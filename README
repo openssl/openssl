@@ -164,16 +164,23 @@
  Report the bug to the OpenSSL project via the Request Tracker
  (http://www.openssl.org/support/rt.html) by mail to:
 
-    openssl-bugs@openssl.org
+    rt@openssl.org
 
- Note that the request tracker should NOT be used for general assistance
- or support queries. Just because something doesn't work the way you expect
- does not mean it is necessarily a bug in OpenSSL.
+ In order to avoid spam, this is a moderated mailing list, and it might
+ take a day for the ticket to show up.  (We also scan posts to make sure
+ that security disclosures aren't publically posted by mistake.) Mail to
+ this address is recorded in the public RT (request tracker) database (see
+ https://www.openssl.org/support/rt.html for details) and also forwarded
+ the public openssl-dev mailing list.  Confidential mail may be sent to
+ openssl-security@openssl.org (PGP key available from the key servers).
 
- Note that mail to openssl-bugs@openssl.org is recorded in the publicly
- readable request tracker database and is forwarded to a public
- mailing list. Confidential mail may be sent to openssl-security@openssl.org
- (PGP key available from the key servers).
+ Please do NOT use this for general assistance or support queries.
+ Just because something doesn't work the way you expect does not mean it
+ is necessarily a bug in OpenSSL.
+
+ You can also make GitHub pull requests. If you do this, please also send
+ mail to rt@openssl.org with a link to the PR so that we can more easily
+ keep track of it.
 
  HOW TO CONTRIBUTE TO OpenSSL
  ----------------------------
@@ -190,11 +197,10 @@
  reason as to why that feature isn't implemented.
 
  Patches should be as up to date as possible, preferably relative to the
- current Git or the last snapshot. They should follow the coding style of
- OpenSSL and compile without warnings. Some of the core team developer targets
- can be used for testing purposes, (debug-steve64, debug-geoff etc). OpenSSL
- compiles on many varied platforms: try to ensure you only use portable
- features.
+ current Git or the last snapshot. They should follow our coding style
+ (see http://openssl.org/about/codingstyle.txt) and compile without
+ warnings using the --strict-warnings flag.  OpenSSL compiles on many
+ varied platforms: try to ensure you only use portable features.
 
  Note: For legal reasons, contributions from the US can be accepted only
  if a TSU notification and a copy of the patch are sent to crypt@bis.doc.gov
