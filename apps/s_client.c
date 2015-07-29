@@ -513,7 +513,8 @@ OPTIONS s_client_options[] = {
     {"tls1", OPT_TLS1, '-', "Just use TLSv1"},
     {"starttls", OPT_STARTTLS, 's',
      "Use the STARTTLS command before starting TLS"},
-    {"xmpphost", OPT_XMPPHOST, 's', "Host to use with \"-starttls xmpp\""},
+    {"xmpphost", OPT_XMPPHOST, 's',
+     "Host to use with \"-starttls xmpp[-server]\""},
     {"rand", OPT_RAND, 's',
      "Load the file(s) into the random number generator"},
     {"sess_out", OPT_SESS_OUT, '>', "File to write SSL session to"},
@@ -608,6 +609,7 @@ typedef enum PROTOCOL_choice {
     PROTO_FTP,
     PROTO_TELNET,
     PROTO_XMPP,
+    PROTO_XMPP_SERVER,
     PROTO_CONNECT
 } PROTOCOL_CHOICE;
 
@@ -617,6 +619,7 @@ static OPT_PAIR services[] = {
     {"imap", PROTO_IMAP},
     {"ftp", PROTO_FTP},
     {"xmpp", PROTO_XMPP},
+    {"xmpp-server", PROTO_XMPP_SERVER},
     {"telnet", PROTO_TELNET},
     {NULL}
 };
@@ -1548,11 +1551,13 @@ int s_client_main(int argc, char **argv)
         }
         break;
     case PROTO_XMPP:
+    case PROTO_XMPP_SERVER:
         {
             int seen = 0;
             BIO_printf(sbio, "<stream:stream "
                        "xmlns:stream='http://etherx.jabber.org/streams' "
-                       "xmlns='jabber:client' to='%s' version='1.0'>",
+                       "xmlns='jabber:%s' to='%s' version='1.0'>",
+                       starttls_proto == PROTO_XMPP ? "client" : "server",
                        xmpphost ? xmpphost : host);
             seen = BIO_read(sbio, mbuf, BUFSIZZ);
             mbuf[seen] = 0;
