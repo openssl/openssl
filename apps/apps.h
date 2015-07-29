@@ -287,7 +287,7 @@ void unbuffer(FILE *fp);
         {"no_tls1_1", OPT_S_NOTLS1_1, '-' }, \
         {"no_tls1_2", OPT_S_NOTLS1_2, '-' }, \
         {"bugs", OPT_S_BUGS, '-' }, \
-        {"no_comp", OPT_S_NOCOMP, '-' }, \
+        {"no_comp", OPT_S_NOCOMP, '-', "Don't use SSL/TLS-level compression" }, \
         {"ecdh_single", OPT_S_ECDHSINGLE, '-' }, \
         {"no_ticket", OPT_S_NOTICKET, '-' }, \
         {"serverpref", OPT_S_SERVERPREF, '-' }, \
