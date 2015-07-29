@@ -478,6 +478,7 @@ long ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
     return n;
  f_err:
     ssl3_send_alert(s, SSL3_AL_FATAL, al);
+    statem_set_error(s);
     *ok = 0;
     return 0;
 }
