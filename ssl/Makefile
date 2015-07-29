@@ -26,7 +26,8 @@ LIBSRC=	\
 	ssl_ciph.c ssl_stat.c ssl_rsa.c \
 	ssl_asn1.c ssl_txt.c ssl_algs.c ssl_conf.c \
 	bio_ssl.c ssl_err.c t1_reneg.c tls_srp.c t1_trce.c ssl_utst.c \
-	record/ssl3_buffer.c record/ssl3_record.c record/dtls1_bitmap.c
+	record/ssl3_buffer.c record/ssl3_record.c record/dtls1_bitmap.c \
+	statem.c
 LIBOBJ= \
 	s3_srvr.o  s3_clnt.o  s3_lib.o  s3_enc.o record/rec_layer_s3.o \
 	s3_both.o s3_cbc.o s3_msg.o \
@@ -37,7 +38,8 @@ LIBOBJ= \
 	ssl_ciph.o ssl_stat.o ssl_rsa.o \
 	ssl_asn1.o ssl_txt.o ssl_algs.o ssl_conf.o \
 	bio_ssl.o ssl_err.o t1_reneg.o tls_srp.o t1_trce.o ssl_utst.o \
-	record/ssl3_buffer.o record/ssl3_record.o record/dtls1_bitmap.o
+	record/ssl3_buffer.o record/ssl3_record.o record/dtls1_bitmap.o \
+	statem.o
 
 SRC= $(LIBSRC)
 
@@ -781,6 +783,26 @@ ssl_utst.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
 ssl_utst.o: ../include/openssl/tls1.h ../include/openssl/x509.h
 ssl_utst.o: ../include/openssl/x509_vfy.h packet_locl.h record/record.h
 ssl_utst.o: ssl_locl.h ssl_utst.c
+statem.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
+statem.o: ../include/openssl/bn.h ../include/openssl/buffer.h
+statem.o: ../include/openssl/comp.h ../include/openssl/crypto.h
+statem.o: ../include/openssl/dsa.h ../include/openssl/dtls1.h
+statem.o: ../include/openssl/e_os2.h ../include/openssl/ec.h
+statem.o: ../include/openssl/ecdh.h ../include/openssl/ecdsa.h
+statem.o: ../include/openssl/err.h ../include/openssl/evp.h
+statem.o: ../include/openssl/hmac.h ../include/openssl/lhash.h
+statem.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
+statem.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
+statem.o: ../include/openssl/ossl_typ.h ../include/openssl/pem.h
+statem.o: ../include/openssl/pem2.h ../include/openssl/pkcs7.h
+statem.o: ../include/openssl/pqueue.h ../include/openssl/rand.h
+statem.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
+statem.o: ../include/openssl/sha.h ../include/openssl/srtp.h
+statem.o: ../include/openssl/ssl.h ../include/openssl/ssl2.h
+statem.o: ../include/openssl/ssl3.h ../include/openssl/stack.h
+statem.o: ../include/openssl/symhacks.h ../include/openssl/tls1.h
+statem.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h packet_locl.h
+statem.o: record/record.h ssl_locl.h statem.c
 t1_clnt.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 t1_clnt.o: ../include/openssl/bn.h ../include/openssl/buffer.h
 t1_clnt.o: ../include/openssl/comp.h ../include/openssl/crypto.h
