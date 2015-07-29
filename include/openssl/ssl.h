@@ -2099,6 +2099,8 @@ void ERR_load_SSL_strings(void);
 # define SSL_F_TLS1_PROCESS_HEARTBEAT                     341
 # define SSL_F_TLS1_SETUP_KEY_BLOCK                       211
 # define SSL_F_TLS1_SET_SERVER_SIGALGS                    335
+# define SSL_F_TLS_GET_MESSAGE_BODY                       351
+# define SSL_F_TLS_GET_MESSAGE_HEADER                     350
 # define SSL_F_USE_CERTIFICATE_CHAIN_FILE                 220
 
 /* Reason codes. */
