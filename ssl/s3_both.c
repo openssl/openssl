@@ -158,37 +158,9 @@ int ssl3_do_write(SSL *s, int type)
 
 int ssl3_send_finished(SSL *s, int a, int b, const char *sender, int slen)
 {
-    unsigned char *p;
-    int i;
-    unsigned long l;
-
     if (s->state == a) {
-        p = ssl_handshake_start(s);
-
-        i = s->method->ssl3_enc->final_finish_mac(s,
-                                                  sender, slen,
-                                                  s->s3->tmp.finish_md);
-        if (i <= 0)
-            return 0;
-        s->s3->tmp.finish_md_len = i;
-        memcpy(p, s->s3->tmp.finish_md, i);
-        l = i;
-
-        /*
-         * Copy the finished so we can use it for renegotiation checks
-         */
-        if (s->type == SSL_ST_CONNECT) {
-            OPENSSL_assert(i <= EVP_MAX_MD_SIZE);
-            memcpy(s->s3->previous_client_finished, s->s3->tmp.finish_md, i);
-            s->s3->previous_client_finished_len = i;
-        } else {
-            OPENSSL_assert(i <= EVP_MAX_MD_SIZE);
-            memcpy(s->s3->previous_server_finished, s->s3->tmp.finish_md, i);
-            s->s3->previous_server_finished_len = i;
-        }
-
-        if (!ssl_set_handshake_header(s, SSL3_MT_FINISHED, l)) {
-            SSLerr(SSL_F_SSL3_SEND_FINISHED, ERR_R_INTERNAL_ERROR);
+        if (tls_construct_finished(s, sender, slen) == 0) {
+            statem_set_error(s);
             return -1;
         }
         s->state = b;
@@ -196,6 +168,44 @@ int ssl3_send_finished(SSL *s, int a, int b, const char *sender, int slen)
 
     /* SSL3_ST_SEND_xxxxxx_HELLO_B */
     return ssl_do_write(s);
+}
+
+int tls_construct_finished(SSL *s, const char *sender, int slen)
+{
+    unsigned char *p;
+    int i;
+    unsigned long l;
+
+    p = ssl_handshake_start(s);
+
+    i = s->method->ssl3_enc->final_finish_mac(s,
+                                              sender, slen,
+                                              s->s3->tmp.finish_md);
+    if (i <= 0)
+        return 0;
+    s->s3->tmp.finish_md_len = i;
+    memcpy(p, s->s3->tmp.finish_md, i);
+    l = i;
+
+    /*
+     * Copy the finished so we can use it for renegotiation checks
+     */
+    if (s->type == SSL_ST_CONNECT) {
+        OPENSSL_assert(i <= EVP_MAX_MD_SIZE);
+        memcpy(s->s3->previous_client_finished, s->s3->tmp.finish_md, i);
+        s->s3->previous_client_finished_len = i;
+    } else {
+        OPENSSL_assert(i <= EVP_MAX_MD_SIZE);
+        memcpy(s->s3->previous_server_finished, s->s3->tmp.finish_md, i);
+        s->s3->previous_server_finished_len = i;
+    }
+
+    if (!ssl_set_handshake_header(s, SSL3_MT_FINISHED, l)) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_FINISHED, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    return 1;
 }
 
 #ifndef OPENSSL_NO_NEXTPROTONEG
@@ -230,13 +240,25 @@ static void ssl3_take_mac(SSL *s)
 
 int ssl3_get_change_cipher_spec(SSL *s, int a, int b)
 {
-    int ok, al;
+    int ok;
     long n;
 
     n = s->method->ssl_get_message(s, a, b, SSL3_MT_CHANGE_CIPHER_SPEC, 1, &ok);
 
     if (!ok)
         return ((int)n);
+
+    if (tls_process_change_cipher_spec(s, n) == 0) {
+        statem_set_error(s);
+        return -1;
+    }
+
+    return 1;
+}
+
+enum MSG_PROCESS_RETURN tls_process_change_cipher_spec(SSL *s, long n)
+{
+    int al;
 
     /*
      * 'Change Cipher Spec' is just a single byte, which should already have
@@ -248,13 +270,15 @@ int ssl3_get_change_cipher_spec(SSL *s, int a, int b)
                     || (s->version != DTLS1_BAD_VER
                         && n != DTLS1_CCS_HEADER_LENGTH - 1)) {
                 al = SSL_AD_ILLEGAL_PARAMETER;
-                SSLerr(SSL_F_SSL3_GET_CHANGE_CIPHER_SPEC, SSL_R_BAD_CHANGE_CIPHER_SPEC);
+                SSLerr(SSL_F_TLS_PROCESS_CHANGE_CIPHER_SPEC,
+                       SSL_R_BAD_CHANGE_CIPHER_SPEC);
                 goto f_err;
         }
     } else {
         if (n != 0) {
             al = SSL_AD_ILLEGAL_PARAMETER;
-            SSLerr(SSL_F_SSL3_GET_CHANGE_CIPHER_SPEC, SSL_R_BAD_CHANGE_CIPHER_SPEC);
+            SSLerr(SSL_F_TLS_PROCESS_CHANGE_CIPHER_SPEC,
+                   SSL_R_BAD_CHANGE_CIPHER_SPEC);
             goto f_err;
         }
     }
@@ -262,14 +286,14 @@ int ssl3_get_change_cipher_spec(SSL *s, int a, int b)
     /* Check we have a cipher to change to */
     if (s->s3->tmp.new_cipher == NULL) {
         al = SSL_AD_UNEXPECTED_MESSAGE;
-        SSLerr(SSL_F_SSL3_GET_CHANGE_CIPHER_SPEC, SSL_R_CCS_RECEIVED_EARLY);
+        SSLerr(SSL_F_TLS_PROCESS_CHANGE_CIPHER_SPEC, SSL_R_CCS_RECEIVED_EARLY);
         goto f_err;
     }
 
     s->s3->change_cipher_spec = 1;
     if (!ssl3_do_change_cipher_spec(s)) {
         al = SSL_AD_INTERNAL_ERROR;
-        SSLerr(SSL_F_SSL3_GET_CHANGE_CIPHER_SPEC, ERR_R_INTERNAL_ERROR);
+        SSLerr(SSL_F_TLS_PROCESS_CHANGE_CIPHER_SPEC, ERR_R_INTERNAL_ERROR);
         goto f_err;
     }
 
@@ -289,18 +313,18 @@ int ssl3_get_change_cipher_spec(SSL *s, int a, int b)
 #endif
     }
 
-    return 1;
+    return MSG_PROCESS_CONTINUE_READING;
  f_err:
     ssl3_send_alert(s, SSL3_AL_FATAL, al);
-    return 0;
+    statem_set_error(s);
+    return MSG_PROCESS_ERROR;
 }
 
 
 int ssl3_get_finished(SSL *s, int a, int b)
 {
-    int al, i, ok;
+    int ok;
     long n;
-    unsigned char *p;
 
 #ifdef OPENSSL_NO_NEXTPROTONEG
     /*
@@ -315,10 +339,18 @@ int ssl3_get_finished(SSL *s, int a, int b)
     if (!ok)
         return ((int)n);
 
+    return tls_process_finished(s, (unsigned long)n);
+}
+
+enum MSG_PROCESS_RETURN tls_process_finished(SSL *s, unsigned long n)
+{
+    int al, i;
+    unsigned char *p;
+
     /* If this occurs, we have missed a message */
     if (!s->s3->change_cipher_spec) {
         al = SSL_AD_UNEXPECTED_MESSAGE;
-        SSLerr(SSL_F_SSL3_GET_FINISHED, SSL_R_GOT_A_FIN_BEFORE_A_CCS);
+        SSLerr(SSL_F_TLS_PROCESS_FINISHED, SSL_R_GOT_A_FIN_BEFORE_A_CCS);
         goto f_err;
     }
     s->s3->change_cipher_spec = 0;
@@ -326,15 +358,15 @@ int ssl3_get_finished(SSL *s, int a, int b)
     p = (unsigned char *)s->init_msg;
     i = s->s3->tmp.peer_finish_md_len;
 
-    if (i != n) {
+    if (i < 0 || (unsigned long)i != n) {
         al = SSL_AD_DECODE_ERROR;
-        SSLerr(SSL_F_SSL3_GET_FINISHED, SSL_R_BAD_DIGEST_LENGTH);
+        SSLerr(SSL_F_TLS_PROCESS_FINISHED, SSL_R_BAD_DIGEST_LENGTH);
         goto f_err;
     }
 
     if (CRYPTO_memcmp(p, s->s3->tmp.peer_finish_md, i) != 0) {
         al = SSL_AD_DECRYPT_ERROR;
-        SSLerr(SSL_F_SSL3_GET_FINISHED, SSL_R_DIGEST_CHECK_FAILED);
+        SSLerr(SSL_F_TLS_PROCESS_FINISHED, SSL_R_DIGEST_CHECK_FAILED);
         goto f_err;
     }
 
@@ -351,10 +383,11 @@ int ssl3_get_finished(SSL *s, int a, int b)
         s->s3->previous_server_finished_len = i;
     }
 
-    return (1);
+    return MSG_PROCESS_CONTINUE_PROCESSING;
  f_err:
     ssl3_send_alert(s, SSL3_AL_FATAL, al);
-    return (0);
+    statem_set_error(s);
+    return MSG_PROCESS_ERROR;
 }
 
 /*-
@@ -368,19 +401,29 @@ int ssl3_get_finished(SSL *s, int a, int b)
  */
 int ssl3_send_change_cipher_spec(SSL *s, int a, int b)
 {
-    unsigned char *p;
-
     if (s->state == a) {
-        p = (unsigned char *)s->init_buf->data;
-        *p = SSL3_MT_CCS;
-        s->init_num = 1;
-        s->init_off = 0;
+        if(tls_construct_change_cipher_spec(s) == 0) {
+            statem_set_error(s);
+            return 0;
+        }
 
         s->state = b;
     }
 
     /* SSL3_ST_CW_CHANGE_B */
     return (ssl3_do_write(s, SSL3_RT_CHANGE_CIPHER_SPEC));
+}
+
+int tls_construct_change_cipher_spec(SSL *s)
+{
+    unsigned char *p;
+
+    p = (unsigned char *)s->init_buf->data;
+    *p = SSL3_MT_CCS;
+    s->init_num = 1;
+    s->init_off = 0;
+
+    return 1;
 }
 
 unsigned long ssl3_output_cert_chain(SSL *s, CERT_PKEY *cpk)

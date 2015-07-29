@@ -2101,8 +2101,24 @@ void ERR_load_SSL_strings(void);
 # define SSL_F_TLS1_PROCESS_HEARTBEAT                     341
 # define SSL_F_TLS1_SETUP_KEY_BLOCK                       211
 # define SSL_F_TLS1_SET_SERVER_SIGALGS                    335
+# define SSL_F_TLS_CLIENT_KEY_EXCHANGE_POST_WORK          354
+# define SSL_F_TLS_CONSTRUCT_CLIENT_CERTIFICATE           355
+# define SSL_F_TLS_CONSTRUCT_CLIENT_HELLO                 356
+# define SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE          357
+# define SSL_F_TLS_CONSTRUCT_CLIENT_VERIFY                358
+# define SSL_F_TLS_CONSTRUCT_FINISHED                     359
 # define SSL_F_TLS_GET_MESSAGE_BODY                       351
 # define SSL_F_TLS_GET_MESSAGE_HEADER                     350
+# define SSL_F_TLS_PREPARE_CLIENT_CERTIFICATE             360
+# define SSL_F_TLS_PROCESS_CERTIFICATE_REQUEST            361
+# define SSL_F_TLS_PROCESS_CERT_STATUS                    362
+# define SSL_F_TLS_PROCESS_CHANGE_CIPHER_SPEC             363
+# define SSL_F_TLS_PROCESS_FINISHED                       364
+# define SSL_F_TLS_PROCESS_KEY_EXCHANGE                   365
+# define SSL_F_TLS_PROCESS_NEW_SESSION_TICKET             366
+# define SSL_F_TLS_PROCESS_SERVER_CERTIFICATE             367
+# define SSL_F_TLS_PROCESS_SERVER_DONE                    368
+# define SSL_F_TLS_PROCESS_SERVER_HELLO                   369
 # define SSL_F_USE_CERTIFICATE_CHAIN_FILE                 220
 
 /* Reason codes. */
