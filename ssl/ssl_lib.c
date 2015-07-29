@@ -218,6 +218,7 @@ int SSL_clear(SSL *s)
     s->type = 0;
 
     s->state = SSL_ST_BEFORE | ((s->server) ? SSL_ST_ACCEPT : SSL_ST_CONNECT);
+    statem_clear(s);
 
     s->version = s->method->version;
     s->client_version = s->version;

@@ -1928,6 +1928,7 @@ void ERR_load_SSL_strings(void);
 # define SSL_F_DTLS1_SEND_SERVER_HELLO                    266
 # define SSL_F_DTLS1_SEND_SERVER_KEY_EXCHANGE             267
 # define SSL_F_DTLS1_WRITE_APP_DATA_BYTES                 268
+# define SSL_F_READ_STATE_MACHINE                         352
 # define SSL_F_SSL3_ACCEPT                                128
 # define SSL_F_SSL3_ADD_CERT_TO_BUF                       296
 # define SSL_F_SSL3_CALLBACK_CTRL                         233
@@ -2085,6 +2086,7 @@ void ERR_load_SSL_strings(void);
 # define SSL_F_SSL_USE_RSAPRIVATEKEY_FILE                 206
 # define SSL_F_SSL_VERIFY_CERT_CHAIN                      207
 # define SSL_F_SSL_WRITE                                  208
+# define SSL_F_STATE_MACHINE                              353
 # define SSL_F_TLS12_CHECK_PEER_SIGALG                    333
 # define SSL_F_TLS1_CERT_VERIFY_MAC                       286
 # define SSL_F_TLS1_CHANGE_CIPHER_STATE                   209

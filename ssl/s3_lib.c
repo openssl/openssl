@@ -5132,6 +5132,7 @@ int ssl3_renegotiate_check(SSL *s)
              */
             /* SSL_ST_ACCEPT */
             s->state = SSL_ST_RENEGOTIATE;
+            statem_set_renegotiate(s);
             s->s3->renegotiate = 0;
             s->s3->num_renegotiations++;
             s->s3->total_renegotiations++;
