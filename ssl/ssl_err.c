@@ -331,6 +331,8 @@ static ERR_STRING_DATA SSL_str_functs[] = {
     {ERR_FUNC(SSL_F_TLS1_PROCESS_HEARTBEAT), "tls1_process_heartbeat"},
     {ERR_FUNC(SSL_F_TLS1_SETUP_KEY_BLOCK), "tls1_setup_key_block"},
     {ERR_FUNC(SSL_F_TLS1_SET_SERVER_SIGALGS), "tls1_set_server_sigalgs"},
+    {ERR_FUNC(SSL_F_TLS_GET_MESSAGE_BODY), "tls_get_message_body"},
+    {ERR_FUNC(SSL_F_TLS_GET_MESSAGE_HEADER), "tls_get_message_header"},
     {ERR_FUNC(SSL_F_USE_CERTIFICATE_CHAIN_FILE), "use_certificate_chain_file"},
     {0, NULL}
 };
