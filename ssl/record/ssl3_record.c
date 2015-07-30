@@ -663,9 +663,7 @@ int tls1_enc(SSL *s, int send)
                      * we can't write into the input stream: Can this ever
                      * happen?? (steve)
                      */
-                    fprintf(stderr,
-                            "%s:%d: rec->data != rec->input\n",
-                            __FILE__, __LINE__);
+                    fprintf(stderr, "tls1_enc(): rec->data != rec->input\n");
                 else if (RAND_bytes(rec->input, ivlen) <= 0)
                     return -1;
             }

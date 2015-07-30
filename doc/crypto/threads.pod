@@ -51,15 +51,15 @@ CRYPTO_destroy_dynlockid, CRYPTO_lock - OpenSSL thread support
  void CRYPTO_lock(int mode, int n, const char *file, int line);
 
  #define CRYPTO_w_lock(type)	\
-	CRYPTO_lock(CRYPTO_LOCK|CRYPTO_WRITE,type,__FILE__,__LINE__)
+	CRYPTO_lock(CRYPTO_LOCK|CRYPTO_WRITE,type,OPENSSL_FILE,OPENSSL_LINE)
  #define CRYPTO_w_unlock(type)	\
-	CRYPTO_lock(CRYPTO_UNLOCK|CRYPTO_WRITE,type,__FILE__,__LINE__)
+	CRYPTO_lock(CRYPTO_UNLOCK|CRYPTO_WRITE,type,OPENSSL_FILE,OPENSSL_LINE)
  #define CRYPTO_r_lock(type)	\
-	CRYPTO_lock(CRYPTO_LOCK|CRYPTO_READ,type,__FILE__,__LINE__)
+	CRYPTO_lock(CRYPTO_LOCK|CRYPTO_READ,type,OPENSSL_FILE,OPENSSL_LINE)
  #define CRYPTO_r_unlock(type)	\
-	CRYPTO_lock(CRYPTO_UNLOCK|CRYPTO_READ,type,__FILE__,__LINE__)
+	CRYPTO_lock(CRYPTO_UNLOCK|CRYPTO_READ,type,OPENSSL_FILE,OPENSSL_LINE)
  #define CRYPTO_add(addr,amount,type)	\
-	CRYPTO_add_lock(addr,amount,type,__FILE__,__LINE__)
+	CRYPTO_add_lock(addr,amount,type,OPENSSL_FILE,OPENSSL_LINE)
 
 =head1 DESCRIPTION
 

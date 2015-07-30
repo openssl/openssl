@@ -67,7 +67,7 @@ extern "C" {
 static void ERR_load_IBMCA_strings(void);
 static void ERR_unload_IBMCA_strings(void);
 static void ERR_IBMCA_error(int function, int reason, char *file, int line);
-# define IBMCAerr(f,r) ERR_IBMCA_error((f),(r),__FILE__,__LINE__)
+# define IBMCAerr(f,r) ERR_IBMCA_error((f),(r),OPENSSL_FILE,OPENSSL_LINE)
 
 /* Error codes for the IBMCA functions. */
 
