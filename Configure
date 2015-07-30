@@ -270,6 +270,7 @@ my @disablables = (
     "egd",
     "engine",
     "err",
+    "filenames",
     "heartbeats",
     "hmac",
     "hw(-.+)?",
