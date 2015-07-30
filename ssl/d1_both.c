@@ -882,7 +882,7 @@ dtls1_get_message_fragment(SSL *s, int st1, int stn, int mt, long max, int *ok)
         if(mt == SSL3_MT_CHANGE_CIPHER_SPEC) {
             if (wire[0] != SSL3_MT_CCS) {
                 al = SSL_AD_UNEXPECTED_MESSAGE;
-                SSLerr(SSL_F_SSL3_GET_MESSAGE, SSL_R_BAD_CHANGE_CIPHER_SPEC);
+                SSLerr(SSL_F_DTLS1_GET_MESSAGE_FRAGMENT, SSL_R_BAD_CHANGE_CIPHER_SPEC);
                 goto f_err;
             }
 
