@@ -666,9 +666,11 @@ int ocsp_main(int argc, char **argv)
 
     /* If running as responder don't verify our own response */
     if (cbio) {
-        if (--accept_count <= 0) {
-            ret = 0;
-            goto end;
+        if (accept_count != -1) { /* unlimited */
+            if (--accept_count <= 0) {
+                ret = 0;
+                goto end;
+            }
         }
         BIO_free_all(cbio);
         cbio = NULL;
