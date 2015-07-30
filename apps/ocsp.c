@@ -666,7 +666,8 @@ int ocsp_main(int argc, char **argv)
 
     /* If running as responder don't verify our own response */
     if (cbio) {
-        if (--accept_count <= 0) {
+        /* If not unlimited, see if we took all we should. */
+        if (accept_count != -1 && --accept_count <= 0) {
             ret = 0;
             goto end;
         }
