@@ -141,6 +141,7 @@ int genrsa_main(int argc, char **argv)
             break;
         case OPT_OUT:
             outfile = opt_arg();
+            break;
         case OPT_ENGINE:
             e = setup_engine(opt_arg(), 0);
             break;
