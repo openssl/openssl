@@ -344,7 +344,6 @@ int req_main(int argc, char **argv)
         case OPT_NO_ASN1_KLUDGE:
             kludge = 0;
             break;
-            multirdn = 1;
         case OPT_DAYS:
             days = atoi(opt_arg());
             break;
