@@ -296,10 +296,15 @@ void unbuffer(FILE *fp);
         {"no_resumption_on_reneg", OPT_S_ONRESUMP, '-' }, \
         {"no_legacy_server_connect", OPT_S_NOLEGACYCONN, '-' }, \
         {"strict", OPT_S_STRICT, '-' }, \
-        {"sigalgs", OPT_S_SIGALGS, 's', }, \
-        {"client_sigalgs", OPT_S_CLIENTSIGALGS, 's', }, \
-        {"curves", OPT_S_CURVES, 's', }, \
-        {"named_curve", OPT_S_NAMEDCURVE, 's', }, \
+        {"sigalgs", OPT_S_SIGALGS, 's', \
+            "Signature algorithms to support (colon-separated list)" }, \
+        {"client_sigalgs", OPT_S_CLIENTSIGALGS, 's', \
+            "Signature algorithms to support for client certificate" \
+            " authentication (colon-separated list)" }, \
+        {"curves", OPT_S_CURVES, 's', \
+            "Elliptic curves to advertise (colon-separated list)" }, \
+        {"named_curve", OPT_S_NAMEDCURVE, 's', \
+            "Elliptic curve used for ECDHE (server-side only)" }, \
         {"cipher", OPT_S_CIPHER, 's', }, \
         {"dhparam", OPT_S_DHPARAM, '<' }, \
         {"debug_broken_protocol", OPT_S_DEBUGBROKE, '-' }
