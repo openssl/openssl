@@ -652,6 +652,12 @@ static void sv_usage(void)
                " -no_ticket    - disable use of RFC4507bis session tickets\n");
     BIO_printf(bio_err,
                " -legacy_renegotiation - enable use of legacy renegotiation (dangerous)\n");
+    BIO_printf(bio_err,
+               " -sigalgs arg      - Signature algorithms to support (colon-separated list)\n");
+    BIO_printf(bio_err,
+               " -client_sigalgs arg  - Signature algorithms to support for client \n");
+    BIO_printf(bio_err,
+               "                        certificate authentication (colon-separated list)\n");
 # ifndef OPENSSL_NO_NEXTPROTONEG
     BIO_printf(bio_err,
                " -nextprotoneg arg - set the advertised protocols for the NPN extension (comma-separated list)\n");
