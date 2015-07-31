@@ -519,6 +519,31 @@ SSL_CTX_callback_ctrl(ssl,SSL_CTRL_SET_TLSEXT_TICKET_KEY_CB,(void (*)(void))cb)
 # define TLS1_CK_ADH_WITH_AES_128_GCM_SHA256             0x030000A6
 # define TLS1_CK_ADH_WITH_AES_256_GCM_SHA384             0x030000A7
 
+/* CCM ciphersuites from RFC6655 */
+# define TLS1_CK_RSA_WITH_AES_128_CCM                    0x0300C09C
+# define TLS1_CK_RSA_WITH_AES_256_CCM                    0x0300C09D
+# define TLS1_CK_DHE_RSA_WITH_AES_128_CCM                0x0300C09E
+# define TLS1_CK_DHE_RSA_WITH_AES_256_CCM                0x0300C09F
+# define TLS1_CK_RSA_WITH_AES_128_CCM_8                  0x0300C0A0
+# define TLS1_CK_RSA_WITH_AES_256_CCM_8                  0x0300C0A1
+# define TLS1_CK_DHE_RSA_WITH_AES_128_CCM_8              0x0300C0A2
+# define TLS1_CK_DHE_RSA_WITH_AES_256_CCM_8              0x0300C0A3
+# define TLS1_CK_PSK_WITH_AES_128_CCM                    0x0300C0A4
+# define TLS1_CK_PSK_WITH_AES_256_CCM                    0x0300C0A5
+# define TLS1_CK_DHE_PSK_WITH_AES_128_CCM                0x0300C0A6
+# define TLS1_CK_DHE_PSK_WITH_AES_256_CCM                0x0300C0A7
+# define TLS1_CK_PSK_WITH_AES_128_CCM_8                  0x0300C0A8
+# define TLS1_CK_PSK_WITH_AES_256_CCM_8                  0x0300C0A9
+# define TLS1_CK_DHE_PSK_WITH_AES_128_CCM_8              0x0300C0AA
+# define TLS1_CK_DHE_PSK_WITH_AES_256_CCM_8              0x0300C0AB
+
+/* CCM ciphersuites from RFC7251 */
+
+# define TLS1_CK_ECDHE_ECDSA_WITH_AES_128_CCM            0x0300C0AC
+# define TLS1_CK_ECDHE_ECDSA_WITH_AES_256_CCM            0x0300C0AD
+# define TLS1_CK_ECDHE_ECDSA_WITH_AES_128_CCM_8          0x0300C0AE
+# define TLS1_CK_ECDHE_ECDSA_WITH_AES_256_CCM_8          0x0300C0AF
+
 /* TLS 1.2 Camellia SHA-256 ciphersuites from RFC5932 */
 # define TLS1_CK_RSA_WITH_CAMELLIA_128_CBC_SHA256                0x030000BA
 # define TLS1_CK_DH_DSS_WITH_CAMELLIA_128_CBC_SHA256             0x030000BB
@@ -822,6 +847,35 @@ SSL_CTX_callback_ctrl(ssl,SSL_CTRL_SET_TLSEXT_TICKET_KEY_CB,(void (*)(void))cb)
 # define TLS1_TXT_DH_DSS_WITH_AES_256_GCM_SHA384         "DH-DSS-AES256-GCM-SHA384"
 # define TLS1_TXT_ADH_WITH_AES_128_GCM_SHA256            "ADH-AES128-GCM-SHA256"
 # define TLS1_TXT_ADH_WITH_AES_256_GCM_SHA384            "ADH-AES256-GCM-SHA384"
+
+/* CCM ciphersuites from RFC6655 */
+
+# define TLS1_TXT_RSA_WITH_AES_128_CCM                   "AES128-CCM"
+# define TLS1_TXT_RSA_WITH_AES_256_CCM                   "AES256-CCM"
+# define TLS1_TXT_DHE_RSA_WITH_AES_128_CCM               "DHE-RSA-AES128-CCM"
+# define TLS1_TXT_DHE_RSA_WITH_AES_256_CCM               "DHE-RSA-AES256-CCM"
+
+# define TLS1_TXT_RSA_WITH_AES_128_CCM_8                 "AES128-CCM8"
+# define TLS1_TXT_RSA_WITH_AES_256_CCM_8                 "AES256-CCM8"
+# define TLS1_TXT_DHE_RSA_WITH_AES_128_CCM_8             "DHE-RSA-AES128-CCM8"
+# define TLS1_TXT_DHE_RSA_WITH_AES_256_CCM_8             "DHE-RSA-AES256-CCM8"
+
+# define TLS1_TXT_PSK_WITH_AES_128_CCM                   "PSK-AES128-CCM"
+# define TLS1_TXT_PSK_WITH_AES_256_CCM                   "PSK-AES256-CCM"
+# define TLS1_TXT_DHE_PSK_WITH_AES_128_CCM               "DHE-PSK-AES128-CCM"
+# define TLS1_TXT_DHE_PSK_WITH_AES_256_CCM               "DHE-PSK-AES256-CCM"
+
+# define TLS1_TXT_PSK_WITH_AES_128_CCM_8                 "PSK-AES128-CCM8"
+# define TLS1_TXT_PSK_WITH_AES_256_CCM_8                 "PSK-AES256-CCM8"
+# define TLS1_TXT_DHE_PSK_WITH_AES_128_CCM_8             "DHE-PSK-AES128-CCM8"
+# define TLS1_TXT_DHE_PSK_WITH_AES_256_CCM_8             "DHE-PSK-AES256-CCM8"
+
+/* CCM ciphersuites from RFC7251 */
+
+# define TLS1_TXT_ECDHE_ECDSA_WITH_AES_128_CCM       "ECDHE-ECDSA-AES128-CCM"
+# define TLS1_TXT_ECDHE_ECDSA_WITH_AES_256_CCM       "ECDHE-ECDSA-AES256-CCM"
+# define TLS1_TXT_ECDHE_ECDSA_WITH_AES_128_CCM_8     "ECDHE-ECDSA-AES128-CCM8"
+# define TLS1_TXT_ECDHE_ECDSA_WITH_AES_256_CCM_8     "ECDHE-ECDSA-AES256-CCM8"
 
 /* ECDH HMAC based ciphersuites from RFC5289 */
 
