@@ -110,6 +110,7 @@ typedef struct {
     int tag_set;                /* Set if tag is valid */
     int len_set;                /* Set if message length set */
     int L, M;                   /* L and M parameters from RFC3610 */
+    int tls_aad_len;            /* TLS AAD length */
     CCM128_CONTEXT ccm;
     ccm128_f str;
 } EVP_AES_CCM_CTX;
@@ -1853,6 +1854,34 @@ static int aes_ccm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
         cctx->M = 12;
         cctx->tag_set = 0;
         cctx->len_set = 0;
+        cctx->tls_aad_len = -1;
+        return 1;
+
+    case EVP_CTRL_AEAD_TLS1_AAD:
+        /* Save the AAD for later use */
+        if (arg != EVP_AEAD_TLS1_AAD_LEN)
+            return 0;
+        memcpy(c->buf, ptr, arg);
+        cctx->tls_aad_len = arg;
+        {
+            uint16_t len = c->buf[arg - 2] << 8 | c->buf[arg - 1];
+            /* Correct length for explicit IV */
+            len -= EVP_CCM_TLS_EXPLICIT_IV_LEN;
+            /* If decrypting correct for tag too */
+            if (!c->encrypt)
+                len -= cctx->M;
+            c->buf[arg - 2] = len >> 8;
+            c->buf[arg - 1] = len & 0xff;
+        }
+        /* Extra padding: tag appended to record */
+        return cctx->M;
+
+    case EVP_CTRL_CCM_SET_IV_FIXED:
+        /* Sanity check length */
+        if (arg != EVP_CCM_TLS_FIXED_IV_LEN)
+            return 0;
+        /* Just copy to first part of IV */
+        memcpy(c->iv, ptr, arg);
         return 1;
 
     case EVP_CTRL_AEAD_SET_IVLEN:
@@ -1945,14 +1974,66 @@ static int aes_ccm_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
     return 1;
 }
 
+static int aes_ccm_tls_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
+                              const unsigned char *in, size_t len)
+{
+    EVP_AES_CCM_CTX *cctx = ctx->cipher_data;
+    CCM128_CONTEXT *ccm = &cctx->ccm;
+    /* Encrypt/decrypt must be performed in place */
+    if (out != in || len < (EVP_CCM_TLS_EXPLICIT_IV_LEN + (size_t)cctx->M))
+        return -1;
+    /* If encrypting set explicit IV from sequence number (start of AAD) */
+    if (ctx->encrypt)
+        memcpy(out, ctx->buf, EVP_CCM_TLS_EXPLICIT_IV_LEN);
+    /* Get rest of IV from explicit IV */
+    memcpy(ctx->iv + EVP_CCM_TLS_FIXED_IV_LEN, in, EVP_CCM_TLS_EXPLICIT_IV_LEN);
+    /* Correct length value */
+    len -= EVP_CCM_TLS_EXPLICIT_IV_LEN + cctx->M;
+    if (CRYPTO_ccm128_setiv(ccm, ctx->iv, 15 - cctx->L, len))
+            return -1;
+    /* Use saved AAD */
+    CRYPTO_ccm128_aad(ccm, ctx->buf, cctx->tls_aad_len);
+    /* Fix buffer to point to payload */
+    in += EVP_CCM_TLS_EXPLICIT_IV_LEN;
+    out += EVP_CCM_TLS_EXPLICIT_IV_LEN;
+    if (ctx->encrypt) {
+        if (cctx->str ? CRYPTO_ccm128_encrypt_ccm64(ccm, in, out, len,
+                                                    cctx->str) :
+            CRYPTO_ccm128_encrypt(ccm, in, out, len))
+            return -1;
+        if (!CRYPTO_ccm128_tag(ccm, out + len, cctx->M))
+            return -1;
+        return len + EVP_CCM_TLS_EXPLICIT_IV_LEN + cctx->M;
+    } else {
+        if (cctx->str ? !CRYPTO_ccm128_decrypt_ccm64(ccm, in, out, len,
+                                                     cctx->str) :
+            !CRYPTO_ccm128_decrypt(ccm, in, out, len)) {
+            unsigned char tag[16];
+            if (CRYPTO_ccm128_tag(ccm, tag, cctx->M)) {
+                if (!CRYPTO_memcmp(tag, in + len, cctx->M))
+                    return len;
+            }
+        }
+        OPENSSL_cleanse(out, len);
+        return -1;
+    }
+}
+
 static int aes_ccm_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                           const unsigned char *in, size_t len)
 {
     EVP_AES_CCM_CTX *cctx = ctx->cipher_data;
     CCM128_CONTEXT *ccm = &cctx->ccm;
     /* If not set up, return error */
-    if (!cctx->iv_set && !cctx->key_set)
+    if (!cctx->key_set)
         return -1;
+
+    if (cctx->tls_aad_len >= 0)
+        return aes_ccm_tls_cipher(ctx, out, in, len);
+
+    if (!cctx->iv_set)
+        return -1;
+
     if (!ctx->encrypt && !cctx->tag_set)
         return -1;
     if (!out) {
@@ -2007,9 +2088,12 @@ static int aes_ccm_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 
 # define aes_ccm_cleanup NULL
 
-BLOCK_CIPHER_custom(NID_aes, 128, 1, 12, ccm, CCM, CUSTOM_FLAGS)
-    BLOCK_CIPHER_custom(NID_aes, 192, 1, 12, ccm, CCM, CUSTOM_FLAGS)
-    BLOCK_CIPHER_custom(NID_aes, 256, 1, 12, ccm, CCM, CUSTOM_FLAGS)
+BLOCK_CIPHER_custom(NID_aes, 128, 1, 12, ccm, CCM,
+                    EVP_CIPH_FLAG_AEAD_CIPHER | CUSTOM_FLAGS)
+    BLOCK_CIPHER_custom(NID_aes, 192, 1, 12, ccm, CCM,
+                        EVP_CIPH_FLAG_AEAD_CIPHER | CUSTOM_FLAGS)
+    BLOCK_CIPHER_custom(NID_aes, 256, 1, 12, ccm, CCM,
+                        EVP_CIPH_FLAG_AEAD_CIPHER | CUSTOM_FLAGS)
 
 typedef struct {
     union {

@@ -764,10 +764,16 @@ int tls1_enc(SSL *s, int send)
             ? (i < 0)
             : (i == 0))
             return -1;          /* AEAD can fail to verify MAC */
-        if (EVP_CIPHER_mode(enc) == EVP_CIPH_GCM_MODE && !send) {
-            rec->data += EVP_GCM_TLS_EXPLICIT_IV_LEN;
-            rec->input += EVP_GCM_TLS_EXPLICIT_IV_LEN;
-            rec->length -= EVP_GCM_TLS_EXPLICIT_IV_LEN;
+        if (send == 0) {
+            if (EVP_CIPHER_mode(enc) == EVP_CIPH_GCM_MODE) {
+                rec->data += EVP_GCM_TLS_EXPLICIT_IV_LEN;
+                rec->input += EVP_GCM_TLS_EXPLICIT_IV_LEN;
+                rec->length -= EVP_GCM_TLS_EXPLICIT_IV_LEN;
+            } else if (EVP_CIPHER_mode(enc) == EVP_CIPH_CCM_MODE) {
+                rec->data += EVP_CCM_TLS_EXPLICIT_IV_LEN;
+                rec->input += EVP_CCM_TLS_EXPLICIT_IV_LEN;
+                rec->length -= EVP_CCM_TLS_EXPLICIT_IV_LEN;
+            }
         }
 
         ret = 1;
