@@ -26,7 +26,9 @@
 #define LOCK()      CRYPTO_w_lock(CRYPTO_LOCK_MALLOC)
 #define UNLOCK()    CRYPTO_w_unlock(CRYPTO_LOCK_MALLOC)
 #define CLEAR(p, s) OPENSSL_cleanse(p, s)
-#define PAGE_SIZE    4096
+#ifndef PAGE_SIZE
+# define PAGE_SIZE    4096
+#endif
 
 #ifdef IMPLEMENTED
 size_t secure_mem_used;
