@@ -246,6 +246,7 @@ extern "C" {
 # define SSL_TXT_AES             "AES"
 # define SSL_TXT_AES_GCM         "AESGCM"
 # define SSL_TXT_AES_CCM         "AESCCM"
+# define SSL_TXT_AES_CCM_8       "AESCCM8"
 # define SSL_TXT_CAMELLIA128     "CAMELLIA128"
 # define SSL_TXT_CAMELLIA256     "CAMELLIA256"
 # define SSL_TXT_CAMELLIA        "CAMELLIA"

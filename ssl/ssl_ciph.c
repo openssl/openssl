@@ -166,7 +166,9 @@
 #define SSL_ENC_AES256GCM_IDX   13
 #define SSL_ENC_AES128CCM_IDX   14
 #define SSL_ENC_AES256CCM_IDX   15
-#define SSL_ENC_NUM_IDX         16
+#define SSL_ENC_AES128CCM8_IDX  16
+#define SSL_ENC_AES256CCM8_IDX  17
+#define SSL_ENC_NUM_IDX         18
 
 /* NB: make sure indices in these tables match values above */
 
@@ -192,7 +194,9 @@ static const ssl_cipher_table ssl_cipher_table_cipher[SSL_ENC_NUM_IDX] = {
     {SSL_AES128GCM, NID_aes_128_gcm}, /* SSL_ENC_AES128GCM_IDX 12 */
     {SSL_AES256GCM, NID_aes_256_gcm}, /* SSL_ENC_AES256GCM_IDX 13 */
     {SSL_AES128CCM, NID_aes_128_ccm}, /* SSL_ENC_AES128CCM_IDX 14 */
-    {SSL_AES256CCM, NID_aes_256_ccm} /* SSL_ENC_AES256CCM_IDX 15 */
+    {SSL_AES256CCM, NID_aes_256_ccm}, /* SSL_ENC_AES256CCM_IDX 15 */
+    {SSL_AES128CCM8, NID_aes_128_ccm}, /* SSL_ENC_AES128CCM8_IDX 16 */
+    {SSL_AES256CCM8, NID_aes_256_ccm} /* SSL_ENC_AES256CCM8_IDX 17 */
 };
 
 static const EVP_CIPHER *ssl_cipher_methods[SSL_ENC_NUM_IDX] = {
@@ -359,14 +363,16 @@ static const SSL_CIPHER cipher_aliases[] = {
     {0, SSL_TXT_IDEA, 0, 0, 0, SSL_IDEA, 0, 0, 0, 0, 0, 0},
     {0, SSL_TXT_SEED, 0, 0, 0, SSL_SEED, 0, 0, 0, 0, 0, 0},
     {0, SSL_TXT_eNULL, 0, 0, 0, SSL_eNULL, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_AES128, 0, 0, 0, SSL_AES128 | SSL_AES128GCM | SSL_AES128CCM, 0,
+    {0, SSL_TXT_AES128, 0, 0, 0, SSL_AES128 | SSL_AES128GCM | SSL_AES128CCM | SSL_AES128CCM8, 0,
      0, 0, 0, 0, 0},
-    {0, SSL_TXT_AES256, 0, 0, 0, SSL_AES256 | SSL_AES256GCM | SSL_AES256CCM, 0,
+    {0, SSL_TXT_AES256, 0, 0, 0, SSL_AES256 | SSL_AES256GCM | SSL_AES256CCM | SSL_AES256CCM8, 0,
      0, 0, 0, 0, 0},
     {0, SSL_TXT_AES, 0, 0, 0, SSL_AES, 0, 0, 0, 0, 0, 0},
     {0, SSL_TXT_AES_GCM, 0, 0, 0, SSL_AES128GCM | SSL_AES256GCM, 0, 0, 0, 0,
      0, 0},
-    {0, SSL_TXT_AES_CCM, 0, 0, 0, SSL_AES128CCM | SSL_AES256CCM, 0, 0, 0, 0,
+    {0, SSL_TXT_AES_CCM, 0, 0, 0, SSL_AES128CCM | SSL_AES256CCM | SSL_AES128CCM8 | SSL_AES256CCM8, 0, 0, 0, 0,
+     0, 0},
+    {0, SSL_TXT_AES_CCM_8, 0, 0, 0, SSL_AES128CCM8 | SSL_AES256CCM8, 0, 0, 0, 0,
      0, 0},
     {0, SSL_TXT_CAMELLIA128, 0, 0, 0, SSL_CAMELLIA128, 0, 0, 0, 0, 0, 0},
     {0, SSL_TXT_CAMELLIA256, 0, 0, 0, SSL_CAMELLIA256, 0, 0, 0, 0, 0, 0},
@@ -1720,6 +1726,12 @@ char *SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
         break;
     case SSL_AES256CCM:
         enc = "AESCCM(256)";
+        break;
+    case SSL_AES128CCM8:
+        enc = "AESCCM8(128)";
+        break;
+    case SSL_AES256CCM8:
+        enc = "AESCCM8(256)";
         break;
     case SSL_CAMELLIA128:
         enc = "Camellia(128)";
