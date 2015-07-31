@@ -203,6 +203,10 @@ chain found is not trusted, then OpenSSL will continue to check to see if an
 alternative chain can be found that is trusted. With this flag set the behaviour
 will match that of OpenSSL versions prior to 1.1.0.
 
+The B<X509_V_FLAG_NO_CHECK_TIME> flag suppresses checking the validity period
+of certificates and CRLs against the current time. If X509_VERIFY_PARAM_set_time()
+is used to specify a verification time, the check is not suppressed.
+
 =head1 NOTES
 
 The above functions should be used to manipulate verification parameters

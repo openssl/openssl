@@ -407,6 +407,8 @@ void X509_STORE_CTX_set_depth(X509_STORE_CTX *ctx, int depth);
  * will force the behaviour to match that of previous versions.
  */
 # define X509_V_FLAG_NO_ALT_CHAINS               0x100000
+/* Do not check certificate/CRL validity against current time */
+# define X509_V_FLAG_NO_CHECK_TIME               0x200000
 
 # define X509_VP_FLAG_DEFAULT                    0x1
 # define X509_VP_FLAG_OVERWRITE                  0x2
