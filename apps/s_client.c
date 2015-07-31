@@ -588,7 +588,7 @@ OPTIONS s_client_options[] = {
      "SRP username into second ClientHello message"},
     {"srp_moregroups", OPT_SRP_MOREGROUPS, '-',
      "Tolerate other than the known g N values."},
-    {"srp_strength", OPT_SRP_STRENGTH, 'p', "Minimal mength in bits for N"},
+    {"srp_strength", OPT_SRP_STRENGTH, 'p', "Minimal length in bits for N"},
 #endif
 #ifndef OPENSSL_NO_NEXTPROTONEG
     {"nextprotoneg", OPT_NEXTPROTONEG, 's',
