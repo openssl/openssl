@@ -179,7 +179,7 @@ void unbuffer(FILE *fp);
         OPT_V_X509_STRICT, OPT_V_EXTENDED_CRL, OPT_V_USE_DELTAS, \
         OPT_V_POLICY_PRINT, OPT_V_CHECK_SS_SIG, OPT_V_TRUSTED_FIRST, \
         OPT_V_SUITEB_128_ONLY, OPT_V_SUITEB_128, OPT_V_SUITEB_192, \
-        OPT_V_PARTIAL_CHAIN, OPT_V_NO_ALT_CHAINS, \
+        OPT_V_PARTIAL_CHAIN, OPT_V_NO_ALT_CHAINS, OPT_V_NO_CHECK_TIME, \
         OPT_V__LAST
 
 # define OPT_V_OPTIONS \
@@ -209,7 +209,8 @@ void unbuffer(FILE *fp);
         { "suiteB_128", OPT_V_SUITEB_128, '-' }, \
         { "suiteB_192", OPT_V_SUITEB_192, '-' }, \
         { "partial_chain", OPT_V_PARTIAL_CHAIN, '-' }, \
-        { "no_alt_chains", OPT_V_NO_ALT_CHAINS, '-', "Only use the first cert chain found" }
+        { "no_alt_chains", OPT_V_NO_ALT_CHAINS, '-', "Only use the first cert chain found" }, \
+        { "no_check_time", OPT_V_NO_CHECK_TIME, '-', "Do not check validity against current time" }
 
 # define OPT_V_CASES \
         OPT_V__FIRST: case OPT_V__LAST: break; \
@@ -239,7 +240,8 @@ void unbuffer(FILE *fp);
         case OPT_V_SUITEB_128: \
         case OPT_V_SUITEB_192: \
         case OPT_V_PARTIAL_CHAIN: \
-        case OPT_V_NO_ALT_CHAINS
+        case OPT_V_NO_ALT_CHAINS: \
+        case OPT_V_NO_CHECK_TIME
 
 /*
  * Common "extended"? options.
