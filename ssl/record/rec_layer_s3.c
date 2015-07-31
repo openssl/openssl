@@ -799,6 +799,8 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
         /* Need explicit part of IV for GCM mode */
         else if (mode == EVP_CIPH_GCM_MODE)
             eivlen = EVP_GCM_TLS_EXPLICIT_IV_LEN;
+        else if (mode == EVP_CIPH_CCM_MODE)
+            eivlen = EVP_CCM_TLS_EXPLICIT_IV_LEN;
         else
             eivlen = 0;
     } else

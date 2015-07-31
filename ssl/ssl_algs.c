@@ -91,6 +91,8 @@ int SSL_library_init(void)
     EVP_add_cipher(EVP_aes_256_cbc());
     EVP_add_cipher(EVP_aes_128_gcm());
     EVP_add_cipher(EVP_aes_256_gcm());
+    EVP_add_cipher(EVP_aes_128_ccm());
+    EVP_add_cipher(EVP_aes_256_ccm());
     EVP_add_cipher(EVP_aes_128_cbc_hmac_sha1());
     EVP_add_cipher(EVP_aes_256_cbc_hmac_sha1());
     EVP_add_cipher(EVP_aes_128_cbc_hmac_sha256());

@@ -399,14 +399,16 @@ struct evp_cipher_st {
 # define         EVP_CTRL_AEAD_SET_IVLEN         0x9
 # define         EVP_CTRL_AEAD_GET_TAG           0x10
 # define         EVP_CTRL_AEAD_SET_TAG           0x11
+# define         EVP_CTRL_AEAD_SET_IV_FIXED      0x12
 # define         EVP_CTRL_GCM_SET_IVLEN          EVP_CTRL_AEAD_SET_IVLEN
 # define         EVP_CTRL_GCM_GET_TAG            EVP_CTRL_AEAD_GET_TAG
 # define         EVP_CTRL_GCM_SET_TAG            EVP_CTRL_AEAD_SET_TAG
-# define         EVP_CTRL_GCM_SET_IV_FIXED       0x12
+# define         EVP_CTRL_GCM_SET_IV_FIXED       EVP_CTRL_AEAD_SET_IV_FIXED
 # define         EVP_CTRL_GCM_IV_GEN             0x13
 # define         EVP_CTRL_CCM_SET_IVLEN          EVP_CTRL_AEAD_SET_IVLEN
 # define         EVP_CTRL_CCM_GET_TAG            EVP_CTRL_AEAD_GET_TAG
 # define         EVP_CTRL_CCM_SET_TAG            EVP_CTRL_AEAD_SET_TAG
+# define         EVP_CTRL_CCM_SET_IV_FIXED       EVP_CTRL_AEAD_SET_IV_FIXED
 # define         EVP_CTRL_CCM_SET_L              0x14
 # define         EVP_CTRL_CCM_SET_MSGLEN         0x15
 /*
@@ -442,6 +444,12 @@ typedef struct {
 # define EVP_GCM_TLS_EXPLICIT_IV_LEN                     8
 /* Length of tag for TLS */
 # define EVP_GCM_TLS_TAG_LEN                             16
+
+/* CCM TLS constants */
+/* Length of fixed part of IV derived from PRF */
+# define EVP_CCM_TLS_FIXED_IV_LEN                        4
+/* Length of explicit part of IV part of TLS records */
+# define EVP_CCM_TLS_EXPLICIT_IV_LEN                     8
 
 typedef struct evp_cipher_info_st {
     const EVP_CIPHER *cipher;
