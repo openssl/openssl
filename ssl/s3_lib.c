@@ -3450,6 +3450,326 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      256},
 #endif
 
+    /* Cipher C09C */
+    {
+     1,
+     TLS1_TXT_RSA_WITH_AES_128_CCM,
+     TLS1_CK_RSA_WITH_AES_128_CCM,
+     SSL_kRSA,
+     SSL_aRSA,
+     SSL_AES128CCM,
+     SSL_AEAD,
+     SSL_TLSV1_2,
+     SSL_NOT_EXP | SSL_HIGH,
+     SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256,
+     128,
+     128,
+     },
+
+    /* Cipher C09D */
+    {
+     1,
+     TLS1_TXT_RSA_WITH_AES_256_CCM,
+     TLS1_CK_RSA_WITH_AES_256_CCM,
+     SSL_kRSA,
+     SSL_aRSA,
+     SSL_AES256CCM,
+     SSL_AEAD,
+     SSL_TLSV1_2,
+     SSL_NOT_EXP | SSL_HIGH,
+     SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256,
+     256,
+     256,
+     },
+
+    /* Cipher C09E */
+    {
+     1,
+     TLS1_TXT_DHE_RSA_WITH_AES_128_CCM,
+     TLS1_CK_DHE_RSA_WITH_AES_128_CCM,
+     SSL_kDHE,
+     SSL_aRSA,
+     SSL_AES128CCM,
+     SSL_AEAD,
+     SSL_TLSV1_2,
+     SSL_NOT_EXP | SSL_HIGH,
+     SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256,
+     128,
+     128,
+     },
+
+    /* Cipher C09F */
+    {
+     1,
+     TLS1_TXT_DHE_RSA_WITH_AES_256_CCM,
+     TLS1_CK_DHE_RSA_WITH_AES_256_CCM,
+     SSL_kDHE,
+     SSL_aRSA,
+     SSL_AES256CCM,
+     SSL_AEAD,
+     SSL_TLSV1_2,
+     SSL_NOT_EXP | SSL_HIGH,
+     SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256,
+     256,
+     256,
+     },
+
+    /* Cipher C0A0 */
+    {
+     1,
+     TLS1_TXT_RSA_WITH_AES_128_CCM_8,
+     TLS1_CK_RSA_WITH_AES_128_CCM_8,
+     SSL_kRSA,
+     SSL_aRSA,
+     SSL_AES128CCM8,
+     SSL_AEAD,
+     SSL_TLSV1_2,
+     SSL_NOT_EXP | SSL_HIGH,
+     SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256,
+     128,
+     128,
+     },
+
+    /* Cipher C0A1 */
+    {
+     1,
+     TLS1_TXT_RSA_WITH_AES_256_CCM_8,
+     TLS1_CK_RSA_WITH_AES_256_CCM_8,
+     SSL_kRSA,
+     SSL_aRSA,
+     SSL_AES256CCM8,
+     SSL_AEAD,
+     SSL_TLSV1_2,
+     SSL_NOT_EXP | SSL_HIGH,
+     SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256,
+     256,
+     256,
+     },
+
+    /* Cipher C0A2 */
+    {
+     1,
+     TLS1_TXT_DHE_RSA_WITH_AES_128_CCM_8,
+     TLS1_CK_DHE_RSA_WITH_AES_128_CCM_8,
+     SSL_kDHE,
+     SSL_aRSA,
+     SSL_AES128CCM8,
+     SSL_AEAD,
+     SSL_TLSV1_2,
+     SSL_NOT_EXP | SSL_HIGH,
+     SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256,
+     128,
+     128,
+     },
+
+    /* Cipher C0A3 */
+    {
+     1,
+     TLS1_TXT_DHE_RSA_WITH_AES_256_CCM_8,
+     TLS1_CK_DHE_RSA_WITH_AES_256_CCM_8,
+     SSL_kDHE,
+     SSL_aRSA,
+     SSL_AES256CCM8,
+     SSL_AEAD,
+     SSL_TLSV1_2,
+     SSL_NOT_EXP | SSL_HIGH,
+     SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256,
+     256,
+     256,
+     },
+
+    /* Cipher C0A4 */
+    {
+     1,
+     TLS1_TXT_PSK_WITH_AES_128_CCM,
+     TLS1_CK_PSK_WITH_AES_128_CCM,
+     SSL_kPSK,
+     SSL_aPSK,
+     SSL_AES128CCM,
+     SSL_AEAD,
+     SSL_TLSV1_2,
+     SSL_NOT_EXP | SSL_HIGH,
+     SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256,
+     128,
+     128,
+     },
+
+    /* Cipher C0A4 */
+    {
+     1,
+     TLS1_TXT_PSK_WITH_AES_256_CCM,
+     TLS1_CK_PSK_WITH_AES_256_CCM,
+     SSL_kPSK,
+     SSL_aPSK,
+     SSL_AES256CCM,
+     SSL_AEAD,
+     SSL_TLSV1_2,
+     SSL_NOT_EXP | SSL_HIGH,
+     SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256,
+     256,
+     256,
+     },
+
+    /* Cipher C0A6 */
+    {
+     1,
+     TLS1_TXT_DHE_PSK_WITH_AES_128_CCM,
+     TLS1_CK_DHE_PSK_WITH_AES_128_CCM,
+     SSL_kDHEPSK,
+     SSL_aPSK,
+     SSL_AES128CCM,
+     SSL_AEAD,
+     SSL_TLSV1_2,
+     SSL_NOT_EXP | SSL_HIGH,
+     SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256,
+     128,
+     128,
+     },
+
+    /* Cipher C0A7 */
+    {
+     1,
+     TLS1_TXT_DHE_PSK_WITH_AES_256_CCM,
+     TLS1_CK_DHE_PSK_WITH_AES_256_CCM,
+     SSL_kDHEPSK,
+     SSL_aPSK,
+     SSL_AES256CCM,
+     SSL_AEAD,
+     SSL_TLSV1_2,
+     SSL_NOT_EXP | SSL_HIGH,
+     SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256,
+     256,
+     256,
+     },
+
+    /* Cipher C0A8 */
+    {
+     1,
+     TLS1_TXT_PSK_WITH_AES_128_CCM_8,
+     TLS1_CK_PSK_WITH_AES_128_CCM_8,
+     SSL_kPSK,
+     SSL_aPSK,
+     SSL_AES128CCM8,
+     SSL_AEAD,
+     SSL_TLSV1_2,
+     SSL_NOT_EXP | SSL_HIGH,
+     SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256,
+     128,
+     128,
+     },
+
+    /* Cipher C0A9 */
+    {
+     1,
+     TLS1_TXT_PSK_WITH_AES_256_CCM_8,
+     TLS1_CK_PSK_WITH_AES_256_CCM_8,
+     SSL_kPSK,
+     SSL_aPSK,
+     SSL_AES256CCM8,
+     SSL_AEAD,
+     SSL_TLSV1_2,
+     SSL_NOT_EXP | SSL_HIGH,
+     SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256,
+     256,
+     256,
+     },
+
+    /* Cipher C0AA */
+    {
+     1,
+     TLS1_TXT_DHE_PSK_WITH_AES_128_CCM_8,
+     TLS1_CK_DHE_PSK_WITH_AES_128_CCM_8,
+     SSL_kDHEPSK,
+     SSL_aPSK,
+     SSL_AES128CCM8,
+     SSL_AEAD,
+     SSL_TLSV1_2,
+     SSL_NOT_EXP | SSL_HIGH,
+     SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256,
+     128,
+     128,
+     },
+
+    /* Cipher C0AB */
+    {
+     1,
+     TLS1_TXT_DHE_PSK_WITH_AES_256_CCM_8,
+     TLS1_CK_DHE_PSK_WITH_AES_256_CCM_8,
+     SSL_kDHEPSK,
+     SSL_aPSK,
+     SSL_AES256CCM8,
+     SSL_AEAD,
+     SSL_TLSV1_2,
+     SSL_NOT_EXP | SSL_HIGH,
+     SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256,
+     256,
+     256,
+     },
+
+    /* Cipher C0AC */
+    {
+     1,
+     TLS1_TXT_ECDHE_ECDSA_WITH_AES_128_CCM,
+     TLS1_CK_ECDHE_ECDSA_WITH_AES_128_CCM,
+     SSL_kECDHE,
+     SSL_aECDSA,
+     SSL_AES128CCM,
+     SSL_AEAD,
+     SSL_TLSV1_2,
+     SSL_NOT_EXP | SSL_HIGH,
+     SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256,
+     128,
+     128,
+     },
+
+    /* Cipher C0AD */
+    {
+     1,
+     TLS1_TXT_ECDHE_ECDSA_WITH_AES_256_CCM,
+     TLS1_CK_ECDHE_ECDSA_WITH_AES_256_CCM,
+     SSL_kECDHE,
+     SSL_aECDSA,
+     SSL_AES256CCM,
+     SSL_AEAD,
+     SSL_TLSV1_2,
+     SSL_NOT_EXP | SSL_HIGH,
+     SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256,
+     256,
+     256,
+     },
+
+    /* Cipher C0AE */
+    {
+     1,
+     TLS1_TXT_ECDHE_ECDSA_WITH_AES_128_CCM_8,
+     TLS1_CK_ECDHE_ECDSA_WITH_AES_128_CCM_8,
+     SSL_kECDHE,
+     SSL_aECDSA,
+     SSL_AES128CCM8,
+     SSL_AEAD,
+     SSL_TLSV1_2,
+     SSL_NOT_EXP | SSL_HIGH,
+     SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256,
+     128,
+     128,
+     },
+
+    /* Cipher C0AF */
+    {
+     1,
+     TLS1_TXT_ECDHE_ECDSA_WITH_AES_256_CCM_8,
+     TLS1_CK_ECDHE_ECDSA_WITH_AES_256_CCM_8,
+     SSL_kECDHE,
+     SSL_aECDSA,
+     SSL_AES256CCM8,
+     SSL_AEAD,
+     SSL_TLSV1_2,
+     SSL_NOT_EXP | SSL_HIGH,
+     SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256,
+     256,
+     256,
+     },
+
 /* end of list */
 };
 
