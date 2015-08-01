@@ -45,6 +45,10 @@ HEADER=	ssl_locl.h record/record_locl.h record/record.h
 
 ALL=	$(GENERAL) $(SRC) $(HEADER)
 
+# BSD make and GNU make disagree on where output goes
+.c.o:
+	$(CC) $(CFLAGS) -c $< -o $@
+
 top:
 	(cd ..; $(MAKE) DIRS=$(DIR) all)
 
