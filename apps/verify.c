@@ -272,37 +272,35 @@ static int check(X509_STORE *ctx, char *file,
     if (crls)
         X509_STORE_CTX_set0_crls(csc, crls);
     i = X509_verify_cert(csc);
-    if (i > 0 && show_chain) {
-        chain = X509_STORE_CTX_get1_chain(csc);
-        num_untrusted = X509_STORE_CTX_get_num_untrusted(csc);
+    if (i > 0) {
+        printf("OK\n");
+        ret = 1;
+	if (show_chain) {
+	    chain = X509_STORE_CTX_get1_chain(csc);
+	    num_untrusted = X509_STORE_CTX_get_num_untrusted(csc);
+	    printf("Chain:\n");
+	    for (i = 0; i < sk_X509_num(chain); i++) {
+		X509 *cert = sk_X509_value(chain, i);
+		printf("depth=%d: ", i);
+		X509_NAME_print_ex_fp(stdout,
+				      X509_get_subject_name(cert),
+				      0, XN_FLAG_ONELINE);
+		if (i < num_untrusted)
+		    printf(" (untrusted)");
+		printf("\n");
+	    }
+	    sk_X509_pop_free(chain, X509_free);
+	}
     }
     X509_STORE_CTX_free(csc);
 
     ret = 0;
  end:
-    if (i > 0) {
-        printf("OK\n");
-        ret = 1;
-    } else
-        ERR_print_errors(bio_err);
-    if (chain) {
-        printf("Chain:\n");
-        for (i = 0; i < sk_X509_num(chain); i++) {
-            X509 *cert = sk_X509_value(chain, i);
-            printf("depth=%d: ", i);
-            X509_NAME_print_ex_fp(stdout,
-                                  X509_get_subject_name(cert),
-                                  0, XN_FLAG_ONELINE);
-            if (i < num_untrusted) {
-                printf(" (untrusted)");
-            }
-            printf("\n");
-        }
-        sk_X509_pop_free(chain, X509_free);
-    }
+    if (i <= 0)
+	ERR_print_errors(bio_err);
     X509_free(x);
 
-    return (ret);
+    return ret;
 }
 
 static int cb(int ok, X509_STORE_CTX *ctx)
