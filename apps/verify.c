@@ -294,7 +294,6 @@ static int check(X509_STORE *ctx, char *file,
     }
     X509_STORE_CTX_free(csc);
 
-    ret = 0;
  end:
     if (i <= 0)
 	ERR_print_errors(bio_err);
