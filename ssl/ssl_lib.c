@@ -2843,6 +2843,7 @@ SSL_CTX *SSL_set_SSL_CTX(SSL *ssl, SSL_CTX *ctx)
     CRYPTO_add(&ctx->references, 1, CRYPTO_LOCK_SSL_CTX);
     SSL_CTX_free(ssl->ctx); /* decrement reference count */
     ssl->ctx = ctx;
+    ssl->verify_mode=ctx->verify_mode;
 
     return (ssl->ctx);
 }
