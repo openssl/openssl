@@ -276,16 +276,18 @@ static int check(X509_STORE *ctx, char *file,
         printf("OK\n");
         ret = 1;
 	if (show_chain) {
+	    int j;
+
 	    chain = X509_STORE_CTX_get1_chain(csc);
 	    num_untrusted = X509_STORE_CTX_get_num_untrusted(csc);
 	    printf("Chain:\n");
-	    for (i = 0; i < sk_X509_num(chain); i++) {
-		X509 *cert = sk_X509_value(chain, i);
-		printf("depth=%d: ", i);
+	    for (j = 0; j < sk_X509_num(chain); j++) {
+		X509 *cert = sk_X509_value(chain, j);
+		printf("depth=%d: ", j);
 		X509_NAME_print_ex_fp(stdout,
 				      X509_get_subject_name(cert),
 				      0, XN_FLAG_ONELINE);
-		if (i < num_untrusted)
+		if (j < num_untrusted)
 		    printf(" (untrusted)");
 		printf("\n");
 	    }
