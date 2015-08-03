@@ -67,7 +67,7 @@ static int test_PACKET_remaining(PACKET *pkt)
             || !PACKET_forward(pkt, BUF_LEN - 1)
             ||  PACKET_remaining(pkt) != 1
             || !PACKET_forward(pkt, 1)
-            ||  PACKET_remaining(pkt)) {
+            ||  PACKET_remaining(pkt) != 0) {
         fprintf(stderr, "test_PACKET_remaining() failed\n");
         return 0;
     }
