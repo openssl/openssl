@@ -260,8 +260,10 @@ int dtls1_do_write(SSL *s, int type)
     if (!dtls1_query_mtu(s))
         return -1;
 
-    OPENSSL_assert(s->d1->mtu >= dtls1_min_mtu(s)); /* should have something
-                                                     * reasonable now */
+    if (s->d1->mtu < dtls1_min_mtu(s))
+        /* should have something
+         * reasonable now */
+        return -1;
 
     if (s->init_off == 0 && type == SSL3_RT_HANDSHAKE)
         OPENSSL_assert(s->init_num ==
