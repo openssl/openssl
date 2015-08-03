@@ -874,7 +874,11 @@ int ssl3_get_client_hello(SSL *s)
     if (!ok)
         return ((int)n);
     s->first_packet = 0;
-    PACKET_buf_init(&pkt, s->init_msg, n);
+    if (!PACKET_buf_init(&pkt, s->init_msg, n)) {
+        SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, ERR_R_INTERNAL_ERROR);
+        al = SSL_AD_INTERNAL_ERROR;
+        goto f_err;
+    }
 
     /* First lets get s->client_version set correctly */
     if (RECORD_LAYER_is_sslv2_record(&s->rlayer)) {
