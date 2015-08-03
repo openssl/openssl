@@ -2211,10 +2211,10 @@ int ssl3_send_certificate_request(SSL *s)
 
 int ssl3_get_client_key_exchange(SSL *s)
 {
-    int i, al, ok;
+    unsigned int i;
+    int al, ok;
     long n;
     unsigned long alg_k;
-    unsigned char *p;
 #ifndef OPENSSL_NO_RSA
     RSA *rsa = NULL;
     EVP_PKEY *pkey = NULL;
@@ -2229,6 +2229,9 @@ int ssl3_get_client_key_exchange(SSL *s)
     EC_POINT *clnt_ecpoint = NULL;
     BN_CTX *bn_ctx = NULL;
 #endif
+    PACKET pkt;
+    unsigned char *data;
+    size_t remain;
 
     n = s->method->ssl_get_message(s,
                                    SSL3_ST_SR_KEY_EXCH_A,
@@ -2237,7 +2240,11 @@ int ssl3_get_client_key_exchange(SSL *s)
 
     if (!ok)
         return ((int)n);
-    p = (unsigned char *)s->init_msg;
+    if (!PACKET_buf_init(&pkt, s->init_msg, n)) {
+        al = SSL_AD_INTERNAL_ERROR;
+        SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
+        goto f_err;
+    }
 
     alg_k = s->s3->tmp.new_cipher->algorithm_mkey;
 
@@ -2246,13 +2253,8 @@ int ssl3_get_client_key_exchange(SSL *s)
     if (alg_k & SSL_PSK) {
         unsigned char psk[PSK_MAX_PSK_LEN];
         size_t psklen;
-        if (n < 2) {
-            al = SSL_AD_DECODE_ERROR;
-            SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE, SSL_R_LENGTH_MISMATCH);
-            goto f_err;
-        }
-        n2s(p, i);
-        if (i + 2 > n) {
+
+        if (!PACKET_get_net_2(&pkt, &i)) {
             al = SSL_AD_DECODE_ERROR;
             SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE, SSL_R_LENGTH_MISMATCH);
             goto f_err;
@@ -2271,14 +2273,20 @@ int ssl3_get_client_key_exchange(SSL *s)
         }
 
         OPENSSL_free(s->session->psk_identity);
-        s->session->psk_identity = BUF_strndup((char *)p, i);
-
+        s->session->psk_identity = OPENSSL_malloc(i + 1);
         if (s->session->psk_identity == NULL) {
             al = SSL_AD_INTERNAL_ERROR;
             SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,
                    ERR_R_MALLOC_FAILURE);
             goto f_err;
         }
+        if (!PACKET_copy_bytes(&pkt, (unsigned char *)s->session->psk_identity,
+                               i)) {
+            al = SSL_AD_DECODE_ERROR;
+            SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE, SSL_R_LENGTH_MISMATCH);
+            goto f_err;
+        }
+        s->session->psk_identity[i] = '\0';
 
         psklen = s->psk_server_callback(s, s->session->psk_identity,
                                          psk, sizeof(psk));
@@ -2308,13 +2316,10 @@ int ssl3_get_client_key_exchange(SSL *s)
         }
 
         s->s3->tmp.psklen = psklen;
-
-        n -= i + 2;
-        p += i;
     }
     if (alg_k & SSL_kPSK) {
         /* Identity extracted earlier: should be nothing left */
-        if (n != 0) {
+        if (PACKET_remaining(&pkt) != 0) {
             al = SSL_AD_HANDSHAKE_FAILURE;
             SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE, SSL_R_LENGTH_MISMATCH);
             goto f_err;
@@ -2362,17 +2367,34 @@ int ssl3_get_client_key_exchange(SSL *s)
 
         /* TLS and [incidentally] DTLS{0xFEFF} */
         if (s->version > SSL3_VERSION && s->version != DTLS1_BAD_VER) {
-            n2s(p, i);
-            if (n != i + 2) {
+            if (!PACKET_get_net_2(&pkt, &i)) {
+                al = SSL_AD_DECODE_ERROR;
+                SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE, SSL_R_LENGTH_MISMATCH);
+                goto f_err;
+            }
+            remain = PACKET_remaining(&pkt);
+            if (remain != i) {
                 if (!(s->options & SSL_OP_TLS_D5_BUG)) {
                     al = SSL_AD_DECODE_ERROR;
                     SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,
                            SSL_R_TLS_RSA_ENCRYPTED_VALUE_LENGTH_IS_WRONG);
                     goto f_err;
-                } else
-                    p -= 2;
-            } else
-                n = i;
+                } else {
+                    remain += 2;
+                    if (!PACKET_back(&pkt, 2)) {
+                        /*
+                         * We already read these 2 bytes so this should never
+                         * fail
+                         */
+                        al = SSL_AD_INTERNAL_ERROR;
+                        SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,
+                               ERR_R_INTERNAL_ERROR);
+                        goto f_err;
+                    }
+                }
+            }
+        } else {
+            remain = PACKET_remaining(&pkt);
         }
 
         /*
@@ -2382,13 +2404,20 @@ int ssl3_get_client_key_exchange(SSL *s)
          * actual expected size is larger due to RSA padding, but the
          * bound is sufficient to be safe.
          */
-        if (n < SSL_MAX_MASTER_KEY_LENGTH) {
+
+        if (remain < SSL_MAX_MASTER_KEY_LENGTH) {
             al = SSL_AD_DECRYPT_ERROR;
             SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,
                    SSL_R_TLS_RSA_ENCRYPTED_VALUE_LENGTH_IS_WRONG);
             goto f_err;
         }
 
+        if (!PACKET_get_bytes(&pkt, &data, remain)) {
+            /* We already checked we had enough data so this shouldn't happen */
+            al = SSL_AD_INTERNAL_ERROR;
+            SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
+            goto f_err;
+        }
         /*
          * We must not leak whether a decryption failure occurs because of
          * Bleichenbacher's attack on PKCS #1 v1.5 RSA padding (see RFC 2246,
@@ -2401,7 +2430,7 @@ int ssl3_get_client_key_exchange(SSL *s)
                               sizeof(rand_premaster_secret)) <= 0)
             goto err;
         decrypt_len =
-            RSA_private_decrypt((int)n, p, p, rsa, RSA_PKCS1_PADDING);
+            RSA_private_decrypt(remain, data, data, rsa, RSA_PKCS1_PADDING);
         ERR_clear_error();
 
         /*
@@ -2420,9 +2449,9 @@ int ssl3_get_client_key_exchange(SSL *s)
          * constant time and are treated like any other decryption error.
          */
         version_good =
-            constant_time_eq_8(p[0], (unsigned)(s->client_version >> 8));
+            constant_time_eq_8(data[0], (unsigned)(s->client_version >> 8));
         version_good &=
-            constant_time_eq_8(p[1], (unsigned)(s->client_version & 0xff));
+            constant_time_eq_8(data[1], (unsigned)(s->client_version & 0xff));
 
         /*
          * The premaster secret must contain the same version number as the
@@ -2436,9 +2465,9 @@ int ssl3_get_client_key_exchange(SSL *s)
         if (s->options & SSL_OP_TLS_ROLLBACK_BUG) {
             unsigned char workaround_good;
             workaround_good =
-                constant_time_eq_8(p[0], (unsigned)(s->version >> 8));
+                constant_time_eq_8(data[0], (unsigned)(s->version >> 8));
             workaround_good &=
-                constant_time_eq_8(p[1], (unsigned)(s->version & 0xff));
+                constant_time_eq_8(data[1], (unsigned)(s->version & 0xff));
             version_good |= workaround_good;
         }
 
@@ -2455,11 +2484,12 @@ int ssl3_get_client_key_exchange(SSL *s)
          * it is still sufficiently large to read from.
          */
         for (j = 0; j < sizeof(rand_premaster_secret); j++) {
-            p[j] = constant_time_select_8(decrypt_good, p[j],
+            data[j] = constant_time_select_8(decrypt_good, data[j],
                                           rand_premaster_secret[j]);
         }
 
-        if (!ssl_generate_master_secret(s, p, sizeof(rand_premaster_secret), 0)) {
+        if (!ssl_generate_master_secret(s, data, sizeof(rand_premaster_secret),
+                                        0)) {
             al = SSL_AD_INTERNAL_ERROR;
             SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
             goto f_err;
@@ -2470,9 +2500,15 @@ int ssl3_get_client_key_exchange(SSL *s)
     if (alg_k & (SSL_kDHE | SSL_kDHr | SSL_kDHd | SSL_kDHEPSK)) {
         int idx = -1;
         EVP_PKEY *skey = NULL;
-        if (n > 1) {
-            n2s(p, i);
-        } else {
+        size_t bookm;
+        unsigned char shared[(OPENSSL_DH_MAX_MODULUS_BITS + 7) / 8];
+
+        if (!PACKET_get_bookmark(&pkt, &bookm)) {
+            al = SSL_AD_INTERNAL_ERROR;
+            SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
+            goto f_err;
+        }
+        if (!PACKET_get_net_2(&pkt, &i)) {
             if (alg_k & (SSL_kDHE | SSL_kDHEPSK)) {
                 al = SSL_AD_HANDSHAKE_FAILURE;
                 SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,
@@ -2481,14 +2517,19 @@ int ssl3_get_client_key_exchange(SSL *s)
             }
             i = 0;
         }
-        if (n && n != i + 2) {
+        if (PACKET_remaining(&pkt) != i) {
             if (!(s->options & SSL_OP_SSLEAY_080_CLIENT_DH_BUG)) {
                 SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,
                        SSL_R_DH_PUBLIC_VALUE_LENGTH_IS_WRONG);
                 goto err;
             } else {
-                p -= 2;
-                i = (int)n;
+                if (!PACKET_goto_bookmark(&pkt, bookm)) {
+                    al = SSL_AD_INTERNAL_ERROR;
+                    SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,
+                           ERR_R_INTERNAL_ERROR);
+                    goto f_err;
+                }
+                i = PACKET_remaining(&pkt);
             }
         }
         if (alg_k & SSL_kDHr)
@@ -2528,14 +2569,22 @@ int ssl3_get_client_key_exchange(SSL *s)
             }
             EVP_PKEY_free(clkey);
             pub = dh_clnt->pub_key;
-        } else
-            pub = BN_bin2bn(p, i, NULL);
+        } else {
+            if (!PACKET_get_bytes(&pkt, &data, i)) {
+                /* We already checked we have enough data */
+                al = SSL_AD_INTERNAL_ERROR;
+                SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,
+                       ERR_R_INTERNAL_ERROR);
+                goto f_err;
+            }
+            pub = BN_bin2bn(data, i, NULL);
+        }
         if (pub == NULL) {
             SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE, SSL_R_BN_LIB);
             goto err;
         }
 
-        i = DH_compute_key(p, pub, dh_srvr);
+        i = DH_compute_key(shared, pub, dh_srvr);
 
         if (i <= 0) {
             SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE, ERR_R_DH_LIB);
@@ -2550,7 +2599,7 @@ int ssl3_get_client_key_exchange(SSL *s)
         else
             BN_clear_free(pub);
         pub = NULL;
-        if (!ssl_generate_master_secret(s, p, i, 0)) {
+        if (!ssl_generate_master_secret(s, shared, i, 0)) {
             al = SSL_AD_INTERNAL_ERROR;
             SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
             goto f_err;
@@ -2567,6 +2616,7 @@ int ssl3_get_client_key_exchange(SSL *s)
         const EC_KEY *tkey;
         const EC_GROUP *group;
         const BIGNUM *priv_key;
+        unsigned char *shared;
 
         /* initialize structures for server's ECDH key pair */
         if ((srvr_ecdh = EC_KEY_new()) == NULL) {
@@ -2645,21 +2695,21 @@ int ssl3_get_client_key_exchange(SSL *s)
             }
 
             /* Get encoded point length */
-            i = *p;
-            p += 1;
-            if (n != 1 + i) {
+            if (!PACKET_get_1(&pkt, &i)) {
+                al = SSL_AD_DECODE_ERROR;
+                SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,
+                       SSL_R_LENGTH_MISMATCH);
+                goto f_err;
+            }
+            if (!PACKET_get_bytes(&pkt, &data, i)
+                    || PACKET_remaining(&pkt) != 0) {
                 SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE, ERR_R_EC_LIB);
                 goto err;
             }
-            if (EC_POINT_oct2point(group, clnt_ecpoint, p, i, bn_ctx) == 0) {
+            if (EC_POINT_oct2point(group, clnt_ecpoint, data, i, bn_ctx) == 0) {
                 SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE, ERR_R_EC_LIB);
                 goto err;
             }
-            /*
-             * p is pointing to somewhere in the buffer currently, so set it
-             * to the start
-             */
-            p = (unsigned char *)s->init_buf->data;
         }
 
         /* Compute the shared pre-master secret */
@@ -2668,10 +2718,16 @@ int ssl3_get_client_key_exchange(SSL *s)
             SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE, ERR_R_ECDH_LIB);
             goto err;
         }
-        i = ECDH_compute_key(p, (field_size + 7) / 8, clnt_ecpoint, srvr_ecdh,
-                             NULL);
+        shared = OPENSSL_malloc((field_size + 7) / 8);
+        if (shared == NULL) {
+            SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE, ERR_R_MALLOC_FAILURE);
+            goto err;
+        }
+        i = ECDH_compute_key(shared, (field_size + 7) / 8, clnt_ecpoint,
+                             srvr_ecdh, NULL);
         if (i <= 0) {
             SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE, ERR_R_ECDH_LIB);
+            OPENSSL_free(shared);
             goto err;
         }
 
@@ -2682,7 +2738,7 @@ int ssl3_get_client_key_exchange(SSL *s)
         EC_KEY_free(s->s3->tmp.ecdh);
         s->s3->tmp.ecdh = NULL;
 
-        if (!ssl_generate_master_secret(s, p, i, 0)) {
+        if (!ssl_generate_master_secret(s, shared, i, 1)) {
             al = SSL_AD_INTERNAL_ERROR;
             SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
             goto f_err;
@@ -2692,17 +2748,13 @@ int ssl3_get_client_key_exchange(SSL *s)
 #endif
 #ifndef OPENSSL_NO_SRP
     if (alg_k & SSL_kSRP) {
-        int param_len;
-
-        n2s(p, i);
-        param_len = i + 2;
-        if (param_len > n) {
+        if (!PACKET_get_net_2(&pkt, &i)
+                || !PACKET_get_bytes(&pkt, &data, i)) {
             al = SSL_AD_DECODE_ERROR;
-            SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,
-                   SSL_R_BAD_SRP_A_LENGTH);
+            SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE, SSL_R_BAD_SRP_A_LENGTH);
             goto f_err;
         }
-        if ((s->srp_ctx.A = BN_bin2bn(p, i, NULL)) == NULL) {
+        if ((s->srp_ctx.A = BN_bin2bn(data, i, NULL)) == NULL) {
             SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE, ERR_R_BN_LIB);
             goto err;
         }
@@ -2724,8 +2776,6 @@ int ssl3_get_client_key_exchange(SSL *s)
             SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
             goto err;
         }
-
-        p += i;
     } else
 #endif                          /* OPENSSL_NO_SRP */
     if (alg_k & SSL_kGOST) {
@@ -2757,15 +2807,20 @@ int ssl3_get_client_key_exchange(SSL *s)
                 ERR_clear_error();
         }
         /* Decrypt session key */
+        if (!PACKET_get_bytes(&pkt, &data, n)) {
+            al = SSL_AD_INTERNAL_ERROR;
+            SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
+            goto f_err;
+        }
         if (ASN1_get_object
-            ((const unsigned char **)&p, &Tlen, &Ttag, &Tclass,
+            ((const unsigned char **)&data, &Tlen, &Ttag, &Tclass,
              n) != V_ASN1_CONSTRUCTED || Ttag != V_ASN1_SEQUENCE
             || Tclass != V_ASN1_UNIVERSAL) {
             SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,
                    SSL_R_DECRYPTION_FAILED);
             goto gerr;
         }
-        start = p;
+        start = data;
         inlen = Tlen;
         if (EVP_PKEY_decrypt
             (pkey_ctx, premaster_secret, &outlen, start, inlen) <= 0) {
