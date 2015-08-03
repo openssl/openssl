@@ -4368,7 +4368,7 @@ DH_compute_key_padded                   4732	EXIST::FUNCTION:DH
 ECDSA_METHOD_set_sign                   4733	EXIST::FUNCTION:EC
 CMS_RecipientEncryptedKey_cert_cmp      4734	EXIST:!VMS:FUNCTION:CMS
 CMS_RecipEncryptedKey_cert_cmp          4734	EXIST:VMS:FUNCTION:CMS
-DH_KDF_X9_42                            4735	EXIST::FUNCTION:DH
+DH_KDF_X9_42                            4735	EXIST::FUNCTION:CMS,DH
 RSA_OAEP_PARAMS_free                    4736	EXIST::FUNCTION:RSA
 EVP_des_ede3_wrap                       4737	EXIST::FUNCTION:DES
 RSA_OAEP_PARAMS_it                      4738	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:RSA
