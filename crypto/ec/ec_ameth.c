@@ -67,8 +67,10 @@
 #include <openssl/asn1t.h>
 #include "internal/asn1_int.h"
 
+#ifndef OPENSSL_NO_CMS
 static int ecdh_cms_decrypt(CMS_RecipientInfo *ri);
 static int ecdh_cms_encrypt(CMS_RecipientInfo *ri);
+#endif
 
 static int eckey_param2type(int *pptype, void **ppval, EC_KEY *ec_key)
 {
