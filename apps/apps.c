@@ -163,12 +163,6 @@ static int set_table_opts(unsigned long *flags, const char *arg,
 static int set_multi_opts(unsigned long *flags, const char *arg,
                           const NAME_EX_TBL * in_tbl);
 
-#if !defined(OPENSSL_NO_RC4) && !defined(OPENSSL_NO_RSA)
-/* Looks like this stuff is worth moving into separate function */
-static EVP_PKEY *load_netscape_key(BIO *key, const char *file,
-                                   const char *key_descrip, int format);
-#endif
-
 int app_init(long mesgwin);
 
 int chopup_args(ARGS *arg, char *buf)
@@ -695,22 +689,7 @@ X509 *load_cert(const char *file, int format,
 
     if (format == FORMAT_ASN1)
         x = d2i_X509_bio(cert, NULL);
-    else if (format == FORMAT_NETSCAPE) {
-        NETSCAPE_X509 *nx;
-        nx = ASN1_item_d2i_bio(ASN1_ITEM_rptr(NETSCAPE_X509), cert, NULL);
-        if (nx == NULL)
-            goto end;
-
-        if ((strncmp(NETSCAPE_CERT_HDR, (char *)nx->header->data,
-                     nx->header->length) != 0)) {
-            NETSCAPE_X509_free(nx);
-            BIO_printf(bio_err, "Error reading header on certificate\n");
-            goto end;
-        }
-        x = nx->cert;
-        nx->cert = NULL;
-        NETSCAPE_X509_free(nx);
-    } else if (format == FORMAT_PEM)
+    else if (format == FORMAT_PEM)
         x = PEM_read_bio_X509_AUX(cert, NULL,
                                   (pem_password_cb *)password_callback, NULL);
     else if (format == FORMAT_PKCS12) {
@@ -803,10 +782,6 @@ EVP_PKEY *load_key(const char *file, int format, int maybe_stdin,
                                        (pem_password_cb *)password_callback,
                                        &cb_data);
     }
-#if !defined(OPENSSL_NO_RC4) && !defined(OPENSSL_NO_RSA)
-    else if (format == FORMAT_NETSCAPE)
-        pkey = load_netscape_key(key, file, key_descrip, format);
-#endif
     else if (format == FORMAT_PKCS12) {
         if (!load_pkcs12(key, key_descrip,
                          (pem_password_cb *)password_callback, &cb_data,
@@ -903,10 +878,6 @@ EVP_PKEY *load_pubkey(const char *file, int format, int maybe_stdin,
                                    (pem_password_cb *)password_callback,
                                    &cb_data);
     }
-#if !defined(OPENSSL_NO_RC4) && !defined(OPENSSL_NO_RSA)
-    else if (format == FORMAT_NETSCAPE)
-        pkey = load_netscape_key(key, file, key_descrip, format);
-#endif
 #if !defined(OPENSSL_NO_RSA) && !defined(OPENSSL_NO_DSA)
     else if (format == FORMAT_MSBLOB)
         pkey = b2i_PublicKey_bio(key);
@@ -917,47 +888,6 @@ EVP_PKEY *load_pubkey(const char *file, int format, int maybe_stdin,
         BIO_printf(bio_err, "unable to load %s\n", key_descrip);
     return (pkey);
 }
-
-#if !defined(OPENSSL_NO_RC4) && !defined(OPENSSL_NO_RSA)
-static EVP_PKEY *load_netscape_key(BIO *key, const char *file,
-                                   const char *key_descrip, int format)
-{
-    EVP_PKEY *pkey;
-    BUF_MEM *buf;
-    RSA *rsa;
-    const unsigned char *p;
-    int size, i;
-
-    buf = BUF_MEM_new();
-    pkey = EVP_PKEY_new();
-    size = 0;
-    if (buf == NULL || pkey == NULL)
-        goto error;
-    for (;;) {
-        if (!BUF_MEM_grow_clean(buf, size + 1024 * 10))
-            goto error;
-        i = BIO_read(key, &(buf->data[size]), 1024 * 10);
-        size += i;
-        if (i == 0)
-            break;
-        if (i < 0) {
-            BIO_printf(bio_err, "Error reading %s %s", key_descrip, file);
-            goto error;
-        }
-    }
-    p = (unsigned char *)buf->data;
-    rsa = d2i_RSA_NET(NULL, &p, (long)size, NULL, 0);
-    if (rsa == NULL)
-        goto error;
-    BUF_MEM_free(buf);
-    EVP_PKEY_set1_RSA(pkey, rsa);
-    return pkey;
- error:
-    BUF_MEM_free(buf);
-    EVP_PKEY_free(pkey);
-    return NULL;
-}
-#endif                          /* ndef OPENSSL_NO_RC4 */
 
 static int load_certs_crls(const char *file, int format,
                            const char *pass, ENGINE *e, const char *desc,

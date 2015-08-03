@@ -513,7 +513,8 @@ OPTIONS s_client_options[] = {
     {"tls1", OPT_TLS1, '-', "Just use TLSv1"},
     {"starttls", OPT_STARTTLS, 's',
      "Use the STARTTLS command before starting TLS"},
-    {"xmpphost", OPT_XMPPHOST, 's', "Host to use with \"-starttls xmpp\""},
+    {"xmpphost", OPT_XMPPHOST, 's',
+     "Host to use with \"-starttls xmpp[-server]\""},
     {"rand", OPT_RAND, 's',
      "Load the file(s) into the random number generator"},
     {"sess_out", OPT_SESS_OUT, '>', "File to write SSL session to"},
@@ -587,7 +588,7 @@ OPTIONS s_client_options[] = {
      "SRP username into second ClientHello message"},
     {"srp_moregroups", OPT_SRP_MOREGROUPS, '-',
      "Tolerate other than the known g N values."},
-    {"srp_strength", OPT_SRP_STRENGTH, 'p', "Minimal mength in bits for N"},
+    {"srp_strength", OPT_SRP_STRENGTH, 'p', "Minimal length in bits for N"},
 #endif
 #ifndef OPENSSL_NO_NEXTPROTONEG
     {"nextprotoneg", OPT_NEXTPROTONEG, 's',
@@ -608,6 +609,7 @@ typedef enum PROTOCOL_choice {
     PROTO_FTP,
     PROTO_TELNET,
     PROTO_XMPP,
+    PROTO_XMPP_SERVER,
     PROTO_CONNECT
 } PROTOCOL_CHOICE;
 
@@ -617,6 +619,7 @@ static OPT_PAIR services[] = {
     {"imap", PROTO_IMAP},
     {"ftp", PROTO_FTP},
     {"xmpp", PROTO_XMPP},
+    {"xmpp-server", PROTO_XMPP_SERVER},
     {"telnet", PROTO_TELNET},
     {NULL}
 };
@@ -653,7 +656,7 @@ int s_client_main(int argc, char **argv)
     int prexit = 0;
     int enable_timeouts = 0, sdebug = 0, peerlen = sizeof peer;
     int reconnect = 0, verify = SSL_VERIFY_NONE, vpmtouched = 0;
-    int ret = 1, in_init = 1, i, nbio_test = 0, s, k, width, state = 0;
+    int ret = 1, in_init = 1, i, nbio_test = 0, s = -1, k, width, state = 0;
     int sbuf_len, sbuf_off, socket_type = SOCK_STREAM, cmdletters = 1;
     int starttls_proto = PROTO_OFF, crl_format = FORMAT_PEM, crl_download = 0;
     int write_tty, read_tty, write_ssl, read_ssl, tty_on, ssl_pending;
@@ -1548,11 +1551,13 @@ int s_client_main(int argc, char **argv)
         }
         break;
     case PROTO_XMPP:
+    case PROTO_XMPP_SERVER:
         {
             int seen = 0;
             BIO_printf(sbio, "<stream:stream "
                        "xmlns:stream='http://etherx.jabber.org/streams' "
-                       "xmlns='jabber:client' to='%s' version='1.0'>",
+                       "xmlns='jabber:%s' to='%s' version='1.0'>",
+                       starttls_proto == PROTO_XMPP ? "client" : "server",
                        xmpphost ? xmpphost : host);
             seen = BIO_read(sbio, mbuf, BUFSIZZ);
             mbuf[seen] = 0;

@@ -287,7 +287,7 @@ void unbuffer(FILE *fp);
         {"no_tls1_1", OPT_S_NOTLS1_1, '-' }, \
         {"no_tls1_2", OPT_S_NOTLS1_2, '-' }, \
         {"bugs", OPT_S_BUGS, '-' }, \
-        {"no_comp", OPT_S_NOCOMP, '-' }, \
+        {"no_comp", OPT_S_NOCOMP, '-', "Don't use SSL/TLS-level compression" }, \
         {"ecdh_single", OPT_S_ECDHSINGLE, '-' }, \
         {"no_ticket", OPT_S_NOTICKET, '-' }, \
         {"serverpref", OPT_S_SERVERPREF, '-' }, \
@@ -532,7 +532,6 @@ void store_setup_crl_download(X509_STORE *st);
 # define FORMAT_ASN1     1
 # define FORMAT_TEXT     2
 # define FORMAT_PEM      3
-# define FORMAT_NETSCAPE 4
 # define FORMAT_PKCS12   5
 # define FORMAT_SMIME    6
 # define FORMAT_ENGINE   7

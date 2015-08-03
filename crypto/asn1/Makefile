@@ -20,7 +20,7 @@ LIBSRC=	a_object.c a_bitstr.c a_utctm.c a_gentm.c a_time.c a_int.c a_octet.c \
 	a_utf8.c a_sign.c a_digest.c a_verify.c a_mbstr.c a_strex.c \
 	x_algor.c x_val.c x_pubkey.c x_sig.c x_req.c x_bignum.c \
 	x_long.c x_x509.c x_x509a.c x_crl.c x_info.c x_spki.c nsseq.c \
-	x_nx509.c d2i_pu.c d2i_pr.c i2d_pu.c i2d_pr.c\
+	d2i_pu.c d2i_pr.c i2d_pu.c i2d_pr.c\
 	t_req.c t_x509.c t_x509a.c t_crl.c t_pkey.c t_spki.c t_bitst.c \
 	tasn_new.c tasn_fre.c tasn_enc.c tasn_dec.c tasn_utl.c tasn_typ.c \
 	tasn_prn.c tasn_scn.c ameth_lib.c \
@@ -34,7 +34,7 @@ LIBOBJ= a_object.o a_bitstr.o a_utctm.o a_gentm.o a_time.o a_int.o a_octet.o \
 	a_utf8.o a_sign.o a_digest.o a_verify.o a_mbstr.o a_strex.o \
 	x_algor.o x_val.o x_pubkey.o x_sig.o x_req.o x_bignum.o \
 	x_long.o x_x509.o x_x509a.o x_crl.o x_info.o x_spki.o nsseq.o \
-	x_nx509.o d2i_pu.o d2i_pr.o i2d_pu.o i2d_pr.o \
+	d2i_pu.o d2i_pr.o i2d_pu.o i2d_pr.o \
 	t_req.o t_x509.o t_x509a.o t_crl.o t_pkey.o t_spki.o t_bitst.o \
 	tasn_new.o tasn_fre.o tasn_enc.o tasn_dec.o tasn_utl.o tasn_typ.o \
 	tasn_prn.o tasn_scn.o ameth_lib.o \
@@ -793,18 +793,6 @@ x_long.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
 x_long.o: ../../include/openssl/ossl_typ.h ../../include/openssl/safestack.h
 x_long.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 x_long.o: ../include/internal/cryptlib.h x_long.c
-x_nx509.o: ../../include/openssl/asn1.h ../../include/openssl/asn1t.h
-x_nx509.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
-x_nx509.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
-x_nx509.o: ../../include/openssl/ec.h ../../include/openssl/ecdh.h
-x_nx509.o: ../../include/openssl/ecdsa.h ../../include/openssl/evp.h
-x_nx509.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
-x_nx509.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
-x_nx509.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-x_nx509.o: ../../include/openssl/pkcs7.h ../../include/openssl/safestack.h
-x_nx509.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
-x_nx509.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
-x_nx509.o: ../../include/openssl/x509_vfy.h x_nx509.c
 x_pkey.o: ../../e_os.h ../../include/openssl/asn1.h ../../include/openssl/bio.h
 x_pkey.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 x_pkey.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h

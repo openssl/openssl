@@ -315,6 +315,14 @@
 /* SRP */
 # define SSL_kSRP        0x00000400L
 
+# define SSL_kRSAPSK             0x00000800L
+# define SSL_kECDHEPSK           0x00001000L
+# define SSL_kDHEPSK             0x00002000L
+
+/* all PSK */
+
+#define SSL_PSK     (SSL_kPSK | SSL_kRSAPSK | SSL_kECDHEPSK | SSL_kDHEPSK)
+
 /* Bits for algorithm_auth (server authentication) */
 /* RSA auth */
 # define SSL_aRSA                0x00000001L
@@ -662,7 +670,7 @@ struct ssl_session_st {
 # ifndef OPENSSL_NO_SRP
     char *srp_username;
 # endif
-    long flags;
+    uint32_t flags;
 };
 
 /* Extended master secret support */
@@ -720,7 +728,7 @@ struct ssl_ctx_st {
      * SSL_SESS_CACHE_SERVER, Default is SSL_SESSION_CACHE_SERVER, which
      * means only SSL_accept which cache SSL_SESSIONS.
      */
-    int session_cache_mode;
+    uint32_t session_cache_mode;
     /*
      * If timeout is not 0, it is the default timeout value set when
      * SSL_new() is called.  This has been put in to make life easier to set
@@ -806,8 +814,8 @@ struct ssl_ctx_st {
      * SSL_new)
      */
 
-    unsigned long options;
-    unsigned long mode;
+    uint32_t options;
+    uint32_t mode;
     long max_cert_list;
 
     struct cert_st /* CERT */ *cert;
@@ -818,7 +826,7 @@ struct ssl_ctx_st {
                           const void *buf, size_t len, SSL *ssl, void *arg);
     void *msg_callback_arg;
 
-    int verify_mode;
+    uint32_t verify_mode;
     unsigned int sid_ctx_length;
     unsigned char sid_ctx[SSL_MAX_SID_CTX_LENGTH];
     /* called 'verify_callback' in the SSL */
@@ -1019,7 +1027,7 @@ struct ssl_st {
      * These are the ones being used, the ones in SSL_SESSION are the ones to
      * be 'copied' into these ones
      */
-    int mac_flags;
+    uint32_t mac_flags;
     EVP_CIPHER_CTX *enc_read_ctx; /* cryptographic state */
     EVP_MD_CTX *read_hash;      /* used for mac generation */
     COMP_CTX *compress;         /* compression */
@@ -1045,7 +1053,7 @@ struct ssl_st {
      * 0 don't care about verify failure.
      * 1 fail if verify fails
      */
-    int verify_mode;
+    uint32_t verify_mode;
     /* fail if callback returns 0 */
     int (*verify_callback) (int ok, X509_STORE_CTX *ctx);
     /* optional informational callback */
@@ -1077,9 +1085,9 @@ struct ssl_st {
     STACK_OF(X509_NAME) *client_CA;
     int references;
     /* protocol behaviour */
-    unsigned long options;
+    uint32_t options;
     /* API behaviour */
-    unsigned long mode;
+    uint32_t mode;
     long max_cert_list;
     int first_packet;
     /* what was passed, used for SSLv3/TLS rollback check */
@@ -1184,7 +1192,6 @@ struct ssl_st {
 
 typedef struct ssl3_state_st {
     long flags;
-    int delay_buf_pop_ret;
     int read_mac_secret_size;
     unsigned char read_mac_secret[EVP_MAX_MD_SIZE];
     int write_mac_secret_size;
@@ -1270,6 +1277,11 @@ typedef struct ssl3_state_st {
         /* Temporary storage for premaster secret */
         unsigned char *pms;
         size_t pmslen;
+#ifndef OPENSSL_NO_PSK
+        /* Temporary storage for PSK key */
+        unsigned char *psk;
+        size_t psklen;
+#endif
         /*
          * signature algorithms peer reports: e.g. supported signature
          * algorithms extension for server or as part of a certificate
@@ -1287,7 +1299,7 @@ typedef struct ssl3_state_st {
          * SSL session: e.g. appropriate curve, signature algorithms etc.
          * If zero it can't be used at all.
          */
-        int valid_flags[SSL_PKEY_NUM];
+        uint32_t valid_flags[SSL_PKEY_NUM];
         /*
          * For servers the following masks are for the key and auth algorithms
          * that are supported by the certs below. For clients they are masks of
@@ -1475,7 +1487,7 @@ typedef struct {
      * Per-connection flags relating to this extension type: not used if
      * part of an SSL_CTX structure.
      */
-    unsigned short ext_flags;
+    uint32_t ext_flags;
     custom_ext_add_cb add_cb;
     custom_ext_free_cb free_cb;
     void *add_arg;
@@ -1526,7 +1538,7 @@ typedef struct cert_st {
     int ecdh_tmp_auto;
 # endif
     /* Flags related to certificates */
-    unsigned int cert_flags;
+    uint32_t cert_flags;
     CERT_PKEY pkeys[SSL_PKEY_NUM];
     /*
      * Certificate types (received or sent) in certificate request message.
@@ -1656,7 +1668,7 @@ typedef struct ssl3_enc_method {
                                    const unsigned char *, size_t,
                                    int use_context);
     /* Various flags indicating protocol version requirements */
-    unsigned int enc_flags;
+    uint32_t enc_flags;
     /* Handshake header length */
     unsigned int hhlen;
     /* Set the handshake header */

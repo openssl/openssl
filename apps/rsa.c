@@ -352,19 +352,6 @@ int rsa_main(int argc, char **argv)
             i = i2d_RSAPrivateKey_bio(out, rsa);
         }
     }
-# ifndef OPENSSL_NO_RC4
-    else if (outformat == FORMAT_NETSCAPE) {
-        unsigned char *p, *save;
-        int size = i2d_RSA_NET(rsa, NULL, NULL, 0);
-
-        save = p = app_malloc(size, "RSA i2d buffer");
-        assert(private);
-        i2d_RSA_NET(rsa, &p, NULL, 0);
-        BIO_write(out, (char *)save, size);
-        OPENSSL_free(save);
-        i = 1;
-    }
-# endif
     else if (outformat == FORMAT_PEM) {
         if (pubout || pubin) {
             if (pubout == 2)

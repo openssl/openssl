@@ -725,7 +725,7 @@ d2i_DSAPublicKey                        731	EXIST::FUNCTION:DSA
 d2i_DSAparams                           732	EXIST::FUNCTION:DSA
 d2i_NETSCAPE_SPKAC                      733	EXIST::FUNCTION:
 d2i_NETSCAPE_SPKI                       734	EXIST::FUNCTION:
-d2i_Netscape_RSA                        735	EXIST::FUNCTION:RC4,RSA
+d2i_Netscape_RSA                        735	NOEXIST::FUNCTION:
 d2i_PKCS7                               736	EXIST::FUNCTION:
 d2i_PKCS7_DIGEST                        737	EXIST::FUNCTION:
 d2i_PKCS7_ENCRYPT                       738	EXIST::FUNCTION:
@@ -827,7 +827,7 @@ i2d_DSAPublicKey                        834	EXIST::FUNCTION:DSA
 i2d_DSAparams                           835	EXIST::FUNCTION:DSA
 i2d_NETSCAPE_SPKAC                      836	EXIST::FUNCTION:
 i2d_NETSCAPE_SPKI                       837	EXIST::FUNCTION:
-i2d_Netscape_RSA                        838	EXIST::FUNCTION:RC4,RSA
+i2d_Netscape_RSA                        838	NOEXIST::FUNCTION:
 i2d_PKCS7                               839	EXIST::FUNCTION:
 i2d_PKCS7_DIGEST                        840	EXIST::FUNCTION:
 i2d_PKCS7_ENCRYPT                       841	EXIST::FUNCTION:
@@ -1816,9 +1816,9 @@ RAND_egd_bytes                          2402	EXIST::FUNCTION:
 X509_REQ_get1_email                     2403	EXIST::FUNCTION:
 X509_get1_email                         2404	EXIST::FUNCTION:
 X509_email_free                         2405	EXIST::FUNCTION:
-i2d_RSA_NET                             2406	EXIST::FUNCTION:RC4,RSA
+i2d_RSA_NET                             2406	NOEXIST::FUNCTION:
 d2i_RSA_NET_2                           2407	NOEXIST::FUNCTION:
-d2i_RSA_NET                             2408	EXIST::FUNCTION:RC4,RSA
+d2i_RSA_NET                             2408	NOEXIST::FUNCTION:
 DSO_bind_func                           2409	EXIST::FUNCTION:
 CRYPTO_get_new_dynlockid                2410	EXIST::FUNCTION:
 sk_new_null                             2411	EXIST::FUNCTION:
@@ -2328,8 +2328,8 @@ X509_CRL_set_lastUpdate                 2837	EXIST::FUNCTION:
 OCSP_BASICRESP_free                     2838	EXIST::FUNCTION:
 OCSP_BASICRESP_add1_ext_i2d             2839	EXIST::FUNCTION:
 d2i_KRB5_AUTHENTBODY                    2840	NOEXIST::FUNCTION:
-CRYPTO_set_ex_data_implementation       2841	EXIST:!VMS:FUNCTION:
-CRYPTO_set_ex_data_impl                 2841	EXIST:VMS:FUNCTION:
+CRYPTO_set_ex_data_impl                 2841	NOEXIST::FUNCTION:
+CRYPTO_set_ex_data_implementation       2841	NOEXIST::FUNCTION:
 KRB5_ENCDATA_new                        2842	NOEXIST::FUNCTION:
 DSO_up_ref                              2843	EXIST::FUNCTION:
 OCSP_crl_reason_str                     2844	EXIST::FUNCTION:
@@ -2559,7 +2559,7 @@ AES_encrypt                             3033	EXIST::FUNCTION:AES
 OCSP_REQUEST_new                        3034	EXIST::FUNCTION:
 ASN1_ANY_it                             3035	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:
 ASN1_ANY_it                             3035	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:
-CRYPTO_ex_data_new_class                3036	EXIST::FUNCTION:
+CRYPTO_ex_data_new_class                3036	NOEXIST::FUNCTION:
 _ossl_old_des_ncbc_encrypt              3037	NOEXIST::FUNCTION:
 i2d_KRB5_TKTBODY                        3038	NOEXIST::FUNCTION:
 EC_POINT_clear_free                     3039	EXIST::FUNCTION:EC
@@ -2676,8 +2676,8 @@ USERNOTICE_it                           3132	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIA
 USERNOTICE_it                           3132	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:
 OCSP_REQINFO_new                        3133	EXIST::FUNCTION:
 OCSP_BASICRESP_get_ext                  3134	EXIST::FUNCTION:
-CRYPTO_get_ex_data_implementation       3135	EXIST:!VMS:FUNCTION:
-CRYPTO_get_ex_data_impl                 3135	EXIST:VMS:FUNCTION:
+CRYPTO_get_ex_data_impl                 3135	NOEXIST::FUNCTION:
+CRYPTO_get_ex_data_implementation       3135	NOEXIST::FUNCTION:
 ASN1_item_pack                          3136	EXIST::FUNCTION:
 i2d_KRB5_ENCDATA                        3137	NOEXIST::FUNCTION:
 X509_PURPOSE_set                        3138	EXIST::FUNCTION:
@@ -3796,7 +3796,7 @@ CRYPTO_THREADID_cmp                     4176	EXIST::FUNCTION:
 TS_REQ_ext_free                         4177	EXIST::FUNCTION:
 EVP_PKEY_asn1_set_free                  4178	EXIST::FUNCTION:
 EVP_PKEY_get0_asn1                      4179	EXIST::FUNCTION:
-d2i_NETSCAPE_X509                       4180	EXIST::FUNCTION:
+d2i_NETSCAPE_X509                       4180	NOEXIST::FUNCTION:
 EVP_PKEY_verify_recover_init            4181	EXIST::FUNCTION:
 EVP_PKEY_CTX_set_data                   4182	EXIST::FUNCTION:
 EVP_PKEY_keygen_init                    4183	EXIST::FUNCTION:
@@ -3864,7 +3864,7 @@ ASN1_PCTX_get_nm_flags                  4242	EXIST::FUNCTION:
 EVP_PKEY_meth_set_sign                  4243	EXIST::FUNCTION:
 CRYPTO_THREADID_current                 4244	EXIST::FUNCTION:
 EVP_PKEY_decrypt_init                   4245	EXIST::FUNCTION:
-NETSCAPE_X509_free                      4246	EXIST::FUNCTION:
+NETSCAPE_X509_free                      4246	NOEXIST::FUNCTION:
 i2b_PVK_bio                             4247	EXIST::FUNCTION:RC4
 EVP_PKEY_print_private                  4248	EXIST::FUNCTION:
 GENERAL_NAME_get0_value                 4249	EXIST::FUNCTION:
@@ -3994,8 +3994,8 @@ WHIRLPOOL_Final                         4370	EXIST::FUNCTION:WHIRLPOOL
 X509_CRL_METHOD_new                     4371	EXIST::FUNCTION:
 EVP_DigestSignFinal                     4372	EXIST::FUNCTION:
 TS_RESP_CTX_set_def_policy              4373	EXIST::FUNCTION:
-NETSCAPE_X509_it                        4374	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:
-NETSCAPE_X509_it                        4374	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:
+NETSCAPE_X509_it                        4374	NOEXIST::FUNCTION:
+NETSCAPE_X509_it                        4374	NOEXIST::FUNCTION:
 TS_RESP_create_response                 4375	EXIST::FUNCTION:
 PKCS7_SIGNER_INFO_get0_algs             4376	EXIST::FUNCTION:
 TS_TST_INFO_get_nonce                   4377	EXIST::FUNCTION:
@@ -4046,7 +4046,7 @@ TS_REQ_get_ext_d2i                      4420	EXIST::FUNCTION:
 GENERAL_NAME_set0_othername             4421	EXIST::FUNCTION:
 TS_TST_INFO_get_ext_count               4422	EXIST::FUNCTION:
 TS_RESP_CTX_get_request                 4423	EXIST::FUNCTION:
-i2d_NETSCAPE_X509                       4424	EXIST::FUNCTION:
+i2d_NETSCAPE_X509                       4424	NOEXIST::FUNCTION:
 ENGINE_get_pkey_meth_engine             4425	EXIST::FUNCTION:ENGINE
 EVP_PKEY_meth_set_signctx               4426	EXIST::FUNCTION:
 EVP_PKEY_asn1_copy                      4427	EXIST::FUNCTION:
@@ -4109,7 +4109,7 @@ PKCS7_stream                            4481	EXIST::FUNCTION:
 TS_RESP_CTX_set_certs                   4482	EXIST::FUNCTION:
 TS_CONF_set_def_policy                  4483	EXIST::FUNCTION:
 ASN1_GENERALIZEDTIME_adj                4484	EXIST::FUNCTION:
-NETSCAPE_X509_new                       4485	EXIST::FUNCTION:
+NETSCAPE_X509_new                       4485	NOEXIST::FUNCTION:
 TS_ACCURACY_free                        4486	EXIST::FUNCTION:
 TS_RESP_get_tst_info                    4487	EXIST::FUNCTION:
 EVP_PKEY_derive_set_peer                4488	EXIST::FUNCTION:
@@ -4587,3 +4587,4 @@ CRYPTO_secure_free                      4945	EXIST::FUNCTION:
 BIO_s_secmem                            4946	EXIST::FUNCTION:
 CRYPTO_get_secure_mem_ex_functions      4947	EXIST::FUNCTION:
 CRYPTO_set_secure_mem_functions         4948	EXIST::FUNCTION:
+X509_STORE_CTX_get_num_untrusted        4949	EXIST::FUNCTION:

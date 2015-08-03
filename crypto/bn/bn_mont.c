@@ -196,7 +196,9 @@ static int BN_from_montgomery_word(BIGNUM *ret, BIGNUM *r, BN_MONT_CTX *mont)
     rp = r->d;
 
     /* clear the top words of T */
-    memset(&rp[r->top], 0, sizeof(*rp) * (max - r->top));
+    i = max - r->top;
+    if (i)
+        memset(&rp[r->top], 0, sizeof(*rp) * i);
 
     r->top = max;
     n0 = mont->n0[0];
@@ -337,9 +339,9 @@ void BN_MONT_CTX_free(BN_MONT_CTX *mont)
     if (mont == NULL)
         return;
 
-    BN_free(&(mont->RR));
-    BN_free(&(mont->N));
-    BN_free(&(mont->Ni));
+    BN_clear_free(&(mont->RR));
+    BN_clear_free(&(mont->N));
+    BN_clear_free(&(mont->Ni));
     if (mont->flags & BN_FLG_MALLOCED)
         OPENSSL_free(mont);
 }

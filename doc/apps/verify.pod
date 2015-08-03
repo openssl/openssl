@@ -12,6 +12,7 @@ B<openssl> B<verify>
 [B<-attime timestamp>]
 [B<-check_ss_sig>]
 [B<-CRLfile file>]
+[B<-crl_download>]
 [B<-crl_check>]
 [B<-crl_check_all>]
 [B<-explicit_policy>]
@@ -32,6 +33,7 @@ B<openssl> B<verify>
 [B<-trusted_first>]
 [B<-no_alt_chains>]
 [B<-untrusted file>]
+[B<-trusted file>]
 [B<-use_deltas>]
 [B<-verbose>]
 [B<-verify_depth num>]
@@ -40,6 +42,7 @@ B<openssl> B<verify>
 [B<-verify_ip ip>]
 [B<-verify_name name>]
 [B<-x509_strict>]
+[B<-show_chain>]
 [B<->]
 [certificates]
 
@@ -79,6 +82,10 @@ because it doesn't add any security.
 =item B<-CRLfile file>
 
 File containing one or more CRL's (in PEM format) to load.
+
+=item B<-crl_download>
+
+Attempt to download CRL information for this certificate.
 
 =item B<-crl_check>
 
@@ -175,8 +182,17 @@ behaviour to match that of OpenSSL versions prior to 1.1.0.
 
 =item B<-untrusted file>
 
-A file of untrusted certificates. The file should contain multiple certificates
-in PEM format concatenated together.
+A file of untrusted certificates. The file should contain one or more
+certificates in PEM format.
+
+=item B<-trusted file>
+
+A file of trusted certificates. The file contain one or more
+certificates in PEM format.
+With this option, no additional (e.g., default) certificate lists
+are consulted. That is, the only trusted issuers are those listed
+in B<file>.
+This option cannot be used with the B<-CAfile> or B<-CApath> options.
 
 =item B<-use_deltas>
 
@@ -215,6 +231,12 @@ Supported usages include: default, pkcs7, smime_sign, ssl_client, ssl_server.
 
 For strict X.509 compliance, disable non-compliant workarounds for broken
 certificates.
+
+=item B<-show_chain>
+
+Display information about the certificate chain that has been built (if
+successful). Certificates in the chain that came from the untrusted list will be
+flagged as "untrusted".
 
 =item B<->
 
@@ -480,6 +502,6 @@ L<x509(1)|x509(1)>
 
 =head1 HISTORY
 
-The -no_alt_chains options was first added to OpenSSL 1.1.0.
+The -show_chain option was first added to OpenSSL 1.1.0.
 
 =cut

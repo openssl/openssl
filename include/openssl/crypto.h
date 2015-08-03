@@ -284,25 +284,9 @@ struct crypto_ex_data_st {
 DECLARE_STACK_OF(void)
 
 /*
- * This stuff is basically class callback functions The current classes are
- * SSL_CTX, SSL, SSL_SESSION, and a few more
- */
-
-typedef struct crypto_ex_data_func_st {
-    long argl;                  /* Arbitary long */
-    void *argp;                 /* Arbitary void * */
-    CRYPTO_EX_new *new_func;
-    CRYPTO_EX_free *free_func;
-    CRYPTO_EX_dup *dup_func;
-} CRYPTO_EX_DATA_FUNCS;
-
-DECLARE_STACK_OF(CRYPTO_EX_DATA_FUNCS)
-
-/*
  * Per class, we have a STACK of CRYPTO_EX_DATA_FUNCS for each CRYPTO_EX_DATA
  * entry.
  */
-
 # define CRYPTO_EX_INDEX_BIO             0
 # define CRYPTO_EX_INDEX_SSL             1
 # define CRYPTO_EX_INDEX_SSL_CTX         2
@@ -319,12 +303,8 @@ DECLARE_STACK_OF(CRYPTO_EX_DATA_FUNCS)
 # define CRYPTO_EX_INDEX_ECDH            13
 # define CRYPTO_EX_INDEX_COMP            14
 # define CRYPTO_EX_INDEX_STORE           15
-
-/*
- * Dynamically assigned indexes start from this value (don't use directly,
- * use via CRYPTO_ex_data_new_class).
- */
-# define CRYPTO_EX_INDEX_USER            100
+# define CRYPTO_EX_INDEX_APP             16
+# define CRYPTO_EX_INDEX__COUNT          17
 
 /*
  * This is the default callbacks, but we can have others as well: this is
@@ -386,14 +366,6 @@ unsigned long SSLeay(void);
 
 int OPENSSL_issetugid(void);
 
-/* An opaque type representing an implementation of "ex_data" support */
-typedef struct st_CRYPTO_EX_DATA_IMPL CRYPTO_EX_DATA_IMPL;
-/* Return an opaque pointer to the current "ex_data" implementation */
-const CRYPTO_EX_DATA_IMPL *CRYPTO_get_ex_data_implementation(void);
-/* Sets the "ex_data" implementation to be used (if it's not too late) */
-int CRYPTO_set_ex_data_implementation(const CRYPTO_EX_DATA_IMPL *i);
-/* Get a new "ex_data" class, and return the corresponding "class_index" */
-int CRYPTO_ex_data_new_class(void);
 /* Within a given class, get/register a new index */
 int CRYPTO_get_ex_new_index(int class_index, long argl, void *argp,
                             CRYPTO_EX_new *new_func, CRYPTO_EX_dup *dup_func,
@@ -611,6 +583,11 @@ int FIPS_mode_set(int r);
 
 void OPENSSL_init(void);
 
+struct tm *OPENSSL_gmtime(const time_t *timer, struct tm *result);
+int OPENSSL_gmtime_adj(struct tm *tm, int offset_day, long offset_sec);
+int OPENSSL_gmtime_diff(int *pday, int *psec,
+                        const struct tm *from, const struct tm *to);
+
 /*
  * CRYPTO_memcmp returns zero iff the |len| bytes at |a| and |b| are equal.
  * It takes an amount of time dependent on |len|, but independent of the
@@ -627,17 +604,15 @@ int CRYPTO_memcmp(const void *a, const void *b, size_t len);
  */
 void ERR_load_CRYPTO_strings(void);
 
-struct tm *OPENSSL_gmtime(const time_t *timer, struct tm *result);
-int OPENSSL_gmtime_adj(struct tm *tm, int offset_day, long offset_sec);
-int OPENSSL_gmtime_diff(int *pday, int *psec,
-                        const struct tm *from, const struct tm *to);
-
 /* Error codes for the CRYPTO functions. */
 
 /* Function codes. */
+# define CRYPTO_F_CRYPTO_DUP_EX_DATA                      110
+# define CRYPTO_F_CRYPTO_FREE_EX_DATA                     111
 # define CRYPTO_F_CRYPTO_GET_EX_NEW_INDEX                 100
 # define CRYPTO_F_CRYPTO_GET_NEW_DYNLOCKID                103
 # define CRYPTO_F_CRYPTO_GET_NEW_LOCKID                   101
+# define CRYPTO_F_CRYPTO_NEW_EX_DATA                      112
 # define CRYPTO_F_CRYPTO_SET_EX_DATA                      102
 # define CRYPTO_F_DEF_ADD_INDEX                           104
 # define CRYPTO_F_DEF_GET_CLASS                           105

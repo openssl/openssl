@@ -200,6 +200,7 @@ int pkeyutl_main(int argc, char **argv)
             break;
         case OPT_REV:
             rev = 1;
+            break;
         case OPT_ENCRYPT:
             pkey_op = EVP_PKEY_OP_ENCRYPT;
             break;

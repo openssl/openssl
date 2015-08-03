@@ -120,26 +120,26 @@ _bn_GF2m_mul_2x2:
 	.asmfunc
 	MVK	0xFF,$xFF
 ___
-	&mul_1x1_upper($a0,$b0);		# a0·b0
+	&mul_1x1_upper($a0,$b0);		# a0Â·b0
 $code.=<<___;
 ||	MV	$b1,$B
 	MV	$a1,$A
 ___
-	&mul_1x1_merged("A28","B28",$A,$B);	# a0·b0/a1·b1
+	&mul_1x1_merged("A28","B28",$A,$B);	# a0Â·b0/a1Â·b1
 $code.=<<___;
 ||	XOR	$b0,$b1,$B
 	XOR	$a0,$a1,$A
 ___
-	&mul_1x1_merged("A31","B31",$A,$B);	# a1·b1/(a0+a1)·(b0+b1)
+	&mul_1x1_merged("A31","B31",$A,$B);	# a1Â·b1/(a0+a1)Â·(b0+b1)
 $code.=<<___;
 	XOR	A28,A31,A29
-||	XOR	B28,B31,B29			; a0·b0+a1·b1
+||	XOR	B28,B31,B29			; a0Â·b0+a1Â·b1
 ___
-	&mul_1x1_lower("A30","B30");		# (a0+a1)·(b0+b1)
+	&mul_1x1_lower("A30","B30");		# (a0+a1)Â·(b0+b1)
 $code.=<<___;
 ||	BNOP	B3
 	XOR	A29,A30,A30
-||	XOR	B29,B30,B30			; (a0+a1)·(b0+b1)-a0·b0-a1·b1
+||	XOR	B29,B30,B30			; (a0+a1)Â·(b0+b1)-a0Â·b0-a1Â·b1
 	XOR	B28,A30,A30
 ||	STW	A28,*${rp}[0]
 	XOR	B30,A31,A31

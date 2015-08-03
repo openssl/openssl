@@ -1937,7 +1937,7 @@ void ssl_set_masks(SSL *s, const SSL_CIPHER *cipher)
 {
     CERT_PKEY *cpk;
     CERT *c = s->cert;
-    int *pvalid = s->s3->tmp.valid_flags;
+    uint32_t *pvalid = s->s3->tmp.valid_flags;
     int rsa_enc, rsa_tmp, rsa_sign, dh_tmp, dh_rsa, dh_dsa, dsa_sign;
     int rsa_enc_export, dh_rsa_export, dh_dsa_export;
     int rsa_tmp_export, dh_tmp_export, kl;
@@ -2112,6 +2112,12 @@ void ssl_set_masks(SSL *s, const SSL_CIPHER *cipher)
     mask_a |= SSL_aPSK;
     emask_k |= SSL_kPSK;
     emask_a |= SSL_aPSK;
+    if (mask_k & SSL_kRSA)
+        mask_k |= SSL_kRSAPSK;
+    if (mask_k & SSL_kDHE)
+        mask_k |= SSL_kDHEPSK;
+    if (mask_k & SSL_kECDHE)
+        mask_k |= SSL_kECDHEPSK;
 #endif
 
     s->s3->tmp.mask_k = mask_k;

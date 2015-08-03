@@ -314,6 +314,9 @@ static const SSL_CIPHER cipher_aliases[] = {
      0, 0, 0},
 
     {0, SSL_TXT_kPSK, 0, SSL_kPSK, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, SSL_TXT_kRSAPSK, 0, SSL_kRSAPSK, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, SSL_TXT_kECDHEPSK, 0, SSL_kECDHEPSK, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, SSL_TXT_kDHEPSK, 0, SSL_kDHEPSK, 0, 0, 0, 0, 0, 0, 0, 0},
     {0, SSL_TXT_kSRP, 0, SSL_kSRP, 0, 0, 0, 0, 0, 0, 0, 0},
     {0, SSL_TXT_kGOST, 0, SSL_kGOST, 0, 0, 0, 0, 0, 0, 0, 0},
 
@@ -342,7 +345,7 @@ static const SSL_CIPHER cipher_aliases[] = {
     {0, SSL_TXT_RSA, 0, SSL_kRSA, SSL_aRSA, 0, 0, 0, 0, 0, 0, 0},
     {0, SSL_TXT_ADH, 0, SSL_kDHE, SSL_aNULL, 0, 0, 0, 0, 0, 0, 0},
     {0, SSL_TXT_AECDH, 0, SSL_kECDHE, SSL_aNULL, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_PSK, 0, SSL_kPSK, SSL_aPSK, 0, 0, 0, 0, 0, 0, 0},
+    {0, SSL_TXT_PSK, 0, SSL_PSK, 0, 0, 0, 0, 0, 0, 0, 0},
     {0, SSL_TXT_SRP, 0, SSL_kSRP, 0, 0, 0, 0, 0, 0, 0, 0},
 
     /* symmetric encryption aliases */
@@ -492,22 +495,22 @@ void ssl_load_ciphers(void)
     disabled_auth_mask = 0;
 
 #ifdef OPENSSL_NO_RSA
-    disabled_mkey_mask |= SSL_kRSA;
+    disabled_mkey_mask |= SSL_kRSA | SSL_kRSAPSK;
     disabled_auth_mask |= SSL_aRSA;
 #endif
 #ifdef OPENSSL_NO_DSA
     disabled_auth_mask |= SSL_aDSS;
 #endif
 #ifdef OPENSSL_NO_DH
-    disabled_mkey_mask |= SSL_kDHr | SSL_kDHd | SSL_kDHE;
+    disabled_mkey_mask |= SSL_kDHr | SSL_kDHd | SSL_kDHE | SSL_kDHEPSK;
     disabled_auth_mask |= SSL_aDH;
 #endif
 #ifdef OPENSSL_NO_EC
-    disabled_mkey_mask |= SSL_kECDHe | SSL_kECDHr;
+    disabled_mkey_mask |= SSL_kECDHe | SSL_kECDHr | SSL_kECDHEPSK;
     disabled_auth_mask |= SSL_aECDSA | SSL_aECDH;
 #endif
 #ifdef OPENSSL_NO_PSK
-    disabled_mkey_mask |= SSL_kPSK;
+    disabled_mkey_mask |= SSL_PSK;
     disabled_auth_mask |= SSL_aPSK;
 #endif
 #ifdef OPENSSL_NO_SRP
@@ -1625,6 +1628,15 @@ char *SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
         break;
     case SSL_kPSK:
         kx = "PSK";
+        break;
+    case SSL_kRSAPSK:
+        kx = "RSAPSK";
+        break;
+    case SSL_kECDHEPSK:
+        kx = "ECDHEPSK";
+        break;
+    case SSL_kDHEPSK:
+        kx = "DHEPSK";
         break;
     case SSL_kSRP:
         kx = "SRP";

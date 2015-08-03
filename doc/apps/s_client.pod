@@ -288,12 +288,13 @@ command for more information.
 
 send the protocol-specific message(s) to switch to TLS for communication.
 B<protocol> is a keyword for the intended protocol.  Currently, the only
-supported keywords are "smtp", "pop3", "imap", "ftp" and "xmpp".
+supported keywords are "smtp", "pop3", "imap", "ftp", "xmpp",
+and "xmpp-server".
 
 =item B<-xmpphost hostname>
 
-This option, when used with "-starttls xmpp", specifies the host for the
-"to" attribute of the stream element.
+This option, when used with "-starttls xmpp" or "-starttls xmpp-server",
+specifies the host for the "to" attribute of the stream element.
 If this option is not specified, then the host specified with "-connect"
 will be used.
 

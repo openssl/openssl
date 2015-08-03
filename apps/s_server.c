@@ -1871,6 +1871,14 @@ int s_server_main(int argc, char *argv[])
         if (ctx2)
             SSL_CTX_set_client_CA_list(ctx2, SSL_load_client_CA_file(CAfile));
     }
+    if (s_tlsextstatus) {
+        SSL_CTX_set_tlsext_status_cb(ctx, cert_status_cb);
+        SSL_CTX_set_tlsext_status_arg(ctx, &tlscstatp);
+        if (ctx2) {
+            SSL_CTX_set_tlsext_status_cb(ctx2, cert_status_cb);
+            SSL_CTX_set_tlsext_status_arg(ctx2, &tlscstatp);
+        }
+    }
 
     BIO_printf(bio_s_out, "ACCEPT\n");
     (void)BIO_flush(bio_s_out);
@@ -1988,10 +1996,6 @@ static int sv_body(char *hostname, int s, int stype, unsigned char *context)
         if (s_tlsextdebug) {
             SSL_set_tlsext_debug_callback(con, tlsext_cb);
             SSL_set_tlsext_debug_arg(con, bio_s_out);
-        }
-        if (s_tlsextstatus) {
-            SSL_CTX_set_tlsext_status_cb(ctx, cert_status_cb);
-            SSL_CTX_set_tlsext_status_arg(ctx, &tlscstatp);
         }
 
         if (context

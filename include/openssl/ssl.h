@@ -204,6 +204,9 @@ extern "C" {
 # define SSL_TXT_kEECDH          "kEECDH"/* alias for kECDHE */
 # define SSL_TXT_kECDHE          "kECDHE"
 # define SSL_TXT_kPSK            "kPSK"
+# define SSL_TXT_kRSAPSK         "kRSAPSK"
+# define SSL_TXT_kECDHEPSK       "kECDHEPSK"
+# define SSL_TXT_kDHEPSK         "kDHEPSK"
 # define SSL_TXT_kGOST           "kGOST"
 # define SSL_TXT_kSRP            "kSRP"
 
@@ -1546,11 +1549,9 @@ __owur const SSL_METHOD *SSLv3_server_method(void); /* SSLv3 */
 __owur const SSL_METHOD *SSLv3_client_method(void); /* SSLv3 */
 # endif
 
-#ifdef OPENSSL_USE_DEPRECATED
 #define SSLv23_method           TLS_method
 #define SSLv23_server_method    TLS_server_method
 #define SSLv23_client_method    TLS_client_method
-#endif
 
 /* Negotiate highest available SSL/TLS version */
 __owur const SSL_METHOD *TLS_method(void);

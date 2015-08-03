@@ -1111,7 +1111,7 @@ void ssl_set_client_disabled(SSL *s)
     /* with PSK there must be client callback set */
     if (!s->psk_client_callback) {
         s->s3->tmp.mask_a |= SSL_aPSK;
-        s->s3->tmp.mask_k |= SSL_kPSK;
+        s->s3->tmp.mask_k |= SSL_PSK;
     }
 #endif                         /* OPENSSL_NO_PSK */
 #ifndef OPENSSL_NO_SRP
@@ -1157,7 +1157,7 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *buf,
 
             alg_k = c->algorithm_mkey;
             alg_a = c->algorithm_auth;
-            if ((alg_k & (SSL_kECDHE | SSL_kECDHr | SSL_kECDHe)
+            if ((alg_k & (SSL_kECDHE | SSL_kECDHr | SSL_kECDHe | SSL_kECDHEPSK)
                  || (alg_a & SSL_aECDSA))) {
                 using_ecc = 1;
                 break;
@@ -3459,7 +3459,7 @@ int tls1_process_sigalgs(SSL *s)
     size_t i;
     const EVP_MD *md;
     const EVP_MD **pmd = s->s3->tmp.md;
-    int *pvalid = s->s3->tmp.valid_flags;
+    uint32_t *pvalid = s->s3->tmp.valid_flags;
     CERT *c = s->cert;
     TLS_SIGALGS *sigptr;
     if (!tls1_set_shared_sigalgs(s))
@@ -3739,12 +3739,27 @@ typedef struct {
     int sigalgs[MAX_SIGALGLEN];
 } sig_cb_st;
 
+static void get_sigorhash(int *psig, int *phash, const char *str)
+{
+    if (strcmp(str, "RSA") == 0) {
+        *psig = EVP_PKEY_RSA;
+    } else if (strcmp(str, "DSA") == 0) {
+        *psig = EVP_PKEY_DSA;
+    } else if (strcmp(str, "ECDSA") == 0) {
+        *psig = EVP_PKEY_EC;
+    } else {
+        *phash = OBJ_sn2nid(str);
+        if (*phash == NID_undef)
+            *phash = OBJ_ln2nid(str);
+    }
+}
+
 static int sig_cb(const char *elem, int len, void *arg)
 {
     sig_cb_st *sarg = arg;
     size_t i;
     char etmp[20], *p;
-    int sig_alg, hash_alg;
+    int sig_alg = NID_undef, hash_alg = NID_undef;
     if (elem == NULL)
         return 0;
     if (sarg->sigalgcnt == MAX_SIGALGLEN)
@@ -3761,19 +3776,10 @@ static int sig_cb(const char *elem, int len, void *arg)
     if (!*p)
         return 0;
 
-    if (strcmp(etmp, "RSA") == 0)
-        sig_alg = EVP_PKEY_RSA;
-    else if (strcmp(etmp, "DSA") == 0)
-        sig_alg = EVP_PKEY_DSA;
-    else if (strcmp(etmp, "ECDSA") == 0)
-        sig_alg = EVP_PKEY_EC;
-    else
-        return 0;
+    get_sigorhash(&sig_alg, &hash_alg, etmp);
+    get_sigorhash(&sig_alg, &hash_alg, p);
 
-    hash_alg = OBJ_sn2nid(p);
-    if (hash_alg == NID_undef)
-        hash_alg = OBJ_ln2nid(p);
-    if (hash_alg == NID_undef)
+    if (sig_alg == NID_undef || hash_alg == NID_undef)
         return 0;
 
     for (i = 0; i < sarg->sigalgcnt; i += 2) {
@@ -3890,7 +3896,7 @@ int tls1_check_chain(SSL *s, X509 *x, EVP_PKEY *pk, STACK_OF(X509) *chain,
     int check_flags = 0, strict_mode;
     CERT_PKEY *cpk = NULL;
     CERT *c = s->cert;
-    int *pvalid;
+    uint32_t *pvalid;
     unsigned int suiteb_flags = tls1_suiteb(s);
     /* idx == -1 means checking server chains */
     if (idx != -1) {
@@ -4159,7 +4165,7 @@ DH *ssl_get_auto_dh(SSL *s)
     int dh_secbits = 80;
     if (s->cert->dh_tmp_auto == 2)
         return DH_get_1024_160();
-    if (s->s3->tmp.new_cipher->algorithm_auth & SSL_aNULL) {
+    if (s->s3->tmp.new_cipher->algorithm_auth & (SSL_aNULL | SSL_aPSK)) {
         if (s->s3->tmp.new_cipher->strength_bits == 256)
             dh_secbits = 128;
         else
