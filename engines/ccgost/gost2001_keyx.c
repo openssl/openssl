@@ -60,12 +60,19 @@ static int VKO_compute_key(unsigned char *shared_key, size_t shared_key_size,
     hash_block(&hash_ctx, hashbuf, 64);
     finish_hash(&hash_ctx, shared_key);
     done_gost_hash_ctx(&hash_ctx);
-err:
+
     BN_free(UKM);
     BN_CTX_end(ctx);
     BN_CTX_free(ctx);
     EC_POINT_free(pnt);
     return 32;
+
+err:
+    BN_free(UKM);
+    BN_CTX_end(ctx);
+    BN_CTX_free(ctx);
+    EC_POINT_free(pnt);
+    return 1;
 }
 
 /*
