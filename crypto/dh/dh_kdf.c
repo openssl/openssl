@@ -61,6 +61,7 @@
 #include <openssl/cms.h>
 
 /* Key derivation from X9.42/RFC2631 */
+/* Uses CMS functions, hence the #ifdef wrapper. */
 
 #define DH_KDF_MAX      (1L << 30)
 
