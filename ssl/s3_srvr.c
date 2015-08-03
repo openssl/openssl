@@ -2816,13 +2816,15 @@ int ssl3_get_client_key_exchange(SSL *s)
 int ssl3_get_cert_verify(SSL *s)
 {
     EVP_PKEY *pkey = NULL;
-    unsigned char *p;
+    unsigned char *sig, *data;
     int al, ok, ret = 0;
     long n;
     int type = 0, i, j;
+    unsigned int len;
     X509 *peer;
     const EVP_MD *md = NULL;
     EVP_MD_CTX mctx;
+    PACKET pkt;
     EVP_MD_CTX_init(&mctx);
 
     /*
@@ -2859,7 +2861,11 @@ int ssl3_get_cert_verify(SSL *s)
     }
 
     /* we now have a signature that we need to verify */
-    p = (unsigned char *)s->init_msg;
+    if (!PACKET_buf_init(&pkt, s->init_msg, n)) {
+        SSLerr(SSL_F_SSL3_GET_CERT_VERIFY, ERR_R_INTERNAL_ERROR);
+        al = SSL_AD_INTERNAL_ERROR;
+        goto f_err;
+    }
     /* Check for broken implementations of GOST ciphersuites */
     /*
      * If key is GOST and n is exactly 64, it is bare signature without
@@ -2867,10 +2873,16 @@ int ssl3_get_cert_verify(SSL *s)
      */
     if (n == 64 && (pkey->type == NID_id_GostR3410_94 ||
                     pkey->type == NID_id_GostR3410_2001)) {
-        i = 64;
+        len = 64;
     } else {
         if (SSL_USE_SIGALGS(s)) {
-            int rv = tls12_check_peer_sigalg(&md, s, p, pkey);
+            int rv;
+
+            if (!PACKET_get_bytes(&pkt, &sig, 2)) {
+                al = SSL_AD_DECODE_ERROR;
+                goto f_err;
+            }
+            rv = tls12_check_peer_sigalg(&md, s, sig, pkey);
             if (rv == -1) {
                 al = SSL_AD_INTERNAL_ERROR;
                 goto f_err;
@@ -2881,20 +2893,21 @@ int ssl3_get_cert_verify(SSL *s)
 #ifdef SSL_DEBUG
             fprintf(stderr, "USING TLSv1.2 HASH %s\n", EVP_MD_name(md));
 #endif
-            p += 2;
-            n -= 2;
         }
-        n2s(p, i);
-        n -= 2;
-        if (i > n) {
+        if (!PACKET_get_net_2(&pkt, &len)) {
             SSLerr(SSL_F_SSL3_GET_CERT_VERIFY, SSL_R_LENGTH_MISMATCH);
             al = SSL_AD_DECODE_ERROR;
             goto f_err;
         }
     }
     j = EVP_PKEY_size(pkey);
-    if ((i > j) || (n > j) || (n <= 0)) {
+    if (((int)len > j) || ((int)PACKET_remaining(&pkt) > j) || (n <= 0)) {
         SSLerr(SSL_F_SSL3_GET_CERT_VERIFY, SSL_R_WRONG_SIGNATURE_SIZE);
+        al = SSL_AD_DECODE_ERROR;
+        goto f_err;
+    }
+    if (!PACKET_get_bytes(&pkt, &data, len)) {
+        SSLerr(SSL_F_SSL3_GET_CERT_VERIFY, SSL_R_LENGTH_MISMATCH);
         al = SSL_AD_DECODE_ERROR;
         goto f_err;
     }
@@ -2919,7 +2932,7 @@ int ssl3_get_cert_verify(SSL *s)
             goto f_err;
         }
 
-        if (EVP_VerifyFinal(&mctx, p, i, pkey) <= 0) {
+        if (EVP_VerifyFinal(&mctx, data, len, pkey) <= 0) {
             al = SSL_AD_DECRYPT_ERROR;
             SSLerr(SSL_F_SSL3_GET_CERT_VERIFY, SSL_R_BAD_SIGNATURE);
             goto f_err;
@@ -2928,7 +2941,7 @@ int ssl3_get_cert_verify(SSL *s)
 #ifndef OPENSSL_NO_RSA
     if (pkey->type == EVP_PKEY_RSA) {
         i = RSA_verify(NID_md5_sha1, s->s3->tmp.cert_verify_md,
-                       MD5_DIGEST_LENGTH + SHA_DIGEST_LENGTH, p, i,
+                       MD5_DIGEST_LENGTH + SHA_DIGEST_LENGTH, data, len,
                        pkey->pkey.rsa);
         if (i < 0) {
             al = SSL_AD_DECRYPT_ERROR;
@@ -2946,7 +2959,7 @@ int ssl3_get_cert_verify(SSL *s)
     if (pkey->type == EVP_PKEY_DSA) {
         j = DSA_verify(pkey->save_type,
                        &(s->s3->tmp.cert_verify_md[MD5_DIGEST_LENGTH]),
-                       SHA_DIGEST_LENGTH, p, i, pkey->pkey.dsa);
+                       SHA_DIGEST_LENGTH, data, len, pkey->pkey.dsa);
         if (j <= 0) {
             /* bad signature */
             al = SSL_AD_DECRYPT_ERROR;
@@ -2959,7 +2972,7 @@ int ssl3_get_cert_verify(SSL *s)
     if (pkey->type == EVP_PKEY_EC) {
         j = ECDSA_verify(pkey->save_type,
                          &(s->s3->tmp.cert_verify_md[MD5_DIGEST_LENGTH]),
-                         SHA_DIGEST_LENGTH, p, i, pkey->pkey.ec);
+                         SHA_DIGEST_LENGTH, data, len, pkey->pkey.ec);
         if (j <= 0) {
             /* bad signature */
             al = SSL_AD_DECRYPT_ERROR;
@@ -2974,11 +2987,11 @@ int ssl3_get_cert_verify(SSL *s)
         int idx;
         EVP_PKEY_CTX *pctx = EVP_PKEY_CTX_new(pkey, NULL);
         EVP_PKEY_verify_init(pctx);
-        if (i != 64) {
-            fprintf(stderr, "GOST signature length is %d", i);
+        if (len != 64) {
+            fprintf(stderr, "GOST signature length is %d", len);
         }
         for (idx = 0; idx < 64; idx++) {
-            signature[63 - idx] = p[idx];
+            signature[63 - idx] = data[idx];
         }
         j = EVP_PKEY_verify(pctx, signature, 64, s->s3->tmp.cert_verify_md,
                             32);
