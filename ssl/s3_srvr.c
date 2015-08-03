@@ -1059,7 +1059,7 @@ int ssl3_get_client_hello(SSL *s)
         memset(s->s3->client_random, 0, SSL3_RANDOM_SIZE);
         if (!PACKET_peek_copy_bytes(&pkt, s->s3->client_random, i)
                 || !PACKET_forward(&pkt, cl)
-                || !PACKET_remaining(&pkt) == 0) {
+                || PACKET_remaining(&pkt) != 0) {
             SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, SSL_R_RECORD_LENGTH_MISMATCH);
             al = SSL_AD_DECODE_ERROR;
             goto f_err;

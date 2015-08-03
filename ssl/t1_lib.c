@@ -2036,7 +2036,7 @@ static int ssl_scan_clienthello_tlsext(SSL *s, PACKET *pkt, int *al)
                     }
             }
             /* We shouldn't have any bytes left */
-            if (PACKET_remaining(&ssubpkt))
+            if (PACKET_remaining(&ssubpkt) != 0)
                 goto err;
 
         }
@@ -2140,7 +2140,7 @@ static int ssl_scan_clienthello_tlsext(SSL *s, PACKET *pkt, int *al)
                     || (dsize & 1) != 0
                     || (dsize == 0)
                     || !PACKET_get_bytes(&subpkt, &data, dsize)
-                    || PACKET_remaining(&subpkt)
+                    || PACKET_remaining(&subpkt) != 0
                     || !tls1_save_sigalgs(s, data, dsize)) {
                 goto err;
             }

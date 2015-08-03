@@ -80,8 +80,7 @@ typedef struct {
 } PACKET;
 
 /*
- * Returns 1 if there are exactly |len| bytes left to be read from |pkt|
- * and 0 otherwise
+ * Returns the number of bytes remaining to be read in the PACKET
  */
 __owur static inline size_t PACKET_remaining(PACKET *pkt)
 {
