@@ -352,7 +352,19 @@ static long acpt_ctrl(BIO *b, int cmd, long num, void *ptr)
             if (num == 0) {
                 b->init = 1;
                 OPENSSL_free(data->param_addr);
-                data->param_addr = BUF_strdup(ptr);
+                data->param_addr = OPENSSL_malloc(2 + strlen(ptr) + 1);
+                if (data->param_addr == NULL) {
+                    ret = -1;
+                } else {
+                    /*
+                     * BIO_set_accept_port receives an int only, but we need a
+                     * host:port in order to work correctly on all IPv6
+                     * systems.
+                     */
+                    data->param_addr[0] = '*';
+                    data->param_addr[1] = ':';
+                    strcpy(data->param_addr + 2, ptr);
+                }
             } else if (num == 1) {
                 data->accept_nbio = (ptr != NULL);
             } else if (num == 2) {
