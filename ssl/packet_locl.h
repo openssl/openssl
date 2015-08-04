@@ -176,8 +176,8 @@ __owur static inline int PACKET_peek_net_3(PACKET *pkt, unsigned long *data)
         return 0;
 
     *data  = ((unsigned long)(*pkt->curr)) << 16;
-    *data |= ((unsigned long)(*pkt->curr + 1)) <<  8;
-    *data |= *pkt->curr + 2;
+    *data |= ((unsigned long)(*(pkt->curr + 1))) <<  8;
+    *data |= *(pkt->curr + 2);
 
     return 1;
 }
@@ -203,9 +203,9 @@ __owur static inline int PACKET_peek_net_4(PACKET *pkt, unsigned long *data)
         return 0;
 
     *data  = ((unsigned long)(*pkt->curr)) << 24;
-    *data |= ((unsigned long)(*pkt->curr + 1)) << 16;
-    *data |= ((unsigned long)(*pkt->curr + 2)) <<  8;
-    *data |= *pkt->curr+3;
+    *data |= ((unsigned long)(*(pkt->curr + 1))) << 16;
+    *data |= ((unsigned long)(*(pkt->curr + 2))) <<  8;
+    *data |= *(pkt->curr+3);
 
     return 1;
 }
@@ -254,9 +254,9 @@ __owur static inline int PACKET_peek_4(PACKET *pkt, unsigned long *data)
         return 0;
 
     *data  = *pkt->curr;
-    *data |= ((unsigned long)(*pkt->curr + 1)) <<  8;
-    *data |= ((unsigned long)(*pkt->curr + 2)) << 16;
-    *data |= ((unsigned long)(*pkt->curr + 3)) << 24;
+    *data |= ((unsigned long)(*(pkt->curr + 1))) <<  8;
+    *data |= ((unsigned long)(*(pkt->curr + 2))) << 16;
+    *data |= ((unsigned long)(*(pkt->curr + 3))) << 24;
 
     return 1;
 }
