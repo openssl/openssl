@@ -2007,11 +2007,6 @@ void ssl_set_masks(SSL *s, const SSL_CIPHER *cipher)
         mask_k |= SSL_kGOST;
         mask_a |= SSL_aGOST01;
     }
-    cpk = &(c->pkeys[SSL_PKEY_GOST94]);
-    if (cpk->x509 != NULL && cpk->privatekey != NULL) {
-        mask_k |= SSL_kGOST;
-        mask_a |= SSL_aGOST94;
-    }
 
     if (rsa_enc || (rsa_tmp && rsa_sign))
         mask_k |= SSL_kRSA;

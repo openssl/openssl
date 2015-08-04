@@ -331,9 +331,8 @@ static const SSL_CIPHER cipher_aliases[] = {
     {0, SSL_TXT_aECDSA, 0, 0, SSL_aECDSA, 0, 0, 0, 0, 0, 0, 0},
     {0, SSL_TXT_ECDSA, 0, 0, SSL_aECDSA, 0, 0, 0, 0, 0, 0, 0},
     {0, SSL_TXT_aPSK, 0, 0, SSL_aPSK, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_aGOST94, 0, 0, SSL_aGOST94, 0, 0, 0, 0, 0, 0, 0},
     {0, SSL_TXT_aGOST01, 0, 0, SSL_aGOST01, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_aGOST, 0, 0, SSL_aGOST94 | SSL_aGOST01, 0, 0, 0, 0, 0, 0, 0},
+    {0, SSL_TXT_aGOST, 0, 0, SSL_aGOST01, 0, 0, 0, 0, 0, 0, 0},
     {0, SSL_TXT_aSRP, 0, 0, SSL_aSRP, 0, 0, 0, 0, 0, 0, 0},
 
     /* aliases combining key exchange and server authentication */
@@ -528,14 +527,12 @@ void ssl_load_ciphers(void)
         disabled_mac_mask |= SSL_GOST89MAC;
     }
 
-    if (!get_optional_pkey_id("gost94"))
-        disabled_auth_mask |= SSL_aGOST94;
     if (!get_optional_pkey_id("gost2001"))
         disabled_auth_mask |= SSL_aGOST01;
     /*
      * Disable GOST key exchange if no GOST signature algs are available *
      */
-    if ((disabled_auth_mask & (SSL_aGOST94 | SSL_aGOST01)) == (SSL_aGOST94 | SSL_aGOST01))
+    if ((disabled_auth_mask & SSL_aGOST01) == SSL_aGOST01)
         disabled_mkey_mask |= SSL_kGOST;
 }
 
@@ -1673,9 +1670,6 @@ char *SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
     case SSL_aSRP:
         au = "SRP";
         break;
-    case SSL_aGOST94:
-        au = "GOST94";
-        break;
     case SSL_aGOST01:
         au = "GOST01";
         break;
@@ -1961,8 +1955,6 @@ int ssl_cipher_get_cert_index(const SSL_CIPHER *c)
         return SSL_PKEY_DSA_SIGN;
     else if (alg_a & SSL_aRSA)
         return SSL_PKEY_RSA_ENC;
-    else if (alg_a & SSL_aGOST94)
-        return SSL_PKEY_GOST94;
     else if (alg_a & SSL_aGOST01)
         return SSL_PKEY_GOST01;
     return -1;
