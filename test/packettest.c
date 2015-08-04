@@ -81,10 +81,10 @@ static int test_PACKET_get_1(PACKET *pkt, size_t start)
 
     if (       !PACKET_goto_bookmark(pkt, start)
             || !PACKET_get_1(pkt, &i)
-            ||  i != 0x01
+            ||  i != 0x02
             || !PACKET_forward(pkt, BUF_LEN - 2)
             || !PACKET_get_1(pkt, &i)
-            ||  i != 0xff
+            ||  i != 0xfe
             ||  PACKET_get_1(pkt, &i)) {
         fprintf(stderr, "test_PACKET_get_1() failed\n");
         return 0;
@@ -99,10 +99,10 @@ static int test_PACKET_get_4(PACKET *pkt, size_t start)
 
     if (       !PACKET_goto_bookmark(pkt, start)
             || !PACKET_get_4(pkt, &i)
-            ||  i != 0x04030201UL
+            ||  i != 0x08060402UL
             || !PACKET_forward(pkt, BUF_LEN - 8)
             || !PACKET_get_4(pkt, &i)
-            ||  i != 0xfffefdfcUL
+            ||  i != 0xfefcfaf8UL
             ||  PACKET_get_4(pkt, &i)) {
         fprintf(stderr, "test_PACKET_get_4() failed\n");
         return 0;
@@ -117,10 +117,10 @@ static int test_PACKET_get_net_2(PACKET *pkt, size_t start)
 
     if (       !PACKET_goto_bookmark(pkt, start)
             || !PACKET_get_net_2(pkt, &i)
-            ||  i != 0x0102
+            ||  i != 0x0204
             || !PACKET_forward(pkt, BUF_LEN - 4)
             || !PACKET_get_net_2(pkt, &i)
-            ||  i != 0xfeff
+            ||  i != 0xfcfe
             ||  PACKET_get_net_2(pkt, &i)) {
         fprintf(stderr, "test_PACKET_get_net_2() failed\n");
         return 0;
@@ -135,11 +135,12 @@ static int test_PACKET_get_net_3(PACKET *pkt, size_t start)
 
     if (       !PACKET_goto_bookmark(pkt, start)
             || !PACKET_get_net_3(pkt, &i)
-            ||  i != 0x010203UL
+            ||  i != 0x020406UL
             || !PACKET_forward(pkt, BUF_LEN - 6)
             || !PACKET_get_net_3(pkt, &i)
-            ||  i != 0xfdfeffUL
+            ||  i != 0xfafcfeUL
             ||  PACKET_get_net_3(pkt, &i)) {
+        fprintf(stderr, "i is %ld\n", i);
         fprintf(stderr, "test_PACKET_get_net_3() failed\n");
         return 0;
     }
@@ -153,10 +154,10 @@ static int test_PACKET_get_net_4(PACKET *pkt, size_t start)
 
     if (       !PACKET_goto_bookmark(pkt, start)
             || !PACKET_get_net_4(pkt, &i)
-            ||  i != 0x01020304UL
+            ||  i != 0x02040608UL
             || !PACKET_forward(pkt, BUF_LEN - 8)
             || !PACKET_get_net_4(pkt, &i)
-            ||  i != 0xfcfdfeffUL
+            ||  i != 0xf8fafcfeUL
             ||  PACKET_get_net_4(pkt, &i)) {
         fprintf(stderr, "test_PACKET_get_net_4() failed\n");
         return 0;
@@ -173,12 +174,12 @@ static int test_PACKET_get_sub_packet(PACKET *pkt, size_t start)
     if (       !PACKET_goto_bookmark(pkt, start)
             || !PACKET_get_sub_packet(pkt, &subpkt, 4)
             || !PACKET_get_net_4(&subpkt, &i)
-            ||  i != 0x01020304UL
+            ||  i != 0x02040608UL
             ||  PACKET_remaining(&subpkt)
             || !PACKET_forward(pkt, BUF_LEN - 8)
             || !PACKET_get_sub_packet(pkt, &subpkt, 4)
             || !PACKET_get_net_4(&subpkt, &i)
-            ||  i != 0xfcfdfeffUL
+            ||  i != 0xf8fafcfeUL
             ||  PACKET_remaining(&subpkt)
             ||  PACKET_get_sub_packet(pkt, &subpkt, 4)) {
         fprintf(stderr, "test_PACKET_get_sub_packet() failed\n");
@@ -194,13 +195,13 @@ static int test_PACKET_get_bytes(PACKET *pkt, size_t start)
 
     if (       !PACKET_goto_bookmark(pkt, start)
             || !PACKET_get_bytes(pkt, &bytes, 4)
-            ||  bytes[0] != 1 || bytes[1] != 2
-            ||  bytes[2] != 3 || bytes[3] != 4
+            ||  bytes[0] != 2 || bytes[1] != 4
+            ||  bytes[2] != 6 || bytes[3] != 8
             ||  PACKET_remaining(pkt) != BUF_LEN -4
             || !PACKET_forward(pkt, BUF_LEN - 8)
             || !PACKET_get_bytes(pkt, &bytes, 4)
-            ||  bytes[0] != 0xfc || bytes[1] != 0xfd
-            ||  bytes[2] != 0xfe || bytes[3] != 0xff
+            ||  bytes[0] != 0xf8 || bytes[1] != 0xfa
+            ||  bytes[2] != 0xfc || bytes[3] != 0xfe
             ||  PACKET_remaining(pkt)) {
         fprintf(stderr, "test_PACKET_get_bytes() failed\n");
         return 0;
@@ -215,13 +216,13 @@ static int test_PACKET_copy_bytes(PACKET *pkt, size_t start)
 
     if (       !PACKET_goto_bookmark(pkt, start)
             || !PACKET_copy_bytes(pkt, bytes, 4)
-            ||  bytes[0] != 1 || bytes[1] != 2
-            ||  bytes[2] != 3 || bytes[3] != 4
+            ||  bytes[0] != 2 || bytes[1] != 4
+            ||  bytes[2] != 6 || bytes[3] != 8
             ||  PACKET_remaining(pkt) != BUF_LEN - 4
             || !PACKET_forward(pkt, BUF_LEN - 8)
             || !PACKET_copy_bytes(pkt, bytes, 4)
-            ||  bytes[0] != 0xfc || bytes[1] != 0xfd
-            ||  bytes[2] != 0xfe || bytes[3] != 0xff
+            ||  bytes[0] != 0xf8 || bytes[1] != 0xfa
+            ||  bytes[2] != 0xfc || bytes[3] != 0xfe
             ||  PACKET_remaining(pkt)) {
         fprintf(stderr, "test_PACKET_copy_bytes() failed\n");
         return 0;
@@ -239,16 +240,16 @@ static int test_PACKET_move_funcs(PACKET *pkt, size_t start)
             ||  PACKET_back(pkt, 1)
             || !PACKET_forward(pkt, 1)
             || !PACKET_get_bytes(pkt, &byte, 1)
-            ||  byte[0] != 2
+            ||  byte[0] != 4
             || !PACKET_get_bookmark(pkt, &bm)
             || !PACKET_forward(pkt, BUF_LEN - 2)
             ||  PACKET_forward(pkt, 1)
             || !PACKET_back(pkt, 1)
             || !PACKET_get_bytes(pkt, &byte, 1)
-            ||  byte[0] != 0xff
+            ||  byte[0] != 0xfe
             || !PACKET_goto_bookmark(pkt, bm)
             || !PACKET_get_bytes(pkt, &byte, 1)
-            ||  byte[0] != 3) {
+            ||  byte[0] != 6) {
         fprintf(stderr, "test_PACKET_move_funcs() failed\n");
         return 0;
     }
@@ -289,7 +290,7 @@ int main(int argc, char **argv)
     PACKET pkt;
 
     for (i=1; i<=BUF_LEN; i++) {
-        buf[i-1] = i;
+        buf[i-1] = (i * 2) & 0xff;
     }
     i = 0;
 
