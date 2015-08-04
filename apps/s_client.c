@@ -519,7 +519,7 @@ OPTIONS s_client_options[] = {
      "Load the file(s) into the random number generator"},
     {"sess_out", OPT_SESS_OUT, '>', "File to write SSL session to"},
     {"sess_in", OPT_SESS_IN, '<', "File to read SSL session from"},
-    {"use_srtp", OPT_USE_SRTP, '<',
+    {"use_srtp", OPT_USE_SRTP, 's',
      "Offer SRTP key management with a colon-separated profile list"},
     {"keymatexport", OPT_KEYMATEXPORT, 's',
      "Export keying material using label"},
