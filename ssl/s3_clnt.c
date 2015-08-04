@@ -930,9 +930,10 @@ int ssl3_get_server_hello(SSL *s)
 {
     STACK_OF(SSL_CIPHER) *sk;
     const SSL_CIPHER *c;
-    unsigned char *p, *d;
+    PACKET pkt;
+    unsigned char *session_id, *cipherchars;
     int i, al = SSL_AD_INTERNAL_ERROR, ok;
-    unsigned int j;
+    unsigned int j, ciphercharlen;
     long n;
 #ifndef OPENSSL_NO_COMP
     SSL_COMP *comp;
@@ -971,10 +972,20 @@ int ssl3_get_server_hello(SSL *s)
         goto f_err;
     }
 
-    d = p = (unsigned char *)s->init_msg;
+    if (!PACKET_buf_init(&pkt, s->init_msg, n)) {
+        al = SSL_AD_INTERNAL_ERROR;
+        SSLerr(SSL_F_SSL3_GET_SERVER_HELLO, ERR_R_INTERNAL_ERROR);
+        goto f_err;
+    }
 
     if (s->method->version == TLS_ANY_VERSION) {
-        int sversion = (p[0] << 8) | p[1];
+        unsigned int sversion;
+
+        if (!PACKET_get_net_2(&pkt, &sversion)) {
+            al = SSL_AD_DECODE_ERROR;
+            SSLerr(SSL_F_SSL3_GET_SERVER_HELLO, SSL_R_LENGTH_MISMATCH);
+            goto f_err;
+        }
 
 #if TLS_MAX_VERSION != TLS1_2_VERSION
 #error Code needs updating for new TLS version
@@ -1012,8 +1023,16 @@ int ssl3_get_server_hello(SSL *s)
         }
     } else if (s->method->version == DTLS_ANY_VERSION) {
         /* Work out correct protocol version to use */
-        int hversion = (p[0] << 8) | p[1];
-        int options = s->options;
+        unsigned int hversion;
+        int options;
+
+        if (!PACKET_get_net_2(&pkt, &hversion)) {
+            al = SSL_AD_DECODE_ERROR;
+            SSLerr(SSL_F_SSL3_GET_SERVER_HELLO, SSL_R_LENGTH_MISMATCH);
+            goto f_err;
+        }
+
+        options = s->options;
         if (hversion == DTLS1_2_VERSION && !(options & SSL_OP_NO_DTLSv1_2))
             s->method = DTLSv1_2_client_method();
         else if (tls1_suiteb(s)) {
@@ -1031,30 +1050,43 @@ int ssl3_get_server_hello(SSL *s)
             goto f_err;
         }
         s->session->ssl_version = s->version = s->method->version;
-    } else if ((p[0] != (s->version >> 8)) || (p[1] != (s->version & 0xff))) {
-        SSLerr(SSL_F_SSL3_GET_SERVER_HELLO, SSL_R_WRONG_SSL_VERSION);
-        s->version = (s->version & 0xff00) | p[1];
-        al = SSL_AD_PROTOCOL_VERSION;
-        goto f_err;
+    } else {
+        unsigned char *vers;
+
+        if (!PACKET_get_bytes(&pkt, &vers, 2)) {
+            al = SSL_AD_DECODE_ERROR;
+            SSLerr(SSL_F_SSL3_GET_SERVER_HELLO, SSL_R_LENGTH_MISMATCH);
+            goto f_err;
+        }
+        if ((vers[0] != (s->version >> 8))
+                || (vers[1] != (s->version & 0xff))) {
+            SSLerr(SSL_F_SSL3_GET_SERVER_HELLO, SSL_R_WRONG_SSL_VERSION);
+            s->version = (s->version & 0xff00) | vers[1];
+            al = SSL_AD_PROTOCOL_VERSION;
+            goto f_err;
+        }
     }
-    p += 2;
 
     /* load the server hello data */
     /* load the server random */
-    memcpy(s->s3->server_random, p, SSL3_RANDOM_SIZE);
-    p += SSL3_RANDOM_SIZE;
+    if (!PACKET_copy_bytes(&pkt, s->s3->server_random, SSL3_RANDOM_SIZE)) {
+        al = SSL_AD_DECODE_ERROR;
+        SSLerr(SSL_F_SSL3_GET_SERVER_HELLO, SSL_R_LENGTH_MISMATCH);
+        goto f_err;
+    }
 
     s->hit = 0;
 
-    /* get the session-id */
-    j = *(p++);
-
-    if ((j > sizeof s->session->session_id) || (j > SSL3_SESSION_ID_SIZE)) {
+    /* get the session-id length */
+    if (!PACKET_get_1(&pkt, &j)
+            || (j > sizeof s->session->session_id)
+            || (j > SSL3_SESSION_ID_SIZE)) {
         al = SSL_AD_ILLEGAL_PARAMETER;
         SSLerr(SSL_F_SSL3_GET_SERVER_HELLO, SSL_R_SSL3_SESSION_ID_TOO_LONG);
         goto f_err;
     }
 
+    ciphercharlen = ssl_put_cipher_by_char(s, NULL, NULL);
     /*
      * Check if we can resume the session based on external pre-shared secret.
      * EAP-FAST (RFC 4851) supports two types of session resumption.
@@ -1070,22 +1102,42 @@ int ssl3_get_server_hello(SSL *s)
     if (s->version >= TLS1_VERSION && s->tls_session_secret_cb &&
         s->session->tlsext_tick) {
         SSL_CIPHER *pref_cipher = NULL;
+        size_t bookm;
+        if (!PACKET_get_bookmark(&pkt, &bookm)
+                || !PACKET_forward(&pkt, j)
+                || !PACKET_get_bytes(&pkt, &cipherchars, ciphercharlen)) {
+            SSLerr(SSL_F_SSL3_GET_SERVER_HELLO, SSL_R_LENGTH_MISMATCH);
+            al = SSL_AD_DECODE_ERROR;
+            goto f_err;
+        }
         s->session->master_key_length = sizeof(s->session->master_key);
         if (s->tls_session_secret_cb(s, s->session->master_key,
                                      &s->session->master_key_length,
                                      NULL, &pref_cipher,
                                      s->tls_session_secret_cb_arg)) {
             s->session->cipher = pref_cipher ?
-                pref_cipher : ssl_get_cipher_by_char(s, p + j);
+                pref_cipher : ssl_get_cipher_by_char(s, cipherchars);
         } else {
+            SSLerr(SSL_F_SSL3_GET_SERVER_HELLO, ERR_R_INTERNAL_ERROR);
+            al = SSL_AD_INTERNAL_ERROR;
+            goto f_err;
+        }
+        if (!PACKET_goto_bookmark(&pkt, bookm)) {
             SSLerr(SSL_F_SSL3_GET_SERVER_HELLO, ERR_R_INTERNAL_ERROR);
             al = SSL_AD_INTERNAL_ERROR;
             goto f_err;
         }
     }
 
+    /* Get the session id */
+    if (!PACKET_get_bytes(&pkt, &session_id, j)) {
+        SSLerr(SSL_F_SSL3_GET_SERVER_HELLO, SSL_R_LENGTH_MISMATCH);
+        al = SSL_AD_DECODE_ERROR;
+        goto f_err;
+    }
+
     if (j != 0 && j == s->session->session_id_length
-        && memcmp(p, s->session->session_id, j) == 0) {
+        && memcmp(session_id, s->session->session_id, j) == 0) {
         if (s->sid_ctx_length != s->session->sid_ctx_length
             || memcmp(s->session->sid_ctx, s->sid_ctx, s->sid_ctx_length)) {
             /* actually a client application bug */
@@ -1109,10 +1161,15 @@ int ssl3_get_server_hello(SSL *s)
             }
         }
         s->session->session_id_length = j;
-        memcpy(s->session->session_id, p, j); /* j could be 0 */
+        memcpy(s->session->session_id, session_id, j); /* j could be 0 */
     }
-    p += j;
-    c = ssl_get_cipher_by_char(s, p);
+
+    if (!PACKET_get_bytes(&pkt, &cipherchars, ciphercharlen)) {
+        SSLerr(SSL_F_SSL3_GET_SERVER_HELLO, SSL_R_LENGTH_MISMATCH);
+        al = SSL_AD_DECODE_ERROR;
+        goto f_err;
+    }
+    c = ssl_get_cipher_by_char(s, cipherchars);
     if (c == NULL) {
         /* unknown cipher */
         al = SSL_AD_ILLEGAL_PARAMETER;
@@ -1133,7 +1190,6 @@ int ssl3_get_server_hello(SSL *s)
         SSLerr(SSL_F_SSL3_GET_SERVER_HELLO, SSL_R_WRONG_CIPHER_RETURNED);
         goto f_err;
     }
-    p += ssl_put_cipher_by_char(s, NULL, NULL);
 
     sk = ssl_get_ciphers_by_id(s);
     i = sk_SSL_CIPHER_find(sk, c);
@@ -1166,8 +1222,13 @@ int ssl3_get_server_hello(SSL *s)
         goto f_err;
     /* lets get the compression algorithm */
     /* COMPRESSION */
+    if (!PACKET_get_1(&pkt, &j)) {
+        SSLerr(SSL_F_SSL3_GET_SERVER_HELLO, SSL_R_LENGTH_MISMATCH);
+        al = SSL_AD_DECODE_ERROR;
+        goto f_err;
+    }
 #ifdef OPENSSL_NO_COMP
-    if (*(p++) != 0) {
+    if (j != 0) {
         al = SSL_AD_ILLEGAL_PARAMETER;
         SSLerr(SSL_F_SSL3_GET_SERVER_HELLO,
                SSL_R_UNSUPPORTED_COMPRESSION_ALGORITHM);
@@ -1182,7 +1243,6 @@ int ssl3_get_server_hello(SSL *s)
         goto f_err;
     }
 #else
-    j = *(p++);
     if (s->hit && j != s->session->compress_meth) {
         al = SSL_AD_ILLEGAL_PARAMETER;
         SSLerr(SSL_F_SSL3_GET_SERVER_HELLO,
@@ -1209,12 +1269,12 @@ int ssl3_get_server_hello(SSL *s)
 #endif
 
     /* TLS extensions */
-    if (!ssl_parse_serverhello_tlsext(s, &p, d, n)) {
+    if (!ssl_parse_serverhello_tlsext(s, &pkt)) {
         SSLerr(SSL_F_SSL3_GET_SERVER_HELLO, SSL_R_PARSE_TLSEXT);
         goto err;
     }
 
-    if (p != (d + n)) {
+    if (PACKET_remaining(&pkt) != 0) {
         /* wrong packet length */
         al = SSL_AD_DECODE_ERROR;
         SSLerr(SSL_F_SSL3_GET_SERVER_HELLO, SSL_R_BAD_PACKET_LENGTH);

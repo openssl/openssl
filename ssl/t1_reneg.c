@@ -220,29 +220,27 @@ int ssl_add_serverhello_renegotiate_ext(SSL *s, unsigned char *p, int *len,
 /*
  * Parse the server's renegotiation binding and abort if it's not right
  */
-int ssl_parse_serverhello_renegotiate_ext(SSL *s, unsigned char *d, int len,
-                                          int *al)
+int ssl_parse_serverhello_renegotiate_ext(SSL *s, PACKET *pkt, int *al)
 {
-    int expected_len = s->s3->previous_client_finished_len
+    unsigned int expected_len = s->s3->previous_client_finished_len
         + s->s3->previous_server_finished_len;
-    int ilen;
+    unsigned int ilen;
+    unsigned char *data;
 
     /* Check for logic errors */
     OPENSSL_assert(!expected_len || s->s3->previous_client_finished_len);
     OPENSSL_assert(!expected_len || s->s3->previous_server_finished_len);
 
     /* Parse the length byte */
-    if (len < 1) {
+    if (!PACKET_get_1(pkt, &ilen)) {
         SSLerr(SSL_F_SSL_PARSE_SERVERHELLO_RENEGOTIATE_EXT,
                SSL_R_RENEGOTIATION_ENCODING_ERR);
         *al = SSL_AD_ILLEGAL_PARAMETER;
         return 0;
     }
-    ilen = *d;
-    d++;
 
     /* Consistency check */
-    if (ilen + 1 != len) {
+    if (PACKET_remaining(pkt) != ilen) {
         SSLerr(SSL_F_SSL_PARSE_SERVERHELLO_RENEGOTIATE_EXT,
                SSL_R_RENEGOTIATION_ENCODING_ERR);
         *al = SSL_AD_ILLEGAL_PARAMETER;
@@ -257,17 +255,18 @@ int ssl_parse_serverhello_renegotiate_ext(SSL *s, unsigned char *d, int len,
         return 0;
     }
 
-    if (memcmp(d, s->s3->previous_client_finished,
-               s->s3->previous_client_finished_len)) {
+    if (!PACKET_get_bytes(pkt, &data, s->s3->previous_client_finished_len)
+            || memcmp(data, s->s3->previous_client_finished,
+               s->s3->previous_client_finished_len) != 0) {
         SSLerr(SSL_F_SSL_PARSE_SERVERHELLO_RENEGOTIATE_EXT,
                SSL_R_RENEGOTIATION_MISMATCH);
         *al = SSL_AD_HANDSHAKE_FAILURE;
         return 0;
     }
-    d += s->s3->previous_client_finished_len;
 
-    if (memcmp(d, s->s3->previous_server_finished,
-               s->s3->previous_server_finished_len)) {
+    if (!PACKET_get_bytes(pkt, &data, s->s3->previous_server_finished_len)
+            || memcmp(data, s->s3->previous_server_finished,
+               s->s3->previous_server_finished_len) != 0) {
         SSLerr(SSL_F_SSL_PARSE_SERVERHELLO_RENEGOTIATE_EXT,
                SSL_R_RENEGOTIATION_MISMATCH);
         *al = SSL_AD_ILLEGAL_PARAMETER;
