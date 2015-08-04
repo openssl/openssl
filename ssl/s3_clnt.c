@@ -2011,12 +2011,13 @@ int ssl3_get_key_exchange(SSL *s)
 int ssl3_get_certificate_request(SSL *s)
 {
     int ok, ret = 0;
-    unsigned long n, nc, l;
-    unsigned int llen, ctype_num, i;
+    unsigned long n;
+    unsigned int list_len, ctype_num, i, name_len;
     X509_NAME *xn = NULL;
-    const unsigned char *p, *q;
-    unsigned char *d;
+    unsigned char *data;
+    unsigned char *namestart, *namebytes;
     STACK_OF(X509_NAME) *ca_sk = NULL;
+    PACKET pkt;
 
     n = s->method->ssl_get_message(s,
                                    SSL3_ST_CR_CERT_REQ_A,
@@ -2055,7 +2056,11 @@ int ssl3_get_certificate_request(SSL *s)
         }
     }
 
-    p = d = (unsigned char *)s->init_msg;
+    if (!PACKET_buf_init(&pkt, s->init_msg, n)) {
+        ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_INTERNAL_ERROR);
+        SSLerr(SSL_F_SSL3_GET_CERTIFICATE_REQUEST, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
 
     if ((ca_sk = sk_X509_NAME_new(ca_dn_cmp)) == NULL) {
         SSLerr(SSL_F_SSL3_GET_CERTIFICATE_REQUEST, ERR_R_MALLOC_FAILURE);
@@ -2063,7 +2068,12 @@ int ssl3_get_certificate_request(SSL *s)
     }
 
     /* get the certificate types */
-    ctype_num = *(p++);
+    if (!PACKET_get_1(&pkt, &ctype_num)
+            || !PACKET_get_bytes(&pkt, &data, ctype_num)) {
+        ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_DECODE_ERROR);
+        SSLerr(SSL_F_SSL3_GET_CERTIFICATE_REQUEST, SSL_R_LENGTH_MISMATCH);
+        goto err;
+    }
     OPENSSL_free(s->cert->ctypes);
     s->cert->ctypes = NULL;
     if (ctype_num > SSL3_CT_NUMBER) {
@@ -2073,31 +2083,27 @@ int ssl3_get_certificate_request(SSL *s)
             SSLerr(SSL_F_SSL3_GET_CERTIFICATE_REQUEST, ERR_R_MALLOC_FAILURE);
             goto err;
         }
-        memcpy(s->cert->ctypes, p, ctype_num);
+        memcpy(s->cert->ctypes, data, ctype_num);
         s->cert->ctype_num = (size_t)ctype_num;
         ctype_num = SSL3_CT_NUMBER;
     }
     for (i = 0; i < ctype_num; i++)
-        s->s3->tmp.ctype[i] = p[i];
-    p += p[-1];
+        s->s3->tmp.ctype[i] = data[i];
+
     if (SSL_USE_SIGALGS(s)) {
-        n2s(p, llen);
-        /*
-         * Check we have enough room for signature algorithms and following
-         * length value.
-         */
-        if ((unsigned long)(p - d + llen + 2) > n) {
+        if (!PACKET_get_net_2(&pkt, &list_len)
+                || !PACKET_get_bytes(&pkt, &data, list_len)) {
             ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_DECODE_ERROR);
-            SSLerr(SSL_F_SSL3_GET_CERTIFICATE_REQUEST,
-                   SSL_R_DATA_LENGTH_TOO_LONG);
+            SSLerr(SSL_F_SSL3_GET_CERTIFICATE_REQUEST, SSL_R_LENGTH_MISMATCH);
             goto err;
         }
+
         /* Clear certificate digests and validity flags */
         for (i = 0; i < SSL_PKEY_NUM; i++) {
             s->s3->tmp.md[i] = NULL;
             s->s3->tmp.valid_flags[i] = 0;
         }
-        if ((llen & 1) || !tls1_save_sigalgs(s, p, llen)) {
+        if ((list_len & 1) || !tls1_save_sigalgs(s, data, list_len)) {
             ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_DECODE_ERROR);
             SSLerr(SSL_F_SSL3_GET_CERTIFICATE_REQUEST,
                    SSL_R_SIGNATURE_ALGORITHMS_ERROR);
@@ -2108,35 +2114,34 @@ int ssl3_get_certificate_request(SSL *s)
             SSLerr(SSL_F_SSL3_GET_CERTIFICATE_REQUEST, ERR_R_MALLOC_FAILURE);
             goto err;
         }
-        p += llen;
     }
 
     /* get the CA RDNs */
-    n2s(p, llen);
-
-    if ((unsigned long)(p - d + llen) != n) {
+    if (!PACKET_get_net_2(&pkt, &list_len)
+            || PACKET_remaining(&pkt) != list_len) {
         ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_DECODE_ERROR);
         SSLerr(SSL_F_SSL3_GET_CERTIFICATE_REQUEST, SSL_R_LENGTH_MISMATCH);
         goto err;
     }
 
-    for (nc = 0; nc < llen;) {
-        n2s(p, l);
-        if ((l + nc + 2) > llen) {
+    while (PACKET_remaining(&pkt)) {
+        if (!PACKET_get_net_2(&pkt, &name_len)
+                || !PACKET_get_bytes(&pkt, &namebytes, name_len)) {
             ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_DECODE_ERROR);
-            SSLerr(SSL_F_SSL3_GET_CERTIFICATE_REQUEST, SSL_R_CA_DN_TOO_LONG);
+            SSLerr(SSL_F_SSL3_GET_CERTIFICATE_REQUEST, SSL_R_LENGTH_MISMATCH);
             goto err;
         }
 
-        q = p;
+        namestart = namebytes;
 
-        if ((xn = d2i_X509_NAME(NULL, &q, l)) == NULL) {
+        if ((xn = d2i_X509_NAME(NULL, (const unsigned char **)&namebytes,
+                                name_len)) == NULL) {
             ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_DECODE_ERROR);
             SSLerr(SSL_F_SSL3_GET_CERTIFICATE_REQUEST, ERR_R_ASN1_LIB);
             goto err;
         }
 
-        if (q != (p + l)) {
+        if (namebytes != (namestart + name_len)) {
             ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_DECODE_ERROR);
             SSLerr(SSL_F_SSL3_GET_CERTIFICATE_REQUEST,
                    SSL_R_CA_DN_LENGTH_MISMATCH);
@@ -2146,9 +2151,6 @@ int ssl3_get_certificate_request(SSL *s)
             SSLerr(SSL_F_SSL3_GET_CERTIFICATE_REQUEST, ERR_R_MALLOC_FAILURE);
             goto err;
         }
-
-        p += l;
-        nc += l + 2;
     }
 
     /* we should setup a certificate to return.... */
