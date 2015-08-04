@@ -2088,8 +2088,7 @@ __owur unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *buf,
 __owur int ssl_parse_clienthello_tlsext(SSL *s, PACKET *pkt);
 __owur int tls1_set_server_sigalgs(SSL *s);
 __owur int ssl_check_clienthello_tlsext_late(SSL *s);
-__owur int ssl_parse_serverhello_tlsext(SSL *s, unsigned char **data,
-                                 unsigned char *d, int n);
+__owur int ssl_parse_serverhello_tlsext(SSL *s, PACKET *pkt);
 __owur int ssl_prepare_clienthello_tlsext(SSL *s);
 __owur int ssl_prepare_serverhello_tlsext(SSL *s);
 
@@ -2126,7 +2125,7 @@ __owur EVP_MD_CTX *ssl_replace_hash(EVP_MD_CTX **hash, const EVP_MD *md);
 void ssl_clear_hash_ctx(EVP_MD_CTX **hash);
 __owur int ssl_add_serverhello_renegotiate_ext(SSL *s, unsigned char *p, int *len,
                                         int maxlen);
-__owur int ssl_parse_serverhello_renegotiate_ext(SSL *s, unsigned char *d, int len,
+__owur int ssl_parse_serverhello_renegotiate_ext(SSL *s, PACKET *pkt,
                                           int *al);
 __owur int ssl_add_clienthello_renegotiate_ext(SSL *s, unsigned char *p, int *len,
                                         int maxlen);
@@ -2147,8 +2146,7 @@ __owur int ssl_add_clienthello_use_srtp_ext(SSL *s, unsigned char *p, int *len,
 __owur int ssl_parse_clienthello_use_srtp_ext(SSL *s, PACKET *pkt, int *al);
 __owur int ssl_add_serverhello_use_srtp_ext(SSL *s, unsigned char *p, int *len,
                                      int maxlen);
-__owur int ssl_parse_serverhello_use_srtp_ext(SSL *s, unsigned char *d, int len,
-                                       int *al);
+__owur int ssl_parse_serverhello_use_srtp_ext(SSL *s, PACKET *pkt, int *al);
 
 __owur int ssl_handshake_hash(SSL *s, unsigned char *out, int outlen);
 
