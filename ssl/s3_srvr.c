@@ -3400,9 +3400,9 @@ int ssl3_send_cert_status(SSL *s)
 int ssl3_get_next_proto(SSL *s)
 {
     int ok;
-    int proto_len, padding_len;
+    unsigned int proto_len, padding_len;
     long n;
-    const unsigned char *p;
+    PACKET pkt;
 
     /*
      * Clients cannot send a NextProtocol message if we didn't see the
@@ -3436,11 +3436,13 @@ int ssl3_get_next_proto(SSL *s)
     }
 
     if (n < 2) {
-        s->state = SSL_ST_ERR;
-        return 0;               /* The body must be > 1 bytes long */
+        goto err;               /* The body must be > 1 bytes long */
     }
 
-    p = (unsigned char *)s->init_msg;
+    if (!PACKET_buf_init(&pkt, s->init_msg, n)) {
+        SSLerr(SSL_F_SSL3_GET_NEXT_PROTO, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
 
     /*-
      * The payload looks like:
@@ -3449,27 +3451,30 @@ int ssl3_get_next_proto(SSL *s)
      *   uint8 padding_len;
      *   uint8 padding[padding_len];
      */
-    proto_len = p[0];
-    if (proto_len + 2 > s->init_num) {
-        s->state = SSL_ST_ERR;
-        return 0;
-    }
-    padding_len = p[proto_len + 1];
-    if (proto_len + padding_len + 2 != s->init_num) {
-        s->state = SSL_ST_ERR;
-        return 0;
+    if (!PACKET_get_1(&pkt, &proto_len)){
+        SSLerr(SSL_F_SSL3_GET_NEXT_PROTO, SSL_R_LENGTH_MISMATCH);
+        goto err;
     }
 
     s->next_proto_negotiated = OPENSSL_malloc(proto_len);
-    if (!s->next_proto_negotiated) {
+    if (s->next_proto_negotiated == NULL) {
         SSLerr(SSL_F_SSL3_GET_NEXT_PROTO, ERR_R_MALLOC_FAILURE);
-        s->state = SSL_ST_ERR;
-        return 0;
+        goto err;
     }
-    memcpy(s->next_proto_negotiated, p + 1, proto_len);
-    s->next_proto_negotiated_len = proto_len;
+
+    if (!PACKET_copy_bytes(&pkt, s->next_proto_negotiated, proto_len)
+            || !PACKET_get_1(&pkt, &padding_len)
+            || PACKET_remaining(&pkt) != padding_len) {
+        OPENSSL_free(s->next_proto_negotiated);
+        s->next_proto_negotiated = NULL;
+        SSLerr(SSL_F_SSL3_GET_NEXT_PROTO, SSL_R_LENGTH_MISMATCH);
+        goto err;
+    }
 
     return 1;
+err:
+    s->state = SSL_ST_ERR;
+    return 0;
 }
 #endif
 
