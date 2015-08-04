@@ -23,6 +23,18 @@
 # define GOST_PARAM_MAX 0
 # define GOST_CTRL_CRYPT_PARAMS (ENGINE_CMD_BASE+GOST_PARAM_CRYPT_PARAMS)
 
+typedef struct R3410_2001 {
+    int nid;
+    char *a;
+    char *b;
+    char *p;
+    char *q;
+    char *x;
+    char *y;
+} R3410_2001_params;
+
+extern R3410_2001_params R3410_2001_paramset[];
+
 extern const ENGINE_CMD_DEFN gost_cmds[];
 int gost_control_func(ENGINE *e, int cmd, long i, void *p, void (*f) (void));
 const char *get_gost_engine_param(int param);
@@ -167,14 +179,6 @@ extern EVP_CIPHER cipher_gost_cpacnt;
 # define EVP_MD_CTRL_KEY_LEN (EVP_MD_CTRL_ALG_CTRL+3)
 # define EVP_MD_CTRL_SET_KEY (EVP_MD_CTRL_ALG_CTRL+4)
 /* EVP_PKEY_METHOD key encryption callbacks */
-/* From gost94_keyx.c */
-int pkey_GOST94cp_encrypt(EVP_PKEY_CTX *ctx, unsigned char *out,
-                          size_t *outlen, const unsigned char *key,
-                          size_t key_len);
-
-int pkey_GOST94cp_decrypt(EVP_PKEY_CTX *ctx, unsigned char *out,
-                          size_t *outlen, const unsigned char *in,
-                          size_t in_len);
 /* From gost2001_keyx.c */
 int pkey_GOST01cp_encrypt(EVP_PKEY_CTX *ctx, unsigned char *out,
                           size_t *outlen, const unsigned char *key,
@@ -187,10 +191,7 @@ int pkey_GOST01cp_decrypt(EVP_PKEY_CTX *ctx, unsigned char *out,
 /* From gost2001_keyx.c */
 int pkey_gost2001_derive(EVP_PKEY_CTX *ctx, unsigned char *key,
                          size_t *keylen);
-/* From gost94_keyx.c */
-int pkey_gost94_derive(EVP_PKEY_CTX *ctx, unsigned char *key, size_t *keylen);
 /* Internal functions for signature algorithms */
-int fill_GOST94_params(DSA *dsa, int nid);
 int fill_GOST2001_params(EC_KEY *eckey, int nid);
 int gost_sign_keygen(DSA *dsa);
 int gost2001_keygen(EC_KEY *ec);
@@ -203,7 +204,6 @@ int gost_do_verify(const unsigned char *dgst, int dgst_len,
 int gost2001_do_verify(const unsigned char *dgst, int dgst_len,
                        DSA_SIG *sig, EC_KEY *ec);
 int gost2001_compute_public(EC_KEY *ec);
-int gost94_compute_public(DSA *dsa);
 /*============== miscellaneous functions============================= */
 /* from gost_sign.c */
 /* Convert GOST R 34.11 hash sum to bignum according to standard */
@@ -220,10 +220,8 @@ int pack_sign_cp(DSA_SIG *s, int order, unsigned char *sig, size_t *siglen);
 /* Unpack GOST R 34.10 signature according to CryptoPro rules */
 DSA_SIG *unpack_cp_signature(const unsigned char *sig, size_t siglen);
 /* from ameth.c */
-/* Get private key as BIGNUM from both R 34.10-94 and R 34.10-2001  keys*/
+/* Get private key as BIGNUM from both 34.10-2001 keys*/
 /* Returns pointer into EVP_PKEY structure */
 BIGNUM *gost_get0_priv_key(const EVP_PKEY *pkey);
-/* Find NID by GOST 94 parameters */
-int gost94_nid_by_params(DSA *p);
 
 #endif

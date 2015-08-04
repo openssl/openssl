@@ -7,7 +7,6 @@
  *          Requires OpenSSL 0.9.9 for compilation                    *
  **********************************************************************/
 #include "gost_lcl.h"
-#include "gost_params.h"
 #include <string.h>
 #include <openssl/rand.h>
 #include <openssl/ecdsa.h>

@@ -3059,8 +3059,7 @@ int ssl3_send_client_verify(SSL *s)
             n = j + 2;
         } else
 #endif
-        if (pkey->type == NID_id_GostR3410_94
-                || pkey->type == NID_id_GostR3410_2001) {
+        if (pkey->type == NID_id_GostR3410_2001) {
             unsigned char signbuf[64];
             int i;
             size_t sigsize = 64;

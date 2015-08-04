@@ -2736,9 +2736,7 @@ int ssl3_get_client_key_exchange(SSL *s)
 
         /* Get our certificate private key */
         alg_a = s->s3->tmp.new_cipher->algorithm_auth;
-        if (alg_a & SSL_aGOST94)
-            pk = s->cert->pkeys[SSL_PKEY_GOST94].privatekey;
-        else if (alg_a & SSL_aGOST01)
+        if (alg_a & SSL_aGOST01)
             pk = s->cert->pkeys[SSL_PKEY_GOST01].privatekey;
 
         pkey_ctx = EVP_PKEY_CTX_new(pk, NULL);
@@ -2874,8 +2872,7 @@ int ssl3_get_cert_verify(SSL *s)
      * If key is GOST and n is exactly 64, it is bare signature without
      * length field
      */
-    if (n == 64 && (pkey->type == NID_id_GostR3410_94 ||
-                    pkey->type == NID_id_GostR3410_2001)) {
+    if (n == 64 && pkey->type == NID_id_GostR3410_2001) {
         len = 64;
     } else {
         if (SSL_USE_SIGALGS(s)) {
@@ -2984,8 +2981,7 @@ int ssl3_get_cert_verify(SSL *s)
         }
     } else
 #endif
-    if (pkey->type == NID_id_GostR3410_94
-            || pkey->type == NID_id_GostR3410_2001) {
+    if (pkey->type == NID_id_GostR3410_2001) {
         unsigned char signature[64];
         int idx;
         EVP_PKEY_CTX *pctx = EVP_PKEY_CTX_new(pkey, NULL);

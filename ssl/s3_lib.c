@@ -1147,19 +1147,6 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
 
     {
      1,
-     "GOST94-GOST89-GOST89",
-     0x3000080,
-     SSL_kGOST,
-     SSL_aGOST94,
-     SSL_eGOST2814789CNT,
-     SSL_GOST89MAC,
-     SSL_TLSV1,
-     SSL_NOT_EXP | SSL_HIGH,
-     SSL_HANDSHAKE_MAC_GOST94 | TLS1_PRF_GOST94 | TLS1_STREAM_MAC,
-     256,
-     256},
-    {
-     1,
      "GOST2001-GOST89-GOST89",
      0x3000081,
      SSL_kGOST,
@@ -1170,20 +1157,8 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      SSL_NOT_EXP | SSL_HIGH,
      SSL_HANDSHAKE_MAC_GOST94 | TLS1_PRF_GOST94 | TLS1_STREAM_MAC,
      256,
-     256},
-    {
-     1,
-     "GOST94-NULL-GOST94",
-     0x3000082,
-     SSL_kGOST,
-     SSL_aGOST94,
-     SSL_eNULL,
-     SSL_GOST94,
-     SSL_TLSV1,
-     SSL_NOT_EXP | SSL_STRONG_NONE,
-     SSL_HANDSHAKE_MAC_GOST94 | TLS1_PRF_GOST94,
-     0,
-     0},
+     256
+    },
     {
      1,
      "GOST2001-NULL-GOST94",
@@ -1196,7 +1171,8 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      SSL_NOT_EXP | SSL_STRONG_NONE,
      SSL_HANDSHAKE_MAC_GOST94 | TLS1_PRF_GOST94,
      0,
-     0},
+     0
+    },
 
 #ifndef OPENSSL_NO_CAMELLIA
     /* Camellia ciphersuites from RFC4132 (256-bit portion) */
@@ -3474,63 +3450,6 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      256},
 #endif
 
-#ifdef TEMP_GOST_TLS
-/* Cipher FF00 */
-    {
-     1,
-     "GOST-MD5",
-     0x0300ff00,
-     SSL_kRSA,
-     SSL_aRSA,
-     SSL_eGOST2814789CNT,
-     SSL_MD5,
-     SSL_TLSV1,
-     SSL_NOT_EXP | SSL_HIGH,
-     SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
-     256,
-     256,
-     },
-    {
-     1,
-     "GOST-GOST94",
-     0x0300ff01,
-     SSL_kRSA,
-     SSL_aRSA,
-     SSL_eGOST2814789CNT,
-     SSL_GOST94,
-     SSL_TLSV1,
-     SSL_NOT_EXP | SSL_HIGH,
-     SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
-     256,
-     256},
-    {
-     1,
-     "GOST-GOST89MAC",
-     0x0300ff02,
-     SSL_kRSA,
-     SSL_aRSA,
-     SSL_eGOST2814789CNT,
-     SSL_GOST89MAC,
-     SSL_TLSV1,
-     SSL_NOT_EXP | SSL_HIGH,
-     SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
-     256,
-     256},
-    {
-     1,
-     "GOST-GOST89STREAM",
-     0x0300ff03,
-     SSL_kRSA,
-     SSL_aRSA,
-     SSL_eGOST2814789CNT,
-     SSL_GOST89MAC,
-     SSL_TLSV1,
-     SSL_NOT_EXP | SSL_HIGH,
-     SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF | TLS1_STREAM_MAC,
-     256,
-     256},
-#endif
-
 /* end of list */
 };
 
@@ -4694,7 +4613,6 @@ int ssl3_get_req_cert_type(SSL *s, unsigned char *p)
 #ifndef OPENSSL_NO_GOST
     if (s->version >= TLS1_VERSION) {
         if (alg_k & SSL_kGOST) {
-            p[ret++] = TLS_CT_GOST94_SIGN;
             p[ret++] = TLS_CT_GOST01_SIGN;
             return (ret);
         }

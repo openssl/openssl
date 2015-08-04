@@ -54,3 +54,19 @@ ASN1_NDEF_SEQUENCE(GOST_CLIENT_KEY_EXCHANGE_PARAMS) = { /* FIXME incomplete */
 
 ASN1_NDEF_SEQUENCE_END(GOST_CLIENT_KEY_EXCHANGE_PARAMS)
 IMPLEMENT_ASN1_FUNCTIONS(GOST_CLIENT_KEY_EXCHANGE_PARAMS)
+
+/* Convert byte buffer to bignum, skipping leading zeros*/
+BIGNUM *getbnfrombuf(const unsigned char *buf, size_t len)
+{
+    BIGNUM *b;
+
+    while (*buf == 0 && len > 0) {
+        buf++;
+        len--;
+    }
+    if (len)
+        return BN_bin2bn(buf, len, NULL);
+    b = BN_new();
+    BN_zero(b);
+    return b;
+}

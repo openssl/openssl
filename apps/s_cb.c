@@ -288,7 +288,6 @@ static STRINT_PAIR cert_type_list[] = {
     {"ECDSA sign", TLS_CT_ECDSA_SIGN},
     {"RSA fixed ECDH", TLS_CT_RSA_FIXED_ECDH},
     {"ECDSA fixed ECDH", TLS_CT_ECDSA_FIXED_ECDH},
-    {"GOST94 Sign", TLS_CT_GOST94_SIGN},
     {"GOST01 Sign", TLS_CT_GOST01_SIGN},
     {NULL}
 };

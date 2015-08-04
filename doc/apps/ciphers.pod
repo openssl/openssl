@@ -310,11 +310,6 @@ cipher suites using GOST R 34.10 (either 2001 or 94) for authentication
 
 cipher suites using GOST R 34.10-2001 authentication.
 
-=item B<aGOST94>
-
-cipher suites using GOST R 34.10-94 authentication (note that R 34.10-94
-standard has been expired so use GOST R 34.10-2001)
-
 =item B<kGOST>
 
 cipher suites, using VKO 34.10 key exchange, specified in the RFC 4357.

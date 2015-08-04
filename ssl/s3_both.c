@@ -618,9 +618,7 @@ int ssl_cert_type(X509 *x, EVP_PKEY *pkey)
         ret = SSL_PKEY_ECC;
     }
 #endif
-    else if (i == NID_id_GostR3410_94 || i == NID_id_GostR3410_94_cc) {
-        ret = SSL_PKEY_GOST94;
-    } else if (i == NID_id_GostR3410_2001 || i == NID_id_GostR3410_2001_cc) {
+    else if (i == NID_id_GostR3410_2001) {
         ret = SSL_PKEY_GOST01;
     } else if (x && (i == EVP_PKEY_DH || i == EVP_PKEY_DHX)) {
         /*
