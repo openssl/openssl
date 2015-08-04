@@ -1014,7 +1014,7 @@ int ssl3_get_client_hello(SSL *s)
         if (!PACKET_get_net_2(&pkt, &csl)
                 || !PACKET_get_net_2(&pkt, &sil)
                 || !PACKET_get_net_2(&pkt, &cl)) {
-            SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, SSL_R_LENGTH_TOO_SHORT);
+            SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, SSL_R_RECORD_LENGTH_MISMATCH);
             al = SSL_AD_DECODE_ERROR;
             goto f_err;
         }
