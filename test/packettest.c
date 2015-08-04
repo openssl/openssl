@@ -140,7 +140,6 @@ static int test_PACKET_get_net_3(PACKET *pkt, size_t start)
             || !PACKET_get_net_3(pkt, &i)
             ||  i != 0xfafcfeUL
             ||  PACKET_get_net_3(pkt, &i)) {
-        fprintf(stderr, "i is %ld\n", i);
         fprintf(stderr, "test_PACKET_get_net_3() failed\n");
         return 0;
     }
