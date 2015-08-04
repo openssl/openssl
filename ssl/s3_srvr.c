@@ -3012,10 +3012,11 @@ int ssl3_get_client_certificate(SSL *s)
 {
     int i, ok, al, ret = -1;
     X509 *x = NULL;
-    unsigned long l, nc, llen, n;
-    const unsigned char *p, *q;
-    unsigned char *d;
+    unsigned long l, llen, n;
+    const unsigned char *certstart;
+    unsigned char *certbytes;
     STACK_OF(X509) *sk = NULL;
+    PACKET pkt, spkt;
 
     n = s->method->ssl_get_message(s,
                                    SSL3_ST_SR_CERT_A,
@@ -3051,35 +3052,42 @@ int ssl3_get_client_certificate(SSL *s)
         SSLerr(SSL_F_SSL3_GET_CLIENT_CERTIFICATE, SSL_R_WRONG_MESSAGE_TYPE);
         goto f_err;
     }
-    p = d = (unsigned char *)s->init_msg;
+
+    if (!PACKET_buf_init(&pkt, s->init_msg, n)) {
+        al = SSL_AD_INTERNAL_ERROR;
+        SSLerr(SSL_F_SSL3_GET_CLIENT_CERTIFICATE, ERR_R_INTERNAL_ERROR);
+        goto f_err;
+    }
 
     if ((sk = sk_X509_new_null()) == NULL) {
         SSLerr(SSL_F_SSL3_GET_CLIENT_CERTIFICATE, ERR_R_MALLOC_FAILURE);
         goto done;
     }
 
-    n2l3(p, llen);
-    if (llen + 3 != n) {
+    if (!PACKET_get_net_3(&pkt, &llen)
+            || !PACKET_get_sub_packet(&pkt, &spkt, llen)
+            || PACKET_remaining(&pkt) != 0) {
         al = SSL_AD_DECODE_ERROR;
         SSLerr(SSL_F_SSL3_GET_CLIENT_CERTIFICATE, SSL_R_LENGTH_MISMATCH);
         goto f_err;
     }
-    for (nc = 0; nc < llen;) {
-        n2l3(p, l);
-        if ((l + nc + 3) > llen) {
+
+    while (PACKET_remaining(&spkt) > 0) {
+        if (!PACKET_get_net_3(&spkt, &l)
+                || !PACKET_get_bytes(&spkt, &certbytes, l)) {
             al = SSL_AD_DECODE_ERROR;
             SSLerr(SSL_F_SSL3_GET_CLIENT_CERTIFICATE,
                    SSL_R_CERT_LENGTH_MISMATCH);
             goto f_err;
         }
 
-        q = p;
-        x = d2i_X509(NULL, &p, l);
+        certstart = certbytes;
+        x = d2i_X509(NULL, (const unsigned char **)&certbytes, l);
         if (x == NULL) {
             SSLerr(SSL_F_SSL3_GET_CLIENT_CERTIFICATE, ERR_R_ASN1_LIB);
             goto done;
         }
-        if (p != (q + l)) {
+        if (certbytes != (certstart + l)) {
             al = SSL_AD_DECODE_ERROR;
             SSLerr(SSL_F_SSL3_GET_CLIENT_CERTIFICATE,
                    SSL_R_CERT_LENGTH_MISMATCH);
@@ -3090,7 +3098,6 @@ int ssl3_get_client_certificate(SSL *s)
             goto done;
         }
         x = NULL;
-        nc += l + 3;
     }
 
     if (sk_X509_num(sk) <= 0) {
