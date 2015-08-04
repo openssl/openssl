@@ -1263,6 +1263,8 @@ OCSP_RESPONSE *process_responder(OCSP_REQUEST *req,
     SSL_CTX *ctx = NULL;
     OCSP_RESPONSE *resp = NULL;
     cbio = BIO_new_connect(host);
+    int hasHost = 0;
+    int i = 0;
     if (!cbio) {
         BIO_printf(bio_err, "Error creating connect BIO\n");
         goto end;
@@ -1280,6 +1282,18 @@ OCSP_RESPONSE *process_responder(OCSP_REQUEST *req,
         sbio = BIO_new_ssl(ctx, 1);
         cbio = BIO_push(sbio, cbio);
     }
+    for (i = 0; i < sk_CONF_VALUE_num(headers); i++) {
+       CONF_VALUE *hdr = sk_CONF_VALUE_value(headers, i);
+       if(strcasecmp("host",hdr->name) == 0){
+           hasHost = 1;
+       }
+    }
+    if(!hasHost){
+       if (!X509V3_add_value("Host", host, &headers)){
+           BIO_printf(bio_err, "Error set HTTP Host Header\n");
+       }
+    }
+
     resp = query_responder(cbio, path, headers, req, req_timeout);
     if (!resp)
         BIO_printf(bio_err, "Error querying OCSP responder\n");
