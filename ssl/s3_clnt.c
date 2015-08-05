@@ -2271,7 +2271,8 @@ int ssl3_get_cert_status(SSL *s)
 {
     int ok, al;
     unsigned long resplen, n;
-    const unsigned char *p;
+    unsigned int type;
+    PACKET pkt;
 
     n = s->method->ssl_get_message(s,
                                    SSL3_ST_CR_CERT_STATUS_A,
@@ -2280,29 +2281,34 @@ int ssl3_get_cert_status(SSL *s)
 
     if (!ok)
         return ((int)n);
-    if (n < 4) {
-        /* need at least status type + length */
-        al = SSL_AD_DECODE_ERROR;
-        SSLerr(SSL_F_SSL3_GET_CERT_STATUS, SSL_R_LENGTH_MISMATCH);
+
+    if (!PACKET_buf_init(&pkt, s->init_msg, n)) {
+        al = SSL_AD_INTERNAL_ERROR;
+        SSLerr(SSL_F_SSL3_GET_CERT_STATUS, ERR_R_INTERNAL_ERROR);
         goto f_err;
     }
-    p = (unsigned char *)s->init_msg;
-    if (*p++ != TLSEXT_STATUSTYPE_ocsp) {
+    if (!PACKET_get_1(&pkt, &type)
+            || type != TLSEXT_STATUSTYPE_ocsp) {
         al = SSL_AD_DECODE_ERROR;
         SSLerr(SSL_F_SSL3_GET_CERT_STATUS, SSL_R_UNSUPPORTED_STATUS_TYPE);
         goto f_err;
     }
-    n2l3(p, resplen);
-    if (resplen + 4 != n) {
+    if (!PACKET_get_net_3(&pkt, &resplen)
+            || PACKET_remaining(&pkt) != resplen) {
         al = SSL_AD_DECODE_ERROR;
         SSLerr(SSL_F_SSL3_GET_CERT_STATUS, SSL_R_LENGTH_MISMATCH);
         goto f_err;
     }
     OPENSSL_free(s->tlsext_ocsp_resp);
-    s->tlsext_ocsp_resp = BUF_memdup(p, resplen);
+    s->tlsext_ocsp_resp = OPENSSL_malloc(resplen);
     if (!s->tlsext_ocsp_resp) {
         al = SSL_AD_INTERNAL_ERROR;
         SSLerr(SSL_F_SSL3_GET_CERT_STATUS, ERR_R_MALLOC_FAILURE);
+        goto f_err;
+    }
+    if (!PACKET_copy_bytes(&pkt, s->tlsext_ocsp_resp, resplen)) {
+        al = SSL_AD_DECODE_ERROR;
+        SSLerr(SSL_F_SSL3_GET_CERT_STATUS, SSL_R_LENGTH_MISMATCH);
         goto f_err;
     }
     s->tlsext_ocsp_resplen = resplen;
