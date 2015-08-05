@@ -2174,10 +2174,10 @@ static int ca_dn_cmp(const X509_NAME *const *a, const X509_NAME *const *b)
 
 int ssl3_get_new_session_ticket(SSL *s)
 {
-    int ok, al, ret = 0, ticklen;
+    int ok, al, ret = 0;
+    unsigned int ticklen;
     long n;
-    const unsigned char *p;
-    unsigned char *d;
+    PACKET pkt;
 
     n = s->method->ssl_get_message(s,
                                    SSL3_ST_CR_SESSION_TICKET_A,
@@ -2187,14 +2187,11 @@ int ssl3_get_new_session_ticket(SSL *s)
     if (!ok)
         return ((int)n);
 
-    if (n < 6) {
-        /* need at least ticket_lifetime_hint + ticket length */
-        al = SSL_AD_DECODE_ERROR;
-        SSLerr(SSL_F_SSL3_GET_NEW_SESSION_TICKET, SSL_R_LENGTH_MISMATCH);
+    if (!PACKET_buf_init(&pkt, s->init_msg, n)) {
+        al = SSL_AD_INTERNAL_ERROR;
+        SSLerr(SSL_F_SSL3_GET_NEW_SESSION_TICKET, ERR_R_INTERNAL_ERROR);
         goto f_err;
     }
-
-    p = d = (unsigned char *)s->init_msg;
 
     if (s->session->session_id_length > 0) {
         int i = s->session_ctx->session_cache_mode;
@@ -2227,10 +2224,9 @@ int ssl3_get_new_session_ticket(SSL *s)
         s->session = new_sess;
     }
 
-    n2l(p, s->session->tlsext_tick_lifetime_hint);
-    n2s(p, ticklen);
-    /* ticket_lifetime_hint + ticket_length + ticket */
-    if (ticklen + 6 != n) {
+    if (!PACKET_get_net_4(&pkt, &s->session->tlsext_tick_lifetime_hint)
+            || !PACKET_get_net_2(&pkt, &ticklen)
+            || PACKET_remaining(&pkt) != ticklen) {
         al = SSL_AD_DECODE_ERROR;
         SSLerr(SSL_F_SSL3_GET_NEW_SESSION_TICKET, SSL_R_LENGTH_MISMATCH);
         goto f_err;
@@ -2242,7 +2238,11 @@ int ssl3_get_new_session_ticket(SSL *s)
         SSLerr(SSL_F_SSL3_GET_NEW_SESSION_TICKET, ERR_R_MALLOC_FAILURE);
         goto err;
     }
-    memcpy(s->session->tlsext_tick, p, ticklen);
+    if (!PACKET_copy_bytes(&pkt, s->session->tlsext_tick, ticklen)) {
+        al = SSL_AD_DECODE_ERROR;
+        SSLerr(SSL_F_SSL3_GET_NEW_SESSION_TICKET, SSL_R_LENGTH_MISMATCH);
+        goto f_err;
+    }
     s->session->tlsext_ticklen = ticklen;
     /*
      * There are two ways to detect a resumed ticket session. One is to set
@@ -2255,7 +2255,7 @@ int ssl3_get_new_session_ticket(SSL *s)
      * elsewhere in OpenSSL. The session ID is set to the SHA256 (or SHA1 is
      * SHA256 is disabled) hash of the ticket.
      */
-    EVP_Digest(p, ticklen,
+    EVP_Digest(s->session->tlsext_tick, ticklen,
                s->session->session_id, &s->session->session_id_length,
                EVP_sha256(), NULL);
     ret = 1;
