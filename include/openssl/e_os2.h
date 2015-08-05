@@ -294,6 +294,22 @@ typedef unsigned __int64 uint64_t;
 #  include <stdint.h>
 # endif
 
+/*
+ * We need a format operator for some client tools for uint64_t.
+ * This is an attempt at doing so in a portable manner.
+ * If we can't use a built-in definition, we'll revert to the previous
+ * behavior that was hard-coded but now causing compiler warnings on
+ * some systems (e.g. Mac OS X).
+ */
+# ifndef PRIu64
+#  if (__STDC_VERSION__ >= 199901L)
+#   include <inttypes.h>
+#  endif
+#  ifndef PRIu64
+#   define PRIu64 "lu"
+#  endif
+# endif
+
 #ifdef  __cplusplus
 }
 #endif
