@@ -727,6 +727,8 @@ static int ssl23_get_server_hello(SSL *s)
             goto err;
         }
 
+        s->session->ssl_version = s->version;
+
         /* ensure that TLS_MAX_VERSION is up-to-date */
         OPENSSL_assert(s->version <= TLS_MAX_VERSION);
 
