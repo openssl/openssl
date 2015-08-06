@@ -429,7 +429,7 @@ OPT_PAIR doit_choices[] = {
 #ifndef OPENSSL_NO_WHIRLPOOL
     {"whirlpool", D_WHIRLPOOL},
 #endif
-#ifndef OPENSSL_NO_RIPEMD
+#ifndef OPENSSL_NO_RMD160
     {"ripemd", D_RMD160},
     {"rmd160", D_RMD160},
     {"ripemd160", D_RMD160},
@@ -605,7 +605,7 @@ int speed_main(int argc, char **argv)
 #ifndef OPENSSL_NO_WHIRLPOOL
     unsigned char whirlpool[WHIRLPOOL_DIGEST_LENGTH];
 #endif
-#ifndef OPENSSL_NO_RIPEMD
+#ifndef OPENSSL_NO_RMD160
     unsigned char rmd160[RIPEMD160_DIGEST_LENGTH];
 #endif
 #ifndef OPENSSL_NO_RC4
