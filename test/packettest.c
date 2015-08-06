@@ -131,7 +131,7 @@ static int test_PACKET_get_net_2(PACKET *pkt, size_t start)
 
 static int test_PACKET_get_net_3(PACKET *pkt, size_t start)
 {
-    unsigned long i;
+    unsigned long i = 0;
 
     if (       !PACKET_goto_bookmark(pkt, start)
             || !PACKET_get_net_3(pkt, &i)
