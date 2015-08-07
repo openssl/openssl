@@ -98,6 +98,7 @@ my $success = 0;
 my $end = 0;
 my @message_rec_list = ();
 my @message_frag_lens = ();
+my $ciphersuite = 0;
 
 sub clear
 {
@@ -119,6 +120,8 @@ sub get_messages
     my $record = shift;
     my @messages = ();
     my $message;
+
+    @message_frag_lens = ();
 
     if ($serverin != $server && length($payload) != 0) {
         die "Changed peer, but we still have fragment data\n";
@@ -252,6 +255,24 @@ sub create_message
             [@message_frag_lens]
         );
         $message->parse();
+    } elsif ($mt == MT_SERVER_HELLO) {
+        $message = TLSProxy::ServerHello->new(
+            $server,
+            $data,
+            [@message_rec_list],
+            $startoffset,
+            [@message_frag_lens]
+        );
+        $message->parse();
+    } elsif ($mt == MT_SERVER_KEY_EXCHANGE) {
+        $message = TLSProxy::ServerKeyExchange->new(
+            $server,
+            $data,
+            [@message_rec_list],
+            $startoffset,
+            [@message_frag_lens]
+        );
+        $message->parse();
     } else {
         #Unknown message type
         $message = TLSProxy::Message->new(
@@ -277,7 +298,11 @@ sub success
     my $class = shift;
     return $success;
 }
-
+sub fail
+{
+    my $class = shift;
+    return !$success && $end;
+}
 sub new
 {
     my $class = shift;
@@ -298,6 +323,15 @@ sub new
     };
 
     return bless $self, $class;
+}
+
+sub ciphersuite
+{
+    my $class = shift;
+    if (@_) {
+      $ciphersuite = shift;
+    }
+    return $ciphersuite;
 }
 
 #Update all the underlying records with the modified data from this message
