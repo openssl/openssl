@@ -67,8 +67,6 @@
 # include <openssl/engine.h>
 #endif
 
-const char RSA_version[] = "RSA" OPENSSL_VERSION_PTEXT;
-
 static const RSA_METHOD *default_RSA_meth = NULL;
 
 RSA *RSA_new(void)

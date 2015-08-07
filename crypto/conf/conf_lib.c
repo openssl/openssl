@@ -64,8 +64,6 @@
 #include <openssl/conf_api.h>
 #include <openssl/lhash.h>
 
-const char CONF_version[] = "CONF" OPENSSL_VERSION_PTEXT;
-
 static CONF_METHOD *default_CONF_method = NULL;
 
 /* Init a 'CONF' structure from an old LHASH */

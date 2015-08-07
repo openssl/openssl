@@ -60,8 +60,6 @@
 #include "idea_lcl.h"
 #include <openssl/opensslv.h>
 
-const char IDEA_version[] = "IDEA" OPENSSL_VERSION_PTEXT;
-
 const char *idea_options(void)
 {
     if (sizeof(short) != sizeof(IDEA_INT))

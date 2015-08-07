@@ -157,8 +157,6 @@
 #endif
 #include <openssl/rand.h>
 
-const char ssl3_version_str[] = "SSLv3" OPENSSL_VERSION_PTEXT;
-
 #define SSL3_NUM_CIPHERS        OSSL_NELEM(ssl3_ciphers)
 
 /* list of available SSLv3 ciphers (sorted by id) */

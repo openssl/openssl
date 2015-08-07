@@ -36,7 +36,6 @@ extern "C" {
 # else
 #  define OPENSSL_VERSION_TEXT    "OpenSSL 1.1.0-dev xx XXX xxxx"
 # endif
-# define OPENSSL_VERSION_PTEXT   " part of " OPENSSL_VERSION_TEXT
 
 /*-
  * The macros below are to be used for shared library (.so, .dll, ...)

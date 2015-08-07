@@ -121,8 +121,6 @@
 #endif
 #include "ssl_locl.h"
 
-const char tls1_version_str[] = "TLSv1" OPENSSL_VERSION_PTEXT;
-
 static int tls_decrypt_ticket(SSL *s, const unsigned char *tick, int ticklen,
                               const unsigned char *sess_id, int sesslen,
                               SSL_SESSION **psess);

@@ -60,8 +60,6 @@
 #include "md5_locl.h"
 #include <openssl/opensslv.h>
 
-const char MD5_version[] = "MD5" OPENSSL_VERSION_PTEXT;
-
 /*
  * Implemented from RFC1321 The MD5 Message-Digest Algorithm
  */

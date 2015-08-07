@@ -13,8 +13,6 @@
 #include <openssl/sha.h>
 #include <openssl/opensslv.h>
 
-const char SHA256_version[] = "SHA-256" OPENSSL_VERSION_PTEXT;
-
 int SHA224_Init(SHA256_CTX *c)
 {
     memset(c, 0, sizeof(*c));
