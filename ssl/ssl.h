@@ -2465,8 +2465,11 @@ void ERR_load_SSL_strings(void);
 # define SSL_R_BAD_DATA_RETURNED_BY_CALLBACK              106
 # define SSL_R_BAD_DECOMPRESSION                          107
 # define SSL_R_BAD_DH_G_LENGTH                            108
+# define SSL_R_BAD_DH_G_VALUE                             375
 # define SSL_R_BAD_DH_PUB_KEY_LENGTH                      109
+# define SSL_R_BAD_DH_PUB_KEY_VALUE                       393
 # define SSL_R_BAD_DH_P_LENGTH                            110
+# define SSL_R_BAD_DH_P_VALUE                             395
 # define SSL_R_BAD_DIGEST_LENGTH                          111
 # define SSL_R_BAD_DSA_SIGNATURE                          112
 # define SSL_R_BAD_ECC_CERT                               304

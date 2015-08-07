@@ -1624,6 +1624,12 @@ int ssl3_get_key_exchange(SSL *s)
         }
         p += i;
 
+        if (BN_is_zero(dh->p)) {
+            SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE, SSL_R_BAD_DH_P_VALUE);
+            goto f_err;
+        }
+
+
         if (2 > n - param_len) {
             SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE, SSL_R_LENGTH_TOO_SHORT);
             goto f_err;
@@ -1643,6 +1649,11 @@ int ssl3_get_key_exchange(SSL *s)
             goto err;
         }
         p += i;
+
+        if (BN_is_zero(dh->g)) {
+            SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE, SSL_R_BAD_DH_G_VALUE);
+            goto f_err;
+        }
 
         if (2 > n - param_len) {
             SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE, SSL_R_LENGTH_TOO_SHORT);
@@ -1664,6 +1675,11 @@ int ssl3_get_key_exchange(SSL *s)
         }
         p += i;
         n -= param_len;
+
+        if (BN_is_zero(dh->pub_key)) {
+            SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE, SSL_R_BAD_DH_PUB_KEY_VALUE);
+            goto f_err;
+        }
 
 # ifndef OPENSSL_NO_RSA
         if (alg_a & SSL_aRSA)
