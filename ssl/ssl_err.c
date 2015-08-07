@@ -226,7 +226,6 @@ static ERR_STRING_DATA SSL_str_functs[] = {
     {ERR_FUNC(SSL_F_SSL_CTX_USE_CERTIFICATE), "SSL_CTX_use_certificate"},
     {ERR_FUNC(SSL_F_SSL_CTX_USE_CERTIFICATE_ASN1),
      "SSL_CTX_use_certificate_ASN1"},
-    {ERR_FUNC(SSL_F_USE_CERTIFICATE_CHAIN_FILE), "use_certificate_chain_file"},
     {ERR_FUNC(SSL_F_SSL_CTX_USE_CERTIFICATE_FILE),
      "SSL_CTX_use_certificate_file"},
     {ERR_FUNC(SSL_F_SSL_CTX_USE_PRIVATEKEY), "SSL_CTX_use_PrivateKey"},
@@ -331,6 +330,7 @@ static ERR_STRING_DATA SSL_str_functs[] = {
     {ERR_FUNC(SSL_F_TLS1_PROCESS_HEARTBEAT), "tls1_process_heartbeat"},
     {ERR_FUNC(SSL_F_TLS1_SETUP_KEY_BLOCK), "tls1_setup_key_block"},
     {ERR_FUNC(SSL_F_TLS1_SET_SERVER_SIGALGS), "tls1_set_server_sigalgs"},
+    {ERR_FUNC(SSL_F_USE_CERTIFICATE_CHAIN_FILE), "use_certificate_chain_file"},
     {0, NULL}
 };
 

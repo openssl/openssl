@@ -2016,7 +2016,6 @@ void ERR_load_SSL_strings(void);
 # define SSL_F_SSL_CTX_SET_TRUST                          229
 # define SSL_F_SSL_CTX_USE_CERTIFICATE                    171
 # define SSL_F_SSL_CTX_USE_CERTIFICATE_ASN1               172
-# define SSL_F_USE_CERTIFICATE_CHAIN_FILE                 220
 # define SSL_F_SSL_CTX_USE_CERTIFICATE_FILE               173
 # define SSL_F_SSL_CTX_USE_PRIVATEKEY                     174
 # define SSL_F_SSL_CTX_USE_PRIVATEKEY_ASN1                175
@@ -2097,6 +2096,7 @@ void ERR_load_SSL_strings(void);
 # define SSL_F_TLS1_PROCESS_HEARTBEAT                     341
 # define SSL_F_TLS1_SETUP_KEY_BLOCK                       211
 # define SSL_F_TLS1_SET_SERVER_SIGALGS                    335
+# define SSL_F_USE_CERTIFICATE_CHAIN_FILE                 220
 
 /* Reason codes. */
 # define SSL_R_APP_DATA_IN_HANDSHAKE                      100
