@@ -61,6 +61,8 @@ use IO::Select;
 use TLSProxy::Record;
 use TLSProxy::Message;
 use TLSProxy::ClientHello;
+use TLSProxy::ServerHello;
+use TLSProxy::ServerKeyExchange;
 
 sub new
 {
@@ -82,6 +84,8 @@ sub new
         execute => $execute,
         cert => $cert,
         debug => $debug,
+        cipherc => "AES128-SHA",
+        ciphers => "",
         flight => 0,
         record_list => [],
         message_list => [],
@@ -97,6 +101,8 @@ sub clear
 {
     my $self = shift;
 
+    $self->{cipherc} = "AES128-SHA";
+    $self->{ciphers} = "";
     $self->{flight} = 0;
     $self->{record_list} = [];
     $self->{message_list} = [];
@@ -124,8 +130,13 @@ sub start
         open(STDOUT, ">", File::Spec->devnull())
             or die "Failed to redirect stdout";
         open(STDERR, ">&STDOUT");
-        exec($self->execute." s_server -testmode -accept ".($self->server_port)
-             ." -cert ".$self->cert." -naccept 1");
+        my $execcmd = $self->execute." s_server -testmode -accept "
+            .($self->server_port)
+            ." -cert ".$self->cert." -naccept 1";
+        if ($self->ciphers ne "") {
+            $execcmd .= " -cipher ".$self->ciphers;
+        }
+        exec($execcmd);
     }
 
     my $oldstdout;
@@ -155,9 +166,13 @@ sub start
             open(STDOUT, ">", File::Spec->devnull())
                 or die "Failed to redirect stdout";
             open(STDERR, ">&STDOUT");
-            exec($self->execute
-                 ." s_client -cipher AES128-SHA -testmode -connect "
-                 .($self->proxy_addr).":".($self->proxy_port));
+            my $execcmd = $self->execute
+                 ." s_client -testmode -connect "
+                 .($self->proxy_addr).":".($self->proxy_port);
+            if ($self->cipherc ne "") {
+                $execcmd .= " -cipher ".$self->cipherc;
+            }
+            exec($execcmd);
         }
     }
 
@@ -360,5 +375,20 @@ sub filter
     }
     return $self->{filter};
 }
-
+sub cipherc
+{
+    my $self = shift;
+    if (@_) {
+      $self->{cipherc} = shift;
+    }
+    return $self->{cipherc};
+}
+sub ciphers
+{
+    my $self = shift;
+    if (@_) {
+      $self->{ciphers} = shift;
+    }
+    return $self->{ciphers};
+}
 1;
