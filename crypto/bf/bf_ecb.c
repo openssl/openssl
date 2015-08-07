@@ -66,8 +66,6 @@
  * SECURITY WORKSHOP, CAMBRIDGE, U.K., DECEMBER 9-11, 1993)
  */
 
-const char BF_version[] = "Blowfish" OPENSSL_VERSION_PTEXT;
-
 const char *BF_options(void)
 {
 #ifdef BF_PTR

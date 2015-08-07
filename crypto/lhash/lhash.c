@@ -101,8 +101,6 @@
 #include <openssl/crypto.h>
 #include <openssl/lhash.h>
 
-const char lh_version[] = "lhash" OPENSSL_VERSION_PTEXT;
-
 #undef MIN_NODES
 #define MIN_NODES       16
 #define UP_LOAD         (2*LH_LOAD_MULT) /* load times 256 (default 2) */

@@ -164,8 +164,6 @@ static CRYPTO_THREADID locking_threadid;
 int rand_predictable = 0;
 #endif
 
-const char RAND_version[] = "RAND" OPENSSL_VERSION_PTEXT;
-
 static void rand_hw_seed(EVP_MD_CTX *ctx);
 
 static void ssleay_rand_cleanup(void);

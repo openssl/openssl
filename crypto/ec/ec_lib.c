@@ -68,8 +68,6 @@
 
 #include "ec_lcl.h"
 
-const char EC_version[] = "EC" OPENSSL_VERSION_PTEXT;
-
 /* functions for EC_GROUP objects */
 
 EC_GROUP *EC_GROUP_new(const EC_METHOD *meth)
