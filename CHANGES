@@ -4,7 +4,12 @@
 
  Changes between 1.0.1p and 1.0.1q [xx XXX xxxx]
 
-  *)
+  *) In DSA_generate_parameters_ex, if the provided seed is too short,
+     return an error
+     [Rich Salz and Ismo Puustinen <ismo.puustinen@intel.com>]
+
+  *) Rewrite PSK to support ECDHE_PSK, DHE_PSK and RSA_PSK. Add ciphersuites
+     from RFC4279, RFC4785, RFC5487, RFC5489.
 
  Changes between 1.0.1o and 1.0.1p [9 Jul 2015]
 
