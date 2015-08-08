@@ -348,7 +348,8 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
             if (!sk_X509_push(ctx->chain, x)) {
                 X509_free(xtmp);
                 X509err(X509_F_X509_VERIFY_CERT, ERR_R_MALLOC_FAILURE);
-                return 0;
+                ok = 0;
+                goto done;
             }
             num++;
         }
