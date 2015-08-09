@@ -8,13 +8,26 @@ use OpenSSL::Test qw/:DEFAULT top_file/;
 
 setup("check_testexes");
 
+my $OpenSSL_ver = "";
+my $Makefile = top_file("Makefile");
+if (open(FH, $Makefile)) {
+    $OpenSSL_ver =
+	(map { chomp; s/^VERSION=([^\s]*)\s*$//; $1 } grep { /^VERSION=/ } <FH>)[0];
+    close FH;
+}
+
 my $MINFO = top_file("MINFO");
 
 plan skip_all => "because MINFO not found. If you want this test to run, please do 'perl util/mkfiles.pl > MINFO'"
     unless open(FH,$MINFO);
 
+my $MINFO_ver = "";
+
 while(<FH>) {
     chomp;
+    if (/^VERSION=([^\s]*)\s*$/) {
+	$MINFO_ver = $1;
+    }
     last if /^RELATIVE_DIRECTORY=test$/;
 }
 while(<FH>) {
@@ -22,6 +35,9 @@ while(<FH>) {
     last if /^EXE=/;
 }
 close FH;
+
+plan skip_all => "because MINFO is not from this OpenSSL version. If you want this test to run, please do 'perl util/mkfiles.pl > MINFO'"
+    unless $OpenSSL_ver eq $MINFO_ver;
 
 s/^EXE=\s*//;
 s/\s*$//;
