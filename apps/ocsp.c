@@ -1256,7 +1256,7 @@ static OCSP_RESPONSE *query_responder(BIO *cbio, const char *path,
 OCSP_RESPONSE *process_responder(OCSP_REQUEST *req,
                                  const char *host, const char *path,
                                  const char *port, int use_ssl,
-                                 const STACK_OF(CONF_VALUE) *headers,
+                                 STACK_OF(CONF_VALUE) *headers,
                                  int req_timeout)
 {
     BIO *cbio = NULL;
