@@ -373,6 +373,9 @@ int BN_MONT_CTX_set(BN_MONT_CTX *mont, const BIGNUM *mod, BN_CTX *ctx)
     int ret = 0;
     BIGNUM *Ri, *R;
 
+    if (BN_is_zero(mod))
+        return 0;
+
     BN_CTX_start(ctx);
     if ((Ri = BN_CTX_get(ctx)) == NULL)
         goto err;
