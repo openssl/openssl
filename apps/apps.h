@@ -450,7 +450,7 @@ ENGINE *setup_engine(const char *engine, int debug);
 OCSP_RESPONSE *process_responder(OCSP_REQUEST *req,
                                  const char *host, const char *path,
                                  const char *port, int use_ssl,
-                                 const STACK_OF(CONF_VALUE) *headers,
+                                 STACK_OF(CONF_VALUE) *headers,
                                  int req_timeout);
 # endif
 
