@@ -35,7 +35,7 @@ static int VKO_compute_key(unsigned char *shared_key, size_t shared_key_size,
         ukm_be[7 - i] = ukm[i];
     }
     BN_CTX_start(ctx);
-    UKM = getbnfrombuf(ukm_be, 8);
+    UKM = BN_bin2bn(ukm_be, 8, NULL);
     p = BN_CTX_get(ctx);
     order = BN_CTX_get(ctx);
     X = BN_CTX_get(ctx);

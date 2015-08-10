@@ -213,8 +213,6 @@ BIGNUM *hashsum2bn(const unsigned char *dgst);
  * nesseccary
  */
 int store_bignum(BIGNUM *bn, unsigned char *buf, int len);
-/* Read bignum, which can have few MSB all-zeros    from buffer*/
-BIGNUM *getbnfrombuf(const unsigned char *buf, size_t len);
 /* Pack GOST R 34.10 signature according to CryptoPro rules */
 int pack_sign_cp(DSA_SIG *s, int order, unsigned char *sig, size_t *siglen);
 /* Unpack GOST R 34.10 signature according to CryptoPro rules */
