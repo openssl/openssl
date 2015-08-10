@@ -276,7 +276,7 @@ static int priv_decode_gost(EVP_PKEY *pk, PKCS8_PRIV_KEY_INFO *p8inf)
             rev_buf[31 - i] = s->data[i];
         }
         ASN1_STRING_free(s);
-        pk_num = getbnfrombuf(rev_buf, 32);
+        pk_num = BN_bin2bn(rev_buf, 32, NULL);
     } else {
         priv_key = d2i_ASN1_INTEGER(NULL, &p, priv_len);
         if (!priv_key)
@@ -490,8 +490,8 @@ static int pub_decode_gost01(EVP_PKEY *pk, X509_PUBKEY *pub)
     len = octet->length / 2;
     ASN1_OCTET_STRING_free(octet);
 
-    Y = getbnfrombuf(databuf, len);
-    X = getbnfrombuf(databuf + len, len);
+    Y = BN_bin2bn(databuf, len, NULL);
+    X = BN_bin2bn(databuf + len, len, NULL);
     OPENSSL_free(databuf);
     pub_key = EC_POINT_new(group);
     if (!EC_POINT_set_affine_coordinates_GFp(group, pub_key, X, Y, NULL)) {

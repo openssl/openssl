@@ -552,7 +552,9 @@ BIGNUM *BN_bin2bn(const unsigned char *s, int len, BIGNUM *ret)
     if (ret == NULL)
         return (NULL);
     bn_check_top(ret);
-    l = 0;
+    /* Skip leading zero's. */
+    for ( ; *s == 0 && len > 0; s++, len--)
+        continue;
     n = len;
     if (n == 0) {
         ret->top = 0;
@@ -566,6 +568,7 @@ BIGNUM *BN_bin2bn(const unsigned char *s, int len, BIGNUM *ret)
     }
     ret->top = i;
     ret->neg = 0;
+    l = 0;
     while (n--) {
         l = (l << 8L) | *(s++);
         if (m-- == 0) {
