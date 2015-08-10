@@ -260,6 +260,13 @@ cipher suites using 128 bit AES, 256 bit AES or either 128 or 256 bit AES.
 AES in Galois Counter Mode (GCM): these ciphersuites are only supported
 in TLS v1.2.
 
+=item B<AESCCM>, B<AESCCM8>
+
+AES in Cipher Block Chaining - Message Authentication Mode (CCM): these
+ciphersuites are only supported in TLS v1.2. B<AESCCM> references CCM
+cipher suites using both 16 and 8 octet Integrity Check Value (ICV)
+while B<AESCCM8> only references 8 octet ICV.
+
 =item B<CAMELLIA128>, B<CAMELLIA256>, B<CAMELLIA>
 
 cipher suites using 128 bit CAMELLIA, 256 bit CAMELLIA or either 128 or 256 bit
@@ -576,6 +583,19 @@ Note: these ciphers can also be used in SSL v3.
  TLS_DH_anon_WITH_AES_128_GCM_SHA256       ADH-AES128-GCM-SHA256
  TLS_DH_anon_WITH_AES_256_GCM_SHA384       ADH-AES256-GCM-SHA384
 
+ RSA_WITH_AES_128_CCM                      AES128-CCM
+ RSA_WITH_AES_256_CCM                      AES256-CCM
+ DHE_RSA_WITH_AES_128_CCM                  DHE-RSA-AES128-CCM
+ DHE_RSA_WITH_AES_256_CCM                  DHE-RSA-AES256-CCM
+ RSA_WITH_AES_128_CCM_8                    AES128-CCM8
+ RSA_WITH_AES_256_CCM_8                    AES256-CCM8
+ DHE_RSA_WITH_AES_128_CCM_8                DHE-RSA-AES128-CCM8
+ DHE_RSA_WITH_AES_256_CCM_8                DHE-RSA-AES256-CCM8
+ ECDHE_ECDSA_WITH_AES_128_CCM              ECDHE-ECDSA-AES128-CCM
+ ECDHE_ECDSA_WITH_AES_256_CCM              ECDHE-ECDSA-AES256-CCM
+ ECDHE_ECDSA_WITH_AES_128_CCM_8            ECDHE-ECDSA-AES128-CCM8
+ ECDHE_ECDSA_WITH_AES_256_CCM_8            ECDHE-ECDSA-AES256-CCM8
+
 =head2 Camellia HMAC-Based ciphersuites from RFC6367, extending TLS v1.2
 
  TLS_ECDHE_ECDSA_WITH_CAMELLIA_128_CBC_SHA256 ECDHE-ECDSA-CAMELLIA128-SHA256
@@ -651,6 +671,15 @@ Note: these ciphers can also be used in SSL v3.
 
  ECDHE_PSK_WITH_CAMELLIA_128_CBC_SHA256    ECDHE-PSK-CAMELLIA128-SHA256
  ECDHE_PSK_WITH_CAMELLIA_256_CBC_SHA384    ECDHE-PSK-CAMELLIA256-SHA384
+
+ PSK_WITH_AES_128_CCM                      PSK-AES128-CCM
+ PSK_WITH_AES_256_CCM                      PSK-AES256-CCM
+ DHE_PSK_WITH_AES_128_CCM                  DHE-PSK-AES128-CCM
+ DHE_PSK_WITH_AES_256_CCM                  DHE-PSK-AES256-CCM
+ PSK_WITH_AES_128_CCM_8                    PSK-AES128-CCM8
+ PSK_WITH_AES_256_CCM_8                    PSK-AES256-CCM8
+ DHE_PSK_WITH_AES_128_CCM_8                DHE-PSK-AES128-CCM8
+ DHE_PSK_WITH_AES_256_CCM_8                DHE-PSK-AES256-CCM8
 
 =head1 NOTES
 
