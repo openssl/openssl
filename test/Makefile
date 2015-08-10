@@ -424,15 +424,18 @@ test_packet: $(PACKETTEST)$(EXE_EXT)
 #OPENSSL_ia32cap=... in ssl tests below ensures AES-NI is switched off (AES-NI does not go through the testmode engine)
 test_sslvertol: ../apps/openssl$(EXE_EXT)
 	@echo $(START) $@
-	PERL5LIB=$$PERL5LIB:../util ../util/shlib_wrap.sh ./$(SSLVERTOLTEST) "OPENSSL_ia32cap='~0x200000200000000' ../apps/openssl$(EXE_EXT)" ../apps/server.pem
+	[ -z "$(SHARED_LIBS)" ] || PERL5LIB=$$PERL5LIB:../util OPENSSL_ENGINES=../engines ../util/shlib_wrap.sh ./$(SSLVERTOLTEST) "OPENSSL_ia32cap='~0x200000200000000' ../apps/openssl$(EXE_EXT)" ../apps/server.pem
+	@[ -n "$(SHARED_LIBS)" ] || echo test_sslvertol can only be performed with OpenSSL configured shared
 
 test_sslextension: ../apps/openssl$(EXE_EXT)
 	@echo $(START) $@
-	PERL5LIB=$$PERL5LIB:../util ../util/shlib_wrap.sh ./$(SSLEXTENSIONTEST) "OPENSSL_ia32cap='~0x200000200000000' ../apps/openssl$(EXE_EXT)" ../apps/server.pem
+	[ -z "$(SHARED_LIBS)" ] || PERL5LIB=$$PERL5LIB:../util OPENSSL_ENGINES=../engines ../util/shlib_wrap.sh ./$(SSLEXTENSIONTEST) "OPENSSL_ia32cap='~0x200000200000000' ../apps/openssl$(EXE_EXT)" ../apps/server.pem
+	@[ -n "$(SHARED_LIBS)" ] || echo test_sslextension can only be performed with OpenSSL configured shared
 
 test_sslskewith0p: ../apps/openssl$(EXE_EXT)
 	@echo $(START) $@
-	PERL5LIB=$$PERL5LIB:../util ../util/shlib_wrap.sh ./$(SSLSKEWITH0PTEST) "OPENSSL_ia32cap='~0x200000200000000' ../apps/openssl$(EXE_EXT)" ../apps/server.pem
+	[ -z "$(SHARED_LIBS)" ] || PERL5LIB=$$PERL5LIB:../util OPENSSL_ENGINES=../engines ../util/shlib_wrap.sh ./$(SSLSKEWITH0PTEST) "OPENSSL_ia32cap='~0x200000200000000' ../apps/openssl$(EXE_EXT)" ../apps/server.pem
+	@[ -n "$(SHARED_LIBS)" ] || echo test_sslskewith0p can only be performed with OpenSSL configured shared
 
 update: local_depend
 	@if [ -z "$(THIS)" ]; then $(MAKE) -f $(TOP)/Makefile reflect THIS=$@; fi
