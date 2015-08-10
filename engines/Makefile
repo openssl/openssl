@@ -31,19 +31,20 @@ AFLAGS= $(ASFLAGS)
 GENERAL=Makefile engines.com install.com engine_vector.mar
 
 LIB=$(TOP)/libcrypto.a
-LIBNAMES= 4758cca gmp padlock capi ossltest
-
+LIBNAMES= 4758cca gmp padlock capi
 LIBSRC=	e_4758cca.c \
 	e_gmp.c \
 	e_padlock.c \
-	e_capi.c \
-	e_ossltest.c
+	e_capi.c
 LIBOBJ= e_4758cca.o \
 	e_gmp.o \
 	e_padlock.o \
 	e_capi.o \
-	e_ossltest.o \
 	$(ENGINES_ASM_OBJ)
+
+TESTLIBNAMES= ossltest
+TESTLIBSRC= e_ossltest.c
+TESTLIBOBJ= e_ossltest.o
 
 SRC= $(LIBSRC)
 
@@ -63,10 +64,10 @@ top:
 
 all:	lib subdirs
 
-lib:	$(LIBOBJ)
+lib:	$(LIBOBJ) $(TESTLIBOBJ)
 	@if [ -n "$(SHARED_LIBS)" ]; then \
 		set -e; \
-		for l in $(LIBNAMES); do \
+		for l in $(LIBNAMES) $(TESTLIBNAMES); do \
 			$(MAKE) -f ../Makefile.shared -e \
 				LIBNAME=$$l LIBEXTRAS="e_$$l*.o" \
 				LIBDEPS='-L.. -lcrypto $(EX_LIBS)' \
@@ -145,7 +146,7 @@ depend: local_depend
 	@if [ -z "$(THIS)" ]; then $(MAKE) -f $(TOP)/Makefile reflect THIS=$@; fi
 	@[ -z "$(THIS)" ] || (set -e; target=depend; $(RECURSIVE_MAKE) )
 local_depend:
-	@[ -z "$(THIS)" ] || $(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(LIBSRC)
+	@[ -z "$(THIS)" ] || $(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(LIBSRC) $(TESTLIBSRC)
 
 dclean:
 	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new

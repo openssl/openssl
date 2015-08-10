@@ -257,7 +257,7 @@ static int bind_ossltest(ENGINE *e)
     return 1;
 }
 
-#ifdef ENGINE_DYNAMIC_SUPPORT
+#ifndef OPENSSL_NO_DYNAMIC_ENGINE
 static int bind_helper(ENGINE *e, const char *id)
 {
     if (id && (strcmp(id, engine_ossltest_id) != 0))
@@ -269,7 +269,8 @@ static int bind_helper(ENGINE *e, const char *id)
 
 IMPLEMENT_DYNAMIC_CHECK_FN()
     IMPLEMENT_DYNAMIC_BIND_FN(bind_helper)
-#else
+#endif
+
 static ENGINE *engine_ossltest(void)
 {
     ENGINE *ret = ENGINE_new();
@@ -292,7 +293,6 @@ void ENGINE_load_ossltest(void)
     ENGINE_free(toadd);
     ERR_clear_error();
 }
-#endif
 
 
 static int ossltest_init(ENGINE *e)

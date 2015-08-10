@@ -130,7 +130,7 @@ sub start
         open(STDOUT, ">", File::Spec->devnull())
             or die "Failed to redirect stdout";
         open(STDERR, ">&STDOUT");
-        my $execcmd = $self->execute." s_server -testmode -accept "
+        my $execcmd = $self->execute." s_server -engine ossltest -accept "
             .($self->server_port)
             ." -cert ".$self->cert." -naccept 1";
         if ($self->ciphers ne "") {
@@ -167,7 +167,7 @@ sub start
                 or die "Failed to redirect stdout";
             open(STDERR, ">&STDOUT");
             my $execcmd = $self->execute
-                 ." s_client -testmode -connect "
+                 ." s_client -engine ossltest -connect "
                  .($self->proxy_addr).":".($self->proxy_port);
             if ($self->cipherc ne "") {
                 $execcmd .= " -cipher ".$self->cipherc;
