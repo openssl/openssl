@@ -2236,6 +2236,7 @@ long dtls1_ctrl(SSL *s, int cmd, long larg, void *parg);
 __owur int dtls1_shutdown(SSL *s);
 
 __owur long dtls1_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok);
+__owur int dtls_get_message(SSL *s, int *mt, unsigned long *len);
 __owur int dtls1_dispatch_alert(SSL *s);
 
 __owur int ssl_init_wbio_buffer(SSL *s, int push);
