@@ -1928,6 +1928,7 @@ void ERR_load_SSL_strings(void);
 # define SSL_F_DTLS1_SEND_SERVER_HELLO                    266
 # define SSL_F_DTLS1_SEND_SERVER_KEY_EXCHANGE             267
 # define SSL_F_DTLS1_WRITE_APP_DATA_BYTES                 268
+# define SSL_F_DTLS_GET_REASSEMBLED_MESSAGE               370
 # define SSL_F_READ_STATE_MACHINE                         352
 # define SSL_F_SSL3_ACCEPT                                128
 # define SSL_F_SSL3_ADD_CERT_TO_BUF                       296
