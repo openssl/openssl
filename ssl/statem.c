@@ -464,7 +464,14 @@ static enum SUB_STATE_RETURN read_state_machine(SSL *s) {
         case READ_STATE_HEADER:
             s->init_num = 0;
             /* Get the state the peer wants to move to */
-            ret = tls_get_message_header(s, &mt);
+            if (SSL_IS_DTLS(s)) {
+                /*
+                 * In DTLS we get the whole message in one go - header and body
+                 */
+                ret = dtls_get_message(s, &mt, &len);
+            } else {
+                ret = tls_get_message_header(s, &mt);
+            }
 
             if (ret == 0) {
                 /* Could be non-blocking IO */
