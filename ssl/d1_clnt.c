@@ -350,11 +350,15 @@ int dtls1_connect(SSL *s)
                              sizeof(DTLS1_SCTP_AUTH_LABEL),
                              DTLS1_SCTP_AUTH_LABEL);
 
-                    SSL_export_keying_material(s, sctpauthkey,
+                    if (SSL_export_keying_material(s, sctpauthkey,
                                                sizeof(sctpauthkey),
                                                labelbuffer,
                                                sizeof(labelbuffer), NULL, 0,
-                                               0);
+                                               0) <= 0) {
+                        ret = -1;
+                        s->state = SSL_ST_ERR;
+                        goto end;
+                    }
 
                     BIO_ctrl(SSL_get_wbio(s),
                              BIO_CTRL_DGRAM_SCTP_ADD_AUTH_KEY,
@@ -484,9 +488,13 @@ int dtls1_connect(SSL *s)
             snprintf((char *)labelbuffer, sizeof(DTLS1_SCTP_AUTH_LABEL),
                      DTLS1_SCTP_AUTH_LABEL);
 
-            SSL_export_keying_material(s, sctpauthkey,
+            if (SSL_export_keying_material(s, sctpauthkey,
                                        sizeof(sctpauthkey), labelbuffer,
-                                       sizeof(labelbuffer), NULL, 0, 0);
+                                       sizeof(labelbuffer), NULL, 0, 0) <= 0) {
+                ret = -1;
+                s->state = SSL_ST_ERR;
+                goto end;
+            }
 
             BIO_ctrl(SSL_get_wbio(s), BIO_CTRL_DGRAM_SCTP_ADD_AUTH_KEY,
                      sizeof(sctpauthkey), sctpauthkey);
