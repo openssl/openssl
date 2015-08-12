@@ -148,7 +148,7 @@ SHLIBDIRS= crypto
 SDIRS=  \
 	sha hmac des aes modes \
 	bn ec rsa dsa ecdsa dh \
-	buffer evp ecdh cmac
+	buffer evp ecdh cmac kdf
 # keep in mind that the above list is adjusted by ./Configure
 # according to no-xxx arguments...
 
@@ -156,7 +156,7 @@ LINKDIRS=  \
 	objects sha hmac des aes modes \
 	bn ec rsa dsa ecdh cmac ecdsa dh engine \
 	buffer bio stack lhash rand err \
-	evp asn1 ui
+	evp asn1 ui kdf
 
 # tests to perform.  "alltests" is a special word indicating that all tests
 # should be performed.
@@ -335,6 +335,12 @@ FIPS_EX_OBJ= ../crypto/aes/aes_cfb.o \
 	../crypto/evp/m_dss.o \
 	../crypto/evp/m_ecdsa.o \
 	../crypto/hmac/hmac.o \
+	../crypto/kdf/kdf_802_11i.o \
+	../crypto/kdf/kdf_ikev2.o \
+	../crypto/kdf/kdf_snmp.o \
+	../crypto/kdf/kdf_srtp.o \
+	../crypto/kdf/kdf_ssh.o \
+	../crypto/kdf/kdf_tls.o \
 	../crypto/modes/cbc128.o \
 	../crypto/modes/ccm128.o \
 	../crypto/modes/cfb128.o \

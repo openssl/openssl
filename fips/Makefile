@@ -35,7 +35,7 @@ AFLAGS=$(ASFLAGS)
 
 LIBS=
 
-FDIRS=sha rand des aes dsa ecdh ecdsa rsa dh cmac hmac utl
+FDIRS=sha rand des aes dsa ecdh ecdsa rsa dh cmac hmac utl kdf
 
 GENERAL=Makefile README fips-lib.com install.com
 

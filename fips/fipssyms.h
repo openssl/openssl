@@ -580,6 +580,14 @@
 #define CMAC_Update FIPS_cmac_update
 #define CMAC_Final FIPS_cmac_final
 #define CMAC_resume FIPS_cmac_resume
+#define kdf_snmp FIPS_kdf_snmp
+#define kdf_srtp FIPS_kdf_srtp
+#define kdf_ssh FIPS_kdf_ssh
+#define kdf_802_11i FIPS_kdf_802_11i
+#define kdf_tls12_P_hash FIPS_kdf_tls12_P_hash
+#define kdf_ikev2_gen FIPS_kdf_ikev2_gen
+#define kdf_ikev2_dkm FIPS_kdf_ikev2_dkm
+#define kdf_ikev2_rekey FIPS_kdf_ikev2_rekey
 
 /* assembler symbols */
 #define gcm_gmult_4bit_x86 fips_gcm_gmult_4bit_x86

@@ -334,6 +334,7 @@ $crypto.=" crypto/pqueue/pqueue.h";
 $crypto.=" crypto/cms/cms.h";
 $crypto.=" crypto/jpake/jpake.h";
 $crypto.=" crypto/srp/srp.h";
+$crypto.=" crypto/kdf/kdf.h";
 $crypto.=" crypto/modes/modes.h";
 $crypto.=" fips/fips.h fips/rand/fips_rand.h";
 

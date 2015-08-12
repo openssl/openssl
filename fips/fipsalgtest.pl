@@ -431,6 +431,19 @@ my @fips_ecdh_test_list = (
 
 );
 
+my @fips_kw_test_list = (
+
+    #KDF
+    "KDF tests",
+    [ "snmp", "fips_kdf_snmp" ],
+    [ "srtp", "fips_kdf_srtp" ],
+    [ "ssh", "fips_kdf_ssh" ],
+    [ "tls", "fips_kdf_tls" ],
+    [ "ikev2", "fips_kdf_ikev2" ],
+    [ "KDFCTR_gen", "fips_kdf_802_11i" ]
+
+);
+
 
 # Verification special cases.
 # In most cases the output of a test is deterministic and
@@ -506,6 +519,7 @@ my %fips_enabled = (
     "aes-gcm"	=> 2,
     "dh"	=> 0,
     "ecdh"	=> 2,
+    "kw"        => 1,
     "v2"	=> 1,
 );
 
@@ -636,6 +650,7 @@ push @fips_test_list, @fips_aes_ccm_test_list	if $fips_enabled{"aes-ccm"};
 push @fips_test_list, @fips_aes_gcm_test_list	if $fips_enabled{"aes-gcm"};
 push @fips_test_list, @fips_aes_xts_test_list	if $fips_enabled{"aes-xts"};
 push @fips_test_list, @fips_dh_test_list	if $fips_enabled{"dh"};
+push @fips_test_list, @fips_kw_test_list        if $fips_enabled{"kw"};
 push @fips_test_list, @fips_ecdh_test_list	if $fips_enabled{"ecdh"};
 
 if ($list_tests) {
