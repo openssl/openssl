@@ -267,23 +267,6 @@ static int ssl_set_version(SSL *s)
     return 1;
 }
 
-int ssl3_client_hello(SSL *s)
-{
-    if (s->state == SSL3_ST_CW_CLNT_HELLO_A) {
-        if(tls_construct_client_hello(s) == 0)
-            goto err;
-
-        s->state = SSL3_ST_CW_CLNT_HELLO_B;
-    }
-
-    /* SSL3_ST_CW_CLNT_HELLO_B */
-    return ssl_do_write(s);
- err:
-    s->state = SSL_ST_ERR;
-    return -1;
-
-}
-
 int tls_construct_client_hello(SSL *s)
 {
     unsigned char *buf;
@@ -464,53 +447,6 @@ int tls_construct_client_hello(SSL *s)
     statem_set_error(s);
     return 0;
 }
-
-#if 0
-int ssl3_get_server_hello(SSL *s)
-{
-    int ok, al;
-    long n;
-    /*
-     * Hello verify request and/or server hello version may not match so set
-     * first packet if we're negotiating version.
-     */
-    s->first_packet = 1;
-
-    n = s->method->ssl_get_message(s,
-                                   SSL3_ST_CR_SRVR_HELLO_A,
-                                   SSL3_ST_CR_SRVR_HELLO_B, -1, 20000, &ok);
-
-    if (!ok)
-        return ((int)n);
-
-    s->first_packet = 0;
-    if (SSL_IS_DTLS(s)) {
-        if (s->s3->tmp.message_type == DTLS1_MT_HELLO_VERIFY_REQUEST) {
-            if (s->d1->send_cookie == 0) {
-                s->s3->tmp.reuse_message = 1;
-                return 1;
-            } else {            /* already sent a cookie */
-
-                al = SSL_AD_UNEXPECTED_MESSAGE;
-                SSLerr(SSL_F_SSL3_GET_SERVER_HELLO, SSL_R_BAD_MESSAGE_TYPE);
-                goto f_err;
-            }
-        }
-    }
-
-    if (s->s3->tmp.message_type != SSL3_MT_SERVER_HELLO) {
-        al = SSL_AD_UNEXPECTED_MESSAGE;
-        SSLerr(SSL_F_SSL3_GET_SERVER_HELLO, SSL_R_BAD_MESSAGE_TYPE);
-        goto f_err;
-    }
-
-    return tls_process_server_hello(s, (unsigned long)n);
- f_err:
-    ssl3_send_alert(s, SSL3_AL_FATAL, al);
-    s->state = SSL_ST_ERR;
-    return (-1);
-}
-#endif
 
 enum MSG_PROCESS_RETURN tls_process_server_hello(SSL *s, unsigned long n)
 {
@@ -858,37 +794,6 @@ enum MSG_PROCESS_RETURN tls_process_server_hello(SSL *s, unsigned long n)
     return MSG_PROCESS_ERROR;
 }
 
-int ssl3_get_server_certificate(SSL *s)
-{
-    long n;
-    int ok, al;
-
-    n = s->method->ssl_get_message(s,
-                                   SSL3_ST_CR_CERT_A,
-                                   SSL3_ST_CR_CERT_B,
-                                   -1, s->max_cert_list, &ok);
-
-    if (!ok)
-        return ((int)n);
-
-    if (s->s3->tmp.message_type == SSL3_MT_SERVER_KEY_EXCHANGE) {
-        s->s3->tmp.reuse_message = 1;
-        return (1);
-    }
-
-    if (s->s3->tmp.message_type != SSL3_MT_CERTIFICATE) {
-        al = SSL_AD_UNEXPECTED_MESSAGE;
-        SSLerr(SSL_F_SSL3_GET_SERVER_CERTIFICATE, SSL_R_BAD_MESSAGE_TYPE);
-        goto f_err;
-    }
-
-    return tls_process_server_certificate(s, (unsigned long)n);
- f_err:
-    ssl3_send_alert(s, SSL3_AL_FATAL, al);
-    s->state = SSL_ST_ERR;
-    return -1;
-}
-
 enum MSG_PROCESS_RETURN tls_process_server_certificate(SSL *s, unsigned long n)
 {
     int al, i, ret = MSG_PROCESS_ERROR, exp_idx;
@@ -1017,43 +922,6 @@ enum MSG_PROCESS_RETURN tls_process_server_certificate(SSL *s, unsigned long n)
     X509_free(x);
     sk_X509_pop_free(sk, X509_free);
     return ret;
-}
-
-int ssl3_get_key_exchange(SSL *s)
-{
-    long n;
-    int ok;
-    long alg_k;
-
-    /*
-     * use same message size as in ssl3_get_certificate_request() as
-     * ServerKeyExchange message may be skipped
-     */
-    n = s->method->ssl_get_message(s,
-                                   SSL3_ST_CR_KEY_EXCH_A,
-                                   SSL3_ST_CR_KEY_EXCH_B,
-                                   -1, s->max_cert_list, &ok);
-    if (!ok)
-        return ((int)n);
-
-    alg_k = s->s3->tmp.new_cipher->algorithm_mkey;
- 
-    if (s->s3->tmp.message_type != SSL3_MT_SERVER_KEY_EXCHANGE) {
-        /*
-         * Can't skip server key exchange if this is an ephemeral
-         * ciphersuite.
-         */
-        if (alg_k & (SSL_kDHE | SSL_kECDHE | SSL_kDHEPSK | SSL_kECDHEPSK)) {
-            SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE, SSL_R_UNEXPECTED_MESSAGE);
-            ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_UNEXPECTED_MESSAGE);
-            return -1;
-        }
-
-        s->s3->tmp.reuse_message = 1;
-        return 1;
-    }
-
-    return tls_process_key_exchange(s, (unsigned long)n);
 }
 
 enum MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, unsigned long n)
@@ -1522,55 +1390,6 @@ enum MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, unsigned long n)
     return MSG_PROCESS_ERROR;
 }
 
-int ssl3_get_certificate_request(SSL *s)
-{
-    long n;
-    int ok;
-
-    n = s->method->ssl_get_message(s,
-                                   SSL3_ST_CR_CERT_REQ_A,
-                                   SSL3_ST_CR_CERT_REQ_B,
-                                   -1, s->max_cert_list, &ok);
-
-    if (!ok)
-        return ((int)n);
-
-    s->s3->tmp.cert_req = 0;
-
-    if (s->s3->tmp.message_type == SSL3_MT_SERVER_DONE) {
-        s->s3->tmp.reuse_message = 1;
-        /*
-         * If we get here we don't need any cached handshake records as we
-         * wont be doing client auth.
-         */
-        if (!ssl3_digest_cached_records(s, 0))
-            goto err;
-        return (1);
-    }
-
-    if (s->s3->tmp.message_type != SSL3_MT_CERTIFICATE_REQUEST) {
-        ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_UNEXPECTED_MESSAGE);
-        SSLerr(SSL_F_SSL3_GET_CERTIFICATE_REQUEST, SSL_R_WRONG_MESSAGE_TYPE);
-        goto err;
-    }
-
-    /* TLS does not like anon-DH with client cert */
-    if (s->version > SSL3_VERSION) {
-        if (s->s3->tmp.new_cipher->algorithm_auth & SSL_aNULL) {
-            ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_UNEXPECTED_MESSAGE);
-            SSLerr(SSL_F_SSL3_GET_CERTIFICATE_REQUEST,
-                   SSL_R_TLS_CLIENT_CERT_REQ_WITH_ANON_CIPHER);
-            goto err;
-        }
-    }
-
-    return tls_process_certificate_request(s, (unsigned long)n);
- err:
-    s->state = SSL_ST_ERR;
-    return -1;
-}
-
-
 enum MSG_PROCESS_RETURN tls_process_certificate_request(SSL *s, unsigned long n)
 {
     int ret = MSG_PROCESS_ERROR;
@@ -1701,22 +1520,6 @@ static int ca_dn_cmp(const X509_NAME *const *a, const X509_NAME *const *b)
     return (X509_NAME_cmp(*a, *b));
 }
 
-int ssl3_get_new_session_ticket(SSL *s)
-{
-    long n;
-    int ok;
-
-    n = s->method->ssl_get_message(s,
-                                   SSL3_ST_CR_SESSION_TICKET_A,
-                                   SSL3_ST_CR_SESSION_TICKET_B,
-                                   SSL3_MT_NEWSESSION_TICKET, 16384, &ok);
-
-    if (!ok)
-        return ((int)n);
-
-    return tls_process_new_session_ticket(s, (unsigned long)n);
-}
-
 enum MSG_PROCESS_RETURN tls_process_new_session_ticket(SSL *s, unsigned long n)
 {
     int al;
@@ -1811,22 +1614,6 @@ enum MSG_PROCESS_RETURN tls_process_new_session_ticket(SSL *s, unsigned long n)
     return MSG_PROCESS_ERROR;
 }
 
-int ssl3_get_cert_status(SSL *s)
-{
-    long n;
-    int ok;
-
-    n = s->method->ssl_get_message(s,
-                                   SSL3_ST_CR_CERT_STATUS_A,
-                                   SSL3_ST_CR_CERT_STATUS_B,
-                                   SSL3_MT_CERTIFICATE_STATUS, 16384, &ok);
-
-    if (!ok)
-        return ((int)n);
-
-    return tls_process_cert_status(s, (unsigned long)n);
-}
-
 enum MSG_PROCESS_RETURN tls_process_cert_status(SSL *s, unsigned long n)
 {
     int al;
@@ -1885,23 +1672,6 @@ enum MSG_PROCESS_RETURN tls_process_cert_status(SSL *s, unsigned long n)
     return MSG_PROCESS_ERROR;
 }
 
-int ssl3_get_server_done(SSL *s)
-{
-    long n;
-    int ok;
-
-    /* Second to last param should be very small, like 0 :-) */
-    n = s->method->ssl_get_message(s,
-                                   SSL3_ST_CR_SRVR_DONE_A,
-                                   SSL3_ST_CR_SRVR_DONE_B,
-                                   SSL3_MT_SERVER_DONE, 30, &ok);
-
-    if (!ok)
-        return ((int)n);
-
-    return tls_process_server_done(s, (unsigned long)n);
-}
-
 enum MSG_PROCESS_RETURN tls_process_server_done(SSL *s, unsigned long n)
 {
     if (n > 0) {
@@ -1931,32 +1701,6 @@ enum MSG_PROCESS_RETURN tls_process_server_done(SSL *s, unsigned long n)
     else
 #endif
         return MSG_PROCESS_FINISHED_READING;
-}
-
-int ssl3_send_client_key_exchange(SSL *s)
-{
-    int n;
-
-    if (s->state == SSL3_ST_CW_KEY_EXCH_A) {
-        if(tls_construct_client_key_exchange(s) == 0)
-            goto err;
-
-        s->state = SSL3_ST_CW_KEY_EXCH_B;
-    }
-
-    /* SSL3_ST_CW_KEY_EXCH_B */
-    n = ssl_do_write(s);
-
-    if (n > 0) {
-        if (tls_client_key_exchange_post_work(s) == 0)
-            goto err;
-        }
-
-    return n;
- err:
-    s->state = SSL_ST_ERR;
-    return -1;
-
 }
 
 int tls_construct_client_key_exchange(SSL *s)
@@ -2593,23 +2337,6 @@ int tls_client_key_exchange_post_work(SSL *s)
     return 0;
 }
 
-int ssl3_send_client_verify(SSL *s)
-{
-    if (s->state == SSL3_ST_CW_CERT_VRFY_A) {
-        if(tls_construct_client_verify(s) == 0)
-            goto err;
-
-        s->state = SSL3_ST_CW_CERT_VRFY_B;
-    }
-
-    /* SSL3_ST_CW_CERT_VRFY_B */
-    return ssl_do_write(s);
- err:
-    s->state = SSL_ST_ERR;
-    return -1;
-
-}
-
 int tls_construct_client_verify(SSL *s)
 {
     unsigned char *p;
@@ -2780,49 +2507,6 @@ static int ssl3_check_client_certificate(SSL *s)
         s->s3->flags |= TLS1_FLAGS_SKIP_CERT_VERIFY;
     }
     return 1;
-}
-
-
-int ssl3_send_client_certificate(SSL *s)
-{
-    enum WORK_STATE wst;
-
-    if (s->state == SSL3_ST_CW_CERT_A || s->state == SSL3_ST_CW_CERT_B) {
-        if (s->state == SSL3_ST_CW_CERT_A)
-            wst = tls_prepare_client_certificate(s, WORK_MORE_A);
-        else
-            wst = tls_prepare_client_certificate(s, WORK_MORE_B);
-        if (wst == WORK_ERROR)
-            goto err;
-        if (wst == WORK_MORE_A)
-            return -1;
-        if (wst == WORK_MORE_B) {
-            s->state = SSL3_ST_CW_CERT_B;
-            return -1;
-        }
-
-        s->state = SSL3_ST_CW_CERT_C;
-    }
-
-    if (s->state == SSL3_ST_CW_CERT_B) {
-        wst = tls_prepare_client_certificate(s, WORK_MORE_B);
-        if (wst == WORK_ERROR)
-            goto err;
-        if (wst == WORK_MORE_A)
-            return -1;
-
-        /* Skip state C...it was entirely temporary in the original code */
-        s->state = SSL3_ST_CW_CERT_D;
-    }
-
-    if (tls_construct_client_certificate(s) == 0)
-        goto err;
-
-    return ssl_do_write(s);
- err:
-    s->state = SSL_ST_ERR;
-    return -1;
-
 }
 
 enum WORK_STATE tls_prepare_client_certificate(SSL *s, enum WORK_STATE wst)
@@ -3076,19 +2760,6 @@ int ssl3_check_cert_and_algorithm(SSL *s)
 }
 
 #ifndef OPENSSL_NO_NEXTPROTONEG
-int ssl3_send_next_proto(SSL *s)
-{
-    if (s->state == SSL3_ST_CW_NEXT_PROTO_A) {
-        if (tls_construct_next_proto(s) == 0) {
-            s->state = SSL_ST_ERR;
-            return -1;
-        }
-        s->state = SSL3_ST_CW_NEXT_PROTO_B;
-    }
-
-    return ssl3_do_write(s, SSL3_RT_HANDSHAKE);
-}
-
 int tls_construct_next_proto(SSL *s)
 {
     unsigned int len, padding_len;
