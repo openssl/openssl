@@ -3043,6 +3043,11 @@ int tls1_process_ticket(SSL *s, PACKET *pkt,  unsigned char *session_id,
                 break;
             }
             goto end;
+        } else {
+            if (!PACKET_forward(pkt, size)) {
+                retv = -1;
+                goto end;
+            }
         }
     }
     retv = 0;
