@@ -83,7 +83,8 @@ use constant {
     VERS_TLS_1_2 => 771,
     VERS_TLS_1_1 => 770,
     VERS_TLS_1_0 => 769,
-    VERS_SSL_3_0 => 768
+    VERS_SSL_3_0 => 768,
+    VERS_SSL_LT_3_0 => 767
 };
 
 my %tls_version = (
@@ -91,7 +92,8 @@ my %tls_version = (
     VERS_TLS_1_2, "TLS1.2",
     VERS_TLS_1_1, "TLS1.1",
     VERS_TLS_1_0, "TLS1.0",
-    VERS_SSL_3_0, "SSL3"
+    VERS_SSL_3_0, "SSL3",
+    VERS_SSL_LT_3_0, "SSL<3"
 );
 
 #Class method to extract records from a packet of data
