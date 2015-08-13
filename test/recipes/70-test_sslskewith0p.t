@@ -53,35 +53,47 @@
 # Hudson (tjh@cryptsoft.com).
 
 use strict;
+use OpenSSL::Test qw/:DEFAULT cmdstr top_file top_dir/;
 use TLSProxy::Proxy;
 
+my $test_name = "test_sslskewith0p";
+setup($test_name);
+
+plan skip_all => "$test_name can only be performed with OpenSSL configured shared"
+    unless (map { chomp; s/^SHARED_LIBS=\s*//; $_ }
+	    grep { /^SHARED_LIBS=/ }
+	    do { local @ARGV = ( top_file("Makefile") ); <> })[0] ne "";
+
+$ENV{OPENSSL_ENGINES} = top_dir("engines");
+$ENV{OPENSSL_ia32cap} = '~0x200000200000000';
 my $proxy = TLSProxy::Proxy->new(
-    \&extension_filter,
-    @ARGV
+    \&ske_0_p_filter,
+    cmdstr(app(["openssl"])),
+    top_file("apps", "server.pem")
 );
 
-#Test 1: Sending a zero length extension block should pass
+plan tests => 1;
+
+#We must use an anon DHE cipher for this test
+$proxy->cipherc('ADH-AES128-SHA:@SECLEVEL=0');
+$proxy->ciphers('ADH-AES128-SHA:@SECLEVEL=0');
+
 $proxy->start();
-TLSProxy::Message->success or die "FAILED: Zero extension length test\n";
+ok(TLSProxy::Message->fail, "ServerKeyExchange with 0 p");
 
-print "SUCCESS: Extension test\n";
-
-sub extension_filter
+sub ske_0_p_filter
 {
     my $proxy = shift;
 
-    # We're only interested in the initial ClientHello
-    if ($proxy->flight != 0) {
+    # We're only interested in the SKE - always in flight 1
+    if ($proxy->flight != 1) {
         return;
     }
 
     foreach my $message (@{$proxy->message_list}) {
-        if ($message->mt == TLSProxy::Message::MT_CLIENT_HELLO) {
-            #Remove all extensions and set the extension len to zero
-            $message->extension_data({});
-            $message->extensions_len(0);
-            #Extensions have been removed so make sure we don't try to use them
-            $message->process_extensions();
+        if ($message->mt == TLSProxy::Message::MT_SERVER_KEY_EXCHANGE) {
+            #Set p to a value of 0
+            $message->p(pack('C', 0));
 
             $message->repack();
         }

@@ -10,15 +10,17 @@ use Test::Harness qw/runtests $switches/;
 my $top = $ENV{TOP};
 my $recipesdir = catdir($top, "test", "recipes");
 my $testlib = catdir($top, "test", "testlib");
+my $utillib = catdir($top, "util");
 
 # It seems that $switches is getting interpretted with 'eval' or something
 # like that, and that we need to take care of backslashes or they will
 # disappear along the way.
 $testlib =~ s|\\|\\\\|g if $^O eq "MSWin32";
+$utillib =~ s|\\|\\\\|g if $^O eq "MSWin32";
 
 # Test::Harness provides the variable $switches to give it
 # switches to be used when it calls our recipes.
-$switches = "-w \"-I$testlib\"";
+$switches = "-w \"-I$testlib\" \"-I$utillib\"";
 
 my @tests = ( "alltests" );
 if (@ARGV) {

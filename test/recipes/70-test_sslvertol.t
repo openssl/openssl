@@ -53,36 +53,52 @@
 # Hudson (tjh@cryptsoft.com).
 
 use strict;
+use OpenSSL::Test qw/:DEFAULT cmdstr top_file top_dir/;
 use TLSProxy::Proxy;
 
+my $test_name = "test_sslextension";
+setup($test_name);
+
+plan skip_all => "$test_name can only be performed with OpenSSL configured shared"
+    unless (map { chomp; s/^SHARED_LIBS=\s*//; $_ }
+	    grep { /^SHARED_LIBS=/ }
+	    do { local @ARGV = ( top_file("Makefile") ); <> })[0] ne "";
+
+$ENV{OPENSSL_ENGINES} = top_dir("engines");
+$ENV{OPENSSL_ia32cap} = '~0x200000200000000';
 my $proxy = TLSProxy::Proxy->new(
-    \&ske_0_p_filter,
-    @ARGV
+    \&vers_tolerance_filter,
+    cmdstr(app(["openssl"])),
+    top_file("apps", "server.pem")
 );
 
-#We must use an anon DHE cipher for this test
-$proxy->cipherc('ADH-AES128-SHA:@SECLEVEL=0');
-$proxy->ciphers('ADH-AES128-SHA:@SECLEVEL=0');
+plan tests => 2;
 
+#Test 1: Asking for TLS1.3 should pass
+my $client_version = TLSProxy::Record::VERS_TLS_1_3;
 $proxy->start();
-TLSProxy::Message->fail or die "FAILED: ServerKeyExchange with 0 p\n";
+ok(TLSProxy::Message->success(), "Version tolerance test, TLS 1.3");
 
-print "SUCCESS: ServerKeyExchange with 0 p\n";
+#Test 2: Testing something below SSLv3 should fail
+$client_version = TLSProxy::Record::VERS_SSL_3_0 - 1;
+$proxy->restart();
+ok(TLSProxy::Message->fail(), "Version tolerance test, SSL < 3.0");
 
-sub ske_0_p_filter
+sub vers_tolerance_filter
 {
     my $proxy = shift;
 
-    # We're only interested in the SKE - always in flight 1
-    if ($proxy->flight != 1) {
+    # We're only interested in the initial ClientHello
+    if ($proxy->flight != 0) {
         return;
     }
 
     foreach my $message (@{$proxy->message_list}) {
-        if ($message->mt == TLSProxy::Message::MT_SERVER_KEY_EXCHANGE) {
-            #Set p to a value of 0
-            $message->p(pack('C', 0));
-
+        if ($message->mt == TLSProxy::Message::MT_CLIENT_HELLO) {
+            #Set the client version
+            #Anything above the max supported version (TLS1.2) should succeed
+            #Anything below SSLv3 should fail
+            $message->client_version($client_version);
             $message->repack();
         }
     }
