@@ -53,26 +53,32 @@
 # Hudson (tjh@cryptsoft.com).
 
 use strict;
+use OpenSSL::Test qw/:DEFAULT cmdstr top_file top_dir/;
 use TLSProxy::Proxy;
 
+my $test_name = "test_sslextension";
+setup($test_name);
+
+plan skip_all => "$test_name can only be performed with OpenSSL configured shared"
+    unless (map { chomp; s/^SHARED_LIBS=\s*//; $_ }
+	    grep { /^SHARED_LIBS=/ }
+	    do { local @ARGV = ( top_file("Makefile") ); <> })[0] ne "";
+
+$ENV{OPENSSL_ENGINES} = top_dir("engines");
+$ENV{OPENSSL_ia32cap} = '~0x200000200000000';
 my $proxy = TLSProxy::Proxy->new(
-    \&vers_tolerance_filter,
-    @ARGV
+    \&extension_filter,
+    cmdstr(app(["openssl"])),
+    top_file("apps", "server.pem")
 );
 
-#Test 1: Asking for TLS1.3 should pass
-my $client_version = TLSProxy::Record::VERS_TLS_1_3;
+plan tests => 1;
+
+#Test 1: Sending a zero length extension block should pass
 $proxy->start();
-TLSProxy::Message->success or die "FAILED: Version tolerance test\n";
+ok(TLSProxy::Message->success, "Zero extension length test");
 
-#Test 2: Testing something below SSLv3 should fail
-$client_version = TLSProxy::Record::VERS_SSL_3_0 - 1;
-$proxy->restart();
-TLSProxy::Message->success and die "FAILED: Version tolerance test\n";
-
-print "SUCCESS: Version tolerance test\n";
-
-sub vers_tolerance_filter
+sub extension_filter
 {
     my $proxy = shift;
 
@@ -83,10 +89,12 @@ sub vers_tolerance_filter
 
     foreach my $message (@{$proxy->message_list}) {
         if ($message->mt == TLSProxy::Message::MT_CLIENT_HELLO) {
-            #Set the client version
-            #Anything above the max supported version (TLS1.2) should succeed
-            #Anything below SSLv3 should fail
-            $message->client_version($client_version);
+            #Remove all extensions and set the extension len to zero
+            $message->extension_data({});
+            $message->extensions_len(0);
+            #Extensions have been removed so make sure we don't try to use them
+            $message->process_extensions();
+
             $message->repack();
         }
     }
