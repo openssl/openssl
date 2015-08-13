@@ -79,13 +79,16 @@ sub new
         server_addr => "localhost",
         server_port => 4443,
         filter => $filter,
+        serverflags => "",
+        clientflags => "",
+        serverconnects => 1,
 
         #Public read
         execute => $execute,
         cert => $cert,
         debug => $debug,
-        cipherc => "AES128-SHA",
-        ciphers => "",
+        cipherc => "",
+        ciphers => "AES128-SHA",
         flight => 0,
         record_list => [],
         message_list => [],
@@ -101,12 +104,15 @@ sub clear
 {
     my $self = shift;
 
-    $self->{cipherc} = "AES128-SHA";
-    $self->{ciphers} = "";
+    $self->{cipherc} = "";
+    $self->{ciphers} = "AES128-SHA";
     $self->{flight} = 0;
     $self->{record_list} = [];
     $self->{message_list} = [];
     $self->{message_rec_list} = [];
+    $self->{serverflags} = "";
+    $self->{clientflags} = "";
+    $self->{serverconnects} = 1;
 
     TLSProxy::Message->clear();
     TLSProxy::Record->clear();
@@ -118,6 +124,14 @@ sub restart
 
     $self->clear;
     $self->start;
+}
+
+sub clientrestart
+{
+    my $self = shift;
+
+    $self->clear;
+    $self->clientstart;
 }
 
 sub start
@@ -132,13 +146,22 @@ sub start
         open(STDERR, ">&STDOUT");
         my $execcmd = $self->execute." s_server -rev -engine ossltest -accept "
             .($self->server_port)
-            ." -cert ".$self->cert." -naccept 1";
+            ." -cert ".$self->cert." -naccept ".$self->serverconnects;
         if ($self->ciphers ne "") {
             $execcmd .= " -cipher ".$self->ciphers;
+        }
+        if ($self->serverflags ne "") {
+            $execcmd .= " ".$self->serverflags;
         }
         exec($execcmd);
     }
 
+    $self->clientstart;
+}
+
+sub clientstart
+{
+    my ($self) = shift;
     my $oldstdout;
 
     if(!$self->debug) {
@@ -172,6 +195,9 @@ sub start
                  .($self->proxy_addr).":".($self->proxy_port);
             if ($self->cipherc ne "") {
                 $execcmd .= " -cipher ".$self->cipherc;
+            }
+            if ($self->clientflags ne "") {
+                $execcmd .= " ".$self->clientflags;
             }
             exec($execcmd);
         }
@@ -274,7 +300,9 @@ sub process_packet
     print "\n";
 
     #Finished parsing. Call user provided filter here
-    $self->filter->($self);
+    if(defined $self->filter) {
+        $self->filter->($self);
+    }
 
     #Reconstruct the packet
     $packet = "";
@@ -391,5 +419,29 @@ sub ciphers
       $self->{ciphers} = shift;
     }
     return $self->{ciphers};
+}
+sub serverflags
+{
+    my $self = shift;
+    if (@_) {
+      $self->{serverflags} = shift;
+    }
+    return $self->{serverflags};
+}
+sub clientflags
+{
+    my $self = shift;
+    if (@_) {
+      $self->{clientflags} = shift;
+    }
+    return $self->{clientflags};
+}
+sub serverconnects
+{
+    my $self = shift;
+    if (@_) {
+      $self->{serverconnects} = shift;
+    }
+    return $self->{serverconnects};
 }
 1;
