@@ -366,6 +366,10 @@ int dtls1_connect(SSL *s)
 #endif
 
                     s->state = SSL3_ST_CR_FINISHED_A;
+                    if (s->tlsext_ticket_expected) {
+                        /* receive renewed session ticket */
+                        s->state = SSL3_ST_CR_SESSION_TICKET_A;
+                    }
                 } else
                     s->state = DTLS1_ST_CR_HELLO_VERIFY_REQUEST_A;
             }
