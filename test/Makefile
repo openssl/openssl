@@ -73,6 +73,7 @@ CLIENTHELLOTEST=	clienthellotest
 PACKETTEST=	packettest
 SSLVERTOLTEST=	sslvertoltest.pl
 SSLEXTENSIONTEST=	sslextensiontest.pl
+SSLSESSIONTICKTEST= 	sslsessionticktest.pl
 SSLSKEWITH0PTEST=	sslskewith0ptest.pl
 
 TESTS=		alltests
@@ -160,7 +161,7 @@ alltests: \
 	test_srp test_cms test_v3name test_ocsp \
 	test_gost2814789 test_heartbeat test_p5_crpt2 \
 	test_constant_time test_verify_extra test_clienthello test_packet \
-	test_sslvertol test_sslextension test_sslskewith0p
+	test_sslvertol test_sslextension test_sslsessionticket test_sslskewith0p
 
 test_evp: $(EVPTEST)$(EXE_EXT) evptests.txt
 	@echo $(START) $@
@@ -431,6 +432,11 @@ test_sslextension: ../apps/openssl$(EXE_EXT)
 	@echo $(START) $@
 	[ -z "$(SHARED_LIBS)" ] || OPENSSL_ENGINES=../engines ../util/shlib_wrap.sh $(PERL) -I../util -w ./$(SSLEXTENSIONTEST) "OPENSSL_ia32cap='~0x200000200000000' ../apps/openssl$(EXE_EXT)" ../apps/server.pem
 	@[ -n "$(SHARED_LIBS)" ] || echo test_sslextension can only be performed with OpenSSL configured shared
+
+test_sslsessionticket: ../apps/openssl$(EXE_EXT)
+	@echo $(START) $@
+	[ -z "$(SHARED_LIBS)" ] || PERL5LIB=$$PERL5LIB:../util OPENSSL_ENGINES=../engines ../util/shlib_wrap.sh ./$(SSLSESSIONTICKTEST) "OPENSSL_ia32cap='~0x200000200000000' ../apps/openssl$(EXE_EXT)" ../apps/server.pem
+	@[ -n "$(SHARED_LIBS)" ] || echo test_sslsessionticket can only be performed with OpenSSL configured shared
 
 test_sslskewith0p: ../apps/openssl$(EXE_EXT)
 	@echo $(START) $@
