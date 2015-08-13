@@ -861,22 +861,25 @@ with the i2d_*_bio() or d2i_*_bio() functions or you can use the
 i2d_*(), d2i_*() functions directly. Since these are often the
 cause of grief here are some code fragments using PKCS7 as an example:
 
+----- snip:start -----
  unsigned char *buf, *p;
- int len;
+ int len = i2d_PKCS7(p7, NULL);
 
- len = i2d_PKCS7(p7, NULL);
- buf = OPENSSL_malloc(len); /* or Malloc, error checking omitted */
+ buf = OPENSSL_malloc(len); /* error checking omitted */
  p = buf;
  i2d_PKCS7(p7, &p);
+----- snip:end -----
 
 At this point buf contains the len bytes of the DER encoding of
 p7.
 
 The opposite assumes we already have len bytes in buf:
 
- unsigned char *p;
- p = buf;
+----- snip:start -----
+ unsigned char *p = buf;
+
  p7 = d2i_PKCS7(NULL, &p, len);
+----- snip:end -----
 
 At this point p7 contains a valid PKCS7 structure or NULL if an error
 occurred. If an error occurred ERR_print_errors(bio) should give more
@@ -893,14 +896,17 @@ because it no longer points to the same address.
 Memory allocation and encoding can also be combined in a single
 operation by the ASN1 routines:
 
- unsigned char *buf = NULL;	/* mandatory */
- int len;
- len = i2d_PKCS7(p7, &buf);
- if (len < 0)
-	/* Error */
+----- snip:start -----
+ unsigned char *buf = NULL;
+ int len = i2d_PKCS7(p7, &buf);
+
+ if (len < 0) {
+     /* Error */
+ }
  /* Do some things with 'buf' */
  /* Finished with buf: free it */
  OPENSSL_free(buf);
+----- snip:end -----
 
 In this special case the "buf" parameter is *not* incremented, it points
 to the start of the encoding.
