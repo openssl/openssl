@@ -142,7 +142,8 @@ sub start
     my $oldstdout;
 
     if(!$self->debug) {
-        $oldstdout = select(File::Spec->devnull());
+        open DEVNULL, ">", File::Spec->devnull();
+        $oldstdout = select(DEVNULL);
     }
 
     # Create the Proxy socket

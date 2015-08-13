@@ -104,13 +104,16 @@ sub parse
     my $pub_key_len = unpack('n', substr($self->data, $ptr));
     $ptr += 2;
     my $pub_key = substr($self->data, $ptr, $pub_key_len);
-    $ptr += $g_len;
+    $ptr += $pub_key_len;
 
     #We assume its signed
     my $sig_len = unpack('n', substr($self->data, $ptr));
-    $ptr += 2;
-    my $sig = substr($self->data, $ptr, $sig_len);
-    $ptr += $sig_len;
+    my $sig = "";
+    if (defined $sig_len) {
+	$ptr += 2;
+	$sig = substr($self->data, $ptr, $sig_len);
+	$ptr += $sig_len;
+    }
 
     $self->p($p);
     $self->g($g);
