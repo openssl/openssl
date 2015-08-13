@@ -350,7 +350,7 @@ sub repack
 
     $lenlo = length($self->data) & 0xff;
     $lenhi = length($self->data) >> 8;
-    my $msgdata = pack('CnC', $self->mt, $lenhi, $lenlo).$self->data;
+    $msgdata = pack('CnC', $self->mt, $lenhi, $lenlo).$self->data;
 
 
     if ($numrecs == 0) {
