@@ -73,6 +73,18 @@ use constant {
     MT_CERTIFICATE_STATUS => 22,
     MT_NEXT_PROTO => 67
 };
+
+#Alert levels
+use constant {
+    AL_LEVEL_WARN => 1,
+    AL_LEVEL_FATAL => 2
+};
+
+#Alert descriptions
+use constant {
+    AL_DESC_CLOSE_NOTIFY => 0
+};
+
 my %message_type = (
     MT_HELLO_REQUEST, "HelloRequest",
     MT_CLIENT_HELLO, "ClientHello",
@@ -164,11 +176,6 @@ sub get_messages
                                               $startoffset);
                     push @messages, $message;
 
-                    #Check if we have finished the handshake
-                    if ($mt == MT_FINISHED && $server) {
-                        $success = 1;
-                        $end = 1;
-                    }
                     $payload = "";
                 } else {
                     #This is just part of the total message
@@ -210,11 +217,6 @@ sub get_messages
                                                   $startoffset);
                         push @messages, $message;
 
-                        #Check if we have finished the handshake
-                        if ($mt == MT_FINISHED && $server) {
-                            $success = 1;
-                            $end = 1;
-                        }
                         $payload = "";
                     } else {
                         #This is just part of the total message
@@ -230,8 +232,15 @@ sub get_messages
         print "  [ENCRYPTED APPLICATION DATA]\n";
         print "  [".$record->decrypt_data."]\n";
     } elsif ($record->content_type == TLSProxy::Record::RT_ALERT) {
-        #For now assume all alerts are fatal
+        my ($alertlev, $alertdesc) = unpack('CC', $record->decrypt_data);
+        #All alerts end the test
         $end = 1;
+        #A CloseNotify from the client indicates we have finished successfully
+        #(we assume)
+        if (!$server && $alertlev == AL_LEVEL_WARN
+            && $alertdesc == AL_DESC_CLOSE_NOTIFY) {
+            $success = 1;
+        }
     }
 
     return @messages;
