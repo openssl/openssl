@@ -355,7 +355,7 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
                 X509_free(xtmp);
                 X509err(X509_F_X509_VERIFY_CERT, ERR_R_MALLOC_FAILURE);
                 ok = 0;
-                goto done;
+                goto end;
             }
             num++;
         }
