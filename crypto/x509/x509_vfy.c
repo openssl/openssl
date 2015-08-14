@@ -501,6 +501,7 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
  end:
         X509_get_pubkey_parameters(NULL, ctx->chain);
     }
+ done:
     if (sktmp != NULL)
         sk_X509_free(sktmp);
     if (chain_ss != NULL)
