@@ -725,3 +725,9 @@
 -T int16_t
 -T uint8_t
 -T int8_t
+-T STRINT_PAIR
+-T felem
+-T felem_bytearray
+-T SH_LIST
+-T PACKET
+-T RECORD_LAYER
