@@ -42,12 +42,12 @@ The PRNG must be seeded prior to calling BN_rand() or BN_rand_range().
 =head1 RETURN VALUES
 
 The functions return 1 on success, 0 on error.
-The error codes can be obtained by L<ERR_get_error(3)|ERR_get_error(3)>.
+The error codes can be obtained by L<ERR_get_error(3)>.
 
 =head1 SEE ALSO
 
-L<bn(3)|bn(3)>, L<ERR_get_error(3)|ERR_get_error(3)>, L<rand(3)|rand(3)>,
-L<RAND_add(3)|RAND_add(3)>, L<RAND_bytes(3)|RAND_bytes(3)>
+L<bn(3)>, L<ERR_get_error(3)>, L<rand(3)>,
+L<RAND_add(3)>, L<RAND_bytes(3)>
 
 =head1 HISTORY
 

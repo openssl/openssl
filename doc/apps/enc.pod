@@ -53,7 +53,7 @@ the output filename, standard output by default.
 =item B<-pass arg>
 
 the password source. For more information about the format of B<arg>
-see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)|openssl(1)>.
+see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
 
 =item B<-salt>
 

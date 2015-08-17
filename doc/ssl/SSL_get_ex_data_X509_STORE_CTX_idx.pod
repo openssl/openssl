@@ -51,11 +51,11 @@ An error occurred, check the error stack for a detailed error message.
 The index returned from SSL_get_ex_data_X509_STORE_CTX_idx() allows to
 access the SSL object for the connection to be accessed during the
 verify_callback() when checking the peers certificate. Please check
-the example in L<SSL_CTX_set_verify(3)|SSL_CTX_set_verify(3)>,
+the example in L<SSL_CTX_set_verify(3)>,
 
 =head1 SEE ALSO
 
-L<ssl(3)|ssl(3)>, L<SSL_CTX_set_verify(3)|SSL_CTX_set_verify(3)>,
-L<CRYPTO_set_ex_data(3)|CRYPTO_set_ex_data(3)>
+L<ssl(3)>, L<SSL_CTX_set_verify(3)>,
+L<CRYPTO_set_ex_data(3)>
 
 =cut

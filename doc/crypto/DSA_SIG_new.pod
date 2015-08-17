@@ -23,15 +23,15 @@ values are erased before the memory is returned to the system.
 
 If the allocation fails, DSA_SIG_new() returns B<NULL> and sets an
 error code that can be obtained by
-L<ERR_get_error(3)|ERR_get_error(3)>. Otherwise it returns a pointer
+L<ERR_get_error(3)>. Otherwise it returns a pointer
 to the newly allocated structure.
 
 DSA_SIG_free() returns no value.
 
 =head1 SEE ALSO
 
-L<dsa(3)|dsa(3)>, L<ERR_get_error(3)|ERR_get_error(3)>,
-L<DSA_do_sign(3)|DSA_do_sign(3)>
+L<dsa(3)>, L<ERR_get_error(3)>,
+L<DSA_do_sign(3)>
 
 =head1 HISTORY
 

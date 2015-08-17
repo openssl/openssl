@@ -19,7 +19,7 @@ contain its length.
 =head1 RETURN VALUE
 
 DSA_dup_DH() returns the new B<DH> structure, and NULL on error. The
-error codes can be obtained by L<ERR_get_error(3)|ERR_get_error(3)>.
+error codes can be obtained by L<ERR_get_error(3)>.
 
 =head1 NOTE
 
@@ -27,7 +27,7 @@ Be careful to avoid small subgroup attacks when using this.
 
 =head1 SEE ALSO
 
-L<dh(3)|dh(3)>, L<dsa(3)|dsa(3)>, L<ERR_get_error(3)|ERR_get_error(3)>
+L<dh(3)>, L<dsa(3)>, L<ERR_get_error(3)>
 
 =head1 HISTORY
 

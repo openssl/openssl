@@ -51,7 +51,7 @@ OpenSSL_add_all_algorithms() as well.
 
 =head1 SEE ALSO
 
-L<ssl(3)|ssl(3)>, L<SSL_load_error_strings(3)|SSL_load_error_strings(3)>,
-L<RAND_add(3)|RAND_add(3)>
+L<ssl(3)>, L<SSL_load_error_strings(3)>,
+L<RAND_add(3)>
 
 =cut

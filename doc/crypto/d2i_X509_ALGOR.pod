@@ -23,7 +23,7 @@ The functions d2i_X509() and i2d_X509() decode and encode an B<X509_ALGOR>
 structure which is equivalent to the B<AlgorithmIdentifier> structure.
 
 Otherwise they behave in a similar way to d2i_X509() and i2d_X509()
-described in the L<d2i_X509(3)|d2i_X509(3)> manual page.
+described in the L<d2i_X509(3)> manual page.
 
 X509_ALGOR_dup() returns a copy of B<alg>.
 
@@ -46,7 +46,7 @@ encodings and non-zero otherwise.
 
 =head1 SEE ALSO
 
-L<d2i_X509(3)|d2i_X509(3)>
+L<d2i_X509(3)>
 
 =head1 HISTORY
 

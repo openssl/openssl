@@ -156,7 +156,7 @@ a NID or B<NID_undef> on error.
 
 =head1 SEE ALSO
 
-L<ERR_get_error(3)|ERR_get_error(3)>
+L<ERR_get_error(3)>
 
 =head1 HISTORY
 

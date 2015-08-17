@@ -34,7 +34,7 @@ RSA_blinding_off() returns no value.
 
 =head1 SEE ALSO
 
-L<rsa(3)|rsa(3)>, L<rand(3)|rand(3)>
+L<rsa(3)>, L<rand(3)>
 
 =head1 HISTORY
 

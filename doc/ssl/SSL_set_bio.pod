@@ -32,9 +32,9 @@ SSL_set_bio(), SSL_set_rbio() and SSL_set_wbio() cannot fail.
 
 =head1 SEE ALSO
 
-L<SSL_get_rbio(3)|SSL_get_rbio(3)>,
-L<SSL_connect(3)|SSL_connect(3)>, L<SSL_accept(3)|SSL_accept(3)>,
-L<SSL_shutdown(3)|SSL_shutdown(3)>, L<ssl(3)|ssl(3)>, L<bio(3)|bio(3)>
+L<SSL_get_rbio(3)>,
+L<SSL_connect(3)>, L<SSL_accept(3)>,
+L<SSL_shutdown(3)>, L<ssl(3)>, L<bio(3)>
 
 =head1 HISTORY
 

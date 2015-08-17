@@ -72,7 +72,7 @@ violates the standard and can break interoperability with clients.
 It is therefore strongly recommended to not use ephemeral RSA key
 exchange and use DHE (Ephemeral Diffie-Hellman) key exchange instead
 in order to achieve forward secrecy (see
-L<SSL_CTX_set_tmp_dh_callback(3)|SSL_CTX_set_tmp_dh_callback(3)>).
+L<SSL_CTX_set_tmp_dh_callback(3)>).
 
 An application may either directly specify the key or can supply the key via a
 callback function. The callback approach has the advantage, that the callback
@@ -151,9 +151,9 @@ RSA key is needed and 0 otherwise.
 
 =head1 SEE ALSO
 
-L<ssl(3)|ssl(3)>, L<SSL_CTX_set_cipher_list(3)|SSL_CTX_set_cipher_list(3)>,
-L<SSL_CTX_set_options(3)|SSL_CTX_set_options(3)>,
-L<SSL_CTX_set_tmp_dh_callback(3)|SSL_CTX_set_tmp_dh_callback(3)>,
-L<SSL_new(3)|SSL_new(3)>, L<ciphers(1)|ciphers(1)>
+L<ssl(3)>, L<SSL_CTX_set_cipher_list(3)>,
+L<SSL_CTX_set_options(3)>,
+L<SSL_CTX_set_tmp_dh_callback(3)>,
+L<SSL_new(3)>, L<ciphers(1)>
 
 =cut

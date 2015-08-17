@@ -49,7 +49,7 @@ These functions do not return values.
 
 =head1 SEE ALSO
 
-L<bio(3)|bio(3)>, L<lhash(3)|lhash(3)>
+L<bio(3)>, L<lhash(3)>
 
 =head1 HISTORY
 

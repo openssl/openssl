@@ -26,6 +26,6 @@ was used.
 
 =head1 SEE ALSO
 
-L<ssl(3)|ssl(3)>
+L<ssl(3)>
 
 =cut

@@ -28,8 +28,8 @@ The size.
 
 =head1 SEE ALSO
 
-L<dh(3)|dh(3)>, L<DH_generate_key(3)|DH_generate_key(3)>,
-L<BN_num_bits(3)|BN_num_bits(3)>
+L<dh(3)>, L<DH_generate_key(3)>,
+L<BN_num_bits(3)>
 
 =head1 HISTORY
 

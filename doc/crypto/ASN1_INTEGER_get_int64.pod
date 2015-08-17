@@ -111,7 +111,7 @@ of NULL if an error occurs. They can fail if the pased type is incorrect
 
 =head1 SEE ALSO
 
-L<ERR_get_error(3)|ERR_get_error(3)>
+L<ERR_get_error(3)>
 
 =head1 HISTORY
 

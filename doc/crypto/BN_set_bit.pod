@@ -51,11 +51,11 @@ For the shift functions, B<r> and B<a> may be the same variable.
 BN_is_bit_set() returns 1 if the bit is set, 0 otherwise.
 
 All other functions return 1 for success, 0 on error. The error codes
-can be obtained by L<ERR_get_error(3)|ERR_get_error(3)>.
+can be obtained by L<ERR_get_error(3)>.
 
 =head1 SEE ALSO
 
-L<bn(3)|bn(3)>, L<BN_num_bytes(3)|BN_num_bytes(3)>, L<BN_add(3)|BN_add(3)>
+L<bn(3)>, L<BN_num_bytes(3)>, L<BN_add(3)>
 
 =head1 HISTORY
 

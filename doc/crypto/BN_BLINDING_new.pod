@@ -98,7 +98,7 @@ parameters or NULL on error.
 
 =head1 SEE ALSO
 
-L<bn(3)|bn(3)>
+L<bn(3)>
 
 =head1 HISTORY
 

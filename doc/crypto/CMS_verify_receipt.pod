@@ -32,13 +32,13 @@ supported since they do not make sense in the context of signed receipts.
 CMS_verify_receipt() returns 1 for a successful verification and zero if an
 error occurred.
 
-The error can be obtained from L<ERR_get_error(3)|ERR_get_error(3)>
+The error can be obtained from L<ERR_get_error(3)>
 
 =head1 SEE ALSO
 
-L<ERR_get_error(3)|ERR_get_error(3)>,
-L<CMS_sign_receipt(3)|CMS_sign_receipt(3)>,
-L<CMS_verify(3)|CMS_verify(3)>,
+L<ERR_get_error(3)>,
+L<CMS_sign_receipt(3)>,
+L<CMS_verify(3)>,
 
 =head1 HISTORY
 

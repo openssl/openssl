@@ -14,7 +14,7 @@ SSL_CTX_set_cert_verify_callback - set peer certificate verification procedure
 
 SSL_CTX_set_cert_verify_callback() sets the verification callback function for
 I<ctx>. SSL objects that are created from I<ctx> inherit the setting valid at
-the time when L<SSL_new(3)|SSL_new(3)> is called.
+the time when L<SSL_new(3)> is called.
 
 =head1 NOTES
 
@@ -38,13 +38,13 @@ member of I<x509_store_ctx> so that the calling application will be informed
 about the detailed result of the verification procedure! 
 
 Within I<x509_store_ctx>, I<callback> has access to the I<verify_callback>
-function set using L<SSL_CTX_set_verify(3)|SSL_CTX_set_verify(3)>.
+function set using L<SSL_CTX_set_verify(3)>.
 
 =head1 WARNINGS
 
 Do not mix the verification callback described in this function with the
 B<verify_callback> function called during the verification process. The
-latter is set using the L<SSL_CTX_set_verify(3)|SSL_CTX_set_verify(3)>
+latter is set using the L<SSL_CTX_set_verify(3)>
 family of functions.
 
 Providing a complete verification procedure including certificate purpose
@@ -60,9 +60,9 @@ SSL_CTX_set_cert_verify_callback() does not provide diagnostic information.
 
 =head1 SEE ALSO
 
-L<ssl(3)|ssl(3)>, L<SSL_CTX_set_verify(3)|SSL_CTX_set_verify(3)>,
-L<SSL_get_verify_result(3)|SSL_get_verify_result(3)>,
-L<SSL_CTX_load_verify_locations(3)|SSL_CTX_load_verify_locations(3)>
+L<ssl(3)>, L<SSL_CTX_set_verify(3)>,
+L<SSL_get_verify_result(3)>,
+L<SSL_CTX_load_verify_locations(3)>
 
 =head1 HISTORY
 

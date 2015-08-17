@@ -58,7 +58,7 @@ i2d_ECPKParameters_fp() is similar to i2d_ECPKParameters() except it writes
 the encoding of the structure B<x> to BIO B<bp> and it
 returns 1 for success and 0 for failure.
 
-These functions are very similar to the X509 functions described in L<d2i_X509(3)|d2i_X509(3)>,
+These functions are very similar to the X509 functions described in L<d2i_X509(3)>,
 where further notes and examples are available.
 
 The ECPKParameters_print and ECPKParameters_print_fp functions print a human-readable output
@@ -77,8 +77,8 @@ return 1 for success and 0 if an error occurs.
 
 =head1 SEE ALSO
 
-L<crypto(3)|crypto(3)>, L<ec(3)|ec(3)>, L<EC_GROUP_new(3)|EC_GROUP_new(3)>, L<EC_GROUP_copy(3)|EC_GROUP_copy(3)>,
-L<EC_POINT_new(3)|EC_POINT_new(3)>, L<EC_POINT_add(3)|EC_POINT_add(3)>, L<EC_KEY_new(3)|EC_KEY_new(3)>,
-L<EC_GFp_simple_method(3)|EC_GFp_simple_method(3)>, L<d2i_X509(3)|d2i_X509(3)>
+L<crypto(3)>, L<ec(3)>, L<EC_GROUP_new(3)>, L<EC_GROUP_copy(3)>,
+L<EC_POINT_new(3)>, L<EC_POINT_add(3)>, L<EC_KEY_new(3)>,
+L<EC_GFp_simple_method(3)>, L<d2i_X509(3)>
 
 =cut

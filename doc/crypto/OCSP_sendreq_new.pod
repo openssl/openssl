@@ -103,11 +103,11 @@ applications is not recommended.
 
 =head1 SEE ALSO
 
-L<crypto(3)|crypto(3)>,
-L<OCSP_cert_to_id(3)|OCSP_cert_to_id(3)>,
-L<OCSP_request_add1_nonce(3)|OCSP_request_add1_nonce(3)>,
-L<OCSP_REQUEST_new(3)|OCSP_REQUEST_new(3)>,
-L<OCSP_response_find_status(3)|OCSP_response_find_status(3)>,
-L<OCSP_response_status(3)|OCSP_response_status(3)>
+L<crypto(3)>,
+L<OCSP_cert_to_id(3)>,
+L<OCSP_request_add1_nonce(3)>,
+L<OCSP_REQUEST_new(3)>,
+L<OCSP_response_find_status(3)>,
+L<OCSP_response_status(3)>
 
 =cut

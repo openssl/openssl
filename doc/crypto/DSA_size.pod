@@ -24,7 +24,7 @@ The size in bytes.
 
 =head1 SEE ALSO
 
-L<dsa(3)|dsa(3)>, L<DSA_sign(3)|DSA_sign(3)>
+L<dsa(3)>, L<DSA_sign(3)>
 
 =head1 HISTORY
 

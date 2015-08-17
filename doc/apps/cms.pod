@@ -434,12 +434,12 @@ or to modify default parameters for ECDH.
 =item B<-passin arg>
 
 the private key password source. For more information about the format of B<arg>
-see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)|openssl(1)>.
+see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
 
 =item B<-rand file(s)>
 
 a file or files containing random data used to seed the random number
-generator, or an EGD socket (see L<RAND_egd(3)|RAND_egd(3)>).
+generator, or an EGD socket (see L<RAND_egd(3)>).
 Multiple files can be specified separated by a OS-dependent character.
 The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
 all others.
@@ -465,7 +465,7 @@ B<-use_deltas>, B<-verify_depth>, B<-verify_email>, B<-verify_hostname>,
 B<-verify_ip>, B<-verify_name>, B<-x509_strict>
 
 Set various certificate chain validation options. See the
-L<B<verify>|verify(1)> manual page for details.
+L<verify(1)> manual page for details.
 
 =back
 
@@ -515,7 +515,7 @@ tried whether they succeed or not and if no recipients match the message
 is "decrypted" using a random key which will typically output garbage. 
 The B<-debug_decrypt> option can be used to disable the MMA attack protection
 and return an error if no recipient can be found: this option should be used
-with caution. For a fuller description see L<CMS_decrypt(3)|CMS_decrypt(3)>).
+with caution. For a fuller description see L<CMS_decrypt(3)>).
 
 =head1 EXIT CODES
 

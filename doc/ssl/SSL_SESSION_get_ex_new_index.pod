@@ -40,9 +40,9 @@ SSL_SESSION_get_ex_data() is used to retrieve the information for B<idx> from
 B<session>.
 
 A detailed description for the B<*_get_ex_new_index()> functionality
-can be found in L<RSA_get_ex_new_index(3)|RSA_get_ex_new_index(3)>.
+can be found in L<RSA_get_ex_new_index(3)>.
 The B<*_get_ex_data()> and B<*_set_ex_data()> functionality is described in
-L<CRYPTO_set_ex_data(3)|CRYPTO_set_ex_data(3)>.
+L<CRYPTO_set_ex_data(3)>.
 
 =head1 WARNINGS
 
@@ -54,8 +54,8 @@ therefore not be restored.
 
 =head1 SEE ALSO
 
-L<ssl(3)|ssl(3)>,
-L<RSA_get_ex_new_index(3)|RSA_get_ex_new_index(3)>,
-L<CRYPTO_set_ex_data(3)|CRYPTO_set_ex_data(3)>
+L<ssl(3)>,
+L<RSA_get_ex_new_index(3)>,
+L<CRYPTO_set_ex_data(3)>
 
 =cut

@@ -42,11 +42,11 @@ This list must explicitly be set using SSL_CTX_set_client_CA_list() for
 B<ctx> and SSL_set_client_CA_list() for the specific B<ssl>. The list
 specified overrides the previous setting. The CAs listed do not become
 trusted (B<list> only contains the names, not the complete certificates); use
-L<SSL_CTX_load_verify_locations(3)|SSL_CTX_load_verify_locations(3)> 
+L<SSL_CTX_load_verify_locations(3)> 
 to additionally load them for verification.
 
 If the list of acceptable CAs is compiled in a file, the
-L<SSL_load_client_CA_file(3)|SSL_load_client_CA_file(3)>
+L<SSL_load_client_CA_file(3)>
 function can be used to help importing the necessary data.
 
 SSL_CTX_add_client_CA() and SSL_add_client_CA() can be used to add additional
@@ -86,9 +86,9 @@ Scan all certificates in B<CAfile> and list them as acceptable CAs:
 
 =head1 SEE ALSO
 
-L<ssl(3)|ssl(3)>,
-L<SSL_get_client_CA_list(3)|SSL_get_client_CA_list(3)>,
-L<SSL_load_client_CA_file(3)|SSL_load_client_CA_file(3)>,
-L<SSL_CTX_load_verify_locations(3)|SSL_CTX_load_verify_locations(3)>
+L<ssl(3)>,
+L<SSL_get_client_CA_list(3)>,
+L<SSL_load_client_CA_file(3)>,
+L<SSL_CTX_load_verify_locations(3)>
 
 =cut

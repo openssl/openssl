@@ -21,11 +21,11 @@ The ECPrivateKey encode and decode routines encode and parse an
 B<EC_KEY> structure into a binary format (ASN.1 DER) and back again.
 
 These functions are similar to the d2i_X509() functions, and you should refer to
-that page for a detailed description (see L<d2i_X509(3)|d2i_X509(3)>).
+that page for a detailed description (see L<d2i_X509(3)>).
 
 The format of the external representation of the public key written by
 i2d_ECPrivateKey (such as whether it is stored in a compressed form or not) is
-described by the point_conversion_form. See L<EC_GROUP_copy(3)|EC_GROUP_copy(3)>
+described by the point_conversion_form. See L<EC_GROUP_copy(3)>
 for a description of point_conversion_form.
 
 When reading a private key encoded without an associated public key (e.g. if
@@ -46,22 +46,22 @@ set then the public key is not encoded along with the private key.
 
 d2i_ECPrivateKey() returns a valid B<EC_KEY> structure or B<NULL> if an error
 occurs. The error code that can be obtained by
-L<ERR_get_error(3)|ERR_get_error(3)>.
+L<ERR_get_error(3)>.
 
 i2d_ECPrivateKey() returns the number of bytes successfully encoded or a
 negative value if an error occurs. The error code can be obtained by
-L<ERR_get_error(3)|ERR_get_error(3)>.
+L<ERR_get_error(3)>.
 
 EC_KEY_get_enc_flags returns the value of the current encoding flags for the
 EC_KEY.
 
 =head1 SEE ALSO
 
-L<crypto(3)|crypto(3)>, L<ec(3)|ec(3)>, L<EC_GROUP_new(3)|EC_GROUP_new(3)>,
-L<EC_GROUP_copy(3)|EC_GROUP_copy(3)>, L<EC_POINT_new(3)|EC_POINT_new(3)>,
-L<EC_POINT_add(3)|EC_POINT_add(3)>,
-L<EC_GFp_simple_method(3)|EC_GFp_simple_method(3)>,
-L<d2i_ECPKParameters(3)|d2i_ECPKParameters(3)>,
-L<d2i_ECPrivateKey(3)|d2i_ECPrivateKey(3)>
+L<crypto(3)>, L<ec(3)>, L<EC_GROUP_new(3)>,
+L<EC_GROUP_copy(3)>, L<EC_POINT_new(3)>,
+L<EC_POINT_add(3)>,
+L<EC_GFp_simple_method(3)>,
+L<d2i_ECPKParameters(3)>,
+L<d2i_ECPrivateKey(3)>
 
 =cut

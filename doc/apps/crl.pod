@@ -57,7 +57,7 @@ print out the CRL in text form.
 =item B<-nameopt option>
 
 option which determines how the subject or issuer names are displayed. See
-the description of B<-nameopt> in L<x509(1)|x509(1)>.
+the description of B<-nameopt> in L<x509(1)>.
 
 =item B<-noout>
 
@@ -123,6 +123,6 @@ and files too.
 
 =head1 SEE ALSO
 
-L<crl2pkcs7(1)|crl2pkcs7(1)>, L<ca(1)|ca(1)>, L<x509(1)|x509(1)>
+L<crl2pkcs7(1)>, L<ca(1)>, L<x509(1)>
 
 =cut

@@ -39,6 +39,6 @@ The file descriptor linked to B<ssl>.
 
 =head1 SEE ALSO
 
-L<SSL_set_fd(3)|SSL_set_fd(3)>, L<ssl(3)|ssl(3)> , L<bio(3)|bio(3)>
+L<SSL_set_fd(3)>, L<ssl(3)> , L<bio(3)>
 
 =cut

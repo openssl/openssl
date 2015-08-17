@@ -38,7 +38,7 @@ These functions return 1 on success, 0 on error.
 
 =head1 SEE ALSO
 
-L<dh(3)|dh(3)>, L<dsa(3)|dsa(3)>, L<rsa(3)|rsa(3)>, L<BN_bn2bin(3)|BN_bn2bin(3)>
+L<dh(3)>, L<dsa(3)>, L<rsa(3)>, L<BN_bn2bin(3)>
 
 =head1 HISTORY
 

@@ -98,7 +98,7 @@ All these functions return 1 for success and 0 for failure.
 
 =head1 SEE ALSO
 
-L<ssl(3)|ssl(3)>, L<SSL_get_shared_sigalgs(3)|SSL_get_shared_sigalgs(3)>,
-L<SSL_CONF_CTX_new(3)|SSL_CONF_CTX_new(3)>
+L<ssl(3)>, L<SSL_get_shared_sigalgs(3)>,
+L<SSL_CONF_CTX_new(3)>
 
 =cut

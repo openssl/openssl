@@ -97,7 +97,7 @@ parameter.
 
 B<new_func()> and B<dup_func()> should return 0 for failure and 1 for success.
 
-On failure an error code can be obtained from L<ERR_get_error(3)|ERR_get_error(3)>.
+On failure an error code can be obtained from L<ERR_get_error(3)>.
 
 =head1 BUGS
 
@@ -110,7 +110,7 @@ present in the parent RSA structure when it is called.
 
 =head1 SEE ALSO
 
-L<rsa(3)|rsa(3)>, L<CRYPTO_set_ex_data(3)|CRYPTO_set_ex_data(3)>
+L<rsa(3)>, L<CRYPTO_set_ex_data(3)>
 
 =head1 HISTORY
 

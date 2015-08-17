@@ -80,8 +80,8 @@ return no values.
 
 =head1 SEE ALSO
 
-L<BN_new(3)|BN_new(3)>,
-L<bn_internal(3)|bn_internal(3)>
+L<BN_new(3)>,
+L<bn_internal(3)>
 
 =head1 HISTORY
 

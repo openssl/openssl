@@ -93,10 +93,10 @@ Callback has been called because a handshake is finished.
 =back
 
 The current state information can be obtained using the
-L<SSL_state_string(3)|SSL_state_string(3)> family of functions.
+L<SSL_state_string(3)> family of functions.
 
 The B<ret> information can be evaluated using the
-L<SSL_alert_type_string(3)|SSL_alert_type_string(3)> family of functions.
+L<SSL_alert_type_string(3)> family of functions.
 
 =head1 RETURN VALUES
 
@@ -147,7 +147,7 @@ about alerts being handled and error messages to the B<bio_err> BIO.
 
 =head1 SEE ALSO
 
-L<ssl(3)|ssl(3)>, L<SSL_state_string(3)|SSL_state_string(3)>,
-L<SSL_alert_type_string(3)|SSL_alert_type_string(3)>
+L<ssl(3)>, L<SSL_state_string(3)>,
+L<SSL_alert_type_string(3)>
 
 =cut

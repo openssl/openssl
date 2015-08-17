@@ -24,16 +24,16 @@ If B<rsa> is NULL nothing is done.
 =head1 RETURN VALUES
 
 If the allocation fails, RSA_new() returns B<NULL> and sets an error
-code that can be obtained by L<ERR_get_error(3)|ERR_get_error(3)>. Otherwise it returns
+code that can be obtained by L<ERR_get_error(3)>. Otherwise it returns
 a pointer to the newly allocated structure.
 
 RSA_free() returns no value.
 
 =head1 SEE ALSO
 
-L<ERR_get_error(3)|ERR_get_error(3)>, L<rsa(3)|rsa(3)>,
-L<RSA_generate_key(3)|RSA_generate_key(3)>,
-L<RSA_new_method(3)|RSA_new_method(3)>
+L<ERR_get_error(3)>, L<rsa(3)>,
+L<RSA_generate_key(3)>,
+L<RSA_new_method(3)>
 
 =head1 HISTORY
 

@@ -47,18 +47,18 @@ B<X509_EXTENSION_>I<...> handle certificate extensions.
 
 =head1 SEE ALSO
 
-L<X509_NAME_ENTRY_get_object(3)|X509_NAME_ENTRY_get_object(3)>,
-L<X509_NAME_add_entry_by_txt(3)|X509_NAME_add_entry_by_txt(3)>,
-L<X509_NAME_add_entry_by_NID(3)|X509_NAME_add_entry_by_NID(3)>,
-L<X509_NAME_print_ex(3)|X509_NAME_print_ex(3)>,
-L<X509_NAME_new(3)|X509_NAME_new(3)>,
-L<d2i_X509(3)|d2i_X509(3)>,
-L<d2i_X509_ALGOR(3)|d2i_X509_ALGOR(3)>,
-L<d2i_X509_CRL(3)|d2i_X509_CRL(3)>,
-L<d2i_X509_NAME(3)|d2i_X509_NAME(3)>,
-L<d2i_X509_REQ(3)|d2i_X509_REQ(3)>,
-L<d2i_X509_SIG(3)|d2i_X509_SIG(3)>,
-L<crypto(3)|crypto(3)>,
-L<x509v3(3)|x509v3(3)>
+L<X509_NAME_ENTRY_get_object(3)>,
+L<X509_NAME_add_entry_by_txt(3)>,
+L<X509_NAME_add_entry_by_NID(3)>,
+L<X509_NAME_print_ex(3)>,
+L<X509_NAME_new(3)>,
+L<d2i_X509(3)>,
+L<d2i_X509_ALGOR(3)>,
+L<d2i_X509_CRL(3)>,
+L<d2i_X509_NAME(3)>,
+L<d2i_X509_REQ(3)>,
+L<d2i_X509_SIG(3)>,
+L<crypto(3)>,
+L<x509v3(3)>
 
 =cut

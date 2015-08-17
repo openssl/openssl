@@ -34,15 +34,15 @@ the new pseudo-random bytes unless disabled at compile time (see FAQ).
 =head1 RETURN VALUES
 
 RAND_bytes() returns 1 on success, 0 otherwise. The error code can be
-obtained by L<ERR_get_error(3)|ERR_get_error(3)>. RAND_pseudo_bytes() returns 1 if the
+obtained by L<ERR_get_error(3)>. RAND_pseudo_bytes() returns 1 if the
 bytes generated are cryptographically strong, 0 otherwise. Both
 functions return -1 if they are not supported by the current RAND
 method.
 
 =head1 SEE ALSO
 
-L<rand(3)|rand(3)>, L<ERR_get_error(3)|ERR_get_error(3)>,
-L<RAND_add(3)|RAND_add(3)>
+L<rand(3)>, L<ERR_get_error(3)>,
+L<RAND_add(3)>
 
 =head1 HISTORY
 

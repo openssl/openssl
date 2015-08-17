@@ -125,7 +125,7 @@ See DESCRIPTION
 
 =head1 SEE ALSO
 
-L<ssl(3)|ssl(3)>, L<SSL_get_current_cipher(3)|SSL_get_current_cipher(3)>,
-L<SSL_get_ciphers(3)|SSL_get_ciphers(3)>, L<ciphers(1)|ciphers(1)>
+L<ssl(3)>, L<SSL_get_current_cipher(3)>,
+L<SSL_get_ciphers(3)>, L<ciphers(1)>
 
 =cut

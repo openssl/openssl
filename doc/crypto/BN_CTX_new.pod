@@ -28,8 +28,8 @@ B<BIGNUM>s.
 
 BN_CTX_free() frees the components of the B<BN_CTX>, and if it was
 created by BN_CTX_new(), also the structure itself.
-If L<BN_CTX_start(3)|BN_CTX_start(3)> has been used on the B<BN_CTX>,
-L<BN_CTX_end(3)|BN_CTX_end(3)> must be called before the B<BN_CTX>
+If L<BN_CTX_start(3)> has been used on the B<BN_CTX>,
+L<BN_CTX_end(3)> must be called before the B<BN_CTX>
 may be freed by BN_CTX_free().
 If B<c> is NULL, nothing is done.
 
@@ -38,7 +38,7 @@ If B<c> is NULL, nothing is done.
 BN_CTX_new() and BN_CTX_secure_new() return a pointer to the B<BN_CTX>.
 If the allocation fails,
 they return B<NULL> and sets an error code that can be obtained by
-L<ERR_get_error(3)|ERR_get_error(3)>.
+L<ERR_get_error(3)>.
 
 BN_CTX_free() has no return values.
 
@@ -57,8 +57,8 @@ replace use of BN_CTX_init with BN_CTX_new instead:
 
 =head1 SEE ALSO
 
-L<bn(3)|bn(3)>, L<ERR_get_error(3)|ERR_get_error(3)>, L<BN_add(3)|BN_add(3)>,
-L<BN_CTX_start(3)|BN_CTX_start(3)>
+L<bn(3)>, L<ERR_get_error(3)>, L<BN_add(3)>,
+L<BN_CTX_start(3)>
 
 =head1 HISTORY
 

@@ -16,12 +16,12 @@ RAND_egd, RAND_egd_bytes, RAND_query_egd_bytes - query entropy gathering daemon
 =head1 DESCRIPTION
 
 RAND_egd() queries the entropy gathering daemon EGD on socket B<path>.
-It queries 255 bytes and uses L<RAND_add(3)|RAND_add(3)> to seed the
+It queries 255 bytes and uses L<RAND_add(3)> to seed the
 OpenSSL built-in PRNG. RAND_egd(path) is a wrapper for
 RAND_egd_bytes(path, 255);
 
 RAND_egd_bytes() queries the entropy gathering daemon EGD on socket B<path>.
-It queries B<bytes> bytes and uses L<RAND_add(3)|RAND_add(3)> to seed the
+It queries B<bytes> bytes and uses L<RAND_add(3)> to seed the
 OpenSSL built-in PRNG.
 This function is more flexible than RAND_egd().
 When only one secret key must
@@ -32,7 +32,7 @@ that can be retrieved from EGD over time is limited.
 RAND_query_egd_bytes() performs the actual query of the EGD daemon on socket
 B<path>. If B<buf> is given, B<bytes> bytes are queried and written into
 B<buf>. If B<buf> is NULL, B<bytes> bytes are queried and used to seed the
-OpenSSL built-in PRNG using L<RAND_add(3)|RAND_add(3)>.
+OpenSSL built-in PRNG using L<RAND_add(3)>.
 
 =head1 NOTES
 
@@ -72,8 +72,8 @@ success, and -1 if the connection failed. The PRNG state is not considered.
 
 =head1 SEE ALSO
 
-L<rand(3)|rand(3)>, L<RAND_add(3)|RAND_add(3)>,
-L<RAND_cleanup(3)|RAND_cleanup(3)>
+L<rand(3)>, L<RAND_add(3)>,
+L<RAND_cleanup(3)>
 
 =head1 HISTORY
 

@@ -29,7 +29,7 @@ implies that the stack became empty, otherwise 1.
 
 =head1 SEE ALSO
 
-L<err(3)|err(3)>
+L<err(3)>
 
 =head1 HISTORY
 

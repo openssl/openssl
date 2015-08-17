@@ -41,7 +41,7 @@ functions are synonyms for the SSL_SESSION_*() counterparts.
 Sessions are expired by examining the creation time and the timeout value.
 Both are set at creation time of the session to the actual time and the
 default timeout value at creation, respectively, as set by
-L<SSL_CTX_set_timeout(3)|SSL_CTX_set_timeout(3)>.
+L<SSL_CTX_set_timeout(3)>.
 Using these functions it is possible to extend or shorten the lifetime
 of the session.
 
@@ -57,8 +57,8 @@ If any of the function is passed the NULL pointer for the session B<s>,
 
 =head1 SEE ALSO
 
-L<ssl(3)|ssl(3)>,
-L<SSL_CTX_set_timeout(3)|SSL_CTX_set_timeout(3)>,
-L<SSL_get_default_timeout(3)|SSL_get_default_timeout(3)>
+L<ssl(3)>,
+L<SSL_CTX_set_timeout(3)>,
+L<SSL_get_default_timeout(3)>
 
 =cut

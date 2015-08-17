@@ -610,7 +610,7 @@ with a 128-bit key:
 
 =head1 SEE ALSO
 
-L<evp(3)|evp(3)>
+L<evp(3)>
 
 =head1 HISTORY
 
