@@ -121,10 +121,7 @@ int app_RAND_load_file(const char *file, int dont_warn)
     char buffer[200];
 
 #ifdef OPENSSL_SYS_WINDOWS
-    BIO_printf(bio_err, "Loading 'screen' into random state -");
-    BIO_flush(bio_err);
     RAND_screen();
-    BIO_printf(bio_err, " done\n");
 #endif
 
     if (file == NULL)
