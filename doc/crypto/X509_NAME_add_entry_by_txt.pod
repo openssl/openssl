@@ -109,7 +109,7 @@ can result in invalid field types its use is strongly discouraged.
 
 =head1 SEE ALSO
 
-L<ERR_get_error(3)|ERR_get_error(3)>, L<d2i_X509_NAME(3)|d2i_X509_NAME(3)>
+L<ERR_get_error(3)>, L<d2i_X509_NAME(3)>
 
 =head1 HISTORY
 

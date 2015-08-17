@@ -255,8 +255,8 @@ digest name passed on the command line.
 
 =head1 SEE ALSO
 
-L<dgst(1)|dgst(1)>,
-L<evp(3)|evp(3)>
+L<dgst(1)>,
+L<evp(3)>
 
 =head1 HISTORY
 

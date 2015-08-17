@@ -594,6 +594,6 @@ implementations.
 
 =head1 SEE ALSO
 
-L<rsa(3)|rsa(3)>, L<dsa(3)|dsa(3)>, L<dh(3)|dh(3)>, L<rand(3)|rand(3)>
+L<rsa(3)>, L<dsa(3)>, L<dh(3)>, L<rand(3)>
 
 =cut

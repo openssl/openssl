@@ -51,18 +51,18 @@ by the return value, and an error code is stored in an error queue
 associated with the current thread. The B<err> library provides
 functions to obtain these error codes and textual error messages.
 
-The L<ERR_get_error(3)|ERR_get_error(3)> manpage describes how to
+The L<ERR_get_error(3)> manpage describes how to
 access error codes.
 
 Error codes contain information about where the error occurred, and
-what went wrong. L<ERR_GET_LIB(3)|ERR_GET_LIB(3)> describes how to
+what went wrong. L<ERR_GET_LIB(3)> describes how to
 extract this information. A method to obtain human-readable error
-messages is described in L<ERR_error_string(3)|ERR_error_string(3)>.
+messages is described in L<ERR_error_string(3)>.
 
-L<ERR_clear_error(3)|ERR_clear_error(3)> can be used to clear the
+L<ERR_clear_error(3)> can be used to clear the
 error queue.
 
-Note that L<ERR_remove_state(3)|ERR_remove_state(3)> should be used to
+Note that L<ERR_remove_state(3)> should be used to
 avoid memory leaks when threads are terminated.
 
 =head1 ADDING NEW ERROR CODES TO OPENSSL
@@ -171,16 +171,16 @@ ERR_get_string_table(void) respectively.
 
 =head1 SEE ALSO
 
-L<CRYPTO_set_locking_callback(3)|CRYPTO_set_locking_callback(3)>,
-L<ERR_get_error(3)|ERR_get_error(3)>,
-L<ERR_GET_LIB(3)|ERR_GET_LIB(3)>,
-L<ERR_clear_error(3)|ERR_clear_error(3)>,
-L<ERR_error_string(3)|ERR_error_string(3)>,
-L<ERR_print_errors(3)|ERR_print_errors(3)>,
-L<ERR_load_crypto_strings(3)|ERR_load_crypto_strings(3)>,
-L<ERR_remove_state(3)|ERR_remove_state(3)>,
-L<ERR_put_error(3)|ERR_put_error(3)>,
-L<ERR_load_strings(3)|ERR_load_strings(3)>,
-L<SSL_get_error(3)|SSL_get_error(3)>
+L<CRYPTO_set_locking_callback(3)>,
+L<ERR_get_error(3)>,
+L<ERR_GET_LIB(3)>,
+L<ERR_clear_error(3)>,
+L<ERR_error_string(3)>,
+L<ERR_print_errors(3)>,
+L<ERR_load_crypto_strings(3)>,
+L<ERR_remove_state(3)>,
+L<ERR_put_error(3)>,
+L<ERR_load_strings(3)>,
+L<SSL_get_error(3)>
 
 =cut

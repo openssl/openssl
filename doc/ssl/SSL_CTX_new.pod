@@ -109,7 +109,7 @@ were introduced in OpenSSL 1.1.0.
 
 =head1 SEE ALSO
 
-L<SSL_CTX_free(3)|SSL_CTX_free(3)>, L<SSL_accept(3)|SSL_accept(3)>,
-L<ssl(3)|ssl(3)>,  L<SSL_set_connect_state(3)|SSL_set_connect_state(3)>
+L<SSL_CTX_free(3)>, L<SSL_accept(3)>,
+L<ssl(3)>,  L<SSL_set_connect_state(3)>
 
 =cut

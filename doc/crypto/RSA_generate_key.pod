@@ -28,14 +28,14 @@ The exponent is an odd number, typically 3, 17 or 65537.
 A callback function may be used to provide feedback about the
 progress of the key generation. If B<cb> is not B<NULL>, it
 will be called as follows using the BN_GENCB_call() function
-described on the L<BN_generate_prime(3)|BN_generate_prime(3)> page.
+described on the L<BN_generate_prime(3)> page.
 
 =over 4
 
 =item *
 
 While a random prime number is generated, it is called as
-described in L<BN_generate_prime(3)|BN_generate_prime(3)>.
+described in L<BN_generate_prime(3)>.
 
 =item *
 
@@ -54,13 +54,13 @@ The process is then repeated for prime q with B<BN_GENCB_call(cb, 3, 1)>.
 RSA_generate_key is deprecated (new applications should use
 RSA_generate_key_ex instead). RSA_generate_key works in the same was as
 RSA_generate_key_ex except it uses "old style" call backs. See
-L<BN_generate_prime(3)|BN_generate_prime(3)> for further details.
+L<BN_generate_prime(3)> for further details.
 
 =head1 RETURN VALUE
 
 If key generation fails, RSA_generate_key() returns B<NULL>.
 
-The error codes can be obtained by L<ERR_get_error(3)|ERR_get_error(3)>.
+The error codes can be obtained by L<ERR_get_error(3)>.
 
 =head1 BUGS
 
@@ -70,8 +70,8 @@ RSA_generate_key() goes into an infinite loop for illegal input values.
 
 =head1 SEE ALSO
 
-L<ERR_get_error(3)|ERR_get_error(3)>, L<rand(3)|rand(3)>, L<rsa(3)|rsa(3)>,
-L<RSA_free(3)|RSA_free(3)>, L<BN_generate_prime(3)|BN_generate_prime(3)>
+L<ERR_get_error(3)>, L<rand(3)>, L<rsa(3)>,
+L<RSA_free(3)>, L<BN_generate_prime(3)>
 
 =head1 HISTORY
 

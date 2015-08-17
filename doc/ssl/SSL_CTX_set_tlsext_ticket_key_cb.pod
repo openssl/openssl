@@ -178,12 +178,12 @@ returns 0 to indicate the callback function was set.
 
 =head1 SEE ALSO
 
-L<ssl(3)|ssl(3)>, L<SSL_set_session(3)|SSL_set_session(3)>,
-L<SSL_session_reused(3)|SSL_session_reused(3)>,
-L<SSL_CTX_add_session(3)|SSL_CTX_add_session(3)>,
-L<SSL_CTX_sess_number(3)|SSL_CTX_sess_number(3)>,
-L<SSL_CTX_sess_set_get_cb(3)|SSL_CTX_sess_set_get_cb(3)>,
-L<SSL_CTX_set_session_id_context(3)|SSL_CTX_set_session_id_context(3)>,
+L<ssl(3)>, L<SSL_set_session(3)>,
+L<SSL_session_reused(3)>,
+L<SSL_CTX_add_session(3)>,
+L<SSL_CTX_sess_number(3)>,
+L<SSL_CTX_sess_set_get_cb(3)>,
+L<SSL_CTX_set_session_id_context(3)>,
 
 =head1 HISTORY
 

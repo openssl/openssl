@@ -70,7 +70,7 @@ truncated.
 
 =head1 SEE ALSO
 
-L<ssl(3)|ssl(3)>,
-L<SSL_CTX_use_certificate(3)|SSL_CTX_use_certificate(3)>
+L<ssl(3)>,
+L<SSL_CTX_use_certificate(3)>
 
 =cut

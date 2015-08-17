@@ -132,7 +132,7 @@ TBA
 
 This SSL/TLS client example, attempts to retrieve a page from an
 SSL/TLS web server. The I/O routines are identical to those of the
-unencrypted example in L<BIO_s_connect(3)|BIO_s_connect(3)>.
+unencrypted example in L<BIO_s_connect(3)>.
 
  BIO *sbio, *out;
  int len;

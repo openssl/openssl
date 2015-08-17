@@ -90,7 +90,7 @@ RFC 2104
 
 =head1 SEE ALSO
 
-L<sha(3)|sha(3)>, L<evp(3)|evp(3)>
+L<sha(3)>, L<evp(3)>
 
 =head1 HISTORY
 

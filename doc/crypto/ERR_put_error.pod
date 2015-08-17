@@ -23,7 +23,7 @@ This function is usually called by a macro.
 ERR_add_error_data() associates the concatenation of its B<num> string
 arguments with the error code added last.
 
-L<ERR_load_strings(3)|ERR_load_strings(3)> can be used to register
+L<ERR_load_strings(3)> can be used to register
 error strings so that the application can a generate human-readable
 error messages for the error code.
 
@@ -34,7 +34,7 @@ no values.
 
 =head1 SEE ALSO
 
-L<err(3)|err(3)>, L<ERR_load_strings(3)|ERR_load_strings(3)>
+L<err(3)>, L<ERR_load_strings(3)>
 
 =head1 HISTORY
 

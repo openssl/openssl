@@ -15,7 +15,7 @@ SSL_CTX_set_cipher_list, SSL_set_cipher_list - choose list of available SSL_CIPH
 
 SSL_CTX_set_cipher_list() sets the list of available ciphers for B<ctx>
 using the control string B<str>. The format of the string is described
-in L<ciphers(1)|ciphers(1)>. The list of ciphers is inherited by all
+in L<ciphers(1)>. The list of ciphers is inherited by all
 B<ssl> objects created from B<ctx>.
 
 SSL_set_cipher_list() sets the list of ciphers only for B<ssl>.
@@ -40,13 +40,13 @@ A RSA cipher can only be chosen, when a RSA certificate is available.
 RSA export ciphers with a keylength of 512 bits for the RSA key require
 a temporary 512 bit RSA key, as typically the supplied key has a length
 of 1024 bit (see
-L<SSL_CTX_set_tmp_rsa_callback(3)|SSL_CTX_set_tmp_rsa_callback(3)>).
+L<SSL_CTX_set_tmp_rsa_callback(3)>).
 RSA ciphers using DHE need a certificate and key and additional DH-parameters
-(see L<SSL_CTX_set_tmp_dh_callback(3)|SSL_CTX_set_tmp_dh_callback(3)>).
+(see L<SSL_CTX_set_tmp_dh_callback(3)>).
 
 A DSA cipher can only be chosen, when a DSA certificate is available.
 DSA ciphers always use DH key exchange and therefore need DH-parameters
-(see L<SSL_CTX_set_tmp_dh_callback(3)|SSL_CTX_set_tmp_dh_callback(3)>).
+(see L<SSL_CTX_set_tmp_dh_callback(3)>).
 
 When these conditions are not met for any cipher in the list (e.g. a
 client only supports export RSA ciphers with a asymmetric key length
@@ -61,10 +61,10 @@ could be selected and 0 on complete failure.
 
 =head1 SEE ALSO
 
-L<ssl(3)|ssl(3)>, L<SSL_get_ciphers(3)|SSL_get_ciphers(3)>,
-L<SSL_CTX_use_certificate(3)|SSL_CTX_use_certificate(3)>,
-L<SSL_CTX_set_tmp_rsa_callback(3)|SSL_CTX_set_tmp_rsa_callback(3)>,
-L<SSL_CTX_set_tmp_dh_callback(3)|SSL_CTX_set_tmp_dh_callback(3)>,
-L<ciphers(1)|ciphers(1)>
+L<ssl(3)>, L<SSL_get_ciphers(3)>,
+L<SSL_CTX_use_certificate(3)>,
+L<SSL_CTX_set_tmp_rsa_callback(3)>,
+L<SSL_CTX_set_tmp_dh_callback(3)>,
+L<ciphers(1)>
 
 =cut

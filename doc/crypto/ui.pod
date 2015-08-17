@@ -69,7 +69,7 @@ UI_set_method, UI_OpenSSL, ERR_load_UI_strings - New User Interface
 
 UI stands for User Interface, and is general purpose set of routines to
 prompt the user for text-based information.  Through user-written methods
-(see L<ui_create(3)|ui_create(3)>), prompting can be done in any way
+(see L<ui_create(3)>), prompting can be done in any way
 imaginable, be it plain text prompting, through dialog boxes or from a
 cell phone.
 
@@ -181,7 +181,7 @@ UI_set_method() changes the UI method associated with a given UI.
 
 =head1 SEE ALSO
 
-L<ui_create(3)|ui_create(3)>, L<ui_compat(3)|ui_compat(3)>
+L<ui_create(3)>, L<ui_compat(3)>
 
 =head1 HISTORY
 

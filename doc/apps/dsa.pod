@@ -66,7 +66,7 @@ prompted for.
 =item B<-passin arg>
 
 the input file password source. For more information about the format of B<arg>
-see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)|openssl(1)>.
+see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
 
 =item B<-out filename>
 
@@ -78,7 +78,7 @@ filename.
 =item B<-passout arg>
 
 the output file password source. For more information about the format of B<arg>
-see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)|openssl(1)>.
+see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
 
 =item B<-aes128|-aes192|-aes256|-camellia128|-camellia192|-camellia256|-des|-des3|-idea>
 
@@ -158,7 +158,7 @@ To just output the public part of a private key:
 
 =head1 SEE ALSO
 
-L<dsaparam(1)|dsaparam(1)>, L<gendsa(1)|gendsa(1)>, L<rsa(1)|rsa(1)>,
-L<genrsa(1)|genrsa(1)>
+L<dsaparam(1)>, L<gendsa(1)>, L<rsa(1)>,
+L<genrsa(1)>
 
 =cut

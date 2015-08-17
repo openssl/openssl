@@ -38,7 +38,7 @@ ASN1_STRING_free() does not return a value.
 
 =head1 SEE ALSO
 
-L<ERR_get_error(3)|ERR_get_error(3)>
+L<ERR_get_error(3)>
 
 =head1 HISTORY
 

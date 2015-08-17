@@ -236,21 +236,21 @@ i2d_re_X509_tbs().
 
 d2i_X509(), d2i_X509_bio() and d2i_X509_fp() return a valid B<X509> structure
 or B<NULL> if an error occurs. The error code that can be obtained by
-L<ERR_get_error(3)|ERR_get_error(3)>. If the "reuse" capability has been used
+L<ERR_get_error(3)>. If the "reuse" capability has been used
 with a valid X509 structure being passed in via B<px> then the object is not
 freed in the event of error but may be in a potentially invalid or inconsistent
 state.
 
 i2d_X509() returns the number of bytes successfully encoded or a negative
 value if an error occurs. The error code can be obtained by
-L<ERR_get_error(3)|ERR_get_error(3)>. 
+L<ERR_get_error(3)>. 
 
 i2d_X509_bio() and i2d_X509_fp() return 1 for success and 0 if an error 
-occurs The error code can be obtained by L<ERR_get_error(3)|ERR_get_error(3)>. 
+occurs The error code can be obtained by L<ERR_get_error(3)>. 
 
 =head1 SEE ALSO
 
-L<ERR_get_error(3)|ERR_get_error(3)>
+L<ERR_get_error(3)>
 
 =head1 HISTORY
 

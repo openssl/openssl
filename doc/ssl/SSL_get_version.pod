@@ -45,6 +45,6 @@ This indicates that no version has been set (no connection established).
 
 =head1 SEE ALSO
 
-L<ssl(3)|ssl(3)>
+L<ssl(3)>
 
 =cut

@@ -24,14 +24,14 @@ If B<a> is NULL nothing is done.
 =head1 RETURN VALUES
 
 If the allocation fails, X509_new() returns B<NULL> and sets an error
-code that can be obtained by L<ERR_get_error(3)|ERR_get_error(3)>.
+code that can be obtained by L<ERR_get_error(3)>.
 Otherwise it returns a pointer to the newly allocated structure.
 
 X509_free() returns no value.
 
 =head1 SEE ALSO
 
-L<ERR_get_error(3)|ERR_get_error(3)>, L<d2i_X509(3)|d2i_X509(3)>
+L<ERR_get_error(3)>, L<d2i_X509(3)>
 
 =head1 HISTORY
 

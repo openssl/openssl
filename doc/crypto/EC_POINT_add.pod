@@ -46,7 +46,7 @@ EC_POINTs_mul calculates the value generator * B<n> + B<q[0]> * B<m[0]> + ... + 
 B<n> may be NULL.
 
 The function EC_GROUP_precompute_mult stores multiples of the generator for faster point multiplication, whilst
-EC_GROUP_have_precompute_mult tests whether precomputation has already been done. See L<EC_GROUP_copy(3)|EC_GROUP_copy(3)> for information
+EC_GROUP_have_precompute_mult tests whether precomputation has already been done. See L<EC_GROUP_copy(3)> for information
 about the generator.
 
 
@@ -65,8 +65,8 @@ EC_GROUP_have_precompute_mult return 1 if a precomputation has been done, or 0 i
 
 =head1 SEE ALSO
 
-L<crypto(3)|crypto(3)>, L<ec(3)|ec(3)>, L<EC_GROUP_new(3)|EC_GROUP_new(3)>, L<EC_GROUP_copy(3)|EC_GROUP_copy(3)>,
-L<EC_POINT_new(3)|EC_POINT_new(3)>, L<EC_KEY_new(3)|EC_KEY_new(3)>,
-L<EC_GFp_simple_method(3)|EC_GFp_simple_method(3)>, L<d2i_ECPKParameters(3)|d2i_ECPKParameters(3)>
+L<crypto(3)>, L<ec(3)>, L<EC_GROUP_new(3)>, L<EC_GROUP_copy(3)>,
+L<EC_POINT_new(3)>, L<EC_KEY_new(3)>,
+L<EC_GFp_simple_method(3)>, L<d2i_ECPKParameters(3)>
 
 =cut

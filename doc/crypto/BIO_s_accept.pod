@@ -54,7 +54,7 @@ connection and reset the BIO into a state where it awaits another
 incoming connection.
 
 BIO_get_fd() and BIO_set_fd() can be called to retrieve or set
-the accept socket. See L<BIO_s_fd(3)|BIO_s_fd(3)>
+the accept socket. See L<BIO_s_fd(3)>
 
 BIO_set_accept_port() uses the string B<name> to set the accept
 port. The port is represented as a string of the form "host:port",

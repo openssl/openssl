@@ -43,7 +43,7 @@ error.
 
 =head1 SEE ALSO
 
-L<rand(3)|rand(3)>, L<RAND_add(3)|RAND_add(3)>, L<RAND_cleanup(3)|RAND_cleanup(3)>
+L<rand(3)>, L<RAND_add(3)>, L<RAND_cleanup(3)>
 
 =head1 HISTORY
 

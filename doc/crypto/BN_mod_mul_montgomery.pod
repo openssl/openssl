@@ -28,7 +28,7 @@ BN_from_montgomery, BN_to_montgomery - Montgomery multiplication
 =head1 DESCRIPTION
 
 These functions implement Montgomery multiplication. They are used
-automatically when L<BN_mod_exp(3)|BN_mod_exp(3)> is called with suitable input,
+automatically when L<BN_mod_exp(3)> is called with suitable input,
 but they may be useful when several operations are to be performed
 using the same modulus.
 
@@ -62,7 +62,7 @@ on error.
 BN_MONT_CTX_free() has no return value.
 
 For the other functions, 1 is returned for success, 0 on error.
-The error codes can be obtained by L<ERR_get_error(3)|ERR_get_error(3)>.
+The error codes can be obtained by L<ERR_get_error(3)>.
 
 =head1 WARNING
 
@@ -91,8 +91,8 @@ BN_MONT_CTX_new:
 
 =head1 SEE ALSO
 
-L<bn(3)|bn(3)>, L<ERR_get_error(3)|ERR_get_error(3)>, L<BN_add(3)|BN_add(3)>,
-L<BN_CTX_new(3)|BN_CTX_new(3)>
+L<bn(3)>, L<ERR_get_error(3)>, L<BN_add(3)>,
+L<BN_CTX_new(3)>
 
 =head1 HISTORY
 

@@ -108,7 +108,7 @@ the method for B<dsa> (including unloading the ENGINE handle if the previous
 method was supplied by an ENGINE).
 
 DSA_new_method() returns NULL and sets an error code that can be
-obtained by L<ERR_get_error(3)|ERR_get_error(3)> if the allocation
+obtained by L<ERR_get_error(3)> if the allocation
 fails. Otherwise it returns a pointer to the newly allocated structure.
 
 =head1 NOTES
@@ -123,7 +123,7 @@ algorithms.
 
 =head1 SEE ALSO
 
-L<dsa(3)|dsa(3)>, L<DSA_new(3)|DSA_new(3)>
+L<dsa(3)>, L<DSA_new(3)>
 
 =head1 HISTORY
 

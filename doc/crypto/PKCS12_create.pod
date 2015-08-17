@@ -66,7 +66,7 @@ B<mac_iter> can be set to -1 and the MAC will then be omitted entirely.
 
 =head1 SEE ALSO
 
-L<d2i_PKCS12(3)|d2i_PKCS12(3)>
+L<d2i_PKCS12(3)>
 
 =head1 HISTORY
 

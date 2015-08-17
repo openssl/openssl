@@ -42,18 +42,18 @@ or SSL object, respectively.
 
 The SSL_CTX_* class of functions loads the certificates and keys into the
 SSL_CTX object B<ctx>. The information is passed to SSL objects B<ssl>
-created from B<ctx> with L<SSL_new(3)|SSL_new(3)> by copying, so that
+created from B<ctx> with L<SSL_new(3)> by copying, so that
 changes applied to B<ctx> do not propagate to already existing SSL objects.
 
 The SSL_* class of functions only loads certificates and keys into a
 specific SSL object. The specific information is kept, when
-L<SSL_clear(3)|SSL_clear(3)> is called for this SSL object.
+L<SSL_clear(3)> is called for this SSL object.
 
 SSL_CTX_use_certificate() loads the certificate B<x> into B<ctx>,
 SSL_use_certificate() loads B<x> into B<ssl>. The rest of the
 certificates needed to form the complete certificate chain can be
 specified using the
-L<SSL_CTX_add_extra_chain_cert(3)|SSL_CTX_add_extra_chain_cert(3)>
+L<SSL_CTX_add_extra_chain_cert(3)>
 function.
 
 SSL_CTX_use_certificate_ASN1() loads the ASN1 encoded certificate from
@@ -112,7 +112,7 @@ this B<ssl>, the last item added into B<ctx> will be checked.
   
 The internal certificate store of OpenSSL can hold several private
 key/certificate pairs at a time. The certificate used depends on the
-cipher selected, see also L<SSL_CTX_set_cipher_list(3)|SSL_CTX_set_cipher_list(3)>.
+cipher selected, see also L<SSL_CTX_set_cipher_list(3)>.
 
 When reading certificates and private keys from file, files of type
 SSL_FILETYPE_ASN1 (also known as B<DER>, binary encoding) can only contain
@@ -122,7 +122,7 @@ Files of type SSL_FILETYPE_PEM can contain more than one item.
 
 SSL_CTX_use_certificate_chain_file() adds the first certificate found
 in the file to the certificate store. The other certificates are added
-to the store of chain certificates using L<SSL_CTX_add1_chain_cert(3)|SSL_CTX_add1_chain_cert(3)>. Note: versions of OpenSSL before 1.0.2 only had a single
+to the store of chain certificates using L<SSL_CTX_add1_chain_cert(3)>. Note: versions of OpenSSL before 1.0.2 only had a single
 certificate chain store for all certificate types, OpenSSL 1.0.2 and later
 have a separate chain store for each type. SSL_CTX_use_certificate_chain_file() 
 should be used instead of the SSL_CTX_use_certificate_file() function in order
@@ -133,12 +133,12 @@ the trusted CA storage.
 If additional certificates are needed to complete the chain during the
 TLS negotiation, CA certificates are additionally looked up in the
 locations of trusted CA certificates, see
-L<SSL_CTX_load_verify_locations(3)|SSL_CTX_load_verify_locations(3)>.
+L<SSL_CTX_load_verify_locations(3)>.
 
 The private keys loaded from file can be encrypted. In order to successfully
 load encrypted keys, a function returning the passphrase must have been
 supplied, see
-L<SSL_CTX_set_default_passwd_cb(3)|SSL_CTX_set_default_passwd_cb(3)>.
+L<SSL_CTX_set_default_passwd_cb(3)>.
 (Certificate files might be encrypted as well from the technical point
 of view, it however does not make sense as the data in the certificate
 is considered public anyway.)
@@ -150,12 +150,12 @@ Otherwise check out the error stack to find out the reason.
 
 =head1 SEE ALSO
 
-L<ssl(3)|ssl(3)>, L<SSL_new(3)|SSL_new(3)>, L<SSL_clear(3)|SSL_clear(3)>,
-L<SSL_CTX_load_verify_locations(3)|SSL_CTX_load_verify_locations(3)>,
-L<SSL_CTX_set_default_passwd_cb(3)|SSL_CTX_set_default_passwd_cb(3)>,
-L<SSL_CTX_set_cipher_list(3)|SSL_CTX_set_cipher_list(3)>,
-L<SSL_CTX_set_client_cert_cb(3)|SSL_CTX_set_client_cert_cb(3)>,
-L<SSL_CTX_add_extra_chain_cert(3)|SSL_CTX_add_extra_chain_cert(3)>
+L<ssl(3)>, L<SSL_new(3)>, L<SSL_clear(3)>,
+L<SSL_CTX_load_verify_locations(3)>,
+L<SSL_CTX_set_default_passwd_cb(3)>,
+L<SSL_CTX_set_cipher_list(3)>,
+L<SSL_CTX_set_client_cert_cb(3)>,
+L<SSL_CTX_add_extra_chain_cert(3)>
 
 =head1 HISTORY
 

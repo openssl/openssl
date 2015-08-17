@@ -59,14 +59,14 @@ In server mode, when requesting a client certificate, the server must send
 the list of CAs of which it will accept client certificates. This list
 is not influenced by the contents of B<CAfile> or B<CApath> and must
 explicitly be set using the
-L<SSL_CTX_set_client_CA_list(3)|SSL_CTX_set_client_CA_list(3)>
+L<SSL_CTX_set_client_CA_list(3)>
 family of functions.
 
 When building its own certificate chain, an OpenSSL client/server will
 try to fill in missing certificates from B<CAfile>/B<CApath>, if the
 certificate chain was not explicitly specified (see
-L<SSL_CTX_add_extra_chain_cert(3)|SSL_CTX_add_extra_chain_cert(3)>,
-L<SSL_CTX_use_certificate(3)|SSL_CTX_use_certificate(3)>.
+L<SSL_CTX_add_extra_chain_cert(3)>,
+L<SSL_CTX_use_certificate(3)>.
 
 =head1 WARNINGS
 
@@ -114,11 +114,11 @@ The operation succeeded.
 
 =head1 SEE ALSO
 
-L<ssl(3)|ssl(3)>,
-L<SSL_CTX_set_client_CA_list(3)|SSL_CTX_set_client_CA_list(3)>,
-L<SSL_get_client_CA_list(3)|SSL_get_client_CA_list(3)>,
-L<SSL_CTX_use_certificate(3)|SSL_CTX_use_certificate(3)>,
-L<SSL_CTX_add_extra_chain_cert(3)|SSL_CTX_add_extra_chain_cert(3)>,
-L<SSL_CTX_set_cert_store(3)|SSL_CTX_set_cert_store(3)>
+L<ssl(3)>,
+L<SSL_CTX_set_client_CA_list(3)>,
+L<SSL_get_client_CA_list(3)>,
+L<SSL_CTX_use_certificate(3)>,
+L<SSL_CTX_add_extra_chain_cert(3)>,
+L<SSL_CTX_set_cert_store(3)>
 
 =cut

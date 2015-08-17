@@ -180,22 +180,22 @@ for different scenarios. No matter which implementation is being used, the inter
 handles calling the correct implementation when an interface function is invoked. An implementation is represented by
 an B<EC_METHOD> structure.
 
-The creation and destruction of B<EC_GROUP> objects is described in L<EC_GROUP_new(3)|EC_GROUP_new(3)>. Functions for
-manipulating B<EC_GROUP> objects are described in L<EC_GROUP_copy(3)|EC_GROUP_copy(3)>.
+The creation and destruction of B<EC_GROUP> objects is described in L<EC_GROUP_new(3)>. Functions for
+manipulating B<EC_GROUP> objects are described in L<EC_GROUP_copy(3)>.
 
-Functions for creating, destroying and manipulating B<EC_POINT> objects are explained in L<EC_POINT_new(3)|EC_POINT_new(3)>,
-whilst functions for performing mathematical operations and tests on B<EC_POINTs> are covered in L<EC_POINT_add(3)|EC_POINT_add(3)>.
+Functions for creating, destroying and manipulating B<EC_POINT> objects are explained in L<EC_POINT_new(3)>,
+whilst functions for performing mathematical operations and tests on B<EC_POINTs> are covered in L<EC_POINT_add(3)>.
 
-For working with private and public keys refer to L<EC_KEY_new(3)|EC_KEY_new(3)>. Implementations are covered in
-L<EC_GFp_simple_method(3)|EC_GFp_simple_method(3)>.
+For working with private and public keys refer to L<EC_KEY_new(3)>. Implementations are covered in
+L<EC_GFp_simple_method(3)>.
 
-For information on encoding and decoding curve parameters to and from ASN1 see L<d2i_ECPKParameters(3)|d2i_ECPKParameters(3)>.
+For information on encoding and decoding curve parameters to and from ASN1 see L<d2i_ECPKParameters(3)>.
 
 =head1 SEE ALSO
 
-L<crypto(3)|crypto(3)>, L<EC_GROUP_new(3)|EC_GROUP_new(3)>, L<EC_GROUP_copy(3)|EC_GROUP_copy(3)>,
-L<EC_POINT_new(3)|EC_POINT_new(3)>, L<EC_POINT_add(3)|EC_POINT_add(3)>, L<EC_KEY_new(3)|EC_KEY_new(3)>,
-L<EC_GFp_simple_method(3)|EC_GFp_simple_method(3)>, L<d2i_ECPKParameters(3)|d2i_ECPKParameters(3)>
+L<crypto(3)>, L<EC_GROUP_new(3)>, L<EC_GROUP_copy(3)>,
+L<EC_POINT_new(3)>, L<EC_POINT_add(3)>, L<EC_KEY_new(3)>,
+L<EC_GFp_simple_method(3)>, L<d2i_ECPKParameters(3)>
 
 
 =cut

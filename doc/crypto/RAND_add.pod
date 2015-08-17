@@ -37,8 +37,8 @@ OpenSSL makes sure that the PRNG state is unique for each thread. On
 systems that provide C</dev/urandom>, the randomness device is used
 to seed the PRNG transparently. However, on all other systems, the
 application is responsible for seeding the PRNG by calling RAND_add(),
-L<RAND_egd(3)|RAND_egd(3)>
-or L<RAND_load_file(3)|RAND_load_file(3)>.
+L<RAND_egd(3)>
+or L<RAND_load_file(3)>.
 
 RAND_seed() is equivalent to RAND_add() when B<num == entropy>.
 
@@ -65,8 +65,8 @@ The other functions do not return values.
 
 =head1 SEE ALSO
 
-L<rand(3)|rand(3)>, L<RAND_egd(3)|RAND_egd(3)>,
-L<RAND_load_file(3)|RAND_load_file(3)>, L<RAND_cleanup(3)|RAND_cleanup(3)>
+L<rand(3)>, L<RAND_egd(3)>,
+L<RAND_load_file(3)>, L<RAND_cleanup(3)>
 
 =head1 HISTORY
 

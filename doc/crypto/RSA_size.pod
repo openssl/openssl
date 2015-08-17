@@ -28,7 +28,7 @@ The size.
 
 =head1 SEE ALSO
 
-L<rsa(3)|rsa(3)>, L<BN_num_bits(3)|BN_num_bits(3)>
+L<rsa(3)>, L<BN_num_bits(3)>
 
 =head1 HISTORY
 

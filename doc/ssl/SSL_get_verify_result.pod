@@ -30,7 +30,7 @@ when a session is reused.
 If no peer certificate was presented, the returned result code is
 X509_V_OK. This is because no verification error occurred, it does however
 not indicate success. SSL_get_verify_result() is only useful in connection
-with L<SSL_get_peer_certificate(3)|SSL_get_peer_certificate(3)>.
+with L<SSL_get_peer_certificate(3)>.
 
 =head1 RETURN VALUES
 
@@ -44,14 +44,14 @@ The verification succeeded or no peer certificate was presented.
 
 =item Any other value
 
-Documented in L<verify(1)|verify(1)>.
+Documented in L<verify(1)>.
 
 =back
 
 =head1 SEE ALSO
 
-L<ssl(3)|ssl(3)>, L<SSL_set_verify_result(3)|SSL_set_verify_result(3)>,
-L<SSL_get_peer_certificate(3)|SSL_get_peer_certificate(3)>,
-L<verify(1)|verify(1)>
+L<ssl(3)>, L<SSL_set_verify_result(3)>,
+L<SSL_get_peer_certificate(3)>,
+L<verify(1)>
 
 =cut

@@ -180,4 +180,4 @@ which it can be seen agrees with the recovered value above.
 
 =head1 SEE ALSO
 
-L<dgst(1)|dgst(1)>, L<rsa(1)|rsa(1)>, L<genrsa(1)|genrsa(1)>
+L<dgst(1)>, L<rsa(1)>, L<genrsa(1)>

@@ -46,7 +46,7 @@ mentioned in PKCS7_sign() also applies to PKCS7_verify().
 
 =head1 SEE ALSO
 
-L<ERR_get_error(3)|ERR_get_error(3)>, L<PKCS7_encrypt(3)|PKCS7_encrypt(3)>
+L<ERR_get_error(3)>, L<PKCS7_encrypt(3)>
 
 =head1 HISTORY
 

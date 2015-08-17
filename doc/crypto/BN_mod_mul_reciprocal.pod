@@ -24,7 +24,7 @@ reciprocal
 =head1 DESCRIPTION
 
 BN_mod_mul_reciprocal() can be used to perform an efficient
-L<BN_mod_mul(3)|BN_mod_mul(3)> operation when the operation will be performed
+L<BN_mod_mul(3)> operation when the operation will be performed
 repeatedly with the same modulus. It computes B<r>=(B<a>*B<b>)%B<m>
 using B<recp>=1/B<m>, which is set as described below.  B<ctx> is a
 previously allocated B<BN_CTX> used for temporary variables.
@@ -54,7 +54,7 @@ on error.
 BN_RECP_CTX_init() and BN_RECP_CTX_free() have no return values.
 
 For the other functions, 1 is returned for success, 0 on error.
-The error codes can be obtained by L<ERR_get_error(3)|ERR_get_error(3)>.
+The error codes can be obtained by L<ERR_get_error(3)>.
 
 =head1 REMOVED FUNCTIONALITY
 
@@ -78,8 +78,8 @@ instead:
 
 =head1 SEE ALSO
 
-L<bn(3)|bn(3)>, L<ERR_get_error(3)|ERR_get_error(3)>, L<BN_add(3)|BN_add(3)>,
-L<BN_CTX_new(3)|BN_CTX_new(3)>
+L<bn(3)>, L<ERR_get_error(3)>, L<BN_add(3)>,
+L<BN_CTX_new(3)>
 
 =head1 HISTORY
 

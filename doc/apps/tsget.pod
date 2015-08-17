@@ -188,7 +188,7 @@ Zoltan Glozik <zglozik@opentsa.org>, OpenTSA project (http://www.opentsa.org)
 
 =head1 SEE ALSO
 
-L<openssl(1)|openssl(1)>, L<ts(1)|ts(1)>, L<curl(1)|curl(1)>, 
+L<openssl(1)>, L<ts(1)>, L<curl(1)>, 
 B<RFC 3161>
 
 =cut

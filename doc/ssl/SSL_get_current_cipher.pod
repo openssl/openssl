@@ -29,7 +29,7 @@ SSL_get_cipher() and SSL_get_cipher_name() are identical macros to obtain the
 name of the currently used cipher. SSL_get_cipher_bits() is a
 macro to obtain the number of secret/algorithm bits used and 
 SSL_get_cipher_version() returns the protocol name.
-See L<SSL_CIPHER_get_name(3)|SSL_CIPHER_get_name(3)> for more details.
+See L<SSL_CIPHER_get_name(3)> for more details.
 
 =head1 RETURN VALUES
 
@@ -38,6 +38,6 @@ no session has been established.
 
 =head1 SEE ALSO
 
-L<ssl(3)|ssl(3)>, L<SSL_CIPHER_get_name(3)|SSL_CIPHER_get_name(3)>
+L<ssl(3)>, L<SSL_CIPHER_get_name(3)>
 
 =cut

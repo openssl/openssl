@@ -139,7 +139,7 @@ The private format to use: DER or PEM. PEM is the default.
 =item B<-pass arg>
 
 the private key password source. For more information about the format of B<arg>
-see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)|openssl(1)>.
+see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
 
 =item B<-dcert filename>, B<-dkey keyname>
 
@@ -222,7 +222,7 @@ B<-no_alt_chains>, B<-use_deltas>, B<-verify_depth>, B<-verify_email>,
 B<-verify_hostname>, B<-verify_ip>, B<-verify_name>, B<-x509_strict>
 
 Set different peer certificate verification options.
-See the L<B<verify>|verify(1)> manual page for details.
+See the L<verify(1)> manual page for details.
 
 =item B<-verify_return_error>
 
@@ -356,7 +356,7 @@ IDs (eg. with a certain prefix).
 =item B<-rand file(s)>
 
 a file or files containing random data used to seed the random number
-generator, or an EGD socket (see L<RAND_egd(3)|RAND_egd(3)>).
+generator, or an EGD socket (see L<RAND_egd(3)>).
 Multiple files can be specified separated by a OS-dependent character.
 The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
 all others.
@@ -474,7 +474,7 @@ unknown cipher suites a client says it supports.
 
 =head1 SEE ALSO
 
-L<sess_id(1)|sess_id(1)>, L<s_client(1)|s_client(1)>, L<ciphers(1)|ciphers(1)>
+L<sess_id(1)>, L<s_client(1)>, L<ciphers(1)>
 
 =head1 HISTORY
 

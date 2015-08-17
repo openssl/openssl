@@ -105,7 +105,7 @@ OpenSSL error queue contains more information on the error.
 
 =head1 SEE ALSO
 
-L<ssl(3)|ssl(3)>, L<err(3)|err(3)>
+L<ssl(3)>, L<err(3)>
 
 =head1 HISTORY
 

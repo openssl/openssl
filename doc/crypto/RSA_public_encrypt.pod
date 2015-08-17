@@ -65,7 +65,7 @@ RSA_size(B<rsa>)). RSA_private_decrypt() returns the size of the
 recovered plaintext.
 
 On error, -1 is returned; the error codes can be
-obtained by L<ERR_get_error(3)|ERR_get_error(3)>.
+obtained by L<ERR_get_error(3)>.
 
 =head1 CONFORMING TO
 
@@ -73,8 +73,8 @@ SSL, PKCS #1 v2.0
 
 =head1 SEE ALSO
 
-L<ERR_get_error(3)|ERR_get_error(3)>, L<rand(3)|rand(3)>, L<rsa(3)|rsa(3)>,
-L<RSA_size(3)|RSA_size(3)>
+L<ERR_get_error(3)>, L<rand(3)>, L<rsa(3)>,
+L<RSA_size(3)>
 
 =head1 HISTORY
 

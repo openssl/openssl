@@ -498,7 +498,7 @@ B<20 X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY> error codes.
 
 =head1 SEE ALSO
 
-L<x509(1)|x509(1)>
+L<x509(1)>
 
 =head1 HISTORY
 

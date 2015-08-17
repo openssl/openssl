@@ -43,7 +43,7 @@ ERR_get_next_error_library() returns a new library number.
 
 =head1 SEE ALSO
 
-L<err(3)|err(3)>, L<ERR_load_strings(3)|ERR_load_strings(3)>
+L<err(3)>, L<ERR_load_strings(3)>
 
 =head1 HISTORY
 

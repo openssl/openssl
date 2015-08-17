@@ -79,7 +79,7 @@ options (B<-new> and B<-newkey>) are not specified.
 =item B<-passin arg>
 
 the input file password source. For more information about the format of B<arg>
-see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)|openssl(1)>.
+see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
 
 =item B<-out filename>
 
@@ -89,7 +89,7 @@ default.
 =item B<-passout arg>
 
 the output file password source. For more information about the format of B<arg>
-see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)|openssl(1)>.
+see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
 
 =item B<-text>
 
@@ -137,7 +137,7 @@ characters may be escaped by \ (backslash), no spaces are skipped.
 =item B<-rand file(s)>
 
 a file or files containing random data used to seed the random number
-generator, or an EGD socket (see L<RAND_egd(3)|RAND_egd(3)>).
+generator, or an EGD socket (see L<RAND_egd(3)>).
 Multiple files can be specified separated by a OS-dependent character.
 The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
 all others.
@@ -270,14 +270,14 @@ configuration file, must be valid UTF8 strings.
 option which determines how the subject or issuer names are displayed. The
 B<option> argument can be a single option or multiple options separated by
 commas.  Alternatively the B<-nameopt> switch may be used more than once to
-set multiple options. See the L<x509(1)|x509(1)> manual page for details.
+set multiple options. See the L<x509(1)> manual page for details.
 
 =item B<-reqopt>
 
 customise the output format used with B<-text>. The B<option> argument can be
 a single option or multiple options separated by commas. 
 
-See discussion of the  B<-certopt> parameter in the L<B<x509>|x509(1)>
+See discussion of the  B<-certopt> parameter in the L<x509(1)>
 command.
 
 
@@ -374,7 +374,7 @@ and long names are the same when this option is used.
 =item B<RANDFILE>
 
 This specifies a filename in which random number seed information is
-placed and read from, or an EGD socket (see L<RAND_egd(3)|RAND_egd(3)>).
+placed and read from, or an EGD socket (see L<RAND_egd(3)>).
 It is used for private key generation.
 
 =item B<encrypt_key>
@@ -408,7 +408,7 @@ problems with BMPStrings and UTF8Strings: in particular Netscape.
 this specifies the configuration file section containing a list of
 extensions to add to the certificate request. It can be overridden
 by the B<-reqexts> command line switch. See the 
-L<x509v3_config(5)|x509v3_config(5)> manual page for details of the
+L<x509v3_config(5)> manual page for details of the
 extension section format.
 
 =item B<x509_extensions>
@@ -670,8 +670,8 @@ address in subjectAltName should be input by the user.
 
 =head1 SEE ALSO
 
-L<x509(1)|x509(1)>, L<ca(1)|ca(1)>, L<genrsa(1)|genrsa(1)>,
-L<gendsa(1)|gendsa(1)>, L<config(5)|config(5)>,
-L<x509v3_config(5)|x509v3_config(5)> 
+L<x509(1)>, L<ca(1)>, L<genrsa(1)>,
+L<gendsa(1)>, L<config(5)>,
+L<x509v3_config(5)> 
 
 =cut

@@ -33,7 +33,7 @@ If B<a> is NULL, nothing is done.
 
 BN_new() returns a pointer to the B<BIGNUM>. If the allocation fails,
 it returns B<NULL> and sets an error code that can be obtained
-by L<ERR_get_error(3)|ERR_get_error(3)>.
+by L<ERR_get_error(3)>.
 
 BN_clear(), BN_free() and BN_clear_free() have no return values.
 
@@ -57,7 +57,7 @@ Applications should replace use of BN_init with BN_new instead:
 
 =head1 SEE ALSO
 
-L<bn(3)|bn(3)>, L<ERR_get_error(3)|ERR_get_error(3)>
+L<bn(3)>, L<ERR_get_error(3)>
 
 =head1 HISTORY
 

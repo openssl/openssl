@@ -107,11 +107,11 @@ CMS_RecipientInfo_encrypt() return 1 for success or 0 if an error occurs.
 CMS_RecipientInfo_ktri_cert_cmp() and CMS_RecipientInfo_kekri_cmp() return 0
 for a successful comparison and non zero otherwise.
 
-Any error can be obtained from L<ERR_get_error(3)|ERR_get_error(3)>.
+Any error can be obtained from L<ERR_get_error(3)>.
 
 =head1 SEE ALSO
 
-L<ERR_get_error(3)|ERR_get_error(3)>, L<CMS_decrypt(3)|CMS_decrypt(3)>
+L<ERR_get_error(3)>, L<CMS_decrypt(3)>
 
 =head1 HISTORY
 

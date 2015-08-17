@@ -39,7 +39,7 @@ A session was reused.
 
 =head1 SEE ALSO
 
-L<ssl(3)|ssl(3)>, L<SSL_set_session(3)|SSL_set_session(3)>,
-L<SSL_CTX_set_session_cache_mode(3)|SSL_CTX_set_session_cache_mode(3)>
+L<ssl(3)>, L<SSL_set_session(3)>,
+L<SSL_CTX_set_session_cache_mode(3)>
 
 =cut

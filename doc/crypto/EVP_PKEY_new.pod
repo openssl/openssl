@@ -28,7 +28,7 @@ particular algorithm.
 
 The structure returned by EVP_PKEY_new() is empty. To add a
 private key to this empty structure the functions described in
-L<EVP_PKEY_set1_RSA(3)|EVP_PKEY_set1_RSA(3)> should be used.
+L<EVP_PKEY_set1_RSA(3)> should be used.
 
 =head1 RETURN VALUES
 
@@ -39,7 +39,7 @@ EVP_PKEY_free() does not return a value.
 
 =head1 SEE ALSO
 
-L<EVP_PKEY_set1_RSA(3)|EVP_PKEY_set1_RSA(3)>
+L<EVP_PKEY_set1_RSA(3)>
 
 =head1 HISTORY
 

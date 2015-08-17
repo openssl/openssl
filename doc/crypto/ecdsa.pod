@@ -119,7 +119,7 @@ on error.
 
 ECDSA_verify() and ECDSA_do_verify() return 1 for a valid
 signature, 0 for an invalid signature and -1 on error.
-The error codes can be obtained by L<ERR_get_error(3)|ERR_get_error(3)>.
+The error codes can be obtained by L<ERR_get_error(3)>.
 
 =head1 EXAMPLES
 
@@ -193,7 +193,7 @@ ANSI X9.62, US Federal Information Processing Standard FIPS 186-2
 
 =head1 SEE ALSO
 
-L<dsa(3)|dsa(3)>, L<rsa(3)|rsa(3)>
+L<dsa(3)>, L<rsa(3)>
 
 =head1 HISTORY
 

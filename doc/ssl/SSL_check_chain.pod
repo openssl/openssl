@@ -79,7 +79,7 @@ for earlier versions of TLS or DTLS.
 
 =head1 SEE ALSO
 
-L<SSL_CTX_set_cert_cb(3)|SSL_CTX_set_cert_cb(3)>,
-L<ssl(3)|ssl(3)>
+L<SSL_CTX_set_cert_cb(3)>,
+L<ssl(3)>
 
 =cut

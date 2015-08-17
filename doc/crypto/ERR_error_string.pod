@@ -40,13 +40,13 @@ ERR_reason_error_string() return the library name, function
 name and reason string respectively.
 
 The OpenSSL error strings should be loaded by calling
-L<ERR_load_crypto_strings(3)|ERR_load_crypto_strings(3)> or, for SSL
-applications, L<SSL_load_error_strings(3)|SSL_load_error_strings(3)>
+L<ERR_load_crypto_strings(3)> or, for SSL
+applications, L<SSL_load_error_strings(3)>
 first.
 If there is no text string registered for the given error code,
 the error string will contain the numeric code.
 
-L<ERR_print_errors(3)|ERR_print_errors(3)> can be used to print
+L<ERR_print_errors(3)> can be used to print
 all error codes currently in the queue.
 
 =head1 RETURN VALUES
@@ -60,10 +60,10 @@ none is registered for the error code.
 
 =head1 SEE ALSO
 
-L<err(3)|err(3)>, L<ERR_get_error(3)|ERR_get_error(3)>,
-L<ERR_load_crypto_strings(3)|ERR_load_crypto_strings(3)>,
-L<SSL_load_error_strings(3)|SSL_load_error_strings(3)>
-L<ERR_print_errors(3)|ERR_print_errors(3)>
+L<err(3)>, L<ERR_get_error(3)>,
+L<ERR_load_crypto_strings(3)>,
+L<SSL_load_error_strings(3)>
+L<ERR_print_errors(3)>
 
 =head1 HISTORY
 

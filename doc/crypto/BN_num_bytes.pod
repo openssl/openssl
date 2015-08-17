@@ -46,8 +46,8 @@ more probability).
 
 =head1 SEE ALSO
 
-L<bn(3)|bn(3)>, L<DH_size(3)|DH_size(3)>, L<DSA_size(3)|DSA_size(3)>,
-L<RSA_size(3)|RSA_size(3)>
+L<bn(3)>, L<DH_size(3)>, L<DSA_size(3)>,
+L<RSA_size(3)>
 
 =head1 HISTORY
 

@@ -71,7 +71,7 @@ BUF_MEM_grow() returns zero on error or the new size (i.e. B<len>).
 
 =head1 SEE ALSO
 
-L<bio(3)|bio(3)>,
+L<bio(3)>,
 L<CRYPTO_secure_malloc(3)>.
 
 =head1 HISTORY

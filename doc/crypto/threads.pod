@@ -205,6 +205,6 @@ thread IDs to always be represented by 'unsigned long'.
 
 =head1 SEE ALSO
 
-L<crypto(3)|crypto(3)>
+L<crypto(3)>
 
 =cut

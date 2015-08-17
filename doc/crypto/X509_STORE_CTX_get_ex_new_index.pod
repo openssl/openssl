@@ -31,7 +31,7 @@ structure.
 
 =head1 SEE ALSO
 
-L<RSA_get_ex_new_index(3)|RSA_get_ex_new_index(3)>
+L<RSA_get_ex_new_index(3)>
 
 =head1 HISTORY
 

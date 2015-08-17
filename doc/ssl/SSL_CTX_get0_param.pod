@@ -46,7 +46,7 @@ for failure.
 
 =head1 SEE ALSO
 
-L<X509_VERIFY_PARAM_set_flags(3)|X509_VERIFY_PARAM_set_flags(3)>
+L<X509_VERIFY_PARAM_set_flags(3)>
 
 =head1 HISTORY
 
