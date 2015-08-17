@@ -944,7 +944,7 @@ int speed_main(int argc, char **argv)
 #endif
 
     /* No parameters; turn on everything. */
-    if (argc == 0) {
+    if ((argc == 0) && !doit[D_EVP]) {
         for (i = 0; i < ALGOR_NUM; i++)
             if (i != D_EVP)
                 doit[i] = 1;
