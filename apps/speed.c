@@ -364,10 +364,8 @@ OPTIONS speed_options[] = {
     {"mr", OPT_MR, '-', "Produce machine readable output"},
     {"mb", OPT_MB, '-'},
     {"misalign", OPT_MISALIGN, 'n', "Amount to mis-align buffers"},
-#if defined(TIMES) || defined(USE_TOD)
     {"elapsed", OPT_ELAPSED, '-',
      "Measure time in real time instead of CPU user time"},
-#endif
 #ifndef NO_FORK
     {"multi", OPT_MULTI, 'p', "Run benchmarks in parallel"},
 #endif
@@ -754,9 +752,6 @@ int speed_main(int argc, char **argv)
     int secret_idx = 0;
     long ecdh_c[EC_NUM][2];
     int ecdh_doit[EC_NUM];
-#endif
-#ifndef TIMES
-    usertime = -1;
 #endif
 
     memset(results, 0, sizeof(results));
