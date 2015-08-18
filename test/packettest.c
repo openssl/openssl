@@ -281,6 +281,85 @@ static int test_PACKET_buf_init()
     return 1;
 }
 
+static int test_PACKET_get_length_prefixed_1()
+{
+    unsigned char buf[BUF_LEN];
+    const size_t len = 16;
+    unsigned int i;
+    PACKET pkt, short_pkt, subpkt;
+
+    buf[0] = len;
+    for (i = 1; i < BUF_LEN; i++) {
+        buf[i] = (i * 2) & 0xff;
+    }
+
+    if (       !PACKET_buf_init(&pkt, buf, BUF_LEN)
+            || !PACKET_buf_init(&short_pkt, buf, len)
+            || !PACKET_get_length_prefixed_1(&pkt, &subpkt)
+            ||  PACKET_remaining(&subpkt) != len
+            || !PACKET_get_net_2(&subpkt, &i)
+            ||  i != 0x0204
+            ||  PACKET_get_length_prefixed_1(&short_pkt, &subpkt)
+            ||  PACKET_remaining(&short_pkt) != len) {
+        fprintf(stderr, "test_PACKET_get_length_prefixed_1() failed\n");
+        return 0;
+    }
+
+    return 1;
+}
+
+static int test_PACKET_get_length_prefixed_2()
+{
+    unsigned char buf[1024];
+    const size_t len = 516;  /* 0x0204 */
+    unsigned int i;
+    PACKET pkt, short_pkt, subpkt;
+
+    for (i = 1; i <= 1024; i++) {
+        buf[i-1] = (i * 2) & 0xff;
+    }
+
+    if (       !PACKET_buf_init(&pkt, buf, 1024)
+            || !PACKET_buf_init(&short_pkt, buf, len)
+            || !PACKET_get_length_prefixed_2(&pkt, &subpkt)
+            ||  PACKET_remaining(&subpkt) != len
+            || !PACKET_get_net_2(&subpkt, &i)
+            ||  i != 0x0608
+            ||  PACKET_get_length_prefixed_2(&short_pkt, &subpkt)
+            ||  PACKET_remaining(&short_pkt) != len) {
+        fprintf(stderr, "test_PACKET_get_length_prefixed_2() failed\n");
+        return 0;
+    }
+
+    return 1;
+}
+
+static int test_PACKET_get_length_prefixed_3()
+{
+    unsigned char buf[1024];
+    const size_t len = 516;  /* 0x000204 */
+    unsigned int i;
+    PACKET pkt, short_pkt, subpkt;
+
+    for (i = 0; i < 1024; i++) {
+        buf[i] = (i * 2) & 0xff;
+    }
+
+    if (       !PACKET_buf_init(&pkt, buf, 1024)
+            || !PACKET_buf_init(&short_pkt, buf, len)
+            || !PACKET_get_length_prefixed_3(&pkt, &subpkt)
+            ||  PACKET_remaining(&subpkt) != len
+            || !PACKET_get_net_2(&subpkt, &i)
+            ||  i != 0x0608
+            ||  PACKET_get_length_prefixed_3(&short_pkt, &subpkt)
+            ||  PACKET_remaining(&short_pkt) != len) {
+        fprintf(stderr, "test_PACKET_get_length_prefixed_3() failed\n");
+        return 0;
+    }
+
+    return 1;
+}
+
 int main(int argc, char **argv)
 {
     unsigned char buf[BUF_LEN];
@@ -309,7 +388,10 @@ int main(int argc, char **argv)
             || !test_PACKET_get_sub_packet(&pkt, start)
             || !test_PACKET_get_bytes(&pkt, start)
             || !test_PACKET_copy_bytes(&pkt, start)
-            || !test_PACKET_move_funcs(&pkt, start)) {
+            || !test_PACKET_move_funcs(&pkt, start)
+            || !test_PACKET_get_length_prefixed_1()
+            || !test_PACKET_get_length_prefixed_2()
+            || !test_PACKET_get_length_prefixed_3()) {
         return 1;
     }
     printf("PASS\n");
