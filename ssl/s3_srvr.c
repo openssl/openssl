@@ -1057,7 +1057,9 @@ int ssl3_get_client_hello(SSL *s)
         /* Load the client random */
         i = (cl > SSL3_RANDOM_SIZE) ? SSL3_RANDOM_SIZE : cl;
         memset(s->s3->client_random, 0, SSL3_RANDOM_SIZE);
-        if (!PACKET_peek_copy_bytes(&pkt, s->s3->client_random, i)
+        if (!PACKET_peek_copy_bytes(&pkt,
+                                    s->s3->client_random + SSL3_RANDOM_SIZE - i,
+                                    i)
                 || !PACKET_forward(&pkt, cl)
                 || PACKET_remaining(&pkt) != 0) {
             SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, SSL_R_RECORD_LENGTH_MISMATCH);
