@@ -88,6 +88,17 @@ __owur static inline size_t PACKET_remaining(const PACKET *pkt)
 }
 
 /*
+ * Returns a pointer to the PACKET's current position.
+ * For use in non-PACKETized APIs.
+ * TODO(openssl-team): this should return 'const unsigned char*' but can't
+ * currently because legacy code passes 'unsigned char*'s around.
+ */
+static inline unsigned char *PACKET_data(const PACKET *pkt)
+{
+    return pkt->curr;
+}
+
+/*
  * Initialise a PACKET with |len| bytes held in |buf|. This does not make a
  * copy of the data so |buf| must be present for the whole time that the PACKET
  * is being used.
@@ -388,6 +399,77 @@ __owur static inline int PACKET_length(const PACKET *pkt, size_t *len)
     return 1;
 }
 
+/*
+ * Reads a variable-length vector prefixed with a one-byte length, and stores
+ * the contents in |subpkt|. |pkt| can equal |subpkt|.
+ * Data is not copied: the |subpkt| packet will share its underlying buffer with
+ * the original |pkt|, so data wrapped by |pkt| must outlive the |subpkt|.
+ * Upon failure, the original |pkt| and |subpkt| are not modified.
+ */
+__owur static inline int PACKET_get_length_prefixed_1(PACKET *pkt, PACKET *subpkt)
+{
+  unsigned int length;
+  unsigned char *data;
+  PACKET tmp = *pkt;
+  if (!PACKET_get_1(&tmp, &length) ||
+      !PACKET_get_bytes(&tmp, &data, (size_t)length)) {
+      return 0;
+  }
+
+  *pkt = tmp;
+  subpkt->start = subpkt->curr = data;
+  subpkt->end = subpkt->start + length;
+
+  return 1;
+}
+
+/*
+ * Reads a variable-length vector prefixed with a two-byte length, and stores
+ * the contents in |subpkt|. |pkt| can equal |subpkt|.
+ * Data is not copied: the |subpkt| packet will share its underlying buffer with
+ * the original |pkt|, so data wrapped by |pkt| must outlive the |subpkt|.
+ * Upon failure, the original |pkt| and |subpkt| are not modified.
+ */
+__owur static inline int PACKET_get_length_prefixed_2(PACKET *pkt, PACKET *subpkt)
+{
+  unsigned int length;
+  unsigned char *data;
+  PACKET tmp = *pkt;
+  if (!PACKET_get_net_2(&tmp, &length) ||
+      !PACKET_get_bytes(&tmp, &data, (size_t)length)) {
+      return 0;
+  }
+
+  *pkt = tmp;
+  subpkt->start = subpkt->curr = data;
+  subpkt->end = subpkt->start + length;
+
+  return 1;
+}
+
+/*
+ * Reads a variable-length vector prefixed with a three-byte length, and stores
+ * the contents in |subpkt|. |pkt| can equal |subpkt|.
+ * Data is not copied: the |subpkt| packet will share its underlying buffer with
+ * the original |pkt|, so data wrapped by |pkt| must outlive the |subpkt|.
+ * Upon failure, the original |pkt| and |subpkt| are not modified.
+ */
+__owur static inline int PACKET_get_length_prefixed_3(PACKET *pkt, PACKET *subpkt)
+{
+  unsigned long length;
+  unsigned char *data;
+  PACKET tmp = *pkt;
+  if (!PACKET_get_net_3(&tmp, &length) ||
+      !PACKET_get_bytes(&tmp, &data, (size_t)length)) {
+      return 0;
+  }
+
+  *pkt = tmp;
+  subpkt->start = subpkt->curr = data;
+  subpkt->end = subpkt->start + length;
+
+  return 1;
+}
 # ifdef __cplusplus
 }
 # endif
