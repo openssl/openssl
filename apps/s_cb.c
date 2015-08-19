@@ -711,6 +711,10 @@ static STRINT_PAIR tlsext_types[] = {
 #ifdef TLSEXT_TYPE_encrypt_then_mac
     {"encrypt-then-mac", TLSEXT_TYPE_encrypt_then_mac},
 #endif
+#ifdef TLSEXT_TYPE_application_layer_protocol_negotiation
+    {"application layer protocol negotiation",
+     TLSEXT_TYPE_application_layer_protocol_negotiation},
+#endif
     {NULL}
 };
 
