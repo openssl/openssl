@@ -94,6 +94,11 @@ const EC_METHOD *EC_GFp_nistp521_method(void);
  */
 const EC_METHOD *EC_GF2m_simple_method(void);
 
+/** Returns the lambda GF2m ec method
+ *  \return  EC_METHOD object
+ */
+const EC_METHOD *EC_GF2m_lambda_method(void);
+
 # endif
 
 /********************************************************************/
