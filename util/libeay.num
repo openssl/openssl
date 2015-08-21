@@ -4640,3 +4640,6 @@ X509_REQ_get_signature_nid              4999	EXIST::FUNCTION:
 X509_CRL_get_signature_nid              5000	EXIST::FUNCTION:
 i2d_re_X509_REQ_tbs                     5001	EXIST::FUNCTION:
 X509_REVOKED_get0_extensions            5002	EXIST::FUNCTION:
+EVP_camellia_192_gcm                    5003	EXIST::FUNCTION:CAMELLIA
+EVP_camellia_128_gcm                    5004	EXIST::FUNCTION:CAMELLIA
+EVP_camellia_256_gcm                    5005	EXIST::FUNCTION:CAMELLIA
