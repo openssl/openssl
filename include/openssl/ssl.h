@@ -250,6 +250,7 @@ extern "C" {
 # define SSL_TXT_CAMELLIA128     "CAMELLIA128"
 # define SSL_TXT_CAMELLIA256     "CAMELLIA256"
 # define SSL_TXT_CAMELLIA        "CAMELLIA"
+# define SSL_TXT_CAMELLIA_GCM    "CAMELLIAGCM"
 
 # define SSL_TXT_MD5             "MD5"
 # define SSL_TXT_SHA1            "SHA1"

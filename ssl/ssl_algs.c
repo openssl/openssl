@@ -101,6 +101,8 @@ int SSL_library_init(void)
 #ifndef OPENSSL_NO_CAMELLIA
     EVP_add_cipher(EVP_camellia_128_cbc());
     EVP_add_cipher(EVP_camellia_256_cbc());
+    EVP_add_cipher(EVP_camellia_128_gcm());
+    EVP_add_cipher(EVP_camellia_256_gcm());
 #endif
 
 #ifndef OPENSSL_NO_SEED
