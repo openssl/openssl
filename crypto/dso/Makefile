@@ -47,6 +47,8 @@ tests:
 lint:
 	lint -DLINT $(INCLUDES) $(SRC)>fluff
 
+update: depend
+
 depend:
 	@[ -n "$(MAKEDEPEND)" ] # should be set by upper Makefile...
 	$(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(LIBSRC)
@@ -67,7 +69,7 @@ dso_dl.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
 dso_dl.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
 dso_dl.o: ../../include/openssl/ossl_typ.h ../../include/openssl/safestack.h
 dso_dl.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-dso_dl.o: ../cryptlib.h dso_dl.c
+dso_dl.o: ../include/internal/cryptlib.h dso_dl.c
 dso_dlfcn.o: ../../e_os.h ../../include/openssl/bio.h
 dso_dlfcn.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 dso_dlfcn.o: ../../include/openssl/dso.h ../../include/openssl/e_os2.h
@@ -75,7 +77,8 @@ dso_dlfcn.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
 dso_dlfcn.o: ../../include/openssl/opensslconf.h
 dso_dlfcn.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 dso_dlfcn.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-dso_dlfcn.o: ../../include/openssl/symhacks.h ../cryptlib.h dso_dlfcn.c
+dso_dlfcn.o: ../../include/openssl/symhacks.h ../include/internal/cryptlib.h
+dso_dlfcn.o: dso_dlfcn.c
 dso_err.o: ../../include/openssl/bio.h ../../include/openssl/crypto.h
 dso_err.o: ../../include/openssl/dso.h ../../include/openssl/e_os2.h
 dso_err.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
@@ -90,7 +93,7 @@ dso_lib.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
 dso_lib.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
 dso_lib.o: ../../include/openssl/ossl_typ.h ../../include/openssl/safestack.h
 dso_lib.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-dso_lib.o: ../cryptlib.h dso_lib.c
+dso_lib.o: ../include/internal/cryptlib.h dso_lib.c
 dso_null.o: ../../e_os.h ../../include/openssl/bio.h
 dso_null.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 dso_null.o: ../../include/openssl/dso.h ../../include/openssl/e_os2.h
@@ -98,7 +101,8 @@ dso_null.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
 dso_null.o: ../../include/openssl/opensslconf.h
 dso_null.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 dso_null.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-dso_null.o: ../../include/openssl/symhacks.h ../cryptlib.h dso_null.c
+dso_null.o: ../../include/openssl/symhacks.h ../include/internal/cryptlib.h
+dso_null.o: dso_null.c
 dso_openssl.o: ../../e_os.h ../../include/openssl/bio.h
 dso_openssl.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 dso_openssl.o: ../../include/openssl/dso.h ../../include/openssl/e_os2.h
@@ -107,7 +111,8 @@ dso_openssl.o: ../../include/openssl/opensslconf.h
 dso_openssl.o: ../../include/openssl/opensslv.h
 dso_openssl.o: ../../include/openssl/ossl_typ.h
 dso_openssl.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-dso_openssl.o: ../../include/openssl/symhacks.h ../cryptlib.h dso_openssl.c
+dso_openssl.o: ../../include/openssl/symhacks.h ../include/internal/cryptlib.h
+dso_openssl.o: dso_openssl.c
 dso_vms.o: ../../e_os.h ../../include/openssl/bio.h
 dso_vms.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 dso_vms.o: ../../include/openssl/dso.h ../../include/openssl/e_os2.h
@@ -115,7 +120,7 @@ dso_vms.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
 dso_vms.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
 dso_vms.o: ../../include/openssl/ossl_typ.h ../../include/openssl/safestack.h
 dso_vms.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-dso_vms.o: ../cryptlib.h dso_vms.c
+dso_vms.o: ../include/internal/cryptlib.h dso_vms.c
 dso_win32.o: ../../e_os.h ../../include/openssl/bio.h
 dso_win32.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 dso_win32.o: ../../include/openssl/dso.h ../../include/openssl/e_os2.h
@@ -123,4 +128,5 @@ dso_win32.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
 dso_win32.o: ../../include/openssl/opensslconf.h
 dso_win32.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 dso_win32.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-dso_win32.o: ../../include/openssl/symhacks.h ../cryptlib.h dso_win32.c
+dso_win32.o: ../../include/openssl/symhacks.h ../include/internal/cryptlib.h
+dso_win32.o: dso_win32.c

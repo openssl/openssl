@@ -68,8 +68,6 @@
 
 #include "ec_lcl.h"
 
-const char EC_version[] = "EC" OPENSSL_VERSION_PTEXT;
-
 /* functions for EC_GROUP objects */
 
 EC_GROUP *EC_GROUP_new(const EC_METHOD *meth)
@@ -949,6 +947,13 @@ int EC_POINT_is_at_infinity(const EC_GROUP *group, const EC_POINT *point)
     return group->meth->is_at_infinity(group, point);
 }
 
+/*
+ * Check whether an EC_POINT is on the curve or not. Note that the return
+ * value for this function should NOT be treated as a boolean. Return values:
+ *  1: The point is on the curve
+ *  0: The point is not on the curve
+ * -1: An error occurred
+ */
 int EC_POINT_is_on_curve(const EC_GROUP *group, const EC_POINT *point,
                          BN_CTX *ctx)
 {

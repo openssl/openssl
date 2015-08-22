@@ -40,7 +40,7 @@ applications.
 
 Although there are a large number of possible flags for most purposes
 B<XN_FLAG_ONELINE>, B<XN_FLAG_MULTILINE> or B<XN_FLAG_RFC2253> will suffice.
-As noted on the L<ASN1_STRING_print_ex(3)|ASN1_STRING_print_ex(3)> manual page
+As noted on the L<ASN1_STRING_print_ex(3)> manual page
 for UTF8 terminals the B<ASN1_STRFLGS_ESC_MSB> should be unset: so for example
 B<XN_FLAG_ONELINE & ~ASN1_STRFLGS_ESC_MSB> would be used.
 
@@ -96,7 +96,7 @@ B<XN_FLAG_COMPAT> uses a format identical to X509_NAME_print(): in fact it calls
 
 =head1 SEE ALSO
 
-L<ASN1_STRING_print_ex(3)|ASN1_STRING_print_ex(3)>
+L<ASN1_STRING_print_ex(3)>
 
 =head1 HISTORY
 

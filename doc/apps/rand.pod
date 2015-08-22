@@ -32,7 +32,7 @@ Write to I<file> instead of standard output.
 
 =item B<-rand> I<file(s)>
 
-Use specified file or files or EGD socket (see L<RAND_egd(3)|RAND_egd(3)>)
+Use specified file or files or EGD socket (see L<RAND_egd(3)>)
 for seeding the random number generator.
 Multiple files can be specified separated by a OS-dependent character.
 The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
@@ -50,6 +50,6 @@ Show the output as a hex string.
 
 =head1 SEE ALSO
 
-L<RAND_bytes(3)|RAND_bytes(3)>
+L<RAND_bytes(3)>
 
 =cut

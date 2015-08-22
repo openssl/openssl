@@ -24,6 +24,10 @@ B<openssl> B<pkcs8>
 [B<-v2prf alg>]
 [B<-v1 alg>]
 [B<-engine id>]
+[B<-scrypt>]
+[B<-scrypt_N N>]
+[B<-scrypt_r r>]
+[B<-scrypt_p p>]
 
 =head1 DESCRIPTION
 
@@ -63,7 +67,7 @@ prompted for.
 =item B<-passin arg>
 
 the input file password source. For more information about the format of B<arg>
-see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)|openssl(1)>.
+see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
 
 =item B<-out filename>
 
@@ -75,13 +79,13 @@ filename.
 =item B<-passout arg>
 
 the output file password source. For more information about the format of B<arg>
-see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)|openssl(1)>.
+see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
 
 =item B<-iter count>
 
-When creating new PKCS#8 containers, use a given number of iterations on the password
-in deriving the encryption key for the PKCS#8 output. High values increase the time
-required to brute-force a PKCS#8 container.
+When creating new PKCS#8 containers, use a given number of iterations on
+the password in deriving the encryption key for the PKCS#8 output.
+High values increase the time required to brute-force a PKCS#8 container.
 
 =item B<-nocrypt>
 
@@ -143,6 +147,17 @@ specifying an engine (by its unique B<id> string) will cause B<pkcs8>
 to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed. The engine will then be set as the default
 for all available algorithms.
+
+=item B<-scrypt>
+
+uses the B<scrypt> algorithm for private key encryption using default
+parameters: currently N=1024, r=8 and p=16 and AES in CBC mode with a 256 bit
+key. These parameters can be modified using the B<-scrypt_N>, B<-scrypt_r>,
+B<-scrypt_p> and B<-v2> options.
+
+B<-scrypt_N N> B<-scrypt_r r> B<-scrypt_p p>
+
+sets the scrypt B<N>, B<r> or B<p> parameters.
 
 =back
 
@@ -261,7 +276,11 @@ the old format at present.
 
 =head1 SEE ALSO
 
-L<dsa(1)|dsa(1)>, L<rsa(1)|rsa(1)>, L<genrsa(1)|genrsa(1)>,
-L<gendsa(1)|gendsa(1)> 
+L<dsa(1)>, L<rsa(1)>, L<genrsa(1)>,
+L<gendsa(1)> 
+
+=head1 HISTORY
+
+The B<-iter> option was added to OpenSSL 1.1.0.
 
 =cut

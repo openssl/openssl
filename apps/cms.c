@@ -208,6 +208,8 @@ OPTIONS cms_options[] = {
     {"keyopt", OPT_KEYOPT, 's', "Set public key parameters as n:v pairs"},
     {"receipt_request_from", OPT_RR_FROM, 's'},
     {"receipt_request_to", OPT_RR_TO, 's'},
+    {"", OPT_CIPHER, '-', "Any supported cipher"},
+    OPT_V_OPTIONS,
 # ifndef OPENSSL_NO_AES
     {"aes128-wrap", OPT_AES128_WRAP, '-', "Use AES128 to wrap key"},
     {"aes192-wrap", OPT_AES192_WRAP, '-', "Use AES192 to wrap key"},
@@ -219,9 +221,7 @@ OPTIONS cms_options[] = {
 # ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine e, possibly a hardware device"},
 # endif
-    {"", OPT_CIPHER, '-', "Any supported cipher"},
-    OPT_V_OPTIONS,
-    {NULL},
+    {NULL}
 };
 
 int cms_main(int argc, char **argv)
@@ -588,11 +588,11 @@ int cms_main(int argc, char **argv)
                 goto end;
             vpmtouched++;
             break;
-# ifndef OPENSSL_NO_DES
         case OPT_3DES_WRAP:
+# ifndef OPENSSL_NO_DES
             wrap_cipher = EVP_des_ede3_wrap();
-            break;
 # endif
+            break;
 # ifndef OPENSSL_NO_AES
         case OPT_AES128_WRAP:
             wrap_cipher = EVP_aes_128_wrap();
@@ -602,6 +602,11 @@ int cms_main(int argc, char **argv)
             break;
         case OPT_AES256_WRAP:
             wrap_cipher = EVP_aes_256_wrap();
+            break;
+# else
+        case OPT_AES128_WRAP:
+        case OPT_AES192_WRAP:
+        case OPT_AES256_WRAP:
             break;
 # endif
         }
@@ -664,11 +669,13 @@ int cms_main(int argc, char **argv)
     } else if (!operation)
         goto opthelp;
 
-
     if (!app_passwd(passinarg, NULL, &passin, NULL)) {
         BIO_printf(bio_err, "Error getting password\n");
         goto end;
     }
+
+    if (!app_load_modules(NULL))
+        goto end;
 
     if (need_rand) {
         app_RAND_load_file(NULL, (inrand != NULL));
@@ -717,8 +724,8 @@ int cms_main(int argc, char **argv)
             if ((encerts = sk_X509_new_null()) == NULL)
                 goto end;
         while (*argv) {
-            if (!(cert = load_cert(*argv, FORMAT_PEM,
-                                   NULL, e, "recipient certificate file")))
+            if ((cert = load_cert(*argv, FORMAT_PEM, NULL, e,
+                                  "recipient certificate file")) == NULL)
                 goto end;
             sk_X509_push(encerts, cert);
             cert = NULL;
@@ -727,24 +734,24 @@ int cms_main(int argc, char **argv)
     }
 
     if (certfile) {
-        if (!(other = load_certs(certfile, FORMAT_PEM, NULL,
-                                 e, "certificate file"))) {
+        if ((other = load_certs(certfile, FORMAT_PEM, NULL, e,
+                                "certificate file")) == NULL) {
             ERR_print_errors(bio_err);
             goto end;
         }
     }
 
     if (recipfile && (operation == SMIME_DECRYPT)) {
-        if (!(recip = load_cert(recipfile, FORMAT_PEM, NULL,
-                                e, "recipient certificate file"))) {
+        if ((recip = load_cert(recipfile, FORMAT_PEM, NULL, e,
+                               "recipient certificate file")) == NULL) {
             ERR_print_errors(bio_err);
             goto end;
         }
     }
 
     if (operation == SMIME_SIGN_RECEIPT) {
-        if (!(signer = load_cert(signerfile, FORMAT_PEM, NULL,
-                                 e, "receipt signer certificate file"))) {
+        if ((signer = load_cert(signerfile, FORMAT_PEM, NULL, e,
+                                "receipt signer certificate file")) == NULL) {
             ERR_print_errors(bio_err);
             goto end;
         }
@@ -787,7 +794,7 @@ int cms_main(int argc, char **argv)
         }
         if (contfile) {
             BIO_free(indata);
-            if (!(indata = BIO_new_file(contfile, "rb"))) {
+            if ((indata = BIO_new_file(contfile, "rb")) == NULL) {
                 BIO_printf(bio_err, "Can't read content file %s\n", contfile);
                 goto end;
             }
@@ -807,7 +814,7 @@ int cms_main(int argc, char **argv)
 
     if (rctfile) {
         char *rctmode = (rctformat == FORMAT_ASN1) ? "rb" : "r";
-        if (!(rctin = BIO_new_file(rctfile, rctmode))) {
+        if ((rctin = BIO_new_file(rctfile, rctmode)) == NULL) {
             BIO_printf(bio_err, "Can't open receipt file %s\n", rctfile);
             goto end;
         }
@@ -834,7 +841,7 @@ int cms_main(int argc, char **argv)
         goto end;
 
     if ((operation == SMIME_VERIFY) || (operation == SMIME_VERIFY_RECEIPT)) {
-        if (!(store = setup_verify(CAfile, CApath)))
+        if ((store = setup_verify(CAfile, CApath)) == NULL)
             goto end;
         X509_STORE_set_verify_cb(store, cms_cb);
         if (vpmtouched)

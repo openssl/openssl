@@ -78,6 +78,8 @@ tests:
 lint:
 	lint -DLINT $(INCLUDES) $(SRC)>fluff
 
+update: depend
+
 depend:
 	@[ -n "$(MAKEDEPEND)" ] # should be set by upper Makefile...
 	$(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(LIBSRC)
@@ -138,7 +140,7 @@ wrap128.o: ../../include/openssl/lhash.h ../../include/openssl/modes.h
 wrap128.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
 wrap128.o: ../../include/openssl/ossl_typ.h ../../include/openssl/safestack.h
 wrap128.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-wrap128.o: ../cryptlib.h wrap128.c
+wrap128.o: ../include/internal/cryptlib.h wrap128.c
 xts128.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
 xts128.o: ../../include/openssl/modes.h ../../include/openssl/opensslconf.h
 xts128.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h

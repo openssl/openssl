@@ -92,9 +92,6 @@ OPTIONS enc_options[] = {
     {"in", OPT_IN, '<', "Input file"},
     {"out", OPT_OUT, '>', "Output file"},
     {"pass", OPT_PASS, 's', "Passphrase source"},
-#ifndef OPENSSL_NO_ENGINE
-    {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
-#endif
     {"e", OPT_E, '-', "Encrypt"},
     {"d", OPT_D, '-', "Decrypt"},
     {"p", OPT_P, '-', "Print the iv/key"},
@@ -107,9 +104,6 @@ OPTIONS enc_options[] = {
     {"A", OPT_UPPER_A, '-'},
     {"a", OPT_A, '-', "base64 encode/decode, depending on encryption flag"},
     {"base64", OPT_A, '-', "Base64 output as a single line"},
-#ifdef ZLIB
-    {"z", OPT_Z, '-', "Use zlib as the 'encryption'"},
-#endif
     {"bufsize", OPT_BUFSIZE, 's', "Buffer size"},
     {"k", OPT_K, 's', "Passphrase"},
     {"kfile", OPT_KFILE, '<', "Fead passphrase from file"},
@@ -120,6 +114,12 @@ OPTIONS enc_options[] = {
     {"non-fips-allow", OPT_NON_FIPS_ALLOW, '-'},
     {"none", OPT_NONE, '-', "Don't encrypt"},
     {"", OPT_CIPHER, '-', "Any supported cipher"},
+#ifdef ZLIB
+    {"z", OPT_Z, '-', "Use zlib as the 'encryption'"},
+#endif
+#ifndef OPENSSL_NO_ENGINE
+    {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
+#endif
     {NULL}
 };
 
@@ -293,6 +293,9 @@ int enc_main(int argc, char **argv)
     }
     argc = opt_num_rest();
     argv = opt_rest();
+
+    if (!app_load_modules(NULL))
+        goto end;
 
     if (cipher && EVP_CIPHER_flags(cipher) & EVP_CIPH_FLAG_AEAD_CIPHER) {
         BIO_printf(bio_err, "%s: AEAD ciphers not supported\n", prog);

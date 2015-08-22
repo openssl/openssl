@@ -59,7 +59,7 @@
 
 #include <stdio.h>
 #include <ctype.h>
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/asn1.h>
 
 static int traverse_string(const unsigned char *p, int len, int inform,
@@ -235,7 +235,7 @@ int ASN1_mbstring_ncopy(ASN1_STRING **out, const unsigned char *in, int len,
         cpyfunc = cpy_utf8;
         break;
     }
-    if (!(p = OPENSSL_malloc(outlen + 1))) {
+    if ((p = OPENSSL_malloc(outlen + 1)) == NULL) {
         if (free_out)
             ASN1_STRING_free(dest);
         ASN1err(ASN1_F_ASN1_MBSTRING_NCOPY, ERR_R_MALLOC_FAILURE);

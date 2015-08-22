@@ -109,3 +109,29 @@ ms/nt.mak
 ms/ntdll.mak
 ms/ssleay32.def
 ms/version32.rc
+
+# Files created on other branches that are not held in git, and are not
+# needed on this branch
+include/openssl/asn1_mac.h
+include/openssl/des_old.h
+include/openssl/fips.h
+include/openssl/fips_rand.h
+include/openssl/krb5_asn.h
+include/openssl/kssl.h
+include/openssl/pq_compat.h
+include/openssl/ssl23.h
+include/openssl/tmdiff.h
+include/openssl/ui_compat.h
+test/fips_aesavs.c
+test/fips_desmovs.c
+test/fips_dsatest.c
+test/fips_dssvs.c
+test/fips_hmactest.c
+test/fips_randtest.c
+test/fips_rngvs.c
+test/fips_rsagtest.c
+test/fips_rsastest.c
+test/fips_rsavtest.c
+test/fips_shatest.c
+test/fips_test_suite.c
+test/shatest.c

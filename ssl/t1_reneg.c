@@ -143,23 +143,14 @@ int ssl_add_clienthello_renegotiate_ext(SSL *s, unsigned char *p, int *len,
 /*
  * Parse the client's renegotiation binding and abort if it's not right
  */
-int ssl_parse_clienthello_renegotiate_ext(SSL *s, unsigned char *d, int len,
-                                          int *al)
+int ssl_parse_clienthello_renegotiate_ext(SSL *s, PACKET *pkt, int *al)
 {
-    int ilen;
+    unsigned int ilen;
+    unsigned char *d;
 
     /* Parse the length byte */
-    if (len < 1) {
-        SSLerr(SSL_F_SSL_PARSE_CLIENTHELLO_RENEGOTIATE_EXT,
-               SSL_R_RENEGOTIATION_ENCODING_ERR);
-        *al = SSL_AD_ILLEGAL_PARAMETER;
-        return 0;
-    }
-    ilen = *d;
-    d++;
-
-    /* Consistency check */
-    if ((ilen + 1) != len) {
+    if (!PACKET_get_1(pkt, &ilen)
+            || !PACKET_get_bytes(pkt, &d, ilen)) {
         SSLerr(SSL_F_SSL_PARSE_CLIENTHELLO_RENEGOTIATE_EXT,
                SSL_R_RENEGOTIATION_ENCODING_ERR);
         *al = SSL_AD_ILLEGAL_PARAMETER;

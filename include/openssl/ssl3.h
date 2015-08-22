@@ -177,25 +177,6 @@ extern "C" {
 # define SSL3_CK_ADH_DES_64_CBC_SHA              0x0300001A
 # define SSL3_CK_ADH_DES_192_CBC_SHA             0x0300001B
 
-/*
- * VRS Additional Kerberos5 entries
- */
-# define SSL3_CK_KRB5_DES_64_CBC_SHA             0x0300001E
-# define SSL3_CK_KRB5_DES_192_CBC3_SHA           0x0300001F
-# define SSL3_CK_KRB5_RC4_128_SHA                0x03000020
-# define SSL3_CK_KRB5_IDEA_128_CBC_SHA           0x03000021
-# define SSL3_CK_KRB5_DES_64_CBC_MD5             0x03000022
-# define SSL3_CK_KRB5_DES_192_CBC3_MD5           0x03000023
-# define SSL3_CK_KRB5_RC4_128_MD5                0x03000024
-# define SSL3_CK_KRB5_IDEA_128_CBC_MD5           0x03000025
-
-# define SSL3_CK_KRB5_DES_40_CBC_SHA             0x03000026
-# define SSL3_CK_KRB5_RC2_40_CBC_SHA             0x03000027
-# define SSL3_CK_KRB5_RC4_40_SHA                 0x03000028
-# define SSL3_CK_KRB5_DES_40_CBC_MD5             0x03000029
-# define SSL3_CK_KRB5_RC2_40_CBC_MD5             0x0300002A
-# define SSL3_CK_KRB5_RC4_40_MD5                 0x0300002B
-
 # define SSL3_TXT_RSA_NULL_MD5                   "NULL-MD5"
 # define SSL3_TXT_RSA_NULL_SHA                   "NULL-SHA"
 # define SSL3_TXT_RSA_RC4_40_MD5                 "EXP-RC4-MD5"
@@ -238,22 +219,6 @@ extern "C" {
 # define SSL3_TXT_ADH_DES_40_CBC_SHA             "EXP-ADH-DES-CBC-SHA"
 # define SSL3_TXT_ADH_DES_64_CBC_SHA             "ADH-DES-CBC-SHA"
 # define SSL3_TXT_ADH_DES_192_CBC_SHA            "ADH-DES-CBC3-SHA"
-
-# define SSL3_TXT_KRB5_DES_64_CBC_SHA            "KRB5-DES-CBC-SHA"
-# define SSL3_TXT_KRB5_DES_192_CBC3_SHA          "KRB5-DES-CBC3-SHA"
-# define SSL3_TXT_KRB5_RC4_128_SHA               "KRB5-RC4-SHA"
-# define SSL3_TXT_KRB5_IDEA_128_CBC_SHA          "KRB5-IDEA-CBC-SHA"
-# define SSL3_TXT_KRB5_DES_64_CBC_MD5            "KRB5-DES-CBC-MD5"
-# define SSL3_TXT_KRB5_DES_192_CBC3_MD5          "KRB5-DES-CBC3-MD5"
-# define SSL3_TXT_KRB5_RC4_128_MD5               "KRB5-RC4-MD5"
-# define SSL3_TXT_KRB5_IDEA_128_CBC_MD5          "KRB5-IDEA-CBC-MD5"
-
-# define SSL3_TXT_KRB5_DES_40_CBC_SHA            "EXP-KRB5-DES-CBC-SHA"
-# define SSL3_TXT_KRB5_RC2_40_CBC_SHA            "EXP-KRB5-RC2-CBC-SHA"
-# define SSL3_TXT_KRB5_RC4_40_SHA                "EXP-KRB5-RC4-SHA"
-# define SSL3_TXT_KRB5_DES_40_CBC_MD5            "EXP-KRB5-DES-CBC-MD5"
-# define SSL3_TXT_KRB5_RC2_40_CBC_MD5            "EXP-KRB5-RC2-CBC-MD5"
-# define SSL3_TXT_KRB5_RC4_40_MD5                "EXP-KRB5-RC4-MD5"
 
 # define SSL3_SSL_SESSION_ID_LENGTH              32
 # define SSL3_MAX_SSL_SESSION_ID_LENGTH          32
@@ -395,16 +360,11 @@ extern "C" {
 # define SSL3_CT_NUMBER                  9
 
 # define SSL3_FLAGS_NO_RENEGOTIATE_CIPHERS       0x0001
-# define SSL3_FLAGS_DELAY_CLIENT_FINISHED        0x0002
-# define SSL3_FLAGS_POP_BUFFER                   0x0004
-# define TLS1_FLAGS_TLS_PADDING_BUG              0x0008
+
+/* Removed from OpenSSL 1.1.0 */
+# define TLS1_FLAGS_TLS_PADDING_BUG              0x0
+
 # define TLS1_FLAGS_SKIP_CERT_VERIFY             0x0010
-# define TLS1_FLAGS_KEEP_HANDSHAKE               0x0020
-/*
- * Set when the handshake is ready to process peer's ChangeCipherSpec message.
- * Cleared after the message has been processed.
- */
-# define SSL3_FLAGS_CCS_OK                       0x0080
 
 /* Set if we encrypt then mac instead of usual mac then encrypt */
 # define TLS1_FLAGS_ENCRYPT_THEN_MAC             0x0100
@@ -533,6 +493,9 @@ extern "C" {
 #  define SSL3_MT_NEXT_PROTO                      67
 # endif
 # define DTLS1_MT_HELLO_VERIFY_REQUEST    3
+
+/* Dummy message type for handling CCS like a normal handshake message */
+# define SSL3_MT_CHANGE_CIPHER_SPEC              0x0101
 
 # define SSL3_MT_CCS                             1
 

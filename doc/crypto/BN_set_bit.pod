@@ -37,12 +37,12 @@ BN_mask_bits() truncates B<a> to an B<n> bit number
 shorter than B<n> bits.
 
 BN_lshift() shifts B<a> left by B<n> bits and places the result in
-B<r> (C<r=a*2^n>). BN_lshift1() shifts B<a> left by one and places
-the result in B<r> (C<r=2*a>).
+B<r> (C<r=a*2^n>). Note that B<n> must be non-negative. BN_lshift1() shifts
+B<a> left by one and places the result in B<r> (C<r=2*a>).
 
 BN_rshift() shifts B<a> right by B<n> bits and places the result in
-B<r> (C<r=a/2^n>). BN_rshift1() shifts B<a> right by one and places
-the result in B<r> (C<r=a/2>).
+B<r> (C<r=a/2^n>). Note that B<n> must be non-negative. BN_rshift1() shifts
+B<a> right by one and places the result in B<r> (C<r=a/2>).
 
 For the shift functions, B<r> and B<a> may be the same variable.
 
@@ -51,11 +51,11 @@ For the shift functions, B<r> and B<a> may be the same variable.
 BN_is_bit_set() returns 1 if the bit is set, 0 otherwise.
 
 All other functions return 1 for success, 0 on error. The error codes
-can be obtained by L<ERR_get_error(3)|ERR_get_error(3)>.
+can be obtained by L<ERR_get_error(3)>.
 
 =head1 SEE ALSO
 
-L<bn(3)|bn(3)>, L<BN_num_bytes(3)|BN_num_bytes(3)>, L<BN_add(3)|BN_add(3)>
+L<bn(3)>, L<BN_num_bytes(3)>, L<BN_add(3)>
 
 =head1 HISTORY
 

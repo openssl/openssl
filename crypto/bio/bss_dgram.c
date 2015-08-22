@@ -60,7 +60,7 @@
 #include <stdio.h>
 #include <errno.h>
 #define USE_SOCKETS
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 
 #include <openssl/bio.h>
 #ifndef OPENSSL_NO_DGRAM
@@ -305,16 +305,17 @@ static void dgram_adjust_rcv_timeout(BIO *b)
 
         /* Calculate time left until timer expires */
         memcpy(&timeleft, &(data->next_timeout), sizeof(struct timeval));
-        timeleft.tv_sec -= timenow.tv_sec;
-        timeleft.tv_usec -= timenow.tv_usec;
-        if (timeleft.tv_usec < 0) {
+        if (timeleft.tv_usec < timenow.tv_usec) {
+            timeleft.tv_usec = 1000000 - timenow.tv_usec + timeleft.tv_usec;
             timeleft.tv_sec--;
-            timeleft.tv_usec += 1000000;
+        } else {
+            timeleft.tv_usec -= timenow.tv_usec;
         }
-
-        if (timeleft.tv_sec < 0) {
+        if (timeleft.tv_sec < timenow.tv_sec) {
             timeleft.tv_sec = 0;
             timeleft.tv_usec = 1;
+        } else {
+            timeleft.tv_sec -= timenow.tv_sec;
         }
 
         /*
@@ -881,7 +882,7 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
                 perror("setsockopt");
                 ret = -1;
             }
-# elif defined(OPENSSL_SYS_LINUX) && defined(IP_MTUDISCOVER)
+# elif defined(OPENSSL_SYS_LINUX) && defined(IP_MTU_DISCOVER) && defined (IP_PMTUDISC_PROBE)
             if ((sockopt_val = num ? IP_PMTUDISC_PROBE : IP_PMTUDISC_DONT),
                 (ret = setsockopt(b->num, IPPROTO_IP, IP_MTU_DISCOVER,
                                   &sockopt_val, sizeof(sockopt_val))) < 0) {
@@ -1218,9 +1219,13 @@ static int dgram_sctp_read(BIO *b, char *out, int outl)
                      * it can be sent now.
                      */
                     if (data->saved_message.length > 0) {
-                        dgram_sctp_write(data->saved_message.bio,
+                        i = dgram_sctp_write(data->saved_message.bio,
                                          data->saved_message.data,
                                          data->saved_message.length);
+                        if (i < 0) {
+                            ret = i;
+                            break;
+                        }
                         OPENSSL_free(data->saved_message.data);
                         data->saved_message.data = NULL;
                         data->saved_message.length = 0;
@@ -1365,6 +1370,14 @@ static int dgram_sctp_read(BIO *b, char *out, int outl)
     return (ret);
 }
 
+/*
+ * dgram_sctp_write - send message on SCTP socket
+ * @b: BIO to write to
+ * @in: data to send
+ * @inl: amount of bytes in @in to send
+ *
+ * Returns -1 on error or the sent amount of bytes on success
+ */
 static int dgram_sctp_write(BIO *b, const char *in, int inl)
 {
     int ret;
@@ -1403,18 +1416,24 @@ static int dgram_sctp_write(BIO *b, const char *in, int inl)
      * If we have to send a shutdown alert message and the socket is not dry
      * yet, we have to save it and send it as soon as the socket gets dry.
      */
-    if (data->save_shutdown && !BIO_dgram_sctp_wait_for_dry(b)) {
-        char *tmp;
-        data->saved_message.bio = b;
-        if (!(tmp = OPENSSL_malloc(inl))) {
-            BIOerr(BIO_F_DGRAM_SCTP_WRITE, ERR_R_MALLOC_FAILURE);
+    if (data->save_shutdown) {
+        ret = BIO_dgram_sctp_wait_for_dry(b);
+        if (ret < 0) {
             return -1;
         }
-        OPENSSL_free(data->saved_message.data);
-        data->saved_message.data = tmp;
-        memcpy(data->saved_message.data, in, inl);
-        data->saved_message.length = inl;
-        return inl;
+        if (ret == 0) {
+            char *tmp;
+            data->saved_message.bio = b;
+            if ((tmp = OPENSSL_malloc(inl)) == NULL) {
+                BIOerr(BIO_F_DGRAM_SCTP_WRITE, ERR_R_MALLOC_FAILURE);
+                return -1;
+            }
+            OPENSSL_free(data->saved_message.data);
+            data->saved_message.data = tmp;
+            memcpy(data->saved_message.data, in, inl);
+            data->saved_message.length = inl;
+            return inl;
+        }
     }
 
     iov[0].iov_base = (char *)in;
@@ -1732,6 +1751,19 @@ int BIO_dgram_sctp_notification_cb(BIO *b,
     return 0;
 }
 
+/*
+ * BIO_dgram_sctp_wait_for_dry - Wait for SCTP SENDER_DRY event
+ * @b: The BIO to check for the dry event
+ *
+ * Wait until the peer confirms all packets have been received, and so that
+ * our kernel doesn't have anything to send anymore.  This is only received by
+ * the peer's kernel, not the application.
+ *
+ * Returns:
+ * -1 on error
+ *  0 when not dry yet
+ *  1 when dry
+ */
 int BIO_dgram_sctp_wait_for_dry(BIO *b)
 {
     int is_dry = 0;

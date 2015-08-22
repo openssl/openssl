@@ -132,6 +132,10 @@ typedef struct ssl3_buffer_st {
 #define SEQ_NUM_SIZE                            8
 
 typedef struct ssl3_record_st {
+    /* Record layer version */
+    /* r */
+    int rec_version;
+
     /* type of record */
     /* r */
     int type;
@@ -298,6 +302,8 @@ typedef struct record_layer_st {
  *                                                                           *
  *****************************************************************************/
 
+#define MIN_SSL2_RECORD_LEN     9
+
 #define RECORD_LAYER_set_read_ahead(rl, ra)     ((rl)->read_ahead = (ra))
 #define RECORD_LAYER_get_read_ahead(rl)         ((rl)->read_ahead)
 #define RECORD_LAYER_get_packet(rl)             ((rl)->packet)
@@ -319,13 +325,14 @@ void RECORD_LAYER_dup(RECORD_LAYER *dst, RECORD_LAYER *src);
 void RECORD_LAYER_reset_read_sequence(RECORD_LAYER *rl);
 void RECORD_LAYER_reset_write_sequence(RECORD_LAYER *rl);
 int RECORD_LAYER_setup_comp_buffer(RECORD_LAYER *rl);
+int RECORD_LAYER_is_sslv2_record(RECORD_LAYER *rl);
+unsigned int RECORD_LAYER_get_rrec_length(RECORD_LAYER *rl);
 __owur int ssl3_pending(const SSL *s);
-__owur int ssl23_read_bytes(SSL *s, int n);
-__owur int ssl23_write_bytes(SSL *s);
 __owur int ssl3_write_bytes(SSL *s, int type, const void *buf, int len);
 __owur int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
                          unsigned int len, int create_empty_fragment);
-__owur int ssl3_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek);
+__owur int ssl3_read_bytes(SSL *s, int type, int *recvd_type,
+                           unsigned char *buf, int len, int peek);
 __owur int ssl3_setup_buffers(SSL *s);
 __owur int ssl3_enc(SSL *s, int send_data);
 __owur int n_ssl3_mac(SSL *ssl, unsigned char *md, int send_data);
@@ -339,7 +346,8 @@ void DTLS_RECORD_LAYER_clear(RECORD_LAYER *rl);
 void DTLS_RECORD_LAYER_set_saved_w_epoch(RECORD_LAYER *rl, unsigned short e);
 void DTLS_RECORD_LAYER_clear(RECORD_LAYER *rl);
 void DTLS_RECORD_LAYER_resync_write(RECORD_LAYER *rl);
-__owur int dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek);
+__owur int dtls1_read_bytes(SSL *s, int type, int *recvd_type,
+                            unsigned char *buf, int len, int peek);
 __owur int dtls1_write_bytes(SSL *s, int type, const void *buf, int len);
 __owur int do_dtls1_write(SSL *s, int type, const unsigned char *buf,
                    unsigned int len, int create_empty_fragement);

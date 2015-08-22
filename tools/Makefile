@@ -53,6 +53,8 @@ tags:
 
 errors:
 
+update: depend
+
 depend:
 
 dclean:

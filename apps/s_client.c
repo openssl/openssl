@@ -134,7 +134,6 @@
  * OTHERWISE.
  */
 
-#include <assert.h>
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -198,9 +197,7 @@ static int c_ign_eof = 0;
 static int c_brief = 0;
 
 static void print_stuff(BIO *berr, SSL *con, int full);
-#ifndef OPENSSL_NO_TLSEXT
 static int ocsp_resp_cb(SSL *s, void *arg);
-#endif
 
 #ifndef OPENSSL_NO_PSK
 /* Default PSK identity and key */
@@ -269,8 +266,6 @@ static unsigned int psk_client_cb(SSL *ssl, const char *hint, char *identity,
 }
 #endif
 
-#ifndef OPENSSL_NO_TLSEXT
-
 /* This is a context that we pass to callbacks */
 typedef struct tlsextctx_st {
     BIO *biodebug;
@@ -289,7 +284,7 @@ static int ssl_servername_cb(SSL *s, int *ad, void *arg)
     return SSL_TLSEXT_ERR_OK;
 }
 
-# ifndef OPENSSL_NO_SRP
+#ifndef OPENSSL_NO_SRP
 
 /* This is a context that we pass to all callbacks */
 typedef struct srp_arg_st {
@@ -301,7 +296,7 @@ typedef struct srp_arg_st {
     int strength /* minimal size for N */ ;
 } SRP_ARG;
 
-#  define SRP_NUMBER_ITERATIONS_FOR_PRIME 64
+# define SRP_NUMBER_ITERATIONS_FOR_PRIME 64
 
 static int srp_Verify_N_and_g(const BIGNUM *N, const BIGNUM *g)
 {
@@ -345,7 +340,8 @@ static int ssl_srp_verify_param_cb(SSL *s, void *arg)
 {
     SRP_ARG *srp_arg = (SRP_ARG *)arg;
     BIGNUM *N = NULL, *g = NULL;
-    if (!(N = SSL_get_srp_N(s)) || !(g = SSL_get_srp_g(s)))
+
+    if (((N = SSL_get_srp_N(s)) == NULL) || ((g = SSL_get_srp_g(s)) == NULL))
         return 0;
     if (srp_arg->debug || srp_arg->msg || srp_arg->amp == 1) {
         BIO_printf(bio_err, "SRP parameters:\n");
@@ -376,7 +372,7 @@ static int ssl_srp_verify_param_cb(SSL *s, void *arg)
     return 0;
 }
 
-#  define PWD_STRLEN 1024
+# define PWD_STRLEN 1024
 
 static char *ssl_give_srp_client_pwd_cb(SSL *s, void *arg)
 {
@@ -397,11 +393,11 @@ static char *ssl_give_srp_client_pwd_cb(SSL *s, void *arg)
     return pass;
 }
 
-# endif
+#endif
 
 char *srtp_profiles = NULL;
 
-# ifndef OPENSSL_NO_NEXTPROTONEG
+#ifndef OPENSSL_NO_NEXTPROTONEG
 /* This the context that we pass to next_proto_cb */
 typedef struct tlsextnextprotoctx_st {
     unsigned char *data;
@@ -434,7 +430,7 @@ static int next_proto_cb(SSL *s, unsigned char **out, unsigned char *outlen,
         SSL_select_next_proto(out, outlen, in, inlen, ctx->data, ctx->len);
     return SSL_TLSEXT_ERR_OK;
 }
-# endif                         /* ndef OPENSSL_NO_NEXTPROTONEG */
+#endif                         /* ndef OPENSSL_NO_NEXTPROTONEG */
 
 static int serverinfo_cli_parse_cb(SSL *s, unsigned int ext_type,
                                    const unsigned char *in, size_t inlen,
@@ -456,8 +452,6 @@ static int serverinfo_cli_parse_cb(SSL *s, unsigned int ext_type,
     return 1;
 }
 
-#endif
-
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
     OPT_HOST, OPT_PORT, OPT_CONNECT, OPT_UNIX, OPT_XMPPHOST, OPT_VERIFY,
@@ -473,14 +467,14 @@ typedef enum OPTION_choice {
     OPT_TLS1_2, OPT_TLS1_1, OPT_TLS1, OPT_DTLS, OPT_DTLS1,
     OPT_DTLS1_2, OPT_TIMEOUT, OPT_MTU, OPT_KEYFORM, OPT_PASS,
     OPT_CERT_CHAIN, OPT_CAPATH, OPT_CHAINCAPATH, OPT_VERIFYCAPATH,
-    OPT_KEY, OPT_RECONNECT, OPT_BUILD_CHAIN, OPT_CAFILE, OPT_KRB5SVC,
+    OPT_KEY, OPT_RECONNECT, OPT_BUILD_CHAIN, OPT_CAFILE,
     OPT_CHAINCAFILE, OPT_VERIFYCAFILE, OPT_NEXTPROTONEG, OPT_ALPN,
     OPT_SERVERINFO, OPT_STARTTLS, OPT_SERVERNAME, OPT_JPAKE,
     OPT_USE_SRTP, OPT_KEYMATEXPORT, OPT_KEYMATEXPORTLEN, OPT_SMTPHOST,
     OPT_V_ENUM,
     OPT_X_ENUM,
     OPT_S_ENUM,
-    OPT_FALLBACKSCSV, OPT_NOCMDS
+    OPT_FALLBACKSCSV, OPT_NOCMDS, OPT_PROXY
 } OPTION_CHOICE;
 
 OPTIONS s_client_options[] = {
@@ -489,6 +483,8 @@ OPTIONS s_client_options[] = {
     {"port", OPT_PORT, 'p', "Use -connect instead"},
     {"connect", OPT_CONNECT, 's',
      "TCP/IP where to connect (default is " SSL_HOST_NAME ":" PORT_STR ")"},
+    {"proxy", OPT_PROXY, 's',
+     "Connect to via specified proxy to the real server"},
     {"unix", OPT_UNIX, 's', "Connect over unix domain sockets"},
     {"verify", OPT_VERIFY, 'p', "Turn on peer certificate verification"},
     {"cert", OPT_CERT, '<', "Certificate file to use, PEM format assumed"},
@@ -512,31 +508,66 @@ OPTIONS s_client_options[] = {
     {"quiet", OPT_QUIET, '-', "No s_client output"},
     {"ign_eof", OPT_IGN_EOF, '-', "Ignore input eof (default when -quiet)"},
     {"no_ign_eof", OPT_NO_IGN_EOF, '-', "Don't ignore input eof"},
-#ifndef OPENSSL_NO_SSL3
-    {"ssl3", OPT_SSL3, '-', "Just use SSLv3"},
-#endif
     {"tls1_2", OPT_TLS1_2, '-', "Just use TLSv1.2"},
     {"tls1_1", OPT_TLS1_1, '-', "Just use TLSv1.1"},
     {"tls1", OPT_TLS1, '-', "Just use TLSv1"},
-    {"dtls", OPT_DTLS, '-'},
-    {"dtls1", OPT_DTLS1, '-', "Just use DTLSv1"},
-    {"dtls1_2", OPT_DTLS1_2, '-'},
-    {"timeout", OPT_TIMEOUT, '-'},
-    {"mtu", OPT_MTU, 'p', "Set the link layer MTU"},
     {"starttls", OPT_STARTTLS, 's',
      "Use the STARTTLS command before starting TLS"},
-    {"xmpphost", OPT_XMPPHOST, 's', "Host to use with \"-starttls xmpp\""},
+    {"xmpphost", OPT_XMPPHOST, 's',
+     "Host to use with \"-starttls xmpp[-server]\""},
     {"rand", OPT_RAND, 's',
      "Load the file(s) into the random number generator"},
     {"sess_out", OPT_SESS_OUT, '>', "File to write SSL session to"},
     {"sess_in", OPT_SESS_IN, '<', "File to read SSL session from"},
-    {"use_srtp", OPT_USE_SRTP, '<',
+    {"use_srtp", OPT_USE_SRTP, 's',
      "Offer SRTP key management with a colon-separated profile list"},
     {"keymatexport", OPT_KEYMATEXPORT, 's',
      "Export keying material using label"},
     {"keymatexportlen", OPT_KEYMATEXPORTLEN, 'p',
      "Export len bytes of keying material (default 20)"},
     {"fallback_scsv", OPT_FALLBACKSCSV, '-', "Send the fallback SCSV"},
+    {"name", OPT_SMTPHOST, 's', "Hostname to use for \"-starttls smtp\""},
+    {"CRL", OPT_CRL, '<'},
+    {"crl_download", OPT_CRL_DOWNLOAD, '-'},
+    {"CRLform", OPT_CRLFORM, 'F'},
+    {"verify_return_error", OPT_VERIFY_RET_ERROR, '-'},
+    {"verify_quiet", OPT_VERIFY_QUIET, '-'},
+    {"brief", OPT_BRIEF, '-'},
+    {"prexit", OPT_PREXIT, '-'},
+    {"security_debug", OPT_SECURITY_DEBUG, '-'},
+    {"security_debug_verbose", OPT_SECURITY_DEBUG_VERBOSE, '-'},
+    {"cert_chain", OPT_CERT_CHAIN, '<'},
+    {"chainCApath", OPT_CHAINCAPATH, '/'},
+    {"verifyCApath", OPT_VERIFYCAPATH, '/'},
+    {"build_chain", OPT_BUILD_CHAIN, '-'},
+    {"chainCAfile", OPT_CHAINCAFILE, '<'},
+    {"verifyCAfile", OPT_VERIFYCAFILE, '<'},
+    {"nocommands", OPT_NOCMDS, '-', "Do not use interactive command letters"},
+    {"servername", OPT_SERVERNAME, 's',
+     "Set TLS extension servername in ClientHello"},
+    {"tlsextdebug", OPT_TLSEXTDEBUG, '-',
+     "Hex dump of all TLS extensions received"},
+    {"status", OPT_STATUS, '-', "Request certificate status from server"},
+    {"serverinfo", OPT_SERVERINFO, 's',
+     "types  Send empty ClientHello extensions (comma-separated numbers)"},
+    {"alpn", OPT_ALPN, 's',
+     "Enable ALPN extension, considering named protocols supported (comma-separated list)"},
+    OPT_S_OPTIONS,
+    OPT_V_OPTIONS,
+    OPT_X_OPTIONS,
+#ifndef OPENSSL_NO_SSL3
+    {"ssl3", OPT_SSL3, '-', "Just use SSLv3"},
+#endif
+#ifndef OPENSSL_NO_DTLS1
+    {"dtls", OPT_DTLS, '-'},
+    {"dtls1", OPT_DTLS1, '-', "Just use DTLSv1"},
+    {"dtls1_2", OPT_DTLS1_2, '-'},
+    {"timeout", OPT_TIMEOUT, '-'},
+    {"mtu", OPT_MTU, 'p', "Set the link layer MTU"},
+#endif
+#ifndef OPENSSL_NO_SSL_TRACE
+    {"trace", OPT_TRACE, '-'},
+#endif
 #ifdef WATT32
     {"wdebug", OPT_WDEBUG, '-', "WATT-32 tcp debugging"},
 #endif
@@ -550,9 +581,6 @@ OPTIONS s_client_options[] = {
     {"jpake", OPT_JPAKE, 's', "JPAKE secret to use"},
 # endif
 #endif
-#ifndef OPENSSL_NO_KRB5
-    {"krb5svc", OPT_KRB5SVC, 's', "Kerberos service name"},
-#endif
 #ifndef OPENSSL_NO_SRP
     {"srpuser", OPT_SRPUSER, 's', "SRP authentification for 'user'"},
     {"srppass", OPT_SRPPASS, 's', "Password for 'user'"},
@@ -560,48 +588,16 @@ OPTIONS s_client_options[] = {
      "SRP username into second ClientHello message"},
     {"srp_moregroups", OPT_SRP_MOREGROUPS, '-',
      "Tolerate other than the known g N values."},
-    {"srp_strength", OPT_SRP_STRENGTH, 'p', "Minimal mength in bits for N"},
+    {"srp_strength", OPT_SRP_STRENGTH, 'p', "Minimal length in bits for N"},
 #endif
-    {"name", OPT_SMTPHOST, 's', "Hostname to use for \"-starttls smtp\""},
-#ifndef OPENSSL_NO_TLSEXT
-    {"servername", OPT_SERVERNAME, 's',
-     "Set TLS extension servername in ClientHello"},
-    {"tlsextdebug", OPT_TLSEXTDEBUG, '-',
-     "Hex dump of all TLS extensions received"},
-    {"status", OPT_STATUS, '-', "Request certificate status from server"},
-    {"serverinfo", OPT_SERVERINFO, 's',
-     "types  Send empty ClientHello extensions (comma-separated numbers)"},
-    {"alpn", OPT_ALPN, 's',
-     "Enable ALPN extension, considering named protocols supported (comma-separated list)"},
-# ifndef OPENSSL_NO_NEXTPROTONEG
+#ifndef OPENSSL_NO_NEXTPROTONEG
     {"nextprotoneg", OPT_NEXTPROTONEG, 's',
      "Enable NPN extension, considering named protocols supported (comma-separated list)"},
-# endif
 #endif
-    {"CRL", OPT_CRL, '<'},
-    {"crl_download", OPT_CRL_DOWNLOAD, '-'},
-    {"CRLform", OPT_CRLFORM, 'F'},
-    {"verify_return_error", OPT_VERIFY_RET_ERROR, '-'},
-    {"verify_quiet", OPT_VERIFY_QUIET, '-'},
-    {"brief", OPT_BRIEF, '-'},
-    {"prexit", OPT_PREXIT, '-'},
-    {"trace", OPT_TRACE, '-'},
-    {"security_debug", OPT_SECURITY_DEBUG, '-'},
-    {"security_debug_verbose", OPT_SECURITY_DEBUG_VERBOSE, '-'},
-    {"cert_chain", OPT_CERT_CHAIN, '<'},
-    {"chainCApath", OPT_CHAINCAPATH, '/'},
-    {"verifyCApath", OPT_VERIFYCAPATH, '/'},
-    {"build_chain", OPT_BUILD_CHAIN, '-'},
-    {"chainCAfile", OPT_CHAINCAFILE, '<'},
-    {"verifyCAfile", OPT_VERIFYCAFILE, '<'},
-    {"nocommands", OPT_NOCMDS, '-', "Do not use interactive command letters"},
 #ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
     {"ssl_client_engine", OPT_SSL_CLIENT_ENGINE, 's'},
 #endif
-    OPT_S_OPTIONS,
-    OPT_V_OPTIONS,
-    OPT_X_OPTIONS,
     {NULL}
 };
 
@@ -612,7 +608,9 @@ typedef enum PROTOCOL_choice {
     PROTO_IMAP,
     PROTO_FTP,
     PROTO_TELNET,
-    PROTO_XMPP
+    PROTO_XMPP,
+    PROTO_XMPP_SERVER,
+    PROTO_CONNECT
 } PROTOCOL_CHOICE;
 
 static OPT_PAIR services[] = {
@@ -621,6 +619,7 @@ static OPT_PAIR services[] = {
     {"imap", PROTO_IMAP},
     {"ftp", PROTO_FTP},
     {"xmpp", PROTO_XMPP},
+    {"xmpp-server", PROTO_XMPP_SERVER},
     {"telnet", PROTO_TELNET},
     {NULL}
 };
@@ -638,12 +637,12 @@ int s_client_main(int argc, char **argv)
     SSL_CONF_CTX *cctx = NULL;
     STACK_OF(OPENSSL_STRING) *ssl_args = NULL;
     STACK_OF(X509_CRL) *crls = NULL;
-    const SSL_METHOD *meth = SSLv23_client_method();
-    char *CApath = NULL, *CAfile = NULL, *cbuf = NULL, *sbuf = NULL, *mbuf =
-        NULL;
+    const SSL_METHOD *meth = TLS_client_method();
+    char *CApath = NULL, *CAfile = NULL, *cbuf = NULL, *sbuf = NULL;
+    char *mbuf = NULL, *proxystr = NULL, *connectstr = NULL;
     char *cert_file = NULL, *key_file = NULL, *chain_file = NULL, *prog;
-    char *chCApath = NULL, *chCAfile = NULL, *host = SSL_HOST_NAME, *inrand =
-        NULL;
+    char *chCApath = NULL, *chCAfile = NULL, *host = SSL_HOST_NAME;
+    char *inrand = NULL;
     char *passarg = NULL, *pass = NULL, *vfyCApath = NULL, *vfyCAfile = NULL;
     char *sess_in = NULL, *sess_out = NULL, *crl_file = NULL, *p;
     char *jpake_secret = NULL, *xmpphost = NULL;
@@ -657,7 +656,7 @@ int s_client_main(int argc, char **argv)
     int prexit = 0;
     int enable_timeouts = 0, sdebug = 0, peerlen = sizeof peer;
     int reconnect = 0, verify = SSL_VERIFY_NONE, vpmtouched = 0;
-    int ret = 1, in_init = 1, i, nbio_test = 0, s, k, width, state = 0;
+    int ret = 1, in_init = 1, i, nbio_test = 0, s = -1, k, width, state = 0;
     int sbuf_len, sbuf_off, socket_type = SOCK_STREAM, cmdletters = 1;
     int starttls_proto = PROTO_OFF, crl_format = FORMAT_PEM, crl_download = 0;
     int write_tty, read_tty, write_ssl, read_ssl, tty_on, ssl_pending;
@@ -665,10 +664,6 @@ int s_client_main(int argc, char **argv)
     long socket_mtu = 0, randamt = 0;
     unsigned short port = PORT;
     OPTION_CHOICE o;
-#ifndef OPENSSL_NO_KRB5
-    KSSL_CTX *kctx;
-    const char *krb5svc = NULL;
-#endif
 #ifndef OPENSSL_NO_ENGINE
     ENGINE *ssl_client_engine = NULL;
 #endif
@@ -676,16 +671,14 @@ int s_client_main(int argc, char **argv)
 #if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MSDOS) || defined(OPENSSL_SYS_NETWARE)
     struct timeval tv;
 #endif
-#ifndef OPENSSL_NO_TLSEXT
     char *servername = NULL;
     const char *alpn_in = NULL;
     tlsextctx tlsextcbp = { NULL, 0 };
-# define MAX_SI_TYPES 100
+#define MAX_SI_TYPES 100
     unsigned short serverinfo_types[MAX_SI_TYPES];
     int serverinfo_count = 0, start = 0, len;
-# ifndef OPENSSL_NO_NEXTPROTONEG
+#ifndef OPENSSL_NO_NEXTPROTONEG
     const char *next_proto_neg_in = NULL;
-# endif
 #endif
 #ifndef OPENSSL_NO_SRP
     char *srppass = NULL;
@@ -719,15 +712,6 @@ int s_client_main(int argc, char **argv)
     prog = opt_init(argc, argv, s_client_options);
     while ((o = opt_next()) != OPT_EOF) {
         switch (o) {
-#ifndef WATT32
-        case OPT_WDEBUG:
-#endif
-#ifdef OPENSSL_NO_JPAKE
-        case OPT_JPAKE:
-#endif
-#ifdef OPENSSL_NO_SSL_TRACE
-        case OPT_TRACE:
-#endif
         case OPT_EOF:
         case OPT_ERR:
  opthelp:
@@ -744,8 +728,11 @@ int s_client_main(int argc, char **argv)
             port = atoi(opt_arg());
             break;
         case OPT_CONNECT:
-            if (!extract_host_port(opt_arg(), &host, NULL, &port))
-                goto end;
+            connectstr = opt_arg();
+            break;
+        case OPT_PROXY:
+            proxystr = opt_arg();
+            starttls_proto = PROTO_CONNECT;
             break;
         case OPT_UNIX:
             unix_path = opt_arg();
@@ -828,11 +815,6 @@ int s_client_main(int argc, char **argv)
         case OPT_NOCMDS:
             cmdletters = 0;
             break;
-        case OPT_KRB5SVC:
-#ifndef OPENSSL_NO_KRB5
-            krb5svc = opt_arg();
-#endif
-            break;
         case OPT_ENGINE:
             e = setup_engine(opt_arg(), 1);
             break;
@@ -861,30 +843,28 @@ int s_client_main(int argc, char **argv)
         case OPT_DEBUG:
             c_debug = 1;
             break;
-#ifndef OPENSSL_NO_TLSEXT
         case OPT_TLSEXTDEBUG:
             c_tlsextdebug = 1;
             break;
         case OPT_STATUS:
             c_status_req = 1;
             break;
-#endif
-#ifdef WATT32
         case OPT_WDEBUG:
+#ifdef WATT32
             dbug_init();
-            break;
 #endif
+            break;
         case OPT_MSG:
             c_msg = 1;
             break;
         case OPT_MSGFILE:
             bio_c_msg = BIO_new_file(opt_arg(), "w");
             break;
-#ifndef OPENSSL_NO_SSL_TRACE
         case OPT_TRACE:
+#ifndef OPENSSL_NO_SSL_TRACE
             c_msg = 2;
-            break;
 #endif
+            break;
         case OPT_SECURITY_DEBUG:
             sdebug = 1;
             break;
@@ -912,6 +892,10 @@ int s_client_main(int argc, char **argv)
                 goto end;
             }
             break;
+#else
+        case OPT_PSK_IDENTITY:
+        case OPT_PSK:
+            break;
 #endif
 #ifndef OPENSSL_NO_SRP
         case OPT_SRPUSER:
@@ -936,12 +920,19 @@ int s_client_main(int argc, char **argv)
             srp_arg.amp = 1;
             meth = TLSv1_client_method();
             break;
-#endif
-#ifndef OPENSSL_NO_SSL3
-        case OPT_SSL3:
-            meth = SSLv3_client_method();
+#else
+        case OPT_SRPUSER:
+        case OPT_SRPPASS:
+        case OPT_SRP_STRENGTH:
+        case OPT_SRP_LATEUSER:
+        case OPT_SRP_MOREGROUPS:
             break;
 #endif
+        case OPT_SSL3:
+#ifndef OPENSSL_NO_SSL3
+            meth = SSLv3_client_method();
+#endif
+            break;
         case OPT_TLS1_2:
             meth = TLSv1_2_client_method();
             break;
@@ -969,6 +960,13 @@ int s_client_main(int argc, char **argv)
             break;
         case OPT_MTU:
             socket_mtu = atol(opt_arg());
+            break;
+#else
+        case OPT_DTLS:
+        case OPT_DTLS1:
+        case OPT_DTLS1_2:
+        case OPT_TIMEOUT:
+        case OPT_MTU:
             break;
 #endif
         case OPT_FALLBACKSCSV:
@@ -1011,7 +1009,6 @@ int s_client_main(int argc, char **argv)
         case OPT_VERIFYCAFILE:
             vfyCAfile = opt_arg();
             break;
-#ifndef OPENSSL_NO_TLSEXT
         case OPT_NEXTPROTONEG:
             next_proto_neg_in = opt_arg();
             break;
@@ -1030,21 +1027,17 @@ int s_client_main(int argc, char **argv)
                 }
             }
             break;
-#endif
         case OPT_STARTTLS:
             if (!opt_pair(opt_arg(), services, &starttls_proto))
                 goto end;
-#ifndef OPENSSL_NO_TLSEXT
         case OPT_SERVERNAME:
             servername = opt_arg();
-            /* meth=TLSv1_client_method(); */
             break;
-#endif
-#ifndef OPENSSL_NO_JPAKE
         case OPT_JPAKE:
+#ifndef OPENSSL_NO_JPAKE
             jpake_secret = opt_arg();
-            break;
 #endif
+            break;
         case OPT_USE_SRTP:
             srtp_profiles = opt_arg();
             break;
@@ -1058,6 +1051,21 @@ int s_client_main(int argc, char **argv)
     }
     argc = opt_num_rest();
     argv = opt_rest();
+
+    if (!app_load_modules(NULL))
+        goto end;
+
+    if (proxystr) {
+        if (connectstr == NULL) {
+            BIO_printf(bio_err, "%s: -proxy requires use of -connect\n", prog);
+            goto opthelp;
+        }
+        if (!extract_host_port(proxystr, &host, NULL, &port))
+            goto end;
+    }
+    else if (connectstr != NULL
+            && !extract_host_port(connectstr, &host, NULL, &port))
+        goto end;
 
     if (unix_path && (socket_type != SOCK_STREAM)) {
         BIO_printf(bio_err,
@@ -1074,7 +1082,7 @@ int s_client_main(int argc, char **argv)
     }
 #endif
 
-#if !defined(OPENSSL_NO_TLSEXT) && !defined(OPENSSL_NO_NEXTPROTONEG)
+#if !defined(OPENSSL_NO_NEXTPROTONEG)
     next_proto.status = -1;
     if (next_proto_neg_in) {
         next_proto.data =
@@ -1223,11 +1231,10 @@ int s_client_main(int argc, char **argv)
     if (exc)
         ssl_ctx_set_excert(ctx, exc);
 
-#if !defined(OPENSSL_NO_TLSEXT)
-# if !defined(OPENSSL_NO_NEXTPROTONEG)
+#if !defined(OPENSSL_NO_NEXTPROTONEG)
     if (next_proto.data)
         SSL_CTX_set_next_proto_select_cb(ctx, next_proto_cb, &next_proto);
-# endif
+#endif
     if (alpn_in) {
         unsigned short alpn_len;
         unsigned char *alpn = next_protos_parse(&alpn_len, alpn_in);
@@ -1243,8 +1250,7 @@ int s_client_main(int argc, char **argv)
         }
         OPENSSL_free(alpn);
     }
-#endif
-#ifndef OPENSSL_NO_TLSEXT
+
     for (i = 0; i < serverinfo_count; i++) {
         if (!SSL_CTX_add_client_custom_ext(ctx,
                                            serverinfo_types[i],
@@ -1255,7 +1261,6 @@ int s_client_main(int argc, char **argv)
                     serverinfo_types[i]);
         }
     }
-#endif
 
     if (state)
         SSL_CTX_set_info_callback(ctx, apps_ssl_info_callback);
@@ -1272,7 +1277,6 @@ int s_client_main(int argc, char **argv)
     if (!set_cert_key_stuff(ctx, cert, key, chain, build_chain))
         goto end;
 
-#ifndef OPENSSL_NO_TLSEXT
     if (servername != NULL) {
         tlsextcbp.biodebug = bio_err;
         SSL_CTX_set_tlsext_servername_callback(ctx, ssl_servername_cb);
@@ -1294,7 +1298,6 @@ int s_client_main(int argc, char **argv)
                                                   ssl_srp_verify_param_cb);
     }
 # endif
-#endif
 
     con = SSL_new(ctx);
     if (sess_in) {
@@ -1323,7 +1326,6 @@ int s_client_main(int argc, char **argv)
     if (fallback_scsv)
         SSL_set_mode(con, SSL_MODE_SEND_FALLBACK_SCSV);
 
-#ifndef OPENSSL_NO_TLSEXT
     if (servername != NULL) {
         if (!SSL_set_tlsext_host_name(con, servername)) {
             BIO_printf(bio_err, "Unable to set TLS servername extension.\n");
@@ -1331,15 +1333,6 @@ int s_client_main(int argc, char **argv)
             goto end;
         }
     }
-#endif
-#ifndef OPENSSL_NO_KRB5
-    if (con && (kctx = kssl_ctx_new()) != NULL) {
-        SSL_set0_kssl_ctx(con, kctx);
-        kssl_ctx_setstring(kctx, KSSL_SERVER, host);
-        if (krb5svc)
-            kssl_ctx_setstring(kctx, KSSL_SERVICE, krb5svc);
-    }
-#endif                          /* OPENSSL_NO_KRB5 */
 
  re_start:
 #ifdef NO_SYS_UN_H
@@ -1430,7 +1423,7 @@ int s_client_main(int argc, char **argv)
             SSL_set_msg_callback(con, msg_cb);
         SSL_set_msg_callback_arg(con, bio_c_msg ? bio_c_msg : bio_c_out);
     }
-#ifndef OPENSSL_NO_TLSEXT
+
     if (c_tlsextdebug) {
         SSL_set_tlsext_debug_callback(con, tlsext_cb);
         SSL_set_tlsext_debug_arg(con, bio_c_out);
@@ -1440,7 +1433,6 @@ int s_client_main(int argc, char **argv)
         SSL_CTX_set_tlsext_status_cb(ctx, ocsp_resp_cb);
         SSL_CTX_set_tlsext_status_arg(ctx, bio_c_out);
     }
-#endif
 #ifndef OPENSSL_NO_JPAKE
     if (jpake_secret)
         jpake_client_auth(bio_c_out, sbio, jpake_secret);
@@ -1559,11 +1551,13 @@ int s_client_main(int argc, char **argv)
         }
         break;
     case PROTO_XMPP:
+    case PROTO_XMPP_SERVER:
         {
             int seen = 0;
             BIO_printf(sbio, "<stream:stream "
                        "xmlns:stream='http://etherx.jabber.org/streams' "
-                       "xmlns='jabber:client' to='%s' version='1.0'>",
+                       "xmlns='jabber:%s' to='%s' version='1.0'>",
+                       starttls_proto == PROTO_XMPP ? "client" : "server",
                        xmpphost ? xmpphost : host);
             seen = BIO_read(sbio, mbuf, BUFSIZZ);
             mbuf[seen] = 0;
@@ -1617,6 +1611,31 @@ int s_client_main(int argc, char **argv)
             if (bytes != 6 || memcmp(mbuf, tls_follows, 6) != 0)
                 goto shut;
         }
+        break;
+    case PROTO_CONNECT:
+        {
+            int foundit = 0;
+            BIO *fbio = BIO_new(BIO_f_buffer());
+
+            BIO_push(fbio, sbio);
+            BIO_printf(fbio, "CONNECT %s\r\n\r\n", connectstr);
+            (void)BIO_flush(fbio);
+            /* wait for multi-line response to end CONNECT response */
+            do {
+                mbuf_len = BIO_gets(fbio, mbuf, BUFSIZZ);
+                if (strstr(mbuf, "200") != NULL
+                    && strstr(mbuf, "established") != NULL)
+                    foundit++;
+            } while (mbuf_len > 3 && foundit == 0);
+            (void)BIO_flush(fbio);
+            BIO_pop(fbio);
+            BIO_free(fbio);
+            if (!foundit) {
+                BIO_printf(bio_err, "%s: HTTP CONNECT failed\n", prog);
+                goto shut;
+            }
+        }
+        break;
     }
 
     for (;;) {
@@ -1636,13 +1655,13 @@ int s_client_main(int argc, char **argv)
             tty_on = 1;
             if (in_init) {
                 in_init = 0;
-#ifndef OPENSSL_NO_TLSEXT
+
                 if (servername != NULL && !SSL_session_reused(con)) {
                     BIO_printf(bio_c_out,
                                "Server did %sacknowledge servername extension.\n",
                                tlsextcbp.ack ? "" : "not ");
                 }
-#endif
+
                 if (sess_out) {
                     BIO *stmp = BIO_new_file(sess_out, "w");
                     if (stmp) {
@@ -1984,7 +2003,7 @@ int s_client_main(int argc, char **argv)
             print_stuff(bio_c_out, con, 1);
         SSL_free(con);
     }
-#if !defined(OPENSSL_NO_TLSEXT) && !defined(OPENSSL_NO_NEXTPROTONEG)
+#if !defined(OPENSSL_NO_NEXTPROTONEG)
     OPENSSL_free(next_proto.data);
 #endif
     SSL_CTX_free(ctx);
@@ -2111,8 +2130,7 @@ static void print_stuff(BIO *bio, SSL *s, int full)
     }
 #endif
 
-#if !defined(OPENSSL_NO_TLSEXT)
-# if !defined(OPENSSL_NO_NEXTPROTONEG)
+#if !defined(OPENSSL_NO_NEXTPROTONEG)
     if (next_proto.status != -1) {
         const unsigned char *proto;
         unsigned int proto_len;
@@ -2121,7 +2139,7 @@ static void print_stuff(BIO *bio, SSL *s, int full)
         BIO_write(bio, proto, proto_len);
         BIO_write(bio, "\n", 1);
     }
-# endif
+#endif
     {
         const unsigned char *proto;
         unsigned int proto_len;
@@ -2133,7 +2151,6 @@ static void print_stuff(BIO *bio, SSL *s, int full)
         } else
             BIO_printf(bio, "No ALPN negotiated\n");
     }
-#endif
 
 #ifndef OPENSSL_NO_SRTP
     {
@@ -2172,8 +2189,6 @@ static void print_stuff(BIO *bio, SSL *s, int full)
     (void)BIO_flush(bio);
 }
 
-#ifndef OPENSSL_NO_TLSEXT
-
 static int ocsp_resp_cb(SSL *s, void *arg)
 {
     const unsigned char *p;
@@ -2197,5 +2212,3 @@ static int ocsp_resp_cb(SSL *s, void *arg)
     OCSP_RESPONSE_free(rsp);
     return 1;
 }
-
-#endif

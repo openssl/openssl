@@ -766,7 +766,9 @@ static void sv_usage(void)
             " -bytes <val>  - number of bytes to swap between client/server\n");
 #ifndef OPENSSL_NO_DH
     fprintf(stderr,
-            " -dhe1024      - use 1024 bit key (safe prime) for DHE\n");
+            " -dhe512       - use 512 bit key for DHE (to test failure)\n");
+    fprintf(stderr,
+            " -dhe1024      - use 1024 bit key (safe prime) for DHE (default, no-op)\n");
     fprintf(stderr,
             " -dhe1024dsa   - use 1024 bit key (with 160-bit subprime) for DHE\n");
     fprintf(stderr, " -no_dhe       - disable DHE\n");
@@ -978,7 +980,7 @@ int main(int argc, char *argv[])
     long bytes = 256L;
 #ifndef OPENSSL_NO_DH
     DH *dh;
-    int dhe1024 = 0, dhe1024dsa = 0;
+    int dhe512 = 0, dhe1024dsa = 0;
 #endif
 #ifndef OPENSSL_NO_EC
     EC_KEY *ecdh = NULL;
@@ -995,7 +997,7 @@ int main(int argc, char *argv[])
     int print_time = 0;
     clock_t s_time = 0, c_time = 0;
 #ifndef OPENSSL_NO_COMP
-    int comp = 0;
+    int n, comp = 0;
     COMP_METHOD *cm = NULL;
     STACK_OF(SSL_COMP) *ssl_comp_methods = NULL;
 #endif
@@ -1004,7 +1006,6 @@ int main(int argc, char *argv[])
     int fips_mode = 0;
 #endif
     int no_protocol = 0;
-    int n;
 
     SSL_CONF_CTX *s_cctx = NULL, *c_cctx = NULL;
     STACK_OF(OPENSSL_STRING) *conf_args = NULL;
@@ -1085,19 +1086,19 @@ int main(int argc, char *argv[])
             debug = 1;
         else if (strcmp(*argv, "-reuse") == 0)
             reuse = 1;
-        else if (strcmp(*argv, "-dhe1024") == 0) {
+        else if (strcmp(*argv, "-dhe512") == 0) {
 #ifndef OPENSSL_NO_DH
-            dhe1024 = 1;
+            dhe512 = 1;
 #else
             fprintf(stderr,
-                    "ignoring -dhe1024, since I'm compiled without DH\n");
+                    "ignoring -dhe512, since I'm compiled without DH\n");
 #endif
         } else if (strcmp(*argv, "-dhe1024dsa") == 0) {
 #ifndef OPENSSL_NO_DH
             dhe1024dsa = 1;
 #else
             fprintf(stderr,
-                    "ignoring -dhe1024, since I'm compiled without DH\n");
+                    "ignoring -dhe1024dsa, since I'm compiled without DH\n");
 #endif
         } else if (strcmp(*argv, "-no_dhe") == 0)
             no_dhe = 1;
@@ -1373,7 +1374,7 @@ int main(int argc, char *argv[])
     if (comp == COMP_ZLIB)
         cm = COMP_zlib();
     if (cm != NULL) {
-        if (cm->type != NID_undef) {
+        if (COMP_get_type(cm) != NID_undef) {
             if (SSL_COMP_add_compression_method(comp, cm) != 0) {
                 fprintf(stderr, "Failed to add compression method\n");
                 ERR_print_errors_fp(stderr);
@@ -1418,7 +1419,7 @@ int main(int argc, char *argv[])
     if (tls1)
         meth = TLSv1_method();
     else
-        meth = SSLv23_method();
+        meth = TLS_method();
 
     c_ctx = SSL_CTX_new(meth);
     s_ctx = SSL_CTX_new(meth);
@@ -1428,7 +1429,8 @@ int main(int argc, char *argv[])
     }
     /*
      * Since we will use low security ciphersuites and keys for testing set
-     * security level to zero.
+     * security level to zero by default. Tests can override this by adding
+     * "@SECLEVEL=n" to the cipher string.
      */
     SSL_CTX_set_security_level(c_ctx, 0);
     SSL_CTX_set_security_level(s_ctx, 0);
@@ -1474,10 +1476,10 @@ int main(int argc, char *argv[])
              */
             SSL_CTX_set_options(s_ctx, SSL_OP_SINGLE_DH_USE);
             dh = get_dh1024dsa();
-        } else if (dhe1024)
-            dh = get_dh1024();
-        else
+        } else if (dhe512)
             dh = get_dh512();
+        else
+            dh = get_dh1024();
         SSL_CTX_set_tmp_dh(s_ctx, dh);
         DH_free(dh);
     }
@@ -1495,12 +1497,9 @@ int main(int argc, char *argv[])
                 BIO_printf(bio_err, "unknown curve name (%s)\n", named_curve);
                 goto end;
             }
-        } else
-# ifdef OPENSSL_NO_EC2M
+        } else {
             nid = NID_X9_62_prime256v1;
-# else
-            nid = NID_sect163r2;
-# endif
+        }
 
         ecdh = EC_KEY_new_by_curve_name(nid);
         if (ecdh == NULL) {
@@ -1719,21 +1718,6 @@ int main(int argc, char *argv[])
 
     c_ssl = SSL_new(c_ctx);
     s_ssl = SSL_new(s_ctx);
-
-#ifndef OPENSSL_NO_KRB5
-    if (c_ssl && c_ssl->kssl_ctx) {
-        char localhost[MAXHOSTNAMELEN + 2];
-
-        if (gethostname(localhost, sizeof localhost - 1) == 0) {
-            localhost[sizeof localhost - 1] = '\0';
-            if (strlen(localhost) == sizeof localhost - 1) {
-                BIO_printf(bio_err, "localhost name too long\n");
-                goto end;
-            }
-            kssl_ctx_setstring(c_ssl->kssl_ctx, KSSL_SERVER, localhost);
-        }
-    }
-#endif                          /* OPENSSL_NO_KRB5 */
 
     BIO_printf(bio_stdout, "Doing handshakes=%d bytes=%ld\n", number, bytes);
     for (i = 0; i < number; i++) {

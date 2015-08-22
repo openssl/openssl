@@ -108,6 +108,8 @@ tests:
 lint:
 	lint -DLINT $(INCLUDES) $(SRC)>fluff
 
+update: depend
+
 depend:
 	@[ -n "$(MAKEDEPEND)" ] # should be set by upper Makefile...
 	$(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(LIBSRC)
@@ -138,7 +140,8 @@ aes_ige.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
 aes_ige.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
 aes_ige.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 aes_ige.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-aes_ige.o: ../../include/openssl/symhacks.h ../cryptlib.h aes_ige.c aes_locl.h
+aes_ige.o: ../../include/openssl/symhacks.h ../include/internal/cryptlib.h
+aes_ige.o: aes_ige.c aes_locl.h
 aes_misc.o: ../../include/openssl/aes.h ../../include/openssl/e_os2.h
 aes_misc.o: ../../include/openssl/opensslconf.h
 aes_misc.o: ../../include/openssl/opensslv.h aes_locl.h aes_misc.c
@@ -151,4 +154,5 @@ aes_wrap.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
 aes_wrap.o: ../../include/openssl/modes.h ../../include/openssl/opensslconf.h
 aes_wrap.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 aes_wrap.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-aes_wrap.o: ../../include/openssl/symhacks.h ../cryptlib.h aes_wrap.c
+aes_wrap.o: ../../include/openssl/symhacks.h ../include/internal/cryptlib.h
+aes_wrap.o: aes_wrap.c

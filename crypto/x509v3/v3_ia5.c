@@ -58,7 +58,7 @@
  */
 
 #include <stdio.h>
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/asn1.h>
 #include <openssl/conf.h>
 #include <openssl/x509v3.h>
@@ -77,9 +77,10 @@ const X509V3_EXT_METHOD v3_ns_ia5_list[] = {
 char *i2s_ASN1_IA5STRING(X509V3_EXT_METHOD *method, ASN1_IA5STRING *ia5)
 {
     char *tmp;
+
     if (!ia5 || !ia5->length)
         return NULL;
-    if (!(tmp = OPENSSL_malloc(ia5->length + 1))) {
+    if ((tmp = OPENSSL_malloc(ia5->length + 1)) == NULL) {
         X509V3err(X509V3_F_I2S_ASN1_IA5STRING, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
@@ -97,7 +98,7 @@ ASN1_IA5STRING *s2i_ASN1_IA5STRING(X509V3_EXT_METHOD *method,
                   X509V3_R_INVALID_NULL_ARGUMENT);
         return NULL;
     }
-    if (!(ia5 = ASN1_IA5STRING_new()))
+    if ((ia5 = ASN1_IA5STRING_new()) == NULL)
         goto err;
     if (!ASN1_STRING_set((ASN1_STRING *)ia5, (unsigned char *)str,
                          strlen(str))) {

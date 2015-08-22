@@ -114,7 +114,7 @@
  * SUN MICROSYSTEMS, INC., and contributed to the OpenSSL project.
  */
 
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/safestack.h>
 
 #if defined(OPENSSL_SYS_WIN32)
@@ -134,11 +134,7 @@ unsigned int *OPENSSL_ia32cap_loc(void)
 
 # if defined(OPENSSL_CPUID_OBJ) && !defined(OPENSSL_NO_ASM) && !defined(I386_ONLY)
 #  define OPENSSL_CPUID_SETUP
-#  if defined(_WIN32)
-typedef unsigned __int64 IA32CAP;
-#  else
-typedef unsigned long long IA32CAP;
-#  endif
+typedef uint64_t IA32CAP;
 void OPENSSL_cpuid_setup(void)
 {
     static int trigger = 0;

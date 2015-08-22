@@ -29,8 +29,8 @@ failure.
 The ssl session has reference counts from two users: the SSL object, for
 which the reference count is removed by SSL_free() and the internal
 session cache. If the session is considered bad, because
-L<SSL_shutdown(3)|SSL_shutdown(3)> was not called for the connection
-and L<SSL_set_shutdown(3)|SSL_set_shutdown(3)> was not used to set the
+L<SSL_shutdown(3)> was not called for the connection
+and L<SSL_set_shutdown(3)> was not used to set the
 SSL_SENT_SHUTDOWN state, the session will also be removed
 from the session cache as required by RFC2246.
 
@@ -38,8 +38,8 @@ from the session cache as required by RFC2246.
 
 SSL_free() does not provide diagnostic information.
 
-L<SSL_new(3)|SSL_new(3)>, L<SSL_clear(3)|SSL_clear(3)>,
-L<SSL_shutdown(3)|SSL_shutdown(3)>, L<SSL_set_shutdown(3)|SSL_set_shutdown(3)>,
-L<ssl(3)|ssl(3)>
+L<SSL_new(3)>, L<SSL_clear(3)>,
+L<SSL_shutdown(3)>, L<SSL_set_shutdown(3)>,
+L<ssl(3)>
 
 =cut

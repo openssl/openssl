@@ -45,6 +45,8 @@ tests:
 lint:
 	lint -DLINT $(INCLUDES) $(SRC)>fluff
 
+update: depend
+
 depend:
 	@[ -n "$(MAKEDEPEND)" ] # should be set by upper Makefile...
 	$(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(LIBSRC)
@@ -66,8 +68,8 @@ hm_ameth.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
 hm_ameth.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
 hm_ameth.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 hm_ameth.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-hm_ameth.o: ../../include/openssl/symhacks.h ../cryptlib.h
-hm_ameth.o: ../include/internal/asn1_int.h hm_ameth.c
+hm_ameth.o: ../../include/openssl/symhacks.h ../include/internal/asn1_int.h
+hm_ameth.o: ../include/internal/cryptlib.h hm_ameth.c
 hm_pmeth.o: ../../e_os.h ../../include/openssl/asn1.h
 hm_pmeth.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 hm_pmeth.o: ../../include/openssl/conf.h ../../include/openssl/crypto.h
@@ -82,7 +84,8 @@ hm_pmeth.o: ../../include/openssl/pkcs7.h ../../include/openssl/safestack.h
 hm_pmeth.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 hm_pmeth.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
 hm_pmeth.o: ../../include/openssl/x509_vfy.h ../../include/openssl/x509v3.h
-hm_pmeth.o: ../cryptlib.h ../include/internal/evp_int.h hm_pmeth.c
+hm_pmeth.o: ../include/internal/cryptlib.h ../include/internal/evp_int.h
+hm_pmeth.o: hm_pmeth.c
 hmac.o: ../../e_os.h ../../include/openssl/asn1.h ../../include/openssl/bio.h
 hmac.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 hmac.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
@@ -91,4 +94,4 @@ hmac.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
 hmac.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
 hmac.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 hmac.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-hmac.o: ../../include/openssl/symhacks.h ../cryptlib.h hmac.c
+hmac.o: ../../include/openssl/symhacks.h ../include/internal/cryptlib.h hmac.c

@@ -465,7 +465,7 @@ int ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
         goto err;
     }
 
-    if (!(tmp = EC_POINT_new(group)))
+    if ((tmp = EC_POINT_new(group)) == NULL)
         goto err;
 
     /*-
@@ -674,7 +674,8 @@ int ec_wNAF_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
         }
     }
 
-    if (!(tmp_point = EC_POINT_new(group)) || !(base = EC_POINT_new(group))) {
+    if ((tmp_point = EC_POINT_new(group)) == NULL
+        || (base = EC_POINT_new(group)) == NULL) {
         ECerr(EC_F_EC_WNAF_PRECOMPUTE_MULT, ERR_R_MALLOC_FAILURE);
         goto err;
     }

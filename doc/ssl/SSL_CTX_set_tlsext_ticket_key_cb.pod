@@ -21,9 +21,6 @@ RFC5077 provide an enhanced session resumption capability where the server
 implementation is not required to maintain per session state. It only applies
 to TLS and there is no SSLv3 implementation.
 
-The callback is available when the OpenSSL library was built without 
-I<OPENSSL_NO_TLSEXT> being defined.
-
 The callback function I<cb> will be called for every client instigated TLS
 session when session ticket extension is presented in the TLS hello
 message. It is the responsibility of this function to create or retrieve the
@@ -181,12 +178,12 @@ returns 0 to indicate the callback function was set.
 
 =head1 SEE ALSO
 
-L<ssl(3)|ssl(3)>, L<SSL_set_session(3)|SSL_set_session(3)>,
-L<SSL_session_reused(3)|SSL_session_reused(3)>,
-L<SSL_CTX_add_session(3)|SSL_CTX_add_session(3)>,
-L<SSL_CTX_sess_number(3)|SSL_CTX_sess_number(3)>,
-L<SSL_CTX_sess_set_get_cb(3)|SSL_CTX_sess_set_get_cb(3)>,
-L<SSL_CTX_set_session_id_context(3)|SSL_CTX_set_session_id_context(3)>,
+L<ssl(3)>, L<SSL_set_session(3)>,
+L<SSL_session_reused(3)>,
+L<SSL_CTX_add_session(3)>,
+L<SSL_CTX_sess_number(3)>,
+L<SSL_CTX_sess_set_get_cb(3)>,
+L<SSL_CTX_set_session_id_context(3)>,
 
 =head1 HISTORY
 

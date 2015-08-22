@@ -57,7 +57,7 @@
  *
  */
 
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/objects.h>
 #include <openssl/ts.h>
 
@@ -121,7 +121,7 @@ TS_VERIFY_CTX *TS_REQ_to_TS_VERIFY_CTX(TS_REQ *req, TS_VERIFY_CTX *ctx)
     OPENSSL_assert(req != NULL);
     if (ret)
         TS_VERIFY_CTX_cleanup(ret);
-    else if (!(ret = TS_VERIFY_CTX_new()))
+    else if ((ret = TS_VERIFY_CTX_new()) == NULL)
         return NULL;
 
     /* Setting flags. */
@@ -129,7 +129,7 @@ TS_VERIFY_CTX *TS_REQ_to_TS_VERIFY_CTX(TS_REQ *req, TS_VERIFY_CTX *ctx)
 
     /* Setting policy. */
     if ((policy = TS_REQ_get_policy_id(req)) != NULL) {
-        if (!(ret->policy = OBJ_dup(policy)))
+        if ((ret->policy = OBJ_dup(policy)) == NULL)
             goto err;
     } else
         ret->flags &= ~TS_VFY_POLICY;
@@ -137,17 +137,17 @@ TS_VERIFY_CTX *TS_REQ_to_TS_VERIFY_CTX(TS_REQ *req, TS_VERIFY_CTX *ctx)
     /* Setting md_alg, imprint and imprint_len. */
     imprint = TS_REQ_get_msg_imprint(req);
     md_alg = TS_MSG_IMPRINT_get_algo(imprint);
-    if (!(ret->md_alg = X509_ALGOR_dup(md_alg)))
+    if ((ret->md_alg = X509_ALGOR_dup(md_alg)) == NULL)
         goto err;
     msg = TS_MSG_IMPRINT_get_msg(imprint);
     ret->imprint_len = ASN1_STRING_length(msg);
-    if (!(ret->imprint = OPENSSL_malloc(ret->imprint_len)))
+    if ((ret->imprint = OPENSSL_malloc(ret->imprint_len)) == NULL)
         goto err;
     memcpy(ret->imprint, ASN1_STRING_data(msg), ret->imprint_len);
 
     /* Setting nonce. */
     if ((nonce = TS_REQ_get_nonce(req)) != NULL) {
-        if (!(ret->nonce = ASN1_INTEGER_dup(nonce)))
+        if ((ret->nonce = ASN1_INTEGER_dup(nonce)) == NULL)
             goto err;
     } else
         ret->flags &= ~TS_VFY_NONCE;

@@ -282,7 +282,7 @@ used in the function passed to lh_<type>_new().
 
 =head1 SEE ALSO
 
-L<lh_stats(3)|lh_stats(3)>
+L<lh_stats(3)>
 
 =head1 HISTORY
 

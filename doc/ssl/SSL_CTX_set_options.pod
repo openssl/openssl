@@ -50,7 +50,7 @@ operation (|).
 SSL_CTX_set_options() and SSL_set_options() affect the (external)
 protocol behaviour of the SSL library. The (internal) behaviour of
 the API can be changed by using the similar
-L<SSL_CTX_set_mode(3)|SSL_CTX_set_mode(3)> and SSL_set_mode() functions.
+L<SSL_CTX_set_mode(3)> and SSL_set_mode() functions.
 
 During a handshake, the option settings of the SSL object are used. When
 a new SSL object is created from a context using SSL_new(), the current
@@ -91,10 +91,6 @@ OS X 10.8..10.8.3 has broken support for ECDHE-ECDSA ciphers.
 ...
 
 =item SSL_OP_TLS_D5_BUG
-
-...
-
-=item SSL_OP_TLS_BLOCK_PADDING_BUG
 
 ...
 
@@ -140,10 +136,10 @@ to the server's answer and violate the version rollback protection.)
 =item SSL_OP_SINGLE_DH_USE
 
 Always create a new key when using temporary/ephemeral DH parameters
-(see L<SSL_CTX_set_tmp_dh_callback(3)|SSL_CTX_set_tmp_dh_callback(3)>).
+(see L<SSL_CTX_set_tmp_dh_callback(3)>).
 This option must be used to prevent small subgroup attacks, when
 the DH parameters were not generated using "strong" primes
-(e.g. when using DSA-parameters, see L<dhparam(1)|dhparam(1)>).
+(e.g. when using DSA-parameters, see L<dhparam(1)>).
 If "strong" primes were used, it is not strictly necessary to generate
 a new DH key during each handshake but it is also recommended.
 B<SSL_OP_SINGLE_DH_USE> should therefore be enabled whenever
@@ -300,10 +296,10 @@ secure renegotiation and 0 if it does not.
 
 =head1 SEE ALSO
 
-L<ssl(3)|ssl(3)>, L<SSL_new(3)|SSL_new(3)>, L<SSL_clear(3)|SSL_clear(3)>,
-L<SSL_CTX_set_tmp_dh_callback(3)|SSL_CTX_set_tmp_dh_callback(3)>,
-L<SSL_CTX_set_tmp_rsa_callback(3)|SSL_CTX_set_tmp_rsa_callback(3)>,
-L<dhparam(1)|dhparam(1)>
+L<ssl(3)>, L<SSL_new(3)>, L<SSL_clear(3)>,
+L<SSL_CTX_set_tmp_dh_callback(3)>,
+L<SSL_CTX_set_tmp_rsa_callback(3)>,
+L<dhparam(1)>
 
 =head1 HISTORY
 

@@ -57,7 +57,7 @@
  */
 
 #include <stdio.h>
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/buffer.h>
 #include <openssl/asn1.h>
 
@@ -203,4 +203,17 @@ int a2i_ASN1_INTEGER(BIO *bp, ASN1_INTEGER *bs, char *buf, int size)
  err:
     ASN1err(ASN1_F_A2I_ASN1_INTEGER, ASN1_R_SHORT_LINE);
     return 0;
+}
+
+int i2a_ASN1_ENUMERATED(BIO *bp, ASN1_ENUMERATED *a)
+{
+    return i2a_ASN1_INTEGER(bp, a);
+}
+
+int a2i_ASN1_ENUMERATED(BIO *bp, ASN1_ENUMERATED *bs, char *buf, int size)
+{
+    int rv = a2i_ASN1_INTEGER(bp, bs, buf, size);
+    if (rv == 1)
+        bs->type = V_ASN1_INTEGER | (bs->type & V_ASN1_NEG);
+    return rv;
 }

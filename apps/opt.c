@@ -49,7 +49,6 @@
 
 /* #define COMPILE_STANDALONE_TEST_DRIVER  */
 #include "apps.h"
-#include <assert.h>
 #include <string.h>
 #if !defined(OPENSSL_SYS_MSDOS)
 # include OPENSSL_UNISTD
@@ -257,15 +256,11 @@ int opt_format(const char *s, unsigned long flags, int *result)
         break;
     case 'N':
     case 'n':
-        if (strcmp(s, "NSS") == 0 || strcmp(s, "nss") == 0) {
-            if ((flags & OPT_FMT_NSS) == 0)
-                return opt_format_error(s, flags);
-            *result = FORMAT_NSS;
-        } else {
-            if ((flags & OPT_FMT_NETSCAPE) == 0)
-                return opt_format_error(s, flags);
-            *result = FORMAT_NETSCAPE;
-        }
+        if ((flags & OPT_FMT_NSS) == 0)
+            return opt_format_error(s, flags);
+        if (strcmp(s, "NSS") != 0 && strcmp(s, "nss") != 0)
+            return opt_format_error(s, flags);
+        *result = FORMAT_NSS;
         break;
     case 'S':
     case 's':

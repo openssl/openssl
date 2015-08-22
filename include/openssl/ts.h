@@ -775,6 +775,11 @@ void ERR_load_TS_strings(void);
 # define TS_F_TS_CHECK_SIGNING_CERTS                      103
 # define TS_F_TS_CHECK_STATUS_INFO                        104
 # define TS_F_TS_COMPUTE_IMPRINT                          145
+# define TS_F_TS_CONF_INVALID                             151
+# define TS_F_TS_CONF_LOAD_CERT                           153
+# define TS_F_TS_CONF_LOAD_CERTS                          154
+# define TS_F_TS_CONF_LOAD_KEY                            155
+# define TS_F_TS_CONF_LOOKUP_FAIL                         152
 # define TS_F_TS_CONF_SET_DEFAULT_ENGINE                  146
 # define TS_F_TS_GET_STATUS_TEXT                          105
 # define TS_F_TS_MSG_IMPRINT_SET_ALGO                     118
@@ -813,6 +818,8 @@ void ERR_load_TS_strings(void);
 /* Reason codes. */
 # define TS_R_BAD_PKCS7_TYPE                              132
 # define TS_R_BAD_TYPE                                    133
+# define TS_R_CANNOT_LOAD_CERT                            137
+# define TS_R_CANNOT_LOAD_KEY                             138
 # define TS_R_CERTIFICATE_VERIFY_ERROR                    100
 # define TS_R_COULD_NOT_SET_ENGINE                        127
 # define TS_R_COULD_NOT_SET_TIME                          115
@@ -845,6 +852,8 @@ void ERR_load_TS_strings(void);
 # define TS_R_UNACCEPTABLE_POLICY                         125
 # define TS_R_UNSUPPORTED_MD_ALGORITHM                    126
 # define TS_R_UNSUPPORTED_VERSION                         113
+# define TS_R_VAR_BAD_VALUE                               135
+# define TS_R_VAR_LOOKUP_FAILURE                          136
 # define TS_R_WRONG_CONTENT_TYPE                          114
 
 #ifdef  __cplusplus

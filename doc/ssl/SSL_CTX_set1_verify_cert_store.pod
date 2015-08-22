@@ -55,8 +55,8 @@ The chain store is used to build the certificate chain.
 
 If the mode B<SSL_MODE_NO_AUTO_CHAIN> is set or a certificate chain is
 configured already (for example using the functions such as 
-L<SSL_CTX_add1_chain_cert(3)|SSL_CTX_add1_chain_cert(3)> or
-L<SSL_CTX_add_extra_chain_cert(3)|SSL_CTX_add_extra_chain_cert(3)>) then
+L<SSL_CTX_add1_chain_cert(3)> or
+L<SSL_CTX_add_extra_chain_cert(3)>) then
 automatic chain building is disabled.
 
 If the mode B<SSL_MODE_NO_AUTO_CHAIN> is set then automatic chain building
@@ -72,17 +72,17 @@ All these functions return 1 for success and 0 for failure.
 
 =head1 SEE ALSO
 
-L<SSL_CTX_add_extra_chain_cert(3)|SSL_CTX_add_extra_chain_cert(3)>
-L<SSL_CTX_set0_chain(3)|SSL_CTX_set0_chain(3)>
-L<SSL_CTX_set1_chain(3)|SSL_CTX_set1_chain(3)>
-L<SSL_CTX_add0_chain_cert(3)|SSL_CTX_add0_chain_cert(3)>
-L<SSL_CTX_add1_chain_cert(3)|SSL_CTX_add1_chain_cert(3)>
-L<SSL_set0_chain(3)|SSL_set0_chain(3)>
-L<SSL_set1_chain(3)|SSL_set1_chain(3)>
-L<SSL_add0_chain_cert(3)|SSL_add0_chain_cert(3)>
-L<SSL_add1_chain_cert(3)|SSL_add1_chain_cert(3)>
-L<SSL_CTX_build_cert_chain(3)|SSL_CTX_build_cert_chain(3)>
-L<SSL_build_cert_chain(3)|SSL_build_cert_chain(3)>
+L<SSL_CTX_add_extra_chain_cert(3)>
+L<SSL_CTX_set0_chain(3)>
+L<SSL_CTX_set1_chain(3)>
+L<SSL_CTX_add0_chain_cert(3)>
+L<SSL_CTX_add1_chain_cert(3)>
+L<SSL_set0_chain(3)>
+L<SSL_set1_chain(3)>
+L<SSL_add0_chain_cert(3)>
+L<SSL_add1_chain_cert(3)>
+L<SSL_CTX_build_cert_chain(3)>
+L<SSL_build_cert_chain(3)>
 
 =head1 HISTORY
 

@@ -319,6 +319,7 @@ struct rsa_st {
 
 RSA *RSA_new(void);
 RSA *RSA_new_method(ENGINE *engine);
+int RSA_bits(const RSA *rsa);
 int RSA_size(const RSA *rsa);
 int RSA_security_bits(const RSA *rsa);
 
@@ -394,22 +395,6 @@ int RSA_print_fp(FILE *fp, const RSA *r, int offset);
 # endif
 
 int RSA_print(BIO *bp, const RSA *r, int offset);
-
-# ifndef OPENSSL_NO_RC4
-int i2d_RSA_NET(const RSA *a, unsigned char **pp,
-                int (*cb) (char *buf, int len, const char *prompt,
-                           int verify), int sgckey);
-RSA *d2i_RSA_NET(RSA **a, const unsigned char **pp, long length,
-                 int (*cb) (char *buf, int len, const char *prompt,
-                            int verify), int sgckey);
-
-int i2d_Netscape_RSA(const RSA *a, unsigned char **pp,
-                     int (*cb) (char *buf, int len, const char *prompt,
-                                int verify));
-RSA *d2i_Netscape_RSA(RSA **a, const unsigned char **pp, long length,
-                      int (*cb) (char *buf, int len, const char *prompt,
-                                 int verify));
-# endif
 
 /*
  * The following 2 functions sign and verify a X509_SIG ASN1 object inside

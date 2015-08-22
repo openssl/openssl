@@ -39,7 +39,7 @@ A callback function may be used to provide feedback about the progress
 of the key generation. If B<cb> is not B<NULL>, it will be
 called as shown below. For information on the BN_GENCB structure and the
 BN_GENCB_call function discussed below, refer to
-L<BN_generate_prime(3)|BN_generate_prime(3)>.
+L<BN_generate_prime(3)>.
 
 =over 4
 
@@ -89,7 +89,7 @@ When the generator has been found, B<BN_GENCB_call(cb, 3, 1)> is called.
 DSA_generate_parameters() (deprecated) works in much the same way as for DSA_generate_parameters_ex, except that no B<dsa> parameter is passed and
 instead a newly allocated B<DSA> structure is returned. Additionally "old
 style" callbacks are used instead of the newer BN_GENCB based approach.
-Refer to L<BN_generate_prime(3)|BN_generate_prime(3)> for further information.
+Refer to L<BN_generate_prime(3)> for further information.
 
 =head1 RETURN VALUE
 
@@ -98,7 +98,7 @@ DSA_generate_parameters_ex() returns a 1 on success, or 0 otherwise.
 DSA_generate_parameters() returns a pointer to the DSA structure, or
 B<NULL> if the parameter generation fails.
 
-The error codes can be obtained by L<ERR_get_error(3)|ERR_get_error(3)>.
+The error codes can be obtained by L<ERR_get_error(3)>.
 
 =head1 BUGS
 
@@ -106,8 +106,8 @@ Seed lengths E<gt> 20 are not supported.
 
 =head1 SEE ALSO
 
-L<dsa(3)|dsa(3)>, L<ERR_get_error(3)|ERR_get_error(3)>, L<rand(3)|rand(3)>,
-L<DSA_free(3)|DSA_free(3)>, L<BN_generate_prime(3)|BN_generate_prime(3)>
+L<dsa(3)>, L<ERR_get_error(3)>, L<rand(3)>,
+L<DSA_free(3)>, L<BN_generate_prime(3)>
 
 =head1 HISTORY
 

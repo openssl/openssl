@@ -45,6 +45,8 @@ tests:
 lint:
 	lint -DLINT $(INCLUDES) $(SRC)>fluff
 
+update: depend
+
 depend:
 	@[ -n "$(MAKEDEPEND)" ] # should be set by upper Makefile...
 	$(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(LIBSRC)
@@ -65,4 +67,5 @@ stack.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
 stack.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
 stack.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 stack.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-stack.o: ../../include/openssl/symhacks.h ../cryptlib.h stack.c
+stack.o: ../../include/openssl/symhacks.h ../include/internal/cryptlib.h
+stack.o: stack.c

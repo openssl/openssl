@@ -52,15 +52,15 @@ I/O structure and may block as a result. Instead select() (or equivalent)
 should be combined with non blocking I/O so successive reads will request
 a retry instead of blocking.
 
-See L<BIO_should_retry(3)|BIO_should_retry(3)> for details of how to
+See L<BIO_should_retry(3)> for details of how to
 determine the cause of a retry and other I/O issues.
 
 If the BIO_gets() function is not supported by a BIO then it possible to
-work around this by adding a buffering BIO L<BIO_f_buffer(3)|BIO_f_buffer(3)>
+work around this by adding a buffering BIO L<BIO_f_buffer(3)>
 to the chain.
 
 =head1 SEE ALSO
 
-L<BIO_should_retry(3)|BIO_should_retry(3)>
+L<BIO_should_retry(3)>
 
 TBA

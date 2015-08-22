@@ -13,8 +13,6 @@
 #include <openssl/sha.h>
 #include <openssl/opensslv.h>
 
-const char SHA256_version[] = "SHA-256" OPENSSL_VERSION_PTEXT;
-
 int SHA224_Init(SHA256_CTX *c)
 {
     memset(c, 0, sizeof(*c));
@@ -127,7 +125,7 @@ static
 #endif
 void sha256_block_data_order(SHA256_CTX *ctx, const void *in, size_t num);
 
-#include "md32_common.h"
+#include "internal/md32_common.h"
 
 #ifndef SHA256_ASM
 static const SHA_LONG K256[64] = {

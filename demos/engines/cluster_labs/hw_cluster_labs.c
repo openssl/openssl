@@ -319,23 +319,18 @@ int cluster_labs_init(ENGINE *e)
         goto err;
     }
     /* bind functions */
-    if (!
-        (p1 =
-         (cl_engine_init *) DSO_bind_func(cluster_labs_dso, CLUSTER_LABS_F1))
-|| !(p2 = (cl_mod_exp *) DSO_bind_func(cluster_labs_dso, CLUSTER_LABS_F2))
-|| !(p3 = (cl_mod_exp_crt *) DSO_bind_func(cluster_labs_dso, CLUSTER_LABS_F3))
-|| !(p4 = (cl_rsa_mod_exp *) DSO_bind_func(cluster_labs_dso, CLUSTER_LABS_F4))
-|| !(p5 =
-     (cl_rsa_priv_enc *) DSO_bind_func(cluster_labs_dso, CLUSTER_LABS_F5))
-|| !(p6 =
-     (cl_rsa_priv_dec *) DSO_bind_func(cluster_labs_dso, CLUSTER_LABS_F6))
-|| !(p7 = (cl_rsa_pub_enc *) DSO_bind_func(cluster_labs_dso, CLUSTER_LABS_F7))
-|| !(p8 = (cl_rsa_pub_dec *) DSO_bind_func(cluster_labs_dso, CLUSTER_LABS_F8))
-|| !(p20 =
-     (cl_rand_bytes *) DSO_bind_func(cluster_labs_dso, CLUSTER_LABS_F20))
-|| !(p30 = (cl_dsa_sign *) DSO_bind_func(cluster_labs_dso, CLUSTER_LABS_F30))
-|| !(p31 =
-     (cl_dsa_verify *) DSO_bind_func(cluster_labs_dso, CLUSTER_LABS_F31))) {
+#define BINDIT(t, name) (t *)DSO_bind_func(cluster_labs_dso, name)
+    if ((p1 = (cl_engine_init, CLUSTER_LABS_F1)) == NULL
+        || (p2 = BINDIT(cl_mod_exp, CLUSTER_LABS_F2)) == NULL
+        || (p3 = BINDIT(cl_mod_exp_crt, CLUSTER_LABS_F3)) == NULL
+        || (p4 = BINDIT(cl_rsa_mod_exp, CLUSTER_LABS_F4)) == NULL
+        || (p5 = BINDIT(cl_rsa_priv_enc, CLUSTER_LABS_F5)) == NULL
+        || (p6 = BINDIT(cl_rsa_priv_dec, CLUSTER_LABS_F6)) == NULL
+        || (p7 = BINDIT(cl_rsa_pub_enc, CLUSTER_LABS_F7)) == NULL
+        || (p8 = BINDIT(cl_rsa_pub_dec, CLUSTER_LABS_F8)) == NULL
+        || (p20 = BINDIT(cl_rand_bytes, CLUSTER_LABS_F20)) == NULL
+        || (p30 = BINDIT(cl_dsa_sign, CLUSTER_LABS_F30)) == NULL
+        || (p31 = BINDIT(cl_dsa_verify, CLUSTER_LABS_F31)) == NULL) {
         CLerr(CL_F_CLUSTER_LABS_INIT, CL_R_DSO_FAILURE);
         goto err;
     }

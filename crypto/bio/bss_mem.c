@@ -58,7 +58,7 @@
 
 #include <stdio.h>
 #include <errno.h>
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/bio.h>
 
 static int mem_write(BIO *h, const char *buf, int num);
@@ -67,6 +67,7 @@ static int mem_puts(BIO *h, const char *str);
 static int mem_gets(BIO *h, char *str, int size);
 static long mem_ctrl(BIO *h, int cmd, long arg1, void *arg2);
 static int mem_new(BIO *h);
+static int secmem_new(BIO *h);
 static int mem_free(BIO *data);
 static BIO_METHOD mem_method = {
     BIO_TYPE_MEM,
@@ -77,6 +78,18 @@ static BIO_METHOD mem_method = {
     mem_gets,
     mem_ctrl,
     mem_new,
+    mem_free,
+    NULL,
+};
+static BIO_METHOD secmem_method = {
+    BIO_TYPE_MEM,
+    "secure memory buffer",
+    mem_write,
+    mem_read,
+    mem_puts,
+    mem_gets,
+    mem_ctrl,
+    secmem_new,
     mem_free,
     NULL,
 };
@@ -91,18 +104,23 @@ BIO_METHOD *BIO_s_mem(void)
     return (&mem_method);
 }
 
+BIO_METHOD *BIO_s_secmem(void)
+{
+    return(&secmem_method);
+}
+
 BIO *BIO_new_mem_buf(void *buf, int len)
 {
     BIO *ret;
     BUF_MEM *b;
     size_t sz;
 
-    if (!buf) {
+    if (buf == NULL) {
         BIOerr(BIO_F_BIO_NEW_MEM_BUF, BIO_R_NULL_PARAMETER);
         return NULL;
     }
     sz = (len < 0) ? strlen(buf) : (size_t)len;
-    if (!(ret = BIO_new(BIO_s_mem())))
+    if ((ret = BIO_new(BIO_s_mem())) == NULL)
         return NULL;
     b = (BUF_MEM *)ret->ptr;
     b->data = buf;
@@ -114,17 +132,27 @@ BIO *BIO_new_mem_buf(void *buf, int len)
     return ret;
 }
 
-static int mem_new(BIO *bi)
+static int mem_init(BIO *bi, unsigned long flags)
 {
     BUF_MEM *b;
 
-    if ((b = BUF_MEM_new()) == NULL)
-        return (0);
+    if ((b = BUF_MEM_new_ex(flags)) == NULL)
+        return(0);
     bi->shutdown = 1;
     bi->init = 1;
     bi->num = -1;
     bi->ptr = (char *)b;
-    return (1);
+    return(1);
+}
+
+static int mem_new(BIO *bi)
+{
+    return (mem_init(bi, 0L));
+}
+
+static int secmem_new(BIO *bi)
+{
+    return (mem_init(bi, BUF_MEM_FLAG_SECURE));
 }
 
 static int mem_free(BIO *a)

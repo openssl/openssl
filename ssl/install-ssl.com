@@ -70,7 +70,7 @@ $ if f$parse("wrk_sslinclude:") .eqs. "" then -
 $ if f$parse("wrk_sslxlib:") .eqs. "" then -
    create /directory /log wrk_sslxlib:
 $!
-$ exheader := ssl.h, ssl2.h, ssl3.h, ssl23.h, tls1.h, dtls1.h, kssl.h, srtp.h
+$ exheader := ssl.h, ssl2.h, ssl3.h, tls1.h, dtls1.h, srtp.h
 $ libs := ssl_libssl
 $!
 $ xexe_dir := [-.'archd'.exe.ssl]

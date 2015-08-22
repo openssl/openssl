@@ -60,7 +60,7 @@ prompted for.
 =item B<-passin arg>
 
 the input file password source. For more information about the format of B<arg>
-see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)|openssl(1)>.
+see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
 
 =item B<-out filename>
 
@@ -72,7 +72,7 @@ filename.
 =item B<-passout arg>
 
 the output file password source. For more information about the format of B<arg>
-see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)|openssl(1)>.
+see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
 
 =item B<-des|-des3|-idea>
 
@@ -177,7 +177,7 @@ To change the point conversion form to B<compressed>:
 
 =head1 SEE ALSO
 
-L<ecparam(1)|ecparam(1)>, L<dsa(1)|dsa(1)>, L<rsa(1)|rsa(1)>
+L<ecparam(1)>, L<dsa(1)>, L<rsa(1)>
 
 =head1 HISTORY
 

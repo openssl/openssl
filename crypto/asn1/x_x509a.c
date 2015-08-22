@@ -58,7 +58,7 @@
  */
 
 #include <stdio.h>
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/evp.h>
 #include <openssl/asn1t.h>
 #include <openssl/x509.h>
@@ -84,9 +84,9 @@ IMPLEMENT_ASN1_FUNCTIONS(X509_CERT_AUX)
 
 static X509_CERT_AUX *aux_get(X509 *x)
 {
-    if (!x)
+    if (x == NULL)
         return NULL;
-    if (!x->aux && !(x->aux = X509_CERT_AUX_new()))
+    if (x->aux == NULL && (x->aux = X509_CERT_AUX_new()) == NULL)
         return NULL;
     return x->aux;
 }
@@ -101,9 +101,9 @@ int X509_alias_set1(X509 *x, unsigned char *name, int len)
         x->aux->alias = NULL;
         return 1;
     }
-    if (!(aux = aux_get(x)))
+    if ((aux = aux_get(x)) == NULL)
         return 0;
-    if (!aux->alias && !(aux->alias = ASN1_UTF8STRING_new()))
+    if (aux->alias == NULL && (aux->alias = ASN1_UTF8STRING_new()) == NULL)
         return 0;
     return ASN1_STRING_set(aux->alias, name, len);
 }
@@ -118,9 +118,10 @@ int X509_keyid_set1(X509 *x, unsigned char *id, int len)
         x->aux->keyid = NULL;
         return 1;
     }
-    if (!(aux = aux_get(x)))
+    if ((aux = aux_get(x)) == NULL)
         return 0;
-    if (!aux->keyid && !(aux->keyid = ASN1_OCTET_STRING_new()))
+    if (aux->keyid ==NULL
+        && (aux->keyid = ASN1_OCTET_STRING_new()) == NULL)
         return 0;
     return ASN1_STRING_set(aux->keyid, id, len);
 }
@@ -152,9 +153,10 @@ int X509_add1_trust_object(X509 *x, ASN1_OBJECT *obj)
         if (!objtmp)
             return 0;
     }
-    if (!(aux = aux_get(x)))
+    if ((aux = aux_get(x)) == NULL)
         goto err;
-    if (!aux->trust && !(aux->trust = sk_ASN1_OBJECT_new_null()))
+    if (aux->trust == NULL
+        && (aux->trust = sk_ASN1_OBJECT_new_null()) == NULL)
         goto err;
     if (!objtmp || sk_ASN1_OBJECT_push(aux->trust, objtmp))
         return 1;
@@ -167,11 +169,12 @@ int X509_add1_reject_object(X509 *x, ASN1_OBJECT *obj)
 {
     X509_CERT_AUX *aux;
     ASN1_OBJECT *objtmp;
-    if (!(objtmp = OBJ_dup(obj)))
+    if ((objtmp = OBJ_dup(obj)) == NULL)
         return 0;
-    if (!(aux = aux_get(x)))
+    if ((aux = aux_get(x)) == NULL)
         return 0;
-    if (!aux->reject && !(aux->reject = sk_ASN1_OBJECT_new_null()))
+    if (aux->reject == NULL
+        && (aux->reject = sk_ASN1_OBJECT_new_null()) == NULL)
         return 0;
     return sk_ASN1_OBJECT_push(aux->reject, objtmp);
 }

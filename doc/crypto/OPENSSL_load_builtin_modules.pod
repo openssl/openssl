@@ -42,7 +42,7 @@ None of the functions return a value.
 
 =head1 SEE ALSO
 
-L<conf(3)|conf(3)>, L<OPENSSL_config(3)|OPENSSL_config(3)>
+L<conf(3)>, L<OPENSSL_config(3)>
 
 =head1 HISTORY
 

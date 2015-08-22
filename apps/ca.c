@@ -99,7 +99,6 @@
 #define BSIZE 256
 
 #define BASE_SECTION    "ca"
-#define CONFIG_FILE "openssl.cnf"
 
 #define ENV_DEFAULT_CA          "default_ca"
 
@@ -285,7 +284,8 @@ int ca_main(int argc, char **argv)
     STACK_OF(X509) *cert_sk = NULL;
     X509_CRL *crl = NULL;
     const EVP_MD *dgst = NULL;
-    char *configfile = NULL, *md = NULL, *policy = NULL, *keyfile = NULL;
+    char *configfile = default_config_file;
+    char *md = NULL, *policy = NULL, *keyfile = NULL;
     char *certfile = NULL, *crl_ext = NULL, *crlnumberfile = NULL;
     char *infile = NULL, *spkac_file = NULL, *ss_cert_file = NULL;
     char *extensions = NULL, *extfile = NULL, *key = NULL, *passinarg = NULL;
@@ -301,7 +301,7 @@ int ca_main(int argc, char **argv)
     int keyformat = FORMAT_PEM, multirdn = 0, notext = 0, output_der = 0;
     int ret = 1, email_dn = 1, req = 0, verbose = 0, gencrl = 0, dorevoke = 0;
     int i, j, rev_type = REV_NONE, selfsign = 0;
-    long crldays = 0, crlhours = 0, crlsec = 0, errorline = -1, days = 0;
+    long crldays = 0, crlhours = 0, crlsec = 0, days = 0;
     unsigned long chtype = MBSTRING_ASC, nameopt = 0, certopt = 0;
     X509 *x509 = NULL, *x509p = NULL, *x = NULL;
     X509_REVOKED *r = NULL;
@@ -325,6 +325,7 @@ opthelp:
                 ret = 0;
                 goto end;
             case OPT_IN:
+                req = 1;
                 infile = opt_arg();
                 break;
             case OPT_OUT:
@@ -482,40 +483,11 @@ end_of_options:
     argc = opt_num_rest();
     argv = opt_rest();
 
-    tofree = NULL;
-    if (configfile == NULL)
-        configfile = getenv("OPENSSL_CONF");
-    if (configfile == NULL)
-        configfile = getenv("SSLEAY_CONF");
-    if (configfile == NULL) {
-        const char *s = X509_get_default_cert_area();
-        size_t len;
-
-        len = strlen(s) + 1 + sizeof(CONFIG_FILE);
-        tofree = app_malloc(len, "config filename");
-#ifdef OPENSSL_SYS_VMS
-        strcpy(tofree, s);
-#else
-        BUF_strlcpy(tofree, s, len);
-        BUF_strlcat(tofree, "/", len);
-#endif
-        BUF_strlcat(tofree, CONFIG_FILE, len);
-        configfile = tofree;
-    }
-
     BIO_printf(bio_err, "Using configuration from %s\n", configfile);
-    conf = NCONF_new(NULL);
-    if (NCONF_load(conf, configfile, &errorline) <= 0) {
-        if (errorline <= 0)
-            BIO_printf(bio_err, "error loading the config file '%s'\n",
-                       configfile);
-        else
-            BIO_printf(bio_err, "error on line %ld of config file '%s'\n",
-                       errorline, configfile);
+    if ((conf = app_load_config(configfile)) == NULL)
         goto end;
-    }
-    OPENSSL_free(tofree);
-    tofree = NULL;
+    if (!app_load_modules(conf))
+        goto end;
 
     /* Lets get the config section we are using */
     if (section == NULL) {
@@ -666,8 +638,10 @@ end_of_options:
             goto end;
         }
         default_op = 0;
-    } else
+    } else {
+        nameopt = XN_FLAG_ONELINE;
         ERR_clear_error();
+    }
 
     f = NCONF_get_string(conf, section, ENV_CERTOPT);
 
@@ -800,18 +774,10 @@ end_of_options:
         }
     }
 
-        /*****************************************************************/
+    /*****************************************************************/
     /* Read extensions config file                                   */
     if (extfile) {
-        extconf = NCONF_new(NULL);
-        if (NCONF_load(extconf, extfile, &errorline) <= 0) {
-            if (errorline <= 0)
-                BIO_printf(bio_err, "ERROR: loading the config file '%s'\n",
-                           extfile);
-            else
-                BIO_printf(bio_err,
-                           "ERROR: on line %ld of config file '%s'\n",
-                           errorline, extfile);
+        if ((extconf = app_load_config(extfile)) == NULL) {
             ret = 1;
             goto end;
         }
@@ -1703,7 +1669,7 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
          * Its best to dup the subject DN and then delete any email addresses
          * because this retains its structure.
          */
-        if (!(dn_subject = X509_NAME_dup(subject))) {
+        if ((dn_subject = X509_NAME_dup(subject)) == NULL) {
             BIO_printf(bio_err, "Memory allocation failure\n");
             goto end;
         }

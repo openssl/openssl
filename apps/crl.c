@@ -95,11 +95,11 @@ OPTIONS crl_options[] = {
     {"verify", OPT_VERIFY, '-'},
     {"text", OPT_TEXT, '-', "Print out a text format version"},
     {"hash", OPT_HASH, '-', "Print hash value"},
+    {"nameopt", OPT_NAMEOPT, 's', "Various certificate name options"},
+    {"", OPT_MD, '-', "Any supported digest"},
 #ifndef OPENSSL_NO_MD5
     {"hash_old", OPT_HASH_OLD, '-', "Print old-style (MD5) hash value"},
 #endif
-    {"nameopt", OPT_NAMEOPT, 's', "Various certificate name options"},
-    {"", OPT_MD, '-', "Any supported digest"},
     {NULL}
 };
 
@@ -114,14 +114,15 @@ int crl_main(int argc, char **argv)
     EVP_PKEY *pkey;
     const EVP_MD *digest = EVP_sha1();
     unsigned long nmflag = 0;
+    char nmflag_set = 0;
     char *infile = NULL, *outfile = NULL, *crldiff = NULL, *keyfile = NULL;
     char *CAfile = NULL, *CApath = NULL, *prog;
     OPTION_CHOICE o;
-    int hash = 0, issuer = 0, lastupdate = 0, nextupdate = 0, noout =
-        0, text = 0;
+    int hash = 0, issuer = 0, lastupdate = 0, nextupdate = 0, noout = 0;
     int informat = FORMAT_PEM, outformat = FORMAT_PEM, keyformat = FORMAT_PEM;
-    int ret = 1, num = 0, badsig = 0, fingerprint = 0, crlnumber =
-        0, i, do_ver = 0;
+    int ret = 1, num = 0, badsig = 0, fingerprint = 0, crlnumber = 0;
+    int text = 0, do_ver = 0;
+    int i;
 #ifndef OPENSSL_NO_MD5
     int hash_old = 0;
 #endif
@@ -170,11 +171,11 @@ int crl_main(int argc, char **argv)
             CAfile = opt_arg();
             do_ver = 1;
             break;
-#ifndef OPENSSL_NO_MD5
         case OPT_HASH_OLD:
+#ifndef OPENSSL_NO_MD5
             hash_old = ++num;
-            break;
 #endif
+            break;
         case OPT_VERIFY:
             do_ver = 1;
             break;
@@ -206,6 +207,7 @@ int crl_main(int argc, char **argv)
             badsig = 1;
             break;
         case OPT_NAMEOPT:
+            nmflag_set = 1;
             if (!set_name_ex(&nmflag, opt_arg()))
                 goto opthelp;
             break;
@@ -217,12 +219,18 @@ int crl_main(int argc, char **argv)
     argc = opt_num_rest();
     argv = opt_rest();
 
+    if (!nmflag_set)
+        nmflag = XN_FLAG_ONELINE;
+
+    if (!app_load_modules(NULL))
+        goto end;
+
     x = load_crl(infile, informat);
     if (x == NULL)
         goto end;
 
     if (do_ver) {
-        if (!(store = setup_verify(CAfile, CApath)))
+        if ((store = setup_verify(CAfile, CApath)) == NULL)
             goto end;
         lookup = X509_STORE_add_lookup(store, X509_LOOKUP_file());
         if (lookup == NULL)

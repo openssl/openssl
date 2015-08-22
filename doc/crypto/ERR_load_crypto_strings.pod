@@ -35,7 +35,7 @@ ERR_free_strings() return no values.
 
 =head1 SEE ALSO
 
-L<err(3)|err(3)>, L<ERR_error_string(3)|ERR_error_string(3)>
+L<err(3)>, L<ERR_error_string(3)>
 
 =head1 HISTORY
 

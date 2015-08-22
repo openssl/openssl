@@ -124,7 +124,6 @@
 #include <sys/types.h>
 #include <ctype.h>
 #include <errno.h>
-#include <assert.h>
 #include <openssl/err.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
@@ -163,12 +162,6 @@ static int set_table_opts(unsigned long *flags, const char *arg,
                           const NAME_EX_TBL * in_tbl);
 static int set_multi_opts(unsigned long *flags, const char *arg,
                           const NAME_EX_TBL * in_tbl);
-
-#if !defined(OPENSSL_NO_RC4) && !defined(OPENSSL_NO_RSA)
-/* Looks like this stuff is worth moving into separate function */
-static EVP_PKEY *load_netscape_key(BIO *key, const char *file,
-                                   const char *key_descrip, int format);
-#endif
 
 int app_init(long mesgwin);
 
@@ -496,17 +489,84 @@ static char *app_get_pass(char *arg, int keepbio)
     return BUF_strdup(tpass);
 }
 
+static CONF *app_load_config_(BIO *in, const char *filename)
+{
+    long errorline = -1;
+    CONF *conf;
+    int i;
+
+    conf = NCONF_new(NULL);
+    i = NCONF_load_bio(conf, in, &errorline);
+    if (i > 0)
+        return conf;
+
+    if (errorline <= 0)
+        BIO_printf(bio_err, "%s: Can't load config file \"%s\"\n",
+                   opt_getprog(), filename);
+    else
+        BIO_printf(bio_err, "%s: Error on line %ld of config file \"%s\"\n",
+                   opt_getprog(), errorline, filename);
+    NCONF_free(conf);
+    return NULL;
+}
+CONF *app_load_config(const char *filename)
+{
+    BIO *in;
+    CONF *conf;
+
+    in = bio_open_default(filename, "r");
+    if (in == NULL)
+        return NULL;
+
+    conf = app_load_config_(in, filename);
+    BIO_free(in);
+    return conf;
+}
+CONF *app_load_config_quiet(const char *filename)
+{
+    BIO *in;
+    CONF *conf;
+
+    in = bio_open_default_quiet(filename, "r");
+    if (in == NULL)
+        return NULL;
+
+    conf = app_load_config_(in, filename);
+    BIO_free(in);
+    return conf;
+}
+
+int app_load_modules(const CONF *config)
+{
+    CONF *to_free = NULL;
+
+    if (config == NULL)
+	config = to_free = app_load_config_quiet(default_config_file);
+    if (config == NULL)
+	return 1;
+
+    if (CONF_modules_load(config, NULL, 0) <= 0) {
+        BIO_printf(bio_err, "Error configuring OpenSSL modules\n");
+        ERR_print_errors(bio_err);
+        NCONF_free(to_free);
+        return 0;
+    }
+    NCONF_free(to_free);
+    return 1;
+}
+
 int add_oid_section(CONF *conf)
 {
     char *p;
     STACK_OF(CONF_VALUE) *sktmp;
     CONF_VALUE *cnf;
     int i;
-    if (!(p = NCONF_get_string(conf, NULL, "oid_section"))) {
+
+    if ((p = NCONF_get_string(conf, NULL, "oid_section")) == NULL) {
         ERR_clear_error();
         return 1;
     }
-    if (!(sktmp = NCONF_get_section(conf, p))) {
+    if ((sktmp = NCONF_get_section(conf, p)) == NULL) {
         BIO_printf(bio_err, "problem loading oid section %s\n", p);
         return 0;
     }
@@ -629,22 +689,7 @@ X509 *load_cert(const char *file, int format,
 
     if (format == FORMAT_ASN1)
         x = d2i_X509_bio(cert, NULL);
-    else if (format == FORMAT_NETSCAPE) {
-        NETSCAPE_X509 *nx;
-        nx = ASN1_item_d2i_bio(ASN1_ITEM_rptr(NETSCAPE_X509), cert, NULL);
-        if (nx == NULL)
-            goto end;
-
-        if ((strncmp(NETSCAPE_CERT_HDR, (char *)nx->header->data,
-                     nx->header->length) != 0)) {
-            NETSCAPE_X509_free(nx);
-            BIO_printf(bio_err, "Error reading header on certificate\n");
-            goto end;
-        }
-        x = nx->cert;
-        nx->cert = NULL;
-        NETSCAPE_X509_free(nx);
-    } else if (format == FORMAT_PEM)
+    else if (format == FORMAT_PEM)
         x = PEM_read_bio_X509_AUX(cert, NULL,
                                   (pem_password_cb *)password_callback, NULL);
     else if (format == FORMAT_PKCS12) {
@@ -737,10 +782,6 @@ EVP_PKEY *load_key(const char *file, int format, int maybe_stdin,
                                        (pem_password_cb *)password_callback,
                                        &cb_data);
     }
-#if !defined(OPENSSL_NO_RC4) && !defined(OPENSSL_NO_RSA)
-    else if (format == FORMAT_NETSCAPE)
-        pkey = load_netscape_key(key, file, key_descrip, format);
-#endif
     else if (format == FORMAT_PKCS12) {
         if (!load_pkcs12(key, key_descrip,
                          (pem_password_cb *)password_callback, &cb_data,
@@ -837,10 +878,6 @@ EVP_PKEY *load_pubkey(const char *file, int format, int maybe_stdin,
                                    (pem_password_cb *)password_callback,
                                    &cb_data);
     }
-#if !defined(OPENSSL_NO_RC4) && !defined(OPENSSL_NO_RSA)
-    else if (format == FORMAT_NETSCAPE)
-        pkey = load_netscape_key(key, file, key_descrip, format);
-#endif
 #if !defined(OPENSSL_NO_RSA) && !defined(OPENSSL_NO_DSA)
     else if (format == FORMAT_MSBLOB)
         pkey = b2i_PublicKey_bio(key);
@@ -851,47 +888,6 @@ EVP_PKEY *load_pubkey(const char *file, int format, int maybe_stdin,
         BIO_printf(bio_err, "unable to load %s\n", key_descrip);
     return (pkey);
 }
-
-#if !defined(OPENSSL_NO_RC4) && !defined(OPENSSL_NO_RSA)
-static EVP_PKEY *load_netscape_key(BIO *key, const char *file,
-                                   const char *key_descrip, int format)
-{
-    EVP_PKEY *pkey;
-    BUF_MEM *buf;
-    RSA *rsa;
-    const unsigned char *p;
-    int size, i;
-
-    buf = BUF_MEM_new();
-    pkey = EVP_PKEY_new();
-    size = 0;
-    if (buf == NULL || pkey == NULL)
-        goto error;
-    for (;;) {
-        if (!BUF_MEM_grow_clean(buf, size + 1024 * 10))
-            goto error;
-        i = BIO_read(key, &(buf->data[size]), 1024 * 10);
-        size += i;
-        if (i == 0)
-            break;
-        if (i < 0) {
-            BIO_printf(bio_err, "Error reading %s %s", key_descrip, file);
-            goto error;
-        }
-    }
-    p = (unsigned char *)buf->data;
-    rsa = d2i_RSA_NET(NULL, &p, (long)size, NULL, 0);
-    if (rsa == NULL)
-        goto error;
-    BUF_MEM_free(buf);
-    EVP_PKEY_set1_RSA(pkey, rsa);
-    return pkey;
- error:
-    BUF_MEM_free(buf);
-    EVP_PKEY_free(pkey);
-    return NULL;
-}
-#endif                          /* ndef OPENSSL_NO_RC4 */
 
 static int load_certs_crls(const char *file, int format,
                            const char *pass, ENGINE *e, const char *desc,
@@ -1558,8 +1554,7 @@ CA_DB *load_index(char *dbfile, DB_ATTR *db_attr)
     TXT_DB *tmpdb = NULL;
     BIO *in;
     CONF *dbattr_conf = NULL;
-    char buf[1][BSIZE];
-    long errorline = -1;
+    char buf[BSIZE];
 
     in = BIO_new_file(dbfile, "r");
     if (in == NULL) {
@@ -1570,22 +1565,11 @@ CA_DB *load_index(char *dbfile, DB_ATTR *db_attr)
         goto err;
 
 #ifndef OPENSSL_SYS_VMS
-    BIO_snprintf(buf[0], sizeof buf[0], "%s.attr", dbfile);
+    BIO_snprintf(buf, sizeof buf, "%s.attr", dbfile);
 #else
-    BIO_snprintf(buf[0], sizeof buf[0], "%s-attr", dbfile);
+    BIO_snprintf(buf, sizeof buf, "%s-attr", dbfile);
 #endif
-    dbattr_conf = NCONF_new(NULL);
-    if (NCONF_load(dbattr_conf, buf[0], &errorline) <= 0) {
-        if (errorline > 0) {
-            BIO_printf(bio_err,
-                       "error on line %ld of db attribute file '%s'\n",
-                       errorline, buf[0]);
-            goto err;
-        } else {
-            NCONF_free(dbattr_conf);
-            dbattr_conf = NULL;
-        }
-    }
+    dbattr_conf = app_load_config(buf);
 
     retdb = app_malloc(sizeof(*retdb), "new DB");
     retdb->db = tmpdb;
@@ -2201,7 +2185,6 @@ void jpake_server_auth(BIO *out, BIO *conn, const char *secret)
 
 #endif
 
-#ifndef OPENSSL_NO_TLSEXT
 /*-
  * next_protos_parse parses a comma separated list of strings into a string
  * in a format suitable for passing to SSL_CTX_set_next_protos_advertised.
@@ -2237,7 +2220,6 @@ unsigned char *next_protos_parse(unsigned short *outlen, const char *in)
     *outlen = len + 1;
     return out;
 }
-#endif                          /* ndef OPENSSL_NO_TLSEXT */
 
 void print_cert_checks(BIO *bio, X509 *x,
                        const char *checkhost,

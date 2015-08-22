@@ -63,7 +63,7 @@
 
 #include <assert.h>
 #include <openssl/crypto.h>
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include "bn_lcl.h"
 
 #if defined(BN_LLONG) || defined(BN_UMULT_HIGH)

@@ -228,6 +228,74 @@ static void ssl3_take_mac(SSL *s)
 }
 #endif
 
+int ssl3_get_change_cipher_spec(SSL *s, int a, int b)
+{
+    int ok, al;
+    long n;
+
+    n = s->method->ssl_get_message(s, a, b, SSL3_MT_CHANGE_CIPHER_SPEC, 1, &ok);
+
+    if (!ok)
+        return ((int)n);
+
+    /*
+     * 'Change Cipher Spec' is just a single byte, which should already have
+     * been consumed by ssl_get_message() so there should be no bytes left,
+     * unless we're using DTLS1_BAD_VER, which has an extra 2 bytes
+     */
+    if (SSL_IS_DTLS(s)) {
+        if ((s->version == DTLS1_BAD_VER && n != DTLS1_CCS_HEADER_LENGTH + 1)
+                    || (s->version != DTLS1_BAD_VER
+                        && n != DTLS1_CCS_HEADER_LENGTH - 1)) {
+                al = SSL_AD_ILLEGAL_PARAMETER;
+                SSLerr(SSL_F_SSL3_GET_CHANGE_CIPHER_SPEC, SSL_R_BAD_CHANGE_CIPHER_SPEC);
+                goto f_err;
+        }
+    } else {
+        if (n != 0) {
+            al = SSL_AD_ILLEGAL_PARAMETER;
+            SSLerr(SSL_F_SSL3_GET_CHANGE_CIPHER_SPEC, SSL_R_BAD_CHANGE_CIPHER_SPEC);
+            goto f_err;
+        }
+    }
+
+    /* Check we have a cipher to change to */
+    if (s->s3->tmp.new_cipher == NULL) {
+        al = SSL_AD_UNEXPECTED_MESSAGE;
+        SSLerr(SSL_F_SSL3_GET_CHANGE_CIPHER_SPEC, SSL_R_CCS_RECEIVED_EARLY);
+        goto f_err;
+    }
+
+    s->s3->change_cipher_spec = 1;
+    if (!ssl3_do_change_cipher_spec(s)) {
+        al = SSL_AD_INTERNAL_ERROR;
+        SSLerr(SSL_F_SSL3_GET_CHANGE_CIPHER_SPEC, ERR_R_INTERNAL_ERROR);
+        goto f_err;
+    }
+
+    if (SSL_IS_DTLS(s)) {
+        dtls1_reset_seq_numbers(s, SSL3_CC_READ);
+
+        if (s->version == DTLS1_BAD_VER)
+            s->d1->handshake_read_seq++;
+
+#ifndef OPENSSL_NO_SCTP
+        /*
+         * Remember that a CCS has been received, so that an old key of
+         * SCTP-Auth can be deleted when a CCS is sent. Will be ignored if no
+         * SCTP is used
+         */
+        BIO_ctrl(SSL_get_wbio(s), BIO_CTRL_DGRAM_SCTP_AUTH_CCS_RCVD, 1, NULL);
+#endif
+    }
+
+    return 1;
+ f_err:
+    ssl3_send_alert(s, SSL3_AL_FATAL, al);
+    return 0;
+}
+
+
 int ssl3_get_finished(SSL *s, int a, int b)
 {
     int al, i, ok;
@@ -345,7 +413,7 @@ long ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
     unsigned char *p;
     unsigned long l;
     long n;
-    int i, al;
+    int i, al, recvd_type;
 
     if (s->s3->tmp.reuse_message) {
         s->s3->tmp.reuse_message = 0;
@@ -356,25 +424,50 @@ long ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
         }
         *ok = 1;
         s->state = stn;
-        s->init_msg = s->init_buf->data + 4;
+        s->init_msg = s->init_buf->data + SSL3_HM_HEADER_LENGTH;
         s->init_num = (int)s->s3->tmp.message_size;
         return s->init_num;
     }
 
     p = (unsigned char *)s->init_buf->data;
 
-    if (s->state == st1) {      /* s->init_num < 4 */
+    if (s->state == st1) {
+        /* s->init_num < SSL3_HM_HEADER_LENGTH */
         int skip_message;
 
         do {
-            while (s->init_num < 4) {
-                i = s->method->ssl_read_bytes(s, SSL3_RT_HANDSHAKE,
-                                              &p[s->init_num],
-                                              4 - s->init_num, 0);
+            while (s->init_num < SSL3_HM_HEADER_LENGTH) {
+                i = s->method->ssl_read_bytes(s, SSL3_RT_HANDSHAKE, &recvd_type,
+                    &p[s->init_num], SSL3_HM_HEADER_LENGTH - s->init_num, 0);
                 if (i <= 0) {
                     s->rwstate = SSL_READING;
                     *ok = 0;
                     return i;
+                }
+                if (s->init_num == 0
+                        && recvd_type == SSL3_RT_CHANGE_CIPHER_SPEC
+                        && (mt < 0 || mt == SSL3_MT_CHANGE_CIPHER_SPEC)) {
+                    if (*p != SSL3_MT_CCS) {
+                        al = SSL_AD_UNEXPECTED_MESSAGE;
+                        SSLerr(SSL_F_SSL3_GET_MESSAGE,
+                               SSL_R_UNEXPECTED_MESSAGE);
+                        goto f_err;
+                    }
+                    s->init_num = i - 1;
+                    s->init_msg = p + 1;
+                    s->s3->tmp.message_type = SSL3_MT_CHANGE_CIPHER_SPEC;
+                    s->s3->tmp.message_size = i - 1;
+                    s->state = stn;
+                    *ok = 1;
+                    if (s->msg_callback)
+                        s->msg_callback(0, s->version,
+                                        SSL3_RT_CHANGE_CIPHER_SPEC, p, 1, s,
+                                        s->msg_callback_arg);
+                    return i - 1;
+                } else if (recvd_type != SSL3_RT_HANDSHAKE) {
+                    al = SSL_AD_UNEXPECTED_MESSAGE;
+                    SSLerr(SSL_F_SSL3_GET_MESSAGE, SSL_R_CCS_RECEIVED_EARLY);
+                    goto f_err;
                 }
                 s->init_num += i;
             }
@@ -394,12 +487,11 @@ long ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 
                         if (s->msg_callback)
                             s->msg_callback(0, s->version, SSL3_RT_HANDSHAKE,
-                                            p, 4, s, s->msg_callback_arg);
+                                            p, SSL3_HM_HEADER_LENGTH, s,
+                                            s->msg_callback_arg);
                     }
-        }
-        while (skip_message);
-
-        /* s->init_num == 4 */
+        } while (skip_message);
+        /* s->init_num == SSL3_HM_HEADER_LENGTH */
 
         if ((mt >= 0) && (*p != mt)) {
             al = SSL_AD_UNEXPECTED_MESSAGE;
@@ -409,34 +501,58 @@ long ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 
         s->s3->tmp.message_type = *(p++);
 
-        n2l3(p, l);
-        if (l > (unsigned long)max) {
-            al = SSL_AD_ILLEGAL_PARAMETER;
-            SSLerr(SSL_F_SSL3_GET_MESSAGE, SSL_R_EXCESSIVE_MESSAGE_SIZE);
-            goto f_err;
-        }
-        if (l > (INT_MAX - 4)) { /* BUF_MEM_grow takes an 'int' parameter */
-            al = SSL_AD_ILLEGAL_PARAMETER;
-            SSLerr(SSL_F_SSL3_GET_MESSAGE, SSL_R_EXCESSIVE_MESSAGE_SIZE);
-            goto f_err;
-        }
-        if (l && !BUF_MEM_grow_clean(s->init_buf, (int)l + 4)) {
-            SSLerr(SSL_F_SSL3_GET_MESSAGE, ERR_R_BUF_LIB);
-            goto err;
-        }
-        s->s3->tmp.message_size = l;
-        s->state = stn;
+        if(RECORD_LAYER_is_sslv2_record(&s->rlayer)) {
+            /*
+             * Only happens with SSLv3+ in an SSLv2 backward compatible
+             * ClientHello
+             */
+             /*
+              * Total message size is the remaining record bytes to read
+              * plus the SSL3_HM_HEADER_LENGTH bytes that we already read
+              */
+            l = RECORD_LAYER_get_rrec_length(&s->rlayer)
+                + SSL3_HM_HEADER_LENGTH;
+            if (l && !BUF_MEM_grow_clean(s->init_buf, (int)l)) {
+                SSLerr(SSL_F_SSL3_GET_MESSAGE, ERR_R_BUF_LIB);
+                goto err;
+            }
+            s->s3->tmp.message_size = l;
+            s->state = stn;
 
-        s->init_msg = s->init_buf->data + 4;
-        s->init_num = 0;
+            s->init_msg = s->init_buf->data;
+            s->init_num = SSL3_HM_HEADER_LENGTH;
+        } else {
+            n2l3(p, l);
+            if (l > (unsigned long)max) {
+                al = SSL_AD_ILLEGAL_PARAMETER;
+                SSLerr(SSL_F_SSL3_GET_MESSAGE, SSL_R_EXCESSIVE_MESSAGE_SIZE);
+                goto f_err;
+            }
+            /* BUF_MEM_grow takes an 'int' parameter */
+            if (l > (INT_MAX - SSL3_HM_HEADER_LENGTH)) {
+                al = SSL_AD_ILLEGAL_PARAMETER;
+                SSLerr(SSL_F_SSL3_GET_MESSAGE, SSL_R_EXCESSIVE_MESSAGE_SIZE);
+                goto f_err;
+            }
+            if (l && !BUF_MEM_grow_clean(s->init_buf,
+                                        (int)l + SSL3_HM_HEADER_LENGTH)) {
+                SSLerr(SSL_F_SSL3_GET_MESSAGE, ERR_R_BUF_LIB);
+                goto err;
+            }
+            s->s3->tmp.message_size = l;
+            s->state = stn;
+
+            s->init_msg = s->init_buf->data + SSL3_HM_HEADER_LENGTH;
+            s->init_num = 0;
+        }
     }
 
     /* next state (stn) */
     p = s->init_msg;
     n = s->s3->tmp.message_size - s->init_num;
     while (n > 0) {
-        i = s->method->ssl_read_bytes(s, SSL3_RT_HANDSHAKE, &p[s->init_num],
-                                      n, 0);
+        i = s->method->ssl_read_bytes(s, SSL3_RT_HANDSHAKE, NULL,
+                                      &p[s->init_num], n, 0);
         if (i <= 0) {
             s->rwstate = SSL_READING;
             *ok = 0;
@@ -456,10 +572,20 @@ long ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 #endif
 
     /* Feed this message into MAC computation. */
-    ssl3_finish_mac(s, (unsigned char *)s->init_buf->data, s->init_num + 4);
-    if (s->msg_callback)
-        s->msg_callback(0, s->version, SSL3_RT_HANDSHAKE, s->init_buf->data,
-                        (size_t)s->init_num + 4, s, s->msg_callback_arg);
+    if(RECORD_LAYER_is_sslv2_record(&s->rlayer)) {
+        ssl3_finish_mac(s, (unsigned char *)s->init_buf->data, s->init_num);
+        if (s->msg_callback)
+            s->msg_callback(0, SSL2_VERSION, 0,  s->init_buf->data,
+                            (size_t)s->init_num, s, s->msg_callback_arg);
+    } else {
+        ssl3_finish_mac(s, (unsigned char *)s->init_buf->data,
+            s->init_num + SSL3_HM_HEADER_LENGTH);
+        if (s->msg_callback)
+            s->msg_callback(0, s->version, SSL3_RT_HANDSHAKE, s->init_buf->data,
+                            (size_t)s->init_num + SSL3_HM_HEADER_LENGTH, s,
+                            s->msg_callback_arg);
+    }
+
     *ok = 1;
     return s->init_num;
  f_err:
@@ -492,9 +618,7 @@ int ssl_cert_type(X509 *x, EVP_PKEY *pkey)
         ret = SSL_PKEY_ECC;
     }
 #endif
-    else if (i == NID_id_GostR3410_94 || i == NID_id_GostR3410_94_cc) {
-        ret = SSL_PKEY_GOST94;
-    } else if (i == NID_id_GostR3410_2001 || i == NID_id_GostR3410_2001_cc) {
+    else if (i == NID_id_GostR3410_2001) {
         ret = SSL_PKEY_GOST01;
     } else if (x && (i == EVP_PKEY_DH || i == EVP_PKEY_DHX)) {
         /*

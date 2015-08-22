@@ -29,10 +29,10 @@ may also become invalid as a result of a call to SSL_CTX_flush_sessions().
 
 =head1 SEE ALSO
 
-L<ssl(3)|ssl(3)>,
-L<d2i_SSL_SESSION(3)|d2i_SSL_SESSION(3)>,
-L<SSL_SESSION_get_time(3)|SSL_SESSION_get_time(3)>,
-L<SSL_SESSION_free(3)|SSL_SESSION_free(3)>
+L<ssl(3)>,
+L<d2i_SSL_SESSION(3)>,
+L<SSL_SESSION_get_time(3)>,
+L<SSL_SESSION_free(3)>
 
 =head1 HISTORY
 

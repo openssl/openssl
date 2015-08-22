@@ -120,6 +120,19 @@ void SSL3_BUFFER_set_data(SSL3_BUFFER *b, const unsigned char *d, int n)
     b->offset = 0;
 }
 
+/*
+ * Clear the contents of an SSL3_BUFFER but retain any memory allocated
+ */
+void SSL3_BUFFER_clear(SSL3_BUFFER *b)
+{
+    unsigned char *buf = b->buf;
+    size_t len = b->len;
+
+    memset(b, 0, sizeof(*b));
+    b->buf = buf;
+    b->len = len;
+}
+
 void SSL3_BUFFER_release(SSL3_BUFFER *b)
 {
     OPENSSL_free(b->buf);

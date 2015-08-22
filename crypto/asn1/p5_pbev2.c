@@ -58,7 +58,7 @@
  */
 
 #include <stdio.h>
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/asn1t.h>
 #include <openssl/x509.h>
 #include <openssl/rand.h>
@@ -106,14 +106,13 @@ X509_ALGOR *PKCS5_pbe2_set_iv(const EVP_CIPHER *cipher, int iter,
     }
     obj = OBJ_nid2obj(alg_nid);
 
-    if (!(pbe2 = PBE2PARAM_new()))
+    if ((pbe2 = PBE2PARAM_new()) == NULL)
         goto merr;
 
     /* Setup the AlgorithmIdentifier for the encryption scheme */
     scheme = pbe2->encryption;
-
     scheme->algorithm = obj;
-    if (!(scheme->parameter = ASN1_TYPE_new()))
+    if ((scheme->parameter = ASN1_TYPE_new()) == NULL)
         goto merr;
 
     /* Create random IV */
@@ -163,7 +162,7 @@ X509_ALGOR *PKCS5_pbe2_set_iv(const EVP_CIPHER *cipher, int iter,
 
     /* Now set up top level AlgorithmIdentifier */
 
-    if (!(ret = X509_ALGOR_new()))
+    if ((ret = X509_ALGOR_new()) == NULL)
         goto merr;
 
     ret->algorithm = OBJ_nid2obj(NID_pbes2);
@@ -205,17 +204,17 @@ X509_ALGOR *PKCS5_pbkdf2_set(int iter, unsigned char *salt, int saltlen,
     PBKDF2PARAM *kdf = NULL;
     ASN1_OCTET_STRING *osalt = NULL;
 
-    if (!(kdf = PBKDF2PARAM_new()))
+    if ((kdf = PBKDF2PARAM_new()) == NULL)
         goto merr;
-    if (!(osalt = ASN1_OCTET_STRING_new()))
+    if ((osalt = ASN1_OCTET_STRING_new()) == NULL)
         goto merr;
 
     kdf->salt->value.octet_string = osalt;
     kdf->salt->type = V_ASN1_OCTET_STRING;
 
-    if (!saltlen)
+    if (saltlen == 0)
         saltlen = PKCS5_SALT_LEN;
-    if (!(osalt->data = OPENSSL_malloc(saltlen)))
+    if ((osalt->data = OPENSSL_malloc(saltlen)) == NULL)
         goto merr;
 
     osalt->length = saltlen;
@@ -234,7 +233,7 @@ X509_ALGOR *PKCS5_pbkdf2_set(int iter, unsigned char *salt, int saltlen,
     /* If have a key len set it up */
 
     if (keylen > 0) {
-        if (!(kdf->keylength = ASN1_INTEGER_new()))
+        if ((kdf->keylength = ASN1_INTEGER_new()) == NULL)
             goto merr;
         if (!ASN1_INTEGER_set(kdf->keylength, keylen))
             goto merr;

@@ -116,7 +116,7 @@
  * sections 3.8 and 4.2 in http://security.ece.orst.edu/koc/papers/r01rsasw.pdf
  */
 
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include "bn_lcl.h"
 
 #define MONT_WORD               /* use the faster word-based algorithm */
@@ -196,7 +196,9 @@ static int BN_from_montgomery_word(BIGNUM *ret, BIGNUM *r, BN_MONT_CTX *mont)
     rp = r->d;
 
     /* clear the top words of T */
-    memset(&rp[r->top], 0, sizeof(*rp) * (max - r->top));
+    i = max - r->top;
+    if (i)
+        memset(&rp[r->top], 0, sizeof(*rp) * i);
 
     r->top = max;
     n0 = mont->n0[0];
@@ -337,9 +339,9 @@ void BN_MONT_CTX_free(BN_MONT_CTX *mont)
     if (mont == NULL)
         return;
 
-    BN_free(&(mont->RR));
-    BN_free(&(mont->N));
-    BN_free(&(mont->Ni));
+    BN_clear_free(&(mont->RR));
+    BN_clear_free(&(mont->N));
+    BN_clear_free(&(mont->Ni));
     if (mont->flags & BN_FLG_MALLOCED)
         OPENSSL_free(mont);
 }
@@ -348,6 +350,9 @@ int BN_MONT_CTX_set(BN_MONT_CTX *mont, const BIGNUM *mod, BN_CTX *ctx)
 {
     int ret = 0;
     BIGNUM *Ri, *R;
+
+    if (BN_is_zero(mod))
+        return 0;
 
     BN_CTX_start(ctx);
     if ((Ri = BN_CTX_get(ctx)) == NULL)

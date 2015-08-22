@@ -80,7 +80,7 @@ $ sdirs := , -
    bn, ec, rsa, dsa, ecdsa, dh, ecdh, dso, engine, -
    buffer, bio, stack, lhash, rand, err, -
    evp, asn1, pem, x509, x509v3, conf, txt_db, pkcs7, pkcs12, comp, ocsp, -
-   ui, krb5, -
+   ui, -
    cms, pqueue, ts, jpake, srp, store, cmac
 $!
 $ exheader_ := crypto.h, opensslv.h, ebcdic.h, symhacks.h, ossl_typ.h
@@ -132,7 +132,6 @@ $ exheader_pkcs12 := pkcs12.h
 $ exheader_comp := comp.h
 $ exheader_ocsp := ocsp.h
 $ exheader_ui := ui.h
-$ exheader_krb5 := krb5_asn.h
 $ exheader_cms := cms.h
 $ exheader_pqueue := pqueue.h
 $ exheader_ts := ts.h

@@ -151,10 +151,10 @@ OPTIONS ts_options[] = {
     {"CApath", OPT_CAPATH, '/', "Path to trusted CA files"},
     {"CAfile", OPT_CAFILE, '<', "File with trusted CA certs"},
     {"untrusted", OPT_UNTRUSTED, '<', "File with untrusted certs"},
+    {"", OPT_MD, '-', "Any supported digest"},
 #ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
 #endif
-    {"", OPT_MD, '-', "Any supported digest"},
     {NULL}
 };
 
@@ -188,7 +188,8 @@ int ts_main(int argc, char **argv)
 {
     CONF *conf = NULL;
     char *CAfile = NULL, *untrusted = NULL, *engine = NULL, *prog, **helpp;
-    char *configfile = NULL, *section = NULL, *password = NULL;
+    char *configfile = default_config_file;
+    char *section = NULL, *password = NULL;
     char *data = NULL, *digest = NULL, *rnd = NULL, *policy = NULL;
     char *in = NULL, *out = NULL, *queryfile = NULL, *passin = NULL;
     char *inkey = NULL, *signer = NULL, *chain = NULL, *CApath = NULL;
@@ -315,6 +316,10 @@ int ts_main(int argc, char **argv)
         goto end;
     }
 
+    conf = load_config_file(configfile);
+    if (!app_load_modules(conf))
+        goto end;
+
     /*
      * Check consistency of parameters and execute the appropriate function.
      */
@@ -330,13 +335,10 @@ int ts_main(int argc, char **argv)
         ret = data != NULL && digest != NULL;
         if (ret)
             goto opthelp;
-        /* Load the config file for possible policy OIDs. */
-        conf = load_config_file(configfile);
         ret = !query_command(data, digest, md, policy, no_nonce, cert,
                              in, out, text);
         break;
     case OPT_REPLY:
-        conf = load_config_file(configfile);
         if (in == NULL) {
             ret = !(queryfile != NULL && conf != NULL && !token_in);
             if (ret)
@@ -381,7 +383,7 @@ static ASN1_OBJECT *txt2obj(const char *oid)
 {
     ASN1_OBJECT *oid_obj = NULL;
 
-    if (!(oid_obj = OBJ_txt2obj(oid, 0)))
+    if ((oid_obj = OBJ_txt2obj(oid, 0)) == NULL)
         BIO_printf(bio_err, "cannot convert %s to OID\n", oid);
 
     return oid_obj;
@@ -389,24 +391,7 @@ static ASN1_OBJECT *txt2obj(const char *oid)
 
 static CONF *load_config_file(const char *configfile)
 {
-    CONF *conf = NULL;
-    long errorline = -1;
-
-    if (!configfile)
-        configfile = getenv("OPENSSL_CONF");
-    if (!configfile)
-        configfile = getenv("SSLEAY_CONF");
-
-    if (configfile &&
-        (!(conf = NCONF_new(NULL)) ||
-         NCONF_load(conf, configfile, &errorline) <= 0)) {
-        if (errorline <= 0)
-            BIO_printf(bio_err, "error loading the config file "
-                       "'%s'\n", configfile);
-        else
-            BIO_printf(bio_err, "error on line %ld of config file "
-                       "'%s'\n", errorline, configfile);
-    }
+    CONF *conf = app_load_config(configfile);
 
     if (conf != NULL) {
         const char *p;
@@ -449,7 +434,8 @@ static int query_command(const char *data, char *digest, const EVP_MD *md,
         query = d2i_TS_REQ_bio(in_bio, NULL);
     } else {
         /* Open the file if no explicit digest bytes were specified. */
-        if (!digest && !(data_bio = bio_open_default(data, "rb")))
+        if (digest == NULL
+            && (data_bio = bio_open_default(data, "rb")) == NULL)
             goto end;
         query = create_query(data_bio, digest, md, policy, no_nonce, cert);
     }
@@ -496,11 +482,11 @@ static TS_REQ *create_query(BIO *data_bio, char *digest, const EVP_MD *md,
     ASN1_INTEGER *nonce_asn1 = NULL;
 
     /* Setting default message digest. */
-    if (!md && !(md = EVP_get_digestbyname("sha1")))
+    if (md == NULL && (md = EVP_get_digestbyname("sha1")) == NULL)
         goto err;
 
     /* Creating request object. */
-    if (!(ts_req = TS_REQ_new()))
+    if ((ts_req = TS_REQ_new()) == NULL)
         goto err;
 
     /* Setting version. */
@@ -508,15 +494,15 @@ static TS_REQ *create_query(BIO *data_bio, char *digest, const EVP_MD *md,
         goto err;
 
     /* Creating and adding MSG_IMPRINT object. */
-    if (!(msg_imprint = TS_MSG_IMPRINT_new()))
+    if ((msg_imprint = TS_MSG_IMPRINT_new()) == NULL)
         goto err;
 
     /* Adding algorithm. */
-    if (!(algo = X509_ALGOR_new()))
+    if ((algo = X509_ALGOR_new()) == NULL)
         goto err;
-    if (!(algo->algorithm = OBJ_nid2obj(EVP_MD_type(md))))
+    if ((algo->algorithm = OBJ_nid2obj(EVP_MD_type(md))) == NULL)
         goto err;
-    if (!(algo->parameter = ASN1_TYPE_new()))
+    if ((algo->parameter = ASN1_TYPE_new()) == NULL)
         goto err;
     algo->parameter->type = V_ASN1_NULL;
     if (!TS_MSG_IMPRINT_set_algo(msg_imprint, algo))
@@ -532,13 +518,13 @@ static TS_REQ *create_query(BIO *data_bio, char *digest, const EVP_MD *md,
         goto err;
 
     /* Setting policy if requested. */
-    if (policy && !(policy_obj = txt2obj(policy)))
+    if (policy && (policy_obj = txt2obj(policy)) == NULL)
         goto err;
     if (policy_obj && !TS_REQ_set_policy_id(ts_req, policy_obj))
         goto err;
 
     /* Setting nonce if requested. */
-    if (!no_nonce && !(nonce_asn1 = create_nonce(NONCE_LENGTH)))
+    if (!no_nonce && (nonce_asn1 = create_nonce(NONCE_LENGTH)) == NULL)
         goto err;
     if (nonce_asn1 && !TS_REQ_set_nonce(ts_req, nonce_asn1))
         goto err;
@@ -615,8 +601,9 @@ static ASN1_INTEGER *create_nonce(int bits)
         goto err;
 
     /* Find the first non-zero byte and creating ASN1_INTEGER object. */
-    for (i = 0; i < len && !buf[i]; ++i) ;
-    if (!(nonce = ASN1_INTEGER_new()))
+    for (i = 0; i < len && !buf[i]; ++i)
+        continue;
+    if ((nonce = ASN1_INTEGER_new()) == NULL)
         goto err;
     OPENSSL_free(nonce->data);
     /* Allocate at least one byte. */
@@ -725,17 +712,17 @@ static TS_RESP *read_PKCS7(BIO *in_bio)
     TS_STATUS_INFO *si = NULL;
 
     /* Read PKCS7 object and extract the signed time stamp info. */
-    if (!(token = d2i_PKCS7_bio(in_bio, NULL)))
+    if ((token = d2i_PKCS7_bio(in_bio, NULL)) == NULL)
         goto end;
-    if (!(tst_info = PKCS7_to_TS_TST_INFO(token)))
+    if ((tst_info = PKCS7_to_TS_TST_INFO(token)) == NULL)
         goto end;
 
     /* Creating response object. */
-    if (!(resp = TS_RESP_new()))
+    if ((resp = TS_RESP_new()) == NULL)
         goto end;
 
     /* Create granted status info. */
-    if (!(si = TS_STATUS_INFO_new()))
+    if ((si = TS_STATUS_INFO_new()) == NULL)
         goto end;
     if (!(ASN1_INTEGER_set(si->status, TS_STATUS_GRANTED)))
         goto end;
@@ -769,15 +756,15 @@ static TS_RESP *create_response(CONF *conf, const char *section, char *engine,
     BIO *query_bio = NULL;
     TS_RESP_CTX *resp_ctx = NULL;
 
-    if (!(query_bio = BIO_new_file(queryfile, "rb")))
+    if ((query_bio = BIO_new_file(queryfile, "rb")) == NULL)
         goto end;
 
     /* Getting TSA configuration section. */
-    if (!(section = TS_CONF_get_tsa_section(conf, section)))
+    if ((section = TS_CONF_get_tsa_section(conf, section)) == NULL)
         goto end;
 
     /* Setting up response generation context. */
-    if (!(resp_ctx = TS_RESP_CTX_new()))
+    if ((resp_ctx = TS_RESP_CTX_new()) == NULL)
         goto end;
 
     /* Setting serial number provider callback. */
@@ -834,7 +821,7 @@ static TS_RESP *create_response(CONF *conf, const char *section, char *engine,
         goto end;
 
     /* Creating the response. */
-    if (!(response = TS_RESP_create_response(resp_ctx, query_bio)))
+    if ((response = TS_RESP_create_response(resp_ctx, query_bio)) == NULL)
         goto end;
 
     ret = 1;
@@ -872,10 +859,10 @@ static ASN1_INTEGER *next_serial(const char *serialfile)
     ASN1_INTEGER *serial = NULL;
     BIGNUM *bn = NULL;
 
-    if (!(serial = ASN1_INTEGER_new()))
+    if ((serial = ASN1_INTEGER_new()) == NULL)
         goto err;
 
-    if (!(in = BIO_new_file(serialfile, "r"))) {
+    if ((in = BIO_new_file(serialfile, "r")) == NULL) {
         ERR_clear_error();
         BIO_printf(bio_err, "Warning: could not open file %s for "
                    "reading, using serial number: 1\n", serialfile);
@@ -888,13 +875,13 @@ static ASN1_INTEGER *next_serial(const char *serialfile)
                        serialfile);
             goto err;
         }
-        if (!(bn = ASN1_INTEGER_to_BN(serial, NULL)))
+        if ((bn = ASN1_INTEGER_to_BN(serial, NULL)) == NULL)
             goto err;
         ASN1_INTEGER_free(serial);
         serial = NULL;
         if (!BN_add_word(bn, 1))
             goto err;
-        if (!(serial = BN_to_ASN1_INTEGER(bn, NULL)))
+        if ((serial = BN_to_ASN1_INTEGER(bn, NULL)) == NULL)
             goto err;
     }
     ret = 1;
@@ -913,7 +900,7 @@ static int save_ts_serial(const char *serialfile, ASN1_INTEGER *serial)
     int ret = 0;
     BIO *out = NULL;
 
-    if (!(out = BIO_new_file(serialfile, "w")))
+    if ((out = BIO_new_file(serialfile, "w")) == NULL)
         goto err;
     if (i2a_ASN1_INTEGER(out, serial) <= 0)
         goto err;
@@ -943,18 +930,18 @@ static int verify_command(char *data, char *digest, char *queryfile,
     int ret = 0;
 
     /* Decode the token (PKCS7) or response (TS_RESP) files. */
-    if (!(in_bio = BIO_new_file(in, "rb")))
+    if ((in_bio = BIO_new_file(in, "rb")) == NULL)
         goto end;
     if (token_in) {
-        if (!(token = d2i_PKCS7_bio(in_bio, NULL)))
+        if ((token = d2i_PKCS7_bio(in_bio, NULL)) == NULL)
             goto end;
     } else {
-        if (!(response = d2i_TS_RESP_bio(in_bio, NULL)))
+        if ((response = d2i_TS_RESP_bio(in_bio, NULL)) == NULL)
             goto end;
     }
 
-    if (!(verify_ctx = create_verify_ctx(data, digest, queryfile,
-                                         CApath, CAfile, untrusted)))
+    if ((verify_ctx = create_verify_ctx(data, digest, queryfile,
+                                        CApath, CAfile, untrusted)) == NULL)
         goto end;
 
     /* Checking the token or response against the request. */
@@ -991,17 +978,17 @@ static TS_VERIFY_CTX *create_verify_ctx(char *data, char *digest,
     int ret = 0;
 
     if (data != NULL || digest != NULL) {
-        if (!(ctx = TS_VERIFY_CTX_new()))
+        if ((ctx = TS_VERIFY_CTX_new()) == NULL)
             goto err;
         ctx->flags = TS_VFY_VERSION | TS_VFY_SIGNER;
         if (data != NULL) {
             ctx->flags |= TS_VFY_DATA;
-            if (!(ctx->data = BIO_new_file(data, "rb")))
+            if ((ctx->data = BIO_new_file(data, "rb")) == NULL)
                 goto err;
         } else if (digest != NULL) {
             long imprint_len;
             ctx->flags |= TS_VFY_IMPRINT;
-            if (!(ctx->imprint = string_to_hex(digest, &imprint_len))) {
+            if ((ctx->imprint = string_to_hex(digest, &imprint_len)) == NULL) {
                 BIO_printf(bio_err, "invalid digest string\n");
                 goto err;
             }
@@ -1013,11 +1000,11 @@ static TS_VERIFY_CTX *create_verify_ctx(char *data, char *digest,
          * The request has just to be read, decoded and converted to a verify
          * context object.
          */
-        if (!(input = BIO_new_file(queryfile, "rb")))
+        if ((input = BIO_new_file(queryfile, "rb")) == NULL)
             goto err;
-        if (!(request = d2i_TS_REQ_bio(input, NULL)))
+        if ((request = d2i_TS_REQ_bio(input, NULL)) == NULL)
             goto err;
-        if (!(ctx = TS_REQ_to_TS_VERIFY_CTX(request, NULL)))
+        if ((ctx = TS_REQ_to_TS_VERIFY_CTX(request, NULL)) == NULL)
             goto err;
     } else
         return NULL;
@@ -1026,11 +1013,11 @@ static TS_VERIFY_CTX *create_verify_ctx(char *data, char *digest,
     ctx->flags |= TS_VFY_SIGNATURE;
 
     /* Initialising the X509_STORE object. */
-    if (!(ctx->store = create_cert_store(CApath, CAfile)))
+    if ((ctx->store = create_cert_store(CApath, CAfile)) == NULL)
         goto err;
 
     /* Loading untrusted certificates. */
-    if (untrusted && !(ctx->certs = TS_CONF_load_certs(untrusted)))
+    if (untrusted && (ctx->certs = TS_CONF_load_certs(untrusted)) == NULL)
         goto err;
 
     ret = 1;

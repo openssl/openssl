@@ -58,7 +58,7 @@
  */
 
 #include <stdio.h>
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/objects.h>
 #include <openssl/bn.h>
 #include <openssl/x509v3.h>
@@ -71,9 +71,9 @@ struct status_map_st {
 
 /* Local function declarations. */
 
-static int TS_status_map_print(BIO *bio, const struct status_map_st *a,
+static int ts_status_map_print(BIO *bio, const struct status_map_st *a,
                                const ASN1_BIT_STRING *v);
-static int TS_ACCURACY_print_bio(BIO *bio, const TS_ACCURACY *accuracy);
+static int ts_ACCURACY_print_bio(BIO *bio, const TS_ACCURACY *accuracy);
 
 /* Function definitions. */
 
@@ -149,7 +149,7 @@ int TS_STATUS_INFO_print_bio(BIO *bio, TS_STATUS_INFO *a)
     /* Printing failure information. */
     BIO_printf(bio, "Failure info: ");
     if (a->failure_info != NULL)
-        lines = TS_status_map_print(bio, failure_map, a->failure_info);
+        lines = ts_status_map_print(bio, failure_map, a->failure_info);
     if (lines == 0)
         BIO_printf(bio, "unspecified");
     BIO_printf(bio, "\n");
@@ -157,7 +157,7 @@ int TS_STATUS_INFO_print_bio(BIO *bio, TS_STATUS_INFO *a)
     return 1;
 }
 
-static int TS_status_map_print(BIO *bio, const struct status_map_st *a,
+static int ts_status_map_print(BIO *bio, const struct status_map_st *a,
                                const ASN1_BIT_STRING *v)
 {
     int lines = 0;
@@ -219,7 +219,7 @@ int TS_TST_INFO_print_bio(BIO *bio, TS_TST_INFO *a)
     if (accuracy == NULL)
         BIO_printf(bio, "unspecified");
     else
-        TS_ACCURACY_print_bio(bio, accuracy);
+        ts_ACCURACY_print_bio(bio, accuracy);
     BIO_write(bio, "\n", 1);
 
     /* Print ordering. */
@@ -254,7 +254,7 @@ int TS_TST_INFO_print_bio(BIO *bio, TS_TST_INFO *a)
     return 1;
 }
 
-static int TS_ACCURACY_print_bio(BIO *bio, const TS_ACCURACY *accuracy)
+static int ts_ACCURACY_print_bio(BIO *bio, const TS_ACCURACY *accuracy)
 {
     const ASN1_INTEGER *seconds = TS_ACCURACY_get_seconds(accuracy);
     const ASN1_INTEGER *millis = TS_ACCURACY_get_millis(accuracy);

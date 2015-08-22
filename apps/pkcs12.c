@@ -149,10 +149,10 @@ OPTIONS pkcs12_options[] = {
     {"password", OPT_PASSWORD, 's', "Set import/export password source"},
     {"CApath", OPT_CAPATH, '/', "PEM-format directory of CA's"},
     {"CAfile", OPT_CAFILE, '<', "PEM-format file of CA's"},
+    {"", OPT_CIPHER, '-', "Any supported cipher"},
 # ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
 # endif
-    {"", OPT_CIPHER, '-', "Any supported cipher"},
     {NULL}
 };
 
@@ -160,7 +160,7 @@ int pkcs12_main(int argc, char **argv)
 {
     char *infile = NULL, *outfile = NULL, *keyname = NULL, *certfile = NULL;
     char *name = NULL, *csp_name = NULL;
-    char pass[50], macpass[50];
+    char pass[2048], macpass[2048];
     int export_cert = 0, options = 0, chain = 0, twopass = 0, keytype = 0;
     int iter = PKCS12_DEFAULT_ITER, maciter = PKCS12_DEFAULT_ITER;
 # ifndef OPENSSL_NO_RC2
@@ -169,7 +169,7 @@ int pkcs12_main(int argc, char **argv)
     int cert_pbe = NID_pbe_WithSHA1And3_Key_TripleDES_CBC;
 # endif
     int key_pbe = NID_pbe_WithSHA1And3_Key_TripleDES_CBC;
-    int ret = 1, macver = 1, noprompt = 0, add_lmk = 0;
+    int ret = 1, macver = 1, noprompt = 0, add_lmk = 0, private = 0;
     char *passinarg = NULL, *passoutarg = NULL, *passarg = NULL;
     char *passin = NULL, *passout = NULL, *inrand = NULL, *macalg = NULL;
     char *cpass = NULL, *mpass = NULL, *CApath = NULL, *CAfile = NULL;
@@ -314,6 +314,7 @@ int pkcs12_main(int argc, char **argv)
     }
     argc = opt_num_rest();
     argv = opt_rest();
+    private = 1;
 
     if (passarg) {
         if (export_cert)
@@ -342,6 +343,9 @@ int pkcs12_main(int argc, char **argv)
         mpass = macpass;
     }
 
+    if (!app_load_modules(NULL))
+        goto end;
+
     if (export_cert || inrand) {
         app_RAND_load_file(NULL, (inrand != NULL));
         if (inrand != NULL)
@@ -352,8 +356,7 @@ int pkcs12_main(int argc, char **argv)
     in = bio_open_default(infile, "rb");
     if (in == NULL)
         goto end;
-
-    out = bio_open_default(outfile, "wb");
+    out = bio_open_owner(outfile, "wb", private);
     if (out == NULL)
         goto end;
 
@@ -421,8 +424,8 @@ int pkcs12_main(int argc, char **argv)
         /* Add any more certificates asked for */
         if (certfile) {
             STACK_OF(X509) *morecerts = NULL;
-            if (!(morecerts = load_certs(certfile, FORMAT_PEM, NULL, e,
-                                         "certificates from certfile")))
+            if ((morecerts = load_certs(certfile, FORMAT_PEM, NULL, e,
+                                        "certificates from certfile")) == NULL)
                 goto export_end;
             while (sk_X509_num(morecerts) > 0)
                 sk_X509_push(certs, sk_X509_shift(morecerts));
@@ -434,7 +437,7 @@ int pkcs12_main(int argc, char **argv)
             int vret;
             STACK_OF(X509) *chain2;
             X509_STORE *store;
-            if (!(store = setup_verify(CAfile, CApath)))
+            if ((store = setup_verify(CAfile, CApath)) == NULL)
                 goto export_end;
 
             vret = get_cert_chain(ucert, store, &chain2);
@@ -497,6 +500,7 @@ int pkcs12_main(int argc, char **argv)
         if (maciter != -1)
             PKCS12_set_mac(p12, mpass, -1, NULL, 0, maciter, macmd);
 
+        assert(private);
         i2d_PKCS12_bio(out, p12);
 
         ret = 0;
@@ -511,7 +515,7 @@ int pkcs12_main(int argc, char **argv)
 
     }
 
-    if (!(p12 = d2i_PKCS12_bio(in, NULL))) {
+    if ((p12 = d2i_PKCS12_bio(in, NULL)) == NULL) {
         ERR_print_errors(bio_err);
         goto end;
     }
@@ -542,6 +546,7 @@ int pkcs12_main(int argc, char **argv)
         }
     }
 
+    assert(private);
     if (!dump_certs_keys_p12(out, p12, cpass, -1, options, passout, enc)) {
         BIO_printf(bio_err, "Error outputting keys and certificates\n");
         ERR_print_errors(bio_err);
@@ -570,7 +575,7 @@ int dump_certs_keys_p12(BIO *out, PKCS12 *p12, char *pass,
     int ret = 0;
     PKCS7 *p7;
 
-    if (!(asafes = PKCS12_unpack_authsafes(p12)))
+    if ((asafes = PKCS12_unpack_authsafes(p12)) == NULL)
         return 0;
     for (i = 0; i < sk_PKCS7_num(asafes); i++) {
         p7 = sk_PKCS7_value(asafes, i);
@@ -634,7 +639,7 @@ int dump_certs_pkeys_bag(BIO *out, PKCS12_SAFEBAG *bag, char *pass,
             return 1;
         print_attribs(out, bag->attrib, "Bag Attributes");
         p8 = bag->value.keybag;
-        if (!(pkey = EVP_PKCS82PKEY(p8)))
+        if ((pkey = EVP_PKCS82PKEY(p8)) == NULL)
             return 0;
         print_attribs(out, p8->attributes, "Key Attributes");
         PEM_write_bio_PrivateKey(out, pkey, enc, NULL, 0, NULL, pempass);
@@ -649,9 +654,9 @@ int dump_certs_pkeys_bag(BIO *out, PKCS12_SAFEBAG *bag, char *pass,
         if (options & NOKEYS)
             return 1;
         print_attribs(out, bag->attrib, "Bag Attributes");
-        if (!(p8 = PKCS12_decrypt_skey(bag, pass, passlen)))
+        if ((p8 = PKCS12_decrypt_skey(bag, pass, passlen)) == NULL)
             return 0;
-        if (!(pkey = EVP_PKCS82PKEY(p8))) {
+        if ((pkey = EVP_PKCS82PKEY(p8)) == NULL) {
             PKCS8_PRIV_KEY_INFO_free(p8);
             return 0;
         }
@@ -674,7 +679,7 @@ int dump_certs_pkeys_bag(BIO *out, PKCS12_SAFEBAG *bag, char *pass,
         print_attribs(out, bag->attrib, "Bag Attributes");
         if (M_PKCS12_cert_bag_type(bag) != NID_x509Certificate)
             return 1;
-        if (!(x509 = PKCS12_certbag2x509(bag)))
+        if ((x509 = PKCS12_certbag2x509(bag)) == NULL)
             return 0;
         dump_cert_text(out, x509);
         PEM_write_bio_X509(out, x509);

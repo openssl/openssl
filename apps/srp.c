@@ -58,17 +58,16 @@
 #include <openssl/opensslconf.h>
 
 #ifndef OPENSSL_NO_SRP
-# include <stdio.h>
-# include <stdlib.h>
-# include <string.h>
-# include <openssl/conf.h>
-# include <openssl/bio.h>
-# include <openssl/err.h>
-# include <openssl/txt_db.h>
-# include <openssl/buffer.h>
-# include <openssl/srp.h>
-
-# include "apps.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <openssl/conf.h>
+#include <openssl/bio.h>
+#include <openssl/err.h>
+#include <openssl/txt_db.h>
+#include <openssl/buffer.h>
+#include <openssl/srp.h>
+#include "apps.h"
 
 # define BASE_SECTION    "srp"
 # define CONFIG_FILE "openssl.cnf"
@@ -256,14 +255,13 @@ int srp_main(int argc, char **argv)
     CA_DB *db = NULL;
     DB_ATTR db_attr;
     CONF *conf = NULL;
-    int gNindex = -1, maxgN = -1, ret = 1, errors = 0, verbose =
-        0, i, doupdatedb = 0;
-    int mode = OPT_ERR;
+    int gNindex = -1, maxgN = -1, ret = 1, errors = 0, verbose = 0, i;
+    int doupdatedb = 0, mode = OPT_ERR;
     char *user = NULL, *passinarg = NULL, *passoutarg = NULL;
     char *passin = NULL, *passout = NULL, *gN = NULL, *userinfo = NULL;
     char *randfile = NULL, *tofree = NULL, *section = NULL;
-    char **gNrow = NULL, *configfile = NULL, *dbfile = NULL, **pp, *prog;
-    long errorline = -1;
+    char **gNrow = NULL, *configfile = default_config_file;
+    char *dbfile = NULL, **pp, *prog;
     OPTION_CHOICE o;
 
     prog = opt_init(argc, argv, srp_options);
@@ -350,42 +348,14 @@ int srp_main(int argc, char **argv)
     }
 
     if (!dbfile) {
-
-        /*****************************************************************/
-        tofree = NULL;
-        if (configfile == NULL)
-            configfile = getenv("OPENSSL_CONF");
-        if (configfile == NULL)
-            configfile = getenv("SSLEAY_CONF");
-        if (configfile == NULL) {
-            const char *s = X509_get_default_cert_area();
-            size_t len = strlen(s) + 1 + sizeof(CONFIG_FILE);
-
-            tofree = app_malloc(len, "config filename space");
-# ifdef OPENSSL_SYS_VMS
-            strcpy(tofree, s);
-# else
-            BUF_strlcpy(tofree, s, len);
-            BUF_strlcat(tofree, "/", len);
-# endif
-            BUF_strlcat(tofree, CONFIG_FILE, len);
-            configfile = tofree;
-        }
-
         if (verbose)
-            BIO_printf(bio_err, "Using configuration from %s\n", configfile);
-        conf = NCONF_new(NULL);
-        if (NCONF_load(conf, configfile, &errorline) <= 0) {
-            if (errorline <= 0)
-                BIO_printf(bio_err, "error loading the config file '%s'\n",
-                           configfile);
-            else
-                BIO_printf(bio_err, "error on line %ld of config file '%s'\n",
-                           errorline, configfile);
+            BIO_printf(bio_err, "Using configuration from %s\n",
+                       configfile);
+        conf = app_load_config(configfile);
+        if (conf == NULL)
             goto end;
-        }
-        OPENSSL_free(tofree);
-        tofree = NULL;
+	if (!app_load_modules(conf))
+            goto end;
 
         /* Lets get the config section we are using */
         if (section == NULL) {
@@ -516,10 +486,13 @@ int srp_main(int argc, char **argv)
                 row[DB_srptype] = BUF_strdup("v");
                 row[DB_srpgN] = BUF_strdup(gNid);
 
-                if (!row[DB_srpid] || !row[DB_srpgN] || !row[DB_srptype]
-                    || !row[DB_srpverifier] || !row[DB_srpsalt]
-                    || (userinfo &&
-                         (!(row [DB_srpinfo] = BUF_strdup (userinfo))))
+                if ((row[DB_srpid] == NULL)
+                    || (row[DB_srpgN] == NULL)
+                    || (row[DB_srptype] == NULL)
+                    || (row[DB_srpverifier] == NULL)
+                    || (row[DB_srpsalt] == NULL)
+                    || (userinfo
+                        && ((row[DB_srpinfo] = BUF_strdup(userinfo)) == NULL))
                     || !update_index(db, row)) {
                     OPENSSL_free(row[DB_srpid]);
                     OPENSSL_free(row[DB_srpgN]);
@@ -596,10 +569,14 @@ int srp_main(int argc, char **argv)
                     row[DB_srptype][0] = 'v';
                     row[DB_srpgN] = BUF_strdup(gNid);
 
-                    if (!row[DB_srpid] || !row[DB_srpgN] || !row[DB_srptype]
-                        || !row[DB_srpverifier] || !row[DB_srpsalt]
+                    if (row[DB_srpid] == NULL
+                        || row[DB_srpgN] == NULL
+                        || row[DB_srptype] == NULL
+                        || row[DB_srpverifier] == NULL
+                        || row[DB_srpsalt] == NULL
                         || (userinfo
-                            && (!(row[DB_srpinfo] = BUF_strdup(userinfo)))))
+                            && ((row[DB_srpinfo] = BUF_strdup(userinfo))
+                                == NULL)))
                         goto end;
 
                     doupdatedb = 1;
@@ -612,12 +589,10 @@ int srp_main(int argc, char **argv)
                            user);
                 errors++;
             } else {
-                char **xpp =
-                    sk_OPENSSL_PSTRING_value(db->db->data, userindex);
+                char **xpp = sk_OPENSSL_PSTRING_value(db->db->data, userindex);
+
                 BIO_printf(bio_err, "user \"%s\" revoked. t\n", user);
-
                 xpp[DB_srptype][0] = 'R';
-
                 doupdatedb = 1;
             }
         }
@@ -674,5 +649,11 @@ int srp_main(int argc, char **argv)
     OBJ_cleanup();
     return (ret);
 }
+
+#else
+
+# if PEDANTIC
+static void *dummy = &dummy;
+# endif
 
 #endif

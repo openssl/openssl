@@ -49,7 +49,7 @@ success, 0 otherwise.
 =head1 NOTE
 
 Applications should use the higher level functions
-L<EVP_DigestInit(3)|EVP_DigestInit(3)> etc. instead of calling these
+L<EVP_DigestInit(3)> etc. instead of calling these
 functions directly.
 
 =head1 CONFORMING TO
@@ -58,6 +58,6 @@ ISO/IEC 10118-3 (draft) (??)
 
 =head1 SEE ALSO
 
-L<EVP_DigestInit(3)|EVP_DigestInit(3)>
+L<EVP_DigestInit(3)>
 
 =cut

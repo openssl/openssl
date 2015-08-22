@@ -34,9 +34,6 @@ PKCS#12: Personal Information Exchange Syntax Standard, version 1.0.
 2560 X.509 Internet Public Key Infrastructure Online Certificate
      Status Protocol - OCSP
 
-2712 Addition of Kerberos Cipher Suites to Transport Layer Security
-     (TLS)
-
 2898 PKCS #5: Password-Based Cryptography Specification Version 2.0
 
 2986 PKCS #10: Certification Request Syntax Specification Version 1.7

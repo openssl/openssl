@@ -568,7 +568,7 @@ bn_sqr_comba8:
 // I've estimated this routine to run in ~120 ticks, but in reality
 // (i.e. according to ar.itc) it takes ~160 ticks. Are those extra
 // cycles consumed for instructions fetch? Or did I misinterpret some
-// clause in Itanium µ-architecture manual? Comments are welcomed and
+// clause in Itanium Âµ-architecture manual? Comments are welcomed and
 // highly appreciated.
 //
 // On Itanium 2 it takes ~190 ticks. This is because of stalls on

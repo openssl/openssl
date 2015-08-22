@@ -67,26 +67,43 @@
 static const SSL_METHOD *tls1_get_server_method(int ver);
 static const SSL_METHOD *tls1_get_server_method(int ver)
 {
+    if (ver == TLS_ANY_VERSION)
+        return TLS_server_method();
     if (ver == TLS1_2_VERSION)
         return TLSv1_2_server_method();
     if (ver == TLS1_1_VERSION)
         return TLSv1_1_server_method();
     if (ver == TLS1_VERSION)
         return TLSv1_server_method();
+#ifndef OPENSSL_NO_SSL3
+    if (ver == SSL3_VERSION)
+        return (SSLv3_server_method());
+#endif
     return NULL;
 }
+
+IMPLEMENT_tls_meth_func(TLS_ANY_VERSION, TLS_server_method,
+                        ssl3_accept,
+                        ssl_undefined_function,
+                        tls1_get_server_method, TLSv1_2_enc_data)
 
 IMPLEMENT_tls_meth_func(TLS1_2_VERSION, TLSv1_2_server_method,
                         ssl3_accept,
                         ssl_undefined_function,
                         tls1_get_server_method, TLSv1_2_enc_data)
 
-    IMPLEMENT_tls_meth_func(TLS1_1_VERSION, TLSv1_1_server_method,
+IMPLEMENT_tls_meth_func(TLS1_1_VERSION, TLSv1_1_server_method,
                         ssl3_accept,
                         ssl_undefined_function,
                         tls1_get_server_method, TLSv1_1_enc_data)
 
-    IMPLEMENT_tls_meth_func(TLS1_VERSION, TLSv1_server_method,
+IMPLEMENT_tls_meth_func(TLS1_VERSION, TLSv1_server_method,
                         ssl3_accept,
                         ssl_undefined_function,
                         tls1_get_server_method, TLSv1_enc_data)
+
+#ifndef OPENSSL_NO_SSL3_METHOD
+IMPLEMENT_ssl3_meth_func(SSLv3_server_method,
+                         ssl3_accept,
+                         ssl_undefined_function, tls1_get_server_method)
+#endif

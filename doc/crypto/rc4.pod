@@ -44,7 +44,7 @@ RC4_set_key() and RC4() do not return values.
 =head1 NOTE
 
 Applications should use the higher level functions
-L<EVP_EncryptInit(3)|EVP_EncryptInit(3)> etc. instead of calling these
+L<EVP_EncryptInit(3)> etc. instead of calling these
 functions directly.
 
 It is difficult to securely use stream ciphers. For example, do not perform
@@ -56,6 +56,6 @@ RC4_set_key() and RC4() are available in all versions of SSLeay and OpenSSL.
 
 =head1 SEE ALSO
 
-L<EVP_EncryptInit(3)|EVP_EncryptInit(3)>
+L<EVP_EncryptInit(3)>
 
 =cut

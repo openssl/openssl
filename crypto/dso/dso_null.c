@@ -63,7 +63,7 @@
  */
 
 #include <stdio.h>
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/dso.h>
 
 static DSO_METHOD dso_meth_null = {

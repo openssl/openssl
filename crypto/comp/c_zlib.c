@@ -1,17 +1,70 @@
+/* ====================================================================
+ * Copyright (c) 1999-2015 The OpenSSL Project.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in
+ *    the documentation and/or other materials provided with the
+ *    distribution.
+ *
+ * 3. All advertising materials mentioning features or use of this
+ *    software must display the following acknowledgment:
+ *    "This product includes software developed by the OpenSSL Project
+ *    for use in the OpenSSL Toolkit. (http://www.OpenSSL.org/)"
+ *
+ * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
+ *    endorse or promote products derived from this software without
+ *    prior written permission. For written permission, please contact
+ *    openssl-core@OpenSSL.org.
+ *
+ * 5. Products derived from this software may not be called "OpenSSL"
+ *    nor may "OpenSSL" appear in their names without prior written
+ *    permission of the OpenSSL Project.
+ *
+ * 6. Redistributions of any form whatsoever must retain the following
+ *    acknowledgment:
+ *    "This product includes software developed by the OpenSSL Project
+ *    for use in the OpenSSL Toolkit (http://www.OpenSSL.org/)"
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
+ * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
+ * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+ * OF THE POSSIBILITY OF SUCH DAMAGE.
+ * ====================================================================
+ *
+ * This product includes cryptographic software written by Eric Young
+ * (eay@cryptsoft.com).  This product includes software written by Tim
+ * Hudson (tjh@cryptsoft.com).
+ *
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <openssl/objects.h>
 #include <openssl/comp.h>
 #include <openssl/err.h>
+#include "comp_lcl.h"
 
 COMP_METHOD *COMP_zlib(void);
 
 static COMP_METHOD zlib_method_nozlib = {
     NID_undef,
     "(undef)",
-    NULL,
-    NULL,
     NULL,
     NULL,
     NULL,
@@ -56,9 +109,7 @@ static COMP_METHOD zlib_stateful_method = {
     zlib_stateful_init,
     zlib_stateful_finish,
     zlib_stateful_compress_block,
-    zlib_stateful_expand_block,
-    NULL,
-    NULL,
+    zlib_stateful_expand_block
 };
 
 /*
@@ -114,8 +165,6 @@ struct zlib_state {
     z_stream ostream;
 };
 
-static int zlib_stateful_ex_idx = -1;
-
 static int zlib_stateful_init(COMP_CTX *ctx)
 {
     int err;
@@ -147,8 +196,7 @@ static int zlib_stateful_init(COMP_CTX *ctx)
     if (err != Z_OK)
         goto err;
 
-    CRYPTO_new_ex_data(CRYPTO_EX_INDEX_COMP, ctx, &ctx->ex_data);
-    CRYPTO_set_ex_data(&ctx->ex_data, zlib_stateful_ex_idx, state);
+    ctx->data = state;
     return 1;
  err:
     OPENSSL_free(state);
@@ -157,13 +205,10 @@ static int zlib_stateful_init(COMP_CTX *ctx)
 
 static void zlib_stateful_finish(COMP_CTX *ctx)
 {
-    struct zlib_state *state =
-        (struct zlib_state *)CRYPTO_get_ex_data(&ctx->ex_data,
-                                                zlib_stateful_ex_idx);
+    struct zlib_state *state = ctx->data;
     inflateEnd(&state->istream);
     deflateEnd(&state->ostream);
     OPENSSL_free(state);
-    CRYPTO_free_ex_data(CRYPTO_EX_INDEX_COMP, ctx, &ctx->ex_data);
 }
 
 static int zlib_stateful_compress_block(COMP_CTX *ctx, unsigned char *out,
@@ -171,9 +216,7 @@ static int zlib_stateful_compress_block(COMP_CTX *ctx, unsigned char *out,
                                         unsigned int ilen)
 {
     int err = Z_OK;
-    struct zlib_state *state =
-        (struct zlib_state *)CRYPTO_get_ex_data(&ctx->ex_data,
-                                                zlib_stateful_ex_idx);
+    struct zlib_state *state = ctx->data;
 
     if (state == NULL)
         return -1;
@@ -199,10 +242,7 @@ static int zlib_stateful_expand_block(COMP_CTX *ctx, unsigned char *out,
                                       unsigned int ilen)
 {
     int err = Z_OK;
-
-    struct zlib_state *state =
-        (struct zlib_state *)CRYPTO_get_ex_data(&ctx->ex_data,
-                                                zlib_stateful_ex_idx);
+    struct zlib_state *state = ctx->data;
 
     if (state == NULL)
         return 0;
@@ -254,33 +294,13 @@ COMP_METHOD *COMP_zlib(void)
                 && p_inflateInit_ && p_deflateEnd
                 && p_deflate && p_deflateInit_ && p_zError)
                 zlib_loaded++;
+            if (zlib_loaded)
+                meth = &zlib_stateful_method;
         }
     }
 #endif
-#ifdef ZLIB_SHARED
-    if (zlib_loaded)
-#endif
-#if defined(ZLIB) || defined(ZLIB_SHARED)
-    {
-        /*
-         * init zlib_stateful_ex_idx here so that in a multi-process
-         * application it's enough to intialize openssl before forking (idx
-         * will be inherited in all the children)
-         */
-        if (zlib_stateful_ex_idx == -1) {
-            CRYPTO_w_lock(CRYPTO_LOCK_COMP);
-            if (zlib_stateful_ex_idx == -1)
-                zlib_stateful_ex_idx =
-                    CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_COMP,
-                                            0, NULL, NULL, NULL, NULL);
-            CRYPTO_w_unlock(CRYPTO_LOCK_COMP);
-            if (zlib_stateful_ex_idx == -1)
-                goto err;
-        }
-
-        meth = &zlib_stateful_method;
-    }
- err:
+#if defined(ZLIB)
+    meth = &zlib_stateful_method;
 #endif
 
     return (meth);

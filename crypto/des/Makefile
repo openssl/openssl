@@ -74,6 +74,8 @@ tests:
 lint:
 	lint -DLINT $(INCLUDES) $(SRC)>fluff
 
+update: depend
+
 depend:
 	@[ -n "$(MAKEDEPEND)" ] # should be set by upper Makefile...
 	$(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(LIBSRC)
@@ -120,8 +122,8 @@ enc_read.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
 enc_read.o: ../../include/openssl/opensslconf.h
 enc_read.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 enc_read.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-enc_read.o: ../../include/openssl/symhacks.h ../cryptlib.h des_locl.h
-enc_read.o: enc_read.c
+enc_read.o: ../../include/openssl/symhacks.h ../include/internal/cryptlib.h
+enc_read.o: des_locl.h enc_read.c
 enc_writ.o: ../../e_os.h ../../include/openssl/bio.h
 enc_writ.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 enc_writ.o: ../../include/openssl/des.h ../../include/openssl/e_os2.h
@@ -130,7 +132,7 @@ enc_writ.o: ../../include/openssl/opensslconf.h
 enc_writ.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 enc_writ.o: ../../include/openssl/rand.h ../../include/openssl/safestack.h
 enc_writ.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-enc_writ.o: ../cryptlib.h des_locl.h enc_writ.c
+enc_writ.o: ../include/internal/cryptlib.h des_locl.h enc_writ.c
 fcrypt.o: ../../include/openssl/crypto.h ../../include/openssl/des.h
 fcrypt.o: ../../include/openssl/e_os2.h ../../include/openssl/opensslconf.h
 fcrypt.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h

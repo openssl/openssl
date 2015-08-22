@@ -257,7 +257,6 @@ int dtls1_accept(SSL *s)
             }
 
             s->init_num = 0;
-            s->d1->change_cipher_spec_ok = 0;
             /*
              * Should have been reset by ssl3_get_finished, too.
              */
@@ -378,7 +377,7 @@ int dtls1_accept(SSL *s)
                 goto end;
             }
 
-            s->state = SSL3_ST_SR_FINISHED_A;
+            s->state = SSL3_ST_SR_CHANGE_A;
             break;
 
         case DTLS1_SCTP_ST_SW_WRITE_SOCK:
@@ -418,21 +417,21 @@ int dtls1_accept(SSL *s)
                 snprintf((char *)labelbuffer, sizeof(DTLS1_SCTP_AUTH_LABEL),
                          DTLS1_SCTP_AUTH_LABEL);
 
-                SSL_export_keying_material(s, sctpauthkey,
-                                           sizeof(sctpauthkey), labelbuffer,
-                                           sizeof(labelbuffer), NULL, 0, 0);
+                if (SSL_export_keying_material(s, sctpauthkey,
+                        sizeof(sctpauthkey), labelbuffer,
+                        sizeof(labelbuffer), NULL, 0, 0) <= 0) {
+                    ret = -1;
+                    s->state = SSL_ST_ERR;
+                    goto end;
+                }
 
                 BIO_ctrl(SSL_get_wbio(s), BIO_CTRL_DGRAM_SCTP_ADD_AUTH_KEY,
                          sizeof(sctpauthkey), sctpauthkey);
 #endif
-#ifndef OPENSSL_NO_TLSEXT
                 if (s->tlsext_ticket_expected)
                     s->state = SSL3_ST_SW_SESSION_TICKET_A;
                 else
                     s->state = SSL3_ST_SW_CHANGE_A;
-#else
-                s->state = SSL3_ST_SW_CHANGE_A;
-#endif
             } else
                 s->state = SSL3_ST_SW_CERT_A;
             s->init_num = 0;
@@ -447,7 +446,7 @@ int dtls1_accept(SSL *s)
                 ret = ssl3_send_server_certificate(s);
                 if (ret <= 0)
                     goto end;
-#ifndef OPENSSL_NO_TLSEXT
+
                 if (s->tlsext_status_expected)
                     s->state = SSL3_ST_SW_CERT_STATUS_A;
                 else
@@ -456,12 +455,6 @@ int dtls1_accept(SSL *s)
                 skip = 1;
                 s->state = SSL3_ST_SW_KEY_EXCH_A;
             }
-#else
-            } else
-                skip = 1;
-
-            s->state = SSL3_ST_SW_KEY_EXCH_A;
-#endif
             s->init_num = 0;
             break;
 
@@ -526,16 +519,12 @@ int dtls1_accept(SSL *s)
                     * RFC 2246):
                     */
                    ((s->s3->tmp.new_cipher->algorithm_auth & SSL_aNULL) &&
-                    /*
-                     * ... except when the application insists on
-                     * verification (against the specs, but s3_clnt.c accepts
-                     * this for SSL 3)
-                     */
-                    !(s->verify_mode & SSL_VERIFY_FAIL_IF_NO_PEER_CERT)) ||
                    /*
-                    * never request cert in Kerberos ciphersuites
+                    * ... except when the application insists on
+                    * verification (against the specs, but s3_clnt.c accepts
+                    * this for SSL 3)
                     */
-                   (s->s3->tmp.new_cipher->algorithm_auth & SSL_aKRB5)
+                   !(s->verify_mode & SSL_VERIFY_FAIL_IF_NO_PEER_CERT))
                    /*
                     * With normal PSK Certificates and Certificate Requests
                     * are omitted
@@ -621,9 +610,13 @@ int dtls1_accept(SSL *s)
             snprintf((char *)labelbuffer, sizeof(DTLS1_SCTP_AUTH_LABEL),
                      DTLS1_SCTP_AUTH_LABEL);
 
-            SSL_export_keying_material(s, sctpauthkey,
+            if (SSL_export_keying_material(s, sctpauthkey,
                                        sizeof(sctpauthkey), labelbuffer,
-                                       sizeof(labelbuffer), NULL, 0, 0);
+                                       sizeof(labelbuffer), NULL, 0, 0) <= 0) {
+                ret = -1;
+                s->state = SSL_ST_ERR;
+                goto end;
+            }
 
             BIO_ctrl(SSL_get_wbio(s), BIO_CTRL_DGRAM_SCTP_ADD_AUTH_KEY,
                      sizeof(sctpauthkey), sctpauthkey);
@@ -638,7 +631,7 @@ int dtls1_accept(SSL *s)
                  * pub key in a certificate, the CertificateVerify message is
                  * not sent.
                  */
-                s->state = SSL3_ST_SR_FINISHED_A;
+                s->state = SSL3_ST_SR_CHANGE_A;
                 s->init_num = 0;
             } else if (SSL_USE_SIGALGS(s)) {
                 s->state = SSL3_ST_SR_CERT_VRFY_A;
@@ -654,12 +647,9 @@ int dtls1_accept(SSL *s)
                  * For sigalgs freeze the handshake buffer. If we support
                  * extms we've done this already.
                  */
-                if (!(s->s3->flags & SSL_SESS_FLAG_EXTMS)) {
-                    s->s3->flags |= TLS1_FLAGS_KEEP_HANDSHAKE;
-                    if (!ssl3_digest_cached_records(s)) {
-                        s->state = SSL_ST_ERR;
-                        return -1;
-                    }
+                if (!ssl3_digest_cached_records(s, 1)) {
+                    s->state = SSL_ST_ERR;
+                    return -1;
                 }
             } else {
                 s->state = SSL3_ST_SR_CERT_VRFY_A;
@@ -683,15 +673,6 @@ int dtls1_accept(SSL *s)
 
         case SSL3_ST_SR_CERT_VRFY_A:
         case SSL3_ST_SR_CERT_VRFY_B:
-            /*
-             * This *should* be the first time we enable CCS, but be
-             * extra careful about surrounding code changes. We need
-             * to set this here because we don't know if we're
-             * expecting a CertificateVerify or not.
-             */
-            if (!s->s3->change_cipher_spec)
-                s->d1->change_cipher_spec_ok = 1;
-            /* we should decide if we expected this one */
             ret = ssl3_get_cert_verify(s);
             if (ret <= 0)
                 goto end;
@@ -701,24 +682,23 @@ int dtls1_accept(SSL *s)
                 s->state = DTLS1_SCTP_ST_SR_READ_SOCK;
             else
 #endif
-                s->state = SSL3_ST_SR_FINISHED_A;
+                s->state = SSL3_ST_SR_CHANGE_A;
+            s->init_num = 0;
+            break;
+
+        case SSL3_ST_SR_CHANGE_A:
+        case SSL3_ST_SR_CHANGE_B:
+            ret = ssl3_get_change_cipher_spec(s, SSL3_ST_SR_CHANGE_A,
+                                              SSL3_ST_SR_CHANGE_B);
+            if (ret <= 0)
+                goto end;
+
+            s->state = SSL3_ST_SR_FINISHED_A;
             s->init_num = 0;
             break;
 
         case SSL3_ST_SR_FINISHED_A:
         case SSL3_ST_SR_FINISHED_B:
-            /*
-             * Enable CCS for resumed handshakes.
-             * In a full handshake, we end up here through
-             * SSL3_ST_SR_CERT_VRFY_B, so change_cipher_spec_ok was
-             * already set. Receiving a CCS clears the flag, so make
-             * sure not to re-enable it to ban duplicates.
-             * s->s3->change_cipher_spec is set when a CCS is
-             * processed in d1_pkt.c, and remains set until
-             * the client's Finished message is read.
-             */
-            if (!s->s3->change_cipher_spec)
-                s->d1->change_cipher_spec_ok = 1;
             ret = ssl3_get_finished(s, SSL3_ST_SR_FINISHED_A,
                                     SSL3_ST_SR_FINISHED_B);
             if (ret <= 0)
@@ -726,16 +706,13 @@ int dtls1_accept(SSL *s)
             dtls1_stop_timer(s);
             if (s->hit)
                 s->state = SSL_ST_OK;
-#ifndef OPENSSL_NO_TLSEXT
             else if (s->tlsext_ticket_expected)
                 s->state = SSL3_ST_SW_SESSION_TICKET_A;
-#endif
             else
                 s->state = SSL3_ST_SW_CHANGE_A;
             s->init_num = 0;
             break;
 
-#ifndef OPENSSL_NO_TLSEXT
         case SSL3_ST_SW_SESSION_TICKET_A:
         case SSL3_ST_SW_SESSION_TICKET_B:
             ret = ssl3_send_newsession_ticket(s);
@@ -753,8 +730,6 @@ int dtls1_accept(SSL *s)
             s->state = SSL3_ST_SW_KEY_EXCH_A;
             s->init_num = 0;
             break;
-
-#endif
 
         case SSL3_ST_SW_CHANGE_A:
         case SSL3_ST_SW_CHANGE_B:
@@ -811,7 +786,7 @@ int dtls1_accept(SSL *s)
                 goto end;
             s->state = SSL3_ST_SW_FLUSH;
             if (s->hit) {
-                s->s3->tmp.next_state = SSL3_ST_SR_FINISHED_A;
+                s->s3->tmp.next_state = SSL3_ST_SR_CHANGE_A;
 
 #ifndef OPENSSL_NO_SCTP
                 /*

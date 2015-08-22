@@ -38,7 +38,7 @@ void main ()
   SSL_METHOD *meth;
 
   SSLeay_add_ssl_algorithms();
-  meth = SSLv23_client_method();
+  meth = TLS_client_method();
   SSL_load_error_strings();
   ctx = SSL_CTX_new (meth);                        CHK_NULL(ctx);
 

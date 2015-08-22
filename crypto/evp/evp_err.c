@@ -1,6 +1,6 @@
 /* crypto/evp/evp_err.c */
 /* ====================================================================
- * Copyright (c) 1999-2013 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2015 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -100,6 +100,7 @@ static ERR_STRING_DATA EVP_str_functs[] = {
     {ERR_FUNC(EVP_F_EVP_PBE_ALG_ADD), "EVP_PBE_alg_add"},
     {ERR_FUNC(EVP_F_EVP_PBE_ALG_ADD_TYPE), "EVP_PBE_alg_add_type"},
     {ERR_FUNC(EVP_F_EVP_PBE_CIPHERINIT), "EVP_PBE_CipherInit"},
+    {ERR_FUNC(EVP_F_EVP_PBE_SCRYPT), "EVP_PBE_scrypt"},
     {ERR_FUNC(EVP_F_EVP_PKCS82PKEY), "EVP_PKCS82PKEY"},
     {ERR_FUNC(EVP_F_EVP_PKCS82PKEY_BROKEN), "EVP_PKCS82PKEY_BROKEN"},
     {ERR_FUNC(EVP_F_EVP_PKEY2PKCS8_BROKEN), "EVP_PKEY2PKCS8_broken"},
@@ -148,6 +149,7 @@ static ERR_STRING_DATA EVP_str_functs[] = {
     {ERR_FUNC(EVP_F_PKCS5_PBE_KEYIVGEN), "PKCS5_PBE_keyivgen"},
     {ERR_FUNC(EVP_F_PKCS5_V2_PBE_KEYIVGEN), "PKCS5_v2_PBE_keyivgen"},
     {ERR_FUNC(EVP_F_PKCS5_V2_PBKDF2_KEYIVGEN), "PKCS5_V2_PBKDF2_KEYIVGEN"},
+    {ERR_FUNC(EVP_F_PKCS5_V2_SCRYPT_KEYIVGEN), "PKCS5_v2_scrypt_keyivgen"},
     {ERR_FUNC(EVP_F_PKCS8_SET_BROKEN), "PKCS8_set_broken"},
     {ERR_FUNC(EVP_F_PKEY_SET_TYPE), "PKEY_SET_TYPE"},
     {ERR_FUNC(EVP_F_RC2_MAGIC_TO_METH), "RC2_MAGIC_TO_METH"},
@@ -165,8 +167,7 @@ static ERR_STRING_DATA EVP_str_reasons[] = {
     {ERR_REASON(EVP_R_BN_DECODE_ERROR), "bn decode error"},
     {ERR_REASON(EVP_R_BN_PUBKEY_ERROR), "bn pubkey error"},
     {ERR_REASON(EVP_R_BUFFER_TOO_SMALL), "buffer too small"},
-    {ERR_REASON(EVP_R_CAMELLIA_KEY_SETUP_FAILED),
-     "camellia key setup failed"},
+    {ERR_REASON(EVP_R_CAMELLIA_KEY_SETUP_FAILED), "camellia key setup failed"},
     {ERR_REASON(EVP_R_CIPHER_PARAMETER_ERROR), "cipher parameter error"},
     {ERR_REASON(EVP_R_COMMAND_NOT_SUPPORTED), "command not supported"},
     {ERR_REASON(EVP_R_CTRL_NOT_IMPLEMENTED), "ctrl not implemented"},
@@ -188,6 +189,7 @@ static ERR_STRING_DATA EVP_str_reasons[] = {
     {ERR_REASON(EVP_R_EXPECTING_A_ECDSA_KEY), "expecting a ecdsa key"},
     {ERR_REASON(EVP_R_EXPECTING_A_EC_KEY), "expecting a ec key"},
     {ERR_REASON(EVP_R_FIPS_MODE_NOT_SUPPORTED), "fips mode not supported"},
+    {ERR_REASON(EVP_R_ILLEGAL_SCRYPT_PARAMETERS), "illegal scrypt parameters"},
     {ERR_REASON(EVP_R_INITIALIZATION_ERROR), "initialization error"},
     {ERR_REASON(EVP_R_INPUT_NOT_INITIALIZED), "input not initialized"},
     {ERR_REASON(EVP_R_INVALID_DIGEST), "invalid digest"},
@@ -196,6 +198,7 @@ static ERR_STRING_DATA EVP_str_reasons[] = {
     {ERR_REASON(EVP_R_INVALID_OPERATION), "invalid operation"},
     {ERR_REASON(EVP_R_IV_TOO_LARGE), "iv too large"},
     {ERR_REASON(EVP_R_KEYGEN_FAILURE), "keygen failure"},
+    {ERR_REASON(EVP_R_MEMORY_LIMIT_EXCEEDED), "memory limit exceeded"},
     {ERR_REASON(EVP_R_MESSAGE_DIGEST_IS_NULL), "message digest is null"},
     {ERR_REASON(EVP_R_METHOD_NOT_SUPPORTED), "method not supported"},
     {ERR_REASON(EVP_R_MISSING_PARAMETERS), "missing parameters"},
@@ -212,8 +215,7 @@ static ERR_STRING_DATA EVP_str_reasons[] = {
     {ERR_REASON(EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE),
      "operation not supported for this keytype"},
     {ERR_REASON(EVP_R_OPERATON_NOT_INITIALIZED), "operaton not initialized"},
-    {ERR_REASON(EVP_R_PKCS8_UNKNOWN_BROKEN_TYPE),
-     "pkcs8 unknown broken type"},
+    {ERR_REASON(EVP_R_PKCS8_UNKNOWN_BROKEN_TYPE), "pkcs8 unknown broken type"},
     {ERR_REASON(EVP_R_PRIVATE_KEY_DECODE_ERROR), "private key decode error"},
     {ERR_REASON(EVP_R_PRIVATE_KEY_ENCODE_ERROR), "private key encode error"},
     {ERR_REASON(EVP_R_PUBLIC_KEY_NOT_RSA), "public key not rsa"},

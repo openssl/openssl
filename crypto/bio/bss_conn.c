@@ -59,7 +59,7 @@
 #include <stdio.h>
 #include <errno.h>
 #define USE_SOCKETS
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/bio.h>
 
 #ifndef OPENSSL_NO_SOCK
@@ -269,7 +269,7 @@ static int conn_state(BIO *b, BIO_CONNECT *c)
         }
 
         if (cb != NULL) {
-            if (!(ret = cb((BIO *)b, c->state, ret)))
+            if ((ret = cb((BIO *)b, c->state, ret)) == 0)
                 goto end;
         }
     }

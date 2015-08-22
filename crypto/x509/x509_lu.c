@@ -57,7 +57,7 @@
  */
 
 #include <stdio.h>
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/lhash.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
@@ -294,8 +294,8 @@ X509_LOOKUP *X509_STORE_add_lookup(X509_STORE *v, X509_LOOKUP_METHOD *m)
     }
 }
 
-int X509_STORE_get_by_subject(X509_STORE_CTX *vs, int type, X509_NAME *name,
-                              X509_OBJECT *ret)
+int X509_STORE_get_by_subject(X509_STORE_CTX *vs, X509_LOOKUP_TYPE type,
+                              X509_NAME *name, X509_OBJECT *ret)
 {
     X509_STORE *ctx = vs->ctx;
     X509_LOOKUP *lu;
@@ -403,6 +403,8 @@ int X509_STORE_add_crl(X509_STORE *ctx, X509_CRL *x)
 void X509_OBJECT_up_ref_count(X509_OBJECT *a)
 {
     switch (a->type) {
+    default:
+        break;
     case X509_LU_X509:
         CRYPTO_add(&a->data.x509->references, 1, CRYPTO_LOCK_X509);
         break;
@@ -417,6 +419,8 @@ void X509_OBJECT_free_contents(X509_OBJECT *a)
     if (!a)
         return;
     switch (a->type) {
+    default:
+        break;
     case X509_LU_X509:
         X509_free(a->data.x509);
         break;

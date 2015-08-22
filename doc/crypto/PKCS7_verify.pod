@@ -96,7 +96,7 @@ if an error occurs.
 
 PKCS7_get0_signers() returns all signers or B<NULL> if an error occurred.
 
-The error can be obtained from L<ERR_get_error(3)|ERR_get_error(3)>
+The error can be obtained from L<ERR_get_error(3)>
 
 =head1 BUGS
 
@@ -109,7 +109,7 @@ mentioned in PKCS7_sign() also applies to PKCS7_verify().
 
 =head1 SEE ALSO
 
-L<ERR_get_error(3)|ERR_get_error(3)>, L<PKCS7_sign(3)|PKCS7_sign(3)>
+L<ERR_get_error(3)>, L<PKCS7_sign(3)>
 
 =head1 HISTORY
 

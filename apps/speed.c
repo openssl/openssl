@@ -358,22 +358,21 @@ OPTIONS speed_options[] = {
     {OPT_HELP_STR, 1, '-', "Usage: %s [options] ciphers...\n"},
     {OPT_HELP_STR, 1, '-', "Valid options are:\n"},
     {"help", OPT_HELP, '-', "Display this summary"},
-#if defined(TIMES) || defined(USE_TOD)
-    {"elapsed", OPT_ELAPSED, '-',
-     "Measure time in real time instead of CPU user time"},
-#endif
     {"evp", OPT_EVP, 's', "Use specified EVP cipher"},
     {"decrypt", OPT_DECRYPT, '-',
      "Time decryption instead of encryption (only EVP)"},
-#ifndef NO_FORK
-    {"multi", OPT_MULTI, 'p', "Run benchmarks in parallel"},
-#endif
     {"mr", OPT_MR, '-', "Produce machine readable output"},
     {"mb", OPT_MB, '-'},
     {"misalign", OPT_MISALIGN, 'n', "Amount to mis-align buffers"},
+    {"elapsed", OPT_ELAPSED, '-',
+     "Measure time in real time instead of CPU user time"},
+#ifndef NO_FORK
+    {"multi", OPT_MULTI, 'p', "Run benchmarks in parallel"},
+#endif
 #ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
 #endif
+    {NULL},
 };
 
 #define D_MD2           0
@@ -428,7 +427,7 @@ OPT_PAIR doit_choices[] = {
 #ifndef OPENSSL_NO_WHIRLPOOL
     {"whirlpool", D_WHIRLPOOL},
 #endif
-#ifndef OPENSSL_NO_RIPEMD
+#ifndef OPENSSL_NO_RMD160
     {"ripemd", D_RMD160},
     {"rmd160", D_RMD160},
     {"ripemd160", D_RMD160},
@@ -604,7 +603,7 @@ int speed_main(int argc, char **argv)
 #ifndef OPENSSL_NO_WHIRLPOOL
     unsigned char whirlpool[WHIRLPOOL_DIGEST_LENGTH];
 #endif
-#ifndef OPENSSL_NO_RIPEMD
+#ifndef OPENSSL_NO_RMD160
     unsigned char rmd160[RIPEMD160_DIGEST_LENGTH];
 #endif
 #ifndef OPENSSL_NO_RC4
@@ -754,9 +753,6 @@ int speed_main(int argc, char **argv)
     long ecdh_c[EC_NUM][2];
     int ecdh_doit[EC_NUM];
 #endif
-#ifndef TIMES
-    usertime = -1;
-#endif
 
     memset(results, 0, sizeof(results));
 #ifndef OPENSSL_NO_DSA
@@ -828,11 +824,11 @@ int speed_main(int argc, char **argv)
         case OPT_ENGINE:
             (void)setup_engine(opt_arg(), 0);
             break;
-#ifndef NO_FORK
         case OPT_MULTI:
+#ifndef NO_FORK
             multi = atoi(opt_arg());
-            break;
 #endif
+            break;
         case OPT_MISALIGN:
             if (!opt_int(opt_arg(), &misalign))
                 goto end;
@@ -854,6 +850,9 @@ int speed_main(int argc, char **argv)
     }
     argc = opt_num_rest();
     argv = opt_rest();
+
+    if (!app_load_modules(NULL))
+        goto end;
 
     /* Remaining arguments are algorithms. */
     for ( ; *argv; argv++) {
@@ -945,7 +944,7 @@ int speed_main(int argc, char **argv)
 #endif
 
     /* No parameters; turn on everything. */
-    if (argc == 0) {
+    if ((argc == 0) && !doit[D_EVP]) {
         for (i = 0; i < ALGOR_NUM; i++)
             if (i != D_EVP)
                 doit[i] = 1;
@@ -1645,7 +1644,7 @@ int speed_main(int argc, char **argv)
             if (!
                 (EVP_CIPHER_flags(evp_cipher) &
                  EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK)) {
-                fprintf(stderr, "%s is not multi-block capable\n",
+                BIO_printf(bio_err, "%s is not multi-block capable\n",
                         OBJ_nid2ln(evp_cipher->nid));
                 goto end;
             }
@@ -2286,11 +2285,11 @@ static int do_multi(int multi)
     fds = malloc(sizeof(*fds) * multi);
     for (n = 0; n < multi; ++n) {
         if (pipe(fd) == -1) {
-            fprintf(stderr, "pipe failure\n");
+            BIO_printf(bio_err, "pipe failure\n");
             exit(1);
         }
         fflush(stdout);
-        fflush(stderr);
+        (void)BIO_flush(bio_err);
         if (fork()) {
             close(fd[1]);
             fds[n] = fd[0];
@@ -2298,7 +2297,7 @@ static int do_multi(int multi)
             close(fd[0]);
             close(1);
             if (dup(fd[1]) == -1) {
-                fprintf(stderr, "dup failed\n");
+                BIO_printf(bio_err, "dup failed\n");
                 exit(1);
             }
             close(fd[1]);
@@ -2322,7 +2321,7 @@ static int do_multi(int multi)
             if (p)
                 *p = '\0';
             if (buf[0] != '+') {
-                fprintf(stderr, "Don't understand line '%s' from child %d\n",
+                BIO_printf(bio_err, "Don't understand line '%s' from child %d\n",
                         buf, n);
                 continue;
             }
@@ -2424,7 +2423,7 @@ static int do_multi(int multi)
             else if (strncmp(buf, "+H:", 3) == 0) {
                 ;
             } else
-                fprintf(stderr, "Unknown type '%s' from child %d\n", buf, n);
+                BIO_printf(bio_err, "Unknown type '%s' from child %d\n", buf, n);
         }
 
         fclose(f);

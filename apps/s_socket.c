@@ -539,8 +539,7 @@ static int do_accept(int acc_sock, int *sock, char **host)
              */
             goto redoit;
         }
-        fprintf(stderr, "errno=%d ", errno);
-        perror("accept");
+        BIO_printf(bio_err, "accept errno=%d, %s\n", errno, strerror(errno));
 # endif
         return (0);
     }
@@ -597,8 +596,7 @@ static int do_accept_unix(int acc_sock, int *sock)
              */
             goto redoit;
         }
-        fprintf(stderr, "errno=%d ", errno);
-        perror("accept");
+        BIO_printf(bio_err, "accept errno=%d, %s\n", errno, strerror(errno));
         return (0);
     }
 

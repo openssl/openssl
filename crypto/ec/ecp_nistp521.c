@@ -1471,7 +1471,7 @@ static void select_point(const limb idx, unsigned int size,
     unsigned i, j;
     limb *outlimbs = &out[0][0];
 
-    memset(out, 0, sizeof(out));
+    memset(out, 0, sizeof(*out) * 3);
 
     for (i = 0; i < size; i++) {
         const limb *inlimbs = &pre_comp[i][0][0];
@@ -1906,7 +1906,7 @@ int ec_GFp_nistp521_points_mul(const EC_GROUP *group, EC_POINT *r,
         pre_comp = OPENSSL_malloc(sizeof(*pre_comp) * num_points);
         if (mixed)
             tmp_felems =
-                OPENSSL_malloc(sizeof(*tmp_felemts) * (num_points * 17 + 1));
+                OPENSSL_malloc(sizeof(*tmp_felems) * (num_points * 17 + 1));
         if ((secrets == NULL) || (pre_comp == NULL)
             || (mixed && (tmp_felems == NULL))) {
             ECerr(EC_F_EC_GFP_NISTP521_POINTS_MUL, ERR_R_MALLOC_FAILURE);
@@ -1918,7 +1918,7 @@ int ec_GFp_nistp521_points_mul(const EC_GROUP *group, EC_POINT *r,
          * i.e., they contribute nothing to the linear combination
          */
         memset(secrets, 0, sizeof(*secrets) * num_points);
-        memset(pre_comp, 0, sizseof(*pre_comp) * num_points);
+        memset(pre_comp, 0, sizeof(*pre_comp) * num_points);
         for (i = 0; i < num_points; ++i) {
             if (i == num)
                 /*

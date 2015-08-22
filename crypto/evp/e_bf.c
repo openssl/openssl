@@ -57,7 +57,7 @@
  */
 
 #include <stdio.h>
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #ifndef OPENSSL_NO_BF
 # include <openssl/evp.h>
 # include "evp_locl.h"

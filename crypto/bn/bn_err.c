@@ -98,6 +98,7 @@ static ERR_STRING_DATA BN_str_functs[] = {
     {ERR_FUNC(BN_F_BN_GF2M_MOD_SOLVE_QUAD_ARR), "BN_GF2m_mod_solve_quad_arr"},
     {ERR_FUNC(BN_F_BN_GF2M_MOD_SQR), "BN_GF2m_mod_sqr"},
     {ERR_FUNC(BN_F_BN_GF2M_MOD_SQRT), "BN_GF2m_mod_sqrt"},
+    {ERR_FUNC(BN_F_BN_LSHIFT), "BN_lshift"},
     {ERR_FUNC(BN_F_BN_MOD_EXP2_MONT), "BN_mod_exp2_mont"},
     {ERR_FUNC(BN_F_BN_MOD_EXP_MONT), "BN_mod_exp_mont"},
     {ERR_FUNC(BN_F_BN_MOD_EXP_MONT_CONSTTIME), "BN_mod_exp_mont_consttime"},
@@ -113,6 +114,7 @@ static ERR_STRING_DATA BN_str_functs[] = {
     {ERR_FUNC(BN_F_BN_NEW), "BN_new"},
     {ERR_FUNC(BN_F_BN_RAND), "BN_rand"},
     {ERR_FUNC(BN_F_BN_RAND_RANGE), "BN_rand_range"},
+    {ERR_FUNC(BN_F_BN_RSHIFT), "BN_rshift"},
     {ERR_FUNC(BN_F_BN_SET_WORDS), "bn_set_words"},
     {ERR_FUNC(BN_F_BN_USUB), "BN_usub"},
     {0, NULL}
@@ -131,6 +133,7 @@ static ERR_STRING_DATA BN_str_reasons[] = {
     {ERR_REASON(BN_R_INPUT_NOT_REDUCED), "input not reduced"},
     {ERR_REASON(BN_R_INVALID_LENGTH), "invalid length"},
     {ERR_REASON(BN_R_INVALID_RANGE), "invalid range"},
+    {ERR_REASON(BN_R_INVALID_SHIFT), "invalid shift"},
     {ERR_REASON(BN_R_NOT_A_SQUARE), "not a square"},
     {ERR_REASON(BN_R_NOT_INITIALIZED), "not initialized"},
     {ERR_REASON(BN_R_NO_INVERSE), "no inverse"},

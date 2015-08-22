@@ -58,7 +58,7 @@
  */
 
 #include <stdio.h>
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/x509v3.h>
 
 static ASN1_OCTET_STRING *s2i_skey_id(X509V3_EXT_METHOD *method,
@@ -83,12 +83,12 @@ ASN1_OCTET_STRING *s2i_ASN1_OCTET_STRING(X509V3_EXT_METHOD *method,
     ASN1_OCTET_STRING *oct;
     long length;
 
-    if (!(oct = ASN1_OCTET_STRING_new())) {
+    if ((oct = ASN1_OCTET_STRING_new()) == NULL) {
         X509V3err(X509V3_F_S2I_ASN1_OCTET_STRING, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 
-    if (!(oct->data = string_to_hex(str, &length))) {
+    if ((oct->data = string_to_hex(str, &length)) == NULL) {
         ASN1_OCTET_STRING_free(oct);
         return NULL;
     }
@@ -110,7 +110,7 @@ static ASN1_OCTET_STRING *s2i_skey_id(X509V3_EXT_METHOD *method,
     if (strcmp(str, "hash"))
         return s2i_ASN1_OCTET_STRING(method, ctx, str);
 
-    if (!(oct = ASN1_OCTET_STRING_new())) {
+    if ((oct = ASN1_OCTET_STRING_new()) == NULL) {
         X509V3err(X509V3_F_S2I_SKEY_ID, ERR_R_MALLOC_FAILURE);
         return NULL;
     }

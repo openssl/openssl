@@ -71,13 +71,13 @@ default.  They are all written in PEM format.
 
 the PKCS#12 file (i.e. input file) password source. For more information about
 the format of B<arg> see the B<PASS PHRASE ARGUMENTS> section in
-L<openssl(1)|openssl(1)>.
+L<openssl(1)>.
 
 =item B<-passout arg>
 
 pass phrase source to encrypt any outputted private keys with. For more
 information about the format of B<arg> see the B<PASS PHRASE ARGUMENTS> section
-in L<openssl(1)|openssl(1)>.
+in L<openssl(1)>.
 
 =item B<-password arg>
 
@@ -192,13 +192,13 @@ displays them.
 
 the PKCS#12 file (i.e. output file) password source. For more information about
 the format of B<arg> see the B<PASS PHRASE ARGUMENTS> section in
-L<openssl(1)|openssl(1)>.
+L<openssl(1)>.
 
 =item B<-passin password>
 
 pass phrase source to decrypt any input private keys with. For more information
 about the format of B<arg> see the B<PASS PHRASE ARGUMENTS> section in
-L<openssl(1)|openssl(1)>.
+L<openssl(1)>.
 
 =item B<-chain>
 
@@ -216,7 +216,7 @@ key is encrypted using triple DES and the certificate using 40 bit RC2.
 
 these options allow the algorithm used to encrypt the private key and
 certificates to be selected. Any PKCS#5 v1.5 or PKCS#12 PBE algorithm name
-can be used (see B<NOTES> section for more information). If a a cipher name
+can be used (see B<NOTES> section for more information). If a cipher name
 (as output by the B<list-cipher-algorithms> command is specified then it
 is used with PKCS#5 v2.0. For interoperability reasons it is advisable to only
 use PKCS#12 algorithms.
@@ -266,7 +266,7 @@ don't attempt to provide the MAC integrity.
 =item B<-rand file(s)>
 
 a file or files containing random data used to seed the random number
-generator, or an EGD socket (see L<RAND_egd(3)|RAND_egd(3)>).
+generator, or an EGD socket (see L<RAND_egd(3)>).
 Multiple files can be specified separated by a OS-dependent character.
 The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
 all others.
@@ -364,5 +364,5 @@ file from the keys and certificates using a newer version of OpenSSL. For exampl
 
 =head1 SEE ALSO
 
-L<pkcs8(1)|pkcs8(1)>
+L<pkcs8(1)>
 

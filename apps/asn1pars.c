@@ -140,7 +140,7 @@ int asn1parse_main(int argc, char **argv)
         case OPT_INFORM:
             if (!opt_format(opt_arg(), OPT_FMT_PEMDER, &informat))
                 goto opthelp;
-            goto end;
+            break;
         case OPT_IN:
             infile = opt_arg();
             break;
@@ -186,8 +186,11 @@ int asn1parse_main(int argc, char **argv)
     argc = opt_num_rest();
     argv = opt_rest();
 
+    if (!app_load_modules(NULL))
+        goto end;
+
     if (oidfile != NULL) {
-        in = bio_open_default(oidfile, "r");
+      in = bio_open_default(oidfile, "r");
         if (in == NULL)
             goto end;
         OBJ_create_objects(in);
@@ -334,14 +337,12 @@ static int do_generate(char *genstr, char *genconf, BUF_MEM *buf)
 {
     CONF *cnf = NULL;
     int len;
-    long errline = 0;
     unsigned char *p;
     ASN1_TYPE *atyp = NULL;
 
     if (genconf) {
-        cnf = NCONF_new(NULL);
-        if (!NCONF_load(cnf, genconf, &errline))
-            goto conferr;
+        if ((cnf = app_load_config(genconf)) == NULL)
+            goto err;
         if (!genstr)
             genstr = NCONF_get_string(cnf, "default", "asn1");
         if (!genstr) {
@@ -372,18 +373,8 @@ static int do_generate(char *genstr, char *genconf, BUF_MEM *buf)
     ASN1_TYPE_free(atyp);
     return len;
 
- conferr:
-
-    if (errline > 0)
-        BIO_printf(bio_err, "Error on line %ld of config file '%s'\n",
-                   errline, genconf);
-    else
-        BIO_printf(bio_err, "Error loading config file '%s'\n", genconf);
-
  err:
     NCONF_free(cnf);
     ASN1_TYPE_free(atyp);
-
     return -1;
-
 }

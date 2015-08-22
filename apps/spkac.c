@@ -95,7 +95,7 @@ OPTIONS spkac_options[] = {
 
 int spkac_main(int argc, char **argv)
 {
-    BIO *in = NULL, *out = NULL;
+    BIO *out = NULL;
     CONF *conf = NULL;
     ENGINE *e = NULL;
     EVP_PKEY *pkey = NULL;
@@ -184,17 +184,10 @@ int spkac_main(int argc, char **argv)
         goto end;
     }
 
-    in = bio_open_default(infile, "r");
-    if (in == NULL)
+    if ((conf = app_load_config(infile)) == NULL)
         goto end;
-
-    conf = NCONF_new(NULL);
-    i = NCONF_load_bio(conf, in, NULL);
-    if (!i) {
-        BIO_printf(bio_err, "Error parsing config file\n");
-        ERR_print_errors(bio_err);
+    if (!app_load_modules(conf))
         goto end;
-    }
 
     spkstr = NCONF_get_string(conf, spksect, spkac);
 
@@ -237,7 +230,6 @@ int spkac_main(int argc, char **argv)
  end:
     NCONF_free(conf);
     NETSCAPE_SPKI_free(spki);
-    BIO_free(in);
     BIO_free_all(out);
     EVP_PKEY_free(pkey);
     OPENSSL_free(passin);

@@ -58,7 +58,7 @@
  */
 
 #include <stdio.h>
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/pkcs12.h>
 
 /* Define this to dump decrypted output to files called DERnnn */
@@ -75,7 +75,7 @@ unsigned char *PKCS12_pbe_crypt(X509_ALGOR *algor, const char *pass,
                                 int passlen, unsigned char *in, int inlen,
                                 unsigned char **data, int *datalen, int en_de)
 {
-    unsigned char *out;
+    unsigned char *out = NULL;
     int outlen, i;
     EVP_CIPHER_CTX ctx;
 
@@ -85,10 +85,11 @@ unsigned char *PKCS12_pbe_crypt(X509_ALGOR *algor, const char *pass,
                             algor->parameter, &ctx, en_de)) {
         PKCS12err(PKCS12_F_PKCS12_PBE_CRYPT,
                   PKCS12_R_PKCS12_ALGOR_CIPHERINIT_ERROR);
-        return NULL;
+        goto err;
     }
 
-    if (!(out = OPENSSL_malloc(inlen + EVP_CIPHER_CTX_block_size(&ctx)))) {
+    if ((out = OPENSSL_malloc(inlen + EVP_CIPHER_CTX_block_size(&ctx)))
+            == NULL) {
         PKCS12err(PKCS12_F_PKCS12_PBE_CRYPT, ERR_R_MALLOC_FAILURE);
         goto err;
     }
@@ -174,7 +175,8 @@ ASN1_OCTET_STRING *PKCS12_item_i2d_encrypt(X509_ALGOR *algor,
     ASN1_OCTET_STRING *oct = NULL;
     unsigned char *in = NULL;
     int inlen;
-    if (!(oct = ASN1_OCTET_STRING_new())) {
+
+    if ((oct = ASN1_OCTET_STRING_new()) == NULL) {
         PKCS12err(PKCS12_F_PKCS12_ITEM_I2D_ENCRYPT, ERR_R_MALLOC_FAILURE);
         goto err;
     }

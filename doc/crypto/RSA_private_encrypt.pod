@@ -31,7 +31,7 @@ B<padding> denotes one of the following modes:
 
 PKCS #1 v1.5 padding. This function does not handle the
 B<algorithmIdentifier> specified in PKCS #1. When generating or
-verifying PKCS #1 signatures, L<RSA_sign(3)|RSA_sign(3)> and L<RSA_verify(3)|RSA_verify(3)> should be
+verifying PKCS #1 signatures, L<RSA_sign(3)> and L<RSA_verify(3)> should be
 used.
 
 =item RSA_NO_PADDING
@@ -55,12 +55,12 @@ RSA_size(rsa)). RSA_public_decrypt() returns the size of the
 recovered message digest.
 
 On error, -1 is returned; the error codes can be
-obtained by L<ERR_get_error(3)|ERR_get_error(3)>.
+obtained by L<ERR_get_error(3)>.
 
 =head1 SEE ALSO
 
-L<ERR_get_error(3)|ERR_get_error(3)>, L<rsa(3)|rsa(3)>,
-L<RSA_sign(3)|RSA_sign(3)>, L<RSA_verify(3)|RSA_verify(3)>
+L<ERR_get_error(3)>, L<rsa(3)>,
+L<RSA_sign(3)>, L<RSA_verify(3)>
 
 =head1 HISTORY
 

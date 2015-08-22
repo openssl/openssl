@@ -160,8 +160,8 @@ static void dtls1_set_message_header_int(SSL *s, unsigned char mt,
                                          unsigned short seq_num,
                                          unsigned long frag_off,
                                          unsigned long frag_len);
-static long dtls1_get_message_fragment(SSL *s, int st1, int stn, long max,
-                                       int *ok);
+static long dtls1_get_message_fragment(SSL *s, int st1, int stn, int mt,
+                                       long max, int *ok);
 
 static hm_fragment *dtls1_hm_fragment_new(unsigned long frag_len,
                                           int reassembly)
@@ -470,7 +470,7 @@ long dtls1_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
     memset(msg_hdr, 0, sizeof(*msg_hdr));
 
  again:
-    i = dtls1_get_message_fragment(s, st1, stn, max, ok);
+    i = dtls1_get_message_fragment(s, st1, stn, mt, max, ok);
     if (i == DTLS1_HM_BAD_FRAGMENT || i == DTLS1_HM_FRAGMENT_RETRY) {
         /* bad fragment received */
         goto again;
@@ -478,7 +478,27 @@ long dtls1_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
         return i;
     }
 
+    if (mt >= 0 && s->s3->tmp.message_type != mt) {
+        al = SSL_AD_UNEXPECTED_MESSAGE;
+        SSLerr(SSL_F_DTLS1_GET_MESSAGE, SSL_R_UNEXPECTED_MESSAGE);
+        goto f_err;
+    }
+
     p = (unsigned char *)s->init_buf->data;
+
+    if (mt == SSL3_MT_CHANGE_CIPHER_SPEC) {
+        if (s->msg_callback) {
+            s->msg_callback(0, s->version, SSL3_RT_CHANGE_CIPHER_SPEC,
+                            p, 1, s, s->msg_callback_arg);
+        }
+        /*
+         * This isn't a real handshake message so skip the processing below.
+         * dtls1_get_message_fragment() will never return a CCS if mt == -1,
+         * so we are ok to continue in that case.
+         */
+        return i;
+    }
+
     msg_len = msg_hdr->msg_len;
 
     /* reconstruct message header */
@@ -673,7 +693,7 @@ dtls1_reassemble_fragment(SSL *s, const struct hm_header_st *msg_hdr, int *ok)
         unsigned char devnull[256];
 
         while (frag_len) {
-            i = s->method->ssl_read_bytes(s, SSL3_RT_HANDSHAKE,
+            i = s->method->ssl_read_bytes(s, SSL3_RT_HANDSHAKE, NULL,
                                           devnull,
                                           frag_len >
                                           sizeof(devnull) ? sizeof(devnull) :
@@ -686,7 +706,7 @@ dtls1_reassemble_fragment(SSL *s, const struct hm_header_st *msg_hdr, int *ok)
     }
 
     /* read the body of the fragment (header has already been read */
-    i = s->method->ssl_read_bytes(s, SSL3_RT_HANDSHAKE,
+    i = s->method->ssl_read_bytes(s, SSL3_RT_HANDSHAKE, NULL,
                                   frag->fragment + msg_hdr->frag_off,
                                   frag_len, 0);
     if ((unsigned long)i != frag_len)
@@ -769,7 +789,7 @@ dtls1_process_out_of_seq_message(SSL *s, const struct hm_header_st *msg_hdr,
         unsigned char devnull[256];
 
         while (frag_len) {
-            i = s->method->ssl_read_bytes(s, SSL3_RT_HANDSHAKE,
+            i = s->method->ssl_read_bytes(s, SSL3_RT_HANDSHAKE, NULL,
                                           devnull,
                                           frag_len >
                                           sizeof(devnull) ? sizeof(devnull) :
@@ -795,7 +815,7 @@ dtls1_process_out_of_seq_message(SSL *s, const struct hm_header_st *msg_hdr,
             /*
              * read the body of the fragment (header has already been read
              */
-            i = s->method->ssl_read_bytes(s, SSL3_RT_HANDSHAKE,
+            i = s->method->ssl_read_bytes(s, SSL3_RT_HANDSHAKE, NULL,
                                           frag->fragment, frag_len, 0);
             if ((unsigned long)i != frag_len)
                 i = -1;
@@ -829,11 +849,11 @@ dtls1_process_out_of_seq_message(SSL *s, const struct hm_header_st *msg_hdr,
 }
 
 static long
-dtls1_get_message_fragment(SSL *s, int st1, int stn, long max, int *ok)
+dtls1_get_message_fragment(SSL *s, int st1, int stn, int mt, long max, int *ok)
 {
     unsigned char wire[DTLS1_HM_HEADER_LENGTH];
     unsigned long len, frag_off, frag_len;
-    int i, al;
+    int i, al, recvd_type;
     struct hm_header_st msg_hdr;
 
  redo:
@@ -845,13 +865,46 @@ dtls1_get_message_fragment(SSL *s, int st1, int stn, long max, int *ok)
     }
 
     /* read handshake message header */
-    i = s->method->ssl_read_bytes(s, SSL3_RT_HANDSHAKE, wire,
+    i = s->method->ssl_read_bytes(s, SSL3_RT_HANDSHAKE, &recvd_type, wire,
                                   DTLS1_HM_HEADER_LENGTH, 0);
     if (i <= 0) {               /* nbio, or an error */
         s->rwstate = SSL_READING;
         *ok = 0;
         return i;
     }
+    if(recvd_type == SSL3_RT_CHANGE_CIPHER_SPEC) {
+        /* This isn't a real handshake message - its a CCS.
+         * There is no message sequence number in a CCS to give us confidence
+         * that this was really intended to be at this point in the handshake
+         * sequence. Therefore we only allow this if we were explicitly looking
+         * for it (i.e. if |mt| is -1 we still don't allow it).
+         */
+        if(mt == SSL3_MT_CHANGE_CIPHER_SPEC) {
+            if (wire[0] != SSL3_MT_CCS) {
+                al = SSL_AD_UNEXPECTED_MESSAGE;
+                SSLerr(SSL_F_DTLS1_GET_MESSAGE_FRAGMENT, SSL_R_BAD_CHANGE_CIPHER_SPEC);
+                goto f_err;
+            }
+
+            memcpy(s->init_buf->data, wire, i);
+            s->init_num = i - 1;
+            s->init_msg = s->init_buf->data + 1;
+            s->s3->tmp.message_type = SSL3_MT_CHANGE_CIPHER_SPEC;
+            s->s3->tmp.message_size = i - 1;
+            s->state = stn;
+            *ok = 1;
+            return i-1;
+        } else {
+            /*
+             * We weren't expecting a CCS yet. Probably something got
+             * re-ordered or this is a retransmit. We should drop this and try
+             * again.
+             */
+            s->init_num = 0;
+            goto redo;
+        }
+    }
+
     /* Handshake fails if message header is incomplete */
     if (i != DTLS1_HM_HEADER_LENGTH) {
         al = SSL_AD_UNEXPECTED_MESSAGE;
@@ -862,6 +915,20 @@ dtls1_get_message_fragment(SSL *s, int st1, int stn, long max, int *ok)
     /* parse the message fragment header */
     dtls1_get_message_header(wire, &msg_hdr);
 
+    len = msg_hdr.msg_len;
+    frag_off = msg_hdr.frag_off;
+    frag_len = msg_hdr.frag_len;
+
+    /*
+     * We must have at least frag_len bytes left in the record to be read.
+     * Fragments must not span records.
+     */
+    if (frag_len > RECORD_LAYER_get_rrec_length(&s->rlayer)) {
+        al = SSL3_AD_ILLEGAL_PARAMETER;
+        SSLerr(SSL_F_DTLS1_GET_MESSAGE_FRAGMENT, SSL_R_BAD_LENGTH);
+        goto f_err;
+    }
+
     /*
      * if this is a future (or stale) message it gets buffered
      * (or dropped)--no further processing at this time
@@ -871,10 +938,6 @@ dtls1_get_message_fragment(SSL *s, int st1, int stn, long max, int *ok)
     if (msg_hdr.seq != s->d1->handshake_read_seq
         && !(s->d1->listen && msg_hdr.seq == 1))
         return dtls1_process_out_of_seq_message(s, &msg_hdr, ok);
-
-    len = msg_hdr.msg_len;
-    frag_off = msg_hdr.frag_off;
-    frag_len = msg_hdr.frag_len;
 
     if (frag_len && frag_len < len)
         return dtls1_reassemble_fragment(s, &msg_hdr, ok);
@@ -906,17 +969,16 @@ dtls1_get_message_fragment(SSL *s, int st1, int stn, long max, int *ok)
     if ((al = dtls1_preprocess_fragment(s, &msg_hdr, max)))
         goto f_err;
 
-    /* XDTLS:  ressurect this when restart is in place */
-    s->state = stn;
-
     if (frag_len > 0) {
         unsigned char *p =
             (unsigned char *)s->init_buf->data + DTLS1_HM_HEADER_LENGTH;
 
-        i = s->method->ssl_read_bytes(s, SSL3_RT_HANDSHAKE,
+        i = s->method->ssl_read_bytes(s, SSL3_RT_HANDSHAKE, NULL,
                                       &p[frag_off], frag_len, 0);
+
         /*
-         * XDTLS: fix this--message fragments cannot span multiple packets
+         * This shouldn't ever fail due to NBIO because we already checked
+         * that we have enough data in the record
          */
         if (i <= 0) {
             s->rwstate = SSL_READING;
@@ -937,6 +999,7 @@ dtls1_get_message_fragment(SSL *s, int st1, int stn, long max, int *ok)
     }
 
     *ok = 1;
+    s->state = stn;
 
     /*
      * Note that s->init_num is *not* used as current offset in
@@ -1298,20 +1361,16 @@ dtls1_get_message_header(unsigned char *data, struct hm_header_st *msg_hdr)
     n2l3(data, msg_hdr->frag_len);
 }
 
-void dtls1_get_ccs_header(unsigned char *data, struct ccs_header_st *ccs_hdr)
-{
-    memset(ccs_hdr, 0, sizeof(*ccs_hdr));
-
-    ccs_hdr->type = *(data++);
-}
-
 int dtls1_shutdown(SSL *s)
 {
     int ret;
 #ifndef OPENSSL_NO_SCTP
-    if (BIO_dgram_is_sctp(SSL_get_wbio(s)) &&
+    BIO *wbio;
+
+    wbio = SSL_get_wbio(s);
+    if (wbio != NULL && BIO_dgram_is_sctp(wbio) &&
         !(s->shutdown & SSL_SENT_SHUTDOWN)) {
-        ret = BIO_dgram_sctp_wait_for_dry(SSL_get_wbio(s));
+        ret = BIO_dgram_sctp_wait_for_dry(wbio);
         if (ret < 0)
             return -1;
 

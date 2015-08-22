@@ -86,8 +86,8 @@ equivalent to:
 
 =head1 SEE ALSO
 
-L<X509_NAME_print_ex(3)|X509_NAME_print_ex(3)>,
-L<ASN1_tag2str(3)|ASN1_tag2str(3)>
+L<X509_NAME_print_ex(3)>,
+L<ASN1_tag2str(3)>
 
 =head1 HISTORY
 

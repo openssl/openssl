@@ -57,7 +57,7 @@
  */
 
 #include <stdio.h>
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/x509.h>
 #include <openssl/asn1.h>
 #include <openssl/dh.h>
@@ -119,18 +119,18 @@ static int dh_pub_decode(EVP_PKEY *pkey, X509_PUBKEY *pubkey)
     pm = pstr->data;
     pmlen = pstr->length;
 
-    if (!(dh = d2i_dhp(pkey, &pm, pmlen))) {
+    if ((dh = d2i_dhp(pkey, &pm, pmlen)) == NULL) {
         DHerr(DH_F_DH_PUB_DECODE, DH_R_DECODE_ERROR);
         goto err;
     }
 
-    if (!(public_key = d2i_ASN1_INTEGER(NULL, &p, pklen))) {
+    if ((public_key = d2i_ASN1_INTEGER(NULL, &p, pklen)) == NULL) {
         DHerr(DH_F_DH_PUB_DECODE, DH_R_DECODE_ERROR);
         goto err;
     }
 
     /* We have parameters now set public key */
-    if (!(dh->pub_key = ASN1_INTEGER_to_BN(public_key, NULL))) {
+    if ((dh->pub_key = ASN1_INTEGER_to_BN(public_key, NULL)) == NULL) {
         DHerr(DH_F_DH_PUB_DECODE, DH_R_BN_DECODE_ERROR);
         goto err;
     }
@@ -218,17 +218,18 @@ static int dh_priv_decode(EVP_PKEY *pkey, PKCS8_PRIV_KEY_INFO *p8)
 
     if (ptype != V_ASN1_SEQUENCE)
         goto decerr;
-
-    if (!(privkey = d2i_ASN1_INTEGER(NULL, &p, pklen)))
+    if ((privkey = d2i_ASN1_INTEGER(NULL, &p, pklen)) == NULL)
         goto decerr;
 
     pstr = pval;
     pm = pstr->data;
     pmlen = pstr->length;
-    if (!(dh = d2i_dhp(pkey, &pm, pmlen)))
+    if ((dh = d2i_dhp(pkey, &pm, pmlen)) == NULL)
         goto decerr;
+
     /* We have parameters now set private key */
-    if (!(dh->priv_key = ASN1_INTEGER_to_BN(privkey, NULL))) {
+    if ((dh->priv_key = BN_secure_new()) == NULL
+        || !ASN1_INTEGER_to_BN(privkey, dh->priv_key)) {
         DHerr(DH_F_DH_PRIV_DECODE, DH_R_BN_ERROR);
         goto dherr;
     }
@@ -310,7 +311,8 @@ static int dh_param_decode(EVP_PKEY *pkey,
                            const unsigned char **pder, int derlen)
 {
     DH *dh;
-    if (!(dh = d2i_dhp(pkey, pder, derlen))) {
+
+    if ((dh = d2i_dhp(pkey, pder, derlen)) == NULL) {
         DHerr(DH_F_DH_PARAM_DECODE, ERR_R_DH_LIB);
         return 0;
     }
@@ -679,13 +681,13 @@ static int dh_cms_set_peerkey(EVP_PKEY_CTX *pctx,
     if (!p || !plen)
         goto err;
 
-    if (!(public_key = d2i_ASN1_INTEGER(NULL, &p, plen))) {
+    if ((public_key = d2i_ASN1_INTEGER(NULL, &p, plen)) == NULL) {
         DHerr(DH_F_DH_CMS_SET_PEERKEY, DH_R_DECODE_ERROR);
         goto err;
     }
 
     /* We have parameters now set public key */
-    if (!(dhpeer->pub_key = ASN1_INTEGER_to_BN(public_key, NULL))) {
+    if ((dhpeer->pub_key = ASN1_INTEGER_to_BN(public_key, NULL)) == NULL) {
         DHerr(DH_F_DH_CMS_SET_PEERKEY, DH_R_BN_DECODE_ERROR);
         goto err;
     }

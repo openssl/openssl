@@ -44,7 +44,7 @@
 # Sandy Bridge	5.0/+8%
 # Atom		12.6/+6%
 # VIA Nano	6.4/+9%
-# Ivy Bridge	4.9/±0%
+# Ivy Bridge	4.9/Â±0%
 # Bulldozer	4.9/+15%
 #
 # (*)	PIII can actually deliver 6.6 cycles per byte with MMX code,

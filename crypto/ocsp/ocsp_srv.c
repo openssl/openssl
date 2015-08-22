@@ -58,7 +58,7 @@
  */
 
 #include <stdio.h>
-#include <cryptlib.h>
+#include "internal/cryptlib.h"
 #include <openssl/objects.h>
 #include <openssl/rand.h>
 #include <openssl/x509.h>
@@ -116,13 +116,13 @@ OCSP_RESPONSE *OCSP_response_create(int status, OCSP_BASICRESP *bs)
 {
     OCSP_RESPONSE *rsp = NULL;
 
-    if (!(rsp = OCSP_RESPONSE_new()))
+    if ((rsp = OCSP_RESPONSE_new()) == NULL)
         goto err;
     if (!(ASN1_ENUMERATED_set(rsp->responseStatus, status)))
         goto err;
     if (!bs)
         return rsp;
-    if (!(rsp->responseBytes = OCSP_RESPBYTES_new()))
+    if ((rsp->responseBytes = OCSP_RESPBYTES_new()) == NULL)
         goto err;
     rsp->responseBytes->responseType = OBJ_nid2obj(NID_id_pkix_OCSP_basic);
     if (!ASN1_item_pack
@@ -145,11 +145,12 @@ OCSP_SINGLERESP *OCSP_basic_add1_status(OCSP_BASICRESP *rsp,
     OCSP_CERTSTATUS *cs;
     OCSP_REVOKEDINFO *ri;
 
-    if (!rsp->tbsResponseData->responses &&
-        !(rsp->tbsResponseData->responses = sk_OCSP_SINGLERESP_new_null()))
+    if (rsp->tbsResponseData->responses == NULL
+        && (rsp->tbsResponseData->responses
+                = sk_OCSP_SINGLERESP_new_null()) == NULL)
         goto err;
 
-    if (!(single = OCSP_SINGLERESP_new()))
+    if ((single = OCSP_SINGLERESP_new()) == NULL)
         goto err;
 
     if (!ASN1_TIME_to_generalizedtime(thisupd, &single->thisUpdate))
@@ -160,7 +161,7 @@ OCSP_SINGLERESP *OCSP_basic_add1_status(OCSP_BASICRESP *rsp,
 
     OCSP_CERTID_free(single->certId);
 
-    if (!(single->certId = OCSP_CERTID_dup(cid)))
+    if ((single->certId = OCSP_CERTID_dup(cid)) == NULL)
         goto err;
 
     cs = single->certStatus;
@@ -170,12 +171,12 @@ OCSP_SINGLERESP *OCSP_basic_add1_status(OCSP_BASICRESP *rsp,
             OCSPerr(OCSP_F_OCSP_BASIC_ADD1_STATUS, OCSP_R_NO_REVOKED_TIME);
             goto err;
         }
-        if (!(cs->value.revoked = ri = OCSP_REVOKEDINFO_new()))
+        if ((cs->value.revoked = ri = OCSP_REVOKEDINFO_new()) == NULL)
             goto err;
         if (!ASN1_TIME_to_generalizedtime(revtime, &ri->revocationTime))
             goto err;
         if (reason != OCSP_REVOKED_STATUS_NOSTATUS) {
-            if (!(ri->revocationReason = ASN1_ENUMERATED_new()))
+            if ((ri->revocationReason = ASN1_ENUMERATED_new()) == NULL)
                 goto err;
             if (!(ASN1_ENUMERATED_set(ri->revocationReason, reason)))
                 goto err;
@@ -206,7 +207,8 @@ OCSP_SINGLERESP *OCSP_basic_add1_status(OCSP_BASICRESP *rsp,
 
 int OCSP_basic_add1_cert(OCSP_BASICRESP *resp, X509 *cert)
 {
-    if (!resp->certs && !(resp->certs = sk_X509_new_null()))
+    if (resp->certs == NULL
+        && (resp->certs = sk_X509_new_null()) == NULL)
         return 0;
 
     if (!sk_X509_push(resp->certs, cert))
@@ -242,7 +244,7 @@ int OCSP_basic_sign(OCSP_BASICRESP *brsp,
     if (flags & OCSP_RESPID_KEY) {
         unsigned char md[SHA_DIGEST_LENGTH];
         X509_pubkey_digest(signer, EVP_sha1(), md, NULL);
-        if (!(rid->value.byKey = ASN1_OCTET_STRING_new()))
+        if ((rid->value.byKey = ASN1_OCTET_STRING_new()) == NULL)
             goto err;
         if (!(ASN1_OCTET_STRING_set(rid->value.byKey, md, SHA_DIGEST_LENGTH)))
             goto err;

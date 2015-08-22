@@ -21,11 +21,11 @@ containing the value B<from>.
 
 BN_copy() returns B<to> on success, NULL on error. BN_dup() returns
 the new B<BIGNUM>, and NULL on error. The error codes can be obtained
-by L<ERR_get_error(3)|ERR_get_error(3)>.
+by L<ERR_get_error(3)>.
 
 =head1 SEE ALSO
 
-L<bn(3)|bn(3)>, L<ERR_get_error(3)|ERR_get_error(3)>
+L<bn(3)>, L<ERR_get_error(3)>
 
 =head1 HISTORY
 

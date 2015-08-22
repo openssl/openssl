@@ -838,7 +838,7 @@ static EC_GROUP *ec_asn1_parameters2group(const ECPARAMETERS *params)
     /* extract seed (optional) */
     if (params->curve->seed != NULL) {
         OPENSSL_free(ret->seed);
-        if (!(ret->seed = OPENSSL_malloc(params->curve->seed->length))) {
+        if ((ret->seed = OPENSSL_malloc(params->curve->seed->length)) == NULL) {
             ECerr(EC_F_EC_ASN1_PARAMETERS2GROUP, ERR_R_MALLOC_FAILURE);
             goto err;
         }
@@ -1023,6 +1023,8 @@ EC_KEY *d2i_ECPrivateKey(EC_KEY **a, const unsigned char **in, long len)
     ret->version = priv_key->version;
 
     if (priv_key->privateKey) {
+        if (ret->priv_key == NULL)
+            ret->priv_key = BN_secure_new();
         ret->priv_key = BN_bin2bn(ASN1_STRING_data(priv_key->privateKey),
                                   ASN1_STRING_length(priv_key->privateKey),
                                   ret->priv_key);

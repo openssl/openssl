@@ -29,7 +29,7 @@ Therefore, it cannot be used with any arbitrary RSA key object,
 even if it is otherwise fit for regular RSA operation.
 
 The B<cb> parameter is a callback that will be invoked in the same
-manner as L<BN_is_prime_ex(3)|BN_is_prime_ex(3)>.
+manner as L<BN_is_prime_ex(3)>.
 
 RSA_check_key() is equivalent to RSA_check_key_ex() with a NULL B<cb>.
 
@@ -40,7 +40,7 @@ return 1 if B<rsa> is a valid RSA key, and 0 otherwise.
 They return -1 if an error occurs while checking the key.
 
 If the key is invalid or an error occurred, the reason code can be
-obtained using L<ERR_get_error(3)|ERR_get_error(3)>.
+obtained using L<ERR_get_error(3)>.
 
 =head1 NOTES
 
@@ -65,9 +65,9 @@ provide their own verifiers.
 
 =head1 SEE ALSO
 
-L<BN_is_prime_ex(3)|BN_is_prime_ex(3)>,
-L<rsa(3)|rsa(3)>,
-L<ERR_get_error(3)|ERR_get_error(3)>
+L<BN_is_prime_ex(3)>,
+L<rsa(3)>,
+L<ERR_get_error(3)>
 
 =head1 HISTORY
 

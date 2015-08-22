@@ -12,8 +12,6 @@ fi
 if [ "$MAKEDEPEND" = "" ]; then MAKEDEPEND=makedepend; fi
 
 cp Makefile Makefile.save
-# fake the presence of Kerberos
-touch $TOP/krb5.h
 if expr "$MAKEDEPEND" : '.*cc' > /dev/null; then
     args=""
     while [ $# -gt 0 ]; do
@@ -32,7 +30,5 @@ else
     RC=$?
 fi
 mv Makefile.new Makefile
-# unfake the presence of Kerberos
-rm $TOP/krb5.h
 
 exit $RC

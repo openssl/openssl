@@ -58,7 +58,7 @@
  */
 
 #include <stdio.h>
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/conf.h>
 #include <openssl/asn1.h>
 #include <openssl/asn1t.h>
@@ -153,13 +153,14 @@ static AUTHORITY_INFO_ACCESS *v2i_AUTHORITY_INFO_ACCESS(X509V3_EXT_METHOD
     ACCESS_DESCRIPTION *acc;
     int i, objlen;
     char *objtmp, *ptmp;
-    if (!(ainfo = sk_ACCESS_DESCRIPTION_new_null())) {
+
+    if ((ainfo = sk_ACCESS_DESCRIPTION_new_null()) == NULL) {
         X509V3err(X509V3_F_V2I_AUTHORITY_INFO_ACCESS, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
     for (i = 0; i < sk_CONF_VALUE_num(nval); i++) {
         cnf = sk_CONF_VALUE_value(nval, i);
-        if (!(acc = ACCESS_DESCRIPTION_new())
+        if ((acc = ACCESS_DESCRIPTION_new()) == NULL
             || !sk_ACCESS_DESCRIPTION_push(ainfo, acc)) {
             X509V3err(X509V3_F_V2I_AUTHORITY_INFO_ACCESS,
                       ERR_R_MALLOC_FAILURE);
@@ -176,7 +177,7 @@ static AUTHORITY_INFO_ACCESS *v2i_AUTHORITY_INFO_ACCESS(X509V3_EXT_METHOD
         ctmp.value = cnf->value;
         if (!v2i_GENERAL_NAME_ex(acc->location, method, ctx, &ctmp, 0))
             goto err;
-        if (!(objtmp = OPENSSL_malloc(objlen + 1))) {
+        if ((objtmp = OPENSSL_malloc(objlen + 1)) == NULL) {
             X509V3err(X509V3_F_V2I_AUTHORITY_INFO_ACCESS,
                       ERR_R_MALLOC_FAILURE);
             goto err;

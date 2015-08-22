@@ -58,7 +58,7 @@
  */
 
 #include <stdio.h>
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/pkcs12.h>
 
 /* Add a local keyid to a safebag */
@@ -129,7 +129,8 @@ ASN1_TYPE *PKCS12_get_attr_gen(STACK_OF(X509_ATTRIBUTE) *attrs, int attr_nid)
 char *PKCS12_get_friendlyname(PKCS12_SAFEBAG *bag)
 {
     ASN1_TYPE *atype;
-    if (!(atype = PKCS12_get_attr(bag, NID_friendlyName)))
+
+    if ((atype = PKCS12_get_attr(bag, NID_friendlyName)) == NULL)
         return NULL;
     if (atype->type != V_ASN1_BMPSTRING)
         return NULL;

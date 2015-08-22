@@ -82,14 +82,8 @@ OPTIONS dsa_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
     {"inform", OPT_INFORM, 'F', "Input format, DER PEM PVK"},
     {"outform", OPT_OUTFORM, 'F', "Output format, DER PEM PVK"},
-# ifndef OPENSSL_NO_ENGINE
-    {"engine", OPT_ENGINE, 's', "Use engine e, possibly a hardware device"},
-# endif
     {"in", OPT_IN, '<', "Input file"},
     {"out", OPT_OUT, '>', "Output file"},
-    {"pvk-strong", OPT_PVK_STRONG, '-'},
-    {"pvk-weak", OPT_PVK_WEAK, '-'},
-    {"pvk-none", OPT_PVK_NONE, '-'},
     {"noout", OPT_NOOUT, '-', "Don't print key out"},
     {"text", OPT_TEXT, '-', "Print the key in text"},
     {"modulus", OPT_MODULUS, '-', "Print the DSA public value"},
@@ -98,6 +92,14 @@ OPTIONS dsa_options[] = {
     {"passin", OPT_PASSIN, 's', "Input file pass phrase source"},
     {"passout", OPT_PASSOUT, 's', "Output file pass phrase source"},
     {"", OPT_CIPHER, '-', "Any supported cipher"},
+# ifndef OPENSSL_NO_RC4
+    {"pvk-strong", OPT_PVK_STRONG, '-'},
+    {"pvk-weak", OPT_PVK_WEAK, '-'},
+    {"pvk-none", OPT_PVK_NONE, '-'},
+# endif
+# ifndef OPENSSL_NO_ENGINE
+    {"engine", OPT_ENGINE, 's', "Use engine e, possibly a hardware device"},
+# endif
     {NULL}
 };
 
@@ -112,17 +114,13 @@ int dsa_main(int argc, char **argv)
     OPTION_CHOICE o;
     int informat = FORMAT_PEM, outformat = FORMAT_PEM, text = 0, noout = 0;
     int i, modulus = 0, pubin = 0, pubout = 0, pvk_encr = 2, ret = 1;
+    int private = 0;
 
     prog = opt_init(argc, argv, dsa_options);
     while ((o = opt_next()) != OPT_EOF) {
         switch (o) {
         case OPT_EOF:
         case OPT_ERR:
-#ifdef OPENSSL_NO_RC4
-        case OPT_PVK_STRONG:
-        case OPT_PVK_WEAK:
-        case OPT_PVK_NONE:
-#endif
  opthelp:
             ret = 0;
             BIO_printf(bio_err, "%s: Use -help for summary.\n", prog);
@@ -166,6 +164,11 @@ int dsa_main(int argc, char **argv)
         case OPT_PVK_NONE:
             pvk_encr = 0;
             break;
+#else
+        case OPT_PVK_STRONG:
+        case OPT_PVK_WEAK:
+        case OPT_PVK_NONE:
+            break;
 #endif
         case OPT_NOOUT:
             noout = 1;
@@ -190,11 +193,17 @@ int dsa_main(int argc, char **argv)
     }
     argc = opt_num_rest();
     argv = opt_rest();
+    private = pubin || pubout ? 0 : 1;
+    if (text)
+        private = 1;
 
     if (!app_passwd(passinarg, passoutarg, &passin, &passout)) {
         BIO_printf(bio_err, "Error getting passwords\n");
         goto end;
     }
+
+    if (!app_load_modules(NULL))
+        goto end;
 
     BIO_printf(bio_err, "read DSA key\n");
     {
@@ -216,16 +225,18 @@ int dsa_main(int argc, char **argv)
         goto end;
     }
 
-    out = bio_open_default(outfile, "w");
+    out = bio_open_owner(outfile, "w", private);
     if (out == NULL)
         goto end;
 
-    if (text)
+    if (text) {
+        assert(private);
         if (!DSA_print(out, dsa, 0)) {
             perror(outfile);
             ERR_print_errors(bio_err);
             goto end;
         }
+    }
 
     if (modulus) {
         BIO_printf(out, "Public Key=");
@@ -241,25 +252,33 @@ int dsa_main(int argc, char **argv)
     if (outformat == FORMAT_ASN1) {
         if (pubin || pubout)
             i = i2d_DSA_PUBKEY_bio(out, dsa);
-        else
+        else {
+            assert(private);
             i = i2d_DSAPrivateKey_bio(out, dsa);
+        }
     } else if (outformat == FORMAT_PEM) {
         if (pubin || pubout)
             i = PEM_write_bio_DSA_PUBKEY(out, dsa);
-        else
+        else {
+            assert(private);
             i = PEM_write_bio_DSAPrivateKey(out, dsa, enc,
                                             NULL, 0, NULL, passout);
+        }
 # if !defined(OPENSSL_NO_RSA) && !defined(OPENSSL_NO_RC4)
     } else if (outformat == FORMAT_MSBLOB || outformat == FORMAT_PVK) {
         EVP_PKEY *pk;
         pk = EVP_PKEY_new();
         EVP_PKEY_set1_DSA(pk, dsa);
-        if (outformat == FORMAT_PVK)
+        if (outformat == FORMAT_PVK) {
+            assert(private);
             i = i2b_PVK_bio(out, pk, pvk_encr, 0, passout);
+        }
         else if (pubin || pubout)
             i = i2b_PublicKey_bio(out, pk);
-        else
+        else {
+            assert(private);
             i = i2b_PrivateKey_bio(out, pk);
+        }
         EVP_PKEY_free(pk);
 # endif
     } else {

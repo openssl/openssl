@@ -66,7 +66,7 @@
 
 #include <stdio.h>
 #include <time.h>
-#include <cryptlib.h>
+#include "internal/cryptlib.h"
 #include <openssl/objects.h>
 #include <openssl/rand.h>
 #include <openssl/x509.h>
@@ -89,7 +89,7 @@ OCSP_ONEREQ *OCSP_request_add0_id(OCSP_REQUEST *req, OCSP_CERTID *cid)
 {
     OCSP_ONEREQ *one = NULL;
 
-    if (!(one = OCSP_ONEREQ_new()))
+    if ((one = OCSP_ONEREQ_new()) == NULL)
         goto err;
     OCSP_CERTID_free(one->reqCert);
     one->reqCert = cid;
@@ -132,7 +132,8 @@ int OCSP_request_add1_cert(OCSP_REQUEST *req, X509 *cert)
         return 0;
     if (!cert)
         return 1;
-    if (!sig->certs && !(sig->certs = sk_X509_new_null()))
+    if (sig->certs == NULL
+        && (sig->certs = sk_X509_new_null()) == NULL)
         return 0;
 
     if (!sk_X509_push(sig->certs, cert))
@@ -159,7 +160,7 @@ int OCSP_request_sign(OCSP_REQUEST *req,
     if (!OCSP_request_set1_name(req, X509_get_subject_name(signer)))
         goto err;
 
-    if (!(req->optionalSignature = OCSP_SIGNATURE_new()))
+    if ((req->optionalSignature = OCSP_SIGNATURE_new()) == NULL)
         goto err;
     if (key) {
         if (!X509_check_private_key(signer, key)) {

@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-SSL_CTX_new, SSLv3_method, SSLv3_server_method, SSLv3_client_method, TLSv1_method, TLSv1_server_method, TLSv1_client_method, TLSv1_1_method, TLSv1_1_server_method, TLSv1_1_client_method, SSLv23_method, SSLv23_server_method, SSLv23_client_method - create a new SSL_CTX object as framework for TLS/SSL enabled functions
+SSL_CTX_new, SSLv3_method, SSLv3_server_method, SSLv3_client_method, TLSv1_method, TLSv1_server_method, TLSv1_client_method, TLSv1_1_method, TLSv1_1_server_method, TLSv1_1_client_method, TLS_method, TLS_server_method, TLS_client_method, SSLv23_method, SSLv23_server_method, SSLv23_client_method - create a new SSL_CTX object as framework for TLS/SSL enabled functions
 
 =head1 SYNOPSIS
 
@@ -28,31 +28,30 @@ client only type. B<method> can be of the following types:
 A TLS/SSL connection established with these methods will only understand the
 SSLv3 protocol. A client will send out SSLv3 client hello messages
 and will indicate that it only understands SSLv3. A server will only understand
-SSLv3 client hello messages. This especially means, that it will
-not understand SSLv2 client hello messages which are widely used for
-compatibility reasons, see SSLv23_*_method().
+SSLv3 client hello messages.
 
 =item TLSv1_method(void), TLSv1_server_method(void), TLSv1_client_method(void)
 
 A TLS/SSL connection established with these methods will only understand the
 TLSv1 protocol. A client will send out TLSv1 client hello messages
 and will indicate that it only understands TLSv1. A server will only understand
-TLSv1 client hello messages. This especially means, that it will
-not understand SSLv2 client hello messages which are widely used for
-compatibility reasons, see SSLv23_*_method(). It will also not understand
-SSLv3 client hello messages.
+TLSv1 client hello messages.
 
 =item TLSv1_1_method(void), TLSv1_1_server_method(void), TLSv1_1_client_method(void)
 
 A TLS/SSL connection established with these methods will only understand the
 TLSv1.1 protocol. A client will send out TLSv1.1 client hello messages
 and will indicate that it only understands TLSv1.1. A server will only
-understand TLSv1.1 client hello messages. This especially means, that it will
-not understand SSLv2 client hello messages which are widely used for
-compatibility reasons, see SSLv23_*_method(). It will also not understand
-SSLv3 client hello messages.
+understand TLSv1.1 client hello messages.
 
-=item SSLv23_method(void), SSLv23_server_method(void), SSLv23_client_method(void)
+=item TLSv1_2_method(void), TLSv1_2_server_method(void), TLSv1_2_client_method(void)
+
+A TLS/SSL connection established with these methods will only understand the
+TLSv1.2 protocol. A client will send out TLSv1.2 client hello messages
+and will indicate that it only understands TLSv1.2. A server will only
+understand TLSv1.2 client hello messages.
+
+=item TLS_method(void), TLS_server_method(void), TLS_client_method(void)
 
 A TLS/SSL connection established with these methods may understand the
 SSLv3, TLSv1, TLSv1.1 and TLSv1.2 protocols.
@@ -62,6 +61,12 @@ a client will send out TLSv1 client hello messages including extensions and
 will indicate that it also understands TLSv1.1, TLSv1.2 and permits a
 fallback to SSLv3. A server will support SSLv3, TLSv1, TLSv1.1 and TLSv1.2
 protocols. This is the best choice when compatibility is a concern.
+
+=item SSLv23_method(void), SSLv23_server_method(void), SSLv23_client_method(void)
+
+Use of these functions is deprecated. They have been replaced with TLS_Method(),
+TLS_server_method() and TLS_client_method() respectively. New code should use
+those functions instead.
 
 =back
 
@@ -98,11 +103,13 @@ The return value points to an allocated SSL_CTX object.
 =head1 HISTORY
 
 SSLv2_method, SSLv2_server_method and SSLv2_client_method where removed in
-OpenSSL 1.1.0.
+OpenSSL 1.1.0. SSLv23_method, SSLv23_server_method and SSLv23_client_method were
+deprecated and TLS_method, TLS_server_method and TLS_client_method
+were introduced in OpenSSL 1.1.0.
 
 =head1 SEE ALSO
 
-L<SSL_CTX_free(3)|SSL_CTX_free(3)>, L<SSL_accept(3)|SSL_accept(3)>,
-L<ssl(3)|ssl(3)>,  L<SSL_set_connect_state(3)|SSL_set_connect_state(3)>
+L<SSL_CTX_free(3)>, L<SSL_accept(3)>,
+L<ssl(3)>,  L<SSL_set_connect_state(3)>
 
 =cut

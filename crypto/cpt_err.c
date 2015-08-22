@@ -1,6 +1,6 @@
 /* crypto/cpt_err.c */
 /* ====================================================================
- * Copyright (c) 1999-2011 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2015 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -70,9 +70,12 @@
 # define ERR_REASON(reason) ERR_PACK(ERR_LIB_CRYPTO,0,reason)
 
 static ERR_STRING_DATA CRYPTO_str_functs[] = {
+    {ERR_FUNC(CRYPTO_F_CRYPTO_DUP_EX_DATA), "CRYPTO_dup_ex_data"},
+    {ERR_FUNC(CRYPTO_F_CRYPTO_FREE_EX_DATA), "CRYPTO_free_ex_data"},
     {ERR_FUNC(CRYPTO_F_CRYPTO_GET_EX_NEW_INDEX), "CRYPTO_get_ex_new_index"},
     {ERR_FUNC(CRYPTO_F_CRYPTO_GET_NEW_DYNLOCKID), "CRYPTO_get_new_dynlockid"},
     {ERR_FUNC(CRYPTO_F_CRYPTO_GET_NEW_LOCKID), "CRYPTO_get_new_lockid"},
+    {ERR_FUNC(CRYPTO_F_CRYPTO_NEW_EX_DATA), "CRYPTO_new_ex_data"},
     {ERR_FUNC(CRYPTO_F_CRYPTO_SET_EX_DATA), "CRYPTO_set_ex_data"},
     {ERR_FUNC(CRYPTO_F_DEF_ADD_INDEX), "DEF_ADD_INDEX"},
     {ERR_FUNC(CRYPTO_F_DEF_GET_CLASS), "DEF_GET_CLASS"},

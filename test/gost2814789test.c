@@ -8,6 +8,7 @@
  * ====================================================================
  */
 #include <stdio.h>
+#include <openssl/e_os2.h>
 
 #if defined(OPENSSL_NO_ENGINE) || defined(OPENSSL_NO_GOST)
 int main(int argc, char *argv[])

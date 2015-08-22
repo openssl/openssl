@@ -26,8 +26,6 @@ rsa - RSA public key cryptosystem
  int RSA_verify(int type, unsigned char *m, unsigned int m_len,
     unsigned char *sigbuf, unsigned int siglen, RSA *rsa);
 
- int RSA_size(const RSA *rsa);
-
  RSA *RSA_generate_key(int num, unsigned long e,
     void (*callback)(int,int,void *), void *cb_arg);
 
@@ -107,17 +105,17 @@ RSA was covered by a US patent which expired in September 2000.
 
 =head1 SEE ALSO
 
-L<rsa(1)|rsa(1)>, L<bn(3)|bn(3)>, L<dsa(3)|dsa(3)>, L<dh(3)|dh(3)>,
-L<rand(3)|rand(3)>, L<engine(3)|engine(3)>, L<RSA_new(3)|RSA_new(3)>,
-L<RSA_public_encrypt(3)|RSA_public_encrypt(3)>,
-L<RSA_sign(3)|RSA_sign(3)>, L<RSA_size(3)|RSA_size(3)>,
-L<RSA_generate_key(3)|RSA_generate_key(3)>,
-L<RSA_check_key(3)|RSA_check_key(3)>,
-L<RSA_blinding_on(3)|RSA_blinding_on(3)>,
-L<RSA_set_method(3)|RSA_set_method(3)>, L<RSA_print(3)|RSA_print(3)>,
-L<RSA_get_ex_new_index(3)|RSA_get_ex_new_index(3)>,
-L<RSA_private_encrypt(3)|RSA_private_encrypt(3)>,
-L<RSA_sign_ASN1_OCTET_STRING(3)|RSA_sign_ASN1_OCTET_STRING(3)>,
-L<RSA_padding_add_PKCS1_type_1(3)|RSA_padding_add_PKCS1_type_1(3)> 
+L<rsa(1)>, L<bn(3)>, L<dsa(3)>, L<dh(3)>,
+L<rand(3)>, L<engine(3)>, L<RSA_new(3)>,
+L<RSA_public_encrypt(3)>,
+L<RSA_sign(3)>, L<RSA_size(3)>,
+L<RSA_generate_key(3)>,
+L<RSA_check_key(3)>,
+L<RSA_blinding_on(3)>,
+L<RSA_set_method(3)>, L<RSA_print(3)>,
+L<RSA_get_ex_new_index(3)>,
+L<RSA_private_encrypt(3)>,
+L<RSA_sign_ASN1_OCTET_STRING(3)>,
+L<RSA_padding_add_PKCS1_type_1(3)> 
 
 =cut

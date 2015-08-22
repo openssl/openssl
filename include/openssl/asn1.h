@@ -509,11 +509,6 @@ typedef STACK_OF(ASN1_TYPE) ASN1_SEQUENCE_ANY;
 DECLARE_ASN1_ENCODE_FUNCTIONS_const(ASN1_SEQUENCE_ANY, ASN1_SEQUENCE_ANY)
 DECLARE_ASN1_ENCODE_FUNCTIONS_const(ASN1_SEQUENCE_ANY, ASN1_SET_ANY)
 
-typedef struct NETSCAPE_X509_st {
-    ASN1_OCTET_STRING *header;
-    X509 *cert;
-} NETSCAPE_X509;
-
 /* This is used to contain a list of bit names */
 typedef struct BIT_STRING_BITNAME_st {
     int bitnum;
@@ -677,15 +672,24 @@ int a2d_ASN1_OBJECT(unsigned char *out, int olen, const char *buf, int num);
 ASN1_OBJECT *ASN1_OBJECT_create(int nid, unsigned char *data, int len,
                                 const char *sn, const char *ln);
 
+int ASN1_INTEGER_get_int64(int64_t *pr, const ASN1_INTEGER *a);
+int ASN1_INTEGER_set_int64(ASN1_INTEGER *a, int64_t r);
+int ASN1_INTEGER_get_uint64(uint64_t *pr, const ASN1_INTEGER *a);
+int ASN1_INTEGER_set_uint64(ASN1_INTEGER *a, uint64_t r);
+
 int ASN1_INTEGER_set(ASN1_INTEGER *a, long v);
 long ASN1_INTEGER_get(const ASN1_INTEGER *a);
 ASN1_INTEGER *BN_to_ASN1_INTEGER(const BIGNUM *bn, ASN1_INTEGER *ai);
 BIGNUM *ASN1_INTEGER_to_BN(const ASN1_INTEGER *ai, BIGNUM *bn);
 
+int ASN1_ENUMERATED_get_int64(int64_t *pr, const ASN1_ENUMERATED *a);
+int ASN1_ENUMERATED_set_int64(ASN1_ENUMERATED *a, int64_t r);
+
+
 int ASN1_ENUMERATED_set(ASN1_ENUMERATED *a, long v);
 long ASN1_ENUMERATED_get(ASN1_ENUMERATED *a);
-ASN1_ENUMERATED *BN_to_ASN1_ENUMERATED(BIGNUM *bn, ASN1_ENUMERATED *ai);
-BIGNUM *ASN1_ENUMERATED_to_BN(ASN1_ENUMERATED *ai, BIGNUM *bn);
+ASN1_ENUMERATED *BN_to_ASN1_ENUMERATED(const BIGNUM *bn, ASN1_ENUMERATED *ai);
+BIGNUM *ASN1_ENUMERATED_to_BN(const ASN1_ENUMERATED *ai, BIGNUM *bn);
 
 /* General */
 /* given a string, return the correct type, max is the maximum length */
@@ -787,8 +791,6 @@ int ASN1_parse_dump(BIO *bp, const unsigned char *pp, long len, int indent,
 const char *ASN1_tag2str(int tag);
 
 /* Used to load and write netscape format cert */
-
-DECLARE_ASN1_FUNCTIONS(NETSCAPE_X509)
 
 int ASN1_UNIVERSALSTRING_to_string(ASN1_UNIVERSALSTRING *s);
 
@@ -930,7 +932,9 @@ void ERR_load_ASN1_strings(void);
 # define ASN1_F_ASN1_GENERALIZEDTIME_ADJ                  216
 # define ASN1_F_ASN1_GENERALIZEDTIME_SET                  185
 # define ASN1_F_ASN1_GENERATE_V3                          178
+# define ASN1_F_ASN1_GET_INT64                            224
 # define ASN1_F_ASN1_GET_OBJECT                           114
+# define ASN1_F_ASN1_GET_UINT64                           225
 # define ASN1_F_ASN1_HEADER_NEW                           115
 # define ASN1_F_ASN1_I2D_BIO                              116
 # define ASN1_F_ASN1_I2D_FP                               117
@@ -938,8 +942,8 @@ void ERR_load_ASN1_strings(void);
 # define ASN1_F_ASN1_INTEGER_TO_BN                        119
 # define ASN1_F_ASN1_ITEM_D2I_FP                          206
 # define ASN1_F_ASN1_ITEM_DUP                             191
-# define ASN1_F_ASN1_ITEM_EX_NEW                          121
 # define ASN1_F_ASN1_ITEM_EX_D2I                          120
+# define ASN1_F_ASN1_ITEM_EX_NEW                          121
 # define ASN1_F_ASN1_ITEM_I2D_BIO                         192
 # define ASN1_F_ASN1_ITEM_I2D_FP                          193
 # define ASN1_F_ASN1_ITEM_PACK                            198
@@ -958,8 +962,11 @@ void ERR_load_ASN1_strings(void);
 # define ASN1_F_ASN1_SEQ_UNPACK                           127
 # define ASN1_F_ASN1_SIGN                                 128
 # define ASN1_F_ASN1_STR2TYPE                             179
+# define ASN1_F_ASN1_STRING_GET_INT64                     227
+# define ASN1_F_ASN1_STRING_GET_UINT64                    230
 # define ASN1_F_ASN1_STRING_SET                           186
 # define ASN1_F_ASN1_STRING_TABLE_ADD                     129
+# define ASN1_F_ASN1_STRING_TO_BN                         228
 # define ASN1_F_ASN1_STRING_TYPE_NEW                      130
 # define ASN1_F_ASN1_TEMPLATE_EX_D2I                      132
 # define ASN1_F_ASN1_TEMPLATE_NEW                         133
@@ -978,9 +985,11 @@ void ERR_load_ASN1_strings(void);
 # define ASN1_F_BITSTR_CB                                 180
 # define ASN1_F_BN_TO_ASN1_ENUMERATED                     138
 # define ASN1_F_BN_TO_ASN1_INTEGER                        139
+# define ASN1_F_BN_TO_ASN1_STRING                         229
 # define ASN1_F_C2I_ASN1_BIT_STRING                       189
 # define ASN1_F_C2I_ASN1_INTEGER                          194
 # define ASN1_F_C2I_ASN1_OBJECT                           196
+# define ASN1_F_C2I_IBUF                                  226
 # define ASN1_F_COLLECT_DATA                              140
 # define ASN1_F_D2I_ASN1_BIT_STRING                       141
 # define ASN1_F_D2I_ASN1_BOOLEAN                          142
@@ -998,8 +1007,6 @@ void ERR_load_ASN1_strings(void);
 # define ASN1_F_D2I_NETSCAPE_RSA_2                        153
 # define ASN1_F_D2I_PRIVATEKEY                            154
 # define ASN1_F_D2I_PUBLICKEY                             155
-# define ASN1_F_D2I_RSA_NET                               200
-# define ASN1_F_D2I_RSA_NET_2                             201
 # define ASN1_F_D2I_X509                                  156
 # define ASN1_F_D2I_X509_CINF                             157
 # define ASN1_F_D2I_X509_PKEY                             159
@@ -1011,15 +1018,16 @@ void ERR_load_ASN1_strings(void);
 # define ASN1_F_I2D_EC_PUBKEY                             181
 # define ASN1_F_I2D_PRIVATEKEY                            163
 # define ASN1_F_I2D_PUBLICKEY                             164
-# define ASN1_F_I2D_RSA_NET                               162
 # define ASN1_F_I2D_RSA_PUBKEY                            165
 # define ASN1_F_LONG_C2I                                  166
 # define ASN1_F_OID_MODULE_INIT                           174
 # define ASN1_F_PARSE_TAGGING                             182
 # define ASN1_F_PKCS5_PBE2_SET_IV                         167
+# define ASN1_F_PKCS5_PBE2_SET_SCRYPT                     231
 # define ASN1_F_PKCS5_PBE_SET                             202
 # define ASN1_F_PKCS5_PBE_SET0_ALGOR                      215
 # define ASN1_F_PKCS5_PBKDF2_SET                          219
+# define ASN1_F_PKCS5_SCRYPT_SET                          232
 # define ASN1_F_SMIME_READ_ASN1                           212
 # define ASN1_F_SMIME_TEXT                                213
 # define ASN1_F_STBL_MODULE_INIT                          223
@@ -1073,14 +1081,17 @@ void ERR_load_ASN1_strings(void);
 # define ASN1_R_ILLEGAL_HEX                               178
 # define ASN1_R_ILLEGAL_IMPLICIT_TAG                      179
 # define ASN1_R_ILLEGAL_INTEGER                           180
+# define ASN1_R_ILLEGAL_NEGATIVE_VALUE                    226
 # define ASN1_R_ILLEGAL_NESTED_TAGGING                    181
 # define ASN1_R_ILLEGAL_NULL                              125
 # define ASN1_R_ILLEGAL_NULL_VALUE                        182
 # define ASN1_R_ILLEGAL_OBJECT                            183
 # define ASN1_R_ILLEGAL_OPTIONAL_ANY                      126
 # define ASN1_R_ILLEGAL_OPTIONS_ON_ITEM_TEMPLATE          170
+# define ASN1_R_ILLEGAL_PADDING                           221
 # define ASN1_R_ILLEGAL_TAGGED_ANY                        127
 # define ASN1_R_ILLEGAL_TIME_VALUE                        184
+# define ASN1_R_ILLEGAL_ZERO_CONTENT                      222
 # define ASN1_R_INTEGER_NOT_ASCII_FORMAT                  185
 # define ASN1_R_INTEGER_TOO_LARGE_FOR_LONG                128
 # define ASN1_R_INVALID_BIT_STRING_BITS_LEFT              220
@@ -1090,6 +1101,7 @@ void ERR_load_ASN1_strings(void);
 # define ASN1_R_INVALID_MODIFIER                          186
 # define ASN1_R_INVALID_NUMBER                            187
 # define ASN1_R_INVALID_OBJECT_ENCODING                   216
+# define ASN1_R_INVALID_SCRYPT_PARAMETERS                 227
 # define ASN1_R_INVALID_SEPARATOR                         131
 # define ASN1_R_INVALID_STRING_TABLE_VALUE                218
 # define ASN1_R_INVALID_TIME_FORMAT                       132
@@ -1133,7 +1145,9 @@ void ERR_load_ASN1_strings(void);
 # define ASN1_R_TAG_VALUE_TOO_HIGH                        153
 # define ASN1_R_THE_ASN1_OBJECT_IDENTIFIER_IS_NOT_KNOWN_FOR_THIS_MD 154
 # define ASN1_R_TIME_NOT_ASCII_FORMAT                     193
+# define ASN1_R_TOO_LARGE                                 223
 # define ASN1_R_TOO_LONG                                  155
+# define ASN1_R_TOO_SMALL                                 224
 # define ASN1_R_TYPE_NOT_CONSTRUCTED                      156
 # define ASN1_R_TYPE_NOT_PRIMITIVE                        195
 # define ASN1_R_UNABLE_TO_DECODE_RSA_KEY                  157
@@ -1151,6 +1165,7 @@ void ERR_load_ASN1_strings(void);
 # define ASN1_R_UNSUPPORTED_ENCRYPTION_ALGORITHM          166
 # define ASN1_R_UNSUPPORTED_PUBLIC_KEY_TYPE               167
 # define ASN1_R_UNSUPPORTED_TYPE                          196
+# define ASN1_R_WRONG_INTEGER_TYPE                        225
 # define ASN1_R_WRONG_PUBLIC_KEY_TYPE                     200
 # define ASN1_R_WRONG_TAG                                 168
 # define ASN1_R_WRONG_TYPE                                169

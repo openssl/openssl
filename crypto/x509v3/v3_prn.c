@@ -59,7 +59,7 @@
 /* X509 v3 extension utilities */
 
 #include <stdio.h>
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/conf.h>
 #include <openssl/x509v3.h>
 
@@ -131,7 +131,7 @@ int X509V3_EXT_print(BIO *out, X509_EXTENSION *ext, unsigned long flag,
     p = ASN1_STRING_data(extoct);
     extlen = ASN1_STRING_length(extoct);
 
-    if (!(method = X509V3_EXT_get(ext)))
+    if ((method = X509V3_EXT_get(ext)) == NULL)
         return unknown_ext_print(out, p, extlen, flag, indent, 0);
     if (method->it)
         ext_str = ASN1_item_d2i(NULL, &p, extlen, ASN1_ITEM_ptr(method->it));
@@ -142,7 +142,7 @@ int X509V3_EXT_print(BIO *out, X509_EXTENSION *ext, unsigned long flag,
         return unknown_ext_print(out, p, extlen, flag, indent, 1);
 
     if (method->i2s) {
-        if (!(value = method->i2s(method, ext_str))) {
+        if ((value = method->i2s(method, ext_str)) == NULL) {
             ok = 0;
             goto err;
         }
@@ -162,7 +162,7 @@ int X509V3_EXT_print(BIO *out, X509_EXTENSION *ext, unsigned long flag,
         }
 #endif
     } else if (method->i2v) {
-        if (!(nval = method->i2v(method, ext_str, NULL))) {
+        if ((nval = method->i2v(method, ext_str, NULL)) == NULL) {
             ok = 0;
             goto err;
         }
@@ -249,7 +249,8 @@ int X509V3_EXT_print_fp(FILE *fp, X509_EXTENSION *ext, int flag, int indent)
 {
     BIO *bio_tmp;
     int ret;
-    if (!(bio_tmp = BIO_new_fp(fp, BIO_NOCLOSE)))
+
+    if ((bio_tmp = BIO_new_fp(fp, BIO_NOCLOSE)) == NULL)
         return 0;
     ret = X509V3_EXT_print(bio_tmp, ext, flag, indent);
     BIO_free(bio_tmp);

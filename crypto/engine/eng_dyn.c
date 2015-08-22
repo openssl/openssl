@@ -512,7 +512,6 @@ static int dynamic_load(ENGINE *e, dynamic_data_ctx *ctx)
      * would also increase opaqueness.
      */
     fns.static_state = ENGINE_get_static_state();
-    fns.ex_data_fns = CRYPTO_get_ex_data_implementation();
     CRYPTO_get_mem_functions(&fns.mem_fns.malloc_cb,
                              &fns.mem_fns.realloc_cb, &fns.mem_fns.free_cb);
     fns.lock_fns.lock_locking_cb = CRYPTO_get_locking_callback();

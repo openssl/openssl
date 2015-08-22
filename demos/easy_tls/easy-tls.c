@@ -667,8 +667,8 @@ SSL_CTX *tls_create_ctx(struct tls_create_ctx_args a, void *apparg)
         return NULL;
 
     ret =
-        SSL_CTX_new((a.client_p ? SSLv23_client_method :
-                     SSLv23_server_method) ());
+        SSL_CTX_new((a.client_p ? TLS_client_method :
+                     TLS_server_method) ());
 
     if (ret == NULL)
         goto err;
@@ -1020,7 +1020,7 @@ tls_proxy(int clear_fd, int tls_fd, int info_fd, SSL_CTX *ctx, int client_p)
         int clear_read_select = 0, clear_write_select = 0,
             tls_read_select = 0, tls_write_select = 0, progress = 0;
         int r;
-        unsigned long num_read = BIO_number_read(rbio),
+        uint64_t num_read = BIO_number_read(rbio),
             num_written = BIO_number_written(wbio);
 
         DEBUG_MSG2("loop iteration", ++tls_loop_count);

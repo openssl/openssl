@@ -68,7 +68,8 @@ typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
     OPT_INFORM, OPT_OUTFORM, OPT_ENGINE, OPT_IN, OPT_OUT,
     OPT_TOPK8, OPT_NOITER, OPT_NOCRYPT, OPT_NOOCT, OPT_NSDB, OPT_EMBED,
-    OPT_V2, OPT_V1, OPT_V2PRF, OPT_ITER, OPT_PASSIN, OPT_PASSOUT
+    OPT_V2, OPT_V1, OPT_V2PRF, OPT_ITER, OPT_PASSIN, OPT_PASSOUT,
+    OPT_SCRYPT, OPT_SCRYPT_N, OPT_SCRYPT_R, OPT_SCRYPT_P
 } OPTION_CHOICE;
 
 OPTIONS pkcs8_options[] = {
@@ -93,6 +94,10 @@ OPTIONS pkcs8_options[] = {
 #ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
 #endif
+    {"scrypt", OPT_SCRYPT, '-', "Use scrypt algorithm"},
+    {"scrypt_N", OPT_SCRYPT_N, 's', "Set scrypt N parameter"},
+    {"scrypt_r", OPT_SCRYPT_R, 's', "Set scrypt r parameter"},
+    {"scrypt_p", OPT_SCRYPT_P, 's', "Set scrypt p parameter"},
     {NULL}
 };
 
@@ -110,6 +115,8 @@ int pkcs8_main(int argc, char **argv)
     OPTION_CHOICE o;
     int nocrypt = 0, ret = 1, iter = PKCS12_DEFAULT_ITER, p8_broken = PKCS8_OK;
     int informat = FORMAT_PEM, outformat = FORMAT_PEM, topk8 = 0, pbe_nid = -1;
+    int private = 0;
+    unsigned long scrypt_N = 0, scrypt_r = 0, scrypt_p = 0;
 
     prog = opt_init(argc, argv, pkcs8_options);
     while ((o = opt_next()) != OPT_EOF) {
@@ -188,15 +195,38 @@ int pkcs8_main(int argc, char **argv)
         case OPT_ENGINE:
             e = setup_engine(opt_arg(), 0);
             break;
+        case OPT_SCRYPT:
+            scrypt_N = 1024;
+            scrypt_r = 8;
+            scrypt_p = 16;
+            if (cipher == NULL)
+                cipher = EVP_aes_256_cbc();
+            break;
+        case OPT_SCRYPT_N:
+            if (!opt_ulong(opt_arg(), &scrypt_N))
+                goto opthelp;
+            break;
+        case OPT_SCRYPT_R:
+            if (!opt_ulong(opt_arg(), &scrypt_r))
+                goto opthelp;
+            break;
+        case OPT_SCRYPT_P:
+            if (!opt_ulong(opt_arg(), &scrypt_p))
+                goto opthelp;
+            break;
         }
     }
     argc = opt_num_rest();
     argv = opt_rest();
+    private = 1;
 
     if (!app_passwd(passinarg, passoutarg, &passin, &passout)) {
         BIO_printf(bio_err, "Error getting passwords\n");
         goto end;
     }
+
+    if (!app_load_modules(NULL))
+        goto end;
 
     if ((pbe_nid == -1) && !cipher)
         pbe_nid = NID_pbeWithMD5AndDES_CBC;
@@ -204,19 +234,21 @@ int pkcs8_main(int argc, char **argv)
     in = bio_open_default(infile, "rb");
     if (in == NULL)
         goto end;
-    out = bio_open_default(outfile, "wb");
+    out = bio_open_owner(outfile, "wb", private);
     if (out == NULL)
         goto end;
+
     if (topk8) {
         pkey = load_key(infile, informat, 1, passin, e, "key");
         if (!pkey)
             goto end;
-        if (!(p8inf = EVP_PKEY2PKCS8_broken(pkey, p8_broken))) {
+        if ((p8inf = EVP_PKEY2PKCS8_broken(pkey, p8_broken)) == NULL) {
             BIO_printf(bio_err, "Error converting key\n");
             ERR_print_errors(bio_err);
             goto end;
         }
         if (nocrypt) {
+            assert(private);
             if (outformat == FORMAT_PEM)
                 PEM_write_bio_PKCS8_PRIV_KEY_INFO(out, p8inf);
             else if (outformat == FORMAT_ASN1)
@@ -226,23 +258,42 @@ int pkcs8_main(int argc, char **argv)
                 goto end;
             }
         } else {
+            X509_ALGOR *pbe;
+            if (cipher) {
+                if (scrypt_N && scrypt_r && scrypt_p)
+                    pbe = PKCS5_pbe2_set_scrypt(cipher, NULL, 0, NULL,
+                                                scrypt_N, scrypt_r, scrypt_p);
+                else
+                    pbe = PKCS5_pbe2_set_iv(cipher, iter, NULL, 0, NULL,
+                                            pbe_nid);
+            } else {
+                pbe = PKCS5_pbe_set(pbe_nid, iter, NULL, 0);
+            }
+            if (pbe == NULL) {
+                BIO_printf(bio_err, "Error setting PBE algorithm\n");
+                ERR_print_errors(bio_err);
+                goto end;
+            }
             if (passout)
                 p8pass = passout;
             else {
                 p8pass = pass;
                 if (EVP_read_pw_string
-                    (pass, sizeof pass, "Enter Encryption Password:", 1))
+                    (pass, sizeof pass, "Enter Encryption Password:", 1)) {
+                    X509_ALGOR_free(pbe);
                     goto end;
+                }
             }
             app_RAND_load_file(NULL, 0);
-            if (!(p8 = PKCS8_encrypt(pbe_nid, cipher,
-                                     p8pass, strlen(p8pass),
-                                     NULL, 0, iter, p8inf))) {
+            p8 = PKCS8_set0_pbe(p8pass, strlen(p8pass), p8inf, pbe);
+            if (p8 == NULL) {
+                X509_ALGOR_free(pbe);
                 BIO_printf(bio_err, "Error encrypting key\n");
                 ERR_print_errors(bio_err);
                 goto end;
             }
             app_RAND_write_file(NULL);
+            assert(private);
             if (outformat == FORMAT_PEM)
                 PEM_write_bio_PKCS8(out, p8);
             else if (outformat == FORMAT_ASN1)
@@ -296,7 +347,7 @@ int pkcs8_main(int argc, char **argv)
         goto end;
     }
 
-    if (!(pkey = EVP_PKCS82PKEY(p8inf))) {
+    if ((pkey = EVP_PKCS82PKEY(p8inf)) == NULL) {
         BIO_printf(bio_err, "Error converting key\n");
         ERR_print_errors(bio_err);
         goto end;
@@ -327,6 +378,7 @@ int pkcs8_main(int argc, char **argv)
         }
     }
 
+    assert(private);
     if (outformat == FORMAT_PEM)
         PEM_write_bio_PrivateKey(out, pkey, NULL, NULL, 0, NULL, passout);
     else if (outformat == FORMAT_ASN1)

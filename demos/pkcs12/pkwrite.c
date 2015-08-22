@@ -20,7 +20,7 @@ int main(int argc, char **argv)
     }
     SSLeay_add_all_algorithms();
     ERR_load_crypto_strings();
-    if (!(fp = fopen(argv[1], "r"))) {
+    if ((fp = fopen(argv[1], "r")) == NULL) {
         fprintf(stderr, "Error opening file %s\n", argv[1]);
         exit(1);
     }
@@ -34,7 +34,7 @@ int main(int argc, char **argv)
         ERR_print_errors_fp(stderr);
         exit(1);
     }
-    if (!(fp = fopen(argv[4], "wb"))) {
+    if ((fp = fopen(argv[4], "wb")) == NULL) {
         fprintf(stderr, "Error opening file %s\n", argv[1]);
         ERR_print_errors_fp(stderr);
         exit(1);

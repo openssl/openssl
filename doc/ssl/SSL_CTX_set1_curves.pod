@@ -94,7 +94,7 @@ returns -1.
 
 =head1 SEE ALSO
 
-L<SSL_CTX_add_extra_chain_cert(3)|SSL_CTX_add_extra_chain_cert(3)>
+L<SSL_CTX_add_extra_chain_cert(3)>
 
 =head1 HISTORY
 

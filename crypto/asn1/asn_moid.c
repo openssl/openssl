@@ -60,7 +60,7 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <openssl/crypto.h>
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/conf.h>
 #include <openssl/dso.h>
 #include <openssl/x509.h>
@@ -76,8 +76,9 @@ static int oid_module_init(CONF_IMODULE *md, const CONF *cnf)
     const char *oid_section;
     STACK_OF(CONF_VALUE) *sktmp;
     CONF_VALUE *oval;
+
     oid_section = CONF_imodule_get_value(md);
-    if (!(sktmp = NCONF_get_section(cnf, oid_section))) {
+    if ((sktmp = NCONF_get_section(cnf, oid_section)) == NULL) {
         ASN1err(ASN1_F_OID_MODULE_INIT, ASN1_R_ERROR_LOADING_SECTION);
         return 0;
     }

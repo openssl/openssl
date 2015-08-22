@@ -3,7 +3,7 @@
  * Contributed to the OpenSSL Project 2004 by Richard Levitte
  * (richard@levitte.org)
  */
-/* Copyright (c) 2004 Kungliga Tekniska Högskolan
+/* Copyright (c) 2004 Kungliga Tekniska HÃ¶gskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
@@ -36,7 +36,7 @@
  */
 
 #include <stdio.h>
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/conf.h>
 #include <openssl/x509v3.h>
 
@@ -86,7 +86,7 @@ static int process_pci_value(CONF_VALUE *val,
             X509V3_conf_err(val);
             return 0;
         }
-        if (!(*language = OBJ_txt2obj(val->value, 0))) {
+        if ((*language = OBJ_txt2obj(val->value, 0)) == NULL) {
             X509V3err(X509V3_F_PROCESS_PCI_VALUE,
                       X509V3_R_INVALID_OBJECT_IDENTIFIER);
             X509V3_conf_err(val);

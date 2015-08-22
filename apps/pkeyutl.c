@@ -200,6 +200,7 @@ int pkeyutl_main(int argc, char **argv)
             break;
         case OPT_REV:
             rev = 1;
+            break;
         case OPT_ENCRYPT:
             pkey_op = EVP_PKEY_OP_ENCRYPT;
             break;
@@ -228,6 +229,9 @@ int pkeyutl_main(int argc, char **argv)
 
     if (ctx == NULL)
         goto opthelp;
+
+    if (!app_load_modules(NULL))
+        goto end;
 
     if (sigfile && (pkey_op != EVP_PKEY_OP_VERIFY)) {
         BIO_printf(bio_err,

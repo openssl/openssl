@@ -57,14 +57,12 @@
  */
 
 #include <stdio.h>
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/bn.h>
 #include <openssl/dh.h>
 #ifndef OPENSSL_NO_ENGINE
 # include <openssl/engine.h>
 #endif
-
-const char DH_version[] = "Diffie-Hellman" OPENSSL_VERSION_PTEXT;
 
 static const DH_METHOD *default_DH_method = NULL;
 
@@ -235,6 +233,11 @@ int DH_set_ex_data(DH *d, int idx, void *arg)
 void *DH_get_ex_data(DH *d, int idx)
 {
     return (CRYPTO_get_ex_data(&d->ex_data, idx));
+}
+
+int DH_bits(const DH *dh)
+{
+    return BN_num_bits(dh->p);
 }
 
 int DH_size(const DH *dh)

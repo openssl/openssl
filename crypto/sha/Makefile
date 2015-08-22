@@ -108,6 +108,8 @@ tests:
 lint:
 	lint -DLINT $(INCLUDES) $(SRC)>fluff
 
+update: depend
+
 depend:
 	@[ -n "$(MAKEDEPEND)" ] # should be set by upper Makefile...
 	$(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(LIBSRC)
@@ -132,12 +134,13 @@ sha1dgst.o: ../../include/openssl/opensslconf.h
 sha1dgst.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 sha1dgst.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
 sha1dgst.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-sha1dgst.o: ../md32_common.h sha1dgst.c sha_locl.h
+sha1dgst.o: ../include/internal/md32_common.h sha1dgst.c sha_locl.h
 sha256.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
 sha256.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
 sha256.o: ../../include/openssl/ossl_typ.h ../../include/openssl/safestack.h
 sha256.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
-sha256.o: ../../include/openssl/symhacks.h ../md32_common.h sha256.c
+sha256.o: ../../include/openssl/symhacks.h ../include/internal/md32_common.h
+sha256.o: sha256.c
 sha512.o: ../../e_os.h ../../include/openssl/bio.h
 sha512.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 sha512.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
@@ -145,4 +148,4 @@ sha512.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
 sha512.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 sha512.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
 sha512.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-sha512.o: ../cryptlib.h sha512.c
+sha512.o: ../include/internal/cryptlib.h sha512.c

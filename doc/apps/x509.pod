@@ -330,7 +330,7 @@ the request.
 =item B<-passin arg>
 
 the key password source. For more information about the format of B<arg>
-see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)|openssl(1)>.
+see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
 
 =item B<-clrext>
 
@@ -416,7 +416,7 @@ the section to add certificate extensions from. If this option is not
 specified then the extensions should either be contained in the unnamed
 (default) section or the default section should contain a variable called
 "extensions" which contains the section to use. See the
-L<x509v3_config(5)|x509v3_config(5)> manual page for details of the
+L<x509v3_config(5)> manual page for details of the
 extension section format.
 
 =item B<-force_pubkey key>
@@ -442,7 +442,7 @@ a B<-> to turn the option off. Only the first four will normally be used.
 
 =item B<compat>
 
-use the old format. This is equivalent to specifying no name options at all.
+use the old format.
 
 =item B<RFC2253>
 
@@ -455,7 +455,7 @@ B<sep_comma_plus>, B<dn_rev> and B<sname>.
 a oneline format which is more readable than RFC2253. It is equivalent to
 specifying the  B<esc_2253>, B<esc_ctrl>, B<esc_msb>, B<utf8>, B<dump_nostr>,
 B<dump_der>, B<use_quote>, B<sep_comma_plus_space>, B<space_eq> and B<sname>
-options.
+options.  This is the I<default> of no name options are given explicitely.
 
 =item B<multiline>
 
@@ -872,9 +872,9 @@ OpenSSL 0.9.5 and later.
 
 =head1 SEE ALSO
 
-L<req(1)|req(1)>, L<ca(1)|ca(1)>, L<genrsa(1)|genrsa(1)>,
-L<gendsa(1)|gendsa(1)>, L<verify(1)|verify(1)>,
-L<x509v3_config(5)|x509v3_config(5)> 
+L<req(1)>, L<ca(1)>, L<genrsa(1)>,
+L<gendsa(1)>, L<verify(1)>,
+L<x509v3_config(5)> 
 
 =head1 HISTORY
 

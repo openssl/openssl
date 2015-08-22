@@ -156,7 +156,7 @@ ENGINE). For this reason, the return type may be replaced with a B<void>
 declaration in a future release.
 
 RSA_new_method() returns NULL and sets an error code that can be obtained
-by L<ERR_get_error(3)|ERR_get_error(3)> if the allocation fails. Otherwise
+by L<ERR_get_error(3)> if the allocation fails. Otherwise
 it returns a pointer to the newly allocated structure.
 
 =head1 NOTES
@@ -183,7 +183,7 @@ not currently exist).
 
 =head1 SEE ALSO
 
-L<rsa(3)|rsa(3)>, L<RSA_new(3)|RSA_new(3)>
+L<rsa(3)>, L<RSA_new(3)>
 
 =head1 HISTORY
 

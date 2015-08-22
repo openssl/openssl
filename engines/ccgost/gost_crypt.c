@@ -118,7 +118,6 @@ struct gost_cipher_info gost_cipher_list[] = {
     /*
      * {NID_id_GostR3411_94_CryptoProParamSet,&GostR3411_94_CryptoProParamSet,0},
      */
-    {NID_id_Gost28147_89_cc, &GostR3411_94_CryptoProParamSet, 0},
     {NID_id_Gost28147_89_CryptoPro_A_ParamSet, &Gost28147_CryptoProParamSetA,
      1},
     {NID_id_Gost28147_89_CryptoPro_B_ParamSet, &Gost28147_CryptoProParamSetB,

@@ -58,7 +58,7 @@
  */
 
 #include <stdio.h>
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/conf.h>
 #include <openssl/x509v3.h>
 
@@ -243,7 +243,8 @@ static GENERAL_NAMES *v2i_issuer_alt(X509V3_EXT_METHOD *method,
     GENERAL_NAMES *gens = NULL;
     CONF_VALUE *cnf;
     int i;
-    if (!(gens = sk_GENERAL_NAME_new_null())) {
+
+    if ((gens = sk_GENERAL_NAME_new_null()) == NULL) {
         X509V3err(X509V3_F_V2I_ISSUER_ALT, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
@@ -255,7 +256,7 @@ static GENERAL_NAMES *v2i_issuer_alt(X509V3_EXT_METHOD *method,
                 goto err;
         } else {
             GENERAL_NAME *gen;
-            if (!(gen = v2i_GENERAL_NAME(method, ctx, cnf)))
+            if ((gen = v2i_GENERAL_NAME(method, ctx, cnf)) == NULL)
                 goto err;
             sk_GENERAL_NAME_push(gens, gen);
         }
@@ -274,6 +275,7 @@ static int copy_issuer(X509V3_CTX *ctx, GENERAL_NAMES *gens)
     GENERAL_NAME *gen;
     X509_EXTENSION *ext;
     int i;
+
     if (ctx && (ctx->flags == CTX_TEST))
         return 1;
     if (!ctx || !ctx->issuer_cert) {
@@ -283,8 +285,8 @@ static int copy_issuer(X509V3_CTX *ctx, GENERAL_NAMES *gens)
     i = X509_get_ext_by_NID(ctx->issuer_cert, NID_subject_alt_name, -1);
     if (i < 0)
         return 1;
-    if (!(ext = X509_get_ext(ctx->issuer_cert, i)) ||
-        !(ialt = X509V3_EXT_d2i(ext))) {
+    if ((ext = X509_get_ext(ctx->issuer_cert, i)) == NULL
+        || (ialt = X509V3_EXT_d2i(ext)) == NULL) {
         X509V3err(X509V3_F_COPY_ISSUER, X509V3_R_ISSUER_DECODE_ERROR);
         goto err;
     }
@@ -312,7 +314,8 @@ static GENERAL_NAMES *v2i_subject_alt(X509V3_EXT_METHOD *method,
     GENERAL_NAMES *gens = NULL;
     CONF_VALUE *cnf;
     int i;
-    if (!(gens = sk_GENERAL_NAME_new_null())) {
+
+    if ((gens = sk_GENERAL_NAME_new_null()) == NULL) {
         X509V3err(X509V3_F_V2I_SUBJECT_ALT, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
@@ -328,7 +331,7 @@ static GENERAL_NAMES *v2i_subject_alt(X509V3_EXT_METHOD *method,
                 goto err;
         } else {
             GENERAL_NAME *gen;
-            if (!(gen = v2i_GENERAL_NAME(method, ctx, cnf)))
+            if ((gen = v2i_GENERAL_NAME(method, ctx, cnf)) == NULL)
                 goto err;
             sk_GENERAL_NAME_push(gens, gen);
         }
@@ -373,7 +376,7 @@ static int copy_email(X509V3_CTX *ctx, GENERAL_NAMES *gens, int move_p)
             X509_NAME_ENTRY_free(ne);
             i--;
         }
-        if (!email || !(gen = GENERAL_NAME_new())) {
+        if (email == NULL || (gen = GENERAL_NAME_new()) == NULL) {
             X509V3err(X509V3_F_COPY_EMAIL, ERR_R_MALLOC_FAILURE);
             goto err;
         }
@@ -403,13 +406,14 @@ GENERAL_NAMES *v2i_GENERAL_NAMES(const X509V3_EXT_METHOD *method,
     GENERAL_NAMES *gens = NULL;
     CONF_VALUE *cnf;
     int i;
-    if (!(gens = sk_GENERAL_NAME_new_null())) {
+
+    if ((gens = sk_GENERAL_NAME_new_null()) == NULL) {
         X509V3err(X509V3_F_V2I_GENERAL_NAMES, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
     for (i = 0; i < sk_CONF_VALUE_num(nval); i++) {
         cnf = sk_CONF_VALUE_value(nval, i);
-        if (!(gen = v2i_GENERAL_NAME(method, ctx, cnf)))
+        if ((gen = v2i_GENERAL_NAME(method, ctx, cnf)) == NULL)
             goto err;
         sk_GENERAL_NAME_push(gens, gen);
     }
@@ -458,7 +462,7 @@ GENERAL_NAME *a2i_GENERAL_NAME(GENERAL_NAME *out,
     case GEN_RID:
         {
             ASN1_OBJECT *obj;
-            if (!(obj = OBJ_txt2obj(value, 0))) {
+            if ((obj = OBJ_txt2obj(value, 0)) == NULL) {
                 X509V3err(X509V3_F_A2I_GENERAL_NAME, X509V3_R_BAD_OBJECT);
                 ERR_add_error_data(2, "value=", value);
                 goto err;
@@ -498,7 +502,7 @@ GENERAL_NAME *a2i_GENERAL_NAME(GENERAL_NAME *out,
     }
 
     if (is_string) {
-        if (!(gen->d.ia5 = ASN1_IA5STRING_new()) ||
+        if ((gen->d.ia5 = ASN1_IA5STRING_new()) == NULL ||
             !ASN1_STRING_set(gen->d.ia5, (unsigned char *)value,
                              strlen(value))) {
             X509V3err(X509V3_F_A2I_GENERAL_NAME, ERR_R_MALLOC_FAILURE);
@@ -560,16 +564,17 @@ static int do_othername(GENERAL_NAME *gen, char *value, X509V3_CTX *ctx)
 {
     char *objtmp = NULL, *p;
     int objlen;
-    if (!(p = strchr(value, ';')))
+
+    if ((p = strchr(value, ';')) == NULL)
         return 0;
-    if (!(gen->d.otherName = OTHERNAME_new()))
+    if ((gen->d.otherName = OTHERNAME_new()) == NULL)
         return 0;
     /*
      * Free this up because we will overwrite it. no need to free type_id
      * because it is static
      */
     ASN1_TYPE_free(gen->d.otherName->value);
-    if (!(gen->d.otherName->value = ASN1_generate_v3(p + 1, ctx)))
+    if ((gen->d.otherName->value = ASN1_generate_v3(p + 1, ctx)) == NULL)
         return 0;
     objlen = p - value;
     objtmp = OPENSSL_malloc(objlen + 1);
@@ -588,8 +593,9 @@ static int do_dirname(GENERAL_NAME *gen, char *value, X509V3_CTX *ctx)
 {
     int ret = 0;
     STACK_OF(CONF_VALUE) *sk = NULL;
-    X509_NAME *nm = NULL;
-    if (!(nm = X509_NAME_new()))
+    X509_NAME *nm;
+
+    if ((nm = X509_NAME_new()) == NULL)
         goto err;
     sk = X509V3_get_section(ctx, value);
     if (!sk) {

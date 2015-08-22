@@ -59,7 +59,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/objects.h>
 #include <openssl/evp.h>
 #ifndef OPENSSL_NO_ENGINE
@@ -416,7 +416,7 @@ int EVP_PKEY_CTX_ctrl_str(EVP_PKEY_CTX *ctx,
     }
     if (strcmp(name, "digest") == 0) {
         const EVP_MD *md;
-        if (!value || !(md = EVP_get_digestbyname(value))) {
+        if (value == NULL || (md = EVP_get_digestbyname(value)) == NULL) {
             EVPerr(EVP_F_EVP_PKEY_CTX_CTRL_STR, EVP_R_INVALID_DIGEST);
             return 0;
         }

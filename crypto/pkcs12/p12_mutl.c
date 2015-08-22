@@ -58,7 +58,8 @@
  */
 
 # include <stdio.h>
-# include "cryptlib.h"
+# include "internal/cryptlib.h"
+#include <openssl/crypto.h>
 # include <openssl/hmac.h>
 # include <openssl/rand.h>
 # include <openssl/pkcs12.h>
@@ -84,7 +85,8 @@ int PKCS12_gen_mac(PKCS12 *p12, const char *pass, int passlen,
         iter = 1;
     else
         iter = ASN1_INTEGER_get(p12->mac->iter);
-    if (!(md_type = EVP_get_digestbyobj(p12->mac->dinfo->algor->algorithm))) {
+    if ((md_type = EVP_get_digestbyobj(p12->mac->dinfo->algor->algorithm))
+            == NULL) {
         PKCS12err(PKCS12_F_PKCS12_GEN_MAC, PKCS12_R_UNKNOWN_DIGEST_ALGORITHM);
         return 0;
     }
@@ -122,7 +124,7 @@ int PKCS12_verify_mac(PKCS12 *p12, const char *pass, int passlen)
         return 0;
     }
     if ((maclen != (unsigned int)p12->mac->dinfo->digest->length)
-        || memcmp(mac, p12->mac->dinfo->digest->data, maclen))
+        || CRYPTO_memcmp(mac, p12->mac->dinfo->digest->data, maclen))
         return 0;
     return 1;
 }
@@ -157,10 +159,10 @@ int PKCS12_set_mac(PKCS12 *p12, const char *pass, int passlen,
 int PKCS12_setup_mac(PKCS12 *p12, int iter, unsigned char *salt, int saltlen,
                      const EVP_MD *md_type)
 {
-    if (!(p12->mac = PKCS12_MAC_DATA_new()))
+    if ((p12->mac = PKCS12_MAC_DATA_new()) == NULL)
         return PKCS12_ERROR;
     if (iter > 1) {
-        if (!(p12->mac->iter = ASN1_INTEGER_new())) {
+        if ((p12->mac->iter = ASN1_INTEGER_new()) == NULL) {
             PKCS12err(PKCS12_F_PKCS12_SETUP_MAC, ERR_R_MALLOC_FAILURE);
             return 0;
         }
@@ -172,7 +174,7 @@ int PKCS12_setup_mac(PKCS12 *p12, int iter, unsigned char *salt, int saltlen,
     if (!saltlen)
         saltlen = PKCS12_SALT_LEN;
     p12->mac->salt->length = saltlen;
-    if (!(p12->mac->salt->data = OPENSSL_malloc(saltlen))) {
+    if ((p12->mac->salt->data = OPENSSL_malloc(saltlen)) == NULL) {
         PKCS12err(PKCS12_F_PKCS12_SETUP_MAC, ERR_R_MALLOC_FAILURE);
         return 0;
     }
@@ -182,7 +184,7 @@ int PKCS12_setup_mac(PKCS12 *p12, int iter, unsigned char *salt, int saltlen,
     } else
         memcpy(p12->mac->salt->data, salt, saltlen);
     p12->mac->dinfo->algor->algorithm = OBJ_nid2obj(EVP_MD_type(md_type));
-    if (!(p12->mac->dinfo->algor->parameter = ASN1_TYPE_new())) {
+    if ((p12->mac->dinfo->algor->parameter = ASN1_TYPE_new()) == NULL) {
         PKCS12err(PKCS12_F_PKCS12_SETUP_MAC, ERR_R_MALLOC_FAILURE);
         return 0;
     }

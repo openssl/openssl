@@ -5,7 +5,7 @@
 DIR=		crypto
 TOP=		..
 CC=		cc
-INCLUDE=	-I. -I$(TOP) -I../include $(ZLIB_INCLUDE)
+INCLUDE=	-I. -I$(TOP) -I../include -Iinclude $(ZLIB_INCLUDE)
 # INCLUDES targets sudbirs!
 INCLUDES=	-I.. -I../.. -I../modes -I../include -I../../include $(ZLIB_INCLUDE)
 CFLAG=		-g
@@ -36,15 +36,14 @@ LIB= $(TOP)/libcrypto.a
 SHARED_LIB= libcrypto$(SHLIB_EXT)
 LIBSRC=	cryptlib.c mem.c mem_clr.c mem_dbg.c cversion.c ex_data.c cpt_err.c \
 	ebcdic.c uid.c o_time.c o_str.c o_dir.c thr_id.c lock.c fips_ers.c \
-	o_init.c o_fips.c
+	o_init.c o_fips.c sec_mem.c
 LIBOBJ= cryptlib.o mem.o mem_dbg.o cversion.o ex_data.o cpt_err.o \
 	ebcdic.o uid.o o_time.o o_str.o o_dir.o thr_id.o lock.o fips_ers.o \
-	o_init.o o_fips.o $(CPUID_OBJ)
+	o_init.o o_fips.o sec_mem.o $(CPUID_OBJ)
 
 SRC= $(LIBSRC)
 
-HEADER=	cryptlib.h buildinf.h md32_common.h o_str.h o_dir.h \
-	constant_time_locl.h
+HEADER=	buildinf.h arm_arch.h ppc_arch.h sparc_arch.h
 
 ALL=	$(GENERAL) $(SRC) $(HEADER)
 
@@ -111,12 +110,17 @@ libs:
 lint:
 	@target=lint; $(RECURSIVE_MAKE)
 
-depend:
+update: local_depend
+	@[ -z "$(THIS)" ] || (set -e; target=update; $(RECURSIVE_MAKE) )
+	@if [ -z "$(THIS)" ]; then $(MAKE) -f $(TOP)/Makefile reflect THIS=$@; fi
+
+depend: local_depend
+	@[ -z "$(THIS)" ] || (set -e; target=depend; $(RECURSIVE_MAKE) )
+	@if [ -z "$(THIS)" ]; then $(MAKE) -f $(TOP)/Makefile reflect THIS=$@; fi
+local_depend:
 	@[ -z "$(THIS)" -o -f buildinf.h ] || touch buildinf.h # fake buildinf.h if it does not exist
 	@[ -z "$(THIS)" ] || $(MAKEDEPEND) -- $(CFLAG) $(INCLUDE) $(DEPFLAG) -- $(PROGS) $(LIBSRC)
 	@[ -z "$(THIS)" -o -s buildinf.h ] || rm buildinf.h
-	@[ -z "$(THIS)" ] || (set -e; target=depend; $(RECURSIVE_MAKE) )
-	@if [ -z "$(THIS)" ]; then $(MAKE) -f $(TOP)/Makefile reflect THIS=$@; fi
 
 clean:
 	rm -f buildinf.h *.s *.o */*.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
@@ -141,37 +145,37 @@ cryptlib.o: ../include/openssl/err.h ../include/openssl/lhash.h
 cryptlib.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
 cryptlib.o: ../include/openssl/ossl_typ.h ../include/openssl/safestack.h
 cryptlib.o: ../include/openssl/stack.h ../include/openssl/symhacks.h cryptlib.c
-cryptlib.o: cryptlib.h
+cryptlib.o: include/internal/cryptlib.h
 cversion.o: ../e_os.h ../include/openssl/bio.h ../include/openssl/buffer.h
 cversion.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
 cversion.o: ../include/openssl/err.h ../include/openssl/lhash.h
 cversion.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
 cversion.o: ../include/openssl/ossl_typ.h ../include/openssl/safestack.h
 cversion.o: ../include/openssl/stack.h ../include/openssl/symhacks.h buildinf.h
-cversion.o: cryptlib.h cversion.c
+cversion.o: cversion.c include/internal/cryptlib.h
 ebcdic.o: ../include/openssl/e_os2.h ../include/openssl/opensslconf.h ebcdic.c
 ex_data.o: ../e_os.h ../include/openssl/bio.h ../include/openssl/buffer.h
 ex_data.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
 ex_data.o: ../include/openssl/err.h ../include/openssl/lhash.h
 ex_data.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
 ex_data.o: ../include/openssl/ossl_typ.h ../include/openssl/safestack.h
-ex_data.o: ../include/openssl/stack.h ../include/openssl/symhacks.h cryptlib.h
-ex_data.o: ex_data.c
+ex_data.o: ../include/openssl/stack.h ../include/openssl/symhacks.h ex_data.c
+ex_data.o: include/internal/cryptlib.h
 fips_ers.o: ../include/openssl/opensslconf.h fips_ers.c
 lock.o: ../e_os.h ../include/openssl/bio.h ../include/openssl/buffer.h
 lock.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
 lock.o: ../include/openssl/err.h ../include/openssl/lhash.h
 lock.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
 lock.o: ../include/openssl/ossl_typ.h ../include/openssl/safestack.h
-lock.o: ../include/openssl/stack.h ../include/openssl/symhacks.h cryptlib.h
-lock.o: lock.c
+lock.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
+lock.o: include/internal/cryptlib.h lock.c
 mem.o: ../e_os.h ../include/openssl/bio.h ../include/openssl/buffer.h
 mem.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
 mem.o: ../include/openssl/err.h ../include/openssl/lhash.h
 mem.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
 mem.o: ../include/openssl/ossl_typ.h ../include/openssl/safestack.h
-mem.o: ../include/openssl/stack.h ../include/openssl/symhacks.h cryptlib.h
-mem.o: mem.c
+mem.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
+mem.o: include/internal/cryptlib.h mem.c
 mem_clr.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
 mem_clr.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
 mem_clr.o: ../include/openssl/ossl_typ.h ../include/openssl/safestack.h
@@ -181,36 +185,40 @@ mem_dbg.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
 mem_dbg.o: ../include/openssl/err.h ../include/openssl/lhash.h
 mem_dbg.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
 mem_dbg.o: ../include/openssl/ossl_typ.h ../include/openssl/safestack.h
-mem_dbg.o: ../include/openssl/stack.h ../include/openssl/symhacks.h cryptlib.h
-mem_dbg.o: mem_dbg.c
-o_dir.o: ../e_os.h ../include/openssl/e_os2.h ../include/openssl/opensslconf.h
-o_dir.o: LPdir_unix.c o_dir.c o_dir.h
+mem_dbg.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
+mem_dbg.o: include/internal/cryptlib.h mem_dbg.c
+o_dir.o: ../e_os.h ../include/internal/o_dir.h ../include/openssl/e_os2.h
+o_dir.o: ../include/openssl/opensslconf.h LPdir_unix.c o_dir.c
 o_fips.o: ../e_os.h ../include/openssl/bio.h ../include/openssl/buffer.h
 o_fips.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
 o_fips.o: ../include/openssl/err.h ../include/openssl/lhash.h
 o_fips.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
 o_fips.o: ../include/openssl/ossl_typ.h ../include/openssl/safestack.h
-o_fips.o: ../include/openssl/stack.h ../include/openssl/symhacks.h cryptlib.h
-o_fips.o: o_fips.c
+o_fips.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
+o_fips.o: include/internal/cryptlib.h o_fips.c
 o_init.o: ../e_os.h ../include/openssl/bio.h ../include/openssl/crypto.h
 o_init.o: ../include/openssl/e_os2.h ../include/openssl/err.h
 o_init.o: ../include/openssl/lhash.h ../include/openssl/opensslconf.h
 o_init.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
 o_init.o: ../include/openssl/safestack.h ../include/openssl/stack.h
 o_init.o: ../include/openssl/symhacks.h o_init.c
-o_str.o: ../e_os.h ../include/openssl/e_os2.h ../include/openssl/opensslconf.h
-o_str.o: o_str.c o_str.h
+o_str.o: ../e_os.h ../include/internal/o_str.h ../include/openssl/e_os2.h
+o_str.o: ../include/openssl/opensslconf.h o_str.c
 o_time.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
 o_time.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
 o_time.o: ../include/openssl/ossl_typ.h ../include/openssl/safestack.h
 o_time.o: ../include/openssl/stack.h ../include/openssl/symhacks.h o_time.c
+sec_mem.o: ../e_os.h ../include/openssl/crypto.h ../include/openssl/e_os2.h
+sec_mem.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
+sec_mem.o: ../include/openssl/ossl_typ.h ../include/openssl/safestack.h
+sec_mem.o: ../include/openssl/stack.h ../include/openssl/symhacks.h sec_mem.c
 thr_id.o: ../e_os.h ../include/openssl/bio.h ../include/openssl/buffer.h
 thr_id.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
 thr_id.o: ../include/openssl/err.h ../include/openssl/lhash.h
 thr_id.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
 thr_id.o: ../include/openssl/ossl_typ.h ../include/openssl/safestack.h
-thr_id.o: ../include/openssl/stack.h ../include/openssl/symhacks.h cryptlib.h
-thr_id.o: thr_id.c
+thr_id.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
+thr_id.o: include/internal/cryptlib.h thr_id.c
 uid.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
 uid.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
 uid.o: ../include/openssl/ossl_typ.h ../include/openssl/safestack.h

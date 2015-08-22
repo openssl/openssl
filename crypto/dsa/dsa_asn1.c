@@ -58,7 +58,7 @@
  */
 
 #include <stdio.h>
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/dsa.h>
 #include <openssl/asn1.h>
 #include <openssl/asn1t.h>
@@ -113,7 +113,7 @@ ASN1_SEQUENCE_cb(DSAPrivateKey, dsa_cb) = {
         ASN1_SIMPLE(DSA, q, BIGNUM),
         ASN1_SIMPLE(DSA, g, BIGNUM),
         ASN1_SIMPLE(DSA, pub_key, BIGNUM),
-        ASN1_SIMPLE(DSA, priv_key, BIGNUM)
+        ASN1_SIMPLE(DSA, priv_key, CBIGNUM)
 } ASN1_SEQUENCE_END_cb(DSA, DSAPrivateKey)
 
 IMPLEMENT_ASN1_ENCODE_FUNCTIONS_const_fname(DSA, DSAPrivateKey, DSAPrivateKey)

@@ -102,15 +102,14 @@ The X509_STORE then calls a function to actually verify the
 certificate chain.
 */
 
-# define X509_LU_RETRY           -1
-# define X509_LU_FAIL            0
-# define X509_LU_X509            1
-# define X509_LU_CRL             2
-# define X509_LU_PKEY            3
+typedef enum {
+    X509_LU_RETRY = -1,
+    X509_LU_FAIL, X509_LU_X509, X509_LU_CRL
+} X509_LOOKUP_TYPE;
 
 typedef struct x509_object_st {
     /* one of the above types */
-    int type;
+    X509_LOOKUP_TYPE type;
     union {
         char *ptr;
         X509 *x509;
@@ -529,6 +528,7 @@ void X509_STORE_CTX_set_verify_cb(X509_STORE_CTX *ctx,
 
 X509_POLICY_TREE *X509_STORE_CTX_get0_policy_tree(X509_STORE_CTX *ctx);
 int X509_STORE_CTX_get_explicit_policy(X509_STORE_CTX *ctx);
+int X509_STORE_CTX_get_num_untrusted(X509_STORE_CTX *ctx);
 
 X509_VERIFY_PARAM *X509_STORE_CTX_get0_param(X509_STORE_CTX *ctx);
 void X509_STORE_CTX_set0_param(X509_STORE_CTX *ctx, X509_VERIFY_PARAM *param);

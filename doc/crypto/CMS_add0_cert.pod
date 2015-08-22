@@ -54,9 +54,9 @@ in practice is if the B<cms> type is invalid.
 
 =head1 SEE ALSO
 
-L<ERR_get_error(3)|ERR_get_error(3)>,
-L<CMS_sign(3)|CMS_sign(3)>,
-L<CMS_encrypt(3)|CMS_encrypt(3)>
+L<ERR_get_error(3)>,
+L<CMS_sign(3)>,
+L<CMS_encrypt(3)>
 
 =head1 HISTORY
 

@@ -29,7 +29,7 @@ shall be specified, the NULL pointer can be used for B<verify_callback>. In
 this case last B<verify_callback> set specifically for this B<ssl> remains. If
 no special B<callback> was set before, the default callback for the underlying
 B<ctx> is used, that was valid at the time B<ssl> was created with
-L<SSL_new(3)|SSL_new(3)>.
+L<SSL_new(3)>.
 
 SSL_CTX_set_verify_depth() sets the maximum B<depth> for the certificate chain
 verification that shall be allowed for B<ctx>. (See the BUGS section.)
@@ -52,7 +52,7 @@ client, so the client will not send a certificate.
 B<Client mode:> if not using an anonymous cipher (by default disabled), the
 server will send a certificate which will be checked. The result of the
 certificate verification process can be checked after the TLS/SSL handshake
-using the L<SSL_get_verify_result(3)|SSL_get_verify_result(3)> function.
+using the L<SSL_get_verify_result(3)> function.
 The handshake will be continued regardless of the verification result.
 
 =item SSL_VERIFY_PEER
@@ -95,7 +95,7 @@ set at any time.
 The actual verification procedure is performed either using the built-in
 verification procedure or using another application provided verification
 function set with
-L<SSL_CTX_set_cert_verify_callback(3)|SSL_CTX_set_cert_verify_callback(3)>.
+L<SSL_CTX_set_cert_verify_callback(3)>.
 The following descriptions apply in the case of the built-in procedure. An
 application provided procedure also has access to the verify depth information
 and the verify_callback() function, but the way this information is used
@@ -138,7 +138,7 @@ the verification process is continued. If B<verify_callback> always returns
 1, the TLS/SSL handshake will not be terminated with respect to verification
 failures and the connection will be established. The calling process can
 however retrieve the error code of the last verification error using
-L<SSL_get_verify_result(3)|SSL_get_verify_result(3)> or by maintaining its
+L<SSL_get_verify_result(3)> or by maintaining its
 own error storage managed by B<verify_callback>.
 
 If no B<verify_callback> is specified, the default callback will be used.
@@ -176,8 +176,8 @@ certificates.
 
 The example makes use of the ex_data technique to store application data
 into/retrieve application data from the SSL structure
-(see L<SSL_get_ex_new_index(3)|SSL_get_ex_new_index(3)>,
-L<SSL_get_ex_data_X509_STORE_CTX_idx(3)|SSL_get_ex_data_X509_STORE_CTX_idx(3)>).
+(see L<SSL_get_ex_new_index(3)>,
+L<SSL_get_ex_data_X509_STORE_CTX_idx(3)>).
 
  ...
  typedef struct {
@@ -282,13 +282,13 @@ L<SSL_get_ex_data_X509_STORE_CTX_idx(3)|SSL_get_ex_data_X509_STORE_CTX_idx(3)>).
 
 =head1 SEE ALSO
 
-L<ssl(3)|ssl(3)>, L<SSL_new(3)|SSL_new(3)>,
-L<SSL_CTX_get_verify_mode(3)|SSL_CTX_get_verify_mode(3)>,
-L<SSL_get_verify_result(3)|SSL_get_verify_result(3)>,
-L<SSL_CTX_load_verify_locations(3)|SSL_CTX_load_verify_locations(3)>,
-L<SSL_get_peer_certificate(3)|SSL_get_peer_certificate(3)>,
-L<SSL_CTX_set_cert_verify_callback(3)|SSL_CTX_set_cert_verify_callback(3)>,
-L<SSL_get_ex_data_X509_STORE_CTX_idx(3)|SSL_get_ex_data_X509_STORE_CTX_idx(3)>,
-L<SSL_get_ex_new_index(3)|SSL_get_ex_new_index(3)>
+L<ssl(3)>, L<SSL_new(3)>,
+L<SSL_CTX_get_verify_mode(3)>,
+L<SSL_get_verify_result(3)>,
+L<SSL_CTX_load_verify_locations(3)>,
+L<SSL_get_peer_certificate(3)>,
+L<SSL_CTX_set_cert_verify_callback(3)>,
+L<SSL_get_ex_data_X509_STORE_CTX_idx(3)>,
+L<SSL_get_ex_new_index(3)>
 
 =cut

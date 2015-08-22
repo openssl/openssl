@@ -90,7 +90,7 @@ The version number.
 
 =head1 SEE ALSO
 
-L<crypto(3)|crypto(3)>
+L<crypto(3)>
 
 =head1 HISTORY
 

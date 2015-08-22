@@ -58,7 +58,7 @@
  */
 
 #include <stdio.h>
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/x509v3.h>
 
 static int tr_cmp(const X509_TRUST *const *a, const X509_TRUST *const *b);
@@ -188,7 +188,7 @@ int X509_TRUST_add(int id, int flags, int (*ck) (X509_TRUST *, X509 *, int),
     idx = X509_TRUST_get_by_id(id);
     /* Need a new entry */
     if (idx == -1) {
-        if (!(trtmp = OPENSSL_malloc(sizeof(*trtmp)))) {
+        if ((trtmp = OPENSSL_malloc(sizeof(*trtmp))) == NULL) {
             X509err(X509_F_X509_TRUST_ADD, ERR_R_MALLOC_FAILURE);
             return 0;
         }
@@ -200,7 +200,7 @@ int X509_TRUST_add(int id, int flags, int (*ck) (X509_TRUST *, X509 *, int),
     if (trtmp->flags & X509_TRUST_DYNAMIC_NAME)
         OPENSSL_free(trtmp->name);
     /* dup supplied name */
-    if (!(trtmp->name = BUF_strdup(name))) {
+    if ((trtmp->name = BUF_strdup(name)) == NULL) {
         X509err(X509_F_X509_TRUST_ADD, ERR_R_MALLOC_FAILURE);
         return 0;
     }
@@ -216,7 +216,8 @@ int X509_TRUST_add(int id, int flags, int (*ck) (X509_TRUST *, X509 *, int),
 
     /* If its a new entry manage the dynamic table */
     if (idx == -1) {
-        if (!trtable && !(trtable = sk_X509_TRUST_new(tr_cmp))) {
+        if (trtable == NULL
+            && (trtable = sk_X509_TRUST_new(tr_cmp)) == NULL) {
             X509err(X509_F_X509_TRUST_ADD, ERR_R_MALLOC_FAILURE);
             return 0;
         }

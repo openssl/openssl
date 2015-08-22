@@ -58,7 +58,7 @@
  */
 
 #include <stdio.h>
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/pkcs12.h>
 
 /* Cheap and nasty Unicode stuff */
@@ -68,10 +68,11 @@ unsigned char *OPENSSL_asc2uni(const char *asc, int asclen,
 {
     int ulen, i;
     unsigned char *unitmp;
+
     if (asclen == -1)
         asclen = strlen(asc);
     ulen = asclen * 2 + 2;
-    if (!(unitmp = OPENSSL_malloc(ulen)))
+    if ((unitmp = OPENSSL_malloc(ulen)) == NULL)
         return NULL;
     for (i = 0; i < ulen - 2; i += 2) {
         unitmp[i] = 0;
@@ -91,12 +92,13 @@ char *OPENSSL_uni2asc(unsigned char *uni, int unilen)
 {
     int asclen, i;
     char *asctmp;
+
     asclen = unilen / 2;
     /* If no terminating zero allow for one */
     if (!unilen || uni[unilen - 1])
         asclen++;
     uni++;
-    if (!(asctmp = OPENSSL_malloc(asclen)))
+    if ((asctmp = OPENSSL_malloc(asclen)) == NULL)
         return NULL;
     for (i = 0; i < unilen; i += 2)
         asctmp[i >> 1] = uni[i];

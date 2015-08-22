@@ -60,7 +60,7 @@
 #include <time.h>
 #include <errno.h>
 
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/crypto.h>
 #include <openssl/lhash.h>
 #include <openssl/buffer.h>
@@ -138,7 +138,6 @@ static int check_crl_chain(X509_STORE_CTX *ctx,
                            STACK_OF(X509) *crl_path);
 
 static int internal_verify(X509_STORE_CTX *ctx);
-const char X509_version[] = "X.509" OPENSSL_VERSION_PTEXT;
 
 static int null_callback(int ok, X509_STORE_CTX *e)
 {
@@ -193,6 +192,14 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
         X509err(X509_F_X509_VERIFY_CERT, X509_R_NO_CERT_SET_FOR_US_TO_VERIFY);
         return -1;
     }
+    if (ctx->chain != NULL) {
+        /*
+         * This X509_STORE_CTX has already been used to verify a cert. We
+         * cannot do another one.
+         */
+        X509err(X509_F_X509_VERIFY_CERT, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+        return -1;
+    }
 
     cb = ctx->verify_cb;
 
@@ -200,15 +207,13 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
      * first we make sure the chain we are going to build is present and that
      * the first entry is in place
      */
-    if (ctx->chain == NULL) {
-        if (((ctx->chain = sk_X509_new_null()) == NULL) ||
-            (!sk_X509_push(ctx->chain, ctx->cert))) {
-            X509err(X509_F_X509_VERIFY_CERT, ERR_R_MALLOC_FAILURE);
-            goto end;
-        }
-        CRYPTO_add(&ctx->cert->references, 1, CRYPTO_LOCK_X509);
-        ctx->last_untrusted = 1;
+    if (((ctx->chain = sk_X509_new_null()) == NULL) ||
+        (!sk_X509_push(ctx->chain, ctx->cert))) {
+        X509err(X509_F_X509_VERIFY_CERT, ERR_R_MALLOC_FAILURE);
+        goto end;
     }
+    CRYPTO_add(&ctx->cert->references, 1, CRYPTO_LOCK_X509);
+    ctx->last_untrusted = 1;
 
     /* We use a temporary STACK so we can chop and hack at it */
     if (ctx->untrusted != NULL
@@ -343,7 +348,8 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
             if (!sk_X509_push(ctx->chain, x)) {
                 X509_free(xtmp);
                 X509err(X509_F_X509_VERIFY_CERT, ERR_R_MALLOC_FAILURE);
-                return 0;
+                ok = 0;
+                goto done;
             }
             num++;
         }
@@ -392,8 +398,8 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
                         xtmp = sk_X509_pop(ctx->chain);
                         X509_free(xtmp);
                         num--;
-                        ctx->last_untrusted--;
                     }
+                    ctx->last_untrusted = sk_X509_num(ctx->chain);
                     retry = 1;
                     break;
                 }
@@ -1808,46 +1814,83 @@ int X509_cmp_time(const ASN1_TIME *ctm, time_t *cmp_time)
     ASN1_TIME atm;
     long offset;
     char buff1[24], buff2[24], *p;
-    int i, j;
+    int i, j, remaining;
 
     p = buff1;
-    i = ctm->length;
+    remaining = ctm->length;
     str = (char *)ctm->data;
+    /*
+     * Note that the following (historical) code allows much more slack in the
+     * time format than RFC5280. In RFC5280, the representation is fixed:
+     * UTCTime: YYMMDDHHMMSSZ
+     * GeneralizedTime: YYYYMMDDHHMMSSZ
+     */
     if (ctm->type == V_ASN1_UTCTIME) {
-        if ((i < 11) || (i > 17))
+        /* YYMMDDHHMM[SS]Z or YYMMDDHHMM[SS](+-)hhmm */
+        int min_length = sizeof("YYMMDDHHMMZ") - 1;
+        int max_length = sizeof("YYMMDDHHMMSS+hhmm") - 1;
+        if (remaining < min_length || remaining > max_length)
             return 0;
         memcpy(p, str, 10);
         p += 10;
         str += 10;
+        remaining -= 10;
     } else {
-        if (i < 13)
+        /* YYYYMMDDHHMM[SS[.fff]]Z or YYYYMMDDHHMM[SS[.f[f[f]]]](+-)hhmm */
+        int min_length = sizeof("YYYYMMDDHHMMZ") - 1;
+        int max_length = sizeof("YYYYMMDDHHMMSS.fff+hhmm") - 1;
+        if (remaining < min_length || remaining > max_length)
             return 0;
         memcpy(p, str, 12);
         p += 12;
         str += 12;
+        remaining -= 12;
     }
 
     if ((*str == 'Z') || (*str == '-') || (*str == '+')) {
         *(p++) = '0';
         *(p++) = '0';
     } else {
+        /* SS (seconds) */
+        if (remaining < 2)
+            return 0;
         *(p++) = *(str++);
         *(p++) = *(str++);
-        /* Skip any fractional seconds... */
-        if (*str == '.') {
+        remaining -= 2;
+        /*
+         * Skip any (up to three) fractional seconds...
+         * TODO(emilia): in RFC5280, fractional seconds are forbidden.
+         * Can we just kill them altogether?
+         */
+        if (remaining && *str == '.') {
             str++;
-            while ((*str >= '0') && (*str <= '9'))
-                str++;
+            remaining--;
+            for (i = 0; i < 3 && remaining; i++, str++, remaining--) {
+                if (*str < '0' || *str > '9')
+                    break;
+            }
         }
 
     }
     *(p++) = 'Z';
     *(p++) = '\0';
 
-    if (*str == 'Z')
+    /* We now need either a terminating 'Z' or an offset. */
+    if (!remaining)
+        return 0;
+    if (*str == 'Z') {
+        if (remaining != 1)
+            return 0;
         offset = 0;
-    else {
+    } else {
+        /* (+-)HHMM */
         if ((*str != '+') && (*str != '-'))
+            return 0;
+        /* Historical behaviour: the (+-)hhmm offset is forbidden in RFC5280. */
+        if (remaining != 5)
+            return 0;
+        if (str[1] < '0' || str[1] > '9' || str[2] < '0' || str[2] > '9' ||
+            str[3] < '0' || str[3] > '9' || str[4] < '0' || str[4] > '9')
             return 0;
         offset = ((str[1] - '0') * 10 + (str[2] - '0')) * 60;
         offset += (str[3] - '0') * 10 + (str[4] - '0');
@@ -2407,6 +2450,11 @@ X509_POLICY_TREE *X509_STORE_CTX_get0_policy_tree(X509_STORE_CTX *ctx)
 int X509_STORE_CTX_get_explicit_policy(X509_STORE_CTX *ctx)
 {
     return ctx->explicit_policy;
+}
+
+int X509_STORE_CTX_get_num_untrusted(X509_STORE_CTX *ctx)
+{
+    return ctx->last_untrusted;
 }
 
 int X509_STORE_CTX_set_default(X509_STORE_CTX *ctx, const char *name)

@@ -41,7 +41,7 @@ Operations in a binary field are performed relative to an B<irreducible polynomi
 use a trinomial or a pentanomial for this parameter.
 
 A new curve can be constructed by calling EC_GROUP_new, using the implementation provided by B<meth> (see
-L<EC_GFp_simple_method(3)|EC_GFp_simple_method(3)>). It is then necessary to call either EC_GROUP_set_curve_GFp or
+L<EC_GFp_simple_method(3)>). It is then necessary to call either EC_GROUP_set_curve_GFp or
 EC_GROUP_set_curve_GF2m as appropriate to create a curve defined over Fp or over F2^m respectively.
 
 EC_GROUP_set_curve_GFp sets the curve parameters B<p>, B<a> and B<b> for a curve over Fp stored in B<group>.
@@ -90,8 +90,8 @@ EC_GROUP_set_curve_GFp, EC_GROUP_get_curve_GFp, EC_GROUP_set_curve_GF2m, EC_GROU
 
 =head1 SEE ALSO
 
-L<crypto(3)|crypto(3)>, L<ec(3)|ec(3)>, L<EC_GROUP_copy(3)|EC_GROUP_copy(3)>,
-L<EC_POINT_new(3)|EC_POINT_new(3)>, L<EC_POINT_add(3)|EC_POINT_add(3)>, L<EC_KEY_new(3)|EC_KEY_new(3)>,
-L<EC_GFp_simple_method(3)|EC_GFp_simple_method(3)>, L<d2i_ECPKParameters(3)|d2i_ECPKParameters(3)>
+L<crypto(3)>, L<ec(3)>, L<EC_GROUP_copy(3)>,
+L<EC_POINT_new(3)>, L<EC_POINT_add(3)>, L<EC_KEY_new(3)>,
+L<EC_GFp_simple_method(3)>, L<d2i_ECPKParameters(3)>
 
 =cut

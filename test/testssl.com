@@ -130,7 +130,7 @@ $	define/user sys$output nla0:
 $	mcr 'exe_dir'openssl no-rsa
 $	no_rsa=$SEVERITY
 $	define/user sys$output nla0:
-$	mcr 'exe_dir'openssl no-dh
+$	mcr 'exe_dir'openssl no-dhparam
 $	no_dh=$SEVERITY
 $
 $	if no_dh

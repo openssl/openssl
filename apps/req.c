@@ -125,7 +125,7 @@ typedef enum OPTION_choice {
     OPT_KEYOUT, OPT_PASSIN, OPT_PASSOUT, OPT_RAND, OPT_NEWKEY,
     OPT_PKEYOPT, OPT_SIGOPT, OPT_BATCH, OPT_NEWHDR, OPT_MODULUS,
     OPT_VERIFY, OPT_NODES, OPT_NOOUT, OPT_VERBOSE, OPT_UTF8,
-    OPT_NAMEOPT, OPT_REQOPT, OPT_SUBJECT, OPT_TEXT, OPT_X509,
+    OPT_NAMEOPT, OPT_REQOPT, OPT_SUBJ, OPT_SUBJECT, OPT_TEXT, OPT_X509,
     OPT_ASN1_KLUDGE, OPT_NO_ASN1_KLUDGE, OPT_MULTIVALUE_RDN,
     OPT_DAYS, OPT_SET_SERIAL, OPT_EXTENSIONS, OPT_REQEXTS, OPT_MD
 } OPTION_CHOICE;
@@ -167,7 +167,8 @@ OPTIONS req_options[] = {
      "Output the request in a format that is wrong"},
     {OPT_MORE_STR, 1, 1, "(Required by some CA's)"},
     {"no-asn1-kludge", OPT_NO_ASN1_KLUDGE, '-'},
-    {"subject", OPT_SUBJECT, 's', "Output the request's subject"},
+    {"subj", OPT_SUBJ, 's', "Set or modify request subject"},
+    {"subject", OPT_SUBJECT, '-', "Output the request's subject"},
     {"multivalue-rdn", OPT_MULTIVALUE_RDN, '-',
      "Enable support for multivalued RDNs"},
     {"days", OPT_DAYS, 'p', "Number of days cert is valid for"},
@@ -176,11 +177,11 @@ OPTIONS req_options[] = {
      "Cert extension section (override value in config file)"},
     {"reqexts", OPT_REQEXTS, 's',
      "Request extension section (override value in config file)"},
+    {"", OPT_MD, '-', "Any supported digest"},
 #ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
     {"keygen_engine", OPT_KEYGEN_ENGINE, 's'},
 #endif
-    {"", OPT_MD, '-', "Any supported digest"},
     {NULL}
 };
 
@@ -200,16 +201,17 @@ int req_main(int argc, char **argv)
     char *outfile = NULL, *keyfile = NULL, *inrand = NULL;
     char *keyalgstr = NULL, *p, *prog, *passargin = NULL, *passargout = NULL;
     char *passin = NULL, *passout = NULL, *req_exts = NULL, *subj = NULL;
-    char *template = NULL, *keyout = NULL;
+    char *template = default_config_file, *keyout = NULL;
     const char *keyalg = NULL;
     OPTION_CHOICE o;
-    int ret = 1, x509 = 0, days = 30, i = 0, newreq = 0, verbose =
-        0, pkey_type = -1;
+    int ret = 1, x509 = 0, days = 30, i = 0, newreq = 0, verbose = 0;
+    int pkey_type = -1, private = 0;
     int informat = FORMAT_PEM, outformat = FORMAT_PEM, keyform = FORMAT_PEM;
     int modulus = 0, multirdn = 0, verify = 0, noout = 0, text = 0;
     int nodes = 0, kludge = 0, newhdr = 0, subject = 0, pubkey = 0;
     long newkey = -1;
     unsigned long chtype = MBSTRING_ASC, nmflag = 0, reqflag = 0;
+    char nmflag_set = 0;
 
 #ifndef OPENSSL_NO_DES
     cipher = EVP_des_ede3_cbc();
@@ -322,6 +324,7 @@ int req_main(int argc, char **argv)
             chtype = MBSTRING_UTF8;
             break;
         case OPT_NAMEOPT:
+            nmflag_set = 1;
             if (!set_name_ex(&nmflag, opt_arg()))
                 goto opthelp;
             break;
@@ -341,7 +344,6 @@ int req_main(int argc, char **argv)
         case OPT_NO_ASN1_KLUDGE:
             kludge = 0;
             break;
-            multirdn = 1;
         case OPT_DAYS:
             days = atoi(opt_arg());
             break;
@@ -351,6 +353,9 @@ int req_main(int argc, char **argv)
                 goto opthelp;
             break;
         case OPT_SUBJECT:
+            subject = 1;
+            break;
+        case OPT_SUBJ:
             subj = opt_arg();
             break;
         case OPT_MULTIVALUE_RDN:
@@ -372,35 +377,21 @@ int req_main(int argc, char **argv)
     argc = opt_num_rest();
     argv = opt_rest();
 
+    if (!nmflag_set)
+        nmflag = XN_FLAG_ONELINE;
+
+    private = newreq && (pkey == NULL) ? 1 : 0;
+
     if (!app_passwd(passargin, passargout, &passin, &passout)) {
         BIO_printf(bio_err, "Error getting passwords\n");
         goto end;
     }
 
-    if (template != NULL) {
-        long errline = -1;
-
-        if (verbose)
-            BIO_printf(bio_err, "Using configuration from %s\n", template);
-        req_conf = NCONF_new(NULL);
-        i = NCONF_load(req_conf, template, &errline);
-        if (i == 0) {
-            BIO_printf(bio_err, "error on line %ld of %s\n", errline,
-                       template);
-            goto end;
-        }
-    } else {
-        req_conf = config;
-
-        if (req_conf == NULL) {
-            BIO_printf(bio_err, "Unable to load config info from %s\n",
-                       default_config_file);
-            if (newreq)
-                goto end;
-        } else if (verbose)
-            BIO_printf(bio_err, "Using configuration from %s\n",
-                       default_config_file);
-    }
+    if (verbose)
+        BIO_printf(bio_err, "Using configuration from %s\n", template);
+    req_conf = app_load_config(template);
+    if (!app_load_modules(req_conf))
+        goto end;
 
     if (req_conf != NULL) {
         p = NCONF_get_string(req_conf, NULL, "oid_file");
@@ -584,7 +575,7 @@ int req_main(int argc, char **argv)
             BIO_printf(bio_err, "writing new private key to stdout\n");
         else
             BIO_printf(bio_err, "writing new private key to '%s'\n", keyout);
-        out = bio_open_default(keyout, "w");
+        out = bio_open_owner(keyout, "w", private);
         if (out == NULL)
             goto end;
 
@@ -602,6 +593,7 @@ int req_main(int argc, char **argv)
 
         i = 0;
  loop:
+        assert(private);
         if (!PEM_write_bio_PrivateKey(out, pkey, cipher,
                                       NULL, 0, NULL, passout)) {
             if ((ERR_GET_REASON(ERR_peek_error()) ==
@@ -612,6 +604,8 @@ int req_main(int argc, char **argv)
             }
             goto end;
         }
+        BIO_free(out);
+        out = NULL;
         BIO_printf(bio_err, "-----\n");
     }
 
@@ -872,8 +866,7 @@ int req_main(int argc, char **argv)
     if (ret) {
         ERR_print_errors(bio_err);
     }
-    if (req_conf != config)
-        NCONF_free(req_conf);
+    NCONF_free(req_conf);
     BIO_free(in);
     BIO_free_all(out);
     EVP_PKEY_free(pkey);
@@ -962,7 +955,7 @@ static int build_subject(X509_REQ *req, char *subject, unsigned long chtype,
 {
     X509_NAME *n;
 
-    if (!(n = parse_name(subject, chtype, multirdn)))
+    if ((n = parse_name(subject, chtype, multirdn)) == NULL)
         return 0;
 
     if (!X509_REQ_set_subject_name(req, n)) {

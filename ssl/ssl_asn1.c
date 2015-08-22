@@ -95,20 +95,15 @@ typedef struct {
     ASN1_OCTET_STRING *comp_id;
     ASN1_OCTET_STRING *master_key;
     ASN1_OCTET_STRING *session_id;
-#ifndef OPENSSL_NO_KRB5
-    ASN1_OCTET_STRING *krb5_princ;
-#endif
     ASN1_OCTET_STRING *key_arg;
     long time;
     long timeout;
     X509 *peer;
     ASN1_OCTET_STRING *session_id_context;
     long verify_result;
-#ifndef OPENSSL_NO_TLSEXT
     ASN1_OCTET_STRING *tlsext_hostname;
     long tlsext_tick_lifetime_hint;
     ASN1_OCTET_STRING *tlsext_tick;
-#endif
 #ifndef OPENSSL_NO_PSK
     ASN1_OCTET_STRING *psk_identity_hint;
     ASN1_OCTET_STRING *psk_identity;
@@ -125,26 +120,19 @@ ASN1_SEQUENCE(SSL_SESSION_ASN1) = {
     ASN1_SIMPLE(SSL_SESSION_ASN1, cipher, ASN1_OCTET_STRING),
     ASN1_SIMPLE(SSL_SESSION_ASN1, session_id, ASN1_OCTET_STRING),
     ASN1_SIMPLE(SSL_SESSION_ASN1, master_key, ASN1_OCTET_STRING),
-#ifndef OPENSSL_NO_KRB5
-    ASN1_OPT(SSL_SESSION_ASN1, krb5_princ, ASN1_OCTET_STRING),
-#endif
     ASN1_IMP_OPT(SSL_SESSION_ASN1, key_arg, ASN1_OCTET_STRING, 0),
     ASN1_EXP_OPT(SSL_SESSION_ASN1, time, ZLONG, 1),
     ASN1_EXP_OPT(SSL_SESSION_ASN1, timeout, ZLONG, 2),
     ASN1_EXP_OPT(SSL_SESSION_ASN1, peer, X509, 3),
     ASN1_EXP_OPT(SSL_SESSION_ASN1, session_id_context, ASN1_OCTET_STRING, 4),
     ASN1_EXP_OPT(SSL_SESSION_ASN1, verify_result, ZLONG, 5),
-#ifndef OPENSSL_NO_TLSEXT
     ASN1_EXP_OPT(SSL_SESSION_ASN1, tlsext_hostname, ASN1_OCTET_STRING, 6),
-#endif
 #ifndef OPENSSL_NO_PSK
     ASN1_EXP_OPT(SSL_SESSION_ASN1, psk_identity_hint, ASN1_OCTET_STRING, 7),
     ASN1_EXP_OPT(SSL_SESSION_ASN1, psk_identity, ASN1_OCTET_STRING, 8),
 #endif
-#ifndef OPENSSL_NO_TLSEXT
     ASN1_EXP_OPT(SSL_SESSION_ASN1, tlsext_tick_lifetime_hint, ZLONG, 9),
     ASN1_EXP_OPT(SSL_SESSION_ASN1, tlsext_tick, ASN1_OCTET_STRING, 10),
-#endif
     ASN1_EXP_OPT(SSL_SESSION_ASN1, comp_id, ASN1_OCTET_STRING, 11),
 #ifndef OPENSSL_NO_SRP
     ASN1_EXP_OPT(SSL_SESSION_ASN1, srp_username, ASN1_OCTET_STRING, 12),
@@ -191,13 +179,7 @@ int i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
     unsigned char comp_id_data;
 #endif
 
-#ifndef OPENSSL_NO_TLSEXT
     ASN1_OCTET_STRING tlsext_hostname, tlsext_tick;
-#endif
-
-#ifndef OPENSSL_NO_KRB5
-    ASN1_OCTET_STRING krb5_princ;
-#endif
 
 #ifndef OPENSSL_NO_SRP
     ASN1_OCTET_STRING srp_username;
@@ -241,12 +223,6 @@ int i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
 
     ssl_session_oinit(&as.session_id_context, &sid_ctx,
                       in->sid_ctx, in->sid_ctx_length);
-#ifndef OPENSSL_NO_KRB5
-    if (in->krb5_client_princ_len) {
-        ssl_session_oinit(&as.krb5_princ, &krb5_princ,
-                          in->krb5_client_princ, in->krb5_client_princ_len);
-    }
-#endif                          /* OPENSSL_NO_KRB5 */
 
     as.time = in->time;
     as.timeout = in->timeout;
@@ -254,7 +230,6 @@ int i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
 
     as.peer = in->peer;
 
-#ifndef OPENSSL_NO_TLSEXT
     ssl_session_sinit(&as.tlsext_hostname, &tlsext_hostname,
                       in->tlsext_hostname);
     if (in->tlsext_tick) {
@@ -263,7 +238,6 @@ int i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
     }
     if (in->tlsext_tick_lifetime_hint > 0)
         as.tlsext_tick_lifetime_hint = in->tlsext_tick_lifetime_hint;
-#endif                          /* OPENSSL_NO_TLSEXT */
 #ifndef OPENSSL_NO_PSK
     ssl_session_sinit(&as.psk_identity_hint, &psk_identity_hint,
                       in->psk_identity_hint);
@@ -368,12 +342,6 @@ SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp,
 
     ret->master_key_length = tmpl;
 
-#ifndef OPENSSL_NO_KRB5
-    if (!ssl_session_memcpy(ret->krb5_client_princ, &ret->krb5_client_princ_len,
-                            as->krb5_princ, SSL_MAX_KRB5_PRINCIPAL_LENGTH))
-        goto err;
-#endif                          /* OPENSSL_NO_KRB5 */
-
     if (as->time != 0)
         ret->time = as->time;
     else
@@ -395,10 +363,8 @@ SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp,
     /* NB: this defaults to zero which is X509_V_OK */
     ret->verify_result = as->verify_result;
 
-#ifndef OPENSSL_NO_TLSEXT
     if (!ssl_session_strndup(&ret->tlsext_hostname, as->tlsext_hostname))
         goto err;
-#endif                          /* OPENSSL_NO_TLSEXT */
 
 #ifndef OPENSSL_NO_PSK
     if (!ssl_session_strndup(&ret->psk_identity_hint, as->psk_identity_hint))
@@ -407,7 +373,6 @@ SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp,
         goto err;
 #endif
 
-#ifndef OPENSSL_NO_TLSEXT
     ret->tlsext_tick_lifetime_hint = as->tlsext_tick_lifetime_hint;
     if (as->tlsext_tick) {
         ret->tlsext_tick = as->tlsext_tick->data;
@@ -416,7 +381,6 @@ SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp,
     } else {
         ret->tlsext_tick = NULL;
     }
-#endif                          /* OPENSSL_NO_TLSEXT */
 #ifndef OPENSSL_NO_COMP
     if (as->comp_id) {
         if (as->comp_id->length != 1) {

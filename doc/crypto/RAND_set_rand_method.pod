@@ -67,7 +67,7 @@ algorithms.
 
 =head1 SEE ALSO
 
-L<rand(3)|rand(3)>, L<engine(3)|engine(3)>
+L<rand(3)>, L<engine(3)>
 
 =head1 HISTORY
 

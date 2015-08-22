@@ -57,7 +57,7 @@
  */
 
 #include <stdio.h>
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/buffer.h>
 #include <openssl/objects.h>
 #include <openssl/evp.h>
@@ -116,7 +116,8 @@ static int do_pk8pkey(BIO *bp, EVP_PKEY *x, int isder, int nid,
     PKCS8_PRIV_KEY_INFO *p8inf;
     char buf[PEM_BUFSIZE];
     int ret;
-    if (!(p8inf = EVP_PKEY2PKCS8(x))) {
+
+    if ((p8inf = EVP_PKEY2PKCS8(x)) == NULL) {
         PEMerr(PEM_F_DO_PK8PKEY, PEM_R_ERROR_CONVERTING_PRIVATE_KEY);
         return 0;
     }
@@ -138,6 +139,8 @@ static int do_pk8pkey(BIO *bp, EVP_PKEY *x, int isder, int nid,
         if (kstr == buf)
             OPENSSL_cleanse(buf, klen);
         PKCS8_PRIV_KEY_INFO_free(p8inf);
+        if (p8 == NULL)
+            return 0;
         if (isder)
             ret = i2d_PKCS8_bio(bp, p8);
         else
@@ -224,7 +227,8 @@ static int do_pk8pkey_fp(FILE *fp, EVP_PKEY *x, int isder, int nid,
 {
     BIO *bp;
     int ret;
-    if (!(bp = BIO_new_fp(fp, BIO_NOCLOSE))) {
+
+    if ((bp = BIO_new_fp(fp, BIO_NOCLOSE)) == NULL) {
         PEMerr(PEM_F_DO_PK8PKEY_FP, ERR_R_BUF_LIB);
         return (0);
     }
@@ -238,7 +242,8 @@ EVP_PKEY *d2i_PKCS8PrivateKey_fp(FILE *fp, EVP_PKEY **x, pem_password_cb *cb,
 {
     BIO *bp;
     EVP_PKEY *ret;
-    if (!(bp = BIO_new_fp(fp, BIO_NOCLOSE))) {
+
+    if ((bp = BIO_new_fp(fp, BIO_NOCLOSE)) == NULL) {
         PEMerr(PEM_F_D2I_PKCS8PRIVATEKEY_FP, ERR_R_BUF_LIB);
         return NULL;
     }

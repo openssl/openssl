@@ -65,7 +65,7 @@
  */
 
 #include <stdio.h>
-#include <cryptlib.h>
+#include "internal/cryptlib.h"
 #include <openssl/objects.h>
 #include <openssl/x509.h>
 #include <openssl/ocsp.h>
@@ -415,22 +415,22 @@ X509_EXTENSION *OCSP_crlID_new(char *url, long *n, char *tim)
     X509_EXTENSION *x = NULL;
     OCSP_CRLID *cid = NULL;
 
-    if (!(cid = OCSP_CRLID_new()))
+    if ((cid = OCSP_CRLID_new()) == NULL)
         goto err;
     if (url) {
-        if (!(cid->crlUrl = ASN1_IA5STRING_new()))
+        if ((cid->crlUrl = ASN1_IA5STRING_new()) == NULL)
             goto err;
         if (!(ASN1_STRING_set(cid->crlUrl, url, -1)))
             goto err;
     }
     if (n) {
-        if (!(cid->crlNum = ASN1_INTEGER_new()))
+        if ((cid->crlNum = ASN1_INTEGER_new()) == NULL)
             goto err;
         if (!(ASN1_INTEGER_set(cid->crlNum, *n)))
             goto err;
     }
     if (tim) {
-        if (!(cid->crlTime = ASN1_GENERALIZEDTIME_new()))
+        if ((cid->crlTime = ASN1_GENERALIZEDTIME_new()) == NULL)
             goto err;
         if (!(ASN1_GENERALIZEDTIME_set_string(cid->crlTime, tim)))
             goto err;
@@ -449,7 +449,7 @@ X509_EXTENSION *OCSP_accept_responses_new(char **oids)
     ASN1_OBJECT *o = NULL;
     X509_EXTENSION *x = NULL;
 
-    if (!(sk = sk_ASN1_OBJECT_new_null()))
+    if ((sk = sk_ASN1_OBJECT_new_null()) == NULL)
         goto err;
     while (oids && *oids) {
         if ((nid = OBJ_txt2nid(*oids)) != NID_undef && (o = OBJ_nid2obj(nid)))
@@ -468,7 +468,7 @@ X509_EXTENSION *OCSP_archive_cutoff_new(char *tim)
     X509_EXTENSION *x = NULL;
     ASN1_GENERALIZEDTIME *gt = NULL;
 
-    if (!(gt = ASN1_GENERALIZEDTIME_new()))
+    if ((gt = ASN1_GENERALIZEDTIME_new()) == NULL)
         goto err;
     if (!(ASN1_GENERALIZEDTIME_set_string(gt, tim)))
         goto err;
@@ -490,20 +490,21 @@ X509_EXTENSION *OCSP_url_svcloc_new(X509_NAME *issuer, char **urls)
     OCSP_SERVICELOC *sloc = NULL;
     ACCESS_DESCRIPTION *ad = NULL;
 
-    if (!(sloc = OCSP_SERVICELOC_new()))
+    if ((sloc = OCSP_SERVICELOC_new()) == NULL)
         goto err;
-    if (!(sloc->issuer = X509_NAME_dup(issuer)))
+    if ((sloc->issuer = X509_NAME_dup(issuer)) == NULL)
         goto err;
-    if (urls && *urls && !(sloc->locator = sk_ACCESS_DESCRIPTION_new_null()))
+    if (urls && *urls
+        && (sloc->locator = sk_ACCESS_DESCRIPTION_new_null()) == NULL)
         goto err;
     while (urls && *urls) {
-        if (!(ad = ACCESS_DESCRIPTION_new()))
+        if ((ad = ACCESS_DESCRIPTION_new()) == NULL)
             goto err;
-        if (!(ad->method = OBJ_nid2obj(NID_ad_OCSP)))
+        if ((ad->method = OBJ_nid2obj(NID_ad_OCSP)) == NULL)
             goto err;
-        if (!(ad->location = GENERAL_NAME_new()))
+        if ((ad->location = GENERAL_NAME_new()) == NULL)
             goto err;
-        if (!(ia5 = ASN1_IA5STRING_new()))
+        if ((ia5 = ASN1_IA5STRING_new()) == NULL)
             goto err;
         if (!ASN1_STRING_set((ASN1_STRING *)ia5, *urls, -1))
             goto err;

@@ -690,7 +690,7 @@ static EVP_PKEY *capi_get_pkey(ENGINE *eng, CAPI_KEY * key)
 
         RSA_set_ex_data(rkey, rsa_capi_idx, key);
 
-        if (!(ret = EVP_PKEY_new()))
+        if ((ret = EVP_PKEY_new()) == NULL)
             goto memerr;
 
         EVP_PKEY_assign_RSA(ret, rkey);
@@ -735,7 +735,7 @@ static EVP_PKEY *capi_get_pkey(ENGINE *eng, CAPI_KEY * key)
 
         DSA_set_ex_data(dkey, dsa_capi_idx, key);
 
-        if (!(ret = EVP_PKEY_new()))
+        if ((ret = EVP_PKEY_new()) == NULL)
             goto memerr;
 
         EVP_PKEY_assign_DSA(ret, dkey);
@@ -920,7 +920,7 @@ int capi_rsa_priv_dec(int flen, const unsigned char *from,
     }
 
     /* Create temp reverse order version of input */
-    if (!(tmpbuf = OPENSSL_malloc(flen))) {
+    if ((tmpbuf = OPENSSL_malloc(flen)) == NULL) {
         CAPIerr(CAPI_F_CAPI_RSA_PRIV_DEC, ERR_R_MALLOC_FAILURE);
         return -1;
     }

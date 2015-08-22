@@ -57,7 +57,7 @@
  */
 
 #include <stdio.h>
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/rand.h>
 #include <openssl/dh.h>
 #include "internal/bn_int.h"
@@ -125,7 +125,7 @@ static int generate_key(DH *dh)
         goto err;
 
     if (dh->priv_key == NULL) {
-        priv_key = BN_new();
+        priv_key = BN_secure_new();
         if (priv_key == NULL)
             goto err;
         generate_new_key = 1;

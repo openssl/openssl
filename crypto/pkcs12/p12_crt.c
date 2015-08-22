@@ -58,7 +58,7 @@
  */
 
 #include <stdio.h>
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/pkcs12.h>
 
 static int pkcs12_add_bag(STACK_OF(PKCS12_SAFEBAG) **pbags,
@@ -189,7 +189,7 @@ PKCS12_SAFEBAG *PKCS12_add_cert(STACK_OF(PKCS12_SAFEBAG) **pbags, X509 *cert)
     int keyidlen = -1;
 
     /* Add user certificate */
-    if (!(bag = PKCS12_x5092certbag(cert)))
+    if ((bag = PKCS12_x5092certbag(cert)) == NULL)
         goto err;
 
     /*
@@ -226,7 +226,7 @@ PKCS12_SAFEBAG *PKCS12_add_key(STACK_OF(PKCS12_SAFEBAG) **pbags,
     PKCS8_PRIV_KEY_INFO *p8 = NULL;
 
     /* Make a PKCS#8 structure */
-    if (!(p8 = EVP_PKEY2PKCS8(key)))
+    if ((p8 = EVP_PKEY2PKCS8(key)) == NULL)
         goto err;
     if (key_usage && !PKCS8_add_keyusage(p8, key_usage))
         goto err;

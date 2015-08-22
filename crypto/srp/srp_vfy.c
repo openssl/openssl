@@ -58,7 +58,7 @@
  *
  */
 #ifndef OPENSSL_NO_SRP
-# include "cryptlib.h"
+# include "internal/cryptlib.h"
 # include <openssl/sha.h>
 # include <openssl/srp.h>
 # include <openssl/evp.h>
@@ -253,8 +253,8 @@ SRP_VBASE *SRP_VBASE_new(char *seed_key)
 
     if (vb == NULL)
         return NULL;
-    if (!(vb->users_pwd = sk_SRP_user_pwd_new_null()) ||
-        !(vb->gN_cache = sk_SRP_gN_cache_new_null())) {
+    if ((vb->users_pwd = sk_SRP_user_pwd_new_null()) == NULL
+        || (vb->gN_cache = sk_SRP_gN_cache_new_null()) == NULL) {
         OPENSSL_free(vb);
         return NULL;
     }
@@ -394,10 +394,11 @@ int SRP_VBASE_init(SRP_VBASE *vb, char *verifier_file)
             if ((gN = OPENSSL_malloc(sizeof(*gN))) == NULL)
                 goto err;
 
-            if (!(gN->id = BUF_strdup(pp[DB_srpid]))
-                || !(gN->N =
-                     SRP_gN_place_bn(vb->gN_cache, pp[DB_srpverifier]))
-                || !(gN->g = SRP_gN_place_bn(vb->gN_cache, pp[DB_srpsalt]))
+            if ((gN->id = BUF_strdup(pp[DB_srpid])) == NULL
+                || (gN->N = SRP_gN_place_bn(vb->gN_cache, pp[DB_srpverifier]))
+                        == NULL
+                || (gN->g = SRP_gN_place_bn(vb->gN_cache, pp[DB_srpsalt]))
+                        == NULL
                 || sk_SRP_gN_insert(SRP_gN_tab, gN, 0) == 0)
                 goto err;
 
@@ -533,10 +534,10 @@ char *SRP_create_verifier(const char *user, const char *pass, char **salt,
         goto err;
 
     if (N) {
-        if (!(len = t_fromb64(tmp, N)))
+        if ((len = t_fromb64(tmp, N)) == 0)
             goto err;
         N_bn = BN_bin2bn(tmp, len, NULL);
-        if (!(len = t_fromb64(tmp, g)))
+        if ((len = t_fromb64(tmp, g)) == 0)
             goto err;
         g_bn = BN_bin2bn(tmp, len, NULL);
         defgNid = "*";
@@ -555,7 +556,7 @@ char *SRP_create_verifier(const char *user, const char *pass, char **salt,
 
         s = BN_bin2bn(tmp2, SRP_RANDOM_SALT_LEN, NULL);
     } else {
-        if (!(len = t_fromb64(tmp2, *salt)))
+        if ((len = t_fromb64(tmp2, *salt)) == 0)
             goto err;
         s = BN_bin2bn(tmp2, len, NULL);
     }

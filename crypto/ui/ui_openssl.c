@@ -160,7 +160,7 @@
 
 /* 06-Apr-92 Luke Brennan    Support for VMS */
 #include "ui_locl.h"
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 
 #ifdef OPENSSL_SYS_VMS          /* prototypes for sys$whatever */
 # include <starlet.h>

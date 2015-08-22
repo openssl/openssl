@@ -14,6 +14,7 @@ bn - multiprecision integer arithmetics
  void BN_clear_free(BIGNUM *a);
 
  BN_CTX *BN_CTX_new(void);
+ BN_CTX *BN_CTX_secure_new(void);
  void BN_CTX_free(BN_CTX *c);
 
  BIGNUM *BN_copy(BIGNUM *a, const BIGNUM *b);
@@ -162,26 +163,26 @@ The basic object in this library is a B<BIGNUM>. It is used to hold a
 single large integer. This type should be considered opaque and fields
 should not be modified or accessed directly.
 
-The creation of B<BIGNUM> objects is described in L<BN_new(3)|BN_new(3)>;
-L<BN_add(3)|BN_add(3)> describes most of the arithmetic operations.
-Comparison is described in L<BN_cmp(3)|BN_cmp(3)>; L<BN_zero(3)|BN_zero(3)>
-describes certain assignments, L<BN_rand(3)|BN_rand(3)> the generation of
-random numbers, L<BN_generate_prime(3)|BN_generate_prime(3)> deals with prime
-numbers and L<BN_set_bit(3)|BN_set_bit(3)> with bit operations. The conversion
-of B<BIGNUM>s to external formats is described in L<BN_bn2bin(3)|BN_bn2bin(3)>.
+The creation of B<BIGNUM> objects is described in L<BN_new(3)>;
+L<BN_add(3)> describes most of the arithmetic operations.
+Comparison is described in L<BN_cmp(3)>; L<BN_zero(3)>
+describes certain assignments, L<BN_rand(3)> the generation of
+random numbers, L<BN_generate_prime(3)> deals with prime
+numbers and L<BN_set_bit(3)> with bit operations. The conversion
+of B<BIGNUM>s to external formats is described in L<BN_bn2bin(3)>.
 
 =head1 SEE ALSO
 
-L<bn_internal(3)|bn_internal(3)>,
-L<dh(3)|dh(3)>, L<err(3)|err(3)>, L<rand(3)|rand(3)>, L<rsa(3)|rsa(3)>,
-L<BN_new(3)|BN_new(3)>, L<BN_CTX_new(3)|BN_CTX_new(3)>,
-L<BN_copy(3)|BN_copy(3)>, L<BN_swap(3)|BN_swap(3)>, L<BN_num_bytes(3)|BN_num_bytes(3)>,
-L<BN_add(3)|BN_add(3)>, L<BN_add_word(3)|BN_add_word(3)>,
-L<BN_cmp(3)|BN_cmp(3)>, L<BN_zero(3)|BN_zero(3)>, L<BN_rand(3)|BN_rand(3)>,
-L<BN_generate_prime(3)|BN_generate_prime(3)>, L<BN_set_bit(3)|BN_set_bit(3)>,
-L<BN_bn2bin(3)|BN_bn2bin(3)>, L<BN_mod_inverse(3)|BN_mod_inverse(3)>,
-L<BN_mod_mul_reciprocal(3)|BN_mod_mul_reciprocal(3)>,
-L<BN_mod_mul_montgomery(3)|BN_mod_mul_montgomery(3)>,
-L<BN_BLINDING_new(3)|BN_BLINDING_new(3)>
+L<bn_internal(3)>,
+L<dh(3)>, L<err(3)>, L<rand(3)>, L<rsa(3)>,
+L<BN_new(3)>, L<BN_CTX_new(3)>,
+L<BN_copy(3)>, L<BN_swap(3)>, L<BN_num_bytes(3)>,
+L<BN_add(3)>, L<BN_add_word(3)>,
+L<BN_cmp(3)>, L<BN_zero(3)>, L<BN_rand(3)>,
+L<BN_generate_prime(3)>, L<BN_set_bit(3)>,
+L<BN_bn2bin(3)>, L<BN_mod_inverse(3)>,
+L<BN_mod_mul_reciprocal(3)>,
+L<BN_mod_mul_montgomery(3)>,
+L<BN_BLINDING_new(3)>
 
 =cut

@@ -58,11 +58,16 @@
 
 #include <stdio.h>
 #include <openssl/crypto.h>
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/lhash.h>
 #include "internal/bn_int.h"
 #include <openssl/rsa.h>
 #include <openssl/rand.h>
+
+int RSA_bits(const RSA *r)
+{
+    return (BN_num_bits(r->n));
+}
 
 int RSA_size(const RSA *r)
 {

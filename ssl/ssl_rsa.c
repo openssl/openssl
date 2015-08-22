@@ -216,7 +216,6 @@ static int ssl_set_pkey(CERT *c, EVP_PKEY *pkey)
     CRYPTO_add(&pkey->references, 1, CRYPTO_LOCK_EVP_PKEY);
     c->pkeys[i].privatekey = pkey;
     c->key = &(c->pkeys[i]);
-    c->valid = 0;
     return (1);
 }
 
@@ -420,7 +419,6 @@ static int ssl_set_cert(CERT *c, X509 *x)
     c->pkeys[i].x509 = x;
     c->key = &(c->pkeys[i]);
 
-    c->valid = 0;
     return (1);
 }
 
@@ -740,7 +738,6 @@ int SSL_use_certificate_chain_file(SSL *ssl, const char *file)
 }
 #endif
 
-#ifndef OPENSSL_NO_TLSEXT
 static int serverinfo_find_extension(const unsigned char *serverinfo,
                                      size_t serverinfo_length,
                                      unsigned int extension_type,
@@ -912,7 +909,7 @@ int SSL_CTX_use_serverinfo(SSL_CTX *ctx, const unsigned char *serverinfo,
     return 1;
 }
 
-# ifndef OPENSSL_NO_STDIO
+#ifndef OPENSSL_NO_STDIO
 int SSL_CTX_use_serverinfo_file(SSL_CTX *ctx, const char *file)
 {
     unsigned char *serverinfo = NULL;
@@ -1002,5 +999,4 @@ int SSL_CTX_use_serverinfo_file(SSL_CTX *ctx, const char *file)
     BIO_free(bin);
     return ret;
 }
-# endif                         /* OPENSSL_NO_STDIO */
-#endif                          /* OPENSSL_NO_TLSEXT */
+#endif                         /* OPENSSL_NO_STDIO */

@@ -59,7 +59,7 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <limits.h>
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/lhash.h>
 #include <openssl/asn1.h>
 #include <openssl/objects.h>
@@ -255,16 +255,16 @@ int OBJ_add_object(const ASN1_OBJECT *obj)
             return (0);
     if ((o = OBJ_dup(obj)) == NULL)
         goto err;
-    if (!(ao[ADDED_NID] = OPENSSL_malloc(sizeof(*ao))))
+    if ((ao[ADDED_NID] = OPENSSL_malloc(sizeof(*ao[0]))) == NULL)
         goto err2;
     if ((o->length != 0) && (obj->data != NULL))
-        if (!(ao[ADDED_DATA] = OPENSSL_malloc(sizeof(*ao))))
+        if ((ao[ADDED_DATA] = OPENSSL_malloc(sizeof(*ao[0]))) == NULL)
             goto err2;
     if (o->sn != NULL)
-        if (!(ao[ADDED_SNAME] = OPENSSL_malloc(sizeof(*ao))))
+        if ((ao[ADDED_SNAME] = OPENSSL_malloc(sizeof(*ao[0]))) == NULL)
             goto err2;
     if (o->ln != NULL)
-        if (!(ao[ADDED_LNAME] = OPENSSL_malloc(sizeof(*ao))))
+        if ((ao[ADDED_LNAME] = OPENSSL_malloc(sizeof(*ao[0]))) == NULL)
             goto err2;
 
     for (i = ADDED_DATA; i <= ADDED_NID; i++) {
@@ -380,6 +380,8 @@ static int obj_cmp(const ASN1_OBJECT *const *ap, const unsigned int *bp)
     j = (a->length - b->length);
     if (j)
         return (j);
+    if (a->length == 0)
+        return 0;
     return (memcmp(a->data, b->data, a->length));
 }
 
@@ -394,6 +396,9 @@ int OBJ_obj2nid(const ASN1_OBJECT *a)
         return (NID_undef);
     if (a->nid != 0)
         return (a->nid);
+
+    if (a->length == 0)
+        return NID_undef;
 
     if (added != NULL) {
         ad.type = ADDED_DATA;
@@ -507,7 +512,7 @@ int OBJ_obj2txt(char *buf, int buf_len, const ASN1_OBJECT *a, int no_name)
             if (!(c & 0x80))
                 break;
             if (!use_bn && (l > (ULONG_MAX >> 7L))) {
-                if (!bl && !(bl = BN_new()))
+                if (bl == NULL && (bl = BN_new()) == NULL)
                     goto err;
                 if (!BN_set_word(bl, l))
                     goto err;

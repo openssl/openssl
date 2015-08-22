@@ -58,7 +58,7 @@
  */
 
 #include <stdio.h>
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/asn1.h>
 #include <openssl/asn1t.h>
 #include <openssl/conf.h>
@@ -107,7 +107,8 @@ static BASIC_CONSTRAINTS *v2i_BASIC_CONSTRAINTS(X509V3_EXT_METHOD *method,
     BASIC_CONSTRAINTS *bcons = NULL;
     CONF_VALUE *val;
     int i;
-    if (!(bcons = BASIC_CONSTRAINTS_new())) {
+
+    if ((bcons = BASIC_CONSTRAINTS_new()) == NULL) {
         X509V3err(X509V3_F_V2I_BASIC_CONSTRAINTS, ERR_R_MALLOC_FAILURE);
         return NULL;
     }

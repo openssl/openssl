@@ -71,7 +71,8 @@ int PKCS7_add_attrib_smimecap(PKCS7_SIGNER_INFO *si,
                               STACK_OF(X509_ALGOR) *cap)
 {
     ASN1_STRING *seq;
-    if (!(seq = ASN1_STRING_new())) {
+
+    if ((seq = ASN1_STRING_new()) == NULL) {
         PKCS7err(PKCS7_F_PKCS7_ADD_ATTRIB_SMIMECAP, ERR_R_MALLOC_FAILURE);
         return 0;
     }
@@ -87,7 +88,7 @@ STACK_OF(X509_ALGOR) *PKCS7_get_smimecap(PKCS7_SIGNER_INFO *si)
     const unsigned char *p;
 
     cap = PKCS7_get_signed_attribute(si, NID_SMIMECapabilities);
-    if (!cap || (cap->type != V_ASN1_SEQUENCE))
+    if (cap == NULL || (cap->type != V_ASN1_SEQUENCE))
         return NULL;
     p = cap->value.sequence->data;
     return (STACK_OF(X509_ALGOR) *)
@@ -100,7 +101,7 @@ int PKCS7_simple_smimecap(STACK_OF(X509_ALGOR) *sk, int nid, int arg)
 {
     X509_ALGOR *alg;
 
-    if (!(alg = X509_ALGOR_new())) {
+    if ((alg = X509_ALGOR_new()) == NULL) {
         PKCS7err(PKCS7_F_PKCS7_SIMPLE_SMIMECAP, ERR_R_MALLOC_FAILURE);
         return 0;
     }
@@ -108,11 +109,11 @@ int PKCS7_simple_smimecap(STACK_OF(X509_ALGOR) *sk, int nid, int arg)
     alg->algorithm = OBJ_nid2obj(nid);
     if (arg > 0) {
         ASN1_INTEGER *nbit;
-        if (!(alg->parameter = ASN1_TYPE_new())) {
+        if ((alg->parameter = ASN1_TYPE_new()) == NULL) {
             PKCS7err(PKCS7_F_PKCS7_SIMPLE_SMIMECAP, ERR_R_MALLOC_FAILURE);
             return 0;
         }
-        if (!(nbit = ASN1_INTEGER_new())) {
+        if ((nbit = ASN1_INTEGER_new()) == NULL) {
             PKCS7err(PKCS7_F_PKCS7_SIMPLE_SMIMECAP, ERR_R_MALLOC_FAILURE);
             return 0;
         }
@@ -139,7 +140,7 @@ int PKCS7_add_attrib_content_type(PKCS7_SIGNER_INFO *si, ASN1_OBJECT *coid)
 
 int PKCS7_add0_attrib_signing_time(PKCS7_SIGNER_INFO *si, ASN1_TIME *t)
 {
-    if (!t && !(t = X509_gmtime_adj(NULL, 0))) {
+    if (t == NULL && (t = X509_gmtime_adj(NULL, 0)) == NULL) {
         PKCS7err(PKCS7_F_PKCS7_ADD0_ATTRIB_SIGNING_TIME,
                  ERR_R_MALLOC_FAILURE);
         return 0;

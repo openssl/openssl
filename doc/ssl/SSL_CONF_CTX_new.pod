@@ -28,11 +28,11 @@ SSL_CONF_CTX_free() does not return a value.
 
 =head1 SEE ALSO
 
-L<SSL_CONF_CTX_set_flags(3)|SSL_CONF_CTX_set_flags(3)>,
-L<SSL_CONF_CTX_set_ssl_ctx(3)|SSL_CONF_CTX_set_ssl_ctx(3)>,
-L<SSL_CONF_CTX_set1_prefix(3)|SSL_CONF_CTX_set1_prefix(3)>,
-L<SSL_CONF_cmd(3)|SSL_CONF_cmd(3)>,
-L<SSL_CONF_cmd_argv(3)|SSL_CONF_cmd_argv(3)>
+L<SSL_CONF_CTX_set_flags(3)>,
+L<SSL_CONF_CTX_set_ssl_ctx(3)>,
+L<SSL_CONF_CTX_set1_prefix(3)>,
+L<SSL_CONF_cmd(3)>,
+L<SSL_CONF_cmd_argv(3)>
 
 =head1 HISTORY
 

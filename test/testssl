@@ -10,7 +10,6 @@ if [ "$2" = "" ]; then
 else
   cert="$2"
 fi
-OPENSSL_CONF=/dev/null ; export OPENSSL_CONF
 ssltest="../util/shlib_wrap.sh ./ssltest -key $key -cert $cert -c_key $key -c_cert $cert"
 
 if ../util/shlib_wrap.sh ../apps/openssl x509 -in $cert -text -noout | fgrep 'DSA Public Key' >/dev/null; then
@@ -118,26 +117,55 @@ $ssltest -bio_pair -server_auth -client_auth $CA $extra || exit 1
 echo test sslv2/sslv3 with both client and server authentication via BIO pair and app verify
 $ssltest -bio_pair -server_auth -client_auth -app_verify $CA $extra || exit 1
 
+test_cipher() {
+    _cipher=$1
+    echo "Testing $_cipher"
+    prot=""
+    if [ $2 = "SSLv3" ] ; then
+      prot="-ssl3"
+    fi
+    $ssltest -cipher $_cipher $prot
+    if [ $? -ne 0 ] ; then
+	  echo "Failed $_cipher"
+	  exit 1
+    fi
+}
+
 echo "Testing ciphersuites"
 for protocol in TLSv1.2 SSLv3; do
   echo "Testing ciphersuites for $protocol"
   for cipher in `../util/shlib_wrap.sh ../apps/openssl ciphers "RSA+$protocol" | tr ':' ' '`; do
-    echo "Testing $cipher"
-    prot=""
-    if [ $protocol = "SSLv3" ] ; then
-      prot="-ssl3"
-    fi
-    $ssltest -cipher $cipher $prot
-    if [ $? -ne 0 ] ; then
-	  echo "Failed $cipher"
-	  exit 1
-    fi
+    test_cipher $cipher $protocol
   done
+  if ../util/shlib_wrap.sh ../apps/openssl no-dhparam; then
+    echo "skipping RSA+DHE tests"
+  else
+    for cipher in `../util/shlib_wrap.sh ../apps/openssl ciphers "EDH+aRSA+$protocol:-EXP" | tr ':' ' '`; do
+      test_cipher $cipher $protocol
+    done
+    echo "testing connection with weak DH, expecting failure"
+    if [ $protocol = "SSLv3" ] ; then
+      $ssltest -s_cipher "EDH" -c_cipher "EDH:@SECLEVEL=1" -dhe512 -ssl3
+    else
+      $ssltest -s_cipher "EDH" -c_cipher "EDH:@SECLEVEL=1" -dhe512
+    fi
+    if [ $? -eq 0 ]; then
+      echo "FAIL: connection with weak DH succeeded"
+      exit 1
+    fi
+  fi
+  if ../util/shlib_wrap.sh ../apps/openssl no-ec; then
+    echo "skipping RSA+ECDHE tests"
+  else
+    for cipher in `../util/shlib_wrap.sh ../apps/openssl ciphers "EECDH+aRSA+$protocol:-EXP" | tr ':' ' '`; do
+      test_cipher $cipher $protocol
+    done
+  fi
 done
 
 #############################################################################
 
-if ../util/shlib_wrap.sh ../apps/openssl no-dh; then
+if ../util/shlib_wrap.sh ../apps/openssl no-dhparam; then
   echo skipping anonymous DH tests
 else
   echo test tls1 with 1024bit anonymous DH, multiple handshakes
@@ -150,7 +178,7 @@ else
   echo 'test tls1 with 1024bit RSA, no (EC)DHE, multiple handshakes'
   ../util/shlib_wrap.sh ./ssltest -v -bio_pair -tls1 -cert ../apps/server2.pem -no_dhe -no_ecdhe -num 10 -f -time $extra || exit 1
 
-  if ../util/shlib_wrap.sh ../apps/openssl no-dh; then
+  if ../util/shlib_wrap.sh ../apps/openssl no-dhparam; then
     echo skipping RSA+DHE tests
   else
     echo test tls1 with 1024bit RSA, 1024bit DHE, multiple handshakes
@@ -208,16 +236,16 @@ if ../util/shlib_wrap.sh ../apps/openssl no-srp; then
   echo skipping SRP tests
 else
   echo test tls1 with SRP
-  $ssltest -tls1 -cipher SRP -srpuser test -srppass abc123
+  $ssltest -tls1 -cipher SRP -srpuser test -srppass abc123 || exit 1
 
   echo test tls1 with SRP via BIO pair
-  $ssltest -bio_pair -tls1 -cipher SRP -srpuser test -srppass abc123
+  $ssltest -bio_pair -tls1 -cipher SRP -srpuser test -srppass abc123 || exit 1
 
   echo test tls1 with SRP auth
-  $ssltest -tls1 -cipher aSRP -srpuser test -srppass abc123
+  $ssltest -tls1 -cipher aSRP -srpuser test -srppass abc123 || exit 1
 
   echo test tls1 with SRP auth via BIO pair
-  $ssltest -bio_pair -tls1 -cipher aSRP -srpuser test -srppass abc123
+  $ssltest -bio_pair -tls1 -cipher aSRP -srpuser test -srppass abc123 || exit 1
 fi
 
 #############################################################################

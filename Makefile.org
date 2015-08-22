@@ -106,10 +106,6 @@ MODES_ASM_OBJ=
 ENGINES_ASM_OBJ=
 PERLASM_SCHEME=
 
-# KRB5 stuff
-KRB5_INCLUDES=
-LIBKRB5=
-
 # Zlib stuff
 ZLIB_INCLUDE=
 LIBZLIB=
@@ -146,7 +142,7 @@ SDIRS=  \
 	des aes rc2 rc4 rc5 idea bf cast camellia seed modes \
 	bn ec rsa dsa ecdsa dh ecdh dso engine \
 	buffer bio stack lhash rand err \
-	evp asn1 pem x509 x509v3 conf txt_db pkcs7 pkcs12 comp ocsp ui krb5 \
+	evp asn1 pem x509 x509v3 conf txt_db pkcs7 pkcs12 comp ocsp ui \
 	cms pqueue ts jpake srp store cmac
 # keep in mind that the above list is adjusted by ./Configure
 # according to no-xxx arguments...
@@ -191,7 +187,7 @@ INSTALLDIRS=	\
 		$(INSTALL_PREFIX)$(OPENSSLDIR)/certs \
 		$(INSTALL_PREFIX)$(OPENSSLDIR)/private
 
-all: Makefile build_all openssl.pc libssl.pc libcrypto.pc
+all: Makefile build_all
 
 # as we stick to -e, CLEARENV ensures that local variables in lower
 # Makefiles remain local and variable. $${VAR+VAR} is tribute to Korn
@@ -223,7 +219,6 @@ BUILDENV=	PLATFORM='$(PLATFORM)' PROCESSOR='$(PROCESSOR)' \
 		DEPFLAG='-DOPENSSL_NO_DEPRECATED $(DEPFLAG)'	\
 		MAKEDEPPROG='$(MAKEDEPPROG)'			\
 		SHARED_LDFLAGS='$(SHARED_LDFLAGS)'		\
-		KRB5_INCLUDES='$(KRB5_INCLUDES)' LIBKRB5='$(LIBKRB5)'	\
 		ZLIB_INCLUDE='$(ZLIB_INCLUDE)' LIBZLIB='$(LIBZLIB)'	\
 		EXE_EXT='$(EXE_EXT)' SHARED_LIBS='$(SHARED_LIBS)'	\
 		SHLIB_EXT='$(SHLIB_EXT)' SHLIB_TARGET='$(SHLIB_TARGET)'	\
@@ -277,7 +272,10 @@ sub_all: build_all
 
 build_all: build_libs build_apps build_tests build_tools
 
-build_libs: build_crypto build_ssl build_engines
+build_libs: build_libcrypto build_libssl openssl.pc
+
+build_libcrypto: build_crypto build_engines libcrypto.pc
+build_libssl: build_ssl libssl.pc
 
 build_crypto:
 	@dir=crypto; target=all; $(BUILD_ONE_CMD)
@@ -344,9 +342,6 @@ build-shared: do_$(SHLIB_TARGET) link-shared
 
 do_$(SHLIB_TARGET):
 	@ set -e; libs='-L. $(SHLIBDEPS)'; for i in $(SHLIBDIRS); do \
-		if [ "$$i" = "ssl" -a -n "$(LIBKRB5)" ]; then \
-			libs="$(LIBKRB5) $$libs"; \
-		fi; \
 		$(CLEARENV) && $(MAKE) -f Makefile.shared -e $(BUILDENV) \
 			LIBNAME=$$i LIBVERSION=$(SHLIB_MAJOR).$(SHLIB_MINOR) \
 			LIBCOMPATVERSIONS=";$(SHLIB_VERSION_HISTORY)" \
@@ -367,7 +362,7 @@ libcrypto.pc: Makefile
 	    echo 'Requires: '; \
 	    echo 'Libs: -L$${libdir} -lcrypto'; \
 	    echo 'Libs.private: $(EX_LIBS)'; \
-	    echo 'Cflags: -I$${includedir} $(KRB5_INCLUDES)' ) > libcrypto.pc
+	    echo 'Cflags: -I$${includedir}' ) > libcrypto.pc
 
 libssl.pc: Makefile
 	@ ( echo 'prefix=$(INSTALLTOP)'; \
@@ -381,7 +376,7 @@ libssl.pc: Makefile
 	    echo 'Requires.private: libcrypto'; \
 	    echo 'Libs: -L$${libdir} -lssl'; \
 	    echo 'Libs.private: $(EX_LIBS)'; \
-	    echo 'Cflags: -I$${includedir} $(KRB5_INCLUDES)' ) > libssl.pc
+	    echo 'Cflags: -I$${includedir}' ) > libssl.pc
 
 openssl.pc: Makefile
 	@ ( echo 'prefix=$(INSTALLTOP)'; \
@@ -447,6 +442,9 @@ tests: rehash
 report:
 	@$(PERL) util/selftest.pl
 
+update: errors stacks util/libeay.num util/ssleay.num TABLE
+	@set -e; target=update; $(RECURSIVE_BUILD_CMD)
+
 depend:
 	@set -e; target=depend; $(RECURSIVE_BUILD_CMD)
 
@@ -474,50 +472,37 @@ util/libeay.num::
 util/ssleay.num::
 	$(PERL) util/mkdef.pl ssl update
 
-crypto/objects/obj_dat.h: crypto/objects/obj_dat.pl include/openssl/obj_mac.h
-	$(PERL) crypto/objects/obj_dat.pl include/openssl/obj_mac.h crypto/objects/obj_dat.h
-include/openssl/obj_mac.h: crypto/objects/objects.pl crypto/objects/objects.txt crypto/objects/obj_mac.num
-	$(PERL) crypto/objects/objects.pl crypto/objects/objects.txt crypto/objects/obj_mac.num include/openssl/obj_mac.h
-crypto/objects/obj_xref.h: crypto/objects/objxref.pl crypto/objects/obj_xref.txt crypto/objects/obj_mac.num
-	$(PERL) crypto/objects/objxref.pl crypto/objects/obj_mac.num crypto/objects/obj_xref.txt >crypto/objects/obj_xref.h
-
-apps/openssl-vms.cnf: apps/openssl.cnf
-	$(PERL) VMS/VMSify-conf.pl < apps/openssl.cnf > apps/openssl-vms.cnf
-
-crypto/bn/bn_prime.h: crypto/bn/bn_prime.pl
-	$(PERL) crypto/bn/bn_prime.pl >crypto/bn/bn_prime.h
-
-
 TABLE: Configure Configurations/*.conf
 	(echo 'Output of `Configure TABLE'"':"; \
 	$(PERL) Configure TABLE) > TABLE
-
-update: errors stacks util/libeay.num util/ssleay.num crypto/objects/obj_dat.h crypto/objects/obj_xref.h apps/openssl-vms.cnf crypto/bn/bn_prime.h TABLE depend
 
 # Build distribution tar-file. As the list of files returned by "find" is
 # pretty long, on several platforms a "too many arguments" error or similar
 # would occur. Therefore the list of files is temporarily stored into a file
 # and read directly, requiring GNU-Tar. Call "make TAR=gtar dist" if the normal
 # tar does not support the --files-from option.
-tar:
+TAR_COMMAND=$(TAR) $(TARFLAGS) --files-from ../$(TARFILE).list \
+	                       --owner openssl:0 --group openssl:0 \
+			       --transform 's|^|openssl-$(VERSION)/|' \
+			       -cvf -
+
+../$(TARFILE).list:
+	find * \! -name STATUS \! -name TABLE \! -name '*.o' \! -name '*.a' \
+	       \! -name '*.so' \! -name '*.so.*'  \! -name 'openssl' \
+	       \! -name '*test' \! -name '.#*' \! -name '*~' \
+	    | sort > ../$(TARFILE).list
+
+tar: ../$(TARFILE).list
 	find . -type d -print | xargs chmod 755
 	find . -type f -print | xargs chmod a+r
 	find . -type f -perm -0100 -print | xargs chmod a+x
-	find * \! -name STATUS \! -name TABLE | sort > ../$(TARFILE).list; \
-	$(TAR) $(TARFLAGS) --files-from ../$(TARFILE).list -cvf - | \
-	tardy --user_number=0  --user_name=openssl \
-	      --group_number=0 --group_name=openssl \
-	      --prefix=openssl-$(VERSION) - |\
-	gzip --best >../$(TARFILE).gz; \
-	rm -f ../$(TARFILE).list; \
+	$(TAR_COMMAND) | gzip --best >../$(TARFILE).gz
+	rm -f ../$(TARFILE).list
 	ls -l ../$(TARFILE).gz
 
-tar-snap:
-	@$(TAR) $(TARFLAGS) -cvf - \
-		`find * \! -name STATUS \! -name TABLE \! -name '*.o' \! -name '*.a' \! -name '*.so' \! -name '*.so.*'  \! -name 'openssl' \! -name '*test' \! -name '.#*' \! -name '*~' | sort` |\
-	tardy --user_number=0  --user_name=openssl \
-	      --group_number=0 --group_name=openssl \
-	      --prefix=openssl-$(VERSION) - > ../$(TARFILE);\
+tar-snap: ../$(TARFILE).list
+	$(TAR_COMMAND) > ../$(TARFILE)
+	rm -f ../$(TARFILE).list
 	ls -l ../$(TARFILE)
 
 dist:   

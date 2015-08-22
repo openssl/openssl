@@ -53,7 +53,6 @@
 
 #if !defined(OPENSSL_NO_DES) || !defined(NO_MD5CRYPT_1)
 
-# include <assert.h>
 # include <string.h>
 
 # include "apps.h"
@@ -101,6 +100,8 @@ OPTIONS passwd_options[] = {
     {"quiet", OPT_QUIET, '-', "No warnings"},
     {"table", OPT_TABLE, '-', "Format output as table"},
     {"reverse", OPT_REVERSE, '-', "Switch table columns"},
+    {"salt", OPT_SALT, 's', "Use provided salt"},
+    {"stdin", OPT_STDIN, '-', "Read passwords from stdin"},
 # ifndef NO_MD5CRYPT_1
     {"apr1", OPT_APR1, '-', "MD5-based password algorithm, Apache variant"},
     {"1", OPT_1, '-', "MD5-based password algorithm"},
@@ -108,8 +109,6 @@ OPTIONS passwd_options[] = {
 # ifndef OPENSSL_NO_DES
     {"crypt", OPT_CRYPT, '-', "Standard Unix password algorithm (default)"},
 # endif
-    {"salt", OPT_SALT, 's', "Use provided salt"},
-    {"stdin", OPT_STDIN, '-', "Read passwords from stdin"},
     {NULL}
 };
 
@@ -201,6 +200,9 @@ int passwd_main(int argc, char **argv)
     if (use1 || useapr1)
         goto opthelp;
 # endif
+
+    if (!app_load_modules(NULL))
+        goto end;
 
     if (infile && in_stdin) {
         BIO_printf(bio_err, "%s: Can't combine -in and -stdin\n", prog);
@@ -493,7 +495,7 @@ static int do_passwd(int passed_salt, char **salt_p, char **salt_malloc_p,
 
 int passwd_main(int argc, char **argv)
 {
-    fputs("Program not available.\n", stderr)
-        return (1);
+    BIO_printf(bio_err, "Program not available.\n");
+    return (1);
 }
 #endif

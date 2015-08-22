@@ -23,16 +23,16 @@ If B<dh> is NULL nothing is done.
 =head1 RETURN VALUES
 
 If the allocation fails, DH_new() returns B<NULL> and sets an error
-code that can be obtained by L<ERR_get_error(3)|ERR_get_error(3)>. Otherwise it returns
+code that can be obtained by L<ERR_get_error(3)>. Otherwise it returns
 a pointer to the newly allocated structure.
 
 DH_free() returns no value.
 
 =head1 SEE ALSO
 
-L<dh(3)|dh(3)>, L<ERR_get_error(3)|ERR_get_error(3)>,
-L<DH_generate_parameters(3)|DH_generate_parameters(3)>,
-L<DH_generate_key(3)|DH_generate_key(3)>
+L<dh(3)>, L<ERR_get_error(3)>,
+L<DH_generate_parameters(3)>,
+L<DH_generate_key(3)>
 
 =head1 HISTORY
 

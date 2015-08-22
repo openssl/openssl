@@ -68,6 +68,7 @@
 # include <stdlib.h>
 # include <string.h>
 # include <time.h>
+# include <ctype.h>
 # include "apps.h"              /* needs to be included before the openssl
                                  * headers! */
 # include <openssl/e_os2.h>
@@ -274,6 +275,7 @@ int ocsp_main(int argc, char **argv)
             OPENSSL_free(thost);
             OPENSSL_free(tport);
             OPENSSL_free(tpath);
+            thost = tport = tpath = NULL;
             if (!OCSP_parse_url(opt_arg(), &host, &port, &path, &use_ssl)) {
                 BIO_printf(bio_err, "%s Error parsing URL\n", prog);
                 goto end;
@@ -481,6 +483,9 @@ int ocsp_main(int argc, char **argv)
     if (!req && !reqin && !respin && !(port && ridx_filename))
         goto opthelp;
 
+    if (!app_load_modules(NULL))
+        goto end;
+
     out = bio_open_default(outfile, "w");
     if (out == NULL)
         goto end;
@@ -661,7 +666,8 @@ int ocsp_main(int argc, char **argv)
 
     /* If running as responder don't verify our own response */
     if (cbio) {
-        if (--accept_count <= 0) {
+        /* If not unlimited, see if we took all we should. */
+        if (accept_count != -1 && --accept_count <= 0) {
             ret = 0;
             goto end;
         }
@@ -1006,22 +1012,27 @@ static BIO *init_responder(const char *port)
 {
     BIO *acbio = NULL, *bufbio = NULL;
 
+# ifdef OPENSSL_NO_SOCK
+    BIO_printf(bio_err,
+               "Error setting up accept BIO - sockets not supported.\n");
+    return NULL;
+# endif
     bufbio = BIO_new(BIO_f_buffer());
     if (!bufbio)
         goto err;
-# ifndef OPENSSL_NO_SOCK
-    acbio = BIO_new_accept(port);
-# else
-    BIO_printf(bio_err,
-               "Error setting up accept BIO - sockets not supported.\n");
-# endif
-    if (!acbio)
+    acbio = BIO_new(BIO_s_accept());
+    if (acbio == NULL
+        || BIO_set_bind_mode(acbio, BIO_BIND_REUSEADDR) < 0
+        || BIO_set_accept_port(acbio, port) < 0) {
+        BIO_printf(bio_err, "Error setting up accept BIO\n");
+        ERR_print_errors(bio_err);
         goto err;
+    }
+
     BIO_set_accept_bios(acbio, bufbio);
     bufbio = NULL;
-
     if (BIO_do_accept(acbio) <= 0) {
-        BIO_printf(bio_err, "Error setting up accept BIO\n");
+        BIO_printf(bio_err, "Error starting accept\n");
         ERR_print_errors(bio_err);
         goto err;
     }
@@ -1035,21 +1046,26 @@ static BIO *init_responder(const char *port)
 }
 
 
-static char *urldecode(char *p)
+/*
+ * Decode %xx URL-decoding in-place. Ignores mal-formed sequences.
+ */
+static int urldecode(char *p)
 {
     unsigned char *out = (unsigned char *)p;
-    char *save = p;
+    unsigned char *save = out;
 
     for (; *p; p++) {
         if (*p != '%')
             *out++ = *p;
-        else if (p[1] && p[2]) {
+        else if (isxdigit(p[1]) && isxdigit(p[2])) {
             *out++ = (app_hex(p[1]) << 4) | app_hex(p[2]);
             p += 2;
         }
+        else
+            return -1;
     }
-    *p = '\0';
-    return save;
+    *out = '\0';
+    return (int)(out - save);
 }
 
 static int do_responder(OCSP_REQUEST **preq, BIO **pcbio, BIO *acbio,
@@ -1057,7 +1073,7 @@ static int do_responder(OCSP_REQUEST **preq, BIO **pcbio, BIO *acbio,
 {
     int len;
     OCSP_REQUEST *req = NULL;
-    char inbuf[2048];
+    char inbuf[2048], reqbuf[2048];
     char *p, *q;
     BIO *cbio = NULL, *getbio = NULL, *b64 = NULL;
 
@@ -1071,40 +1087,51 @@ static int do_responder(OCSP_REQUEST **preq, BIO **pcbio, BIO *acbio,
     *pcbio = cbio;
 
     /* Read the request line. */
-    len = BIO_gets(cbio, inbuf, sizeof inbuf);
+    len = BIO_gets(cbio, reqbuf, sizeof reqbuf);
     if (len <= 0)
         return 1;
-    if (strncmp(inbuf, "GET", 3) == 0) {
+    if (strncmp(reqbuf, "GET ", 4) == 0) {
         /* Expecting GET {sp} /URL {sp} HTTP/1.x */
-        for (p = inbuf + 3; *p == ' ' || *p == '\t'; ++p)
+        for (p = reqbuf + 4; *p == ' '; ++p)
             continue;
-        if (*p) {
-            /* Move past the slash before the URL part. */
-            p++;
+        if (*p != '/') {
+            BIO_printf(bio_err, "Invalid request -- bad URL\n");
+            return 1;
         }
+        p++;
+
         /* Splice off the HTTP version identifier. */
         for (q = p; *q; q++)
-            if (*q == ' ' || *q == '\t')
+            if (*q == ' ')
                 break;
-        if (*q == '\0') {
-            BIO_printf(bio_err, "Invalid request\n");
+        if (strncmp(q, " HTTP/1.", 8) != 0) {
+            BIO_printf(bio_err, "Invalid request -- bad HTTP vesion\n");
             return 1;
         }
         *q = '\0';
-        p = urldecode(p);
-        getbio = BIO_new_mem_buf(p, strlen(p));
-        b64 = BIO_new(BIO_f_base64());
+        len = urldecode(p);
+        if (len <= 0) {
+            BIO_printf(bio_err, "Invalid request -- bad URL encoding\n");
+            return 1;
+        }
+        if ((getbio = BIO_new_mem_buf(p, len)) == NULL
+            || (b64 = BIO_new(BIO_f_base64())) == NULL) {
+            BIO_printf(bio_err, "Could not allocate memory\n");
+            ERR_print_errors(bio_err);
+            return 1;
+        }
         BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL);
         getbio = BIO_push(b64, getbio);
-    } else if (strncmp(inbuf, "POST", 4) != 0) {
-        BIO_printf(bio_err, "Invalid request\n");
+    } else if (strncmp(reqbuf, "POST ", 5) != 0) {
+        BIO_printf(bio_err, "Invalid request -- bad HTTP verb\n");
         return 1;
     }
+
+    /* Read and skip past the headers. */
     for (;;) {
         len = BIO_gets(cbio, inbuf, sizeof inbuf);
         if (len <= 0)
             return 1;
-        /* Look for end of headers */
         if ((inbuf[0] == '\r') || (inbuf[0] == '\n'))
             break;
     }
@@ -1229,12 +1256,14 @@ static OCSP_RESPONSE *query_responder(BIO *cbio, const char *path,
 OCSP_RESPONSE *process_responder(OCSP_REQUEST *req,
                                  const char *host, const char *path,
                                  const char *port, int use_ssl,
-                                 const STACK_OF(CONF_VALUE) *headers,
+                                 STACK_OF(CONF_VALUE) *headers,
                                  int req_timeout)
 {
     BIO *cbio = NULL;
     SSL_CTX *ctx = NULL;
     OCSP_RESPONSE *resp = NULL;
+    int found, i;
+
     cbio = BIO_new_connect(host);
     if (!cbio) {
         BIO_printf(bio_err, "Error creating connect BIO\n");
@@ -1244,7 +1273,7 @@ OCSP_RESPONSE *process_responder(OCSP_REQUEST *req,
         BIO_set_conn_port(cbio, port);
     if (use_ssl == 1) {
         BIO *sbio;
-        ctx = SSL_CTX_new(SSLv23_client_method());
+        ctx = SSL_CTX_new(TLS_client_method());
         if (ctx == NULL) {
             BIO_printf(bio_err, "Error creating SSL context.\n");
             goto end;
@@ -1253,6 +1282,17 @@ OCSP_RESPONSE *process_responder(OCSP_REQUEST *req,
         sbio = BIO_new_ssl(ctx, 1);
         cbio = BIO_push(sbio, cbio);
     }
+    for (found = i = 0; i < sk_CONF_VALUE_num(headers); i++) {
+       CONF_VALUE *hdr = sk_CONF_VALUE_value(headers, i);
+       if (strcasecmp("host", hdr->name) == 0) {
+           found = 1;
+           break;
+       }
+    }
+
+    if (!found && !X509V3_add_value("Host", host, &headers))
+        BIO_printf(bio_err, "Error setting HTTP Host header\n");
+
     resp = query_responder(cbio, path, headers, req, req_timeout);
     if (!resp)
         BIO_printf(bio_err, "Error querying OCSP responder\n");

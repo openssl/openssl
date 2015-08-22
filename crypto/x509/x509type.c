@@ -57,7 +57,7 @@
  */
 
 #include <stdio.h>
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 #include <openssl/x509.h>
@@ -93,7 +93,6 @@ int X509_certificate_type(X509 *x, EVP_PKEY *pkey)
     case EVP_PKEY_DH:
         ret = EVP_PK_DH | EVP_PKT_EXCH;
         break;
-    case NID_id_GostR3410_94:
     case NID_id_GostR3410_2001:
         ret = EVP_PKT_EXCH | EVP_PKT_SIGN;
         break;
@@ -121,9 +120,6 @@ int X509_certificate_type(X509 *x, EVP_PKEY *pkey)
         }
     }
 
-    /* /8 because it's 1024 bits we look for, not bytes */
-    if (EVP_PKEY_size(pk) <= 1024 / 8)
-        ret |= EVP_PKT_EXP;
     if (pkey == NULL)
         EVP_PKEY_free(pk);
     return (ret);

@@ -58,7 +58,6 @@
 #include <openssl/opensslconf.h> /* for OPENSSL_NO_DSA */
 
 #ifndef OPENSSL_NO_DSA
-# include <assert.h>
 # include <stdio.h>
 # include <stdlib.h>
 # include <time.h>
@@ -103,11 +102,11 @@ OPTIONS dsaparam_options[] = {
     {"genkey", OPT_GENKEY, '-', "Generate a DSA key"},
     {"rand", OPT_RAND, 's', "Files to use for random number input"},
     {"non-fips-allow", OPT_NON_FIPS_ALLOW, '-'},
-# ifndef OPENSSL_NO_ENGINE
-    {"engine", OPT_ENGINE, 's', "Use engine e, possibly a hardware device"},
-# endif
 # ifdef GENCB_TEST
     {"timebomb", OPT_TIMEBOMB, 'p', "Interrupt keygen after 'pnum' seconds"},
+# endif
+# ifndef OPENSSL_NO_ENGINE
+    {"engine", OPT_ENGINE, 's', "Use engine e, possibly a hardware device"},
 # endif
     {NULL}
 };
@@ -118,9 +117,8 @@ int dsaparam_main(int argc, char **argv)
     BIO *in = NULL, *out = NULL;
     BN_GENCB *cb = NULL;
     int numbits = -1, num = 0, genkey = 0, need_rand = 0, non_fips_allow = 0;
-    int informat = FORMAT_PEM, outformat = FORMAT_PEM, noout = 0, C = 0, ret =
-        1;
-    int i, text = 0;
+    int informat = FORMAT_PEM, outformat = FORMAT_PEM, noout = 0, C = 0;
+    int ret = 1, i, text = 0, private = 0;
 # ifdef GENCB_TEST
     int timebomb = 0;
 # endif
@@ -185,6 +183,9 @@ int dsaparam_main(int argc, char **argv)
     argc = opt_num_rest();
     argv = opt_rest();
 
+    if (!app_load_modules(NULL))
+        goto end;
+
     if (argc == 1) {
         if (!opt_int(argv[0], &num))
             goto end;
@@ -192,11 +193,12 @@ int dsaparam_main(int argc, char **argv)
         numbits = num;
         need_rand = 1;
     }
+    private = genkey ? 1 : 0;
 
     in = bio_open_default(infile, "r");
     if (in == NULL)
         goto end;
-    out = bio_open_default(outfile, "w");
+    out = bio_open_owner(outfile, "w", private);
     if (out == NULL)
         goto end;
 
@@ -317,6 +319,7 @@ int dsaparam_main(int argc, char **argv)
             DSA_free(dsakey);
             goto end;
         }
+        assert(private);
         if (outformat == FORMAT_ASN1)
             i = i2d_DSAPrivateKey_bio(out, dsakey);
         else

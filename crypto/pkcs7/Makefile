@@ -52,6 +52,8 @@ tests:
 lint:
 	lint -DLINT $(INCLUDES) $(SRC)>fluff
 
+update: depend
+
 depend:
 	@[ -n "$(MAKEDEPEND)" ] # should be set by upper Makefile...
 	$(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(LIBSRC)
@@ -83,7 +85,8 @@ pk7_asn1.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 pk7_asn1.o: ../../include/openssl/pkcs7.h ../../include/openssl/safestack.h
 pk7_asn1.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 pk7_asn1.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
-pk7_asn1.o: ../../include/openssl/x509_vfy.h ../cryptlib.h pk7_asn1.c
+pk7_asn1.o: ../../include/openssl/x509_vfy.h ../include/internal/cryptlib.h
+pk7_asn1.o: pk7_asn1.c
 pk7_attr.o: ../../include/openssl/asn1.h ../../include/openssl/asn1t.h
 pk7_attr.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 pk7_attr.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
@@ -111,7 +114,8 @@ pk7_doit.o: ../../include/openssl/pkcs7.h ../../include/openssl/rand.h
 pk7_doit.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
 pk7_doit.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 pk7_doit.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
-pk7_doit.o: ../../include/openssl/x509v3.h ../cryptlib.h pk7_doit.c
+pk7_doit.o: ../../include/openssl/x509v3.h ../include/internal/cryptlib.h
+pk7_doit.o: pk7_doit.c
 pk7_lib.o: ../../e_os.h ../../include/openssl/asn1.h
 pk7_lib.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 pk7_lib.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
@@ -124,7 +128,8 @@ pk7_lib.o: ../../include/openssl/ossl_typ.h ../../include/openssl/pkcs7.h
 pk7_lib.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
 pk7_lib.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 pk7_lib.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
-pk7_lib.o: ../cryptlib.h ../include/internal/asn1_int.h pk7_lib.c
+pk7_lib.o: ../include/internal/asn1_int.h ../include/internal/cryptlib.h
+pk7_lib.o: pk7_lib.c
 pk7_mime.o: ../../e_os.h ../../include/openssl/asn1.h
 pk7_mime.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 pk7_mime.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
@@ -138,7 +143,7 @@ pk7_mime.o: ../../include/openssl/pkcs7.h ../../include/openssl/rand.h
 pk7_mime.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
 pk7_mime.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 pk7_mime.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
-pk7_mime.o: ../cryptlib.h pk7_mime.c
+pk7_mime.o: ../include/internal/cryptlib.h pk7_mime.c
 pk7_smime.o: ../../e_os.h ../../include/openssl/asn1.h
 pk7_smime.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 pk7_smime.o: ../../include/openssl/conf.h ../../include/openssl/crypto.h
@@ -153,7 +158,7 @@ pk7_smime.o: ../../include/openssl/pkcs7.h ../../include/openssl/safestack.h
 pk7_smime.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 pk7_smime.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
 pk7_smime.o: ../../include/openssl/x509_vfy.h ../../include/openssl/x509v3.h
-pk7_smime.o: ../cryptlib.h pk7_smime.c
+pk7_smime.o: ../include/internal/cryptlib.h pk7_smime.c
 pkcs7err.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 pkcs7err.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
 pkcs7err.o: ../../include/openssl/err.h ../../include/openssl/lhash.h

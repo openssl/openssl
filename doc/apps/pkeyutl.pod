@@ -59,7 +59,7 @@ the key format PEM, DER or ENGINE.
 =item B<-passin arg>
 
 the input key password source. For more information about the format of B<arg>
-see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)|openssl(1)>.
+see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
 
 
 =item B<-peerkey file>
@@ -218,5 +218,5 @@ Derive a shared secret value:
 
 =head1 SEE ALSO
 
-L<genpkey(1)|genpkey(1)>, L<pkey(1)|pkey(1)>, L<rsautl(1)|rsautl(1)>
-L<dgst(1)|dgst(1)>, L<rsa(1)|rsa(1)>, L<genrsa(1)|genrsa(1)>
+L<genpkey(1)>, L<pkey(1)>, L<rsautl(1)>
+L<dgst(1)>, L<rsa(1)>, L<genrsa(1)>

@@ -113,6 +113,7 @@
 # define HEADER_APPS_H
 
 # include "e_os.h"
+# include <assert.h>
 
 # include <openssl/bio.h>
 # include <openssl/x509.h>
@@ -147,14 +148,18 @@ long app_RAND_load_files(char *file); /* `file' is a list of files to read,
                                        * (see e_os.h).  The string is
                                        * destroyed! */
 
-extern CONF *config;
 extern char *default_config_file;
 extern BIO *bio_in;
 extern BIO *bio_out;
 extern BIO *bio_err;
 BIO *dup_bio_in(void);
 BIO *dup_bio_out(void);
+BIO *bio_open_owner(const char *filename, const char *mode, int private);
 BIO *bio_open_default(const char *filename, const char *mode);
+BIO *bio_open_default_quiet(const char *filename, const char *mode);
+CONF *app_load_config(const char *filename);
+CONF *app_load_config_quiet(const char *filename);
+int app_load_modules(const CONF *config);
 void unbuffer(FILE *fp);
 
 /* Often used in calls to bio_open_default. */
@@ -282,7 +287,7 @@ void unbuffer(FILE *fp);
         {"no_tls1_1", OPT_S_NOTLS1_1, '-' }, \
         {"no_tls1_2", OPT_S_NOTLS1_2, '-' }, \
         {"bugs", OPT_S_BUGS, '-' }, \
-        {"no_comp", OPT_S_NOCOMP, '-' }, \
+        {"no_comp", OPT_S_NOCOMP, '-', "Don't use SSL/TLS-level compression" }, \
         {"ecdh_single", OPT_S_ECDHSINGLE, '-' }, \
         {"no_ticket", OPT_S_NOTICKET, '-' }, \
         {"serverpref", OPT_S_SERVERPREF, '-' }, \
@@ -340,10 +345,15 @@ typedef struct options_st {
     const char *helpstr;
 } OPTIONS;
 
-typedef struct opt_pair_st {
+/*
+ * A string/int pairing; widely use for option value lookup, hence the
+ * name OPT_PAIR. But that name is misleading in s_cb.c, so we also use
+ * the "generic" name STRINT_PAIR.
+ */
+typedef struct string_int_pair_st {
     const char *name;
     int retval;
-} OPT_PAIR;
+} OPT_PAIR, STRINT_PAIR;
 
 /* Flags to pass into opt_format; see FORMAT_xxx, below. */
 # define OPT_FMT_PEMDER          (1L <<  1)
@@ -440,7 +450,7 @@ ENGINE *setup_engine(const char *engine, int debug);
 OCSP_RESPONSE *process_responder(OCSP_REQUEST *req,
                                  const char *host, const char *path,
                                  const char *port, int use_ssl,
-                                 const STACK_OF(CONF_VALUE) *headers,
+                                 STACK_OF(CONF_VALUE) *headers,
                                  int req_timeout);
 # endif
 
@@ -509,9 +519,7 @@ void jpake_client_auth(BIO *out, BIO *conn, const char *secret);
 void jpake_server_auth(BIO *out, BIO *conn, const char *secret);
 # endif
 
-# ifndef OPENSSL_NO_TLSEXT
 unsigned char *next_protos_parse(unsigned short *outlen, const char *in);
-# endif                         /* ndef OPENSSL_NO_TLSEXT */
 
 void print_cert_checks(BIO *bio, X509 *x,
                        const char *checkhost,
@@ -524,7 +532,6 @@ void store_setup_crl_download(X509_STORE *st);
 # define FORMAT_ASN1     1
 # define FORMAT_TEXT     2
 # define FORMAT_PEM      3
-# define FORMAT_NETSCAPE 4
 # define FORMAT_PKCS12   5
 # define FORMAT_SMIME    6
 # define FORMAT_ENGINE   7

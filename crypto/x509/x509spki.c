@@ -58,7 +58,7 @@
  */
 
 #include <stdio.h>
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/x509.h>
 
 int NETSCAPE_SPKI_set_pubkey(NETSCAPE_SPKI *x, EVP_PKEY *pkey)
@@ -85,7 +85,7 @@ NETSCAPE_SPKI *NETSCAPE_SPKI_b64_decode(const char *str, int len)
     NETSCAPE_SPKI *spki;
     if (len <= 0)
         len = strlen(str);
-    if (!(spki_der = OPENSSL_malloc(len + 1))) {
+    if ((spki_der = OPENSSL_malloc(len + 1)) == NULL) {
         X509err(X509_F_NETSCAPE_SPKI_B64_DECODE, ERR_R_MALLOC_FAILURE);
         return NULL;
     }

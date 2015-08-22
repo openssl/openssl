@@ -57,7 +57,7 @@
  */
 
 #include <stdio.h>
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/evp.h>
 #include <openssl/err.h>
 #include <openssl/rand.h>
@@ -65,8 +65,6 @@
 # include <openssl/engine.h>
 #endif
 #include "evp_locl.h"
-
-const char EVP_version[] = "EVP" OPENSSL_VERSION_PTEXT;
 
 void EVP_CIPHER_CTX_init(EVP_CIPHER_CTX *ctx)
 {
@@ -165,6 +163,7 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
                 EVPerr(EVP_F_EVP_CIPHERINIT_EX, ERR_R_MALLOC_FAILURE);
                 return 0;
             }
+            memset(ctx->cipher_data, 0, ctx->cipher->ctx_size);
         } else {
             ctx->cipher_data = NULL;
         }

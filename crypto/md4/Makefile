@@ -46,6 +46,8 @@ tests:
 lint:
 	lint -DLINT $(INCLUDES) $(SRC)>fluff
 
+update: depend
+
 depend:
 	@[ -n "$(MAKEDEPEND)" ] # should be set by upper Makefile...
 	$(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(LIBSRC)
@@ -61,8 +63,8 @@ clean:
 
 md4_dgst.o: ../../include/openssl/e_os2.h ../../include/openssl/md4.h
 md4_dgst.o: ../../include/openssl/opensslconf.h
-md4_dgst.o: ../../include/openssl/opensslv.h ../md32_common.h md4_dgst.c
-md4_dgst.o: md4_locl.h
+md4_dgst.o: ../../include/openssl/opensslv.h ../include/internal/md32_common.h
+md4_dgst.o: md4_dgst.c md4_locl.h
 md4_one.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
 md4_one.o: ../../include/openssl/md4.h ../../include/openssl/opensslconf.h
 md4_one.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h

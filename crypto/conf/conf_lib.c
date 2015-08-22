@@ -64,8 +64,6 @@
 #include <openssl/conf_api.h>
 #include <openssl/lhash.h>
 
-const char CONF_version[] = "CONF" OPENSSL_VERSION_PTEXT;
-
 static CONF_METHOD *default_CONF_method = NULL;
 
 /* Init a 'CONF' structure from an old LHASH */
@@ -118,7 +116,7 @@ LHASH_OF(CONF_VALUE) *CONF_load_fp(LHASH_OF(CONF_VALUE) *conf, FILE *fp,
 {
     BIO *btmp;
     LHASH_OF(CONF_VALUE) *ltmp;
-    if (!(btmp = BIO_new_fp(fp, BIO_NOCLOSE))) {
+    if ((btmp = BIO_new_fp(fp, BIO_NOCLOSE)) == NULL) {
         CONFerr(CONF_F_CONF_LOAD_FP, ERR_R_BUF_LIB);
         return NULL;
     }
@@ -200,7 +198,7 @@ int CONF_dump_fp(LHASH_OF(CONF_VALUE) *conf, FILE *out)
     BIO *btmp;
     int ret;
 
-    if (!(btmp = BIO_new_fp(out, BIO_NOCLOSE))) {
+    if ((btmp = BIO_new_fp(out, BIO_NOCLOSE)) == NULL) {
         CONFerr(CONF_F_CONF_DUMP_FP, ERR_R_BUF_LIB);
         return 0;
     }
@@ -270,7 +268,7 @@ int NCONF_load_fp(CONF *conf, FILE *fp, long *eline)
 {
     BIO *btmp;
     int ret;
-    if (!(btmp = BIO_new_fp(fp, BIO_NOCLOSE))) {
+    if ((btmp = BIO_new_fp(fp, BIO_NOCLOSE)) == NULL) {
         CONFerr(CONF_F_NCONF_LOAD_FP, ERR_R_BUF_LIB);
         return 0;
     }
@@ -354,7 +352,7 @@ int NCONF_dump_fp(const CONF *conf, FILE *out)
 {
     BIO *btmp;
     int ret;
-    if (!(btmp = BIO_new_fp(out, BIO_NOCLOSE))) {
+    if ((btmp = BIO_new_fp(out, BIO_NOCLOSE)) == NULL) {
         CONFerr(CONF_F_NCONF_DUMP_FP, ERR_R_BUF_LIB);
         return 0;
     }

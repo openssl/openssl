@@ -104,6 +104,12 @@ extern "C" {
 #     define OPENSSL_SYS_WIN32
 #    endif
 #   endif
+#   if defined(_WIN64) || defined(OPENSSL_SYS_WIN64)
+#    undef OPENSSL_SYS_UNIX
+#    if !defined(OPENSSL_SYS_WIN64)
+#     define OPENSSL_SYS_WIN64
+#    endif
+#   endif
 #   if defined(OPENSSL_SYS_WINNT)
 #    undef OPENSSL_SYS_UNIX
 #   endif
@@ -114,7 +120,7 @@ extern "C" {
 # endif
 
 /* Anything that tries to look like Microsoft is "Windows" */
-# if defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_WINNT) || defined(OPENSSL_SYS_WINCE)
+# if defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_WIN64) || defined(OPENSSL_SYS_WINNT) || defined(OPENSSL_SYS_WINCE)
 #  undef OPENSSL_SYS_UNIX
 #  define OPENSSL_SYS_WINDOWS
 #  ifndef OPENSSL_SYS_MSDOS
@@ -266,6 +272,26 @@ extern "C" {
 #  define __owur __attribute__((__warn_unused_result__))
 # else
 #  define __owur
+# endif
+
+/* Standard integer types */
+# if defined(__osf__) || defined(__sgi) || defined(__hpux) || defined(OPENSSL_SYS_VMS)
+#  include <inttypes.h>
+# elif defined(_MSC_VER) && _MSC_VER<=1500
+/*
+ * minimally required typdefs for systems not supporting inttypes.h or
+ * stdint.h: currently just older VC++
+ */
+typedef signed char int8_t;
+typedef unsigned char uint8_t;
+typedef short int16_t;
+typedef unsigned short uint16_t;
+typedef int int32_t;
+typedef unsigned int uint32_t;
+typedef __int64 int64_t;
+typedef unsigned __int64 uint64_t;
+# else
+#  include <stdint.h>
 # endif
 
 #ifdef  __cplusplus

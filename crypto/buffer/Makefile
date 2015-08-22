@@ -45,6 +45,8 @@ tests:
 lint:
 	lint -DLINT $(INCLUDES) $(SRC)>fluff
 
+update: depend
+
 depend:
 	@[ -n "$(MAKEDEPEND)" ] # should be set by upper Makefile...
 	$(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(LIBSRC)
@@ -71,11 +73,13 @@ buf_str.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
 buf_str.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
 buf_str.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 buf_str.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-buf_str.o: ../../include/openssl/symhacks.h ../cryptlib.h buf_str.c
+buf_str.o: ../../include/openssl/symhacks.h ../include/internal/cryptlib.h
+buf_str.o: buf_str.c
 buffer.o: ../../e_os.h ../../include/openssl/bio.h
 buffer.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 buffer.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
 buffer.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
 buffer.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 buffer.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-buffer.o: ../../include/openssl/symhacks.h ../cryptlib.h buffer.c
+buffer.o: ../../include/openssl/symhacks.h ../include/internal/cryptlib.h
+buffer.o: buffer.c

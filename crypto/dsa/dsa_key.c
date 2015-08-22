@@ -58,7 +58,7 @@
 
 #include <stdio.h>
 #include <time.h>
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/bn.h>
 #include <openssl/dsa.h>
 #include <openssl/rand.h>
@@ -82,7 +82,7 @@ static int dsa_builtin_keygen(DSA *dsa)
         goto err;
 
     if (dsa->priv_key == NULL) {
-        if ((priv_key = BN_new()) == NULL)
+        if ((priv_key = BN_secure_new()) == NULL)
             goto err;
     } else
         priv_key = dsa->priv_key;

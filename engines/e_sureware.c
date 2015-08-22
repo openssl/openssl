@@ -889,7 +889,7 @@ static int surewarehk_rsa_priv_dec(int flen, const unsigned char *from,
                     ENGINE_R_NOT_INITIALISED);
     }
     /* extract ref to private key */
-    else if (!(hptr = RSA_get_ex_data(rsa, rsaHndidx))) {
+    else if ((hptr = RSA_get_ex_data(rsa, rsaHndidx)) == NULL) {
         SUREWAREerr(SUREWARE_F_SUREWAREHK_RSA_PRIV_DEC,
                     SUREWARE_R_MISSING_KEY_COMPONENTS);
         goto err;
@@ -964,7 +964,7 @@ static int surewarehk_rsa_sign(int flen, const unsigned char *from,
         SUREWAREerr(SUREWARE_F_SUREWAREHK_RSA_SIGN, ENGINE_R_NOT_INITIALISED);
     }
     /* extract ref to private key */
-    else if (!(hptr = RSA_get_ex_data(rsa, rsaHndidx))) {
+    else if ((hptr = RSA_get_ex_data(rsa, rsaHndidx)) == NULL) {
         SUREWAREerr(SUREWARE_F_SUREWAREHK_RSA_SIGN,
                     SUREWARE_R_MISSING_KEY_COMPONENTS);
     } else {
@@ -1002,7 +1002,7 @@ static DSA_SIG *surewarehk_dsa_do_sign(const unsigned char *from, int flen,
         goto err;
     }
     /* extract ref to private key */
-    else if (!(hptr = DSA_get_ex_data(dsa, dsaHndidx))) {
+    else if ((hptr = DSA_get_ex_data(dsa, dsaHndidx)) == NULL) {
         SUREWAREerr(SUREWARE_F_SUREWAREHK_DSA_DO_SIGN,
                     SUREWARE_R_MISSING_KEY_COMPONENTS);
         goto err;

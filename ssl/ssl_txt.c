@@ -165,18 +165,6 @@ int SSL_SESSION_print(BIO *bp, const SSL_SESSION *x)
         if (BIO_printf(bp, "%02X", x->master_key[i]) <= 0)
             goto err;
     }
-#ifndef OPENSSL_NO_KRB5
-    if (BIO_puts(bp, "\n    Krb5 Principal: ") <= 0)
-        goto err;
-    if (x->krb5_client_princ_len == 0) {
-        if (BIO_puts(bp, "None") <= 0)
-            goto err;
-    } else
-        for (i = 0; i < x->krb5_client_princ_len; i++) {
-            if (BIO_printf(bp, "%02X", x->krb5_client_princ[i]) <= 0)
-                goto err;
-        }
-#endif                          /* OPENSSL_NO_KRB5 */
 #ifndef OPENSSL_NO_PSK
     if (BIO_puts(bp, "\n    PSK identity: ") <= 0)
         goto err;
@@ -194,7 +182,6 @@ int SSL_SESSION_print(BIO *bp, const SSL_SESSION *x)
     if (BIO_printf(bp, "%s", x->srp_username ? x->srp_username : "None") <= 0)
         goto err;
 #endif
-#ifndef OPENSSL_NO_TLSEXT
     if (x->tlsext_tick_lifetime_hint) {
         if (BIO_printf(bp,
                        "\n    TLS session ticket lifetime hint: %ld (seconds)",
@@ -208,7 +195,6 @@ int SSL_SESSION_print(BIO *bp, const SSL_SESSION *x)
             <= 0)
             goto err;
     }
-#endif
 
 #ifndef OPENSSL_NO_COMP
     if (x->compress_meth != 0) {
@@ -221,9 +207,8 @@ int SSL_SESSION_print(BIO *bp, const SSL_SESSION *x)
                 0)
                 goto err;
         } else {
-            if (BIO_printf
-                (bp, "\n    Compression: %d (%s)", comp->id,
-                 comp->method->name) <= 0)
+            if (BIO_printf(bp, "\n    Compression: %d (%s)", comp->id,
+                 comp->name) <= 0)
                 goto err;
         }
     }

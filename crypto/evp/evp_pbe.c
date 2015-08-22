@@ -58,7 +58,7 @@
  */
 
 #include <stdio.h>
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/evp.h>
 #include <openssl/pkcs12.h>
 #include <openssl/x509.h>
@@ -118,7 +118,8 @@ static const EVP_PBE_CTL builtin_pbe[] = {
     {EVP_PBE_TYPE_PRF, NID_hmacWithSHA384, -1, NID_sha384, 0},
     {EVP_PBE_TYPE_PRF, NID_hmacWithSHA512, -1, NID_sha512, 0},
     {EVP_PBE_TYPE_PRF, NID_id_HMACGostR3411_94, -1, NID_id_GostR3411_94, 0},
-    {EVP_PBE_TYPE_KDF, NID_id_pbkdf2, -1, -1, PKCS5_v2_PBKDF2_keyivgen}
+    {EVP_PBE_TYPE_KDF, NID_id_pbkdf2, -1, -1, PKCS5_v2_PBKDF2_keyivgen},
+    {EVP_PBE_TYPE_KDF, NID_id_scrypt, -1, -1, PKCS5_v2_scrypt_keyivgen}
 };
 
 #ifdef TEST
@@ -227,9 +228,9 @@ int EVP_PBE_alg_add_type(int pbe_type, int pbe_nid, int cipher_nid,
 {
     EVP_PBE_CTL *pbe_tmp;
 
-    if (!pbe_algs)
+    if (pbe_algs == NULL)
         pbe_algs = sk_EVP_PBE_CTL_new(pbe_cmp);
-    if (!(pbe_tmp = OPENSSL_malloc(sizeof(*pbe_tmp)))) {
+    if ((pbe_tmp = OPENSSL_malloc(sizeof(*pbe_tmp))) == NULL) {
         EVPerr(EVP_F_EVP_PBE_ALG_ADD_TYPE, ERR_R_MALLOC_FAILURE);
         return 0;
     }
@@ -247,6 +248,7 @@ int EVP_PBE_alg_add(int nid, const EVP_CIPHER *cipher, const EVP_MD *md,
                     EVP_PBE_KEYGEN *keygen)
 {
     int cipher_nid, md_nid;
+
     if (cipher)
         cipher_nid = EVP_CIPHER_nid(cipher);
     else

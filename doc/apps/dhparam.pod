@@ -71,13 +71,15 @@ check if the parameters are valid primes and generator.
 
 =item B<-2>, B<-5>
 
-The generator to use, either 2 or 5. 2 is the default. If present then the
-input file is ignored and parameters are generated instead.
+The generator to use, either 2 or 5. If present then the
+input file is ignored and parameters are generated instead. If not
+present but B<numbits> is present, parameters are generated with the
+default generator 2.
 
 =item B<-rand> I<file(s)>
 
 a file or files containing random data used to seed the random number
-generator, or an EGD socket (see L<RAND_egd(3)|RAND_egd(3)>).
+generator, or an EGD socket (see L<RAND_egd(3)>).
 Multiple files can be specified separated by a OS-dependent character.
 The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
 all others.
@@ -85,9 +87,10 @@ all others.
 =item I<numbits>
 
 this option specifies that a parameter set should be generated of size
-I<numbits>. It must be the last option. If not present then a value of 512
-is used. If this option is present then the input file is ignored and 
-parameters are generated instead.
+I<numbits>. It must be the last option. If this option is present then
+the input file is ignored and parameters are generated instead. If
+this option is not present but a generator (B<-2> or B<-5>) is
+present, parameters are generated with a default length of 2048 bits.
 
 =item B<-noout>
 
@@ -136,7 +139,7 @@ There should be a way to generate and manipulate DH keys.
 
 =head1 SEE ALSO
 
-L<dsaparam(1)|dsaparam(1)>
+L<dsaparam(1)>
 
 =head1 HISTORY
 

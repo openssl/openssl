@@ -123,8 +123,8 @@ EC_POINT_hex2point returns the pointer to the EC_POINT supplied, or NULL on erro
 
 =head1 SEE ALSO
 
-L<crypto(3)|crypto(3)>, L<ec(3)|ec(3)>, L<EC_GROUP_new(3)|EC_GROUP_new(3)>, L<EC_GROUP_copy(3)|EC_GROUP_copy(3)>,
-L<EC_POINT_add(3)|EC_POINT_add(3)>, L<EC_KEY_new(3)|EC_KEY_new(3)>,
-L<EC_GFp_simple_method(3)|EC_GFp_simple_method(3)>, L<d2i_ECPKParameters(3)|d2i_ECPKParameters(3)>
+L<crypto(3)>, L<ec(3)>, L<EC_GROUP_new(3)>, L<EC_GROUP_copy(3)>,
+L<EC_POINT_add(3)>, L<EC_KEY_new(3)>,
+L<EC_GFp_simple_method(3)>, L<d2i_ECPKParameters(3)>
 
 =cut

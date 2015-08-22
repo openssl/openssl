@@ -59,14 +59,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/buffer.h>
 #include <openssl/txt_db.h>
 
 #undef BUFSIZE
 #define BUFSIZE 512
-
-const char TXT_DB_version[] = "TXT_DB" OPENSSL_VERSION_PTEXT;
 
 TXT_DB *TXT_DB_read(BIO *in, int num)
 {
@@ -123,7 +121,7 @@ TXT_DB *TXT_DB_read(BIO *in, int num)
             continue;
         else {
             buf->data[offset - 1] = '\0'; /* blat the '\n' */
-            if (!(p = OPENSSL_malloc(add + offset)))
+            if ((p = OPENSSL_malloc(add + offset)) == NULL)
                 goto err;
             offset = 0;
         }
@@ -155,11 +153,7 @@ TXT_DB *TXT_DB_read(BIO *in, int num)
         }
         *(p++) = '\0';
         if ((n != num) || (*f != '\0')) {
-#if !defined(OPENSSL_NO_STDIO)  /* temporary fix :-( */
-            fprintf(stderr,
-                    "wrong number of fields on line %ld (looking for field %d, got %d, '%s' left)\n",
-                    ln, num, n, f);
-#endif
+            ret->error = DB_ERROR_WRONG_NUM_FIELDS;
             goto err;
         }
         pp[n] = p;

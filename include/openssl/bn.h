@@ -268,14 +268,11 @@ extern "C" {
  * BN_mod_inverse() will call BN_mod_inverse_no_branch.
  */
 # define BN_FLG_CONSTTIME        0x04
+# define BN_FLG_SECURE           0x08
 
 # ifdef OPENSSL_USE_DEPRECATED
 /* deprecated name for the flag */
 #  define BN_FLG_EXP_CONSTTIME BN_FLG_CONSTTIME
-/*
- * avoid leaking exponent information through timings
- * (BN_mod_exp_mont() will call BN_mod_exp_mont_consttime)
- */
 # endif
 
 # ifdef OPENSSL_USE_DEPRECATED
@@ -353,6 +350,7 @@ void BN_zero_ex(BIGNUM *a);
 const BIGNUM *BN_value_one(void);
 char *BN_options(void);
 BN_CTX *BN_CTX_new(void);
+BN_CTX *BN_CTX_secure_new(void);
 void BN_CTX_free(BN_CTX *c);
 void BN_CTX_start(BN_CTX *ctx);
 BIGNUM *BN_CTX_get(BN_CTX *ctx);
@@ -365,6 +363,7 @@ int BN_num_bits(const BIGNUM *a);
 int BN_num_bits_word(BN_ULONG l);
 int BN_security_bits(int L, int N);
 BIGNUM *BN_new(void);
+BIGNUM *BN_secure_new(void);
 void BN_clear_free(BIGNUM *a);
 BIGNUM *BN_copy(BIGNUM *a, const BIGNUM *b);
 void BN_swap(BIGNUM *a, BIGNUM *b);
@@ -715,6 +714,7 @@ void ERR_load_BN_strings(void);
 # define BN_F_BN_GF2M_MOD_SOLVE_QUAD_ARR                  135
 # define BN_F_BN_GF2M_MOD_SQR                             136
 # define BN_F_BN_GF2M_MOD_SQRT                            137
+# define BN_F_BN_LSHIFT                                   145
 # define BN_F_BN_MOD_EXP2_MONT                            118
 # define BN_F_BN_MOD_EXP_MONT                             109
 # define BN_F_BN_MOD_EXP_MONT_CONSTTIME                   124
@@ -730,6 +730,7 @@ void ERR_load_BN_strings(void);
 # define BN_F_BN_NEW                                      113
 # define BN_F_BN_RAND                                     114
 # define BN_F_BN_RAND_RANGE                               122
+# define BN_F_BN_RSHIFT                                   146
 # define BN_F_BN_SET_WORDS                                144
 # define BN_F_BN_USUB                                     115
 
@@ -745,6 +746,7 @@ void ERR_load_BN_strings(void);
 # define BN_R_INPUT_NOT_REDUCED                           110
 # define BN_R_INVALID_LENGTH                              106
 # define BN_R_INVALID_RANGE                               115
+# define BN_R_INVALID_SHIFT                               119
 # define BN_R_NOT_A_SQUARE                                111
 # define BN_R_NOT_INITIALIZED                             107
 # define BN_R_NO_INVERSE                                  108

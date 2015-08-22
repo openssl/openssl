@@ -55,7 +55,6 @@
  * [including the GNU Public Licence.]
  */
 
-#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -107,13 +106,9 @@ typedef enum OPTION_choice {
     OPT_PURPOSE, OPT_STARTDATE, OPT_ENDDATE, OPT_CHECKEND, OPT_CHECKHOST,
     OPT_CHECKEMAIL, OPT_CHECKIP, OPT_NOOUT, OPT_TRUSTOUT, OPT_CLRTRUST,
     OPT_CLRREJECT, OPT_ALIAS, OPT_CACREATESERIAL, OPT_CLREXT, OPT_OCSPID,
-#ifndef OPENSSL_NO_MD5
     OPT_SUBJECT_HASH_OLD,
     OPT_ISSUER_HASH_OLD,
-#endif
-#ifdef OPENSSL_SSL_DEBUG_BROKEN_PROTOCOL
     OPT_FORCE_VERSION,
-#endif
     OPT_BADSIG, OPT_MD, OPT_ENGINE, OPT_NOCERT
 } OPTION_CHOICE;
 
@@ -130,12 +125,6 @@ OPTIONS x509_options[] = {
     {"serial", OPT_SERIAL, '-', "Print serial number value"},
     {"subject_hash", OPT_HASH, '-', "Print subject hash value"},
     {"issuer_hash", OPT_ISSUER_HASH, '-', "Print issuer hash value"},
-#ifndef OPENSSL_NO_MD5
-    {"subject_hash_old", OPT_SUBJECT_HASH_OLD, '-',
-     "Print old-style (MD5) issuer hash value"},
-    {"issuer_hash_old", OPT_ISSUER_HASH_OLD, '-',
-     "Print old-style (MD5) subject hash value"},
-#endif
     {"hash", OPT_HASH, '-', "Synonym for -subject_hash"},
     {"subject", OPT_SUBJECT, '-', "Print subject DN"},
     {"issuer", OPT_ISSUER, '-', "Print issuer DN"},
@@ -194,11 +183,17 @@ OPTIONS x509_options[] = {
     {"clrreject", OPT_CLRREJECT, '-'},
     {"badsig", OPT_BADSIG, '-'},
     {"", OPT_MD, '-', "Any supported digest"},
-#ifndef OPENSSL_NO_ENGINE
-    {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
+#ifndef OPENSSL_NO_MD5
+    {"subject_hash_old", OPT_SUBJECT_HASH_OLD, '-',
+     "Print old-style (MD5) issuer hash value"},
+    {"issuer_hash_old", OPT_ISSUER_HASH_OLD, '-',
+     "Print old-style (MD5) subject hash value"},
 #endif
 #ifdef OPENSSL_SSL_DEBUG_BROKEN_PROTOCOL
     {"force_version", OPT_FORCE_VERSION, 'p'},
+#endif
+#ifndef OPENSSL_NO_ENGINE
+    {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
 #endif
     {NULL}
 };
@@ -232,6 +227,7 @@ int x509_main(int argc, char **argv)
     int text = 0, serial = 0, subject = 0, issuer = 0, startdate = 0;
     int checkoffset = 0, enddate = 0;
     unsigned long nmflag = 0, certflag = 0;
+    char nmflag_set = 0;
     OPTION_CHOICE o;
     ENGINE *e = NULL;
 #ifndef OPENSSL_NO_MD5
@@ -291,11 +287,11 @@ int x509_main(int argc, char **argv)
             if (!sigopts || !sk_OPENSSL_STRING_push(sigopts, opt_arg()))
                 goto opthelp;
             break;
-#ifdef OPENSSL_SSL_DEBUG_BROKEN_PROTOCOL
         case OPT_FORCE_VERSION:
+#ifdef OPENSSL_SSL_DEBUG_BROKEN_PROTOCOL
             force_version = atoi(opt_arg()) - 1;
-            break;
 #endif
+            break;
         case OPT_DAYS:
             days = atoi(opt_arg());
             break;
@@ -365,6 +361,7 @@ int x509_main(int argc, char **argv)
                 goto opthelp;
             break;
         case OPT_NAMEOPT:
+            nmflag_set = 1;
             if (!set_name_ex(&nmflag, opt_arg()))
                 goto opthelp;
             break;
@@ -459,6 +456,10 @@ int x509_main(int argc, char **argv)
         case OPT_ISSUER_HASH_OLD:
             issuer_hash_old = ++num;
             break;
+#else
+        case OPT_SUBJECT_HASH_OLD:
+        case OPT_ISSUER_HASH_OLD:
+            break;
 #endif
         case OPT_DATES:
             startdate = ++num;
@@ -488,6 +489,12 @@ int x509_main(int argc, char **argv)
         BIO_printf(bio_err, "%s: Unknown parameter %s\n", prog, argv[0]);
         goto opthelp;
     }
+
+    if (!nmflag_set)
+        nmflag = XN_FLAG_ONELINE;
+
+    if (!app_load_modules(NULL))
+        goto end;
 
     out = bio_open_default(outfile, "w");
     if (out == NULL)
@@ -521,19 +528,9 @@ int x509_main(int argc, char **argv)
     }
 
     if (extfile) {
-        long errorline = -1;
         X509V3_CTX ctx2;
-        extconf = NCONF_new(NULL);
-        if (!NCONF_load(extconf, extfile, &errorline)) {
-            if (errorline <= 0)
-                BIO_printf(bio_err,
-                           "error loading the config file '%s'\n", extfile);
-            else
-                BIO_printf(bio_err,
-                           "error on line %ld of config file '%s'\n",
-                           errorline, extfile);
+        if ((extconf = app_load_config(extfile)) == NULL)
             goto end;
-        }
         if (!extsect) {
             extsect = NCONF_get_string(extconf, "default", "extensions");
             if (!extsect) {
@@ -916,16 +913,6 @@ int x509_main(int argc, char **argv)
             i = PEM_write_bio_X509_AUX(out, x);
         else
             i = PEM_write_bio_X509(out, x);
-    } else if (outformat == FORMAT_NETSCAPE) {
-        NETSCAPE_X509 nx;
-        ASN1_OCTET_STRING hdr;
-
-        hdr.data = (unsigned char *)NETSCAPE_CERT_HDR;
-        hdr.length = strlen(NETSCAPE_CERT_HDR);
-        nx.header = &hdr;
-        nx.cert = x;
-
-        i = ASN1_item_i2d_bio(ASN1_ITEM_rptr(NETSCAPE_X509), out, &nx);
     } else {
         BIO_printf(bio_err, "bad output format specified for outfile\n");
         goto end;
@@ -1021,10 +1008,8 @@ static int x509_certify(X509_STORE *ctx, char *CAfile, const EVP_MD *digest,
     }
     if (sno)
         bs = sno;
-    else if (!(bs = x509_load_serial(CAfile, serialfile, create)))
+    else if ((bs = x509_load_serial(CAfile, serialfile, create)) == NULL)
         goto end;
-
-/*      if (!X509_STORE_add_cert(ctx,x)) goto end;*/
 
     /*
      * NOTE: this certificate can/should be self signed, unless it was a

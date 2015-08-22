@@ -7,7 +7,6 @@
  *          Requires OpenSSL 0.9.9 for compilation                    *
  **********************************************************************/
 #include "gost_lcl.h"
-#include "gost_params.h"
 #include <string.h>
 #include <openssl/rand.h>
 #include <openssl/ecdsa.h>
@@ -393,7 +392,7 @@ int gost2001_compute_public(EC_KEY *ec)
         goto err;
     }
     BN_CTX_start(ctx);
-    if (!(priv_key = EC_KEY_get0_private_key(ec))) {
+    if ((priv_key = EC_KEY_get0_private_key(ec)) == NULL) {
         GOSTerr(GOST_F_GOST2001_COMPUTE_PUBLIC, ERR_R_EC_LIB);
         goto err;
     }

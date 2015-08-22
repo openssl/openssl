@@ -12,8 +12,6 @@ dh - Diffie-Hellman key agreement
  DH *	DH_new(void);
  void	DH_free(DH *dh);
 
- int	DH_size(const DH *dh);
-
  DH *	DH_generate_parameters(int prime_len, int generator,
 		void (*callback)(int, int, void *), void *cb_arg);
  int	DH_check(const DH *dh, int *codes);
@@ -42,7 +40,7 @@ dh - Diffie-Hellman key agreement
 
 These functions implement the Diffie-Hellman key agreement protocol.
 The generation of shared DH parameters is described in
-L<DH_generate_parameters(3)|DH_generate_parameters(3)>; L<DH_generate_key(3)|DH_generate_key(3)> describes how
+L<DH_generate_parameters(3)>; L<DH_generate_key(3)> describes how
 to perform a key agreement.
 
 The B<DH> structure consists of several BIGNUM components.
@@ -67,12 +65,12 @@ modify keys.
 
 =head1 SEE ALSO
 
-L<dhparam(1)|dhparam(1)>, L<bn(3)|bn(3)>, L<dsa(3)|dsa(3)>, L<err(3)|err(3)>,
-L<rand(3)|rand(3)>, L<rsa(3)|rsa(3)>, L<engine(3)|engine(3)>,
-L<DH_set_method(3)|DH_set_method(3)>, L<DH_new(3)|DH_new(3)>,
-L<DH_get_ex_new_index(3)|DH_get_ex_new_index(3)>,
-L<DH_generate_parameters(3)|DH_generate_parameters(3)>,
-L<DH_compute_key(3)|DH_compute_key(3)>, L<d2i_DHparams(3)|d2i_DHparams(3)>,
-L<RSA_print(3)|RSA_print(3)> 
+L<dhparam(1)>, L<bn(3)>, L<dsa(3)>, L<err(3)>,
+L<rand(3)>, L<rsa(3)>, L<engine(3)>,
+L<DH_set_method(3)>, L<DH_new(3)>,
+L<DH_get_ex_new_index(3)>,
+L<DH_generate_parameters(3)>,
+L<DH_compute_key(3)>, L<d2i_DHparams(3)>,
+L<RSA_print(3)> 
 
 =cut

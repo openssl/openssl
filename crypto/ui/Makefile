@@ -45,6 +45,8 @@ tests:
 lint:
 	lint -DLINT $(INCLUDES) $(SRC)>fluff
 
+update: depend
+
 depend:
 	@[ -n "$(MAKEDEPEND)" ] # should be set by upper Makefile...
 	$(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(LIBSRC)
@@ -71,7 +73,7 @@ ui_lib.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
 ui_lib.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 ui_lib.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 ui_lib.o: ../../include/openssl/symhacks.h ../../include/openssl/ui.h
-ui_lib.o: ../cryptlib.h ui_lib.c ui_locl.h
+ui_lib.o: ../include/internal/cryptlib.h ui_lib.c ui_locl.h
 ui_openssl.o: ../../e_os.h ../../include/openssl/bio.h
 ui_openssl.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 ui_openssl.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
@@ -79,7 +81,7 @@ ui_openssl.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
 ui_openssl.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 ui_openssl.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 ui_openssl.o: ../../include/openssl/symhacks.h ../../include/openssl/ui.h
-ui_openssl.o: ../cryptlib.h ui_locl.h ui_openssl.c
+ui_openssl.o: ../include/internal/cryptlib.h ui_locl.h ui_openssl.c
 ui_util.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
 ui_util.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
 ui_util.o: ../../include/openssl/ossl_typ.h ../../include/openssl/safestack.h

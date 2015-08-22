@@ -56,7 +56,7 @@
  * [including the GNU Public Licence.]
  */
 #include <stdio.h>
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/stack.h>
 #include <openssl/objects.h>
 
@@ -70,8 +70,6 @@ struct stack_st {
 
 #undef MIN_NODES
 #define MIN_NODES       4
-
-const char STACK_version[] = "Stack" OPENSSL_VERSION_PTEXT;
 
 #include <errno.h>
 

@@ -200,7 +200,7 @@ The name of the file containing a DER encoded time stamp request. (Optional)
 =item B<-passin> password_src
 
 Specifies the password source for the private key of the TSA. See
-B<PASS PHRASE ARGUMENTS> in L<openssl(1)|openssl(1)>. (Optional)
+B<PASS PHRASE ARGUMENTS> in L<openssl(1)>. (Optional)
 
 =item B<-signer> tsa_cert.pem
 
@@ -312,7 +312,7 @@ of a time stamp response (TimeStampResp). (Optional)
 =item B<-CApath> trusted_cert_path
 
 The name of the directory containing the trusted CA certificates of the
-client. See the similar option of L<verify(1)|verify(1)> for additional
+client. See the similar option of L<verify(1)> for additional
 details. Either this option or B<-CAfile> must be specified. (Optional)
 
 
@@ -320,7 +320,7 @@ details. Either this option or B<-CAfile> must be specified. (Optional)
 
 The name of the file containing a set of trusted self-signed CA
 certificates in PEM format. See the similar option of
-L<verify(1)|verify(1)> for additional details. Either this option
+L<verify(1)> for additional details. Either this option
 or B<-CApath> must be specified.
 (Optional)
 
@@ -337,7 +337,7 @@ all intermediate CA certificates unless the response includes them.
 =head1 CONFIGURATION FILE OPTIONS
 
 The B<-query> and B<-reply> commands make use of a configuration file
-defined by the B<OPENSSL_CONF> environment variable. See L<config(5)|config(5)>
+defined by the B<OPENSSL_CONF> environment variable. See L<config(5)>
 for a general description of the syntax of the config file. The
 B<-query> command uses only the symbolic OID names section
 and it can work without it. However, the B<-reply> command needs the
@@ -356,15 +356,15 @@ section can be overridden with the B<-section> command line switch. (Optional)
 
 =item B<oid_file>
 
-See L<ca(1)|ca(1)> for description. (Optional)
+See L<ca(1)> for description. (Optional)
 
 =item B<oid_section>
 
-See L<ca(1)|ca(1)> for description. (Optional)
+See L<ca(1)> for description. (Optional)
 
 =item B<RANDFILE>
 
-See L<ca(1)|ca(1)> for description. (Optional)
+See L<ca(1)> for description. (Optional)
 
 =item B<serial>
 
@@ -493,8 +493,8 @@ Before generating a response a signing certificate must be created for
 the TSA that contains the B<timeStamping> critical extended key usage extension
 without any other key usage extensions. You can add the
 'extendedKeyUsage = critical,timeStamping' line to the user certificate section
-of the config file to generate a proper certificate. See L<req(1)|req(1)>,
-L<ca(1)|ca(1)>, L<x509(1)|x509(1)> for instructions. The examples
+of the config file to generate a proper certificate. See L<req(1)>,
+L<ca(1)>, L<x509(1)> for instructions. The examples
 below assume that cacert.pem contains the certificate of the CA,
 tsacert.pem is the signing certificate issued by cacert.pem and
 tsakey.pem is the private key of the TSA.
@@ -559,14 +559,14 @@ Zoltan Glozik <zglozik@opentsa.org>. Known issues:
 =over 4
 
 =item * No support for time stamps over SMTP, though it is quite easy
-to implement an automatic e-mail based TSA with L<procmail(1)|procmail(1)>
-and L<perl(1)|perl(1)>. HTTP server support is provided in the form of
+to implement an automatic e-mail based TSA with L<procmail(1)>
+and L<perl(1)>. HTTP server support is provided in the form of
 a separate apache module. HTTP client support is provided by
-L<tsget(1)|tsget(1)>. Pure TCP/IP protocol is not supported.
+L<tsget(1)>. Pure TCP/IP protocol is not supported.
 
 =item * The file containing the last serial number of the TSA is not
 locked when being read or written. This is a problem if more than one
-instance of L<openssl(1)|openssl(1)> is trying to create a time stamp
+instance of L<openssl(1)> is trying to create a time stamp
 response at the same time. This is not an issue when using the apache
 server module, it does proper locking.
 
@@ -587,8 +587,8 @@ Zoltan Glozik <zglozik@opentsa.org>, OpenTSA project (http://www.opentsa.org)
 
 =head1 SEE ALSO
 
-L<tsget(1)|tsget(1)>, L<openssl(1)|openssl(1)>, L<req(1)|req(1)>,
-L<x509(1)|x509(1)>, L<ca(1)|ca(1)>, L<genrsa(1)|genrsa(1)>,
-L<config(5)|config(5)>
+L<tsget(1)>, L<openssl(1)>, L<req(1)>,
+L<x509(1)>, L<ca(1)>, L<genrsa(1)>,
+L<config(5)>
 
 =cut

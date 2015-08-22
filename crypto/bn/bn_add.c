@@ -56,7 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include "bn_lcl.h"
 
 /* r can == a or b */
@@ -222,7 +222,8 @@ int BN_usub(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
                 break;
         }
     }
-    memcpy(rp, ap, sizeof(*rp) * dif);
+    if (dif)
+        memcpy(rp, ap, sizeof(*rp) * dif);
 
     r->top = max;
     r->neg = 0;

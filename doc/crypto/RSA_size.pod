@@ -2,32 +2,37 @@
 
 =head1 NAME
 
-RSA_size - get RSA modulus size
+RSA_size, RSA_bits - get RSA modulus size
 
 =head1 SYNOPSIS
 
- #include <openssl/rsa.h>
+#include <openssl/rsa.h>
 
- int RSA_size(const RSA *rsa);
+int RSA_size(const RSA *rsa);
+
+int RSA_bits(const RSA *rsa);
 
 =head1 DESCRIPTION
 
-This function returns the RSA modulus size in bytes. It can be used to
+RSA_size() returns the RSA modulus size in bytes. It can be used to
 determine how much memory must be allocated for an RSA encrypted
 value.
 
-B<rsa-E<gt>n> must not be B<NULL>.
+RSA_bits() returns the number of significant bits.
+
+B<rsa> and B<rsa-E<gt>n> must not be B<NULL>.
 
 =head1 RETURN VALUE
 
-The size in bytes.
+The size.
 
 =head1 SEE ALSO
 
-L<rsa(3)|rsa(3)>
+L<rsa(3)>, L<BN_num_bits(3)>
 
 =head1 HISTORY
 
 RSA_size() is available in all versions of SSLeay and OpenSSL.
+RSA_bits() was added in OpenSSL 1.1.0.
 
 =cut

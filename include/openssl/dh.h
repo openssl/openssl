@@ -142,7 +142,7 @@ struct dh_st {
     BIGNUM *p;
     BIGNUM *g;
     long length;                /* optional */
-    BIGNUM *pub_key;            /* g^x */
+    BIGNUM *pub_key;            /* g^x % p */
     BIGNUM *priv_key;           /* x */
     int flags;
     BN_MONT_CTX *method_mont_p;
@@ -200,6 +200,7 @@ DH *DH_new_method(ENGINE *engine);
 DH *DH_new(void);
 void DH_free(DH *dh);
 int DH_up_ref(DH *dh);
+int DH_bits(const DH *dh);
 int DH_size(const DH *dh);
 int DH_security_bits(const DH *dh);
 int DH_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,

@@ -382,7 +382,7 @@ if (!$legacy_mode) {
     }
 
     $FINGERPRINT_ascii_value
-			= $exe->Lookup("FINGERPRINT_ascii_value")	or die;
+			= $exe->Lookup("FINGERPRINT_ascii_value");
 
 }
 if ($FIPS_text_startX && $FIPS_text_endX) {
@@ -439,9 +439,12 @@ $fingerprint = FIPS_incore_fingerprint();
 
 if ($legacy_mode) {
     print unpack("H*",$fingerprint);
-} else {
+} elsif (defined($FINGERPRINT_ascii_value)) {
     seek(FD,$FINGERPRINT_ascii_value->{st_offset},0)	or die "$!";
     print FD unpack("H*",$fingerprint)			or die "$!";
+} else {
+    seek(FD,$FIPS_signature->{st_offset},0)		or die "$!";
+    print FD $fingerprint				or die "$!";
 }
 
 close (FD);

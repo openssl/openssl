@@ -83,18 +83,22 @@ OPTIONS verify_options[] = {
     {OPT_HELP_STR, 1, '-', "Usage: %s [options] cert.pem...\n"},
     {OPT_HELP_STR, 1, '-', "Valid options are:\n"},
     {"help", OPT_HELP, '-', "Display this summary"},
-    {"verbose", OPT_VERBOSE, '-'},
-    {"CApath", OPT_CAPATH, '/'},
-    {"CAfile", OPT_CAFILE, '<'},
-    {"untrusted", OPT_UNTRUSTED, '<'},
-    {"trusted", OPT_TRUSTED, '<'},
-    {"CRLfile", OPT_CRLFILE, '<'},
-    {"crl_download", OPT_CRL_DOWNLOAD, '-'},
-    {"show_chain", OPT_SHOW_CHAIN, '-'},
+    {"verbose", OPT_VERBOSE, '-',
+        "Print extra information about the operations being performed."},
+    {"CApath", OPT_CAPATH, '/', "A directory of trusted certificates"},
+    {"CAfile", OPT_CAFILE, '<', "A file of trusted certificates"},
+    {"untrusted", OPT_UNTRUSTED, '<', "A file of untrusted certificates"},
+    {"trusted", OPT_TRUSTED, '<', "A file of trusted certificates"},
+    {"CRLfile", OPT_CRLFILE, '<',
+        "File containing one or more CRL's (in PEM format) to load"},
+    {"crl_download", OPT_CRL_DOWNLOAD, '-',
+        "Attempt to download CRL information for this certificate"},
+    {"show_chain", OPT_SHOW_CHAIN, '-',
+        "Display information about the certificate chain"},
+    OPT_V_OPTIONS,
 #ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
 #endif
-    OPT_V_OPTIONS,
     {NULL}
 };
 
@@ -176,8 +180,17 @@ int verify_main(int argc, char **argv)
     }
     argc = opt_num_rest();
     argv = opt_rest();
+    if (trustfile && (CAfile || CApath)) {
+        BIO_printf(bio_err,
+                   "%s: Cannot use -trusted with -CAfile or -CApath\n",
+                   prog);
+        goto end;
+    }
 
-    if (!(store = setup_verify(CAfile, CApath)))
+    if (!app_load_modules(NULL))
+        goto end;
+
+    if ((store = setup_verify(CAfile, CApath)) == NULL)
         goto end;
     X509_STORE_set_verify_cb(store, cb);
 
@@ -237,6 +250,7 @@ static int check(X509_STORE *ctx, char *file,
     int i = 0, ret = 0;
     X509_STORE_CTX *csc;
     STACK_OF(X509) *chain = NULL;
+    int num_untrusted;
 
     x = load_cert(file, FORMAT_PEM, NULL, e, "certificate file");
     if (x == NULL)
@@ -258,32 +272,36 @@ static int check(X509_STORE *ctx, char *file,
     if (crls)
         X509_STORE_CTX_set0_crls(csc, crls);
     i = X509_verify_cert(csc);
-    if (i > 0 && show_chain)
-        chain = X509_STORE_CTX_get1_chain(csc);
-    X509_STORE_CTX_free(csc);
-
-    ret = 0;
- end:
     if (i > 0) {
         printf("OK\n");
         ret = 1;
-    } else
-        ERR_print_errors(bio_err);
-    if (chain) {
-        printf("Chain:\n");
-        for (i = 0; i < sk_X509_num(chain); i++) {
-            X509 *cert = sk_X509_value(chain, i);
-            printf("depth=%d: ", i);
-            X509_NAME_print_ex_fp(stdout,
-                                  X509_get_subject_name(cert),
-                                  0, XN_FLAG_ONELINE);
-            printf("\n");
-        }
-        sk_X509_pop_free(chain, X509_free);
+	if (show_chain) {
+	    int j;
+
+	    chain = X509_STORE_CTX_get1_chain(csc);
+	    num_untrusted = X509_STORE_CTX_get_num_untrusted(csc);
+	    printf("Chain:\n");
+	    for (j = 0; j < sk_X509_num(chain); j++) {
+		X509 *cert = sk_X509_value(chain, j);
+		printf("depth=%d: ", j);
+		X509_NAME_print_ex_fp(stdout,
+				      X509_get_subject_name(cert),
+				      0, XN_FLAG_ONELINE);
+		if (j < num_untrusted)
+		    printf(" (untrusted)");
+		printf("\n");
+	    }
+	    sk_X509_pop_free(chain, X509_free);
+	}
     }
+    X509_STORE_CTX_free(csc);
+
+ end:
+    if (i <= 0)
+	ERR_print_errors(bio_err);
     X509_free(x);
 
-    return (ret);
+    return ret;
 }
 
 static int cb(int ok, X509_STORE_CTX *ctx)

@@ -102,12 +102,13 @@ OPTIONS genrsa_options[] = {
 int genrsa_main(int argc, char **argv)
 {
     BN_GENCB *cb = BN_GENCB_new();
+    PW_CB_DATA cb_data;
     ENGINE *e = NULL;
     BIGNUM *bn = BN_new();
     BIO *out = NULL;
     RSA *rsa = NULL;
     const EVP_CIPHER *enc = NULL;
-    int ret = 1, non_fips_allow = 0, num = DEFBITS;
+    int ret = 1, non_fips_allow = 0, num = DEFBITS, private = 0;
     unsigned long f4 = RSA_F4;
     char *outfile = NULL, *passoutarg = NULL, *passout = NULL;
     char *inrand = NULL, *prog, *hexe, *dece;
@@ -140,6 +141,7 @@ int genrsa_main(int argc, char **argv)
             break;
         case OPT_OUT:
             outfile = opt_arg();
+            break;
         case OPT_ENGINE:
             e = setup_engine(opt_arg(), 0);
             break;
@@ -157,6 +159,7 @@ int genrsa_main(int argc, char **argv)
     }
     argc = opt_num_rest();
     argv = opt_rest();
+    private = 1;
 
     if (argv[0] && (!opt_int(argv[0], &num) || num <= 0))
         goto end;
@@ -166,7 +169,10 @@ int genrsa_main(int argc, char **argv)
         goto end;
     }
 
-    out = bio_open_default(outfile, "w");
+    if (!app_load_modules(NULL))
+        goto end;
+
+    out = bio_open_owner(outfile, "w", private);
     if (out == NULL)
         goto end;
 
@@ -200,15 +206,13 @@ int genrsa_main(int argc, char **argv)
     }
     OPENSSL_free(hexe);
     OPENSSL_free(dece);
-    {
-        PW_CB_DATA cb_data;
-        cb_data.password = passout;
-        cb_data.prompt_info = outfile;
-        if (!PEM_write_bio_RSAPrivateKey(out, rsa, enc, NULL, 0,
-                                         (pem_password_cb *)password_callback,
-                                         &cb_data))
-            goto end;
-    }
+    cb_data.password = passout;
+    cb_data.prompt_info = outfile;
+    assert(private);
+    if (!PEM_write_bio_RSAPrivateKey(out, rsa, enc, NULL, 0,
+                                     (pem_password_cb *)password_callback,
+                                     &cb_data))
+        goto end;
 
     ret = 0;
  end:

@@ -58,7 +58,7 @@
 
 #include <stdio.h>
 #include <errno.h>
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/rand.h>
 #include <openssl/bio.h>
 
@@ -102,7 +102,7 @@ static int nbiof_new(BIO *bi)
 {
     NBIO_TEST *nt;
 
-    if (!(nt = OPENSSL_malloc(sizeof(*nt))))
+    if ((nt = OPENSSL_malloc(sizeof(*nt))) == NULL)
         return (0);
     nt->lrn = -1;
     nt->lwn = -1;

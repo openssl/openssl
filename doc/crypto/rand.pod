@@ -55,11 +55,11 @@ need randomness.
 
 A cryptographic PRNG must be seeded with unpredictable data such as
 mouse movements or keys pressed at random by the user. This is
-described in L<RAND_add(3)|RAND_add(3)>. Its state can be saved in a seed file
-(see L<RAND_load_file(3)|RAND_load_file(3)>) to avoid having to go through the
+described in L<RAND_add(3)>. Its state can be saved in a seed file
+(see L<RAND_load_file(3)>) to avoid having to go through the
 seeding process whenever the application is started.
 
-L<RAND_bytes(3)|RAND_bytes(3)> describes how to obtain random data from the
+L<RAND_bytes(3)> describes how to obtain random data from the
 PRNG. 
 
 =head1 INTERNALS
@@ -162,14 +162,14 @@ overwritten) and 7 (by not using the 10 bytes given to the caller to
 update the 'state', but they are used to update 'md').
 
 So of the points raised, only 2 is not addressed (but see
-L<RAND_add(3)|RAND_add(3)>).
+L<RAND_add(3)>).
 
 =head1 SEE ALSO
 
-L<BN_rand(3)|BN_rand(3)>, L<RAND_add(3)|RAND_add(3)>,
-L<RAND_load_file(3)|RAND_load_file(3)>, L<RAND_egd(3)|RAND_egd(3)>,
-L<RAND_bytes(3)|RAND_bytes(3)>,
-L<RAND_set_rand_method(3)|RAND_set_rand_method(3)>,
-L<RAND_cleanup(3)|RAND_cleanup(3)> 
+L<BN_rand(3)>, L<RAND_add(3)>,
+L<RAND_load_file(3)>, L<RAND_egd(3)>,
+L<RAND_bytes(3)>,
+L<RAND_set_rand_method(3)>,
+L<RAND_cleanup(3)> 
 
 =cut

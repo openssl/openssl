@@ -121,7 +121,7 @@ same id is already in the cache.
 
 =head1 SEE ALSO
 
-L<ssl(3)|ssl(3)>, L<SSL_get_version(3)|SSL_get_version(3)>
+L<ssl(3)>, L<SSL_get_version(3)>
 
 =head1 HISTORY
 

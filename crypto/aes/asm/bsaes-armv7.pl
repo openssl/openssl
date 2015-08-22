@@ -1417,7 +1417,7 @@ bsaes_ctr32_encrypt_blocks:
 
 	vld1.8	{@XMM[0]}, [$ctr]		@ load counter
 #ifdef	__APPLE__
-	mov	$ctr, #.LREVM0SR-.LM0
+	mov	$ctr, #:lower16:(.LREVM0SR-.LM0)
 	add	$ctr, $const, $ctr
 #else
 	add	$ctr, $const, #.LREVM0SR-.LM0	@ borrow $ctr
@@ -1479,7 +1479,7 @@ bsaes_ctr32_encrypt_blocks:
 	mov		r5, $rounds			@ pass rounds
 	vstmia		$fp, {@XMM[10]}			@ save next counter
 #ifdef	__APPLE__
-	mov		$const, #.LREVM0SR-.LSR
+	mov		$const, #:lower16:(.LREVM0SR-.LSR)
 	sub		$const, $ctr, $const
 #else
 	sub		$const, $ctr, #.LREVM0SR-.LSR	@ pass constants

@@ -9,6 +9,7 @@ s_client - SSL/TLS client program
 
 B<openssl> B<s_client>
 [B<-connect host:port>]
+[B<-proxy host:port>]
 [B<-servername name>]
 [B<-verify depth>]
 [B<-verify_return_error>]
@@ -100,6 +101,12 @@ manual page.
 This specifies the host and optional port to connect to. If not specified
 then an attempt is made to connect to the local host on port 4433.
 
+=item B<-proxy host:port>
+
+When used with the B<-connect> flag, the program uses the host and port
+specified with this flag and issues an HTTP CONNECT command to connect
+to the desired server.
+
 =item B<-servername name>
 
 Set the TLS SNI (Server Name Indication) extension in the ClientHello message.
@@ -125,7 +132,7 @@ The private format to use: DER or PEM. PEM is the default.
 =item B<-pass arg>
 
 the private key password source. For more information about the format of B<arg>
-see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)|openssl(1)>.
+see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
 
 =item B<-verify depth>
 
@@ -160,7 +167,7 @@ B<-use_deltas>, B<-verify_depth>, B<-verify_email>, B<-verify_hostname>,
 B<-verify_ip>, B<-verify_name>, B<-x509_strict>
 
 Set various certificate chain validation options. See the
-L<B<verify>|verify(1)> manual page for details.
+L<verify(1)> manual page for details.
 
 =item B<-reconnect>
 
@@ -281,12 +288,13 @@ command for more information.
 
 send the protocol-specific message(s) to switch to TLS for communication.
 B<protocol> is a keyword for the intended protocol.  Currently, the only
-supported keywords are "smtp", "pop3", "imap", "ftp" and "xmpp".
+supported keywords are "smtp", "pop3", "imap", "ftp", "xmpp",
+and "xmpp-server".
 
 =item B<-xmpphost hostname>
 
-This option, when used with "-starttls xmpp", specifies the host for the
-"to" attribute of the stream element.
+This option, when used with "-starttls xmpp" or "-starttls xmpp-server",
+specifies the host for the "to" attribute of the stream element.
 If this option is not specified, then the host specified with "-connect"
 will be used.
 
@@ -317,7 +325,7 @@ for all available algorithms.
 =item B<-rand file(s)>
 
 a file or files containing random data used to seed the random number
-generator, or an EGD socket (see L<RAND_egd(3)|RAND_egd(3)>).
+generator, or an EGD socket (see L<RAND_egd(3)>).
 Multiple files can be specified separated by a OS-dependent character.
 The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
 all others.
@@ -409,7 +417,7 @@ information whenever a session is renegotiated.
 
 =head1 SEE ALSO
 
-L<sess_id(1)|sess_id(1)>, L<s_server(1)|s_server(1)>, L<ciphers(1)|ciphers(1)>
+L<sess_id(1)>, L<s_server(1)>, L<ciphers(1)>
 
 =head1 HISTORY
 
