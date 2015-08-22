@@ -1004,6 +1004,7 @@ static int x509_certify(X509_STORE *ctx, char *CAfile, const EVP_MD *digest,
 
     if (!X509_STORE_CTX_init(&xsc, ctx, x, NULL)) {
         BIO_printf(bio_err, "Error initialising X509 store\n");
+    	X509_STORE_CTX_cleanup(&xsc);
         goto end;
     }
     if (sno)

@@ -1268,9 +1268,10 @@ static int check_crl_path(X509_STORE_CTX *ctx, X509 *x)
     /* Don't allow recursive CRL path validation */
     if (ctx->parent)
         return 0;
-    if (!X509_STORE_CTX_init(&crl_ctx, ctx->ctx, x, ctx->untrusted))
-        return -1;
-
+    if (!X509_STORE_CTX_init(&crl_ctx, ctx->ctx, x, ctx->untrusted)){
+    	X509_STORE_CTX_cleanup(&crl_ctx);
+		return -1;
+    }
     crl_ctx.crls = ctx->crls;
     /* Copy verify params across */
     X509_STORE_CTX_set0_param(&crl_ctx, ctx->param);
@@ -2272,10 +2273,18 @@ void X509_STORE_CTX_free(X509_STORE_CTX *ctx)
     OPENSSL_free(ctx);
 }
 
+/*
+*if X509_STORE_CTX_init fail caused by X509_VERIFY_PARAM_inherit or 
+*CRYPTO_new_ex_data, you need to call X509_STORE_CTX_cleanup to clean
+*ctx, or it will cause memory leak.
+*/
 int X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store, X509 *x509,
                         STACK_OF(X509) *chain)
 {
     int ret = 1;
+	/*need to be memset first, otherwise X509_STORE_CTX_cleanup will not work properly*/
+	OPENSSL_memcmp(ctx, 0, sizeof(X509_STORE_CTX));
+	
     ctx->ctx = store;
     ctx->current_method = 0;
     ctx->cert = x509;
@@ -2385,7 +2394,8 @@ int X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store, X509 *x509,
      */
     if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_X509_STORE_CTX, ctx,
                             &(ctx->ex_data))) {
-        OPENSSL_free(ctx);
+		/*ctx is always local variable, we can't free it*/
+		//OPENSSL_free(ctx);
         X509err(X509_F_X509_STORE_CTX_INIT, ERR_R_MALLOC_FAILURE);
         return 0;
     }

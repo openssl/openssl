@@ -950,6 +950,7 @@ int PKCS7_dataVerify(X509_STORE *cert_store, X509_STORE_CTX *ctx, BIO *bio,
     /* Lets verify */
     if (!X509_STORE_CTX_init(ctx, cert_store, x509, cert)) {
         PKCS7err(PKCS7_F_PKCS7_DATAVERIFY, ERR_R_X509_LIB);
+		X509_STORE_CTX_cleanup(ctx);
         goto err;
     }
     X509_STORE_CTX_set_purpose(ctx, X509_PURPOSE_SMIME_SIGN);

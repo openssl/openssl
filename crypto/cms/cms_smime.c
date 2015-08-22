@@ -281,6 +281,7 @@ static int cms_signerinfo_verify_cert(CMS_SignerInfo *si,
     CMS_SignerInfo_get0_algs(si, NULL, &signer, NULL, NULL);
     if (!X509_STORE_CTX_init(&ctx, store, signer, certs)) {
         CMSerr(CMS_F_CMS_SIGNERINFO_VERIFY_CERT, CMS_R_STORE_INIT_ERROR);
+		X509_STORE_CTX_cleanup(&ctx);
         goto err;
     }
     X509_STORE_CTX_set_default(&ctx, "smime_sign");
