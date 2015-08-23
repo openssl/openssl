@@ -76,10 +76,9 @@ $chunk="ebx";
 	&jb	(&label("noluck"));
 	&mov	("eax",1);
 	&cpuid	();
-	&or	("eax",0x0f);
 	&xor	("ebx","ebx");
-	&and	("eax",0x0fff);
-	&cmp	("eax",0x06ff);		# check for Nano
+	&and	("eax",0x0ff0);
+	&cmp	("eax",0x06f0);		# check for Nano
 	&sete	("bl");
 	&mov	("eax",0xC0000001);
 	&push	("ebx");
