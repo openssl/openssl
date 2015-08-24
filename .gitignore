@@ -41,6 +41,7 @@
 
 # Auto generated assembly language source files
 *.s
+*.S
 !/crypto/bn/asm/pa-risc2.s
 !/crypto/bn/asm/pa-risc2W.s
 crypto/aes/asm/a_win32.asm
