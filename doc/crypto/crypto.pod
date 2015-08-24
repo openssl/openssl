@@ -32,7 +32,7 @@ L<idea(3)>, L<rc2(3)>, L<rc4(3)>, L<rc5(3)>
 
 =item PUBLIC KEY CRYPTOGRAPHY AND KEY AGREEMENT
 
-L<dsa(3)>, L<dh(3)>, L<rsa(3)>
+L<dsa(3)>, L<dh(3)>, L<ec(3)>, L<rsa(3)>
 
 =item CERTIFICATES
 
@@ -54,9 +54,9 @@ L<OPENSSL_VERSION_NUMBER(3)>
 L<asn1(3)>, L<bio(3)>, L<evp(3)>, L<pem(3)>,
 L<pkcs7(3)>, L<pkcs12(3)> 
 
-=item INTERNAL FUNCTIONS
+=item UTILITY FUNCTIONS
 
-L<bn(3)>, L<buffer(3)>, L<ec(3)>, L<lhash(3)>,
+L<bn(3)>, L<buffer(3)>, L<lhash(3)>,
 L<objects(3)>, L<stack(3)>,
 L<txt_db(3)> 
 
