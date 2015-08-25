@@ -187,13 +187,12 @@ static hm_fragment *dtls1_hm_fragment_new(unsigned long frag_len,
 
     /* Initialize reassembly bitmask if necessary */
     if (reassembly) {
-        bitmask = OPENSSL_malloc(RSMBLY_BITMASK_SIZE(frag_len));
+        bitmask = OPENSSL_zalloc(RSMBLY_BITMASK_SIZE(frag_len));
         if (bitmask == NULL) {
             OPENSSL_free(buf);
             OPENSSL_free(frag);
             return NULL;
         }
-        memset(bitmask, 0, RSMBLY_BITMASK_SIZE(frag_len));
     }
 
     frag->reassembly = bitmask;

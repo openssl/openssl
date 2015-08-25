@@ -169,11 +169,10 @@ TS_RESP_CTX *TS_RESP_CTX_new()
 {
     TS_RESP_CTX *ctx;
 
-    if ((ctx = OPENSSL_malloc(sizeof(*ctx))) == NULL) {
+    if ((ctx = OPENSSL_zalloc(sizeof(*ctx))) == NULL) {
         TSerr(TS_F_TS_RESP_CTX_NEW, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
-    memset(ctx, 0, sizeof(*ctx));
 
     /* Setting default callbacks. */
     ctx->serial_cb = def_serial_cb;

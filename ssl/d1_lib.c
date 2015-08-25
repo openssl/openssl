@@ -135,11 +135,10 @@ int dtls1_new(SSL *s)
     
     if (!ssl3_new(s))
         return (0);
-    if ((d1 = OPENSSL_malloc(sizeof(*d1))) == NULL) {
+    if ((d1 = OPENSSL_zalloc(sizeof(*d1))) == NULL) {
         ssl3_free(s);
         return (0);
     }
-    memset(d1, 0, sizeof(*d1));
 
     d1->buffered_messages = pqueue_new();
     d1->sent_messages = pqueue_new();

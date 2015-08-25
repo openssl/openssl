@@ -198,15 +198,12 @@ EVP_PKEY_METHOD *EVP_PKEY_meth_new(int id, int flags)
 {
     EVP_PKEY_METHOD *pmeth;
 
-    pmeth = OPENSSL_malloc(sizeof(*pmeth));
+    pmeth = OPENSSL_zalloc(sizeof(*pmeth));
     if (!pmeth)
         return NULL;
 
-    memset(pmeth, 0, sizeof(*pmeth));
-
     pmeth->pkey_id = id;
     pmeth->flags = flags | EVP_PKEY_FLAG_DYNAMIC;
-
     pmeth->init = 0;
     pmeth->copy = 0;
     pmeth->cleanup = 0;

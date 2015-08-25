@@ -283,12 +283,11 @@ const EVP_PKEY_ASN1_METHOD *EVP_PKEY_get0_asn1(EVP_PKEY *pkey)
 EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_new(int id, int flags,
                                         const char *pem_str, const char *info)
 {
-    EVP_PKEY_ASN1_METHOD *ameth;
-    ameth = OPENSSL_malloc(sizeof(*ameth));
+    EVP_PKEY_ASN1_METHOD *ameth = OPENSSL_zalloc(sizeof(*ameth));
+
     if (!ameth)
         return NULL;
 
-    memset(ameth, 0, sizeof(*ameth));
     ameth->pkey_id = id;
     ameth->pkey_base_id = id;
     ameth->pkey_flags = flags | ASN1_PKEY_DYNAMIC;

@@ -314,23 +314,20 @@ static int sh_init(size_t size, int minsize)
     for (i = sh.bittable_size; i; i >>= 1)
         sh.freelist_size++;
 
-    sh.freelist = OPENSSL_malloc(sh.freelist_size * sizeof (char *));
+    sh.freelist = OPENSSL_zalloc(sh.freelist_size * sizeof (char *));
     OPENSSL_assert(sh.freelist != NULL);
     if (sh.freelist == NULL)
         goto err;
-    memset(sh.freelist, 0, sh.freelist_size * sizeof (char *));
 
-    sh.bittable = OPENSSL_malloc(sh.bittable_size >> 3);
+    sh.bittable = OPENSSL_zalloc(sh.bittable_size >> 3);
     OPENSSL_assert(sh.bittable != NULL);
     if (sh.bittable == NULL)
         goto err;
-    memset(sh.bittable, 0, sh.bittable_size >> 3);
 
-    sh.bitmalloc = OPENSSL_malloc(sh.bittable_size >> 3);
+    sh.bitmalloc = OPENSSL_zalloc(sh.bittable_size >> 3);
     OPENSSL_assert(sh.bitmalloc != NULL);
     if (sh.bitmalloc == NULL)
         goto err;
-    memset(sh.bitmalloc, 0, sh.bittable_size >> 3);
 
     /* Allocate space for heap, and two extra pages as guards */
 #ifdef _SC_PAGE_SIZE

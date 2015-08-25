@@ -63,11 +63,9 @@
 
 TS_VERIFY_CTX *TS_VERIFY_CTX_new(void)
 {
-    TS_VERIFY_CTX *ctx = OPENSSL_malloc(sizeof(*ctx));
+    TS_VERIFY_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));
 
-    if (ctx)
-        memset(ctx, 0, sizeof(*ctx));
-    else
+    if (!ctx)
         TSerr(TS_F_TS_VERIFY_CTX_NEW, ERR_R_MALLOC_FAILURE);
     return ctx;
 }

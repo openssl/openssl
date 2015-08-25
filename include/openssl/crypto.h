@@ -337,6 +337,7 @@ int CRYPTO_is_mem_check_on(void);
 # define is_MemCheck_on() CRYPTO_is_mem_check_on()
 
 # define OPENSSL_malloc(num)     CRYPTO_malloc((int)num,__FILE__,__LINE__)
+# define OPENSSL_zalloc(num)     CRYPTO_zalloc((int)num,__FILE__,__LINE__)
 # define OPENSSL_strdup(str)     CRYPTO_strdup((str),__FILE__,__LINE__)
 # define OPENSSL_realloc(addr,num) \
         CRYPTO_realloc((char *)addr,(int)num,__FILE__,__LINE__)
@@ -469,6 +470,7 @@ void CRYPTO_get_mem_debug_functions(void (**m)
                                     void (**so) (long), long (**go) (void));
 
 void *CRYPTO_malloc(int num, const char *file, int line);
+void *CRYPTO_zalloc(int num, const char *file, int line);
 char *CRYPTO_strdup(const char *str, const char *file, int line);
 void CRYPTO_free(void *ptr);
 void CRYPTO_clear_free(void *ptr, size_t num);

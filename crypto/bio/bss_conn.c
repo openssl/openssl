@@ -286,19 +286,12 @@ BIO_CONNECT *BIO_CONNECT_new(void)
 {
     BIO_CONNECT *ret;
 
-    if ((ret = OPENSSL_malloc(sizeof(*ret))) == NULL)
+    if ((ret = OPENSSL_zalloc(sizeof(*ret))) == NULL)
         return (NULL);
     ret->state = BIO_CONN_S_BEFORE;
     ret->param_hostname = NULL;
     ret->param_port = NULL;
     ret->info_callback = NULL;
-    ret->nbio = 0;
-    ret->ip[0] = 0;
-    ret->ip[1] = 0;
-    ret->ip[2] = 0;
-    ret->ip[3] = 0;
-    ret->port = 0;
-    memset(&ret->them, 0, sizeof(ret->them));
     return (ret);
 }
 

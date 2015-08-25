@@ -63,9 +63,8 @@ COMP_CTX *COMP_CTX_new(COMP_METHOD *meth)
 {
     COMP_CTX *ret;
 
-    if ((ret = OPENSSL_malloc(sizeof(*ret))) == NULL)
+    if ((ret = OPENSSL_zalloc(sizeof(*ret))) == NULL)
         return (NULL);
-    memset(ret, 0, sizeof(*ret));
     ret->meth = meth;
     if ((ret->meth->init != NULL) && !ret->meth->init(ret)) {
         OPENSSL_free(ret);

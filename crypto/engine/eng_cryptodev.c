@@ -1020,10 +1020,9 @@ static int bn2crparam(const BIGNUM *a, struct crparam *crp)
     bits = BN_num_bits(a);
     bytes = BN_num_bytes(a);
 
-    b = OPENSSL_malloc(bytes);
+    b = OPENSSL_zalloc(bytes);
     if (b == NULL)
         return (1);
-    memset(b, 0, bytes);
 
     crp->crp_p = (caddr_t) b;
     crp->crp_nbits = bits;

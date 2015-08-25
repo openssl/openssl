@@ -101,13 +101,12 @@ BIO_METHOD *BIO_f_ssl(void)
 
 static int ssl_new(BIO *bi)
 {
-    BIO_SSL *bs = OPENSSL_malloc(sizeof(*bs));
+    BIO_SSL *bs = OPENSSL_zalloc(sizeof(*bs));
 
     if (bs == NULL) {
         BIOerr(BIO_F_SSL_NEW, ERR_R_MALLOC_FAILURE);
         return (0);
     }
-    memset(bs, 0, sizeof(*bs));
     bi->init = 0;
     bi->ptr = (char *)bs;
     bi->flags = 0;

@@ -440,10 +440,8 @@ int test_builtin(BIO *out)
             goto builtin_err;
         }
         buf_len = 2 * bn_len;
-        if ((raw_buf = OPENSSL_malloc(buf_len)) == NULL)
+        if ((raw_buf = OPENSSL_zalloc(buf_len)) == NULL)
             goto builtin_err;
-        /* Pad the bignums with leading zeroes. */
-        memset(raw_buf, 0, buf_len);
         BN_bn2bin(ecdsa_sig->r, raw_buf + bn_len - r_len);
         BN_bn2bin(ecdsa_sig->s, raw_buf + buf_len - s_len);
 

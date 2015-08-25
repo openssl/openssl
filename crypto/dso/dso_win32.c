@@ -304,13 +304,12 @@ static struct file_st *win32_splitter(DSO *dso, const char *filename,
         return (NULL);
     }
 
-    result = OPENSSL_malloc(sizeof(*result));
+    result = OPENSSL_zalloc(sizeof(*result));
     if (result == NULL) {
         DSOerr(DSO_F_WIN32_SPLITTER, ERR_R_MALLOC_FAILURE);
         return (NULL);
     }
 
-    memset(result, 0, sizeof(*result));
     position = IN_DEVICE;
 
     if ((filename[0] == '\\' && filename[1] == '\\')

@@ -221,16 +221,13 @@ BIO *BIO_new_dgram(int fd, int close_flag)
 
 static int dgram_new(BIO *bi)
 {
-    bio_dgram_data *data = NULL;
+    bio_dgram_data *data = OPENSSL_zalloc(sizeof(*data));
 
-    bi->init = 0;
-    bi->num = 0;
-    data = OPENSSL_malloc(sizeof(*data));
     if (data == NULL)
         return 0;
-    memset(data, 0, sizeof(*data));
+    bi->init = 0;
+    bi->num = 0;
     bi->ptr = data;
-
     bi->flags = 0;
     return (1);
 }
@@ -997,16 +994,13 @@ BIO *BIO_new_dgram_sctp(int fd, int close_flag)
      * connected socket won't use it.
      */
     sockopt_len = (socklen_t) (sizeof(sctp_assoc_t) + 256 * sizeof(uint8_t));
-    authchunks = OPENSSL_malloc(sockopt_len);
+    authchunks = OPENSSL_zalloc(sockopt_len);
     if (!authchunks) {
         BIO_vfree(bio);
         return (NULL);
     }
-    memset(authchunks, 0, sockopt_len);
-    ret =
-        getsockopt(fd, IPPROTO_SCTP, SCTP_LOCAL_AUTH_CHUNKS, authchunks,
+    ret = getsockopt(fd, IPPROTO_SCTP, SCTP_LOCAL_AUTH_CHUNKS, authchunks,
                    &sockopt_len);
-
     if (ret < 0) {
         OPENSSL_free(authchunks);
         BIO_vfree(bio);
@@ -1086,10 +1080,9 @@ static int dgram_sctp_new(BIO *bi)
 
     bi->init = 0;
     bi->num = 0;
-    data = OPENSSL_malloc(sizeof(*data));
+    data = OPENSSL_zalloc(sizeof(*data));
     if (data == NULL)
         return 0;
-    memset(data, 0, sizeof(*data));
 #  ifdef SCTP_PR_SCTP_NONE
     data->prinfo.pr_policy = SCTP_PR_SCTP_NONE;
 #  endif
