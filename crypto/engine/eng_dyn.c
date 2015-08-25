@@ -202,13 +202,12 @@ static void dynamic_data_ctx_free_func(void *parent, void *ptr,
  */
 static int dynamic_set_data_ctx(ENGINE *e, dynamic_data_ctx **ctx)
 {
-    dynamic_data_ctx *c = OPENSSL_malloc(sizeof(*c));
+    dynamic_data_ctx *c = OPENSSL_zalloc(sizeof(*c));
 
     if (!c) {
         ENGINEerr(ENGINE_F_DYNAMIC_SET_DATA_CTX, ERR_R_MALLOC_FAILURE);
         return 0;
     }
-    memset(c, 0, sizeof(*c));
     c->dynamic_dso = NULL;
     c->v_check = NULL;
     c->bind_engine = NULL;

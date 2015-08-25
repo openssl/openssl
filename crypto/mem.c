@@ -312,14 +312,21 @@ void *CRYPTO_malloc(int num, const char *file, int line)
     return ret;
 }
 
+void *CRYPTO_zalloc(int num, const char *file, int line)
+{
+    void *ret = CRYPTO_malloc(num, file, line);
+
+    if (ret != NULL)
+        memset(ret, 0, num);
+    return ret;
+}
+
 char *CRYPTO_strdup(const char *str, const char *file, int line)
 {
     char *ret = CRYPTO_malloc(strlen(str) + 1, file, line);
 
-    if (ret == NULL)
-        return NULL;
-
-    strcpy(ret, str);
+    if (ret != NULL)
+        strcpy(ret, str);
     return ret;
 }
 

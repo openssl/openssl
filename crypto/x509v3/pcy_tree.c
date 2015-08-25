@@ -217,25 +217,18 @@ static int tree_init(X509_POLICY_TREE **ptree, STACK_OF(X509) *certs,
     }
 
     /* If we get this far initialize the tree */
-
     tree = OPENSSL_malloc(sizeof(*tree));
-
     if (!tree)
         return 0;
-
-    tree->flags = 0;
-    tree->levels = OPENSSL_malloc(sizeof(*tree->levels) * n);
-    tree->nlevel = 0;
-    tree->extra_data = NULL;
-    tree->auth_policies = NULL;
-    tree->user_policies = NULL;
-
+    tree->levels = OPENSSL_zalloc(sizeof(*tree->levels) * n);
     if (!tree->levels) {
         OPENSSL_free(tree);
         return 0;
     }
-
-    memset(tree->levels, 0, sizeof(*tree->levels) * n);
+    tree->flags = 0;
+    tree->extra_data = NULL;
+    tree->auth_policies = NULL;
+    tree->user_policies = NULL;
     tree->nlevel = n;
     level = tree->levels;
 

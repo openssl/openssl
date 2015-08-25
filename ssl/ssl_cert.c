@@ -167,13 +167,12 @@ int SSL_get_ex_data_X509_STORE_CTX_idx(void)
 
 CERT *ssl_cert_new(void)
 {
-    CERT *ret = OPENSSL_malloc(sizeof(*ret));
+    CERT *ret = OPENSSL_zalloc(sizeof(*ret));
 
     if (ret == NULL) {
         SSLerr(SSL_F_SSL_CERT_NEW, ERR_R_MALLOC_FAILURE);
         return (NULL);
     }
-    memset(ret, 0, sizeof(*ret));
 
     ret->key = &(ret->pkeys[SSL_PKEY_RSA_ENC]);
     ret->references = 1;
@@ -185,15 +184,13 @@ CERT *ssl_cert_new(void)
 
 CERT *ssl_cert_dup(CERT *cert)
 {
-    CERT *ret = OPENSSL_malloc(sizeof(*ret));
+    CERT *ret = OPENSSL_zalloc(sizeof(*ret));
     int i;
 
     if (ret == NULL) {
         SSLerr(SSL_F_SSL_CERT_DUP, ERR_R_MALLOC_FAILURE);
         return (NULL);
     }
-
-    memset(ret, 0, sizeof(*ret));
 
     ret->key = &ret->pkeys[cert->key - cert->pkeys];
 

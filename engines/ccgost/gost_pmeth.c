@@ -24,10 +24,9 @@ static int pkey_gost_init(EVP_PKEY_CTX *ctx)
     struct gost_pmeth_data *data;
     EVP_PKEY *pkey = EVP_PKEY_CTX_get0_pkey(ctx);
 
-    data = OPENSSL_malloc(sizeof(*data));
+    data = OPENSSL_zalloc(sizeof(*data));
     if (!data)
         return 0;
-    memset(data, 0, sizeof(*data));
     if (pkey && EVP_PKEY_get0(pkey)) {
         switch (EVP_PKEY_base_id(pkey)) {
         case NID_id_GostR3410_2001:
@@ -309,11 +308,10 @@ static int pkey_gost_derive_init(EVP_PKEY_CTX *ctx)
 /* -------- PKEY_METHOD for GOST MAC algorithm --------------------*/
 static int pkey_gost_mac_init(EVP_PKEY_CTX *ctx)
 {
-    struct gost_mac_pmeth_data *data = OPENSSL_malloc(sizeof(*data));
+    struct gost_mac_pmeth_data *data = OPENSSL_zalloc(sizeof(*data));
 
     if (!data)
         return 0;
-    memset(data, 0, sizeof(*data));
     EVP_PKEY_CTX_set_data(ctx, data);
     return 1;
 }

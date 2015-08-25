@@ -3836,9 +3836,8 @@ int ssl3_new(SSL *s)
 {
     SSL3_STATE *s3;
 
-    if ((s3 = OPENSSL_malloc(sizeof(*s3))) == NULL)
+    if ((s3 = OPENSSL_zalloc(sizeof(*s3))) == NULL)
         goto err;
-    memset(s3, 0, sizeof(*s3));
     s->s3 = s3;
     
 #ifndef OPENSSL_NO_SRP

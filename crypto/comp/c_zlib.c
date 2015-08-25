@@ -91,9 +91,7 @@ static void *zlib_zalloc(void *opaque, unsigned int no, unsigned int size)
 {
     void *p;
 
-    p = OPENSSL_malloc(no * size);
-    if (p)
-        memset(p, 0, no * size);
+    p = OPENSSL_zalloc(no * size);
     return p;
 }
 

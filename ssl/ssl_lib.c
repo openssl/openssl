@@ -277,10 +277,9 @@ SSL *SSL_new(SSL_CTX *ctx)
         return (NULL);
     }
 
-    s = OPENSSL_malloc(sizeof(*s));
+    s = OPENSSL_zalloc(sizeof(*s));
     if (s == NULL)
         goto err;
-    memset(s, 0, sizeof(*s));
 
     RECORD_LAYER_init(&s->rlayer, s);
 
@@ -1684,14 +1683,11 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
         SSLerr(SSL_F_SSL_CTX_NEW, SSL_R_X509_VERIFICATION_SETUP_PROBLEMS);
         goto err;
     }
-    ret = OPENSSL_malloc(sizeof(*ret));
+    ret = OPENSSL_zalloc(sizeof(*ret));
     if (ret == NULL)
         goto err;
 
-    memset(ret, 0, sizeof(*ret));
-
     ret->method = meth;
-
     ret->cert_store = NULL;
     ret->session_cache_mode = SSL_SESS_CACHE_SERVER;
     ret->session_cache_size = SSL_SESSION_CACHE_MAX_SIZE_DEFAULT;
@@ -1705,8 +1701,6 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
     ret->remove_session_cb = 0;
     ret->get_session_cb = 0;
     ret->generate_session_id = 0;
-
-    memset(&ret->stats, 0, sizeof(ret->stats));
 
     ret->references = 1;
     ret->quiet_shutdown = 0;

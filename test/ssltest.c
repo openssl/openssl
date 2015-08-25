@@ -2116,13 +2116,10 @@ int doit(SSL *s_ssl, SSL *c_ssl, long count)
 
     bufsiz = count > 40 * 1024 ? 40 * 1024 : count;
 
-    if ((cbuf = OPENSSL_malloc(bufsiz)) == NULL)
+    if ((cbuf = OPENSSL_zalloc(bufsiz)) == NULL)
         goto err;
-    if ((sbuf = OPENSSL_malloc(bufsiz)) == NULL)
+    if ((sbuf = OPENSSL_zalloc(bufsiz)) == NULL)
         goto err;
-
-    memset(cbuf, 0, bufsiz);
-    memset(sbuf, 0, bufsiz);
 
     c_to_s = BIO_new(BIO_s_mem());
     s_to_c = BIO_new(BIO_s_mem());

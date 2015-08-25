@@ -582,12 +582,10 @@ const UI_METHOD *UI_set_method(UI *ui, const UI_METHOD *meth)
 
 UI_METHOD *UI_create_method(char *name)
 {
-    UI_METHOD *ui_method = OPENSSL_malloc(sizeof(*ui_method));
+    UI_METHOD *ui_method = OPENSSL_zalloc(sizeof(*ui_method));
 
-    if (ui_method) {
-        memset(ui_method, 0, sizeof(*ui_method));
+    if (ui_method)
         ui_method->name = BUF_strdup(name);
-    }
     return ui_method;
 }
 

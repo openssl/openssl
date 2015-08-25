@@ -287,7 +287,7 @@ int RSA_memory_lock(RSA *r)
     j = 1;
     for (i = 0; i < 6; i++)
         j += bn_get_top(*t[i]);
-    if ((p = OPENSSL_malloc((off + j) * sizeof(BN_ULONG))) == NULL) {
+    if ((p = OPENSSL_malloc((off + j) * sizeof(*p))) == NULL) {
         RSAerr(RSA_F_RSA_MEMORY_LOCK, ERR_R_MALLOC_FAILURE);
         return (0);
     }

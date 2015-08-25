@@ -137,10 +137,8 @@ static BIO_ACCEPT *BIO_ACCEPT_new(void)
 {
     BIO_ACCEPT *ret;
 
-    if ((ret = OPENSSL_malloc(sizeof(*ret))) == NULL)
+    if ((ret = OPENSSL_zalloc(sizeof(*ret))) == NULL)
         return (NULL);
-
-    memset(ret, 0, sizeof(*ret));
     ret->accept_sock = INVALID_SOCKET;
     ret->bind_mode = BIO_BIND_NORMAL;
     return (ret);

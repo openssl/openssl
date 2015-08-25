@@ -158,12 +158,11 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
 
         ctx->cipher = cipher;
         if (ctx->cipher->ctx_size) {
-            ctx->cipher_data = OPENSSL_malloc(ctx->cipher->ctx_size);
+            ctx->cipher_data = OPENSSL_zalloc(ctx->cipher->ctx_size);
             if (!ctx->cipher_data) {
                 EVPerr(EVP_F_EVP_CIPHERINIT_EX, ERR_R_MALLOC_FAILURE);
                 return 0;
             }
-            memset(ctx->cipher_data, 0, ctx->cipher->ctx_size);
         } else {
             ctx->cipher_data = NULL;
         }

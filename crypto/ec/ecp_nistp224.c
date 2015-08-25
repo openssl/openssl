@@ -1199,13 +1199,12 @@ static void batch_mul(felem x_out, felem y_out, felem z_out,
 
 static NISTP224_PRE_COMP *nistp224_pre_comp_new()
 {
-    NISTP224_PRE_COMP *ret = NULL;
-    ret = OPENSSL_malloc(sizeof(*ret));
+    NISTP224_PRE_COMP *ret = OPENSSL_zalloc(sizeof(*ret));
+
     if (!ret) {
         ECerr(EC_F_NISTP224_PRE_COMP_NEW, ERR_R_MALLOC_FAILURE);
         return ret;
     }
-    memset(ret->g_pre_comp, 0, sizeof(ret->g_pre_comp));
     ret->references = 1;
     return ret;
 }
@@ -1457,8 +1456,8 @@ int ec_GFp_nistp224_points_mul(const EC_GROUP *group, EC_POINT *r,
              */
             mixed = 1;
         }
-        secrets = OPENSSL_malloc(sizeof(*secrets) * num_points);
-        pre_comp = OPENSSL_malloc(sizeof(*pre_comp) * num_points);
+        secrets = OPENSSL_zalloc(sizeof(*secrets) * num_points);
+        pre_comp = OPENSSL_zalloc(sizeof(*pre_comp) * num_points);
         if (mixed)
             tmp_felems =
                 OPENSSL_malloc(sizeof(felem) * (num_points * 17 + 1));
@@ -1472,8 +1471,6 @@ int ec_GFp_nistp224_points_mul(const EC_GROUP *group, EC_POINT *r,
          * we treat NULL scalars as 0, and NULL points as points at infinity,
          * i.e., they contribute nothing to the linear combination
          */
-        memset(secrets, 0, sizeof(*secrets) * num_points);
-        memset(pre_comp, 0, sizeof(*pre_comp) * num_points);
         for (i = 0; i < num_points; ++i) {
             if (i == num)
                 /* the generator */
