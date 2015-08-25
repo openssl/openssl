@@ -188,6 +188,7 @@ static int RSA_eay_public_encrypt(int flen, const unsigned char *from,
         RSAerr(RSA_F_RSA_EAY_PUBLIC_ENCRYPT, ERR_R_MALLOC_FAILURE);
         goto err;
     }
+    memset(buf,0,num);
 
     switch (padding) {
     case RSA_PKCS1_PADDING:
