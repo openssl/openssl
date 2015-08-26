@@ -128,10 +128,6 @@
 #  define CRYPTO_get_dynlock_destroy_callback     CRYPTO_get_dynlock_destroy_cb
 #  undef CRYPTO_get_dynlock_create_callback
 #  define CRYPTO_get_dynlock_create_callback      CRYPTO_get_dynlock_create_cb
-#  undef CRYPTO_set_locked_mem_ex_functions
-#  define CRYPTO_set_locked_mem_ex_functions      CRYPTO_set_locked_mem_ex_funcs
-#  undef CRYPTO_get_locked_mem_ex_functions
-#  define CRYPTO_get_locked_mem_ex_functions      CRYPTO_get_locked_mem_ex_funcs
 
 /* Hack some long SSL/TLS names */
 #  undef SSL_CTX_set_default_verify_paths

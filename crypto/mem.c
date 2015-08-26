@@ -103,17 +103,6 @@ static void *(*malloc_secure_ex_func)(size_t, const char *file, int line)
     = default_malloc_secure_ex;
 static void (*free_secure_func)(void *) = free;
 
-static void *(*malloc_locked_func) (size_t) = malloc;
-static void *default_malloc_locked_ex(size_t num, const char *file, int line)
-{
-    return malloc_locked_func(num);
-}
-
-static void *(*malloc_locked_ex_func) (size_t, const char *file, int line)
-    = default_malloc_locked_ex;
-
-static void (*free_locked_func) (void *) = free;
-
 /* may be changed as long as 'allow_customize_debug' is set */
 /* XXX use correct function pointer types */
 #ifdef CRYPTO_MDEBUG
@@ -159,9 +148,6 @@ int CRYPTO_set_mem_functions(void *(*m) (size_t), void *(*r) (void *, size_t),
     malloc_secure_func = m;
     malloc_secure_ex_func = default_malloc_secure_ex;
     free_secure_func = f;
-    malloc_locked_func = m;
-    malloc_locked_ex_func = default_malloc_locked_ex;
-    free_locked_func = f;
     return 1;
 }
 
@@ -181,9 +167,6 @@ int CRYPTO_set_mem_ex_functions(void *(*m) (size_t, const char *, int),
     malloc_secure_func = 0;
     malloc_secure_ex_func = m;
     free_secure_func = f;
-    malloc_locked_func = 0;
-    malloc_locked_ex_func = m;
-    free_locked_func = f;
     return 1;
 }
 
@@ -198,11 +181,6 @@ int CRYPTO_set_secure_mem_functions(void *(*m)(size_t), void (*f)(void *))
     malloc_secure_func = m;
     malloc_secure_ex_func = default_malloc_secure_ex;
     free_secure_func = f;
-    /* If user wants to intercept the locked functions, do it after
-     * the secure functions. */
-    malloc_locked_func = m;
-    malloc_locked_ex_func = default_malloc_secure_ex;
-    free_locked_func = f;
     return 1;
 }
 
@@ -216,34 +194,6 @@ int CRYPTO_set_secure_mem_ex_functions(void *(*m)(size_t, const char *, int),
     malloc_secure_func = 0;
     malloc_secure_ex_func = m;
     free_secure_func = f;
-    malloc_locked_func = 0;
-    malloc_locked_ex_func = m;
-    free_locked_func = f;
-    return 1;
-}
-
-int CRYPTO_set_locked_mem_functions(void *(*m) (size_t), void (*f) (void *))
-{
-    if (!allow_customize)
-        return 0;
-    if ((m == NULL) || (f == NULL))
-        return 0;
-    malloc_locked_func = m;
-    malloc_locked_ex_func = default_malloc_locked_ex;
-    free_locked_func = f;
-    return 1;
-}
-
-int CRYPTO_set_locked_mem_ex_functions(void *(*m) (size_t, const char *, int),
-                                       void (*f) (void *))
-{
-    if (!allow_customize)
-        return 0;
-    if ((m == NULL) || (f == NULL))
-        return 0;
-    malloc_locked_func = 0;
-    malloc_locked_ex_func = m;
-    free_locked_func = f;
     return 1;
 }
 
@@ -307,27 +257,6 @@ void CRYPTO_get_secure_mem_ex_functions(void *(**m)(size_t,const char *,int),
         *f=free_secure_func;
 }
 
-void CRYPTO_get_locked_mem_functions(void *(**m) (size_t),
-                                     void (**f) (void *))
-{
-    if (m != NULL)
-        *m = (malloc_locked_ex_func == default_malloc_locked_ex) ?
-            malloc_locked_func : 0;
-    if (f != NULL)
-        *f = free_locked_func;
-}
-
-void CRYPTO_get_locked_mem_ex_functions(void
-                                        *(**m) (size_t, const char *, int),
-                                        void (**f) (void *))
-{
-    if (m != NULL)
-        *m = (malloc_locked_ex_func != default_malloc_locked_ex) ?
-            malloc_locked_ex_func : 0;
-    if (f != NULL)
-        *f = free_locked_func;
-}
-
 void CRYPTO_get_mem_debug_functions(void (**m)
                                      (void *, int, const char *, int, int),
                                     void (**r) (void *, void *, int,
@@ -345,54 +274,6 @@ void CRYPTO_get_mem_debug_functions(void (**m)
         *so = set_debug_options_func;
     if (go != NULL)
         *go = get_debug_options_func;
-}
-
-void *CRYPTO_malloc_locked(int num, const char *file, int line)
-{
-    void *ret = NULL;
-
-    if (num <= 0)
-        return NULL;
-
-    if (allow_customize)
-        allow_customize = 0;
-    if (malloc_debug_func != NULL) {
-        if (allow_customize_debug)
-            allow_customize_debug = 0;
-        malloc_debug_func(NULL, num, file, line, 0);
-    }
-    ret = malloc_locked_ex_func(num, file, line);
-#ifdef LEVITTE_DEBUG_MEM
-    fprintf(stderr, "LEVITTE_DEBUG_MEM:         > 0x%p (%d)\n", ret, num);
-#endif
-    if (malloc_debug_func != NULL)
-        malloc_debug_func(ret, num, file, line, 1);
-
-#ifndef OPENSSL_CPUID_OBJ
-    /*
-     * Create a dependency on the value of 'cleanse_ctr' so our memory
-     * sanitisation function can't be optimised out. NB: We only do this for
-     * >2Kb so the overhead doesn't bother us.
-     */
-    if (ret && (num > 2048)) {
-        extern unsigned char cleanse_ctr;
-        ((unsigned char *)ret)[0] = cleanse_ctr;
-    }
-#endif
-
-    return ret;
-}
-
-void CRYPTO_free_locked(void *str)
-{
-    if (free_debug_func != NULL)
-        free_debug_func(str, 0);
-#ifdef LEVITTE_DEBUG_MEM
-    fprintf(stderr, "LEVITTE_DEBUG_MEM:         < 0x%p\n", str);
-#endif
-    free_locked_func(str);
-    if (free_debug_func != NULL)
-        free_debug_func(NULL, 1);
 }
 
 void *CRYPTO_malloc(int num, const char *file, int line)

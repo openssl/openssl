@@ -356,9 +356,6 @@ int CRYPTO_is_mem_check_on(void);
 # define OPENSSL_clear_free(addr, num) CRYPTO_clear_free(addr, num)
 # define OPENSSL_free(addr)      CRYPTO_free(addr)
 
-# define OPENSSL_malloc_locked(num) \
-        CRYPTO_malloc_locked((int)num,__FILE__,__LINE__)
-# define OPENSSL_free_locked(addr) CRYPTO_free_locked(addr)
 # define OPENSSL_MALLOC_MAX_NELEMS(type)  (((1U<<(sizeof(int)*8-1))-1)/sizeof(type))
 
 const char *SSLeay_version(int type);
@@ -456,19 +453,11 @@ void (*CRYPTO_get_dynlock_destroy_callback(void)) (struct CRYPTO_dynlock_value
                                                    *l, const char *file,
                                                    int line);
 
-/*
- * CRYPTO_set_mem_functions includes CRYPTO_set_locked_mem_functions -- call
- * the latter last if you need different functions
- */
 int CRYPTO_set_mem_functions(void *(*m) (size_t), void *(*r) (void *, size_t),
                              void (*f) (void *));
-int CRYPTO_set_locked_mem_functions(void *(*m) (size_t),
-                                    void (*f) (void *));
 int CRYPTO_set_mem_ex_functions(void *(*m) (size_t, const char *, int),
                                 void *(*r) (void *, size_t, const char *,
                                             int), void (*f) (void *));
-int CRYPTO_set_locked_mem_ex_functions(void *(*m) (size_t, const char *, int),
-                                       void (*f) (void *));
 int CRYPTO_set_mem_debug_functions(void (*m)
                                     (void *, int, const char *, int, int),
                                    void (*r) (void *, void *, int,
@@ -478,14 +467,9 @@ int CRYPTO_set_mem_debug_functions(void (*m)
 void CRYPTO_get_mem_functions(void *(**m) (size_t),
                               void *(**r) (void *, size_t),
                               void (**f) (void *));
-void CRYPTO_get_locked_mem_functions(void *(**m) (size_t),
-                                     void (**f) (void *));
 void CRYPTO_get_mem_ex_functions(void *(**m) (size_t, const char *, int),
                                  void *(**r) (void *, size_t, const char *,
                                               int), void (**f) (void *));
-void CRYPTO_get_locked_mem_ex_functions(void
-                                        *(**m) (size_t, const char *, int),
-                                        void (**f) (void *));
 void CRYPTO_get_mem_debug_functions(void (**m)
                                      (void *, int, const char *, int, int),
                                     void (**r) (void *, void *, int,
@@ -493,8 +477,6 @@ void CRYPTO_get_mem_debug_functions(void (**m)
                                     void (**f) (void *, int),
                                     void (**so) (long), long (**go) (void));
 
-void *CRYPTO_malloc_locked(int num, const char *file, int line);
-void CRYPTO_free_locked(void *ptr);
 void *CRYPTO_malloc(int num, const char *file, int line);
 char *CRYPTO_strdup(const char *str, const char *file, int line);
 void CRYPTO_free(void *ptr);
