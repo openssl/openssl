@@ -72,6 +72,7 @@ static int cpy_asc(unsigned long value, void *arg);
 static int cpy_bmp(unsigned long value, void *arg);
 static int cpy_univ(unsigned long value, void *arg);
 static int cpy_utf8(unsigned long value, void *arg);
+static int is_numeric(unsigned long value);
 static int is_printable(unsigned long value);
 
 /*
@@ -169,7 +170,9 @@ int ASN1_mbstring_ncopy(ASN1_STRING **out, const unsigned char *in, int len,
 
     /* Now work out output format and string type */
     outform = MBSTRING_ASC;
-    if (mask & B_ASN1_PRINTABLESTRING)
+    if (mask & B_ASN1_NUMERICSTRING)
+        str_type = V_ASN1_NUMERICSTRING;
+    else if (mask & B_ASN1_PRINTABLESTRING)
         str_type = V_ASN1_PRINTABLESTRING;
     else if (mask & B_ASN1_IA5STRING)
         str_type = V_ASN1_IA5STRING;
@@ -320,6 +323,8 @@ static int type_str(unsigned long value, void *arg)
 {
     unsigned long types;
     types = *((unsigned long *)arg);
+    if ((types & B_ASN1_NUMERICSTRING) && !is_numeric(value))
+        types &= ~B_ASN1_NUMERICSTRING;
     if ((types & B_ASN1_PRINTABLESTRING) && !is_printable(value))
         types &= ~B_ASN1_PRINTABLESTRING;
     if ((types & B_ASN1_IA5STRING) && (value > 127))
@@ -418,4 +423,13 @@ static int is_printable(unsigned long value)
         return 1;
 #endif                          /* CHARSET_EBCDIC */
     return 0;
+}
+
+static int is_numeric(unsigned long value)
+{
+    if (value > '9')
+        return 0;
+    if (value < '0' && value != 32)
+        return 0;
+    return 1;
 }
