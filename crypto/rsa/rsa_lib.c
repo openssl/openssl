@@ -231,7 +231,7 @@ void RSA_free(RSA *r)
     BN_clear_free(r->iqmp);
     BN_BLINDING_free(r->blinding);
     BN_BLINDING_free(r->mt_blinding);
-    OPENSSL_free_locked(r->bignum_data);
+    OPENSSL_free(r->bignum_data);
     OPENSSL_free(r);
 }
 
@@ -287,7 +287,7 @@ int RSA_memory_lock(RSA *r)
     j = 1;
     for (i = 0; i < 6; i++)
         j += bn_get_top(*t[i]);
-    if ((p = OPENSSL_malloc_locked((off + j) * sizeof(BN_ULONG))) == NULL) {
+    if ((p = OPENSSL_malloc((off + j) * sizeof(BN_ULONG))) == NULL) {
         RSAerr(RSA_F_RSA_MEMORY_LOCK, ERR_R_MALLOC_FAILURE);
         return (0);
     }

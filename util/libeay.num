@@ -1371,8 +1371,8 @@ X509V3_string_free                      1506	EXIST::FUNCTION:
 X509V3_section_free                     1507	EXIST::FUNCTION:
 X509V3_set_ctx                          1508	EXIST::FUNCTION:
 s2i_ASN1_INTEGER                        1509	EXIST::FUNCTION:
-CRYPTO_set_locked_mem_functions         1510	EXIST::FUNCTION:
-CRYPTO_get_locked_mem_functions         1511	EXIST::FUNCTION:
+CRYPTO_set_locked_mem_functions         1510	NOEXIST::FUNCTION:
+CRYPTO_get_locked_mem_functions         1511	NOEXIST::FUNCTION:
 CRYPTO_malloc_locked                    1512	EXIST::FUNCTION:
 CRYPTO_free_locked                      1513	EXIST::FUNCTION:
 BN_mod_exp2_mont                        1514	EXIST::FUNCTION:
@@ -2237,8 +2237,8 @@ DIRECTORYSTRING_it                      2767	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIA
 DIRECTORYSTRING_it                      2767	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:
 d2i_OCSP_CRLID                          2768	EXIST::FUNCTION:
 EC_POINT_is_on_curve                    2769	EXIST::FUNCTION:EC
-CRYPTO_set_locked_mem_ex_functions      2770	EXIST:!VMS:FUNCTION:
-CRYPTO_set_locked_mem_ex_funcs          2770	EXIST:VMS:FUNCTION:
+CRYPTO_set_locked_mem_ex_funcs          2770	NOEXIST::FUNCTION:
+CRYPTO_set_locked_mem_ex_functions      2770	NOEXIST::FUNCTION:
 d2i_KRB5_CHECKSUM                       2771	NOEXIST::FUNCTION:
 ASN1_item_dup                           2772	EXIST::FUNCTION:
 X509_it                                 2773	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:
@@ -2252,8 +2252,8 @@ EC_POINT_get_Jprojective_coordinates_GFp 2779	EXIST:!VMS:FUNCTION:EC
 EC_POINT_get_Jproj_coords_GFp           2779	EXIST:VMS:FUNCTION:EC
 ZLONG_it                                2780	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:
 ZLONG_it                                2780	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:
-CRYPTO_get_locked_mem_ex_functions      2781	EXIST:!VMS:FUNCTION:
-CRYPTO_get_locked_mem_ex_funcs          2781	EXIST:VMS:FUNCTION:
+CRYPTO_get_locked_mem_ex_funcs          2781	NOEXIST::FUNCTION:
+CRYPTO_get_locked_mem_ex_functions      2781	NOEXIST::FUNCTION:
 ASN1_TIME_check                         2782	EXIST::FUNCTION:
 UI_get0_user_data                       2783	EXIST::FUNCTION:
 HMAC_CTX_cleanup                        2784	EXIST::FUNCTION:
