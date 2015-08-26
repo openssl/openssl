@@ -10,7 +10,7 @@ if [ "$2" = "" ]; then
 else
   cert="$2"
 fi
-ssltest="../util/shlib_wrap.sh ./ssltest -key $key -cert $cert -c_key $key -c_cert $cert"
+ssltest="../util/shlib_wrap.sh ./ssltest -s_key $key -s_cert $cert -c_key $key -c_cert $cert"
 
 if ../util/shlib_wrap.sh ../apps/openssl x509 -in $cert -text -noout | fgrep 'DSA Public Key' >/dev/null; then
   dsa_cert=YES
@@ -176,13 +176,13 @@ if ../util/shlib_wrap.sh ../apps/openssl no-rsa; then
   echo skipping RSA tests
 else
   echo 'test tls1 with 1024bit RSA, no (EC)DHE, multiple handshakes'
-  ../util/shlib_wrap.sh ./ssltest -v -bio_pair -tls1 -cert ../apps/server2.pem -no_dhe -no_ecdhe -num 10 -f -time $extra || exit 1
+  ../util/shlib_wrap.sh ./ssltest -v -bio_pair -tls1 -s_cert ../apps/server2.pem -no_dhe -no_ecdhe -num 10 -f -time $extra || exit 1
 
   if ../util/shlib_wrap.sh ../apps/openssl no-dhparam; then
     echo skipping RSA+DHE tests
   else
     echo test tls1 with 1024bit RSA, 1024bit DHE, multiple handshakes
-    ../util/shlib_wrap.sh ./ssltest -v -bio_pair -tls1 -cert ../apps/server2.pem -dhe1024dsa -num 10 -f -time $extra || exit 1
+    ../util/shlib_wrap.sh ./ssltest -v -bio_pair -tls1 -s_cert ../apps/server2.pem -dhe1024dsa -num 10 -f -time $extra || exit 1
   fi
 fi
 
