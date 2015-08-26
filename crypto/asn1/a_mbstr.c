@@ -78,8 +78,8 @@ static int is_printable(unsigned long value);
 /*
  * These functions take a string in UTF8, ASCII or multibyte form and a mask
  * of permissible ASN1 string types. It then works out the minimal type
- * (using the order Printable < IA5 < T61 < BMP < Universal < UTF8) and
- * creates a string of the correct type with the supplied data. Yes this is
+ * (using the order Numeric < Printable < IA5 < T61 < BMP < Universal < UTF8)
+ * and creates a string of the correct type with the supplied data. Yes this is
  * horrible: it has to be :-( The 'ncopy' form checks minimum and maximum
  * size limits too.
  */
@@ -425,11 +425,21 @@ static int is_printable(unsigned long value)
     return 0;
 }
 
+/* Return 1 if the character is a digit or space */
 static int is_numeric(unsigned long value)
 {
-    if (value > '9')
+    int ch;
+    if (value > 0x7f)
         return 0;
-    if (value < '0' && value != 32)
+    ch = (int)value;
+#ifndef CHARSET_EBCDIC
+    if (!isdigit(ch) && ch != ' ')
         return 0;
+#else
+    if (ch > os_toascii['9'])
+        return 0;
+    if (ch < os_toascii['0'] && ch != os_toascii[' '])
+        return 0;
+#endif
     return 1;
 }
