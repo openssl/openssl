@@ -166,8 +166,8 @@ void RECORD_LAYER_clear(RECORD_LAYER *rl)
     SSL3_RECORD_clear(&rl->rrec);
     SSL3_RECORD_clear(&rl->wrec);
 
-    memset(rl->read_sequence, 0, sizeof(rl->read_sequence));
-    memset(rl->write_sequence, 0, sizeof(rl->write_sequence));
+    RECORD_LAYER_reset_read_sequence(rl);
+    RECORD_LAYER_reset_write_sequence(rl);
     
     if (rl->d)
         DTLS_RECORD_LAYER_clear(rl);
@@ -219,12 +219,12 @@ void RECORD_LAYER_dup(RECORD_LAYER *dst, RECORD_LAYER *src)
 
 void RECORD_LAYER_reset_read_sequence(RECORD_LAYER *rl)
 {
-    memset(rl->read_sequence, 0, 8);
+    memset(rl->read_sequence, 0, sizeof(rl->read_sequence));
 }
 
 void RECORD_LAYER_reset_write_sequence(RECORD_LAYER *rl)
 {
-    memset(rl->write_sequence, 0, 8);
+    memset(rl->write_sequence, 0, sizeof(rl->write_sequence));
 }
 
 int RECORD_LAYER_setup_comp_buffer(RECORD_LAYER *rl)
