@@ -204,20 +204,6 @@
 # include OPENSSL_UNISTD
 #endif
 
-#ifdef OPENSSL_SYS_VMS
-# define TEST_SERVER_CERT "SYS$DISK:[-.APPS]SERVER.PEM"
-# define TEST_CLIENT_CERT "SYS$DISK:[-.APPS]CLIENT.PEM"
-#elif defined(OPENSSL_SYS_WINCE)
-# define TEST_SERVER_CERT "\\OpenSSL\\server.pem"
-# define TEST_CLIENT_CERT "\\OpenSSL\\client.pem"
-#elif defined(OPENSSL_SYS_NETWARE)
-# define TEST_SERVER_CERT "\\openssl\\apps\\server.pem"
-# define TEST_CLIENT_CERT "\\openssl\\apps\\client.pem"
-#else
-# define TEST_SERVER_CERT "../apps/server.pem"
-# define TEST_CLIENT_CERT "../apps/client.pem"
-#endif
-
 /*
  * There is really no standard for this, so let's assign something
  * only for this test
@@ -965,10 +951,6 @@ int main(int argc, char *argv[])
     int server_auth = 0, i;
     struct app_verify_arg app_verify_arg =
         { APP_CALLBACK_STRING, 0, 0, NULL, NULL };
-    char *server_cert = TEST_SERVER_CERT;
-    char *server_key = NULL;
-    char *client_cert = TEST_CLIENT_CERT;
-    char *client_key = NULL;
 #ifndef OPENSSL_NO_EC
     char *named_curve = NULL;
 #endif
@@ -1043,14 +1025,18 @@ int main(int argc, char *argv[])
     }
 
     SSL_CONF_CTX_set_flags(s_cctx,
-                           SSL_CONF_FLAG_CMDLINE | SSL_CONF_FLAG_SERVER);
+                           SSL_CONF_FLAG_CMDLINE | SSL_CONF_FLAG_SERVER |
+                           SSL_CONF_FLAG_CERTIFICATE |
+                           SSL_CONF_FLAG_REQUIRE_PRIVATE);
     if (!SSL_CONF_CTX_set1_prefix(s_cctx, "-s_")) {
         ERR_print_errors(bio_err);
         goto end;
     }
 
     SSL_CONF_CTX_set_flags(c_cctx,
-                           SSL_CONF_FLAG_CMDLINE | SSL_CONF_FLAG_CLIENT);
+                           SSL_CONF_FLAG_CMDLINE | SSL_CONF_FLAG_CLIENT |
+                           SSL_CONF_FLAG_CERTIFICATE |
+                           SSL_CONF_FLAG_REQUIRE_PRIVATE);
     if (!SSL_CONF_CTX_set1_prefix(c_cctx, "-c_")) {
         ERR_print_errors(bio_err);
         goto end;
@@ -1165,30 +1151,6 @@ int main(int argc, char *argv[])
                 bytes *= 1024L;
             if (argv[0][i - 1] == 'm')
                 bytes *= 1024L * 1024L;
-        } else if (strcmp(*argv, "-cert") == 0) {
-            if (--argc < 1)
-                goto bad;
-            server_cert = *(++argv);
-        } else if (strcmp(*argv, "-s_cert") == 0) {
-            if (--argc < 1)
-                goto bad;
-            server_cert = *(++argv);
-        } else if (strcmp(*argv, "-key") == 0) {
-            if (--argc < 1)
-                goto bad;
-            server_key = *(++argv);
-        } else if (strcmp(*argv, "-s_key") == 0) {
-            if (--argc < 1)
-                goto bad;
-            server_key = *(++argv);
-        } else if (strcmp(*argv, "-c_cert") == 0) {
-            if (--argc < 1)
-                goto bad;
-            client_cert = *(++argv);
-        } else if (strcmp(*argv, "-c_key") == 0) {
-            if (--argc < 1)
-                goto bad;
-            client_key = *(++argv);
         } else if (strcmp(*argv, "-cipher") == 0) {
             if (--argc < 1)
                 goto bad;
@@ -1518,26 +1480,6 @@ int main(int argc, char *argv[])
 #ifndef OPENSSL_NO_RSA
     SSL_CTX_set_tmp_rsa_callback(s_ctx, tmp_rsa_cb);
 #endif
-
-    if (!SSL_CTX_use_certificate_file(s_ctx, server_cert, SSL_FILETYPE_PEM)) {
-        ERR_print_errors(bio_err);
-    } else if (!SSL_CTX_use_PrivateKey_file(s_ctx,
-                                            (server_key ? server_key :
-                                             server_cert),
-                                            SSL_FILETYPE_PEM)) {
-        ERR_print_errors(bio_err);
-        goto end;
-    }
-
-    if (client_auth) {
-        if (!SSL_CTX_use_certificate_file(c_ctx, client_cert, SSL_FILETYPE_PEM)
-           || !SSL_CTX_use_PrivateKey_file(c_ctx,
-                                    (client_key ? client_key : client_cert),
-                                    SSL_FILETYPE_PEM)) {
-            ERR_print_errors(bio_err);
-            goto end;
-        }
-    }
 
     if ((!SSL_CTX_load_verify_locations(s_ctx, CAfile, CApath)) ||
         (!SSL_CTX_set_default_verify_paths(s_ctx)) ||
