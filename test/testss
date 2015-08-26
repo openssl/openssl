@@ -18,6 +18,14 @@ Ukey="keyU.ss"
 Ureq="reqU.ss"
 Ucert="certU.ss"
 
+Dkey="keyD.ss"
+Dreq="reqD.ss"
+Dcert="certD.ss"
+
+Ekey="keyE.ss"
+Ereq="reqE.ss"
+Ecert="certE.ss"
+
 P1conf="P1ss.cnf"
 P1key="keyP1.ss"
 P1req="reqP1.ss"
@@ -33,8 +41,10 @@ P2intermediate="tmp_intP2.ss"
 
 echo string to make the random number generator think it has entropy >> ./.rnd
 
+req_dsa='-newkey dsa:../apps/dsa1024.pem'
+
 if ../util/shlib_wrap.sh ../apps/openssl no-rsa >/dev/null; then
-  req_new='-newkey dsa:../apps/dsa512.pem'
+  req_new=$req_dsa
 else
   req_new='-new'
 fi
@@ -66,6 +76,37 @@ $verifycmd -CAfile $CAcert $Ucert || exit 1
 
 echo Certificate details
 $x509cmd -subject -issuer -startdate -enddate -noout -in $Ucert || exit 1
+
+if ../util/shlib_wrap.sh ../apps/openssl no-dsa >/dev/null; then
+        echo skipping DSA certificate creation
+else
+        echo make a DSA user cert request
+        CN2="DSA Certificate" $reqcmd -config $Uconf -out $Dreq -keyout $Dkey $req_dsa >err.ss || exit 1
+
+        echo sign DSA user cert request
+        $x509cmd -CAcreateserial -in $Dreq -days 30 -req -out $Dcert -CA $CAcert -CAkey $CAkey -CAserial $CAserial -extfile $Uconf -extensions v3_ee_dsa >err.ss || exit 1
+        $verifycmd -CAfile $CAcert $Dcert || exit 1
+
+        echo DSA Certificate details
+        $x509cmd -subject -issuer -startdate -enddate -noout -in $Dcert || exit 1
+
+fi
+
+if ../util/shlib_wrap.sh ../apps/openssl no-ec >/dev/null; then
+        echo skipping ECDSA/ECDH certificate creation
+else
+        echo make an ECDSA/ECDH user cert request
+        ../util/shlib_wrap.sh ../apps/openssl ecparam -name P-256 -out ecp.ss || exit 1
+        CN2="ECDSA Certificate" $reqcmd -config $Uconf -out $Ereq -keyout $Ekey -newkey ec:ecp.ss >err.ss || exit 1
+
+        echo sign ECDSA/ECDH user cert request
+        $x509cmd -CAcreateserial -in $Ereq -days 30 -req -out $Ecert -CA $CAcert -CAkey $CAkey -CAserial $CAserial -extfile $Uconf -extensions v3_ee_ec >err.ss || exit 1
+        $verifycmd -CAfile $CAcert $Ecert || exit 1
+
+        echo ECDSA Certificate details
+        $x509cmd -subject -issuer -startdate -enddate -noout -in $Ecert || exit 1
+
+fi
 
 echo make a proxy cert request
 $reqcmd -config $P1conf -out $P1req -keyout $P1key $req_new >err.ss || exit 1
