@@ -55,7 +55,7 @@ B<openssl> B<x509>
 [B<-text>]
 [B<-certopt option>]
 [B<-C>]
-[B<-md2|-md5|-sha1|-mdc2>]
+[B<-[digest]>]
 [B<-clrext>]
 [B<-extfile filename>]
 [B<-extensions section>]
@@ -101,12 +101,15 @@ if this option is not specified.
 This specifies the output filename to write to or standard output by
 default.
 
-=item B<-md2|-md5|-sha1|-mdc2>
+=item B<-[digest]>
 
-the digest to use. This affects any signing or display option that uses a message
-digest, such as the B<-fingerprint>, B<-signkey> and B<-CA> options. If not
-specified then SHA1 is used. If the key being used to sign with is a DSA key
-then this option has no effect: SHA1 is always used with DSA keys.
+the digest to use.
+This affects any signing or display option that uses a message
+digest, such as the B<-fingerprint>, B<-signkey> and B<-CA> options.
+Any digest supported by the OpenSSL B<dgst> command can be used.
+If not specified then SHA1 is used.
+Note that if a DSA key is used for signing, then this flag is ignored
+and SHA1 is used.
 
 =item B<-engine id>
 

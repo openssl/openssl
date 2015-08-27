@@ -167,7 +167,8 @@ the number of days to certify the certificate for.
 
 =item B<-md alg>
 
-the message digest to use. Possible values include md5, sha1 and mdc2.
+the message digest to use.
+Any digest supported by the OpenSSL B<dgst> command can be used.
 This option also applies to CRLs.
 
 =item B<-policy arg>
@@ -406,7 +407,7 @@ least one of these must be present to generate a CRL.
 
 =item B<default_md>
 
-the same as the B<-md> option. The message digest to use. Mandatory.
+the same as the B<-md> option. Mandatory.
 
 =item B<database>
 

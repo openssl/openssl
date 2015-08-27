@@ -143,7 +143,15 @@ BIO_do_accept() are macros.
 
 =head1 RETURN VALUES
 
-TBA
+BIO_do_accept(),
+BIO_set_accept_port(), BIO_set_nbio_accept(), BIO_set_accept_bios(),
+and BIO_set_bind_mode(), return 1 for success and 0 or -1 for failure.
+
+BIO_get_accept_port() returns the port name or NULL on error.
+
+BIO_get_bind_mode() returns the set of B<BIO_BIND> flags, or -1 on failure.
+
+BIO_new_accept() returns a BIO or NULL on error.
 
 =head1 EXAMPLE
 

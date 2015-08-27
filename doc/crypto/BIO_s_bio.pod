@@ -136,9 +136,9 @@ without having to go through the SSL-interface.
 
  BIO *internal_bio, *network_bio;
  ...
- BIO_new_bio_pair(internal_bio, 0, network_bio, 0);
+ BIO_new_bio_pair(&internal_bio, 0, &network_bio, 0);
  SSL_set_bio(ssl, internal_bio, internal_bio);
- SSL_operations();
+ SSL_operations(); //e.g SSL_read and SSL_write
  ...
 
  application |   TLS-engine
@@ -147,9 +147,13 @@ without having to go through the SSL-interface.
              |     /\    ||
              |     ||    \/
              |   BIO-pair (internal_bio)
-    +----------< BIO-pair (network_bio)
+             |   BIO-pair (network_bio)
+             |     ||     /\
+             |     \/     ||
+    +-----------< BIO_operations()
     |        |
-  socket     |
+    |        |
+   socket
 
   ...
   SSL_free(ssl);		/* implicitly frees internal_bio */
