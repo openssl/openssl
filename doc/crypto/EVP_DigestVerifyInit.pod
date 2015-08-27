@@ -34,8 +34,7 @@ B<sig> of length B<siglen>.
 =head1 RETURN VALUES
 
 EVP_DigestVerifyInit() and EVP_DigestVerifyUpdate() return 1 for success and 0
-or a negative value for failure. In particular a return value of -2 indicates
-the operation is not supported by the public key algorithm.
+for failure.
 
 Unlike other functions the return value 0 from EVP_DigestVerifyFinal() only
 indicates that the signature did not verify successfully (that is tbs did

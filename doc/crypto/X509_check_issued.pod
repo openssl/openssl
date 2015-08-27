@@ -1,0 +1,36 @@
+=pod
+
+=head1 NAME
+
+X509_check_issued - checks if certificate is issued by another
+certificate
+
+=head1 SYNOPSIS
+
+ #include <openssl/x509v3.h>
+
+ int X509_check_issued(X509 *issuer, X509 *subject);
+
+
+=head1 DESCRIPTION
+
+This function checks if certificate I<subject> was issued using CA
+certificate I<issuer>. This function takes into account not only 
+matching of issuer field of I<subject> with subject field of I<issuer>,
+but also compares B<authorityKeyIdentifier> extension of I<subject> with
+B<subjectKeyIdentifier> of I<issuer> if B<authorityKeyIdentifier>
+present in the I<subject> certificate and checks B<keyUsage> field of
+I<issuer>.
+
+=head1 RETURN VALUE
+
+Function return B<X509_V_OK> if certificate I<subject> is issued by
+I<issuer> or some B<X509_V_ERR*> constant to indicate an error.
+
+=head1 SEE ALSO
+
+L<X509_verify_cert(3)>,
+L<X509_check_ca(3)>,
+L<verify(1)>
+
+=cut

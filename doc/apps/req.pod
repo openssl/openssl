@@ -127,13 +127,6 @@ in the configuration file and any requested extensions.
 If the B<-key> option is not used it will generate a new RSA private
 key using information specified in the configuration file.
 
-=item B<-subj arg>
-
-Replaces subject field of input request with specified data and outputs
-modified request. The arg must be formatted as
-I</type0=value0/type1=value1/type2=...>,
-characters may be escaped by \ (backslash), no spaces are skipped.
-
 =item B<-rand file(s)>
 
 a file or files containing random data used to seed the random number
@@ -198,8 +191,9 @@ will not be encrypted.
 
 =item B<-[digest]>
 
-this specifies the message digest to sign the request with (such as
-B<-md5>, B<-sha1>). This overrides the digest algorithm specified in
+this specifies the message digest to sign the request.
+Any digest supported by the OpenSSL B<dgst> command can be used.
+This overrides the digest algorithm specified in
 the configuration file.
 
 Some public key algorithms may override this choice. For instance, DSA
@@ -385,9 +379,10 @@ option. For compatibility B<encrypt_rsa_key> is an equivalent option.
 
 =item B<default_md>
 
-This option specifies the digest algorithm to use. Possible values
-include B<md5 sha1 mdc2>. If not present then MD5 is used. This
-option can be overridden on the command line.
+This option specifies the digest algorithm to use.
+Any digest supported by the OpenSSL B<dgst> command can be used.
+If not present then MD5 is used.
+This option can be overridden on the command line.
 
 =item B<string_mask>
 

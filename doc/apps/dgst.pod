@@ -185,6 +185,10 @@ To verify a signature:
 
 =head1 NOTES
 
+The digest mechanisms that are available will depend on the options
+used when building OpenSSL.
+The B<list digest-commands> command can be used to list them.
+
 New or agile applications should use probably use SHA-256. Other digests,
 particularly SHA-1 and MD5, are still widely used for interoperating
 with existing formats and protocols.

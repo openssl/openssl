@@ -12,7 +12,7 @@ I<command>
 [ I<command_opts> ]
 [ I<command_args> ]
 
-B<openssl> [ B<list-standard-commands> | B<list-message-digest-commands> | B<list-cipher-commands> | B<list-cipher-algorithms> | B<list-message-digest-algorithms> | B<list-public-key-algorithms>]
+B<openssl> B<list> [ B<standard-commands> | B<digest-commands> | B<cipher-commands> | B<cipher-algorithms> | B<digest-algorithms> | B<public-key-algorithms>]
 
 B<openssl> B<no->I<XXX> [ I<arbitrary options> ]
 
@@ -41,20 +41,20 @@ The B<openssl> program provides a rich variety of commands (I<command> in the
 SYNOPSIS above), each of which often has a wealth of options and arguments
 (I<command_opts> and I<command_args> in the SYNOPSIS).
 
-The pseudo-commands B<list-standard-commands>, B<list-message-digest-commands>,
-and B<list-cipher-commands> output a list (one entry per line) of the names
+The list parameters B<standard-commands>, B<digest-commands>,
+and B<cipher-commands> output a list (one entry per line) of the names
 of all standard commands, message digest commands, or cipher commands,
 respectively, that are available in the present B<openssl> utility.
 
-The pseudo-commands B<list-cipher-algorithms> and
-B<list-message-digest-algorithms> list all cipher and message digest names, one entry per line. Aliases are listed as:
+The list parameters B<cipher-algorithms> and
+B<digest-algorithms> list all cipher and message digest names, one entry per line. Aliases are listed as:
 
  from => to
 
-The pseudo-command B<list-public-key-algorithms> lists all supported public
+The list parameter B<public-key-algorithms> lists all supported public
 key algorithms.
 
-The pseudo-command B<no->I<XXX> tests whether a command of the
+The command B<no->I<XXX> tests whether a command of the
 specified name is available.  If no command named I<XXX> exists, it
 returns 0 (success) and prints B<no->I<XXX>; otherwise it returns 1
 and prints I<XXX>.  In both cases, the output goes to B<stdout> and
@@ -63,7 +63,7 @@ are always ignored.  Since for each cipher there is a command of the
 same name, this provides an easy way for shell scripts to test for the
 availability of ciphers in the B<openssl> program.  (B<no->I<XXX> is
 not able to detect pseudo-commands such as B<quit>,
-B<list->I<...>B<-commands>, or B<no->I<XXX> itself.)
+B<list>, or B<no->I<XXX> itself.)
 
 =head2 STANDARD COMMANDS
 
