@@ -1,8 +1,21 @@
 
- apps/openssl.pod .... Documentation of OpenSSL `openssl' command
- crypto/crypto.pod ... Documentation of OpenSSL crypto.h (libcrypto)
- ssl/ssl.pod ......... Documentation of OpenSSL ssl.h (libssl)
- standards.txt ....... Pointers to standards, RFCs or internet drafts
-                       that are related to OpenSSL.  Incomplete.
+README  This file
 
- HTML versions are on https://www.openssl.org/docs
+fingerprints.txt
+        PGP fingerprints of authoried release signers
+
+standards.txt
+        Pointers to standards, RFC's and IETF Drafts that are
+        related to OpenSSL.  Incomplete.
+
+HOWTO/
+        A few how-to documents; not necessarily up-to-date
+apps/
+        The openssl command-line tools; start with openssl.pod
+ssl/
+        The SSL library; start with ssl.pod
+crypto/
+        The cryptographic library; start with crypto.pod
+
+Formatted versions of the manpages (apps,ssl,crypto) can be found at
+        https://www.openssl.org/docs/manpages.html
