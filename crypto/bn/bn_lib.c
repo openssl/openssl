@@ -553,7 +553,7 @@ BIGNUM *BN_bin2bn(const unsigned char *s, int len, BIGNUM *ret)
         return (NULL);
     bn_check_top(ret);
     /* Skip leading zero's. */
-    for ( ; *s == 0 && len > 0; s++, len--)
+    for ( ; len > 0 && *s == 0; s++, len--)
         continue;
     n = len;
     if (n == 0) {
