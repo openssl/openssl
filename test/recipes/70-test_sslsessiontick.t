@@ -53,8 +53,23 @@
 # Hudson (tjh@cryptsoft.com).
 
 use strict;
+use OpenSSL::Test qw/:DEFAULT cmdstr top_file top_dir/;
 use TLSProxy::Proxy;
 use File::Temp qw(tempfile);
+
+my $test_name = "test_sslsessiontick";
+setup($test_name);
+
+plan skip_all => "$test_name can only be performed with OpenSSL configured shared"
+    unless (map { chomp; s/^SHARED_LIBS=\s*//; $_ }
+	    grep { /^SHARED_LIBS=/ }
+	    do { local @ARGV = ( top_file("Makefile") ); <> })[0] ne "";
+
+$ENV{OPENSSL_ENGINES} = top_dir("engines");
+$ENV{OPENSSL_ia32cap} = '~0x200000200000000';
+
+sub checkmessages($$$$$$);
+sub clearall();
 
 my $chellotickext = 0;
 my $shellotickext = 0;
@@ -63,8 +78,11 @@ my $ticketseen = 0;
 
 my $proxy = TLSProxy::Proxy->new(
     undef,
-    @ARGV
+    cmdstr(app(["openssl"])),
+    top_file("apps", "server.pem")
 );
+
+plan tests => 5;
 
 #Test 1: By default with no existing session we should get a session ticket
 #Expected result: ClientHello extension seen; ServerHello extension seen
@@ -107,7 +125,7 @@ checkmessages(4, "Session resumption session ticket test", 1, 0, 0, 0);
 #Expected result: ClientHello extension seen; ServerHello extension seen
 #                 NewSessionTicket message seen; Abbreviated handshake
 clearall();
-(my $fh, my $session) = tempfile();
+($fh, $session) = tempfile();
 $proxy->serverconnects(2);
 $proxy->clientflags("-sess_out ".$session." -no_ticket");
 $proxy->start();
@@ -117,50 +135,45 @@ $proxy->clientstart();
 checkmessages(5, "Session resumption with ticket capable client without a "
                  ."ticket", 1, 1, 1, 0);
 
-sub checkmessages()
+sub checkmessages($$$$$$)
 {
     my ($testno, $testname, $testch, $testsh, $testtickseen, $testhand) = @_;
 
-    foreach my $message (@{$proxy->message_list}) {
-        if ($message->mt == TLSProxy::Message::MT_CLIENT_HELLO
-                || $message->mt == TLSProxy::Message::MT_SERVER_HELLO) {
-            #Get the extensions data
-            my %extensions = %{$message->extension_data};
-            if (defined
-                    $extensions{TLSProxy::ClientHello::EXT_SESSION_TICKET}) {
-                if ($message->mt == TLSProxy::Message::MT_CLIENT_HELLO) {
-                    $chellotickext = 1;
-                } else {
-                    $shellotickext = 1;
-                }
-            }
-        } elsif ($message->mt == TLSProxy::Message::MT_CLIENT_KEY_EXCHANGE) {
-            #Must be doing a full handshake
-            $fullhand = 1;
-        } elsif ($message->mt == TLSProxy::Message::MT_NEW_SESSION_TICKET) {
-            $ticketseen = 1;
-        }
-    }
+    subtest $testname => sub {
 
-    TLSProxy::Message->success or die "FAILED: $testname: Hanshake failed "
-                                      ."(Test $testno)\n";
-    if (($testch && !$chellotickext) || (!$testch && $chellotickext)) {
-        die "FAILED: $testname: ClientHello extension Session Ticket check "
-            ."failed (Test $testno)\n";
+	foreach my $message (@{$proxy->message_list}) {
+	    if ($message->mt == TLSProxy::Message::MT_CLIENT_HELLO
+                || $message->mt == TLSProxy::Message::MT_SERVER_HELLO) {
+		#Get the extensions data
+		my %extensions = %{$message->extension_data};
+		if (defined
+                    $extensions{TLSProxy::ClientHello::EXT_SESSION_TICKET}) {
+		    if ($message->mt == TLSProxy::Message::MT_CLIENT_HELLO) {
+			$chellotickext = 1;
+		    } else {
+			$shellotickext = 1;
+		    }
+		}
+	    } elsif ($message->mt == TLSProxy::Message::MT_CLIENT_KEY_EXCHANGE) {
+		#Must be doing a full handshake
+		$fullhand = 1;
+	    } elsif ($message->mt == TLSProxy::Message::MT_NEW_SESSION_TICKET) {
+		$ticketseen = 1;
+	    }
+	}
+
+	plan tests => 5;
+
+	ok(TLSProxy::Message->success, "Hanshake");
+	ok(($testch && $chellotickext) || (!$testch && !$chellotickext),
+	   "ClientHello extension Session Ticket check");
+	ok(($testsh && $shellotickext) || (!$testsh && !$shellotickext),
+	   "ServerHello extension Session Ticket check");
+	ok(($testtickseen && $ticketseen) || (!$testtickseen && !$ticketseen),
+	   "Session Ticket message presence check");
+	ok(($testhand && $fullhand) || (!$testhand && !$fullhand),
+	   "Session Ticket full handshake check");
     }
-    if (($testsh && !$shellotickext) || (!$testsh && $shellotickext)) {
-        die "FAILED: $testname: ServerHello extension Session Ticket check "
-            ."failed (Test $testno)\n";
-    }
-    if (($testtickseen && !$ticketseen) || (!$testtickseen && $ticketseen)) {
-        die "FAILED: $testname: Session Ticket message presence check failed "
-            ."(Test $testno)\n";
-    }
-    if (($testhand && !$fullhand) || (!$testhand && $fullhand)) {
-        die "FAILED: $testname: Session Ticket full handshake check failed "
-            ."(Test $testno)\n";
-    }
-    print "SUCCESS: $testname (Test#$testno)\n";
 }
 
 sub clearall()
