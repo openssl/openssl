@@ -348,6 +348,7 @@ int PKCS7_verify(PKCS7 *p7, STACK_OF(X509) *certs, X509_STORE *store,
         tmpin = BIO_new_mem_buf(ptr, len);
         if (tmpin == NULL) {
             PKCS7err(PKCS7_F_PKCS7_VERIFY, ERR_R_MALLOC_FAILURE);
+            sk_X509_free(signers);
             return 0;
         }
     } else

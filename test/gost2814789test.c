@@ -1411,6 +1411,7 @@ int main(int argc, char *argv[])
             }
             siglen = 4;
             OPENSSL_assert(EVP_DigestSignFinal(&mctx, bTest, &siglen));
+            EVP_PKEY_free(mac_key);
             EVP_MD_CTX_cleanup(&mctx);
             enlu = (int)tcs[t].ullLen;
             enlf = 0;
@@ -1433,6 +1434,8 @@ int main(int argc, char *argv[])
 
     printf(" passed\n");
     fflush(NULL);
+
+    NCONF_free(pConfig);
 
     return EXIT_SUCCESS;
 }
