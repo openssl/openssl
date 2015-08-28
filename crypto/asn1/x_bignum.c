@@ -163,8 +163,8 @@ static int bn_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
 {
     BIGNUM *bn;
 
-    if (!*pval)
-        bn_new(pval, it);
+    if (*pval == NULL && !bn_new(pval, it))
+        return 0;
     bn = (BIGNUM *)*pval;
     if (!BN_bin2bn(cont, len, bn)) {
         bn_free(pval, it);
