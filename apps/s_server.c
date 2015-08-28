@@ -658,7 +658,10 @@ static int cert_status_cb(SSL *s, void *arg)
     if (!X509_STORE_CTX_init(&inctx,
                              SSL_CTX_get_cert_store(SSL_get_SSL_CTX(s)),
                              NULL, NULL))
+    {
+    	X509_STORE_CTX_cleanup(&inctx);
         goto err;
+    }
     if (X509_STORE_get_by_subject(&inctx, X509_LU_X509,
                                   X509_get_issuer_name(x), &obj) <= 0) {
         BIO_puts(bio_err, "cert_status: Can't retrieve issuer certificate.\n");

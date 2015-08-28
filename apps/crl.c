@@ -237,6 +237,7 @@ int crl_main(int argc, char **argv)
             goto end;
         if (!X509_STORE_CTX_init(&ctx, store, NULL, NULL)) {
             BIO_printf(bio_err, "Error initialising X509 store\n");
+			X509_STORE_CTX_cleanup(&ctx);
             goto end;
         }
 

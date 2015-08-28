@@ -717,7 +717,11 @@ int get_cert_chain(X509 *cert, X509_STORE *store, STACK_OF(X509) **chain)
      * for an error, but how that fits into the return value of this function
      * is less obvious.
      */
-    X509_STORE_CTX_init(&store_ctx, store, cert, NULL);
+    if(!X509_STORE_CTX_init(&store_ctx, store, cert, NULL)){
+		i = -1;
+		chn = NULL;
+		goto err;
+  	}
     if (X509_verify_cert(&store_ctx) <= 0) {
         i = X509_STORE_CTX_get_error(&store_ctx);
         if (i == 0)

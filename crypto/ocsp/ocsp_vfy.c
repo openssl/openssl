@@ -126,6 +126,7 @@ int OCSP_basic_verify(OCSP_BASICRESP *bs, STACK_OF(X509) *certs,
         if (!init_res) {
             ret = -1;
             OCSPerr(OCSP_F_OCSP_BASIC_VERIFY, ERR_R_X509_LIB);
+			X509_STORE_CTX_cleanup(&ctx);
             goto end;
         }
 
@@ -414,6 +415,7 @@ int OCSP_request_verify(OCSP_REQUEST *req, STACK_OF(X509) *certs,
                                            req->optionalSignature->certs);
         if (!init_res) {
             OCSPerr(OCSP_F_OCSP_REQUEST_VERIFY, ERR_R_X509_LIB);
+			X509_STORE_CTX_cleanup(&ctx);
             return 0;
         }
 
