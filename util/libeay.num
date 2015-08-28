@@ -1373,8 +1373,8 @@ X509V3_set_ctx                          1508	EXIST::FUNCTION:
 s2i_ASN1_INTEGER                        1509	EXIST::FUNCTION:
 CRYPTO_set_locked_mem_functions         1510	NOEXIST::FUNCTION:
 CRYPTO_get_locked_mem_functions         1511	NOEXIST::FUNCTION:
-CRYPTO_malloc_locked                    1512	EXIST::FUNCTION:
-CRYPTO_free_locked                      1513	EXIST::FUNCTION:
+CRYPTO_malloc_locked                    1512	NOEXIST::FUNCTION:
+CRYPTO_free_locked                      1513	NOEXIST::FUNCTION:
 BN_mod_exp2_mont                        1514	EXIST::FUNCTION:
 ERR_get_error_line_data                 1515	EXIST::FUNCTION:
 ERR_peek_error_line_data                1516	EXIST::FUNCTION:
