@@ -25,7 +25,7 @@ for use in the DSA and stores the result in B<dsa>.
 
 B<bits> is the length of the prime p to be generated.
 For lengths under 2048 bits, the length of q is 160 bits; for lengths
-at least 2048, it is set to 256 bits.
+greater than or equal to 2048 bits, the length of q is set to 256 bits.
 
 If B<seed> is NULL, the primes will be generated at random.
 If B<seed_len> is less than the length of q, an error is returned.

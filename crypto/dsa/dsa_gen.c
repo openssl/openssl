@@ -136,7 +136,7 @@ int dsa_builtin_paramgen(DSA *ret, size_t bits, size_t qbits,
         if (seed_len < (size_t)qsize)
             return 0;
         if (seed_len > (size_t)qsize) {
-            /* Don't overflow seed local variable. */
+            /* Only consume as much seed as is expected. */
             seed_len = qsize;
         }
         memcpy(seed, seed_in, seed_len);
@@ -163,13 +163,13 @@ int dsa_builtin_paramgen(DSA *ret, size_t bits, size_t qbits,
 
     for (;;) {
         for (;;) {              /* find q */
-            int seed_is_random = seed_in == NULL;
+            int use_random_seed = (seed_in == NULL);
 
             /* step 1 */
             if (!BN_GENCB_call(cb, 0, m++))
                 goto err;
 
-            if (seed_is_random) {
+            if (use_random_seed) {
                 if (RAND_bytes(seed, qsize) <= 0)
                     goto err;
             } else {
@@ -201,7 +201,7 @@ int dsa_builtin_paramgen(DSA *ret, size_t bits, size_t qbits,
 
             /* step 4 */
             r = BN_is_prime_fasttest_ex(q, DSS_prime_checks, ctx,
-                                        seed_is_random, cb);
+                                        use_random_seed, cb);
             if (r > 0)
                 break;
             if (r != 0)
