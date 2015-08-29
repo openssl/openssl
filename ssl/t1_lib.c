@@ -2712,8 +2712,11 @@ static void ssl_set_default_md(SSL *s)
     pmd[SSL_PKEY_DSA_SIGN] = EVP_sha1();
 #endif
 #ifndef OPENSSL_NO_RSA
-    pmd[SSL_PKEY_RSA_SIGN] = EVP_sha1();
-    pmd[SSL_PKEY_RSA_ENC] = EVP_sha1();
+    if (SSL_USE_SIGALGS(s))
+        pmd[SSL_PKEY_RSA_SIGN] = EVP_sha1();
+    else
+        pmd[SSL_PKEY_RSA_SIGN] = EVP_md5_sha1();
+    pmd[SSL_PKEY_RSA_ENC] = pmd[SSL_PKEY_RSA_SIGN];
 #endif
 #ifndef OPENSSL_NO_EC
     pmd[SSL_PKEY_ECC] = EVP_sha1();
