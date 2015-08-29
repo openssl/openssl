@@ -2296,36 +2296,11 @@ int X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store, X509 *x509,
     ctx->tree = NULL;
     ctx->parent = NULL;
 
-    ctx->param = X509_VERIFY_PARAM_new();
-
-    if (!ctx->param) {
-        X509err(X509_F_X509_STORE_CTX_INIT, ERR_R_MALLOC_FAILURE);
-        return 0;
-    }
-
-    /*
-     * Inherit callbacks and flags from X509_STORE if not set use defaults.
-     */
-
-    if (store)
-        ret = X509_VERIFY_PARAM_inherit(ctx->param, store->param);
-    else
-        ctx->param->inh_flags |= X509_VP_FLAG_DEFAULT | X509_VP_FLAG_ONCE;
-
     if (store) {
         ctx->verify_cb = store->verify_cb;
         ctx->cleanup = store->cleanup;
     } else
         ctx->cleanup = 0;
-
-    if (ret)
-        ret = X509_VERIFY_PARAM_inherit(ctx->param,
-                                        X509_VERIFY_PARAM_lookup("default"));
-
-    if (ret == 0) {
-        X509err(X509_F_X509_STORE_CTX_INIT, ERR_R_MALLOC_FAILURE);
-        return 0;
-    }
 
     if (store && store->check_issued)
         ctx->check_issued = store->check_issued;
@@ -2380,16 +2355,46 @@ int X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store, X509 *x509,
     ctx->check_policy = check_policy;
 
     /*
+    *   For ctx->cleanup running well in X509_STORE_CTX_cleanup ,
+    *   initial all ctx before exceptional handling.
+    */
+    ctx->param = X509_VERIFY_PARAM_new();
+    if (!ctx->param) {
+        X509err(X509_F_X509_STORE_CTX_INIT, ERR_R_MALLOC_FAILURE);
+        goto err;
+    }
+
+    /*
+     * Inherit callbacks and flags from X509_STORE if not set use defaults.
+     */
+    if (store)
+        ret = X509_VERIFY_PARAM_inherit(ctx->param, store->param);
+    else
+        ctx->param->inh_flags |= X509_VP_FLAG_DEFAULT | X509_VP_FLAG_ONCE;
+
+    if (ret)
+        ret = X509_VERIFY_PARAM_inherit(ctx->param,
+                                        X509_VERIFY_PARAM_lookup("default"));
+
+    if (ret == 0) {
+        X509err(X509_F_X509_STORE_CTX_INIT, ERR_R_MALLOC_FAILURE);
+        goto err;
+    }
+
+    /*
      * Since X509_STORE_CTX_cleanup does a proper "free" on the ex_data, we
      * put a corresponding "new" here.
      */
     if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_X509_STORE_CTX, ctx,
                             &(ctx->ex_data))) {
-        OPENSSL_free(ctx);
         X509err(X509_F_X509_STORE_CTX_INIT, ERR_R_MALLOC_FAILURE);
-        return 0;
+        goto err;
     }
     return 1;
+    
+err:
+    X509_STORE_CTX_cleanup(ctx);
+    return 0;
 }
 
 /*
