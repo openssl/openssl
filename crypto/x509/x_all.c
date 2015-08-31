@@ -63,6 +63,7 @@
 #include <openssl/asn1.h>
 #include <openssl/evp.h>
 #include <openssl/x509.h>
+#include "internal/x509_int.h"
 #include <openssl/ocsp.h>
 #ifndef OPENSSL_NO_RSA
 # include <openssl/rsa.h>

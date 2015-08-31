@@ -63,6 +63,7 @@
 #include <openssl/asn1.h>
 #include <openssl/asn1t.h>
 #include <openssl/x509.h>
+#include "internal/x509_int.h"
 #include <openssl/objects.h>
 #include <openssl/buffer.h>
 #include <openssl/pem.h>
@@ -302,4 +303,14 @@ int X509_REQ_add1_attr_by_txt(X509_REQ *req,
                                 type, bytes, len))
         return 1;
     return 0;
+}
+
+long X509_REQ_get_version(X509_REQ *req)
+{
+    return ASN1_INTEGER_get(req->req_info->version);
+}
+
+X509_NAME *X509_REQ_get_subject_name(X509_REQ *req)
+{
+    return req->req_info->subject;
 }

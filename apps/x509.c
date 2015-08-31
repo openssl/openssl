@@ -567,15 +567,6 @@ int x509_main(int argc, char **argv)
             goto end;
         }
 
-        if ((req->req_info == NULL) ||
-            (req->req_info->pubkey == NULL) ||
-            (req->req_info->pubkey->public_key == NULL) ||
-            (req->req_info->pubkey->public_key->data == NULL)) {
-            BIO_printf(bio_err,
-                       "The certificate request appears to corrupted\n");
-            BIO_printf(bio_err, "It does not contain a public key\n");
-            goto end;
-        }
         if ((pkey = X509_REQ_get_pubkey(req)) == NULL) {
             BIO_printf(bio_err, "error unpacking public key\n");
             goto end;
@@ -611,9 +602,9 @@ int x509_main(int argc, char **argv)
         } else if (!X509_set_serialNumber(x, sno))
             goto end;
 
-        if (!X509_set_issuer_name(x, req->req_info->subject))
+        if (!X509_set_issuer_name(x, X509_REQ_get_subject_name(req)))
             goto end;
-        if (!X509_set_subject_name(x, req->req_info->subject))
+        if (!X509_set_subject_name(x, X509_REQ_get_subject_name(req)))
             goto end;
 
         X509_gmtime_adj(X509_get_notBefore(x), 0);

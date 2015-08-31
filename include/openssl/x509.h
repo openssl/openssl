@@ -166,21 +166,9 @@ typedef struct x509_attributes_st X509_ATTRIBUTE;
 
 DECLARE_STACK_OF(X509_ATTRIBUTE)
 
-typedef struct X509_req_info_st {
-    ASN1_ENCODING enc;
-    ASN1_INTEGER *version;
-    X509_NAME *subject;
-    X509_PUBKEY *pubkey;
-    /*  d=2 hl=2 l=  0 cons: cont: 00 */
-    STACK_OF(X509_ATTRIBUTE) *attributes; /* [ 0 ] */
-} X509_REQ_INFO;
+typedef struct X509_req_info_st X509_REQ_INFO;
 
-typedef struct X509_req_st {
-    X509_REQ_INFO *req_info;
-    X509_ALGOR *sig_alg;
-    ASN1_BIT_STRING *signature;
-    int references;
-} X509_REQ;
+typedef struct X509_req_st X509_REQ;
 
 typedef struct x509_cinf_st {
     ASN1_INTEGER *version;      /* [ 0 ] default of v1 */
@@ -508,8 +496,6 @@ extern "C" {
 # define         X509_get_notBefore(x) ((x)->cert_info->validity->notBefore)
 # define         X509_get_notAfter(x) ((x)->cert_info->validity->notAfter)
 # define         X509_extract_key(x)     X509_get_pubkey(x)/*****/
-# define         X509_REQ_get_version(x) ASN1_INTEGER_get((x)->req_info->version)
-# define         X509_REQ_get_subject_name(x) ((x)->req_info->subject)
 # define         X509_REQ_extract_key(a) X509_REQ_get_pubkey(a)
 # define         X509_name_cmp(a,b)      X509_NAME_cmp((a),(b))
 # define         X509_get_signature_type(x) EVP_PKEY_type(OBJ_obj2nid((x)->sig_alg->algorithm))
@@ -816,7 +802,9 @@ EVP_PKEY *X509_get_pubkey(X509 *x);
 ASN1_BIT_STRING *X509_get0_pubkey_bitstr(const X509 *x);
 int X509_certificate_type(X509 *x, EVP_PKEY *pubkey /* optional */ );
 
+long X509_REQ_get_version(X509_REQ *req);
 int X509_REQ_set_version(X509_REQ *x, long version);
+X509_NAME *X509_REQ_get_subject_name(X509_REQ *req);
 int X509_REQ_set_subject_name(X509_REQ *req, X509_NAME *name);
 int X509_REQ_set_pubkey(X509_REQ *x, EVP_PKEY *pkey);
 EVP_PKEY *X509_REQ_get_pubkey(X509_REQ *req);
