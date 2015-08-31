@@ -71,6 +71,7 @@
 
 #include <openssl/lhash.h>
 #include <openssl/x509.h>
+#include "internal/x509_int.h"
 
 typedef struct lookup_dir_hashes_st {
     unsigned long hash;

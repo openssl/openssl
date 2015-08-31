@@ -340,38 +340,7 @@ struct x509_revoked_st {
 
 DECLARE_STACK_OF(X509_REVOKED)
 
-typedef struct X509_crl_info_st {
-    ASN1_INTEGER *version;
-    X509_ALGOR *sig_alg;
-    X509_NAME *issuer;
-    ASN1_TIME *lastUpdate;
-    ASN1_TIME *nextUpdate;
-    STACK_OF(X509_REVOKED) *revoked;
-    STACK_OF(X509_EXTENSION) /* [0] */ *extensions;
-    ASN1_ENCODING enc;
-} X509_CRL_INFO;
-
-struct X509_crl_st {
-    /* actual signature */
-    X509_CRL_INFO *crl;
-    X509_ALGOR *sig_alg;
-    ASN1_BIT_STRING *signature;
-    int references;
-    int flags;
-    /* Copies of various extensions */
-    AUTHORITY_KEYID *akid;
-    ISSUING_DIST_POINT *idp;
-    /* Convenient breakdown of IDP */
-    int idp_flags;
-    int idp_reasons;
-    /* CRL and base CRL numbers for delta processing */
-    ASN1_INTEGER *crl_number;
-    ASN1_INTEGER *base_crl_number;
-    unsigned char sha1_hash[SHA_DIGEST_LENGTH];
-    STACK_OF(GENERAL_NAMES) *issuers;
-    const X509_CRL_METHOD *meth;
-    void *meth_data;
-} /* X509_CRL */ ;
+typedef struct X509_crl_info_st X509_CRL_INFO;
 
 DECLARE_STACK_OF(X509_CRL)
 
@@ -493,12 +462,6 @@ extern "C" {
 # define         X509_REQ_extract_key(a) X509_REQ_get_pubkey(a)
 # define         X509_name_cmp(a,b)      X509_NAME_cmp((a),(b))
 # define         X509_get_signature_type(x) EVP_PKEY_type(OBJ_obj2nid((x)->sig_alg->algorithm))
-
-# define         X509_CRL_get_version(x) ASN1_INTEGER_get((x)->crl->version)
-# define         X509_CRL_get_lastUpdate(x) ((x)->crl->lastUpdate)
-# define         X509_CRL_get_nextUpdate(x) ((x)->crl->nextUpdate)
-# define         X509_CRL_get_issuer(x) ((x)->crl->issuer)
-# define         X509_CRL_get_REVOKED(x) ((x)->crl->revoked)
 
 void X509_CRL_set_default_method(const X509_CRL_METHOD *meth);
 X509_CRL_METHOD *X509_CRL_METHOD_new(int (*crl_init) (X509_CRL *crl),
@@ -833,6 +796,14 @@ int X509_CRL_set_lastUpdate(X509_CRL *x, const ASN1_TIME *tm);
 int X509_CRL_set_nextUpdate(X509_CRL *x, const ASN1_TIME *tm);
 int X509_CRL_sort(X509_CRL *crl);
 void X509_CRL_up_ref(X509_CRL *crl);
+
+long X509_CRL_get_version(X509_CRL *crl);
+ASN1_TIME *X509_CRL_get_lastUpdate(X509_CRL *crl);
+ASN1_TIME *X509_CRL_get_nextUpdate(X509_CRL *crl);
+X509_NAME *X509_CRL_get_issuer(X509_CRL *crl);
+STACK_OF(X509_REVOKED) *X509_CRL_get_REVOKED(X509_CRL *crl);
+void X509_CRL_get0_signature(ASN1_BIT_STRING **psig, X509_ALGOR **palg,
+                             const X509_CRL *crl);
 
 int X509_REVOKED_set_serialNumber(X509_REVOKED *x, ASN1_INTEGER *serial);
 int X509_REVOKED_set_revocationDate(X509_REVOKED *r, ASN1_TIME *tm);

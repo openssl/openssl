@@ -63,6 +63,7 @@
 #include <openssl/bn.h>
 #include <openssl/objects.h>
 #include <openssl/x509.h>
+#include "internal/x509_int.h"
 #include <openssl/x509v3.h>
 
 #ifndef OPENSSL_NO_STDIO

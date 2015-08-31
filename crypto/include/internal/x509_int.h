@@ -105,3 +105,36 @@ struct X509_req_st {
     ASN1_BIT_STRING *signature;
     int references;
 };
+
+struct X509_crl_info_st {
+    ASN1_INTEGER *version;
+    X509_ALGOR *sig_alg;
+    X509_NAME *issuer;
+    ASN1_TIME *lastUpdate;
+    ASN1_TIME *nextUpdate;
+    STACK_OF(X509_REVOKED) *revoked;
+    STACK_OF(X509_EXTENSION) /* [0] */ *extensions;
+    ASN1_ENCODING enc;
+};
+
+struct X509_crl_st {
+    /* actual signature */
+    X509_CRL_INFO *crl;
+    X509_ALGOR *sig_alg;
+    ASN1_BIT_STRING *signature;
+    int references;
+    int flags;
+    /* Copies of various extensions */
+    AUTHORITY_KEYID *akid;
+    ISSUING_DIST_POINT *idp;
+    /* Convenient breakdown of IDP */
+    int idp_flags;
+    int idp_reasons;
+    /* CRL and base CRL numbers for delta processing */
+    ASN1_INTEGER *crl_number;
+    ASN1_INTEGER *base_crl_number;
+    unsigned char sha1_hash[SHA_DIGEST_LENGTH];
+    STACK_OF(GENERAL_NAMES) *issuers;
+    const X509_CRL_METHOD *meth;
+    void *meth_data;
+};
