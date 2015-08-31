@@ -21,6 +21,8 @@
 ;;;
 ;;; A new buffer with .dir-locals.el will appear.  Save it (C-x C-s).
 ;;;
+;;; Alternatively, have a look at dir-locals.example.el
+
 ;;; For suggesting improvements, please send e-mail to levitte@openssl.org.
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
