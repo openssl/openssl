@@ -63,6 +63,7 @@
 #include <openssl/objects.h>
 #include <openssl/evp.h>
 #include <openssl/x509.h>
+#include "internal/x509_int.h"
 
 int X509_CRL_set_version(X509_CRL *x, long version)
 {
@@ -135,6 +136,40 @@ int X509_CRL_sort(X509_CRL *c)
 void X509_CRL_up_ref(X509_CRL *crl)
 {
     CRYPTO_add(&crl->references, 1, CRYPTO_LOCK_X509_CRL);
+}
+
+long X509_CRL_get_version(X509_CRL *crl)
+{
+    return ASN1_INTEGER_get(crl->crl->version);
+}
+
+ASN1_TIME *X509_CRL_get_lastUpdate(X509_CRL *crl)
+{
+    return crl->crl->lastUpdate;
+}
+
+ASN1_TIME *X509_CRL_get_nextUpdate(X509_CRL *crl)
+{
+    return crl->crl->nextUpdate;
+}
+
+X509_NAME *X509_CRL_get_issuer(X509_CRL *crl)
+{
+    return crl->crl->issuer;
+}
+
+STACK_OF(X509_REVOKED) *X509_CRL_get_REVOKED(X509_CRL *crl)
+{
+    return crl->crl->revoked;
+}
+
+void X509_CRL_get0_signature(ASN1_BIT_STRING **psig, X509_ALGOR **palg,
+                             const X509_CRL *crl)
+{
+    if (psig)
+        *psig = crl->signature;
+    if (palg)
+        *palg = crl->sig_alg;
 }
 
 int X509_REVOKED_set_revocationDate(X509_REVOKED *x, ASN1_TIME *tm)
