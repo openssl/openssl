@@ -10,8 +10,6 @@
 ((nil
   (indent-tabs-mode . nil)
   (fill-column . 78)
-  ;; (auto-fill-mode . t)  ;; optional.
   )
  (c-mode
-  (auto-fill-mode . nil)   ;; auto-fill makes more harm than good in C
   (c-file-style . "OpenSSL-II")))
