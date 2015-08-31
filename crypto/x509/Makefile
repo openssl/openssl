@@ -84,7 +84,7 @@ by_dir.o: ../../include/openssl/pkcs7.h ../../include/openssl/safestack.h
 by_dir.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 by_dir.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
 by_dir.o: ../../include/openssl/x509_vfy.h ../include/internal/cryptlib.h
-by_dir.o: by_dir.c
+by_dir.o: ../include/internal/x509_int.h by_dir.c
 by_file.o: ../../e_os.h ../../include/openssl/asn1.h
 by_file.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 by_file.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
@@ -180,7 +180,8 @@ x509_ext.o: ../../include/openssl/pkcs7.h ../../include/openssl/safestack.h
 x509_ext.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 x509_ext.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
 x509_ext.o: ../../include/openssl/x509_vfy.h ../../include/openssl/x509v3.h
-x509_ext.o: ../include/internal/cryptlib.h x509_ext.c
+x509_ext.o: ../include/internal/cryptlib.h ../include/internal/x509_int.h
+x509_ext.o: x509_ext.c
 x509_lu.o: ../../e_os.h ../../include/openssl/asn1.h
 x509_lu.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 x509_lu.o: ../../include/openssl/conf.h ../../include/openssl/crypto.h
@@ -194,7 +195,8 @@ x509_lu.o: ../../include/openssl/pkcs7.h ../../include/openssl/safestack.h
 x509_lu.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 x509_lu.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
 x509_lu.o: ../../include/openssl/x509_vfy.h ../../include/openssl/x509v3.h
-x509_lu.o: ../include/internal/cryptlib.h x509_lcl.h x509_lu.c
+x509_lu.o: ../include/internal/cryptlib.h ../include/internal/x509_int.h
+x509_lu.o: x509_lcl.h x509_lu.c
 x509_obj.o: ../../e_os.h ../../include/openssl/asn1.h
 x509_obj.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 x509_obj.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
@@ -309,7 +311,8 @@ x509_vfy.o: ../../include/openssl/pkcs7.h ../../include/openssl/safestack.h
 x509_vfy.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 x509_vfy.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
 x509_vfy.o: ../../include/openssl/x509_vfy.h ../../include/openssl/x509v3.h
-x509_vfy.o: ../include/internal/cryptlib.h x509_lcl.h x509_vfy.c
+x509_vfy.o: ../include/internal/cryptlib.h ../include/internal/x509_int.h
+x509_vfy.o: x509_lcl.h x509_vfy.c
 x509_vpm.o: ../../e_os.h ../../include/openssl/asn1.h
 x509_vpm.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 x509_vpm.o: ../../include/openssl/conf.h ../../include/openssl/crypto.h
@@ -337,7 +340,7 @@ x509cset.o: ../../include/openssl/pkcs7.h ../../include/openssl/safestack.h
 x509cset.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 x509cset.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
 x509cset.o: ../../include/openssl/x509_vfy.h ../include/internal/cryptlib.h
-x509cset.o: x509cset.c
+x509cset.o: ../include/internal/x509_int.h x509cset.c
 x509name.o: ../../e_os.h ../../include/openssl/asn1.h
 x509name.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 x509name.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
