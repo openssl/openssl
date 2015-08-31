@@ -270,7 +270,8 @@ v3_conf.o: ../../include/openssl/pkcs7.h ../../include/openssl/safestack.h
 v3_conf.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 v3_conf.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
 v3_conf.o: ../../include/openssl/x509_vfy.h ../../include/openssl/x509v3.h
-v3_conf.o: ../include/internal/cryptlib.h v3_conf.c
+v3_conf.o: ../include/internal/cryptlib.h ../include/internal/x509_int.h
+v3_conf.o: v3_conf.c
 v3_cpols.o: ../../e_os.h ../../include/openssl/asn1.h
 v3_cpols.o: ../../include/openssl/asn1t.h ../../include/openssl/bio.h
 v3_cpols.o: ../../include/openssl/buffer.h ../../include/openssl/conf.h

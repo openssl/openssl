@@ -4595,3 +4595,9 @@ X509_CRL_up_ref                         4953	EXIST::FUNCTION:
 X509_get_extension_flags                4954	EXIST::FUNCTION:
 X509_get_extended_key_usage             4955	EXIST::FUNCTION:
 X509_get_key_usage                      4956	EXIST::FUNCTION:
+X509_CRL_get_issuer                     4957	EXIST::FUNCTION:
+X509_CRL_get_nextUpdate                 4958	EXIST::FUNCTION:
+X509_CRL_get0_signature                 4959	EXIST::FUNCTION:
+X509_CRL_get_REVOKED                    4960	EXIST::FUNCTION:
+X509_CRL_get_version                    4961	EXIST::FUNCTION:
+X509_CRL_get_lastUpdate                 4962	EXIST::FUNCTION:

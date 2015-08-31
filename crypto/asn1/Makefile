@@ -587,7 +587,7 @@ t_crl.o: ../../include/openssl/pkcs7.h ../../include/openssl/safestack.h
 t_crl.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 t_crl.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
 t_crl.o: ../../include/openssl/x509_vfy.h ../../include/openssl/x509v3.h
-t_crl.o: ../include/internal/cryptlib.h t_crl.c
+t_crl.o: ../include/internal/cryptlib.h ../include/internal/x509_int.h t_crl.c
 t_pkey.o: ../../e_os.h ../../include/openssl/asn1.h ../../include/openssl/bio.h
 t_pkey.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
 t_pkey.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
@@ -771,7 +771,7 @@ x_crl.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
 x_crl.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 x_crl.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
 x_crl.o: ../../include/openssl/x509v3.h ../include/internal/cryptlib.h
-x_crl.o: asn1_locl.h x_crl.c
+x_crl.o: ../include/internal/x509_int.h asn1_locl.h x_crl.c
 x_info.o: ../../e_os.h ../../include/openssl/asn1.h ../../include/openssl/bio.h
 x_info.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 x_info.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
