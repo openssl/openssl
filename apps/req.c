@@ -126,8 +126,8 @@ typedef enum OPTION_choice {
     OPT_PKEYOPT, OPT_SIGOPT, OPT_BATCH, OPT_NEWHDR, OPT_MODULUS,
     OPT_VERIFY, OPT_NODES, OPT_NOOUT, OPT_VERBOSE, OPT_UTF8,
     OPT_NAMEOPT, OPT_REQOPT, OPT_SUBJ, OPT_SUBJECT, OPT_TEXT, OPT_X509,
-    OPT_ASN1_KLUDGE, OPT_NO_ASN1_KLUDGE, OPT_MULTIVALUE_RDN,
-    OPT_DAYS, OPT_SET_SERIAL, OPT_EXTENSIONS, OPT_REQEXTS, OPT_MD
+    OPT_MULTIVALUE_RDN, OPT_DAYS, OPT_SET_SERIAL, OPT_EXTENSIONS,
+    OPT_REQEXTS, OPT_MD
 } OPTION_CHOICE;
 
 OPTIONS req_options[] = {
@@ -163,10 +163,7 @@ OPTIONS req_options[] = {
     {"text", OPT_TEXT, '-', "Text form of request"},
     {"x509", OPT_X509, '-',
      "Output a x509 structure instead of a cert request"},
-    {"asn1-kludge", OPT_ASN1_KLUDGE, '-',
-     "Output the request in a format that is wrong"},
     {OPT_MORE_STR, 1, 1, "(Required by some CA's)"},
-    {"no-asn1-kludge", OPT_NO_ASN1_KLUDGE, '-'},
     {"subj", OPT_SUBJ, 's', "Set or modify request subject"},
     {"subject", OPT_SUBJECT, '-', "Output the request's subject"},
     {"multivalue-rdn", OPT_MULTIVALUE_RDN, '-',
@@ -208,7 +205,7 @@ int req_main(int argc, char **argv)
     int pkey_type = -1, private = 0;
     int informat = FORMAT_PEM, outformat = FORMAT_PEM, keyform = FORMAT_PEM;
     int modulus = 0, multirdn = 0, verify = 0, noout = 0, text = 0;
-    int nodes = 0, kludge = 0, newhdr = 0, subject = 0, pubkey = 0;
+    int nodes = 0, newhdr = 0, subject = 0, pubkey = 0;
     long newkey = -1;
     unsigned long chtype = MBSTRING_ASC, nmflag = 0, reqflag = 0;
     char nmflag_set = 0;
@@ -337,12 +334,6 @@ int req_main(int argc, char **argv)
             break;
         case OPT_X509:
             x509 = 1;
-            break;
-        case OPT_ASN1_KLUDGE:
-            kludge = 1;
-            break;
-        case OPT_NO_ASN1_KLUDGE:
-            kludge = 0;
             break;
         case OPT_DAYS:
             days = atoi(opt_arg());
@@ -610,11 +601,6 @@ int req_main(int argc, char **argv)
     }
 
     if (!newreq) {
-        /*
-         * Since we are using a pre-existing certificate request, the kludge
-         * 'format' info should not be changed.
-         */
-        kludge = -1;
         in = bio_open_default(infile, RB(informat));
         if (in == NULL)
             goto end;
@@ -643,11 +629,6 @@ int req_main(int argc, char **argv)
 
             i = make_REQ(req, pkey, subj, multirdn, !x509, chtype);
             subj = NULL;        /* done processing '-subj' option */
-            if ((kludge > 0)
-                && !sk_X509_ATTRIBUTE_num(req->req_info->attributes)) {
-                sk_X509_ATTRIBUTE_free(req->req_info->attributes);
-                req->req_info->attributes = NULL;
-            }
             if (!i) {
                 BIO_printf(bio_err, "problems making Certificate Request\n");
                 goto end;
