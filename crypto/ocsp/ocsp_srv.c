@@ -213,7 +213,7 @@ int OCSP_basic_add1_cert(OCSP_BASICRESP *resp, X509 *cert)
 
     if (!sk_X509_push(resp->certs, cert))
         return 0;
-    CRYPTO_add(&cert->references, 1, CRYPTO_LOCK_X509);
+    X509_up_ref(cert);
     return 1;
 }
 

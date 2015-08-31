@@ -250,7 +250,7 @@ CERT *ssl_cert_dup(CERT *cert)
         CERT_PKEY *rpk = ret->pkeys + i;
         if (cpk->x509 != NULL) {
             rpk->x509 = cpk->x509;
-            CRYPTO_add(&rpk->x509->references, 1, CRYPTO_LOCK_X509);
+            X509_up_ref(rpk->x509);
         }
 
         if (cpk->privatekey != NULL) {
@@ -463,7 +463,7 @@ int ssl_cert_add1_chain_cert(SSL *s, SSL_CTX *ctx, X509 *x)
 {
     if (!ssl_cert_add0_chain_cert(s, ctx, x))
         return 0;
-    CRYPTO_add(&x->references, 1, CRYPTO_LOCK_X509);
+    X509_up_ref(x);
     return 1;
 }
 

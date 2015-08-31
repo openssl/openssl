@@ -266,7 +266,7 @@ SSL_SESSION *ssl_session_dup(SSL_SESSION *src, int ticket)
     dest->references = 1;
 
     if (src->peer != NULL)
-        CRYPTO_add(&src->peer->references, 1, CRYPTO_LOCK_X509);
+        X509_up_ref(src->peer);
 
     if (src->peer_chain != NULL) {
         dest->peer_chain = X509_chain_up_ref(src->peer_chain);

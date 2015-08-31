@@ -212,7 +212,7 @@ int TS_RESP_verify_signature(PKCS7 *token, STACK_OF(X509) *certs,
     /* Return the signer certificate if needed. */
     if (signer_out) {
         *signer_out = signer;
-        CRYPTO_add(&signer->references, 1, CRYPTO_LOCK_X509);
+        X509_up_ref(signer);
     }
 
     ret = 1;

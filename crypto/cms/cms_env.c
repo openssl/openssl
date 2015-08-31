@@ -206,7 +206,7 @@ static int cms_RecipientInfo_ktri_init(CMS_RecipientInfo *ri, X509 *recip,
     if (!cms_set1_SignerIdentifier(ktri->rid, recip, idtype))
         return 0;
 
-    CRYPTO_add(&recip->references, 1, CRYPTO_LOCK_X509);
+    X509_up_ref(recip);
     CRYPTO_add(&pk->references, 1, CRYPTO_LOCK_EVP_PKEY);
     ktri->pkey = pk;
     ktri->recip = recip;
