@@ -62,6 +62,7 @@
 #include <openssl/evp.h>
 #include <openssl/asn1.h>
 #include <openssl/x509.h>
+#include "internal/x509_int.h"
 
 /*
  * X509_CERT_AUX and string set routines
