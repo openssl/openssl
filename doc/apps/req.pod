@@ -34,8 +34,6 @@ B<openssl> B<req>
 [B<-x509>]
 [B<-days n>]
 [B<-set_serial n>]
-[B<-asn1-kludge>]
-[B<-no-asn1-kludge>]
 [B<-newhdr>]
 [B<-extensions section>]
 [B<-reqexts section>]
@@ -273,26 +271,6 @@ a single option or multiple options separated by commas.
 
 See discussion of the  B<-certopt> parameter in the L<x509(1)>
 command.
-
-
-=item B<-asn1-kludge>
-
-by default the B<req> command outputs certificate requests containing
-no attributes in the correct PKCS#10 format. However certain CAs will only
-accept requests containing no attributes in an invalid form: this
-option produces this invalid format.
-
-More precisely the B<Attributes> in a PKCS#10 certificate request
-are defined as a B<SET OF Attribute>. They are B<not OPTIONAL> so
-if no attributes are present then they should be encoded as an
-empty B<SET OF>. The invalid form does not include the empty
-B<SET OF> whereas the correct form does.
-
-It should be noted that very few CAs still require the use of this option.
-
-=item B<-no-asn1-kludge>
-
-Reverses effect of B<-asn1-kludge>
 
 =item B<-newhdr>
 
