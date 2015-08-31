@@ -526,9 +526,9 @@ int test_div_word(BIO *bp)
         do {
             BN_bntest_rand(a, 512, -1, 0);
             BN_bntest_rand(b, BN_BITS2, -1, 0);
-            s = b->d[0];
-        } while (!s);
+        } while (BN_is_zero(b));
 
+        s = b->d[0];
         BN_copy(b, a);
         r = BN_div_word(b, s);
 
