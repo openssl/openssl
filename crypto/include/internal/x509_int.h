@@ -75,3 +75,17 @@ struct X509_name_st {
     unsigned char *canon_enc;
     int canon_enclen;
 } /* X509_NAME */ ;
+
+/*
+ * This stuff is certificate "auxiliary info" it contains details which are
+ * useful in certificate stores and databases. When used this is tagged onto
+ * the end of the certificate itself
+ */
+
+struct x509_cert_aux_st {
+    STACK_OF(ASN1_OBJECT) *trust; /* trusted uses */
+    STACK_OF(ASN1_OBJECT) *reject; /* rejected uses */
+    ASN1_UTF8STRING *alias;     /* "friendly name" */
+    ASN1_OCTET_STRING *keyid;   /* key id of private key */
+    STACK_OF(X509_ALGOR) *other; /* other unspecified info */
+};

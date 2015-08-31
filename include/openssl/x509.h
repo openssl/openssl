@@ -196,19 +196,7 @@ typedef struct x509_cinf_st {
     ASN1_ENCODING enc;
 } X509_CINF;
 
-/*
- * This stuff is certificate "auxiliary info" it contains details which are
- * useful in certificate stores and databases. When used this is tagged onto
- * the end of the certificate itself
- */
-
-typedef struct x509_cert_aux_st {
-    STACK_OF(ASN1_OBJECT) *trust; /* trusted uses */
-    STACK_OF(ASN1_OBJECT) *reject; /* rejected uses */
-    ASN1_UTF8STRING *alias;     /* "friendly name" */
-    ASN1_OCTET_STRING *keyid;   /* key id of private key */
-    STACK_OF(X509_ALGOR) *other; /* other unspecified info */
-} X509_CERT_AUX;
+typedef struct x509_cert_aux_st X509_CERT_AUX;
 
 struct x509_st {
     X509_CINF *cert_info;
