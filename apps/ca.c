@@ -1479,7 +1479,6 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
             goto end;
         }
         X509_REQ_set_subject_name(req, n);
-        req->req_info->enc.modified = 1;
         X509_NAME_free(n);
     }
 
@@ -1993,7 +1992,6 @@ static int certify_spkac(X509 **xret, char *infile, EVP_PKEY *pkey,
     X509_REQ *req = NULL;
     CONF_VALUE *cv = NULL;
     NETSCAPE_SPKI *spki = NULL;
-    X509_REQ_INFO *ri;
     char *type, *buf;
     EVP_PKEY *pktmp = NULL;
     X509_NAME *n = NULL;
@@ -2037,8 +2035,7 @@ static int certify_spkac(X509 **xret, char *infile, EVP_PKEY *pkey,
     /*
      * Build up the subject name set.
      */
-    ri = req->req_info;
-    n = ri->subject;
+    n = X509_REQ_get_subject_name(req);
 
     for (i = 0;; i++) {
         if (sk_CONF_VALUE_num(sk) <= i)

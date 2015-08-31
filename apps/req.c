@@ -726,8 +726,6 @@ int req_main(int argc, char **argv)
             goto end;
         }
 
-        req->req_info->enc.modified = 1;
-
         if (verbose) {
             print_name(bio_err, "new subject=",
                        X509_REQ_get_subject_name(req), nmflag);
