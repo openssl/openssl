@@ -611,7 +611,7 @@ t_req.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
 t_req.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 t_req.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
 t_req.o: ../../include/openssl/x509_vfy.h ../../include/openssl/x509v3.h
-t_req.o: ../include/internal/cryptlib.h t_req.c
+t_req.o: ../include/internal/cryptlib.h ../include/internal/x509_int.h t_req.c
 t_spki.o: ../../e_os.h ../../include/openssl/asn1.h ../../include/openssl/bio.h
 t_spki.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
 t_spki.o: ../../include/openssl/crypto.h ../../include/openssl/dsa.h
@@ -654,7 +654,8 @@ t_x509a.o: ../../include/openssl/ossl_typ.h ../../include/openssl/pkcs7.h
 t_x509a.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
 t_x509a.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 t_x509a.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
-t_x509a.o: ../include/internal/cryptlib.h t_x509a.c
+t_x509a.o: ../include/internal/cryptlib.h ../include/internal/x509_int.h
+t_x509a.o: t_x509a.c
 tasn_dec.o: ../../include/openssl/asn1.h ../../include/openssl/asn1t.h
 tasn_dec.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 tasn_dec.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
@@ -835,7 +836,7 @@ x_req.o: ../../include/openssl/pkcs7.h ../../include/openssl/safestack.h
 x_req.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 x_req.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
 x_req.o: ../../include/openssl/x509_vfy.h ../include/internal/cryptlib.h
-x_req.o: x_req.c
+x_req.o: ../include/internal/x509_int.h x_req.c
 x_sig.o: ../../e_os.h ../../include/openssl/asn1.h
 x_sig.o: ../../include/openssl/asn1t.h ../../include/openssl/bio.h
 x_sig.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
@@ -906,4 +907,4 @@ x_x509a.o: ../../include/openssl/pkcs7.h ../../include/openssl/safestack.h
 x_x509a.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 x_x509a.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
 x_x509a.o: ../../include/openssl/x509_vfy.h ../include/internal/cryptlib.h
-x_x509a.o: x_x509a.c
+x_x509a.o: ../include/internal/x509_int.h x_x509a.c

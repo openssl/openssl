@@ -545,7 +545,8 @@ v3_skey.o: ../../include/openssl/pkcs7.h ../../include/openssl/safestack.h
 v3_skey.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 v3_skey.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
 v3_skey.o: ../../include/openssl/x509_vfy.h ../../include/openssl/x509v3.h
-v3_skey.o: ../include/internal/cryptlib.h v3_skey.c
+v3_skey.o: ../include/internal/cryptlib.h ../include/internal/x509_int.h
+v3_skey.o: v3_skey.c
 v3_sxnet.o: ../../e_os.h ../../include/openssl/asn1.h
 v3_sxnet.o: ../../include/openssl/asn1t.h ../../include/openssl/bio.h
 v3_sxnet.o: ../../include/openssl/buffer.h ../../include/openssl/conf.h
@@ -574,7 +575,8 @@ v3_utl.o: ../../include/openssl/pkcs7.h ../../include/openssl/safestack.h
 v3_utl.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 v3_utl.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
 v3_utl.o: ../../include/openssl/x509_vfy.h ../../include/openssl/x509v3.h
-v3_utl.o: ../include/internal/cryptlib.h v3_utl.c
+v3_utl.o: ../include/internal/cryptlib.h ../include/internal/x509_int.h
+v3_utl.o: v3_utl.c
 v3err.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 v3err.o: ../../include/openssl/buffer.h ../../include/openssl/conf.h
 v3err.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
