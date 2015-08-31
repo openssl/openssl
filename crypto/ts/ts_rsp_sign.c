@@ -209,7 +209,7 @@ int TS_RESP_CTX_set_signer_cert(TS_RESP_CTX *ctx, X509 *signer)
     }
     X509_free(ctx->signer_cert);
     ctx->signer_cert = signer;
-    CRYPTO_add(&ctx->signer_cert->references, +1, CRYPTO_LOCK_X509);
+    X509_up_ref(ctx->signer_cert);
     return 1;
 }
 

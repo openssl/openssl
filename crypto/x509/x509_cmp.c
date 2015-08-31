@@ -487,7 +487,7 @@ STACK_OF(X509) *X509_chain_up_ref(STACK_OF(X509) *chain)
     ret = sk_X509_dup(chain);
     for (i = 0; i < sk_X509_num(ret); i++) {
         X509 *x = sk_X509_value(ret, i);
-        CRYPTO_add(&x->references, 1, CRYPTO_LOCK_X509);
+        X509_up_ref(x);
     }
     return ret;
 }

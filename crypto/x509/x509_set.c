@@ -150,3 +150,8 @@ int X509_set_pubkey(X509 *x, EVP_PKEY *pkey)
         return (0);
     return (X509_PUBKEY_set(&(x->cert_info->key), pkey));
 }
+
+void X509_up_ref(X509 *x)
+{
+    CRYPTO_add(&x->references, 1, CRYPTO_LOCK_X509);
+}

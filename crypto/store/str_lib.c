@@ -251,8 +251,7 @@ X509 *STORE_get_certificate(STORE *s, OPENSSL_ITEM attributes[],
                  STORE_R_FAILED_GETTING_CERTIFICATE);
         return 0;
     }
-    CRYPTO_add(&object->data.x509.certificate->references, 1,
-               CRYPTO_LOCK_X509);
+    X509_up_ref(object->data.x509.certificate);
 #ifdef REF_PRINT
     REF_PRINT("X509", data);
 #endif
@@ -276,7 +275,7 @@ int STORE_store_certificate(STORE *s, X509 *data, OPENSSL_ITEM attributes[],
         return 0;
     }
 
-    CRYPTO_add(&data->references, 1, CRYPTO_LOCK_X509);
+    X509_up_ref(data);
 #ifdef REF_PRINT
     REF_PRINT("X509", data);
 #endif
@@ -378,8 +377,7 @@ X509 *STORE_list_certificate_next(STORE *s, void *handle)
                  STORE_R_FAILED_LISTING_CERTIFICATES);
         return 0;
     }
-    CRYPTO_add(&object->data.x509.certificate->references, 1,
-               CRYPTO_LOCK_X509);
+    X509_up_ref(object->data.x509.certificate);
 #ifdef REF_PRINT
     REF_PRINT("X509", data);
 #endif

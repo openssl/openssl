@@ -798,6 +798,7 @@ X509_NAME *X509_get_subject_name(X509 *a);
 int X509_set_notBefore(X509 *x, const ASN1_TIME *tm);
 int X509_set_notAfter(X509 *x, const ASN1_TIME *tm);
 int X509_set_pubkey(X509 *x, EVP_PKEY *pkey);
+void X509_up_ref(X509 *x);
 EVP_PKEY *X509_get_pubkey(X509 *x);
 ASN1_BIT_STRING *X509_get0_pubkey_bitstr(const X509 *x);
 int X509_certificate_type(X509 *x, EVP_PKEY *pubkey /* optional */ );

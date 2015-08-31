@@ -415,7 +415,7 @@ static int ssl_set_cert(CERT *c, X509 *x)
     EVP_PKEY_free(pkey);
 
     X509_free(c->pkeys[i].x509);
-    CRYPTO_add(&x->references, 1, CRYPTO_LOCK_X509);
+    X509_up_ref(x);
     c->pkeys[i].x509 = x;
     c->key = &(c->pkeys[i]);
 

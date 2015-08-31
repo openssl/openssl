@@ -825,7 +825,7 @@ X509 *SSL_get_peer_certificate(const SSL *s)
     if (r == NULL)
         return (r);
 
-    CRYPTO_add(&r->references, 1, CRYPTO_LOCK_X509);
+    X509_up_ref(r);
 
     return (r);
 }
