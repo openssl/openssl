@@ -341,7 +341,7 @@ int PKCS7_add_crl(PKCS7 *p7, X509_CRL *crl)
         return 0;
     }
 
-    CRYPTO_add(&crl->references, 1, CRYPTO_LOCK_X509_CRL);
+    X509_CRL_up_ref(crl);
     if (!sk_X509_CRL_push(*sk, crl)) {
         X509_CRL_free(crl);
         return 0;

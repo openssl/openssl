@@ -132,6 +132,11 @@ int X509_CRL_sort(X509_CRL *c)
     return 1;
 }
 
+void X509_CRL_up_ref(X509_CRL *crl)
+{
+    CRYPTO_add(&crl->references, 1, CRYPTO_LOCK_X509_CRL);
+}
+
 int X509_REVOKED_set_revocationDate(X509_REVOKED *x, ASN1_TIME *tm)
 {
     ASN1_TIME *in;

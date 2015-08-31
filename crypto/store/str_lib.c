@@ -821,7 +821,7 @@ X509_CRL *STORE_generate_crl(STORE *s, OPENSSL_ITEM attributes[],
         STOREerr(STORE_F_STORE_GENERATE_CRL, STORE_R_FAILED_GENERATING_CRL);
         return 0;
     }
-    CRYPTO_add(&object->data.crl->references, 1, CRYPTO_LOCK_X509_CRL);
+    X509_CRL_up_ref(object->data.crl);
 #ifdef REF_PRINT
     REF_PRINT("X509_CRL", data);
 #endif
@@ -845,7 +845,7 @@ X509_CRL *STORE_get_crl(STORE *s, OPENSSL_ITEM attributes[],
         STOREerr(STORE_F_STORE_GET_CRL, STORE_R_FAILED_GETTING_KEY);
         return 0;
     }
-    CRYPTO_add(&object->data.crl->references, 1, CRYPTO_LOCK_X509_CRL);
+    X509_CRL_up_ref(object->data.crl);
 #ifdef REF_PRINT
     REF_PRINT("X509_CRL", data);
 #endif
@@ -869,7 +869,7 @@ int STORE_store_crl(STORE *s, X509_CRL *data, OPENSSL_ITEM attributes[],
         return 0;
     }
 
-    CRYPTO_add(&data->references, 1, CRYPTO_LOCK_X509_CRL);
+    X509_CRL_up_ref(data);
 #ifdef REF_PRINT
     REF_PRINT("X509_CRL", data);
 #endif
@@ -950,7 +950,7 @@ X509_CRL *STORE_list_crl_next(STORE *s, void *handle)
         STOREerr(STORE_F_STORE_LIST_CRL_NEXT, STORE_R_FAILED_LISTING_KEYS);
         return 0;
     }
-    CRYPTO_add(&object->data.crl->references, 1, CRYPTO_LOCK_X509_CRL);
+    X509_CRL_up_ref(object->data.crl);
 #ifdef REF_PRINT
     REF_PRINT("X509_CRL", data);
 #endif
