@@ -230,6 +230,57 @@ static int test_PACKET_copy_bytes(PACKET *pkt, size_t start)
     return 1;
 }
 
+static int test_PACKET_memdup(PACKET *pkt, size_t start)
+{
+    unsigned char *data = NULL;
+    size_t len;
+    if (       !PACKET_goto_bookmark(pkt, start)
+            || !PACKET_memdup(pkt, &data, &len)
+            ||  len != BUF_LEN
+            ||  memcmp(data, PACKET_data(pkt), len)
+            || !PACKET_forward(pkt, 10)
+            || !PACKET_memdup(pkt, &data, &len)
+            ||  len != BUF_LEN - 10
+            ||  memcmp(data, PACKET_data(pkt), len)
+            || !PACKET_back(pkt, 1)
+            || !PACKET_memdup(pkt, &data, &len)
+            ||  len != BUF_LEN - 9
+               ||  memcmp(data, PACKET_data(pkt), len)) {
+        fprintf(stderr, "test_PACKET_memdup() failed\n");
+        OPENSSL_free(data);
+        return 0;
+    }
+
+    OPENSSL_free(data);
+    return 1;
+}
+
+static int test_PACKET_strndup()
+{
+    char buf[10], buf2[10];
+    memset(buf, 'x', 10);
+    memset(buf2, 'y', 10);
+    buf2[5] = '\0';
+    char *data = NULL;
+    PACKET pkt;
+
+    if (       !PACKET_buf_init(&pkt, (unsigned char*)buf, 10)
+            || !PACKET_strndup(&pkt, &data)
+            ||  strlen(data) != 10
+            ||  strncmp(data, buf, 10)
+            || !PACKET_buf_init(&pkt, (unsigned char*)buf2, 10)
+            || !PACKET_strndup(&pkt, &data)
+            ||  strlen(data) != 5
+            ||  strcmp(data, buf2)) {
+        fprintf(stderr, "test_PACKET_strndup failed\n");
+        OPENSSL_free(data);
+        return 0;
+    }
+
+    OPENSSL_free(data);
+    return 1;
+}
+
 static int test_PACKET_move_funcs(PACKET *pkt, size_t start)
 {
     unsigned char *byte;
@@ -388,6 +439,8 @@ int main(int argc, char **argv)
             || !test_PACKET_get_sub_packet(&pkt, start)
             || !test_PACKET_get_bytes(&pkt, start)
             || !test_PACKET_copy_bytes(&pkt, start)
+            || !test_PACKET_memdup(&pkt, start)
+            || !test_PACKET_strndup()
             || !test_PACKET_move_funcs(&pkt, start)
             || !test_PACKET_get_length_prefixed_1()
             || !test_PACKET_get_length_prefixed_2()
