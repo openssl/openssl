@@ -723,6 +723,10 @@
 
  Changes between 1.0.1l and 1.0.2 [22 Jan 2015]
 
+  *) Change RSA and DH/DSA key generation apps to generate 2048-bit
+     keys by default.
+     [Kurt Roeckx]
+
   *) Facilitate "universal" ARM builds targeting range of ARM ISAs, e.g.
      ARMv5 through ARMv8, as opposite to "locking" it to single one.
      So far those who have to target multiple plaforms would compromise
