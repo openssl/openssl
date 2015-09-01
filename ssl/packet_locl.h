@@ -335,9 +335,12 @@ __owur static inline int PACKET_peek_copy_bytes(const PACKET *pkt,
     return 1;
 }
 
-/* Read |len| bytes from |pkt| and copy them to |data| */
+/*
+ * Read |len| bytes from |pkt| and copy them to |data|.
+ * The caller is responsible for ensuring that |data| can hold |len| bytes.
+ */
 __owur static inline int PACKET_copy_bytes(PACKET *pkt, unsigned char *data,
-                                          size_t len)
+                                           size_t len)
 {
     if (!PACKET_peek_copy_bytes(pkt, data, len))
         return 0;
@@ -345,6 +348,55 @@ __owur static inline int PACKET_copy_bytes(PACKET *pkt, unsigned char *data,
     pkt->curr += len;
 
     return 1;
+}
+
+/*
+ * Copy |pkt| bytes to a newly allocated buffer and store a pointer to the
+ * result in |*data|, and the length in |len|.
+ * If |*data| is not NULL, the old data is OPENSSL_free'd.
+ * If the packet is empty, or malloc fails, |*data| will be set to NULL.
+ * Returns 1 if the malloc succeeds and 0 otherwise.
+ * Does not forward PACKET position (because it is typically the last thing
+ * done with a given PACKET).
+ */
+__owur static inline int PACKET_memdup(const PACKET *pkt, unsigned char **data,
+                                       size_t *len)
+{
+    size_t length;
+
+    OPENSSL_free(*data);
+    *data = NULL;
+    *len = 0;
+
+    length = PACKET_remaining(pkt);
+
+    if (length == 0)
+        return 1;
+
+    *data = BUF_memdup(pkt->curr, length);
+
+    if (*data == NULL)
+        return 0;
+
+    *len = length;
+    return 1;
+}
+
+/*
+ * Read a C string from |pkt| and copy to a newly allocated, NUL-terminated
+ * buffer. Store a pointer to the result in |*data|.
+ * If |*data| is not NULL, the old data is OPENSSL_free'd.
+ * If the data in |pkt| does not contain a NUL-byte, the entire data is
+ * copied and NUL-terminated.
+ * Returns 1 if the malloc succeeds and 0 otherwise.
+ * Does not forward PACKET position (because it is typically the last thing done
+ * with a given PACKET).
+ */
+__owur static inline int PACKET_strndup(const PACKET *pkt, char **data)
+{
+    OPENSSL_free(*data);
+    *data = BUF_strndup((const char*)pkt->curr, PACKET_remaining(pkt));
+    return (*data != NULL);
 }
 
 /* Move the current reading position back |len| bytes */

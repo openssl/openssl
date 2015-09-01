@@ -2250,13 +2250,14 @@ int ssl3_get_client_key_exchange(SSL *s)
     if (alg_k & SSL_PSK) {
         unsigned char psk[PSK_MAX_PSK_LEN];
         size_t psklen;
+	PACKET psk_identity;
 
-        if (!PACKET_get_net_2(&pkt, &i)) {
+        if (!PACKET_get_length_prefixed_2(&pkt, &psk_identity)) {
             al = SSL_AD_DECODE_ERROR;
             SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE, SSL_R_LENGTH_MISMATCH);
             goto f_err;
         }
-        if (i > PSK_MAX_IDENTITY_LEN) {
+        if (PACKET_remaining(&psk_identity) > PSK_MAX_IDENTITY_LEN) {
             al = SSL_AD_DECODE_ERROR;
             SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,
                    SSL_R_DATA_LENGTH_TOO_LONG);
@@ -2269,21 +2270,10 @@ int ssl3_get_client_key_exchange(SSL *s)
             goto f_err;
         }
 
-        OPENSSL_free(s->session->psk_identity);
-        s->session->psk_identity = OPENSSL_malloc(i + 1);
-        if (s->session->psk_identity == NULL) {
+        if (!PACKET_strndup(&psk_identity, &s->session->psk_identity)) {
             al = SSL_AD_INTERNAL_ERROR;
-            SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,
-                   ERR_R_MALLOC_FAILURE);
             goto f_err;
         }
-        if (!PACKET_copy_bytes(&pkt, (unsigned char *)s->session->psk_identity,
-                               i)) {
-            al = SSL_AD_DECODE_ERROR;
-            SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE, SSL_R_LENGTH_MISMATCH);
-            goto f_err;
-        }
-        s->session->psk_identity[i] = '\0';
 
         psklen = s->psk_server_callback(s, s->session->psk_identity,
                                          psk, sizeof(psk));
@@ -3455,9 +3445,9 @@ int ssl3_send_cert_status(SSL *s)
 int ssl3_get_next_proto(SSL *s)
 {
     int ok;
-    unsigned int proto_len, padding_len;
     long n;
-    PACKET pkt;
+    PACKET pkt, next_proto, padding;
+    size_t next_proto_len;
 
     /*
      * Clients cannot send a NextProtocol message if we didn't see the
@@ -3506,25 +3496,20 @@ int ssl3_get_next_proto(SSL *s)
      *   uint8 padding_len;
      *   uint8 padding[padding_len];
      */
-    if (!PACKET_get_1(&pkt, &proto_len)){
+    if (!PACKET_get_length_prefixed_1(&pkt, &next_proto)
+        || !PACKET_get_length_prefixed_1(&pkt, &padding)
+        || PACKET_remaining(&pkt) > 0) {
         SSLerr(SSL_F_SSL3_GET_NEXT_PROTO, SSL_R_LENGTH_MISMATCH);
         goto err;
     }
 
-    s->next_proto_negotiated = OPENSSL_malloc(proto_len);
-    if (s->next_proto_negotiated == NULL) {
-        SSLerr(SSL_F_SSL3_GET_NEXT_PROTO, ERR_R_MALLOC_FAILURE);
+    if (!PACKET_memdup(&next_proto, &s->next_proto_negotiated,
+                       &next_proto_len)) {
+        s->next_proto_negotiated_len = 0;
         goto err;
     }
 
-    if (!PACKET_copy_bytes(&pkt, s->next_proto_negotiated, proto_len)
-            || !PACKET_get_1(&pkt, &padding_len)
-            || PACKET_remaining(&pkt) != padding_len) {
-        OPENSSL_free(s->next_proto_negotiated);
-        s->next_proto_negotiated = NULL;
-        SSLerr(SSL_F_SSL3_GET_NEXT_PROTO, SSL_R_LENGTH_MISMATCH);
-        goto err;
-    }
+    s->next_proto_negotiated_len = (unsigned char)next_proto_len;
 
     return 1;
 err:
