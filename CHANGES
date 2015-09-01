@@ -103,6 +103,9 @@
   *) Reject DH handshakes with parameters shorter than 768 bits.
      [Kurt Roeckx and Emilia Kasper]
 
+  *) dhparam: generate 2048-bit parameters by default.
+     [Kurt Roeckx and Emilia Kasper]
+
  Changes between 1.0.1l and 1.0.1m [19 Mar 2015]
 
   *) Segmentation fault in ASN1_TYPE_cmp fix
