@@ -4592,3 +4592,6 @@ X509_up_ref                             4950	EXIST::FUNCTION:
 X509_REQ_get_version                    4951	EXIST::FUNCTION:
 X509_REQ_get_subject_name               4952	EXIST::FUNCTION:
 X509_CRL_up_ref                         4953	EXIST::FUNCTION:
+X509_get_extension_flags                4954	EXIST::FUNCTION:
+X509_get_extended_key_usage             4955	EXIST::FUNCTION:
+X509_get_key_usage                      4956	EXIST::FUNCTION:
