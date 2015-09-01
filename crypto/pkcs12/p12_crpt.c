@@ -76,6 +76,9 @@ int PKCS12_PBE_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
     unsigned char *salt;
     unsigned char key[EVP_MAX_KEY_LENGTH], iv[EVP_MAX_IV_LENGTH];
 
+    if (cipher == NULL)
+        return 0;
+
     /* Extract useful info from parameter */
 
     pbe = ASN1_TYPE_unpack_sequence(ASN1_ITEM_rptr(PBEPARAM), param);
