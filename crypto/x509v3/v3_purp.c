@@ -841,3 +841,25 @@ int X509_check_akid(X509 *issuer, AUTHORITY_KEYID *akid)
     }
     return X509_V_OK;
 }
+
+uint32_t X509_get_extension_flags(X509 *x)
+{
+    X509_check_purpose(x, -1, -1);
+    return x->ex_flags;
+}
+
+uint32_t X509_get_key_usage(X509 *x)
+{
+    X509_check_purpose(x, -1, -1);
+    if (x->ex_flags & EXFLAG_KUSAGE)
+        return x->ex_kusage;
+    return UINT32_MAX;
+}
+
+uint32_t X509_get_extended_key_usage(X509 *x)
+{
+    X509_check_purpose(x, -1, -1);
+    if (x->ex_flags & EXFLAG_XKUSAGE)
+        return x->ex_xkusage;
+    return UINT32_MAX;
+}
