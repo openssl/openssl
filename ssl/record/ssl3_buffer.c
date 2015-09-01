@@ -147,7 +147,7 @@ int ssl3_setup_read_buffer(SSL *s)
     
     b = RECORD_LAYER_get_rbuf(&s->rlayer);
 
-    if (SSL_version(s) == DTLS1_VERSION || SSL_version(s) == DTLS1_BAD_VER)
+    if (SSL_IS_DTLS(s))
         headerlen = DTLS1_RT_HEADER_LENGTH;
     else
         headerlen = SSL3_RT_HEADER_LENGTH;
@@ -189,7 +189,7 @@ int ssl3_setup_write_buffer(SSL *s)
 
     wb = RECORD_LAYER_get_wbuf(&s->rlayer);
 
-    if (SSL_version(s) == DTLS1_VERSION || SSL_version(s) == DTLS1_BAD_VER)
+    if (SSL_IS_DTLS(s))
         headerlen = DTLS1_RT_HEADER_LENGTH + 1;
     else
         headerlen = SSL3_RT_HEADER_LENGTH;
