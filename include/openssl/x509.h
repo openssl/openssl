@@ -197,10 +197,10 @@ struct x509_st {
     /* These contain copies of various extension values */
     long ex_pathlen;
     long ex_pcpathlen;
-    unsigned long ex_flags;
-    unsigned long ex_kusage;
-    unsigned long ex_xkusage;
-    unsigned long ex_nscert;
+    uint32_t ex_flags;
+    uint32_t ex_kusage;
+    uint32_t ex_xkusage;
+    uint32_t ex_nscert;
     ASN1_OCTET_STRING *skid;
     AUTHORITY_KEYID *akid;
     X509_POLICY_CACHE *policy_cache;
