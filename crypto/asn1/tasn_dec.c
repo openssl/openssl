@@ -600,6 +600,7 @@ static int asn1_template_noexp_d2i(ASN1_VALUE **val,
             len -= p - q;
             if (!sk_ASN1_VALUE_push((STACK_OF(ASN1_VALUE) *)*val, skfield)) {
                 ASN1err(ASN1_F_ASN1_TEMPLATE_NOEXP_D2I, ERR_R_MALLOC_FAILURE);
+                ASN1_item_free(skfield, ASN1_ITEM_ptr(tt->item));
                 goto err;
             }
         }
