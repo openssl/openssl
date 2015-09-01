@@ -575,7 +575,6 @@ int speed_main(int argc, char **argv)
     long c[ALGOR_NUM][SIZE_NUM], count = 0, save_count = 0;
     unsigned char *buf_malloc = NULL, *buf2_malloc = NULL;
     unsigned char *buf = NULL, *buf2 = NULL;
-    unsigned char *save_buf = NULL, *save_buf2 = NULL;
     unsigned char md[EVP_MAX_MD_SIZE];
 #ifndef NO_FORK
     int multi = 0;
@@ -2183,8 +2182,8 @@ int speed_main(int argc, char **argv)
 
  end:
     ERR_print_errors(bio_err);
-    OPENSSL_free(save_buf);
-    OPENSSL_free(save_buf2);
+    OPENSSL_free(buf_malloc);
+    OPENSSL_free(buf2_malloc);
 #ifndef OPENSSL_NO_RSA
     for (i = 0; i < RSA_NUM; i++)
         RSA_free(rsa_key[i]);
@@ -2201,7 +2200,6 @@ int speed_main(int argc, char **argv)
         EC_KEY_free(ecdh_b[i]);
     }
 #endif
-
     return (ret);
 }
 
