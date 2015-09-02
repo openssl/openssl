@@ -119,12 +119,6 @@ extern "C" {
 # define X509v3_KU_DECIPHER_ONLY         0x8000
 # define X509v3_KU_UNDEF                 0xffff
 
-typedef struct X509_objects_st {
-    int nid;
-    int (*a2i) (void);
-    int (*i2a) (void);
-} X509_OBJECTS;
-
 struct X509_algor_st {
     ASN1_OBJECT *algorithm;
     ASN1_TYPE *parameter;
