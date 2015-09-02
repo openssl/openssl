@@ -55,6 +55,8 @@
 #include "apps.h"
 
 #include <ctype.h>
+#include <inttypes.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -87,7 +89,8 @@ int rand_main(int argc, char **argv)
     BIO *out = NULL;
     char *inrand = NULL, *outfile = NULL, *prog;
     OPTION_CHOICE o;
-    int base64 = 0, hex = 0, i, num = -1, r, ret = 1;
+    int base64 = 0, hex = 0, i, r, ret = 1;
+    int64_t num = -1;
 
     prog = opt_init(argc, argv, rand_options);
     while ((o = opt_next()) != OPT_EOF) {
@@ -123,7 +126,7 @@ int rand_main(int argc, char **argv)
 
     if (argc != 1 || (hex && base64))
         goto opthelp;
-    if (sscanf(argv[0], "%d", &num) != 1 || num < 0)
+    if (sscanf(argv[0], "%" SCNd64, &num) != 1 || num < 0)
         goto opthelp;
 
     if (!app_load_modules(NULL))
@@ -147,7 +150,7 @@ int rand_main(int argc, char **argv)
 
     while (num > 0) {
         unsigned char buf[4096];
-        int chunk;
+        int64_t chunk;
 
         chunk = num;
         if (chunk > (int)sizeof(buf))
