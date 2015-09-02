@@ -4,6 +4,12 @@
 
  Changes between 1.0.2 and 1.1.0  [xx XXX xxxx]
 
+  *) Rewrite EVP_DecodeUpdate (base64 decoding) to fix several bugs.
+     This changes the decoding behaviour for some invalid messages,
+     though the change is mostly in the more lenient direction, and
+     legacy behaviour is preserved as much as possible.
+     [Emilia Käsper]
+
   *) New testing framework
      The testing framework has been largely rewritten and is now using
      perl and the perl modules Test::Harness and an extended variant of
