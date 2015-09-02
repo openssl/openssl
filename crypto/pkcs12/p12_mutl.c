@@ -64,6 +64,28 @@
 # include <openssl/rand.h>
 # include <openssl/pkcs12.h>
 
+# define TK26_MAC_KEY_LEN 32
+
+static int pkcs12_gen_gost_mac_key(const char *pass, int passlen,
+                                   const unsigned char *salt, int saltlen,
+                                   int iter, int keylen, unsigned char *key,
+                                   const EVP_MD *digest)
+{
+    unsigned char out[96];
+
+    if (keylen != TK26_MAC_KEY_LEN) {
+        return 0;
+    }
+
+    if (!PKCS5_PBKDF2_HMAC(pass, passlen, salt, saltlen, iter,
+                           digest, sizeof(out), out)) {
+        return 0;
+    }
+    memcpy(key, out + sizeof(out) - TK26_MAC_KEY_LEN, TK26_MAC_KEY_LEN);
+    OPENSSL_cleanse(out, sizeof(out));
+    return 1;
+}
+
 /* Generate a MAC */
 int PKCS12_gen_mac(PKCS12 *p12, const char *pass, int passlen,
                    unsigned char *mac, unsigned int *maclen)
@@ -72,7 +94,8 @@ int PKCS12_gen_mac(PKCS12 *p12, const char *pass, int passlen,
     HMAC_CTX hmac;
     unsigned char key[EVP_MAX_MD_SIZE], *salt;
     int saltlen, iter;
-    int md_size;
+    int md_size = 0;
+    int md_type_nid;
 
     if (!PKCS7_type_is_data(p12->authsafes)) {
         PKCS12err(PKCS12_F_PKCS12_GEN_MAC, PKCS12_R_CONTENT_TYPE_NOT_DATA);
@@ -91,10 +114,22 @@ int PKCS12_gen_mac(PKCS12 *p12, const char *pass, int passlen,
         return 0;
     }
     md_size = EVP_MD_size(md_type);
+    md_type_nid = EVP_MD_type(md_type);
     if (md_size < 0)
         return 0;
-    if (!PKCS12_key_gen(pass, passlen, salt, saltlen, PKCS12_MAC_ID, iter,
-                        md_size, key, md_type)) {
+    if ((md_type_nid == NID_id_GostR3411_94
+         || md_type_nid == NID_id_GostR3411_2012_256
+         || md_type_nid == NID_id_GostR3411_2012_512)
+        && !getenv("LEGACY_GOST_PKCS12")) {
+        md_size = TK26_MAC_KEY_LEN;
+        if (!pkcs12_gen_gost_mac_key(pass, passlen, salt, saltlen, iter,
+                                     md_size, key, md_type)) {
+            PKCS12err(PKCS12_F_PKCS12_GEN_MAC, PKCS12_R_KEY_GEN_ERROR);
+            return 0;
+        }
+    } else
+        if (!PKCS12_key_gen(pass, passlen, salt, saltlen, PKCS12_MAC_ID, iter,
+                            md_size, key, md_type)) {
         PKCS12err(PKCS12_F_PKCS12_GEN_MAC, PKCS12_R_KEY_GEN_ERROR);
         return 0;
     }
