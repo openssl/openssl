@@ -393,11 +393,11 @@ static int pkcs7_cmp_ri(PKCS7_RECIP_INFO *ri, X509 *pcert)
 {
     int ret;
     ret = X509_NAME_cmp(ri->issuer_and_serial->issuer,
-                        pcert->cert_info->issuer);
+                        X509_get_issuer_name(pcert));
     if (ret)
         return ret;
-    return ASN1_INTEGER_cmp(pcert->cert_info->serialNumber,
-                              ri->issuer_and_serial->serial);
+    return ASN1_INTEGER_cmp(X509_get_serialNumber(pcert),
+                            ri->issuer_and_serial->serial);
 }
 
 /* int */

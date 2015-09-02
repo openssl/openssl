@@ -657,7 +657,7 @@ static TS_TST_INFO *ts_RESP_create_tst_info(TS_RESP_CTX *ctx,
             goto end;
         tsa_name->type = GEN_DIRNAME;
         tsa_name->d.dirn =
-            X509_NAME_dup(ctx->signer_cert->cert_info->subject);
+            X509_NAME_dup(X509_get_subject_name(ctx->signer_cert));
         if (!tsa_name->d.dirn)
             goto end;
         if (!TS_TST_INFO_set_tsa(tst_info, tsa_name))
@@ -869,7 +869,7 @@ static ESS_CERT_ID *ess_CERT_ID_new_init(X509 *cert, int issuer_needed)
         if ((name = GENERAL_NAME_new()) == NULL)
             goto err;
         name->type = GEN_DIRNAME;
-        if ((name->d.dirn = X509_NAME_dup(cert->cert_info->issuer)) == NULL)
+        if ((name->d.dirn = X509_NAME_dup(X509_get_issuer_name(cert))) == NULL)
             goto err;
         if (!sk_GENERAL_NAME_push(cid->issuer_serial->issuer, name))
             goto err;
@@ -877,7 +877,7 @@ static ESS_CERT_ID *ess_CERT_ID_new_init(X509 *cert, int issuer_needed)
         /* Setting the serial number. */
         ASN1_INTEGER_free(cid->issuer_serial->serial);
         if (!(cid->issuer_serial->serial =
-              ASN1_INTEGER_dup(cert->cert_info->serialNumber)))
+              ASN1_INTEGER_dup(X509_get_serialNumber(cert))))
             goto err;
     }
 

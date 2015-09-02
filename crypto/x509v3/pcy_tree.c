@@ -184,7 +184,9 @@ static int tree_init(X509_POLICY_TREE **ptree, STACK_OF(X509) *certs,
      * explicit_policy value at this point.
      */
     for (i = n - 2; i >= 0; i--) {
+        uint32_t ex_flags;
         x = sk_X509_value(certs, i);
+        ex_flags = X509_get_extension_flags(x);
         X509_check_purpose(x, -1, -1);
         cache = policy_cache_set(x);
         /* If cache NULL something bad happened: return immediately */
@@ -193,7 +195,7 @@ static int tree_init(X509_POLICY_TREE **ptree, STACK_OF(X509) *certs,
         /*
          * If inconsistent extensions keep a note of it but continue
          */
-        if (x->ex_flags & EXFLAG_INVALID_POLICY)
+        if (ex_flags & EXFLAG_INVALID_POLICY)
             ret = -1;
         /*
          * Otherwise if we have no data (hence no CertificatePolicies) and
@@ -202,7 +204,7 @@ static int tree_init(X509_POLICY_TREE **ptree, STACK_OF(X509) *certs,
         else if ((ret == 1) && !cache->data)
             ret = 2;
         if (explicit_policy > 0) {
-            if (!(x->ex_flags & EXFLAG_SI))
+            if (!(ex_flags & EXFLAG_SI))
                 explicit_policy--;
             if ((cache->explicit_skip != -1)
                 && (cache->explicit_skip < explicit_policy))
@@ -235,8 +237,10 @@ static int tree_init(X509_POLICY_TREE **ptree, STACK_OF(X509) *certs,
         goto bad_tree;
 
     for (i = n - 2; i >= 0; i--) {
+        uint32_t ex_flags;
         level++;
         x = sk_X509_value(certs, i);
+        ex_flags = X509_get_extension_flags(x);
         cache = policy_cache_set(x);
         X509_up_ref(x);
         level->cert = x;
@@ -250,10 +254,10 @@ static int tree_init(X509_POLICY_TREE **ptree, STACK_OF(X509) *certs,
              * Any matching allowed if certificate is self issued and not the
              * last in the chain.
              */
-            if (!(x->ex_flags & EXFLAG_SI) || (i == 0))
+            if (!(ex_flags & EXFLAG_SI) || (i == 0))
                 level->flags |= X509_V_FLAG_INHIBIT_ANY;
         } else {
-            if (!(x->ex_flags & EXFLAG_SI))
+            if (!(ex_flags & EXFLAG_SI))
                 any_skip--;
             if ((cache->any_skip >= 0)
                 && (cache->any_skip < any_skip))
@@ -263,7 +267,7 @@ static int tree_init(X509_POLICY_TREE **ptree, STACK_OF(X509) *certs,
         if (map_skip == 0)
             level->flags |= X509_V_FLAG_INHIBIT_MAP;
         else {
-            if (!(x->ex_flags & EXFLAG_SI))
+            if (!(ex_flags & EXFLAG_SI))
                 map_skip--;
             if ((cache->map_skip >= 0)
                 && (cache->map_skip < map_skip))

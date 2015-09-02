@@ -2422,7 +2422,7 @@ static int verify_callback(int ok, X509_STORE_CTX *ctx)
 
     if (ok == 1) {
         X509 *xs = ctx->current_cert;
-        if (xs->ex_flags & EXFLAG_PROXY) {
+        if (X509_get_extension_flags(xs) & EXFLAG_PROXY) {
             unsigned int *letters = X509_STORE_CTX_get_ex_data(ctx,
                                                                get_proxy_auth_ex_data_idx
                                                                ());

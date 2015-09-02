@@ -1028,8 +1028,7 @@ int ssl_build_cert_chain(SSL *s, SSL_CTX *ctx, int flags)
         if (sk_X509_num(chain) > 0) {
             /* See if last cert is self signed */
             x = sk_X509_value(chain, sk_X509_num(chain) - 1);
-            X509_check_purpose(x, -1, 0);
-            if (x->ex_flags & EXFLAG_SS) {
+            if (X509_get_extension_flags(x) & EXFLAG_SS) {
                 x = sk_X509_pop(chain);
                 X509_free(x);
             }
