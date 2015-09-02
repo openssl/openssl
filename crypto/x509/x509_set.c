@@ -155,3 +155,28 @@ void X509_up_ref(X509 *x)
 {
     CRYPTO_add(&x->references, 1, CRYPTO_LOCK_X509);
 }
+
+long X509_get_version(X509 *x)
+{
+    return ASN1_INTEGER_get(x->cert_info->version);
+}
+
+ASN1_TIME * X509_get_notBefore(X509 *x)
+{
+    return x->cert_info->validity->notBefore;
+}
+
+ASN1_TIME *X509_get_notAfter(X509 *x)
+{
+    return x->cert_info->validity->notAfter;
+}
+
+int X509_get_signature_type(const X509 *x)
+{
+    return EVP_PKEY_type(OBJ_obj2nid(x->sig_alg->algorithm));
+}
+
+X509_PUBKEY *X509_get_X509_PUBKEY(const X509 *x)
+{
+    return x->cert_info->key;
+}
