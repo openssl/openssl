@@ -1900,7 +1900,7 @@ void ssl_set_masks(SSL *s, const SSL_CIPHER *cipher)
     int have_ecdh_tmp, ecdh_ok;
     X509 *x = NULL;
     EVP_PKEY *ecc_pkey = NULL;
-    int signature_nid = 0, pk_nid = 0, md_nid = 0;
+    int pk_nid = 0, md_nid = 0;
 #endif
     if (c == NULL)
         return;
@@ -2004,23 +2004,18 @@ void ssl_set_masks(SSL *s, const SSL_CIPHER *cipher)
      */
 #ifndef OPENSSL_NO_EC
     if (have_ecc_cert) {
+        uint32_t ex_kusage;
         cpk = &c->pkeys[SSL_PKEY_ECC];
         x = cpk->x509;
-        /* This call populates extension flags (ex_flags) */
-        X509_check_purpose(x, -1, 0);
-        ecdh_ok = (x->ex_flags & EXFLAG_KUSAGE) ?
-            (x->ex_kusage & X509v3_KU_KEY_AGREEMENT) : 1;
-        ecdsa_ok = (x->ex_flags & EXFLAG_KUSAGE) ?
-            (x->ex_kusage & X509v3_KU_DIGITAL_SIGNATURE) : 1;
+        ex_kusage = X509_get_key_usage(x);
+        ecdh_ok = ex_kusage & X509v3_KU_KEY_AGREEMENT;
+        ecdsa_ok = ex_kusage & X509v3_KU_DIGITAL_SIGNATURE;
         if (!(pvalid[SSL_PKEY_ECC] & CERT_PKEY_SIGN))
             ecdsa_ok = 0;
         ecc_pkey = X509_get_pubkey(x);
         ecc_pkey_size = (ecc_pkey != NULL) ? EVP_PKEY_bits(ecc_pkey) : 0;
         EVP_PKEY_free(ecc_pkey);
-        if ((x->sig_alg) && (x->sig_alg->algorithm)) {
-            signature_nid = OBJ_obj2nid(x->sig_alg->algorithm);
-            OBJ_find_sigid_algs(signature_nid, &md_nid, &pk_nid);
-        }
+        OBJ_find_sigid_algs(X509_get_signature_nid(x), &md_nid, &pk_nid);
         if (ecdh_ok) {
 
             if (pk_nid == NID_rsaEncryption || pk_nid == NID_rsa) {
@@ -2074,10 +2069,6 @@ void ssl_set_masks(SSL *s, const SSL_CIPHER *cipher)
     s->s3->tmp.export_mask_a = emask_a;
 }
 
-/* This handy macro borrowed from crypto/x509v3/v3_purp.c */
-#define ku_reject(x, usage) \
-        (((x)->ex_flags & EXFLAG_KUSAGE) && !((x)->ex_kusage & (usage)))
-
 #ifndef OPENSSL_NO_EC
 
 int ssl_check_srvr_ecc_cert_and_alg(X509 *x, SSL *s)
@@ -2085,8 +2076,9 @@ int ssl_check_srvr_ecc_cert_and_alg(X509 *x, SSL *s)
     unsigned long alg_k, alg_a;
     EVP_PKEY *pkey = NULL;
     int keysize = 0;
-    int signature_nid = 0, md_nid = 0, pk_nid = 0;
+    int md_nid = 0, pk_nid = 0;
     const SSL_CIPHER *cs = s->s3->tmp.new_cipher;
+    uint32_t ex_kusage = X509_get_key_usage(x);
 
     alg_k = cs->algorithm_mkey;
     alg_a = cs->algorithm_auth;
@@ -2102,15 +2094,11 @@ int ssl_check_srvr_ecc_cert_and_alg(X509 *x, SSL *s)
             return 0;
     }
 
-    /* This call populates the ex_flags field correctly */
-    X509_check_purpose(x, -1, 0);
-    if ((x->sig_alg) && (x->sig_alg->algorithm)) {
-        signature_nid = OBJ_obj2nid(x->sig_alg->algorithm);
-        OBJ_find_sigid_algs(signature_nid, &md_nid, &pk_nid);
-    }
+    OBJ_find_sigid_algs(X509_get_signature_nid(x), &md_nid, &pk_nid);
+
     if (alg_k & SSL_kECDHe || alg_k & SSL_kECDHr) {
         /* key usage, if present, must allow key agreement */
-        if (ku_reject(x, X509v3_KU_KEY_AGREEMENT)) {
+        if (!(ex_kusage & X509v3_KU_KEY_AGREEMENT)) {
             SSLerr(SSL_F_SSL_CHECK_SRVR_ECC_CERT_AND_ALG,
                    SSL_R_ECC_CERT_NOT_FOR_KEY_AGREEMENT);
             return 0;
@@ -2135,7 +2123,7 @@ int ssl_check_srvr_ecc_cert_and_alg(X509 *x, SSL *s)
     }
     if (alg_a & SSL_aECDSA) {
         /* key usage, if present, must allow signing */
-        if (ku_reject(x, X509v3_KU_DIGITAL_SIGNATURE)) {
+        if (!(ex_kusage & X509v3_KU_DIGITAL_SIGNATURE)) {
             SSLerr(SSL_F_SSL_CHECK_SRVR_ECC_CERT_AND_ALG,
                    SSL_R_ECC_CERT_NOT_FOR_SIGNING);
             return 0;
