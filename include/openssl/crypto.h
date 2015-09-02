@@ -158,15 +158,6 @@ extern "C" {
 # define SSLEAY_PLATFORM         4
 # define SSLEAY_DIR              5
 
-/* A generic structure to pass assorted data in a expandable way */
-typedef struct openssl_item_st {
-    int code;
-    void *value;                /* Not used for flag attributes */
-    size_t value_size;          /* Max size of value for output, length for
-                                 * input */
-    size_t *value_length;       /* Returned length of value for output */
-} OPENSSL_ITEM;
-
 /*
  * When changing the CRYPTO_LOCK_* list, be sure to maintin the text lock
  * names in cryptlib.c
