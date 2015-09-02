@@ -445,14 +445,9 @@ extern "C" {
 # define X509_EXT_PACK_UNKNOWN   1
 # define X509_EXT_PACK_STRING    2
 
-# define         X509_get_version(x) ASN1_INTEGER_get((x)->cert_info->version)
-/* #define      X509_get_serialNumber(x) ((x)->cert_info->serialNumber) */
-# define         X509_get_notBefore(x) ((x)->cert_info->validity->notBefore)
-# define         X509_get_notAfter(x) ((x)->cert_info->validity->notAfter)
 # define         X509_extract_key(x)     X509_get_pubkey(x)/*****/
 # define         X509_REQ_extract_key(a) X509_REQ_get_pubkey(a)
 # define         X509_name_cmp(a,b)      X509_NAME_cmp((a),(b))
-# define         X509_get_signature_type(x) EVP_PKEY_type(OBJ_obj2nid((x)->sig_alg->algorithm))
 
 void X509_CRL_set_default_method(const X509_CRL_METHOD *meth);
 X509_CRL_METHOD *X509_CRL_METHOD_new(int (*crl_init) (X509_CRL *crl),
@@ -467,12 +462,6 @@ void X509_CRL_METHOD_free(X509_CRL_METHOD *m);
 
 void X509_CRL_set_meth_data(X509_CRL *crl, void *dat);
 void *X509_CRL_get_meth_data(X509_CRL *crl);
-
-/*
- * This one is only used so that a binary form can output, as in
- * i2d_X509_NAME(X509_get_X509_PUBKEY(x),&buf)
- */
-# define         X509_get_X509_PUBKEY(x) ((x)->cert_info->key)
 
 const char *X509_verify_cert_error_string(long n);
 
@@ -736,6 +725,7 @@ int ASN1_item_sign_ctx(const ASN1_ITEM *it, X509_ALGOR *algor1,
                        X509_ALGOR *algor2, ASN1_BIT_STRING *signature,
                        void *asn, EVP_MD_CTX *ctx);
 
+long X509_get_version(X509 *x);
 int X509_set_version(X509 *x, long version);
 int X509_set_serialNumber(X509 *x, ASN1_INTEGER *serial);
 ASN1_INTEGER *X509_get_serialNumber(X509 *x);
@@ -743,10 +733,19 @@ int X509_set_issuer_name(X509 *x, X509_NAME *name);
 X509_NAME *X509_get_issuer_name(X509 *a);
 int X509_set_subject_name(X509 *x, X509_NAME *name);
 X509_NAME *X509_get_subject_name(X509 *a);
+ASN1_TIME * X509_get_notBefore(X509 *x);
 int X509_set_notBefore(X509 *x, const ASN1_TIME *tm);
+ASN1_TIME *X509_get_notAfter(X509 *x);
 int X509_set_notAfter(X509 *x, const ASN1_TIME *tm);
 int X509_set_pubkey(X509 *x, EVP_PKEY *pkey);
 void X509_up_ref(X509 *x);
+int X509_get_signature_type(const X509 *x);
+/*
+ * This one is only used so that a binary form can output, as in
+ * i2d_X509_NAME(X509_get_X509_PUBKEY(x),&buf)
+ */
+X509_PUBKEY *X509_get_X509_PUBKEY(const X509 *x);
+
 EVP_PKEY *X509_get_pubkey(X509 *x);
 ASN1_BIT_STRING *X509_get0_pubkey_bitstr(const X509 *x);
 int X509_certificate_type(X509 *x, EVP_PKEY *pubkey /* optional */ );
