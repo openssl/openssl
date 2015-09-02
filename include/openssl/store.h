@@ -248,6 +248,15 @@ DECLARE_STACK_OF(STORE_OBJECT)
 STORE_OBJECT *STORE_OBJECT_new(void);
 void STORE_OBJECT_free(STORE_OBJECT *data);
 
+/* A generic structure to pass assorted data in a expandable way */
+typedef struct openssl_item_st {
+    int code;
+    void *value;                /* Not used for flag attributes */
+    size_t value_size;          /* Max size of value for output, length for
+                                 * input */
+    size_t *value_length;       /* Returned length of value for output */
+} OPENSSL_ITEM;
+
 /*
  * The following functions handle the storage. They return 0, a negative
  * number or NULL on error, anything else on success.
