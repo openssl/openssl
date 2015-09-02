@@ -148,6 +148,7 @@ static void x509_verify_param_zero(X509_VERIFY_PARAM *param)
     sk_OPENSSL_STRING_pop_free(paramid->hosts, str_free);
     paramid->hosts = NULL;
     OPENSSL_free(paramid->peername);
+    paramid->peername = NULL;
     OPENSSL_free(paramid->email);
     paramid->email = NULL;
     paramid->emaillen = 0;
@@ -164,13 +165,20 @@ X509_VERIFY_PARAM *X509_VERIFY_PARAM_new(void)
     param = OPENSSL_malloc(sizeof(*param));
     if (!param)
         return NULL;
+    memset(param, 0, sizeof(*param));
+
     paramid = OPENSSL_malloc(sizeof(*paramid));
     if (!paramid) {
         OPENSSL_free(param);
         return NULL;
     }
-    memset(param, 0, sizeof(*param));
     memset(paramid, 0, sizeof(*paramid));
+    /* Exotic platforms may have non-zero bit representation of NULL */
+    paramid->hosts = NULL;
+    paramid->peername = NULL;
+    paramid->email = NULL;
+    paramid->ip = NULL;
+
     param->id = paramid;
     x509_verify_param_zero(param);
     return param;
