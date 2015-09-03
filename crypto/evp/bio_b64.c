@@ -115,18 +115,12 @@ static int b64_new(BIO *bi)
 {
     BIO_B64_CTX *ctx;
 
-    ctx = OPENSSL_malloc(sizeof(*ctx));
+    ctx = OPENSSL_zalloc(sizeof(*ctx));
     if (ctx == NULL)
         return (0);
 
-    ctx->buf_len = 0;
-    ctx->tmp_len = 0;
-    ctx->tmp_nl = 0;
-    ctx->buf_off = 0;
     ctx->cont = 1;
     ctx->start = 1;
-    ctx->encode = 0;
-
     bi->init = 1;
     bi->ptr = (char *)ctx;
     bi->flags = 0;

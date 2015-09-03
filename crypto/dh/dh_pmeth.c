@@ -98,22 +98,14 @@ typedef struct {
 static int pkey_dh_init(EVP_PKEY_CTX *ctx)
 {
     DH_PKEY_CTX *dctx;
-    dctx = OPENSSL_malloc(sizeof(*dctx));
+
+    dctx = OPENSSL_zalloc(sizeof(*dctx));
     if (!dctx)
         return 0;
     dctx->prime_len = 1024;
     dctx->subprime_len = -1;
     dctx->generator = 2;
-    dctx->use_dsa = 0;
-    dctx->md = NULL;
-    dctx->rfc5114_param = 0;
-
     dctx->kdf_type = EVP_PKEY_DH_KDF_NONE;
-    dctx->kdf_oid = NULL;
-    dctx->kdf_md = NULL;
-    dctx->kdf_ukm = NULL;
-    dctx->kdf_ukmlen = 0;
-    dctx->kdf_outlen = 0;
 
     ctx->data = dctx;
     ctx->keygen_info = dctx->gentmp;

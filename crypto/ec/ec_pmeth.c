@@ -92,22 +92,13 @@ static int pkey_ec_init(EVP_PKEY_CTX *ctx)
 {
     EC_PKEY_CTX *dctx;
 
-    dctx = OPENSSL_malloc(sizeof(*dctx));
+    dctx = OPENSSL_zalloc(sizeof(*dctx));
     if (!dctx)
         return 0;
-    dctx->gen_group = NULL;
-    dctx->md = NULL;
 
     dctx->cofactor_mode = -1;
-    dctx->co_key = NULL;
     dctx->kdf_type = EVP_PKEY_ECDH_KDF_NONE;
-    dctx->kdf_md = NULL;
-    dctx->kdf_outlen = 0;
-    dctx->kdf_ukm = NULL;
-    dctx->kdf_ukmlen = 0;
-
     ctx->data = dctx;
-
     return 1;
 }
 

@@ -114,12 +114,12 @@ X509_POLICY_NODE *level_add_node(X509_POLICY_LEVEL *level,
                                  X509_POLICY_TREE *tree)
 {
     X509_POLICY_NODE *node;
-    node = OPENSSL_malloc(sizeof(*node));
+
+    node = OPENSSL_zalloc(sizeof(*node));
     if (!node)
         return NULL;
     node->data = data;
     node->parent = parent;
-    node->nchild = 0;
     if (level) {
         if (OBJ_obj2nid(data->valid_policy) == NID_any_policy) {
             if (level->anyPolicy)

@@ -225,10 +225,7 @@ static int dgram_new(BIO *bi)
 
     if (data == NULL)
         return 0;
-    bi->init = 0;
-    bi->num = 0;
     bi->ptr = data;
-    bi->flags = 0;
     return (1);
 }
 

@@ -113,7 +113,7 @@ static int parse_http_line1(char *line);
 
 OCSP_REQ_CTX *OCSP_REQ_CTX_new(BIO *io, int maxline)
 {
-    OCSP_REQ_CTX *rctx = OPENSSL_malloc(sizeof(*rctx));
+    OCSP_REQ_CTX *rctx = OPENSSL_zalloc(sizeof(*rctx));
 
     if (!rctx)
         return NULL;
@@ -121,7 +121,6 @@ OCSP_REQ_CTX *OCSP_REQ_CTX_new(BIO *io, int maxline)
     rctx->max_resp_len = OCSP_MAX_RESP_LENGTH;
     rctx->mem = BIO_new(BIO_s_mem());
     rctx->io = io;
-    rctx->asn1_len = 0;
     if (maxline > 0)
         rctx->iobuflen = maxline;
     else

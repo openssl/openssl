@@ -281,7 +281,7 @@ static CONF_MODULE *module_add(DSO *dso, const char *name,
         supported_modules = sk_CONF_MODULE_new_null();
     if (supported_modules == NULL)
         return NULL;
-    tmod = OPENSSL_malloc(sizeof(*tmod));
+    tmod = OPENSSL_zalloc(sizeof(*tmod));
     if (tmod == NULL)
         return NULL;
 
@@ -289,7 +289,6 @@ static CONF_MODULE *module_add(DSO *dso, const char *name,
     tmod->name = BUF_strdup(name);
     tmod->init = ifunc;
     tmod->finish = ffunc;
-    tmod->links = 0;
 
     if (!sk_CONF_MODULE_push(supported_modules, tmod)) {
         OPENSSL_free(tmod);

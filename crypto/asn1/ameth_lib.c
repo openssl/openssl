@@ -296,48 +296,17 @@ EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_new(int id, int flags,
         ameth->info = BUF_strdup(info);
         if (!ameth->info)
             goto err;
-    } else
-        ameth->info = NULL;
+    }
 
     if (pem_str) {
         ameth->pem_str = BUF_strdup(pem_str);
         if (!ameth->pem_str)
             goto err;
-    } else
-        ameth->pem_str = NULL;
-
-    ameth->pub_decode = 0;
-    ameth->pub_encode = 0;
-    ameth->pub_cmp = 0;
-    ameth->pub_print = 0;
-
-    ameth->priv_decode = 0;
-    ameth->priv_encode = 0;
-    ameth->priv_print = 0;
-
-    ameth->old_priv_encode = 0;
-    ameth->old_priv_decode = 0;
-
-    ameth->item_verify = 0;
-    ameth->item_sign = 0;
-
-    ameth->pkey_size = 0;
-    ameth->pkey_bits = 0;
-
-    ameth->param_decode = 0;
-    ameth->param_encode = 0;
-    ameth->param_missing = 0;
-    ameth->param_copy = 0;
-    ameth->param_cmp = 0;
-    ameth->param_print = 0;
-
-    ameth->pkey_free = 0;
-    ameth->pkey_ctrl = 0;
+    }
 
     return ameth;
 
  err:
-
     EVP_PKEY_asn1_free(ameth);
     return NULL;
 

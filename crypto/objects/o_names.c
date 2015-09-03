@@ -83,7 +83,7 @@ int OBJ_NAME_new_index(unsigned long (*hash_func) (const char *),
     names_type_num++;
     for (i = sk_NAME_FUNCS_num(name_funcs_stack); i < names_type_num; i++) {
         MemCheck_off();
-        name_funcs = OPENSSL_malloc(sizeof(*name_funcs));
+        name_funcs = OPENSSL_zalloc(sizeof(*name_funcs));
         MemCheck_on();
         if (!name_funcs) {
             OBJerr(OBJ_F_OBJ_NAME_NEW_INDEX, ERR_R_MALLOC_FAILURE);
@@ -91,10 +91,6 @@ int OBJ_NAME_new_index(unsigned long (*hash_func) (const char *),
         }
         name_funcs->hash_func = lh_strhash;
         name_funcs->cmp_func = OPENSSL_strcmp;
-        name_funcs->free_func = 0; /* NULL is often declared to * ((void
-                                    * *)0), which according * to Compaq C is
-                                    * not really * compatible with a function
-                                    * * pointer.  -- Richard Levitte */
         MemCheck_off();
         sk_NAME_FUNCS_push(name_funcs_stack, name_funcs);
         MemCheck_on();

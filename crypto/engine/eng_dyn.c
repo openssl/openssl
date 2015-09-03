@@ -208,22 +208,15 @@ static int dynamic_set_data_ctx(ENGINE *e, dynamic_data_ctx **ctx)
         ENGINEerr(ENGINE_F_DYNAMIC_SET_DATA_CTX, ERR_R_MALLOC_FAILURE);
         return 0;
     }
-    c->dynamic_dso = NULL;
-    c->v_check = NULL;
-    c->bind_engine = NULL;
-    c->DYNAMIC_LIBNAME = NULL;
-    c->no_vcheck = 0;
-    c->engine_id = NULL;
-    c->list_add_value = 0;
-    c->DYNAMIC_F1 = "v_check";
-    c->DYNAMIC_F2 = "bind_engine";
-    c->dir_load = 1;
     c->dirs = sk_OPENSSL_STRING_new_null();
     if (!c->dirs) {
         ENGINEerr(ENGINE_F_DYNAMIC_SET_DATA_CTX, ERR_R_MALLOC_FAILURE);
         OPENSSL_free(c);
         return 0;
     }
+    c->DYNAMIC_F1 = "v_check";
+    c->DYNAMIC_F2 = "bind_engine";
+    c->dir_load = 1;
     CRYPTO_w_lock(CRYPTO_LOCK_ENGINE);
     if ((*ctx = (dynamic_data_ctx *)ENGINE_get_ex_data(e,
                                                        dynamic_ex_data_idx))

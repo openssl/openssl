@@ -64,22 +64,14 @@
 
 X509_INFO *X509_INFO_new(void)
 {
-    X509_INFO *ret = NULL;
+    X509_INFO *ret;
 
-    ret = OPENSSL_malloc(sizeof(*ret));
+    ret = OPENSSL_zalloc(sizeof(*ret));
     if (ret == NULL) {
         ASN1err(ASN1_F_X509_INFO_NEW, ERR_R_MALLOC_FAILURE);
         return (NULL);
     }
-
-    ret->enc_cipher.cipher = NULL;
-    ret->enc_len = 0;
-    ret->enc_data = NULL;
-
     ret->references = 1;
-    ret->x509 = NULL;
-    ret->crl = NULL;
-    ret->x_pkey = NULL;
     return (ret);
 }
 

@@ -150,19 +150,15 @@ _STACK *sk_new_null(void)
 _STACK *sk_new(int (*c) (const void *, const void *))
 {
     _STACK *ret;
-    int i;
 
-    if ((ret = OPENSSL_malloc(sizeof(_STACK))) == NULL)
+    if ((ret = OPENSSL_zalloc(sizeof(_STACK))) == NULL)
         goto err;
     if ((ret->data = OPENSSL_malloc(sizeof(*ret->data) * MIN_NODES)) == NULL)
         goto err;
-    for (i = 0; i < MIN_NODES; i++)
-        ret->data[i] = NULL;
     ret->comp = c;
     ret->num_alloc = MIN_NODES;
-    ret->num = 0;
-    ret->sorted = 0;
     return (ret);
+
  err:
     OPENSSL_free(ret);
     return (NULL);

@@ -67,7 +67,7 @@
 
 EC_KEY *EC_KEY_new(void)
 {
-    EC_KEY *ret = OPENSSL_malloc(sizeof(*ret));
+    EC_KEY *ret = OPENSSL_zalloc(sizeof(*ret));
 
     if (ret == NULL) {
         ECerr(EC_F_EC_KEY_NEW, ERR_R_MALLOC_FAILURE);
@@ -75,14 +75,8 @@ EC_KEY *EC_KEY_new(void)
     }
 
     ret->version = 1;
-    ret->flags = 0;
-    ret->group = NULL;
-    ret->pub_key = NULL;
-    ret->priv_key = NULL;
-    ret->enc_flag = 0;
     ret->conv_form = POINT_CONVERSION_UNCOMPRESSED;
     ret->references = 1;
-    ret->method_data = NULL;
     return (ret);
 }
 

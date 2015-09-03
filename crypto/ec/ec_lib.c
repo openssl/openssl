@@ -83,37 +83,25 @@ EC_GROUP *EC_GROUP_new(const EC_METHOD *meth)
         return NULL;
     }
 
-    ret = OPENSSL_malloc(sizeof(*ret));
+    ret = OPENSSL_zalloc(sizeof(*ret));
     if (ret == NULL) {
         ECerr(EC_F_EC_GROUP_NEW, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 
     ret->meth = meth;
-
-    ret->extra_data = NULL;
-    ret->mont_data = NULL;
-
-    ret->generator = NULL;
     ret->order = BN_new();
-    ret->cofactor = NULL;
     if (!ret->order)
         goto err;
     ret->cofactor = BN_new();
     if (!ret->cofactor)
         goto err;
-
-    ret->curve_name = 0;
     ret->asn1_flag = OPENSSL_EC_NAMED_CURVE;
     ret->asn1_form = POINT_CONVERSION_UNCOMPRESSED;
-
-    ret->seed = NULL;
-    ret->seed_len = 0;
-
     if (!meth->group_init(ret))
         goto err;
-
     return ret;
+
  err:
     BN_free(ret->order);
     BN_free(ret->cofactor);

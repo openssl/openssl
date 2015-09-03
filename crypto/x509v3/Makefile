@@ -505,20 +505,21 @@ v3_prn.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 v3_prn.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
 v3_prn.o: ../../include/openssl/x509v3.h ../include/internal/cryptlib.h
 v3_prn.o: v3_prn.c
-v3_purp.o: ../../e_os.h ../../include/openssl/asn1.h
-v3_purp.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
-v3_purp.o: ../../include/openssl/conf.h ../../include/openssl/crypto.h
-v3_purp.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
-v3_purp.o: ../../include/openssl/ecdh.h ../../include/openssl/ecdsa.h
-v3_purp.o: ../../include/openssl/err.h ../../include/openssl/evp.h
-v3_purp.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
-v3_purp.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
-v3_purp.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-v3_purp.o: ../../include/openssl/pkcs7.h ../../include/openssl/safestack.h
-v3_purp.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
-v3_purp.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
-v3_purp.o: ../../include/openssl/x509_vfy.h ../../include/openssl/x509v3.h
-v3_purp.o: ../include/internal/cryptlib.h v3_purp.c
+v3_purp.o: ../../e_os.h ../../include/internal/numbers.h
+v3_purp.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
+v3_purp.o: ../../include/openssl/buffer.h ../../include/openssl/conf.h
+v3_purp.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
+v3_purp.o: ../../include/openssl/ec.h ../../include/openssl/ecdh.h
+v3_purp.o: ../../include/openssl/ecdsa.h ../../include/openssl/err.h
+v3_purp.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
+v3_purp.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
+v3_purp.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
+v3_purp.o: ../../include/openssl/ossl_typ.h ../../include/openssl/pkcs7.h
+v3_purp.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
+v3_purp.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
+v3_purp.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
+v3_purp.o: ../../include/openssl/x509v3.h ../include/internal/cryptlib.h
+v3_purp.o: v3_purp.c
 v3_scts.o: ../../e_os.h ../../include/openssl/asn1.h
 v3_scts.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 v3_scts.o: ../../include/openssl/conf.h ../../include/openssl/crypto.h

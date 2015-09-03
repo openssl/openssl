@@ -74,7 +74,7 @@ UI *UI_new(void)
 
 UI *UI_new_method(const UI_METHOD *method)
 {
-    UI *ret = OPENSSL_malloc(sizeof(*ret));
+    UI *ret = OPENSSL_zalloc(sizeof(*ret));
 
     if (ret == NULL) {
         UIerr(UI_F_UI_NEW_METHOD, ERR_R_MALLOC_FAILURE);
@@ -85,9 +85,6 @@ UI *UI_new_method(const UI_METHOD *method)
     else
         ret->meth = method;
 
-    ret->strings = NULL;
-    ret->user_data = NULL;
-    ret->flags = 0;
     CRYPTO_new_ex_data(CRYPTO_EX_INDEX_UI, ret, &ret->ex_data);
     return ret;
 }

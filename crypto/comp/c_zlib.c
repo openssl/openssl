@@ -166,7 +166,7 @@ struct zlib_state {
 static int zlib_stateful_init(COMP_CTX *ctx)
 {
     int err;
-    struct zlib_state *state = OPENSSL_malloc(sizeof(*state));
+    struct zlib_state *state = OPENSSL_zalloc(sizeof(*state));
 
     if (state == NULL)
         goto err;
@@ -176,8 +176,6 @@ static int zlib_stateful_init(COMP_CTX *ctx)
     state->istream.opaque = Z_NULL;
     state->istream.next_in = Z_NULL;
     state->istream.next_out = Z_NULL;
-    state->istream.avail_in = 0;
-    state->istream.avail_out = 0;
     err = inflateInit_(&state->istream, ZLIB_VERSION, sizeof(z_stream));
     if (err != Z_OK)
         goto err;
@@ -187,8 +185,6 @@ static int zlib_stateful_init(COMP_CTX *ctx)
     state->ostream.opaque = Z_NULL;
     state->ostream.next_in = Z_NULL;
     state->ostream.next_out = Z_NULL;
-    state->ostream.avail_in = 0;
-    state->ostream.avail_out = 0;
     err = deflateInit_(&state->ostream, Z_DEFAULT_COMPRESSION,
                        ZLIB_VERSION, sizeof(z_stream));
     if (err != Z_OK)
@@ -367,28 +363,17 @@ static int bio_zlib_new(BIO *bi)
         return 0;
     }
 # endif
-    ctx = OPENSSL_malloc(sizeof(*ctx));
+    ctx = OPENSSL_zalloc(sizeof(*ctx));
     if (!ctx) {
         COMPerr(COMP_F_BIO_ZLIB_NEW, ERR_R_MALLOC_FAILURE);
         return 0;
     }
-    ctx->ibuf = NULL;
-    ctx->obuf = NULL;
     ctx->ibufsize = ZLIB_DEFAULT_BUFSIZE;
     ctx->obufsize = ZLIB_DEFAULT_BUFSIZE;
     ctx->zin.zalloc = Z_NULL;
     ctx->zin.zfree = Z_NULL;
-    ctx->zin.next_in = NULL;
-    ctx->zin.avail_in = 0;
-    ctx->zin.next_out = NULL;
-    ctx->zin.avail_out = 0;
     ctx->zout.zalloc = Z_NULL;
     ctx->zout.zfree = Z_NULL;
-    ctx->zout.next_in = NULL;
-    ctx->zout.avail_in = 0;
-    ctx->zout.next_out = NULL;
-    ctx->zout.avail_out = 0;
-    ctx->odone = 0;
     ctx->comp_level = Z_DEFAULT_COMPRESSION;
     bi->init = 1;
     bi->ptr = (char *)ctx;

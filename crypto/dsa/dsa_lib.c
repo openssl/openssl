@@ -115,7 +115,7 @@ DSA *DSA_new_method(ENGINE *engine)
 {
     DSA *ret;
 
-    ret = OPENSSL_malloc(sizeof(*ret));
+    ret = OPENSSL_zalloc(sizeof(*ret));
     if (ret == NULL) {
         DSAerr(DSA_F_DSA_NEW_METHOD, ERR_R_MALLOC_FAILURE);
         return (NULL);
@@ -141,19 +141,6 @@ DSA *DSA_new_method(ENGINE *engine)
         }
     }
 #endif
-
-    ret->pad = 0;
-    ret->version = 0;
-    ret->p = NULL;
-    ret->q = NULL;
-    ret->g = NULL;
-
-    ret->pub_key = NULL;
-    ret->priv_key = NULL;
-
-    ret->kinv = NULL;
-    ret->r = NULL;
-    ret->method_mont_p = NULL;
 
     ret->references = 1;
     ret->flags = ret->meth->flags & ~DSA_FLAG_NON_FIPS_ALLOW;
