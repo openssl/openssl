@@ -6,7 +6,7 @@ use warnings;
 use POSIX;
 use File::Spec;
 use File::Copy;
-use OpenSSL::Test qw/:DEFAULT with top_file/;
+use OpenSSL::Test qw/:DEFAULT with top_file cmdstr/;
 
 setup("test_ssl");
 
@@ -27,6 +27,14 @@ my $Uconf=top_file("test","Uss.cnf");
 my $Ukey="keyU.ss";
 my $Ureq="reqU.ss";
 my $Ucert="certU.ss";
+
+my $Dkey="keyD.ss";
+my $Dreq="reqD.ss";
+my $Dcert="certD.ss";
+
+my $Ekey="keyE.ss";
+my $Ereq="reqE.ss";
+my $Ecert="certE.ss";
 
 my $P1conf=top_file("test","P1ss.cnf");
 my $P1key="keyP1.ss";
@@ -83,58 +91,59 @@ sub testss {
     print RND "string to make the random number generator think it has entropy";
     close RND;
 
+    my @req_dsa = ("-newkey",
+                   "dsa:".File::Spec->catfile("..", "apps", "dsa1024.pem"));;
     my @req_new;
     if (run(app(["openssl", "no-rsa"], stdout => undef))) {
-	@req_new = ("-newkey",
-		    "dsa:".File::Spec->catfile("..", "apps", "dsa512.pem"));
+	@req_new = @req_dsa;
     } else {
 	@req_new = ("-new");
     }
 
-    plan tests => 15;
+    plan tests => 17;
 
   SKIP: {
-      skip 'failure', 14 unless
+      skip 'failure', 16 unless
 	  ok(run(app([@reqcmd, "-config", $CAconf,
 		      "-out", $CAreq, "-keyout", $CAkey,
 		      @req_new])),
 	     'make cert request');
 
-      skip 'failure', 13 unless
+      skip 'failure', 15 unless
 	  ok(run(app([@x509cmd, "-CAcreateserial", "-in", $CAreq, "-days", "30",
 		      "-req", "-out", $CAcert, "-signkey", $CAkey,
 		      "-extfile", $CAconf, "-extensions", "v3_ca"],
 		     stdout => "err.ss")),
 	     'convert request into self-signed cert');
 
-      skip 'failure', 12 unless
+      skip 'failure', 14 unless
 	  ok(run(app([@x509cmd, "-in", $CAcert,
 		      "-x509toreq", "-signkey", $CAkey, "-out", $CAreq2],
 		     stdout => "err.ss")),
 	     'convert cert into a cert request');
 
-      skip 'failure', 11 unless
+      skip 'failure', 13 unless
 	  ok(run(app([@reqcmd, "-config", $dummycnf,
 		      "-verify", "-in", $CAreq, "-noout"])),
 	     'verify request 1');
 
 
-      skip 'failure', 10 unless
+      skip 'failure', 12 unless
 	  ok(run(app([@reqcmd, "-config", $dummycnf,
 		      "-verify", "-in", $CAreq2, "-noout"])),
 	     'verify request 2');
 
-      skip 'failure', 9 unless
+      skip 'failure', 11 unless
 	  ok(run(app([@verifycmd, "-CAfile", $CAcert, $CAcert])),
 	     'verify signature');
 
-      skip 'failure', 8 unless
+      skip 'failure', 10 unless
 	  ok(run(app([@reqcmd, "-config", $Uconf,
 		      "-out", $Ureq, "-keyout", $Ukey, @req_new],
 		     stdout => "err.ss")),
 	     'make a user cert request');
 
-      skip 'failure', 7 unless
+      skip 'failure', 9 unless
 	  ok(run(app([@x509cmd, "-CAcreateserial", "-in", $Ureq, "-days", "30",
 		      "-req", "-out", $Ucert,
 		      "-CA", $CAcert, "-CAkey", $CAkey, "-CAserial", $CAserial,
@@ -143,12 +152,93 @@ sub testss {
 	     && run(app([@verifycmd, "-CAfile", $CAcert, $Ucert])),
 	     'sign user cert request');
 
-      skip 'failure', 6 unless
+      skip 'failure', 8 unless
 	  ok(run(app([@x509cmd,
 		      "-subject", "-issuer", "-startdate", "-enddate",
 		      "-noout", "-in", $Ucert])),
 	     'Certificate details');
 
+      skip 'failure', 7 unless
+          subtest 'DSA certificate creation' => sub {
+              plan skip_all => "skipping DSA certificate creation"
+                  if run(app(["openssl", "no-dsa"], stdout => undef));
+
+              plan tests => 4;
+
+            SKIP: {
+                $ENV{CN2} = "DSA Certificate";
+                skip 'failure', 3 unless
+                    ok(run(app([@reqcmd, "-config", $Uconf,
+                                "-out", $Dreq, "-keyout", $Dkey,
+                                @req_dsa],
+                               stdout => "err.ss")),
+                       "make a DSA user cert request");
+                skip 'failure', 2 unless
+                    ok(run(app([@x509cmd, "-CAcreateserial",
+                                "-in", $Dreq,
+                                "-days", "30",
+                                "-req",
+                                "-out", $Dcert,
+                                "-CA", $CAcert, "-CAkey", $CAkey,
+                                "-CAserial", $CAserial,
+                                "-extfile", $Uconf,
+                                "-extensions", "v3_ee_dsa"],
+                               stdout => "err.ss")),
+                       "sign DSA user cert request");
+                skip 'failure', 1 unless
+                    ok(run(app([@verifycmd, "-CAfile", $CAcert, $Dcert])),
+                       "verify DSA user cert");
+                skip 'failure', 0 unless
+                    ok(run(app([@x509cmd,
+                                "-subject", "-issuer",
+                                "-startdate", "-enddate", "-noout",
+                                "-in", $Dcert])),
+                       "DSA Certificate details");
+              }
+      };
+
+      skip 'failure', 6 unless
+          subtest 'ECDSA/ECDH certificate creation' => sub {
+              plan skip_all => "skipping ECDSA/ECDH certificate creation"
+                  if run(app(["openssl", "no-ec"], stdout => undef));
+
+              plan tests => 5;
+
+            SKIP: {
+                $ENV{CN2} = "ECDSA Certificate";
+                skip 'failure', 4 unless
+                    ok(run(app(["openssl", "ecparam", "-name", "P-256",
+                                "-out", "ecp.ss"])),
+                       "make EC parameters");
+                skip 'failure', 3 unless
+                    ok(run(app([@reqcmd, "-config", $Uconf,
+                                "-out", $Ereq, "-keyout", $Ekey,
+                                "-newkey", "ec:ecp.ss"],
+                               stdout => "err.ss")),
+                       "make a ECDSA/ECDH user cert request");
+                skip 'failure', 2 unless
+                    ok(run(app([@x509cmd, "-CAcreateserial",
+                                "-in", $Ereq,
+                                "-days", "30",
+                                "-req",
+                                "-out", $Ecert,
+                                "-CA", $CAcert, "-CAkey", $CAkey,
+                                "-CAserial", $CAserial,
+                                "-extfile", $Uconf,
+                                "-extensions", "v3_ee_ec"],
+                               stdout => "err.ss")),
+                       "sign ECDSA/ECDH user cert request");
+                skip 'failure', 1 unless
+                    ok(run(app([@verifycmd, "-CAfile", $CAcert, $Ecert])),
+                       "verify ECDSA/ECDH user cert");
+                skip 'failure', 0 unless
+                    ok(run(app([@x509cmd,
+                                "-subject", "-issuer",
+                                "-startdate", "-enddate", "-noout",
+                                "-in", $Ecert])),
+                       "ECDSA Certificate details");
+              }
+      };
 
       skip 'failure', 5 unless
 	  ok(run(app([@reqcmd, "-config", $P1conf,
@@ -210,7 +300,7 @@ sub testssl {
     my @extra = @_;
 
     my @ssltest = ("ssltest",
-		   "-key", $key, "-cert", $cert,
+		   "-s_key", $key, "-s_cert", $cert,
 		   "-c_key", $key, "-c_cert", $cert);
 
     my $serverinfo = top_file("test","serverinfo.pem");
@@ -292,42 +382,55 @@ sub testssl {
 
     subtest "Testing ciphersuites" => sub {
 
-	my $no_dh = run(app(["openssl", "no-dhparam"], stdout => undef));
-	my $no_ec = run(app(["openssl", "no-ec"], stdout => undef));
+        my @exkeys = ();
+        my $ciphers = "-EXP:-PSK:-SRP:-kDH:-kECDHe";
+
+        if (run(app(["openssl", "no-dhparam"], stdout => undef))) {
+            note "skipping DHE tests\n";
+            $ciphers .= ":-kDHE";
+        }
+        if (run(app(["openssl", "no-dsa"], stdout => undef))) {
+            note "skipping DSA tests\n";
+            $ciphers .= ":-aDSA";
+        } else {
+            push @exkeys, "-s_cert", "certD.ss", "-s_key", "keyD.ss";
+        }
+
+        if (run(app(["openssl", "no-ec"], stdout => undef))) {
+            note "skipping EC tests\n";
+            $ciphers .= ":!aECDSA:!kECDH";
+        } else {
+            push @exkeys, "-s_cert", "certE.ss", "-s_key", "keyE.ss";
+        }
 
 	my @protocols = ("TLSv1.2", "SSLv3");
 	my $protocolciphersuitcount = 0;
 	my %ciphersuites =
 	    map { my @c =
 		      map { split(/:/, $_) }
-		      map { run(app(["openssl",
-				     "ciphers", "$_"]),
-				capture => 1);
-		      }
-		      ( "RSA+$_",
-			$no_dh ? () : "EDH+aRSA+$_:-EXP",
-			$no_ec ? () : "EECDH+aRSA+$_:-EXP" );
+		      run(app(["openssl", "ciphers", "${_}:$ciphers"]),
+                          capture => 1);
 		  chomp @c;
 		  $protocolciphersuitcount += scalar @c;
 		  $_ => [ @c ] } @protocols;
 
-	plan tests => $protocolciphersuitcount + ($no_dh ? 0 : 2);
+        # The count of protocols is because in addition to the ciphersuits
+        # we got above, we're running a weak DH test for each protocol
+	plan tests => $protocolciphersuitcount + scalar(@protocols);
 
 	foreach my $protocol (@protocols) {
 	    note "Testing ciphersuites for $protocol";
 	    foreach my $cipher (@{$ciphersuites{$protocol}}) {
-		ok(run(test([@ssltest, "-cipher", $cipher,
+		ok(run(test([@ssltest, @exkeys, "-cipher", $cipher,
 			     $protocol eq "SSLv3" ? ("-ssl3") : ()])),
 		   "Testing $cipher");
 	    }
-	    if (!$no_dh) {
-		is(run(test([@ssltest,
-			     "-s_cipher", "EDH",
-			     "-c_cipher", 'EDH:@SECLEVEL=1',
-			     "-dhe512",
-			     $protocol eq "SSLv3" ? ("-ssl3") : ()])), 0,
-		   "testing connection with weak DH, expecting failure");
-	    }
+            is(run(test([@ssltest,
+                         "-s_cipher", "EDH",
+                         "-c_cipher", 'EDH:@SECLEVEL=1',
+                         "-dhe512",
+                         $protocol eq "SSLv3" ? ("-ssl3") : ()])), 0,
+               "testing connection with weak DH, expecting failure");
 	}
     };
 
@@ -351,13 +454,13 @@ sub testssl {
 	      skip "skipping RSA tests", 2
 		  if (run(app(["openssl", "no-rsa"], stdout => undef)));
 
-	      ok(run(test(["ssltest", "-v", "-bio_pair", "-tls1", "-cert", top_file("apps","server2.pem"), "-no_dhe", "-no_ecdhe", "-num", "10", "-f", "-time", @extra])),
+	      ok(run(test(["ssltest", "-v", "-bio_pair", "-tls1", "-s_cert", top_file("apps","server2.pem"), "-no_dhe", "-no_ecdhe", "-num", "10", "-f", "-time", @extra])),
 		 'test tlsv1 with 1024bit RSA, no (EC)DHE, multiple handshakes');
 
 	      skip "skipping RSA+DHE tests", 1
 		  if (run(app(["openssl", "no-dhparam"], stdout => undef)));
 
-	      ok(run(test(["ssltest", "-v", "-bio_pair", "-tls1", "-cert", top_file("apps","server2.pem"), "-dhe1024dsa", "-num", "10", "-f", "-time", @extra])),
+	      ok(run(test(["ssltest", "-v", "-bio_pair", "-tls1", "-s_cert", top_file("apps","server2.pem"), "-dhe1024dsa", "-num", "10", "-f", "-time", @extra])),
 		 'test tlsv1 with 1024bit RSA, 1024bit DHE, multiple handshakes');
 	    }
 	}
@@ -464,7 +567,9 @@ sub testsslproxy {
     foreach my $auth (('A', 'B', 'C', 'BC')) {
 	foreach my $cond (('A', 'B', 'C', 'A|B&!C')) {
 	    # Exit code 3 is when ssltest couldn't parse the condition
-	    with({ exit_checker => sub { return shift == 3 ? 0 : 1; } },
+	    with({ exit_checker => sub { my $x = shift;
+                                         return
+                                             ($x == 1 || $x == 3) ? 0 : 1; } },
 		 sub {
 		     testssl($a1, $a2, $a3,
 			     "-proxy", "-proxy_auth", $auth,
