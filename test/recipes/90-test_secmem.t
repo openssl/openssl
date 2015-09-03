@@ -2,4 +2,4 @@
 
 use OpenSSL::Test::Simple;
 
-simple_test("test_jpake", "secmemtest");
+simple_test("test_secmem", "secmemtest");
