@@ -122,31 +122,6 @@ static const EVP_PBE_CTL builtin_pbe[] = {
     {EVP_PBE_TYPE_KDF, NID_id_scrypt, -1, -1, PKCS5_v2_scrypt_keyivgen}
 };
 
-#ifdef TEST
-int main(int argc, char **argv)
-{
-    int i, nid_md, nid_cipher;
-    EVP_PBE_CTL *tpbe, *tpbe2;
-    /*
-     * OpenSSL_add_all_algorithms();
-     */
-
-    for (i = 0; i < OSSL_NELEM(builtin_pbe); i++) {
-        tpbe = builtin_pbe + i;
-        fprintf(stderr, "%d %d %s ", tpbe->pbe_type, tpbe->pbe_nid,
-                OBJ_nid2sn(tpbe->pbe_nid));
-        if (EVP_PBE_find(tpbe->pbe_type, tpbe->pbe_nid,
-                         &nid_cipher, &nid_md, 0))
-            fprintf(stderr, "Found %s %s\n",
-                    OBJ_nid2sn(nid_cipher), OBJ_nid2sn(nid_md));
-        else
-            fprintf(stderr, "Find ERROR!!\n");
-    }
-
-    return 0;
-}
-#endif
-
 int EVP_PBE_CipherInit(ASN1_OBJECT *pbe_obj, const char *pass, int passlen,
                        ASN1_TYPE *param, EVP_CIPHER_CTX *ctx, int en_de)
 {
@@ -301,4 +276,19 @@ void EVP_PBE_cleanup(void)
 {
     sk_EVP_PBE_CTL_pop_free(pbe_algs, free_evp_pbe_ctl);
     pbe_algs = NULL;
+}
+
+int EVP_PBE_get(int *ptype, int *ppbe_nid, size_t num)
+{
+    const EVP_PBE_CTL *tpbe;
+
+    if (num >= OSSL_NELEM(builtin_pbe))
+        return 0;
+
+    tpbe = builtin_pbe + num;
+    if (ptype)
+        *ptype = tpbe->pbe_type;
+    if (ppbe_nid)
+        *ppbe_nid = tpbe->pbe_nid;
+    return 1;
 }
