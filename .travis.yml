@@ -1,9 +1,7 @@
 language: c
-
 os:
  - linux
  - osx
-
 compiler:
  - clang
  - gcc
@@ -12,7 +10,6 @@ env:
  - CONFIG_OPTS=""
  - CONFIG_OPTS="--debug"
  - CONFIG_OPTS="shared"
-
 script:
  - ./config $CONFIG_OPTS && make && make test
 
