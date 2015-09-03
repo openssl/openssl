@@ -2,4 +2,4 @@
 
 use OpenSSL::Test::Simple;
 
-simple_test("test_jpake", "packettest");
+simple_test("test_packet", "packettest");
