@@ -1330,15 +1330,16 @@ static int check_suiteb_cipher_list(const SSL_METHOD *meth, CERT *c,
                                     const char **prule_str)
 {
     unsigned int suiteb_flags = 0, suiteb_comb2 = 0;
-    if (strcmp(*prule_str, "SUITEB128") == 0)
-        suiteb_flags = SSL_CERT_FLAG_SUITEB_128_LOS;
-    else if (strcmp(*prule_str, "SUITEB128ONLY") == 0)
+    if (strncmp(*prule_str, "SUITEB128ONLY", 13) == 0) {
         suiteb_flags = SSL_CERT_FLAG_SUITEB_128_LOS_ONLY;
-    else if (strcmp(*prule_str, "SUITEB128C2") == 0) {
+    } else if (strncmp(*prule_str, "SUITEB128C2", 11) == 0) {
         suiteb_comb2 = 1;
         suiteb_flags = SSL_CERT_FLAG_SUITEB_128_LOS;
-    } else if (strcmp(*prule_str, "SUITEB192") == 0)
+    } else if (strncmp(*prule_str, "SUITEB128", 9) == 0) {
+        suiteb_flags = SSL_CERT_FLAG_SUITEB_128_LOS;
+    } else if (strncmp(*prule_str, "SUITEB192", 9) == 0) {
         suiteb_flags = SSL_CERT_FLAG_SUITEB_192_LOS;
+    }
 
     if (suiteb_flags) {
         c->cert_flags &= ~SSL_CERT_FLAG_SUITEB_128_LOS;
