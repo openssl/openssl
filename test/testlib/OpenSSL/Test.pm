@@ -695,8 +695,10 @@ sub __build_cmd {
 
     my $num = shift;
     my $path_builder = shift;
-    my $cmd = __fixup_cmd($path_builder->(shift @{$_[0]}));
-    my @args = @{$_[0]}; shift;
+    # Make a copy to not destroy the caller's array
+    my @cmdarray = ( @{$_[0]} ); shift;
+    my $cmd = __fixup_cmd($path_builder->(shift @cmdarray));
+    my @args = @cmdarray;
     my %opts = @_;
 
     return () if !$cmd;
