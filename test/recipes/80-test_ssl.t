@@ -52,8 +52,8 @@ plan tests =>
     1				# For testss
     + 1				# For ssltest -test_cipherlist
     + 8				# For the first testssl
-    + 8 * 4 * 4			# For the first testsslproxy (16 times testssl)
-    + 8 * 4 * 4			# For the second testsslproxy (16 times testssl)
+    + 16			# For the first testsslproxy
+    + 16			# For the second testsslproxy
     ;
 
 subtest 'test_ss' => sub {
@@ -78,10 +78,10 @@ my $check = ok(run(test(["ssltest","-test_cipherlist"])), "running ssltest");
       testssl("keyU.ss", $Ucert, $CAcert);
 
       note('test_ssl -- key P1');
-      testsslproxy("keyP1.ss", "certP1.ss", "intP1.ss");
+      testsslproxy("keyP1.ss", "certP1.ss", "intP1.ss", "AB");
 
       note('test_ssl -- key P2');
-      testsslproxy("keyP2.ss", "certP2.ss", "intP2.ss");
+      testsslproxy("keyP2.ss", "certP2.ss", "intP2.ss", "BC");
     }
 
 # -----------
@@ -558,23 +558,70 @@ sub testssl {
 }
 
 sub testsslproxy {
-    my ($a1, $a2, $a3, @rest) = @_;
+    my $key = shift || top_file("apps","server.pem");
+    my $cert = shift || top_file("apps","server.pem");
+    my $CAtmp = shift;
+    my @CA = $CAtmp ? ("-CAfile", $CAtmp) : ("-CApath", top_dir("certs"));
+    my @extra = @_;
+
+    my @ssltest = ("ssltest",
+		   "-s_key", $key, "-s_cert", $cert,
+		   "-c_key", $key, "-c_cert", $cert);
 
     # plan tests => 16;
 
     note('Testing a lot of proxy conditions.');
-    note('Some of them may turn out being invalid, which is fine.');
-    foreach my $auth (('A', 'B', 'C', 'BC')) {
-	foreach my $cond (('A', 'B', 'C', 'A|B&!C')) {
-	    # Exit code 3 is when ssltest couldn't parse the condition
-	    with({ exit_checker => sub { my $x = shift;
-                                         return
-                                             ($x == 1 || $x == 3) ? 0 : 1; } },
-		 sub {
-		     testssl($a1, $a2, $a3,
-			     "-proxy", "-proxy_auth", $auth,
-			     "-proxy_cond", $cond);
-		 });
-	}
+
+    # We happen to know that certP1.ss has policy letters "AB" and
+    # certP2.ss has policy letters "BC".  However, because certP2.ss
+    # has certP1.ss as issuer, when it's used, both their policy
+    # letters get combined into just "B".
+    # The policy letter(s) then get filtered with the given auth letter
+    # in the table below, and the result gets tested with the given
+    # condition.  For details, read ssltest.c
+    #
+    # certfilename => [ [ auth, cond, expected result ] ... ]
+    my %expected = ( "certP1.ss" => [ [ [ 'A',  'A'      ], 1 ],
+                                      [ [ 'A',  'B'      ], 0 ],
+                                      [ [ 'A',  'C'      ], 0 ],
+                                      [ [ 'A',  'A|B&!C' ], 1 ],
+                                      [ [ 'B',  'A'      ], 0 ],
+                                      [ [ 'B',  'B'      ], 1 ],
+                                      [ [ 'B',  'C'      ], 0 ],
+                                      [ [ 'B',  'A|B&!C' ], 1 ],
+                                      [ [ 'C',  'A'      ], 0 ],
+                                      [ [ 'C',  'B'      ], 0 ],
+                                      [ [ 'C',  'C'      ], 0 ],
+                                      [ [ 'C',  'A|B&!C' ], 0 ],
+                                      [ [ 'BC', 'A'      ], 0 ],
+                                      [ [ 'BC', 'B'      ], 1 ],
+                                      [ [ 'BC', 'C'      ], 0 ],
+                                      [ [ 'BC', 'A|B&!C' ], 1 ] ],
+                     "certP2.ss" => [ [ [ 'A',  'A'      ], 0 ],
+                                      [ [ 'A',  'B'      ], 0 ],
+                                      [ [ 'A',  'C'      ], 0 ],
+                                      [ [ 'A',  'A|B&!C' ], 0 ],
+                                      [ [ 'B',  'A'      ], 0 ],
+                                      [ [ 'B',  'B'      ], 1 ],
+                                      [ [ 'B',  'C'      ], 0 ],
+                                      [ [ 'B',  'A|B&!C' ], 1 ],
+                                      [ [ 'C',  'A'      ], 0 ],
+                                      [ [ 'C',  'B'      ], 0 ],
+                                      [ [ 'C',  'C'      ], 0 ],
+                                      [ [ 'C',  'A|B&!C' ], 0 ],
+                                      [ [ 'BC', 'A'      ], 0 ],
+                                      [ [ 'BC', 'B'      ], 1 ],
+                                      [ [ 'BC', 'C'      ], 0 ],
+                                      [ [ 'BC', 'A|B&!C' ], 1 ] ] );
+
+    foreach (@{$expected{$cert}}) {
+        my $auth = $_->[0]->[0];
+        my $cond = $_->[0]->[1];
+        my $res  = $_->[1];
+	is(run(test([@ssltest, "-ssl3", "-server_auth", @CA,
+                     "-proxy", "-proxy_auth", $auth,
+                     "-proxy_cond", $cond])), $res,
+	   "test tlsv1, server auth, proxy auth $auth and cond $cond (expect "
+           .($res ? "success" : "failure").")");
     }
 }
