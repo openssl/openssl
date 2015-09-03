@@ -4602,3 +4602,4 @@ X509_CRL_get0_signature                 4960	EXIST::FUNCTION:
 X509_CRL_get_REVOKED                    4961	EXIST::FUNCTION:
 X509_CRL_get_version                    4962	EXIST::FUNCTION:
 X509_CRL_get_lastUpdate                 4963	EXIST::FUNCTION:
+EVP_PBE_get                             4964	EXIST::FUNCTION:
