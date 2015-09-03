@@ -81,15 +81,11 @@ BUF_MEM *BUF_MEM_new(void)
 {
     BUF_MEM *ret;
 
-    ret = OPENSSL_malloc(sizeof(*ret));
+    ret = OPENSSL_zalloc(sizeof(*ret));
     if (ret == NULL) {
         BUFerr(BUF_F_BUF_MEM_NEW, ERR_R_MALLOC_FAILURE);
         return (NULL);
     }
-    ret->flags = 0;
-    ret->length = 0;
-    ret->max = 0;
-    ret->data = NULL;
     return (ret);
 }
 

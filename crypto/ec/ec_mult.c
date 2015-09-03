@@ -100,17 +100,14 @@ static EC_PRE_COMP *ec_pre_comp_new(const EC_GROUP *group)
     if (!group)
         return NULL;
 
-    ret = OPENSSL_malloc(sizeof(*ret));
+    ret = OPENSSL_zalloc(sizeof(*ret));
     if (!ret) {
         ECerr(EC_F_EC_PRE_COMP_NEW, ERR_R_MALLOC_FAILURE);
         return ret;
     }
     ret->group = group;
     ret->blocksize = 8;         /* default */
-    ret->numblocks = 0;
     ret->w = 4;                 /* default */
-    ret->points = NULL;
-    ret->num = 0;
     ret->references = 1;
     return ret;
 }

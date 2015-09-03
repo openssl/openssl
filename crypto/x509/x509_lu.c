@@ -68,15 +68,11 @@ X509_LOOKUP *X509_LOOKUP_new(X509_LOOKUP_METHOD *method)
 {
     X509_LOOKUP *ret;
 
-    ret = OPENSSL_malloc(sizeof(*ret));
+    ret = OPENSSL_zalloc(sizeof(*ret));
     if (ret == NULL)
         return NULL;
 
-    ret->init = 0;
-    ret->skip = 0;
     ret->method = method;
-    ret->method_data = NULL;
-    ret->store_ctx = NULL;
     if ((method->new_item != NULL) && !method->new_item(ret)) {
         OPENSSL_free(ret);
         return NULL;
@@ -185,26 +181,14 @@ X509_STORE *X509_STORE_new(void)
 {
     X509_STORE *ret;
 
-    if ((ret = OPENSSL_malloc(sizeof(*ret))) == NULL)
+    if ((ret = OPENSSL_zalloc(sizeof(*ret))) == NULL)
         return NULL;
     ret->objs = sk_X509_OBJECT_new(x509_object_cmp);
     ret->cache = 1;
     ret->get_cert_methods = sk_X509_LOOKUP_new_null();
-    ret->verify = 0;
-    ret->verify_cb = 0;
 
     if ((ret->param = X509_VERIFY_PARAM_new()) == NULL)
         return NULL;
-
-    ret->get_issuer = 0;
-    ret->check_issued = 0;
-    ret->check_revocation = 0;
-    ret->get_crl = 0;
-    ret->check_crl = 0;
-    ret->cert_crl = 0;
-    ret->lookup_certs = 0;
-    ret->lookup_crls = 0;
-    ret->cleanup = 0;
 
     if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_X509_STORE, ret, &ret->ex_data)) {
         sk_X509_OBJECT_free(ret->objs);

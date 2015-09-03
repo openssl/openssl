@@ -190,17 +190,13 @@ BN_CTX *BN_CTX_new(void)
 {
     BN_CTX *ret;
 
-    if ((ret = OPENSSL_malloc(sizeof(*ret))) == NULL) {
+    if ((ret = OPENSSL_zalloc(sizeof(*ret))) == NULL) {
         BNerr(BN_F_BN_CTX_NEW, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
     /* Initialise the structure */
     BN_POOL_init(&ret->pool);
     BN_STACK_init(&ret->stack);
-    ret->used = 0;
-    ret->err_stack = 0;
-    ret->too_many = 0;
-    ret->flags = 0;
     return ret;
 }
 

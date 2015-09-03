@@ -107,7 +107,7 @@ DH *DH_new(void)
 
 DH *DH_new_method(ENGINE *engine)
 {
-    DH *ret = OPENSSL_malloc(sizeof(*ret));
+    DH *ret = OPENSSL_zalloc(sizeof(*ret));
 
     if (ret == NULL) {
         DHerr(DH_F_DH_NEW_METHOD, ERR_R_MALLOC_FAILURE);
@@ -136,19 +136,6 @@ DH *DH_new_method(ENGINE *engine)
     }
 #endif
 
-    ret->pad = 0;
-    ret->version = 0;
-    ret->p = NULL;
-    ret->g = NULL;
-    ret->length = 0;
-    ret->pub_key = NULL;
-    ret->priv_key = NULL;
-    ret->q = NULL;
-    ret->j = NULL;
-    ret->seed = NULL;
-    ret->seedlen = 0;
-    ret->counter = NULL;
-    ret->method_mont_p = NULL;
     ret->references = 1;
     ret->flags = ret->meth->flags;
     CRYPTO_new_ex_data(CRYPTO_EX_INDEX_DH, ret, &ret->ex_data);

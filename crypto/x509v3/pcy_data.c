@@ -98,7 +98,7 @@ X509_POLICY_DATA *policy_data_new(POLICYINFO *policy,
             return NULL;
     } else
         id = NULL;
-    ret = OPENSSL_malloc(sizeof(*ret));
+    ret = OPENSSL_zalloc(sizeof(*ret));
     if (!ret)
         return NULL;
     ret->expected_policy_set = sk_ASN1_OBJECT_new_null();
@@ -110,8 +110,6 @@ X509_POLICY_DATA *policy_data_new(POLICYINFO *policy,
 
     if (crit)
         ret->flags = POLICY_DATA_FLAG_CRITICAL;
-    else
-        ret->flags = 0;
 
     if (id)
         ret->valid_policy = id;
@@ -123,8 +121,7 @@ X509_POLICY_DATA *policy_data_new(POLICYINFO *policy,
     if (policy) {
         ret->qualifier_set = policy->qualifiers;
         policy->qualifiers = NULL;
-    } else
-        ret->qualifier_set = NULL;
+    }
 
     return ret;
 }

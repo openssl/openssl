@@ -1573,23 +1573,18 @@ void capi_free_key(CAPI_KEY * key)
 
 static CAPI_CTX *capi_ctx_new()
 {
-    CAPI_CTX *ctx = OPENSSL_malloc(sizeof(*ctx));
+    CAPI_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));
 
     if (!ctx) {
         CAPIerr(CAPI_F_CAPI_CTX_NEW, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
-    ctx->cspname = NULL;
     ctx->csptype = PROV_RSA_FULL;
     ctx->dump_flags = CAPI_DMP_SUMMARY | CAPI_DMP_FNAME;
     ctx->keytype = AT_KEYEXCHANGE;
-    ctx->storename = NULL;
-    ctx->ssl_client_store = NULL;
     ctx->store_flags = CERT_STORE_OPEN_EXISTING_FLAG |
         CERT_STORE_READONLY_FLAG | CERT_SYSTEM_STORE_CURRENT_USER;
     ctx->lookup_method = CAPI_LU_SUBSTR;
-    ctx->debug_level = 0;
-    ctx->debug_file = NULL;
     ctx->client_cert_select = cert_select_simple;
     return ctx;
 }

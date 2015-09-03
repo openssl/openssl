@@ -97,21 +97,12 @@ typedef struct {
 static int pkey_rsa_init(EVP_PKEY_CTX *ctx)
 {
     RSA_PKEY_CTX *rctx;
-    rctx = OPENSSL_malloc(sizeof(*rctx));
+    rctx = OPENSSL_zalloc(sizeof(*rctx));
     if (!rctx)
         return 0;
     rctx->nbits = 1024;
-    rctx->pub_exp = NULL;
     rctx->pad_mode = RSA_PKCS1_PADDING;
-    rctx->md = NULL;
-    rctx->mgf1md = NULL;
-    rctx->tbuf = NULL;
-
     rctx->saltlen = -2;
-
-    rctx->oaep_label = NULL;
-    rctx->oaep_labellen = 0;
-
     ctx->data = rctx;
     ctx->keygen_info = rctx->gentmp;
     ctx->keygen_info_count = 2;

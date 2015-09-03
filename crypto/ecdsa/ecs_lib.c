@@ -251,7 +251,7 @@ ECDSA_METHOD *ECDSA_METHOD_new(ECDSA_METHOD *ecdsa_meth)
 {
     ECDSA_METHOD *ret;
 
-    ret = OPENSSL_malloc(sizeof(*ret));
+    ret = OPENSSL_zalloc(sizeof(*ret));
     if (ret == NULL) {
         ECDSAerr(ECDSA_F_ECDSA_METHOD_NEW, ERR_R_MALLOC_FAILURE);
         return NULL;
@@ -259,13 +259,6 @@ ECDSA_METHOD *ECDSA_METHOD_new(ECDSA_METHOD *ecdsa_meth)
 
     if (ecdsa_meth)
         *ret = *ecdsa_meth;
-    else {
-        ret->ecdsa_sign_setup = 0;
-        ret->ecdsa_do_sign = 0;
-        ret->ecdsa_do_verify = 0;
-        ret->name = NULL;
-        ret->flags = 0;
-    }
     ret->flags |= ECDSA_METHOD_FLAG_ALLOCATED;
     return ret;
 }

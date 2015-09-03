@@ -345,16 +345,11 @@ ASN1_OBJECT *ASN1_OBJECT_new(void)
 {
     ASN1_OBJECT *ret;
 
-    ret = OPENSSL_malloc(sizeof(*ret));
+    ret = OPENSSL_zalloc(sizeof(*ret));
     if (ret == NULL) {
         ASN1err(ASN1_F_ASN1_OBJECT_NEW, ERR_R_MALLOC_FAILURE);
         return (NULL);
     }
-    ret->length = 0;
-    ret->data = NULL;
-    ret->nid = 0;
-    ret->sn = NULL;
-    ret->ln = NULL;
     ret->flags = ASN1_OBJECT_FLAG_DYNAMIC;
     return (ret);
 }

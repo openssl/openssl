@@ -70,17 +70,10 @@ X509_PKEY *X509_PKEY_new(void)
     if (!ret)
         goto err;
 
-    ret->version = 0;
     ret->enc_algor = X509_ALGOR_new();
     ret->enc_pkey = ASN1_OCTET_STRING_new();
     if (!ret->enc_algor || !ret->enc_pkey)
         goto err;
-    ret->dec_pkey = NULL;
-    ret->key_length = 0;
-    ret->key_data = NULL;
-    ret->key_free = 0;
-    ret->cipher.cipher = NULL;
-    memset(ret->cipher.iv, 0, EVP_MAX_IV_LENGTH);
     ret->references = 1;
     return ret;
 err:

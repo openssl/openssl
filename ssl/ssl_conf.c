@@ -771,24 +771,8 @@ int SSL_CONF_cmd_value_type(SSL_CONF_CTX *cctx, const char *cmd)
 
 SSL_CONF_CTX *SSL_CONF_CTX_new(void)
 {
-    SSL_CONF_CTX *ret = OPENSSL_malloc(sizeof(*ret));
-    size_t i;
+    SSL_CONF_CTX *ret = OPENSSL_zalloc(sizeof(*ret));
 
-    if (ret) {
-        ret->flags = 0;
-        ret->prefix = NULL;
-        ret->prefixlen = 0;
-        ret->ssl = NULL;
-        ret->ctx = NULL;
-        ret->poptions = NULL;
-        ret->pcert_flags = NULL;
-        ret->pvfy_flags = NULL;
-        ret->tbl = NULL;
-        ret->ntbl = 0;
-        for (i = 0; i < SSL_PKEY_NUM; i++)
-            ret->cert_filename[i] = NULL;
-        ret->canames = NULL;
-    }
     return ret;
 }
 

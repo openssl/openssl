@@ -176,21 +176,13 @@ static int ok_new(BIO *bi)
 {
     BIO_OK_CTX *ctx;
 
-    ctx = OPENSSL_malloc(sizeof(*ctx));
+    ctx = OPENSSL_zalloc(sizeof(*ctx));
     if (ctx == NULL)
         return (0);
 
-    ctx->buf_len = 0;
-    ctx->buf_off = 0;
-    ctx->buf_len_save = 0;
-    ctx->buf_off_save = 0;
     ctx->cont = 1;
-    ctx->finished = 0;
-    ctx->blockout = 0;
     ctx->sigio = 1;
-
     EVP_MD_CTX_init(&ctx->md);
-
     bi->init = 0;
     bi->ptr = (char *)ctx;
     bi->flags = 0;
