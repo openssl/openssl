@@ -4,6 +4,21 @@
 
  Changes between 1.0.2 and 1.1.0  [xx XXX xxxx]
 
+  *) New testing framework
+     The testing framework has been largely rewritten and is now using
+     perl and the perl modules Test::Harness and an extended variant of
+     Test::More called OpenSSL::Test to do its work.  All test scripts in
+     test/ have been rewritten into test recipes, and all direct calls to
+     executables in test/Makefile have become individual recipes using the
+     simplified testing OpenSSL::Test::Simple.
+
+     For documentation on our testing modules, do:
+
+        perldoc test/testlib/OpenSSL/Test/Simple.pm
+        perldoc test/testlib/OpenSSL/Test.pm
+
+     [Richard Levitte]
+
   *) In DSA_generate_parameters_ex, if the provided seed is too short,
      return an error
      [Rich Salz and Ismo Puustinen <ismo.puustinen@intel.com>]
