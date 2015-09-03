@@ -4610,3 +4610,8 @@ X509_CRL_get_REVOKED                    4960	EXIST::FUNCTION:
 X509_CRL_get_version                    4961	EXIST::FUNCTION:
 X509_CRL_get_lastUpdate                 4962	EXIST::FUNCTION:
 EVP_PBE_get                             4964	EXIST::FUNCTION:
+X509_get_version                        4965	EXIST::FUNCTION:
+X509_get_X509_PUBKEY                    4966	EXIST::FUNCTION:
+X509_get_notBefore                      4967	EXIST::FUNCTION:
+X509_get_notAfter                       4968	EXIST::FUNCTION:
+X509_get_signature_type                 4969	EXIST::FUNCTION:
