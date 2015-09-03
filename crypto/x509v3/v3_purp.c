@@ -59,6 +59,7 @@
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
+#include "internal/numbers.h"
 #include <openssl/x509v3.h>
 #include <openssl/x509_vfy.h>
 
