@@ -29,6 +29,7 @@ LIBFIPS= -L.. -lfips
 # Prefix for logline for each test
 START= @@@ START
 
+NPTEST=		nptest
 BNTEST=		bntest
 ECTEST=		ectest
 ECDSATEST=	ecdsatest
@@ -80,7 +81,9 @@ SSLSKEWITH0PTEST=	sslskewith0ptest.pl
 
 TESTS=		alltests
 
-EXE=	$(BNTEST)$(EXE_EXT) $(ECTEST)$(EXE_EXT)  $(ECDSATEST)$(EXE_EXT) $(ECDHTEST)$(EXE_EXT) $(GMDIFFTEST)$(EXE_EXT) $(PBELUTEST)$(EXE_EXT) $(IDEATEST)$(EXE_EXT) \
+EXE=	$(NPTEST)$(EXE_EXT) $(BNTEST)$(EXE_EXT) $(ECTEST)$(EXE_EXT) \
+	$(ECDSATEST)$(EXE_EXT) $(ECDHTEST)$(EXE_EXT) $(GMDIFFTEST)$(EXE_EXT) \
+	$(PBELUTEST)$(EXE_EXT) $(IDEATEST)$(EXE_EXT) \
 	$(MD2TEST)$(EXE_EXT)  $(MD4TEST)$(EXE_EXT) $(MD5TEST)$(EXE_EXT) $(HMACTEST)$(EXE_EXT) $(WPTEST)$(EXE_EXT) \
 	$(RC2TEST)$(EXE_EXT) $(RC4TEST)$(EXE_EXT) $(RC5TEST)$(EXE_EXT) \
 	$(DESTEST)$(EXE_EXT) $(SHA1TEST)$(EXE_EXT) $(SHA256TEST)$(EXE_EXT) $(SHA512TEST)$(EXE_EXT) \
@@ -98,7 +101,8 @@ EXE=	$(BNTEST)$(EXE_EXT) $(ECTEST)$(EXE_EXT)  $(ECDSATEST)$(EXE_EXT) $(ECDHTEST)
 
 # $(METHTEST)$(EXE_EXT)
 
-OBJ=	$(BNTEST).o $(ECTEST).o  $(ECDSATEST).o $(ECDHTEST).o $(GMDIFFTEST).o $(PBELUTEST).o $(IDEATEST).o \
+OBJ=	$(NPTEST).o $(BNTEST).o $(ECTEST).o \
+	$(ECDSATEST).o $(ECDHTEST).o $(GMDIFFTEST).o $(PBELUTEST).o $(IDEATEST).o \
 	$(MD2TEST).o $(MD4TEST).o $(MD5TEST).o \
 	$(HMACTEST).o $(WPTEST).o \
 	$(RC2TEST).o $(RC4TEST).o $(RC5TEST).o \
@@ -111,7 +115,8 @@ OBJ=	$(BNTEST).o $(ECTEST).o  $(ECDSATEST).o $(ECDHTEST).o $(GMDIFFTEST).o $(PBE
 	$(CONSTTIMETEST).o $(VERIFYEXTRATEST).o $(CLIENTHELLOTEST).o \
 	$(PACKETTEST).o testutil.o
 
-SRC=	$(BNTEST).c $(ECTEST).c  $(ECDSATEST).c $(ECDHTEST).c $(GMDIFFTEST).c $(PBELUTEST).c $(IDEATEST).c \
+SRC=	$(NPTEST).c $(BNTEST).c $(ECTEST).c \
+	$(ECDSATEST).c $(ECDHTEST).c $(GMDIFFTEST).c $(PBELUTEST).c $(IDEATEST).c \
 	$(MD2TEST).c  $(MD4TEST).c $(MD5TEST).c \
 	$(HMACTEST).c $(WPTEST).c \
 	$(RC2TEST).c $(RC4TEST).c $(RC5TEST).c \
@@ -152,6 +157,7 @@ apps:
 	@(cd ..; $(MAKE) DIRS=apps all)
 
 alltests: \
+	test_np \
 	test_des test_gmdiff test_idea test_sha test_md4 test_md5 test_hmac \
 	test_pbelu test_md2 test_mdc2 test_wp \
 	test_rmd test_rc2 test_rc4 test_rc5 test_bf test_cast \
@@ -164,6 +170,10 @@ alltests: \
 	test_gost2814789 test_heartbeat test_p5_crpt2 \
 	test_constant_time test_verify_extra test_clienthello test_packet \
 	test_sslvertol test_sslextension test_sslsessionticket test_sslskewith0p
+
+test_np: $(NPTEST)$(EXE_EXT)
+	@echo $(START) $@
+	./$(NPTEST)
 
 test_evp: $(EVPTEST)$(EXE_EXT) evptests.txt
 	@echo $(START) $@
@@ -891,6 +901,7 @@ mdc2test.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
 mdc2test.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
 mdc2test.o: ../include/openssl/safestack.h ../include/openssl/stack.h
 mdc2test.o: ../include/openssl/symhacks.h mdc2test.c
+nptest.o: nptest.c
 p5_crpt2_test.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 p5_crpt2_test.o: ../include/openssl/buffer.h ../include/openssl/conf.h
 p5_crpt2_test.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
