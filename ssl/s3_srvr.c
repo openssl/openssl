@@ -2876,27 +2876,47 @@ enum MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, long n)
 enum WORK_STATE tls_post_process_client_key_exchange(SSL *s,
                                                       enum WORK_STATE wst)
 {
-
 #ifndef OPENSSL_NO_SCTP
-    if (SSL_IS_DTLS(s)) {
-        unsigned char sctpauthkey[64];
-        char labelbuffer[sizeof(DTLS1_SCTP_AUTH_LABEL)];
-        /*
-         * Add new shared key for SCTP-Auth, will be ignored if no SCTP
-         * used.
-         */
-        snprintf((char *)labelbuffer, sizeof(DTLS1_SCTP_AUTH_LABEL),
-                 DTLS1_SCTP_AUTH_LABEL);
+    if (wst == WORK_MORE_A) {
+        if (SSL_IS_DTLS(s)) {
+            unsigned char sctpauthkey[64];
+            char labelbuffer[sizeof(DTLS1_SCTP_AUTH_LABEL)];
+            /*
+             * Add new shared key for SCTP-Auth, will be ignored if no SCTP
+             * used.
+             */
+            snprintf((char *)labelbuffer, sizeof(DTLS1_SCTP_AUTH_LABEL),
+                     DTLS1_SCTP_AUTH_LABEL);
 
-        if (SSL_export_keying_material(s, sctpauthkey,
-                                   sizeof(sctpauthkey), labelbuffer,
-                                   sizeof(labelbuffer), NULL, 0, 0) <= 0) {
-            statem_set_error(s);
-            return WORK_ERROR;;
+            if (SSL_export_keying_material(s, sctpauthkey,
+                                       sizeof(sctpauthkey), labelbuffer,
+                                       sizeof(labelbuffer), NULL, 0, 0) <= 0) {
+                statem_set_error(s);
+                return WORK_ERROR;;
+            }
+
+            BIO_ctrl(SSL_get_wbio(s), BIO_CTRL_DGRAM_SCTP_ADD_AUTH_KEY,
+                     sizeof(sctpauthkey), sctpauthkey);
         }
+        wst = WORK_MORE_B;
+    }
 
-        BIO_ctrl(SSL_get_wbio(s), BIO_CTRL_DGRAM_SCTP_ADD_AUTH_KEY,
-                 sizeof(sctpauthkey), sctpauthkey);
+    if ((wst == WORK_MORE_B)
+            /* Is this SCTP? */
+            && BIO_dgram_is_sctp(SSL_get_wbio(s))
+            /* Are we renegotiating? */
+            && s->renegotiate
+            /* Are we going to skip the CertificateVerify? */
+            && (s->session->peer == NULL || s->no_cert_verify)
+            && BIO_dgram_sctp_msg_waiting(SSL_get_rbio(s))) {
+        s->s3->in_read_app_data = 2;
+        s->rwstate = SSL_READING;
+        BIO_clear_retry_flags(SSL_get_rbio(s));
+        BIO_set_retry_read(SSL_get_rbio(s));
+        statem_set_sctp_read_sock(s, 1);
+        return WORK_MORE_B;
+    } else {
+        statem_set_sctp_read_sock(s, 0);
     }
 #endif
 
@@ -3169,7 +3189,7 @@ enum MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, long n)
         goto f_err;
     }
 
-    ret = MSG_PROCESS_CONTINUE_READING;
+    ret = MSG_PROCESS_CONTINUE_PROCESSING;
     if (0) {
  f_err:
         ssl3_send_alert(s, SSL3_AL_FATAL, al);

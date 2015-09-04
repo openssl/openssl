@@ -127,7 +127,6 @@
 #endif
 
 static const SSL_METHOD *dtls1_get_server_method(int ver);
-static int dtls1_send_hello_verify_request(SSL *s);
 
 static const SSL_METHOD *dtls1_get_server_method(int ver)
 {
@@ -157,6 +156,7 @@ IMPLEMENT_dtls1_meth_func(DTLS1_VERSION,
                           ssl_undefined_function,
                           dtls1_get_server_method, DTLSv1_2_enc_data)
 
+#if 0
 int dtls1_accept(SSL *s)
 {
     BUF_MEM *buf;
@@ -857,6 +857,7 @@ int dtls1_accept(SSL *s)
         cb(s, SSL_CB_ACCEPT_EXIT, ret);
     return (ret);
 }
+#endif
 
 unsigned int dtls1_raw_hello_verify_request(unsigned char *buf,
                                             unsigned char *cookie,
@@ -879,37 +880,33 @@ unsigned int dtls1_raw_hello_verify_request(unsigned char *buf,
 }
 
 
-int dtls1_send_hello_verify_request(SSL *s)
+int dtls_construct_hello_verify_request(SSL *s)
 {
     unsigned int len;
     unsigned char *buf;
 
-    if (s->state == DTLS1_ST_SW_HELLO_VERIFY_REQUEST_A) {
-        buf = (unsigned char *)s->init_buf->data;
+    buf = (unsigned char *)s->init_buf->data;
 
-        if (s->ctx->app_gen_cookie_cb == NULL ||
-            s->ctx->app_gen_cookie_cb(s, s->d1->cookie,
-                                      &(s->d1->cookie_len)) == 0 ||
-            s->d1->cookie_len > 255) {
-            SSLerr(SSL_F_DTLS1_SEND_HELLO_VERIFY_REQUEST,
-                   SSL_R_COOKIE_GEN_CALLBACK_FAILURE);
-            s->state = SSL_ST_ERR;
-            return 0;
-        }
-
-        len = dtls1_raw_hello_verify_request(&buf[DTLS1_HM_HEADER_LENGTH],
-                                             s->d1->cookie, s->d1->cookie_len);
-
-        dtls1_set_message_header(s, buf, DTLS1_MT_HELLO_VERIFY_REQUEST, len, 0,
-                                 len);
-        len += DTLS1_HM_HEADER_LENGTH;
-
-        s->state = DTLS1_ST_SW_HELLO_VERIFY_REQUEST_B;
-        /* number of bytes to write */
-        s->init_num = len;
-        s->init_off = 0;
+    if (s->ctx->app_gen_cookie_cb == NULL ||
+        s->ctx->app_gen_cookie_cb(s, s->d1->cookie,
+                                  &(s->d1->cookie_len)) == 0 ||
+        s->d1->cookie_len > 255) {
+        SSLerr(SSL_F_DTLS1_SEND_HELLO_VERIFY_REQUEST,
+               SSL_R_COOKIE_GEN_CALLBACK_FAILURE);
+        statem_set_error(s);
+        return 0;
     }
 
-    /* s->state = DTLS1_ST_SW_HELLO_VERIFY_REQUEST_B */
-    return (dtls1_do_write(s, SSL3_RT_HANDSHAKE));
+    len = dtls1_raw_hello_verify_request(&buf[DTLS1_HM_HEADER_LENGTH],
+                                         s->d1->cookie, s->d1->cookie_len);
+
+    dtls1_set_message_header(s, buf, DTLS1_MT_HELLO_VERIFY_REQUEST, len, 0,
+                             len);
+    len += DTLS1_HM_HEADER_LENGTH;
+
+    /* number of bytes to write */
+    s->init_num = len;
+    s->init_off = 0;
+
+    return 1;
 }

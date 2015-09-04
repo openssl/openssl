@@ -2201,6 +2201,7 @@ __owur int tls_construct_server_hello(SSL *s);
 __owur int ssl3_send_hello_request(SSL *s);
 __owur int tls_construct_hello_request(SSL *s);
 __owur int ssl3_send_server_key_exchange(SSL *s);
+__owur int dtls_construct_hello_verify_request(SSL *s);
 __owur int tls_construct_server_key_exchange(SSL *s);
 __owur int ssl3_send_certificate_request(SSL *s);
 __owur int tls_construct_certificate_request(SSL *s);
