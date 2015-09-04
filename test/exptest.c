@@ -151,7 +151,7 @@ int main(int argc, char *argv[])
 
     if (out == NULL)
         EXIT(1);
-    BIO_set_fp(out, stdout, BIO_NOCLOSE);
+    BIO_set_fp(out, stdout, BIO_NOCLOSE | BIO_FP_TEXT);
 
     for (i = 0; i < 200; i++) {
         RAND_bytes(&c, 1);

@@ -107,7 +107,7 @@ int main(int argc, char *argv[])
     out = BIO_new(BIO_s_file());
     if (out == NULL)
         EXIT(1);
-    BIO_set_fp(out, stdout, BIO_NOCLOSE);
+    BIO_set_fp(out, stdout, BIO_NOCLOSE | BIO_FP_TEXT);
 
     _cb = BN_GENCB_new();
     if (!_cb)
