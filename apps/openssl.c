@@ -305,11 +305,11 @@ static const char *modestr(char mode, int format)
 
     switch (mode) {
     case 'a':
-        return (format) & B_FORMAT_TEXT ? "ab" : "a";
+        return (format & B_FORMAT_TEXT) ? "a" : "ab";
     case 'r':
-        return (format) & B_FORMAT_TEXT ? "rb" : "r";
+        return (format & B_FORMAT_TEXT) ? "r" : "rb";
     case 'w':
-        return (format) & B_FORMAT_TEXT ? "wb" : "w";
+        return (format & B_FORMAT_TEXT) ? "w" : "wb";
     }
     /* The assert above should make sure we never reach this point */
     return NULL;
