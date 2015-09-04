@@ -4563,13 +4563,13 @@ COMP_get_name                           4921	EXIST::FUNCTION:
 COMP_get_type                           4922	EXIST::FUNCTION:
 ASN1_INTEGER_get_int64                  4923	EXIST::FUNCTION:
 ASN1_ENUMERATED_set_int64               4924	EXIST::FUNCTION:
-EVP_PBE_scrypt                          4925	EXIST::FUNCTION:
+EVP_PBE_scrypt                          4925	EXIST::FUNCTION:SCRYPT
 ASN1_INTEGER_set_int64                  4926	EXIST::FUNCTION:
 ASN1_ENUMERATED_get_int64               4927	EXIST::FUNCTION:
-PKCS5_v2_scrypt_keyivgen                4928	EXIST::FUNCTION:
+PKCS5_v2_scrypt_keyivgen                4928	EXIST::FUNCTION:SCRYPT
 ASN1_INTEGER_get_uint64                 4929	EXIST::FUNCTION:
 ASN1_INTEGER_set_uint64                 4930	EXIST::FUNCTION:
-PKCS5_pbe2_set_scrypt                   4931	EXIST::FUNCTION:
+PKCS5_pbe2_set_scrypt                   4931	EXIST::FUNCTION:SCRYPT
 PKCS8_set0_pbe                          4932	EXIST::FUNCTION:
 DH_bits                                 4933	EXIST::FUNCTION:DH
 RSA_bits                                4934	EXIST::FUNCTION:RSA

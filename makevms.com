@@ -295,6 +295,7 @@ $ CONFIG_LOGICALS := AES,-
 		     RFC3779,-
 		     RMD160,-
 		     RSA,-
+                     SCRYPT,-
 		     SCTP,-
 		     SEED,-
 		     SOCK,-

@@ -64,6 +64,8 @@
 #include <openssl/err.h>
 #include <internal/numbers.h>
 
+#ifndef OPENSSL_NO_SCRYPT
+
 #define R(a,b) (((a) << (b)) | ((a) >> (32 - (b))))
 static void salsa208_word_specification(uint32_t inout[16])
 {
@@ -296,3 +298,4 @@ int EVP_PBE_scrypt(const char *pass, size_t passlen,
     OPENSSL_clear_free(B, Blen + Vlen);
     return rv;
 }
+#endif

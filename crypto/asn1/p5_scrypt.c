@@ -65,6 +65,7 @@
 #include <openssl/x509.h>
 #include <openssl/rand.h>
 
+#ifndef OPENSSL_NO_SCRYPT
 /* PKCS#5 scrypt password based encryption structures */
 
 typedef struct {
@@ -330,3 +331,4 @@ int PKCS5_v2_scrypt_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass,
     SCRYPT_PARAMS_free(sparam);
     return rv;
 }
+#endif /* OPENSSL_NO_SCRYPT */
