@@ -170,7 +170,6 @@ int smime_main(int argc, char **argv)
         NULL;
     char *passinarg = NULL, *passin = NULL, *to = NULL, *from =
         NULL, *subject = NULL;
-    const char *inmode = "r", *outmode = "w";
     OPTION_CHOICE o;
     int flags = PKCS7_DETACHED, operation = 0, ret = 0, need_rand = 0, indef =
         0;
@@ -426,18 +425,14 @@ int smime_main(int argc, char **argv)
     if (!(operation & SMIME_SIGNERS))
         flags &= ~PKCS7_DETACHED;
 
-    if (operation & SMIME_OP) {
-        outmode = WB(outformat);
-    } else {
+    if (!(operation & SMIME_OP)) {
         if (flags & PKCS7_BINARY)
-            outmode = "wb";
+            outformat = FORMAT_BINARY;
     }
 
-    if (operation & SMIME_IP) {
-        inmode = RB(informat);
-    } else {
+    if (!(operation & SMIME_IP)) {
         if (flags & PKCS7_BINARY)
-            inmode = "rb";
+            informat = FORMAT_BINARY;
     }
 
     if (operation == SMIME_ENCRYPT) {
@@ -494,7 +489,7 @@ int smime_main(int argc, char **argv)
             goto end;
     }
 
-    in = bio_open_default(infile, inmode);
+    in = bio_open_default(infile, 'r', informat);
     if (in == NULL)
         goto end;
 
@@ -523,7 +518,7 @@ int smime_main(int argc, char **argv)
         }
     }
 
-    out = bio_open_default(outfile, outmode);
+    out = bio_open_default(outfile, 'w', outformat);
     if (out == NULL)
         goto end;
 

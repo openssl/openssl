@@ -147,7 +147,7 @@ int gendsa_main(int argc, char **argv)
     if (!app_load_modules(NULL))
         goto end;
 
-    in = bio_open_default(dsaparams, "r");
+    in = bio_open_default(dsaparams, 'r', FORMAT_PEM);
     if (in == NULL)
         goto end2;
 
@@ -158,7 +158,7 @@ int gendsa_main(int argc, char **argv)
     BIO_free(in);
     in = NULL;
 
-    out = bio_open_owner(outfile, "w", private);
+    out = bio_open_owner(outfile, FORMAT_PEM, private);
     if (out == NULL)
         goto end2;
 

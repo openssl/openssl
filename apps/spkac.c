@@ -175,7 +175,7 @@ int spkac_main(int argc, char **argv)
         NETSCAPE_SPKI_sign(spki, pkey, EVP_md5());
         spkstr = NETSCAPE_SPKI_b64_encode(spki);
 
-        out = bio_open_default(outfile, "w");
+        out = bio_open_default(outfile, 'w', FORMAT_TEXT);
         if (out == NULL)
             goto end;
         BIO_printf(out, "SPKAC=%s\n", spkstr);
@@ -205,7 +205,7 @@ int spkac_main(int argc, char **argv)
         goto end;
     }
 
-    out = bio_open_default(outfile, "w");
+    out = bio_open_default(outfile, 'w', FORMAT_TEXT);
     if (out == NULL)
         goto end;
 

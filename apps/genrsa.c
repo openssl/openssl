@@ -172,7 +172,7 @@ int genrsa_main(int argc, char **argv)
     if (!app_load_modules(NULL))
         goto end;
 
-    out = bio_open_owner(outfile, "w", private);
+    out = bio_open_owner(outfile, FORMAT_PEM, private);
     if (out == NULL)
         goto end;
 

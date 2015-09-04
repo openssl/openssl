@@ -247,7 +247,6 @@ int cms_main(int argc, char **argv)
         NULL;
     char *to = NULL, *from = NULL, *subject = NULL, *prog;
     cms_key_param *key_first = NULL, *key_param = NULL;
-    const char *inmode = "r", *outmode = "w";
     int flags = CMS_DETACHED, noout = 0, print = 0, keyidx = -1, vpmtouched =
         0;
     int informat = FORMAT_SMIME, outformat = FORMAT_SMIME;
@@ -689,18 +688,14 @@ int cms_main(int argc, char **argv)
     if (!(operation & SMIME_SIGNERS))
         flags &= ~CMS_DETACHED;
 
-    if (operation & SMIME_OP) {
-        outmode = WB(outformat);
-    } else {
+    if (!(operation & SMIME_OP)) {
         if (flags & CMS_BINARY)
-            outmode = "wb";
+            outformat = FORMAT_BINARY;
     }
 
-    if (operation & SMIME_IP) {
-        inmode = RB(informat);
-    } else {
+    if (!(operation & SMIME_IP)) {
         if (flags & CMS_BINARY)
-            inmode = "rb";
+            informat = FORMAT_BINARY;
     }
 
     if (operation == SMIME_ENCRYPT) {
@@ -770,7 +765,7 @@ int cms_main(int argc, char **argv)
             goto end;
     }
 
-    in = bio_open_default(infile, inmode);
+    in = bio_open_default(infile, 'r', informat);
     if (in == NULL)
         goto end;
 
@@ -834,7 +829,7 @@ int cms_main(int argc, char **argv)
         }
     }
 
-    out = bio_open_default(outfile, outmode);
+    out = bio_open_default(outfile, 'w', outformat);
     if (out == NULL)
         goto end;
 

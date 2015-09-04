@@ -346,7 +346,7 @@ int crl_main(int argc, char **argv)
             }
         }
     }
-    out = bio_open_default(outfile, WB(outformat));
+    out = bio_open_default(outfile, 'w', outformat);
     if (out == NULL)
         goto end;
 

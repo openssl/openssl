@@ -239,10 +239,10 @@ int pkcs8_main(int argc, char **argv)
     if ((pbe_nid == -1) && !cipher)
         pbe_nid = NID_pbeWithMD5AndDES_CBC;
 
-    in = bio_open_default(infile, RB(informat));
+    in = bio_open_default(infile, 'r', informat);
     if (in == NULL)
         goto end;
-    out = bio_open_owner(outfile, WB(outformat), private);
+    out = bio_open_owner(outfile, outformat, private);
     if (out == NULL)
         goto end;
 

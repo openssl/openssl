@@ -486,7 +486,7 @@ int ocsp_main(int argc, char **argv)
     if (!app_load_modules(NULL))
         goto end;
 
-    out = bio_open_default(outfile, "w");
+    out = bio_open_default(outfile, 'w', FORMAT_TEXT);
     if (out == NULL)
         goto end;
 
@@ -494,7 +494,7 @@ int ocsp_main(int argc, char **argv)
         add_nonce = 0;
 
     if (!req && reqin) {
-        derbio = bio_open_default(reqin, "rb");
+        derbio = bio_open_default(reqin, 'r', FORMAT_ASN1);
         if (derbio == NULL)
             goto end;
         req = d2i_OCSP_REQUEST_bio(derbio, NULL);
@@ -589,7 +589,7 @@ int ocsp_main(int argc, char **argv)
         OCSP_REQUEST_print(out, req, 0);
 
     if (reqout) {
-        derbio = bio_open_default(reqout, "wb");
+        derbio = bio_open_default(reqout, 'w', FORMAT_ASN1);
         if (derbio == NULL)
             goto end;
         i2d_OCSP_REQUEST_bio(derbio, req);
@@ -627,7 +627,7 @@ int ocsp_main(int argc, char **argv)
         goto end;
 # endif
     } else if (respin) {
-        derbio = bio_open_default(respin, "rb");
+        derbio = bio_open_default(respin, 'r', FORMAT_ASN1);
         if (derbio == NULL)
             goto end;
         resp = d2i_OCSP_RESPONSE_bio(derbio, NULL);
@@ -644,7 +644,7 @@ int ocsp_main(int argc, char **argv)
  done_resp:
 
     if (respout) {
-        derbio = bio_open_default(respout, "wb");
+        derbio = bio_open_default(respout, 'w', FORMAT_ASN1);
         if (derbio == NULL)
             goto end;
         i2d_OCSP_RESPONSE_bio(derbio, resp);

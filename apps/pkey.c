@@ -172,7 +172,7 @@ int pkey_main(int argc, char **argv)
     if (!app_load_modules(NULL))
         goto end;
 
-    out = bio_open_owner(outfile, WB(outformat), private);
+    out = bio_open_owner(outfile, outformat, private);
     if (out == NULL)
         goto end;
 

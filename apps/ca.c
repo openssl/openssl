@@ -795,7 +795,8 @@ end_of_options:
 
     /*****************************************************************/
     if (req || gencrl) {
-        Sout = bio_open_default(outfile, "w");
+        /* FIXME: Is it really always text? */
+        Sout = bio_open_default(outfile, 'w', FORMAT_TEXT);
         if (Sout == NULL)
             goto end;
     }

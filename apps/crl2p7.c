@@ -152,7 +152,7 @@ int crl2pkcs7_main(int argc, char **argv)
         goto end;
 
     if (!nocrl) {
-        in = bio_open_default(infile, RB(informat));
+        in = bio_open_default(infile, 'r', informat);
         if (in == NULL)
             goto end;
 
@@ -201,7 +201,7 @@ int crl2pkcs7_main(int argc, char **argv)
 
     sk_OPENSSL_STRING_free(certflst);
 
-    out = bio_open_default(outfile, WB(outformat));
+    out = bio_open_default(outfile, 'w', outformat);
     if (out == NULL)
         goto end;
 

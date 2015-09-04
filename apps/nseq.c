@@ -112,10 +112,10 @@ int nseq_main(int argc, char **argv)
     if (!app_load_modules(NULL))
         goto end;
 
-    in = bio_open_default(infile, "r");
+    in = bio_open_default(infile, 'r', FORMAT_PEM);
     if (in == NULL)
         goto end;
-    out = bio_open_default(outfile, "w");
+    out = bio_open_default(outfile, 'w', FORMAT_PEM);
     if (out == NULL)
         goto end;
 
