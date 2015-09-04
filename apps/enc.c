@@ -330,7 +330,7 @@ int enc_main(int argc, char **argv)
         unbuffer(stdin);
         in = dup_bio_in();
     } else
-        in = bio_open_default(infile, "r");
+        in = bio_open_default(infile, base64 ? "r" : "rb");
     if (in == NULL)
         goto end;
 
@@ -366,7 +366,7 @@ int enc_main(int argc, char **argv)
         }
     }
 
-    out = bio_open_default(outfile, "w");
+    out = bio_open_default(outfile, base64 ? "w" : "wb");
     if (out == NULL)
         goto end;
 

@@ -197,7 +197,7 @@ int asn1parse_main(int argc, char **argv)
         BIO_free(in);
     }
 
-    if ((in = bio_open_default(infile, "r")) == NULL)
+    if ((in = bio_open_default(infile, RB(informat))) == NULL)
         goto end;
 
     if (derfile && (derout = bio_open_default(derfile, "wb")) == NULL)

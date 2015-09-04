@@ -163,8 +163,9 @@ int app_load_modules(const CONF *config);
 void unbuffer(FILE *fp);
 
 /* Often used in calls to bio_open_default. */
-# define RB(xformat)  ((xformat) == FORMAT_ASN1 ? "rb" : "r")
-# define WB(xformat)  ((xformat) == FORMAT_ASN1 ? "wb" : "w")
+# define RB(xformat)  (((xformat) & B_FORMAT_TEXT) ? "rb" : "r")
+# define WB(xformat)  (((xformat) & B_FORMAT_TEXT) ? "wb" : "w")
+# define AB(xformat)  (((xformat) & B_FORMAT_TEXT) ? "ab" : "a")
 
 /*
  * Common verification options.
@@ -535,19 +536,20 @@ void print_cert_checks(BIO *bio, X509 *x,
 void store_setup_crl_download(X509_STORE *st);
 
 /* See OPT_FMT_xxx, above. */
+# define B_FORMAT_TEXT   0x8000
 # define FORMAT_UNDEF    0
 # define FORMAT_ASN1     1
-# define FORMAT_TEXT     2
-# define FORMAT_PEM      3
+# define FORMAT_TEXT    (2 | B_FORMAT_TEXT)
+# define FORMAT_PEM     (3 | B_FORMAT_TEXT)
 # define FORMAT_PKCS12   5
-# define FORMAT_SMIME    6
+# define FORMAT_SMIME   (6 | B_FORMAT_TEXT)
 # define FORMAT_ENGINE   7
-# define FORMAT_PEMRSA   9      /* PEM RSAPubicKey format */
-# define FORMAT_ASN1RSA  10     /* DER RSAPubicKey format */
-# define FORMAT_MSBLOB   11     /* MS Key blob format */
-# define FORMAT_PVK      12     /* MS PVK file format */
-# define FORMAT_HTTP     13     /* Download using HTTP */
-# define FORMAT_NSS      14     /* NSS keylog format */
+# define FORMAT_PEMRSA  (9 | B_FORMAT_TEXT)     /* PEM RSAPubicKey format */
+# define FORMAT_ASN1RSA  10                     /* DER RSAPubicKey format */
+# define FORMAT_MSBLOB   11                     /* MS Key blob format */
+# define FORMAT_PVK      12                     /* MS PVK file format */
+# define FORMAT_HTTP     13                     /* Download using HTTP */
+# define FORMAT_NSS      14                     /* NSS keylog format */
 
 # define EXT_COPY_NONE   0
 # define EXT_COPY_ADD    1

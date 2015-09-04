@@ -160,10 +160,7 @@ int sess_id_main(int argc, char **argv)
     }
 
     if (!noout || text) {
-        const char* modeflag = "w";
-        if (outformat == FORMAT_ASN1 || outformat == FORMAT_NSS)
-            modeflag = "wb";
-        out = bio_open_default(outfile, modeflag);
+        out = bio_open_default(outfile, WB(outformat));
         if (out == NULL)
             goto end;
     }

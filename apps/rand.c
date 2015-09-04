@@ -134,7 +134,7 @@ int rand_main(int argc, char **argv)
         BIO_printf(bio_err, "%ld semi-random bytes loaded\n",
                    app_RAND_load_files(inrand));
 
-    out = bio_open_default(outfile, "w");
+    out = bio_open_default(outfile, base64 ? "w" : "wb");
     if (out == NULL)
         goto end;
 

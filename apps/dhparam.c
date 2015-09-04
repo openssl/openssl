@@ -352,7 +352,7 @@ int dhparam_main(int argc, char **argv)
         /* dh != NULL */
     }
 
-    out = bio_open_default(outfile, "w");
+    out = bio_open_default(outfile, WB(outformat));
     if (out == NULL)
         goto end;
 
