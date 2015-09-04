@@ -504,6 +504,9 @@ BUILD_CMD_STATIC=shlib_target=; \
 $(RSATEST)$(EXE_EXT): $(RSATEST).o $(DLIBCRYPTO)
 	@target=$(RSATEST); $(BUILD_CMD)
 
+$(NPTEST)$(EXE_EXT): $(NPTEST).o $(DLIBCRYPTO)
+	@target=$(NPTEST); $(BUILD_CMD)
+
 $(BNTEST)$(EXE_EXT): $(BNTEST).o $(DLIBCRYPTO)
 	@target=$(BNTEST); $(BUILD_CMD)
 
