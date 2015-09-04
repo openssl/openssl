@@ -510,7 +510,7 @@ int main(void)
     int ret = 1;
     BIO *out;
 
-    out = BIO_new_fp(stdout, BIO_NOCLOSE);
+    out = BIO_new_fp(stdout, BIO_NOCLOSE | BIO_FP_TEXT);
 
     /* enable memory leak checking unless explicitly disabled */
     if (!((getenv("OPENSSL_DEBUG_MEMORY") != NULL) &&

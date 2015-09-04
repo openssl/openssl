@@ -1310,7 +1310,7 @@ int main(int argc, char *argv[])
     if (fips_mode) {
         if (!FIPS_mode_set(1)) {
             ERR_load_crypto_strings();
-            ERR_print_errors(BIO_new_fp(stderr, BIO_NOCLOSE));
+            ERR_print_errors(bio_err);
             EXIT(1);
         } else
             fprintf(stderr, "*** IN FIPS MODE ***\n");

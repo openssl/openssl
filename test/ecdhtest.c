@@ -466,7 +466,7 @@ int main(int argc, char *argv[])
     out = BIO_new(BIO_s_file());
     if (out == NULL)
         EXIT(1);
-    BIO_set_fp(out, stdout, BIO_NOCLOSE);
+    BIO_set_fp(out, stdout, BIO_NOCLOSE | BIO_FP_TEXT);
 
     if ((ctx = BN_CTX_new()) == NULL)
         goto err;

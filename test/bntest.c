@@ -168,7 +168,7 @@ int main(int argc, char *argv[])
     if (out == NULL)
         EXIT(1);
     if (outfile == NULL) {
-        BIO_set_fp(out, stdout, BIO_NOCLOSE);
+        BIO_set_fp(out, stdout, BIO_NOCLOSE | BIO_FP_TEXT);
     } else {
         if (!BIO_write_filename(out, outfile)) {
             perror(outfile);
