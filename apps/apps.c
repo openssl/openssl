@@ -514,7 +514,7 @@ CONF *app_load_config(const char *filename)
     BIO *in;
     CONF *conf;
 
-    in = bio_open_default(filename, "r");
+    in = bio_open_default(filename, 'r', FORMAT_TEXT);
     if (in == NULL)
         return NULL;
 
@@ -527,7 +527,7 @@ CONF *app_load_config_quiet(const char *filename)
     BIO *in;
     CONF *conf;
 
-    in = bio_open_default_quiet(filename, "r");
+    in = bio_open_default_quiet(filename, 'r', FORMAT_TEXT);
     if (in == NULL)
         return NULL;
 
@@ -683,7 +683,7 @@ X509 *load_cert(const char *file, int format,
         unbuffer(stdin);
         cert = dup_bio_in();
     } else
-        cert = bio_open_default(file, RB(format));
+        cert = bio_open_default(file, 'r', format);
     if (cert == NULL)
         goto end;
 
@@ -718,7 +718,7 @@ X509_CRL *load_crl(const char *infile, int format)
         return x;
     }
 
-    in = bio_open_default(infile, RB(format));
+    in = bio_open_default(infile, 'r', format);
     if (in == NULL)
         goto end;
     if (format == FORMAT_ASN1)
@@ -772,7 +772,7 @@ EVP_PKEY *load_key(const char *file, int format, int maybe_stdin,
         unbuffer(stdin);
         key = dup_bio_in();
     } else
-        key = bio_open_default(file, RB(format));
+        key = bio_open_default(file, 'r', format);
     if (key == NULL)
         goto end;
     if (format == FORMAT_ASN1) {
@@ -808,13 +808,6 @@ EVP_PKEY *load_key(const char *file, int format, int maybe_stdin,
     return (pkey);
 }
 
-static const char *key_file_format(int format)
-{
-    if (format == FORMAT_PEM || format == FORMAT_PEMRSA)
-        return "r";
-    return "rb";
-}
-
 EVP_PKEY *load_pubkey(const char *file, int format, int maybe_stdin,
                       const char *pass, ENGINE *e, const char *key_descrip)
 {
@@ -842,7 +835,7 @@ EVP_PKEY *load_pubkey(const char *file, int format, int maybe_stdin,
         unbuffer(stdin);
         key = dup_bio_in();
     } else
-        key = bio_open_default(file, key_file_format(format));
+        key = bio_open_default(file, 'r', format);
     if (key == NULL)
         goto end;
     if (format == FORMAT_ASN1) {
@@ -909,7 +902,7 @@ static int load_certs_crls(const char *file, int format,
         return 0;
     }
 
-    bio = bio_open_default(file, "r");
+    bio = bio_open_default(file, 'r', FORMAT_PEM);
     if (bio == NULL)
         return 0;
 

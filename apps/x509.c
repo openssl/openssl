@@ -496,7 +496,7 @@ int x509_main(int argc, char **argv)
     if (!app_load_modules(NULL))
         goto end;
 
-    out = bio_open_default(outfile, WB(outformat));
+    out = bio_open_default(outfile, 'w', outformat);
     if (out == NULL)
         goto end;
 
@@ -556,7 +556,7 @@ int x509_main(int argc, char **argv)
             BIO_printf(bio_err, "We need a private key to sign with\n");
             goto end;
         }
-        in = bio_open_default(infile, RB(informat));
+        in = bio_open_default(infile, 'r', informat);
         if (in == NULL)
             goto end;
         req = PEM_read_bio_X509_REQ(in, NULL, NULL, NULL);

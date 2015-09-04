@@ -275,7 +275,7 @@ int dgst_main(int argc, char **argv)
     if (randfile)
         app_RAND_load_file(randfile, 0);
 
-    out = bio_open_default(outfile, out_bin ? "wb" : "w");
+    out = bio_open_default(outfile, 'w', out_bin ? FORMAT_BINARY : FORMAT_TEXT);
     if (out == NULL)
         goto end;
 

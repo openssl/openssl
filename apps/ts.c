@@ -429,13 +429,13 @@ static int query_command(const char *data, char *digest, const EVP_MD *md,
 
     /* Build query object either from file or from scratch. */
     if (in != NULL) {
-        if ((in_bio = BIO_new_file(in, "rb")) == NULL)
+        if ((in_bio = bio_open_default(in, 'r', FORMAT_ASN1)) == NULL)
             goto end;
         query = d2i_TS_REQ_bio(in_bio, NULL);
     } else {
         /* Open the file if no explicit digest bytes were specified. */
         if (digest == NULL
-            && (data_bio = bio_open_default(data, "rb")) == NULL)
+            && (data_bio = bio_open_default(data, 'r', FORMAT_ASN1)) == NULL)
             goto end;
         query = create_query(data_bio, digest, md, policy, no_nonce, cert);
     }
@@ -443,14 +443,16 @@ static int query_command(const char *data, char *digest, const EVP_MD *md,
         goto end;
 
     /* Write query either in ASN.1 or in text format. */
-    if ((out_bio = bio_open_default(out, "wb")) == NULL)
-        goto end;
     if (text) {
         /* Text output. */
+        if ((out_bio = bio_open_default(out, 'w', FORMAT_TEXT)) == NULL)
+            goto end;
         if (!TS_REQ_print_bio(out_bio, query))
             goto end;
     } else {
         /* ASN.1 output. */
+        if ((out_bio = bio_open_default(out, 'w', FORMAT_ASN1)) == NULL)
+            goto end;
         if (!i2d_TS_REQ_bio(out_bio, query))
             goto end;
     }
@@ -662,10 +664,10 @@ static int reply_command(CONF *conf, char *section, char *engine,
         goto end;
 
     /* Write response either in ASN.1 or text format. */
-    if ((out_bio = bio_open_default(out, "wb")) == NULL)
-        goto end;
     if (text) {
         /* Text output. */
+        if ((out_bio = bio_open_default(out, 'w', FORMAT_TEXT)) == NULL)
+        goto end;
         if (token_out) {
             TS_TST_INFO *tst_info = TS_RESP_get_tst_info(response);
             if (!TS_TST_INFO_print_bio(out_bio, tst_info))
@@ -676,6 +678,8 @@ static int reply_command(CONF *conf, char *section, char *engine,
         }
     } else {
         /* ASN.1 DER output. */
+        if ((out_bio = bio_open_default(out, 'w', FORMAT_ASN1)) == NULL)
+            goto end;
         if (token_out) {
             PKCS7 *token = TS_RESP_get_token(response);
             if (!i2d_PKCS7_bio(out_bio, token))

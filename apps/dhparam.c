@@ -309,7 +309,7 @@ int dhparam_main(int argc, char **argv)
         app_RAND_write_file(NULL);
     } else {
 
-        in = bio_open_default(infile, RB(informat));
+        in = bio_open_default(infile, 'r', informat);
         if (in == NULL)
             goto end;
 
@@ -352,7 +352,7 @@ int dhparam_main(int argc, char **argv)
         /* dh != NULL */
     }
 
-    out = bio_open_default(outfile, WB(outformat));
+    out = bio_open_default(outfile, 'w', outformat);
     if (out == NULL)
         goto end;
 

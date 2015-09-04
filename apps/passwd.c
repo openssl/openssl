@@ -209,7 +209,7 @@ int passwd_main(int argc, char **argv)
         goto end;
     }
 
-    in = bio_open_default(infile, "r");
+    in = bio_open_default(infile, 'r', FORMAT_TEXT);
     if (in == NULL)
         goto end;
 

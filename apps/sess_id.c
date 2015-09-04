@@ -160,7 +160,7 @@ int sess_id_main(int argc, char **argv)
     }
 
     if (!noout || text) {
-        out = bio_open_default(outfile, WB(outformat));
+        out = bio_open_default(outfile, 'w', outformat);
         if (out == NULL)
             goto end;
     }
@@ -217,7 +217,7 @@ static SSL_SESSION *load_sess_id(char *infile, int format)
     SSL_SESSION *x = NULL;
     BIO *in = NULL;
 
-    in = bio_open_default(infile, RB(format));
+    in = bio_open_default(infile, 'r', format);
     if (in == NULL)
         goto end;
     if (format == FORMAT_ASN1)

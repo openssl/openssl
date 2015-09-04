@@ -87,7 +87,7 @@ int rand_main(int argc, char **argv)
     BIO *out = NULL;
     char *inrand = NULL, *outfile = NULL, *prog;
     OPTION_CHOICE o;
-    int base64 = 0, hex = 0, i, num = -1, r, ret = 1;
+    int format = FORMAT_BINARY, i, num = -1, r, ret = 1;
 
     prog = opt_init(argc, argv, rand_options);
     while ((o = opt_next()) != OPT_EOF) {
@@ -111,17 +111,17 @@ int rand_main(int argc, char **argv)
             inrand = opt_arg();
             break;
         case OPT_BASE64:
-            base64 = 1;
+            format = FORMAT_BASE64;
             break;
         case OPT_HEX:
-            hex = 1;
+            format = FORMAT_TEXT;
             break;
         }
     }
     argc = opt_num_rest();
     argv = opt_rest();
 
-    if (argc != 1 || (hex && base64))
+    if (argc != 1)
         goto opthelp;
     if (sscanf(argv[0], "%d", &num) != 1 || num < 0)
         goto opthelp;
@@ -134,11 +134,11 @@ int rand_main(int argc, char **argv)
         BIO_printf(bio_err, "%ld semi-random bytes loaded\n",
                    app_RAND_load_files(inrand));
 
-    out = bio_open_default(outfile, base64 ? "w" : "wb");
+    out = bio_open_default(outfile, 'w', format);
     if (out == NULL)
         goto end;
 
-    if (base64) {
+    if (format == FORMAT_BASE64) {
         BIO *b64 = BIO_new(BIO_f_base64());
         if (b64 == NULL)
             goto end;
@@ -155,7 +155,7 @@ int rand_main(int argc, char **argv)
         r = RAND_bytes(buf, chunk);
         if (r <= 0)
             goto end;
-        if (!hex)
+        if (format != FORMAT_TEXT) /* hex */
             BIO_write(out, buf, chunk);
         else {
             for (i = 0; i < chunk; i++)
@@ -163,7 +163,7 @@ int rand_main(int argc, char **argv)
         }
         num -= chunk;
     }
-    if (hex)
+    if (format == FORMAT_TEXT)
         BIO_puts(out, "\n");
     (void)BIO_flush(out);
 

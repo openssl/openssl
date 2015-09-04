@@ -353,13 +353,6 @@ int pkcs12_main(int argc, char **argv)
                        app_RAND_load_files(inrand));
     }
 
-    in = bio_open_default(infile, "rb");
-    if (in == NULL)
-        goto end;
-    out = bio_open_owner(outfile, "wb", private);
-    if (out == NULL)
-        goto end;
-
     if (twopass) {
         if (EVP_read_pw_string
             (macpass, sizeof macpass, "Enter MAC Password:", export_cert)) {
@@ -501,6 +494,11 @@ int pkcs12_main(int argc, char **argv)
             PKCS12_set_mac(p12, mpass, -1, NULL, 0, maciter, macmd);
 
         assert(private);
+
+        out = bio_open_owner(outfile, FORMAT_PKCS12, private);
+        if (out == NULL)
+            goto end;
+
         i2d_PKCS12_bio(out, p12);
 
         ret = 0;
@@ -514,6 +512,13 @@ int pkcs12_main(int argc, char **argv)
         goto end;
 
     }
+
+    in = bio_open_default(infile, 'r', FORMAT_PKCS12);
+    if (in == NULL)
+        goto end;
+    out = bio_open_owner(outfile, FORMAT_PEM, private);
+    if (out == NULL)
+        goto end;
 
     if ((p12 = d2i_PKCS12_bio(in, NULL)) == NULL) {
         ERR_print_errors(bio_err);

@@ -299,17 +299,46 @@ void unbuffer(FILE *fp)
     setbuf(fp, NULL);
 }
 
+static const char *modestr(char mode, int format)
+{
+    OPENSSL_assert(mode == 'a' || mode == 'r' || mode == 'w');
+
+    switch (mode) {
+    case 'a':
+        return (format) & B_FORMAT_TEXT ? "ab" : "a";
+    case 'r':
+        return (format) & B_FORMAT_TEXT ? "rb" : "r";
+    case 'w':
+        return (format) & B_FORMAT_TEXT ? "wb" : "w";
+    }
+    /* The assert above should make sure we never reach this point */
+    return NULL;
+}
+
+static const char *modeverb(char mode)
+{
+    switch (mode) {
+    case 'a':
+        return "appending";
+    case 'r':
+        return "reading";
+    case 'w':
+        return "writing";
+    }
+    return "(doing something)";
+}
+
 /*
  * Open a file for writing, owner-read-only.
  */
-BIO *bio_open_owner(const char *filename, const char *modestr, int private)
+BIO *bio_open_owner(const char *filename, int format, int private)
 {
     FILE *fp = NULL;
     BIO *b = NULL;
     int fd = -1, bflags, mode, binmode;
 
     if (!private || filename == NULL || strcmp(filename, "-") == 0)
-        return bio_open_default(filename, modestr);
+        return bio_open_default(filename, 'w', format);
 
     mode = O_WRONLY;
 #ifdef O_CREAT
@@ -318,7 +347,7 @@ BIO *bio_open_owner(const char *filename, const char *modestr, int private)
 #ifdef O_TRUNC
     mode |= O_TRUNC;
 #endif
-    binmode = strchr(modestr, 'b') != NULL;
+    binmode = !(format & B_FORMAT_TEXT);
     if (binmode) {
 #ifdef O_BINARY
         mode |= O_BINARY;
@@ -330,7 +359,7 @@ BIO *bio_open_owner(const char *filename, const char *modestr, int private)
     fd = open(filename, mode, 0600);
     if (fd < 0)
         goto err;
-    fp = fdopen(fd, modestr);
+    fp = fdopen(fd, modestr('w', format));
     if (fp == NULL)
         goto err;
     bflags = BIO_CLOSE;
@@ -352,12 +381,13 @@ BIO *bio_open_owner(const char *filename, const char *modestr, int private)
     return NULL;
 }
 
-static BIO *bio_open_default_(const char *filename, const char *mode, int quiet)
+static BIO *bio_open_default_(const char *filename, char mode, int format,
+                              int quiet)
 {
     BIO *ret;
 
     if (filename == NULL || strcmp(filename, "-") == 0) {
-        ret = *mode == 'r' ? dup_bio_in() : dup_bio_out();
+        ret = mode == 'r' ? dup_bio_in() : dup_bio_out();
         if (quiet) {
             ERR_clear_error();
             return ret;
@@ -366,9 +396,9 @@ static BIO *bio_open_default_(const char *filename, const char *mode, int quiet)
             return ret;
         BIO_printf(bio_err,
                    "Can't open %s, %s\n",
-                   *mode == 'r' ? "stdin" : "stdout", strerror(errno));
+                   mode == 'r' ? "stdin" : "stdout", strerror(errno));
     } else {
-        ret = BIO_new_file(filename, mode);
+        ret = BIO_new_file(filename, modestr(mode, format));
         if (quiet) {
             ERR_clear_error();
             return ret;
@@ -377,21 +407,20 @@ static BIO *bio_open_default_(const char *filename, const char *mode, int quiet)
             return ret;
         BIO_printf(bio_err,
                    "Can't open %s for %s, %s\n",
-                   filename,
-                   *mode == 'r' ? "reading" : "writing", strerror(errno));
+                   filename, modeverb(mode), strerror(errno));
     }
     ERR_print_errors(bio_err);
     return NULL;
 }
 
-BIO *bio_open_default(const char *filename, const char *mode)
+BIO *bio_open_default(const char *filename, char mode, int format)
 {
-    return bio_open_default_(filename, mode, 0);
+    return bio_open_default_(filename, mode, format, 0);
 }
 
-BIO *bio_open_default_quiet(const char *filename, const char *mode)
+BIO *bio_open_default_quiet(const char *filename, char mode, int format)
 {
-    return bio_open_default_(filename, mode, 1);
+    return bio_open_default_(filename, mode, format, 1);
 }
 
 #if defined( OPENSSL_SYS_VMS)
