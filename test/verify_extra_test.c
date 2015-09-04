@@ -130,7 +130,9 @@ static STACK_OF(X509) *load_certs_from_file(const char *filename)
  * CA=FALSE, and will therefore incorrectly verify bad
  *
  */
-static int test_alt_chains_cert_forgery(void)
+static int test_alt_chains_cert_forgery(const char *roots_f,
+                                        const char *untrusted_f,
+                                        const char *bad_f)
 {
     int ret = 0;
     int i;
@@ -148,12 +150,12 @@ static int test_alt_chains_cert_forgery(void)
     lookup = X509_STORE_add_lookup(store, X509_LOOKUP_file());
     if (lookup == NULL)
         goto err;
-    if(!X509_LOOKUP_load_file(lookup, "certs/roots.pem", X509_FILETYPE_PEM))
+    if(!X509_LOOKUP_load_file(lookup, roots_f, X509_FILETYPE_PEM))
         goto err;
 
-    untrusted = load_certs_from_file("certs/untrusted.pem");
+    untrusted = load_certs_from_file(untrusted_f);
 
-    if ((bio = BIO_new_file("certs/bad.pem", "r")) == NULL)
+    if ((bio = BIO_new_file(bad_f, "r")) == NULL)
         goto err;
 
     if((x = PEM_read_bio_X509(bio, NULL, 0, NULL)) == NULL)
@@ -183,7 +185,7 @@ static int test_alt_chains_cert_forgery(void)
     return ret;
 }
 
-int main(void)
+int main(int argc, char **argv)
 {
     CRYPTO_malloc_debug_init();
     CRYPTO_set_mem_debug_options(V_CRYPTO_MDEBUG_ALL);
@@ -192,7 +194,12 @@ int main(void)
     ERR_load_crypto_strings();
     OpenSSL_add_all_digests();
 
-    if (!test_alt_chains_cert_forgery()) {
+    if (argc != 4) {
+        fprintf(stderr, "usage: verify_extra_test roots.pem untrusted.pem bad.pem\n");
+        return 1;
+    }
+
+    if (!test_alt_chains_cert_forgery(argv[1], argv[2], argv[3])) {
         fprintf(stderr, "Test alt chains cert forgery failed\n");
         return 1;
     }

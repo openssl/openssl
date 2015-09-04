@@ -432,7 +432,8 @@ test_constant_time: $(CONSTTIMETEST)$(EXE_EXT)
 
 test_verify_extra: $(VERIFYEXTRATEST)$(EXE_EXT)
 	@echo $(START) $@
-	../util/shlib_wrap.sh ./$(VERIFYEXTRATEST)
+	../util/shlib_wrap.sh ./$(VERIFYEXTRATEST) \
+                certs/roots.pem certs/untrusted.pem certs/bad.pem
 
 test_clienthello: $(CLIENTHELLOTEST)$(EXE_EXT)
 	@echo $(START) $@
