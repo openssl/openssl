@@ -1311,6 +1311,7 @@ struct pbe_data {
     size_t key_len;
 };
 
+#ifndef OPENSSL_NO_SCRYPT
 static int scrypt_test_parse(struct evp_test *t,
                              const char *keyword, const char *value)
 {
@@ -1326,6 +1327,7 @@ static int scrypt_test_parse(struct evp_test *t,
         return test_uint64(value, &pdata->maxmem);
     return 0;
 }
+#endif
 
 static int pbkdf2_test_parse(struct evp_test *t,
                              const char *keyword, const char *value)
@@ -1366,8 +1368,10 @@ static int pbe_test_init(struct evp_test *t, const char *alg)
     struct pbe_data *pdat;
     int pbe_type = 0;
 
+#ifndef OPENSSL_NO_SCRYPT
     if (strcmp(alg, "scrypt") == 0)
         pbe_type = PBE_TYPE_SCRYPT;
+#endif
     else if (strcmp(alg, "pbkdf2") == 0)
         pbe_type = PBE_TYPE_PBKDF2;
     else if (strcmp(alg, "pkcs12") == 0)
@@ -1408,12 +1412,14 @@ static int pbe_test_parse(struct evp_test *t,
         return test_bin(value, &pdata->salt, &pdata->salt_len);
     if (strcmp(keyword, "Key") == 0)
         return test_bin(value, &pdata->key, &pdata->key_len);
-    if (pdata->pbe_type == PBE_TYPE_SCRYPT)
-        return scrypt_test_parse(t, keyword, value);
-    else if (pdata->pbe_type == PBE_TYPE_PBKDF2)
+    if (pdata->pbe_type == PBE_TYPE_PBKDF2)
         return pbkdf2_test_parse(t, keyword, value);
     else if (pdata->pbe_type == PBE_TYPE_PKCS12)
         return pkcs12_test_parse(t, keyword, value);
+#ifndef OPENSSL_NO_SCRYPT
+    else if (pdata->pbe_type == PBE_TYPE_SCRYPT)
+        return scrypt_test_parse(t, keyword, value);
+#endif
     return 0;
 }
 
@@ -1433,6 +1439,7 @@ static int pbe_test_run(struct evp_test *t)
                               pdata->iter, pdata->md,
                               pdata->key_len, key) == 0)
             goto err;
+#ifndef OPENSSL_NO_SCRYPT
     } else if (pdata->pbe_type == PBE_TYPE_SCRYPT) {
         err = "SCRYPT_ERROR";
         if (EVP_PBE_scrypt((const char *)pdata->pass, pdata->pass_len,
@@ -1440,6 +1447,7 @@ static int pbe_test_run(struct evp_test *t)
                            pdata->N, pdata->r, pdata->p, pdata->maxmem,
                            key, pdata->key_len) == 0)
             goto err;
+#endif
     } else if (pdata->pbe_type == PBE_TYPE_PKCS12) {
         err = "PKCS12_ERROR";
         if (PKCS12_key_gen_uni(pdata->pass, pdata->pass_len,

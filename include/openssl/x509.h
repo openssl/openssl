@@ -1052,10 +1052,12 @@ X509_ALGOR *PKCS5_pbe2_set_iv(const EVP_CIPHER *cipher, int iter,
                               unsigned char *salt, int saltlen,
                               unsigned char *aiv, int prf_nid);
 
+#ifndef OPENSSL_NO_SCRYPT
 X509_ALGOR *PKCS5_pbe2_set_scrypt(const EVP_CIPHER *cipher,
                                   const unsigned char *salt, int saltlen,
                                   unsigned char *aiv, uint64_t N, uint64_t r,
                                   uint64_t p);
+#endif
 
 X509_ALGOR *PKCS5_pbkdf2_set(int iter, unsigned char *salt, int saltlen,
                              int prf_nid, int keylen);
