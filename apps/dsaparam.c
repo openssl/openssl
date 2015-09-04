@@ -195,10 +195,10 @@ int dsaparam_main(int argc, char **argv)
     }
     private = genkey ? 1 : 0;
 
-    in = bio_open_default(infile, "r");
+    in = bio_open_default(infile, RB(informat));
     if (in == NULL)
         goto end;
-    out = bio_open_owner(outfile, "w", private);
+    out = bio_open_owner(outfile, WB(outformat), private);
     if (out == NULL)
         goto end;
 

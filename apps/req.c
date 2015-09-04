@@ -764,7 +764,8 @@ int req_main(int argc, char **argv)
 
     out = bio_open_default(outfile,
                            keyout != NULL && outfile != NULL &&
-                           strcmp(keyout, outfile) == 0 ? "a" : "w");
+                           strcmp(keyout, outfile) == 0
+                           ? AB(outformat) : WB(outformat));
     if (out == NULL)
         goto end;
 

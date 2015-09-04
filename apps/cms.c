@@ -690,16 +690,14 @@ int cms_main(int argc, char **argv)
         flags &= ~CMS_DETACHED;
 
     if (operation & SMIME_OP) {
-        if (outformat == FORMAT_ASN1)
-            outmode = "wb";
+        outmode = WB(outformat);
     } else {
         if (flags & CMS_BINARY)
             outmode = "wb";
     }
 
     if (operation & SMIME_IP) {
-        if (informat == FORMAT_ASN1)
-            inmode = "rb";
+        inmode = RB(informat);
     } else {
         if (flags & CMS_BINARY)
             inmode = "rb";

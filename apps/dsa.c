@@ -225,7 +225,7 @@ int dsa_main(int argc, char **argv)
         goto end;
     }
 
-    out = bio_open_owner(outfile, "w", private);
+    out = bio_open_owner(outfile, WB(outformat), private);
     if (out == NULL)
         goto end;
 
