@@ -153,7 +153,7 @@ _STACK *sk_new(int (*c) (const void *, const void *))
 
     if ((ret = OPENSSL_zalloc(sizeof(_STACK))) == NULL)
         goto err;
-    if ((ret->data = OPENSSL_malloc(sizeof(*ret->data) * MIN_NODES)) == NULL)
+    if ((ret->data = OPENSSL_zalloc(sizeof(*ret->data) * MIN_NODES)) == NULL)
         goto err;
     ret->comp = c;
     ret->num_alloc = MIN_NODES;

@@ -180,7 +180,6 @@ static EVP_PKEY_CTX *int_ctx_new(EVP_PKEY *pkey, ENGINE *e, int id)
     ret->pkey = pkey;
     if (pkey)
         CRYPTO_add(&pkey->references, 1, CRYPTO_LOCK_EVP_PKEY);
-    ret->data = NULL;
 
     if (pmeth->init) {
         if (pmeth->init(ret) <= 0) {
