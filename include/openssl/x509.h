@@ -329,17 +329,6 @@ DECLARE_STACK_OF(X509_TRUST)
                         XN_FLAG_FN_LN | \
                         XN_FLAG_FN_ALIGN)
 
-struct x509_revoked_st {
-    ASN1_INTEGER *serialNumber;
-    ASN1_TIME *revocationDate;
-    STACK_OF(X509_EXTENSION) /* optional */ *extensions;
-    /* Set up if indirect CRL */
-    STACK_OF(GENERAL_NAME) *issuer;
-    /* Revocation reason */
-    int reason;
-    int sequence;               /* load sequence */
-};
-
 DECLARE_STACK_OF(X509_REVOKED)
 
 typedef struct X509_crl_info_st X509_CRL_INFO;
