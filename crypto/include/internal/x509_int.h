@@ -138,3 +138,14 @@ struct X509_crl_st {
     const X509_CRL_METHOD *meth;
     void *meth_data;
 };
+
+struct x509_revoked_st {
+    ASN1_INTEGER *serialNumber;
+    ASN1_TIME *revocationDate;
+    STACK_OF(X509_EXTENSION) /* optional */ *extensions;
+    /* Set up if indirect CRL */
+    STACK_OF(GENERAL_NAME) *issuer;
+    /* Revocation reason */
+    int reason;
+    int sequence;               /* load sequence */
+};
