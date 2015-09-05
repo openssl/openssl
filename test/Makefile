@@ -173,7 +173,7 @@ alltests: \
 
 test_np: $(NPTEST)$(EXE_EXT)
 	@echo $(START) $@
-	./$(NPTEST)
+	../util/shlib_wrap.sh ./$(NPTEST)
 
 test_evp: $(EVPTEST)$(EXE_EXT) evptests.txt
 	@echo $(START) $@
