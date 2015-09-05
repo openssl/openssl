@@ -65,7 +65,6 @@ extern int list_main(int argc, char *argv[]);
 extern int help_main(int argc, char *argv[]);
 extern int exit_main(int argc, char *argv[]);
 
-#ifdef INCLUDE_FUNCTION_TABLE
 extern OPTIONS asn1parse_options[];
 extern OPTIONS ca_options[];
 extern OPTIONS ciphers_options[];
@@ -114,7 +113,9 @@ extern OPTIONS rehash_options[];
 extern OPTIONS list_options[];
 extern OPTIONS help_options[];
 extern OPTIONS exit_options[];
-FUNCTION functions[] = {
+
+#ifdef INCLUDE_FUNCTION_TABLE
+static FUNCTION functions[] = {
     { FT_general, "asn1parse", asn1parse_main, asn1parse_options },
     { FT_general, "ca", ca_main, ca_options },
 #if !defined(OPENSSL_NO_SOCK)

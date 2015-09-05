@@ -395,7 +395,7 @@ static char *ssl_give_srp_client_pwd_cb(SSL *s, void *arg)
 
 #endif
 
-char *srtp_profiles = NULL;
+static char *srtp_profiles = NULL;
 
 #ifndef OPENSSL_NO_NEXTPROTONEG
 /* This the context that we pass to next_proto_cb */

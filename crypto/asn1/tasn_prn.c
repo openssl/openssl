@@ -74,7 +74,7 @@
 
 /* ASN1_PCTX routines */
 
-ASN1_PCTX default_pctx = {
+static ASN1_PCTX default_pctx = {
     ASN1_PCTX_FLAGS_SHOW_ABSENT, /* flags */
     0,                          /* nm_flags */
     0,                          /* cert_flags */

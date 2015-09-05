@@ -65,6 +65,7 @@
 #include <openssl/x509v3.h>
 
 #include "pcy_int.h"
+#include "ext_dat.h"
 
 /* Certificate policies extension support: this one is a bit complex... */
 

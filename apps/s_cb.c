@@ -131,8 +131,8 @@ int verify_depth = 0;
 int verify_quiet = 0;
 int verify_error = X509_V_OK;
 int verify_return_error = 0;
-unsigned char cookie_secret[COOKIE_SECRET_LENGTH];
-int cookie_initialized = 0;
+static unsigned char cookie_secret[COOKIE_SECRET_LENGTH];
+static int cookie_initialized = 0;
 
 static const char *lookup(int val, const STRINT_PAIR* list, const char* def)
 {

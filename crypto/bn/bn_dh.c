@@ -56,6 +56,7 @@
  *
  */
 
+#include <openssl/dh.h>
 #include "bn_lcl.h"
 #include "e_os.h"
 

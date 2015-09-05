@@ -107,8 +107,8 @@ int change_rand(void);
 int restore_rand(void);
 int fbytes(unsigned char *buf, int num);
 
-RAND_METHOD fake_rand;
-const RAND_METHOD *old_rand;
+static RAND_METHOD fake_rand;
+static const RAND_METHOD *old_rand;
 
 int change_rand(void)
 {

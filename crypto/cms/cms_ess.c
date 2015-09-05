@@ -61,9 +61,6 @@
 #include <openssl/cms.h>
 #include "cms_lcl.h"
 
-DECLARE_ASN1_ITEM(CMS_ReceiptRequest)
-DECLARE_ASN1_ITEM(CMS_Receipt)
-
 IMPLEMENT_ASN1_FUNCTIONS(CMS_ReceiptRequest)
 
 /* ESS services: for now just Signed Receipt related */

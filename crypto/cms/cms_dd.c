@@ -60,8 +60,6 @@
 #include <openssl/cms.h>
 #include "cms_lcl.h"
 
-DECLARE_ASN1_ITEM(CMS_DigestedData)
-
 /* CMS DigestedData Utilities */
 
 CMS_ContentInfo *cms_DigestedData_create(const EVP_MD *md)

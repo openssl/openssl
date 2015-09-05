@@ -67,8 +67,6 @@
 # include <openssl/cms.h>
 #endif
 
-extern const EVP_PKEY_ASN1_METHOD dhx_asn1_meth;
-
 /*
  * i2d/d2i like DH parameter functions which use the appropriate routine for
  * PKCS#3 DH or X9.42 DH.

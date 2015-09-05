@@ -63,8 +63,6 @@
 
 /* CMS EncryptedData Utilities */
 
-DECLARE_ASN1_ITEM(CMS_EncryptedData)
-
 /* Return BIO based on EncryptedContentInfo and key */
 
 BIO *cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec)

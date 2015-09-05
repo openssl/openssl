@@ -33,11 +33,13 @@ foreach (@ARGV) {
 	printf "extern int %s_main(int argc, char *argv[]);\n", $_;
 }
 
-printf "\n#ifdef INCLUDE_FUNCTION_TABLE\n";
+print "\n";
+
 foreach (@ARGV) {
 	printf "extern OPTIONS %s_options[];\n", $_;
 }
-printf "FUNCTION functions[] = {\n";
+print "\n#ifdef INCLUDE_FUNCTION_TABLE\n";
+print "static FUNCTION functions[] = {\n";
 foreach (@ARGV) {
 	$str="    { FT_general, \"$_\", ${_}_main, ${_}_options },\n";
 	if (/^s_/ || /^ciphers$/) {

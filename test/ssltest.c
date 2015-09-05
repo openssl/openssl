@@ -288,9 +288,9 @@ static BIO *bio_stdout = NULL;
 #ifndef OPENSSL_NO_NEXTPROTONEG
 /* Note that this code assumes that this is only a one element list: */
 static const char NEXT_PROTO_STRING[] = "\x09testproto";
-int npn_client = 0;
-int npn_server = 0;
-int npn_server_reject = 0;
+static int npn_client = 0;
+static int npn_server = 0;
+static int npn_server_reject = 0;
 
 static int cb_client_npn(SSL *s, unsigned char **out, unsigned char *outlen,
                          const unsigned char *in, unsigned int inlen,
@@ -500,24 +500,24 @@ static int verify_alpn(SSL *client, SSL *server)
 #define CUSTOM_EXT_TYPE_2 1002
 #define CUSTOM_EXT_TYPE_3 1003
 
-const char custom_ext_cli_string[] = "abc";
-const char custom_ext_srv_string[] = "defg";
+static const char custom_ext_cli_string[] = "abc";
+static const char custom_ext_srv_string[] = "defg";
 
 /* These set from cmdline */
-char *serverinfo_file = NULL;
-int serverinfo_sct = 0;
-int serverinfo_tack = 0;
+static char *serverinfo_file = NULL;
+static int serverinfo_sct = 0;
+static int serverinfo_tack = 0;
 
 /* These set based on extension callbacks */
-int serverinfo_sct_seen = 0;
-int serverinfo_tack_seen = 0;
-int serverinfo_other_seen = 0;
+static int serverinfo_sct_seen = 0;
+static int serverinfo_tack_seen = 0;
+static int serverinfo_other_seen = 0;
 
 /* This set from cmdline */
-int custom_ext = 0;
+static int custom_ext = 0;
 
 /* This set based on extension callbacks */
-int custom_ext_error = 0;
+static int custom_ext_error = 0;
 
 static int serverinfo_cli_parse_cb(SSL *s, unsigned int ext_type,
                                    const unsigned char *in, size_t inlen,

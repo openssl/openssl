@@ -64,8 +64,6 @@
 
 /* CMS SignedData Utilities */
 
-DECLARE_ASN1_ITEM(CMS_SignedData)
-
 static CMS_SignedData *cms_get0_signed(CMS_ContentInfo *cms)
 {
     if (OBJ_obj2nid(cms->contentType) != NID_pkcs7_signed) {

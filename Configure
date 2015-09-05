@@ -103,11 +103,10 @@ my $gcc_devteam_warn = "-Wall -pedantic -DPEDANTIC -Wno-long-long -Wsign-compare
 # TODO(openssl-team): fix problems and investigate if (at least) the
 # following warnings can also be enabled:
 # -Wswitch-enum, -Wunused-macros, -Wmissing-field-initializers,
-# -Wmissing-variable-declarations,
-# -Wincompatible-pointer-types-discards-qualifiers, -Wcast-align,
+# -Wcast-align,
 # -Wunreachable-code -Wunused-parameter -Wlanguage-extension-token
 # -Wextended-offsetof
-my $clang_devteam_warn = "-Wno-unused-parameter -Wno-missing-field-initializers -Wno-language-extension-token -Wno-extended-offsetof -Wconditional-uninitialized -Qunused-arguments";
+my $clang_devteam_warn = "-Wno-unused-parameter -Wno-missing-field-initializers -Wno-language-extension-token -Wno-extended-offsetof -Wconditional-uninitialized -Qunused-arguments -Wincompatible-pointer-types-discards-qualifiers -Wmissing-variable-declarations";
 
 my $strict_warnings = 0;
 

@@ -464,6 +464,22 @@ int cms_RecipientInfo_kari_encrypt(CMS_ContentInfo *cms,
 int cms_RecipientInfo_pwri_crypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri,
                                  int en_de);
 
+DECLARE_ASN1_ITEM(CMS_CertificateChoices)
+DECLARE_ASN1_ITEM(CMS_DigestedData)
+DECLARE_ASN1_ITEM(CMS_EncryptedData)
+DECLARE_ASN1_ITEM(CMS_EnvelopedData)
+DECLARE_ASN1_ITEM(CMS_KEKRecipientInfo)
+DECLARE_ASN1_ITEM(CMS_KeyAgreeRecipientInfo)
+DECLARE_ASN1_ITEM(CMS_KeyTransRecipientInfo)
+DECLARE_ASN1_ITEM(CMS_OriginatorPublicKey)
+DECLARE_ASN1_ITEM(CMS_OtherKeyAttribute)
+DECLARE_ASN1_ITEM(CMS_Receipt)
+DECLARE_ASN1_ITEM(CMS_ReceiptRequest)
+DECLARE_ASN1_ITEM(CMS_RecipientEncryptedKey)
+DECLARE_ASN1_ITEM(CMS_RecipientKeyIdentifier)
+DECLARE_ASN1_ITEM(CMS_RevocationInfoChoice)
+DECLARE_ASN1_ITEM(CMS_SignedData)
+
 #ifdef  __cplusplus
 }
 #endif
