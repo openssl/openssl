@@ -68,6 +68,7 @@
 #include <openssl/x509v3.h>
 #include <openssl/x509.h>
 #include <openssl/bn.h>
+#include "ext_dat.h"
 
 #ifndef OPENSSL_NO_RFC3779
 

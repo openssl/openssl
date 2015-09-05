@@ -214,4 +214,4 @@ v3_ocsp.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
 v3_ocsp.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 v3_ocsp.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
 v3_ocsp.o: ../../include/openssl/x509v3.h ../include/internal/cryptlib.h
-v3_ocsp.o: ocsp_lcl.h v3_ocsp.c
+v3_ocsp.o: ../x509v3/ext_dat.h ocsp_lcl.h v3_ocsp.c

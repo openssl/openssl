@@ -100,19 +100,20 @@ eng_cnf.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
 eng_cnf.o: ../include/internal/cryptlib.h eng_cnf.c eng_int.h
 eng_cryptodev.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 eng_cryptodev.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
-eng_cryptodev.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
+eng_cryptodev.o: ../../include/openssl/crypto.h ../../include/openssl/dh.h
+eng_cryptodev.o: ../../include/openssl/dsa.h ../../include/openssl/e_os2.h
 eng_cryptodev.o: ../../include/openssl/ec.h ../../include/openssl/ecdh.h
 eng_cryptodev.o: ../../include/openssl/ecdsa.h ../../include/openssl/engine.h
-eng_cryptodev.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
-eng_cryptodev.o: ../../include/openssl/obj_mac.h
+eng_cryptodev.o: ../../include/openssl/err.h ../../include/openssl/evp.h
+eng_cryptodev.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
 eng_cryptodev.o: ../../include/openssl/objects.h
 eng_cryptodev.o: ../../include/openssl/opensslconf.h
 eng_cryptodev.o: ../../include/openssl/opensslv.h
 eng_cryptodev.o: ../../include/openssl/ossl_typ.h ../../include/openssl/pkcs7.h
-eng_cryptodev.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
-eng_cryptodev.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-eng_cryptodev.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
-eng_cryptodev.o: eng_cryptodev.c
+eng_cryptodev.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
+eng_cryptodev.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
+eng_cryptodev.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
+eng_cryptodev.o: ../../include/openssl/x509_vfy.h eng_cryptodev.c
 eng_ctrl.o: ../../e_os.h ../../include/openssl/asn1.h
 eng_ctrl.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 eng_ctrl.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h

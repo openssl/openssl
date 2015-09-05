@@ -64,6 +64,7 @@
 # include <openssl/ocsp.h>
 # include "ocsp_lcl.h"
 # include <openssl/x509v3.h>
+# include "../x509v3/ext_dat.h"
 
 /*
  * OCSP extensions and a couple of CRL entry extensions

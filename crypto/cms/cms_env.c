@@ -65,11 +65,6 @@
 
 /* CMS EnvelopedData Utilities */
 
-DECLARE_ASN1_ITEM(CMS_EnvelopedData)
-DECLARE_ASN1_ITEM(CMS_KeyTransRecipientInfo)
-DECLARE_ASN1_ITEM(CMS_KEKRecipientInfo)
-DECLARE_ASN1_ITEM(CMS_OtherKeyAttribute)
-
 DECLARE_STACK_OF(CMS_RecipientInfo)
 
 CMS_EnvelopedData *cms_get0_enveloped(CMS_ContentInfo *cms)

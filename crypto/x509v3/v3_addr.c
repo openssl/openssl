@@ -68,6 +68,7 @@
 #include <openssl/asn1t.h>
 #include <openssl/buffer.h>
 #include <openssl/x509v3.h>
+#include "ext_dat.h"
 
 #ifndef OPENSSL_NO_RFC3779
 
@@ -98,7 +99,7 @@ ASN1_SEQUENCE(IPAddressFamily) = {
 ASN1_ITEM_TEMPLATE(IPAddrBlocks) =
   ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SEQUENCE_OF, 0,
                         IPAddrBlocks, IPAddressFamily)
-ASN1_ITEM_TEMPLATE_END(IPAddrBlocks)
+static_ASN1_ITEM_TEMPLATE_END(IPAddrBlocks)
 
 IMPLEMENT_ASN1_FUNCTIONS(IPAddressRange)
 IMPLEMENT_ASN1_FUNCTIONS(IPAddressOrRange)

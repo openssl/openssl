@@ -76,6 +76,8 @@ int CMAC_Update(CMAC_CTX *ctx, const void *data, size_t dlen);
 int CMAC_Final(CMAC_CTX *ctx, unsigned char *out, size_t *poutlen);
 int CMAC_resume(CMAC_CTX *ctx);
 
+extern const EVP_PKEY_METHOD cmac_pkey_meth;
+
 #ifdef  __cplusplus
 }
 #endif

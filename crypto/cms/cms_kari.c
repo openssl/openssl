@@ -63,11 +63,6 @@
 #include "cms_lcl.h"
 #include "internal/asn1_int.h"
 
-DECLARE_ASN1_ITEM(CMS_KeyAgreeRecipientInfo)
-DECLARE_ASN1_ITEM(CMS_RecipientEncryptedKey)
-DECLARE_ASN1_ITEM(CMS_OriginatorPublicKey)
-DECLARE_ASN1_ITEM(CMS_RecipientKeyIdentifier)
-
 /* Key Agreement Recipient Info (KARI) routines */
 
 int CMS_RecipientInfo_kari_get0_alg(CMS_RecipientInfo *ri,

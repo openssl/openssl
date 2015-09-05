@@ -79,7 +79,7 @@ typedef struct g89_tc_ {
      */
 } g89_tc;
 
-const g89_tc tcs[] = {
+static const g89_tc tcs[] = {
     /*
      * GOST R 34.11-94 Test cases
      */

@@ -160,7 +160,7 @@ static void list_pkey(void);
 static void list_type(FUNC_TYPE ft);
 char *default_config_file = NULL;
 
-CONF *config = NULL;
+static CONF *config = NULL;
 BIO *bio_in = NULL;
 BIO *bio_out = NULL;
 BIO *bio_err = NULL;

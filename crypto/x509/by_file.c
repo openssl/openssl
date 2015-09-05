@@ -70,7 +70,7 @@
 
 static int by_file_ctrl(X509_LOOKUP *ctx, int cmd, const char *argc,
                         long argl, char **ret);
-X509_LOOKUP_METHOD x509_file_lookup = {
+static X509_LOOKUP_METHOD x509_file_lookup = {
     "Load file into cache",
     NULL,                       /* new */
     NULL,                       /* free */

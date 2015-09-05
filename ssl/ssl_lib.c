@@ -159,7 +159,7 @@
 # include <openssl/engine.h>
 #endif
 
-const char *SSL_version_str = OPENSSL_VERSION_TEXT;
+const char SSL_version_str[] = OPENSSL_VERSION_TEXT;
 
 SSL3_ENC_METHOD ssl3_undef_enc_method = {
     /*

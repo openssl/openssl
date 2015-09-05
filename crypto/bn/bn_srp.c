@@ -1,5 +1,7 @@
 #include "bn_lcl.h"
 #include "e_os.h"
+#include <openssl/srp.h>
+#include <internal/bn_srp.h>
 
 #ifndef OPENSSL_NO_SRP
 

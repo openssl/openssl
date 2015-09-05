@@ -103,7 +103,7 @@ typedef struct {
 ASN1_SEQUENCE(asn1_int_oct) = {
         ASN1_SIMPLE(asn1_int_oct, num, LONG),
         ASN1_SIMPLE(asn1_int_oct, oct, ASN1_OCTET_STRING)
-} ASN1_SEQUENCE_END(asn1_int_oct)
+} static_ASN1_SEQUENCE_END(asn1_int_oct)
 
 DECLARE_ASN1_ITEM(asn1_int_oct)
 

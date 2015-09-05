@@ -290,7 +290,6 @@ e_null.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
 e_null.o: ../../include/openssl/ossl_typ.h ../../include/openssl/safestack.h
 e_null.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 e_null.o: ../include/internal/cryptlib.h e_null.c
-e_old.o: e_old.c
 e_rc2.o: ../../e_os.h ../../include/openssl/asn1.h ../../include/openssl/bio.h
 e_rc2.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 e_rc2.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
@@ -756,20 +755,22 @@ pmeth_gn.o: ../include/internal/cryptlib.h ../include/internal/evp_int.h
 pmeth_gn.o: pmeth_gn.c
 pmeth_lib.o: ../../e_os.h ../../include/openssl/asn1.h
 pmeth_lib.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
-pmeth_lib.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
-pmeth_lib.o: ../../include/openssl/ec.h ../../include/openssl/ecdh.h
-pmeth_lib.o: ../../include/openssl/ecdsa.h ../../include/openssl/engine.h
-pmeth_lib.o: ../../include/openssl/err.h ../../include/openssl/evp.h
+pmeth_lib.o: ../../include/openssl/cmac.h ../../include/openssl/crypto.h
+pmeth_lib.o: ../../include/openssl/dh.h ../../include/openssl/dsa.h
+pmeth_lib.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
+pmeth_lib.o: ../../include/openssl/ecdh.h ../../include/openssl/ecdsa.h
+pmeth_lib.o: ../../include/openssl/engine.h ../../include/openssl/err.h
+pmeth_lib.o: ../../include/openssl/evp.h ../../include/openssl/hmac.h
 pmeth_lib.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
 pmeth_lib.o: ../../include/openssl/objects.h
 pmeth_lib.o: ../../include/openssl/opensslconf.h
 pmeth_lib.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-pmeth_lib.o: ../../include/openssl/pkcs7.h ../../include/openssl/safestack.h
-pmeth_lib.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
-pmeth_lib.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
-pmeth_lib.o: ../../include/openssl/x509_vfy.h ../include/internal/asn1_int.h
-pmeth_lib.o: ../include/internal/cryptlib.h ../include/internal/evp_int.h
-pmeth_lib.o: pmeth_lib.c
+pmeth_lib.o: ../../include/openssl/pkcs7.h ../../include/openssl/rsa.h
+pmeth_lib.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
+pmeth_lib.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
+pmeth_lib.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
+pmeth_lib.o: ../include/internal/asn1_int.h ../include/internal/cryptlib.h
+pmeth_lib.o: ../include/internal/evp_int.h pmeth_lib.c
 scrypt.o: ../../include/internal/numbers.h ../../include/openssl/asn1.h
 scrypt.o: ../../include/openssl/bio.h ../../include/openssl/crypto.h
 scrypt.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h

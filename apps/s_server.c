@@ -232,7 +232,7 @@ static char *s_dcert_file = NULL, *s_dkey_file = NULL, *s_dchain_file = NULL;
 static int s_nbio = 0;
 #endif
 static int s_nbio_test = 0;
-int s_crlf = 0;
+static int s_crlf = 0;
 static SSL_CTX *ctx = NULL;
 static SSL_CTX *ctx2 = NULL;
 static int www = 0;
@@ -2366,7 +2366,7 @@ static int init_ssl_connection(SSL *con)
     int i;
     const char *str;
     X509 *peer;
-    long verify_error;
+    long verify_err;
     char buf[BUFSIZ];
 #if !defined(OPENSSL_NO_NEXTPROTONEG)
     const unsigned char *next_proto_neg;
@@ -2409,10 +2409,10 @@ static int init_ssl_connection(SSL *con)
 
         BIO_printf(bio_err, "ERROR\n");
 
-        verify_error = SSL_get_verify_result(con);
-        if (verify_error != X509_V_OK) {
+        verify_err = SSL_get_verify_result(con);
+        if (verify_err != X509_V_OK) {
             BIO_printf(bio_err, "verify error:%s\n",
-                       X509_verify_cert_error_string(verify_error));
+                       X509_verify_cert_error_string(verify_err));
         }
         /* Always print any error messages */
         ERR_print_errors(bio_err);

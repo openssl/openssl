@@ -83,9 +83,9 @@
 
 #include "../crypto/bn/bn_lcl.h"
 
-const int num0 = 100;           /* number of tests */
-const int num1 = 50;            /* additional tests for some functions */
-const int num2 = 5;             /* number of tests for slow functions */
+static const int num0 = 100;           /* number of tests */
+static const int num1 = 50;            /* additional tests for some functions */
+static const int num2 = 5;             /* number of tests for slow functions */
 
 int test_add(BIO *bp);
 int test_sub(BIO *bp);

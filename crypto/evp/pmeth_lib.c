@@ -60,8 +60,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "internal/cryptlib.h"
-#include <openssl/objects.h>
+#include <openssl/cmac.h>
+#include <openssl/dh.h>
+#include <openssl/dsa.h>
 #include <openssl/evp.h>
+#include <openssl/hmac.h>
+#include <openssl/objects.h>
+#include <openssl/rsa.h>
 #ifndef OPENSSL_NO_ENGINE
 # include <openssl/engine.h>
 #endif
@@ -71,11 +76,7 @@
 typedef int sk_cmp_fn_type(const char *const *a, const char *const *b);
 
 DECLARE_STACK_OF(EVP_PKEY_METHOD)
-STACK_OF(EVP_PKEY_METHOD) *app_pkey_methods = NULL;
-
-extern const EVP_PKEY_METHOD rsa_pkey_meth, dh_pkey_meth, dsa_pkey_meth;
-extern const EVP_PKEY_METHOD ec_pkey_meth, hmac_pkey_meth, cmac_pkey_meth;
-extern const EVP_PKEY_METHOD dhx_pkey_meth;
+static STACK_OF(EVP_PKEY_METHOD) *app_pkey_methods = NULL;
 
 static const EVP_PKEY_METHOD *standard_methods[] = {
 #ifndef OPENSSL_NO_RSA

@@ -573,6 +573,12 @@ int raw_write_stdout(const void *, int);
 # define TM_STOP         1
 double app_tminterval(int stop, int usertime);
 
+/* this is an accident waiting to happen (-Wshadow is your friend) */
+extern int verify_depth;
+extern int verify_quiet;
+extern int verify_error;
+extern int verify_return_error;
+
 # include "progs.h"
 
 #endif

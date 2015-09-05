@@ -31,7 +31,7 @@
 #endif
 
 #ifdef IMPLEMENTED
-size_t secure_mem_used;
+static size_t secure_mem_used;
 
 static int secure_mem_initialized;
 static int too_late;

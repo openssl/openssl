@@ -535,7 +535,7 @@ static int cryptodev_cleanup(EVP_CIPHER_CTX *ctx)
  */
 
 /* RC4 */
-const EVP_CIPHER cryptodev_rc4 = {
+static const EVP_CIPHER cryptodev_rc4 = {
     NID_rc4,
     1, 16, 0,
     EVP_CIPH_VARIABLE_LENGTH,
@@ -549,7 +549,7 @@ const EVP_CIPHER cryptodev_rc4 = {
 };
 
 /* DES CBC EVP */
-const EVP_CIPHER cryptodev_des_cbc = {
+static const EVP_CIPHER cryptodev_des_cbc = {
     NID_des_cbc,
     8, 8, 8,
     EVP_CIPH_CBC_MODE,
@@ -563,7 +563,7 @@ const EVP_CIPHER cryptodev_des_cbc = {
 };
 
 /* 3DES CBC EVP */
-const EVP_CIPHER cryptodev_3des_cbc = {
+static const EVP_CIPHER cryptodev_3des_cbc = {
     NID_des_ede3_cbc,
     8, 24, 8,
     EVP_CIPH_CBC_MODE,
@@ -576,7 +576,7 @@ const EVP_CIPHER cryptodev_3des_cbc = {
     NULL
 };
 
-const EVP_CIPHER cryptodev_bf_cbc = {
+static const EVP_CIPHER cryptodev_bf_cbc = {
     NID_bf_cbc,
     8, 16, 8,
     EVP_CIPH_CBC_MODE,
@@ -589,7 +589,7 @@ const EVP_CIPHER cryptodev_bf_cbc = {
     NULL
 };
 
-const EVP_CIPHER cryptodev_cast_cbc = {
+static const EVP_CIPHER cryptodev_cast_cbc = {
     NID_cast5_cbc,
     8, 16, 8,
     EVP_CIPH_CBC_MODE,
@@ -602,7 +602,7 @@ const EVP_CIPHER cryptodev_cast_cbc = {
     NULL
 };
 
-const EVP_CIPHER cryptodev_aes_cbc = {
+static const EVP_CIPHER cryptodev_aes_cbc = {
     NID_aes_128_cbc,
     16, 16, 16,
     EVP_CIPH_CBC_MODE,
@@ -615,7 +615,7 @@ const EVP_CIPHER cryptodev_aes_cbc = {
     NULL
 };
 
-const EVP_CIPHER cryptodev_aes_192_cbc = {
+static const EVP_CIPHER cryptodev_aes_192_cbc = {
     NID_aes_192_cbc,
     16, 24, 16,
     EVP_CIPH_CBC_MODE,
@@ -628,7 +628,7 @@ const EVP_CIPHER cryptodev_aes_192_cbc = {
     NULL
 };
 
-const EVP_CIPHER cryptodev_aes_256_cbc = {
+static const EVP_CIPHER cryptodev_aes_256_cbc = {
     NID_aes_256_cbc,
     16, 32, 16,
     EVP_CIPH_CBC_MODE,
