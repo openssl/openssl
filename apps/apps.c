@@ -2721,7 +2721,7 @@ int raw_write_stdout(const void *buf, int siz)
  * does impact behavior on some platform, such as differentiating between
  * text and binary input/output on non-Unix platforms
  */
-inline int istext(int format)
+static int istext(int format)
 {
     return (format & B_FORMAT_TEXT) == B_FORMAT_TEXT;
 }
