@@ -444,7 +444,7 @@ int rehash_main(int argc, char **argv)
 
 int rehash_main(int argc, char **argv)
 {
-    BIO_print(bio_err, "Not available; use c_rehash script\n");
+    BIO_printf(bio_err, "Not available; use c_rehash script\n");
     return (1);
 }
 
