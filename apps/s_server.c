@@ -1575,10 +1575,10 @@ int s_server_main(int argc, char *argv[])
         if (s_quiet && !s_debug) {
             bio_s_out = BIO_new(BIO_s_null());
             if (s_msg && !bio_s_msg)
-                bio_s_msg = dup_bio_out();
+                bio_s_msg = dup_bio_out(FORMAT_TEXT);
         } else {
             if (bio_s_out == NULL)
-                bio_s_out = dup_bio_out();
+                bio_s_out = dup_bio_out(FORMAT_TEXT);
         }
     }
 #if !defined(OPENSSL_NO_RSA) || !defined(OPENSSL_NO_DSA) || !defined(OPENSSL_NO_EC)

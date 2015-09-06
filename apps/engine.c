@@ -319,7 +319,7 @@ int engine_main(int argc, char **argv)
     OPTION_CHOICE o;
     char *prog;
 
-    out = dup_bio_out();
+    out = dup_bio_out(FORMAT_TEXT);
     prog = opt_init(argc, argv, engine_options);
     if (!engines || !pre_cmds || !post_cmds)
         goto end;
