@@ -21,12 +21,12 @@ remove_tree("demoCA", { safe => 0 });
 
 plan tests => 4;
  SKIP: {
-     $ENV{SSLEAY_CONFIG} = "-config CAss.cnf";
+     $ENV{SSLEAY_CONFIG} = "-config ".top_file("test", "CAss.cnf");
      skip "failed creating CA structure", 3
 	 if !is(system("$perl ".$CA_pl." -newca < ".devnull()." 2>&1"), 0,
 		'creating CA structure');
 
-     $ENV{SSLEAY_CONFIG} = "-config Uss.cnf";
+     $ENV{SSLEAY_CONFIG} = "-config ".top_file("test", "Uss.cnf");
      skip "failed creating new certificate request", 2
 	 if !is(system("$perl ".$CA_pl." -newreq 2>&1"), 0,
 		'creating new certificate request');
