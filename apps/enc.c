@@ -328,7 +328,7 @@ int enc_main(int argc, char **argv)
 
     if (infile == NULL) {
         unbuffer(stdin);
-        in = dup_bio_in();
+        in = dup_bio_in(format);
     } else
         in = bio_open_default(infile, 'r', format);
     if (in == NULL)

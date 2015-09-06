@@ -470,7 +470,7 @@ static char *app_get_pass(char *arg, int keepbio)
             pwdbio = BIO_push(btmp, pwdbio);
 #endif
         } else if (strcmp(arg, "stdin") == 0) {
-            pwdbio = dup_bio_in();
+            pwdbio = dup_bio_in(FORMAT_TEXT);
             if (!pwdbio) {
                 BIO_printf(bio_err, "Can't open BIO for stdin\n");
                 return NULL;
@@ -687,7 +687,7 @@ X509 *load_cert(const char *file, int format,
 
     if (file == NULL) {
         unbuffer(stdin);
-        cert = dup_bio_in();
+        cert = dup_bio_in(format);
     } else
         cert = bio_open_default(file, 'r', format);
     if (cert == NULL)
@@ -776,7 +776,7 @@ EVP_PKEY *load_key(const char *file, int format, int maybe_stdin,
 #endif
     if (file == NULL && maybe_stdin) {
         unbuffer(stdin);
-        key = dup_bio_in();
+        key = dup_bio_in(format);
     } else
         key = bio_open_default(file, 'r', format);
     if (key == NULL)
@@ -839,7 +839,7 @@ EVP_PKEY *load_pubkey(const char *file, int format, int maybe_stdin,
 #endif
     if (file == NULL && maybe_stdin) {
         unbuffer(stdin);
-        key = dup_bio_in();
+        key = dup_bio_in(format);
     } else
         key = bio_open_default(file, 'r', format);
     if (key == NULL)
@@ -2721,16 +2721,24 @@ int raw_write_stdout(const void *buf, int siz)
  * does impact behavior on some platform, such as differentiating between
  * text and binary input/output on non-Unix platforms
  */
-BIO *dup_bio_in(void)
+inline int istext(int format)
 {
-    return BIO_new_fp(stdin, BIO_NOCLOSE | BIO_FP_TEXT);
+    return (format & B_FORMAT_TEXT) == B_FORMAT_TEXT;
 }
 
-BIO *dup_bio_out(void)
+BIO *dup_bio_in(int format)
 {
-    BIO *b = BIO_new_fp(stdout, BIO_NOCLOSE | BIO_FP_TEXT);
+    return BIO_new_fp(stdin,
+                      BIO_NOCLOSE | (istext(format) ? BIO_FP_TEXT : 0));
+}
+
+BIO *dup_bio_out(int format)
+{
+    BIO *b = BIO_new_fp(stdout,
+                        BIO_NOCLOSE | (istext(format) ? BIO_FP_TEXT : 0));
 #ifdef OPENSSL_SYS_VMS
-    b = BIO_push(BIO_new(BIO_f_linebuffer()), b);
+    if (istext(format))
+        b = BIO_push(BIO_new(BIO_f_linebuffer()), b);
 #endif
     return b;
 }
@@ -2746,11 +2754,11 @@ static const char *modestr(char mode, int format)
 
     switch (mode) {
     case 'a':
-        return (format & B_FORMAT_TEXT) ? "a" : "ab";
+        return istext(format) ? "a" : "ab";
     case 'r':
-        return (format & B_FORMAT_TEXT) ? "r" : "rb";
+        return istext(format) ? "r" : "rb";
     case 'w':
-        return (format & B_FORMAT_TEXT) ? "w" : "wb";
+        return istext(format) ? "w" : "wb";
     }
     /* The assert above should make sure we never reach this point */
     return NULL;
@@ -2788,7 +2796,7 @@ BIO *bio_open_owner(const char *filename, int format, int private)
 #ifdef O_TRUNC
     mode |= O_TRUNC;
 #endif
-    binmode = !(format & B_FORMAT_TEXT);
+    binmode = istext(format);
     if (binmode) {
 #ifdef O_BINARY
         mode |= O_BINARY;
@@ -2828,7 +2836,7 @@ static BIO *bio_open_default_(const char *filename, char mode, int format,
     BIO *ret;
 
     if (filename == NULL || strcmp(filename, "-") == 0) {
-        ret = mode == 'r' ? dup_bio_in() : dup_bio_out();
+        ret = mode == 'r' ? dup_bio_in(format) : dup_bio_out(format);
         if (quiet) {
             ERR_clear_error();
             return ret;
