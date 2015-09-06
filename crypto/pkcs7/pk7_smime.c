@@ -513,7 +513,7 @@ PKCS7 *PKCS7_encrypt(STACK_OF(X509) *certs, BIO *in, const EVP_CIPHER *cipher,
 int PKCS7_decrypt(PKCS7 *p7, EVP_PKEY *pkey, X509 *cert, BIO *data, int flags)
 {
     BIO *tmpmem;
-    int ret, i;
+    int ret = 0, i;
     char *buf = NULL;
 
     if (!p7) {
@@ -575,7 +575,6 @@ int PKCS7_decrypt(PKCS7 *p7, EVP_PKEY *pkey, X509 *cert, BIO *data, int flags)
             break;
         }
         if (BIO_write(data, buf, i) != i) {
-            ret = 0;
             break;
         }
     }
