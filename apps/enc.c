@@ -138,7 +138,8 @@ int enc_main(int argc, char **argv)
     char mbuf[sizeof magic - 1];
     OPTION_CHOICE o;
     int bsize = BSIZE, verbose = 0, debug = 0, olb64 = 0, nosalt = 0;
-    int enc = 1, printkey = 0, i, k, format = FORMAT_BINARY;
+    int enc = 1, printkey = 0, i, k;
+    int base64 = 0, informat = FORMAT_BINARY, outformat = FORMAT_BINARY;
     int ret = 1, inl, nopad = 0, non_fips_allow = 0;
     unsigned char key[EVP_MAX_KEY_LENGTH], iv[EVP_MAX_IV_LENGTH];
     unsigned char *buff = NULL, salt[PKCS5_SALT_LEN];
@@ -151,7 +152,7 @@ int enc_main(int argc, char **argv)
     /* first check the program name */
     prog = opt_progname(argv[0]);
     if (strcmp(prog, "base64") == 0)
-        format = FORMAT_BASE64;
+        base64 = 1;
 #ifdef ZLIB
     else if (strcmp(prog, "zlib") == 0)
         do_zlib = 1;
@@ -223,7 +224,7 @@ int enc_main(int argc, char **argv)
             olb64 = 1;
             break;
         case OPT_A:
-            format = FORMAT_BASE64;
+            base64 = 1;
             break;
         case OPT_Z:
 #ifdef ZLIB
@@ -311,10 +312,17 @@ int enc_main(int argc, char **argv)
         dgst = EVP_md5();
 
     /* It must be large enough for a base64 encoded line */
-    if (format == FORMAT_BASE64 && bsize < 80)
+    if (base64 && bsize < 80)
         bsize = 80;
     if (verbose)
         BIO_printf(bio_err, "bufsize=%d\n", bsize);
+
+    if (base64) {
+        if (enc)
+            outformat = FORMAT_BASE64;
+        else
+            informat = FORMAT_BASE64;
+    }
 
     strbuf = app_malloc(SIZE, "strbuf");
     buff = app_malloc(EVP_ENCODE_LENGTH(bsize), "evp buffer");
@@ -328,9 +336,9 @@ int enc_main(int argc, char **argv)
 
     if (infile == NULL) {
         unbuffer(stdin);
-        in = dup_bio_in(format);
+        in = dup_bio_in(informat);
     } else
-        in = bio_open_default(infile, 'r', format);
+        in = bio_open_default(infile, 'r', informat);
     if (in == NULL)
         goto end;
 
@@ -366,7 +374,7 @@ int enc_main(int argc, char **argv)
         }
     }
 
-    out = bio_open_default(outfile, 'w', format);
+    out = bio_open_default(outfile, 'w', outformat);
     if (out == NULL)
         goto end;
 
@@ -384,7 +392,7 @@ int enc_main(int argc, char **argv)
     }
 #endif
 
-    if (format == FORMAT_BASE64) {
+    if (base64) {
         if ((b64 = BIO_new(BIO_f_base64())) == NULL)
             goto end;
         if (debug) {
