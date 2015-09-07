@@ -440,9 +440,8 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
      * SCTP.
      */
     if ((!s->in_handshake && SSL_in_init(s)) ||
-        (BIO_dgram_is_sctp(SSL_get_rbio(s)) &&
-         (s->state == DTLS1_SCTP_ST_SR_READ_SOCK
-          || s->state == DTLS1_SCTP_ST_CR_READ_SOCK)
+        (BIO_dgram_is_sctp(SSL_get_rbio(s))
+         && statem_in_sctp_read_sock(s)
          && s->s3->in_read_app_data != 2))
 #else
     if (!s->in_handshake && SSL_in_init(s))
@@ -586,8 +585,7 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
          */
         if (BIO_dgram_is_sctp(SSL_get_rbio(s)) &&
             SSL3_RECORD_get_type(rr) == SSL3_RT_APPLICATION_DATA &&
-            (s->state == DTLS1_SCTP_ST_SR_READ_SOCK
-             || s->state == DTLS1_SCTP_ST_CR_READ_SOCK)) {
+            statem_in_sctp_read_sock(s)) {
             s->rwstate = SSL_READING;
             BIO_clear_retry_flags(SSL_get_rbio(s));
             BIO_set_retry_read(SSL_get_rbio(s));

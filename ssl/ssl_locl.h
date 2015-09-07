@@ -844,6 +844,9 @@ struct statem_st {
     enum HANDSHAKE_STATE hand_state;
     int read_state_first_init;
     int use_timer;
+#ifndef OPENSSL_NO_SCTP
+    int in_sctp_read_sock;
+#endif
 };
 typedef struct statem_st STATEM;
 
@@ -2071,6 +2074,7 @@ __owur int tls_get_message_header(SSL *s, int *mt);
 __owur int tls_get_message_body(SSL *s, unsigned long *len);
 __owur int ssl3_send_finished(SSL *s, int a, int b, const char *sender, int slen);
 __owur int tls_construct_finished(SSL *s, const char *sender, int slen);
+__owur enum WORK_STATE tls_finish_handshake(SSL *s, enum WORK_STATE wst);
 __owur int ssl3_num_ciphers(void);
 __owur const SSL_CIPHER *ssl3_get_cipher(unsigned int u);
 int ssl3_renegotiate(SSL *ssl);
@@ -2092,7 +2096,11 @@ __owur int ssl3_connect(SSL *s);
 void statem_clear(SSL *s);
 void statem_set_renegotiate(SSL *s);
 void statem_set_error(SSL *s);
-__owur int statem_client_app_data_allowed(SSL *s);
+__owur int statem_app_data_allowed(SSL *s);
+#ifndef OPENSSL_NO_SCTP
+void statem_set_sctp_read_sock(SSL *s, int read_sock);
+__owur int statem_in_sctp_read_sock(SSL *s);
+#endif
 __owur int ssl3_read(SSL *s, void *buf, int len);
 __owur int ssl3_peek(SSL *s, void *buf, int len);
 __owur int ssl3_write(SSL *s, const void *buf, int len);
