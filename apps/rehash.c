@@ -60,7 +60,8 @@
 
 #include "apps.h"
 
-#ifdef unix
+#if defined(unix) || defined(__APPLE__)
+
 # include <unistd.h>
 # include <stdio.h>
 # include <limits.h>
