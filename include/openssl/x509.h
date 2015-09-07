@@ -800,7 +800,9 @@ void X509_CRL_get0_signature(ASN1_BIT_STRING **psig, X509_ALGOR **palg,
 int X509_CRL_get_signature_nid(const X509_CRL *crl);
 int i2d_re_X509_CRL_tbs(X509_CRL *req, unsigned char **pp);
 
+ASN1_INTEGER *X509_REVOKED_get0_serialNumber(X509_REVOKED *x);
 int X509_REVOKED_set_serialNumber(X509_REVOKED *x, ASN1_INTEGER *serial);
+ASN1_TIME *X509_REVOKED_get0_revocationDate(X509_REVOKED *x);
 int X509_REVOKED_set_revocationDate(X509_REVOKED *r, ASN1_TIME *tm);
 
 X509_CRL *X509_CRL_diff(X509_CRL *base, X509_CRL *newer,
