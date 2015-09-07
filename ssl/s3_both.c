@@ -461,8 +461,15 @@ enum WORK_STATE tls_finish_handshake(SSL *s, enum WORK_STATE wst)
 
     /* clean a few things up */
     ssl3_cleanup_key_block(s);
-    BUF_MEM_free(s->init_buf);
-    s->init_buf = NULL;
+
+    if (!SSL_IS_DTLS(s)) {
+        /*
+         * We don't do this in DTLS because we may still need the init_buf
+         * in case there are any unexpected retransmits
+         */
+        BUF_MEM_free(s->init_buf);
+        s->init_buf = NULL;
+    }
 
     ssl_free_wbio_buffer(s);
 
