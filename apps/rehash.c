@@ -441,6 +441,9 @@ int rehash_main(int argc, char **argv)
 }
 
 #else
+OPTIONS rehash_options[] = {
+    {NULL}
+};
 
 int rehash_main(int argc, char **argv)
 {
