@@ -239,16 +239,17 @@ static int do_file(const char *filename, const char *fullpath, enum Hash h)
     BIO *b;
     const char *ext;
     unsigned char digest[EVP_MAX_MD_SIZE];
-    int i, type, errs = 0;
+    int type, errs = 0;
+    size_t i;
 
     /* Does it end with a recognized extension? */
     if ((ext = strrchr(filename, '.')) == NULL)
         goto end;
-    for (i = 0; i < (int)OSSL_NELEM(extensions); i++) {
+    for (i = 0; i < OSSL_NELEM(extensions); i++) {
         if (strcasecmp(extensions[i], ext + 1) == 0)
             break;
     }
-    if (i >= (int)OSSL_NELEM(extensions))
+    if (i >= OSSL_NELEM(extensions))
         goto end;
 
     /* Does it have X.509 data in it? */
@@ -280,6 +281,9 @@ static int do_file(const char *filename, const char *fullpath, enum Hash h)
         type = TYPE_CRL;
         name = X509_CRL_get_issuer(x->crl);
         X509_CRL_digest(x->crl, evpmd, digest, NULL);
+    } else {
+        ++errs;
+        goto end;
     }
     if (name) {
         if ((h == HASH_NEW) || (h == HASH_BOTH))
@@ -303,7 +307,8 @@ static int do_dir(const char *dirname, enum Hash h)
     OPENSSL_DIR_CTX *d = NULL;
     struct stat st;
     unsigned char idmask[MAX_COLLISIONS / 8];
-    int i, n, nextid, buflen, errs = 0;
+    int n, nextid, buflen, errs = 0;
+    size_t i;
     const char *pathsep;
     const char *filename;
     char *buf;
@@ -328,7 +333,7 @@ static int do_dir(const char *dirname, enum Hash h)
     }
     OPENSSL_DIR_end(&d);
 
-    for (i = 0; i < (int)OSSL_NELEM(hash_table); i++) {
+    for (i = 0; i < OSSL_NELEM(hash_table); i++) {
         for (bp = hash_table[i]; bp; bp = nextbp) {
             nextbp = bp->next;
             nextid = 0;
