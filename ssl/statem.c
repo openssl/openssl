@@ -103,11 +103,22 @@ enum SUB_STATE_RETURN {
     SUB_STATE_END_HANDSHAKE
 };
 
-int state_machine(SSL *s, int server);
+static int state_machine(SSL *s, int server);
 static void init_read_state_machine(SSL *s);
 static enum SUB_STATE_RETURN read_state_machine(SSL *s);
 static void init_write_state_machine(SSL *s);
 static enum SUB_STATE_RETURN write_state_machine(SSL *s);
+static inline int cert_req_allowed(SSL *s);
+static inline int key_exchange_skip_allowed(SSL *s);
+static int client_read_transition(SSL *s, int mt);
+static enum WRITE_TRAN client_write_transition(SSL *s);
+static enum WORK_STATE client_pre_work(SSL *s, enum WORK_STATE wst);
+static enum WORK_STATE client_post_work(SSL *s, enum WORK_STATE wst);
+static int client_construct_message(SSL *s);
+static unsigned long client_max_message_size(SSL *s);
+static enum MSG_PROCESS_RETURN client_process_message(SSL *s,
+                                                      unsigned long len);
+static enum WORK_STATE client_post_process_message(SSL *s, enum WORK_STATE wst);
 
 /*
  * Clear the state machine state and reset back to MSG_FLOW_UNINITED
@@ -134,6 +145,10 @@ void statem_set_error(SSL *s)
     s->statem.state = MSG_FLOW_ERROR;
     /* TODO: This is temporary - remove me */
     s->state = SSL_ST_ERR;
+}
+
+int ssl3_connect(SSL *s) {
+    return state_machine(s, 0);
 }
 
 /*
@@ -164,7 +179,7 @@ void statem_set_error(SSL *s)
  *   1: Success
  * <=0: NBIO or error
  */
-int state_machine(SSL *s, int server) {
+static int state_machine(SSL *s, int server) {
     BUF_MEM *buf = NULL;
     unsigned long Time = (unsigned long)time(NULL);
     void (*cb) (const SSL *ssl, int type, int val) = NULL;
@@ -433,11 +448,10 @@ static enum SUB_STATE_RETURN read_state_machine(SSL *s) {
         post_process_message = NULL;
         max_message_size = NULL;
     } else {
-        /* TODO: Fill these in later when we've implemented them */
-        transition = NULL;
-        process_message = NULL;
-        post_process_message = NULL;
-        max_message_size = NULL;
+        transition = client_read_transition;
+        process_message = client_process_message;
+        max_message_size = client_max_message_size;
+        post_process_message = client_post_process_message;
     }
 
     if (st->read_state_first_init) {
@@ -623,11 +637,10 @@ static enum SUB_STATE_RETURN write_state_machine(SSL *s)
         post_work = NULL;
         construct_message = NULL;
     } else {
-        /* TODO: Fill these in later when we've implemented them */
-        transition = NULL;
-        pre_work = NULL;
-        post_work = NULL;
-        construct_message = NULL;
+        transition = client_write_transition;
+        pre_work = client_pre_work;
+        post_work = client_post_work;
+        construct_message = client_construct_message;
     }
 
     while(1) {
@@ -705,6 +718,20 @@ static enum SUB_STATE_RETURN write_state_machine(SSL *s)
 }
 
 /*
+ * Flush the write BIO
+ */
+static int statem_flush(SSL *s)
+{
+    s->rwstate = SSL_WRITING;
+    if (BIO_flush(s->wbio) <= 0) {
+        return 0;
+    }
+    s->rwstate = SSL_NOTHING;
+
+    return 1;
+}
+
+/*
  * Called by the record layer to determine whether application data is
  * allowed to be sent in the current handshake state or not.
  *
@@ -712,14 +739,637 @@ static enum SUB_STATE_RETURN write_state_machine(SSL *s)
  *   1: Yes (application data allowed)
  *   0: No (application data not allowed)
  */
-int statem_client_app_data_allowed(SSL *s)
+int statem_app_data_allowed(SSL *s)
 {
     STATEM *st = &s->statem;
 
-    if(st->hand_state != TLS_ST_BEFORE &&
-            st->hand_state != TLS_ST_OK &&
-            st->hand_state != TLS_ST_CW_CLNT_HELLO)
+    if (!s->s3->in_read_app_data || (s->s3->total_renegotiations == 0))
+        return 0;
+
+    if (!s->server) {
+        if (st->state == MSG_FLOW_UNINITED || st->state == MSG_FLOW_RENEGOTIATE)
+            return 0;
+
+        if(st->hand_state == TLS_ST_CW_CLNT_HELLO)
+            return 1;
+
+        return 0;
+    }
+
+    /*
+     * This is the old check for code still using the old state machine. This
+     * will be removed by later commits
+     */
+    if (((s->state & SSL_ST_CONNECT) && SSL_IS_DTLS(s) &&
+          (s->state >= SSL3_ST_CW_CLNT_HELLO_A) &&
+          (s->state <= SSL3_ST_CR_SRVR_HELLO_A)) ||
+         ((s->state & SSL_ST_ACCEPT) &&
+               (s->state <= SSL3_ST_SW_HELLO_REQ_A) &&
+               (s->state >= SSL3_ST_SR_CLNT_HELLO_A))
+        )
+        return 1;
+
+    return 0;
+}
+
+
+#ifndef OPENSSL_NO_SCTP
+/*
+ * Set flag used by SCTP to determine whether we are in the read sock state
+ */
+void statem_set_sctp_read_sock(SSL *s, int read_sock)
+{
+    s->statem.in_sctp_read_sock = read_sock;
+}
+
+/*
+ * Called by the record layer to determine whether we are in the read sock
+ * state or not.
+ *
+ * Return values are:
+ *   1: Yes (we are in the read sock state)
+ *   0: No (we are not in the read sock state)
+ */
+int statem_in_sctp_read_sock(SSL *s)
+{
+    return s->statem.in_sctp_read_sock;
+}
+#endif
+
+/*
+ * Is a CertificateRequest message allowed at the moment or not?
+ *
+ *  Return values are:
+ *  1: Yes
+ *  0: No
+ */
+static inline int cert_req_allowed(SSL *s)
+{
+    /* TLS does not like anon-DH with client cert */
+    if (s->version > SSL3_VERSION
+            && (s->s3->tmp.new_cipher->algorithm_auth & SSL_aNULL))
         return 0;
 
     return 1;
+}
+
+/*
+ * Are we allowed to skip the ServerKeyExchange message?
+ *
+ *  Return values are:
+ *  1: Yes
+ *  0: No
+ */
+static inline int key_exchange_skip_allowed(SSL *s)
+{
+    long alg_k = s->s3->tmp.new_cipher->algorithm_mkey;
+
+    /*
+     * Can't skip server key exchange if this is an ephemeral
+     * ciphersuite.
+     */
+    if (alg_k & (SSL_kDHE | SSL_kECDHE)) {
+        return 0;
+    }
+
+    return 1;
+}
+
+/*
+ * client_read_transition() encapsulates the logic for the allowed handshake
+ * state transitions when the client is reading messages from the server. The
+ * message type that the server has sent is provided in |mt|. The current state
+ * is in |s->statem.hand_state|.
+ *
+ *  Return values are:
+ *  1: Success (transition allowed)
+ *  0: Error (transition not allowed)
+ */
+static int client_read_transition(SSL *s, int mt)
+{
+    STATEM *st = &s->statem;
+
+    switch(st->hand_state) {
+    case TLS_ST_CW_CLNT_HELLO:
+        if (mt == SSL3_MT_SERVER_HELLO) {
+            st->hand_state = TLS_ST_CR_SRVR_HELLO;
+            return 1;
+        }
+
+        if (SSL_IS_DTLS(s)) {
+            if (mt == DTLS1_MT_HELLO_VERIFY_REQUEST) {
+                st->hand_state = DTLS_ST_CR_HELLO_VERIFY_REQUEST;
+                return 1;
+            }
+        }
+        break;
+
+    case TLS_ST_CR_SRVR_HELLO:
+        if (s->hit) {
+            if (s->tlsext_ticket_expected) {
+                if (mt == SSL3_MT_NEWSESSION_TICKET) {
+                    st->hand_state = TLS_ST_CR_SESSION_TICKET;
+                    return 1;
+                }
+            } else if (mt == SSL3_MT_CHANGE_CIPHER_SPEC) {
+                st->hand_state = TLS_ST_CR_CHANGE;
+                return 1;
+            }
+        } else {
+            if (!(s->s3->tmp.new_cipher->algorithm_auth
+                        & (SSL_aNULL | SSL_aSRP | SSL_aPSK))) {
+                if (mt == SSL3_MT_CERTIFICATE) {
+                    st->hand_state = TLS_ST_CR_CERT;
+                    return 1;
+                }
+            } else {
+                if (mt == SSL3_MT_SERVER_KEY_EXCHANGE) {
+                    st->hand_state = TLS_ST_CR_KEY_EXCH;
+                    return 1;
+                } else if (key_exchange_skip_allowed(s)) {
+                    if (mt == SSL3_MT_CERTIFICATE_REQUEST
+                            && cert_req_allowed(s)) {
+                        st->hand_state = TLS_ST_CR_CERT_REQ;
+                        return 1;
+                    } else if (mt == SSL3_MT_SERVER_DONE) {
+                        st->hand_state = TLS_ST_CR_SRVR_DONE;
+                        return 1;
+                    }
+                }
+            }
+        }
+        break;
+
+    case TLS_ST_CR_CERT:
+        if (s->tlsext_status_expected) {
+            if (mt == SSL3_MT_CERTIFICATE_STATUS) {
+                st->hand_state = TLS_ST_CR_CERT_STATUS;
+                return 1;
+            }
+        } else {
+            if (mt == SSL3_MT_SERVER_KEY_EXCHANGE) {
+                st->hand_state = TLS_ST_CR_KEY_EXCH;
+                return 1;
+            } else if (key_exchange_skip_allowed(s)) {
+                if (mt == SSL3_MT_CERTIFICATE_REQUEST && cert_req_allowed(s)) {
+                    st->hand_state = TLS_ST_CR_CERT_REQ;
+                    return 1;
+                } else if (mt == SSL3_MT_SERVER_DONE) {
+                    st->hand_state = TLS_ST_CR_SRVR_DONE;
+                    return 1;
+                }
+            }
+        }
+        break;
+
+    case TLS_ST_CR_CERT_STATUS:
+        if (mt == SSL3_MT_SERVER_KEY_EXCHANGE) {
+            st->hand_state = TLS_ST_CR_KEY_EXCH;
+            return 1;
+        } else if (key_exchange_skip_allowed(s)) {
+            if (mt == SSL3_MT_CERTIFICATE_REQUEST && cert_req_allowed(s)) {
+                st->hand_state = TLS_ST_CR_CERT_REQ;
+                return 1;
+            } else if (mt == SSL3_MT_SERVER_DONE) {
+                st->hand_state = TLS_ST_CR_SRVR_DONE;
+                return 1;
+            }
+        }
+        break;
+
+    case TLS_ST_CR_KEY_EXCH:
+        if (mt == SSL3_MT_CERTIFICATE_REQUEST && cert_req_allowed(s)) {
+            st->hand_state = TLS_ST_CR_CERT_REQ;
+            return 1;
+        } else if (mt == SSL3_MT_SERVER_DONE) {
+            st->hand_state = TLS_ST_CR_SRVR_DONE;
+            return 1;
+        }
+        break;
+
+    case TLS_ST_CR_CERT_REQ:
+        if (mt == SSL3_MT_SERVER_DONE) {
+            st->hand_state = TLS_ST_CR_SRVR_DONE;
+            return 1;
+        }
+        break;
+
+    case TLS_ST_CW_FINISHED:
+        if (mt == SSL3_MT_NEWSESSION_TICKET && s->tlsext_ticket_expected) {
+            st->hand_state = TLS_ST_CR_SESSION_TICKET;
+            return 1;
+        } else if (mt == SSL3_MT_CHANGE_CIPHER_SPEC) {
+            st->hand_state = TLS_ST_CR_CHANGE;
+            return 1;
+        }
+        break;
+
+    case TLS_ST_CR_SESSION_TICKET:
+        if (mt == SSL3_MT_CHANGE_CIPHER_SPEC) {
+            st->hand_state = TLS_ST_CR_CHANGE;
+            return 1;
+        }
+        break;
+
+    case TLS_ST_CR_CHANGE:
+        if (mt == SSL3_MT_FINISHED) {
+            st->hand_state = TLS_ST_CR_FINISHED;
+            return 1;
+        }
+        break;
+
+    default:
+        break;
+    }
+
+    /* No valid transition found */
+    return 0;
+}
+
+/*
+ * client_write_transition() works out what handshake state to move to next
+ * when the client is writing messages to be sent to the server.
+ */
+static enum WRITE_TRAN client_write_transition(SSL *s)
+{
+    STATEM *st = &s->statem;
+
+    switch(st->hand_state) {
+        case TLS_ST_OK:
+            /* Renegotiation - fall through */
+        case TLS_ST_BEFORE:
+            st->hand_state = TLS_ST_CW_CLNT_HELLO;
+            return WRITE_TRAN_CONTINUE;
+
+        case TLS_ST_CW_CLNT_HELLO:
+            /*
+             * No transition at the end of writing because we don't know what
+             * we will be sent
+             */
+            return WRITE_TRAN_FINISHED;
+
+        case TLS_ST_CR_SRVR_DONE:
+            if (s->s3->tmp.cert_req)
+                st->hand_state = TLS_ST_CW_CERT;
+            else
+                st->hand_state = TLS_ST_CW_KEY_EXCH;
+            return WRITE_TRAN_CONTINUE;
+
+        case TLS_ST_CW_CERT:
+            st->hand_state = TLS_ST_CW_KEY_EXCH;
+            return WRITE_TRAN_CONTINUE;
+
+        case TLS_ST_CW_KEY_EXCH:
+            /*
+             * For TLS, cert_req is set to 2, so a cert chain of nothing is
+             * sent, but no verify packet is sent
+             */
+            /*
+             * XXX: For now, we do not support client authentication in ECDH
+             * cipher suites with ECDH (rather than ECDSA) certificates. We
+             * need to skip the certificate verify message when client's
+             * ECDH public key is sent inside the client certificate.
+             */
+            if (s->s3->tmp.cert_req == 1) {
+                st->hand_state = TLS_ST_CW_CERT_VRFY;
+            } else {
+                st->hand_state = TLS_ST_CW_CHANGE;
+            }
+            if (s->s3->flags & TLS1_FLAGS_SKIP_CERT_VERIFY) {
+                st->hand_state = TLS_ST_CW_CHANGE;
+            }
+            return WRITE_TRAN_CONTINUE;
+
+        case TLS_ST_CW_CERT_VRFY:
+            st->hand_state = TLS_ST_CW_CHANGE;
+            return WRITE_TRAN_CONTINUE;
+
+        case TLS_ST_CW_CHANGE:
+#if defined(OPENSSL_NO_NEXTPROTONEG)
+            st->hand_state = TLS_ST_CW_FINISHED;
+#else
+            if (s->s3->next_proto_neg_seen)
+                st->hand_state = TLS_ST_CW_NEXT_PROTO;
+            else
+                st->hand_state = TLS_ST_CW_FINISHED;
+#endif
+            return WRITE_TRAN_CONTINUE;
+
+#if !defined(OPENSSL_NO_NEXTPROTONEG)
+        case TLS_ST_CW_NEXT_PROTO:
+            st->hand_state = TLS_ST_CW_FINISHED;
+            return WRITE_TRAN_CONTINUE;
+#endif
+
+        case TLS_ST_CW_FINISHED:
+            if (s->hit) {
+                st->hand_state = TLS_ST_OK;
+                /* TODO: This needs removing */
+                s->state = SSL_ST_OK;
+                return WRITE_TRAN_CONTINUE;
+            } else {
+                return WRITE_TRAN_FINISHED;
+            }
+
+        case TLS_ST_CR_FINISHED:
+            if (s->hit) {
+                st->hand_state = TLS_ST_CW_CHANGE;
+                return WRITE_TRAN_CONTINUE;
+            } else {
+                st->hand_state = TLS_ST_OK;
+                /* TODO: This needs removing */
+                s->state = SSL_ST_OK;
+                return WRITE_TRAN_CONTINUE;
+            }
+
+        default:
+            /* Shouldn't happen */
+            return WRITE_TRAN_ERROR;
+    }
+}
+
+/*
+ * Perform any pre work that needs to be done prior to sending a message from
+ * the client to the server.
+ */
+static enum WORK_STATE client_pre_work(SSL *s, enum WORK_STATE wst)
+{
+    STATEM *st = &s->statem;
+
+    switch(st->hand_state) {
+    case TLS_ST_CW_CLNT_HELLO:
+        s->shutdown = 0;
+        break;
+
+    case TLS_ST_CW_CERT:
+        return tls_prepare_client_certificate(s, wst);
+
+    case TLS_ST_OK:
+        return tls_finish_handshake(s, wst);
+
+    default:
+        /* No pre work to be done */
+        break;
+    }
+
+    return WORK_FINISHED_CONTINUE;
+}
+
+/*
+ * Perform any work that needs to be done after sending a message from the
+ * client to the server.
+ */
+static enum WORK_STATE client_post_work(SSL *s, enum WORK_STATE wst)
+{
+    STATEM *st = &s->statem;
+
+    s->init_num = 0;
+
+    switch(st->hand_state) {
+    case TLS_ST_CW_CLNT_HELLO:
+        /* turn on buffering for the next lot of output */
+        if (s->bbio != s->wbio)
+            s->wbio = BIO_push(s->bbio, s->wbio);
+        break;
+
+    case TLS_ST_CW_KEY_EXCH:
+        if (tls_client_key_exchange_post_work(s) == 0)
+            return WORK_ERROR;
+        break;
+
+    case TLS_ST_CW_CHANGE:
+        s->session->cipher = s->s3->tmp.new_cipher;
+#ifdef OPENSSL_NO_COMP
+        s->session->compress_meth = 0;
+#else
+        if (s->s3->tmp.new_compression == NULL)
+            s->session->compress_meth = 0;
+        else
+            s->session->compress_meth = s->s3->tmp.new_compression->id;
+#endif
+        if (!s->method->ssl3_enc->setup_key_block(s))
+            return WORK_ERROR;
+
+        if (!s->method->ssl3_enc->change_cipher_state(s,
+                                                      SSL3_CHANGE_CIPHER_CLIENT_WRITE))
+            return WORK_ERROR;
+
+        if (SSL_IS_DTLS(s)) {
+#ifndef OPENSSL_NO_SCTP
+            if (s->hit) {
+                /*
+                 * Change to new shared key of SCTP-Auth, will be ignored if
+                 * no SCTP used.
+                 */
+                BIO_ctrl(SSL_get_wbio(s), BIO_CTRL_DGRAM_SCTP_NEXT_AUTH_KEY,
+                         0, NULL);
+            }
+#endif
+
+            dtls1_reset_seq_numbers(s, SSL3_CC_WRITE);
+        }
+        break;
+
+    case TLS_ST_CW_FINISHED:
+#ifndef OPENSSL_NO_SCTP
+        if (SSL_IS_DTLS(s) && s->hit == 0) {
+            /*
+             * Change to new shared key of SCTP-Auth, will be ignored if
+             * no SCTP used.
+             */
+            BIO_ctrl(SSL_get_wbio(s), BIO_CTRL_DGRAM_SCTP_NEXT_AUTH_KEY,
+                     0, NULL);
+        }
+#endif
+        if (statem_flush(s) != 1)
+            return WORK_MORE_B;
+
+        if (s->hit && tls_finish_handshake(s, WORK_MORE_A) != 1)
+                return WORK_ERROR;
+        break;
+
+    default:
+        /* No post work to be done */
+        break;
+    }
+
+    return WORK_FINISHED_CONTINUE;
+}
+
+/*
+ * Construct a message to be sent from the client to the server.
+ *
+ * Valid return values are:
+ *   1: Success
+ *   0: Error
+ */
+static int client_construct_message(SSL *s)
+{
+    STATEM *st = &s->statem;
+
+    switch(st->hand_state) {
+    case TLS_ST_CW_CLNT_HELLO:
+        return tls_construct_client_hello(s);
+
+    case TLS_ST_CW_CERT:
+        return tls_construct_client_certificate(s);
+
+    case TLS_ST_CW_KEY_EXCH:
+        return tls_construct_client_key_exchange(s);
+
+    case TLS_ST_CW_CERT_VRFY:
+        return tls_construct_client_verify(s);
+
+    case TLS_ST_CW_CHANGE:
+        return tls_construct_change_cipher_spec(s);
+
+#if !defined(OPENSSL_NO_NEXTPROTONEG)
+    case TLS_ST_CW_NEXT_PROTO:
+        return tls_construct_next_proto(s);
+#endif
+    case TLS_ST_CW_FINISHED:
+        return tls_construct_finished(s,
+                                      s->method->
+                                      ssl3_enc->client_finished_label,
+                                      s->method->
+                                      ssl3_enc->client_finished_label_len);
+
+    default:
+        /* Shouldn't happen */
+        break;
+    }
+
+    return 0;
+}
+
+/* The spec allows for a longer length than this, but we limit it */
+#define SERVER_HELLO_MAX_LENGTH         20000
+#define SERVER_KEY_EXCH_MAX_LENGTH      102400
+#define SERVER_HELLO_DONE_MAX_LENGTH    0
+#define CCS_MAX_LENGTH                  1
+/* Max should actually be 36 but we are generous */
+#define FINISHED_MAX_LENGTH             64
+
+/*
+ * Returns the maximum allowed length for the current message that we are
+ * reading. Excludes the message header.
+ */
+static unsigned long client_max_message_size(SSL *s)
+{
+    STATEM *st = &s->statem;
+
+    switch(st->hand_state) {
+        case TLS_ST_CR_SRVR_HELLO:
+            return SERVER_HELLO_MAX_LENGTH;
+
+        case TLS_ST_CR_CERT:
+            return s->max_cert_list;
+
+        case TLS_ST_CR_CERT_STATUS:
+            return SSL3_RT_MAX_PLAIN_LENGTH;
+
+        case TLS_ST_CR_KEY_EXCH:
+            return SERVER_KEY_EXCH_MAX_LENGTH;
+
+        case TLS_ST_CR_CERT_REQ:
+            return SSL3_RT_MAX_PLAIN_LENGTH;
+
+        case TLS_ST_CR_SRVR_DONE:
+            return SERVER_HELLO_DONE_MAX_LENGTH;
+
+        case TLS_ST_CR_CHANGE:
+            return CCS_MAX_LENGTH;
+
+        case TLS_ST_CR_SESSION_TICKET:
+            return SSL3_RT_MAX_PLAIN_LENGTH;
+
+        case TLS_ST_CR_FINISHED:
+            return FINISHED_MAX_LENGTH;
+
+        default:
+            /* Shouldn't happen */
+            break;
+    }
+
+    return 0;
+}
+
+/*
+ * Process a message that the client has been received from the server.
+ */
+static enum MSG_PROCESS_RETURN client_process_message(SSL *s, unsigned long len)
+{
+    STATEM *st = &s->statem;
+
+    switch(st->hand_state) {
+        case TLS_ST_CR_SRVR_HELLO:
+            return tls_process_server_hello(s, len);
+
+        case TLS_ST_CR_CERT:
+            return tls_process_server_certificate(s, len);
+
+        case TLS_ST_CR_CERT_STATUS:
+            return tls_process_cert_status(s, len);
+
+        case TLS_ST_CR_KEY_EXCH:
+            return tls_process_key_exchange(s, len);
+
+        case TLS_ST_CR_CERT_REQ:
+            return tls_process_certificate_request(s, len);
+
+        case TLS_ST_CR_SRVR_DONE:
+            return tls_process_server_done(s, len);
+
+        case TLS_ST_CR_CHANGE:
+            return tls_process_change_cipher_spec(s, len);
+
+        case TLS_ST_CR_SESSION_TICKET:
+            return tls_process_new_session_ticket(s, len);
+
+        case TLS_ST_CR_FINISHED:
+            return tls_process_finished(s, len);
+
+        default:
+            /* Shouldn't happen */
+            break;
+    }
+
+    return MSG_PROCESS_ERROR;
+}
+
+/*
+ * Perform any further processing required following the receipt of a message
+ * from the server
+ */
+static enum WORK_STATE client_post_process_message(SSL *s, enum WORK_STATE wst)
+{
+    STATEM *st = &s->statem;
+
+    switch(st->hand_state) {
+#ifndef OPENSSL_NO_SCTP
+    case TLS_ST_CR_SRVR_DONE:
+        /* We only get here if we are using SCTP and we are renegotiating */
+        if (BIO_dgram_sctp_msg_waiting(SSL_get_rbio(s))) {
+            s->s3->in_read_app_data = 2;
+            s->rwstate = SSL_READING;
+            BIO_clear_retry_flags(SSL_get_rbio(s));
+            BIO_set_retry_read(SSL_get_rbio(s));
+            statem_set_sctp_read_sock(s, 1);
+            return WORK_MORE_A;
+        }
+        statem_set_sctp_read_sock(s, 0);
+        return WORK_FINISHED_STOP;
+#endif
+
+    case TLS_ST_CR_FINISHED:
+        if (!s->hit)
+            return tls_finish_handshake(s, wst);
+        else
+            return WORK_FINISHED_STOP;
+    default:
+        break;
+    }
+
+    /* Shouldn't happen */
+    return WORK_ERROR;
 }

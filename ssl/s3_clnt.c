@@ -165,11 +165,22 @@
 
 static int ssl_set_version(SSL *s);
 static int ca_dn_cmp(const X509_NAME *const *a, const X509_NAME *const *b);
+#if 0
+/*
+ * Temporarily disabled during development of new state machine code.
+ * TODO: Clean me up
+ */
 static int ssl3_check_change(SSL *s);
+#endif
 static int ssl_cipher_list_to_bytes(SSL *s, STACK_OF(SSL_CIPHER) *sk,
                                     unsigned char *p);
 
 
+#if 0
+/*
+ * Temporarily disabled during development of new state machine code.
+ * TODO: Clean me up
+ */
 int ssl3_connect(SSL *s)
 {
     BUF_MEM *buf = NULL;
@@ -631,6 +642,7 @@ int ssl3_connect(SSL *s)
     return (ret);
 }
 
+#endif /* End temp disabled ssl3_connect */
 /*
  * Work out what version we should be using for the initial ClientHello if
  * the version is currently set to (D)TLS_ANY_VERSION.
@@ -1284,6 +1296,32 @@ enum MSG_PROCESS_RETURN tls_process_server_hello(SSL *s, unsigned long n)
         SSLerr(SSL_F_TLS_PROCESS_SERVER_HELLO, SSL_R_BAD_PACKET_LENGTH);
         goto f_err;
     }
+
+#ifndef OPENSSL_NO_SCTP
+    if (SSL_IS_DTLS(s) && s->hit) {
+        unsigned char sctpauthkey[64];
+        char labelbuffer[sizeof(DTLS1_SCTP_AUTH_LABEL)];
+
+        /*
+         * Add new shared key for SCTP-Auth, will be ignored if
+         * no SCTP used.
+         */
+        snprintf((char *)labelbuffer,
+                 sizeof(DTLS1_SCTP_AUTH_LABEL),
+                 DTLS1_SCTP_AUTH_LABEL);
+
+        if (SSL_export_keying_material(s, sctpauthkey,
+                                   sizeof(sctpauthkey),
+                                   labelbuffer,
+                                   sizeof(labelbuffer), NULL, 0,
+                                   0) <= 0)
+            goto err;
+
+        BIO_ctrl(SSL_get_wbio(s),
+                 BIO_CTRL_DGRAM_SCTP_ADD_AUTH_KEY,
+                 sizeof(sctpauthkey), sctpauthkey);
+    }
+#endif
 
     return MSG_PROCESS_CONTINUE_READING;
  f_err:
@@ -3489,6 +3527,11 @@ int ssl3_check_cert_and_algorithm(SSL *s)
  * pre-shared secret, we have a "ticket" and the next server message
  * is CCS; and 0 otherwise. It returns -1 upon an error.
  */
+ #if 0
+ /*
+  * TODO: No longer required. Temporarily kept during state machine development
+  * To be deleted by later commits
+  */
 static int ssl3_check_change(SSL *s)
 {
     int ok = 0;
@@ -3518,6 +3561,7 @@ static int ssl3_check_change(SSL *s)
 
     return 0;
 }
+#endif
 
 #ifndef OPENSSL_NO_NEXTPROTONEG
 int ssl3_send_next_proto(SSL *s)

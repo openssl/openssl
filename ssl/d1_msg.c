@@ -127,8 +127,7 @@ int dtls1_write_app_data_bytes(SSL *s, int type, const void *buf_, int len)
      */
     if ((SSL_in_init(s) && !s->in_handshake) ||
         (BIO_dgram_is_sctp(SSL_get_wbio(s)) &&
-         (s->state == DTLS1_SCTP_ST_SR_READ_SOCK
-          || s->state == DTLS1_SCTP_ST_CR_READ_SOCK)))
+         statem_in_sctp_read_sock(s)))
 #else
     if (SSL_in_init(s) && !s->in_handshake)
 #endif
