@@ -465,6 +465,7 @@ int tls_construct_client_hello(SSL *s)
     return 0;
 }
 
+#if 0
 int ssl3_get_server_hello(SSL *s)
 {
     int ok, al;
@@ -509,6 +510,7 @@ int ssl3_get_server_hello(SSL *s)
     s->state = SSL_ST_ERR;
     return (-1);
 }
+#endif
 
 enum MSG_PROCESS_RETURN tls_process_server_hello(SSL *s, unsigned long n)
 {
@@ -1921,7 +1923,14 @@ enum MSG_PROCESS_RETURN tls_process_server_done(SSL *s, unsigned long n)
     }
 #endif
 
-    return MSG_PROCESS_FINISHED_READING;
+#ifndef OPENSSL_NO_SCTP
+    /* Only applies to renegotiation */
+    if (SSL_IS_DTLS(s) && BIO_dgram_is_sctp(SSL_get_wbio(s))
+            && s->renegotiate != 0)
+        return MSG_PROCESS_CONTINUE_PROCESSING;
+    else
+#endif
+        return MSG_PROCESS_FINISHED_READING;
 }
 
 int ssl3_send_client_key_exchange(SSL *s)
@@ -2553,6 +2562,29 @@ int tls_client_key_exchange_post_work(SSL *s)
         SSLerr(SSL_F_TLS_CLIENT_KEY_EXCHANGE_POST_WORK, ERR_R_INTERNAL_ERROR);
         goto err;
     }
+
+#ifndef OPENSSL_NO_SCTP
+    if (SSL_IS_DTLS(s)) {
+        unsigned char sctpauthkey[64];
+        char labelbuffer[sizeof(DTLS1_SCTP_AUTH_LABEL)];
+
+        /*
+         * Add new shared key for SCTP-Auth, will be ignored if no SCTP
+         * used.
+         */
+        snprintf((char *)labelbuffer, sizeof(DTLS1_SCTP_AUTH_LABEL),
+                 DTLS1_SCTP_AUTH_LABEL);
+
+        if (SSL_export_keying_material(s, sctpauthkey,
+                                   sizeof(sctpauthkey), labelbuffer,
+                                   sizeof(labelbuffer), NULL, 0, 0) <= 0)
+            goto err;
+
+        BIO_ctrl(SSL_get_wbio(s), BIO_CTRL_DGRAM_SCTP_ADD_AUTH_KEY,
+                 sizeof(sctpauthkey), sctpauthkey);
+    }
+#endif
+
     return 1;
  err:
     OPENSSL_clear_free(pms, pmslen);

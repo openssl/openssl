@@ -151,6 +151,11 @@ int ssl3_connect(SSL *s) {
     return state_machine(s, 0);
 }
 
+int dtls1_connect(SSL *s)
+{
+    return state_machine(s, 0);
+}
+
 /*
  * The main message flow state machine. We start in the MSG_FLOW_UNINITED or
  * MSG_FLOW_RENEGOTIATE state and finish in MSG_FLOW_FINISHED. Valid states and
@@ -207,6 +212,17 @@ static int state_machine(SSL *s, int server) {
             return -1;
     }
 
+#ifndef OPENSSL_NO_SCTP
+    if (SSL_IS_DTLS(s)) {
+        /*
+         * Notify SCTP BIO socket to enter handshake mode and prevent stream
+         * identifier other than 0. Will be ignored if no SCTP is used.
+         */
+        BIO_ctrl(SSL_get_wbio(s), BIO_CTRL_DGRAM_SCTP_SET_IN_HANDSHAKE,
+                 s->in_handshake, NULL);
+    }
+#endif
+
 #ifndef OPENSSL_NO_HEARTBEATS
     /*
      * If we're awaiting a HeartbeatResponse, pretend we already got and
@@ -259,10 +275,12 @@ static int state_machine(SSL *s, int server) {
             }
         }
 
-        if (s->version != TLS_ANY_VERSION &&
-                !ssl_security(s, SSL_SECOP_VERSION, 0, s->version, NULL)) {
-            SSLerr(SSL_F_STATE_MACHINE, SSL_R_VERSION_TOO_LOW);
-            goto end;
+        if (!SSL_IS_DTLS(s)) {
+            if (s->version != TLS_ANY_VERSION &&
+                    !ssl_security(s, SSL_SECOP_VERSION, 0, s->version, NULL)) {
+                SSLerr(SSL_F_STATE_MACHINE, SSL_R_VERSION_TOO_LOW);
+                goto end;
+            }
         }
 
         if (server)
@@ -380,6 +398,18 @@ static int state_machine(SSL *s, int server) {
 
  end:
     s->in_handshake--;
+
+#ifndef OPENSSL_NO_SCTP
+    if (SSL_IS_DTLS(s)) {
+        /*
+         * Notify SCTP BIO socket to leave handshake mode and allow stream
+         * identifier other than 0. Will be ignored if no SCTP is used.
+         */
+        BIO_ctrl(SSL_get_wbio(s), BIO_CTRL_DGRAM_SCTP_SET_IN_HANDSHAKE,
+                 s->in_handshake, NULL);
+    }
+#endif
+
     BUF_MEM_free(buf);
     if (cb != NULL) {
         if (server)
@@ -765,14 +795,11 @@ int statem_app_data_allowed(SSL *s)
 
     /*
      * This is the old check for code still using the old state machine. This
-     * will be removed by later commits
+     * will be removed by a later commit
      */
-    if (((s->state & SSL_ST_CONNECT) && SSL_IS_DTLS(s) &&
-          (s->state >= SSL3_ST_CW_CLNT_HELLO_A) &&
-          (s->state <= SSL3_ST_CR_SRVR_HELLO_A)) ||
-         ((s->state & SSL_ST_ACCEPT) &&
+    if ((s->state & SSL_ST_ACCEPT) &&
                (s->state <= SSL3_ST_SW_HELLO_REQ_A) &&
-               (s->state >= SSL3_ST_SR_CLNT_HELLO_A))
+               (s->state >= SSL3_ST_SR_CLNT_HELLO_A)
         )
         return 1;
 
@@ -883,7 +910,10 @@ static int client_read_transition(SSL *s, int mt)
                 return 1;
             }
         } else {
-            if (!(s->s3->tmp.new_cipher->algorithm_auth
+            if (SSL_IS_DTLS(s) && mt == DTLS1_MT_HELLO_VERIFY_REQUEST) {
+                st->hand_state = DTLS_ST_CR_HELLO_VERIFY_REQUEST;
+                return 1;
+            } else if (!(s->s3->tmp.new_cipher->algorithm_auth
                         & (SSL_aNULL | SSL_aSRP | SSL_aPSK))) {
                 if (mt == SSL3_MT_CERTIFICATE) {
                     st->hand_state = TLS_ST_CR_CERT;
@@ -1015,6 +1045,10 @@ static enum WRITE_TRAN client_write_transition(SSL *s)
              */
             return WRITE_TRAN_FINISHED;
 
+        case DTLS_ST_CR_HELLO_VERIFY_REQUEST:
+            st->hand_state = TLS_ST_CW_CLNT_HELLO;
+            return WRITE_TRAN_CONTINUE;
+
         case TLS_ST_CR_SRVR_DONE:
             if (s->s3->tmp.cert_req)
                 st->hand_state = TLS_ST_CW_CERT;
@@ -1055,7 +1089,7 @@ static enum WRITE_TRAN client_write_transition(SSL *s)
 #if defined(OPENSSL_NO_NEXTPROTONEG)
             st->hand_state = TLS_ST_CW_FINISHED;
 #else
-            if (s->s3->next_proto_neg_seen)
+            if (!SSL_IS_DTLS(s) && s->s3->next_proto_neg_seen)
                 st->hand_state = TLS_ST_CW_NEXT_PROTO;
             else
                 st->hand_state = TLS_ST_CW_FINISHED;
@@ -1106,10 +1140,30 @@ static enum WORK_STATE client_pre_work(SSL *s, enum WORK_STATE wst)
     switch(st->hand_state) {
     case TLS_ST_CW_CLNT_HELLO:
         s->shutdown = 0;
+        if (SSL_IS_DTLS(s)) {
+            /* every DTLS ClientHello resets Finished MAC */
+            ssl3_init_finished_mac(s);
+        }
         break;
 
     case TLS_ST_CW_CERT:
         return tls_prepare_client_certificate(s, wst);
+
+    case TLS_ST_CW_CHANGE:
+        if (SSL_IS_DTLS(s)) {
+            if (s->hit) {
+                /*
+                 * We're into the last flight so we don't retransmit these
+                 * messages unless we need to.
+                 */
+                st->use_timer = 0;
+            }
+#ifndef OPENSSL_NO_SCTP
+            if (BIO_dgram_is_sctp(SSL_get_wbio(s)))
+                return dtls_wait_for_dry(s);
+#endif
+        }
+        return WORK_FINISHED_CONTINUE;
 
     case TLS_ST_OK:
         return tls_finish_handshake(s, wst);
@@ -1134,9 +1188,24 @@ static enum WORK_STATE client_post_work(SSL *s, enum WORK_STATE wst)
 
     switch(st->hand_state) {
     case TLS_ST_CW_CLNT_HELLO:
-        /* turn on buffering for the next lot of output */
-        if (s->bbio != s->wbio)
-            s->wbio = BIO_push(s->bbio, s->wbio);
+        if (SSL_IS_DTLS(s) && s->d1->cookie_len > 0 && statem_flush(s) != 1)
+            return WORK_MORE_A;
+#ifndef OPENSSL_NO_SCTP
+        /* Disable buffering for SCTP */
+        if (!SSL_IS_DTLS(s) || !BIO_dgram_is_sctp(SSL_get_wbio(s))) {
+#endif
+            /*
+             * turn on buffering for the next lot of output
+             */
+            if (s->bbio != s->wbio)
+                s->wbio = BIO_push(s->bbio, s->wbio);
+#ifndef OPENSSL_NO_SCTP
+            }
+#endif
+        if (SSL_IS_DTLS(s)) {
+            /* Treat the next message as the first packet */
+            s->first_packet = 1;
+        }
         break;
 
     case TLS_ST_CW_KEY_EXCH:
@@ -1179,7 +1248,7 @@ static enum WORK_STATE client_post_work(SSL *s, enum WORK_STATE wst)
 
     case TLS_ST_CW_FINISHED:
 #ifndef OPENSSL_NO_SCTP
-        if (SSL_IS_DTLS(s) && s->hit == 0) {
+        if (wst == WORK_MORE_A && SSL_IS_DTLS(s) && s->hit == 0) {
             /*
              * Change to new shared key of SCTP-Auth, will be ignored if
              * no SCTP used.
@@ -1228,7 +1297,10 @@ static int client_construct_message(SSL *s)
         return tls_construct_client_verify(s);
 
     case TLS_ST_CW_CHANGE:
-        return tls_construct_change_cipher_spec(s);
+        if (SSL_IS_DTLS(s))
+            return dtls_construct_change_cipher_spec(s);
+        else
+            return tls_construct_change_cipher_spec(s);
 
 #if !defined(OPENSSL_NO_NEXTPROTONEG)
     case TLS_ST_CW_NEXT_PROTO:
@@ -1250,6 +1322,7 @@ static int client_construct_message(SSL *s)
 }
 
 /* The spec allows for a longer length than this, but we limit it */
+#define HELLO_VERIFY_REQUEST_MAX_LENGTH 258
 #define SERVER_HELLO_MAX_LENGTH         20000
 #define SERVER_KEY_EXCH_MAX_LENGTH      102400
 #define SERVER_HELLO_DONE_MAX_LENGTH    0
@@ -1268,6 +1341,9 @@ static unsigned long client_max_message_size(SSL *s)
     switch(st->hand_state) {
         case TLS_ST_CR_SRVR_HELLO:
             return SERVER_HELLO_MAX_LENGTH;
+
+        case DTLS_ST_CR_HELLO_VERIFY_REQUEST:
+            return HELLO_VERIFY_REQUEST_MAX_LENGTH;
 
         case TLS_ST_CR_CERT:
             return s->max_cert_list;
@@ -1311,6 +1387,9 @@ static enum MSG_PROCESS_RETURN client_process_message(SSL *s, unsigned long len)
     switch(st->hand_state) {
         case TLS_ST_CR_SRVR_HELLO:
             return tls_process_server_hello(s, len);
+
+        case DTLS_ST_CR_HELLO_VERIFY_REQUEST:
+            return dtls_process_hello_verify(s, len);
 
         case TLS_ST_CR_CERT:
             return tls_process_server_certificate(s, len);

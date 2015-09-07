@@ -1555,7 +1555,6 @@ typedef struct hm_fragment_st {
 } hm_fragment;
 
 typedef struct dtls1_state_st {
-    unsigned int send_cookie;
     unsigned char cookie[DTLS1_COOKIE_LENGTH];
     unsigned int cookie_len;
 
@@ -2062,6 +2061,7 @@ __owur enum MSG_PROCESS_RETURN tls_process_finished(SSL *s, unsigned long n);
 __owur int ssl3_setup_key_block(SSL *s);
 __owur int ssl3_send_change_cipher_spec(SSL *s, int state_a, int state_b);
 __owur int tls_construct_change_cipher_spec(SSL *s);
+__owur int dtls_construct_change_cipher_spec(SSL *s);
 __owur int ssl3_change_cipher_state(SSL *s, int which);
 void ssl3_cleanup_key_block(SSL *s);
 __owur int ssl3_do_write(SSL *s, int type);
@@ -2075,6 +2075,7 @@ __owur int tls_get_message_body(SSL *s, unsigned long *len);
 __owur int ssl3_send_finished(SSL *s, int a, int b, const char *sender, int slen);
 __owur int tls_construct_finished(SSL *s, const char *sender, int slen);
 __owur enum WORK_STATE tls_finish_handshake(SSL *s, enum WORK_STATE wst);
+__owur enum WORK_STATE dtls_wait_for_dry(SSL *s);
 __owur int ssl3_num_ciphers(void);
 __owur const SSL_CIPHER *ssl3_get_cipher(unsigned int u);
 int ssl3_renegotiate(SSL *ssl);
@@ -2194,6 +2195,8 @@ __owur int ssl3_check_cert_and_algorithm(SSL *s);
 __owur int ssl3_send_next_proto(SSL *s);
 __owur int tls_construct_next_proto(SSL *s);
 #  endif
+__owur enum MSG_PROCESS_RETURN dtls_process_hello_verify(SSL *s,
+                                                         unsigned long n);
 
 int dtls1_client_hello(SSL *s);
 

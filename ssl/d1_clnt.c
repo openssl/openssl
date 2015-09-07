@@ -126,7 +126,9 @@
 #endif
 
 static const SSL_METHOD *dtls1_get_client_method(int ver);
+#if 0
 static int dtls1_get_hello_verify(SSL *s);
+#endif
 
 static const SSL_METHOD *dtls1_get_client_method(int ver)
 {
@@ -156,6 +158,7 @@ IMPLEMENT_dtls1_meth_func(DTLS1_VERSION,
                           dtls1_connect,
                           dtls1_get_client_method, DTLSv1_2_enc_data)
 
+#if 0
 int dtls1_connect(SSL *s)
 {
     BUF_MEM *buf = NULL;
@@ -785,13 +788,16 @@ int dtls1_connect(SSL *s)
         cb(s, SSL_CB_CONNECT_EXIT, ret);
     return (ret);
 }
+#endif
 
+#if 0
 static int dtls1_get_hello_verify(SSL *s)
 {
     int n, al, ok = 0;
     unsigned char *data;
     unsigned int cookie_len;
 
+    /* TODO: CHECK first_packet handling!!! */
     s->first_packet = 1;
     n = s->method->ssl_get_message(s,
                                    DTLS1_ST_CR_HELLO_VERIFY_REQUEST_A,
@@ -801,12 +807,14 @@ static int dtls1_get_hello_verify(SSL *s)
 
     if (!ok)
         return ((int)n);
+}
+#endif
 
-    if (s->s3->tmp.message_type != DTLS1_MT_HELLO_VERIFY_REQUEST) {
-        s->d1->send_cookie = 0;
-        s->s3->tmp.reuse_message = 1;
-        return (1);
-    }
+enum MSG_PROCESS_RETURN dtls_process_hello_verify(SSL *s, unsigned long n)
+{
+    int al;
+    unsigned char *data;
+    unsigned int cookie_len;
 
     data = (unsigned char *)s->init_msg;
     data += 2;
@@ -820,11 +828,9 @@ static int dtls1_get_hello_verify(SSL *s)
     memcpy(s->d1->cookie, data, cookie_len);
     s->d1->cookie_len = cookie_len;
 
-    s->d1->send_cookie = 1;
-    return 1;
-
+    return MSG_PROCESS_FINISHED_READING;
  f_err:
     ssl3_send_alert(s, SSL3_AL_FATAL, al);
-    s->state = SSL_ST_ERR;
-    return -1;
+    statem_set_error(s);
+    return MSG_PROCESS_ERROR;
 }
