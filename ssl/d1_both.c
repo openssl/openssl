@@ -582,6 +582,7 @@ int dtls_get_message(SSL *s, int *mt, unsigned long *len)
         /*
          * This isn't a real handshake message so skip the processing below.
          */
+        *len = (unsigned long)tmplen;
         return 1;
     }
 
@@ -1102,6 +1103,19 @@ static int dtls_get_reassembled_message(SSL *s, long *len)
     return 0;
 }
 
+
+int dtls1_send_change_cipher_spec(SSL *s, int a, int b)
+{
+    if (s->state == a) {
+        if (dtls_construct_change_cipher_spec(s) == 0)
+            return -1;
+    }
+
+    /* SSL3_ST_CW_CHANGE_B */
+    return (dtls1_do_write(s, SSL3_RT_CHANGE_CIPHER_SPEC));
+}
+
+
 /*-
  * for these 2 messages, we need to
  * ssl->enc_read_ctx                    re-init
@@ -1111,39 +1125,55 @@ static int dtls_get_reassembled_message(SSL *s, long *len)
  * ssl->session->read_compression       assign
  * ssl->session->read_hash              assign
  */
-int dtls1_send_change_cipher_spec(SSL *s, int a, int b)
+int dtls_construct_change_cipher_spec(SSL *s)
 {
     unsigned char *p;
 
-    if (s->state == a) {
-        p = (unsigned char *)s->init_buf->data;
-        *p++ = SSL3_MT_CCS;
-        s->d1->handshake_write_seq = s->d1->next_handshake_write_seq;
-        s->init_num = DTLS1_CCS_HEADER_LENGTH;
+    p = (unsigned char *)s->init_buf->data;
+    *p++ = SSL3_MT_CCS;
+    s->d1->handshake_write_seq = s->d1->next_handshake_write_seq;
+    s->init_num = DTLS1_CCS_HEADER_LENGTH;
 
-        if (s->version == DTLS1_BAD_VER) {
-            s->d1->next_handshake_write_seq++;
-            s2n(s->d1->handshake_write_seq, p);
-            s->init_num += 2;
-        }
-
-        s->init_off = 0;
-
-        dtls1_set_message_header_int(s, SSL3_MT_CCS, 0,
-                                     s->d1->handshake_write_seq, 0, 0);
-
-        /* buffer the message to handle re-xmits */
-        if (!dtls1_buffer_message(s, 1)) {
-            SSLerr(SSL_F_DTLS1_SEND_CHANGE_CIPHER_SPEC, ERR_R_INTERNAL_ERROR);
-            return -1;
-        }
-
-        s->state = b;
+    if (s->version == DTLS1_BAD_VER) {
+        s->d1->next_handshake_write_seq++;
+        s2n(s->d1->handshake_write_seq, p);
+        s->init_num += 2;
     }
 
-    /* SSL3_ST_CW_CHANGE_B */
-    return (dtls1_do_write(s, SSL3_RT_CHANGE_CIPHER_SPEC));
+    s->init_off = 0;
+
+    dtls1_set_message_header_int(s, SSL3_MT_CCS, 0,
+                                 s->d1->handshake_write_seq, 0, 0);
+
+    /* buffer the message to handle re-xmits */
+    if (!dtls1_buffer_message(s, 1)) {
+        SSLerr(SSL_F_DTLS_CONSTRUCT_CHANGE_CIPHER_SPEC, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    return 1;
 }
+
+#ifndef OPENSSL_NO_SCTP
+enum WORK_STATE dtls_wait_for_dry(SSL *s)
+{
+    int ret;
+
+    /* read app data until dry event */
+    ret = BIO_dgram_sctp_wait_for_dry(SSL_get_wbio(s));
+    if (ret < 0)
+        return WORK_ERROR;
+
+    if (ret == 0) {
+        s->s3->in_read_app_data = 2;
+        s->rwstate = SSL_READING;
+        BIO_clear_retry_flags(SSL_get_rbio(s));
+        BIO_set_retry_read(SSL_get_rbio(s));
+        return WORK_MORE_A;
+    }
+    return WORK_FINISHED_CONTINUE;
+}
+#endif
 
 int dtls1_read_failed(SSL *s, int code)
 {
