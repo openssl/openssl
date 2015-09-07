@@ -1450,16 +1450,7 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
          * application data at this point (session renegotiation not yet
          * started), we will indulge it.
          */
-        if (s->s3->in_read_app_data &&
-            (s->s3->total_renegotiations != 0) &&
-            (((s->state & SSL_ST_CONNECT) &&
-              (s->state >= SSL3_ST_CW_CLNT_HELLO_A) &&
-              (s->state <= SSL3_ST_CR_SRVR_HELLO_A)
-             ) || ((s->state & SSL_ST_ACCEPT) &&
-                   (s->state <= SSL3_ST_SW_HELLO_REQ_A) &&
-                   (s->state >= SSL3_ST_SR_CLNT_HELLO_A)
-             )
-            )) {
+        if (statem_app_data_allowed(s)) {
             s->s3->in_read_app_data = 2;
             return (-1);
         } else {
