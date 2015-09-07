@@ -2,4 +2,4 @@
 
 use OpenSSL::Test::Simple;
 
-simple_test("test_ecdh", "ecdhtest", "ecdh");
+simple_test("test_ecdh", "ecdhtest", "ec");
