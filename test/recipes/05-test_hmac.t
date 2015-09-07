@@ -2,4 +2,4 @@
 
 use OpenSSL::Test::Simple;
 
-simple_test("test_hmac", "hmactest", "hmac");
+simple_test("test_hmac", "hmactest");
