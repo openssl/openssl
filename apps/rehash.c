@@ -124,7 +124,10 @@ static int bit_isset(unsigned char *set, unsigned int bit)
 }
 
 
-static void add_entry(enum Type type, unsigned int hash, const char *filename,
+/*
+ * Process an entry; return number of errors.
+ */
+static int add_entry(enum Type type, unsigned int hash, const char *filename,
                       const unsigned char *digest, int need_symlink,
                       unsigned short old_id)
 {
@@ -151,7 +154,7 @@ static void add_entry(enum Type type, unsigned int hash, const char *filename,
             BIO_printf(bio_err,
                        "%s: skipping duplicate certificate in %s\n",
                        opt_getprog(), filename);
-            return;
+            return 1;
         }
         if (strcmp(filename, ep->filename) == 0) {
             found = ep;
@@ -161,8 +164,12 @@ static void add_entry(enum Type type, unsigned int hash, const char *filename,
     }
     ep = found;
     if (ep == NULL) {
-        if (bp->num_needed >= MAX_COLLISIONS)
-            return;
+        if (bp->num_needed >= MAX_COLLISIONS) {
+            BIO_printf(bio_err,
+                       "%s: hash table overflow for %s\n",
+                       opt_getprog(), filename);
+            return 1;
+        }
         ep = app_malloc(sizeof(*ep), "collision bucket");
         *ep = nilhentry;
         ep->old_id = ~0;
@@ -181,8 +188,13 @@ static void add_entry(enum Type type, unsigned int hash, const char *filename,
         bp->num_needed++;
         memcpy(ep->digest, digest, evpmdsize);
     }
+    return 0;
 }
 
+/*
+ * Check if a symlink goes to the right spot; return 0 if okay.
+ * This can be -1 if bad filename, or an error count.
+ */
 static int handle_symlink(const char *filename, const char *fullpath)
 {
     unsigned int hash = 0;
@@ -214,41 +226,50 @@ static int handle_symlink(const char *filename, const char *fullpath)
         return -1;
     linktarget[n] = 0;
 
-    add_entry(type, hash, linktarget, NULL, 0, id);
-    return 0;
+    return add_entry(type, hash, linktarget, NULL, 0, id);
 }
 
+/*
+ * process a file, return number of errors.
+ */
 static int do_file(const char *filename, const char *fullpath, enum Hash h)
 {
-    STACK_OF (X509_INFO) *inf;
+    STACK_OF (X509_INFO) *inf = NULL;
     X509_INFO *x;
     X509_NAME *name = NULL;
     BIO *b;
     const char *ext;
     unsigned char digest[EVP_MAX_MD_SIZE];
-    int i, type, ret = -1;
+    int i, type, errs = 0;
 
+    /* Does it end with a recognized extension? */
     if ((ext = strrchr(filename, '.')) == NULL)
-        return 0;
+        goto end;
     for (i = 0; i < (int)OSSL_NELEM(extensions); i++) {
         if (strcasecmp(extensions[i], ext + 1) == 0)
             break;
     }
     if (i >= (int)OSSL_NELEM(extensions))
-        return -1;
+        goto end;
 
-    if ((b = BIO_new_file(fullpath, "r")) == NULL)
-        return -1;
+    /* Does it have X.509 data in it? */
+    if ((b = BIO_new_file(fullpath, "r")) == NULL) {
+        BIO_printf(bio_err, "%s: skipping %s, cannot open file\n",
+                   opt_getprog(), filename);
+        errs++;
+        goto end;
+    }
     inf = PEM_X509_INFO_read_bio(b, NULL, NULL, NULL);
     BIO_free(b);
     if (inf == NULL)
-        return -1;
+        goto end;
 
     if (sk_X509_INFO_num(inf) != 1) {
         BIO_printf(bio_err,
                    "%s: skipping %s,"
                    "it does not contain exactly one certificate or CRL\n",
                    opt_getprog(), filename);
+        /* This is not an error. */
         goto end;
     }
     x = sk_X509_INFO_value(inf, 0);
@@ -263,16 +284,19 @@ static int do_file(const char *filename, const char *fullpath, enum Hash h)
     }
     if (name) {
         if ((h == HASH_NEW) || (h == HASH_BOTH))
-            add_entry(type, X509_NAME_hash(name), filename, digest, 1, ~0);
+            errs += add_entry(type, X509_NAME_hash(name), filename, digest, 1, ~0);
         if ((h == HASH_OLD) || (h == HASH_BOTH))
-            add_entry(type, X509_NAME_hash_old(name), filename, digest, 1, ~0);
+            errs += add_entry(type, X509_NAME_hash_old(name), filename, digest, 1, ~0);
     }
 
 end:
     sk_X509_INFO_pop_free(inf, X509_INFO_free);
-    return ret;
+    return errs;
 }
 
+/*
+ * Process a directory; return number of errors found.
+ */
 static int do_dir(const char *dirname, enum Hash h)
 {
     BUCKET *bp, *nextbp;
@@ -280,7 +304,7 @@ static int do_dir(const char *dirname, enum Hash h)
     OPENSSL_DIR_CTX *d = NULL;
     struct stat st;
     unsigned char idmask[MAX_COLLISIONS / 8];
-    int i, n, nextid, buflen, ret = -1;
+    int i, n, nextid, buflen, errs = 0;
     const char *pathsep;
     const char *filename;
     char *buf;
@@ -301,7 +325,7 @@ static int do_dir(const char *dirname, enum Hash h)
             continue;
         if (S_ISLNK(st.st_mode) && handle_symlink(filename, buf) == 0)
             continue;
-        do_file(filename, buf, h);
+        errs += do_file(filename, buf, h);
     }
     OPENSSL_DIR_end(&d);
 
@@ -334,15 +358,19 @@ static int do_dir(const char *dirname, enum Hash h)
                     if (verbose)
                         BIO_printf(bio_out, "link %s -> %s\n",
                                    ep->filename, &buf[n]);
-                    if (unlink(buf) < 0 && errno != ENOENT)
+                    if (unlink(buf) < 0 && errno != ENOENT) {
                         BIO_printf(bio_err,
                                    "%s: Can't unlink %s, %s\n",
                                    opt_getprog(), buf, strerror(errno));
-                    if (symlink(ep->filename, buf) < 0)
+                        errs++;
+                    }
+                    if (symlink(ep->filename, buf) < 0) {
                         BIO_printf(bio_err,
                                    "%s: Can't symlink %s, %s\n",
                                    opt_getprog(), ep->filename,
                                    strerror(errno));
+                        errs++;
+                    }
                 } else if (remove_links) {
                     /* Link to be deleted */
                     snprintf(buf, buflen, "%s%s%n%08x.%s%d",
@@ -351,10 +379,12 @@ static int do_dir(const char *dirname, enum Hash h)
                     if (verbose)
                         BIO_printf(bio_out, "unlink %s\n",
                                    &buf[n]);
-                    if (unlink(buf) < 0 && errno != ENOENT)
+                    if (unlink(buf) < 0 && errno != ENOENT) {
                         BIO_printf(bio_err,
                                    "%s: Can't unlink %s, %s\n",
                                    opt_getprog(), buf, strerror(errno));
+                        errs++;
+                    }
                 }
                 OPENSSL_free(ep->filename);
                 OPENSSL_free(ep);
@@ -363,10 +393,9 @@ static int do_dir(const char *dirname, enum Hash h)
         }
         hash_table[i] = NULL;
     }
-    ret = 0;
 
     OPENSSL_free(buf);
-    return ret;
+    return errs;
 }
 
 typedef enum OPTION_choice {
@@ -390,7 +419,7 @@ int rehash_main(int argc, char **argv)
 {
     const char *env, *prog;
     char *e, *m;
-    int ret = 0;
+    int errs = 0;
     OPTION_CHOICE o;
     enum Hash h = HASH_NEW;
 
@@ -426,18 +455,18 @@ int rehash_main(int argc, char **argv)
 
     if (*argv) {
         while (*argv)
-            ret |= do_dir(*argv++, h);
+            errs += do_dir(*argv++, h);
     } else if ((env = getenv("SSL_CERT_DIR")) != NULL) {
         m = BUF_strdup(env);
         for (e = strtok(m, ":"); e != NULL; e = strtok(NULL, ":"))
-            ret |= do_dir(e, h);
+            errs += do_dir(e, h);
         OPENSSL_free(m);
     } else {
-        ret |= do_dir("/etc/ssl/certs", h);
+        errs += do_dir("/etc/ssl/certs", h);
     }
 
  end:
-    return ret ? 2 : 0;
+    return errs;
 }
 
 #else
