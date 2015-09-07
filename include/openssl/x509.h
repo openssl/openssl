@@ -753,6 +753,10 @@ long X509_REQ_get_version(X509_REQ *req);
 int X509_REQ_set_version(X509_REQ *x, long version);
 X509_NAME *X509_REQ_get_subject_name(X509_REQ *req);
 int X509_REQ_set_subject_name(X509_REQ *req, X509_NAME *name);
+void X509_REQ_get0_signature(ASN1_BIT_STRING **psig, X509_ALGOR **palg,
+                             X509_REQ *req);
+int X509_REQ_get_signature_nid(const X509_REQ *req);
+int i2d_re_X509_REQ_tbs(X509_REQ *req, unsigned char **pp);
 int X509_REQ_set_pubkey(X509_REQ *x, EVP_PKEY *pkey);
 EVP_PKEY *X509_REQ_get_pubkey(X509_REQ *req);
 int X509_REQ_extension_nid(int nid);
@@ -793,6 +797,8 @@ X509_NAME *X509_CRL_get_issuer(X509_CRL *crl);
 STACK_OF(X509_REVOKED) *X509_CRL_get_REVOKED(X509_CRL *crl);
 void X509_CRL_get0_signature(ASN1_BIT_STRING **psig, X509_ALGOR **palg,
                              X509_CRL *crl);
+int X509_CRL_get_signature_nid(const X509_CRL *crl);
+int i2d_re_X509_CRL_tbs(X509_CRL *req, unsigned char **pp);
 
 int X509_REVOKED_set_serialNumber(X509_REVOKED *x, ASN1_INTEGER *serial);
 int X509_REVOKED_set_revocationDate(X509_REVOKED *r, ASN1_TIME *tm);
