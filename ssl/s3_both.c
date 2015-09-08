@@ -156,20 +156,6 @@ int ssl3_do_write(SSL *s, int type)
     return (0);
 }
 
-int ssl3_send_finished(SSL *s, int a, int b, const char *sender, int slen)
-{
-    if (s->state == a) {
-        if (tls_construct_finished(s, sender, slen) == 0) {
-            statem_set_error(s);
-            return -1;
-        }
-        s->state = b;
-    }
-
-    /* SSL3_ST_SEND_xxxxxx_HELLO_B */
-    return ssl_do_write(s);
-}
-
 int tls_construct_finished(SSL *s, const char *sender, int slen)
 {
     unsigned char *p;
@@ -223,7 +209,7 @@ static void ssl3_take_mac(SSL *s)
      */
     if (s->s3->tmp.new_cipher == NULL)
         return;
-    if (s->state & SSL_ST_CONNECT) {
+    if (!s->server) {
         sender = s->method->ssl3_enc->server_finished_label;
         slen = s->method->ssl3_enc->server_finished_label_len;
     } else {
@@ -237,24 +223,6 @@ static void ssl3_take_mac(SSL *s)
                                                                           s->s3->tmp.peer_finish_md);
 }
 #endif
-
-int ssl3_get_change_cipher_spec(SSL *s, int a, int b)
-{
-    int ok;
-    long n;
-
-    n = s->method->ssl_get_message(s, a, b, SSL3_MT_CHANGE_CIPHER_SPEC, 1, &ok);
-
-    if (!ok)
-        return ((int)n);
-
-    if (tls_process_change_cipher_spec(s, n) == 0) {
-        statem_set_error(s);
-        return -1;
-    }
-
-    return 1;
-}
 
 enum MSG_PROCESS_RETURN tls_process_change_cipher_spec(SSL *s, long n)
 {
@@ -320,28 +288,6 @@ enum MSG_PROCESS_RETURN tls_process_change_cipher_spec(SSL *s, long n)
     return MSG_PROCESS_ERROR;
 }
 
-
-int ssl3_get_finished(SSL *s, int a, int b)
-{
-    int ok;
-    long n;
-
-#ifdef OPENSSL_NO_NEXTPROTONEG
-    /*
-     * the mac has already been generated when we received the change cipher
-     * spec message and is in s->s3->tmp.peer_finish_md
-     */
-#endif
-
-    /* 64 argument should actually be 36+4 :-) */
-    n = s->method->ssl_get_message(s, a, b, SSL3_MT_FINISHED, 64, &ok);
-
-    if (!ok)
-        return ((int)n);
-
-    return tls_process_finished(s, (unsigned long)n);
-}
-
 enum MSG_PROCESS_RETURN tls_process_finished(SSL *s, unsigned long n)
 {
     int al, i;
@@ -388,30 +334,6 @@ enum MSG_PROCESS_RETURN tls_process_finished(SSL *s, unsigned long n)
     ssl3_send_alert(s, SSL3_AL_FATAL, al);
     statem_set_error(s);
     return MSG_PROCESS_ERROR;
-}
-
-/*-
- * for these 2 messages, we need to
- * ssl->enc_read_ctx                    re-init
- * ssl->rlayer.read_sequence            zero
- * ssl->s3->read_mac_secret             re-init
- * ssl->session->read_sym_enc           assign
- * ssl->session->read_compression       assign
- * ssl->session->read_hash              assign
- */
-int ssl3_send_change_cipher_spec(SSL *s, int a, int b)
-{
-    if (s->state == a) {
-        if(tls_construct_change_cipher_spec(s) == 0) {
-            statem_set_error(s);
-            return 0;
-        }
-
-        s->state = b;
-    }
-
-    /* SSL3_ST_CW_CHANGE_B */
-    return (ssl3_do_write(s, SSL3_RT_CHANGE_CIPHER_SPEC));
 }
 
 int tls_construct_change_cipher_spec(SSL *s)
@@ -514,87 +436,6 @@ enum WORK_STATE tls_finish_handshake(SSL *s, enum WORK_STATE wst)
     }
 
     return WORK_FINISHED_STOP;
-}
-
-
-/*
- * Obtain handshake message of message type 'mt' (any if mt == -1), maximum
- * acceptable body length 'max'. The first four bytes (msg_type and length)
- * are read in state 'st1', the body is read in state 'stn'.
- */
-long ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
-{
-    unsigned char *p;
-    long n;
-    int al, mtin;
-
-    if (s->s3->tmp.reuse_message) {
-        s->s3->tmp.reuse_message = 0;
-        if ((mt >= 0) && (s->s3->tmp.message_type != mt)) {
-            al = SSL_AD_UNEXPECTED_MESSAGE;
-            SSLerr(SSL_F_SSL3_GET_MESSAGE, SSL_R_UNEXPECTED_MESSAGE);
-            goto f_err;
-        }
-        *ok = 1;
-        s->state = stn;
-        s->init_msg = s->init_buf->data + SSL3_HM_HEADER_LENGTH;
-        s->init_num = (int)s->s3->tmp.message_size;
-        return s->init_num;
-    }
-
-    p = (unsigned char *)s->init_buf->data;
-
-    if (s->state == st1) {
-        if (tls_get_message_header(s, &mtin) == 0) {
-            /* Could be NBIO */
-            *ok = 0;
-            return -1;
-        }
-        s->state = stn;
-        if (s->init_num == 0
-                && mtin == SSL3_MT_CHANGE_CIPHER_SPEC
-                && (mt < 0 || mt == SSL3_MT_CHANGE_CIPHER_SPEC)) {
-            if (*p != SSL3_MT_CCS) {
-                al = SSL_AD_UNEXPECTED_MESSAGE;
-                SSLerr(SSL_F_SSL3_GET_MESSAGE,
-                       SSL_R_UNEXPECTED_MESSAGE);
-                goto f_err;
-            }
-            s->init_msg = p + 1;
-            s->s3->tmp.message_type = SSL3_MT_CHANGE_CIPHER_SPEC;
-            s->s3->tmp.message_size = s->init_num;
-            *ok = 1;
-            if (s->msg_callback)
-                s->msg_callback(0, s->version,
-                                SSL3_RT_CHANGE_CIPHER_SPEC, p, 1, s,
-                                s->msg_callback_arg);
-            return s->init_num;
-        }
-        if (s->s3->tmp.message_size > (unsigned long)max) {
-            al = SSL_AD_ILLEGAL_PARAMETER;
-            SSLerr(SSL_F_SSL3_GET_MESSAGE, SSL_R_EXCESSIVE_MESSAGE_SIZE);
-            goto f_err;
-        }
-        if ((mt >= 0) && (mtin != mt)) {
-            al = SSL_AD_UNEXPECTED_MESSAGE;
-            SSLerr(SSL_F_SSL3_GET_MESSAGE, SSL_R_UNEXPECTED_MESSAGE);
-            goto f_err;
-        }
-    }
-
-    /* next state (stn) */
-    if (tls_get_message_body(s, (unsigned long *)&n) == 0) {
-        *ok = 0;
-        return n;
-    }
-
-    *ok = 1;
-    return n;
- f_err:
-    ssl3_send_alert(s, SSL3_AL_FATAL, al);
-    statem_set_error(s);
-    *ok = 0;
-    return 0;
 }
 
 int tls_get_message_header(SSL *s, int *mt)

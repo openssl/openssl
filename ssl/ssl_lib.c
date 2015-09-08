@@ -217,7 +217,6 @@ int SSL_clear(SSL *s)
 
     s->type = 0;
 
-    s->state = SSL_ST_BEFORE | ((s->server) ? SSL_ST_ACCEPT : SSL_ST_CONNECT);
     statem_clear(s);
 
     s->version = s->method->version;
@@ -2399,7 +2398,7 @@ void SSL_set_accept_state(SSL *s)
 {
     s->server = 1;
     s->shutdown = 0;
-    s->state = SSL_ST_ACCEPT | SSL_ST_BEFORE;
+    statem_clear(s);
     s->handshake_func = s->method->ssl_accept;
     clear_ciphers(s);
 }
@@ -2408,7 +2407,7 @@ void SSL_set_connect_state(SSL *s)
 {
     s->server = 0;
     s->shutdown = 0;
-    s->state = SSL_ST_CONNECT | SSL_ST_BEFORE;
+    statem_clear(s);
     s->handshake_func = s->method->ssl_connect;
     clear_ciphers(s);
 }
@@ -2538,8 +2537,8 @@ SSL *SSL_dup(SSL *s)
     ret->new_session = s->new_session;
     ret->quiet_shutdown = s->quiet_shutdown;
     ret->shutdown = s->shutdown;
-    ret->state = s->state;      /* SSL_dup does not really work at any state,
-                                 * though */
+    ret->statem = s->statem;      /* SSL_dup does not really work at any state,
+                                   * though */
     RECORD_LAYER_dup(&ret->rlayer, &s->rlayer);
     ret->init_num = 0;          /* would have to copy ret->init_buf,
                                  * ret->init_msg, ret->init_num,
@@ -2839,16 +2838,6 @@ void (*SSL_get_info_callback(const SSL *ssl)) (const SSL * /* ssl */ ,
                                                int /* type */ ,
                                                int /* val */ ) {
     return ssl->info_callback;
-}
-
-int SSL_state(const SSL *ssl)
-{
-    return (ssl->state);
-}
-
-void SSL_set_state(SSL *ssl, int state)
-{
-    ssl->state = state;
 }
 
 void SSL_set_verify_result(SSL *ssl, long arg)

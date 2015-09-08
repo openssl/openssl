@@ -5014,7 +5014,7 @@ int ssl3_shutdown(SSL *s)
      * Don't do anything much if we have not done the handshake or we don't
      * want to send messages :-)
      */
-    if ((s->quiet_shutdown) || (s->state == SSL_ST_BEFORE)) {
+    if ((s->quiet_shutdown) || (SSL_in_before(s))) {
         s->shutdown = (SSL_SENT_SHUTDOWN | SSL_RECEIVED_SHUTDOWN);
         return (1);
     }
@@ -5128,10 +5128,9 @@ int ssl3_renegotiate_check(SSL *s)
             && !SSL_in_init(s)) {
             /*
              * if we are the server, and we have sent a 'RENEGOTIATE'
-             * message, we need to go to SSL_ST_ACCEPT.
+             * message, we need to set the state machine into the renegotiate
+             * state.
              */
-            /* SSL_ST_ACCEPT */
-            s->state = SSL_ST_RENEGOTIATE;
             statem_set_renegotiate(s);
             s->s3->renegotiate = 0;
             s->s3->num_renegotiations++;

@@ -920,6 +920,59 @@ extern "C" {
 # define SSL_CTX_get_app_data(ctx)       (SSL_CTX_get_ex_data(ctx,0))
 # define SSL_CTX_set_app_data(ctx,arg)   (SSL_CTX_set_ex_data(ctx,0,(char *)arg))
 
+
+/*
+ * The valid handshake states (one for each type message sent and one for each
+ * type of message received). There are also two "special" states:
+ * TLS = TLS or DTLS state
+ * DTLS = DTLS specific state
+ * CR/SR = Client Read/Server Read
+ * CW/SW = Client Write/Server Write
+ *
+ * The "special" states are:
+ * TLS_ST_BEFORE = No handshake has been initiated yet
+ * TLS_ST_OK = A handshake has been successfully completed
+ */
+enum HANDSHAKE_STATE {
+    TLS_ST_BEFORE,
+    TLS_ST_OK,
+    DTLS_ST_CR_HELLO_VERIFY_REQUEST,
+    TLS_ST_CR_SRVR_HELLO,
+    TLS_ST_CR_CERT,
+    TLS_ST_CR_CERT_STATUS,
+    TLS_ST_CR_KEY_EXCH,
+    TLS_ST_CR_CERT_REQ,
+    TLS_ST_CR_SRVR_DONE,
+    TLS_ST_CR_SESSION_TICKET,
+    TLS_ST_CR_CHANGE,
+    TLS_ST_CR_FINISHED,
+    TLS_ST_CW_CLNT_HELLO,
+    TLS_ST_CW_CERT,
+    TLS_ST_CW_KEY_EXCH,
+    TLS_ST_CW_CERT_VRFY,
+    TLS_ST_CW_CHANGE,
+    TLS_ST_CW_NEXT_PROTO,
+    TLS_ST_CW_FINISHED,
+    TLS_ST_SW_HELLO_REQ,
+    TLS_ST_SR_CLNT_HELLO,
+    DTLS_ST_SW_HELLO_VERIFY_REQUEST,
+    TLS_ST_SW_SRVR_HELLO,
+    TLS_ST_SW_CERT,
+    TLS_ST_SW_KEY_EXCH,
+    TLS_ST_SW_CERT_REQ,
+    TLS_ST_SW_SRVR_DONE,
+    TLS_ST_SR_CERT,
+    TLS_ST_SR_KEY_EXCH,
+    TLS_ST_SR_CERT_VRFY,
+    TLS_ST_SR_NEXT_PROTO,
+    TLS_ST_SR_CHANGE,
+    TLS_ST_SR_FINISHED,
+    TLS_ST_SW_SESSION_TICKET,
+    TLS_ST_SW_CERT_STATUS,
+    TLS_ST_SW_CHANGE,
+    TLS_ST_SW_FINISHED
+};
+
 /*
  * The following are the possible values for ssl->state are are used to
  * indicate where we are up to in the SSL connection establishment. The
@@ -953,11 +1006,11 @@ extern "C" {
 
 /* Is the SSL_connection established? */
 # define SSL_get_state(a)                SSL_state(a)
-# define SSL_is_init_finished(a)         (SSL_state(a) == SSL_ST_OK)
-# define SSL_in_init(a)                  (SSL_state(a)&SSL_ST_INIT)
-# define SSL_in_before(a)                (SSL_state(a)&SSL_ST_BEFORE)
-# define SSL_in_connect_init(a)          (SSL_state(a)&SSL_ST_CONNECT)
-# define SSL_in_accept_init(a)           (SSL_state(a)&SSL_ST_ACCEPT)
+# define SSL_in_connect_init(a)          (SSL_in_init(a) && !a->server)
+# define SSL_in_accept_init(a)           (SSL_in_init(a) && a->server)
+int SSL_in_init(SSL *s);
+int SSL_in_before(SSL *s);
+int SSL_is_init_finished(SSL *s);
 
 /*
  * The following 3 states are kept in ssl->rlayer.rstate when reads fail, you
@@ -1646,8 +1699,8 @@ void SSL_set_info_callback(SSL *ssl,
                            void (*cb) (const SSL *ssl, int type, int val));
 void (*SSL_get_info_callback(const SSL *ssl)) (const SSL *ssl, int type,
                                                int val);
-__owur int SSL_state(const SSL *ssl);
-void SSL_set_state(SSL *ssl, int state);
+__owur enum HANDSHAKE_STATE SSL_state(const SSL *ssl);
+void SSL_set_state(SSL *ssl, enum HANDSHAKE_STATE state);
 
 void SSL_set_verify_result(SSL *ssl, long v);
 __owur long SSL_get_verify_result(const SSL *ssl);
