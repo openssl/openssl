@@ -228,6 +228,7 @@ int SSL_clear(SSL *s)
     s->init_buf = NULL;
     clear_ciphers(s);
     s->first_packet = 0;
+    s->no_cert_verify = 0;
 
     /*
      * Check to see if we were changed into a different method, if so, revert

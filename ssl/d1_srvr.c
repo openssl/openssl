@@ -317,7 +317,8 @@ int dtls1_accept(SSL *s)
                 goto end;
             dtls1_stop_timer(s);
 
-            if (ret == 1 && (SSL_get_options(s) & SSL_OP_COOKIE_EXCHANGE))
+            if (!s->d1->cookie_verified
+                    && (SSL_get_options(s) & SSL_OP_COOKIE_EXCHANGE))
                 s->state = DTLS1_ST_SW_HELLO_VERIFY_REQUEST_A;
             else
                 s->state = SSL3_ST_SW_SRVR_HELLO_A;
@@ -599,7 +600,7 @@ int dtls1_accept(SSL *s)
             s->state = SSL3_ST_SR_CERT_VRFY_A;
             s->init_num = 0;
 
-            if (ret == 2) {
+            if (s->no_cert_verify) {
                 /*
                  * For the ECDH ciphersuites when the client sends its ECDH
                  * pub key in a certificate, the CertificateVerify message is
