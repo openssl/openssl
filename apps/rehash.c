@@ -313,6 +313,10 @@ static int do_dir(const char *dirname, enum Hash h)
     const char *filename;
     char *buf;
 
+    if (app_access(dirname, W_OK) < 0) {
+        BIO_printf(bio_err, "Skipping %s, can't write\n", dirname);
+        return 0;
+    }
     buflen = strlen(dirname);
     pathsep = (buflen && dirname[buflen - 1] == '/') ? "" : "/";
     buflen += NAME_MAX + 2;
