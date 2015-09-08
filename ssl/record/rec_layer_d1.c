@@ -283,8 +283,8 @@ int dtls1_buffer_record(SSL *s, record_pqueue *queue, unsigned char *priority)
 #ifndef OPENSSL_NO_SCTP
     /* Store bio_dgram_sctp_rcvinfo struct */
     if (BIO_dgram_is_sctp(SSL_get_rbio(s)) &&
-        (s->state == SSL3_ST_SR_FINISHED_A
-         || s->state == SSL3_ST_CR_FINISHED_A)) {
+        (SSL_state(s) == TLS_ST_SR_FINISHED
+         || SSL_state(s) == TLS_ST_CR_FINISHED)) {
         BIO_ctrl(SSL_get_rbio(s), BIO_CTRL_DGRAM_SCTP_GET_RCVINFO,
                  sizeof(rdata->recordinfo), &rdata->recordinfo);
     }
@@ -472,7 +472,7 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
      * We are not handshaking and have no data yet, so process data buffered
      * during the last handshake in advance, if any.
      */
-    if (s->state == SSL_ST_OK && SSL3_RECORD_get_length(rr) == 0) {
+    if (SSL_is_init_finished(s) && SSL3_RECORD_get_length(rr) == 0) {
         pitem *item;
         item = pqueue_pop(s->rlayer.d->buffered_app_data.q);
         if (item) {
@@ -901,9 +901,9 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
             goto start;
         }
 
-        if (((s->state & SSL_ST_MASK) == SSL_ST_OK) &&
+        if (SSL_is_init_finished(s) &&
             !(s->s3->flags & SSL3_FLAGS_NO_RENEGOTIATE_CIPHERS)) {
-            s->state = s->server ? SSL_ST_ACCEPT : SSL_ST_CONNECT;
+            statem_set_in_init(s, 1);
             s->renegotiate = 1;
             s->new_session = 1;
         }
@@ -966,14 +966,7 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
          */
         if (s->s3->in_read_app_data &&
             (s->s3->total_renegotiations != 0) &&
-            (((s->state & SSL_ST_CONNECT) &&
-              (s->state >= SSL3_ST_CW_CLNT_HELLO_A) &&
-              (s->state <= SSL3_ST_CR_SRVR_HELLO_A)
-             ) || ((s->state & SSL_ST_ACCEPT) &&
-                   (s->state <= SSL3_ST_SW_HELLO_REQ_A) &&
-                   (s->state >= SSL3_ST_SR_CLNT_HELLO_A)
-             )
-            )) {
+            statem_app_data_allowed(s)) {
             s->s3->in_read_app_data = 2;
             return (-1);
         } else {

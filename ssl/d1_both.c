@@ -160,8 +160,6 @@ static void dtls1_set_message_header_int(SSL *s, unsigned char mt,
                                          unsigned short seq_num,
                                          unsigned long frag_off,
                                          unsigned long frag_len);
-static long dtls1_get_message_fragment(SSL *s, int st1, int stn, int mt,
-                                       int *ok);
 static int dtls_get_reassembled_message(SSL *s, long *len);
 
 static hm_fragment *dtls1_hm_fragment_new(unsigned long frag_len,
@@ -436,117 +434,6 @@ int dtls1_do_write(SSL *s, int type)
         }
     }
     return (0);
-}
-
-/*
- * Obtain handshake message of message type 'mt' (any if mt == -1), maximum
- * acceptable body length 'max'. Read an entire handshake message.  Handshake
- * messages arrive in fragments.
- */
-long dtls1_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
-{
-    int i, al;
-    struct hm_header_st *msg_hdr;
-    unsigned char *p;
-    unsigned long msg_len;
-
-    /*
-     * s3->tmp is used to store messages that are unexpected, caused by the
-     * absence of an optional handshake message
-     */
-    if (s->s3->tmp.reuse_message) {
-        if ((mt >= 0) && (s->s3->tmp.message_type != mt)) {
-            al = SSL_AD_UNEXPECTED_MESSAGE;
-            SSLerr(SSL_F_DTLS1_GET_MESSAGE, SSL_R_UNEXPECTED_MESSAGE);
-            goto f_err;
-        }
-        *ok = 1;
-
-
-        /*
-         * Messages reused from dtls1_listen also have the record header in
-         * the buffer which we need to skip over.
-         */
-        if (s->s3->tmp.reuse_message == DTLS1_SKIP_RECORD_HEADER) {
-            s->init_msg = s->init_buf->data + DTLS1_HM_HEADER_LENGTH
-                          + DTLS1_RT_HEADER_LENGTH;
-        } else {
-            s->init_msg = s->init_buf->data + DTLS1_HM_HEADER_LENGTH;
-        }
-        s->init_num = (int)s->s3->tmp.message_size;
-        s->s3->tmp.reuse_message = 0;
-        return s->init_num;
-    }
-
-    msg_hdr = &s->d1->r_msg_hdr;
-    memset(msg_hdr, 0, sizeof(*msg_hdr));
-
- again:
-    i = dtls1_get_message_fragment(s, st1, stn, mt, ok);
-    if (i == DTLS1_HM_BAD_FRAGMENT || i == DTLS1_HM_FRAGMENT_RETRY) {
-        /* bad fragment received */
-        goto again;
-    } else if (i <= 0 && !*ok) {
-        return i;
-    }
-
-    if (mt >= 0 && s->s3->tmp.message_type != mt) {
-        al = SSL_AD_UNEXPECTED_MESSAGE;
-        SSLerr(SSL_F_DTLS1_GET_MESSAGE, SSL_R_UNEXPECTED_MESSAGE);
-        goto f_err;
-    }
-
-    p = (unsigned char *)s->init_buf->data;
-
-    if (mt == SSL3_MT_CHANGE_CIPHER_SPEC) {
-        if (s->msg_callback) {
-            s->msg_callback(0, s->version, SSL3_RT_CHANGE_CIPHER_SPEC,
-                            p, 1, s, s->msg_callback_arg);
-        }
-        /*
-         * This isn't a real handshake message so skip the processing below.
-         * dtls1_get_message_fragment() will never return a CCS if mt == -1,
-         * so we are ok to continue in that case.
-         */
-        return i;
-    }
-
-    msg_len = msg_hdr->msg_len;
-
-    /* reconstruct message header */
-    *(p++) = msg_hdr->type;
-    l2n3(msg_len, p);
-    s2n(msg_hdr->seq, p);
-    l2n3(0, p);
-    l2n3(msg_len, p);
-    if (s->version != DTLS1_BAD_VER) {
-        p -= DTLS1_HM_HEADER_LENGTH;
-        msg_len += DTLS1_HM_HEADER_LENGTH;
-    }
-
-    if (msg_len > (unsigned long)max) {
-        al = SSL_AD_ILLEGAL_PARAMETER;
-        SSLerr(SSL_F_DTLS1_GET_MESSAGE, SSL_R_EXCESSIVE_MESSAGE_SIZE);
-        goto f_err;
-    }
-
-    ssl3_finish_mac(s, p, msg_len);
-    if (s->msg_callback)
-        s->msg_callback(0, s->version, SSL3_RT_HANDSHAKE,
-                        p, msg_len, s, s->msg_callback_arg);
-
-    memset(msg_hdr, 0, sizeof(*msg_hdr));
-
-    s->d1->handshake_read_seq++;
-
-
-    s->init_msg = s->init_buf->data + DTLS1_HM_HEADER_LENGTH;
-    return s->init_num;
-
- f_err:
-    ssl3_send_alert(s, SSL3_AL_FATAL, al);
-    *ok = 0;
-    return -1;
 }
 
 int dtls_get_message(SSL *s, int *mt, unsigned long *len)
@@ -925,30 +812,6 @@ dtls1_process_out_of_seq_message(SSL *s, const struct hm_header_st *msg_hdr,
     return i;
 }
 
-static long
-dtls1_get_message_fragment(SSL *s, int st1, int stn, int mt, int *ok)
-{
-    long len;
-
-    do {
-        *ok = dtls_get_reassembled_message(s, &len);
-        /* A CCS isn't a real handshake message, so if we get one there is no
-         * message sequence number to give us confidence that this was really
-         * intended to be at this point in the handshake sequence. Therefore we
-         * only allow this if we were explicitly looking for it (i.e. if |mt|
-         * is -1 we still don't allow it). If we get one when we're not
-         * expecting it then probably something got re-ordered or this is a
-         * retransmit. We should drop this and try again.
-         */
-    } while (*ok && mt != SSL3_MT_CHANGE_CIPHER_SPEC
-             && s->s3->tmp.message_type == SSL3_MT_CHANGE_CIPHER_SPEC);
-
-    if (*ok)
-        s->state = stn;
-
-    return len;
-}
-
 static int dtls_get_reassembled_message(SSL *s, long *len)
 {
     unsigned char wire[DTLS1_HM_HEADER_LENGTH];
@@ -1102,19 +965,6 @@ static int dtls_get_reassembled_message(SSL *s, long *len)
     *len = -1;
     return 0;
 }
-
-
-int dtls1_send_change_cipher_spec(SSL *s, int a, int b)
-{
-    if (s->state == a) {
-        if (dtls_construct_change_cipher_spec(s) == 0)
-            return -1;
-    }
-
-    /* SSL3_ST_CW_CHANGE_B */
-    return (dtls1_do_write(s, SSL3_RT_CHANGE_CIPHER_SPEC));
-}
-
 
 /*-
  * for these 2 messages, we need to
