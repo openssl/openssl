@@ -2,7 +2,6 @@
  * C implementation based on the original Perl and shell versions
  *
  * Copyright (c) 2013-2014 Timo Teräs <timo.teras@iki.fi>
- * All rights reserved.
  */
 /* ====================================================================
  * Copyright (c) 2015 The OpenSSL Project.  All rights reserved.
@@ -60,7 +59,7 @@
 
 #include "apps.h"
 
-#ifdef unix
+#if defined(unix) || defined(__APPLE__)
 # include <unistd.h>
 # include <stdio.h>
 # include <limits.h>
@@ -480,4 +479,4 @@ int rehash_main(int argc, char **argv)
     return (1);
 }
 
-#endif
+#endif /* defined(unix) || defined(__APPLE__) */
