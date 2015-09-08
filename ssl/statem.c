@@ -130,12 +130,52 @@ static unsigned long server_max_message_size(SSL *s);
 static enum MSG_PROCESS_RETURN server_process_message(SSL *s, unsigned long len);
 static enum WORK_STATE server_post_process_message(SSL *s, enum WORK_STATE wst);
 
+
+enum HANDSHAKE_STATE SSL_state(const SSL *ssl)
+{
+    return ssl->statem.hand_state;
+}
+
+void SSL_set_state(SSL *ssl, enum HANDSHAKE_STATE state)
+{
+    /*
+     * This function seems like a really bad idea. Should we remove it
+     * completely?
+     */
+    ssl->statem.hand_state = state;
+}
+
+int SSL_in_init(SSL *s)
+{
+    return s->statem.in_init;
+}
+
+int SSL_is_init_finished(SSL *s)
+{
+    return !(s->statem.in_init) && (s->statem.hand_state == TLS_ST_OK);
+}
+
+int SSL_in_before(SSL *s)
+{
+    /*
+     * Historically being "in before" meant before anything had happened. In the
+     * current code though we remain in the "before" state for a while after we
+     * have started the handshake process (e.g. as a server waiting for the
+     * first message to arrive). There "in before" is taken to mean "in before"
+     * and not started any handshake process yet.
+     */
+    return (s->statem.hand_state == TLS_ST_BEFORE)
+        && (s->statem.state == MSG_FLOW_UNINITED);
+}
+
 /*
  * Clear the state machine state and reset back to MSG_FLOW_UNINITED
  */
 void statem_clear(SSL *s)
 {
     s->statem.state = MSG_FLOW_UNINITED;
+    s->statem.hand_state = TLS_ST_BEFORE;
+    s->statem.in_init = 1;
 }
 
 /*
@@ -153,8 +193,26 @@ void statem_set_renegotiate(SSL *s)
 void statem_set_error(SSL *s)
 {
     s->statem.state = MSG_FLOW_ERROR;
-    /* TODO: This is temporary - remove me */
-    s->state = SSL_ST_ERR;
+}
+
+/*
+ * Discover whether the current connection is in the error state.
+ *
+ * Valid return values are:
+ *   1: Yes
+ *   0: No
+ */
+int statem_in_error(const SSL *s)
+{
+    if (s->statem.state == MSG_FLOW_ERROR)
+        return 1;
+
+    return 0;
+}
+
+void statem_set_in_init(SSL *s, int init)
+{
+    s->statem.in_init = init;
 }
 
 int ssl3_connect(SSL *s) {
@@ -266,12 +324,6 @@ static int state_machine(SSL *s, int server) {
     }
 
     if (st->state == MSG_FLOW_UNINITED || st->state == MSG_FLOW_RENEGOTIATE) {
-        /* TODO: Temporary - fix this */
-        if (server)
-            s->state = SSL_ST_ACCEPT;
-        else
-            s->state = SSL_ST_CONNECT;
-
         if (st->state == MSG_FLOW_UNINITED) {
             st->hand_state = TLS_ST_BEFORE;
         }
@@ -1123,8 +1175,7 @@ static enum WRITE_TRAN client_write_transition(SSL *s)
         case TLS_ST_CW_FINISHED:
             if (s->hit) {
                 st->hand_state = TLS_ST_OK;
-                /* TODO: This needs removing */
-                s->state = SSL_ST_OK;
+                statem_set_in_init(s, 0);
                 return WRITE_TRAN_CONTINUE;
             } else {
                 return WRITE_TRAN_FINISHED;
@@ -1136,8 +1187,7 @@ static enum WRITE_TRAN client_write_transition(SSL *s)
                 return WRITE_TRAN_CONTINUE;
             } else {
                 st->hand_state = TLS_ST_OK;
-                /* TODO: This needs removing */
-                s->state = SSL_ST_OK;
+                statem_set_in_init(s, 0);
                 return WRITE_TRAN_CONTINUE;
             }
 
@@ -1727,8 +1777,7 @@ static enum WRITE_TRAN server_write_transition(SSL *s)
 
         case TLS_ST_SW_HELLO_REQ:
             st->hand_state = TLS_ST_OK;
-            /* TODO: This needs removing */
-            s->state = SSL_ST_OK;
+            statem_set_in_init(s, 0);
             return WRITE_TRAN_CONTINUE;
 
         case TLS_ST_SR_CLNT_HELLO:
@@ -1795,8 +1844,7 @@ static enum WRITE_TRAN server_write_transition(SSL *s)
         case TLS_ST_SR_FINISHED:
             if (s->hit) {
                 st->hand_state = TLS_ST_OK;
-                /* TODO: This needs removing */
-                s->state = SSL_ST_OK;
+                statem_set_in_init(s, 0);
                 return WRITE_TRAN_CONTINUE;
             } else if (s->tlsext_ticket_expected) {
                 st->hand_state = TLS_ST_SW_SESSION_TICKET;
@@ -1818,8 +1866,7 @@ static enum WRITE_TRAN server_write_transition(SSL *s)
                 return WRITE_TRAN_FINISHED;
             }
             st->hand_state = TLS_ST_OK;
-            /* TODO: This needs removing */
-            s->state = SSL_ST_OK;
+            statem_set_in_init(s, 0);
             return WRITE_TRAN_CONTINUE;
 
         default:

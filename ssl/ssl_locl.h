@@ -718,58 +718,6 @@ DECLARE_STACK_OF(SSL_COMP)
 DECLARE_LHASH_OF(SSL_SESSION);
 
 /*
- * The valid handshake states (one for each type message sent and one for each
- * type of message received). There are also two "special" states:
- * TLS = TLS or DTLS state
- * DTLS = DTLS specific state
- * CR/SR = Client Read/Server Read
- * CW/SW = Client Write/Server Write
- *
- * The "special" states are:
- * TLS_ST_BEFORE = No handshake has been initiated yet
- * TLS_ST_OK = A handshake has been successfully completed
- */
-enum HANDSHAKE_STATE {
-    TLS_ST_BEFORE,
-    TLS_ST_OK,
-    DTLS_ST_CR_HELLO_VERIFY_REQUEST,
-    TLS_ST_CR_SRVR_HELLO,
-    TLS_ST_CR_CERT,
-    TLS_ST_CR_CERT_STATUS,
-    TLS_ST_CR_KEY_EXCH,
-    TLS_ST_CR_CERT_REQ,
-    TLS_ST_CR_SRVR_DONE,
-    TLS_ST_CR_SESSION_TICKET,
-    TLS_ST_CR_CHANGE,
-    TLS_ST_CR_FINISHED,
-    TLS_ST_CW_CLNT_HELLO,
-    TLS_ST_CW_CERT,
-    TLS_ST_CW_KEY_EXCH,
-    TLS_ST_CW_CERT_VRFY,
-    TLS_ST_CW_CHANGE,
-    TLS_ST_CW_NEXT_PROTO,
-    TLS_ST_CW_FINISHED,
-    TLS_ST_SW_HELLO_REQ,
-    TLS_ST_SR_CLNT_HELLO,
-    DTLS_ST_SW_HELLO_VERIFY_REQUEST,
-    TLS_ST_SW_SRVR_HELLO,
-    TLS_ST_SW_CERT,
-    TLS_ST_SW_KEY_EXCH,
-    TLS_ST_SW_CERT_REQ,
-    TLS_ST_SW_SRVR_DONE,
-    TLS_ST_SR_CERT,
-    TLS_ST_SR_KEY_EXCH,
-    TLS_ST_SR_CERT_VRFY,
-    TLS_ST_SR_NEXT_PROTO,
-    TLS_ST_SR_CHANGE,
-    TLS_ST_SR_FINISHED,
-    TLS_ST_SW_SESSION_TICKET,
-    TLS_ST_SW_CERT_STATUS,
-    TLS_ST_SW_CHANGE,
-    TLS_ST_SW_FINISHED
-};
-
-/*
  * Valid return codes used for functions performing work prior to or after
  * sending or receiving a message
  */
@@ -842,6 +790,7 @@ struct statem_st {
     enum READ_STATE read_state;
     enum WORK_STATE read_state_work;
     enum HANDSHAKE_STATE hand_state;
+    int in_init;
     int read_state_first_init;
     int use_timer;
 #ifndef OPENSSL_NO_SCTP
@@ -1398,7 +1347,6 @@ typedef struct ssl3_state_st {
 #  endif
         /* used when SSL_ST_FLUSH_DATA is entered */
         int next_state;
-        int reuse_message;
         /* used for certificate requests */
         int cert_req;
         int ctype_num;
@@ -1885,7 +1833,7 @@ const SSL_METHOD *func_name(void)  \
                 ssl3_shutdown, \
                 ssl3_renegotiate, \
                 ssl3_renegotiate_check, \
-                ssl3_get_message, \
+                NULL /*TODO: Fix this */, \
                 ssl3_read_bytes, \
                 ssl3_write_bytes, \
                 ssl3_dispatch_alert, \
@@ -1922,7 +1870,7 @@ const SSL_METHOD *func_name(void)  \
                 ssl3_shutdown, \
                 ssl3_renegotiate, \
                 ssl3_renegotiate_check, \
-                ssl3_get_message, \
+                NULL /*TODO: Fix this */, \
                 ssl3_read_bytes, \
                 ssl3_write_bytes, \
                 ssl3_dispatch_alert, \
@@ -1960,7 +1908,7 @@ const SSL_METHOD *func_name(void)  \
                 dtls1_shutdown, \
                 ssl3_renegotiate, \
                 ssl3_renegotiate_check, \
-                dtls1_get_message, \
+                NULL /*TODO: fix this */, \
                 dtls1_read_bytes, \
                 dtls1_write_app_data_bytes, \
                 dtls1_dispatch_alert, \
@@ -2054,18 +2002,12 @@ __owur int ssl_generate_master_secret(SSL *s, unsigned char *pms, size_t pmslen,
 __owur const SSL_CIPHER *ssl3_get_cipher_by_char(const unsigned char *p);
 __owur int ssl3_put_cipher_by_char(const SSL_CIPHER *c, unsigned char *p);
 void ssl3_init_finished_mac(SSL *s);
-__owur int ssl3_send_server_certificate(SSL *s);
 __owur int tls_construct_server_certificate(SSL *s);
-__owur int ssl3_send_newsession_ticket(SSL *s);
 __owur int tls_construct_new_session_ticket(SSL *s);
-__owur int ssl3_send_cert_status(SSL *s);
-__owur int ssl3_get_change_cipher_spec(SSL *s, int a, int b);
-__owur int ssl3_get_finished(SSL *s, int state_a, int state_b);
 __owur int tls_construct_cert_status(SSL *s);
 __owur enum MSG_PROCESS_RETURN tls_process_change_cipher_spec(SSL *s, long n);
 __owur enum MSG_PROCESS_RETURN tls_process_finished(SSL *s, unsigned long n);
 __owur int ssl3_setup_key_block(SSL *s);
-__owur int ssl3_send_change_cipher_spec(SSL *s, int state_a, int state_b);
 __owur int tls_construct_change_cipher_spec(SSL *s);
 __owur int dtls_construct_change_cipher_spec(SSL *s);
 __owur int ssl3_change_cipher_state(SSL *s, int which);
@@ -2078,7 +2020,6 @@ __owur int ssl3_get_req_cert_type(SSL *s, unsigned char *p);
 __owur long ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok);
 __owur int tls_get_message_header(SSL *s, int *mt);
 __owur int tls_get_message_body(SSL *s, unsigned long *len);
-__owur int ssl3_send_finished(SSL *s, int a, int b, const char *sender, int slen);
 __owur int tls_construct_finished(SSL *s, const char *sender, int slen);
 __owur enum WORK_STATE tls_finish_handshake(SSL *s, enum WORK_STATE wst);
 __owur enum WORK_STATE dtls_wait_for_dry(SSL *s);
@@ -2103,6 +2044,8 @@ __owur int ssl3_connect(SSL *s);
 void statem_clear(SSL *s);
 void statem_set_renegotiate(SSL *s);
 void statem_set_error(SSL *s);
+int statem_in_error(const SSL *s);
+void statem_set_in_init(SSL *s, int init);
 __owur int statem_app_data_allowed(SSL *s);
 #ifndef OPENSSL_NO_SCTP
 void statem_set_sctp_read_sock(SSL *s, int read_sock);
@@ -2136,7 +2079,6 @@ void dtls1_set_message_header(SSL *s,
 
 __owur int dtls1_write_app_data_bytes(SSL *s, int type, const void *buf, int len);
 
-__owur int dtls1_send_change_cipher_spec(SSL *s, int a, int b);
 __owur int dtls1_read_failed(SSL *s, int code);
 __owur int dtls1_buffer_message(SSL *s, int ccs);
 __owur int dtls1_retransmit_message(SSL *s, unsigned short seq,
@@ -2192,31 +2134,21 @@ __owur enum MSG_PROCESS_RETURN dtls_process_hello_verify(SSL *s,
                                                          unsigned long n);
 
 /* some server-only functions */
-__owur int ssl3_get_client_hello(SSL *s);
-__owur int ssl3_send_server_hello(SSL *s);
 __owur enum MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, long n);
 __owur enum WORK_STATE tls_post_process_client_hello(SSL *s,
                                                      enum WORK_STATE wst);
 __owur int tls_construct_server_hello(SSL *s);
-__owur int ssl3_send_hello_request(SSL *s);
 __owur int tls_construct_hello_request(SSL *s);
-__owur int ssl3_send_server_key_exchange(SSL *s);
 __owur int dtls_construct_hello_verify_request(SSL *s);
 __owur int tls_construct_server_key_exchange(SSL *s);
-__owur int ssl3_send_certificate_request(SSL *s);
 __owur int tls_construct_certificate_request(SSL *s);
-__owur int ssl3_send_server_done(SSL *s);
 __owur int tls_construct_server_done(SSL *s);
-__owur int ssl3_get_client_certificate(SSL *s);
-__owur int ssl3_get_client_key_exchange(SSL *s);
-__owur int ssl3_get_cert_verify(SSL *s);
 __owur enum MSG_PROCESS_RETURN tls_process_client_certificate(SSL *s, long n);
 __owur enum MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, long n);
 __owur enum WORK_STATE tls_post_process_client_key_exchange(SSL *s,
     enum WORK_STATE wst);
 __owur enum MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, long n);
 #  ifndef OPENSSL_NO_NEXTPROTONEG
-__owur int ssl3_get_next_proto(SSL *s);
 __owur enum MSG_PROCESS_RETURN tls_process_next_proto(SSL *s, long n);
 #  endif
 
@@ -2234,7 +2166,6 @@ void dtls1_clear(SSL *s);
 long dtls1_ctrl(SSL *s, int cmd, long larg, void *parg);
 __owur int dtls1_shutdown(SSL *s);
 
-__owur long dtls1_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok);
 __owur int dtls_get_message(SSL *s, int *mt, unsigned long *len);
 __owur int dtls1_dispatch_alert(SSL *s);
 

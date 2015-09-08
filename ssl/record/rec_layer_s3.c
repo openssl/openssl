@@ -779,7 +779,7 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
      * Some servers hang if iniatial client hello is larger than 256 bytes
      * and record version number > TLS 1.0
      */
-    if (s->state == SSL3_ST_CW_CLNT_HELLO_B
+    if (SSL_get_state(s) == TLS_ST_CW_CLNT_HELLO
         && !s->renegotiate && TLS1_get_version(s) > TLS1_VERSION)
         *(p++) = 0x1;
     else
@@ -1384,9 +1384,9 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
      * Unexpected handshake message (Client Hello, or protocol violation)
      */
     if ((s->rlayer.handshake_fragment_len >= 4) && !s->in_handshake) {
-        if (((s->state & SSL_ST_MASK) == SSL_ST_OK) &&
+        if (SSL_is_init_finished(s) &&
             !(s->s3->flags & SSL3_FLAGS_NO_RENEGOTIATE_CIPHERS)) {
-            s->state = s->server ? SSL_ST_ACCEPT : SSL_ST_CONNECT;
+            statem_set_in_init(s, 1);
             s->renegotiate = 1;
             s->new_session = 1;
         }
