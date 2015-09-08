@@ -54,24 +54,24 @@ if (defined(&Cwd::getcwd)) {
 my $path_delim = ($pwd =~ /^[a-z]\:/i) ? ';' : ':';
 $ENV{PATH} = "$prefix/bin" . ($ENV{PATH} ? $path_delim . $ENV{PATH} : "");
 
-if(! -x $openssl) {
+if (! -x $openssl) {
 	my $found = 0;
 	foreach (split /$path_delim/, $ENV{PATH}) {
-		if(-x "$_/$openssl") {
+		if (-x "$_/$openssl") {
 			$found = 1;
 			$openssl = "$_/$openssl";
 			last;
 		}	
 	}
-	if($found == 0) {
+	if ($found == 0) {
 		print STDERR "c_rehash: rehashing skipped ('openssl' program not available)\n";
 		exit 0;
 	}
 }
 
-if(@ARGV) {
+if (@ARGV) {
 	@dirlist = @ARGV;
-} elsif($ENV{SSL_CERT_DIR}) {
+} elsif ($ENV{SSL_CERT_DIR}) {
 	@dirlist = split /$path_delim/, $ENV{SSL_CERT_DIR};
 } else {
 	$dirlist[0] = "$dir/certs";
@@ -84,8 +84,12 @@ if (-d $dirlist[0]) {
 }
 
 foreach (@dirlist) {
-	if(-d $_ and -w $_) {
+	if (-d $_ ) {
+            if ( -w $_) {
 		hash_dir($_);
+            } else {
+                print "Skipping $_, can't write\n";
+            }
 	}
 }
 
@@ -99,21 +103,21 @@ sub hash_dir {
 	if ( $removelinks ) {
 		# Delete any existing symbolic links
 		foreach (grep {/^[\da-f]+\.r{0,1}\d+$/} @flist) {
-			if(-l $_) {
-				unlink $_;
+			if (-l $_) {
 				print "unlink $_" if $verbose;
+				unlink $_ || warn "Can't unlink $_, $!\n";
 			}
 		}
 	}
 	FILE: foreach $fname (grep {/\.(pem)|(crt)|(cer)|(crl)$/} @flist) {
 		# Check to see if certificates and/or CRLs present.
 		my ($cert, $crl) = check_file($fname);
-		if(!$cert && !$crl) {
+		if (!$cert && !$crl) {
 			print STDERR "WARNING: $fname does not contain a certificate or CRL: skipping\n";
 			next;
 		}
-		link_hash_cert($fname) if($cert);
-		link_hash_crl($fname) if($crl);
+		link_hash_cert($fname) if ($cert);
+		link_hash_crl($fname) if ($crl);
 	}
 }
 
@@ -122,14 +126,14 @@ sub check_file {
 	my $fname = $_[0];
 	open IN, $fname;
 	while(<IN>) {
-		if(/^-----BEGIN (.*)-----/) {
+		if (/^-----BEGIN (.*)-----/) {
 			my $hdr = $1;
-			if($hdr =~ /^(X509 |TRUSTED |)CERTIFICATE$/) {
+			if ($hdr =~ /^(X509 |TRUSTED |)CERTIFICATE$/) {
 				$is_cert = 1;
-				last if($is_crl);
-			} elsif($hdr eq "X509 CRL") {
+				last if ($is_crl);
+			} elsif ($hdr eq "X509 CRL") {
 				$is_crl = 1;
-				last if($is_cert);
+				last if ($is_cert);
 			}
 		}
 	}
@@ -156,7 +160,7 @@ sub link_hash_cert {
 		# Search for an unused hash filename
 		while(exists $hashlist{"$hash.$suffix"}) {
 			# Hash matches: if fingerprint matches its a duplicate cert
-			if($hashlist{"$hash.$suffix"} eq $fprint) {
+			if ($hashlist{"$hash.$suffix"} eq $fprint) {
 				print STDERR "WARNING: Skipping duplicate certificate $fname\n";
 				return;
 			}
@@ -164,15 +168,21 @@ sub link_hash_cert {
 		}
 		$hash .= ".$suffix";
 		if ($symlink_exists) {
-			symlink $fname, $hash;
 			print "link $fname -> $hash\n" if $verbose;
+			symlink $fname, $hash || warn "Can't symlink, $!";
 		} else {
-			open IN,"<$fname" or die "can't open $fname for read";
-			open OUT,">$hash" or die "can't open $hash for write";
-			print OUT <IN>;	# does the job for small text files
-			close OUT;
-			close IN;
 			print "copy $fname -> $hash\n" if $verbose;
+                        if (open($in, "<", $fname)) {
+                            if (open($out,">", $hash)) {
+                                print $out $_ while (<$in>);
+                                close $out;
+                            } else {
+                                warn "can't open $hash for write, $!";
+                            }
+                            close $in;
+                        } else {
+                            warn "can't open $fname for read, $!";
+                        }
 		}
 		$hashlist{$hash} = $fprint;
 }
@@ -191,7 +201,7 @@ sub link_hash_crl {
 		# Search for an unused hash filename
 		while(exists $hashlist{"$hash.r$suffix"}) {
 			# Hash matches: if fingerprint matches its a duplicate cert
-			if($hashlist{"$hash.r$suffix"} eq $fprint) {
+			if ($hashlist{"$hash.r$suffix"} eq $fprint) {
 				print STDERR "WARNING: Skipping duplicate CRL $fname\n";
 				return;
 			}
@@ -199,12 +209,12 @@ sub link_hash_crl {
 		}
 		$hash .= ".r$suffix";
 		if ($symlink_exists) {
-			symlink $fname, $hash;
 			print "link $fname -> $hash\n" if $verbose;
+			symlink $fname, $hash || warn "Can't symlink, $!";
 		} else {
-			system ("cp", $fname, $hash);
 			print "cp $fname -> $hash\n" if $verbose;
+			system ("cp", $fname, $hash);
+                        warn "Can't copy, $!" if ($? >> 8) != 0;
 		}
 		$hashlist{$hash} = $fprint;
 }
-

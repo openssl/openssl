@@ -23,7 +23,8 @@ I<flags...>
 =head1 DESCRIPTION
 
 On some platforms, the OpenSSL B<rehash> command is available as
-an external script called B<c_rehash>.  They are functionally equivalent.
+an external script called B<c_rehash>.  They are functionally equivalent,
+except for minor differences noted below.
 
 B<rehash> scans directories and calculates a hash value of each
 C<.pem>, C<.crt>, C<.cer>, or C<.crl>
@@ -41,12 +42,13 @@ If that is not set then the default directory (installation-specific
 but often B</usr/local/ssl/certs>) is processed.
 
 In order for a directory to be processed, the user must have write
-permissions on that directory, otherwise it will be skipped.
+permissions on that directory, otherwise an error will be generated.
+
 The links created are of the form C<HHHHHHHH.D>, where each B<H>
 is a hexadecimal character and B<D> is a single decimal digit.
 When processing a directory, B<rehash> will first remove all links
-that have a name in that syntax. If you have links in that format
-used for other purposes, they will be removed.
+that have a name in that syntax, even if they are being used for some
+other purpose.
 To skip the removal step, use the B<-n> flag.
 Hashes for CRL's look similar except the letter B<r> appears after
 the period, like this: C<HHHHHHHH.rD>.
@@ -57,9 +59,13 @@ full SHA-1 fingerprint. A warning will be displayed if a duplicate
 is found.
 
 A warning will also be displayed if there are files that
-cannot be parsed as either a certificate or a CRL.
+cannot be parsed as either a certificate or a CRL or if
+more than one such object appears in the file.
 
-The program uses the B<openssl> program to compute the hashes and
+=head2 Script Configuration
+
+The B<c_rehash> script
+uses the B<openssl> program to compute the hashes and
 fingerprints. If not found in the user's B<PATH>, then set the
 B<OPENSSL> environment variable to the full pathname.
 Any program can be used, it will be invoked as follows for either
@@ -79,8 +85,8 @@ optionally prefixed with some text and an equals sign.
 =item B<-old>
 
 Use old-style hashing (MD5, as opposed to SHA-1) for generating
-links for releases before 1.0.0.  Note that current versions will
-not use the old style.
+links to be used for releases before 1.0.0.
+Note that current versions will not use the old style.
 
 =item B<-h>
 
