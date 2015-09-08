@@ -361,6 +361,8 @@ static ERR_STRING_DATA SSL_str_functs[] = {
     {ERR_FUNC(SSL_F_TLS_GET_MESSAGE_HEADER), "tls_get_message_header"},
     {ERR_FUNC(SSL_F_TLS_POST_PROCESS_CLIENT_HELLO),
      "tls_post_process_client_hello"},
+    {ERR_FUNC(SSL_F_TLS_POST_PROCESS_CLIENT_KEY_EXCHANGE),
+     "tls_post_process_client_key_exchange"},
     {ERR_FUNC(SSL_F_TLS_PREPARE_CLIENT_CERTIFICATE),
      "tls_prepare_client_certificate"},
     {ERR_FUNC(SSL_F_TLS_PROCESS_CERTIFICATE_REQUEST),

@@ -193,6 +193,7 @@ static int ssl_check_srp_ext_ClientHello(SSL *s, int *al)
 }
 #endif
 
+#if 0
 int ssl3_accept(SSL *s)
 {
     BUF_MEM *buf;
@@ -811,6 +812,7 @@ int ssl3_accept(SSL *s)
         cb(s, SSL_CB_ACCEPT_EXIT, ret);
     return (ret);
 }
+#endif
 
 int ssl3_send_hello_request(SSL *s)
 {
@@ -2869,6 +2871,97 @@ enum MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, long n)
 #endif
     statem_set_error(s);
     return MSG_PROCESS_ERROR;
+}
+
+enum WORK_STATE tls_post_process_client_key_exchange(SSL *s,
+                                                      enum WORK_STATE wst)
+{
+
+#ifndef OPENSSL_NO_SCTP
+    if (SSL_IS_DTLS(s)) {
+        unsigned char sctpauthkey[64];
+        char labelbuffer[sizeof(DTLS1_SCTP_AUTH_LABEL)];
+        /*
+         * Add new shared key for SCTP-Auth, will be ignored if no SCTP
+         * used.
+         */
+        snprintf((char *)labelbuffer, sizeof(DTLS1_SCTP_AUTH_LABEL),
+                 DTLS1_SCTP_AUTH_LABEL);
+
+        if (SSL_export_keying_material(s, sctpauthkey,
+                                   sizeof(sctpauthkey), labelbuffer,
+                                   sizeof(labelbuffer), NULL, 0, 0) <= 0) {
+            statem_set_error(s);
+            return WORK_ERROR;;
+        }
+
+        BIO_ctrl(SSL_get_wbio(s), BIO_CTRL_DGRAM_SCTP_ADD_AUTH_KEY,
+                 sizeof(sctpauthkey), sctpauthkey);
+    }
+#endif
+
+    if (s->no_cert_verify) {
+        /* No certificate verify so we no longer need the handshake_buffer */
+        BIO_free(s->s3->handshake_buffer);
+        return WORK_FINISHED_CONTINUE;
+    } else if (SSL_USE_SIGALGS(s)) {
+        if (!s->session->peer) {
+            /* No peer certificate so we no longer need the handshake_buffer */
+            BIO_free(s->s3->handshake_buffer);
+            return WORK_FINISHED_CONTINUE;
+        }
+        if (!s->s3->handshake_buffer) {
+            SSLerr(SSL_F_TLS_POST_PROCESS_CLIENT_KEY_EXCHANGE,
+                   ERR_R_INTERNAL_ERROR);
+            statem_set_error(s);
+            return WORK_ERROR;
+        }
+        /*
+         * For sigalgs freeze the handshake buffer. If we support
+         * extms we've done this already so this is a no-op
+         */
+        if (!ssl3_digest_cached_records(s, 1)) {
+            statem_set_error(s);
+            return WORK_ERROR;
+        }
+    } else {
+        int offset = 0;
+        int dgst_num;
+
+        /*
+         * We need to get hashes here so if there is a client cert,
+         * it can be verified FIXME - digest processing for
+         * CertificateVerify should be generalized. But it is next
+         * step
+         */
+        if (!ssl3_digest_cached_records(s, 0)) {
+            statem_set_error(s);
+            return WORK_ERROR;
+        }
+        for (dgst_num = 0; dgst_num < SSL_MAX_DIGEST; dgst_num++) {
+            if (s->s3->handshake_dgst[dgst_num]) {
+                int dgst_size;
+
+                s->method->ssl3_enc->cert_verify_mac(s,
+                                                     EVP_MD_CTX_type
+                                                     (s->
+                                                      s3->handshake_dgst
+                                                      [dgst_num]),
+                                                     &(s->s3->
+                                                       tmp.cert_verify_md
+                                                       [offset]));
+                dgst_size =
+                    EVP_MD_CTX_size(s->s3->handshake_dgst[dgst_num]);
+                if (dgst_size < 0) {
+                    statem_set_error(s);
+                return WORK_ERROR;
+                }
+                offset += dgst_size;
+            }
+        }
+    }
+
+    return WORK_FINISHED_CONTINUE;
 }
 
 int ssl3_get_cert_verify(SSL *s)
