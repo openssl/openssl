@@ -1157,6 +1157,9 @@ struct ssl_st {
     struct ssl3_state_st *s3;   /* SSLv3 variables */
     struct dtls1_state_st *d1;  /* DTLSv1 variables */
 
+    /* Should we skip the CertificateVerify message? */
+    unsigned int no_cert_verify;
+
     /* callback that allows applications to peek at protocol messages */
     void (*msg_callback) (int write_p, int version, int content_type,
                           const void *buf, size_t len, SSL *ssl, void *arg);
@@ -1557,6 +1560,7 @@ typedef struct hm_fragment_st {
 typedef struct dtls1_state_st {
     unsigned char cookie[DTLS1_COOKIE_LENGTH];
     unsigned int cookie_len;
+    unsigned int cookie_verified;
 
     /* handshake message numbers */
     unsigned short handshake_write_seq;
@@ -2051,7 +2055,9 @@ __owur const SSL_CIPHER *ssl3_get_cipher_by_char(const unsigned char *p);
 __owur int ssl3_put_cipher_by_char(const SSL_CIPHER *c, unsigned char *p);
 void ssl3_init_finished_mac(SSL *s);
 __owur int ssl3_send_server_certificate(SSL *s);
+__owur int tls_construct_server_certificate(SSL *s);
 __owur int ssl3_send_newsession_ticket(SSL *s);
+__owur int tls_construct_new_session_ticket(SSL *s);
 __owur int ssl3_send_cert_status(SSL *s);
 __owur int ssl3_get_change_cipher_spec(SSL *s, int a, int b);
 __owur int ssl3_get_finished(SSL *s, int state_a, int state_b);
@@ -2193,9 +2199,13 @@ __owur enum WORK_STATE tls_post_process_client_hello(SSL *s,
                                                      enum WORK_STATE wst);
 __owur int tls_construct_server_hello(SSL *s);
 __owur int ssl3_send_hello_request(SSL *s);
+__owur int tls_construct_hello_request(SSL *s);
 __owur int ssl3_send_server_key_exchange(SSL *s);
+__owur int tls_construct_server_key_exchange(SSL *s);
 __owur int ssl3_send_certificate_request(SSL *s);
+__owur int tls_construct_certificate_request(SSL *s);
 __owur int ssl3_send_server_done(SSL *s);
+__owur int tls_construct_server_done(SSL *s);
 __owur int ssl3_get_client_certificate(SSL *s);
 __owur int ssl3_get_client_key_exchange(SSL *s);
 __owur int ssl3_get_cert_verify(SSL *s);
