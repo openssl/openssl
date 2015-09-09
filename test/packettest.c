@@ -258,11 +258,12 @@ static int test_PACKET_memdup(PACKET *pkt, size_t start)
 static int test_PACKET_strndup()
 {
     char buf[10], buf2[10];
+    char *data = NULL;
+    PACKET pkt;
+
     memset(buf, 'x', 10);
     memset(buf2, 'y', 10);
     buf2[5] = '\0';
-    char *data = NULL;
-    PACKET pkt;
 
     if (       !PACKET_buf_init(&pkt, (unsigned char*)buf, 10)
             || !PACKET_strndup(&pkt, &data)
