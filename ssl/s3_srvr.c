@@ -2226,9 +2226,8 @@ int ssl3_get_client_key_exchange(SSL *s)
     EC_POINT *clnt_ecpoint = NULL;
     BN_CTX *bn_ctx = NULL;
 #endif
-    PACKET pkt;
-    unsigned char *data;
-    size_t remain;
+    PACKET pkt, enc_premaster;
+    unsigned char *data, *rsa_decrypt = NULL;
 
     n = s->method->ssl_get_message(s,
                                    SSL3_ST_SR_KEY_EXCH_A,
@@ -2353,59 +2352,44 @@ int ssl3_get_client_key_exchange(SSL *s)
             rsa = pkey->pkey.rsa;
         }
 
-        /* TLS and [incidentally] DTLS{0xFEFF} */
-        if (s->version > SSL3_VERSION && s->version != DTLS1_BAD_VER) {
-            if (!PACKET_get_net_2(&pkt, &i)) {
-                al = SSL_AD_DECODE_ERROR;
-                SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE, SSL_R_LENGTH_MISMATCH);
-                goto f_err;
-            }
-            remain = PACKET_remaining(&pkt);
-            if (remain != i) {
-                if (!(s->options & SSL_OP_TLS_D5_BUG)) {
-                    al = SSL_AD_DECODE_ERROR;
-                    SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,
-                           SSL_R_TLS_RSA_ENCRYPTED_VALUE_LENGTH_IS_WRONG);
-                    goto f_err;
+        /* SSLv3 and pre-standard DTLS omit the length bytes. */
+        if (s->version == SSL3_VERSION || s->version == DTLS1_BAD_VER) {
+            enc_premaster = pkt;
+        } else {
+            PACKET orig = pkt;
+            if (!PACKET_get_length_prefixed_2(&pkt, &enc_premaster)
+                || PACKET_remaining(&pkt) != 0) {
+                /* Try SSLv3 behaviour for TLS. */
+                if (s->options & SSL_OP_TLS_D5_BUG) {
+                    enc_premaster = orig;
                 } else {
-                    remain += 2;
-                    if (!PACKET_back(&pkt, 2)) {
-                        /*
-                         * We already read these 2 bytes so this should never
-                         * fail
-                         */
-                        al = SSL_AD_INTERNAL_ERROR;
-                        SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,
-                               ERR_R_INTERNAL_ERROR);
-                        goto f_err;
-                    }
+                    al = SSL_AD_DECODE_ERROR;
+                    SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE, SSL_R_LENGTH_MISMATCH);
+                    goto f_err;
                 }
             }
-        } else {
-            remain = PACKET_remaining(&pkt);
         }
 
         /*
-         * Reject overly short RSA ciphertext because we want to be sure
-         * that the buffer size makes it safe to iterate over the entire
-         * size of a premaster secret (SSL_MAX_MASTER_KEY_LENGTH). The
-         * actual expected size is larger due to RSA padding, but the
-         * bound is sufficient to be safe.
+         * We want to be sure that the plaintext buffer size makes it safe to
+         * iterate over the entire size of a premaster secret
+         * (SSL_MAX_MASTER_KEY_LENGTH). Reject overly short RSA keys because
+         * their ciphertext cannot accommodate a premaster secret anyway.
          */
-
-        if (remain < SSL_MAX_MASTER_KEY_LENGTH) {
-            al = SSL_AD_DECRYPT_ERROR;
-            SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,
-                   SSL_R_TLS_RSA_ENCRYPTED_VALUE_LENGTH_IS_WRONG);
-            goto f_err;
-        }
-
-        if (!PACKET_get_bytes(&pkt, &data, remain)) {
-            /* We already checked we had enough data so this shouldn't happen */
+        if (RSA_size(rsa) < SSL_MAX_MASTER_KEY_LENGTH) {
             al = SSL_AD_INTERNAL_ERROR;
-            SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
+            SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,
+                   RSA_R_KEY_SIZE_TOO_SMALL);
             goto f_err;
         }
+
+        rsa_decrypt = OPENSSL_malloc(RSA_size(rsa));
+        if (rsa_decrypt == NULL) {
+            al = SSL_AD_INTERNAL_ERROR;
+            SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE, ERR_R_MALLOC_FAILURE);
+            goto f_err;
+        }
+
         /*
          * We must not leak whether a decryption failure occurs because of
          * Bleichenbacher's attack on PKCS #1 v1.5 RSA padding (see RFC 2246,
@@ -2415,10 +2399,13 @@ int ssl3_get_client_key_exchange(SSL *s)
          */
 
         if (RAND_bytes(rand_premaster_secret,
-                              sizeof(rand_premaster_secret)) <= 0)
+                       sizeof(rand_premaster_secret)) <= 0) {
             goto err;
-        decrypt_len =
-            RSA_private_decrypt(remain, data, data, rsa, RSA_PKCS1_PADDING);
+        }
+
+        decrypt_len = RSA_private_decrypt(PACKET_remaining(&enc_premaster),
+                                          PACKET_data(&enc_premaster),
+                                          rsa_decrypt, rsa, RSA_PKCS1_PADDING);
         ERR_clear_error();
 
         /*
@@ -2437,9 +2424,11 @@ int ssl3_get_client_key_exchange(SSL *s)
          * constant time and are treated like any other decryption error.
          */
         version_good =
-            constant_time_eq_8(data[0], (unsigned)(s->client_version >> 8));
+            constant_time_eq_8(rsa_decrypt[0],
+                               (unsigned)(s->client_version >> 8));
         version_good &=
-            constant_time_eq_8(data[1], (unsigned)(s->client_version & 0xff));
+            constant_time_eq_8(rsa_decrypt[1],
+                               (unsigned)(s->client_version & 0xff));
 
         /*
          * The premaster secret must contain the same version number as the
@@ -2453,9 +2442,10 @@ int ssl3_get_client_key_exchange(SSL *s)
         if (s->options & SSL_OP_TLS_ROLLBACK_BUG) {
             unsigned char workaround_good;
             workaround_good =
-                constant_time_eq_8(data[0], (unsigned)(s->version >> 8));
+                constant_time_eq_8(rsa_decrypt[0], (unsigned)(s->version >> 8));
             workaround_good &=
-                constant_time_eq_8(data[1], (unsigned)(s->version & 0xff));
+                constant_time_eq_8(rsa_decrypt[1],
+                                   (unsigned)(s->version & 0xff));
             version_good |= workaround_good;
         }
 
@@ -2472,16 +2462,19 @@ int ssl3_get_client_key_exchange(SSL *s)
          * it is still sufficiently large to read from.
          */
         for (j = 0; j < sizeof(rand_premaster_secret); j++) {
-            data[j] = constant_time_select_8(decrypt_good, data[j],
-                                          rand_premaster_secret[j]);
+            rsa_decrypt[j] =
+                constant_time_select_8(decrypt_good, rsa_decrypt[j],
+                                       rand_premaster_secret[j]);
         }
 
-        if (!ssl_generate_master_secret(s, data, sizeof(rand_premaster_secret),
-                                        0)) {
+        if (!ssl_generate_master_secret(s, rsa_decrypt,
+                                        sizeof(rand_premaster_secret), 0)) {
             al = SSL_AD_INTERNAL_ERROR;
             SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
             goto f_err;
         }
+        OPENSSL_free(rsa_decrypt);
+        rsa_decrypt = NULL;
     } else
 #endif
 #ifndef OPENSSL_NO_DH
@@ -2852,6 +2845,7 @@ int ssl3_get_client_key_exchange(SSL *s)
     EC_POINT_free(clnt_ecpoint);
     EC_KEY_free(srvr_ecdh);
     BN_CTX_free(bn_ctx);
+    OPENSSL_free(rsa_decrypt);
 #endif
 #ifndef OPENSSL_NO_PSK
     OPENSSL_clear_free(s->s3->tmp.psk, s->s3->tmp.psklen);
