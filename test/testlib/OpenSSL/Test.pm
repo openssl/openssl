@@ -720,7 +720,8 @@ sub __build_cmd {
 
     $saved_stderr = $opts{stderr}		if defined($opts{stderr});
 
-    my $errlog = $num ? "$test_name.$num.tmp_err" : "$test_name.tmp_err";
+    my $errlog =
+        __results_file($num ? "$test_name.$num.tmp_err" : "$test_name.tmp_err");
     my $display_cmd = "$cmd$arg_str$stdin$stdout$stderr";
     $cmd .= "$arg_str$stdin$stdout 2> $errlog";
 
