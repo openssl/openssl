@@ -73,7 +73,7 @@
 #endif
 #endif
 
-#if defined(HEADER_BN_H) && !defined(CONFIG_HEADER_BN_H)
+#if defined(HEADER_BN_H) && !defined(CONFIG_HEADER_BN_H) && !defined(OPENSSL_SYS_UEFI)
 #define CONFIG_HEADER_BN_H
 #undef BN_LLONG
 
