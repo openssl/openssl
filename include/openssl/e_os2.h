@@ -90,7 +90,13 @@ extern "C" {
  * For 32 bit environment, there seems to be the CygWin environment and then
  * all the others that try to do the same thing Microsoft does...
  */
-# if defined(OPENSSL_SYS_UWIN)
+/*
+ * UEFI lives here because it might be built with a Microsoft toolchain and
+ * we need to avoid the false positive match on Windows.
+ */
+# if defined(OPENSSL_SYS_UEFI)
+#  undef OPENSSL_SYS_UNIX
+# elif defined(OPENSSL_SYS_UWIN)
 #  undef OPENSSL_SYS_UNIX
 #  define OPENSSL_SYS_WIN32_UWIN
 # else
@@ -277,6 +283,15 @@ extern "C" {
 /* Standard integer types */
 # if defined(__osf__) || defined(__sgi) || defined(__hpux) || defined(OPENSSL_SYS_VMS)
 #  include <inttypes.h>
+# elif defined(OPENSSL_SYS_UEFI)
+typedef INT8 int8_t;
+typedef UINT8 uint8_t;
+typedef INT16 int16_t;
+typedef UINT16 uint16_t;
+typedef INT32 int32_t;
+typedef UINT32 uint32_t;
+typedef INT64 int64_t;
+typedef UINT64 uint64_t;
 # elif defined(_MSC_VER) && _MSC_VER<=1500
 /*
  * minimally required typdefs for systems not supporting inttypes.h or

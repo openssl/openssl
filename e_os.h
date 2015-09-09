@@ -112,7 +112,7 @@ extern "C" {
 #  define MSDOS
 # endif
 
-# if defined(MSDOS) && !defined(GETPID_IS_MEANINGLESS)
+# if (defined(MSDOS) || defined(OPENSSL_SYS_UEFI)) && !defined(GETPID_IS_MEANINGLESS)
 #  define GETPID_IS_MEANINGLESS
 # endif
 
