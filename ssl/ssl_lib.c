@@ -215,8 +215,6 @@ int SSL_clear(SSL *s)
         return 0;
     }
 
-    s->type = 0;
-
     statem_clear(s);
 
     s->version = s->method->version;
@@ -2469,7 +2467,6 @@ SSL *SSL_dup(SSL *s)
         return (NULL);
 
     ret->version = s->version;
-    ret->type = s->type;
     ret->method = s->method;
 
     if (s->session != NULL) {
