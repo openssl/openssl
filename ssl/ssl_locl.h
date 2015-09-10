@@ -1050,8 +1050,7 @@ struct ssl_st {
      * DTLS1_VERSION)
      */
     int version;
-    /* SSL_ST_CONNECT or SSL_ST_ACCEPT */
-    int type;
+
     /* SSLv3 */
     const SSL_METHOD *method;
     /*
@@ -1080,7 +1079,7 @@ struct ssl_st {
      * handshake_func is == 0 until then, we use this test instead of an
      * "init" member.
      */
-    /* are we the server side? - mostly used by SSL_clear */
+    /* are we the server side? */
     int server;
     /*
      * Generate a new session or reuse an old one.

@@ -356,11 +356,6 @@ static int state_machine(SSL *s, int server) {
             }
         }
 
-        if (server)
-            s->type = SSL_ST_ACCEPT;
-        else
-            s->type = SSL_ST_CONNECT;
-
         if (s->init_buf == NULL) {
             if ((buf = BUF_MEM_new()) == NULL) {
                 goto end;
