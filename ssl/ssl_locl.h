@@ -1093,7 +1093,6 @@ struct ssl_st {
     /* we have shut things down, 0x01 sent, 0x02 for received */
     int shutdown;
     /* where we are */
-    int state;
     STATEM statem;
 
     BUF_MEM *init_buf;          /* buffer used during init */
