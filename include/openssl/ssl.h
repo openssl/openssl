@@ -1985,6 +1985,7 @@ void ERR_load_SSL_strings(void);
 # define SSL_F_DTLS_CONSTRUCT_CHANGE_CIPHER_SPEC          371
 # define SSL_F_DTLS_CONSTRUCT_HELLO_VERIFY_REQUEST        385
 # define SSL_F_DTLS_GET_REASSEMBLED_MESSAGE               370
+# define SSL_F_DTLS_PROCESS_HELLO_VERIFY                  386
 # define SSL_F_READ_STATE_MACHINE                         352
 # define SSL_F_SSL3_ACCEPT                                128
 # define SSL_F_SSL3_ADD_CERT_TO_BUF                       296
@@ -2300,6 +2301,7 @@ void ERR_load_SSL_strings(void);
 # define SSL_R_INVALID_TICKET_KEYS_LENGTH                 325
 # define SSL_R_INVALID_TRUST                              279
 # define SSL_R_LENGTH_MISMATCH                            159
+# define SSL_R_LENGTH_TOO_LONG                            102
 # define SSL_R_LENGTH_TOO_SHORT                           160
 # define SSL_R_LIBRARY_BUG                                274
 # define SSL_R_LIBRARY_HAS_NO_CIPHERS                     161

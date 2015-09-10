@@ -116,8 +116,7 @@ static enum WORK_STATE client_pre_work(SSL *s, enum WORK_STATE wst);
 static enum WORK_STATE client_post_work(SSL *s, enum WORK_STATE wst);
 static int client_construct_message(SSL *s);
 static unsigned long client_max_message_size(SSL *s);
-static enum MSG_PROCESS_RETURN client_process_message(SSL *s,
-                                                      unsigned long len);
+static enum MSG_PROCESS_RETURN client_process_message(SSL *s, PACKET *pkt);
 static enum WORK_STATE client_post_process_message(SSL *s, enum WORK_STATE wst);
 static int server_read_transition(SSL *s, int mt);
 static inline int send_server_key_exchange(SSL *s);
@@ -127,7 +126,7 @@ static enum WORK_STATE server_pre_work(SSL *s, enum WORK_STATE wst);
 static enum WORK_STATE server_post_work(SSL *s, enum WORK_STATE wst);
 static int server_construct_message(SSL *s);
 static unsigned long server_max_message_size(SSL *s);
-static enum MSG_PROCESS_RETURN server_process_message(SSL *s, unsigned long len);
+static enum MSG_PROCESS_RETURN server_process_message(SSL *s, PACKET *pkt);
 static enum WORK_STATE server_post_process_message(SSL *s, enum WORK_STATE wst);
 
 
@@ -529,7 +528,8 @@ static enum SUB_STATE_RETURN read_state_machine(SSL *s) {
     int ret, mt;
     unsigned long len;
     int (*transition)(SSL *s, int mt);
-    enum MSG_PROCESS_RETURN (*process_message)(SSL *s, unsigned long n);
+    PACKET pkt;
+    enum MSG_PROCESS_RETURN (*process_message)(SSL *s, PACKET *pkt);
     enum WORK_STATE (*post_process_message)(SSL *s, enum WORK_STATE wst);
     unsigned long (*max_message_size)(SSL *s);
     void (*cb) (const SSL *ssl, int type, int val) = NULL;
@@ -612,7 +612,12 @@ static enum SUB_STATE_RETURN read_state_machine(SSL *s) {
             }
 
             s->first_packet = 0;
-            ret = process_message(s, len);
+            if (!PACKET_buf_init(&pkt, s->init_msg, len)) {
+                ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_INTERNAL_ERROR);
+                SSLerr(SSL_F_READ_STATE_MACHINE, ERR_R_INTERNAL_ERROR);
+                return SUB_STATE_ERROR;
+            }
+            ret = process_message(s, &pkt);
             if (ret == MSG_PROCESS_ERROR) {
                 return SUB_STATE_ERROR;
             }
@@ -1444,40 +1449,40 @@ static unsigned long client_max_message_size(SSL *s)
 /*
  * Process a message that the client has been received from the server.
  */
-static enum MSG_PROCESS_RETURN client_process_message(SSL *s, unsigned long len)
+static enum MSG_PROCESS_RETURN client_process_message(SSL *s, PACKET *pkt)
 {
     STATEM *st = &s->statem;
 
     switch(st->hand_state) {
         case TLS_ST_CR_SRVR_HELLO:
-            return tls_process_server_hello(s, len);
+            return tls_process_server_hello(s, pkt);
 
         case DTLS_ST_CR_HELLO_VERIFY_REQUEST:
-            return dtls_process_hello_verify(s, len);
+            return dtls_process_hello_verify(s, pkt);
 
         case TLS_ST_CR_CERT:
-            return tls_process_server_certificate(s, len);
+            return tls_process_server_certificate(s, pkt);
 
         case TLS_ST_CR_CERT_STATUS:
-            return tls_process_cert_status(s, len);
+            return tls_process_cert_status(s, pkt);
 
         case TLS_ST_CR_KEY_EXCH:
-            return tls_process_key_exchange(s, len);
+            return tls_process_key_exchange(s, pkt);
 
         case TLS_ST_CR_CERT_REQ:
-            return tls_process_certificate_request(s, len);
+            return tls_process_certificate_request(s, pkt);
 
         case TLS_ST_CR_SRVR_DONE:
-            return tls_process_server_done(s, len);
+            return tls_process_server_done(s, pkt);
 
         case TLS_ST_CR_CHANGE:
-            return tls_process_change_cipher_spec(s, len);
+            return tls_process_change_cipher_spec(s, pkt);
 
         case TLS_ST_CR_SESSION_TICKET:
-            return tls_process_new_session_ticket(s, len);
+            return tls_process_new_session_ticket(s, pkt);
 
         case TLS_ST_CR_FINISHED:
-            return tls_process_finished(s, len);
+            return tls_process_finished(s, pkt);
 
         default:
             /* Shouldn't happen */
@@ -2161,34 +2166,33 @@ static unsigned long server_max_message_size(SSL *s)
 /*
  * Process a message that the server has received from the client.
  */
-static enum MSG_PROCESS_RETURN  server_process_message(SSL *s,
-                                                       unsigned long len)
+static enum MSG_PROCESS_RETURN  server_process_message(SSL *s, PACKET *pkt)
 {
     STATEM *st = &s->statem;
 
     switch(st->hand_state) {
     case TLS_ST_SR_CLNT_HELLO:
-        return tls_process_client_hello(s, len);
+        return tls_process_client_hello(s, pkt);
 
     case TLS_ST_SR_CERT:
-        return tls_process_client_certificate(s, len);
+        return tls_process_client_certificate(s, pkt);
 
     case TLS_ST_SR_KEY_EXCH:
-        return tls_process_client_key_exchange(s, len);
+        return tls_process_client_key_exchange(s, pkt);
 
     case TLS_ST_SR_CERT_VRFY:
-        return tls_process_cert_verify(s, len);
+        return tls_process_cert_verify(s, pkt);
 
 #ifndef OPENSSL_NO_NEXTPROTONEG
     case TLS_ST_SR_NEXT_PROTO:
-        return tls_process_next_proto(s, len);
+        return tls_process_next_proto(s, pkt);
 #endif
 
     case TLS_ST_SR_CHANGE:
-        return tls_process_change_cipher_spec(s, len);
+        return tls_process_change_cipher_spec(s, pkt);
 
     case TLS_ST_SR_FINISHED:
-        return tls_process_finished(s, len);
+        return tls_process_finished(s, pkt);
 
     default:
         /* Shouldn't happen */

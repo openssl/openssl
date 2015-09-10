@@ -204,7 +204,7 @@ int tls_construct_hello_request(SSL *s)
     return 1;
 }
 
-enum MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, long n)
+enum MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
 {
     int i, al = SSL_AD_INTERNAL_ERROR;
     unsigned int j, complen = 0;
@@ -216,14 +216,8 @@ enum MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, long n)
     STACK_OF(SSL_CIPHER) *ciphers = NULL;
     int protverr = 1;
     /* |cookie| will only be initialized for DTLS. */
-    PACKET pkt, session_id, cipher_suites, compression, extensions, cookie;
+    PACKET session_id, cipher_suites, compression, extensions, cookie;
     int is_v2_record;
-
-    if (!PACKET_buf_init(&pkt, s->init_msg, n)) {
-        SSLerr(SSL_F_TLS_PROCESS_CLIENT_HELLO, ERR_R_INTERNAL_ERROR);
-        al = SSL_AD_INTERNAL_ERROR;
-        goto f_err;
-    }
 
     is_v2_record = RECORD_LAYER_is_sslv2_record(&s->rlayer);
 
@@ -247,7 +241,7 @@ enum MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, long n)
          * ...   ...
          */
 
-        if (!PACKET_get_1(&pkt, &mt)
+        if (!PACKET_get_1(pkt, &mt)
                 || mt != SSL2_MT_CLIENT_HELLO) {
             /*
              * Should never happen. We should have tested this in the record
@@ -258,7 +252,7 @@ enum MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, long n)
             goto err;
         }
 
-        if (!PACKET_get_net_2(&pkt, &version)) {
+        if (!PACKET_get_net_2(pkt, &version)) {
             /* No protocol version supplied! */
             SSLerr(SSL_F_TLS_PROCESS_CLIENT_HELLO, SSL_R_UNKNOWN_PROTOCOL);
             goto err;
@@ -280,7 +274,7 @@ enum MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, long n)
          * use version from inside client hello, not from record header (may
          * differ: see RFC 2246, Appendix E, second paragraph)
          */
-        if(!PACKET_get_net_2(&pkt, (unsigned int *)&s->client_version)) {
+        if(!PACKET_get_net_2(pkt, (unsigned int *)&s->client_version)) {
             al = SSL_AD_DECODE_ERROR;
             SSLerr(SSL_F_TLS_PROCESS_CLIENT_HELLO, SSL_R_LENGTH_TOO_SHORT);
             goto f_err;
@@ -365,20 +359,20 @@ enum MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, long n)
         unsigned int cipher_len, session_id_len, challenge_len;
         PACKET challenge;
 
-        if (!PACKET_get_net_2(&pkt, &cipher_len)
-                || !PACKET_get_net_2(&pkt, &session_id_len)
-                || !PACKET_get_net_2(&pkt, &challenge_len)) {
+        if (!PACKET_get_net_2(pkt, &cipher_len)
+                || !PACKET_get_net_2(pkt, &session_id_len)
+                || !PACKET_get_net_2(pkt, &challenge_len)) {
             SSLerr(SSL_F_TLS_PROCESS_CLIENT_HELLO,
                    SSL_R_RECORD_LENGTH_MISMATCH);
             al = SSL_AD_DECODE_ERROR;
             goto f_err;
         }
 
-        if (!PACKET_get_sub_packet(&pkt, &cipher_suites, cipher_len)
-            || !PACKET_get_sub_packet(&pkt, &session_id, session_id_len)
-            || !PACKET_get_sub_packet(&pkt, &challenge, challenge_len)
+        if (!PACKET_get_sub_packet(pkt, &cipher_suites, cipher_len)
+            || !PACKET_get_sub_packet(pkt, &session_id, session_id_len)
+            || !PACKET_get_sub_packet(pkt, &challenge, challenge_len)
             /* No extensions. */
-            || PACKET_remaining(&pkt) != 0) {
+            || PACKET_remaining(pkt) != 0) {
             SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, SSL_R_RECORD_LENGTH_MISMATCH);
             al = SSL_AD_DECODE_ERROR;
             goto f_err;
@@ -400,15 +394,15 @@ enum MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, long n)
         PACKET_null_init(&extensions);
     } else {
         /* Regular ClientHello. */
-        if (!PACKET_copy_bytes(&pkt, s->s3->client_random, SSL3_RANDOM_SIZE)
-            || !PACKET_get_length_prefixed_1(&pkt, &session_id)) {
+        if (!PACKET_copy_bytes(pkt, s->s3->client_random, SSL3_RANDOM_SIZE)
+            || !PACKET_get_length_prefixed_1(pkt, &session_id)) {
             al = SSL_AD_DECODE_ERROR;
             SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, SSL_R_LENGTH_MISMATCH);
             goto f_err;
         }
 
         if (SSL_IS_DTLS(s)) {
-            if (!PACKET_get_length_prefixed_1(&pkt, &cookie)) {
+            if (!PACKET_get_length_prefixed_1(pkt, &cookie)) {
                 al = SSL_AD_DECODE_ERROR;
                 SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, SSL_R_LENGTH_MISMATCH);
                 goto f_err;
@@ -424,14 +418,14 @@ enum MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, long n)
             }
         }
 
-        if (!PACKET_get_length_prefixed_2(&pkt, &cipher_suites)
-            || !PACKET_get_length_prefixed_1(&pkt, &compression)) {
+        if (!PACKET_get_length_prefixed_2(pkt, &cipher_suites)
+            || !PACKET_get_length_prefixed_1(pkt, &compression)) {
                 al = SSL_AD_DECODE_ERROR;
                 SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, SSL_R_LENGTH_MISMATCH);
                 goto f_err;
         }
         /* Could be empty. */
-        extensions = pkt;
+        extensions = *pkt;
     }
 
     s->hit = 0;
@@ -1497,7 +1491,7 @@ int tls_construct_certificate_request(SSL *s)
     return 0;
 }
 
-enum MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, long n)
+enum MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
 {
     int al;
     unsigned int i;
@@ -1516,14 +1510,8 @@ enum MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, long n)
     EC_POINT *clnt_ecpoint = NULL;
     BN_CTX *bn_ctx = NULL;
 #endif
-    PACKET pkt, enc_premaster;
+    PACKET enc_premaster;
     unsigned char *data, *rsa_decrypt = NULL;
-
-    if (!PACKET_buf_init(&pkt, s->init_msg, n)) {
-        al = SSL_AD_INTERNAL_ERROR;
-        SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
-        goto f_err;
-    }
 
     alg_k = s->s3->tmp.new_cipher->algorithm_mkey;
 
@@ -1532,9 +1520,9 @@ enum MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, long n)
     if (alg_k & SSL_PSK) {
         unsigned char psk[PSK_MAX_PSK_LEN];
         size_t psklen;
-	PACKET psk_identity;
+        PACKET psk_identity;
 
-        if (!PACKET_get_length_prefixed_2(&pkt, &psk_identity)) {
+        if (!PACKET_get_length_prefixed_2(pkt, &psk_identity)) {
             al = SSL_AD_DECODE_ERROR;
             SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE, SSL_R_LENGTH_MISMATCH);
             goto f_err;
@@ -1589,7 +1577,7 @@ enum MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, long n)
     }
     if (alg_k & SSL_kPSK) {
         /* Identity extracted earlier: should be nothing left */
-        if (PACKET_remaining(&pkt) != 0) {
+        if (PACKET_remaining(pkt) != 0) {
             al = SSL_AD_HANDSHAKE_FAILURE;
             SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE, SSL_R_LENGTH_MISMATCH);
             goto f_err;
@@ -1637,11 +1625,11 @@ enum MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, long n)
 
         /* SSLv3 and pre-standard DTLS omit the length bytes. */
         if (s->version == SSL3_VERSION || s->version == DTLS1_BAD_VER) {
-            enc_premaster = pkt;
+            enc_premaster = *pkt;
         } else {
-            PACKET orig = pkt;
-            if (!PACKET_get_length_prefixed_2(&pkt, &enc_premaster)
-                || PACKET_remaining(&pkt) != 0) {
+            PACKET orig = *pkt;
+            if (!PACKET_get_length_prefixed_2(pkt, &enc_premaster)
+                || PACKET_remaining(pkt) != 0) {
                 /* Try SSLv3 behaviour for TLS. */
                 if (s->options & SSL_OP_TLS_D5_BUG) {
                     enc_premaster = orig;
@@ -1764,10 +1752,10 @@ enum MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, long n)
     if (alg_k & (SSL_kDHE | SSL_kDHr | SSL_kDHd | SSL_kDHEPSK)) {
         int idx = -1;
         EVP_PKEY *skey = NULL;
-        PACKET bookmark = pkt;
+        PACKET bookmark = *pkt;
         unsigned char shared[(OPENSSL_DH_MAX_MODULUS_BITS + 7) / 8];
 
-        if (!PACKET_get_net_2(&pkt, &i)) {
+        if (!PACKET_get_net_2(pkt, &i)) {
             if (alg_k & (SSL_kDHE | SSL_kDHEPSK)) {
                 al = SSL_AD_HANDSHAKE_FAILURE;
                 SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE,
@@ -1776,14 +1764,14 @@ enum MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, long n)
             }
             i = 0;
         }
-        if (PACKET_remaining(&pkt) != i) {
+        if (PACKET_remaining(pkt) != i) {
             if (!(s->options & SSL_OP_SSLEAY_080_CLIENT_DH_BUG)) {
                 SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE,
                        SSL_R_DH_PUBLIC_VALUE_LENGTH_IS_WRONG);
                 goto err;
             } else {
-                pkt = bookmark;
-                i = PACKET_remaining(&pkt);
+                *pkt = bookmark;
+                i = PACKET_remaining(pkt);
             }
         }
         if (alg_k & SSL_kDHr)
@@ -1808,7 +1796,7 @@ enum MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, long n)
         } else
             dh_srvr = s->s3->tmp.dh;
 
-        if (n == 0L) {
+        if (PACKET_remaining(pkt) == 0L) {
             /* Get pubkey from cert */
             EVP_PKEY *clkey = X509_get_pubkey(s->session->peer);
             if (clkey) {
@@ -1824,7 +1812,7 @@ enum MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, long n)
             EVP_PKEY_free(clkey);
             pub = dh_clnt->pub_key;
         } else {
-            if (!PACKET_get_bytes(&pkt, &data, i)) {
+            if (!PACKET_get_bytes(pkt, &data, i)) {
                 /* We already checked we have enough data */
                 al = SSL_AD_INTERNAL_ERROR;
                 SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE,
@@ -1906,7 +1894,7 @@ enum MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, long n)
             goto err;
         }
 
-        if (n == 0L) {
+        if (PACKET_remaining(pkt) == 0L) {
             /* Client Publickey was in Client Certificate */
 
             if (alg_k & (SSL_kECDHE | SSL_kECDHEPSK)) {
@@ -1950,14 +1938,14 @@ enum MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, long n)
             }
 
             /* Get encoded point length */
-            if (!PACKET_get_1(&pkt, &i)) {
+            if (!PACKET_get_1(pkt, &i)) {
                 al = SSL_AD_DECODE_ERROR;
                 SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE,
                        SSL_R_LENGTH_MISMATCH);
                 goto f_err;
             }
-            if (!PACKET_get_bytes(&pkt, &data, i)
-                    || PACKET_remaining(&pkt) != 0) {
+            if (!PACKET_get_bytes(pkt, &data, i)
+                    || PACKET_remaining(pkt) != 0) {
                 SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE, ERR_R_EC_LIB);
                 goto err;
             }
@@ -2003,8 +1991,8 @@ enum MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, long n)
 #endif
 #ifndef OPENSSL_NO_SRP
     if (alg_k & SSL_kSRP) {
-        if (!PACKET_get_net_2(&pkt, &i)
-                || !PACKET_get_bytes(&pkt, &data, i)) {
+        if (!PACKET_get_net_2(pkt, &i)
+                || !PACKET_get_bytes(pkt, &data, i)) {
             al = SSL_AD_DECODE_ERROR;
             SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE, SSL_R_BAD_SRP_A_LENGTH);
             goto f_err;
@@ -2041,6 +2029,7 @@ enum MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, long n)
         unsigned long alg_a;
         int Ttag, Tclass;
         long Tlen;
+        long sess_key_len;
 
         /* Get our certificate private key */
         alg_a = s->s3->tmp.new_cipher->algorithm_auth;
@@ -2061,14 +2050,15 @@ enum MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, long n)
                 ERR_clear_error();
         }
         /* Decrypt session key */
-        if (!PACKET_get_bytes(&pkt, &data, n)) {
+        sess_key_len = PACKET_remaining(pkt);
+        if (!PACKET_get_bytes(pkt, &data, sess_key_len)) {
             al = SSL_AD_INTERNAL_ERROR;
             SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
             goto f_err;
         }
-        if (ASN1_get_object
-            ((const unsigned char **)&data, &Tlen, &Ttag, &Tclass,
-             n) != V_ASN1_CONSTRUCTED || Ttag != V_ASN1_SEQUENCE
+        if (ASN1_get_object ((const unsigned char **)&data, &Tlen, &Ttag,
+                             &Tclass, sess_key_len) != V_ASN1_CONSTRUCTED
+            || Ttag != V_ASN1_SEQUENCE
             || Tclass != V_ASN1_UNIVERSAL) {
             SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE,
                    SSL_R_DECRYPTION_FAILED);
@@ -2239,7 +2229,7 @@ enum WORK_STATE tls_post_process_client_key_exchange(SSL *s,
     return WORK_FINISHED_CONTINUE;
 }
 
-enum MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, long n)
+enum MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
 {
     EVP_PKEY *pkey = NULL;
     unsigned char *sig, *data;
@@ -2249,7 +2239,6 @@ enum MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, long n)
     X509 *peer;
     const EVP_MD *md = NULL;
     EVP_MD_CTX mctx;
-    PACKET pkt;
     EVP_MD_CTX_init(&mctx);
 
     peer = s->session->peer;
@@ -2263,24 +2252,18 @@ enum MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, long n)
         goto f_err;
     }
 
-    /* we now have a signature that we need to verify */
-    if (!PACKET_buf_init(&pkt, s->init_msg, n)) {
-        SSLerr(SSL_F_TLS_PROCESS_CERT_VERIFY, ERR_R_INTERNAL_ERROR);
-        al = SSL_AD_INTERNAL_ERROR;
-        goto f_err;
-    }
     /* Check for broken implementations of GOST ciphersuites */
     /*
      * If key is GOST and n is exactly 64, it is bare signature without
      * length field
      */
-    if (n == 64 && pkey->type == NID_id_GostR3410_2001) {
+    if (PACKET_remaining(pkt) == 64 && pkey->type == NID_id_GostR3410_2001) {
         len = 64;
     } else {
         if (SSL_USE_SIGALGS(s)) {
             int rv;
 
-            if (!PACKET_get_bytes(&pkt, &sig, 2)) {
+            if (!PACKET_get_bytes(pkt, &sig, 2)) {
                 al = SSL_AD_DECODE_ERROR;
                 goto f_err;
             }
@@ -2296,19 +2279,20 @@ enum MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, long n)
             fprintf(stderr, "USING TLSv1.2 HASH %s\n", EVP_MD_name(md));
 #endif
         }
-        if (!PACKET_get_net_2(&pkt, &len)) {
+        if (!PACKET_get_net_2(pkt, &len)) {
             SSLerr(SSL_F_TLS_PROCESS_CERT_VERIFY, SSL_R_LENGTH_MISMATCH);
             al = SSL_AD_DECODE_ERROR;
             goto f_err;
         }
     }
     j = EVP_PKEY_size(pkey);
-    if (((int)len > j) || ((int)PACKET_remaining(&pkt) > j) || (n <= 0)) {
+    if (((int)len > j) || ((int)PACKET_remaining(pkt) > j)
+            || (PACKET_remaining(pkt) == 0)) {
         SSLerr(SSL_F_TLS_PROCESS_CERT_VERIFY, SSL_R_WRONG_SIGNATURE_SIZE);
         al = SSL_AD_DECODE_ERROR;
         goto f_err;
     }
-    if (!PACKET_get_bytes(&pkt, &data, len)) {
+    if (!PACKET_get_bytes(pkt, &data, len)) {
         SSLerr(SSL_F_TLS_PROCESS_CERT_VERIFY, SSL_R_LENGTH_MISMATCH);
         al = SSL_AD_DECODE_ERROR;
         goto f_err;
@@ -2421,7 +2405,7 @@ enum MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, long n)
     return ret;
 }
 
-enum MSG_PROCESS_RETURN tls_process_client_certificate(SSL *s, long n)
+enum MSG_PROCESS_RETURN tls_process_client_certificate(SSL *s, PACKET *pkt)
 {
     int i, al, ret = MSG_PROCESS_ERROR;
     X509 *x = NULL;
@@ -2429,22 +2413,16 @@ enum MSG_PROCESS_RETURN tls_process_client_certificate(SSL *s, long n)
     const unsigned char *certstart;
     unsigned char *certbytes;
     STACK_OF(X509) *sk = NULL;
-    PACKET pkt, spkt;
-
-    if (!PACKET_buf_init(&pkt, s->init_msg, n)) {
-        al = SSL_AD_INTERNAL_ERROR;
-        SSLerr(SSL_F_TLS_PROCESS_CLIENT_CERTIFICATE, ERR_R_INTERNAL_ERROR);
-        goto f_err;
-    }
+    PACKET spkt;
 
     if ((sk = sk_X509_new_null()) == NULL) {
         SSLerr(SSL_F_TLS_PROCESS_CLIENT_CERTIFICATE, ERR_R_MALLOC_FAILURE);
         goto f_err;
     }
 
-    if (!PACKET_get_net_3(&pkt, &llen)
-            || !PACKET_get_sub_packet(&pkt, &spkt, llen)
-            || PACKET_remaining(&pkt) != 0) {
+    if (!PACKET_get_net_3(pkt, &llen)
+            || !PACKET_get_sub_packet(pkt, &spkt, llen)
+            || PACKET_remaining(pkt) != 0) {
         al = SSL_AD_DECODE_ERROR;
         SSLerr(SSL_F_TLS_PROCESS_CLIENT_CERTIFICATE, SSL_R_LENGTH_MISMATCH);
         goto f_err;
@@ -2748,19 +2726,10 @@ int tls_construct_cert_status(SSL *s)
  * tls_process_next_proto reads a Next Protocol Negotiation handshake message.
  * It sets the next_proto member in s if found
  */
-enum MSG_PROCESS_RETURN tls_process_next_proto(SSL *s, long n)
+enum MSG_PROCESS_RETURN tls_process_next_proto(SSL *s, PACKET *pkt)
 {
-    PACKET pkt, next_proto, padding;
+    PACKET next_proto, padding;
     size_t next_proto_len;
-
-    if (n < 2) {
-        goto err;               /* The body must be > 1 bytes long */
-    }
-
-    if (!PACKET_buf_init(&pkt, s->init_msg, n)) {
-        SSLerr(SSL_F_TLS_PROCESS_NEXT_PROTO, ERR_R_INTERNAL_ERROR);
-        goto err;
-    }
 
     /*-
      * The payload looks like:
@@ -2769,9 +2738,9 @@ enum MSG_PROCESS_RETURN tls_process_next_proto(SSL *s, long n)
      *   uint8 padding_len;
      *   uint8 padding[padding_len];
      */
-    if (!PACKET_get_length_prefixed_1(&pkt, &next_proto)
-        || !PACKET_get_length_prefixed_1(&pkt, &padding)
-        || PACKET_remaining(&pkt) > 0) {
+    if (!PACKET_get_length_prefixed_1(pkt, &next_proto)
+        || !PACKET_get_length_prefixed_1(pkt, &padding)
+        || PACKET_remaining(pkt) > 0) {
         SSLerr(SSL_F_TLS_PROCESS_NEXT_PROTO, SSL_R_LENGTH_MISMATCH);
         goto err;
     }
