@@ -156,22 +156,31 @@ IMPLEMENT_dtls1_meth_func(DTLS1_VERSION,
                           dtls1_get_client_method, DTLSv1_2_enc_data)
 
 
-enum MSG_PROCESS_RETURN dtls_process_hello_verify(SSL *s, unsigned long n)
+enum MSG_PROCESS_RETURN dtls_process_hello_verify(SSL *s, PACKET *pkt)
 {
     int al;
-    unsigned char *data;
     unsigned int cookie_len;
+    PACKET cookiepkt;
 
-    data = (unsigned char *)s->init_msg;
-    data += 2;
-
-    cookie_len = *(data++);
-    if (cookie_len > sizeof(s->d1->cookie)) {
-        al = SSL_AD_ILLEGAL_PARAMETER;
+    if (!PACKET_forward(pkt, 2)
+            || !PACKET_get_length_prefixed_1(pkt, &cookiepkt)) {
+        al = SSL_AD_DECODE_ERROR;
+        SSLerr(SSL_F_DTLS_PROCESS_HELLO_VERIFY, SSL_R_LENGTH_MISMATCH);
         goto f_err;
     }
 
-    memcpy(s->d1->cookie, data, cookie_len);
+    cookie_len = PACKET_remaining(&cookiepkt);
+    if (cookie_len > sizeof(s->d1->cookie)) {
+        al = SSL_AD_ILLEGAL_PARAMETER;
+        SSLerr(SSL_F_DTLS_PROCESS_HELLO_VERIFY, SSL_R_LENGTH_TOO_LONG);
+        goto f_err;
+    }
+
+    if (!PACKET_copy_bytes(&cookiepkt, s->d1->cookie, cookie_len)) {
+        al = SSL_AD_DECODE_ERROR;
+        SSLerr(SSL_F_DTLS_PROCESS_HELLO_VERIFY, SSL_R_LENGTH_MISMATCH);
+        goto f_err;
+    }
     s->d1->cookie_len = cookie_len;
 
     return MSG_PROCESS_FINISHED_READING;
