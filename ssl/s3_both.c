@@ -176,7 +176,7 @@ int tls_construct_finished(SSL *s, const char *sender, int slen)
     /*
      * Copy the finished so we can use it for renegotiation checks
      */
-    if (s->type == SSL_ST_CONNECT) {
+    if (!s->server) {
         OPENSSL_assert(i <= EVP_MAX_MD_SIZE);
         memcpy(s->s3->previous_client_finished, s->s3->tmp.finish_md, i);
         s->s3->previous_client_finished_len = i;
@@ -319,7 +319,7 @@ enum MSG_PROCESS_RETURN tls_process_finished(SSL *s, unsigned long n)
     /*
      * Copy the finished so we can use it for renegotiation checks
      */
-    if (s->type == SSL_ST_ACCEPT) {
+    if (s->server) {
         OPENSSL_assert(i <= EVP_MAX_MD_SIZE);
         memcpy(s->s3->previous_client_finished, s->s3->tmp.peer_finish_md, i);
         s->s3->previous_client_finished_len = i;
