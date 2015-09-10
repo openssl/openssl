@@ -974,21 +974,22 @@ enum HANDSHAKE_STATE {
 };
 
 /*
- * The following are the possible values for ssl->state are are used to
- * indicate where we are up to in the SSL connection establishment. The
- * macros that follow are about the only things you should need to use and
- * even then, only when using non-blocking IO. It can also be useful to work
- * out where you were when the connection failed
+ * Most of the following state values are no longer used and are defined to be
+ * the closest equivalent value in the current state machine code. Not all
+ * defines have an equivalent and are set to a dummy value (-1). SSL_ST_CONNECT
+ * and SSL_ST_ACCEPT are still in use in the definition of SSL_CB_ACCEPT_LOOP,
+ * SSL_CB_ACCEPT_EXIT, SSL_CB_CONNECT_LOOP and SSL_CB_CONNECT_EXIT.
  */
 
 # define SSL_ST_CONNECT                  0x1000
 # define SSL_ST_ACCEPT                   0x2000
+
 # define SSL_ST_MASK                     0x0FFF
-# define SSL_ST_INIT                     (SSL_ST_CONNECT|SSL_ST_ACCEPT)
-# define SSL_ST_BEFORE                   0x4000
-# define SSL_ST_OK                       0x03
-# define SSL_ST_RENEGOTIATE              (0x04|SSL_ST_INIT)
-# define SSL_ST_ERR                      0x05
+# define SSL_ST_INIT                     (-1)
+# define SSL_ST_BEFORE                   TLS_ST_BEFORE
+# define SSL_ST_OK                       TLS_ST_OK
+# define SSL_ST_RENEGOTIATE              (-1)
+# define SSL_ST_ERR                      (-1)
 
 # define SSL_CB_LOOP                     0x01
 # define SSL_CB_EXIT                     0x02

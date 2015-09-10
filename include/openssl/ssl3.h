@@ -372,110 +372,115 @@ extern "C" {
 
 /* SSLv3 */
 /*
+ * The following states are no longer used and are defined to be the closest
+ * equivalent value in the current state machine code. Not all defines have an
+ * equivalent and are set to a dummy value (-1).
+ */
+/*
  * client
  */
 /* extra state */
-# define SSL3_ST_CW_FLUSH                (0x100|SSL_ST_CONNECT)
+# define SSL3_ST_CW_FLUSH                   (-1)
 # ifndef OPENSSL_NO_SCTP
-#  define DTLS1_SCTP_ST_CW_WRITE_SOCK                     (0x310|SSL_ST_CONNECT)
-#  define DTLS1_SCTP_ST_CR_READ_SOCK                      (0x320|SSL_ST_CONNECT)
+#  define DTLS1_SCTP_ST_CW_WRITE_SOCK       (-1)
+#  define DTLS1_SCTP_ST_CR_READ_SOCK        (-1)
 # endif
 /* write to server */
-# define SSL3_ST_CW_CLNT_HELLO_A         (0x110|SSL_ST_CONNECT)
-# define SSL3_ST_CW_CLNT_HELLO_B         (0x111|SSL_ST_CONNECT)
+# define SSL3_ST_CW_CLNT_HELLO_A            TLS_ST_CW_CLNT_HELLO
+# define SSL3_ST_CW_CLNT_HELLO_B            TLS_ST_CW_CLNT_HELLO
 /* read from server */
-# define SSL3_ST_CR_SRVR_HELLO_A         (0x120|SSL_ST_CONNECT)
-# define SSL3_ST_CR_SRVR_HELLO_B         (0x121|SSL_ST_CONNECT)
-# define DTLS1_ST_CR_HELLO_VERIFY_REQUEST_A (0x126|SSL_ST_CONNECT)
-# define DTLS1_ST_CR_HELLO_VERIFY_REQUEST_B (0x127|SSL_ST_CONNECT)
-# define SSL3_ST_CR_CERT_A               (0x130|SSL_ST_CONNECT)
-# define SSL3_ST_CR_CERT_B               (0x131|SSL_ST_CONNECT)
-# define SSL3_ST_CR_KEY_EXCH_A           (0x140|SSL_ST_CONNECT)
-# define SSL3_ST_CR_KEY_EXCH_B           (0x141|SSL_ST_CONNECT)
-# define SSL3_ST_CR_CERT_REQ_A           (0x150|SSL_ST_CONNECT)
-# define SSL3_ST_CR_CERT_REQ_B           (0x151|SSL_ST_CONNECT)
-# define SSL3_ST_CR_SRVR_DONE_A          (0x160|SSL_ST_CONNECT)
-# define SSL3_ST_CR_SRVR_DONE_B          (0x161|SSL_ST_CONNECT)
+# define SSL3_ST_CR_SRVR_HELLO_A            TLS_ST_CR_SRVR_HELLO
+# define SSL3_ST_CR_SRVR_HELLO_B            TLS_ST_CR_SRVR_HELLO
+# define DTLS1_ST_CR_HELLO_VERIFY_REQUEST_A DTLS_ST_CR_HELLO_VERIFY_REQUEST
+# define DTLS1_ST_CR_HELLO_VERIFY_REQUEST_B DTLS_ST_CR_HELLO_VERIFY_REQUEST
+# define SSL3_ST_CR_CERT_A                  TLS_ST_CR_CERT
+# define SSL3_ST_CR_CERT_B                  TLS_ST_CR_CERT
+# define SSL3_ST_CR_KEY_EXCH_A              TLS_ST_CR_KEY_EXCH
+# define SSL3_ST_CR_KEY_EXCH_B              TLS_ST_CR_KEY_EXCH
+# define SSL3_ST_CR_CERT_REQ_A              TLS_ST_CR_CERT_REQ
+# define SSL3_ST_CR_CERT_REQ_B              TLS_ST_CR_CERT_REQ
+# define SSL3_ST_CR_SRVR_DONE_A             TLS_ST_CR_SRVR_DONE
+# define SSL3_ST_CR_SRVR_DONE_B             TLS_ST_CR_SRVR_DONE
 /* write to server */
-# define SSL3_ST_CW_CERT_A               (0x170|SSL_ST_CONNECT)
-# define SSL3_ST_CW_CERT_B               (0x171|SSL_ST_CONNECT)
-# define SSL3_ST_CW_CERT_C               (0x172|SSL_ST_CONNECT)
-# define SSL3_ST_CW_CERT_D               (0x173|SSL_ST_CONNECT)
-# define SSL3_ST_CW_KEY_EXCH_A           (0x180|SSL_ST_CONNECT)
-# define SSL3_ST_CW_KEY_EXCH_B           (0x181|SSL_ST_CONNECT)
-# define SSL3_ST_CW_CERT_VRFY_A          (0x190|SSL_ST_CONNECT)
-# define SSL3_ST_CW_CERT_VRFY_B          (0x191|SSL_ST_CONNECT)
-# define SSL3_ST_CW_CHANGE_A             (0x1A0|SSL_ST_CONNECT)
-# define SSL3_ST_CW_CHANGE_B             (0x1A1|SSL_ST_CONNECT)
+# define SSL3_ST_CW_CERT_A                  TLS_ST_CW_CERT
+# define SSL3_ST_CW_CERT_B                  TLS_ST_CW_CERT
+# define SSL3_ST_CW_CERT_C                  TLS_ST_CW_CERT
+# define SSL3_ST_CW_CERT_D                  TLS_ST_CW_CERT
+# define SSL3_ST_CW_KEY_EXCH_A              TLS_ST_CW_KEY_EXCH
+# define SSL3_ST_CW_KEY_EXCH_B              TLS_ST_CW_KEY_EXCH
+# define SSL3_ST_CW_CERT_VRFY_A             TLS_ST_CW_CERT_VRFY
+# define SSL3_ST_CW_CERT_VRFY_B             TLS_ST_CW_CERT_VRFY
+# define SSL3_ST_CW_CHANGE_A                TLS_ST_CW_CHANGE
+# define SSL3_ST_CW_CHANGE_B                TLS_ST_CW_CHANGE
 # ifndef OPENSSL_NO_NEXTPROTONEG
-#  define SSL3_ST_CW_NEXT_PROTO_A         (0x200|SSL_ST_CONNECT)
-#  define SSL3_ST_CW_NEXT_PROTO_B         (0x201|SSL_ST_CONNECT)
+#  define SSL3_ST_CW_NEXT_PROTO_A           TLS_ST_CW_NEXT_PROTO
+#  define SSL3_ST_CW_NEXT_PROTO_B           TLS_ST_CW_NEXT_PROTO
 # endif
-# define SSL3_ST_CW_FINISHED_A           (0x1B0|SSL_ST_CONNECT)
-# define SSL3_ST_CW_FINISHED_B           (0x1B1|SSL_ST_CONNECT)
+# define SSL3_ST_CW_FINISHED_A              TLS_ST_CW_FINISHED
+# define SSL3_ST_CW_FINISHED_B              TLS_ST_CW_FINISHED
 /* read from server */
-# define SSL3_ST_CR_CHANGE_A             (0x1C0|SSL_ST_CONNECT)
-# define SSL3_ST_CR_CHANGE_B             (0x1C1|SSL_ST_CONNECT)
-# define SSL3_ST_CR_FINISHED_A           (0x1D0|SSL_ST_CONNECT)
-# define SSL3_ST_CR_FINISHED_B           (0x1D1|SSL_ST_CONNECT)
-# define SSL3_ST_CR_SESSION_TICKET_A     (0x1E0|SSL_ST_CONNECT)
-# define SSL3_ST_CR_SESSION_TICKET_B     (0x1E1|SSL_ST_CONNECT)
-# define SSL3_ST_CR_CERT_STATUS_A        (0x1F0|SSL_ST_CONNECT)
-# define SSL3_ST_CR_CERT_STATUS_B        (0x1F1|SSL_ST_CONNECT)
+# define SSL3_ST_CR_CHANGE_A                TLS_ST_CR_CHANGE
+# define SSL3_ST_CR_CHANGE_B                TLS_ST_CR_CHANGE
+# define SSL3_ST_CR_FINISHED_A              TLS_ST_CR_FINISHED
+# define SSL3_ST_CR_FINISHED_B              TLS_ST_CR_FINISHED
+# define SSL3_ST_CR_SESSION_TICKET_A        TLS_ST_CR_SESSION_TICKET
+# define SSL3_ST_CR_SESSION_TICKET_B        TLS_ST_CR_SESSION_TICKET
+# define SSL3_ST_CR_CERT_STATUS_A           TLS_ST_CR_CERT_STATUS
+# define SSL3_ST_CR_CERT_STATUS_B           TLS_ST_CR_CERT_STATUS
 
 /* server */
 /* extra state */
-# define SSL3_ST_SW_FLUSH                (0x100|SSL_ST_ACCEPT)
+# define SSL3_ST_SW_FLUSH                   (-1)
 # ifndef OPENSSL_NO_SCTP
-#  define DTLS1_SCTP_ST_SW_WRITE_SOCK                     (0x310|SSL_ST_ACCEPT)
-#  define DTLS1_SCTP_ST_SR_READ_SOCK                      (0x320|SSL_ST_ACCEPT)
+#  define DTLS1_SCTP_ST_SW_WRITE_SOCK       (-1)
+#  define DTLS1_SCTP_ST_SR_READ_SOCK        (-1)
 # endif
 /* read from client */
 /* Do not change the number values, they do matter */
-# define SSL3_ST_SR_CLNT_HELLO_A         (0x110|SSL_ST_ACCEPT)
-# define SSL3_ST_SR_CLNT_HELLO_B         (0x111|SSL_ST_ACCEPT)
-# define SSL3_ST_SR_CLNT_HELLO_C         (0x112|SSL_ST_ACCEPT)
-# define SSL3_ST_SR_CLNT_HELLO_D         (0x115|SSL_ST_ACCEPT)
+# define SSL3_ST_SR_CLNT_HELLO_A            TLS_ST_SR_CLNT_HELLO
+# define SSL3_ST_SR_CLNT_HELLO_B            TLS_ST_SR_CLNT_HELLO
+# define SSL3_ST_SR_CLNT_HELLO_C            TLS_ST_SR_CLNT_HELLO
+# define SSL3_ST_SR_CLNT_HELLO_D            TLS_ST_SR_CLNT_HELLO
 /* write to client */
-# define DTLS1_ST_SW_HELLO_VERIFY_REQUEST_A (0x113|SSL_ST_ACCEPT)
-# define DTLS1_ST_SW_HELLO_VERIFY_REQUEST_B (0x114|SSL_ST_ACCEPT)
-# define SSL3_ST_SW_HELLO_REQ_A          (0x120|SSL_ST_ACCEPT)
-# define SSL3_ST_SW_HELLO_REQ_B          (0x121|SSL_ST_ACCEPT)
-# define SSL3_ST_SW_HELLO_REQ_C          (0x122|SSL_ST_ACCEPT)
-# define SSL3_ST_SW_SRVR_HELLO_A         (0x130|SSL_ST_ACCEPT)
-# define SSL3_ST_SW_SRVR_HELLO_B         (0x131|SSL_ST_ACCEPT)
-# define SSL3_ST_SW_CERT_A               (0x140|SSL_ST_ACCEPT)
-# define SSL3_ST_SW_CERT_B               (0x141|SSL_ST_ACCEPT)
-# define SSL3_ST_SW_KEY_EXCH_A           (0x150|SSL_ST_ACCEPT)
-# define SSL3_ST_SW_KEY_EXCH_B           (0x151|SSL_ST_ACCEPT)
-# define SSL3_ST_SW_CERT_REQ_A           (0x160|SSL_ST_ACCEPT)
-# define SSL3_ST_SW_CERT_REQ_B           (0x161|SSL_ST_ACCEPT)
-# define SSL3_ST_SW_SRVR_DONE_A          (0x170|SSL_ST_ACCEPT)
-# define SSL3_ST_SW_SRVR_DONE_B          (0x171|SSL_ST_ACCEPT)
+# define DTLS1_ST_SW_HELLO_VERIFY_REQUEST_A DTLS_ST_SW_HELLO_VERIFY_REQUEST
+# define DTLS1_ST_SW_HELLO_VERIFY_REQUEST_B DTLS_ST_SW_HELLO_VERIFY_REQUEST
+# define SSL3_ST_SW_HELLO_REQ_A             TLS_ST_SW_HELLO_REQ
+# define SSL3_ST_SW_HELLO_REQ_B             TLS_ST_SW_HELLO_REQ
+# define SSL3_ST_SW_HELLO_REQ_C             TLS_ST_SW_HELLO_REQ
+# define SSL3_ST_SW_SRVR_HELLO_A            TLS_ST_SW_SRVR_HELLO
+# define SSL3_ST_SW_SRVR_HELLO_B            TLS_ST_SW_SRVR_HELLO
+# define SSL3_ST_SW_CERT_A                  TLS_ST_SW_CERT
+# define SSL3_ST_SW_CERT_B                  TLS_ST_SW_CERT
+# define SSL3_ST_SW_KEY_EXCH_A              TLS_ST_SW_KEY_EXCH
+# define SSL3_ST_SW_KEY_EXCH_B              TLS_ST_SW_KEY_EXCH
+# define SSL3_ST_SW_CERT_REQ_A              TLS_ST_SW_CERT_REQ
+# define SSL3_ST_SW_CERT_REQ_B              TLS_ST_SW_CERT_REQ
+# define SSL3_ST_SW_SRVR_DONE_A             TLS_ST_SW_SRVR_DONE
+# define SSL3_ST_SW_SRVR_DONE_B             TLS_ST_SW_SRVR_DONE
 /* read from client */
-# define SSL3_ST_SR_CERT_A               (0x180|SSL_ST_ACCEPT)
-# define SSL3_ST_SR_CERT_B               (0x181|SSL_ST_ACCEPT)
-# define SSL3_ST_SR_KEY_EXCH_A           (0x190|SSL_ST_ACCEPT)
-# define SSL3_ST_SR_KEY_EXCH_B           (0x191|SSL_ST_ACCEPT)
-# define SSL3_ST_SR_CERT_VRFY_A          (0x1A0|SSL_ST_ACCEPT)
-# define SSL3_ST_SR_CERT_VRFY_B          (0x1A1|SSL_ST_ACCEPT)
-# define SSL3_ST_SR_CHANGE_A             (0x1B0|SSL_ST_ACCEPT)
-# define SSL3_ST_SR_CHANGE_B             (0x1B1|SSL_ST_ACCEPT)
+# define SSL3_ST_SR_CERT_A                  TLS_ST_SR_CERT
+# define SSL3_ST_SR_CERT_B                  TLS_ST_SR_CERT
+# define SSL3_ST_SR_KEY_EXCH_A              TLS_ST_SR_KEY_EXCH
+# define SSL3_ST_SR_KEY_EXCH_B              TLS_ST_SR_KEY_EXCH
+# define SSL3_ST_SR_CERT_VRFY_A             TLS_ST_SR_CERT_VRFY
+# define SSL3_ST_SR_CERT_VRFY_B             TLS_ST_SR_CERT_VRFY
+# define SSL3_ST_SR_CHANGE_A                TLS_ST_SR_CHANGE
+# define SSL3_ST_SR_CHANGE_B                TLS_ST_SR_CHANGE
 # ifndef OPENSSL_NO_NEXTPROTONEG
-#  define SSL3_ST_SR_NEXT_PROTO_A         (0x210|SSL_ST_ACCEPT)
-#  define SSL3_ST_SR_NEXT_PROTO_B         (0x211|SSL_ST_ACCEPT)
+#  define SSL3_ST_SR_NEXT_PROTO_A           TLS_ST_SR_NEXT_PROTO
+#  define SSL3_ST_SR_NEXT_PROTO_B           TLS_ST_SR_NEXT_PROTO
 # endif
-# define SSL3_ST_SR_FINISHED_A           (0x1C0|SSL_ST_ACCEPT)
-# define SSL3_ST_SR_FINISHED_B           (0x1C1|SSL_ST_ACCEPT)
+# define SSL3_ST_SR_FINISHED_A              TLS_ST_SR_FINISHED
+# define SSL3_ST_SR_FINISHED_B              TLS_ST_SR_FINISHED
 /* write to client */
-# define SSL3_ST_SW_CHANGE_A             (0x1D0|SSL_ST_ACCEPT)
-# define SSL3_ST_SW_CHANGE_B             (0x1D1|SSL_ST_ACCEPT)
-# define SSL3_ST_SW_FINISHED_A           (0x1E0|SSL_ST_ACCEPT)
-# define SSL3_ST_SW_FINISHED_B           (0x1E1|SSL_ST_ACCEPT)
-# define SSL3_ST_SW_SESSION_TICKET_A     (0x1F0|SSL_ST_ACCEPT)
-# define SSL3_ST_SW_SESSION_TICKET_B     (0x1F1|SSL_ST_ACCEPT)
-# define SSL3_ST_SW_CERT_STATUS_A        (0x200|SSL_ST_ACCEPT)
-# define SSL3_ST_SW_CERT_STATUS_B        (0x201|SSL_ST_ACCEPT)
+# define SSL3_ST_SW_CHANGE_A                TLS_ST_SW_CHANGE
+# define SSL3_ST_SW_CHANGE_B                TLS_ST_SW_CHANGE
+# define SSL3_ST_SW_FINISHED_A              TLS_ST_SW_FINISHED
+# define SSL3_ST_SW_FINISHED_B              TLS_ST_SW_FINISHED
+# define SSL3_ST_SW_SESSION_TICKET_A        TLS_ST_SW_SESSION_TICKET
+# define SSL3_ST_SW_SESSION_TICKET_B        TLS_ST_SW_SESSION_TICKET
+# define SSL3_ST_SW_CERT_STATUS_A           TLS_ST_SW_CERT_STATUS
+# define SSL3_ST_SW_CERT_STATUS_B           TLS_ST_SW_CERT_STATUS
 
 # define SSL3_MT_HELLO_REQUEST                   0
 # define SSL3_MT_CLIENT_HELLO                    1
