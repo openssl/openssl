@@ -12,7 +12,7 @@
  To install OpenSSL, you will need:
 
   * make
-  * Perl 5
+  * Perl 5 with core modules (see 'Note on Perl' further down)
   * an ANSI C compiler
   * a development environment in form of development libraries and C
     header files
@@ -285,6 +285,26 @@
      while the header files still are able to #include each other
      with names of the form <foo.h>.
 
+
+ Note on Perl
+ ------------
+
+ For our scripts, we rely quite a bit on Perl, and increasingly on
+ some core Perl modules.  These Perl modules are part of the Perl
+ source, so if you build Perl on your own, you should be set.
+
+ However, if you install Perl as binary packages, the outcome might
+ differ, and you may have to check that you do get the core modules
+ installed properly.  We do not claim to know them all, but experience
+ has told us the following:
+
+ - on Linux distributions based on Debian, the package 'perl' will
+   install the core Perl modules as well, so you will be fine.
+ - on Linux distributions based on RPMs, you will need to install
+   'perl-core' rather than just 'perl'.
+
+ It is highly recommended that you have at least Perl version 5.12
+ installed.
 
  Note on multi-threading
  -----------------------
