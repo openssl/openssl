@@ -315,7 +315,7 @@ static int do_dir(const char *dirname, enum Hash h)
 
     if (app_access(dirname, W_OK) < 0) {
         BIO_printf(bio_err, "Skipping %s, can't write\n", dirname);
-        return 0;
+        return 1;
     }
     buflen = strlen(dirname);
     pathsep = (buflen && dirname[buflen - 1] == '/') ? "" : "/";
