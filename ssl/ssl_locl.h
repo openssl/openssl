@@ -568,8 +568,6 @@ struct ssl_method_st {
     int (*ssl_shutdown) (SSL *s);
     int (*ssl_renegotiate) (SSL *s);
     int (*ssl_renegotiate_check) (SSL *s);
-    long (*ssl_get_message) (SSL *s, int st1, int stn, int mt, long
-                             max, int *ok);
     int (*ssl_read_bytes) (SSL *s, int type, int *recvd_type,
                            unsigned char *buf, int len, int peek);
     int (*ssl_write_bytes) (SSL *s, int type, const void *buf_, int len);
@@ -1831,7 +1829,6 @@ const SSL_METHOD *func_name(void)  \
                 ssl3_shutdown, \
                 ssl3_renegotiate, \
                 ssl3_renegotiate_check, \
-                NULL /*TODO: Fix this */, \
                 ssl3_read_bytes, \
                 ssl3_write_bytes, \
                 ssl3_dispatch_alert, \
@@ -1868,7 +1865,6 @@ const SSL_METHOD *func_name(void)  \
                 ssl3_shutdown, \
                 ssl3_renegotiate, \
                 ssl3_renegotiate_check, \
-                NULL /*TODO: Fix this */, \
                 ssl3_read_bytes, \
                 ssl3_write_bytes, \
                 ssl3_dispatch_alert, \
@@ -1906,7 +1902,6 @@ const SSL_METHOD *func_name(void)  \
                 dtls1_shutdown, \
                 ssl3_renegotiate, \
                 ssl3_renegotiate_check, \
-                NULL /*TODO: fix this */, \
                 dtls1_read_bytes, \
                 dtls1_write_app_data_bytes, \
                 dtls1_dispatch_alert, \
