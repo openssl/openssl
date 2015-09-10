@@ -25,6 +25,8 @@ Requirements:
 
 To build and install OpenSSL, you will need:
 
+ * Perl 5 with core modules.  If you don't want to build it yourself,
+   we suggest you look here: http://sourceforge.net/projects/vmsperlkit/files/
  * DEC C or some other ANSI C compiler.  VAX C is *not* supported.
    [Note: OpenSSL has only been tested with DEC C.  Compiling with 
     a different ANSI C compiler may require some work]
