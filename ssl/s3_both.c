@@ -224,26 +224,29 @@ static void ssl3_take_mac(SSL *s)
 }
 #endif
 
-enum MSG_PROCESS_RETURN tls_process_change_cipher_spec(SSL *s, long n)
+enum MSG_PROCESS_RETURN tls_process_change_cipher_spec(SSL *s, PACKET *pkt)
 {
     int al;
-
+    long remain;
+    
+    remain = PACKET_remaining(pkt);
     /*
      * 'Change Cipher Spec' is just a single byte, which should already have
      * been consumed by ssl_get_message() so there should be no bytes left,
      * unless we're using DTLS1_BAD_VER, which has an extra 2 bytes
      */
     if (SSL_IS_DTLS(s)) {
-        if ((s->version == DTLS1_BAD_VER && n != DTLS1_CCS_HEADER_LENGTH + 1)
+        if ((s->version == DTLS1_BAD_VER
+                        && remain != DTLS1_CCS_HEADER_LENGTH + 1)
                     || (s->version != DTLS1_BAD_VER
-                        && n != DTLS1_CCS_HEADER_LENGTH - 1)) {
+                        && remain != DTLS1_CCS_HEADER_LENGTH - 1)) {
                 al = SSL_AD_ILLEGAL_PARAMETER;
                 SSLerr(SSL_F_TLS_PROCESS_CHANGE_CIPHER_SPEC,
                        SSL_R_BAD_CHANGE_CIPHER_SPEC);
                 goto f_err;
         }
     } else {
-        if (n != 0) {
+        if (remain != 0) {
             al = SSL_AD_ILLEGAL_PARAMETER;
             SSLerr(SSL_F_TLS_PROCESS_CHANGE_CIPHER_SPEC,
                    SSL_R_BAD_CHANGE_CIPHER_SPEC);
@@ -288,10 +291,9 @@ enum MSG_PROCESS_RETURN tls_process_change_cipher_spec(SSL *s, long n)
     return MSG_PROCESS_ERROR;
 }
 
-enum MSG_PROCESS_RETURN tls_process_finished(SSL *s, unsigned long n)
+enum MSG_PROCESS_RETURN tls_process_finished(SSL *s, PACKET *pkt)
 {
     int al, i;
-    unsigned char *p;
 
     /* If this occurs, we have missed a message */
     if (!s->s3->change_cipher_spec) {
@@ -301,16 +303,15 @@ enum MSG_PROCESS_RETURN tls_process_finished(SSL *s, unsigned long n)
     }
     s->s3->change_cipher_spec = 0;
 
-    p = (unsigned char *)s->init_msg;
     i = s->s3->tmp.peer_finish_md_len;
 
-    if (i < 0 || (unsigned long)i != n) {
+    if (i < 0 || (unsigned long)i != PACKET_remaining(pkt)) {
         al = SSL_AD_DECODE_ERROR;
         SSLerr(SSL_F_TLS_PROCESS_FINISHED, SSL_R_BAD_DIGEST_LENGTH);
         goto f_err;
     }
 
-    if (CRYPTO_memcmp(p, s->s3->tmp.peer_finish_md, i) != 0) {
+    if (CRYPTO_memcmp(PACKET_data(pkt), s->s3->tmp.peer_finish_md, i) != 0) {
         al = SSL_AD_DECRYPT_ERROR;
         SSLerr(SSL_F_TLS_PROCESS_FINISHED, SSL_R_DIGEST_CHECK_FAILED);
         goto f_err;

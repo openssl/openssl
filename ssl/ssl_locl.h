@@ -2003,8 +2003,9 @@ void ssl3_init_finished_mac(SSL *s);
 __owur int tls_construct_server_certificate(SSL *s);
 __owur int tls_construct_new_session_ticket(SSL *s);
 __owur int tls_construct_cert_status(SSL *s);
-__owur enum MSG_PROCESS_RETURN tls_process_change_cipher_spec(SSL *s, long n);
-__owur enum MSG_PROCESS_RETURN tls_process_finished(SSL *s, unsigned long n);
+__owur enum MSG_PROCESS_RETURN tls_process_change_cipher_spec(SSL *s,
+                                                              PACKET *pkt);
+__owur enum MSG_PROCESS_RETURN tls_process_finished(SSL *s, PACKET *pkt);
 __owur int ssl3_setup_key_block(SSL *s);
 __owur int tls_construct_change_cipher_spec(SSL *s);
 __owur int dtls_construct_change_cipher_spec(SSL *s);
@@ -2106,13 +2107,13 @@ void dtls1_hm_fragment_free(hm_fragment *frag);
 /* some client-only functions */
 __owur int tls_construct_client_hello(SSL *s);
 __owur enum MSG_PROCESS_RETURN tls_process_server_hello(SSL *s,
-                                                        unsigned long n);
+                                                        PACKET *pkt);
 __owur enum MSG_PROCESS_RETURN tls_process_certificate_request(SSL *s,
-                                                               unsigned long n);
+                                                               PACKET *pkt);
 __owur enum MSG_PROCESS_RETURN tls_process_new_session_ticket(SSL *s,
-                                                              unsigned long n);
-__owur enum MSG_PROCESS_RETURN tls_process_cert_status(SSL *s, unsigned long n);
-__owur enum MSG_PROCESS_RETURN tls_process_server_done(SSL *s, unsigned long n);
+                                                              PACKET *pkt);
+__owur enum MSG_PROCESS_RETURN tls_process_cert_status(SSL *s, PACKET *pkt);
+__owur enum MSG_PROCESS_RETURN tls_process_server_done(SSL *s, PACKET *pkt);
 __owur int tls_construct_client_verify(SSL *s);
 __owur enum WORK_STATE tls_prepare_client_certificate(SSL *s,
                                                       enum WORK_STATE wst);
@@ -2121,18 +2122,17 @@ __owur int ssl_do_client_cert_cb(SSL *s, X509 **px509, EVP_PKEY **ppkey);
 __owur int tls_construct_client_key_exchange(SSL *s);
 __owur int tls_client_key_exchange_post_work(SSL *s);
 __owur enum MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s,
-                                                        unsigned long n);
+                                                        PACKET *pkt);
 __owur enum MSG_PROCESS_RETURN tls_process_server_certificate(SSL *s,
-                                                              unsigned long n);
+                                                              PACKET *pkt);
 __owur int ssl3_check_cert_and_algorithm(SSL *s);
 #  ifndef OPENSSL_NO_NEXTPROTONEG
 __owur int tls_construct_next_proto(SSL *s);
 #  endif
-__owur enum MSG_PROCESS_RETURN dtls_process_hello_verify(SSL *s,
-                                                         unsigned long n);
+__owur enum MSG_PROCESS_RETURN dtls_process_hello_verify(SSL *s, PACKET *pkt);
 
 /* some server-only functions */
-__owur enum MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, long n);
+__owur enum MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt);
 __owur enum WORK_STATE tls_post_process_client_hello(SSL *s,
                                                      enum WORK_STATE wst);
 __owur int tls_construct_server_hello(SSL *s);
@@ -2141,13 +2141,15 @@ __owur int dtls_construct_hello_verify_request(SSL *s);
 __owur int tls_construct_server_key_exchange(SSL *s);
 __owur int tls_construct_certificate_request(SSL *s);
 __owur int tls_construct_server_done(SSL *s);
-__owur enum MSG_PROCESS_RETURN tls_process_client_certificate(SSL *s, long n);
-__owur enum MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, long n);
+__owur enum MSG_PROCESS_RETURN tls_process_client_certificate(SSL *s,
+                                                              PACKET *pkt);
+__owur enum MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s,
+                                                               PACKET *pkt);
 __owur enum WORK_STATE tls_post_process_client_key_exchange(SSL *s,
     enum WORK_STATE wst);
-__owur enum MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, long n);
+__owur enum MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt);
 #  ifndef OPENSSL_NO_NEXTPROTONEG
-__owur enum MSG_PROCESS_RETURN tls_process_next_proto(SSL *s, long n);
+__owur enum MSG_PROCESS_RETURN tls_process_next_proto(SSL *s, PACKET *pkt);
 #  endif
 
 __owur int tls1_new(SSL *s);
