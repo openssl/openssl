@@ -6,6 +6,7 @@
 my $dir;
 my $prefix;
 
+my $errorcount = 0;
 my $openssl = $ENV{OPENSSL} || "openssl";
 my $pwd;
 my $x509hash = "-subject_hash";
@@ -89,9 +90,11 @@ foreach (@dirlist) {
 		hash_dir($_);
             } else {
                 print "Skipping $_, can't write\n";
+                $errorcount++;
             }
 	}
 }
+exit($errorcount);
 
 sub hash_dir {
 	my %hashlist;
