@@ -2567,6 +2567,11 @@ static int www_body(char *hostname, int s, int stype, unsigned char *context)
 #ifdef RENEG
     int total_bytes = 0;
 #endif
+    int width;
+    fd_set readfds;
+
+    /* Set width for a select call if needed */
+    width = s + 1;
 
     buf = app_malloc(bufsize, "server www buffer");
     io = BIO_new(BIO_f_buffer());
@@ -2684,6 +2689,7 @@ static int www_body(char *hostname, int s, int stype, unsigned char *context)
                                    NULL);
                 i = SSL_renegotiate(con);
                 BIO_printf(bio_s_out, "SSL_renegotiate -> %d\n", i);
+                /* Send the HelloRequest */
                 i = SSL_do_handshake(con);
                 if (i <= 0) {
                     BIO_printf(bio_s_out, "SSL_do_handshake() Retval %d\n",
@@ -2691,16 +2697,22 @@ static int www_body(char *hostname, int s, int stype, unsigned char *context)
                     ERR_print_errors(bio_err);
                     goto err;
                 }
-                /* EVIL HACK! */
-                SSL_set_state(con, SSL_ST_ACCEPT);
-                i = SSL_do_handshake(con);
-                BIO_printf(bio_s_out, "SSL_do_handshake -> %d\n", i);
-                if (i <= 0) {
-                    BIO_printf(bio_s_out, "SSL_do_handshake() Retval %d\n",
-                               SSL_get_error(con, i));
+                /* Wait for a ClientHello to come back */
+                FD_ZERO(&readfds);
+                openssl_fdset(s, &readfds);
+                i = select(width, (void *)&readfds, NULL, NULL, NULL);
+                if (i <= 0 || !FD_ISSET(s, &readfds)) {
+                    BIO_printf(bio_s_out, "Error waiting for client response\n");
                     ERR_print_errors(bio_err);
                     goto err;
                 }
+                /*
+                 * We're not acutally expecting any data here and we ignore
+                 * any that is sent. This is just to force the handshake that
+                 * we're expecting to come from the client. If they haven't
+                 * sent one there's not much we can do.
+                 */
+                BIO_gets(io, buf, bufsize - 1);
             }
 
             BIO_puts(io,
