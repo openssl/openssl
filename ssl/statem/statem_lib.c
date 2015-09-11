@@ -1,4 +1,4 @@
-/* ssl/s3_both.c */
+/* ssl/statem/statem_lib.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -117,7 +117,7 @@
 #include <limits.h>
 #include <string.h>
 #include <stdio.h>
-#include "ssl_locl.h"
+#include "../ssl_locl.h"
 #include <openssl/buffer.h>
 #include <openssl/rand.h>
 #include <openssl/objects.h>
@@ -410,13 +410,13 @@ enum WORK_STATE tls_finish_handshake(SSL *s, enum WORK_STATE wst)
             ssl_update_cache(s, SSL_SESS_CACHE_SERVER);
 
             s->ctx->stats.sess_accept_good++;
-            s->handshake_func = ssl3_accept;
+            s->handshake_func = statem_accept;
         } else {
             ssl_update_cache(s, SSL_SESS_CACHE_CLIENT);
             if (s->hit)
                 s->ctx->stats.sess_hit++;
 
-            s->handshake_func = ssl3_connect;
+            s->handshake_func = statem_connect;
             s->ctx->stats.sess_connect_good++;
         }
 

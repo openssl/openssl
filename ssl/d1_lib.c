@@ -60,6 +60,7 @@
 #include <stdio.h>
 #define USE_SOCKETS
 #include <openssl/objects.h>
+#include <openssl/rand.h>
 #include "ssl_locl.h"
 
 #if defined(OPENSSL_SYS_VMS)
@@ -76,6 +77,9 @@ static void get_current_time(struct timeval *t);
 static int dtls1_set_handshake_header(SSL *s, int type, unsigned long len);
 static int dtls1_handshake_write(SSL *s);
 int dtls1_listen(SSL *s, struct sockaddr *client);
+
+/* XDTLS:  figure out the right values */
+static const unsigned int g_probable_mtu[] = { 1500, 512, 256 };
 
 const SSL3_ENC_METHOD DTLSv1_enc_data = {
     tls1_enc,
@@ -762,8 +766,8 @@ int dtls1_listen(SSL *s, struct sockaddr *client)
             }
 
             p = &buf[DTLS1_RT_HEADER_LENGTH];
-            msglen = dtls1_raw_hello_verify_request(p + DTLS1_HM_HEADER_LENGTH,
-                                                    cookie, cookielen);
+            msglen = dtls_raw_hello_verify_request(p + DTLS1_HM_HEADER_LENGTH,
+                                                   cookie, cookielen);
 
             *p++ = DTLS1_MT_HELLO_VERIFY_REQUEST;
 
@@ -904,4 +908,237 @@ static int dtls1_set_handshake_header(SSL *s, int htype, unsigned long len)
 static int dtls1_handshake_write(SSL *s)
 {
     return dtls1_do_write(s, SSL3_RT_HANDSHAKE);
+}
+
+#ifndef OPENSSL_NO_HEARTBEATS
+int dtls1_process_heartbeat(SSL *s, unsigned char *p, unsigned int length)
+{
+    unsigned char *pl;
+    unsigned short hbtype;
+    unsigned int payload;
+    unsigned int padding = 16;  /* Use minimum padding */
+
+    if (s->msg_callback)
+        s->msg_callback(0, s->version, TLS1_RT_HEARTBEAT,
+                        p, length, s, s->msg_callback_arg);
+
+    /* Read type and payload length first */
+    if (1 + 2 + 16 > length)
+        return 0;               /* silently discard */
+    if (length > SSL3_RT_MAX_PLAIN_LENGTH)
+        return 0;               /* silently discard per RFC 6520 sec. 4 */
+
+    hbtype = *p++;
+    n2s(p, payload);
+    if (1 + 2 + payload + 16 > length)
+        return 0;               /* silently discard per RFC 6520 sec. 4 */
+    pl = p;
+
+    if (hbtype == TLS1_HB_REQUEST) {
+        unsigned char *buffer, *bp;
+        unsigned int write_length = 1 /* heartbeat type */  +
+            2 /* heartbeat length */  +
+            payload + padding;
+        int r;
+
+        if (write_length > SSL3_RT_MAX_PLAIN_LENGTH)
+            return 0;
+
+        /*
+         * Allocate memory for the response, size is 1 byte message type,
+         * plus 2 bytes payload length, plus payload, plus padding
+         */
+        buffer = OPENSSL_malloc(write_length);
+        if (buffer == NULL)
+            return -1;
+        bp = buffer;
+
+        /* Enter response type, length and copy payload */
+        *bp++ = TLS1_HB_RESPONSE;
+        s2n(payload, bp);
+        memcpy(bp, pl, payload);
+        bp += payload;
+        /* Random padding */
+        if (RAND_bytes(bp, padding) <= 0) {
+            OPENSSL_free(buffer);
+            return -1;
+        }
+
+        r = dtls1_write_bytes(s, TLS1_RT_HEARTBEAT, buffer, write_length);
+
+        if (r >= 0 && s->msg_callback)
+            s->msg_callback(1, s->version, TLS1_RT_HEARTBEAT,
+                            buffer, write_length, s, s->msg_callback_arg);
+
+        OPENSSL_free(buffer);
+
+        if (r < 0)
+            return r;
+    } else if (hbtype == TLS1_HB_RESPONSE) {
+        unsigned int seq;
+
+        /*
+         * We only send sequence numbers (2 bytes unsigned int), and 16
+         * random bytes, so we just try to read the sequence number
+         */
+        n2s(pl, seq);
+
+        if (payload == 18 && seq == s->tlsext_hb_seq) {
+            dtls1_stop_timer(s);
+            s->tlsext_hb_seq++;
+            s->tlsext_hb_pending = 0;
+        }
+    }
+
+    return 0;
+}
+
+int dtls1_heartbeat(SSL *s)
+{
+    unsigned char *buf, *p;
+    int ret = -1;
+    unsigned int payload = 18;  /* Sequence number + random bytes */
+    unsigned int padding = 16;  /* Use minimum padding */
+
+    /* Only send if peer supports and accepts HB requests... */
+    if (!(s->tlsext_heartbeat & SSL_TLSEXT_HB_ENABLED) ||
+        s->tlsext_heartbeat & SSL_TLSEXT_HB_DONT_SEND_REQUESTS) {
+        SSLerr(SSL_F_DTLS1_HEARTBEAT, SSL_R_TLS_HEARTBEAT_PEER_DOESNT_ACCEPT);
+        return -1;
+    }
+
+    /* ...and there is none in flight yet... */
+    if (s->tlsext_hb_pending) {
+        SSLerr(SSL_F_DTLS1_HEARTBEAT, SSL_R_TLS_HEARTBEAT_PENDING);
+        return -1;
+    }
+
+    /* ...and no handshake in progress. */
+    if (SSL_in_init(s) || s->in_handshake) {
+        SSLerr(SSL_F_DTLS1_HEARTBEAT, SSL_R_UNEXPECTED_MESSAGE);
+        return -1;
+    }
+
+    /*
+     * Check if padding is too long, payload and padding must not exceed 2^14
+     * - 3 = 16381 bytes in total.
+     */
+    OPENSSL_assert(payload + padding <= 16381);
+
+    /*-
+     * Create HeartBeat message, we just use a sequence number
+     * as payload to distuingish different messages and add
+     * some random stuff.
+     *  - Message Type, 1 byte
+     *  - Payload Length, 2 bytes (unsigned int)
+     *  - Payload, the sequence number (2 bytes uint)
+     *  - Payload, random bytes (16 bytes uint)
+     *  - Padding
+     */
+    buf = OPENSSL_malloc(1 + 2 + payload + padding);
+    if (buf == NULL) {
+        SSLerr(SSL_F_DTLS1_HEARTBEAT, ERR_R_MALLOC_FAILURE);
+        return -1;
+    }
+    p = buf;
+    /* Message Type */
+    *p++ = TLS1_HB_REQUEST;
+    /* Payload length (18 bytes here) */
+    s2n(payload, p);
+    /* Sequence number */
+    s2n(s->tlsext_hb_seq, p);
+    /* 16 random bytes */
+    if (RAND_bytes(p, 16) <= 0) {
+        SSLerr(SSL_F_DTLS1_HEARTBEAT, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+    p += 16;
+    /* Random padding */
+    if (RAND_bytes(p, padding) <= 0) {
+        SSLerr(SSL_F_DTLS1_HEARTBEAT, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+
+    ret = dtls1_write_bytes(s, TLS1_RT_HEARTBEAT, buf, 3 + payload + padding);
+    if (ret >= 0) {
+        if (s->msg_callback)
+            s->msg_callback(1, s->version, TLS1_RT_HEARTBEAT,
+                            buf, 3 + payload + padding,
+                            s, s->msg_callback_arg);
+
+        dtls1_start_timer(s);
+        s->tlsext_hb_pending = 1;
+    }
+
+ err:
+    OPENSSL_free(buf);
+
+    return ret;
+}
+#endif
+
+int dtls1_shutdown(SSL *s)
+{
+    int ret;
+#ifndef OPENSSL_NO_SCTP
+    BIO *wbio;
+
+    wbio = SSL_get_wbio(s);
+    if (wbio != NULL && BIO_dgram_is_sctp(wbio) &&
+        !(s->shutdown & SSL_SENT_SHUTDOWN)) {
+        ret = BIO_dgram_sctp_wait_for_dry(wbio);
+        if (ret < 0)
+            return -1;
+
+        if (ret == 0)
+            BIO_ctrl(SSL_get_wbio(s), BIO_CTRL_DGRAM_SCTP_SAVE_SHUTDOWN, 1,
+                     NULL);
+    }
+#endif
+    ret = ssl3_shutdown(s);
+#ifndef OPENSSL_NO_SCTP
+    BIO_ctrl(SSL_get_wbio(s), BIO_CTRL_DGRAM_SCTP_SAVE_SHUTDOWN, 0, NULL);
+#endif
+    return ret;
+}
+
+int dtls1_query_mtu(SSL *s)
+{
+    if (s->d1->link_mtu) {
+        s->d1->mtu =
+            s->d1->link_mtu - BIO_dgram_get_mtu_overhead(SSL_get_wbio(s));
+        s->d1->link_mtu = 0;
+    }
+
+    /* AHA!  Figure out the MTU, and stick to the right size */
+    if (s->d1->mtu < dtls1_min_mtu(s)) {
+        if (!(SSL_get_options(s) & SSL_OP_NO_QUERY_MTU)) {
+            s->d1->mtu =
+                BIO_ctrl(SSL_get_wbio(s), BIO_CTRL_DGRAM_QUERY_MTU, 0, NULL);
+
+            /*
+             * I've seen the kernel return bogus numbers when it doesn't know
+             * (initial write), so just make sure we have a reasonable number
+             */
+            if (s->d1->mtu < dtls1_min_mtu(s)) {
+                /* Set to min mtu */
+                s->d1->mtu = dtls1_min_mtu(s);
+                BIO_ctrl(SSL_get_wbio(s), BIO_CTRL_DGRAM_SET_MTU,
+                         s->d1->mtu, NULL);
+            }
+        } else
+            return 0;
+    }
+    return 1;
+}
+
+unsigned int dtls1_link_min_mtu(void)
+{
+    return (g_probable_mtu[(sizeof(g_probable_mtu) /
+                            sizeof(g_probable_mtu[0])) - 1]);
+}
+
+unsigned int dtls1_min_mtu(SSL *s)
+{
+    return dtls1_link_min_mtu() - BIO_dgram_get_mtu_overhead(SSL_get_wbio(s));
 }

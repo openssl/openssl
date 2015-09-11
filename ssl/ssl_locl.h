@@ -166,6 +166,7 @@
 # include <openssl/symhacks.h>
 
 #include "record/record.h"
+#include "statem/statem.h"
 #include "packet_locl.h"
 
 # ifdef OPENSSL_BUILD_SHLIBSSL
@@ -714,88 +715,6 @@ struct ssl_comp_st {
 
 DECLARE_STACK_OF(SSL_COMP)
 DECLARE_LHASH_OF(SSL_SESSION);
-
-/*
- * Valid return codes used for functions performing work prior to or after
- * sending or receiving a message
- */
-enum WORK_STATE {
-    /* Something went wrong */
-    WORK_ERROR,
-    /* We're done working and there shouldn't be anything else to do after */
-    WORK_FINISHED_STOP,
-    /* We're done working move onto the next thing */
-    WORK_FINISHED_CONTINUE,
-    /* We're working on phase A */
-    WORK_MORE_A,
-    /* We're working on phase B */
-    WORK_MORE_B
-};
-
-/* Write transition return codes */
-enum WRITE_TRAN {
-    /* Something went wrong */
-    WRITE_TRAN_ERROR,
-    /* A transition was successfully completed and we should continue */
-    WRITE_TRAN_CONTINUE,
-    /* There is no more write work to be done */
-    WRITE_TRAN_FINISHED
-};
-
-/* Message processing return codes */
-enum MSG_PROCESS_RETURN {
-    MSG_PROCESS_ERROR,
-    MSG_PROCESS_FINISHED_READING,
-    MSG_PROCESS_CONTINUE_PROCESSING,
-    MSG_PROCESS_CONTINUE_READING
-};
-
-/* Message flow states */
-enum MSG_FLOW_STATE {
-    /* No handshake in progress */
-    MSG_FLOW_UNINITED,
-    /* A permanent error with this connection */
-    MSG_FLOW_ERROR,
-    /* We are about to renegotiate */
-    MSG_FLOW_RENEGOTIATE,
-    /* We are reading messages */
-    MSG_FLOW_READING,
-    /* We are writing messages */
-    MSG_FLOW_WRITING,
-    /* Handshake has finished */
-    MSG_FLOW_FINISHED
-};
-
-/* Read states */
-enum READ_STATE {
-    READ_STATE_HEADER,
-    READ_STATE_BODY,
-    READ_STATE_POST_PROCESS
-};
-
-/* Write states */
-enum WRITE_STATE {
-    WRITE_STATE_TRANSITION,
-    WRITE_STATE_PRE_WORK,
-    WRITE_STATE_SEND,
-    WRITE_STATE_POST_WORK
-};
-
-struct statem_st {
-    enum MSG_FLOW_STATE state;
-    enum WRITE_STATE write_state;
-    enum WORK_STATE write_state_work;
-    enum READ_STATE read_state;
-    enum WORK_STATE read_state_work;
-    enum HANDSHAKE_STATE hand_state;
-    int in_init;
-    int read_state_first_init;
-    int use_timer;
-#ifndef OPENSSL_NO_SCTP
-    int in_sctp_read_sock;
-#endif
-};
-typedef struct statem_st STATEM;
 
 
 struct ssl_ctx_st {
@@ -2033,18 +1952,6 @@ __owur SSL_CIPHER *ssl3_choose_cipher(SSL *ssl, STACK_OF(SSL_CIPHER) *clnt,
 __owur int ssl3_digest_cached_records(SSL *s, int keep);
 __owur int ssl3_new(SSL *s);
 void ssl3_free(SSL *s);
-__owur int ssl3_accept(SSL *s);
-__owur int ssl3_connect(SSL *s);
-void statem_clear(SSL *s);
-void statem_set_renegotiate(SSL *s);
-void statem_set_error(SSL *s);
-int statem_in_error(const SSL *s);
-void statem_set_in_init(SSL *s, int init);
-__owur int statem_app_data_allowed(SSL *s);
-#ifndef OPENSSL_NO_SCTP
-void statem_set_sctp_read_sock(SSL *s, int read_sock);
-__owur int statem_in_sctp_read_sock(SSL *s);
-#endif
 __owur int ssl3_read(SSL *s, void *buf, int len);
 __owur int ssl3_peek(SSL *s, void *buf, int len);
 __owur int ssl3_write(SSL *s, const void *buf, int len);
@@ -2091,13 +1998,14 @@ void dtls1_start_timer(SSL *s);
 void dtls1_stop_timer(SSL *s);
 __owur int dtls1_is_timer_expired(SSL *s);
 void dtls1_double_timeout(SSL *s);
-__owur unsigned int dtls1_raw_hello_verify_request(unsigned char *buf,
-                                                   unsigned char *cookie,
-                                                   unsigned char cookie_len);
+__owur unsigned int dtls_raw_hello_verify_request(unsigned char *buf,
+                                                  unsigned char *cookie,
+                                                  unsigned char cookie_len);
 __owur int dtls1_send_newsession_ticket(SSL *s);
 __owur unsigned int dtls1_min_mtu(SSL *s);
 __owur unsigned int dtls1_link_min_mtu(void);
 void dtls1_hm_fragment_free(hm_fragment *frag);
+__owur int dtls1_query_mtu(SSL *s);
 
 /* some client-only functions */
 __owur int tls_construct_client_hello(SSL *s);
@@ -2154,8 +2062,6 @@ long tls1_ctrl(SSL *s, int cmd, long larg, void *parg);
 long tls1_callback_ctrl(SSL *s, int cmd, void (*fp) (void));
 
 __owur int dtls1_new(SSL *s);
-__owur int dtls1_accept(SSL *s);
-__owur int dtls1_connect(SSL *s);
 void dtls1_free(SSL *s);
 void dtls1_clear(SSL *s);
 long dtls1_ctrl(SSL *s, int cmd, long larg, void *parg);
