@@ -1236,7 +1236,11 @@ int set_name_ex(unsigned long *flags, const char *arg)
         {"ca_default", XN_FLAG_MULTILINE, 0xffffffffL},
         {NULL, 0, 0}
     };
-    return set_multi_opts(flags, arg, ex_tbl);
+    if (set_multi_opts(flags, arg, ex_tbl) == 0)
+        return 0;
+    if ((*flags & XN_FLAG_SEP_MASK) == 0)
+        *flags |= XN_FLAG_SEP_CPLUS_SPC;
+    return 1;
 }
 
 int set_ext_copy(int *copy_type, const char *arg)
