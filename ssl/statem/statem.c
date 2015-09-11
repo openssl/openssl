@@ -1,4 +1,4 @@
-/* ssl/statem.c */
+/* ssl/statem/statem.c */
 /*
  * Written by Matt Caswell for the OpenSSL project.
  */
@@ -57,7 +57,7 @@
  */
 
 #include <openssl/rand.h>
-#include "ssl_locl.h"
+#include "../ssl_locl.h"
 
 /*
  * This file implements the SSL/TLS/DTLS state machines.
@@ -215,21 +215,11 @@ void statem_set_in_init(SSL *s, int init)
     s->statem.in_init = init;
 }
 
-int ssl3_connect(SSL *s) {
+int statem_connect(SSL *s) {
     return state_machine(s, 0);
 }
 
-int dtls1_connect(SSL *s)
-{
-    return state_machine(s, 0);
-}
-
-int ssl3_accept(SSL *s)
-{
-    return state_machine(s, 1);
-}
-
-int dtls1_accept(SSL *s)
+int statem_accept(SSL *s)
 {
     return state_machine(s, 1);
 }
