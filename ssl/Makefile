@@ -682,6 +682,7 @@ statem/statem.o: ../include/openssl/symhacks.h ../include/openssl/tls1.h
 statem/statem.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h
 statem/statem.o: statem/../packet_locl.h statem/../record/record.h
 statem/statem.o: statem/../ssl_locl.h statem/../statem/statem.h statem/statem.c
+statem/statem.o: statem/statem_locl.h
 statem/statem_clnt.o: ../e_os.h ../include/openssl/asn1.h
 statem/statem_clnt.o: ../include/openssl/bio.h ../include/openssl/bn.h
 statem/statem_clnt.o: ../include/openssl/buffer.h ../include/openssl/comp.h
@@ -706,7 +707,7 @@ statem/statem_clnt.o: ../include/openssl/symhacks.h ../include/openssl/tls1.h
 statem/statem_clnt.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h
 statem/statem_clnt.o: statem/../packet_locl.h statem/../record/record.h
 statem/statem_clnt.o: statem/../ssl_locl.h statem/../statem/statem.h
-statem/statem_clnt.o: statem/statem_clnt.c
+statem/statem_clnt.o: statem/statem_clnt.c statem/statem_locl.h
 statem/statem_dtls.o: ../e_os.h ../include/openssl/asn1.h
 statem/statem_dtls.o: ../include/openssl/bio.h ../include/openssl/bn.h
 statem/statem_dtls.o: ../include/openssl/buffer.h ../include/openssl/comp.h
@@ -730,7 +731,7 @@ statem/statem_dtls.o: ../include/openssl/symhacks.h ../include/openssl/tls1.h
 statem/statem_dtls.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h
 statem/statem_dtls.o: statem/../packet_locl.h statem/../record/record.h
 statem/statem_dtls.o: statem/../ssl_locl.h statem/../statem/statem.h
-statem/statem_dtls.o: statem/statem_dtls.c
+statem/statem_dtls.o: statem/statem_dtls.c statem/statem_locl.h
 statem/statem_lib.o: ../e_os.h ../include/openssl/asn1.h
 statem/statem_lib.o: ../include/openssl/bio.h ../include/openssl/bn.h
 statem/statem_lib.o: ../include/openssl/buffer.h ../include/openssl/comp.h
@@ -754,7 +755,7 @@ statem/statem_lib.o: ../include/openssl/symhacks.h ../include/openssl/tls1.h
 statem/statem_lib.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h
 statem/statem_lib.o: statem/../packet_locl.h statem/../record/record.h
 statem/statem_lib.o: statem/../ssl_locl.h statem/../statem/statem.h
-statem/statem_lib.o: statem/statem_lib.c
+statem/statem_lib.o: statem/statem_lib.c statem/statem_locl.h
 statem/statem_srvr.o: ../e_os.h ../include/internal/constant_time_locl.h
 statem/statem_srvr.o: ../include/openssl/asn1.h ../include/openssl/bio.h
 statem/statem_srvr.o: ../include/openssl/bn.h ../include/openssl/buffer.h
@@ -779,7 +780,7 @@ statem/statem_srvr.o: ../include/openssl/symhacks.h ../include/openssl/tls1.h
 statem/statem_srvr.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h
 statem/statem_srvr.o: statem/../packet_locl.h statem/../record/record.h
 statem/statem_srvr.o: statem/../ssl_locl.h statem/../statem/statem.h
-statem/statem_srvr.o: statem/statem_srvr.c
+statem/statem_srvr.o: statem/statem_locl.h statem/statem_srvr.c
 t1_enc.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 t1_enc.o: ../include/openssl/bn.h ../include/openssl/buffer.h
 t1_enc.o: ../include/openssl/comp.h ../include/openssl/crypto.h
