@@ -1316,10 +1316,6 @@ int s_server_main(int argc, char *argv[])
                 goto end;
             }
             break;
-#else
-        case OPT_PSK_HINT:
-        case OPT_PSK:
-            break;
 #endif
 #ifndef OPENSSL_NO_SRP
         case OPT_SRPVFILE:
