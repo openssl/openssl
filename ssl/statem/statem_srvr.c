@@ -151,6 +151,7 @@
 
 #include <stdio.h>
 #include "../ssl_locl.h"
+#include "statem_locl.h"
 #include "internal/constant_time_locl.h"
 #include <openssl/buffer.h>
 #include <openssl/rand.h>
@@ -168,6 +169,726 @@ static STACK_OF(SSL_CIPHER) *ssl_bytes_to_cipher_list(SSL *s,
                                                       PACKET *cipher_suites,
                                                       STACK_OF(SSL_CIPHER) **skp,
                                                       int sslv2format, int *al);
+
+/*
+ * server_read_transition() encapsulates the logic for the allowed handshake
+ * state transitions when the server is reading messages from the client. The
+ * message type that the client has sent is provided in |mt|. The current state
+ * is in |s->statem.hand_state|.
+ *
+ *  Valid return values are:
+ *  1: Success (transition allowed)
+ *  0: Error (transition not allowed)
+ */
+int server_read_transition(SSL *s, int mt)
+{
+    STATEM *st = &s->statem;
+
+    switch(st->hand_state) {
+    case TLS_ST_BEFORE:
+    case DTLS_ST_SW_HELLO_VERIFY_REQUEST:
+        if (mt == SSL3_MT_CLIENT_HELLO) {
+            st->hand_state = TLS_ST_SR_CLNT_HELLO;
+            return 1;
+        }
+        break;
+
+    case TLS_ST_SW_SRVR_DONE:
+        /*
+         * If we get a CKE message after a ServerDone then either
+         * 1) We didn't request a Certificate
+         * OR
+         * 2) If we did request one then
+         *      a) We allow no Certificate to be returned
+         *      AND
+         *      b) We are running SSL3 (in TLS1.0+ the client must return a 0
+         *         list if we requested a certificate)
+         */
+        if (mt == SSL3_MT_CLIENT_KEY_EXCHANGE
+                && (!s->s3->tmp.cert_request
+                    || (!((s->verify_mode & SSL_VERIFY_PEER) &&
+                          (s->verify_mode & SSL_VERIFY_FAIL_IF_NO_PEER_CERT))
+                        && (s->version == SSL3_VERSION)))) {
+            st->hand_state = TLS_ST_SR_KEY_EXCH;
+            return 1;
+        } else if (s->s3->tmp.cert_request) {
+            if (mt == SSL3_MT_CERTIFICATE) {
+                st->hand_state = TLS_ST_SR_CERT;
+                return 1;
+            } 
+        }
+        break;
+
+    case TLS_ST_SR_CERT:
+        if (mt == SSL3_MT_CLIENT_KEY_EXCHANGE) {
+            st->hand_state = TLS_ST_SR_KEY_EXCH;
+            return 1;
+        }
+        break;
+
+    case TLS_ST_SR_KEY_EXCH:
+        /*
+         * We should only process a CertificateVerify message if we have
+         * received a Certificate from the client. If so then |s->session->peer|
+         * will be non NULL. In some instances a CertificateVerify message is
+         * not required even if the peer has sent a Certificate (e.g. such as in
+         * the case of static DH). In that case |s->no_cert_verify| should be
+         * set.
+         */
+        if (s->session->peer == NULL || s->no_cert_verify) {
+            if (mt == SSL3_MT_CHANGE_CIPHER_SPEC) {
+                /*
+                 * For the ECDH ciphersuites when the client sends its ECDH
+                 * pub key in a certificate, the CertificateVerify message is
+                 * not sent. Also for GOST ciphersuites when the client uses
+                 * its key from the certificate for key exchange.
+                 */
+                st->hand_state = TLS_ST_SR_CHANGE;
+                return 1;
+            }
+        } else {
+            if (mt == SSL3_MT_CERTIFICATE_VERIFY) {
+                st->hand_state = TLS_ST_SR_CERT_VRFY;
+                return 1;
+            }
+        }
+        break;
+
+    case TLS_ST_SR_CERT_VRFY:
+        if (mt == SSL3_MT_CHANGE_CIPHER_SPEC) {
+            st->hand_state = TLS_ST_SR_CHANGE;
+            return 1;
+        }
+        break;
+
+    case TLS_ST_SR_CHANGE:
+#ifndef OPENSSL_NO_NEXTPROTONEG
+        if (s->s3->next_proto_neg_seen) {
+            if (mt == SSL3_MT_NEXT_PROTO) {
+                st->hand_state = TLS_ST_SR_NEXT_PROTO;
+                return 1;
+            }
+        } else {
+#endif
+            if (mt == SSL3_MT_FINISHED) {
+                st->hand_state = TLS_ST_SR_FINISHED;
+                return 1;
+            }
+#ifndef OPENSSL_NO_NEXTPROTONEG
+        }
+#endif
+        break;
+
+#ifndef OPENSSL_NO_NEXTPROTONEG
+    case TLS_ST_SR_NEXT_PROTO:
+        if (mt == SSL3_MT_FINISHED) {
+            st->hand_state = TLS_ST_SR_FINISHED;
+            return 1;
+        }
+        break;
+#endif
+
+    case TLS_ST_SW_FINISHED:
+        if (mt == SSL3_MT_CHANGE_CIPHER_SPEC) {
+            st->hand_state = TLS_ST_SR_CHANGE;
+            return 1;
+        }
+        break;
+
+    default:
+        break;
+    }
+
+    /* No valid transition found */
+    return 0;
+}
+
+/*
+ * Should we send a ServerKeyExchange message?
+ *
+ * Valid return values are:
+ *   1: Yes
+ *   0: No
+ */
+static inline int send_server_key_exchange(SSL *s)
+{
+    unsigned long alg_k = s->s3->tmp.new_cipher->algorithm_mkey;
+
+    /*
+     * only send a ServerKeyExchange if DH, fortezza or RSA but we have a
+     * sign only certificate PSK: may send PSK identity hints For
+     * ECC ciphersuites, we send a serverKeyExchange message only if
+     * the cipher suite is either ECDH-anon or ECDHE. In other cases,
+     * the server certificate contains the server's public key for
+     * key exchange.
+     */
+    if (   (alg_k & SSL_kDHE)
+        || (alg_k & SSL_kECDHE)
+        || ((alg_k & SSL_kRSA)
+            && (s->cert->pkeys[SSL_PKEY_RSA_ENC].privatekey == NULL
+                || (SSL_C_IS_EXPORT(s->s3->tmp.new_cipher)
+                    && EVP_PKEY_size(s->cert->pkeys
+                                     [SSL_PKEY_RSA_ENC].privatekey) *
+                    8 > SSL_C_EXPORT_PKEYLENGTH(s->s3->tmp.new_cipher)
+                   )
+               )
+           )
+        /*
+         * PSK: send ServerKeyExchange if PSK identity hint if
+         * provided
+         */
+#ifndef OPENSSL_NO_PSK
+        /* Only send SKE if we have identity hint for plain PSK */
+        || ((alg_k & (SSL_kPSK | SSL_kRSAPSK))
+            && s->cert->psk_identity_hint)
+        /* For other PSK always send SKE */
+        || (alg_k & (SSL_PSK & (SSL_kDHEPSK | SSL_kECDHEPSK)))
+#endif
+#ifndef OPENSSL_NO_SRP
+        /* SRP: send ServerKeyExchange */
+        || (alg_k & SSL_kSRP)
+#endif
+       ) {
+        return 1;
+    }
+
+    return 0;
+}
+
+/*
+ * Should we send a CertificateRequest message?
+ *
+ * Valid return values are:
+ *   1: Yes
+ *   0: No
+ */
+static inline int send_certificate_request(SSL *s)
+{
+    if (
+           /* don't request cert unless asked for it: */
+           s->verify_mode & SSL_VERIFY_PEER
+           /*
+            * if SSL_VERIFY_CLIENT_ONCE is set, don't request cert
+            * during re-negotiation:
+            */
+           && ((s->session->peer == NULL) ||
+               !(s->verify_mode & SSL_VERIFY_CLIENT_ONCE))
+           /*
+            * never request cert in anonymous ciphersuites (see
+            * section "Certificate request" in SSL 3 drafts and in
+            * RFC 2246):
+            */
+           && (!(s->s3->tmp.new_cipher->algorithm_auth & SSL_aNULL)
+           /*
+            * ... except when the application insists on
+            * verification (against the specs, but s3_clnt.c accepts
+            * this for SSL 3)
+            */
+               || (s->verify_mode & SSL_VERIFY_FAIL_IF_NO_PEER_CERT))
+           /* don't request certificate for SRP auth */
+           && !(s->s3->tmp.new_cipher->algorithm_auth & SSL_aSRP)
+           /*
+            * With normal PSK Certificates and Certificate Requests
+            * are omitted
+            */
+           && !(s->s3->tmp.new_cipher->algorithm_mkey & SSL_PSK)) {
+        return 1;
+    }
+
+    return 0;
+}
+
+/*
+ * server_write_transition() works out what handshake state to move to next
+ * when the server is writing messages to be sent to the client.
+ */
+enum WRITE_TRAN server_write_transition(SSL *s)
+{
+    STATEM *st = &s->statem;
+
+    switch(st->hand_state) {
+        case TLS_ST_BEFORE:
+            /* Just go straight to trying to read from the client */;
+            return WRITE_TRAN_FINISHED;
+
+        case TLS_ST_OK:
+            /* We must be trying to renegotiate */
+            st->hand_state = TLS_ST_SW_HELLO_REQ;
+            return WRITE_TRAN_CONTINUE;
+
+        case TLS_ST_SW_HELLO_REQ:
+            st->hand_state = TLS_ST_OK;
+            statem_set_in_init(s, 0);
+            return WRITE_TRAN_CONTINUE;
+
+        case TLS_ST_SR_CLNT_HELLO:
+            if (SSL_IS_DTLS(s) && !s->d1->cookie_verified
+                    && (SSL_get_options(s) & SSL_OP_COOKIE_EXCHANGE))
+                st->hand_state = DTLS_ST_SW_HELLO_VERIFY_REQUEST;
+            else
+                st->hand_state = TLS_ST_SW_SRVR_HELLO;
+            return WRITE_TRAN_CONTINUE;
+
+        case DTLS_ST_SW_HELLO_VERIFY_REQUEST:
+            return WRITE_TRAN_FINISHED;
+
+        case TLS_ST_SW_SRVR_HELLO:
+            if (s->hit) {
+                if (s->tlsext_ticket_expected)
+                    st->hand_state = TLS_ST_SW_SESSION_TICKET;
+                else
+                    st->hand_state = TLS_ST_SW_CHANGE;
+            } else {
+                /* Check if it is anon DH or anon ECDH, */
+                /* normal PSK or SRP */
+                if (!(s->s3->tmp.new_cipher->algorithm_auth &
+                     (SSL_aNULL | SSL_aSRP | SSL_aPSK))) {
+                    st->hand_state = TLS_ST_SW_CERT;
+                } else if (send_server_key_exchange(s)) {
+                    st->hand_state = TLS_ST_SW_KEY_EXCH;
+                } else if (send_certificate_request(s)) {
+                    st->hand_state = TLS_ST_SW_CERT_REQ;
+                } else {
+                    st->hand_state = TLS_ST_SW_SRVR_DONE;
+                }
+            }
+            return WRITE_TRAN_CONTINUE;
+
+        case TLS_ST_SW_CERT:
+            if (s->tlsext_status_expected) {
+                st->hand_state = TLS_ST_SW_CERT_STATUS;
+                return WRITE_TRAN_CONTINUE;
+            }
+            /* Fall through */
+
+        case TLS_ST_SW_CERT_STATUS:
+            if (send_server_key_exchange(s)) {
+                st->hand_state = TLS_ST_SW_KEY_EXCH;
+                return WRITE_TRAN_CONTINUE;
+            }
+            /* Fall through */
+
+        case TLS_ST_SW_KEY_EXCH:
+            if (send_certificate_request(s)) {
+                st->hand_state = TLS_ST_SW_CERT_REQ;
+                return WRITE_TRAN_CONTINUE;
+            }
+            /* Fall through */
+
+        case TLS_ST_SW_CERT_REQ:
+            st->hand_state = TLS_ST_SW_SRVR_DONE;
+            return WRITE_TRAN_CONTINUE;
+
+        case TLS_ST_SW_SRVR_DONE:
+            return WRITE_TRAN_FINISHED;
+
+        case TLS_ST_SR_FINISHED:
+            if (s->hit) {
+                st->hand_state = TLS_ST_OK;
+                statem_set_in_init(s, 0);
+                return WRITE_TRAN_CONTINUE;
+            } else if (s->tlsext_ticket_expected) {
+                st->hand_state = TLS_ST_SW_SESSION_TICKET;
+            } else {
+                st->hand_state = TLS_ST_SW_CHANGE;
+            }
+            return WRITE_TRAN_CONTINUE;
+
+        case TLS_ST_SW_SESSION_TICKET:
+            st->hand_state = TLS_ST_SW_CHANGE;
+            return WRITE_TRAN_CONTINUE;
+
+        case TLS_ST_SW_CHANGE:
+            st->hand_state = TLS_ST_SW_FINISHED;
+            return WRITE_TRAN_CONTINUE;
+
+        case TLS_ST_SW_FINISHED:
+            if (s->hit) {
+                return WRITE_TRAN_FINISHED;
+            }
+            st->hand_state = TLS_ST_OK;
+            statem_set_in_init(s, 0);
+            return WRITE_TRAN_CONTINUE;
+
+        default:
+            /* Shouldn't happen */
+            return WRITE_TRAN_ERROR;
+    }
+}
+
+/*
+ * Perform any pre work that needs to be done prior to sending a message from
+ * the server to the client.
+ */
+enum WORK_STATE server_pre_work(SSL *s, enum WORK_STATE wst)
+{
+    STATEM *st = &s->statem;
+
+    switch(st->hand_state) {
+    case TLS_ST_SW_HELLO_REQ:
+        s->shutdown = 0;
+        if (SSL_IS_DTLS(s))
+            dtls1_clear_record_buffer(s);
+        break;
+
+    case DTLS_ST_SW_HELLO_VERIFY_REQUEST:
+        s->shutdown = 0;
+        if (SSL_IS_DTLS(s)) {
+            dtls1_clear_record_buffer(s);
+            /* We don't buffer this message so don't use the timer */
+            st->use_timer = 0;
+        }
+        break;
+
+    case TLS_ST_SW_SRVR_HELLO:
+        if (SSL_IS_DTLS(s)) {
+            /*
+             * Messages we write from now on should be bufferred and
+             * retransmitted if necessary, so we need to use the timer now
+             */
+            st->use_timer = 1;
+        }
+        break;
+
+    case TLS_ST_SW_SRVR_DONE:
+#ifndef OPENSSL_NO_SCTP
+        if (SSL_IS_DTLS(s) && BIO_dgram_is_sctp(SSL_get_wbio(s)))
+            return dtls_wait_for_dry(s);
+#endif
+        return WORK_FINISHED_CONTINUE;
+
+    case TLS_ST_SW_SESSION_TICKET:
+        if (SSL_IS_DTLS(s)) {
+            /*
+             * We're into the last flight. We don't retransmit the last flight
+             * unless we need to, so we don't use the timer
+             */
+            st->use_timer = 0;
+        }
+        break;
+
+    case TLS_ST_SW_CHANGE:
+        s->session->cipher = s->s3->tmp.new_cipher;
+        if (!s->method->ssl3_enc->setup_key_block(s)) {
+            statem_set_error(s);
+            return WORK_ERROR;
+        }
+        if (SSL_IS_DTLS(s)) {
+            /*
+             * We're into the last flight. We don't retransmit the last flight
+             * unless we need to, so we don't use the timer. This might have
+             * already been set to 0 if we sent a NewSessionTicket message,
+             * but we'll set it again here in case we didn't.
+             */
+            st->use_timer = 0;
+        }
+        return WORK_FINISHED_CONTINUE;
+
+    case TLS_ST_OK:
+        return tls_finish_handshake(s, wst);
+
+    default:
+        /* No pre work to be done */
+        break;
+    }
+
+    return WORK_FINISHED_CONTINUE;
+}
+
+/*
+ * Perform any work that needs to be done after sending a message from the
+ * server to the client.
+ */
+enum WORK_STATE server_post_work(SSL *s, enum WORK_STATE wst)
+{
+    STATEM *st = &s->statem;
+
+    s->init_num = 0;
+
+    switch(st->hand_state) {
+    case TLS_ST_SW_HELLO_REQ:
+        if (statem_flush(s) != 1)
+            return WORK_MORE_A;
+        ssl3_init_finished_mac(s);
+        break;
+
+    case DTLS_ST_SW_HELLO_VERIFY_REQUEST:
+        if (statem_flush(s) != 1)
+            return WORK_MORE_A;
+        /* HelloVerifyRequest resets Finished MAC */
+        if (s->version != DTLS1_BAD_VER)
+            ssl3_init_finished_mac(s);
+        /*
+         * The next message should be another ClientHello which we need to
+         * treat like it was the first packet
+         */
+        s->first_packet = 1;
+        break;
+
+    case TLS_ST_SW_SRVR_HELLO:
+#ifndef OPENSSL_NO_SCTP
+        if (SSL_IS_DTLS(s) && s->hit) {
+            unsigned char sctpauthkey[64];
+            char labelbuffer[sizeof(DTLS1_SCTP_AUTH_LABEL)];
+
+            /*
+             * Add new shared key for SCTP-Auth, will be ignored if no
+             * SCTP used.
+             */
+            snprintf((char *)labelbuffer, sizeof(DTLS1_SCTP_AUTH_LABEL),
+                     DTLS1_SCTP_AUTH_LABEL);
+
+            if (SSL_export_keying_material(s, sctpauthkey,
+                    sizeof(sctpauthkey), labelbuffer,
+                    sizeof(labelbuffer), NULL, 0, 0) <= 0) {
+                statem_set_error(s);
+                return WORK_ERROR;
+            }
+
+            BIO_ctrl(SSL_get_wbio(s), BIO_CTRL_DGRAM_SCTP_ADD_AUTH_KEY,
+                     sizeof(sctpauthkey), sctpauthkey);
+        }
+#endif
+        break;
+
+    case TLS_ST_SW_CHANGE:
+#ifndef OPENSSL_NO_SCTP
+        if (SSL_IS_DTLS(s) && !s->hit) {
+            /*
+             * Change to new shared key of SCTP-Auth, will be ignored if
+             * no SCTP used.
+             */
+            BIO_ctrl(SSL_get_wbio(s), BIO_CTRL_DGRAM_SCTP_NEXT_AUTH_KEY,
+                     0, NULL);
+        }
+#endif
+        if (!s->method->ssl3_enc->change_cipher_state(s,
+                SSL3_CHANGE_CIPHER_SERVER_WRITE)) {
+            statem_set_error(s);
+            return WORK_ERROR;
+        }
+
+        if (SSL_IS_DTLS(s))
+            dtls1_reset_seq_numbers(s, SSL3_CC_WRITE);
+        break;
+
+    case TLS_ST_SW_SRVR_DONE:
+        if (statem_flush(s) != 1)
+            return WORK_MORE_A;
+        break;
+
+    case TLS_ST_SW_FINISHED:
+        if (statem_flush(s) != 1)
+            return WORK_MORE_A;
+#ifndef OPENSSL_NO_SCTP
+        if (SSL_IS_DTLS(s) && s->hit) {
+            /*
+             * Change to new shared key of SCTP-Auth, will be ignored if
+             * no SCTP used.
+             */
+            BIO_ctrl(SSL_get_wbio(s), BIO_CTRL_DGRAM_SCTP_NEXT_AUTH_KEY,
+                     0, NULL);
+        }
+#endif
+        break;
+
+    default:
+        /* No post work to be done */
+        break;
+    }
+
+    return WORK_FINISHED_CONTINUE;
+}
+
+/*
+ * Construct a message to be sent from the server to the client.
+ *
+ * Valid return values are:
+ *   1: Success
+ *   0: Error
+ */
+int server_construct_message(SSL *s)
+{
+    STATEM *st = &s->statem;
+
+    switch(st->hand_state) {
+    case DTLS_ST_SW_HELLO_VERIFY_REQUEST:
+        return dtls_construct_hello_verify_request(s);
+
+    case TLS_ST_SW_HELLO_REQ:
+        return tls_construct_hello_request(s);
+
+    case TLS_ST_SW_SRVR_HELLO:
+        return tls_construct_server_hello(s);
+
+    case TLS_ST_SW_CERT:
+        return tls_construct_server_certificate(s);
+
+    case TLS_ST_SW_KEY_EXCH:
+        return tls_construct_server_key_exchange(s);
+
+    case TLS_ST_SW_CERT_REQ:
+        return tls_construct_certificate_request(s);
+
+    case TLS_ST_SW_SRVR_DONE:
+        return tls_construct_server_done(s);
+
+    case TLS_ST_SW_SESSION_TICKET:
+        return tls_construct_new_session_ticket(s);
+
+    case TLS_ST_SW_CERT_STATUS:
+        return tls_construct_cert_status(s);
+
+    case TLS_ST_SW_CHANGE:
+        if (SSL_IS_DTLS(s))
+            return dtls_construct_change_cipher_spec(s);
+        else
+            return tls_construct_change_cipher_spec(s);
+
+    case TLS_ST_SW_FINISHED:
+        return tls_construct_finished(s,
+                                      s->method->
+                                      ssl3_enc->server_finished_label,
+                                      s->method->
+                                      ssl3_enc->server_finished_label_len);
+
+    default:
+        /* Shouldn't happen */
+        break;
+    }
+
+    return 0;
+}
+
+#define CLIENT_KEY_EXCH_MAX_LENGTH      2048
+#define NEXT_PROTO_MAX_LENGTH           514
+
+/*
+ * Returns the maximum allowed length for the current message that we are
+ * reading. Excludes the message header.
+ */
+unsigned long server_max_message_size(SSL *s)
+{
+    STATEM *st = &s->statem;
+
+    switch(st->hand_state) {
+    case TLS_ST_SR_CLNT_HELLO:
+        return SSL3_RT_MAX_PLAIN_LENGTH;
+
+    case TLS_ST_SR_CERT:
+        return s->max_cert_list;
+
+    case TLS_ST_SR_KEY_EXCH:
+        return CLIENT_KEY_EXCH_MAX_LENGTH;
+
+    case TLS_ST_SR_CERT_VRFY:
+        return SSL3_RT_MAX_PLAIN_LENGTH;
+
+#ifndef OPENSSL_NO_NEXTPROTONEG
+    case TLS_ST_SR_NEXT_PROTO:
+        return NEXT_PROTO_MAX_LENGTH;
+#endif
+
+    case TLS_ST_SR_CHANGE:
+        return CCS_MAX_LENGTH;
+
+    case TLS_ST_SR_FINISHED:
+        return FINISHED_MAX_LENGTH;
+
+    default:
+        /* Shouldn't happen */
+        break;
+    }
+
+    return 0;
+}
+
+/*
+ * Process a message that the server has received from the client.
+ */
+enum MSG_PROCESS_RETURN server_process_message(SSL *s, PACKET *pkt)
+{
+    STATEM *st = &s->statem;
+
+    switch(st->hand_state) {
+    case TLS_ST_SR_CLNT_HELLO:
+        return tls_process_client_hello(s, pkt);
+
+    case TLS_ST_SR_CERT:
+        return tls_process_client_certificate(s, pkt);
+
+    case TLS_ST_SR_KEY_EXCH:
+        return tls_process_client_key_exchange(s, pkt);
+
+    case TLS_ST_SR_CERT_VRFY:
+        return tls_process_cert_verify(s, pkt);
+
+#ifndef OPENSSL_NO_NEXTPROTONEG
+    case TLS_ST_SR_NEXT_PROTO:
+        return tls_process_next_proto(s, pkt);
+#endif
+
+    case TLS_ST_SR_CHANGE:
+        return tls_process_change_cipher_spec(s, pkt);
+
+    case TLS_ST_SR_FINISHED:
+        return tls_process_finished(s, pkt);
+
+    default:
+        /* Shouldn't happen */
+        break;
+    }
+
+    return MSG_PROCESS_ERROR;
+}
+
+/*
+ * Perform any further processing required following the receipt of a message
+ * from the client
+ */
+enum WORK_STATE server_post_process_message(SSL *s, enum WORK_STATE wst)
+{
+    STATEM *st = &s->statem;
+
+    switch(st->hand_state) {
+    case TLS_ST_SR_CLNT_HELLO:
+        return tls_post_process_client_hello(s, wst);
+
+    case TLS_ST_SR_KEY_EXCH:
+        return tls_post_process_client_key_exchange(s, wst);
+
+    case TLS_ST_SR_CERT_VRFY:
+#ifndef OPENSSL_NO_SCTP
+        if (    /* Is this SCTP? */
+                BIO_dgram_is_sctp(SSL_get_wbio(s))
+                /* Are we renegotiating? */
+                && s->renegotiate
+                && BIO_dgram_sctp_msg_waiting(SSL_get_rbio(s))) {
+            s->s3->in_read_app_data = 2;
+            s->rwstate = SSL_READING;
+            BIO_clear_retry_flags(SSL_get_rbio(s));
+            BIO_set_retry_read(SSL_get_rbio(s));
+            statem_set_sctp_read_sock(s, 1);
+            return WORK_MORE_A;
+        } else {
+            statem_set_sctp_read_sock(s, 0);
+        }
+#endif
+        return WORK_FINISHED_CONTINUE;
+
+
+    case TLS_ST_SR_FINISHED:
+        if (s->hit)
+            return tls_finish_handshake(s, wst);
+        else
+            return WORK_FINISHED_STOP;
+    default:
+        break;
+    }
+
+    /* Shouldn't happen */
+    return WORK_ERROR;
+}
 
 #ifndef OPENSSL_NO_SRP
 static int ssl_check_srp_ext_ClientHello(SSL *s, int *al)
