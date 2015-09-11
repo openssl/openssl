@@ -4,6 +4,17 @@
 
  Changes between 1.0.2 and 1.1.0  [xx XXX xxxx]
 
+  *) State machine rewrite. The state machine code has been significantly
+     refactored in order to remove much duplication of code and solve issues
+     with the old code (see ssl/statem/README for further details). This change
+     does have some associated API changes. Notably SSL_get_state/SSL_state now
+     returns an "enum HANDSHAKE_STATE" instead of an int. The previous handshake
+     states defined in ssl.h and ssl3.h have been redefined to be the nearest
+     equivalent HANDSHAKE_STATE value. Not all states have an equivalent value,
+     (e.g. SSL_ST_CW_FLUSH). New application code should not use the old
+     handshake state values, but should instead use HANDSHAKE_STATE.
+     [Matt Caswell]
+
   *) Removed obsolete engines: 4758cca, aep, atalla, cswift, nuron and sureware.
      [Matt Caswell]
 
@@ -44,6 +55,7 @@
   *) Fix no-stdio build.
     [ David Woodhouse <David.Woodhouse@intel.com> and also
       Ivan Nestlerode <ivan.nestlerode@sonos.com> ]
+
   *) New testing framework
      The testing framework has been largely rewritten and is now using
      perl and the perl modules Test::Harness and an extended variant of
