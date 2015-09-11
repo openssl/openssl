@@ -1260,8 +1260,6 @@ typedef struct ssl3_state_st {
 #  ifndef OPENSSL_NO_EC
         EC_KEY *ecdh;           /* holds short lived ECDH key */
 #  endif
-        /* used when SSL_ST_FLUSH_DATA is entered */
-        int next_state;
         /* used for certificate requests */
         int cert_req;
         int ctype_num;
@@ -1449,8 +1447,6 @@ typedef struct dtls1_state_st {
 
     unsigned int retransmitting;
 #  ifndef OPENSSL_NO_SCTP
-    /* used when SSL_ST_XX_FLUSH is entered */
-    int next_state;
     int shutdown_received;
 #  endif
 } DTLS1_STATE;
