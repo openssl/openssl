@@ -207,7 +207,7 @@ ts_rsp_sign.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 ts_rsp_sign.o: ../../include/openssl/symhacks.h ../../include/openssl/ts.h
 ts_rsp_sign.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
 ts_rsp_sign.o: ../../include/openssl/x509v3.h ../include/internal/cryptlib.h
-ts_rsp_sign.o: ../include/internal/x509_int.h ts_lcl.h ts_rsp_sign.c
+ts_rsp_sign.o: ts_lcl.h ts_rsp_sign.c
 ts_rsp_utils.o: ../../e_os.h ../../include/openssl/asn1.h
 ts_rsp_utils.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 ts_rsp_utils.o: ../../include/openssl/conf.h ../../include/openssl/crypto.h
@@ -243,7 +243,7 @@ ts_rsp_verify.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 ts_rsp_verify.o: ../../include/openssl/symhacks.h ../../include/openssl/ts.h
 ts_rsp_verify.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
 ts_rsp_verify.o: ../../include/openssl/x509v3.h ../include/internal/cryptlib.h
-ts_rsp_verify.o: ../include/internal/x509_int.h ts_lcl.h ts_rsp_verify.c
+ts_rsp_verify.o: ts_lcl.h ts_rsp_verify.c
 ts_verify_ctx.o: ../../e_os.h ../../include/openssl/asn1.h
 ts_verify_ctx.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 ts_verify_ctx.o: ../../include/openssl/conf.h ../../include/openssl/crypto.h

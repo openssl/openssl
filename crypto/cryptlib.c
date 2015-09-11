@@ -129,6 +129,7 @@ unsigned int *OPENSSL_ia32cap_loc(void)
 }
 
 # if defined(OPENSSL_CPUID_OBJ) && !defined(OPENSSL_NO_ASM) && !defined(I386_ONLY)
+#include <stdio.h>
 #  define OPENSSL_CPUID_SETUP
 typedef uint64_t IA32CAP;
 void OPENSSL_cpuid_setup(void)
@@ -432,11 +433,13 @@ void OPENSSL_showfatal(const char *fmta, ...)
 #else
 void OPENSSL_showfatal(const char *fmta, ...)
 {
+#ifndef OPENSSL_NO_STDIO
     va_list ap;
 
     va_start(ap, fmta);
     vfprintf(stderr, fmta, ap);
     va_end(ap);
+#endif
 }
 
 int OPENSSL_isservice(void)
@@ -461,11 +464,6 @@ void OpenSSLDie(const char *file, int line, const char *assertion)
 # endif
     _exit(3);
 #endif
-}
-
-void *OPENSSL_stderr(void)
-{
-    return stderr;
 }
 
 int CRYPTO_memcmp(const void *in_a, const void *in_b, size_t len)

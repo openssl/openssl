@@ -56,6 +56,10 @@
 #include <string.h>
 #include "ui_locl.h"
 
+#ifndef BUFSIZ
+#define BUFSIZ 256
+#endif
+
 int UI_UTIL_read_pw_string(char *buf, int length, const char *prompt,
                            int verify)
 {
