@@ -64,8 +64,6 @@
 #endif
 #include "cms_lcl.h"
 
-DECLARE_ASN1_ITEM(CMS_CompressedData)
-
 #ifdef ZLIB
 
 /* CMS CompressedData Utilities */
