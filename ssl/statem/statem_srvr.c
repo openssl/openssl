@@ -1,4 +1,4 @@
-/* ssl/s3_srvr.c -*- mode:C; c-file-style: "eay" -*- */
+/* ssl/statem/statem_srvr.c -*- mode:C; c-file-style: "eay" -*- */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -150,7 +150,7 @@
 
 
 #include <stdio.h>
-#include "ssl_locl.h"
+#include "../ssl_locl.h"
 #include "internal/constant_time_locl.h"
 #include <openssl/buffer.h>
 #include <openssl/rand.h>
@@ -200,6 +200,57 @@ int tls_construct_hello_request(SSL *s)
         statem_set_error(s);
         return 0;
     }
+
+    return 1;
+}
+
+unsigned int dtls_raw_hello_verify_request(unsigned char *buf,
+                                            unsigned char *cookie,
+                                            unsigned char cookie_len)
+{
+    unsigned int msg_len;
+    unsigned char *p;
+
+    p = buf;
+    /* Always use DTLS 1.0 version: see RFC 6347 */
+    *(p++) = DTLS1_VERSION >> 8;
+    *(p++) = DTLS1_VERSION & 0xFF;
+
+    *(p++) = (unsigned char)cookie_len;
+    memcpy(p, cookie, cookie_len);
+    p += cookie_len;
+    msg_len = p - buf;
+
+    return msg_len;
+}
+
+int dtls_construct_hello_verify_request(SSL *s)
+{
+    unsigned int len;
+    unsigned char *buf;
+
+    buf = (unsigned char *)s->init_buf->data;
+
+    if (s->ctx->app_gen_cookie_cb == NULL ||
+        s->ctx->app_gen_cookie_cb(s, s->d1->cookie,
+                                  &(s->d1->cookie_len)) == 0 ||
+        s->d1->cookie_len > 255) {
+        SSLerr(SSL_F_DTLS1_SEND_HELLO_VERIFY_REQUEST,
+               SSL_R_COOKIE_GEN_CALLBACK_FAILURE);
+        statem_set_error(s);
+        return 0;
+    }
+
+    len = dtls_raw_hello_verify_request(&buf[DTLS1_HM_HEADER_LENGTH],
+                                         s->d1->cookie, s->d1->cookie_len);
+
+    dtls1_set_message_header(s, buf, DTLS1_MT_HELLO_VERIFY_REQUEST, len, 0,
+                             len);
+    len += DTLS1_HM_HEADER_LENGTH;
+
+    /* number of bytes to write */
+    s->init_num = len;
+    s->init_off = 0;
 
     return 1;
 }
