@@ -183,6 +183,7 @@ struct ESS_signing_cert {
 struct TS_resp_ctx {
     X509 *signer_cert;
     EVP_PKEY *signer_key;
+    const EVP_MD *signer_md;
     STACK_OF(X509) *certs;      /* Certs to include in signed data. */
     STACK_OF(ASN1_OBJECT) *policies; /* Acceptable policies. */
     ASN1_OBJECT *default_policy; /* It may appear in policies, too. */
