@@ -9,7 +9,9 @@
      though the change is mostly in the more lenient direction, and
      legacy behaviour is preserved as much as possible.
      [Emilia Käsper]
-
+  *) Fix no-stdio build.
+    [ David Woodhouse <David.Woodhouse@intel.com> and also
+      Ivan Nestlerode <ivan.nestlerode@sonos.com> ]
   *) New testing framework
      The testing framework has been largely rewritten and is now using
      perl and the perl modules Test::Harness and an extended variant of

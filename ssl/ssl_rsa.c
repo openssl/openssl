@@ -911,7 +911,6 @@ int SSL_CTX_use_serverinfo(SSL_CTX *ctx, const unsigned char *serverinfo,
     return 1;
 }
 
-#ifndef OPENSSL_NO_STDIO
 int SSL_CTX_use_serverinfo_file(SSL_CTX *ctx, const char *file)
 {
     unsigned char *serverinfo = NULL;
@@ -1001,4 +1000,3 @@ int SSL_CTX_use_serverinfo_file(SSL_CTX *ctx, const char *file)
     BIO_free(bin);
     return ret;
 }
-#endif                         /* OPENSSL_NO_STDIO */

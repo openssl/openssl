@@ -76,6 +76,12 @@ extern "C" {
 #  undef REF_PRINT
 #  define REF_PRINT(a,b)  fprintf(stderr,"%08X:%4d:%s\n",(int)b,b->references,a)
 # endif
+# if defined(OPENSSL_NO_STDIO) && defined(REF_CHECK)
+#  error "Cannot have REF_CHECK with no-stdio"
+# endif
+# if defined(OPENSSL_NO_STDIO) && defined(REF_PRINT)
+#  error "Cannot have REF_PRINT with no-stdio"
+# endif
 
 # ifndef DEVRANDOM
 /*

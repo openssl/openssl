@@ -467,6 +467,60 @@ static int file_puts(BIO *bp, const char *str)
     return (ret);
 }
 
+#else
+
+static int file_write(BIO *b, const char *in, int inl)
+{
+    return -1;
+}
+static int file_read(BIO *b, char *out, int outl)
+{
+    return -1;
+}
+static int file_puts(BIO *bp, const char *str)
+{
+    return -1;
+}
+static int file_gets(BIO *bp, char *buf, int size)
+{
+    return 0;
+}
+static long file_ctrl(BIO *b, int cmd, long num, void *ptr)
+{
+    return 0;
+}
+static int file_new(BIO *bi)
+{
+    return 0;
+}
+static int file_free(BIO *a)
+{
+    return 0;
+}
+
+static BIO_METHOD methods_filep = {
+    BIO_TYPE_FILE,
+    "FILE pointer",
+    file_write,
+    file_read,
+    file_puts,
+    file_gets,
+    file_ctrl,
+    file_new,
+    file_free,
+    NULL,
+};
+
+BIO_METHOD *BIO_s_file(void)
+{
+    return (&methods_filep);
+}
+
+BIO *BIO_new_file(const char *filename, const char *mode)
+{
+    return NULL;
+}
+
 # endif                         /* OPENSSL_NO_STDIO */
 
 #endif                          /* HEADER_BSS_FILE_C */

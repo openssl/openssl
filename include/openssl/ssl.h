@@ -1386,11 +1386,8 @@ __owur int SSL_use_certificate_ASN1(SSL *ssl, const unsigned char *d, int len);
 /* Set serverinfo data for the current active cert. */
 __owur int SSL_CTX_use_serverinfo(SSL_CTX *ctx, const unsigned char *serverinfo,
                            size_t serverinfo_length);
-# ifndef OPENSSL_NO_STDIO
 __owur int SSL_CTX_use_serverinfo_file(SSL_CTX *ctx, const char *file);
-# endif                        /* NO_STDIO */
 
-# ifndef OPENSSL_NO_STDIO
 __owur int SSL_use_RSAPrivateKey_file(SSL *ssl, const char *file, int type);
 __owur int SSL_use_PrivateKey_file(SSL *ssl, const char *file, int type);
 __owur int SSL_use_certificate_file(SSL *ssl, const char *file, int type);
@@ -1403,11 +1400,9 @@ __owur int SSL_use_certificate_chain_file(SSL *ssl, const char *file);
 __owur STACK_OF(X509_NAME) *SSL_load_client_CA_file(const char *file);
 __owur int SSL_add_file_cert_subjects_to_stack(STACK_OF(X509_NAME) *stackCAs,
                                         const char *file);
-#  ifndef OPENSSL_SYS_VMS
+# ifndef OPENSSL_SYS_VMS
 int SSL_add_dir_cert_subjects_to_stack(STACK_OF(X509_NAME) *stackCAs,
                                        const char *dir);
-#  endif
-
 # endif
 
 void SSL_load_error_strings(void);

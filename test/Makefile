@@ -524,21 +524,8 @@ gmdifftest.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
 gmdifftest.o: ../include/openssl/ossl_typ.h ../include/openssl/safestack.h
 gmdifftest.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
 gmdifftest.o: gmdifftest.c
-gost2814789test.o: ../e_os.h ../engines/ccgost/gost89.h
-gost2814789test.o: ../include/openssl/asn1.h ../include/openssl/bio.h
-gost2814789test.o: ../include/openssl/buffer.h ../include/openssl/conf.h
-gost2814789test.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
-gost2814789test.o: ../include/openssl/ec.h ../include/openssl/ecdh.h
-gost2814789test.o: ../include/openssl/ecdsa.h ../include/openssl/engine.h
-gost2814789test.o: ../include/openssl/err.h ../include/openssl/evp.h
-gost2814789test.o: ../include/openssl/hmac.h ../include/openssl/lhash.h
-gost2814789test.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
-gost2814789test.o: ../include/openssl/opensslconf.h
-gost2814789test.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
-gost2814789test.o: ../include/openssl/pkcs7.h ../include/openssl/safestack.h
-gost2814789test.o: ../include/openssl/sha.h ../include/openssl/stack.h
-gost2814789test.o: ../include/openssl/symhacks.h ../include/openssl/x509.h
-gost2814789test.o: ../include/openssl/x509_vfy.h gost2814789test.c
+gost2814789test.o: ../include/openssl/e_os2.h ../include/openssl/opensslconf.h
+gost2814789test.o: gost2814789test.c
 heartbeat_test.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 heartbeat_test.o: ../include/openssl/bn.h ../include/openssl/buffer.h
 heartbeat_test.o: ../include/openssl/comp.h ../include/openssl/crypto.h

@@ -1086,7 +1086,7 @@ if (defined($disabled{"md5"}) || defined($disabled{"sha"})
 
 
 if (defined($disabled{"ec"}) || defined($disabled{"dsa"})
-    || defined($disabled{"dh"}))
+    || defined($disabled{"dh"}) || defined($disabled{"stdio"}))
 	{
 	$disabled{"gost"} = "forced";
 	}
