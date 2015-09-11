@@ -405,3 +405,6 @@ SSL_get_client_random                   439	EXIST::FUNCTION:
 SSL_SESSION_get_master_key              440	EXIST::FUNCTION:
 SSL_CTX_set_default_verify_dir          441	EXIST::FUNCTION:
 SSL_CTX_set_default_verify_file         442	EXIST::FUNCTION:
+SSL_in_init                             443	EXIST::FUNCTION:
+SSL_in_before                           444	EXIST::FUNCTION:
+SSL_is_init_finished                    445	EXIST::FUNCTION:
