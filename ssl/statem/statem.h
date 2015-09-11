@@ -86,14 +86,6 @@ enum WRITE_TRAN {
     WRITE_TRAN_FINISHED
 };
 
-/* Message processing return codes */
-enum MSG_PROCESS_RETURN {
-    MSG_PROCESS_ERROR,
-    MSG_PROCESS_FINISHED_READING,
-    MSG_PROCESS_CONTINUE_PROCESSING,
-    MSG_PROCESS_CONTINUE_READING
-};
-
 /* Message flow states */
 enum MSG_FLOW_STATE {
     /* No handshake in progress */
