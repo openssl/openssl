@@ -479,6 +479,7 @@ DECLARE_ASN1_ITEM(CMS_RecipientEncryptedKey)
 DECLARE_ASN1_ITEM(CMS_RecipientKeyIdentifier)
 DECLARE_ASN1_ITEM(CMS_RevocationInfoChoice)
 DECLARE_ASN1_ITEM(CMS_SignedData)
+DECLARE_ASN1_ITEM(CMS_CompressedData)
 
 #ifdef  __cplusplus
 }

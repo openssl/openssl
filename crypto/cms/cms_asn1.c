@@ -305,7 +305,7 @@ ASN1_NDEF_SEQUENCE(CMS_CompressedData) = {
         ASN1_SIMPLE(CMS_CompressedData, version, LONG),
         ASN1_SIMPLE(CMS_CompressedData, compressionAlgorithm, X509_ALGOR),
         ASN1_SIMPLE(CMS_CompressedData, encapContentInfo, CMS_EncapsulatedContentInfo),
-} static_ASN1_NDEF_SEQUENCE_END(CMS_CompressedData)
+} ASN1_NDEF_SEQUENCE_END(CMS_CompressedData)
 
 /* This is the ANY DEFINED BY table for the top level ContentInfo structure */
 
