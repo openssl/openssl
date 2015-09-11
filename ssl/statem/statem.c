@@ -378,7 +378,7 @@ static int state_machine(SSL *s, int server) {
                 goto end;
             } else {
                 /*
-                 * s->state == SSL_ST_RENEGOTIATE, we will just send a
+                 * st->state == MSG_FLOW_RENEGOTIATE, we will just send a
                  * HelloRequest
                  */
                 s->ctx->stats.sess_accept_renegotiate++;
