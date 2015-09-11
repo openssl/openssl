@@ -306,6 +306,18 @@ int SRP_Verify_A_mod_N(BIGNUM *A, BIGNUM *N)
     return SRP_Verify_B_mod_N(A, N);
 }
 
+static SRP_gN knowngN[] = {
+    {"8192", (BIGNUM *)&bn_generator_19, (BIGNUM *)&bn_group_8192},
+    {"6144", (BIGNUM *)&bn_generator_5, (BIGNUM *)&bn_group_6144},
+    {"4096", (BIGNUM *)&bn_generator_5, (BIGNUM *)&bn_group_4096},
+    {"3072", (BIGNUM *)&bn_generator_5, (BIGNUM *)&bn_group_3072},
+    {"2048", (BIGNUM *)&bn_generator_2, (BIGNUM *)&bn_group_2048},
+    {"1536", (BIGNUM *)&bn_generator_2, (BIGNUM *)&bn_group_1536},
+    {"1024", (BIGNUM *)&bn_generator_2, (BIGNUM *)&bn_group_1024},
+};
+
+# define KNOWN_GN_NUMBER sizeof(knowngN) / sizeof(SRP_gN)
+
 /*
  * Check if G and N are kwown parameters. The values have been generated
  * from the ietf-tls-srp draft version 8
