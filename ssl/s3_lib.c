@@ -4250,16 +4250,14 @@ long ssl3_callback_ctrl(SSL *s, int cmd, void (*fp) (void))
 
 long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 {
-    CERT *cert;
-
-    cert = ctx->cert;
-
     switch (cmd) {
 #ifndef OPENSSL_NO_DH
     case SSL_CTRL_SET_TMP_DH:
         {
             DH *new = NULL, *dh;
+            CERT *cert;
 
+            cert = ctx->cert;
             dh = (DH *)parg;
             if (!ssl_ctx_security(ctx, SSL_SECOP_TMP_DH,
                                   DH_security_bits(dh), 0, dh)) {
@@ -4464,15 +4462,11 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 
 long ssl3_ctx_callback_ctrl(SSL_CTX *ctx, int cmd, void (*fp) (void))
 {
-    CERT *cert;
-
-    cert = ctx->cert;
-
     switch (cmd) {
 #ifndef OPENSSL_NO_DH
     case SSL_CTRL_SET_TMP_DH_CB:
         {
-            cert->dh_tmp_cb = (DH *(*)(SSL *, int, int))fp;
+            cxt->cert->dh_tmp_cb = (DH *(*)(SSL *, int, int))fp;
         }
         break;
 #endif
