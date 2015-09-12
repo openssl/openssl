@@ -468,11 +468,19 @@ sub testssl {
 		 'test tlsv1 with 1024bit RSA, 1024bit DHE, multiple handshakes');
 	    }
 	}
-	ok(run(test([@ssltest, "-tls1", "-cipher", "PSK", "-psk", "abc123", @extra])),
-	   'test tls1 with PSK');
+    {
+        SKIP: {
+	        skip "skipping PSK tests", 2
+	        if ($no_psk);
 
-	ok(run(test([@ssltest, "-bio_pair", "-tls1", "-cipher", "PSK", "-psk", "abc123", @extra])),
-	   'test tls1 with PSK via BIO pair');
+	        ok(run(test([@ssltest, "-tls1", "-cipher", "PSK", "-psk", "abc123", @extra])),
+	        'test tls1 with PSK');
+
+	        ok(run(test([@ssltest, "-bio_pair", "-tls1", "-cipher", "PSK", "-psk", "abc123", @extra])),
+	        'test tls1 with PSK via BIO pair');
+        }
+    }
+
     };
 
     subtest 'Next Protocol Negotiation Tests' => sub {
