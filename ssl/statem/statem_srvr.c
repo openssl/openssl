@@ -1729,7 +1729,6 @@ int tls_construct_server_key_exchange(SSL *s)
     int al, i;
     unsigned long type;
     int n;
-    CERT *cert;
     BIGNUM *r[4];
     int nr[4], kn;
     BUF_MEM *buf;
@@ -1742,7 +1741,6 @@ int tls_construct_server_key_exchange(SSL *s)
     }
 
     type = s->s3->tmp.new_cipher->algorithm_mkey;
-    cert = s->cert;
 
     buf = s->init_buf;
 
@@ -1763,6 +1761,8 @@ int tls_construct_server_key_exchange(SSL *s)
 #endif                          /* !OPENSSL_NO_PSK */
 #ifndef OPENSSL_NO_DH
     if (type & (SSL_kDHE | SSL_kDHEPSK)) {
+        CERT *cert = s->cert;
+
         if (s->cert->dh_tmp_auto) {
             dhp = ssl_get_auto_dh(s);
             if (dhp == NULL) {

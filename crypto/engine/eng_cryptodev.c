@@ -55,7 +55,9 @@
 # include <errno.h>
 # include <string.h>
 #endif
-#include <openssl/dh.h>
+#ifndef OPENSSL_NO_DH
+# include <openssl/dh.h>
+#endif
 #include <openssl/dsa.h>
 #include <openssl/err.h>
 #include <openssl/rsa.h>
@@ -125,11 +127,13 @@ static DSA_SIG *cryptodev_dsa_do_sign(const unsigned char *dgst, int dlen,
                                       DSA *dsa);
 static int cryptodev_dsa_verify(const unsigned char *dgst, int dgst_len,
                                 DSA_SIG *sig, DSA *dsa);
+#ifndef OPENSSL_NO_DH
 static int cryptodev_mod_exp_dh(const DH *dh, BIGNUM *r, const BIGNUM *a,
                                 const BIGNUM *p, const BIGNUM *m, BN_CTX *ctx,
                                 BN_MONT_CTX *m_ctx);
 static int cryptodev_dh_compute_key(unsigned char *key, const BIGNUM *pub_key,
                                     DH *dh);
+#endif
 static int cryptodev_ctrl(ENGINE *e, int cmd, long i, void *p,
                           void (*f) (void));
 void ENGINE_load_cryptodev(void);
@@ -1364,6 +1368,7 @@ static DSA_METHOD cryptodev_dsa = {
     NULL                        /* app_data */
 };
 
+#ifndef OPENSSL_NO_DH
 static int
 cryptodev_mod_exp_dh(const DH *dh, BIGNUM *r, const BIGNUM *a,
                      const BIGNUM *p, const BIGNUM *m, BN_CTX *ctx,
@@ -1424,6 +1429,8 @@ static DH_METHOD cryptodev_dh = {
     0,                          /* flags */
     NULL                        /* app_data */
 };
+
+#endif /* ndef OPENSSL_NO_DH */
 
 /*
  * ctrl right now is just a wrapper that doesn't do much
@@ -1512,6 +1519,7 @@ void ENGINE_load_cryptodev(void)
             cryptodev_dsa.dsa_do_verify = cryptodev_dsa_verify;
     }
 
+#ifndef OPENSSL_NO_DH
     if (ENGINE_set_DH(engine, &cryptodev_dh)) {
         const DH_METHOD *dh_meth = DH_OpenSSL();
 
@@ -1524,6 +1532,7 @@ void ENGINE_load_cryptodev(void)
                 cryptodev_dh.compute_key = cryptodev_dh_compute_key;
         }
     }
+#endif
 
     ENGINE_add(engine);
     ENGINE_free(engine);
