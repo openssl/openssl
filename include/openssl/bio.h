@@ -178,6 +178,8 @@ extern "C" {
 
 # define BIO_CTRL_DGRAM_GET_MTU_OVERHEAD   49
 
+# define BIO_CTRL_DGRAM_SET_PEEK_MODE      50
+
 # ifndef OPENSSL_NO_SCTP
 /* SCTP stuff */
 #  define BIO_CTRL_DGRAM_SCTP_SET_IN_HANDSHAKE    50

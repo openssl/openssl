@@ -169,6 +169,7 @@ typedef struct bio_dgram_data_st {
     unsigned int mtu;
     struct timeval next_timeout;
     struct timeval socket_timeout;
+    unsigned int peekmode;
 } bio_dgram_data;
 
 # ifndef OPENSSL_NO_SCTP
@@ -367,6 +368,7 @@ static int dgram_read(BIO *b, char *out, int outl)
 {
     int ret = 0;
     bio_dgram_data *data = (bio_dgram_data *)b->ptr;
+    int flags = 0;
 
     struct {
         /*
@@ -392,7 +394,9 @@ static int dgram_read(BIO *b, char *out, int outl)
         clear_socket_error();
         memset(&sa.peer, 0, sizeof(sa.peer));
         dgram_adjust_rcv_timeout(b);
-        ret = recvfrom(b->num, out, outl, 0, &sa.peer.sa, (void *)&sa.len);
+        if (data->peekmode)
+            flags = MSG_PEEK;
+        ret = recvfrom(b->num, out, outl, flags, &sa.peer.sa, (void *)&sa.len);
         if (sizeof(sa.len.i) != sizeof(sa.len.s) && sa.len.i == 0) {
             OPENSSL_assert(sa.len.s <= sizeof(sa.peer));
             sa.len.i = (int)sa.len.s;
@@ -922,6 +926,9 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
         break;
     case BIO_CTRL_DGRAM_GET_MTU_OVERHEAD:
         ret = dgram_get_mtu_overhead(data);
+        break;
+    case BIO_CTRL_DGRAM_SET_PEEK_MODE:
+        data->peekmode = (unsigned int)num;
         break;
     default:
         ret = 0;
