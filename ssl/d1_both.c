@@ -454,15 +454,26 @@ long dtls1_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
      * absence of an optional handshake message
      */
     if (s->s3->tmp.reuse_message) {
-        s->s3->tmp.reuse_message = 0;
         if ((mt >= 0) && (s->s3->tmp.message_type != mt)) {
             al = SSL_AD_UNEXPECTED_MESSAGE;
             SSLerr(SSL_F_DTLS1_GET_MESSAGE, SSL_R_UNEXPECTED_MESSAGE);
             goto f_err;
         }
         *ok = 1;
-        s->init_msg = s->init_buf->data + DTLS1_HM_HEADER_LENGTH;
+
+
+        /*
+         * Messages reused from dtls1_listen also have the record header in
+         * the buffer which we need to skip over.
+         */
+        if (s->s3->tmp.reuse_message == DTLS1_SKIP_RECORD_HEADER) {
+            s->init_msg = s->init_buf->data + DTLS1_HM_HEADER_LENGTH
+                          + DTLS1_RT_HEADER_LENGTH;
+        } else {
+            s->init_msg = s->init_buf->data + DTLS1_HM_HEADER_LENGTH;
+        }
         s->init_num = (int)s->s3->tmp.message_size;
+        s->s3->tmp.reuse_message = 0;
         return s->init_num;
     }
 

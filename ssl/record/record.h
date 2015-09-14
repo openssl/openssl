@@ -288,8 +288,8 @@ typedef struct record_layer_st {
     int wpend_ret;
     const unsigned char *wpend_buf;
 
-    unsigned char read_sequence[8];
-    unsigned char write_sequence[8];
+    unsigned char read_sequence[SEQ_NUM_SIZE];
+    unsigned char write_sequence[SEQ_NUM_SIZE];
     
     DTLS_RECORD_LAYER *d;
 } RECORD_LAYER;
@@ -346,6 +346,7 @@ void DTLS_RECORD_LAYER_clear(RECORD_LAYER *rl);
 void DTLS_RECORD_LAYER_set_saved_w_epoch(RECORD_LAYER *rl, unsigned short e);
 void DTLS_RECORD_LAYER_clear(RECORD_LAYER *rl);
 void DTLS_RECORD_LAYER_resync_write(RECORD_LAYER *rl);
+void DTLS_RECORD_LAYER_set_write_sequence(RECORD_LAYER *rl, unsigned char *seq);
 __owur int dtls1_read_bytes(SSL *s, int type, int *recvd_type,
                             unsigned char *buf, int len, int peek);
 __owur int dtls1_write_bytes(SSL *s, int type, const void *buf, int len);
