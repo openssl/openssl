@@ -883,18 +883,34 @@ int dtls1_accept(SSL *s)
     return (ret);
 }
 
-int dtls1_send_hello_verify_request(SSL *s)
+unsigned int dtls1_raw_hello_verify_request(unsigned char *buf,
+                                            unsigned char *cookie,
+                                            unsigned char cookie_len)
 {
     unsigned int msg_len;
-    unsigned char *msg, *buf, *p;
+    unsigned char *p;
+
+    p = buf;
+    /* Always use DTLS 1.0 version: see RFC 6347 */
+    *(p++) = DTLS1_VERSION >> 8;
+    *(p++) = DTLS1_VERSION & 0xFF;
+
+    *(p++) = (unsigned char)cookie_len;
+    memcpy(p, cookie, cookie_len);
+    p += cookie_len;
+    msg_len = p - buf;
+
+    return msg_len;
+}
+
+
+int dtls1_send_hello_verify_request(SSL *s)
+{
+    unsigned int len;
+    unsigned char *buf;
 
     if (s->state == DTLS1_ST_SW_HELLO_VERIFY_REQUEST_A) {
         buf = (unsigned char *)s->init_buf->data;
-
-        msg = p = &(buf[DTLS1_HM_HEADER_LENGTH]);
-        /* Always use DTLS 1.0 version: see RFC 6347 */
-        *(p++) = DTLS1_VERSION >> 8;
-        *(p++) = DTLS1_VERSION & 0xFF;
 
         if (s->ctx->app_gen_cookie_cb == NULL ||
             s->ctx->app_gen_cookie_cb(s, s->d1->cookie,
@@ -905,18 +921,16 @@ int dtls1_send_hello_verify_request(SSL *s)
             return 0;
         }
 
-        *(p++) = (unsigned char)s->d1->cookie_len;
-        memcpy(p, s->d1->cookie, s->d1->cookie_len);
-        p += s->d1->cookie_len;
-        msg_len = p - msg;
+        len = dtls1_raw_hello_verify_request(&buf[DTLS1_HM_HEADER_LENGTH],
+                                             s->d1->cookie, s->d1->cookie_len);
 
-        dtls1_set_message_header(s, buf,
-                                 DTLS1_MT_HELLO_VERIFY_REQUEST, msg_len, 0,
-                                 msg_len);
+        dtls1_set_message_header(s, buf, DTLS1_MT_HELLO_VERIFY_REQUEST, len, 0,
+                                 len);
+        len += DTLS1_HM_HEADER_LENGTH;
 
         s->state = DTLS1_ST_SW_HELLO_VERIFY_REQUEST_B;
         /* number of bytes to write */
-        s->init_num = p - buf;
+        s->init_num = len;
         s->init_off = 0;
     }
 

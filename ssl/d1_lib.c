@@ -499,23 +499,394 @@ static void get_current_time(struct timeval *t)
 #endif
 }
 
+
+#define LISTEN_SUCCESS              2
+#define LISTEN_SEND_VERIFY_REQUEST  1
+
+
 int dtls1_listen(SSL *s, struct sockaddr *client)
 {
-    int ret;
+    int next, n, ret = 0, clearpkt = 0;
+    unsigned char cookie[DTLS1_COOKIE_LENGTH];
+    unsigned char seq[SEQ_NUM_SIZE];
+    unsigned char *data, *p, *buf;
+    unsigned long reclen, fragoff, fraglen, msglen;
+    unsigned int rectype, versmajor, msgseq, msgtype, clientvers, cookielen;
+    BIO *rbio, *wbio;
+    BUF_MEM *bufm;
+    struct sockaddr_storage tmpclient;
+    PACKET pkt, msgpkt, msgpayload, session, cookiepkt;
 
     /* Ensure there is no state left over from a previous invocation */
     if (!SSL_clear(s))
         return -1;
 
+    ERR_clear_error();
+
+    rbio = SSL_get_rbio(s);
+    wbio = SSL_get_wbio(s);
+
+    if(!rbio || !wbio) {
+        SSLerr(SSL_F_DTLS1_LISTEN, SSL_R_BIO_NOT_SET);
+        return -1;
+    }
+
+    /*
+     * We only peek at incoming ClientHello's until we're sure we are going to
+     * to respond with a HelloVerifyRequest. If its a ClientHello with a valid
+     * cookie then we leave it in the BIO for dtls1_accept to handle.
+     */
+    BIO_ctrl(SSL_get_rbio(s), BIO_CTRL_DGRAM_SET_PEEK_MODE, 1, NULL);
+
+    /*
+     * Note: This check deliberately excludes DTLS1_BAD_VER because that version
+     * requires the MAC to be calculated *including* the first ClientHello
+     * (without the cookie). Since DTLSv1_listen is stateless that cannot be
+     * supported. DTLS1_BAD_VER must use cookies in a stateful manner (e.g. via
+     * SSL_accept)
+     */
+    if ((s->version & 0xff00) != (DTLS1_VERSION & 0xff00)) {
+        SSLerr(SSL_F_DTLS1_LISTEN, SSL_R_UNSUPPORTED_SSL_VERSION);
+        return -1;
+    }
+
+    if (s->init_buf == NULL) {
+        if ((bufm = BUF_MEM_new()) == NULL) {
+            SSLerr(SSL_F_DTLS1_LISTEN, ERR_R_MALLOC_FAILURE);
+            return -1;
+        }
+
+        if (!BUF_MEM_grow(bufm, SSL3_RT_MAX_PLAIN_LENGTH)) {
+            BUF_MEM_free(bufm);
+            SSLerr(SSL_F_DTLS1_LISTEN, ERR_R_MALLOC_FAILURE);
+            return -1;
+        }
+        s->init_buf = bufm;
+    }
+    buf = (unsigned char *)s->init_buf->data;
+
+    do {
+        /* Get a packet */
+
+        clear_sys_error();
+        /*
+         * Technically a ClientHello could be SSL3_RT_MAX_PLAIN_LENGTH
+         * + DTLS1_RT_HEADER_LENGTH bytes long. Normally init_buf does not store
+         * the record header as well, but we do here. We've set up init_buf to
+         * be the standard size for simplicity. In practice we shouldn't ever
+         * receive a ClientHello as long as this. If we do it will get dropped
+         * in the record length check below.
+         */
+        n = BIO_read(rbio, buf, SSL3_RT_MAX_PLAIN_LENGTH);
+
+        if (n <= 0) {
+            if(BIO_should_retry(rbio)) {
+                /* Non-blocking IO */
+                goto end;
+            }
+            return -1;
+        }
+
+        /* If we hit any problems we need to clear this packet from the BIO */
+        clearpkt = 1;
+
+        if (!PACKET_buf_init(&pkt, buf, n)) {
+            SSLerr(SSL_F_DTLS1_LISTEN, ERR_R_INTERNAL_ERROR);
+            return -1;
+        }
+
+        /*
+         * Parse the received record. If there are any problems with it we just
+         * dump it - with no alert. RFC6347 says this "Unlike TLS, DTLS is
+         * resilient in the face of invalid records (e.g., invalid formatting,
+         * length, MAC, etc.).  In general, invalid records SHOULD be silently
+         * discarded, thus preserving the association; however, an error MAY be
+         * logged for diagnostic purposes."
+         */
+
+        /* this packet contained a partial record, dump it */
+        if (n < DTLS1_RT_HEADER_LENGTH) {
+            SSLerr(SSL_F_DTLS1_LISTEN, SSL_R_RECORD_TOO_SMALL);
+            goto end;
+        }
+
+        if (s->msg_callback)
+            s->msg_callback(0, 0, SSL3_RT_HEADER, buf,
+                            DTLS1_RT_HEADER_LENGTH, s, s->msg_callback_arg);
+
+        /* Get the record header */
+        if (!PACKET_get_1(&pkt, &rectype)
+            || !PACKET_get_1(&pkt, &versmajor)) {
+            SSLerr(SSL_F_DTLS1_LISTEN, SSL_R_LENGTH_MISMATCH);
+            goto end;
+        }
+
+        if (rectype != SSL3_RT_HANDSHAKE)  {
+            SSLerr(SSL_F_DTLS1_LISTEN, SSL_R_UNEXPECTED_MESSAGE);
+            goto end;
+        }
+
+        /*
+         * Check record version number. We only check that the major version is
+         * the same.
+         */
+        if (versmajor != DTLS1_VERSION_MAJOR) {
+            SSLerr(SSL_F_DTLS1_LISTEN, SSL_R_BAD_PROTOCOL_VERSION_NUMBER);
+            goto end;
+        }
+
+        if (!PACKET_forward(&pkt, 1)
+            /* Save the sequence number: 64 bits, with top 2 bytes = epoch */
+            || !PACKET_copy_bytes(&pkt, seq, SEQ_NUM_SIZE)
+            || !PACKET_get_length_prefixed_2(&pkt, &msgpkt)
+            || PACKET_remaining(&pkt) != 0) {
+            SSLerr(SSL_F_DTLS1_LISTEN, SSL_R_LENGTH_MISMATCH);
+            goto end;
+        }
+
+        /* This is an initial ClientHello so the epoch has to be 0 */
+        if (seq[0] != 0 || seq[1] != 0) {
+            SSLerr(SSL_F_DTLS1_LISTEN, SSL_R_UNEXPECTED_MESSAGE);
+            goto end;
+        }
+
+        /* Get a pointer to the raw message for the later callback */
+        data = PACKET_data(&msgpkt);
+
+        /* Finished processing the record header, now process the message */
+        if (!PACKET_get_1(&msgpkt, &msgtype)
+            || !PACKET_get_net_3(&msgpkt, &msglen)
+            || !PACKET_get_net_2(&msgpkt, &msgseq)
+            || !PACKET_get_net_3(&msgpkt, &fragoff)
+            || !PACKET_get_net_3(&msgpkt, &fraglen)
+            || !PACKET_get_sub_packet(&msgpkt, &msgpayload, msglen)
+            || PACKET_remaining(&msgpkt) != 0) {
+            SSLerr(SSL_F_DTLS1_LISTEN, SSL_R_LENGTH_MISMATCH);
+            goto end;
+        }
+
+        if (msgtype != SSL3_MT_CLIENT_HELLO) {
+            SSLerr(SSL_F_DTLS1_LISTEN, SSL_R_UNEXPECTED_MESSAGE);
+            goto end;
+        }
+
+        /* Message sequence number can only be 0 or 1 */
+        if(msgseq > 2) {
+            SSLerr(SSL_F_DTLS1_LISTEN, SSL_R_INVALID_SEQUENCE_NUMBER);
+            goto end;
+        }
+
+        /* We don't support a fragmented ClientHello whilst listening */
+        if (fragoff != 0 || fraglen != msglen) {
+            SSLerr(SSL_F_DTLS1_LISTEN, SSL_R_FRAGMENTED_CLIENT_HELLO);
+            goto end;
+        }
+
+        if (s->msg_callback)
+            s->msg_callback(0, s->version, SSL3_RT_HANDSHAKE, data,
+                            msglen + DTLS1_HM_HEADER_LENGTH, s,
+                            s->msg_callback_arg);
+
+        if (!PACKET_get_net_2(&msgpayload, &clientvers)) {
+            SSLerr(SSL_F_DTLS1_LISTEN, SSL_R_LENGTH_MISMATCH);
+            goto end;
+        }
+
+        /*
+         * Verify client version is supported
+         */
+        if ((clientvers > (unsigned int)s->method->version &&
+                              s->method->version != DTLS_ANY_VERSION)) {
+            SSLerr(SSL_F_DTLS1_LISTEN, SSL_R_WRONG_VERSION_NUMBER);
+            goto end;
+        }
+
+        if (!PACKET_forward(&msgpayload, SSL3_RANDOM_SIZE)
+            || !PACKET_get_length_prefixed_1(&msgpayload, &session)
+            || !PACKET_get_length_prefixed_1(&msgpayload, &cookiepkt)) {
+            SSLerr(SSL_F_DTLS1_LISTEN, SSL_R_LENGTH_MISMATCH);
+            goto end;
+        }
+
+        /*
+         * Check if we have a cookie or not. If not we need to send a
+         * HelloVerifyRequest.
+         */
+        if (PACKET_remaining(&cookiepkt) == 0) {
+            next = LISTEN_SEND_VERIFY_REQUEST;
+        } else {
+            /*
+             * We have a cookie, so lets check it.
+             */
+            if (s->ctx->app_verify_cookie_cb == NULL) {
+                SSLerr(SSL_F_DTLS1_LISTEN, SSL_R_NO_VERIFY_COOKIE_CALLBACK);
+                /* This is fatal */
+                return -1;
+            }
+            if (PACKET_remaining(&cookiepkt) > sizeof(s->d1->rcvd_cookie)
+                || s->ctx->app_verify_cookie_cb(s, PACKET_data(&cookiepkt),
+                    PACKET_remaining(&cookiepkt)) == 0) {
+                /*
+                 * We treat invalid cookies in the same was as no cookie as
+                 * per RFC6347
+                 */
+                next = LISTEN_SEND_VERIFY_REQUEST;
+            } else {
+                /* Cookie verification succeeded */
+                next = LISTEN_SUCCESS;
+            }
+        }
+
+        if (next == LISTEN_SEND_VERIFY_REQUEST) {
+            /*
+             * There was no cookie in the ClientHello so we need to send a
+             * HelloVerifyRequest. If this fails we do not worry about trying
+             * to resend, we just drop it.
+             */
+
+            /*
+             * Dump the read packet, we don't need it any more. Ignore return
+             * value
+             */
+            BIO_ctrl(SSL_get_rbio(s), BIO_CTRL_DGRAM_SET_PEEK_MODE, 0, NULL);
+            BIO_read(rbio, buf, SSL3_RT_MAX_PLAIN_LENGTH);
+            BIO_ctrl(SSL_get_rbio(s), BIO_CTRL_DGRAM_SET_PEEK_MODE, 1, NULL);
+
+            /* Generate the cookie */
+            if (s->ctx->app_gen_cookie_cb == NULL ||
+                s->ctx->app_gen_cookie_cb(s, cookie, &cookielen) == 0) {
+                SSLerr(SSL_F_DTLS1_LISTEN, SSL_R_COOKIE_GEN_CALLBACK_FAILURE);
+                /* This is fatal */
+                return -1;
+            }
+
+            p = &buf[DTLS1_RT_HEADER_LENGTH];
+            msglen = dtls1_raw_hello_verify_request(p + DTLS1_HM_HEADER_LENGTH,
+                                                    cookie, cookielen);
+
+            *p++ = DTLS1_MT_HELLO_VERIFY_REQUEST;
+
+            /* Message length */
+            l2n3(msglen, p);
+
+            /* Message sequence number is always 0 for a HelloVerifyRequest */
+            s2n(0, p);
+
+            /*
+             * We never fragment a HelloVerifyRequest, so fragment offset is 0
+             * and fragment length is message length
+             */
+            l2n3(0, p);
+            l2n3(msglen, p);
+
+            /* Set reclen equal to length of whole handshake message */
+            reclen = msglen + DTLS1_HM_HEADER_LENGTH;
+
+            /* Add the record header */
+            p = buf;
+
+            *(p++) = SSL3_RT_HANDSHAKE;
+            /*
+             * Special case: for hello verify request, client version 1.0 and we
+             * haven't decided which version to use yet send back using version
+             * 1.0 header: otherwise some clients will ignore it.
+             */
+            if (s->method->version == DTLS_ANY_VERSION) {
+                *(p++) = DTLS1_VERSION >> 8;
+                *(p++) = DTLS1_VERSION & 0xff;
+            } else {
+                *(p++) = s->version >> 8;
+                *(p++) = s->version & 0xff;
+            }
+
+            /*
+             * Record sequence number is always the same as in the received
+             * ClientHello
+             */
+            memcpy(p, seq, SEQ_NUM_SIZE);
+            p += SEQ_NUM_SIZE;
+
+            /* Length */
+            s2n(reclen, p);
+
+            /*
+             * Set reclen equal to length of whole record including record
+             * header
+             */
+            reclen += DTLS1_RT_HEADER_LENGTH;
+
+            if (s->msg_callback)
+                s->msg_callback(1, 0, SSL3_RT_HEADER, buf,
+                                DTLS1_RT_HEADER_LENGTH, s, s->msg_callback_arg);
+
+            /*
+             * This is unneccessary if rbio and wbio are one and the same - but
+             * maybe they're not.
+             */
+            if(BIO_dgram_get_peer(rbio, &tmpclient) <= 0
+               || BIO_dgram_set_peer(wbio, &tmpclient) <= 0) {
+                SSLerr(SSL_F_DTLS1_LISTEN, ERR_R_INTERNAL_ERROR);
+                goto end;
+            }
+
+            if (BIO_write(wbio, buf, reclen) < (int)reclen) {
+                if(BIO_should_retry(wbio)) {
+                    /*
+                     * Non-blocking IO...but we're stateless, so we're just
+                     * going to drop this packet.
+                     */
+                    goto end;
+                }
+                return -1;
+            }
+
+            if (BIO_flush(wbio) <= 0) {
+                if(BIO_should_retry(wbio)) {
+                    /*
+                     * Non-blocking IO...but we're stateless, so we're just
+                     * going to drop this packet.
+                     */
+                    goto end;
+                }
+                return -1;
+            }
+        }
+    } while (next != LISTEN_SUCCESS);
+
+    /*
+     * Set expected sequence numbers to continue the handshake.
+     */
+    s->d1->handshake_read_seq = 1;
+    s->d1->handshake_write_seq = 1;
+    s->d1->next_handshake_write_seq = 1;
+    DTLS_RECORD_LAYER_set_write_sequence(&s->rlayer, seq);
+
+    /*
+     * We are doing cookie exchange, so make sure we set that option in the
+     * SSL object
+     */
     SSL_set_options(s, SSL_OP_COOKIE_EXCHANGE);
-    s->d1->listen = 1;
 
-    ret = SSL_accept(s);
-    if (ret <= 0)
-        return ret;
+    /*
+     * Put us into the "init" state so that dtls1_accept doesn't clear our
+     * state
+     */
+    s->state = SSL_ST_ACCEPT;
 
-    (void)BIO_dgram_get_peer(SSL_get_rbio(s), client);
-    return 1;
+    if(BIO_dgram_get_peer(rbio, client) <= 0) {
+        SSLerr(SSL_F_DTLS1_LISTEN, ERR_R_INTERNAL_ERROR);
+        return -1;
+    }
+
+    ret = 1;
+    clearpkt = 0;
+end:
+    BIO_ctrl(SSL_get_rbio(s), BIO_CTRL_DGRAM_SET_PEEK_MODE, 0, NULL);
+    if (clearpkt) {
+        /* Dump this packet. Ignore return value */
+        BIO_read(rbio, buf, SSL3_RT_MAX_PLAIN_LENGTH);
+    }
+    return ret;
 }
 
 static int dtls1_set_handshake_header(SSL *s, int htype, unsigned long len)

@@ -226,6 +226,12 @@ void DTLS_RECORD_LAYER_resync_write(RECORD_LAYER *rl)
     memcpy(rl->write_sequence, rl->read_sequence, sizeof(rl->write_sequence));
 }
 
+
+void DTLS_RECORD_LAYER_set_write_sequence(RECORD_LAYER *rl, unsigned char *seq)
+{
+    memcpy(rl->write_sequence, seq, SEQ_NUM_SIZE);
+}
+
 static int have_handshake_fragment(SSL *s, int type, unsigned char *buf,
                                    int len, int peek);
 
