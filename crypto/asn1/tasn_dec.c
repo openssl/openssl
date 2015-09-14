@@ -350,9 +350,9 @@ int ASN1_item_ex_d2i(ASN1_VALUE **pval, const unsigned char **in, long len,
         }
 
         asn1_set_choice_selector(pval, i, it);
-        *in = p;
         if (asn1_cb && !asn1_cb(ASN1_OP_D2I_POST, pval, it, NULL))
             goto auxerr;
+        *in = p;
         return 1;
 
     case ASN1_ITYPE_NDEF_SEQUENCE:
@@ -489,9 +489,9 @@ int ASN1_item_ex_d2i(ASN1_VALUE **pval, const unsigned char **in, long len,
         /* Save encoding */
         if (!asn1_enc_save(pval, *in, p - *in, it))
             goto auxerr;
-        *in = p;
         if (asn1_cb && !asn1_cb(ASN1_OP_D2I_POST, pval, it, NULL))
             goto auxerr;
+        *in = p;
         return 1;
 
     default:
