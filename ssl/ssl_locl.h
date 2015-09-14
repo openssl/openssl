@@ -873,7 +873,6 @@ struct ssl_ctx_st {
     void *tlsext_status_arg;
 
 #  ifndef OPENSSL_NO_PSK
-    char *psk_identity_hint;
     unsigned int (*psk_client_callback) (SSL *ssl, const char *hint,
                                          char *identity,
                                          unsigned int max_identity_len,
@@ -1592,6 +1591,10 @@ typedef struct cert_st {
     /* Security level */
     int sec_level;
     void *sec_ex;
+#ifndef OPENSSL_NO_PSK
+    /* If not NULL psk identity hint to use for servers */
+    char *psk_identity_hint;
+#endif
     int references;             /* >1 only if SSL_copy_session_id is used */
 } CERT;
 

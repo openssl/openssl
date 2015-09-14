@@ -444,7 +444,7 @@ int ssl3_accept(SSL *s)
                  */
 #ifndef OPENSSL_NO_PSK
                 /* Only send SKE if we have identity hint for plain PSK */
-                || ((alg_k & (SSL_kPSK | SSL_kRSAPSK)) && s->ctx->psk_identity_hint)
+                || ((alg_k & (SSL_kPSK | SSL_kRSAPSK)) && s->cert->psk_identity_hint)
                 /* For other PSK always send SKE */
                 || (alg_k & (SSL_PSK & (SSL_kDHEPSK | SSL_kECDHEPSK)))
 #endif
@@ -1708,8 +1708,8 @@ int ssl3_send_server_key_exchange(SSL *s)
              * reserve size for record length and PSK identity hint
              */
             n += 2;
-            if (s->ctx->psk_identity_hint)
-                n += strlen(s->ctx->psk_identity_hint);
+            if (s->cert->psk_identity_hint)
+                n += strlen(s->cert->psk_identity_hint);
         }
         /* Plain PSK or RSAPSK nothing to do */
         if (type & (SSL_kPSK | SSL_kRSAPSK)) {
@@ -1991,11 +1991,11 @@ int ssl3_send_server_key_exchange(SSL *s)
 #ifndef OPENSSL_NO_PSK
         if (type & SSL_PSK) {
             /* copy PSK identity hint */
-            if (s->ctx->psk_identity_hint) {
-                s2n(strlen(s->ctx->psk_identity_hint), p);
-                strncpy((char *)p, s->ctx->psk_identity_hint,
-                        strlen(s->ctx->psk_identity_hint));
-                p += strlen(s->ctx->psk_identity_hint);
+            if (s->cert->psk_identity_hint) {
+                s2n(strlen(s->cert->psk_identity_hint), p);
+                strncpy((char *)p, s->cert->psk_identity_hint,
+                        strlen(s->cert->psk_identity_hint));
+                p += strlen(s->cert->psk_identity_hint);
             } else {
                 s2n(0, p);
             }

@@ -478,7 +478,7 @@ int dtls1_accept(SSL *s)
                  * provided
                  */
 #ifndef OPENSSL_NO_PSK
-                || ((alg_k & SSL_kPSK) && s->ctx->psk_identity_hint)
+                || ((alg_k & SSL_kPSK) && s->cert->psk_identity_hint)
 #endif
                 || (alg_k & SSL_kDHE)
                 || (alg_k & SSL_kECDHE)

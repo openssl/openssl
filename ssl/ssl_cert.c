@@ -334,6 +334,12 @@ CERT *ssl_cert_dup(CERT *cert)
     if (!custom_exts_copy(&ret->srv_ext, &cert->srv_ext))
         goto err;
 
+    if (cert->psk_identity_hint) {
+        ret->psk_identity_hint = BUF_strdup(cert->psk_identity_hint);
+        if (ret->psk_identity_hint == NULL)
+            goto err;
+    }
+
     return (ret);
 
  err:
@@ -402,6 +408,9 @@ void ssl_cert_free(CERT *c)
     X509_STORE_free(c->chain_store);
     custom_exts_free(&c->cli_ext);
     custom_exts_free(&c->srv_ext);
+#ifndef OPENSSL_NO_PSK
+    OPENSSL_free(c->psk_identity_hint);
+#endif
     OPENSSL_free(c);
 }
 

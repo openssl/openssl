@@ -1825,9 +1825,6 @@ void SSL_CTX_free(SSL_CTX *a)
 #ifndef OPENSSL_NO_SRTP
     sk_SRTP_PROTECTION_PROFILE_free(a->srtp_profiles);
 #endif
-#ifndef OPENSSL_NO_PSK
-    OPENSSL_free(a->psk_identity_hint);
-#endif
 #ifndef OPENSSL_NO_SRP
     SSL_CTX_SRP_CTX_free(a);
 #endif
@@ -3007,13 +3004,13 @@ int SSL_CTX_use_psk_identity_hint(SSL_CTX *ctx, const char *identity_hint)
                SSL_R_DATA_LENGTH_TOO_LONG);
         return 0;
     }
-    OPENSSL_free(ctx->psk_identity_hint);
+    OPENSSL_free(ctx->cert->psk_identity_hint);
     if (identity_hint != NULL) {
-        ctx->psk_identity_hint = BUF_strdup(identity_hint);
-        if (ctx->psk_identity_hint == NULL)
+        ctx->cert->psk_identity_hint = BUF_strdup(identity_hint);
+        if (ctx->cert->psk_identity_hint == NULL)
             return 0;
     } else
-        ctx->psk_identity_hint = NULL;
+        ctx->cert->psk_identity_hint = NULL;
     return 1;
 }
 
@@ -3022,20 +3019,17 @@ int SSL_use_psk_identity_hint(SSL *s, const char *identity_hint)
     if (s == NULL)
         return 0;
 
-    if (s->session == NULL)
-        return 1;               /* session not created yet, ignored */
-
     if (identity_hint != NULL && strlen(identity_hint) > PSK_MAX_IDENTITY_LEN) {
         SSLerr(SSL_F_SSL_USE_PSK_IDENTITY_HINT, SSL_R_DATA_LENGTH_TOO_LONG);
         return 0;
     }
-    OPENSSL_free(s->session->psk_identity_hint);
+    OPENSSL_free(s->cert->psk_identity_hint);
     if (identity_hint != NULL) {
-        s->session->psk_identity_hint = BUF_strdup(identity_hint);
-        if (s->session->psk_identity_hint == NULL)
+        s->cert->psk_identity_hint = BUF_strdup(identity_hint);
+        if (s->cert->psk_identity_hint == NULL)
             return 0;
     } else
-        s->session->psk_identity_hint = NULL;
+        s->cert->psk_identity_hint = NULL;
     return 1;
 }
 
