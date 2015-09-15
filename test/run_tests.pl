@@ -26,7 +26,8 @@ my @tests = ( "alltests" );
 if (@ARGV) {
     @tests = @ARGV;
 }
-if (grep /^alltests$/, @tests) {
+my $list_mode = scalar(grep /^list$/, @tests) != 0;
+if (grep /^alltests|list$/, @tests) {
     @tests = grep {
 	basename($_) =~ /^[0-9][0-9]-[^\.]*\.t$/
     } glob(catfile($recipesdir,"*.t"));
@@ -40,6 +41,12 @@ if (grep /^alltests$/, @tests) {
     @tests = @t;
 }
 
-@tests = map { abs2rel($_, rel2abs(curdir())); } @tests;
+if ($list_mode) {
+    @tests = map { $_ = basename($_); $_ =~ s/^[0-9][0-9]-//; $_ =~ s/\.t$//;
+                   $_ } @tests;
+    print join("\n", @tests), "\n";
+} else {
+    @tests = map { abs2rel($_, rel2abs(curdir())); } @tests;
 
-runtests(sort @tests);
+    runtests(sort @tests);
+}
