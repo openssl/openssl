@@ -244,7 +244,17 @@ static int asn1_template_ex_i2d(ASN1_VALUE **pval, unsigned char **out,
                                 const ASN1_TEMPLATE *tt, int tag, int iclass)
 {
     int i, ret, flags, ttag, tclass, ndef;
+    ASN1_VALUE *tval;
     flags = tt->flags;
+
+    /*
+     * If field is embedded then val needs fixing so it is a pointer to
+     * a pointer to a field.
+     */
+    if (flags & ASN1_TFLG_EMBED) {
+        tval = (ASN1_VALUE *)pval;
+        pval = &tval;
+    }
     /*
      * Work out tag and class to use: tagging may come either from the
      * template or the arguments, not both because this would create
