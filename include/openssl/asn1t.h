@@ -390,6 +390,8 @@ extern "C" {
 # endif
 /* Plain simple type */
 # define ASN1_SIMPLE(stname, field, type) ASN1_EX_TYPE(0,0, stname, field, type)
+/* Embedded simple type */
+# define ASN1_EMBED(stname, field, type) ASN1_EX_TYPE(ASN1_TFLG_EMBED,0, stname, field, type)
 
 /* OPTIONAL simple type */
 # define ASN1_OPT(stname, field, type) ASN1_EX_TYPE(ASN1_TFLG_OPTIONAL, 0, stname, field, type)
@@ -615,6 +617,9 @@ struct ASN1_ADB_TABLE_st {
  */
 
 # define ASN1_TFLG_NDEF          (0x1<<11)
+
+/* Field is embedded and not a pointer */
+# define ASN1_TFLG_EMBED         (0x1 << 12)
 
 /* This is the actual ASN1 item itself */
 

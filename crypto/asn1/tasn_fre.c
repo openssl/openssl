@@ -63,14 +63,23 @@
 #include <openssl/objects.h>
 #include "asn1_locl.h"
 
+static void asn1_item_embed_free(ASN1_VALUE **pval, const ASN1_ITEM *it,
+                                 int embed);
+
 /* Free up an ASN1 structure */
 
 void ASN1_item_free(ASN1_VALUE *val, const ASN1_ITEM *it)
 {
-    ASN1_item_ex_free(&val, it);
+    asn1_item_embed_free(&val, it, 0);
 }
 
 void ASN1_item_ex_free(ASN1_VALUE **pval, const ASN1_ITEM *it)
+{
+    asn1_item_embed_free(pval, it, 0);
+}
+
+static void asn1_item_embed_free(ASN1_VALUE **pval, const ASN1_ITEM *it,
+                                 int embed)
 {
     const ASN1_TEMPLATE *tt = NULL, *seqtt;
     const ASN1_EXTERN_FUNCS *ef;
@@ -152,14 +161,22 @@ void ASN1_item_ex_free(ASN1_VALUE **pval, const ASN1_ITEM *it)
         }
         if (asn1_cb)
             asn1_cb(ASN1_OP_FREE_POST, pval, it, NULL);
-        OPENSSL_free(*pval);
-        *pval = NULL;
+        if (embed == 0) {
+            OPENSSL_free(*pval);
+            *pval = NULL;
+        }
         break;
     }
 }
 
 void asn1_template_free(ASN1_VALUE **pval, const ASN1_TEMPLATE *tt)
 {
+    int embed = tt->flags & ASN1_TFLG_EMBED;
+    ASN1_VALUE *tval;
+    if (embed) {
+        tval = (ASN1_VALUE *)pval;
+        pval = &tval;
+    }
     if (tt->flags & ASN1_TFLG_SK_MASK) {
         STACK_OF(ASN1_VALUE) *sk = (STACK_OF(ASN1_VALUE) *)*pval;
         int i;
@@ -167,12 +184,12 @@ void asn1_template_free(ASN1_VALUE **pval, const ASN1_TEMPLATE *tt)
         for (i = 0; i < sk_ASN1_VALUE_num(sk); i++) {
             ASN1_VALUE *vtmp = sk_ASN1_VALUE_value(sk, i);
 
-            ASN1_item_ex_free(&vtmp, ASN1_ITEM_ptr(tt->item));
+            asn1_item_embed_free(&vtmp, ASN1_ITEM_ptr(tt->item), embed);
         }
         sk_ASN1_VALUE_free(sk);
         *pval = NULL;
     } else {
-        ASN1_item_ex_free(pval, ASN1_ITEM_ptr(tt->item));
+        asn1_item_embed_free(pval, ASN1_ITEM_ptr(tt->item), embed);
     }
 }
 

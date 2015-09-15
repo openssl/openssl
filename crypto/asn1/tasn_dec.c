@@ -524,6 +524,7 @@ static int asn1_template_noexp_d2i(ASN1_VALUE **val,
 {
     int flags, aclass;
     int ret;
+    ASN1_VALUE *tval;
     const unsigned char *p, *q;
     if (!val)
         return 0;
@@ -532,6 +533,15 @@ static int asn1_template_noexp_d2i(ASN1_VALUE **val,
 
     p = *in;
     q = p;
+
+    /*
+     * If field is embedded then val needs fixing so it is a pointer to
+     * a pointer to a field.
+     */
+    if (tt->flags & ASN1_TFLG_EMBED) {
+        tval = (ASN1_VALUE *)val;
+        val = &tval;
+    }
 
     if (flags & ASN1_TFLG_SK_MASK) {
         /* SET OF, SEQUENCE OF */

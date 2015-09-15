@@ -65,6 +65,8 @@
 #include <string.h>
 #include "asn1_locl.h"
 
+static int asn1_item_embed_new(ASN1_VALUE **pval, const ASN1_ITEM *it,
+                               int embed);
 static int asn1_primitive_new(ASN1_VALUE **pval, const ASN1_ITEM *it);
 static void asn1_item_clear(ASN1_VALUE **pval, const ASN1_ITEM *it);
 static int asn1_template_new(ASN1_VALUE **pval, const ASN1_TEMPLATE *tt);
@@ -82,6 +84,11 @@ ASN1_VALUE *ASN1_item_new(const ASN1_ITEM *it)
 /* Allocate an ASN1 structure */
 
 int ASN1_item_ex_new(ASN1_VALUE **pval, const ASN1_ITEM *it)
+{
+    return asn1_item_embed_new(pval, it, 0);
+}
+
+int asn1_item_embed_new(ASN1_VALUE **pval, const ASN1_ITEM *it, int embed)
 {
     const ASN1_TEMPLATE *tt = NULL;
     const ASN1_EXTERN_FUNCS *ef;
@@ -157,9 +164,13 @@ int ASN1_item_ex_new(ASN1_VALUE **pval, const ASN1_ITEM *it)
                 return 1;
             }
         }
-        *pval = OPENSSL_zalloc(it->size);
-        if (!*pval)
-            goto memerr;
+        if (embed) {
+            memset(*pval, 0, it->size);
+        } else {
+            *pval = OPENSSL_zalloc(it->size);
+            if (!*pval)
+                goto memerr;
+        }
         asn1_do_lock(pval, 0, it);
         asn1_enc_init(pval, it);
         for (i = 0, tt = it->templates; i < it->tcount; tt++, i++) {
@@ -178,7 +189,7 @@ int ASN1_item_ex_new(ASN1_VALUE **pval, const ASN1_ITEM *it)
     return 1;
 
  memerr:
-    ASN1err(ASN1_F_ASN1_ITEM_EX_NEW, ERR_R_MALLOC_FAILURE);
+    ASN1err(ASN1_F_ASN1_ITEM_EMBED_NEW, ERR_R_MALLOC_FAILURE);
 #ifdef CRYPTO_MDEBUG
     if (it->sname)
         CRYPTO_pop_info();
@@ -186,7 +197,7 @@ int ASN1_item_ex_new(ASN1_VALUE **pval, const ASN1_ITEM *it)
     return 0;
 
  auxerr:
-    ASN1err(ASN1_F_ASN1_ITEM_EX_NEW, ASN1_R_AUX_ERROR);
+    ASN1err(ASN1_F_ASN1_ITEM_EMBED_NEW, ASN1_R_AUX_ERROR);
     ASN1_item_ex_free(pval, it);
 #ifdef CRYPTO_MDEBUG
     if (it->sname)
@@ -232,7 +243,13 @@ static void asn1_item_clear(ASN1_VALUE **pval, const ASN1_ITEM *it)
 static int asn1_template_new(ASN1_VALUE **pval, const ASN1_TEMPLATE *tt)
 {
     const ASN1_ITEM *it = ASN1_ITEM_ptr(tt->item);
+    int embed = tt->flags & ASN1_TFLG_EMBED;
+    ASN1_VALUE *tval;
     int ret;
+    if (embed) {
+        tval = (ASN1_VALUE *)pval;
+        pval = &tval;
+    }
     if (tt->flags & ASN1_TFLG_OPTIONAL) {
         asn1_template_clear(pval, tt);
         return 1;
@@ -261,7 +278,7 @@ static int asn1_template_new(ASN1_VALUE **pval, const ASN1_TEMPLATE *tt)
         goto done;
     }
     /* Otherwise pass it back to the item routine */
-    ret = ASN1_item_ex_new(pval, it);
+    ret = asn1_item_embed_new(pval, it, embed);
  done:
 #ifdef CRYPTO_MDEBUG
     if (it->sname)
