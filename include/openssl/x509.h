@@ -169,7 +169,7 @@ typedef struct x509_cinf_st {
     ASN1_INTEGER *serialNumber;
     X509_ALGOR *signature;
     X509_NAME *issuer;
-    X509_VAL *validity;
+    X509_VAL validity;
     X509_NAME *subject;
     X509_PUBKEY *key;
     ASN1_BIT_STRING *issuerUID; /* [ 1 ] optional in v2 */

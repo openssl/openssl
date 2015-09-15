@@ -95,9 +95,9 @@ X509 *X509_REQ_to_X509(X509_REQ *r, int days, EVP_PKEY *pkey)
     if (X509_set_issuer_name(ret, X509_NAME_dup(xn)) == 0)
         goto err;
 
-    if (X509_gmtime_adj(xi->validity->notBefore, 0) == NULL)
+    if (X509_gmtime_adj(xi->validity.notBefore, 0) == NULL)
         goto err;
-    if (X509_gmtime_adj(xi->validity->notAfter, (long)60 * 60 * 24 * days) ==
+    if (X509_gmtime_adj(xi->validity.notAfter, (long)60 * 60 * 24 * days) ==
         NULL)
         goto err;
 
