@@ -523,7 +523,7 @@ v3_purp.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 v3_purp.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
 v3_purp.o: ../../include/openssl/x509v3.h ../include/internal/cryptlib.h
 v3_purp.o: ../include/internal/x509_int.h v3_purp.c
-v3_scts.o: ../../e_os.h ../../include/openssl/asn1.h
+v3_scts.o: ../../crypto/ct/ct_locl.h ../../e_os.h ../../include/openssl/asn1.h
 v3_scts.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 v3_scts.o: ../../include/openssl/conf.h ../../include/openssl/crypto.h
 v3_scts.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
