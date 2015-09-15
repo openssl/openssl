@@ -1,8 +1,0 @@
-lib
-Makefile.save
-*.flc
-semantic.cache
-aes-*.s
-aesni-*.s
-bsaes-*.s
-vpaes-*.s
