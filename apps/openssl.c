@@ -158,6 +158,7 @@ static LHASH_OF(FUNCTION) *prog_init(void);
 static int do_cmd(LHASH_OF(FUNCTION) *prog, int argc, char *argv[]);
 static void list_pkey(void);
 static void list_type(FUNC_TYPE ft);
+static void list_disabled(void);
 char *default_config_file = NULL;
 
 static CONF *config = NULL;
@@ -479,7 +480,7 @@ typedef enum HELPLIST_CHOICE {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
     OPT_COMMANDS, OPT_DIGEST_COMMANDS,
     OPT_DIGEST_ALGORITHMS, OPT_CIPHER_COMMANDS, OPT_CIPHER_ALGORITHMS,
-    OPT_PK_ALGORITHMS
+    OPT_PK_ALGORITHMS, OPT_DISABLED
 } HELPLIST_CHOICE;
 
 OPTIONS list_options[] = {
@@ -494,6 +495,8 @@ OPTIONS list_options[] = {
      "List of cipher algorithms"},
     {"public-key-algorithms", OPT_PK_ALGORITHMS, '-',
      "List of public key algorithms"},
+    {"disabled", OPT_DISABLED, '-',
+     "List of disabled features"},
     {NULL}
 };
 
@@ -529,6 +532,9 @@ int list_main(int argc, char **argv)
             break;
         case OPT_PK_ALGORITHMS:
             list_pkey();
+            break;
+        case OPT_DISABLED:
+            list_disabled();
             break;
         }
     }
@@ -712,6 +718,35 @@ static int SortFnByName(const void *_f1, const void *_f2)
     if (f1->type != f2->type)
         return f1->type - f2->type;
     return strcmp(f1->name, f2->name);
+}
+
+static void list_disabled(void)
+{
+BIO_puts(bio_out, "Disabled algorithms:\n");
+#ifdef OPENSSL_NO_DH
+    BIO_puts(bio_out, "DH\n");
+#endif
+#ifdef OPENSSL_NO_DSA
+    BIO_puts(bio_out, "DSA\n");
+#endif
+#ifdef OPENSSL_NO_RSA
+    BIO_puts(bio_out, "RSA\n");
+#endif
+#ifdef OPENSSL_NO_EC
+    BIO_puts(bio_out, "EC\n");
+#endif
+#ifdef OPENSSL_NO_EC2M
+    BIO_puts(bio_out, "EC2M\n");
+#endif
+#ifndef ZLIB
+    BIO_puts(bio_out, "ZLIB\n");
+#endif
+#ifdef OPENSSL_NO_PSK
+    BIO_puts(bio_out, "PSK\n");
+#endif
+#ifdef OPENSSL_NO_SRP
+    BIO_puts(bio_out, "SRP\n");
+#endif
 }
 
 static LHASH_OF(FUNCTION) *prog_init(void)
