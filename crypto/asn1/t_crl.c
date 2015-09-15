@@ -108,7 +108,7 @@ int X509_CRL_print(BIO *out, X509_CRL *x)
         BIO_printf(out, "NONE");
     BIO_printf(out, "\n");
 
-    X509V3_extensions_print(out, "CRL extensions", x->crl->extensions, 0, 8);
+    X509V3_extensions_print(out, "CRL extensions", x->crl.extensions, 0, 8);
 
     rev = X509_CRL_get_REVOKED(x);
 

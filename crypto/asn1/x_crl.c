@@ -249,7 +249,7 @@ static int crl_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
          * directly: applications shouldn't do this.
          */
 
-        exts = crl->crl->extensions;
+        exts = crl->crl.extensions;
 
         for (idx = 0; idx < sk_X509_EXTENSION_num(exts); idx++) {
             int nid;
@@ -331,7 +331,7 @@ static void setup_idp(X509_CRL *crl, ISSUING_DIST_POINT *idp)
 }
 
 ASN1_SEQUENCE_ref(X509_CRL, crl_cb, CRYPTO_LOCK_X509_CRL) = {
-        ASN1_SIMPLE(X509_CRL, crl, X509_CRL_INFO),
+        ASN1_EMBED(X509_CRL, crl, X509_CRL_INFO),
         ASN1_SIMPLE(X509_CRL, sig_alg, X509_ALGOR),
         ASN1_SIMPLE(X509_CRL, signature, ASN1_BIT_STRING)
 } ASN1_SEQUENCE_END_ref(X509_CRL, X509_CRL)
@@ -356,7 +356,7 @@ static int X509_REVOKED_cmp(const X509_REVOKED *const *a,
 int X509_CRL_add0_revoked(X509_CRL *crl, X509_REVOKED *rev)
 {
     X509_CRL_INFO *inf;
-    inf = crl->crl;
+    inf = &crl->crl;
     if (!inf->revoked)
         inf->revoked = sk_X509_REVOKED_new(X509_REVOKED_cmp);
     if (!inf->revoked || !sk_X509_REVOKED_push(inf->revoked, rev)) {
@@ -394,7 +394,7 @@ int X509_CRL_get0_by_cert(X509_CRL *crl, X509_REVOKED **ret, X509 *x)
 static int def_crl_verify(X509_CRL *crl, EVP_PKEY *r)
 {
     return (ASN1_item_verify(ASN1_ITEM_rptr(X509_CRL_INFO),
-                             crl->sig_alg, crl->signature, crl->crl, r));
+                             crl->sig_alg, crl->signature, &crl->crl, r));
 }
 
 static int crl_revoked_issuer_match(X509_CRL *crl, X509_NAME *nm,
@@ -435,17 +435,17 @@ static int def_crl_lookup(X509_CRL *crl,
      * Sort revoked into serial number order if not already sorted. Do this
      * under a lock to avoid race condition.
      */
-    if (!sk_X509_REVOKED_is_sorted(crl->crl->revoked)) {
+    if (!sk_X509_REVOKED_is_sorted(crl->crl.revoked)) {
         CRYPTO_w_lock(CRYPTO_LOCK_X509_CRL);
-        sk_X509_REVOKED_sort(crl->crl->revoked);
+        sk_X509_REVOKED_sort(crl->crl.revoked);
         CRYPTO_w_unlock(CRYPTO_LOCK_X509_CRL);
     }
-    idx = sk_X509_REVOKED_find(crl->crl->revoked, &rtmp);
+    idx = sk_X509_REVOKED_find(crl->crl.revoked, &rtmp);
     if (idx < 0)
         return 0;
     /* Need to look for matching name */
-    for (; idx < sk_X509_REVOKED_num(crl->crl->revoked); idx++) {
-        rev = sk_X509_REVOKED_value(crl->crl->revoked, idx);
+    for (; idx < sk_X509_REVOKED_num(crl->crl.revoked); idx++) {
+        rev = sk_X509_REVOKED_value(crl->crl.revoked, idx);
         if (ASN1_INTEGER_cmp(rev->serialNumber, serial))
             return 0;
         if (crl_revoked_issuer_match(crl, issuer, rev)) {

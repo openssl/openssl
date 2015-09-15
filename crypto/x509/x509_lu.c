@@ -422,7 +422,6 @@ static int x509_object_idx_cnt(STACK_OF(X509_OBJECT) *h, int type,
     X509 x509_s;
     X509_CINF cinf_s;
     X509_CRL crl_s;
-    X509_CRL_INFO crl_info_s;
     int idx;
 
     stmp.type = type;
@@ -434,8 +433,7 @@ static int x509_object_idx_cnt(STACK_OF(X509_OBJECT) *h, int type,
         break;
     case X509_LU_CRL:
         stmp.data.crl = &crl_s;
-        crl_s.crl = &crl_info_s;
-        crl_info_s.issuer = name;
+        crl_s.crl.issuer = name;
         break;
     default:
         /* abort(); */

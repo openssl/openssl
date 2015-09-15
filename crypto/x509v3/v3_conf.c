@@ -387,7 +387,7 @@ int X509V3_EXT_CRL_add_nconf(CONF *conf, X509V3_CTX *ctx, char *section,
 {
     STACK_OF(X509_EXTENSION) **sk = NULL;
     if (crl)
-        sk = &crl->crl->extensions;
+        sk = &crl->crl.extensions;
     return X509V3_EXT_add_nconf_sk(conf, ctx, section, sk);
 }
 
