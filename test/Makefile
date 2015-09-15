@@ -153,6 +153,8 @@ tags:
 
 tests:	exe apps
 	TOP=$(TOP) PERL=$(PERL) $(PERL) run_tests.pl $(TESTS)
+list-tests:
+	@TOP=$(TOP) PERL=$(PERL) $(PERL) run_tests.pl list
 
 apps:
 	@(cd ..; $(MAKE) DIRS=apps all)
