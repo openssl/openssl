@@ -63,6 +63,7 @@ use TLSProxy::Message;
 use TLSProxy::ClientHello;
 use TLSProxy::ServerHello;
 use TLSProxy::ServerKeyExchange;
+use TLSProxy::NewSessionTicket;
 
 sub new
 {
