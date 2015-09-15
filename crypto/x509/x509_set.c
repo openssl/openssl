@@ -114,14 +114,14 @@ int X509_set_notBefore(X509 *x, const ASN1_TIME *tm)
 {
     ASN1_TIME *in;
 
-    if ((x == NULL) || (x->cert_info->validity == NULL))
+    if (x == NULL)
         return (0);
-    in = x->cert_info->validity->notBefore;
+    in = x->cert_info->validity.notBefore;
     if (in != tm) {
         in = ASN1_STRING_dup(tm);
         if (in != NULL) {
-            ASN1_TIME_free(x->cert_info->validity->notBefore);
-            x->cert_info->validity->notBefore = in;
+            ASN1_TIME_free(x->cert_info->validity.notBefore);
+            x->cert_info->validity.notBefore = in;
         }
     }
     return (in != NULL);
@@ -131,14 +131,14 @@ int X509_set_notAfter(X509 *x, const ASN1_TIME *tm)
 {
     ASN1_TIME *in;
 
-    if ((x == NULL) || (x->cert_info->validity == NULL))
+    if (x == NULL)
         return (0);
-    in = x->cert_info->validity->notAfter;
+    in = x->cert_info->validity.notAfter;
     if (in != tm) {
         in = ASN1_STRING_dup(tm);
         if (in != NULL) {
-            ASN1_TIME_free(x->cert_info->validity->notAfter);
-            x->cert_info->validity->notAfter = in;
+            ASN1_TIME_free(x->cert_info->validity.notAfter);
+            x->cert_info->validity.notAfter = in;
         }
     }
     return (in != NULL);
@@ -163,12 +163,12 @@ long X509_get_version(X509 *x)
 
 ASN1_TIME * X509_get_notBefore(X509 *x)
 {
-    return x->cert_info->validity->notBefore;
+    return x->cert_info->validity.notBefore;
 }
 
 ASN1_TIME *X509_get_notAfter(X509 *x)
 {
-    return x->cert_info->validity->notAfter;
+    return x->cert_info->validity.notAfter;
 }
 
 int X509_get_signature_type(const X509 *x)
