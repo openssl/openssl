@@ -120,7 +120,7 @@ int X509_subject_name_cmp(const X509 *a, const X509 *b)
 
 int X509_CRL_cmp(const X509_CRL *a, const X509_CRL *b)
 {
-    return (X509_NAME_cmp(a->crl->issuer, b->crl->issuer));
+    return (X509_NAME_cmp(a->crl.issuer, b->crl.issuer));
 }
 
 int X509_CRL_match(const X509_CRL *a, const X509_CRL *b)
@@ -458,7 +458,7 @@ int X509_CRL_check_suiteb(X509_CRL *crl, EVP_PKEY *pk, unsigned long flags)
     int sign_nid;
     if (!(flags & X509_V_FLAG_SUITEB_128_LOS))
         return X509_V_OK;
-    sign_nid = OBJ_obj2nid(crl->crl->sig_alg->algorithm);
+    sign_nid = OBJ_obj2nid(crl->crl.sig_alg->algorithm);
     return check_suite_b(pk, sign_nid, &flags);
 }
 

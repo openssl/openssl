@@ -119,7 +119,7 @@ struct X509_crl_info_st {
 
 struct X509_crl_st {
     /* actual signature */
-    X509_CRL_INFO *crl;
+    X509_CRL_INFO crl;
     X509_ALGOR *sig_alg;
     ASN1_BIT_STRING *signature;
     int references;

@@ -257,10 +257,7 @@ static int get_cert_by_subject(X509_LOOKUP *xl, X509_LOOKUP_TYPE type,
             X509 st_x509;
             X509_CINF st_x509_cinf;
         } x509;
-        struct {
-            X509_CRL st_crl;
-            X509_CRL_INFO st_crl_info;
-        } crl;
+        X509_CRL crl;
     } data;
     int ok = 0;
     int i, j, k;
@@ -279,9 +276,8 @@ static int get_cert_by_subject(X509_LOOKUP *xl, X509_LOOKUP_TYPE type,
         stmp.data.x509 = &data.x509.st_x509;
         postfix = "";
     } else if (type == X509_LU_CRL) {
-        data.crl.st_crl.crl = &data.crl.st_crl_info;
-        data.crl.st_crl_info.issuer = name;
-        stmp.data.crl = &data.crl.st_crl;
+        data.crl.crl.issuer = name;
+        stmp.data.crl = &data.crl;
         postfix = "r";
     } else {
         X509err(X509_F_GET_CERT_BY_SUBJECT, X509_R_WRONG_LOOKUP_TYPE);
