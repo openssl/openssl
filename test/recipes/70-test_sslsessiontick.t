@@ -82,7 +82,7 @@ my $proxy = TLSProxy::Proxy->new(
     top_file("apps", "server.pem")
 );
 
-plan tests => 5;
+plan tests => 6;
 
 #Test 1: By default with no existing session we should get a session ticket
 #Expected result: ClientHello extension seen; ServerHello extension seen
@@ -135,6 +135,27 @@ $proxy->clientstart();
 checkmessages(5, "Session resumption with ticket capable client without a "
                  ."ticket", 1, 1, 1, 0);
 
+#Test 6: Client accepts empty ticket.
+#Expected result: ClientHello extension seen; ServerHello extension seen;
+#                 NewSessionTicket message seen; Full handshake.
+clearall();
+$proxy->filter(\&ticket_filter);
+$proxy->start();
+checkmessages(6, "Empty ticket test",  1, 1, 1, 1);
+
+
+sub ticket_filter
+{
+    my $proxy = shift;
+
+    foreach my $message (@{$proxy->message_list}) {
+        if ($message->mt == TLSProxy::Message::MT_NEW_SESSION_TICKET) {
+            $message->ticket("");
+            $message->repack();
+        }
+    }
+}
+
 sub checkmessages($$$$$$)
 {
     my ($testno, $testname, $testch, $testsh, $testtickseen, $testhand) = @_;
@@ -164,7 +185,7 @@ sub checkmessages($$$$$$)
 
 	plan tests => 5;
 
-	ok(TLSProxy::Message->success, "Hanshake");
+	ok(TLSProxy::Message->success, "Handshake");
 	ok(($testch && $chellotickext) || (!$testch && !$chellotickext),
 	   "ClientHello extension Session Ticket check");
 	ok(($testsh && $shellotickext) || (!$testsh && !$shellotickext),

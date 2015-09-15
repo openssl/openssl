@@ -282,6 +282,15 @@ sub create_message
             [@message_frag_lens]
         );
         $message->parse();
+    } elsif ($mt == MT_NEW_SESSION_TICKET) {
+        $message = TLSProxy::NewSessionTicket->new(
+            $server,
+            $data,
+            [@message_rec_list],
+            $startoffset,
+            [@message_frag_lens]
+        );
+        $message->parse();
     } else {
         #Unknown message type
         $message = TLSProxy::Message->new(
