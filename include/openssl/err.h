@@ -193,6 +193,7 @@ typedef struct err_state_st {
 # define ERR_LIB_TS              47
 # define ERR_LIB_HMAC            48
 # define ERR_LIB_JPAKE           49
+# define ERR_LIB_CT              50
 
 # define ERR_LIB_USER            128
 
@@ -229,6 +230,7 @@ typedef struct err_state_st {
 # define TSerr(f,r) ERR_PUT_error(ERR_LIB_TS,(f),(r),__FILE__,__LINE__)
 # define HMACerr(f,r) ERR_PUT_error(ERR_LIB_HMAC,(f),(r),__FILE__,__LINE__)
 # define JPAKEerr(f,r) ERR_PUT_error(ERR_LIB_JPAKE,(f),(r),__FILE__,__LINE__)
+# define CTerr(f,r) ERR_PUT_error(ERR_LIB_CT,(f),(r),__FILE__,__LINE__)
 
 /*
  * Borland C seems too stupid to be able to shift and do longs in the
