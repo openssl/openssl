@@ -62,7 +62,7 @@
 # define ASYNC_ARCH
 
 # include <windows.h>
-# include "cryptlib.h"
+# include "internal/cryptlib.h"
 
 typedef struct async_fibre_st {
     LPVOID fibre;

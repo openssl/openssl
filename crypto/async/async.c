@@ -295,6 +295,16 @@ int ASYNC_in_job(void)
     return 0;
 }
 
+static void async_empty_pool(STACK_OF(ASYNC_JOB) *pool)
+{
+    ASYNC_JOB *job;
+
+    do {
+        job = sk_ASYNC_JOB_pop(pool);
+        ASYNC_JOB_free(job);
+    } while (job);
+}
+
 int ASYNC_init_pool(size_t max_size, size_t init_size)
 {
     STACK_OF(ASYNC_JOB) *pool;
@@ -326,23 +336,24 @@ int ASYNC_init_pool(size_t max_size, size_t init_size)
         }
     }
 
-    async_set_pool(pool, curr_size, max_size);
+    if (!async_set_pool(pool, curr_size, max_size)) {
+        async_empty_pool(pool);
+        sk_ASYNC_JOB_free(pool);
+        return 0;
+    }
 
     return 1;
 }
 
 void ASYNC_free_pool(void)
 {
-    ASYNC_JOB *job;
     STACK_OF(ASYNC_JOB) *pool;
 
     pool = async_get_pool();
     if (pool == NULL)
         return;
-    do {
-        job = sk_ASYNC_JOB_pop(pool);
-        ASYNC_JOB_free(job);
-    } while (job);
+
+    async_empty_pool(pool);
     async_release_pool();
 }
 
