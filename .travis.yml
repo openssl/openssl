@@ -1,49 +1,49 @@
 language: c
 
 addons:
- apt_packages:
-  - binutils-mingw-w64
-  - gcc-mingw-w64
+  apt_packages:
+    - binutils-mingw-w64
+    - gcc-mingw-w64
 
 os:
- - linux
- - osx
+  - linux
+  - osx
 
 compiler:
- - clang
- - gcc
- - i686-w64-mingw32-gcc
- - x86_64-w64-mingw32-gcc
+  - clang
+  - gcc
+  - i686-w64-mingw32-gcc
+  - x86_64-w64-mingw32-gcc
 
 env:
- - CONFIG_OPTS=""
- - CONFIG_OPTS="--debug"
- - CONFIG_OPTS="shared"
+  - CONFIG_OPTS=""
+  - CONFIG_OPTS="--debug"
+  - CONFIG_OPTS="shared"
 
 matrix:
- exclude:
-  - os: osx
-   compiler: i686-w64-mingw32-gcc
-  - os: osx
-   compiler: x86_64-w64-mingw32-gcc
+  exclude:
+    - os: osx
+      compiler: i686-w64-mingw32-gcc
+    - os: osx
+      compiler: x86_64-w64-mingw32-gcc
 
 before_script:
- - if [ "$CC" == i686-w64-mingw32-gcc -o "$CC" == x86_64-w64-mingw32-gcc ]; then
-   export CROSS_COMPILE=${CC%%gcc};
-   unset CC; ./Configure mingw64 no-asm $CONFIG_OPTS;
-  else
-   ./config $CONFIG_OPTS;
-  fi
+  - if [ "$CC" == i686-w64-mingw32-gcc -o "$CC" == x86_64-w64-mingw32-gcc ]; then
+      export CROSS_COMPILE=${CC%%gcc};
+      unset CC; ./Configure mingw64 no-asm $CONFIG_OPTS;
+    else
+      ./config $CONFIG_OPTS;
+    fi
 
 script:
- - make
- - if [ -z "$CROSS_COMPILE" ]; then
-    make test;
-   fi
+  - make
+  - if [ -z "$CROSS_COMPILE" ]; then
+      make test;
+    fi
 
 notifications:
   recipient:
-   - openssl-dev@openssl.org
+    - openssl-dev@openssl.org
   email:
     on_success: change
     on_failure: always
