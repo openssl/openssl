@@ -260,8 +260,8 @@ int srp_main(int argc, char **argv)
     char *user = NULL, *passinarg = NULL, *passoutarg = NULL;
     char *passin = NULL, *passout = NULL, *gN = NULL, *userinfo = NULL;
     char *randfile = NULL, *tofree = NULL, *section = NULL;
-    char **gNrow = NULL, *configfile = default_config_file;
-    char *dbfile = NULL, **pp, *prog;
+    char **gNrow = NULL, *configfile = NULL;
+    char *srpvfile = NULL, **pp, *prog;
     OPTION_CHOICE o;
 
     prog = opt_init(argc, argv, srp_options);
@@ -286,7 +286,7 @@ int srp_main(int argc, char **argv)
             section = opt_arg();
             break;
         case OPT_SRPVFILE:
-            dbfile = opt_arg();
+            srpvfile = opt_arg();
             break;
         case OPT_ADD:
         case OPT_DELETE:
@@ -320,9 +320,9 @@ int srp_main(int argc, char **argv)
     argc = opt_num_rest();
     argv = opt_rest();
 
-    if (dbfile && configfile) {
+    if (srpvfile && configfile) {
         BIO_printf(bio_err,
-                   "-dbfile and -configfile cannot be specified together.\n");
+                   "-srpvfile and -configfile cannot be specified together.\n");
         goto end;
     }
     if (mode == OPT_ERR) {
@@ -347,14 +347,17 @@ int srp_main(int argc, char **argv)
         goto end;
     }
 
-    if (!dbfile) {
+    if (!srpvfile) {
+        if (!configfile)
+            configfile = default_config_file;
+
         if (verbose)
             BIO_printf(bio_err, "Using configuration from %s\n",
                        configfile);
         conf = app_load_config(configfile);
         if (conf == NULL)
             goto end;
-	if (!app_load_modules(conf))
+        if (!app_load_modules(conf))
             goto end;
 
         /* Lets get the config section we are using */
@@ -379,7 +382,8 @@ int srp_main(int argc, char **argv)
                        "trying to read " ENV_DATABASE " in section \"%s\"\n",
                        section);
 
-        if ((dbfile = NCONF_get_string(conf, section, ENV_DATABASE)) == NULL) {
+        if ((srpvfile = NCONF_get_string(conf, section, ENV_DATABASE))
+                == NULL) {
             lookup_fail(section, ENV_DATABASE);
             goto end;
         }
@@ -392,9 +396,9 @@ int srp_main(int argc, char **argv)
 
     if (verbose)
         BIO_printf(bio_err, "Trying to read SRP verifier file \"%s\"\n",
-                   dbfile);
+                   srpvfile);
 
-    db = load_index(dbfile, &db_attr);
+    db = load_index(srpvfile, &db_attr);
     if (db == NULL)
         goto end;
 
@@ -619,12 +623,12 @@ int srp_main(int argc, char **argv)
 
         if (verbose)
             BIO_printf(bio_err, "Trying to update srpvfile.\n");
-        if (!save_index(dbfile, "new", db))
+        if (!save_index(srpvfile, "new", db))
             goto end;
 
         if (verbose)
             BIO_printf(bio_err, "Temporary srpvfile created.\n");
-        if (!rotate_index(dbfile, "new", "old"))
+        if (!rotate_index(srpvfile, "new", "old"))
             goto end;
 
         if (verbose)
