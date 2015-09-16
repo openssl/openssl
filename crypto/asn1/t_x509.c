@@ -122,7 +122,7 @@ int X509_print_ex(BIO *bp, X509 *x, unsigned long nmflags,
     if (nmflags == X509_FLAG_COMPAT)
         nmindent = 16;
 
-    ci = x->cert_info;
+    ci = &x->cert_info;
     if (!(cflag & X509_FLAG_NO_HEADER)) {
         if (BIO_write(bp, "Certificate:\n", 13) <= 0)
             goto err;
@@ -272,10 +272,10 @@ int X509_ocspid_print(BIO *bp, X509 *x)
      */
     if (BIO_printf(bp, "        Subject OCSP hash: ") <= 0)
         goto err;
-    derlen = i2d_X509_NAME(x->cert_info->subject, NULL);
+    derlen = i2d_X509_NAME(x->cert_info.subject, NULL);
     if ((der = dertmp = OPENSSL_malloc(derlen)) == NULL)
         goto err;
-    i2d_X509_NAME(x->cert_info->subject, &dertmp);
+    i2d_X509_NAME(x->cert_info.subject, &dertmp);
 
     if (!EVP_Digest(der, derlen, SHA1md, NULL, EVP_sha1(), NULL))
         goto err;
@@ -292,8 +292,8 @@ int X509_ocspid_print(BIO *bp, X509 *x)
     if (BIO_printf(bp, "\n        Public key OCSP hash: ") <= 0)
         goto err;
 
-    if (!EVP_Digest(x->cert_info->key->public_key->data,
-                    x->cert_info->key->public_key->length,
+    if (!EVP_Digest(x->cert_info.key->public_key->data,
+                    x->cert_info.key->public_key->length,
                     SHA1md, NULL, EVP_sha1(), NULL))
         goto err;
     for (i = 0; i < SHA_DIGEST_LENGTH; i++) {

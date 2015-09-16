@@ -114,49 +114,49 @@ int X509_CRL_add_ext(X509_CRL *x, X509_EXTENSION *ex, int loc)
 
 int X509_get_ext_count(X509 *x)
 {
-    return (X509v3_get_ext_count(x->cert_info->extensions));
+    return (X509v3_get_ext_count(x->cert_info.extensions));
 }
 
 int X509_get_ext_by_NID(X509 *x, int nid, int lastpos)
 {
-    return (X509v3_get_ext_by_NID(x->cert_info->extensions, nid, lastpos));
+    return (X509v3_get_ext_by_NID(x->cert_info.extensions, nid, lastpos));
 }
 
 int X509_get_ext_by_OBJ(X509 *x, ASN1_OBJECT *obj, int lastpos)
 {
-    return (X509v3_get_ext_by_OBJ(x->cert_info->extensions, obj, lastpos));
+    return (X509v3_get_ext_by_OBJ(x->cert_info.extensions, obj, lastpos));
 }
 
 int X509_get_ext_by_critical(X509 *x, int crit, int lastpos)
 {
     return (X509v3_get_ext_by_critical
-            (x->cert_info->extensions, crit, lastpos));
+            (x->cert_info.extensions, crit, lastpos));
 }
 
 X509_EXTENSION *X509_get_ext(X509 *x, int loc)
 {
-    return (X509v3_get_ext(x->cert_info->extensions, loc));
+    return (X509v3_get_ext(x->cert_info.extensions, loc));
 }
 
 X509_EXTENSION *X509_delete_ext(X509 *x, int loc)
 {
-    return (X509v3_delete_ext(x->cert_info->extensions, loc));
+    return (X509v3_delete_ext(x->cert_info.extensions, loc));
 }
 
 int X509_add_ext(X509 *x, X509_EXTENSION *ex, int loc)
 {
-    return (X509v3_add_ext(&(x->cert_info->extensions), ex, loc) != NULL);
+    return (X509v3_add_ext(&(x->cert_info.extensions), ex, loc) != NULL);
 }
 
 void *X509_get_ext_d2i(X509 *x, int nid, int *crit, int *idx)
 {
-    return X509V3_get_d2i(x->cert_info->extensions, nid, crit, idx);
+    return X509V3_get_d2i(x->cert_info.extensions, nid, crit, idx);
 }
 
 int X509_add1_ext_i2d(X509 *x, int nid, void *value, int crit,
                       unsigned long flags)
 {
-    return X509V3_add1_i2d(&x->cert_info->extensions, nid, value, crit,
+    return X509V3_add1_i2d(&x->cert_info.extensions, nid, value, crit,
                            flags);
 }
 

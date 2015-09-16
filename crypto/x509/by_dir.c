@@ -253,10 +253,7 @@ static int get_cert_by_subject(X509_LOOKUP *xl, X509_LOOKUP_TYPE type,
 {
     BY_DIR *ctx;
     union {
-        struct {
-            X509 st_x509;
-            X509_CINF st_x509_cinf;
-        } x509;
+        X509 st_x509;
         X509_CRL crl;
     } data;
     int ok = 0;
@@ -271,9 +268,8 @@ static int get_cert_by_subject(X509_LOOKUP *xl, X509_LOOKUP_TYPE type,
 
     stmp.type = type;
     if (type == X509_LU_X509) {
-        data.x509.st_x509.cert_info = &data.x509.st_x509_cinf;
-        data.x509.st_x509_cinf.subject = name;
-        stmp.data.x509 = &data.x509.st_x509;
+        data.st_x509.cert_info.subject = name;
+        stmp.data.x509 = &data.st_x509;
         postfix = "";
     } else if (type == X509_LU_CRL) {
         data.crl.crl.issuer = name;

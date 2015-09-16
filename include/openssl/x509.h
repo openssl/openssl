@@ -181,7 +181,7 @@ typedef struct x509_cinf_st {
 typedef struct x509_cert_aux_st X509_CERT_AUX;
 
 struct x509_st {
-    X509_CINF *cert_info;
+    X509_CINF cert_info;
     X509_ALGOR *sig_alg;
     ASN1_BIT_STRING *signature;
     int valid;
