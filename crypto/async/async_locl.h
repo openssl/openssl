@@ -52,6 +52,7 @@
  */
 
 #include <openssl/async.h>
+#include <openssl/crypto.h>
 
 typedef struct async_ctx_st ASYNC_CTX;
 
@@ -75,4 +76,14 @@ struct async_job_st {
     int wake_fd;
 };
 
+DECLARE_STACK_OF(ASYNC_JOB)
+
 void ASYNC_start_func(void);
+STACK_OF(ASYNC_JOB) *async_get_pool(void);
+void async_set_pool(STACK_OF(ASYNC_JOB) *poolin, size_t curr_size,
+                    size_t max_size);
+void async_increment_pool_size(void);
+void async_release_job_to_pool(ASYNC_JOB *job);
+size_t async_pool_max_size(void);
+void async_release_pool(void);
+int async_pool_can_grow(void);
