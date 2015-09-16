@@ -120,12 +120,13 @@ STACK_OF(ASYNC_JOB) *async_get_pool(void)
     return pool;
 }
 
-void async_set_pool(STACK_OF(ASYNC_JOB) *poolin, size_t curr_size,
+int async_set_pool(STACK_OF(ASYNC_JOB) *poolin, size_t curr_size,
                     size_t max_size)
 {
     pool = poolin;
     pool_curr_size = curr_size;
     pool_max_size = max_size;
+    return 1;
 }
 
 void async_increment_pool_size(void)
@@ -146,6 +147,7 @@ size_t async_pool_max_size(void)
 void async_release_pool(void)
 {
     sk_ASYNC_JOB_free(pool);
+    pool = NULL;
 }
 
 int async_pool_can_grow(void)
