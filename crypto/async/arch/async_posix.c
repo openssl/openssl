@@ -65,6 +65,10 @@ __thread ASYNC_CTX *sysvctx;
 
 #define STACKSIZE       32768
 
+__thread size_t pool_max_size = 0;
+__thread size_t pool_curr_size = 0;
+__thread STACK_OF(ASYNC_JOB) *pool = NULL;
+
 int ASYNC_FIBRE_init(ASYNC_FIBRE *fibre)
 {
     void *stack = NULL;
@@ -109,6 +113,44 @@ int async_read1(int fd, void *buf)
         return 1;
 
     return 0;
+}
+
+STACK_OF(ASYNC_JOB) *async_get_pool(void)
+{
+    return pool;
+}
+
+void async_set_pool(STACK_OF(ASYNC_JOB) *poolin, size_t curr_size,
+                    size_t max_size)
+{
+    pool = poolin;
+    pool_curr_size = curr_size;
+    pool_max_size = max_size;
+}
+
+void async_increment_pool_size(void)
+{
+    pool_curr_size++;
+}
+
+void async_release_job_to_pool(ASYNC_JOB *job)
+{
+    sk_ASYNC_JOB_push(pool, job);
+}
+
+size_t async_pool_max_size(void)
+{
+    return pool_max_size;
+}
+
+void async_release_pool(void)
+{
+    sk_ASYNC_JOB_free(pool);
+}
+
+int async_pool_can_grow(void)
+{
+    return (pool_max_size == 0) || (pool_curr_size < pool_max_size);
 }
 
 #endif

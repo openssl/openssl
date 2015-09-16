@@ -67,7 +67,7 @@ typedef struct async_job_st ASYNC_JOB;
 #define ASYNC_PAUSE    2
 #define ASYNC_FINISH   3
 
-int ASYNC_init_pool(unsigned int local, size_t max_size, size_t init_size);
+int ASYNC_init_pool(size_t max_size, size_t init_size);
 void ASYNC_free_pool(void);
 
 int ASYNC_start_job(ASYNC_JOB **job, int *ret, int (*func)(void *),
