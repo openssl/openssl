@@ -83,7 +83,7 @@ int X509_verify(X509 *a, EVP_PKEY *r)
 int X509_REQ_verify(X509_REQ *a, EVP_PKEY *r)
 {
     return (ASN1_item_verify(ASN1_ITEM_rptr(X509_REQ_INFO),
-                             a->sig_alg, a->signature, a->req_info, r));
+                             a->sig_alg, a->signature, &a->req_info, r));
 }
 
 int NETSCAPE_SPKI_verify(NETSCAPE_SPKI *a, EVP_PKEY *r)
@@ -116,13 +116,13 @@ int X509_http_nbio(OCSP_REQ_CTX *rctx, X509 **pcert)
 int X509_REQ_sign(X509_REQ *x, EVP_PKEY *pkey, const EVP_MD *md)
 {
     return (ASN1_item_sign(ASN1_ITEM_rptr(X509_REQ_INFO), x->sig_alg, NULL,
-                           x->signature, x->req_info, pkey, md));
+                           x->signature, &x->req_info, pkey, md));
 }
 
 int X509_REQ_sign_ctx(X509_REQ *x, EVP_MD_CTX *ctx)
 {
     return ASN1_item_sign_ctx(ASN1_ITEM_rptr(X509_REQ_INFO),
-                              x->sig_alg, NULL, x->signature, x->req_info,
+                              x->sig_alg, NULL, x->signature, &x->req_info,
                               ctx);
 }
 

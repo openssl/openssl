@@ -108,7 +108,7 @@ int X509_REQ_print_ex(BIO *bp, X509_REQ *x, unsigned long nmflags,
     if (nmflags == X509_FLAG_COMPAT)
         nmindent = 16;
 
-    ri = x->req_info;
+    ri = &x->req_info;
     if (!(cflag & X509_FLAG_NO_HEADER)) {
         if (BIO_write(bp, "Certificate Request:\n", 21) <= 0)
             goto err;
@@ -153,7 +153,7 @@ int X509_REQ_print_ex(BIO *bp, X509_REQ *x, unsigned long nmflags,
         if (BIO_printf(bp, "%8sAttributes:\n", "") <= 0)
             goto err;
 
-        sk = x->req_info->attributes;
+        sk = x->req_info.attributes;
         if (sk_X509_ATTRIBUTE_num(sk) == 0) {
             if (BIO_printf(bp, "%12sa0:00\n", "") <= 0)
                 goto err;
