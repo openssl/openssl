@@ -82,7 +82,7 @@ my $proxy = TLSProxy::Proxy->new(
     top_file("apps", "server.pem")
 );
 
-plan tests => 6;
+plan tests => 8;
 
 #Test 1: By default with no existing session we should get a session ticket
 #Expected result: ClientHello extension seen; ServerHello extension seen
@@ -143,6 +143,28 @@ $proxy->filter(\&ticket_filter);
 $proxy->start();
 checkmessages(6, "Empty ticket test",  1, 1, 1, 1);
 
+#Test 7-8: Client keeps existing ticket on empty ticket.
+clearall();
+($fh, $session) = tempfile();
+$proxy->serverconnects(3);
+$proxy->filter(undef);
+$proxy->clientflags("-sess_out ".$session);
+$proxy->start();
+$proxy->clear();
+$proxy->clientflags("-sess_in ".$session." -sess_out ".$session);
+$proxy->filter(\&inject_empty_ticket_filter);
+$proxy->clientstart();
+#Expected result: ClientHello extension seen; ServerHello extension seen;
+#                 NewSessionTicket message seen; Abbreviated handshake.
+checkmessages(7, "Empty ticket resumption test",  1, 1, 1, 0);
+clearall();
+$proxy->clientflags("-sess_in ".$session);
+$proxy->filter(undef);
+$proxy->clientstart();
+#Expected result: ClientHello extension seen; ServerHello extension not seen;
+#                 NewSessionTicket message not seen; Abbreviated handshake.
+checkmessages(8, "Empty ticket resumption test",  1, 0, 0, 0);
+
 
 sub ticket_filter
 {
@@ -154,6 +176,36 @@ sub ticket_filter
             $message->repack();
         }
     }
+}
+
+sub inject_empty_ticket_filter {
+    my $proxy = shift;
+
+    foreach my $message (@{$proxy->message_list}) {
+        if ($message->mt == TLSProxy::Message::MT_NEW_SESSION_TICKET) {
+            # Only inject the message first time we're called.
+            return;
+        }
+    }
+
+    my @new_message_list = ();
+    foreach my $message (@{$proxy->message_list}) {
+        push @new_message_list, $message;
+        if ($message->mt == TLSProxy::Message::MT_SERVER_HELLO) {
+            $message->set_extension(TLSProxy::ClientHello::EXT_SESSION_TICKET, "");
+            $message->repack();
+            # Tack NewSessionTicket onto the ServerHello record.
+            # This only works if the ServerHello is exactly one record.
+            my $record = ${$message->records}[0];
+
+            my $offset = $message->startoffset + $message->encoded_length;
+            my $newsessionticket = TLSProxy::NewSessionTicket->new(
+                1, "", [$record], $offset, []);
+            $newsessionticket->repack();
+            push @new_message_list, $newsessionticket;
+        }
+    }
+    $proxy->message_list([@new_message_list]);
 }
 
 sub checkmessages($$$$$$)

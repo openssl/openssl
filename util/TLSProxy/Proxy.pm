@@ -93,9 +93,6 @@ sub new
         flight => 0,
         record_list => [],
         message_list => [],
-
-        #Private
-        message_rec_list => []
     };
 
     return bless $self, $class;
@@ -110,7 +107,6 @@ sub clear
     $self->{flight} = 0;
     $self->{record_list} = [];
     $self->{message_list} = [];
-    $self->{message_rec_list} = [];
     $self->{serverflags} = "";
     $self->{clientflags} = "";
     $self->{serverconnects} = 1;
@@ -274,7 +270,6 @@ sub clientstart
     }
 }
 
-
 sub process_packet
 {
     my ($self, $server, $packet) = @_;
@@ -296,7 +291,6 @@ sub process_packet
     #list of messages in those records
     my @ret = TLSProxy::Record->get_records($server, $self->flight, $packet);
     push @{$self->record_list}, @{$ret[0]};
-    $self->{message_rec_list} = $ret[0];
     push @{$self->{message_list}}, @{$ret[1]};
 
     print "\n";
@@ -348,11 +342,6 @@ sub record_list
 {
     my $self = shift;
     return $self->{record_list};
-}
-sub message_list
-{
-    my $self = shift;
-    return $self->{message_list};
 }
 sub success
 {
@@ -445,5 +434,17 @@ sub serverconnects
       $self->{serverconnects} = shift;
     }
     return $self->{serverconnects};
+}
+# This is a bit ugly because the caller is responsible for keeping the records
+# in sync with the updated message list; simply updating the message list isn't
+# sufficient to get the proxy to forward the new message.
+# But it does the trick for the one test (test_sslsessiontick) that needs it.
+sub message_list
+{
+    my $self = shift;
+    if (@_) {
+        $self->{message_list} = shift;
+    }
+    return $self->{message_list};
 }
 1;

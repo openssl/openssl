@@ -80,7 +80,6 @@ sub new
     $self->{session} = "";
     $self->{ciphersuite} = 0;
     $self->{comp_meth} = 0;
-    $self->{extensions_len} = 0;
     $self->{extensions_data} = "";
 
     return $self;
@@ -124,7 +123,6 @@ sub parse
     $self->session($session);
     $self->ciphersuite($ciphersuite);
     $self->comp_meth($comp_meth);
-    $self->extensions_len($extensions_len);
     $self->extension_data(\%extensions);
 
     $self->process_data();
@@ -149,6 +147,7 @@ sub set_message_contents
 {
     my $self = shift;
     my $data;
+    my $extensions = "";
 
     $data = pack('n', $self->server_version);
     $data .= $self->random;
@@ -156,14 +155,16 @@ sub set_message_contents
     $data .= $self->session;
     $data .= pack('n', $self->ciphersuite);
     $data .= pack('C', $self->comp_meth);
-    $data .= pack('n', $self->extensions_len);
+
     foreach my $key (keys %{$self->extension_data}) {
         my $extdata = ${$self->extension_data}{$key};
-        $data .= pack("n", $key);
-        $data .= pack("n", length($extdata));
-        $data .= $extdata;
+        $extensions .= pack("n", $key);
+        $extensions .= pack("n", length($extdata));
+        $extensions .= $extdata;
     }
 
+    $data .= pack('n', length($extensions));
+    $data .= $extensions;
     $self->data($data);
 }
 
@@ -216,14 +217,6 @@ sub comp_meth
     }
     return $self->{comp_meth};
 }
-sub extensions_len
-{
-    my $self = shift;
-    if (@_) {
-      $self->{extensions_len} = shift;
-    }
-    return $self->{extensions_len};
-}
 sub extension_data
 {
     my $self = shift;
@@ -231,5 +224,10 @@ sub extension_data
       $self->{extension_data} = shift;
     }
     return $self->{extension_data};
+}
+sub set_extension
+{
+    my ($self, $ext_type, $ext_data) = @_;
+    $self->{extension_data}{$ext_type} = $ext_data;
 }
 1;
