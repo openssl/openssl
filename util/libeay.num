@@ -4615,3 +4615,17 @@ TS_VERIFY_CTS_set_certs                 4973	EXIST::FUNCTION:
 TS_VERIFY_CTX_add_flags                 4974	EXIST::FUNCTION:
 TS_STATUS_INFO_set_status               4975	EXIST::FUNCTION:
 TS_VERIFY_CTX_set_store                 4976	EXIST::FUNCTION:
+EVP_PKEY_meth_get_decrypt               4977	EXIST::FUNCTION:
+EVP_PKEY_meth_get_derive                4978	EXIST::FUNCTION:
+EVP_PKEY_meth_get_verify                4979	EXIST::FUNCTION:
+EVP_PKEY_meth_get_ctrl                  4980	EXIST::FUNCTION:
+EVP_PKEY_meth_get_verifyctx             4981	EXIST::FUNCTION:
+EVP_PKEY_meth_get_paramgen              4982	EXIST::FUNCTION:
+EVP_PKEY_meth_get_init                  4983	EXIST::FUNCTION:
+EVP_PKEY_meth_get_cleanup               4984	EXIST::FUNCTION:
+EVP_PKEY_meth_get_keygen                4985	EXIST::FUNCTION:
+EVP_PKEY_meth_get_signctx               4986	EXIST::FUNCTION:
+EVP_PKEY_meth_get_sign                  4987	EXIST::FUNCTION:
+EVP_PKEY_meth_get_copy                  4988	EXIST::FUNCTION:
+EVP_PKEY_meth_get_verify_recover        4989	EXIST::FUNCTION:
+EVP_PKEY_meth_get_encrypt               4990	EXIST::FUNCTION:
