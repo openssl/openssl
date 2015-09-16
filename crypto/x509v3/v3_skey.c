@@ -128,7 +128,7 @@ static ASN1_OCTET_STRING *s2i_skey_id(X509V3_EXT_METHOD *method,
     if (ctx->subject_req)
         pk = ctx->subject_req->req_info->pubkey->public_key;
     else
-        pk = ctx->subject_cert->cert_info->key->public_key;
+        pk = ctx->subject_cert->cert_info.key->public_key;
 
     if (!pk) {
         X509V3err(X509V3_F_S2I_SKEY_ID, X509V3_R_NO_PUBLIC_KEY);

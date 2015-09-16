@@ -106,7 +106,7 @@ static int x509_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
 
     case ASN1_OP_D2I_POST:
         OPENSSL_free(ret->name);
-        ret->name = X509_NAME_oneline(ret->cert_info->subject, NULL, 0);
+        ret->name = X509_NAME_oneline(ret->cert_info.subject, NULL, 0);
         break;
 
     case ASN1_OP_FREE_POST:
@@ -132,7 +132,7 @@ static int x509_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
 }
 
 ASN1_SEQUENCE_ref(X509, x509_cb, CRYPTO_LOCK_X509) = {
-        ASN1_SIMPLE(X509, cert_info, X509_CINF),
+        ASN1_EMBED(X509, cert_info, X509_CINF),
         ASN1_SIMPLE(X509, sig_alg, X509_ALGOR),
         ASN1_SIMPLE(X509, signature, ASN1_BIT_STRING)
 } ASN1_SEQUENCE_END_ref(X509, X509)
@@ -209,8 +209,8 @@ int i2d_X509_AUX(X509 *a, unsigned char **pp)
 
 int i2d_re_X509_tbs(X509 *x, unsigned char **pp)
 {
-    x->cert_info->enc.modified = 1;
-    return i2d_X509_CINF(x->cert_info, pp);
+    x->cert_info.enc.modified = 1;
+    return i2d_X509_CINF(&x->cert_info, pp);
 }
 
 void X509_get0_signature(ASN1_BIT_STRING **psig, X509_ALGOR **palg,
