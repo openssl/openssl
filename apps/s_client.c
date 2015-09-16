@@ -160,6 +160,7 @@ typedef unsigned int u_int;
 #include <openssl/rand.h>
 #include <openssl/ocsp.h>
 #include <openssl/bn.h>
+#include <openssl/async.h>
 #ifndef OPENSSL_NO_SRP
 # include <openssl/srp.h>
 #endif
@@ -1205,8 +1206,10 @@ int s_client_main(int argc, char **argv)
         goto end;
     }
 
-    if (async)
+    if (async) {
         SSL_CTX_set_mode(ctx, SSL_MODE_ASYNC);
+        ASYNC_init_pool(0, 0);
+    }
 
     if (!config_ctx(cctx, ssl_args, ctx, 1, jpake_secret == NULL))
         goto end;
@@ -2095,6 +2098,9 @@ int s_client_main(int argc, char **argv)
         if (prexit != 0)
             print_stuff(bio_c_out, con, 1);
         SSL_free(con);
+    }
+    if (async) {
+        ASYNC_free_pool();
     }
 #if !defined(OPENSSL_NO_NEXTPROTONEG)
     OPENSSL_free(next_proto.data);
