@@ -256,121 +256,71 @@ d1_srvr.o: ../include/openssl/ssl3.h ../include/openssl/stack.h
 d1_srvr.o: ../include/openssl/symhacks.h ../include/openssl/tls1.h
 d1_srvr.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h d1_srvr.c
 d1_srvr.o: packet_locl.h record/record.h ssl_locl.h
-record/dtls1_bitmap.o: ../e_os.h ../include/openssl/asn1.h
-record/dtls1_bitmap.o: ../include/openssl/bio.h ../include/openssl/bn.h
-record/dtls1_bitmap.o: ../include/openssl/buffer.h ../include/openssl/comp.h
-record/dtls1_bitmap.o: ../include/openssl/crypto.h ../include/openssl/dsa.h
-record/dtls1_bitmap.o: ../include/openssl/dtls1.h ../include/openssl/e_os2.h
-record/dtls1_bitmap.o: ../include/openssl/ec.h ../include/openssl/ecdh.h
-record/dtls1_bitmap.o: ../include/openssl/ecdsa.h ../include/openssl/err.h
-record/dtls1_bitmap.o: ../include/openssl/evp.h ../include/openssl/hmac.h
-record/dtls1_bitmap.o: ../include/openssl/lhash.h ../include/openssl/obj_mac.h
-record/dtls1_bitmap.o: ../include/openssl/objects.h
-record/dtls1_bitmap.o: ../include/openssl/opensslconf.h
-record/dtls1_bitmap.o: ../include/openssl/opensslv.h
-record/dtls1_bitmap.o: ../include/openssl/ossl_typ.h ../include/openssl/pem.h
-record/dtls1_bitmap.o: ../include/openssl/pem2.h ../include/openssl/pkcs7.h
-record/dtls1_bitmap.o: ../include/openssl/pqueue.h ../include/openssl/rsa.h
-record/dtls1_bitmap.o: ../include/openssl/safestack.h ../include/openssl/sha.h
-record/dtls1_bitmap.o: ../include/openssl/srtp.h ../include/openssl/ssl.h
-record/dtls1_bitmap.o: ../include/openssl/ssl2.h ../include/openssl/ssl3.h
-record/dtls1_bitmap.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
-record/dtls1_bitmap.o: ../include/openssl/tls1.h ../include/openssl/x509.h
-record/dtls1_bitmap.o: ../include/openssl/x509_vfy.h packet_locl.h
-record/dtls1_bitmap.o: record/dtls1_bitmap.c record/record.h
-record/dtls1_bitmap.o: record/record_locl.h ssl_locl.h
-record/rec_layer_d1.o: ../e_os.h ../include/openssl/asn1.h
-record/rec_layer_d1.o: ../include/openssl/bio.h ../include/openssl/bn.h
-record/rec_layer_d1.o: ../include/openssl/buffer.h ../include/openssl/comp.h
-record/rec_layer_d1.o: ../include/openssl/crypto.h ../include/openssl/dsa.h
-record/rec_layer_d1.o: ../include/openssl/dtls1.h ../include/openssl/e_os2.h
-record/rec_layer_d1.o: ../include/openssl/ec.h ../include/openssl/ecdh.h
-record/rec_layer_d1.o: ../include/openssl/ecdsa.h ../include/openssl/err.h
-record/rec_layer_d1.o: ../include/openssl/evp.h ../include/openssl/hmac.h
-record/rec_layer_d1.o: ../include/openssl/lhash.h ../include/openssl/obj_mac.h
-record/rec_layer_d1.o: ../include/openssl/objects.h
-record/rec_layer_d1.o: ../include/openssl/opensslconf.h
-record/rec_layer_d1.o: ../include/openssl/opensslv.h
-record/rec_layer_d1.o: ../include/openssl/ossl_typ.h ../include/openssl/pem.h
-record/rec_layer_d1.o: ../include/openssl/pem2.h ../include/openssl/pkcs7.h
-record/rec_layer_d1.o: ../include/openssl/pqueue.h ../include/openssl/rand.h
-record/rec_layer_d1.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
-record/rec_layer_d1.o: ../include/openssl/sha.h ../include/openssl/srtp.h
-record/rec_layer_d1.o: ../include/openssl/ssl.h ../include/openssl/ssl2.h
-record/rec_layer_d1.o: ../include/openssl/ssl3.h ../include/openssl/stack.h
-record/rec_layer_d1.o: ../include/openssl/symhacks.h ../include/openssl/tls1.h
-record/rec_layer_d1.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h
-record/rec_layer_d1.o: packet_locl.h record/rec_layer_d1.c record/record.h
-record/rec_layer_d1.o: record/record_locl.h ssl_locl.h
-record/rec_layer_s3.o: ../e_os.h ../include/openssl/asn1.h
-record/rec_layer_s3.o: ../include/openssl/bio.h ../include/openssl/bn.h
-record/rec_layer_s3.o: ../include/openssl/buffer.h ../include/openssl/comp.h
-record/rec_layer_s3.o: ../include/openssl/crypto.h ../include/openssl/dsa.h
-record/rec_layer_s3.o: ../include/openssl/dtls1.h ../include/openssl/e_os2.h
-record/rec_layer_s3.o: ../include/openssl/ec.h ../include/openssl/ecdh.h
-record/rec_layer_s3.o: ../include/openssl/ecdsa.h ../include/openssl/err.h
-record/rec_layer_s3.o: ../include/openssl/evp.h ../include/openssl/hmac.h
-record/rec_layer_s3.o: ../include/openssl/lhash.h ../include/openssl/obj_mac.h
-record/rec_layer_s3.o: ../include/openssl/objects.h
-record/rec_layer_s3.o: ../include/openssl/opensslconf.h
-record/rec_layer_s3.o: ../include/openssl/opensslv.h
-record/rec_layer_s3.o: ../include/openssl/ossl_typ.h ../include/openssl/pem.h
-record/rec_layer_s3.o: ../include/openssl/pem2.h ../include/openssl/pkcs7.h
-record/rec_layer_s3.o: ../include/openssl/pqueue.h ../include/openssl/rand.h
-record/rec_layer_s3.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
-record/rec_layer_s3.o: ../include/openssl/sha.h ../include/openssl/srtp.h
-record/rec_layer_s3.o: ../include/openssl/ssl.h ../include/openssl/ssl2.h
-record/rec_layer_s3.o: ../include/openssl/ssl3.h ../include/openssl/stack.h
-record/rec_layer_s3.o: ../include/openssl/symhacks.h ../include/openssl/tls1.h
-record/rec_layer_s3.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h
-record/rec_layer_s3.o: packet_locl.h record/rec_layer_s3.c record/record.h
-record/rec_layer_s3.o: record/record_locl.h ssl_locl.h
-record/ssl3_buffer.o: ../e_os.h ../include/openssl/asn1.h
-record/ssl3_buffer.o: ../include/openssl/bio.h ../include/openssl/bn.h
-record/ssl3_buffer.o: ../include/openssl/buffer.h ../include/openssl/comp.h
-record/ssl3_buffer.o: ../include/openssl/crypto.h ../include/openssl/dsa.h
-record/ssl3_buffer.o: ../include/openssl/dtls1.h ../include/openssl/e_os2.h
-record/ssl3_buffer.o: ../include/openssl/ec.h ../include/openssl/ecdh.h
-record/ssl3_buffer.o: ../include/openssl/ecdsa.h ../include/openssl/err.h
-record/ssl3_buffer.o: ../include/openssl/evp.h ../include/openssl/hmac.h
-record/ssl3_buffer.o: ../include/openssl/lhash.h ../include/openssl/obj_mac.h
-record/ssl3_buffer.o: ../include/openssl/objects.h
-record/ssl3_buffer.o: ../include/openssl/opensslconf.h
-record/ssl3_buffer.o: ../include/openssl/opensslv.h
-record/ssl3_buffer.o: ../include/openssl/ossl_typ.h ../include/openssl/pem.h
-record/ssl3_buffer.o: ../include/openssl/pem2.h ../include/openssl/pkcs7.h
-record/ssl3_buffer.o: ../include/openssl/pqueue.h ../include/openssl/rsa.h
-record/ssl3_buffer.o: ../include/openssl/safestack.h ../include/openssl/sha.h
-record/ssl3_buffer.o: ../include/openssl/srtp.h ../include/openssl/ssl.h
-record/ssl3_buffer.o: ../include/openssl/ssl2.h ../include/openssl/ssl3.h
-record/ssl3_buffer.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
-record/ssl3_buffer.o: ../include/openssl/tls1.h ../include/openssl/x509.h
-record/ssl3_buffer.o: ../include/openssl/x509_vfy.h packet_locl.h
-record/ssl3_buffer.o: record/record.h record/record_locl.h record/ssl3_buffer.c
-record/ssl3_buffer.o: ssl_locl.h
-record/ssl3_record.o: ../e_os.h ../include/internal/constant_time_locl.h
-record/ssl3_record.o: ../include/openssl/asn1.h ../include/openssl/bio.h
-record/ssl3_record.o: ../include/openssl/bn.h ../include/openssl/buffer.h
-record/ssl3_record.o: ../include/openssl/comp.h ../include/openssl/crypto.h
-record/ssl3_record.o: ../include/openssl/dsa.h ../include/openssl/dtls1.h
-record/ssl3_record.o: ../include/openssl/e_os2.h ../include/openssl/ec.h
-record/ssl3_record.o: ../include/openssl/ecdh.h ../include/openssl/ecdsa.h
-record/ssl3_record.o: ../include/openssl/err.h ../include/openssl/evp.h
-record/ssl3_record.o: ../include/openssl/hmac.h ../include/openssl/lhash.h
-record/ssl3_record.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
-record/ssl3_record.o: ../include/openssl/opensslconf.h
-record/ssl3_record.o: ../include/openssl/opensslv.h
-record/ssl3_record.o: ../include/openssl/ossl_typ.h ../include/openssl/pem.h
-record/ssl3_record.o: ../include/openssl/pem2.h ../include/openssl/pkcs7.h
-record/ssl3_record.o: ../include/openssl/pqueue.h ../include/openssl/rand.h
-record/ssl3_record.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
-record/ssl3_record.o: ../include/openssl/sha.h ../include/openssl/srtp.h
-record/ssl3_record.o: ../include/openssl/ssl.h ../include/openssl/ssl2.h
-record/ssl3_record.o: ../include/openssl/ssl3.h ../include/openssl/stack.h
-record/ssl3_record.o: ../include/openssl/symhacks.h ../include/openssl/tls1.h
-record/ssl3_record.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h
-record/ssl3_record.o: packet_locl.h record/record.h record/record_locl.h
-record/ssl3_record.o: record/ssl3_record.c ssl_locl.h
+dtls1_bitmap.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
+dtls1_bitmap.o: ../include/openssl/bn.h ../include/openssl/buffer.h
+dtls1_bitmap.o: ../include/openssl/comp.h ../include/openssl/crypto.h
+dtls1_bitmap.o: ../include/openssl/dsa.h ../include/openssl/dtls1.h
+dtls1_bitmap.o: ../include/openssl/e_os2.h ../include/openssl/ec.h
+dtls1_bitmap.o: ../include/openssl/ecdh.h ../include/openssl/ecdsa.h
+dtls1_bitmap.o: ../include/openssl/err.h ../include/openssl/evp.h
+dtls1_bitmap.o: ../include/openssl/hmac.h ../include/openssl/lhash.h
+dtls1_bitmap.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
+dtls1_bitmap.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
+dtls1_bitmap.o: ../include/openssl/ossl_typ.h ../include/openssl/pem.h
+dtls1_bitmap.o: ../include/openssl/pem2.h ../include/openssl/pkcs7.h
+dtls1_bitmap.o: ../include/openssl/pqueue.h ../include/openssl/rsa.h
+dtls1_bitmap.o: ../include/openssl/safestack.h ../include/openssl/sha.h
+dtls1_bitmap.o: ../include/openssl/srtp.h ../include/openssl/ssl.h
+dtls1_bitmap.o: ../include/openssl/ssl2.h ../include/openssl/ssl3.h
+dtls1_bitmap.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
+dtls1_bitmap.o: ../include/openssl/tls1.h ../include/openssl/x509.h
+dtls1_bitmap.o: ../include/openssl/x509_vfy.h dtls1_bitmap.c
+dtls1_bitmap.o: record/../packet_locl.h record/../record/record.h
+dtls1_bitmap.o: record/../ssl_locl.h record/dtls1_bitmap.c record/record_locl.h
+rec_layer_d1.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
+rec_layer_d1.o: ../include/openssl/bn.h ../include/openssl/buffer.h
+rec_layer_d1.o: ../include/openssl/comp.h ../include/openssl/crypto.h
+rec_layer_d1.o: ../include/openssl/dsa.h ../include/openssl/dtls1.h
+rec_layer_d1.o: ../include/openssl/e_os2.h ../include/openssl/ec.h
+rec_layer_d1.o: ../include/openssl/ecdh.h ../include/openssl/ecdsa.h
+rec_layer_d1.o: ../include/openssl/err.h ../include/openssl/evp.h
+rec_layer_d1.o: ../include/openssl/hmac.h ../include/openssl/lhash.h
+rec_layer_d1.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
+rec_layer_d1.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
+rec_layer_d1.o: ../include/openssl/ossl_typ.h ../include/openssl/pem.h
+rec_layer_d1.o: ../include/openssl/pem2.h ../include/openssl/pkcs7.h
+rec_layer_d1.o: ../include/openssl/pqueue.h ../include/openssl/rand.h
+rec_layer_d1.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
+rec_layer_d1.o: ../include/openssl/sha.h ../include/openssl/srtp.h
+rec_layer_d1.o: ../include/openssl/ssl.h ../include/openssl/ssl2.h
+rec_layer_d1.o: ../include/openssl/ssl3.h ../include/openssl/stack.h
+rec_layer_d1.o: ../include/openssl/symhacks.h ../include/openssl/tls1.h
+rec_layer_d1.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h
+rec_layer_d1.o: rec_layer_d1.c record/../packet_locl.h
+rec_layer_d1.o: record/../record/record.h record/../ssl_locl.h
+rec_layer_d1.o: record/rec_layer_d1.c record/record_locl.h
+rec_layer_s3.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
+rec_layer_s3.o: ../include/openssl/bn.h ../include/openssl/buffer.h
+rec_layer_s3.o: ../include/openssl/comp.h ../include/openssl/crypto.h
+rec_layer_s3.o: ../include/openssl/dsa.h ../include/openssl/dtls1.h
+rec_layer_s3.o: ../include/openssl/e_os2.h ../include/openssl/ec.h
+rec_layer_s3.o: ../include/openssl/ecdh.h ../include/openssl/ecdsa.h
+rec_layer_s3.o: ../include/openssl/err.h ../include/openssl/evp.h
+rec_layer_s3.o: ../include/openssl/hmac.h ../include/openssl/lhash.h
+rec_layer_s3.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
+rec_layer_s3.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
+rec_layer_s3.o: ../include/openssl/ossl_typ.h ../include/openssl/pem.h
+rec_layer_s3.o: ../include/openssl/pem2.h ../include/openssl/pkcs7.h
+rec_layer_s3.o: ../include/openssl/pqueue.h ../include/openssl/rand.h
+rec_layer_s3.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
+rec_layer_s3.o: ../include/openssl/sha.h ../include/openssl/srtp.h
+rec_layer_s3.o: ../include/openssl/ssl.h ../include/openssl/ssl2.h
+rec_layer_s3.o: ../include/openssl/ssl3.h ../include/openssl/stack.h
+rec_layer_s3.o: ../include/openssl/symhacks.h ../include/openssl/tls1.h
+rec_layer_s3.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h
+rec_layer_s3.o: rec_layer_s3.c record/../packet_locl.h
+rec_layer_s3.o: record/../record/record.h record/../ssl_locl.h
+rec_layer_s3.o: record/rec_layer_s3.c record/record_locl.h
 s3_both.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 s3_both.o: ../include/openssl/bn.h ../include/openssl/buffer.h
 s3_both.o: ../include/openssl/comp.h ../include/openssl/crypto.h
@@ -517,6 +467,50 @@ s3_srvr.o: ../include/openssl/ssl3.h ../include/openssl/stack.h
 s3_srvr.o: ../include/openssl/symhacks.h ../include/openssl/tls1.h
 s3_srvr.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h
 s3_srvr.o: packet_locl.h record/record.h s3_srvr.c ssl_locl.h
+ssl3_buffer.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
+ssl3_buffer.o: ../include/openssl/bn.h ../include/openssl/buffer.h
+ssl3_buffer.o: ../include/openssl/comp.h ../include/openssl/crypto.h
+ssl3_buffer.o: ../include/openssl/dsa.h ../include/openssl/dtls1.h
+ssl3_buffer.o: ../include/openssl/e_os2.h ../include/openssl/ec.h
+ssl3_buffer.o: ../include/openssl/ecdh.h ../include/openssl/ecdsa.h
+ssl3_buffer.o: ../include/openssl/err.h ../include/openssl/evp.h
+ssl3_buffer.o: ../include/openssl/hmac.h ../include/openssl/lhash.h
+ssl3_buffer.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
+ssl3_buffer.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
+ssl3_buffer.o: ../include/openssl/ossl_typ.h ../include/openssl/pem.h
+ssl3_buffer.o: ../include/openssl/pem2.h ../include/openssl/pkcs7.h
+ssl3_buffer.o: ../include/openssl/pqueue.h ../include/openssl/rsa.h
+ssl3_buffer.o: ../include/openssl/safestack.h ../include/openssl/sha.h
+ssl3_buffer.o: ../include/openssl/srtp.h ../include/openssl/ssl.h
+ssl3_buffer.o: ../include/openssl/ssl2.h ../include/openssl/ssl3.h
+ssl3_buffer.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
+ssl3_buffer.o: ../include/openssl/tls1.h ../include/openssl/x509.h
+ssl3_buffer.o: ../include/openssl/x509_vfy.h record/../packet_locl.h
+ssl3_buffer.o: record/../record/record.h record/../ssl_locl.h
+ssl3_buffer.o: record/record_locl.h record/ssl3_buffer.c ssl3_buffer.c
+ssl3_record.o: ../e_os.h ../include/internal/constant_time_locl.h
+ssl3_record.o: ../include/openssl/asn1.h ../include/openssl/bio.h
+ssl3_record.o: ../include/openssl/bn.h ../include/openssl/buffer.h
+ssl3_record.o: ../include/openssl/comp.h ../include/openssl/crypto.h
+ssl3_record.o: ../include/openssl/dsa.h ../include/openssl/dtls1.h
+ssl3_record.o: ../include/openssl/e_os2.h ../include/openssl/ec.h
+ssl3_record.o: ../include/openssl/ecdh.h ../include/openssl/ecdsa.h
+ssl3_record.o: ../include/openssl/err.h ../include/openssl/evp.h
+ssl3_record.o: ../include/openssl/hmac.h ../include/openssl/lhash.h
+ssl3_record.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
+ssl3_record.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
+ssl3_record.o: ../include/openssl/ossl_typ.h ../include/openssl/pem.h
+ssl3_record.o: ../include/openssl/pem2.h ../include/openssl/pkcs7.h
+ssl3_record.o: ../include/openssl/pqueue.h ../include/openssl/rand.h
+ssl3_record.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
+ssl3_record.o: ../include/openssl/sha.h ../include/openssl/srtp.h
+ssl3_record.o: ../include/openssl/ssl.h ../include/openssl/ssl2.h
+ssl3_record.o: ../include/openssl/ssl3.h ../include/openssl/stack.h
+ssl3_record.o: ../include/openssl/symhacks.h ../include/openssl/tls1.h
+ssl3_record.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h
+ssl3_record.o: record/../packet_locl.h record/../record/record.h
+ssl3_record.o: record/../ssl_locl.h record/record_locl.h record/ssl3_record.c
+ssl3_record.o: ssl3_record.c
 ssl_algs.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 ssl_algs.o: ../include/openssl/bn.h ../include/openssl/buffer.h
 ssl_algs.o: ../include/openssl/comp.h ../include/openssl/crypto.h
