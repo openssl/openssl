@@ -1661,7 +1661,7 @@ int s_server_main(int argc, char *argv[])
 
     if (async) {
         SSL_CTX_set_mode(ctx, SSL_MODE_ASYNC);
-        ASYNC_init_pool(0, 0, 0);
+        ASYNC_init_pool(0, 0);
     }
 
 #ifndef OPENSSL_NO_SRTP

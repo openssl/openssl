@@ -51,7 +51,6 @@
  * ====================================================================
  */
 
-#include <openssl/crypto.h>
 #include <openssl/async.h>
 #include <string.h>
 #include "async_locl.h"
@@ -60,13 +59,6 @@
 #define ASYNC_JOB_PAUSING   1
 #define ASYNC_JOB_PAUSED    2
 #define ASYNC_JOB_STOPPING  3
-
-static size_t pool_max_size = 0;
-static size_t curr_size = 0;
-
-DECLARE_STACK_OF(ASYNC_JOB)
-static STACK_OF(ASYNC_JOB) *pool = NULL;
-
 
 static ASYNC_CTX *ASYNC_CTX_new(void)
 {
@@ -139,27 +131,29 @@ static void ASYNC_JOB_free(ASYNC_JOB *job)
 
 static ASYNC_JOB *async_get_pool_job(void) {
     ASYNC_JOB *job;
+    STACK_OF(ASYNC_JOB) *pool;
 
+    pool = async_get_pool();
     if (pool == NULL) {
         /*
          * Pool has not been initialised, so init with the defaults, i.e.
          * global pool, with no max size and no pre-created jobs
          */
-        if (ASYNC_init_pool(0, 0, 0) == 0)
+        if (ASYNC_init_pool(0, 0) == 0)
             return NULL;
+        pool = async_get_pool();
     }
 
     job = sk_ASYNC_JOB_pop(pool);
     if (job == NULL) {
         /* Pool is empty */
-        if (pool_max_size && curr_size >= pool_max_size) {
-            /* Pool is at max size. We cannot continue */
+        if (!async_pool_can_grow())
             return NULL;
-        }
+
         job = ASYNC_JOB_new();
         if (job) {
             ASYNC_FIBRE_makecontext(&job->fibrectx);
-            curr_size++;
+            async_increment_pool_size();
         }
     }
     return job;
@@ -170,7 +164,7 @@ static void async_release_job(ASYNC_JOB *job) {
         OPENSSL_free(job->funcargs);
     job->funcargs = NULL;
     /* Ignore error return */
-    sk_ASYNC_JOB_push(pool, job);
+    async_release_job_to_pool(job);
 }
 
 void ASYNC_start_func(void)
@@ -301,14 +295,14 @@ int ASYNC_in_job(void)
     return 0;
 }
 
-int ASYNC_init_pool(unsigned int local, size_t max_size, size_t init_size)
+int ASYNC_init_pool(size_t max_size, size_t init_size)
 {
-    if (local != 0) {
-        /* We only support a global pool so far */
-        return 0;
-    }
+    STACK_OF(ASYNC_JOB) *pool;
+    size_t curr_size = 0;
 
-    pool_max_size = max_size;
+    if (init_size > max_size)
+        return 0;
+
     pool = sk_ASYNC_JOB_new_null();
     if (pool == NULL) {
         return 0;
@@ -332,18 +326,24 @@ int ASYNC_init_pool(unsigned int local, size_t max_size, size_t init_size)
         }
     }
 
+    async_set_pool(pool, curr_size, max_size);
+
     return 1;
 }
 
 void ASYNC_free_pool(void)
 {
     ASYNC_JOB *job;
+    STACK_OF(ASYNC_JOB) *pool;
 
+    pool = async_get_pool();
+    if (pool == NULL)
+        return;
     do {
         job = sk_ASYNC_JOB_pop(pool);
         ASYNC_JOB_free(job);
     } while (job);
-    sk_ASYNC_JOB_free(pool);
+    async_release_pool();
 }
 
 ASYNC_JOB *ASYNC_get_current_job(void)
