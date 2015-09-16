@@ -2152,7 +2152,8 @@ static int sv_body(char *hostname, int s, int stype, unsigned char *context)
         int read_from_sslcon;
 
         read_from_terminal = 0;
-        read_from_sslcon = SSL_pending(con);
+        read_from_sslcon = SSL_pending(con)
+                           || (async && SSL_waiting_for_async(con));
 
         if (!read_from_sslcon) {
             FD_ZERO(&readfds);
@@ -2348,7 +2349,13 @@ static int sv_body(char *hostname, int s, int stype, unsigned char *context)
             }
         }
         if (read_from_sslcon) {
-            if (!SSL_is_init_finished(con)) {
+            /*
+             * init_ssl_connection handles all async events itself so if we're
+             * waiting for async then we shouldn't go back into
+             * init_ssl_connection
+             */
+            if ((!async || !SSL_waiting_for_async(con))
+                    && !SSL_is_init_finished(con)) {
                 i = init_ssl_connection(con);
 
                 if (i < 0) {
