@@ -69,22 +69,25 @@ extern "C" {
 # endif
 
 typedef struct {
-    /* Pointer to the start of the buffer data */
-    unsigned char *start;
-
-    /* Pointer to the first byte after the end of the buffer data */
-    unsigned char *end;
-
     /* Pointer to where we are currently reading from */
     unsigned char *curr;
+    /* Number of bytes remaining */
+    size_t remaining;
 } PACKET;
+
+/* Internal unchecked shorthand; don't use outside this file. */
+static inline void packet_forward(PACKET *pkt, size_t len)
+{
+    pkt->curr += len;
+    pkt->remaining -= len;
+}
 
 /*
  * Returns the number of bytes remaining to be read in the PACKET
  */
 __owur static inline size_t PACKET_remaining(const PACKET *pkt)
 {
-    return (size_t)(pkt->end - pkt->curr);
+    return pkt->remaining;
 }
 
 /*
@@ -105,17 +108,12 @@ static inline unsigned char *PACKET_data(const PACKET *pkt)
  */
 static inline int PACKET_buf_init(PACKET *pkt, unsigned char *buf, size_t len)
 {
-    pkt->start = pkt->curr = buf;
-    pkt->end = pkt->start + len;
-
-    /* Sanity checks */
-    if (pkt->start > pkt->end
-            || pkt->curr < pkt->start
-            || pkt->curr > pkt->end
-            || len != (size_t)(pkt->end - pkt->start)) {
+    /* Sanity check for negative values. */
+    if (buf + len < buf)
         return 0;
-    }
 
+    pkt->curr = buf;
+    pkt->remaining = len;
     return 1;
 }
 
@@ -146,7 +144,7 @@ __owur static inline int PACKET_get_sub_packet(PACKET *pkt, PACKET *subpkt,
     if (!PACKET_peek_sub_packet(pkt, subpkt, len))
         return 0;
 
-    pkt->curr += len;
+    packet_forward(pkt, len);
 
     return 1;
 }
@@ -173,7 +171,7 @@ __owur static inline int PACKET_get_net_2(PACKET *pkt, unsigned int *data)
     if (!PACKET_peek_net_2(pkt, data))
         return 0;
 
-    pkt->curr += 2;
+    packet_forward(pkt, 2);
 
     return 1;
 }
@@ -201,7 +199,7 @@ __owur static inline int PACKET_get_net_3(PACKET *pkt, unsigned long *data)
     if (!PACKET_peek_net_3(pkt, data))
         return 0;
 
-    pkt->curr += 3;
+    packet_forward(pkt, 3);
 
     return 1;
 }
@@ -230,7 +228,7 @@ __owur static inline int PACKET_get_net_4(PACKET *pkt, unsigned long *data)
     if (!PACKET_peek_net_4(pkt, data))
         return 0;
 
-    pkt->curr += 4;
+    packet_forward(pkt, 4);
 
     return 1;
 }
@@ -252,7 +250,7 @@ __owur static inline int PACKET_get_1(PACKET *pkt, unsigned int *data)
     if (!PACKET_peek_1(pkt, data))
         return 0;
 
-    pkt->curr++;
+    packet_forward(pkt, 1);
 
     return 1;
 }
@@ -284,7 +282,7 @@ __owur static inline int PACKET_get_4(PACKET *pkt, unsigned long *data)
     if (!PACKET_peek_4(pkt, data))
         return 0;
 
-    pkt->curr += 4;
+    packet_forward(pkt, 4);
 
     return 1;
 }
@@ -318,7 +316,7 @@ __owur static inline int PACKET_get_bytes(PACKET *pkt, unsigned char **data,
     if (!PACKET_peek_bytes(pkt, data, len))
         return 0;
 
-    pkt->curr += len;
+    packet_forward(pkt, len);
 
     return 1;
 }
@@ -345,7 +343,7 @@ __owur static inline int PACKET_copy_bytes(PACKET *pkt, unsigned char *data,
     if (!PACKET_peek_copy_bytes(pkt, data, len))
         return 0;
 
-    pkt->curr += len;
+    packet_forward(pkt, len);
 
     return 1;
 }
@@ -405,18 +403,7 @@ __owur static inline int PACKET_forward(PACKET *pkt, size_t len)
     if (PACKET_remaining(pkt) < len)
         return 0;
 
-    pkt->curr += len;
-
-    return 1;
-}
-
-/*
- * Stores the total length of the packet we have in the underlying buffer in
- * |*len|
- */
-__owur static inline int PACKET_length(const PACKET *pkt, size_t *len)
-{
-    *len = pkt->end - pkt->start;
+    packet_forward(pkt, len);
 
     return 1;
 }
@@ -439,8 +426,8 @@ __owur static inline int PACKET_get_length_prefixed_1(PACKET *pkt, PACKET *subpk
   }
 
   *pkt = tmp;
-  subpkt->start = subpkt->curr = data;
-  subpkt->end = subpkt->start + length;
+  subpkt->curr = data;
+  subpkt->remaining = length;
 
   return 1;
 }
@@ -463,8 +450,8 @@ __owur static inline int PACKET_get_length_prefixed_2(PACKET *pkt, PACKET *subpk
   }
 
   *pkt = tmp;
-  subpkt->start = subpkt->curr = data;
-  subpkt->end = subpkt->start + length;
+  subpkt->curr = data;
+  subpkt->remaining = length;
 
   return 1;
 }
@@ -487,8 +474,8 @@ __owur static inline int PACKET_get_length_prefixed_3(PACKET *pkt, PACKET *subpk
   }
 
   *pkt = tmp;
-  subpkt->start = subpkt->curr = data;
-  subpkt->end = subpkt->start + length;
+  subpkt->curr = data;
+  subpkt->remaining = length;
 
   return 1;
 }
