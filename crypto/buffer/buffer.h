@@ -87,8 +87,8 @@ int BUF_MEM_grow_clean(BUF_MEM *str, size_t len);
 char *BUF_strdup(const char *str);
 
 /*
- * Returns a pointer to a new string which is a duplicate of the string |str|,
- * but guarantees to never read past the first |siz| bytes of |str|.
+ * Like strndup, but in addition, explicitly guarantees to never read past the
+ * first |siz| bytes of |str|.
  */
 char *BUF_strndup(const char *str, size_t siz);
 
