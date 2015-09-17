@@ -2934,7 +2934,7 @@ int tls1_process_ticket(SSL *s, PACKET *pkt,  unsigned char *session_id,
                         int len, SSL_SESSION **ret)
 {
     unsigned int i;
-    size_t bookmark = 0;
+    PACKET bookmark = *pkt;
     int retv = -1;
 
     *ret = NULL;
@@ -2948,10 +2948,6 @@ int tls1_process_ticket(SSL *s, PACKET *pkt,  unsigned char *session_id,
         return 0;
     if ((s->version <= SSL3_VERSION))
         return 0;
-
-    if (!PACKET_get_bookmark(pkt, &bookmark)) {
-        return -1;
-    }
 
     /* Skip past DTLS cookie */
     if (SSL_IS_DTLS(s)) {
@@ -3043,8 +3039,7 @@ int tls1_process_ticket(SSL *s, PACKET *pkt,  unsigned char *session_id,
     }
     retv = 0;
 end:
-    if (!PACKET_goto_bookmark(pkt, bookmark))
-        return -1;
+    *pkt = bookmark;
     return retv;
 }
 
