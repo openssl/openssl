@@ -115,6 +115,7 @@
 # include "e_os.h"
 # include <assert.h>
 
+# include <openssl/e_os2.h>
 # include <openssl/bio.h>
 # include <openssl/x509.h>
 # include <openssl/lhash.h>
