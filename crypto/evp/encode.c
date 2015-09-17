@@ -60,9 +60,9 @@
 #include "cryptlib.h"
 #include <openssl/evp.h>
 
+static unsigned char conv_ascii2bin(unsigned char a);
 #ifndef CHARSET_EBCDIC
 # define conv_bin2ascii(a)       (data_bin2ascii[(a)&0x3f])
-# define conv_ascii2bin(a)       (data_ascii2bin[(a)&0x7f])
 #else
 /*
  * We assume that PEM encoded files are EBCDIC files (i.e., printable text
@@ -71,7 +71,6 @@
  * as the underlying textstring data_bin2ascii[] is already EBCDIC)
  */
 # define conv_bin2ascii(a)       (data_bin2ascii[(a)&0x3f])
-# define conv_ascii2bin(a)       (data_ascii2bin[os_toascii[a]&0x7f])
 #endif
 
 /*-
@@ -123,6 +122,23 @@ static const unsigned char data_ascii2bin[128] = {
     0x29, 0x2A, 0x2B, 0x2C, 0x2D, 0x2E, 0x2F, 0x30,
     0x31, 0x32, 0x33, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
 };
+
+#ifndef CHARSET_EBCDIC
+static unsigned char conv_ascii2bin(unsigned char a)
+{
+    if (a & 0x80)
+        return B64_ERROR;
+    return data_ascii2bin[a];
+}
+#else
+static unsigned char conv_ascii2bin(unsigned char a)
+{
+    a = os_toascii[a];
+    if (a & 0x80)
+        return B64_ERROR;
+    return data_ascii2bin[a];
+}
+#endif
 
 void EVP_EncodeInit(EVP_ENCODE_CTX *ctx)
 {
