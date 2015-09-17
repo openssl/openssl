@@ -2690,6 +2690,12 @@ Output = 61475600736247383d0a
 Encoding = invalid
 Output = 61475601736247383d0a
 
+Encoding = invalid
+Output = 61475680736247383d0a
+
+Encoding = invalid
+Output = e14756736247383d0a
+
 Encoding = canonical
 Input = "OpenSSLOpenSSL\n"
 Output = "T3BlblNTTE9wZW5TU0wK\n"
