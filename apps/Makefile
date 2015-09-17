@@ -780,28 +780,28 @@ s_cb.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
 s_cb.o: ../include/openssl/tls1.h ../include/openssl/txt_db.h
 s_cb.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h
 s_cb.o: ../include/openssl/x509v3.h apps.h progs.h s_apps.h s_cb.c
-s_client.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
-s_client.o: ../include/openssl/bn.h ../include/openssl/buffer.h
-s_client.o: ../include/openssl/comp.h ../include/openssl/conf.h
-s_client.o: ../include/openssl/crypto.h ../include/openssl/dtls1.h
-s_client.o: ../include/openssl/e_os2.h ../include/openssl/ec.h
-s_client.o: ../include/openssl/ecdh.h ../include/openssl/ecdsa.h
-s_client.o: ../include/openssl/engine.h ../include/openssl/err.h
-s_client.o: ../include/openssl/evp.h ../include/openssl/hmac.h
-s_client.o: ../include/openssl/lhash.h ../include/openssl/obj_mac.h
-s_client.o: ../include/openssl/objects.h ../include/openssl/ocsp.h
-s_client.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
-s_client.o: ../include/openssl/ossl_typ.h ../include/openssl/pem.h
-s_client.o: ../include/openssl/pem2.h ../include/openssl/pkcs7.h
-s_client.o: ../include/openssl/rand.h ../include/openssl/safestack.h
-s_client.o: ../include/openssl/sha.h ../include/openssl/srp.h
-s_client.o: ../include/openssl/srtp.h ../include/openssl/ssl.h
-s_client.o: ../include/openssl/ssl2.h ../include/openssl/ssl3.h
-s_client.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
-s_client.o: ../include/openssl/tls1.h ../include/openssl/txt_db.h
-s_client.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h
-s_client.o: ../include/openssl/x509v3.h apps.h progs.h s_apps.h s_client.c
-s_client.o: timeouts.h
+s_client.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/async.h
+s_client.o: ../include/openssl/bio.h ../include/openssl/bn.h
+s_client.o: ../include/openssl/buffer.h ../include/openssl/comp.h
+s_client.o: ../include/openssl/conf.h ../include/openssl/crypto.h
+s_client.o: ../include/openssl/dtls1.h ../include/openssl/e_os2.h
+s_client.o: ../include/openssl/ec.h ../include/openssl/ecdh.h
+s_client.o: ../include/openssl/ecdsa.h ../include/openssl/engine.h
+s_client.o: ../include/openssl/err.h ../include/openssl/evp.h
+s_client.o: ../include/openssl/hmac.h ../include/openssl/lhash.h
+s_client.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
+s_client.o: ../include/openssl/ocsp.h ../include/openssl/opensslconf.h
+s_client.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
+s_client.o: ../include/openssl/pem.h ../include/openssl/pem2.h
+s_client.o: ../include/openssl/pkcs7.h ../include/openssl/rand.h
+s_client.o: ../include/openssl/safestack.h ../include/openssl/sha.h
+s_client.o: ../include/openssl/srp.h ../include/openssl/srtp.h
+s_client.o: ../include/openssl/ssl.h ../include/openssl/ssl2.h
+s_client.o: ../include/openssl/ssl3.h ../include/openssl/stack.h
+s_client.o: ../include/openssl/symhacks.h ../include/openssl/tls1.h
+s_client.o: ../include/openssl/txt_db.h ../include/openssl/x509.h
+s_client.o: ../include/openssl/x509_vfy.h ../include/openssl/x509v3.h apps.h
+s_client.o: progs.h s_apps.h s_client.c timeouts.h
 s_server.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/async.h
 s_server.o: ../include/openssl/bio.h ../include/openssl/bn.h
 s_server.o: ../include/openssl/buffer.h ../include/openssl/comp.h
