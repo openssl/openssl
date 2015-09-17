@@ -59,7 +59,7 @@
 
 #include "apps.h"
 
-#if defined(unix) || defined(__APPLE__)
+#if defined(OPENSSL_SYS_UNIX) || defined(__APPLE__)
 # include <unistd.h>
 # include <stdio.h>
 # include <limits.h>
@@ -488,4 +488,4 @@ int rehash_main(int argc, char **argv)
     return (1);
 }
 
-#endif /* defined(unix) || defined(__APPLE__) */
+#endif /* defined(OPENSSL_SYS_UNIX) || defined(__APPLE__) */
