@@ -173,7 +173,7 @@ ASN1_TIME *X509_get_notAfter(X509 *x)
 
 int X509_get_signature_type(const X509 *x)
 {
-    return EVP_PKEY_type(OBJ_obj2nid(x->sig_alg->algorithm));
+    return EVP_PKEY_type(OBJ_obj2nid(x->sig_alg.algorithm));
 }
 
 X509_PUBKEY *X509_get_X509_PUBKEY(const X509 *x)

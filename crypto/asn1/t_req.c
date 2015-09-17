@@ -227,7 +227,7 @@ int X509_REQ_print_ex(BIO *bp, X509_REQ *x, unsigned long nmflags,
     }
 
     if (!(cflag & X509_FLAG_NO_SIGDUMP)) {
-        if (!X509_signature_print(bp, x->sig_alg, x->signature))
+        if (!X509_signature_print(bp, &x->sig_alg, x->signature))
             goto err;
     }
 
