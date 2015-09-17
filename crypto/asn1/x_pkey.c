@@ -70,11 +70,12 @@ X509_PKEY *X509_PKEY_new(void)
     if (!ret)
         goto err;
 
+    ret->references = 1;
     ret->enc_algor = X509_ALGOR_new();
     ret->enc_pkey = ASN1_OCTET_STRING_new();
     if (!ret->enc_algor || !ret->enc_pkey)
         goto err;
-    ret->references = 1;
+
     return ret;
 err:
     X509_PKEY_free(ret);
