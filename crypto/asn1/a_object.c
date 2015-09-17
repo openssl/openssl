@@ -271,7 +271,7 @@ ASN1_OBJECT *d2i_ASN1_OBJECT(ASN1_OBJECT **a, const unsigned char **pp,
 ASN1_OBJECT *c2i_ASN1_OBJECT(ASN1_OBJECT **a, const unsigned char **pp,
                              long len)
 {
-    ASN1_OBJECT *ret = NULL;
+    ASN1_OBJECT *ret = NULL, tobj;
     const unsigned char *p;
     unsigned char *data;
     int i, length;
@@ -288,6 +288,29 @@ ASN1_OBJECT *c2i_ASN1_OBJECT(ASN1_OBJECT **a, const unsigned char **pp,
     }
     /* Now 0 < len <= INT_MAX, so the cast is safe. */
     length = (int)len;
+    /*
+     * Try to lookup OID in table: these are all valid encodings so if we get
+     * a match we know the OID is valid.
+     */
+    tobj.nid = NID_undef;
+    tobj.data = p;
+    tobj.length = length;
+    tobj.flags = 0;
+    i = OBJ_obj2nid(&tobj);
+    if (i != NID_undef) {
+        /*
+         * Return shared registered OID object: this improves efficiency
+         * because we don't have to return a dynamically allocated OID
+         * and NID lookups can use the cached value.
+         */
+        ret = OBJ_nid2obj(i);
+        if (a) {
+            ASN1_OBJECT_free(*a);
+            *a = ret;
+        }
+        *pp += len;
+        return ret;
+    }
     for (i = 0; i < length; i++, p++) {
         if (*p == 0x80 && (!i || !(p[-1] & 0x80))) {
             ASN1err(ASN1_F_C2I_ASN1_OBJECT, ASN1_R_INVALID_OBJECT_ENCODING);
