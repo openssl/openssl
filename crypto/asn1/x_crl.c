@@ -115,7 +115,7 @@ static int crl_inf_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
 
 ASN1_SEQUENCE_enc(X509_CRL_INFO, enc, crl_inf_cb) = {
         ASN1_OPT(X509_CRL_INFO, version, ASN1_INTEGER),
-        ASN1_SIMPLE(X509_CRL_INFO, sig_alg, X509_ALGOR),
+        ASN1_EMBED(X509_CRL_INFO, sig_alg, X509_ALGOR),
         ASN1_SIMPLE(X509_CRL_INFO, issuer, X509_NAME),
         ASN1_SIMPLE(X509_CRL_INFO, lastUpdate, ASN1_TIME),
         ASN1_OPT(X509_CRL_INFO, nextUpdate, ASN1_TIME),
@@ -332,7 +332,7 @@ static void setup_idp(X509_CRL *crl, ISSUING_DIST_POINT *idp)
 
 ASN1_SEQUENCE_ref(X509_CRL, crl_cb, CRYPTO_LOCK_X509_CRL) = {
         ASN1_EMBED(X509_CRL, crl, X509_CRL_INFO),
-        ASN1_SIMPLE(X509_CRL, sig_alg, X509_ALGOR),
+        ASN1_EMBED(X509_CRL, sig_alg, X509_ALGOR),
         ASN1_SIMPLE(X509_CRL, signature, ASN1_BIT_STRING)
 } ASN1_SEQUENCE_END_ref(X509_CRL, X509_CRL)
 
@@ -394,7 +394,7 @@ int X509_CRL_get0_by_cert(X509_CRL *crl, X509_REVOKED **ret, X509 *x)
 static int def_crl_verify(X509_CRL *crl, EVP_PKEY *r)
 {
     return (ASN1_item_verify(ASN1_ITEM_rptr(X509_CRL_INFO),
-                             crl->sig_alg, crl->signature, &crl->crl, r));
+                             &crl->sig_alg, crl->signature, &crl->crl, r));
 }
 
 static int crl_revoked_issuer_match(X509_CRL *crl, X509_NAME *nm,

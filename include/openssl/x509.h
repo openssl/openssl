@@ -167,7 +167,7 @@ typedef struct X509_req_st X509_REQ;
 typedef struct x509_cinf_st {
     ASN1_INTEGER *version;      /* [ 0 ] default of v1 */
     ASN1_INTEGER *serialNumber;
-    X509_ALGOR *signature;
+    X509_ALGOR signature;
     X509_NAME *issuer;
     X509_VAL validity;
     X509_NAME *subject;
@@ -182,7 +182,7 @@ typedef struct x509_cert_aux_st X509_CERT_AUX;
 
 struct x509_st {
     X509_CINF cert_info;
-    X509_ALGOR *sig_alg;
+    X509_ALGOR sig_alg;
     ASN1_BIT_STRING *signature;
     int valid;
     int references;
@@ -375,7 +375,7 @@ typedef struct Netscape_spkac_st {
 
 typedef struct Netscape_spki_st {
     NETSCAPE_SPKAC *spkac;      /* signed public key and challenge */
-    X509_ALGOR *sig_algor;
+    X509_ALGOR sig_algor;
     ASN1_BIT_STRING *signature;
 } NETSCAPE_SPKI;
 
@@ -666,8 +666,7 @@ X509 *d2i_X509_AUX(X509 **a, const unsigned char **pp, long length);
 
 int i2d_re_X509_tbs(X509 *x, unsigned char **pp);
 
-void X509_get0_signature(ASN1_BIT_STRING **psig, X509_ALGOR **palg,
-                         const X509 *x);
+void X509_get0_signature(ASN1_BIT_STRING **psig, X509_ALGOR **palg, X509 *x);
 int X509_get_signature_nid(const X509 *x);
 
 int X509_alias_set1(X509 *x, unsigned char *name, int len);
@@ -793,7 +792,7 @@ ASN1_TIME *X509_CRL_get_nextUpdate(X509_CRL *crl);
 X509_NAME *X509_CRL_get_issuer(X509_CRL *crl);
 STACK_OF(X509_REVOKED) *X509_CRL_get_REVOKED(X509_CRL *crl);
 void X509_CRL_get0_signature(ASN1_BIT_STRING **psig, X509_ALGOR **palg,
-                             const X509_CRL *crl);
+                             X509_CRL *crl);
 
 int X509_REVOKED_set_serialNumber(X509_REVOKED *x, ASN1_INTEGER *serial);
 int X509_REVOKED_set_revocationDate(X509_REVOKED *r, ASN1_TIME *tm);

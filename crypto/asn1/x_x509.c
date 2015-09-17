@@ -66,7 +66,7 @@
 ASN1_SEQUENCE_enc(X509_CINF, enc, 0) = {
         ASN1_EXP_OPT(X509_CINF, version, ASN1_INTEGER, 0),
         ASN1_SIMPLE(X509_CINF, serialNumber, ASN1_INTEGER),
-        ASN1_SIMPLE(X509_CINF, signature, X509_ALGOR),
+        ASN1_EMBED(X509_CINF, signature, X509_ALGOR),
         ASN1_SIMPLE(X509_CINF, issuer, X509_NAME),
         ASN1_EMBED(X509_CINF, validity, X509_VAL),
         ASN1_SIMPLE(X509_CINF, subject, X509_NAME),
@@ -133,7 +133,7 @@ static int x509_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
 
 ASN1_SEQUENCE_ref(X509, x509_cb, CRYPTO_LOCK_X509) = {
         ASN1_EMBED(X509, cert_info, X509_CINF),
-        ASN1_SIMPLE(X509, sig_alg, X509_ALGOR),
+        ASN1_EMBED(X509, sig_alg, X509_ALGOR),
         ASN1_SIMPLE(X509, signature, ASN1_BIT_STRING)
 } ASN1_SEQUENCE_END_ref(X509, X509)
 
@@ -213,16 +213,15 @@ int i2d_re_X509_tbs(X509 *x, unsigned char **pp)
     return i2d_X509_CINF(&x->cert_info, pp);
 }
 
-void X509_get0_signature(ASN1_BIT_STRING **psig, X509_ALGOR **palg,
-                         const X509 *x)
+void X509_get0_signature(ASN1_BIT_STRING **psig, X509_ALGOR **palg, X509 *x)
 {
     if (psig)
         *psig = x->signature;
     if (palg)
-        *palg = x->sig_alg;
+        *palg = &x->sig_alg;
 }
 
 int X509_get_signature_nid(const X509 *x)
 {
-    return OBJ_obj2nid(x->sig_alg->algorithm);
+    return OBJ_obj2nid(x->sig_alg.algorithm);
 }

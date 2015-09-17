@@ -164,12 +164,12 @@ STACK_OF(X509_REVOKED) *X509_CRL_get_REVOKED(X509_CRL *crl)
 }
 
 void X509_CRL_get0_signature(ASN1_BIT_STRING **psig, X509_ALGOR **palg,
-                             const X509_CRL *crl)
+                             X509_CRL *crl)
 {
     if (psig)
         *psig = crl->signature;
     if (palg)
-        *palg = crl->sig_alg;
+        *palg = &crl->sig_alg;
 }
 
 int X509_REVOKED_set_revocationDate(X509_REVOKED *x, ASN1_TIME *tm)

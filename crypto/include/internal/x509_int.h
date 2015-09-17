@@ -101,14 +101,14 @@ struct X509_req_info_st {
 
 struct X509_req_st {
     X509_REQ_INFO req_info;
-    X509_ALGOR *sig_alg;
+    X509_ALGOR sig_alg;
     ASN1_BIT_STRING *signature;
     int references;
 };
 
 struct X509_crl_info_st {
     ASN1_INTEGER *version;
-    X509_ALGOR *sig_alg;
+    X509_ALGOR sig_alg;
     X509_NAME *issuer;
     ASN1_TIME *lastUpdate;
     ASN1_TIME *nextUpdate;
@@ -120,7 +120,7 @@ struct X509_crl_info_st {
 struct X509_crl_st {
     /* actual signature */
     X509_CRL_INFO crl;
-    X509_ALGOR *sig_alg;
+    X509_ALGOR sig_alg;
     ASN1_BIT_STRING *signature;
     int references;
     int flags;

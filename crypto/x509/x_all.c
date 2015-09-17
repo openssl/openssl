@@ -74,37 +74,37 @@
 
 int X509_verify(X509 *a, EVP_PKEY *r)
 {
-    if (X509_ALGOR_cmp(a->sig_alg, a->cert_info.signature))
+    if (X509_ALGOR_cmp(&a->sig_alg, &a->cert_info.signature))
         return 0;
-    return (ASN1_item_verify(ASN1_ITEM_rptr(X509_CINF), a->sig_alg,
+    return (ASN1_item_verify(ASN1_ITEM_rptr(X509_CINF), &a->sig_alg,
                              a->signature, &a->cert_info, r));
 }
 
 int X509_REQ_verify(X509_REQ *a, EVP_PKEY *r)
 {
     return (ASN1_item_verify(ASN1_ITEM_rptr(X509_REQ_INFO),
-                             a->sig_alg, a->signature, &a->req_info, r));
+                             &a->sig_alg, a->signature, &a->req_info, r));
 }
 
 int NETSCAPE_SPKI_verify(NETSCAPE_SPKI *a, EVP_PKEY *r)
 {
     return (ASN1_item_verify(ASN1_ITEM_rptr(NETSCAPE_SPKAC),
-                             a->sig_algor, a->signature, a->spkac, r));
+                             &a->sig_algor, a->signature, a->spkac, r));
 }
 
 int X509_sign(X509 *x, EVP_PKEY *pkey, const EVP_MD *md)
 {
     x->cert_info.enc.modified = 1;
-    return (ASN1_item_sign(ASN1_ITEM_rptr(X509_CINF), x->cert_info.signature,
-                           x->sig_alg, x->signature, &x->cert_info, pkey, md));
+    return (ASN1_item_sign(ASN1_ITEM_rptr(X509_CINF), &x->cert_info.signature,
+                           &x->sig_alg, x->signature, &x->cert_info, pkey, md));
 }
 
 int X509_sign_ctx(X509 *x, EVP_MD_CTX *ctx)
 {
     x->cert_info.enc.modified = 1;
     return ASN1_item_sign_ctx(ASN1_ITEM_rptr(X509_CINF),
-                              x->cert_info.signature,
-                              x->sig_alg, x->signature, &x->cert_info, ctx);
+                              &x->cert_info.signature,
+                              &x->sig_alg, x->signature, &x->cert_info, ctx);
 }
 
 int X509_http_nbio(OCSP_REQ_CTX *rctx, X509 **pcert)
@@ -115,29 +115,29 @@ int X509_http_nbio(OCSP_REQ_CTX *rctx, X509 **pcert)
 
 int X509_REQ_sign(X509_REQ *x, EVP_PKEY *pkey, const EVP_MD *md)
 {
-    return (ASN1_item_sign(ASN1_ITEM_rptr(X509_REQ_INFO), x->sig_alg, NULL,
+    return (ASN1_item_sign(ASN1_ITEM_rptr(X509_REQ_INFO), &x->sig_alg, NULL,
                            x->signature, &x->req_info, pkey, md));
 }
 
 int X509_REQ_sign_ctx(X509_REQ *x, EVP_MD_CTX *ctx)
 {
     return ASN1_item_sign_ctx(ASN1_ITEM_rptr(X509_REQ_INFO),
-                              x->sig_alg, NULL, x->signature, &x->req_info,
+                              &x->sig_alg, NULL, x->signature, &x->req_info,
                               ctx);
 }
 
 int X509_CRL_sign(X509_CRL *x, EVP_PKEY *pkey, const EVP_MD *md)
 {
     x->crl.enc.modified = 1;
-    return (ASN1_item_sign(ASN1_ITEM_rptr(X509_CRL_INFO), x->crl.sig_alg,
-                           x->sig_alg, x->signature, &x->crl, pkey, md));
+    return (ASN1_item_sign(ASN1_ITEM_rptr(X509_CRL_INFO), &x->crl.sig_alg,
+                           &x->sig_alg, x->signature, &x->crl, pkey, md));
 }
 
 int X509_CRL_sign_ctx(X509_CRL *x, EVP_MD_CTX *ctx)
 {
     x->crl.enc.modified = 1;
     return ASN1_item_sign_ctx(ASN1_ITEM_rptr(X509_CRL_INFO),
-                              x->crl.sig_alg, x->sig_alg, x->signature,
+                              &x->crl.sig_alg, &x->sig_alg, x->signature,
                               &x->crl, ctx);
 }
 
@@ -150,7 +150,7 @@ int X509_CRL_http_nbio(OCSP_REQ_CTX *rctx, X509_CRL **pcrl)
 
 int NETSCAPE_SPKI_sign(NETSCAPE_SPKI *x, EVP_PKEY *pkey, const EVP_MD *md)
 {
-    return (ASN1_item_sign(ASN1_ITEM_rptr(NETSCAPE_SPKAC), x->sig_algor, NULL,
+    return (ASN1_item_sign(ASN1_ITEM_rptr(NETSCAPE_SPKAC), &x->sig_algor, NULL,
                            x->signature, x->spkac, pkey, md));
 }
 
