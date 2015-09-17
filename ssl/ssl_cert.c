@@ -192,6 +192,7 @@ CERT *ssl_cert_dup(CERT *cert)
         return (NULL);
     }
 
+    ret->references = 1;
     ret->key = &ret->pkeys[cert->key - cert->pkeys];
 
 #ifndef OPENSSL_NO_RSA
@@ -278,7 +279,6 @@ CERT *ssl_cert_dup(CERT *cert)
         }
     }
 
-    ret->references = 1;
     /* Configured sigalgs copied across */
     if (cert->conf_sigalgs) {
         ret->conf_sigalgs = OPENSSL_malloc(cert->conf_sigalgslen);
