@@ -61,13 +61,16 @@
 
 #define BUF_LEN 255
 
-static int test_PACKET_remaining(PACKET *pkt)
+static int test_PACKET_remaining(unsigned char buf[BUF_LEN])
 {
-    if (        PACKET_remaining(pkt) != BUF_LEN
-            || !PACKET_forward(pkt, BUF_LEN - 1)
-            ||  PACKET_remaining(pkt) != 1
-            || !PACKET_forward(pkt, 1)
-            ||  PACKET_remaining(pkt) != 0) {
+    PACKET pkt;
+
+    if (       !PACKET_buf_init(&pkt, buf, BUF_LEN)
+            ||  PACKET_remaining(&pkt) != BUF_LEN
+            || !PACKET_forward(&pkt, BUF_LEN - 1)
+            ||  PACKET_remaining(&pkt) != 1
+            || !PACKET_forward(&pkt, 1)
+            ||  PACKET_remaining(&pkt) != 0) {
         fprintf(stderr, "test_PACKET_remaining() failed\n");
         return 0;
     }
@@ -75,17 +78,18 @@ static int test_PACKET_remaining(PACKET *pkt)
     return 1;
 }
 
-static int test_PACKET_get_1(PACKET *pkt, size_t start)
+static int test_PACKET_get_1(unsigned char buf[BUF_LEN])
 {
     unsigned int i;
+    PACKET pkt;
 
-    if (       !PACKET_goto_bookmark(pkt, start)
-            || !PACKET_get_1(pkt, &i)
+    if (       !PACKET_buf_init(&pkt, buf, BUF_LEN)
+            || !PACKET_get_1(&pkt, &i)
             ||  i != 0x02
-            || !PACKET_forward(pkt, BUF_LEN - 2)
-            || !PACKET_get_1(pkt, &i)
+            || !PACKET_forward(&pkt, BUF_LEN - 2)
+            || !PACKET_get_1(&pkt, &i)
             ||  i != 0xfe
-            ||  PACKET_get_1(pkt, &i)) {
+            ||  PACKET_get_1(&pkt, &i)) {
         fprintf(stderr, "test_PACKET_get_1() failed\n");
         return 0;
     }
@@ -93,17 +97,18 @@ static int test_PACKET_get_1(PACKET *pkt, size_t start)
     return 1;
 }
 
-static int test_PACKET_get_4(PACKET *pkt, size_t start)
+static int test_PACKET_get_4(unsigned char buf[BUF_LEN])
 {
     unsigned long i;
+    PACKET pkt;
 
-    if (       !PACKET_goto_bookmark(pkt, start)
-            || !PACKET_get_4(pkt, &i)
+    if (       !PACKET_buf_init(&pkt, buf, BUF_LEN)
+            || !PACKET_get_4(&pkt, &i)
             ||  i != 0x08060402UL
-            || !PACKET_forward(pkt, BUF_LEN - 8)
-            || !PACKET_get_4(pkt, &i)
+            || !PACKET_forward(&pkt, BUF_LEN - 8)
+            || !PACKET_get_4(&pkt, &i)
             ||  i != 0xfefcfaf8UL
-            ||  PACKET_get_4(pkt, &i)) {
+            ||  PACKET_get_4(&pkt, &i)) {
         fprintf(stderr, "test_PACKET_get_4() failed\n");
         return 0;
     }
@@ -111,17 +116,18 @@ static int test_PACKET_get_4(PACKET *pkt, size_t start)
     return 1;
 }
 
-static int test_PACKET_get_net_2(PACKET *pkt, size_t start)
+static int test_PACKET_get_net_2(unsigned char buf[BUF_LEN])
 {
     unsigned int i;
+    PACKET pkt;
 
-    if (       !PACKET_goto_bookmark(pkt, start)
-            || !PACKET_get_net_2(pkt, &i)
+    if (       !PACKET_buf_init(&pkt, buf, BUF_LEN)
+            || !PACKET_get_net_2(&pkt, &i)
             ||  i != 0x0204
-            || !PACKET_forward(pkt, BUF_LEN - 4)
-            || !PACKET_get_net_2(pkt, &i)
+            || !PACKET_forward(&pkt, BUF_LEN - 4)
+            || !PACKET_get_net_2(&pkt, &i)
             ||  i != 0xfcfe
-            ||  PACKET_get_net_2(pkt, &i)) {
+            ||  PACKET_get_net_2(&pkt, &i)) {
         fprintf(stderr, "test_PACKET_get_net_2() failed\n");
         return 0;
     }
@@ -129,17 +135,18 @@ static int test_PACKET_get_net_2(PACKET *pkt, size_t start)
     return 1;
 }
 
-static int test_PACKET_get_net_3(PACKET *pkt, size_t start)
+static int test_PACKET_get_net_3(unsigned char buf[BUF_LEN])
 {
     unsigned long i;
+    PACKET pkt;
 
-    if (       !PACKET_goto_bookmark(pkt, start)
-            || !PACKET_get_net_3(pkt, &i)
+    if (       !PACKET_buf_init(&pkt, buf, BUF_LEN)
+            || !PACKET_get_net_3(&pkt, &i)
             ||  i != 0x020406UL
-            || !PACKET_forward(pkt, BUF_LEN - 6)
-            || !PACKET_get_net_3(pkt, &i)
+            || !PACKET_forward(&pkt, BUF_LEN - 6)
+            || !PACKET_get_net_3(&pkt, &i)
             ||  i != 0xfafcfeUL
-            ||  PACKET_get_net_3(pkt, &i)) {
+            ||  PACKET_get_net_3(&pkt, &i)) {
         fprintf(stderr, "test_PACKET_get_net_3() failed\n");
         return 0;
     }
@@ -147,17 +154,18 @@ static int test_PACKET_get_net_3(PACKET *pkt, size_t start)
     return 1;
 }
 
-static int test_PACKET_get_net_4(PACKET *pkt, size_t start)
+static int test_PACKET_get_net_4(unsigned char buf[BUF_LEN])
 {
     unsigned long i;
+    PACKET pkt;
 
-    if (       !PACKET_goto_bookmark(pkt, start)
-            || !PACKET_get_net_4(pkt, &i)
+    if (       !PACKET_buf_init(&pkt, buf, BUF_LEN)
+            || !PACKET_get_net_4(&pkt, &i)
             ||  i != 0x02040608UL
-            || !PACKET_forward(pkt, BUF_LEN - 8)
-            || !PACKET_get_net_4(pkt, &i)
+            || !PACKET_forward(&pkt, BUF_LEN - 8)
+            || !PACKET_get_net_4(&pkt, &i)
             ||  i != 0xf8fafcfeUL
-            ||  PACKET_get_net_4(pkt, &i)) {
+            ||  PACKET_get_net_4(&pkt, &i)) {
         fprintf(stderr, "test_PACKET_get_net_4() failed\n");
         return 0;
     }
@@ -165,22 +173,22 @@ static int test_PACKET_get_net_4(PACKET *pkt, size_t start)
     return 1;
 }
 
-static int test_PACKET_get_sub_packet(PACKET *pkt, size_t start)
+static int test_PACKET_get_sub_packet(unsigned char buf[BUF_LEN])
 {
-    PACKET subpkt;
+    PACKET pkt, subpkt;
     unsigned long i;
 
-    if (       !PACKET_goto_bookmark(pkt, start)
-            || !PACKET_get_sub_packet(pkt, &subpkt, 4)
+    if (       !PACKET_buf_init(&pkt, buf, BUF_LEN)
+            || !PACKET_get_sub_packet(&pkt, &subpkt, 4)
             || !PACKET_get_net_4(&subpkt, &i)
             ||  i != 0x02040608UL
             ||  PACKET_remaining(&subpkt)
-            || !PACKET_forward(pkt, BUF_LEN - 8)
-            || !PACKET_get_sub_packet(pkt, &subpkt, 4)
+            || !PACKET_forward(&pkt, BUF_LEN - 8)
+            || !PACKET_get_sub_packet(&pkt, &subpkt, 4)
             || !PACKET_get_net_4(&subpkt, &i)
             ||  i != 0xf8fafcfeUL
             ||  PACKET_remaining(&subpkt)
-            ||  PACKET_get_sub_packet(pkt, &subpkt, 4)) {
+            ||  PACKET_get_sub_packet(&pkt, &subpkt, 4)) {
         fprintf(stderr, "test_PACKET_get_sub_packet() failed\n");
         return 0;
     }
@@ -188,20 +196,21 @@ static int test_PACKET_get_sub_packet(PACKET *pkt, size_t start)
     return 1;
 }
 
-static int test_PACKET_get_bytes(PACKET *pkt, size_t start)
+static int test_PACKET_get_bytes(unsigned char buf[BUF_LEN])
 {
     unsigned char *bytes;
+    PACKET pkt;
 
-    if (       !PACKET_goto_bookmark(pkt, start)
-            || !PACKET_get_bytes(pkt, &bytes, 4)
+    if (       !PACKET_buf_init(&pkt, buf, BUF_LEN)
+            || !PACKET_get_bytes(&pkt, &bytes, 4)
             ||  bytes[0] != 2 || bytes[1] != 4
             ||  bytes[2] != 6 || bytes[3] != 8
-            ||  PACKET_remaining(pkt) != BUF_LEN -4
-            || !PACKET_forward(pkt, BUF_LEN - 8)
-            || !PACKET_get_bytes(pkt, &bytes, 4)
+            ||  PACKET_remaining(&pkt) != BUF_LEN -4
+            || !PACKET_forward(&pkt, BUF_LEN - 8)
+            || !PACKET_get_bytes(&pkt, &bytes, 4)
             ||  bytes[0] != 0xf8 || bytes[1] != 0xfa
             ||  bytes[2] != 0xfc || bytes[3] != 0xfe
-            ||  PACKET_remaining(pkt)) {
+            ||  PACKET_remaining(&pkt)) {
         fprintf(stderr, "test_PACKET_get_bytes() failed\n");
         return 0;
     }
@@ -209,20 +218,21 @@ static int test_PACKET_get_bytes(PACKET *pkt, size_t start)
     return 1;
 }
 
-static int test_PACKET_copy_bytes(PACKET *pkt, size_t start)
+static int test_PACKET_copy_bytes(unsigned char buf[BUF_LEN])
 {
     unsigned char bytes[4];
+    PACKET pkt;
 
-    if (       !PACKET_goto_bookmark(pkt, start)
-            || !PACKET_copy_bytes(pkt, bytes, 4)
+    if (       !PACKET_buf_init(&pkt, buf, BUF_LEN)
+            || !PACKET_copy_bytes(&pkt, bytes, 4)
             ||  bytes[0] != 2 || bytes[1] != 4
             ||  bytes[2] != 6 || bytes[3] != 8
-            ||  PACKET_remaining(pkt) != BUF_LEN - 4
-            || !PACKET_forward(pkt, BUF_LEN - 8)
-            || !PACKET_copy_bytes(pkt, bytes, 4)
+            ||  PACKET_remaining(&pkt) != BUF_LEN - 4
+            || !PACKET_forward(&pkt, BUF_LEN - 8)
+            || !PACKET_copy_bytes(&pkt, bytes, 4)
             ||  bytes[0] != 0xf8 || bytes[1] != 0xfa
             ||  bytes[2] != 0xfc || bytes[3] != 0xfe
-            ||  PACKET_remaining(pkt)) {
+            ||  PACKET_remaining(&pkt)) {
         fprintf(stderr, "test_PACKET_copy_bytes() failed\n");
         return 0;
     }
@@ -230,22 +240,24 @@ static int test_PACKET_copy_bytes(PACKET *pkt, size_t start)
     return 1;
 }
 
-static int test_PACKET_memdup(PACKET *pkt, size_t start)
+static int test_PACKET_memdup(unsigned char buf[BUF_LEN])
 {
     unsigned char *data = NULL;
     size_t len;
-    if (       !PACKET_goto_bookmark(pkt, start)
-            || !PACKET_memdup(pkt, &data, &len)
+    PACKET pkt;
+
+    if (       !PACKET_buf_init(&pkt, buf, BUF_LEN)
+            || !PACKET_memdup(&pkt, &data, &len)
             ||  len != BUF_LEN
-            ||  memcmp(data, PACKET_data(pkt), len)
-            || !PACKET_forward(pkt, 10)
-            || !PACKET_memdup(pkt, &data, &len)
+            ||  memcmp(data, PACKET_data(&pkt), len)
+            || !PACKET_forward(&pkt, 10)
+            || !PACKET_memdup(&pkt, &data, &len)
             ||  len != BUF_LEN - 10
-            ||  memcmp(data, PACKET_data(pkt), len)
-            || !PACKET_back(pkt, 1)
-            || !PACKET_memdup(pkt, &data, &len)
+            ||  memcmp(data, PACKET_data(&pkt), len)
+            || !PACKET_back(&pkt, 1)
+            || !PACKET_memdup(&pkt, &data, &len)
             ||  len != BUF_LEN - 9
-               ||  memcmp(data, PACKET_data(pkt), len)) {
+               ||  memcmp(data, PACKET_data(&pkt), len)) {
         fprintf(stderr, "test_PACKET_memdup() failed\n");
         OPENSSL_free(data);
         return 0;
@@ -282,25 +294,21 @@ static int test_PACKET_strndup()
     return 1;
 }
 
-static int test_PACKET_move_funcs(PACKET *pkt, size_t start)
+static int test_PACKET_move_funcs(unsigned char buf[BUF_LEN])
 {
     unsigned char *byte;
-    size_t bm;
+    PACKET pkt;
 
-    if (       !PACKET_goto_bookmark(pkt, start)
-            ||  PACKET_back(pkt, 1)
-            || !PACKET_forward(pkt, 1)
-            || !PACKET_get_bytes(pkt, &byte, 1)
+    if (       !PACKET_buf_init(&pkt, buf, BUF_LEN)
+            ||  PACKET_back(&pkt, 1)
+            || !PACKET_forward(&pkt, 1)
+            || !PACKET_get_bytes(&pkt, &byte, 1)
             ||  byte[0] != 4
-            || !PACKET_get_bookmark(pkt, &bm)
-            || !PACKET_forward(pkt, BUF_LEN - 2)
-            ||  PACKET_forward(pkt, 1)
-            || !PACKET_back(pkt, 1)
-            || !PACKET_get_bytes(pkt, &byte, 1)
-            ||  byte[0] != 0xfe
-            || !PACKET_goto_bookmark(pkt, bm)
-            || !PACKET_get_bytes(pkt, &byte, 1)
-            ||  byte[0] != 6) {
+            || !PACKET_forward(&pkt, BUF_LEN - 2)
+            ||  PACKET_forward(&pkt, 1)
+            || !PACKET_back(&pkt, 1)
+            || !PACKET_get_bytes(&pkt, &byte, 1)
+            ||  byte[0] != 0xfe) {
         fprintf(stderr, "test_PACKET_move_funcs() failed\n");
         return 0;
     }
@@ -416,33 +424,25 @@ int main(int argc, char **argv)
 {
     unsigned char buf[BUF_LEN];
     unsigned int i;
-    size_t start = 0;
-    PACKET pkt;
 
     for (i=1; i<=BUF_LEN; i++) {
         buf[i-1] = (i * 2) & 0xff;
     }
     i = 0;
 
-    if (       !PACKET_buf_init(&pkt, buf, BUF_LEN)
-            || !PACKET_get_bookmark(&pkt, &start)) {
-        fprintf(stderr, "setup failed\n");
-        return 0;
-    }
-
     if (       !test_PACKET_buf_init()
-            || !test_PACKET_remaining(&pkt)
-            || !test_PACKET_get_1(&pkt, start)
-            || !test_PACKET_get_4(&pkt, start)
-            || !test_PACKET_get_net_2(&pkt, start)
-            || !test_PACKET_get_net_3(&pkt, start)
-            || !test_PACKET_get_net_4(&pkt, start)
-            || !test_PACKET_get_sub_packet(&pkt, start)
-            || !test_PACKET_get_bytes(&pkt, start)
-            || !test_PACKET_copy_bytes(&pkt, start)
-            || !test_PACKET_memdup(&pkt, start)
+            || !test_PACKET_remaining(buf)
+            || !test_PACKET_get_1(buf)
+            || !test_PACKET_get_4(buf)
+            || !test_PACKET_get_net_2(buf)
+            || !test_PACKET_get_net_3(buf)
+            || !test_PACKET_get_net_4(buf)
+            || !test_PACKET_get_sub_packet(buf)
+            || !test_PACKET_get_bytes(buf)
+            || !test_PACKET_copy_bytes(buf)
+            || !test_PACKET_memdup(buf)
             || !test_PACKET_strndup()
-            || !test_PACKET_move_funcs(&pkt, start)
+            || !test_PACKET_move_funcs(buf)
             || !test_PACKET_get_length_prefixed_1()
             || !test_PACKET_get_length_prefixed_2()
             || !test_PACKET_get_length_prefixed_3()) {

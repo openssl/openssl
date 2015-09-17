@@ -421,25 +421,6 @@ __owur static inline int PACKET_forward(PACKET *pkt, size_t len)
     return 1;
 }
 
-/* Store a bookmark for the current reading position in |*bm| */
-__owur static inline int PACKET_get_bookmark(const PACKET *pkt, size_t *bm)
-{
-    *bm = pkt->curr - pkt->start;
-
-    return 1;
-}
-
-/* Set the current reading position to the bookmark |bm| */
-__owur static inline int PACKET_goto_bookmark(PACKET *pkt, size_t bm)
-{
-    if (bm > (size_t)(pkt->end - pkt->start))
-        return 0;
-
-    pkt->curr = pkt->start + bm;
-
-    return 1;
-}
-
 /*
  * Stores the total length of the packet we have in the underlying buffer in
  * |*len|

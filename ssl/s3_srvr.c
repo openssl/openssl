@@ -2481,14 +2481,9 @@ int ssl3_get_client_key_exchange(SSL *s)
     if (alg_k & (SSL_kDHE | SSL_kDHr | SSL_kDHd | SSL_kDHEPSK)) {
         int idx = -1;
         EVP_PKEY *skey = NULL;
-        size_t bookm;
+        PACKET bookmark = pkt;
         unsigned char shared[(OPENSSL_DH_MAX_MODULUS_BITS + 7) / 8];
 
-        if (!PACKET_get_bookmark(&pkt, &bookm)) {
-            al = SSL_AD_INTERNAL_ERROR;
-            SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
-            goto f_err;
-        }
         if (!PACKET_get_net_2(&pkt, &i)) {
             if (alg_k & (SSL_kDHE | SSL_kDHEPSK)) {
                 al = SSL_AD_HANDSHAKE_FAILURE;
@@ -2504,12 +2499,7 @@ int ssl3_get_client_key_exchange(SSL *s)
                        SSL_R_DH_PUBLIC_VALUE_LENGTH_IS_WRONG);
                 goto err;
             } else {
-                if (!PACKET_goto_bookmark(&pkt, bookm)) {
-                    al = SSL_AD_INTERNAL_ERROR;
-                    SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,
-                           ERR_R_INTERNAL_ERROR);
-                    goto f_err;
-                }
+                pkt = bookmark;
                 i = PACKET_remaining(&pkt);
             }
         }

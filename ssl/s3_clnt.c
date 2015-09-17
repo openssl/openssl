@@ -1102,10 +1102,9 @@ int ssl3_get_server_hello(SSL *s)
     if (s->version >= TLS1_VERSION && s->tls_session_secret_cb &&
         s->session->tlsext_tick) {
         SSL_CIPHER *pref_cipher = NULL;
-        size_t bookm;
-        if (!PACKET_get_bookmark(&pkt, &bookm)
-                || !PACKET_forward(&pkt, j)
-                || !PACKET_get_bytes(&pkt, &cipherchars, ciphercharlen)) {
+        PACKET bookmark = pkt;
+        if (!PACKET_forward(&pkt, j)
+            || !PACKET_get_bytes(&pkt, &cipherchars, ciphercharlen)) {
             SSLerr(SSL_F_SSL3_GET_SERVER_HELLO, SSL_R_LENGTH_MISMATCH);
             al = SSL_AD_DECODE_ERROR;
             goto f_err;
@@ -1122,11 +1121,7 @@ int ssl3_get_server_hello(SSL *s)
             al = SSL_AD_INTERNAL_ERROR;
             goto f_err;
         }
-        if (!PACKET_goto_bookmark(&pkt, bookm)) {
-            SSLerr(SSL_F_SSL3_GET_SERVER_HELLO, ERR_R_INTERNAL_ERROR);
-            al = SSL_AD_INTERNAL_ERROR;
-            goto f_err;
-        }
+        pkt = bookmark;
     }
 
     /* Get the session id */
@@ -1462,9 +1457,9 @@ int ssl3_get_key_exchange(SSL *s)
     int curve_nid = 0;
     unsigned int encoded_pt_len = 0;
 #endif
-    PACKET pkt;
+    PACKET pkt, save_param_start;
     unsigned char *data, *param;
-    size_t startparam, endparam;
+    size_t param_len;
 
     EVP_MD_CTX_init(&md_ctx);
 
@@ -1496,12 +1491,12 @@ int ssl3_get_key_exchange(SSL *s)
         return (1);
     }
 
-    if (!PACKET_buf_init(&pkt, s->init_msg, n)
-            || !PACKET_get_bookmark(&pkt, &startparam)) {
+    if (!PACKET_buf_init(&pkt, s->init_msg, n)) {
             SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
             al = SSL_AD_INTERNAL_ERROR;
             goto f_err;
     }
+    save_param_start = pkt;
 
 #ifndef OPENSSL_NO_RSA
     RSA_free(s->s3->peer_rsa_tmp);
@@ -1894,10 +1889,11 @@ int ssl3_get_key_exchange(SSL *s)
     }
 #endif                          /* !OPENSSL_NO_EC */
 
-    if (!PACKET_get_bookmark(&pkt, &endparam)) {
-        SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
-        goto f_err;
-    }
+    /*
+     * |pkt| now points to the beginning of the signature, so the difference
+     * equals the length of the parameters.
+     */
+    param_len = PACKET_remaining(&save_param_start) - PACKET_remaining(&pkt);
 
     /* if it was signed, check the signature */
     if (pkey != NULL) {
@@ -1939,8 +1935,8 @@ int ssl3_get_key_exchange(SSL *s)
             SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE, SSL_R_WRONG_SIGNATURE_LENGTH);
             goto f_err;
         }
-        if (!PACKET_goto_bookmark(&pkt, startparam)
-                || !PACKET_get_bytes(&pkt, &param, endparam - startparam)) {
+        pkt = save_param_start;
+        if (!PACKET_get_bytes(&pkt, &param, param_len)) {
             al = SSL_AD_INTERNAL_ERROR;
             SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
             goto f_err;
@@ -1960,7 +1956,7 @@ int ssl3_get_key_exchange(SSL *s)
                                  SSL3_RANDOM_SIZE);
                 EVP_DigestUpdate(&md_ctx, &(s->s3->server_random[0]),
                                  SSL3_RANDOM_SIZE);
-                EVP_DigestUpdate(&md_ctx, param, endparam - startparam);
+                EVP_DigestUpdate(&md_ctx, param, param_len);
                 EVP_DigestFinal_ex(&md_ctx, q, &size);
                 q += size;
                 j += size;
@@ -1986,7 +1982,7 @@ int ssl3_get_key_exchange(SSL *s)
                              SSL3_RANDOM_SIZE);
             EVP_VerifyUpdate(&md_ctx, &(s->s3->server_random[0]),
                              SSL3_RANDOM_SIZE);
-            EVP_VerifyUpdate(&md_ctx, param, endparam - startparam);
+            EVP_VerifyUpdate(&md_ctx, param, param_len);
             if (EVP_VerifyFinal(&md_ctx, data, (int)i, pkey) <= 0) {
                 /* bad signature */
                 al = SSL_AD_DECRYPT_ERROR;
