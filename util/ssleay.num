@@ -411,3 +411,5 @@ SSL_is_init_finished                    445	EXIST::FUNCTION:
 SSL_get_state                           446	EXIST::FUNCTION:
 SSL_set_default_passwd_cb               447	EXIST::FUNCTION:
 SSL_set_default_passwd_cb_userdata      448	EXIST::FUNCTION:
+SSL_waiting_for_async                   449	EXIST::FUNCTION:
+SSL_get_async_wait_fd                   450	EXIST::FUNCTION:
