@@ -253,11 +253,7 @@ static int test_PACKET_memdup(unsigned char buf[BUF_LEN])
             || !PACKET_forward(&pkt, 10)
             || !PACKET_memdup(&pkt, &data, &len)
             ||  len != BUF_LEN - 10
-            ||  memcmp(data, PACKET_data(&pkt), len)
-            || !PACKET_back(&pkt, 1)
-            || !PACKET_memdup(&pkt, &data, &len)
-            ||  len != BUF_LEN - 9
-               ||  memcmp(data, PACKET_data(&pkt), len)) {
+            ||  memcmp(data, PACKET_data(&pkt), len)) {
         fprintf(stderr, "test_PACKET_memdup() failed\n");
         OPENSSL_free(data);
         return 0;
@@ -294,22 +290,19 @@ static int test_PACKET_strndup()
     return 1;
 }
 
-static int test_PACKET_move_funcs(unsigned char buf[BUF_LEN])
+static int test_PACKET_forward(unsigned char buf[BUF_LEN])
 {
     unsigned char *byte;
     PACKET pkt;
 
     if (       !PACKET_buf_init(&pkt, buf, BUF_LEN)
-            ||  PACKET_back(&pkt, 1)
             || !PACKET_forward(&pkt, 1)
             || !PACKET_get_bytes(&pkt, &byte, 1)
             ||  byte[0] != 4
-            || !PACKET_forward(&pkt, BUF_LEN - 2)
-            ||  PACKET_forward(&pkt, 1)
-            || !PACKET_back(&pkt, 1)
+            || !PACKET_forward(&pkt, BUF_LEN - 3)
             || !PACKET_get_bytes(&pkt, &byte, 1)
             ||  byte[0] != 0xfe) {
-        fprintf(stderr, "test_PACKET_move_funcs() failed\n");
+        fprintf(stderr, "test_PACKET_forward() failed\n");
         return 0;
     }
 
@@ -442,7 +435,7 @@ int main(int argc, char **argv)
             || !test_PACKET_copy_bytes(buf)
             || !test_PACKET_memdup(buf)
             || !test_PACKET_strndup()
-            || !test_PACKET_move_funcs(buf)
+            || !test_PACKET_forward(buf)
             || !test_PACKET_get_length_prefixed_1()
             || !test_PACKET_get_length_prefixed_2()
             || !test_PACKET_get_length_prefixed_3()) {

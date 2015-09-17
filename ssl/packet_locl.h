@@ -399,17 +399,6 @@ __owur static inline int PACKET_strndup(const PACKET *pkt, char **data)
     return (*data != NULL);
 }
 
-/* Move the current reading position back |len| bytes */
-__owur static inline int PACKET_back(PACKET *pkt, size_t len)
-{
-    if (len > (size_t)(pkt->curr - pkt->start))
-        return 0;
-
-    pkt->curr -= len;
-
-    return 1;
-}
-
 /* Move the current reading position forward |len| bytes */
 __owur static inline int PACKET_forward(PACKET *pkt, size_t len)
 {
