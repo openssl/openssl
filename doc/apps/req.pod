@@ -3,472 +3,516 @@
 
 =head1 NAME
 
-req - PKCS#10 certificate request and certificate generating utility.
+req - PKCS#10 certificate request and certificate generating utility
 
 =head1 SYNOPSIS
 
-B<openssl> B<req>
-[B<-inform PEM|DER>]
-[B<-outform PEM|DER>]
-[B<-in filename>]
-[B<-passin arg>]
-[B<-out filename>]
-[B<-passout arg>]
+B<openssl req>
+[B<-inform> B<PEM>|B<DER>]
+[B<-outform> B<PEM>|B<DER>]
+[B<-in> I<filename>]
+[B<-passin> I<arg>]
+[B<-out> I<filename>]
+[B<-passout> I<arg>]
 [B<-text>]
 [B<-pubkey>]
 [B<-noout>]
 [B<-verify>]
 [B<-modulus>]
 [B<-new>]
-[B<-rand file(s)>]
-[B<-newkey rsa:bits>]
-[B<-newkey alg:file>]
+[B<-rand> I<files>]
+[B<-newkey> [ B<rsa>[B<:>I<bits>] | B<alg:>I<file> | B<param:>I<file> | I<algname>[B<:>I<file>]]
+[B<-pkeyopt> I<opt>B<:>I<value>]
 [B<-nodes>]
-[B<-key filename>]
-[B<-keyform PEM|DER>]
-[B<-keyout filename>]
-[B<-keygen_engine id>]
-[B<-[digest]>]
-[B<-config filename>]
+[B<-key> I<filename>]
+[B<-keyform> B<PEM>|B<DER>]
+[B<-keyout> I<filename>]
+[B<-keygen_engine> I<id>]
+[B<->I<digest>]
+[B<-config> I<filename>]
 [B<-multivalue-rdn>]
 [B<-x509>]
-[B<-days n>]
-[B<-set_serial n>]
+[B<-days> I<n>]
+[B<-set_serial> I<n>]
 [B<-newhdr>]
-[B<-extensions section>]
-[B<-reqexts section>]
+[B<-extensions> I<section>]
+[B<-reqexts> I<section>]
 [B<-utf8>]
-[B<-nameopt>]
-[B<-reqopt>]
+[B<-nameopt> I<option>]
+[B<-reqopt> I<option>]
 [B<-subject>]
-[B<-subj arg>]
+[B<-subj> I<arg>]
 [B<-batch>]
 [B<-verbose>]
-[B<-engine id>]
+[B<-engine> I<id>]
 
 =head1 DESCRIPTION
 
-The B<req> command primarily creates and processes certificate requests
-in PKCS#10 format. It can additionally create self signed certificates
-for use as root CAs for example.
+The B<req> command primarily creates and processes certificate requests in PKCS#10 format.
+It can additionally create self signed certificates (for use as root CAs, for example).
 
-=head1 COMMAND OPTIONS
+=head1 OPTIONS
 
 =over 4
 
-=item B<-inform DER|PEM>
+=item B<-inform> B<PEM>|B<DER>
 
-This specifies the input format. The B<DER> option uses an ASN1 DER encoded
-form compatible with the PKCS#10. The B<PEM> form is the default format: it
-consists of the B<DER> format base64 encoded with additional header and
-footer lines.
+This specifies the input format.
+The B<DER> option uses an ASN1 DER encoded form compatible with the PKCS#10.
+The B<PEM> form is the default format: it consists of the B<DER> format base64 encoded with additional header and footer lines.
 
-=item B<-outform DER|PEM>
+=item B<-outform> B<PEM>|B<DER>
 
-This specifies the output format, the options have the same meaning as the 
-B<-inform> option.
+This specifies the output format.
+The options have the same meaning as the B<-inform> option.
 
-=item B<-in filename>
+=item B<-in> I<filename>
 
-This specifies the input filename to read a request from or standard input
-if this option is not specified. A request is only read if the creation
-options (B<-new> and B<-newkey>) are not specified.
+This specifies the input filename to read a request from.
+Standard input is the default.
+A request is only read if the creation options (B<-new> and B<-newkey>) are not specified.
 
-=item B<-passin arg>
+=item B<-passin> I<arg>
 
-the input file password source. For more information about the format of B<arg>
-see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
+The input file password source.
+For more information about the format of I<arg>, see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
 
-=item B<-out filename>
+=item B<-out> I<filename>
 
-This specifies the output filename to write to or standard output by
-default.
+This specifies the output filename to write to.
+Standard output is the default.
 
-=item B<-passout arg>
+=item B<-passout> I<arg>
 
-the output file password source. For more information about the format of B<arg>
-see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
+The output file password source.
+For more information about the format of I<arg>, see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
 
 =item B<-text>
 
-prints out the certificate request in text form.
+Prints out the certificate request in text form.
 
 =item B<-subject>
 
-prints out the request subject (or certificate subject if B<-x509> is
-specified)
+Prints out the request subject (or certificate subject if B<-x509> is specified).
 
 =item B<-pubkey>
 
-outputs the public key.
+Outputs the public key.
 
 =item B<-noout>
 
-this option prevents output of the encoded version of the request.
+Prevents output of the encoded version of the request.
 
 =item B<-modulus>
 
-this option prints out the value of the modulus of the public key
-contained in the request.
+Prints out the value of the modulus of the public key contained in the request.
 
 =item B<-verify>
 
-verifies the signature on the request.
+Verifies the signature on the request.
 
 =item B<-new>
 
-this option generates a new certificate request. It will prompt
-the user for the relevant field values. The actual fields
-prompted for and their maximum and minimum sizes are specified
-in the configuration file and any requested extensions.
+Generates a new certificate request.
+It will prompt the user for the relevant field values.
+The actual fields prompted for and their maximum and minimum sizes are specified in the configuration file and any requested extensions.
 
-If the B<-key> option is not used it will generate a new RSA private
-key using information specified in the configuration file.
+If the B<-key> option is not used, it will generate a new RSA private key using information specified in the configuration file.
 
-=item B<-rand file(s)>
+=item B<-rand> I<files>
 
-a file or files containing random data used to seed the random number
-generator, or an EGD socket (see L<RAND_egd(3)>).
+A file or files containing random data used to seed the random number generator, or an EGD socket (see L<RAND_egd(3)>).
 Multiple files can be specified separated by a OS-dependent character.
-The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
-all others.
+The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for all others.
 
-=item B<-newkey arg>
+=item B<-newkey> I<arg>
 
-this option creates a new certificate request and a new private
-key. The argument takes one of several forms. B<rsa:nbits>, where
-B<nbits> is the number of bits, generates an RSA key B<nbits>
-in size. If B<nbits> is omitted, i.e. B<-newkey rsa> specified,
-the default key size, specified in the configuration file is used.
+Creates a new certificate request and a new private key.
+The argument takes one of several forms.
+B<rsa:>I<nbits>, where I<nbits> is the number of bits, generates an RSA key I<nbits> in size.
+If B<:>I<nbits> is omitted (i.e. B<-newkey rsa> is specified), the default key size specified in the configuration file is used.
 
-All other algorithms support the B<-newkey alg:file> form, where file may be
-an algorithm parameter file, created by the B<genpkey -genparam> command
-or and X.509 certificate for a key with appropriate algorithm.
+All other algorithms support the B<-newkey> B<alg:>I<file> form, where I<file> may be an algorithm parameter file created by the B<genpkey -genparam> command, or an X.509 certificate for a key with appropriate algorithm.
 
-B<param:file> generates a key using the parameter file or certificate B<file>,
-the algorithm is determined by the parameters. B<algname:file> use algorithm
-B<algname> and parameter file B<file>: the two algorithms must match or an
-error occurs. B<algname> just uses algorithm B<algname>, and parameters,
-if necessary should be specified via B<-pkeyopt> parameter.
+B<param:>I<file> generates a key using the parameter file or certificate I<file>; the algorithm is determined by the parameters.
 
-B<dsa:filename> generates a DSA key using the parameters
-in the file B<filename>. B<ec:filename> generates EC key (usable both with
-ECDSA or ECDH algorithms), B<gost2001:filename> generates GOST R
-34.10-2001 key (requires B<ccgost> engine configured in the configuration
-file). If just B<gost2001> is specified a parameter set should be
-specified by B<-pkeyopt paramset:X>
+I<algname>B<:>I<file> uses algorithm I<algname> and parameter file I<file>. The two algorithms must match or an error occurs. I<algname> just uses algorithm B<algname>, and parameters, if necessary should be specified via B<-pkeyopt> parameter.
 
+=over 4
 
-=item B<-pkeyopt opt:value>
+=item *
 
-set the public key algorithm option B<opt> to B<value>. The precise set of
-options supported depends on the public key algorithm used and its
-implementation. See B<KEY GENERATION OPTIONS> in the B<genpkey> manual page
-for more details.
+B<dsa:>I<filename> generates a DSA key using the parameters in the file I<filename>.
 
-=item B<-key filename>
+=item *
 
-This specifies the file to read the private key from. It also
-accepts PKCS#8 format private keys for PEM format files.
+B<ec:>I<filename> generates an EC key (usable both with ECDSA or ECDH algorithms).
 
-=item B<-keyform PEM|DER>
+=item *
 
-the format of the private key file specified in the B<-key>
-argument. PEM is the default.
+B<gost2001>:I<filename> generates a GOST R 34.10-2001 key (requires B<ccgost> engine configured in the configuration file).
+If just B<gost2001> is specified, a parameter set should be specified by B<-pkeyopt paramset:>I<X>
 
-=item B<-keyout filename>
+=back
 
-this gives the filename to write the newly created private key to.
-If this option is not specified then the filename present in the
-configuration file is used.
+=item B<-pkeyopt> I<opt>B<:>I<value>
+
+Set the public key algorithm option I<opt> to I<value>.
+The precise set of options supported depends on the public key algorithm used and its implementation.
+See B<KEY GENERATION OPTIONS> in the L<genpkey(1)> manual page for more details.
+
+=item B<-key> I<filename>
+
+The file to read the private key from.
+It also accepts PKCS#8 format private keys for PEM format files.
+
+=item B<-keyform> B<PEM>|B<DER>
+
+The format of the private key file specified in the B<-key> argument.
+B<PEM> is the default.
+
+=item B<-keyout> I<filename>
+
+The file to write the newly created private key to.
+If this option is not specified then the filename present in the configuration file is used.
 
 =item B<-nodes>
 
-if this option is specified then if a private key is created it
-will not be encrypted.
+If a private key is created it will not be encrypted.
 
-=item B<-[digest]>
+=item B<->I<digest>
 
-this specifies the message digest to sign the request.
-Any digest supported by the OpenSSL B<dgst> command can be used.
-This overrides the digest algorithm specified in
-the configuration file.
+The message digest to sign the request.
+Any digest supported by the OpenSSL B<dgst> command can be used as a value for I<digest>.
+This overrides the digest algorithm specified in the configuration file.
 
-Some public key algorithms may override this choice. For instance, DSA
-signatures always use SHA1, GOST R 34.10 signatures always use
-GOST R 34.11-94 (B<-md_gost94>).
+Some public key algorithms may override this choice.
+For instance, DSA signatures always use SHA1, and GOST R 34.10 signatures always use GOST R 34.11-94 (B<-md_gost94>).
 
-=item B<-config filename>
+=item B<-config> I<filename>
 
-this allows an alternative configuration file to be specified,
-this overrides the compile time filename or any specified in
-the B<OPENSSL_CONF> environment variable.
+Allows an alternative configuration file to be specified.
+This overrides the compile time filename or any specified in the B<OPENSSL_CONF> environment variable.
 
-=item B<-subj arg>
+=item B<-subj> I<arg>
 
-sets subject name for new request or supersedes the subject name
-when processing a request.
-The arg must be formatted as I</type0=value0/type1=value1/type2=...>,
-characters may be escaped by \ (backslash), no spaces are skipped.
+Sets subject name for a new request, or supersedes the subject name when processing a request.
+The arg must be formatted as B</>I<type0>B<=>I<value0>B</>I<type1>B<=>I<value1>B</>I<...>.
+Characters may be escaped by B<\> (backslash); no spaces are skipped.
 
 =item B<-multivalue-rdn>
 
-this option causes the -subj argument to be interpreted with full
-support for multivalued RDNs. Example:
+Causes the B<-subj> argument to be interpreted with full support for multivalued RDNs.
+Example:
 
-I</DC=org/DC=OpenSSL/DC=users/UID=123456+CN=John Doe>
+B</DC=org/DC=OpenSSL/DC=users/UID=123456+CN=John Doe>
 
-If -multi-rdn is not used then the UID value is I<123456+CN=John Doe>.
+If B<-multi-rdn> is not used then the UID value is B<123456+CN=John Doe>.
 
 =item B<-x509>
 
-this option outputs a self signed certificate instead of a certificate
-request. This is typically used to generate a test certificate or
-a self signed root CA. The extensions added to the certificate
-(if any) are specified in the configuration file. Unless specified
-using the B<set_serial> option, a large random number will be used for
-the serial number.
+Outputs a self signed certificate instead of a certificate request.
+This is typically used to generate a test certificate or a self signed root CA.
+The extensions added to the certificate (if any) are specified in the configuration file.
+Unless specified using the B<-set_serial> option, a large random number will be used for the serial number.
 
-=item B<-days n>
+=item B<-days> I<n>
 
-when the B<-x509> option is being used this specifies the number of
-days to certify the certificate for. The default is 30 days.
+When the B<-x509> option is being used, this specifies the number of days to certify the certificate for.
+The default is 30 days.
 
-=item B<-set_serial n>
+=item B<-set_serial> I<n>
 
-serial number to use when outputting a self signed certificate. This
-may be specified as a decimal value or a hex value if preceded by B<0x>.
+Serial number to use when outputting a self signed certificate.
+This may be specified as a decimal value, or a hex value if preceded by B<0x>.
 It is possible to use negative serial numbers but this is not recommended.
 
-=item B<-extensions section>
+=item B<-extensions> I<section>, B<-reqexts> I<section>
 
-=item B<-reqexts section>
-
-these options specify alternative sections to include certificate
-extensions (if the B<-x509> option is present) or certificate
-request extensions. This allows several different sections to
-be used in the same configuration file to specify requests for
-a variety of purposes.
+These options specify alternative sections to include certificate extensions (if the B<-x509> option is present) or certificate request extensions.
+This allows several different sections to be used in the same configuration file to specify requests for a variety of purposes.
 
 =item B<-utf8>
 
-this option causes field values to be interpreted as UTF8 strings, by 
-default they are interpreted as ASCII. This means that the field
-values, whether prompted from a terminal or obtained from a
-configuration file, must be valid UTF8 strings.
+This option causes field values to be interpreted as UTF-8 strings.
+By default they are interpreted as ASCII.
+This means that the field values, whether prompted from a terminal or obtained from a configuration file, must be valid UTF-8 strings.
 
-=item B<-nameopt option>
+=item B<-nameopt> I<option>
 
-option which determines how the subject or issuer names are displayed. The
-B<option> argument can be a single option or multiple options separated by
-commas.  Alternatively the B<-nameopt> switch may be used more than once to
-set multiple options. See the L<x509(1)> manual page for details.
+Determines how the subject or issuer names are displayed.
+The I<option> argument can be a single option or multiple options separated by commas.
+Alternatively, the B<-nameopt> switch may be used more than once to set multiple options.
+See the L<x509(1)> manual page for details.
 
-=item B<-reqopt>
+=item B<-reqopt> I<option>
 
-customise the output format used with B<-text>. The B<option> argument can be
-a single option or multiple options separated by commas. 
+Customise the output format used with B<-text>.
+The I<option> argument can be a single option or multiple options separated by commas. 
 
-See discussion of the  B<-certopt> parameter in the L<x509(1)>
-command.
+See discussion of the B<-certopt> parameter in the L<x509(1)> command.
 
 =item B<-newhdr>
 
-Adds the word B<NEW> to the PEM file header and footer lines on the outputted
-request. Some software (Netscape certificate server) and some CAs need this.
+Adds the word B<NEW> to the PEM file header and footer lines on the outputted request.
+Some software (Netscape certificate server) and CAs need this.
 
 =item B<-batch>
 
-non-interactive mode.
+Non-interactive mode.
 
 =item B<-verbose>
 
-print extra details about the operations being performed.
+Print extra details about the operations being performed.
 
-=item B<-engine id>
+=item B<-engine> I<id>
 
-specifying an engine (by its unique B<id> string) will cause B<req>
-to attempt to obtain a functional reference to the specified engine,
-thus initialising it if needed. The engine will then be set as the default
-for all available algorithms.
+Specifying an engine (by its unique I<id> string) will cause B<req> to attempt to obtain a functional reference to the specified engine, thus initialising it if needed.
+The engine will then be set as the default for all available algorithms.
 
-=item B<-keygen_engine id>
+=item B<-keygen_engine> I<id>
 
-specifies an engine (by its unique B<id> string) which would be used
-for key generation operations.
+Specifies an engine (by its unique I<id> string) to be used for key generation operations.
 
 =back
 
 =head1 CONFIGURATION FILE FORMAT
 
-The configuration options are specified in the B<req> section of
-the configuration file. As with all configuration files if no
-value is specified in the specific section (i.e. B<req>) then
-the initial unnamed or B<default> section is searched too.
+The configuration options are specified in the B<req> section of the configuration file.
+As with all configuration files, if no value is specified in the specific section (i.e. B<req>) then the initial unnamed or B<default> section is searched, too.
 
 The options available are described in detail below.
 
 =over 4
 
-=item B<input_password output_password>
+=item B<input_password>, B<output_password>
 
-The passwords for the input private key file (if present) and
-the output private key file (if one will be created). The
-command line options B<passin> and B<passout> override the
-configuration file values.
+The passwords for the input private key file (if present) and the output private key file (if one will be created).
+The command line options B<-passin> and B<-passout> override the configuration file values.
 
 =item B<default_bits>
 
-This specifies the default key size in bits. If not specified then
-512 is used. It is used if the B<-new> option is used. It can be
-overridden by using the B<-newkey> option.
+This specifies the default key size in bits.
+If not specified, then 512 is used.
+It is used if the B<-new> option is specified.
+It can be overridden by using the B<-newkey> option.
 
 =item B<default_keyfile>
 
-This is the default filename to write a private key to. If not
-specified the key is written to standard output. This can be
-overridden by the B<-keyout> option.
+This is the default filename to write a private key to.
+If not specified, the key is written to standard output.
+This can be overridden by the B<-keyout> option.
 
 =item B<oid_file>
 
 This specifies a file containing additional B<OBJECT IDENTIFIERS>.
-Each line of the file should consist of the numerical form of the
-object identifier followed by white space then the short name followed
-by white space and finally the long name. 
+Each line of the file should consist of the numerical form of the object identifier followed by white space, then the short name followed by white space, and finally the long name. 
 
 =item B<oid_section>
 
-This specifies a section in the configuration file containing extra
-object identifiers. Each line should consist of the short name of the
-object identifier followed by B<=> and the numerical form. The short
-and long names are the same when this option is used.
+This specifies a section in the configuration file containing extra object identifiers.
+Each line should consist of the short name of the object identifier followed by B<=> and the numerical form.
+The short and long names are the same when this option is used.
 
 =item B<RANDFILE>
 
-This specifies a filename in which random number seed information is
-placed and read from, or an EGD socket (see L<RAND_egd(3)>).
+This specifies a filename in which random number seed information is placed and read from, or an EGD socket (see L<RAND_egd(3)>).
 It is used for private key generation.
 
 =item B<encrypt_key>
 
-If this is set to B<no> then if a private key is generated it is
-B<not> encrypted. This is equivalent to the B<-nodes> command line
-option. For compatibility B<encrypt_rsa_key> is an equivalent option.
+If this is set to B<no>, then if a private key is generated it is B<not> encrypted.
+This is equivalent to the B<-nodes> command line option.
+For compatibility, B<encrypt_rsa_key> is an equivalent option.
 
 =item B<default_md>
 
 This option specifies the digest algorithm to use.
 Any digest supported by the OpenSSL B<dgst> command can be used.
 If not present then MD5 is used.
-This option can be overridden on the command line.
+This option can be overridden on the command line by the B<->I<digest> option.
 
 =item B<string_mask>
 
-This option masks out the use of certain string types in certain
-fields. Most users will not need to change this option.
+This option masks out the use of certain string types in certain fields.
+Most users will not need to change this option.
 
-It can be set to several values B<default> which is also the default
-option uses PrintableStrings, T61Strings and BMPStrings if the 
-B<pkix> value is used then only PrintableStrings and BMPStrings will
-be used. This follows the PKIX recommendation in RFC2459. If the
-B<utf8only> option is used then only UTF8Strings will be used: this
-is the PKIX recommendation in RFC2459 after 2003. Finally the B<nombstr>
-option just uses PrintableStrings and T61Strings: certain software has
-problems with BMPStrings and UTF8Strings: in particular Netscape.
+It can be set to several values:
 
-=item B<req_extensions>
+=over 4
 
-this specifies the configuration file section containing a list of
-extensions to add to the certificate request. It can be overridden
-by the B<-reqexts> command line switch. See the 
-L<x509v3_config(5)> manual page for details of the
-extension section format.
+=item B<default>
 
-=item B<x509_extensions>
+Uses PrintableStrings, T61Strings, and BMPStrings. This is the default.
 
-this specifies the configuration file section containing a list of
-extensions to add to certificate generated when the B<-x509> switch
-is used. It can be overridden by the B<-extensions> command line switch.
+=item B<pkix>
 
-=item B<prompt>
+Only PrintableStrings and BMPStrings will be used.
+This follows the PKIX recommendation in RFC2459.
 
-if set to the value B<no> this disables prompting of certificate fields
-and just takes values from the config file directly. It also changes the
-expected format of the B<distinguished_name> and B<attributes> sections.
+=item B<utf8only>
 
-=item B<utf8>
+Only UTF8Strings will be used.
+This is the PKIX recommendation in RFC2459 after 2003.
 
-if set to the value B<yes> then field values to be interpreted as UTF8
-strings, by default they are interpreted as ASCII. This means that
-the field values, whether prompted from a terminal or obtained from a
-configuration file, must be valid UTF8 strings.
+=item B<nombstr> 
 
-=item B<attributes>
-
-this specifies the section containing any request attributes: its format
-is the same as B<distinguished_name>. Typically these may contain the
-challengePassword or unstructuredName types. They are currently ignored
-by OpenSSL's request signing utilities but some CAs might want them.
-
-=item B<distinguished_name>
-
-This specifies the section containing the distinguished name fields to
-prompt for when generating a certificate or certificate request. The format
-is described in the next section.
+Only PrintableStrings and T61Strings will be used.
+Certain software has problems with BMPStrings and UTF8Strings (in particular, Netscape).
 
 =back
 
-=head1 DISTINGUISHED NAME AND ATTRIBUTE SECTION FORMAT
+=item B<req_extensions>
 
-There are two separate formats for the distinguished name and attribute
-sections. If the B<prompt> option is set to B<no> then these sections
-just consist of field names and values: for example,
+Specifies the configuration file section containing a list of extensions to add to the certificate request.
+It can be overridden by the B<-reqexts> command line switch.
+See the L<x509v3_config(5)> manual page for details of the extension section format.
+
+=item B<x509_extensions>
+
+Specifies the configuration file section containing a list of extensions to add to certificate generated when the B<-x509> switch is used.
+It can be overridden by the B<-extensions> command line switch.
+
+=item B<prompt>
+
+If B<no>, this disables prompting of certificate fields and just takes values from the config file directly.
+It also changes the expected format of the B<distinguished_name> and B<attributes> sections.
+
+=item B<utf8>
+
+If B<yes>, then field values to be interpreted as UTF-8 strings.
+By default they are interpreted as ASCII.
+This means that the field values, whether prompted from a terminal or obtained from a configuration file, must be valid UTF-8 strings.
+
+=item B<attributes>
+
+Specifies the section containing any request attributes.
+Its format is the same as B<distinguished_name>.
+Typically these may contain the challengePassword or unstructuredName types.
+They are currently ignored by OpenSSL's request signing utilities, but some CAs might want them.
+
+=item B<distinguished_name>
+
+Specifies the section containing the distinguished name fields to prompt for when generating a certificate or certificate request.
+The format is described in the next section.
+
+=back
+
+=head2 DISTINGUISHED NAME AND ATTRIBUTE SECTION FORMAT
+
+There are two separate formats for the distinguished name and attribute sections.
+If the B<prompt> option is set to B<no> then these sections just consist of field names and values.
+For example:
 
  CN=My Name
  OU=My Organization
  emailAddress=someone@somewhere.org
 
-This allows external programs (e.g. GUI based) to generate a template file
-with all the field names and values and just pass it to B<req>. An example
-of this kind of configuration file is contained in the B<EXAMPLES> section.
+This allows external programs (e.g. GUI based) to generate a template file with all the field names and values and just pass it to B<req>.
+An example of this kind of configuration file is contained in the B<EXAMPLES> section.
 
-Alternatively if the B<prompt> option is absent or not set to B<no> then the
-file contains field prompting information. It consists of lines of the form:
+Alternatively, if the B<prompt> option is absent or not set to B<no>, then the file contains field prompting information.
+It consists of lines of the form:
 
  fieldName="prompt"
  fieldName_default="default field value"
  fieldName_min= 2
  fieldName_max= 4
 
-"fieldName" is the field name being used, for example commonName (or CN).
-The "prompt" string is used to ask the user to enter the relevant
-details. If the user enters nothing then the default value is used if no
-default value is present then the field is omitted. A field can
-still be omitted if a default value is present if the user just
-enters the '.' character.
+"fieldName" is the field name being used; for example, B<commonName> (or B<CN>).
+The "prompt" string is used to ask the user to enter the relevant details.
+If the user enters nothing, then the default value is used; if no default value is present, then the field is omitted.
+A field can still be omitted if a default value is present by entering the '.' character.
 
-The number of characters entered must be between the fieldName_min and
-fieldName_max limits: there may be additional restrictions based
-on the field being used (for example countryName can only ever be
-two characters long and must fit in a PrintableString).
+The number of characters entered must be between the fieldName_min and fieldName_max limits.
+There may be additional restrictions based on the field being used (for example, countryName can only ever be two characters long and must fit in a PrintableString).
 
-Some fields (such as organizationName) can be used more than once
-in a DN. This presents a problem because configuration files will
-not recognize the same name occurring twice. To avoid this problem
-if the fieldName contains some characters followed by a full stop
-they will be ignored. So for example a second organizationName can
-be input by calling it "1.organizationName".
+Some fields (such as organizationName) can be used more than once in a DN.
+This presents a problem because configuration files will not recognize the same name occurring twice.
+To avoid this problem, if the fieldName contains some characters followed by a full stop, they will be ignored.
+So for example a second organizationName can be input by calling it "1.organizationName".
 
-The actual permitted field names are any object identifier short or
-long names. These are compiled into OpenSSL and include the usual
-values such as commonName, countryName, localityName, organizationName,
-organizationalUnitName, stateOrProvinceName. Additionally emailAddress
-is include as well as name, surname, givenName initials and dnQualifier.
+The actual permitted field names are any object identifier short or long names.
+These are compiled into OpenSSL and include the usual values such as commonName, countryName, localityName, organizationName, organizationalUnitName, and stateOrProvinceName.
+Additionally, emailAddress is included as well as name, surname, givenName, initials, and dnQualifier.
 
-Additional object identifiers can be defined with the B<oid_file> or
-B<oid_section> options in the configuration file. Any additional fields
-will be treated as though they were a DirectoryString.
+Additional object identifiers can be defined with the B<oid_file> or B<oid_section> options in the configuration file.
+Any additional fields will be treated as though they were a DirectoryString.
 
+=head1 NOTES
+
+The header and footer lines in the B<PEM> format are normally:
+
+ -----BEGIN CERTIFICATE REQUEST-----
+ -----END CERTIFICATE REQUEST-----
+
+Some software (some versions of Netscape certificate server) instead needs:
+
+ -----BEGIN NEW CERTIFICATE REQUEST-----
+ -----END NEW CERTIFICATE REQUEST-----
+
+which is produced with the B<-newhdr> option but is otherwise compatible.
+Either form is accepted transparently on input.
+
+The certificate requests generated by B<Xenroll> with MSIE have extensions added.
+It includes the B<keyUsage> extension which determines the type of key (signature only or general purpose) and any additional OIDs entered by the script in an B<extendedKeyUsage> extension.
+
+=head1 DIAGNOSTICS
+
+The following messages are frequently asked about:
+
+    Using configuration from /some/path/openssl.cnf
+    Unable to load config info
+
+This is followed some time later by:
+
+    unable to find 'distinguished_name' in config
+    problems making Certificate Request
+
+The first error message is the clue: it can't find the configuration file!
+Certain operations (like examining a certificate request) don't need a configuration file, so its use isn't enforced.
+Generation of certificates or requests, however, does need a configuration file.
+This could be regarded as a bug.
+
+Another puzzling message is this:
+
+        Attributes:
+            a0:00
+
+This is displayed when no attributes are present and the request includes the correct empty B<SET OF> structure (the DER encoding of which is 0xa0 0x00).
+If you just see:
+
+        Attributes:
+
+then the B<SET OF> is missing and the encoding is technically invalid (but it is tolerated).
+See the description of the command line option B<-asn1-kludge> for more information.
+
+=head1 ENVIRONMENT
+
+=over 4
+
+=item B<OPENSSL_CONF>
+
+Allows an alternative configuration file location to be specified.
+It will be overridden by the B<-config> command line switch if it is present.
+For compatibility reasons, the B<SSLEAY_CONF> environment variable serves the same purpose but its use is discouraged.
+
+=back
+
+=head1 BUGS
+
+OpenSSL's handling of T61Strings (aka TeletexStrings) is broken: it effectively treats them as ISO-8859-1 (Latin 1).
+Netscape and MSIE have similar behaviour.
+This can cause problems if you need characters that aren't available in PrintableStrings and you don't want to or can't use BMPStrings.
+
+As a consequence of the T61String handling, the only correct way to represent accented characters in OpenSSL is to use a BMPString.
+Unfortunately, Netscape currently chokes on these.
+If you have to use accented characters with Netscape and MSIE, then you currently need to use the invalid T61String form.
+
+The current prompting is not very friendly.
+It doesn't allow you to confirm what you've just entered.
+Other things like extensions in certificate requests are statically defined in the configuration file.
+Some of these, like an email address in subjectAltName, should be input by the user.
 
 =head1 EXAMPLES
 
@@ -491,11 +535,10 @@ Generate a self signed root certificate:
 
 Example of a file pointed to by the B<oid_file> option:
 
- 1.2.3.4	shortName	A longer Name
- 1.2.3.6	otherName	Other longer Name
+ 1.2.3.4    shortName   A longer Name
+ 1.2.3.6    otherName   Other longer Name
 
-Example of a section pointed to by B<oid_section> making use of variable
-expansion:
+Example of a section pointed to by B<oid_section> making use of variable expansion:
 
  testoid1=1.2.3.5
  testoid2=${testoid1}.6
@@ -571,7 +614,7 @@ The header and footer lines in the B<PEM> format are normally:
  -----BEGIN CERTIFICATE REQUEST-----
  -----END CERTIFICATE REQUEST-----
 
-some software (some versions of Netscape certificate server) instead needs:
+Some software (some versions of Netscape certificate server) instead needs:
 
  -----BEGIN NEW CERTIFICATE REQUEST-----
  -----END NEW CERTIFICATE REQUEST-----
@@ -579,10 +622,8 @@ some software (some versions of Netscape certificate server) instead needs:
 which is produced with the B<-newhdr> option but is otherwise compatible.
 Either form is accepted transparently on input.
 
-The certificate requests generated by B<Xenroll> with MSIE have extensions
-added. It includes the B<keyUsage> extension which determines the type of
-key (signature only or general purpose) and any additional OIDs entered
-by the script in an extendedKeyUsage extension.
+The certificate requests generated by B<Xenroll> with MSIE have extensions added.
+It includes the B<keyUsage> extension which determines the type of key (signature only or general purpose) and any additional OIDs entered by the script in an extendedKeyUsage extension.
 
 =head1 DIAGNOSTICS
 
@@ -591,59 +632,57 @@ The following messages are frequently asked about:
 	Using configuration from /some/path/openssl.cnf
 	Unable to load config info
 
-This is followed some time later by...
+This is followed some time later by:
 
 	unable to find 'distinguished_name' in config
 	problems making Certificate Request
 
-The first error message is the clue: it can't find the configuration
-file! Certain operations (like examining a certificate request) don't
-need a configuration file so its use isn't enforced. Generation of
-certificates or requests however does need a configuration file. This
-could be regarded as a bug.
+The first error message is the clue: it can't find the configuration file!
+Certain operations (like examining a certificate request) don't need a configuration file, so its use isn't enforced.
+Generation of certificates or requests, however, does need a configuration file.
+This could be regarded as a bug.
 
 Another puzzling message is this:
 
         Attributes:
             a0:00
 
-this is displayed when no attributes are present and the request includes
-the correct empty B<SET OF> structure (the DER encoding of which is 0xa0
-0x00). If you just see:
+This is displayed when no attributes are present and the request includes the correct empty B<SET OF> structure (the DER encoding of which is 0xa0 0x00).
+If you just see:
 
         Attributes:
 
-then the B<SET OF> is missing and the encoding is technically invalid (but
-it is tolerated). See the description of the command line option B<-asn1-kludge>
-for more information.
+then the B<SET OF> is missing and the encoding is technically invalid (but it is tolerated).
+See the description of the command line option B<-asn1-kludge> for more information.
 
-=head1 ENVIRONMENT VARIABLES
+=head1 ENVIRONMENT
 
-The variable B<OPENSSL_CONF> if defined allows an alternative configuration
-file location to be specified, it will be overridden by the B<-config> command
-line switch if it is present.
+=over 4
+
+=item B<OPENSSL_CONF>
+
+Allows an alternative configuration file location to be specified.
+It will be overridden by the B<-config> command line switch if it is present.
+
+=back
 
 =head1 BUGS
 
-OpenSSL's handling of T61Strings (aka TeletexStrings) is broken: it effectively
-treats them as ISO-8859-1 (Latin 1), Netscape and MSIE have similar behaviour.
-This can cause problems if you need characters that aren't available in
-PrintableStrings and you don't want to or can't use BMPStrings.
+OpenSSL's handling of T61Strings (aka TeletexStrings) is broken: it effectively treats them as ISO-8859-1 (Latin 1).
+Netscape and MSIE have similar behaviour.
+This can cause problems if you need characters that aren't available in PrintableStrings and you don't want to or can't use BMPStrings.
 
-As a consequence of the T61String handling the only correct way to represent
-accented characters in OpenSSL is to use a BMPString: unfortunately Netscape
-currently chokes on these. If you have to use accented characters with Netscape
-and MSIE then you currently need to use the invalid T61String form.
+As a consequence of the T61String handling, the only correct way to represent accented characters in OpenSSL is to use a BMPString.
+Unfortunately, Netscape currently chokes on these.
+If you have to use accented characters with Netscape and MSIE, then you currently need to use the invalid T61String form.
 
-The current prompting is not very friendly. It doesn't allow you to confirm what
-you've just entered. Other things like extensions in certificate requests are
-statically defined in the configuration file. Some of these: like an email
-address in subjectAltName should be input by the user.
+The current prompting is not very friendly.
+It doesn't allow you to confirm what you've just entered.
+Other things like extensions in certificate requests are statically defined in the configuration file.
+Some of these, like an email address in subjectAltName, should be input by the user.
 
 =head1 SEE ALSO
 
-L<x509(1)>, L<ca(1)>, L<genrsa(1)>,
-L<gendsa(1)>, L<config(5)>,
-L<x509v3_config(5)> 
+L<x509(1)>, L<ca(1)>, L<genrsa(1)>, L<gendsa(1)>, L<config(5)>, L<x509v3_config(5)> 
 
 =cut

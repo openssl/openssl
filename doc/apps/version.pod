@@ -25,37 +25,37 @@ This command is used to print out version information about OpenSSL.
 
 =item B<-a>
 
-all information, this is the same as setting all the other flags.
+All information.
+This is the same as setting all the other flags.
 
 =item B<-v>
 
-the current OpenSSL version.
+The current OpenSSL version.
 
 =item B<-b>
 
-the date the current version of OpenSSL was built.
+The date the current version of OpenSSL was built.
 
 =item B<-o>
 
-option information: various options set when the library was built.
+Option information: various options set when the library was built.
 
 =item B<-f>
 
-compilation flags.
+Compilation flags.
 
 =item B<-p>
 
-platform setting.
+Platform setting.
 
 =item B<-d>
 
-OPENSSLDIR setting.
+B<OPENSSLDIR> setting.
 
 =back
 
 =head1 NOTES
 
-The output of B<openssl version -a> would typically be used when sending
-in a bug report.
+The output of B<openssl version -a> would typically be used when sending in a bug report.
 
 =cut

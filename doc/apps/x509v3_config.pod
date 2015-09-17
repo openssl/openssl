@@ -8,11 +8,10 @@ x509v3_config - X509 V3 certificate extension configuration format
 
 =head1 DESCRIPTION
 
-Several of the OpenSSL utilities can add extensions to a certificate or
-certificate request based on the contents of a configuration file.
+Several of the OpenSSL utilities can add extensions to a certificate or certificate request based on the contents of a configuration file.
 
-Typically the application will contain an option to point to an extension
-section. Each line of the extension section takes the form:
+Typically the application will contain an option to point to an extension section.
+Each line of the extension section takes the form:
 
  extension_name=[critical,] extension_options
 
@@ -20,18 +19,16 @@ If B<critical> is present then the extension will be critical.
 
 The format of B<extension_options> depends on the value of B<extension_name>.
 
-There are four main types of extension: I<string> extensions, I<multi-valued>
-extensions, I<raw> and I<arbitrary> extensions.
+There are four main types of extension: B<string> extensions, B<multi-valued> extensions, B<raw> extensions, and B<arbitrary> extensions.
 
-String extensions simply have a string which contains either the value itself
-or how it is obtained.
+String extensions simply have a string which contains either the value itself or how it is obtained.
 
 For example:
 
  nsComment="This is a Comment"
 
-Multi-valued extensions have a short form and a long form. The short form
-is a list of names and values:
+Multi-valued extensions have a short form and a long form.
+The short form is a list of names and values:
 
  basicConstraints=critical,CA:true,pathlen:1
 
@@ -46,24 +43,21 @@ The long form allows the values to be placed in a separate section:
 
 Both forms are equivalent.
 
-The syntax of raw extensions is governed by the extension code: it can
-for example contain data in multiple sections. The correct syntax to
-use is defined by the extension code itself: check out the certificate
-policies extension for an example.
+The syntax of raw extensions is governed by the extension code: it can, for example, contain data in multiple sections.
+The correct syntax to use is defined by the extension code itself.
+Check out the certificate policies extension for an example.
 
-If an extension type is unsupported then the I<arbitrary> extension syntax
-must be used, see the L<ARBITRARY EXTENSIONS|/"ARBITRARY EXTENSIONS"> section for more details.
+If an extension type is unsupported, then the B<arbitrary> extension syntax must be used; see the L<ARBITRARY EXTENSIONS|/"ARBITRARY EXTENSIONS"> section for more details.
 
-=head1 STANDARD EXTENSIONS
+=head2 STANDARD EXTENSIONS
 
 The following sections describe each supported extension in detail.
 
-=head2 Basic Constraints.
+=head2 Basic Constraints
 
-This is a multi valued extension which indicates whether a certificate is
-a CA certificate. The first (mandatory) name is B<CA> followed by B<TRUE> or
-B<FALSE>. If B<CA> is B<TRUE> then an optional B<pathlen> name followed by an
-non-negative value can be included.
+This is a multi-valued extension which indicates whether a certificate is a CA certificate.
+The first (mandatory) name is B<CA>, followed by B<TRUE> or B<FALSE>.
+If B<CA> is B<true> then an optional B<pathlen> name followed by a non-negative value can be included.
 
 For example:
 
@@ -73,24 +67,19 @@ For example:
 
  basicConstraints=critical,CA:TRUE, pathlen:0
 
-A CA certificate B<must> include the basicConstraints value with the CA field
-set to TRUE. An end user certificate must either set CA to FALSE or exclude the
-extension entirely. Some software may require the inclusion of basicConstraints
-with CA set to FALSE for end entity certificates.
+A CA certificate B<must> include the B<basicConstraints> extension with the B<CA> field set to B<TRUE>.
+An end user certificate must either set B<CA> to B<FALSE> or exclude the extension entirely.
+Some software may require the inclusion of B<basicConstraints> with B<CA> set to B<FALSE> for end entity certificates.
 
-The pathlen parameter indicates the maximum number of CAs that can appear
-below this one in a chain. So if you have a CA with a pathlen of zero it can
-only be used to sign end user certificates and not further CAs.
+The pathlen parameter indicates the maximum number of CAs that can appear below this one in a chain.
+So if you have a CA with a pathlen of zero it can only be used to sign end user certificates, and not further CAs.
 
 
-=head2 Key Usage.
+=head2 Key Usage
 
-Key usage is a multi valued extension consisting of a list of names of the
-permitted key usages.
+Key usage is a multi-valued extension consisting of a list of names of the permitted key usages.
 
-The supported names are: digitalSignature, nonRepudiation, keyEncipherment,
-dataEncipherment, keyAgreement, keyCertSign, cRLSign, encipherOnly
-and decipherOnly.
+The supported names are: B<digitalSignature>, B<nonRepudiation>, B<keyEncipherment>, B<dataEncipherment>, B<keyAgreement>, B<keyCertSign>, B<cRLSign>, B<encipherOnly> and B<decipherOnly>.
 
 Examples:
 
@@ -99,26 +88,25 @@ Examples:
  keyUsage=critical, keyCertSign
 
 
-=head2 Extended Key Usage.
+=head2 Extended Key Usage
 
-This extensions consists of a list of usages indicating purposes for which
-the certificate public key can be used for,
+This extension consists of a list of usages indicating purposes for which the certificate public key can be used.
 
-These can either be object short names of the dotted numerical form of OIDs.
-While any OID can be used only certain values make sense. In particular the
-following PKIX, NS and MS values are meaningful:
+These can either be object short names or the dotted numerical form of OIDs.
+While any OID can be used, only certain values make sense.
+In particular, the following PKIX, NS, and MS values are meaningful:
 
- Value			Meaning
- -----			-------
- serverAuth		SSL/TLS Web Server Authentication.
- clientAuth		SSL/TLS Web Client Authentication.
- codeSigning		Code signing.
- emailProtection	E-mail Protection (S/MIME).
- timeStamping		Trusted Timestamping
- msCodeInd		Microsoft Individual Code Signing (authenticode)
- msCodeCom		Microsoft Commercial Code Signing (authenticode)
- msCTLSign		Microsoft Trust List Signing
- msEFS			Microsoft Encrypted File System
+ Value              Meaning
+ -----              -------
+ serverAuth         SSL/TLS Web Server Authentication.
+ clientAuth         SSL/TLS Web Client Authentication.
+ codeSigning        Code signing.
+ emailProtection    E-mail Protection (S/MIME).
+ timeStamping       Trusted Timestamping
+ msCodeInd          Microsoft Individual Code Signing (authenticode)
+ msCodeCom          Microsoft Commercial Code Signing (authenticode)
+ msCTLSign          Microsoft Trust List Signing
+ msEFS              Microsoft Encrypted File System
 
 Examples:
 
@@ -126,57 +114,47 @@ Examples:
  extendedKeyUsage=serverAuth,clientAuth
 
 
-=head2 Subject Key Identifier.
+=head2 Subject Key Identifier
 
-This is really a string extension and can take two possible values. Either
-the word B<hash> which will automatically follow the guidelines in RFC3280
-or a hex string giving the extension value to include. The use of the hex
-string is strongly discouraged.
+This is really a string extension and can take two possible values.
+Either the word B<hash> which will automatically follow the guidelines in RFC3280, or a hex string giving the extension value to include.
+The use of the hex string is strongly discouraged.
 
 Example:
 
  subjectKeyIdentifier=hash
 
 
-=head2 Authority Key Identifier.
+=head2 Authority Key Identifier
 
-The authority key identifier extension permits two options. keyid and issuer:
-both can take the optional value "always".
+The authority key identifier extension permits two options: B<keyid> and B<issuer>.
+Both can take the optional value B<always>.
 
-If the keyid option is present an attempt is made to copy the subject key
-identifier from the parent certificate. If the value "always" is present
-then an error is returned if the option fails.
+If the B<keyid> option is present, an attempt is made to copy the subject key identifier from the parent certificate.
+If the value B<always> is present, then an error is returned if the attempt fails.
 
-The issuer option copies the issuer and serial number from the issuer
-certificate. This will only be done if the keyid option fails or
-is not included unless the "always" flag will always include the value.
+The B<issuer> option copies the issuer and serial number from the issuer certificate.
+This will only be done if the B<keyid> option fails or is not included, unless the B<always> flag is specified, in which case the value will always be copied.
 
 Example:
 
  authorityKeyIdentifier=keyid,issuer
 
+=head2 Subject Alternative Name
 
-=head2 Subject Alternative Name.
+The subject alternative name extension allows various literal values to be included in the configuration file.
+These include B<email> (an email address), B<URI> (a uniform resource indicator), B<DNS> (a DNS domain name), B<RID> (a registered ID: OBJECT IDENTIFIER), B<IP> (an IP address), B<dirName> (a distinguished name), and B<otherName>.
 
-The subject alternative name extension allows various literal values to be
-included in the configuration file. These include B<email> (an email address)
-B<URI> a uniform resource indicator, B<DNS> (a DNS domain name), B<RID> (a
-registered ID: OBJECT IDENTIFIER), B<IP> (an IP address), B<dirName>
-(a distinguished name) and otherName.
+The B<email> option allows a special B<copy> value.
+This will automatically include any email addresses contained in the certificate subject name in the extension.
 
-The email option include a special 'copy' value. This will automatically
-include and email addresses contained in the certificate subject name in
-the extension.
+The IP address used in the B<IP> option can be in either IPv4 or IPv6 format.
 
-The IP address used in the B<IP> options can be in either IPv4 or IPv6 format.
+The value of B<dirName> should point to a section containing the distinguished name to use as a set of name-value pairs.
+Multi-valued AVAs can be formed by prefacing the name with a B<+> character.
 
-The value of B<dirName> should point to a section containing the distinguished
-name to use as a set of name value pairs. Multi values AVAs can be formed by
-prefacing the name with a B<+> character.
-
-otherName can include arbitrary data associated with an OID: the value
-should be the OID followed by a semicolon and the content in standard
-L<ASN1_generate_nconf(3)> format.
+B<otherName> can include arbitrary data associated with an OID.
+The value should be the OID followed by a semicolon and the content in standard L<ASN1_generate_nconf(3)> format.
 
 Examples:
 
@@ -195,26 +173,22 @@ Examples:
  CN=My Name
 
 
-=head2 Issuer Alternative Name.
+=head2 Issuer Alternative Name
 
-The issuer alternative name option supports all the literal options of
-subject alternative name. It does B<not> support the email:copy option because
-that would not make sense. It does support an additional issuer:copy option
-that will copy all the subject alternative name values from the issuer
-certificate (if possible).
+The issuer alternative name option supports all the literal options of subject alternative name.
+It does B<not> support the B<email:copy> option because that would not make sense.
+It does support an additional B<issuer:copy> option that will copy all the subject alternative name-values from the issuer certificate (if possible).
 
 Example:
 
  issuserAltName = issuer:copy
 
 
-=head2 Authority Info Access.
+=head2 Authority Info Access
 
-The authority information access extension gives details about how to access
-certain information relating to the CA. Its syntax is accessOID;location
-where I<location> has the same syntax as subject alternative name (except
-that email:copy is not supported). accessOID can be any valid OID but only
-certain values are meaningful, for example OCSP and caIssuers.
+The authority information access extension gives details about how to access certain information relating to the CA.
+Its syntax is I<accessOID>B<;>I<location>, where I<location> has the same syntax as subject alternative name (except that B<email:copy> is not supported).
+I<accessOID> can be any valid OID, but only certain values are meaningful, for example, B<OCSP> and B<caIssuers>.
 
 Example:
 
@@ -222,32 +196,24 @@ Example:
  authorityInfoAccess = caIssuers;URI:http://my.ca/ca.html
 
 
-=head2 CRL distribution points.
+=head2 CRL distribution points
 
-This is a multi-valued extension whose options can be either in name:value pair
-using the same form as subject alternative name or a single value representing
-a section name containing all the distribution point fields.
+This is a multi-valued extension whose options can be either I<name>:I<value> pairs using the same format as subject alternative name, or a single value representing a section name containing all the distribution point fields.
 
-For a name:value pair a new DistributionPoint with the fullName field set to
-the given value both the cRLissuer and reasons fields are omitted in this case.
+For a I<name>:I<value> pair, a new DistributionPoint with the B<fullName> field set to the given I<value>.
+Both the B<cRLissuer> and B<reasons> fields are omitted in this case.
 
-In the single option case the section indicated contains values for each
-field. In this section:
+In the single value case, the section indicated contains values for each field.
+In this section:
 
-If the name is "fullname" the value field should contain the full name
-of the distribution point in the same format as subject alternative name.
+If the name is B<fullname>, the value field should contain the full name of the distribution point in the same format as subject alternative name.
 
-If the name is "relativename" then the value field should contain a section
-name whose contents represent a DN fragment to be placed in this field.
+If the name is B<relativename>, then the value field should contain a section name whose contents represent a DN fragment to be placed in this field.
 
-The name "CRLIssuer" if present should contain a value for this field in
-subject alternative name format.
+The name B<CRLIssuer>, if present, should contain a value for this field in subject alternative name format.
 
-If the name is "reasons" the value field should consist of a comma
-separated field containing the reasons. Valid reasons are: "keyCompromise",
-"CACompromise", "affiliationChanged", "superseded", "cessationOfOperation",
-"certificateHold", "privilegeWithdrawn" and "AACompromise".
-
+If the name is B<reasons>, the value field should consist of a comma separated field containing the reasons.
+Valid reasons are: B<keyCompromise>, B<CACompromise>, B<affiliationChanged>, B<superseded>, B<cessationOfOperation>, B<certificateHold>, B<privilegeWithdrawn>, and B<AACompromise>.
 
 Simple examples:
 
@@ -271,18 +237,16 @@ Full distribution point example:
 
 =head2 Issuing Distribution Point
 
-This extension should only appear in CRLs. It is a multi valued extension
-whose syntax is similar to the "section" pointed to by the CRL distribution
-points extension with a few differences.
+This extension should only appear in CRLs.
+It is a multi valued extension whose syntax is similar to the B<section> pointed to by the CRL distribution points extension with a few differences.
 
-The names "reasons" and "CRLissuer" are not recognized.
+The names B<reasons> and B<CRLissuer> are not recognized.
 
-The name "onlysomereasons" is accepted which sets this field. The value is
-in the same format as the CRL distribution point "reasons" field.
+The name B<onlysomereasons> is accepted, which sets this field.
+The value is in the same format as the CRL distribution point B<reasons> field.
 
-The names "onlyuser", "onlyCA", "onlyAA" and "indirectCRL" are also accepted
-the values should be a boolean value (TRUE or FALSE) to indicate the value of
-the corresponding field.
+The names B<onlyuser>, B<onlyCA>, B<onlyAA>, and B<indirectCRL> are also accepted.
+The values should be a boolean value (B<TRUE> or B<FALSE>) to indicate the value of the corresponding field.
 
 Example:
 
@@ -300,37 +264,33 @@ Example:
  CN=Some Name
 
 
-=head2 Certificate Policies.
+=head2 Certificate Policies
 
-This is a I<raw> extension. All the fields of this extension can be set by
-using the appropriate syntax.
+This is a I<raw> extension.
+All the fields of this extension can be set by using the appropriate syntax.
 
-If you follow the PKIX recommendations and just using one OID then you just
-include the value of that OID. Multiple OIDs can be set separated by commas,
-for example:
+If you follow the PKIX recommendations and are just using one OID, then you just include the value of that OID.
+Multiple OIDs can be set separated by commas; for example:
 
  certificatePolicies= 1.2.4.5, 1.1.3.4
 
-If you wish to include qualifiers then the policy OID and qualifiers need to
-be specified in a separate section: this is done by using the @section syntax
-instead of a literal OID value.
+If you wish to include qualifiers, then the policy OID and qualifiers need to be specified in a separate section.
+This is done by using the B<@>I<section> syntax instead of a literal OID value.
 
-The section referred to must include the policy OID using the name
-policyIdentifier, cPSuri qualifiers can be included using the syntax:
+The section referred to must include the policy OID using the name B<policyIdentifier>.
+B<cPSuri> qualifiers can be included using the syntax:
 
  CPS.nnn=value
 
-userNotice qualifiers can be set using the syntax:
+B<userNotice> qualifiers can be set using the syntax:
 
  userNotice.nnn=@notice
 
-The value of the userNotice qualifier is specified in the relevant section.
-This section can include explicitText, organization and noticeNumbers
-options. explicitText and organization are text strings, noticeNumbers is a
-comma separated list of numbers. The organization and noticeNumbers options
-(if included) must BOTH be present. If you use the userNotice option with IE5
-then you need the 'ia5org' option at the top level to modify the encoding:
-otherwise it will not be interpreted properly.
+The value of the B<userNotice> qualifier is specified in the relevant section.
+This section can include B<explicitText>, B<organization>, and B<noticeNumbers> options.
+B<explicitText> and B<organization> are text strings; B<noticeNumbers> is a comma separated list of numbers. 
+The B<organization> and B<noticeNumbers> options (if included) must BOTH be present.
+If you use the B<userNotice> option with IE5, then you need the B<ia5org> option at the top level to modify the encoding; otherwise, it will not be interpreted properly.
 
 Example:
 
@@ -349,15 +309,15 @@ Example:
  organization="Organisation Name"
  noticeNumbers=1,2,3,4
 
-The B<ia5org> option changes the type of the I<organization> field. In RFC2459
-it can only be of type DisplayText. In RFC3280 IA5Strring is also permissible.
-Some software (for example some versions of MSIE) may require ia5org.
+The B<ia5org> option changes the type of the I<organization> field.
+In RFC2459, it can only be of type B<DisplayText>.
+In RFC3280, B<IA5Strring> is also permissible.
+Some software (for example, some versions of MSIE) may require B<ia5org>.
 
 =head2 Policy Constraints
 
-This is a multi-valued extension which consisting of the names
-B<requireExplicitPolicy> or B<inhibitPolicyMapping> and a non negative integer
-value. At least one component must be present.
+This is a multi-valued extension which consists of the names B<requireExplicitPolicy> or B<inhibitPolicyMapping> and a non negative integer value.
+At least one component must be present.
 
 Example:
 
@@ -375,11 +335,9 @@ Example:
 
 =head2 Name Constraints
 
-The name constraints extension is a multi-valued extension. The name should
-begin with the word B<permitted> or B<excluded> followed by a B<;>. The rest of
-the name and the value follows the syntax of subjectAltName except email:copy
-is not supported and the B<IP> form should consist of an IP addresses and
-subnet mask separated by a B</>.
+The name constraints extension is a multi-valued extension.
+The name should begin with the word B<permitted> or B<excluded> followed by a B<;>.
+The rest of the name and the value follows the syntax of B<subjectAltName>, except B<email:copy> is not supported, and the B<IP> form should consist of an IP address and subnet mask separated by a B</>.
 
 Examples:
 
@@ -399,47 +357,40 @@ Example:
  noCheck = ignored
 
 
-=head1 DEPRECATED EXTENSIONS
+=head2 DEPRECATED EXTENSIONS
 
-The following extensions are non standard, Netscape specific and largely
-obsolete. Their use in new applications is discouraged.
+The following extensions are non standard, Netscape specific, and largely obsolete.
+Their use in new applications is discouraged.
 
-=head2 Netscape String extensions.
+=head2 Netscape String extensions
 
-Netscape Comment (B<nsComment>) is a string extension containing a comment
-which will be displayed when the certificate is viewed in some browsers.
+Netscape Comment (B<nsComment>) is a string extension containing a comment which will be displayed when the certificate is viewed in some browsers.
 
 Example:
 
  nsComment = "Some Random Comment"
 
-Other supported extensions in this category are: B<nsBaseUrl>,
-B<nsRevocationUrl>, B<nsCaRevocationUrl>, B<nsRenewalUrl>, B<nsCaPolicyUrl>
-and B<nsSslServerName>.
+Other supported extensions in this category are: B<nsBaseUrl>, B<nsRevocationUrl>, B<nsCaRevocationUrl>, B<nsRenewalUrl>, B<nsCaPolicyUrl>, and B<nsSslServerName>.
 
 
 =head2 Netscape Certificate Type
 
-This is a multi-valued extensions which consists of a list of flags to be
-included. It was used to indicate the purposes for which a certificate could
-be used. The basicConstraints, keyUsage and extended key usage extensions are
-now used instead.
+This is a multi-valued extension which consists of a list of flags to be included.
+It was used to indicate the purposes for which a certificate could be used.
+The B<basicConstraints>, B<keyUsage> and extended key usage extensions are now used instead.
 
-Acceptable values for nsCertType are: B<client>, B<server>, B<email>,
-B<objsign>, B<reserved>, B<sslCA>, B<emailCA>, B<objCA>.
+Acceptable values for nsCertType are: B<client>, B<server>, B<email>, B<objsign>, B<reserved>, B<sslCA>, B<emailCA>, and B<objCA>.
 
 
-=head1 ARBITRARY EXTENSIONS
+=head2 ARBITRARY EXTENSIONS
 
-If an extension is not supported by the OpenSSL code then it must be encoded
-using the arbitrary extension format. It is also possible to use the arbitrary
-format for supported extensions. Extreme care should be taken to ensure that
-the data is formatted correctly for the given extension type.
+If an extension is not supported by the OpenSSL code, then it must be encoded using the arbitrary extension format.
+It is also possible to use the arbitrary format for supported extensions.
+Extreme care should be taken to ensure that the data is formatted correctly for the given extension type.
 
 There are two ways to encode arbitrary extensions.
 
-The first way is to use the word ASN1 followed by the extension content
-using the same syntax as L<ASN1_generate_nconf(3)>.
+The first way is to use the word B<ASN1> followed by the extension content using the same syntax as L<ASN1_generate_nconf(3)>.
 For example:
 
  1.2.3.4=critical,ASN1:UTF8String:Some random data
@@ -451,13 +402,12 @@ For example:
  field1 = UTF8:field1
  field2 = UTF8:field2
 
-It is also possible to use the word DER to include the raw encoded data in any
-extension.
+It is also possible to use the word B<DER> to include the raw encoded data in any extension.
 
  1.2.3.4=critical,DER:01:02:03:04
  1.2.3.4=DER:01020304
 
-The value following DER is a hex dump of the DER encoding of the extension
+The value following B<DER> is a hex dump of the DER encoding of the extension.
 Any extension can be placed in this form to override the default behaviour.
 For example:
 
@@ -465,24 +415,21 @@ For example:
 
 =head1 WARNING
 
-There is no guarantee that a specific implementation will process a given
-extension. It may therefore be sometimes possible to use certificates for
-purposes prohibited by their extensions because a specific application does
-not recognize or honour the values of the relevant extensions.
+There is no guarantee that a specific implementation will process a given extension.
+It may therefore be sometimes possible to use certificates for purposes prohibited by their extensions because a specific application does not recognize or honour the values of the relevant extensions.
 
-The DER and ASN1 options should be used with caution. It is possible to create
-totally invalid extensions if they are not used carefully.
+The B<DER> and B<ASN1> options should be used with caution.
+It is possible to create totally invalid extensions if they are not used carefully.
 
 
 =head1 NOTES
 
-If an extension is multi-value and a field value must contain a comma the long
-form must be used otherwise the comma would be misinterpreted as a field
-separator. For example:
+If an extension is multi-valued and a field value must contain a comma, the long form must be used; otherwise, the comma would be misinterpreted as a field separator.
+For example:
 
  subjectAltName=URI:ldap://somehost.com/CN=foo,OU=bar
 
-will produce an error but the equivalent form:
+will produce an error, but the equivalent form:
 
  subjectAltName=@subject_alt_section
 
@@ -491,8 +438,8 @@ will produce an error but the equivalent form:
 
 is valid.
 
-Due to the behaviour of the OpenSSL B<conf> library the same field name
-can only occur once in a section. This means that:
+Due to the behaviour of the OpenSSL B<conf> library, the same field name can only occur once in a section.
+This means that:
 
  subjectAltName=@alt_section
 
@@ -501,7 +448,8 @@ can only occur once in a section. This means that:
  email=steve@here
  email=steve@there
 
-will only recognize the last value. This can be worked around by using the form:
+will only recognize the last value.
+This can be worked around by using the form:
 
  [alt_section]
 
@@ -510,8 +458,6 @@ will only recognize the last value. This can be worked around by using the form:
 
 =head1 SEE ALSO
 
-L<req(1)>, L<ca(1)>, L<x509(1)>,
-L<ASN1_generate_nconf(3)>
-
+L<req(1)>, L<ca(1)>, L<x509(1)>, L<ASN1_generate_nconf(3)>
 
 =cut

@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-errstr - lookup error codes
+errstr - look up error codes
 
 =head1 SYNOPSIS
 
@@ -10,10 +10,9 @@ B<openssl errstr error_code>
 
 =head1 DESCRIPTION
 
-Sometimes an application will not load error message and only
-numerical forms will be available. The B<errstr> utility can be used to 
-display the meaning of the hex code. The hex code is the hex digits after the
-second colon.
+Sometimes an application will not load error message and only numerical forms will be available.
+The B<errstr> utility can be used to display the meaning of the hex code.
+The hex code is the hex digits after the second colon.
 
 =head1 EXAMPLE
 
@@ -31,9 +30,6 @@ to produce the error message:
 
 =head1 SEE ALSO
 
-L<err(3)>,
-L<ERR_load_crypto_strings(3)>,
-L<SSL_load_error_strings(3)>
-
+L<err(3)>, L<ERR_load_crypto_strings(3)>, L<SSL_load_error_strings(3)>
 
 =cut

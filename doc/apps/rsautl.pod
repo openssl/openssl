@@ -7,9 +7,9 @@ rsautl - RSA utility
 =head1 SYNOPSIS
 
 B<openssl> B<rsautl>
-[B<-in file>]
-[B<-out file>]
-[B<-inkey file>]
+[B<-in> I<file>]
+[B<-out> I<file>]
+[B<-inkey> I<file>]
 [B<-pubin>]
 [B<-certin>]
 [B<-sign>]
@@ -24,74 +24,84 @@ B<openssl> B<rsautl>
 
 =head1 DESCRIPTION
 
-The B<rsautl> command can be used to sign, verify, encrypt and decrypt
-data using the RSA algorithm.
+The B<rsautl> command can be used to sign, verify, encrypt and decrypt data using the RSA algorithm.
 
-=head1 COMMAND OPTIONS
+=head1 OPTIONS
 
 =over 4
 
-=item B<-in filename>
+=item B<-in> I<file>
 
-This specifies the input filename to read data from or standard input
-if this option is not specified.
+Specifies the input filename to read data from.
+Standard input is the default.
 
-=item B<-out filename>
+=item B<-out> I<file>
 
-specifies the output filename to write to or standard output by
-default.
+Specifies the output filename to write to.
+Standard output is the default.
 
-=item B<-inkey file>
+=item B<-inkey> I<file>
 
-the input key file, by default it should be an RSA private key.
+The input key file.
+By default it should be an RSA private key.
 
 =item B<-pubin>
 
-the input file is an RSA public key. 
+The input file is an RSA public key.
 
 =item B<-certin>
 
-the input is a certificate containing an RSA public key. 
+The input is a certificate containing an RSA public key. 
 
 =item B<-sign>
 
-sign the input data and output the signed result. This requires
-an RSA private key.
+Sign the input data and output the signed result.
+This requires an RSA private key.
 
 =item B<-verify>
 
-verify the input data and output the recovered data.
+Verify the input data and output the recovered data.
 
 =item B<-encrypt>
 
-encrypt the input data using an RSA public key.
+Encrypt the input data using an RSA public key.
 
 =item B<-decrypt>
 
-decrypt the input data using an RSA private key.
+Decrypt the input data using an RSA private key.
 
-=item B<-pkcs, -oaep, -ssl, -raw>
+=item B<-pkcs>, B<-oaep>, B<-ssl>, B<-raw>
 
-the padding to use: PKCS#1 v1.5 (the default), PKCS#1 OAEP,
-special padding used in SSL v2 backwards compatible handshakes,
-or no padding, respectively.
+The padding to use.
+
+=over 4
+
+=item * B<-pkcs> (default): PKCS#1 v1.5
+
+=item * B<-oaep>: PKCS#1 OAEP
+
+=item * B<-ssl>: special padding used in SSL v2 backwards compatible handshakes
+
+=item * B<-raw>: no padding
+
+=back
+
 For signatures, only B<-pkcs> and B<-raw> can be used.
 
 =item B<-hexdump>
 
-hex dump the output data.
+Hex dump the output data.
 
 =item B<-asn1parse>
 
-asn1parse the output data, this is useful when combined with the
-B<-verify> option.
+B<asn1parse> the output data.
+This is useful when combined with the B<-verify> option.
 
 =back
 
 =head1 NOTES
 
-B<rsautl> because it uses the RSA algorithm directly can only be
-used to sign or verify small pieces of data.
+Because B<rsautl> uses the RSA algorithm directly, it can only be used to sign or verify small pieces of data.
 
 =head1 EXAMPLES
 
@@ -99,7 +109,7 @@ Sign some data using a private key:
 
  openssl rsautl -sign -in file -inkey key.pem -out sig
 
-Recover the signed data
+Recover the signed data:
 
  openssl rsautl -verify -in sig -inkey key.pem
 
@@ -116,13 +126,11 @@ Examine the raw signed data:
  0060 - ff ff ff ff ff ff ff ff-ff ff ff ff ff ff ff ff   ................
  0070 - ff ff ff ff 00 68 65 6c-6c 6f 20 77 6f 72 6c 64   .....hello world
 
-The PKCS#1 block formatting is evident from this. If this was done using
-encrypt and decrypt the block would have been of type 2 (the second byte)
-and random padding data visible instead of the 0xff bytes.
+The PKCS#1 block formatting is evident from this.
+If this were done using B<encrypt> and B<decrypt>, the block would have been of type 2 (indicated in the second byte), and random padding data would be visible instead of the 0xff bytes.
 
-It is possible to analyse the signature of certificates using this
-utility in conjunction with B<asn1parse>. Consider the self signed
-example in certs/pca-cert.pem . Running B<asn1parse> as follows yields:
+It is possible to analyse the signature of certificates using this utility in conjunction with B<asn1parse>. Consider the self signed example in F<certs/pca-cert.pem>.
+Running B<asn1parse> as follows yields:
 
  openssl asn1parse -in pca-cert.pem
 
@@ -146,7 +154,8 @@ example in certs/pca-cert.pem . Running B<asn1parse> as follows yields:
   614:d=1  hl=3 l= 129 prim:  BIT STRING        
 
 
-The final BIT STRING contains the actual signature. It can be extracted with:
+The final BIT STRING contains the actual signature.
+It can be extracted with:
 
  openssl asn1parse -in pca-cert.pem -out sig -noout -strparse 614
 
@@ -165,9 +174,9 @@ The signature can be analysed with:
    16:d=1  hl=2 l=  16 prim:  OCTET STRING      
       0000 - f3 46 9e aa 1a 4a 73 c9-37 ea 93 00 48 25 08 b5   .F...Js.7...H%..
 
-This is the parsed version of an ASN1 DigestInfo structure. It can be seen that
-the digest used was md5. The actual part of the certificate that was signed can
-be extracted with:
+This is the parsed version of an ASN1 DigestInfo structure.
+It can be seen that the digest used was md5.
+The actual part of the certificate that was signed can be extracted with:
 
  openssl asn1parse -in pca-cert.pem -out tbs -noout -strparse 4
 
@@ -176,8 +185,10 @@ and its digest computed with:
  openssl md5 -c tbs
  MD5(tbs)= f3:46:9e:aa:1a:4a:73:c9:37:ea:93:00:48:25:08:b5
 
-which it can be seen agrees with the recovered value above.
+which can be seen agrees with the recovered value above.
 
 =head1 SEE ALSO
 
 L<dgst(1)>, L<rsa(1)>, L<genrsa(1)>
+
+=cut

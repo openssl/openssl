@@ -8,96 +8,93 @@ pkey - public or private key processing tool
 =head1 SYNOPSIS
 
 B<openssl> B<pkey>
-[B<-inform PEM|DER>]
-[B<-outform PEM|DER>]
-[B<-in filename>]
-[B<-passin arg>]
-[B<-out filename>]
-[B<-passout arg>]
-[B<-cipher>]
+[B<-inform> B<PEM>|B<DER>]
+[B<-outform> B<PEM>|B<DER>]
+[B<-in> I<filename>]
+[B<-passin> I<arg>]
+[B<-out> I<filename>]
+[B<-passout> I<arg>]
+[B<->I<cipher>]
 [B<-text>]
 [B<-text_pub>]
 [B<-noout>]
 [B<-pubin>]
 [B<-pubout>]
-[B<-engine id>]
+[B<-engine> I<id>]
 
 =head1 DESCRIPTION
 
-The B<pkey> command processes public or private keys. They can be converted
-between various forms and their components printed out.
+The B<pkey> command processes public or private keys.
+They can be converted between various forms and their components printed out.
 
-=head1 COMMAND OPTIONS
+=head1 OPTIONS
 
 =over 4
 
-=item B<-inform DER|PEM>
+=item B<-inform> B<DER>|B<PEM>
 
-This specifies the input format DER or PEM.
+This specifies the input format to be DER or PEM.
 
-=item B<-outform DER|PEM>
+=item B<-outform> B<DER>|B<PEM>
 
-This specifies the output format, the options have the same meaning as the 
-B<-inform> option.
+This specifies the output format.
+The options have the same meaning as the B<-inform> option.
 
-=item B<-in filename>
+=item B<-in> I<filename>
 
-This specifies the input filename to read a key from or standard input if this
-option is not specified. If the key is encrypted a pass phrase will be
-prompted for.
+This specifies the input filename to read a key from.
+Standard input is the default.
+If the key is encrypted a pass phrase will be prompted for.
 
-=item B<-passin arg>
+=item B<-passin> I<arg>
 
-the input file password source. For more information about the format of B<arg>
-see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
+The input file password source.
+For more information about the format of I<arg>, see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
 
-=item B<-out filename>
+=item B<-out> I<filename>
 
-This specifies the output filename to write a key to or standard output if this
-option is not specified. If any encryption options are set then a pass phrase
-will be prompted for. The output filename should B<not> be the same as the input
-filename.
+This specifies the output filename to write a key to or.
+Standard output is the default.
+If any encryption options are set, then a pass phrase will be prompted for.
+The output filename should B<not> be the same as the input filename.
 
-=item B<-passout password>
+=item B<-passout> I<arg>
 
-the output file password source. For more information about the format of B<arg>
-see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
+The output file password source.
+For more information about the format of I<arg>, see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
 
-=item B<-cipher>
+=item B<->I<cipher>
 
-These options encrypt the private key with the supplied cipher. Any algorithm
-name accepted by EVP_get_cipherbyname() is acceptable such as B<des3>.
+These options encrypt the private key with the supplied cipher.
+Any algorithm name accepted by EVP_get_cipherbyname(), such as B<des3>, is acceptable for I<cipher>.
 
 =item B<-text>
 
-prints out the various public or private key components in
-plain text in addition to the encoded version. 
+Prints out the various public or private key components in plain text in addition to the encoded version. 
 
 =item B<-text_pub>
 
-print out only public key components even if a private key is being processed.
+Print out only public key components, even if a private key is being processed.
 
 =item B<-noout>
 
-do not output the encoded version of the key.
+Do not output the encoded version of the key.
 
 =item B<-pubin>
 
-by default a private key is read from the input file: with this
-option a public key is read instead.
+By default, a private key is read from the input file.
+With this option a public key is read instead.
 
 =item B<-pubout>
 
-by default a private key is output: with this option a public
-key will be output instead. This option is automatically set if
-the input is a public key.
+By default a private key is output.
+With this option a public key will be output instead.
+This option is automatically set if the input is a public key.
 
-=item B<-engine id>
+=item B<-engine> I<id>
 
-specifying an engine (by its unique B<id> string) will cause B<pkey>
-to attempt to obtain a functional reference to the specified engine,
-thus initialising it if needed. The engine will then be set as the default
-for all available algorithms.
+Specifying an engine (by its unique I<id> string) will cause B<pkey> to attempt to obtain a functional reference to the specified engine, thus initialising it if needed.
+The engine will then be set as the default for all available algorithms.
 
 =back
 
@@ -129,7 +126,6 @@ To just output the public part of a private key:
 
 =head1 SEE ALSO
 
-L<genpkey(1)>, L<rsa(1)>, L<pkcs8(1)>,
-L<dsa(1)>, L<genrsa(1)>, L<gendsa(1)> 
+L<genpkey(1)>, L<rsa(1)>, L<pkcs8(1)>, L<dsa(1)>, L<genrsa(1)>, L<gendsa(1)> 
 
 =cut
