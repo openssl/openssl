@@ -117,6 +117,11 @@ EVP_PKEY *X509_REQ_get_pubkey(X509_REQ *req)
     return (X509_PUBKEY_get(req->req_info.pubkey));
 }
 
+X509_PUBKEY *X509_REQ_get_X509_PUBKEY(X509_REQ *req)
+{
+    return req->req_info.pubkey;
+}
+
 int X509_REQ_check_private_key(X509_REQ *x, EVP_PKEY *k)
 {
     EVP_PKEY *xk = NULL;
