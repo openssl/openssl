@@ -63,7 +63,6 @@
 #include <openssl/bn.h>
 #include <openssl/objects.h>
 #include <openssl/x509.h>
-#include "internal/x509_int.h"
 #include <openssl/x509v3.h>
 
 #ifndef OPENSSL_NO_STDIO
@@ -87,6 +86,8 @@ int X509_CRL_print(BIO *out, X509_CRL *x)
 {
     STACK_OF(X509_REVOKED) *rev;
     X509_REVOKED *r;
+    X509_ALGOR *sig_alg;
+    ASN1_BIT_STRING *sig;
     long l;
     int i;
     char *p;
@@ -94,8 +95,9 @@ int X509_CRL_print(BIO *out, X509_CRL *x)
     BIO_printf(out, "Certificate Revocation List (CRL):\n");
     l = X509_CRL_get_version(x);
     BIO_printf(out, "%8sVersion %lu (0x%lx)\n", "", l + 1, l);
-    i = OBJ_obj2nid(x->sig_alg.algorithm);
-    X509_signature_print(out, &x->sig_alg, NULL);
+    X509_CRL_get0_signature(&sig, &sig_alg, x);
+    i = X509_CRL_get_signature_nid(x);
+    X509_signature_print(out, sig_alg, NULL);
     p = X509_NAME_oneline(X509_CRL_get_issuer(x), NULL, 0);
     BIO_printf(out, "%8sIssuer: %s\n", "", p);
     OPENSSL_free(p);
@@ -108,7 +110,8 @@ int X509_CRL_print(BIO *out, X509_CRL *x)
         BIO_printf(out, "NONE");
     BIO_printf(out, "\n");
 
-    X509V3_extensions_print(out, "CRL extensions", x->crl.extensions, 0, 8);
+    X509V3_extensions_print(out, "CRL extensions",
+                            X509_CRL_get0_extensions(x), 0, 8);
 
     rev = X509_CRL_get_REVOKED(x);
 
@@ -120,14 +123,14 @@ int X509_CRL_print(BIO *out, X509_CRL *x)
     for (i = 0; i < sk_X509_REVOKED_num(rev); i++) {
         r = sk_X509_REVOKED_value(rev, i);
         BIO_printf(out, "    Serial Number: ");
-        i2a_ASN1_INTEGER(out, r->serialNumber);
+        i2a_ASN1_INTEGER(out, X509_REVOKED_get0_serialNumber(r));
         BIO_printf(out, "\n        Revocation Date: ");
-        ASN1_TIME_print(out, r->revocationDate);
+        ASN1_TIME_print(out, X509_REVOKED_get0_revocationDate(r));
         BIO_printf(out, "\n");
         X509V3_extensions_print(out, "CRL entry extensions",
-                                r->extensions, 0, 8);
+                                X509_REVOKED_get0_extensions(r), 0, 8);
     }
-    X509_signature_print(out, &x->sig_alg, x->signature);
+    X509_signature_print(out, sig_alg, sig);
 
     return 1;
 
