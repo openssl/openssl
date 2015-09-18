@@ -528,6 +528,9 @@
 #define CERT_PRIVATE_KEY        2
 */
 
+
+/* CipherSuite length. SSLv3 and all TLS versions. */
+#define TLS_CIPHER_LEN 2
 /* used to hold info on the particular ciphers used */
 struct ssl_cipher_st {
     int valid;
@@ -1641,8 +1644,6 @@ struct tls_sigalgs_st {
  */
 
 # define FP_ICC  (int (*)(const void *,const void *))
-# define ssl_put_cipher_by_char(ssl,ciph,ptr) \
-                ((ssl)->method->put_cipher_by_char((ciph),(ptr)))
 
 /*
  * This is for the SSLv3/TLSv1.0 differences in crypto/hash stuff It is a bit

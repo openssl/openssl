@@ -1078,8 +1078,9 @@ long SSL_ctrl(SSL *s, int cmd, long larg, void *parg)
                 return 0;
             *(unsigned char **)parg = s->s3->tmp.ciphers_raw;
             return (int)s->s3->tmp.ciphers_rawlen;
-        } else
-            return ssl_put_cipher_by_char(s, NULL, NULL);
+        } else {
+            return TLS_CIPHER_LEN;
+        }
     case SSL_CTRL_GET_EXTMS_SUPPORT:
         if (!s->session || SSL_in_init(s) || s->in_handshake)
 		return -1;
