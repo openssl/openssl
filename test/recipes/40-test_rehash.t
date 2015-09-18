@@ -10,7 +10,7 @@ use OpenSSL::Test qw/:DEFAULT top_file/;
 
 setup("test_rehash");
 
-plan tests => 4;
+plan tests => 5;
 
 indir "rehash.$$" => sub {
     prepare();
@@ -32,8 +32,15 @@ indir "rehash.$$" => sub {
 indir "rehash.$$" => sub {
     prepare();
     chmod 0500, curdir();
-    isnt(run(app(["openssl", "rehash", curdir()])), 1,
-         'Testing rehash operations on readonly directory');
+  SKIP: {
+      if (!ok(!open(FOO, ">unwritable.txt"),
+              "Testing that we aren't running as a priviledged user, such as root")) {
+          close FOO;
+          skip "It's pointless to run the next test as root", 1;
+      }
+      isnt(run(app(["openssl", "rehash", curdir()])), 1,
+           'Testing rehash operations on readonly directory');
+    }
     chmod 0700, curdir();       # make it writable again, so cleanup works
 }, create => 1, cleanup => 1;
 
