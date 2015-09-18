@@ -129,11 +129,15 @@ int X509_REQ_print_ex(BIO *bp, X509_REQ *x, unsigned long nmflags,
             goto err;
     }
     if (!(cflag & X509_FLAG_NO_PUBKEY)) {
+        X509_PUBKEY *xpkey;
+        ASN1_OBJECT *koid;
         if (BIO_write(bp, "        Subject Public Key Info:\n", 33) <= 0)
             goto err;
         if (BIO_printf(bp, "%12sPublic Key Algorithm: ", "") <= 0)
             goto err;
-        if (i2a_ASN1_OBJECT(bp, ri->pubkey->algor->algorithm) <= 0)
+        xpkey = X509_REQ_get_X509_PUBKEY(x);
+        X509_PUBKEY_get0_param(&koid, NULL, NULL, NULL, xpkey);
+        if (i2a_ASN1_OBJECT(bp, koid) <= 0)
             goto err;
         if (BIO_puts(bp, "\n") <= 0)
             goto err;
