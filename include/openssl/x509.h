@@ -794,6 +794,7 @@ long X509_CRL_get_version(X509_CRL *crl);
 ASN1_TIME *X509_CRL_get_lastUpdate(X509_CRL *crl);
 ASN1_TIME *X509_CRL_get_nextUpdate(X509_CRL *crl);
 X509_NAME *X509_CRL_get_issuer(X509_CRL *crl);
+STACK_OF(X509_EXTENSION) *X509_CRL_get0_extensions(X509_CRL *crl);
 STACK_OF(X509_REVOKED) *X509_CRL_get_REVOKED(X509_CRL *crl);
 void X509_CRL_get0_signature(ASN1_BIT_STRING **psig, X509_ALGOR **palg,
                              X509_CRL *crl);
@@ -804,6 +805,7 @@ ASN1_INTEGER *X509_REVOKED_get0_serialNumber(X509_REVOKED *x);
 int X509_REVOKED_set_serialNumber(X509_REVOKED *x, ASN1_INTEGER *serial);
 ASN1_TIME *X509_REVOKED_get0_revocationDate(X509_REVOKED *x);
 int X509_REVOKED_set_revocationDate(X509_REVOKED *r, ASN1_TIME *tm);
+STACK_OF(X509_EXTENSION) *X509_REVOKED_get0_extensions(X509_REVOKED *r);
 
 X509_CRL *X509_CRL_diff(X509_CRL *base, X509_CRL *newer,
                         EVP_PKEY *skey, const EVP_MD *md, unsigned int flags);
