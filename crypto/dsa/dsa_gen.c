@@ -163,15 +163,18 @@ int dsa_builtin_paramgen(DSA *ret, size_t bits, size_t qbits,
 
     bits = (bits + 63) / 64 * 64;
 
-    if (seed_in != NULL) {
-        if (seed_len < (size_t)qsize)
-            return 0;
-        if (seed_len > (size_t)qsize) {
-            /* Only consume as much seed as is expected. */
-            seed_len = qsize;
-        }
+    /*
+     * NB: seed_len == 0 is special case: copy generated seed to seed_in if
+     * it is not NULL.
+     */
+    if (seed_len && (seed_len < (size_t)qsize))
+        seed_in = NULL;         /* seed buffer too small -- ignore */
+    if (seed_len > (size_t)qsize)
+        seed_len = qsize;       /* App. 2.2 of FIPS PUB 186 allows larger
+                                 * SEED, but our internal buffers are
+                                 * restricted to 160 bits */
+    if (seed_in != NULL)
         memcpy(seed, seed_in, seed_len);
-    }
 
     if ((ctx = BN_CTX_new()) == NULL)
         goto err;
@@ -194,18 +197,20 @@ int dsa_builtin_paramgen(DSA *ret, size_t bits, size_t qbits,
 
     for (;;) {
         for (;;) {              /* find q */
-            int use_random_seed = (seed_in == NULL);
+            int seed_is_random;
 
             /* step 1 */
             if (!BN_GENCB_call(cb, 0, m++))
                 goto err;
 
-            if (use_random_seed) {
-                if (RAND_bytes(seed, qsize) <= 0)
+            if (!seed_len) {
+                if (RAND_pseudo_bytes(seed, qsize) < 0)
                     goto err;
+                seed_is_random = 1;
             } else {
-                /* If we come back through, use random seed next time. */
-                seed_in = NULL;
+                seed_is_random = 0;
+                seed_len = 0;   /* use random seed if 'seed_in' turns out to
+                                 * be bad */
             }
             memcpy(buf, seed, qsize);
             memcpy(buf2, seed, qsize);
@@ -232,7 +237,7 @@ int dsa_builtin_paramgen(DSA *ret, size_t bits, size_t qbits,
 
             /* step 4 */
             r = BN_is_prime_fasttest_ex(q, DSS_prime_checks, ctx,
-                                        use_random_seed, cb);
+                                        seed_is_random, cb);
             if (r > 0)
                 break;
             if (r != 0)
