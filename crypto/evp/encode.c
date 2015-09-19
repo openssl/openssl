@@ -344,13 +344,13 @@ int EVP_DecodeUpdate(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl,
 tail:
     if (n > 0) {
         if ((n & 3) == 0) {
-        decoded_len = EVP_DecodeBlock(out, d, n);
-        n = 0;
-        if (decoded_len < 0 || eof > decoded_len) {
-            rv = -1;
-            goto end;
-        }
-        ret += (decoded_len - eof);
+            decoded_len = EVP_DecodeBlock(out, d, n);
+            n = 0;
+            if (decoded_len < 0 || eof > decoded_len) {
+                rv = -1;
+                goto end;
+            }
+            ret += (decoded_len - eof);
         } else if (seof) {
             /* EOF in the middle of a base64 block. */
             rv = -1;
