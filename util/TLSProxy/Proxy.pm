@@ -144,7 +144,8 @@ sub start
         open(STDOUT, ">", File::Spec->devnull())
             or die "Failed to redirect stdout";
         open(STDERR, ">&STDOUT");
-        my $execcmd = $self->execute." s_server -rev -engine ossltest -accept "
+        my $execcmd = $self->execute
+            ." s_server -no_comp -rev -engine ossltest -accept "
             .($self->server_port)
             ." -cert ".$self->cert." -naccept ".$self->serverconnects;
         if ($self->ciphers ne "") {
