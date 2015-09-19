@@ -5,6 +5,7 @@ use warnings;
 
 use File::Spec;
 use OpenSSL::Test qw/:DEFAULT top_file/;
+use OpenSSL::Test::Utils;
 
 setup("test_rsa");
 
@@ -16,7 +17,7 @@ ok(run(test(["rsa_test"])), "running rsatest");
 
  SKIP: {
      skip "Skipping rsa conversion test", 3
-	 if run(app(["openssl","no-rsa"], stdout => undef));
+	 if disabled("rsa");
 
      subtest 'rsa conversions -- private key' => sub {
 	 tconversion("rsa", top_file("test","testrsa.pem"));

@@ -7,8 +7,12 @@ use POSIX;
 use File::Spec;
 use File::Copy;
 use OpenSSL::Test qw/:DEFAULT with top_file cmdstr/;
+use OpenSSL::Test::Utils;
 
 setup("test_ssl");
+
+my ($no_rsa, $no_dsa, $no_dh, $no_ec, $no_srp, $no_psk) =
+    disabled qw/rsa dsa dh ec srp psk/;
 
 my $digest = "-sha1";
 my @reqcmd = ("openssl", "req");
@@ -94,7 +98,7 @@ sub testss {
     my @req_dsa = ("-newkey",
                    "dsa:".File::Spec->catfile("..", "apps", "dsa1024.pem"));;
     my @req_new;
-    if (run(app(["openssl", "no-rsa"], stdout => undef))) {
+    if ($no_rsa) {
 	@req_new = @req_dsa;
     } else {
 	@req_new = ("-new");
@@ -161,7 +165,7 @@ sub testss {
       skip 'failure', 7 unless
           subtest 'DSA certificate creation' => sub {
               plan skip_all => "skipping DSA certificate creation"
-                  if run(app(["openssl", "no-dsa"], stdout => undef));
+                  if $no_dsa;
 
               plan tests => 4;
 
@@ -200,7 +204,7 @@ sub testss {
       skip 'failure', 6 unless
           subtest 'ECDSA/ECDH certificate creation' => sub {
               plan skip_all => "skipping ECDSA/ECDH certificate creation"
-                  if run(app(["openssl", "no-ec"], stdout => undef));
+                  if $no_ec;
 
               plan tests => 5;
 
@@ -385,18 +389,18 @@ sub testssl {
         my @exkeys = ();
         my $ciphers = "-EXP:-PSK:-SRP:-kDH:-kECDHe";
 
-        if (run(app(["openssl", "no-dhparam"], stdout => undef))) {
+        if ($no_dh) {
             note "skipping DHE tests\n";
             $ciphers .= ":-kDHE";
         }
-        if (run(app(["openssl", "no-dsa"], stdout => undef))) {
+        if ($no_dsa) {
             note "skipping DSA tests\n";
             $ciphers .= ":-aDSA";
         } else {
             push @exkeys, "-s_cert", "certD.ss", "-s_key", "keyD.ss";
         }
 
-        if (run(app(["openssl", "no-ec"], stdout => undef))) {
+        if ($no_ec) {
             note "skipping EC tests\n";
             $ciphers .= ":!aECDSA:!kECDH";
         } else {
@@ -442,7 +446,7 @@ sub testssl {
 	{
 	  SKIP: {
 	      skip "skipping anonymous DH tests", 1
-		  if (run(app(["openssl", "no-dhparam"], stdout => undef)));
+		  if ($no_dh);
 
 	      ok(run(test([@ssltest, "-v", "-bio_pair", "-tls1", "-cipher", "ADH", "-dhe1024dsa", "-num", "10", "-f", "-time", @extra])),
 		 'test tlsv1 with 1024bit anonymous DH, multiple handshakes');
@@ -452,13 +456,13 @@ sub testssl {
 	{
 	  SKIP: {
 	      skip "skipping RSA tests", 2
-		  if (run(app(["openssl", "no-rsa"], stdout => undef)));
+		  if $no_rsa;
 
 	      ok(run(test(["ssltest", "-v", "-bio_pair", "-tls1", "-s_cert", top_file("apps","server2.pem"), "-no_dhe", "-no_ecdhe", "-num", "10", "-f", "-time", @extra])),
 		 'test tlsv1 with 1024bit RSA, no (EC)DHE, multiple handshakes');
 
 	      skip "skipping RSA+DHE tests", 1
-		  if (run(app(["openssl", "no-dhparam"], stdout => undef)));
+		  if $no_dh;
 
 	      ok(run(test(["ssltest", "-v", "-bio_pair", "-tls1", "-s_cert", top_file("apps","server2.pem"), "-dhe1024dsa", "-num", "10", "-f", "-time", @extra])),
 		 'test tlsv1 with 1024bit RSA, 1024bit DHE, multiple handshakes');
@@ -524,7 +528,7 @@ sub testssl {
 	{
 	  SKIP: {
 	      skip "skipping SRP tests", 4
-		  if run(app(["openssl", "no-srp"], stdout => undef));
+		  if $no_srp;
 
 	      ok(run(test([@ssltest, "-tls1", "-cipher", "SRP", "-srpuser", "test", "-srppass", "abc123"])),
 		 'test tls1 with SRP');

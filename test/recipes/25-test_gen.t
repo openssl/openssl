@@ -5,6 +5,7 @@ use warnings;
 
 use File::Spec;
 use OpenSSL::Test qw/:DEFAULT top_file/;
+use OpenSSL::Test::Utils;
 
 setup("test_gen");
 
@@ -21,7 +22,7 @@ close RND;
 
 subtest "generating certificate requests" => sub {
     my @req_new;
-    if (run(app(["openssl", "no-rsa"], stdout => undef))) {
+    if (disabled("rsa")) {
 	@req_new = ("-newkey", "dsa:".top_file("apps", "dsa512.pem"));
     } else {
 	@req_new = ("-new");

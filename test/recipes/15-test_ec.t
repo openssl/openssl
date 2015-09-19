@@ -5,6 +5,7 @@ use warnings;
 
 use File::Spec;
 use OpenSSL::Test qw/:DEFAULT top_file/;
+use OpenSSL::Test::Utils;
 
 setup("test_ec");
 
@@ -16,7 +17,7 @@ ok(run(test(["ectest"])), "running ectest");
 
  SKIP: {
      skip "Skipping ec conversion test", 3
-	 if run(app(["openssl","no-ec"], stdout => undef));
+	 if disabled("ec");
 
      subtest 'ec conversions -- private key' => sub {
 	 tconversion("ec", top_file("test","testec-p256.pem"));
