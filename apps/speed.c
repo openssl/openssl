@@ -521,7 +521,7 @@ static OPT_PAIR rsa_choices[] = {
 #define R_EC_B283    13
 #define R_EC_B409    14
 #define R_EC_B571    15
-#ifndef OPENSSL_NO_ECA
+#ifndef OPENSSL_NO_EC
 static OPT_PAIR ecdsa_choices[] = {
     {"ecdsap160", R_EC_P160},
     {"ecdsap192", R_EC_P192},
