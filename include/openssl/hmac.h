@@ -104,8 +104,6 @@ __owur int HMAC_CTX_copy(HMAC_CTX *dctx, HMAC_CTX *sctx);
 
 void HMAC_CTX_set_flags(HMAC_CTX *ctx, unsigned long flags);
 
-extern const EVP_PKEY_METHOD hmac_pkey_meth;
-
 #ifdef  __cplusplus
 }
 #endif

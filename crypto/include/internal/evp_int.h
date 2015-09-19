@@ -121,3 +121,11 @@ struct evp_pkey_method_st {
 } /* EVP_PKEY_METHOD */ ;
 
 void evp_pkey_set_cb_translate(BN_GENCB *cb, EVP_PKEY_CTX *ctx);
+
+extern const EVP_PKEY_METHOD cmac_pkey_meth;
+extern const EVP_PKEY_METHOD dh_pkey_meth;
+extern const EVP_PKEY_METHOD dhx_pkey_meth;
+extern const EVP_PKEY_METHOD dsa_pkey_meth;
+extern const EVP_PKEY_METHOD ec_pkey_meth;
+extern const EVP_PKEY_METHOD hmac_pkey_meth;
+extern const EVP_PKEY_METHOD rsa_pkey_meth;

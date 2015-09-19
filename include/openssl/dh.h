@@ -342,9 +342,6 @@ int DH_KDF_X9_42(unsigned char *out, size_t outlen,
 # define EVP_PKEY_DH_KDF_X9_42                           2
 # endif
 
-extern const EVP_PKEY_METHOD dh_pkey_meth;
-extern const EVP_PKEY_METHOD dhx_pkey_meth;
-
 #define declare_dh_bn(x) \
         const extern BIGNUM _bignum_dh##x##_p;\
         const extern BIGNUM _bignum_dh##x##_g;\
