@@ -7,14 +7,13 @@ use POSIX;
 use File::Spec::Functions qw/catfile/;
 use File::Compare qw/compare_text/;
 use OpenSSL::Test qw/:DEFAULT top_dir top_file/;
+use OpenSSL::Test::Utils;
 
 setup("test_cms");
 
 my $smdir    = top_dir("test", "smime-certs");
 my $smcont   = top_file("test", "smcont.txt");
-my $no_ec    = run(app(["openssl", "no-ec"], stdout => undef));
-my $no_ec2m  = run(app(["openssl", "no-ec2m"], stdout => undef));
-my $no_ecdh  = run(app(["openssl", "no-ecdh"], stdout => undef));
+my ($no_ec, $no_ec2m, $no_zlib) = disabled qw/ec ec2m zlib/;
 
 plan tests => 4;
 
@@ -442,8 +441,7 @@ subtest "CMS <=> CMS consistency tests, modified key parameters\n" => sub {
   SKIP: {
       skip("Zlib not supported: compression tests skipped",
 	   scalar @smime_cms_comp_tests)
-	  unless grep /ZLIB/, run(app(["openssl", "version", "-f"]),
-				  capture => 1);
+	  if $no_zlib;
 
       foreach (@smime_cms_comp_tests) {
 	SKIP: {
@@ -469,7 +467,7 @@ sub check_availability {
     return "$tnam: skipped, EC disabled\n"
 	if ($no_ec && $tnam =~ /ECDH/);
     return "$tnam: skipped, ECDH disabled\n"
-	if ($no_ecdh && $tnam =~ /ECDH/);
+	if ($no_ec && $tnam =~ /ECDH/);
     return "$tnam: skipped, EC2M disabled\n"
 	if ($no_ec2m && $tnam =~ /K-283/);
     return "";

@@ -5,6 +5,7 @@ use warnings;
 
 use File::Spec;
 use OpenSSL::Test qw/:DEFAULT top_file/;
+use OpenSSL::Test::Utils;
 
 setup("test_dsa");
 
@@ -17,7 +18,7 @@ ok(run(test(["dsatest", "-app2_1"])), "running dsatest -app2_1");
 
  SKIP: {
      skip "Skipping dsa conversion test", 3
-	 if run(app(["openssl","no-dsa"], stdout => undef));
+	 if disabled("dsa");
 
      subtest 'dsa conversions -- private key' => sub {
 	 tconversion("dsa", top_file("test","testdsa.pem"));
