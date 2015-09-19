@@ -722,15 +722,12 @@ static int SortFnByName(const void *_f1, const void *_f2)
 
 static void list_disabled(void)
 {
-BIO_puts(bio_out, "Disabled algorithms:\n");
+    BIO_puts(bio_out, "Disabled algorithms:\n");
 #ifdef OPENSSL_NO_DH
     BIO_puts(bio_out, "DH\n");
 #endif
 #ifdef OPENSSL_NO_DSA
     BIO_puts(bio_out, "DSA\n");
-#endif
-#ifdef OPENSSL_NO_RSA
-    BIO_puts(bio_out, "RSA\n");
 #endif
 #ifdef OPENSSL_NO_EC
     BIO_puts(bio_out, "EC\n");
@@ -738,14 +735,17 @@ BIO_puts(bio_out, "Disabled algorithms:\n");
 #ifdef OPENSSL_NO_EC2M
     BIO_puts(bio_out, "EC2M\n");
 #endif
-#ifndef ZLIB
-    BIO_puts(bio_out, "ZLIB\n");
-#endif
 #ifdef OPENSSL_NO_PSK
     BIO_puts(bio_out, "PSK\n");
 #endif
+#ifdef OPENSSL_NO_RSA
+    BIO_puts(bio_out, "RSA\n");
+#endif
 #ifdef OPENSSL_NO_SRP
     BIO_puts(bio_out, "SRP\n");
+#endif
+#ifndef ZLIB
+    BIO_puts(bio_out, "ZLIB\n");
 #endif
 }
 
