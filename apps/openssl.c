@@ -735,6 +735,9 @@ static void list_disabled(void)
 #ifdef OPENSSL_NO_CAST
     BIO_puts(bio_out, "CAST\n");
 #endif
+#ifdef OPENSSL_NO_CMAC
+    BIO_puts(bio_out, "CMAC\n");
+#endif
 #ifdef OPENSSL_NO_CMS
     BIO_puts(bio_out, "CMS\n");
 #endif
@@ -767,6 +770,9 @@ static void list_disabled(void)
 #endif
 #ifdef OPENSSL_NO_GOST
     BIO_puts(bio_out, "GOST\n");
+#endif
+#ifdef OPENSSL_NO_HMAC
+    BIO_puts(bio_out, "HMAC\n");
 #endif
 #ifdef OPENSSL_NO_IDEA
     BIO_puts(bio_out, "IDEA\n");
