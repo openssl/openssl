@@ -723,6 +723,24 @@ static int SortFnByName(const void *_f1, const void *_f2)
 static void list_disabled(void)
 {
     BIO_puts(bio_out, "Disabled algorithms:\n");
+#ifdef OPENSSL_NO_AES
+    BIO_puts(bio_out, "AES\n");
+#endif
+#ifdef OPENSSL_NO_BF
+    BIO_puts(bio_out, "BF\n");
+#endif
+#ifdef OPENSSL_NO_CAMELLIA
+    BIO_puts(bio_out, "CAMELLIA\n");
+#endif
+#ifdef OPENSSL_NO_CAST
+    BIO_puts(bio_out, "CAST\n");
+#endif
+#ifdef OPENSSL_NO_CMS
+    BIO_puts(bio_out, "CMS\n");
+#endif
+#ifdef OPENSSL_NO_DES
+    BIO_puts(bio_out, "DES\n");
+#endif
 #ifdef OPENSSL_NO_DH
     BIO_puts(bio_out, "DH\n");
 #endif
@@ -735,14 +753,59 @@ static void list_disabled(void)
 #ifdef OPENSSL_NO_EC2M
     BIO_puts(bio_out, "EC2M\n");
 #endif
+#ifdef OPENSSL_NO_ENGINE
+    BIO_puts(bio_out, "ENGINE\n");
+#endif
+#ifdef OPENSSL_NO_IDEA
+    BIO_puts(bio_out, "IDEA\n");
+#endif
+#ifdef OPENSSL_NO_MD2
+    BIO_puts(bio_out, "MD2\n");
+#endif
+#ifdef OPENSSL_NO_MD4
+    BIO_puts(bio_out, "MD4\n");
+#endif
+#ifdef OPENSSL_NO_MD5
+    BIO_puts(bio_out, "MD5\n");
+#endif
+#ifdef OPENSSL_NO_MDC2
+    BIO_puts(bio_out, "MDC2\n");
+#endif
+#ifdef OPENSSL_NO_MD
+    BIO_puts(bio_out, "MD\n");
+#endif_GHOST94
+#ifdef OPENSSL_NO_OCSP
+    BIO_puts(bio_out, "OCSP\n");
+#endif
 #ifdef OPENSSL_NO_PSK
     BIO_puts(bio_out, "PSK\n");
+#endif
+#ifdef OPENSSL_NO_RC2
+    BIO_puts(bio_out, "RC2\n");
+#endif
+#ifdef OPENSSL_NO_RC4
+    BIO_puts(bio_out, "RC4\n");
+#endif
+#ifdef OPENSSL_NO_RC5
+    BIO_puts(bio_out, "RC5\n");
+#endif
+#ifdef OPENSSL_NO_RMD160
+    BIO_puts(bio_out, "RMD160\n");
 #endif
 #ifdef OPENSSL_NO_RSA
     BIO_puts(bio_out, "RSA\n");
 #endif
+#ifdef OPENSSL_NO_SEED
+    BIO_puts(bio_out, "SEED\n");
+#endif
+#ifdef OPENSSL_NO_SOCK
+    BIO_puts(bio_out, "SOCK\n");
+#endif
 #ifdef OPENSSL_NO_SRP
     BIO_puts(bio_out, "SRP\n");
+#endif
+#ifdef OPENSSL_NO_WHIRLPOOL
+    BIO_puts(bio_out, "WHIRLPOOL\n");
 #endif
 #ifndef ZLIB
     BIO_puts(bio_out, "ZLIB\n");
