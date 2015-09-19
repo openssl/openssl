@@ -2,4 +2,4 @@
 
 use OpenSSL::Test::Simple;
 
-simple_test("test_wp", "wptest", "wp");
+simple_test("test_wp", "wp_test", "whirlpool");
