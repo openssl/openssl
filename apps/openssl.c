@@ -792,9 +792,6 @@ static void list_disabled(void)
 #ifdef OPENSSL_NO_MDC2
     BIO_puts(bio_out, "MDC2\n");
 #endif
-#ifdef OPENSSL_NO_MD_GHOST94
-    BIO_puts(bio_out, "MD_GHOST94\n");
-#endif
 #ifdef OPENSSL_NO_OCB
     BIO_puts(bio_out, "OCB\n");
 #endif
