@@ -61,7 +61,6 @@
 #include <stdlib.h>
 #include "internal/cryptlib.h"
 #include <openssl/cmac.h>
-#include <openssl/dh.h>
 #include <openssl/dsa.h>
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
