@@ -28,6 +28,7 @@ You could call them hacks if you wish.
 =cut
 
 use OpenSSL::Test;
+use OpenSSL::Test::Utils;
 
 =over 4
 
@@ -58,7 +59,7 @@ sub simple_test {
     plan tests => 1;
   SKIP: {
       skip "$algo is not supported by this OpenSSL build, skipping this test...", 1
-	  if $algo && run(app(["openssl", "no-$algo"]));
+	  if $algo && disabled($algo);
 
       ok(run(test([$prgr])), "running $prgr");
     }
