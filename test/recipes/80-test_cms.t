@@ -445,7 +445,7 @@ subtest "CMS <=> CMS consistency tests, modified key parameters\n" => sub {
 	  unless grep /ZLIB/, run(app(["openssl", "version", "-f"]),
 				  capture => 1);
 
-      foreach (@smime_cms_param_tests) {
+      foreach (@smime_cms_comp_tests) {
 	SKIP: {
 	    my $skip_reason = check_availability($$_[0]);
 	    skip $skip_reason, 1 if $skip_reason;
