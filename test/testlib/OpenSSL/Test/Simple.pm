@@ -72,7 +72,7 @@ L<OpenSSL::Test>
 =head1 AUTHORS
 
 Richard Levitte E<lt>levitte@openssl.orgE<gt> with inspiration
-from Rich Salz E<lt>rsalz@openssl.org<gt>.
+from Rich Salz E<lt>rsalz@openssl.orgE<gt>.
 
 =cut
 
