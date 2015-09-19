@@ -56,11 +56,11 @@
  *
  */
 
-#include <openssl/dh.h>
 #include "bn_lcl.h"
 #include "e_os.h"
 
 #ifndef OPENSSL_NO_DH
+#include <openssl/dh.h>
 /* DH parameters from RFC5114 */
 
 # if BN_BITS2 == 64

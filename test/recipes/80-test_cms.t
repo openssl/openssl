@@ -13,7 +13,7 @@ setup("test_cms");
 
 my $smdir    = top_dir("test", "smime-certs");
 my $smcont   = top_file("test", "smcont.txt");
-my ($no_ec, $no_ec2m, $no_zlib) = disabled qw/ec ec2m zlib/;
+my ($no_dh, $no_ec, $no_ec2m, $no_zlib) = disabled qw/dh ec ec2m zlib/;
 
 plan tests => 4;
 
@@ -470,5 +470,7 @@ sub check_availability {
 	if ($no_ec && $tnam =~ /ECDH/);
     return "$tnam: skipped, EC2M disabled\n"
 	if ($no_ec2m && $tnam =~ /K-283/);
+    return "$tnam: skipped, DH disabled\n"
+	if ($no_dh && $tnam =~ /X9\.42/);
     return "";
 }

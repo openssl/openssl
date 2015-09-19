@@ -973,7 +973,10 @@ int s_server_main(int argc, char *argv[])
     X509 *s_cert = NULL, *s_dcert = NULL;
     X509_VERIFY_PARAM *vpm = NULL;
     char *CApath = NULL, *CAfile = NULL, *chCApath = NULL, *chCAfile = NULL;
-    char *dhfile = NULL, *dpassarg = NULL, *dpass = NULL, *inrand = NULL;
+#ifndef OPENSSL_NO_DH
+    char *dhfile = NULL;
+#endif
+    char *dpassarg = NULL, *dpass = NULL, *inrand = NULL;
     char *passarg = NULL, *pass = NULL, *vfyCApath = NULL, *vfyCAfile = NULL;
     char *crl_file = NULL, *prog;
 #ifndef OPENSSL_NO_PSK
@@ -986,7 +989,10 @@ int s_server_main(int argc, char *argv[])
     int (*server_cb) (char *hostname, int s, int stype,
                       unsigned char *context);
     int vpmtouched = 0, build_chain = 0, no_cache = 0, ext_cache = 0;
-    int no_tmp_rsa = 0, no_dhe = 0, no_ecdhe = 0, nocert = 0, ret = 1;
+#ifndef OPENSSL_NO_DH
+    int no_dhe = 0;
+#endif
+    int no_tmp_rsa = 0, no_ecdhe = 0, nocert = 0, ret = 1;
     int s_cert_format = FORMAT_PEM, s_key_format = FORMAT_PEM;
     int s_dcert_format = FORMAT_PEM, s_dkey_format = FORMAT_PEM;
     int rev = 0, naccept = -1, sdebug = 0, socket_type = SOCK_STREAM;
@@ -1119,7 +1125,9 @@ int s_server_main(int argc, char *argv[])
             s_chain_file = opt_arg();
             break;
         case OPT_DHPARAM:
+#ifndef OPENSSL_NO_DH
             dhfile = opt_arg();
+#endif
             break;
         case OPT_DCERTFORM:
             if (!opt_format(opt_arg(), OPT_FMT_PEMDER, &s_dcert_format))
@@ -1272,7 +1280,9 @@ int s_server_main(int argc, char *argv[])
             no_tmp_rsa = 1;
             break;
         case OPT_NO_DHE:
+#ifndef OPENSSL_NO_DH
             no_dhe = 1;
+#endif
             break;
         case OPT_NO_ECDHE:
             no_ecdhe = 1;

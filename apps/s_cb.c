@@ -1381,13 +1381,14 @@ static int security_callback_debug(SSL *s, SSL_CTX *ctx,
         }
         break;
 #endif
-
+#ifndef OPENSSL_NO_DH
     case SSL_SECOP_OTHER_DH:
         {
             DH *dh = other;
             BIO_printf(sdb->out, "%d", BN_num_bits(dh->p));
             break;
         }
+#endif
     case SSL_SECOP_OTHER_CERT:
         {
             if (cert_md) {
