@@ -744,13 +744,16 @@ static void list_disabled(void)
 #ifdef OPENSSL_NO_DES
     BIO_puts(bio_out, "DES\n");
 #endif
+#ifdef OPENSSL_NO_DGRAM
+    BIO_puts(bio_out, "DGRAM\n");
+#endif
 #ifdef OPENSSL_NO_DH
     BIO_puts(bio_out, "DH\n");
 #endif
 #ifdef OPENSSL_NO_DSA
     BIO_puts(bio_out, "DSA\n");
 #endif
-#ifdef OPENSSL_NO_DTLS1
+#if defined(OPENSSL_NO_DTLS1) || defined(OPENSSL_NO_DTLS)
     BIO_puts(bio_out, "DTLS1\n");
 #endif
 #ifdef OPENSSL_NO_EC
@@ -761,6 +764,9 @@ static void list_disabled(void)
 #endif
 #ifdef OPENSSL_NO_ENGINE
     BIO_puts(bio_out, "ENGINE\n");
+#endif
+#ifdef OPENSSL_NO_GOST
+    BIO_puts(bio_out, "GOST\n");
 #endif
 #ifdef OPENSSL_NO_IDEA
     BIO_puts(bio_out, "IDEA\n");
@@ -782,6 +788,9 @@ static void list_disabled(void)
 #endif
 #ifdef OPENSSL_NO_MD_GHOST94
     BIO_puts(bio_out, "MD_GHOST94\n");
+#endif
+#ifdef OPENSSL_NO_OCB
+    BIO_puts(bio_out, "OCB\n");
 #endif
 #ifdef OPENSSL_NO_OCSP
     BIO_puts(bio_out, "OCSP\n");
@@ -807,8 +816,17 @@ static void list_disabled(void)
 #ifdef OPENSSL_NO_SCRYPT
     BIO_puts(bio_out, "SCRYPT\n");
 #endif
+#ifdef OPENSSL_NO_SCT
+    BIO_puts(bio_out, "SCT\n");
+#endif
+#ifdef OPENSSL_NO_SCTP
+    BIO_puts(bio_out, "SCTP\n");
+#endif
 #ifdef OPENSSL_NO_SEED
     BIO_puts(bio_out, "SEED\n");
+#endif
+#ifdef OPENSSL_NO_SHA
+    BIO_puts(bio_out, "SHA\n");
 #endif
 #ifdef OPENSSL_NO_SOCK
     BIO_puts(bio_out, "SOCK\n");
