@@ -60,12 +60,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "internal/cryptlib.h"
-#include <openssl/cmac.h>
-#include <openssl/dsa.h>
-#include <openssl/evp.h>
-#include <openssl/hmac.h>
-#include <openssl/objects.h>
-#include <openssl/rsa.h>
 #ifndef OPENSSL_NO_ENGINE
 # include <openssl/engine.h>
 #endif
