@@ -2023,6 +2023,9 @@ int s_client_main(int argc, char **argv)
     EVP_PKEY_free(key);
     sk_X509_pop_free(chain, X509_free);
     OPENSSL_free(pass);
+#ifndef OPENSSL_NO_SRP
+    OPENSSL_free(srp_arg.srppassin);
+#endif
     X509_VERIFY_PARAM_free(vpm);
     ssl_excert_free(exc);
     sk_OPENSSL_STRING_free(ssl_args);
