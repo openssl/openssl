@@ -56,13 +56,12 @@ sub simple_test {
 
     setup($name);
 
-    plan tests => 1;
-  SKIP: {
-      skip "$algo is not supported by this OpenSSL build, skipping this test...", 1
-	  if $algo && disabled($algo);
+    plan skip_all => "$algo is not supported by this OpenSSL build"
+        if $algo && disabled($algo);
 
-      ok(run(test([$prgr])), "running $prgr");
-    }
+    plan tests => 1;
+
+    ok(run(test([$prgr])), "running $prgr");
 }
 
 =head1 SEE ALSO
