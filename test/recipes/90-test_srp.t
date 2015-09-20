@@ -2,4 +2,4 @@
 
 use OpenSSL::Test::Simple;
 
-simple_test("test_srp", "srptest");
+simple_test("test_srp", "srptest", "srp");
