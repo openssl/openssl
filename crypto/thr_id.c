@@ -146,7 +146,7 @@ void CRYPTO_THREADID_set_pointer(CRYPTO_THREADID *id, void *ptr)
         /*
          * 'ptr' can be embedded in 'val' without loss of uniqueness
          */
-        id->val = (unsigned long)id->ptr;
+        id->val = *(unsigned long *)id->ptr;
         return;
     }
     /*

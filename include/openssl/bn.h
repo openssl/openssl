@@ -131,6 +131,7 @@
 # endif
 # include <openssl/ossl_typ.h>
 # include <openssl/crypto.h>
+# include <inttypes.h>
 
 #ifdef  __cplusplus
 extern "C" {
@@ -220,11 +221,11 @@ extern "C" {
 #  define BN_MASK2h1      (0xffffffff80000000LL)
 #  define BN_TBIT         (0x8000000000000000LL)
 #  define BN_DEC_CONV     (10000000000000000000ULL)
-#  define BN_DEC_FMT1     "%llu"
-#  define BN_DEC_FMT2     "%019llu"
+#  define BN_DEC_FMT1     "%" PRIuMAX
+#  define BN_DEC_FMT2     "%019" PRIuMAX
 #  define BN_DEC_NUM      19
-#  define BN_HEX_FMT1     "%llX"
-#  define BN_HEX_FMT2     "%016llX"
+#  define BN_HEX_FMT1     "%" PRIXMAX
+#  define BN_HEX_FMT2     "%016" PRIXMAX
 # endif
 
 # ifdef THIRTY_TWO_BIT

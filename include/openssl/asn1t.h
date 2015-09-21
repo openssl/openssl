@@ -98,6 +98,7 @@ extern "C" {
 /* Macros for start and end of ASN1_ITEM definition */
 
 #  define ASN1_ITEM_start(itname) \
+        const ASN1_ITEM * itname##_it(void); \
         const ASN1_ITEM * itname##_it(void) \
         { \
                 static const ASN1_ITEM local_it = {
