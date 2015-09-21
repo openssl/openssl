@@ -169,7 +169,11 @@ $code.=<<___;
 $func:
 ___
 $code.=<<___	if ($SZ==4);
+#ifdef	__ILP32__
+	ldrsw	x16,.LOPENSSL_armcap_P
+#else
 	ldr	x16,.LOPENSSL_armcap_P
+#endif
 	adr	x17,.LOPENSSL_armcap_P
 	add	x16,x16,x17
 	ldr	w16,[x16]
@@ -311,7 +315,11 @@ $code.=<<___;
 .size	.LK$BITS,.-.LK$BITS
 .align	3
 .LOPENSSL_armcap_P:
+#ifdef	__ILP32__
+	.long	OPENSSL_armcap_P-.
+#else
 	.quad	OPENSSL_armcap_P-.
+#endif
 .asciz	"SHA$BITS block transform for ARMv8, CRYPTOGAMS by <appro\@openssl.org>"
 .align	2
 ___
