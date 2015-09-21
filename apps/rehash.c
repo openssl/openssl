@@ -199,7 +199,7 @@ static int handle_symlink(const char *filename, const char *fullpath)
     unsigned int hash = 0;
     int i, type, id;
     unsigned char ch;
-    char linktarget[NAME_MAX], *endptr;
+    char linktarget[PATH_MAX], *endptr;
     ssize_t n;
 
     for (i = 0; i < 8; i++) {
@@ -319,8 +319,7 @@ static int do_dir(const char *dirname, enum Hash h)
     }
     buflen = strlen(dirname);
     pathsep = (buflen && dirname[buflen - 1] == '/') ? "" : "/";
-    buflen += NAME_MAX + 2;
-    buf = app_malloc(buflen, "filename buffer");
+    buf = app_malloc(PATH_MAX, "filename buffer");
 
     if (verbose)
         BIO_printf(bio_out, "Doing %s\n", dirname);
