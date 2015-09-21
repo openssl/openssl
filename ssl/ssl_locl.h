@@ -343,6 +343,8 @@
 # define SSL_aGOST01                     0x00000200L
 /* SRP auth */
 # define SSL_aSRP                0x00000400L
+/* GOST R 34.10-2012 signature auth */
+# define SSL_aGOST12             0x00000800L
 
 /* Bits for algorithm_enc (symmetric encryption) */
 # define SSL_DES                 0x00000001L
@@ -363,6 +365,7 @@
 # define SSL_AES256CCM           0x00008000L
 # define SSL_AES128CCM8          0x00010000L
 # define SSL_AES256CCM8          0x00020000L
+# define SSL_eGOST2814789CNT12   0x00040000L
 
 # define SSL_AES                 (SSL_AES128|SSL_AES256|SSL_AES128GCM|SSL_AES256GCM|SSL_AES128CCM|SSL_AES256CCM|SSL_AES128CCM8|SSL_AES256CCM8)
 # define SSL_CAMELLIA            (SSL_CAMELLIA128|SSL_CAMELLIA256)
@@ -377,6 +380,9 @@
 # define SSL_SHA384              0x00000020L
 /* Not a real MAC, just an indication it is part of cipher */
 # define SSL_AEAD                0x00000040L
+# define SSL_GOST12_256          0x00000080L
+# define SSL_GOST89MAC12         0x00000100L
+# define SSL_GOST12_512          0x00000200L
 
 /* Bits for algorithm_ssl (protocol version) */
 # define SSL_SSLV3               0x00000002L
@@ -390,13 +396,16 @@
 # define SSL_HANDSHAKE_MAC_GOST94 0x40
 # define SSL_HANDSHAKE_MAC_SHA256 0x80
 # define SSL_HANDSHAKE_MAC_SHA384 0x100
+# define SSL_HANDSHAKE_MAC_GOST12_256 0x200
+# define SSL_HANDSHAKE_MAC_GOST12_512 0x400
 # define SSL_HANDSHAKE_MAC_DEFAULT (SSL_HANDSHAKE_MAC_MD5 | SSL_HANDSHAKE_MAC_SHA)
+# define SSL_HANDSHAKE_MAC_GOST    (SSL_HANDSHAKE_MAC_GOST94 | SSL_HANDSHAKE_MAC_GOST12_256 | SSL_HANDSHAKE_MAC_GOST12_512)
 
 /*
- * When adding new digest in the ssl_ciph.c and increment SSM_MD_NUM_IDX make
+ * When adding new digest in the ssl_ciph.c and increment SSL_MD_NUM_IDX make
  * sure to update this constant too
  */
-# define SSL_MAX_DIGEST 6
+# define SSL_MAX_DIGEST 9
 
 # define TLS1_PRF_DGST_SHIFT 10
 # define TLS1_PRF_MD5 (SSL_HANDSHAKE_MAC_MD5 << TLS1_PRF_DGST_SHIFT)
@@ -404,6 +413,8 @@
 # define TLS1_PRF_SHA256 (SSL_HANDSHAKE_MAC_SHA256 << TLS1_PRF_DGST_SHIFT)
 # define TLS1_PRF_SHA384 (SSL_HANDSHAKE_MAC_SHA384 << TLS1_PRF_DGST_SHIFT)
 # define TLS1_PRF_GOST94 (SSL_HANDSHAKE_MAC_GOST94 << TLS1_PRF_DGST_SHIFT)
+# define TLS1_PRF_GOST12_256 (SSL_HANDSHAKE_MAC_GOST12_256 << TLS1_PRF_DGST_SHIFT)
+# define TLS1_PRF_GOST12_512 (SSL_HANDSHAKE_MAC_GOST12_512 << TLS1_PRF_DGST_SHIFT)
 # define TLS1_PRF (TLS1_PRF_MD5 | TLS1_PRF_SHA1)
 
 /*
@@ -511,7 +522,14 @@
 # define SSL_PKEY_DH_DSA         4
 # define SSL_PKEY_ECC            5
 # define SSL_PKEY_GOST01         7
-# define SSL_PKEY_NUM            8
+# define SSL_PKEY_GOST12_256     8
+# define SSL_PKEY_GOST12_512     9
+# define SSL_PKEY_NUM            10
+/*
+ * Pseudo-constant. GOST cipher suites can use different certs for 1
+ * SSL_CIPHER. So let's see which one we have in fact.
+ */
+# define SSL_PKEY_GOST_EC SSL_PKEY_NUM+1
 
 /*-
  * SSL_kRSA <- RSA_ENC | (RSA_TMP & RSA_SIGN) |
@@ -1234,7 +1252,7 @@ typedef struct ssl3_state_st {
     int num_renegotiations;
     int in_read_app_data;
     struct {
-        /* actually only needs to be 16+20 */
+        /* actually needs to be 32+32+64 for GOST */
         unsigned char cert_verify_md[EVP_MAX_MD_SIZE * 2];
         /* actually only need to be 16+20 for SSLv3 and 12 for TLS */
         unsigned char finish_md[EVP_MAX_MD_SIZE * 2];
@@ -1869,6 +1887,7 @@ __owur int ssl_cipher_get_evp(const SSL_SESSION *s, const EVP_CIPHER **enc,
                        const EVP_MD **md, int *mac_pkey_type,
                        int *mac_secret_size, SSL_COMP **comp, int use_etm);
 __owur int ssl_get_handshake_digest(int i, long *mask, const EVP_MD **md);
+__owur int ssl_get_certverify_digest(int i, long *mask, const EVP_MD **md);
 __owur int ssl_cipher_get_cert_index(const SSL_CIPHER *c);
 __owur const SSL_CIPHER *ssl_get_cipher_by_char(SSL *ssl, const unsigned char *ptr);
 __owur int ssl_cert_set0_chain(SSL *s, SSL_CTX *ctx, STACK_OF(X509) *chain);

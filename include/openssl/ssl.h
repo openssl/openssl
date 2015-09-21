@@ -218,6 +218,7 @@ extern "C" {
 # define SSL_TXT_aPSK            "aPSK"
 # define SSL_TXT_aGOST94 "aGOST94"
 # define SSL_TXT_aGOST01 "aGOST01"
+# define SSL_TXT_aGOST12 "aGOST12"
 # define SSL_TXT_aGOST  "aGOST"
 # define SSL_TXT_aSRP            "aSRP"
 
@@ -250,12 +251,15 @@ extern "C" {
 # define SSL_TXT_CAMELLIA128     "CAMELLIA128"
 # define SSL_TXT_CAMELLIA256     "CAMELLIA256"
 # define SSL_TXT_CAMELLIA        "CAMELLIA"
+# define SSL_TXT_GOST            "GOST89"
 
 # define SSL_TXT_MD5             "MD5"
 # define SSL_TXT_SHA1            "SHA1"
 # define SSL_TXT_SHA             "SHA"/* same as "SHA1" */
 # define SSL_TXT_GOST94          "GOST94"
-# define SSL_TXT_GOST89MAC               "GOST89MAC"
+# define SSL_TXT_GOST89MAC       "GOST89MAC"
+# define SSL_TXT_GOST12          "GOST12"
+# define SSL_TXT_GOST89MAC12     "GOST89MAC12"
 # define SSL_TXT_SHA256          "SHA256"
 # define SSL_TXT_SHA384          "SHA384"
 

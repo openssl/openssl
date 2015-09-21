@@ -954,6 +954,9 @@ static const unsigned char tls12_sigalgs[] = {
         tlsext_sigalg(TLSEXT_hash_sha256)
         tlsext_sigalg(TLSEXT_hash_sha224)
         tlsext_sigalg(TLSEXT_hash_sha1)
+    TLSEXT_hash_gostr3411, TLSEXT_signature_gostr34102001,
+    TLSEXT_hash_gostr34112012_256, TLSEXT_signature_gostr34102012_256,
+    TLSEXT_hash_gostr34112012_512, TLSEXT_signature_gostr34102012_512
 };
 
 #ifndef OPENSSL_NO_EC
@@ -2687,6 +2690,11 @@ static void ssl_set_default_md(SSL *s)
 #ifndef OPENSSL_NO_EC
     pmd[SSL_PKEY_ECC] = EVP_sha1();
 #endif
+#ifndef OPENSSL_NO_GOST
+    pmd[SSL_PKEY_GOST01] = EVP_get_digestbynid(NID_id_GostR3411_94);
+    pmd[SSL_PKEY_GOST12_256] = EVP_get_digestbynid(NID_id_GostR3411_2012_256);
+    pmd[SSL_PKEY_GOST12_512] = EVP_get_digestbynid(NID_id_GostR3411_2012_512);
+#endif
 }
 
 int tls1_set_server_sigalgs(SSL *s)
@@ -3171,13 +3179,19 @@ static const tls12_lookup tls12_md[] = {
     {NID_sha224, TLSEXT_hash_sha224},
     {NID_sha256, TLSEXT_hash_sha256},
     {NID_sha384, TLSEXT_hash_sha384},
-    {NID_sha512, TLSEXT_hash_sha512}
+    {NID_sha512, TLSEXT_hash_sha512},
+    {NID_id_GostR3411_94, TLSEXT_hash_gostr3411},
+    {NID_id_GostR3411_2012_256, TLSEXT_hash_gostr34112012_256},
+    {NID_id_GostR3411_2012_512, TLSEXT_hash_gostr34112012_512},
 };
 
 static const tls12_lookup tls12_sig[] = {
     {EVP_PKEY_RSA, TLSEXT_signature_rsa},
     {EVP_PKEY_DSA, TLSEXT_signature_dsa},
-    {EVP_PKEY_EC, TLSEXT_signature_ecdsa}
+    {EVP_PKEY_EC, TLSEXT_signature_ecdsa},
+    {NID_id_GostR3410_2001, TLSEXT_signature_gostr34102001},
+    {NID_id_GostR3410_2012_256, TLSEXT_signature_gostr34102012_256},
+    {NID_id_GostR3410_2012_512, TLSEXT_signature_gostr34102012_512}
 };
 
 static int tls12_find_id(int nid, const tls12_lookup *table, size_t tlen)
@@ -3228,6 +3242,21 @@ typedef struct {
     const EVP_MD *(*mfunc) (void);
 } tls12_hash_info;
 
+static const EVP_MD* md_gost94()
+{
+	return EVP_get_digestbynid(NID_id_GostR3411_94);
+}
+
+static const EVP_MD* md_gost2012_256()
+{
+	return EVP_get_digestbynid(NID_id_GostR3411_2012_256);
+}
+
+static const EVP_MD* md_gost2012_512()
+{
+	return EVP_get_digestbynid(NID_id_GostR3411_2012_512);
+}
+
 static const tls12_hash_info tls12_md_info[] = {
 #ifdef OPENSSL_NO_MD5
     {NID_md5, 64, 0},
@@ -3238,7 +3267,11 @@ static const tls12_hash_info tls12_md_info[] = {
     {NID_sha224, 112, EVP_sha224},
     {NID_sha256, 128, EVP_sha256},
     {NID_sha384, 192, EVP_sha384},
-    {NID_sha512, 256, EVP_sha512}
+    {NID_sha512, 256, EVP_sha512},
+		/* FIXME correct secbits values to be found out*/
+		{NID_id_GostR3411_94, 128, md_gost94},
+    {NID_id_GostR3411_2012_256, 128, md_gost2012_256},
+    {NID_id_GostR3411_2012_512, 256, md_gost2012_512},
 };
 
 static const tls12_hash_info *tls12_get_hash_info(unsigned char hash_alg)
@@ -3276,6 +3309,16 @@ static int tls12_get_pkey_idx(unsigned char sig_alg)
     case TLSEXT_signature_ecdsa:
         return SSL_PKEY_ECC;
 #endif
+# ifndef OPENSSL_NO_GOST 
+    case TLSEXT_signature_gostr34102001:
+        return SSL_PKEY_GOST01;
+
+    case TLSEXT_signature_gostr34102012_256:
+        return SSL_PKEY_GOST12_256;
+
+    case TLSEXT_signature_gostr34102012_512:
+        return SSL_PKEY_GOST12_512;
+# endif
     }
     return -1;
 }
@@ -3550,6 +3593,14 @@ int tls1_process_sigalgs(SSL *s)
         if (pmd[SSL_PKEY_ECC] == NULL)
             pmd[SSL_PKEY_ECC] = EVP_sha1();
 #endif
+# ifndef OPENSSL_NO_GOST
+        if (pmd[SSL_PKEY_GOST01] == NULL)
+            pmd[SSL_PKEY_GOST01] = EVP_get_digestbynid(NID_id_GostR3411_94);
+        if (pmd[SSL_PKEY_GOST12_256] == NULL)
+            pmd[SSL_PKEY_GOST12_256] = EVP_get_digestbynid(NID_id_GostR3411_2012_256);
+        if (pmd[SSL_PKEY_GOST12_512] == NULL)
+            pmd[SSL_PKEY_GOST12_512] = EVP_get_digestbynid(NID_id_GostR3411_2012_512);
+# endif
     }
     return 1;
 }
@@ -4004,6 +4055,21 @@ int tls1_check_chain(SSL *s, X509 *x, EVP_PKEY *pk, STACK_OF(X509) *chain,
                 default_nid = NID_ecdsa_with_SHA1;
                 break;
 
+            case SSL_PKEY_GOST01:
+                rsign = TLSEXT_signature_gostr34102001;
+                default_nid = NID_id_GostR3411_94_with_GostR3410_2001;
+                break;
+
+            case SSL_PKEY_GOST12_256:
+                rsign = TLSEXT_signature_gostr34102012_256;
+                default_nid = NID_id_tc26_signwithdigest_gost3410_2012_256;
+                break;
+
+            case SSL_PKEY_GOST12_512:
+                rsign = TLSEXT_signature_gostr34102012_512;
+                default_nid = NID_id_tc26_signwithdigest_gost3410_2012_512;
+                break;
+
             default:
                 default_nid = -1;
                 break;
@@ -4174,6 +4240,9 @@ void tls1_set_cert_validity(SSL *s)
     tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_DH_RSA);
     tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_DH_DSA);
     tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_ECC);
+    tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_GOST01);
+    tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_GOST12_256);
+    tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_GOST12_512);
 }
 
 /* User level utiity function to check a chain is suitable */

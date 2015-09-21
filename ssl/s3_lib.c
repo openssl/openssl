@@ -3449,7 +3449,6 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      256,
      256},
 #endif
-
     /* Cipher C09C */
     {
      1,
@@ -3769,6 +3768,34 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      256,
      256,
      },
+
+    {
+     1,
+     "GOST2012-GOST8912-GOST8912",
+     0x0300ff85,
+     SSL_kGOST,
+     SSL_aGOST12 | SSL_aGOST01,
+     SSL_eGOST2814789CNT12,
+     SSL_GOST89MAC12,
+     SSL_TLSV1,
+     SSL_NOT_EXP | SSL_HIGH,
+     SSL_HANDSHAKE_MAC_GOST12_256 | TLS1_PRF_GOST12_256 | TLS1_STREAM_MAC,
+     256,
+     256},
+    {
+     1,
+     "GOST2012-NULL-GOST12",
+     0x0300ff87,
+     SSL_kGOST,
+     SSL_aGOST12 | SSL_aGOST01,
+     SSL_eNULL,
+     SSL_GOST12_256,
+     SSL_TLSV1,
+     SSL_NOT_EXP | SSL_STRONG_NONE,
+     SSL_HANDSHAKE_MAC_GOST12_256 | TLS1_PRF_GOST12_256,
+     0,
+     0},
+
 
 /* end of list */
 };
@@ -4933,6 +4960,8 @@ int ssl3_get_req_cert_type(SSL *s, unsigned char *p)
     if (s->version >= TLS1_VERSION) {
         if (alg_k & SSL_kGOST) {
             p[ret++] = TLS_CT_GOST01_SIGN;
+            p[ret++] = TLS_CT_GOST12_SIGN;
+            p[ret++] = TLS_CT_GOST12_512_SIGN;
             return (ret);
         }
     }

@@ -2761,8 +2761,24 @@ int ssl3_get_client_key_exchange(SSL *s)
 
         /* Get our certificate private key */
         alg_a = s->s3->tmp.new_cipher->algorithm_auth;
-        if (alg_a & SSL_aGOST01)
-            pk = s->cert->pkeys[SSL_PKEY_GOST01].privatekey;
+        if (alg_a & SSL_aGOST01) {
+            /*
+             * New GOST ciphersuites have SSL_aGOST01 bit too
+             */
+            pk = s->cert->pkeys[SSL_PKEY_GOST12_512].privatekey;
+            if (pk == NULL) {
+                pk = s->cert->pkeys[SSL_PKEY_GOST12_256].privatekey;
+            }
+            if (pk == NULL) {
+                pk = s->cert->pkeys[SSL_PKEY_GOST01].privatekey;
+            }
+        } else if (alg_a & SSL_aGOST12) {
+            pk = s->cert->pkeys[SSL_PKEY_GOST12_512].privatekey;
+            if (pk == NULL) {
+                pk = s->cert->pkeys[SSL_PKEY_GOST12_256].privatekey;
+            }
+        }
+ 
 
         pkey_ctx = EVP_PKEY_CTX_new(pk, NULL);
         EVP_PKEY_decrypt_init(pkey_ctx);
@@ -2903,8 +2919,11 @@ int ssl3_get_cert_verify(SSL *s)
      * If key is GOST and n is exactly 64, it is bare signature without
      * length field
      */
-    if (n == 64 && pkey->type == NID_id_GostR3410_2001) {
-        len = 64;
+    if (n == 64 && (pkey->type == NID_id_GostR3410_2001 ||
+                    pkey->type == NID_id_GostR3410_2012_256)) {
+         len = 64;
+    } else if (n == 128 && (pkey->type == NID_id_GostR3410_2012_512)) {
+         len = 128;
     } else {
         if (SSL_USE_SIGALGS(s)) {
             int rv;
@@ -3012,19 +3031,32 @@ int ssl3_get_cert_verify(SSL *s)
         }
     } else
 #endif
-    if (pkey->type == NID_id_GostR3410_2001) {
-        unsigned char signature[64];
-        int idx;
+    if (pkey->type == NID_id_GostR3410_2001 
+            || pkey->type == NID_id_GostR3410_2012_256
+            || pkey->type == NID_id_GostR3410_2012_512) {
+        unsigned char signature[128];
+        size_t sigsize = (pkey->type == NID_id_GostR3410_2012_512) ? 128 : 64;
+        size_t dgstsize = (pkey->type == NID_id_GostR3410_2012_512) ? 64 : 32;
+
+        /*
+         * We can have
+         *    - client cert 34.10-94/2001 with 32-bytes digest offset 0
+         *    - client cert 34.10-2012 256 with 32-bytes digest offset 32
+         *    - client cert 34.10-2012 512 with 64-bytes digest offset 64
+         */
+        size_t offset = (pkey->type == NID_id_GostR3410_2012_512) ? 64
+            : ((pkey->type == NID_id_GostR3410_2012_256) ? 32 : 0);
+        size_t idx;
         EVP_PKEY_CTX *pctx = EVP_PKEY_CTX_new(pkey, NULL);
         EVP_PKEY_verify_init(pctx);
-        if (len != 64) {
+        if (len != sigsize) {
             fprintf(stderr, "GOST signature length is %d", len);
         }
-        for (idx = 0; idx < 64; idx++) {
-            signature[63 - idx] = data[idx];
+        for (idx = 0; idx < sigsize; idx++) {
+            signature[sigsize - 1 - idx] = data[idx];
         }
-        j = EVP_PKEY_verify(pctx, signature, 64, s->s3->tmp.cert_verify_md,
-                            32);
+        j = EVP_PKEY_verify(pctx, signature, sigsize,
+                            s->s3->tmp.cert_verify_md + offset, dgstsize);
         EVP_PKEY_CTX_free(pctx);
         if (j <= 0) {
             al = SSL_AD_DECRYPT_ERROR;
