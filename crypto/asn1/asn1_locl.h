@@ -87,6 +87,9 @@ struct asn1_sctx_st {
     void *app_data;
 } /* ASN1_SCTX */ ;
 
+/* Month values for printing out times */
+extern const char *_asn1_mon[12];
+
 /*
  * Method to handle CRL access. In general a CRL could be very large (several
  * Mb) and can consume large amounts of resources if stored in memory by
