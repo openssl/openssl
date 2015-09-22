@@ -207,23 +207,6 @@ int ossltest_aes128_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 int ossltest_aes128_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                                const unsigned char *in, size_t inl);
 
-/*
- * Copy of the definition in crypto/evp/e_aes.c. Only used for the "sizeof"
- * below
- */
-typedef struct {
-    union {
-        double align;
-        AES_KEY ks;
-    } ks;
-    block128_f block;
-    union {
-        cbc128_f cbc;
-        ctr128_f ctr;
-    } stream;
-} EVP_AES_KEY;
-
-
 static const EVP_CIPHER ossltest_aes_128_cbc = { \
     NID_aes_128_cbc,
     16, /* block size */
@@ -233,7 +216,7 @@ static const EVP_CIPHER ossltest_aes_128_cbc = { \
     ossltest_aes128_init_key,
     ossltest_aes128_cbc_cipher,
     NULL,
-    sizeof(EVP_AES_KEY),
+    0, /* We don't know the size of cipher_data at compile time */
     NULL,NULL,NULL,NULL
 };
 
@@ -515,6 +498,19 @@ static int digest_sha512_final(EVP_MD_CTX *ctx, unsigned char *md)
 int ossltest_aes128_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
                              const unsigned char *iv, int enc)
 {
+    if (ctx->cipher_data == NULL) {
+        /*
+         * Normally cipher_data is allocated automatically for an engine but
+         * we don't know the ctx_size as compile time so we have to do it at
+         * run time
+         */
+        ctx->cipher_data = OPENSSL_zalloc(EVP_aes_128_cbc()->ctx_size);
+        if (!ctx->cipher_data) {
+            OSSLTESTerr(OSSLTEST_F_OSSLTEST_AES128_INIT_KEY,
+                        ERR_R_MALLOC_FAILURE);
+            return 0;
+        }
+    }
     return EVP_aes_128_cbc()->init(ctx, key, iv, enc);
 }
 
