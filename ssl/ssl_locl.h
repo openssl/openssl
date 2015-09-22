@@ -830,10 +830,18 @@ struct ssl_ctx_st {
 #  endif
 
     /*
+     * If we're using more than one pipeline how should we divide the data
+     * up between the pipes?
+     */
+    unsigned int split_send_fragment;
+    /*
      * Maximum amount of data to send in one fragment. actual record size can
      * be more than this due to padding and MAC overheads.
      */
     unsigned int max_send_fragment;
+
+    /* Up to how many pipelines should we use? If 0 then 1 is assumed */
+    unsigned int max_pipelines;
 
 #  ifndef OPENSSL_NO_ENGINE
     /*
@@ -1085,7 +1093,20 @@ struct ssl_st {
     int first_packet;
     /* what was passed, used for SSLv3/TLS rollback check */
     int client_version;
+
+    /*
+     * If we're using more than one pipeline how should we divide the data
+     * up between the pipes?
+     */
+    unsigned int split_send_fragment;
+    /*
+     * Maximum amount of data to send in one fragment. actual record size can
+     * be more than this due to padding and MAC overheads.
+     */
     unsigned int max_send_fragment;
+
+    /* Up to how many pipelines should we use? If 0 then 1 is assumed */
+    unsigned int max_pipelines;
 
     /* TLS extension debug callback */
     void (*tlsext_debug_cb) (SSL *s, int client_server, int type,
@@ -1635,8 +1656,8 @@ struct tls_sigalgs_st {
  * of a mess of functions, but hell, think of it as an opaque structure :-)
  */
 typedef struct ssl3_enc_method {
-    int (*enc) (SSL *, int);
-    int (*mac) (SSL *, unsigned char *, int);
+    int (*enc) (SSL *, SSL3_RECORD *, unsigned int, int);
+    int (*mac) (SSL *, SSL3_RECORD *, unsigned char *, int);
     int (*setup_key_block) (SSL *);
     int (*generate_master_secret) (SSL *, unsigned char *, unsigned char *,
                                    int);
