@@ -606,20 +606,25 @@ sub testssl {
     subtest 'ALPN tests' => sub {
 	######################################################################
 
-	plan tests => 12;
+	plan tests => 14;
 
       SKIP: {
 	  skip "TLSv1.0 is not supported by this OpenSSL build", 12
 	      if $no_tls1;
 
-	  ok(run(test([@ssltest, "-bio_pair", "-tls1", "-alpn_client", "foo", "-alpn_server", "bar"])));
+	  ok(run(test([@ssltest, "-bio_pair", "-tls1", "-alpn_client", "foo"])));
+	  ok(run(test([@ssltest, "-bio_pair", "-tls1", "-alpn_server", "foo"])));
 	  ok(run(test([@ssltest, "-bio_pair", "-tls1", "-alpn_client", "foo", "-alpn_server", "foo", "-alpn_expected", "foo"])));
 	  ok(run(test([@ssltest, "-bio_pair", "-tls1", "-alpn_client", "foo,bar", "-alpn_server", "foo", "-alpn_expected", "foo"])));
 	  ok(run(test([@ssltest, "-bio_pair", "-tls1", "-alpn_client", "bar,foo", "-alpn_server", "foo", "-alpn_expected", "foo"])));
 	  ok(run(test([@ssltest, "-bio_pair", "-tls1", "-alpn_client", "bar,foo", "-alpn_server", "foo,bar", "-alpn_expected", "foo"])));
 	  ok(run(test([@ssltest, "-bio_pair", "-tls1", "-alpn_client", "bar,foo", "-alpn_server", "bar,foo", "-alpn_expected", "bar"])));
 	  ok(run(test([@ssltest, "-bio_pair", "-tls1", "-alpn_client", "foo,bar", "-alpn_server", "bar,foo", "-alpn_expected", "bar"])));
-	  ok(run(test([@ssltest, "-bio_pair", "-tls1", "-alpn_client", "baz", "-alpn_server", "bar,foo"])));
+
+	  is(run(test([@ssltest, "-bio_pair", "-tls1", "-alpn_client", "foo", "-alpn_server", "bar"])), 0,
+             "Testing ALPN with protocol mismatch, expecting failure");
+	  is(run(test([@ssltest, "-bio_pair", "-tls1", "-alpn_client", "baz", "-alpn_server", "bar,foo"])), 0,
+             "Testing ALPN with protocol mismatch, expecting failure");
 
 	SKIP: {
 	    skip "skipping SRP tests", 4
