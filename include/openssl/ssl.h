@@ -1637,6 +1637,8 @@ void SSL_set_shutdown(SSL *ssl, int mode);
 __owur int SSL_get_shutdown(const SSL *ssl);
 __owur int SSL_version(const SSL *ssl);
 __owur int SSL_CTX_set_default_verify_paths(SSL_CTX *ctx);
+__owur int SSL_CTX_set_default_verify_dir(SSL_CTX *ctx);
+__owur int SSL_CTX_set_default_verify_file(SSL_CTX *ctx);
 __owur int SSL_CTX_load_verify_locations(SSL_CTX *ctx, const char *CAfile,
                                   const char *CApath);
 # define SSL_get0_session SSL_get_session/* just peek at pointer */

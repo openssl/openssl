@@ -403,3 +403,5 @@ SSL_get_server_random                   437	EXIST::FUNCTION:
 SSL_get_client_ciphers                  438	EXIST::FUNCTION:
 SSL_get_client_random                   439	EXIST::FUNCTION:
 SSL_SESSION_get_master_key              440	EXIST::FUNCTION:
+SSL_CTX_set_default_verify_dir          441	EXIST::FUNCTION:
+SSL_CTX_set_default_verify_file         442	EXIST::FUNCTION:
