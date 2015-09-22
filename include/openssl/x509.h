@@ -164,50 +164,9 @@ typedef struct X509_req_info_st X509_REQ_INFO;
 
 typedef struct X509_req_st X509_REQ;
 
-typedef struct x509_cinf_st {
-    ASN1_INTEGER *version;      /* [ 0 ] default of v1 */
-    ASN1_INTEGER *serialNumber;
-    X509_ALGOR signature;
-    X509_NAME *issuer;
-    X509_VAL validity;
-    X509_NAME *subject;
-    X509_PUBKEY *key;
-    ASN1_BIT_STRING *issuerUID; /* [ 1 ] optional in v2 */
-    ASN1_BIT_STRING *subjectUID; /* [ 2 ] optional in v2 */
-    STACK_OF(X509_EXTENSION) *extensions; /* [ 3 ] optional in v3 */
-    ASN1_ENCODING enc;
-} X509_CINF;
-
 typedef struct x509_cert_aux_st X509_CERT_AUX;
 
-struct x509_st {
-    X509_CINF cert_info;
-    X509_ALGOR sig_alg;
-    ASN1_BIT_STRING *signature;
-    int valid;
-    int references;
-    char *name;
-    CRYPTO_EX_DATA ex_data;
-    /* These contain copies of various extension values */
-    long ex_pathlen;
-    long ex_pcpathlen;
-    uint32_t ex_flags;
-    uint32_t ex_kusage;
-    uint32_t ex_xkusage;
-    uint32_t ex_nscert;
-    ASN1_OCTET_STRING *skid;
-    AUTHORITY_KEYID *akid;
-    X509_POLICY_CACHE *policy_cache;
-    STACK_OF(DIST_POINT) *crldp;
-    STACK_OF(GENERAL_NAME) *altname;
-    NAME_CONSTRAINTS *nc;
-#ifndef OPENSSL_NO_RFC3779
-    STACK_OF(IPAddressFamily) *rfc3779_addr;
-    struct ASIdentifiers_st *rfc3779_asid;
-# endif
-    unsigned char sha1_hash[SHA_DIGEST_LENGTH];
-    X509_CERT_AUX *aux;
-} /* X509 */ ;
+typedef struct x509_cinf_st X509_CINF;
 
 DECLARE_STACK_OF(X509)
 
