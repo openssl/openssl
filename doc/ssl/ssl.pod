@@ -298,6 +298,17 @@ protocol context defined in the B<SSL_CTX> structure.
 
 =item int B<SSL_CTX_set_default_verify_paths>(SSL_CTX *ctx);
 
+Use the default paths to locate trusted CA certificates. There is one default
+directory path and one default file path. Both are set via this call.
+
+=item int B<SSL_CTX_set_default_verify_dir>(SSL_CTX *ctx)
+
+Use the default directory path to locate trusted CA certficates.
+
+=item int B<SSL_CTX_set_default_verify_file>(SSL_CTX *ctx)
+
+Use the file path to locate trusted CA certficates.
+
 =item int B<SSL_CTX_set_ex_data>(SSL_CTX *s, int idx, char *arg);
 
 =item void B<SSL_CTX_set_info_callback>(SSL_CTX *ctx, void (*cb)(SSL *ssl, int cb, int ret));
