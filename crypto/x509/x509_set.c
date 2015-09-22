@@ -62,6 +62,7 @@
 #include <openssl/objects.h>
 #include <openssl/evp.h>
 #include <openssl/x509.h>
+#include "internal/x509_int.h"
 
 int X509_set_version(X509 *x, long version)
 {
