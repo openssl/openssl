@@ -4732,3 +4732,4 @@ OPENSSL_thread_stop                     5213	1_1_0	EXIST::FUNCTION:
 OPENSSL_INIT_new                        5215	1_1_0	EXIST::FUNCTION:
 OPENSSL_INIT_free                       5216	1_1_0	EXIST::FUNCTION:
 OPENSSL_INIT_set_config_filename        5217	1_1_0	EXIST::FUNCTION:
+EVP_CIPHER_CTX_set_cipher_data          5218	1_1_0	EXIST::FUNCTION:
