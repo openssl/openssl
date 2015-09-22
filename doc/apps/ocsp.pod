@@ -30,6 +30,8 @@ B<openssl> B<ocsp>
 [B<-path>]
 [B<-CApath dir>]
 [B<-CAfile file>]
+[B<-no-CAfile>]
+[B<-no-CApath>]
 [B<-attime timestamp>]
 [B<-check_ss_sig>]
 [B<-crl_check>]
@@ -176,6 +178,14 @@ connection timeout to the OCSP responder in seconds
 
 file or pathname containing trusted CA certificates. These are used to verify
 the signature on the OCSP response.
+
+=item B<-no-CAfile>
+
+Do not load the trusted CA certificates from the default file location
+
+=item B<-no-CApath>
+
+Do not load the trusted CA certificates from the default directory location
 
 =item B<-attime>, B<-check_ss_sig>, B<-crl_check>, B<-crl_check_all>,
 B<explicit_policy>, B<-extended_crl>, B<-ignore_critical>, B<-inhibit_any>,
