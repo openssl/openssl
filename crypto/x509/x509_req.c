@@ -318,9 +318,9 @@ X509_NAME *X509_REQ_get_subject_name(X509_REQ *req)
 void X509_REQ_get0_signature(ASN1_BIT_STRING **psig, X509_ALGOR **palg,
                              X509_REQ *req)
 {
-    if (psig == NULL)
+    if (psig != NULL)
         *psig = req->signature;
-    if (palg == NULL)
+    if (palg != NULL)
         *palg = &req->sig_alg;
 }
 

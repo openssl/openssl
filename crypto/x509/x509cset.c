@@ -166,9 +166,9 @@ STACK_OF(X509_REVOKED) *X509_CRL_get_REVOKED(X509_CRL *crl)
 void X509_CRL_get0_signature(ASN1_BIT_STRING **psig, X509_ALGOR **palg,
                              X509_CRL *crl)
 {
-    if (psig == NULL)
+    if (psig != NULL)
         *psig = crl->signature;
-    if (palg == NULL)
+    if (palg != NULL)
         *palg = &crl->sig_alg;
 }
 
