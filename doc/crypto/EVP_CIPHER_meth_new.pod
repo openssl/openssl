@@ -7,9 +7,10 @@ EVP_CIPHER_meth_set_iv_length, EVP_CIPHER_meth_set_flags,
 EVP_CIPHER_meth_set_impl_ctx_size, EVP_CIPHER_meth_set_init,
 EVP_CIPHER_meth_set_do_cipher, EVP_CIPHER_meth_set_cleanup,
 EVP_CIPHER_meth_set_set_asn1_params, EVP_CIPHER_meth_set_get_asn1_params,
-EVP_CIPHER_meth_set_ctrl, EVP_CIPHER_meth_get_init,
-EVP_CIPHER_meth_get_do_cipher, EVP_CIPHER_meth_get_cleanup,
-EVP_CIPHER_meth_get_set_asn1_params, EVP_CIPHER_meth_get_get_asn1_params,
+EVP_CIPHER_meth_set_ctrl, EVP_CIPHER_meth_get_ctx_size,
+EVP_CIPHER_meth_get_init, EVP_CIPHER_meth_get_do_cipher,
+EVP_CIPHER_meth_get_cleanup, EVP_CIPHER_meth_get_set_asn1_params,
+EVP_CIPHER_meth_get_get_asn1_params,
 EVP_CIPHER_meth_get_ctrl  - Routines to build up EVP_CIPHER methods
 
 =head1 SYNOPSIS
@@ -45,6 +46,7 @@ EVP_CIPHER_meth_get_ctrl  - Routines to build up EVP_CIPHER methods
                               int (*ctrl) (EVP_CIPHER_CTX *, int type,
                                            int arg, void *ptr));
  
+ int EVP_CIPHER_meth_get_impl_ctx_size(EVP_CIPHER *cipher);
  int (*EVP_CIPHER_meth_get_init(const EVP_CIPHER *cipher))(EVP_CIPHER_CTX *ctx,
                                                            const unsigned char *key,
                                                            const unsigned char *iv,
@@ -75,6 +77,9 @@ EVP_CIPHER_meth_free() destroys a B<EVP_CIPHER> structure.
 
 EVP_CIPHER_meth_iv_length() sets the length of the IV.
 This is only needed when the implemented cipher mode requires it.
+
+EVP_CIPHER_meth_set_impl_ctx_size() sets the size of the EVP_CIPHER's
+implementation context so that it can be automatically allocated.
 
 EVP_CIPHER_meth_set_flags() sets the flags to describe optional
 behaviours in the particular B<cipher>.
@@ -234,11 +239,11 @@ EVP_CIPHER_meth_set_ctrl() sets the control function for B<cipher>.
 
 EVP_CIPHER_meth_get_input_blocksize(), EVP_CIPHER_meth_get_result_size(),
 EVP_CIPHER_meth_get_app_datasize(), EVP_CIPHER_meth_get_flags(),
-EVP_CIPHER_meth_get_init(), EVP_CIPHER_meth_get_update(),
-EVP_CIPHER_meth_get_final(), EVP_CIPHER_meth_get_copy(),
-EVP_CIPHER_meth_get_cleanup() and EVP_CIPHER_meth_get_ctrl() are all used
-to retrieve the method data given with the EVP_CIPHER_meth_set_*()
-functions above.
+EVP_CIPHER_meth_get_impl_ctx_size(), EVP_CIPHER_meth_get_init(),
+EVP_CIPHER_meth_get_update(), EVP_CIPHER_meth_get_final(),
+EVP_CIPHER_meth_get_copy(), EVP_CIPHER_meth_get_cleanup() and
+EVP_CIPHER_meth_get_ctrl() are all used to retrieve the method data given with
+the EVP_CIPHER_meth_set_*() functions above.
 
 =head1 SEE ALSO
 
