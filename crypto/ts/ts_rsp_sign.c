@@ -784,12 +784,13 @@ static ESS_CERT_ID *ess_CERT_ID_new_init(X509 *cert, int issuer_needed)
 {
     ESS_CERT_ID *cid = NULL;
     GENERAL_NAME *name = NULL;
+    unsigned char cert_sha1[SHA_DIGEST_LENGTH];
 
     X509_check_purpose(cert, -1, 0);
     if ((cid = ESS_CERT_ID_new()) == NULL)
         goto err;
-    if (!ASN1_OCTET_STRING_set(cid->hash, cert->sha1_hash,
-                               sizeof(cert->sha1_hash)))
+    X509_digest(cert, EVP_sha1(), cert_sha1, NULL);
+    if (!ASN1_OCTET_STRING_set(cid->hash, cert_sha1, SHA_DIGEST_LENGTH))
         goto err;
 
     /* Setting the issuer/serial if requested. */
