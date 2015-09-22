@@ -207,6 +207,9 @@ I could use some help explaining this one!
 
 =back
 
+EVP_CIPHER_meth_set_impl_ctx_size() sets the size of the EVP_CIPHER's
+implementation context so that it can be automatically allocated.
+
 EVP_CIPHER_meth_set_init() sets the cipher init function for
 B<cipher>.
 The cipher init function is called by EVP_CipherInit(),
