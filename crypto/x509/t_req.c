@@ -1,4 +1,4 @@
-/* crypto/asn1/t_req.c */
+/* crypto/x509/t_req.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
