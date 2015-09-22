@@ -18,10 +18,10 @@ LIB=$(TOP)/libcrypto.a
 LIBSRC=	a_object.c a_bitstr.c a_utctm.c a_gentm.c a_time.c a_int.c a_octet.c \
 	a_print.c a_type.c a_dup.c a_d2i_fp.c a_i2d_fp.c \
 	a_utf8.c a_sign.c a_digest.c a_verify.c a_mbstr.c a_strex.c \
-	x_algor.c x_val.c x_pubkey.c x_sig.c x_req.c x_bignum.c \
-	x_long.c x_x509.c x_x509a.c x_crl.c x_info.c x_spki.c nsseq.c \
+	x_algor.c x_val.c x_pubkey.c x_sig.c x_bignum.c \
+	x_long.c x_info.c x_spki.c nsseq.c \
 	d2i_pu.c d2i_pr.c i2d_pu.c i2d_pr.c\
-	t_req.c t_x509.c t_x509a.c t_crl.c t_pkey.c t_spki.c t_bitst.c \
+	t_pkey.c t_spki.c t_bitst.c \
 	tasn_new.c tasn_fre.c tasn_enc.c tasn_dec.c tasn_utl.c tasn_typ.c \
 	tasn_prn.c tasn_scn.c ameth_lib.c \
 	f_int.c f_string.c n_pkey.c \
@@ -32,10 +32,10 @@ LIBSRC=	a_object.c a_bitstr.c a_utctm.c a_gentm.c a_time.c a_int.c a_octet.c \
 LIBOBJ= a_object.o a_bitstr.o a_utctm.o a_gentm.o a_time.o a_int.o a_octet.o \
 	a_print.o a_type.o a_dup.o a_d2i_fp.o a_i2d_fp.o \
 	a_utf8.o a_sign.o a_digest.o a_verify.o a_mbstr.o a_strex.o \
-	x_algor.o x_val.o x_pubkey.o x_sig.o x_req.o x_bignum.o \
-	x_long.o x_x509.o x_x509a.o x_crl.o x_info.o x_spki.o nsseq.o \
+	x_algor.o x_val.o x_pubkey.o x_sig.o x_bignum.o \
+	x_long.o x_info.o x_spki.o nsseq.o \
 	d2i_pu.o d2i_pr.o i2d_pu.o i2d_pr.o \
-	t_req.o t_x509.o t_x509a.o t_crl.o t_pkey.o t_spki.o t_bitst.o \
+	t_pkey.o t_spki.o t_bitst.o \
 	tasn_new.o tasn_fre.o tasn_enc.o tasn_dec.o tasn_utl.o tasn_typ.o \
 	tasn_prn.o tasn_scn.o ameth_lib.o \
 	f_int.o f_string.o n_pkey.o \
@@ -574,20 +574,6 @@ t_bitst.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 t_bitst.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
 t_bitst.o: ../../include/openssl/x509_vfy.h ../../include/openssl/x509v3.h
 t_bitst.o: ../include/internal/cryptlib.h t_bitst.c
-t_crl.o: ../../e_os.h ../../include/openssl/asn1.h ../../include/openssl/bio.h
-t_crl.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
-t_crl.o: ../../include/openssl/conf.h ../../include/openssl/crypto.h
-t_crl.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
-t_crl.o: ../../include/openssl/ecdh.h ../../include/openssl/ecdsa.h
-t_crl.o: ../../include/openssl/err.h ../../include/openssl/evp.h
-t_crl.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
-t_crl.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
-t_crl.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-t_crl.o: ../../include/openssl/pkcs7.h ../../include/openssl/safestack.h
-t_crl.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
-t_crl.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
-t_crl.o: ../../include/openssl/x509_vfy.h ../../include/openssl/x509v3.h
-t_crl.o: ../include/internal/cryptlib.h ../include/internal/x509_int.h t_crl.c
 t_pkey.o: ../../e_os.h ../../include/openssl/asn1.h ../../include/openssl/bio.h
 t_pkey.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
 t_pkey.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
@@ -597,21 +583,6 @@ t_pkey.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
 t_pkey.o: ../../include/openssl/ossl_typ.h ../../include/openssl/safestack.h
 t_pkey.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 t_pkey.o: ../include/internal/bn_int.h ../include/internal/cryptlib.h t_pkey.c
-t_req.o: ../../e_os.h ../../include/openssl/asn1.h ../../include/openssl/bio.h
-t_req.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
-t_req.o: ../../include/openssl/conf.h ../../include/openssl/crypto.h
-t_req.o: ../../include/openssl/dsa.h ../../include/openssl/e_os2.h
-t_req.o: ../../include/openssl/ec.h ../../include/openssl/ecdh.h
-t_req.o: ../../include/openssl/ecdsa.h ../../include/openssl/err.h
-t_req.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
-t_req.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
-t_req.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
-t_req.o: ../../include/openssl/ossl_typ.h ../../include/openssl/pkcs7.h
-t_req.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
-t_req.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
-t_req.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
-t_req.o: ../../include/openssl/x509_vfy.h ../../include/openssl/x509v3.h
-t_req.o: ../include/internal/cryptlib.h ../include/internal/x509_int.h t_req.c
 t_spki.o: ../../e_os.h ../../include/openssl/asn1.h ../../include/openssl/bio.h
 t_spki.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
 t_spki.o: ../../include/openssl/crypto.h ../../include/openssl/dsa.h
@@ -626,36 +597,6 @@ t_spki.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
 t_spki.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 t_spki.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
 t_spki.o: ../include/internal/cryptlib.h t_spki.c
-t_x509.o: ../../e_os.h ../../include/openssl/asn1.h ../../include/openssl/bio.h
-t_x509.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
-t_x509.o: ../../include/openssl/conf.h ../../include/openssl/crypto.h
-t_x509.o: ../../include/openssl/dsa.h ../../include/openssl/e_os2.h
-t_x509.o: ../../include/openssl/ec.h ../../include/openssl/ecdh.h
-t_x509.o: ../../include/openssl/ecdsa.h ../../include/openssl/err.h
-t_x509.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
-t_x509.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
-t_x509.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
-t_x509.o: ../../include/openssl/ossl_typ.h ../../include/openssl/pkcs7.h
-t_x509.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
-t_x509.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
-t_x509.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
-t_x509.o: ../../include/openssl/x509_vfy.h ../../include/openssl/x509v3.h
-t_x509.o: ../include/internal/asn1_int.h ../include/internal/cryptlib.h
-t_x509.o: t_x509.c
-t_x509a.o: ../../e_os.h ../../include/openssl/asn1.h
-t_x509a.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
-t_x509a.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
-t_x509a.o: ../../include/openssl/ec.h ../../include/openssl/ecdh.h
-t_x509a.o: ../../include/openssl/ecdsa.h ../../include/openssl/err.h
-t_x509a.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
-t_x509a.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
-t_x509a.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
-t_x509a.o: ../../include/openssl/ossl_typ.h ../../include/openssl/pkcs7.h
-t_x509a.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
-t_x509a.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-t_x509a.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
-t_x509a.o: ../include/internal/cryptlib.h ../include/internal/x509_int.h
-t_x509a.o: t_x509a.c
 tasn_dec.o: ../../include/openssl/asn1.h ../../include/openssl/asn1t.h
 tasn_dec.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 tasn_dec.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
@@ -757,21 +698,6 @@ x_bignum.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 x_bignum.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 x_bignum.o: ../../include/openssl/symhacks.h ../include/internal/cryptlib.h
 x_bignum.o: x_bignum.c
-x_crl.o: ../../e_os.h ../../include/openssl/asn1.h
-x_crl.o: ../../include/openssl/asn1t.h ../../include/openssl/bio.h
-x_crl.o: ../../include/openssl/buffer.h ../../include/openssl/conf.h
-x_crl.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
-x_crl.o: ../../include/openssl/ec.h ../../include/openssl/ecdh.h
-x_crl.o: ../../include/openssl/ecdsa.h ../../include/openssl/err.h
-x_crl.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
-x_crl.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
-x_crl.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
-x_crl.o: ../../include/openssl/ossl_typ.h ../../include/openssl/pkcs7.h
-x_crl.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
-x_crl.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-x_crl.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
-x_crl.o: ../../include/openssl/x509v3.h ../include/internal/cryptlib.h
-x_crl.o: ../include/internal/x509_int.h asn1_locl.h x_crl.c
 x_info.o: ../../e_os.h ../../include/openssl/asn1.h ../../include/openssl/bio.h
 x_info.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 x_info.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
@@ -823,20 +749,6 @@ x_pubkey.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 x_pubkey.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
 x_pubkey.o: ../include/internal/asn1_int.h ../include/internal/cryptlib.h
 x_pubkey.o: x_pubkey.c
-x_req.o: ../../e_os.h ../../include/openssl/asn1.h
-x_req.o: ../../include/openssl/asn1t.h ../../include/openssl/bio.h
-x_req.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
-x_req.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
-x_req.o: ../../include/openssl/ecdh.h ../../include/openssl/ecdsa.h
-x_req.o: ../../include/openssl/err.h ../../include/openssl/evp.h
-x_req.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
-x_req.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
-x_req.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-x_req.o: ../../include/openssl/pkcs7.h ../../include/openssl/safestack.h
-x_req.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
-x_req.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
-x_req.o: ../../include/openssl/x509_vfy.h ../include/internal/cryptlib.h
-x_req.o: ../include/internal/x509_int.h x_req.c
 x_sig.o: ../../e_os.h ../../include/openssl/asn1.h
 x_sig.o: ../../include/openssl/asn1t.h ../../include/openssl/bio.h
 x_sig.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
@@ -879,32 +791,3 @@ x_val.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 x_val.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
 x_val.o: ../../include/openssl/x509_vfy.h ../include/internal/cryptlib.h
 x_val.o: x_val.c
-x_x509.o: ../../e_os.h ../../include/openssl/asn1.h
-x_x509.o: ../../include/openssl/asn1t.h ../../include/openssl/bio.h
-x_x509.o: ../../include/openssl/buffer.h ../../include/openssl/conf.h
-x_x509.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
-x_x509.o: ../../include/openssl/ec.h ../../include/openssl/ecdh.h
-x_x509.o: ../../include/openssl/ecdsa.h ../../include/openssl/err.h
-x_x509.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
-x_x509.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
-x_x509.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
-x_x509.o: ../../include/openssl/ossl_typ.h ../../include/openssl/pkcs7.h
-x_x509.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
-x_x509.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-x_x509.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
-x_x509.o: ../../include/openssl/x509v3.h ../include/internal/cryptlib.h
-x_x509.o: x_x509.c
-x_x509a.o: ../../e_os.h ../../include/openssl/asn1.h
-x_x509a.o: ../../include/openssl/asn1t.h ../../include/openssl/bio.h
-x_x509a.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
-x_x509a.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
-x_x509a.o: ../../include/openssl/ecdh.h ../../include/openssl/ecdsa.h
-x_x509a.o: ../../include/openssl/err.h ../../include/openssl/evp.h
-x_x509a.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
-x_x509a.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
-x_x509a.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-x_x509a.o: ../../include/openssl/pkcs7.h ../../include/openssl/safestack.h
-x_x509a.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
-x_x509a.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
-x_x509a.o: ../../include/openssl/x509_vfy.h ../include/internal/cryptlib.h
-x_x509a.o: ../include/internal/x509_int.h x_x509a.c
