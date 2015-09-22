@@ -4,6 +4,12 @@
 
  Changes between 1.0.2g and 1.1.0  [xx XXX xxxx]
 
+  *) If the server has ALPN configured, but supports no protocols that the
+     client advertises, send a fatal "no_application_protocol" alert.
+     This behaviour is SHALL in RFC 7301, though it isn't universally
+     implemented by other servers.
+     [Emilia Käsper]
+
   *) Add X25519 support.
      Integrate support for X25519 into EC library. This includes support
      for public and private key encoding using the format documented in

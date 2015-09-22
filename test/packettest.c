@@ -77,6 +77,24 @@ static int test_PACKET_remaining(unsigned char buf[BUF_LEN])
     return 1;
 }
 
+static int test_PACKET_end(unsigned char buf[BUF_LEN])
+{
+    PACKET pkt;
+
+    if (       !PACKET_buf_init(&pkt, buf, BUF_LEN)
+            ||  PACKET_remaining(&pkt) != BUF_LEN
+            ||  PACKET_end(&pkt) != buf + BUF_LEN
+            || !PACKET_forward(&pkt, BUF_LEN - 1)
+            || PACKET_end(&pkt) != buf + BUF_LEN
+            || !PACKET_forward(&pkt, 1)
+            || PACKET_end(&pkt) != buf + BUF_LEN) {
+        fprintf(stderr, "test_PACKET_end() failed\n");
+        return 0;
+    }
+
+    return 1;
+}
+
 static int test_PACKET_get_1(unsigned char buf[BUF_LEN])
 {
     unsigned int i;
@@ -308,6 +326,26 @@ static int test_PACKET_strndup()
     return 1;
 }
 
+static int test_PACKET_contains_zero_byte()
+{
+    char buf[10], buf2[10];
+    PACKET pkt;
+
+    memset(buf, 'x', 10);
+    memset(buf2, 'y', 10);
+    buf2[5] = '\0';
+
+    if (       !PACKET_buf_init(&pkt, (unsigned char*)buf, 10)
+            ||  PACKET_contains_zero_byte(&pkt)
+            || !PACKET_buf_init(&pkt, (unsigned char*)buf2, 10)
+            || !PACKET_contains_zero_byte(&pkt)) {
+        fprintf(stderr, "test_PACKET_contains_zero_byte failed\n");
+        return 0;
+    }
+
+    return 1;
+}
+
 static int test_PACKET_forward(unsigned char buf[BUF_LEN])
 {
     const unsigned char *byte;
@@ -457,6 +495,57 @@ static int test_PACKET_get_length_prefixed_3()
     return 1;
 }
 
+static int test_PACKET_as_length_prefixed_1()
+{
+    unsigned char buf[BUF_LEN];
+    const size_t len = 16;
+    unsigned int i;
+    PACKET pkt, exact_pkt, subpkt;
+
+    buf[0] = len;
+    for (i = 1; i < BUF_LEN; i++) {
+        buf[i] = (i * 2) & 0xff;
+    }
+
+    if (       !PACKET_buf_init(&pkt, buf, BUF_LEN)
+            || !PACKET_buf_init(&exact_pkt, buf, len + 1)
+            ||  PACKET_as_length_prefixed_1(&pkt, &subpkt)
+            ||  PACKET_remaining(&pkt) != BUF_LEN
+            || !PACKET_as_length_prefixed_1(&exact_pkt, &subpkt)
+            ||  PACKET_remaining(&exact_pkt) != 0
+            ||  PACKET_remaining(&subpkt) != len) {
+        fprintf(stderr, "test_PACKET_as_length_prefixed_1() failed\n");
+        return 0;
+    }
+
+    return 1;
+}
+
+static int test_PACKET_as_length_prefixed_2()
+{
+    unsigned char buf[1024];
+    const size_t len = 516;  /* 0x0204 */
+    unsigned int i;
+    PACKET pkt, exact_pkt, subpkt;
+
+    for (i = 1; i <= 1024; i++) {
+        buf[i-1] = (i * 2) & 0xff;
+    }
+
+    if (       !PACKET_buf_init(&pkt, buf, 1024)
+            || !PACKET_buf_init(&exact_pkt, buf, len + 2)
+            ||  PACKET_as_length_prefixed_2(&pkt, &subpkt)
+            ||  PACKET_remaining(&pkt) != 1024
+            || !PACKET_as_length_prefixed_2(&exact_pkt, &subpkt)
+            ||  PACKET_remaining(&exact_pkt) != 0
+            ||  PACKET_remaining(&subpkt) != len) {
+        fprintf(stderr, "test_PACKET_as_length_prefixed_2() failed\n");
+        return 0;
+    }
+
+    return 1;
+}
+
 int main(int argc, char **argv)
 {
     unsigned char buf[BUF_LEN];
@@ -470,6 +559,7 @@ int main(int argc, char **argv)
     if (       !test_PACKET_buf_init()
             || !test_PACKET_null_init()
             || !test_PACKET_remaining(buf)
+            || !test_PACKET_end(buf)
             || !test_PACKET_equal(buf)
             || !test_PACKET_get_1(buf)
             || !test_PACKET_get_4(buf)
@@ -482,10 +572,13 @@ int main(int argc, char **argv)
             || !test_PACKET_copy_all(buf)
             || !test_PACKET_memdup(buf)
             || !test_PACKET_strndup()
+            || !test_PACKET_contains_zero_byte()
             || !test_PACKET_forward(buf)
             || !test_PACKET_get_length_prefixed_1()
             || !test_PACKET_get_length_prefixed_2()
-            || !test_PACKET_get_length_prefixed_3()) {
+            || !test_PACKET_get_length_prefixed_3()
+            || !test_PACKET_as_length_prefixed_1()
+            || !test_PACKET_as_length_prefixed_2()) {
         return 1;
     }
     printf("PASS\n");
