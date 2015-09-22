@@ -227,11 +227,17 @@ int app_init(long mesgwin)
 }
 #endif
 
-int ctx_set_verify_locations(SSL_CTX *ctx,
-                             const char *CAfile, const char *CApath)
+int ctx_set_verify_locations(SSL_CTX *ctx, const char *CAfile,
+                             const char *CApath, int noCAfile, int noCApath)
 {
-    if (CAfile == NULL && CApath == NULL)
-        return SSL_CTX_set_default_verify_paths(ctx);
+    if (CAfile == NULL && CApath == NULL) {
+        if (!noCAfile && SSL_CTX_set_default_verify_file(ctx) <= 0)
+            return 0;
+        if (!noCApath && SSL_CTX_set_default_verify_dir(ctx) <= 0)
+            return 0;
+
+        return 1;
+    }
     return SSL_CTX_load_verify_locations(ctx, CAfile, CApath);
 }
 
@@ -1244,34 +1250,39 @@ void print_array(BIO *out, const char* title, int len, const unsigned char* d)
     BIO_printf(out, "\n};\n");
 }
 
-X509_STORE *setup_verify(char *CAfile, char *CApath)
+X509_STORE *setup_verify(char *CAfile, char *CApath, int noCAfile, int noCApath)
 {
     X509_STORE *store = X509_STORE_new();
     X509_LOOKUP *lookup;
 
     if (!store)
         goto end;
-    lookup = X509_STORE_add_lookup(store, X509_LOOKUP_file());
-    if (lookup == NULL)
-        goto end;
-    if (CAfile) {
-        if (!X509_LOOKUP_load_file(lookup, CAfile, X509_FILETYPE_PEM)) {
-            BIO_printf(bio_err, "Error loading file %s\n", CAfile);
-            goto end;
-        }
-    } else
-        X509_LOOKUP_load_file(lookup, NULL, X509_FILETYPE_DEFAULT);
 
-    lookup = X509_STORE_add_lookup(store, X509_LOOKUP_hash_dir());
-    if (lookup == NULL)
-        goto end;
-    if (CApath) {
-        if (!X509_LOOKUP_add_dir(lookup, CApath, X509_FILETYPE_PEM)) {
-            BIO_printf(bio_err, "Error loading directory %s\n", CApath);
+    if(CAfile != NULL || !noCAfile) {
+        lookup = X509_STORE_add_lookup(store, X509_LOOKUP_file());
+        if (lookup == NULL)
             goto end;
-        }
-    } else
-        X509_LOOKUP_add_dir(lookup, NULL, X509_FILETYPE_DEFAULT);
+        if (CAfile) {
+            if (!X509_LOOKUP_load_file(lookup, CAfile, X509_FILETYPE_PEM)) {
+                BIO_printf(bio_err, "Error loading file %s\n", CAfile);
+                goto end;
+            }
+        } else
+            X509_LOOKUP_load_file(lookup, NULL, X509_FILETYPE_DEFAULT);
+    }
+
+    if(CApath != NULL || !noCApath) {
+        lookup = X509_STORE_add_lookup(store, X509_LOOKUP_hash_dir());
+        if (lookup == NULL)
+            goto end;
+        if (CApath) {
+            if (!X509_LOOKUP_add_dir(lookup, CApath, X509_FILETYPE_PEM)) {
+                BIO_printf(bio_err, "Error loading directory %s\n", CApath);
+                goto end;
+            }
+        } else
+            X509_LOOKUP_add_dir(lookup, NULL, X509_FILETYPE_DEFAULT);
+    }
 
     ERR_clear_error();
     return store;

@@ -98,7 +98,7 @@ typedef enum OPTION_choice {
     OPT_NOMAC, OPT_LMK, OPT_NODES, OPT_MACALG, OPT_CERTPBE, OPT_KEYPBE,
     OPT_RAND, OPT_INKEY, OPT_CERTFILE, OPT_NAME, OPT_CSP, OPT_CANAME,
     OPT_IN, OPT_OUT, OPT_PASSIN, OPT_PASSOUT, OPT_PASSWORD, OPT_CAPATH,
-    OPT_CAFILE, OPT_ENGINE
+    OPT_CAFILE, OPT_NOCAPATH, OPT_NOCAFILE, OPT_ENGINE
 } OPTION_CHOICE;
 
 OPTIONS pkcs12_options[] = {
@@ -149,6 +149,10 @@ OPTIONS pkcs12_options[] = {
     {"password", OPT_PASSWORD, 's', "Set import/export password source"},
     {"CApath", OPT_CAPATH, '/', "PEM-format directory of CA's"},
     {"CAfile", OPT_CAFILE, '<', "PEM-format file of CA's"},
+    {"no-CAfile", OPT_NOCAFILE, '-',
+     "Do not load the default certificates file"},
+    {"no-CApath", OPT_NOCAPATH, '-',
+     "Do not load certificates from the default certificates directory"},
     {"", OPT_CIPHER, '-', "Any supported cipher"},
 # ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
@@ -174,6 +178,7 @@ int pkcs12_main(int argc, char **argv)
     char *passin = NULL, *passout = NULL, *inrand = NULL, *macalg = NULL;
     char *cpass = NULL, *mpass = NULL, *CApath = NULL, *CAfile = NULL;
     char *prog;
+    int noCApath = 0, noCAfile = 0;
     ENGINE *e = NULL;
     BIO *in = NULL, *out = NULL;
     PKCS12 *p12 = NULL;
@@ -307,6 +312,12 @@ int pkcs12_main(int argc, char **argv)
         case OPT_CAFILE:
             CAfile = opt_arg();
             break;
+        case OPT_NOCAPATH:
+            noCApath = 1;
+            break;
+        case OPT_NOCAFILE:
+            noCAfile = 1;
+            break;
         case OPT_ENGINE:
             e = setup_engine(opt_arg(), 0);
             break;
@@ -430,7 +441,8 @@ int pkcs12_main(int argc, char **argv)
             int vret;
             STACK_OF(X509) *chain2;
             X509_STORE *store;
-            if ((store = setup_verify(CAfile, CApath)) == NULL)
+            if ((store = setup_verify(CAfile, CApath, noCAfile, noCApath))
+                    == NULL)
                 goto export_end;
 
             vret = get_cert_chain(ucert, store, &chain2);

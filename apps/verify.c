@@ -73,8 +73,8 @@ static int v_verbose = 0, vflags = 0;
 
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
-    OPT_ENGINE, OPT_CAPATH, OPT_CAFILE, OPT_UNTRUSTED, OPT_TRUSTED,
-    OPT_CRLFILE, OPT_CRL_DOWNLOAD, OPT_SHOW_CHAIN,
+    OPT_ENGINE, OPT_CAPATH, OPT_CAFILE, OPT_NOCAPATH, OPT_NOCAFILE,
+    OPT_UNTRUSTED, OPT_TRUSTED, OPT_CRLFILE, OPT_CRL_DOWNLOAD, OPT_SHOW_CHAIN,
     OPT_V_ENUM,
     OPT_VERBOSE
 } OPTION_CHOICE;
@@ -87,6 +87,10 @@ OPTIONS verify_options[] = {
         "Print extra information about the operations being performed."},
     {"CApath", OPT_CAPATH, '/', "A directory of trusted certificates"},
     {"CAfile", OPT_CAFILE, '<', "A file of trusted certificates"},
+    {"no-CAfile", OPT_NOCAFILE, '-',
+     "Do not load the default certificates file"},
+    {"no-CApath", OPT_NOCAPATH, '-',
+     "Do not load certificates from the default certificates directory"},
     {"untrusted", OPT_UNTRUSTED, '<', "A file of untrusted certificates"},
     {"trusted", OPT_TRUSTED, '<', "A file of trusted certificates"},
     {"CRLfile", OPT_CRLFILE, '<',
@@ -110,6 +114,7 @@ int verify_main(int argc, char **argv)
     X509_STORE *store = NULL;
     X509_VERIFY_PARAM *vpm = NULL;
     char *prog, *CApath = NULL, *CAfile = NULL;
+    int noCApath = 0, noCAfile = 0;
     char *untfile = NULL, *trustfile = NULL, *crlfile = NULL;
     int vpmtouched = 0, crl_download = 0, show_chain = 0, i = 0, ret = 1;
     OPTION_CHOICE o;
@@ -155,6 +160,12 @@ int verify_main(int argc, char **argv)
         case OPT_CAFILE:
             CAfile = opt_arg();
             break;
+        case OPT_NOCAPATH:
+            noCApath = 1;
+            break;
+        case OPT_NOCAFILE:
+            noCAfile = 1;
+            break;
         case OPT_UNTRUSTED:
             untfile = opt_arg();
             break;
@@ -190,7 +201,7 @@ int verify_main(int argc, char **argv)
     if (!app_load_modules(NULL))
         goto end;
 
-    if ((store = setup_verify(CAfile, CApath)) == NULL)
+    if ((store = setup_verify(CAfile, CApath, noCAfile, noCApath)) == NULL)
         goto end;
     X509_STORE_set_verify_cb(store, cb);
 
