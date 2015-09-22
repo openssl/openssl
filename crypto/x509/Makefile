@@ -21,14 +21,16 @@ LIBSRC=	x509_def.c x509_d2.c x509_r2x.c x509_cmp.c \
 	x509name.c x509_v3.c x509_ext.c x509_att.c \
 	x509type.c x509_lu.c x_all.c x509_txt.c \
 	x509_trs.c by_file.c by_dir.c x509_vpm.c \
-    x_attrib.c x_exten.c x_name.c
+	x_crl.c t_crl.c x_req.c t_req.c x_x509.c t_x509.c \
+	x_x509a.c t_x509a.c x_attrib.c x_exten.c x_name.c
 LIBOBJ= x509_def.o x509_d2.o x509_r2x.o x509_cmp.o \
 	x509_obj.o x509_req.o x509spki.o x509_vfy.o \
 	x509_set.o x509cset.o x509rset.o x509_err.o \
 	x509name.o x509_v3.o x509_ext.o x509_att.o \
 	x509type.o x509_lu.o x_all.o x509_txt.o \
 	x509_trs.o by_file.o by_dir.o x509_vpm.o \
-    x_attrib.o x_exten.o x_name.o
+	x_crl.o t_crl.o x_req.o t_req.o x_x509.o t_x509.o \
+	x_x509a.o t_x509a.o x_attrib.o x_exten.o x_name.o
 
 SRC= $(LIBSRC)
 
