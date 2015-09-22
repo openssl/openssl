@@ -60,19 +60,11 @@
 #include "internal/cryptlib.h"
 #include <openssl/buffer.h>
 #include <openssl/bn.h>
-#ifndef OPENSSL_NO_RSA
-# include <openssl/rsa.h>
-#endif
-#ifndef OPENSSL_NO_DSA
-# include <openssl/dsa.h>
-#endif
-#ifndef OPENSSL_NO_EC
-# include <openssl/ec.h>
-#endif
 #include <openssl/objects.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 #include "internal/asn1_int.h"
+#include "internal/x509_int.h"
 
 #ifndef OPENSSL_NO_STDIO
 int X509_print_fp(FILE *fp, X509 *x)
