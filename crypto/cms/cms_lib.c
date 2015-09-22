@@ -585,10 +585,11 @@ int cms_ias_cert_cmp(CMS_IssuerAndSerialNumber *ias, X509 *cert)
 
 int cms_keyid_cert_cmp(ASN1_OCTET_STRING *keyid, X509 *cert)
 {
-    X509_check_purpose(cert, -1, -1);
-    if (!cert->skid)
+    const ASN1_OCTET_STRING *cert_keyid = X509_get0_subject_key_id(cert);
+
+    if (cert_keyid == NULL)
         return -1;
-    return ASN1_OCTET_STRING_cmp(keyid, cert->skid);
+    return ASN1_OCTET_STRING_cmp(keyid, cert_keyid);
 }
 
 int cms_set1_ias(CMS_IssuerAndSerialNumber **pias, X509 *cert)
@@ -613,12 +614,13 @@ int cms_set1_ias(CMS_IssuerAndSerialNumber **pias, X509 *cert)
 int cms_set1_keyid(ASN1_OCTET_STRING **pkeyid, X509 *cert)
 {
     ASN1_OCTET_STRING *keyid = NULL;
-    X509_check_purpose(cert, -1, -1);
-    if (!cert->skid) {
+    const ASN1_OCTET_STRING *cert_keyid;
+    cert_keyid = X509_get0_subject_key_id(cert);
+    if (cert_keyid == NULL) {
         CMSerr(CMS_F_CMS_SET1_KEYID, CMS_R_CERTIFICATE_HAS_NO_KEYID);
         return 0;
     }
-    keyid = ASN1_STRING_dup(cert->skid);
+    keyid = ASN1_STRING_dup(cert_keyid);
     if (!keyid) {
         CMSerr(CMS_F_CMS_SET1_KEYID, ERR_R_MALLOC_FAILURE);
         return 0;

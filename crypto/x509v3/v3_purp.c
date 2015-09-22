@@ -62,6 +62,7 @@
 #include "internal/numbers.h"
 #include <openssl/x509v3.h>
 #include <openssl/x509_vfy.h>
+#include "internal/x509_int.h"
 
 static void x509v3_cache_extensions(X509 *x);
 
@@ -867,4 +868,10 @@ uint32_t X509_get_extended_key_usage(X509 *x)
     if (x->ex_flags & EXFLAG_XKUSAGE)
         return x->ex_xkusage;
     return UINT32_MAX;
+}
+
+const ASN1_OCTET_STRING *X509_get0_subject_key_id(X509 *x)
+{
+    X509_check_purpose(x, -1, -1);
+    return x->skid;
 }
