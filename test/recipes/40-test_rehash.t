@@ -10,6 +10,11 @@ use OpenSSL::Test qw/:DEFAULT top_file/;
 
 setup("test_rehash");
 
+#If "openssl rehash -help" fails it's most likely because we're on a platform
+#that doesn't support the rehash command (e.g. Windows)
+plan skip_all => "test_rehash is not available on this platform"
+    unless run(app(["openssl", "rehash", "-help"]));
+
 plan tests => 5;
 
 indir "rehash.$$" => sub {
