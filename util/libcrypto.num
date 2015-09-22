@@ -4041,3 +4041,4 @@ lh_doall                                3906	1_1_0	EXIST::FUNCTION:
 PKCS8_pkey_get0_attrs                   3907	1_1_0	EXIST::FUNCTION:
 PKCS8_pkey_add1_attr_by_NID             3908	1_1_0	EXIST::FUNCTION:
 ASYNC_is_capable                        3909	1_1_0	EXIST::FUNCTION:
+EVP_CIPHER_CTX_set_cipher_data          3910	1_1_0	EXIST::FUNCTION:
