@@ -198,3 +198,13 @@ int ASN1_TIME_diff(int *pday, int *psec,
         return 0;
     return OPENSSL_gmtime_diff(pday, psec, &tm_from, &tm_to);
 }
+
+int ASN1_TIME_print(BIO *bp, const ASN1_TIME *tm)
+{
+    if (tm->type == V_ASN1_UTCTIME)
+        return ASN1_UTCTIME_print(bp, tm);
+    if (tm->type == V_ASN1_GENERALIZEDTIME)
+        return ASN1_GENERALIZEDTIME_print(bp, tm);
+    BIO_write(bp, "Bad time value", 14);
+    return (0);
+}
