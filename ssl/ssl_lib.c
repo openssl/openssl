@@ -167,8 +167,8 @@ SSL3_ENC_METHOD ssl3_undef_enc_method = {
      * evil casts, but these functions are only called if there's a library
      * bug
      */
-    (int (*)(SSL *, int))ssl_undefined_function,
-    (int (*)(SSL *, unsigned char *, int))ssl_undefined_function,
+    (int (*)(SSL *, SSL3_RECORD *, unsigned int, int))ssl_undefined_function,
+    (int (*)(SSL *, SSL3_RECORD *, unsigned char *, int))ssl_undefined_function,
     ssl_undefined_function,
     (int (*)(SSL *, unsigned char *, unsigned char *, int))
         ssl_undefined_function,
@@ -667,6 +667,8 @@ SSL *SSL_new(SSL_CTX *ctx)
     X509_VERIFY_PARAM_inherit(s->param, ctx->param);
     s->quiet_shutdown = ctx->quiet_shutdown;
     s->max_send_fragment = ctx->max_send_fragment;
+    s->split_send_fragment = ctx->split_send_fragment;
+    s->max_pipelines = ctx->max_pipelines;
 
     CRYPTO_add(&ctx->references, 1, CRYPTO_LOCK_SSL_CTX);
     s->ctx = ctx;
@@ -1648,7 +1650,18 @@ long SSL_ctrl(SSL *s, int cmd, long larg, void *parg)
         if (larg < 512 || larg > SSL3_RT_MAX_PLAIN_LENGTH)
             return 0;
         s->max_send_fragment = larg;
+        if (s->max_send_fragment < s->split_send_fragment)
+            s->split_send_fragment = s->max_send_fragment;
         return 1;
+    case SSL_CTRL_SET_SPLIT_SEND_FRAGMENT:
+        if (larg > s->max_send_fragment || larg == 0)
+            return 0;
+        s->split_send_fragment = larg;
+        return 1;
+    case SSL_CTRL_SET_MAX_PIPELINES:
+        if (larg < 1 || larg > SSL_MAX_PIPELINES)
+            return 0;
+        s->max_pipelines = larg;
     case SSL_CTRL_GET_RI_SUPPORT:
         if (s->s3)
             return s->s3->send_connection_binding;
@@ -1788,7 +1801,18 @@ long SSL_CTX_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
         if (larg < 512 || larg > SSL3_RT_MAX_PLAIN_LENGTH)
             return 0;
         ctx->max_send_fragment = larg;
+        if (ctx->max_send_fragment < ctx->split_send_fragment)
+            ctx->split_send_fragment = ctx->split_send_fragment;
         return 1;
+    case SSL_CTRL_SET_SPLIT_SEND_FRAGMENT:
+        if (larg > ctx->max_send_fragment || larg == 0)
+            return 0;
+        ctx->split_send_fragment = larg;
+        return 1;
+    case SSL_CTRL_SET_MAX_PIPELINES:
+        if (larg < 1 || larg > SSL_MAX_PIPELINES)
+            return 0;
+        ctx->max_pipelines = larg;
     case SSL_CTRL_CERT_FLAGS:
         return (ctx->cert->cert_flags |= larg);
     case SSL_CTRL_CLEAR_CERT_FLAGS:
@@ -2330,6 +2354,7 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
         ret->comp_methods = SSL_COMP_get_compression_methods();
 
     ret->max_send_fragment = SSL3_RT_MAX_PLAIN_LENGTH;
+    ret->split_send_fragment = SSL3_RT_MAX_PLAIN_LENGTH;
 
     /* Setup RFC4507 ticket keys */
     if ((RAND_bytes(ret->tlsext_tick_key_name, 16) <= 0)

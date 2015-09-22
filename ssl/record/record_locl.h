@@ -119,7 +119,7 @@
 /* Functions/macros provided by the RECORD_LAYER component */
 
 #define RECORD_LAYER_get_rbuf(rl)               (&(rl)->rbuf)
-#define RECORD_LAYER_get_wbuf(rl)               (&(rl)->wbuf)
+#define RECORD_LAYER_get_wbuf(rl)               ((rl)->wbuf)
 #define RECORD_LAYER_get_rrec(rl)               (&(rl)->rrec)
 #define RECORD_LAYER_get_wrec(rl)               (&(rl)->wrec)
 #define RECORD_LAYER_set_packet(rl, p)          ((rl)->packet = (p))
@@ -165,7 +165,7 @@ void SSL3_BUFFER_clear(SSL3_BUFFER *b);
 void SSL3_BUFFER_set_data(SSL3_BUFFER *b, const unsigned char *d, int n);
 void SSL3_BUFFER_release(SSL3_BUFFER *b);
 __owur int ssl3_setup_read_buffer(SSL *s);
-__owur int ssl3_setup_write_buffer(SSL *s);
+__owur int ssl3_setup_write_buffer(SSL *s, unsigned int numwpipes);
 int ssl3_release_read_buffer(SSL *s);
 int ssl3_release_write_buffer(SSL *s);
 
@@ -194,7 +194,7 @@ void SSL3_RECORD_release(SSL3_RECORD *r);
 int SSL3_RECORD_setup(SSL3_RECORD *r);
 void SSL3_RECORD_set_seq_num(SSL3_RECORD *r, const unsigned char *seq_num);
 int ssl3_get_record(SSL *s);
-__owur int ssl3_do_compress(SSL *ssl);
+__owur int ssl3_do_compress(SSL *ssl, SSL3_RECORD *wr);
 __owur int ssl3_do_uncompress(SSL *ssl);
 void ssl3_cbc_copy_mac(unsigned char *out,
                        const SSL3_RECORD *rec, unsigned md_size);
