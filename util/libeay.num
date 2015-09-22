@@ -4629,3 +4629,14 @@ EVP_PKEY_meth_get_sign                  4987	EXIST::FUNCTION:
 EVP_PKEY_meth_get_copy                  4988	EXIST::FUNCTION:
 EVP_PKEY_meth_get_verify_recover        4989	EXIST::FUNCTION:
 EVP_PKEY_meth_get_encrypt               4990	EXIST::FUNCTION:
+X509_get0_subject_key_id                4991	EXIST::FUNCTION:
+i2d_re_X509_CRL_tbs                     4992	EXIST::FUNCTION:
+X509_REQ_get_X509_PUBKEY                4993	EXIST::FUNCTION:
+X509_REQ_get0_signature                 4994	EXIST::FUNCTION:
+X509_REVOKED_get0_revocationDate        4995	EXIST::FUNCTION:
+X509_REVOKED_get0_serialNumber          4996	EXIST::FUNCTION:
+X509_CRL_get0_extensions                4997	EXIST::FUNCTION:
+X509_REQ_get_signature_nid              4998	EXIST::FUNCTION:
+X509_CRL_get_signature_nid              5000	EXIST::FUNCTION:
+i2d_re_X509_REQ_tbs                     5001	EXIST::FUNCTION:
+X509_REVOKED_get0_extensions            5002	EXIST::FUNCTION:
