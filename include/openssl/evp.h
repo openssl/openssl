@@ -307,6 +307,8 @@ int (*EVP_CIPHER_meth_get_ctrl(const EVP_CIPHER *cipher))(EVP_CIPHER_CTX *,
 # define         EVP_CIPH_FLAG_CUSTOM_CIPHER     0x100000
 # define         EVP_CIPH_FLAG_AEAD_CIPHER       0x200000
 # define         EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK 0x400000
+/* Cipher can handle pipeline operations */
+# define         EVP_CIPH_FLAG_PIPELINE          0X800000
 
 /*
  * Cipher context flag to indicate we can handle wrap mode: if allowed in
@@ -372,6 +374,13 @@ int (*EVP_CIPHER_meth_get_ctrl(const EVP_CIPHER *cipher))(EVP_CIPHER_CTX *,
 # define         EVP_CTRL_KEY_MESH                       0x20
 /* EVP_CTRL_BLOCK_PADDING_MODE takes the padding mode */
 # define         EVP_CTRL_BLOCK_PADDING_MODE             0x21
+
+/* Set the output buffers to use for a pipelined operation */
+# define         EVP_CTRL_SET_PIPELINE_OUTPUT_BUFS       0x22
+/* Set the input buffers to use for a pipelined operation */
+# define         EVP_CTRL_SET_PIPELINE_INPUT_BUFS        0x23
+/* Set the input buffer lengths to use for a pipelined operation */
+# define         EVP_CTRL_SET_PIPELINE_INPUT_LENS        0x24
 
 /* Padding modes */
 #define EVP_PADDING_PKCS7       1
