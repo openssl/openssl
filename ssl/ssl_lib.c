@@ -2787,6 +2787,37 @@ int SSL_CTX_set_default_verify_paths(SSL_CTX *ctx)
     return (X509_STORE_set_default_paths(ctx->cert_store));
 }
 
+int SSL_CTX_set_default_verify_dir(SSL_CTX *ctx)
+{
+    X509_LOOKUP *lookup;
+
+    lookup = X509_STORE_add_lookup(ctx->cert_store, X509_LOOKUP_hash_dir());
+    if (lookup == NULL)
+        return 0;
+    X509_LOOKUP_add_dir(lookup, NULL, X509_FILETYPE_DEFAULT);
+
+    /* Clear any errors if the default directory does not exist */
+    ERR_clear_error();
+
+    return 1;
+}
+
+int SSL_CTX_set_default_verify_file(SSL_CTX *ctx)
+{
+    X509_LOOKUP *lookup;
+
+    lookup = X509_STORE_add_lookup(ctx->cert_store, X509_LOOKUP_file());
+    if (lookup == NULL)
+        return 0;
+
+    X509_LOOKUP_load_file(lookup, NULL, X509_FILETYPE_DEFAULT);
+
+    /* Clear any errors if the default file does not exist */
+    ERR_clear_error();
+
+    return 1;
+}
+
 int SSL_CTX_load_verify_locations(SSL_CTX *ctx, const char *CAfile,
                                   const char *CApath)
 {
