@@ -12,6 +12,7 @@ retrieve certificate extension flags.
    uint32_t X509_get_extension_flags(X509 *x);
    uint32_t X509_get_key_usage(X509 *x);
    uint32_t X509_get_extended_key_usage(X509 *x);
+   const ASN1_OCTET_STRING *X509_get0_subject_key_id(X509 *x);
 
 =head1 DESCRIPTION
 
@@ -90,11 +91,16 @@ B<id-kp-timeStamping>, B<id-kp-dvcs> and B<anyExtendedKeyUsage> respectively.
 Additionally B<XKU_SGC> is set if either Netscape or Microsoft SGC OIDs are
 present.
 
+X509_get_extended_key_usage() return an internal pointer to the subject key
+identifier of B<x> as an B<ASN1_OCTET_STRING> or B<NULL> if the extension
+is not present or cannot be parsed.
+
 =head1 NOTES
 
 The value of the flags correspond to extension values which are cached
 in the B<X509> structure. If the flags returned do not provide sufficient
-information an application should examine extension values directly.
+information an application should examine extension values directly
+for example using X509_get_ext_d2i().
 
 If the key usage or extended key usage extension is absent then typically usage
 is unrestricted. For this reason X509_get_key_usage() and
@@ -103,10 +109,19 @@ extension is absent. Applications can additionally check the return value of
 X509_get_extension_flags() and take appropriate action is an extension is
 absent.
 
+If X509_get0_subject_key_id() returns B<NULL> then the extension may be
+absent or malformed. Applications can determine the precise reason using
+X509_get_ext_d2i().
+
 =head1 RETURN VALUE
 
-These functions all return sets of flags corresponding to the certificate
-extension values.
+X509_get_extension_flags(), X509_get_key_usage() and
+X509_get_extended_key_usage() return sets of flags corresponding to the
+certificate extension values.
+
+X509_get0_subject_key_id() returns the subject key identifier as a
+pointer to an B<ASN1_OCTET_STRING> structure or B<NULL> if the extension
+is absent or an error occured during parsing.
 
 =head1 SEE ALSO
 
