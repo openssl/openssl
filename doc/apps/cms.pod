@@ -35,6 +35,8 @@ B<openssl> B<cms>
 [B<-print>]
 [B<-CAfile file>]
 [B<-CApath dir>]
+[B<-no-CAfile>]
+[B<-no-CApath>]
 [B<-attime timestamp>]
 [B<-check_ss_sig>]
 [B<-crl_check>]
@@ -271,6 +273,14 @@ a directory containing trusted CA certificates, only used with
 B<-verify>. This directory must be a standard certificate directory: that
 is a hash of each subject name (using B<x509 -hash>) should be linked
 to each certificate.
+
+=item B<-no-CAfile>
+
+Do not load the trusted CA certificates from the default file location
+
+=item B<-no-CApath>
+
+Do not load the trusted CA certificates from the default directory location
 
 =item B<-md digest>
 

@@ -34,6 +34,8 @@ B<openssl> B<s_server>
 [B<-state>]
 [B<-CApath directory>]
 [B<-CAfile filename>]
+[B<-no-CAfile>]
+[B<-no-CApath>]
 [B<-attime timestamp>]
 [B<-check_ss_sig>]
 [B<-explicit_policy>]
@@ -206,6 +208,14 @@ A file containing trusted certificates to use during client authentication
 and to use when attempting to build the server certificate chain. The list
 is also used in the list of acceptable client CAs passed to the client when
 a certificate is requested.
+
+=item B<-no-CAfile>
+
+Do not load the trusted CA certificates from the default file location
+
+=item B<-no-CApath>
+
+Do not load the trusted CA certificates from the default directory location
 
 =item B<-verify depth>, B<-Verify depth>
 

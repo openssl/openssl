@@ -39,6 +39,8 @@ B<openssl> B<pkcs12>
 [B<-rand file(s)>]
 [B<-CAfile file>]
 [B<-CApath dir>]
+[B<-no-CAfile>]
+[B<-no-CApath>]
 [B<-CSP name>]
 
 =head1 DESCRIPTION
@@ -280,6 +282,14 @@ CA storage as a file.
 CA storage as a directory. This directory must be a standard certificate
 directory: that is a hash of each subject name (using B<x509 -hash>) should be
 linked to each certificate.
+
+=item B<-no-CAfile>
+
+Do not load the trusted CA certificates from the default file location
+
+=item B<-no-CApath>
+
+Do not load the trusted CA certificates from the default directory location
 
 =item B<-CSP name>
 
