@@ -261,8 +261,8 @@ static int enable_timeouts = 0;
 static long socket_mtu;
 #ifndef OPENSSL_NO_DTLS1
 static int cert_chain = 0;
-static int dtlslisten = 0;
 #endif
+static int dtlslisten = 0;
 
 static BIO *serverinfo_in = NULL;
 static const char *s_serverinfo_file = NULL;
@@ -2395,7 +2395,7 @@ static int init_ssl_connection(SSL *con)
     unsigned next_proto_neg_len;
 #endif
     unsigned char *exportedkeymat;
-    struct sockaddr client;
+    struct sockaddr_storage client;
 
 #ifndef OPENSSL_NO_DTLS1
     if(dtlslisten) {
@@ -2409,7 +2409,8 @@ static int init_ssl_connection(SSL *con)
                 BIO_get_fd(wbio, &fd);
             }
 
-            if(!wbio || connect(fd, &client, sizeof(struct sockaddr))) {
+            if(!wbio || connect(fd, (struct sockaddr *)&client,
+                                sizeof(struct sockaddr_storage))) {
                 BIO_printf(bio_err, "ERROR - unable to connect\n");
                 return 0;
             }
@@ -2447,13 +2448,11 @@ static int init_ssl_connection(SSL *con)
 #endif
 
     if (i <= 0) {
-#ifndef OPENSSL_NO_DTLS1
         if ((dtlslisten && i == 0)
                 || (!dtlslisten && BIO_sock_should_retry(i))) {
             BIO_printf(bio_s_out, "DELAY\n");
             return (1);
         }
-#endif
 
         BIO_printf(bio_err, "ERROR\n");
 
