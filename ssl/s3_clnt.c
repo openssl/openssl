@@ -3014,7 +3014,7 @@ int ssl3_send_client_key_exchange(SSL *s)
 int ssl3_send_client_verify(SSL *s)
 {
     unsigned char *p;
-    unsigned char data[EVP_MAX_MD_SIZE * 2];
+    unsigned char data[EVP_MAX_MD_SIZE]; /* GOST R 34.11-2012-256*/
     EVP_PKEY *pkey;
     EVP_PKEY_CTX *pctx = NULL;
     EVP_MD_CTX mctx;
