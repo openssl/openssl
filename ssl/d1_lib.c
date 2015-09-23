@@ -754,7 +754,8 @@ int dtls1_listen(SSL *s, struct sockaddr *client)
 
             /* Generate the cookie */
             if (s->ctx->app_gen_cookie_cb == NULL ||
-                s->ctx->app_gen_cookie_cb(s, cookie, &cookielen) == 0) {
+                s->ctx->app_gen_cookie_cb(s, cookie, &cookielen) == 0 ||
+                cookielen > 255) {
                 SSLerr(SSL_F_DTLS1_LISTEN, SSL_R_COOKIE_GEN_CALLBACK_FAILURE);
                 /* This is fatal */
                 return -1;

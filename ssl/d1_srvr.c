@@ -888,9 +888,10 @@ int dtls1_send_hello_verify_request(SSL *s)
 
         if (s->ctx->app_gen_cookie_cb == NULL ||
             s->ctx->app_gen_cookie_cb(s, s->d1->cookie,
-                                      &(s->d1->cookie_len)) == 0) {
+                                      &(s->d1->cookie_len)) == 0 ||
+            s->d1->cookie_len > 255) {
             SSLerr(SSL_F_DTLS1_SEND_HELLO_VERIFY_REQUEST,
-                   ERR_R_INTERNAL_ERROR);
+                   SSL_R_COOKIE_GEN_CALLBACK_FAILURE);
             s->state = SSL_ST_ERR;
             return 0;
         }
