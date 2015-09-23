@@ -1,0 +1,242 @@
+=pod
+
+=head1 NAME
+
+ASYNC_init_pool, ASYNC_free_pool, ASYNC_start_job, ASYNC_pause_job,
+ASYNC_in_job, ASYNC_get_wait_fd, ASYNC_get_current_job, ASYNC_wake,
+ASYNC_clear_wake - asynchronous job management functions
+
+=head1 SYNOPSIS
+
+ #include <openssl/async.h>
+
+ int ASYNC_init_pool(size_t max_size, size_t init_size);
+ void ASYNC_free_pool(void);
+
+ int ASYNC_start_job(ASYNC_JOB **job, int *ret, int (*func)(void *),
+                     void *args, size_t size);
+ int ASYNC_pause_job(void);
+
+ int ASYNC_get_wait_fd(ASYNC_JOB *job);
+ ASYNC_JOB *ASYNC_get_current_job(void);
+ void ASYNC_wake(ASYNC_JOB *job);
+ void ASYNC_clear_wake(ASYNC_JOB *job);
+
+=head1 DESCRIPTION
+
+OpenSSL implements asynchronous capabilities through an ASYNC_JOB. This
+represents code that can be started and executes until some event occurs. At
+that point the code can be paused and control returns to user code until some
+subsequent event indicates that the job can be resumed.
+
+The creation of an ASYNC_JOB is a relatively expensive operation. Therefore, for
+efficiency reasons, jobs can be created up front and reused many times. They are
+held in a pool until they are needed, at which point they are removed from the
+pool, used, and then returned to the pool when the job completes. Before using
+any of the asynchronous job functions, user code should first call
+ASYNC_init_pool(). If the user application is multi-threaded, then this should
+be done for each thread that will initiate asynchronous jobs. Before user code
+exits it should free the pool up (for each thread where a pool was initialised)
+using ASYNC_free_pool(). The B<max_size> argument limits the number of
+ASYNC_JOBs that will be held in the pool. If B<max_size> is set to 0 then no
+upper limit is set. When an ASYNC_JOB is needed but there are none available in
+the pool already then one will be automatically created, as long as the total
+of ASYNC_JOBs managed by the pool does not exceed B<max_size>. When the pool is
+first initialised B<init_size> ASYNC_JOBs will be created immediately. If
+ASYNC_init_pool() is not called before the pool is first used then it will be
+called automatically with a B<max_size> of 0 (no upper limit) and an
+B<init_size> of 0 (no ASYNC_JOBs created up front). If a pool is created in this
+way it must still be cleaned up with an explicit call to ASYNC_free_pool().
+
+An asynchronous job is started by calling the ASYNC_start_job() function.
+Initially B<*job> should be NULL. B<ret> should point to a location where the
+return value of the asynchronous function should be stored on completion of the
+job. B<func> represents the function that should be started asynchronously. The
+data pointed to by B<args> and of size B<size> will be copied and then passed as
+an argument to B<func> when the job starts. ASYNC_start_job will return one of
+the following values:
+
+=over 4
+
+=item B<ASYNC_ERR>
+
+An error occurred trying to start the job. Check the OpenSSL error queue (e.g.
+see L<ERR_print_errors(3)>) for more details.
+
+=item B<ASYNC_NO_JOBS>
+
+There are no jobs currently available in the pool. This call can be retried
+again at a later time.
+
+=item B<ASYNC_PAUSE>
+
+The job was successfully started but was "paused" before it completed (see
+ASYNC_pause_job() below). A handle to the job is placed in B<*job>. Other work
+can be performed (if desired) and the job restarted at a later time. To restart
+a job call ASYNC_start_job() again passing the job handle in B<*job>. The
+B<func>, B<args> and B<size> parameters will be ignored when restarting a job.
+
+=item B<ASYNC_FINISH>
+
+The job completed. B<*job> will be NULL and the return value from B<func> will
+be placed in B<*ret>.
+
+=back
+
+ASYNC_get_current_job() can be used to get a pointer to the currently executing
+ASYNC_JOB. If no job is currently executing then this will return NULL.
+
+If executing within the context of a job (i.e. having been called directly or
+indirectly by the function "func" passed as an argument to ASYNC_start_job())
+then ASYNC_pause_job() will immediately return control to the calling
+application with ASYNC_PAUSE returned from the ASYNC_start_job() call. A
+subsequent call to ASYNC_start_job passing in the relevant ASYNC_JOB in the
+B<*job> parameter will resume execution from the ASYNC_pause_job() call. If
+ASYNC_pause_job() is called whilst not within the context of a job then no
+action is taken and ASYNC_pause_job() returns immediately.
+
+Every ASYNC_JOB has a "wait" file descriptor associated with it. Calling
+ASYNC_get_wait_fd() and passing in a pointer to an ASYNC_JOB in the B<job>
+parameter will return the wait file descriptor associated with that job. This
+file descriptor can be used to signal that the job should be resumed.
+Applications can wait on the file descriptor using a system function call
+such as select or poll. Applications can signal that a job is ready to resume
+using ASYNC_wake() or clear an existing signal using ASYNC_clear_wake().
+
+An example of typical usage might be an async capable engine. User code would
+initiate cryptographic operations. The engine would initiate those operations
+asynchronously and then call ASYNC_pause_job() to return control to the user
+code. The user code can then perform other tasks or wait for the job to be ready
+by calling "select" or other similar function on the wait file descriptor. The
+engine can signal to the user code that the job should be resumed using
+ASYNC_wait(). Once resumed the engine would clear the wake signal by calling
+ASYNC_clear_wake().
+
+
+=head1 RETURN VALUES
+
+ASYNC_init_pool returns 1 on success or 0 otherwise.
+
+ASYNC_start_job returns one of ASYNC_ERR, ASYNC_NO_JOBS, ASYNC_PAUSE or
+ASYNC_FINISH as described above.
+
+ASYNC_pause_job returns 0 if an error occured (including if called when not
+within the context of an ASYNC_JOB), or 1 on success.
+
+ASYNC_get_wait_fd returns the "wait" file descriptor associated with the
+ASYNC_JOB provided as an argument.
+
+ASYNC_get_current_job returns a pointer to the currently executing ASYNC_JOB or
+NULL if not within the context of a job.
+
+=head1 EXAMPLE
+
+The following example demonstrates how to use most of the core async APIs:
+
+ #include <stdio.h>
+ #include <openssl/async.h>
+
+ int jobfunc(void *arg)
+ {
+     ASYNC_JOB *currjob;
+     unsigned char *msg;
+
+     currjob = ASYNC_get_current_job();
+     if (currjob != NULL) {
+         printf("Executing within a job\n");
+     } else {
+         printf("Not executing within a job - should not happen\n");
+         return 0;
+     }
+
+     msg = (unsigned char *)arg;
+     printf("Passed in message is: %s\n", msg);
+
+     /*
+      * Normally some external event would cause this to happen at some
+      * later point - but we do it here for demo purposes, i.e.
+      * immediately signalling that the job is ready to be woken up after
+      * we return to main via ASYNC_pause_job().
+      */
+     ASYNC_wake(currjob);
+
+     /* Return control back to main */
+     ASYNC_pause_job();
+
+     /* Clear the wake signal */
+     ASYNC_clear_wake(currjob);
+
+     printf ("Resumed the job after a pause\n");
+
+     return 1;
+ }
+
+ int main(void)
+ {
+     ASYNC_JOB *job = NULL;
+     int ret, waitfd;
+     fd_set waitfdset;
+     unsigned char msg[13] = "Hello world!";
+
+     /*
+      * We're only expecting 1 job to be used here so we're only creating
+      * a pool of 1
+      */
+     if (!ASYNC_init_pool(1, 1)) {
+         printf("Error creating pool\n");
+         goto end;
+     }
+
+     printf("Starting...\n");
+
+     for (;;) {
+         switch(ASYNC_start_job(&job, &ret, jobfunc, msg, sizeof(msg))) {
+         case ASYNC_ERR:
+         case ASYNC_NO_JOBS:
+                 printf("An error occurred\n");
+                 goto end;
+         case ASYNC_PAUSE:
+                 printf("Job was paused\n");
+                 break;
+         case ASYNC_FINISH:
+                 printf("Job finished with return value %d\n", ret);
+                 goto end;
+         }
+
+         /* Wait for the job to be woken */
+         printf("Waiting for the job to be woken up\n");
+         waitfd = ASYNC_get_wait_fd(job);
+         FD_ZERO(&waitfdset);
+         FD_SET(waitfd, &waitfdset);
+         select(waitfd + 1, &waitfdset, NULL, NULL, NULL);
+     }
+
+ end:
+     printf("Finishing\n");
+     ASYNC_free_pool();
+
+     return 0;
+ }
+
+The expected output from executing the above example program is:
+
+ Starting...
+ Executing within a job
+ Passed in message is: Hello world!
+ Job was paused
+ Waiting for the job to be woken up
+ Resumed the job after a pause
+ Job finished with return value 1
+ Finishing
+
+=head1 SEE ALSO
+
+L<crypto(3)>, L<ERR_print_errors(3)>
+
+=head1 HISTORY
+
+ASYNC_init_pool, ASYNC_free_pool, ASYNC_start_job, ASYNC_pause_job,
+ASYNC_get_wait_fd, ASYNC_get_current_job, ASYNC_wake, ASYNC_clear_wake were
+first added to OpenSSL 1.1.0.
+
+=cut
