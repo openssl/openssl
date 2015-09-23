@@ -82,7 +82,12 @@ $code=<<___;
 #include "arm_arch.h"
 
 .text
+#if defined(__thumb2__) && !defined(__APPLE__)
+.syntax	unified
+.thumb
+#else
 .code	32
+#endif
 
 #if __ARM_MAX_ARCH__>=7
 .align	5
@@ -101,7 +106,7 @@ bn_mul_mont:
 #if __ARM_MAX_ARCH__>=7
 	tst	ip,#7
 	bne	.Lialu
-	adr	r0,bn_mul_mont
+	adr	r0,.Lbn_mul_mont
 	ldr	r2,.LOPENSSL_armcap
 	ldr	r0,[r0,r2]
 #ifdef	__APPLE__
@@ -117,6 +122,9 @@ bn_mul_mont:
 #endif
 	cmp	ip,#2
 	mov	$num,ip			@ load num
+#ifdef	__thumb2__
+	ittt	lt
+#endif
 	movlt	r0,#0
 	addlt	sp,sp,#2*4
 	blt	.Labrt
@@ -164,10 +172,11 @@ bn_mul_mont:
 	ldr	$n0,[$_n0]		@ restore n0
 	adc	$nhi,$nhi,#0
 	str	$nlo,[$num]		@ tp[num-1]=
+	mov	$tj,sp
 	str	$nhi,[$num,#4]		@ tp[num]=
 
 .Louter:
-	sub	$tj,$num,sp		@ "original" $num-1 value
+	sub	$tj,$num,$tj		@ "original" $num-1 value
 	sub	$ap,$ap,$tj		@ "rewind" ap to &ap[1]
 	ldr	$bi,[$tp,#4]!		@ *(++bp)
 	sub	$np,$np,$tj		@ "rewind" np to &np[1]
@@ -212,11 +221,16 @@ bn_mul_mont:
 	str	$nhi,[$num,#4]		@ tp[num]=
 
 	cmp	$tp,$tj
+#ifdef	__thumb2__
+	itt	ne
+#endif
+	movne	$tj,sp
 	bne	.Louter
 
 	ldr	$rp,[$_rp]		@ pull rp
+	mov	$aj,sp
 	add	$num,$num,#4		@ $num to point at &tp[num]
-	sub	$aj,$num,sp		@ "original" num value
+	sub	$aj,$num,$aj		@ "original" num value
 	mov	$tp,sp			@ "rewind" $tp
 	mov	$ap,$tp			@ "borrow" $ap
 	sub	$np,$np,$aj		@ "rewind" $np to &np[0]
@@ -242,7 +256,8 @@ bn_mul_mont:
 	cmp	$tp,$num
 	bne	.Lcopy
 
-	add	sp,$num,#4		@ skip over tp[num+1]
+	mov	sp,$num
+	add	sp,sp,#4		@ skip over tp[num+1]
 	ldmia	sp!,{r4-r12,lr}		@ restore registers
 	add	sp,sp,#2*4		@ skip over {r0,r2}
 	mov	r0,#1
@@ -283,6 +298,7 @@ bn_mul8x_mont_neon:
 	stmdb	sp!,{r4-r11}
 	vstmdb	sp!,{d8-d15}		@ ABI specification says so
 	ldmia	ip,{r4-r5}		@ load rest of parameter block
+	mov	ip,sp
 
 	sub		$toutptr,sp,#16
 	vld1.32		{${Bi}[0]}, [$bptr,:32]!
@@ -638,8 +654,9 @@ bn_mul8x_mont_neon:
 	bne	.LNEON_sub
 
 	ldr	r10, [$aptr]				@ load top-most bit
+	mov	r11,sp
 	veor	q0,q0,q0
-	sub	r11,$bptr,sp				@ this is num*4
+	sub	r11,$bptr,r11				@ this is num*4
 	veor	q1,q1,q1
 	mov	$aptr,sp
 	sub	$rptr,$rptr,r11				@ rewind $rptr
@@ -649,27 +666,33 @@ bn_mul8x_mont_neon:
 .LNEON_copy_n_zap:
 	ldmia	$aptr!, {r4-r7}
 	ldmia	$rptr,  {r8-r11}
+	it	cc
 	movcc	r8, r4
 	vst1.64	{q0-q1}, [$nptr,:256]!			@ wipe
+	itt	cc
 	movcc	r9, r5
 	movcc	r10,r6
 	vst1.64	{q0-q1}, [$nptr,:256]!			@ wipe
+	it	cc
 	movcc	r11,r7
 	ldmia	$aptr, {r4-r7}
 	stmia	$rptr!, {r8-r11}
 	sub	$aptr,$aptr,#16
 	ldmia	$rptr, {r8-r11}
+	it	cc
 	movcc	r8, r4
 	vst1.64	{q0-q1}, [$aptr,:256]!			@ wipe
+	itt	cc
 	movcc	r9, r5
 	movcc	r10,r6
 	vst1.64	{q0-q1}, [$nptr,:256]!			@ wipe
+	it	cc
 	movcc	r11,r7
 	teq	$aptr,$bptr				@ preserves carry
 	stmia	$rptr!, {r8-r11}
 	bne	.LNEON_copy_n_zap
 
-	sub	sp,ip,#96
+	mov	sp,ip
         vldmia  sp!,{d8-d15}
         ldmia   sp!,{r4-r11}
 	ret						@ bx lr

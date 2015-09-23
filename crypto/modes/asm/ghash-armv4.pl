@@ -136,7 +136,12 @@ $code=<<___;
 #include "arm_arch.h"
 
 .text
+#if defined(__thumb2__) && !defined(__APPLE__)
+.syntax	unified
+.thumb
+#else
 .code	32
+#endif
 
 #ifdef  __APPLE__
 #define ldrplb  ldrbpl
@@ -154,19 +159,27 @@ rem_4bit:
 
 .type	rem_4bit_get,%function
 rem_4bit_get:
-	sub	$rem_4bit,pc,#8
-	sub	$rem_4bit,$rem_4bit,#32	@ &rem_4bit
+#if defined(__thumb2__)
+	adr	$rem_4bit,rem_4bit
+#else
+	sub	$rem_4bit,pc,#8+32	@ &rem_4bit
+#endif
 	b	.Lrem_4bit_got
+	nop
 	nop
 .size	rem_4bit_get,.-rem_4bit_get
 
 .global	gcm_ghash_4bit
 .type	gcm_ghash_4bit,%function
+.align	4
 gcm_ghash_4bit:
-	sub	r12,pc,#8
+#if defined(__thumb2__)
+	adr	r12,rem_4bit
+#else
+	sub	r12,pc,#8+48		@ &rem_4bit
+#endif
 	add	$len,$inp,$len		@ $len to point at the end
 	stmdb	sp!,{r3-r11,lr}		@ save $len/end too
-	sub	r12,r12,#48		@ &rem_4bit
 
 	ldmia	r12,{r4-r11}		@ copy rem_4bit ...
 	stmdb	sp!,{r4-r11}		@ ... to stack
@@ -213,6 +226,9 @@ gcm_ghash_4bit:
 	eor	$Zlh,$Zlh,$Zhl,lsl#28
 	ldrh	$Tll,[sp,$nlo]		@ rem_4bit[rem]
 	eor	$Zhl,$Thl,$Zhl,lsr#4
+#ifdef	__thumb2__
+	it	pl
+#endif
 	ldrplb	$nlo,[$inp,$cnt]
 	eor	$Zhl,$Zhl,$Zhh,lsl#28
 	eor	$Zhh,$Thh,$Zhh,lsr#4
@@ -223,6 +239,9 @@ gcm_ghash_4bit:
 	add	$nhi,$nhi,$nhi
 	ldmia	$Thh,{$Tll-$Thh}	@ load Htbl[nhi]
 	eor	$Zll,$Tll,$Zll,lsr#4
+#ifdef	__thumb2__
+	it	pl
+#endif
 	ldrplb	$Tll,[$Xi,$cnt]
 	eor	$Zll,$Zll,$Zlh,lsl#28
 	eor	$Zlh,$Tlh,$Zlh,lsr#4
@@ -230,8 +249,14 @@ gcm_ghash_4bit:
 	eor	$Zlh,$Zlh,$Zhl,lsl#28
 	eor	$Zhl,$Thl,$Zhl,lsr#4
 	eor	$Zhl,$Zhl,$Zhh,lsl#28
+#ifdef	__thumb2__
+	it	pl
+#endif
 	eorpl	$nlo,$nlo,$Tll
 	eor	$Zhh,$Thh,$Zhh,lsr#4
+#ifdef	__thumb2__
+	itt	pl
+#endif
 	andpl	$nhi,$nlo,#0xf0
 	andpl	$nlo,$nlo,#0x0f
 	eor	$Zhh,$Zhh,$Tlh,lsl#16	@ ^= rem_4bit[rem]
@@ -241,7 +266,11 @@ gcm_ghash_4bit:
 	add	$inp,$inp,#16
 	mov	$nhi,$Zll
 ___
-	&Zsmash("cmp\t$inp,$len","ldrneb\t$nlo,[$inp,#15]");
+	&Zsmash("cmp\t$inp,$len","\n".
+				 "#ifdef __thumb2__\n".
+				 "	it	ne\n".
+				 "#endif\n".
+				 "	ldrneb	$nlo,[$inp,#15]");
 $code.=<<___;
 	bne	.Louter
 
@@ -299,6 +328,9 @@ gcm_gmult_4bit:
 	eor	$Zlh,$Zlh,$Zhl,lsl#28
 	ldrh	$Tll,[$rem_4bit,$nlo]	@ rem_4bit[rem]
 	eor	$Zhl,$Thl,$Zhl,lsr#4
+#ifdef	__thumb2__
+	it	pl
+#endif
 	ldrplb	$nlo,[$Xi,$cnt]
 	eor	$Zhl,$Zhl,$Zhh,lsl#28
 	eor	$Zhh,$Thh,$Zhh,lsr#4
@@ -316,6 +348,9 @@ gcm_gmult_4bit:
 	eor	$Zhl,$Thl,$Zhl,lsr#4
 	eor	$Zhl,$Zhl,$Zhh,lsl#28
 	eor	$Zhh,$Thh,$Zhh,lsr#4
+#ifdef	__thumb2__
+	itt	pl
+#endif
 	andpl	$nhi,$nlo,#0xf0
 	andpl	$nlo,$nlo,#0x0f
 	eor	$Zhh,$Zhh,$Tll,lsl#16	@ ^= rem_4bit[rem]

@@ -51,7 +51,12 @@ $code=<<___;
 #include "arm_arch.h"
 
 .text
+#if defined(__thumb2__) && !defined(__APPLE__)
+.syntax	unified
+.thumb
+#else
 .code	32
+#endif
 ___
 ################
 # private interface to mul_1x1_ialu
@@ -132,11 +137,17 @@ mul_1x1_ialu:
 	eor	$hi,$hi,$t0,lsr#8
 	ldr	$t0,[sp,$i0]		@ tab[b >> 30      ]
 
+#ifdef	__thumb2__
+	itt	ne
+#endif
 	eorne	$lo,$lo,$b,lsl#30
 	eorne	$hi,$hi,$b,lsr#2
 	tst	$a,#1<<31
 	eor	$lo,$lo,$t1,lsl#27
 	eor	$hi,$hi,$t1,lsr#5
+#ifdef	__thumb2__
+	itt	ne
+#endif
 	eorne	$lo,$lo,$b,lsl#31
 	eorne	$hi,$hi,$b,lsr#1
 	eor	$lo,$lo,$t0,lsl#30
@@ -156,20 +167,33 @@ $code.=<<___;
 .align	5
 bn_GF2m_mul_2x2:
 #if __ARM_MAX_ARCH__>=7
+	stmdb	sp!,{r10,lr}
 	ldr	r12,.LOPENSSL_armcap
-.Lpic:	ldr	r12,[pc,r12]
-	tst	r12,#1
+	adr	r10,.LOPENSSL_armcap
+	ldr	r12,[r12,r10]
+#ifdef	__APPLE__
+	ldr	r12,[r12]
+#endif
+	tst	r12,#ARMV7_NEON
+	itt	ne
+	ldrne	r10,[sp],#8
 	bne	.LNEON
+	stmdb	sp!,{r4-r9}
+#else
+	stmdb	sp!,{r4-r10,lr}
 #endif
 ___
 $ret="r10";	# reassigned 1st argument
 $code.=<<___;
-	stmdb	sp!,{r4-r10,lr}
 	mov	$ret,r0			@ reassign 1st argument
 	mov	$b,r3			@ $b=b1
+	sub	r7,sp,#36
+	mov	r8,sp
+	and	r7,r7,#-32
 	ldr	r3,[sp,#32]		@ load b0
 	mov	$mask,#7<<2
-	sub	sp,sp,#32		@ allocate tab[8]
+	mov	sp,r7			@ allocate tab[8]
+	str	r8,[r7,#32]
 
 	bl	mul_1x1_ialu		@ a1·b1
 	str	$lo,[$ret,#8]
@@ -193,6 +217,7 @@ ___
 $code.=<<___;
 	ldmia	$ret,{@r[0]-@r[3]}
 	eor	$lo,$lo,$hi
+	ldr	sp,[sp,#32]		@ destroy tab[8]
 	eor	$hi,$hi,@r[1]
 	eor	$lo,$lo,@r[0]
 	eor	$hi,$hi,@r[2]
@@ -200,7 +225,6 @@ $code.=<<___;
 	eor	$hi,$hi,@r[3]
 	str	$hi,[$ret,#8]
 	eor	$lo,$lo,$hi
-	add	sp,sp,#32		@ destroy tab[8]
 	str	$lo,[$ret,#4]
 
 #if __ARM_ARCH__>=5
@@ -279,7 +303,7 @@ $code.=<<___;
 #if __ARM_MAX_ARCH__>=7
 .align	5
 .LOPENSSL_armcap:
-.word	OPENSSL_armcap_P-(.Lpic+8)
+.word	OPENSSL_armcap_P-.
 #endif
 .asciz	"GF(2^m) Multiplication for ARMv4/NEON, CRYPTOGAMS by <appro\@openssl.org>"
 .align	5
