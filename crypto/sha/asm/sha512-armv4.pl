@@ -212,16 +212,12 @@ $code=<<___;
 #endif
 
 .text
-#if __ARM_ARCH__<7 || defined(__APPLE__)
-.code	32
-#else
+#if defined(__thumb2__) && !defined(__APPLE__)
 .syntax unified
-# ifdef __thumb2__
-#  define adrl adr
 .thumb
-# else
-.code   32
-# endif
+# define adrl adr
+#else
+.code	32
 #endif
 
 .type	K512,%object
@@ -280,10 +276,10 @@ WORD64(0x5fcb6fab,0x3ad6faec, 0x6c44198c,0x4a475817)
 .type	sha512_block_data_order,%function
 sha512_block_data_order:
 .Lsha512_block_data_order:
-#if __ARM_ARCH__<7
+#if __ARM_ARCH__<7 && !defined(__thumb2__)
 	sub	r3,pc,#8		@ sha512_block_data_order
 #else
-	adr	r3,sha512_block_data_order
+	adr	r3,.Lsha512_block_data_order
 #endif
 #if __ARM_MAX_ARCH__>=7 && !defined(__KERNEL__)
 	ldr	r12,.LOPENSSL_armcap

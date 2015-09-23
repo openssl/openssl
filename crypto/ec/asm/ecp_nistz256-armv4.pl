@@ -45,7 +45,12 @@ $code.=<<___;
 #include "arm_arch.h"
 
 .text
+#if defined(__thumb2__) && !defined(__APPLE__)
+.syntax	unified
+.thumb
+#else
 .code	32
+#endif
 ___
 ########################################################################
 # Convert ecp_nistz256_table.c to layout expected by ecp_nistz_gather_w7
@@ -162,6 +167,9 @@ __ecp_nistz256_mul_by_2:
 	adcs	$a6,$a6,$a6
 	mov	$ff,#0
 	adcs	$a7,$a7,$a7
+#ifdef	__thumb2__
+	it	cs
+#endif
 	movcs	$ff,#-1			@ $ff = carry ? -1 : 0
 
 	b	.Lreduce_by_sub
@@ -213,6 +221,9 @@ __ecp_nistz256_add:
 	adcs	$a6,$a6,$t2
 	mov	$ff,#0
 	adcs	$a7,$a7,$t3
+#ifdef	__thumb2__
+	it	cs
+#endif
 	movcs	$ff,#-1			@ $ff = carry ? -1 : 0, "broadcast" carry
 	ldr	lr,[sp],#4		@ pop lr
 
@@ -286,6 +297,9 @@ __ecp_nistz256_mul_by_3:
 	adcs	$a6,$a6,$a6
 	mov	$ff,#0
 	adcs	$a7,$a7,$a7
+#ifdef	__thumb2__
+	it	cs
+#endif
 	movcs	$ff,#-1			@ $ff = carry ? -1 : 0, "broadcast" carry
 
 	subs	$a0,$a0,$ff		@ subtract synthesized modulus, see
@@ -318,6 +332,9 @@ __ecp_nistz256_mul_by_3:
 	adcs	$a6,$a6,$t2
 	mov	$ff,#0
 	adcs	$a7,$a7,$t3
+#ifdef	__thumb2__
+	it	cs
+#endif
 	movcs	$ff,#-1			@ $ff = carry ? -1 : 0, "broadcast" carry
 	ldr	lr,[sp],#4		@ pop lr
 
@@ -781,6 +798,9 @@ ecp_nistz256_gather_w5:
 
 	cmp	$index,#0
 	mov	$mask,#0
+#ifdef	__thumb2__
+	itt	ne
+#endif
 	subne	$index,$index,#1
 	movne	$mask,#-1
 	add	$inp,$inp,$index,lsl#2
@@ -887,6 +907,9 @@ ecp_nistz256_gather_w7:
 
 	cmp	$index,#0
 	mov	$mask,#0
+#ifdef	__thumb2__
+	itt	ne
+#endif
 	subne	$index,$index,#1
 	movne	$mask,#-1
 	add	$inp,$inp,$index
@@ -1180,6 +1203,9 @@ __ecp_nistz256_add_self:
 	adcs	$a6,$a6,$a6
 	mov	$ff,#0
 	adcs	$a7,$a7,$a7
+#ifdef	__thumb2__
+	it	cs
+#endif
 	movcs	$ff,#-1			@ $ff = carry ? -1 : 0
 
 	subs	$a0,$a0,$ff		@ subtract synthesized modulus
@@ -1369,6 +1395,9 @@ ecp_nistz256_point_add:
 	stmia	r3!,{r4-r11}
 	ldmia	$b_ptr,{r4-r11}
 	cmp	r12,#0
+#ifdef	__thumb2__
+	it	ne
+#endif
 	movne	r12,#-1
 	stmia	r3,{r4-r11}
 	str	r12,[sp,#32*18+8]	@ !in2infty
@@ -1395,6 +1424,9 @@ ecp_nistz256_point_add:
 	stmia	r3!,{r4-r11}
 	ldmia	$a_ptr,{r4-r11}
 	cmp	r12,#0
+#ifdef	__thumb2__
+	it	ne
+#endif
 	movne	r12,#-1
 	stmia	r3,{r4-r11}
 	str	r12,[sp,#32*18+4]	@ !in1infty
@@ -1636,6 +1668,9 @@ ecp_nistz256_point_add_affine:
 	stmia	r3!,{r4-r11}
 	ldmia	$a_ptr,{r4-r11}
 	cmp	r12,#0
+#ifdef	__thumb2__
+	it	ne
+#endif
 	movne	r12,#-1
 	stmia	r3,{r4-r11}
 	str	r12,[sp,#32*15+4]	@ !in1infty
@@ -1661,6 +1696,9 @@ ecp_nistz256_point_add_affine:
 	orr	r12,r12,r11
 	stmia	r3!,{r4-r11}
 	cmp	r12,#0
+#ifdef	__thumb2__
+	it	ne
+#endif
 	movne	r12,#-1
 	str	r12,[sp,#32*15+8]	@ !in2infty
 
