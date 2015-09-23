@@ -73,7 +73,6 @@ void ASYNC_free_pool(void);
 int ASYNC_start_job(ASYNC_JOB **job, int *ret, int (*func)(void *),
                          void *args, size_t size);
 int ASYNC_pause_job(void);
-int ASYNC_in_job(void);
 
 int ASYNC_get_wait_fd(ASYNC_JOB *job);
 ASYNC_JOB *ASYNC_get_current_job(void);

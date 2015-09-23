@@ -287,14 +287,6 @@ int ASYNC_pause_job(void)
     return 1;
 }
 
-int ASYNC_in_job(void)
-{
-    if(ASYNC_get_ctx())
-        return 1;
-
-    return 0;
-}
-
 static void async_empty_pool(STACK_OF(ASYNC_JOB) *pool)
 {
     ASYNC_JOB *job;
