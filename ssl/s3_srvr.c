@@ -2761,7 +2761,7 @@ int ssl3_get_client_key_exchange(SSL *s)
 
         /* Get our certificate private key */
         alg_a = s->s3->tmp.new_cipher->algorithm_auth;
-        if (alg_a & SSL_aGOST01) {
+        if (alg_a & SSL_aGOST12) {
             /*
              * New GOST ciphersuites have SSL_aGOST01 bit too
              */
@@ -2772,13 +2772,9 @@ int ssl3_get_client_key_exchange(SSL *s)
             if (pk == NULL) {
                 pk = s->cert->pkeys[SSL_PKEY_GOST01].privatekey;
             }
-        } else if (alg_a & SSL_aGOST12) {
-            pk = s->cert->pkeys[SSL_PKEY_GOST12_512].privatekey;
-            if (pk == NULL) {
-                pk = s->cert->pkeys[SSL_PKEY_GOST12_256].privatekey;
-            }
+        } else if (alg_a & SSL_aGOST01) {
+            pk = s->cert->pkeys[SSL_PKEY_GOST01].privatekey;
         }
- 
 
         pkey_ctx = EVP_PKEY_CTX_new(pk, NULL);
         EVP_PKEY_decrypt_init(pkey_ctx);
