@@ -44,8 +44,12 @@ When a ClientHello is received that contains a cookie that has been verified,
 then DTLSv1_listen() will return with the B<ssl> parameter updated into a state
 where the handshake can be continued by a call to (for example) SSL_accept().
 Additionally the B<struct sockaddr> location pointed to by B<peer> will be
-filled in with details of the peer that sent the ClientHello. Typically user
-code is expected to "connect" the underlying socket to the peer and continue the
+filled in with details of the peer that sent the ClientHello. It is the calling
+code's responsibility to ensure that the B<peer> location is sufficiently large
+to accommodate the addressing scheme in use. For example this might be done by
+allocating space for a struct sockaddr_storage and casting the pointer to it to
+a struct sockaddr * for the call to DTLSv1_listen(). Typically user code is
+expected to "connect" the underlying socket to the peer and continue the
 handshake in a connected state.
 
 Prior to calling DTLSv1_listen() user code must ensure that cookie generation
