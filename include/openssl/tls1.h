@@ -946,7 +946,7 @@ SSL_CTX_callback_ctrl(ssl,SSL_CTRL_SET_TLSEXT_TICKET_KEY_CB,(void (*)(void))cb)
  * when correcting this number, correct also SSL3_CT_NUMBER in ssl3.h (see
  * comment there)
  */
-# define TLS_CT_NUMBER                   10
+# define TLS_CT_NUMBER                   9
 
 # define TLS1_FINISH_MAC_LENGTH          12
 
