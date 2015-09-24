@@ -117,10 +117,6 @@
 #include "internal/cryptlib.h"
 #include <openssl/safestack.h>
 
-#if defined(OPENSSL_SYS_WIN32)
-static double SSLeay_MSVC5_hack = 0.0; /* and for VC1.5 */
-#endif
-
 #if     defined(__i386)   || defined(__i386__)   || defined(_M_IX86) || \
         defined(__INTEL__) || \
         defined(__x86_64) || defined(__x86_64__) || \
@@ -268,15 +264,15 @@ int OPENSSL_isservice(void)
     WCHAR *name;
     static union {
         void *p;
-        int (*f) (void);
+        FARPROC f;
     } _OPENSSL_isservice = {
         NULL
     };
 
     if (_OPENSSL_isservice.p == NULL) {
-        HANDLE h = GetModuleHandle(NULL);
-        if (h != NULL)
-            _OPENSSL_isservice.p = GetProcAddress(h, "_OPENSSL_isservice");
+        HANDLE modh = GetModuleHandle(NULL);
+        if (modh != NULL)
+            _OPENSSL_isservice.f = GetProcAddress(modh, "_OPENSSL_isservice");
         if (_OPENSSL_isservice.p == NULL)
             _OPENSSL_isservice.p = (void *)-1;
     }

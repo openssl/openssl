@@ -370,7 +370,7 @@ _dopr(char **sbuffer,
                        flags, min, max);
                 break;
             case 'p':
-                value = (long)va_arg(args, void *);
+                value = *(long *)va_arg(args, void *);
                 fmtint(sbuffer, buffer, &currlen, maxlen,
                        value, 16, min, max, flags | DP_F_NUM);
                 break;
