@@ -19,6 +19,7 @@
 # Sandy Bridge	(8.16	+5.15=13.3)/n	4.99	5.98		+80%
 # Ivy Bridge	(8.08	+5.14=13.2)/n	4.60	5.54		+68%
 # Haswell(iii)	(8.96	+5.00=14.0)/n	3.57	4.55		+160%
+# Skylake	(8.70	+5.00=13.7)/n	3.64	4.20		+145%
 # Bulldozer	(9.76	+5.76=15.5)/n	5.95	6.37		+64%
 #
 # (i)	multi-block CBC encrypt with 128-bit key;
