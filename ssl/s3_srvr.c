@@ -2913,13 +2913,10 @@ int ssl3_get_cert_verify(SSL *s)
     /* Check for broken implementations of GOST ciphersuites */
     /*
      * If key is GOST and n is exactly 64, it is bare signature without
-     * length field
+     * length field (CryptoPro implementations at least till CSP 4.0)
      */
-    if (n == 64 && (pkey->type == NID_id_GostR3410_2001 ||
-                    pkey->type == NID_id_GostR3410_2012_256)) {
+    if (n == 64 && (pkey->type == NID_id_GostR3410_2001)) {
          len = 64;
-    } else if (n == 128 && (pkey->type == NID_id_GostR3410_2012_512)) {
-         len = 128;
     } else {
         if (SSL_USE_SIGALGS(s)) {
             int rv;
