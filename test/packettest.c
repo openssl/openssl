@@ -312,20 +312,13 @@ static int test_PACKET_forward(unsigned char buf[BUF_LEN])
 static int test_PACKET_buf_init()
 {
     unsigned char buf[BUF_LEN];
-    size_t len;
     PACKET pkt;
 
     /* Also tests PACKET_get_len() */
     if (       !PACKET_buf_init(&pkt, buf, 4)
-            || !PACKET_length(&pkt, &len)
-            ||  len != 4
+            ||  PACKET_remaining(&pkt) != 4
             || !PACKET_buf_init(&pkt, buf, BUF_LEN)
-            || !PACKET_length(&pkt, &len)
-            ||  len != BUF_LEN
-            ||  pkt.end - pkt.start != BUF_LEN
-            ||  pkt.end < pkt.start
-            ||  pkt.curr < pkt.start
-            ||  pkt.curr > pkt.end
+            ||  PACKET_remaining(&pkt) != BUF_LEN
             ||  PACKET_buf_init(&pkt, buf, -1)) {
         fprintf(stderr, "test_PACKET_buf_init() failed\n");
         return 0;

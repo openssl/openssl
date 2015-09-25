@@ -1,4 +1,4 @@
-/* crypto/asn1/x_name.c */
+/* crypto/x509/x_name.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -513,4 +513,60 @@ int X509_NAME_set(X509_NAME **xn, X509_NAME *name)
         }
     }
     return (*xn != NULL);
+}
+
+int X509_NAME_print(BIO *bp, X509_NAME *name, int obase)
+{
+    char *s, *c, *b;
+    int l, i;
+
+    l = 80 - 2 - obase;
+
+    b = X509_NAME_oneline(name, NULL, 0);
+    if (!b)
+        return 0;
+    if (!*b) {
+        OPENSSL_free(b);
+        return 1;
+    }
+    s = b + 1;                  /* skip the first slash */
+
+    c = s;
+    for (;;) {
+#ifndef CHARSET_EBCDIC
+        if (((*s == '/') &&
+             ((s[1] >= 'A') && (s[1] <= 'Z') && ((s[2] == '=') ||
+                                                 ((s[2] >= 'A')
+                                                  && (s[2] <= 'Z')
+                                                  && (s[3] == '='))
+              ))) || (*s == '\0'))
+#else
+        if (((*s == '/') &&
+             (isupper(s[1]) && ((s[2] == '=') ||
+                                (isupper(s[2]) && (s[3] == '='))
+              ))) || (*s == '\0'))
+#endif
+        {
+            i = s - c;
+            if (BIO_write(bp, c, i) != i)
+                goto err;
+            c = s + 1;          /* skip following slash */
+            if (*s != '\0') {
+                if (BIO_write(bp, ", ", 2) != 2)
+                    goto err;
+            }
+            l--;
+        }
+        if (*s == '\0')
+            break;
+        s++;
+        l--;
+    }
+
+    OPENSSL_free(b);
+    return 1;
+ err:
+    X509err(X509_F_X509_NAME_PRINT, ERR_R_BUF_LIB);
+    OPENSSL_free(b);
+    return 0;
 }

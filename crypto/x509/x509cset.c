@@ -158,6 +158,11 @@ X509_NAME *X509_CRL_get_issuer(X509_CRL *crl)
     return crl->crl.issuer;
 }
 
+STACK_OF(X509_EXTENSION) *X509_CRL_get0_extensions(X509_CRL *crl)
+{
+    return crl->crl.extensions;
+}
+
 STACK_OF(X509_REVOKED) *X509_CRL_get_REVOKED(X509_CRL *crl)
 {
     return crl->crl.revoked;
@@ -166,10 +171,20 @@ STACK_OF(X509_REVOKED) *X509_CRL_get_REVOKED(X509_CRL *crl)
 void X509_CRL_get0_signature(ASN1_BIT_STRING **psig, X509_ALGOR **palg,
                              X509_CRL *crl)
 {
-    if (psig)
+    if (psig != NULL)
         *psig = crl->signature;
-    if (palg)
+    if (palg != NULL)
         *palg = &crl->sig_alg;
+}
+
+int X509_CRL_get_signature_nid(const X509_CRL *crl)
+{
+    return OBJ_obj2nid(crl->sig_alg.algorithm);
+}
+
+ASN1_TIME *X509_REVOKED_get0_revocationDate(X509_REVOKED *x)
+{
+    return x->revocationDate;
 }
 
 int X509_REVOKED_set_revocationDate(X509_REVOKED *x, ASN1_TIME *tm)
@@ -189,6 +204,11 @@ int X509_REVOKED_set_revocationDate(X509_REVOKED *x, ASN1_TIME *tm)
     return (in != NULL);
 }
 
+ASN1_INTEGER *X509_REVOKED_get0_serialNumber(X509_REVOKED *x)
+{
+    return x->serialNumber;
+}
+
 int X509_REVOKED_set_serialNumber(X509_REVOKED *x, ASN1_INTEGER *serial)
 {
     ASN1_INTEGER *in;
@@ -204,4 +224,15 @@ int X509_REVOKED_set_serialNumber(X509_REVOKED *x, ASN1_INTEGER *serial)
         }
     }
     return (in != NULL);
+}
+
+STACK_OF(X509_EXTENSION) *X509_REVOKED_get0_extensions(X509_REVOKED *r)
+{
+    return r->extensions;
+}
+
+int i2d_re_X509_CRL_tbs(X509_CRL *crl, unsigned char **pp)
+{
+    crl->crl.enc.modified = 1;
+    return i2d_X509_CRL_INFO(&crl->crl, pp);
 }

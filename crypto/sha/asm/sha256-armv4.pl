@@ -175,16 +175,12 @@ $code=<<___;
 #endif
 
 .text
-#if __ARM_ARCH__<7
-.code	32
-#else
+#if defined(__thumb2__) && !defined(__APPLE__)
 .syntax unified
-# if defined(__thumb2__) && !defined(__APPLE__)
-#  define adrl adr
 .thumb
-# else
+# define adrl adr
+#else
 .code   32
-# endif
 #endif
 
 .type	K256,%object
@@ -218,10 +214,10 @@ K256:
 .type	sha256_block_data_order,%function
 sha256_block_data_order:
 .Lsha256_block_data_order:
-#if __ARM_ARCH__<7
+#if __ARM_ARCH__<7 && !defined(__thumb2__)
 	sub	r3,pc,#8		@ sha256_block_data_order
 #else
-	adr	r3,sha256_block_data_order
+	adr	r3,.Lsha256_block_data_order
 #endif
 #if __ARM_MAX_ARCH__>=7 && !defined(__KERNEL__)
 	ldr	r12,.LOPENSSL_armcap

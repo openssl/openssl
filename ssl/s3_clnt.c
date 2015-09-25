@@ -167,9 +167,7 @@ static int ssl_set_version(SSL *s);
 static int ca_dn_cmp(const X509_NAME *const *a, const X509_NAME *const *b);
 static int ssl3_check_change(SSL *s);
 static int ssl_cipher_list_to_bytes(SSL *s, STACK_OF(SSL_CIPHER) *sk,
-                                    unsigned char *p,
-                                    int (*put_cb) (const SSL_CIPHER *,
-                                                 unsigned char *));
+                                    unsigned char *p);
 
 
 int ssl3_connect(SSL *s)
@@ -862,7 +860,7 @@ int ssl3_client_hello(SSL *s)
         }
 
         /* Ciphers supported */
-        i = ssl_cipher_list_to_bytes(s, SSL_get_ciphers(s), &(p[2]), 0);
+        i = ssl_cipher_list_to_bytes(s, SSL_get_ciphers(s), &(p[2]));
         if (i == 0) {
             SSLerr(SSL_F_SSL3_CLIENT_HELLO, SSL_R_NO_CIPHERS_AVAILABLE);
             goto err;
@@ -933,7 +931,7 @@ int ssl3_get_server_hello(SSL *s)
     PACKET pkt;
     unsigned char *session_id, *cipherchars;
     int i, al = SSL_AD_INTERNAL_ERROR, ok;
-    unsigned int j, ciphercharlen;
+    unsigned int j;
     long n;
 #ifndef OPENSSL_NO_COMP
     SSL_COMP *comp;
@@ -1086,7 +1084,6 @@ int ssl3_get_server_hello(SSL *s)
         goto f_err;
     }
 
-    ciphercharlen = ssl_put_cipher_by_char(s, NULL, NULL);
     /*
      * Check if we can resume the session based on external pre-shared secret.
      * EAP-FAST (RFC 4851) supports two types of session resumption.
@@ -1104,7 +1101,7 @@ int ssl3_get_server_hello(SSL *s)
         SSL_CIPHER *pref_cipher = NULL;
         PACKET bookmark = pkt;
         if (!PACKET_forward(&pkt, j)
-            || !PACKET_get_bytes(&pkt, &cipherchars, ciphercharlen)) {
+            || !PACKET_get_bytes(&pkt, &cipherchars, TLS_CIPHER_LEN)) {
             SSLerr(SSL_F_SSL3_GET_SERVER_HELLO, SSL_R_LENGTH_MISMATCH);
             al = SSL_AD_DECODE_ERROR;
             goto f_err;
@@ -1159,7 +1156,7 @@ int ssl3_get_server_hello(SSL *s)
         memcpy(s->session->session_id, session_id, j); /* j could be 0 */
     }
 
-    if (!PACKET_get_bytes(&pkt, &cipherchars, ciphercharlen)) {
+    if (!PACKET_get_bytes(&pkt, &cipherchars, TLS_CIPHER_LEN)) {
         SSLerr(SSL_F_SSL3_GET_SERVER_HELLO, SSL_R_LENGTH_MISMATCH);
         al = SSL_AD_DECODE_ERROR;
         goto f_err;
@@ -3523,9 +3520,7 @@ int ssl_do_client_cert_cb(SSL *s, X509 **px509, EVP_PKEY **ppkey)
 }
 
 int ssl_cipher_list_to_bytes(SSL *s, STACK_OF(SSL_CIPHER) *sk,
-                             unsigned char *p,
-                             int (*put_cb) (const SSL_CIPHER *,
-                                            unsigned char *))
+                             unsigned char *p)
 {
     int i, j = 0;
     SSL_CIPHER *c;
@@ -3537,8 +3532,6 @@ int ssl_cipher_list_to_bytes(SSL *s, STACK_OF(SSL_CIPHER) *sk,
     if (sk == NULL)
         return (0);
     q = p;
-    if (put_cb == NULL)
-        put_cb = s->method->put_cipher_by_char;
 
     for (i = 0; i < sk_SSL_CIPHER_num(sk); i++) {
         c = sk_SSL_CIPHER_value(sk, i);
@@ -3553,7 +3546,7 @@ int ssl_cipher_list_to_bytes(SSL *s, STACK_OF(SSL_CIPHER) *sk,
                 empty_reneg_info_scsv = 0;
         }
 #endif
-        j = put_cb(c, p);
+        j = s->method->put_cipher_by_char(c, p);
         p += j;
     }
     /*
@@ -3565,7 +3558,7 @@ int ssl_cipher_list_to_bytes(SSL *s, STACK_OF(SSL_CIPHER) *sk,
             static SSL_CIPHER scsv = {
                 0, NULL, SSL3_CK_SCSV, 0, 0, 0, 0, 0, 0, 0, 0, 0
             };
-            j = put_cb(&scsv, p);
+            j = s->method->put_cipher_by_char(&scsv, p);
             p += j;
 #ifdef OPENSSL_RI_DEBUG
             fprintf(stderr,
@@ -3576,7 +3569,7 @@ int ssl_cipher_list_to_bytes(SSL *s, STACK_OF(SSL_CIPHER) *sk,
             static SSL_CIPHER scsv = {
                 0, NULL, SSL3_CK_FALLBACK_SCSV, 0, 0, 0, 0, 0, 0, 0, 0, 0
             };
-            j = put_cb(&scsv, p);
+            j = s->method->put_cipher_by_char(&scsv, p);
             p += j;
         }
     }

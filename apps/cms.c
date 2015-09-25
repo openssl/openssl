@@ -118,9 +118,9 @@ typedef enum OPTION_choice {
     OPT_NOSIGS, OPT_NO_CONTENT_VERIFY, OPT_NO_ATTR_VERIFY, OPT_INDEF,
     OPT_NOINDEF, OPT_NOOLDMIME, OPT_CRLFEOL, OPT_NOOUT, OPT_RR_PRINT,
     OPT_RR_ALL, OPT_RR_FIRST, OPT_RCTFORM, OPT_CERTFILE, OPT_CAFILE,
-    OPT_CAPATH, OPT_CONTENT, OPT_PRINT, OPT_SECRETKEY,
-    OPT_SECRETKEYID, OPT_PWRI_PASSWORD, OPT_ECONTENT_TYPE, OPT_RAND,
-    OPT_PASSIN, OPT_TO, OPT_FROM, OPT_SUBJECT, OPT_SIGNER, OPT_RECIP,
+    OPT_CAPATH, OPT_NOCAPATH, OPT_NOCAFILE,OPT_CONTENT, OPT_PRINT,
+    OPT_SECRETKEY, OPT_SECRETKEYID, OPT_PWRI_PASSWORD, OPT_ECONTENT_TYPE,
+    OPT_RAND, OPT_PASSIN, OPT_TO, OPT_FROM, OPT_SUBJECT, OPT_SIGNER, OPT_RECIP,
     OPT_CERTSOUT, OPT_MD, OPT_INKEY, OPT_KEYFORM, OPT_KEYOPT, OPT_RR_FROM,
     OPT_RR_TO, OPT_AES128_WRAP, OPT_AES192_WRAP, OPT_AES256_WRAP,
     OPT_3DES_WRAP, OPT_ENGINE,
@@ -185,6 +185,10 @@ OPTIONS cms_options[] = {
     {"certfile", OPT_CERTFILE, '<', "Other certificates file"},
     {"CAfile", OPT_CAFILE, '<', "Trusted certificates file"},
     {"CApath", OPT_CAPATH, '/', "trusted certificates directory"},
+    {"no-CAfile", OPT_NOCAFILE, '-',
+     "Do not load the default certificates file"},
+    {"no-CApath", OPT_NOCAPATH, '-',
+     "Do not load certificates from the default certificates directory"},
     {"content", OPT_CONTENT, '<',
      "Supply or override content for detached signature"},
     {"print", OPT_PRINT, '-'},
@@ -242,6 +246,7 @@ int cms_main(int argc, char **argv)
     X509_VERIFY_PARAM *vpm = NULL;
     char *certfile = NULL, *keyfile = NULL, *contfile = NULL;
     char *CAfile = NULL, *CApath = NULL, *certsoutfile = NULL;
+    int noCAfile = 0, noCApath = 0;
     char *infile = NULL, *outfile = NULL, *rctfile = NULL, *inrand = NULL;
     char *passinarg = NULL, *passin = NULL, *signerfile = NULL, *recipfile =
         NULL;
@@ -421,6 +426,12 @@ int cms_main(int argc, char **argv)
             break;
         case OPT_CAPATH:
             CApath = opt_arg();
+            break;
+        case OPT_NOCAFILE:
+            noCAfile = 1;
+            break;
+        case OPT_NOCAPATH:
+            noCApath = 1;
             break;
         case OPT_IN:
             infile = opt_arg();
@@ -834,7 +845,7 @@ int cms_main(int argc, char **argv)
         goto end;
 
     if ((operation == SMIME_VERIFY) || (operation == SMIME_VERIFY_RECEIPT)) {
-        if ((store = setup_verify(CAfile, CApath)) == NULL)
+        if ((store = setup_verify(CAfile, CApath, noCAfile, noCApath)) == NULL)
             goto end;
         X509_STORE_set_verify_cb(store, cms_cb);
         if (vpmtouched)

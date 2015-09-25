@@ -65,8 +65,6 @@
 #include <openssl/ts.h>
 #include "ts_lcl.h"
 
-/* Function definitions. */
-
 int TS_REQ_print_bio(BIO *bio, TS_REQ *a)
 {
     int v;

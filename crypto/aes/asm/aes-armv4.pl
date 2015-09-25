@@ -70,15 +70,11 @@ $code=<<___;
 #endif
 
 .text
-#if __ARM_ARCH__<7
-.code	32
-#else
+#if defined(__thumb2__) && !defined(__APPLE__)
 .syntax	unified
-# if defined(__thumb2__) && !defined(__APPLE__)
 .thumb
-# else
+#else
 .code	32
-# endif
 #endif
 
 .type	AES_Te,%object
@@ -193,7 +189,7 @@ AES_Te:
 .type   AES_encrypt,%function
 .align	5
 AES_encrypt:
-#if __ARM_ARCH__<7
+#ifndef	__thumb2__
 	sub	r3,pc,#8		@ AES_encrypt
 #else
 	adr	r3,AES_encrypt
@@ -443,19 +439,19 @@ _armv4_AES_encrypt:
 .align	5
 AES_set_encrypt_key:
 _armv4_AES_set_encrypt_key:
-#if __ARM_ARCH__<7
+#ifndef	__thumb2__
 	sub	r3,pc,#8		@ AES_set_encrypt_key
 #else
 	adr	r3,AES_set_encrypt_key
 #endif
 	teq	r0,#0
-#if __ARM_ARCH__>=7
+#ifdef	__thumb2__
 	itt	eq			@ Thumb2 thing, sanity check in ARM
 #endif
 	moveq	r0,#-1
 	beq	.Labrt
 	teq	r2,#0
-#if __ARM_ARCH__>=7
+#ifdef	__thumb2__
 	itt	eq			@ Thumb2 thing, sanity check in ARM
 #endif
 	moveq	r0,#-1
@@ -466,7 +462,7 @@ _armv4_AES_set_encrypt_key:
 	teq	r1,#192
 	beq	.Lok
 	teq	r1,#256
-#if __ARM_ARCH__>=7
+#ifdef	__thumb2__
 	itt	ne			@ Thumb2 thing, sanity check in ARM
 #endif
 	movne	r0,#-1
@@ -627,7 +623,7 @@ _armv4_AES_set_encrypt_key:
 	str	$s2,[$key,#-16]
 	subs	$rounds,$rounds,#1
 	str	$s3,[$key,#-12]
-#if __ARM_ARCH__>=7
+#ifdef	__thumb2__
 	itt	eq				@ Thumb2 thing, sanity check in ARM
 #endif
 	subeq	r2,$key,#216
@@ -699,7 +695,7 @@ _armv4_AES_set_encrypt_key:
 	str	$s2,[$key,#-24]
 	subs	$rounds,$rounds,#1
 	str	$s3,[$key,#-20]
-#if __ARM_ARCH__>=7
+#ifdef	__thumb2__
 	itt	eq				@ Thumb2 thing, sanity check in ARM
 #endif
 	subeq	r2,$key,#256
@@ -969,7 +965,7 @@ AES_Td:
 .type   AES_decrypt,%function
 .align	5
 AES_decrypt:
-#if __ARM_ARCH__<7
+#ifndef	__thumb2__
 	sub	r3,pc,#8		@ AES_decrypt
 #else
 	adr	r3,AES_decrypt

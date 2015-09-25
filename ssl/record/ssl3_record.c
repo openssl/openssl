@@ -1508,18 +1508,8 @@ int dtls1_get_record(SSL *s)
     /* Only do replay check if no SCTP bio */
     if (!BIO_dgram_is_sctp(SSL_get_rbio(s))) {
 #endif
-        /*
-         * Check whether this is a repeat, or aged record. Don't check if
-         * we're listening and this message is a ClientHello. They can look
-         * as if they're replayed, since they arrive from different
-         * connections and would be dropped unnecessarily.
-         */
-        if (!(s->d1->listen && rr->type == SSL3_RT_HANDSHAKE &&
-              RECORD_LAYER_get_packet_length(&s->rlayer)
-                  > DTLS1_RT_HEADER_LENGTH &&
-              RECORD_LAYER_get_packet(&s->rlayer)[DTLS1_RT_HEADER_LENGTH]
-                  == SSL3_MT_CLIENT_HELLO) &&
-            !dtls1_record_replay_check(s, bitmap)) {
+        /* Check whether this is a repeat, or aged record. */
+        if (!dtls1_record_replay_check(s, bitmap)) {
             rr->length = 0;
             RECORD_LAYER_reset_packet_length(&s->rlayer); /* dump this record */
             goto again;         /* get another record */
@@ -1535,11 +1525,10 @@ int dtls1_get_record(SSL *s)
     /*
      * If this record is from the next epoch (either HM or ALERT), and a
      * handshake is currently in progress, buffer it since it cannot be
-     * processed at this time. However, do not buffer anything while
-     * listening.
+     * processed at this time.
      */
     if (is_next_epoch) {
-        if ((SSL_in_init(s) || s->in_handshake) && !s->d1->listen) {
+        if ((SSL_in_init(s) || s->in_handshake)) {
             if (dtls1_buffer_record
                 (s, &(DTLS_RECORD_LAYER_get_unprocessed_rcds(&s->rlayer)),
                 rr->seq_num) < 0)

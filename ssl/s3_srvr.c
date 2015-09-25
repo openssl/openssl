@@ -3545,7 +3545,7 @@ STACK_OF(SSL_CIPHER) *ssl_bytes_to_cipher_list(SSL *s, unsigned char *p,
     if(sslv2format) {
         n = SSLV2_CIPHER_LEN;
     } else {
-        n = ssl_put_cipher_by_char(s, NULL, NULL);
+        n = TLS_CIPHER_LEN;
     }
     if (n == 0 || (num % n) != 0) {
         SSLerr(SSL_F_SSL_BYTES_TO_CIPHER_LIST,

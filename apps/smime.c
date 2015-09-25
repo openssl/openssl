@@ -90,7 +90,8 @@ typedef enum OPTION_choice {
     OPT_TO, OPT_FROM, OPT_SUBJECT, OPT_SIGNER, OPT_RECIP, OPT_MD,
     OPT_CIPHER, OPT_INKEY, OPT_KEYFORM, OPT_CERTFILE, OPT_CAFILE,
     OPT_V_ENUM,
-    OPT_CAPATH, OPT_IN, OPT_INFORM, OPT_OUT, OPT_OUTFORM, OPT_CONTENT
+    OPT_CAPATH, OPT_NOCAFILE, OPT_NOCAPATH, OPT_IN, OPT_INFORM, OPT_OUT,
+    OPT_OUTFORM, OPT_CONTENT
 } OPTION_CHOICE;
 
 OPTIONS smime_options[] = {
@@ -132,6 +133,10 @@ OPTIONS smime_options[] = {
     {"text", OPT_TEXT, '-', "Include or delete text MIME headers"},
     {"CApath", OPT_CAPATH, '/', "Trusted certificates directory"},
     {"CAfile", OPT_CAFILE, '<', "Trusted certificates file"},
+    {"no-CAfile", OPT_NOCAFILE, '-',
+     "Do not load the default certificates file"},
+    {"no-CApath", OPT_NOCAPATH, '-',
+     "Do not load certificates from the default certificates directory"},
     {"resign", OPT_RESIGN, '-'},
     {"nochain", OPT_NOCHAIN, '-'},
     {"nosmimecap", OPT_NOSMIMECAP, '-'},
@@ -171,6 +176,7 @@ int smime_main(int argc, char **argv)
     char *passinarg = NULL, *passin = NULL, *to = NULL, *from =
         NULL, *subject = NULL;
     OPTION_CHOICE o;
+    int noCApath = 0, noCAfile = 0;
     int flags = PKCS7_DETACHED, operation = 0, ret = 0, need_rand = 0, indef =
         0;
     int informat = FORMAT_SMIME, outformat = FORMAT_SMIME, keyform =
@@ -348,6 +354,12 @@ int smime_main(int argc, char **argv)
         case OPT_CAPATH:
             CApath = opt_arg();
             break;
+        case OPT_NOCAFILE:
+            noCAfile = 1;
+            break;
+        case OPT_NOCAPATH:
+            noCApath = 1;
+            break;
         case OPT_CONTENT:
             contfile = opt_arg();
             break;
@@ -523,7 +535,7 @@ int smime_main(int argc, char **argv)
         goto end;
 
     if (operation == SMIME_VERIFY) {
-        if ((store = setup_verify(CAfile, CApath)) == NULL)
+        if ((store = setup_verify(CAfile, CApath, noCAfile, noCApath)) == NULL)
             goto end;
         X509_STORE_set_verify_cb(store, smime_cb);
         if (vpmtouched)

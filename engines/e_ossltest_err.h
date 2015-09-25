@@ -73,6 +73,7 @@ static void ERR_OSSLTEST_error(int function, int reason, char *file, int line);
 
 /* Function codes. */
 # define OSSLTEST_F_BIND_OSSLTEST                         100
+# define OSSLTEST_F_OSSLTEST_AES128_INIT_KEY              101
 
 /* Reason codes. */
 # define OSSLTEST_R_INIT_FAILED                           100

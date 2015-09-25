@@ -59,27 +59,111 @@
 
 /* Internal X509 structures and functions: not for application use */
 
+/* Note: unless otherwise stated a field pointer is mandatory and should
+ * never be set to NULL: the ASN.1 code and accessors rely on mandatory
+ * fields never being NULL.
+ */
+
+/*
+ * name entry structure, equivalent to AttributeTypeAndValue defined
+ * in RFC5280 et al.
+ */
 struct X509_name_entry_st {
-    ASN1_OBJECT *object;
-    ASN1_STRING *value;
-    int set;
+    ASN1_OBJECT *object;        /* AttributeType */
+    ASN1_STRING *value;         /* AttributeValue */
+    int set;                    /* index of RDNSequence for this entry */
     int size;                   /* temp variable */
 };
 
-/* we always keep X509_NAMEs in 2 forms. */
+/* Name from RFC 5280. */
 struct X509_name_st {
-    STACK_OF(X509_NAME_ENTRY) *entries;
+    STACK_OF(X509_NAME_ENTRY) *entries; /* DN components */
     int modified;               /* true if 'bytes' needs to be built */
-    BUF_MEM *bytes;
-/*      unsigned long hash; Keep the hash around for lookups */
+    BUF_MEM *bytes;             /* cached encoding: cannot be NULL */
+    /* canonical encoding used for rapid Name comparison */
     unsigned char *canon_enc;
     int canon_enclen;
 } /* X509_NAME */ ;
 
+/* PKCS#10 certificate request */
+
+struct X509_req_info_st {
+    ASN1_ENCODING enc;          /* cached encoding of signed part */
+    ASN1_INTEGER *version;      /* version, defaults to v1(0) so can be NULL */
+    X509_NAME *subject;         /* certificate request DN */
+    X509_PUBKEY *pubkey;        /* public key of request */
+    /*
+     * Zero or more attributes.
+     * NB: although attributes is a mandatory field some broken
+     * encodings omit it so this may be NULL in that case.
+     */
+    STACK_OF(X509_ATTRIBUTE) *attributes;
+};
+
+struct X509_req_st {
+    X509_REQ_INFO req_info;     /* signed certificate request data */
+    X509_ALGOR sig_alg;         /* signature algorithm */
+    ASN1_BIT_STRING *signature; /* signature */
+    int references;
+};
+
+struct X509_crl_info_st {
+    ASN1_INTEGER *version;      /* version: defaults to v1(0) so may be NULL */
+    X509_ALGOR sig_alg;         /* signagture algorithm */
+    X509_NAME *issuer;          /* CRL issuer name */
+    ASN1_TIME *lastUpdate;      /* lastUpdate field */
+    ASN1_TIME *nextUpdate;      /* nextUpdate field: optional */
+    STACK_OF(X509_REVOKED) *revoked; /* revoked entries: optional */
+    STACK_OF(X509_EXTENSION) *extensions;   /* extensions: optional */
+    ASN1_ENCODING enc;          /* encoding of signed portion of CRL */
+};
+
+struct X509_crl_st {
+    X509_CRL_INFO crl;          /* signed CRL data */
+    X509_ALGOR sig_alg;         /* CRL signature algorithm */
+    ASN1_BIT_STRING *signature; /* CRL signature */
+    int references;
+    int flags;
+    /*
+     * Cached copies of decoded extension values, since extensions
+     * are optional any of these can be NULL.
+     */
+    AUTHORITY_KEYID *akid;
+    ISSUING_DIST_POINT *idp;
+    /* Convenient breakdown of IDP */
+    int idp_flags;
+    int idp_reasons;
+    /* CRL and base CRL numbers for delta processing */
+    ASN1_INTEGER *crl_number;
+    ASN1_INTEGER *base_crl_number;
+    STACK_OF(GENERAL_NAMES) *issuers;
+    /* hash of CRL */
+    unsigned char sha1_hash[SHA_DIGEST_LENGTH];
+    /* alternative method to handle this CRL */
+    const X509_CRL_METHOD *meth;
+    void *meth_data;
+};
+
+struct x509_revoked_st {
+    ASN1_INTEGER *serialNumber; /* revoked entry serial number */
+    ASN1_TIME *revocationDate;  /* revocation date */
+    STACK_OF(X509_EXTENSION) *extensions;   /* CRL entry extensions: optional */
+    /* decoded value of CRLissuer extension: set if indirect CRL */
+    STACK_OF(GENERAL_NAME) *issuer;
+    /* revocation reason: set to CRL_REASON_NONE if reason extension absent */
+    int reason;
+    /*
+     * CRL entries are reordered for faster lookup of serial numbers. This
+     * field contains the original load sequence for this entry.
+     */
+    int sequence;
+};
+
 /*
- * This stuff is certificate "auxiliary info" it contains details which are
+ * This stuff is certificate "auxiliary info": it contains details which are
  * useful in certificate stores and databases. When used this is tagged onto
- * the end of the certificate itself
+ * the end of the certificate itself. OpenSSL specific structure not defined
+ * in any RFC.
  */
 
 struct x509_cert_aux_st {
@@ -90,62 +174,45 @@ struct x509_cert_aux_st {
     STACK_OF(X509_ALGOR) *other; /* other unspecified info */
 };
 
-struct X509_req_info_st {
-    ASN1_ENCODING enc;
-    ASN1_INTEGER *version;
-    X509_NAME *subject;
-    X509_PUBKEY *pubkey;
-    /*  d=2 hl=2 l=  0 cons: cont: 00 */
-    STACK_OF(X509_ATTRIBUTE) *attributes; /* [ 0 ] */
-};
-
-struct X509_req_st {
-    X509_REQ_INFO req_info;
-    X509_ALGOR sig_alg;
-    ASN1_BIT_STRING *signature;
-    int references;
-};
-
-struct X509_crl_info_st {
-    ASN1_INTEGER *version;
-    X509_ALGOR sig_alg;
-    X509_NAME *issuer;
-    ASN1_TIME *lastUpdate;
-    ASN1_TIME *nextUpdate;
-    STACK_OF(X509_REVOKED) *revoked;
-    STACK_OF(X509_EXTENSION) /* [0] */ *extensions;
-    ASN1_ENCODING enc;
-};
-
-struct X509_crl_st {
-    /* actual signature */
-    X509_CRL_INFO crl;
-    X509_ALGOR sig_alg;
-    ASN1_BIT_STRING *signature;
-    int references;
-    int flags;
-    /* Copies of various extensions */
-    AUTHORITY_KEYID *akid;
-    ISSUING_DIST_POINT *idp;
-    /* Convenient breakdown of IDP */
-    int idp_flags;
-    int idp_reasons;
-    /* CRL and base CRL numbers for delta processing */
-    ASN1_INTEGER *crl_number;
-    ASN1_INTEGER *base_crl_number;
-    unsigned char sha1_hash[SHA_DIGEST_LENGTH];
-    STACK_OF(GENERAL_NAMES) *issuers;
-    const X509_CRL_METHOD *meth;
-    void *meth_data;
-};
-
-struct x509_revoked_st {
+struct x509_cinf_st {
+    ASN1_INTEGER *version;      /* [ 0 ] default of v1 */
     ASN1_INTEGER *serialNumber;
-    ASN1_TIME *revocationDate;
-    STACK_OF(X509_EXTENSION) /* optional */ *extensions;
-    /* Set up if indirect CRL */
-    STACK_OF(GENERAL_NAME) *issuer;
-    /* Revocation reason */
-    int reason;
-    int sequence;               /* load sequence */
+    X509_ALGOR signature;
+    X509_NAME *issuer;
+    X509_VAL validity;
+    X509_NAME *subject;
+    X509_PUBKEY *key;
+    ASN1_BIT_STRING *issuerUID; /* [ 1 ] optional in v2 */
+    ASN1_BIT_STRING *subjectUID; /* [ 2 ] optional in v2 */
+    STACK_OF(X509_EXTENSION) *extensions; /* [ 3 ] optional in v3 */
+    ASN1_ENCODING enc;
 };
+
+struct x509_st {
+    X509_CINF cert_info;
+    X509_ALGOR sig_alg;
+    ASN1_BIT_STRING *signature;
+    int valid;
+    int references;
+    char *name;
+    CRYPTO_EX_DATA ex_data;
+    /* These contain copies of various extension values */
+    long ex_pathlen;
+    long ex_pcpathlen;
+    uint32_t ex_flags;
+    uint32_t ex_kusage;
+    uint32_t ex_xkusage;
+    uint32_t ex_nscert;
+    ASN1_OCTET_STRING *skid;
+    AUTHORITY_KEYID *akid;
+    X509_POLICY_CACHE *policy_cache;
+    STACK_OF(DIST_POINT) *crldp;
+    STACK_OF(GENERAL_NAME) *altname;
+    NAME_CONSTRAINTS *nc;
+#ifndef OPENSSL_NO_RFC3779
+    STACK_OF(IPAddressFamily) *rfc3779_addr;
+    struct ASIdentifiers_st *rfc3779_asid;
+# endif
+    unsigned char sha1_hash[SHA_DIGEST_LENGTH];
+    X509_CERT_AUX *aux;
+} /* X509 */ ;

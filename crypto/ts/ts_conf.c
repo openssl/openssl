@@ -68,7 +68,6 @@
 #include <openssl/ts.h>
 
 /* Macro definitions for the configuration file. */
-
 #define BASE_SECTION                    "tsa"
 #define ENV_DEFAULT_TSA                 "default_tsa"
 #define ENV_SERIAL                      "serial"
@@ -214,20 +213,17 @@ int TS_CONF_set_default_engine(const char *name)
     ENGINE *e = NULL;
     int ret = 0;
 
-    /* Leave the default if builtin specified. */
     if (strcmp(name, "builtin") == 0)
         return 1;
 
     if ((e = ENGINE_by_id(name)) == NULL)
         goto err;
-
-    /* Enable the use of the NCipher HSM for forked children. */
     if (strcmp(name, "chil") == 0)
         ENGINE_ctrl(e, ENGINE_CTRL_CHIL_SET_FORKCHECK, 1, 0, 0);
-    /* All the operations are going to be carried out by the engine. */
     if (!ENGINE_set_default(e, ENGINE_METHOD_ALL))
         goto err;
     ret = 1;
+
  err:
     if (!ret) {
         TSerr(TS_F_TS_CONF_SET_DEFAULT_ENGINE, TS_R_COULD_NOT_SET_ENGINE);
@@ -467,8 +463,8 @@ int TS_CONF_set_clock_precision_digits(CONF *conf, const char *section,
 static int ts_CONF_add_flag(CONF *conf, const char *section,
                             const char *field, int flag, TS_RESP_CTX *ctx)
 {
-    /* Default is false. */
     const char *value = NCONF_get_string(conf, section, field);
+
     if (value) {
         if (strcmp(value, ENV_VALUE_YES) == 0)
             TS_RESP_CTX_add_flags(ctx, flag);

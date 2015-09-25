@@ -1,24 +1,50 @@
 language: c
 
+addons:
+    apt_packages:
+        - binutils-mingw-w64
+        - gcc-mingw-w64
+
 os:
- - linux
- - osx
+    - linux
+    - osx
 
 compiler:
- - clang
- - gcc
+    - clang
+    - gcc
+    - i686-w64-mingw32-gcc
+    - x86_64-w64-mingw32-gcc
 
 env:
- - CONFIG_OPTS=""
- - CONFIG_OPTS="--debug"
- - CONFIG_OPTS="shared"
+    - CONFIG_OPTS=""
+    - CONFIG_OPTS="shared"
+    - CONFIG_OPTS="-d --strict-warnings"
+
+matrix:
+    exclude:
+        - os: osx
+          compiler: i686-w64-mingw32-gcc
+        - os: osx
+          compiler: x86_64-w64-mingw32-gcc
+
+before_script:
+    - if [ "$CC" == i686-w64-mingw32-gcc ]; then
+          export CROSS_COMPILE=${CC%%gcc}; unset CC;
+          ./Configure mingw $CONFIG_OPTS;
+      elif [ "$CC" == x86_64-w64-mingw32-gcc ]; then
+          export CROSS_COMPILE=${CC%%gcc}; unset CC;
+          ./Configure mingw64 $CONFIG_OPTS;
+      else
+          ./config $CONFIG_OPTS;
+      fi
 
 script:
- - ./config $CONFIG_OPTS && make && make test
+    - make
+    - if [ -z "$CROSS_COMPILE" ]; then make test; fi
 
 notifications:
-  recipient:
-   - openssl-dev@openssl.org
-  email:
-    on_success: change
-    on_failure: always
+    recipient:
+        - openssl-commits@openssl.org
+    email:
+        on_success: change
+        on_failure: always

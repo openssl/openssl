@@ -1,4 +1,4 @@
-/* crypto/asn1/x_crl.c */
+/* crypto/x509/x_crl.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -59,10 +59,10 @@
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include <openssl/asn1t.h>
-#include "asn1_locl.h"
 #include <openssl/x509.h>
 #include "internal/x509_int.h"
 #include <openssl/x509v3.h>
+#include "x509_lcl.h"
 
 static int X509_REVOKED_cmp(const X509_REVOKED *const *a,
                             const X509_REVOKED *const *b);

@@ -329,17 +329,6 @@ int main(int argc, char *argv[])
     }
 
     apps_startup();
-
-    /*
-     * If first argument is a colon, skip it.  Because in "interactive"
-     * mode our prompt is a colon and we can cut/paste whole lines
-     * by doing this hack.
-     */
-    if (argv[1] && strcmp(argv[1], ":") == 0) {
-        argv[1] = argv[0];
-        argc--;
-        argv++;
-    }
     prog = prog_init();
     pname = opt_progname(argv[0]);
 
@@ -367,7 +356,7 @@ int main(int argc, char *argv[])
         ret = 0;
         /* Read a line, continue reading if line ends with \ */
         for (p = buf, n = sizeof buf, i = 0, first = 1; n > 0; first = 0) {
-            prompt = first ? "openssl : " : "> ";
+            prompt = first ? "OpenSSL> " : "> ";
             p[0] = '\0';
 #ifndef READLINE
             fputs(prompt, stdout);

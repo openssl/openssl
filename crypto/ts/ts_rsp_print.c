@@ -70,13 +70,10 @@ struct status_map_st {
     const char *text;
 };
 
-/* Local function declarations. */
-
 static int ts_status_map_print(BIO *bio, const struct status_map_st *a,
                                const ASN1_BIT_STRING *v);
 static int ts_ACCURACY_print_bio(BIO *bio, const TS_ACCURACY *accuracy);
 
-/* Function definitions. */
 
 int TS_RESP_print_bio(BIO *bio, TS_RESP *a)
 {
@@ -125,7 +122,6 @@ int TS_STATUS_INFO_print_bio(BIO *bio, TS_STATUS_INFO *a)
     long status;
     int i, lines = 0;
 
-    /* Printing status code. */
     BIO_printf(bio, "Status: ");
     status = ASN1_INTEGER_get(a->status);
     if (0 <= status && status < (long)OSSL_NELEM(status_map))
@@ -133,7 +129,6 @@ int TS_STATUS_INFO_print_bio(BIO *bio, TS_STATUS_INFO *a)
     else
         BIO_printf(bio, "out of bounds\n");
 
-    /* Printing status description. */
     BIO_printf(bio, "Status description: ");
     for (i = 0; i < sk_ASN1_UTF8STRING_num(a->text); ++i) {
         if (i > 0)
@@ -144,7 +139,6 @@ int TS_STATUS_INFO_print_bio(BIO *bio, TS_STATUS_INFO *a)
     if (i == 0)
         BIO_printf(bio, "unspecified\n");
 
-    /* Printing failure information. */
     BIO_printf(bio, "Failure info: ");
     if (a->failure_info != NULL)
         lines = ts_status_map_print(bio, failure_map, a->failure_info);
@@ -178,18 +172,14 @@ int TS_TST_INFO_print_bio(BIO *bio, TS_TST_INFO *a)
     if (a == NULL)
         return 0;
 
-    /* Print version. */
     v = ASN1_INTEGER_get(a->version);
     BIO_printf(bio, "Version: %d\n", v);
 
-    /* Print policy id. */
     BIO_printf(bio, "Policy OID: ");
     TS_OBJ_print_bio(bio, a->policy_id);
 
-    /* Print message imprint. */
     TS_MSG_IMPRINT_print_bio(bio, a->msg_imprint);
 
-    /* Print serial number. */
     BIO_printf(bio, "Serial number: ");
     if (a->serial == NULL)
         BIO_printf(bio, "unspecified");
@@ -197,12 +187,10 @@ int TS_TST_INFO_print_bio(BIO *bio, TS_TST_INFO *a)
         TS_ASN1_INTEGER_print_bio(bio, a->serial);
     BIO_write(bio, "\n", 1);
 
-    /* Print time stamp. */
     BIO_printf(bio, "Time stamp: ");
     ASN1_GENERALIZEDTIME_print(bio, a->time);
     BIO_write(bio, "\n", 1);
 
-    /* Print accuracy. */
     BIO_printf(bio, "Accuracy: ");
     if (a->accuracy == NULL)
         BIO_printf(bio, "unspecified");
@@ -210,10 +198,8 @@ int TS_TST_INFO_print_bio(BIO *bio, TS_TST_INFO *a)
         ts_ACCURACY_print_bio(bio, a->accuracy);
     BIO_write(bio, "\n", 1);
 
-    /* Print ordering. */
     BIO_printf(bio, "Ordering: %s\n", a->ordering ? "yes" : "no");
 
-    /* Print nonce. */
     BIO_printf(bio, "Nonce: ");
     if (a->nonce == NULL)
         BIO_printf(bio, "unspecified");
@@ -221,7 +207,6 @@ int TS_TST_INFO_print_bio(BIO *bio, TS_TST_INFO *a)
         TS_ASN1_INTEGER_print_bio(bio, a->nonce);
     BIO_write(bio, "\n", 1);
 
-    /* Print TSA name. */
     BIO_printf(bio, "TSA: ");
     if (a->tsa == NULL)
         BIO_printf(bio, "unspecified");
@@ -233,7 +218,6 @@ int TS_TST_INFO_print_bio(BIO *bio, TS_TST_INFO *a)
     }
     BIO_write(bio, "\n", 1);
 
-    /* Print extensions. */
     TS_ext_print_bio(bio, a->extensions);
 
     return 1;

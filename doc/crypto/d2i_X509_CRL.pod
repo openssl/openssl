@@ -3,7 +3,7 @@
 =head1 NAME
 
 d2i_X509_CRL, i2d_X509_CRL, d2i_X509_CRL_bio, d2i_X509_CRL_fp,
-i2d_X509_CRL_bio, i2d_X509_CRL_fp - PKCS#10 certificate request functions.
+i2d_X509_CRL_bio, i2d_X509_CRL_fp, i2d_re_X509_CRL_tbs - CRL functions.
 
 =head1 SYNOPSIS
 
@@ -17,6 +17,8 @@ i2d_X509_CRL_bio, i2d_X509_CRL_fp - PKCS#10 certificate request functions.
 
  int i2d_X509_CRL_bio(BIO *bp, X509_CRL *x);
  int i2d_X509_CRL_fp(FILE *fp, X509_CRL *x);
+
+ int i2d_re_X509_CRL_tbs(X509_CRL *x, unsigned char **out);
 
 =head1 DESCRIPTION
 

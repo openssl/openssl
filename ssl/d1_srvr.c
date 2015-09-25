@@ -165,7 +165,6 @@ int dtls1_accept(SSL *s)
     unsigned long alg_k;
     int ret = -1;
     int new_state, state, skip = 0;
-    int listen;
 #ifndef OPENSSL_NO_SCTP
     unsigned char sctpauthkey[64];
     char labelbuffer[sizeof(DTLS1_SCTP_AUTH_LABEL)];
@@ -180,8 +179,6 @@ int dtls1_accept(SSL *s)
     else if (s->ctx->info_callback != NULL)
         cb = s->ctx->info_callback;
 
-    listen = s->d1->listen;
-
     /* init things to blank */
     s->in_handshake++;
     if (!SSL_in_init(s) || SSL_in_before(s)) {
@@ -189,7 +186,6 @@ int dtls1_accept(SSL *s)
             return -1;
     }
 
-    s->d1->listen = listen;
 #ifndef OPENSSL_NO_SCTP
     /*
      * Notify SCTP BIO socket to enter handshake mode and prevent stream
@@ -327,28 +323,6 @@ int dtls1_accept(SSL *s)
                 s->state = SSL3_ST_SW_SRVR_HELLO_A;
 
             s->init_num = 0;
-
-            /*
-             * Reflect ClientHello sequence to remain stateless while
-             * listening
-             */
-            if (listen) {
-                DTLS_RECORD_LAYER_resync_write(&s->rlayer);
-            }
-
-            /* If we're just listening, stop here */
-            if (listen && s->state == SSL3_ST_SW_SRVR_HELLO_A) {
-                ret = 2;
-                s->d1->listen = 0;
-                /*
-                 * Set expected sequence numbers to continue the handshake.
-                 */
-                s->d1->handshake_read_seq = 2;
-                s->d1->handshake_write_seq = 1;
-                s->d1->next_handshake_write_seq = 1;
-                goto end;
-            }
-
             break;
 
         case DTLS1_ST_SW_HELLO_VERIFY_REQUEST_A:
@@ -883,40 +857,55 @@ int dtls1_accept(SSL *s)
     return (ret);
 }
 
-int dtls1_send_hello_verify_request(SSL *s)
+unsigned int dtls1_raw_hello_verify_request(unsigned char *buf,
+                                            unsigned char *cookie,
+                                            unsigned char cookie_len)
 {
     unsigned int msg_len;
-    unsigned char *msg, *buf, *p;
+    unsigned char *p;
+
+    p = buf;
+    /* Always use DTLS 1.0 version: see RFC 6347 */
+    *(p++) = DTLS1_VERSION >> 8;
+    *(p++) = DTLS1_VERSION & 0xFF;
+
+    *(p++) = (unsigned char)cookie_len;
+    memcpy(p, cookie, cookie_len);
+    p += cookie_len;
+    msg_len = p - buf;
+
+    return msg_len;
+}
+
+
+int dtls1_send_hello_verify_request(SSL *s)
+{
+    unsigned int len;
+    unsigned char *buf;
 
     if (s->state == DTLS1_ST_SW_HELLO_VERIFY_REQUEST_A) {
         buf = (unsigned char *)s->init_buf->data;
 
-        msg = p = &(buf[DTLS1_HM_HEADER_LENGTH]);
-        /* Always use DTLS 1.0 version: see RFC 6347 */
-        *(p++) = DTLS1_VERSION >> 8;
-        *(p++) = DTLS1_VERSION & 0xFF;
-
         if (s->ctx->app_gen_cookie_cb == NULL ||
             s->ctx->app_gen_cookie_cb(s, s->d1->cookie,
-                                      &(s->d1->cookie_len)) == 0) {
+                                      &(s->d1->cookie_len)) == 0 ||
+            s->d1->cookie_len > 255) {
             SSLerr(SSL_F_DTLS1_SEND_HELLO_VERIFY_REQUEST,
-                   ERR_R_INTERNAL_ERROR);
+                   SSL_R_COOKIE_GEN_CALLBACK_FAILURE);
             s->state = SSL_ST_ERR;
             return 0;
         }
 
-        *(p++) = (unsigned char)s->d1->cookie_len;
-        memcpy(p, s->d1->cookie, s->d1->cookie_len);
-        p += s->d1->cookie_len;
-        msg_len = p - msg;
+        len = dtls1_raw_hello_verify_request(&buf[DTLS1_HM_HEADER_LENGTH],
+                                             s->d1->cookie, s->d1->cookie_len);
 
-        dtls1_set_message_header(s, buf,
-                                 DTLS1_MT_HELLO_VERIFY_REQUEST, msg_len, 0,
-                                 msg_len);
+        dtls1_set_message_header(s, buf, DTLS1_MT_HELLO_VERIFY_REQUEST, len, 0,
+                                 len);
+        len += DTLS1_HM_HEADER_LENGTH;
 
         s->state = DTLS1_ST_SW_HELLO_VERIFY_REQUEST_B;
         /* number of bytes to write */
-        s->init_num = p - buf;
+        s->init_num = len;
         s->init_off = 0;
     }
 

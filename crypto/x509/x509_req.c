@@ -117,6 +117,11 @@ EVP_PKEY *X509_REQ_get_pubkey(X509_REQ *req)
     return (X509_PUBKEY_get(req->req_info.pubkey));
 }
 
+X509_PUBKEY *X509_REQ_get_X509_PUBKEY(X509_REQ *req)
+{
+    return req->req_info.pubkey;
+}
+
 int X509_REQ_check_private_key(X509_REQ *x, EVP_PKEY *k)
 {
     EVP_PKEY *xk = NULL;
@@ -313,4 +318,24 @@ long X509_REQ_get_version(X509_REQ *req)
 X509_NAME *X509_REQ_get_subject_name(X509_REQ *req)
 {
     return req->req_info.subject;
+}
+
+void X509_REQ_get0_signature(ASN1_BIT_STRING **psig, X509_ALGOR **palg,
+                             X509_REQ *req)
+{
+    if (psig != NULL)
+        *psig = req->signature;
+    if (palg != NULL)
+        *palg = &req->sig_alg;
+}
+
+int X509_REQ_get_signature_nid(const X509_REQ *req)
+{
+    return OBJ_obj2nid(req->sig_alg.algorithm);
+}
+
+int i2d_re_X509_REQ_tbs(X509_REQ *req, unsigned char **pp)
+{
+    req->req_info.enc.modified = 1;
+    return i2d_X509_REQ_INFO(&req->req_info, pp);
 }

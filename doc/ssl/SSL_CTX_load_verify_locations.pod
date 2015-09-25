@@ -12,11 +12,29 @@ certificates
  int SSL_CTX_load_verify_locations(SSL_CTX *ctx, const char *CAfile,
                                    const char *CApath);
 
+ int SSL_CTX_set_default_verify_paths(SSL_CTX *ctx);
+
+ int SSL_CTX_set_default_verify_dir(SSL_CTX *ctx);
+
+ int SSL_CTX_set_default_verify_file(SSL_CTX *ctx);
+
 =head1 DESCRIPTION
 
 SSL_CTX_load_verify_locations() specifies the locations for B<ctx>, at
 which CA certificates for verification purposes are located. The certificates
 available via B<CAfile> and B<CApath> are trusted.
+
+SSL_CTX_set_default_verify_paths() specifies that the default locations for
+which CA certificates are loaded should be used. There is one default directory
+and one default file.
+
+SSL_CTX_set_default_verify_dir() is similar to
+SSL_CTX_set_default_verify_paths() except that just the default directory is
+used.
+
+SSL_CTX_set_default_verify_file() is similar to
+SSL_CTX_set_default_verify_paths() except that just the default file is
+used.
 
 =head1 NOTES
 
@@ -96,7 +114,7 @@ for use as B<CApath>:
 
 =head1 RETURN VALUES
 
-The following return values can occur:
+For SSL_CTX_load_verify_locations the following return values can occur:
 
 =over 4
 
@@ -111,6 +129,10 @@ stack to find out the reason.
 The operation succeeded.
 
 =back
+
+SSL_CTX_set_default_verify_paths(), SSL_CTX_set_default_verify_dir() and
+SSL_CTX_set_default_verify_file() all return 1 on success or 0 on failure. A
+missing default location is still treated as a success.
 
 =head1 SEE ALSO
 

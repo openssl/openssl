@@ -87,23 +87,8 @@ struct asn1_sctx_st {
     void *app_data;
 } /* ASN1_SCTX */ ;
 
-/*
- * Method to handle CRL access. In general a CRL could be very large (several
- * Mb) and can consume large amounts of resources if stored in memory by
- * multiple processes. This method allows general CRL operations to be
- * redirected to more efficient callbacks: for example a CRL entry database.
- */
-
-#define X509_CRL_METHOD_DYNAMIC         1
-
-struct x509_crl_method_st {
-    int flags;
-    int (*crl_init) (X509_CRL *crl);
-    int (*crl_free) (X509_CRL *crl);
-    int (*crl_lookup) (X509_CRL *crl, X509_REVOKED **ret,
-                       ASN1_INTEGER *ser, X509_NAME *issuer);
-    int (*crl_verify) (X509_CRL *crl, EVP_PKEY *pk);
-};
+/* Month values for printing out times */
+extern const char *_asn1_mon[12];
 
 int asn1_get_choice_selector(ASN1_VALUE **pval, const ASN1_ITEM *it);
 int asn1_set_choice_selector(ASN1_VALUE **pval, int value,

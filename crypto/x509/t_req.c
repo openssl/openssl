@@ -1,4 +1,4 @@
-/* crypto/asn1/t_req.c */
+/* crypto/x509/t_req.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -62,7 +62,6 @@
 #include <openssl/bn.h>
 #include <openssl/objects.h>
 #include <openssl/x509.h>
-#include "internal/x509_int.h"
 #include <openssl/x509v3.h>
 #ifndef OPENSSL_NO_RSA
 # include <openssl/rsa.h>
@@ -93,9 +92,7 @@ int X509_REQ_print_ex(BIO *bp, X509_REQ *x, unsigned long nmflags,
 {
     long l;
     int i;
-    X509_REQ_INFO *ri;
     EVP_PKEY *pkey;
-    STACK_OF(X509_ATTRIBUTE) *sk;
     STACK_OF(X509_EXTENSION) *exts;
     char mlch = ' ';
     int nmindent = 0;
@@ -108,7 +105,6 @@ int X509_REQ_print_ex(BIO *bp, X509_REQ *x, unsigned long nmflags,
     if (nmflags == X509_FLAG_COMPAT)
         nmindent = 16;
 
-    ri = &x->req_info;
     if (!(cflag & X509_FLAG_NO_HEADER)) {
         if (BIO_write(bp, "Certificate Request:\n", 21) <= 0)
             goto err;
@@ -123,17 +119,22 @@ int X509_REQ_print_ex(BIO *bp, X509_REQ *x, unsigned long nmflags,
     if (!(cflag & X509_FLAG_NO_SUBJECT)) {
         if (BIO_printf(bp, "        Subject:%c", mlch) <= 0)
             goto err;
-        if (X509_NAME_print_ex(bp, ri->subject, nmindent, nmflags) < 0)
+        if (X509_NAME_print_ex(bp, X509_REQ_get_subject_name(x),
+            nmindent, nmflags) < 0)
             goto err;
         if (BIO_write(bp, "\n", 1) <= 0)
             goto err;
     }
     if (!(cflag & X509_FLAG_NO_PUBKEY)) {
+        X509_PUBKEY *xpkey;
+        ASN1_OBJECT *koid;
         if (BIO_write(bp, "        Subject Public Key Info:\n", 33) <= 0)
             goto err;
         if (BIO_printf(bp, "%12sPublic Key Algorithm: ", "") <= 0)
             goto err;
-        if (i2a_ASN1_OBJECT(bp, ri->pubkey->algor->algorithm) <= 0)
+        xpkey = X509_REQ_get_X509_PUBKEY(x);
+        X509_PUBKEY_get0_param(&koid, NULL, NULL, NULL, xpkey);
+        if (i2a_ASN1_OBJECT(bp, koid) <= 0)
             goto err;
         if (BIO_puts(bp, "\n") <= 0)
             goto err;
@@ -153,19 +154,18 @@ int X509_REQ_print_ex(BIO *bp, X509_REQ *x, unsigned long nmflags,
         if (BIO_printf(bp, "%8sAttributes:\n", "") <= 0)
             goto err;
 
-        sk = x->req_info.attributes;
-        if (sk_X509_ATTRIBUTE_num(sk) == 0) {
+        if (X509_REQ_get_attr_count(x) == 0) {
             if (BIO_printf(bp, "%12sa0:00\n", "") <= 0)
                 goto err;
         } else {
-            for (i = 0; i < sk_X509_ATTRIBUTE_num(sk); i++) {
+            for (i = 0; i < X509_REQ_get_attr_count(x); i++) {
                 ASN1_TYPE *at;
                 X509_ATTRIBUTE *a;
                 ASN1_BIT_STRING *bs = NULL;
                 ASN1_OBJECT *aobj;
                 int j, type = 0, count = 1, ii = 0;
 
-                a = sk_X509_ATTRIBUTE_value(sk, i);
+                a = X509_REQ_get_attr(x, i);
                 aobj = X509_ATTRIBUTE_get0_object(a);
                 if (X509_REQ_extension_nid(OBJ_obj2nid(aobj)))
                     continue;
@@ -227,7 +227,10 @@ int X509_REQ_print_ex(BIO *bp, X509_REQ *x, unsigned long nmflags,
     }
 
     if (!(cflag & X509_FLAG_NO_SIGDUMP)) {
-        if (!X509_signature_print(bp, &x->sig_alg, x->signature))
+        X509_ALGOR *sig_alg;
+        ASN1_BIT_STRING *sig;
+        X509_REQ_get0_signature(&sig, &sig_alg, x);
+        if (!X509_signature_print(bp, sig_alg, sig))
             goto err;
     }
 

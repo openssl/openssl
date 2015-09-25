@@ -1078,8 +1078,9 @@ long SSL_ctrl(SSL *s, int cmd, long larg, void *parg)
                 return 0;
             *(unsigned char **)parg = s->s3->tmp.ciphers_raw;
             return (int)s->s3->tmp.ciphers_rawlen;
-        } else
-            return ssl_put_cipher_by_char(s, NULL, NULL);
+        } else {
+            return TLS_CIPHER_LEN;
+        }
     case SSL_CTRL_GET_EXTMS_SUPPORT:
         if (!s->session || SSL_in_init(s) || s->in_handshake)
 		return -1;
@@ -2804,6 +2805,37 @@ SSL_CTX *SSL_set_SSL_CTX(SSL *ssl, SSL_CTX *ctx)
 int SSL_CTX_set_default_verify_paths(SSL_CTX *ctx)
 {
     return (X509_STORE_set_default_paths(ctx->cert_store));
+}
+
+int SSL_CTX_set_default_verify_dir(SSL_CTX *ctx)
+{
+    X509_LOOKUP *lookup;
+
+    lookup = X509_STORE_add_lookup(ctx->cert_store, X509_LOOKUP_hash_dir());
+    if (lookup == NULL)
+        return 0;
+    X509_LOOKUP_add_dir(lookup, NULL, X509_FILETYPE_DEFAULT);
+
+    /* Clear any errors if the default directory does not exist */
+    ERR_clear_error();
+
+    return 1;
+}
+
+int SSL_CTX_set_default_verify_file(SSL_CTX *ctx)
+{
+    X509_LOOKUP *lookup;
+
+    lookup = X509_STORE_add_lookup(ctx->cert_store, X509_LOOKUP_file());
+    if (lookup == NULL)
+        return 0;
+
+    X509_LOOKUP_load_file(lookup, NULL, X509_FILETYPE_DEFAULT);
+
+    /* Clear any errors if the default file does not exist */
+    ERR_clear_error();
+
+    return 1;
 }
 
 int SSL_CTX_load_verify_locations(SSL_CTX *ctx, const char *CAfile,

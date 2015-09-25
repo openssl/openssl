@@ -546,6 +546,9 @@
 #define CERT_PRIVATE_KEY        2
 */
 
+
+/* CipherSuite length. SSLv3 and all TLS versions. */
+#define TLS_CIPHER_LEN 2
 /* used to hold info on the particular ciphers used */
 struct ssl_cipher_st {
     int valid;
@@ -1391,6 +1394,12 @@ typedef struct ssl3_state_st {
 /* Max MTU overhead we know about so far is 40 for IPv6 + 8 for UDP */
 #  define DTLS1_MAX_MTU_OVERHEAD                   48
 
+/*
+ * Flag used in message reuse to indicate the buffer contains the record
+ * header as well as the the handshake message header.
+ */
+#  define DTLS1_SKIP_RECORD_HEADER                 2
+
 struct dtls1_retransmit_state {
     EVP_CIPHER_CTX *enc_write_ctx; /* cryptographic state */
     EVP_MD_CTX *write_hash;     /* used for mac generation */
@@ -1440,8 +1449,6 @@ typedef struct dtls1_state_st {
     /* Buffered (sent) handshake records */
     pqueue sent_messages;
 
-    /* Is set when listening for new connections with dtls1_listen() */
-    unsigned int listen;
     unsigned int link_mtu;      /* max on-the-wire DTLS packet size */
     unsigned int mtu;           /* max DTLS packet size */
     struct hm_header_st w_msg_hdr;
@@ -1659,8 +1666,6 @@ struct tls_sigalgs_st {
  */
 
 # define FP_ICC  (int (*)(const void *,const void *))
-# define ssl_put_cipher_by_char(ssl,ciph,ptr) \
-                ((ssl)->method->put_cipher_by_char((ciph),(ptr)))
 
 /*
  * This is for the SSLv3/TLSv1.0 differences in crypto/hash stuff It is a bit
@@ -2008,6 +2013,9 @@ void dtls1_start_timer(SSL *s);
 void dtls1_stop_timer(SSL *s);
 __owur int dtls1_is_timer_expired(SSL *s);
 void dtls1_double_timeout(SSL *s);
+__owur unsigned int dtls1_raw_hello_verify_request(unsigned char *buf,
+                                                   unsigned char *cookie,
+                                                   unsigned char cookie_len);
 __owur int dtls1_send_newsession_ticket(SSL *s);
 __owur unsigned int dtls1_min_mtu(SSL *s);
 __owur unsigned int dtls1_link_min_mtu(void);

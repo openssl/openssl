@@ -442,9 +442,10 @@ STACK_OF(X509) *load_certs(const char *file, int format,
 STACK_OF(X509_CRL) *load_crls(const char *file, int format,
                               const char *pass, ENGINE *e,
                               const char *cert_descrip);
-X509_STORE *setup_verify(char *CAfile, char *CApath);
-int ctx_set_verify_locations(SSL_CTX *ctx,
-                             const char *CAfile, const char *CApath);
+X509_STORE *setup_verify(char *CAfile, char *CApath,
+                         int noCAfile, int noCApath);
+int ctx_set_verify_locations(SSL_CTX *ctx, const char *CAfile,
+                             const char *CApath, int noCAfile, int noCApath);
 # ifdef OPENSSL_NO_ENGINE
 #  define setup_engine(engine, debug) NULL
 # else
