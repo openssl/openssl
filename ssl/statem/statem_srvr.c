@@ -760,6 +760,23 @@ int ossl_statem_server_construct_message(SSL *s)
     return 0;
 }
 
+/*
+ * Maximum size (excluding the Handshake header) of a ClientHello message,
+ * calculated as follows:
+ *
+ *  2 + # client_version
+ *  32 + # only valid length for random
+ *  1 + # length of session_id
+ *  32 + # maximum size for session_id
+ *  2 + # length of cipher suites
+ *  2^16-2 + # maximum length of cipher suites array
+ *  1 + # length of compression_methods
+ *  2^8-1 + # maximum length of compression methods
+ *  2 + # length of extensions
+ *  2^16-1 # maximum length of extensions
+ */
+#define CLIENT_HELLO_MAX_LENGTH         131396
+
 #define CLIENT_KEY_EXCH_MAX_LENGTH      2048
 #define NEXT_PROTO_MAX_LENGTH           514
 
@@ -773,7 +790,7 @@ unsigned long ossl_statem_server_max_message_size(SSL *s)
 
     switch(st->hand_state) {
     case TLS_ST_SR_CLNT_HELLO:
-        return SSL3_RT_MAX_PLAIN_LENGTH;
+        return CLIENT_HELLO_MAX_LENGTH;
 
     case TLS_ST_SR_CERT:
         return s->max_cert_list;
