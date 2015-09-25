@@ -74,6 +74,9 @@
 # include <openssl/x509.h>
 
 
+# ifndef NAME_MAX
+#  define NAME_MAX 255
+# endif
 # define MAX_COLLISIONS  256
 
 typedef struct hentry_st {
@@ -319,7 +322,8 @@ static int do_dir(const char *dirname, enum Hash h)
     }
     buflen = strlen(dirname);
     pathsep = (buflen && dirname[buflen - 1] == '/') ? "" : "/";
-    buf = app_malloc(PATH_MAX, "filename buffer");
+    buflen += NAME_MAX + 1 + 1;
+    buf = app_malloc(buflen, "filename buffer");
 
     if (verbose)
         BIO_printf(bio_out, "Doing %s\n", dirname);
