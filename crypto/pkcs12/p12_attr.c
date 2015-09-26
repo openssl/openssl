@@ -137,3 +137,8 @@ char *PKCS12_get_friendlyname(PKCS12_SAFEBAG *bag)
     return OPENSSL_uni2asc(atype->value.bmpstring->data,
                            atype->value.bmpstring->length);
 }
+
+STACK_OF(X509_ATTRIBUTE) *PKCS12_SAFEBAG_get0_attrs(PKCS12_SAFEBAG *bag)
+{
+    return bag->attrib;
+}
