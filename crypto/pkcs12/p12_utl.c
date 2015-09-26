@@ -59,6 +59,7 @@
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include <openssl/pkcs12.h>
+#include "p12_lcl.h"
 
 /* Cheap and nasty Unicode stuff */
 
@@ -143,9 +144,9 @@ PKCS12_SAFEBAG *PKCS12_x509crl2certbag(X509_CRL *crl)
 
 X509 *PKCS12_certbag2x509(PKCS12_SAFEBAG *bag)
 {
-    if (M_PKCS12_bag_type(bag) != NID_certBag)
+    if (PKCS12_bag_type(bag) != NID_certBag)
         return NULL;
-    if (M_PKCS12_cert_bag_type(bag) != NID_x509Certificate)
+    if (PKCS12_cert_bag_type(bag) != NID_x509Certificate)
         return NULL;
     return ASN1_item_unpack(bag->value.bag->value.octet,
                             ASN1_ITEM_rptr(X509));
@@ -153,10 +154,51 @@ X509 *PKCS12_certbag2x509(PKCS12_SAFEBAG *bag)
 
 X509_CRL *PKCS12_certbag2x509crl(PKCS12_SAFEBAG *bag)
 {
-    if (M_PKCS12_bag_type(bag) != NID_crlBag)
+    if (PKCS12_bag_type(bag) != NID_crlBag)
         return NULL;
-    if (M_PKCS12_cert_bag_type(bag) != NID_x509Crl)
+    if (PKCS12_cert_bag_type(bag) != NID_x509Crl)
         return NULL;
     return ASN1_item_unpack(bag->value.bag->value.octet,
                             ASN1_ITEM_rptr(X509_CRL));
+}
+
+ASN1_TYPE *PKCS12_get_attr(PKCS12_SAFEBAG *bag, int attr_nid)
+{
+    return PKCS12_get_attr_gen(bag->attrib, attr_nid);
+}
+
+ASN1_TYPE *PKCS8_get_attr(PKCS8_PRIV_KEY_INFO *p8, int attr_nid)
+{
+    return PKCS12_get_attr_gen(p8->attributes, attr_nid);
+}
+
+int PKCS12_mac_present(PKCS12 *p12)
+{
+return p12->mac ? 1 : 0;
+}
+
+int PKCS12_bag_type(PKCS12_SAFEBAG *bag)
+{
+    return OBJ_obj2nid(bag->type);
+}
+
+int PKCS12_cert_bag_type(PKCS12_SAFEBAG *bag)
+{
+    if (PKCS12_bag_type(bag) != NID_certBag)
+        return -1;
+    return OBJ_obj2nid(bag->value.bag->type);
+}
+
+PKCS8_PRIV_KEY_INFO *PKCS12_SAFEBAG_get0_p8inf(PKCS12_SAFEBAG *bag)
+{
+    if (PKCS12_bag_type(bag) != NID_keyBag)
+        return NULL;
+    return bag->value.keybag;
+}
+
+STACK_OF(PKCS12_SAFEBAG) *PKCS12_SAFEBAG_get0_safes(PKCS12_SAFEBAG *bag)
+{
+    if (OBJ_obj2nid(bag->type) != NID_safeContentsBag)
+        return NULL;
+    return bag->value.safes;
 }
