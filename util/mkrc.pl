@@ -1,6 +1,6 @@
 #!/bin/env perl
 #
-open FD,"crypto/opensslv.h";
+open FD,"include/openssl/opensslv.h";
 while(<FD>) {
     if (/OPENSSL_VERSION_NUMBER\s+(0x[0-9a-f]+)/i) {
 	$ver = hex($1);
