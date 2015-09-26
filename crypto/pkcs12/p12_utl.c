@@ -177,6 +177,31 @@ int PKCS12_mac_present(PKCS12 *p12)
 return p12->mac ? 1 : 0;
 }
 
+void PKCS12_get0_mac(ASN1_OCTET_STRING **pmac, X509_ALGOR **pmacalg,
+                     ASN1_OCTET_STRING **psalt, ASN1_INTEGER **piter,
+                     PKCS12 *p12)
+{
+    if (p12->mac) {
+        if (pmac)
+            *pmac = p12->mac->dinfo->digest;
+        if (pmacalg)
+            *pmacalg = p12->mac->dinfo->algor;
+        if (psalt)
+            *psalt = p12->mac->salt;
+        if (piter)
+            *piter = p12->mac->iter;
+    } else {
+        if (pmac)
+            *pmac = NULL;
+        if (pmacalg)
+            *pmacalg = NULL;
+        if (psalt)
+            *psalt = NULL;
+        if (piter)
+            *piter = NULL;
+    }
+}
+
 int PKCS12_bag_type(PKCS12_SAFEBAG *bag)
 {
     return OBJ_obj2nid(bag->type);
@@ -196,9 +221,21 @@ PKCS8_PRIV_KEY_INFO *PKCS12_SAFEBAG_get0_p8inf(PKCS12_SAFEBAG *bag)
     return bag->value.keybag;
 }
 
+X509_SIG *PKCS12_SAFEBAG_get0_pkcs8(PKCS12_SAFEBAG *bag)
+{
+    if (OBJ_obj2nid(bag->type) != NID_pkcs8ShroudedKeyBag)
+        return NULL;
+    return bag->value.shkeybag;
+}
+
 STACK_OF(PKCS12_SAFEBAG) *PKCS12_SAFEBAG_get0_safes(PKCS12_SAFEBAG *bag)
 {
     if (OBJ_obj2nid(bag->type) != NID_safeContentsBag)
         return NULL;
     return bag->value.safes;
+}
+
+ASN1_OBJECT *PKCS12_SAFEBAG_get0_type(PKCS12_SAFEBAG *bag)
+{
+    return bag->type;
 }
