@@ -540,9 +540,12 @@ int pkcs12_main(int argc, char **argv)
     if (!twopass)
         OPENSSL_strlcpy(macpass, pass, sizeof macpass);
 
-    if ((options & INFO) && p12->mac)
+    if ((options & INFO) && PKCS12_mac_present(p12)) {
+        ASN1_INTEGER *tmaciter;
+        PKCS12_get0_mac(NULL, NULL, NULL, &tmaciter, p12);
         BIO_printf(bio_err, "MAC Iteration %ld\n",
-                   p12->mac->iter ? ASN1_INTEGER_get(p12->mac->iter) : 1);
+                   tmaciter ? ASN1_INTEGER_get(tmaciter) : 1);
+    }
     if (macver) {
         /* If we enter empty password try no password first */
         if (!mpass[0] && PKCS12_verify_mac(p12, NULL, 0)) {
@@ -640,6 +643,9 @@ int dump_certs_pkeys_bag(BIO *out, PKCS12_SAFEBAG *bag, char *pass,
     EVP_PKEY *pkey;
     PKCS8_PRIV_KEY_INFO *p8;
     X509 *x509;
+    STACK_OF(X509_ATTRIBUTE) *attrs;
+
+    attrs = PKCS12_SAFEBAG_get0_attrs(bag);
 
     switch (M_PKCS12_bag_type(bag)) {
     case NID_keyBag:
@@ -647,8 +653,8 @@ int dump_certs_pkeys_bag(BIO *out, PKCS12_SAFEBAG *bag, char *pass,
             BIO_printf(bio_err, "Key bag\n");
         if (options & NOKEYS)
             return 1;
-        print_attribs(out, bag->attrib, "Bag Attributes");
-        p8 = bag->value.keybag;
+        print_attribs(out, attrs, "Bag Attributes");
+        p8 = PKCS12_SAFEBAG_get0_p8inf(bag);
         if ((pkey = EVP_PKCS82PKEY(p8)) == NULL)
             return 0;
         print_attribs(out, p8->attributes, "Key Attributes");
@@ -658,12 +664,14 @@ int dump_certs_pkeys_bag(BIO *out, PKCS12_SAFEBAG *bag, char *pass,
 
     case NID_pkcs8ShroudedKeyBag:
         if (options & INFO) {
+            X509_SIG *tp8;
             BIO_printf(bio_err, "Shrouded Keybag: ");
-            alg_print(bag->value.shkeybag->algor);
+            tp8 = PKCS12_SAFEBAG_get0_pkcs8(bag);
+            alg_print(tp8->algor);
         }
         if (options & NOKEYS)
             return 1;
-        print_attribs(out, bag->attrib, "Bag Attributes");
+        print_attribs(out, attrs, "Bag Attributes");
         if ((p8 = PKCS12_decrypt_skey(bag, pass, passlen)) == NULL)
             return 0;
         if ((pkey = EVP_PKCS82PKEY(p8)) == NULL) {
@@ -686,7 +694,7 @@ int dump_certs_pkeys_bag(BIO *out, PKCS12_SAFEBAG *bag, char *pass,
                 return 1;
         } else if (options & CLCERTS)
             return 1;
-        print_attribs(out, bag->attrib, "Bag Attributes");
+        print_attribs(out, attrs, "Bag Attributes");
         if (M_PKCS12_cert_bag_type(bag) != NID_x509Certificate)
             return 1;
         if ((x509 = PKCS12_certbag2x509(bag)) == NULL)
@@ -699,13 +707,13 @@ int dump_certs_pkeys_bag(BIO *out, PKCS12_SAFEBAG *bag, char *pass,
     case NID_safeContentsBag:
         if (options & INFO)
             BIO_printf(bio_err, "Safe Contents bag\n");
-        print_attribs(out, bag->attrib, "Bag Attributes");
-        return dump_certs_pkeys_bags(out, bag->value.safes, pass,
-                                     passlen, options, pempass, enc);
+        print_attribs(out, attrs, "Bag Attributes");
+        return dump_certs_pkeys_bags(out, PKCS12_SAFEBAG_get0_safes(bag),
+                                     pass, passlen, options, pempass, enc);
 
     default:
         BIO_printf(bio_err, "Warning unsupported bag type: ");
-        i2a_ASN1_OBJECT(bio_err, bag->type);
+        i2a_ASN1_OBJECT(bio_err, PKCS12_SAFEBAG_get0_type(bag));
         BIO_printf(bio_err, "\n");
         return 1;
     }
