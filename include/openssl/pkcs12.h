@@ -127,17 +127,17 @@ typedef struct pkcs12_bag_st PKCS12_BAGS;
 # define M_PKCS12_decrypt_skey PKCS12_decrypt_skey
 # define M_PKCS8_decrypt PKCS8_decrypt
 
-# define M_PKCS12_bag_type(bg) OBJ_obj2nid((bg)->type)
-# define M_PKCS12_cert_bag_type(bg) OBJ_obj2nid((bg)->value.bag->type)
-# define M_PKCS12_crl_bag_type M_PKCS12_cert_bag_type
+# define M_PKCS12_bag_type PKCS12_bag_type
+# define M_PKCS12_cert_bag_type PKCS12_cert_bag_type
+# define M_PKCS12_crl_bag_type PKCS12_cert_bag_type
 
-# define PKCS12_get_attr(bag, attr_nid) \
-                         PKCS12_get_attr_gen(bag->attrib, attr_nid)
-
-# define PKCS8_get_attr(p8, attr_nid) \
-                PKCS12_get_attr_gen(p8->attributes, attr_nid)
-
-# define PKCS12_mac_present(p12) ((p12)->mac ? 1 : 0)
+ASN1_TYPE *PKCS12_get_attr(PKCS12_SAFEBAG *bag, int attr_nid);
+ASN1_TYPE *PKCS8_get_attr(PKCS8_PRIV_KEY_INFO *p8, int attr_nid);
+int PKCS12_mac_present(PKCS12 *p12);
+int PKCS12_bag_type(PKCS12_SAFEBAG *bag);
+int PKCS12_cert_bag_type(PKCS12_SAFEBAG *bag);
+PKCS8_PRIV_KEY_INFO *PKCS12_SAFEBAG_get0_p8inf(PKCS12_SAFEBAG *bag);
+STACK_OF(PKCS12_SAFEBAG) *PKCS12_SAFEBAG_get0_safes(PKCS12_SAFEBAG *bag);
 
 PKCS12_SAFEBAG *PKCS12_x5092certbag(X509 *x509);
 PKCS12_SAFEBAG *PKCS12_x509crl2certbag(X509_CRL *crl);
