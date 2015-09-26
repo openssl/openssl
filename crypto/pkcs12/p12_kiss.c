@@ -233,11 +233,12 @@ static int parse_bag(PKCS12_SAFEBAG *bag, const char *pass, int passlen,
     if ((attrib = PKCS12_get_attr(bag, NID_localKeyID)))
         lkid = attrib->value.octet_string;
 
-    switch (M_PKCS12_bag_type(bag)) {
+    switch (PKCS12_bag_type(bag)) {
     case NID_keyBag:
         if (!pkey || *pkey)
             return 1;
-        if ((*pkey = EVP_PKCS82PKEY(bag->value.keybag)) == NULL)
+        *pkey = EVP_PKCS82PKEY(PKCS12_SAFEBAG_get0_p8inf(bag));
+        if (*pkey == NULL)
             return 0;
         break;
 
@@ -253,7 +254,7 @@ static int parse_bag(PKCS12_SAFEBAG *bag, const char *pass, int passlen,
         break;
 
     case NID_certBag:
-        if (M_PKCS12_cert_bag_type(bag) != NID_x509Certificate)
+        if (PKCS12_cert_bag_type(bag) != NID_x509Certificate)
             return 1;
         if ((x509 = PKCS12_certbag2x509(bag)) == NULL)
             return 0;
@@ -283,7 +284,8 @@ static int parse_bag(PKCS12_SAFEBAG *bag, const char *pass, int passlen,
         break;
 
     case NID_safeContentsBag:
-        return parse_bags(bag->value.safes, pass, passlen, pkey, ocerts);
+        return parse_bags(PKCS12_SAFEBAG_get0_safes(bag), pass, passlen, pkey,
+                          ocerts);
 
     default:
         return 1;

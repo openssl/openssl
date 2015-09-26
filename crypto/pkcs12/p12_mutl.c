@@ -62,6 +62,7 @@
 # include <openssl/hmac.h>
 # include <openssl/rand.h>
 # include <openssl/pkcs12.h>
+# include "p12_lcl.h"
 
 # define TK26_MAC_KEY_LEN 32
 
