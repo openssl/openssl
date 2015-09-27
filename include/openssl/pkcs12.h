@@ -132,13 +132,15 @@ typedef struct pkcs12_bag_st PKCS12_BAGS;
 # define M_PKCS12_crl_bag_type PKCS12_cert_bag_type
 
 /* Compatibility macros for pre 1.1.0 function names */
-# define PKCS12_x5092certbag PKCS12_SAFEBAG_new_cert
-# define PKCS12_crl2certbag PKCS12_SAFEBAG_new_crl
 # define PKCS12_certbag2x509 PKCS12_SAFEBAG_get1_cert
 # define PKCS12_certbag2scrl PKCS12_SAFEBAG_get1_crl
 # define PKCS12_get_attr PKCS12_SAFEBAG_get0_attr
 # define PKCS12_bag_type PKCS12_SAFEBAG_get_nid
 # define PKCS12_cert_bag_type PKCS12_SAFEBAG_get_bag_nid
+# define PKCS12_x5092certbag PKCS12_SAFEBAG_create_cert
+# define PKCS12_crl2certbag PKCS12_SAFEBAG_create_crl
+# define PKCS12_MAKE_KEYBAG PKCS12_SAFEBAG_create_p8inf
+# define PKCS12_MAKE_SHKEYBAG PKCS12_SAFEBAG_create_pkcs8
 
 ASN1_TYPE *PKCS8_get_attr(PKCS8_PRIV_KEY_INFO *p8, int attr_nid);
 int PKCS12_mac_present(PKCS12 *p12);
@@ -157,12 +159,16 @@ STACK_OF(PKCS12_SAFEBAG) *PKCS12_SAFEBAG_get0_safes(PKCS12_SAFEBAG *bag);
 PKCS8_PRIV_KEY_INFO *PKCS12_SAFEBAG_get0_p8inf(PKCS12_SAFEBAG *bag);
 X509_SIG *PKCS12_SAFEBAG_get0_pkcs8(PKCS12_SAFEBAG *bag);
 
-PKCS12_SAFEBAG *PKCS12_SAFEBAG_new_cert(X509 *x509);
-PKCS12_SAFEBAG *PKCS12_SAFEBAG_new_crl(X509_CRL *crl);
+PKCS12_SAFEBAG *PKCS12_SAFEBAG_create_cert(X509 *x509);
+PKCS12_SAFEBAG *PKCS12_SAFEBAG_create_crl(X509_CRL *crl);
+PKCS12_SAFEBAG *PKCS12_SAFEBAG_create_p8inf(PKCS8_PRIV_KEY_INFO *p8);
+PKCS12_SAFEBAG *PKCS12_SAFEBAG_create_pkcs8(int pbe_nid, const char *pass,
+                                            int passlen, unsigned char *salt,
+                                            int saltlen, int iter,
+                                            PKCS8_PRIV_KEY_INFO *p8);
 
 PKCS12_SAFEBAG *PKCS12_item_pack_safebag(void *obj, const ASN1_ITEM *it,
                                          int nid1, int nid2);
-PKCS12_SAFEBAG *PKCS12_MAKE_KEYBAG(PKCS8_PRIV_KEY_INFO *p8);
 PKCS8_PRIV_KEY_INFO *PKCS8_decrypt(X509_SIG *p8, const char *pass,
                                    int passlen);
 PKCS8_PRIV_KEY_INFO *PKCS12_decrypt_skey(PKCS12_SAFEBAG *bag,
@@ -172,10 +178,6 @@ X509_SIG *PKCS8_encrypt(int pbe_nid, const EVP_CIPHER *cipher,
                         int saltlen, int iter, PKCS8_PRIV_KEY_INFO *p8);
 X509_SIG *PKCS8_set0_pbe(const char *pass, int passlen,
                         PKCS8_PRIV_KEY_INFO *p8inf, X509_ALGOR *pbe);
-PKCS12_SAFEBAG *PKCS12_MAKE_SHKEYBAG(int pbe_nid, const char *pass,
-                                     int passlen, unsigned char *salt,
-                                     int saltlen, int iter,
-                                     PKCS8_PRIV_KEY_INFO *p8);
 PKCS7 *PKCS12_pack_p7data(STACK_OF(PKCS12_SAFEBAG) *sk);
 STACK_OF(PKCS12_SAFEBAG) *PKCS12_unpack_p7data(PKCS7 *p7);
 PKCS7 *PKCS12_pack_p7encdata(int pbe_nid, const char *pass, int passlen,
