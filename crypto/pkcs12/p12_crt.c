@@ -189,7 +189,7 @@ PKCS12_SAFEBAG *PKCS12_add_cert(STACK_OF(PKCS12_SAFEBAG) **pbags, X509 *cert)
     int keyidlen = -1;
 
     /* Add user certificate */
-    if ((bag = PKCS12_SAFEBAG_new_cert(cert)) == NULL)
+    if ((bag = PKCS12_SAFEBAG_create_cert(cert)) == NULL)
         goto err;
 
     /*
