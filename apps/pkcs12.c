@@ -647,7 +647,7 @@ int dump_certs_pkeys_bag(BIO *out, PKCS12_SAFEBAG *bag, char *pass,
 
     attrs = PKCS12_SAFEBAG_get0_attrs(bag);
 
-    switch (M_PKCS12_bag_type(bag)) {
+    switch (PKCS12_SAFEBAG_get_nid(bag)) {
     case NID_keyBag:
         if (options & INFO)
             BIO_printf(bio_err, "Key bag\n");
@@ -689,15 +689,15 @@ int dump_certs_pkeys_bag(BIO *out, PKCS12_SAFEBAG *bag, char *pass,
             BIO_printf(bio_err, "Certificate bag\n");
         if (options & NOCERTS)
             return 1;
-        if (PKCS12_get_attr(bag, NID_localKeyID)) {
+        if (PKCS12_SAFEBAG_get0_attr(bag, NID_localKeyID)) {
             if (options & CACERTS)
                 return 1;
         } else if (options & CLCERTS)
             return 1;
         print_attribs(out, attrs, "Bag Attributes");
-        if (M_PKCS12_cert_bag_type(bag) != NID_x509Certificate)
+        if (PKCS12_SAFEBAG_get_bag_nid(bag) != NID_x509Certificate)
             return 1;
-        if ((x509 = PKCS12_certbag2x509(bag)) == NULL)
+        if ((x509 = PKCS12_SAFEBAG_get1_cert(bag)) == NULL)
             return 0;
         dump_cert_text(out, x509);
         PEM_write_bio_X509(out, x509);

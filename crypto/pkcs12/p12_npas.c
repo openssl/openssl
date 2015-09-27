@@ -203,7 +203,7 @@ static int newpass_bag(PKCS12_SAFEBAG *bag, char *oldpass, char *newpass)
     X509_SIG *p8new;
     int p8_nid, p8_saltlen, p8_iter;
 
-    if (PKCS12_bag_type(bag) != NID_pkcs8ShroudedKeyBag)
+    if (PKCS12_SAFEBAG_get_nid(bag) != NID_pkcs8ShroudedKeyBag)
         return 1;
 
     if ((p8 = PKCS8_decrypt(bag->value.shkeybag, oldpass, -1)) == NULL)

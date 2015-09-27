@@ -227,13 +227,13 @@ static int parse_bag(PKCS12_SAFEBAG *bag, const char *pass, int passlen,
     ASN1_BMPSTRING *fname = NULL;
     ASN1_OCTET_STRING *lkid = NULL;
 
-    if ((attrib = PKCS12_get_attr(bag, NID_friendlyName)))
+    if ((attrib = PKCS12_SAFEBAG_get0_attr(bag, NID_friendlyName)))
         fname = attrib->value.bmpstring;
 
-    if ((attrib = PKCS12_get_attr(bag, NID_localKeyID)))
+    if ((attrib = PKCS12_SAFEBAG_get0_attr(bag, NID_localKeyID)))
         lkid = attrib->value.octet_string;
 
-    switch (PKCS12_bag_type(bag)) {
+    switch (PKCS12_SAFEBAG_get_nid(bag)) {
     case NID_keyBag:
         if (!pkey || *pkey)
             return 1;
@@ -254,9 +254,9 @@ static int parse_bag(PKCS12_SAFEBAG *bag, const char *pass, int passlen,
         break;
 
     case NID_certBag:
-        if (PKCS12_cert_bag_type(bag) != NID_x509Certificate)
+        if (PKCS12_SAFEBAG_get_bag_nid(bag) != NID_x509Certificate)
             return 1;
-        if ((x509 = PKCS12_certbag2x509(bag)) == NULL)
+        if ((x509 = PKCS12_SAFEBAG_get1_cert(bag)) == NULL)
             return 0;
         if (lkid && !X509_keyid_set1(x509, lkid->data, lkid->length)) {
             X509_free(x509);
