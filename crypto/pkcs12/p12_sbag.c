@@ -145,12 +145,12 @@ PKCS12_SAFEBAG *PKCS12_SAFEBAG_create_crl(X509_CRL *crl)
 
 /* Turn PKCS8 object into a keybag */
 
-PKCS12_SAFEBAG *PKCS12_SAFEBAG_create_p8inf(PKCS8_PRIV_KEY_INFO *p8)
+PKCS12_SAFEBAG *PKCS12_SAFEBAG_create0_p8inf(PKCS8_PRIV_KEY_INFO *p8)
 {
-    PKCS12_SAFEBAG *bag;
+    PKCS12_SAFEBAG *bag = PKCS12_SAFEBAG_new();
 
-    if ((bag = PKCS12_SAFEBAG_new()) == NULL) {
-        PKCS12err(PKCS12_F_PKCS12_MAKE_KEYBAG, ERR_R_MALLOC_FAILURE);
+    if (bag == NULL) {
+        PKCS12err(PKCS12_F_PKCS12_SAFEBAG_CREATE0_P8INF, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
     bag->type = OBJ_nid2obj(NID_keyBag);
@@ -160,31 +160,48 @@ PKCS12_SAFEBAG *PKCS12_SAFEBAG_create_p8inf(PKCS8_PRIV_KEY_INFO *p8)
 
 /* Turn PKCS8 object into a shrouded keybag */
 
-PKCS12_SAFEBAG *PKCS12_SAFEBAG_create_pkcs8(int pbe_nid, const char *pass,
-                                            int passlen, unsigned char *salt,
-                                            int saltlen, int iter,
-                                            PKCS8_PRIV_KEY_INFO *p8)
+PKCS12_SAFEBAG *PKCS12_SAFEBAG_create0_pkcs8(X509_SIG *p8)
+{
+    PKCS12_SAFEBAG *bag = PKCS12_SAFEBAG_new();
+    /* Set up the safe bag */
+    if (bag == NULL) {
+        PKCS12err(PKCS12_F_PKCS12_SAFEBAG_CREATE0_PKCS8, ERR_R_MALLOC_FAILURE);
+        return NULL;
+    }
+    bag->type = OBJ_nid2obj(NID_pkcs8ShroudedKeyBag);
+    bag->value.shkeybag = p8;
+    return bag;
+}
+
+PKCS12_SAFEBAG *PKCS12_SAFEBAG_create_pkcs8_encrypt(int pbe_nid,
+                                                    const char *pass,
+                                                    int passlen,
+                                                    unsigned char *salt,
+                                                    int saltlen, int iter,
+                                                    PKCS8_PRIV_KEY_INFO *p8inf)
 {
     PKCS12_SAFEBAG *bag;
     const EVP_CIPHER *pbe_ciph;
-
-    /* Set up the safe bag */
-    if ((bag = PKCS12_SAFEBAG_new()) == NULL) {
-        PKCS12err(PKCS12_F_PKCS12_MAKE_SHKEYBAG, ERR_R_MALLOC_FAILURE);
-        return NULL;
-    }
-
-    bag->type = OBJ_nid2obj(NID_pkcs8ShroudedKeyBag);
+    X509_SIG *p8;
 
     pbe_ciph = EVP_get_cipherbynid(pbe_nid);
 
     if (pbe_ciph)
         pbe_nid = -1;
 
-    if (!(bag->value.shkeybag =
-          PKCS8_encrypt(pbe_nid, pbe_ciph, pass, passlen, salt, saltlen, iter,
-                        p8))) {
-        PKCS12err(PKCS12_F_PKCS12_MAKE_SHKEYBAG, ERR_R_MALLOC_FAILURE);
+    p8 = PKCS8_encrypt(pbe_nid, pbe_ciph, pass, passlen, salt, saltlen, iter,
+                       p8inf);
+
+    if (p8 == NULL) {
+        PKCS12err(PKCS12_F_PKCS12_SAFEBAG_CREATE_PKCS8_ENCRYPT, ERR_R_MALLOC_FAILURE);
+        return NULL;
+    }
+
+    bag = PKCS12_SAFEBAG_create0_pkcs8(p8);
+
+    if (bag == NULL) {
+        PKCS12err(PKCS12_F_PKCS12_SAFEBAG_CREATE_PKCS8_ENCRYPT, ERR_R_MALLOC_FAILURE);
+        X509_SIG_free(p8);
         return NULL;
     }
 

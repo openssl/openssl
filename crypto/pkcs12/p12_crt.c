@@ -231,10 +231,11 @@ PKCS12_SAFEBAG *PKCS12_add_key(STACK_OF(PKCS12_SAFEBAG) **pbags,
     if (key_usage && !PKCS8_add_keyusage(p8, key_usage))
         goto err;
     if (nid_key != -1) {
-        bag = PKCS12_MAKE_SHKEYBAG(nid_key, pass, -1, NULL, 0, iter, p8);
+        bag = PKCS12_SAFEBAG_create_pkcs8_encrypt(nid_key, pass, -1, NULL, 0,
+                                                  iter, p8);
         PKCS8_PRIV_KEY_INFO_free(p8);
     } else
-        bag = PKCS12_MAKE_KEYBAG(p8);
+        bag = PKCS12_SAFEBAG_create0_p8inf(p8);
 
     if (!bag)
         goto err;
