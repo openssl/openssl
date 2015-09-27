@@ -138,9 +138,9 @@ typedef struct pkcs12_bag_st PKCS12_BAGS;
 # define PKCS12_bag_type PKCS12_SAFEBAG_get_nid
 # define PKCS12_cert_bag_type PKCS12_SAFEBAG_get_bag_nid
 # define PKCS12_x5092certbag PKCS12_SAFEBAG_create_cert
-# define PKCS12_crl2certbag PKCS12_SAFEBAG_create_crl
-# define PKCS12_MAKE_KEYBAG PKCS12_SAFEBAG_create_p8inf
-# define PKCS12_MAKE_SHKEYBAG PKCS12_SAFEBAG_create_pkcs8
+# define PKCS12_x509crl2certbag PKCS12_SAFEBAG_create_crl
+# define PKCS12_MAKE_KEYBAG PKCS12_SAFEBAG_create0_p8inf
+# define PKCS12_MAKE_SHKEYBAG PKCS12_SAFEBAG_create_pkcs8_encrypt
 
 ASN1_TYPE *PKCS8_get_attr(PKCS8_PRIV_KEY_INFO *p8, int attr_nid);
 int PKCS12_mac_present(PKCS12 *p12);
@@ -161,11 +161,14 @@ X509_SIG *PKCS12_SAFEBAG_get0_pkcs8(PKCS12_SAFEBAG *bag);
 
 PKCS12_SAFEBAG *PKCS12_SAFEBAG_create_cert(X509 *x509);
 PKCS12_SAFEBAG *PKCS12_SAFEBAG_create_crl(X509_CRL *crl);
-PKCS12_SAFEBAG *PKCS12_SAFEBAG_create_p8inf(PKCS8_PRIV_KEY_INFO *p8);
-PKCS12_SAFEBAG *PKCS12_SAFEBAG_create_pkcs8(int pbe_nid, const char *pass,
-                                            int passlen, unsigned char *salt,
-                                            int saltlen, int iter,
-                                            PKCS8_PRIV_KEY_INFO *p8);
+PKCS12_SAFEBAG *PKCS12_SAFEBAG_create0_p8inf(PKCS8_PRIV_KEY_INFO *p8);
+PKCS12_SAFEBAG *PKCS12_SAFEBAG_create0_pkcs8(X509_SIG *p8);
+PKCS12_SAFEBAG *PKCS12_SAFEBAG_create_pkcs8_encrypt(int pbe_nid,
+                                                    const char *pass,
+                                                    int passlen,
+                                                    unsigned char *salt,
+                                                    int saltlen, int iter,
+                                                    PKCS8_PRIV_KEY_INFO *p8inf);
 
 PKCS12_SAFEBAG *PKCS12_item_pack_safebag(void *obj, const ASN1_ITEM *it,
                                          int nid1, int nid2);
@@ -287,14 +290,15 @@ void ERR_load_PKCS12_strings(void);
 # define PKCS12_F_PKCS12_ITEM_PACK_SAFEBAG                117
 # define PKCS12_F_PKCS12_KEY_GEN_ASC                      110
 # define PKCS12_F_PKCS12_KEY_GEN_UNI                      111
-# define PKCS12_F_PKCS12_MAKE_KEYBAG                      112
-# define PKCS12_F_PKCS12_MAKE_SHKEYBAG                    113
 # define PKCS12_F_PKCS12_NEWPASS                          128
 # define PKCS12_F_PKCS12_PACK_P7DATA                      114
 # define PKCS12_F_PKCS12_PACK_P7ENCDATA                   115
 # define PKCS12_F_PKCS12_PARSE                            118
 # define PKCS12_F_PKCS12_PBE_CRYPT                        119
 # define PKCS12_F_PKCS12_PBE_KEYIVGEN                     120
+# define PKCS12_F_PKCS12_SAFEBAG_CREATE0_P8INF            112
+# define PKCS12_F_PKCS12_SAFEBAG_CREATE0_PKCS8            113
+# define PKCS12_F_PKCS12_SAFEBAG_CREATE_PKCS8_ENCRYPT     133
 # define PKCS12_F_PKCS12_SETUP_MAC                        122
 # define PKCS12_F_PKCS12_SET_MAC                          123
 # define PKCS12_F_PKCS12_UNPACK_AUTHSAFES                 130
