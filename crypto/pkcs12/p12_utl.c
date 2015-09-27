@@ -130,39 +130,39 @@ PKCS12 *d2i_PKCS12_fp(FILE *fp, PKCS12 **p12)
 }
 #endif
 
-PKCS12_SAFEBAG *PKCS12_x5092certbag(X509 *x509)
+PKCS12_SAFEBAG *PKCS12_SAFEBAG_new_cert(X509 *x509)
 {
     return PKCS12_item_pack_safebag(x509, ASN1_ITEM_rptr(X509),
                                     NID_x509Certificate, NID_certBag);
 }
 
-PKCS12_SAFEBAG *PKCS12_x509crl2certbag(X509_CRL *crl)
+PKCS12_SAFEBAG *PKCS12_SAFEBAG_new_crl(X509_CRL *crl)
 {
     return PKCS12_item_pack_safebag(crl, ASN1_ITEM_rptr(X509_CRL),
                                     NID_x509Crl, NID_crlBag);
 }
 
-X509 *PKCS12_certbag2x509(PKCS12_SAFEBAG *bag)
+X509 *PKCS12_SAFEBAG_get1_cert(PKCS12_SAFEBAG *bag)
 {
-    if (PKCS12_bag_type(bag) != NID_certBag)
+    if (PKCS12_SAFEBAG_get_nid(bag) != NID_certBag)
         return NULL;
-    if (PKCS12_cert_bag_type(bag) != NID_x509Certificate)
+    if (OBJ_obj2nid(bag->value.bag->type) != NID_x509Certificate)
         return NULL;
     return ASN1_item_unpack(bag->value.bag->value.octet,
                             ASN1_ITEM_rptr(X509));
 }
 
-X509_CRL *PKCS12_certbag2x509crl(PKCS12_SAFEBAG *bag)
+X509_CRL *PKCS12_SAFEBAG_get1_crl(PKCS12_SAFEBAG *bag)
 {
-    if (PKCS12_bag_type(bag) != NID_crlBag)
+    if (PKCS12_SAFEBAG_get_nid(bag) != NID_crlBag)
         return NULL;
-    if (PKCS12_cert_bag_type(bag) != NID_x509Crl)
+    if (OBJ_obj2nid(bag->value.bag->type) != NID_x509Crl)
         return NULL;
     return ASN1_item_unpack(bag->value.bag->value.octet,
                             ASN1_ITEM_rptr(X509_CRL));
 }
 
-ASN1_TYPE *PKCS12_get_attr(PKCS12_SAFEBAG *bag, int attr_nid)
+ASN1_TYPE *PKCS12_SAFEBAG_get0_attr(PKCS12_SAFEBAG *bag, int attr_nid)
 {
     return PKCS12_get_attr_gen(bag->attrib, attr_nid);
 }
@@ -202,21 +202,9 @@ void PKCS12_get0_mac(ASN1_OCTET_STRING **pmac, X509_ALGOR **pmacalg,
     }
 }
 
-int PKCS12_bag_type(PKCS12_SAFEBAG *bag)
-{
-    return OBJ_obj2nid(bag->type);
-}
-
-int PKCS12_cert_bag_type(PKCS12_SAFEBAG *bag)
-{
-    if (PKCS12_bag_type(bag) != NID_certBag)
-        return -1;
-    return OBJ_obj2nid(bag->value.bag->type);
-}
-
 PKCS8_PRIV_KEY_INFO *PKCS12_SAFEBAG_get0_p8inf(PKCS12_SAFEBAG *bag)
 {
-    if (PKCS12_bag_type(bag) != NID_keyBag)
+    if (PKCS12_SAFEBAG_get_nid(bag) != NID_keyBag)
         return NULL;
     return bag->value.keybag;
 }
@@ -238,4 +226,17 @@ STACK_OF(PKCS12_SAFEBAG) *PKCS12_SAFEBAG_get0_safes(PKCS12_SAFEBAG *bag)
 ASN1_OBJECT *PKCS12_SAFEBAG_get0_type(PKCS12_SAFEBAG *bag)
 {
     return bag->type;
+}
+
+int PKCS12_SAFEBAG_get_nid(PKCS12_SAFEBAG *bag)
+{
+    return OBJ_obj2nid(bag->type);
+}
+
+int PKCS12_SAFEBAG_get_bag_nid(PKCS12_SAFEBAG *bag)
+{
+    int btype = PKCS12_SAFEBAG_get_nid(bag);
+    if (btype != NID_certBag || btype != NID_crlBag || btype != NID_secretBag)
+        return -1;
+    return OBJ_obj2nid(bag->value.bag->type);
 }
