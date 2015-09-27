@@ -130,7 +130,7 @@ char *PKCS12_get_friendlyname(PKCS12_SAFEBAG *bag)
 {
     ASN1_TYPE *atype;
 
-    if ((atype = PKCS12_get_attr(bag, NID_friendlyName)) == NULL)
+    if ((atype = PKCS12_SAFEBAG_get0_attr(bag, NID_friendlyName)) == NULL)
         return NULL;
     if (atype->type != V_ASN1_BMPSTRING)
         return NULL;
