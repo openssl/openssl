@@ -148,7 +148,7 @@ struct evp_pkey_st {
 # define EVP_PKEY_MO_DECRYPT     0x0008
 
 # ifndef EVP_MD
-struct env_md_st {
+struct evp_md_st {
     int type;
     int pkey_type;
     int md_size;
@@ -256,7 +256,7 @@ typedef int evp_verify_method(int type, const unsigned char *m,
 
 # endif                         /* !EVP_MD */
 
-struct env_md_ctx_st {
+struct evp_md_ctx_st {
     const EVP_MD *digest;
     ENGINE *engine;             /* functional reference if 'digest' is
                                  * ENGINE-provided */
