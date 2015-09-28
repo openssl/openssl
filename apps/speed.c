@@ -297,9 +297,9 @@ static double Time_F(int s)
         schlock = 0;
         thr = CreateThread(NULL, 4096, sleepy, NULL, 0, NULL);
         if (thr == NULL) {
-            DWORD ret = GetLastError();
-            BIO_printf(bio_err, "unable to CreateThread (%d)", ret);
-            ExitProcess(ret);
+            DWORD err = GetLastError();
+            BIO_printf(bio_err, "unable to CreateThread (%lu)", err);
+            ExitProcess(err);
         }
         while (!schlock)
             Sleep(0);           /* scheduler spinlock */
