@@ -121,7 +121,7 @@ int prime_main(int argc, char **argv)
         char *s;
 
         if (!bits) {
-            BIO_printf(bio_err, "Specifiy the number of bits.\n");
+            BIO_printf(bio_err, "Specify the number of bits.\n");
             goto end;
         }
         bn = BN_new();
