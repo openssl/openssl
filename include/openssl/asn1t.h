@@ -103,7 +103,7 @@ extern "C" {
                 static const ASN1_ITEM local_it = {
 
 #  define static_ASN1_ITEM_start(itname) \
-        ASN1_ITEM_start(itname)
+        static ASN1_ITEM_start(itname)
 
 #  define ASN1_ITEM_end(itname) \
                 }; \
