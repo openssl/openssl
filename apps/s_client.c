@@ -2073,6 +2073,9 @@ int MAIN(int argc, char **argv)
         sk_X509_pop_free(chain, X509_free);
     if (pass)
         OPENSSL_free(pass);
+#ifndef OPENSSL_NO_SRP
+    OPENSSL_free(srp_arg.srppassin);
+#endif
     if (vpm)
         X509_VERIFY_PARAM_free(vpm);
     ssl_excert_free(exc);
