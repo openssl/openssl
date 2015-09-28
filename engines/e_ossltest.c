@@ -94,7 +94,7 @@ static int ossltest_digest_nids[] = {
 /* MD5 */
 static int digest_md5_init(EVP_MD_CTX *ctx);
 static int digest_md5_update(EVP_MD_CTX *ctx, const void *data,
-                             unsigned long count);
+                             size_t count);
 static int digest_md5_final(EVP_MD_CTX *ctx, unsigned char *md);
 
 static const EVP_MD digest_md5 = {
@@ -115,7 +115,7 @@ static const EVP_MD digest_md5 = {
 /* SHA1 */
 static int digest_sha1_init(EVP_MD_CTX *ctx);
 static int digest_sha1_update(EVP_MD_CTX *ctx, const void *data,
-                             unsigned long count);
+                              size_t count);
 static int digest_sha1_final(EVP_MD_CTX *ctx, unsigned char *md);
 
 static const EVP_MD digest_sha1 = {
@@ -136,7 +136,7 @@ static const EVP_MD digest_sha1 = {
 /* SHA256 */
 static int digest_sha256_init(EVP_MD_CTX *ctx);
 static int digest_sha256_update(EVP_MD_CTX *ctx, const void *data,
-                             unsigned long count);
+                                size_t count);
 static int digest_sha256_final(EVP_MD_CTX *ctx, unsigned char *md);
 
 static const EVP_MD digest_sha256 = {
@@ -158,7 +158,7 @@ static const EVP_MD digest_sha256 = {
 static int digest_sha384_init(EVP_MD_CTX *ctx);
 static int digest_sha512_init(EVP_MD_CTX *ctx);
 static int digest_sha512_update(EVP_MD_CTX *ctx, const void *data,
-                             unsigned long count);
+                                size_t count);
 static int digest_sha384_final(EVP_MD_CTX *ctx, unsigned char *md);
 static int digest_sha512_final(EVP_MD_CTX *ctx, unsigned char *md);
 
@@ -377,7 +377,7 @@ static int digest_md5_init(EVP_MD_CTX *ctx)
 }
 
 static int digest_md5_update(EVP_MD_CTX *ctx, const void *data,
-          unsigned long count)
+                             size_t count)
 {
     return MD5_Update(data(ctx), data, (size_t)count);
 }
@@ -404,7 +404,7 @@ static int digest_sha1_init(EVP_MD_CTX *ctx)
 }
 
 static int digest_sha1_update(EVP_MD_CTX *ctx, const void *data,
-                             unsigned long count)
+                              size_t count)
 {
     return SHA1_Update(data(ctx), data, (size_t)count);
 }
@@ -431,7 +431,7 @@ static int digest_sha256_init(EVP_MD_CTX *ctx)
 }
 
 static int digest_sha256_update(EVP_MD_CTX *ctx, const void *data,
-                             unsigned long count)
+                                size_t count)
 {
     return SHA256_Update(data(ctx), data, (size_t)count);
 }
@@ -463,7 +463,7 @@ static int digest_sha512_init(EVP_MD_CTX *ctx)
 }
 
 static int digest_sha512_update(EVP_MD_CTX *ctx, const void *data,
-                             unsigned long count)
+                                size_t count)
 {
     return SHA512_Update(data(ctx), data, (size_t)count);
 }
