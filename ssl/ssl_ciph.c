@@ -295,8 +295,7 @@ static const SSL_CIPHER cipher_aliases[] = {
      * "COMPLEMENTOFDEFAULT" (does *not* include ciphersuites not found in
      * ALL!)
      */
-    {0, SSL_TXT_CMPDEF, 0, SSL_kDHE | SSL_kECDHE, SSL_aNULL, ~SSL_eNULL, 0, 0,
-     0, 0, 0, 0},
+    {0, SSL_TXT_CMPDEF, 0, 0, 0, ~SSL_eNULL, 0, 0, SSL_NOT_DEFAULT, 0, 0, 0},
 
     /*
      * key exchange aliases (some of those using only a single bit here
@@ -966,6 +965,9 @@ static void ssl_cipher_apply_rule(unsigned long cipher_id,
             if ((algo_strength & SSL_STRONG_MASK)
                 && !(algo_strength & SSL_STRONG_MASK & cp->algo_strength))
                 continue;
+            if ((algo_strength & SSL_DEFAULT_MASK)
+                && !(algo_strength & SSL_DEFAULT_MASK & cp->algo_strength))
+                continue;
         }
 
 #ifdef CIPHER_DEBUG
@@ -1249,6 +1251,20 @@ static int ssl_cipher_process_rulestr(const char *rule_str,
                 } else
                     algo_strength |=
                         ca_list[j]->algo_strength & SSL_STRONG_MASK;
+            }
+
+            if (ca_list[j]->algo_strength & SSL_DEFAULT_MASK) {
+                if (algo_strength & SSL_DEFAULT_MASK) {
+                    algo_strength &=
+                        (ca_list[j]->algo_strength & SSL_DEFAULT_MASK) |
+                        ~SSL_DEFAULT_MASK;
+                    if (!(algo_strength & SSL_DEFAULT_MASK)) {
+                        found = 0;
+                        break;
+                    }
+                } else
+                    algo_strength |=
+                        ca_list[j]->algo_strength & SSL_DEFAULT_MASK;
             }
 
             if (ca_list[j]->valid) {
