@@ -429,6 +429,7 @@
  */
 # define SSL_EXP_MASK            0x00000003L
 # define SSL_STRONG_MASK         0x000001fcL
+# define SSL_DEFAULT_MASK        0X00000200L
 
 # define SSL_NOT_EXP             0x00000001L
 # define SSL_EXPORT              0x00000002L
@@ -443,7 +444,9 @@
 # define SSL_HIGH                0x00000080L
 # define SSL_FIPS                0x00000100L
 
-/* we have used 000001ff - 23 bits left to go */
+# define SSL_NOT_DEFAULT         0x00000200L
+
+/* we have used 000003ff - 22 bits left to go */
 
 /*-
  * Macros to check the export status and cipher strength for export ciphers.

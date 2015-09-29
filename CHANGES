@@ -4,6 +4,12 @@
 
  Changes between 1.0.2 and 1.1.0  [xx XXX xxxx]
 
+  *) Removed DES and RC4 ciphersuites from DEFAULT. Also removed RC2 although
+     in 1.0.2 EXPORT was already removed and the only RC2 ciphersuite is also
+     an EXPORT one. COMPLEMENTOFDEFAULT has been updated accordingly to add
+     DES and RC4 ciphersuites.
+     [Matt Caswell]
+
   *) Rewrite EVP_DecodeUpdate (base64 decoding) to fix several bugs.
      This changes the decoding behaviour for some invalid messages,
      though the change is mostly in the more lenient direction, and
