@@ -2123,6 +2123,7 @@ void ERR_load_SSL_strings(void);
 # define SSL_R_BAD_ECC_CERT                               304
 # define SSL_R_BAD_ECDSA_SIGNATURE                        305
 # define SSL_R_BAD_ECPOINT                                306
+# define SSL_R_BAD_GOST_SIGNATURE                         404
 # define SSL_R_BAD_HANDSHAKE_LENGTH                       332
 # define SSL_R_BAD_HELLO_REQUEST                          105
 # define SSL_R_BAD_LENGTH                                 271

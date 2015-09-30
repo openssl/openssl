@@ -3043,7 +3043,9 @@ int ssl3_get_cert_verify(SSL *s)
         EVP_PKEY_CTX *pctx = EVP_PKEY_CTX_new(pkey, NULL);
         EVP_PKEY_verify_init(pctx);
         if (len != sigsize) {
-            fprintf(stderr, "GOST signature length is %d", len);
+            al = SSL_AD_DECODE_ERROR;
+            SSLerr(SSL_F_SSL3_GET_CERT_VERIFY, SSL_R_BAD_GOST_SIGNATURE);
+            goto f_err;
         }
         for (idx = 0; idx < sigsize; idx++) {
             signature[sigsize - 1 - idx] = data[idx];
@@ -3053,7 +3055,7 @@ int ssl3_get_cert_verify(SSL *s)
         EVP_PKEY_CTX_free(pctx);
         if (j <= 0) {
             al = SSL_AD_DECRYPT_ERROR;
-            SSLerr(SSL_F_SSL3_GET_CERT_VERIFY, SSL_R_BAD_ECDSA_SIGNATURE);
+            SSLerr(SSL_F_SSL3_GET_CERT_VERIFY, SSL_R_BAD_GOST_SIGNATURE);
             goto f_err;
         }
     } else {
