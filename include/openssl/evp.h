@@ -427,18 +427,6 @@ struct evp_cipher_st {
 # define         EVP_CTRL_TLS1_1_MULTIBLOCK_DECRYPT      0x1b
 # define         EVP_CTRL_TLS1_1_MULTIBLOCK_MAX_BUFSIZE  0x1c
 
-/* For engine-specific control values */
-# define         EVP_CTRL_ENGINE_CIPHER_CUSTOM0          0x1000
-# define         EVP_CTRL_ENGINE_CIPHER_CUSTOM1          0x1001
-# define         EVP_CTRL_ENGINE_CIPHER_CUSTOM2          0x1002
-# define         EVP_CTRL_ENGINE_CIPHER_CUSTOM3          0x1003
-# define         EVP_CTRL_ENGINE_CIPHER_CUSTOM4          0x1004
-# define         EVP_CTRL_ENGINE_CIPHER_CUSTOM5          0x1005
-# define         EVP_CTRL_ENGINE_CIPHER_CUSTOM6          0x1006
-# define         EVP_CTRL_ENGINE_CIPHER_CUSTOM7          0x1007
-# define         EVP_CTRL_ENGINE_CIPHER_CUSTOM8          0x1008
-# define         EVP_CTRL_ENGINE_CIPHER_CUSTOM9          0x1009
-
 /* RFC 5246 defines additional data to be 13 bytes in length */
 # define         EVP_AEAD_TLS1_AAD_LEN           13
 
