@@ -117,6 +117,13 @@ static inline int PACKET_buf_init(PACKET *pkt, unsigned char *buf, size_t len)
     return 1;
 }
 
+/* Initialize a PACKET to hold zero bytes. */
+static inline void PACKET_null_init(PACKET *pkt)
+{
+    pkt->curr = NULL;
+    pkt->remaining = 0;
+}
+
 /*
  * Peek ahead and initialize |subpkt| with the next |len| bytes read from |pkt|.
  * Data is not copied: the |subpkt| packet will share its underlying buffer with

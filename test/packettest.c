@@ -327,6 +327,21 @@ static int test_PACKET_buf_init()
     return 1;
 }
 
+static int test_PACKET_null_init()
+{
+    PACKET pkt;
+
+    PACKET_null_init(&pkt);
+    /* Also tests PACKET_get_len() */
+    if (       PACKET_remaining(&pkt) != 0
+            || PACKET_forward(&pkt, 1)) {
+        fprintf(stderr, "test_PACKET_null_init() failed\n");
+        return 0;
+        }
+
+    return 1;
+}
+
 static int test_PACKET_get_length_prefixed_1()
 {
     unsigned char buf[BUF_LEN];
@@ -417,6 +432,7 @@ int main(int argc, char **argv)
     i = 0;
 
     if (       !test_PACKET_buf_init()
+            || !test_PACKET_null_init()
             || !test_PACKET_remaining(buf)
             || !test_PACKET_get_1(buf)
             || !test_PACKET_get_4(buf)
