@@ -493,11 +493,12 @@ int list_main(int argc, char **argv)
 {
     char *prog;
     HELPLIST_CHOICE o;
+    int done = 0;
 
     prog = opt_init(argc, argv, list_options);
     while ((o = opt_next()) != OPT_EOF) {
         switch (o) {
-        case OPT_EOF:
+        case OPT_EOF:  /* Never hit, but suppresses warning */
         case OPT_ERR:
             BIO_printf(bio_err, "%s: Use -help for summary.\n", prog);
             return 1;
@@ -526,6 +527,12 @@ int list_main(int argc, char **argv)
             list_disabled();
             break;
         }
+        done = 1;
+    }
+
+    if (!done) {
+        BIO_printf(bio_err, "%s: Use -help for summary.\n", prog);
+        return 1;
     }
 
     return 0;
