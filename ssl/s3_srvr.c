@@ -847,7 +847,9 @@ int ssl3_get_client_hello(SSL *s)
 #endif
     STACK_OF(SSL_CIPHER) *ciphers = NULL;
     int protverr = 1;
-    PACKET pkt, cipher_suite, compression;
+    /* |cookie| will only be initialized for DTLS. */
+    PACKET pkt, session_id, cipher_suites, compression, extensions, cookie;
+    int is_v2_record;
 
     if (s->state == SSL3_ST_SR_CLNT_HELLO_C && !s->first_packet)
         goto retry_cert;
@@ -877,8 +879,10 @@ int ssl3_get_client_hello(SSL *s)
         goto f_err;
     }
 
+    is_v2_record = RECORD_LAYER_is_sslv2_record(&s->rlayer);
+
     /* First lets get s->client_version set correctly */
-    if (RECORD_LAYER_is_sslv2_record(&s->rlayer)) {
+    if (is_v2_record) {
         unsigned int version;
         unsigned int mt;
         /*-
@@ -1004,13 +1008,15 @@ int ssl3_get_client_hello(SSL *s)
         goto f_err;
     }
 
-    if (RECORD_LAYER_is_sslv2_record(&s->rlayer)) {
+    /* Parse the message and load client random. */
+    if (is_v2_record) {
         /*
          * Handle an SSLv2 backwards compatible ClientHello
          * Note, this is only for SSLv3+ using the backward compatible format.
          * Real SSLv2 is not supported, and is rejected above.
          */
         unsigned int cipher_len, session_id_len, challenge_len;
+        PACKET challenge;
 
         if (!PACKET_get_net_2(&pkt, &cipher_len)
                 || !PACKET_get_net_2(&pkt, &session_id_len)
@@ -1020,309 +1026,250 @@ int ssl3_get_client_hello(SSL *s)
             goto f_err;
         }
 
-        if (cipher_len == 0) {
-            /* we need at least one cipher */
-            al = SSL_AD_ILLEGAL_PARAMETER;
-            SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, SSL_R_NO_CIPHERS_SPECIFIED);
-            goto f_err;
-        }
-
-        if (!PACKET_get_sub_packet(&pkt, &cipher_suite, cipher_len)) {
+        if (!PACKET_get_sub_packet(&pkt, &cipher_suites, cipher_len)
+            || !PACKET_get_sub_packet(&pkt, &session_id, session_id_len)
+            || !PACKET_get_sub_packet(&pkt, &challenge, challenge_len)
+            /* No extensions. */
+            || PACKET_remaining(&pkt) != 0) {
             SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, SSL_R_RECORD_LENGTH_MISMATCH);
             al = SSL_AD_DECODE_ERROR;
             goto f_err;
         }
-
-        if (ssl_bytes_to_cipher_list(s, PACKET_data(&cipher_suite),
-                                     cipher_len, &(ciphers), 1) == NULL) {
-            goto err;
-        }
-
-        /*
-         * Ignore any session id. We don't allow resumption in a backwards
-         * compatible ClientHello
-         */
-        if (!PACKET_forward(&pkt, session_id_len)) {
-            SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, SSL_R_RECORD_LENGTH_MISMATCH);
-            al = SSL_AD_DECODE_ERROR;
-            goto f_err;
-        }
-        s->hit = 0;
-
-        if (!ssl_get_new_session(s, 1))
-            goto err;
 
         /* Load the client random */
-        i = challenge_len > SSL3_RANDOM_SIZE ? SSL3_RANDOM_SIZE : challenge_len;
+        challenge_len = challenge_len > SSL3_RANDOM_SIZE ? SSL3_RANDOM_SIZE :
+            challenge_len;
         memset(s->s3->client_random, 0, SSL3_RANDOM_SIZE);
-        if (!PACKET_peek_copy_bytes(&pkt,
-                                    s->s3->client_random + SSL3_RANDOM_SIZE - i,
-                                    i)
-                || !PACKET_forward(&pkt, challenge_len)
-                || PACKET_remaining(&pkt) != 0) {
-            SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, SSL_R_RECORD_LENGTH_MISMATCH);
-            al = SSL_AD_DECODE_ERROR;
+        if (!PACKET_copy_bytes(&challenge,
+                               s->s3->client_random + SSL3_RANDOM_SIZE -
+                               challenge_len, challenge_len)) {
+            SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, ERR_R_INTERNAL_ERROR);
+            al = SSL_AD_INTERNAL_ERROR;
             goto f_err;
         }
+
+        PACKET_null_init(&compression);
+        PACKET_null_init(&extensions);
+        /* We're never DTLS here but just play safe and initialize. */
+        PACKET_null_init(&cookie);
     } else {
-        /* If we get here we've got SSLv3+ in an SSLv3+ record */
-        PACKET session_id;
-        unsigned int cookie_len;
-        /* load the client random and get the session-id */
+        /* Regular ClientHello. */
         if (!PACKET_copy_bytes(&pkt, s->s3->client_random, SSL3_RANDOM_SIZE)
-		|| !PACKET_get_length_prefixed_1(&pkt, &session_id)) {
+            || !PACKET_get_length_prefixed_1(&pkt, &session_id)) {
             al = SSL_AD_DECODE_ERROR;
-            SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, SSL_R_LENGTH_TOO_SHORT);
-            goto f_err;
-        }
-
-        /*
-         * If we require cookies and this ClientHello doesn't contain one, just
-         * return since we do not want to allocate any memory yet. So check
-         * cookie length...
-         */
-        if (SSL_get_options(s) & SSL_OP_COOKIE_EXCHANGE) {
-
-            if (!PACKET_peek_1(&pkt, &cookie_len)) {
-                al = SSL_AD_DECODE_ERROR;
-                SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, SSL_R_LENGTH_TOO_SHORT);
-                goto f_err;
-            }
-
-            if (cookie_len == 0)
-                return 1;
-        }
-
-        s->hit = 0;
-        /*
-         * Versions before 0.9.7 always allow clients to resume sessions in
-         * renegotiation. 0.9.7 and later allow this by default, but optionally
-         * ignore resumption requests with flag
-         * SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION (it's a new flag rather
-         * than a change to default behavior so that applications relying on
-         * this for security won't even compile against older library versions).
-         * 1.0.1 and later also have a function SSL_renegotiate_abbreviated() to
-         * request renegotiation but not a new session (s->new_session remains
-         * unset): for servers, this essentially just means that the
-         * SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION setting will be
-         * ignored.
-         */
-        if ((s->new_session
-             && (s->options & SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION))) {
-            if (!ssl_get_new_session(s, 1))
-                goto err;
-        } else {
-            /*
-             * TODO(openssl-team): ssl_get_prev_session passes a non-const
-             * 'unsigned char*' session id to a user callback. Grab a copy of
-             * the data?
-             */
-	    i = ssl_get_prev_session(s, &pkt, PACKET_data(&session_id),
-		                     PACKET_remaining(&session_id));
-            /*
-             * Only resume if the session's version matches the negotiated
-             * version.
-             * RFC 5246 does not provide much useful advice on resumption
-             * with a different protocol version. It doesn't forbid it but
-             * the sanity of such behaviour would be questionable.
-             * In practice, clients do not accept a version mismatch and
-             * will abort the handshake with an error.
-             */
-            if (i == 1 && s->version == s->session->ssl_version) {
-                /* previous session */
-                s->hit = 1;
-            } else if (i == -1)
-                goto err;
-            else {
-                /* i == 0 */
-                if (!ssl_get_new_session(s, 1))
-                    goto err;
-            }
-        }
-
-        if (SSL_IS_DTLS(s)) {
-            PACKET cookie;
-            if (!PACKET_get_length_prefixed_1(&pkt, &cookie)) {
-                al = SSL_AD_DECODE_ERROR;
-                SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, SSL_R_LENGTH_TOO_SHORT);
-                goto f_err;
-            }
-	    cookie_len = PACKET_remaining(&cookie);
-            /*
-             * The ClientHello may contain a cookie even if the
-             * HelloVerify message has not been sent--make sure that it
-             * does not cause an overflow.
-             */
-            if (cookie_len > sizeof(s->d1->rcvd_cookie)) {
-                /* too much data */
-                al = SSL_AD_DECODE_ERROR;
-                SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, SSL_R_COOKIE_MISMATCH);
-                goto f_err;
-            }
-
-            /* verify the cookie if appropriate option is set. */
-            if ((SSL_get_options(s) & SSL_OP_COOKIE_EXCHANGE)
-                    && cookie_len > 0) {
-                /* Get cookie */
-                /*
-                 * TODO(openssl-team): rcvd_cookie appears unused outside this
-                 * function. Remove the field?
-                 */
-                if (!PACKET_copy_bytes(&cookie, s->d1->rcvd_cookie, cookie_len)) {
-                    al = SSL_AD_INTERNAL_ERROR;
-                    SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, ERR_R_INTERNAL_ERROR);
-                    goto f_err;
-                }
-
-                if (s->ctx->app_verify_cookie_cb != NULL) {
-                    if (s->ctx->app_verify_cookie_cb(s, s->d1->rcvd_cookie,
-                                                     cookie_len) == 0) {
-                        al = SSL_AD_HANDSHAKE_FAILURE;
-                        SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO,
-                               SSL_R_COOKIE_MISMATCH);
-                        goto f_err;
-                    }
-                    /* else cookie verification succeeded */
-                }
-                /* default verification */
-                else if (memcmp(s->d1->rcvd_cookie, s->d1->cookie,
-                                s->d1->cookie_len) != 0) {
-                    al = SSL_AD_HANDSHAKE_FAILURE;
-                    SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, SSL_R_COOKIE_MISMATCH);
-                    goto f_err;
-                }
-                /* Set to -2 so if successful we return 2 */
-                ret = -2;
-            }
-            if (s->method->version == DTLS_ANY_VERSION) {
-                /* Select version to use */
-                if (s->client_version <= DTLS1_2_VERSION &&
-                    !(s->options & SSL_OP_NO_DTLSv1_2)) {
-                    s->version = DTLS1_2_VERSION;
-                    s->method = DTLSv1_2_server_method();
-                } else if (tls1_suiteb(s)) {
-                    SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO,
-                           SSL_R_ONLY_DTLS_1_2_ALLOWED_IN_SUITEB_MODE);
-                    s->version = s->client_version;
-                    al = SSL_AD_PROTOCOL_VERSION;
-                    goto f_err;
-                } else if (s->client_version <= DTLS1_VERSION &&
-                           !(s->options & SSL_OP_NO_DTLSv1)) {
-                    s->version = DTLS1_VERSION;
-                    s->method = DTLSv1_server_method();
-                } else {
-                    SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO,
-                           SSL_R_WRONG_VERSION_NUMBER);
-                    s->version = s->client_version;
-                    al = SSL_AD_PROTOCOL_VERSION;
-                    goto f_err;
-                }
-                s->session->ssl_version = s->version;
-            }
-        }
-
-        if (!PACKET_get_length_prefixed_2(&pkt, &cipher_suite)) {
-            al = SSL_AD_DECODE_ERROR;
-            SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, SSL_R_LENGTH_TOO_SHORT);
-            goto f_err;
-        }
-
-        if (PACKET_remaining(&cipher_suite) == 0) {
-            al = SSL_AD_ILLEGAL_PARAMETER;
-            SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, SSL_R_NO_CIPHERS_SPECIFIED);
-            goto f_err;
-        }
-
-        if (ssl_bytes_to_cipher_list(s, PACKET_data(&cipher_suite),
-                                     PACKET_remaining(&cipher_suite),
-                                     &(ciphers), 0) == NULL) {
-            goto err;
-        }
-
-        /* If it is a hit, check that the cipher is in the list */
-        if (s->hit) {
-            j = 0;
-            id = s->session->cipher->id;
-
-#ifdef CIPHER_DEBUG
-            fprintf(stderr, "client sent %d ciphers\n",
-                    sk_SSL_CIPHER_num(ciphers));
-#endif
-            for (i = 0; i < sk_SSL_CIPHER_num(ciphers); i++) {
-                c = sk_SSL_CIPHER_value(ciphers, i);
-#ifdef CIPHER_DEBUG
-                fprintf(stderr, "client [%2d of %2d]:%s\n",
-                        i, sk_SSL_CIPHER_num(ciphers), SSL_CIPHER_get_name(c));
-#endif
-                if (c->id == id) {
-                    j = 1;
-                    break;
-                }
-            }
-            /*
-             * Disabled because it can be used in a ciphersuite downgrade
-             * attack:
-             * CVE-2010-4180.
-             */
-#if 0
-            if (j == 0 && (s->options & SSL_OP_NETSCAPE_REUSE_CIPHER_CHANGE_BUG)
-                && (sk_SSL_CIPHER_num(ciphers) == 1)) {
-                /*
-                 * Special case as client bug workaround: the previously used
-                 * cipher may not be in the current list, the client instead
-                 * might be trying to continue using a cipher that before wasn't
-                 * chosen due to server preferences.  We'll have to reject the
-                 * connection if the cipher is not enabled, though.
-                 */
-                c = sk_SSL_CIPHER_value(ciphers, 0);
-                if (sk_SSL_CIPHER_find(SSL_get_ciphers(s), c) >= 0) {
-                    s->session->cipher = c;
-                    j = 1;
-                }
-            }
-#endif
-            if (j == 0) {
-                /*
-                 * we need to have the cipher in the cipher list if we are asked
-                 * to reuse it
-                 */
-                al = SSL_AD_ILLEGAL_PARAMETER;
-                SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO,
-                       SSL_R_REQUIRED_CIPHER_MISSING);
-                goto f_err;
-            }
-        }
-
-        /* compression */
-        if (!PACKET_get_length_prefixed_1(&pkt, &compression)) {
-            /* not enough data */
-            al = SSL_AD_DECODE_ERROR;
-            /*
-             * TODO(openssl-team):
-             * SSL_R_LENGTH_TOO_SHORT and SSL_R_LENGTH_MISMATCH are used
-             * interchangeably. Pick one.
-             */
             SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, SSL_R_LENGTH_MISMATCH);
             goto f_err;
         }
 
-        complen = PACKET_remaining(&compression);
-        for (j = 0; j < complen; j++) {
-            if (PACKET_data(&compression)[j] == 0)
-                break;
+        if (SSL_IS_DTLS(s)) {
+            if (!PACKET_get_length_prefixed_1(&pkt, &cookie)) {
+                al = SSL_AD_DECODE_ERROR;
+                SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, SSL_R_LENGTH_MISMATCH);
+                goto f_err;
+            }
+            /*
+             * If we require cookies and this ClientHello doesn't contain one,
+             * just return since we do not want to allocate any memory yet.
+             * So check cookie length...
+             */
+            if (SSL_get_options(s) & SSL_OP_COOKIE_EXCHANGE) {
+                if (PACKET_remaining(&cookie) == 0)
+                return 1;
+            }
         }
 
-        if (j >= complen) {
-            /* no compress */
+        if (!PACKET_get_length_prefixed_2(&pkt, &cipher_suites)
+            || !PACKET_get_length_prefixed_1(&pkt, &compression)) {
+                al = SSL_AD_DECODE_ERROR;
+                SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, SSL_R_LENGTH_MISMATCH);
+                goto f_err;
+        }
+        /* Could be empty. */
+        extensions = pkt;
+    }
+
+    s->hit = 0;
+
+    /*
+     * We don't allow resumption in a backwards compatible ClientHello.
+     * TODO(openssl-team): in TLS1.1+, session_id MUST be empty.
+     *
+     * Versions before 0.9.7 always allow clients to resume sessions in
+     * renegotiation. 0.9.7 and later allow this by default, but optionally
+     * ignore resumption requests with flag
+     * SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION (it's a new flag rather
+     * than a change to default behavior so that applications relying on
+     * this for security won't even compile against older library versions).
+     * 1.0.1 and later also have a function SSL_renegotiate_abbreviated() to
+     * request renegotiation but not a new session (s->new_session remains
+     * unset): for servers, this essentially just means that the
+     * SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION setting will be
+     * ignored.
+     */
+    if (is_v2_record ||
+        (s->new_session &&
+         (s->options & SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION))) {
+        if (!ssl_get_new_session(s, 1))
+            goto err;
+    } else {
+        i = ssl_get_prev_session(s, &extensions, &session_id);
+        /*
+         * Only resume if the session's version matches the negotiated
+         * version.
+         * RFC 5246 does not provide much useful advice on resumption
+         * with a different protocol version. It doesn't forbid it but
+         * the sanity of such behaviour would be questionable.
+         * In practice, clients do not accept a version mismatch and
+         * will abort the handshake with an error.
+         */
+        if (i == 1 && s->version == s->session->ssl_version) {
+            /* previous session */
+            s->hit = 1;
+        } else if (i == -1) {
+            goto err;
+        } else {
+            /* i == 0 */
+            if (!ssl_get_new_session(s, 1))
+                goto err;
+        }
+    }
+
+    if (SSL_IS_DTLS(s)) {
+        size_t cookie_len = PACKET_remaining(&cookie);
+        /*
+         * The ClientHello may contain a cookie even if the
+         * HelloVerify message has not been sent--make sure that it
+         * does not cause an overflow.
+         */
+        if (cookie_len > sizeof(s->d1->rcvd_cookie)) {
+            /* too much data */
             al = SSL_AD_DECODE_ERROR;
-            SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, SSL_R_NO_COMPRESSION_SPECIFIED);
+            SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, SSL_R_COOKIE_MISMATCH);
+            goto f_err;
+        }
+
+        /* verify the cookie if appropriate option is set. */
+        if ((SSL_get_options(s) & SSL_OP_COOKIE_EXCHANGE) && cookie_len > 0) {
+            /* Get cookie */
+            /*
+             * TODO(openssl-team): rcvd_cookie appears unused outside this
+             * function. Remove the field?
+             */
+            if (!PACKET_copy_bytes(&cookie, s->d1->rcvd_cookie, cookie_len)) {
+                al = SSL_AD_INTERNAL_ERROR;
+                SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, ERR_R_INTERNAL_ERROR);
+                goto f_err;
+            }
+
+            if (s->ctx->app_verify_cookie_cb != NULL) {
+                if (s->ctx->app_verify_cookie_cb(s, s->d1->rcvd_cookie,
+                                                 cookie_len) == 0) {
+                    al = SSL_AD_HANDSHAKE_FAILURE;
+                    SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO,
+                           SSL_R_COOKIE_MISMATCH);
+                    goto f_err;
+                }
+                /* else cookie verification succeeded */
+            }
+            /* default verification */
+            else if (memcmp(s->d1->rcvd_cookie, s->d1->cookie,
+                            s->d1->cookie_len) != 0) {
+                al = SSL_AD_HANDSHAKE_FAILURE;
+                SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, SSL_R_COOKIE_MISMATCH);
+                goto f_err;
+            }
+            /* Set to -2 so if successful we return 2 */
+            ret = -2;
+        }
+        if (s->method->version == DTLS_ANY_VERSION) {
+            /* Select version to use */
+            if (s->client_version <= DTLS1_2_VERSION &&
+                !(s->options & SSL_OP_NO_DTLSv1_2)) {
+                s->version = DTLS1_2_VERSION;
+                s->method = DTLSv1_2_server_method();
+            } else if (tls1_suiteb(s)) {
+                SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO,
+                       SSL_R_ONLY_DTLS_1_2_ALLOWED_IN_SUITEB_MODE);
+                s->version = s->client_version;
+                al = SSL_AD_PROTOCOL_VERSION;
+                goto f_err;
+            } else if (s->client_version <= DTLS1_VERSION &&
+                       !(s->options & SSL_OP_NO_DTLSv1)) {
+                s->version = DTLS1_VERSION;
+                s->method = DTLSv1_server_method();
+            } else {
+                SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO,
+                       SSL_R_WRONG_VERSION_NUMBER);
+                s->version = s->client_version;
+                al = SSL_AD_PROTOCOL_VERSION;
+                goto f_err;
+            }
+            s->session->ssl_version = s->version;
+        }
+    }
+
+    if (PACKET_remaining(&cipher_suites) == 0) {
+        /* we need at least one cipher */
+        al = SSL_AD_ILLEGAL_PARAMETER;
+        SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, SSL_R_NO_CIPHERS_SPECIFIED);
+        goto f_err;
+    }
+
+    if (ssl_bytes_to_cipher_list(s, PACKET_data(&cipher_suites),
+                                 PACKET_remaining(&cipher_suites),
+                                 &(ciphers), is_v2_record) == NULL) {
+        /* TODO(openssl-team): make this alert correctly. */
+        goto err;
+    }
+
+    /* If it is a hit, check that the cipher is in the list */
+    if (s->hit) {
+        j = 0;
+        id = s->session->cipher->id;
+
+#ifdef CIPHER_DEBUG
+        fprintf(stderr, "client sent %d ciphers\n",
+                sk_SSL_CIPHER_num(ciphers));
+#endif
+        for (i = 0; i < sk_SSL_CIPHER_num(ciphers); i++) {
+            c = sk_SSL_CIPHER_value(ciphers, i);
+#ifdef CIPHER_DEBUG
+            fprintf(stderr, "client [%2d of %2d]:%s\n",
+                    i, sk_SSL_CIPHER_num(ciphers), SSL_CIPHER_get_name(c));
+#endif
+            if (c->id == id) {
+                j = 1;
+                break;
+            }
+        }
+        if (j == 0) {
+            /*
+             * we need to have the cipher in the cipher list if we are asked
+             * to reuse it
+             */
+            al = SSL_AD_ILLEGAL_PARAMETER;
+            SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO,
+                   SSL_R_REQUIRED_CIPHER_MISSING);
             goto f_err;
         }
     }
 
+    complen = PACKET_remaining(&compression);
+    for (j = 0; j < complen; j++) {
+        if (PACKET_data(&compression)[j] == 0)
+            break;
+    }
+
+    if (j >= complen) {
+        /* no compress */
+        al = SSL_AD_DECODE_ERROR;
+        SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, SSL_R_NO_COMPRESSION_SPECIFIED);
+        goto f_err;
+    }
+    
     /* TLS extensions */
     if (s->version >= SSL3_VERSION) {
-        if (!ssl_parse_clienthello_tlsext(s, &pkt)) {
+        if (!ssl_parse_clienthello_tlsext(s, &extensions)) {
             SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, SSL_R_PARSE_TLSEXT);
             goto err;
         }
