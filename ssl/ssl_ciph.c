@@ -519,11 +519,7 @@ void ssl_load_ciphers(void)
         if (md == NULL) {
             disabled_mac_mask |= t->mask;
         } else {
-            if ((t->nid == NID_id_Gost28147_89_MAC) || (t->nid == NID_gost_mac_12)) {
-                ssl_mac_secret_size[i] = 32;
-            } else {
-                ssl_mac_secret_size[i] = EVP_MD_size(md);
-            }
+            ssl_mac_secret_size[i] = EVP_MD_size(md);
             OPENSSL_assert(ssl_mac_secret_size[i] >= 0);
         }
     }
@@ -566,6 +562,13 @@ void ssl_load_ciphers(void)
         ssl_mac_secret_size[SSL_MD_GOST89MAC_IDX] = 32;
     } else {
         disabled_mac_mask |= SSL_GOST89MAC;
+    }
+
+    ssl_mac_pkey_id[SSL_MD_GOST89MAC_IDX] = get_optional_pkey_id("gost-mac-12");
+    if (ssl_mac_pkey_id[SSL_MD_GOST89MAC12_IDX]) {
+        ssl_mac_secret_size[SSL_MD_GOST89MAC12_IDX] = 32;
+    } else {
+        disabled_mac_mask |= SSL_GOST89MAC12;
     }
 
     if (!get_optional_pkey_id("gost2001"))
