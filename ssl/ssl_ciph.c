@@ -2055,7 +2055,7 @@ int ssl_cipher_get_cert_index(const SSL_CIPHER *c)
         return SSL_PKEY_DSA_SIGN;
     else if (alg_a & SSL_aRSA)
         return SSL_PKEY_RSA_ENC;
-		else if (alg_a & SSL_aGOST12)
+    else if (alg_a & SSL_aGOST12)
         return SSL_PKEY_GOST_EC;
     else if (alg_a & SSL_aGOST01)
         return SSL_PKEY_GOST01;
