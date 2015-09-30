@@ -1399,11 +1399,22 @@ int ssl3_get_server_certificate(SSL *s)
 
     exp_idx = ssl_cipher_get_cert_index(s->s3->tmp.new_cipher);
     if (exp_idx >= 0 && i != exp_idx) {
-        x = NULL;
-        al = SSL_AD_ILLEGAL_PARAMETER;
-        SSLerr(SSL_F_SSL3_GET_SERVER_CERTIFICATE,
-               SSL_R_WRONG_CERTIFICATE_TYPE);
-        goto f_err;
+        if (exp_idx == SSL_PKEY_GOST_EC) {
+            if ((i != SSL_PKEY_GOST12_512) && (i != SSL_PKEY_GOST12_256)
+                && (i != SSL_PKEY_GOST01)) {
+                x = NULL;
+                al = SSL_AD_ILLEGAL_PARAMETER;
+                SSLerr(SSL_F_SSL3_GET_SERVER_CERTIFICATE,
+                       SSL_R_WRONG_CERTIFICATE_TYPE);
+                goto f_err;
+            }
+        } else {
+            x = NULL;
+            al = SSL_AD_ILLEGAL_PARAMETER;
+            SSLerr(SSL_F_SSL3_GET_SERVER_CERTIFICATE,
+                   SSL_R_WRONG_CERTIFICATE_TYPE);
+            goto f_err;
+        }
     }
     s->session->peer_type = i;
 
@@ -2797,11 +2808,19 @@ int ssl3_send_client_key_exchange(SSL *s)
             unsigned char shared_ukm[32], tmp[256];
             EVP_MD_CTX *ukm_hash;
             EVP_PKEY *pub_key;
+            int dgst_nid = NID_id_GostR3411_94;
 
             pmslen = 32;
             pms = OPENSSL_malloc(pmslen);
             if (!pms)
                 goto memerr;
+
+            /*
+             * New GOST ciphersuites have both SSL_aGOST12 and SSL_aGOST01
+             * bits
+             */
+            if ((s->s3->tmp.new_cipher->algorithm_auth & SSL_aGOST12) != 0)
+                dgst_nid = NID_id_GostR3411_2012_256;
 
             /*
              * Get server sertificate PKEY and create ctx from it
@@ -2850,8 +2869,7 @@ int ssl3_send_client_key_exchange(SSL *s)
              * data
              */
             ukm_hash = EVP_MD_CTX_create();
-            EVP_DigestInit(ukm_hash,
-                           EVP_get_digestbynid(NID_id_GostR3411_94));
+            EVP_DigestInit(ukm_hash, EVP_get_digestbynid(dgst_nid));
             EVP_DigestUpdate(ukm_hash, s->s3->client_random,
                              SSL3_RANDOM_SIZE);
             EVP_DigestUpdate(ukm_hash, s->s3->server_random,
@@ -2999,7 +3017,7 @@ int ssl3_send_client_key_exchange(SSL *s)
 int ssl3_send_client_verify(SSL *s)
 {
     unsigned char *p;
-    unsigned char data[MD5_DIGEST_LENGTH + SHA_DIGEST_LENGTH];
+    unsigned char data[EVP_MAX_MD_SIZE]; /* GOST R 34.11-2012-256*/
     EVP_PKEY *pkey;
     EVP_PKEY_CTX *pctx = NULL;
     EVP_MD_CTX mctx;
@@ -3093,17 +3111,23 @@ int ssl3_send_client_verify(SSL *s)
             n = j + 2;
         } else
 #endif
-        if (pkey->type == NID_id_GostR3410_2001) {
-            unsigned char signbuf[64];
+        if (pkey->type == NID_id_GostR3410_2001
+                || pkey->type == NID_id_GostR3410_2012_256
+                || pkey->type == NID_id_GostR3410_2012_512) {
+            unsigned char signbuf[128];
             int i;
-            size_t sigsize = 64;
-            s->method->ssl3_enc->cert_verify_mac(s,
-                                                 NID_id_GostR3411_94, data);
-            if (EVP_PKEY_sign(pctx, signbuf, &sigsize, data, 32) <= 0) {
+            size_t sigsize =
+                (pkey->type == NID_id_GostR3410_2012_512) ? 128 : 64;
+            int dgst_nid = NID_undef;
+
+            EVP_PKEY_get_default_digest_nid(pkey, &dgst_nid);
+            s->method->ssl3_enc->cert_verify_mac(s, dgst_nid, data);
+            if (EVP_PKEY_sign(pctx, signbuf, &sigsize, data,
+                              EVP_MD_size(EVP_get_digestbynid(dgst_nid))) <= 0) {
                 SSLerr(SSL_F_SSL3_SEND_CLIENT_VERIFY, ERR_R_INTERNAL_ERROR);
                 goto err;
             }
-            for (i = 63, j = 0; i >= 0; j++, i--) {
+            for (i = sigsize - 1, j = 0; i >= 0; j++, i--) {
                 p[2 + j] = signbuf[i];
             }
             s2n(j, p);

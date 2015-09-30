@@ -537,7 +537,7 @@ int ssl3_digest_cached_records(SSL *s, int keep)
         }
 
         /* Loop through bits of algorithm2 field and create MD_CTX-es */
-        for (i = 0; ssl_get_handshake_digest(i, &mask, &md); i++) {
+        for (i = 0; ssl_get_certverify_digest(i, &mask, &md); i++) {
             if ((mask & ssl_get_algorithm2(s)) && md) {
                 s->s3->handshake_dgst[i] = EVP_MD_CTX_create();
                 if (EVP_MD_nid(md) == NID_md5) {

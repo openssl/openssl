@@ -1953,6 +1953,16 @@ void ssl_set_masks(SSL *s, const SSL_CIPHER *cipher)
             rsa_enc_export, rsa_sign, dsa_sign, dh_rsa, dh_dsa);
 #endif
 
+    cpk = &(c->pkeys[SSL_PKEY_GOST12_512]);
+    if (cpk->x509 != NULL && cpk->privatekey != NULL) {
+        mask_k |= SSL_kGOST;
+        mask_a |= SSL_aGOST12;
+    }
+    cpk = &(c->pkeys[SSL_PKEY_GOST12_256]);
+    if (cpk->x509 != NULL && cpk->privatekey != NULL) {
+        mask_k |= SSL_kGOST;
+        mask_a |= SSL_aGOST12;
+    }
     cpk = &(c->pkeys[SSL_PKEY_GOST01]);
     if (cpk->x509 != NULL && cpk->privatekey != NULL) {
         mask_k |= SSL_kGOST;
@@ -2139,6 +2149,16 @@ static int ssl_get_server_cert_index(const SSL *s)
     idx = ssl_cipher_get_cert_index(s->s3->tmp.new_cipher);
     if (idx == SSL_PKEY_RSA_ENC && !s->cert->pkeys[SSL_PKEY_RSA_ENC].x509)
         idx = SSL_PKEY_RSA_SIGN;
+    if (idx == SSL_PKEY_GOST_EC) {
+        if (s->cert->pkeys[SSL_PKEY_GOST12_512].x509)
+            idx = SSL_PKEY_GOST12_512;
+        else if (s->cert->pkeys[SSL_PKEY_GOST12_256].x509)
+            idx = SSL_PKEY_GOST12_256;
+        else if (s->cert->pkeys[SSL_PKEY_GOST01].x509)
+            idx = SSL_PKEY_GOST01;
+        else
+            idx = -1;
+    }
     if (idx == -1)
         SSLerr(SSL_F_SSL_GET_SERVER_CERT_INDEX, ERR_R_INTERNAL_ERROR);
     return idx;
