@@ -3268,8 +3268,7 @@ static const tls12_hash_info tls12_md_info[] = {
     {NID_sha256, 128, EVP_sha256},
     {NID_sha384, 192, EVP_sha384},
     {NID_sha512, 256, EVP_sha512},
-		/* FIXME correct secbits values to be found out*/
-		{NID_id_GostR3411_94, 128, md_gost94},
+    {NID_id_GostR3411_94,       128, md_gost94},
     {NID_id_GostR3411_2012_256, 128, md_gost2012_256},
     {NID_id_GostR3411_2012_512, 256, md_gost2012_512},
 };
