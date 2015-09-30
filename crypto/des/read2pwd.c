@@ -114,6 +114,10 @@
 #include <openssl/ui.h>
 #include <openssl/crypto.h>
 
+#ifndef BUFSIZ
+#define BUFSIZ 256
+#endif
+
 int DES_read_password(DES_cblock *key, const char *prompt, int verify)
 {
     int ok;

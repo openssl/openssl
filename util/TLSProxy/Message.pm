@@ -282,6 +282,15 @@ sub create_message
             [@message_frag_lens]
         );
         $message->parse();
+    } elsif ($mt == MT_NEW_SESSION_TICKET) {
+        $message = TLSProxy::NewSessionTicket->new(
+            $server,
+            $data,
+            [@message_rec_list],
+            $startoffset,
+            [@message_frag_lens]
+        );
+        $message->parse();
     } else {
         #Unknown message type
         $message = TLSProxy::Message->new(
@@ -361,24 +370,34 @@ sub repack
     $lenhi = length($self->data) >> 8;
     $msgdata = pack('CnC', $self->mt, $lenhi, $lenlo).$self->data;
 
-
     if ($numrecs == 0) {
         #The message is fully contained within one record
         my ($rec) = @{$self->records};
         my $recdata = $rec->decrypt_data;
 
-        if (length($msgdata) != ${$self->message_frag_lens}[0]
-                                + TLS_MESSAGE_HEADER_LENGTH) {
-            #Message length has changed! Better adjust the record length
-            my $diff = length($msgdata) - ${$self->message_frag_lens}[0]
-                                        - TLS_MESSAGE_HEADER_LENGTH;
-            $rec->len($rec->len + $diff);
+        my $old_length;
+
+        # We use empty message_frag_lens to indicates that pre-repacking,
+        # the message wasn't present. The first fragment length doesn't include
+        # the TLS header, so we need to check and compute the right length.
+        if (@{$self->message_frag_lens}) {
+            $old_length = ${$self->message_frag_lens}[0] +
+              TLS_MESSAGE_HEADER_LENGTH;
+        } else {
+            $old_length = 0;
         }
 
-        $rec->data(substr($recdata, 0, $self->startoffset)
-                   .($msgdata)
-                   .substr($recdata, ${$self->message_frag_lens}[0]
-                                     + TLS_MESSAGE_HEADER_LENGTH));
+        my $prefix = substr($recdata, 0, $self->startoffset);
+        my $suffix = substr($recdata, $self->startoffset + $old_length);
+
+        $rec->decrypt_data($prefix.($msgdata).($suffix));
+        # TODO(openssl-team): don't keep explicit lengths.
+        # (If a length override is ever needed to construct invalid packets,
+        #  use an explicit override field instead.)
+        $rec->decrypt_len(length($rec->decrypt_data));
+        $rec->len($rec->len + length($msgdata) - $old_length);
+        # Don't support re-encryption.
+        $rec->data($rec->decrypt_data);
 
         #Update the fragment len in case we changed it above
         ${$self->message_frag_lens}[0] = length($msgdata)
@@ -461,6 +480,11 @@ sub message_frag_lens
       $self->{message_frag_lens} = shift;
     }
     return $self->{message_frag_lens};
+}
+sub encoded_length
+{
+    my $self = shift;
+    return TLS_MESSAGE_HEADER_LENGTH + length($self->data);
 }
 
 1;

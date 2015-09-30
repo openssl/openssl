@@ -715,6 +715,9 @@ static STRINT_PAIR tlsext_types[] = {
     {"application layer protocol negotiation",
      TLSEXT_TYPE_application_layer_protocol_negotiation},
 #endif
+#ifdef TLSEXT_TYPE_extended_master_secret
+    {"extended master secret", TLSEXT_TYPE_extended_master_secret},
+#endif
     {NULL}
 };
 

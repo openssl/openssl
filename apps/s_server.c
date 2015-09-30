@@ -2413,7 +2413,7 @@ static int init_ssl_connection(SSL *con)
         i = DTLSv1_listen(con, &client);
         if (i > 0) {
             BIO *wbio;
-            int fd;
+            int fd = -1;
 
             wbio = SSL_get_wbio(con);
             if(wbio) {

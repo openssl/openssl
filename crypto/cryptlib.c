@@ -117,10 +117,6 @@
 #include "internal/cryptlib.h"
 #include <openssl/safestack.h>
 
-#if defined(OPENSSL_SYS_WIN32)
-static double SSLeay_MSVC5_hack = 0.0; /* and for VC1.5 */
-#endif
-
 #if     defined(__i386)   || defined(__i386__)   || defined(_M_IX86) || \
         defined(__INTEL__) || \
         defined(__x86_64) || defined(__x86_64__) || \
@@ -133,6 +129,7 @@ unsigned int *OPENSSL_ia32cap_loc(void)
 }
 
 # if defined(OPENSSL_CPUID_OBJ) && !defined(OPENSSL_NO_ASM) && !defined(I386_ONLY)
+#include <stdio.h>
 #  define OPENSSL_CPUID_SETUP
 typedef uint64_t IA32CAP;
 void OPENSSL_cpuid_setup(void)
@@ -268,15 +265,15 @@ int OPENSSL_isservice(void)
     WCHAR *name;
     static union {
         void *p;
-        int (*f) (void);
+        FARPROC f;
     } _OPENSSL_isservice = {
         NULL
     };
 
     if (_OPENSSL_isservice.p == NULL) {
-        HANDLE h = GetModuleHandle(NULL);
-        if (h != NULL)
-            _OPENSSL_isservice.p = GetProcAddress(h, "_OPENSSL_isservice");
+        HANDLE mod = GetModuleHandle(NULL);
+        if (mod != NULL)
+            _OPENSSL_isservice.f = GetProcAddress(mod, "_OPENSSL_isservice");
         if (_OPENSSL_isservice.p == NULL)
             _OPENSSL_isservice.p = (void *)-1;
     }
@@ -436,11 +433,13 @@ void OPENSSL_showfatal(const char *fmta, ...)
 #else
 void OPENSSL_showfatal(const char *fmta, ...)
 {
+#ifndef OPENSSL_NO_STDIO
     va_list ap;
 
     va_start(ap, fmta);
     vfprintf(stderr, fmta, ap);
     va_end(ap);
+#endif
 }
 
 int OPENSSL_isservice(void)
@@ -465,11 +464,6 @@ void OpenSSLDie(const char *file, int line, const char *assertion)
 # endif
     _exit(3);
 #endif
-}
-
-void *OPENSSL_stderr(void)
-{
-    return stderr;
 }
 
 int CRYPTO_memcmp(const void *in_a, const void *in_b, size_t len)

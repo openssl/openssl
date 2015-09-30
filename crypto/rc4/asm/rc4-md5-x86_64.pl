@@ -29,13 +29,16 @@
 # Core2		6.5	5.8	12.3	7.7	+60%
 # Westmere	4.3	5.2	9.5	7.0	+36%
 # Sandy Bridge	4.2	5.5	9.7	6.8	+43%
+# Ivy Bridge	4.1	5.2	9.3	6.0	+54%
+# Haswell	4.0	5.0	9.0	5.7	+60%
+# Skylake	6.3(**)	5.0	11.3	5.3	+110%
 # Atom		9.3	6.5	15.8	11.1	+42%
 # VIA Nano	6.3	5.4	11.7	8.6	+37%
-# Ivy Bridge	4.1	5.2	9.3	6.0	+54%
 # Bulldozer	4.5	5.4	9.9	7.7	+29%
 #
 # (*)	rc4-x86_64.pl delivers 5.3 on Opteron, so real improvement
 #	is +53%...
+# (**)	unidentified anomaly;
 
 my ($rc4,$md5)=(1,1);	# what to generate?
 my $D="#" if (!$md5);	# if set to "#", MD5 is stitched into RC4(),

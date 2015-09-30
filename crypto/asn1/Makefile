@@ -668,14 +668,16 @@ tasn_typ.o: ../../include/openssl/e_os2.h ../../include/openssl/opensslconf.h
 tasn_typ.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 tasn_typ.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 tasn_typ.o: ../../include/openssl/symhacks.h tasn_typ.c
-tasn_utl.o: ../../include/openssl/asn1.h ../../include/openssl/asn1t.h
-tasn_utl.o: ../../include/openssl/bio.h ../../include/openssl/crypto.h
+tasn_utl.o: ../../e_os.h ../../include/openssl/asn1.h
+tasn_utl.o: ../../include/openssl/asn1t.h ../../include/openssl/bio.h
+tasn_utl.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 tasn_utl.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
 tasn_utl.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
 tasn_utl.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
 tasn_utl.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 tasn_utl.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-tasn_utl.o: ../../include/openssl/symhacks.h asn1_locl.h tasn_utl.c
+tasn_utl.o: ../../include/openssl/symhacks.h ../include/internal/cryptlib.h
+tasn_utl.o: asn1_locl.h tasn_utl.c
 x_algor.o: ../../include/openssl/asn1.h ../../include/openssl/asn1t.h
 x_algor.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 x_algor.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h

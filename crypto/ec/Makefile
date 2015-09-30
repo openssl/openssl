@@ -83,7 +83,7 @@ dclean:
 	mv -f Makefile.new $(MAKEFILE)
 
 clean:
-	rm -f *.o */*.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
+	rm -f *.s *.o */*.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
@@ -169,14 +169,15 @@ ec_err.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
 ec_err.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 ec_err.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 ec_err.o: ../../include/openssl/symhacks.h ec_err.c
-ec_key.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
-ec_key.o: ../../include/openssl/bn.h ../../include/openssl/crypto.h
-ec_key.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
-ec_key.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
-ec_key.o: ../../include/openssl/obj_mac.h ../../include/openssl/opensslconf.h
-ec_key.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-ec_key.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-ec_key.o: ../../include/openssl/symhacks.h ec_key.c ec_lcl.h
+ec_key.o: ../../e_os.h ../../include/openssl/asn1.h ../../include/openssl/bio.h
+ec_key.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
+ec_key.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
+ec_key.o: ../../include/openssl/ec.h ../../include/openssl/err.h
+ec_key.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
+ec_key.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
+ec_key.o: ../../include/openssl/ossl_typ.h ../../include/openssl/safestack.h
+ec_key.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
+ec_key.o: ../include/internal/cryptlib.h ec_key.c ec_lcl.h
 ec_lib.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 ec_lib.o: ../../include/openssl/bn.h ../../include/openssl/crypto.h
 ec_lib.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h

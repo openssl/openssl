@@ -117,15 +117,16 @@ The following is a list of all permitted cipher strings and their meanings.
 
 =item B<DEFAULT>
 
-the default cipher list. This is determined at compile time and, as of OpenSSL
-1.0.0, is normally B<ALL:!aNULL:!eNULL>. This must be the first cipher string
-specified.
+the default cipher list. This is determined at compile time and
+is B<ALL:!COMPLEMENTOFDEFAULT:!eNULL>. This must be the first cipher
+string specified.
 
 =item B<COMPLEMENTOFDEFAULT>
 
 the ciphers included in B<ALL>, but not enabled by default. Currently
-this is B<ADH> and B<AECDH>. Note that this rule does not cover B<eNULL>,
-which is not included by B<ALL> (use B<COMPLEMENTOFALL> if necessary).
+this includes all RC4, DES, RC2 and anonymous ciphers. Note that this rule does
+not cover B<eNULL>, which is not included by B<ALL> (use B<COMPLEMENTOFALL> if
+necessary).
 
 =item B<ALL>
 

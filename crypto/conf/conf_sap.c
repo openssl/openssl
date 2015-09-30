@@ -87,9 +87,11 @@ void OPENSSL_config(const char *config_name)
     ENGINE_load_builtin_engines();
 #endif
     ERR_clear_error();
+#ifndef OPENSSL_SYS_UEFI
     CONF_modules_load_file(NULL, config_name,
                                CONF_MFLAGS_DEFAULT_SECTION |
                                CONF_MFLAGS_IGNORE_MISSING_FILE);
+#endif
 }
 
 void OPENSSL_no_config()

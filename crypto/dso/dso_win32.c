@@ -224,7 +224,10 @@ static int win32_unload(DSO *dso)
 static void *win32_bind_var(DSO *dso, const char *symname)
 {
     HINSTANCE *ptr;
-    void *sym;
+    union {
+        void *p;
+        FARPROC f;
+    } sym;
 
     if ((dso == NULL) || (symname == NULL)) {
         DSOerr(DSO_F_WIN32_BIND_VAR, ERR_R_PASSED_NULL_PARAMETER);
@@ -239,19 +242,22 @@ static void *win32_bind_var(DSO *dso, const char *symname)
         DSOerr(DSO_F_WIN32_BIND_VAR, DSO_R_NULL_HANDLE);
         return (NULL);
     }
-    sym = GetProcAddress(*ptr, symname);
-    if (sym == NULL) {
+    sym.f = GetProcAddress(*ptr, symname);
+    if (sym.p == NULL) {
         DSOerr(DSO_F_WIN32_BIND_VAR, DSO_R_SYM_FAILURE);
         ERR_add_error_data(3, "symname(", symname, ")");
         return (NULL);
     }
-    return (sym);
+    return (sym.p);
 }
 
 static DSO_FUNC_TYPE win32_bind_func(DSO *dso, const char *symname)
 {
     HINSTANCE *ptr;
-    void *sym;
+    union {
+        void *p;
+        FARPROC f;
+    } sym;
 
     if ((dso == NULL) || (symname == NULL)) {
         DSOerr(DSO_F_WIN32_BIND_FUNC, ERR_R_PASSED_NULL_PARAMETER);
@@ -266,13 +272,13 @@ static DSO_FUNC_TYPE win32_bind_func(DSO *dso, const char *symname)
         DSOerr(DSO_F_WIN32_BIND_FUNC, DSO_R_NULL_HANDLE);
         return (NULL);
     }
-    sym = GetProcAddress(*ptr, symname);
-    if (sym == NULL) {
+    sym.f = GetProcAddress(*ptr, symname);
+    if (sym.p == NULL) {
         DSOerr(DSO_F_WIN32_BIND_FUNC, DSO_R_SYM_FAILURE);
         ERR_add_error_data(3, "symname(", symname, ")");
         return (NULL);
     }
-    return ((DSO_FUNC_TYPE)sym);
+    return ((DSO_FUNC_TYPE)sym.f);
 }
 
 struct file_st {
@@ -704,7 +710,10 @@ static void *win32_globallookup(const char *name)
     CREATETOOLHELP32SNAPSHOT create_snap;
     CLOSETOOLHELP32SNAPSHOT close_snap;
     MODULE32 module_first, module_next;
-    FARPROC ret = NULL;
+    union {
+        void *p;
+        FARPROC f;
+    } ret = { NULL };
 
     dll = LoadLibrary(TEXT(DLLNAME));
     if (dll == NULL) {
@@ -745,10 +754,10 @@ static void *win32_globallookup(const char *name)
     }
 
     do {
-        if ((ret = GetProcAddress(me32.hModule, name))) {
+        if ((ret.f = GetProcAddress(me32.hModule, name))) {
             (*close_snap) (hModuleSnap);
             FreeLibrary(dll);
-            return ret;
+            return ret.p;
         }
     } while ((*module_next) (hModuleSnap, &me32));
 
