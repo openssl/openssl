@@ -635,7 +635,6 @@ int BIO_asn1_get_suffix(BIO *b, asn1_ps_func **psuffix,
 
 BIO_METHOD *BIO_s_file(void);
 BIO *BIO_new_file(const char *filename, const char *mode);
-# define BIO_s_file_internal    BIO_s_file
 # ifndef OPENSSL_NO_STDIO
 BIO *BIO_new_fp(FILE *stream, int close_flag);
 # endif

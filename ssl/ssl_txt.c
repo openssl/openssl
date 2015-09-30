@@ -92,7 +92,7 @@ int SSL_SESSION_print_fp(FILE *fp, const SSL_SESSION *x)
     BIO *b;
     int ret;
 
-    if ((b = BIO_new(BIO_s_file_internal())) == NULL) {
+    if ((b = BIO_new(BIO_s_file())) == NULL) {
         SSLerr(SSL_F_SSL_SESSION_PRINT_FP, ERR_R_BUF_LIB);
         return (0);
     }
