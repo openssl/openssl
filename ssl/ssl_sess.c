@@ -583,13 +583,15 @@ int ssl_get_prev_session(SSL *s, const PACKET *ext, const PACKET *session_id)
     if (try_session_cache &&
         ret == NULL && s->session_ctx->get_session_cb != NULL) {
         int copy = 1;
+        /* The user callback takes a non-const pointer, so grab a local copy. */
+        unsigned char *sid = NULL;
+        size_t sid_len;
+        if (!PACKET_memdup(session_id, &sid, &sid_len))
+            goto err;
+        ret = s->session_ctx->get_session_cb(s, sid, sid_len, &copy);
+        OPENSSL_free(sid);
 
-        /*
-         * TODO(openssl-team): grab a copy of the data in |session_id|
-         * so that the PACKET data can be made const.
-         */
-        if ((ret = s->session_ctx->get_session_cb(s, PACKET_data(session_id),
-                                                  len, &copy))) {
+        if (ret != NULL) {
             s->session_ctx->stats.sess_cb_hit++;
 
             /*
