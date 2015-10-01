@@ -427,7 +427,7 @@ struct evp_cipher_st {
 # define         EVP_CTRL_TLS1_1_MULTIBLOCK_DECRYPT      0x1b
 # define         EVP_CTRL_TLS1_1_MULTIBLOCK_MAX_BUFSIZE  0x1c
 
-/* For engine-specific control values */
+/* For the custom (for example, engine-provided) cipher algorithms control values */
 # define         EVP_CTRL_CIPHER_CUSTOM0          0x1000
 # define         EVP_CTRL_CIPHER_CUSTOM1          0x1001
 # define         EVP_CTRL_CIPHER_CUSTOM2          0x1002
