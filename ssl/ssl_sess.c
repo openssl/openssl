@@ -564,11 +564,14 @@ int ssl_get_prev_session(SSL *s, const PACKET *ext, const PACKET *session_id)
         !(s->session_ctx->session_cache_mode &
           SSL_SESS_CACHE_NO_INTERNAL_LOOKUP)) {
         SSL_SESSION data;
+        size_t local_len;
         data.ssl_version = s->version;
-        data.session_id_length = len;
-        if (len == 0)
-            return 0;
-        memcpy(data.session_id, PACKET_data(session_id), len);
+        if (!PACKET_copy_all(session_id, data.session_id,
+                             sizeof(data.session_id),
+                             &local_len)) {
+            goto err;
+        }
+        data.session_id_length = local_len;
         CRYPTO_r_lock(CRYPTO_LOCK_SSL_CTX);
         ret = lh_SSL_SESSION_retrieve(s->session_ctx->sessions, &data);
         if (ret != NULL) {
