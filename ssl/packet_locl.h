@@ -301,7 +301,7 @@ __owur static inline int PACKET_get_4(PACKET *pkt, unsigned long *data)
  * underlying buffer gets freed
  */
 __owur static inline int PACKET_peek_bytes(const PACKET *pkt, unsigned char **data,
-                                          size_t len)
+                                           size_t len)
 {
     if (PACKET_remaining(pkt) < len)
         return 0;
@@ -352,6 +352,24 @@ __owur static inline int PACKET_copy_bytes(PACKET *pkt, unsigned char *data,
 
     packet_forward(pkt, len);
 
+    return 1;
+}
+
+/*
+ * Copy packet data to |dest|, and set |len| to the number of copied bytes.
+ * If the packet has more than |dest_len| bytes, nothing is copied.
+ * Returns 1 if the packet data fits in |dest_len| bytes, 0 otherwise.
+ * Does not forward PACKET position (because it is typically the last thing
+ * done with a given PACKET).
+ */
+__owur static inline int PACKET_copy_all(const PACKET *pkt, unsigned char *dest,
+                                         size_t dest_len, size_t *len) {
+    if (PACKET_remaining(pkt) > dest_len) {
+        *len = 0;
+        return 0;
+    }
+    *len = pkt->remaining;
+    memcpy(dest, pkt->curr, pkt->remaining);
     return 1;
 }
 

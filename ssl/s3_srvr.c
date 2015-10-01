@@ -3457,15 +3457,6 @@ STACK_OF(SSL_CIPHER) *ssl_bytes_to_cipher_list(SSL *s,
     /* 3 = SSLV2_CIPHER_LEN > TLS_CIPHER_LEN = 2. */
     unsigned char cipher[SSLV2_CIPHER_LEN];
 
-    /*
-     * Can this ever happen?
-     * This method used to check for s->s3, but did so inconsistently.
-     */
-    if (s->s3 == NULL) {
-        *al = SSL_AD_INTERNAL_ERROR;
-        return NULL;
-    }
-
     s->s3->send_connection_binding = 0;
 
     n = sslv2format ? SSLV2_CIPHER_LEN : TLS_CIPHER_LEN;
