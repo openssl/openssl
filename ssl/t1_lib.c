@@ -1024,7 +1024,7 @@ int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d,
 
     n2s(data, len);
 
-    if (data > (d + n - len))
+    if (data + len != d + n)
         goto err;
 
     while (data <= (d + n - 4)) {
