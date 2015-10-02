@@ -2115,6 +2115,7 @@ void ERR_load_SSL_strings(void);
 # define SSL_R_BAD_DH_PUB_KEY_VALUE                       393
 # define SSL_R_BAD_DH_P_LENGTH                            110
 # define SSL_R_BAD_DH_P_VALUE                             395
+# define SSL_R_BAD_DH_VALUE                               102
 # define SSL_R_BAD_DIGEST_LENGTH                          111
 # define SSL_R_BAD_DSA_SIGNATURE                          112
 # define SSL_R_BAD_ECC_CERT                               304

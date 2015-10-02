@@ -351,6 +351,7 @@ static ERR_STRING_DATA SSL_str_reasons[] = {
     {ERR_REASON(SSL_R_BAD_DH_PUB_KEY_VALUE), "bad dh pub key value"},
     {ERR_REASON(SSL_R_BAD_DH_P_LENGTH), "bad dh p length"},
     {ERR_REASON(SSL_R_BAD_DH_P_VALUE), "bad dh p value"},
+    {ERR_REASON(SSL_R_BAD_DH_VALUE), "bad dh value"},
     {ERR_REASON(SSL_R_BAD_DIGEST_LENGTH), "bad digest length"},
     {ERR_REASON(SSL_R_BAD_DSA_SIGNATURE), "bad dsa signature"},
     {ERR_REASON(SSL_R_BAD_ECC_CERT), "bad ecc cert"},
