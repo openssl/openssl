@@ -1927,6 +1927,9 @@ static int ssl_scan_clienthello_tlsext(SSL *s, PACKET *pkt, int *al)
     if (!PACKET_get_net_2(pkt, &len))
         goto err;
 
+    if (PACKET_remaining(pkt) != len)
+        goto err;
+
     while (PACKET_get_net_2(pkt, &type) && PACKET_get_net_2(pkt, &size)) {
         PACKET subpkt;
 
