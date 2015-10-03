@@ -66,6 +66,10 @@
 #include <openssl/err.h>
 #include "asn1_locl.h"
 
+static int asn1_item_embed_d2i(ASN1_VALUE **pval, const unsigned char **in,
+                               long len, const ASN1_ITEM *it,
+                               int tag, int aclass, char opt, ASN1_TLC *ctx);
+
 static int asn1_check_eoc(const unsigned char **in, long len);
 static int asn1_find_end(const unsigned char **in, long len, char inf);
 
@@ -151,14 +155,25 @@ ASN1_VALUE *ASN1_item_d2i(ASN1_VALUE **pval,
     return NULL;
 }
 
+int ASN1_item_ex_d2i(ASN1_VALUE **pval, const unsigned char **in, long len,
+                     const ASN1_ITEM *it,
+                     int tag, int aclass, char opt, ASN1_TLC *ctx)
+{
+    int rv;
+    rv = asn1_item_embed_d2i(pval, in, len, it, tag, aclass, opt, ctx);
+    if (rv <= 0)
+        ASN1_item_ex_free(pval, it);
+    return rv;
+}
+
 /*
  * Decode an item, taking care of IMPLICIT tagging, if any. If 'opt' set and
  * tag mismatch return -1 to handle OPTIONAL
  */
 
-int ASN1_item_ex_d2i(ASN1_VALUE **pval, const unsigned char **in, long len,
-                     const ASN1_ITEM *it,
-                     int tag, int aclass, char opt, ASN1_TLC *ctx)
+static int asn1_item_embed_d2i(ASN1_VALUE **pval, const unsigned char **in,
+                               long len, const ASN1_ITEM *it,
+                               int tag, int aclass, char opt, ASN1_TLC *ctx)
 {
     const ASN1_TEMPLATE *tt, *errtt = NULL;
     const ASN1_EXTERN_FUNCS *ef;
@@ -189,7 +204,7 @@ int ASN1_item_ex_d2i(ASN1_VALUE **pval, const unsigned char **in, long len,
              * template in the template itself.
              */
             if ((tag != -1) || opt) {
-                ASN1err(ASN1_F_ASN1_ITEM_EX_D2I,
+                ASN1err(ASN1_F_ASN1_ITEM_EMBED_D2I,
                         ASN1_R_ILLEGAL_OPTIONS_ON_ITEM_TEMPLATE);
                 goto err;
             }
@@ -205,7 +220,7 @@ int ASN1_item_ex_d2i(ASN1_VALUE **pval, const unsigned char **in, long len,
         ret = asn1_check_tlen(NULL, &otag, &oclass, NULL, NULL,
                               &p, len, -1, 0, 1, ctx);
         if (!ret) {
-            ASN1err(ASN1_F_ASN1_ITEM_EX_D2I, ERR_R_NESTED_ASN1_ERROR);
+            ASN1err(ASN1_F_ASN1_ITEM_EMBED_D2I, ERR_R_NESTED_ASN1_ERROR);
             goto err;
         }
 
@@ -214,7 +229,7 @@ int ASN1_item_ex_d2i(ASN1_VALUE **pval, const unsigned char **in, long len,
             /* If OPTIONAL, assume this is OK */
             if (opt)
                 return -1;
-            ASN1err(ASN1_F_ASN1_ITEM_EX_D2I, ASN1_R_MSTRING_NOT_UNIVERSAL);
+            ASN1err(ASN1_F_ASN1_ITEM_EMBED_D2I, ASN1_R_MSTRING_NOT_UNIVERSAL);
             goto err;
         }
         /* Check tag matches bit map */
@@ -222,7 +237,7 @@ int ASN1_item_ex_d2i(ASN1_VALUE **pval, const unsigned char **in, long len,
             /* If OPTIONAL, assume this is OK */
             if (opt)
                 return -1;
-            ASN1err(ASN1_F_ASN1_ITEM_EX_D2I, ASN1_R_MSTRING_WRONG_TAG);
+            ASN1err(ASN1_F_ASN1_ITEM_EMBED_D2I, ASN1_R_MSTRING_WRONG_TAG);
             goto err;
         }
         return asn1_d2i_ex_primitive(pval, in, len, it, otag, 0, 0, ctx);
@@ -245,7 +260,7 @@ int ASN1_item_ex_d2i(ASN1_VALUE **pval, const unsigned char **in, long len,
                 asn1_set_choice_selector(pval, -1, it);
             }
         } else if (!ASN1_item_ex_new(pval, it)) {
-            ASN1err(ASN1_F_ASN1_ITEM_EX_D2I, ERR_R_NESTED_ASN1_ERROR);
+            ASN1err(ASN1_F_ASN1_ITEM_EMBED_D2I, ERR_R_NESTED_ASN1_ERROR);
             goto err;
         }
         /* CHOICE type, try each possibility in turn */
@@ -264,7 +279,7 @@ int ASN1_item_ex_d2i(ASN1_VALUE **pval, const unsigned char **in, long len,
                 break;
             /* Otherwise must be an ASN1 parsing error */
             errtt = tt;
-            ASN1err(ASN1_F_ASN1_ITEM_EX_D2I, ERR_R_NESTED_ASN1_ERROR);
+            ASN1err(ASN1_F_ASN1_ITEM_EMBED_D2I, ERR_R_NESTED_ASN1_ERROR);
             goto err;
         }
 
@@ -276,7 +291,7 @@ int ASN1_item_ex_d2i(ASN1_VALUE **pval, const unsigned char **in, long len,
                 ASN1_item_ex_free(pval, it);
                 return -1;
             }
-            ASN1err(ASN1_F_ASN1_ITEM_EX_D2I, ASN1_R_NO_MATCHING_CHOICE_TYPE);
+            ASN1err(ASN1_F_ASN1_ITEM_EMBED_D2I, ASN1_R_NO_MATCHING_CHOICE_TYPE);
             goto err;
         }
 
@@ -300,7 +315,7 @@ int ASN1_item_ex_d2i(ASN1_VALUE **pval, const unsigned char **in, long len,
         ret = asn1_check_tlen(&len, NULL, NULL, &seq_eoc, &cst,
                               &p, len, tag, aclass, opt, ctx);
         if (!ret) {
-            ASN1err(ASN1_F_ASN1_ITEM_EX_D2I, ERR_R_NESTED_ASN1_ERROR);
+            ASN1err(ASN1_F_ASN1_ITEM_EMBED_D2I, ERR_R_NESTED_ASN1_ERROR);
             goto err;
         } else if (ret == -1)
             return -1;
@@ -312,12 +327,12 @@ int ASN1_item_ex_d2i(ASN1_VALUE **pval, const unsigned char **in, long len,
         else
             seq_nolen = seq_eoc;
         if (!cst) {
-            ASN1err(ASN1_F_ASN1_ITEM_EX_D2I, ASN1_R_SEQUENCE_NOT_CONSTRUCTED);
+            ASN1err(ASN1_F_ASN1_ITEM_EMBED_D2I, ASN1_R_SEQUENCE_NOT_CONSTRUCTED);
             goto err;
         }
 
         if (!*pval && !ASN1_item_ex_new(pval, it)) {
-            ASN1err(ASN1_F_ASN1_ITEM_EX_D2I, ERR_R_NESTED_ASN1_ERROR);
+            ASN1err(ASN1_F_ASN1_ITEM_EMBED_D2I, ERR_R_NESTED_ASN1_ERROR);
             goto err;
         }
 
@@ -349,7 +364,7 @@ int ASN1_item_ex_d2i(ASN1_VALUE **pval, const unsigned char **in, long len,
             q = p;
             if (asn1_check_eoc(&p, len)) {
                 if (!seq_eoc) {
-                    ASN1err(ASN1_F_ASN1_ITEM_EX_D2I, ASN1_R_UNEXPECTED_EOC);
+                    ASN1err(ASN1_F_ASN1_ITEM_EMBED_D2I, ASN1_R_UNEXPECTED_EOC);
                     goto err;
                 }
                 len -= p - q;
@@ -388,12 +403,12 @@ int ASN1_item_ex_d2i(ASN1_VALUE **pval, const unsigned char **in, long len,
 
         /* Check for EOC if expecting one */
         if (seq_eoc && !asn1_check_eoc(&p, len)) {
-            ASN1err(ASN1_F_ASN1_ITEM_EX_D2I, ASN1_R_MISSING_EOC);
+            ASN1err(ASN1_F_ASN1_ITEM_EMBED_D2I, ASN1_R_MISSING_EOC);
             goto err;
         }
         /* Check all data read */
         if (!seq_nolen && len) {
-            ASN1err(ASN1_F_ASN1_ITEM_EX_D2I, ASN1_R_SEQUENCE_LENGTH_MISMATCH);
+            ASN1err(ASN1_F_ASN1_ITEM_EMBED_D2I, ASN1_R_SEQUENCE_LENGTH_MISMATCH);
             goto err;
         }
 
@@ -413,7 +428,7 @@ int ASN1_item_ex_d2i(ASN1_VALUE **pval, const unsigned char **in, long len,
                 asn1_template_free(pseqval, seqtt);
             } else {
                 errtt = seqtt;
-                ASN1err(ASN1_F_ASN1_ITEM_EX_D2I, ASN1_R_FIELD_MISSING);
+                ASN1err(ASN1_F_ASN1_ITEM_EMBED_D2I, ASN1_R_FIELD_MISSING);
                 goto err;
             }
         }
@@ -429,9 +444,8 @@ int ASN1_item_ex_d2i(ASN1_VALUE **pval, const unsigned char **in, long len,
         return 0;
     }
  auxerr:
-    ASN1err(ASN1_F_ASN1_ITEM_EX_D2I, ASN1_R_AUX_ERROR);
+    ASN1err(ASN1_F_ASN1_ITEM_EMBED_D2I, ASN1_R_AUX_ERROR);
  err:
-    ASN1_item_ex_free(pval, it);
     if (errtt)
         ERR_add_error_data(4, "Field=", errtt->field_name,
                            ", Type=", it->sname);
@@ -513,7 +527,6 @@ static int asn1_template_ex_d2i(ASN1_VALUE **val,
     return 1;
 
  err:
-    asn1_template_free(val, tt);
     return 0;
 }
 
@@ -601,8 +614,8 @@ static int asn1_template_noexp_d2i(ASN1_VALUE **val,
                 break;
             }
             skfield = NULL;
-            if (!ASN1_item_ex_d2i(&skfield, &p, len,
-                                  ASN1_ITEM_ptr(tt->item), -1, 0, 0, ctx)) {
+            if (!asn1_item_embed_d2i(&skfield, &p, len,
+                                     ASN1_ITEM_ptr(tt->item), -1, 0, 0, ctx)) {
                 ASN1err(ASN1_F_ASN1_TEMPLATE_NOEXP_D2I,
                         ERR_R_NESTED_ASN1_ERROR);
                 goto err;
@@ -619,9 +632,9 @@ static int asn1_template_noexp_d2i(ASN1_VALUE **val,
         }
     } else if (flags & ASN1_TFLG_IMPTAG) {
         /* IMPLICIT tagging */
-        ret = ASN1_item_ex_d2i(val, &p, len,
-                               ASN1_ITEM_ptr(tt->item), tt->tag, aclass, opt,
-                               ctx);
+        ret = asn1_item_embed_d2i(val, &p, len,
+                                  ASN1_ITEM_ptr(tt->item), tt->tag, aclass, opt,
+                                  ctx);
         if (!ret) {
             ASN1err(ASN1_F_ASN1_TEMPLATE_NOEXP_D2I, ERR_R_NESTED_ASN1_ERROR);
             goto err;
@@ -629,8 +642,8 @@ static int asn1_template_noexp_d2i(ASN1_VALUE **val,
             return -1;
     } else {
         /* Nothing special */
-        ret = ASN1_item_ex_d2i(val, &p, len, ASN1_ITEM_ptr(tt->item),
-                               -1, 0, opt, ctx);
+        ret = asn1_item_embed_d2i(val, &p, len, ASN1_ITEM_ptr(tt->item),
+                                  -1, 0, opt, ctx);
         if (!ret) {
             ASN1err(ASN1_F_ASN1_TEMPLATE_NOEXP_D2I, ERR_R_NESTED_ASN1_ERROR);
             goto err;
@@ -642,7 +655,6 @@ static int asn1_template_noexp_d2i(ASN1_VALUE **val,
     return 1;
 
  err:
-    asn1_template_free(val, tt);
     return 0;
 }
 
