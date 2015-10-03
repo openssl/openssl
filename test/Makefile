@@ -416,7 +416,8 @@ clienthellotest.o: ../include/openssl/symhacks.h ../include/openssl/tls1.h
 clienthellotest.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h
 clienthellotest.o: clienthellotest.c
 constant_time_test.o: ../e_os.h ../include/internal/constant_time_locl.h
-constant_time_test.o: constant_time_test.c
+constant_time_test.o: ../include/openssl/e_os2.h
+constant_time_test.o: ../include/openssl/opensslconf.h constant_time_test.c
 destest.o: ../include/openssl/des.h ../include/openssl/e_os2.h
 destest.o: ../include/openssl/opensslconf.h destest.c
 dhtest.o: ../e_os.h ../include/openssl/bio.h ../include/openssl/bn.h
@@ -681,7 +682,8 @@ ssltest.o: ../include/openssl/symhacks.h ../include/openssl/tls1.h
 ssltest.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h
 ssltest.o: ../include/openssl/x509v3.h ../ssl/packet_locl.h
 ssltest.o: ../ssl/record/record.h ../ssl/ssl_locl.h ssltest.c
-testutil.o: ../e_os.h testutil.c testutil.h
+testutil.o: ../e_os.h ../include/openssl/e_os2.h
+testutil.o: ../include/openssl/opensslconf.h testutil.c testutil.h
 v3nametest.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 v3nametest.o: ../include/openssl/buffer.h ../include/openssl/conf.h
 v3nametest.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
