@@ -42,6 +42,24 @@
 # endif
 #endif
 
+#include <sys/types.h>
+#ifdef HAVE_CRYPTODEV
+# include <crypto/cryptodev.h>
+#endif
+#include <openssl/dh.h>
+#include <openssl/dsa.h>
+#include <openssl/err.h>
+#include <openssl/rsa.h>
+#include <sys/ioctl.h>
+#include <errno.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <stdarg.h>
+#include <syslog.h>
+#include <errno.h>
+#include <string.h>
+
 #ifndef HAVE_CRYPTODEV
 
 void ENGINE_load_cryptodev(void)
@@ -51,22 +69,6 @@ void ENGINE_load_cryptodev(void)
 }
 
 #else
-
-# include <sys/types.h>
-# include <crypto/cryptodev.h>
-# include <openssl/dh.h>
-# include <openssl/dsa.h>
-# include <openssl/err.h>
-# include <openssl/rsa.h>
-# include <sys/ioctl.h>
-# include <errno.h>
-# include <stdio.h>
-# include <unistd.h>
-# include <fcntl.h>
-# include <stdarg.h>
-# include <syslog.h>
-# include <errno.h>
-# include <string.h>
 
 struct dev_crypto_state {
     struct session_op d_sess;
