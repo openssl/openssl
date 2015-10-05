@@ -11,10 +11,7 @@
      has been removed and replaced by SSL_get_state which now returns an
      "OSSL_HANDSHAKE_STATE" instead of an int. SSL_set_state() has been removed
      altogether. The previous handshake states defined in ssl.h and ssl3.h have
-     been redefined to be the nearest equivalent OSS_HANDSHAKE_STATE value. Not
-     all states have an equivalent value, (e.g. SSL_ST_CW_FLUSH). New
-     application code should not use the old handshake state values, but should
-     instead use OSSL_HANDSHAKE_STATE.
+     also been removed.
      [Matt Caswell]
 
   *) The demo files in crypto/threads were moved to demo/threads.
