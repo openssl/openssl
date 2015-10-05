@@ -293,7 +293,7 @@ int ssl3_read_n(SSL *s, int n, int max, int extend)
      * s->packet_length bytes if extend == 1].)
      */
     int i, len, left;
-    long align = 0;
+    size_t align = 0;
     unsigned char *pkt;
     SSL3_BUFFER *rb;
 
@@ -307,8 +307,8 @@ int ssl3_read_n(SSL *s, int n, int max, int extend)
 
     left = rb->left;
 #if defined(SSL3_ALIGN_PAYLOAD) && SSL3_ALIGN_PAYLOAD!=0
-    align = (long)rb->buf + SSL3_RT_HEADER_LENGTH;
-    align = (-align) & (SSL3_ALIGN_PAYLOAD - 1);
+    align = (size_t)rb->buf + SSL3_RT_HEADER_LENGTH;
+    align = (0-align) & (SSL3_ALIGN_PAYLOAD - 1);
 #endif
 
     if (!extend) {
@@ -673,7 +673,7 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
     int i, mac_size, clear = 0;
     int prefix_len = 0;
     int eivlen;
-    long align = 0;
+    size_t align = 0;
     SSL3_RECORD *wr;
     SSL3_BUFFER *wb = &s->rlayer.wbuf;
     SSL_SESSION *sess;
@@ -753,8 +753,8 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
          * multiple of SSL3_ALIGN_PAYLOAD, so if we want to align the real
          * payload, then we can just pretent we simply have two headers.
          */
-        align = (long)SSL3_BUFFER_get_buf(wb) + 2 * SSL3_RT_HEADER_LENGTH;
-        align = (-align) & (SSL3_ALIGN_PAYLOAD - 1);
+        align = (size_t)SSL3_BUFFER_get_buf(wb) + 2 * SSL3_RT_HEADER_LENGTH;
+        align = (0-align) & (SSL3_ALIGN_PAYLOAD - 1);
 #endif
         p = SSL3_BUFFER_get_buf(wb) + align;
         SSL3_BUFFER_set_offset(wb, align);
@@ -762,8 +762,8 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
         p = SSL3_BUFFER_get_buf(wb) + SSL3_BUFFER_get_offset(wb) + prefix_len;
     } else {
 #if defined(SSL3_ALIGN_PAYLOAD) && SSL3_ALIGN_PAYLOAD!=0
-        align = (long)SSL3_BUFFER_get_buf(wb) + SSL3_RT_HEADER_LENGTH;
-        align = (-align) & (SSL3_ALIGN_PAYLOAD - 1);
+        align = (size_t)SSL3_BUFFER_get_buf(wb) + SSL3_RT_HEADER_LENGTH;
+        align = (0-align) & (SSL3_ALIGN_PAYLOAD - 1);
 #endif
         p = SSL3_BUFFER_get_buf(wb) + align;
         SSL3_BUFFER_set_offset(wb, align);
