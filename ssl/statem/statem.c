@@ -196,6 +196,16 @@ int ossl_statem_accept(SSL *s)
     return state_machine(s, 1);
 }
 
+static void (*get_callback(SSL *s))(const SSL *, int, int)
+{
+    if (s->info_callback != NULL)
+        return s->info_callback;
+    else if (s->ctx->info_callback != NULL)
+        return s->ctx->info_callback;
+
+    return NULL;
+}
+
 /*
  * The main message flow state machine. We start in the MSG_FLOW_UNINITED or
  * MSG_FLOW_RENEGOTIATE state and finish in MSG_FLOW_FINISHED. Valid states and
@@ -241,10 +251,7 @@ static int state_machine(SSL *s, int server) {
     ERR_clear_error();
     clear_sys_error();
 
-    if (s->info_callback != NULL)
-        cb = s->info_callback;
-    else if (s->ctx->info_callback != NULL)
-        cb = s->ctx->info_callback;
+    cb = get_callback(s);
 
     s->in_handshake++;
     if (!SSL_in_init(s) || SSL_in_before(s)) {
@@ -496,10 +503,7 @@ static SUB_STATE_RETURN read_state_machine(SSL *s) {
     unsigned long (*max_message_size)(SSL *s);
     void (*cb) (const SSL *ssl, int type, int val) = NULL;
 
-    if (s->info_callback != NULL)
-        cb = s->info_callback;
-    else if (s->ctx->info_callback != NULL)
-        cb = s->ctx->info_callback;
+    cb = get_callback(s);
 
     if(s->server) {
         transition = server_read_transition;
@@ -696,10 +700,7 @@ static SUB_STATE_RETURN write_state_machine(SSL *s)
     int (*construct_message)(SSL *s);
     void (*cb) (const SSL *ssl, int type, int val) = NULL;
 
-    if (s->info_callback != NULL)
-        cb = s->info_callback;
-    else if (s->ctx->info_callback != NULL)
-        cb = s->ctx->info_callback;
+    cb = get_callback(s);
 
     if(s->server) {
         transition = server_write_transition;
