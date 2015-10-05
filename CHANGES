@@ -8,11 +8,11 @@
      refactored in order to remove much duplication of code and solve issues
      with the old code (see ssl/statem/README for further details). This change
      does have some associated API changes. Notably SSL_get_state/SSL_state now
-     returns an "enum HANDSHAKE_STATE" instead of an int. The previous handshake
+     returns an "OSSL_HANDSHAKE_STATE" instead of an int. The previous handshake
      states defined in ssl.h and ssl3.h have been redefined to be the nearest
-     equivalent HANDSHAKE_STATE value. Not all states have an equivalent value,
-     (e.g. SSL_ST_CW_FLUSH). New application code should not use the old
-     handshake state values, but should instead use HANDSHAKE_STATE.
+     equivalent OSS_HANDSHAKE_STATE value. Not all states have an equivalent
+     value, (e.g. SSL_ST_CW_FLUSH). New application code should not use the old
+     handshake state values, but should instead use OSSL_HANDSHAKE_STATE.
      [Matt Caswell]
 
   *) The demo files in crypto/threads were moved to demo/threads.
