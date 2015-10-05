@@ -985,11 +985,6 @@ typedef enum {
 # define SSL_ST_ACCEPT                   0x2000
 
 # define SSL_ST_MASK                     0x0FFF
-# define SSL_ST_INIT                     (-1)
-# define SSL_ST_BEFORE                   TLS_ST_BEFORE
-# define SSL_ST_OK                       TLS_ST_OK
-# define SSL_ST_RENEGOTIATE              (-1)
-# define SSL_ST_ERR                      (-1)
 
 # define SSL_CB_LOOP                     0x01
 # define SSL_CB_EXIT                     0x02
