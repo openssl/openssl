@@ -1386,7 +1386,7 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
     if ((s->rlayer.handshake_fragment_len >= 4) && !s->in_handshake) {
         if (SSL_is_init_finished(s) &&
             !(s->s3->flags & SSL3_FLAGS_NO_RENEGOTIATE_CIPHERS)) {
-            statem_set_in_init(s, 1);
+            ossl_statem_set_in_init(s, 1);
             s->renegotiate = 1;
             s->new_session = 1;
         }
@@ -1450,7 +1450,7 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
          * application data at this point (session renegotiation not yet
          * started), we will indulge it.
          */
-        if (statem_app_data_allowed(s)) {
+        if (ossl_statem_app_data_allowed(s)) {
             s->s3->in_read_app_data = 2;
             return (-1);
         } else {

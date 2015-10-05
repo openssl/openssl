@@ -5131,7 +5131,7 @@ int ssl3_renegotiate_check(SSL *s)
              * message, we need to set the state machine into the renegotiate
              * state.
              */
-            statem_set_renegotiate(s);
+            ossl_statem_set_renegotiate(s);
             s->s3->renegotiate = 0;
             s->s3->num_renegotiations++;
             s->s3->total_renegotiations++;

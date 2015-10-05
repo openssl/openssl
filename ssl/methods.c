@@ -136,24 +136,24 @@ static const SSL_METHOD *tls1_get_method(int ver)
 }
 
 IMPLEMENT_tls_meth_func(TLS_ANY_VERSION, TLS_method,
-                        statem_accept,
-                        statem_connect, tls1_get_method, TLSv1_2_enc_data)
+                        ossl_statem_accept,
+                        ossl_statem_connect, tls1_get_method, TLSv1_2_enc_data)
 
 IMPLEMENT_tls_meth_func(TLS1_2_VERSION, TLSv1_2_method,
-                        statem_accept,
-                        statem_connect, tls1_get_method, TLSv1_2_enc_data)
+                        ossl_statem_accept,
+                        ossl_statem_connect, tls1_get_method, TLSv1_2_enc_data)
 
 IMPLEMENT_tls_meth_func(TLS1_1_VERSION, TLSv1_1_method,
-                        statem_accept,
-                        statem_connect, tls1_get_method, TLSv1_1_enc_data)
+                        ossl_statem_accept,
+                        ossl_statem_connect, tls1_get_method, TLSv1_1_enc_data)
 
 IMPLEMENT_tls_meth_func(TLS1_VERSION, TLSv1_method,
-                        statem_accept,
-                        statem_connect, tls1_get_method, TLSv1_enc_data)
+                        ossl_statem_accept,
+                        ossl_statem_connect, tls1_get_method, TLSv1_enc_data)
 
 #ifndef OPENSSL_NO_SSL3_METHOD
-IMPLEMENT_ssl3_meth_func(SSLv3_method,
-                         statem_accept, statem_connect, tls1_get_method)
+IMPLEMENT_ssl3_meth_func(SSLv3_method, ossl_statem_accept, ossl_statem_connect,
+                         tls1_get_method)
 #endif
 
 
@@ -179,28 +179,28 @@ static const SSL_METHOD *tls1_get_server_method(int ver)
 }
 
 IMPLEMENT_tls_meth_func(TLS_ANY_VERSION, TLS_server_method,
-                        statem_accept,
+                        ossl_statem_accept,
                         ssl_undefined_function,
                         tls1_get_server_method, TLSv1_2_enc_data)
 
 IMPLEMENT_tls_meth_func(TLS1_2_VERSION, TLSv1_2_server_method,
-                        statem_accept,
+                        ossl_statem_accept,
                         ssl_undefined_function,
                         tls1_get_server_method, TLSv1_2_enc_data)
 
 IMPLEMENT_tls_meth_func(TLS1_1_VERSION, TLSv1_1_server_method,
-                        statem_accept,
+                        ossl_statem_accept,
                         ssl_undefined_function,
                         tls1_get_server_method, TLSv1_1_enc_data)
 
 IMPLEMENT_tls_meth_func(TLS1_VERSION, TLSv1_server_method,
-                        statem_accept,
+                        ossl_statem_accept,
                         ssl_undefined_function,
                         tls1_get_server_method, TLSv1_enc_data)
 
 #ifndef OPENSSL_NO_SSL3_METHOD
 IMPLEMENT_ssl3_meth_func(SSLv3_server_method,
-                         statem_accept,
+                         ossl_statem_accept,
                          ssl_undefined_function, tls1_get_server_method)
 #endif
 
@@ -228,27 +228,28 @@ static const SSL_METHOD *tls1_get_client_method(int ver)
 
 IMPLEMENT_tls_meth_func(TLS_ANY_VERSION, TLS_client_method,
                         ssl_undefined_function,
-                        statem_connect,
+                        ossl_statem_connect,
                         tls1_get_client_method, TLSv1_2_enc_data)
 
 IMPLEMENT_tls_meth_func(TLS1_2_VERSION, TLSv1_2_client_method,
                         ssl_undefined_function,
-                        statem_connect,
+                        ossl_statem_connect,
                         tls1_get_client_method, TLSv1_2_enc_data)
 
 IMPLEMENT_tls_meth_func(TLS1_1_VERSION, TLSv1_1_client_method,
                         ssl_undefined_function,
-                        statem_connect,
+                        ossl_statem_connect,
                         tls1_get_client_method, TLSv1_1_enc_data)
 
 IMPLEMENT_tls_meth_func(TLS1_VERSION, TLSv1_client_method,
                         ssl_undefined_function,
-                        statem_connect, tls1_get_client_method, TLSv1_enc_data)
+                        ossl_statem_connect,
+                        tls1_get_client_method, TLSv1_enc_data)
 
 #ifndef OPENSSL_NO_SSL3_METHOD
 IMPLEMENT_ssl3_meth_func(SSLv3_client_method,
                          ssl_undefined_function,
-                         statem_connect, tls1_get_client_method)
+                         ossl_statem_connect, tls1_get_client_method)
 #endif
 
 
@@ -267,18 +268,21 @@ static const SSL_METHOD *dtls1_get_method(int ver)
 
 IMPLEMENT_dtls1_meth_func(DTLS1_VERSION,
                           DTLSv1_method,
-                          statem_accept,
-                          statem_connect, dtls1_get_method, DTLSv1_enc_data)
+                          ossl_statem_accept,
+                          ossl_statem_connect,
+                          dtls1_get_method, DTLSv1_enc_data)
 
 IMPLEMENT_dtls1_meth_func(DTLS1_2_VERSION,
                           DTLSv1_2_method,
-                          statem_accept,
-                          statem_connect, dtls1_get_method, DTLSv1_2_enc_data)
+                          ossl_statem_accept,
+                          ossl_statem_connect,
+                          dtls1_get_method, DTLSv1_2_enc_data)
 
 IMPLEMENT_dtls1_meth_func(DTLS_ANY_VERSION,
                           DTLS_method,
-                          statem_accept,
-                          statem_connect, dtls1_get_method, DTLSv1_2_enc_data)
+                          ossl_statem_accept,
+                          ossl_statem_connect,
+                          dtls1_get_method, DTLSv1_2_enc_data)
 
 
 /*
@@ -297,19 +301,19 @@ static const SSL_METHOD *dtls1_get_server_method(int ver)
 
 IMPLEMENT_dtls1_meth_func(DTLS1_VERSION,
                           DTLSv1_server_method,
-                          statem_accept,
+                          ossl_statem_accept,
                           ssl_undefined_function,
                           dtls1_get_server_method, DTLSv1_enc_data)
 
 IMPLEMENT_dtls1_meth_func(DTLS1_2_VERSION,
                           DTLSv1_2_server_method,
-                          statem_accept,
+                          ossl_statem_accept,
                           ssl_undefined_function,
                           dtls1_get_server_method, DTLSv1_2_enc_data)
 
 IMPLEMENT_dtls1_meth_func(DTLS_ANY_VERSION,
                           DTLS_server_method,
-                          statem_accept,
+                          ossl_statem_accept,
                           ssl_undefined_function,
                           dtls1_get_server_method, DTLSv1_2_enc_data)
 
@@ -331,17 +335,17 @@ static const SSL_METHOD *dtls1_get_client_method(int ver)
 IMPLEMENT_dtls1_meth_func(DTLS1_VERSION,
                           DTLSv1_client_method,
                           ssl_undefined_function,
-                          statem_connect,
+                          ossl_statem_connect,
                           dtls1_get_client_method, DTLSv1_enc_data)
 
 IMPLEMENT_dtls1_meth_func(DTLS1_2_VERSION,
                           DTLSv1_2_client_method,
                           ssl_undefined_function,
-                          statem_connect,
+                          ossl_statem_connect,
                           dtls1_get_client_method, DTLSv1_2_enc_data)
 
 IMPLEMENT_dtls1_meth_func(DTLS_ANY_VERSION,
                           DTLS_client_method,
                           ssl_undefined_function,
-                          statem_connect,
+                          ossl_statem_connect,
                           dtls1_get_client_method, DTLSv1_2_enc_data)

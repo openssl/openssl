@@ -469,7 +469,7 @@ enum WRITE_TRAN client_write_transition(SSL *s)
         case TLS_ST_CW_FINISHED:
             if (s->hit) {
                 st->hand_state = TLS_ST_OK;
-                statem_set_in_init(s, 0);
+                ossl_statem_set_in_init(s, 0);
                 return WRITE_TRAN_CONTINUE;
             } else {
                 return WRITE_TRAN_FINISHED;
@@ -481,7 +481,7 @@ enum WRITE_TRAN client_write_transition(SSL *s)
                 return WRITE_TRAN_CONTINUE;
             } else {
                 st->hand_state = TLS_ST_OK;
-                statem_set_in_init(s, 0);
+                ossl_statem_set_in_init(s, 0);
                 return WRITE_TRAN_CONTINUE;
             }
 
@@ -793,10 +793,10 @@ enum WORK_STATE client_post_process_message(SSL *s, enum WORK_STATE wst)
             s->rwstate = SSL_READING;
             BIO_clear_retry_flags(SSL_get_rbio(s));
             BIO_set_retry_read(SSL_get_rbio(s));
-            statem_set_sctp_read_sock(s, 1);
+            ossl_statem_set_sctp_read_sock(s, 1);
             return WORK_MORE_A;
         }
-        statem_set_sctp_read_sock(s, 0);
+        ossl_statem_set_sctp_read_sock(s, 0);
         return WORK_FINISHED_STOP;
 #endif
 
@@ -1089,7 +1089,7 @@ int tls_construct_client_hello(SSL *s)
 
     return 1;
  err:
-    statem_set_error(s);
+    ossl_statem_set_error(s);
     return 0;
 }
 
@@ -1123,7 +1123,7 @@ enum MSG_PROCESS_RETURN dtls_process_hello_verify(SSL *s, PACKET *pkt)
     return MSG_PROCESS_FINISHED_READING;
  f_err:
     ssl3_send_alert(s, SSL3_AL_FATAL, al);
-    statem_set_error(s);
+    ossl_statem_set_error(s);
     return MSG_PROCESS_ERROR;
 }
 
@@ -1463,7 +1463,7 @@ enum MSG_PROCESS_RETURN tls_process_server_hello(SSL *s, PACKET *pkt)
  f_err:
     ssl3_send_alert(s, SSL3_AL_FATAL, al);
  err:
-    statem_set_error(s);
+    ossl_statem_set_error(s);
     return MSG_PROCESS_ERROR;
 }
 
@@ -1582,7 +1582,7 @@ enum MSG_PROCESS_RETURN tls_process_server_certificate(SSL *s, PACKET *pkt)
  f_err:
     ssl3_send_alert(s, SSL3_AL_FATAL, al);
  err:
-    statem_set_error(s);
+    ossl_statem_set_error(s);
  done:
     EVP_PKEY_free(pkey);
     X509_free(x);
@@ -2041,7 +2041,7 @@ enum MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
     EC_KEY_free(ecdh);
 #endif
     EVP_MD_CTX_cleanup(&md_ctx);
-    statem_set_error(s);
+    ossl_statem_set_error(s);
     return MSG_PROCESS_ERROR;
 }
 
@@ -2157,7 +2157,7 @@ enum MSG_PROCESS_RETURN tls_process_certificate_request(SSL *s, PACKET *pkt)
     ret = MSG_PROCESS_CONTINUE_READING;
     goto done;
  err:
-    statem_set_error(s);
+    ossl_statem_set_error(s);
  done:
     sk_X509_NAME_pop_free(ca_sk, X509_NAME_free);
     return ret;
@@ -2251,7 +2251,7 @@ enum MSG_PROCESS_RETURN tls_process_new_session_ticket(SSL *s, PACKET *pkt)
  f_err:
     ssl3_send_alert(s, SSL3_AL_FATAL, al);
  err:
-    statem_set_error(s);
+    ossl_statem_set_error(s);
     return MSG_PROCESS_ERROR;
 }
 
@@ -2303,7 +2303,7 @@ enum MSG_PROCESS_RETURN tls_process_cert_status(SSL *s, PACKET *pkt)
     return MSG_PROCESS_CONTINUE_READING;
  f_err:
     ssl3_send_alert(s, SSL3_AL_FATAL, al);
-    statem_set_error(s);
+    ossl_statem_set_error(s);
     return MSG_PROCESS_ERROR;
 }
 
@@ -2313,7 +2313,7 @@ enum MSG_PROCESS_RETURN tls_process_server_done(SSL *s, PACKET *pkt)
         /* should contain no data */
         ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_DECODE_ERROR);
         SSLerr(SSL_F_TLS_PROCESS_SERVER_DONE, SSL_R_LENGTH_MISMATCH);
-        statem_set_error(s);
+        ossl_statem_set_error(s);
         return MSG_PROCESS_ERROR;
     }
 
@@ -2322,7 +2322,7 @@ enum MSG_PROCESS_RETURN tls_process_server_done(SSL *s, PACKET *pkt)
         if (SRP_Calc_A_param(s) <= 0) {
             SSLerr(SSL_F_TLS_PROCESS_SERVER_DONE, SSL_R_SRP_A_CALC);
             ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_INTERNAL_ERROR);
-            statem_set_error(s);
+            ossl_statem_set_error(s);
             return MSG_PROCESS_ERROR;
         }
     }
@@ -2334,7 +2334,7 @@ enum MSG_PROCESS_RETURN tls_process_server_done(SSL *s, PACKET *pkt)
      */
     if (!ssl3_check_cert_and_algorithm(s)) {
         ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_HANDSHAKE_FAILURE);
-        statem_set_error(s);
+        ossl_statem_set_error(s);
         return MSG_PROCESS_ERROR;
     }
 
@@ -2918,7 +2918,7 @@ psk_err:
     OPENSSL_clear_free(s->s3->tmp.psk, s->s3->tmp.psklen);
     s->s3->tmp.psk = NULL;
 #endif
-    statem_set_error(s);
+    ossl_statem_set_error(s);
     return 0;
 }
 
@@ -3169,7 +3169,7 @@ enum WORK_STATE tls_prepare_client_certificate(SSL *s, enum WORK_STATE wst)
             }
             if (i == 0) {
                 ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_INTERNAL_ERROR);
-                statem_set_error(s);
+                ossl_statem_set_error(s);
                 return 0;
             }
             s->rwstate = SSL_NOTHING;
@@ -3216,7 +3216,7 @@ enum WORK_STATE tls_prepare_client_certificate(SSL *s, enum WORK_STATE wst)
                 s->s3->tmp.cert_req = 2;
                 if (!ssl3_digest_cached_records(s, 0)) {
                     ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_INTERNAL_ERROR);
-                    statem_set_error(s);
+                    ossl_statem_set_error(s);
                     return 0;
                 }
             }
@@ -3236,7 +3236,7 @@ int tls_construct_client_certificate(SSL *s)
                                  2) ? NULL : s->cert->key)) {
         SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_CERTIFICATE, ERR_R_INTERNAL_ERROR);
         ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_INTERNAL_ERROR);
-        statem_set_error(s);
+        ossl_statem_set_error(s);
         return 0;
     }
 
