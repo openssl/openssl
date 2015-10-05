@@ -18,7 +18,7 @@ compiler:
 env:
     - CONFIG_OPTS=""
     - CONFIG_OPTS="shared"
-    - CONFIG_OPTS="-d --strict-warnings"
+    - CONFIG_OPTS="--debug --strict-warnings"
 
 matrix:
     exclude:
