@@ -228,7 +228,7 @@ static int state_machine(SSL *s, int server) {
     BUF_MEM *buf = NULL;
     unsigned long Time = (unsigned long)time(NULL);
     void (*cb) (const SSL *ssl, int type, int val) = NULL;
-    STATEM *st = &s->statem;
+    OSSL_STATEM *st = &s->statem;
     int ret = -1;
     int ssret;
 
@@ -454,7 +454,7 @@ static int state_machine(SSL *s, int server) {
  */
 static void init_read_state_machine(SSL *s)
 {
-    STATEM *st = &s->statem;
+    OSSL_STATEM *st = &s->statem;
 
     st->read_state = READ_STATE_HEADER;
 }
@@ -486,7 +486,7 @@ static void init_read_state_machine(SSL *s)
  * will resume in the same state where we left off.
  */
 static enum SUB_STATE_RETURN read_state_machine(SSL *s) {
-    STATEM *st = &s->statem;
+    OSSL_STATEM *st = &s->statem;
     int ret, mt;
     unsigned long len;
     int (*transition)(SSL *s, int mt);
@@ -632,7 +632,7 @@ static enum SUB_STATE_RETURN read_state_machine(SSL *s) {
  */
 static int statem_do_write(SSL *s)
 {
-    STATEM *st = &s->statem;
+    OSSL_STATEM *st = &s->statem;
 
     if (st->hand_state == TLS_ST_CW_CHANGE
             || st->hand_state == TLS_ST_SW_CHANGE) {
@@ -650,7 +650,7 @@ static int statem_do_write(SSL *s)
  */
 static void init_write_state_machine(SSL *s)
 {
-    STATEM *st = &s->statem;
+    OSSL_STATEM *st = &s->statem;
 
     st->write_state = WRITE_STATE_TRANSITION;
 }
@@ -688,7 +688,7 @@ static void init_write_state_machine(SSL *s)
  */
 static enum SUB_STATE_RETURN write_state_machine(SSL *s)
 {
-    STATEM *st = &s->statem;
+    OSSL_STATEM *st = &s->statem;
     int ret;
     enum WRITE_TRAN (*transition)(SSL *s);
     enum WORK_STATE (*pre_work)(SSL *s, enum WORK_STATE wst);
@@ -811,7 +811,7 @@ int statem_flush(SSL *s)
  */
 int ossl_statem_app_data_allowed(SSL *s)
 {
-    STATEM *st = &s->statem;
+    OSSL_STATEM *st = &s->statem;
 
     if (st->state == MSG_FLOW_UNINITED || st->state == MSG_FLOW_RENEGOTIATE)
         return 0;

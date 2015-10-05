@@ -182,7 +182,7 @@ static STACK_OF(SSL_CIPHER) *ssl_bytes_to_cipher_list(SSL *s,
  */
 int server_read_transition(SSL *s, int mt)
 {
-    STATEM *st = &s->statem;
+    OSSL_STATEM *st = &s->statem;
 
     switch(st->hand_state) {
     case TLS_ST_BEFORE:
@@ -404,7 +404,7 @@ static inline int send_certificate_request(SSL *s)
  */
 enum WRITE_TRAN server_write_transition(SSL *s)
 {
-    STATEM *st = &s->statem;
+    OSSL_STATEM *st = &s->statem;
 
     switch(st->hand_state) {
         case TLS_ST_BEFORE:
@@ -522,7 +522,7 @@ enum WRITE_TRAN server_write_transition(SSL *s)
  */
 enum WORK_STATE server_pre_work(SSL *s, enum WORK_STATE wst)
 {
-    STATEM *st = &s->statem;
+    OSSL_STATEM *st = &s->statem;
 
     switch(st->hand_state) {
     case TLS_ST_SW_HELLO_REQ:
@@ -601,7 +601,7 @@ enum WORK_STATE server_pre_work(SSL *s, enum WORK_STATE wst)
  */
 enum WORK_STATE server_post_work(SSL *s, enum WORK_STATE wst)
 {
-    STATEM *st = &s->statem;
+    OSSL_STATEM *st = &s->statem;
 
     s->init_num = 0;
 
@@ -709,7 +709,7 @@ enum WORK_STATE server_post_work(SSL *s, enum WORK_STATE wst)
  */
 int server_construct_message(SSL *s)
 {
-    STATEM *st = &s->statem;
+    OSSL_STATEM *st = &s->statem;
 
     switch(st->hand_state) {
     case DTLS_ST_SW_HELLO_VERIFY_REQUEST:
@@ -769,7 +769,7 @@ int server_construct_message(SSL *s)
  */
 unsigned long server_max_message_size(SSL *s)
 {
-    STATEM *st = &s->statem;
+    OSSL_STATEM *st = &s->statem;
 
     switch(st->hand_state) {
     case TLS_ST_SR_CLNT_HELLO:
@@ -808,7 +808,7 @@ unsigned long server_max_message_size(SSL *s)
  */
 enum MSG_PROCESS_RETURN server_process_message(SSL *s, PACKET *pkt)
 {
-    STATEM *st = &s->statem;
+    OSSL_STATEM *st = &s->statem;
 
     switch(st->hand_state) {
     case TLS_ST_SR_CLNT_HELLO:
@@ -848,7 +848,7 @@ enum MSG_PROCESS_RETURN server_process_message(SSL *s, PACKET *pkt)
  */
 enum WORK_STATE server_post_process_message(SSL *s, enum WORK_STATE wst)
 {
-    STATEM *st = &s->statem;
+    OSSL_STATEM *st = &s->statem;
 
     switch(st->hand_state) {
     case TLS_ST_SR_CLNT_HELLO:
