@@ -126,7 +126,7 @@ enum WRITE_STATE {
  *                                                                           *
  *****************************************************************************/
 
-struct statem_st {
+struct ossl_statem_st {
     enum MSG_FLOW_STATE state;
     enum WRITE_STATE write_state;
     enum WORK_STATE write_state_work;
@@ -144,7 +144,7 @@ struct statem_st {
     int in_sctp_read_sock;
 #endif
 };
-typedef struct statem_st STATEM;
+typedef struct ossl_statem_st OSSL_STATEM;
 
 
 /*****************************************************************************

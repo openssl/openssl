@@ -1010,7 +1010,7 @@ struct ssl_st {
     /* we have shut things down, 0x01 sent, 0x02 for received */
     int shutdown;
     /* where we are */
-    STATEM statem;
+    OSSL_STATEM statem;
 
     BUF_MEM *init_buf;          /* buffer used during init */
     void *init_msg;             /* pointer to handshake message body, set by

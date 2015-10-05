@@ -249,7 +249,7 @@ static int key_exchange_expected(SSL *s)
  */
 int client_read_transition(SSL *s, int mt)
 {
-    STATEM *st = &s->statem;
+    OSSL_STATEM *st = &s->statem;
     int ske_expected;
 
     switch(st->hand_state) {
@@ -393,7 +393,7 @@ int client_read_transition(SSL *s, int mt)
  */
 enum WRITE_TRAN client_write_transition(SSL *s)
 {
-    STATEM *st = &s->statem;
+    OSSL_STATEM *st = &s->statem;
 
     switch(st->hand_state) {
         case TLS_ST_OK:
@@ -497,7 +497,7 @@ enum WRITE_TRAN client_write_transition(SSL *s)
  */
 enum WORK_STATE client_pre_work(SSL *s, enum WORK_STATE wst)
 {
-    STATEM *st = &s->statem;
+    OSSL_STATEM *st = &s->statem;
 
     switch(st->hand_state) {
     case TLS_ST_CW_CLNT_HELLO:
@@ -544,7 +544,7 @@ enum WORK_STATE client_pre_work(SSL *s, enum WORK_STATE wst)
  */
 enum WORK_STATE client_post_work(SSL *s, enum WORK_STATE wst)
 {
-    STATEM *st = &s->statem;
+    OSSL_STATEM *st = &s->statem;
 
     s->init_num = 0;
 
@@ -643,7 +643,7 @@ enum WORK_STATE client_post_work(SSL *s, enum WORK_STATE wst)
  */
 int client_construct_message(SSL *s)
 {
-    STATEM *st = &s->statem;
+    OSSL_STATEM *st = &s->statem;
 
     switch(st->hand_state) {
     case TLS_ST_CW_CLNT_HELLO:
@@ -689,7 +689,7 @@ int client_construct_message(SSL *s)
  */
 unsigned long client_max_message_size(SSL *s)
 {
-    STATEM *st = &s->statem;
+    OSSL_STATEM *st = &s->statem;
 
     switch(st->hand_state) {
         case TLS_ST_CR_SRVR_HELLO:
@@ -735,7 +735,7 @@ unsigned long client_max_message_size(SSL *s)
  */
 enum MSG_PROCESS_RETURN client_process_message(SSL *s, PACKET *pkt)
 {
-    STATEM *st = &s->statem;
+    OSSL_STATEM *st = &s->statem;
 
     switch(st->hand_state) {
         case TLS_ST_CR_SRVR_HELLO:
@@ -782,7 +782,7 @@ enum MSG_PROCESS_RETURN client_process_message(SSL *s, PACKET *pkt)
  */
 enum WORK_STATE client_post_process_message(SSL *s, enum WORK_STATE wst)
 {
-    STATEM *st = &s->statem;
+    OSSL_STATEM *st = &s->statem;
 
     switch(st->hand_state) {
 #ifndef OPENSSL_NO_SCTP
