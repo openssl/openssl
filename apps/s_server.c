@@ -2428,7 +2428,7 @@ static int init_ssl_connection(SSL *con)
 #ifdef CERT_CB_TEST_RETRY
     {
         while (i <= 0 && SSL_get_error(con, i) == SSL_ERROR_WANT_X509_LOOKUP
-               && SSL_state(con) == TLS_ST_SR_CLNT_HELLO) {
+               && SSL_get_state(con) == TLS_ST_SR_CLNT_HELLO) {
             BIO_printf(bio_err,
                        "LOOKUP from certificate callback during accept\n");
             i = SSL_accept(con);

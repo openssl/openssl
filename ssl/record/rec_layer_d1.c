@@ -283,8 +283,8 @@ int dtls1_buffer_record(SSL *s, record_pqueue *queue, unsigned char *priority)
 #ifndef OPENSSL_NO_SCTP
     /* Store bio_dgram_sctp_rcvinfo struct */
     if (BIO_dgram_is_sctp(SSL_get_rbio(s)) &&
-        (SSL_state(s) == TLS_ST_SR_FINISHED
-         || SSL_state(s) == TLS_ST_CR_FINISHED)) {
+        (SSL_get_state(s) == TLS_ST_SR_FINISHED
+         || SSL_get_state(s) == TLS_ST_CR_FINISHED)) {
         BIO_ctrl(SSL_get_rbio(s), BIO_CTRL_DGRAM_SCTP_GET_RCVINFO,
                  sizeof(rdata->recordinfo), &rdata->recordinfo);
     }
