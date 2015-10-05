@@ -1007,8 +1007,8 @@ typedef enum {
 
 /* Is the SSL_connection established? */
 # define SSL_get_state(a)                SSL_state(a)
-# define SSL_in_connect_init(a)          (SSL_in_init(a) && !a->server)
-# define SSL_in_accept_init(a)           (SSL_in_init(a) && a->server)
+# define SSL_in_connect_init(a)          (SSL_in_init(a) && !SSL_is_server(a))
+# define SSL_in_accept_init(a)           (SSL_in_init(a) && SSL_is_server(a))
 int SSL_in_init(SSL *s);
 int SSL_in_before(SSL *s);
 int SSL_is_init_finished(SSL *s);
