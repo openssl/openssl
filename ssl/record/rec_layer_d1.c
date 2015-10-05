@@ -441,7 +441,7 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
      */
     if ((!s->in_handshake && SSL_in_init(s)) ||
         (BIO_dgram_is_sctp(SSL_get_rbio(s))
-         && statem_in_sctp_read_sock(s)
+         && ossl_statem_in_sctp_read_sock(s)
          && s->s3->in_read_app_data != 2))
 #else
     if (!s->in_handshake && SSL_in_init(s))
@@ -585,7 +585,7 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
          */
         if (BIO_dgram_is_sctp(SSL_get_rbio(s)) &&
             SSL3_RECORD_get_type(rr) == SSL3_RT_APPLICATION_DATA &&
-            statem_in_sctp_read_sock(s)) {
+            ossl_statem_in_sctp_read_sock(s)) {
             s->rwstate = SSL_READING;
             BIO_clear_retry_flags(SSL_get_rbio(s));
             BIO_set_retry_read(SSL_get_rbio(s));
@@ -903,7 +903,7 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
 
         if (SSL_is_init_finished(s) &&
             !(s->s3->flags & SSL3_FLAGS_NO_RENEGOTIATE_CIPHERS)) {
-            statem_set_in_init(s, 1);
+            ossl_statem_set_in_init(s, 1);
             s->renegotiate = 1;
             s->new_session = 1;
         }
@@ -966,7 +966,7 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
          */
         if (s->s3->in_read_app_data &&
             (s->s3->total_renegotiations != 0) &&
-            statem_app_data_allowed(s)) {
+            ossl_statem_app_data_allowed(s)) {
             s->s3->in_read_app_data = 2;
             return (-1);
         } else {

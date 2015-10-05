@@ -89,7 +89,7 @@ const char *SSL_state_string_long(const SSL *s)
 {
     const char *str;
 
-    if (statem_in_error(s)) {
+    if (ossl_statem_in_error(s)) {
         return "error";
     }
 
@@ -204,7 +204,7 @@ const char *SSL_state_string(const SSL *s)
 {
     const char *str;
 
-    if (statem_in_error(s)) {
+    if (ossl_statem_in_error(s)) {
         return "SSLERR";
     }
 

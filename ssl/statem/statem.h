@@ -150,17 +150,17 @@ typedef struct statem_st STATEM;
  *                                                                           *
  *****************************************************************************/
 
-__owur int statem_accept(SSL *s);
-__owur int statem_connect(SSL *s);
-void statem_clear(SSL *s);
-void statem_set_renegotiate(SSL *s);
-void statem_set_error(SSL *s);
-int statem_in_error(const SSL *s);
-void statem_set_in_init(SSL *s, int init);
-__owur int statem_app_data_allowed(SSL *s);
+__owur int ossl_statem_accept(SSL *s);
+__owur int ossl_statem_connect(SSL *s);
+void ossl_statem_clear(SSL *s);
+void ossl_statem_set_renegotiate(SSL *s);
+void ossl_statem_set_error(SSL *s);
+int ossl_statem_in_error(const SSL *s);
+void ossl_statem_set_in_init(SSL *s, int init);
+__owur int ossl_statem_app_data_allowed(SSL *s);
 #ifndef OPENSSL_NO_SCTP
-void statem_set_sctp_read_sock(SSL *s, int read_sock);
-__owur int statem_in_sctp_read_sock(SSL *s);
+void ossl_statem_set_sctp_read_sock(SSL *s, int read_sock);
+__owur int ossl_statem_in_sctp_read_sock(SSL *s);
 #endif
 
 

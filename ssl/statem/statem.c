@@ -150,7 +150,7 @@ int SSL_in_before(SSL *s)
 /*
  * Clear the state machine state and reset back to MSG_FLOW_UNINITED
  */
-void statem_clear(SSL *s)
+void ossl_statem_clear(SSL *s)
 {
     s->statem.state = MSG_FLOW_UNINITED;
     s->statem.hand_state = TLS_ST_BEFORE;
@@ -160,7 +160,7 @@ void statem_clear(SSL *s)
 /*
  * Set the state machine up ready for a renegotiation handshake
  */
-void statem_set_renegotiate(SSL *s)
+void ossl_statem_set_renegotiate(SSL *s)
 {
     s->statem.state = MSG_FLOW_RENEGOTIATE;
     s->statem.in_init = 1;
@@ -170,7 +170,7 @@ void statem_set_renegotiate(SSL *s)
  * Put the state machine into an error state. This is a permanent error for
  * the current connection.
  */
-void statem_set_error(SSL *s)
+void ossl_statem_set_error(SSL *s)
 {
     s->statem.state = MSG_FLOW_ERROR;
 }
@@ -182,7 +182,7 @@ void statem_set_error(SSL *s)
  *   1: Yes
  *   0: No
  */
-int statem_in_error(const SSL *s)
+int ossl_statem_in_error(const SSL *s)
 {
     if (s->statem.state == MSG_FLOW_ERROR)
         return 1;
@@ -190,16 +190,16 @@ int statem_in_error(const SSL *s)
     return 0;
 }
 
-void statem_set_in_init(SSL *s, int init)
+void ossl_statem_set_in_init(SSL *s, int init)
 {
     s->statem.in_init = init;
 }
 
-int statem_connect(SSL *s) {
+int ossl_statem_connect(SSL *s) {
     return state_machine(s, 0);
 }
 
-int statem_accept(SSL *s)
+int ossl_statem_accept(SSL *s)
 {
     return state_machine(s, 1);
 }
@@ -374,7 +374,7 @@ static int state_machine(SSL *s, int server) {
                 SSLerr(SSL_F_STATE_MACHINE,
                        SSL_R_UNSAFE_LEGACY_RENEGOTIATION_DISABLED);
                 ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_HANDSHAKE_FAILURE);
-                statem_set_error(s);
+                ossl_statem_set_error(s);
                 goto end;
             } else {
                 /*
@@ -425,7 +425,7 @@ static int state_machine(SSL *s, int server) {
             }
         } else {
             /* Error */
-            statem_set_error(s);
+            ossl_statem_set_error(s);
             goto end;
         }
     }
@@ -629,7 +629,7 @@ static enum SUB_STATE_RETURN read_state_machine(SSL *s) {
             /* Shouldn't happen */
             ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_INTERNAL_ERROR);
             SSLerr(SSL_F_READ_STATE_MACHINE, ERR_R_INTERNAL_ERROR);
-            statem_set_error(s);
+            ossl_statem_set_error(s);
             return SUB_STATE_ERROR;
         }
     }
@@ -817,7 +817,7 @@ int statem_flush(SSL *s)
  *   1: Yes (application data allowed)
  *   0: No (application data not allowed)
  */
-int statem_app_data_allowed(SSL *s)
+int ossl_statem_app_data_allowed(SSL *s)
 {
     STATEM *st = &s->statem;
 
@@ -851,7 +851,7 @@ int statem_app_data_allowed(SSL *s)
 /*
  * Set flag used by SCTP to determine whether we are in the read sock state
  */
-void statem_set_sctp_read_sock(SSL *s, int read_sock)
+void ossl_statem_set_sctp_read_sock(SSL *s, int read_sock)
 {
     s->statem.in_sctp_read_sock = read_sock;
 }
