@@ -1,4 +1,4 @@
-/* crypto/async/arch/async_null.h */
+/* crypto/async/arch/async_null.c */
 /*
  * Written by Matt Caswell (matt@openssl.org) for the OpenSSL project.
  */
@@ -51,30 +51,45 @@
  * ====================================================================
  */
 
+#include "../async_locl.h"
 #include <openssl/async.h>
 
-/*
- * If we haven't managed to detect any other async architecture then we default
- * to NULL.
- */
-#ifndef ASYNC_ARCH
-# define ASYNC_NULL
-# define ASYNC_ARCH
+#ifdef ASYNC_NULL
 
-typedef struct async_fibre_st {
-    int dummy;
-} ASYNC_FIBRE;
+STACK_OF(ASYNC_JOB) *async_get_pool(void)
+{
+    return NULL;
+}
 
+int async_set_pool(STACK_OF(ASYNC_JOB) *poolin, size_t curr_size,
+                   size_t max_size)
+{
+    return 0;
+}
 
+void async_increment_pool_size(void)
+{
+    return;
+}
 
-# define ASYNC_set_ctx(nctx)                    0
-# define ASYNC_get_ctx()                        ((ASYNC_CTX *)NULL)
-# define ASYNC_FIBRE_swapcontext(o,n,r)         0
-# define ASYNC_FIBRE_makecontext(c)
-# define ASYNC_FIBRE_free(f)
-# define ASYNC_FIBRE_init_dispatcher(f)
-# define async_pipe(f)                          0
-# define async_write1(f,b)                      ((*b == 0) ? (f = 0) : (f = 1))
-# define async_read1(f,b)                       (*b = 0)
+void async_release_job_to_pool(ASYNC_JOB *job)
+{
+    return;
+}
+
+size_t async_pool_max_size(void)
+{
+    return 0;
+}
+
+void async_release_pool(void)
+{
+    return;
+}
+
+int async_pool_can_grow(void) {
+    return 0;
+}
 
 #endif
+
