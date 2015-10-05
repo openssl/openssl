@@ -913,7 +913,7 @@ unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *buf,
  * 10.8..10.8.3 (which don't work).
  */
 static void ssl_check_for_safari(SSL *s, const unsigned char *data,
-                                 const unsigned char *d, int n)
+                                 const unsigned char *limit)
 {
     unsigned short type, size;
     static const unsigned char kSafariExtensionsBlock[] = {
@@ -942,11 +942,11 @@ static void ssl_check_for_safari(SSL *s, const unsigned char *data,
         0x02, 0x03,             /* SHA-1/ECDSA */
     };
 
-    if (data >= (d + n - 2))
+    if (data >= (limit - 2))
         return;
     data += 2;
 
-    if (data > (d + n - 4))
+    if (data > (limit - 4))
         return;
     n2s(data, type);
     n2s(data, size);
@@ -954,7 +954,7 @@ static void ssl_check_for_safari(SSL *s, const unsigned char *data,
     if (type != TLSEXT_TYPE_server_name)
         return;
 
-    if (data + size > d + n)
+    if (data + size > limit)
         return;
     data += size;
 
@@ -962,7 +962,7 @@ static void ssl_check_for_safari(SSL *s, const unsigned char *data,
         const size_t len1 = sizeof(kSafariExtensionsBlock);
         const size_t len2 = sizeof(kSafariTLS12ExtensionsBlock);
 
-        if (data + len1 + len2 != d + n)
+        if (data + len1 + len2 != limit)
             return;
         if (memcmp(data, kSafariExtensionsBlock, len1) != 0)
             return;
@@ -971,7 +971,7 @@ static void ssl_check_for_safari(SSL *s, const unsigned char *data,
     } else {
         const size_t len = sizeof(kSafariExtensionsBlock);
 
-        if (data + len != d + n)
+        if (data + len != limit)
             return;
         if (memcmp(data, kSafariExtensionsBlock, len) != 0)
             return;
@@ -981,8 +981,8 @@ static void ssl_check_for_safari(SSL *s, const unsigned char *data,
 }
 # endif                         /* !OPENSSL_NO_EC */
 
-int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d,
-                                 int n, int *al)
+int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p,
+                                 unsigned char *limit, int *al)
 {
     unsigned short type;
     unsigned short size;
@@ -1004,7 +1004,7 @@ int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d,
 
 # ifndef OPENSSL_NO_EC
     if (s->options & SSL_OP_SAFARI_ECDHE_ECDSA_BUG)
-        ssl_check_for_safari(s, data, d, n);
+        ssl_check_for_safari(s, data, limit);
 # endif                         /* !OPENSSL_NO_EC */
 
 # ifndef OPENSSL_NO_SRP
@@ -1016,22 +1016,22 @@ int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d,
 
     s->srtp_profile = NULL;
 
-    if (data == d + n)
+    if (data == limit)
         goto ri_check;
 
-    if (data > (d + n - 2))
+    if (data > (limit - 2))
         goto err;
 
     n2s(data, len);
 
-    if (data + len != d + n)
+    if (data + len != limit)
         goto err;
 
-    while (data <= (d + n - 4)) {
+    while (data <= (limit - 4)) {
         n2s(data, type);
         n2s(data, size);
 
-        if (data + size > (d + n))
+        if (data + size > (limit))
             goto err;
 # if 0
         fprintf(stderr, "Received extension type %d size %d\n", type, size);
@@ -1396,7 +1396,7 @@ int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d,
     }
 
     /* Spurious data on the end */
-    if (data != d + n)
+    if (data != limit)
         goto err;
 
     *p = data;
