@@ -110,18 +110,9 @@ static enum SUB_STATE_RETURN read_state_machine(SSL *s);
 static void init_write_state_machine(SSL *s);
 static enum SUB_STATE_RETURN write_state_machine(SSL *s);
 
-OSSL_HANDSHAKE_STATE SSL_state(const SSL *ssl)
+OSSL_HANDSHAKE_STATE SSL_get_state(const SSL *ssl)
 {
     return ssl->statem.hand_state;
-}
-
-void SSL_set_state(SSL *ssl, OSSL_HANDSHAKE_STATE state)
-{
-    /*
-     * This function seems like a really bad idea. Should we remove it
-     * completely?
-     */
-    ssl->statem.hand_state = state;
 }
 
 int SSL_in_init(SSL *s)

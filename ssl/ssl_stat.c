@@ -93,7 +93,7 @@ const char *SSL_state_string_long(const SSL *s)
         return "error";
     }
 
-    switch (SSL_state(s)) {
+    switch (SSL_get_state(s)) {
     case TLS_ST_BEFORE:
         str = "before SSL initialization";
         break;
@@ -208,7 +208,7 @@ const char *SSL_state_string(const SSL *s)
         return "SSLERR";
     }
 
-    switch (SSL_state(s)) {
+    switch (SSL_get_state(s)) {
     case TLS_ST_BEFORE:
         str = "PINIT ";
         break;
