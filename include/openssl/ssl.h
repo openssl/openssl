@@ -1006,7 +1006,6 @@ typedef enum {
 # define SSL_CB_HANDSHAKE_DONE           0x20
 
 /* Is the SSL_connection established? */
-# define SSL_get_state(a)                SSL_state(a)
 # define SSL_in_connect_init(a)          (SSL_in_init(a) && !SSL_is_server(a))
 # define SSL_in_accept_init(a)           (SSL_in_init(a) && SSL_is_server(a))
 int SSL_in_init(SSL *s);
@@ -1700,8 +1699,7 @@ void SSL_set_info_callback(SSL *ssl,
                            void (*cb) (const SSL *ssl, int type, int val));
 void (*SSL_get_info_callback(const SSL *ssl)) (const SSL *ssl, int type,
                                                int val);
-__owur OSSL_HANDSHAKE_STATE SSL_state(const SSL *ssl);
-void SSL_set_state(SSL *ssl, OSSL_HANDSHAKE_STATE state);
+__owur OSSL_HANDSHAKE_STATE SSL_get_state(const SSL *ssl);
 
 void SSL_set_verify_result(SSL *ssl, long v);
 __owur long SSL_get_verify_result(const SSL *ssl);
