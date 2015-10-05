@@ -288,7 +288,7 @@ enum MSG_PROCESS_RETURN tls_process_change_cipher_spec(SSL *s, PACKET *pkt)
     return MSG_PROCESS_CONTINUE_READING;
  f_err:
     ssl3_send_alert(s, SSL3_AL_FATAL, al);
-    statem_set_error(s);
+    ossl_statem_set_error(s);
     return MSG_PROCESS_ERROR;
 }
 
@@ -334,7 +334,7 @@ enum MSG_PROCESS_RETURN tls_process_finished(SSL *s, PACKET *pkt)
     return MSG_PROCESS_CONTINUE_PROCESSING;
  f_err:
     ssl3_send_alert(s, SSL3_AL_FATAL, al);
-    statem_set_error(s);
+    ossl_statem_set_error(s);
     return MSG_PROCESS_ERROR;
 }
 
@@ -411,13 +411,13 @@ enum WORK_STATE tls_finish_handshake(SSL *s, enum WORK_STATE wst)
             ssl_update_cache(s, SSL_SESS_CACHE_SERVER);
 
             s->ctx->stats.sess_accept_good++;
-            s->handshake_func = statem_accept;
+            s->handshake_func = ossl_statem_accept;
         } else {
             ssl_update_cache(s, SSL_SESS_CACHE_CLIENT);
             if (s->hit)
                 s->ctx->stats.sess_hit++;
 
-            s->handshake_func = statem_connect;
+            s->handshake_func = ossl_statem_connect;
             s->ctx->stats.sess_connect_good++;
         }
 

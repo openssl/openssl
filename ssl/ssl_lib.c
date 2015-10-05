@@ -215,7 +215,7 @@ int SSL_clear(SSL *s)
         return 0;
     }
 
-    statem_clear(s);
+    ossl_statem_clear(s);
 
     s->version = s->method->version;
     s->client_version = s->version;
@@ -2396,7 +2396,7 @@ void SSL_set_accept_state(SSL *s)
 {
     s->server = 1;
     s->shutdown = 0;
-    statem_clear(s);
+    ossl_statem_clear(s);
     s->handshake_func = s->method->ssl_accept;
     clear_ciphers(s);
 }
@@ -2405,7 +2405,7 @@ void SSL_set_connect_state(SSL *s)
 {
     s->server = 0;
     s->shutdown = 0;
-    statem_clear(s);
+    ossl_statem_clear(s);
     s->handshake_func = s->method->ssl_connect;
     clear_ciphers(s);
 }

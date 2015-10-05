@@ -873,7 +873,7 @@ int dtls1_listen(SSL *s, struct sockaddr *client)
     SSL_set_options(s, SSL_OP_COOKIE_EXCHANGE);
 
     /* Put us into the "init" state so that we don't get our state cleared */
-    statem_set_in_init(s, 1);
+    ossl_statem_set_in_init(s, 1);
 
     if(BIO_dgram_get_peer(rbio, client) <= 0) {
         SSLerr(SSL_F_DTLS1_LISTEN, ERR_R_INTERNAL_ERROR);
