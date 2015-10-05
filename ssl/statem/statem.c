@@ -95,20 +95,20 @@
  */
 
 /* Sub state machine return values */
-enum SUB_STATE_RETURN {
+typedef enum  {
     /* Something bad happened or NBIO */
     SUB_STATE_ERROR,
     /* Sub state finished go to the next sub state */
     SUB_STATE_FINISHED,
     /* Sub state finished and handshake was completed */
     SUB_STATE_END_HANDSHAKE
-};
+} SUB_STATE_RETURN;
 
 static int state_machine(SSL *s, int server);
 static void init_read_state_machine(SSL *s);
-static enum SUB_STATE_RETURN read_state_machine(SSL *s);
+static SUB_STATE_RETURN read_state_machine(SSL *s);
 static void init_write_state_machine(SSL *s);
-static enum SUB_STATE_RETURN write_state_machine(SSL *s);
+static SUB_STATE_RETURN write_state_machine(SSL *s);
 
 OSSL_HANDSHAKE_STATE SSL_get_state(const SSL *ssl)
 {
@@ -485,7 +485,7 @@ static void init_read_state_machine(SSL *s)
  * control returns to the calling application. When this function is recalled we
  * will resume in the same state where we left off.
  */
-static enum SUB_STATE_RETURN read_state_machine(SSL *s) {
+static SUB_STATE_RETURN read_state_machine(SSL *s) {
     OSSL_STATEM *st = &s->statem;
     int ret, mt;
     unsigned long len;
@@ -686,7 +686,7 @@ static void init_write_state_machine(SSL *s)
  * message has been completed. As for WRITE_STATE_PRE_WORK this could also
  * result in an NBIO event.
  */
-static enum SUB_STATE_RETURN write_state_machine(SSL *s)
+static SUB_STATE_RETURN write_state_machine(SSL *s)
 {
     OSSL_STATEM *st = &s->statem;
     int ret;
