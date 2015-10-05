@@ -26,6 +26,11 @@ matrix:
           compiler: i686-w64-mingw32-gcc
         - os: osx
           compiler: x86_64-w64-mingw32-gcc
+    allow_failures:
+        - compiler: i686-w64-mingw32-gcc
+          env: CONFIG_OPTS="--debug --strict-warnings"
+        - compiler: x86_64-w64-mingw32-gcc
+          env: CONFIG_OPTS="--debug --strict-warnings"
 
 before_script:
     - if [ "$CC" == i686-w64-mingw32-gcc ]; then
