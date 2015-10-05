@@ -5014,7 +5014,7 @@ int ssl3_shutdown(SSL *s)
      * Don't do anything much if we have not done the handshake or we don't
      * want to send messages :-)
      */
-    if ((s->quiet_shutdown) || (SSL_in_before(s))) {
+    if (s->quiet_shutdown || SSL_in_before(s)) {
         s->shutdown = (SSL_SENT_SHUTDOWN | SSL_RECEIVED_SHUTDOWN);
         return (1);
     }
