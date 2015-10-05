@@ -624,7 +624,7 @@ success or 0 on failure.
 
 =item int B<SSL_shutdown>(SSL *ssl);
 
-=item enum HANDSHAKE_STATE B<SSL_state>(const SSL *ssl);
+=item OSSL_HANDSHAKE_STATE B<SSL_state>(const SSL *ssl);
 
 Returns the current handshake state.
 

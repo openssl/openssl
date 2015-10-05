@@ -933,7 +933,7 @@ extern "C" {
  * TLS_ST_BEFORE = No handshake has been initiated yet
  * TLS_ST_OK = A handshake has been successfully completed
  */
-enum HANDSHAKE_STATE {
+typedef enum {
     TLS_ST_BEFORE,
     TLS_ST_OK,
     DTLS_ST_CR_HELLO_VERIFY_REQUEST,
@@ -971,7 +971,7 @@ enum HANDSHAKE_STATE {
     TLS_ST_SW_CERT_STATUS,
     TLS_ST_SW_CHANGE,
     TLS_ST_SW_FINISHED
-};
+} OSSL_HANDSHAKE_STATE;
 
 /*
  * Most of the following state values are no longer used and are defined to be
@@ -1700,8 +1700,8 @@ void SSL_set_info_callback(SSL *ssl,
                            void (*cb) (const SSL *ssl, int type, int val));
 void (*SSL_get_info_callback(const SSL *ssl)) (const SSL *ssl, int type,
                                                int val);
-__owur enum HANDSHAKE_STATE SSL_state(const SSL *ssl);
-void SSL_set_state(SSL *ssl, enum HANDSHAKE_STATE state);
+__owur OSSL_HANDSHAKE_STATE SSL_state(const SSL *ssl);
+void SSL_set_state(SSL *ssl, OSSL_HANDSHAKE_STATE state);
 
 void SSL_set_verify_result(SSL *ssl, long v);
 __owur long SSL_get_verify_result(const SSL *ssl);

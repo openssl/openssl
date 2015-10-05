@@ -132,7 +132,7 @@ struct statem_st {
     enum WORK_STATE write_state_work;
     enum READ_STATE read_state;
     enum WORK_STATE read_state_work;
-    enum HANDSHAKE_STATE hand_state;
+    OSSL_HANDSHAKE_STATE hand_state;
     int in_init;
     int read_state_first_init;
     int use_timer;
