@@ -75,6 +75,8 @@
 # define ASYNC_NULL
 #endif
 
+#ifndef ASYNC_NULL
+
 static int ctr = 0;
 static ASYNC_JOB *currjob = NULL;
 
@@ -233,6 +235,7 @@ static int test_ASYNC_get_wait_fd()
     ASYNC_free_pool();
     return 1;
 }
+#endif
 
 int main(int argc, char **argv)
 {
