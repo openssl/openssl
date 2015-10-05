@@ -135,6 +135,10 @@ struct statem_st {
     OSSL_HANDSHAKE_STATE hand_state;
     int in_init;
     int read_state_first_init;
+
+    /* Should we skip the CertificateVerify message? */
+    unsigned int no_cert_verify;
+
     int use_timer;
 #ifndef OPENSSL_NO_SCTP
     int in_sctp_read_sock;

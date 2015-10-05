@@ -1021,9 +1021,6 @@ struct ssl_st {
     struct ssl3_state_st *s3;   /* SSLv3 variables */
     struct dtls1_state_st *d1;  /* DTLSv1 variables */
 
-    /* Should we skip the CertificateVerify message? */
-    unsigned int no_cert_verify;
-
     /* callback that allows applications to peek at protocol messages */
     void (*msg_callback) (int write_p, int version, int content_type,
                           const void *buf, size_t len, SSL *ssl, void *arg);
