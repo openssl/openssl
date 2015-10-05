@@ -17,8 +17,8 @@ TEST=
 APPS=
 
 LIB=$(TOP)/libcrypto.a
-LIBSRC=async.c arch/async_posix.c arch/async_win.c
-LIBOBJ=async.o arch/async_posix.o arch/async_win.o
+LIBSRC=async.c arch/async_posix.c arch/async_win.c arch/async_null.c
+LIBOBJ=async.o arch/async_posix.o arch/async_win.o arch/async_null.o
 
 SRC= $(LIBSRC)
 
@@ -76,6 +76,16 @@ clean:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
+arch/async_null.o: ../../e_os.h ../../include/openssl/async.h
+arch/async_null.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
+arch/async_null.o: ../../include/openssl/opensslconf.h
+arch/async_null.o: ../../include/openssl/opensslv.h
+arch/async_null.o: ../../include/openssl/ossl_typ.h
+arch/async_null.o: ../../include/openssl/safestack.h
+arch/async_null.o: ../../include/openssl/stack.h
+arch/async_null.o: ../../include/openssl/symhacks.h arch/../arch/async_null.h
+arch/async_null.o: arch/../arch/async_posix.h arch/../arch/async_win.h
+arch/async_null.o: arch/../async_locl.h arch/async_null.c
 arch/async_posix.o: ../../e_os.h ../../include/openssl/async.h
 arch/async_posix.o: ../../include/openssl/crypto.h
 arch/async_posix.o: ../../include/openssl/e_os2.h

@@ -383,6 +383,22 @@ dummytest$(EXE_EXT): dummytest.o $(DLIBCRYPTO)
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
+asynctest.o: ../e_os.h ../include/../apps/apps.h ../include/../apps/progs.h
+asynctest.o: ../include/openssl/asn1.h ../include/openssl/async.h
+asynctest.o: ../include/openssl/bio.h ../include/openssl/buffer.h
+asynctest.o: ../include/openssl/conf.h ../include/openssl/crypto.h
+asynctest.o: ../include/openssl/e_os2.h ../include/openssl/ec.h
+asynctest.o: ../include/openssl/ecdh.h ../include/openssl/ecdsa.h
+asynctest.o: ../include/openssl/engine.h ../include/openssl/evp.h
+asynctest.o: ../include/openssl/lhash.h ../include/openssl/obj_mac.h
+asynctest.o: ../include/openssl/objects.h ../include/openssl/ocsp.h
+asynctest.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
+asynctest.o: ../include/openssl/ossl_typ.h ../include/openssl/pkcs7.h
+asynctest.o: ../include/openssl/safestack.h ../include/openssl/sha.h
+asynctest.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
+asynctest.o: ../include/openssl/txt_db.h ../include/openssl/x509.h
+asynctest.o: ../include/openssl/x509_vfy.h ../include/openssl/x509v3.h
+asynctest.o: asynctest.c
 bftest.o: ../e_os.h ../include/openssl/blowfish.h ../include/openssl/e_os2.h
 bftest.o: ../include/openssl/opensslconf.h bftest.c
 bntest.o: ../crypto/bn/bn_lcl.h ../crypto/include/internal/bn_int.h ../e_os.h
