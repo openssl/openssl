@@ -232,10 +232,10 @@ int server_read_transition(SSL *s, int mt)
          * received a Certificate from the client. If so then |s->session->peer|
          * will be non NULL. In some instances a CertificateVerify message is
          * not required even if the peer has sent a Certificate (e.g. such as in
-         * the case of static DH). In that case |s->no_cert_verify| should be
+         * the case of static DH). In that case |st->no_cert_verify| should be
          * set.
          */
-        if (s->session->peer == NULL || s->no_cert_verify) {
+        if (s->session->peer == NULL || st->no_cert_verify) {
             if (mt == SSL3_MT_CHANGE_CIPHER_SPEC) {
                 /*
                  * For the ECDH ciphersuites when the client sends its ECDH
@@ -2619,7 +2619,7 @@ enum MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
             goto f_err;
         }
         if (dh_clnt) {
-            s->no_cert_verify = 1;
+            s->statem.no_cert_verify = 1;
             return MSG_PROCESS_CONTINUE_PROCESSING;
         }
     } else
@@ -2697,7 +2697,7 @@ enum MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
                 SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE, ERR_R_EC_LIB);
                 goto err;
             }
-            s->no_cert_verify = 1;
+            s->statem.no_cert_verify = 1;
         } else {
             /*
              * Get client's public key from encoded point in the
@@ -2854,7 +2854,7 @@ enum MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
         /* Check if pubkey from client certificate was used */
         if (EVP_PKEY_CTX_ctrl
             (pkey_ctx, -1, -1, EVP_PKEY_CTRL_PEER_KEY, 2, NULL) > 0)
-            s->no_cert_verify = 1;
+            s->statem.no_cert_verify = 1;
 
         EVP_PKEY_free(client_pub_pkey);
         EVP_PKEY_CTX_free(pkey_ctx);
@@ -2924,7 +2924,7 @@ enum WORK_STATE tls_post_process_client_key_exchange(SSL *s,
             /* Are we renegotiating? */
             && s->renegotiate
             /* Are we going to skip the CertificateVerify? */
-            && (s->session->peer == NULL || s->no_cert_verify)
+            && (s->session->peer == NULL || s->statem.no_cert_verify)
             && BIO_dgram_sctp_msg_waiting(SSL_get_rbio(s))) {
         s->s3->in_read_app_data = 2;
         s->rwstate = SSL_READING;
@@ -2937,7 +2937,7 @@ enum WORK_STATE tls_post_process_client_key_exchange(SSL *s,
     }
 #endif
 
-    if (s->no_cert_verify) {
+    if (s->statem.no_cert_verify) {
         /* No certificate verify so we no longer need the handshake_buffer */
         BIO_free(s->s3->handshake_buffer);
         return WORK_FINISHED_CONTINUE;
