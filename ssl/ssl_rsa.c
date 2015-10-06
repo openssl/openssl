@@ -90,7 +90,7 @@ int SSL_use_certificate_file(SSL *ssl, const char *file, int type)
     int ret = 0;
     X509 *x = NULL;
 
-    in = BIO_new(BIO_s_file_internal());
+    in = BIO_new(BIO_s_file());
     if (in == NULL) {
         SSLerr(SSL_F_SSL_USE_CERTIFICATE_FILE, ERR_R_BUF_LIB);
         goto end;
@@ -227,7 +227,7 @@ int SSL_use_RSAPrivateKey_file(SSL *ssl, const char *file, int type)
     BIO *in;
     RSA *rsa = NULL;
 
-    in = BIO_new(BIO_s_file_internal());
+    in = BIO_new(BIO_s_file());
     if (in == NULL) {
         SSLerr(SSL_F_SSL_USE_RSAPRIVATEKEY_FILE, ERR_R_BUF_LIB);
         goto end;
@@ -299,7 +299,7 @@ int SSL_use_PrivateKey_file(SSL *ssl, const char *file, int type)
     BIO *in;
     EVP_PKEY *pkey = NULL;
 
-    in = BIO_new(BIO_s_file_internal());
+    in = BIO_new(BIO_s_file());
     if (in == NULL) {
         SSLerr(SSL_F_SSL_USE_PRIVATEKEY_FILE, ERR_R_BUF_LIB);
         goto end;
@@ -430,7 +430,7 @@ int SSL_CTX_use_certificate_file(SSL_CTX *ctx, const char *file, int type)
     int ret = 0;
     X509 *x = NULL;
 
-    in = BIO_new(BIO_s_file_internal());
+    in = BIO_new(BIO_s_file());
     if (in == NULL) {
         SSLerr(SSL_F_SSL_CTX_USE_CERTIFICATE_FILE, ERR_R_BUF_LIB);
         goto end;
@@ -512,7 +512,7 @@ int SSL_CTX_use_RSAPrivateKey_file(SSL_CTX *ctx, const char *file, int type)
     BIO *in;
     RSA *rsa = NULL;
 
-    in = BIO_new(BIO_s_file_internal());
+    in = BIO_new(BIO_s_file());
     if (in == NULL) {
         SSLerr(SSL_F_SSL_CTX_USE_RSAPRIVATEKEY_FILE, ERR_R_BUF_LIB);
         goto end;
@@ -581,7 +581,7 @@ int SSL_CTX_use_PrivateKey_file(SSL_CTX *ctx, const char *file, int type)
     BIO *in;
     EVP_PKEY *pkey = NULL;
 
-    in = BIO_new(BIO_s_file_internal());
+    in = BIO_new(BIO_s_file());
     if (in == NULL) {
         SSLerr(SSL_F_SSL_CTX_USE_PRIVATEKEY_FILE, ERR_R_BUF_LIB);
         goto end;
@@ -648,7 +648,7 @@ static int use_certificate_chain_file(SSL_CTX *ctx, SSL *ssl, const char *file)
     ERR_clear_error();          /* clear error stack for
                                  * SSL_CTX_use_certificate() */
 
-    in = BIO_new(BIO_s_file_internal());
+    in = BIO_new(BIO_s_file());
     if (in == NULL) {
         SSLerr(SSL_F_USE_CERTIFICATE_CHAIN_FILE, ERR_R_BUF_LIB);
         goto end;
@@ -930,7 +930,7 @@ int SSL_CTX_use_serverinfo_file(SSL_CTX *ctx, const char *file)
         goto end;
     }
 
-    bin = BIO_new(BIO_s_file_internal());
+    bin = BIO_new(BIO_s_file());
     if (bin == NULL) {
         SSLerr(SSL_F_SSL_CTX_USE_SERVERINFO_FILE, ERR_R_BUF_LIB);
         goto end;

@@ -3735,6 +3735,15 @@
 #define SN_gost89_cnt_12                "gost89-cnt-12"
 #define NID_gost89_cnt_12               975
 
+#define SN_gost89_cbc           "gost89-cbc"
+#define NID_gost89_cbc          1009
+
+#define SN_gost89_ecb           "gost89-ecb"
+#define NID_gost89_ecb          1010
+
+#define SN_gost89_ctr           "gost89-ctr"
+#define NID_gost89_ctr          1011
+
 #define SN_id_Gost28147_89_MAC          "gost-mac"
 #define LN_id_Gost28147_89_MAC          "GOST 28147-89 MAC"
 #define NID_id_Gost28147_89_MAC         815
@@ -4052,6 +4061,24 @@
 #define LN_issuerSignTool               "Signing Tool of Issuer"
 #define NID_issuerSignTool              1008
 #define OBJ_issuerSignTool              OBJ_member_body,643L,100L,112L
+
+#define SN_grasshopper_ecb              "grasshopper-ecb"
+#define NID_grasshopper_ecb             1012
+
+#define SN_grasshopper_ctr              "grasshopper-ctr"
+#define NID_grasshopper_ctr             1013
+
+#define SN_grasshopper_ofb              "grasshopper-ofb"
+#define NID_grasshopper_ofb             1014
+
+#define SN_grasshopper_cbc              "grasshopper-cbc"
+#define NID_grasshopper_cbc             1015
+
+#define SN_grasshopper_cfb              "grasshopper-cfb"
+#define NID_grasshopper_cfb             1016
+
+#define SN_grasshopper_mac              "grasshopper-mac"
+#define NID_grasshopper_mac             1017
 
 #define SN_camellia_128_cbc             "CAMELLIA-128-CBC"
 #define LN_camellia_128_cbc             "camellia-128-cbc"
