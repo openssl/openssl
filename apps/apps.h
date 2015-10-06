@@ -162,6 +162,7 @@ CONF *app_load_config(const char *filename);
 CONF *app_load_config_quiet(const char *filename);
 int app_load_modules(const CONF *config);
 void unbuffer(FILE *fp);
+void wait_for_async(SSL *s);
 
 /*
  * Common verification options.
