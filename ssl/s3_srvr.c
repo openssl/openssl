@@ -3494,10 +3494,9 @@ STACK_OF(SSL_CIPHER) *ssl_bytes_to_cipher_list(SSL *s,
 
     while (PACKET_copy_bytes(cipher_suites, cipher, n)) {
         /*
-         * We only support SSLv2 format ciphers in SSLv3+ using a
-         * SSLv2 backward compatible ClientHello. In this case the first
-         * byte is always 0 for SSLv3 compatible ciphers. Anything else
-         * is an SSLv2 cipher and we ignore it
+         * SSLv3 ciphers wrapped in an SSLv2-compatible ClientHello have the
+         * first byte set to zero, while true SSLv2 ciphers have a non-zero
+         * first byte. We don't support any true SSLv2 ciphers, so skip them.
          */
         if (sslv2format && cipher[0] != '\0')
                 continue;
