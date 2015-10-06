@@ -4,6 +4,15 @@
 
  Changes between 1.0.2 and 1.1.0  [xx XXX xxxx]
 
+  *) Added ASYNC support. Libcrypto now includes the async sub-library to enable
+     cryptographic operations to be performed asynchronously as long as an
+     asynchronous capable engine is used. See the ASYNC_start_job() man page for
+     further details. Libssl has also had this capability integrated with the
+     introduction of the new mode SSL_MODE_ASYNC and associated error
+     SSL_ERROR_WANT_ASYNC. See the SSL_CTX_set_mode() and SSL_get_error() man
+     pages.
+     [Matt Caswell]
+
   *) State machine rewrite. The state machine code has been significantly
      refactored in order to remove much duplication of code and solve issues
      with the old code (see ssl/statem/README for further details). This change
@@ -59,6 +68,7 @@
      though the change is mostly in the more lenient direction, and
      legacy behaviour is preserved as much as possible.
      [Emilia Käsper]
+
   *) Fix no-stdio build.
     [ David Woodhouse <David.Woodhouse@intel.com> and also
       Ivan Nestlerode <ivan.nestlerode@sonos.com> ]
