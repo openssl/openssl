@@ -1,0 +1,45 @@
+=pod
+
+=head1 NAME
+
+SSL_waiting_for_async, SSL_get_async_wait_fd - manage asynchronous operations
+
+=head1 SYNOPSIS
+
+ #include <openssl/ssl.h>
+
+ int SSL_waiting_for_async(SSL *s);
+ int SSL_get_async_wait_fd(SSL *s);
+
+=head1 DESCRIPTION
+
+SSL_waiting_for_async() determines whether an SSL connection is currently
+waiting for asynchronous operations to complete (see the SSL_MODE_ASYNC mode in
+L<SSL_CTX_set_mode(3)>).
+
+SSL_get_async_wait_fd() returns a file descriptor which can be used in a call to
+select() or poll() to determine whether the current asynchronous operation has
+completed or not. A completed operation will result in data appearing as
+available on the file descriptor (no actual data should be read from the file
+descriptor). This function should only be called if the SSL object is currently
+waiting for asynchronous work to complete (i.e. SSL_ERROR_WANT_ASYNC has been
+received - see L<SSL_get_error(3)>).
+
+=head1 RETURN VALUES
+
+SSL_waiting_for_async() will return 1 if the current SSL operation is waiting
+for an async operation to complete and 0 otherwise.
+
+SSL_get_async_wait_fd() will return a file descriptor that can be used in a call
+to select() or poll() to wait for asynchronous work to complete, or -1 on error.
+
+=head1 SEE ALSO
+
+L<SSL_get_error(3)>, L<SSL_CTX_set_mode(3)>
+
+=head1 HISTORY
+
+SSL_waiting_for_async() and SSL_get_async_wait_fd() were first added to
+OpenSSL 1.1.0
+
+=cut
