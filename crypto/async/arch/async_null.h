@@ -63,15 +63,14 @@
 
 typedef struct async_fibre_st {
     int dummy;
-} ASYNC_FIBRE;
+} async_fibre;
 
 
-
-# define ASYNC_set_ctx(nctx)                    0
-# define ASYNC_get_ctx()                        ((ASYNC_CTX *)NULL)
-# define ASYNC_FIBRE_swapcontext(o,n,r)         0
-# define ASYNC_FIBRE_makecontext(c)
-# define ASYNC_FIBRE_free(f)
-# define ASYNC_FIBRE_init_dispatcher(f)
+# define async_set_ctx(nctx)                    0
+# define async_get_ctx()                        ((async_ctx *)NULL)
+# define async_fibre_swapcontext(o,n,r)         0
+# define async_fibre_makecontext(c)
+# define async_fibre_free(f)
+# define async_fibre_init_dispatcher(f)
 
 #endif

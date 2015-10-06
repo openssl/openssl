@@ -58,25 +58,25 @@
 
 # if _POSIX_VERSION >= 200112L
 
-#  define ASYNC_SYSV
+#  define ASYNC_POSIX
 #  define ASYNC_ARCH
 
 #  include <ucontext.h>
 #  include <setjmp.h>
 #  include "e_os.h"
 
-extern __thread ASYNC_CTX *sysvctx;
+extern __thread async_ctx *sysvctx;
 
 typedef struct async_fibre_st {
     ucontext_t fibre;
     jmp_buf env;
     int env_init;
-} ASYNC_FIBRE;
+} async_fibre;
 
-#  define ASYNC_set_ctx(nctx)             (sysvctx = (nctx))
-#  define ASYNC_get_ctx()                 (sysvctx)
+#  define async_set_ctx(nctx)             (sysvctx = (nctx))
+#  define async_get_ctx()                 (sysvctx)
 
-static inline int ASYNC_FIBRE_swapcontext(ASYNC_FIBRE *o, ASYNC_FIBRE *n, int r)
+static inline int async_fibre_swapcontext(async_fibre *o, async_fibre *n, int r)
 {
     o->env_init = 1;
 
@@ -90,14 +90,14 @@ static inline int ASYNC_FIBRE_swapcontext(ASYNC_FIBRE *o, ASYNC_FIBRE *n, int r)
     return 1;
 }
 
-#  define ASYNC_FIBRE_makecontext(c) \
-            (ASYNC_FIBRE_init(c) \
+#  define async_fibre_makecontext(c) \
+            (async_fibre_init(c) \
             && !getcontext(&(c)->fibre) \
-            && (makecontext(&(c)->fibre, ASYNC_start_func, 0), 1))
-#  define ASYNC_FIBRE_init_dispatcher(d)
+            && (makecontext(&(c)->fibre, async_start_func, 0), 1))
+#  define async_fibre_init_dispatcher(d)
 
-int ASYNC_FIBRE_init(ASYNC_FIBRE *fibre);
-void ASYNC_FIBRE_free(ASYNC_FIBRE *fibre);
+int async_fibre_init(async_fibre *fibre);
+void async_fibre_free(async_fibre *fibre);
 
 # endif
 #endif
