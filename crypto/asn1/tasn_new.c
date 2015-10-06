@@ -142,9 +142,13 @@ int asn1_item_embed_new(ASN1_VALUE **pval, const ASN1_ITEM *it, int embed)
                 return 1;
             }
         }
-        *pval = OPENSSL_zalloc(it->size);
-        if (!*pval)
-            goto memerr;
+        if (embed) {
+            memset(*pval, 0, it->size);
+        } else {
+            *pval = OPENSSL_zalloc(it->size);
+            if (!*pval)
+                goto memerr;
+        }
         asn1_set_choice_selector(pval, -1, it);
         if (asn1_cb && !asn1_cb(ASN1_OP_NEW_POST, pval, it, NULL))
             goto auxerr;
