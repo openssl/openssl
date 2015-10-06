@@ -360,6 +360,25 @@ static int test_PACKET_null_init()
     return 1;
 }
 
+static int test_PACKET_equal(unsigned char buf[BUF_LEN])
+{
+    PACKET pkt;
+
+    if (       !PACKET_buf_init(&pkt, buf, 4)
+            || !PACKET_equal(&pkt, buf, 4)
+            ||  PACKET_equal(&pkt, buf + 1, 4)
+            || !PACKET_buf_init(&pkt, buf, BUF_LEN)
+            || !PACKET_equal(&pkt, buf, BUF_LEN)
+            ||  PACKET_equal(&pkt, buf, BUF_LEN - 1)
+            ||  PACKET_equal(&pkt, buf, BUF_LEN + 1)
+            ||  PACKET_equal(&pkt, buf, 0)) {
+        fprintf(stderr, "test_PACKET_equal() failed\n");
+        return 0;
+        }
+
+    return 1;
+}
+
 static int test_PACKET_get_length_prefixed_1()
 {
     unsigned char buf[BUF_LEN];
@@ -452,6 +471,7 @@ int main(int argc, char **argv)
     if (       !test_PACKET_buf_init()
             || !test_PACKET_null_init()
             || !test_PACKET_remaining(buf)
+            || !test_PACKET_equal(buf)
             || !test_PACKET_get_1(buf)
             || !test_PACKET_get_4(buf)
             || !test_PACKET_get_net_2(buf)

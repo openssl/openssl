@@ -1137,45 +1137,20 @@ int ssl3_get_client_hello(SSL *s)
     }
 
     if (SSL_IS_DTLS(s)) {
-        size_t cookie_len = PACKET_remaining(&cookie);
-        /*
-         * The ClientHello may contain a cookie even if the
-         * HelloVerify message has not been sent--make sure that it
-         * does not cause an overflow.
-         */
-        if (cookie_len > sizeof(s->d1->rcvd_cookie)) {
-            /* too much data */
-            al = SSL_AD_DECODE_ERROR;
-            SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, SSL_R_COOKIE_MISMATCH);
-            goto f_err;
-        }
-
-        /* verify the cookie if appropriate option is set. */
-        if ((SSL_get_options(s) & SSL_OP_COOKIE_EXCHANGE) && cookie_len > 0) {
-            /* Get cookie */
-            /*
-             * TODO(openssl-team): rcvd_cookie appears unused outside this
-             * function. Remove the field?
-             */
-            if (!PACKET_copy_bytes(&cookie, s->d1->rcvd_cookie, cookie_len)) {
-                al = SSL_AD_INTERNAL_ERROR;
-                SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, ERR_R_INTERNAL_ERROR);
-                goto f_err;
-            }
-
+	/* Empty cookie was already handled above by returning early. */
+        if (SSL_get_options(s) & SSL_OP_COOKIE_EXCHANGE) {
             if (s->ctx->app_verify_cookie_cb != NULL) {
-                if (s->ctx->app_verify_cookie_cb(s, s->d1->rcvd_cookie,
-                                                 cookie_len) == 0) {
+                if (s->ctx->app_verify_cookie_cb(s, PACKET_data(&cookie),
+                                                 PACKET_remaining(&cookie)) == 0) {
                     al = SSL_AD_HANDSHAKE_FAILURE;
                     SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO,
                            SSL_R_COOKIE_MISMATCH);
                     goto f_err;
+                    /* else cookie verification succeeded */
                 }
-                /* else cookie verification succeeded */
-            }
             /* default verification */
-            else if (memcmp(s->d1->rcvd_cookie, s->d1->cookie,
-                            s->d1->cookie_len) != 0) {
+            } else if (!PACKET_equal(&cookie, s->d1->cookie,
+                                     s->d1->cookie_len)) {
                 al = SSL_AD_HANDSHAKE_FAILURE;
                 SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, SSL_R_COOKIE_MISMATCH);
                 goto f_err;
