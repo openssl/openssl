@@ -1434,7 +1434,9 @@ int s_server_main(int argc, char *argv[])
             goto opthelp;
 #endif
         case OPT_SRTP_PROFILES:
+#ifndef OPENSSL_NO_SRTP
             srtp_profiles = opt_arg();
+#endif
             break;
         case OPT_KEYMATEXPORT:
             keymatexportlabel = opt_arg();
