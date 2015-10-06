@@ -91,5 +91,20 @@ int async_pool_can_grow(void) {
     return 0;
 }
 
+int async_pipe(int *pipefds)
+{
+    return -1;
+}
+
+int async_write1(int fd, const void *buf)
+{
+    return -1;
+}
+
+int async_read1(int fd, void *buf)
+{
+    return -1;
+}
+
 #endif
 
