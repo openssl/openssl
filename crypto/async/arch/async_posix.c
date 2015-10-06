@@ -54,14 +54,14 @@
 #include "../async_locl.h"
 #include <openssl/async.h>
 
-#ifdef ASYNC_SYSV
+#ifdef ASYNC_POSIX
 # include <stddef.h>
 # include <ucontext.h>
 # include <unistd.h>
 # include <openssl/crypto.h>
 # include <openssl/async.h>
 
-__thread ASYNC_CTX *sysvctx;
+__thread async_ctx *sysvctx;
 
 #define STACKSIZE       32768
 
@@ -69,7 +69,7 @@ __thread size_t pool_max_size = 0;
 __thread size_t pool_curr_size = 0;
 __thread STACK_OF(ASYNC_JOB) *pool = NULL;
 
-int ASYNC_FIBRE_init(ASYNC_FIBRE *fibre)
+int async_fibre_init(async_fibre *fibre)
 {
     void *stack = NULL;
 
@@ -85,7 +85,7 @@ int ASYNC_FIBRE_init(ASYNC_FIBRE *fibre)
     return 1;
 }
 
-void ASYNC_FIBRE_free(ASYNC_FIBRE *fibre)
+void async_fibre_free(async_fibre *fibre)
 {
     if (fibre->fibre.uc_stack.ss_sp)
         OPENSSL_free(fibre->fibre.uc_stack.ss_sp);

@@ -54,19 +54,19 @@
 #include <openssl/async.h>
 #include <openssl/crypto.h>
 
-typedef struct async_ctx_st ASYNC_CTX;
+typedef struct async_ctx_st async_ctx;
 
 #include "arch/async_win.h"
 #include "arch/async_posix.h"
 #include "arch/async_null.h"
 
 struct async_ctx_st {
-    ASYNC_FIBRE dispatcher;
+    async_fibre dispatcher;
     ASYNC_JOB *currjob;
 };
 
 struct async_job_st {
-    ASYNC_FIBRE fibrectx;
+    async_fibre fibrectx;
     int (*func) (void *);
     void *funcargs;
     int ret;
@@ -78,7 +78,7 @@ struct async_job_st {
 
 DECLARE_STACK_OF(ASYNC_JOB)
 
-void ASYNC_start_func(void);
+void async_start_func(void);
 STACK_OF(ASYNC_JOB) *async_get_pool(void);
 int async_set_pool(STACK_OF(ASYNC_JOB) *poolin, size_t curr_size,
                    size_t max_size);
