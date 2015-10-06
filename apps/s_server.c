@@ -2014,7 +2014,7 @@ static void wait_for_async(SSL *s)
     fd_set asyncfds;
 
     fd = SSL_get_async_wait_fd(s);
-    if (!fd)
+    if (fd < 0)
         return;
 
     width = fd + 1;

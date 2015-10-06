@@ -934,7 +934,7 @@ int SSL_waiting_for_async(SSL *s)
 int SSL_get_async_wait_fd(SSL *s)
 {
     if (!s->job)
-        return 0;
+        return -1;
 
     return ASYNC_get_wait_fd(s->job);
 }
