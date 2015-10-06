@@ -242,16 +242,16 @@ static int test_PACKET_copy_bytes(unsigned char buf[BUF_LEN])
 
 static int test_PACKET_copy_all(unsigned char buf[BUF_LEN])
 {
-    unsigned char dup[BUF_LEN];
+    unsigned char tmp[BUF_LEN];
     PACKET pkt;
     size_t len;
 
     if (       !PACKET_buf_init(&pkt, buf, BUF_LEN)
-               || !PACKET_copy_all(&pkt, dup, BUF_LEN, &len)
+               || !PACKET_copy_all(&pkt, tmp, BUF_LEN, &len)
                || len != BUF_LEN
-               || memcmp(buf, dup, BUF_LEN) != 0
+               || memcmp(buf, tmp, BUF_LEN) != 0
                || PACKET_remaining(&pkt) != BUF_LEN
-               || PACKET_copy_all(&pkt, dup, BUF_LEN - 1, &len)) {
+               || PACKET_copy_all(&pkt, tmp, BUF_LEN - 1, &len)) {
         fprintf(stderr, "test_PACKET_copy_bytes() failed\n");
         return 0;
     }
