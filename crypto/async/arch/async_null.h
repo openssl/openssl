@@ -73,8 +73,5 @@ typedef struct async_fibre_st {
 # define ASYNC_FIBRE_makecontext(c)
 # define ASYNC_FIBRE_free(f)
 # define ASYNC_FIBRE_init_dispatcher(f)
-# define async_pipe(f)                          0
-# define async_write1(f,b)                      ((*b == 0) ? (f = 0) : (f = 1))
-# define async_read1(f,b)                       (*b = 0)
 
 #endif
