@@ -68,6 +68,7 @@ B<openssl> B<s_client>
 [B<-no_tls1_1>]
 [B<-no_tls1_2>]
 [B<-fallback_scsv>]
+[B<-async>]
 [B<-bugs>]
 [B<-cipher cipherlist>]
 [B<-serverpref>]
@@ -276,6 +277,13 @@ work if TLS is turned off.
 =item B<-fallback_scsv>
 
 Send TLS_FALLBACK_SCSV in the ClientHello.
+
+=item B<-async>
+
+switch on asynchronous mode. Cryptographic operations will be performed
+asynchronously. This will only have an effect if an asynchronous capable engine
+is also used via the B<-engine> option. For test purposes the dummy async engine
+(dasync) can be used (if available).
 
 =item B<-bugs>
 
