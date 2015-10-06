@@ -51,6 +51,7 @@
  * ====================================================================
  */
 
+#include <openssl/err.h>
 #include <openssl/async.h>
 #include <string.h>
 #include "async_locl.h"
@@ -65,7 +66,7 @@ static async_ctx *async_ctx_new(void)
     async_ctx *nctx = NULL;
 
     if(!(nctx = OPENSSL_malloc(sizeof (async_ctx)))) {
-        /* Error here */
+        ASYNCerr(ASYNC_F_ASYNC_CTX_NEW, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
@@ -101,11 +102,13 @@ static ASYNC_JOB *async_job_new(void)
     int pipefds[2];
 
     if(!(job = OPENSSL_malloc(sizeof (ASYNC_JOB)))) {
+        ASYNCerr(ASYNC_F_ASYNC_JOB_NEW, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 
     if(!async_pipe(pipefds)) {
         OPENSSL_free(job);
+        ASYNCerr(ASYNC_F_ASYNC_JOB_NEW, ASYNC_R_CANNOT_CREATE_WAIT_PIPE);
         return NULL;
     }
 
@@ -181,9 +184,10 @@ void async_start_func(void)
         if(!async_fibre_swapcontext(&job->fibrectx,
                                     &async_get_ctx()->dispatcher, 1)) {
             /*
-             * Should not happen. Getting here will close the thread...can't do much
-             * about it
+             * Should not happen. Getting here will close the thread...can't do
+             * much about it
              */
+            ASYNCerr(ASYNC_F_ASYNC_START_FUNC, ASYNC_R_FAILED_TO_SWAP_CONTEXT);
         }
     }
 }
@@ -220,12 +224,16 @@ int ASYNC_start_job(ASYNC_JOB **job, int *ret, int (*func)(void *),
                 async_get_ctx()->currjob = *job;
                 /* Resume previous job */
                 if(!async_fibre_swapcontext(&async_get_ctx()->dispatcher,
-                    &async_get_ctx()->currjob->fibrectx, 1))
+                    &async_get_ctx()->currjob->fibrectx, 1)) {
+                    ASYNCerr(ASYNC_F_ASYNC_START_JOB,
+                             ASYNC_R_FAILED_TO_SWAP_CONTEXT);
                     goto err;
+                }
                 continue;
             }
 
             /* Should not happen */
+            ASYNCerr(ASYNC_F_ASYNC_START_JOB, ERR_R_INTERNAL_ERROR);
             async_release_job(async_get_ctx()->currjob);
             async_get_ctx()->currjob = NULL;
             *job = NULL;
@@ -240,6 +248,7 @@ int ASYNC_start_job(ASYNC_JOB **job, int *ret, int (*func)(void *),
         if(args != NULL) {
             async_get_ctx()->currjob->funcargs = OPENSSL_malloc(size);
             if(!async_get_ctx()->currjob->funcargs) {
+                ASYNCerr(ASYNC_F_ASYNC_START_JOB, ERR_R_MALLOC_FAILURE);
                 async_release_job(async_get_ctx()->currjob);
                 async_get_ctx()->currjob = NULL;
                 return ASYNC_ERR;
@@ -251,8 +260,10 @@ int ASYNC_start_job(ASYNC_JOB **job, int *ret, int (*func)(void *),
 
         async_get_ctx()->currjob->func = func;
         if(!async_fibre_swapcontext(&async_get_ctx()->dispatcher,
-            &async_get_ctx()->currjob->fibrectx, 1))
+            &async_get_ctx()->currjob->fibrectx, 1)) {
+            ASYNCerr(ASYNC_F_ASYNC_START_JOB, ASYNC_R_FAILED_TO_SWAP_CONTEXT);
             goto err;
+        }
     }
 
 err:
@@ -267,15 +278,20 @@ int ASYNC_pause_job(void)
 {
     ASYNC_JOB *job;
 
-    if(!async_get_ctx() || !async_get_ctx()->currjob)
+    if(!async_get_ctx() || !async_get_ctx()->currjob) {
+        /*
+         * Could be we've deliberately not been started within a job so we
+         * don't put an error on the error queue here.
+         */
         return 0;
+    }
 
     job = async_get_ctx()->currjob;
     job->status = ASYNC_JOB_PAUSING;
 
     if(!async_fibre_swapcontext(&job->fibrectx,
                                &async_get_ctx()->dispatcher, 1)) {
-        /* Error */
+        ASYNCerr(ASYNC_F_ASYNC_PAUSE_JOB, ASYNC_R_FAILED_TO_SWAP_CONTEXT);
         return 0;
     }
 
@@ -297,11 +313,14 @@ int ASYNC_init_pool(size_t max_size, size_t init_size)
     STACK_OF(ASYNC_JOB) *pool;
     size_t curr_size = 0;
 
-    if (init_size > max_size)
+    if (init_size > max_size) {
+        ASYNCerr(ASYNC_F_ASYNC_INIT_POOL, ASYNC_R_INVALID_POOL_SIZE);
         return 0;
+    }
 
     pool = sk_ASYNC_JOB_new_null();
     if (pool == NULL) {
+        ASYNCerr(ASYNC_F_ASYNC_INIT_POOL, ERR_R_MALLOC_FAILURE);
         return 0;
     }
     /* Pre-create jobs as required */
@@ -324,6 +343,7 @@ int ASYNC_init_pool(size_t max_size, size_t init_size)
     }
 
     if (!async_set_pool(pool, curr_size, max_size)) {
+        ASYNCerr(ASYNC_F_ASYNC_INIT_POOL, ASYNC_R_FAILED_TO_SET_POOL);
         async_empty_pool(pool);
         sk_ASYNC_JOB_free(pool);
         return 0;
