@@ -66,19 +66,19 @@
 
 typedef struct async_fibre_st {
     LPVOID fibre;
-} ASYNC_FIBRE;
+} async_fibre;
 
-# define ASYNC_set_ctx(nctx) \
+# define async_set_ctx(nctx) \
         (CRYPTO_set_thread_local(CRYPTO_THREAD_LOCAL_ASYNC_CTX, (void *)(nctx)))
-# define ASYNC_get_ctx() \
-        ((ASYNC_CTX *)CRYPTO_get_thread_local(CRYPTO_THREAD_LOCAL_ASYNC_CTX))
-# define ASYNC_FIBRE_swapcontext(o,n,r) \
+# define async_get_ctx() \
+        ((async_ctx *)CRYPTO_get_thread_local(CRYPTO_THREAD_LOCAL_ASYNC_CTX))
+# define async_fibre_swapcontext(o,n,r) \
         (SwitchToFiber((n)->fibre), 1)
-# define ASYNC_FIBRE_makecontext(c) \
-        ((c)->fibre = CreateFiber(0, ASYNC_start_func_win, 0))
-# define ASYNC_FIBRE_free(f)             (DeleteFiber((f)->fibre))
+# define async_fibre_makecontext(c) \
+        ((c)->fibre = CreateFiber(0, async_start_func_win, 0))
+# define async_fibre_free(f)             (DeleteFiber((f)->fibre))
 
-int ASYNC_FIBRE_init_dispatcher(ASYNC_FIBRE *fibre);
-VOID CALLBACK ASYNC_start_func_win(PVOID unused);
+int async_fibre_init_dispatcher(async_fibre *fibre);
+VOID CALLBACK async_start_func_win(PVOID unused);
 
 #endif

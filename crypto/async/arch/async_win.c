@@ -64,9 +64,9 @@ struct winpool {
     size_t max_size;
 };
 
-void ASYNC_start_func(void);
+void async_start_func(void);
 
-int ASYNC_FIBRE_init_dispatcher(ASYNC_FIBRE *fibre)
+int async_fibre_init_dispatcher(async_fibre *fibre)
 {
     LPVOID dispatcher;
 
@@ -82,9 +82,9 @@ int ASYNC_FIBRE_init_dispatcher(ASYNC_FIBRE *fibre)
     return 1;
 }
 
-VOID CALLBACK ASYNC_start_func_win(PVOID unused)
+VOID CALLBACK async_start_func_win(PVOID unused)
 {
-    ASYNC_start_func();
+    async_start_func();
 }
 
 int async_pipe(int *pipefds)
