@@ -750,7 +750,7 @@ void SSL_CTX_set_cookie_generate_cb(SSL_CTX *ctx,
                                                               *cookie_len));
 void SSL_CTX_set_cookie_verify_cb(SSL_CTX *ctx,
                                   int (*app_verify_cookie_cb) (SSL *ssl,
-                                                               unsigned char
+                                                               const unsigned char
                                                                *cookie,
                                                                unsigned int
                                                                cookie_len));

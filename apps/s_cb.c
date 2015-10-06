@@ -806,7 +806,7 @@ int generate_cookie_callback(SSL *ssl, unsigned char *cookie,
     return 1;
 }
 
-int verify_cookie_callback(SSL *ssl, unsigned char *cookie,
+int verify_cookie_callback(SSL *ssl, const unsigned char *cookie,
                            unsigned int cookie_len)
 {
     unsigned char *buffer, result[EVP_MAX_MD_SIZE];
