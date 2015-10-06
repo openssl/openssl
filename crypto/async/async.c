@@ -137,7 +137,7 @@ static ASYNC_JOB *async_get_pool_job(void) {
     if (pool == NULL) {
         /*
          * Pool has not been initialised, so init with the defaults, i.e.
-         * global pool, with no max size and no pre-created jobs
+         * no max size and no pre-created jobs
          */
         if (ASYNC_init_pool(0, 0) == 0)
             return NULL;
@@ -191,7 +191,7 @@ void ASYNC_start_func(void)
 int ASYNC_start_job(ASYNC_JOB **job, int *ret, int (*func)(void *),
                          void *args, size_t size)
 {
-    if(ASYNC_get_ctx() || !ASYNC_CTX_new()) {
+    if(!ASYNC_get_ctx() && !ASYNC_CTX_new()) {
         return ASYNC_ERR;
     }
 
@@ -206,14 +206,13 @@ int ASYNC_start_job(ASYNC_JOB **job, int *ret, int (*func)(void *),
                 async_release_job(ASYNC_get_ctx()->currjob);
                 ASYNC_get_ctx()->currjob = NULL;
                 *job = NULL;
-                ASYNC_CTX_free();
                 return ASYNC_FINISH;
             }
 
             if(ASYNC_get_ctx()->currjob->status == ASYNC_JOB_PAUSING) {
                 *job = ASYNC_get_ctx()->currjob;
                 ASYNC_get_ctx()->currjob->status = ASYNC_JOB_PAUSED;
-                ASYNC_CTX_free();
+                ASYNC_get_ctx()->currjob = NULL;
                 return ASYNC_PAUSE;
             }
 
@@ -230,13 +229,11 @@ int ASYNC_start_job(ASYNC_JOB **job, int *ret, int (*func)(void *),
             async_release_job(ASYNC_get_ctx()->currjob);
             ASYNC_get_ctx()->currjob = NULL;
             *job = NULL;
-            ASYNC_CTX_free();
             return ASYNC_ERR;
         }
 
         /* Start a new job */
         if(!(ASYNC_get_ctx()->currjob = async_get_pool_job())) {
-            ASYNC_CTX_free();
             return ASYNC_NO_JOBS;
         }
 
@@ -245,7 +242,6 @@ int ASYNC_start_job(ASYNC_JOB **job, int *ret, int (*func)(void *),
             if(!ASYNC_get_ctx()->currjob->funcargs) {
                 async_release_job(ASYNC_get_ctx()->currjob);
                 ASYNC_get_ctx()->currjob = NULL;
-                ASYNC_CTX_free();
                 return ASYNC_ERR;
             }
             memcpy(ASYNC_get_ctx()->currjob->funcargs, args, size);
@@ -263,7 +259,6 @@ err:
     async_release_job(ASYNC_get_ctx()->currjob);
     ASYNC_get_ctx()->currjob = NULL;
     *job = NULL;
-    ASYNC_CTX_free();
     return ASYNC_ERR;
 }
 
@@ -347,6 +342,7 @@ void ASYNC_free_pool(void)
 
     async_empty_pool(pool);
     async_release_pool();
+    ASYNC_CTX_free();
 }
 
 ASYNC_JOB *ASYNC_get_current_job(void)
