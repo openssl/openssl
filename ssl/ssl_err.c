@@ -333,6 +333,7 @@ static ERR_STRING_DATA SSL_str_functs[] = {
      "SSL_use_RSAPrivateKey_file"},
     {ERR_FUNC(SSL_F_SSL_VERIFY_CERT_CHAIN), "ssl_verify_cert_chain"},
     {ERR_FUNC(SSL_F_SSL_WRITE), "SSL_write"},
+    {ERR_FUNC(SSL_F_START_ASYNC_JOB), "START_ASYNC_JOB"},
     {ERR_FUNC(SSL_F_STATE_MACHINE), "STATE_MACHINE"},
     {ERR_FUNC(SSL_F_TLS12_CHECK_PEER_SIGALG), "tls12_check_peer_sigalg"},
     {ERR_FUNC(SSL_F_TLS1_CERT_VERIFY_MAC), "tls1_cert_verify_mac"},
