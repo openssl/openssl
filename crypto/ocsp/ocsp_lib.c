@@ -109,7 +109,7 @@ OCSP_CERTID *OCSP_cert_id_new(const EVP_MD *dgst,
     if ((cid = OCSP_CERTID_new()) == NULL)
         goto err;
 
-    alg = cid->hashAlgorithm;
+    alg = &cid->hashAlgorithm;
     ASN1_OBJECT_free(alg->algorithm);
     if ((nid = EVP_MD_type(dgst)) == NID_undef) {
         OCSPerr(OCSP_F_OCSP_CERT_ID_NEW, OCSP_R_UNKNOWN_NID);
@@ -149,7 +149,7 @@ OCSP_CERTID *OCSP_cert_id_new(const EVP_MD *dgst,
 int OCSP_id_issuer_cmp(OCSP_CERTID *a, OCSP_CERTID *b)
 {
     int ret;
-    ret = OBJ_cmp(a->hashAlgorithm->algorithm, b->hashAlgorithm->algorithm);
+    ret = OBJ_cmp(a->hashAlgorithm.algorithm, b->hashAlgorithm.algorithm);
     if (ret)
         return ret;
     ret = ASN1_OCTET_STRING_cmp(a->issuerNameHash, b->issuerNameHash);

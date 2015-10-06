@@ -182,7 +182,7 @@ static int ocsp_find_signer(X509 **psigner, OCSP_BASICRESP *bs,
                             unsigned long flags)
 {
     X509 *signer;
-    OCSP_RESPID *rid = bs->tbsResponseData->responderId;
+    OCSP_RESPID *rid = &bs->tbsResponseData.responderId;
     if ((signer = ocsp_find_signer_sk(certs, rid))) {
         *psigner = signer;
         return 2;
@@ -231,7 +231,7 @@ static int ocsp_check_issuer(OCSP_BASICRESP *bs, STACK_OF(X509) *chain,
     X509 *signer, *sca;
     OCSP_CERTID *caid = NULL;
     int i;
-    sresp = bs->tbsResponseData->responses;
+    sresp = bs->tbsResponseData.responses;
 
     if (sk_X509_num(chain) <= 0) {
         OCSPerr(OCSP_F_OCSP_CHECK_ISSUER, OCSP_R_NO_CERTIFICATES_IN_CHAIN);
@@ -292,8 +292,8 @@ static int ocsp_check_ids(STACK_OF(OCSP_SINGLERESP) *sresp, OCSP_CERTID **ret)
         /* Check to see if IDs match */
         if (OCSP_id_issuer_cmp(cid, tmpid)) {
             /* If algoritm mismatch let caller deal with it */
-            if (OBJ_cmp(tmpid->hashAlgorithm->algorithm,
-                        cid->hashAlgorithm->algorithm))
+            if (OBJ_cmp(tmpid->hashAlgorithm.algorithm,
+                        cid->hashAlgorithm.algorithm))
                 return 2;
             /* Else mismatch */
             return 0;
@@ -314,7 +314,7 @@ static int ocsp_match_issuerid(X509 *cert, OCSP_CERTID *cid,
         X509_NAME *iname;
         int mdlen;
         unsigned char md[EVP_MAX_MD_SIZE];
-        if ((dgst = EVP_get_digestbyobj(cid->hashAlgorithm->algorithm))
+        if ((dgst = EVP_get_digestbyobj(cid->hashAlgorithm.algorithm))
                 == NULL) {
             OCSPerr(OCSP_F_OCSP_MATCH_ISSUERID,
                     OCSP_R_UNKNOWN_MESSAGE_DIGEST);
@@ -380,7 +380,7 @@ int OCSP_request_verify(OCSP_REQUEST *req, STACK_OF(X509) *certs,
         OCSPerr(OCSP_F_OCSP_REQUEST_VERIFY, OCSP_R_REQUEST_NOT_SIGNED);
         return 0;
     }
-    gen = req->tbsRequest->requestorName;
+    gen = req->tbsRequest.requestorName;
     if (!gen || gen->type != GEN_DIRNAME) {
         OCSPerr(OCSP_F_OCSP_REQUEST_VERIFY,
                 OCSP_R_UNSUPPORTED_REQUESTORNAME_TYPE);
