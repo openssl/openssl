@@ -26,9 +26,6 @@ matrix:
           compiler: i686-w64-mingw32-gcc
         - os: osx
           compiler: x86_64-w64-mingw32-gcc
-        - os: linux
-          compiler: clang
-          env: CONFIG_OPTS="-d --strict-warnings"
         - compiler: i686-w64-mingw32-gcc
           env: CONFIG_OPTS="-d --strict-warnings"
         - compiler: x86_64-w64-mingw32-gcc
