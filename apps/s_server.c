@@ -194,7 +194,6 @@ typedef unsigned int u_int;
 static RSA *tmp_rsa_cb(SSL *s, int is_export, int keylength);
 #endif
 static int not_resumable_sess_cb(SSL *s, int is_forward_secure);
-static void wait_for_async(SSL *s);
 static int sv_body(char *hostname, int s, int stype, unsigned char *context);
 static int www_body(char *hostname, int s, int stype, unsigned char *context);
 static int rev_body(char *hostname, int s, int stype, unsigned char *context);
@@ -2006,21 +2005,6 @@ static void print_stats(BIO *bio, SSL_CTX *ssl_ctx)
     BIO_printf(bio, "%4ld cache full overflows (%ld allowed)\n",
                SSL_CTX_sess_cache_full(ssl_ctx),
                SSL_CTX_sess_get_cache_size(ssl_ctx));
-}
-
-static void wait_for_async(SSL *s)
-{
-    int width, fd;
-    fd_set asyncfds;
-
-    fd = SSL_get_async_wait_fd(s);
-    if (fd < 0)
-        return;
-
-    width = fd + 1;
-    FD_ZERO(&asyncfds);
-    openssl_fdset(fd, &asyncfds);
-    select(width, (void *)&asyncfds, NULL, NULL, NULL);
 }
 
 static int sv_body(char *hostname, int s, int stype, unsigned char *context)

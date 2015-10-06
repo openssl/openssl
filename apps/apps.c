@@ -2884,3 +2884,17 @@ BIO *bio_open_default_quiet(const char *filename, char mode, int format)
     return bio_open_default_(filename, mode, format, 1);
 }
 
+void wait_for_async(SSL *s)
+{
+    int width, fd;
+    fd_set asyncfds;
+
+    fd = SSL_get_async_wait_fd(s);
+    if (fd < 0)
+        return;
+
+    width = fd + 1;
+    FD_ZERO(&asyncfds);
+    openssl_fdset(fd, &asyncfds);
+    select(width, (void *)&asyncfds, NULL, NULL, NULL);
+}
