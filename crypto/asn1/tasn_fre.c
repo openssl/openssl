@@ -249,6 +249,5 @@ void asn1_primitive_free(ASN1_VALUE **pval, const ASN1_ITEM *it)
         ASN1_STRING_free((ASN1_STRING *)*pval);
         break;
     }
-    if (*pval)
-        *pval = NULL;
+    *pval = NULL;
 }
