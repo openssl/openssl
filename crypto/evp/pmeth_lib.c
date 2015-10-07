@@ -64,6 +64,7 @@
 # include <openssl/engine.h>
 #endif
 #include "internal/asn1_int.h"
+#include <openssl/evp.h>
 #include "internal/evp_int.h"
 
 typedef int sk_cmp_fn_type(const char *const *a, const char *const *b);
