@@ -67,7 +67,8 @@
 
 static int asn1_item_embed_new(ASN1_VALUE **pval, const ASN1_ITEM *it,
                                int embed);
-static int asn1_primitive_new(ASN1_VALUE **pval, const ASN1_ITEM *it);
+static int asn1_primitive_new(ASN1_VALUE **pval, const ASN1_ITEM *it,
+                              int embed);
 static void asn1_item_clear(ASN1_VALUE **pval, const ASN1_ITEM *it);
 static int asn1_template_new(ASN1_VALUE **pval, const ASN1_TEMPLATE *tt);
 static void asn1_template_clear(ASN1_VALUE **pval, const ASN1_TEMPLATE *tt);
@@ -120,12 +121,12 @@ int asn1_item_embed_new(ASN1_VALUE **pval, const ASN1_ITEM *it, int embed)
         if (it->templates) {
             if (!asn1_template_new(pval, it->templates))
                 goto memerr;
-        } else if (!asn1_primitive_new(pval, it))
+        } else if (!asn1_primitive_new(pval, it, embed))
             goto memerr;
         break;
 
     case ASN1_ITYPE_MSTRING:
-        if (!asn1_primitive_new(pval, it))
+        if (!asn1_primitive_new(pval, it, embed))
             goto memerr;
         break;
 
@@ -305,7 +306,8 @@ static void asn1_template_clear(ASN1_VALUE **pval, const ASN1_TEMPLATE *tt)
  * all the old functions.
  */
 
-static int asn1_primitive_new(ASN1_VALUE **pval, const ASN1_ITEM *it)
+static int asn1_primitive_new(ASN1_VALUE **pval, const ASN1_ITEM *it,
+                              int embed)
 {
     ASN1_TYPE *typ;
     ASN1_STRING *str;
@@ -347,10 +349,16 @@ static int asn1_primitive_new(ASN1_VALUE **pval, const ASN1_ITEM *it)
         break;
 
     default:
-        str = ASN1_STRING_type_new(utype);
+        if (embed) {
+            str = *(ASN1_STRING **)pval;
+            memset(str, 0, sizeof(*str));
+            str->flags = ASN1_STRING_FLAG_EMBED;
+        } else {
+            str = ASN1_STRING_type_new(utype);
+            *pval = (ASN1_VALUE *)str;
+        }
         if (it->itype == ASN1_ITYPE_MSTRING && str)
             str->flags |= ASN1_STRING_FLAG_MSTRING;
-        *pval = (ASN1_VALUE *)str;
         break;
     }
     if (*pval)
