@@ -77,11 +77,11 @@ static int ocsp_certid_print(BIO *bp, OCSP_CERTID *a, int indent)
     BIO_printf(bp, "%*sHash Algorithm: ", indent, "");
     i2a_ASN1_OBJECT(bp, a->hashAlgorithm.algorithm);
     BIO_printf(bp, "\n%*sIssuer Name Hash: ", indent, "");
-    i2a_ASN1_STRING(bp, a->issuerNameHash, V_ASN1_OCTET_STRING);
+    i2a_ASN1_STRING(bp, &a->issuerNameHash, V_ASN1_OCTET_STRING);
     BIO_printf(bp, "\n%*sIssuer Key Hash: ", indent, "");
-    i2a_ASN1_STRING(bp, a->issuerKeyHash, V_ASN1_OCTET_STRING);
+    i2a_ASN1_STRING(bp, &a->issuerKeyHash, V_ASN1_OCTET_STRING);
     BIO_printf(bp, "\n%*sSerial Number: ", indent, "");
-    i2a_ASN1_INTEGER(bp, a->serialNumber);
+    i2a_ASN1_INTEGER(bp, &a->serialNumber);
     BIO_printf(bp, "\n");
     return 1;
 }

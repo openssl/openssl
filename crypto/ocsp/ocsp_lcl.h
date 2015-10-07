@@ -72,9 +72,9 @@
  */
 struct ocsp_cert_id_st {
     X509_ALGOR hashAlgorithm;
-    ASN1_OCTET_STRING *issuerNameHash;
-    ASN1_OCTET_STRING *issuerKeyHash;
-    ASN1_INTEGER *serialNumber;
+    ASN1_OCTET_STRING issuerNameHash;
+    ASN1_OCTET_STRING issuerKeyHash;
+    ASN1_INTEGER serialNumber;
 };
 
 /*-  Request ::=     SEQUENCE {

@@ -324,16 +324,16 @@ static int ocsp_match_issuerid(X509 *cert, OCSP_CERTID *cid,
         mdlen = EVP_MD_size(dgst);
         if (mdlen < 0)
             return -1;
-        if ((cid->issuerNameHash->length != mdlen) ||
-            (cid->issuerKeyHash->length != mdlen))
+        if ((cid->issuerNameHash.length != mdlen) ||
+            (cid->issuerKeyHash.length != mdlen))
             return 0;
         iname = X509_get_subject_name(cert);
         if (!X509_NAME_digest(iname, dgst, md, NULL))
             return -1;
-        if (memcmp(md, cid->issuerNameHash->data, mdlen))
+        if (memcmp(md, cid->issuerNameHash.data, mdlen))
             return 0;
         X509_pubkey_digest(cert, dgst, md, NULL);
-        if (memcmp(md, cid->issuerKeyHash->data, mdlen))
+        if (memcmp(md, cid->issuerKeyHash.data, mdlen))
             return 0;
 
         return 1;

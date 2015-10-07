@@ -96,11 +96,11 @@ int OCSP_id_get0_info(ASN1_OCTET_STRING **piNameHash, ASN1_OBJECT **pmd,
     if (pmd)
         *pmd = cid->hashAlgorithm.algorithm;
     if (piNameHash)
-        *piNameHash = cid->issuerNameHash;
+        *piNameHash = &cid->issuerNameHash;
     if (pikeyHash)
-        *pikeyHash = cid->issuerKeyHash;
+        *pikeyHash = &cid->issuerKeyHash;
     if (pserial)
-        *pserial = cid->serialNumber;
+        *pserial = &cid->serialNumber;
     return 1;
 }
 
