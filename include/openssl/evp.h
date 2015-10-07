@@ -427,9 +427,9 @@ struct evp_cipher_st {
 # define         EVP_CTRL_TLS1_1_MULTIBLOCK_DECRYPT      0x1b
 # define         EVP_CTRL_TLS1_1_MULTIBLOCK_MAX_BUFSIZE  0x1c
 
-/* Expects the string identifier is passed to specify S-boxes */
+/* Expects the string identifier to be passed to specify S-boxes */
 # define         EVP_CTRL_SET_SBOX                       0x1d
-/* Expects the pointer to string to be set by the ctrl function */
+/* Expects the pointer to a pointer to be set by the ctrl function */
 # define         EVP_CTRL_SBOX_USED                      0x1e
 /* Expects number of bytes to mesh the key after, 0 switches meshing off */
 # define         EVP_CTRL_KEY_MESH                       0x1f
