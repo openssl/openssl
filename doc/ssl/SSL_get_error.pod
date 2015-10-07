@@ -96,7 +96,8 @@ engine is being used. An application can determine whether the engine has
 completed its processing using select() or poll() on the asynchronous wait file
 descriptor. This file descriptor is available by calling
 L<SSL_get_async_wait_fd(3)>. The TLS/SSL I/O function should be called again
-later.
+later. The function B<must> be called from the same thread that the original
+call was made from.
 
 =item SSL_ERROR_SYSCALL
 

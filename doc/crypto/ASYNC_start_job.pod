@@ -75,6 +75,8 @@ ASYNC_pause_job() below). A handle to the job is placed in B<*job>. Other work
 can be performed (if desired) and the job restarted at a later time. To restart
 a job call ASYNC_start_job() again passing the job handle in B<*job>. The
 B<func>, B<args> and B<size> parameters will be ignored when restarting a job.
+When restarting a job ASYNC_start_job() B<must> be called from the same thread
+that the job was originally started from.
 
 =item B<ASYNC_FINISH>
 
@@ -83,8 +85,10 @@ be placed in B<*ret>.
 
 =back
 
-ASYNC_get_current_job() can be used to get a pointer to the currently executing
-ASYNC_JOB. If no job is currently executing then this will return NULL.
+At any one time there can be a maximum of one job actively running per thread
+(you can have many that are paused). ASYNC_get_current_job() can be used to get
+a pointer to the currently executing ASYNC_JOB. If no job is currently executing
+then this will return NULL.
 
 If executing within the context of a job (i.e. having been called directly or
 indirectly by the function "func" passed as an argument to ASYNC_start_job())
@@ -99,9 +103,10 @@ Every ASYNC_JOB has a "wait" file descriptor associated with it. Calling
 ASYNC_get_wait_fd() and passing in a pointer to an ASYNC_JOB in the B<job>
 parameter will return the wait file descriptor associated with that job. This
 file descriptor can be used to signal that the job should be resumed.
-Applications can wait on the file descriptor using a system function call
-such as select or poll. Applications can signal that a job is ready to resume
-using ASYNC_wake() or clear an existing signal using ASYNC_clear_wake().
+Applications can wait for the file descriptor to be ready for "read" using a
+system function call such as select or poll (being ready for "read" indicates
+that the job should be resumed). Applications can signal that a job is ready to
+resume using ASYNC_wake() or clear an existing signal using ASYNC_clear_wake().
 
 An example of typical usage might be an async capable engine. User code would
 initiate cryptographic operations. The engine would initiate those operations
@@ -109,7 +114,7 @@ asynchronously and then call ASYNC_pause_job() to return control to the user
 code. The user code can then perform other tasks or wait for the job to be ready
 by calling "select" or other similar function on the wait file descriptor. The
 engine can signal to the user code that the job should be resumed using
-ASYNC_wait(). Once resumed the engine would clear the wake signal by calling
+ASYNC_wake(). Once resumed the engine would clear the wake signal by calling
 ASYNC_clear_wake().
 
 
@@ -120,8 +125,9 @@ ASYNC_init_pool returns 1 on success or 0 otherwise.
 ASYNC_start_job returns one of ASYNC_ERR, ASYNC_NO_JOBS, ASYNC_PAUSE or
 ASYNC_FINISH as described above.
 
-ASYNC_pause_job returns 0 if an error occured (including if called when not
-within the context of an ASYNC_JOB), or 1 on success.
+ASYNC_pause_job returns 0 if an error occured or 1 on success. If called when
+not within the context of an ASYNC_JOB then this is counted as success so 1 is
+returned.
 
 ASYNC_get_wait_fd returns the "wait" file descriptor associated with the
 ASYNC_JOB provided as an argument.

@@ -280,10 +280,10 @@ int ASYNC_pause_job(void)
 
     if(!async_get_ctx() || !async_get_ctx()->currjob) {
         /*
-         * Could be we've deliberately not been started within a job so we
-         * don't put an error on the error queue here.
+         * Could be we've deliberately not been started within a job so this is
+         * counted as success.
          */
-        return 0;
+        return 1;
     }
 
     job = async_get_ctx()->currjob;
