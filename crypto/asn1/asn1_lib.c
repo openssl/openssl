@@ -363,7 +363,8 @@ void ASN1_STRING_free(ASN1_STRING *a)
         return;
     if (!(a->flags & ASN1_STRING_FLAG_NDEF))
         OPENSSL_free(a->data);
-    OPENSSL_free(a);
+    if (!(a->flags & ASN1_STRING_FLAG_EMBED))
+        OPENSSL_free(a);
 }
 
 void ASN1_STRING_clear_free(ASN1_STRING *a)

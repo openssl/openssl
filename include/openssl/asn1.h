@@ -179,6 +179,8 @@ DECLARE_STACK_OF(X509_ALGOR)
  * type.
  */
 # define ASN1_STRING_FLAG_MSTRING 0x040
+/* String is embedded and only content should be freed */
+# define ASN1_STRING_FLAG_EMBED 0x080
 /* This is the base type that holds just about everything :-) */
 struct asn1_string_st {
     int length;
