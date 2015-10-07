@@ -123,19 +123,18 @@ OCSP_CERTID *OCSP_cert_id_new(const EVP_MD *dgst,
 
     if (!X509_NAME_digest(issuerName, dgst, md, &i))
         goto digerr;
-    if (!(ASN1_OCTET_STRING_set(cid->issuerNameHash, md, i)))
+    if (!(ASN1_OCTET_STRING_set(&cid->issuerNameHash, md, i)))
         goto err;
 
     /* Calculate the issuerKey hash, excluding tag and length */
     if (!EVP_Digest(issuerKey->data, issuerKey->length, md, &i, dgst, NULL))
         goto err;
 
-    if (!(ASN1_OCTET_STRING_set(cid->issuerKeyHash, md, i)))
+    if (!(ASN1_OCTET_STRING_set(&cid->issuerKeyHash, md, i)))
         goto err;
 
     if (serialNumber) {
-        ASN1_INTEGER_free(cid->serialNumber);
-        if ((cid->serialNumber = ASN1_INTEGER_dup(serialNumber)) == NULL)
+        if (ASN1_STRING_copy(&cid->serialNumber, serialNumber) == 0)
             goto err;
     }
     return cid;
@@ -152,10 +151,10 @@ int OCSP_id_issuer_cmp(OCSP_CERTID *a, OCSP_CERTID *b)
     ret = OBJ_cmp(a->hashAlgorithm.algorithm, b->hashAlgorithm.algorithm);
     if (ret)
         return ret;
-    ret = ASN1_OCTET_STRING_cmp(a->issuerNameHash, b->issuerNameHash);
+    ret = ASN1_OCTET_STRING_cmp(&a->issuerNameHash, &b->issuerNameHash);
     if (ret)
         return ret;
-    return ASN1_OCTET_STRING_cmp(a->issuerKeyHash, b->issuerKeyHash);
+    return ASN1_OCTET_STRING_cmp(&a->issuerKeyHash, &b->issuerKeyHash);
 }
 
 int OCSP_id_cmp(OCSP_CERTID *a, OCSP_CERTID *b)
@@ -164,7 +163,7 @@ int OCSP_id_cmp(OCSP_CERTID *a, OCSP_CERTID *b)
     ret = OCSP_id_issuer_cmp(a, b);
     if (ret)
         return ret;
-    return ASN1_INTEGER_cmp(a->serialNumber, b->serialNumber);
+    return ASN1_INTEGER_cmp(&a->serialNumber, &b->serialNumber);
 }
 
 /*
