@@ -1815,10 +1815,11 @@ static int tls1_alpn_handle_client_hello(SSL *s, PACKET *pkt, int *al)
  * Sadly we cannot differentiate 10.6, 10.7 and 10.8.4 (which work), from
  * 10.8..10.8.3 (which don't work).
  */
-static void ssl_check_for_safari(SSL *s, PACKET *pkt)
+static void ssl_check_for_safari(SSL *s, const PACKET *pkt)
 {
     unsigned int type, size;
     unsigned char *eblock1, *eblock2;
+    PACKET tmppkt;
 
     static const unsigned char kSafariExtensionsBlock[] = {
         0x00, 0x0a,             /* elliptic_curves extension */
@@ -1846,10 +1847,12 @@ static void ssl_check_for_safari(SSL *s, PACKET *pkt)
         0x02, 0x03,             /* SHA-1/ECDSA */
     };
 
-    if (!PACKET_forward(pkt, 2)
-            || !PACKET_get_net_2(pkt, &type)
-            || !PACKET_get_net_2(pkt, &size)
-            || !PACKET_forward(pkt, size))
+    tmppkt = *pkt;
+
+    if (!PACKET_forward(&tmppkt, 2)
+            || !PACKET_get_net_2(&tmppkt, &type)
+            || !PACKET_get_net_2(&tmppkt, &size)
+            || !PACKET_forward(&tmppkt, size))
         return;
 
     if (type != TLSEXT_TYPE_server_name)
@@ -1859,9 +1862,9 @@ static void ssl_check_for_safari(SSL *s, PACKET *pkt)
         const size_t len1 = sizeof(kSafariExtensionsBlock);
         const size_t len2 = sizeof(kSafariTLS12ExtensionsBlock);
 
-        if (!PACKET_get_bytes(pkt, &eblock1, len1)
-                || !PACKET_get_bytes(pkt, &eblock2, len2)
-                || PACKET_remaining(pkt))
+        if (!PACKET_get_bytes(&tmppkt, &eblock1, len1)
+                || !PACKET_get_bytes(&tmppkt, &eblock2, len2)
+                || PACKET_remaining(&tmppkt))
             return;
         if (memcmp(eblock1, kSafariExtensionsBlock, len1) != 0)
             return;
@@ -1870,8 +1873,8 @@ static void ssl_check_for_safari(SSL *s, PACKET *pkt)
     } else {
         const size_t len = sizeof(kSafariExtensionsBlock);
 
-        if (!PACKET_get_bytes(pkt, &eblock1, len)
-                || PACKET_remaining(pkt))
+        if (!PACKET_get_bytes(&tmppkt, &eblock1, len)
+                || PACKET_remaining(&tmppkt))
             return;
         if (memcmp(eblock1, kSafariExtensionsBlock, len) != 0)
             return;
