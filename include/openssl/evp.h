@@ -427,13 +427,18 @@ struct evp_cipher_st {
 # define         EVP_CTRL_TLS1_1_MULTIBLOCK_DECRYPT      0x1b
 # define         EVP_CTRL_TLS1_1_MULTIBLOCK_MAX_BUFSIZE  0x1c
 
-/* Expects the string identifier to be passed to specify S-boxes */
+/* Expects the char* specifying S-boxes is passed */
 # define         EVP_CTRL_SET_SBOX                       0x1d
-/* Expects the pointer to a pointer to be set by the ctrl function */
+/* 
+ * Expects the length of an app-allocated buffer 
+ * and char** pointing to the buffer. 
+ * The ctrl function uses the buffer returning 0 if its length is enough.
+ * Otherwise the ctrl function should return 0.
+ */
 # define         EVP_CTRL_SBOX_USED                      0x1e
 /* Expects number of bytes to mesh the key after, 0 switches meshing off */
 # define         EVP_CTRL_KEY_MESH                       0x1f
-/* Expects the string identifier is passed to specify padding mode */
+/* Expects the char* specifying padding mode is passed */
 # define         EVP_CTRL_BLOCK_PADDING_MODE             0x20
 
 
