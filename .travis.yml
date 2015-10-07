@@ -26,6 +26,10 @@ matrix:
           compiler: i686-w64-mingw32-gcc
         - os: osx
           compiler: x86_64-w64-mingw32-gcc
+        - compiler: i686-w64-mingw32-gcc
+          env: CONFIG_OPTS="-d --strict-warnings"
+        - compiler: x86_64-w64-mingw32-gcc
+          env: CONFIG_OPTS="-d --strict-warnings"
 
 before_script:
     - if [ "$CC" == i686-w64-mingw32-gcc ]; then
@@ -35,6 +39,9 @@ before_script:
           export CROSS_COMPILE=${CC%%gcc}; unset CC;
           ./Configure mingw64 $CONFIG_OPTS;
       else
+          if [ "$CC" == gcc ]; then
+              export CONFIG_OPTS="$CONFIG_OPTS -Wno-error=shadow";
+          fi;
           ./config $CONFIG_OPTS;
       fi
 
@@ -43,8 +50,5 @@ script:
     - if [ -z "$CROSS_COMPILE" ]; then make test; fi
 
 notifications:
-    recipient:
-        - openssl-commits@openssl.org
     email:
-        on_success: change
-        on_failure: always
+        - openssl-commits@openssl.org
