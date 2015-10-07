@@ -10,7 +10,7 @@
      further details. Libssl has also had this capability integrated with the
      introduction of the new mode SSL_MODE_ASYNC and associated error
      SSL_ERROR_WANT_ASYNC. See the SSL_CTX_set_mode() and SSL_get_error() man
-     pages.
+     pages. This work was developed in partnership with Intel Corp.
      [Matt Caswell]
 
   *) State machine rewrite. The state machine code has been significantly

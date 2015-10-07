@@ -20,10 +20,10 @@ L<SSL_CTX_set_mode(3)>).
 SSL_get_async_wait_fd() returns a file descriptor which can be used in a call to
 select() or poll() to determine whether the current asynchronous operation has
 completed or not. A completed operation will result in data appearing as
-available on the file descriptor (no actual data should be read from the file
-descriptor). This function should only be called if the SSL object is currently
-waiting for asynchronous work to complete (i.e. SSL_ERROR_WANT_ASYNC has been
-received - see L<SSL_get_error(3)>).
+"read ready" on the file descriptor (no actual data should be read from the
+file descriptor). This function should only be called if the SSL object is
+currently waiting for asynchronous work to complete (i.e. SSL_ERROR_WANT_ASYNC
+has been received - see L<SSL_get_error(3)>).
 
 =head1 RETURN VALUES
 
