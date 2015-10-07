@@ -2915,6 +2915,17 @@ int ssl3_get_cert_verify(SSL *s)
             goto f_err;
         }
 
+        if (pkey->type == NID_id_GostR3410_2001
+                || pkey->type == NID_id_GostR3410_2012_256
+                || pkey->type == NID_id_GostR3410_2012_512) {
+            int j1, j2;
+            for (j1 = len - 1, j2 = 0; j2 < len/2; j2++, j1--) {
+                char c = data[j2];
+                data[j2] = data[j1];
+                data[j1] = c;
+            }
+        }
+
         if (EVP_VerifyFinal(&mctx, data, len, pkey) <= 0) {
             al = SSL_AD_DECRYPT_ERROR;
             SSLerr(SSL_F_SSL3_GET_CERT_VERIFY, SSL_R_BAD_SIGNATURE);
