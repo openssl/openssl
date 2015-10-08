@@ -137,7 +137,7 @@ int EVP_BytesToKey(const EVP_CIPHER *type, const EVP_MD *md,
     EVP_MD_CTX_init(&c);
     for (;;) {
         if (!EVP_DigestInit_ex(&c, md, NULL))
-            return 0;
+            goto err;
         if (addmd++)
             if (!EVP_DigestUpdate(&c, &(md_buf[0]), mds))
                 goto err;
@@ -188,6 +188,6 @@ int EVP_BytesToKey(const EVP_CIPHER *type, const EVP_MD *md,
     rv = type->key_len;
  err:
     EVP_MD_CTX_cleanup(&c);
-    OPENSSL_cleanse(&(md_buf[0]), EVP_MAX_MD_SIZE);
+    OPENSSL_cleanse(md_buf, sizeof(md_buf));
     return rv;
 }
