@@ -112,16 +112,8 @@ int DSA_generate_parameters_ex(DSA *ret, int bits,
     }
 # endif
     else {
-        const EVP_MD *evpmd;
-        size_t qbits = bits >= 2048 ? 256 : 160;
-
-        if (bits >= 2048) {
-            qbits = 256;
-            evpmd = EVP_sha256();
-        } else {
-            qbits = 160;
-            evpmd = EVP_sha1();
-        }
+        const EVP_MD *evpmd = bits >= 2048 ? EVP_sha256() : EVP_sha1();
+        size_t qbits = EVP_MD_size(evpmd) * 8;
 
         return dsa_builtin_paramgen(ret, bits, qbits, evpmd,
                                     seed_in, seed_len, NULL, counter_ret,
