@@ -816,8 +816,6 @@ static int aesni_cbc_hmac_sha256_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg,
             if (arg != EVP_AEAD_TLS1_AAD_LEN)
                 return -1;
 
-            len = p[arg - 2] << 8 | p[arg - 1];
-
             if (ctx->encrypt) {
                 key->payload_length = len;
                 if ((key->aux.tls_ver =
