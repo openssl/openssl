@@ -69,8 +69,6 @@
 # include <openssl/x509.h>
 # include <openssl/pem.h>
 
-# define DEFBITS 512
-
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
     OPT_OUT, OPT_PASSOUT, OPT_ENGINE, OPT_RAND, OPT_CIPHER
