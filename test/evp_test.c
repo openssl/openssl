@@ -639,7 +639,7 @@ struct digest_data {
 static int digest_test_init(struct evp_test *t, const char *alg)
 {
     const EVP_MD *digest;
-    struct digest_data *mdat = t->data;
+    struct digest_data *mdat;
     digest = EVP_get_digestbyname(alg);
     if (!digest) {
         /* If alg has an OID assume disabled algorithm */

@@ -118,9 +118,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#if !defined(OPENSSL_SYS_WIN32) && !defined(OPENSSL_SYS_WINCE) && !defined(NETWARE_CLIB)
-# include <strings.h>
-#endif
 #ifndef NO_SYS_TYPES_H
 # include <sys/types.h>
 #endif

@@ -617,13 +617,11 @@ static int do_PVK_header(const unsigned char **in, unsigned int length,
             PEMerr(PEM_F_DO_PVK_HEADER, PEM_R_PVK_TOO_SHORT);
             return 0;
         }
-        length -= 20;
     } else {
         if (length < 24) {
             PEMerr(PEM_F_DO_PVK_HEADER, PEM_R_PVK_TOO_SHORT);
             return 0;
         }
-        length -= 24;
         pvk_magic = read_ledword(&p);
         if (pvk_magic != MS_PVKMAGIC) {
             PEMerr(PEM_F_DO_PVK_HEADER, PEM_R_BAD_MAGIC_NUMBER);
