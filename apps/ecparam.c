@@ -317,8 +317,6 @@ int ecparam_main(int argc, char **argv)
     }
 
     if (check) {
-        if (group == NULL)
-            BIO_printf(bio_err, "no elliptic curve parameters\n");
         BIO_printf(bio_err, "checking elliptic curve parameters: ");
         if (!EC_GROUP_check(group, NULL)) {
             BIO_printf(bio_err, "failed\n");

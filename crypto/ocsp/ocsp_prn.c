@@ -213,7 +213,6 @@ int OCSP_RESPONSE_print(BIO *bp, OCSP_RESPONSE *o, unsigned long flags)
         return 1;
     }
 
-    i = ASN1_STRING_length(rb->response);
     if ((br = OCSP_response_get1_basic(o)) == NULL)
         goto err;
     rd = &br->tbsResponseData;
