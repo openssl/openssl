@@ -265,6 +265,8 @@ int DSA_print_fp(FILE *bp, const DSA *x, int off);
 DH *DSA_dup_DH(const DSA *r);
 # endif
 
+DSA *DSA_dup(const DSA *r);
+
 # define EVP_PKEY_CTX_set_dsa_paramgen_bits(ctx, nbits) \
         EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DSA, EVP_PKEY_OP_PARAMGEN, \
                                 EVP_PKEY_CTRL_DSA_PARAMGEN_BITS, nbits, NULL)

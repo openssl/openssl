@@ -2,15 +2,15 @@
 
 =head1 NAME
 
-DSA_new, DSA_free - allocate and free DSA objects
+DSA_new, DSA_free, DSA_dup - allocate, free and duplicate DSA objects
 
 =head1 SYNOPSIS
 
  #include <openssl/dsa.h>
 
  DSA* DSA_new(void);
-
  void DSA_free(DSA *dsa);
+ DSA* DSA_dup(const DSA *dsa);
 
 =head1 DESCRIPTION
 
@@ -21,9 +21,11 @@ DSA_free() frees the B<DSA> structure and its components. The values are
 erased before the memory is returned to the system.
 If B<dsa> is NULL nothing is done.
 
+DSA_dup() allocates a new B<DSA> object and copies B<dsa> into it.
+
 =head1 RETURN VALUES
 
-If the allocation fails, DSA_new() returns B<NULL> and sets an error
+If the allocation fails, DSA_new() and DSA_dup() returns B<NULL> and sets an error
 code that can be obtained by
 L<ERR_get_error(3)>. Otherwise it returns a pointer
 to the newly allocated structure.
