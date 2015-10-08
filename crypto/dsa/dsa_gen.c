@@ -174,13 +174,13 @@ int dsa_builtin_paramgen(DSA *ret, size_t bits, size_t qbits,
     if (seed_in != NULL)
         memcpy(seed, seed_in, seed_len);
 
+    if ((mont = BN_MONT_CTX_new()) == NULL)
+        goto err;
+
     if ((ctx = BN_CTX_new()) == NULL)
         goto err;
 
     BN_CTX_start(ctx);
-
-    if ((mont = BN_MONT_CTX_new()) == NULL)
-        goto err;
 
     r0 = BN_CTX_get(ctx);
     g = BN_CTX_get(ctx);

@@ -576,7 +576,7 @@ int BN_GF2m_mod_sqr_arr(BIGNUM *r, const BIGNUM *a, const int p[],
     bn_check_top(a);
     BN_CTX_start(ctx);
     if ((s = BN_CTX_get(ctx)) == NULL)
-        return 0;
+        goto err;
     if (!bn_wexpand(s, 2 * a->top))
         goto err;
 
