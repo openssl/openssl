@@ -1016,11 +1016,11 @@ RSA_padding_check_none                  1038	EXIST::FUNCTION:RSA
 bn_add_words                            1039	NOEXIST::FUNCTION:
 d2i_Netscape_RSA_2                      1040	NOEXIST::FUNCTION:
 CRYPTO_get_ex_new_index                 1041	EXIST::FUNCTION:
-RIPEMD160_Init                          1042	EXIST::FUNCTION:
-RIPEMD160_Update                        1043	EXIST::FUNCTION:
-RIPEMD160_Final                         1044	EXIST::FUNCTION:
-RIPEMD160                               1045	EXIST::FUNCTION:
-RIPEMD160_Transform                     1046	EXIST::FUNCTION:
+RIPEMD160_Init                          1042	EXIST::FUNCTION:RMD160
+RIPEMD160_Update                        1043	EXIST::FUNCTION:RMD160
+RIPEMD160_Final                         1044	EXIST::FUNCTION:RMD160
+RIPEMD160                               1045	EXIST::FUNCTION:RMD160
+RIPEMD160_Transform                     1046	EXIST::FUNCTION:RMD160
 RC5_32_set_key                          1047	EXIST::FUNCTION:RC5
 RC5_32_ecb_encrypt                      1048	EXIST::FUNCTION:RC5
 RC5_32_encrypt                          1049	EXIST::FUNCTION:RC5
