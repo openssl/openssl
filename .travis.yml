@@ -67,7 +67,7 @@ before_script:
 
 script:
     - make
-    - if [ -z "$CROSS_COMPILE" ]; then make test; fi
+    - if [ -z "$CROSS_COMPILE" ]; then HARNESS_VERBOSE=yes make test; fi
 
 notifications:
     email:
