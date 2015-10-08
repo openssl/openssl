@@ -1082,6 +1082,12 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
             goto f_err;
         }
 
+        if (session_id_len > SSL_MAX_SSL_SESSION_ID_LENGTH) {
+            al = SSL_AD_DECODE_ERROR;
+            SSLerr(SSL_F_TLS_PROCESS_CLIENT_HELLO, SSL_R_LENGTH_MISMATCH);
+            goto f_err;
+        }
+
         if (!PACKET_get_sub_packet(pkt, &cipher_suites, cipher_len)
             || !PACKET_get_sub_packet(pkt, &session_id, session_id_len)
             || !PACKET_get_sub_packet(pkt, &challenge, challenge_len)
@@ -1111,6 +1117,12 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
         /* Regular ClientHello. */
         if (!PACKET_copy_bytes(pkt, s->s3->client_random, SSL3_RANDOM_SIZE)
             || !PACKET_get_length_prefixed_1(pkt, &session_id)) {
+            al = SSL_AD_DECODE_ERROR;
+            SSLerr(SSL_F_TLS_PROCESS_CLIENT_HELLO, SSL_R_LENGTH_MISMATCH);
+            goto f_err;
+        }
+
+        if (PACKET_remaining(&session_id) > SSL_MAX_SSL_SESSION_ID_LENGTH) {
             al = SSL_AD_DECODE_ERROR;
             SSLerr(SSL_F_TLS_PROCESS_CLIENT_HELLO, SSL_R_LENGTH_MISMATCH);
             goto f_err;
