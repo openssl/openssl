@@ -80,9 +80,9 @@ static inline int async_fibre_swapcontext(async_fibre *o, async_fibre *n, int r)
 {
     o->env_init = 1;
 
-    if (!r || !setjmp(o->env)) {
+    if (!r || !_setjmp(o->env)) {
         if (n->env_init)
-            longjmp(n->env, 1);
+            _longjmp(n->env, 1);
         else
             setcontext(&n->fibre);
     }
