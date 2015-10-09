@@ -20,7 +20,7 @@ LIBOBJ= ct_lib.o
 
 SRC= $(LIBSRC)
 
-HEADER=	ct_lcl.h
+HEADER=	ct_locl.h
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 
