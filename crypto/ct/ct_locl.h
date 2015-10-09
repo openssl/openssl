@@ -91,8 +91,9 @@ typedef struct {
     unsigned char *sct;
     size_t sct_len;
     /*
-     * If version is SCT_V1 fields below contain components of the SCT. "logid",
-     * "ext" and "sig" point to buffers allocated with OPENSSL_malloc().
+     * If version is SCT_V1, fields below contain components of the SCT.
+     * "log_id", "ext" and "sig" point to buffers allocated with
+     * OPENSSL_malloc().
      */
     unsigned char *log_id;
     size_t log_id_len;
@@ -139,7 +140,7 @@ int SCT_set_version(SCT *sct, sct_version_t version);
 int SCT_set_log_entry_type(SCT *sct, log_entry_type_t entry_type);
 
 /*
- * Set the log id of an SCT to point directly to the *logid specified.
+ * Set the log id of an SCT to point directly to the *log_id specified.
  * The SCT takes ownership of the specified pointer.
  * Returns 1 on success.
  */
@@ -180,7 +181,7 @@ sct_version_t SCT_get_version(const SCT *sct);
 log_entry_type_t SCT_get_log_entry_type(const SCT *sct);
 
 /*
- * Set *logid to point to the log id for the SCT. logid must not be NULL.
+ * Set *log_id to point to the log id for the SCT. log_id must not be NULL.
  * The SCT retains ownership of this pointer.
  * Returns length of the data pointed to.
  */
@@ -193,7 +194,8 @@ uint64_t SCT_get_timestamp(const SCT *sct);
 
 /*
  * Return the nid for the signature used by the SCT.
- * Currently NID_sha256WithRSAEncryption or NID_ecdsa_with_SHA256 (or NID_undef)
+ * Currently NID_sha256WithRSAEncryption or NID_ecdsa_with_SHA256
+ * (or NID_undef).
  */
 int SCT_get_signature_nid(const SCT *sct);
 
