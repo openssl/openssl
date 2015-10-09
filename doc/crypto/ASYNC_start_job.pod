@@ -37,16 +37,20 @@ any of the asynchronous job functions, user code should first call
 ASYNC_init_pool(). If the user application is multi-threaded, then this should
 be done for each thread that will initiate asynchronous jobs. Before user code
 exits it should free the pool up (for each thread where a pool was initialised)
-using ASYNC_free_pool(). The B<max_size> argument limits the number of
-ASYNC_JOBs that will be held in the pool. If B<max_size> is set to 0 then no
-upper limit is set. When an ASYNC_JOB is needed but there are none available in
-the pool already then one will be automatically created, as long as the total
-of ASYNC_JOBs managed by the pool does not exceed B<max_size>. When the pool is
-first initialised B<init_size> ASYNC_JOBs will be created immediately. If
-ASYNC_init_pool() is not called before the pool is first used then it will be
-called automatically with a B<max_size> of 0 (no upper limit) and an
-B<init_size> of 0 (no ASYNC_JOBs created up front). If a pool is created in this
-way it must still be cleaned up with an explicit call to ASYNC_free_pool().
+using ASYNC_free_pool(). No asynchronous jobs must be outstanding for the thread
+when ASYNC_free_pool() is called. Failing to ensure this will result in memory
+leaks.
+
+The B<max_size> argument limits the number of ASYNC_JOBs that will be held in
+the pool. If B<max_size> is set to 0 then no upper limit is set. When an
+ASYNC_JOB is needed but there are none available in the pool already then one
+will be automatically created, as long as the total of ASYNC_JOBs managed by the
+pool does not exceed B<max_size>. When the pool is first initialised
+B<init_size> ASYNC_JOBs will be created immediately. If ASYNC_init_pool() is not
+called before the pool is first used then it will be called automatically with a
+B<max_size> of 0 (no upper limit) and an B<init_size> of 0 (no ASYNC_JOBs
+created up front). If a pool is created in this way it must still be cleaned up
+with an explicit call to ASYNC_free_pool().
 
 An asynchronous job is started by calling the ASYNC_start_job() function.
 Initially B<*job> should be NULL. B<ret> should point to a location where the
