@@ -2123,6 +2123,7 @@ void ERR_load_SSL_strings(void);
 # define SSL_F_SSL_SET_WFD                                196
 # define SSL_F_SSL_SHUTDOWN                               224
 # define SSL_F_SSL_SRP_CTX_INIT                           313
+# define SSL_F_SSL_START_ASYNC_JOB                        388
 # define SSL_F_SSL_UNDEFINED_CONST_FUNCTION               243
 # define SSL_F_SSL_UNDEFINED_FUNCTION                     197
 # define SSL_F_SSL_UNDEFINED_VOID_FUNCTION                244
@@ -2138,7 +2139,6 @@ void ERR_load_SSL_strings(void);
 # define SSL_F_SSL_USE_RSAPRIVATEKEY_FILE                 206
 # define SSL_F_SSL_VERIFY_CERT_CHAIN                      207
 # define SSL_F_SSL_WRITE                                  208
-# define SSL_F_START_ASYNC_JOB                            388
 # define SSL_F_STATE_MACHINE                              353
 # define SSL_F_TLS12_CHECK_PEER_SIGALG                    333
 # define SSL_F_TLS1_CERT_VERIFY_MAC                       286
