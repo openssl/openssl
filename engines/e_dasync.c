@@ -85,19 +85,19 @@ static int dasync_digest_nids[] = { NID_sha1, 0 };
 static void dummy_pause_job(void);
 
 /* SHA1 */
-static int digest_sha1_init(EVP_MD_CTX *ctx);
-static int digest_sha1_update(EVP_MD_CTX *ctx, const void *data,
+static int dasync_sha1_init(EVP_MD_CTX *ctx);
+static int dasync_sha1_update(EVP_MD_CTX *ctx, const void *data,
                              unsigned long count);
-static int digest_sha1_final(EVP_MD_CTX *ctx, unsigned char *md);
+static int dasync_sha1_final(EVP_MD_CTX *ctx, unsigned char *md);
 
-static const EVP_MD digest_sha1 = {
+static const EVP_MD dasync_sha1 = {
     NID_sha1,
     NID_sha1WithRSAEncryption,
     SHA_DIGEST_LENGTH,
     EVP_MD_FLAG_PKEY_METHOD_SIGNATURE | EVP_MD_FLAG_DIGALGID_ABSENT,
-    digest_sha1_init,
-    digest_sha1_update,
-    digest_sha1_final,
+    dasync_sha1_init,
+    dasync_sha1_update,
+    dasync_sha1_final,
     NULL,
     NULL,
     EVP_PKEY_NULL_method,
@@ -225,7 +225,7 @@ static int dasync_digests(ENGINE *e, const EVP_MD **digest,
     /* We are being asked for a specific digest */
     switch (nid) {
     case NID_sha1:
-        *digest = &digest_sha1;
+        *digest = &dasync_sha1;
         break;
     default:
         ok = 0;
@@ -261,14 +261,14 @@ static void dummy_pause_job(void) {
  */
 #undef data
 #define data(ctx) ((SHA_CTX *)(ctx)->md_data)
-static int digest_sha1_init(EVP_MD_CTX *ctx)
+static int dasync_sha1_init(EVP_MD_CTX *ctx)
 {
     dummy_pause_job();
 
     return SHA1_Init(data(ctx));
 }
 
-static int digest_sha1_update(EVP_MD_CTX *ctx, const void *data,
+static int dasync_sha1_update(EVP_MD_CTX *ctx, const void *data,
                              unsigned long count)
 {
     dummy_pause_job();
@@ -276,7 +276,7 @@ static int digest_sha1_update(EVP_MD_CTX *ctx, const void *data,
     return SHA1_Update(data(ctx), data, (size_t)count);
 }
 
-static int digest_sha1_final(EVP_MD_CTX *ctx, unsigned char *md)
+static int dasync_sha1_final(EVP_MD_CTX *ctx, unsigned char *md)
 {
     dummy_pause_job();
 
