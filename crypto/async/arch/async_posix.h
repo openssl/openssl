@@ -61,6 +61,12 @@
 #  define ASYNC_POSIX
 #  define ASYNC_ARCH
 
+/*
+ * Some platforms complain (e.g. OS-X) that setcontext/getcontext/makecontext
+ * are deprecated without this defined
+ */
+#  define _XOPEN_SOURCE
+
 #  include <ucontext.h>
 #  include <setjmp.h>
 #  include "e_os.h"
