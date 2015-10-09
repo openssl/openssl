@@ -51,6 +51,14 @@
  * ====================================================================
  */
 
+/*
+ * Without this we start getting longjmp crashes because it thinks we're jumping
+ * up the stack when in fact we are jumping to an entirely different stack. The
+ * cost of this is not having certain buffer overrun/underrun checks etc for
+ * this source file :-(
+ */
+#undef _FORTIFY_SOURCE
+
 #include <openssl/err.h>
 #include <openssl/async.h>
 #include <string.h>
