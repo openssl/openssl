@@ -564,7 +564,7 @@ void ssl_load_ciphers(void)
         disabled_mac_mask |= SSL_GOST89MAC;
     }
 
-    ssl_mac_pkey_id[SSL_MD_GOST89MAC_IDX] = get_optional_pkey_id("gost-mac-12");
+    ssl_mac_pkey_id[SSL_MD_GOST89MAC12_IDX] = get_optional_pkey_id("gost-mac-12");
     if (ssl_mac_pkey_id[SSL_MD_GOST89MAC12_IDX]) {
         ssl_mac_secret_size[SSL_MD_GOST89MAC12_IDX] = 32;
     } else {
