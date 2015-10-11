@@ -121,7 +121,7 @@ struct X509_crl_info_st {
 struct X509_crl_st {
     X509_CRL_INFO crl;          /* signed CRL data */
     X509_ALGOR sig_alg;         /* CRL signature algorithm */
-    ASN1_BIT_STRING *signature; /* CRL signature */
+    ASN1_BIT_STRING signature; /* CRL signature */
     int references;
     int flags;
     /*
@@ -145,7 +145,7 @@ struct X509_crl_st {
 };
 
 struct x509_revoked_st {
-    ASN1_INTEGER *serialNumber; /* revoked entry serial number */
+    ASN1_INTEGER serialNumber; /* revoked entry serial number */
     ASN1_TIME *revocationDate;  /* revocation date */
     STACK_OF(X509_EXTENSION) *extensions;   /* CRL entry extensions: optional */
     /* decoded value of CRLissuer extension: set if indirect CRL */

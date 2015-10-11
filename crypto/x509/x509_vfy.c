@@ -2088,7 +2088,7 @@ X509_CRL *X509_CRL_diff(X509_CRL *base, X509_CRL *newer,
          * Add only if not also in base. TODO: need something cleverer here
          * for some more complex CRLs covering multiple CAs.
          */
-        if (!X509_CRL_get0_by_serial(base, &rvtmp, rvn->serialNumber)) {
+        if (!X509_CRL_get0_by_serial(base, &rvtmp, &rvn->serialNumber)) {
             rvtmp = X509_REVOKED_dup(rvn);
             if (!rvtmp)
                 goto memerr;
