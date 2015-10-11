@@ -85,16 +85,11 @@ int X509_set_serialNumber(X509 *x, ASN1_INTEGER *serial)
     ASN1_INTEGER *in;
 
     if (x == NULL)
-        return (0);
-    in = x->cert_info.serialNumber;
-    if (in != serial) {
-        in = ASN1_INTEGER_dup(serial);
-        if (in != NULL) {
-            ASN1_INTEGER_free(x->cert_info.serialNumber);
-            x->cert_info.serialNumber = in;
-        }
-    }
-    return (in != NULL);
+        return 0;
+    in = &x->cert_info.serialNumber;
+    if (in != serial)
+        return ASN1_STRING_copy(in, serial);
+    return 1;
 }
 
 int X509_set_issuer_name(X509 *x, X509_NAME *name)
