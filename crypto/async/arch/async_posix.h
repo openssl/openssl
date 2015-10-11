@@ -97,8 +97,8 @@ static inline int async_fibre_swapcontext(async_fibre *o, async_fibre *n, int r)
 }
 
 #  define async_fibre_makecontext(c) \
-            (async_fibre_init(c) \
-            && !getcontext(&(c)->fibre) \
+            (!getcontext(&(c)->fibre) \
+            && async_fibre_init(c) \
             && (makecontext(&(c)->fibre, async_start_func, 0), 1))
 #  define async_fibre_init_dispatcher(d)
 
