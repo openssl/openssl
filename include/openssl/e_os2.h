@@ -262,8 +262,12 @@ extern "C" {
 #  define OPENSSL_GLOBAL_REF(name) _shadow_##name
 # endif
 
-# ifdef OPENSSL_SYS_MSDOS
-#  define ossl_ssize_t long
+# ifdef _WIN32
+#  ifdef _WIN64
+#   define ossl_ssize_t __int64
+#  else
+#   define ossl_ssize_t int
+#  endif
 # endif
 
 # if defined(__ultrix) && !defined(ssize_t)

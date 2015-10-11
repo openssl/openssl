@@ -3066,6 +3066,16 @@ int ssl3_send_client_verify(SSL *s)
                 SSLerr(SSL_F_SSL3_SEND_CLIENT_VERIFY, ERR_R_EVP_LIB);
                 goto err;
             }
+            if (pkey->type == NID_id_GostR3410_2001
+                    || pkey->type == NID_id_GostR3410_2012_256
+                    || pkey->type == NID_id_GostR3410_2012_512) {
+                int i, j; 
+                for (i = u - 1, j = 0; j < u/2; j++, i--) {
+                    char c = p[2 + j];
+                    p[2 + j] = p[2 + i];
+                    p[2 + i] = c;
+                }
+            }
             s2n(u, p);
             n = u + 4;
             /* Digest cached records and discard handshake buffer */

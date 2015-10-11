@@ -717,6 +717,8 @@ static int RSA_eay_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
     BIGNUM *dmp1, *dmq1, *c, *pr1;
     int ret = 0;
 
+    BN_CTX_start(ctx);
+
     local_dmp1 = BN_new();
     local_dmq1 = BN_new();
     local_c = BN_new();
@@ -724,7 +726,6 @@ static int RSA_eay_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
     if (!local_dmp1 || !local_dmq1 || !local_c || !local_r1)
         goto err;
 
-    BN_CTX_start(ctx);
     r1 = BN_CTX_get(ctx);
     m1 = BN_CTX_get(ctx);
     vrfy = BN_CTX_get(ctx);

@@ -1818,10 +1818,11 @@ static int tls1_alpn_handle_client_hello(SSL *s, PACKET *pkt, int *al)
  * Sadly we cannot differentiate 10.6, 10.7 and 10.8.4 (which work), from
  * 10.8..10.8.3 (which don't work).
  */
-static void ssl_check_for_safari(SSL *s, PACKET *pkt)
+static void ssl_check_for_safari(SSL *s, const PACKET *pkt)
 {
     unsigned int type, size;
     unsigned char *eblock1, *eblock2;
+    PACKET tmppkt;
 
     static const unsigned char kSafariExtensionsBlock[] = {
         0x00, 0x0a,             /* elliptic_curves extension */
@@ -1849,10 +1850,12 @@ static void ssl_check_for_safari(SSL *s, PACKET *pkt)
         0x02, 0x03,             /* SHA-1/ECDSA */
     };
 
-    if (!PACKET_forward(pkt, 2)
-            || !PACKET_get_net_2(pkt, &type)
-            || !PACKET_get_net_2(pkt, &size)
-            || !PACKET_forward(pkt, size))
+    tmppkt = *pkt;
+
+    if (!PACKET_forward(&tmppkt, 2)
+            || !PACKET_get_net_2(&tmppkt, &type)
+            || !PACKET_get_net_2(&tmppkt, &size)
+            || !PACKET_forward(&tmppkt, size))
         return;
 
     if (type != TLSEXT_TYPE_server_name)
@@ -1862,9 +1865,9 @@ static void ssl_check_for_safari(SSL *s, PACKET *pkt)
         const size_t len1 = sizeof(kSafariExtensionsBlock);
         const size_t len2 = sizeof(kSafariTLS12ExtensionsBlock);
 
-        if (!PACKET_get_bytes(pkt, &eblock1, len1)
-                || !PACKET_get_bytes(pkt, &eblock2, len2)
-                || PACKET_remaining(pkt))
+        if (!PACKET_get_bytes(&tmppkt, &eblock1, len1)
+                || !PACKET_get_bytes(&tmppkt, &eblock2, len2)
+                || PACKET_remaining(&tmppkt))
             return;
         if (memcmp(eblock1, kSafariExtensionsBlock, len1) != 0)
             return;
@@ -1873,8 +1876,8 @@ static void ssl_check_for_safari(SSL *s, PACKET *pkt)
     } else {
         const size_t len = sizeof(kSafariExtensionsBlock);
 
-        if (!PACKET_get_bytes(pkt, &eblock1, len)
-                || PACKET_remaining(pkt))
+        if (!PACKET_get_bytes(&tmppkt, &eblock1, len)
+                || PACKET_remaining(&tmppkt))
             return;
         if (memcmp(eblock1, kSafariExtensionsBlock, len) != 0)
             return;
@@ -1928,6 +1931,9 @@ static int ssl_scan_clienthello_tlsext(SSL *s, PACKET *pkt, int *al)
         goto ri_check;
 
     if (!PACKET_get_net_2(pkt, &len))
+        goto err;
+
+    if (PACKET_remaining(pkt) != len)
         goto err;
 
     while (PACKET_get_net_2(pkt, &type) && PACKET_get_net_2(pkt, &size)) {
@@ -2909,11 +2915,8 @@ int ssl_parse_serverhello_tlsext(SSL *s, PACKET *pkt)
  * ClientHello, and other operations depend on the result, we need to handle
  * any TLS session ticket extension at the same time.
  *
- *   session_id: points at the session ID in the ClientHello. This code will
- *       read past the end of this in order to parse out the session ticket
- *       extension, if any.
- *   len: the length of the session ID.
- *   limit: a pointer to the first byte after the ClientHello.
+ *   session_id: ClientHello session ID.
+ *   ext: ClientHello extensions (including length prefix)
  *   ret: (output) on return, if a ticket was decrypted, then this is set to
  *       point to the resulting session.
  *
@@ -2938,11 +2941,11 @@ int ssl_parse_serverhello_tlsext(SSL *s, PACKET *pkt)
  *   s->ctx->tlsext_ticket_key_cb asked to renew the client's ticket.
  *   Otherwise, s->tlsext_ticket_expected is set to 0.
  */
-int tls1_process_ticket(SSL *s, PACKET *pkt,  unsigned char *session_id,
-                        int len, SSL_SESSION **ret)
+int tls1_process_ticket(SSL *s, const PACKET *ext, const PACKET *session_id,
+                        SSL_SESSION **ret)
 {
     unsigned int i;
-    PACKET bookmark = *pkt;
+    PACKET local_ext = *ext;
     int retv = -1;
 
     *ret = NULL;
@@ -2957,38 +2960,20 @@ int tls1_process_ticket(SSL *s, PACKET *pkt,  unsigned char *session_id,
     if ((s->version <= SSL3_VERSION))
         return 0;
 
-    /* Skip past DTLS cookie */
-    if (SSL_IS_DTLS(s)) {
-        if (!PACKET_get_1(pkt, &i)
-                || !PACKET_forward(pkt, i)) {
-            retv = -1;
-            goto end;
-        }
-    }
-    /* Skip past cipher list and compression algorithm list */
-    if (!PACKET_get_net_2(pkt, &i)
-            || !PACKET_forward(pkt, i)
-            || !PACKET_get_1(pkt, &i)
-            || !PACKET_forward(pkt, i)) {
-        retv = -1;
-        goto end;
-    }
-
-    /* Now at start of extensions */
-    if (!PACKET_get_net_2(pkt, &i)) {
+    if (!PACKET_get_net_2(&local_ext, &i)) {
         retv = 0;
         goto end;
     }
-    while (PACKET_remaining (pkt) >= 4) {
+    while (PACKET_remaining(&local_ext) >= 4) {
         unsigned int type, size;
 
-        if (!PACKET_get_net_2(pkt, &type)
-                || !PACKET_get_net_2(pkt, &size)) {
+        if (!PACKET_get_net_2(&local_ext, &type)
+                || !PACKET_get_net_2(&local_ext, &size)) {
             /* Shouldn't ever happen */
             retv = -1;
             goto end;
         }
-        if (PACKET_remaining(pkt) < size) {
+        if (PACKET_remaining(&local_ext) < size) {
             retv = 0;
             goto end;
         }
@@ -3015,12 +3000,13 @@ int tls1_process_ticket(SSL *s, PACKET *pkt,  unsigned char *session_id,
                 retv = 2;
                 goto end;
             }
-            if (!PACKET_get_bytes(pkt, &etick, size)) {
+            if (!PACKET_get_bytes(&local_ext, &etick, size)) {
                 /* Shouldn't ever happen */
                 retv = -1;
                 goto end;
             }
-            r = tls_decrypt_ticket(s, etick, size, session_id, len, ret);
+            r = tls_decrypt_ticket(s, etick, size, PACKET_data(session_id),
+                                   PACKET_remaining(session_id), ret);
             switch (r) {
             case 2:            /* ticket couldn't be decrypted */
                 s->tlsext_ticket_expected = 1;
@@ -3039,7 +3025,7 @@ int tls1_process_ticket(SSL *s, PACKET *pkt,  unsigned char *session_id,
             }
             goto end;
         } else {
-            if (!PACKET_forward(pkt, size)) {
+            if (!PACKET_forward(&local_ext, size)) {
                 retv = -1;
                 goto end;
             }
@@ -3047,7 +3033,6 @@ int tls1_process_ticket(SSL *s, PACKET *pkt,  unsigned char *session_id,
     }
     retv = 0;
 end:
-    *pkt = bookmark;
     return retv;
 }
 

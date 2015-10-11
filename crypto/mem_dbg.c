@@ -321,9 +321,9 @@ static IMPLEMENT_LHASH_COMP_FN(mem, MEM)
 
 static unsigned long mem_hash(const MEM *a)
 {
-    unsigned long ret;
+    size_t ret;
 
-    ret = (unsigned long)a->addr;
+    ret = (size_t)a->addr;
 
     ret = ret * 17851 + (ret >> 14) * 7 + (ret >> 4) * 251;
     return (ret);
@@ -661,8 +661,8 @@ static void print_leak_doall_arg(const MEM *m, MEM_LEAK *l)
         bufp += strlen(bufp);
     }
 
-    BIO_snprintf(bufp, BUF_REMAIN, "number=%d, address=%08lX\n",
-                 m->num, (unsigned long)m->addr);
+    BIO_snprintf(bufp, BUF_REMAIN, "number=%d, address=%p\n",
+                 m->num, m->addr);
     bufp += strlen(bufp);
 
     BIO_puts(l->bio, buf);

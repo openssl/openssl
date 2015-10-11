@@ -123,7 +123,7 @@ static int acpt_new(BIO *bi)
     BIO_ACCEPT *ba;
 
     bi->init = 0;
-    bi->num = INVALID_SOCKET;
+    bi->num = (int)INVALID_SOCKET;
     bi->flags = 0;
     if ((ba = BIO_ACCEPT_new()) == NULL)
         return (0);
@@ -139,7 +139,7 @@ static BIO_ACCEPT *BIO_ACCEPT_new(void)
 
     if ((ret = OPENSSL_zalloc(sizeof(*ret))) == NULL)
         return (NULL);
-    ret->accept_sock = INVALID_SOCKET;
+    ret->accept_sock = (int)INVALID_SOCKET;
     ret->bind_mode = BIO_BIND_NORMAL;
     return (ret);
 }
@@ -160,11 +160,11 @@ static void acpt_close_socket(BIO *bio)
     BIO_ACCEPT *c;
 
     c = (BIO_ACCEPT *)bio->ptr;
-    if (c->accept_sock != INVALID_SOCKET) {
+    if (c->accept_sock != (int)INVALID_SOCKET) {
         shutdown(c->accept_sock, 2);
         closesocket(c->accept_sock);
-        c->accept_sock = INVALID_SOCKET;
-        bio->num = INVALID_SOCKET;
+        c->accept_sock = (int)INVALID_SOCKET;
+        bio->num = (int)INVALID_SOCKET;
     }
 }
 
@@ -200,7 +200,7 @@ static int acpt_state(BIO *b, BIO_ACCEPT *c)
             return (-1);
         }
         s = BIO_get_accept_socket(c->param_addr, c->bind_mode);
-        if (s == INVALID_SOCKET)
+        if (s == (int)INVALID_SOCKET)
             return (-1);
 
         if (c->accept_nbio) {

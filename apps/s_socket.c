@@ -266,7 +266,7 @@ static int init_client_ip(int *sock, const unsigned char ip[4], int port,
     else                        /* ( type == SOCK_DGRAM) */
         s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 
-    if (s == INVALID_SOCKET) {
+    if (s == (int)INVALID_SOCKET) {
         perror("socket");
         return (0);
     }
@@ -303,7 +303,7 @@ int init_client_unix(int *sock, const char *server)
         return (0);
 
     s = socket(AF_UNIX, SOCK_STREAM, 0);
-    if (s == INVALID_SOCKET) {
+    if (s == (int)INVALID_SOCKET) {
         perror("socket");
         return (0);
     }
@@ -428,7 +428,7 @@ static int init_server_long(int *sock, int port, char *ip, int type)
     else                        /* type == SOCK_DGRAM */
         s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 
-    if (s == INVALID_SOCKET)
+    if (s == (int)INVALID_SOCKET)
         goto err;
 # if defined SOL_SOCKET && defined SO_REUSEADDR
     {
@@ -472,7 +472,7 @@ static int init_server_unix(int *sock, const char *path)
         return (0);
 
     s = socket(AF_UNIX, SOCK_STREAM, 0);
-    if (s == INVALID_SOCKET)
+    if (s == (int)INVALID_SOCKET)
         goto err;
 
     memset(&server, 0, sizeof(server));
@@ -527,7 +527,7 @@ static int do_accept(int acc_sock, int *sock, char **host)
      * can either go for (int *) or (void *).
      */
     ret = accept(acc_sock, (struct sockaddr *)&from, (void *)&len);
-    if (ret == INVALID_SOCKET) {
+    if (ret == (int)INVALID_SOCKET) {
 # if defined(OPENSSL_SYS_WINDOWS) || (defined(OPENSSL_SYS_NETWARE) && !defined(NETWARE_BSDSOCK))
         int i;
         i = WSAGetLastError();
@@ -589,7 +589,7 @@ static int do_accept_unix(int acc_sock, int *sock)
 
  redoit:
     ret = accept(acc_sock, NULL, NULL);
-    if (ret == INVALID_SOCKET) {
+    if (ret == (int)INVALID_SOCKET) {
         if (errno == EINTR) {
             /*
              * check_timeout();

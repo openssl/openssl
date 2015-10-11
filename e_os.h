@@ -477,7 +477,9 @@ struct servent *PASCAL getservbyname(const char *, const char *);
 /*
  * Even though sizeof(SOCKET) is 8, it's safe to cast it to int, because
  * the value constitutes an index in per-process table of limited size
- * and not a real pointer.
+ * and not a real pointer. And we also depend on fact that all processors
+ * Windows run on happen to be two's-complement, which allows to
+ * interchange INVALID_SOCKET and -1.
  */
 #     define socket(d,t,p)   ((int)socket(d,t,p))
 #     define accept(s,f,l)   ((int)accept(s,f,l))
