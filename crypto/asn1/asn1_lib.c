@@ -284,7 +284,9 @@ int ASN1_STRING_copy(ASN1_STRING *dst, const ASN1_STRING *str)
     dst->type = str->type;
     if (!ASN1_STRING_set(dst, str->data, str->length))
         return 0;
-    dst->flags = str->flags;
+    /* Copy flags but preserve embed value */
+    dst->flags &= ASN1_STRING_FLAG_EMBED;
+    dst->flags |= str->flags & ~ASN1_STRING_FLAG_EMBED;
     return 1;
 }
 
