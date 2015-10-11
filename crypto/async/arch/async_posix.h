@@ -63,9 +63,11 @@
 
 /*
  * Some platforms complain (e.g. OS-X) that setcontext/getcontext/makecontext
- * are deprecated without this defined
+ * are deprecated without the following defined. We know its deprecated but
+ * there is no alternative.
  */
 #  define _XOPEN_SOURCE
+#  pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 
 #  include <ucontext.h>
 #  include <setjmp.h>
