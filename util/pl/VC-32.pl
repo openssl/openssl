@@ -307,6 +307,7 @@ $target: $deps
 	set OPENSSL=\$(BIN_D)${o}openssl.exe
 	set OPENSSL_DEBUG_MEMORY=on
 	\$(PERL) tools/c_rehash certs/demo
+	echo off > $target
 EOF
     return $ret
 }
