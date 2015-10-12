@@ -21,7 +21,7 @@ my $test = catfile(".", "p");
 my $cmd = "openssl";
 
 my @ciphers =
-    map { chomp; s/^\s+//; s/\s+$//; split /\s+/ }
+    map { s/^\s+//; s/\s+$//; split /\s+/ }
     run(app([$cmd, "list", "-cipher-commands"]), capture => 1);
 
 plan tests => 1 + (scalar @ciphers)*2;
