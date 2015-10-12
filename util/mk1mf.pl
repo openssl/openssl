@@ -779,8 +779,8 @@ reallyclean:
 
 EOF
 
-$rules .= &do_rehash_rule("rehash", "certs apps");
-$rules .= &do_test_rule("test", "rehash", "run_tests.pl");
+$rules .= &do_rehash_rule("rehash.time", "certs apps");
+$rules .= &do_test_rule("test", "rehash.time", "run_tests.pl");
 
 my $platform_cpp_symbol = "MK1MF_PLATFORM_$platform";
 $platform_cpp_symbol =~ s/-/_/g;
