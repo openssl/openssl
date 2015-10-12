@@ -1714,7 +1714,9 @@ unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *buf,
          * for other cases too.
          */
         if (s->s3->tmp.new_cipher->algorithm_mac == SSL_AEAD
-            || s->s3->tmp.new_cipher->algorithm_enc == SSL_RC4)
+            || s->s3->tmp.new_cipher->algorithm_enc == SSL_RC4
+            || s->s3->tmp.new_cipher->algorithm_enc == SSL_eGOST2814789CNT
+            || s->s3->tmp.new_cipher->algorithm_enc == SSL_eGOST2814789CNT12)
             s->s3->flags &= ~TLS1_FLAGS_ENCRYPT_THEN_MAC;
         else {
             s2n(TLSEXT_TYPE_encrypt_then_mac, ret);
