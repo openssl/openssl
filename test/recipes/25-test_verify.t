@@ -8,6 +8,9 @@ use OpenSSL::Test qw/:DEFAULT top_dir top_file/;
 
 setup("test_verify");
 
+plan skip_all => "no rehash.time was found."
+    unless (-f top_file("rehash.time"));
+
 plan tests => 1;
 
 note("Expect some failures and expired certificate");
