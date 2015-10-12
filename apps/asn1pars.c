@@ -186,9 +186,6 @@ int asn1parse_main(int argc, char **argv)
     argc = opt_num_rest();
     argv = opt_rest();
 
-    if (!app_load_modules(NULL))
-        goto end;
-
     if (oidfile != NULL) {
         in = bio_open_default(oidfile, 'r', FORMAT_TEXT);
         if (in == NULL)

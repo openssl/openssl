@@ -220,9 +220,6 @@ int ecparam_main(int argc, char **argv)
     argv = opt_rest();
     private = genkey ? 1 : 0;
 
-    if (!app_load_modules(NULL))
-        goto end;
-
     in = bio_open_default(infile, 'r', informat);
     if (in == NULL)
         goto end;

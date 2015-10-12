@@ -1475,9 +1475,6 @@ int s_server_main(int argc, char *argv[])
         goto end;
     }
 
-    if (!app_load_modules(NULL))
-        goto end;
-
     if (s_key_file == NULL)
         s_key_file = s_cert_file;
 

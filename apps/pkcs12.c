@@ -354,9 +354,6 @@ int pkcs12_main(int argc, char **argv)
         mpass = macpass;
     }
 
-    if (!app_load_modules(NULL))
-        goto end;
-
     if (export_cert || inrand) {
         app_RAND_load_file(NULL, (inrand != NULL));
         if (inrand != NULL)

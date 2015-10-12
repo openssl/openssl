@@ -493,9 +493,6 @@ int x509_main(int argc, char **argv)
     if (!nmflag_set)
         nmflag = XN_FLAG_ONELINE;
 
-    if (!app_load_modules(NULL))
-        goto end;
-
     out = bio_open_default(outfile, 'w', outformat);
     if (out == NULL)
         goto end;

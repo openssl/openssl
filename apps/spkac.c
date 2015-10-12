@@ -186,8 +186,6 @@ int spkac_main(int argc, char **argv)
 
     if ((conf = app_load_config(infile)) == NULL)
         goto end;
-    if (!app_load_modules(conf))
-        goto end;
 
     spkstr = NCONF_get_string(conf, spksect, spkac);
 
