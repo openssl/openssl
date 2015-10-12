@@ -414,7 +414,7 @@ sub testssl {
 		      map { split(/:/, $_) }
 		      run(app(["openssl", "ciphers", "${_}:$ciphers"]),
                           capture => 1);
-		  chomp @c;
+		  map { s/\R//; } @c;  # chomp @c;
 		  $protocolciphersuitcount += scalar @c;
 		  $_ => [ @c ] } @protocols;
 
