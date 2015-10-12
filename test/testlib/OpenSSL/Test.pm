@@ -284,8 +284,6 @@ sub run {
     my $prefix = "";
     if ( $^O eq "VMS" ) {	# VMS
 	$prefix = "pipe ";
-    } elsif ($^O eq "MSWin32") { # MSYS
-	$prefix = "cmd /c ";
     }
 
     my @r = ();
