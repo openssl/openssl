@@ -166,7 +166,7 @@ BIO *bio_in = NULL;
 BIO *bio_out = NULL;
 BIO *bio_err = NULL;
 
-static void apps_startup()
+static int apps_startup()
 {
 #ifdef SIGPIPE
     signal(SIGPIPE, SIG_IGN);
@@ -174,6 +174,13 @@ static void apps_startup()
     CRYPTO_malloc_init();
     ERR_load_crypto_strings();
     ERR_load_SSL_strings();
+
+    if (!app_load_modules(NULL)) {
+        ERR_print_errors(bio_err);
+        BIO_printf(bio_err, "Error loading default configuration\n");
+        return 0;
+    }
+
     OpenSSL_add_all_algorithms();
     OpenSSL_add_ssl_algorithms();
     OPENSSL_load_builtin_modules();
@@ -182,6 +189,7 @@ static void apps_startup()
 #ifndef OPENSSL_NO_ENGINE
     ENGINE_load_builtin_engines();
 #endif
+    return 1;
 }
 
 static void apps_shutdown()
@@ -328,7 +336,9 @@ int main(int argc, char *argv[])
 #endif
     }
 
-    apps_startup();
+    if (!apps_startup())
+        goto end;
+
     prog = prog_init();
     pname = opt_progname(argv[0]);
 

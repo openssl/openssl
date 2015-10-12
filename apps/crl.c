@@ -232,9 +232,6 @@ int crl_main(int argc, char **argv)
     if (!nmflag_set)
         nmflag = XN_FLAG_ONELINE;
 
-    if (!app_load_modules(NULL))
-        goto end;
-
     x = load_crl(infile, informat);
     if (x == NULL)
         goto end;

@@ -202,9 +202,6 @@ int dsa_main(int argc, char **argv)
         goto end;
     }
 
-    if (!app_load_modules(NULL))
-        goto end;
-
     BIO_printf(bio_err, "read DSA key\n");
     {
         EVP_PKEY *pkey;

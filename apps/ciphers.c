@@ -144,9 +144,6 @@ int ciphers_main(int argc, char **argv)
     else if (argc != 0)
         goto opthelp;
 
-    if (!app_load_modules(NULL))
-        goto end;
-
     ctx = SSL_CTX_new(meth);
     if (ctx == NULL)
         goto err;
