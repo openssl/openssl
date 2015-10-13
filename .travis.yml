@@ -1,9 +1,15 @@
 language: c
 
 addons:
-    apt_packages:
-        - binutils-mingw-w64
-        - gcc-mingw-w64
+    apt:
+        packages:
+            - clang-3.6
+            - gcc-5
+            - binutils-mingw-w64
+            - gcc-mingw-w64
+        sources:
+            - llvm-toolchain-precise-3.6
+            - ubuntu-toolchain-r-test
 
 os:
     - linux
@@ -11,7 +17,9 @@ os:
 
 compiler:
     - clang
+    - clang-3.6
     - gcc
+    - gcc-5
     - i686-w64-mingw32-gcc
     - x86_64-w64-mingw32-gcc
 
@@ -21,7 +29,24 @@ env:
     - CONFIG_OPTS="--debug --strict-warnings"
 
 matrix:
+    include:
+        - os: linux
+          compiler: clang-3.6
+          env: CONFIG_OPTS="-fsanitize=address"
+        - os: linux
+          compiler: clang-3.6
+          env: CONFIG_OPTS="--debug --strict-warnings -fsanitize=address"
+        - os: linux
+          compiler: gcc-5
+          env: CONFIG_OPTS="-fsanitize=address"
+        - os: linux
+          compiler: gcc-5
+          env: CONFIG_OPTS="--debug --strict-warnings -fsanitize=address"
     exclude:
+        - os: osx
+          compiler: clang-3.6
+        - os: osx
+          compiler: gcc-5
         - os: osx
           compiler: i686-w64-mingw32-gcc
         - os: osx
