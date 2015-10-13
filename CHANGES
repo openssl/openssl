@@ -4,6 +4,9 @@
 
  Changes between 1.0.2 and 1.1.0  [xx XXX xxxx]
 
+  *) Removed obsolete engines: 4758cca, aep, atalla, cswift, nuron and sureware.
+     [Matt Caswell]
+
   *) New ASN.1 embed macro.
 
      New ASN.1 macro ASN1_EMBED. This is the same as ASN1_SIMPLE except the
