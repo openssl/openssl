@@ -46,7 +46,7 @@ my $disabled_set = 0;
 sub check_disabled {
 #print STDERR "Running check_disabled\n";
     foreach (run(app(["openssl", "list", "-disabled"]), capture => 1)) {
-        chomp;
+        s/\R//;         # chomp;
         next if /:/;    # skip header
         $disabled{lc $_} = 1;
     }

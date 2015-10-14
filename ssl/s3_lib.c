@@ -5257,8 +5257,9 @@ int ssl_generate_master_secret(SSL *s, unsigned char *pms, size_t pmslen,
             s->method->ssl3_enc->generate_master_secret(s,
                                                         s->session->master_key,
                                                         pms, pmslen);
-
+#ifndef OPENSSL_NO_PSK
     err:
+#endif
     if (pms) {
         if (free_pms)
             OPENSSL_clear_free(pms, pmslen);

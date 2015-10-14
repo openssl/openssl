@@ -109,8 +109,8 @@ OPTIONS dgst_options[] = {
     {"non-fips-allow", OPT_NON_FIPS_ALLOW, '-'},
     {"hmac", OPT_HMAC, 's', "Create hashed MAC with key"},
     {"mac", OPT_MAC, 's', "Create MAC (not neccessarily HMAC)"},
-    {"sigop", OPT_SIGOPT, 's', "Signature parameter in n:v form"},
-    {"macop", OPT_MACOPT, 's', "MAC algorithm parameters in n:v form or key"},
+    {"sigopt", OPT_SIGOPT, 's', "Signature parameter in n:v form"},
+    {"macopt", OPT_MACOPT, 's', "MAC algorithm parameters in n:v form or key"},
     {"", OPT_DIGEST, '-', "Any supported digest"},
 #ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine e, possibly a hardware device"},
@@ -235,9 +235,6 @@ int dgst_main(int argc, char **argv)
     }
     argc = opt_num_rest();
     argv = opt_rest();
-
-    if (!app_load_modules(NULL))
-        goto end;
 
     if (do_verify && !sigfile) {
         BIO_printf(bio_err,

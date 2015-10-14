@@ -494,9 +494,6 @@ int ocsp_main(int argc, char **argv)
     if (!req && !reqin && !respin && !(port && ridx_filename))
         goto opthelp;
 
-    if (!app_load_modules(NULL))
-        goto end;
-
     out = bio_open_default(outfile, 'w', FORMAT_TEXT);
     if (out == NULL)
         goto end;

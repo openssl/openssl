@@ -152,7 +152,7 @@ static const X509V3_EXT_METHOD *standard_exts[] = {
     &v3_idp,
     &v3_alt[2],
     &v3_freshest_crl,
-#ifndef OPENSSL_NO_SCT
+#ifndef OPENSSL_NO_CT
     &v3_ct_scts[0],
     &v3_ct_scts[1],
 #endif

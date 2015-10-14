@@ -25,7 +25,7 @@ my $init = ok(run(test(["bntest"], stdout => $testresults)), 'initialize');
 	     @lines = <DATA>;
 	     close DATA;
 	 }
-	 chomp(@lines);
+	 map { s/\R//; } @lines;	# chomp(@lines);
 
 	 plan tests => scalar grep(/^print /, @lines);
 

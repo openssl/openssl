@@ -333,13 +333,13 @@ CERT *ssl_cert_dup(CERT *cert)
         goto err;
     if (!custom_exts_copy(&ret->srv_ext, &cert->srv_ext))
         goto err;
-
+#ifndef OPENSSL_NO_PSK
     if (cert->psk_identity_hint) {
         ret->psk_identity_hint = BUF_strdup(cert->psk_identity_hint);
         if (ret->psk_identity_hint == NULL)
             goto err;
     }
-
+#endif
     return (ret);
 
  err:

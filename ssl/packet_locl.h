@@ -62,6 +62,7 @@
 # include <string.h>
 # include <openssl/bn.h>
 # include <openssl/buffer.h>
+# include <openssl/crypto.h>
 # include "e_os.h"
 
 # ifdef __cplusplus
@@ -122,6 +123,18 @@ static inline void PACKET_null_init(PACKET *pkt)
 {
     pkt->curr = NULL;
     pkt->remaining = 0;
+}
+
+/*
+ * Returns 1 if the packet has length |num| and its contents equal the |num|
+ * bytes read from |ptr|. Returns 0 otherwise (lengths or contents not equal).
+ * If lengths are equal, performs the comparison in constant time.
+ */
+__owur static inline int PACKET_equal(const PACKET *pkt, const void *ptr,
+                                      size_t num) {
+    if (PACKET_remaining(pkt) != num)
+        return 0;
+    return CRYPTO_memcmp(pkt->curr, ptr, num) == 0;
 }
 
 /*
@@ -418,6 +431,8 @@ __owur static inline int PACKET_memdup(const PACKET *pkt, unsigned char **data,
 __owur static inline int PACKET_strndup(const PACKET *pkt, char **data)
 {
     OPENSSL_free(*data);
+
+    /* This will succeed on an empty packet, unless pkt->curr == NULL. */
     *data = BUF_strndup((const char*)pkt->curr, PACKET_remaining(pkt));
     return (*data != NULL);
 }

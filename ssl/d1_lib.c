@@ -723,9 +723,9 @@ int dtls1_listen(SSL *s, struct sockaddr *client)
                 /* This is fatal */
                 return -1;
             }
-            if (PACKET_remaining(&cookiepkt) > sizeof(s->d1->rcvd_cookie)
-                || s->ctx->app_verify_cookie_cb(s, PACKET_data(&cookiepkt),
-                    PACKET_remaining(&cookiepkt)) == 0) {
+            if (s->ctx->app_verify_cookie_cb(s, PACKET_data(&cookiepkt),
+                                             PACKET_remaining(&cookiepkt)) ==
+                0) {
                 /*
                  * We treat invalid cookies in the same was as no cookie as
                  * per RFC6347

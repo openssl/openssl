@@ -256,10 +256,6 @@ int rsa_main(int argc, char **argv)
         BIO_printf(bio_err, "Error getting passwords\n");
         goto end;
     }
-
-    if (!app_load_modules(NULL))
-        goto end;
-
     if (check && pubin) {
         BIO_printf(bio_err, "Only private keys can be checked\n");
         goto end;

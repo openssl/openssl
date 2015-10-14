@@ -67,7 +67,7 @@ extern "C" {
 #endif
 
 # ifdef OPENSSL_NO_RMD160
-#  error RIPEMD is disabled.
+#  error RMD160 is disabled.
 # endif
 
 # define RIPEMD160_LONG unsigned int

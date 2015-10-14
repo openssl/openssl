@@ -1316,10 +1316,6 @@ int s_server_main(int argc, char *argv[])
                 goto end;
             }
             break;
-#else
-        case OPT_PSK_HINT:
-        case OPT_PSK:
-            break;
 #endif
 #ifndef OPENSSL_NO_SRP
         case OPT_SRPVFILE:
@@ -1478,9 +1474,6 @@ int s_server_main(int argc, char *argv[])
         BIO_printf(bio_err, "Error getting password\n");
         goto end;
     }
-
-    if (!app_load_modules(NULL))
-        goto end;
 
     if (s_key_file == NULL)
         s_key_file = s_cert_file;

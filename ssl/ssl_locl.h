@@ -816,7 +816,7 @@ struct ssl_ctx_st {
                               unsigned int *cookie_len);
 
     /* verify cookie callback */
-    int (*app_verify_cookie_cb) (SSL *ssl, unsigned char *cookie,
+    int (*app_verify_cookie_cb) (SSL *ssl, const unsigned char *cookie,
                                  unsigned int cookie_len);
 
     CRYPTO_EX_DATA ex_data;
@@ -1439,7 +1439,6 @@ typedef struct hm_fragment_st {
 typedef struct dtls1_state_st {
     unsigned int send_cookie;
     unsigned char cookie[DTLS1_COOKIE_LENGTH];
-    unsigned char rcvd_cookie[DTLS1_COOKIE_LENGTH];
     unsigned int cookie_len;
 
     /* handshake message numbers */

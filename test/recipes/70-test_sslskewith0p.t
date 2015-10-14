@@ -60,7 +60,7 @@ my $test_name = "test_sslskewith0p";
 setup($test_name);
 
 plan skip_all => "$test_name can only be performed with OpenSSL configured shared"
-    unless (map { chomp; s/^SHARED_LIBS=\s*//; $_ }
+    unless (map { s/\R//; s/^SHARED_LIBS=\s*//; $_ }
 	    grep { /^SHARED_LIBS=/ }
 	    do { local @ARGV = ( top_file("Makefile") ); <> })[0] ne "";
 
