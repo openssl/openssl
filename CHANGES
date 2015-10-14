@@ -3,6 +3,8 @@
  _______________
 
  Changes between 1.0.2 and 1.1.0  [xx XXX xxxx]
+  *) Remove EVP_CHECK_DES_KEY, a compile-time option that never compiled.
+     [Emilia Käsper]
 
   *) Removed DES and RC4 ciphersuites from DEFAULT. Also removed RC2 although
      in 1.0.2 EXPORT was already removed and the only RC2 ciphersuite is also
