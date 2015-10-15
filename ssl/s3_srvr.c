@@ -883,6 +883,7 @@ int ssl3_get_client_hello(SSL *s)
 
     is_v2_record = RECORD_LAYER_is_sslv2_record(&s->rlayer);
 
+    PACKET_null_init(&cookie);
     /* First lets get s->client_version set correctly */
     if (is_v2_record) {
         unsigned int version;
@@ -1052,8 +1053,6 @@ int ssl3_get_client_hello(SSL *s)
 
         PACKET_null_init(&compression);
         PACKET_null_init(&extensions);
-        /* We're never DTLS here but just play safe and initialize. */
-        PACKET_null_init(&cookie);
     } else {
         /* Regular ClientHello. */
         if (!PACKET_copy_bytes(&pkt, s->s3->client_random, SSL3_RANDOM_SIZE)
