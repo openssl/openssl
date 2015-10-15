@@ -3227,6 +3227,7 @@ typedef struct {
     int nid;
     int secbits;
     const EVP_MD *(*mfunc) (void);
+    unsigned char tlsext_hash;
 } tls12_hash_info;
 
 static const EVP_MD* md_gost94()
@@ -3246,27 +3247,33 @@ static const EVP_MD* md_gost2012_512()
 
 static const tls12_hash_info tls12_md_info[] = {
 #ifdef OPENSSL_NO_MD5
-    {NID_md5, 64, 0},
+    {NID_md5, 64, 0, TLSEXT_hash_md5},
 #else
-    {NID_md5, 64, EVP_md5},
+    {NID_md5, 64, EVP_md5, TLSEXT_hash_md5},
 #endif
-    {NID_sha1, 80, EVP_sha1},
-    {NID_sha224, 112, EVP_sha224},
-    {NID_sha256, 128, EVP_sha256},
-    {NID_sha384, 192, EVP_sha384},
-    {NID_sha512, 256, EVP_sha512},
-    {NID_id_GostR3411_94,       128, md_gost94},
-    {NID_id_GostR3411_2012_256, 128, md_gost2012_256},
-    {NID_id_GostR3411_2012_512, 256, md_gost2012_512},
+    {NID_sha1, 80, EVP_sha1, TLSEXT_hash_sha1},
+    {NID_sha224, 112, EVP_sha224, TLSEXT_hash_sha224},
+    {NID_sha256, 128, EVP_sha256, TLSEXT_hash_sha256},
+    {NID_sha384, 192, EVP_sha384, TLSEXT_hash_sha384},
+    {NID_sha512, 256, EVP_sha512, TLSEXT_hash_sha512},
+    {NID_id_GostR3411_94,       128, md_gost94, TLSEXT_hash_gostr3411},
+    {NID_id_GostR3411_2012_256, 128, md_gost2012_256, TLSEXT_hash_gostr34112012_256},
+    {NID_id_GostR3411_2012_512, 256, md_gost2012_512, TLSEXT_hash_gostr34112012_512},
 };
 
 static const tls12_hash_info *tls12_get_hash_info(unsigned char hash_alg)
 {
+    int i;
     if (hash_alg == 0)
         return NULL;
-    if (hash_alg > OSSL_NELEM(tls12_md_info))
-        return NULL;
-    return tls12_md_info + hash_alg - 1;
+    
+    for (i=0; i < OSSL_NELEM(tls12_md_info); i++)
+    {
+        if (tls12_md_info[i].tlsext_hash == hash_alg)
+            return tls12_md_info + i;
+    }
+
+    return NULL;
 }
 
 const EVP_MD *tls12_get_hash(unsigned char hash_alg)
