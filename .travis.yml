@@ -7,6 +7,7 @@ addons:
             - gcc-5
             - binutils-mingw-w64
             - gcc-mingw-w64
+            - wine
         sources:
             - llvm-toolchain-precise-3.6
             - ubuntu-toolchain-r-test
@@ -51,6 +52,10 @@ matrix:
           compiler: i686-w64-mingw32-gcc
         - os: osx
           compiler: x86_64-w64-mingw32-gcc
+        - compiler: i686-w64-mingw32-gcc
+          env: CONFIG_OPTS="shared"
+        - compiler: x86_64-w64-mingw32-gcc
+          env: CONFIG_OPTS="shared"
     allow_failures:
         - compiler: i686-w64-mingw32-gcc
           env: CONFIG_OPTS="--debug --strict-warnings"
@@ -70,7 +75,10 @@ before_script:
 
 script:
     - make
-    - if [ -z "$CROSS_COMPILE" ]; then make test; fi
+    - if [ -n "$CROSS_COMPILE" ]; then
+          export EXE_SHELL="wine" WINEPREFIX=`pwd`;
+      fi
+    - make test
 
 notifications:
     email:
