@@ -175,6 +175,10 @@ static int apps_startup()
     ERR_load_crypto_strings();
     ERR_load_SSL_strings();
 
+    OPENSSL_load_builtin_modules();
+#ifndef OPENSSL_NO_ENGINE
+    ENGINE_load_builtin_engines();
+#endif
     if (!app_load_modules(NULL)) {
         ERR_print_errors(bio_err);
         BIO_printf(bio_err, "Error loading default configuration\n");
@@ -183,12 +187,8 @@ static int apps_startup()
 
     OpenSSL_add_all_algorithms();
     OpenSSL_add_ssl_algorithms();
-    OPENSSL_load_builtin_modules();
     setup_ui_method();
     /*SSL_library_init();*/
-#ifndef OPENSSL_NO_ENGINE
-    ENGINE_load_builtin_engines();
-#endif
     return 1;
 }
 
