@@ -541,7 +541,7 @@ my %globals;
 					$v="$current_segment\tENDS\n" if ($current_segment);
 					$current_segment = ".text\$";
 					$v.="$current_segment\tSEGMENT ";
-					$v.=$masm>=$masmref ? "ALIGN(256)" : "PAGE";
+					$v.=$masm>=$masmref ? "ALIGN(4096)" : "PAGE";
 					$v.=" 'CODE'";
 				    }
 				    $self->{value} = $v;
