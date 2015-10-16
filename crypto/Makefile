@@ -7,7 +7,7 @@ TOP=		..
 CC=		cc
 INCLUDE=	-I. -I$(TOP) -I../include -Iinclude $(ZLIB_INCLUDE)
 # INCLUDES targets sudbirs!
-INCLUDES=	-I.. -I../.. -I../modes -I../include -I../../include $(ZLIB_INCLUDE)
+INCLUDES=	-I.. -I../.. -I../modes -I../ct -I../include -I../../include $(ZLIB_INCLUDE)
 CFLAG=		-g
 MAKEDEPPROG=	makedepend
 MAKEDEPEND=	$(TOP)/util/domd $(TOP) -MD $(MAKEDEPPROG)
