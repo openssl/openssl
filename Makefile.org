@@ -437,7 +437,9 @@ test:   tests
 tests: rehash
 	@(cd test && echo "testing..." && \
 	$(CLEARENV) && $(MAKE) -e $(BUILDENV) TOP=.. TESTS='$(TESTS)' OPENSSL_DEBUG_MEMORY=on OPENSSL_CONF=../apps/openssl.cnf tests );
-	OPENSSL_CONF=apps/openssl.cnf util/opensslwrap.sh version -a
+	@if [ -z "$(CROSS_COMPILE)" ]; then \
+		OPENSSL_CONF=apps/openssl.cnf util/opensslwrap.sh version -a; \
+	fi
 
 list-tests:
 	@(cd test && \
