@@ -139,7 +139,7 @@ static void scryptROMix(unsigned char *B, uint64_t r, uint64_t N,
         *pV = *pB++;
         *pV |= *pB++ << 8;
         *pV |= *pB++ << 16;
-        *pV |= *pB++ << 24;
+        *pV |= (uint32_t)*pB++ << 24;
     }
 
     for (i = 1; i < N; i++, pV += 32 * r)
