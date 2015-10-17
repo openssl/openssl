@@ -118,7 +118,8 @@ static BIO *init_responder(const char *port);
 static int do_responder(OCSP_REQUEST **preq, BIO **pcbio, BIO *acbio,
                         const char *port);
 static int send_ocsp_response(BIO *cbio, OCSP_RESPONSE *resp);
-static OCSP_RESPONSE *query_responder(BIO *cbio, const char *path,
+static OCSP_RESPONSE *query_responder(BIO *cbio, const char *host,
+                                      const char *path,
                                       const STACK_OF(CONF_VALUE) *headers,
                                       OCSP_REQUEST *req, int req_timeout);
 
@@ -1177,13 +1178,15 @@ static int send_ocsp_response(BIO *cbio, OCSP_RESPONSE *resp)
     return 1;
 }
 
-static OCSP_RESPONSE *query_responder(BIO *cbio, const char *path,
+static OCSP_RESPONSE *query_responder(BIO *cbio, const char *host,
+                                      const char *path,
                                       const STACK_OF(CONF_VALUE) *headers,
                                       OCSP_REQUEST *req, int req_timeout)
 {
     int fd;
     int rv;
     int i;
+    int add_host = 1;
     OCSP_REQ_CTX *ctx = NULL;
     OCSP_RESPONSE *rsp = NULL;
     fd_set confds;
@@ -1222,9 +1225,14 @@ static OCSP_RESPONSE *query_responder(BIO *cbio, const char *path,
 
     for (i = 0; i < sk_CONF_VALUE_num(headers); i++) {
         CONF_VALUE *hdr = sk_CONF_VALUE_value(headers, i);
+        if (add_host == 1 && strcasecmp("host", hdr->name) == 0)
+            add_host = 0;
         if (!OCSP_REQ_CTX_add1_header(ctx, hdr->name, hdr->value))
             goto err;
     }
+
+    if (add_host == 1 && OCSP_REQ_CTX_add1_header(ctx, "Host", host) == 0)
+        goto err;
 
     if (!OCSP_REQ_CTX_set1_req(ctx, req))
         goto err;
@@ -1272,7 +1280,6 @@ OCSP_RESPONSE *process_responder(OCSP_REQUEST *req,
     BIO *cbio = NULL;
     SSL_CTX *ctx = NULL;
     OCSP_RESPONSE *resp = NULL;
-    int found, i;
 
     cbio = BIO_new_connect(host);
     if (!cbio) {
@@ -1292,18 +1299,8 @@ OCSP_RESPONSE *process_responder(OCSP_REQUEST *req,
         sbio = BIO_new_ssl(ctx, 1);
         cbio = BIO_push(sbio, cbio);
     }
-    for (found = i = 0; i < sk_CONF_VALUE_num(headers); i++) {
-       CONF_VALUE *hdr = sk_CONF_VALUE_value(headers, i);
-       if (strcasecmp("host", hdr->name) == 0) {
-           found = 1;
-           break;
-       }
-    }
 
-    if (!found && !X509V3_add_value("Host", host, &headers))
-        BIO_printf(bio_err, "Error setting HTTP Host header\n");
-
-    resp = query_responder(cbio, path, headers, req, req_timeout);
+    resp = query_responder(cbio, host, path, headers, req, req_timeout);
     if (!resp)
         BIO_printf(bio_err, "Error querying OCSP responder\n");
  end:
