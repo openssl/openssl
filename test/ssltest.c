@@ -454,7 +454,12 @@ static int verify_alpn(SSL *client, SSL *server)
     OPENSSL_free(alpn_selected);
     alpn_selected = NULL;
 
-    if (client_proto_len != server_proto_len ||
+    if (client_proto_len != server_proto_len) {
+        BIO_printf(bio_stdout, "ALPN selected protocols differ!\n");
+        goto err;
+    }
+
+    if (client_proto != NULL &&
         memcmp(client_proto, server_proto, client_proto_len) != 0) {
         BIO_printf(bio_stdout, "ALPN selected protocols differ!\n");
         goto err;
