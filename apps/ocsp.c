@@ -404,13 +404,14 @@ int ocsp_main(int argc, char **argv)
             path = opt_arg();
             break;
         case OPT_ISSUER:
-            X509_free(issuer);
             issuer = load_cert(opt_arg(), FORMAT_PEM,
                                NULL, NULL, "issuer certificate");
             if (issuer == NULL)
                 goto end;
-            if ((issuers = sk_X509_new_null()) == NULL)
-                goto end;
+            if (issuers == NULL) {
+                if ((issuers = sk_X509_new_null()) == NULL)
+                    goto end;
+            }
             sk_X509_push(issuers, issuer);
             break;
         case OPT_CERT:
@@ -750,6 +751,7 @@ int ocsp_main(int argc, char **argv)
     EVP_PKEY_free(key);
     EVP_PKEY_free(rkey);
     X509_free(cert);
+    sk_X509_pop_free(issuers, X509_free);
     X509_free(rsigner);
     X509_free(rca_cert);
     free_index(rdb);
