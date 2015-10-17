@@ -86,10 +86,10 @@ fill in B<id> directly, but should use CRYPTO_THREADID_set_numeric() if thread
 IDs are numeric, or CRYPTO_THREADID_set_pointer() if they are pointer-based.
 If the application does not register such a callback using
 CRYPTO_THREADID_set_callback(), then a default implementation is used - on
-Windows and BeOS this uses the system's default thread identifying APIs, and on
-all other platforms it uses the address of B<errno>. The latter is satisfactory
-for thread-safety if and only if the platform has a thread-local error number
-facility.
+Windows and BeOS this uses the system's default thread identifying APIs, on Unix
+it uses the ID of the current pthread and on all other platforms it uses the
+address of B<errno>. The latter is satisfactory for thread-safety if and only if
+the platform has a thread-local error number facility.
 
 Once threadid_func() is registered, or if the built-in default implementation is
 to be used;
