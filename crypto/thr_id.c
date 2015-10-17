@@ -119,6 +119,11 @@
 #ifndef OPENSSL_NO_DEPRECATED
 static unsigned long (*id_callback) (void) = 0;
 #endif
+
+#if defined(__unix__) || defined(unix)
+# include <pthread.h>
+#endif
+
 static void (*threadid_callback) (CRYPTO_THREADID *) = 0;
 
 /*
@@ -199,6 +204,8 @@ void CRYPTO_THREADID_current(CRYPTO_THREADID *id)
     /* Else pick a backup */
 #if defined(OPENSSL_SYS_WIN32)
     CRYPTO_THREADID_set_numeric(id, (unsigned long)GetCurrentThreadId());
+#elif defined(__unix__) || defined(unix)
+    CRYPTO_THREADID_set_numeric(id, (unsigned long)pthread_self());
 #else
     /* For everything else, default to using the address of 'errno' */
     CRYPTO_THREADID_set_pointer(id, (void *)&errno);
