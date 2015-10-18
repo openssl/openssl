@@ -80,4 +80,4 @@ ct_lib.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 ct_lib.o: ../../include/openssl/tls1.h ../../include/openssl/x509.h
 ct_lib.o: ../../include/openssl/x509_vfy.h ../../ssl/packet_locl.h
 ct_lib.o: ../../ssl/record/record.h ../../ssl/ssl_locl.h
-ct_lib.o: ../include/internal/cryptlib.h ct_lib.c ct_locl.h
+ct_lib.o: ../include/internal/cryptlib.h ../include/internal/ct_int.h ct_lib.c
