@@ -77,7 +77,7 @@ int X509_verify(X509 *a, EVP_PKEY *r)
     if (X509_ALGOR_cmp(&a->sig_alg, &a->cert_info.signature))
         return 0;
     return (ASN1_item_verify(ASN1_ITEM_rptr(X509_CINF), &a->sig_alg,
-                             a->signature, &a->cert_info, r));
+                             &a->signature, &a->cert_info, r));
 }
 
 int X509_REQ_verify(X509_REQ *a, EVP_PKEY *r)
@@ -96,7 +96,8 @@ int X509_sign(X509 *x, EVP_PKEY *pkey, const EVP_MD *md)
 {
     x->cert_info.enc.modified = 1;
     return (ASN1_item_sign(ASN1_ITEM_rptr(X509_CINF), &x->cert_info.signature,
-                           &x->sig_alg, x->signature, &x->cert_info, pkey, md));
+                           &x->sig_alg, &x->signature, &x->cert_info, pkey,
+                           md));
 }
 
 int X509_sign_ctx(X509 *x, EVP_MD_CTX *ctx)
@@ -104,7 +105,7 @@ int X509_sign_ctx(X509 *x, EVP_MD_CTX *ctx)
     x->cert_info.enc.modified = 1;
     return ASN1_item_sign_ctx(ASN1_ITEM_rptr(X509_CINF),
                               &x->cert_info.signature,
-                              &x->sig_alg, x->signature, &x->cert_info, ctx);
+                              &x->sig_alg, &x->signature, &x->cert_info, ctx);
 }
 
 int X509_http_nbio(OCSP_REQ_CTX *rctx, X509 **pcert)
@@ -130,14 +131,14 @@ int X509_CRL_sign(X509_CRL *x, EVP_PKEY *pkey, const EVP_MD *md)
 {
     x->crl.enc.modified = 1;
     return (ASN1_item_sign(ASN1_ITEM_rptr(X509_CRL_INFO), &x->crl.sig_alg,
-                           &x->sig_alg, x->signature, &x->crl, pkey, md));
+                           &x->sig_alg, &x->signature, &x->crl, pkey, md));
 }
 
 int X509_CRL_sign_ctx(X509_CRL *x, EVP_MD_CTX *ctx)
 {
     x->crl.enc.modified = 1;
     return ASN1_item_sign_ctx(ASN1_ITEM_rptr(X509_CRL_INFO),
-                              &x->crl.sig_alg, &x->sig_alg, x->signature,
+                              &x->crl.sig_alg, &x->sig_alg, &x->signature,
                               &x->crl, ctx);
 }
 

@@ -1,0 +1,43 @@
+HOW TO CONTRIBUTE TO OpenSSL
+----------------------------
+
+Development is coordinated on the openssl-dev mailing list (see
+http://www.openssl.org for information on subscribing). If you
+would like to submit a patch, send it to rt@openssl.org with
+the string "[PATCH]" in the subject. Please be sure to include a
+textual explanation of what your patch does.
+
+You can also make GitHub pull requests. If you do this, please also send mail to
+rt@openssl.org with a brief description and a link to the PR so that we can more
+easily keep track of it.
+
+If you are unsure as to whether a feature will be useful for the general
+OpenSSL community please discuss it on the openssl-dev mailing list first.
+Someone may be already working on the same thing or there may be a good
+reason as to why that feature isn't implemented.
+
+Patches should be as up to date as possible, preferably relative to the
+current Git or the last snapshot. They should follow our coding style
+(see https://www.openssl.org/policies/codingstyle.html) and compile without
+warnings using the --strict-warnings flag.  OpenSSL compiles on many
+varied platforms: try to ensure you only use portable features.
+
+Note: For legal reasons, contributions from the US can be accepted only
+if a TSU notification and a copy of the patch are sent to crypt@bis.doc.gov
+(formerly BXA) with a copy to the ENC Encryption Request Coordinator;
+please take some time to look at
+http://www.bis.doc.gov/Encryption/PubAvailEncSourceCodeNofify.html [sic]
+and
+http://w3.access.gpo.gov/bis/ear/pdf/740.pdf (EAR Section 740.13(e))
+for the details. If "your encryption source code is too large to serve as
+an email attachment", they are glad to receive it by fax instead; hope you
+have a cheap long-distance plan.
+
+Our preferred format for changes is "diff -u" output. You might
+generate it like this:
+
+# cd openssl-work
+# [your changes]
+# ./Configure dist; make clean
+# cd ..
+# diff -ur openssl-orig openssl-work > mydiffs.patch

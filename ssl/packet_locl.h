@@ -86,7 +86,7 @@ static inline void packet_forward(PACKET *pkt, size_t len)
 /*
  * Returns the number of bytes remaining to be read in the PACKET
  */
-__owur static inline size_t PACKET_remaining(const PACKET *pkt)
+static inline size_t PACKET_remaining(const PACKET *pkt)
 {
     return pkt->remaining;
 }
@@ -107,7 +107,8 @@ static inline unsigned char *PACKET_data(const PACKET *pkt)
  * copy of the data so |buf| must be present for the whole time that the PACKET
  * is being used.
  */
-static inline int PACKET_buf_init(PACKET *pkt, unsigned char *buf, size_t len)
+__owur static inline int PACKET_buf_init(PACKET *pkt, unsigned char *buf,
+                                         size_t len)
 {
     /* Sanity check for negative values. */
     if (buf + len < buf)
@@ -148,9 +149,7 @@ __owur static inline int PACKET_peek_sub_packet(const PACKET *pkt,
     if (PACKET_remaining(pkt) < len)
         return 0;
 
-    PACKET_buf_init(subpkt, pkt->curr, len);
-
-    return 1;
+    return PACKET_buf_init(subpkt, pkt->curr, len);
 }
 
 /*
