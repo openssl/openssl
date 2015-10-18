@@ -61,7 +61,7 @@
 #include <openssl/asn1.h>
 #include <openssl/x509v3.h>
 #include "ext_dat.h"
-#include "crypto/ct/ct_locl.h"
+#include "ct_locl.h"
 
 #ifndef OPENSSL_NO_CT
 /* Signature and hash algorithms from RFC 5246 */
