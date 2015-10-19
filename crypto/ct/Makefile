@@ -15,8 +15,8 @@ CFLAGS= $(INCLUDES) $(CFLAG)
 GENERAL=Makefile
 
 LIB=$(TOP)/libcrypto.a
-LIBSRC= ct_lib.c
-LIBOBJ= ct_lib.o
+LIBSRC= ct_lib.c ct_err.c
+LIBOBJ= ct_lib.o ct_err.o
 
 SRC= $(LIBSRC)
 
@@ -41,6 +41,9 @@ files:
 
 tags:
 	ctags $(SRC)
+
+errors:
+	$(PERL) $(TOP)/util/mkerr.pl -conf ct.ec -hprefix internal/ -write *.c
 
 lint:
 	lint -DLINT $(INCLUDES) $(SRC)>fluff
