@@ -181,6 +181,7 @@ struct engine_st {
     const DH_METHOD *dh_meth;
     const ECDH_METHOD *ecdh_meth;
     const ECDSA_METHOD *ecdsa_meth;
+    const EC_KEY_METHOD *ec_key_meth;
     const RAND_METHOD *rand_meth;
     const STORE_METHOD *store_meth;
     /* Cipher handling is via this callback */
