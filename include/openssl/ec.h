@@ -740,6 +740,7 @@ int ECPKParameters_print_fp(FILE *fp, const EC_GROUP *x, int off);
 /********************************************************************/
 
 typedef struct ec_key_st EC_KEY;
+typedef struct ec_key_method_st EC_KEY_METHOD;
 
 /* some values for the encoding_flag */
 # define EC_PKEY_NO_PARAMETERS   0x001
@@ -982,6 +983,11 @@ int ECParameters_print_fp(FILE *fp, const EC_KEY *key);
 int EC_KEY_print_fp(FILE *fp, const EC_KEY *key, int off);
 
 # endif
+
+const EC_KEY_METHOD *EC_KEY_OpenSSL(void);
+const EC_KEY_METHOD *EC_KEY_get_default_method(void);
+void EC_KEY_set_default_method(const EC_KEY_METHOD *meth);
+EC_KEY *EC_KEY_new_method(ENGINE *engine);
 
 # define ECParameters_dup(x) ASN1_dup_of(EC_KEY,i2d_ECParameters,d2i_ECParameters,x)
 

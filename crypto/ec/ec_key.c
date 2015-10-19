@@ -68,17 +68,7 @@
 
 EC_KEY *EC_KEY_new(void)
 {
-    EC_KEY *ret = OPENSSL_zalloc(sizeof(*ret));
-
-    if (ret == NULL) {
-        ECerr(EC_F_EC_KEY_NEW, ERR_R_MALLOC_FAILURE);
-        return (NULL);
-    }
-
-    ret->version = 1;
-    ret->conv_form = POINT_CONVERSION_UNCOMPRESSED;
-    ret->references = 1;
-    return (ret);
+    return EC_KEY_new_method(NULL);
 }
 
 EC_KEY *EC_KEY_new_by_curve_name(int nid)

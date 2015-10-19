@@ -115,6 +115,7 @@ extern "C" {
 # define ENGINE_METHOD_STORE             (unsigned int)0x0100
 # define ENGINE_METHOD_PKEY_METHS        (unsigned int)0x0200
 # define ENGINE_METHOD_PKEY_ASN1_METHS   (unsigned int)0x0400
+# define ENGINE_METHOD_EC_KEY            (unsigned int)0x0800
 /* Obvious all-or-nothing cases. */
 # define ENGINE_METHOD_ALL               (unsigned int)0xFFFF
 # define ENGINE_METHOD_NONE              (unsigned int)0x0000
@@ -447,6 +448,10 @@ int ENGINE_register_ECDSA(ENGINE *e);
 void ENGINE_unregister_ECDSA(ENGINE *e);
 void ENGINE_register_all_ECDSA(void);
 
+int ENGINE_register_EC_KEY(ENGINE *e);
+void ENGINE_unregister_EC_KEY(ENGINE *e);
+void ENGINE_register_all_EC_KEY(void);
+
 int ENGINE_register_DH(ENGINE *e);
 void ENGINE_unregister_DH(ENGINE *e);
 void ENGINE_register_all_DH(void);
@@ -555,6 +560,7 @@ int ENGINE_set_RSA(ENGINE *e, const RSA_METHOD *rsa_meth);
 int ENGINE_set_DSA(ENGINE *e, const DSA_METHOD *dsa_meth);
 int ENGINE_set_ECDH(ENGINE *e, const ECDH_METHOD *ecdh_meth);
 int ENGINE_set_ECDSA(ENGINE *e, const ECDSA_METHOD *ecdsa_meth);
+int ENGINE_set_EC_KEY(ENGINE *e, const EC_KEY_METHOD *ecdsa_meth);
 int ENGINE_set_DH(ENGINE *e, const DH_METHOD *dh_meth);
 int ENGINE_set_RAND(ENGINE *e, const RAND_METHOD *rand_meth);
 int ENGINE_set_STORE(ENGINE *e, const STORE_METHOD *store_meth);
@@ -600,6 +606,7 @@ const RSA_METHOD *ENGINE_get_RSA(const ENGINE *e);
 const DSA_METHOD *ENGINE_get_DSA(const ENGINE *e);
 const ECDH_METHOD *ENGINE_get_ECDH(const ENGINE *e);
 const ECDSA_METHOD *ENGINE_get_ECDSA(const ENGINE *e);
+const EC_KEY_METHOD *ENGINE_get_EC_KEY(const ENGINE *e);
 const DH_METHOD *ENGINE_get_DH(const ENGINE *e);
 const RAND_METHOD *ENGINE_get_RAND(const ENGINE *e);
 const STORE_METHOD *ENGINE_get_STORE(const ENGINE *e);
@@ -679,6 +686,7 @@ ENGINE *ENGINE_get_default_RSA(void);
 ENGINE *ENGINE_get_default_DSA(void);
 ENGINE *ENGINE_get_default_ECDH(void);
 ENGINE *ENGINE_get_default_ECDSA(void);
+ENGINE *ENGINE_get_default_EC_KEY(void);
 ENGINE *ENGINE_get_default_DH(void);
 ENGINE *ENGINE_get_default_RAND(void);
 /*
@@ -702,6 +710,7 @@ int ENGINE_set_default_string(ENGINE *e, const char *def_list);
 int ENGINE_set_default_DSA(ENGINE *e);
 int ENGINE_set_default_ECDH(ENGINE *e);
 int ENGINE_set_default_ECDSA(ENGINE *e);
+int ENGINE_set_default_EC_KEY(ENGINE *e);
 int ENGINE_set_default_DH(ENGINE *e);
 int ENGINE_set_default_RAND(ENGINE *e);
 int ENGINE_set_default_ciphers(ENGINE *e);

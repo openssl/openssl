@@ -257,6 +257,8 @@ struct ec_group_st {
 } /* EC_GROUP */ ;
 
 struct ec_key_st {
+    const EC_KEY_METHOD *meth;
+    ENGINE *engine;
     int version;
     EC_GROUP *group;
     EC_POINT *pub_key;
@@ -552,3 +554,12 @@ int ec_precompute_mont_data(EC_GROUP *);
  */
 const EC_METHOD *EC_GFp_nistz256_method(void);
 #endif
+
+/* EC_METHOD definitions */
+
+struct ec_key_method_st {
+    const char *name;
+    int32_t flags;
+} /* EC_KEY_METHOD */ ;
+
+#define EC_KEY_METHOD_DYNAMIC   1
