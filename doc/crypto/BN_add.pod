@@ -49,6 +49,7 @@ BN_add() adds I<a> and I<b> and places the result in I<r> (C<r=a+b>).
 I<r> may be the same B<BIGNUM> as I<a> or I<b>.
 
 BN_sub() subtracts I<b> from I<a> and places the result in I<r> (C<r=a-b>).
+I<r> may be the same B<BIGNUM> as I<a> or I<b>.
 
 BN_mul() multiplies I<a> and I<b> and places the result in I<r> (C<r=a*b>).
 I<r> may be the same B<BIGNUM> as I<a> or I<b>.
