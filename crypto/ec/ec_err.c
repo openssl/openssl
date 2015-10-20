@@ -200,6 +200,7 @@ static ERR_STRING_DATA EC_str_functs[] = {
     {ERR_FUNC(EC_F_EC_KEY_COPY), "EC_KEY_copy"},
     {ERR_FUNC(EC_F_EC_KEY_GENERATE_KEY), "EC_KEY_generate_key"},
     {ERR_FUNC(EC_F_EC_KEY_NEW), "EC_KEY_new"},
+    {ERR_FUNC(EC_F_EC_KEY_NEW_METHOD), "EC_KEY_new_method"},
     {ERR_FUNC(EC_F_EC_KEY_PRINT), "EC_KEY_print"},
     {ERR_FUNC(EC_F_EC_KEY_PRINT_FP), "EC_KEY_print_fp"},
     {ERR_FUNC(EC_F_EC_KEY_SET_PUBLIC_KEY_AFFINE_COORDINATES),
