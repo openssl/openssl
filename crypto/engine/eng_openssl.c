@@ -155,7 +155,6 @@ static int bind_helper(ENGINE *e)
         || !ENGINE_set_DSA(e, DSA_get_default_method())
 # endif
 # ifndef OPENSSL_NO_EC
-        || !ENGINE_set_ECDH(e, ECDH_OpenSSL())
         || !ENGINE_set_ECDSA(e, ECDSA_OpenSSL())
 # endif
 # ifndef OPENSSL_NO_DH
