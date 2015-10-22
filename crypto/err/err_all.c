@@ -139,7 +139,6 @@ void ERR_load_crypto_strings(void)
 # ifndef OPENSSL_NO_EC
     ERR_load_EC_strings();
     ERR_load_ECDSA_strings();
-    ERR_load_ECDH_strings();
 # endif
     /* skip ERR_load_SSL_strings() because it is not in this library */
     ERR_load_BIO_strings();
