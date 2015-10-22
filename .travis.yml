@@ -27,6 +27,7 @@ compiler:
 env:
     - CONFIG_OPTS=""
     - CONFIG_OPTS="shared"
+    - CONFIG_OPTS="no-asm"
     - CONFIG_OPTS="--debug --strict-warnings"
 
 matrix:
@@ -56,6 +57,10 @@ matrix:
           env: CONFIG_OPTS="shared"
         - compiler: x86_64-w64-mingw32-gcc
           env: CONFIG_OPTS="shared"
+        - compiler: i686-w64-mingw32-gcc
+          env: CONFIG_OPTS="no-asm"
+        - compiler: x86_64-w64-mingw32-gcc
+          env: CONFIG_OPTS="no-asm"
     allow_failures:
         - compiler: i686-w64-mingw32-gcc
           env: CONFIG_OPTS="--debug --strict-warnings"
