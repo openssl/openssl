@@ -560,6 +560,9 @@ const EC_METHOD *EC_GFp_nistz256_method(void);
 struct ec_key_method_st {
     const char *name;
     int32_t flags;
+    int (*keygen)(EC_KEY *key);
 } /* EC_KEY_METHOD */ ;
 
 #define EC_KEY_METHOD_DYNAMIC   1
+
+int ossl_ec_key_gen(EC_KEY *eckey);

@@ -203,15 +203,22 @@ int EC_KEY_up_ref(EC_KEY *r)
 
 int EC_KEY_generate_key(EC_KEY *eckey)
 {
-    int ok = 0;
-    BN_CTX *ctx = NULL;
-    BIGNUM *priv_key = NULL, *order = NULL;
-    EC_POINT *pub_key = NULL;
-
     if (!eckey || !eckey->group) {
         ECerr(EC_F_EC_KEY_GENERATE_KEY, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
+    if (eckey->meth->keygen)
+        return eckey->meth->keygen(eckey);
+    ECerr(EC_F_EC_KEY_GENERATE_KEY, EC_R_OPERATION_NOT_SUPPORTED);
+    return 0;
+}
+
+int ossl_ec_key_gen(EC_KEY *eckey)
+{
+    int ok = 0;
+    BN_CTX *ctx = NULL;
+    BIGNUM *priv_key = NULL, *order = NULL;
+    EC_POINT *pub_key = NULL;
 
     if ((order = BN_new()) == NULL)
         goto err;

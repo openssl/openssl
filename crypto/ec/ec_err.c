@@ -300,6 +300,7 @@ static ERR_STRING_DATA EC_str_reasons[] = {
     {ERR_REASON(EC_R_NOT_INITIALIZED), "not initialized"},
     {ERR_REASON(EC_R_NO_FIELD_MOD), "no field mod"},
     {ERR_REASON(EC_R_NO_PARAMETERS_SET), "no parameters set"},
+    {ERR_REASON(EC_R_OPERATION_NOT_SUPPORTED), "operation not supported"},
     {ERR_REASON(EC_R_PASSED_NULL_PARAMETER), "passed null parameter"},
     {ERR_REASON(EC_R_PEER_KEY_ERROR), "peer key error"},
     {ERR_REASON(EC_R_PKPARAMETERS2GROUP_FAILURE),
