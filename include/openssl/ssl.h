@@ -2165,7 +2165,7 @@ void ERR_load_SSL_strings(void);
 # define SSL_F_TLS_CONSTRUCT_SERVER_HELLO                 376
 # define SSL_F_TLS_CONSTRUCT_SERVER_KEY_EXCHANGE          377
 # define SSL_F_TLS_GET_MESSAGE_BODY                       351
-# define SSL_F_TLS_GET_MESSAGE_HEADER                     350
+# define SSL_F_TLS_GET_MESSAGE_HEADER                     387
 # define SSL_F_TLS_POST_PROCESS_CLIENT_HELLO              378
 # define SSL_F_TLS_POST_PROCESS_CLIENT_KEY_EXCHANGE       384
 # define SSL_F_TLS_PREPARE_CLIENT_CERTIFICATE             360
@@ -2294,8 +2294,8 @@ void ERR_load_SSL_strings(void);
 # define SSL_R_INVALID_TICKET_KEYS_LENGTH                 325
 # define SSL_R_INVALID_TRUST                              279
 # define SSL_R_LENGTH_MISMATCH                            159
-# define SSL_R_LENGTH_TOO_LONG                            102
 # define SSL_R_LENGTH_TOO_SHORT                           160
+# define SSL_R_LENGTH_TOO_LONG                            404
 # define SSL_R_LIBRARY_BUG                                274
 # define SSL_R_LIBRARY_HAS_NO_CIPHERS                     161
 # define SSL_R_MISSING_DH_DSA_CERT                        162

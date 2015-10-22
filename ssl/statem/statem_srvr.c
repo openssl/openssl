@@ -956,7 +956,7 @@ int dtls_construct_hello_verify_request(SSL *s)
         s->ctx->app_gen_cookie_cb(s, s->d1->cookie,
                                   &(s->d1->cookie_len)) == 0 ||
         s->d1->cookie_len > 255) {
-        SSLerr(SSL_F_DTLS1_SEND_HELLO_VERIFY_REQUEST,
+        SSLerr(SSL_F_DTLS_CONSTRUCT_HELLO_VERIFY_REQUEST,
                SSL_R_COOKIE_GEN_CALLBACK_FAILURE);
         ossl_statem_set_error(s);
         return 0;
@@ -1145,7 +1145,8 @@ enum MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
             || !PACKET_get_sub_packet(pkt, &challenge, challenge_len)
             /* No extensions. */
             || PACKET_remaining(pkt) != 0) {
-            SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, SSL_R_RECORD_LENGTH_MISMATCH);
+            SSLerr(SSL_F_TLS_PROCESS_CLIENT_HELLO,
+                   SSL_R_RECORD_LENGTH_MISMATCH);
             al = SSL_AD_DECODE_ERROR;
             goto f_err;
         }
@@ -1157,7 +1158,7 @@ enum MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
         if (!PACKET_copy_bytes(&challenge,
                                s->s3->client_random + SSL3_RANDOM_SIZE -
                                challenge_len, challenge_len)) {
-            SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, ERR_R_INTERNAL_ERROR);
+            SSLerr(SSL_F_TLS_PROCESS_CLIENT_HELLO, ERR_R_INTERNAL_ERROR);
             al = SSL_AD_INTERNAL_ERROR;
             goto f_err;
         }
@@ -1169,14 +1170,14 @@ enum MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
         if (!PACKET_copy_bytes(pkt, s->s3->client_random, SSL3_RANDOM_SIZE)
             || !PACKET_get_length_prefixed_1(pkt, &session_id)) {
             al = SSL_AD_DECODE_ERROR;
-            SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, SSL_R_LENGTH_MISMATCH);
+            SSLerr(SSL_F_TLS_PROCESS_CLIENT_HELLO, SSL_R_LENGTH_MISMATCH);
             goto f_err;
         }
 
         if (SSL_IS_DTLS(s)) {
             if (!PACKET_get_length_prefixed_1(pkt, &cookie)) {
                 al = SSL_AD_DECODE_ERROR;
-                SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, SSL_R_LENGTH_MISMATCH);
+                SSLerr(SSL_F_TLS_PROCESS_CLIENT_HELLO, SSL_R_LENGTH_MISMATCH);
                 goto f_err;
             }
             /*
@@ -1193,7 +1194,7 @@ enum MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
         if (!PACKET_get_length_prefixed_2(pkt, &cipher_suites)
             || !PACKET_get_length_prefixed_1(pkt, &compression)) {
                 al = SSL_AD_DECODE_ERROR;
-                SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, SSL_R_LENGTH_MISMATCH);
+                SSLerr(SSL_F_TLS_PROCESS_CLIENT_HELLO, SSL_R_LENGTH_MISMATCH);
                 goto f_err;
         }
         /* Could be empty. */
@@ -1253,7 +1254,7 @@ enum MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
                 if (s->ctx->app_verify_cookie_cb(s, PACKET_data(&cookie),
                                                  PACKET_remaining(&cookie)) == 0) {
                     al = SSL_AD_HANDSHAKE_FAILURE;
-                    SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO,
+                    SSLerr(SSL_F_TLS_PROCESS_CLIENT_HELLO,
                            SSL_R_COOKIE_MISMATCH);
                     goto f_err;
                     /* else cookie verification succeeded */
@@ -1262,7 +1263,7 @@ enum MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
             } else if (!PACKET_equal(&cookie, s->d1->cookie,
                                      s->d1->cookie_len)) {
                 al = SSL_AD_HANDSHAKE_FAILURE;
-                SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, SSL_R_COOKIE_MISMATCH);
+                SSLerr(SSL_F_TLS_PROCESS_CLIENT_HELLO, SSL_R_COOKIE_MISMATCH);
                 goto f_err;
             }
             s->d1->cookie_verified = 1;
@@ -1274,7 +1275,7 @@ enum MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
                 s->version = DTLS1_2_VERSION;
                 s->method = DTLSv1_2_server_method();
             } else if (tls1_suiteb(s)) {
-                SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO,
+                SSLerr(SSL_F_TLS_PROCESS_CLIENT_HELLO,
                        SSL_R_ONLY_DTLS_1_2_ALLOWED_IN_SUITEB_MODE);
                 s->version = s->client_version;
                 al = SSL_AD_PROTOCOL_VERSION;
@@ -1284,7 +1285,7 @@ enum MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
                 s->version = DTLS1_VERSION;
                 s->method = DTLSv1_server_method();
             } else {
-                SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO,
+                SSLerr(SSL_F_TLS_PROCESS_CLIENT_HELLO,
                        SSL_R_WRONG_VERSION_NUMBER);
                 s->version = s->client_version;
                 al = SSL_AD_PROTOCOL_VERSION;
@@ -1325,7 +1326,7 @@ enum MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
              * to reuse it
              */
             al = SSL_AD_ILLEGAL_PARAMETER;
-            SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO,
+            SSLerr(SSL_F_TLS_PROCESS_CLIENT_HELLO,
                    SSL_R_REQUIRED_CIPHER_MISSING);
             goto f_err;
         }
@@ -1340,14 +1341,14 @@ enum MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
     if (j >= complen) {
         /* no compress */
         al = SSL_AD_DECODE_ERROR;
-        SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, SSL_R_NO_COMPRESSION_SPECIFIED);
+        SSLerr(SSL_F_TLS_PROCESS_CLIENT_HELLO, SSL_R_NO_COMPRESSION_SPECIFIED);
         goto f_err;
     }
     
     /* TLS extensions */
     if (s->version >= SSL3_VERSION) {
         if (!ssl_parse_clienthello_tlsext(s, &extensions)) {
-            SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, SSL_R_PARSE_TLSEXT);
+            SSLerr(SSL_F_TLS_PROCESS_CLIENT_HELLO, SSL_R_PARSE_TLSEXT);
             goto err;
         }
     }
@@ -2313,7 +2314,7 @@ enum MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
         }
 
         if (!PACKET_strndup(&psk_identity, &s->session->psk_identity)) {
-            SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
+            SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
             al = SSL_AD_INTERNAL_ERROR;
             goto f_err;
         }
@@ -2407,7 +2408,8 @@ enum MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
                     enc_premaster = orig;
                 } else {
                     al = SSL_AD_DECODE_ERROR;
-                    SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE, SSL_R_LENGTH_MISMATCH);
+                    SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE,
+                           SSL_R_LENGTH_MISMATCH);
                     goto f_err;
                 }
             }
@@ -2421,7 +2423,7 @@ enum MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
          */
         if (RSA_size(rsa) < SSL_MAX_MASTER_KEY_LENGTH) {
             al = SSL_AD_INTERNAL_ERROR;
-            SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,
+            SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE,
                    RSA_R_KEY_SIZE_TOO_SMALL);
             goto f_err;
         }
@@ -2429,7 +2431,7 @@ enum MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
         rsa_decrypt = OPENSSL_malloc(RSA_size(rsa));
         if (rsa_decrypt == NULL) {
             al = SSL_AD_INTERNAL_ERROR;
-            SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE, ERR_R_MALLOC_FAILURE);
+            SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE, ERR_R_MALLOC_FAILURE);
             goto f_err;
         }
 
