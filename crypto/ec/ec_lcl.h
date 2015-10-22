@@ -561,8 +561,16 @@ struct ec_key_method_st {
     const char *name;
     int32_t flags;
     int (*keygen)(EC_KEY *key);
+    int (*compute_key)(void *out, size_t outlen, const EC_POINT *pub_key,
+                       EC_KEY *ecdh,
+                       void *(*KDF) (const void *in, size_t inlen,
+                                     void *out, size_t *outlen));
 } /* EC_KEY_METHOD */ ;
 
 #define EC_KEY_METHOD_DYNAMIC   1
 
 int ossl_ec_key_gen(EC_KEY *eckey);
+int ossl_ecdh_compute_key(void *out, size_t outlen, const EC_POINT *pub_key,
+                          EC_KEY *ecdh,
+                          void *(*KDF) (const void *in, size_t inlen,
+                                        void *out, size_t *outlen));
