@@ -522,7 +522,7 @@ static void init_read_state_machine(SSL *s)
 static SUB_STATE_RETURN read_state_machine(SSL *s) {
     OSSL_STATEM *st = &s->statem;
     int ret, mt;
-    unsigned long len;
+    unsigned long len = 0;
     int (*transition)(SSL *s, int mt);
     PACKET pkt;
     enum MSG_PROCESS_RETURN (*process_message)(SSL *s, PACKET *pkt);
