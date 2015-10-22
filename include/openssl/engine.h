@@ -108,7 +108,6 @@ extern "C" {
 # define ENGINE_METHOD_DSA               (unsigned int)0x0002
 # define ENGINE_METHOD_DH                (unsigned int)0x0004
 # define ENGINE_METHOD_RAND              (unsigned int)0x0008
-# define ENGINE_METHOD_ECDH              (unsigned int)0x0010
 # define ENGINE_METHOD_ECDSA             (unsigned int)0x0020
 # define ENGINE_METHOD_CIPHERS           (unsigned int)0x0040
 # define ENGINE_METHOD_DIGESTS           (unsigned int)0x0080
@@ -440,10 +439,6 @@ int ENGINE_register_DSA(ENGINE *e);
 void ENGINE_unregister_DSA(ENGINE *e);
 void ENGINE_register_all_DSA(void);
 
-int ENGINE_register_ECDH(ENGINE *e);
-void ENGINE_unregister_ECDH(ENGINE *e);
-void ENGINE_register_all_ECDH(void);
-
 int ENGINE_register_ECDSA(ENGINE *e);
 void ENGINE_unregister_ECDSA(ENGINE *e);
 void ENGINE_register_all_ECDSA(void);
@@ -558,7 +553,6 @@ int ENGINE_set_id(ENGINE *e, const char *id);
 int ENGINE_set_name(ENGINE *e, const char *name);
 int ENGINE_set_RSA(ENGINE *e, const RSA_METHOD *rsa_meth);
 int ENGINE_set_DSA(ENGINE *e, const DSA_METHOD *dsa_meth);
-int ENGINE_set_ECDH(ENGINE *e, const ECDH_METHOD *ecdh_meth);
 int ENGINE_set_ECDSA(ENGINE *e, const ECDSA_METHOD *ecdsa_meth);
 int ENGINE_set_EC_KEY(ENGINE *e, const EC_KEY_METHOD *ecdsa_meth);
 int ENGINE_set_DH(ENGINE *e, const DH_METHOD *dh_meth);
@@ -604,7 +598,6 @@ const char *ENGINE_get_id(const ENGINE *e);
 const char *ENGINE_get_name(const ENGINE *e);
 const RSA_METHOD *ENGINE_get_RSA(const ENGINE *e);
 const DSA_METHOD *ENGINE_get_DSA(const ENGINE *e);
-const ECDH_METHOD *ENGINE_get_ECDH(const ENGINE *e);
 const ECDSA_METHOD *ENGINE_get_ECDSA(const ENGINE *e);
 const EC_KEY_METHOD *ENGINE_get_EC_KEY(const ENGINE *e);
 const DH_METHOD *ENGINE_get_DH(const ENGINE *e);
@@ -684,7 +677,6 @@ int ENGINE_load_ssl_client_cert(ENGINE *e, SSL *s,
 ENGINE *ENGINE_get_default_RSA(void);
 /* Same for the other "methods" */
 ENGINE *ENGINE_get_default_DSA(void);
-ENGINE *ENGINE_get_default_ECDH(void);
 ENGINE *ENGINE_get_default_ECDSA(void);
 ENGINE *ENGINE_get_default_EC_KEY(void);
 ENGINE *ENGINE_get_default_DH(void);
@@ -708,7 +700,6 @@ int ENGINE_set_default_RSA(ENGINE *e);
 int ENGINE_set_default_string(ENGINE *e, const char *def_list);
 /* Same for the other "methods" */
 int ENGINE_set_default_DSA(ENGINE *e);
-int ENGINE_set_default_ECDH(ENGINE *e);
 int ENGINE_set_default_ECDSA(ENGINE *e);
 int ENGINE_set_default_EC_KEY(ENGINE *e);
 int ENGINE_set_default_DH(ENGINE *e);
