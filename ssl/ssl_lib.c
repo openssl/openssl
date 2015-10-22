@@ -230,7 +230,7 @@ int SSL_clear(SSL *s)
      * Check to see if we were changed into a different method, if so, revert
      * back if we are not doing session-id reuse.
      */
-    if (!s->in_handshake && (s->session == NULL)
+    if (!ossl_statem_get_in_handshake(s) && (s->session == NULL)
         && (s->method != s->ctx->method)) {
         s->method->ssl_free(s);
         s->method = s->ctx->method;
@@ -1080,7 +1080,7 @@ long SSL_ctrl(SSL *s, int cmd, long larg, void *parg)
             return TLS_CIPHER_LEN;
         }
     case SSL_CTRL_GET_EXTMS_SUPPORT:
-        if (!s->session || SSL_in_init(s) || s->in_handshake)
+        if (!s->session || SSL_in_init(s) || ossl_statem_get_in_handshake(s))
 		return -1;
 	if (s->session->flags & SSL_SESS_FLAG_EXTMS)
             return 1;
@@ -2526,7 +2526,6 @@ SSL *SSL_dup(SSL *s)
             ret->wbio = ret->rbio;
     }
     ret->rwstate = s->rwstate;
-    ret->in_handshake = s->in_handshake;
     ret->handshake_func = s->handshake_func;
     ret->server = s->server;
     ret->renegotiate = s->renegotiate;

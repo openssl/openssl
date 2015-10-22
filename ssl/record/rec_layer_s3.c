@@ -459,7 +459,7 @@ int ssl3_write_bytes(SSL *s, int type, const void *buf_, int len)
     tot = s->rlayer.wnum;
     s->rlayer.wnum = 0;
 
-    if (SSL_in_init(s) && !s->in_handshake) {
+    if (SSL_in_init(s) && !ossl_statem_get_in_handshake(s)) {
         i = s->handshake_func(s);
         if (i < 0)
             return (i);
@@ -1025,7 +1025,7 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
      * Now s->rlayer.handshake_fragment_len == 0 if type == SSL3_RT_HANDSHAKE.
      */
 
-    if (!s->in_handshake && SSL_in_init(s)) {
+    if (!ossl_statem_get_in_handshake(s) && SSL_in_init(s)) {
         /* type == SSL3_RT_APPLICATION_DATA */
         i = s->handshake_func(s);
         if (i < 0)
@@ -1383,7 +1383,8 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
     /*
      * Unexpected handshake message (Client Hello, or protocol violation)
      */
-    if ((s->rlayer.handshake_fragment_len >= 4) && !s->in_handshake) {
+    if ((s->rlayer.handshake_fragment_len >= 4)
+            && !ossl_statem_get_in_handshake(s)) {
         if (SSL_is_init_finished(s) &&
             !(s->s3->flags & SSL3_FLAGS_NO_RENEGOTIATE_CIPHERS)) {
             ossl_statem_set_in_init(s, 1);
@@ -1436,8 +1437,8 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
     case SSL3_RT_HANDSHAKE:
         /*
          * we already handled all of these, with the possible exception of
-         * SSL3_RT_HANDSHAKE when s->in_handshake is set, but that should not
-         * happen when type != rr->type
+         * SSL3_RT_HANDSHAKE when ossl_statem_get_in_handshake(s) is true, but
+         * that should not happen when type != rr->type
          */
         al = SSL_AD_UNEXPECTED_MESSAGE;
         SSLerr(SSL_F_SSL3_READ_BYTES, ERR_R_INTERNAL_ERROR);
