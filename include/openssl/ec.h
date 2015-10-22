@@ -749,6 +749,7 @@ typedef struct ec_key_method_st EC_KEY_METHOD;
 /* some values for the flags field */
 # define EC_FLAG_NON_FIPS_ALLOW  0x1
 # define EC_FLAG_FIPS_CHECKED    0x2
+# define EC_FLAG_COFACTOR_ECDH   0x1000
 
 /** Creates a new EC_KEY object.
  *  \return EC_KEY object or NULL if an error occurred.
@@ -993,6 +994,10 @@ int ECDH_KDF_X9_62(unsigned char *out, size_t outlen,
                    const unsigned char *Z, size_t Zlen,
                    const unsigned char *sinfo, size_t sinfolen,
                    const EVP_MD *md);
+
+int ECDH_compute_key(void *out, size_t outlen, const EC_POINT *pub_key,
+                     EC_KEY *ecdh, void *(*KDF) (const void *in, size_t inlen,
+                                                 void *out, size_t *outlen));
 
 # define ECParameters_dup(x) ASN1_dup_of(EC_KEY,i2d_ECParameters,d2i_ECParameters,x)
 

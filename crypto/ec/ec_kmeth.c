@@ -61,7 +61,8 @@
 static const EC_KEY_METHOD openssl_ec_key_method = {
     "OpenSSL EC_KEY method",
     0,
-    ossl_ec_key_gen
+    ossl_ec_key_gen,
+    ossl_ecdh_compute_key
 };
 
 const EC_KEY_METHOD *default_ec_key_meth = &openssl_ec_key_method;
@@ -118,4 +119,15 @@ EC_KEY *EC_KEY_new_method(ENGINE *engine)
     ret->conv_form = POINT_CONVERSION_UNCOMPRESSED;
     ret->references = 1;
     return (ret);
+}
+
+int ECDH_compute_key(void *out, size_t outlen, const EC_POINT *pub_key,
+                     EC_KEY *eckey,
+                     void *(*KDF) (const void *in, size_t inlen, void *out,
+                                   size_t *outlen))
+{
+    if (eckey->meth->compute_key)
+        return eckey->meth->compute_key(out, outlen, pub_key, eckey, KDF);
+    ECerr(EC_F_ECDH_COMPUTE_KEY, EC_R_OPERATION_NOT_SUPPORTED);
+    return 0;
 }
