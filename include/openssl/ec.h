@@ -1101,6 +1101,7 @@ void ERR_load_EC_strings(void);
 # define EC_F_DO_EC_KEY_PRINT                             221
 # define EC_F_ECDH_CMS_DECRYPT                            238
 # define EC_F_ECDH_CMS_SET_SHARED_INFO                    239
+# define EC_F_ECDH_COMPUTE_KEY                            246
 # define EC_F_ECKEY_PARAM2TYPE                            223
 # define EC_F_ECKEY_PARAM_DECODE                          212
 # define EC_F_ECKEY_PRIV_DECODE                           213
@@ -1231,6 +1232,7 @@ void ERR_load_EC_strings(void);
 # define EC_F_NISTP521_PRE_COMP_NEW                       237
 # define EC_F_O2I_ECPUBLICKEY                             152
 # define EC_F_OLD_EC_PRIV_DECODE                          222
+# define EC_F_OSSL_ECDH_COMPUTE_KEY                       247
 # define EC_F_PKEY_EC_CTRL                                197
 # define EC_F_PKEY_EC_CTRL_STR                            198
 # define EC_F_PKEY_EC_DERIVE                              217
@@ -1266,6 +1268,7 @@ void ERR_load_EC_strings(void);
 # define EC_R_INVALID_PENTANOMIAL_BASIS                   132
 # define EC_R_INVALID_PRIVATE_KEY                         123
 # define EC_R_INVALID_TRINOMIAL_BASIS                     137
+# define EC_R_KDF_FAILED                                  153
 # define EC_R_KDF_PARAMETER_ERROR                         148
 # define EC_R_KEYS_NOT_SET                                140
 # define EC_R_MISSING_PARAMETERS                          124
@@ -1276,10 +1279,12 @@ void ERR_load_EC_strings(void);
 # define EC_R_NOT_INITIALIZED                             111
 # define EC_R_NO_FIELD_MOD                                133
 # define EC_R_NO_PARAMETERS_SET                           139
+# define EC_R_NO_PRIVATE_VALUE                            154
 # define EC_R_OPERATION_NOT_SUPPORTED                     152
 # define EC_R_PASSED_NULL_PARAMETER                       134
 # define EC_R_PEER_KEY_ERROR                              149
 # define EC_R_PKPARAMETERS2GROUP_FAILURE                  127
+# define EC_R_POINT_ARITHMETIC_FAILURE                    155
 # define EC_R_POINT_AT_INFINITY                           106
 # define EC_R_POINT_IS_NOT_ON_CURVE                       107
 # define EC_R_SHARED_INFO_ERROR                           150
