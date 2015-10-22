@@ -60,7 +60,8 @@
 
 static const EC_KEY_METHOD openssl_ec_key_method = {
     "OpenSSL EC_KEY method",
-    0
+    0,
+    ossl_ec_key_gen
 };
 
 const EC_KEY_METHOD *default_ec_key_meth = &openssl_ec_key_method;

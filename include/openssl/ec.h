@@ -1266,6 +1266,7 @@ void ERR_load_EC_strings(void);
 # define EC_R_NOT_INITIALIZED                             111
 # define EC_R_NO_FIELD_MOD                                133
 # define EC_R_NO_PARAMETERS_SET                           139
+# define EC_R_OPERATION_NOT_SUPPORTED                     152
 # define EC_R_PASSED_NULL_PARAMETER                       134
 # define EC_R_PEER_KEY_ERROR                              149
 # define EC_R_PKPARAMETERS2GROUP_FAILURE                  127
