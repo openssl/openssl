@@ -150,7 +150,6 @@ typedef struct rsa_meth_st RSA_METHOD;
 
 typedef struct rand_meth_st RAND_METHOD;
 
-typedef struct ecdh_method ECDH_METHOD;
 typedef struct ecdsa_method ECDSA_METHOD;
 
 typedef struct x509_st X509;
