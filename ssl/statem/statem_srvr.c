@@ -3179,7 +3179,7 @@ enum MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
 
 enum MSG_PROCESS_RETURN tls_process_client_certificate(SSL *s, PACKET *pkt)
 {
-    int i, al, ret = MSG_PROCESS_ERROR;
+    int i, al = SSL_AD_INTERNAL_ERROR, ret = MSG_PROCESS_ERROR;
     X509 *x = NULL;
     unsigned long l, llen;
     const unsigned char *certstart;
@@ -3246,7 +3246,6 @@ enum MSG_PROCESS_RETURN tls_process_client_certificate(SSL *s, PACKET *pkt)
         }
         /* No client certificate so digest cached records */
         if (s->s3->handshake_buffer && !ssl3_digest_cached_records(s, 0)) {
-            al = SSL_AD_INTERNAL_ERROR;
             goto f_err;
         }
     } else {
