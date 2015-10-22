@@ -1242,7 +1242,7 @@ enum MSG_PROCESS_RETURN tls_process_server_hello(SSL *s, PACKET *pkt)
     /* Get the session-id. */
     if (!PACKET_get_length_prefixed_1(pkt, &session_id)) {
         al = SSL_AD_DECODE_ERROR;
-        SSLerr(SSL_F_SSL3_GET_SERVER_HELLO, SSL_R_LENGTH_MISMATCH);
+        SSLerr(SSL_F_TLS_PROCESS_SERVER_HELLO, SSL_R_LENGTH_MISMATCH);
         goto f_err;
     }
     session_id_len = PACKET_remaining(&session_id);
@@ -1254,7 +1254,7 @@ enum MSG_PROCESS_RETURN tls_process_server_hello(SSL *s, PACKET *pkt)
     }
 
     if (!PACKET_get_bytes(pkt, &cipherchars, TLS_CIPHER_LEN)) {
-        SSLerr(SSL_F_SSL3_GET_SERVER_HELLO, SSL_R_LENGTH_MISMATCH);
+        SSLerr(SSL_F_TLS_PROCESS_SERVER_HELLO, SSL_R_LENGTH_MISMATCH);
         al = SSL_AD_DECODE_ERROR;
         goto f_err;
     }
@@ -1374,7 +1374,7 @@ enum MSG_PROCESS_RETURN tls_process_server_hello(SSL *s, PACKET *pkt)
     /* lets get the compression algorithm */
     /* COMPRESSION */
     if (!PACKET_get_1(pkt, &compression)) {
-        SSLerr(SSL_F_SSL3_GET_SERVER_HELLO, SSL_R_LENGTH_MISMATCH);
+        SSLerr(SSL_F_TLS_PROCESS_SERVER_HELLO, SSL_R_LENGTH_MISMATCH);
         al = SSL_AD_DECODE_ERROR;
         goto f_err;
     }
@@ -1642,7 +1642,7 @@ enum MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
     if (alg_k & SSL_PSK) {
         PACKET psk_identity_hint;
         if (!PACKET_get_length_prefixed_2(pkt, &psk_identity_hint)) {
-            SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE, SSL_R_LENGTH_MISMATCH);
+            SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, SSL_R_LENGTH_MISMATCH);
             goto f_err;
         }
 
@@ -1676,7 +1676,7 @@ enum MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
             || !PACKET_get_length_prefixed_2(pkt, &generator)
             || !PACKET_get_length_prefixed_1(pkt, &salt)
             || !PACKET_get_length_prefixed_2(pkt, &server_pub)) {
-            SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE, SSL_R_LENGTH_MISMATCH);
+            SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, SSL_R_LENGTH_MISMATCH);
             goto f_err;
         }
 
@@ -1692,7 +1692,7 @@ enum MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
             || (s->srp_ctx.B =
                 BN_bin2bn(PACKET_data(&server_pub),
                           PACKET_remaining(&server_pub), NULL)) == NULL) {
-            SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE, ERR_R_BN_LIB);
+            SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, ERR_R_BN_LIB);
             goto err;
         }
 
@@ -1718,12 +1718,12 @@ enum MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
 
         if (!PACKET_get_length_prefixed_2(pkt, &mod)
             || !PACKET_get_length_prefixed_2(pkt, &exp)) {
-            SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE, SSL_R_LENGTH_MISMATCH);
+            SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, SSL_R_LENGTH_MISMATCH);
             goto f_err;
         }
 
         if ((rsa = RSA_new()) == NULL) {
-            SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE, ERR_R_MALLOC_FAILURE);
+            SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, ERR_R_MALLOC_FAILURE);
             goto err;
         }
 
@@ -1731,7 +1731,7 @@ enum MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
                                 rsa->n)) == NULL
             || (rsa->e = BN_bin2bn(PACKET_data(&exp), PACKET_remaining(&exp),
                                    rsa->e)) == NULL) {
-            SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE, ERR_R_BN_LIB);
+            SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, ERR_R_BN_LIB);
             goto err;
         }
 
@@ -1756,12 +1756,12 @@ enum MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
         if (!PACKET_get_length_prefixed_2(pkt, &prime)
             || !PACKET_get_length_prefixed_2(pkt, &generator)
             || !PACKET_get_length_prefixed_2(pkt, &pub_key)) {
-            SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE, SSL_R_LENGTH_MISMATCH);
+            SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, SSL_R_LENGTH_MISMATCH);
             goto f_err;
         }
 
         if ((dh = DH_new()) == NULL) {
-            SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE, ERR_R_DH_LIB);
+            SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, ERR_R_DH_LIB);
             goto err;
         }
 
@@ -1772,12 +1772,12 @@ enum MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
             || (dh->pub_key =
                 BN_bin2bn(PACKET_data(&pub_key),
                           PACKET_remaining(&pub_key), NULL)) == NULL) {
-            SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE, ERR_R_BN_LIB);
+            SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, ERR_R_BN_LIB);
             goto err;
         }
 
         if (BN_is_zero(dh->p) || BN_is_zero(dh->g) || BN_is_zero(dh->pub_key)) {
-            SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE, SSL_R_BAD_DH_VALUE);
+            SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, SSL_R_BAD_DH_VALUE);
             goto f_err;
         }
 
@@ -1813,7 +1813,7 @@ enum MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
          * ECParameters in this case is just three bytes.
          */
         if (!PACKET_get_bytes(pkt, &ecparams, 3)) {
-            SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE, SSL_R_LENGTH_TOO_SHORT);
+            SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, SSL_R_LENGTH_TOO_SHORT);
             goto f_err;
         }
         /*
@@ -1821,7 +1821,7 @@ enum MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
          * invalid curve. ECParameters is 3 bytes.
          */
         if (!tls1_check_curve(s, ecparams, 3)) {
-            SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE, SSL_R_WRONG_CURVE);
+            SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, SSL_R_WRONG_CURVE);
             goto f_err;
         }
 
@@ -1861,13 +1861,13 @@ enum MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
         }
 
         if (!PACKET_get_length_prefixed_1(pkt, &encoded_pt)) {
-            SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE, SSL_R_LENGTH_MISMATCH);
+            SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, SSL_R_LENGTH_MISMATCH);
             goto f_err;
         }
 
         if (EC_POINT_oct2point(group, srvr_ecpoint, PACKET_data(&encoded_pt),
                                PACKET_remaining(&encoded_pt), bn_ctx) == 0) {
-            SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE, SSL_R_BAD_ECPOINT);
+            SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, SSL_R_BAD_ECPOINT);
             goto f_err;
         }
 
@@ -1911,7 +1911,7 @@ enum MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
                                    PACKET_remaining(&save_param_start) -
                                    PACKET_remaining(pkt))) {
             al = SSL_AD_INTERNAL_ERROR;
-            SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
+            SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
             goto f_err;
         }
 
@@ -1919,7 +1919,7 @@ enum MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
             unsigned char *sigalgs;
             int rv;
             if (!PACKET_get_bytes(pkt, &sigalgs, 2)) {
-                SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE, SSL_R_LENGTH_TOO_SHORT);
+                SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, SSL_R_LENGTH_TOO_SHORT);
                 goto f_err;
             }
             rv = tls12_check_peer_sigalg(&md, s, sigalgs, pkey);
@@ -1937,7 +1937,7 @@ enum MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
 
         if (!PACKET_get_length_prefixed_2(pkt, &signature)
             || PACKET_remaining(pkt) != 0) {
-            SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE, SSL_R_LENGTH_MISMATCH);
+            SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, SSL_R_LENGTH_MISMATCH);
             goto f_err;
         }
         j = EVP_PKEY_size(pkey);
@@ -2178,7 +2178,7 @@ enum MSG_PROCESS_RETURN tls_process_new_session_ticket(SSL *s, PACKET *pkt)
             || !PACKET_get_net_2(pkt, &ticklen)
             || PACKET_remaining(pkt) != ticklen) {
         al = SSL_AD_DECODE_ERROR;
-        SSLerr(SSL_F_SSL3_GET_NEW_SESSION_TICKET, SSL_R_LENGTH_MISMATCH);
+        SSLerr(SSL_F_TLS_PROCESS_NEW_SESSION_TICKET, SSL_R_LENGTH_MISMATCH);
         goto f_err;
     }
 
