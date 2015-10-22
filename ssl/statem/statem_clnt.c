@@ -2184,7 +2184,7 @@ enum MSG_PROCESS_RETURN tls_process_new_session_ticket(SSL *s, PACKET *pkt)
 
     /* Server is allowed to change its mind and send an empty ticket. */
     if (ticklen == 0)
-        return 1;
+        return MSG_PROCESS_CONTINUE_READING;
 
     if (s->session->session_id_length > 0) {
         int i = s->session_ctx->session_cache_mode;
