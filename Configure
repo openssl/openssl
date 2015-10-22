@@ -947,6 +947,7 @@ while($argv_unprocessed)
 	$argvstring=join(' ',@argvcopy);
 
 PROCESS_ARGS:
+	my %unsupported_options = ();
 	foreach (@argvcopy)
 		{
 		s /^-no-/no-/; # some people just can't read the instructions
@@ -963,7 +964,7 @@ PROCESS_ARGS:
 			my $word = $2;
 			if (!grep { $word =~ /^${_}$/ } @disablables)
 				{
-				warn "Unsupported option ${word}, ignored...\n";
+				$unsupported_options{$_} = 1;
 				next;
 				}
 			}
@@ -1134,6 +1135,12 @@ PROCESS_ARGS:
 			else
 				{ $options .= " ".$_; }
 			}
+		}
+
+	if (keys %unsupported_options)
+		{
+		die "***** Unsupported options: ",
+			join(", ", keys %unsupported_options), "\n";
 		}
 	}
 
