@@ -1518,7 +1518,7 @@ enum MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
 
 enum WORK_STATE tls_post_process_client_hello(SSL *s, enum WORK_STATE wst)
 {
-    int al;
+    int al = SSL_AD_HANDSHAKE_FAILURE;
     SSL_CIPHER *cipher;
 
     if (wst == WORK_MORE_A) {
@@ -1540,7 +1540,6 @@ enum WORK_STATE tls_post_process_client_hello(SSL *s, enum WORK_STATE wst)
             cipher = ssl3_choose_cipher(s, s->session->ciphers, SSL_get_ciphers(s));
 
             if (cipher == NULL) {
-                al = SSL_AD_HANDSHAKE_FAILURE;
                 SSLerr(SSL_F_TLS_POST_PROCESS_CLIENT_HELLO, SSL_R_NO_SHARED_CIPHER);
                 goto f_err;
             }
@@ -1558,8 +1557,10 @@ enum WORK_STATE tls_post_process_client_hello(SSL *s, enum WORK_STATE wst)
         }
 
         if (!SSL_USE_SIGALGS(s) || !(s->verify_mode & SSL_VERIFY_PEER)) {
-            if (!ssl3_digest_cached_records(s, 0))
+            if (!ssl3_digest_cached_records(s, 0)) {
+                al = SSL_AD_INTERNAL_ERROR;
                 goto f_err;
+            }
         }
 
         /*-
@@ -1577,7 +1578,8 @@ enum WORK_STATE tls_post_process_client_hello(SSL *s, enum WORK_STATE wst)
         /* Handles TLS extensions that we couldn't check earlier */
         if (s->version >= SSL3_VERSION) {
             if (ssl_check_clienthello_tlsext_late(s) <= 0) {
-                SSLerr(SSL_F_TLS_POST_PROCESS_CLIENT_HELLO, SSL_R_CLIENTHELLO_TLSEXT);
+                SSLerr(SSL_F_TLS_POST_PROCESS_CLIENT_HELLO,
+                       SSL_R_CLIENTHELLO_TLSEXT);
                 goto f_err;
             }
         }
