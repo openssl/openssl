@@ -1,4 +1,4 @@
-/* crypto/ecdh/ec_kdf.c */
+/* crypto/ec/ecdh_kdf.c */
 /*
  * Written by Stephen Henson for the OpenSSL project.
  */
@@ -52,7 +52,7 @@
  */
 
 #include <string.h>
-#include <openssl/ecdh.h>
+#include <openssl/ec.h>
 #include <openssl/evp.h>
 
 /* Key derivation function from X9.62/SECG */
