@@ -145,7 +145,7 @@ SSL_set_shutdown                        162	EXIST::FUNCTION:
 SSL_set_verify_result                   163	EXIST::FUNCTION:
 SSL_version                             164	EXIST::FUNCTION:
 SSL_get_info_callback                   165	EXIST::FUNCTION:
-SSL_state                               166	EXIST::FUNCTION:
+SSL_state                               166	NOEXIST::FUNCTION:
 SSL_CTX_get_ex_new_index                167	EXIST::FUNCTION:
 SSL_SESSION_get_ex_new_index            168	EXIST::FUNCTION:
 SSL_get_ex_new_index                    169	EXIST::FUNCTION:
@@ -304,7 +304,7 @@ SSL_cache_hit                           344	EXIST::FUNCTION:
 SSL_get0_kssl_ctx                       345	NOEXIST::FUNCTION:
 SSL_set0_kssl_ctx                       346	NOEXIST::FUNCTION:
 SSL_SESSION_get0_id                     347	NOEXIST::FUNCTION:
-SSL_set_state                           348	EXIST::FUNCTION:
+SSL_set_state                           348	NOEXIST::FUNCTION:
 SSL_CIPHER_get_id                       349	EXIST::FUNCTION:
 TLSv1_2_method                          350	EXIST::FUNCTION:
 SSL_SESSION_get_id_len                  351	NOEXIST::FUNCTION:
@@ -405,3 +405,7 @@ SSL_get_client_random                   439	EXIST::FUNCTION:
 SSL_SESSION_get_master_key              440	EXIST::FUNCTION:
 SSL_CTX_set_default_verify_dir          441	EXIST::FUNCTION:
 SSL_CTX_set_default_verify_file         442	EXIST::FUNCTION:
+SSL_in_init                             443	EXIST::FUNCTION:
+SSL_in_before                           444	EXIST::FUNCTION:
+SSL_is_init_finished                    445	EXIST::FUNCTION:
+SSL_get_state                           446	EXIST::FUNCTION:

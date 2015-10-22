@@ -1528,7 +1528,7 @@ int dtls1_get_record(SSL *s)
      * processed at this time.
      */
     if (is_next_epoch) {
-        if ((SSL_in_init(s) || s->in_handshake)) {
+        if ((SSL_in_init(s) || ossl_statem_get_in_handshake(s))) {
             if (dtls1_buffer_record
                 (s, &(DTLS_RECORD_LAYER_get_unprocessed_rcds(&s->rlayer)),
                 rr->seq_num) < 0)

@@ -920,22 +920,71 @@ extern "C" {
 # define SSL_CTX_get_app_data(ctx)       (SSL_CTX_get_ex_data(ctx,0))
 # define SSL_CTX_set_app_data(ctx,arg)   (SSL_CTX_set_ex_data(ctx,0,(char *)arg))
 
+
 /*
- * The following are the possible values for ssl->state are are used to
- * indicate where we are up to in the SSL connection establishment. The
- * macros that follow are about the only things you should need to use and
- * even then, only when using non-blocking IO. It can also be useful to work
- * out where you were when the connection failed
+ * The valid handshake states (one for each type message sent and one for each
+ * type of message received). There are also two "special" states:
+ * TLS = TLS or DTLS state
+ * DTLS = DTLS specific state
+ * CR/SR = Client Read/Server Read
+ * CW/SW = Client Write/Server Write
+ *
+ * The "special" states are:
+ * TLS_ST_BEFORE = No handshake has been initiated yet
+ * TLS_ST_OK = A handshake has been successfully completed
+ */
+typedef enum {
+    TLS_ST_BEFORE,
+    TLS_ST_OK,
+    DTLS_ST_CR_HELLO_VERIFY_REQUEST,
+    TLS_ST_CR_SRVR_HELLO,
+    TLS_ST_CR_CERT,
+    TLS_ST_CR_CERT_STATUS,
+    TLS_ST_CR_KEY_EXCH,
+    TLS_ST_CR_CERT_REQ,
+    TLS_ST_CR_SRVR_DONE,
+    TLS_ST_CR_SESSION_TICKET,
+    TLS_ST_CR_CHANGE,
+    TLS_ST_CR_FINISHED,
+    TLS_ST_CW_CLNT_HELLO,
+    TLS_ST_CW_CERT,
+    TLS_ST_CW_KEY_EXCH,
+    TLS_ST_CW_CERT_VRFY,
+    TLS_ST_CW_CHANGE,
+    TLS_ST_CW_NEXT_PROTO,
+    TLS_ST_CW_FINISHED,
+    TLS_ST_SW_HELLO_REQ,
+    TLS_ST_SR_CLNT_HELLO,
+    DTLS_ST_SW_HELLO_VERIFY_REQUEST,
+    TLS_ST_SW_SRVR_HELLO,
+    TLS_ST_SW_CERT,
+    TLS_ST_SW_KEY_EXCH,
+    TLS_ST_SW_CERT_REQ,
+    TLS_ST_SW_SRVR_DONE,
+    TLS_ST_SR_CERT,
+    TLS_ST_SR_KEY_EXCH,
+    TLS_ST_SR_CERT_VRFY,
+    TLS_ST_SR_NEXT_PROTO,
+    TLS_ST_SR_CHANGE,
+    TLS_ST_SR_FINISHED,
+    TLS_ST_SW_SESSION_TICKET,
+    TLS_ST_SW_CERT_STATUS,
+    TLS_ST_SW_CHANGE,
+    TLS_ST_SW_FINISHED
+} OSSL_HANDSHAKE_STATE;
+
+/*
+ * Most of the following state values are no longer used and are defined to be
+ * the closest equivalent value in the current state machine code. Not all
+ * defines have an equivalent and are set to a dummy value (-1). SSL_ST_CONNECT
+ * and SSL_ST_ACCEPT are still in use in the definition of SSL_CB_ACCEPT_LOOP,
+ * SSL_CB_ACCEPT_EXIT, SSL_CB_CONNECT_LOOP and SSL_CB_CONNECT_EXIT.
  */
 
 # define SSL_ST_CONNECT                  0x1000
 # define SSL_ST_ACCEPT                   0x2000
+
 # define SSL_ST_MASK                     0x0FFF
-# define SSL_ST_INIT                     (SSL_ST_CONNECT|SSL_ST_ACCEPT)
-# define SSL_ST_BEFORE                   0x4000
-# define SSL_ST_OK                       0x03
-# define SSL_ST_RENEGOTIATE              (0x04|SSL_ST_INIT)
-# define SSL_ST_ERR                      0x05
 
 # define SSL_CB_LOOP                     0x01
 # define SSL_CB_EXIT                     0x02
@@ -952,12 +1001,11 @@ extern "C" {
 # define SSL_CB_HANDSHAKE_DONE           0x20
 
 /* Is the SSL_connection established? */
-# define SSL_get_state(a)                SSL_state(a)
-# define SSL_is_init_finished(a)         (SSL_state(a) == SSL_ST_OK)
-# define SSL_in_init(a)                  (SSL_state(a)&SSL_ST_INIT)
-# define SSL_in_before(a)                (SSL_state(a)&SSL_ST_BEFORE)
-# define SSL_in_connect_init(a)          (SSL_state(a)&SSL_ST_CONNECT)
-# define SSL_in_accept_init(a)           (SSL_state(a)&SSL_ST_ACCEPT)
+# define SSL_in_connect_init(a)          (SSL_in_init(a) && !SSL_is_server(a))
+# define SSL_in_accept_init(a)           (SSL_in_init(a) && SSL_is_server(a))
+int SSL_in_init(SSL *s);
+int SSL_in_before(SSL *s);
+int SSL_is_init_finished(SSL *s);
 
 /*
  * The following 3 states are kept in ssl->rlayer.rstate when reads fail, you
@@ -1646,8 +1694,7 @@ void SSL_set_info_callback(SSL *ssl,
                            void (*cb) (const SSL *ssl, int type, int val));
 void (*SSL_get_info_callback(const SSL *ssl)) (const SSL *ssl, int type,
                                                int val);
-__owur int SSL_state(const SSL *ssl);
-void SSL_set_state(SSL *ssl, int state);
+__owur OSSL_HANDSHAKE_STATE SSL_get_state(const SSL *ssl);
 
 void SSL_set_verify_result(SSL *ssl, long v);
 __owur long SSL_get_verify_result(const SSL *ssl);
@@ -1928,6 +1975,11 @@ void ERR_load_SSL_strings(void);
 # define SSL_F_DTLS1_SEND_SERVER_HELLO                    266
 # define SSL_F_DTLS1_SEND_SERVER_KEY_EXCHANGE             267
 # define SSL_F_DTLS1_WRITE_APP_DATA_BYTES                 268
+# define SSL_F_DTLS_CONSTRUCT_CHANGE_CIPHER_SPEC          371
+# define SSL_F_DTLS_CONSTRUCT_HELLO_VERIFY_REQUEST        385
+# define SSL_F_DTLS_GET_REASSEMBLED_MESSAGE               370
+# define SSL_F_DTLS_PROCESS_HELLO_VERIFY                  386
+# define SSL_F_READ_STATE_MACHINE                         352
 # define SSL_F_SSL3_ACCEPT                                128
 # define SSL_F_SSL3_ADD_CERT_TO_BUF                       296
 # define SSL_F_SSL3_CALLBACK_CTRL                         233
@@ -2085,6 +2137,7 @@ void ERR_load_SSL_strings(void);
 # define SSL_F_SSL_USE_RSAPRIVATEKEY_FILE                 206
 # define SSL_F_SSL_VERIFY_CERT_CHAIN                      207
 # define SSL_F_SSL_WRITE                                  208
+# define SSL_F_STATE_MACHINE                              353
 # define SSL_F_TLS12_CHECK_PEER_SIGALG                    333
 # define SSL_F_TLS1_CERT_VERIFY_MAC                       286
 # define SSL_F_TLS1_CHANGE_CIPHER_STATE                   209
@@ -2099,6 +2152,37 @@ void ERR_load_SSL_strings(void);
 # define SSL_F_TLS1_PROCESS_HEARTBEAT                     341
 # define SSL_F_TLS1_SETUP_KEY_BLOCK                       211
 # define SSL_F_TLS1_SET_SERVER_SIGALGS                    335
+# define SSL_F_TLS_CLIENT_KEY_EXCHANGE_POST_WORK          354
+# define SSL_F_TLS_CONSTRUCT_CERTIFICATE_REQUEST          372
+# define SSL_F_TLS_CONSTRUCT_CLIENT_CERTIFICATE           355
+# define SSL_F_TLS_CONSTRUCT_CLIENT_HELLO                 356
+# define SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE          357
+# define SSL_F_TLS_CONSTRUCT_CLIENT_VERIFY                358
+# define SSL_F_TLS_CONSTRUCT_FINISHED                     359
+# define SSL_F_TLS_CONSTRUCT_HELLO_REQUEST                373
+# define SSL_F_TLS_CONSTRUCT_SERVER_CERTIFICATE           374
+# define SSL_F_TLS_CONSTRUCT_SERVER_DONE                  375
+# define SSL_F_TLS_CONSTRUCT_SERVER_HELLO                 376
+# define SSL_F_TLS_CONSTRUCT_SERVER_KEY_EXCHANGE          377
+# define SSL_F_TLS_GET_MESSAGE_BODY                       351
+# define SSL_F_TLS_GET_MESSAGE_HEADER                     387
+# define SSL_F_TLS_POST_PROCESS_CLIENT_HELLO              378
+# define SSL_F_TLS_POST_PROCESS_CLIENT_KEY_EXCHANGE       384
+# define SSL_F_TLS_PREPARE_CLIENT_CERTIFICATE             360
+# define SSL_F_TLS_PROCESS_CERTIFICATE_REQUEST            361
+# define SSL_F_TLS_PROCESS_CERT_STATUS                    362
+# define SSL_F_TLS_PROCESS_CERT_VERIFY                    379
+# define SSL_F_TLS_PROCESS_CHANGE_CIPHER_SPEC             363
+# define SSL_F_TLS_PROCESS_CLIENT_CERTIFICATE             380
+# define SSL_F_TLS_PROCESS_CLIENT_HELLO                   381
+# define SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE            382
+# define SSL_F_TLS_PROCESS_FINISHED                       364
+# define SSL_F_TLS_PROCESS_KEY_EXCHANGE                   365
+# define SSL_F_TLS_PROCESS_NEW_SESSION_TICKET             366
+# define SSL_F_TLS_PROCESS_NEXT_PROTO                     383
+# define SSL_F_TLS_PROCESS_SERVER_CERTIFICATE             367
+# define SSL_F_TLS_PROCESS_SERVER_DONE                    368
+# define SSL_F_TLS_PROCESS_SERVER_HELLO                   369
 # define SSL_F_USE_CERTIFICATE_CHAIN_FILE                 220
 
 /* Reason codes. */
@@ -2211,6 +2295,7 @@ void ERR_load_SSL_strings(void);
 # define SSL_R_INVALID_TRUST                              279
 # define SSL_R_LENGTH_MISMATCH                            159
 # define SSL_R_LENGTH_TOO_SHORT                           160
+# define SSL_R_LENGTH_TOO_LONG                            404
 # define SSL_R_LIBRARY_BUG                                274
 # define SSL_R_LIBRARY_HAS_NO_CIPHERS                     161
 # define SSL_R_MISSING_DH_DSA_CERT                        162
