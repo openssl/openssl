@@ -161,6 +161,7 @@ void ossl_statem_set_renegotiate(SSL *s);
 void ossl_statem_set_error(SSL *s);
 int ossl_statem_in_error(const SSL *s);
 void ossl_statem_set_in_init(SSL *s, int init);
+void ossl_statem_set_hello_verify_done(SSL *s);
 __owur int ossl_statem_app_data_allowed(SSL *s);
 #ifndef OPENSSL_NO_SCTP
 void ossl_statem_set_sctp_read_sock(SSL *s, int read_sock);

@@ -872,8 +872,11 @@ int dtls1_listen(SSL *s, struct sockaddr *client)
      */
     SSL_set_options(s, SSL_OP_COOKIE_EXCHANGE);
 
-    /* Put us into the "init" state so that we don't get our state cleared */
-    ossl_statem_set_in_init(s, 1);
+    /*
+     * Tell the state machine that we've done the initial hello verify
+     * exchange
+     */
+    ossl_statem_set_hello_verify_done(s);
 
     if(BIO_dgram_get_peer(rbio, client) <= 0) {
         SSLerr(SSL_F_DTLS1_LISTEN, ERR_R_INTERNAL_ERROR);

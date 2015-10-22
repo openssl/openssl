@@ -187,6 +187,20 @@ void ossl_statem_set_in_init(SSL *s, int init)
     s->statem.in_init = init;
 }
 
+void ossl_statem_set_hello_verify_done(SSL *s)
+{
+    s->statem.state = MSG_FLOW_UNINITED;
+    s->statem.in_init = 1;
+    /*
+     * This will get reset (briefly) back to TLS_ST_BEFORE when we enter
+     * state_machine() because |state| is MSG_FLOW_UNINITED, but until then any
+     * calls to SSL_in_before() will return false. Also calls to
+     * SSL_state_string() and SSL_state_string_long() will return something
+     * sensible.
+     */
+    s->statem.hand_state = TLS_ST_SR_CLNT_HELLO;
+}
+
 int ossl_statem_connect(SSL *s) {
     return state_machine(s, 0);
 }
