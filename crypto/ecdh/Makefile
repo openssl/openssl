@@ -15,9 +15,9 @@ CFLAGS= $(INCLUDES) $(CFLAG)
 GENERAL=Makefile
 
 LIB=$(TOP)/libcrypto.a
-LIBSRC=	ech_lib.c ech_ossl.c ech_key.c ech_err.c
+LIBSRC=	ech_lib.c ech_key.c ech_err.c
 
-LIBOBJ=	ech_lib.o ech_ossl.o ech_key.o ech_err.o
+LIBOBJ=	ech_lib.o ech_key.o ech_err.o
 
 SRC= $(LIBSRC)
 
@@ -89,14 +89,3 @@ ech_lib.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
 ech_lib.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 ech_lib.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
 ech_lib.o: ech_lib.c ech_locl.h
-ech_ossl.o: ../../e_os.h ../../include/openssl/asn1.h
-ech_ossl.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
-ech_ossl.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
-ech_ossl.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
-ech_ossl.o: ../../include/openssl/ecdh.h ../../include/openssl/err.h
-ech_ossl.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
-ech_ossl.o: ../../include/openssl/opensslconf.h
-ech_ossl.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-ech_ossl.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
-ech_ossl.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-ech_ossl.o: ../include/internal/cryptlib.h ech_locl.h ech_ossl.c
