@@ -439,12 +439,12 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
      * Continue handshake if it had to be interrupted to read app data with
      * SCTP.
      */
-    if ((!s->in_handshake && SSL_in_init(s)) ||
+    if ((!ossl_statem_get_in_handshake(s) && SSL_in_init(s)) ||
         (BIO_dgram_is_sctp(SSL_get_rbio(s))
          && ossl_statem_in_sctp_read_sock(s)
          && s->s3->in_read_app_data != 2))
 #else
-    if (!s->in_handshake && SSL_in_init(s))
+    if (!ossl_statem_get_in_handshake(s) && SSL_in_init(s))
 #endif
     {
         /* type == SSL3_RT_APPLICATION_DATA */
@@ -878,7 +878,7 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
      * Unexpected handshake message (Client Hello, or protocol violation)
      */
     if ((s->rlayer.d->handshake_fragment_len >= DTLS1_HM_HEADER_LENGTH) &&
-        !s->in_handshake) {
+        !ossl_statem_get_in_handshake(s)) {
         struct hm_header_st msg_hdr;
 
         /* this may just be a stale retransmit */
@@ -950,8 +950,8 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
     case SSL3_RT_HANDSHAKE:
         /*
          * we already handled all of these, with the possible exception of
-         * SSL3_RT_HANDSHAKE when s->in_handshake is set, but that should not
-         * happen when type != rr->type
+         * SSL3_RT_HANDSHAKE when ossl_statem_get_in_handshake(s) is true, but
+         * that should not happen when type != rr->type
          */
         al = SSL_AD_UNEXPECTED_MESSAGE;
         SSLerr(SSL_F_DTLS1_READ_BYTES, ERR_R_INTERNAL_ERROR);

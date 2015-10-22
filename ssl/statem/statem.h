@@ -136,6 +136,9 @@ struct ossl_statem_st {
     int in_init;
     int read_state_first_init;
 
+    /* true when we are actually in SSL_accept() or SSL_connect() */
+    int in_handshake;
+
     /* Should we skip the CertificateVerify message? */
     unsigned int no_cert_verify;
 
@@ -161,6 +164,8 @@ void ossl_statem_set_renegotiate(SSL *s);
 void ossl_statem_set_error(SSL *s);
 int ossl_statem_in_error(const SSL *s);
 void ossl_statem_set_in_init(SSL *s, int init);
+int ossl_statem_get_in_handshake(SSL *s);
+void ossl_statem_set_in_handshake(SSL *s, int inhand);
 void ossl_statem_set_hello_verify_done(SSL *s);
 __owur int ossl_statem_app_data_allowed(SSL *s);
 #ifndef OPENSSL_NO_SCTP

@@ -5085,11 +5085,11 @@ static int ssl3_read_internal(SSL *s, void *buf, int len, int peek)
          * makes sense here; so disable handshake processing and try to read
          * application data again.
          */
-        s->in_handshake++;
+        ossl_statem_set_in_handshake(s, 1);
         ret =
             s->method->ssl_read_bytes(s, SSL3_RT_APPLICATION_DATA, NULL, buf,
                                       len, peek);
-        s->in_handshake--;
+        ossl_statem_set_in_handshake(s, 0);
     } else
         s->s3->in_read_app_data = 0;
 

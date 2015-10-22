@@ -187,6 +187,19 @@ void ossl_statem_set_in_init(SSL *s, int init)
     s->statem.in_init = init;
 }
 
+int ossl_statem_get_in_handshake(SSL *s)
+{
+    return s->statem.in_handshake;
+}
+
+void ossl_statem_set_in_handshake(SSL *s, int inhand)
+{
+    if (inhand)
+        s->statem.in_handshake++;
+    else
+        s->statem.in_handshake--;
+}
+
 void ossl_statem_set_hello_verify_done(SSL *s)
 {
     s->statem.state = MSG_FLOW_UNINITED;
@@ -267,7 +280,7 @@ static int state_machine(SSL *s, int server) {
 
     cb = get_callback(s);
 
-    s->in_handshake++;
+    st->in_handshake++;
     if (!SSL_in_init(s) || SSL_in_before(s)) {
         if (!SSL_clear(s))
             return -1;
@@ -280,7 +293,7 @@ static int state_machine(SSL *s, int server) {
          * identifier other than 0. Will be ignored if no SCTP is used.
          */
         BIO_ctrl(SSL_get_wbio(s), BIO_CTRL_DGRAM_SCTP_SET_IN_HANDSHAKE,
-                 s->in_handshake, NULL);
+                 st->in_handshake, NULL);
     }
 #endif
 
@@ -447,7 +460,7 @@ static int state_machine(SSL *s, int server) {
     ret = 1;
 
  end:
-    s->in_handshake--;
+    st->in_handshake--;
 
 #ifndef OPENSSL_NO_SCTP
     if (SSL_IS_DTLS(s)) {
@@ -456,7 +469,7 @@ static int state_machine(SSL *s, int server) {
          * identifier other than 0. Will be ignored if no SCTP is used.
          */
         BIO_ctrl(SSL_get_wbio(s), BIO_CTRL_DGRAM_SCTP_SET_IN_HANDSHAKE,
-                 s->in_handshake, NULL);
+                 st->in_handshake, NULL);
     }
 #endif
 
