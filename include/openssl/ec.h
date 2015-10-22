@@ -989,6 +989,11 @@ const EC_KEY_METHOD *EC_KEY_get_default_method(void);
 void EC_KEY_set_default_method(const EC_KEY_METHOD *meth);
 EC_KEY *EC_KEY_new_method(ENGINE *engine);
 
+int ECDH_KDF_X9_62(unsigned char *out, size_t outlen,
+                   const unsigned char *Z, size_t Zlen,
+                   const unsigned char *sinfo, size_t sinfolen,
+                   const EVP_MD *md);
+
 # define ECParameters_dup(x) ASN1_dup_of(EC_KEY,i2d_ECParameters,d2i_ECParameters,x)
 
 # ifndef __cplusplus
