@@ -90,7 +90,6 @@ int main(int argc, char *argv[])
 }
 #else
 # include <openssl/ec.h>
-# include <openssl/ecdh.h>
 
 static const char rnd_seed[] =
     "string to make the random number generator think it has entropy";

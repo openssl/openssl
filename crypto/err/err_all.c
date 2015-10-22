@@ -78,7 +78,6 @@
 #endif
 #ifndef OPENSSL_NO_EC
 # include <openssl/ecdsa.h>
-# include <openssl/ecdh.h>
 #endif
 #include <openssl/evp.h>
 #include <openssl/objects.h>
