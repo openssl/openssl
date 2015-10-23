@@ -123,9 +123,6 @@
 # include <openssl/engine.h>
 #endif
 #include <openssl/err.h>
-#ifdef OPENSSL_FIPS
-# include <openssl/fips.h>
-#endif
 #define USE_SOCKETS /* needed for the _O_BINARY defs in the MS world */
 #include "s_apps.h"
 /* Needed to get the other O_xxx flags. */
@@ -322,19 +319,6 @@ int main(int argc, char *argv[])
     }
     CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
     CRYPTO_set_locking_callback(lock_dbg_cb);
-
-    if (getenv("OPENSSL_FIPS")) {
-#ifdef OPENSSL_FIPS
-        if (!FIPS_mode_set(1)) {
-            ERR_load_crypto_strings();
-            ERR_print_errors(bio_err);
-            return 1;
-        }
-#else
-        BIO_printf(bio_err, "FIPS mode not supported.\n");
-        return 1;
-#endif
-    }
 
     if (!apps_startup())
         goto end;

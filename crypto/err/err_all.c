@@ -91,9 +91,6 @@
 #include <openssl/ui.h>
 #include <openssl/ocsp.h>
 #include <openssl/err.h>
-#ifdef OPENSSL_FIPS
-# include <openssl/fips.h>
-#endif
 #include <openssl/ts.h>
 #ifndef OPENSSL_NO_CMS
 # include <openssl/cms.h>
@@ -106,9 +103,6 @@
 
 void ERR_load_crypto_strings(void)
 {
-#ifdef OPENSSL_FIPS
-    FIPS_set_error_callbacks(ERR_put_error, ERR_add_error_vdata);
-#endif
 #ifndef OPENSSL_NO_ERR
     ERR_load_ERR_strings();     /* include error strings for SYSerr */
     ERR_load_BN_strings();
@@ -148,9 +142,6 @@ void ERR_load_crypto_strings(void)
 # endif
     ERR_load_OCSP_strings();
     ERR_load_UI_strings();
-# ifdef OPENSSL_FIPS
-    ERR_load_FIPS_strings();
-# endif
 # ifndef OPENSSL_NO_CMS
     ERR_load_CMS_strings();
 # endif

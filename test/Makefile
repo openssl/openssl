@@ -5,7 +5,7 @@
 DIR=		test
 TOP=		..
 CC=		cc
-INCLUDES=	-I$(TOP) -I../include -I../crypto/include -I$(TOP)/fips
+INCLUDES=	-I$(TOP) -I../include -I../crypto/include
 CFLAG=		-g
 MAKEDEPEND=	$(TOP)/util/domd $(TOP) -MD $(MAKEDEPPROG)
 PERL=		perl
@@ -24,7 +24,6 @@ DLIBCRYPTO= ../libcrypto.a
 DLIBSSL= ../libssl.a
 LIBCRYPTO= -L.. -lcrypto
 LIBSSL= -L.. -lssl
-LIBFIPS= -L.. -lfips
 
 # Prefix for logline for each test
 START= @@@ START
@@ -233,35 +232,6 @@ $(SHA256TEST)$(EXE_EXT): $(SHA256TEST).o $(DLIBCRYPTO)
 
 $(SHA512TEST)$(EXE_EXT): $(SHA512TEST).o $(DLIBCRYPTO)
 	@target=$(SHA512TEST); $(BUILD_CMD)
-
-FIPS_BUILD_CMD=shlib_target=; if [ -n "$(SHARED_LIBS)" ]; then \
-		shlib_target="$(SHLIB_TARGET)"; \
-	fi; \
-	if [ "$(FIPSCANLIB)" = "libfips" ]; then \
-		LIBRARIES="-L$(TOP) -lfips"; \
-	elif [ -n "$(FIPSCANLIB)" ]; then \
-		FIPSLD_CC="$(CC)"; CC=$(TOP)/fips/fipsld; export CC FIPSLD_CC; \
-		LIBRARIES="$${FIPSLIBDIR:-$(TOP)/fips/}fipscanister.o"; \
-	else \
-		LIBRARIES="$(LIBCRYPTO)"; \
-	fi; \
-	$(MAKE) -f $(TOP)/Makefile.shared -e \
-		CC="$${CC}" APPNAME=$$target$(EXE_EXT) OBJECTS="$$target.o" \
-		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
-		link_app.$${shlib_target}
-
-FIPS_CRYPTO_BUILD_CMD=shlib_target=; if [ -n "$(SHARED_LIBS)" ]; then \
-		shlib_target="$(SHLIB_TARGET)"; \
-	fi; \
-	LIBRARIES="$(LIBSSL) $(LIBCRYPTO)"; \
-	if [ -z "$(SHARED_LIBS)" -a -n "$(FIPSCANLIB)" ] ; then \
-		FIPSLD_CC="$(CC)"; CC=$(TOP)/fips/fipsld; export CC FIPSLD_CC; \
-	fi; \
-	[ "$(FIPSCANLIB)" = "libfips" ] && LIBRARIES="$$LIBRARIES -lfips"; \
-	$(MAKE) -f $(TOP)/Makefile.shared -e \
-		CC="$${CC}" APPNAME=$$target$(EXE_EXT) OBJECTS="$$target.o" \
-		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
-		link_app.$${shlib_target}
 
 $(RMDTEST)$(EXE_EXT): $(RMDTEST).o $(DLIBCRYPTO)
 	@target=$(RMDTEST); $(BUILD_CMD)

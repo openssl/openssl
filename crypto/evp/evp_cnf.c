@@ -82,30 +82,8 @@ static int alg_module_init(CONF_IMODULE *md, const CONF *cnf)
     }
     for (i = 0; i < sk_CONF_VALUE_num(sktmp); i++) {
         oval = sk_CONF_VALUE_value(sktmp, i);
-        if (strcmp(oval->name, "fips_mode") == 0) {
-            int m;
-            if (!X509V3_get_value_bool(oval, &m)) {
-                EVPerr(EVP_F_ALG_MODULE_INIT, EVP_R_INVALID_FIPS_MODE);
-                return 0;
-            }
-            if (m > 0) {
-#ifdef OPENSSL_FIPS
-                if (!FIPS_mode() && !FIPS_mode_set(1)) {
-                    EVPerr(EVP_F_ALG_MODULE_INIT,
-                           EVP_R_ERROR_SETTING_FIPS_MODE);
-                    return 0;
-                }
-#else
-                EVPerr(EVP_F_ALG_MODULE_INIT, EVP_R_FIPS_MODE_NOT_SUPPORTED);
-                return 0;
-#endif
-            }
-        } else {
-            EVPerr(EVP_F_ALG_MODULE_INIT, EVP_R_UNKNOWN_OPTION);
-            ERR_add_error_data(4, "name=", oval->name,
-                               ", value=", oval->value);
-        }
-
+        EVPerr(EVP_F_ALG_MODULE_INIT, EVP_R_UNKNOWN_OPTION);
+        ERR_add_error_data(4, "name=", oval->name, ", value=", oval->value);
     }
     return 1;
 }

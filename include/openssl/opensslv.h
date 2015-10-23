@@ -31,11 +31,7 @@ extern "C" {
  *  major minor fix final patch/beta)
  */
 # define OPENSSL_VERSION_NUMBER  0x10100002L
-# ifdef OPENSSL_FIPS
-#  define OPENSSL_VERSION_TEXT    "OpenSSL 1.1.0-pre2-fips-dev  xx XXX xxxx"
-# else
-#  define OPENSSL_VERSION_TEXT    "OpenSSL 1.1.0-pre2-dev  xx XXX xxxx"
-# endif
+# define OPENSSL_VERSION_TEXT    "OpenSSL 1.1.0-pre2-dev  xx XXX xxxx"
 
 /*-
  * The macros below are to be used for shared library (.so, .dll, ...)

@@ -33,25 +33,8 @@ int bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,
                         const BN_ULONG *np, const BN_ULONG *n0, int num);
 
     if (sizeof(size_t) == 4) {
-# if 1 || (defined(__APPLE__) && defined(__MACH__))
         if (num >= 8 && (num & 3) == 0 && (OPENSSL_ppccap_P & PPC_FPU64))
             return bn_mul_mont_fpu64(rp, ap, bp, np, n0, num);
-# else
-        /*
-         * boundary of 32 was experimentally determined on Linux 2.6.22,
-         * might have to be adjusted on AIX...
-         */
-        if (num >= 32 && (num & 3) == 0 && (OPENSSL_ppccap_P & PPC_FPU64)) {
-            sigset_t oset;
-            int ret;
-
-            sigprocmask(SIG_SETMASK, &all_masked, &oset);
-            ret = bn_mul_mont_fpu64(rp, ap, bp, np, n0, num);
-            sigprocmask(SIG_SETMASK, &oset, NULL);
-
-            return ret;
-        }
-# endif
     } else if ((OPENSSL_ppccap_P & PPC_FPU64))
         /*
          * this is a "must" on POWER6, but run-time detection is not

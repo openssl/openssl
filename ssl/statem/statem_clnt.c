@@ -857,12 +857,6 @@ static int ssl_set_version(SSL *s)
                    SSL_R_ONLY_TLS_1_2_ALLOWED_IN_SUITEB_MODE);
             return 0;
         }
-
-        if (s->version == SSL3_VERSION && FIPS_mode()) {
-            SSLerr(SSL_F_SSL_SET_VERSION, SSL_R_ONLY_TLS_ALLOWED_IN_FIPS_MODE);
-            return 0;
-        }
-
     } else if (s->method->version == DTLS_ANY_VERSION) {
         /* Determine which DTLS version to use */
         /* If DTLS 1.2 disabled correct the version number */
@@ -1141,12 +1135,6 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL *s, PACKET *pkt)
 #endif
 #ifndef OPENSSL_NO_SSL3
         if ((sversion == SSL3_VERSION) && !(s->options & SSL_OP_NO_SSLv3)) {
-            if (FIPS_mode()) {
-                SSLerr(SSL_F_TLS_PROCESS_SERVER_HELLO,
-                       SSL_R_ONLY_TLS_ALLOWED_IN_FIPS_MODE);
-                al = SSL_AD_PROTOCOL_VERSION;
-                goto f_err;
-            }
             s->method = SSLv3_client_method();
         } else
 #endif
