@@ -107,6 +107,9 @@ void EC_KEY_free(EC_KEY *r)
     }
 #endif
 
+    if (r->meth->finish)
+        r->meth->finish(r);
+
 #ifndef OPENSSL_NO_ENGINE
     if (r->engine)
         ENGINE_finish(r->engine);
