@@ -1,4 +1,4 @@
-/* crypto/ct/ct_err.c */
+/* ct_err.c */
 /* ====================================================================
  * Copyright (c) 1999-2015 The OpenSSL Project.  All rights reserved.
  *
@@ -61,7 +61,7 @@
 
 #include <stdio.h>
 #include <openssl/err.h>
-#include <openssl/ct_locl.h>
+#include <internal/ct_int.h>
 
 /* BEGIN ERROR CODES */
 #ifndef OPENSSL_NO_ERR

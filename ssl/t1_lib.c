@@ -3997,7 +3997,6 @@ int tls1_check_chain(SSL *s, X509 *x, EVP_PKEY *pk, STACK_OF(X509) *chain,
         idx = ssl_cert_type(x, pk);
         if (idx == -1)
             return 0;
-        cpk = c->pkeys + idx;
         pvalid = s->s3->tmp.valid_flags + idx;
 
         if (c->cert_flags & SSL_CERT_FLAGS_CHECK_TLS_STRICT)

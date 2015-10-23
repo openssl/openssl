@@ -1089,7 +1089,6 @@ PKCS7_ISSUER_AND_SERIAL *PKCS7_get_issuer_and_serial(PKCS7 *p7, int idx)
     rsk = p7->d.signed_and_enveloped->recipientinfo;
     if (rsk == NULL)
         return NULL;
-    ri = sk_PKCS7_RECIP_INFO_value(rsk, 0);
     if (sk_PKCS7_RECIP_INFO_num(rsk) <= idx)
         return (NULL);
     ri = sk_PKCS7_RECIP_INFO_value(rsk, idx);
