@@ -65,6 +65,9 @@
 #include <string.h>
 #include "ec_lcl.h"
 #include <openssl/err.h>
+#ifndef OPENSSSL_NO_ENGINE
+# include <openssl/engine.h>
+#endif
 
 EC_KEY *EC_KEY_new(void)
 {
@@ -102,6 +105,11 @@ void EC_KEY_free(EC_KEY *r)
         fprintf(stderr, "EC_KEY_free, bad reference count\n");
         abort();
     }
+#endif
+
+#ifndef OPENSSL_NO_ENGINE
+    if (r->engine)
+        ENGINE_finish(r->engine);
 #endif
 
     EC_GROUP_free(r->group);
