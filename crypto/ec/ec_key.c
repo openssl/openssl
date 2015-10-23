@@ -132,6 +132,15 @@ EC_KEY *EC_KEY_copy(EC_KEY *dest, const EC_KEY *src)
         ECerr(EC_F_EC_KEY_COPY, ERR_R_PASSED_NULL_PARAMETER);
         return NULL;
     }
+    if (src->meth != dest->meth) {
+        if (dest->meth->finish)
+            dest->meth->finish(dest);
+#ifndef OPENSSL_NO_ENGINE
+        if (dest->engine && ENGINE_finish(dest->engine) == 0)
+            return 0;
+        dest->engine = NULL;
+#endif
+    }
     /* copy the parameters */
     if (src->group) {
         const EC_METHOD *meth = EC_GROUP_method_of(src->group);
@@ -182,12 +191,24 @@ EC_KEY *EC_KEY_copy(EC_KEY *dest, const EC_KEY *src)
     dest->version = src->version;
     dest->flags = src->flags;
 
+    if (src->meth != dest->meth) {
+#ifndef OPENSSL_NO_ENGINE
+        if (src->engine && ENGINE_init(src->engine) == 0)
+            return 0;
+        dest->engine = src->engine;
+#endif
+        dest->meth = src->meth;
+    }
+
+    if (src->meth->copy && src->meth->copy(dest, src) == 0)
+        return 0;
+
     return dest;
 }
 
 EC_KEY *EC_KEY_dup(const EC_KEY *ec_key)
 {
-    EC_KEY *ret = EC_KEY_new();
+    EC_KEY *ret = EC_KEY_new_method(ec_key->engine);
     if (ret == NULL)
         return NULL;
     if (EC_KEY_copy(ret, ec_key) == NULL) {

@@ -562,6 +562,7 @@ struct ec_key_method_st {
     int32_t flags;
     int (*init)(EC_KEY *key);
     void (*finish)(EC_KEY *key);
+    int (*copy)(EC_KEY *dest, const EC_KEY *src);
     int (*keygen)(EC_KEY *key);
     int (*compute_key)(void *out, size_t outlen, const EC_POINT *pub_key,
                        EC_KEY *ecdh,
