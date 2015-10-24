@@ -954,9 +954,11 @@ static const unsigned char tls12_sigalgs[] = {
         tlsext_sigalg(TLSEXT_hash_sha256)
         tlsext_sigalg(TLSEXT_hash_sha224)
         tlsext_sigalg(TLSEXT_hash_sha1)
+#ifndef OPENSSL_NO_GOST
     TLSEXT_hash_gostr3411, TLSEXT_signature_gostr34102001,
     TLSEXT_hash_gostr34112012_256, TLSEXT_signature_gostr34102012_256,
     TLSEXT_hash_gostr34112012_512, TLSEXT_signature_gostr34102012_512
+#endif
 };
 
 #ifndef OPENSSL_NO_EC
@@ -995,7 +997,22 @@ size_t tls12_get_psigalgs(SSL *s, const unsigned char **psigs)
         return s->cert->conf_sigalgslen;
     } else {
         *psigs = tls12_sigalgs;
+#ifndef OPENSSL_NO_GOST
+        /* 
+         * We expect that GOST 2001 signature and GOST 34.11-94 hash are present in all engines
+         * and GOST 2012 algorithms are not always present.
+         * It may change when the old algorithms are deprecated.
+         */
+        if ((EVP_get_digestbynid(NID_id_GostR3411_94) != NULL) 
+            && (EVP_get_digestbynid(NID_id_GostR3411_2012_256) == NULL)) {
+            return sizeof(tls12_sigalgs) - 4;
+        } else if (EVP_get_digestbynid(NID_id_GostR3411_94) == NULL) {
+            return sizeof(tls12_sigalgs) - 6;
+        }
         return sizeof(tls12_sigalgs);
+#else
+        return sizeof(tls12_sigalgs);
+#endif
     }
 }
 
