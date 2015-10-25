@@ -155,6 +155,7 @@ EC_KEY *EC_KEY_new_method(ENGINE *engine)
     ret->version = 1;
     ret->conv_form = POINT_CONVERSION_UNCOMPRESSED;
     ret->references = 1;
+    CRYPTO_MUTEX_init(&ret->lock);
     if (ret->meth->init != NULL && ret->meth->init(ret) == 0) {
         EC_KEY_free(ret);
         return NULL;

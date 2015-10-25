@@ -176,6 +176,7 @@ CERT *ssl_cert_new(void)
 
     ret->key = &(ret->pkeys[SSL_PKEY_RSA_ENC]);
     ret->references = 1;
+    CRYPTO_MUTEX_init(&ret->lock);
     ret->sec_cb = ssl_security_default_callback;
     ret->sec_level = OPENSSL_TLS_SECURITY_LEVEL;
     ret->sec_ex = NULL;
@@ -193,6 +194,8 @@ CERT *ssl_cert_dup(CERT *cert)
     }
 
     ret->references = 1;
+    CRYPTO_MUTEX_init(&ret->lock);
+
     ret->key = &ret->pkeys[cert->key - cert->pkeys];
 
 #ifndef OPENSSL_NO_DH
@@ -276,13 +279,14 @@ CERT *ssl_cert_dup(CERT *cert)
     ret->cert_cb_arg = cert->cert_cb_arg;
 
     if (cert->verify_store) {
-        CRYPTO_add(&cert->verify_store->references, 1,
-                   CRYPTO_LOCK_X509_STORE);
+        CRYPTO_atomic_add(&cert->verify_store->references, 1,
+                         &cert->verify_store->lock);
         ret->verify_store = cert->verify_store;
     }
 
     if (cert->chain_store) {
-        CRYPTO_add(&cert->chain_store->references, 1, CRYPTO_LOCK_X509_STORE);
+        CRYPTO_atomic_add(&cert->chain_store->references, 1,
+                         &cert->chain_store->lock);
         ret->chain_store = cert->chain_store;
     }
 
@@ -337,7 +341,7 @@ void ssl_cert_free(CERT *c)
     if (c == NULL)
         return;
 
-    i = CRYPTO_add(&c->references, -1, CRYPTO_LOCK_SSL_CERT);
+    i = CRYPTO_atomic_add(&c->references, -1, &c->lock);
 #ifdef REF_PRINT
     REF_PRINT("CERT", c);
 #endif
@@ -1057,7 +1061,7 @@ int ssl_cert_set_cert_store(CERT *c, X509_STORE *store, int chain, int ref)
     X509_STORE_free(*pstore);
     *pstore = store;
     if (ref && store)
-        CRYPTO_add(&store->references, 1, CRYPTO_LOCK_X509_STORE);
+        CRYPTO_atomic_add(&store->references, 1, &store->lock);
     return 1;
 }
 

@@ -684,7 +684,7 @@ static int hwcrhk_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f) (void))
             CRYPTO_w_lock(CRYPTO_LOCK_ENGINE);
             BIO_free(logstream);
             logstream = NULL;
-            if (CRYPTO_add(&bio->references, 1, CRYPTO_LOCK_BIO) > 1)
+            if (CRYPTO_atomic_add(&bio->references, 1, &bio->lock) > 1)
                 logstream = bio;
             else
                 HWCRHKerr(HWCRHK_F_HWCRHK_CTRL, HWCRHK_R_BIO_WAS_FREED);

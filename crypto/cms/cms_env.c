@@ -200,7 +200,7 @@ static int cms_RecipientInfo_ktri_init(CMS_RecipientInfo *ri, X509 *recip,
         return 0;
 
     X509_up_ref(recip);
-    CRYPTO_add(&pk->references, 1, CRYPTO_LOCK_EVP_PKEY);
+    CRYPTO_atomic_add(&pk->references, 1, &pk->lock);
     ktri->pkey = pk;
     ktri->recip = recip;
 

@@ -136,6 +136,7 @@ DH *DH_new_method(ENGINE *engine)
 #endif
 
     ret->references = 1;
+    CRYPTO_MUTEX_init(&ret->lock);
     ret->flags = ret->meth->flags;
     CRYPTO_new_ex_data(CRYPTO_EX_INDEX_DH, ret, &ret->ex_data);
     if ((ret->meth->init != NULL) && !ret->meth->init(ret)) {
@@ -156,7 +157,7 @@ void DH_free(DH *r)
 
     if (r == NULL)
         return;
-    i = CRYPTO_add(&r->references, -1, CRYPTO_LOCK_DH);
+    i = CRYPTO_atomic_add(&r->references, -1, &r->lock);
 #ifdef REF_PRINT
     REF_PRINT("DH", r);
 #endif
@@ -191,7 +192,7 @@ void DH_free(DH *r)
 
 int DH_up_ref(DH *r)
 {
-    int i = CRYPTO_add(&r->references, 1, CRYPTO_LOCK_DH);
+    int i = CRYPTO_atomic_add(&r->references, 1, &r->lock);
 #ifdef REF_PRINT
     REF_PRINT("DH", r);
 #endif

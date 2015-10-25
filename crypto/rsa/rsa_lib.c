@@ -152,6 +152,7 @@ RSA *RSA_new_method(ENGINE *engine)
     }
 #endif
 
+    CRYPTO_MUTEX_init(&ret->lock);
     ret->references = 1;
     ret->flags = ret->meth->flags & ~RSA_FLAG_NON_FIPS_ALLOW;
     if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_RSA, ret, &ret->ex_data)) {
@@ -182,7 +183,7 @@ void RSA_free(RSA *r)
     if (r == NULL)
         return;
 
-    i = CRYPTO_add(&r->references, -1, CRYPTO_LOCK_RSA);
+    i = CRYPTO_atomic_add(&r->references, -1, &r->lock);
 #ifdef REF_PRINT
     REF_PRINT("RSA", r);
 #endif
@@ -220,7 +221,7 @@ void RSA_free(RSA *r)
 
 int RSA_up_ref(RSA *r)
 {
-    int i = CRYPTO_add(&r->references, 1, CRYPTO_LOCK_RSA);
+    int i = CRYPTO_atomic_add(&r->references, 1, &r->lock);
 #ifdef REF_PRINT
     REF_PRINT("RSA", r);
 #endif

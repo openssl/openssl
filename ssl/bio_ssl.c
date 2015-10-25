@@ -338,7 +338,7 @@ static long ssl_ctrl(BIO *b, int cmd, long num, void *ptr)
             if (b->next_bio != NULL)
                 BIO_push(bio, b->next_bio);
             b->next_bio = bio;
-            CRYPTO_add(&bio->references, 1, CRYPTO_LOCK_BIO);
+            CRYPTO_atomic_add(&bio->references, 1, &bio->lock);
         }
         b->init = 1;
         break;
@@ -371,7 +371,7 @@ static long ssl_ctrl(BIO *b, int cmd, long num, void *ptr)
     case BIO_CTRL_PUSH:
         if ((b->next_bio != NULL) && (b->next_bio != ssl->rbio)) {
             SSL_set_bio(ssl, b->next_bio, b->next_bio);
-            CRYPTO_add(&b->next_bio->references, 1, CRYPTO_LOCK_BIO);
+            CRYPTO_atomic_add(&b->next_bio->references, 1, &b->next_bio->lock);
         }
         break;
     case BIO_CTRL_POP:
@@ -384,7 +384,7 @@ static long ssl_ctrl(BIO *b, int cmd, long num, void *ptr)
             if (ssl->rbio != ssl->wbio)
                 BIO_free_all(ssl->wbio);
             if (b->next_bio != NULL)
-                CRYPTO_add(&b->next_bio->references, -1, CRYPTO_LOCK_BIO);
+                CRYPTO_atomic_add(&b->next_bio->references, 1, &b->next_bio->lock);
             ssl->wbio = NULL;
             ssl->rbio = NULL;
         }

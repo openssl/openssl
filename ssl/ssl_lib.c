@@ -636,6 +636,7 @@ SSL *SSL_new(SSL_CTX *ctx)
     s->mode = ctx->mode;
     s->max_cert_list = ctx->max_cert_list;
     s->references = 1;
+    CRYPTO_MUTEX_init(&s->lock);
 
     /*
      * Earlier library versions used to copy the pointer to the CERT, not
@@ -668,7 +669,7 @@ SSL *SSL_new(SSL_CTX *ctx)
     s->quiet_shutdown = ctx->quiet_shutdown;
     s->max_send_fragment = ctx->max_send_fragment;
 
-    CRYPTO_add(&ctx->references, 1, CRYPTO_LOCK_SSL_CTX);
+    CRYPTO_atomic_add(&ctx->references, 1, &ctx->lock);
     s->ctx = ctx;
     s->tlsext_debug_cb = 0;
     s->tlsext_debug_arg = NULL;
@@ -679,7 +680,7 @@ SSL *SSL_new(SSL_CTX *ctx)
     s->tlsext_ocsp_exts = NULL;
     s->tlsext_ocsp_resp = NULL;
     s->tlsext_ocsp_resplen = -1;
-    CRYPTO_add(&ctx->references, 1, CRYPTO_LOCK_SSL_CTX);
+    CRYPTO_atomic_add(&ctx->references, 1, &ctx->lock);
     s->initial_ctx = ctx;
 # ifndef OPENSSL_NO_EC
     if (ctx->tlsext_ecpointformatlist) {
@@ -749,7 +750,7 @@ SSL *SSL_new(SSL_CTX *ctx)
 
 void SSL_up_ref(SSL *s)
 {
-    CRYPTO_add(&s->references, 1, CRYPTO_LOCK_SSL);
+    CRYPTO_atomic_add(&s->references, 1, &s->lock);
 }
 
 int SSL_CTX_set_session_id_context(SSL_CTX *ctx, const unsigned char *sid_ctx,
@@ -994,7 +995,7 @@ void SSL_free(SSL *s)
     if (s == NULL)
         return;
 
-    i = CRYPTO_add(&s->references, -1, CRYPTO_LOCK_SSL);
+    i = CRYPTO_atomic_add(&s->references, -1, &s->lock);
 #ifdef REF_PRINT
     REF_PRINT("SSL", s);
 #endif
@@ -1351,7 +1352,7 @@ int SSL_copy_session_id(SSL *t, const SSL *f)
             return 0;
     }
 
-    CRYPTO_add(&f->cert->references, 1, CRYPTO_LOCK_SSL_CERT);
+    CRYPTO_atomic_add(&f->cert->references, 1, &f->cert->lock);
     ssl_cert_free(t->cert);
     t->cert = f->cert;
     if (!SSL_set_session_id_context(t, f->sid_ctx, f->sid_ctx_length)) {
@@ -2288,6 +2289,7 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
     /* We take the system default. */
     ret->session_timeout = meth->get_timeout();
     ret->references = 1;
+    CRYPTO_MUTEX_init(&ret->lock);
     ret->max_cert_list = SSL_MAX_CERT_LIST_DEFAULT;
     ret->verify_mode = SSL_VERIFY_NONE;
     if ((ret->cert = ssl_cert_new()) == NULL)
@@ -2383,7 +2385,7 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
 
 void SSL_CTX_up_ref(SSL_CTX *ctx)
 {
-    CRYPTO_add(&ctx->references, 1, CRYPTO_LOCK_SSL_CTX);
+    CRYPTO_atomic_add(&ctx->references, 1, &ctx->lock);
 }
 
 void SSL_CTX_free(SSL_CTX *a)
@@ -2393,7 +2395,7 @@ void SSL_CTX_free(SSL_CTX *a)
     if (a == NULL)
         return;
 
-    i = CRYPTO_add(&a->references, -1, CRYPTO_LOCK_SSL_CTX);
+    i = CRYPTO_atomic_add(&a->references, -1, &a->lock);
 #ifdef REF_PRINT
     REF_PRINT("SSL_CTX", a);
 #endif
@@ -2804,7 +2806,7 @@ void ssl_update_cache(SSL *s, int mode)
         && ((i & SSL_SESS_CACHE_NO_INTERNAL_STORE)
             || SSL_CTX_add_session(s->session_ctx, s->session))
         && (s->session_ctx->new_session_cb != NULL)) {
-        CRYPTO_add(&s->session->references, 1, CRYPTO_LOCK_SSL_SESSION);
+        CRYPTO_atomic_add(&s->session->references, 1, &s->session->lock);
         if (!s->session_ctx->new_session_cb(s, s->session))
             SSL_SESSION_free(s->session);
     }
@@ -3040,7 +3042,7 @@ SSL *SSL_dup(SSL *s)
 
     /* If we're not quiescent, just up_ref! */
     if (!SSL_in_init(s) || !SSL_in_before(s)) {
-        CRYPTO_add(&s->references, 1, CRYPTO_LOCK_SSL);
+        CRYPTO_atomic_add(&s->references, 1, &s->lock);
         return s;
     }
 
@@ -3350,7 +3352,7 @@ SSL_CTX *SSL_set_SSL_CTX(SSL *ssl, SSL_CTX *ctx)
         memcpy(&ssl->sid_ctx, &ctx->sid_ctx, sizeof(ssl->sid_ctx));
     }
 
-    CRYPTO_add(&ctx->references, 1, CRYPTO_LOCK_SSL_CTX);
+    CRYPTO_atomic_add(&ctx->references, 1, &ctx->lock);
     SSL_CTX_free(ssl->ctx); /* decrement reference count */
     ssl->ctx = ctx;
 

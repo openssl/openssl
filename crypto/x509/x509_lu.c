@@ -195,6 +195,7 @@ X509_STORE *X509_STORE_new(void)
         goto err;
 
     ret->references = 1;
+    CRYPTO_MUTEX_init(&ret->lock);
     return ret;
 err:
     X509_VERIFY_PARAM_free(ret->param);
@@ -228,7 +229,7 @@ void X509_STORE_free(X509_STORE *vfy)
     if (vfy == NULL)
         return;
 
-    i = CRYPTO_add(&vfy->references, -1, CRYPTO_LOCK_X509_STORE);
+    i = CRYPTO_atomic_add(&vfy->references, -1, &vfy->lock);
 #ifdef REF_PRINT
     REF_PRINT("X509_STORE", vfy);
 #endif

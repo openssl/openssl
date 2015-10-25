@@ -69,6 +69,7 @@ X509_PKEY *X509_PKEY_new(void)
     if (ret == NULL)
         goto err;
 
+    CRYPTO_MUTEX_init(&ret->lock);
     ret->references = 1;
     ret->enc_algor = X509_ALGOR_new();
     ret->enc_pkey = ASN1_OCTET_STRING_new();
@@ -89,7 +90,7 @@ void X509_PKEY_free(X509_PKEY *x)
     if (x == NULL)
         return;
 
-    i = CRYPTO_add(&x->references, -1, CRYPTO_LOCK_X509_PKEY);
+    i = CRYPTO_atomic_add(&x->references, -1, &x->lock);
 #ifdef REF_PRINT
     REF_PRINT("X509_PKEY", x);
 #endif

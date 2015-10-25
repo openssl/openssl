@@ -170,6 +170,7 @@ struct dsa_st {
     /* Normally used to cache montgomery values */
     BN_MONT_CTX *method_mont_p;
     int references;
+    CRYPTO_MUTEX lock;
     CRYPTO_EX_DATA ex_data;
     const DSA_METHOD *meth;
     /* functional reference if 'meth' is ENGINE-provided */

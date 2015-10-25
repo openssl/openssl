@@ -105,6 +105,7 @@ int asn1_do_lock(ASN1_VALUE **pval, int op, const ASN1_ITEM *it)
 {
     const ASN1_AUX *aux;
     int *lck, ret;
+    CRYPTO_MUTEX *mutex;
     if ((it->itype != ASN1_ITYPE_SEQUENCE)
         && (it->itype != ASN1_ITYPE_NDEF_SEQUENCE))
         return 0;
@@ -112,11 +113,13 @@ int asn1_do_lock(ASN1_VALUE **pval, int op, const ASN1_ITEM *it)
     if (!aux || !(aux->flags & ASN1_AFLG_REFCOUNT))
         return 0;
     lck = offset2ptr(*pval, aux->ref_offset);
+    mutex = offset2ptr(*pval, aux->ref_lock_offset);
     if (op == 0) {
         *lck = 1;
+        CRYPTO_MUTEX_init(mutex);
         return 1;
     }
-    ret = CRYPTO_add(lck, op, aux->ref_lock);
+    ret = CRYPTO_atomic_add(lck, op, mutex);
 #ifdef REF_PRINT
     fprintf(stderr, "%s: Reference Count: %d\n", it->sname, *lck);
 #endif

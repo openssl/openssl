@@ -196,6 +196,7 @@ EVP_PKEY *EVP_PKEY_new(void)
     ret->type = EVP_PKEY_NONE;
     ret->save_type = EVP_PKEY_NONE;
     ret->references = 1;
+    CRYPTO_MUTEX_init(&ret->lock);
     ret->ameth = NULL;
     ret->engine = NULL;
     ret->pkey.ptr = NULL;
@@ -206,7 +207,7 @@ EVP_PKEY *EVP_PKEY_new(void)
 
 void EVP_PKEY_up_ref(EVP_PKEY *pkey)
 {
-    CRYPTO_add(&pkey->references, 1, CRYPTO_LOCK_EVP_PKEY);
+    CRYPTO_atomic_add(&pkey->references, 1, &pkey->lock);
 }
 
 /*
@@ -424,7 +425,7 @@ void EVP_PKEY_free(EVP_PKEY *x)
     if (x == NULL)
         return;
 
-    i = CRYPTO_add(&x->references, -1, CRYPTO_LOCK_EVP_PKEY);
+    i = CRYPTO_atomic_add(&x->references, -1, &x->lock);
 #ifdef REF_PRINT
     REF_PRINT("EVP_PKEY", x);
 #endif
