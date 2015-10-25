@@ -244,6 +244,48 @@ typedef struct {
     struct CRYPTO_dynlock_value *data;
 } CRYPTO_dynlock;
 
+#if !defined(OPENSSL_THREADS) || defined(CRYPTO_TDEBUG)
+typedef int CRYPTO_MUTEX;
+typedef int CRYPTO_ONCE;
+typedef int CRYPTO_THREAD_LOCAL;
+typedef int CRYPTO_THREAD_ID;
+
+#  define CRYPTO_ONCE_STATIC_INIT 0
+# elif defined(OPENSSL_SYS_WINDOWS)
+#  include <windows.h>
+typedef CRITICAL_SECTION CRYPTO_MUTEX;
+typedef INIT_ONCE CRYPTO_ONCE;
+typedef DWORD CRYPTO_THREAD_LOCAL;
+typedef DWORD CRYPTO_THREAD_ID;
+
+#  define CRYPTO_ONCE_STATIC_INIT INIT_ONCE_STATIC_INIT
+# else
+#  include <pthread.h>
+typedef pthread_rwlock_t CRYPTO_MUTEX;
+typedef pthread_once_t CRYPTO_ONCE;
+typedef pthread_key_t CRYPTO_THREAD_LOCAL;
+typedef pthread_t CRYPTO_THREAD_ID;
+
+#  define CRYPTO_ONCE_STATIC_INIT PTHREAD_ONCE_INIT
+# endif
+
+int CRYPTO_atomic_add(int *val, int amount, CRYPTO_MUTEX *lock);
+
+int CRYPTO_MUTEX_init(CRYPTO_MUTEX *lock);
+int CRYPTO_MUTEX_lock_read(CRYPTO_MUTEX *lock);
+int CRYPTO_MUTEX_lock_write(CRYPTO_MUTEX *lock);
+int CRYPTO_MUTEX_unlock(CRYPTO_MUTEX *lock);
+void CRYPTO_MUTEX_cleanup(CRYPTO_MUTEX *lock);
+
+void CRYPTO_ONCE_run(CRYPTO_ONCE *once, void (*init)(void));
+
+int CRYPTO_THREAD_LOCAL_init(CRYPTO_THREAD_LOCAL *key, void (*cleanup)(void *));
+void *CRYPTO_THREAD_LOCAL_get(CRYPTO_THREAD_LOCAL *key);
+int CRYPTO_THREAD_LOCAL_set(CRYPTO_THREAD_LOCAL *key, void *val);
+
+CRYPTO_THREAD_ID CRYPTO_THREAD_get_current_id(void);
+int CRYPTO_THREAD_compare_id(CRYPTO_THREAD_ID a, CRYPTO_THREAD_ID b);
+
 /*
  * The following can be used to detect memory leaks in the library. If
  * used, it turns on malloc checking

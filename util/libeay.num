@@ -214,7 +214,7 @@ ERR_clear_error                         222	1_1_0	EXIST::FUNCTION:
 ERR_error_string                        223	1_1_0	EXIST::FUNCTION:
 ERR_free_strings                        224	1_1_0	EXIST::FUNCTION:
 ERR_func_error_string                   225	1_1_0	EXIST::FUNCTION:
-ERR_get_err_state_table                 226	1_1_0	EXIST::FUNCTION:
+ERR_get_err_state_table                 226	1_1_0	NOEXIST::FUNCTION:
 ERR_get_error                           227	1_1_0	EXIST::FUNCTION:
 ERR_get_error_line                      228	1_1_0	EXIST::FUNCTION:
 ERR_get_state                           229	1_1_0	EXIST::FUNCTION:
@@ -2783,7 +2783,7 @@ BIO_indent                              3242	1_1_0	EXIST::FUNCTION:
 OpenSSLDie                              3244	1_1_0	EXIST::FUNCTION:
 OPENSSL_cleanse                         3245	1_1_0	EXIST::FUNCTION:
 ENGINE_setup_bsd_cryptodev              3246	1_1_0	EXIST:__FreeBSD__:FUNCTION:ENGINE
-ERR_release_err_state_table             3247	1_1_0	EXIST::FUNCTION:
+ERR_release_err_state_table             3247	1_1_0	NOEXIST::FUNCTION:
 EVP_aes_128_cfb8                        3248	1_1_0	EXIST::FUNCTION:AES
 FIPS_corrupt_rsa                        3249	1_1_0	NOEXIST::FUNCTION:
 FIPS_selftest_des                       3250	1_1_0	NOEXIST::FUNCTION:
