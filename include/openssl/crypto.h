@@ -245,6 +245,16 @@ typedef struct {
     struct CRYPTO_dynlock_value *data;
 } CRYPTO_dynlock;
 
+typedef void CRYPTO_RWLOCK;
+
+CRYPTO_RWLOCK *CRYPTO_THREAD_lock_new(void);
+int CRYPTO_THREAD_read_lock(CRYPTO_RWLOCK *lock);
+int CRYPTO_THREAD_write_lock(CRYPTO_RWLOCK *lock);
+int CRYPTO_THREAD_unlock(CRYPTO_RWLOCK *lock);
+void CRYPTO_THREAD_lock_free(CRYPTO_RWLOCK *lock);
+
+int CRYPTO_atomic_add(int *val, int amount, int *ret, CRYPTO_RWLOCK *lock);
+
 /*
  * The following can be used to detect memory leaks in the library. If
  * used, it turns on malloc checking
