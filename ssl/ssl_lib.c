@@ -783,17 +783,17 @@ int SSL_set_session_id_context(SSL *ssl, const unsigned char *sid_ctx,
 
 int SSL_CTX_set_generate_session_id(SSL_CTX *ctx, GEN_SESSION_CB cb)
 {
-    CRYPTO_w_lock(CRYPTO_LOCK_SSL_CTX);
+    CRYPTO_MUTEX_lock_write(&ctx->lock);
     ctx->generate_session_id = cb;
-    CRYPTO_w_unlock(CRYPTO_LOCK_SSL_CTX);
+    CRYPTO_MUTEX_unlock(&ctx->lock);
     return 1;
 }
 
 int SSL_set_generate_session_id(SSL *ssl, GEN_SESSION_CB cb)
 {
-    CRYPTO_w_lock(CRYPTO_LOCK_SSL);
+    CRYPTO_MUTEX_lock_write(&ssl->lock);
     ssl->generate_session_id = cb;
-    CRYPTO_w_unlock(CRYPTO_LOCK_SSL);
+    CRYPTO_MUTEX_unlock(&ssl->lock);
     return 1;
 }
 
@@ -816,9 +816,10 @@ int SSL_has_matching_session_id(const SSL *ssl, const unsigned char *id,
     r.session_id_length = id_len;
     memcpy(r.session_id, id, id_len);
 
-    CRYPTO_r_lock(CRYPTO_LOCK_SSL_CTX);
+    CRYPTO_MUTEX_lock_read(&ssl->ctx->lock);
     p = lh_SSL_SESSION_retrieve(ssl->ctx->sessions, &r);
-    CRYPTO_r_unlock(CRYPTO_LOCK_SSL_CTX);
+    CRYPTO_MUTEX_unlock(&ssl->ctx->lock);
+
     return (p != NULL);
 }
 

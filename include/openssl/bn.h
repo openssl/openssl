@@ -416,7 +416,7 @@ int BN_from_montgomery(BIGNUM *r, const BIGNUM *a, BN_MONT_CTX *mont,
 void BN_MONT_CTX_free(BN_MONT_CTX *mont);
 int BN_MONT_CTX_set(BN_MONT_CTX *mont, const BIGNUM *mod, BN_CTX *ctx);
 BN_MONT_CTX *BN_MONT_CTX_copy(BN_MONT_CTX *to, BN_MONT_CTX *from);
-BN_MONT_CTX *BN_MONT_CTX_set_locked(BN_MONT_CTX **pmont, int lock,
+BN_MONT_CTX *BN_MONT_CTX_set_locked(BN_MONT_CTX **pmont, CRYPTO_MUTEX *lock,
                                     const BIGNUM *mod, BN_CTX *ctx);
 
 /* BN_BLINDING flags */
@@ -451,6 +451,9 @@ BN_BLINDING *BN_BLINDING_create_param(BN_BLINDING *b,
 DEPRECATEDIN_0_9_8(void BN_set_params(int mul, int high, int low, int mont))
 DEPRECATEDIN_0_9_8(int BN_get_params(int which)) /* 0, mul, 1 high, 2 low, 3
                                                   * mont */
+
+int BN_BLINDING_lock_write(BN_BLINDING *b);
+int BN_BLINDING_unlock(BN_BLINDING *b);
 
 BN_RECP_CTX *BN_RECP_CTX_new(void);
 void BN_RECP_CTX_free(BN_RECP_CTX *recp);

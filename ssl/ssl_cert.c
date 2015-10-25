@@ -138,17 +138,25 @@ static int ssl_security_default_callback(SSL *s, SSL_CTX *ctx, int op,
                                          int bits, int nid, void *other,
                                          void *ex);
 
+static CRYPTO_MUTEX ssl_x509_store_ctx_lock;
+static CRYPTO_ONCE ssl_x509_store_ctx_once;
+
+static void ssl_x509_store_ctx_init(void)
+{
+    CRYPTO_MUTEX_init(&ssl_x509_store_ctx_lock);
+}
+
 int SSL_get_ex_data_X509_STORE_CTX_idx(void)
 {
     static volatile int ssl_x509_store_ctx_idx = -1;
-    int got_write_lock = 0;
 
-    CRYPTO_r_lock(CRYPTO_LOCK_SSL_CTX);
+    CRYPTO_ONCE_run(&ssl_x509_store_ctx_once, ssl_x509_store_ctx_init);
+
+    CRYPTO_MUTEX_lock_read(&ssl_x509_store_ctx_lock);
 
     if (ssl_x509_store_ctx_idx < 0) {
-        CRYPTO_r_unlock(CRYPTO_LOCK_SSL_CTX);
-        CRYPTO_w_lock(CRYPTO_LOCK_SSL_CTX);
-        got_write_lock = 1;
+        CRYPTO_MUTEX_unlock(&ssl_x509_store_ctx_lock);
+        CRYPTO_MUTEX_lock_write(&ssl_x509_store_ctx_lock);
 
         if (ssl_x509_store_ctx_idx < 0) {
             ssl_x509_store_ctx_idx =
@@ -157,10 +165,7 @@ int SSL_get_ex_data_X509_STORE_CTX_idx(void)
         }
     }
 
-    if (got_write_lock)
-        CRYPTO_w_unlock(CRYPTO_LOCK_SSL_CTX);
-    else
-        CRYPTO_r_unlock(CRYPTO_LOCK_SSL_CTX);
+    CRYPTO_MUTEX_unlock(&ssl_x509_store_ctx_lock);
 
     return ssl_x509_store_ctx_idx;
 }
