@@ -84,6 +84,10 @@ EC_KEY *EC_KEY_new_by_curve_name(int nid)
         EC_KEY_free(ret);
         return NULL;
     }
+    if (ret->meth->set_group && ret->meth->set_group(ret, ret->group) == 0) {
+        EC_KEY_free(ret);
+        return NULL;
+    }
     return ret;
 }
 
@@ -449,6 +453,8 @@ const EC_GROUP *EC_KEY_get0_group(const EC_KEY *key)
 
 int EC_KEY_set_group(EC_KEY *key, const EC_GROUP *group)
 {
+    if (key->meth->set_group && key->meth->set_group(key, group) == 0)
+        return 0;
     EC_GROUP_free(key->group);
     key->group = EC_GROUP_dup(group);
     return (key->group == NULL) ? 0 : 1;
@@ -461,6 +467,8 @@ const BIGNUM *EC_KEY_get0_private_key(const EC_KEY *key)
 
 int EC_KEY_set_private_key(EC_KEY *key, const BIGNUM *priv_key)
 {
+    if (key->meth->set_private && key->meth->set_private(key, priv_key) == 0)
+        return 0;
     BN_clear_free(key->priv_key);
     key->priv_key = BN_dup(priv_key);
     return (key->priv_key == NULL) ? 0 : 1;
@@ -473,6 +481,8 @@ const EC_POINT *EC_KEY_get0_public_key(const EC_KEY *key)
 
 int EC_KEY_set_public_key(EC_KEY *key, const EC_POINT *pub_key)
 {
+    if (key->meth->set_public && key->meth->set_public(key, pub_key) == 0)
+        return 0;
     EC_POINT_free(key->pub_key);
     key->pub_key = EC_POINT_dup(pub_key, key->group);
     return (key->pub_key == NULL) ? 0 : 1;

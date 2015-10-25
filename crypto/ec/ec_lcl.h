@@ -563,6 +563,9 @@ struct ec_key_method_st {
     int (*init)(EC_KEY *key);
     void (*finish)(EC_KEY *key);
     int (*copy)(EC_KEY *dest, const EC_KEY *src);
+    int (*set_group)(EC_KEY *key, const EC_GROUP *grp);
+    int (*set_private)(EC_KEY *key, const BIGNUM *priv_key);
+    int (*set_public)(EC_KEY *key, const EC_POINT *pub_key);
     int (*keygen)(EC_KEY *key);
     int (*compute_key)(void *out, size_t outlen, const EC_POINT *pub_key,
                        EC_KEY *ecdh,
