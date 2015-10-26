@@ -63,7 +63,7 @@
  * Valid return codes used for functions performing work prior to or after
  * sending or receiving a message
  */
-enum WORK_STATE {
+typedef enum {
     /* Something went wrong */
     WORK_ERROR,
     /* We're done working and there shouldn't be anything else to do after */
@@ -74,20 +74,20 @@ enum WORK_STATE {
     WORK_MORE_A,
     /* We're working on phase B */
     WORK_MORE_B
-};
+} WORK_STATE;
 
 /* Write transition return codes */
-enum WRITE_TRAN {
+typedef enum {
     /* Something went wrong */
     WRITE_TRAN_ERROR,
     /* A transition was successfully completed and we should continue */
     WRITE_TRAN_CONTINUE,
     /* There is no more write work to be done */
     WRITE_TRAN_FINISHED
-};
+} WRITE_TRAN;
 
 /* Message flow states */
-enum MSG_FLOW_STATE {
+typedef enum {
     /* No handshake in progress */
     MSG_FLOW_UNINITED,
     /* A permanent error with this connection */
@@ -100,22 +100,22 @@ enum MSG_FLOW_STATE {
     MSG_FLOW_WRITING,
     /* Handshake has finished */
     MSG_FLOW_FINISHED
-};
+} MSG_FLOW_STATE;
 
 /* Read states */
-enum READ_STATE {
+typedef enum {
     READ_STATE_HEADER,
     READ_STATE_BODY,
     READ_STATE_POST_PROCESS
-};
+} READ_STATE;
 
 /* Write states */
-enum WRITE_STATE {
+typedef enum {
     WRITE_STATE_TRANSITION,
     WRITE_STATE_PRE_WORK,
     WRITE_STATE_SEND,
     WRITE_STATE_POST_WORK
-};
+} WRITE_STATE;
 
 
 /*****************************************************************************
@@ -127,11 +127,11 @@ enum WRITE_STATE {
  *****************************************************************************/
 
 struct ossl_statem_st {
-    enum MSG_FLOW_STATE state;
-    enum WRITE_STATE write_state;
-    enum WORK_STATE write_state_work;
-    enum READ_STATE read_state;
-    enum WORK_STATE read_state_work;
+    MSG_FLOW_STATE state;
+    WRITE_STATE write_state;
+    WORK_STATE write_state_work;
+    READ_STATE read_state;
+    WORK_STATE read_state_work;
     OSSL_HANDSHAKE_STATE hand_state;
     int in_init;
     int read_state_first_init;

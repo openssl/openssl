@@ -391,7 +391,7 @@ int client_read_transition(SSL *s, int mt)
  * client_write_transition() works out what handshake state to move to next
  * when the client is writing messages to be sent to the server.
  */
-enum WRITE_TRAN client_write_transition(SSL *s)
+WRITE_TRAN client_write_transition(SSL *s)
 {
     OSSL_STATEM *st = &s->statem;
 
@@ -495,7 +495,7 @@ enum WRITE_TRAN client_write_transition(SSL *s)
  * Perform any pre work that needs to be done prior to sending a message from
  * the client to the server.
  */
-enum WORK_STATE client_pre_work(SSL *s, enum WORK_STATE wst)
+WORK_STATE client_pre_work(SSL *s, WORK_STATE wst)
 {
     OSSL_STATEM *st = &s->statem;
 
@@ -542,7 +542,7 @@ enum WORK_STATE client_pre_work(SSL *s, enum WORK_STATE wst)
  * Perform any work that needs to be done after sending a message from the
  * client to the server.
  */
-enum WORK_STATE client_post_work(SSL *s, enum WORK_STATE wst)
+WORK_STATE client_post_work(SSL *s, WORK_STATE wst)
 {
     OSSL_STATEM *st = &s->statem;
 
@@ -733,7 +733,7 @@ unsigned long client_max_message_size(SSL *s)
 /*
  * Process a message that the client has been received from the server.
  */
-enum MSG_PROCESS_RETURN client_process_message(SSL *s, PACKET *pkt)
+MSG_PROCESS_RETURN client_process_message(SSL *s, PACKET *pkt)
 {
     OSSL_STATEM *st = &s->statem;
 
@@ -780,7 +780,7 @@ enum MSG_PROCESS_RETURN client_process_message(SSL *s, PACKET *pkt)
  * Perform any further processing required following the receipt of a message
  * from the server
  */
-enum WORK_STATE client_post_process_message(SSL *s, enum WORK_STATE wst)
+WORK_STATE client_post_process_message(SSL *s, WORK_STATE wst)
 {
     OSSL_STATEM *st = &s->statem;
 
@@ -1093,7 +1093,7 @@ int tls_construct_client_hello(SSL *s)
     return 0;
 }
 
-enum MSG_PROCESS_RETURN dtls_process_hello_verify(SSL *s, PACKET *pkt)
+MSG_PROCESS_RETURN dtls_process_hello_verify(SSL *s, PACKET *pkt)
 {
     int al;
     unsigned int cookie_len;
@@ -1127,7 +1127,7 @@ enum MSG_PROCESS_RETURN dtls_process_hello_verify(SSL *s, PACKET *pkt)
     return MSG_PROCESS_ERROR;
 }
 
-enum MSG_PROCESS_RETURN tls_process_server_hello(SSL *s, PACKET *pkt)
+MSG_PROCESS_RETURN tls_process_server_hello(SSL *s, PACKET *pkt)
 {
     STACK_OF(SSL_CIPHER) *sk;
     const SSL_CIPHER *c;
@@ -1467,7 +1467,7 @@ enum MSG_PROCESS_RETURN tls_process_server_hello(SSL *s, PACKET *pkt)
     return MSG_PROCESS_ERROR;
 }
 
-enum MSG_PROCESS_RETURN tls_process_server_certificate(SSL *s, PACKET *pkt)
+MSG_PROCESS_RETURN tls_process_server_certificate(SSL *s, PACKET *pkt)
 {
     int al, i, ret = MSG_PROCESS_ERROR, exp_idx;
     unsigned long cert_list_len, cert_len;
@@ -1590,7 +1590,7 @@ enum MSG_PROCESS_RETURN tls_process_server_certificate(SSL *s, PACKET *pkt)
     return ret;
 }
 
-enum MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
+MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
 {
 #ifndef OPENSSL_NO_RSA
     unsigned char *q, md_buf[EVP_MAX_MD_SIZE * 2];
@@ -2045,7 +2045,7 @@ enum MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
     return MSG_PROCESS_ERROR;
 }
 
-enum MSG_PROCESS_RETURN tls_process_certificate_request(SSL *s, PACKET *pkt)
+MSG_PROCESS_RETURN tls_process_certificate_request(SSL *s, PACKET *pkt)
 {
     int ret = MSG_PROCESS_ERROR;
     unsigned int list_len, ctype_num, i, name_len;
@@ -2168,7 +2168,7 @@ static int ca_dn_cmp(const X509_NAME *const *a, const X509_NAME *const *b)
     return (X509_NAME_cmp(*a, *b));
 }
 
-enum MSG_PROCESS_RETURN tls_process_new_session_ticket(SSL *s, PACKET *pkt)
+MSG_PROCESS_RETURN tls_process_new_session_ticket(SSL *s, PACKET *pkt)
 {
     int al;
     unsigned int ticklen;
@@ -2255,7 +2255,7 @@ enum MSG_PROCESS_RETURN tls_process_new_session_ticket(SSL *s, PACKET *pkt)
     return MSG_PROCESS_ERROR;
 }
 
-enum MSG_PROCESS_RETURN tls_process_cert_status(SSL *s, PACKET *pkt)
+MSG_PROCESS_RETURN tls_process_cert_status(SSL *s, PACKET *pkt)
 {
     int al;
     unsigned long resplen;
@@ -2307,7 +2307,7 @@ enum MSG_PROCESS_RETURN tls_process_cert_status(SSL *s, PACKET *pkt)
     return MSG_PROCESS_ERROR;
 }
 
-enum MSG_PROCESS_RETURN tls_process_server_done(SSL *s, PACKET *pkt)
+MSG_PROCESS_RETURN tls_process_server_done(SSL *s, PACKET *pkt)
 {
     if (PACKET_remaining(pkt) > 0) {
         /* should contain no data */
@@ -3154,7 +3154,7 @@ static int ssl3_check_client_certificate(SSL *s)
     return 1;
 }
 
-enum WORK_STATE tls_prepare_client_certificate(SSL *s, enum WORK_STATE wst)
+WORK_STATE tls_prepare_client_certificate(SSL *s, WORK_STATE wst)
 {
     X509 *x509 = NULL;
     EVP_PKEY *pkey = NULL;
