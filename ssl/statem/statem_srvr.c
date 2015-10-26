@@ -310,7 +310,7 @@ int ossl_statem_server_read_transition(SSL *s, int mt)
  *   1: Yes
  *   0: No
  */
-static inline int send_server_key_exchange(SSL *s)
+static int send_server_key_exchange(SSL *s)
 {
     unsigned long alg_k = s->s3->tmp.new_cipher->algorithm_mkey;
 
@@ -362,7 +362,7 @@ static inline int send_server_key_exchange(SSL *s)
  *   1: Yes
  *   0: No
  */
-static inline int send_certificate_request(SSL *s)
+static int send_certificate_request(SSL *s)
 {
     if (
            /* don't request cert unless asked for it: */
