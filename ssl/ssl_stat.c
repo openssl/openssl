@@ -217,79 +217,79 @@ const char *SSL_state_string(const SSL *s)
         break;
 
     case TLS_ST_CW_CLNT_HELLO:
-        str = "3WCH";
+        str = "TWCH";
         break;
     case TLS_ST_CR_SRVR_HELLO:
-        str = "3RSH";
+        str = "TRSH";
         break;
     case TLS_ST_CR_CERT:
-        str = "3RSC";
+        str = "TRSC";
         break;
     case TLS_ST_CR_KEY_EXCH:
-        str = "3RSKE";
+        str = "TRSKE";
         break;
     case TLS_ST_CR_CERT_REQ:
-        str = "3RCR";
+        str = "TRCR";
         break;
     case TLS_ST_CR_SRVR_DONE:
-        str = "3RSD";
+        str = "TRSD";
         break;
     case TLS_ST_CW_CERT:
-        str = "3WCC";
+        str = "TWCC";
         break;
     case TLS_ST_CW_KEY_EXCH:
-        str = "3WCKE";
+        str = "TWCKE";
         break;
     case TLS_ST_CW_CERT_VRFY:
-        str = "3WCV";
+        str = "TWCV";
         break;
 
     case TLS_ST_SW_CHANGE:
     case TLS_ST_CW_CHANGE:
-        str = "3WCCS";
+        str = "TWCCS";
         break;
     case TLS_ST_SW_FINISHED:
     case TLS_ST_CW_FINISHED:
-        str = "3WFIN";
+        str = "TWFIN";
         break;
     case TLS_ST_SR_CHANGE:
     case TLS_ST_CR_CHANGE:
-        str = "3RCCS";
+        str = "TRCCS";
         break;
     case TLS_ST_SR_FINISHED:
     case TLS_ST_CR_FINISHED:
-        str = "3RFIN";
+        str = "TRFIN";
         break;
 
     case TLS_ST_SW_HELLO_REQ:
-        str = "3WHR";
+        str = "TWHR";
         break;
     case TLS_ST_SR_CLNT_HELLO:
-        str = "3RCH";
+        str = "TRCH";
         break;
     case TLS_ST_SW_SRVR_HELLO:
-        str = "3WSH";
+        str = "TWSH";
         break;
     case TLS_ST_SW_CERT:
-        str = "3WSC";
+        str = "TWSC";
         break;
     case TLS_ST_SW_KEY_EXCH:
-        str = "3WSKE";
+        str = "TWSKE";
         break;
     case TLS_ST_SW_CERT_REQ:
-        str = "3WCR";
+        str = "TWCR";
         break;
     case TLS_ST_SW_SRVR_DONE:
-        str = "3WSD";
+        str = "TWSD";
         break;
     case TLS_ST_SR_CERT:
-        str = "3RCC";
+        str = "TRCC";
         break;
     case TLS_ST_SR_KEY_EXCH:
-        str = "3RCKE";
+        str = "TRCKE";
         break;
     case TLS_ST_SR_CERT_VRFY:
-        str = "3RCV";
+        str = "TRCV";
         break;
 
 /* DTLS */
