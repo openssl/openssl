@@ -533,15 +533,15 @@ static SUB_STATE_RETURN read_state_machine(SSL *s) {
     cb = get_callback(s);
 
     if(s->server) {
-        transition = server_read_transition;
-        process_message = server_process_message;
-        max_message_size = server_max_message_size;
-        post_process_message = server_post_process_message;
+        transition = ossl_statem_server_read_transition;
+        process_message = ossl_statem_server_process_message;
+        max_message_size = ossl_statem_server_max_message_size;
+        post_process_message = ossl_statem_server_post_process_message;
     } else {
-        transition = client_read_transition;
-        process_message = client_process_message;
-        max_message_size = client_max_message_size;
-        post_process_message = client_post_process_message;
+        transition = ossl_statem_client_read_transition;
+        process_message = ossl_statem_client_process_message;
+        max_message_size = ossl_statem_client_max_message_size;
+        post_process_message = ossl_statem_client_post_process_message;
     }
 
     if (st->read_state_first_init) {
@@ -730,15 +730,15 @@ static SUB_STATE_RETURN write_state_machine(SSL *s)
     cb = get_callback(s);
 
     if(s->server) {
-        transition = server_write_transition;
-        pre_work = server_pre_work;
-        post_work = server_post_work;
-        construct_message = server_construct_message;
+        transition = ossl_statem_server_write_transition;
+        pre_work = ossl_statem_server_pre_work;
+        post_work = ossl_statem_server_post_work;
+        construct_message = ossl_statem_server_construct_message;
     } else {
-        transition = client_write_transition;
-        pre_work = client_pre_work;
-        post_work = client_post_work;
-        construct_message = client_construct_message;
+        transition = ossl_statem_client_write_transition;
+        pre_work = ossl_statem_client_pre_work;
+        post_work = ossl_statem_client_post_work;
+        construct_message = ossl_statem_client_construct_message;
     }
 
     while(1) {

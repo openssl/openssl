@@ -180,7 +180,7 @@ static STACK_OF(SSL_CIPHER) *ssl_bytes_to_cipher_list(SSL *s,
  *  1: Success (transition allowed)
  *  0: Error (transition not allowed)
  */
-int server_read_transition(SSL *s, int mt)
+int ossl_statem_server_read_transition(SSL *s, int mt)
 {
     OSSL_STATEM *st = &s->statem;
 
@@ -402,7 +402,7 @@ static inline int send_certificate_request(SSL *s)
  * server_write_transition() works out what handshake state to move to next
  * when the server is writing messages to be sent to the client.
  */
-WRITE_TRAN server_write_transition(SSL *s)
+WRITE_TRAN ossl_statem_server_write_transition(SSL *s)
 {
     OSSL_STATEM *st = &s->statem;
 
@@ -520,7 +520,7 @@ WRITE_TRAN server_write_transition(SSL *s)
  * Perform any pre work that needs to be done prior to sending a message from
  * the server to the client.
  */
-WORK_STATE server_pre_work(SSL *s, WORK_STATE wst)
+WORK_STATE ossl_statem_server_pre_work(SSL *s, WORK_STATE wst)
 {
     OSSL_STATEM *st = &s->statem;
 
@@ -599,7 +599,7 @@ WORK_STATE server_pre_work(SSL *s, WORK_STATE wst)
  * Perform any work that needs to be done after sending a message from the
  * server to the client.
  */
-WORK_STATE server_post_work(SSL *s, WORK_STATE wst)
+WORK_STATE ossl_statem_server_post_work(SSL *s, WORK_STATE wst)
 {
     OSSL_STATEM *st = &s->statem;
 
@@ -707,7 +707,7 @@ WORK_STATE server_post_work(SSL *s, WORK_STATE wst)
  *   1: Success
  *   0: Error
  */
-int server_construct_message(SSL *s)
+int ossl_statem_server_construct_message(SSL *s)
 {
     OSSL_STATEM *st = &s->statem;
 
@@ -767,7 +767,7 @@ int server_construct_message(SSL *s)
  * Returns the maximum allowed length for the current message that we are
  * reading. Excludes the message header.
  */
-unsigned long server_max_message_size(SSL *s)
+unsigned long ossl_statem_server_max_message_size(SSL *s)
 {
     OSSL_STATEM *st = &s->statem;
 
@@ -806,7 +806,7 @@ unsigned long server_max_message_size(SSL *s)
 /*
  * Process a message that the server has received from the client.
  */
-MSG_PROCESS_RETURN server_process_message(SSL *s, PACKET *pkt)
+MSG_PROCESS_RETURN ossl_statem_server_process_message(SSL *s, PACKET *pkt)
 {
     OSSL_STATEM *st = &s->statem;
 
@@ -846,7 +846,7 @@ MSG_PROCESS_RETURN server_process_message(SSL *s, PACKET *pkt)
  * Perform any further processing required following the receipt of a message
  * from the client
  */
-WORK_STATE server_post_process_message(SSL *s, WORK_STATE wst)
+WORK_STATE ossl_statem_server_post_process_message(SSL *s, WORK_STATE wst)
 {
     OSSL_STATEM *st = &s->statem;
 
