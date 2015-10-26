@@ -306,7 +306,7 @@ MSG_PROCESS_RETURN tls_process_finished(SSL *s, PACKET *pkt)
 
     i = s->s3->tmp.peer_finish_md_len;
 
-    if (i < 0 || (unsigned long)i != PACKET_remaining(pkt)) {
+    if ((unsigned long)i != PACKET_remaining(pkt)) {
         al = SSL_AD_DECODE_ERROR;
         SSLerr(SSL_F_TLS_PROCESS_FINISHED, SSL_R_BAD_DIGEST_LENGTH);
         goto f_err;
