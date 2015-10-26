@@ -238,16 +238,16 @@ static int key_exchange_expected(SSL *s)
 }
 
 /*
- * client_read_transition() encapsulates the logic for the allowed handshake
- * state transitions when the client is reading messages from the server. The
- * message type that the server has sent is provided in |mt|. The current state
- * is in |s->statem.hand_state|.
+ * ossl_statem_client_read_transition() encapsulates the logic for the allowed
+ * handshake state transitions when the client is reading messages from the
+ * server. The message type that the server has sent is provided in |mt|. The
+ * current state is in |s->statem.hand_state|.
  *
  *  Return values are:
  *  1: Success (transition allowed)
  *  0: Error (transition not allowed)
  */
-int client_read_transition(SSL *s, int mt)
+int ossl_statem_client_read_transition(SSL *s, int mt)
 {
     OSSL_STATEM *st = &s->statem;
     int ske_expected;
@@ -391,7 +391,7 @@ int client_read_transition(SSL *s, int mt)
  * client_write_transition() works out what handshake state to move to next
  * when the client is writing messages to be sent to the server.
  */
-WRITE_TRAN client_write_transition(SSL *s)
+WRITE_TRAN ossl_statem_client_write_transition(SSL *s)
 {
     OSSL_STATEM *st = &s->statem;
 
@@ -495,7 +495,7 @@ WRITE_TRAN client_write_transition(SSL *s)
  * Perform any pre work that needs to be done prior to sending a message from
  * the client to the server.
  */
-WORK_STATE client_pre_work(SSL *s, WORK_STATE wst)
+WORK_STATE ossl_statem_client_pre_work(SSL *s, WORK_STATE wst)
 {
     OSSL_STATEM *st = &s->statem;
 
@@ -542,7 +542,7 @@ WORK_STATE client_pre_work(SSL *s, WORK_STATE wst)
  * Perform any work that needs to be done after sending a message from the
  * client to the server.
  */
-WORK_STATE client_post_work(SSL *s, WORK_STATE wst)
+WORK_STATE ossl_statem_client_post_work(SSL *s, WORK_STATE wst)
 {
     OSSL_STATEM *st = &s->statem;
 
@@ -641,7 +641,7 @@ WORK_STATE client_post_work(SSL *s, WORK_STATE wst)
  *   1: Success
  *   0: Error
  */
-int client_construct_message(SSL *s)
+int ossl_statem_client_construct_message(SSL *s)
 {
     OSSL_STATEM *st = &s->statem;
 
@@ -687,7 +687,7 @@ int client_construct_message(SSL *s)
  * Returns the maximum allowed length for the current message that we are
  * reading. Excludes the message header.
  */
-unsigned long client_max_message_size(SSL *s)
+unsigned long ossl_statem_client_max_message_size(SSL *s)
 {
     OSSL_STATEM *st = &s->statem;
 
@@ -733,7 +733,7 @@ unsigned long client_max_message_size(SSL *s)
 /*
  * Process a message that the client has been received from the server.
  */
-MSG_PROCESS_RETURN client_process_message(SSL *s, PACKET *pkt)
+MSG_PROCESS_RETURN ossl_statem_client_process_message(SSL *s, PACKET *pkt)
 {
     OSSL_STATEM *st = &s->statem;
 
@@ -780,7 +780,7 @@ MSG_PROCESS_RETURN client_process_message(SSL *s, PACKET *pkt)
  * Perform any further processing required following the receipt of a message
  * from the server
  */
-WORK_STATE client_post_process_message(SSL *s, WORK_STATE wst)
+WORK_STATE ossl_statem_client_post_process_message(SSL *s, WORK_STATE wst)
 {
     OSSL_STATEM *st = &s->statem;
 
