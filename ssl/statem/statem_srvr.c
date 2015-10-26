@@ -391,7 +391,7 @@ static int send_certificate_request(SSL *s)
             * With normal PSK Certificates and Certificate Requests
             * are omitted
             */
-           && !(s->s3->tmp.new_cipher->algorithm_mkey & SSL_PSK)) {
+           && !(s->s3->tmp.new_cipher->algorithm_auth & SSL_aPSK)) {
         return 1;
     }
 

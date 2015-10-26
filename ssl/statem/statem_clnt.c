@@ -182,8 +182,9 @@ static int ssl_cipher_list_to_bytes(SSL *s, STACK_OF(SSL_CIPHER) *sk,
 static inline int cert_req_allowed(SSL *s)
 {
     /* TLS does not like anon-DH with client cert */
-    if (s->version > SSL3_VERSION
-            && (s->s3->tmp.new_cipher->algorithm_auth & SSL_aNULL))
+    if ((s->version > SSL3_VERSION
+                && (s->s3->tmp.new_cipher->algorithm_auth & SSL_aNULL))
+            || (s->s3->tmp.new_cipher->algorithm_auth & (SSL_aSRP | SSL_aPSK)))
         return 0;
 
     return 1;
