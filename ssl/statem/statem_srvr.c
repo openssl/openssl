@@ -635,8 +635,8 @@ WORK_STATE ossl_statem_server_post_work(SSL *s, WORK_STATE wst)
              * Add new shared key for SCTP-Auth, will be ignored if no
              * SCTP used.
              */
-            snprintf((char *)labelbuffer, sizeof(DTLS1_SCTP_AUTH_LABEL),
-                     DTLS1_SCTP_AUTH_LABEL);
+            memcpy(labelbuffer, DTLS1_SCTP_AUTH_LABEL,
+                   sizeof(DTLS1_SCTP_AUTH_LABEL));
 
             if (SSL_export_keying_material(s, sctpauthkey,
                     sizeof(sctpauthkey), labelbuffer,
@@ -2905,8 +2905,8 @@ WORK_STATE tls_post_process_client_key_exchange(SSL *s, WORK_STATE wst)
              * Add new shared key for SCTP-Auth, will be ignored if no SCTP
              * used.
              */
-            snprintf((char *)labelbuffer, sizeof(DTLS1_SCTP_AUTH_LABEL),
-                     DTLS1_SCTP_AUTH_LABEL);
+            memcpy(labelbuffer, DTLS1_SCTP_AUTH_LABEL,
+                   sizeof(DTLS1_SCTP_AUTH_LABEL));
 
             if (SSL_export_keying_material(s, sctpauthkey,
                                        sizeof(sctpauthkey), labelbuffer,
