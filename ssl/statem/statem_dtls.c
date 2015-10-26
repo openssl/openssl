@@ -973,7 +973,7 @@ int dtls_construct_change_cipher_spec(SSL *s)
 }
 
 #ifndef OPENSSL_NO_SCTP
-enum WORK_STATE dtls_wait_for_dry(SSL *s)
+WORK_STATE dtls_wait_for_dry(SSL *s)
 {
     int ret;
 

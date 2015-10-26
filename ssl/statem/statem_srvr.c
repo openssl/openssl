@@ -402,7 +402,7 @@ static inline int send_certificate_request(SSL *s)
  * server_write_transition() works out what handshake state to move to next
  * when the server is writing messages to be sent to the client.
  */
-enum WRITE_TRAN server_write_transition(SSL *s)
+WRITE_TRAN server_write_transition(SSL *s)
 {
     OSSL_STATEM *st = &s->statem;
 
@@ -520,7 +520,7 @@ enum WRITE_TRAN server_write_transition(SSL *s)
  * Perform any pre work that needs to be done prior to sending a message from
  * the server to the client.
  */
-enum WORK_STATE server_pre_work(SSL *s, enum WORK_STATE wst)
+WORK_STATE server_pre_work(SSL *s, WORK_STATE wst)
 {
     OSSL_STATEM *st = &s->statem;
 
@@ -599,7 +599,7 @@ enum WORK_STATE server_pre_work(SSL *s, enum WORK_STATE wst)
  * Perform any work that needs to be done after sending a message from the
  * server to the client.
  */
-enum WORK_STATE server_post_work(SSL *s, enum WORK_STATE wst)
+WORK_STATE server_post_work(SSL *s, WORK_STATE wst)
 {
     OSSL_STATEM *st = &s->statem;
 
@@ -806,7 +806,7 @@ unsigned long server_max_message_size(SSL *s)
 /*
  * Process a message that the server has received from the client.
  */
-enum MSG_PROCESS_RETURN server_process_message(SSL *s, PACKET *pkt)
+MSG_PROCESS_RETURN server_process_message(SSL *s, PACKET *pkt)
 {
     OSSL_STATEM *st = &s->statem;
 
@@ -846,7 +846,7 @@ enum MSG_PROCESS_RETURN server_process_message(SSL *s, PACKET *pkt)
  * Perform any further processing required following the receipt of a message
  * from the client
  */
-enum WORK_STATE server_post_process_message(SSL *s, enum WORK_STATE wst)
+WORK_STATE server_post_process_message(SSL *s, WORK_STATE wst)
 {
     OSSL_STATEM *st = &s->statem;
 
@@ -976,7 +976,7 @@ int dtls_construct_hello_verify_request(SSL *s)
     return 1;
 }
 
-enum MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
+MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
 {
     int i, al = SSL_AD_INTERNAL_ERROR;
     unsigned int j, complen = 0;
@@ -1516,7 +1516,7 @@ enum MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
 
 }
 
-enum WORK_STATE tls_post_process_client_hello(SSL *s, enum WORK_STATE wst)
+WORK_STATE tls_post_process_client_hello(SSL *s, WORK_STATE wst)
 {
     int al = SSL_AD_HANDSHAKE_FAILURE;
     SSL_CIPHER *cipher;
@@ -2266,7 +2266,7 @@ int tls_construct_certificate_request(SSL *s)
     return 0;
 }
 
-enum MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
+MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
 {
     int al;
     unsigned int i;
@@ -2894,8 +2894,7 @@ enum MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
     return MSG_PROCESS_ERROR;
 }
 
-enum WORK_STATE tls_post_process_client_key_exchange(SSL *s,
-                                                      enum WORK_STATE wst)
+WORK_STATE tls_post_process_client_key_exchange(SSL *s, WORK_STATE wst)
 {
 #ifndef OPENSSL_NO_SCTP
     if (wst == WORK_MORE_A) {
@@ -3005,7 +3004,7 @@ enum WORK_STATE tls_post_process_client_key_exchange(SSL *s,
     return WORK_FINISHED_CONTINUE;
 }
 
-enum MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
+MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
 {
     EVP_PKEY *pkey = NULL;
     unsigned char *sig, *data;
@@ -3181,7 +3180,7 @@ enum MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
     return ret;
 }
 
-enum MSG_PROCESS_RETURN tls_process_client_certificate(SSL *s, PACKET *pkt)
+MSG_PROCESS_RETURN tls_process_client_certificate(SSL *s, PACKET *pkt)
 {
     int i, al = SSL_AD_INTERNAL_ERROR, ret = MSG_PROCESS_ERROR;
     X509 *x = NULL;
@@ -3501,7 +3500,7 @@ int tls_construct_cert_status(SSL *s)
  * tls_process_next_proto reads a Next Protocol Negotiation handshake message.
  * It sets the next_proto member in s if found
  */
-enum MSG_PROCESS_RETURN tls_process_next_proto(SSL *s, PACKET *pkt)
+MSG_PROCESS_RETURN tls_process_next_proto(SSL *s, PACKET *pkt)
 {
     PACKET next_proto, padding;
     size_t next_proto_len;

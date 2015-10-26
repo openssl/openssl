@@ -525,8 +525,8 @@ static SUB_STATE_RETURN read_state_machine(SSL *s) {
     unsigned long len = 0;
     int (*transition)(SSL *s, int mt);
     PACKET pkt;
-    enum MSG_PROCESS_RETURN (*process_message)(SSL *s, PACKET *pkt);
-    enum WORK_STATE (*post_process_message)(SSL *s, enum WORK_STATE wst);
+    MSG_PROCESS_RETURN (*process_message)(SSL *s, PACKET *pkt);
+    WORK_STATE (*post_process_message)(SSL *s, WORK_STATE wst);
     unsigned long (*max_message_size)(SSL *s);
     void (*cb) (const SSL *ssl, int type, int val) = NULL;
 
@@ -721,9 +721,9 @@ static SUB_STATE_RETURN write_state_machine(SSL *s)
 {
     OSSL_STATEM *st = &s->statem;
     int ret;
-    enum WRITE_TRAN (*transition)(SSL *s);
-    enum WORK_STATE (*pre_work)(SSL *s, enum WORK_STATE wst);
-    enum WORK_STATE (*post_work)(SSL *s, enum WORK_STATE wst);
+    WRITE_TRAN (*transition)(SSL *s);
+    WORK_STATE (*pre_work)(SSL *s, WORK_STATE wst);
+    WORK_STATE (*post_work)(SSL *s, WORK_STATE wst);
     int (*construct_message)(SSL *s);
     void (*cb) (const SSL *ssl, int type, int val) = NULL;
 

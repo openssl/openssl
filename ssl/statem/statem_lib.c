@@ -225,7 +225,7 @@ static void ssl3_take_mac(SSL *s)
 }
 #endif
 
-enum MSG_PROCESS_RETURN tls_process_change_cipher_spec(SSL *s, PACKET *pkt)
+MSG_PROCESS_RETURN tls_process_change_cipher_spec(SSL *s, PACKET *pkt)
 {
     int al;
     long remain;
@@ -292,7 +292,7 @@ enum MSG_PROCESS_RETURN tls_process_change_cipher_spec(SSL *s, PACKET *pkt)
     return MSG_PROCESS_ERROR;
 }
 
-enum MSG_PROCESS_RETURN tls_process_finished(SSL *s, PACKET *pkt)
+MSG_PROCESS_RETURN tls_process_finished(SSL *s, PACKET *pkt)
 {
     int al, i;
 
@@ -370,13 +370,13 @@ unsigned long ssl3_output_cert_chain(SSL *s, CERT_PKEY *cpk)
     return l + SSL_HM_HEADER_LENGTH(s);
 }
 
-enum WORK_STATE tls_finish_handshake(SSL *s, enum WORK_STATE wst)
+WORK_STATE tls_finish_handshake(SSL *s, WORK_STATE wst)
 {
     void (*cb) (const SSL *ssl, int type, int val) = NULL;
 
 #ifndef OPENSSL_NO_SCTP
     if (SSL_IS_DTLS(s) && BIO_dgram_is_sctp(SSL_get_wbio(s))) {
-        enum WORK_STATE ret;
+        WORK_STATE ret;
         ret = dtls_wait_for_dry(s);
         if (ret != WORK_FINISHED_CONTINUE)
             return ret;
