@@ -1981,7 +1981,6 @@ __owur unsigned int dtls_raw_hello_verify_request(unsigned char *buf,
                                                   unsigned char cookie_len);
 __owur int dtls1_send_newsession_ticket(SSL *s);
 __owur unsigned int dtls1_min_mtu(SSL *s);
-__owur unsigned int dtls1_link_min_mtu(void);
 void dtls1_hm_fragment_free(hm_fragment *frag);
 __owur int dtls1_query_mtu(SSL *s);
 

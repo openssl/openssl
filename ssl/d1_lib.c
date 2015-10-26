@@ -77,6 +77,7 @@ static void get_current_time(struct timeval *t);
 static int dtls1_set_handshake_header(SSL *s, int type, unsigned long len);
 static int dtls1_handshake_write(SSL *s);
 int dtls1_listen(SSL *s, struct sockaddr *client);
+static unsigned int dtls1_link_min_mtu(void);
 
 /* XDTLS:  figure out the right values */
 static const unsigned int g_probable_mtu[] = { 1500, 512, 256 };
@@ -1135,7 +1136,7 @@ int dtls1_query_mtu(SSL *s)
     return 1;
 }
 
-unsigned int dtls1_link_min_mtu(void)
+static unsigned int dtls1_link_min_mtu(void)
 {
     return (g_probable_mtu[(sizeof(g_probable_mtu) /
                             sizeof(g_probable_mtu[0])) - 1]);
