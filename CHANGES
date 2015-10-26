@@ -4,6 +4,9 @@
 
  Changes between 1.0.2 and 1.1.0  [xx XXX xxxx]
 
+  *) The demo files in crypto/threads were moved to demo/threads.
+     [Rich Salz]
+
   *) Removed obsolete engines: 4758cca, aep, atalla, cswift, nuron and sureware.
      [Matt Caswell]
 
