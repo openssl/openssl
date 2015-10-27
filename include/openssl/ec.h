@@ -1089,6 +1089,12 @@ int ECDSA_sign_ex(int type, const unsigned char *dgst, int dgstlen,
 int ECDSA_verify(int type, const unsigned char *dgst, int dgstlen,
                  const unsigned char *sig, int siglen, EC_KEY *eckey);
 
+/** Returns the maximum length of the DER encoded signature
+ *  \param  eckey  EC_KEY object
+ *  \return numbers of bytes required for the DER encoded signature
+ */
+int ECDSA_size(const EC_KEY *eckey);
+
 # define ECParameters_dup(x) ASN1_dup_of(EC_KEY,i2d_ECParameters,d2i_ECParameters,x)
 
 # ifndef __cplusplus
