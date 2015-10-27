@@ -1036,6 +1036,42 @@ ECDSA_SIG *d2i_ECDSA_SIG(ECDSA_SIG **sig, const unsigned char **pp, long len);
  */
 void ECDSA_SIG_get0(BIGNUM **pr, BIGNUM **ps, ECDSA_SIG *sig);
 
+/** Computes the ECDSA signature of the given hash value using
+ *  the supplied private key and returns the created signature.
+ *  \param  dgst      pointer to the hash value
+ *  \param  dgst_len  length of the hash value
+ *  \param  eckey     EC_KEY object containing a private EC key
+ *  \return pointer to a ECDSA_SIG structure or NULL if an error occurred
+ */
+ECDSA_SIG *ECDSA_do_sign(const unsigned char *dgst, int dgst_len,
+                         EC_KEY *eckey);
+
+/** Computes ECDSA signature of a given hash value using the supplied
+ *  private key (note: sig must point to ECDSA_size(eckey) bytes of memory).
+ *  \param  dgst     pointer to the hash value to sign
+ *  \param  dgstlen  length of the hash value
+ *  \param  kinv     BIGNUM with a pre-computed inverse k (optional)
+ *  \param  rp       BIGNUM with a pre-computed rp value (optioanl),
+ *                   see ECDSA_sign_setup
+ *  \param  eckey    EC_KEY object containing a private EC key
+ *  \return pointer to a ECDSA_SIG structure or NULL if an error occurred
+ */
+ECDSA_SIG *ECDSA_do_sign_ex(const unsigned char *dgst, int dgstlen,
+                            const BIGNUM *kinv, const BIGNUM *rp,
+                            EC_KEY *eckey);
+
+/** Verifies that the supplied signature is a valid ECDSA
+ *  signature of the supplied hash value using the supplied public key.
+ *  \param  dgst      pointer to the hash value
+ *  \param  dgst_len  length of the hash value
+ *  \param  sig       ECDSA_SIG structure
+ *  \param  eckey     EC_KEY object containing a public EC key
+ *  \return 1 if the signature is valid, 0 if the signature is invalid
+ *          and -1 on error
+ */
+int ECDSA_do_verify(const unsigned char *dgst, int dgst_len,
+                    const ECDSA_SIG *sig, EC_KEY *eckey);
+
 /** Precompute parts of the signing operation
  *  \param  eckey  EC_KEY object containing a private EC key
  *  \param  ctx    BN_CTX object (optional)
