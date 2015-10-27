@@ -1319,3 +1319,37 @@ void ECDSA_SIG_get0(BIGNUM **pr, BIGNUM **ps, ECDSA_SIG *sig)
     if (ps)
         *ps = sig->s;
 }
+
+int ECDSA_size(const EC_KEY *r)
+{
+    int ret, i;
+    ASN1_INTEGER bs;
+    BIGNUM *order = NULL;
+    unsigned char buf[4];
+    const EC_GROUP *group;
+
+    if (r == NULL)
+        return 0;
+    group = EC_KEY_get0_group(r);
+    if (group == NULL)
+        return 0;
+
+    if ((order = BN_new()) == NULL)
+        return 0;
+    if (!EC_GROUP_get_order(group, order, NULL)) {
+        BN_clear_free(order);
+        return 0;
+    }
+    i = BN_num_bits(order);
+    bs.length = (i + 7) / 8;
+    bs.data = buf;
+    bs.type = V_ASN1_INTEGER;
+    /* If the top bit is set the asn1 encoding is 1 larger. */
+    buf[0] = 0xff;
+
+    i = i2d_ASN1_INTEGER(&bs, NULL);
+    i += i;                     /* r and s */
+    ret = ASN1_object_size(1, i, V_ASN1_SEQUENCE);
+    BN_clear_free(order);
+    return (ret);
+}
