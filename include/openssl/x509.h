@@ -75,7 +75,6 @@
 
 # ifndef OPENSSL_NO_EC
 #  include <openssl/ec.h>
-#  include <openssl/ecdsa.h>
 # endif
 
 # ifdef OPENSSL_USE_DEPRECATED
