@@ -571,6 +571,14 @@ struct ec_key_method_st {
                        EC_KEY *ecdh,
                        void *(*KDF) (const void *in, size_t inlen,
                                      void *out, size_t *outlen));
+
+    int (*sign_setup)(EC_KEY *eckey, BN_CTX *ctx_in, BIGNUM **kinvp,
+                      BIGNUM **rp);
+    ECDSA_SIG *(*sign_sig)(const unsigned char *dgst, int dgst_len,
+                           const BIGNUM *in_kinv, const BIGNUM *in_r,
+                           EC_KEY *eckey);
+    int (*verify_sig)(const unsigned char *dgst, int dgst_len,
+                      const ECDSA_SIG *sig, EC_KEY *eckey);
 } /* EC_KEY_METHOD */ ;
 
 #define EC_KEY_METHOD_DYNAMIC   1
@@ -585,3 +593,11 @@ struct ECDSA_SIG_st {
     BIGNUM *r;
     BIGNUM *s;
 };
+
+int ossl_ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in, BIGNUM **kinvp,
+                          BIGNUM **rp);
+ECDSA_SIG *ossl_ecdsa_sign_sig(const unsigned char *dgst, int dgst_len,
+                               const BIGNUM *in_kinv, const BIGNUM *in_r,
+                               EC_KEY *eckey);
+int ossl_ecdsa_verify_sig(const unsigned char *dgst, int dgst_len,
+                          const ECDSA_SIG *sig, EC_KEY *eckey);
