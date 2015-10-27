@@ -75,11 +75,6 @@
 extern "C" {
 #endif
 
-typedef struct ECDSA_SIG_st {
-    BIGNUM *r;
-    BIGNUM *s;
-} ECDSA_SIG;
-
 /** Allocates and initialize a ECDSA_SIG structure
  *  \return pointer to a ECDSA_SIG structure or NULL if an error occurred
  */
