@@ -999,6 +999,8 @@ int ECDH_compute_key(void *out, size_t outlen, const EC_POINT *pub_key,
                      EC_KEY *ecdh, void *(*KDF) (const void *in, size_t inlen,
                                                  void *out, size_t *outlen));
 
+typedef struct ECDSA_SIG_st ECDSA_SIG;
+
 # define ECParameters_dup(x) ASN1_dup_of(EC_KEY,i2d_ECParameters,d2i_ECParameters,x)
 
 # ifndef __cplusplus

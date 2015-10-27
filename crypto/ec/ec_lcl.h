@@ -580,3 +580,8 @@ int ossl_ecdh_compute_key(void *out, size_t outlen, const EC_POINT *pub_key,
                           EC_KEY *ecdh,
                           void *(*KDF) (const void *in, size_t inlen,
                                         void *out, size_t *outlen));
+
+struct ECDSA_SIG_st {
+    BIGNUM *r;
+    BIGNUM *s;
+};
