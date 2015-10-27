@@ -62,6 +62,7 @@
 #ifndef OPENSSL_NO_ENGINE
 # include <openssl/engine.h>
 #endif
+#include <openssl/err.h>
 
 /*-
  * returns
@@ -74,6 +75,7 @@ int ECDSA_do_verify(const unsigned char *dgst, int dgst_len,
 {
     if (eckey->meth->verify_sig)
         return eckey->meth->verify_sig(dgst, dgst_len, sig, eckey);
+    ECerr(EC_F_ECDSA_DO_VERIFY, EC_R_OPERATION_NOT_SUPPORTED);
     return 0;
 }
 

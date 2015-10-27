@@ -1192,6 +1192,8 @@ void ERR_load_EC_strings(void);
 # define EC_F_ECDH_CMS_DECRYPT                            238
 # define EC_F_ECDH_CMS_SET_SHARED_INFO                    239
 # define EC_F_ECDH_COMPUTE_KEY                            246
+# define EC_F_ECDSA_DO_SIGN_EX                            251
+# define EC_F_ECDSA_DO_VERIFY                             252
 # define EC_F_ECDSA_SIGN_SETUP                            248
 # define EC_F_ECKEY_PARAM2TYPE                            223
 # define EC_F_ECKEY_PARAM_DECODE                          212
