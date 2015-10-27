@@ -83,8 +83,6 @@ void HMAC_CTX_init(HMAC_CTX *ctx);
 void HMAC_CTX_cleanup(HMAC_CTX *ctx);
 
 #ifdef OPENSSL_USE_DEPRECATED
-/* deprecated */
-# define HMAC_cleanup(ctx) HMAC_CTX_cleanup(ctx)
 
 /* deprecated */
 DECLARE_DEPRECATED(__owur int HMAC_Init(HMAC_CTX *ctx, const void *key, int len,
