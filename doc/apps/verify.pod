@@ -307,7 +307,7 @@ the B<CERTIFICATE EXTENSIONS> section of the B<x509> utility.
 
 The third operation is to check the trust settings on the root CA. The root
 CA should be trusted for the supplied purpose. For compatibility with previous
-versions of SSLeay and OpenSSL a certificate with no trust settings is considered
+versions of OpenSSL, a certificate with no trust settings is considered
 to be valid for all purposes. 
 
 The final operation is to check the validity of the certificate chain. The validity

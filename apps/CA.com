@@ -10,29 +10,14 @@ $! At the end of that grab newreq.pem and newcert.pem (one has the key
 $! and the other the certificate) and cat them together and that is what
 $! you want/need ... I'll make even this a little cleaner later.
 $!
-$!
-$! 12-Jan-96 tjh    Added more things ... including CA -signcert which
-$!                  converts a certificate to a request and then signs it.
-$! 10-Jan-96 eay    Fixed a few more bugs and added the SSLEAY_CONFIG
-$!                 environment variable so this can be driven from
-$!                 a script.
-$! 25-Jul-96 eay    Cleaned up filenames some more.
-$! 11-Jun-96 eay    Fixed a few filename missmatches.
-$! 03-May-96 eay    Modified to use 'openssl cmd' instead of 'cmd'.
-$! 18-Apr-96 tjh    Original hacking
-$!
-$! Tim Hudson
-$! tjh@cryptsoft.com
-$!
-$!
-$! default ssleay.cnf file has setup as per the following
+$! default openssl.cnf file has setup as per the following
 $! demoCA ... where everything is stored
 $
-$ IF F$TYPE(SSLEAY_CONFIG) .EQS. "" THEN SSLEAY_CONFIG := SSLLIB:SSLEAY.CNF
+$ IF F$TYPE(OPENSSL_CONFIG) .EQS. "" THEN OPENSSL_CONFIG := SSLLIB:OPENSSL.CNF
 $
 $ DAYS   = "-days 365"
-$ REQ    = openssl + " req " + SSLEAY_CONFIG
-$ CA     = openssl + " ca " + SSLEAY_CONFIG
+$ REQ    = openssl + " req " + OPENSSL_CONFIG
+$ CA     = openssl + " ca " + OPENSSL_CONFIG
 $ VERIFY = openssl + " verify"
 $ X509   = openssl + " x509"
 $ PKCS12 = openssl + " pkcs12"

@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-RAND_set_rand_method, RAND_get_rand_method, RAND_SSLeay - select RAND method
+RAND_set_rand_method, RAND_get_rand_method, RAND_OpenSSL - select RAND method
 
 =head1 SYNOPSIS
 
@@ -12,7 +12,7 @@ RAND_set_rand_method, RAND_get_rand_method, RAND_SSLeay - select RAND method
 
  const RAND_METHOD *RAND_get_rand_method(void);
 
- RAND_METHOD *RAND_SSLeay(void);
+ RAND_METHOD *RAND_OpenSSL(void);
 
 =head1 DESCRIPTION
 
@@ -23,7 +23,7 @@ information about how these RAND API functions are affected by the use of
 B<ENGINE> API calls.
 
 Initially, the default RAND_METHOD is the OpenSSL internal implementation, as
-returned by RAND_SSLeay().
+returned by RAND_OpenSSL().
 
 RAND_set_default_method() makes B<meth> the method for PRNG use. B<NB>: This is
 true only whilst no ENGINE has been set as a default for RAND, so this function
@@ -53,7 +53,7 @@ Each component may be NULL if the function is not implemented.
 =head1 RETURN VALUES
 
 RAND_set_rand_method() returns no value. RAND_get_rand_method() and
-RAND_SSLeay() return pointers to the respective methods.
+RAND_OpenSSL() return pointers to the respective methods.
 
 =head1 NOTES
 

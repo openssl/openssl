@@ -2719,7 +2719,7 @@ static int www_body(char *hostname, int s, int stype, unsigned char *context)
                      "HTTP/1.0 200 ok\r\nContent-type: text/html\r\n\r\n");
             BIO_puts(io, "<HTML><BODY BGCOLOR=\"#ffffff\">\n");
             BIO_puts(io, "<pre>\n");
-/*                      BIO_puts(io,SSLeay_version(SSLEAY_VERSION));*/
+/*                      BIO_puts(io,OpenSSL_version(OPENSSL_VERSION));*/
             BIO_puts(io, "\n");
             for (i = 0; i < local_argc; i++) {
                 const char *myp;

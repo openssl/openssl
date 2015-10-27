@@ -145,19 +145,6 @@
 extern "C" {
 #endif
 
-/* Backward compatibility to SSLeay */
-/*
- * This is more to be used to check the correct DLL is being used in the MS
- * world.
- */
-# define SSLEAY_VERSION_NUMBER   OPENSSL_VERSION_NUMBER
-# define SSLEAY_VERSION          0
-/* #define SSLEAY_OPTIONS       1 no longer supported */
-# define SSLEAY_CFLAGS           2
-# define SSLEAY_BUILT_ON         3
-# define SSLEAY_PLATFORM         4
-# define SSLEAY_DIR              5
-
 /*
  * When changing the CRYPTO_LOCK_* list, be sure to maintin the text lock
  * names in cryptlib.c
@@ -243,7 +230,7 @@ typedef struct {
 } CRYPTO_dynlock;
 
 /*
- * The following can be used to detect memory leaks in the SSLeay library. It
+ * The following can be used to detect memory leaks in the OpenSSL library. It
  * used, it turns on malloc checking
  */
 
@@ -350,8 +337,13 @@ int CRYPTO_is_mem_check_on(void);
 
 # define OPENSSL_MALLOC_MAX_NELEMS(type)  (((1U<<(sizeof(int)*8-1))-1)/sizeof(type))
 
-const char *SSLeay_version(int type);
-unsigned long SSLeay(void);
+unsigned long OpenSSL_version_num(void);
+const char *OpenSSL_version(int type);
+# define OPENSSL_VERSION          0
+# define OPENSSL_CFLAGS           1
+# define OPENSSL_BUILT_ON         2
+# define OPENSSL_PLATFORM         3
+# define OPENSSL_DIR              4
 
 int OPENSSL_issetugid(void);
 

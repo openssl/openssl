@@ -163,7 +163,7 @@
 extern "C" {
 #endif
 
-/* SSLeay version number for ASN.1 encoding of the session information */
+/* OpenSSL version number for ASN.1 encoding of the session information */
 /*-
  * Version 0 - initial version
  * Version 1 - added the optional peer certificate
@@ -438,20 +438,10 @@ typedef int (*custom_ext_parse_cb) (SSL *s, unsigned int ext_type,
 # define SSL_OP_NO_SSL_MASK (SSL_OP_NO_SSLv3|\
         SSL_OP_NO_TLSv1|SSL_OP_NO_TLSv1_1|SSL_OP_NO_TLSv1_2)
 
-/*
- * These next two were never actually used for anything since SSLeay zap so
- * we have some more flags.
- */
-/*
- * The next flag deliberately changes the ciphertest, this is a check for the
- * PKCS#1 attack
- */
+/* Removed from previous versions */
 # define SSL_OP_PKCS1_CHECK_1                            0x0
 # define SSL_OP_PKCS1_CHECK_2                            0x0
-
-/* Removed as of OpenSSL 1.1.0 */
 # define SSL_OP_NETSCAPE_CA_DN_BUG                       0x0
-/* Removed as of OpenSSL 1.1.0 */
 # define SSL_OP_NETSCAPE_DEMO_CIPHER_CHANGE_BUG          0x0L
 /*
  * Make server add server-hello extension from early version of cryptopro
@@ -1034,7 +1024,6 @@ size_t SSL_get_peer_finished(const SSL *s, void *buf, size_t count);
 # define SSL_VERIFY_CLIENT_ONCE          0x04
 
 # define OpenSSL_add_ssl_algorithms()    SSL_library_init()
-# define SSLeay_add_ssl_algorithms()     SSL_library_init()
 
 /* More backward compatibility */
 # define SSL_get_cipher(s) \
