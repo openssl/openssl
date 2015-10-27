@@ -1104,6 +1104,7 @@ void ERR_load_EC_strings(void);
 # define EC_F_ECDH_CMS_DECRYPT                            238
 # define EC_F_ECDH_CMS_SET_SHARED_INFO                    239
 # define EC_F_ECDH_COMPUTE_KEY                            246
+# define EC_F_ECDSA_SIGN_SETUP                            248
 # define EC_F_ECKEY_PARAM2TYPE                            223
 # define EC_F_ECKEY_PARAM_DECODE                          212
 # define EC_F_ECKEY_PRIV_DECODE                           213
@@ -1235,6 +1236,8 @@ void ERR_load_EC_strings(void);
 # define EC_F_O2I_ECPUBLICKEY                             152
 # define EC_F_OLD_EC_PRIV_DECODE                          222
 # define EC_F_OSSL_ECDH_COMPUTE_KEY                       247
+# define EC_F_OSSL_ECDSA_SIGN_SIG                         249
+# define EC_F_OSSL_ECDSA_VERIFY_SIG                       250
 # define EC_F_PKEY_EC_CTRL                                197
 # define EC_F_PKEY_EC_CTRL_STR                            198
 # define EC_F_PKEY_EC_DERIVE                              217
@@ -1245,6 +1248,7 @@ void ERR_load_EC_strings(void);
 /* Reason codes. */
 # define EC_R_ASN1_ERROR                                  115
 # define EC_R_ASN1_UNKNOWN_FIELD                          116
+# define EC_R_BAD_SIGNATURE                               156
 # define EC_R_BIGNUM_OUT_OF_RANGE                         144
 # define EC_R_BUFFER_TOO_SMALL                            100
 # define EC_R_COORDINATES_OUT_OF_RANGE                    146
@@ -1275,6 +1279,7 @@ void ERR_load_EC_strings(void);
 # define EC_R_KEYS_NOT_SET                                140
 # define EC_R_MISSING_PARAMETERS                          124
 # define EC_R_MISSING_PRIVATE_KEY                         125
+# define EC_R_NEED_NEW_SETUP_VALUES                       157
 # define EC_R_NOT_A_NIST_PRIME                            135
 # define EC_R_NOT_A_SUPPORTED_NIST_PRIME                  136
 # define EC_R_NOT_IMPLEMENTED                             126
@@ -1289,6 +1294,7 @@ void ERR_load_EC_strings(void);
 # define EC_R_POINT_ARITHMETIC_FAILURE                    155
 # define EC_R_POINT_AT_INFINITY                           106
 # define EC_R_POINT_IS_NOT_ON_CURVE                       107
+# define EC_R_RANDOM_NUMBER_GENERATION_FAILED             158
 # define EC_R_SHARED_INFO_ERROR                           150
 # define EC_R_SLOT_FULL                                   108
 # define EC_R_UNDEFINED_GENERATOR                         113
