@@ -80,8 +80,6 @@ int ENGINE_set_default(ENGINE *e, unsigned int flags)
         return 0;
 #endif
 #ifndef OPENSSL_NO_EC
-    if ((flags & ENGINE_METHOD_ECDSA) && !ENGINE_set_default_ECDSA(e))
-        return 0;
 #endif
     if ((flags & ENGINE_METHOD_RAND) && !ENGINE_set_default_RAND(e))
         return 0;
@@ -107,8 +105,6 @@ static int int_def_cb(const char *alg, int len, void *arg)
         *pflags |= ENGINE_METHOD_RSA;
     else if (strncmp(alg, "DSA", len) == 0)
         *pflags |= ENGINE_METHOD_DSA;
-    else if (strncmp(alg, "ECDSA", len) == 0)
-        *pflags |= ENGINE_METHOD_ECDSA;
     else if (strncmp(alg, "DH", len) == 0)
         *pflags |= ENGINE_METHOD_DH;
     else if (strncmp(alg, "RAND", len) == 0)
@@ -154,7 +150,6 @@ int ENGINE_register_complete(ENGINE *e)
     ENGINE_register_DH(e);
 #endif
 #ifndef OPENSSL_NO_EC
-    ENGINE_register_ECDSA(e);
 #endif
     ENGINE_register_RAND(e);
     ENGINE_register_pkey_meths(e);

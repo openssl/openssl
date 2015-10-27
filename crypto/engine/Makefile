@@ -17,13 +17,13 @@ GENERAL=Makefile
 LIB=$(TOP)/libcrypto.a
 LIBSRC= eng_err.c eng_lib.c eng_list.c eng_init.c eng_ctrl.c \
 	eng_table.c eng_pkey.c eng_fat.c eng_all.c \
-	tb_rsa.c tb_dsa.c tb_ecdsa.c tb_dh.c tb_rand.c tb_store.c \
+	tb_rsa.c tb_dsa.c tb_dh.c tb_rand.c tb_store.c \
 	tb_cipher.c tb_digest.c tb_pkmeth.c tb_asnmth.c tb_eckey.c \
 	eng_openssl.c eng_cnf.c eng_dyn.c eng_cryptodev.c \
 	eng_rdrand.c
 LIBOBJ= eng_err.o eng_lib.o eng_list.o eng_init.o eng_ctrl.o \
 	eng_table.o eng_pkey.o eng_fat.o eng_all.o \
-	tb_rsa.o tb_dsa.o tb_ecdsa.o tb_dh.o tb_rand.o tb_store.o \
+	tb_rsa.o tb_dsa.o tb_dh.o tb_rand.o tb_store.o \
 	tb_cipher.o tb_digest.o tb_pkmeth.o tb_asnmth.o tb_eckey.o \
 	eng_openssl.o eng_cnf.o eng_dyn.o eng_cryptodev.o \
 	eng_rdrand.o
@@ -345,34 +345,19 @@ tb_dsa.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
 tb_dsa.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 tb_dsa.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
 tb_dsa.o: ../include/internal/cryptlib.h eng_int.h tb_dsa.c
-tb_ecdh.o: ../../e_os.h ../../include/openssl/asn1.h
-tb_ecdh.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
-tb_ecdh.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
-tb_ecdh.o: ../../include/openssl/ec.h ../../include/openssl/ecdh.h
-tb_ecdh.o: ../../include/openssl/ecdsa.h ../../include/openssl/engine.h
-tb_ecdh.o: ../../include/openssl/err.h ../../include/openssl/evp.h
-tb_ecdh.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
-tb_ecdh.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
-tb_ecdh.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-tb_ecdh.o: ../../include/openssl/pkcs7.h ../../include/openssl/safestack.h
-tb_ecdh.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
-tb_ecdh.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
-tb_ecdh.o: ../../include/openssl/x509_vfy.h ../include/internal/cryptlib.h
-tb_ecdh.o: eng_int.h tb_ecdh.c
-tb_ecdsa.o: ../../e_os.h ../../include/openssl/asn1.h
-tb_ecdsa.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
-tb_ecdsa.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
-tb_ecdsa.o: ../../include/openssl/ec.h ../../include/openssl/ecdh.h
-tb_ecdsa.o: ../../include/openssl/ecdsa.h ../../include/openssl/engine.h
-tb_ecdsa.o: ../../include/openssl/err.h ../../include/openssl/evp.h
-tb_ecdsa.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
-tb_ecdsa.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
-tb_ecdsa.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-tb_ecdsa.o: ../../include/openssl/pkcs7.h ../../include/openssl/safestack.h
-tb_ecdsa.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
-tb_ecdsa.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
-tb_ecdsa.o: ../../include/openssl/x509_vfy.h ../include/internal/cryptlib.h
-tb_ecdsa.o: eng_int.h tb_ecdsa.c
+tb_eckey.o: ../../e_os.h ../../include/openssl/asn1.h
+tb_eckey.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
+tb_eckey.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
+tb_eckey.o: ../../include/openssl/ec.h ../../include/openssl/engine.h
+tb_eckey.o: ../../include/openssl/err.h ../../include/openssl/evp.h
+tb_eckey.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
+tb_eckey.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
+tb_eckey.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+tb_eckey.o: ../../include/openssl/pkcs7.h ../../include/openssl/safestack.h
+tb_eckey.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
+tb_eckey.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
+tb_eckey.o: ../../include/openssl/x509_vfy.h ../include/internal/cryptlib.h
+tb_eckey.o: eng_int.h tb_eckey.c
 tb_pkmeth.o: ../../e_os.h ../../include/openssl/asn1.h
 tb_pkmeth.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 tb_pkmeth.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
