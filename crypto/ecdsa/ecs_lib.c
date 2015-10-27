@@ -74,8 +74,6 @@ void ECDSA_set_default_method(const ECDSA_METHOD *meth)
 
 const ECDSA_METHOD *ECDSA_get_default_method(void)
 {
-    if (!default_ECDSA_method)
-        default_ECDSA_method = ECDSA_OpenSSL();
     return default_ECDSA_method;
 }
 
