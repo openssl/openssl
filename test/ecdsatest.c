@@ -87,7 +87,7 @@ int main(int argc, char *argv[])
 # include <openssl/bio.h>
 # include <openssl/evp.h>
 # include <openssl/bn.h>
-# include <openssl/ecdsa.h>
+# include <openssl/ec.h>
 # ifndef OPENSSL_NO_ENGINE
 #  include <openssl/engine.h>
 # endif

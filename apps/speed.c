@@ -168,7 +168,7 @@
 # include "./testdsa.h"
 #endif
 #ifndef OPENSSL_NO_EC
-# include <openssl/ecdsa.h>
+# include <openssl/ec.h>
 #endif
 #include <openssl/modes.h>
 
