@@ -193,6 +193,7 @@ int x9_62_test_internal(BIO *out, int nid, const char *r_in, const char *s_in)
     ECDSA_SIG *signature = NULL;
     BIGNUM *r = NULL, *s = NULL;
     BIGNUM *kinv = NULL, *rp = NULL;
+    BIGNUM *sig_r, *sig_s;
 
     if (md_ctx == NULL)
         goto x962_int_err;
@@ -227,7 +228,8 @@ int x9_62_test_internal(BIO *out, int nid, const char *r_in, const char *s_in)
         goto x962_int_err;
     if (!BN_dec2bn(&r, r_in) || !BN_dec2bn(&s, s_in))
         goto x962_int_err;
-    if (BN_cmp(signature->r, r) || BN_cmp(signature->s, s))
+    ECDSA_SIG_get0(&sig_r, &sig_s, signature);
+    if (BN_cmp(sig_r, r) || BN_cmp(sig_s, s))
         goto x962_int_err;
     BIO_printf(out, ".");
     (void)BIO_flush(out);
@@ -303,6 +305,7 @@ int test_builtin(BIO *out)
     const unsigned char *sig_ptr;
     unsigned char *sig_ptr2;
     unsigned char *raw_buf = NULL;
+    BIGNUM *sig_r, *sig_s;
     unsigned int sig_len, degree, r_len, s_len, bn_len, buf_len;
     int nid, ret = 0;
 
@@ -433,9 +436,11 @@ int test_builtin(BIO *out)
             goto builtin_err;
         }
 
+        ECDSA_SIG_get0(&sig_r, &sig_s, ecdsa_sig);
+
         /* Store the two BIGNUMs in raw_buf. */
-        r_len = BN_num_bytes(ecdsa_sig->r);
-        s_len = BN_num_bytes(ecdsa_sig->s);
+        r_len = BN_num_bytes(sig_r);
+        s_len = BN_num_bytes(sig_s);
         bn_len = (degree + 7) / 8;
         if ((r_len > bn_len) || (s_len > bn_len)) {
             BIO_printf(out, " failed\n");
@@ -444,16 +449,16 @@ int test_builtin(BIO *out)
         buf_len = 2 * bn_len;
         if ((raw_buf = OPENSSL_zalloc(buf_len)) == NULL)
             goto builtin_err;
-        BN_bn2bin(ecdsa_sig->r, raw_buf + bn_len - r_len);
-        BN_bn2bin(ecdsa_sig->s, raw_buf + buf_len - s_len);
+        BN_bn2bin(sig_r, raw_buf + bn_len - r_len);
+        BN_bn2bin(sig_s, raw_buf + buf_len - s_len);
 
         /* Modify a single byte in the buffer. */
         offset = raw_buf[10] % buf_len;
         dirt = raw_buf[11] ? raw_buf[11] : 1;
         raw_buf[offset] ^= dirt;
         /* Now read the BIGNUMs back in from raw_buf. */
-        if ((BN_bin2bn(raw_buf, bn_len, ecdsa_sig->r) == NULL) ||
-            (BN_bin2bn(raw_buf + bn_len, bn_len, ecdsa_sig->s) == NULL))
+        if ((BN_bin2bn(raw_buf, bn_len, sig_r) == NULL) ||
+            (BN_bin2bn(raw_buf + bn_len, bn_len, sig_s) == NULL))
             goto builtin_err;
 
         sig_ptr2 = signature;
@@ -466,8 +471,8 @@ int test_builtin(BIO *out)
          * Sanity check: undo the modification and verify signature.
          */
         raw_buf[offset] ^= dirt;
-        if ((BN_bin2bn(raw_buf, bn_len, ecdsa_sig->r) == NULL) ||
-            (BN_bin2bn(raw_buf + bn_len, bn_len, ecdsa_sig->s) == NULL))
+        if ((BN_bin2bn(raw_buf, bn_len, sig_r) == NULL) ||
+            (BN_bin2bn(raw_buf + bn_len, bn_len, sig_s) == NULL))
             goto builtin_err;
 
         sig_ptr2 = signature;
