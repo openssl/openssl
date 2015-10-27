@@ -1302,3 +1302,14 @@ int i2o_ECPublicKey(EC_KEY *a, unsigned char **out)
         *out += buf_len;
     return buf_len;
 }
+
+#include <openssl/ecdsa.h>
+
+ASN1_SEQUENCE(ECDSA_SIG) = {
+        ASN1_SIMPLE(ECDSA_SIG, r, CBIGNUM),
+        ASN1_SIMPLE(ECDSA_SIG, s, CBIGNUM)
+} static_ASN1_SEQUENCE_END(ECDSA_SIG)
+
+DECLARE_ASN1_FUNCTIONS_const(ECDSA_SIG)
+DECLARE_ASN1_ENCODE_FUNCTIONS_const(ECDSA_SIG, ECDSA_SIG)
+IMPLEMENT_ASN1_FUNCTIONS_const(ECDSA_SIG)
