@@ -2,7 +2,8 @@
 
 =head1 NAME
 
-OPENSSL_VERSION_NUMBER, OpenSSL_version - get OpenSSL version number
+OPENSSL_VERSION_NUMBER, OpenSSL_version,
+OpenSSL_version_num - get OpenSSL version number
 
 =head1 SYNOPSIS
 
@@ -10,6 +11,8 @@ OPENSSL_VERSION_NUMBER, OpenSSL_version - get OpenSSL version number
  #define OPENSSL_VERSION_NUMBER 0xnnnnnnnnnL
 
  #include <openssl/crypto.h>
+
+ unsigned long OpenSSL_version_num();
  const char *OpenSSL_version(int t);
 
 =head1 DESCRIPTION
@@ -42,8 +45,7 @@ Version 0.9.5a had an interim interpretation that is like the current one,
 except the patch level got the highest bit set, to keep continuity.  The
 number was therefore 0x0090581f.
 
-
-For backward compatibility, OPENSSL_VERSION_NUMBER is also defined.
+OpenSSL_version_num() returns the version number.
 
 OpenSSL_version() returns different strings depending on B<t>:
 

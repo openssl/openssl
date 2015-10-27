@@ -365,8 +365,8 @@ int RSA_set_method(RSA *rsa, const RSA_METHOD *meth);
 /* This function needs the memory locking malloc callbacks to be installed */
 int RSA_memory_lock(RSA *r);
 
-/* these are the actual SSLeay RSA functions */
-const RSA_METHOD *RSA_PKCS1_SSLeay(void);
+/* these are the actual RSA functions */
+const RSA_METHOD *RSA_PKCS1_OpenSSL(void);
 
 const RSA_METHOD *RSA_null_method(void);
 

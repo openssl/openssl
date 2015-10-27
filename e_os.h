@@ -328,7 +328,6 @@ extern FILE *_imp___iob;
 #   define R_OK        4
 #  endif
 #  define OPENSSL_CONF  "openssl.cnf"
-#  define SSLEAY_CONF   OPENSSL_CONF
 #  define NUL_DEV       "nul"
 #  define RFILE         ".rnd"
 #  ifdef OPENSSL_SYS_WINCE
@@ -361,7 +360,6 @@ extern FILE *_imp___iob;
 #    include <unixlib.h>
 #   endif
 #   define OPENSSL_CONF        "openssl.cnf"
-#   define SSLEAY_CONF         OPENSSL_CONF
 #   define RFILE               ".rnd"
 #   define LIST_SEPARATOR_CHAR ','
 #   define NUL_DEV             "NLA0:"
@@ -412,7 +410,6 @@ extern int kbhit(void);
 #   define _O_TEXT O_TEXT
 #   define _O_BINARY O_BINARY
 #   define OPENSSL_CONF   "openssl.cnf"
-#   define SSLEAY_CONF    OPENSSL_CONF
 #   define RFILE    ".rnd"
 #   define LIST_SEPARATOR_CHAR ';'
 #   define EXIT(n)  { if (n) printf("ERROR: %d\n", (int)n); exit(n); }
@@ -433,14 +430,13 @@ extern int kbhit(void);
 #   endif
 
 #   define OPENSSL_CONF        "openssl.cnf"
-#   define SSLEAY_CONF         OPENSSL_CONF
 #   define RFILE               ".rnd"
 #   define LIST_SEPARATOR_CHAR ':'
 #   define NUL_DEV             "/dev/null"
 #   define EXIT(n)             exit(n)
 #  endif
 
-#  define SSLeay_getpid()       getpid()
+#  define OpenSSL_getpid()       getpid()
 
 # endif
 
@@ -455,8 +451,8 @@ extern int kbhit(void);
       /* windows world */
 
 #   ifdef OPENSSL_NO_SOCK
-#    define SSLeay_Write(a,b,c)       (-1)
-#    define SSLeay_Read(a,b,c)        (-1)
+#    define OpenSSL_Write(a,b,c)       (-1)
+#    define OpenSSL_Read(a,b,c)        (-1)
 #    define SHUTDOWN(fd)              close(fd)
 #    define SHUTDOWN2(fd)             close(fd)
 #   elif !defined(__DJGPP__)
@@ -484,13 +480,13 @@ struct servent *PASCAL getservbyname(const char *, const char *);
 #     define socket(d,t,p)   ((int)socket(d,t,p))
 #     define accept(s,f,l)   ((int)accept(s,f,l))
 #    endif
-#    define SSLeay_Write(a,b,c)       send((a),(b),(c),0)
-#    define SSLeay_Read(a,b,c)        recv((a),(b),(c),0)
+#    define OpenSSL_Write(a,b,c)       send((a),(b),(c),0)
+#    define OpenSSL_Read(a,b,c)        recv((a),(b),(c),0)
 #    define SHUTDOWN(fd)              { shutdown((fd),0); closesocket(fd); }
 #    define SHUTDOWN2(fd)             { shutdown((fd),2); closesocket(fd); }
 #   else
-#    define SSLeay_Write(a,b,c)       write_s(a,b,c,0)
-#    define SSLeay_Read(a,b,c)        read_s(a,b,c)
+#    define OpenSSL_Write(a,b,c)       write_s(a,b,c,0)
+#    define OpenSSL_Read(a,b,c)        read_s(a,b,c)
 #    define SHUTDOWN(fd)              close_s(fd)
 #    define SHUTDOWN2(fd)             close_s(fd)
 #   endif
@@ -513,8 +509,8 @@ struct servent *PASCAL getservbyname(const char *, const char *);
 #   else
 #    include <novsock2.h>
 #   endif
-#   define SSLeay_Write(a,b,c)   send((a),(b),(c),0)
-#   define SSLeay_Read(a,b,c) recv((a),(b),(c),0)
+#   define OpenSSL_Write(a,b,c)   send((a),(b),(c),0)
+#   define OpenSSL_Read(a,b,c) recv((a),(b),(c),0)
 #   define SHUTDOWN(fd)    { shutdown((fd),0); closesocket(fd); }
 #   define SHUTDOWN2(fd)      { shutdown((fd),2); closesocket(fd); }
 
@@ -579,8 +575,8 @@ struct servent *PASCAL getservbyname(const char *, const char *);
 #    endif
 #   endif
 
-#   define SSLeay_Read(a,b,c)     read((a),(b),(c))
-#   define SSLeay_Write(a,b,c)    write((a),(b),(c))
+#   define OpenSSL_Read(a,b,c)     read((a),(b),(c))
+#   define OpenSSL_Write(a,b,c)    write((a),(b),(c))
 #   define SHUTDOWN(fd)    { shutdown((fd),0); closesocket((fd)); }
 #   define SHUTDOWN2(fd)   { shutdown((fd),2); closesocket((fd)); }
 #   ifndef INVALID_SOCKET

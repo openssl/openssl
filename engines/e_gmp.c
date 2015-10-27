@@ -170,7 +170,7 @@ static int bind_helper(ENGINE *e)
         return 0;
 
 #  ifndef OPENSSL_NO_RSA
-    meth1 = RSA_PKCS1_SSLeay();
+    meth1 = RSA_PKCS1_OpenSSL();
     e_gmp_rsa.rsa_pub_enc = meth1->rsa_pub_enc;
     e_gmp_rsa.rsa_pub_dec = meth1->rsa_pub_dec;
     e_gmp_rsa.rsa_priv_enc = meth1->rsa_priv_enc;

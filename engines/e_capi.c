@@ -472,7 +472,7 @@ static int capi_init(ENGINE *e)
 
         /* Setup RSA_METHOD */
         rsa_capi_idx = RSA_get_ex_new_index(0, NULL, NULL, NULL, 0);
-        ossl_rsa_meth = RSA_PKCS1_SSLeay();
+        ossl_rsa_meth = RSA_PKCS1_OpenSSL();
         capi_rsa_method.rsa_pub_enc = ossl_rsa_meth->rsa_pub_enc;
         capi_rsa_method.rsa_pub_dec = ossl_rsa_meth->rsa_pub_dec;
         capi_rsa_method.rsa_mod_exp = ossl_rsa_meth->rsa_mod_exp;

@@ -58,9 +58,8 @@
 
 /*
  * The DSS routines are based on patches supplied by
- * Steven Schoch <schoch@sheba.arc.nasa.gov>.  He basically did the
- * work and I have just tweaked them a little to fit into my
- * stylistic vision for SSLeay :-) */
+ * Steven Schoch <schoch@sheba.arc.nasa.gov>.
+ */
 
 #ifndef HEADER_DSA_H
 # define HEADER_DSA_H

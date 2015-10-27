@@ -16,11 +16,11 @@ if(defined $ENV{'OPENSSL'}) {
 
 my $verbose = 1;
 
-my $SSLEAY_CONFIG = $ENV{"SSLEAY_CONFIG"};
+my $OPENSSL_CONFIG = $ENV{"OPENSSL_CONFIG"};
 my $DAYS = "-days 365";
 my $CADAYS = "-days 1095";	# 3 years
-my $REQ = "$openssl req $SSLEAY_CONFIG";
-my $CA = "$openssl ca $SSLEAY_CONFIG";
+my $REQ = "$openssl req $OPENSSL_CONFIG";
+my $CA = "$openssl ca $OPENSSL_CONFIG";
 my $VERIFY = "$openssl verify";
 my $X509 = "$openssl x509";
 my $PKCS12 = "$openssl pkcs12";

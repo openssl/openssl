@@ -14,6 +14,10 @@
      also been removed.
      [Matt Caswell]
 
+  *) All instances of the string "ssleay" in the public API were replaced
+     with OpenSSL (case-matching; e.g., OPENSSL_VERSION for #define's)
+     [Rich Salz]
+
   *) The demo files in crypto/threads were moved to demo/threads.
      [Rich Salz]
 
