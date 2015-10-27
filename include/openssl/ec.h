@@ -1001,6 +1001,33 @@ int ECDH_compute_key(void *out, size_t outlen, const EC_POINT *pub_key,
 
 typedef struct ECDSA_SIG_st ECDSA_SIG;
 
+/** Allocates and initialize a ECDSA_SIG structure
+ *  \return pointer to a ECDSA_SIG structure or NULL if an error occurred
+ */
+ECDSA_SIG *ECDSA_SIG_new(void);
+
+/** frees a ECDSA_SIG structure
+ *  \param  sig  pointer to the ECDSA_SIG structure
+ */
+void ECDSA_SIG_free(ECDSA_SIG *sig);
+
+/** DER encode content of ECDSA_SIG object (note: this function modifies *pp
+ *  (*pp += length of the DER encoded signature)).
+ *  \param  sig  pointer to the ECDSA_SIG object
+ *  \param  pp   pointer to a unsigned char pointer for the output or NULL
+ *  \return the length of the DER encoded ECDSA_SIG object or 0
+ */
+int i2d_ECDSA_SIG(const ECDSA_SIG *sig, unsigned char **pp);
+
+/** Decodes a DER encoded ECDSA signature (note: this function changes *pp
+ *  (*pp += len)).
+ *  \param  sig  pointer to ECDSA_SIG pointer (may be NULL)
+ *  \param  pp   memory buffer with the DER encoded signature
+ *  \param  len  length of the buffer
+ *  \return pointer to the decoded ECDSA_SIG structure (or NULL)
+ */
+ECDSA_SIG *d2i_ECDSA_SIG(ECDSA_SIG **sig, const unsigned char **pp, long len);
+
 # define ECParameters_dup(x) ASN1_dup_of(EC_KEY,i2d_ECParameters,d2i_ECParameters,x)
 
 # ifndef __cplusplus
