@@ -1,4 +1,4 @@
-/* crypto/ecdsa/ecdsa_sign.c */
+/* crypto/ec/ecdsa_sign.c */
 /* ====================================================================
  * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
  *
@@ -53,7 +53,8 @@
  *
  */
 
-#include "ecs_locl.h"
+# include <openssl/ec.h>
+#include "ec_lcl.h"
 #ifndef OPENSSL_NO_ENGINE
 # include <openssl/engine.h>
 #endif
@@ -68,10 +69,9 @@ ECDSA_SIG *ECDSA_do_sign_ex(const unsigned char *dgst, int dlen,
                             const BIGNUM *kinv, const BIGNUM *rp,
                             EC_KEY *eckey)
 {
-    ECDSA_DATA *ecdsa = ecdsa_check(eckey);
-    if (ecdsa == NULL)
-        return NULL;
-    return ecdsa->meth->ecdsa_do_sign(dgst, dlen, kinv, rp, eckey);
+    if (eckey->meth->sign_sig)
+        return eckey->meth->sign_sig(dgst, dlen, kinv, rp, eckey);
+    return NULL;
 }
 
 int ECDSA_sign(int type, const unsigned char *dgst, int dlen, unsigned char
@@ -99,8 +99,7 @@ int ECDSA_sign_ex(int type, const unsigned char *dgst, int dlen, unsigned char
 int ECDSA_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in, BIGNUM **kinvp,
                      BIGNUM **rp)
 {
-    ECDSA_DATA *ecdsa = ecdsa_check(eckey);
-    if (ecdsa == NULL)
-        return 0;
-    return ecdsa->meth->ecdsa_sign_setup(eckey, ctx_in, kinvp, rp);
+    if (eckey->meth->sign_setup)
+        return eckey->meth->sign_setup(eckey, ctx_in, kinvp, rp);
+    return 0;
 }
