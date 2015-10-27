@@ -57,7 +57,7 @@ RAND_SSLeay() return pointers to the respective methods.
 
 =head1 NOTES
 
-As of version 0.9.7, RAND_METHOD implementations are grouped together with other
+RAND_METHOD implementations are grouped together with other
 algorithmic APIs (eg. RSA_METHOD, EVP_CIPHER, etc) in B<ENGINE> modules. If a
 default ENGINE is specified for RAND functionality using an ENGINE API function,
 that will override any RAND defaults set using the RAND API (ie.
@@ -68,16 +68,5 @@ algorithms.
 =head1 SEE ALSO
 
 L<rand(3)>, L<engine(3)>
-
-=head1 HISTORY
-
-RAND_set_rand_method(), RAND_get_rand_method() and RAND_SSLeay() are
-available in all versions of OpenSSL.
-
-In the engine version of version 0.9.6, RAND_set_rand_method() was altered to
-take an ENGINE pointer as its argument. As of version 0.9.7, that has been
-reverted as the ENGINE API transparently overrides RAND defaults if used,
-otherwise RAND API functions work as before. RAND_set_rand_engine() was also
-introduced in version 0.9.7.
 
 =cut

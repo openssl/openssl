@@ -89,12 +89,6 @@ L<sha(3)>, L<evp(3)>
 
 =head1 HISTORY
 
-HMAC(), HMAC_Init(), HMAC_Update(), HMAC_Final() and HMAC_cleanup()
-are available since SSLeay 0.9.0.
-
-HMAC_CTX_init(), HMAC_Init_ex() and HMAC_CTX_cleanup() are available
-since OpenSSL 0.9.7.
-
 HMAC_Init_ex(), HMAC_Update() and HMAC_Final() did not return values in
 versions of OpenSSL before 1.0.0.
 

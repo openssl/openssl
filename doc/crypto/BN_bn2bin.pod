@@ -84,12 +84,4 @@ L<bn(3)>, L<ERR_get_error(3)>, L<BN_zero(3)>,
 L<ASN1_INTEGER_to_BN(3)>,
 L<BN_num_bytes(3)>
 
-=head1 HISTORY
-
-BN_bn2bin(), BN_bin2bn(), BN_print_fp() and BN_print() are available
-in all versions of SSLeay and OpenSSL.
-
-BN_bn2hex(), BN_bn2dec(), BN_hex2bn(), BN_dec2bn(), BN_bn2mpi() and
-BN_mpi2bn() were added in SSLeay 0.9.0.
-
 =cut

@@ -44,10 +44,4 @@ method.
 L<rand(3)>, L<ERR_get_error(3)>,
 L<RAND_add(3)>
 
-=head1 HISTORY
-
-RAND_bytes() is available in all versions of SSLeay and OpenSSL.  It
-has a return value since OpenSSL 0.9.5. RAND_pseudo_bytes() was added
-in OpenSSL 0.9.5.
-
 =cut

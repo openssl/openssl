@@ -43,9 +43,4 @@ L<ERR_get_error(3)>,
 L<ERR_load_crypto_strings(3)>,
 L<SSL_load_error_strings(3)>
 
-=head1 HISTORY
-
-ERR_print_errors() and ERR_print_errors_fp()
-are available in all versions of SSLeay and OpenSSL.
-
 =cut

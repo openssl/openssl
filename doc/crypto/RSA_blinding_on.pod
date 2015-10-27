@@ -36,8 +36,4 @@ RSA_blinding_off() returns no value.
 
 L<rsa(3)>, L<rand(3)>
 
-=head1 HISTORY
-
-RSA_blinding_on() and RSA_blinding_off() appeared in SSLeay 0.9.0.
-
 =cut

@@ -107,8 +107,4 @@ OpenSSL error queue contains more information on the error.
 
 L<ssl(3)>, L<err(3)>
 
-=head1 HISTORY
-
-SSL_get_error() was added in SSLeay 0.8.
-
 =cut

@@ -49,11 +49,4 @@ The error codes can be obtained by L<ERR_get_error(3)>.
 L<bn(3)>, L<ERR_get_error(3)>, L<rand(3)>,
 L<RAND_add(3)>, L<RAND_bytes(3)>
 
-=head1 HISTORY
-
-BN_rand() is available in all versions of SSLeay and OpenSSL.
-BN_pseudo_rand() was added in OpenSSL 0.9.5. The B<top> == -1 case
-and the function BN_rand_range() were added in OpenSSL 0.9.6a.
-BN_pseudo_rand_range() was added in OpenSSL 0.9.6c.
-
 =cut

@@ -759,8 +759,6 @@ L<DTLSv1_listen(3)|DTLSv1_listen(3)>
 
 =head1 HISTORY
 
-The L<ssl(3)> document appeared in OpenSSL 0.9.2
-
 B<SSLv2_client_method>, B<SSLv2_server_method> and B<SSLv2_method> where removed
 in OpenSSL 1.1.0.
 

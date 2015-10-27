@@ -168,12 +168,4 @@ To print out the EC parameters to standard output:
 
 L<ec(1)>, L<dsaparam(1)>
 
-=head1 HISTORY
-
-The ecparam command was first introduced in OpenSSL 0.9.8.
-
-=head1 AUTHOR
-
-Nils Larsch for the OpenSSL project (http://www.openssl.org)
-
 =cut

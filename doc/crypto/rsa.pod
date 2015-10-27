@@ -38,7 +38,7 @@ rsa - RSA public key cryptosystem
  const RSA_METHOD *RSA_get_default_method(void);
  int RSA_set_method(RSA *rsa, const RSA_METHOD *meth);
  const RSA_METHOD *RSA_get_method(const RSA *rsa);
- RSA_METHOD *RSA_PKCS1_SSLeay(void);
+ RSA_METHOD *RSA_PKCS1_OpenSSL(void);
  RSA_METHOD *RSA_null_method(void);
  int RSA_flags(const RSA *rsa);
  RSA *RSA_new_method(ENGINE *engine);

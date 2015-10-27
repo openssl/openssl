@@ -97,33 +97,8 @@ DH_new_method() returns NULL and sets an error code that can be obtained by
 L<ERR_get_error(3)> if the allocation fails. Otherwise it
 returns a pointer to the newly allocated structure.
 
-=head1 NOTES
-
-As of version 0.9.7, DH_METHOD implementations are grouped together with other
-algorithmic APIs (eg. RSA_METHOD, EVP_CIPHER, etc) in B<ENGINE> modules. If a
-default ENGINE is specified for DH functionality using an ENGINE API function,
-that will override any DH defaults set using the DH API (ie.
-DH_set_default_method()). For this reason, the ENGINE API is the recommended way
-to control default implementations for use in DH and other cryptographic
-algorithms.
-
 =head1 SEE ALSO
 
 L<dh(3)>, L<DH_new(3)>
-
-=head1 HISTORY
-
-DH_set_default_method(), DH_get_default_method(), DH_set_method(),
-DH_new_method() and DH_OpenSSL() were added in OpenSSL 0.9.4.
-
-DH_set_default_openssl_method() and DH_get_default_openssl_method() replaced
-DH_set_default_method() and DH_get_default_method() respectively, and
-DH_set_method() and DH_new_method() were altered to use B<ENGINE>s rather than
-B<DH_METHOD>s during development of the engine version of OpenSSL 0.9.6. For
-0.9.7, the handling of defaults in the ENGINE API was restructured so that this
-change was reversed, and behaviour of the other functions resembled more closely
-the previous behaviour. The behaviour of defaults in the ENGINE API now
-transparently overrides the behaviour of defaults in the DH API without
-requiring changing these function prototypes.
 
 =cut

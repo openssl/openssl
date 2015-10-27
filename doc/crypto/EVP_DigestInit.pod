@@ -189,7 +189,7 @@ EVP_MD_CTX_copy_ex() because they can efficiently reuse a digest context
 instead of initializing and cleaning it up on each call and allow non default
 implementations of digests to be specified.
 
-In OpenSSL 0.9.7 and later if digest contexts are not cleaned up after use
+If digest contexts are not cleaned up after use
 memory leaks will occur.
 
 Stack allocation of EVP_MD_CTX structures is common, for example:
@@ -260,22 +260,8 @@ L<evp(3)>
 
 =head1 HISTORY
 
-EVP_DigestInit(), EVP_DigestUpdate() and EVP_DigestFinal() are
-available in all versions of SSLeay and OpenSSL.
-
-EVP_MD_CTX_init(), EVP_MD_CTX_create(), EVP_MD_CTX_copy_ex(),
-EVP_MD_CTX_cleanup(), EVP_MD_CTX_destroy(), EVP_DigestInit_ex()
-and EVP_DigestFinal_ex() were added in OpenSSL 0.9.7.
-
-EVP_md_null(), EVP_md2(), EVP_md5(), EVP_sha1(),
-EVP_dss1(), EVP_mdc2() and EVP_ripemd160() were
-changed to return truly const EVP_MD * in OpenSSL 0.9.7.
-
 The link between digests and signing algorithms was fixed in OpenSSL 1.0 and
 later, so now EVP_sha1() can be used with RSA and DSA; there is no need to
 use EVP_dss1() any more.
-
-OpenSSL 1.0 and later does not include the MD2 digest algorithm in the
-default configuration due to its security weaknesses.
 
 =cut

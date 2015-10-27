@@ -61,8 +61,6 @@ L<bn(3)>, L<ERR_get_error(3)>
 
 =head1 HISTORY
 
-BN_new(), BN_clear(), BN_free() and BN_clear_free() are available in
-all versions on SSLeay and OpenSSL.  BN_init() was added in SSLeay
-0.9.1b and removed in OpenSSL 1.1.0.
+BN_init() was removed in OpenSSL 1.1.0.
 
 =cut

@@ -869,11 +869,6 @@ be checked.
 There should be options to explicitly set such things as start and end
 dates rather than an offset from the current time.
 
-The code to implement the verify behaviour described in the B<TRUST SETTINGS>
-is currently being developed. It thus describes the intended behaviour rather
-than the current behaviour. It is hoped that it will represent reality in
-OpenSSL 0.9.5 and later.
-
 =head1 SEE ALSO
 
 L<req(1)>, L<ca(1)>, L<genrsa(1)>,
@@ -881,8 +876,6 @@ L<gendsa(1)>, L<verify(1)>,
 L<x509v3_config(5)> 
 
 =head1 HISTORY
-
-Before OpenSSL 0.9.8, the default digest for RSA keys was MD5.
 
 The hash algorithm used in the B<-subject_hash> and B<-issuer_hash> options
 before OpenSSL 1.0.0 was based on the deprecated MD5 algorithm and the encoding

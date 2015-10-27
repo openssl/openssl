@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-OPENSSL_VERSION_NUMBER, SSLeay, SSLeay_version - get OpenSSL version number
+OPENSSL_VERSION_NUMBER, OpenSSL_version - get OpenSSL version number
 
 =head1 SYNOPSIS
 
@@ -10,8 +10,7 @@ OPENSSL_VERSION_NUMBER, SSLeay, SSLeay_version - get OpenSSL version number
  #define OPENSSL_VERSION_NUMBER 0xnnnnnnnnnL
 
  #include <openssl/crypto.h>
- long SSLeay(void);
- const char *SSLeay_version(int t);
+ const char *OpenSSL_version(int t);
 
 =head1 DESCRIPTION
 
@@ -44,38 +43,34 @@ except the patch level got the highest bit set, to keep continuity.  The
 number was therefore 0x0090581f.
 
 
-For backward compatibility, SSLEAY_VERSION_NUMBER is also defined.
+For backward compatibility, OPENSSL_VERSION_NUMBER is also defined.
 
-SSLeay() returns this number. The return value can be compared to the
-macro to make sure that the correct version of the library has been
-loaded, especially when using DLLs on Windows systems.
-
-SSLeay_version() returns different strings depending on B<t>:
+OpenSSL_version() returns different strings depending on B<t>:
 
 =over 4
 
-=item SSLEAY_VERSION
+=item OPENSSL_VERSION
 
 The text variant of the version number and the release date.  For example,
-"OpenSSL 0.9.5a 1 Apr 2000".
+"OpenSSL 1.0.1a 15 Oct 2015".
 
-=item SSLEAY_CFLAGS
+=item OPENSSL_CFLAGS
 
 The compiler flags set for the compilation process in the form
 "compiler: ..."  if available or "compiler: information not available"
 otherwise.
 
-=item SSLEAY_BUILT_ON
+=item OPENSSL_BUILT_ON
 
 The date of the build process in the form "built on: ..." if available
 or "built on: date not available" otherwise.
 
-=item SSLEAY_PLATFORM
+=item OPENSSL_PLATFORM
 
 The "Configure" target of the library build in the form "platform: ..."
 if available or "platform: information not available" otherwise.
 
-=item SSLEAY_DIR
+=item OPENSSL_DIR
 
 The "OPENSSLDIR" setting of the library build in the form "OPENSSLDIR: "...""
 if available or "OPENSSLDIR: N/A" otherwise.
@@ -91,11 +86,5 @@ The version number.
 =head1 SEE ALSO
 
 L<crypto(3)>
-
-=head1 HISTORY
-
-SSLeay() and SSLEAY_VERSION_NUMBER are available in all versions of SSLeay and OpenSSL.
-OPENSSL_VERSION_NUMBER is available in all versions of OpenSSL.
-B<SSLEAY_DIR> was added in OpenSSL 0.9.7.
 
 =cut

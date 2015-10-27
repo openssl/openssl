@@ -508,16 +508,6 @@ will only recognize the last value. This can be worked around by using the form:
  email.1=steve@here
  email.2=steve@there
 
-=head1 HISTORY
-
-The X509v3 extension code was first added to OpenSSL 0.9.2.
-
-Policy mappings, inhibit any policy and name constraints support was added in
-OpenSSL 0.9.8
-
-The B<directoryName> and B<otherName> option as well as the B<ASN1> option
-for arbitrary extensions was added in OpenSSL 0.9.8
-
 =head1 SEE ALSO
 
 L<req(1)>, L<ca(1)>, L<x509(1)>,

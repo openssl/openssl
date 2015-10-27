@@ -112,9 +112,4 @@ present in the parent RSA structure when it is called.
 
 L<rsa(3)>, L<CRYPTO_set_ex_data(3)>
 
-=head1 HISTORY
-
-RSA_get_ex_new_index(), RSA_set_ex_data() and RSA_get_ex_data() are
-available since SSLeay 0.9.0.
-
 =cut

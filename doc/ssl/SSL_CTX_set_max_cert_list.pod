@@ -70,8 +70,4 @@ set value.
 L<ssl(3)>, L<SSL_new(3)>,
 L<SSL_CTX_set_verify(3)>
 
-=head1 HISTORY
-
-SSL*_set/get_max_cert_list() have been introduced in OpenSSL 0.9.7.
-
 =cut

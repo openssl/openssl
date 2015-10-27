@@ -46,8 +46,4 @@ L<RSA_get_ex_new_index(3)>,
 L<DSA_get_ex_new_index(3)>,
 L<DH_get_ex_new_index(3)>
 
-=head1 HISTORY
-
-CRYPTO_set_ex_data() and CRYPTO_get_ex_data() have been available since SSLeay 0.9.0.
-
 =cut

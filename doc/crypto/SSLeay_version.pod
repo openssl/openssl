@@ -67,8 +67,4 @@ Textual description.
 
 L<crypto(3)>
 
-=head1 HISTORY
-
-B<SSLEAY_DIR> was added in OpenSSL 0.9.7.
-
 =cut

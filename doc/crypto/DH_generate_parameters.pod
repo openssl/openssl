@@ -71,12 +71,4 @@ a usable generator.
 L<dh(3)>, L<ERR_get_error(3)>, L<rand(3)>,
 L<DH_free(3)>
 
-=head1 HISTORY
-
-DH_check() is available in all versions of SSLeay and OpenSSL.
-The B<cb_arg> argument to DH_generate_parameters() was added in SSLeay 0.9.0.
-
-In versions before OpenSSL 0.9.5, DH_CHECK_P_NOT_STRONG_PRIME is used
-instead of DH_CHECK_P_NOT_SAFE_PRIME.
-
 =cut

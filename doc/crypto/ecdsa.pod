@@ -195,12 +195,4 @@ ANSI X9.62, US Federal Information Processing Standard FIPS 186-2
 
 L<dsa(3)>, L<rsa(3)>
 
-=head1 HISTORY
-
-The ecdsa implementation was first introduced in OpenSSL 0.9.8
-
-=head1 AUTHOR
-
-Nils Larsch for the OpenSSL project (http://www.openssl.org).
-
 =cut
