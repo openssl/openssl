@@ -1028,6 +1028,14 @@ int i2d_ECDSA_SIG(const ECDSA_SIG *sig, unsigned char **pp);
  */
 ECDSA_SIG *d2i_ECDSA_SIG(ECDSA_SIG **sig, const unsigned char **pp, long len);
 
+/** Accessor for r and s fields of ECDSA_SIG
+ *  \param  sig  pointer to ECDSA_SIG pointer
+ *  \param  pr   pointer to BIGNUM pointer for r (may be NULL)
+ *  \param  ps   pointer to BIGNUM pointer for s (may be NULL)
+ */
+void ECDSA_SIG_get0(BIGNUM **pr, BIGNUM **ps, ECDSA_SIG *sig);
+
+
 # define ECParameters_dup(x) ASN1_dup_of(EC_KEY,i2d_ECParameters,d2i_ECParameters,x)
 
 # ifndef __cplusplus
