@@ -15,9 +15,9 @@ CFLAGS= $(INCLUDES) $(CFLAG)
 GENERAL=Makefile
 
 LIB=$(TOP)/libcrypto.a
-LIBSRC=	ecs_lib.c ecs_asn1.c ecs_ossl.c ecs_sign.c ecs_vrf.c ecs_err.c
+LIBSRC=	ecs_lib.c ecs_ossl.c ecs_sign.c ecs_vrf.c ecs_err.c
 
-LIBOBJ=	ecs_lib.o ecs_asn1.o ecs_ossl.o ecs_sign.o ecs_vrf.o ecs_err.o
+LIBOBJ=	ecs_lib.o ecs_ossl.o ecs_sign.o ecs_vrf.o ecs_err.o
 
 SRC= $(LIBSRC)
 
