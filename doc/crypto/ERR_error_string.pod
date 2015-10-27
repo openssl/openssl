@@ -65,9 +65,4 @@ L<ERR_load_crypto_strings(3)>,
 L<SSL_load_error_strings(3)>
 L<ERR_print_errors(3)>
 
-=head1 HISTORY
-
-ERR_error_string() is available in all versions of SSLeay and OpenSSL.
-ERR_error_string_n() was added in OpenSSL 0.9.6.
-
 =cut

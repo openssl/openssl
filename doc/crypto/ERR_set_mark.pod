@@ -31,8 +31,4 @@ implies that the stack became empty, otherwise 1.
 
 L<err(3)>
 
-=head1 HISTORY
-
-ERR_set_mark() and ERR_pop_to_mark() were added in OpenSSL 0.9.8.
-
 =cut

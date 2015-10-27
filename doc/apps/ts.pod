@@ -581,10 +581,6 @@ test/testtsa).
 
 =cut
 
-=head1 AUTHOR
-
-Zoltan Glozik <zglozik@opentsa.org>, OpenTSA project (http://www.opentsa.org)
-
 =head1 SEE ALSO
 
 L<tsget(1)>, L<openssl(1)>, L<req(1)>,

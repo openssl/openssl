@@ -141,9 +141,4 @@ There should be a way to generate and manipulate DH keys.
 
 L<dsaparam(1)>
 
-=head1 HISTORY
-
-The B<dhparam> command was added in OpenSSL 0.9.5.
-The B<-dsaparam> option was added in OpenSSL 0.9.6.
-
 =cut

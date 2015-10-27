@@ -157,10 +157,4 @@ L<SSL_CTX_set_cipher_list(3)>,
 L<SSL_CTX_set_client_cert_cb(3)>,
 L<SSL_CTX_add_extra_chain_cert(3)>
 
-=head1 HISTORY
-
-Support for DER encoded private keys (SSL_FILETYPE_ASN1) in
-SSL_CTX_use_PrivateKey_file() and SSL_use_PrivateKey_file() was added
-in 0.9.8 .
-
 =cut

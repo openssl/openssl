@@ -43,11 +43,6 @@ RSA_verify() returns 1 on successful verification.
 
 The error codes can be obtained by L<ERR_get_error(3)>.
 
-=head1 BUGS
-
-Certain signatures with an improper algorithm identifier are accepted
-for compatibility with SSLeay 0.4.5 :-)
-
 =head1 CONFORMING TO
 
 SSL, PKCS #1 v2.0
@@ -57,10 +52,5 @@ SSL, PKCS #1 v2.0
 L<ERR_get_error(3)>,
 L<rsa(3)>, L<RSA_private_encrypt(3)>,
 L<RSA_public_decrypt(3)> 
-
-=head1 HISTORY
-
-RSA_sign() and RSA_verify() are available in all versions of SSLeay
-and OpenSSL.
 
 =cut

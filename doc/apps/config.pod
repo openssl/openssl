@@ -56,7 +56,7 @@ the sequences B<\n>, B<\r>, B<\b> and B<\t> are recognized.
 
 =head1 OPENSSL LIBRARY CONFIGURATION
 
-In OpenSSL 0.9.7 and later applications can automatically configure certain
+Applications can automatically configure certain
 aspects of OpenSSL using the master OpenSSL configuration file, or optionally
 an alternative configuration file. The B<openssl> utility includes this
 functionality: any sub command uses the master OpenSSL configuration file
@@ -106,7 +106,7 @@ as any compliant applications. For example:
  some_new_oid = 1.2.3.4
  some_other_oid = 1.2.3.5
 
-In OpenSSL 0.9.8 it is also possible to set the value to the long name followed
+It is also possible to set the value to the long name followed
 by a comma and the numerical OID form. For example:
 
  shortName = some object long name, 1.2.3.4

@@ -29,8 +29,4 @@ NULL on error. The error codes can be obtained by L<ERR_get_error(3)>.
 
 L<bn(3)>, L<ERR_get_error(3)>, L<BN_add(3)>
 
-=head1 HISTORY
-
-BN_mod_inverse() is available in all versions of SSLeay and OpenSSL.
-
 =cut

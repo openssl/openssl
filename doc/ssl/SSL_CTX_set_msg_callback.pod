@@ -91,9 +91,4 @@ I<version> will be B<SSL3_VERSION>.
 
 L<ssl(3)>, L<SSL_new(3)>
 
-=head1 HISTORY
-
-SSL_CTX_set_msg_callback(), SSL_CTX_set_msg_callback_arg(),
-SSL_set_msg_callback() and SSL_get_msg_callback_arg() were added in OpenSSL 0.9.7.
-
 =cut

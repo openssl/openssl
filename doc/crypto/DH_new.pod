@@ -34,8 +34,4 @@ L<dh(3)>, L<ERR_get_error(3)>,
 L<DH_generate_parameters(3)>,
 L<DH_generate_key(3)>
 
-=head1 HISTORY
-
-DH_new() and DH_free() are available in all versions of SSLeay and OpenSSL.
-
 =cut

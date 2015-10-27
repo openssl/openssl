@@ -48,8 +48,4 @@ L<X509_sign(3)>,
 L<X509V3_get_d2i(3)>,
 L<X509_verify_cert(3)>
 
-=head1 HISTORY
-
-X509_new() and X509_free() are available in all versions of SSLeay and OpenSSL.
-
 =cut

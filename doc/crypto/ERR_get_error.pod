@@ -67,13 +67,4 @@ The error code, or 0 if there is no error in the queue.
 L<err(3)>, L<ERR_error_string(3)>,
 L<ERR_GET_LIB(3)>
 
-=head1 HISTORY
-
-ERR_get_error(), ERR_peek_error(), ERR_get_error_line() and
-ERR_peek_error_line() are available in all versions of SSLeay and
-OpenSSL. ERR_get_error_line_data() and ERR_peek_error_line_data()
-were added in SSLeay 0.9.0.
-ERR_peek_last_error(), ERR_peek_last_error_line() and
-ERR_peek_last_error_line_data() were added in OpenSSL 0.9.7.
-
 =cut

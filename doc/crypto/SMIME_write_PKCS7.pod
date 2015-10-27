@@ -58,8 +58,4 @@ L<ERR_get_error(3)>, L<PKCS7_sign(3)>,
 L<PKCS7_verify(3)>, L<PKCS7_encrypt(3)>
 L<PKCS7_decrypt(3)>
 
-=head1 HISTORY
-
-SMIME_write_PKCS7() was added to OpenSSL 0.9.5
-
 =cut

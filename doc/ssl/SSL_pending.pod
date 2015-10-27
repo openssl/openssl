@@ -34,9 +34,6 @@ L<SSL_CTX_set_read_ahead(3)>), additional protocol
 bytes may have been read containing more TLS/SSL records; these are ignored by
 SSL_pending().
 
-Up to OpenSSL 0.9.6, SSL_pending() does not check if the record type
-of pending data is application data.
-
 =head1 SEE ALSO
 
 L<SSL_read(3)>,

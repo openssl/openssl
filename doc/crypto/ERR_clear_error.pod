@@ -22,8 +22,4 @@ ERR_clear_error() has no return value.
 
 L<err(3)>, L<ERR_get_error(3)>
 
-=head1 HISTORY
-
-ERR_clear_error() is available in all versions of SSLeay and OpenSSL.
-
 =cut

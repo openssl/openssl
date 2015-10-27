@@ -576,16 +576,6 @@ might query various ENGINEs to see if they implement "FOO_GET_VENDOR_LOGO_GIF" -
 and ENGINE could therefore decide whether or not to support this "foo"-specific
 extension).
 
-=head2 Future developments
-
-The ENGINE API and internal architecture is currently being reviewed. Slated for
-possible release in 0.9.8 is support for transparent loading of "dynamic"
-ENGINEs (built as self-contained shared-libraries). This would allow ENGINE
-implementations to be provided independently of OpenSSL libraries and/or
-OpenSSL-based applications, and would also remove any requirement for
-applications to explicitly use the "dynamic" ENGINE to bind to shared-library
-implementations.
-
 =head1 SEE ALSO
 
 L<rsa(3)>, L<dsa(3)>, L<dh(3)>, L<rand(3)>
