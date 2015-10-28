@@ -1131,6 +1131,103 @@ int ECDSA_verify(int type, const unsigned char *dgst, int dgstlen,
  */
 int ECDSA_size(const EC_KEY *eckey);
 
+EC_KEY_METHOD *EC_KEY_METHOD_new(const EC_KEY_METHOD *meth);
+void EC_KEY_METHOD_free(EC_KEY_METHOD *meth);
+void EC_KEY_METHOD_set_init(EC_KEY_METHOD *meth,
+                            int (*init)(EC_KEY *key),
+                            void (*finish)(EC_KEY *key),
+                            int (*copy)(EC_KEY *dest, const EC_KEY *src),
+                            int (*set_group)(EC_KEY *key, const EC_GROUP *grp),
+                            int (*set_private)(EC_KEY *key,
+                                               const BIGNUM *priv_key),
+                            int (*set_public)(EC_KEY *key,
+                                              const EC_POINT *pub_key));
+
+void EC_KEY_METHOD_set_keygen(EC_KEY_METHOD *meth,
+                              int (*keygen)(EC_KEY *key));
+
+void EC_KEY_METHOD_set_compute_key(EC_KEY_METHOD *meth,
+                                   int (*ckey)(void *out,
+                                               size_t outlen,
+                                               const EC_POINT *pub_key,
+                                               EC_KEY *ecdh,
+                                               void *(*KDF) (const void *in,
+                                                             size_t inlen,
+                                                             void *out,
+                                                             size_t *outlen)));
+
+void EC_KEY_METHOD_set_sign(EC_KEY_METHOD *meth,
+                            int (*sign)(int type, const unsigned char *dgst,
+                                        int dlen, unsigned char *sig,
+                                        unsigned int *siglen,
+                                        const BIGNUM *kinv, const BIGNUM *r,
+                                        EC_KEY *eckey),
+                            int (*sign_setup)(EC_KEY *eckey, BN_CTX *ctx_in,
+                                              BIGNUM **kinvp, BIGNUM **rp),
+                            ECDSA_SIG *(*sign_sig)(const unsigned char *dgst,
+                                                   int dgst_len,
+                                                   const BIGNUM *in_kinv,
+                                                   const BIGNUM *in_r,
+                                                   EC_KEY *eckey));
+
+void EC_KEY_METHOD_set_verify(EC_KEY_METHOD *meth,
+                              int (*verify)(int type, const unsigned
+                                            char *dgst, int dgst_len,
+                                            const unsigned char *sigbuf,
+                                            int sig_len, EC_KEY *eckey),
+                              int (*verify_sig)(const unsigned char *dgst,
+                                                int dgst_len,
+                                                const ECDSA_SIG *sig,
+                                                EC_KEY *eckey));
+
+void EC_KEY_METHOD_get_init(EC_KEY_METHOD *meth,
+                            int (**pinit)(EC_KEY *key),
+                            void (**pfinish)(EC_KEY *key),
+                            int (**pcopy)(EC_KEY *dest, const EC_KEY *src),
+                            int (**pset_group)(EC_KEY *key,
+                                               const EC_GROUP *grp),
+                            int (**pset_private)(EC_KEY *key,
+                                                 const BIGNUM *priv_key),
+                            int (**pset_public)(EC_KEY *key,
+                                                const EC_POINT *pub_key));
+
+void EC_KEY_METHOD_get_keygen(EC_KEY_METHOD *meth,
+                              int (**pkeygen)(EC_KEY *key));
+
+void EC_KEY_METHOD_get_compute_key(EC_KEY_METHOD *meth,
+                                   int (**pck)(void *out,
+                                               size_t outlen,
+                                               const EC_POINT *pub_key,
+                                               EC_KEY *ecdh,
+                                               void *(*KDF) (const void *in,
+                                                             size_t inlen,
+                                                             void *out,
+                                                             size_t *outlen)));
+
+void EC_KEY_METHOD_get_sign(EC_KEY_METHOD *meth,
+                            int (**psign)(int type, const unsigned char *dgst,
+                                          int dlen, unsigned char *sig,
+                                          unsigned int *siglen,
+                                          const BIGNUM *kinv, const BIGNUM *r,
+                                          EC_KEY *eckey),
+                            int (**psign_setup)(EC_KEY *eckey, BN_CTX *ctx_in,
+                                                BIGNUM **kinvp, BIGNUM **rp),
+                            ECDSA_SIG *(**psign_sig)(const unsigned char *dgst,
+                                                     int dgst_len,
+                                                     const BIGNUM *in_kinv,
+                                                     const BIGNUM *in_r,
+                                                     EC_KEY *eckey));
+
+void EC_KEY_METHOD_get_verify(EC_KEY_METHOD *meth,
+                              int (**pverify)(int type, const unsigned
+                                              char *dgst, int dgst_len,
+                                              const unsigned char *sigbuf,
+                                              int sig_len, EC_KEY *eckey),
+                              int (**pverify_sig)(const unsigned char *dgst,
+                                                  int dgst_len,
+                                                  const ECDSA_SIG *sig,
+                                                  EC_KEY *eckey));
+
 # define ECParameters_dup(x) ASN1_dup_of(EC_KEY,i2d_ECParameters,d2i_ECParameters,x)
 
 # ifndef __cplusplus
