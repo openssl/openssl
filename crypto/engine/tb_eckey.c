@@ -64,38 +64,38 @@
 static ENGINE_TABLE *dh_table = NULL;
 static const int dummy_nid = 1;
 
-void ENGINE_unregister_EC_KEY(ENGINE *e)
+void ENGINE_unregister_EC(ENGINE *e)
 {
     engine_table_unregister(&dh_table, e);
 }
 
-static void engine_unregister_all_EC_KEY(void)
+static void engine_unregister_all_EC(void)
 {
     engine_table_cleanup(&dh_table);
 }
 
-int ENGINE_register_EC_KEY(ENGINE *e)
+int ENGINE_register_EC(ENGINE *e)
 {
-    if (e->ec_key_meth)
+    if (e->ec_meth)
         return engine_table_register(&dh_table,
-                                     engine_unregister_all_EC_KEY, e, &dummy_nid,
+                                     engine_unregister_all_EC, e, &dummy_nid,
                                      1, 0);
     return 1;
 }
 
-void ENGINE_register_all_EC_KEY()
+void ENGINE_register_all_EC()
 {
     ENGINE *e;
 
     for (e = ENGINE_get_first(); e; e = ENGINE_get_next(e))
-        ENGINE_register_EC_KEY(e);
+        ENGINE_register_EC(e);
 }
 
-int ENGINE_set_default_EC_KEY(ENGINE *e)
+int ENGINE_set_default_EC(ENGINE *e)
 {
-    if (e->ec_key_meth)
+    if (e->ec_meth)
         return engine_table_register(&dh_table,
-                                     engine_unregister_all_EC_KEY, e, &dummy_nid,
+                                     engine_unregister_all_EC, e, &dummy_nid,
                                      1, 1);
     return 1;
 }
@@ -105,20 +105,20 @@ int ENGINE_set_default_EC_KEY(ENGINE *e)
  * table (ie. try to get a functional reference from the tabled structural
  * references).
  */
-ENGINE *ENGINE_get_default_EC_KEY(void)
+ENGINE *ENGINE_get_default_EC(void)
 {
     return engine_table_select(&dh_table, dummy_nid);
 }
 
 /* Obtains an EC_KEY implementation from an ENGINE functional reference */
-const EC_KEY_METHOD *ENGINE_get_EC_KEY(const ENGINE *e)
+const EC_KEY_METHOD *ENGINE_get_EC(const ENGINE *e)
 {
-    return e->ec_key_meth;
+    return e->ec_meth;
 }
 
 /* Sets an EC_KEY implementation in an ENGINE structure */
-int ENGINE_set_EC_KEY(ENGINE *e, const EC_KEY_METHOD *ec_key_meth)
+int ENGINE_set_EC(ENGINE *e, const EC_KEY_METHOD *ec_meth)
 {
-    e->ec_key_meth = ec_key_meth;
+    e->ec_meth = ec_meth;
     return 1;
 }

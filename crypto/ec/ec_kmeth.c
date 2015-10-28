@@ -109,9 +109,9 @@ EC_KEY *EC_KEY_new_method(ENGINE *engine)
         }
         ret->engine = engine;
     } else
-        ret->engine = ENGINE_get_default_EC_KEY();
+        ret->engine = ENGINE_get_default_EC();
     if (ret->engine) {
-        ret->meth = ENGINE_get_EC_KEY(ret->engine);
+        ret->meth = ENGINE_get_EC(ret->engine);
         if (!ret->meth) {
             ECerr(EC_F_EC_KEY_NEW_METHOD, ERR_R_ENGINE_LIB);
             ENGINE_finish(ret->engine);
