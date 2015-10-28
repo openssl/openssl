@@ -60,23 +60,15 @@
 #include <string.h>
 #include <openssl/crypto.h>
 
-extern unsigned char cleanse_ctr;
-unsigned char cleanse_ctr = 0;
-
+static void *(*const volatile __memset_vp)(void *, int, size_t) = (memset);
 void OPENSSL_cleanse(void *ptr, size_t len)
 {
-    unsigned char *p = ptr;
-    size_t loop = len, ctr = cleanse_ctr;
-
-    if (ptr == NULL)
-        return;
-
-    while (loop--) {
-        *(p++) = (unsigned char)ctr;
-        ctr += (17 + ((size_t)p & 0xF));
-    }
-    p = memchr(ptr, (unsigned char)ctr, len);
-    if (p)
-        ctr += (63 + (size_t)p);
-    cleanse_ctr = (unsigned char)ctr;
+#if defined(OPENSSL_USE_MEMSET_S)
+    memset_s(ptr, 0, len);
+#elif defined(OPENSSL_WINDOWS)
+    SecureZeroMemory(ptr, len);
+#else
+    /* Calling a function using a volatile pointer should never be optimised */
+    (*__memset_vp)(ptr, 0, len);
+#endif
 }

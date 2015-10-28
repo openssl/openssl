@@ -139,18 +139,6 @@ void *CRYPTO_malloc(size_t num, const char *file, int line)
     ret = malloc(num);
 #endif
 
-#ifndef OPENSSL_CPUID_OBJ
-    /*
-     * Create a dependency on the value of 'cleanse_ctr' so our memory
-     * sanitisation function can't be optimised out. NB: We only do this for
-     * >2Kb so the overhead doesn't bother us.
-     */
-    if (ret && (num > 2048)) {
-        extern unsigned char cleanse_ctr;
-        ((unsigned char *)ret)[0] = cleanse_ctr;
-    }
-#endif
-
     return ret;
 }
 
