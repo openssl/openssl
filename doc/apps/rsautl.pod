@@ -56,7 +56,7 @@ the input is a certificate containing an RSA public key.
 =item B<-sign>
 
 sign the input data and output the signed result. This requires
-and RSA private key.
+an RSA private key.
 
 =item B<-verify>
 
