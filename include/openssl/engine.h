@@ -83,8 +83,7 @@
 #   include <openssl/dh.h>
 #  endif
 #  ifndef OPENSSL_NO_EC
-#   include <openssl/ecdh.h>
-#   include <openssl/ecdsa.h>
+#   include <openssl/ec.h>
 #  endif
 #  include <openssl/rand.h>
 #  include <openssl/ui.h>
@@ -113,7 +112,7 @@ extern "C" {
 # define ENGINE_METHOD_STORE             (unsigned int)0x0100
 # define ENGINE_METHOD_PKEY_METHS        (unsigned int)0x0200
 # define ENGINE_METHOD_PKEY_ASN1_METHS   (unsigned int)0x0400
-# define ENGINE_METHOD_EC_KEY            (unsigned int)0x0800
+# define ENGINE_METHOD_EC                (unsigned int)0x0800
 /* Obvious all-or-nothing cases. */
 # define ENGINE_METHOD_ALL               (unsigned int)0xFFFF
 # define ENGINE_METHOD_NONE              (unsigned int)0x0000
@@ -438,9 +437,9 @@ int ENGINE_register_DSA(ENGINE *e);
 void ENGINE_unregister_DSA(ENGINE *e);
 void ENGINE_register_all_DSA(void);
 
-int ENGINE_register_EC_KEY(ENGINE *e);
-void ENGINE_unregister_EC_KEY(ENGINE *e);
-void ENGINE_register_all_EC_KEY(void);
+int ENGINE_register_EC(ENGINE *e);
+void ENGINE_unregister_EC(ENGINE *e);
+void ENGINE_register_all_EC(void);
 
 int ENGINE_register_DH(ENGINE *e);
 void ENGINE_unregister_DH(ENGINE *e);
@@ -548,7 +547,7 @@ int ENGINE_set_id(ENGINE *e, const char *id);
 int ENGINE_set_name(ENGINE *e, const char *name);
 int ENGINE_set_RSA(ENGINE *e, const RSA_METHOD *rsa_meth);
 int ENGINE_set_DSA(ENGINE *e, const DSA_METHOD *dsa_meth);
-int ENGINE_set_EC_KEY(ENGINE *e, const EC_KEY_METHOD *ecdsa_meth);
+int ENGINE_set_EC(ENGINE *e, const EC_KEY_METHOD *ecdsa_meth);
 int ENGINE_set_DH(ENGINE *e, const DH_METHOD *dh_meth);
 int ENGINE_set_RAND(ENGINE *e, const RAND_METHOD *rand_meth);
 int ENGINE_set_STORE(ENGINE *e, const STORE_METHOD *store_meth);
@@ -592,7 +591,7 @@ const char *ENGINE_get_id(const ENGINE *e);
 const char *ENGINE_get_name(const ENGINE *e);
 const RSA_METHOD *ENGINE_get_RSA(const ENGINE *e);
 const DSA_METHOD *ENGINE_get_DSA(const ENGINE *e);
-const EC_KEY_METHOD *ENGINE_get_EC_KEY(const ENGINE *e);
+const EC_KEY_METHOD *ENGINE_get_EC(const ENGINE *e);
 const DH_METHOD *ENGINE_get_DH(const ENGINE *e);
 const RAND_METHOD *ENGINE_get_RAND(const ENGINE *e);
 const STORE_METHOD *ENGINE_get_STORE(const ENGINE *e);
@@ -670,7 +669,7 @@ int ENGINE_load_ssl_client_cert(ENGINE *e, SSL *s,
 ENGINE *ENGINE_get_default_RSA(void);
 /* Same for the other "methods" */
 ENGINE *ENGINE_get_default_DSA(void);
-ENGINE *ENGINE_get_default_EC_KEY(void);
+ENGINE *ENGINE_get_default_EC(void);
 ENGINE *ENGINE_get_default_DH(void);
 ENGINE *ENGINE_get_default_RAND(void);
 /*
@@ -692,7 +691,7 @@ int ENGINE_set_default_RSA(ENGINE *e);
 int ENGINE_set_default_string(ENGINE *e, const char *def_list);
 /* Same for the other "methods" */
 int ENGINE_set_default_DSA(ENGINE *e);
-int ENGINE_set_default_EC_KEY(ENGINE *e);
+int ENGINE_set_default_EC(ENGINE *e);
 int ENGINE_set_default_DH(ENGINE *e);
 int ENGINE_set_default_RAND(ENGINE *e);
 int ENGINE_set_default_ciphers(ENGINE *e);
