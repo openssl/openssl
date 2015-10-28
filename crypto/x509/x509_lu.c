@@ -522,12 +522,10 @@ STACK_OF(X509_CRL) *X509_STORE_get1_crls(X509_STORE_CTX *ctx, X509_NAME *nm)
     X509_CRL *x;
     X509_OBJECT *obj, xobj;
     sk = sk_X509_CRL_new_null();
-    CRYPTO_w_lock(CRYPTO_LOCK_X509_STORE);
 
     /*
      * Always do lookup to possibly add new CRLs to cache
      */
-    CRYPTO_w_unlock(CRYPTO_LOCK_X509_STORE);
     if (!X509_STORE_get_by_subject(ctx, X509_LU_CRL, nm, &xobj)) {
         sk_X509_CRL_free(sk);
         return NULL;
