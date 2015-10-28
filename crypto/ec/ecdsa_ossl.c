@@ -56,12 +56,29 @@
  *
  */
 
+#include <string.h>
 #include <openssl/err.h>
 #include <openssl/obj_mac.h>
 #include <openssl/bn.h>
 #include <openssl/rand.h>
 #include <openssl/ec.h>
 #include "ec_lcl.h"
+
+int ossl_ecdsa_sign(int type, const unsigned char *dgst, int dlen,
+                    unsigned char *sig, unsigned int *siglen,
+                    const BIGNUM *kinv, const BIGNUM *r, EC_KEY *eckey)
+{
+    ECDSA_SIG *s;
+    RAND_seed(dgst, dlen);
+    s = ECDSA_do_sign_ex(dgst, dlen, kinv, r, eckey);
+    if (s == NULL) {
+        *siglen = 0;
+        return 0;
+    }
+    *siglen = i2d_ECDSA_SIG(s, &sig);
+    ECDSA_SIG_free(s);
+    return 1;
+}
 
 static int ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in,
                             BIGNUM **kinvp, BIGNUM **rp,
@@ -324,6 +341,37 @@ ECDSA_SIG *ossl_ecdsa_sign_sig(const unsigned char *dgst, int dgst_len,
     BN_free(order);
     BN_clear_free(kinv);
     return ret;
+}
+
+/*-
+ * returns
+ *      1: correct signature
+ *      0: incorrect signature
+ *     -1: error
+ */
+int ossl_ecdsa_verify(int type, const unsigned char *dgst, int dgst_len,
+                      const unsigned char *sigbuf, int sig_len, EC_KEY *eckey)
+{
+    ECDSA_SIG *s;
+    const unsigned char *p = sigbuf;
+    unsigned char *der = NULL;
+    int derlen = -1;
+    int ret = -1;
+
+    s = ECDSA_SIG_new();
+    if (s == NULL)
+        return (ret);
+    if (d2i_ECDSA_SIG(&s, &p, sig_len) == NULL)
+        goto err;
+    /* Ensure signature uses DER and doesn't have trailing garbage */
+    derlen = i2d_ECDSA_SIG(s, &der);
+    if (derlen != sig_len || memcmp(sigbuf, der, derlen))
+        goto err;
+    ret = ECDSA_do_verify(dgst, dgst_len, s, eckey);
+ err:
+    OPENSSL_clear_free(der, derlen);
+    ECDSA_SIG_free(s);
+    return (ret);
 }
 
 int ossl_ecdsa_verify_sig(const unsigned char *dgst, int dgst_len,

@@ -572,11 +572,17 @@ struct ec_key_method_st {
                        void *(*KDF) (const void *in, size_t inlen,
                                      void *out, size_t *outlen));
 
+    int (*sign)(int type, const unsigned char *dgst, int dlen, unsigned char
+                *sig, unsigned int *siglen, const BIGNUM *kinv,
+                const BIGNUM *r, EC_KEY *eckey);
     int (*sign_setup)(EC_KEY *eckey, BN_CTX *ctx_in, BIGNUM **kinvp,
                       BIGNUM **rp);
     ECDSA_SIG *(*sign_sig)(const unsigned char *dgst, int dgst_len,
                            const BIGNUM *in_kinv, const BIGNUM *in_r,
                            EC_KEY *eckey);
+
+    int (*verify)(int type, const unsigned char *dgst, int dgst_len,
+                  const unsigned char *sigbuf, int sig_len, EC_KEY *eckey);
     int (*verify_sig)(const unsigned char *dgst, int dgst_len,
                       const ECDSA_SIG *sig, EC_KEY *eckey);
 } /* EC_KEY_METHOD */ ;
@@ -596,8 +602,13 @@ struct ECDSA_SIG_st {
 
 int ossl_ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in, BIGNUM **kinvp,
                           BIGNUM **rp);
+int ossl_ecdsa_sign(int type, const unsigned char *dgst, int dlen,
+                    unsigned char *sig, unsigned int *siglen,
+                    const BIGNUM *kinv, const BIGNUM *r, EC_KEY *eckey);
 ECDSA_SIG *ossl_ecdsa_sign_sig(const unsigned char *dgst, int dgst_len,
                                const BIGNUM *in_kinv, const BIGNUM *in_r,
                                EC_KEY *eckey);
+int ossl_ecdsa_verify(int type, const unsigned char *dgst, int dgst_len,
+                      const unsigned char *sigbuf, int sig_len, EC_KEY *eckey);
 int ossl_ecdsa_verify_sig(const unsigned char *dgst, int dgst_len,
                           const ECDSA_SIG *sig, EC_KEY *eckey);

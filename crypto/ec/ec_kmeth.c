@@ -66,8 +66,10 @@ static const EC_KEY_METHOD openssl_ec_key_method = {
     0,0,0,0,0,0,
     ossl_ec_key_gen,
     ossl_ecdh_compute_key,
+    ossl_ecdsa_sign,
     ossl_ecdsa_sign_setup,
     ossl_ecdsa_sign_sig,
+    ossl_ecdsa_verify,
     ossl_ecdsa_verify_sig
 };
 
