@@ -3056,31 +3056,33 @@ static int tls_decrypt_ticket(SSL *s, const unsigned char *etick,
     HMAC_CTX hctx;
     EVP_CIPHER_CTX ctx;
     SSL_CTX *tctx = s->initial_ctx;
+    unsigned char *nctick = (unsigned char *)etick;
+    int rv;
+
     /* Need at least keyname + iv + some encrypted data */
     if (eticklen < 48)
         return 2;
     /* Initialize session ticket encryption and HMAC contexts */
     HMAC_CTX_init(&hctx);
     EVP_CIPHER_CTX_init(&ctx);
-    if (tctx->tlsext_ticket_key_cb) {
-        unsigned char *nctick = (unsigned char *)etick;
-        int rv = tctx->tlsext_ticket_key_cb(s, nctick, nctick + 16,
-                                            &ctx, &hctx, 0);
-        if (rv < 0)
-            return -1;
-        if (rv == 0)
-            return 2;
-        if (rv == 2)
-            renew_ticket = 1;
+
+    if (tctx->tlsext_ticket_key_cb != NULL) {
+        rv = tctx->tlsext_ticket_key_cb(s, nctick, nctick + 16, &ctx, &hctx, 0);
     } else {
-        /* Check key name matches */
-        if (memcmp(etick, tctx->tlsext_tick_key_name, 16))
-            return 2;
-        HMAC_Init_ex(&hctx, tctx->tlsext_tick_hmac_key, 16,
-                     EVP_sha256(), NULL);
-        EVP_DecryptInit_ex(&ctx, EVP_aes_128_cbc(), NULL,
-                           tctx->tlsext_tick_aes_key, etick + 16);
+      SESS_TICKET_ELEM key_name;
+      memcpy(key_name.elem, nctick, 16);
+      SESS_TICKET_IV iv;
+      memcpy(iv.iv, nctick+16, 16);
+      rv = handle_session_tickets(s, &key_name, &iv, &ctx, &hctx, 0);
     }
+
+    if (rv < 0)
+        return -1;
+    if (rv == 0)
+        return 2;
+    if (rv == 2)
+        renew_ticket = 1;
+
     /*
      * Attempt to process session ticket, first conduct sanity and integrity
      * checks on ticket.

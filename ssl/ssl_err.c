@@ -223,6 +223,8 @@ static ERR_STRING_DATA SSL_str_functs[] = {
     {ERR_FUNC(SSL_F_SSL_CTX_SET_SESSION_ID_CONTEXT),
      "SSL_CTX_set_session_id_context"},
     {ERR_FUNC(SSL_F_SSL_CTX_SET_SSL_VERSION), "SSL_CTX_set_ssl_version"},
+    {ERR_FUNC(SSL_F_SSL_CTX_SET_TLSEXT_TICKET_KEY_LIST),
+     "SSL_CTX_set_tlsext_ticket_key_list"},
     {ERR_FUNC(SSL_F_SSL_CTX_SET_TRUST), "SSL_CTX_set_trust"},
     {ERR_FUNC(SSL_F_SSL_CTX_USE_CERTIFICATE), "SSL_CTX_use_certificate"},
     {ERR_FUNC(SSL_F_SSL_CTX_USE_CERTIFICATE_ASN1),

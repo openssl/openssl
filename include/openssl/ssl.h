@@ -318,12 +318,33 @@ extern "C" {
  * function parameters used to prototype callbacks in SSL_CTX.
  */
 typedef struct ssl_st *ssl_crock_st;
-typedef struct tls_session_ticket_ext_st TLS_SESSION_TICKET_EXT;
 typedef struct ssl_method_st SSL_METHOD;
 typedef struct ssl_cipher_st SSL_CIPHER;
 typedef struct ssl_session_st SSL_SESSION;
 typedef struct tls_sigalgs_st TLS_SIGALGS;
 typedef struct ssl_conf_ctx_st SSL_CONF_CTX;
+
+
+#define SESS_TICKET_ELEM_SIZE 16
+typedef struct sess_ticket_key_elem_st {
+    unsigned char elem[SESS_TICKET_ELEM_SIZE];
+} SESS_TICKET_ELEM;
+typedef struct sess_ticket_iv_st {
+    unsigned char iv[EVP_MAX_IV_LENGTH];
+} SESS_TICKET_IV;
+typedef struct tls_session_ticket_ext_st TLS_SESSION_TICKET_EXT;
+typedef struct sess_ticket_key_st SESS_TICKET_KEY;
+typedef struct sess_ticket_key_set_st SESS_TICKET_KEY_LIST;
+
+typedef int (*tls_session_ticket_ext_cb_fn)(SSL *s,
+                                            const unsigned char *data,
+                                            int len, void *arg);
+int handle_session_tickets(SSL *s, SESS_TICKET_ELEM *key_name, SESS_TICKET_IV *iv, EVP_CIPHER_CTX *ctx, HMAC_CTX *hctx, int enc);
+
+# define SSL_RESUME_SUCCESS_RENEW 2
+# define SSL_RESUME_SUCCESS 1
+# define SSL_RESUME_NOPE 0
+# define SSL_RESUME_ERROR -1
 
 DECLARE_STACK_OF(SSL_CIPHER)
 
@@ -335,9 +356,6 @@ typedef struct srtp_protection_profile_st {
 
 DECLARE_STACK_OF(SRTP_PROTECTION_PROFILE)
 
-typedef int (*tls_session_ticket_ext_cb_fn) (SSL *s,
-                                             const unsigned char *data,
-                                             int len, void *arg);
 typedef int (*tls_session_secret_cb_fn) (SSL *s, void *secret,
                                          int *secret_len,
                                          STACK_OF(SSL_CIPHER) *peer_ciphers,
@@ -611,6 +629,8 @@ typedef int (*custom_ext_parse_cb) (SSL *s, unsigned int ext_type,
         SSL_ctrl((ssl),SSL_CTRL_TLS_EXT_SEND_HEARTBEAT,0,NULL)
 # endif
 
+void SSL_CTX_set_tlsext_ticket_key_list(SSL_CTX *ctx, SESS_TICKET_KEY *keys, int len);
+
 # define SSL_CTX_set_cert_flags(ctx,op) \
         SSL_CTX_ctrl((ctx),SSL_CTRL_CERT_FLAGS,(op),NULL)
 # define SSL_set_cert_flags(s,op) \
@@ -671,6 +691,28 @@ __owur int SRP_Calc_A_param(SSL *s);
 typedef int (*GEN_SESSION_CB) (const SSL *ssl, unsigned char *id,
                                unsigned int *id_len);
 
+/**
+ * sess_ticket_key is a struct representing a key to use for session ticket
+ * creation and decryption.
+ **/
+struct sess_ticket_key_st {
+    SESS_TICKET_ELEM key_name;
+    SESS_TICKET_ELEM hmac_key;
+    SESS_TICKET_ELEM aes_key;
+};
+
+/**
+ * A struct representing all currently available keys. Clients can resume
+ * sessions created using any of the keys in `all.' New tickets are created
+ * using all[0]. This allows smooth rotation of keys in order to provide
+ * forward secrecy without a jump in resumption rate at each rotation.
+ **/
+struct sess_ticket_key_set_st {
+    SESS_TICKET_KEY *all;
+    int all_len;
+    int references;
+};
+
 # define SSL_SESS_CACHE_OFF                      0x0000
 # define SSL_SESS_CACHE_CLIENT                   0x0001
 # define SSL_SESS_CACHE_SERVER                   0x0002
@@ -707,6 +749,13 @@ LHASH_OF(SSL_SESSION) *SSL_CTX_sessions(SSL_CTX *ctx);
         SSL_CTX_ctrl(ctx,SSL_CTRL_SESS_TIMEOUTS,0,NULL)
 # define SSL_CTX_sess_cache_full(ctx) \
         SSL_CTX_ctrl(ctx,SSL_CTRL_SESS_CACHE_FULL,0,NULL)
+
+# define SSL_CTX_tls_ticket_success(ctx) \
+        SSL_CTX_ctrl(ctx,SSL_CTRL_TLS_TICKET_SUCCESS,0,NULL)
+# define SSL_CTX_tls_ticket_renew(ctx) \
+        SSL_CTX_ctrl(ctx,SSL_CTRL_TLS_TICKET_RENEW,0,NULL)
+# define SSL_CTX_tls_ticket_fail(ctx) \
+        SSL_CTX_ctrl(ctx,SSL_CTRL_TLS_TICKET_FAIL,0,NULL)
 
 void SSL_CTX_sess_set_new_cb(SSL_CTX *ctx,
                              int (*new_session_cb) (struct ssl_st *ssl,
@@ -1179,6 +1228,13 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 # define DTLS_CTRL_SET_LINK_MTU                  120
 # define DTLS_CTRL_GET_LINK_MIN_MTU              121
 # define SSL_CTRL_GET_EXTMS_SUPPORT              122
+
+/* TLS stats */
+# define SSL_CTRL_TLS_TICKET_SUCCESS             122
+# define SSL_CTRL_TLS_TICKET_RENEW               123
+# define SSL_CTRL_TLS_TICKET_FAIL                124
+
+
 # define SSL_CERT_SET_FIRST                      1
 # define SSL_CERT_SET_NEXT                       2
 # define SSL_CERT_SET_SERVER                     3
@@ -2016,6 +2072,7 @@ void ERR_load_SSL_strings(void);
 # define SSL_F_SSL_CTX_SET_PURPOSE                        226
 # define SSL_F_SSL_CTX_SET_SESSION_ID_CONTEXT             219
 # define SSL_F_SSL_CTX_SET_SSL_VERSION                    170
+# define SSL_F_SSL_CTX_SET_TLSEXT_TICKET_KEY_LIST         339
 # define SSL_F_SSL_CTX_SET_TRUST                          229
 # define SSL_F_SSL_CTX_USE_CERTIFICATE                    171
 # define SSL_F_SSL_CTX_USE_CERTIFICATE_ASN1               172

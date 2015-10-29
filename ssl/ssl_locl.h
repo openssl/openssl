@@ -772,6 +772,9 @@ struct ssl_ctx_st {
                                  * indicates that the application is
                                  * supplying session-id's from other
                                  * processes - spooky :-) */
+        int tls_ticket_success; /* tls ticket session resumptions (primary key) */
+        int tls_ticket_renew;   /* tls ticket session upgrades (non-primary key) */
+        int tls_ticket_fail;    /* tls ticket session renewal failure */
     } stats;
 
     int references;
@@ -863,10 +866,10 @@ struct ssl_ctx_st {
     /* TLS extensions servername callback */
     int (*tlsext_servername_callback) (SSL *, int *, void *);
     void *tlsext_servername_arg;
-    /* RFC 4507 session ticket keys */
-    unsigned char tlsext_tick_key_name[16];
-    unsigned char tlsext_tick_hmac_key[16];
-    unsigned char tlsext_tick_aes_key[16];
+
+    /* A set of session ticket keys for RFC 5077 resumption. */
+    SESS_TICKET_KEY_LIST* ticket_key_list;
+
     /* Callback to support customisation of ticket key setting */
     int (*tlsext_ticket_key_cb) (SSL *ssl,
                                  unsigned char *name, unsigned char *iv,

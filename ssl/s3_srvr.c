@@ -3162,8 +3162,8 @@ int ssl3_send_newsession_ticket(SSL *s)
         SSL_SESSION *sess;
         unsigned int hlen;
         SSL_CTX *tctx = s->initial_ctx;
-        unsigned char iv[EVP_MAX_IV_LENGTH];
-        unsigned char key_name[16];
+        SESS_TICKET_ELEM key_name;
+        SESS_TICKET_IV iv;
 
         /* get session encoding length */
         slen_full = i2d_SSL_SESSION(s->session, NULL);
@@ -3225,22 +3225,15 @@ int ssl3_send_newsession_ticket(SSL *s)
         p = ssl_handshake_start(s);
         /*
          * Initialize HMAC and cipher contexts. If callback present it does
-         * all the work otherwise use generated values from parent ctx.
+         * all the work otherwise use default callback.
          */
         if (tctx->tlsext_ticket_key_cb) {
-            if (tctx->tlsext_ticket_key_cb(s, key_name, iv, &ctx,
+            if (tctx->tlsext_ticket_key_cb(s, key_name.elem, iv.iv, &ctx,
                                            &hctx, 1) < 0)
                 goto err;
         } else {
-            if (RAND_bytes(iv, 16) <= 0)
+            if (handle_session_tickets(s, &key_name, &iv, &ctx, &hctx, 1) <= 0)
                 goto err;
-            if (!EVP_EncryptInit_ex(&ctx, EVP_aes_128_cbc(), NULL,
-                                    tctx->tlsext_tick_aes_key, iv))
-                goto err;
-            if (!HMAC_Init_ex(&hctx, tctx->tlsext_tick_hmac_key, 16,
-                              EVP_sha256(), NULL))
-                goto err;
-            memcpy(key_name, tctx->tlsext_tick_key_name, 16);
         }
 
         /*
@@ -3254,10 +3247,10 @@ int ssl3_send_newsession_ticket(SSL *s)
         p += 2;
         /* Output key name */
         macstart = p;
-        memcpy(p, key_name, 16);
+        memcpy(p, key_name.elem, 16);
         p += 16;
         /* output IV */
-        memcpy(p, iv, EVP_CIPHER_CTX_iv_length(&ctx));
+        memcpy(p, iv.iv, EVP_CIPHER_CTX_iv_length(&ctx));
         p += EVP_CIPHER_CTX_iv_length(&ctx);
         /* Encrypt session data */
         if (!EVP_EncryptUpdate(&ctx, p, &len, senc, slen))
