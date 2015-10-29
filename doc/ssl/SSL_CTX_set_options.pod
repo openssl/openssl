@@ -141,9 +141,8 @@ This option is no longer implemented and is treated as no op.
 
 When choosing a cipher, use the server's preferences instead of the client
 preferences. When not set, the SSL server will always follow the clients
-preferences. When set, the SSLv3/TLSv1 server will choose following its
-own preferences. Because of the different protocol, for SSLv2 the server
-will send its list of preferences to the client and the client chooses.
+preferences. When set, the SSL/TLS server will choose following its
+own preferences.
 
 =item SSL_OP_PKCS1_CHECK_1
 
@@ -153,11 +152,6 @@ will send its list of preferences to the client and the client chooses.
 
 ...
 
-
-
-=item SSL_OP_NO_SSLv2
-
-Do not use the SSLv2 protocol.
 
 =item SSL_OP_NO_SSLv3
 
@@ -199,9 +193,6 @@ B<SECURE RENEGOTIATION> section for more details.
 OpenSSL always attempts to use secure renegotiation as
 described in RFC5746. This counters the prefix attack described in
 CVE-2009-3555 and elsewhere.
-
-The deprecated and highly broken SSLv2 protocol does not support
-renegotiation at all: its use is B<strongly> discouraged.
 
 This attack has far reaching consequences which application writers should be
 aware of. In the description below an implementation supporting secure

@@ -856,7 +856,7 @@ int SSL_copy_session_id(SSL *t, const SSL *f)
     }
 
     /*
-     * what if we are setup as SSLv2 but want to talk SSLv3 or vice-versa
+     * what if we are setup for one protocol version but want to talk another
      */
     if (t->method != f->method) {
         t->method->ssl_free(t); /* cleanup current */
@@ -1361,7 +1361,6 @@ int SSL_set_cipher_list(SSL *s, const char *str)
     return 1;
 }
 
-/* works well for SSLv2, not so good for SSLv3 */
 char *SSL_get_shared_ciphers(const SSL *s, char *buf, int len)
 {
     char *p;

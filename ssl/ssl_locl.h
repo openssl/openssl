@@ -555,7 +555,7 @@ struct ssl_cipher_st {
     int alg_bits;               /* Number of bits for algorithm */
 };
 
-/* Used to hold functions for SSLv2 or SSLv3/TLSv1 functions */
+/* Used to hold SSL/TLS functions */
 struct ssl_method_st {
     int version;
     int (*ssl_new) (SSL *s);
