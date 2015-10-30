@@ -258,12 +258,14 @@ IMPLEMENT_ssl3_meth_func(SSLv3_client_method,
  */
 static const SSL_METHOD *dtls1_get_method(int ver)
 {
-    if (ver == DTLS1_VERSION)
-        return (DTLSv1_method());
+    if (ver == DTLS_ANY_VERSION)
+        return DTLS_method();
+    else if (ver == DTLS1_VERSION)
+        return DTLSv1_method();
     else if (ver == DTLS1_2_VERSION)
-        return (DTLSv1_2_method());
+        return DTLSv1_2_method();
     else
-        return (NULL);
+        return NULL;
 }
 
 IMPLEMENT_dtls1_meth_func(DTLS1_VERSION,
@@ -291,12 +293,14 @@ IMPLEMENT_dtls1_meth_func(DTLS_ANY_VERSION,
 
 static const SSL_METHOD *dtls1_get_server_method(int ver)
 {
-    if (ver == DTLS1_VERSION)
-        return (DTLSv1_server_method());
+    if (ver == DTLS_ANY_VERSION)
+        return DTLS_server_method();
+    else if (ver == DTLS1_VERSION)
+        return DTLSv1_server_method();
     else if (ver == DTLS1_2_VERSION)
-        return (DTLSv1_2_server_method());
+        return DTLSv1_2_server_method();
     else
-        return (NULL);
+        return NULL;
 }
 
 IMPLEMENT_dtls1_meth_func(DTLS1_VERSION,
@@ -324,12 +328,14 @@ IMPLEMENT_dtls1_meth_func(DTLS_ANY_VERSION,
 
 static const SSL_METHOD *dtls1_get_client_method(int ver)
 {
-    if (ver == DTLS1_VERSION || ver == DTLS1_BAD_VER)
-        return (DTLSv1_client_method());
+    if (ver == DTLS_ANY_VERSION)
+        return DTLS_client_method();
+    else if (ver == DTLS1_VERSION || ver == DTLS1_BAD_VER)
+        return DTLSv1_client_method();
     else if (ver == DTLS1_2_VERSION)
-        return (DTLSv1_2_client_method());
+        return DTLSv1_2_client_method();
     else
-        return (NULL);
+        return NULL;
 }
 
 IMPLEMENT_dtls1_meth_func(DTLS1_VERSION,
