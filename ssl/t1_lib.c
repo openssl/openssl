@@ -599,7 +599,7 @@ int tls1_set_curves(unsigned char **pext, size_t *pextlen,
      */
     unsigned long dup_list = 0;
     clist = OPENSSL_malloc(ncurves * 2);
-    if (!clist)
+    if (clist == NULL)
         return 0;
     for (i = 0, p = clist; i < ncurves; i++) {
         unsigned long idmask;
@@ -1327,7 +1327,7 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *buf,
                  s->tlsext_session_ticket->data) {
             ticklen = s->tlsext_session_ticket->length;
             s->session->tlsext_tick = OPENSSL_malloc(ticklen);
-            if (!s->session->tlsext_tick)
+            if (s->session->tlsext_tick == NULL)
                 return NULL;
             memcpy(s->session->tlsext_tick,
                    s->tlsext_session_ticket->data, ticklen);
@@ -1787,7 +1787,7 @@ static int tls1_alpn_handle_client_hello(SSL *s, PACKET *pkt, int *al)
     if (r == SSL_TLSEXT_ERR_OK) {
         OPENSSL_free(s->s3->alpn_selected);
         s->s3->alpn_selected = OPENSSL_malloc(selected_len);
-        if (!s->s3->alpn_selected) {
+        if (s->s3->alpn_selected == NULL) {
             *al = SSL_AD_INTERNAL_ERROR;
             return -1;
         }
@@ -2496,7 +2496,7 @@ static int ssl_scan_serverhello_tlsext(SSL *s, PACKET *pkt, int *al)
                 return 0;
             }
             s->next_proto_negotiated = OPENSSL_malloc(selected_len);
-            if (!s->next_proto_negotiated) {
+            if (s->next_proto_negotiated == NULL) {
                 *al = TLS1_AD_INTERNAL_ERROR;
                 return 0;
             }
@@ -2528,7 +2528,7 @@ static int ssl_scan_serverhello_tlsext(SSL *s, PACKET *pkt, int *al)
             }
             OPENSSL_free(s->s3->alpn_selected);
             s->s3->alpn_selected = OPENSSL_malloc(len);
-            if (!s->s3->alpn_selected) {
+            if (s->s3->alpn_selected == NULL) {
                 *al = TLS1_AD_INTERNAL_ERROR;
                 return 0;
             }
@@ -3104,7 +3104,7 @@ static int tls_decrypt_ticket(SSL *s, const unsigned char *etick,
     p = etick + 16 + EVP_CIPHER_CTX_iv_length(&ctx);
     eticklen -= 16 + EVP_CIPHER_CTX_iv_length(&ctx);
     sdec = OPENSSL_malloc(eticklen);
-    if (!sdec) {
+    if (sdec == NULL) {
         EVP_CIPHER_CTX_cleanup(&ctx);
         return -1;
     }
@@ -3430,7 +3430,7 @@ static int tls1_set_shared_sigalgs(SSL *s)
     nmatch = tls12_shared_sigalgs(s, NULL, pref, preflen, allow, allowlen);
     if (nmatch) {
         salgs = OPENSSL_malloc(nmatch * sizeof(TLS_SIGALGS));
-        if (!salgs)
+        if (salgs == NULL)
             return 0;
         nmatch = tls12_shared_sigalgs(s, salgs, pref, preflen, allow, allowlen);
     } else {
@@ -4179,16 +4179,16 @@ DH *ssl_get_auto_dh(SSL *s)
 
     if (dh_secbits >= 128) {
         DH *dhp = DH_new();
-        if (!dhp)
+        if (dhp == NULL)
             return NULL;
         dhp->g = BN_new();
-        if (dhp->g)
+        if (dhp->g != NULL)
             BN_set_word(dhp->g, 2);
         if (dh_secbits >= 192)
             dhp->p = get_rfc3526_prime_8192(NULL);
         else
             dhp->p = get_rfc3526_prime_3072(NULL);
-        if (!dhp->p || !dhp->g) {
+        if (dhp->p == NULL || dhp->g == NULL) {
             DH_free(dhp);
             return NULL;
         }
