@@ -189,7 +189,7 @@ int spkac_main(int argc, char **argv)
 
     spkstr = NCONF_get_string(conf, spksect, spkac);
 
-    if (!spkstr) {
+    if (spkstr == NULL) {
         BIO_printf(bio_err, "Can't find SPKAC called \"%s\"\n", spkac);
         ERR_print_errors(bio_err);
         goto end;
