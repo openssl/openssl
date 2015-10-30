@@ -3685,12 +3685,6 @@ int tls1_heartbeat(SSL *s)
         return -1;
     }
 
-    /*
-     * Check if padding is too long, payload and padding must not exceed 2^14
-     * - 3 = 16381 bytes in total.
-     */
-    OPENSSL_assert(payload + padding <= 16381);
-
     /*-
      * Create HeartBeat message, we just use a sequence number
      * as payload to distuingish different messages and add
