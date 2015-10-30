@@ -646,7 +646,7 @@ int load_cert_crl_http(const char *url, X509 **pcert, X509_CRL **pcrl)
     if (!bio || !BIO_set_conn_port(bio, port))
         goto err;
     rctx = OCSP_REQ_CTX_new(bio, 1024);
-    if (!rctx)
+    if (rctx == NULL)
         goto err;
     if (!OCSP_REQ_CTX_http(rctx, "GET", path))
         goto err;
@@ -856,7 +856,7 @@ EVP_PKEY *load_pubkey(const char *file, int format, int maybe_stdin,
         rsa = d2i_RSAPublicKey_bio(key, NULL);
         if (rsa) {
             pkey = EVP_PKEY_new();
-            if (pkey)
+            if (pkey != NULL)
                 EVP_PKEY_set1_RSA(pkey, rsa);
             RSA_free(rsa);
         } else
@@ -866,9 +866,9 @@ EVP_PKEY *load_pubkey(const char *file, int format, int maybe_stdin,
         rsa = PEM_read_bio_RSAPublicKey(key, NULL,
                                         (pem_password_cb *)password_callback,
                                         &cb_data);
-        if (rsa) {
+        if (rsa != NULL) {
             pkey = EVP_PKEY_new();
-            if (pkey)
+            if (pkey != NULL)
                 EVP_PKEY_set1_RSA(pkey, rsa);
             RSA_free(rsa);
         } else
@@ -1252,7 +1252,7 @@ X509_STORE *setup_verify(char *CAfile, char *CApath, int noCAfile, int noCApath)
     X509_STORE *store = X509_STORE_new();
     X509_LOOKUP *lookup;
 
-    if (!store)
+    if (store == NULL)
         goto end;
 
     if(CAfile != NULL || !noCAfile) {
@@ -1541,7 +1541,7 @@ int rand_serial(BIGNUM *b, ASN1_INTEGER *ai)
     else
         btmp = BN_new();
 
-    if (!btmp)
+    if (btmp == NULL)
         return 0;
 
     if (!BN_pseudo_rand(btmp, SERIAL_RAND_BITS, 0, 0))
@@ -1901,7 +1901,7 @@ int bio_to_mem(unsigned char **out, int maxlen, BIO *in)
     int len, ret;
     unsigned char tbuf[1024];
     mem = BIO_new(BIO_s_mem());
-    if (!mem)
+    if (mem == NULL)
         return -1;
     for (;;) {
         if ((maxlen != -1) && maxlen < 1024)

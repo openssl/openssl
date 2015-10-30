@@ -1442,7 +1442,7 @@ static EVP_PKEY_CTX *set_keygen_ctx(const char *gstr,
     } else
         gctx = EVP_PKEY_CTX_new_id(*pkey_type, keygen_engine);
 
-    if (!gctx) {
+    if (gctx == NULL) {
         BIO_puts(bio_err, "Error allocating keygen context\n");
         ERR_print_errors(bio_err);
         return NULL;

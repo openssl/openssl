@@ -251,7 +251,7 @@ int dhparam_main(int argc, char **argv)
 
         BN_GENCB *cb;
         cb = BN_GENCB_new();
-        if (!cb) {
+        if (cb == NULL) {
             ERR_print_errors(bio_err);
             goto end;
         }
@@ -271,7 +271,7 @@ int dhparam_main(int argc, char **argv)
 
             BIO_printf(bio_err,
                        "Generating DSA parameters, %d bit long prime\n", num);
-            if (!dsa
+            if (dsa == NULL
                 || !DSA_generate_parameters_ex(dsa, num, NULL, 0, NULL, NULL,
                                                cb)) {
                 DSA_free(dsa);
@@ -295,7 +295,7 @@ int dhparam_main(int argc, char **argv)
                        "Generating DH parameters, %d bit long safe prime, generator %d\n",
                        num, g);
             BIO_printf(bio_err, "This is going to take a long time\n");
-            if (!dh || !DH_generate_parameters_ex(dh, num, g, cb)) {
+            if (dh == NULL || !DH_generate_parameters_ex(dh, num, g, cb)) {
                 BN_GENCB_free(cb);
                 ERR_print_errors(bio_err);
                 goto end;

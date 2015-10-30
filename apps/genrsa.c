@@ -114,7 +114,7 @@ int genrsa_main(int argc, char **argv)
     char *inrand = NULL, *prog, *hexe, *dece;
     OPTION_CHOICE o;
 
-    if (!bn || !cb)
+    if (bn == NULL || cb == NULL)
         goto end;
 
     BN_GENCB_set(cb, genrsa_cb, bio_err);
@@ -185,7 +185,7 @@ int genrsa_main(int argc, char **argv)
     BIO_printf(bio_err, "Generating RSA private key, %d bit long modulus\n",
                num);
     rsa = e ? RSA_new_method(e) : RSA_new();
-    if (!rsa)
+    if (rsa == NULL)
         goto end;
 
     if (non_fips_allow)
