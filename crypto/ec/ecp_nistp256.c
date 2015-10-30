@@ -1817,7 +1817,7 @@ static NISTP256_PRE_COMP *nistp256_pre_comp_new()
 {
     NISTP256_PRE_COMP *ret = NULL;
     ret = OPENSSL_malloc(sizeof(*ret));
-    if (!ret) {
+    if (ret == NULL) {
         ECerr(EC_F_NISTP256_PRE_COMP_NEW, ERR_R_MALLOC_FAILURE);
         return ret;
     }

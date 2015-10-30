@@ -433,7 +433,7 @@ static char *win32_joiner(DSO *dso, const struct file_st *file_split)
     }
 
     result = OPENSSL_malloc(len + 1);
-    if (!result) {
+    if (result == NULL) {
         DSOerr(DSO_F_WIN32_JOINER, ERR_R_MALLOC_FAILURE);
         return (NULL);
     }
@@ -499,14 +499,14 @@ static char *win32_merger(DSO *dso, const char *filespec1,
     }
     if (!filespec2) {
         merged = OPENSSL_malloc(strlen(filespec1) + 1);
-        if (!merged) {
+        if (merged == NULL) {
             DSOerr(DSO_F_WIN32_MERGER, ERR_R_MALLOC_FAILURE);
             return (NULL);
         }
         strcpy(merged, filespec1);
     } else if (!filespec1) {
         merged = OPENSSL_malloc(strlen(filespec2) + 1);
-        if (!merged) {
+        if (merged == NULL) {
             DSOerr(DSO_F_WIN32_MERGER, ERR_R_MALLOC_FAILURE);
             return (NULL);
         }

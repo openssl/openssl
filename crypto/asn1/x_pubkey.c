@@ -246,7 +246,7 @@ int i2d_RSA_PUBKEY(RSA *a, unsigned char **pp)
     if (!a)
         return 0;
     pktmp = EVP_PKEY_new();
-    if (!pktmp) {
+    if (pktmp == NULL) {
         ASN1err(ASN1_F_I2D_RSA_PUBKEY, ERR_R_MALLOC_FAILURE);
         return 0;
     }
@@ -286,7 +286,7 @@ int i2d_DSA_PUBKEY(DSA *a, unsigned char **pp)
     if (!a)
         return 0;
     pktmp = EVP_PKEY_new();
-    if (!pktmp) {
+    if (pktmp == NULL) {
         ASN1err(ASN1_F_I2D_DSA_PUBKEY, ERR_R_MALLOC_FAILURE);
         return 0;
     }

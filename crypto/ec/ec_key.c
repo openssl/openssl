@@ -352,12 +352,12 @@ int EC_KEY_set_public_key_affine_coordinates(EC_KEY *key, BIGNUM *x,
         return 0;
     }
     ctx = BN_CTX_new();
-    if (!ctx)
+    if (ctx == NULL)
         goto err;
 
     point = EC_POINT_new(key->group);
 
-    if (!point)
+    if (point == NULL)
         goto err;
 
     tx = BN_CTX_get(ctx);

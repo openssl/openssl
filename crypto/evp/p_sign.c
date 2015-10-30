@@ -90,7 +90,7 @@ int EVP_SignFinal(EVP_MD_CTX *ctx, unsigned char *sigret,
         size_t sltmp = (size_t)EVP_PKEY_size(pkey);
         i = 0;
         pkctx = EVP_PKEY_CTX_new(pkey, NULL);
-        if (!pkctx)
+        if (pkctx == NULL)
             goto err;
         if (EVP_PKEY_sign_init(pkctx) <= 0)
             goto err;

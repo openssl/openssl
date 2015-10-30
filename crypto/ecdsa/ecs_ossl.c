@@ -120,7 +120,7 @@ static int ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in,
     r = BN_new();               /* this value is later returned in *rp */
     order = BN_new();
     X = BN_new();
-    if (!k || !r || !order || !X) {
+    if (k == NULL || r == NULL || order == NULL || X == NULL) {
         ECDSAerr(ECDSA_F_ECDSA_SIGN_SETUP, ERR_R_MALLOC_FAILURE);
         goto err;
     }
@@ -265,7 +265,7 @@ static ECDSA_SIG *ecdsa_do_sign(const unsigned char *dgst, int dgst_len,
     }
 
     ret = ECDSA_SIG_new();
-    if (!ret) {
+    if (ret == NULL) {
         ECDSAerr(ECDSA_F_ECDSA_DO_SIGN, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
@@ -371,7 +371,7 @@ static int ecdsa_do_verify(const unsigned char *dgst, int dgst_len,
     }
 
     ctx = BN_CTX_new();
-    if (!ctx) {
+    if (ctx == NULL) {
         ECDSAerr(ECDSA_F_ECDSA_DO_VERIFY, ERR_R_MALLOC_FAILURE);
         return -1;
     }

@@ -163,10 +163,10 @@ X509_VERIFY_PARAM *X509_VERIFY_PARAM_new(void)
     X509_VERIFY_PARAM_ID *paramid;
 
     param = OPENSSL_zalloc(sizeof(*param));
-    if (!param)
+    if (param == NULL)
         return NULL;
     param->id = paramid = OPENSSL_zalloc(sizeof(*paramid));
-    if (!paramid) {
+    if (paramid == NULL) {
         OPENSSL_free(param);
         return NULL;
     }
@@ -580,9 +580,9 @@ int X509_VERIFY_PARAM_add0_table(X509_VERIFY_PARAM *param)
 {
     int idx;
     X509_VERIFY_PARAM *ptmp;
-    if (!param_table) {
+    if (param_table == NULL) {
         param_table = sk_X509_VERIFY_PARAM_new(param_cmp);
-        if (!param_table)
+        if (param_table == NULL)
             return 0;
     } else {
         idx = sk_X509_VERIFY_PARAM_find(param_table, param);

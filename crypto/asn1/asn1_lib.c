@@ -296,7 +296,7 @@ ASN1_STRING *ASN1_STRING_dup(const ASN1_STRING *str)
     if (!str)
         return NULL;
     ret = ASN1_STRING_new();
-    if (!ret)
+    if (ret == NULL)
         return NULL;
     if (!ASN1_STRING_copy(ret, str)) {
         ASN1_STRING_free(ret);

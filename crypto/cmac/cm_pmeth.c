@@ -64,7 +64,7 @@
 static int pkey_cmac_init(EVP_PKEY_CTX *ctx)
 {
     ctx->data = CMAC_CTX_new();
-    if (!ctx->data)
+    if (ctx->data == NULL)
         return 0;
     ctx->keygen_info_count = 0;
     return 1;
@@ -88,7 +88,7 @@ static int pkey_cmac_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
 {
     CMAC_CTX *cmkey = CMAC_CTX_new();
     CMAC_CTX *cmctx = ctx->data;
-    if (!cmkey)
+    if (cmkey == NULL)
         return 0;
     if (!CMAC_CTX_copy(cmkey, cmctx)) {
         CMAC_CTX_free(cmkey);

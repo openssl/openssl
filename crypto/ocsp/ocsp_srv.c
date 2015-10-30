@@ -184,11 +184,13 @@ OCSP_SINGLERESP *OCSP_basic_add1_status(OCSP_BASICRESP *rsp,
         break;
 
     case V_OCSP_CERTSTATUS_GOOD:
-        cs->value.good = ASN1_NULL_new();
+        if ((cs->value.good = ASN1_NULL_new()) == NULL)
+            goto err;
         break;
 
     case V_OCSP_CERTSTATUS_UNKNOWN:
-        cs->value.unknown = ASN1_NULL_new();
+        if ((cs->value.unknown = ASN1_NULL_new()) == NULL)
+            goto err;
         break;
 
     default:

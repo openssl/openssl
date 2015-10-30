@@ -128,7 +128,7 @@ static int set_dist_point_name(DIST_POINT_NAME **pdp, X509V3_CTX *ctx,
         STACK_OF(CONF_VALUE) *dnsect;
         X509_NAME *nm;
         nm = X509_NAME_new();
-        if (!nm)
+        if (nm == NULL)
             return -1;
         dnsect = X509V3_get_section(ctx, cnf->value);
         if (!dnsect) {
@@ -162,7 +162,7 @@ static int set_dist_point_name(DIST_POINT_NAME **pdp, X509V3_CTX *ctx,
     }
 
     *pdp = DIST_POINT_NAME_new();
-    if (!*pdp)
+    if (*pdp == NULL)
         goto err;
     if (fnm) {
         (*pdp)->type = 0;
@@ -206,9 +206,9 @@ static int set_reasons(ASN1_BIT_STRING **preas, char *value)
         return 0;
     for (i = 0; i < sk_CONF_VALUE_num(rsk); i++) {
         bnam = sk_CONF_VALUE_value(rsk, i)->name;
-        if (!*preas) {
+        if (*preas == NULL) {
             *preas = ASN1_BIT_STRING_new();
-            if (!*preas)
+            if (*preas == NULL)
                 goto err;
         }
         for (pbn = reason_flags; pbn->lname; pbn++) {
@@ -257,7 +257,7 @@ static DIST_POINT *crldp_from_section(X509V3_CTX *ctx,
     CONF_VALUE *cnf;
     DIST_POINT *point = NULL;
     point = DIST_POINT_new();
-    if (!point)
+    if (point == NULL)
         goto err;
     for (i = 0; i < sk_CONF_VALUE_num(nval); i++) {
         int ret;
@@ -418,7 +418,7 @@ static void *v2i_idp(const X509V3_EXT_METHOD *method, X509V3_CTX *ctx,
     char *name, *val;
     int i, ret;
     idp = ISSUING_DIST_POINT_new();
-    if (!idp)
+    if (idp == NULL)
         goto merr;
     for (i = 0; i < sk_CONF_VALUE_num(nval); i++) {
         cnf = sk_CONF_VALUE_value(nval, i);

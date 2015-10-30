@@ -92,7 +92,7 @@ CMAC_CTX *CMAC_CTX_new(void)
     CMAC_CTX *ctx;
 
     ctx = OPENSSL_malloc(sizeof(*ctx));
-    if (!ctx)
+    if (ctx == NULL)
         return NULL;
     EVP_CIPHER_CTX_init(&ctx->cctx);
     ctx->nlast_block = -1;

@@ -224,7 +224,7 @@ int EVP_PKEY_asn1_add0(const EVP_PKEY_ASN1_METHOD *ameth)
 {
     if (app_methods == NULL) {
         app_methods = sk_EVP_PKEY_ASN1_METHOD_new(ameth_cmp);
-        if (!app_methods)
+        if (app_methods == NULL)
             return 0;
     }
     if (!sk_EVP_PKEY_ASN1_METHOD_push(app_methods, ameth))
@@ -237,7 +237,7 @@ int EVP_PKEY_asn1_add_alias(int to, int from)
 {
     EVP_PKEY_ASN1_METHOD *ameth;
     ameth = EVP_PKEY_asn1_new(from, ASN1_PKEY_ALIAS, NULL, NULL);
-    if (!ameth)
+    if (ameth == NULL)
         return 0;
     ameth->pkey_base_id = to;
     if (!EVP_PKEY_asn1_add0(ameth)) {
@@ -277,7 +277,7 @@ EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_new(int id, int flags,
 {
     EVP_PKEY_ASN1_METHOD *ameth = OPENSSL_zalloc(sizeof(*ameth));
 
-    if (!ameth)
+    if (ameth == NULL)
         return NULL;
 
     ameth->pkey_id = id;
