@@ -67,13 +67,13 @@ X509_PKEY *X509_PKEY_new(void)
     X509_PKEY *ret = NULL;
 
     ret = OPENSSL_zalloc(sizeof(*ret));
-    if (!ret)
+    if (ret == NULL)
         goto err;
 
     ret->references = 1;
     ret->enc_algor = X509_ALGOR_new();
     ret->enc_pkey = ASN1_OCTET_STRING_new();
-    if (!ret->enc_algor || !ret->enc_pkey)
+    if (ret->enc_algor == NULL || ret->enc_pkey == NULL)
         goto err;
 
     return ret;

@@ -163,7 +163,7 @@ static int int_cleanup_check(int create)
 static ENGINE_CLEANUP_ITEM *int_cleanup_item(ENGINE_CLEANUP_CB *cb)
 {
     ENGINE_CLEANUP_ITEM *item = OPENSSL_malloc(sizeof(*item));
-    if (!item)
+    if (item == NULL)
         return NULL;
     item->cb = cb;
     return item;

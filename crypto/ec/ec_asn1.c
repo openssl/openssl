@@ -383,7 +383,7 @@ static int ec_asn1_group2fieldid(const EC_GROUP *group, X9_62_FIELDID *field)
                 goto err;
 
             char_two->p.tpBasis = ASN1_INTEGER_new();
-            if (!char_two->p.tpBasis) {
+            if (char_two->p.tpBasis == NULL) {
                 ECerr(EC_F_EC_ASN1_GROUP2FIELDID, ERR_R_MALLOC_FAILURE);
                 goto err;
             }
@@ -398,7 +398,7 @@ static int ec_asn1_group2fieldid(const EC_GROUP *group, X9_62_FIELDID *field)
                 goto err;
 
             char_two->p.ppBasis = X9_62_PENTANOMIAL_new();
-            if (!char_two->p.ppBasis) {
+            if (char_two->p.ppBasis == NULL) {
                 ECerr(EC_F_EC_ASN1_GROUP2FIELDID, ERR_R_MALLOC_FAILURE);
                 goto err;
             }
@@ -411,7 +411,7 @@ static int ec_asn1_group2fieldid(const EC_GROUP *group, X9_62_FIELDID *field)
 
             /* for ONB the parameters are (asn1) NULL */
             char_two->p.onBasis = ASN1_NULL_new();
-            if (!char_two->p.onBasis) {
+            if (char_two->p.onBasis == NULL) {
                 ECerr(EC_F_EC_ASN1_GROUP2FIELDID, ERR_R_MALLOC_FAILURE);
                 goto err;
             }
@@ -1028,6 +1028,10 @@ EC_KEY *d2i_ECPrivateKey(EC_KEY **a, const unsigned char **in, long len)
     if (priv_key->privateKey) {
         if (ret->priv_key == NULL)
             ret->priv_key = BN_secure_new();
+        if (ret->priv_key == NULL) {
+            ECerr(EC_F_D2I_ECPRIVATEKEY, ERR_R_MALLOC_FAILURE);
+            goto err;
+        }
         ret->priv_key = BN_bin2bn(ASN1_STRING_data(priv_key->privateKey),
                                   ASN1_STRING_length(priv_key->privateKey),
                                   ret->priv_key);

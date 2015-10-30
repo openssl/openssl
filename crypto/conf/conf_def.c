@@ -129,7 +129,7 @@ static CONF *def_create(CONF_METHOD *meth)
     CONF *ret;
 
     ret = OPENSSL_malloc(sizeof(*ret));
-    if (ret)
+    if (ret != NULL)
         if (meth->init(ret) == 0) {
             OPENSSL_free(ret);
             ret = NULL;

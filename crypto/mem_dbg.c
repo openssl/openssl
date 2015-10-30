@@ -792,7 +792,7 @@ void CRYPTO_mem_leaks_fp(FILE *fp)
     MemCheck_off();
     b = BIO_new(BIO_s_file());
     MemCheck_on();
-    if (!b)
+    if (b == NULL)
         return;
     BIO_set_fp(b, fp, BIO_NOCLOSE);
     CRYPTO_mem_leaks(b);

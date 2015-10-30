@@ -198,7 +198,7 @@ int CRYPTO_get_ex_new_index(int class_index, long argl, void *argp,
     if (!ip)
         return -1;
     a = (CRYPTO_EX_DATA_FUNCS *)OPENSSL_malloc(sizeof(*a));
-    if (!a) {
+    if (a == NULL) {
         CRYPTOerr(CRYPTO_F_CRYPTO_GET_EX_NEW_INDEX, ERR_R_MALLOC_FAILURE);
         goto err;
     }
@@ -247,7 +247,7 @@ int CRYPTO_new_ex_data(int class_index, void *obj, CRYPTO_EX_DATA *ad)
             storage = stack;
         else
             storage = OPENSSL_malloc(sizeof(*storage) * mx);
-        if (storage)
+        if (storage != NULL)
             for (i = 0; i < mx; i++)
                 storage[i] = sk_CRYPTO_EX_DATA_FUNCS_value(ip->meth, i);
     }
@@ -297,7 +297,7 @@ int CRYPTO_dup_ex_data(int class_index, CRYPTO_EX_DATA *to,
             storage = stack;
         else
             storage = OPENSSL_malloc(sizeof(*storage) * mx);
-        if (storage)
+        if (storage != NULL)
             for (i = 0; i < mx; i++)
                 storage[i] = sk_CRYPTO_EX_DATA_FUNCS_value(ip->meth, i);
     }
@@ -342,7 +342,7 @@ void CRYPTO_free_ex_data(int class_index, void *obj, CRYPTO_EX_DATA *ad)
             storage = stack;
         else
             storage = OPENSSL_malloc(sizeof(*storage) * mx);
-        if (storage)
+        if (storage != NULL)
             for (i = 0; i < mx; i++)
                 storage[i] = sk_CRYPTO_EX_DATA_FUNCS_value(ip->meth, i);
     }

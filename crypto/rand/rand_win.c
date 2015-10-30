@@ -712,7 +712,7 @@ static void readscreen(void)
     bi.biClrImportant = 0;
 
     bmbits = OPENSSL_malloc(size);
-    if (bmbits) {
+    if (bmbits != NULL) {
         /* Now go through the whole screen, repeatedly grabbing n lines */
         for (y = 0; y < h - n; y += n) {
             unsigned char md[MD_DIGEST_LENGTH];

@@ -176,11 +176,15 @@ ASN1_INTEGER *s2i_ASN1_INTEGER(X509V3_EXT_METHOD *method, char *value)
     ASN1_INTEGER *aint;
     int isneg, ishex;
     int ret;
-    if (!value) {
+    if (value == NULL) {
         X509V3err(X509V3_F_S2I_ASN1_INTEGER, X509V3_R_INVALID_NULL_VALUE);
-        return 0;
+        return NULL;
     }
     bn = BN_new();
+    if (bn == NULL) {
+        X509V3err(X509V3_F_S2I_ASN1_INTEGER, ERR_R_MALLOC_FAILURE);
+        return NULL;
+    }
     if (value[0] == '-') {
         value++;
         isneg = 1;
@@ -201,7 +205,7 @@ ASN1_INTEGER *s2i_ASN1_INTEGER(X509V3_EXT_METHOD *method, char *value)
     if (!ret || value[ret]) {
         BN_free(bn);
         X509V3err(X509V3_F_S2I_ASN1_INTEGER, X509V3_R_BN_DEC2BN_ERROR);
-        return 0;
+        return NULL;
     }
 
     if (isneg && BN_is_zero(bn))
@@ -212,7 +216,7 @@ ASN1_INTEGER *s2i_ASN1_INTEGER(X509V3_EXT_METHOD *method, char *value)
     if (!aint) {
         X509V3err(X509V3_F_S2I_ASN1_INTEGER,
                   X509V3_R_BN_TO_ASN1_INTEGER_ERROR);
-        return 0;
+        return NULL;
     }
     if (isneg)
         aint->type |= V_ASN1_NEG;
@@ -606,15 +610,15 @@ static int append_ia5(STACK_OF(OPENSSL_STRING) **sk, ASN1_IA5STRING *email)
         return 1;
     if (!email->data || !email->length)
         return 1;
-    if (!*sk)
+    if (*sk == NULL)
         *sk = sk_OPENSSL_STRING_new(sk_strcmp);
-    if (!*sk)
+    if (*sk == NULL)
         return 0;
     /* Don't add duplicates */
     if (sk_OPENSSL_STRING_find(*sk, (char *)email->data) != -1)
         return 1;
     emtmp = BUF_strdup((char *)email->data);
-    if (!emtmp || !sk_OPENSSL_STRING_push(*sk, emtmp)) {
+    if (emtmp == NULL || !sk_OPENSSL_STRING_push(*sk, emtmp)) {
         X509_email_free(*sk);
         *sk = NULL;
         return 0;
@@ -1077,7 +1081,7 @@ ASN1_OCTET_STRING *a2i_IPADDRESS(const char *ipasc)
         return NULL;
 
     ret = ASN1_OCTET_STRING_new();
-    if (!ret)
+    if (ret == NULL)
         return NULL;
     if (!ASN1_OCTET_STRING_set(ret, ipout, iplen)) {
         ASN1_OCTET_STRING_free(ret);
@@ -1115,7 +1119,7 @@ ASN1_OCTET_STRING *a2i_IPADDRESS_NC(const char *ipasc)
         goto err;
 
     ret = ASN1_OCTET_STRING_new();
-    if (!ret)
+    if (ret == NULL)
         goto err;
     if (!ASN1_OCTET_STRING_set(ret, ipout, iplen1 + iplen2))
         goto err;

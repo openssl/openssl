@@ -149,7 +149,7 @@ static int B64_write_ASN1(BIO *out, ASN1_VALUE *val, BIO *in, int flags,
     BIO *b64;
     int r;
     b64 = BIO_new(BIO_f_base64());
-    if (!b64) {
+    if (b64 == NULL) {
         ASN1err(ASN1_F_B64_WRITE_ASN1, ERR_R_MALLOC_FAILURE);
         return 0;
     }
@@ -533,7 +533,7 @@ int SMIME_crlf_copy(BIO *in, BIO *out, int flags)
      * when streaming as we don't end up with one OCTET STRING per line.
      */
     bf = BIO_new(BIO_f_buffer());
-    if (!bf)
+    if (bf == NULL)
         return 0;
     out = BIO_push(bf, out);
     if (flags & SMIME_BINARY) {
@@ -678,7 +678,7 @@ static STACK_OF(MIME_HEADER) *mime_parse_hdr(BIO *bio)
     int len, state, save_state = 0;
 
     headers = sk_MIME_HEADER_new(mime_hdr_cmp);
-    if (!headers)
+    if (headers == NULL)
         return NULL;
     while ((len = BIO_gets(bio, linebuf, MAX_SMLEN)) > 0) {
         /* If whitespace at line start then continuation line */
@@ -850,7 +850,7 @@ static MIME_HEADER *mime_hdr_new(char *name, char *value)
         }
     }
     mhdr = OPENSSL_malloc(sizeof(*mhdr));
-    if (!mhdr)
+    if (mhdr == NULL)
         goto err;
     mhdr->name = tmpname;
     mhdr->value = tmpval;
@@ -889,7 +889,7 @@ static int mime_hdr_addparam(MIME_HEADER *mhdr, char *name, char *value)
     }
     /* Parameter values are case sensitive so leave as is */
     mparam = OPENSSL_malloc(sizeof(*mparam));
-    if (!mparam)
+    if (mparam == NULL)
         goto err;
     mparam->param_name = tmpname;
     mparam->param_value = tmpval;

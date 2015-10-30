@@ -82,7 +82,7 @@ BIO *cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec)
     enc = ec->cipher ? 1 : 0;
 
     b = BIO_new(BIO_f_cipher());
-    if (!b) {
+    if (b == NULL) {
         CMSerr(CMS_F_CMS_ENCRYPTEDCONTENT_INIT_BIO, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
@@ -130,7 +130,7 @@ BIO *cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec)
     /* Generate random session key */
     if (!enc || !ec->key) {
         tkey = OPENSSL_malloc(tkeylen);
-        if (!tkey) {
+        if (tkey == NULL) {
             CMSerr(CMS_F_CMS_ENCRYPTEDCONTENT_INIT_BIO, ERR_R_MALLOC_FAILURE);
             goto err;
         }
@@ -179,7 +179,7 @@ BIO *cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec)
 
     if (piv) {
         calg->parameter = ASN1_TYPE_new();
-        if (!calg->parameter) {
+        if (calg->parameter == NULL) {
             CMSerr(CMS_F_CMS_ENCRYPTEDCONTENT_INIT_BIO, ERR_R_MALLOC_FAILURE);
             goto err;
         }
@@ -210,7 +210,7 @@ int cms_EncryptedContent_init(CMS_EncryptedContentInfo *ec,
     ec->cipher = cipher;
     if (key) {
         ec->key = OPENSSL_malloc(keylen);
-        if (!ec->key)
+        if (ec->key == NULL)
             return 0;
         memcpy(ec->key, key, keylen);
     }

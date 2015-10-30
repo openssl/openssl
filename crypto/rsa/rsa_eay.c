@@ -184,7 +184,7 @@ static int RSA_eay_public_encrypt(int flen, const unsigned char *from,
     ret = BN_CTX_get(ctx);
     num = BN_num_bytes(rsa->n);
     buf = OPENSSL_malloc(num);
-    if (!f || !ret || !buf) {
+    if (f == NULL || ret == NULL || buf == NULL) {
         RSAerr(RSA_F_RSA_EAY_PUBLIC_ENCRYPT, ERR_R_MALLOC_FAILURE);
         goto err;
     }
@@ -361,7 +361,7 @@ static int RSA_eay_private_encrypt(int flen, const unsigned char *from,
     ret = BN_CTX_get(ctx);
     num = BN_num_bytes(rsa->n);
     buf = OPENSSL_malloc(num);
-    if (!f || !ret || !buf) {
+    if (f == NULL || ret == NULL || buf == NULL) {
         RSAerr(RSA_F_RSA_EAY_PRIVATE_ENCRYPT, ERR_R_MALLOC_FAILURE);
         goto err;
     }
@@ -422,7 +422,7 @@ static int RSA_eay_private_encrypt(int flen, const unsigned char *from,
 
         if (!(rsa->flags & RSA_FLAG_NO_CONSTTIME)) {
             local_d = d = BN_new();
-            if (!d) {
+            if (d == NULL) {
                 RSAerr(RSA_F_RSA_EAY_PRIVATE_ENCRYPT, ERR_R_MALLOC_FAILURE);
                 goto err;
             }
@@ -500,7 +500,7 @@ static int RSA_eay_private_decrypt(int flen, const unsigned char *from,
     ret = BN_CTX_get(ctx);
     num = BN_num_bytes(rsa->n);
     buf = OPENSSL_malloc(num);
-    if (!f || !ret || !buf) {
+    if (f == NULL || ret == NULL || buf == NULL) {
         RSAerr(RSA_F_RSA_EAY_PRIVATE_DECRYPT, ERR_R_MALLOC_FAILURE);
         goto err;
     }
@@ -554,7 +554,7 @@ static int RSA_eay_private_decrypt(int flen, const unsigned char *from,
 
         if (!(rsa->flags & RSA_FLAG_NO_CONSTTIME)) {
             local_d = d = BN_new();
-            if (!d) {
+            if (d == NULL) {
                 RSAerr(RSA_F_RSA_EAY_PRIVATE_DECRYPT, ERR_R_MALLOC_FAILURE);
                 goto err;
             }
@@ -646,7 +646,7 @@ static int RSA_eay_public_decrypt(int flen, const unsigned char *from,
     ret = BN_CTX_get(ctx);
     num = BN_num_bytes(rsa->n);
     buf = OPENSSL_malloc(num);
-    if (!f || !ret || !buf) {
+    if (f == NULL || ret == NULL || buf == NULL) {
         RSAerr(RSA_F_RSA_EAY_PUBLIC_DECRYPT, ERR_R_MALLOC_FAILURE);
         goto err;
     }
@@ -723,7 +723,8 @@ static int RSA_eay_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
     local_dmq1 = BN_new();
     local_c = BN_new();
     local_r1 = BN_new();
-    if (!local_dmp1 || !local_dmq1 || !local_c || !local_r1)
+    if (local_dmp1 == NULL
+            || local_dmq1 == NULL || local_c == NULL || local_r1 == NULL)
         goto err;
 
     r1 = BN_CTX_get(ctx);
@@ -740,12 +741,12 @@ static int RSA_eay_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
          */
         if (!(rsa->flags & RSA_FLAG_NO_CONSTTIME)) {
             local_p = p = BN_new();
-            if (!p)
+            if (p == NULL)
                 goto err;
             BN_with_flags(p, rsa->p, BN_FLG_CONSTTIME);
 
             local_q = q = BN_new();
-            if (!q) {
+            if (q == NULL) {
                 BN_free(local_p);
                 goto err;
             }
@@ -880,7 +881,7 @@ static int RSA_eay_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
 
             if (!(rsa->flags & RSA_FLAG_NO_CONSTTIME)) {
                 local_d = d = BN_new();
-                if (!d)
+                if (d == NULL)
                     goto err;
                 BN_with_flags(d, rsa->d, BN_FLG_CONSTTIME);
             } else

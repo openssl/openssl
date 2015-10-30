@@ -83,7 +83,7 @@ int UI_UTIL_read_pw(char *buf, char *buff, int size, const char *prompt,
         return -1;
 
     ui = UI_new();
-    if (ui) {
+    if (ui != NULL) {
         ok = UI_add_input_string(ui, prompt, 0, buf, 0, size - 1);
         if (ok >= 0 && verify)
             ok = UI_add_verify_string(ui, prompt, 0, buff, 0, size - 1, buf);

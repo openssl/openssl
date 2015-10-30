@@ -204,12 +204,12 @@ static int dynamic_set_data_ctx(ENGINE *e, dynamic_data_ctx **ctx)
 {
     dynamic_data_ctx *c = OPENSSL_zalloc(sizeof(*c));
 
-    if (!c) {
+    if (c == NULL) {
         ENGINEerr(ENGINE_F_DYNAMIC_SET_DATA_CTX, ERR_R_MALLOC_FAILURE);
         return 0;
     }
     c->dirs = sk_OPENSSL_STRING_new_null();
-    if (!c->dirs) {
+    if (c->dirs == NULL) {
         ENGINEerr(ENGINE_F_DYNAMIC_SET_DATA_CTX, ERR_R_MALLOC_FAILURE);
         OPENSSL_free(c);
         return 0;
@@ -278,7 +278,7 @@ static dynamic_data_ctx *dynamic_get_data_ctx(ENGINE *e)
 static ENGINE *engine_dynamic(void)
 {
     ENGINE *ret = ENGINE_new();
-    if (!ret)
+    if (ret == NULL)
         return NULL;
     if (!ENGINE_set_id(ret, engine_dynamic_id) ||
         !ENGINE_set_name(ret, engine_dynamic_name) ||
@@ -438,8 +438,10 @@ static int dynamic_load(ENGINE *e, dynamic_data_ctx *ctx)
     ENGINE cpy;
     dynamic_fns fns;
 
-    if (!ctx->dynamic_dso)
+    if (ctx->dynamic_dso == NULL)
         ctx->dynamic_dso = DSO_new();
+    if (ctx->dynamic_dso == NULL)
+        return 0;
     if (!ctx->DYNAMIC_LIBNAME) {
         if (!ctx->engine_id)
             return 0;

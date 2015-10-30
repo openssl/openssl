@@ -156,7 +156,7 @@ static int dh_pub_encode(X509_PUBKEY *pk, const EVP_PKEY *pkey)
     dh = pkey->pkey.dh;
 
     str = ASN1_STRING_new();
-    if (!str) {
+    if (str == NULL) {
         DHerr(DH_F_DH_PUB_ENCODE, ERR_R_MALLOC_FAILURE);
         goto err;
     }
@@ -258,7 +258,7 @@ static int dh_priv_encode(PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pkey)
 
     params = ASN1_STRING_new();
 
-    if (!params) {
+    if (params == NULL) {
         DHerr(DH_F_DH_PRIV_ENCODE, ERR_R_MALLOC_FAILURE);
         goto err;
     }
@@ -496,7 +496,7 @@ DH *DHparams_dup(DH *dh)
 {
     DH *ret;
     ret = DH_new();
-    if (!ret)
+    if (ret == NULL)
         return NULL;
     if (!int_dh_param_copy(ret, dh, -1)) {
         DH_free(ret);
@@ -691,7 +691,7 @@ static int dh_cms_set_peerkey(EVP_PKEY_CTX *pctx,
     }
 
     pkpeer = EVP_PKEY_new();
-    if (!pkpeer)
+    if (pkpeer == NULL)
         goto err;
     EVP_PKEY_assign(pkpeer, pk->ameth->pkey_id, dhpeer);
     dhpeer = NULL;
@@ -891,11 +891,11 @@ static int dh_cms_encrypt(CMS_RecipientInfo *ri)
     /* Package wrap algorithm in an AlgorithmIdentifier */
 
     wrap_alg = X509_ALGOR_new();
-    if (!wrap_alg)
+    if (wrap_alg == NULL)
         goto err;
     wrap_alg->algorithm = OBJ_nid2obj(wrap_nid);
     wrap_alg->parameter = ASN1_TYPE_new();
-    if (!wrap_alg->parameter)
+    if (wrap_alg->parameter == NULL)
         goto err;
     if (EVP_CIPHER_param_to_asn1(ctx, wrap_alg->parameter) <= 0)
         goto err;
@@ -927,7 +927,7 @@ static int dh_cms_encrypt(CMS_RecipientInfo *ri)
     if (!penc || !penclen)
         goto err;
     wrap_str = ASN1_STRING_new();
-    if (!wrap_str)
+    if (wrap_str == NULL)
         goto err;
     ASN1_STRING_set0(wrap_str, penc, penclen);
     penc = NULL;

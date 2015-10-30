@@ -201,6 +201,9 @@ static int generate_zkp(JPAKE_STEP_PART *p, const BIGNUM *x,
     BIGNUM *h = BN_new();
     BIGNUM *t = BN_new();
 
+    if (r == NULL || h == NULL || t == NULL)
+        goto end;
+
    /*-
     * r in [0,q)
     * XXX: Java chooses r in [0, 2^160) - i.e. distribution not uniform
@@ -234,6 +237,9 @@ static int verify_zkp(const JPAKE_STEP_PART *p, const BIGNUM *zkpg,
     BIGNUM *t2 = BN_new();
     BIGNUM *t3 = BN_new();
     int ret = 0;
+
+    if (h == NULL || t1 == NULL || t2 == NULL || t3 == NULL)
+        goto end;
 
     if (!zkp_hash(h, zkpg, p, ctx->p.peer_name))
         goto end;
