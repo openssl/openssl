@@ -257,7 +257,7 @@ IMPLEMENT_DYNAMIC_CHECK_FN()
 static ENGINE *engine_ossltest(void)
 {
     ENGINE *ret = ENGINE_new();
-    if (!ret)
+    if (ret == NULL)
         return NULL;
     if (!bind_ossltest(ret)) {
         ENGINE_free(ret);
@@ -505,7 +505,7 @@ int ossltest_aes128_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
          * run time
          */
         ctx->cipher_data = OPENSSL_zalloc(EVP_aes_128_cbc()->ctx_size);
-        if (!ctx->cipher_data) {
+        if (ctx->cipher_data == NULL) {
             OSSLTESTerr(OSSLTEST_F_OSSLTEST_AES128_INIT_KEY,
                         ERR_R_MALLOC_FAILURE);
             return 0;

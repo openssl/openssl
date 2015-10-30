@@ -406,7 +406,7 @@ static int bind_helper(ENGINE *e)
 static ENGINE *engine_chil(void)
 {
     ENGINE *ret = ENGINE_new();
-    if (!ret)
+    if (ret == NULL)
         return NULL;
     if (!bind_helper(ret)) {
         ENGINE_free(ret);
@@ -780,7 +780,7 @@ static EVP_PKEY *hwcrhk_load_privkey(ENGINE *eng, const char *key_id,
     }
 #  ifndef OPENSSL_NO_RSA
     hptr = OPENSSL_malloc(sizeof(*hptr));
-    if (!hptr) {
+    if (hptr == NULL) {
         HWCRHKerr(HWCRHK_F_HWCRHK_LOAD_PRIVKEY, ERR_R_MALLOC_FAILURE);
         goto err;
     }
@@ -827,10 +827,14 @@ static EVP_PKEY *hwcrhk_load_privkey(ENGINE *eng, const char *key_id,
     bn_fix_top(rtmp->n);
 
     res = EVP_PKEY_new();
+    if (res == NULL) {
+        HWCRHKerr(HWCRHK_F_HWCRHK_LOAD_PRIVKEY, HWCRHK_R_CHIL_ERROR);
+        goto err;
+    }
     EVP_PKEY_assign_RSA(res, rtmp);
 #  endif
 
-    if (!res)
+    if (res == NULL)
         HWCRHKerr(HWCRHK_F_HWCRHK_LOAD_PRIVKEY,
                   HWCRHK_R_PRIVATE_KEY_ALGORITHMS_DISABLED);
 
