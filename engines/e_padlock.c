@@ -192,7 +192,7 @@ static ENGINE *ENGINE_padlock(void)
 {
     ENGINE *eng = ENGINE_new();
 
-    if (!eng) {
+    if (eng == NULL) {
         return NULL;
     }
 
