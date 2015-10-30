@@ -1039,7 +1039,7 @@ static int ssl_cipher_strength_sort(CIPHER_ORDER **head_p,
     }
 
     number_uses = OPENSSL_zalloc(sizeof(int) * (max_strength_bits + 1));
-    if (!number_uses) {
+    if (number_uses == NULL) {
         SSLerr(SSL_F_SSL_CIPHER_STRENGTH_SORT, ERR_R_MALLOC_FAILURE);
         return (0);
     }

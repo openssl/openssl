@@ -4311,7 +4311,7 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
                 return 0;
 #endif
             ptmp = EVP_PKEY_new();
-            if (!ptmp)
+            if (ptmp == NULL)
                 return 0;
 #ifndef OPENSSL_NO_RSA
             else if (s->s3->peer_rsa_tmp)
@@ -4999,7 +4999,7 @@ static int ssl3_set_req_cert_type(CERT *c, const unsigned char *p, size_t len)
     if (len > 0xff)
         return 0;
     c->ctypes = OPENSSL_malloc(len);
-    if (!c->ctypes)
+    if (c->ctypes == NULL)
         return 0;
     memcpy(c->ctypes, p, len);
     c->ctype_num = len;
