@@ -95,8 +95,8 @@ extern "C" {
 # define BIO_TYPE_BASE64         (11|0x0200)/* filter */
 # define BIO_TYPE_CONNECT        (12|0x0400|0x0100)/* socket - connect */
 # define BIO_TYPE_ACCEPT         (13|0x0400|0x0100)/* socket for accept */
-# define BIO_TYPE_PROXY_CLIENT   (14|0x0200)/* client proxy BIO */
-# define BIO_TYPE_PROXY_SERVER   (15|0x0200)/* server proxy BIO */
+/* # define BIO_TYPE_PROXY_CLIENT   (14|0x0200)*/ /* client proxy BIO */
+/* # define BIO_TYPE_PROXY_SERVER   (15|0x0200)*/ /* server proxy BIO */
 # define BIO_TYPE_NBIO_TEST      (16|0x0200)/* server proxy BIO */
 # define BIO_TYPE_NULL_FILTER    (17|0x0200)
 # define BIO_TYPE_BER            (18|0x0200)/* BER -> bin filter */
@@ -398,7 +398,7 @@ struct bio_dgram_sctp_prinfo {
 # define BIO_C_SET_CONNECT                       100
 # define BIO_C_DO_STATE_MACHINE                  101
 # define BIO_C_SET_NBIO                          102
-# define BIO_C_SET_PROXY_PARAM                   103
+/* # define BIO_C_SET_PROXY_PARAM                   103 */
 # define BIO_C_SET_FD                            104
 # define BIO_C_GET_FD                            105
 # define BIO_C_SET_FILE_PTR                      106
@@ -416,7 +416,7 @@ struct bio_dgram_sctp_prinfo {
 # define BIO_C_SET_ACCEPT                        118
 # define BIO_C_SSL_MODE                          119
 # define BIO_C_GET_MD_CTX                        120
-# define BIO_C_GET_PROXY_PARAM                   121
+/* # define BIO_C_GET_PROXY_PARAM                   121 */
 # define BIO_C_SET_BUFF_READ_DATA                122/* data to read first */
 # define BIO_C_GET_CONNECT                       123
 # define BIO_C_GET_ACCEPT                        124
@@ -486,21 +486,6 @@ struct bio_dgram_sctp_prinfo {
 # define BIO_do_connect(b)       BIO_do_handshake(b)
 # define BIO_do_accept(b)        BIO_do_handshake(b)
 # define BIO_do_handshake(b)     BIO_ctrl(b,BIO_C_DO_STATE_MACHINE,0,NULL)
-
-/* BIO_s_proxy_client() */
-# define BIO_set_url(b,url)      BIO_ctrl(b,BIO_C_SET_PROXY_PARAM,0,(char *)(url))
-# define BIO_set_proxies(b,p)    BIO_ctrl(b,BIO_C_SET_PROXY_PARAM,1,(char *)(p))
-/* BIO_set_nbio(b,n) */
-# define BIO_set_filter_bio(b,s) BIO_ctrl(b,BIO_C_SET_PROXY_PARAM,2,(char *)(s))
-/* BIO *BIO_get_filter_bio(BIO *bio); */
-# define BIO_set_proxy_cb(b,cb) BIO_callback_ctrl(b,BIO_C_SET_PROXY_PARAM,3,(void *(*cb)()))
-# define BIO_set_proxy_header(b,sk) BIO_ctrl(b,BIO_C_SET_PROXY_PARAM,4,(char *)sk)
-# define BIO_set_no_connect_return(b,bool) BIO_int_ctrl(b,BIO_C_SET_PROXY_PARAM,5,bool)
-
-# define BIO_get_proxy_header(b,skp) BIO_ctrl(b,BIO_C_GET_PROXY_PARAM,0,(char *)skp)
-# define BIO_get_proxies(b,pxy_p) BIO_ctrl(b,BIO_C_GET_PROXY_PARAM,1,(char *)(pxy_p))
-# define BIO_get_url(b,url)      BIO_ctrl(b,BIO_C_GET_PROXY_PARAM,2,(char *)(url))
-# define BIO_get_no_connect_return(b)    BIO_ctrl(b,BIO_C_GET_PROXY_PARAM,5,NULL)
 
 # define BIO_set_fd(b,fd,c)      BIO_int_ctrl(b,BIO_C_SET_FD,c,fd)
 # define BIO_get_fd(b,c)         BIO_ctrl(b,BIO_C_GET_FD,0,(char *)c)
