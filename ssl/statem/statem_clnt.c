@@ -3021,19 +3021,7 @@ int tls_construct_client_verify(SSL *s)
     } else {
         ERR_clear_error();
     }
-    /*
-     * For TLS v1.2 send signature algorithm and signature using agreed
-     * digest and cached handshake records.
-     */
-    if (SSL_USE_SIGALGS(s)) {
-        long hdatalen = 0;
-        void *hdata;
-        const EVP_MD *md = s->s3->tmp.md[s->cert->key - s->cert->pkeys];
-        hdatalen = BIO_get_mem_data(s->s3->handshake_buffer, &hdata);
-        if (hdatalen <= 0 || !tls12_get_sigandhash(p, pkey, md)) {
-            SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_VERIFY, ERR_R_INTERNAL_ERROR);
-            goto err;
-        }
+        
         /*
          * For TLS v1.2 send signature algorithm and signature using agreed
          * digest and cached handshake records.
@@ -3152,12 +3140,6 @@ int tls_construct_client_verify(SSL *s)
             SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_VERIFY, ERR_R_INTERNAL_ERROR);
             goto err;
         }
-        s2n(j, p);
-        n = j + 2;
-    } else {
-        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_VERIFY, ERR_R_INTERNAL_ERROR);
-        goto err;
-    }
     if (!ssl_set_handshake_header(s, SSL3_MT_CERTIFICATE_VERIFY, n)) {
         SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_VERIFY, ERR_R_INTERNAL_ERROR);
         goto err;
