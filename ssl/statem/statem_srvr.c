@@ -2957,7 +2957,8 @@ WORK_STATE tls_post_process_client_key_exchange(SSL *s, WORK_STATE wst)
         /* No certificate verify so we no longer need the handshake_buffer */
         BIO_free(s->s3->handshake_buffer);
         return WORK_FINISHED_CONTINUE;
-    } else if (SSL_USE_SIGALGS(s)) {
+    } else if (SSL_USE_SIGALGS(s) || (s->s3->tmp.new_cipher->algorithm_auth
+                        & (SSL_aGOST12|SSL_aGOST01) )) {
         if (!s->session->peer) {
             /* No peer certificate so we no longer need the handshake_buffer */
             BIO_free(s->s3->handshake_buffer);
