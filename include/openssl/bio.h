@@ -481,7 +481,7 @@ struct bio_dgram_sctp_prinfo {
 # define BIO_BIND_REUSEADDR_IF_UNUSED    1
 # define BIO_BIND_REUSEADDR              2
 # define BIO_set_bind_mode(b,mode) BIO_ctrl(b,BIO_C_SET_BIND_MODE,mode,NULL)
-# define BIO_get_bind_mode(b,mode) BIO_ctrl(b,BIO_C_GET_BIND_MODE,0,NULL)
+# define BIO_get_bind_mode(b)    BIO_ctrl(b,BIO_C_GET_BIND_MODE,0,NULL)
 
 # define BIO_do_connect(b)       BIO_do_handshake(b)
 # define BIO_do_accept(b)        BIO_do_handshake(b)
