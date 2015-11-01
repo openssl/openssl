@@ -1556,7 +1556,8 @@ WORK_STATE tls_post_process_client_hello(SSL *s, WORK_STATE wst)
             s->s3->tmp.new_cipher = s->session->cipher;
         }
 
-        if (!SSL_USE_SIGALGS(s) || !(s->verify_mode & SSL_VERIFY_PEER)) {
+        if (!(SSL_USE_SIGALGS(s) || (s->s3->tmp.new_cipher->algorithm_auth & (SSL_aGOST12|SSL_aGOST01)) )
+                || !(s->verify_mode & SSL_VERIFY_PEER)) {
             if (!ssl3_digest_cached_records(s, 0)) {
                 al = SSL_AD_INTERNAL_ERROR;
                 goto f_err;
@@ -2809,8 +2810,20 @@ MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
 
         /* Get our certificate private key */
         alg_a = s->s3->tmp.new_cipher->algorithm_auth;
-        if (alg_a & SSL_aGOST01)
+        if (alg_a & SSL_aGOST12) {
+            /*
+             * New GOST ciphersuites have SSL_aGOST01 bit too
+             */
+            pk = s->cert->pkeys[SSL_PKEY_GOST12_512].privatekey;
+            if (pk == NULL) {
+                pk = s->cert->pkeys[SSL_PKEY_GOST12_256].privatekey;
+            }
+            if (pk == NULL) {
+                pk = s->cert->pkeys[SSL_PKEY_GOST01].privatekey;
+            }
+        } else if (alg_a & SSL_aGOST01) {
             pk = s->cert->pkeys[SSL_PKEY_GOST01].privatekey;
+        }
 
         pkey_ctx = EVP_PKEY_CTX_new(pk, NULL);
         EVP_PKEY_decrypt_init(pkey_ctx);
@@ -3030,7 +3043,7 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
     /* Check for broken implementations of GOST ciphersuites */
     /*
      * If key is GOST and n is exactly 64, it is bare signature without
-     * length field
+     * length field (CryptoPro implementations at least till CSP 4.0)
      */
     if (PACKET_remaining(pkt) == 64 && pkey->type == NID_id_GostR3410_2001) {
         len = 64;
@@ -3073,7 +3086,10 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
         goto f_err;
     }
 
-    if (SSL_USE_SIGALGS(s)) {
+    if (SSL_USE_SIGALGS(s)
+            || pkey->type == NID_id_GostR3410_2001
+            || pkey->type == NID_id_GostR3410_2012_256
+            || pkey->type == NID_id_GostR3410_2012_512) {
         long hdatalen = 0;
         void *hdata;
         hdatalen = BIO_get_mem_data(s->s3->handshake_buffer, &hdata);
@@ -3086,11 +3102,31 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
         fprintf(stderr, "Using TLS 1.2 with client verify alg %s\n",
                 EVP_MD_name(md));
 #endif
+        if (!SSL_USE_SIGALGS(s)) {
+            int dgst_nid;
+            if (EVP_PKEY_get_default_digest_nid(pkey, &dgst_nid) <= 0
+                || (md = EVP_get_digestbynid(dgst_nid)) == NULL) {
+                SSLerr(SSL_F_SSL3_GET_CERT_VERIFY, ERR_R_INTERNAL_ERROR);
+                al = SSL_AD_INTERNAL_ERROR;
+                goto f_err;
+            }
+        }
         if (!EVP_VerifyInit_ex(&mctx, md, NULL)
             || !EVP_VerifyUpdate(&mctx, hdata, hdatalen)) {
             SSLerr(SSL_F_TLS_PROCESS_CERT_VERIFY, ERR_R_EVP_LIB);
             al = SSL_AD_INTERNAL_ERROR;
             goto f_err;
+        }
+
+        if (pkey->type == NID_id_GostR3410_2001
+                || pkey->type == NID_id_GostR3410_2012_256
+                || pkey->type == NID_id_GostR3410_2012_512) {
+            unsigned int j1, j2;
+            for (j1 = len - 1, j2 = 0; j2 < len/2; j2++, j1--) {
+                char c = data[j2];
+                data[j2] = data[j1];
+                data[j1] = c;
+            }
         }
 
         if (EVP_VerifyFinal(&mctx, data, len, pkey) <= 0) {
@@ -3142,26 +3178,7 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
         }
     } else
 #endif
-    if (pkey->type == NID_id_GostR3410_2001) {
-        unsigned char signature[64];
-        int idx;
-        EVP_PKEY_CTX *pctx = EVP_PKEY_CTX_new(pkey, NULL);
-        EVP_PKEY_verify_init(pctx);
-        if (len != 64) {
-            fprintf(stderr, "GOST signature length is %d", len);
-        }
-        for (idx = 0; idx < 64; idx++) {
-            signature[63 - idx] = data[idx];
-        }
-        j = EVP_PKEY_verify(pctx, signature, 64, s->s3->tmp.cert_verify_md,
-                            32);
-        EVP_PKEY_CTX_free(pctx);
-        if (j <= 0) {
-            al = SSL_AD_DECRYPT_ERROR;
-            SSLerr(SSL_F_TLS_PROCESS_CERT_VERIFY, SSL_R_BAD_ECDSA_SIGNATURE);
-            goto f_err;
-        }
-    } else {
+    {
         SSLerr(SSL_F_TLS_PROCESS_CERT_VERIFY, ERR_R_INTERNAL_ERROR);
         al = SSL_AD_UNSUPPORTED_CERTIFICATE;
         goto f_err;
