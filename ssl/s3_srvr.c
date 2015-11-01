@@ -578,7 +578,9 @@ int ssl3_accept(SSL *s)
                  */
                 s->state = SSL3_ST_SR_CHANGE_A;
                 s->init_num = 0;
-            } else if (SSL_USE_SIGALGS(s)) {
+            } else if (SSL_USE_SIGALGS(s)
+                    || (s->s3->tmp.new_cipher->algorithm_auth
+                        & (SSL_aGOST12|SSL_aGOST01) )) {
                 s->state = SSL3_ST_SR_CERT_VRFY_A;
                 s->init_num = 0;
                 if (!s->session->peer)
@@ -1426,7 +1428,9 @@ int ssl3_get_client_hello(SSL *s)
         s->s3->tmp.new_cipher = s->session->cipher;
     }
 
-    if (!SSL_USE_SIGALGS(s) || !(s->verify_mode & SSL_VERIFY_PEER)) {
+    if (!(SSL_USE_SIGALGS(s) || (s->s3->tmp.new_cipher->algorithm_auth
+                                 & (SSL_aGOST12|SSL_aGOST01)))
+            || !(s->verify_mode & SSL_VERIFY_PEER)) {
         if (!ssl3_digest_cached_records(s, 0))
             goto f_err;
     }
@@ -2868,7 +2872,10 @@ int ssl3_get_cert_verify(SSL *s)
         goto f_err;
     }
 
-    if (SSL_USE_SIGALGS(s)) {
+    if (SSL_USE_SIGALGS(s)
+            || pkey->type == NID_id_GostR3410_2001
+            || pkey->type == NID_id_GostR3410_2012_256
+            || pkey->type == NID_id_GostR3410_2012_512) {
         long hdatalen = 0;
         void *hdata;
         hdatalen = BIO_get_mem_data(s->s3->handshake_buffer, &hdata);
@@ -2881,6 +2888,17 @@ int ssl3_get_cert_verify(SSL *s)
         fprintf(stderr, "Using TLS 1.2 with client verify alg %s\n",
                 EVP_MD_name(md));
 #endif
+        if (!SSL_USE_SIGALGS(s)) {
+            int dgst_nid;
+            if (EVP_PKEY_get_default_digest_nid(pkey, &dgst_nid) <= 0
+                || (md = EVP_get_digestbynid(dgst_nid)) == NULL) {
+                SSLerr(SSL_F_SSL3_GET_CERT_VERIFY, ERR_R_INTERNAL_ERROR);
+                al = SSL_AD_INTERNAL_ERROR;
+                goto f_err;
+            }
+        }
+        fprintf(stderr, "Using TLS with client verify alg %s\n",
+                EVP_MD_name(md));
         if (!EVP_VerifyInit_ex(&mctx, md, NULL)
             || !EVP_VerifyUpdate(&mctx, hdata, hdatalen)) {
             SSLerr(SSL_F_SSL3_GET_CERT_VERIFY, ERR_R_EVP_LIB);
@@ -2891,7 +2909,7 @@ int ssl3_get_cert_verify(SSL *s)
         if (pkey->type == NID_id_GostR3410_2001
                 || pkey->type == NID_id_GostR3410_2012_256
                 || pkey->type == NID_id_GostR3410_2012_512) {
-            int j1, j2;
+            unsigned int j1, j2;
             for (j1 = len - 1, j2 = 0; j2 < len/2; j2++, j1--) {
                 char c = data[j2];
                 data[j2] = data[j1];
@@ -2948,41 +2966,7 @@ int ssl3_get_cert_verify(SSL *s)
         }
     } else
 #endif
-    if (pkey->type == NID_id_GostR3410_2001 
-            || pkey->type == NID_id_GostR3410_2012_256
-            || pkey->type == NID_id_GostR3410_2012_512) {
-        unsigned char signature[128];
-        size_t sigsize = (pkey->type == NID_id_GostR3410_2012_512) ? 128 : 64;
-        size_t dgstsize = (pkey->type == NID_id_GostR3410_2012_512) ? 64 : 32;
-
-        /*
-         * We can have
-         *    - client cert 34.10-94/2001 with 32-bytes digest offset 0
-         *    - client cert 34.10-2012 256 with 32-bytes digest offset 32
-         *    - client cert 34.10-2012 512 with 64-bytes digest offset 64
-         */
-        size_t offset = (pkey->type == NID_id_GostR3410_2012_512) ? 64
-            : ((pkey->type == NID_id_GostR3410_2012_256) ? 32 : 0);
-        size_t idx;
-        EVP_PKEY_CTX *pctx = EVP_PKEY_CTX_new(pkey, NULL);
-        EVP_PKEY_verify_init(pctx);
-        if (len != sigsize) {
-            al = SSL_AD_DECODE_ERROR;
-            SSLerr(SSL_F_SSL3_GET_CERT_VERIFY, SSL_R_BAD_GOST_SIGNATURE);
-            goto f_err;
-        }
-        for (idx = 0; idx < sigsize; idx++) {
-            signature[sigsize - 1 - idx] = data[idx];
-        }
-        j = EVP_PKEY_verify(pctx, signature, sigsize,
-                            s->s3->tmp.cert_verify_md + offset, dgstsize);
-        EVP_PKEY_CTX_free(pctx);
-        if (j <= 0) {
-            al = SSL_AD_DECRYPT_ERROR;
-            SSLerr(SSL_F_SSL3_GET_CERT_VERIFY, SSL_R_BAD_GOST_SIGNATURE);
-            goto f_err;
-        }
-    } else {
+    {
         SSLerr(SSL_F_SSL3_GET_CERT_VERIFY, ERR_R_INTERNAL_ERROR);
         al = SSL_AD_UNSUPPORTED_CERTIFICATE;
         goto f_err;

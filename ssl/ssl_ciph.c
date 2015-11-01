@@ -285,13 +285,6 @@ static const int ssl_handshake_digest_flag[SSL_MD_NUM_IDX] = {
     SSL_HANDSHAKE_MAC_GOST12_512,
 };
 
-static int ssl_certverify_digest_flag[SSL_MD_NUM_IDX] = {
-    SSL_HANDSHAKE_MAC_MD5, SSL_HANDSHAKE_MAC_SHA,
-    SSL_HANDSHAKE_MAC_GOST, 0, SSL_HANDSHAKE_MAC_SHA256,
-    SSL_HANDSHAKE_MAC_SHA384, SSL_HANDSHAKE_MAC_GOST, 0,
-    SSL_HANDSHAKE_MAC_GOST,
-};
-
 #define CIPHER_ADD      1
 #define CIPHER_KILL     2
 #define CIPHER_DEL      3
@@ -736,19 +729,6 @@ int ssl_get_handshake_digest(int idx, long *mask, const EVP_MD **md)
         return 0;
     }
     *mask = ssl_handshake_digest_flag[idx];
-    if (*mask)
-        *md = ssl_digest_methods[idx];
-    else
-        *md = NULL;
-    return 1;
-}
-
-int ssl_get_certverify_digest(int idx, long *mask, const EVP_MD **md)
-{
-    if (idx < 0 || idx >= SSL_MD_NUM_IDX) {
-        return 0;
-    }
-    *mask = ssl_certverify_digest_flag[idx];
     if (*mask)
         *md = ssl_digest_methods[idx];
     else

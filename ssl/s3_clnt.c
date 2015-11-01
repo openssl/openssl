@@ -1206,7 +1206,8 @@ int ssl3_get_server_hello(SSL *s)
      * Don't digest cached records if no sigalgs: we may need them for client
      * authentication.
      */
-    if (!SSL_USE_SIGALGS(s) && !ssl3_digest_cached_records(s, 0))
+    if (!(SSL_USE_SIGALGS(s) || (s->s3->tmp.new_cipher->algorithm_auth  & (SSL_aGOST12|SSL_aGOST01) )) 
+        && !ssl3_digest_cached_records(s, 0))
         goto f_err;
     /* lets get the compression algorithm */
     /* COMPRESSION */
@@ -2944,16 +2945,28 @@ int ssl3_send_client_verify(SSL *s)
          * For TLS v1.2 send signature algorithm and signature using agreed
          * digest and cached handshake records.
          */
-        if (SSL_USE_SIGALGS(s)) {
+        if (SSL_USE_SIGALGS(s) || pkey->type == NID_id_GostR3410_2001
+                    || pkey->type == NID_id_GostR3410_2012_256
+                    || pkey->type == NID_id_GostR3410_2012_512) {
             long hdatalen = 0;
             void *hdata;
             const EVP_MD *md = s->s3->tmp.md[s->cert->key - s->cert->pkeys];
             hdatalen = BIO_get_mem_data(s->s3->handshake_buffer, &hdata);
+            if (!SSL_USE_SIGALGS(s)) {
+                    int dgst_nid;
+                    if (EVP_PKEY_get_default_digest_nid(pkey, &dgst_nid) <= 0
+                                    || (md = EVP_get_digestbynid(dgst_nid)) == NULL) {
+                            SSLerr(SSL_F_SSL3_SEND_CLIENT_VERIFY, ERR_R_INTERNAL_ERROR);
+                            goto err;
+                    }
+            }
             if (hdatalen <= 0 || !tls12_get_sigandhash(p, pkey, md)) {
                 SSLerr(SSL_F_SSL3_SEND_CLIENT_VERIFY, ERR_R_INTERNAL_ERROR);
                 goto err;
             }
-            p += 2;
+            if (SSL_USE_SIGALGS(s) ) {
+                p += 2;
+            }
 #ifdef SSL_DEBUG
             fprintf(stderr, "Using TLS 1.2 with client alg %s\n",
                     EVP_MD_name(md));
@@ -2967,15 +2980,17 @@ int ssl3_send_client_verify(SSL *s)
             if (pkey->type == NID_id_GostR3410_2001
                     || pkey->type == NID_id_GostR3410_2012_256
                     || pkey->type == NID_id_GostR3410_2012_512) {
-                int i, j; 
-                for (i = u - 1, j = 0; j < u/2; j++, i--) {
-                    char c = p[2 + j];
-                    p[2 + j] = p[2 + i];
+                unsigned int i, k; 
+                for (i = u - 1, k = 0; k < u/2; k++, i--) {
+                    char c = p[2 + k];
+                    p[2 + k] = p[2 + i];
                     p[2 + i] = c;
                 }
             }
             s2n(u, p);
-            n = u + 4;
+            n = u + 2;
+            if (SSL_USE_SIGALGS(s))
+                n += 2;
             /* Digest cached records and discard handshake buffer */
             if (!ssl3_digest_cached_records(s, 0))
                 goto err;

@@ -3280,7 +3280,7 @@ static const tls12_hash_info tls12_md_info[] = {
 
 static const tls12_hash_info *tls12_get_hash_info(unsigned char hash_alg)
 {
-    int i;
+    unsigned int i;
     if (hash_alg == 0)
         return NULL;
     
