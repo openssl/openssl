@@ -40,10 +40,4 @@ These functions return 1 on success, 0 on error.
 
 L<dh(3)>, L<dsa(3)>, L<rsa(3)>, L<BN_bn2bin(3)>
 
-=head1 HISTORY
-
-RSA_print(), RSA_print_fp(), DSA_print(), DSA_print_fp(), DH_print(),
-DH_print_fp() are available in all versions of SSLeay and OpenSSL.
-DSAparams_print() and DSAparams_print_fp() were added in SSLeay 0.8.
-
 =cut

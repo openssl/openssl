@@ -85,11 +85,4 @@ L<evp(3)>, L<hmac(3)>, L<md2(3)>,
 L<md5(3)>, L<mdc2(3)>, L<ripemd(3)>,
 L<sha(3)>, L<dgst(1)>
 
-=head1 HISTORY
-
-EVP_VerifyInit(), EVP_VerifyUpdate() and EVP_VerifyFinal() are
-available in all versions of SSLeay and OpenSSL.
-
-EVP_VerifyInit_ex() was added in OpenSSL 0.9.7
-
 =cut

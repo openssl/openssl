@@ -233,8 +233,7 @@ DECLARE_STACK_OF(X509_TRUST)
 
 # define XN_FLAG_SEP_MASK        (0xf << 16)
 
-# define XN_FLAG_COMPAT          0/* Traditional SSLeay: use old
-                                   * X509_NAME_print */
+# define XN_FLAG_COMPAT          0/* Traditional; use old X509_NAME_print */
 # define XN_FLAG_SEP_COMMA_PLUS  (1 << 16)/* RFC2253 ,+ */
 # define XN_FLAG_SEP_CPLUS_SPC   (2 << 16)/* ,+ spaced: more readable */
 # define XN_FLAG_SEP_SPLUS_SPC   (3 << 16)/* ;+ spaced */

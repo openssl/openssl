@@ -166,6 +166,7 @@
 # include <openssl/symhacks.h>
 
 #include "record/record.h"
+#include "statem/statem.h"
 #include "packet_locl.h"
 
 # ifdef OPENSSL_BUILD_SHLIBSSL
@@ -572,7 +573,7 @@ struct ssl_cipher_st {
     int alg_bits;               /* Number of bits for algorithm */
 };
 
-/* Used to hold functions for SSLv2 or SSLv3/TLSv1 functions */
+/* Used to hold SSL/TLS functions */
 struct ssl_method_st {
     int version;
     int (*ssl_new) (SSL *s);
@@ -586,8 +587,6 @@ struct ssl_method_st {
     int (*ssl_shutdown) (SSL *s);
     int (*ssl_renegotiate) (SSL *s);
     int (*ssl_renegotiate_check) (SSL *s);
-    long (*ssl_get_message) (SSL *s, int st1, int stn, int mt, long
-                             max, int *ok);
     int (*ssl_read_bytes) (SSL *s, int type, int *recvd_type,
                            unsigned char *buf, int len, int peek);
     int (*ssl_write_bytes) (SSL *s, int type, const void *buf_, int len);
@@ -734,6 +733,7 @@ struct ssl_comp_st {
 
 DECLARE_STACK_OF(SSL_COMP)
 DECLARE_LHASH_OF(SSL_SESSION);
+
 
 struct ssl_ctx_st {
     const SSL_METHOD *method;
@@ -985,8 +985,7 @@ struct ssl_st {
      * DTLS1_VERSION)
      */
     int version;
-    /* SSL_ST_CONNECT or SSL_ST_ACCEPT */
-    int type;
+
     /* SSLv3 */
     const SSL_METHOD *method;
     /*
@@ -1005,8 +1004,7 @@ struct ssl_st {
      * request needs re-doing when in SSL_accept or SSL_connect
      */
     int rwstate;
-    /* true when we are actually in SSL_accept() or SSL_connect() */
-    int in_handshake;
+
     int (*handshake_func) (SSL *);
     /*
      * Imagine that here's a boolean member "init" that is switched as soon
@@ -1015,7 +1013,7 @@ struct ssl_st {
      * handshake_func is == 0 until then, we use this test instead of an
      * "init" member.
      */
-    /* are we the server side? - mostly used by SSL_clear */
+    /* are we the server side? */
     int server;
     /*
      * Generate a new session or reuse an old one.
@@ -1029,7 +1027,8 @@ struct ssl_st {
     /* we have shut things down, 0x01 sent, 0x02 for received */
     int shutdown;
     /* where we are */
-    int state;
+    OSSL_STATEM statem;
+
     BUF_MEM *init_buf;          /* buffer used during init */
     void *init_msg;             /* pointer to handshake message body, set by
                                  * ssl3_get_message() */
@@ -1275,9 +1274,6 @@ typedef struct ssl3_state_st {
 #  ifndef OPENSSL_NO_EC
         EC_KEY *ecdh;           /* holds short lived ECDH key */
 #  endif
-        /* used when SSL_ST_FLUSH_DATA is entered */
-        int next_state;
-        int reuse_message;
         /* used for certificate requests */
         int cert_req;
         int ctype_num;
@@ -1437,9 +1433,9 @@ typedef struct hm_fragment_st {
 } hm_fragment;
 
 typedef struct dtls1_state_st {
-    unsigned int send_cookie;
     unsigned char cookie[DTLS1_COOKIE_LENGTH];
     unsigned int cookie_len;
+    unsigned int cookie_verified;
 
     /* handshake message numbers */
     unsigned short handshake_write_seq;
@@ -1465,8 +1461,6 @@ typedef struct dtls1_state_st {
 
     unsigned int retransmitting;
 #  ifndef OPENSSL_NO_SCTP
-    /* used when SSL_ST_XX_FLUSH is entered */
-    int next_state;
     int shutdown_received;
 #  endif
 } DTLS1_STATE;
@@ -1764,7 +1758,6 @@ const SSL_METHOD *func_name(void)  \
                 ssl3_shutdown, \
                 ssl3_renegotiate, \
                 ssl3_renegotiate_check, \
-                ssl3_get_message, \
                 ssl3_read_bytes, \
                 ssl3_write_bytes, \
                 ssl3_dispatch_alert, \
@@ -1801,7 +1794,6 @@ const SSL_METHOD *func_name(void)  \
                 ssl3_shutdown, \
                 ssl3_renegotiate, \
                 ssl3_renegotiate_check, \
-                ssl3_get_message, \
                 ssl3_read_bytes, \
                 ssl3_write_bytes, \
                 ssl3_dispatch_alert, \
@@ -1839,7 +1831,6 @@ const SSL_METHOD *func_name(void)  \
                 dtls1_shutdown, \
                 ssl3_renegotiate, \
                 ssl3_renegotiate_check, \
-                dtls1_get_message, \
                 dtls1_read_bytes, \
                 dtls1_write_app_data_bytes, \
                 dtls1_dispatch_alert, \
@@ -1933,13 +1924,7 @@ __owur int ssl_generate_master_secret(SSL *s, unsigned char *pms, size_t pmslen,
 __owur const SSL_CIPHER *ssl3_get_cipher_by_char(const unsigned char *p);
 __owur int ssl3_put_cipher_by_char(const SSL_CIPHER *c, unsigned char *p);
 void ssl3_init_finished_mac(SSL *s);
-__owur int ssl3_send_server_certificate(SSL *s);
-__owur int ssl3_send_newsession_ticket(SSL *s);
-__owur int ssl3_send_cert_status(SSL *s);
-__owur int ssl3_get_change_cipher_spec(SSL *s, int a, int b);
-__owur int ssl3_get_finished(SSL *s, int state_a, int state_b);
 __owur int ssl3_setup_key_block(SSL *s);
-__owur int ssl3_send_change_cipher_spec(SSL *s, int state_a, int state_b);
 __owur int ssl3_change_cipher_state(SSL *s, int which);
 void ssl3_cleanup_key_block(SSL *s);
 __owur int ssl3_do_write(SSL *s, int type);
@@ -1947,8 +1932,6 @@ int ssl3_send_alert(SSL *s, int level, int desc);
 __owur int ssl3_generate_master_secret(SSL *s, unsigned char *out,
                                 unsigned char *p, int len);
 __owur int ssl3_get_req_cert_type(SSL *s, unsigned char *p);
-__owur long ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok);
-__owur int ssl3_send_finished(SSL *s, int a, int b, const char *sender, int slen);
 __owur int ssl3_num_ciphers(void);
 __owur const SSL_CIPHER *ssl3_get_cipher(unsigned int u);
 int ssl3_renegotiate(SSL *ssl);
@@ -1965,8 +1948,6 @@ __owur SSL_CIPHER *ssl3_choose_cipher(SSL *ssl, STACK_OF(SSL_CIPHER) *clnt,
 __owur int ssl3_digest_cached_records(SSL *s, int keep);
 __owur int ssl3_new(SSL *s);
 void ssl3_free(SSL *s);
-__owur int ssl3_accept(SSL *s);
-__owur int ssl3_connect(SSL *s);
 __owur int ssl3_read(SSL *s, void *buf, int len);
 __owur int ssl3_peek(SSL *s, void *buf, int len);
 __owur int ssl3_write(SSL *s, const void *buf, int len);
@@ -1995,7 +1976,6 @@ void dtls1_set_message_header(SSL *s,
 
 __owur int dtls1_write_app_data_bytes(SSL *s, int type, const void *buf, int len);
 
-__owur int dtls1_send_change_cipher_spec(SSL *s, int a, int b);
 __owur int dtls1_read_failed(SSL *s, int code);
 __owur int dtls1_buffer_message(SSL *s, int ccs);
 __owur int dtls1_retransmit_message(SSL *s, unsigned short seq,
@@ -2014,47 +1994,13 @@ void dtls1_start_timer(SSL *s);
 void dtls1_stop_timer(SSL *s);
 __owur int dtls1_is_timer_expired(SSL *s);
 void dtls1_double_timeout(SSL *s);
-__owur unsigned int dtls1_raw_hello_verify_request(unsigned char *buf,
-                                                   unsigned char *cookie,
-                                                   unsigned char cookie_len);
+__owur unsigned int dtls_raw_hello_verify_request(unsigned char *buf,
+                                                  unsigned char *cookie,
+                                                  unsigned char cookie_len);
 __owur int dtls1_send_newsession_ticket(SSL *s);
 __owur unsigned int dtls1_min_mtu(SSL *s);
-__owur unsigned int dtls1_link_min_mtu(void);
 void dtls1_hm_fragment_free(hm_fragment *frag);
-
-/* some client-only functions */
-__owur int ssl3_client_hello(SSL *s);
-__owur int ssl3_get_server_hello(SSL *s);
-__owur int ssl3_get_certificate_request(SSL *s);
-__owur int ssl3_get_new_session_ticket(SSL *s);
-__owur int ssl3_get_cert_status(SSL *s);
-__owur int ssl3_get_server_done(SSL *s);
-__owur int ssl3_send_client_verify(SSL *s);
-__owur int ssl3_send_client_certificate(SSL *s);
-__owur int ssl_do_client_cert_cb(SSL *s, X509 **px509, EVP_PKEY **ppkey);
-__owur int ssl3_send_client_key_exchange(SSL *s);
-__owur int ssl3_get_key_exchange(SSL *s);
-__owur int ssl3_get_server_certificate(SSL *s);
-__owur int ssl3_check_cert_and_algorithm(SSL *s);
-#  ifndef OPENSSL_NO_NEXTPROTONEG
-__owur int ssl3_send_next_proto(SSL *s);
-#  endif
-
-int dtls1_client_hello(SSL *s);
-
-/* some server-only functions */
-__owur int ssl3_get_client_hello(SSL *s);
-__owur int ssl3_send_server_hello(SSL *s);
-__owur int ssl3_send_hello_request(SSL *s);
-__owur int ssl3_send_server_key_exchange(SSL *s);
-__owur int ssl3_send_certificate_request(SSL *s);
-__owur int ssl3_send_server_done(SSL *s);
-__owur int ssl3_get_client_certificate(SSL *s);
-__owur int ssl3_get_client_key_exchange(SSL *s);
-__owur int ssl3_get_cert_verify(SSL *s);
-#  ifndef OPENSSL_NO_NEXTPROTONEG
-__owur int ssl3_get_next_proto(SSL *s);
-#  endif
+__owur int dtls1_query_mtu(SSL *s);
 
 __owur int tls1_new(SSL *s);
 void tls1_free(SSL *s);
@@ -2063,14 +2009,11 @@ long tls1_ctrl(SSL *s, int cmd, long larg, void *parg);
 long tls1_callback_ctrl(SSL *s, int cmd, void (*fp) (void));
 
 __owur int dtls1_new(SSL *s);
-__owur int dtls1_accept(SSL *s);
-__owur int dtls1_connect(SSL *s);
 void dtls1_free(SSL *s);
 void dtls1_clear(SSL *s);
 long dtls1_ctrl(SSL *s, int cmd, long larg, void *parg);
 __owur int dtls1_shutdown(SSL *s);
 
-__owur long dtls1_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok);
 __owur int dtls1_dispatch_alert(SSL *s);
 
 __owur int ssl_init_wbio_buffer(SSL *s, int push);

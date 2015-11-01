@@ -61,18 +61,6 @@ The following B<bug workaround> options are available:
 
 =over 4
 
-=item SSL_OP_MICROSOFT_SESS_ID_BUG
-
-As of OpenSSL 1.0.0 this option has no effect.
-
-=item SSL_OP_NETSCAPE_CHALLENGE_BUG
-
-As of OpenSSL 1.0.0 this option has no effect.
-
-=item SSL_OP_NETSCAPE_REUSE_CIPHER_CHANGE_BUG
-
-As of OpenSSL 0.9.8q and 1.0.0c, this option has no effect.
-
 =item SSL_OP_SSLREF2_REUSE_CERT_TYPE_BUG
 
 ...
@@ -153,9 +141,8 @@ This option is no longer implemented and is treated as no op.
 
 When choosing a cipher, use the server's preferences instead of the client
 preferences. When not set, the SSL server will always follow the clients
-preferences. When set, the SSLv3/TLSv1 server will choose following its
-own preferences. Because of the different protocol, for SSLv2 the server
-will send its list of preferences to the client and the client chooses.
+preferences. When set, the SSL/TLS server will choose following its
+own preferences.
 
 =item SSL_OP_PKCS1_CHECK_1
 
@@ -165,11 +152,6 @@ will send its list of preferences to the client and the client chooses.
 
 ...
 
-
-
-=item SSL_OP_NO_SSLv2
-
-Do not use the SSLv2 protocol.
 
 =item SSL_OP_NO_SSLv3
 
@@ -208,12 +190,9 @@ B<SECURE RENEGOTIATION> section for more details.
 
 =head1 SECURE RENEGOTIATION
 
-OpenSSL 0.9.8m and later always attempts to use secure renegotiation as
+OpenSSL always attempts to use secure renegotiation as
 described in RFC5746. This counters the prefix attack described in
 CVE-2009-3555 and elsewhere.
-
-The deprecated and highly broken SSLv2 protocol does not support
-renegotiation at all: its use is B<strongly> discouraged.
 
 This attack has far reaching consequences which application writers should be
 aware of. In the description below an implementation supporting secure
@@ -239,14 +218,6 @@ unaware of the unpatched nature of the client.
 
 If the option B<SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION> is set then
 renegotiation B<always> succeeds.
-
-B<NB:> a bug in OpenSSL clients earlier than 0.9.8m (all of which are
-unpatched) will result in the connection hanging if it receives a
-B<no_renegotiation> alert. OpenSSL versions 0.9.8m and later will regard
-a B<no_renegotiation> alert as fatal and respond with a fatal
-B<handshake_failure> alert. This is because the OpenSSL API currently has
-no provision to indicate to an application that a renegotiation attempt
-was refused.
 
 =head2 Patched OpenSSL client and unpatched server.
 
@@ -303,24 +274,7 @@ L<dhparam(1)>
 
 =head1 HISTORY
 
-B<SSL_OP_CIPHER_SERVER_PREFERENCE> and
-B<SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION> have been added in
-OpenSSL 0.9.7.
-
-B<SSL_OP_TLS_ROLLBACK_BUG> has been added in OpenSSL 0.9.6 and was automatically
-enabled with B<SSL_OP_ALL>. As of 0.9.7, it is no longer included in B<SSL_OP_ALL>
-and must be explicitly set.
-
-B<SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS> has been added in OpenSSL 0.9.6e.
-Versions up to OpenSSL 0.9.6c do not include the countermeasure that
-can be disabled with this option (in OpenSSL 0.9.6d, it was always
-enabled).
-
-SSL_CTX_clear_options() and SSL_clear_options() were first added in OpenSSL
-0.9.8m.
-
-B<SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION>, B<SSL_OP_LEGACY_SERVER_CONNECT>
-and the function SSL_get_secure_renegotiation_support() were first added in
-OpenSSL 0.9.8m.
+The attempt to always try to use secure renegotiation was added in
+Openssl 0.9.8m.
 
 =cut

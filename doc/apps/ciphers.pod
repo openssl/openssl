@@ -162,9 +162,7 @@ export encryption algorithms. Including 40 and 56 bits algorithms.
 
 =item B<EXPORT56>
 
-56 bit export encryption algorithms. In OpenSSL 0.9.8c and later the set of
-56 bit export ciphers is empty unless OpenSSL has been explicitly configured
-with support for experimental ciphers.
+56 bit export encryption algorithms. This list is empty.
 
 =item B<eNULL>, B<NULL>
 
@@ -726,8 +724,6 @@ L<s_client(1)>, L<s_server(1)>, L<ssl(3)>
 
 =head1 HISTORY
 
-The B<COMPLENTOFALL> and B<COMPLEMENTOFDEFAULT> selection options
-for cipherlist strings were added in OpenSSL 0.9.7.
 The B<-V> option for the B<ciphers> command was added in OpenSSL 1.0.0.
 
 =cut

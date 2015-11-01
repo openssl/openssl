@@ -7,7 +7,7 @@
 #include <stdio.h>
 #include <errno.h>
 
-#include "rsa.h"       /* SSLeay stuff */
+#include "rsa.h"
 #include <openssl/crypto.h>
 #include <openssl/x509.h>
 #include <openssl/pem.h>

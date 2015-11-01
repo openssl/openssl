@@ -869,7 +869,7 @@ int speed_main(int argc, char **argv)
 #ifndef OPENSSL_NO_RSA
 # ifndef RSA_NULL
         if (strcmp(*argv, "openssl") == 0) {
-            RSA_set_default_method(RSA_PKCS1_SSLeay());
+            RSA_set_default_method(RSA_PKCS1_OpenSSL());
             continue;
         }
 # endif
@@ -2041,8 +2041,8 @@ int speed_main(int argc, char **argv)
  show_res:
 #endif
     if (!mr) {
-        printf("%s\n", SSLeay_version(SSLEAY_VERSION));
-        printf("%s\n", SSLeay_version(SSLEAY_BUILT_ON));
+        printf("%s\n", OpenSSL_version(OPENSSL_VERSION));
+        printf("%s\n", OpenSSL_version(OPENSSL_BUILT_ON));
         printf("options:");
         printf("%s ", BN_options());
 #ifndef OPENSSL_NO_MD2
@@ -2063,7 +2063,7 @@ int speed_main(int argc, char **argv)
 #ifndef OPENSSL_NO_BF
         printf("%s ", BF_options());
 #endif
-        printf("\n%s\n", SSLeay_version(SSLEAY_CFLAGS));
+        printf("\n%s\n", OpenSSL_version(OPENSSL_CFLAGS));
     }
 
     if (pr_header) {

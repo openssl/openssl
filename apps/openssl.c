@@ -217,8 +217,7 @@ static char *make_config_name()
     size_t len;
     char *p;
 
-    if ((t = getenv("OPENSSL_CONF")) != NULL
-        || (t = getenv("SSLEAY_CONF")) != NULL)
+    if ((t = getenv("OPENSSL_CONF")) != NULL)
         return BUF_strdup(t);
 
     t = X509_get_default_cert_area();

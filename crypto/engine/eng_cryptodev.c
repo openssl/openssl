@@ -42,22 +42,9 @@
 # endif
 #endif
 
-#ifndef HAVE_CRYPTODEV
-
-void ENGINE_load_cryptodev(void)
-{
-    /* This is a NOP on platforms without /dev/crypto */
-    return;
-}
-
-#else
-
-# include <sys/types.h>
+#include <sys/types.h>
+#ifdef HAVE_CRYPTODEV
 # include <crypto/cryptodev.h>
-# include <openssl/dh.h>
-# include <openssl/dsa.h>
-# include <openssl/err.h>
-# include <openssl/rsa.h>
 # include <sys/ioctl.h>
 # include <errno.h>
 # include <stdio.h>
@@ -67,6 +54,21 @@ void ENGINE_load_cryptodev(void)
 # include <syslog.h>
 # include <errno.h>
 # include <string.h>
+#endif
+#include <openssl/dh.h>
+#include <openssl/dsa.h>
+#include <openssl/err.h>
+#include <openssl/rsa.h>
+
+#ifndef HAVE_CRYPTODEV
+
+void ENGINE_load_cryptodev(void)
+{
+    /* This is a NOP on platforms without /dev/crypto */
+    return;
+}
+
+#else
 
 struct dev_crypto_state {
     struct session_op d_sess;
@@ -1127,12 +1129,12 @@ cryptodev_bn_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
     kop.crk_iparams = 3;
 
     if (cryptodev_asym(&kop, BN_num_bytes(m), r, 0, NULL)) {
-        const RSA_METHOD *meth = RSA_PKCS1_SSLeay();
+        const RSA_METHOD *meth = RSA_PKCS1_OpenSSL();
         printf("OCF asym process failed, Running in software\n");
         ret = meth->bn_mod_exp(r, a, p, m, ctx, in_mont);
 
     } else if (ECANCELED == kop.crk_status) {
-        const RSA_METHOD *meth = RSA_PKCS1_SSLeay();
+        const RSA_METHOD *meth = RSA_PKCS1_OpenSSL();
         printf("OCF hardware operation cancelled. Running in Software\n");
         ret = meth->bn_mod_exp(r, a, p, m, ctx, in_mont);
     }
@@ -1183,12 +1185,12 @@ cryptodev_rsa_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
     kop.crk_iparams = 6;
 
     if (cryptodev_asym(&kop, BN_num_bytes(rsa->n), r0, 0, NULL)) {
-        const RSA_METHOD *meth = RSA_PKCS1_SSLeay();
+        const RSA_METHOD *meth = RSA_PKCS1_OpenSSL();
         printf("OCF asym process failed, running in Software\n");
         ret = (*meth->rsa_mod_exp) (r0, I, rsa, ctx);
 
     } else if (ECANCELED == kop.crk_status) {
-        const RSA_METHOD *meth = RSA_PKCS1_SSLeay();
+        const RSA_METHOD *meth = RSA_PKCS1_OpenSSL();
         printf("OCF hardware operation cancelled. Running in Software\n");
         ret = (*meth->rsa_mod_exp) (r0, I, rsa, ctx);
     }
@@ -1475,7 +1477,7 @@ void ENGINE_load_cryptodev(void)
     }
 
     if (ENGINE_set_RSA(engine, &cryptodev_rsa)) {
-        const RSA_METHOD *rsa_meth = RSA_PKCS1_SSLeay();
+        const RSA_METHOD *rsa_meth = RSA_PKCS1_OpenSSL();
 
         cryptodev_rsa.bn_mod_exp = rsa_meth->bn_mod_exp;
         cryptodev_rsa.rsa_mod_exp = rsa_meth->rsa_mod_exp;

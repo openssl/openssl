@@ -108,13 +108,4 @@ Seed lengths E<gt> 20 are not supported.
 L<dsa(3)>, L<ERR_get_error(3)>, L<rand(3)>,
 L<DSA_free(3)>, L<BN_generate_prime(3)>
 
-=head1 HISTORY
-
-DSA_generate_parameters() appeared in SSLeay 0.8. The B<cb_arg>
-argument was added in SSLeay 0.9.0.
-In versions up to OpenSSL 0.9.4, B<callback(1, ...)> was called
-in the inner loop of the Miller-Rabin test whenever it reached the
-squaring step (the parameters to B<callback> did not reveal how many
-witnesses had been tested); since OpenSSL 0.9.5, B<callback(1, ...)>
-is called as in BN_is_prime(3), i.e. once for each witness.
 =cut

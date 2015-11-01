@@ -371,16 +371,16 @@ argument.
 The order of operations is significant. This can be used to set either defaults
 or values which cannot be overridden. For example if an application calls:
 
- SSL_CONF_cmd(ctx, "Protocol", "-SSLv2");
+ SSL_CONF_cmd(ctx, "Protocol", "-SSLv3");
  SSL_CONF_cmd(ctx, userparam, uservalue);
 
-it will disable SSLv2 support by default but the user can override it. If 
+it will disable SSLv3 support by default but the user can override it. If
 however the call sequence is:
 
  SSL_CONF_cmd(ctx, userparam, uservalue);
- SSL_CONF_cmd(ctx, "Protocol", "-SSLv2");
+ SSL_CONF_cmd(ctx, "Protocol", "-SSLv3");
 
-SSLv2 is B<always> disabled and attempt to override this by the user are
+SSLv3 is B<always> disabled and attempt to override this by the user are
 ignored.
 
 By checking the return code of SSL_CTX_cmd() it is possible to query if a
@@ -416,9 +416,9 @@ Set supported signature algorithms:
 
  SSL_CONF_cmd(ctx, "SignatureAlgorithms", "ECDSA+SHA256:RSA+SHA256:DSA+SHA256");
 
-Enable all protocols except SSLv3 and SSLv2:
+Enable all protocols except SSLv3:
 
- SSL_CONF_cmd(ctx, "Protocol", "ALL,-SSLv3,-SSLv2");
+ SSL_CONF_cmd(ctx, "Protocol", "ALL,-SSLv3");
 
 Only enable TLSv1.2:
 

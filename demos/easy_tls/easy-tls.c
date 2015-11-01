@@ -418,7 +418,7 @@ static int tls_init(void *apparg)
         return 0;
 
     SSL_load_error_strings();
-    if (!SSL_library_init() /* aka SSLeay_add_ssl_algorithms() */ ) {
+    if (!SSL_library_init()) {
         tls_errprintf(1, apparg, "SSL_library_init failed.\n");
         return -1;
     }

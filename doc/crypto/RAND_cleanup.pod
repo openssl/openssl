@@ -22,8 +22,4 @@ RAND_cleanup() returns no value.
 
 L<rand(3)>
 
-=head1 HISTORY
-
-RAND_cleanup() is available in all versions of SSLeay and OpenSSL.
-
 =cut

@@ -62,9 +62,4 @@ obtained by L<ERR_get_error(3)>.
 L<ERR_get_error(3)>, L<rsa(3)>,
 L<RSA_sign(3)>, L<RSA_verify(3)>
 
-=head1 HISTORY
-
-The B<padding> argument was added in SSLeay 0.8. RSA_NO_PADDING is
-available since SSLeay 0.9.0.
-
 =cut

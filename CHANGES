@@ -4,6 +4,23 @@
 
  Changes between 1.0.2 and 1.1.0  [xx XXX xxxx]
 
+  *) State machine rewrite. The state machine code has been significantly
+     refactored in order to remove much duplication of code and solve issues
+     with the old code (see ssl/statem/README for further details). This change
+     does have some associated API changes. Notably the SSL_state() function
+     has been removed and replaced by SSL_get_state which now returns an
+     "OSSL_HANDSHAKE_STATE" instead of an int. SSL_set_state() has been removed
+     altogether. The previous handshake states defined in ssl.h and ssl3.h have
+     also been removed.
+     [Matt Caswell]
+
+  *) All instances of the string "ssleay" in the public API were replaced
+     with OpenSSL (case-matching; e.g., OPENSSL_VERSION for #define's)
+     [Rich Salz]
+
+  *) The demo files in crypto/threads were moved to demo/threads.
+     [Rich Salz]
+
   *) Removed obsolete engines: 4758cca, aep, atalla, cswift, nuron and sureware.
      [Matt Caswell]
 
@@ -44,6 +61,7 @@
   *) Fix no-stdio build.
     [ David Woodhouse <David.Woodhouse@intel.com> and also
       Ivan Nestlerode <ivan.nestlerode@sonos.com> ]
+
   *) New testing framework
      The testing framework has been largely rewritten and is now using
      perl and the perl modules Test::Harness and an extended variant of

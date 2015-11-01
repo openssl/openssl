@@ -141,7 +141,7 @@ and 2048 bit group with 256 bit subgroup as mentioned in RFC5114 sections
 
 =head1 EC PARAMETER GENERATION OPTIONS
 
-In OpenSSL 1.0.2 and later the EC parameter generation options below can also
+The EC parameter generation options below can also
 be supplied as EC key generation options. This can (for example) generate a
 key from a named curve without the need to use an explicit parameter file.
 
@@ -149,8 +149,7 @@ key from a named curve without the need to use an explicit parameter file.
 
 =item B<ec_paramgen_curve:curve>
 
-the EC curve to use. OpenSSL 1.0.2 and later supports NIST curve names
-such as "P-256".
+the EC curve to use. OpenSSL supports NIST curve names such as "P-256".
 
 =item B<ec_param_enc:encoding>
 
@@ -243,11 +242,16 @@ Generate EC key from parameters:
 
  openssl genpkey -paramfile ecp.pem -out eckey.pem
 
-Generate EC key directly (OpenSSL 1.0.2+ only):
+Generate EC key directly:
 
  openssl genpkey -algorithm EC -out eckey.pem \
 	-pkeyopt ec_paramgen_curve:P-384 \
 	-pkeyopt ec_param_enc:named_curve
+
+=head1 HISTORY
+
+The ability to use NIST curve names, and to generate an EC key directly,
+were added in OpenSSL 1.0.2.
 
 =cut
 

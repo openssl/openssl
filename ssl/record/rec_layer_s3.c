@@ -459,7 +459,7 @@ int ssl3_write_bytes(SSL *s, int type, const void *buf_, int len)
     tot = s->rlayer.wnum;
     s->rlayer.wnum = 0;
 
-    if (SSL_in_init(s) && !s->in_handshake) {
+    if (SSL_in_init(s) && !ossl_statem_get_in_handshake(s)) {
         i = s->handshake_func(s);
         if (i < 0)
             return (i);
@@ -779,7 +779,7 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
      * Some servers hang if iniatial client hello is larger than 256 bytes
      * and record version number > TLS 1.0
      */
-    if (s->state == SSL3_ST_CW_CLNT_HELLO_B
+    if (SSL_get_state(s) == TLS_ST_CW_CLNT_HELLO
         && !s->renegotiate && TLS1_get_version(s) > TLS1_VERSION)
         *(p++) = 0x1;
     else
@@ -1025,7 +1025,7 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
      * Now s->rlayer.handshake_fragment_len == 0 if type == SSL3_RT_HANDSHAKE.
      */
 
-    if (!s->in_handshake && SSL_in_init(s)) {
+    if (!ossl_statem_get_in_handshake(s) && SSL_in_init(s)) {
         /* type == SSL3_RT_APPLICATION_DATA */
         i = s->handshake_func(s);
         if (i < 0)
@@ -1383,10 +1383,11 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
     /*
      * Unexpected handshake message (Client Hello, or protocol violation)
      */
-    if ((s->rlayer.handshake_fragment_len >= 4) && !s->in_handshake) {
-        if (((s->state & SSL_ST_MASK) == SSL_ST_OK) &&
+    if ((s->rlayer.handshake_fragment_len >= 4)
+            && !ossl_statem_get_in_handshake(s)) {
+        if (SSL_is_init_finished(s) &&
             !(s->s3->flags & SSL3_FLAGS_NO_RENEGOTIATE_CIPHERS)) {
-            s->state = s->server ? SSL_ST_ACCEPT : SSL_ST_CONNECT;
+            ossl_statem_set_in_init(s, 1);
             s->renegotiate = 1;
             s->new_session = 1;
         }
@@ -1436,8 +1437,8 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
     case SSL3_RT_HANDSHAKE:
         /*
          * we already handled all of these, with the possible exception of
-         * SSL3_RT_HANDSHAKE when s->in_handshake is set, but that should not
-         * happen when type != rr->type
+         * SSL3_RT_HANDSHAKE when ossl_statem_get_in_handshake(s) is true, but
+         * that should not happen when type != rr->type
          */
         al = SSL_AD_UNEXPECTED_MESSAGE;
         SSLerr(SSL_F_SSL3_READ_BYTES, ERR_R_INTERNAL_ERROR);
@@ -1450,16 +1451,7 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
          * application data at this point (session renegotiation not yet
          * started), we will indulge it.
          */
-        if (s->s3->in_read_app_data &&
-            (s->s3->total_renegotiations != 0) &&
-            (((s->state & SSL_ST_CONNECT) &&
-              (s->state >= SSL3_ST_CW_CLNT_HELLO_A) &&
-              (s->state <= SSL3_ST_CR_SRVR_HELLO_A)
-             ) || ((s->state & SSL_ST_ACCEPT) &&
-                   (s->state <= SSL3_ST_SW_HELLO_REQ_A) &&
-                   (s->state >= SSL3_ST_SR_CLNT_HELLO_A)
-             )
-            )) {
+        if (ossl_statem_app_data_allowed(s)) {
             s->s3->in_read_app_data = 2;
             return (-1);
         } else {

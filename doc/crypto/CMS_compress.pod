@@ -67,7 +67,6 @@ L<ERR_get_error(3)>, L<CMS_uncompress(3)>
 
 =head1 HISTORY
 
-CMS_compress() was added to OpenSSL 0.9.8
-The B<CMS_STREAM> flag was first supported in OpenSSL 1.0.0.
+The B<CMS_STREAM> flag was added in OpenSSL 1.0.0.
 
 =cut

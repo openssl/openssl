@@ -73,8 +73,4 @@ RSA_generate_key() goes into an infinite loop for illegal input values.
 L<ERR_get_error(3)>, L<rand(3)>, L<rsa(3)>,
 L<RSA_free(3)>, L<BN_generate_prime(3)>
 
-=head1 HISTORY
-
-The B<cb_arg> argument was added in SSLeay 0.9.0.
-
 =cut

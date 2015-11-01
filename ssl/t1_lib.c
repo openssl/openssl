@@ -3756,7 +3756,7 @@ int tls1_heartbeat(SSL *s)
     }
 
     /* ...and no handshake in progress. */
-    if (SSL_in_init(s) || s->in_handshake) {
+    if (SSL_in_init(s) || ossl_statem_get_in_handshake(s)) {
         SSLerr(SSL_F_TLS1_HEARTBEAT, SSL_R_UNEXPECTED_MESSAGE);
         return -1;
     }

@@ -22,8 +22,4 @@ described in the L<d2i_X509(3)> manual page.
 
 L<d2i_X509(3)>
 
-=head1 HISTORY
-
-These functions were first added to OpenSSL 0.9.8
-
 =cut
