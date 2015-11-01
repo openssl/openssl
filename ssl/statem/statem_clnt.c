@@ -2775,6 +2775,10 @@ psk_err:
         unsigned char shared_ukm[32], tmp[256];
         EVP_MD_CTX *ukm_hash;
         EVP_PKEY *pub_key;
+        int dgst_nid = NID_id_GostR3411_94;
+        if ((s->s3->tmp.new_cipher->algorithm_auth & SSL_aGOST12) != 0)
+            dgst_nid = NID_id_GostR3411_2012_256;
+
 
         pmslen = 32;
         pms = OPENSSL_malloc(pmslen);
@@ -2795,8 +2799,7 @@ psk_err:
                                     X509_get_pubkey(peer_cert), NULL);
         /*
          * If we have send a certificate, and certificate key
-         *
-         * * parameters match those of server certificate, use
+         * parameters match those of server certificate, use
          * certificate key for key exchange
          */
 
@@ -2829,7 +2832,7 @@ psk_err:
          */
         ukm_hash = EVP_MD_CTX_create();
         EVP_DigestInit(ukm_hash,
-                       EVP_get_digestbynid(NID_id_GostR3411_94));
+                       EVP_get_digestbynid(dgst_nid));
         EVP_DigestUpdate(ukm_hash, s->s3->client_random,
                          SSL3_RANDOM_SIZE);
         EVP_DigestUpdate(ukm_hash, s->s3->server_random,
