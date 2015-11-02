@@ -1379,7 +1379,7 @@ int s_client_main(int argc, char **argv)
             goto end;
         }
 
-        (void)BIO_ctrl_set_connected(sbio, 1, &peer);
+        (void)BIO_ctrl_set_connected(sbio, &peer);
 
         if (enable_timeouts) {
             timeout.tv_sec = 0;
