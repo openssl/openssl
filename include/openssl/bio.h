@@ -496,7 +496,7 @@ struct bio_dgram_sctp_prinfo {
 # define BIO_set_fp(b,fp,c)      BIO_ctrl(b,BIO_C_SET_FILE_PTR,c,(char *)fp)
 # define BIO_get_fp(b,fpp)       BIO_ctrl(b,BIO_C_GET_FILE_PTR,0,(char *)fpp)
 
-/* BIO_s_datagram(), BIO_s_fd() and BIO_s_file() */
+/* BIO_s_fd() and BIO_s_file() */
 # define BIO_seek(b,ofs) (int)BIO_ctrl(b,BIO_C_FILE_SEEK,ofs,NULL)
 # define BIO_tell(b)     (int)BIO_ctrl(b,BIO_C_FILE_TELL,0,NULL)
 
