@@ -1,4 +1,3 @@
-/* crypto/rsa/rsa_eay.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -116,29 +115,29 @@
 
 #ifndef RSA_NULL
 
-static int RSA_eay_public_encrypt(int flen, const unsigned char *from,
+static int rsa_ossl_public_encrypt(int flen, const unsigned char *from,
                                   unsigned char *to, RSA *rsa, int padding);
-static int RSA_eay_private_encrypt(int flen, const unsigned char *from,
+static int rsa_ossl_private_encrypt(int flen, const unsigned char *from,
                                    unsigned char *to, RSA *rsa, int padding);
-static int RSA_eay_public_decrypt(int flen, const unsigned char *from,
+static int rsa_ossl_public_decrypt(int flen, const unsigned char *from,
                                   unsigned char *to, RSA *rsa, int padding);
-static int RSA_eay_private_decrypt(int flen, const unsigned char *from,
+static int rsa_ossl_private_decrypt(int flen, const unsigned char *from,
                                    unsigned char *to, RSA *rsa, int padding);
-static int RSA_eay_mod_exp(BIGNUM *r0, const BIGNUM *i, RSA *rsa,
+static int rsa_ossl_mod_exp(BIGNUM *r0, const BIGNUM *i, RSA *rsa,
                            BN_CTX *ctx);
-static int RSA_eay_init(RSA *rsa);
-static int RSA_eay_finish(RSA *rsa);
-static RSA_METHOD rsa_pkcs1_eay_meth = {
-    "Eric Young's PKCS#1 RSA",
-    RSA_eay_public_encrypt,
-    RSA_eay_public_decrypt,     /* signature verification */
-    RSA_eay_private_encrypt,    /* signing */
-    RSA_eay_private_decrypt,
-    RSA_eay_mod_exp,
+static int rsa_ossl_init(RSA *rsa);
+static int rsa_ossl_finish(RSA *rsa);
+static RSA_METHOD rsa_pkcs1_ossl_meth = {
+    "OpenSSL PKCS#1 RSA (from Eric Young)",
+    rsa_ossl_public_encrypt,
+    rsa_ossl_public_decrypt,     /* signature verification */
+    rsa_ossl_private_encrypt,    /* signing */
+    rsa_ossl_private_decrypt,
+    rsa_ossl_mod_exp,
     BN_mod_exp_mont,            /* XXX probably we should not use Montgomery
                                  * if e == 3 */
-    RSA_eay_init,
-    RSA_eay_finish,
+    rsa_ossl_init,
+    rsa_ossl_finish,
     RSA_FLAG_FIPS_METHOD,       /* flags */
     NULL,
     0,                          /* rsa_sign */
@@ -148,10 +147,10 @@ static RSA_METHOD rsa_pkcs1_eay_meth = {
 
 const RSA_METHOD *RSA_PKCS1_OpenSSL(void)
 {
-    return (&rsa_pkcs1_eay_meth);
+    return &rsa_pkcs1_ossl_meth;
 }
 
-static int RSA_eay_public_encrypt(int flen, const unsigned char *from,
+static int rsa_ossl_public_encrypt(int flen, const unsigned char *from,
                                   unsigned char *to, RSA *rsa, int padding)
 {
     BIGNUM *f, *ret;
@@ -160,19 +159,19 @@ static int RSA_eay_public_encrypt(int flen, const unsigned char *from,
     BN_CTX *ctx = NULL;
 
     if (BN_num_bits(rsa->n) > OPENSSL_RSA_MAX_MODULUS_BITS) {
-        RSAerr(RSA_F_RSA_EAY_PUBLIC_ENCRYPT, RSA_R_MODULUS_TOO_LARGE);
+        RSAerr(RSA_F_RSA_OSSL_PUBLIC_ENCRYPT, RSA_R_MODULUS_TOO_LARGE);
         return -1;
     }
 
     if (BN_ucmp(rsa->n, rsa->e) <= 0) {
-        RSAerr(RSA_F_RSA_EAY_PUBLIC_ENCRYPT, RSA_R_BAD_E_VALUE);
+        RSAerr(RSA_F_RSA_OSSL_PUBLIC_ENCRYPT, RSA_R_BAD_E_VALUE);
         return -1;
     }
 
     /* for large moduli, enforce exponent limit */
     if (BN_num_bits(rsa->n) > OPENSSL_RSA_SMALL_MODULUS_BITS) {
         if (BN_num_bits(rsa->e) > OPENSSL_RSA_MAX_PUBEXP_BITS) {
-            RSAerr(RSA_F_RSA_EAY_PUBLIC_ENCRYPT, RSA_R_BAD_E_VALUE);
+            RSAerr(RSA_F_RSA_OSSL_PUBLIC_ENCRYPT, RSA_R_BAD_E_VALUE);
             return -1;
         }
     }
@@ -185,7 +184,7 @@ static int RSA_eay_public_encrypt(int flen, const unsigned char *from,
     num = BN_num_bytes(rsa->n);
     buf = OPENSSL_malloc(num);
     if (f == NULL || ret == NULL || buf == NULL) {
-        RSAerr(RSA_F_RSA_EAY_PUBLIC_ENCRYPT, ERR_R_MALLOC_FAILURE);
+        RSAerr(RSA_F_RSA_OSSL_PUBLIC_ENCRYPT, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
@@ -203,7 +202,7 @@ static int RSA_eay_public_encrypt(int flen, const unsigned char *from,
         i = RSA_padding_add_none(buf, num, from, flen);
         break;
     default:
-        RSAerr(RSA_F_RSA_EAY_PUBLIC_ENCRYPT, RSA_R_UNKNOWN_PADDING_TYPE);
+        RSAerr(RSA_F_RSA_OSSL_PUBLIC_ENCRYPT, RSA_R_UNKNOWN_PADDING_TYPE);
         goto err;
     }
     if (i <= 0)
@@ -214,7 +213,7 @@ static int RSA_eay_public_encrypt(int flen, const unsigned char *from,
 
     if (BN_ucmp(f, rsa->n) >= 0) {
         /* usually the padding functions would catch this */
-        RSAerr(RSA_F_RSA_EAY_PUBLIC_ENCRYPT,
+        RSAerr(RSA_F_RSA_OSSL_PUBLIC_ENCRYPT,
                RSA_R_DATA_TOO_LARGE_FOR_MODULUS);
         goto err;
     }
@@ -338,7 +337,7 @@ static int rsa_blinding_invert(BN_BLINDING *b, BIGNUM *f, BIGNUM *unblind,
 }
 
 /* signing */
-static int RSA_eay_private_encrypt(int flen, const unsigned char *from,
+static int rsa_ossl_private_encrypt(int flen, const unsigned char *from,
                                    unsigned char *to, RSA *rsa, int padding)
 {
     BIGNUM *f, *ret, *res;
@@ -362,7 +361,7 @@ static int RSA_eay_private_encrypt(int flen, const unsigned char *from,
     num = BN_num_bytes(rsa->n);
     buf = OPENSSL_malloc(num);
     if (f == NULL || ret == NULL || buf == NULL) {
-        RSAerr(RSA_F_RSA_EAY_PRIVATE_ENCRYPT, ERR_R_MALLOC_FAILURE);
+        RSAerr(RSA_F_RSA_OSSL_PRIVATE_ENCRYPT, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
@@ -378,7 +377,7 @@ static int RSA_eay_private_encrypt(int flen, const unsigned char *from,
         break;
     case RSA_SSLV23_PADDING:
     default:
-        RSAerr(RSA_F_RSA_EAY_PRIVATE_ENCRYPT, RSA_R_UNKNOWN_PADDING_TYPE);
+        RSAerr(RSA_F_RSA_OSSL_PRIVATE_ENCRYPT, RSA_R_UNKNOWN_PADDING_TYPE);
         goto err;
     }
     if (i <= 0)
@@ -389,7 +388,7 @@ static int RSA_eay_private_encrypt(int flen, const unsigned char *from,
 
     if (BN_ucmp(f, rsa->n) >= 0) {
         /* usually the padding functions would catch this */
-        RSAerr(RSA_F_RSA_EAY_PRIVATE_ENCRYPT,
+        RSAerr(RSA_F_RSA_OSSL_PRIVATE_ENCRYPT,
                RSA_R_DATA_TOO_LARGE_FOR_MODULUS);
         goto err;
     }
@@ -397,14 +396,14 @@ static int RSA_eay_private_encrypt(int flen, const unsigned char *from,
     if (!(rsa->flags & RSA_FLAG_NO_BLINDING)) {
         blinding = rsa_get_blinding(rsa, &local_blinding, ctx);
         if (blinding == NULL) {
-            RSAerr(RSA_F_RSA_EAY_PRIVATE_ENCRYPT, ERR_R_INTERNAL_ERROR);
+            RSAerr(RSA_F_RSA_OSSL_PRIVATE_ENCRYPT, ERR_R_INTERNAL_ERROR);
             goto err;
         }
     }
 
     if (blinding != NULL) {
         if (!local_blinding && ((unblind = BN_CTX_get(ctx)) == NULL)) {
-            RSAerr(RSA_F_RSA_EAY_PRIVATE_ENCRYPT, ERR_R_MALLOC_FAILURE);
+            RSAerr(RSA_F_RSA_OSSL_PRIVATE_ENCRYPT, ERR_R_MALLOC_FAILURE);
             goto err;
         }
         if (!rsa_blinding_convert(blinding, f, unblind, ctx))
@@ -423,7 +422,7 @@ static int RSA_eay_private_encrypt(int flen, const unsigned char *from,
         if (!(rsa->flags & RSA_FLAG_NO_CONSTTIME)) {
             local_d = d = BN_new();
             if (d == NULL) {
-                RSAerr(RSA_F_RSA_EAY_PRIVATE_ENCRYPT, ERR_R_MALLOC_FAILURE);
+                RSAerr(RSA_F_RSA_OSSL_PRIVATE_ENCRYPT, ERR_R_MALLOC_FAILURE);
                 goto err;
             }
             BN_with_flags(d, rsa->d, BN_FLG_CONSTTIME);
@@ -476,7 +475,7 @@ static int RSA_eay_private_encrypt(int flen, const unsigned char *from,
     return (r);
 }
 
-static int RSA_eay_private_decrypt(int flen, const unsigned char *from,
+static int rsa_ossl_private_decrypt(int flen, const unsigned char *from,
                                    unsigned char *to, RSA *rsa, int padding)
 {
     BIGNUM *f, *ret;
@@ -501,7 +500,7 @@ static int RSA_eay_private_decrypt(int flen, const unsigned char *from,
     num = BN_num_bytes(rsa->n);
     buf = OPENSSL_malloc(num);
     if (f == NULL || ret == NULL || buf == NULL) {
-        RSAerr(RSA_F_RSA_EAY_PRIVATE_DECRYPT, ERR_R_MALLOC_FAILURE);
+        RSAerr(RSA_F_RSA_OSSL_PRIVATE_DECRYPT, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
@@ -510,7 +509,7 @@ static int RSA_eay_private_decrypt(int flen, const unsigned char *from,
      * top '0' bytes
      */
     if (flen > num) {
-        RSAerr(RSA_F_RSA_EAY_PRIVATE_DECRYPT,
+        RSAerr(RSA_F_RSA_OSSL_PRIVATE_DECRYPT,
                RSA_R_DATA_GREATER_THAN_MOD_LEN);
         goto err;
     }
@@ -520,7 +519,7 @@ static int RSA_eay_private_decrypt(int flen, const unsigned char *from,
         goto err;
 
     if (BN_ucmp(f, rsa->n) >= 0) {
-        RSAerr(RSA_F_RSA_EAY_PRIVATE_DECRYPT,
+        RSAerr(RSA_F_RSA_OSSL_PRIVATE_DECRYPT,
                RSA_R_DATA_TOO_LARGE_FOR_MODULUS);
         goto err;
     }
@@ -528,14 +527,14 @@ static int RSA_eay_private_decrypt(int flen, const unsigned char *from,
     if (!(rsa->flags & RSA_FLAG_NO_BLINDING)) {
         blinding = rsa_get_blinding(rsa, &local_blinding, ctx);
         if (blinding == NULL) {
-            RSAerr(RSA_F_RSA_EAY_PRIVATE_DECRYPT, ERR_R_INTERNAL_ERROR);
+            RSAerr(RSA_F_RSA_OSSL_PRIVATE_DECRYPT, ERR_R_INTERNAL_ERROR);
             goto err;
         }
     }
 
     if (blinding != NULL) {
         if (!local_blinding && ((unblind = BN_CTX_get(ctx)) == NULL)) {
-            RSAerr(RSA_F_RSA_EAY_PRIVATE_DECRYPT, ERR_R_MALLOC_FAILURE);
+            RSAerr(RSA_F_RSA_OSSL_PRIVATE_DECRYPT, ERR_R_MALLOC_FAILURE);
             goto err;
         }
         if (!rsa_blinding_convert(blinding, f, unblind, ctx))
@@ -555,7 +554,7 @@ static int RSA_eay_private_decrypt(int flen, const unsigned char *from,
         if (!(rsa->flags & RSA_FLAG_NO_CONSTTIME)) {
             local_d = d = BN_new();
             if (d == NULL) {
-                RSAerr(RSA_F_RSA_EAY_PRIVATE_DECRYPT, ERR_R_MALLOC_FAILURE);
+                RSAerr(RSA_F_RSA_OSSL_PRIVATE_DECRYPT, ERR_R_MALLOC_FAILURE);
                 goto err;
             }
             BN_with_flags(d, rsa->d, BN_FLG_CONSTTIME);
@@ -597,11 +596,11 @@ static int RSA_eay_private_decrypt(int flen, const unsigned char *from,
         r = RSA_padding_check_none(to, num, buf, j, num);
         break;
     default:
-        RSAerr(RSA_F_RSA_EAY_PRIVATE_DECRYPT, RSA_R_UNKNOWN_PADDING_TYPE);
+        RSAerr(RSA_F_RSA_OSSL_PRIVATE_DECRYPT, RSA_R_UNKNOWN_PADDING_TYPE);
         goto err;
     }
     if (r < 0)
-        RSAerr(RSA_F_RSA_EAY_PRIVATE_DECRYPT, RSA_R_PADDING_CHECK_FAILED);
+        RSAerr(RSA_F_RSA_OSSL_PRIVATE_DECRYPT, RSA_R_PADDING_CHECK_FAILED);
 
  err:
     if (ctx != NULL)
@@ -612,7 +611,7 @@ static int RSA_eay_private_decrypt(int flen, const unsigned char *from,
 }
 
 /* signature verification */
-static int RSA_eay_public_decrypt(int flen, const unsigned char *from,
+static int rsa_ossl_public_decrypt(int flen, const unsigned char *from,
                                   unsigned char *to, RSA *rsa, int padding)
 {
     BIGNUM *f, *ret;
@@ -622,19 +621,19 @@ static int RSA_eay_public_decrypt(int flen, const unsigned char *from,
     BN_CTX *ctx = NULL;
 
     if (BN_num_bits(rsa->n) > OPENSSL_RSA_MAX_MODULUS_BITS) {
-        RSAerr(RSA_F_RSA_EAY_PUBLIC_DECRYPT, RSA_R_MODULUS_TOO_LARGE);
+        RSAerr(RSA_F_RSA_OSSL_PUBLIC_DECRYPT, RSA_R_MODULUS_TOO_LARGE);
         return -1;
     }
 
     if (BN_ucmp(rsa->n, rsa->e) <= 0) {
-        RSAerr(RSA_F_RSA_EAY_PUBLIC_DECRYPT, RSA_R_BAD_E_VALUE);
+        RSAerr(RSA_F_RSA_OSSL_PUBLIC_DECRYPT, RSA_R_BAD_E_VALUE);
         return -1;
     }
 
     /* for large moduli, enforce exponent limit */
     if (BN_num_bits(rsa->n) > OPENSSL_RSA_SMALL_MODULUS_BITS) {
         if (BN_num_bits(rsa->e) > OPENSSL_RSA_MAX_PUBEXP_BITS) {
-            RSAerr(RSA_F_RSA_EAY_PUBLIC_DECRYPT, RSA_R_BAD_E_VALUE);
+            RSAerr(RSA_F_RSA_OSSL_PUBLIC_DECRYPT, RSA_R_BAD_E_VALUE);
             return -1;
         }
     }
@@ -647,7 +646,7 @@ static int RSA_eay_public_decrypt(int flen, const unsigned char *from,
     num = BN_num_bytes(rsa->n);
     buf = OPENSSL_malloc(num);
     if (f == NULL || ret == NULL || buf == NULL) {
-        RSAerr(RSA_F_RSA_EAY_PUBLIC_DECRYPT, ERR_R_MALLOC_FAILURE);
+        RSAerr(RSA_F_RSA_OSSL_PUBLIC_DECRYPT, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
@@ -656,7 +655,7 @@ static int RSA_eay_public_decrypt(int flen, const unsigned char *from,
      * top '0' bytes
      */
     if (flen > num) {
-        RSAerr(RSA_F_RSA_EAY_PUBLIC_DECRYPT, RSA_R_DATA_GREATER_THAN_MOD_LEN);
+        RSAerr(RSA_F_RSA_OSSL_PUBLIC_DECRYPT, RSA_R_DATA_GREATER_THAN_MOD_LEN);
         goto err;
     }
 
@@ -664,7 +663,7 @@ static int RSA_eay_public_decrypt(int flen, const unsigned char *from,
         goto err;
 
     if (BN_ucmp(f, rsa->n) >= 0) {
-        RSAerr(RSA_F_RSA_EAY_PUBLIC_DECRYPT,
+        RSAerr(RSA_F_RSA_OSSL_PUBLIC_DECRYPT,
                RSA_R_DATA_TOO_LARGE_FOR_MODULUS);
         goto err;
     }
@@ -696,11 +695,11 @@ static int RSA_eay_public_decrypt(int flen, const unsigned char *from,
         r = RSA_padding_check_none(to, num, buf, i, num);
         break;
     default:
-        RSAerr(RSA_F_RSA_EAY_PUBLIC_DECRYPT, RSA_R_UNKNOWN_PADDING_TYPE);
+        RSAerr(RSA_F_RSA_OSSL_PUBLIC_DECRYPT, RSA_R_UNKNOWN_PADDING_TYPE);
         goto err;
     }
     if (r < 0)
-        RSAerr(RSA_F_RSA_EAY_PUBLIC_DECRYPT, RSA_R_PADDING_CHECK_FAILED);
+        RSAerr(RSA_F_RSA_OSSL_PUBLIC_DECRYPT, RSA_R_PADDING_CHECK_FAILED);
 
  err:
     if (ctx != NULL)
@@ -710,7 +709,7 @@ static int RSA_eay_public_decrypt(int flen, const unsigned char *from,
     return (r);
 }
 
-static int RSA_eay_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
+static int rsa_ossl_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
 {
     BIGNUM *r1, *m1, *vrfy;
     BIGNUM *local_dmp1, *local_dmq1, *local_c, *local_r1;
@@ -905,13 +904,13 @@ static int RSA_eay_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
     return (ret);
 }
 
-static int RSA_eay_init(RSA *rsa)
+static int rsa_ossl_init(RSA *rsa)
 {
     rsa->flags |= RSA_FLAG_CACHE_PUBLIC | RSA_FLAG_CACHE_PRIVATE;
     return (1);
 }
 
-static int RSA_eay_finish(RSA *rsa)
+static int rsa_ossl_finish(RSA *rsa)
 {
     BN_MONT_CTX_free(rsa->_method_mod_n);
     BN_MONT_CTX_free(rsa->_method_mod_p);
