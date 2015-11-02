@@ -589,8 +589,8 @@ int BIO_ctrl_reset_read_request(BIO *b);
 /* ctrl macros for dgram */
 # define BIO_ctrl_dgram_connect(b,peer)  \
                      (int)BIO_ctrl(b,BIO_CTRL_DGRAM_CONNECT,0, (char *)peer)
-# define BIO_ctrl_set_connected(b, state, peer) \
-         (int)BIO_ctrl(b, BIO_CTRL_DGRAM_SET_CONNECTED, state, (char *)peer)
+# define BIO_ctrl_set_connected(b,peer) \
+         (int)BIO_ctrl(b, BIO_CTRL_DGRAM_SET_CONNECTED, 0, (char *)peer)
 # define BIO_dgram_recv_timedout(b) \
          (int)BIO_ctrl(b, BIO_CTRL_DGRAM_GET_RECV_TIMER_EXP, 0, NULL)
 # define BIO_dgram_send_timedout(b) \
