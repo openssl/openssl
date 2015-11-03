@@ -299,13 +299,12 @@ int dtls1_connect(SSL *s)
 #endif
 
         case SSL3_ST_CW_CLNT_HELLO_A:
-        case SSL3_ST_CW_CLNT_HELLO_B:
-
             s->shutdown = 0;
 
             /* every DTLS ClientHello resets Finished MAC */
             ssl3_init_finished_mac(s);
 
+        case SSL3_ST_CW_CLNT_HELLO_B:
             dtls1_start_timer(s);
             ret = dtls1_client_hello(s);
             if (ret <= 0)
