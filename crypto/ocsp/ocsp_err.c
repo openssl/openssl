@@ -1,6 +1,6 @@
 /* crypto/ocsp/ocsp_err.c */
 /* ====================================================================
- * Copyright (c) 1999-2006 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2015 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -71,23 +71,23 @@
 
 static ERR_STRING_DATA OCSP_str_functs[] = {
     {ERR_FUNC(OCSP_F_ASN1_STRING_ENCODE), "ASN1_STRING_encode"},
-    {ERR_FUNC(OCSP_F_D2I_OCSP_NONCE), "D2I_OCSP_NONCE"},
+    {ERR_FUNC(OCSP_F_D2I_OCSP_NONCE), "d2i_ocsp_nonce"},
     {ERR_FUNC(OCSP_F_OCSP_BASIC_ADD1_STATUS), "OCSP_basic_add1_status"},
     {ERR_FUNC(OCSP_F_OCSP_BASIC_SIGN), "OCSP_basic_sign"},
     {ERR_FUNC(OCSP_F_OCSP_BASIC_VERIFY), "OCSP_basic_verify"},
     {ERR_FUNC(OCSP_F_OCSP_CERT_ID_NEW), "OCSP_cert_id_new"},
-    {ERR_FUNC(OCSP_F_OCSP_CHECK_DELEGATED), "OCSP_CHECK_DELEGATED"},
-    {ERR_FUNC(OCSP_F_OCSP_CHECK_IDS), "OCSP_CHECK_IDS"},
-    {ERR_FUNC(OCSP_F_OCSP_CHECK_ISSUER), "OCSP_CHECK_ISSUER"},
+    {ERR_FUNC(OCSP_F_OCSP_CHECK_DELEGATED), "ocsp_check_delegated"},
+    {ERR_FUNC(OCSP_F_OCSP_CHECK_IDS), "ocsp_check_ids"},
+    {ERR_FUNC(OCSP_F_OCSP_CHECK_ISSUER), "ocsp_check_issuer"},
     {ERR_FUNC(OCSP_F_OCSP_CHECK_VALIDITY), "OCSP_check_validity"},
-    {ERR_FUNC(OCSP_F_OCSP_MATCH_ISSUERID), "OCSP_MATCH_ISSUERID"},
+    {ERR_FUNC(OCSP_F_OCSP_MATCH_ISSUERID), "ocsp_match_issuerid"},
     {ERR_FUNC(OCSP_F_OCSP_PARSE_URL), "OCSP_parse_url"},
     {ERR_FUNC(OCSP_F_OCSP_REQUEST_SIGN), "OCSP_request_sign"},
     {ERR_FUNC(OCSP_F_OCSP_REQUEST_VERIFY), "OCSP_request_verify"},
     {ERR_FUNC(OCSP_F_OCSP_RESPONSE_GET1_BASIC), "OCSP_response_get1_basic"},
     {ERR_FUNC(OCSP_F_OCSP_SENDREQ_BIO), "OCSP_sendreq_bio"},
     {ERR_FUNC(OCSP_F_OCSP_SENDREQ_NBIO), "OCSP_sendreq_nbio"},
-    {ERR_FUNC(OCSP_F_PARSE_HTTP_LINE1), "PARSE_HTTP_LINE1"},
+    {ERR_FUNC(OCSP_F_PARSE_HTTP_LINE1), "parse_http_line1"},
     {ERR_FUNC(OCSP_F_REQUEST_VERIFY), "REQUEST_VERIFY"},
     {0, NULL}
 };

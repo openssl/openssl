@@ -1,6 +1,6 @@
 /* crypto/store/str_err.c */
 /* ====================================================================
- * Copyright (c) 1999-2006 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2015 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -70,13 +70,13 @@
 # define ERR_REASON(reason) ERR_PACK(ERR_LIB_STORE,0,reason)
 
 static ERR_STRING_DATA STORE_str_functs[] = {
-    {ERR_FUNC(STORE_F_MEM_DELETE), "MEM_DELETE"},
-    {ERR_FUNC(STORE_F_MEM_GENERATE), "MEM_GENERATE"},
-    {ERR_FUNC(STORE_F_MEM_LIST_END), "MEM_LIST_END"},
-    {ERR_FUNC(STORE_F_MEM_LIST_NEXT), "MEM_LIST_NEXT"},
-    {ERR_FUNC(STORE_F_MEM_LIST_START), "MEM_LIST_START"},
-    {ERR_FUNC(STORE_F_MEM_MODIFY), "MEM_MODIFY"},
-    {ERR_FUNC(STORE_F_MEM_STORE), "MEM_STORE"},
+    {ERR_FUNC(STORE_F_MEM_DELETE), "mem_delete"},
+    {ERR_FUNC(STORE_F_MEM_GENERATE), "mem_generate"},
+    {ERR_FUNC(STORE_F_MEM_LIST_END), "mem_list_end"},
+    {ERR_FUNC(STORE_F_MEM_LIST_NEXT), "mem_list_next"},
+    {ERR_FUNC(STORE_F_MEM_LIST_START), "mem_list_start"},
+    {ERR_FUNC(STORE_F_MEM_MODIFY), "mem_modify"},
+    {ERR_FUNC(STORE_F_MEM_STORE), "mem_store"},
     {ERR_FUNC(STORE_F_STORE_ATTR_INFO_GET0_CSTR),
      "STORE_ATTR_INFO_get0_cstr"},
     {ERR_FUNC(STORE_F_STORE_ATTR_INFO_GET0_DN), "STORE_ATTR_INFO_get0_dn"},
@@ -98,7 +98,7 @@ static ERR_STRING_DATA STORE_str_functs[] = {
      "STORE_ATTR_INFO_set_number"},
     {ERR_FUNC(STORE_F_STORE_ATTR_INFO_SET_SHA1STR),
      "STORE_ATTR_INFO_set_sha1str"},
-    {ERR_FUNC(STORE_F_STORE_CERTIFICATE), "STORE_CERTIFICATE"},
+    {ERR_FUNC(STORE_F_STORE_CERTIFICATE), "STORE_store_certificate"},
     {ERR_FUNC(STORE_F_STORE_CTRL), "STORE_ctrl"},
     {ERR_FUNC(STORE_F_STORE_DELETE_ARBITRARY), "STORE_delete_arbitrary"},
     {ERR_FUNC(STORE_F_STORE_DELETE_CERTIFICATE), "STORE_delete_certificate"},
