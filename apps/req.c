@@ -57,6 +57,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <time.h>
 #include <string.h>
 #include "apps.h"
@@ -1136,22 +1137,23 @@ static int auto_info(X509_REQ *req, STACK_OF(CONF_VALUE) *dn_sk,
          */
         for (p = v->name; *p; p++)
 #ifndef CHARSET_EBCDIC
-            if ((*p == ':') || (*p == ',') || (*p == '.')) {
+            bool skipCharacters = ((*p == ':') || (*p == ',') || (*p == '.'));
 #else
-            if ((*p == os_toascii[':']) || (*p == os_toascii[','])
-                || (*p == os_toascii['.'])) {
+            bool skipCharacters = ((*p == os_toascii[':']) || (*p == os_toascii[','])
+                || (*p == os_toascii['.']));
 #endif
+            if (skipCharacters) {
                 p++;
                 if (*p)
                     type = p;
                 break;
             }
 #ifndef CHARSET_EBCDIC
-        if (*p == '+')
+        bool isPlusCharacter = (*p == '+');
 #else
-        if (*p == os_toascii['+'])
+        bool isPlusCharacter = (*p == os_toascii['+']);
 #endif
-        {
+        if (isPlusCharacter) {
             p++;
             mval = -1;
         } else
