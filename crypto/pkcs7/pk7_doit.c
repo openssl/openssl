@@ -656,6 +656,8 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
             bio = BIO_new_mem_buf(data_body->data, data_body->length);
         else {
             bio = BIO_new(BIO_s_mem());
+            if (bio == NULL)
+                goto err;
             BIO_set_mem_eof_return(bio, 0);
         }
         if (bio == NULL)
