@@ -139,11 +139,8 @@ $code.=<<___ if ($avx>1);
 	je	${func}_avx2
 ___
 $code.=<<___;
-	and	\$`1<<30`,%eax			# mask "Intel CPU" bit
-	and	\$`1<<28|1<<9`,%r10d		# mask AVX+SSSE3 bits
-	or	%eax,%r10d
-	cmp	\$`1<<28|1<<9|1<<30`,%r10d
-	je	${func}_avx
+	and	\$`1<<28`,%r10d			# check for AVX
+	jnz	${func}_avx
 	ud2
 ___
 						}
