@@ -615,11 +615,14 @@ int DTLSv1_listen(SSL *s, BIO_ADDR *client)
         if (!PACKET_forward(&pkt, 1)
             /* Save the sequence number: 64 bits, with top 2 bytes = epoch */
             || !PACKET_copy_bytes(&pkt, seq, SEQ_NUM_SIZE)
-            || !PACKET_get_length_prefixed_2(&pkt, &msgpkt)
-            || PACKET_remaining(&pkt) != 0) {
+            || !PACKET_get_length_prefixed_2(&pkt, &msgpkt)) {
             SSLerr(SSL_F_DTLSV1_LISTEN, SSL_R_LENGTH_MISMATCH);
             goto end;
         }
+        /*
+         * We allow data remaining at the end of the packet because there could
+         * be a second record (but we ignore it)
+         */
 
         /* This is an initial ClientHello so the epoch has to be 0 */
         if (seq[0] != 0 || seq[1] != 0) {
@@ -636,7 +639,7 @@ int DTLSv1_listen(SSL *s, BIO_ADDR *client)
             || !PACKET_get_net_2(&msgpkt, &msgseq)
             || !PACKET_get_net_3(&msgpkt, &fragoff)
             || !PACKET_get_net_3(&msgpkt, &fraglen)
-            || !PACKET_get_sub_packet(&msgpkt, &msgpayload, msglen)
+            || !PACKET_get_sub_packet(&msgpkt, &msgpayload, fraglen)
             || PACKET_remaining(&msgpkt) != 0) {
             SSLerr(SSL_F_DTLSV1_LISTEN, SSL_R_LENGTH_MISMATCH);
             goto end;
@@ -653,15 +656,22 @@ int DTLSv1_listen(SSL *s, BIO_ADDR *client)
             goto end;
         }
 
-        /* We don't support a fragmented ClientHello whilst listening */
-        if (fragoff != 0 || fraglen != msglen) {
+        /*
+         * We don't support fragment reassembly for ClientHellos whilst
+         * listening because that would require server side state (which is
+         * against the whole point of the ClientHello/HelloVerifyRequest
+         * mechanism). Instead we only look at the first ClientHello fragment
+         * and require that the cookie must be contained within it.
+         */
+        if (fragoff != 0 || fraglen > msglen) {
+            /* Non initial ClientHello fragment (or bad fragment) */
             SSLerr(SSL_F_DTLSV1_LISTEN, SSL_R_FRAGMENTED_CLIENT_HELLO);
             goto end;
         }
 
         if (s->msg_callback)
             s->msg_callback(0, s->version, SSL3_RT_HANDSHAKE, data,
-                            msglen + DTLS1_HM_HEADER_LENGTH, s,
+                            fraglen + DTLS1_HM_HEADER_LENGTH, s,
                             s->msg_callback_arg);
 
         if (!PACKET_get_net_2(&msgpayload, &clientvers)) {
@@ -681,6 +691,10 @@ int DTLSv1_listen(SSL *s, BIO_ADDR *client)
         if (!PACKET_forward(&msgpayload, SSL3_RANDOM_SIZE)
             || !PACKET_get_length_prefixed_1(&msgpayload, &session)
             || !PACKET_get_length_prefixed_1(&msgpayload, &cookiepkt)) {
+            /*
+             * Could be malformed or the cookie does not fit within the initial
+             * ClientHello fragment. Either way we can't handle it.
+             */
             SSLerr(SSL_F_DTLSV1_LISTEN, SSL_R_LENGTH_MISMATCH);
             goto end;
         }
