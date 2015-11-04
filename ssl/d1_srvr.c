@@ -131,12 +131,14 @@ static int dtls1_send_hello_verify_request(SSL *s);
 
 static const SSL_METHOD *dtls1_get_server_method(int ver)
 {
-    if (ver == DTLS1_VERSION)
-        return (DTLSv1_server_method());
+    if (ver == DTLS_ANY_VERSION)
+        return DTLS_server_method();
+    else if (ver == DTLS1_VERSION)
+        return DTLSv1_server_method();
     else if (ver == DTLS1_2_VERSION)
-        return (DTLSv1_2_server_method());
+        return DTLSv1_2_server_method();
     else
-        return (NULL);
+        return NULL;
 }
 
 IMPLEMENT_dtls1_meth_func(DTLS1_VERSION,
@@ -145,13 +147,13 @@ IMPLEMENT_dtls1_meth_func(DTLS1_VERSION,
                           ssl_undefined_function,
                           dtls1_get_server_method, DTLSv1_enc_data)
 
-    IMPLEMENT_dtls1_meth_func(DTLS1_2_VERSION,
+IMPLEMENT_dtls1_meth_func(DTLS1_2_VERSION,
                           DTLSv1_2_server_method,
                           dtls1_accept,
                           ssl_undefined_function,
                           dtls1_get_server_method, DTLSv1_2_enc_data)
 
-    IMPLEMENT_dtls1_meth_func(DTLS_ANY_VERSION,
+IMPLEMENT_dtls1_meth_func(DTLS_ANY_VERSION,
                           DTLS_server_method,
                           dtls1_accept,
                           ssl_undefined_function,
