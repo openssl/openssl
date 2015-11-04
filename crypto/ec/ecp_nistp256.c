@@ -2207,8 +2207,7 @@ int ec_GFp_nistp256_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
      */
     if (0 == EC_POINT_cmp(group, generator, group->generator, ctx)) {
         memcpy(pre->g_pre_comp, gmul, sizeof(pre->g_pre_comp));
-        ret = 1;
-        goto err;
+        goto done;
     }
     if ((!BN_to_felem(x_tmp, group->generator->X)) ||
         (!BN_to_felem(y_tmp, group->generator->Y)) ||
@@ -2295,6 +2294,7 @@ int ec_GFp_nistp256_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
     }
     make_points_affine(31, &(pre->g_pre_comp[0][1]), tmp_smallfelems);
 
+ done:
     SETPRECOMP(group, nistp256, pre);
     pre = NULL;
     ret = 1;
