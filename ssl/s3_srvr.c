@@ -2878,6 +2878,11 @@ int ssl3_get_client_key_exchange(SSL *s)
             pk = s->cert->pkeys[SSL_PKEY_GOST01].privatekey;
 
         pkey_ctx = EVP_PKEY_CTX_new(pk, NULL);
+        if (pkey_ctx == NULL) {
+            al = SSL_AD_INTERNAL_ERROR;
+            SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE, ERR_R_MALLOC_FAILURE);
+            goto f_err;
+        }
         EVP_PKEY_decrypt_init(pkey_ctx);
         /*
          * If client certificate is present and is of the same type, maybe
@@ -3122,6 +3127,11 @@ int ssl3_get_cert_verify(SSL *s)
         unsigned char signature[64];
         int idx;
         EVP_PKEY_CTX *pctx = EVP_PKEY_CTX_new(pkey, NULL);
+        if (pctx == NULL) {
+            al = SSL_AD_INTERNAL_ERROR;
+            SSLerr(SSL_F_SSL3_GET_CERT_VERIFY, ERR_R_MALLOC_FAILURE);
+            goto f_err;
+        }
         EVP_PKEY_verify_init(pctx);
         if (i != 64) {
             fprintf(stderr, "GOST signature length is %d", i);

@@ -2825,6 +2825,11 @@ int ssl3_send_client_key_exchange(SSL *s)
 
             pkey_ctx = EVP_PKEY_CTX_new(pub_key =
                                         X509_get_pubkey(peer_cert), NULL);
+            if (pkey_ctx == NULL) {
+                SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
+                       ERR_R_MALLOC_FAILURE);
+                goto err;
+            }
             /*
              * If we have send a certificate, and certificate key
              *
