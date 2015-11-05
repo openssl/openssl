@@ -58,6 +58,7 @@ package TLSProxy::ClientHello;
 use parent 'TLSProxy::Message';
 
 use constant {
+    EXT_STATUS_REQUEST => 5,
     EXT_ENCRYPT_THEN_MAC => 22,
     EXT_EXTENDED_MASTER_SECRET => 23,
     EXT_SESSION_TICKET => 35
