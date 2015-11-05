@@ -2081,6 +2081,9 @@ int ssl_check_serverhello_tlsext(SSL *s)
     }
 # endif
 
+    OPENSSL_free(s->tlsext_ocsp_resp);
+    s->tlsext_ocsp_resp = NULL;
+    s->tlsext_ocsp_resplen = -1;
     /*
      * If we've requested certificate status and we wont get one tell the
      * callback
@@ -2089,14 +2092,9 @@ int ssl_check_serverhello_tlsext(SSL *s)
         && s->ctx && s->ctx->tlsext_status_cb) {
         int r;
         /*
-         * Set resp to NULL, resplen to -1 so callback knows there is no
-         * response.
+         * Call callback with resp == NULL and resplen == -1 so callback
+         * knows there is no response
          */
-        if (s->tlsext_ocsp_resp) {
-            OPENSSL_free(s->tlsext_ocsp_resp);
-            s->tlsext_ocsp_resp = NULL;
-        }
-        s->tlsext_ocsp_resplen = -1;
         r = s->ctx->tlsext_status_cb(s, s->ctx->tlsext_status_arg);
         if (r == 0) {
             al = SSL_AD_BAD_CERTIFICATE_STATUS_RESPONSE;
