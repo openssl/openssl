@@ -3310,7 +3310,7 @@ static int tls12_sigalg_allowed(SSL *s, int op, const unsigned char *ptmp)
  * disabled.
  */
 
-void ssl_set_sig_mask(unsigned long *pmask_a, SSL *s, int op)
+void ssl_set_sig_mask(uint32_t *pmask_a, SSL *s, int op)
 {
     const unsigned char *sigalgs;
     size_t i, sigalgslen;

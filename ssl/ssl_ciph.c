@@ -173,7 +173,7 @@
 /* NB: make sure indices in these tables match values above */
 
 typedef struct {
-    unsigned long mask;
+    uint32_t mask;
     int nid;
 } ssl_cipher_table;
 
@@ -239,7 +239,7 @@ static const EVP_MD *ssl_digest_methods[SSL_MD_NUM_IDX] = {
 
 /* Utility function for table lookup */
 static int ssl_cipher_info_find(const ssl_cipher_table * table,
-                                size_t table_cnt, unsigned long mask)
+                                size_t table_cnt, uint32_t mask)
 {
     size_t i;
     for (i = 0; i < table_cnt; i++, table++) {
@@ -463,10 +463,10 @@ static int get_optional_pkey_id(const char *pkey_name)
 #endif
 
 /* masks of disabled algorithms */
-static unsigned long disabled_enc_mask;
-static unsigned long disabled_mac_mask;
-static unsigned long disabled_mkey_mask;
-static unsigned long disabled_auth_mask;
+static uint32_t disabled_enc_mask;
+static uint32_t disabled_mac_mask;
+static uint32_t disabled_mkey_mask;
+static uint32_t disabled_auth_mask;
 
 void ssl_load_ciphers(void)
 {
@@ -745,11 +745,11 @@ static void ll_append_head(CIPHER_ORDER **head, CIPHER_ORDER *curr,
 
 static void ssl_cipher_collect_ciphers(const SSL_METHOD *ssl_method,
                                        int num_of_ciphers,
-                                       unsigned long disabled_mkey,
-                                       unsigned long disabled_auth,
-                                       unsigned long disabled_enc,
-                                       unsigned long disabled_mac,
-                                       unsigned long disabled_ssl,
+                                       uint32_t disabled_mkey,
+                                       uint32_t disabled_auth,
+                                       uint32_t disabled_enc,
+                                       uint32_t disabled_mac,
+                                       uint32_t disabled_ssl,
                                        CIPHER_ORDER *co_list,
                                        CIPHER_ORDER **head_p,
                                        CIPHER_ORDER **tail_p)
@@ -813,21 +813,21 @@ static void ssl_cipher_collect_ciphers(const SSL_METHOD *ssl_method,
 
 static void ssl_cipher_collect_aliases(const SSL_CIPHER **ca_list,
                                        int num_of_group_aliases,
-                                       unsigned long disabled_mkey,
-                                       unsigned long disabled_auth,
-                                       unsigned long disabled_enc,
-                                       unsigned long disabled_mac,
-                                       unsigned long disabled_ssl,
+                                       uint32_t disabled_mkey,
+                                       uint32_t disabled_auth,
+                                       uint32_t disabled_enc,
+                                       uint32_t disabled_mac,
+                                       uint32_t disabled_ssl,
                                        CIPHER_ORDER *head)
 {
     CIPHER_ORDER *ciph_curr;
     const SSL_CIPHER **ca_curr;
     int i;
-    unsigned long mask_mkey = ~disabled_mkey;
-    unsigned long mask_auth = ~disabled_auth;
-    unsigned long mask_enc = ~disabled_enc;
-    unsigned long mask_mac = ~disabled_mac;
-    unsigned long mask_ssl = ~disabled_ssl;
+    uint32_t mask_mkey = ~disabled_mkey;
+    uint32_t mask_auth = ~disabled_auth;
+    uint32_t mask_enc = ~disabled_enc;
+    uint32_t mask_mac = ~disabled_mac;
+    uint32_t mask_ssl = ~disabled_ssl;
 
     /*
      * First, add the real ciphers as already collected
@@ -847,11 +847,11 @@ static void ssl_cipher_collect_aliases(const SSL_CIPHER **ca_list,
      * or represent a cipher strength value (will be added in any case because algorithms=0).
      */
     for (i = 0; i < num_of_group_aliases; i++) {
-        unsigned long algorithm_mkey = cipher_aliases[i].algorithm_mkey;
-        unsigned long algorithm_auth = cipher_aliases[i].algorithm_auth;
-        unsigned long algorithm_enc = cipher_aliases[i].algorithm_enc;
-        unsigned long algorithm_mac = cipher_aliases[i].algorithm_mac;
-        unsigned long algorithm_ssl = cipher_aliases[i].algorithm_ssl;
+        uint32_t algorithm_mkey = cipher_aliases[i].algorithm_mkey;
+        uint32_t algorithm_auth = cipher_aliases[i].algorithm_auth;
+        uint32_t algorithm_enc = cipher_aliases[i].algorithm_enc;
+        uint32_t algorithm_mac = cipher_aliases[i].algorithm_mac;
+        uint32_t algorithm_ssl = cipher_aliases[i].algorithm_ssl;
 
         if (algorithm_mkey)
             if ((algorithm_mkey & mask_mkey) == 0)
@@ -880,14 +880,11 @@ static void ssl_cipher_collect_aliases(const SSL_CIPHER **ca_list,
     *ca_curr = NULL;            /* end of list */
 }
 
-static void ssl_cipher_apply_rule(unsigned long cipher_id,
-                                  unsigned long alg_mkey,
-                                  unsigned long alg_auth,
-                                  unsigned long alg_enc,
-                                  unsigned long alg_mac,
-                                  unsigned long alg_ssl,
-                                  unsigned long algo_strength, int rule,
-                                  int strength_bits, CIPHER_ORDER **head_p,
+static void ssl_cipher_apply_rule(uint32_t cipher_id, uint32_t alg_mkey,
+                                  uint32_t alg_auth, uint32_t alg_enc,
+                                  uint32_t alg_mac, uint32_t alg_ssl,
+                                  uint32_t algo_strength, int rule,
+                                  int32_t strength_bits, CIPHER_ORDER **head_p,
                                   CIPHER_ORDER **tail_p)
 {
     CIPHER_ORDER *head, *tail, *curr, *next, *last;
@@ -1024,7 +1021,8 @@ static void ssl_cipher_apply_rule(unsigned long cipher_id,
 static int ssl_cipher_strength_sort(CIPHER_ORDER **head_p,
                                     CIPHER_ORDER **tail_p)
 {
-    int max_strength_bits, i, *number_uses;
+    int32_t max_strength_bits;
+    int i, *number_uses;
     CIPHER_ORDER *curr;
 
     /*
@@ -1073,11 +1071,10 @@ static int ssl_cipher_process_rulestr(const char *rule_str,
                                       CIPHER_ORDER **tail_p,
                                       const SSL_CIPHER **ca_list, CERT *c)
 {
-    unsigned long alg_mkey, alg_auth, alg_enc, alg_mac, alg_ssl,
-        algo_strength;
+    uint32_t alg_mkey, alg_auth, alg_enc, alg_mac, alg_ssl, algo_strength;
     const char *l, *buf;
     int j, multi, found, rule, retval, ok, buflen;
-    unsigned long cipher_id = 0;
+    uint32_t cipher_id = 0;
     char ch;
 
     retval = 1;
@@ -1409,7 +1406,7 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method, STACK
                                              const char *rule_str, CERT *c)
 {
     int ok, num_of_ciphers, num_of_alias_max, num_of_group_aliases;
-    unsigned long disabled_mkey, disabled_auth, disabled_enc, disabled_mac,
+    uint32_t disabled_mkey, disabled_auth, disabled_enc, disabled_mac,
         disabled_ssl;
     STACK_OF(SSL_CIPHER) *cipherstack, *tmp_cipher_list;
     const char *rule_p;
@@ -1607,7 +1604,7 @@ char *SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
     int is_export, pkl, kl;
     const char *ver, *exp_str;
     const char *kx, *au, *enc, *mac;
-    unsigned long alg_mkey, alg_auth, alg_enc, alg_mac, alg_ssl;
+    uint32_t alg_mkey, alg_auth, alg_enc, alg_mac, alg_ssl;
     static const char *format =
         "%-23s %s Kx=%-8s Au=%-4s Enc=%-9s Mac=%-4s%s\n";
 
@@ -1829,19 +1826,19 @@ const char *SSL_CIPHER_get_name(const SSL_CIPHER *c)
 }
 
 /* number of bits for symmetric cipher */
-int SSL_CIPHER_get_bits(const SSL_CIPHER *c, int *alg_bits)
+int32_t SSL_CIPHER_get_bits(const SSL_CIPHER *c, uint32_t *alg_bits)
 {
-    int ret = 0;
+    int32_t ret = 0;
 
     if (c != NULL) {
         if (alg_bits != NULL)
             *alg_bits = c->alg_bits;
         ret = c->strength_bits;
     }
-    return (ret);
+    return ret;
 }
 
-unsigned long SSL_CIPHER_get_id(const SSL_CIPHER *c)
+uint32_t SSL_CIPHER_get_id(const SSL_CIPHER *c)
 {
     return c->id;
 }
@@ -1970,7 +1967,7 @@ const char *SSL_COMP_get_name(const COMP_METHOD *comp)
 /* For a cipher return the index corresponding to the certificate type */
 int ssl_cipher_get_cert_index(const SSL_CIPHER *c)
 {
-    unsigned long alg_k, alg_a;
+    uint32_t alg_k, alg_a;
 
     alg_k = c->algorithm_mkey;
     alg_a = c->algorithm_auth;
