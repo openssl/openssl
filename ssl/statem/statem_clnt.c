@@ -303,12 +303,13 @@ int ossl_statem_client_read_transition(SSL *s, int mt)
         break;
 
     case TLS_ST_CR_CERT:
-        if (s->tlsext_status_expected) {
-            if (mt == SSL3_MT_CERTIFICATE_STATUS) {
-                st->hand_state = TLS_ST_CR_CERT_STATUS;
-                return 1;
-            }
-            return 0;
+        /*
+         * The CertificateStatus message is optional even if
+         * |tlsext_status_expected| is set
+         */
+        if (s->tlsext_status_expected && mt == SSL3_MT_CERTIFICATE_STATUS) {
+            st->hand_state = TLS_ST_CR_CERT_STATUS;
+            return 1;
         }
         /* Fall through */
 
@@ -2155,7 +2156,6 @@ MSG_PROCESS_RETURN tls_process_cert_status(SSL *s, PACKET *pkt)
         SSLerr(SSL_F_TLS_PROCESS_CERT_STATUS, SSL_R_LENGTH_MISMATCH);
         goto f_err;
     }
-    OPENSSL_free(s->tlsext_ocsp_resp);
     s->tlsext_ocsp_resp = OPENSSL_malloc(resplen);
     if (s->tlsext_ocsp_resp == NULL) {
         al = SSL_AD_INTERNAL_ERROR;
@@ -2168,20 +2168,6 @@ MSG_PROCESS_RETURN tls_process_cert_status(SSL *s, PACKET *pkt)
         goto f_err;
     }
     s->tlsext_ocsp_resplen = resplen;
-    if (s->ctx->tlsext_status_cb) {
-        int ret;
-        ret = s->ctx->tlsext_status_cb(s, s->ctx->tlsext_status_arg);
-        if (ret == 0) {
-            al = SSL_AD_BAD_CERTIFICATE_STATUS_RESPONSE;
-            SSLerr(SSL_F_TLS_PROCESS_CERT_STATUS, SSL_R_INVALID_STATUS_RESPONSE);
-            goto f_err;
-        }
-        if (ret < 0) {
-            al = SSL_AD_INTERNAL_ERROR;
-            SSLerr(SSL_F_TLS_PROCESS_CERT_STATUS, ERR_R_MALLOC_FAILURE);
-            goto f_err;
-        }
-    }
     return MSG_PROCESS_CONTINUE_READING;
  f_err:
     ssl3_send_alert(s, SSL3_AL_FATAL, al);
@@ -2218,6 +2204,28 @@ MSG_PROCESS_RETURN tls_process_server_done(SSL *s, PACKET *pkt)
         ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_HANDSHAKE_FAILURE);
         ossl_statem_set_error(s);
         return MSG_PROCESS_ERROR;
+    }
+
+    /*
+     * Call the ocsp status callback if needed. The |tlsext_ocsp_resp| and
+     * |tlsext_ocsp_resplen| values will be set if we actually received a status
+     * message, or NULL and -1 otherwise
+     */
+    if (s->tlsext_status_expected && s->ctx->tlsext_status_cb != NULL) {
+        int ret;
+        ret = s->ctx->tlsext_status_cb(s, s->ctx->tlsext_status_arg);
+        if (ret == 0) {
+            ssl3_send_alert(s, SSL3_AL_FATAL,
+                            SSL_AD_BAD_CERTIFICATE_STATUS_RESPONSE);
+            SSLerr(SSL_F_TLS_PROCESS_SERVER_DONE,
+                   SSL_R_INVALID_STATUS_RESPONSE);
+            return MSG_PROCESS_ERROR;
+        }
+        if (ret < 0) {
+            ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_INTERNAL_ERROR);
+            SSLerr(SSL_F_TLS_PROCESS_SERVER_DONE, ERR_R_MALLOC_FAILURE);
+            return MSG_PROCESS_ERROR;
+        }
     }
 
 #ifndef OPENSSL_NO_SCTP
