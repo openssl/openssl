@@ -1224,25 +1224,21 @@ long SSL_CTX_callback_ctrl(SSL_CTX *ctx, int cmd, void (*fp) (void))
 
 int ssl_cipher_id_cmp(const SSL_CIPHER *a, const SSL_CIPHER *b)
 {
-    long l;
-
-    l = a->id - b->id;
-    if (l == 0L)
-        return (0);
-    else
-        return ((l > 0) ? 1 : -1);
+    if (a->id > b->id)
+        return 1;
+    if (a->id < b->id)
+        return -1;
+    return 0;
 }
 
 int ssl_cipher_ptr_id_cmp(const SSL_CIPHER *const *ap,
                           const SSL_CIPHER *const *bp)
 {
-    long l;
-
-    l = (*ap)->id - (*bp)->id;
-    if (l == 0L)
-        return (0);
-    else
-        return ((l > 0) ? 1 : -1);
+    if ((*ap)->id > (*bp)->id)
+        return 1;
+    if ((*ap)->id < (*bp)->id)
+        return -1;
+    return 0;
 }
 
 /** return a STACK of the ciphers available for the SSL and in order of

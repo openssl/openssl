@@ -4763,9 +4763,9 @@ const SSL_CIPHER *ssl3_get_cipher_by_char(const unsigned char *p)
 {
     SSL_CIPHER c;
     const SSL_CIPHER *cp;
-    unsigned long id;
+    uint32_t id;
 
-    id = 0x03000000L | ((unsigned long)p[0] << 8L) | (unsigned long)p[1];
+    id = 0x03000000 | ((uint32_t)p[0] << 8L) | (uint32_t)p[1];
     c.id = id;
     cp = OBJ_bsearch_ssl_cipher_id(&c, ssl3_ciphers, SSL3_NUM_CIPHERS);
 #ifdef DEBUG_PRINT_UNKNOWN_CIPHERSUITES
@@ -4915,7 +4915,7 @@ int ssl3_get_req_cert_type(SSL *s, unsigned char *p)
 {
     int ret = 0;
     int nostrict = 1;
-    unsigned long alg_k, alg_a = 0;
+    uint32_t alg_k, alg_a = 0;
 
     /* If we have custom certificate types set, use them */
     if (s->cert->ctypes) {

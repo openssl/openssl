@@ -537,22 +537,22 @@
 #define TLS_CIPHER_LEN 2
 /* used to hold info on the particular ciphers used */
 struct ssl_cipher_st {
-    int valid;
-    const char *name;           /* text name */
-    unsigned long id;           /* id, 4 bytes, first is version */
+    uint32_t valid;
+    const char *name;        /* text name */
+    uint32_t id;             /* id, 4 bytes, first is version */
     /*
-     * changed in 0.9.9: these four used to be portions of a single value
+     * changed in 1.0.0: these four used to be portions of a single value
      * 'algorithms'
      */
-    unsigned long algorithm_mkey; /* key exchange algorithm */
-    unsigned long algorithm_auth; /* server authentication */
-    unsigned long algorithm_enc; /* symmetric encryption */
-    unsigned long algorithm_mac; /* symmetric authentication */
-    unsigned long algorithm_ssl; /* (major) protocol version */
-    unsigned long algo_strength; /* strength and export flags */
-    unsigned long algorithm2;   /* Extra flags */
-    int strength_bits;          /* Number of bits really used */
-    int alg_bits;               /* Number of bits for algorithm */
+    uint32_t algorithm_mkey; /* key exchange algorithm */
+    uint32_t algorithm_auth; /* server authentication */
+    uint32_t algorithm_enc;  /* symmetric encryption */
+    uint32_t algorithm_mac;  /* symmetric authentication */
+    uint32_t algorithm_ssl;  /* (major) protocol version */
+    uint32_t algo_strength;  /* strength and export flags */
+    uint32_t algorithm2;     /* Extra flags */
+    int32_t strength_bits;   /* Number of bits really used */
+    uint32_t alg_bits;       /* Number of bits for algorithm */
 };
 
 /* Used to hold SSL/TLS functions */
@@ -1308,12 +1308,12 @@ typedef struct ssl3_state_st {
          * that are supported by the certs below. For clients they are masks of
          * *disabled* algorithms based on the current session.
          */
-        unsigned long mask_k;
-        unsigned long mask_a;
-        unsigned long export_mask_k;
-        unsigned long export_mask_a;
+        uint32_t mask_k;
+        uint32_t mask_a;
+        uint32_t export_mask_k;
+        uint32_t export_mask_a;
         /* Client only */
-        unsigned long mask_ssl;
+        uint32_t mask_ssl;
     } tmp;
 
     /* Connection binding to prevent renegotiation attacks */
@@ -2062,7 +2062,7 @@ __owur int tls12_get_sigandhash(unsigned char *p, const EVP_PKEY *pk,
                          const EVP_MD *md);
 __owur int tls12_get_sigid(const EVP_PKEY *pk);
 __owur const EVP_MD *tls12_get_hash(unsigned char hash_alg);
-void ssl_set_sig_mask(unsigned long *pmask_a, SSL *s, int op);
+void ssl_set_sig_mask(uint32_t *pmask_a, SSL *s, int op);
 
 __owur int tls1_set_sigalgs_list(CERT *c, const char *str, int client);
 __owur int tls1_set_sigalgs(CERT *c, const int *salg, size_t salglen, int client);
