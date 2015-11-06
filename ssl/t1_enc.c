@@ -353,6 +353,8 @@ int tls1_change_cipher_state(SSL *s, int which)
             EVP_CIPHER_CTX_init(s->enc_read_ctx);
         dd = s->enc_read_ctx;
         mac_ctx = ssl_replace_hash(&s->read_hash, NULL);
+        if (mac_ctx == NULL)
+            goto err;
 #ifndef OPENSSL_NO_COMP
         COMP_CTX_free(s->expand);
         s->expand = NULL;
@@ -386,11 +388,14 @@ int tls1_change_cipher_state(SSL *s, int which)
         dd = s->enc_write_ctx;
         if (SSL_IS_DTLS(s)) {
             mac_ctx = EVP_MD_CTX_create();
-            if (!mac_ctx)
+            if (mac_ctx == NULL)
                 goto err;
             s->write_hash = mac_ctx;
-        } else
+        } else {
             mac_ctx = ssl_replace_hash(&s->write_hash, NULL);
+            if (mac_ctx == NULL)
+                goto err;
+        }
 #ifndef OPENSSL_NO_COMP
         COMP_CTX_free(s->compress);
         s->compress = NULL;
@@ -463,7 +468,12 @@ int tls1_change_cipher_state(SSL *s, int which)
     if (!(EVP_CIPHER_flags(c) & EVP_CIPH_FLAG_AEAD_CIPHER)) {
         mac_key = EVP_PKEY_new_mac_key(mac_type, NULL,
                                        mac_secret, *mac_secret_size);
-        EVP_DigestSignInit(mac_ctx, NULL, m, NULL, mac_key);
+        if (mac_key == NULL
+                || EVP_DigestSignInit(mac_ctx, NULL, m, NULL, mac_key) <= 0) {
+            EVP_PKEY_free(mac_key);
+            SSLerr(SSL_F_TLS1_CHANGE_CIPHER_STATE, ERR_R_INTERNAL_ERROR);
+            goto err2;
+        }
         EVP_PKEY_free(mac_key);
     }
 #ifdef TLS_DEBUG
@@ -711,8 +721,9 @@ int tls1_cert_verify_mac(SSL *s, int md_nid, unsigned char *out)
     }
 
     EVP_MD_CTX_init(&ctx);
-    EVP_MD_CTX_copy_ex(&ctx, d);
-    EVP_DigestFinal_ex(&ctx, out, &ret);
+    if (EVP_MD_CTX_copy_ex(&ctx, d) <=0
+            || EVP_DigestFinal_ex(&ctx, out, &ret) <= 0)
+        ret = 0;
     EVP_MD_CTX_cleanup(&ctx);
     return ((int)ret);
 }
