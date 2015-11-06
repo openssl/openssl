@@ -622,9 +622,6 @@ WORK_STATE ossl_statem_client_post_work(SSL *s, WORK_STATE wst)
 #endif
         if (statem_flush(s) != 1)
             return WORK_MORE_B;
-
-        if (s->hit && tls_finish_handshake(s, WORK_MORE_A) != 1)
-                return WORK_ERROR;
         break;
 
     default:
@@ -801,11 +798,6 @@ WORK_STATE ossl_statem_client_post_process_message(SSL *s, WORK_STATE wst)
         return WORK_FINISHED_STOP;
 #endif
 
-    case TLS_ST_CR_FINISHED:
-        if (!s->hit)
-            return tls_finish_handshake(s, wst);
-        else
-            return WORK_FINISHED_STOP;
     default:
         break;
     }
