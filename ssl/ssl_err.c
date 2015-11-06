@@ -163,6 +163,8 @@ static ERR_STRING_DATA SSL_str_functs[] = {
      "ssl3_do_change_cipher_spec"},
     {ERR_FUNC(SSL_F_SSL3_ENC), "ssl3_enc"},
     {ERR_FUNC(SSL_F_SSL3_GENERATE_KEY_BLOCK), "SSL3_GENERATE_KEY_BLOCK"},
+    {ERR_FUNC(SSL_F_SSL3_GENERATE_MASTER_SECRET),
+     "ssl3_generate_master_secret"},
     {ERR_FUNC(SSL_F_SSL3_GET_CERTIFICATE_REQUEST),
      "ssl3_get_certificate_request"},
     {ERR_FUNC(SSL_F_SSL3_GET_CERT_STATUS), "ssl3_get_cert_status"},
