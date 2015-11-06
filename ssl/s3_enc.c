@@ -253,7 +253,7 @@ int ssl3_change_cipher_state(SSL *s, int which)
             EVP_CIPHER_CTX_init(s->enc_read_ctx);
         dd = s->enc_read_ctx;
 
-        if (!ssl_replace_hash(&s->read_hash, m)) {
+        if (ssl_replace_hash(&s->read_hash, m) == NULL) {
                 SSLerr(SSL_F_SSL3_CHANGE_CIPHER_STATE, ERR_R_INTERNAL_ERROR);
                 goto err2;
         }
@@ -286,7 +286,7 @@ int ssl3_change_cipher_state(SSL *s, int which)
              */
             EVP_CIPHER_CTX_init(s->enc_write_ctx);
         dd = s->enc_write_ctx;
-        if (!ssl_replace_hash(&s->write_hash, m)) {
+        if (ssl_replace_hash(&s->write_hash, m) == NULL) {
                 SSLerr(SSL_F_SSL3_CHANGE_CIPHER_STATE, ERR_R_INTERNAL_ERROR);
                 goto err2;
         }
@@ -617,19 +617,21 @@ static int ssl3_handshake_mac(SSL *s, int md_nid,
         return 0;
 
     npad = (48 / n) * n;
-    if (sender != NULL)
-        EVP_DigestUpdate(&ctx, sender, len);
-    EVP_DigestUpdate(&ctx, s->session->master_key,
-                     s->session->master_key_length);
-    EVP_DigestUpdate(&ctx, ssl3_pad_1, npad);
-    EVP_DigestFinal_ex(&ctx, md_buf, &i);
+    if ((sender != NULL && EVP_DigestUpdate(&ctx, sender, len) <= 0)
+            || EVP_DigestUpdate(&ctx, s->session->master_key,
+                                s->session->master_key_length) <= 0
+            || EVP_DigestUpdate(&ctx, ssl3_pad_1, npad) <= 0
+            || EVP_DigestFinal_ex(&ctx, md_buf, &i) <= 0
 
-    EVP_DigestInit_ex(&ctx, EVP_MD_CTX_md(&ctx), NULL);
-    EVP_DigestUpdate(&ctx, s->session->master_key,
-                     s->session->master_key_length);
-    EVP_DigestUpdate(&ctx, ssl3_pad_2, npad);
-    EVP_DigestUpdate(&ctx, md_buf, i);
-    EVP_DigestFinal_ex(&ctx, p, &ret);
+            || EVP_DigestInit_ex(&ctx, EVP_MD_CTX_md(&ctx), NULL) <= 0
+            || EVP_DigestUpdate(&ctx, s->session->master_key,
+                                s->session->master_key_length) <= 0
+            || EVP_DigestUpdate(&ctx, ssl3_pad_2, npad) <= 0
+            || EVP_DigestUpdate(&ctx, md_buf, i) <= 0
+            || EVP_DigestFinal_ex(&ctx, p, &ret) <= 0) {
+        SSLerr(SSL_F_SSL3_HANDSHAKE_MAC, ERR_R_INTERNAL_ERROR);
+        ret = 0;
+    }
 
     EVP_MD_CTX_cleanup(&ctx);
 
@@ -660,24 +662,31 @@ int ssl3_generate_master_secret(SSL *s, unsigned char *out, unsigned char *p,
 
     EVP_MD_CTX_init(&ctx);
     for (i = 0; i < 3; i++) {
-        EVP_DigestInit_ex(&ctx, s->ctx->sha1, NULL);
-        EVP_DigestUpdate(&ctx, salt[i], strlen((const char *)salt[i]));
-        EVP_DigestUpdate(&ctx, p, len);
-        EVP_DigestUpdate(&ctx, &(s->s3->client_random[0]), SSL3_RANDOM_SIZE);
-        EVP_DigestUpdate(&ctx, &(s->s3->server_random[0]), SSL3_RANDOM_SIZE);
-        EVP_DigestFinal_ex(&ctx, buf, &n);
+        if (EVP_DigestInit_ex(&ctx, s->ctx->sha1, NULL) <= 0
+                || EVP_DigestUpdate(&ctx, salt[i],
+                                    strlen((const char *)salt[i])) <= 0
+                || EVP_DigestUpdate(&ctx, p, len) <= 0
+                || EVP_DigestUpdate(&ctx, &(s->s3->client_random[0]),
+                                    SSL3_RANDOM_SIZE) <= 0
+                || EVP_DigestUpdate(&ctx, &(s->s3->server_random[0]),
+                                    SSL3_RANDOM_SIZE) <= 0
+                || EVP_DigestFinal_ex(&ctx, buf, &n) <= 0
 
-        EVP_DigestInit_ex(&ctx, s->ctx->md5, NULL);
-        EVP_DigestUpdate(&ctx, p, len);
-        EVP_DigestUpdate(&ctx, buf, n);
-        EVP_DigestFinal_ex(&ctx, out, &n);
+                || EVP_DigestInit_ex(&ctx, s->ctx->md5, NULL) <= 0
+                || EVP_DigestUpdate(&ctx, p, len) <= 0
+                || EVP_DigestUpdate(&ctx, buf, n) <= 0
+                || EVP_DigestFinal_ex(&ctx, out, &n) <= 0) {
+            SSLerr(SSL_F_SSL3_GENERATE_MASTER_SECRET, ERR_R_INTERNAL_ERROR);
+            ret = 0;
+            break;
+        }
         out += n;
         ret += n;
     }
     EVP_MD_CTX_cleanup(&ctx);
 
 #ifdef OPENSSL_SSL_TRACE_CRYPTO
-    if (s->msg_callback) {
+    if (ret > 0 && s->msg_callback) {
         s->msg_callback(2, s->version, TLS1_RT_CRYPTO_PREMASTER,
                         p, len, s, s->msg_callback_arg);
         s->msg_callback(2, s->version, TLS1_RT_CRYPTO_CLIENT_RANDOM,

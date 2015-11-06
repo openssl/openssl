@@ -1986,6 +1986,7 @@ void ERR_load_SSL_strings(void);
 # define SSL_F_SSL3_DO_CHANGE_CIPHER_SPEC                 292
 # define SSL_F_SSL3_ENC                                   134
 # define SSL_F_SSL3_GENERATE_KEY_BLOCK                    238
+# define SSL_F_SSL3_GENERATE_MASTER_SECRET                388
 # define SSL_F_SSL3_GET_CERTIFICATE_REQUEST               135
 # define SSL_F_SSL3_GET_CERT_STATUS                       289
 # define SSL_F_SSL3_GET_CERT_VERIFY                       136
@@ -2285,8 +2286,8 @@ void ERR_load_SSL_strings(void);
 # define SSL_R_INVALID_TICKET_KEYS_LENGTH                 325
 # define SSL_R_INVALID_TRUST                              279
 # define SSL_R_LENGTH_MISMATCH                            159
-# define SSL_R_LENGTH_TOO_SHORT                           160
 # define SSL_R_LENGTH_TOO_LONG                            404
+# define SSL_R_LENGTH_TOO_SHORT                           160
 # define SSL_R_LIBRARY_BUG                                274
 # define SSL_R_LIBRARY_HAS_NO_CIPHERS                     161
 # define SSL_R_MISSING_DH_DSA_CERT                        162
