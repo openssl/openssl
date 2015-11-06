@@ -331,7 +331,7 @@ MSG_PROCESS_RETURN tls_process_finished(SSL *s, PACKET *pkt)
         s->s3->previous_server_finished_len = i;
     }
 
-    return MSG_PROCESS_CONTINUE_PROCESSING;
+    return MSG_PROCESS_FINISHED_READING;
  f_err:
     ssl3_send_alert(s, SSL3_AL_FATAL, al);
     ossl_statem_set_error(s);

@@ -876,12 +876,6 @@ WORK_STATE ossl_statem_server_post_process_message(SSL *s, WORK_STATE wst)
 #endif
         return WORK_FINISHED_CONTINUE;
 
-
-    case TLS_ST_SR_FINISHED:
-        if (s->hit)
-            return tls_finish_handshake(s, wst);
-        else
-            return WORK_FINISHED_STOP;
     default:
         break;
     }
