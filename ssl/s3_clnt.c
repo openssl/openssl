@@ -1883,14 +1883,20 @@ int ssl3_get_key_exchange(SSL *s)
             q = md_buf;
             for (num = 2; num > 0; num--) {
                 EVP_MD_CTX_set_flags(&md_ctx, EVP_MD_CTX_FLAG_NON_FIPS_ALLOW);
-                EVP_DigestInit_ex(&md_ctx, (num == 2)
-                                  ? s->ctx->md5 : s->ctx->sha1, NULL);
-                EVP_DigestUpdate(&md_ctx, &(s->s3->client_random[0]),
-                                 SSL3_RANDOM_SIZE);
-                EVP_DigestUpdate(&md_ctx, &(s->s3->server_random[0]),
-                                 SSL3_RANDOM_SIZE);
-                EVP_DigestUpdate(&md_ctx, param, param_len);
-                EVP_DigestFinal_ex(&md_ctx, q, &size);
+                if (EVP_DigestInit_ex(&md_ctx,
+                                      (num == 2) ? s->ctx->md5 : s->ctx->sha1,
+                                      NULL) <= 0
+                        || EVP_DigestUpdate(&md_ctx, &(s->s3->client_random[0]),
+                                            SSL3_RANDOM_SIZE) <= 0
+                        || EVP_DigestUpdate(&md_ctx, &(s->s3->server_random[0]),
+                                            SSL3_RANDOM_SIZE) <= 0
+                        || EVP_DigestUpdate(&md_ctx, param, param_len) <= 0
+                        || EVP_DigestFinal_ex(&md_ctx, q, &size) <= 0) {
+                    SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,
+                           ERR_R_INTERNAL_ERROR);
+                    al = SSL_AD_INTERNAL_ERROR;
+                    goto f_err;
+                }
                 q += size;
                 j += size;
             }
@@ -1909,12 +1915,16 @@ int ssl3_get_key_exchange(SSL *s)
         } else
 #endif
         {
-            EVP_VerifyInit_ex(&md_ctx, md, NULL);
-            EVP_VerifyUpdate(&md_ctx, &(s->s3->client_random[0]),
-                             SSL3_RANDOM_SIZE);
-            EVP_VerifyUpdate(&md_ctx, &(s->s3->server_random[0]),
-                             SSL3_RANDOM_SIZE);
-            EVP_VerifyUpdate(&md_ctx, param, param_len);
+            if (EVP_VerifyInit_ex(&md_ctx, md, NULL) <= 0
+                    || EVP_VerifyUpdate(&md_ctx, &(s->s3->client_random[0]),
+                                        SSL3_RANDOM_SIZE) <= 0
+                    || EVP_VerifyUpdate(&md_ctx, &(s->s3->server_random[0]),
+                                        SSL3_RANDOM_SIZE) <= 0
+                    || EVP_VerifyUpdate(&md_ctx, param, param_len) <= 0) {
+                al = SSL_AD_INTERNAL_ERROR;
+                SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE, ERR_R_EVP_LIB);
+                goto f_err;
+            }
             if (EVP_VerifyFinal(&md_ctx, p, (int)n, pkey) <= 0) {
                 /* bad signature */
                 al = SSL_AD_DECRYPT_ERROR;
@@ -2839,10 +2849,13 @@ int ssl3_send_client_key_exchange(SSL *s)
 
             /* Otherwise, generate ephemeral key pair */
 
-            EVP_PKEY_encrypt_init(pkey_ctx);
-            /* Generate session key */
-            if (RAND_bytes(premaster_secret, 32) <= 0) {
+            if (pkey_ctx == NULL
+                    || EVP_PKEY_encrypt_init(pkey_ctx) <= 0
+                    /* Generate session key */
+                    || RAND_bytes(premaster_secret, 32) <= 0) {
                 EVP_PKEY_CTX_free(pkey_ctx);
+                SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
+                       ERR_R_INTERNAL_ERROR);
                 goto err;
             }
             /*
@@ -2863,13 +2876,18 @@ int ssl3_send_client_key_exchange(SSL *s)
              * data
              */
             ukm_hash = EVP_MD_CTX_create();
-            EVP_DigestInit(ukm_hash,
-                           EVP_get_digestbynid(NID_id_GostR3411_94));
-            EVP_DigestUpdate(ukm_hash, s->s3->client_random,
-                             SSL3_RANDOM_SIZE);
-            EVP_DigestUpdate(ukm_hash, s->s3->server_random,
-                             SSL3_RANDOM_SIZE);
-            EVP_DigestFinal_ex(ukm_hash, shared_ukm, &md_len);
+            if (EVP_DigestInit(ukm_hash,
+                               EVP_get_digestbynid(NID_id_GostR3411_94)) <= 0
+                    || EVP_DigestUpdate(ukm_hash, s->s3->client_random,
+                                        SSL3_RANDOM_SIZE) <= 0
+                    || EVP_DigestUpdate(ukm_hash, s->s3->server_random,
+                                        SSL3_RANDOM_SIZE) <= 0
+                    || EVP_DigestFinal_ex(ukm_hash, shared_ukm, &md_len) <= 0) {
+                EVP_MD_CTX_destroy(ukm_hash);
+                SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
+                       ERR_R_INTERNAL_ERROR);
+                goto err;
+            }
             EVP_MD_CTX_destroy(ukm_hash);
             if (EVP_PKEY_CTX_ctrl
                 (pkey_ctx, -1, EVP_PKEY_OP_ENCRYPT, EVP_PKEY_CTRL_SET_IV, 8,
@@ -2885,7 +2903,7 @@ int ssl3_send_client_key_exchange(SSL *s)
             *(p++) = V_ASN1_SEQUENCE | V_ASN1_CONSTRUCTED;
             msglen = 255;
             if (EVP_PKEY_encrypt(pkey_ctx, tmp, &msglen, premaster_secret, 32)
-                < 0) {
+                <= 0) {
                 SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
                        SSL_R_LIBRARY_BUG);
                 goto err;
@@ -3086,7 +3104,10 @@ int ssl3_send_client_verify(SSL *s)
         pkey = s->cert->key->privatekey;
 /* Create context from key and test if sha1 is allowed as digest */
         pctx = EVP_PKEY_CTX_new(pkey, NULL);
-        EVP_PKEY_sign_init(pctx);
+        if (pctx == NULL || EVP_PKEY_sign_init(pctx) <= 0) {
+            SSLerr(SSL_F_SSL3_SEND_CLIENT_VERIFY, ERR_R_INTERNAL_ERROR);
+            goto err;
+        }
         if (EVP_PKEY_CTX_set_signature_md(pctx, EVP_sha1()) > 0) {
             if (TLS1_get_version(s) < TLS1_2_VERSION)
                 s->method->ssl3_enc->cert_verify_mac(s,

@@ -2291,10 +2291,13 @@ static int tls_decrypt_ticket(SSL *s, const unsigned char *etick,
         /* Check key name matches */
         if (memcmp(etick, tctx->tlsext_tick_key_name, 16))
             return 2;
-        HMAC_Init_ex(&hctx, tctx->tlsext_tick_hmac_key, 16,
-                     tlsext_tick_md(), NULL);
-        EVP_DecryptInit_ex(&ctx, EVP_aes_128_cbc(), NULL,
-                           tctx->tlsext_tick_aes_key, etick + 16);
+        if (HMAC_Init_ex(&hctx, tctx->tlsext_tick_hmac_key, 16,
+                         tlsext_tick_md(), NULL) <= 0
+                || EVP_DecryptInit_ex(&ctx, EVP_aes_128_cbc(), NULL,
+                                      tctx->tlsext_tick_aes_key,
+                                      etick + 16) <= 0) {
+            goto err;
+       }
     }
     /*
      * Attempt to process session ticket, first conduct sanity and integrity
@@ -2302,13 +2305,14 @@ static int tls_decrypt_ticket(SSL *s, const unsigned char *etick,
      */
     mlen = HMAC_size(&hctx);
     if (mlen < 0) {
-        EVP_CIPHER_CTX_cleanup(&ctx);
-        return -1;
+        goto err;
     }
     eticklen -= mlen;
     /* Check HMAC of encrypted ticket */
-    HMAC_Update(&hctx, etick, eticklen);
-    HMAC_Final(&hctx, tick_hmac, NULL);
+    if (HMAC_Update(&hctx, etick, eticklen) <= 0
+            || HMAC_Final(&hctx, tick_hmac, NULL) <= 0) {
+        goto err;
+    }
     HMAC_CTX_cleanup(&hctx);
     if (CRYPTO_memcmp(tick_hmac, etick + eticklen, mlen)) {
         EVP_CIPHER_CTX_cleanup(&ctx);
@@ -2319,11 +2323,10 @@ static int tls_decrypt_ticket(SSL *s, const unsigned char *etick,
     p = etick + 16 + EVP_CIPHER_CTX_iv_length(&ctx);
     eticklen -= 16 + EVP_CIPHER_CTX_iv_length(&ctx);
     sdec = OPENSSL_malloc(eticklen);
-    if (!sdec) {
+    if (!sdec || EVP_DecryptUpdate(&ctx, sdec, &slen, p, eticklen) <= 0) {
         EVP_CIPHER_CTX_cleanup(&ctx);
         return -1;
     }
-    EVP_DecryptUpdate(&ctx, sdec, &slen, p, eticklen);
     if (EVP_DecryptFinal(&ctx, sdec + slen, &mlen) <= 0) {
         EVP_CIPHER_CTX_cleanup(&ctx);
         OPENSSL_free(sdec);
@@ -2356,6 +2359,10 @@ static int tls_decrypt_ticket(SSL *s, const unsigned char *etick,
      * For session parse failure, indicate that we need to send a new ticket.
      */
     return 2;
+err:
+    EVP_CIPHER_CTX_cleanup(&ctx);
+    HMAC_CTX_cleanup(&hctx);
+    return -1;
 }
 
 /* Tables to translate from NIDs to TLS v1.2 ids */

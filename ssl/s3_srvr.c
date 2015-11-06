@@ -1986,14 +1986,22 @@ int ssl3_send_server_key_exchange(SSL *s)
                 for (num = 2; num > 0; num--) {
                     EVP_MD_CTX_set_flags(&md_ctx,
                                          EVP_MD_CTX_FLAG_NON_FIPS_ALLOW);
-                    EVP_DigestInit_ex(&md_ctx, (num == 2)
-                                      ? s->ctx->md5 : s->ctx->sha1, NULL);
-                    EVP_DigestUpdate(&md_ctx, &(s->s3->client_random[0]),
-                                     SSL3_RANDOM_SIZE);
-                    EVP_DigestUpdate(&md_ctx, &(s->s3->server_random[0]),
-                                     SSL3_RANDOM_SIZE);
-                    EVP_DigestUpdate(&md_ctx, &(d[4]), n);
-                    EVP_DigestFinal_ex(&md_ctx, q, (unsigned int *)&i);
+                    if (EVP_DigestInit_ex(&md_ctx,
+                                          (num == 2) ? s->ctx->md5
+                                                     : s->ctx->sha1,
+                                          NULL) <= 0
+                        || EVP_DigestUpdate(&md_ctx, &(s->s3->client_random[0]),
+                                            SSL3_RANDOM_SIZE) <= 0
+                        || EVP_DigestUpdate(&md_ctx, &(s->s3->server_random[0]),
+                                            SSL3_RANDOM_SIZE) <= 0
+                        || EVP_DigestUpdate(&md_ctx, &(d[4]), n) <= 0
+                        || EVP_DigestFinal_ex(&md_ctx, q,
+                                              (unsigned int *)&i) <= 0) {
+                        SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,
+                               ERR_LIB_EVP);
+                        al = SSL_AD_INTERNAL_ERROR;
+                        goto f_err;
+                    }
                     q += i;
                     j += i;
                 }
@@ -2023,16 +2031,17 @@ int ssl3_send_server_key_exchange(SSL *s)
 #ifdef SSL_DEBUG
                 fprintf(stderr, "Using hash %s\n", EVP_MD_name(md));
 #endif
-                EVP_SignInit_ex(&md_ctx, md, NULL);
-                EVP_SignUpdate(&md_ctx, &(s->s3->client_random[0]),
-                               SSL3_RANDOM_SIZE);
-                EVP_SignUpdate(&md_ctx, &(s->s3->server_random[0]),
-                               SSL3_RANDOM_SIZE);
-                EVP_SignUpdate(&md_ctx, &(d[4]), n);
-                if (!EVP_SignFinal(&md_ctx, &(p[2]),
-                                   (unsigned int *)&i, pkey)) {
+                if (EVP_SignInit_ex(&md_ctx, md, NULL) <= 0
+                        || EVP_SignUpdate(&md_ctx, &(s->s3->client_random[0]),
+                                          SSL3_RANDOM_SIZE) <= 0
+                        || EVP_SignUpdate(&md_ctx, &(s->s3->server_random[0]),
+                                          SSL3_RANDOM_SIZE) <= 0
+                        || EVP_SignUpdate(&md_ctx, &(d[4]), n) <= 0
+                        || EVP_SignFinal(&md_ctx, &(p[2]),
+                                         (unsigned int *)&i, pkey) <= 0) {
                     SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE, ERR_LIB_EVP);
-                    goto err;
+                    al = SSL_AD_INTERNAL_ERROR;
+                    goto f_err;
                 }
                 s2n(i, p);
                 n += i + 2;
@@ -2883,7 +2892,10 @@ int ssl3_get_client_key_exchange(SSL *s)
             SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE, ERR_R_MALLOC_FAILURE);
             goto f_err;
         }
-        EVP_PKEY_decrypt_init(pkey_ctx);
+        if (EVP_PKEY_decrypt_init(pkey_ctx) <= 0) {
+            SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
+            goto gerr;
+        }
         /*
          * If client certificate is present and is of the same type, maybe
          * use it for key exchange.  Don't mind errors from
@@ -3132,7 +3144,12 @@ int ssl3_get_cert_verify(SSL *s)
             SSLerr(SSL_F_SSL3_GET_CERT_VERIFY, ERR_R_MALLOC_FAILURE);
             goto f_err;
         }
-        EVP_PKEY_verify_init(pctx);
+        if (EVP_PKEY_verify_init(pctx) <= 0) {
+            EVP_PKEY_CTX_free(pctx);
+            al = SSL_AD_INTERNAL_ERROR;
+            SSLerr(SSL_F_SSL3_GET_CERT_VERIFY, ERR_R_INTERNAL_ERROR);
+            goto f_err;
+        }
         if (i != 64) {
             fprintf(stderr, "GOST signature length is %d", i);
         }
