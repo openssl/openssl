@@ -884,7 +884,7 @@ void ossl_statem_set_sctp_read_sock(SSL *s, int read_sock)
  *   1: Yes (we are in the read sock state)
  *   0: No (we are not in the read sock state)
  */
-int statem_in_sctp_read_sock(SSL *s)
+int ossl_statem_in_sctp_read_sock(SSL *s)
 {
     return s->statem.in_sctp_read_sock;
 }
