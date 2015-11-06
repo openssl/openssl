@@ -405,9 +405,6 @@ WORK_STATE tls_finish_handshake(SSL *s, WORK_STATE wst)
         s->new_session = 0;
 
         if (s->server) {
-            s->renegotiate = 0;
-            s->new_session = 0;
-
             ssl_update_cache(s, SSL_SESS_CACHE_SERVER);
 
             s->ctx->stats.sess_accept_good++;
