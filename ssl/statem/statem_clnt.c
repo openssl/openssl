@@ -2757,6 +2757,10 @@ psk_err:
         unsigned char shared_ukm[32], tmp[256];
         EVP_MD_CTX *ukm_hash;
         EVP_PKEY *pub_key;
+        int dgst_nid = NID_id_GostR3411_94;
+        if ((s->s3->tmp.new_cipher->algorithm_auth & SSL_aGOST12) != 0)
+            dgst_nid = NID_id_GostR3411_2012_256;
+
 
         pmslen = 32;
         pms = OPENSSL_malloc(pmslen);
@@ -2777,8 +2781,7 @@ psk_err:
                                     X509_get_pubkey(peer_cert), NULL);
         /*
          * If we have send a certificate, and certificate key
-         *
-         * * parameters match those of server certificate, use
+         * parameters match those of server certificate, use
          * certificate key for key exchange
          */
 
@@ -2811,7 +2814,7 @@ psk_err:
          */
         ukm_hash = EVP_MD_CTX_create();
         EVP_DigestInit(ukm_hash,
-                       EVP_get_digestbynid(NID_id_GostR3411_94));
+                       EVP_get_digestbynid(dgst_nid));
         EVP_DigestUpdate(ukm_hash, s->s3->client_random,
                          SSL3_RANDOM_SIZE);
         EVP_DigestUpdate(ukm_hash, s->s3->server_random,
@@ -3003,19 +3006,7 @@ int tls_construct_client_verify(SSL *s)
     } else {
         ERR_clear_error();
     }
-    /*
-     * For TLS v1.2 send signature algorithm and signature using agreed
-     * digest and cached handshake records.
-     */
-    if (SSL_USE_SIGALGS(s)) {
-        long hdatalen = 0;
-        void *hdata;
-        const EVP_MD *md = s->s3->tmp.md[s->cert->key - s->cert->pkeys];
-        hdatalen = BIO_get_mem_data(s->s3->handshake_buffer, &hdata);
-        if (hdatalen <= 0 || !tls12_get_sigandhash(p, pkey, md)) {
-            SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_VERIFY, ERR_R_INTERNAL_ERROR);
-            goto err;
-        }
+        
         /*
          * For TLS v1.2 send signature algorithm and signature using agreed
          * digest and cached handshake records.
@@ -3134,12 +3125,6 @@ int tls_construct_client_verify(SSL *s)
             SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_VERIFY, ERR_R_INTERNAL_ERROR);
             goto err;
         }
-        s2n(j, p);
-        n = j + 2;
-    } else {
-        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_VERIFY, ERR_R_INTERNAL_ERROR);
-        goto err;
-    }
     if (!ssl_set_handshake_header(s, SSL3_MT_CERTIFICATE_VERIFY, n)) {
         SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_VERIFY, ERR_R_INTERNAL_ERROR);
         goto err;
