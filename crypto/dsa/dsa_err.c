@@ -1,6 +1,6 @@
 /* crypto/dsa/dsa_err.c */
 /* ====================================================================
- * Copyright (c) 1999-2013 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2015 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -71,31 +71,31 @@
 
 static ERR_STRING_DATA DSA_str_functs[] = {
     {ERR_FUNC(DSA_F_D2I_DSA_SIG), "d2i_DSA_SIG"},
-    {ERR_FUNC(DSA_F_DO_DSA_PRINT), "DO_DSA_PRINT"},
+    {ERR_FUNC(DSA_F_DO_DSA_PRINT), "do_dsa_print"},
     {ERR_FUNC(DSA_F_DSAPARAMS_PRINT), "DSAparams_print"},
     {ERR_FUNC(DSA_F_DSAPARAMS_PRINT_FP), "DSAparams_print_fp"},
     {ERR_FUNC(DSA_F_DSA_BUILTIN_KEYGEN), "DSA_BUILTIN_KEYGEN"},
     {ERR_FUNC(DSA_F_DSA_BUILTIN_PARAMGEN), "DSA_BUILTIN_PARAMGEN"},
-    {ERR_FUNC(DSA_F_DSA_BUILTIN_PARAMGEN2), "DSA_BUILTIN_PARAMGEN2"},
+    {ERR_FUNC(DSA_F_DSA_BUILTIN_PARAMGEN2), "dsa_builtin_paramgen2"},
     {ERR_FUNC(DSA_F_DSA_DO_SIGN), "DSA_do_sign"},
     {ERR_FUNC(DSA_F_DSA_DO_VERIFY), "DSA_do_verify"},
     {ERR_FUNC(DSA_F_DSA_NEW_METHOD), "DSA_new_method"},
-    {ERR_FUNC(DSA_F_DSA_PARAM_DECODE), "DSA_PARAM_DECODE"},
+    {ERR_FUNC(DSA_F_DSA_PARAM_DECODE), "dsa_param_decode"},
     {ERR_FUNC(DSA_F_DSA_PRINT_FP), "DSA_print_fp"},
-    {ERR_FUNC(DSA_F_DSA_PRIV_DECODE), "DSA_PRIV_DECODE"},
-    {ERR_FUNC(DSA_F_DSA_PRIV_ENCODE), "DSA_PRIV_ENCODE"},
-    {ERR_FUNC(DSA_F_DSA_PUB_DECODE), "DSA_PUB_DECODE"},
-    {ERR_FUNC(DSA_F_DSA_PUB_ENCODE), "DSA_PUB_ENCODE"},
+    {ERR_FUNC(DSA_F_DSA_PRIV_DECODE), "dsa_priv_decode"},
+    {ERR_FUNC(DSA_F_DSA_PRIV_ENCODE), "dsa_priv_encode"},
+    {ERR_FUNC(DSA_F_DSA_PUB_DECODE), "dsa_pub_decode"},
+    {ERR_FUNC(DSA_F_DSA_PUB_ENCODE), "dsa_pub_encode"},
     {ERR_FUNC(DSA_F_DSA_SIGN), "DSA_sign"},
     {ERR_FUNC(DSA_F_DSA_SIGN_SETUP), "DSA_sign_setup"},
     {ERR_FUNC(DSA_F_DSA_SIG_NEW), "DSA_SIG_new"},
-    {ERR_FUNC(DSA_F_DSA_SIG_PRINT), "DSA_SIG_PRINT"},
+    {ERR_FUNC(DSA_F_DSA_SIG_PRINT), "dsa_sig_print"},
     {ERR_FUNC(DSA_F_DSA_VERIFY), "DSA_verify"},
     {ERR_FUNC(DSA_F_I2D_DSA_SIG), "i2d_DSA_SIG"},
-    {ERR_FUNC(DSA_F_OLD_DSA_PRIV_DECODE), "OLD_DSA_PRIV_DECODE"},
-    {ERR_FUNC(DSA_F_PKEY_DSA_CTRL), "PKEY_DSA_CTRL"},
-    {ERR_FUNC(DSA_F_PKEY_DSA_KEYGEN), "PKEY_DSA_KEYGEN"},
-    {ERR_FUNC(DSA_F_SIG_CB), "SIG_CB"},
+    {ERR_FUNC(DSA_F_OLD_DSA_PRIV_DECODE), "old_dsa_priv_decode"},
+    {ERR_FUNC(DSA_F_PKEY_DSA_CTRL), "pkey_dsa_ctrl"},
+    {ERR_FUNC(DSA_F_PKEY_DSA_KEYGEN), "pkey_dsa_keygen"},
+    {ERR_FUNC(DSA_F_SIG_CB), "sig_cb"},
     {0, NULL}
 };
 

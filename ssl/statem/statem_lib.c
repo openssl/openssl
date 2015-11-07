@@ -331,7 +331,7 @@ MSG_PROCESS_RETURN tls_process_finished(SSL *s, PACKET *pkt)
         s->s3->previous_server_finished_len = i;
     }
 
-    return MSG_PROCESS_CONTINUE_PROCESSING;
+    return MSG_PROCESS_FINISHED_READING;
  f_err:
     ssl3_send_alert(s, SSL3_AL_FATAL, al);
     ossl_statem_set_error(s);
@@ -405,9 +405,6 @@ WORK_STATE tls_finish_handshake(SSL *s, WORK_STATE wst)
         s->new_session = 0;
 
         if (s->server) {
-            s->renegotiate = 0;
-            s->new_session = 0;
-
             ssl_update_cache(s, SSL_SESS_CACHE_SERVER);
 
             s->ctx->stats.sess_accept_good++;

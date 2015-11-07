@@ -868,20 +868,14 @@ WORK_STATE ossl_statem_server_post_process_message(SSL *s, WORK_STATE wst)
             s->rwstate = SSL_READING;
             BIO_clear_retry_flags(SSL_get_rbio(s));
             BIO_set_retry_read(SSL_get_rbio(s));
-            statem_set_sctp_read_sock(s, 1);
+            ossl_statem_set_sctp_read_sock(s, 1);
             return WORK_MORE_A;
         } else {
-            ossl_ossl_statem_set_sctp_read_sock(s, 0);
+            ossl_statem_set_sctp_read_sock(s, 0);
         }
 #endif
         return WORK_FINISHED_CONTINUE;
 
-
-    case TLS_ST_SR_FINISHED:
-        if (s->hit)
-            return tls_finish_handshake(s, wst);
-        else
-            return WORK_FINISHED_STOP;
     default:
         break;
     }
@@ -2946,7 +2940,7 @@ WORK_STATE tls_post_process_client_key_exchange(SSL *s, WORK_STATE wst)
         s->rwstate = SSL_READING;
         BIO_clear_retry_flags(SSL_get_rbio(s));
         BIO_set_retry_read(SSL_get_rbio(s));
-        statem_set_sctp_read_sock(s, 1);
+        ossl_statem_set_sctp_read_sock(s, 1);
         return WORK_MORE_B;
     } else {
         ossl_statem_set_sctp_read_sock(s, 0);

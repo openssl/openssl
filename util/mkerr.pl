@@ -328,9 +328,18 @@ foreach $file (@source) {
 	next if exists $cskip{$file};
 	print STDERR "File loaded: ".$file."\r" if $debug;
 	open(IN, "<$file") || die "Can't open source file $file\n";
+	my $func;
+	my $linenr = 0;
 	while(<IN>) {
 		# skip obsoleted source files entirely!
 		last if(/^#error\s+obsolete/);
+		$linenr++;
+		if (!/;$/ && /^\**([a-zA-Z_].*[\s*])?([A-Za-z_0-9]+)\(.*([),]|$)/)
+			{
+			/^([^()]*(\([^()]*\)[^()]*)*)\(/;
+			$1 =~ /([A-Za-z_0-9]*)$/;
+			$func = $1;
+			}
 
 		if(/(([A-Z0-9]+)_F_([A-Z0-9_]+))/) {
 			next unless exists $csrc{$2};
@@ -340,7 +349,11 @@ foreach $file (@source) {
 				$fcodes{$1} = "X";
 				$fnew{$2}++;
 			}
-			$notrans{$1} = 1 unless exists $ftrans{$3};
+			$ftrans{$3} = $func unless exists $ftrans{$3};
+            if (uc $func ne $3) {
+                print STDERR "ERROR: mismatch $file:$linenr $func:$3\n";
+                $errcount++;
+            }
 			print STDERR "Function: $1\t= $fcodes{$1} (lib: $2, name: $3)\n" if $debug; 
 		}
 		if(/(([A-Z0-9]+)_R_[A-Z0-9_]+)/) {

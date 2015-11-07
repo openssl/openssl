@@ -266,7 +266,7 @@ int STORE_store_certificate(STORE *s, X509 *data, OPENSSL_ITEM attributes[],
     STORE_OBJECT *object;
     int i;
 
-    check_store(s, STORE_F_STORE_CERTIFICATE,
+    check_store(s, STORE_F_STORE_STORE_CERTIFICATE,
                 store_object, STORE_R_NO_STORE_OBJECT_FUNCTION);
 
     object = STORE_OBJECT_new();

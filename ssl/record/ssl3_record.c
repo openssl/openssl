@@ -954,7 +954,8 @@ int tls1_mac(SSL *ssl, unsigned char *md, int send)
         EVP_DigestSignUpdate(mac_ctx, header, sizeof(header));
         EVP_DigestSignUpdate(mac_ctx, rec->input, rec->length);
         t = EVP_DigestSignFinal(mac_ctx, md, &md_size);
-        OPENSSL_assert(t > 0);
+        if (t <= 0)
+            return -1;
         if (!send && !SSL_USE_ETM(ssl) && FIPS_mode())
             tls_fips_digest_extra(ssl->enc_read_ctx,
                                   mac_ctx, rec->input,
