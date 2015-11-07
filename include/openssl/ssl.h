@@ -357,17 +357,17 @@ typedef int (*custom_ext_parse_cb) (SSL *s, unsigned int ext_type,
                                     size_t inlen, int *al, void *parse_arg);
 
 /* Allow initial connection to servers that don't support RI */
-# define SSL_OP_LEGACY_SERVER_CONNECT                    0x00000004L
+# define SSL_OP_LEGACY_SERVER_CONNECT                    0x00000004U
 /* Removed from OpenSSL 0.9.8q and 1.0.0c */
 /* Dead forever, see CVE-2010-4180. */
-# define SSL_OP_NETSCAPE_REUSE_CIPHER_CHANGE_BUG         0x0L
-# define SSL_OP_TLSEXT_PADDING                           0x00000010L
-# define SSL_OP_MICROSOFT_BIG_SSLV3_BUFFER               0x00000020L
-# define SSL_OP_SAFARI_ECDHE_ECDSA_BUG                   0x00000040L
-# define SSL_OP_SSLEAY_080_CLIENT_DH_BUG                 0x00000080L
-# define SSL_OP_TLS_D5_BUG                               0x00000100L
+# define SSL_OP_NETSCAPE_REUSE_CIPHER_CHANGE_BUG         0x0U
+# define SSL_OP_TLSEXT_PADDING                           0x00000010U
+# define SSL_OP_MICROSOFT_BIG_SSLV3_BUFFER               0x00000020U
+# define SSL_OP_SAFARI_ECDHE_ECDSA_BUG                   0x00000040U
+# define SSL_OP_SSLEAY_080_CLIENT_DH_BUG                 0x00000080U
+# define SSL_OP_TLS_D5_BUG                               0x00000100U
 /* Removed from OpenSSL 1.1.0 */
-# define SSL_OP_TLS_BLOCK_PADDING_BUG                    0x0L
+# define SSL_OP_TLS_BLOCK_PADDING_BUG                    0x0U
 
 /* Hasn't done anything since OpenSSL 0.9.7h, retained for compatibility */
 # define SSL_OP_MSIE_SSLV2_RSA_PADDING                   0x0
@@ -385,55 +385,55 @@ typedef int (*custom_ext_parse_cb) (SSL *s, unsigned int ext_type,
  * SSL_OP_ALL.
  */
 /* added in 0.9.6e */
-# define SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS              0x00000800L
+# define SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS              0x00000800U
 
 /*
  * SSL_OP_ALL: various bug workarounds that should be rather harmless.  This
  * used to be 0x000FFFFFL before 0.9.7.
  */
-# define SSL_OP_ALL                                      0x80000BFFL
+# define SSL_OP_ALL                                      0x80000BFFU
 
 /* DTLS options */
-# define SSL_OP_NO_QUERY_MTU                 0x00001000L
+# define SSL_OP_NO_QUERY_MTU                 0x00001000U
 /* Turn on Cookie Exchange (on relevant for servers) */
-# define SSL_OP_COOKIE_EXCHANGE              0x00002000L
+# define SSL_OP_COOKIE_EXCHANGE              0x00002000U
 /* Don't use RFC4507 ticket extension */
-# define SSL_OP_NO_TICKET                    0x00004000L
+# define SSL_OP_NO_TICKET                    0x00004000U
 /* Use Cisco's "speshul" version of DTLS_BAD_VER (as client)  */
-# define SSL_OP_CISCO_ANYCONNECT             0x00008000L
+# define SSL_OP_CISCO_ANYCONNECT             0x00008000U
 
 /* As server, disallow session resumption on renegotiation */
-# define SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION   0x00010000L
+# define SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION   0x00010000U
 /* Don't use compression even if supported */
-# define SSL_OP_NO_COMPRESSION                           0x00020000L
+# define SSL_OP_NO_COMPRESSION                           0x00020000U
 /* Permit unsafe legacy renegotiation */
-# define SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION        0x00040000L
+# define SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION        0x00040000U
 /* If set, always create a new key when using tmp_ecdh parameters */
-# define SSL_OP_SINGLE_ECDH_USE                          0x00080000L
+# define SSL_OP_SINGLE_ECDH_USE                          0x00080000U
 /* If set, always create a new key when using tmp_dh parameters */
-# define SSL_OP_SINGLE_DH_USE                            0x00100000L
+# define SSL_OP_SINGLE_DH_USE                            0x00100000U
 /* Does nothing: retained for compatibiity */
 # define SSL_OP_EPHEMERAL_RSA                            0x0
 /*
  * Set on servers to choose the cipher according to the server's preferences
  */
-# define SSL_OP_CIPHER_SERVER_PREFERENCE                 0x00400000L
+# define SSL_OP_CIPHER_SERVER_PREFERENCE                 0x00400000U
 /*
  * If set, a server will allow a client to issue a SSLv3.0 version number as
  * latest version supported in the premaster secret, even when TLSv1.0
  * (version 3.1) was announced in the client hello. Normally this is
  * forbidden to prevent version rollback attacks.
  */
-# define SSL_OP_TLS_ROLLBACK_BUG                         0x00800000L
+# define SSL_OP_TLS_ROLLBACK_BUG                         0x00800000U
 
-# define SSL_OP_NO_SSLv2                                 0x00000000L
-# define SSL_OP_NO_SSLv3                                 0x02000000L
-# define SSL_OP_NO_TLSv1                                 0x04000000L
-# define SSL_OP_NO_TLSv1_2                               0x08000000L
-# define SSL_OP_NO_TLSv1_1                               0x10000000L
+# define SSL_OP_NO_SSLv2                                 0x00000000U
+# define SSL_OP_NO_SSLv3                                 0x02000000U
+# define SSL_OP_NO_TLSv1                                 0x04000000U
+# define SSL_OP_NO_TLSv1_2                               0x08000000U
+# define SSL_OP_NO_TLSv1_1                               0x10000000U
 
-# define SSL_OP_NO_DTLSv1                                0x04000000L
-# define SSL_OP_NO_DTLSv1_2                              0x08000000L
+# define SSL_OP_NO_DTLSv1                                0x04000000U
+# define SSL_OP_NO_DTLSv1_2                              0x08000000U
 
 # define SSL_OP_NO_SSL_MASK (SSL_OP_NO_SSLv3|\
         SSL_OP_NO_TLSv1|SSL_OP_NO_TLSv1_1|SSL_OP_NO_TLSv1_2)
@@ -442,45 +442,45 @@ typedef int (*custom_ext_parse_cb) (SSL *s, unsigned int ext_type,
 # define SSL_OP_PKCS1_CHECK_1                            0x0
 # define SSL_OP_PKCS1_CHECK_2                            0x0
 # define SSL_OP_NETSCAPE_CA_DN_BUG                       0x0
-# define SSL_OP_NETSCAPE_DEMO_CIPHER_CHANGE_BUG          0x0L
+# define SSL_OP_NETSCAPE_DEMO_CIPHER_CHANGE_BUG          0x0U
 /*
  * Make server add server-hello extension from early version of cryptopro
  * draft, when GOST ciphersuite is negotiated. Required for interoperability
  * with CryptoPro CSP 3.x
  */
-# define SSL_OP_CRYPTOPRO_TLSEXT_BUG                     0x80000000L
+# define SSL_OP_CRYPTOPRO_TLSEXT_BUG                     0x80000000U
 
 /*
  * Allow SSL_write(..., n) to return r with 0 < r < n (i.e. report success
  * when just a single record has been written):
  */
-# define SSL_MODE_ENABLE_PARTIAL_WRITE       0x00000001L
+# define SSL_MODE_ENABLE_PARTIAL_WRITE       0x00000001U
 /*
  * Make it possible to retry SSL_write() with changed buffer location (buffer
  * contents must stay the same!); this is not the default to avoid the
  * misconception that non-blocking SSL_write() behaves like non-blocking
  * write():
  */
-# define SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER 0x00000002L
+# define SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER 0x00000002U
 /*
  * Never bother the application with retries if the transport is blocking:
  */
-# define SSL_MODE_AUTO_RETRY 0x00000004L
+# define SSL_MODE_AUTO_RETRY 0x00000004U
 /* Don't attempt to automatically build certificate chain */
-# define SSL_MODE_NO_AUTO_CHAIN 0x00000008L
+# define SSL_MODE_NO_AUTO_CHAIN 0x00000008U
 /*
  * Save RAM by releasing read and write buffers when they're empty. (SSL3 and
  * TLS only.) "Released" buffers are put onto a free-list in the context or
  * just freed (depending on the context's setting for freelist_max_len).
  */
-# define SSL_MODE_RELEASE_BUFFERS 0x00000010L
+# define SSL_MODE_RELEASE_BUFFERS 0x00000010U
 /*
  * Send the current time in the Random fields of the ClientHello and
  * ServerHello records for compatibility with hypothetical implementations
  * that require it.
  */
-# define SSL_MODE_SEND_CLIENTHELLO_TIME 0x00000020L
-# define SSL_MODE_SEND_SERVERHELLO_TIME 0x00000040L
+# define SSL_MODE_SEND_CLIENTHELLO_TIME 0x00000020U
+# define SSL_MODE_SEND_SERVERHELLO_TIME 0x00000040U
 /*
  * Send TLS_FALLBACK_SCSV in the ClientHello. To be set only by applications
  * that reconnect with a downgraded protocol version; see
@@ -489,14 +489,14 @@ typedef int (*custom_ext_parse_cb) (SSL *s, unsigned int ext_type,
  * fallback retries, following the guidance in
  * draft-ietf-tls-downgrade-scsv-00.
  */
-# define SSL_MODE_SEND_FALLBACK_SCSV 0x00000080L
+# define SSL_MODE_SEND_FALLBACK_SCSV 0x00000080U
 
 /* Cert related flags */
 /*
  * Many implementations ignore some aspects of the TLS standards such as
  * enforcing certifcate chain algorithms. When this is set we enforce them.
  */
-# define SSL_CERT_FLAG_TLS_STRICT                0x00000001L
+# define SSL_CERT_FLAG_TLS_STRICT                0x00000001U
 
 /* Suite B modes, takes same values as certificate verify flags */
 # define SSL_CERT_FLAG_SUITEB_128_LOS_ONLY       0x10000
