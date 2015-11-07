@@ -1554,23 +1554,13 @@ MSG_PROCESS_RETURN tls_process_server_certificate(SSL *s, PACKET *pkt)
     }
 
     exp_idx = ssl_cipher_get_cert_index(s->s3->tmp.new_cipher);
-    if (exp_idx >= 0 && i != exp_idx) {
-        if (exp_idx == SSL_PKEY_GOST_EC) {
-            if ((i != SSL_PKEY_GOST12_512) && (i != SSL_PKEY_GOST12_256)
-                && (i != SSL_PKEY_GOST01)) {
-                x = NULL;
-                al = SSL_AD_ILLEGAL_PARAMETER;
-                SSLerr(SSL_F_TLS_PROCESS_SERVER_CERTIFICATE,
-                       SSL_R_WRONG_CERTIFICATE_TYPE);
-                goto f_err;
-            }
-        } else {
-            x = NULL;
-            al = SSL_AD_ILLEGAL_PARAMETER;
-            SSLerr(SSL_F_TLS_PROCESS_SERVER_CERTIFICATE,
-                   SSL_R_WRONG_CERTIFICATE_TYPE);
-            goto f_err;
-        }
+    if (exp_idx >= 0 && i != exp_idx && (exp_idx != SSL_PKEY_GOST_EC ||
+        (i != SSL_PKEY_GOST12_512 && i != SSL_PKEY_GOST12_256 && i != SSL_PKEY_GOST01))) {		
+        x = NULL;
+        al = SSL_AD_ILLEGAL_PARAMETER;
+        SSLerr(SSL_F_TLS_PROCESS_SERVER_CERTIFICATE,
+               SSL_R_WRONG_CERTIFICATE_TYPE);
+        goto f_err;
     }
     s->session->peer_type = i;
 
