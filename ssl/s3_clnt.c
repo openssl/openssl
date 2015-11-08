@@ -1050,6 +1050,11 @@ int ssl3_get_server_hello(SSL *s)
         SSLerr(SSL_F_SSL3_GET_SERVER_HELLO, SSL_R_UNKNOWN_CIPHER_RETURNED);
         goto f_err;
     }
+    /* Set version disabled mask now we know version */
+    if (!SSL_USE_TLS1_2_CIPHERS(s))
+        ct->mask_ssl = SSL_TLSV1_2;
+    else
+        ct->mask_ssl = 0;
     /*
      * If it is a disabled cipher we didn't send it in client hello, so
      * return an error.
