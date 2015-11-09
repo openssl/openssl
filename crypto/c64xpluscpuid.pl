@@ -12,7 +12,6 @@ $code.=<<___;
 	.endif
 	.if	__TI_EABI__
 	.asg	OPENSSL_rdtsc,_OPENSSL_rdtsc
-	.asg	OPENSSL_cleanse,_OPENSSL_cleanse
 	.asg	OPENSSL_atomic_add,_OPENSSL_atomic_add
 	.asg	OPENSSL_wipe_cpu,_OPENSSL_wipe_cpu
 	.asg	OPENSSL_instrument_bus,_OPENSSL_instrument_bus
@@ -30,56 +29,6 @@ _OPENSSL_rdtsc:
   [!B0]	MVC	B0,TSCL		; start TSC
 	MV	B0,A4
 	MV	B1,A5
-	.endasmfunc
-
-	.global	_OPENSSL_cleanse
-_OPENSSL_cleanse:
-	.asmfunc
-	ZERO	A3:A2
-||	ZERO	B2
-||	SHRU	B4,3,B0		; is length >= 8
-||	ADD	1,A4,B6
-  [!B0]	BNOP	RA
-||	ZERO	A1
-||	ZERO	B1
-   [B0]	MVC	B0,ILC
-||[!B0]	CMPLT	0,B4,A1
-||[!B0]	CMPLT	1,B4,B1
-   [A1]	STB	A2,*A4++[2]
-|| [B1] STB	B2,*B6++[2]
-||[!B0]	CMPLT	2,B4,A1
-||[!B0]	CMPLT	3,B4,B1
-   [A1]	STB	A2,*A4++[2]
-|| [B1] STB	B2,*B6++[2]
-||[!B0]	CMPLT	4,B4,A1
-||[!B0]	CMPLT	5,B4,B1
-   [A1]	STB	A2,*A4++[2]
-|| [B1] STB	B2,*B6++[2]
-||[!B0]	CMPLT	6,B4,A1
-   [A1]	STB	A2,*A4++[2]
-
-	SPLOOP	1
-	STNDW	A3:A2,*A4++
-||	SUB	B4,8,B4
-	SPKERNEL
-
-	MV	B4,B0		; remaining bytes
-||	ADD	1,A4,B6
-||	BNOP	RA
-   [B0]	CMPLT	0,B0,A1
-|| [B0]	CMPLT	1,B0,B1
-   [A1]	STB	A2,*A4++[2]
-|| [B1] STB	B2,*B6++[2]
-|| [B0]	CMPLT	2,B0,A1
-|| [B0]	CMPLT	3,B0,B1
-   [A1]	STB	A2,*A4++[2]
-|| [B1] STB	B2,*B6++[2]
-|| [B0]	CMPLT	4,B0,A1
-|| [B0]	CMPLT	5,B0,B1
-   [A1]	STB	A2,*A4++[2]
-|| [B1] STB	B2,*B6++[2]
-|| [B0]	CMPLT	6,B0,A1
-   [A1]	STB	A2,*A4++[2]
 	.endasmfunc
 
 	.global	_OPENSSL_atomic_add

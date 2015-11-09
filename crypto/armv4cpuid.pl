@@ -59,45 +59,6 @@ OPENSSL_atomic_add:
 #endif
 .size	OPENSSL_atomic_add,.-OPENSSL_atomic_add
 
-.global	OPENSSL_cleanse
-.type	OPENSSL_cleanse,%function
-OPENSSL_cleanse:
-	eor	ip,ip,ip
-	cmp	r1,#7
-#ifdef	__thumb2__
-	itt	hs
-#endif
-	subhs	r1,r1,#4
-	bhs	.Lot
-	cmp	r1,#0
-	beq	.Lcleanse_done
-.Little:
-	strb	ip,[r0],#1
-	subs	r1,r1,#1
-	bhi	.Little
-	b	.Lcleanse_done
-
-.Lot:	tst	r0,#3
-	beq	.Laligned
-	strb	ip,[r0],#1
-	sub	r1,r1,#1
-	b	.Lot
-.Laligned:
-	str	ip,[r0],#4
-	subs	r1,r1,#4
-	bhs	.Laligned
-	adds	r1,r1,#4
-	bne	.Little
-.Lcleanse_done:
-#if __ARM_ARCH__>=5
-	bx	lr
-#else
-	tst	lr,#1
-	moveq	pc,lr
-	.word	0xe12fff1e	@ bx	lr
-#endif
-.size	OPENSSL_cleanse,.-OPENSSL_cleanse
-
 #if __ARM_MAX_ARCH__>=7
 .arch	armv7-a
 .fpu	neon

@@ -127,39 +127,6 @@ $code.=<<___;
 	.long	0
 	.byte	0,12,0x14,0,0,0,0,0
 .size	.OPENSSL_rdtsc,.-.OPENSSL_rdtsc
-
-.globl	.OPENSSL_cleanse
-.align	4
-.OPENSSL_cleanse:
-	$CMPLI	r4,7
-	li	r0,0
-	bge	Lot
-	$CMPLI	r4,0
-	beqlr-
-Little:	mtctr	r4
-	stb	r0,0(r3)
-	addi	r3,r3,1
-	bdnz	\$-8
-	blr
-Lot:	andi.	r5,r3,3
-	beq	Laligned
-	stb	r0,0(r3)
-	subi	r4,r4,1
-	addi	r3,r3,1
-	b	Lot
-Laligned:
-	$SHRLI	r5,r4,2
-	mtctr	r5
-	stw	r0,0(r3)
-	addi	r3,r3,4
-	bdnz	\$-8
-	andi.	r4,r4,3
-	bne	Little
-	blr
-	.long	0
-	.byte	0,12,0x14,0,0,0,2,0
-	.long	0
-.size	.OPENSSL_cleanse,.-.OPENSSL_cleanse
 ___
 {
 my ($out,$cnt,$max)=("r3","r4","r5");

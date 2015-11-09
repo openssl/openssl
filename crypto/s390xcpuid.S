@@ -58,41 +58,6 @@ OPENSSL_wipe_cpu:
 	br	%r14
 .size	OPENSSL_wipe_cpu,.-OPENSSL_wipe_cpu
 
-.globl	OPENSSL_cleanse
-.type	OPENSSL_cleanse,@function
-.align	16
-OPENSSL_cleanse:
-#if !defined(__s390x__) && !defined(__s390x)
-	llgfr	%r3,%r3
-#endif
-	lghi	%r4,15
-	lghi	%r0,0
-	clgr	%r3,%r4
-	jh	.Lot
-	clgr	%r3,%r0
-	bcr	8,%r14
-.Little:
-	stc	%r0,0(%r2)
-	la	%r2,1(%r2)
-	brctg	%r3,.Little
-	br	%r14
-.align	4
-.Lot:	tmll	%r2,7
-	jz	.Laligned
-	stc	%r0,0(%r2)
-	la	%r2,1(%r2)
-	brctg	%r3,.Lot
-.Laligned:
-	srlg	%r4,%r3,3
-.Loop:	stg	%r0,0(%r2)
-	la	%r2,8(%r2)
-	brctg	%r4,.Loop
-	lghi	%r4,7
-	ngr	%r3,%r4
-	jnz	.Little
-	br	%r14
-.size	OPENSSL_cleanse,.-OPENSSL_cleanse
-
 .globl	OPENSSL_instrument_bus
 .type	OPENSSL_instrument_bus,@function
 .align	16

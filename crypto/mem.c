@@ -59,6 +59,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <limits.h>
+#include <string.h>
 #include <openssl/crypto.h>
 #include "internal/cryptlib.h"
 
@@ -241,4 +242,17 @@ void CRYPTO_clear_free(void *str, size_t num)
     if (num)
         OPENSSL_cleanse(str, num);
     CRYPTO_free(str);
+}
+
+static void *(*const volatile __memset_vp)(void *, int, size_t) = (memset);
+void OPENSSL_cleanse(void *ptr, size_t len)
+{
+#if defined(OPENSSL_USE_MEMSET_S)
+    memset_s(ptr, 0, len);
+#elif defined(OPENSSL_WINDOWS)
+    SecureZeroMemory(ptr, len);
+#else
+    /* Calling a function using a volatile pointer should never be optimised */
+    (*__memset_vp)(ptr, 0, len);
+#endif
 }
