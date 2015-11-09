@@ -1740,13 +1740,13 @@ if ($strict_warnings)
 	die "ERROR --strict-warnings requires gcc or clang" unless ($ecc =~ /gcc(-\d(\.\d)*)?$/ or $ecc =~ /clang$/);
 	foreach $wopt (split /\s+/, $gcc_devteam_warn)
 		{
-		$cflags .= " $wopt" unless ($cflags =~ /$wopt/)
+		$cflags .= " $wopt" unless ($cflags =~ /(^|\s)$wopt(\s|$)/)
 		}
 	if ($ecc eq "clang")
 		{
 		foreach $wopt (split /\s+/, $clang_devteam_warn)
 			{
-			$cflags .= " $wopt" unless ($cflags =~ /$wopt/)
+			$cflags .= " $wopt" unless ($cflags =~ /(^|\s)$wopt(\s|$)/)
 			}
 		}
 	}
