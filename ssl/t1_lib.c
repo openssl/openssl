@@ -497,7 +497,7 @@ static int tls1_get_curvelist(SSL *s, int sess,
             } else
 # endif
             {
-                if (!s->server || (s->cert && s->cert->ecdh_tmp_auto)) {
+                if (!s->server || s->cert->ecdh_tmp_auto) {
                     *pcurves = eccurves_auto;
                     pcurveslen = sizeof(eccurves_auto);
                 } else {
