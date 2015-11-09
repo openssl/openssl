@@ -1193,6 +1193,12 @@ struct ssl_st {
     int (*not_resumable_session_cb) (SSL *ssl, int is_forward_secure);
     
     RECORD_LAYER rlayer;
+
+    /* Default password callback. */
+    pem_password_cb *default_passwd_callback;
+
+    /* Default password callback user data. */
+    void *default_passwd_callback_userdata;
 };
 
 
