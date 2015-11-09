@@ -1419,6 +1419,7 @@ my $shared_ldflag = $table{$target}->{shared_ldflag};
 my $shared_extension = $table{$target}->{shared_extension};
 my $ranlib = $ENV{'RANLIB'} || $table{$target}->{ranlib};
 my $ar = $ENV{'AR'} || "ar";
+my $nm = $ENV{'NM'} || "nm";
 my $arflags = $table{$target}->{arflags};
 my $multilib = $table{$target}->{multilib};
 
@@ -1867,6 +1868,7 @@ while (<IN>)
 	else	{
 		s/^CC=.*$/CC= $cc/;
 		s/^AR=\s*ar/AR= $ar/;
+		s/^NM=\s*nm/NM= $nm/;
 		s/^RANLIB=.*/RANLIB= $ranlib/;
 		s/^MAKEDEPPROG=.*$/MAKEDEPPROG= $cc/ if $ecc eq "gcc" || $ecc eq "clang";
 		}
