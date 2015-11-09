@@ -644,9 +644,19 @@ static int use_certificate_chain_file(SSL_CTX *ctx, SSL *ssl, const char *file)
     BIO *in;
     int ret = 0;
     X509 *x = NULL;
+    pem_password_cb *passwd_callback;
+    void *passwd_callback_userdata;
 
     ERR_clear_error();          /* clear error stack for
                                  * SSL_CTX_use_certificate() */
+
+    if (ctx != NULL) {
+        passwd_callback = ctx->default_passwd_callback;
+        passwd_callback_userdata = ctx->default_passwd_callback_userdata;
+    } else {
+        passwd_callback = ssl->default_passwd_callback;
+        passwd_callback_userdata = ssl->default_passwd_callback_userdata;
+    }
 
     in = BIO_new(BIO_s_file());
     if (in == NULL) {
@@ -659,8 +669,8 @@ static int use_certificate_chain_file(SSL_CTX *ctx, SSL *ssl, const char *file)
         goto end;
     }
 
-    x = PEM_read_bio_X509_AUX(in, NULL, ctx->default_passwd_callback,
-                              ctx->default_passwd_callback_userdata);
+    x = PEM_read_bio_X509_AUX(in, NULL, passwd_callback,
+                              passwd_callback_userdata);
     if (x == NULL) {
         SSLerr(SSL_F_USE_CERTIFICATE_CHAIN_FILE, ERR_R_PEM_LIB);
         goto end;
@@ -693,10 +703,9 @@ static int use_certificate_chain_file(SSL_CTX *ctx, SSL *ssl, const char *file)
             goto end;
         }
 
-        while ((ca = PEM_read_bio_X509(in, NULL,
-                                       ctx->default_passwd_callback,
-                                       ctx->default_passwd_callback_userdata))
-               != NULL) {
+        while ((ca = PEM_read_bio_X509(in, NULL, passwd_callback,
+                                       passwd_callback_userdata))
+                != NULL) {
             if (ctx)
                 r = SSL_CTX_add0_chain_cert(ctx, ca);
             else

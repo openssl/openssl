@@ -366,6 +366,9 @@ SSL *SSL_new(SSL_CTX *ctx)
 
     s->verify_result = X509_V_OK;
 
+    s->default_passwd_callback = ctx->default_passwd_callback;
+    s->default_passwd_callback_userdata = ctx->default_passwd_callback_userdata;
+
     s->method = ctx->method;
 
     if (!s->method->ssl_new(s))
@@ -1846,6 +1849,16 @@ void SSL_CTX_set_default_passwd_cb_userdata(SSL_CTX *ctx, void *u)
     ctx->default_passwd_callback_userdata = u;
 }
 
+void SSL_set_default_passwd_cb(SSL *s, pem_password_cb *cb)
+{
+    s->default_passwd_callback = cb;
+}
+
+void SSL_set_default_passwd_cb_userdata(SSL *s, void *u)
+{
+    s->default_passwd_callback_userdata = u;
+}
+
 void SSL_CTX_set_cert_verify_callback(SSL_CTX *ctx,
                                       int (*cb) (X509_STORE_CTX *, void *),
                                       void *arg)
@@ -2534,6 +2547,9 @@ SSL *SSL_dup(SSL *s)
                                  * ret->init_msg, ret->init_num,
                                  * ret->init_off */
     ret->hit = s->hit;
+
+    ret->default_passwd_callback = s->default_passwd_callback;
+    ret->default_passwd_callback_userdata = s->default_passwd_callback_userdata;
 
     X509_VERIFY_PARAM_inherit(ret->param, s->param);
 
