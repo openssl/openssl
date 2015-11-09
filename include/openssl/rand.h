@@ -92,7 +92,7 @@ const RAND_METHOD *RAND_get_rand_method(void);
 # ifndef OPENSSL_NO_ENGINE
 int RAND_set_rand_engine(ENGINE *engine);
 # endif
-RAND_METHOD *RAND_SSLeay(void);
+RAND_METHOD *RAND_OpenSSL(void);
 void RAND_cleanup(void);
 int RAND_bytes(unsigned char *buf, int num);
 #ifdef OPENSSL_USE_DEPRECATED
@@ -138,8 +138,8 @@ void ERR_load_RAND_strings(void);
 # define RAND_F_FIPS_SET_PRNG_SEED                        104
 # define RAND_F_FIPS_SET_TEST_MODE                        105
 # define RAND_F_FIPS_X931_SET_DT                          106
+# define RAND_F_RAND_BYTES                                100
 # define RAND_F_RAND_GET_RAND_METHOD                      101
-# define RAND_F_SSLEAY_RAND_BYTES                         100
 
 /* Reason codes. */
 # define RAND_R_NOT_IN_TEST_MODE                          101

@@ -189,5 +189,5 @@ dh_rfc5114.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
 dh_rfc5114.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
 dh_rfc5114.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 dh_rfc5114.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-dh_rfc5114.o: ../../include/openssl/symhacks.h ../include/internal/cryptlib.h
-dh_rfc5114.o: dh_rfc5114.c
+dh_rfc5114.o: ../../include/openssl/symhacks.h ../include/internal/bn_dh.h
+dh_rfc5114.o: ../include/internal/cryptlib.h dh_rfc5114.c

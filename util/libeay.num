@@ -1,5 +1,5 @@
-SSLeay                                  1	EXIST::FUNCTION:
-SSLeay_version                          2	EXIST::FUNCTION:
+OpenSSL_version_num                     1	EXIST::FUNCTION:
+OpenSSL_version                         2	EXIST::FUNCTION:
 ASN1_BIT_STRING_asn1_meth               3	NOEXIST::FUNCTION:
 ASN1_HEADER_free                        4	NOEXIST::FUNCTION:
 ASN1_HEADER_new                         5	NOEXIST::FUNCTION:
@@ -472,7 +472,7 @@ RC4_set_key                             479	EXIST::FUNCTION:RC4
 RSAPrivateKey_asn1_meth                 480	NOEXIST::FUNCTION:
 RSAPrivateKey_dup                       481	EXIST::FUNCTION:RSA
 RSAPublicKey_dup                        482	EXIST::FUNCTION:RSA
-RSA_PKCS1_SSLeay                        483	EXIST::FUNCTION:RSA
+RSA_PKCS1_OpenSSL                       483	EXIST::FUNCTION:RSA
 RSA_free                                484	EXIST::FUNCTION:RSA
 RSA_generate_key                        485	EXIST::FUNCTION:DEPRECATED,RSA
 RSA_new                                 486	EXIST::FUNCTION:RSA
@@ -1082,7 +1082,7 @@ BN_MONT_CTX_copy                        1109	EXIST::FUNCTION:
 BIO_new_socks4a_connect                 1110	NOEXIST::FUNCTION:
 BIO_s_socks4a_connect                   1111	NOEXIST::FUNCTION:
 PROXY_set_connect_mode                  1112	NOEXIST::FUNCTION:
-RAND_SSLeay                             1113	EXIST::FUNCTION:
+RAND_OpenSSL                            1113	EXIST::FUNCTION:
 RAND_set_rand_method                    1114	EXIST::FUNCTION:
 RSA_memory_lock                         1115	EXIST::FUNCTION:RSA
 bn_sub_words                            1116	NOEXIST::FUNCTION:

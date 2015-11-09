@@ -158,7 +158,7 @@ static int bind_helper(ENGINE *e)
 # ifndef OPENSSL_NO_DH
         || !ENGINE_set_DH(e, DH_get_default_method())
 # endif
-        || !ENGINE_set_RAND(e, RAND_SSLeay())
+        || !ENGINE_set_RAND(e, RAND_OpenSSL())
 # ifdef TEST_ENG_OPENSSL_RC4
         || !ENGINE_set_ciphers(e, openssl_ciphers)
 # endif

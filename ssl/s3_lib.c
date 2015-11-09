@@ -4763,9 +4763,9 @@ const SSL_CIPHER *ssl3_get_cipher_by_char(const unsigned char *p)
 {
     SSL_CIPHER c;
     const SSL_CIPHER *cp;
-    unsigned long id;
+    uint32_t id;
 
-    id = 0x03000000L | ((unsigned long)p[0] << 8L) | (unsigned long)p[1];
+    id = 0x03000000 | ((uint32_t)p[0] << 8L) | (uint32_t)p[1];
     c.id = id;
     cp = OBJ_bsearch_ssl_cipher_id(&c, ssl3_ciphers, SSL3_NUM_CIPHERS);
 #ifdef DEBUG_PRINT_UNKNOWN_CIPHERSUITES
@@ -4915,7 +4915,7 @@ int ssl3_get_req_cert_type(SSL *s, unsigned char *p)
 {
     int ret = 0;
     int nostrict = 1;
-    unsigned long alg_k, alg_a = 0;
+    uint32_t alg_k, alg_a = 0;
 
     /* If we have custom certificate types set, use them */
     if (s->cert->ctypes) {
@@ -5014,7 +5014,7 @@ int ssl3_shutdown(SSL *s)
      * Don't do anything much if we have not done the handshake or we don't
      * want to send messages :-)
      */
-    if ((s->quiet_shutdown) || (s->state == SSL_ST_BEFORE)) {
+    if (s->quiet_shutdown || SSL_in_before(s)) {
         s->shutdown = (SSL_SENT_SHUTDOWN | SSL_RECEIVED_SHUTDOWN);
         return (1);
     }
@@ -5085,11 +5085,11 @@ static int ssl3_read_internal(SSL *s, void *buf, int len, int peek)
          * makes sense here; so disable handshake processing and try to read
          * application data again.
          */
-        s->in_handshake++;
+        ossl_statem_set_in_handshake(s, 1);
         ret =
             s->method->ssl_read_bytes(s, SSL3_RT_APPLICATION_DATA, NULL, buf,
                                       len, peek);
-        s->in_handshake--;
+        ossl_statem_set_in_handshake(s, 0);
     } else
         s->s3->in_read_app_data = 0;
 
@@ -5128,10 +5128,10 @@ int ssl3_renegotiate_check(SSL *s)
             && !SSL_in_init(s)) {
             /*
              * if we are the server, and we have sent a 'RENEGOTIATE'
-             * message, we need to go to SSL_ST_ACCEPT.
+             * message, we need to set the state machine into the renegotiate
+             * state.
              */
-            /* SSL_ST_ACCEPT */
-            s->state = SSL_ST_RENEGOTIATE;
+            ossl_statem_set_renegotiate(s);
             s->s3->renegotiate = 0;
             s->s3->num_renegotiations++;
             s->s3->total_renegotiations++;

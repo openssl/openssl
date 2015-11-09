@@ -3310,7 +3310,7 @@ static int tls12_sigalg_allowed(SSL *s, int op, const unsigned char *ptmp)
  * disabled.
  */
 
-void ssl_set_sig_mask(unsigned long *pmask_a, SSL *s, int op)
+void ssl_set_sig_mask(uint32_t *pmask_a, SSL *s, int op)
 {
     const unsigned char *sigalgs;
     size_t i, sigalgslen;
@@ -3680,16 +3680,10 @@ int tls1_heartbeat(SSL *s)
     }
 
     /* ...and no handshake in progress. */
-    if (SSL_in_init(s) || s->in_handshake) {
+    if (SSL_in_init(s) || ossl_statem_get_in_handshake(s)) {
         SSLerr(SSL_F_TLS1_HEARTBEAT, SSL_R_UNEXPECTED_MESSAGE);
         return -1;
     }
-
-    /*
-     * Check if padding is too long, payload and padding must not exceed 2^14
-     * - 3 = 16381 bytes in total.
-     */
-    OPENSSL_assert(payload + padding <= 16381);
 
     /*-
      * Create HeartBeat message, we just use a sequence number
@@ -3938,7 +3932,6 @@ int tls1_check_chain(SSL *s, X509 *x, EVP_PKEY *pk, STACK_OF(X509) *chain,
         idx = ssl_cert_type(x, pk);
         if (idx == -1)
             return 0;
-        cpk = c->pkeys + idx;
         pvalid = s->s3->tmp.valid_flags + idx;
 
         if (c->cert_flags & SSL_CERT_FLAGS_CHECK_TLS_STRICT)

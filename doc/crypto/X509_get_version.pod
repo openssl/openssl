@@ -68,10 +68,6 @@ L<X509_verify_cert(3)>
 
 =head1 HISTORY
 
-X509_get_version(), X509_set_version() X509_REQ_get_version(),
-X509_REQ_set_version(), X509_REQ_get_version() and X509_REQ_set_version()
-are available in all versions of OpenSSL.
-
 X509_get_version(), X509_REQ_get_version() and X509_CRL_get_version() are
 functions in OpenSSL 1.1.0, in previous versions they were macros.
 

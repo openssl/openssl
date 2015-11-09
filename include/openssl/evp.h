@@ -959,9 +959,6 @@ void OPENSSL_add_all_algorithms_conf(void);
 
 void OpenSSL_add_all_ciphers(void);
 void OpenSSL_add_all_digests(void);
-# define SSLeay_add_all_algorithms() OpenSSL_add_all_algorithms()
-# define SSLeay_add_all_ciphers() OpenSSL_add_all_ciphers()
-# define SSLeay_add_all_digests() OpenSSL_add_all_digests()
 
 int EVP_add_cipher(const EVP_CIPHER *cipher);
 int EVP_add_digest(const EVP_MD *digest);

@@ -19,7 +19,7 @@ BN_rand, BN_pseudo_rand, BN_rand_range, BN_pseudo_rand_range - generate pseudo-r
 =head1 DESCRIPTION
 
 BN_rand() generates a cryptographically strong pseudo-random number of
-B<bits> bits in length and stores it in B<rnd>. If B<top> is -1, the
+B<bits> in length and stores it in B<rnd>. If B<top> is -1, the
 most significant bit of the random number can be zero. If B<top> is 0,
 it is set to 1, and if B<top> is 1, the two most significant bits of
 the number will be set to 1, so that the product of two such random
@@ -48,12 +48,5 @@ The error codes can be obtained by L<ERR_get_error(3)>.
 
 L<bn(3)>, L<ERR_get_error(3)>, L<rand(3)>,
 L<RAND_add(3)>, L<RAND_bytes(3)>
-
-=head1 HISTORY
-
-BN_rand() is available in all versions of SSLeay and OpenSSL.
-BN_pseudo_rand() was added in OpenSSL 0.9.5. The B<top> == -1 case
-and the function BN_rand_range() were added in OpenSSL 0.9.6a.
-BN_pseudo_rand_range() was added in OpenSSL 0.9.6c.
 
 =cut

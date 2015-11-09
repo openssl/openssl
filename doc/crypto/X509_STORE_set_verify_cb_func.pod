@@ -46,9 +46,6 @@ L<CMS_verify(3)>
 
 =head1 HISTORY
 
-X509_STORE_set_verify_cb_func() is available in all versions of SSLeay and
-OpenSSL.
-
 X509_STORE_set_verify_cb() was added to OpenSSL 1.0.0.
 
 =cut

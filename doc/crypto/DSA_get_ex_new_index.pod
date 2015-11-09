@@ -28,9 +28,4 @@ as described in L<RSA_get_ex_new_index(3)>.
 
 L<RSA_get_ex_new_index(3)>, L<dsa(3)>
 
-=head1 HISTORY
-
-DSA_get_ex_new_index(), DSA_set_ex_data() and DSA_get_ex_data() are
-available since OpenSSL 0.9.5.
-
 =cut

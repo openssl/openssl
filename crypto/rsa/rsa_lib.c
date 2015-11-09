@@ -87,7 +87,7 @@ const RSA_METHOD *RSA_get_default_method(void)
 #ifdef RSA_NULL
         default_RSA_meth = RSA_null_method();
 #else
-        default_RSA_meth = RSA_PKCS1_SSLeay();
+        default_RSA_meth = RSA_PKCS1_OpenSSL();
 #endif
     }
 

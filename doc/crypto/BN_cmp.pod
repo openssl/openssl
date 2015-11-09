@@ -39,10 +39,4 @@ the condition is true, 0 otherwise.
 
 L<bn(3)>
 
-=head1 HISTORY
-
-BN_cmp(), BN_ucmp(), BN_is_zero(), BN_is_one() and BN_is_word() are
-available in all versions of SSLeay and OpenSSL.
-BN_is_odd() was added in SSLeay 0.8.
-
 =cut

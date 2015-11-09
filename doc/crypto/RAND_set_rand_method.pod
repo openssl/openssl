@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-RAND_set_rand_method, RAND_get_rand_method, RAND_SSLeay - select RAND method
+RAND_set_rand_method, RAND_get_rand_method, RAND_OpenSSL - select RAND method
 
 =head1 SYNOPSIS
 
@@ -12,7 +12,7 @@ RAND_set_rand_method, RAND_get_rand_method, RAND_SSLeay - select RAND method
 
  const RAND_METHOD *RAND_get_rand_method(void);
 
- RAND_METHOD *RAND_SSLeay(void);
+ RAND_METHOD *RAND_OpenSSL(void);
 
 =head1 DESCRIPTION
 
@@ -23,7 +23,7 @@ information about how these RAND API functions are affected by the use of
 B<ENGINE> API calls.
 
 Initially, the default RAND_METHOD is the OpenSSL internal implementation, as
-returned by RAND_SSLeay().
+returned by RAND_OpenSSL().
 
 RAND_set_default_method() makes B<meth> the method for PRNG use. B<NB>: This is
 true only whilst no ENGINE has been set as a default for RAND, so this function
@@ -53,11 +53,11 @@ Each component may be NULL if the function is not implemented.
 =head1 RETURN VALUES
 
 RAND_set_rand_method() returns no value. RAND_get_rand_method() and
-RAND_SSLeay() return pointers to the respective methods.
+RAND_OpenSSL() return pointers to the respective methods.
 
 =head1 NOTES
 
-As of version 0.9.7, RAND_METHOD implementations are grouped together with other
+RAND_METHOD implementations are grouped together with other
 algorithmic APIs (eg. RSA_METHOD, EVP_CIPHER, etc) in B<ENGINE> modules. If a
 default ENGINE is specified for RAND functionality using an ENGINE API function,
 that will override any RAND defaults set using the RAND API (ie.
@@ -68,16 +68,5 @@ algorithms.
 =head1 SEE ALSO
 
 L<rand(3)>, L<engine(3)>
-
-=head1 HISTORY
-
-RAND_set_rand_method(), RAND_get_rand_method() and RAND_SSLeay() are
-available in all versions of OpenSSL.
-
-In the engine version of version 0.9.6, RAND_set_rand_method() was altered to
-take an ENGINE pointer as its argument. As of version 0.9.7, that has been
-reverted as the ENGINE API transparently overrides RAND defaults if used,
-otherwise RAND API functions work as before. RAND_set_rand_engine() was also
-introduced in version 0.9.7.
 
 =cut

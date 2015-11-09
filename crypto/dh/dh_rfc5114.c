@@ -60,6 +60,7 @@
 #include "internal/cryptlib.h"
 #include <openssl/dh.h>
 #include <openssl/bn.h>
+#include "internal/bn_dh.h"
 
 /*
  * Macro to make a DH structure from BIGNUM data. NB: although just copying
@@ -68,9 +69,6 @@
  */
 
 #define make_dh(x) \
-\
-extern const BIGNUM _bignum_dh##x##_p, _bignum_dh##x##_g, _bignum_dh##x##_q; \
-\
 DH *DH_get_##x(void) \
 { \
     DH *dh = DH_new(); \

@@ -183,13 +183,4 @@ UI_set_method() changes the UI method associated with a given UI.
 
 L<ui_create(3)>, L<ui_compat(3)>
 
-=head1 HISTORY
-
-The UI section was first introduced in OpenSSL 0.9.7.
-
-=head1 AUTHOR
-
-Richard Levitte (richard@levitte.org) for the OpenSSL project
-(http://www.openssl.org).
-
 =cut

@@ -352,6 +352,7 @@ static int asn1_primitive_new(ASN1_VALUE **pval, const ASN1_ITEM *it,
         if (embed) {
             str = *(ASN1_STRING **)pval;
             memset(str, 0, sizeof(*str));
+            str->type = utype;
             str->flags = ASN1_STRING_FLAG_EMBED;
         } else {
             str = ASN1_STRING_type_new(utype);

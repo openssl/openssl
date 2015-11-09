@@ -34,8 +34,4 @@ CMS_final() returns 1 for success or 0 for failure.
 L<ERR_get_error(3)>, L<CMS_sign(3)>,
 L<CMS_encrypt(3)>
 
-=head1 HISTORY
-
-CMS_final() was added to OpenSSL 0.9.8
-
 =cut

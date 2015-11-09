@@ -79,10 +79,6 @@ L<CRYPTO_secure_malloc(3)>.
 
 =head1 HISTORY
 
-BUF_MEM_new(), BUF_MEM_free() and BUF_MEM_grow() are available in all
-versions of SSLeay and OpenSSL. BUF_strdup() was added in SSLeay 0.8.
-
-BUF_MEM_new_ex() was contributed to OpenSSL by Akamai Technologies
-in May, 2014.
+BUF_MEM_new_ex() was added in OpenSSL 1.1.0.
 
 =cut

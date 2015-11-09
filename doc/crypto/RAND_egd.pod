@@ -75,14 +75,4 @@ success, and -1 if the connection failed. The PRNG state is not considered.
 L<rand(3)>, L<RAND_add(3)>,
 L<RAND_cleanup(3)>
 
-=head1 HISTORY
-
-RAND_egd() is available since OpenSSL 0.9.5.
-
-RAND_egd_bytes() is available since OpenSSL 0.9.6.
-
-RAND_query_egd_bytes() is available since OpenSSL 0.9.7.
-
-The automatic query of /var/run/egd-pool et al was added in OpenSSL 0.9.7.
-
 =cut

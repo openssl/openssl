@@ -468,6 +468,7 @@ errors:
 	$(PERL) util/ck_errf.pl -strict */*.c */*/*.c
 	$(PERL) util/mkerr.pl -recurse -write
 	(cd engines; $(MAKE) PERL=$(PERL) errors)
+	(cd crypto/ct; $(MAKE) PERL=$(PERL) errors)
 
 stacks:
 	$(PERL) util/mkstack.pl -write

@@ -38,8 +38,8 @@ L<err(3)>
 
 =head1 HISTORY
 
-ERR_remove_state() is available in all versions of SSLeay and OpenSSL. It
-was deprecated in OpenSSL 1.0.0 when ERR_remove_thread_state was introduced
+ERR_remove_state()
+was deprecated in OpenSSL 1.0.0 when ERR_remove_thread_state() was introduced
 and thread IDs were introduced to identify threads instead of 'unsigned long'. 
 
 =cut

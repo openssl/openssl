@@ -3,6 +3,11 @@
 # Written by Ben Laurie <ben@algroup.co.uk> 19 Jan 1999
 
 use strict;
+use Cwd;
+
+my $path = getcwd();
+$path =~ /([^\/]+)$/;
+$path = $1;
 
 while(<STDIN>) {
     print;
@@ -56,6 +61,8 @@ foreach $file (sort keys %files) {
 
     # Remove leading ./ before sorting
     my @deps = map { $_ =~ s/^\.\///; $_ } @{$files{$file}};
+    # Remove ../thisdir/
+    @deps = map { $_ =~ s|^../$path/||; $_ } @deps;
 
     foreach $dep (sort @deps) {
 	$dep=~s/^\.\///;

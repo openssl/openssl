@@ -1,6 +1,6 @@
 /* crypto/conf/conf_err.c */
 /* ====================================================================
- * Copyright (c) 1999-2007 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2015 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -76,11 +76,11 @@ static ERR_STRING_DATA CONF_str_functs[] = {
     {ERR_FUNC(CONF_F_CONF_LOAD_FP), "CONF_load_fp"},
     {ERR_FUNC(CONF_F_CONF_MODULES_LOAD), "CONF_modules_load"},
     {ERR_FUNC(CONF_F_CONF_PARSE_LIST), "CONF_parse_list"},
-    {ERR_FUNC(CONF_F_DEF_LOAD), "DEF_LOAD"},
-    {ERR_FUNC(CONF_F_DEF_LOAD_BIO), "DEF_LOAD_BIO"},
-    {ERR_FUNC(CONF_F_MODULE_INIT), "MODULE_INIT"},
-    {ERR_FUNC(CONF_F_MODULE_LOAD_DSO), "MODULE_LOAD_DSO"},
-    {ERR_FUNC(CONF_F_MODULE_RUN), "MODULE_RUN"},
+    {ERR_FUNC(CONF_F_DEF_LOAD), "def_load"},
+    {ERR_FUNC(CONF_F_DEF_LOAD_BIO), "def_load_bio"},
+    {ERR_FUNC(CONF_F_MODULE_INIT), "module_init"},
+    {ERR_FUNC(CONF_F_MODULE_LOAD_DSO), "module_load_dso"},
+    {ERR_FUNC(CONF_F_MODULE_RUN), "module_run"},
     {ERR_FUNC(CONF_F_NCONF_DUMP_BIO), "NCONF_dump_bio"},
     {ERR_FUNC(CONF_F_NCONF_DUMP_FP), "NCONF_dump_fp"},
     {ERR_FUNC(CONF_F_NCONF_GET_NUMBER), "NCONF_get_number"},
@@ -91,7 +91,7 @@ static ERR_STRING_DATA CONF_str_functs[] = {
     {ERR_FUNC(CONF_F_NCONF_LOAD_BIO), "NCONF_load_bio"},
     {ERR_FUNC(CONF_F_NCONF_LOAD_FP), "NCONF_load_fp"},
     {ERR_FUNC(CONF_F_NCONF_NEW), "NCONF_new"},
-    {ERR_FUNC(CONF_F_STR_COPY), "STR_COPY"},
+    {ERR_FUNC(CONF_F_STR_COPY), "str_copy"},
     {0, NULL}
 };
 

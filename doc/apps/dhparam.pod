@@ -117,7 +117,7 @@ for all available algorithms.
 =head1 WARNINGS
 
 The program B<dhparam> combines the functionality of the programs B<dh> and
-B<gendh> in previous versions of OpenSSL and SSLeay. The B<dh> and B<gendh>
+B<gendh> in previous versions of OpenSSL. The B<dh> and B<gendh>
 programs are retained for now but may have different purposes in future 
 versions of OpenSSL.
 
@@ -140,10 +140,5 @@ There should be a way to generate and manipulate DH keys.
 =head1 SEE ALSO
 
 L<dsaparam(1)>
-
-=head1 HISTORY
-
-The B<dhparam> command was added in OpenSSL 0.9.5.
-The B<-dsaparam> option was added in OpenSSL 0.9.6.
 
 =cut

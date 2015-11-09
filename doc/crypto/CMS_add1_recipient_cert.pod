@@ -54,9 +54,4 @@ occurs.
 L<ERR_get_error(3)>, L<CMS_decrypt(3)>,
 L<CMS_final(3)>,
 
-=head1 HISTORY
-
-CMS_add1_recipient_cert() and CMS_add0_recipient_key() were added to OpenSSL
-0.9.8
-
 =cut

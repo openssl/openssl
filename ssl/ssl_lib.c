@@ -215,9 +215,7 @@ int SSL_clear(SSL *s)
         return 0;
     }
 
-    s->type = 0;
-
-    s->state = SSL_ST_BEFORE | ((s->server) ? SSL_ST_ACCEPT : SSL_ST_CONNECT);
+    ossl_statem_clear(s);
 
     s->version = s->method->version;
     s->client_version = s->version;
@@ -232,7 +230,7 @@ int SSL_clear(SSL *s)
      * Check to see if we were changed into a different method, if so, revert
      * back if we are not doing session-id reuse.
      */
-    if (!s->in_handshake && (s->session == NULL)
+    if (!ossl_statem_get_in_handshake(s) && (s->session == NULL)
         && (s->method != s->ctx->method)) {
         s->method->ssl_free(s);
         s->method = s->ctx->method;
@@ -858,7 +856,7 @@ int SSL_copy_session_id(SSL *t, const SSL *f)
     }
 
     /*
-     * what if we are setup as SSLv2 but want to talk SSLv3 or vice-versa
+     * what if we are setup for one protocol version but want to talk another
      */
     if (t->method != f->method) {
         t->method->ssl_free(t); /* cleanup current */
@@ -1082,7 +1080,7 @@ long SSL_ctrl(SSL *s, int cmd, long larg, void *parg)
             return TLS_CIPHER_LEN;
         }
     case SSL_CTRL_GET_EXTMS_SUPPORT:
-        if (!s->session || SSL_in_init(s) || s->in_handshake)
+        if (!s->session || SSL_in_init(s) || ossl_statem_get_in_handshake(s))
 		return -1;
 	if (s->session->flags & SSL_SESS_FLAG_EXTMS)
             return 1;
@@ -1226,25 +1224,21 @@ long SSL_CTX_callback_ctrl(SSL_CTX *ctx, int cmd, void (*fp) (void))
 
 int ssl_cipher_id_cmp(const SSL_CIPHER *a, const SSL_CIPHER *b)
 {
-    long l;
-
-    l = a->id - b->id;
-    if (l == 0L)
-        return (0);
-    else
-        return ((l > 0) ? 1 : -1);
+    if (a->id > b->id)
+        return 1;
+    if (a->id < b->id)
+        return -1;
+    return 0;
 }
 
 int ssl_cipher_ptr_id_cmp(const SSL_CIPHER *const *ap,
                           const SSL_CIPHER *const *bp)
 {
-    long l;
-
-    l = (*ap)->id - (*bp)->id;
-    if (l == 0L)
-        return (0);
-    else
-        return ((l > 0) ? 1 : -1);
+    if ((*ap)->id > (*bp)->id)
+        return 1;
+    if ((*ap)->id < (*bp)->id)
+        return -1;
+    return 0;
 }
 
 /** return a STACK of the ciphers available for the SSL and in order of
@@ -1363,7 +1357,6 @@ int SSL_set_cipher_list(SSL *s, const char *str)
     return 1;
 }
 
-/* works well for SSLv2, not so good for SSLv3 */
 char *SSL_get_shared_ciphers(const SSL *s, char *buf, int len)
 {
     char *p;
@@ -2397,7 +2390,7 @@ void SSL_set_accept_state(SSL *s)
 {
     s->server = 1;
     s->shutdown = 0;
-    s->state = SSL_ST_ACCEPT | SSL_ST_BEFORE;
+    ossl_statem_clear(s);
     s->handshake_func = s->method->ssl_accept;
     clear_ciphers(s);
 }
@@ -2406,7 +2399,7 @@ void SSL_set_connect_state(SSL *s)
 {
     s->server = 0;
     s->shutdown = 0;
-    s->state = SSL_ST_CONNECT | SSL_ST_BEFORE;
+    ossl_statem_clear(s);
     s->handshake_func = s->method->ssl_connect;
     clear_ciphers(s);
 }
@@ -2468,7 +2461,6 @@ SSL *SSL_dup(SSL *s)
         return (NULL);
 
     ret->version = s->version;
-    ret->type = s->type;
     ret->method = s->method;
 
     if (s->session != NULL) {
@@ -2529,15 +2521,14 @@ SSL *SSL_dup(SSL *s)
             ret->wbio = ret->rbio;
     }
     ret->rwstate = s->rwstate;
-    ret->in_handshake = s->in_handshake;
     ret->handshake_func = s->handshake_func;
     ret->server = s->server;
     ret->renegotiate = s->renegotiate;
     ret->new_session = s->new_session;
     ret->quiet_shutdown = s->quiet_shutdown;
     ret->shutdown = s->shutdown;
-    ret->state = s->state;      /* SSL_dup does not really work at any state,
-                                 * though */
+    ret->statem = s->statem;      /* SSL_dup does not really work at any state,
+                                   * though */
     RECORD_LAYER_dup(&ret->rlayer, &s->rlayer);
     ret->init_num = 0;          /* would have to copy ret->init_buf,
                                  * ret->init_msg, ret->init_num,
@@ -2837,16 +2828,6 @@ void (*SSL_get_info_callback(const SSL *ssl)) (const SSL * /* ssl */ ,
                                                int /* type */ ,
                                                int /* val */ ) {
     return ssl->info_callback;
-}
-
-int SSL_state(const SSL *ssl)
-{
-    return (ssl->state);
-}
-
-void SSL_set_state(SSL *ssl, int state)
-{
-    ssl->state = state;
 }
 
 void SSL_set_verify_result(SSL *ssl, long arg)

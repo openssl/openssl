@@ -146,7 +146,7 @@ static RSA_METHOD rsa_pkcs1_eay_meth = {
     NULL                        /* rsa_keygen */
 };
 
-const RSA_METHOD *RSA_PKCS1_SSLeay(void)
+const RSA_METHOD *RSA_PKCS1_OpenSSL(void)
 {
     return (&rsa_pkcs1_eay_meth);
 }

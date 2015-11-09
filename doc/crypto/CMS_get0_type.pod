@@ -69,9 +69,4 @@ error can be obtained from ERR_get_error(3).
 
 L<ERR_get_error(3)>
 
-=head1 HISTORY
-
-CMS_get0_type(), CMS_set1_eContentType() and CMS_get0_eContentType() were all
-first added to OpenSSL 0.9.8
-
 =cut

@@ -1,0 +1,7 @@
+This shows how to set up the OpenSSL callbacks for use in
+multi-threaded programs.
+
+Two implementations, one for Win32 native and one for pthreads, are provided
+in th-lock.c  A test program is in mttest.c
+
+Build scripts are in pthread.sh and win32.bat

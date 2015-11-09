@@ -111,7 +111,7 @@ __owur static inline int PACKET_buf_init(PACKET *pkt, unsigned char *buf,
                                          size_t len)
 {
     /* Sanity check for negative values. */
-    if (buf + len < buf)
+    if (len > (size_t)(SIZE_MAX / 2))
         return 0;
 
     pkt->curr = buf;

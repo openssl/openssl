@@ -89,7 +89,6 @@ L<ssl(3)|ssl(3)>, L<bio(3)|bio(3)>
 
 =head1 HISTORY
 
-DTLSv1_listen() was added in OpenSSL 0.9.8. Its return codes were clarified in
-OpenSSL 1.1.0.
+DTLSv1_listen() return codes were clarified in OpenSSL 1.1.0.
 
 =cut
