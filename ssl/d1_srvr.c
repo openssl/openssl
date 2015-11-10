@@ -267,6 +267,19 @@ int dtls1_accept(SSL *s)
                 ssl3_init_finished_mac(s);
                 s->state = SSL3_ST_SR_CLNT_HELLO_A;
                 s->ctx->stats.sess_accept++;
+            } else if (!s->s3->send_connection_binding &&
+                       !(s->options &
+                         SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION)) {
+                /*
+                 * Server attempting to renegotiate with client that doesn't
+                 * support secure renegotiation.
+                 */
+                SSLerr(SSL_F_DTLS1_ACCEPT,
+                       SSL_R_UNSAFE_LEGACY_RENEGOTIATION_DISABLED);
+                ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_HANDSHAKE_FAILURE);
+                ret = -1;
+                s->state = SSL_ST_ERR;
+                goto end;
             } else {
                 /*
                  * s->state == SSL_ST_RENEGOTIATE, we will just send a
