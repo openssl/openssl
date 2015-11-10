@@ -97,7 +97,7 @@ static int rsa_builtin_keygen(RSA *rsa, int bits, BIGNUM *e_value,
     local_r0 = BN_new();
     local_d = BN_new();
     local_p = BN_new();
-    if (!local_r0 || !local_d || !local_p)
+    if (local_r0 == NULL || local_d == NULL || local_p == NULL)
         goto err;
 
     ctx = BN_CTX_new();

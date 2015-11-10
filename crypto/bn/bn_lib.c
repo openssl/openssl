@@ -287,7 +287,7 @@ BIGNUM *BN_new(void)
  BIGNUM *BN_secure_new(void)
  {
      BIGNUM *ret = BN_new();
-     if (ret)
+     if (ret != NULL)
          ret->flags |= BN_FLG_SECURE;
      return (ret);
  }

@@ -590,7 +590,7 @@ int x509_main(int argc, char **argv)
 
         if (sno == NULL) {
             sno = ASN1_INTEGER_new();
-            if (!sno || !rand_serial(NULL, sno))
+            if (sno == NULL || !rand_serial(NULL, sno))
                 goto end;
             if (!X509_set_serialNumber(x, sno))
                 goto end;

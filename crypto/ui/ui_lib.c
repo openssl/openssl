@@ -138,7 +138,7 @@ static UI_STRING *general_allocate_prompt(UI *ui, const char *prompt,
     } else if ((type == UIT_PROMPT || type == UIT_VERIFY
                 || type == UIT_BOOLEAN) && result_buf == NULL) {
         UIerr(UI_F_GENERAL_ALLOCATE_PROMPT, UI_R_NO_RESULT_BUFFER);
-    } else if ((ret = OPENSSL_malloc(sizeof(*ret)))) {
+    } else if ((ret = OPENSSL_malloc(sizeof(*ret))) != NULL) {
         ret->out_string = prompt;
         ret->flags = prompt_freeable ? OUT_STRING_FREEABLE : 0;
         ret->input_flags = input_flags;
@@ -581,7 +581,7 @@ UI_METHOD *UI_create_method(char *name)
 {
     UI_METHOD *ui_method = OPENSSL_zalloc(sizeof(*ui_method));
 
-    if (ui_method)
+    if (ui_method != NULL)
         ui_method->name = BUF_strdup(name);
     return ui_method;
 }

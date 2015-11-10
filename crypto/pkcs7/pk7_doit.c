@@ -567,7 +567,7 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
         /* Generate random key as MMA defence */
         tkeylen = EVP_CIPHER_CTX_key_length(evp_ctx);
         tkey = OPENSSL_malloc(tkeylen);
-        if (!tkey)
+        if (tkey == NULL)
             goto err;
         if (EVP_CIPHER_CTX_rand_key(evp_ctx, tkey) <= 0)
             goto err;
@@ -614,6 +614,8 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
             bio = BIO_new_mem_buf(data_body->data, data_body->length);
         else {
             bio = BIO_new(BIO_s_mem());
+            if (bio == NULL)
+                goto err;
             BIO_set_mem_eof_return(bio, 0);
         }
         if (bio == NULL)
@@ -717,9 +719,9 @@ int PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
         /* XXXXXXXXXXXXXXXX */
         si_sk = p7->d.signed_and_enveloped->signer_info;
         os = p7->d.signed_and_enveloped->enc_data->enc_data;
-        if (!os) {
+        if (os == NULL) {
             os = ASN1_OCTET_STRING_new();
-            if (!os) {
+            if (os == NULL) {
                 PKCS7err(PKCS7_F_PKCS7_DATAFINAL, ERR_R_MALLOC_FAILURE);
                 goto err;
             }
@@ -729,9 +731,9 @@ int PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
     case NID_pkcs7_enveloped:
         /* XXXXXXXXXXXXXXXX */
         os = p7->d.enveloped->enc_data->enc_data;
-        if (!os) {
+        if (os == NULL) {
             os = ASN1_OCTET_STRING_new();
-            if (!os) {
+            if (os == NULL) {
                 PKCS7err(PKCS7_F_PKCS7_DATAFINAL, ERR_R_MALLOC_FAILURE);
                 goto err;
             }
@@ -799,7 +801,7 @@ int PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
                 unsigned int abuflen;
                 abuflen = EVP_PKEY_size(si->pkey);
                 abuf = OPENSSL_malloc(abuflen);
-                if (!abuf)
+                if (abuf == NULL)
                     goto err;
 
                 if (!EVP_SignFinal(&ctx_tmp, abuf, &abuflen, si->pkey)) {
@@ -885,7 +887,7 @@ int PKCS7_SIGNER_INFO_sign(PKCS7_SIGNER_INFO *si)
     if (EVP_DigestSignFinal(&mctx, NULL, &siglen) <= 0)
         goto err;
     abuf = OPENSSL_malloc(siglen);
-    if (!abuf)
+    if (abuf == NULL)
         goto err;
     if (EVP_DigestSignFinal(&mctx, abuf, &siglen) <= 0)
         goto err;

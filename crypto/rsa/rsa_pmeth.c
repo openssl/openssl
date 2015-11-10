@@ -98,7 +98,7 @@ static int pkey_rsa_init(EVP_PKEY_CTX *ctx)
 {
     RSA_PKEY_CTX *rctx;
     rctx = OPENSSL_zalloc(sizeof(*rctx));
-    if (!rctx)
+    if (rctx == NULL)
         return 0;
     rctx->nbits = 1024;
     rctx->pad_mode = RSA_PKCS1_PADDING;
@@ -141,7 +141,7 @@ static int setup_tbuf(RSA_PKEY_CTX *ctx, EVP_PKEY_CTX *pk)
     if (ctx->tbuf)
         return 1;
     ctx->tbuf = OPENSSL_malloc(EVP_PKEY_size(pk->pkey));
-    if (!ctx->tbuf)
+    if (ctx->tbuf == NULL)
         return 0;
     return 1;
 }
@@ -634,17 +634,17 @@ static int pkey_rsa_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
     RSA_PKEY_CTX *rctx = ctx->data;
     BN_GENCB *pcb;
     int ret;
-    if (!rctx->pub_exp) {
+    if (rctx->pub_exp == NULL) {
         rctx->pub_exp = BN_new();
-        if (!rctx->pub_exp || !BN_set_word(rctx->pub_exp, RSA_F4))
+        if (rctx->pub_exp == NULL || !BN_set_word(rctx->pub_exp, RSA_F4))
             return 0;
     }
     rsa = RSA_new();
-    if (!rsa)
+    if (rsa == NULL)
         return 0;
     if (ctx->pkey_gencb) {
         pcb = BN_GENCB_new();
-        if (!pcb) {
+        if (pcb == NULL) {
             RSA_free(rsa);
             return 0;
         }

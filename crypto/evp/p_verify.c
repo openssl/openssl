@@ -88,7 +88,7 @@ int EVP_VerifyFinal(EVP_MD_CTX *ctx, const unsigned char *sigbuf,
     if (ctx->digest->flags & EVP_MD_FLAG_PKEY_METHOD_SIGNATURE) {
         i = -1;
         pkctx = EVP_PKEY_CTX_new(pkey, NULL);
-        if (!pkctx)
+        if (pkctx == NULL)
             goto err;
         if (EVP_PKEY_verify_init(pkctx) <= 0)
             goto err;

@@ -104,7 +104,7 @@ static int dsa_builtin_keygen(DSA *dsa)
 
         if ((dsa->flags & DSA_FLAG_NO_EXP_CONSTTIME) == 0) {
             local_prk = prk = BN_new();
-            if (!local_prk)
+            if (local_prk == NULL)
                 goto err;
             BN_with_flags(prk, priv_key, BN_FLG_CONSTTIME);
         } else

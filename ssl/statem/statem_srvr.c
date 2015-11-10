@@ -2820,6 +2820,11 @@ MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
         }
 
         pkey_ctx = EVP_PKEY_CTX_new(pk, NULL);
+        if (pkey_ctx == NULL) {
+            al = SSL_AD_INTERNAL_ERROR;
+            SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE, ERR_R_MALLOC_FAILURE);
+            goto f_err;
+        }
         EVP_PKEY_decrypt_init(pkey_ctx);
         /*
          * If client certificate is present and is of the same type, maybe
@@ -3356,7 +3361,7 @@ int tls_construct_new_session_ticket(SSL *s)
         return 0;
     }
     senc = OPENSSL_malloc(slen_full);
-    if (!senc) {
+    if (senc == NULL) {
         ossl_statem_set_error(s);
         return 0;
     }

@@ -332,7 +332,7 @@ CMS_SignerInfo *CMS_add1_signer(CMS_ContentInfo *cms,
 
     if (i == sk_X509_ALGOR_num(sd->digestAlgorithms)) {
         alg = X509_ALGOR_new();
-        if (!alg)
+        if (alg == NULL)
             goto merr;
         X509_ALGOR_set_md(alg, md);
         if (!sk_X509_ALGOR_push(sd->digestAlgorithms, alg)) {
@@ -381,7 +381,7 @@ CMS_SignerInfo *CMS_add1_signer(CMS_ContentInfo *cms,
     if (flags & CMS_KEY_PARAM) {
         if (flags & CMS_NOATTR) {
             si->pctx = EVP_PKEY_CTX_new(si->pkey, NULL);
-            if (!si->pctx)
+            if (si->pctx == NULL)
                 goto err;
             if (EVP_PKEY_sign_init(si->pctx) <= 0)
                 goto err;
@@ -617,7 +617,7 @@ static int cms_SignerInfo_content_sign(CMS_ContentInfo *cms,
             goto err;
         siglen = EVP_PKEY_size(si->pkey);
         sig = OPENSSL_malloc(siglen);
-        if (!sig) {
+        if (sig == NULL) {
             CMSerr(CMS_F_CMS_SIGNERINFO_CONTENT_SIGN, ERR_R_MALLOC_FAILURE);
             goto err;
         }
@@ -630,7 +630,7 @@ static int cms_SignerInfo_content_sign(CMS_ContentInfo *cms,
         unsigned char *sig;
         unsigned int siglen;
         sig = OPENSSL_malloc(EVP_PKEY_size(si->pkey));
-        if (!sig) {
+        if (sig == NULL) {
             CMSerr(CMS_F_CMS_SIGNERINFO_CONTENT_SIGN, ERR_R_MALLOC_FAILURE);
             goto err;
         }
@@ -708,7 +708,7 @@ int CMS_SignerInfo_sign(CMS_SignerInfo *si)
         goto err;
     OPENSSL_free(abuf);
     abuf = OPENSSL_malloc(siglen);
-    if (!abuf)
+    if (abuf == NULL)
         goto err;
     if (EVP_DigestSignFinal(mctx, abuf, &siglen) <= 0)
         goto err;
@@ -851,6 +851,8 @@ int CMS_SignerInfo_verify_content(CMS_SignerInfo *si, BIO *chain)
     } else {
         const EVP_MD *md = EVP_MD_CTX_md(&mctx);
         pkctx = EVP_PKEY_CTX_new(si->pkey, NULL);
+        if (pkctx == NULL)
+            goto err;
         if (EVP_PKEY_verify_init(pkctx) <= 0)
             goto err;
         if (EVP_PKEY_CTX_set_signature_md(pkctx, md) <= 0)
@@ -894,20 +896,20 @@ int CMS_add_simple_smimecap(STACK_OF(X509_ALGOR) **algs,
     ASN1_INTEGER *key = NULL;
     if (keysize > 0) {
         key = ASN1_INTEGER_new();
-        if (!key || !ASN1_INTEGER_set(key, keysize))
+        if (key == NULL || !ASN1_INTEGER_set(key, keysize))
             return 0;
     }
     alg = X509_ALGOR_new();
-    if (!alg) {
+    if (alg == NULL) {
         ASN1_INTEGER_free(key);
         return 0;
     }
 
     X509_ALGOR_set0(alg, OBJ_nid2obj(algnid),
                     key ? V_ASN1_INTEGER : V_ASN1_UNDEF, key);
-    if (!*algs)
+    if (*algs == NULL)
         *algs = sk_X509_ALGOR_new_null();
-    if (!*algs || !sk_X509_ALGOR_push(*algs, alg)) {
+    if (*algs == NULL || !sk_X509_ALGOR_push(*algs, alg)) {
         X509_ALGOR_free(alg);
         return 0;
     }

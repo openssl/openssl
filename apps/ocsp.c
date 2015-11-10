@@ -783,9 +783,9 @@ static int add_ocsp_cert(OCSP_REQUEST **req, X509 *cert,
         BIO_printf(bio_err, "No issuer certificate specified\n");
         return 0;
     }
-    if (!*req)
+    if (*req == NULL)
         *req = OCSP_REQUEST_new();
-    if (!*req)
+    if (*req == NULL)
         goto err;
     id = OCSP_cert_to_id(cert_id_md, cert, issuer);
     if (!id || !sk_OCSP_CERTID_push(ids, id))
@@ -811,9 +811,9 @@ static int add_ocsp_serial(OCSP_REQUEST **req, char *serial,
         BIO_printf(bio_err, "No issuer certificate specified\n");
         return 0;
     }
-    if (!*req)
+    if (*req == NULL)
         *req = OCSP_REQUEST_new();
-    if (!*req)
+    if (*req == NULL)
         goto err;
     iname = X509_get_subject_name(issuer);
     ikey = X509_get0_pubkey_bitstr(issuer);
@@ -824,7 +824,7 @@ static int add_ocsp_serial(OCSP_REQUEST **req, char *serial,
     }
     id = OCSP_cert_id_new(cert_id_md, iname, ikey, sno);
     ASN1_INTEGER_free(sno);
-    if (!id || !sk_OCSP_CERTID_push(ids, id))
+    if (id == NULL || !sk_OCSP_CERTID_push(ids, id))
         goto err;
     if (!OCSP_request_add0_id(*req, id))
         goto err;
@@ -1029,7 +1029,7 @@ static BIO *init_responder(const char *port)
     return NULL;
 # endif
     bufbio = BIO_new(BIO_f_buffer());
-    if (!bufbio)
+    if (bufbio == NULL)
         goto err;
     acbio = BIO_new(BIO_s_accept());
     if (acbio == NULL
@@ -1220,7 +1220,7 @@ static OCSP_RESPONSE *query_responder(BIO *cbio, const char *host,
     }
 
     ctx = OCSP_sendreq_new(cbio, path, NULL, -1);
-    if (!ctx)
+    if (ctx == NULL)
         return NULL;
 
     for (i = 0; i < sk_CONF_VALUE_num(headers); i++) {

@@ -85,7 +85,7 @@ int OBJ_NAME_new_index(unsigned long (*hash_func) (const char *),
         MemCheck_off();
         name_funcs = OPENSSL_zalloc(sizeof(*name_funcs));
         MemCheck_on();
-        if (!name_funcs) {
+        if (name_funcs == NULL) {
             OBJerr(OBJ_F_OBJ_NAME_NEW_INDEX, ERR_R_MALLOC_FAILURE);
             return (0);
         }
@@ -308,7 +308,7 @@ void OBJ_NAME_do_all_sorted(int type,
     d.names =
         OPENSSL_malloc(sizeof(*d.names) * lh_OBJ_NAME_num_items(names_lh));
     /* Really should return an error if !d.names...but its a void function! */
-    if (d.names) {
+    if (d.names != NULL) {
         d.n = 0;
         OBJ_NAME_do_all(type, do_all_sorted_fn, &d);
 

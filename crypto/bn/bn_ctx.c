@@ -204,7 +204,7 @@ BN_CTX *BN_CTX_secure_new(void)
 {
     BN_CTX *ret = BN_CTX_new();
 
-    if (ret)
+    if (ret != NULL)
         ret->flags = BN_FLG_SECURE;
     return ret;
 }

@@ -2215,7 +2215,7 @@ MSG_PROCESS_RETURN tls_process_new_session_ticket(SSL *s, PACKET *pkt)
     s->session->tlsext_ticklen = 0;
 
     s->session->tlsext_tick = OPENSSL_malloc(ticklen);
-    if (!s->session->tlsext_tick) {
+    if (s->session->tlsext_tick == NULL) {
         SSLerr(SSL_F_TLS_PROCESS_NEW_SESSION_TICKET, ERR_R_MALLOC_FAILURE);
         goto err;
     }
@@ -2269,7 +2269,7 @@ MSG_PROCESS_RETURN tls_process_cert_status(SSL *s, PACKET *pkt)
     }
     OPENSSL_free(s->tlsext_ocsp_resp);
     s->tlsext_ocsp_resp = OPENSSL_malloc(resplen);
-    if (!s->tlsext_ocsp_resp) {
+    if (s->tlsext_ocsp_resp == NULL) {
         al = SSL_AD_INTERNAL_ERROR;
         SSLerr(SSL_F_TLS_PROCESS_CERT_STATUS, ERR_R_MALLOC_FAILURE);
         goto f_err;
@@ -2453,7 +2453,7 @@ psk_err:
         RSA *rsa;
         pmslen = SSL_MAX_MASTER_KEY_LENGTH;
         pms = OPENSSL_malloc(pmslen);
-        if (!pms)
+        if (pms == NULL)
             goto memerr;
 
         if (s->session->peer == NULL) {
@@ -2555,7 +2555,7 @@ psk_err:
 
         pmslen = DH_size(dh_clnt);
         pms = OPENSSL_malloc(pmslen);
-        if (!pms)
+        if (pms == NULL)
             goto memerr;
 
         /*
@@ -2695,7 +2695,7 @@ psk_err:
         }
         pmslen = (field_size + 7) / 8;
         pms = OPENSSL_malloc(pmslen);
-        if (!pms)
+        if (pms == NULL)
             goto memerr;
         n = ECDH_compute_key(pms, pmslen, srvr_ecpoint, clnt_ecdh, NULL);
         if (n <= 0 || pmslen != (size_t)n) {
@@ -2764,7 +2764,7 @@ psk_err:
 
         pmslen = 32;
         pms = OPENSSL_malloc(pmslen);
-        if (!pms)
+        if (pms == NULL)
             goto memerr;
 
         /*
@@ -2779,6 +2779,11 @@ psk_err:
 
         pkey_ctx = EVP_PKEY_CTX_new(pub_key =
                                     X509_get_pubkey(peer_cert), NULL);
+        if (pkey_ctx == NULL) {
+            SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE,
+                   ERR_R_MALLOC_FAILURE);
+            goto err;
+        }
         /*
          * If we have send a certificate, and certificate key
          * parameters match those of server certificate, use
@@ -2994,8 +2999,12 @@ int tls_construct_client_verify(SSL *s)
 
     p = ssl_handshake_start(s);
     pkey = s->cert->key->privatekey;
-/* Create context from key and test if sha1 is allowed as digest */
+    /* Create context from key and test if sha1 is allowed as digest */
     pctx = EVP_PKEY_CTX_new(pkey, NULL);
+    if (pctx == NULL) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_VERIFY, ERR_R_MALLOC_FAILURE);
+        goto err;
+    }
     EVP_PKEY_sign_init(pctx);
     if (EVP_PKEY_CTX_set_signature_md(pctx, EVP_sha1()) > 0) {
         if (!SSL_USE_SIGALGS(s))

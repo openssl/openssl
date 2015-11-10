@@ -376,7 +376,7 @@ static EVP_PKEY_CTX *init_ctx(int *pkeysize,
 
     EVP_PKEY_free(pkey);
 
-    if (!ctx)
+    if (ctx == NULL)
         goto end;
 
     switch (pkey_op) {

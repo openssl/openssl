@@ -248,7 +248,7 @@ static void *mem_list_start(STORE *s, STORE_OBJECT_TYPES type,
     void *attribute_context = NULL;
     STORE_ATTR_INFO *attrs = NULL;
 
-    if (!context) {
+    if (context == NULL) {
         STOREerr(STORE_F_MEM_LIST_START, ERR_R_MALLOC_FAILURE);
         return 0;
     }
@@ -263,7 +263,7 @@ static void *mem_list_start(STORE *s, STORE_OBJECT_TYPES type,
         if (context->search_attributes == NULL) {
             context->search_attributes =
                 sk_STORE_ATTR_INFO_new(STORE_ATTR_INFO_compare);
-            if (!context->search_attributes) {
+            if (context->search_attributes == NULL) {
                 STOREerr(STORE_F_MEM_LIST_START, ERR_R_MALLOC_FAILURE);
                 goto err;
             }

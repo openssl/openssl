@@ -4339,7 +4339,7 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
                 return 0;
 #endif
             ptmp = EVP_PKEY_new();
-            if (!ptmp)
+            if (ptmp == NULL)
                 return 0;
 #ifndef OPENSSL_NO_RSA
             else if (s->s3->peer_rsa_tmp)
@@ -4791,9 +4791,9 @@ const SSL_CIPHER *ssl3_get_cipher_by_char(const unsigned char *p)
 {
     SSL_CIPHER c;
     const SSL_CIPHER *cp;
-    unsigned long id;
+    uint32_t id;
 
-    id = 0x03000000L | ((unsigned long)p[0] << 8L) | (unsigned long)p[1];
+    id = 0x03000000 | ((uint32_t)p[0] << 8L) | (uint32_t)p[1];
     c.id = id;
     cp = OBJ_bsearch_ssl_cipher_id(&c, ssl3_ciphers, SSL3_NUM_CIPHERS);
 #ifdef DEBUG_PRINT_UNKNOWN_CIPHERSUITES
@@ -4943,7 +4943,7 @@ int ssl3_get_req_cert_type(SSL *s, unsigned char *p)
 {
     int ret = 0;
     int nostrict = 1;
-    unsigned long alg_k, alg_a = 0;
+    uint32_t alg_k, alg_a = 0;
 
     /* If we have custom certificate types set, use them */
     if (s->cert->ctypes) {
@@ -5029,7 +5029,7 @@ static int ssl3_set_req_cert_type(CERT *c, const unsigned char *p, size_t len)
     if (len > 0xff)
         return 0;
     c->ctypes = OPENSSL_malloc(len);
-    if (!c->ctypes)
+    if (c->ctypes == NULL)
         return 0;
     memcpy(c->ctypes, p, len);
     c->ctype_num = len;

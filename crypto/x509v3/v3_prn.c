@@ -101,7 +101,7 @@ void X509V3_EXT_val_prn(BIO *out, STACK_OF(CONF_VALUE) *val, int indent,
             char *tmp;
             len = strlen(nval->value) + 1;
             tmp = OPENSSL_malloc(len);
-            if (tmp) {
+            if (tmp != NULL) {
                 ascii2ebcdic(tmp, nval->value, len);
                 BIO_printf(out, "%s:%s", nval->name, tmp);
                 OPENSSL_free(tmp);
@@ -154,7 +154,7 @@ int X509V3_EXT_print(BIO *out, X509_EXTENSION *ext, unsigned long flag,
             char *tmp;
             len = strlen(value) + 1;
             tmp = OPENSSL_malloc(len);
-            if (tmp) {
+            if (tmp != NULL) {
                 ascii2ebcdic(tmp, value, len);
                 BIO_printf(out, "%*s%s", indent, "", tmp);
                 OPENSSL_free(tmp);

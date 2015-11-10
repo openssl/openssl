@@ -2049,7 +2049,7 @@ X509_CRL *X509_CRL_diff(X509_CRL *base, X509_CRL *newer,
     }
     /* Create new CRL */
     crl = X509_CRL_new();
-    if (!crl || !X509_CRL_set_version(crl, 1))
+    if (crl == NULL || !X509_CRL_set_version(crl, 1))
         goto memerr;
     /* Set issuer name */
     if (!X509_CRL_set_issuer_name(crl, X509_CRL_get_issuer(newer)))
@@ -2267,7 +2267,7 @@ X509_STORE_CTX *X509_STORE_CTX_new(void)
 {
     X509_STORE_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));
 
-    if (!ctx) {
+    if (ctx == NULL) {
         X509err(X509_F_X509_STORE_CTX_NEW, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
