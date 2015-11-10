@@ -126,6 +126,11 @@ $code=<<___;
 .text
 .code	32
 
+#ifdef __clang__
+#define ldrplb	ldrbpl
+#define ldrneb	ldrbne
+#endif
+
 .type	rem_4bit,%object
 .align	5
 rem_4bit:
