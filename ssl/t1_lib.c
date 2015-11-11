@@ -3326,7 +3326,7 @@ static int tls12_get_pkey_idx(unsigned char sig_alg)
 static void tls1_lookup_sigalg(int *phash_nid, int *psign_nid,
                                int *psignhash_nid, const unsigned char *data)
 {
-    int sign_nid = 0, hash_nid = 0;
+    int sign_nid = NID_undef, hash_nid = NID_undef;
     if (!phash_nid && !psign_nid && !psignhash_nid)
         return;
     if (phash_nid || psignhash_nid) {
@@ -3340,9 +3340,9 @@ static void tls1_lookup_sigalg(int *phash_nid, int *psign_nid,
             *psign_nid = sign_nid;
     }
     if (psignhash_nid) {
-        if (sign_nid && hash_nid)
-            OBJ_find_sigid_by_algs(psignhash_nid, hash_nid, sign_nid);
-        else
+        if (sign_nid == NID_undef || hash_nid == NID_undef
+                || OBJ_find_sigid_by_algs(psignhash_nid, hash_nid,
+                                          sign_nid) <= 0)
             *psignhash_nid = NID_undef;
     }
 }
