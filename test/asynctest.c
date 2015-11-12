@@ -114,6 +114,16 @@ static int wake(void *args)
     return 1;
 }
 
+static int blockpause(void *args)
+{
+    ASYNC_block_pause();
+    ASYNC_pause_job();
+    ASYNC_unblock_pause();
+    ASYNC_pause_job();
+
+    return 1;
+}
+
 static int test_ASYNC_init_pool()
 {
     ASYNC_JOB *job1 = NULL, *job2 = NULL, *job3 = NULL;
@@ -210,8 +220,6 @@ static int test_ASYNC_get_wait_fd()
     ASYNC_JOB *job = NULL;
     int funcret, fd;
 
-    currjob = NULL;
-
     if (       !ASYNC_init_pool(1, 0)
             || ASYNC_start_job(&job, &funcret, wake, NULL, 0)
                 != ASYNC_PAUSE
@@ -235,6 +243,27 @@ static int test_ASYNC_get_wait_fd()
     ASYNC_free_pool();
     return 1;
 }
+
+static int test_ASYNC_block_pause()
+{
+    ASYNC_JOB *job = NULL;
+    int funcret;
+
+    if (       !ASYNC_init_pool(1, 0)
+            || ASYNC_start_job(&job, &funcret, blockpause, NULL, 0)
+                != ASYNC_PAUSE
+            || ASYNC_start_job(&job, &funcret, blockpause, NULL, 0)
+                != ASYNC_FINISH
+            || funcret != 1) {
+        fprintf(stderr, "test_ASYNC_block_pause() failed\n");
+        ASYNC_free_pool();
+        return 0;
+    }
+
+    ASYNC_free_pool();
+    return 1;
+}
+
 #endif
 
 int main(int argc, char **argv)
@@ -250,7 +279,8 @@ int main(int argc, char **argv)
     if (       !test_ASYNC_init_pool()
             || !test_ASYNC_start_job()
             || !test_ASYNC_get_current_job()
-            || !test_ASYNC_get_wait_fd()) {
+            || !test_ASYNC_get_wait_fd()
+            || !test_ASYNC_block_pause()) {
         return 1;
     }
 #endif
