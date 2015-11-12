@@ -76,7 +76,8 @@ int async_fibre_init(async_fibre *fibre)
 {
     void *stack = NULL;
 
-    if (!(stack = OPENSSL_malloc(STACKSIZE))) {
+    stack = OPENSSL_malloc(STACKSIZE);
+    if (stack == NULL) {
         return 0;
     }
 

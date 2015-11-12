@@ -72,7 +72,7 @@ int async_fibre_init_dispatcher(async_fibre *fibre)
 
     dispatcher =
         (LPVOID) CRYPTO_get_thread_local(CRYPTO_THREAD_LOCAL_ASYNC_DISPATCH);
-    if (!dispatcher) {
+    if (dispatcher == NULL) {
         fibre->fibre = ConvertThreadToFiber(NULL);
         CRYPTO_set_thread_local(CRYPTO_THREAD_LOCAL_ASYNC_DISPATCH,
                                 (void *)fibre->fibre);
@@ -125,7 +125,7 @@ int async_set_pool(STACK_OF(ASYNC_JOB) *poolin, size_t curr_size,
 {
     struct winpool *pool;
     pool = OPENSSL_malloc(sizeof *pool);
-    if (!pool)
+    if (pool == NULL)
         return 0;
 
     pool->pool = poolin;
