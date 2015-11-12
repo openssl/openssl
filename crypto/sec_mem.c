@@ -333,8 +333,18 @@ static int sh_init(size_t size, int minsize)
         goto err;
 
     /* Allocate space for heap, and two extra pages as guards */
-#ifdef _SC_PAGE_SIZE
-    pgsize = (size_t)sysconf(_SC_PAGE_SIZE);
+#if defined(_SC_PAGE_SIZE) || defined (_SC_PAGESIZE)
+    {
+# if defined(_SC_PAGE_SIZE)
+        long tmppgsize = sysconf(_SC_PAGE_SIZE);
+# else
+        long tmppgsize = sysconf(_SC_PAGESIZE);
+# endif
+        if (tmppgsize < 1)
+            pgsize = PAGE_SIZE;
+        else
+            pgsize = (size_t)tmppgsize;
+    }
 #else
     pgsize = PAGE_SIZE;
 #endif
