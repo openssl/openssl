@@ -80,6 +80,7 @@ static async_ctx *async_ctx_new(void)
 
     async_fibre_init_dispatcher(&nctx->dispatcher);
     nctx->currjob = NULL;
+    nctx->blocked = 0;
     if(!async_set_ctx(nctx))
         goto err;
 
@@ -286,7 +287,9 @@ int ASYNC_pause_job(void)
 {
     ASYNC_JOB *job;
 
-    if(!async_get_ctx() || !async_get_ctx()->currjob) {
+    if (async_get_ctx() == NULL
+            || async_get_ctx()->currjob == NULL
+            || async_get_ctx()->blocked) {
         /*
          * Could be we've deliberately not been started within a job so this is
          * counted as success.
@@ -297,8 +300,8 @@ int ASYNC_pause_job(void)
     job = async_get_ctx()->currjob;
     job->status = ASYNC_JOB_PAUSING;
 
-    if(!async_fibre_swapcontext(&job->fibrectx,
-                               &async_get_ctx()->dispatcher, 1)) {
+    if (!async_fibre_swapcontext(&job->fibrectx,
+                                 &async_get_ctx()->dispatcher, 1)) {
         ASYNCerr(ASYNC_F_ASYNC_PAUSE_JOB, ASYNC_R_FAILED_TO_SWAP_CONTEXT);
         return 0;
     }
@@ -404,4 +407,29 @@ void ASYNC_clear_wake(ASYNC_JOB *job)
         return;
     async_read1(job->wait_fd, &dummy);
     job->wake_set = 0;
+}
+
+void ASYNC_block_pause(void)
+{
+    if (async_get_ctx() == NULL
+            || async_get_ctx()->currjob == NULL) {
+        /*
+         * We're not in a job anyway so ignore this
+         */
+        return;
+    }
+    async_get_ctx()->blocked++;
+}
+
+void ASYNC_unblock_pause(void)
+{
+    if (async_get_ctx() == NULL
+            || async_get_ctx()->currjob == NULL) {
+        /*
+         * We're not in a job anyway so ignore this
+         */
+        return;
+    }
+    if(async_get_ctx()->blocked > 0)
+        async_get_ctx()->blocked--;
 }
