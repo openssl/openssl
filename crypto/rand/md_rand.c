@@ -130,6 +130,7 @@
 
 #include <openssl/crypto.h>
 #include <openssl/rand.h>
+#include <openssl/async.h>
 #include "rand_lcl.h"
 
 #include <openssl/err.h>
@@ -432,6 +433,11 @@ static int rand_bytes(unsigned char *buf, int num, int pseudo)
      */
 
     CRYPTO_w_lock(CRYPTO_LOCK_RAND);
+    /*
+     * We could end up in an async engine while holding this lock so ensure
+     * we don't pause and cause a deadlock
+     */
+    ASYNC_block_pause();
 
     /* prevent rand_bytes() from trying to obtain the lock again */
     CRYPTO_w_lock(CRYPTO_LOCK_RAND2);
@@ -510,6 +516,7 @@ static int rand_bytes(unsigned char *buf, int num, int pseudo)
 
     /* before unlocking, we must clear 'crypto_lock_rand' */
     crypto_lock_rand = 0;
+    ASYNC_unblock_pause();
     CRYPTO_w_unlock(CRYPTO_LOCK_RAND);
 
     while (num > 0) {
@@ -576,10 +583,15 @@ static int rand_bytes(unsigned char *buf, int num, int pseudo)
         || !MD_Update(&m, local_md, MD_DIGEST_LENGTH))
         goto err;
     CRYPTO_w_lock(CRYPTO_LOCK_RAND);
+    /*
+     * Prevent deadlocks if we end up in an async engine
+     */
+    ASYNC_block_pause();
     if (!MD_Update(&m, md, MD_DIGEST_LENGTH) || !MD_Final(&m, md)) {
         CRYPTO_w_unlock(CRYPTO_LOCK_RAND);
         goto err;
     }
+    ASYNC_unblock_pause();
     CRYPTO_w_unlock(CRYPTO_LOCK_RAND);
 
     EVP_MD_CTX_cleanup(&m);
@@ -635,6 +647,10 @@ static int rand_status(void)
 
     if (!do_not_lock) {
         CRYPTO_w_lock(CRYPTO_LOCK_RAND);
+        /*
+         * Prevent deadlocks in case we end up in an async engine
+         */
+        ASYNC_block_pause();
 
         /*
          * prevent rand_bytes() from trying to obtain the lock again
@@ -656,6 +672,7 @@ static int rand_status(void)
         /* before unlocking, we must clear 'crypto_lock_rand' */
         crypto_lock_rand = 0;
 
+        ASYNC_unblock_pause();
         CRYPTO_w_unlock(CRYPTO_LOCK_RAND);
     }
 
