@@ -63,6 +63,7 @@ typedef struct async_ctx_st async_ctx;
 struct async_ctx_st {
     async_fibre dispatcher;
     ASYNC_JOB *currjob;
+    unsigned int blocked;
 };
 
 struct async_job_st {

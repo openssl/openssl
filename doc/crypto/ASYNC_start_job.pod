@@ -4,7 +4,8 @@
 
 ASYNC_init_pool, ASYNC_free_pool, ASYNC_start_job, ASYNC_pause_job,
 ASYNC_in_job, ASYNC_get_wait_fd, ASYNC_get_current_job, ASYNC_wake,
-ASYNC_clear_wake - asynchronous job management functions
+ASYNC_clear_wake, ASYNC_block_pause, ASYNC_unblock_pause - asynchronous job
+management functions
 
 =head1 SYNOPSIS
 
@@ -21,6 +22,8 @@ ASYNC_clear_wake - asynchronous job management functions
  ASYNC_JOB *ASYNC_get_current_job(void);
  void ASYNC_wake(ASYNC_JOB *job);
  void ASYNC_clear_wake(ASYNC_JOB *job);
+ void ASYNC_block_pause(void);
+ void ASYNC_unblock_pause(void);
 
 =head1 DESCRIPTION
 
@@ -121,6 +124,20 @@ engine can signal to the user code that the job should be resumed using
 ASYNC_wake(). Once resumed the engine would clear the wake signal by calling
 ASYNC_clear_wake().
 
+The ASYNC_block_pause() function will prevent the currently active job from
+pausing. The block will remain in place until a subsequent call to
+ASYNC_unblock_pause(). These functions can be nested, e.g. if you call
+ASYNC_block_pause() twice then you must call ASYNC_unblock_pause() twice in
+order to reenable pausing. If these functions are called while there is no
+currently active job then they have no effect. This functionality can be useful
+to avoid deadlock scenarios. For example during the execution of an ASYNC_JOB an
+application aquires a lock. It then calls some cryptographic function which
+invokes ASYNC_pause_job(). This returns control back to the code that created
+the ASYNC_JOB. If that code then attempts to aquire the same lock before
+resuming the original job then a deadlock can occur. By calling
+ASYNC_block_pause() immediately after aquiring the lock and
+ASYNC_unblock_pause() immediately before releasing it then this situation cannot
+occur.
 
 =head1 RETURN VALUES
 

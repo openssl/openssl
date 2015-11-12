@@ -4657,3 +4657,5 @@ ASYNC_clear_wake                        5016	EXIST::FUNCTION:
 ASYNC_get_current_job                   5017	EXIST::FUNCTION:
 ASYNC_get_wait_fd                       5018	EXIST::FUNCTION:
 ERR_load_ASYNC_strings                  5019	EXIST::FUNCTION:
+ASYNC_unblock_pause                     5020	EXIST::FUNCTION:
+ASYNC_block_pause                       5021	EXIST::FUNCTION:
