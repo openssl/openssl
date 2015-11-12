@@ -1314,25 +1314,28 @@ int X509V3_NAME_from_section(X509_NAME *nm, STACK_OF(CONF_VALUE) *dn_sk,
         /*
          * Skip past any leading X. X: X, etc to allow for multiple instances
          */
-        for (p = type; *p; p++)
+        for (p = type; *p; p++){
+            int spec_char;
 #ifndef CHARSET_EBCDIC
-            if ((*p == ':') || (*p == ',') || (*p == '.'))
+            spec_char = ((*p == ':') || (*p == ',') || (*p == '.'));
 #else
-            if ((*p == os_toascii[':']) || (*p == os_toascii[','])
-                || (*p == os_toascii['.']))
+            spec_char = ((*p == os_toascii[':']) || (*p == os_toascii[','])
+                    || (*p == os_toascii['.']));
 #endif
-            {
+            if (spec_char){
                 p++;
                 if (*p)
                     type = p;
                 break;
             }
+        }
+        int plus_char;
 #ifndef CHARSET_EBCDIC
-        if (*type == '+')
+        plus_char = (*type == '+');
 #else
-        if (*type == os_toascii['+'])
+        plus_char = (*type == os_toascii['+']);
 #endif
-        {
+        if (plus_char){
             mval = -1;
             type++;
         } else

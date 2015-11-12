@@ -847,12 +847,13 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
     case BIO_CTRL_DGRAM_GET_SEND_TIMER_EXP:
         /* fall-through */
     case BIO_CTRL_DGRAM_GET_RECV_TIMER_EXP:
+        int d_errno;
 # ifdef OPENSSL_SYS_WINDOWS
-        if (data->_errno == WSAETIMEDOUT)
+        d_errno = (data->_errno == WSAETIMEDOUT);
 # else
-        if (data->_errno == EAGAIN)
+        d_errno = (data->_errno == EAGAIN);
 # endif
-        {
+        if (d_errno){
             ret = 1;
             data->_errno = 0;
         } else
