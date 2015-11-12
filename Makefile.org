@@ -26,7 +26,7 @@ HERE=.
 INSTALL_PREFIX=
 INSTALLTOP=/usr/local/ssl
 
-# Do not edit this manually. Use Configure --openssldir=DIR do change this!
+# Do not edit this manually. Use Configure --openssldir=DIR to change this!
 OPENSSLDIR=/usr/local/ssl
 
 # NO_IDEA - Define to build without the IDEA algorithm
