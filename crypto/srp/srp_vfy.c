@@ -644,7 +644,7 @@ int SRP_create_verifier_BN(const char *user, const char *pass, BIGNUM **salt,
     *salt = salttmp;
 
  err:
-    if (*salt != salttmp)
+    if (salt != NULL && *salt != salttmp)
         BN_clear_free(salttmp);
     BN_clear_free(x);
     BN_CTX_free(bn_ctx);
