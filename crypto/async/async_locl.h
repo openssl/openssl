@@ -55,6 +55,7 @@
 #include <openssl/crypto.h>
 
 typedef struct async_ctx_st async_ctx;
+typedef struct async_pool_st async_pool;
 
 #include "arch/async_win.h"
 #include "arch/async_posix.h"
@@ -79,15 +80,14 @@ struct async_job_st {
 
 DECLARE_STACK_OF(ASYNC_JOB)
 
+struct async_pool_st {
+    STACK_OF(ASYNC_JOB) *jobs;
+    size_t curr_size;
+    size_t max_size;
+};
+
 void async_start_func(void);
-STACK_OF(ASYNC_JOB) *async_get_pool(void);
-int async_set_pool(STACK_OF(ASYNC_JOB) *poolin, size_t curr_size,
-                   size_t max_size);
-void async_increment_pool_size(void);
-void async_release_job_to_pool(ASYNC_JOB *job);
-size_t async_pool_max_size(void);
-void async_release_pool(void);
-int async_pool_can_grow(void);
 int async_pipe(OSSL_ASYNC_FD *pipefds);
+int async_close_fd(OSSL_ASYNC_FD fd);
 int async_write1(OSSL_ASYNC_FD fd, const void *buf);
 int async_read1(OSSL_ASYNC_FD fd, void *buf);
