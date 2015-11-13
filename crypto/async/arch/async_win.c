@@ -87,25 +87,29 @@ VOID CALLBACK async_start_func_win(PVOID unused)
     async_start_func();
 }
 
-int async_pipe(int *pipefds)
+int async_pipe(OSSL_ASYNC_FD *pipefds)
 {
-    if (_pipe(pipefds, 256, _O_BINARY) == 0)
+    if (CreatePipe(&pipefds[0], &pipefds[1], NULL, 256) == 0)
+        return 0;
+
+    return 1;
+}
+
+int async_write1(OSSL_ASYNC_FD fd, const void *buf)
+{
+    DWORD numwritten = 0;
+
+    if (WriteFile(fd, buf, 1, &numwritten, NULL) && numwritten == 1)
         return 1;
 
     return 0;
 }
 
-int async_write1(int fd, const void *buf)
+int async_read1(OSSL_ASYNC_FD fd, void *buf)
 {
-    if (_write(fd, buf, 1) > 0)
-        return 1;
+    DWORD numread = 0;
 
-    return 0;
-}
-
-int async_read1(int fd, void *buf)
-{
-    if (_read(fd, buf, 1) > 0)
+    if (ReadFile(fd, buf, 1, &numread, NULL) && numread == 1)
         return 1;
 
     return 0;
