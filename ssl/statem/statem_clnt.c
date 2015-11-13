@@ -1325,6 +1325,9 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL *s, PACKET *pkt)
         s->s3->tmp.mask_ssl = SSL_TLSV1_2;
     else
         s->s3->tmp.mask_ssl = 0;
+    /* Skip TLS v1.0 ciphersuites if SSLv3 */
+    if ((c->algorithm_ssl & SSL_TLSV1) && s->version == SSL3_VERSION)
+        s->s3->tmp.mask_ssl |= SSL_TLSV1;
     /*
      * If it is a disabled cipher we didn't send it in client hello, so
      * return an error.
