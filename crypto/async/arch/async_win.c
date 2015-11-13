@@ -51,7 +51,7 @@
  * ====================================================================
  */
 
-#include "async_win.h"
+#include "../async_locl.h"
 
 #ifdef ASYNC_WIN
 
@@ -95,6 +95,14 @@ int async_pipe(OSSL_ASYNC_FD *pipefds)
     return 1;
 }
 
+int async_close_fd(OSSL_ASYNC_FD fd)
+{
+    if (CloseHandle(fd) == 0)
+        return 0;
+
+    return 1;
+}
+
 int async_write1(OSSL_ASYNC_FD fd, const void *buf)
 {
     DWORD numwritten = 0;
@@ -115,70 +123,17 @@ int async_read1(OSSL_ASYNC_FD fd, void *buf)
     return 0;
 }
 
-STACK_OF(ASYNC_JOB) *async_get_pool(void)
+async_pool *async_get_pool(void)
 {
-    struct winpool *pool;
-    pool = (struct winpool *)
+    return (async_pool *)
             CRYPTO_get_thread_local(CRYPTO_THREAD_LOCAL_ASYNC_POOL);
-    return pool->pool;
 }
 
 
-int async_set_pool(STACK_OF(ASYNC_JOB) *poolin, size_t curr_size,
-                    size_t max_size)
+int async_set_pool(async_pool *pool)
 {
-    struct winpool *pool;
-    pool = OPENSSL_malloc(sizeof *pool);
-    if (pool == NULL)
-        return 0;
-
-    pool->pool = poolin;
-    pool->curr_size = curr_size;
-    pool->max_size = max_size;
     CRYPTO_set_thread_local(CRYPTO_THREAD_LOCAL_ASYNC_POOL, (void *)pool);
     return 1;
-}
-
-void async_increment_pool_size(void)
-{
-    struct winpool *pool;
-    pool = (struct winpool *)
-            CRYPTO_get_thread_local(CRYPTO_THREAD_LOCAL_ASYNC_POOL);
-    pool->curr_size++;
-}
-
-void async_release_job_to_pool(ASYNC_JOB *job)
-{
-    struct winpool *pool;
-    pool = (struct winpool *)
-            CRYPTO_get_thread_local(CRYPTO_THREAD_LOCAL_ASYNC_POOL);
-    sk_ASYNC_JOB_push(pool->pool, job);
-}
-
-size_t async_pool_max_size(void)
-{
-    struct winpool *pool;
-    pool = (struct winpool *)
-            CRYPTO_get_thread_local(CRYPTO_THREAD_LOCAL_ASYNC_POOL);
-    return pool->max_size;
-}
-
-void async_release_pool(void)
-{
-    struct winpool *pool;
-    pool = (struct winpool *)
-            CRYPTO_get_thread_local(CRYPTO_THREAD_LOCAL_ASYNC_POOL);
-    sk_ASYNC_JOB_free(pool->pool);
-    OPENSSL_free(pool);
-    CRYPTO_set_thread_local(CRYPTO_THREAD_LOCAL_ASYNC_POOL, NULL);
-}
-
-int async_pool_can_grow(void)
-{
-    struct winpool *pool;
-    pool = (struct winpool *)
-            CRYPTO_get_thread_local(CRYPTO_THREAD_LOCAL_ASYNC_POOL);
-    return (pool->max_size == 0) || (pool->curr_size < pool->max_size);
 }
 
 #endif

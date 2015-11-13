@@ -111,6 +111,7 @@ void ERR_load_ASYNC_strings(void);
 # define ASYNC_R_FAILED_TO_SET_POOL                       101
 # define ASYNC_R_FAILED_TO_SWAP_CONTEXT                   102
 # define ASYNC_R_INVALID_POOL_SIZE                        103
+# define ASYNC_R_POOL_ALREADY_INITED                      104
 
 #ifdef  __cplusplus
 }

@@ -56,41 +56,6 @@
 
 #ifdef ASYNC_NULL
 
-STACK_OF(ASYNC_JOB) *async_get_pool(void)
-{
-    return NULL;
-}
-
-int async_set_pool(STACK_OF(ASYNC_JOB) *poolin, size_t curr_size,
-                   size_t max_size)
-{
-    return 0;
-}
-
-void async_increment_pool_size(void)
-{
-    return;
-}
-
-void async_release_job_to_pool(ASYNC_JOB *job)
-{
-    return;
-}
-
-size_t async_pool_max_size(void)
-{
-    return 0;
-}
-
-void async_release_pool(void)
-{
-    return;
-}
-
-int async_pool_can_grow(void) {
-    return 0;
-}
-
 int async_pipe(OSSL_ASYNC_FD *pipefds)
 {
     return -1;
