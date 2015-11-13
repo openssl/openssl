@@ -67,6 +67,8 @@ typedef enum OPTION_choice {
     OPT_STDNAME,
     OPT_SSL3,
     OPT_TLS1,
+    OPT_TLS1_1,
+    OPT_TLS1_2,
     OPT_V, OPT_UPPER_V, OPT_S
 } OPTION_CHOICE;
 
@@ -76,6 +78,8 @@ OPTIONS ciphers_options[] = {
     {"V", OPT_UPPER_V, '-', "Even more verbose"},
     {"s", OPT_S, '-', "Only supported ciphers"},
     {"tls1", OPT_TLS1, '-', "TLS1 mode"},
+    {"tls1_1", OPT_TLS1_1, '-', "TLS1.1 mode"},
+    {"tls1_2", OPT_TLS1_2, '-', "TLS1.2 mode"},
 #ifndef OPENSSL_NO_SSL_TRACE
     {"stdname", OPT_STDNAME, '-', "Show standard cipher names"},
 #endif
@@ -133,6 +137,12 @@ int ciphers_main(int argc, char **argv)
             break;
         case OPT_TLS1:
             meth = TLSv1_client_method();
+            break;
+        case OPT_TLS1_1:
+            meth = TLSv1_1_client_method();
+            break;
+        case OPT_TLS1_2:
+            meth = TLSv1_2_client_method();
             break;
         }
     }
