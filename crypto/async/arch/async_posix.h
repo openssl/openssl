@@ -73,7 +73,8 @@
 #  include <setjmp.h>
 #  include "e_os.h"
 
-extern __thread async_ctx *sysvctx;
+extern __thread async_ctx *posixctx;
+extern __thread async_pool *posixpool;
 
 typedef struct async_fibre_st {
     ucontext_t fibre;
@@ -81,8 +82,10 @@ typedef struct async_fibre_st {
     int env_init;
 } async_fibre;
 
-#  define async_set_ctx(nctx)             (sysvctx = (nctx))
-#  define async_get_ctx()                 (sysvctx)
+#  define async_set_ctx(nctx)             (posixctx = (nctx))
+#  define async_get_ctx()                 (posixctx)
+#  define async_set_pool(p)               (posixpool = (p))
+#  define async_get_pool()                (posixpool)
 
 static inline int async_fibre_swapcontext(async_fibre *o, async_fibre *n, int r)
 {

@@ -81,4 +81,7 @@ typedef struct async_fibre_st {
 int async_fibre_init_dispatcher(async_fibre *fibre);
 VOID CALLBACK async_start_func_win(PVOID unused);
 
+async_pool *async_get_pool(void);
+int async_set_pool(async_pool *pool);
+
 #endif

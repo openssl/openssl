@@ -70,11 +70,11 @@
 # define ERR_REASON(reason) ERR_PACK(ERR_LIB_ASYNC,0,reason)
 
 static ERR_STRING_DATA ASYNC_str_functs[] = {
-    {ERR_FUNC(ASYNC_F_ASYNC_CTX_NEW), "ASYNC_CTX_NEW"},
+    {ERR_FUNC(ASYNC_F_ASYNC_CTX_NEW), "async_ctx_new"},
     {ERR_FUNC(ASYNC_F_ASYNC_INIT_POOL), "ASYNC_init_pool"},
-    {ERR_FUNC(ASYNC_F_ASYNC_JOB_NEW), "ASYNC_JOB_NEW"},
+    {ERR_FUNC(ASYNC_F_ASYNC_JOB_NEW), "async_job_new"},
     {ERR_FUNC(ASYNC_F_ASYNC_PAUSE_JOB), "ASYNC_pause_job"},
-    {ERR_FUNC(ASYNC_F_ASYNC_START_FUNC), "ASYNC_START_FUNC"},
+    {ERR_FUNC(ASYNC_F_ASYNC_START_FUNC), "async_start_func"},
     {ERR_FUNC(ASYNC_F_ASYNC_START_JOB), "ASYNC_start_job"},
     {0, NULL}
 };
@@ -84,6 +84,7 @@ static ERR_STRING_DATA ASYNC_str_reasons[] = {
     {ERR_REASON(ASYNC_R_FAILED_TO_SET_POOL), "failed to set pool"},
     {ERR_REASON(ASYNC_R_FAILED_TO_SWAP_CONTEXT), "failed to swap context"},
     {ERR_REASON(ASYNC_R_INVALID_POOL_SIZE), "invalid pool size"},
+    {ERR_REASON(ASYNC_R_POOL_ALREADY_INITED), "pool already inited"},
     {0, NULL}
 };
 

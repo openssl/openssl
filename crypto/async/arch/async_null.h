@@ -72,5 +72,7 @@ typedef struct async_fibre_st {
 # define async_fibre_makecontext(c)
 # define async_fibre_free(f)
 # define async_fibre_init_dispatcher(f)
+# define async_get_pool()                       NULL
+# define async_set_pool(p)                      0
 
 #endif
