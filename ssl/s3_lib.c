@@ -4841,6 +4841,9 @@ SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
         /* Skip TLS v1.2 only ciphersuites if not supported */
         if ((c->algorithm_ssl & SSL_TLSV1_2) && !SSL_USE_TLS1_2_CIPHERS(s))
             continue;
+        /* Skip TLS v1.0 ciphersuites if SSLv3 */
+        if ((c->algorithm_ssl & SSL_TLSV1) && s->version == SSL3_VERSION)
+            continue;
 
         ssl_set_masks(s, c);
         mask_k = s->s3->tmp.mask_k;

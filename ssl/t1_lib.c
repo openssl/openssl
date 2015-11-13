@@ -1094,6 +1094,9 @@ void ssl_set_client_disabled(SSL *s)
         s->s3->tmp.mask_ssl = SSL_TLSV1_2;
     else
         s->s3->tmp.mask_ssl = 0;
+    /* Disable TLS 1.0 ciphers if using SSL v3 */
+    if (s->client_version == SSL3_VERSION)
+        s->s3->tmp.mask_ssl |= SSL_TLSV1;
     ssl_set_sig_mask(&s->s3->tmp.mask_a, s, SSL_SECOP_SIGALG_MASK);
     /*
      * Disable static DH if we don't include any appropriate signature

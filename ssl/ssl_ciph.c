@@ -1621,6 +1621,8 @@ char *SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
 
     if (alg_ssl & SSL_SSLV3)
         ver = "SSLv3";
+    else if (alg_ssl & SSL_TLSV1)
+        ver = "TLSv1.0";
     else if (alg_ssl & SSL_TLSV1_2)
         ver = "TLSv1.2";
     else

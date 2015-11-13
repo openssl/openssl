@@ -381,8 +381,8 @@
 
 /* Bits for algorithm_ssl (protocol version) */
 # define SSL_SSLV3               0x00000002U
-# define SSL_TLSV1               SSL_SSLV3/* for now */
-# define SSL_TLSV1_2             0x00000004U
+# define SSL_TLSV1               0x00000004U
+# define SSL_TLSV1_2             0x00000008U
 
 /* Bits for algorithm2 (handshake digests and other extra flags) */
 
