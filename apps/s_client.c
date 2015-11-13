@@ -1208,7 +1208,7 @@ int s_client_main(int argc, char **argv)
 
     if (async) {
         SSL_CTX_set_mode(ctx, SSL_MODE_ASYNC);
-        ASYNC_init_pool(0, 0);
+        ASYNC_init(1, 0, 0);
     }
 
     if (!config_ctx(cctx, ssl_args, ctx, 1, jpake_secret == NULL))
@@ -2102,7 +2102,7 @@ int s_client_main(int argc, char **argv)
         SSL_free(con);
     }
     if (async) {
-        ASYNC_free_pool();
+        ASYNC_cleanup(1);
     }
 #if !defined(OPENSSL_NO_NEXTPROTONEG)
     OPENSSL_free(next_proto.data);

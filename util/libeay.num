@@ -4650,8 +4650,8 @@ X509_aux_print                          5009	EXIST::FUNCTION:STDIO
 ENGINE_load_dasync                      5010	EXIST::FUNCTION:ENGINE,STATIC_ENGINE
 ASYNC_pause_job                         5011	EXIST::FUNCTION:
 ASYNC_start_job                         5012	EXIST::FUNCTION:
-ASYNC_init_pool                         5013	EXIST::FUNCTION:
-ASYNC_free_pool                         5014	EXIST::FUNCTION:
+ASYNC_init_thread                       5013	EXIST::FUNCTION:
+ASYNC_cleanup_thread                    5014	EXIST::FUNCTION:
 ASYNC_wake                              5015	EXIST::FUNCTION:
 ASYNC_clear_wake                        5016	EXIST::FUNCTION:
 ASYNC_get_current_job                   5017	EXIST::FUNCTION:

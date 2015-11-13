@@ -71,7 +71,7 @@
 
 static ERR_STRING_DATA ASYNC_str_functs[] = {
     {ERR_FUNC(ASYNC_F_ASYNC_CTX_NEW), "async_ctx_new"},
-    {ERR_FUNC(ASYNC_F_ASYNC_INIT_POOL), "ASYNC_init_pool"},
+    {ERR_FUNC(ASYNC_F_ASYNC_INIT_THREAD), "ASYNC_init_thread"},
     {ERR_FUNC(ASYNC_F_ASYNC_JOB_NEW), "async_job_new"},
     {ERR_FUNC(ASYNC_F_ASYNC_PAUSE_JOB), "ASYNC_pause_job"},
     {ERR_FUNC(ASYNC_F_ASYNC_START_FUNC), "async_start_func"},

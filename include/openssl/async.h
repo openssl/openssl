@@ -75,8 +75,10 @@ typedef struct async_job_st ASYNC_JOB;
 #define ASYNC_PAUSE    2
 #define ASYNC_FINISH   3
 
-int ASYNC_init_pool(size_t max_size, size_t init_size);
-void ASYNC_free_pool(void);
+int ASYNC_init(int init_thread, size_t max_size, size_t init_size);
+void ASYNC_cleanup(int cleanupthread);
+int ASYNC_init_thread(size_t max_size, size_t init_size);
+void ASYNC_cleanup_thread(void);
 
 int ASYNC_start_job(ASYNC_JOB **job, int *ret, int (*func)(void *),
                          void *args, size_t size);
@@ -100,7 +102,7 @@ void ERR_load_ASYNC_strings(void);
 
 /* Function codes. */
 # define ASYNC_F_ASYNC_CTX_NEW                            100
-# define ASYNC_F_ASYNC_INIT_POOL                          101
+# define ASYNC_F_ASYNC_INIT_THREAD                        101
 # define ASYNC_F_ASYNC_JOB_NEW                            102
 # define ASYNC_F_ASYNC_PAUSE_JOB                          103
 # define ASYNC_F_ASYNC_START_FUNC                         104

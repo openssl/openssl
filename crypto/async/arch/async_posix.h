@@ -52,11 +52,13 @@
  */
 #include <openssl/e_os2.h>
 
-#ifdef OPENSSL_SYS_UNIX
+#if defined(OPENSSL_SYS_UNIX) && defined(OPENSSL_THREADS)
 
 # include <unistd.h>
 
 # if _POSIX_VERSION >= 200112L
+
+# include <pthread.h>
 
 #  define ASYNC_POSIX
 #  define ASYNC_ARCH
@@ -73,8 +75,8 @@
 #  include <setjmp.h>
 #  include "e_os.h"
 
-extern __thread async_ctx *posixctx;
-extern __thread async_pool *posixpool;
+extern pthread_key_t posixctx;
+extern pthread_key_t posixpool;
 
 typedef struct async_fibre_st {
     ucontext_t fibre;
@@ -82,10 +84,10 @@ typedef struct async_fibre_st {
     int env_init;
 } async_fibre;
 
-#  define async_set_ctx(nctx)             (posixctx = (nctx))
-#  define async_get_ctx()                 (posixctx)
-#  define async_set_pool(p)               (posixpool = (p))
-#  define async_get_pool()                (posixpool)
+#  define async_set_ctx(nctx)  (pthread_setspecific(posixctx , (nctx)) == 0)
+#  define async_get_ctx()      ((async_ctx *)pthread_getspecific(posixctx))
+#  define async_set_pool(p)    (pthread_setspecific(posixpool , (p)) == 0)
+#  define async_get_pool()     ((async_pool *)pthread_getspecific(posixpool))
 
 static inline int async_fibre_swapcontext(async_fibre *o, async_fibre *n, int r)
 {

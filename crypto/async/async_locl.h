@@ -86,6 +86,7 @@ struct async_pool_st {
     size_t max_size;
 };
 
+int async_thread_local_init(void);
 void async_start_func(void);
 int async_pipe(OSSL_ASYNC_FD *pipefds);
 int async_close_fd(OSSL_ASYNC_FD fd);
