@@ -390,6 +390,7 @@ static const SSL_CIPHER cipher_aliases[] = {
     /* protocol version aliases */
     {0, SSL_TXT_SSLV3, 0, 0, 0, 0, 0, SSL_SSLV3, 0, 0, 0, 0},
     {0, SSL_TXT_TLSV1, 0, 0, 0, 0, 0, SSL_SSLV3, 0, 0, 0, 0},
+    {0, "TLSv1.0", 0, 0, 0, 0, 0, SSL_TLSV1, 0, 0, 0, 0},
     {0, SSL_TXT_TLSV1_2, 0, 0, 0, 0, 0, SSL_TLSV1_2, 0, 0, 0, 0},
 
     /* export flag */
