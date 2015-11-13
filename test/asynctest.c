@@ -67,7 +67,7 @@
 # if _POSIX_VERSION >= 200112L
 #  define ASYNC_POSIX
 # endif
-#elif (defined(_WIN32) || defined(__CYGWIN__)) && defined(_WINDLL)
+#elif defined(_WIN32) || defined(__CYGWIN__)
 # define ASYNC_WIN
 #endif
 
@@ -201,8 +201,9 @@ static int test_ASYNC_get_current_job()
     return 1;
 }
 
-static int hasdata(int fd)
+static int hasdata(OSSL_ASYNC_FD fd)
 {
+#ifdef ASYNC_POSIX
     fd_set checkfds;
     struct timeval tv;
     FD_ZERO(&checkfds);
@@ -213,12 +214,21 @@ static int hasdata(int fd)
     if (FD_ISSET(fd, &checkfds))
         return 1;
     return 0;
+#else
+    DWORD avail = 0;
+
+    if (PeekNamedPipe(fd, NULL, 0, NULL, &avail, NULL) && avail > 0)
+        return 1;
+
+    return 0;
+#endif
 }
 
 static int test_ASYNC_get_wait_fd()
 {
     ASYNC_JOB *job = NULL;
-    int funcret, fd;
+    int funcret;
+    OSSL_ASYNC_FD fd;
 
     if (       !ASYNC_init_pool(1, 0)
             || ASYNC_start_job(&job, &funcret, wake, NULL, 0)

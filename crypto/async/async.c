@@ -109,7 +109,7 @@ static int async_ctx_free(void)
 static ASYNC_JOB *async_job_new(void)
 {
     ASYNC_JOB *job = NULL;
-    int pipefds[2];
+    OSSL_ASYNC_FD pipefds[2];
 
     job = OPENSSL_malloc(sizeof (ASYNC_JOB));
     if (job == NULL) {
@@ -387,7 +387,7 @@ ASYNC_JOB *ASYNC_get_current_job(void)
     return ctx->currjob;
 }
 
-int ASYNC_get_wait_fd(ASYNC_JOB *job)
+OSSL_ASYNC_FD ASYNC_get_wait_fd(ASYNC_JOB *job)
 {
     return job->wait_fd;
 }

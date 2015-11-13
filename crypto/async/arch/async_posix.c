@@ -95,7 +95,7 @@ void async_fibre_free(async_fibre *fibre)
         OPENSSL_free(fibre->fibre.uc_stack.ss_sp);
 }
 
-int async_pipe(int *pipefds)
+int async_pipe(OSSL_ASYNC_FD *pipefds)
 {
     if (pipe(pipefds) == 0)
         return 1;
@@ -103,7 +103,7 @@ int async_pipe(int *pipefds)
     return 0;
 }
 
-int async_write1(int fd, const void *buf)
+int async_write1(OSSL_ASYNC_FD fd, const void *buf)
 {
     if (write(fd, buf, 1) > 0)
         return 1;
@@ -111,7 +111,7 @@ int async_write1(int fd, const void *buf)
     return 0;
 }
 
-int async_read1(int fd, void *buf)
+int async_read1(OSSL_ASYNC_FD fd, void *buf)
 {
     if (read(fd, buf, 1) > 0)
         return 1;

@@ -73,8 +73,8 @@ struct async_job_st {
     int ret;
     int status;
     int wake_set;
-    int wait_fd;
-    int wake_fd;
+    OSSL_ASYNC_FD wait_fd;
+    OSSL_ASYNC_FD wake_fd;
 };
 
 DECLARE_STACK_OF(ASYNC_JOB)
@@ -88,6 +88,6 @@ void async_release_job_to_pool(ASYNC_JOB *job);
 size_t async_pool_max_size(void);
 void async_release_pool(void);
 int async_pool_can_grow(void);
-int async_pipe(int *pipefds);
-int async_write1(int fd, const void *buf);
-int async_read1(int fd, void *buf);
+int async_pipe(OSSL_ASYNC_FD *pipefds);
+int async_write1(OSSL_ASYNC_FD fd, const void *buf);
+int async_read1(OSSL_ASYNC_FD fd, void *buf);
