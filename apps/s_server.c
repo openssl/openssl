@@ -141,6 +141,7 @@
 
 #include <ctype.h>
 #include <stdio.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -1826,11 +1827,11 @@ int s_server_main(int argc, char *argv[])
     }
 #ifndef OPENSSL_NO_PSK
 # ifdef OPENSSL_NO_JPAKE
-    if (psk_key != NULL)
+    bool keyInUse = (psk_key != NULL);
 # else
-    if (psk_key != NULL || jpake_secret)
+    bool keyInUse = (psk_key != NULL || jpake_secret);
 # endif
-    {
+    if (keyInUse) {
         if (s_debug)
             BIO_printf(bio_s_out,
                        "PSK key given or JPAKE in use, setting server callback\n");
