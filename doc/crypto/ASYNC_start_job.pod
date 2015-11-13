@@ -2,17 +2,20 @@
 
 =head1 NAME
 
-ASYNC_init_pool, ASYNC_free_pool, ASYNC_start_job, ASYNC_pause_job,
-ASYNC_in_job, ASYNC_get_wait_fd, ASYNC_get_current_job, ASYNC_wake,
-ASYNC_clear_wake, ASYNC_block_pause, ASYNC_unblock_pause - asynchronous job
-management functions
+ASYNC_init, ASYNC_cleanup, ASYNC_init_thread, ASYNC_cleanup_thread,
+ASYNC_start_job, ASYNC_pause_job, ASYNC_in_job, ASYNC_get_wait_fd,
+ASYNC_get_current_job, ASYNC_wake, ASYNC_clear_wake, ASYNC_block_pause,
+ASYNC_unblock_pause - asynchronous job management functions
 
 =head1 SYNOPSIS
 
  #include <openssl/async.h>
 
- int ASYNC_init_pool(size_t max_size, size_t init_size);
- void ASYNC_free_pool(void);
+ int ASYNC_init(int init_thread, size_t max_size, size_t init_size);
+ void ASYNC_cleanup(int cleanupthread);
+
+ int ASYNC_init_thread(size_t max_size, size_t init_size);
+ void ASYNC_cleanup_thread(void);
 
  int ASYNC_start_job(ASYNC_JOB **job, int *ret, int (*func)(void *),
                      void *args, size_t size);
@@ -37,23 +40,28 @@ efficiency reasons, jobs can be created up front and reused many times. They are
 held in a pool until they are needed, at which point they are removed from the
 pool, used, and then returned to the pool when the job completes. Before using
 any of the asynchronous job functions, user code should first call
-ASYNC_init_pool(). If the user application is multi-threaded, then this should
-be done for each thread that will initiate asynchronous jobs. Before user code
-exits it should free the pool up (for each thread where a pool was initialised)
-using ASYNC_free_pool(). No asynchronous jobs must be outstanding for the thread
-when ASYNC_free_pool() is called. Failing to ensure this will result in memory
-leaks.
+ASYNC_init(). If the user application is multi-threaded, then
+ASYNC_init_thread() should be called for each thread that will initiate
+asynchronous jobs. If the B<init_thread> parameter to ASYNC_init() is non-zero
+then ASYNC_init_thread is automatically called for the current thread. Before
+user code exits it should free up resources for each thread that was initialised
+using ASYNC_cleanup_thread(). No asynchronous jobs must be outstanding for the thread
+when ASYNC_cleanup_thread() is called. Failing to ensure this will result in memory
+leaks. Additionally an application should call ASYNC_cleanup() when all
+asynchronous work is complete across all threads. If B<cleanupthread> is
+non-zero then ASYNC_cleanup_thread() is automatically called for the current
+thread.
 
 The B<max_size> argument limits the number of ASYNC_JOBs that will be held in
 the pool. If B<max_size> is set to 0 then no upper limit is set. When an
 ASYNC_JOB is needed but there are none available in the pool already then one
 will be automatically created, as long as the total of ASYNC_JOBs managed by the
 pool does not exceed B<max_size>. When the pool is first initialised
-B<init_size> ASYNC_JOBs will be created immediately. If ASYNC_init_pool() is not
-called before the pool is first used then it will be called automatically with a
-B<max_size> of 0 (no upper limit) and an B<init_size> of 0 (no ASYNC_JOBs
+B<init_size> ASYNC_JOBs will be created immediately. If ASYNC_init_thread() is
+not called before the pool is first used then it will be called automatically
+with a B<max_size> of 0 (no upper limit) and an B<init_size> of 0 (no ASYNC_JOBs
 created up front). If a pool is created in this way it must still be cleaned up
-with an explicit call to ASYNC_free_pool().
+with an explicit call to ASYNC_cleanup_thread().
 
 An asynchronous job is started by calling the ASYNC_start_job() function.
 Initially B<*job> should be NULL. B<ret> should point to a location where the
@@ -141,7 +149,7 @@ occur.
 
 =head1 RETURN VALUES
 
-ASYNC_init_pool returns 1 on success or 0 otherwise.
+ASYNC_init and ASYNC_init_thread return 1 on success or 0 otherwise.
 
 ASYNC_start_job returns one of ASYNC_ERR, ASYNC_NO_JOBS, ASYNC_PAUSE or
 ASYNC_FINISH as described above.
@@ -209,7 +217,7 @@ The following example demonstrates how to use most of the core async APIs:
       * We're only expecting 1 job to be used here so we're only creating
       * a pool of 1
       */
-     if (!ASYNC_init_pool(1, 1)) {
+     if (!ASYNC_init(1, 1, 1)) {
          printf("Error creating pool\n");
          goto end;
      }
@@ -240,7 +248,7 @@ The following example demonstrates how to use most of the core async APIs:
 
  end:
      printf("Finishing\n");
-     ASYNC_free_pool();
+     ASYNC_cleanup(1);
 
      return 0;
  }
@@ -262,8 +270,8 @@ L<crypto(3)>, L<ERR_print_errors(3)>
 
 =head1 HISTORY
 
-ASYNC_init_pool, ASYNC_free_pool, ASYNC_start_job, ASYNC_pause_job,
-ASYNC_get_wait_fd, ASYNC_get_current_job, ASYNC_wake, ASYNC_clear_wake were
-first added to OpenSSL 1.1.0.
+ASYNC_init, ASYNC_init_thread, ASYNC_cleanup, ASYNC_cleanup_thread,
+ASYNC_start_job, ASYNC_pause_job, ASYNC_get_wait_fd, ASYNC_get_current_job,
+ASYNC_wake, ASYNC_clear_wake were first added to OpenSSL 1.1.0.
 
 =cut

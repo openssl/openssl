@@ -61,6 +61,11 @@ int async_pipe(OSSL_ASYNC_FD *pipefds)
     return -1;
 }
 
+int async_close_fd(OSSL_ASYNC_FD fd)
+{
+    return 0;
+}
+
 int async_write1(OSSL_ASYNC_FD fd, const void *buf)
 {
     return -1;
@@ -69,6 +74,11 @@ int async_write1(OSSL_ASYNC_FD fd, const void *buf)
 int async_read1(OSSL_ASYNC_FD fd, void *buf)
 {
     return -1;
+}
+
+int async_thread_local_init(void)
+{
+    return 0;
 }
 
 #endif

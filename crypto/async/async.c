@@ -156,7 +156,7 @@ static ASYNC_JOB *async_get_pool_job(void) {
          * Pool has not been initialised, so init with the defaults, i.e.
          * no max size and no pre-created jobs
          */
-        if (ASYNC_init_pool(0, 0) == 0)
+        if (ASYNC_init_thread(0, 0) == 0)
             return NULL;
         pool = async_get_pool();
     }
@@ -328,30 +328,36 @@ static void async_empty_pool(async_pool *pool)
     } while (job);
 }
 
-int ASYNC_init_pool(size_t max_size, size_t init_size)
+int ASYNC_init(int init_thread, size_t max_size, size_t init_size)
+{
+    if (!async_thread_local_init())
+        return 0;
+
+    if (init_thread)
+        return ASYNC_init_thread(max_size, init_size);
+
+    return 1;
+}
+
+int ASYNC_init_thread(size_t max_size, size_t init_size)
 {
     async_pool *pool;
     size_t curr_size = 0;
 
-    if (init_size > max_size || max_size == 0) {
-        ASYNCerr(ASYNC_F_ASYNC_INIT_POOL, ASYNC_R_INVALID_POOL_SIZE);
-        return 0;
-    }
-
-    if(async_get_pool() != NULL) {
-        ASYNCerr(ASYNC_F_ASYNC_INIT_POOL, ASYNC_R_POOL_ALREADY_INITED);
+    if (init_size > max_size) {
+        ASYNCerr(ASYNC_F_ASYNC_INIT_THREAD, ASYNC_R_INVALID_POOL_SIZE);
         return 0;
     }
 
     pool = OPENSSL_zalloc(sizeof *pool);
     if (pool == NULL) {
-        ASYNCerr(ASYNC_F_ASYNC_INIT_POOL, ERR_R_MALLOC_FAILURE);
+        ASYNCerr(ASYNC_F_ASYNC_INIT_THREAD, ERR_R_MALLOC_FAILURE);
         return 0;
     }
 
     pool->jobs = sk_ASYNC_JOB_new_null();
     if (pool->jobs == NULL) {
-        ASYNCerr(ASYNC_F_ASYNC_INIT_POOL, ERR_R_MALLOC_FAILURE);
+        ASYNCerr(ASYNC_F_ASYNC_INIT_THREAD, ERR_R_MALLOC_FAILURE);
         OPENSSL_free(pool);
         return 0;
     }
@@ -379,7 +385,7 @@ int ASYNC_init_pool(size_t max_size, size_t init_size)
     pool->curr_size = curr_size;
 
     if (!async_set_pool(pool)) {
-        ASYNCerr(ASYNC_F_ASYNC_INIT_POOL, ASYNC_R_FAILED_TO_SET_POOL);
+        ASYNCerr(ASYNC_F_ASYNC_INIT_THREAD, ASYNC_R_FAILED_TO_SET_POOL);
         goto err;
     }
 
@@ -397,13 +403,23 @@ static void async_free_pool_internal(async_pool *pool)
     async_empty_pool(pool);
     sk_ASYNC_JOB_free(pool->jobs);
     OPENSSL_free(pool);
-    async_set_pool(NULL);
+    (void)async_set_pool(NULL);
     async_ctx_free();
 }
 
-void ASYNC_free_pool(void)
+void ASYNC_cleanup_thread(void)
 {
     async_free_pool_internal(async_get_pool());
+}
+
+void ASYNC_cleanup(int cleanupthread)
+{
+    /*
+     * We don't actually have any global cleanup at the moment so just cleanup
+     * the thread
+     */
+    if (cleanupthread)
+        ASYNC_cleanup_thread();
 }
 
 ASYNC_JOB *ASYNC_get_current_job(void)

@@ -61,10 +61,19 @@
 # include <openssl/crypto.h>
 # include <openssl/async.h>
 
-__thread async_ctx *posixctx;
-__thread async_pool *posixpool;
+pthread_key_t posixctx;
+pthread_key_t posixpool;
 
 #define STACKSIZE       32768
+
+int async_thread_local_init(void)
+{
+    if (pthread_key_create(&posixctx, NULL) != 0
+            || pthread_key_create(&posixpool, NULL) != 0)
+        return 0;
+
+    return 1;
+}
 
 int async_fibre_init(async_fibre *fibre)
 {
