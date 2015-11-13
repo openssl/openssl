@@ -1650,7 +1650,10 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
             goto f_err;
         }
 
-        if (!PACKET_strndup(&psk_identity_hint,
+        if (PACKET_remaining(&psk_identity_hint) == 0) {
+            OPENSSL_free(s->session->psk_identity_hint);
+            s->session->psk_identity_hint = NULL;
+        } else if (!PACKET_strndup(&psk_identity_hint,
                             &s->session->psk_identity_hint)) {
             al = SSL_AD_INTERNAL_ERROR;
             goto f_err;
