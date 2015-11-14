@@ -1303,7 +1303,7 @@ int X509V3_NAME_from_section(X509_NAME *nm, STACK_OF(CONF_VALUE) *dn_sk,
                              unsigned long chtype)
 {
     CONF_VALUE *v;
-    int i, mval;
+    int i, mval, spec_char, plus_char;
     char *p, *type;
     if (!nm)
         return 0;
@@ -1315,7 +1315,6 @@ int X509V3_NAME_from_section(X509_NAME *nm, STACK_OF(CONF_VALUE) *dn_sk,
          * Skip past any leading X. X: X, etc to allow for multiple instances
          */
         for (p = type; *p; p++){
-            int spec_char;
 #ifndef CHARSET_EBCDIC
             spec_char = ((*p == ':') || (*p == ',') || (*p == '.'));
 #else
@@ -1329,7 +1328,6 @@ int X509V3_NAME_from_section(X509_NAME *nm, STACK_OF(CONF_VALUE) *dn_sk,
                 break;
             }
         }
-        int plus_char;
 #ifndef CHARSET_EBCDIC
         plus_char = (*type == '+');
 #else

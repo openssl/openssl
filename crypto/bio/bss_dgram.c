@@ -494,6 +494,7 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
     struct sockaddr *to = NULL;
     bio_dgram_data *data = NULL;
     int sockopt_val = 0;
+    int d_errno;
 # if defined(OPENSSL_SYS_LINUX) && (defined(IP_MTU_DISCOVER) || defined(IP_MTU))
     socklen_t sockopt_len;      /* assume that system supporting IP_MTU is
                                  * modern enough to define socklen_t */
@@ -847,7 +848,6 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
     case BIO_CTRL_DGRAM_GET_SEND_TIMER_EXP:
         /* fall-through */
     case BIO_CTRL_DGRAM_GET_RECV_TIMER_EXP:
-        int d_errno;
 # ifdef OPENSSL_SYS_WINDOWS
         d_errno = (data->_errno == WSAETIMEDOUT);
 # else

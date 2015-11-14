@@ -1118,7 +1118,7 @@ static int auto_info(X509_REQ *req, STACK_OF(CONF_VALUE) *dn_sk,
                      STACK_OF(CONF_VALUE) *attr_sk, int attribs,
                      unsigned long chtype)
 {
-    int i;
+    int i, spec_char, plus_char;
     char *p, *q;
     char *type;
     CONF_VALUE *v;
@@ -1135,7 +1135,6 @@ static int auto_info(X509_REQ *req, STACK_OF(CONF_VALUE) *dn_sk,
          * Skip past any leading X. X: X, etc to allow for multiple instances
          */
         for (p = v->name; *p; p++){
-            int spec_char;
 #ifndef CHARSET_EBCDIC
             spec_char = ((*p == ':') || (*p == ',') || (*p == '.'));
 #else
@@ -1149,7 +1148,6 @@ static int auto_info(X509_REQ *req, STACK_OF(CONF_VALUE) *dn_sk,
                 break;
             }
         }
-        int plus_char;
 #ifndef CHARSET_EBCDIC
         plus_char = (*p == ‘+’);
 #else

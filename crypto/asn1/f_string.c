@@ -95,7 +95,7 @@ int i2a_ASN1_STRING(BIO *bp, ASN1_STRING *a, int type)
 
 int a2i_ASN1_STRING(BIO *bp, ASN1_STRING *bs, char *buf, int size)
 {
-    int i, j, k, m, n, again, bufsize;
+    int i, j, k, m, n, again, bufsize, spec_char;
     unsigned char *s = NULL, *sp;
     unsigned char *bufp;
     int num = 0, slen = 0, first = 1;
@@ -122,7 +122,6 @@ int a2i_ASN1_STRING(BIO *bp, ASN1_STRING *bs, char *buf, int size)
         again = (buf[i - 1] == '\\');
 
         for (j = i - 1; j > 0; j--) {
-            int spec_char;
 #ifndef CHARSET_EBCDIC
             spec_char = (!(((buf[j] >= '0') && (buf[j] <= '9')) ||
                   ((buf[j] >= 'a') && (buf[j] <= 'f')) ||

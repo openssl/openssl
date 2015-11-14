@@ -1020,6 +1020,7 @@ int s_server_main(int argc, char *argv[])
 #ifndef OPENSSL_NO_PSK
     /* by default do not send a PSK identity hint */
     static char *psk_identity_hint = NULL;
+    int key_in_use;
 #endif
 #ifndef OPENSSL_NO_SRP
     char *srpuserseed = NULL;
@@ -1825,7 +1826,6 @@ int s_server_main(int argc, char *argv[])
                                                        not_resumable_sess_cb);
     }
 #ifndef OPENSSL_NO_PSK
-    int key_in_use;
 # ifdef OPENSSL_NO_JPAKE
     key_in_use = (psk_key != NULL);
 # else
