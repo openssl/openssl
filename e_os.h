@@ -221,18 +221,16 @@ extern "C" {
        /*
         * Defining _WIN32_WINNT here in e_os.h implies certain "discipline."
         * Most notably we ought to check for availability of each specific
-        * routine with GetProcAddress() and/or guard NT-specific calls with
-        * GetVersion() < 0x80000000. One can argue that in latter "or" case
-        * we ought to /DELAYLOAD some .DLLs in order to protect ourselves
-        * against run-time link errors. This doesn't seem to be necessary,
-        * because it turned out that already Windows 95, first non-NT Win32
-        * implementation, is equipped with at least NT 3.51 stubs, dummy
-        * routines with same name, but which do nothing. Meaning that it's
-        * apparently sufficient to guard "vanilla" NT calls with GetVersion
-        * alone, while NT 4.0 and above interfaces ought to be linked with
-        * GetProcAddress at run-time.
+        * routine that was introduced after denoted _WIN32_WINNT with
+        * GetProcAddress(). Normally newer functions are masked with higher
+        * _WIN32_WINNT in SDK headers. So that if you wish to use them in
+        * some module, you'd need to override _WIN32_WINNT definition in
+        * the target module in order to "reach for" prototypes, but replace
+        * calls to new functions with indirect calls. Alternatively it
+        * might be possible to achieve the goal by /DELAYLOAD-ing .DLLs
+        * and check for current OS version instead.
         */
-#    define _WIN32_WINNT 0x0400
+#    define _WIN32_WINNT 0x0501
 #   endif
 #   if !defined(OPENSSL_NO_SOCK) && (defined(_WIN32_WINNT) || defined(_WIN32_WCE))
        /*
