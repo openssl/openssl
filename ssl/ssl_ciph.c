@@ -168,7 +168,9 @@
 #define SSL_ENC_AES256CCM_IDX   15
 #define SSL_ENC_AES128CCM8_IDX  16
 #define SSL_ENC_AES256CCM8_IDX  17
-#define SSL_ENC_NUM_IDX         18
+#define SSL_ENC_CAMELLIA128GCM_IDX 18
+#define SSL_ENC_CAMELLIA256GCM_IDX 19
+#define SSL_ENC_NUM_IDX         20
 
 /* NB: make sure indices in these tables match values above */
 
@@ -196,7 +198,9 @@ static const ssl_cipher_table ssl_cipher_table_cipher[SSL_ENC_NUM_IDX] = {
     {SSL_AES128CCM, NID_aes_128_ccm}, /* SSL_ENC_AES128CCM_IDX 14 */
     {SSL_AES256CCM, NID_aes_256_ccm}, /* SSL_ENC_AES256CCM_IDX 15 */
     {SSL_AES128CCM8, NID_aes_128_ccm}, /* SSL_ENC_AES128CCM8_IDX 16 */
-    {SSL_AES256CCM8, NID_aes_256_ccm} /* SSL_ENC_AES256CCM8_IDX 17 */
+    {SSL_AES256CCM8, NID_aes_256_ccm}, /* SSL_ENC_AES256CCM8_IDX 17 */
+    {SSL_CAMELLIA128GCM, NID_camellia_128_gcm}, /* SSL_ENC_CAMELLIA128GCM_IDX 18 */
+    {SSL_CAMELLIA256GCM, NID_camellia_256_gcm}, /* SSL_ENC_CAMELLIA256GCM_IDX 19 */
 };
 
 static const EVP_CIPHER *ssl_cipher_methods[SSL_ENC_NUM_IDX] = {
@@ -373,10 +377,13 @@ static const SSL_CIPHER cipher_aliases[] = {
      0, 0},
     {0, SSL_TXT_AES_CCM_8, 0, 0, 0, SSL_AES128CCM8 | SSL_AES256CCM8, 0, 0, 0, 0,
      0, 0},
-    {0, SSL_TXT_CAMELLIA128, 0, 0, 0, SSL_CAMELLIA128, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_CAMELLIA256, 0, 0, 0, SSL_CAMELLIA256, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_CAMELLIA, 0, 0, 0, SSL_CAMELLIA128 | SSL_CAMELLIA256, 0, 0, 0,
-     0, 0, 0},
+    {0, SSL_TXT_CAMELLIA128, 0, 0, 0, SSL_CAMELLIA128 | SSL_CAMELLIA128GCM, 0,
+     0, 0, 0, 0, 0},
+    {0, SSL_TXT_CAMELLIA256, 0, 0, 0, SSL_CAMELLIA256 | SSL_CAMELLIA256GCM, 0,
+     0, 0, 0, 0, 0},
+    {0, SSL_TXT_CAMELLIA, 0, 0, 0, SSL_CAMELLIA, 0, 0, 0, 0, 0, 0},
+    {0, SSL_TXT_CAMELLIA_GCM, 0, 0, 0, SSL_CAMELLIA128GCM | SSL_CAMELLIA256GCM,
+     0, 0, 0, 0, 0, 0},
 
     /* MAC aliases */
     {0, SSL_TXT_MD5, 0, 0, 0, 0, SSL_MD5, 0, 0, 0, 0, 0},
@@ -1754,6 +1761,12 @@ char *SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
         break;
     case SSL_CAMELLIA256:
         enc = "Camellia(256)";
+        break;
+    case SSL_CAMELLIA128GCM:
+        enc = "CamelliaGCM(128)";
+        break;
+    case SSL_CAMELLIA256GCM:
+        enc = "CamelliaGCM(256)";
         break;
     case SSL_SEED:
         enc = "SEED(128)";
