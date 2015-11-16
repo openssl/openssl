@@ -1518,6 +1518,8 @@ __owur int SSL_CTX_use_certificate_ASN1(SSL_CTX *ctx, int len,
 
 void SSL_CTX_set_default_passwd_cb(SSL_CTX *ctx, pem_password_cb *cb);
 void SSL_CTX_set_default_passwd_cb_userdata(SSL_CTX *ctx, void *u);
+void SSL_set_default_passwd_cb(SSL *s, pem_password_cb *cb);
+void SSL_set_default_passwd_cb_userdata(SSL *s, void *u);
 
 __owur int SSL_CTX_check_private_key(const SSL_CTX *ctx);
 __owur int SSL_check_private_key(const SSL *ctx);

@@ -387,8 +387,8 @@
 
 /* Bits for algorithm_ssl (protocol version) */
 # define SSL_SSLV3               0x00000002U
-# define SSL_TLSV1               SSL_SSLV3/* for now */
-# define SSL_TLSV1_2             0x00000004U
+# define SSL_TLSV1               0x00000004U
+# define SSL_TLSV1_2             0x00000008U
 
 /* Bits for algorithm2 (handshake digests and other extra flags) */
 
@@ -1210,6 +1210,12 @@ struct ssl_st {
     int (*not_resumable_session_cb) (SSL *ssl, int is_forward_secure);
     
     RECORD_LAYER rlayer;
+
+    /* Default password callback. */
+    pem_password_cb *default_passwd_callback;
+
+    /* Default password callback user data. */
+    void *default_passwd_callback_userdata;
 };
 
 

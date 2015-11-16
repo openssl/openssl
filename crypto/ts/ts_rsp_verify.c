@@ -88,11 +88,16 @@ static int ts_find_name(STACK_OF(GENERAL_NAME) *gen_names,
                         GENERAL_NAME *name);
 
 /*
- * Local mapping between response codes and descriptions.
- * Don't forget to change TS_STATUS_BUF_SIZE when modifying
- * the elements of this array.
+ * This must be large enough to hold all values in ts_status_text (with
+ * comma separator) or all text fields in ts_failure_info (also with comma).
  */
-static const char *ts_status_text[] = { "granted",
+#define TS_STATUS_BUF_SIZE      256
+
+/*
+ * Local mapping between response codes and descriptions.
+ */
+static const char *ts_status_text[] = {
+    "granted",
     "grantedWithMods",
     "rejection",
     "waiting",
@@ -101,12 +106,6 @@ static const char *ts_status_text[] = { "granted",
 };
 
 #define TS_STATUS_TEXT_SIZE     OSSL_NELEM(ts_status_text)
-
-/*
- * This must be greater or equal to the sum of the strings in TS_status_text
- * plus the number of its elements.
- */
-#define TS_STATUS_BUF_SIZE      256
 
 static struct {
     int code;
@@ -121,8 +120,6 @@ static struct {
     {TS_INFO_ADD_INFO_NOT_AVAILABLE, "addInfoNotAvailable"},
     {TS_INFO_SYSTEM_FAILURE, "systemFailure"}
 };
-
-#define TS_FAILURE_INFO_SIZE    OSSL_NELEM(ts_failure_info)
 
 
 /*-
@@ -445,7 +442,7 @@ static int ts_check_status_info(TS_RESP *response)
         return 1;
 
     /* There was an error, get the description in status_text. */
-    if (0 <= status && status < (long)TS_STATUS_TEXT_SIZE)
+    if (0 <= status && status < (long) OSSL_NELEM(ts_status_text))
         status_text = ts_status_text[status];
     else
         status_text = "unknown code";
@@ -462,7 +459,7 @@ static int ts_check_status_info(TS_RESP *response)
             if (ASN1_BIT_STRING_get_bit(info->failure_info,
                                         ts_failure_info[i].code)) {
                 if (!first)
-                    strcpy(failure_text, ",");
+                    strcat(failure_text, ",");
                 else
                     first = 0;
                 strcat(failure_text, ts_failure_info[i].text);
