@@ -3103,17 +3103,17 @@ int tls_construct_client_verify(SSL *s)
     } else
 #endif
 #ifndef OPENSSL_NO_EC
-        if (pkey->type == EVP_PKEY_EC) {
-            if (!ECDSA_sign(pkey->save_type,
-                            &(data[MD5_DIGEST_LENGTH]),
-                            SHA_DIGEST_LENGTH, &(p[2]),
-                            (unsigned int *)&j, pkey->pkey.ec)) {
-                SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_VERIFY, ERR_R_ECDSA_LIB);
-                goto err;
-            }
-            s2n(j, p);
-            n = j + 2;
-        } else
+    if (pkey->type == EVP_PKEY_EC) {
+        if (!ECDSA_sign(pkey->save_type,
+                        &(data[MD5_DIGEST_LENGTH]),
+                        SHA_DIGEST_LENGTH, &(p[2]),
+                        (unsigned int *)&j, pkey->pkey.ec)) {
+            SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_VERIFY, ERR_R_ECDSA_LIB);
+            goto err;
+        }
+        s2n(j, p);
+        n = j + 2;
+    } else
 #endif
         if (pkey->type == NID_id_GostR3410_2001
                 || pkey->type == NID_id_GostR3410_2012_256
