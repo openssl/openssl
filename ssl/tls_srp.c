@@ -393,7 +393,8 @@ int srp_generate_client_master_secret(SSL *s)
  err:
     BN_clear_free(K);
     BN_clear_free(x);
-    OPENSSL_clear_free(passwd, strlen(passwd));
+    if (passwd != NULL)
+        OPENSSL_clear_free(passwd, strlen(passwd));
     BN_clear_free(u);
     return ret;
 }

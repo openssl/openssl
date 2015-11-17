@@ -144,7 +144,7 @@ t_x509.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 t_x509.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
 t_x509.o: ../../include/openssl/x509_vfy.h ../../include/openssl/x509v3.h
 t_x509.o: ../include/internal/asn1_int.h ../include/internal/cryptlib.h
-t_x509.o: ../include/internal/x509_int.h t_x509.c
+t_x509.o: t_x509.c
 x509_att.o: ../../e_os.h ../../include/openssl/asn1.h
 x509_att.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 x509_att.o: ../../include/openssl/conf.h ../../include/openssl/crypto.h
