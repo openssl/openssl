@@ -543,14 +543,20 @@ static ssl_trace_tbl ssl_md_tbl[] = {
     {3, "sha224"},
     {4, "sha256"},
     {5, "sha384"},
-    {6, "sha512"}
+    {6, "sha512"},
+    {237, "md_gost94"},
+    {238, "md_gost2012_256"},
+    {239, "md_gost2012_512"},
 };
 
 static ssl_trace_tbl ssl_sig_tbl[] = {
     {0, "anonymous"},
     {1, "rsa"},
     {2, "dsa"},
-    {3, "ecdsa"}
+    {3, "ecdsa"},
+    {237, "gost2001"},
+    {238, "gost2012_256"},
+    {239, "gost2012_512"},
 };
 
 static ssl_trace_tbl ssl_hb_tbl[] = {
