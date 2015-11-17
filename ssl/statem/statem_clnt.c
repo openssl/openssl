@@ -1365,7 +1365,10 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL *s, PACKET *pkt)
      * Don't digest cached records if no sigalgs: we may need them for client
      * authentication.
      */
-    if (!SSL_USE_SIGALGS(s) && !ssl3_digest_cached_records(s, 0))
+    if (!(SSL_USE_SIGALGS(s)
+            || (s->s3->tmp.new_cipher->algorithm_auth
+                & (SSL_aGOST12|SSL_aGOST01)))
+            && !ssl3_digest_cached_records(s, 0))
         goto f_err;
     /* lets get the compression algorithm */
     /* COMPRESSION */
@@ -1556,7 +1559,10 @@ MSG_PROCESS_RETURN tls_process_server_certificate(SSL *s, PACKET *pkt)
     }
 
     exp_idx = ssl_cipher_get_cert_index(s->s3->tmp.new_cipher);
-    if (exp_idx >= 0 && i != exp_idx) {
+    if (exp_idx >= 0 && i != exp_idx
+            && (exp_idx != SSL_PKEY_GOST_EC ||
+                (i != SSL_PKEY_GOST12_512 && i != SSL_PKEY_GOST12_256
+                 && i != SSL_PKEY_GOST01))) {
         x = NULL;
         al = SSL_AD_ILLEGAL_PARAMETER;
         SSLerr(SSL_F_TLS_PROCESS_SERVER_CERTIFICATE,
@@ -2771,6 +2777,10 @@ psk_err:
         unsigned char shared_ukm[32], tmp[256];
         EVP_MD_CTX *ukm_hash;
         EVP_PKEY *pub_key;
+        int dgst_nid = NID_id_GostR3411_94;
+        if ((s->s3->tmp.new_cipher->algorithm_auth & SSL_aGOST12) != 0)
+            dgst_nid = NID_id_GostR3411_2012_256;
+
 
         pmslen = 32;
         pms = OPENSSL_malloc(pmslen);
@@ -2830,7 +2840,7 @@ psk_err:
          */
         ukm_hash = EVP_MD_CTX_create();
         if (EVP_DigestInit(ukm_hash,
-                           EVP_get_digestbynid(NID_id_GostR3411_94)) <= 0
+                           EVP_get_digestbynid(dgst_nid)) <= 0
                 || EVP_DigestUpdate(ukm_hash, s->s3->client_random,
                                     SSL3_RANDOM_SIZE) <= 0
                 || EVP_DigestUpdate(ukm_hash, s->s3->server_random,
@@ -3003,7 +3013,7 @@ int tls_client_key_exchange_post_work(SSL *s)
 int tls_construct_client_verify(SSL *s)
 {
     unsigned char *p;
-    unsigned char data[MD5_DIGEST_LENGTH + SHA_DIGEST_LENGTH];
+    unsigned char data[EVP_MAX_MD_SIZE]; /* GOST R 34.11-2012-256*/
     EVP_PKEY *pkey;
     EVP_PKEY_CTX *pctx = NULL;
     EVP_MD_CTX mctx;
@@ -3034,20 +3044,33 @@ int tls_construct_client_verify(SSL *s)
     } else {
         ERR_clear_error();
     }
+
     /*
      * For TLS v1.2 send signature algorithm and signature using agreed
      * digest and cached handshake records.
      */
-    if (SSL_USE_SIGALGS(s)) {
+    if (SSL_USE_SIGALGS(s) || pkey->type == NID_id_GostR3410_2001
+                || pkey->type == NID_id_GostR3410_2012_256
+                || pkey->type == NID_id_GostR3410_2012_512) {
         long hdatalen = 0;
         void *hdata;
         const EVP_MD *md = s->s3->tmp.md[s->cert->key - s->cert->pkeys];
         hdatalen = BIO_get_mem_data(s->s3->handshake_buffer, &hdata);
+        if (!SSL_USE_SIGALGS(s)) {
+                int dgst_nid;
+                if (EVP_PKEY_get_default_digest_nid(pkey, &dgst_nid) <= 0
+                                || (md = EVP_get_digestbynid(dgst_nid)) == NULL) {
+                        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_VERIFY, ERR_R_INTERNAL_ERROR);
+                        goto err;
+                }
+        }
         if (hdatalen <= 0 || !tls12_get_sigandhash(p, pkey, md)) {
             SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_VERIFY, ERR_R_INTERNAL_ERROR);
             goto err;
         }
-        p += 2;
+        if (SSL_USE_SIGALGS(s) ) {
+            p += 2;
+        }
 #ifdef SSL_DEBUG
         fprintf(stderr, "Using TLS 1.2 with client alg %s\n",
                 EVP_MD_name(md));
@@ -3058,8 +3081,20 @@ int tls_construct_client_verify(SSL *s)
             SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_VERIFY, ERR_R_EVP_LIB);
             goto err;
         }
+        if (pkey->type == NID_id_GostR3410_2001
+                || pkey->type == NID_id_GostR3410_2012_256
+                || pkey->type == NID_id_GostR3410_2012_512) {
+            unsigned int i, k;
+            for (i = u - 1, k = 0; k < u/2; k++, i--) {
+                char c = p[2 + k];
+                p[2 + k] = p[2 + i];
+                p[2 + i] = c;
+            }
+        }
         s2n(u, p);
-        n = u + 4;
+        n = u + 2;
+        if (SSL_USE_SIGALGS(s))
+            n += 2;
         /* Digest cached records and discard handshake buffer */
         if (!ssl3_digest_cached_records(s, 0))
             goto err;
@@ -3103,17 +3138,23 @@ int tls_construct_client_verify(SSL *s)
         n = j + 2;
     } else
 #endif
-    if (pkey->type == NID_id_GostR3410_2001) {
-        unsigned char signbuf[64];
+    if (pkey->type == NID_id_GostR3410_2001
+            || pkey->type == NID_id_GostR3410_2012_256
+            || pkey->type == NID_id_GostR3410_2012_512) {
+        unsigned char signbuf[128];
         int i;
-        size_t sigsize = 64;
-        s->method->ssl3_enc->cert_verify_mac(s,
-                                             NID_id_GostR3411_94, data);
-        if (EVP_PKEY_sign(pctx, signbuf, &sigsize, data, 32) <= 0) {
+        size_t sigsize =
+            (pkey->type == NID_id_GostR3410_2012_512) ? 128 : 64;
+        int dgst_nid = NID_undef;
+
+        EVP_PKEY_get_default_digest_nid(pkey, &dgst_nid);
+        s->method->ssl3_enc->cert_verify_mac(s, dgst_nid, data);
+        if (EVP_PKEY_sign(pctx, signbuf, &sigsize, data,
+                          EVP_MD_size(EVP_get_digestbynid(dgst_nid))) <= 0) {
             SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_VERIFY, ERR_R_INTERNAL_ERROR);
             goto err;
         }
-        for (i = 63, j = 0; i >= 0; j++, i--) {
+        for (i = sigsize - 1, j = 0; i >= 0; j++, i--) {
             p[2 + j] = signbuf[i];
         }
         s2n(j, p);
