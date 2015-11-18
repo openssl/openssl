@@ -282,7 +282,7 @@ CERT *ssl_cert_dup(CERT *cert)
     /* Configured sigalgs copied across */
     if (cert->conf_sigalgs) {
         ret->conf_sigalgs = OPENSSL_malloc(cert->conf_sigalgslen);
-        if (!ret->conf_sigalgs)
+        if (ret->conf_sigalgs == NULL)
             goto err;
         memcpy(ret->conf_sigalgs, cert->conf_sigalgs, cert->conf_sigalgslen);
         ret->conf_sigalgslen = cert->conf_sigalgslen;
@@ -291,7 +291,7 @@ CERT *ssl_cert_dup(CERT *cert)
 
     if (cert->client_sigalgs) {
         ret->client_sigalgs = OPENSSL_malloc(cert->client_sigalgslen);
-        if (!ret->client_sigalgs)
+        if (ret->client_sigalgs == NULL)
             goto err;
         memcpy(ret->client_sigalgs, cert->client_sigalgs,
                cert->client_sigalgslen);
@@ -303,7 +303,7 @@ CERT *ssl_cert_dup(CERT *cert)
     /* Copy any custom client certificate types */
     if (cert->ctypes) {
         ret->ctypes = OPENSSL_malloc(cert->ctype_num);
-        if (!ret->ctypes)
+        if (ret->ctypes == NULL)
             goto err;
         memcpy(ret->ctypes, cert->ctypes, cert->ctype_num);
         ret->ctype_num = cert->ctype_num;
@@ -914,6 +914,12 @@ int ssl_add_cert_chain(SSL *s, CERT_PKEY *cpk, unsigned long *l)
             SSLerr(SSL_F_SSL_ADD_CERT_CHAIN, ERR_R_X509_LIB);
             return (0);
         }
+        /*
+         * It is valid for the chain not to be complete (because normally we
+         * don't include the root cert in the chain). Therefore we deliberately
+         * ignore the error return from this call. We're not actually verifying
+         * the cert - we're just building as much of the chain as we can
+         */
         X509_verify_cert(&xs_ctx);
         /* Don't leave errors in the queue */
         ERR_clear_error();
@@ -968,7 +974,7 @@ int ssl_build_cert_chain(SSL *s, SSL_CTX *ctx, int flags)
     /* Rearranging and check the chain: add everything to a store */
     if (flags & SSL_BUILD_CHAIN_FLAG_CHECK) {
         chain_store = X509_STORE_new();
-        if (!chain_store)
+        if (chain_store == NULL)
             goto err;
         for (i = 0; i < sk_X509_num(cpk->chain); i++) {
             x = sk_X509_value(cpk->chain, i);

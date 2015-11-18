@@ -268,7 +268,7 @@ int EVP_PBE_scrypt(const char *pass, size_t passlen,
         return 1;
 
     B = OPENSSL_malloc(Blen + Vlen);
-    if (B == 0)
+    if (B == NULL)
         return 0;
     X = (uint32_t *)(B + Blen);
     T = X + 32 * r;

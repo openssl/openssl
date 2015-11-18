@@ -455,8 +455,22 @@ int ssl3_write_bytes(SSL *s, int type, const void *buf_, int len)
     }
 
     s->rwstate = SSL_NOTHING;
-    OPENSSL_assert(s->rlayer.wnum <= INT_MAX);
     tot = s->rlayer.wnum;
+    /*
+     * ensure that if we end up with a smaller value of data to write out
+     * than the the original len from a write which didn't complete for
+     * non-blocking I/O and also somehow ended up avoiding the check for
+     * this in ssl3_write_pending/SSL_R_BAD_WRITE_RETRY as it must never be
+     * possible to end up with (len-tot) as a large number that will then
+     * promptly send beyond the end of the users buffer ... so we trap and
+     * report the error in a way the user will notice
+     */
+    if ((unsigned int)len < s->rlayer.wnum) {
+        SSLerr(SSL_F_SSL3_WRITE_BYTES, SSL_R_BAD_LENGTH);
+        return -1;
+    }
+
+
     s->rlayer.wnum = 0;
 
     if (SSL_in_init(s) && !ossl_statem_get_in_handshake(s)) {
@@ -467,20 +481,6 @@ int ssl3_write_bytes(SSL *s, int type, const void *buf_, int len)
             SSLerr(SSL_F_SSL3_WRITE_BYTES, SSL_R_SSL_HANDSHAKE_FAILURE);
             return -1;
         }
-    }
-
-    /*
-     * ensure that if we end up with a smaller value of data to write out
-     * than the the original len from a write which didn't complete for
-     * non-blocking I/O and also somehow ended up avoiding the check for
-     * this in ssl3_write_pending/SSL_R_BAD_WRITE_RETRY as it must never be
-     * possible to end up with (len-tot) as a large number that will then
-     * promptly send beyond the end of the users buffer ... so we trap and
-     * report the error in a way the user will notice
-     */
-    if (len < tot) {
-        SSLerr(SSL_F_SSL3_WRITE_BYTES, SSL_R_BAD_LENGTH);
-        return (-1);
     }
 
     /*
@@ -530,7 +530,7 @@ int ssl3_write_bytes(SSL *s, int type, const void *buf_, int len)
                 packlen *= 4;
 
             wb->buf = OPENSSL_malloc(packlen);
-            if (!wb->buf) {
+            if (wb->buf == NULL) {
                 SSLerr(SSL_F_SSL3_WRITE_BYTES, ERR_R_MALLOC_FAILURE);
                 return -1;
             }

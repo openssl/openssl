@@ -311,7 +311,7 @@ SSL *SSL_new(SSL_CTX *ctx)
     s->generate_session_id = ctx->generate_session_id;
 
     s->param = X509_VERIFY_PARAM_new();
-    if (!s->param)
+    if (s->param == NULL)
         goto err;
     X509_VERIFY_PARAM_inherit(s->param, ctx->param);
     s->quiet_shutdown = ctx->quiet_shutdown;
@@ -365,6 +365,9 @@ SSL *SSL_new(SSL_CTX *ctx)
     }
 
     s->verify_result = X509_V_OK;
+
+    s->default_passwd_callback = ctx->default_passwd_callback;
+    s->default_passwd_callback_userdata = ctx->default_passwd_callback_userdata;
 
     s->method = ctx->method;
 
@@ -990,7 +993,7 @@ int SSL_shutdown(SSL *s)
         return -1;
     }
 
-    if ((s != NULL) && !SSL_in_init(s))
+    if (!SSL_in_init(s))
         return (s->method->ssl_shutdown(s));
     else
         return (1);
@@ -1224,25 +1227,21 @@ long SSL_CTX_callback_ctrl(SSL_CTX *ctx, int cmd, void (*fp) (void))
 
 int ssl_cipher_id_cmp(const SSL_CIPHER *a, const SSL_CIPHER *b)
 {
-    long l;
-
-    l = a->id - b->id;
-    if (l == 0L)
-        return (0);
-    else
-        return ((l > 0) ? 1 : -1);
+    if (a->id > b->id)
+        return 1;
+    if (a->id < b->id)
+        return -1;
+    return 0;
 }
 
 int ssl_cipher_ptr_id_cmp(const SSL_CIPHER *const *ap,
                           const SSL_CIPHER *const *bp)
 {
-    long l;
-
-    l = (*ap)->id - (*bp)->id;
-    if (l == 0L)
-        return (0);
-    else
-        return ((l > 0) ? 1 : -1);
+    if ((*ap)->id > (*bp)->id)
+        return 1;
+    if ((*ap)->id < (*bp)->id)
+        return -1;
+    return 0;
 }
 
 /** return a STACK of the ciphers available for the SSL and in order of
@@ -1551,7 +1550,7 @@ int SSL_CTX_set_alpn_protos(SSL_CTX *ctx, const unsigned char *protos,
 {
     OPENSSL_free(ctx->alpn_client_proto_list);
     ctx->alpn_client_proto_list = OPENSSL_malloc(protos_len);
-    if (!ctx->alpn_client_proto_list)
+    if (ctx->alpn_client_proto_list == NULL)
         return 1;
     memcpy(ctx->alpn_client_proto_list, protos, protos_len);
     ctx->alpn_client_proto_list_len = protos_len;
@@ -1569,7 +1568,7 @@ int SSL_set_alpn_protos(SSL *ssl, const unsigned char *protos,
 {
     OPENSSL_free(ssl->alpn_client_proto_list);
     ssl->alpn_client_proto_list = OPENSSL_malloc(protos_len);
-    if (!ssl->alpn_client_proto_list)
+    if (ssl->alpn_client_proto_list == NULL)
         return 1;
     memcpy(ssl->alpn_client_proto_list, protos, protos_len);
     ssl->alpn_client_proto_list_len = protos_len;
@@ -1712,7 +1711,7 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
     }
 
     ret->param = X509_VERIFY_PARAM_new();
-    if (!ret->param)
+    if (ret->param == NULL)
         goto err;
 
     if ((ret->md5 = EVP_get_digestbyname("ssl3-md5")) == NULL) {
@@ -1848,6 +1847,16 @@ void SSL_CTX_set_default_passwd_cb(SSL_CTX *ctx, pem_password_cb *cb)
 void SSL_CTX_set_default_passwd_cb_userdata(SSL_CTX *ctx, void *u)
 {
     ctx->default_passwd_callback_userdata = u;
+}
+
+void SSL_set_default_passwd_cb(SSL *s, pem_password_cb *cb)
+{
+    s->default_passwd_callback = cb;
+}
+
+void SSL_set_default_passwd_cb_userdata(SSL *s, void *u)
+{
+    s->default_passwd_callback_userdata = u;
 }
 
 void SSL_CTX_set_cert_verify_callback(SSL_CTX *ctx,
@@ -2538,6 +2547,9 @@ SSL *SSL_dup(SSL *s)
                                  * ret->init_msg, ret->init_num,
                                  * ret->init_off */
     ret->hit = s->hit;
+
+    ret->default_passwd_callback = s->default_passwd_callback;
+    ret->default_passwd_callback_userdata = s->default_passwd_callback_userdata;
 
     X509_VERIFY_PARAM_inherit(ret->param, s->param);
 

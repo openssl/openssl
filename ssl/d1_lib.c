@@ -155,7 +155,7 @@ int dtls1_new(SSL *s)
     d1->link_mtu = 0;
     d1->mtu = 0;
 
-    if (!d1->buffered_messages || !d1->sent_messages) {
+    if (d1->buffered_messages == NULL || d1->sent_messages == NULL) {
         pqueue_free(d1->buffered_messages);
         pqueue_free(d1->sent_messages);
         OPENSSL_free(d1);
@@ -1022,12 +1022,6 @@ int dtls1_heartbeat(SSL *s)
         SSLerr(SSL_F_DTLS1_HEARTBEAT, SSL_R_UNEXPECTED_MESSAGE);
         return -1;
     }
-
-    /*
-     * Check if padding is too long, payload and padding must not exceed 2^14
-     * - 3 = 16381 bytes in total.
-     */
-    OPENSSL_assert(payload + padding <= 16381);
 
     /*-
      * Create HeartBeat message, we just use a sequence number

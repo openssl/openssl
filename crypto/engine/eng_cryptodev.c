@@ -1233,6 +1233,8 @@ cryptodev_dsa_dsa_mod_exp(DSA *dsa, BIGNUM *t1, BIGNUM *g,
     int ret = 0;
 
     t2 = BN_new();
+    if (t2 == NULL)
+        goto err;
 
     /* v = ( g^u1 * y^u2 mod p ) mod q */
     /* let t1 = g ^ u1 mod p */
@@ -1289,6 +1291,8 @@ static DSA_SIG *cryptodev_dsa_do_sign(const unsigned char *dgst, int dlen,
     if (cryptodev_asym(&kop, BN_num_bytes(dsa->q), r,
                        BN_num_bytes(dsa->q), s) == 0) {
         dsaret = DSA_SIG_new();
+        if (dsaret == NULL)
+            goto err;
         dsaret->r = r;
         dsaret->s = s;
     } else {

@@ -3082,7 +3082,7 @@ static int do_test_cipherlist(void)
         if (tci != NULL)
             if (ci->id >= tci->id) {
                 fprintf(stderr, "testing SSLv3 cipher list order: ");
-                fprintf(stderr, "failed %lx vs. %lx\n", ci->id, tci->id);
+                fprintf(stderr, "failed %x vs. %x\n", ci->id, tci->id);
                 return 0;
             }
         tci = ci;
@@ -3094,7 +3094,7 @@ static int do_test_cipherlist(void)
         if (tci != NULL)
             if (ci->id >= tci->id) {
                 fprintf(stderr, "testing TLSv1 cipher list order: ");
-                fprintf(stderr, "failed %lx vs. %lx\n", ci->id, tci->id);
+                fprintf(stderr, "failed %x vs. %x\n", ci->id, tci->id);
                 return 0;
             }
         tci = ci;

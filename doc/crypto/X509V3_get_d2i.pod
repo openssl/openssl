@@ -31,6 +31,10 @@ X509_REVOKED_add1_ext_i2d - X509 extension decode and encode functions
  int X509_REVOKED_add1_ext_i2d(X509_REVOKED *r, int nid, void *value, int crit,
                                unsigned long flags);
 
+ STACK_OF(X509_EXTENSION) *X509_get0_extensions(const X509 *x);
+ STACK_OF(X509_EXTENSION) *X509_CRL_get0_extensions(X509_CRL *crl);
+ STACK_OF(X509_EXTENSION) *X509_REVOKED_get0_extensions(X509_REVOKED *r);
+
 =head1 DESCRIPTION
 
 X509V3_get_ext_d2i() looks for an extension with OID B<nid> in the extensions
@@ -65,6 +69,10 @@ X509V3_add_i2d().
 X509_REVOKED_get_ext_d2i() and X509_REVOKED_add1_ext_i2d() operate on the
 extensions of B<X509_REVOKED> structure B<r> (i.e for CRL entry extensions),
 they are otherwise identical to X509V3_get_d2i() and X509V3_add_i2d().
+
+X509_get0_extensions(), X509_CRL_get0_extensions() and
+X509_REVOKED_get0_extensions() return a stack of all the extensions
+of a certificate a CRL or a CRL entry respectively.
 
 =head1 NOTES
 
@@ -194,6 +202,10 @@ X509V3_add1_i2d() returns 1 if the operation is successful and 0 if it
 fails due to a non-fatal error (extension not found, already exists,
 cannot be encoded) or -1 due to a fatal error such as a memory allocation
 failure.
+
+X509_get0_extensions(), X509_CRL_get0_extensions() and
+X509_REVOKED_get0_extensions() return a stack of extensions. They can return
+NULL if no extensions are present.
 
 =head1 SEE ALSO
 

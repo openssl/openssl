@@ -1,6 +1,6 @@
 /* crypto/engine/eng_err.c */
 /* ====================================================================
- * Copyright (c) 1999-2010 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2015 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -70,10 +70,10 @@
 # define ERR_REASON(reason) ERR_PACK(ERR_LIB_ENGINE,0,reason)
 
 static ERR_STRING_DATA ENGINE_str_functs[] = {
-    {ERR_FUNC(ENGINE_F_DYNAMIC_CTRL), "DYNAMIC_CTRL"},
-    {ERR_FUNC(ENGINE_F_DYNAMIC_GET_DATA_CTX), "DYNAMIC_GET_DATA_CTX"},
-    {ERR_FUNC(ENGINE_F_DYNAMIC_LOAD), "DYNAMIC_LOAD"},
-    {ERR_FUNC(ENGINE_F_DYNAMIC_SET_DATA_CTX), "DYNAMIC_SET_DATA_CTX"},
+    {ERR_FUNC(ENGINE_F_DYNAMIC_CTRL), "dynamic_ctrl"},
+    {ERR_FUNC(ENGINE_F_DYNAMIC_GET_DATA_CTX), "dynamic_get_data_ctx"},
+    {ERR_FUNC(ENGINE_F_DYNAMIC_LOAD), "dynamic_load"},
+    {ERR_FUNC(ENGINE_F_DYNAMIC_SET_DATA_CTX), "dynamic_set_data_ctx"},
     {ERR_FUNC(ENGINE_F_ENGINE_ADD), "ENGINE_add"},
     {ERR_FUNC(ENGINE_F_ENGINE_BY_ID), "ENGINE_by_id"},
     {ERR_FUNC(ENGINE_F_ENGINE_CMD_IS_EXECUTABLE), "ENGINE_cmd_is_executable"},
@@ -91,8 +91,8 @@ static ERR_STRING_DATA ENGINE_str_functs[] = {
     {ERR_FUNC(ENGINE_F_ENGINE_GET_PKEY_METH), "ENGINE_get_pkey_meth"},
     {ERR_FUNC(ENGINE_F_ENGINE_GET_PREV), "ENGINE_get_prev"},
     {ERR_FUNC(ENGINE_F_ENGINE_INIT), "ENGINE_init"},
-    {ERR_FUNC(ENGINE_F_ENGINE_LIST_ADD), "ENGINE_LIST_ADD"},
-    {ERR_FUNC(ENGINE_F_ENGINE_LIST_REMOVE), "ENGINE_LIST_REMOVE"},
+    {ERR_FUNC(ENGINE_F_ENGINE_LIST_ADD), "engine_list_add"},
+    {ERR_FUNC(ENGINE_F_ENGINE_LIST_REMOVE), "engine_list_remove"},
     {ERR_FUNC(ENGINE_F_ENGINE_LOAD_PRIVATE_KEY), "ENGINE_load_private_key"},
     {ERR_FUNC(ENGINE_F_ENGINE_LOAD_PUBLIC_KEY), "ENGINE_load_public_key"},
     {ERR_FUNC(ENGINE_F_ENGINE_LOAD_SSL_CLIENT_CERT),
@@ -104,13 +104,13 @@ static ERR_STRING_DATA ENGINE_str_functs[] = {
     {ERR_FUNC(ENGINE_F_ENGINE_SET_DEFAULT_TYPE), "ENGINE_SET_DEFAULT_TYPE"},
     {ERR_FUNC(ENGINE_F_ENGINE_SET_ID), "ENGINE_set_id"},
     {ERR_FUNC(ENGINE_F_ENGINE_SET_NAME), "ENGINE_set_name"},
-    {ERR_FUNC(ENGINE_F_ENGINE_TABLE_REGISTER), "ENGINE_TABLE_REGISTER"},
+    {ERR_FUNC(ENGINE_F_ENGINE_TABLE_REGISTER), "engine_table_register"},
     {ERR_FUNC(ENGINE_F_ENGINE_UNLOAD_KEY), "ENGINE_UNLOAD_KEY"},
-    {ERR_FUNC(ENGINE_F_ENGINE_UNLOCKED_FINISH), "ENGINE_UNLOCKED_FINISH"},
+    {ERR_FUNC(ENGINE_F_ENGINE_UNLOCKED_FINISH), "engine_unlocked_finish"},
     {ERR_FUNC(ENGINE_F_ENGINE_UP_REF), "ENGINE_up_ref"},
-    {ERR_FUNC(ENGINE_F_INT_CTRL_HELPER), "INT_CTRL_HELPER"},
-    {ERR_FUNC(ENGINE_F_INT_ENGINE_CONFIGURE), "INT_ENGINE_CONFIGURE"},
-    {ERR_FUNC(ENGINE_F_INT_ENGINE_MODULE_INIT), "INT_ENGINE_MODULE_INIT"},
+    {ERR_FUNC(ENGINE_F_INT_CTRL_HELPER), "int_ctrl_helper"},
+    {ERR_FUNC(ENGINE_F_INT_ENGINE_CONFIGURE), "int_engine_configure"},
+    {ERR_FUNC(ENGINE_F_INT_ENGINE_MODULE_INIT), "int_engine_module_init"},
     {ERR_FUNC(ENGINE_F_LOG_MESSAGE), "LOG_MESSAGE"},
     {0, NULL}
 };

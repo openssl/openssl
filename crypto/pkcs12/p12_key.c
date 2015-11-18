@@ -140,7 +140,8 @@ int PKCS12_key_gen_uni(unsigned char *pass, int passlen, unsigned char *salt,
     I = OPENSSL_malloc(Ilen);
     Ij = BN_new();
     Bpl1 = BN_new();
-    if (!D || !Ai || !B || !I || !Ij || !Bpl1)
+    if (D == NULL || Ai == NULL || B == NULL || I == NULL || Ij == NULL
+            || Bpl1 == NULL)
         goto err;
     for (i = 0; i < v; i++)
         D[i] = id;

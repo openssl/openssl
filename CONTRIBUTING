@@ -22,8 +22,14 @@ current Git or the last snapshot. They should follow our coding style
 warnings using the --strict-warnings flag.  OpenSSL compiles on many varied
 platforms: try to ensure you only use portable features.
 
-Our preferred format for changes is "diff -u" output. One method is to use
-"git diff"  Another is to generate it something like this:
+Our preferred format for patch files is "git format-patch" output. For example
+to provide a patch file containing the last commit in your local git repository
+use the following command:
+
+# git format-patch --stdout HEAD^ >mydiffs.patch
+
+Another method of creating an acceptable patch file without using git is as
+follows:
 
 # cd openssl-work
 # [your changes]

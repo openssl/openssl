@@ -1556,7 +1556,7 @@ X509_STORE_CTX_purpose_inherit          1976	EXIST::FUNCTION:
 PEM_read_RSA_PUBKEY                     1977	EXIST::FUNCTION:RSA
 d2i_X509_AUX                            1980	EXIST::FUNCTION:
 i2d_DSA_PUBKEY                          1981	EXIST::FUNCTION:DSA
-X509_CERT_AUX_print                     1982	EXIST::FUNCTION:
+X509_CERT_AUX_print                     1982	NOEXIST::FUNCTION:
 PEM_read_DSA_PUBKEY                     1984	EXIST::FUNCTION:DSA
 i2d_RSA_PUBKEY_bio                      1985	EXIST::FUNCTION:RSA
 ASN1_BIT_STRING_num_asc                 1986	EXIST::FUNCTION:
@@ -4640,3 +4640,10 @@ X509_REQ_get_signature_nid              4999	EXIST::FUNCTION:
 X509_CRL_get_signature_nid              5000	EXIST::FUNCTION:
 i2d_re_X509_REQ_tbs                     5001	EXIST::FUNCTION:
 X509_REVOKED_get0_extensions            5002	EXIST::FUNCTION:
+X509_get0_tbs_sigalg                    5003	EXIST::FUNCTION:
+X509_trusted                            5004	EXIST::FUNCTION:
+X509_get0_reject_objects                5005	EXIST::FUNCTION:
+X509_get0_extensions                    5006	EXIST::FUNCTION:
+X509_get0_trust_objects                 5007	EXIST::FUNCTION:
+X509_get0_uids                          5008	EXIST::FUNCTION:
+X509_aux_print                          5009	EXIST::FUNCTION:STDIO

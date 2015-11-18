@@ -449,7 +449,7 @@ static int rsa_md_to_algor(X509_ALGOR **palg, const EVP_MD *md)
     if (EVP_MD_type(md) == NID_sha1)
         return 1;
     *palg = X509_ALGOR_new();
-    if (!*palg)
+    if (*palg == NULL)
         return 0;
     X509_ALGOR_set_md(*palg, md);
     return 1;
@@ -469,7 +469,7 @@ static int rsa_md_to_mgf1(X509_ALGOR **palg, const EVP_MD *mgf1md)
     if (!ASN1_item_pack(algtmp, ASN1_ITEM_rptr(X509_ALGOR), &stmp))
          goto err;
     *palg = X509_ALGOR_new();
-    if (!*palg)
+    if (*palg == NULL)
         goto err;
     X509_ALGOR_set0(*palg, OBJ_nid2obj(NID_mgf1), V_ASN1_SEQUENCE, stmp);
     stmp = NULL;
@@ -542,11 +542,11 @@ static ASN1_STRING *rsa_ctx_to_pss(EVP_PKEY_CTX *pkctx)
             saltlen--;
     }
     pss = RSA_PSS_PARAMS_new();
-    if (!pss)
+    if (pss == NULL)
         goto err;
     if (saltlen != 20) {
         pss->saltLength = ASN1_INTEGER_new();
-        if (!pss->saltLength)
+        if (pss->saltLength == NULL)
             goto err;
         if (!ASN1_INTEGER_set(pss->saltLength, saltlen))
             goto err;
@@ -876,7 +876,7 @@ static int rsa_cms_encrypt(CMS_RecipientInfo *ri)
     if (labellen < 0)
         goto err;
     oaep = RSA_OAEP_PARAMS_new();
-    if (!oaep)
+    if (oaep == NULL)
         goto err;
     if (!rsa_md_to_algor(&oaep->hashFunc, md))
         goto err;
@@ -885,9 +885,9 @@ static int rsa_cms_encrypt(CMS_RecipientInfo *ri)
     if (labellen > 0) {
         ASN1_OCTET_STRING *los = ASN1_OCTET_STRING_new();
         oaep->pSourceFunc = X509_ALGOR_new();
-        if (!oaep->pSourceFunc)
+        if (oaep->pSourceFunc == NULL)
             goto err;
-        if (!los)
+        if (los == NULL)
             goto err;
         if (!ASN1_OCTET_STRING_set(los, label, labellen)) {
             ASN1_OCTET_STRING_free(los);

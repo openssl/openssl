@@ -667,7 +667,7 @@ static int cert_status_cb(SSL *s, void *arg)
         goto done;
     }
     req = OCSP_REQUEST_new();
-    if (!req)
+    if (req == NULL)
         goto err;
     id = OCSP_cert_to_id(NULL, x, obj.data.x509);
     X509_free(obj.data.x509);

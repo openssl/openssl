@@ -293,33 +293,33 @@
 
 /* Bits for algorithm_mkey (key exchange algorithm) */
 /* RSA key exchange */
-# define SSL_kRSA                0x00000001L
+# define SSL_kRSA                0x00000001U
 /* DH cert, RSA CA cert */
-# define SSL_kDHr                0x00000002L
+# define SSL_kDHr                0x00000002U
 /* DH cert, DSA CA cert */
-# define SSL_kDHd                0x00000004L
+# define SSL_kDHd                0x00000004U
 /* tmp DH key no DH cert */
-# define SSL_kDHE                0x00000008L
+# define SSL_kDHE                0x00000008U
 /* synonym */
 # define SSL_kEDH                SSL_kDHE
 /* ECDH cert, RSA CA cert */
-# define SSL_kECDHr              0x00000020L
+# define SSL_kECDHr              0x00000020U
 /* ECDH cert, ECDSA CA cert */
-# define SSL_kECDHe              0x00000040L
+# define SSL_kECDHe              0x00000040U
 /* ephemeral ECDH */
-# define SSL_kECDHE              0x00000080L
+# define SSL_kECDHE              0x00000080U
 /* synonym */
 # define SSL_kEECDH              SSL_kECDHE
 /* PSK */
-# define SSL_kPSK                0x00000100L
+# define SSL_kPSK                0x00000100U
 /* GOST key exchange */
-# define SSL_kGOST       0x00000200L
+# define SSL_kGOST       0x00000200U
 /* SRP */
-# define SSL_kSRP        0x00000400L
+# define SSL_kSRP        0x00000400U
 
-# define SSL_kRSAPSK             0x00000800L
-# define SSL_kECDHEPSK           0x00001000L
-# define SSL_kDHEPSK             0x00002000L
+# define SSL_kRSAPSK             0x00000800U
+# define SSL_kECDHEPSK           0x00001000U
+# define SSL_kDHEPSK             0x00002000U
 
 /* all PSK */
 
@@ -327,62 +327,62 @@
 
 /* Bits for algorithm_auth (server authentication) */
 /* RSA auth */
-# define SSL_aRSA                0x00000001L
+# define SSL_aRSA                0x00000001U
 /* DSS auth */
-# define SSL_aDSS                0x00000002L
+# define SSL_aDSS                0x00000002U
 /* no auth (i.e. use ADH or AECDH) */
-# define SSL_aNULL               0x00000004L
+# define SSL_aNULL               0x00000004U
 /* Fixed DH auth (kDHd or kDHr) */
-# define SSL_aDH                 0x00000008L
+# define SSL_aDH                 0x00000008U
 /* Fixed ECDH auth (kECDHe or kECDHr) */
-# define SSL_aECDH               0x00000010L
+# define SSL_aECDH               0x00000010U
 /* ECDSA auth*/
-# define SSL_aECDSA              0x00000040L
+# define SSL_aECDSA              0x00000040U
 /* PSK auth */
-# define SSL_aPSK                0x00000080L
+# define SSL_aPSK                0x00000080U
 /* GOST R 34.10-2001 signature auth */
-# define SSL_aGOST01                     0x00000200L
+# define SSL_aGOST01                     0x00000200U
 /* SRP auth */
-# define SSL_aSRP                0x00000400L
+# define SSL_aSRP                0x00000400U
 
 /* Bits for algorithm_enc (symmetric encryption) */
-# define SSL_DES                 0x00000001L
-# define SSL_3DES                0x00000002L
-# define SSL_RC4                 0x00000004L
-# define SSL_RC2                 0x00000008L
-# define SSL_IDEA                0x00000010L
-# define SSL_eNULL               0x00000020L
-# define SSL_AES128              0x00000040L
-# define SSL_AES256              0x00000080L
-# define SSL_CAMELLIA128         0x00000100L
-# define SSL_CAMELLIA256         0x00000200L
-# define SSL_eGOST2814789CNT     0x00000400L
-# define SSL_SEED                0x00000800L
-# define SSL_AES128GCM           0x00001000L
-# define SSL_AES256GCM           0x00002000L
-# define SSL_AES128CCM           0x00004000L
-# define SSL_AES256CCM           0x00008000L
-# define SSL_AES128CCM8          0x00010000L
-# define SSL_AES256CCM8          0x00020000L
+# define SSL_DES                 0x00000001U
+# define SSL_3DES                0x00000002U
+# define SSL_RC4                 0x00000004U
+# define SSL_RC2                 0x00000008U
+# define SSL_IDEA                0x00000010U
+# define SSL_eNULL               0x00000020U
+# define SSL_AES128              0x00000040U
+# define SSL_AES256              0x00000080U
+# define SSL_CAMELLIA128         0x00000100U
+# define SSL_CAMELLIA256         0x00000200U
+# define SSL_eGOST2814789CNT     0x00000400U
+# define SSL_SEED                0x00000800U
+# define SSL_AES128GCM           0x00001000U
+# define SSL_AES256GCM           0x00002000U
+# define SSL_AES128CCM           0x00004000U
+# define SSL_AES256CCM           0x00008000U
+# define SSL_AES128CCM8          0x00010000U
+# define SSL_AES256CCM8          0x00020000U
 
 # define SSL_AES                 (SSL_AES128|SSL_AES256|SSL_AES128GCM|SSL_AES256GCM|SSL_AES128CCM|SSL_AES256CCM|SSL_AES128CCM8|SSL_AES256CCM8)
 # define SSL_CAMELLIA            (SSL_CAMELLIA128|SSL_CAMELLIA256)
 
 /* Bits for algorithm_mac (symmetric authentication) */
 
-# define SSL_MD5                 0x00000001L
-# define SSL_SHA1                0x00000002L
-# define SSL_GOST94      0x00000004L
-# define SSL_GOST89MAC   0x00000008L
-# define SSL_SHA256              0x00000010L
-# define SSL_SHA384              0x00000020L
+# define SSL_MD5                 0x00000001U
+# define SSL_SHA1                0x00000002U
+# define SSL_GOST94      0x00000004U
+# define SSL_GOST89MAC   0x00000008U
+# define SSL_SHA256              0x00000010U
+# define SSL_SHA384              0x00000020U
 /* Not a real MAC, just an indication it is part of cipher */
-# define SSL_AEAD                0x00000040L
+# define SSL_AEAD                0x00000040U
 
 /* Bits for algorithm_ssl (protocol version) */
-# define SSL_SSLV3               0x00000002L
-# define SSL_TLSV1               SSL_SSLV3/* for now */
-# define SSL_TLSV1_2             0x00000004L
+# define SSL_SSLV3               0x00000002U
+# define SSL_TLSV1               0x00000004U
+# define SSL_TLSV1_2             0x00000008U
 
 /* Bits for algorithm2 (handshake digests and other extra flags) */
 
@@ -428,24 +428,24 @@
  * and ciphers goes, another extension to SSL_SUPER and/or SSL_ULTRA would
  * be possible.
  */
-# define SSL_EXP_MASK            0x00000003L
-# define SSL_STRONG_MASK         0x000001fcL
-# define SSL_DEFAULT_MASK        0X00000200L
+# define SSL_EXP_MASK            0x00000003U
+# define SSL_STRONG_MASK         0x000001fcU
+# define SSL_DEFAULT_MASK        0X00000200U
 
-# define SSL_NOT_EXP             0x00000001L
-# define SSL_EXPORT              0x00000002L
+# define SSL_NOT_EXP             0x00000001U
+# define SSL_EXPORT              0x00000002U
 
-# define SSL_STRONG_NONE         0x00000004L
-# define SSL_EXP40               0x00000008L
+# define SSL_STRONG_NONE         0x00000004U
+# define SSL_EXP40               0x00000008U
 # define SSL_MICRO               (SSL_EXP40)
-# define SSL_EXP56               0x00000010L
+# define SSL_EXP56               0x00000010U
 # define SSL_MINI                (SSL_EXP56)
-# define SSL_LOW                 0x00000020L
-# define SSL_MEDIUM              0x00000040L
-# define SSL_HIGH                0x00000080L
-# define SSL_FIPS                0x00000100L
+# define SSL_LOW                 0x00000020U
+# define SSL_MEDIUM              0x00000040U
+# define SSL_HIGH                0x00000080U
+# define SSL_FIPS                0x00000100U
 
-# define SSL_NOT_DEFAULT         0x00000200L
+# define SSL_NOT_DEFAULT         0x00000200U
 
 /* we have used 000003ff - 22 bits left to go */
 
@@ -537,22 +537,22 @@
 #define TLS_CIPHER_LEN 2
 /* used to hold info on the particular ciphers used */
 struct ssl_cipher_st {
-    int valid;
-    const char *name;           /* text name */
-    unsigned long id;           /* id, 4 bytes, first is version */
+    uint32_t valid;
+    const char *name;        /* text name */
+    uint32_t id;             /* id, 4 bytes, first is version */
     /*
-     * changed in 0.9.9: these four used to be portions of a single value
+     * changed in 1.0.0: these four used to be portions of a single value
      * 'algorithms'
      */
-    unsigned long algorithm_mkey; /* key exchange algorithm */
-    unsigned long algorithm_auth; /* server authentication */
-    unsigned long algorithm_enc; /* symmetric encryption */
-    unsigned long algorithm_mac; /* symmetric authentication */
-    unsigned long algorithm_ssl; /* (major) protocol version */
-    unsigned long algo_strength; /* strength and export flags */
-    unsigned long algorithm2;   /* Extra flags */
-    int strength_bits;          /* Number of bits really used */
-    int alg_bits;               /* Number of bits for algorithm */
+    uint32_t algorithm_mkey; /* key exchange algorithm */
+    uint32_t algorithm_auth; /* server authentication */
+    uint32_t algorithm_enc;  /* symmetric encryption */
+    uint32_t algorithm_mac;  /* symmetric authentication */
+    uint32_t algorithm_ssl;  /* (major) protocol version */
+    uint32_t algo_strength;  /* strength and export flags */
+    uint32_t algorithm2;     /* Extra flags */
+    int32_t strength_bits;   /* Number of bits really used */
+    uint32_t alg_bits;       /* Number of bits for algorithm */
 };
 
 /* Used to hold SSL/TLS functions */
@@ -1193,6 +1193,12 @@ struct ssl_st {
     int (*not_resumable_session_cb) (SSL *ssl, int is_forward_secure);
     
     RECORD_LAYER rlayer;
+
+    /* Default password callback. */
+    pem_password_cb *default_passwd_callback;
+
+    /* Default password callback user data. */
+    void *default_passwd_callback_userdata;
 };
 
 
@@ -1308,12 +1314,12 @@ typedef struct ssl3_state_st {
          * that are supported by the certs below. For clients they are masks of
          * *disabled* algorithms based on the current session.
          */
-        unsigned long mask_k;
-        unsigned long mask_a;
-        unsigned long export_mask_k;
-        unsigned long export_mask_a;
+        uint32_t mask_k;
+        uint32_t mask_a;
+        uint32_t export_mask_k;
+        uint32_t export_mask_a;
         /* Client only */
-        unsigned long mask_ssl;
+        uint32_t mask_ssl;
     } tmp;
 
     /* Connection binding to prevent renegotiation attacks */
@@ -2062,7 +2068,7 @@ __owur int tls12_get_sigandhash(unsigned char *p, const EVP_PKEY *pk,
                          const EVP_MD *md);
 __owur int tls12_get_sigid(const EVP_PKEY *pk);
 __owur const EVP_MD *tls12_get_hash(unsigned char hash_alg);
-void ssl_set_sig_mask(unsigned long *pmask_a, SSL *s, int op);
+void ssl_set_sig_mask(uint32_t *pmask_a, SSL *s, int op);
 
 __owur int tls1_set_sigalgs_list(CERT *c, const char *str, int client);
 __owur int tls1_set_sigalgs(CERT *c, const int *salg, size_t salglen, int client);

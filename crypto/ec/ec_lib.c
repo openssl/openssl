@@ -91,10 +91,10 @@ EC_GROUP *EC_GROUP_new(const EC_METHOD *meth)
 
     ret->meth = meth;
     ret->order = BN_new();
-    if (!ret->order)
+    if (ret->order == NULL)
         goto err;
     ret->cofactor = BN_new();
-    if (!ret->cofactor)
+    if (ret->cofactor == NULL)
         goto err;
     ret->asn1_flag = OPENSSL_EC_NAMED_CURVE;
     ret->asn1_form = POINT_CONVERSION_UNCOMPRESSED;
@@ -464,9 +464,9 @@ int EC_GROUP_cmp(const EC_GROUP *a, const EC_GROUP *b, BN_CTX *ctx)
         EC_GROUP_get_curve_name(a) != EC_GROUP_get_curve_name(b))
         return 1;
 
-    if (!ctx)
+    if (ctx == NULL)
         ctx_new = ctx = BN_CTX_new();
-    if (!ctx)
+    if (ctx == NULL)
         return -1;
 
     BN_CTX_start(ctx);
@@ -476,7 +476,7 @@ int EC_GROUP_cmp(const EC_GROUP *a, const EC_GROUP *b, BN_CTX *ctx)
     b1 = BN_CTX_get(ctx);
     b2 = BN_CTX_get(ctx);
     b3 = BN_CTX_get(ctx);
-    if (!b3) {
+    if (b3 == NULL) {
         BN_CTX_end(ctx);
         BN_CTX_free(ctx_new);
         return -1;
@@ -1075,7 +1075,7 @@ int ec_precompute_mont_data(EC_GROUP *group)
         goto err;
 
     group->mont_data = BN_MONT_CTX_new();
-    if (!group->mont_data)
+    if (group->mont_data == NULL)
         goto err;
 
     if (!BN_MONT_CTX_set(group->mont_data, group->order, ctx)) {

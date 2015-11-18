@@ -409,3 +409,5 @@ SSL_in_init                             443	EXIST::FUNCTION:
 SSL_in_before                           444	EXIST::FUNCTION:
 SSL_is_init_finished                    445	EXIST::FUNCTION:
 SSL_get_state                           446	EXIST::FUNCTION:
+SSL_set_default_passwd_cb               447	EXIST::FUNCTION:
+SSL_set_default_passwd_cb_userdata      448	EXIST::FUNCTION:

@@ -1279,8 +1279,10 @@ int ssl_load_stores(SSL_CTX *ctx,
 {
     X509_STORE *vfy = NULL, *ch = NULL;
     int rv = 0;
-    if (vfyCApath || vfyCAfile) {
+    if (vfyCApath != NULL || vfyCAfile != NULL) {
         vfy = X509_STORE_new();
+        if (vfy == NULL)
+            goto err;
         if (!X509_STORE_load_locations(vfy, vfyCAfile, vfyCApath))
             goto err;
         add_crls_store(vfy, crls);
@@ -1288,8 +1290,10 @@ int ssl_load_stores(SSL_CTX *ctx,
         if (crl_download)
             store_setup_crl_download(vfy);
     }
-    if (chCApath || chCAfile) {
+    if (chCApath != NULL || chCAfile != NULL) {
         ch = X509_STORE_new();
+        if (ch == NULL)
+            goto err;
         if (!X509_STORE_load_locations(ch, chCAfile, chCApath))
             goto err;
         SSL_CTX_set1_chain_cert_store(ctx, ch);

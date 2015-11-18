@@ -99,10 +99,10 @@ X509_POLICY_DATA *policy_data_new(POLICYINFO *policy,
     } else
         id = NULL;
     ret = OPENSSL_zalloc(sizeof(*ret));
-    if (!ret)
+    if (ret == NULL)
         return NULL;
     ret->expected_policy_set = sk_ASN1_OBJECT_new_null();
-    if (!ret->expected_policy_set) {
+    if (ret->expected_policy_set == NULL) {
         OPENSSL_free(ret);
         ASN1_OBJECT_free(id);
         return NULL;

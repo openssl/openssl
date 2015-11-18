@@ -2,8 +2,8 @@
 
 =head1 NAME
 
-X509_get0_signature, X509_get_signature_nid, X509_REQ_get0_signature,
-X509_REQ_get_signature_nid, X509_CRL_get0_signature,
+X509_get0_signature, X509_get_signature_nid, X509_get0_tbs_sigalg,
+X509_REQ_get0_signature, X509_REQ_get_signature_nid, X509_CRL_get0_signature,
 X509_CRL_get_signature_nid - signature information.
 
 =head1 SYNOPSIS
@@ -13,6 +13,7 @@ X509_CRL_get_signature_nid - signature information.
  void X509_get0_signature(ASN1_BIT_STRING **psig, X509_ALGOR **palg,
                           const X509 *x);
  int X509_get_signature_nid(const X509 *x);
+ X509_ALGOR *X509_get0_tbs_sigalg(X509 *x);
 
  void X509_REQ_get0_signature(ASN1_BIT_STRING **psig, X509_ALGOR **palg,
                               const X509_REQ *crl);
@@ -27,6 +28,9 @@ X509_CRL_get_signature_nid - signature information.
 X509_get0_signature() sets B<*psig> to the signature of B<x> and B<*palg>
 to the signature algorithm of B<x>. The values returned are internal
 pointers which B<MUST NOT> be freed up after the call.
+
+X509_get0_tbs_sigalg() returns the signature algorithm in the signed
+portion of B<x>.
 
 X509_get_signature_nid() returns the NID corresponding to the signature
 algorithm of B<x>.

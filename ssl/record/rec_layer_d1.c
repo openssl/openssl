@@ -137,8 +137,8 @@ int DTLS_RECORD_LAYER_new(RECORD_LAYER *rl)
     d->processed_rcds.q = pqueue_new();
     d->buffered_app_data.q = pqueue_new();
 
-    if (!d->unprocessed_rcds.q || !d->processed_rcds.q
-        || !d->buffered_app_data.q) {
+    if (d->unprocessed_rcds.q == NULL || d->processed_rcds.q == NULL
+        || d->buffered_app_data.q == NULL) {
         pqueue_free(d->unprocessed_rcds.q);
         pqueue_free(d->processed_rcds.q);
         pqueue_free(d->buffered_app_data.q);

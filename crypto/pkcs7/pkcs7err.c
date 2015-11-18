@@ -1,6 +1,6 @@
 /* crypto/pkcs7/pkcs7err.c */
 /* ====================================================================
- * Copyright (c) 1999-2014 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2015 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -72,20 +72,19 @@
 static ERR_STRING_DATA PKCS7_str_functs[] = {
     {ERR_FUNC(PKCS7_F_B64_READ_PKCS7), "B64_READ_PKCS7"},
     {ERR_FUNC(PKCS7_F_B64_WRITE_PKCS7), "B64_WRITE_PKCS7"},
-    {ERR_FUNC(PKCS7_F_DO_PKCS7_SIGNED_ATTRIB), "DO_PKCS7_SIGNED_ATTRIB"},
+    {ERR_FUNC(PKCS7_F_DO_PKCS7_SIGNED_ATTRIB), "do_pkcs7_signed_attrib"},
     {ERR_FUNC(PKCS7_F_I2D_PKCS7_BIO_STREAM), "i2d_PKCS7_bio_stream"},
     {ERR_FUNC(PKCS7_F_PKCS7_ADD0_ATTRIB_SIGNING_TIME),
      "PKCS7_add0_attrib_signing_time"},
-    {ERR_FUNC(PKCS7_F_PKCS7_ADD_ATTRIB_SMIMECAP),
-     "PKCS7_add_attrib_smimecap"},
+    {ERR_FUNC(PKCS7_F_PKCS7_ADD_ATTRIB_SMIMECAP), "PKCS7_add_attrib_smimecap"},
     {ERR_FUNC(PKCS7_F_PKCS7_ADD_CERTIFICATE), "PKCS7_add_certificate"},
     {ERR_FUNC(PKCS7_F_PKCS7_ADD_CRL), "PKCS7_add_crl"},
     {ERR_FUNC(PKCS7_F_PKCS7_ADD_RECIPIENT_INFO), "PKCS7_add_recipient_info"},
     {ERR_FUNC(PKCS7_F_PKCS7_ADD_SIGNATURE), "PKCS7_add_signature"},
     {ERR_FUNC(PKCS7_F_PKCS7_ADD_SIGNER), "PKCS7_add_signer"},
-    {ERR_FUNC(PKCS7_F_PKCS7_BIO_ADD_DIGEST), "PKCS7_BIO_ADD_DIGEST"},
+    {ERR_FUNC(PKCS7_F_PKCS7_BIO_ADD_DIGEST), "PKCS7_bio_add_digest"},
     {ERR_FUNC(PKCS7_F_PKCS7_COPY_EXISTING_DIGEST),
-     "PKCS7_COPY_EXISTING_DIGEST"},
+     "pkcs7_copy_existing_digest"},
     {ERR_FUNC(PKCS7_F_PKCS7_CTRL), "PKCS7_ctrl"},
     {ERR_FUNC(PKCS7_F_PKCS7_DATADECODE), "PKCS7_dataDecode"},
     {ERR_FUNC(PKCS7_F_PKCS7_DATAFINAL), "PKCS7_dataFinal"},
@@ -93,11 +92,11 @@ static ERR_STRING_DATA PKCS7_str_functs[] = {
     {ERR_FUNC(PKCS7_F_PKCS7_DATASIGN), "PKCS7_DATASIGN"},
     {ERR_FUNC(PKCS7_F_PKCS7_DATAVERIFY), "PKCS7_dataVerify"},
     {ERR_FUNC(PKCS7_F_PKCS7_DECRYPT), "PKCS7_decrypt"},
-    {ERR_FUNC(PKCS7_F_PKCS7_DECRYPT_RINFO), "PKCS7_DECRYPT_RINFO"},
-    {ERR_FUNC(PKCS7_F_PKCS7_ENCODE_RINFO), "PKCS7_ENCODE_RINFO"},
+    {ERR_FUNC(PKCS7_F_PKCS7_DECRYPT_RINFO), "pkcs7_decrypt_rinfo"},
+    {ERR_FUNC(PKCS7_F_PKCS7_ENCODE_RINFO), "pkcs7_encode_rinfo"},
     {ERR_FUNC(PKCS7_F_PKCS7_ENCRYPT), "PKCS7_encrypt"},
     {ERR_FUNC(PKCS7_F_PKCS7_FINAL), "PKCS7_final"},
-    {ERR_FUNC(PKCS7_F_PKCS7_FIND_DIGEST), "PKCS7_FIND_DIGEST"},
+    {ERR_FUNC(PKCS7_F_PKCS7_FIND_DIGEST), "PKCS7_find_digest"},
     {ERR_FUNC(PKCS7_F_PKCS7_GET0_SIGNERS), "PKCS7_get0_signers"},
     {ERR_FUNC(PKCS7_F_PKCS7_RECIP_INFO_SET), "PKCS7_RECIP_INFO_set"},
     {ERR_FUNC(PKCS7_F_PKCS7_SET_CIPHER), "PKCS7_set_cipher"},
@@ -117,13 +116,11 @@ static ERR_STRING_DATA PKCS7_str_functs[] = {
 };
 
 static ERR_STRING_DATA PKCS7_str_reasons[] = {
-    {ERR_REASON(PKCS7_R_CERTIFICATE_VERIFY_ERROR),
-     "certificate verify error"},
+    {ERR_REASON(PKCS7_R_CERTIFICATE_VERIFY_ERROR), "certificate verify error"},
     {ERR_REASON(PKCS7_R_CIPHER_HAS_NO_OBJECT_IDENTIFIER),
      "cipher has no object identifier"},
     {ERR_REASON(PKCS7_R_CIPHER_NOT_INITIALIZED), "cipher not initialized"},
-    {ERR_REASON(PKCS7_R_CONTENT_AND_DATA_PRESENT),
-     "content and data present"},
+    {ERR_REASON(PKCS7_R_CONTENT_AND_DATA_PRESENT), "content and data present"},
     {ERR_REASON(PKCS7_R_CTRL_ERROR), "ctrl error"},
     {ERR_REASON(PKCS7_R_DECODE_ERROR), "decode error"},
     {ERR_REASON(PKCS7_R_DECRYPTED_KEY_IS_WRONG_LENGTH),
@@ -137,8 +134,7 @@ static ERR_STRING_DATA PKCS7_str_reasons[] = {
     {ERR_REASON(PKCS7_R_ERROR_SETTING_CIPHER), "error setting cipher"},
     {ERR_REASON(PKCS7_R_INVALID_MIME_TYPE), "invalid mime type"},
     {ERR_REASON(PKCS7_R_INVALID_NULL_POINTER), "invalid null pointer"},
-    {ERR_REASON(PKCS7_R_INVALID_SIGNED_DATA_TYPE),
-     "invalid signed data type"},
+    {ERR_REASON(PKCS7_R_INVALID_SIGNED_DATA_TYPE), "invalid signed data type"},
     {ERR_REASON(PKCS7_R_MIME_NO_CONTENT_TYPE), "mime no content type"},
     {ERR_REASON(PKCS7_R_MIME_PARSE_ERROR), "mime parse error"},
     {ERR_REASON(PKCS7_R_MIME_SIG_PARSE_ERROR), "mime sig parse error"},
@@ -153,8 +149,7 @@ static ERR_STRING_DATA PKCS7_str_reasons[] = {
     {ERR_REASON(PKCS7_R_NO_MULTIPART_BOUNDARY), "no multipart boundary"},
     {ERR_REASON(PKCS7_R_NO_RECIPIENT_MATCHES_CERTIFICATE),
      "no recipient matches certificate"},
-    {ERR_REASON(PKCS7_R_NO_RECIPIENT_MATCHES_KEY),
-     "no recipient matches key"},
+    {ERR_REASON(PKCS7_R_NO_RECIPIENT_MATCHES_KEY), "no recipient matches key"},
     {ERR_REASON(PKCS7_R_NO_SIGNATURES_ON_DATA), "no signatures on data"},
     {ERR_REASON(PKCS7_R_NO_SIGNERS), "no signers"},
     {ERR_REASON(PKCS7_R_NO_SIG_CONTENT_TYPE), "no sig content type"},
@@ -186,8 +181,7 @@ static ERR_STRING_DATA PKCS7_str_reasons[] = {
     {ERR_REASON(PKCS7_R_UNKNOWN_DIGEST_TYPE), "unknown digest type"},
     {ERR_REASON(PKCS7_R_UNKNOWN_OPERATION), "unknown operation"},
     {ERR_REASON(PKCS7_R_UNSUPPORTED_CIPHER_TYPE), "unsupported cipher type"},
-    {ERR_REASON(PKCS7_R_UNSUPPORTED_CONTENT_TYPE),
-     "unsupported content type"},
+    {ERR_REASON(PKCS7_R_UNSUPPORTED_CONTENT_TYPE), "unsupported content type"},
     {ERR_REASON(PKCS7_R_WRONG_CONTENT_TYPE), "wrong content type"},
     {ERR_REASON(PKCS7_R_WRONG_PKCS7_TYPE), "wrong pkcs7 type"},
     {0, NULL}

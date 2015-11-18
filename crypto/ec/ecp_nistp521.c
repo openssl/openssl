@@ -1646,7 +1646,7 @@ static NISTP521_PRE_COMP *nistp521_pre_comp_new()
 {
     NISTP521_PRE_COMP *ret = OPENSSL_zalloc(sizeof(*ret));
 
-    if (!ret) {
+    if (ret == NULL) {
         ECerr(EC_F_NISTP521_PRE_COMP_NEW, ERR_R_MALLOC_FAILURE);
         return ret;
     }

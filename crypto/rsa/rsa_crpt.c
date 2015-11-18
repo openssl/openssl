@@ -199,7 +199,7 @@ BN_BLINDING *RSA_setup_blinding(RSA *rsa, BN_CTX *in_ctx)
     if (!(rsa->flags & RSA_FLAG_NO_CONSTTIME)) {
         /* Set BN_FLG_CONSTTIME flag */
         local_n = n = BN_new();
-        if (!local_n) {
+        if (local_n == NULL) {
             RSAerr(RSA_F_RSA_SETUP_BLINDING, ERR_R_MALLOC_FAILURE);
             goto err;
         }

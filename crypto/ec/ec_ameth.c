@@ -90,7 +90,7 @@ static int eckey_param2type(int *pptype, void **ppval, EC_KEY *ec_key)
 
         ASN1_STRING *pstr = NULL;
         pstr = ASN1_STRING_new();
-        if (!pstr)
+        if (pstr == NULL)
             return 0;
         pstr->length = i2d_ECParameters(ec_key, &pstr->data);
         if (pstr->length <= 0) {
@@ -120,7 +120,7 @@ static int eckey_pub_encode(X509_PUBKEY *pk, const EVP_PKEY *pkey)
     if (penclen <= 0)
         goto err;
     penc = OPENSSL_malloc(penclen);
-    if (!penc)
+    if (penc == NULL)
         goto err;
     p = penc;
     penclen = i2o_ECPublicKey(ec_key, &p);
@@ -326,7 +326,7 @@ static int eckey_priv_encode(PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pkey)
         return 0;
     }
     ep = OPENSSL_malloc(eplen);
-    if (!ep) {
+    if (ep == NULL) {
         EC_KEY_set_enc_flags(ec_key, old_flags);
         ECerr(EC_F_ECKEY_PRIV_ENCODE, ERR_R_MALLOC_FAILURE);
         return 0;
@@ -359,7 +359,7 @@ static int ec_bits(const EVP_PKEY *pkey)
     const EC_GROUP *group;
     int ret;
 
-    if (!order) {
+    if (order == NULL) {
         ERR_clear_error();
         return 0;
     }
@@ -679,7 +679,7 @@ static int ecdh_cms_set_peerkey(EVP_PKEY_CTX *pctx,
             goto err;
         grp = EC_KEY_get0_group(pk->pkey.ec);
         ecpeer = EC_KEY_new();
-        if (!ecpeer)
+        if (ecpeer == NULL)
             goto err;
         if (!EC_KEY_set_group(ecpeer, grp))
             goto err;
@@ -696,7 +696,7 @@ static int ecdh_cms_set_peerkey(EVP_PKEY_CTX *pctx,
     if (!o2i_ECPublicKey(&ecpeer, &p, plen))
         goto err;
     pkpeer = EVP_PKEY_new();
-    if (!pkpeer)
+    if (pkpeer == NULL)
         goto err;
     EVP_PKEY_set1_EC_KEY(pkpeer, ecpeer);
     if (EVP_PKEY_derive_set_peer(pctx, pkpeer) > 0)
@@ -864,7 +864,7 @@ static int ecdh_cms_encrypt(CMS_RecipientInfo *ri)
         if (penclen <= 0)
             goto err;
         penc = OPENSSL_malloc(penclen);
-        if (!penc)
+        if (penc == NULL)
             goto err;
         p = penc;
         penclen = i2o_ECPublicKey(eckey, &p);
@@ -922,11 +922,11 @@ static int ecdh_cms_encrypt(CMS_RecipientInfo *ri)
     /* Package wrap algorithm in an AlgorithmIdentifier */
 
     wrap_alg = X509_ALGOR_new();
-    if (!wrap_alg)
+    if (wrap_alg == NULL)
         goto err;
     wrap_alg->algorithm = OBJ_nid2obj(wrap_nid);
     wrap_alg->parameter = ASN1_TYPE_new();
-    if (!wrap_alg->parameter)
+    if (wrap_alg->parameter == NULL)
         goto err;
     if (EVP_CIPHER_param_to_asn1(ctx, wrap_alg->parameter) <= 0)
         goto err;
@@ -955,7 +955,7 @@ static int ecdh_cms_encrypt(CMS_RecipientInfo *ri)
     if (!penc || !penclen)
         goto err;
     wrap_str = ASN1_STRING_new();
-    if (!wrap_str)
+    if (wrap_str == NULL)
         goto err;
     ASN1_STRING_set0(wrap_str, penc, penclen);
     penc = NULL;

@@ -70,7 +70,7 @@
 # define ERR_REASON(reason) ERR_PACK(ERR_LIB_BN,0,reason)
 
 static ERR_STRING_DATA BN_str_functs[] = {
-    {ERR_FUNC(BN_F_BNRAND), "BNRAND"},
+    {ERR_FUNC(BN_F_BNRAND), "bnrand"},
     {ERR_FUNC(BN_F_BN_BLINDING_CONVERT_EX), "BN_BLINDING_convert_ex"},
     {ERR_FUNC(BN_F_BN_BLINDING_CREATE_PARAM), "BN_BLINDING_create_param"},
     {ERR_FUNC(BN_F_BN_BLINDING_INVERT_EX), "BN_BLINDING_invert_ex"},
@@ -87,7 +87,7 @@ static ERR_STRING_DATA BN_str_functs[] = {
     {ERR_FUNC(BN_F_BN_DIV_RECP), "BN_div_recp"},
     {ERR_FUNC(BN_F_BN_EXP), "BN_exp"},
     {ERR_FUNC(BN_F_BN_EXPAND2), "bn_expand2"},
-    {ERR_FUNC(BN_F_BN_EXPAND_INTERNAL), "BN_EXPAND_INTERNAL"},
+    {ERR_FUNC(BN_F_BN_EXPAND_INTERNAL), "bn_expand_internal"},
     {ERR_FUNC(BN_F_BN_GENCB_NEW), "BN_GENCB_new"},
     {ERR_FUNC(BN_F_BN_GENERATE_DSA_NONCE), "BN_generate_dsa_nonce"},
     {ERR_FUNC(BN_F_BN_GENERATE_PRIME_EX), "BN_generate_prime_ex"},

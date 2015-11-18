@@ -82,12 +82,12 @@ CMS_ContentInfo *cms_CompressedData_create(int comp_nid)
         return NULL;
     }
     cms = CMS_ContentInfo_new();
-    if (!cms)
+    if (cms == NULL)
         return NULL;
 
     cd = M_ASN1_new_of(CMS_CompressedData);
 
-    if (!cd)
+    if (cd == NULL)
         goto err;
 
     cms->contentType = OBJ_nid2obj(NID_id_smime_ct_compressedData);

@@ -146,11 +146,13 @@ int EVP_PKEY_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey)
         return -1;
     }
 
-    if (!ppkey)
+    if (ppkey == NULL)
         return -1;
 
-    if (!*ppkey)
+    if (*ppkey == NULL)
         *ppkey = EVP_PKEY_new();
+    if (*ppkey == NULL)
+        return -1;
 
     ret = ctx->pmeth->keygen(ctx, *ppkey);
     if (ret <= 0) {

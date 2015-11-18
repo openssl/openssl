@@ -19,8 +19,11 @@
 # include <string.h>
 # include <assert.h>
 # include <unistd.h>
+# include <sys/types.h>
 # include <sys/mman.h>
 # include <sys/param.h>
+# include <sys/stat.h>
+# include <fcntl.h>
 #endif
 
 #define LOCK()      CRYPTO_w_lock(CRYPTO_LOCK_MALLOC)
@@ -330,14 +333,37 @@ static int sh_init(size_t size, int minsize)
         goto err;
 
     /* Allocate space for heap, and two extra pages as guards */
-#ifdef _SC_PAGE_SIZE
-    pgsize = (size_t)sysconf(_SC_PAGE_SIZE);
+#if defined(_SC_PAGE_SIZE) || defined (_SC_PAGESIZE)
+    {
+# if defined(_SC_PAGE_SIZE)
+        long tmppgsize = sysconf(_SC_PAGE_SIZE);
+# else
+        long tmppgsize = sysconf(_SC_PAGESIZE);
+# endif
+        if (tmppgsize < 1)
+            pgsize = PAGE_SIZE;
+        else
+            pgsize = (size_t)tmppgsize;
+    }
 #else
     pgsize = PAGE_SIZE;
 #endif
     sh.map_size = pgsize + sh.arena_size + pgsize;
-    sh.map_result = mmap(NULL, sh.map_size,
-                         PROT_READ|PROT_WRITE, MAP_ANON|MAP_PRIVATE, -1, 0);
+    if (1) {
+#ifdef MAP_ANON
+        sh.map_result = mmap(NULL, sh.map_size,
+                             PROT_READ|PROT_WRITE, MAP_ANON|MAP_PRIVATE, -1, 0);
+    } else {
+#endif
+        int fd;
+
+        sh.map_result = MAP_FAILED;
+        if ((fd = open("/dev/zero", O_RDWR)) >= 0) {
+            sh.map_result = mmap(NULL, sh.map_size,
+                                 PROT_READ|PROT_WRITE, MAP_PRIVATE, fd, 0);
+            close(fd);
+        }
+    }
     OPENSSL_assert(sh.map_result != MAP_FAILED);
     if (sh.map_result == MAP_FAILED)
         goto err;

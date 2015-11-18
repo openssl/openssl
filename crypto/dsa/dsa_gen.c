@@ -387,7 +387,7 @@ int dsa_builtin_paramgen2(DSA *ret, size_t L, size_t N,
         else
             seed_tmp = OPENSSL_malloc(seed_len);
 
-        if (!seed || !seed_tmp)
+        if (seed == NULL || seed_tmp == NULL)
             goto err;
 
         if (seed_in)
@@ -650,7 +650,7 @@ int dsa_paramgen_check_g(DSA *dsa)
     BN_MONT_CTX *mont = NULL;
     int rv = -1;
     ctx = BN_CTX_new();
-    if (!ctx)
+    if (ctx == NULL)
         return -1;
     BN_CTX_start(ctx);
     if (BN_cmp(dsa->g, BN_value_one()) <= 0)

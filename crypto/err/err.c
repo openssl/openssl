@@ -279,7 +279,7 @@ static LHASH_OF(ERR_STRING_DATA) *get_hash(int create, int lockit)
         int_error_hash = lh_ERR_STRING_DATA_new();
         CRYPTO_pop_info();
     }
-    if (int_error_hash)
+    if (int_error_hash != NULL)
         ret = int_error_hash;
     if (lockit)
         CRYPTO_w_unlock(CRYPTO_LOCK_ERR);
@@ -326,7 +326,7 @@ static LHASH_OF(ERR_STATE) *int_thread_get(int create, int lockit)
         int_thread_hash = lh_ERR_STATE_new();
         CRYPTO_pop_info();
     }
-    if (int_thread_hash) {
+    if (int_thread_hash != NULL) {
         int_thread_hash_references++;
         ret = int_thread_hash;
     }

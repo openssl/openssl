@@ -1165,7 +1165,7 @@ end_of_options:
             goto end;
 
         tmptm = ASN1_TIME_new();
-        if (!tmptm)
+        if (tmptm == NULL)
             goto end;
         X509_gmtime_adj(tmptm, 0);
         X509_CRL_set_lastUpdate(crl, tmptm);
@@ -2283,10 +2283,12 @@ static int do_updatedb(CA_DB *db)
     char **rrow, *a_tm_s;
 
     a_tm = ASN1_UTCTIME_new();
+    if (a_tm == NULL)
+        return -1;
 
     /* get actual time and make a string */
     a_tm = X509_gmtime_adj(a_tm, 0);
-    a_tm_s = (char *)OPENSSL_malloc(a_tm->length + 1);
+    a_tm_s = (char *)app_malloc(a_tm->length + 1, "time string");
 
     memcpy(a_tm_s, a_tm->data, a_tm->length);
     a_tm_s[a_tm->length] = '\0';
@@ -2470,7 +2472,7 @@ int make_revoked(X509_REVOKED *rev, const char *str)
 
     if (rev && (reason_code != OCSP_REVOKED_STATUS_NOSTATUS)) {
         rtmp = ASN1_ENUMERATED_new();
-        if (!rtmp || !ASN1_ENUMERATED_set(rtmp, reason_code))
+        if (rtmp == NULL || !ASN1_ENUMERATED_set(rtmp, reason_code))
             goto end;
         if (!X509_REVOKED_add1_ext_i2d(rev, NID_crl_reason, rtmp, 0, 0))
             goto end;
@@ -2576,7 +2578,7 @@ int unpack_revinfo(ASN1_TIME **prevtm, int *preason, ASN1_OBJECT **phold,
 
     if (prevtm) {
         *prevtm = ASN1_UTCTIME_new();
-        if (!*prevtm) {
+        if (*prevtm == NULL) {
             BIO_printf(bio_err, "memory allocation failure\n");
             goto end;
         }
@@ -2622,7 +2624,7 @@ int unpack_revinfo(ASN1_TIME **prevtm, int *preason, ASN1_OBJECT **phold,
                 goto end;
             }
             comp_time = ASN1_GENERALIZEDTIME_new();
-            if (!comp_time) {
+            if (comp_time == NULL) {
                 BIO_printf(bio_err, "memory allocation failure\n");
                 goto end;
             }

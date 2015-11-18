@@ -183,21 +183,26 @@ X509_STORE *X509_STORE_new(void)
 
     if ((ret = OPENSSL_zalloc(sizeof(*ret))) == NULL)
         return NULL;
-    ret->objs = sk_X509_OBJECT_new(x509_object_cmp);
+    if ((ret->objs = sk_X509_OBJECT_new(x509_object_cmp)) == NULL)
+        goto err;
     ret->cache = 1;
-    ret->get_cert_methods = sk_X509_LOOKUP_new_null();
+    if ((ret->get_cert_methods = sk_X509_LOOKUP_new_null()) == NULL)
+        goto err;
 
     if ((ret->param = X509_VERIFY_PARAM_new()) == NULL)
-        return NULL;
+        goto err;
 
-    if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_X509_STORE, ret, &ret->ex_data)) {
-        sk_X509_OBJECT_free(ret->objs);
-        OPENSSL_free(ret);
-        return NULL;
-    }
+    if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_X509_STORE, ret, &ret->ex_data))
+        goto err;
 
     ret->references = 1;
     return ret;
+err:
+    X509_VERIFY_PARAM_free(ret->param);
+    sk_X509_OBJECT_free(ret->objs);
+    sk_X509_LOOKUP_free(ret->get_cert_methods);
+    OPENSSL_free(ret);
+    return NULL;
 }
 
 static void cleanup(X509_OBJECT *a)

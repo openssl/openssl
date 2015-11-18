@@ -868,20 +868,14 @@ WORK_STATE ossl_statem_server_post_process_message(SSL *s, WORK_STATE wst)
             s->rwstate = SSL_READING;
             BIO_clear_retry_flags(SSL_get_rbio(s));
             BIO_set_retry_read(SSL_get_rbio(s));
-            statem_set_sctp_read_sock(s, 1);
+            ossl_statem_set_sctp_read_sock(s, 1);
             return WORK_MORE_A;
         } else {
-            ossl_ossl_statem_set_sctp_read_sock(s, 0);
+            ossl_statem_set_sctp_read_sock(s, 0);
         }
 #endif
         return WORK_FINISHED_CONTINUE;
 
-
-    case TLS_ST_SR_FINISHED:
-        if (s->hit)
-            return tls_finish_handshake(s, wst);
-        else
-            return WORK_FINISHED_STOP;
     default:
         break;
     }
@@ -2813,6 +2807,11 @@ MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
             pk = s->cert->pkeys[SSL_PKEY_GOST01].privatekey;
 
         pkey_ctx = EVP_PKEY_CTX_new(pk, NULL);
+        if (pkey_ctx == NULL) {
+            al = SSL_AD_INTERNAL_ERROR;
+            SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE, ERR_R_MALLOC_FAILURE);
+            goto f_err;
+        }
         EVP_PKEY_decrypt_init(pkey_ctx);
         /*
          * If client certificate is present and is of the same type, maybe
@@ -2933,7 +2932,7 @@ WORK_STATE tls_post_process_client_key_exchange(SSL *s, WORK_STATE wst)
         s->rwstate = SSL_READING;
         BIO_clear_retry_flags(SSL_get_rbio(s));
         BIO_set_retry_read(SSL_get_rbio(s));
-        statem_set_sctp_read_sock(s, 1);
+        ossl_statem_set_sctp_read_sock(s, 1);
         return WORK_MORE_B;
     } else {
         ossl_statem_set_sctp_read_sock(s, 0);
@@ -3146,6 +3145,11 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
         unsigned char signature[64];
         int idx;
         EVP_PKEY_CTX *pctx = EVP_PKEY_CTX_new(pkey, NULL);
+        if (pctx == NULL) {
+            al = SSL_AD_INTERNAL_ERROR;
+            SSLerr(SSL_F_TLS_PROCESS_CERT_VERIFY, ERR_R_MALLOC_FAILURE);
+            goto f_err;
+        }
         EVP_PKEY_verify_init(pctx);
         if (len != 64) {
             fprintf(stderr, "GOST signature length is %d", len);
@@ -3343,7 +3347,7 @@ int tls_construct_new_session_ticket(SSL *s)
         return 0;
     }
     senc = OPENSSL_malloc(slen_full);
-    if (!senc) {
+    if (senc == NULL) {
         ossl_statem_set_error(s);
         return 0;
     }

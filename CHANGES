@@ -16,6 +16,7 @@
 
   *) All instances of the string "ssleay" in the public API were replaced
      with OpenSSL (case-matching; e.g., OPENSSL_VERSION for #define's)
+     Some error codes related to internal RSA_eay API's were renamed.
      [Rich Salz]
 
   *) The demo files in crypto/threads were moved to demo/threads.

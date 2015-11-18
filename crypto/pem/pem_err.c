@@ -1,6 +1,6 @@
 /* crypto/pem/pem_err.c */
 /* ====================================================================
- * Copyright (c) 1999-2011 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2015 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -70,23 +70,23 @@
 # define ERR_REASON(reason) ERR_PACK(ERR_LIB_PEM,0,reason)
 
 static ERR_STRING_DATA PEM_str_functs[] = {
-    {ERR_FUNC(PEM_F_B2I_DSS), "B2I_DSS"},
+    {ERR_FUNC(PEM_F_B2I_DSS), "b2i_dss"},
     {ERR_FUNC(PEM_F_B2I_PVK_BIO), "b2i_PVK_bio"},
-    {ERR_FUNC(PEM_F_B2I_RSA), "B2I_RSA"},
-    {ERR_FUNC(PEM_F_CHECK_BITLEN_DSA), "CHECK_BITLEN_DSA"},
-    {ERR_FUNC(PEM_F_CHECK_BITLEN_RSA), "CHECK_BITLEN_RSA"},
+    {ERR_FUNC(PEM_F_B2I_RSA), "b2i_rsa"},
+    {ERR_FUNC(PEM_F_CHECK_BITLEN_DSA), "check_bitlen_dsa"},
+    {ERR_FUNC(PEM_F_CHECK_BITLEN_RSA), "check_bitlen_rsa"},
     {ERR_FUNC(PEM_F_D2I_PKCS8PRIVATEKEY_BIO), "d2i_PKCS8PrivateKey_bio"},
     {ERR_FUNC(PEM_F_D2I_PKCS8PRIVATEKEY_FP), "d2i_PKCS8PrivateKey_fp"},
-    {ERR_FUNC(PEM_F_DO_B2I), "DO_B2I"},
-    {ERR_FUNC(PEM_F_DO_B2I_BIO), "DO_B2I_BIO"},
-    {ERR_FUNC(PEM_F_DO_BLOB_HEADER), "DO_BLOB_HEADER"},
-    {ERR_FUNC(PEM_F_DO_PK8PKEY), "DO_PK8PKEY"},
-    {ERR_FUNC(PEM_F_DO_PK8PKEY_FP), "DO_PK8PKEY_FP"},
-    {ERR_FUNC(PEM_F_DO_PVK_BODY), "DO_PVK_BODY"},
-    {ERR_FUNC(PEM_F_DO_PVK_HEADER), "DO_PVK_HEADER"},
-    {ERR_FUNC(PEM_F_I2B_PVK), "I2B_PVK"},
+    {ERR_FUNC(PEM_F_DO_B2I), "do_b2i"},
+    {ERR_FUNC(PEM_F_DO_B2I_BIO), "do_b2i_bio"},
+    {ERR_FUNC(PEM_F_DO_BLOB_HEADER), "do_blob_header"},
+    {ERR_FUNC(PEM_F_DO_PK8PKEY), "do_pk8pkey"},
+    {ERR_FUNC(PEM_F_DO_PK8PKEY_FP), "do_pk8pkey_fp"},
+    {ERR_FUNC(PEM_F_DO_PVK_BODY), "do_PVK_body"},
+    {ERR_FUNC(PEM_F_DO_PVK_HEADER), "do_PVK_header"},
+    {ERR_FUNC(PEM_F_I2B_PVK), "i2b_PVK"},
     {ERR_FUNC(PEM_F_I2B_PVK_BIO), "i2b_PVK_bio"},
-    {ERR_FUNC(PEM_F_LOAD_IV), "LOAD_IV"},
+    {ERR_FUNC(PEM_F_LOAD_IV), "load_iv"},
     {ERR_FUNC(PEM_F_PEM_ASN1_READ), "PEM_ASN1_read"},
     {ERR_FUNC(PEM_F_PEM_ASN1_READ_BIO), "PEM_ASN1_read_bio"},
     {ERR_FUNC(PEM_F_PEM_ASN1_WRITE), "PEM_ASN1_write"},
@@ -99,17 +99,17 @@ static ERR_STRING_DATA PEM_str_functs[] = {
     {ERR_FUNC(PEM_F_PEM_PK8PKEY), "PEM_PK8PKEY"},
     {ERR_FUNC(PEM_F_PEM_READ), "PEM_read"},
     {ERR_FUNC(PEM_F_PEM_READ_BIO), "PEM_read_bio"},
-    {ERR_FUNC(PEM_F_PEM_READ_BIO_DHPARAMS), "PEM_READ_BIO_DHPARAMS"},
+    {ERR_FUNC(PEM_F_PEM_READ_BIO_DHPARAMS), "PEM_read_bio_DHparams"},
     {ERR_FUNC(PEM_F_PEM_READ_BIO_PARAMETERS), "PEM_read_bio_Parameters"},
-    {ERR_FUNC(PEM_F_PEM_READ_BIO_PRIVATEKEY), "PEM_READ_BIO_PRIVATEKEY"},
-    {ERR_FUNC(PEM_F_PEM_READ_DHPARAMS), "PEM_READ_DHPARAMS"},
-    {ERR_FUNC(PEM_F_PEM_READ_PRIVATEKEY), "PEM_READ_PRIVATEKEY"},
+    {ERR_FUNC(PEM_F_PEM_READ_BIO_PRIVATEKEY), "PEM_read_bio_PrivateKey"},
+    {ERR_FUNC(PEM_F_PEM_READ_DHPARAMS), "PEM_read_DHparams"},
+    {ERR_FUNC(PEM_F_PEM_READ_PRIVATEKEY), "PEM_read_PrivateKey"},
     {ERR_FUNC(PEM_F_PEM_SEALFINAL), "PEM_SealFinal"},
     {ERR_FUNC(PEM_F_PEM_SEALINIT), "PEM_SealInit"},
     {ERR_FUNC(PEM_F_PEM_SIGNFINAL), "PEM_SignFinal"},
     {ERR_FUNC(PEM_F_PEM_WRITE), "PEM_write"},
     {ERR_FUNC(PEM_F_PEM_WRITE_BIO), "PEM_write_bio"},
-    {ERR_FUNC(PEM_F_PEM_WRITE_PRIVATEKEY), "PEM_WRITE_PRIVATEKEY"},
+    {ERR_FUNC(PEM_F_PEM_WRITE_PRIVATEKEY), "PEM_write_PrivateKey"},
     {ERR_FUNC(PEM_F_PEM_X509_INFO_READ), "PEM_X509_INFO_read"},
     {ERR_FUNC(PEM_F_PEM_X509_INFO_READ_BIO), "PEM_X509_INFO_read_bio"},
     {ERR_FUNC(PEM_F_PEM_X509_INFO_WRITE_BIO), "PEM_X509_INFO_write_bio"},

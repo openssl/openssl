@@ -947,7 +947,7 @@ static X509_STORE *create_cert_store(char *CApath, char *CAfile)
 
     cert_ctx = X509_STORE_new();
     X509_STORE_set_verify_cb(cert_ctx, verify_cb);
-    if (CApath) {
+    if (CApath != NULL) {
         lookup = X509_STORE_add_lookup(cert_ctx, X509_LOOKUP_hash_dir());
         if (lookup == NULL) {
             BIO_printf(bio_err, "memory allocation failure\n");
@@ -960,7 +960,7 @@ static X509_STORE *create_cert_store(char *CApath, char *CAfile)
         }
     }
 
-    if (CAfile) {
+    if (CAfile != NULL) {
         lookup = X509_STORE_add_lookup(cert_ctx, X509_LOOKUP_file());
         if (lookup == NULL) {
             BIO_printf(bio_err, "memory allocation failure\n");

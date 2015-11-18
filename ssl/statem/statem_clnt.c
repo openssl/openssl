@@ -622,9 +622,6 @@ WORK_STATE ossl_statem_client_post_work(SSL *s, WORK_STATE wst)
 #endif
         if (statem_flush(s) != 1)
             return WORK_MORE_B;
-
-        if (s->hit && tls_finish_handshake(s, WORK_MORE_A) != 1)
-                return WORK_ERROR;
         break;
 
     default:
@@ -801,11 +798,6 @@ WORK_STATE ossl_statem_client_post_process_message(SSL *s, WORK_STATE wst)
         return WORK_FINISHED_STOP;
 #endif
 
-    case TLS_ST_CR_FINISHED:
-        if (!s->hit)
-            return tls_finish_handshake(s, wst);
-        else
-            return WORK_FINISHED_STOP;
     default:
         break;
     }
@@ -1333,6 +1325,9 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL *s, PACKET *pkt)
         s->s3->tmp.mask_ssl = SSL_TLSV1_2;
     else
         s->s3->tmp.mask_ssl = 0;
+    /* Skip TLS v1.0 ciphersuites if SSLv3 */
+    if ((c->algorithm_ssl & SSL_TLSV1) && s->version == SSL3_VERSION)
+        s->s3->tmp.mask_ssl |= SSL_TLSV1;
     /*
      * If it is a disabled cipher we didn't send it in client hello, so
      * return an error.
@@ -1658,7 +1653,10 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
             goto f_err;
         }
 
-        if (!PACKET_strndup(&psk_identity_hint,
+        if (PACKET_remaining(&psk_identity_hint) == 0) {
+            OPENSSL_free(s->session->psk_identity_hint);
+            s->session->psk_identity_hint = NULL;
+        } else if (!PACKET_strndup(&psk_identity_hint,
                             &s->session->psk_identity_hint)) {
             al = SSL_AD_INTERNAL_ERROR;
             goto f_err;
@@ -2221,7 +2219,7 @@ MSG_PROCESS_RETURN tls_process_new_session_ticket(SSL *s, PACKET *pkt)
     s->session->tlsext_ticklen = 0;
 
     s->session->tlsext_tick = OPENSSL_malloc(ticklen);
-    if (!s->session->tlsext_tick) {
+    if (s->session->tlsext_tick == NULL) {
         SSLerr(SSL_F_TLS_PROCESS_NEW_SESSION_TICKET, ERR_R_MALLOC_FAILURE);
         goto err;
     }
@@ -2275,7 +2273,7 @@ MSG_PROCESS_RETURN tls_process_cert_status(SSL *s, PACKET *pkt)
     }
     OPENSSL_free(s->tlsext_ocsp_resp);
     s->tlsext_ocsp_resp = OPENSSL_malloc(resplen);
-    if (!s->tlsext_ocsp_resp) {
+    if (s->tlsext_ocsp_resp == NULL) {
         al = SSL_AD_INTERNAL_ERROR;
         SSLerr(SSL_F_TLS_PROCESS_CERT_STATUS, ERR_R_MALLOC_FAILURE);
         goto f_err;
@@ -2459,7 +2457,7 @@ psk_err:
         RSA *rsa;
         pmslen = SSL_MAX_MASTER_KEY_LENGTH;
         pms = OPENSSL_malloc(pmslen);
-        if (!pms)
+        if (pms == NULL)
             goto memerr;
 
         if (s->session->peer == NULL) {
@@ -2561,7 +2559,7 @@ psk_err:
 
         pmslen = DH_size(dh_clnt);
         pms = OPENSSL_malloc(pmslen);
-        if (!pms)
+        if (pms == NULL)
             goto memerr;
 
         /*
@@ -2701,7 +2699,7 @@ psk_err:
         }
         pmslen = (field_size + 7) / 8;
         pms = OPENSSL_malloc(pmslen);
-        if (!pms)
+        if (pms == NULL)
             goto memerr;
         n = ECDH_compute_key(pms, pmslen, srvr_ecpoint, clnt_ecdh, NULL);
         if (n <= 0 || pmslen != (size_t)n) {
@@ -2766,7 +2764,7 @@ psk_err:
 
         pmslen = 32;
         pms = OPENSSL_malloc(pmslen);
-        if (!pms)
+        if (pms == NULL)
             goto memerr;
 
         /*
@@ -2781,6 +2779,11 @@ psk_err:
 
         pkey_ctx = EVP_PKEY_CTX_new(pub_key =
                                     X509_get_pubkey(peer_cert), NULL);
+        if (pkey_ctx == NULL) {
+            SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE,
+                   ERR_R_MALLOC_FAILURE);
+            goto err;
+        }
         /*
          * If we have send a certificate, and certificate key
          *
@@ -2997,8 +3000,12 @@ int tls_construct_client_verify(SSL *s)
 
     p = ssl_handshake_start(s);
     pkey = s->cert->key->privatekey;
-/* Create context from key and test if sha1 is allowed as digest */
+    /* Create context from key and test if sha1 is allowed as digest */
     pctx = EVP_PKEY_CTX_new(pkey, NULL);
+    if (pctx == NULL) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_VERIFY, ERR_R_MALLOC_FAILURE);
+        goto err;
+    }
     EVP_PKEY_sign_init(pctx);
     if (EVP_PKEY_CTX_set_signature_md(pctx, EVP_sha1()) > 0) {
         if (!SSL_USE_SIGALGS(s))

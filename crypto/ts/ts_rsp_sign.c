@@ -96,7 +96,7 @@ static ASN1_INTEGER *def_serial_cb(struct TS_resp_ctx *ctx, void *data)
 {
     ASN1_INTEGER *serial = ASN1_INTEGER_new();
 
-    if (!serial)
+    if (serial == NULL)
         goto err;
     if (!ASN1_INTEGER_set(serial, 1))
         goto err;

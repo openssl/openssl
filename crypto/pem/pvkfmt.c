@@ -98,7 +98,7 @@ static int read_lebn(const unsigned char **in, unsigned int nbyte, BIGNUM **r)
     unsigned int i;
     p = *in + nbyte - 1;
     tmpbuf = OPENSSL_malloc(nbyte);
-    if (!tmpbuf)
+    if (tmpbuf == NULL)
         return 0;
     q = tmpbuf;
     for (i = 0; i < nbyte; i++)
@@ -269,7 +269,7 @@ static EVP_PKEY *do_b2i_bio(BIO *in, int ispub)
 
     length = blob_length(bitlen, isdss, ispub);
     buf = OPENSSL_malloc(length);
-    if (!buf) {
+    if (buf == NULL) {
         PEMerr(PEM_F_DO_B2I_BIO, ERR_R_MALLOC_FAILURE);
         goto err;
     }
@@ -301,7 +301,7 @@ static EVP_PKEY *b2i_dss(const unsigned char **in, unsigned int length,
 
     dsa = DSA_new();
     ret = EVP_PKEY_new();
-    if (!dsa || !ret)
+    if (dsa == NULL || ret == NULL)
         goto memerr;
     if (!read_lebn(&p, nbyte, &dsa->p))
         goto memerr;
@@ -350,10 +350,10 @@ static EVP_PKEY *b2i_rsa(const unsigned char **in, unsigned int length,
     hnbyte = (bitlen + 15) >> 4;
     rsa = RSA_new();
     ret = EVP_PKEY_new();
-    if (!rsa || !ret)
+    if (rsa == NULL || ret == NULL)
         goto memerr;
     rsa->e = BN_new();
-    if (!rsa->e)
+    if (rsa->e == NULL)
         goto memerr;
     if (!BN_set_word(rsa->e, read_ledword(&p)))
         goto memerr;
@@ -468,7 +468,7 @@ static int do_i2b(unsigned char **out, EVP_PKEY *pk, int ispub)
         p = *out;
     else {
         p = OPENSSL_malloc(outlen);
-        if (!p)
+        if (p == NULL)
             return -1;
         *out = p;
         noinc = 1;
@@ -687,7 +687,7 @@ static EVP_PKEY *do_PVK_body(const unsigned char **in,
             goto err;
         }
         enctmp = OPENSSL_malloc(keylen + 8);
-        if (!enctmp) {
+        if (enctmp == NULL) {
             PEMerr(PEM_F_DO_PVK_BODY, ERR_R_MALLOC_FAILURE);
             goto err;
         }
@@ -755,7 +755,7 @@ EVP_PKEY *b2i_PVK_bio(BIO *in, pem_password_cb *cb, void *u)
         return 0;
     buflen = (int)keylen + saltlen;
     buf = OPENSSL_malloc(buflen);
-    if (!buf) {
+    if (buf == NULL) {
         PEMerr(PEM_F_B2I_PVK_BIO, ERR_R_MALLOC_FAILURE);
         return 0;
     }
@@ -790,7 +790,7 @@ static int i2b_PVK(unsigned char **out, EVP_PKEY *pk, int enclevel,
         p = *out;
     else {
         p = OPENSSL_malloc(outlen);
-        if (!p) {
+        if (p == NULL) {
             PEMerr(PEM_F_I2B_PVK, ERR_R_MALLOC_FAILURE);
             return -1;
         }
