@@ -168,7 +168,8 @@
 #define SSL_ENC_AES256CCM_IDX   15
 #define SSL_ENC_AES128CCM8_IDX  16
 #define SSL_ENC_AES256CCM8_IDX  17
-#define SSL_ENC_NUM_IDX         18
+#define SSL_ENC_GOST8912_IDX    18
+#define SSL_ENC_NUM_IDX         19
 
 /* NB: make sure indices in these tables match values above */
 
@@ -196,7 +197,8 @@ static const ssl_cipher_table ssl_cipher_table_cipher[SSL_ENC_NUM_IDX] = {
     {SSL_AES128CCM, NID_aes_128_ccm}, /* SSL_ENC_AES128CCM_IDX 14 */
     {SSL_AES256CCM, NID_aes_256_ccm}, /* SSL_ENC_AES256CCM_IDX 15 */
     {SSL_AES128CCM8, NID_aes_128_ccm}, /* SSL_ENC_AES128CCM8_IDX 16 */
-    {SSL_AES256CCM8, NID_aes_256_ccm} /* SSL_ENC_AES256CCM8_IDX 17 */
+    {SSL_AES256CCM8, NID_aes_256_ccm}, /* SSL_ENC_AES256CCM8_IDX 17 */
+    {SSL_eGOST2814789CNT12, NID_gost89_cnt_12}, /* SSL_ENC_GOST8912_IDX */
 };
 
 static const EVP_CIPHER *ssl_cipher_methods[SSL_ENC_NUM_IDX] = {
@@ -216,6 +218,9 @@ static STACK_OF(SSL_COMP) *ssl_comp_methods = NULL;
 #define SSL_MD_GOST89MAC_IDX 3
 #define SSL_MD_SHA256_IDX 4
 #define SSL_MD_SHA384_IDX 5
+#define SSL_MD_GOST12_256_IDX  6
+#define SSL_MD_GOST89MAC12_IDX 7
+#define SSL_MD_GOST12_512_IDX  8
 /*
  * Constant SSL_MAX_DIGEST equal to size of digests array should be defined
  * in the ssl_locl.h
@@ -230,11 +235,14 @@ static const ssl_cipher_table ssl_cipher_table_mac[SSL_MD_NUM_IDX] = {
     {SSL_GOST94, NID_id_GostR3411_94}, /* SSL_MD_GOST94_IDX 2 */
     {SSL_GOST89MAC, NID_id_Gost28147_89_MAC}, /* SSL_MD_GOST89MAC_IDX 3 */
     {SSL_SHA256, NID_sha256},   /* SSL_MD_SHA256_IDX 4 */
-    {SSL_SHA384, NID_sha384}    /* SSL_MD_SHA384_IDX 5 */
+    {SSL_SHA384, NID_sha384},   /* SSL_MD_SHA384_IDX 5 */
+    {SSL_GOST12_256, NID_id_GostR3411_2012_256},  /* SSL_MD_GOST12_256_IDX 6 */
+    {SSL_GOST89MAC12, NID_gost_mac_12},           /* SSL_MD_GOST89MAC12_IDX 7 */
+    {SSL_GOST12_512, NID_id_GostR3411_2012_512}   /* SSL_MD_GOST12_512_IDX 8 */
 };
 
 static const EVP_MD *ssl_digest_methods[SSL_MD_NUM_IDX] = {
-    NULL, NULL, NULL, NULL, NULL, NULL
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL
 };
 
 /* Utility function for table lookup */
@@ -258,18 +266,23 @@ static int ssl_cipher_info_find(const ssl_cipher_table * table,
  * found
  */
 static int ssl_mac_pkey_id[SSL_MD_NUM_IDX] = {
+    /* MD5, SHA, GOST94, MAC89 */
     EVP_PKEY_HMAC, EVP_PKEY_HMAC, EVP_PKEY_HMAC, NID_undef,
-    EVP_PKEY_HMAC, EVP_PKEY_HMAC
+    /* SHA256, SHA384, GOST2012_256, MAC89-12 */
+    EVP_PKEY_HMAC, EVP_PKEY_HMAC, EVP_PKEY_HMAC, NID_undef,
+    /* GOST2012_512 */
+    EVP_PKEY_HMAC,
 };
 
 static int ssl_mac_secret_size[SSL_MD_NUM_IDX] = {
-    0, 0, 0, 0, 0, 0
+    0, 0, 0, 0, 0, 0, 0, 0, 0
 };
 
 static const int ssl_handshake_digest_flag[SSL_MD_NUM_IDX] = {
     SSL_HANDSHAKE_MAC_MD5, SSL_HANDSHAKE_MAC_SHA,
     SSL_HANDSHAKE_MAC_GOST94, 0, SSL_HANDSHAKE_MAC_SHA256,
-    SSL_HANDSHAKE_MAC_SHA384
+    SSL_HANDSHAKE_MAC_SHA384, SSL_HANDSHAKE_MAC_GOST12_256, 0,
+    SSL_HANDSHAKE_MAC_GOST12_512,
 };
 
 #define CIPHER_ADD      1
@@ -339,7 +352,9 @@ static const SSL_CIPHER cipher_aliases[] = {
     {0, SSL_TXT_ECDSA, 0, 0, SSL_aECDSA, 0, 0, 0, 0, 0, 0, 0},
     {0, SSL_TXT_aPSK, 0, 0, SSL_aPSK, 0, 0, 0, 0, 0, 0, 0},
     {0, SSL_TXT_aGOST01, 0, 0, SSL_aGOST01, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_aGOST, 0, 0, SSL_aGOST01, 0, 0, 0, 0, 0, 0, 0},
+    {0, SSL_TXT_aGOST12, 0, 0, SSL_aGOST12, 0, 0, 0, 0, 0, 0, 0},
+    {0, SSL_TXT_aGOST, 0, 0, SSL_aGOST01 | SSL_aGOST12, 0, 0, 0,
+     0, 0, 0, 0},
     {0, SSL_TXT_aSRP, 0, 0, SSL_aSRP, 0, 0, 0, 0, 0, 0, 0},
 
     /* aliases combining key exchange and server authentication */
@@ -362,6 +377,8 @@ static const SSL_CIPHER cipher_aliases[] = {
     {0, SSL_TXT_IDEA, 0, 0, 0, SSL_IDEA, 0, 0, 0, 0, 0, 0},
     {0, SSL_TXT_SEED, 0, 0, 0, SSL_SEED, 0, 0, 0, 0, 0, 0},
     {0, SSL_TXT_eNULL, 0, 0, 0, SSL_eNULL, 0, 0, 0, 0, 0, 0},
+    {0, SSL_TXT_GOST, 0, 0, 0, SSL_eGOST2814789CNT | SSL_eGOST2814789CNT12, 0,
+     0, 0, 0, 0, 0},
     {0, SSL_TXT_AES128, 0, 0, 0, SSL_AES128 | SSL_AES128GCM | SSL_AES128CCM | SSL_AES128CCM8, 0,
      0, 0, 0, 0, 0},
     {0, SSL_TXT_AES256, 0, 0, 0, SSL_AES256 | SSL_AES256GCM | SSL_AES256CCM | SSL_AES256CCM8, 0,
@@ -383,9 +400,11 @@ static const SSL_CIPHER cipher_aliases[] = {
     {0, SSL_TXT_SHA1, 0, 0, 0, 0, SSL_SHA1, 0, 0, 0, 0, 0},
     {0, SSL_TXT_SHA, 0, 0, 0, 0, SSL_SHA1, 0, 0, 0, 0, 0},
     {0, SSL_TXT_GOST94, 0, 0, 0, 0, SSL_GOST94, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_GOST89MAC, 0, 0, 0, 0, SSL_GOST89MAC, 0, 0, 0, 0, 0},
+    {0, SSL_TXT_GOST89MAC, 0, 0, 0, 0, SSL_GOST89MAC | SSL_GOST89MAC12, 0, 0,
+     0, 0, 0},
     {0, SSL_TXT_SHA256, 0, 0, 0, 0, SSL_SHA256, 0, 0, 0, 0, 0},
     {0, SSL_TXT_SHA384, 0, 0, 0, 0, SSL_SHA384, 0, 0, 0, 0, 0},
+    {0, SSL_TXT_GOST12, 0, 0, 0, 0, SSL_GOST12_256, 0, 0, 0, 0, 0},
 
     /* protocol version aliases */
     {0, SSL_TXT_SSLV3, 0, 0, 0, 0, 0, SSL_SSLV3, 0, 0, 0, 0},
@@ -539,12 +558,23 @@ void ssl_load_ciphers(void)
         disabled_mac_mask |= SSL_GOST89MAC;
     }
 
+    ssl_mac_pkey_id[SSL_MD_GOST89MAC12_IDX] = get_optional_pkey_id("gost-mac-12");
+    if (ssl_mac_pkey_id[SSL_MD_GOST89MAC12_IDX]) {
+        ssl_mac_secret_size[SSL_MD_GOST89MAC12_IDX] = 32;
+    } else {
+        disabled_mac_mask |= SSL_GOST89MAC12;
+    }
+
     if (!get_optional_pkey_id("gost2001"))
-        disabled_auth_mask |= SSL_aGOST01;
+        disabled_auth_mask |= SSL_aGOST01 | SSL_aGOST12;
+    if (!get_optional_pkey_id("gost2012_256"))
+        disabled_auth_mask |= SSL_aGOST12;
+    if (!get_optional_pkey_id("gost2012_512"))
+        disabled_auth_mask |= SSL_aGOST12;
     /*
      * Disable GOST key exchange if no GOST signature algs are available *
      */
-    if ((disabled_auth_mask & SSL_aGOST01) == SSL_aGOST01)
+    if ((disabled_auth_mask & (SSL_aGOST01 | SSL_aGOST12)) == (SSL_aGOST01 | SSL_aGOST12))
         disabled_mkey_mask |= SSL_kGOST;
 }
 
@@ -1701,6 +1731,10 @@ char *SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
     case SSL_aGOST01:
         au = "GOST01";
         break;
+        /* New GOST ciphersuites have both SSL_aGOST12 and SSL_aGOST01 bits */
+    case (SSL_aGOST12 | SSL_aGOST01):
+        au = "GOST12";
+        break;
     default:
         au = "unknown";
         break;
@@ -1759,6 +1793,7 @@ char *SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
         enc = "SEED(128)";
         break;
     case SSL_eGOST2814789CNT:
+    case SSL_eGOST2814789CNT12:
         enc = "GOST89(256)";
         break;
     default:
@@ -1783,10 +1818,15 @@ char *SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
         mac = "AEAD";
         break;
     case SSL_GOST89MAC:
+    case SSL_GOST89MAC12:
         mac = "GOST89";
         break;
     case SSL_GOST94:
         mac = "GOST94";
+        break;
+    case SSL_GOST12_256:
+    case SSL_GOST12_512:
+        mac = "GOST2012";
         break;
     default:
         mac = "unknown";
@@ -1995,8 +2035,11 @@ int ssl_cipher_get_cert_index(const SSL_CIPHER *c)
         return SSL_PKEY_DSA_SIGN;
     else if (alg_a & SSL_aRSA)
         return SSL_PKEY_RSA_ENC;
+    else if (alg_a & SSL_aGOST12)
+        return SSL_PKEY_GOST_EC;
     else if (alg_a & SSL_aGOST01)
         return SSL_PKEY_GOST01;
+
     return -1;
 }
 
