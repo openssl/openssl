@@ -37,9 +37,9 @@ sub create_tsa_cert {
 sub create_time_stamp_response {
     my $queryfile = shift;
     my $outputfile = shift;
-    my $datafile = shift;
+    my $confsection = shift;
 
-    ok(run(app([@RUN, "-reply", "-section", "$datafile",
+    ok(run(app([@RUN, "-reply", "-section", "$confsection",
                 "-queryfile", "$queryfile", "-out", "$outputfile"])));
 }
 
@@ -67,7 +67,7 @@ sub verify_time_stamp_response_fail {
 
 # main functions
 
-plan tests => 20;
+plan tests => 25;
 
 note "setting up TSA test directory";
 indir "tsa" => sub
@@ -81,31 +81,31 @@ indir "tsa" => sub
 
  SKIP: {
      $ENV{TSDNSECT} = "ts_ca_dn";
-     skip "failed", 19
+     skip "failed", 24
          unless ok(run(app(["openssl", "req", "-new", "-x509", "-nodes",
                             "-out", "tsaca.pem", "-keyout", "tsacakey.pem"])),
                    'creating a new CA for the TSA tests');
 
-     skip "failed", 18
+     skip "failed", 23
          unless subtest 'creating tsa_cert1.pem TSA server cert' => sub {
              create_tsa_cert("1", "tsa_cert")
      };
 
-     skip "failed", 17
+     skip "failed", 22
          unless subtest 'creating tsa_cert2.pem non-TSA server cert' => sub {
              create_tsa_cert("2", "non_tsa_cert")
      };
 
-     skip "failed", 16
+     skip "failed", 21
          unless ok(run(app([@RUN, "-query", "-data", $testtsa,
                             "-policy", "tsa_policy1", "-cert",
                             "-out", "req1.tsq"])),
-                   'creating req1.req time stamp request for file testtsa');
+                   'creating req1.tsq time stamp request for file testtsa');
 
      ok(run(app([@RUN, "-query", "-in", "req1.tsq", "-text"])),
-        'printing req1.req');
+        'printing req1.tsq');
 
-     subtest 'generating valid response for req1.req' => sub {
+     subtest 'generating valid response for req1.tsq' => sub {
          create_time_stamp_response("req1.tsq", "resp1.tsr", "tsa_config1")
      };
 
@@ -116,7 +116,7 @@ indir "tsa" => sub
          verify_time_stamp_response("req1.tsq", "resp1.tsr", $testtsa)
      };
 
-     skip "failed", 11
+     skip "failed", 16
          unless subtest 'verifying valid token' => sub {
              ok(run(app([@RUN, "-reply", "-in", "resp1.tsr",
                          "-out", "resp1.tsr.token", "-token_out"])));
@@ -130,21 +130,21 @@ indir "tsa" => sub
                          "-untrusted", "tsa_cert1.pem"])));
      };
 
-     skip "failed", 10
+     skip "failed", 15
          unless ok(run(app([@RUN, "-query", "-data", $testtsa,
                             "-policy", "tsa_policy2", "-no_nonce",
                             "-out", "req2.tsq"])),
-                   'creating req2.req time stamp request for file testtsa');
+                   'creating req2.tsq time stamp request for file testtsa');
 
      ok(run(app([@RUN, "-query", "-in", "req2.tsq", "-text"])),
-        'printing req2.req');
+        'printing req2.tsq');
 
-     skip "failed", 8
-         unless subtest 'generating valid response for req2.req' => sub {
+     skip "failed", 13
+         unless subtest 'generating valid response for req2.tsq' => sub {
              create_time_stamp_response("req2.tsq", "resp2.tsr", "tsa_config1")
      };
 
-     skip "failed", 7
+     skip "failed", 12
          unless subtest 'checking -token_in and -token_out options with -reply' => sub {
              my $RESPONSE2="resp2.tsr.copy.tsr";
              my $TOKEN_DER="resp2.tsr.token.der";
@@ -177,16 +177,37 @@ indir "tsa" => sub
          verify_time_stamp_response_fail("req2.tsq", "resp1.tsr")
      };
 
-     skip "failure", 2
+     skip "failure", 7
          unless ok(run(app([@RUN, "-query", "-data", $CAtsa,
                             "-no_nonce", "-out", "req3.tsq"])),
-                   "creating req3.req time stamp request for file CAtsa.cnf");
+                   "creating req3.tsq time stamp request for file CAtsa.cnf");
 
      ok(run(app([@RUN, "-query", "-in", "req3.tsq", "-text"])),
-        'printing req3.req');
+        'printing req3.tsq');
 
      subtest 'verifying response against wrong request, it should fail' => sub {
          verify_time_stamp_response_fail("req3.tsq", "resp1.tsr")
+     };
+
+     skip "failed", 4
+         unless ok(run(app([@RUN, "-query", "-data", $testtsa,
+                            "-policy", "tsa_policy1", "-cert", "-sha256",
+                            "-out", "req4.tsq"])),
+                   'creating req4.tsq time stamp request with sha256 md, '.
+                   'not acceptable for reply generation by the config though');
+
+     ok(run(app([@RUN, "-query", "-in", "req4.tsq", "-text"])),
+        'printing req4.tsq');
+
+     subtest 'generating failure (badAlg) response for req4.tsq' => sub {
+         create_time_stamp_response("req4.tsq", "resp4.tsr", "tsa_config3")
+     };
+
+     ok(run(app([@RUN, "-reply", "-in", "resp4.tsr", "-text"])),
+        'printing response');
+
+     subtest 'verifying failure response' => sub {
+         verify_time_stamp_response_fail("req4.tsq", "resp4.tsr", $testtsa)
      };
     }
 }, create => 1, cleanup => 1

@@ -136,7 +136,7 @@ signer_key	= $dir/tsa_key1.pem	# The TSA private key (optional)
 default_policy	= tsa_policy1		# Policy if request did not specify it
 					# (optional)
 other_policies	= tsa_policy2, tsa_policy3	# acceptable policies (optional)
-digests		= md5, sha1		# Acceptable message digests (mandatory)
+digests		= sha1, sha256, sha384, sha512	# Acceptable message digests (mandatory)
 accuracy	= secs:1, millisecs:500, microsecs:100	# (optional)
 ordering		= yes	# Is ordering defined for timestamps?
 				# (optional, default: no)
@@ -160,4 +160,21 @@ signer_key	= $dir/tsa_key2.pem	# The TSA private key (optional)
 default_policy	= tsa_policy1		# Policy if request did not specify it
 					# (optional)
 other_policies	= tsa_policy2, tsa_policy3	# acceptable policies (optional)
-digests		= md5, sha1		# Acceptable message digests (mandatory)
+digests		= sha1, sha256, sha384, sha512	# Acceptable message digests (mandatory)
+
+[ tsa_config3 ]
+
+# This configuration accepts only sha512 message digest in TSQ.
+# These are used by the TSA reply generation only.
+dir			= $tsa_config1::dir
+serial			= $tsa_config1::serial
+signer_cert		= $tsa_config1::signer_cert
+certs			= $tsa_config1::certs
+signer_key		= $tsa_config1::signer_key
+default_policy		= $tsa_config1::default_policy
+other_policies		= $tsa_config1::other_policies
+digests			= sha512
+accuracy		= $tsa_config1::accuracy
+ordering		= $tsa_config1::ordering
+tsa_name		= $tsa_config1::tsa_name
+ess_cert_id_chain	= $tsa_config1::ess_cert_id_chain
