@@ -700,7 +700,7 @@ static int ts_RESP_sign(TS_RESP_CTX *ctx)
     }
 
     if ((si = PKCS7_add_signature(p7, ctx->signer_cert,
-                                  ctx->signer_key, EVP_sha1())) == NULL) {
+                                  ctx->signer_key, EVP_sha256())) == NULL) {
         TSerr(TS_F_TS_RESP_SIGN, TS_R_PKCS7_ADD_SIGNATURE_ERROR);
         goto err;
     }
