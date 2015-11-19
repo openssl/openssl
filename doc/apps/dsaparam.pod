@@ -62,7 +62,7 @@ this option prints out the DSA parameters in human readable form.
 =item B<-C>
 
 this option converts the parameters into C code. The parameters can then
-be loaded by calling the B<get_dsaXXX()> function.
+be loaded by calling the get_dsaXXX() function.
 
 =item B<-genkey>
 

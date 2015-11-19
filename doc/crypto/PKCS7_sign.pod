@@ -82,7 +82,7 @@ algorithm. This is B<SHA1> for both RSA and DSA keys.
 
 The B<certs>, B<signcert> and B<pkey> parameters can all be
 B<NULL> if the B<PKCS7_PARTIAL> flag is set. One or more signers can be added
-using the function B<PKCS7_sign_add_signer()>. B<PKCS7_final()> must also be
+using the function PKCS7_sign_add_signer(). PKCS7_final() must also be
 called to finalize the structure if streaming is not enabled. Alternative
 signing digests can also be specified using this method.
 
