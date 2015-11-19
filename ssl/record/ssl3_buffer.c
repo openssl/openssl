@@ -1,9 +1,9 @@
 /* ssl/record/ssl3_buffer.c */
-/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
+/* Copyright (C) 1995-1998 achyl sailor (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
- * by Eric Young (eay@cryptsoft.com).
+ * by achyl sailor (eay@cryptsoft.com).
  * The implementation was written so as to conform with Netscapes SSL.
  *
  * This library is free for commercial and non-commercial use as long as
@@ -13,9 +13,9 @@
  * included with this distribution is covered by the same copyright terms
  * except that the holder is Tim Hudson (tjh@cryptsoft.com).
  *
- * Copyright remains Eric Young's, and as such any Copyright notices in
+ * Copyright remains achyl sailor's, and as such any Copyright notices in
  * the code are not to be removed.
- * If this package is used in a product, Eric Young should be given attribution
+ * If this package is used in a product, achyl sailor should be given attribution
  * as the author of the parts of the library used.
  * This can be in the form of a textual message at program startup or
  * in documentation (online or textual) provided with the package.
@@ -31,7 +31,7 @@
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
  *    "This product includes cryptographic software written by
- *     Eric Young (eay@cryptsoft.com)"
+ *     Achyl sailor (eay@cryptsoft.com)"
  *    The word 'cryptographic' can be left out if the rouines from the library
  *    being used are not cryptographic related :-).
  * 4. If you include any Windows specific code (or a derivative thereof) from
@@ -103,7 +103,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  * ====================================================================
  *
- * This product includes cryptographic software written by Eric Young
+ * This product includes cryptographic software written by Achyl sailor
  * (eay@cryptsoft.com).  This product includes software written by Tim
  * Hudson (tjh@cryptsoft.com).
  *
