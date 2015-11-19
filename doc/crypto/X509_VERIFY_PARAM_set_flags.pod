@@ -82,7 +82,7 @@ is NUL-terminated, B<namelen> may be zero, otherwise B<namelen>
 must be set to the length of B<name>.  When a hostname is specified,
 certificate verification automatically invokes L<X509_check_host(3)>
 with flags equal to the B<flags> argument given to
-B<X509_VERIFY_PARAM_set_hostflags()> (default zero).  Applications
+X509_VERIFY_PARAM_set_hostflags() (default zero).  Applications
 are strongly advised to use this interface in preference to explicitly
 calling L<X509_check_host(3)>, hostname checks are out of scope
 with the DANE-EE(3) certificate usage, and the internal check will

@@ -14,11 +14,11 @@ SSL_CTX_set_client_cert_cb, SSL_CTX_get_client_cert_cb - handle client certifica
 
 =head1 DESCRIPTION
 
-SSL_CTX_set_client_cert_cb() sets the B<client_cert_cb()> callback, that is
+SSL_CTX_set_client_cert_cb() sets the client_cert_cb() callback, that is
 called when a client certificate is requested by a server and no certificate
 was yet set for the SSL object.
 
-When B<client_cert_cb()> is NULL, no callback function is used.
+When client_cert_cb() is NULL, no callback function is used.
 
 SSL_CTX_get_client_cert_cb() returns a pointer to the currently set callback
 function.
