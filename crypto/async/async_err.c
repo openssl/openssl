@@ -83,6 +83,7 @@ static ERR_STRING_DATA ASYNC_str_reasons[] = {
     {ERR_REASON(ASYNC_R_CANNOT_CREATE_WAIT_PIPE), "cannot create wait pipe"},
     {ERR_REASON(ASYNC_R_FAILED_TO_SET_POOL), "failed to set pool"},
     {ERR_REASON(ASYNC_R_FAILED_TO_SWAP_CONTEXT), "failed to swap context"},
+    {ERR_REASON(ASYNC_R_INIT_FAILED), "init failed"},
     {ERR_REASON(ASYNC_R_INVALID_POOL_SIZE), "invalid pool size"},
     {ERR_REASON(ASYNC_R_POOL_ALREADY_INITED), "pool already inited"},
     {0, NULL}

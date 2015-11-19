@@ -4661,3 +4661,5 @@ ASYNC_get_wait_fd                       5020	EXIST::FUNCTION:
 ERR_load_ASYNC_strings                  5021	EXIST::FUNCTION:
 ASYNC_unblock_pause                     5022	EXIST::FUNCTION:
 ASYNC_block_pause                       5023	EXIST::FUNCTION:
+ASYNC_cleanup                           5024	EXIST::FUNCTION:
+ASYNC_init                              5025	EXIST::FUNCTION:
