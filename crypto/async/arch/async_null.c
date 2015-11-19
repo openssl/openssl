@@ -76,9 +76,22 @@ int async_read1(OSSL_ASYNC_FD fd, void *buf)
     return -1;
 }
 
-int async_thread_local_init(void)
+int async_global_init(void)
 {
     return 0;
+}
+
+int async_local_init(void)
+{
+    return 0;
+}
+
+void async_local_cleanup(void)
+{
+}
+
+void async_global_cleanup(void)
+{
 }
 
 #endif

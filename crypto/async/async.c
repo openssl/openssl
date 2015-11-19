@@ -330,7 +330,7 @@ static void async_empty_pool(async_pool *pool)
 
 int ASYNC_init(int init_thread, size_t max_size, size_t init_size)
 {
-    if (!async_thread_local_init())
+    if (!async_global_init())
         return 0;
 
     if (init_thread)
@@ -349,6 +349,10 @@ int ASYNC_init_thread(size_t max_size, size_t init_size)
         return 0;
     }
 
+    if (!async_local_init()) {
+        ASYNCerr(ASYNC_F_ASYNC_INIT_THREAD, ASYNC_R_INIT_FAILED);
+        return 0;
+    }
     pool = OPENSSL_zalloc(sizeof *pool);
     if (pool == NULL) {
         ASYNCerr(ASYNC_F_ASYNC_INIT_THREAD, ERR_R_MALLOC_FAILURE);
@@ -383,7 +387,6 @@ int ASYNC_init_thread(size_t max_size, size_t init_size)
         }
     }
     pool->curr_size = curr_size;
-
     if (!async_set_pool(pool)) {
         ASYNCerr(ASYNC_F_ASYNC_INIT_THREAD, ASYNC_R_FAILED_TO_SET_POOL);
         goto err;
@@ -404,6 +407,7 @@ static void async_free_pool_internal(async_pool *pool)
     sk_ASYNC_JOB_free(pool->jobs);
     OPENSSL_free(pool);
     (void)async_set_pool(NULL);
+    async_local_cleanup();
     async_ctx_free();
 }
 
