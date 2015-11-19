@@ -66,13 +66,29 @@ pthread_key_t posixpool;
 
 #define STACKSIZE       32768
 
-int async_thread_local_init(void)
+int async_global_init(void)
 {
     if (pthread_key_create(&posixctx, NULL) != 0
             || pthread_key_create(&posixpool, NULL) != 0)
         return 0;
 
     return 1;
+}
+
+int async_local_init(void)
+{
+    if (!async_set_ctx(NULL) || ! async_set_pool(NULL))
+        return 0;
+
+    return 1;
+}
+
+void async_local_cleanup(void)
+{
+}
+
+void async_global_cleanup(void)
+{
 }
 
 int async_fibre_init(async_fibre *fibre)

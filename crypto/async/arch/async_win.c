@@ -64,18 +64,80 @@ struct winpool {
     size_t max_size;
 };
 
+static DWORD asyncwinpool = 0;
+static DWORD asyncwinctx = 0;
+static DWORD asyncwindispatch = 0;
+
+
 void async_start_func(void);
+
+int async_global_init(void)
+{
+    asyncwinpool = TlsAlloc();
+    asyncwinctx = TlsAlloc();
+    asyncwindispatch = TlsAlloc();
+    if (asyncwinpool == TLS_OUT_OF_INDEXES || asyncwinctx == TLS_OUT_OF_INDEXES
+            || asyncwindispatch == TLS_OUT_OF_INDEXES) {
+        if (asyncwinpool != TLS_OUT_OF_INDEXES) {
+            TlsFree(asyncwinpool);
+        }
+        if (asyncwinctx != TLS_OUT_OF_INDEXES) {
+            TlsFree(asyncwinctx);
+        }
+        if (asyncwindispatch != TLS_OUT_OF_INDEXES) {
+            TlsFree(asyncwindispatch);
+        }
+        return 0;
+    }
+    return 1;
+}
+
+int async_local_init(void)
+{
+    return (TlsSetValue(asyncwinpool, NULL) != 0)
+        && (TlsSetValue(asyncwinctx, NULL) != 0)
+        && (TlsSetValue(asyncwindispatch, NULL) != 0);
+}
+
+void async_local_cleanup(void)
+{
+    async_ctx *ctx = async_get_ctx();
+    if (ctx != NULL) {
+        async_fibre *fibre = &ctx->dispatcher;
+        if(fibre != NULL && fibre->fibre != NULL && fibre->converted) {
+            ConvertFiberToThread();
+            fibre->fibre = NULL;
+        }
+    }
+}
+
+void async_global_cleanup(void)
+{
+    TlsFree(asyncwinpool);
+    TlsFree(asyncwinctx);
+    TlsFree(asyncwindispatch);
+    asyncwinpool = 0;
+    asyncwinctx = 0;
+    asyncwindispatch = 0;
+}
 
 int async_fibre_init_dispatcher(async_fibre *fibre)
 {
     LPVOID dispatcher;
 
-    dispatcher =
-        (LPVOID) CRYPTO_get_thread_local(CRYPTO_THREAD_LOCAL_ASYNC_DISPATCH);
+    dispatcher = (LPVOID)TlsGetValue(asyncwindispatch);
     if (dispatcher == NULL) {
         fibre->fibre = ConvertThreadToFiber(NULL);
-        CRYPTO_set_thread_local(CRYPTO_THREAD_LOCAL_ASYNC_DISPATCH,
-                                (void *)fibre->fibre);
+        if (fibre->fibre == NULL) {
+            fibre->converted = 0;
+            fibre->fibre = GetCurrentFiber();
+            if (fibre->fibre == NULL)
+                return 0;
+        } else {
+            fibre->converted = 1;
+        }
+        if (TlsSetValue(asyncwindispatch, (LPVOID)fibre->fibre) == 0)
+            return 0;
     } else {
         fibre->fibre = dispatcher;
     }
@@ -125,15 +187,23 @@ int async_read1(OSSL_ASYNC_FD fd, void *buf)
 
 async_pool *async_get_pool(void)
 {
-    return (async_pool *)
-            CRYPTO_get_thread_local(CRYPTO_THREAD_LOCAL_ASYNC_POOL);
+    return (async_pool *)TlsGetValue(asyncwinpool);
 }
 
 
 int async_set_pool(async_pool *pool)
 {
-    CRYPTO_set_thread_local(CRYPTO_THREAD_LOCAL_ASYNC_POOL, (void *)pool);
-    return 1;
+    return TlsSetValue(asyncwinpool, (LPVOID)pool) != 0;
+}
+
+async_ctx *async_get_ctx(void)
+{
+    return (async_ctx *)TlsGetValue(asyncwinctx);
+}
+
+int async_set_ctx(async_ctx *ctx)
+{
+    return TlsSetValue(asyncwinctx, (LPVOID)ctx) != 0;
 }
 
 #endif
