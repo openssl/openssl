@@ -79,6 +79,12 @@ DO NOT ENABLE THIS if your application attempts a normal handshake.
 Only use this in explicit fallback retries, following the guidance
 in draft-ietf-tls-downgrade-scsv-00.
 
+=item SSL_MODE_ASYNC
+
+Enable asynchronous processing. TLS I/O operations may indicate a retry with
+SSL_ERROR_WANT_ASYNC with this mode set if an asynchronous capable engine is
+used to perform cryptographic operations. See L<SSL_get_error(3)>.
+
 =back
 
 =head1 RETURN VALUES
@@ -90,6 +96,11 @@ SSL_CTX_get_mode() and SSL_get_mode() return the current bitmask.
 
 =head1 SEE ALSO
 
-L<ssl(3)>, L<SSL_read(3)>, L<SSL_write(3)>
+L<ssl(3)>, L<SSL_read(3)>, L<SSL_write(3)>, L<SSL_get_error(3)>
+
+=======
+=head1 HISTORY
+
+SSL_MODE_ASYNC was first added to OpenSSL 1.1.0.
 
 =cut

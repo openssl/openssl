@@ -31,13 +31,15 @@ AFLAGS= $(ASFLAGS)
 GENERAL=Makefile engines.com install.com engine_vector.mar
 
 LIB=$(TOP)/libcrypto.a
-LIBNAMES= gmp padlock capi
+LIBNAMES= gmp padlock capi dasync
 LIBSRC=	e_gmp.c \
 	e_padlock.c \
-	e_capi.c
+	e_capi.c \
+	e_dasync.c
 LIBOBJ= e_gmp.o \
 	e_padlock.o \
 	e_capi.o \
+	e_dasync.o \
 	$(ENGINES_ASM_OBJ)
 
 TESTLIBNAMES= ossltest
@@ -50,7 +52,8 @@ HEADER=	e_gmp_err.c e_gmp_err.h \
 	e_chil_err.c e_chil_err.h \
 	e_ubsec_err.c e_ubsec_err.h \
 	e_capi_err.c e_capi_err.h \
-	e_ossltest_err.c e_ossltest_err.h
+	e_ossltest_err.c e_ossltest_err.h \
+	e_dasync_err.c e_dasync_err.h
 
 ALL=	$(GENERAL) $(SRC) $(HEADER)
 
@@ -166,6 +169,21 @@ e_capi.o: ../include/openssl/pkcs7.h ../include/openssl/safestack.h
 e_capi.o: ../include/openssl/sha.h ../include/openssl/stack.h
 e_capi.o: ../include/openssl/symhacks.h ../include/openssl/x509.h
 e_capi.o: ../include/openssl/x509_vfy.h e_capi.c
+e_dasync.o: ../include/openssl/asn1.h ../include/openssl/async.h
+e_dasync.o: ../include/openssl/bio.h ../include/openssl/bn.h
+e_dasync.o: ../include/openssl/buffer.h ../include/openssl/crypto.h
+e_dasync.o: ../include/openssl/e_os2.h ../include/openssl/ec.h
+e_dasync.o: ../include/openssl/ecdh.h ../include/openssl/ecdsa.h
+e_dasync.o: ../include/openssl/engine.h ../include/openssl/err.h
+e_dasync.o: ../include/openssl/evp.h ../include/openssl/lhash.h
+e_dasync.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
+e_dasync.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
+e_dasync.o: ../include/openssl/ossl_typ.h ../include/openssl/pkcs7.h
+e_dasync.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
+e_dasync.o: ../include/openssl/sha.h ../include/openssl/stack.h
+e_dasync.o: ../include/openssl/symhacks.h ../include/openssl/x509.h
+e_dasync.o: ../include/openssl/x509_vfy.h e_dasync.c e_dasync_err.c
+e_dasync.o: e_dasync_err.h
 e_gmp.o: ../include/openssl/asn1.h ../include/openssl/bio.h
 e_gmp.o: ../include/openssl/bn.h ../include/openssl/buffer.h
 e_gmp.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h

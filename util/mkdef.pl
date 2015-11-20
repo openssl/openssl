@@ -331,6 +331,7 @@ $crypto.=" include/openssl/cms.h";
 $crypto.=" include/openssl/jpake.h";
 $crypto.=" include/openssl/srp.h";
 $crypto.=" include/openssl/modes.h";
+$crypto.=" include/openssl/async.h";
 
 my $symhacks="include/openssl/symhacks.h";
 

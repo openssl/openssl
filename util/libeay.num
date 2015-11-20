@@ -4647,3 +4647,17 @@ X509_get0_extensions                    5006	EXIST::FUNCTION:
 X509_get0_trust_objects                 5007	EXIST::FUNCTION:
 X509_get0_uids                          5008	EXIST::FUNCTION:
 X509_aux_print                          5009	EXIST::FUNCTION:STDIO
+ENGINE_load_dasync                      5010	EXIST::FUNCTION:ENGINE,STATIC_ENGINE
+ASYNC_pause_job                         5011	EXIST::FUNCTION:
+ASYNC_start_job                         5012	EXIST::FUNCTION:
+ASYNC_init_thread                       5013	EXIST::FUNCTION:
+ASYNC_cleanup_thread                    5014	EXIST::FUNCTION:
+ASYNC_wake                              5015	EXIST::FUNCTION:
+ASYNC_clear_wake                        5016	EXIST::FUNCTION:
+ASYNC_get_current_job                   5017	EXIST::FUNCTION:
+ASYNC_get_wait_fd                       5018	EXIST::FUNCTION:
+ERR_load_ASYNC_strings                  5019	EXIST::FUNCTION:
+ASYNC_unblock_pause                     5020	EXIST::FUNCTION:
+ASYNC_block_pause                       5021	EXIST::FUNCTION:
+ASYNC_cleanup                           5022	EXIST::FUNCTION:
+ASYNC_init                              5023	EXIST::FUNCTION:
