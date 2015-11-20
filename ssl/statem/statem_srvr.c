@@ -2855,6 +2855,7 @@ MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
         inlen = Tlen;
         if (EVP_PKEY_decrypt
             (pkey_ctx, premaster_secret, &outlen, start, inlen) <= 0) {
+            al = SSL_AD_DECODE_ERROR;
             SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE,
                    SSL_R_DECRYPTION_FAILED);
             goto gerr;
