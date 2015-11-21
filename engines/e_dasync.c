@@ -87,7 +87,7 @@ static void dummy_pause_job(void);
 /* SHA1 */
 static int dasync_sha1_init(EVP_MD_CTX *ctx);
 static int dasync_sha1_update(EVP_MD_CTX *ctx, const void *data,
-                             unsigned long count);
+                             size_t count);
 static int dasync_sha1_final(EVP_MD_CTX *ctx, unsigned char *md);
 
 static const EVP_MD dasync_sha1 = {
@@ -269,7 +269,7 @@ static int dasync_sha1_init(EVP_MD_CTX *ctx)
 }
 
 static int dasync_sha1_update(EVP_MD_CTX *ctx, const void *data,
-                             unsigned long count)
+                             size_t count)
 {
     dummy_pause_job();
 
