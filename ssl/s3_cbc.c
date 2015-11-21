@@ -520,7 +520,7 @@ int ssl3_cbc_digest_record(const EVP_MD_CTX *ctx,
          */
         OPENSSL_assert(0);
         if (md_out_size)
-            *md_out_size = -1;
+            *md_out_size = 0;
         return 0;
     }
 
