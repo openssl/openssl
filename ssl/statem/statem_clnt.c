@@ -1593,11 +1593,8 @@ MSG_PROCESS_RETURN tls_process_server_certificate(SSL *s, PACKET *pkt)
 
 MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
 {
-#ifndef OPENSSL_NO_RSA
-    unsigned char *q, md_buf[EVP_MAX_MD_SIZE * 2];
-#endif
     EVP_MD_CTX md_ctx;
-    int al, j, verify_ret;
+    int al, j;
     long alg_k, alg_a;
     EVP_PKEY *pkey = NULL;
     const EVP_MD *md = NULL;
@@ -1935,6 +1932,8 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
 #ifdef SSL_DEBUG
             fprintf(stderr, "USING TLSv1.2 HASH %s\n", EVP_MD_name(md));
 #endif
+        } else if (pkey->type == EVP_PKEY_RSA) {
+            md = EVP_md5_sha1();
         } else {
             md = EVP_sha1();
         }
@@ -1958,68 +1957,23 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
             SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, SSL_R_WRONG_SIGNATURE_LENGTH);
             goto f_err;
         }
-#ifndef OPENSSL_NO_RSA
-        if (pkey->type == EVP_PKEY_RSA && !SSL_USE_SIGALGS(s)) {
-            int num;
-            unsigned int size;
-
-            j = 0;
-            q = md_buf;
-            for (num = 2; num > 0; num--) {
-                EVP_MD_CTX_set_flags(&md_ctx, EVP_MD_CTX_FLAG_NON_FIPS_ALLOW);
-                if (EVP_DigestInit_ex(&md_ctx,
-                                      (num == 2) ? s->ctx->md5 : s->ctx->sha1,
-                                      NULL) <= 0
-                        || EVP_DigestUpdate(&md_ctx, &(s->s3->client_random[0]),
-                                            SSL3_RANDOM_SIZE) <= 0
-                        || EVP_DigestUpdate(&md_ctx, &(s->s3->server_random[0]),
-                                            SSL3_RANDOM_SIZE) <= 0
-                        || EVP_DigestUpdate(&md_ctx, PACKET_data(&params),
-                                            PACKET_remaining(&params)) <= 0
-                        || EVP_DigestFinal_ex(&md_ctx, q, &size) <= 0) {
-                    SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE,
-                           ERR_R_INTERNAL_ERROR);
-                    al = SSL_AD_INTERNAL_ERROR;
-                    goto f_err;
-                }
-                q += size;
-                j += size;
-            }
-            verify_ret =
-                RSA_verify(NID_md5_sha1, md_buf, j, PACKET_data(&signature),
-                           PACKET_remaining(&signature), pkey->pkey.rsa);
-            if (verify_ret < 0) {
-                al = SSL_AD_DECRYPT_ERROR;
-                SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, SSL_R_BAD_RSA_DECRYPT);
-                goto f_err;
-            }
-            if (verify_ret == 0) {
-                /* bad signature */
-                al = SSL_AD_DECRYPT_ERROR;
-                SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, SSL_R_BAD_SIGNATURE);
-                goto f_err;
-            }
-        } else
-#endif
-        {
-            if (EVP_VerifyInit_ex(&md_ctx, md, NULL) <= 0
-                    || EVP_VerifyUpdate(&md_ctx, &(s->s3->client_random[0]),
-                                        SSL3_RANDOM_SIZE) <= 0
-                    || EVP_VerifyUpdate(&md_ctx, &(s->s3->server_random[0]),
-                                        SSL3_RANDOM_SIZE) <= 0
-                    || EVP_VerifyUpdate(&md_ctx, PACKET_data(&params),
-                                        PACKET_remaining(&params)) <= 0) {
-                al = SSL_AD_INTERNAL_ERROR;
-                SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, ERR_R_EVP_LIB);
-                goto f_err;
-            }
-            if (EVP_VerifyFinal(&md_ctx, PACKET_data(&signature),
-                                PACKET_remaining(&signature), pkey) <= 0) {
-                /* bad signature */
-                al = SSL_AD_DECRYPT_ERROR;
-                SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, SSL_R_BAD_SIGNATURE);
-                goto f_err;
-            }
+        if (EVP_VerifyInit_ex(&md_ctx, md, NULL) <= 0
+                || EVP_VerifyUpdate(&md_ctx, &(s->s3->client_random[0]),
+                                    SSL3_RANDOM_SIZE) <= 0
+                || EVP_VerifyUpdate(&md_ctx, &(s->s3->server_random[0]),
+                                    SSL3_RANDOM_SIZE) <= 0
+                || EVP_VerifyUpdate(&md_ctx, PACKET_data(&params),
+                                    PACKET_remaining(&params)) <= 0) {
+            al = SSL_AD_INTERNAL_ERROR;
+            SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, ERR_R_EVP_LIB);
+            goto f_err;
+        }
+        if (EVP_VerifyFinal(&md_ctx, PACKET_data(&signature),
+                            PACKET_remaining(&signature), pkey) <= 0) {
+            /* bad signature */
+            al = SSL_AD_DECRYPT_ERROR;
+            SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, SSL_R_BAD_SIGNATURE);
+            goto f_err;
         }
     } else {
         /* aNULL, aSRP or PSK do not need public keys */
