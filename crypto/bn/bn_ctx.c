@@ -365,7 +365,7 @@ static BIGNUM *BN_POOL_get(BN_POOL *p, int flag)
         if (item == NULL)
             return NULL;
         for (loop = 0, bn = item->vals; loop++ < BN_CTX_POOL_SIZE; bn++) {
-            BN_init(bn);
+            bn_init(bn);
             if ((flag & BN_FLG_SECURE) != 0)
                 BN_set_flags(bn, BN_FLG_SECURE);
         }

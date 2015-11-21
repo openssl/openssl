@@ -327,9 +327,9 @@ BN_MONT_CTX *BN_MONT_CTX_new(void)
 void BN_MONT_CTX_init(BN_MONT_CTX *ctx)
 {
     ctx->ri = 0;
-    BN_init(&(ctx->RR));
-    BN_init(&(ctx->N));
-    BN_init(&(ctx->Ni));
+    bn_init(&(ctx->RR));
+    bn_init(&(ctx->N));
+    bn_init(&(ctx->Ni));
     ctx->n0[0] = ctx->n0[1] = 0;
     ctx->flags = 0;
 }
@@ -367,7 +367,7 @@ int BN_MONT_CTX_set(BN_MONT_CTX *mont, const BIGNUM *mod, BN_CTX *ctx)
         BIGNUM tmod;
         BN_ULONG buf[2];
 
-        BN_init(&tmod);
+        bn_init(&tmod);
         tmod.d = buf;
         tmod.dmax = 2;
         tmod.neg = 0;
