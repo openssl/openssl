@@ -598,7 +598,7 @@ static BIGNUM *BN_mod_inverse_no_branch(BIGNUM *in,
          */
          {
             BIGNUM local_B;
-            BN_init(&local_B);
+            bn_init(&local_B);
             BN_with_flags(&local_B, B, BN_FLG_CONSTTIME);
             if (!BN_nnmod(B, &local_B, A, ctx))
                 goto err;
@@ -629,7 +629,7 @@ static BIGNUM *BN_mod_inverse_no_branch(BIGNUM *in,
          */
         {
             BIGNUM local_A;
-            BN_init(&local_A);
+            bn_init(&local_A);
             BN_with_flags(&local_A, A, BN_FLG_CONSTTIME);
 
             /* (D, M) := (A/B, A%B) ... */

@@ -265,9 +265,11 @@ void BN_free(BIGNUM *a)
     }
 }
 
-void BN_init(BIGNUM *a)
+void bn_init(BIGNUM *a)
 {
-    memset(a, 0, sizeof(*a));
+    static BIGNUM nilbn;
+
+    *a = nilbn;
     bn_check_top(a);
 }
 
