@@ -50,6 +50,8 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  * ====================================================================
  */
+#ifndef OPENSSL_ASYNC_ARCH_ASYNC_POSIX_H
+#define OPENSSL_ASYNC_ARCH_ASYNC_POSIX_H
 #include <openssl/e_os2.h>
 
 #if defined(OPENSSL_SYS_UNIX) && defined(OPENSSL_THREADS)
@@ -62,14 +64,6 @@
 
 #  define ASYNC_POSIX
 #  define ASYNC_ARCH
-
-/*
- * Some platforms complain (e.g. OS-X) that setcontext/getcontext/makecontext
- * are deprecated without the following defined. We know its deprecated but
- * there is no alternative.
- */
-#  define _XOPEN_SOURCE
-#  pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 
 #  include <ucontext.h>
 #  include <setjmp.h>
@@ -103,14 +97,11 @@ static inline int async_fibre_swapcontext(async_fibre *o, async_fibre *n, int r)
     return 1;
 }
 
-#  define async_fibre_makecontext(c) \
-            (!getcontext(&(c)->fibre) \
-            && async_fibre_init(c) \
-            && (makecontext(&(c)->fibre, async_start_func, 0), 1))
 #  define async_fibre_init_dispatcher(d)
 
-int async_fibre_init(async_fibre *fibre);
+int async_fibre_makecontext(async_fibre *fibre);
 void async_fibre_free(async_fibre *fibre);
 
 # endif
 #endif
+#endif /* OPENSSL_ASYNC_ARCH_ASYNC_POSIX_H */
