@@ -2033,7 +2033,7 @@ void ERR_load_SSL_strings(void);
 # define SSL_F_SSL3_SETUP_WRITE_BUFFER                    291
 # define SSL_F_SSL3_WRITE_BYTES                           158
 # define SSL_F_SSL3_WRITE_PENDING                         159
-# define SSL_F_SSL_ACCEPT                                 351
+# define SSL_F_SSL_ACCEPT                                 390
 # define SSL_F_SSL_ADD_CERT_CHAIN                         316
 # define SSL_F_SSL_ADD_CERT_TO_BUF                        319
 # define SSL_F_SSL_ADD_CLIENTHELLO_RENEGOTIATE_EXT        298
@@ -2124,7 +2124,7 @@ void ERR_load_SSL_strings(void);
 # define SSL_F_SSL_SET_WFD                                196
 # define SSL_F_SSL_SHUTDOWN                               224
 # define SSL_F_SSL_SRP_CTX_INIT                           313
-# define SSL_F_SSL_START_ASYNC_JOB                        388
+# define SSL_F_SSL_START_ASYNC_JOB                        389
 # define SSL_F_SSL_UNDEFINED_CONST_FUNCTION               243
 # define SSL_F_SSL_UNDEFINED_FUNCTION                     197
 # define SSL_F_SSL_UNDEFINED_VOID_FUNCTION                244
