@@ -553,16 +553,12 @@ struct servent *PASCAL getservbyname(const char *, const char *);
 #    include <sys/select.h>
 #   endif
 
-#   if defined(__sun)
-#    include <sys/filio.h>
+#   ifndef VMS
+#    include <sys/ioctl.h>
 #   else
-#    ifndef VMS
+        /* ioctl is only in VMS > 7.0 and when socketshr is not used */
+#    if !defined(TCPIP_TYPE_SOCKETSHR) && defined(__VMS_VER) && (__VMS_VER > 70000000)
 #     include <sys/ioctl.h>
-#    else
-         /* ioctl is only in VMS > 7.0 and when socketshr is not used */
-#     if !defined(TCPIP_TYPE_SOCKETSHR) && defined(__VMS_VER) && (__VMS_VER > 70000000)
-#      include <sys/ioctl.h>
-#     endif
 #    endif
 #   endif
 
@@ -593,22 +589,6 @@ struct servent *PASCAL getservbyname(const char *, const char *);
 #   endif
 #  endif
 
-# endif
-
-# if defined(__sun) && !defined(__svr4__) && !defined(__SVR4)
-  /* include headers first, so our defines don't break it */
-#  include <stdlib.h>
-#  include <string.h>
-  /* bcopy can handle overlapping moves according to SunOS 4.1.4 manpage */
-#  define memmove(s1,s2,n) bcopy((s2),(s1),(n))
-#  define strtoul(s,e,b) ((unsigned long int)strtol((s),(e),(b)))
-extern char *sys_errlist[];
-extern int sys_nerr;
-#  define strerror(errnum) \
-        (((errnum)<0 || (errnum)>=sys_nerr) ? NULL : sys_errlist[errnum])
-  /* Being signed SunOS 4.x memcpy breaks ASN1_OBJECT table lookup */
-#  include "internal/o_str.h"
-#  define memcmp OPENSSL_memcmp
 # endif
 
 # ifndef OPENSSL_EXIT
