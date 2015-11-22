@@ -51,15 +51,13 @@
  * ====================================================================
  */
 
+/* This must be the first #include file */
 #include "../async_locl.h"
-#include <openssl/async.h>
 
 #ifdef ASYNC_POSIX
+
 # include <stddef.h>
-# include <ucontext.h>
 # include <unistd.h>
-# include <openssl/crypto.h>
-# include <openssl/async.h>
 
 pthread_key_t posixctx;
 pthread_key_t posixpool;
@@ -91,27 +89,27 @@ void async_global_cleanup(void)
 {
 }
 
-int async_fibre_init(async_fibre *fibre)
+int async_fibre_makecontext(async_fibre *fibre)
 {
-    void *stack = NULL;
-
-    stack = OPENSSL_malloc(STACKSIZE);
-    if (stack == NULL) {
-        return 0;
-    }
-
-    fibre->fibre.uc_stack.ss_sp = stack;
-    fibre->fibre.uc_stack.ss_size = STACKSIZE;
-    fibre->fibre.uc_link = NULL;
     fibre->env_init = 0;
-
-    return 1;
+    if (getcontext(&fibre->fibre) == 0) {
+        fibre->fibre.uc_stack.ss_sp = OPENSSL_malloc(STACKSIZE);
+        if (fibre->fibre.uc_stack.ss_sp != NULL) {
+            fibre->fibre.uc_stack.ss_size = STACKSIZE;
+            fibre->fibre.uc_link = NULL;
+            makecontext(&fibre->fibre, async_start_func, 0);
+            return 1;
+        }
+    } else {
+        fibre->fibre.uc_stack.ss_sp = NULL;
+    }
+    return 0;
 }
 
 void async_fibre_free(async_fibre *fibre)
 {
-    if (fibre->fibre.uc_stack.ss_sp)
-        OPENSSL_free(fibre->fibre.uc_stack.ss_sp);
+    OPENSSL_free(fibre->fibre.uc_stack.ss_sp);
+    fibre->fibre.uc_stack.ss_sp = NULL;
 }
 
 int async_pipe(OSSL_ASYNC_FD *pipefds)

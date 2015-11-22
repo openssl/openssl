@@ -59,10 +59,11 @@
  */
 #undef _FORTIFY_SOURCE
 
-#include <openssl/err.h>
-#include <openssl/async.h>
-#include <string.h>
+/* This must be the first #include file */
 #include "async_locl.h"
+
+#include <openssl/err.h>
+#include <string.h>
 
 #define ASYNC_JOB_RUNNING   0
 #define ASYNC_JOB_PAUSING   1
@@ -168,8 +169,11 @@ static ASYNC_JOB *async_get_pool_job(void) {
             return NULL;
 
         job = async_job_new();
-        if (job) {
-            async_fibre_makecontext(&job->fibrectx);
+        if (job != NULL) {
+            if (! async_fibre_makecontext(&job->fibrectx)) {
+                async_job_free(job);
+                return NULL;
+            }
             pool->curr_size++;
         }
     }
@@ -369,22 +373,20 @@ int ASYNC_init_thread(size_t max_size, size_t init_size)
     pool->max_size = max_size;
 
     /* Pre-create jobs as required */
-    while (init_size) {
+    while (init_size--) {
         ASYNC_JOB *job;
         job = async_job_new();
-        if (job) {
-            async_fibre_makecontext(&job->fibrectx);
-            job->funcargs = NULL;
-            sk_ASYNC_JOB_push(pool->jobs, job);
-            curr_size++;
-            init_size--;
-        } else {
+        if (job == NULL || !async_fibre_makecontext(&job->fibrectx)) {
             /*
-             * Not actually fatal because we already created the pool, just skip
-             * creation of any more jobs
+             * Not actually fatal because we already created the pool, just
+             * skip creation of any more jobs
              */
-            init_size = 0;
+            async_job_free(job);
+            break;
         }
+        job->funcargs = NULL;
+        sk_ASYNC_JOB_push(pool->jobs, job);
+        curr_size++;
     }
     pool->curr_size = curr_size;
     if (!async_set_pool(pool)) {

@@ -51,8 +51,8 @@
  * ====================================================================
  */
 
+/* This must be the first #include file */
 #include "../async_locl.h"
-#include <openssl/async.h>
 
 #ifdef ASYNC_NULL
 

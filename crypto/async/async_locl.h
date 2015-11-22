@@ -51,6 +51,15 @@
  * ====================================================================
  */
 
+/*
+ * Must do this before including any header files, because on MacOS/X <stlib.h>
+ * includes <signal.h> which includes <ucontext.h>
+ */
+#if defined(__APPLE__) && defined(__MACH__) && !defined(_XOPEN_SOURCE)
+# define _XOPEN_SOURCE          /* Otherwise incomplete ucontext_t structure */
+# pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
+
 #include <openssl/async.h>
 #include <openssl/crypto.h>
 

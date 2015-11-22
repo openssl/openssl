@@ -51,6 +51,7 @@
  * ====================================================================
  */
 
+/* This must be the first #include file */
 #include "../async_locl.h"
 
 #ifdef ASYNC_WIN
