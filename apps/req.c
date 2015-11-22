@@ -1149,9 +1149,9 @@ static int auto_info(X509_REQ *req, STACK_OF(CONF_VALUE) *dn_sk,
             }
         }
 #ifndef CHARSET_EBCDIC
-        plus_char = (*p == ‘+’);
+        plus_char = (*p == '+');
 #else
-        plus_char = (*p == os_toascii[‘+’]);
+        plus_char = (*p == os_toascii['+']);
 #endif
         if (plus_char){
             p++;
