@@ -553,7 +553,7 @@ struct servent *PASCAL getservbyname(const char *, const char *);
 #    include <sys/select.h>
 #   endif
 
-#   if defined(sun)
+#   if defined(__sun)
 #    include <sys/filio.h>
 #   else
 #    ifndef VMS
@@ -595,7 +595,7 @@ struct servent *PASCAL getservbyname(const char *, const char *);
 
 # endif
 
-# if defined(sun) && !defined(__svr4__) && !defined(__SVR4)
+# if defined(__sun) && !defined(__svr4__) && !defined(__SVR4)
   /* include headers first, so our defines don't break it */
 #  include <stdlib.h>
 #  include <string.h>
