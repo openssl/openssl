@@ -389,7 +389,8 @@ static const SSL_CIPHER cipher_aliases[] = {
 
     /* protocol version aliases */
     {0, SSL_TXT_SSLV3, 0, 0, 0, 0, 0, SSL_SSLV3, 0, 0, 0, 0},
-    {0, SSL_TXT_TLSV1, 0, 0, 0, 0, 0, SSL_TLSV1, 0, 0, 0, 0},
+    {0, SSL_TXT_TLSV1, 0, 0, 0, 0, 0, SSL_SSLV3, 0, 0, 0, 0},
+    {0, "TLSv1.0", 0, 0, 0, 0, 0, SSL_TLSV1, 0, 0, 0, 0},
     {0, SSL_TXT_TLSV1_2, 0, 0, 0, 0, 0, SSL_TLSV1_2, 0, 0, 0, 0},
 
     /* export flag */
@@ -1621,6 +1622,8 @@ char *SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
 
     if (alg_ssl & SSL_SSLV3)
         ver = "SSLv3";
+    else if (alg_ssl & SSL_TLSV1)
+        ver = "TLSv1.0";
     else if (alg_ssl & SSL_TLSV1_2)
         ver = "TLSv1.2";
     else
