@@ -1025,6 +1025,7 @@ int s_server_main(int argc, char *argv[])
 #ifndef OPENSSL_NO_PSK
     /* by default do not send a PSK identity hint */
     static char *psk_identity_hint = NULL;
+    int key_in_use;
 #endif
 #ifndef OPENSSL_NO_SRP
     char *srpuserseed = NULL;
@@ -1842,11 +1843,11 @@ int s_server_main(int argc, char *argv[])
     }
 #ifndef OPENSSL_NO_PSK
 # ifdef OPENSSL_NO_JPAKE
-    if (psk_key != NULL)
+    key_in_use = (psk_key != NULL);
 # else
-    if (psk_key != NULL || jpake_secret)
+    key_in_use = (psk_key != NULL || jpake_secret);
 # endif
-    {
+    if (key_in_use){
         if (s_debug)
             BIO_printf(bio_s_out,
                        "PSK key given or JPAKE in use, setting server callback\n");

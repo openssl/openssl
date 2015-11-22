@@ -95,7 +95,7 @@ int i2a_ASN1_STRING(BIO *bp, ASN1_STRING *a, int type)
 
 int a2i_ASN1_STRING(BIO *bp, ASN1_STRING *bs, char *buf, int size)
 {
-    int i, j, k, m, n, again, bufsize;
+    int i, j, k, m, n, again, bufsize, spec_char;
     unsigned char *s = NULL, *sp;
     unsigned char *bufp;
     int num = 0, slen = 0, first = 1;
@@ -123,18 +123,18 @@ int a2i_ASN1_STRING(BIO *bp, ASN1_STRING *bs, char *buf, int size)
 
         for (j = i - 1; j > 0; j--) {
 #ifndef CHARSET_EBCDIC
-            if (!(((buf[j] >= '0') && (buf[j] <= '9')) ||
+            spec_char = (!(((buf[j] >= '0') && (buf[j] <= '9')) ||
                   ((buf[j] >= 'a') && (buf[j] <= 'f')) ||
-                  ((buf[j] >= 'A') && (buf[j] <= 'F'))))
+                  ((buf[j] >= 'A') && (buf[j] <= 'F'))));
 #else
             /*
              * This #ifdef is not strictly necessary, since the characters
              * A...F a...f 0...9 are contiguous (yes, even in EBCDIC - but
              * not the whole alphabet). Nevertheless, isxdigit() is faster.
              */
-            if (!isxdigit(buf[j]))
+            spec_char = (!isxdigit(buf[j]));
 #endif
-            {
+            if (spec_char){
                 i = j;
                 break;
             }
