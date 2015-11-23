@@ -539,7 +539,7 @@ struct servent *PASCAL getservbyname(const char *, const char *);
 #     endif
 #    endif
 #    ifdef FILIO_H
-#     include <sys/filio.h>     /* Added for FIONBIO under unixware */
+#     include <sys/filio.h> /* FIONBIO in some SVR4, e.g. unixware, solaris */
 #    endif
 #    include <netinet/in.h>
 #    include <arpa/inet.h>
