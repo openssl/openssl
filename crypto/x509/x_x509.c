@@ -175,12 +175,11 @@ X509 *d2i_X509_AUX(X509 **a, const unsigned char **pp, long length)
     /* Save start position */
     q = *pp;
 
-    if (!a || *a == NULL) {
+    if (a == NULL || *a == NULL)
         freeret = 1;
-    }
     ret = d2i_X509(a, &q, length);
     /* If certificate unreadable then forget it */
-    if (!ret)
+    if (ret == NULL)
         return NULL;
     /* update length */
     length -= q - *pp;
