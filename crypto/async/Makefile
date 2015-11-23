@@ -97,8 +97,16 @@ arch/async_posix.o: ../../include/openssl/stack.h
 arch/async_posix.o: ../../include/openssl/symhacks.h arch/../arch/async_null.h
 arch/async_posix.o: arch/../arch/async_posix.h arch/../arch/async_win.h
 arch/async_posix.o: arch/../async_locl.h arch/async_posix.c
-arch/async_win.o: ../../include/openssl/async.h arch/async_win.c
-arch/async_win.o: arch/async_win.h
+arch/async_win.o: ../../e_os.h ../../include/openssl/async.h
+arch/async_win.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
+arch/async_win.o: ../../include/openssl/opensslconf.h
+arch/async_win.o: ../../include/openssl/opensslv.h
+arch/async_win.o: ../../include/openssl/ossl_typ.h
+arch/async_win.o: ../../include/openssl/safestack.h
+arch/async_win.o: ../../include/openssl/stack.h
+arch/async_win.o: ../../include/openssl/symhacks.h arch/../arch/async_null.h
+arch/async_win.o: arch/../arch/async_posix.h arch/../arch/async_win.h
+arch/async_win.o: arch/../async_locl.h arch/async_win.c
 async.o: ../../e_os.h ../../include/openssl/async.h ../../include/openssl/bio.h
 async.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
 async.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
