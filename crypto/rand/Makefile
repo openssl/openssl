@@ -63,15 +63,15 @@ clean:
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
 md_rand.o: ../../e_os.h ../../include/openssl/asn1.h
-md_rand.o: ../../include/openssl/bio.h ../../include/openssl/crypto.h
-md_rand.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-md_rand.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
-md_rand.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
-md_rand.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
-md_rand.o: ../../include/openssl/ossl_typ.h ../../include/openssl/rand.h
-md_rand.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
-md_rand.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-md_rand.o: md_rand.c rand_lcl.h
+md_rand.o: ../../include/openssl/async.h ../../include/openssl/bio.h
+md_rand.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
+md_rand.o: ../../include/openssl/err.h ../../include/openssl/evp.h
+md_rand.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
+md_rand.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
+md_rand.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+md_rand.o: ../../include/openssl/rand.h ../../include/openssl/safestack.h
+md_rand.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
+md_rand.o: ../../include/openssl/symhacks.h md_rand.c rand_lcl.h
 rand_egd.o: ../../include/openssl/buffer.h ../../include/openssl/e_os2.h
 rand_egd.o: ../../include/openssl/opensslconf.h
 rand_egd.o: ../../include/openssl/ossl_typ.h ../../include/openssl/rand.h
