@@ -471,7 +471,7 @@ BIO *BIO_find_type(BIO *bio, int type)
 {
     int mt, mask;
 
-    if (!bio)
+    if (bio == NULL)
         return NULL;
     mask = type & 0xff;
     do {
@@ -491,7 +491,7 @@ BIO *BIO_find_type(BIO *bio, int type)
 
 BIO *BIO_next(BIO *b)
 {
-    if (!b)
+    if (b == NULL)
         return NULL;
     return b->next_bio;
 }
