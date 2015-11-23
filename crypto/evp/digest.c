@@ -364,3 +364,14 @@ int EVP_MD_CTX_cleanup(EVP_MD_CTX *ctx)
 
     return 1;
 }
+
+int EVP_MD_CTX_ctrl(EVP_MD_CTX *ctx, int cmd, int p1, void *p2)
+{
+    if (ctx->digest && ctx->digest->md_ctrl) {
+        int ret = ctx->digest->md_ctrl(ctx, cmd, p1, p2);
+        if (ret <= 0)
+            return 0;
+        return 1;
+    }
+    return 0;
+}

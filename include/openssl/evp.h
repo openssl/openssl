@@ -626,6 +626,7 @@ void BIO_set_md(BIO *, const EVP_MD *md);
 
 void EVP_MD_CTX_init(EVP_MD_CTX *ctx);
 int EVP_MD_CTX_cleanup(EVP_MD_CTX *ctx);
+int EVP_MD_CTX_ctrl(EVP_MD_CTX *ctx, int cmd, int p1, void *p2);
 EVP_MD_CTX *EVP_MD_CTX_create(void);
 void EVP_MD_CTX_destroy(EVP_MD_CTX *ctx);
 /*__owur*/ int EVP_MD_CTX_copy_ex(EVP_MD_CTX *out, const EVP_MD_CTX *in);
