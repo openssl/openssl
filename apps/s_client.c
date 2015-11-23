@@ -1513,8 +1513,8 @@ int s_client_main(int argc, char **argv)
             BIO_free(fbio);
             if (!foundit)
                 BIO_printf(bio_err,
-                           "didn't found starttls in server response,"
-                           " try anyway...\n");
+                           "didn't find starttls in server response,"
+                           " trying anyway...\n");
             BIO_printf(sbio, "STARTTLS\r\n");
             BIO_read(sbio, sbuf, BUFSIZZ);
         }
@@ -1551,8 +1551,8 @@ int s_client_main(int argc, char **argv)
             BIO_free(fbio);
             if (!foundit)
                 BIO_printf(bio_err,
-                           "didn't found STARTTLS in server response,"
-                           " try anyway...\n");
+                           "didn't find STARTTLS in server response,"
+                           " trying anyway...\n");
             BIO_printf(sbio, ". STARTTLS\r\n");
             BIO_read(sbio, sbuf, BUFSIZZ);
         }
