@@ -33,7 +33,7 @@ OPENSSLDIR=/usr/local/ssl
 # NO_RC4  - Define to build without the RC4 algorithm
 # NO_RC2  - Define to build without the RC2 algorithm
 # THREADS - Define when building with threads, you will probably also need any
-#           system defines as well, i.e. _REENTERANT for Solaris 2.[34]
+#           system defines as well, i.e. _REENTRANT for Solaris 2.[34]
 # TERMIO  - Define the termio terminal subsystem, needed if sgtty is missing.
 # TERMIOS - Define the termios terminal subsystem, Silicon Graphics.
 # LONGCRYPT - Define to use HPUX 10.x's long password modification to crypt(3).
