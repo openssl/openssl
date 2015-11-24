@@ -135,7 +135,7 @@ static int asn1_parse2(BIO *bp, const unsigned char **pp, long length,
 
     if (depth > ASN1_PARSE_MAXDEPTH) {
             BIO_puts(bp, "BAD RECURSION DEPTH\n");
-            goto end;
+            return 0;
     }
 
     p = *pp;
