@@ -2715,6 +2715,7 @@ psk_err:
         EVP_PKEY_free(srvr_pub_pkey);
     }
 #endif                          /* !OPENSSL_NO_EC */
+#ifndef OPENSSL_NO_GOST
     else if (alg_k & SSL_kGOST) {
         /* GOST key exchange message creation */
         EVP_PKEY_CTX *pkey_ctx;
@@ -2836,6 +2837,7 @@ psk_err:
         EVP_PKEY_free(pub_key);
 
     }
+#endif
 #ifndef OPENSSL_NO_SRP
     else if (alg_k & SSL_kSRP) {
         if (s->srp_ctx.A != NULL) {
@@ -2964,7 +2966,7 @@ int tls_construct_client_verify(SSL *s)
     const EVP_MD *md = s->s3->tmp.md[s->cert->key - s->cert->pkeys];
     EVP_MD_CTX mctx;
     unsigned u = 0;
-    unsigned long n;
+    unsigned long n = 0;
     long hdatalen = 0;
     void *hdata;
 
@@ -2984,6 +2986,7 @@ int tls_construct_client_verify(SSL *s)
             goto err;
         }
         p += 2;
+        n = 2;
     }
 #ifdef SSL_DEBUG
     fprintf(stderr, "Using client alg %s\n", EVP_MD_name(md));
@@ -2998,21 +3001,16 @@ int tls_construct_client_verify(SSL *s)
         SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_VERIFY, ERR_R_EVP_LIB);
         goto err;
     }
+#ifndef OPENSSL_NO_GOST
     if (pkey->type == NID_id_GostR3410_2001
             || pkey->type == NID_id_GostR3410_2012_256
             || pkey->type == NID_id_GostR3410_2012_512) {
-        unsigned int i, k;
-        for (i = u - 1, k = 0; k < u/2; k++, i--) {
-            char c = p[2 + k];
-            p[2 + k] = p[2 + i];
-            p[2 + i] = c;
-        }
+        BUF_reverse(p + 2, NULL, u);
     }
+#endif
 
     s2n(u, p);
-    n = u + 2;
-    if (SSL_USE_SIGALGS(s))
-        n += 2;
+    n += u + 2;
     /* Digest cached records and discard handshake buffer */
     if (!ssl3_digest_cached_records(s, 0))
         goto err;

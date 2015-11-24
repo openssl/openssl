@@ -1144,7 +1144,7 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      },
 
     /* GOST Ciphersuites */
-
+#ifndef OPENSL_NO_GOST
     {
      1,
      "GOST2001-GOST89-GOST89",
@@ -1173,7 +1173,7 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      0,
      0
     },
-
+#endif
 #ifndef OPENSSL_NO_CAMELLIA
     /* Camellia ciphersuites from RFC4132 (256-bit portion) */
 
@@ -3769,7 +3769,7 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      256,
      256,
      },
-
+#ifndef OPENSSL_NO_GOST
     {
      1,
      "GOST2012-GOST8912-GOST8912",
@@ -3796,7 +3796,7 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      SSL_HANDSHAKE_MAC_GOST12_256 | TLS1_PRF_GOST12_256,
      0,
      0},
-
+#endif
 
 /* end of list */
 };

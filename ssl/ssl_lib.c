@@ -2068,6 +2068,7 @@ void ssl_set_masks(SSL *s, const SSL_CIPHER *cipher)
             rsa_enc_export, rsa_sign, dsa_sign, dh_rsa, dh_dsa);
 #endif
 
+#ifndef OPENSSL_NO_GOST
     cpk = &(c->pkeys[SSL_PKEY_GOST12_512]);
     if (cpk->x509 != NULL && cpk->privatekey != NULL) {
         mask_k |= SSL_kGOST;
@@ -2083,6 +2084,7 @@ void ssl_set_masks(SSL *s, const SSL_CIPHER *cipher)
         mask_k |= SSL_kGOST;
         mask_a |= SSL_aGOST01;
     }
+#endif
 
     if (rsa_enc || (rsa_tmp && rsa_sign))
         mask_k |= SSL_kRSA;

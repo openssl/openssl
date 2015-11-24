@@ -623,13 +623,16 @@ int ssl_cert_type(X509 *x, EVP_PKEY *pkey)
         ret = SSL_PKEY_ECC;
     }
 #endif
+#ifndef OPENSSL_NO_GOST
     else if (i == NID_id_GostR3410_2001) {
         ret = SSL_PKEY_GOST01;
     } else if (i == NID_id_GostR3410_2012_256) {
         ret = SSL_PKEY_GOST12_256;
     } else if (i == NID_id_GostR3410_2012_512) {
         ret = SSL_PKEY_GOST12_512;
-    } else if (x && (i == EVP_PKEY_DH || i == EVP_PKEY_DHX)) {
+    }
+#endif
+    else if (x && (i == EVP_PKEY_DH || i == EVP_PKEY_DHX)) {
         /*
          * For DH two cases: DH certificate signed with RSA and DH
          * certificate signed with DSA.
