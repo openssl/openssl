@@ -1550,8 +1550,7 @@ WORK_STATE tls_post_process_client_hello(SSL *s, WORK_STATE wst)
             s->s3->tmp.new_cipher = s->session->cipher;
         }
 
-        if (!(SSL_USE_SIGALGS(s) || (s->s3->tmp.new_cipher->algorithm_auth & (SSL_aGOST12|SSL_aGOST01)) )
-                || !(s->verify_mode & SSL_VERIFY_PEER)) {
+        if (!(s->verify_mode & SSL_VERIFY_PEER)) {
             if (!ssl3_digest_cached_records(s, 0)) {
                 al = SSL_AD_INTERNAL_ERROR;
                 goto f_err;
@@ -2933,8 +2932,7 @@ WORK_STATE tls_post_process_client_key_exchange(SSL *s, WORK_STATE wst)
         BIO_free(s->s3->handshake_buffer);
         s->s3->handshake_buffer = NULL;
         return WORK_FINISHED_CONTINUE;
-    } else if (SSL_USE_SIGALGS(s) || (s->s3->tmp.new_cipher->algorithm_auth
-                        & (SSL_aGOST12|SSL_aGOST01) )) {
+    } else {
         if (!s->session->peer) {
             /* No peer certificate so we no longer need the handshake_buffer */
             BIO_free(s->s3->handshake_buffer);
@@ -2954,41 +2952,6 @@ WORK_STATE tls_post_process_client_key_exchange(SSL *s, WORK_STATE wst)
             ossl_statem_set_error(s);
             return WORK_ERROR;
         }
-    } else {
-        int offset = 0;
-        int dgst_num;
-
-        /*
-         * We need to get hashes here so if there is a client cert,
-         * it can be verified FIXME - digest processing for
-         * CertificateVerify should be generalized. But it is next
-         * step
-         */
-        if (!ssl3_digest_cached_records(s, 0)) {
-            ossl_statem_set_error(s);
-            return WORK_ERROR;
-        }
-        for (dgst_num = 0; dgst_num < SSL_MAX_DIGEST; dgst_num++) {
-            if (s->s3->handshake_dgst[dgst_num]) {
-                int dgst_size;
-
-                s->method->ssl3_enc->cert_verify_mac(s,
-                                                     EVP_MD_CTX_type
-                                                     (s->
-                                                      s3->handshake_dgst
-                                                      [dgst_num]),
-                                                     &(s->s3->
-                                                       tmp.cert_verify_md
-                                                       [offset]));
-                dgst_size =
-                    EVP_MD_CTX_size(s->s3->handshake_dgst[dgst_num]);
-                if (dgst_size < 0) {
-                    ossl_statem_set_error(s);
-                return WORK_ERROR;
-                }
-                offset += dgst_size;
-            }
-        }
     }
 
     return WORK_FINISHED_CONTINUE;
@@ -2999,10 +2962,13 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
     EVP_PKEY *pkey = NULL;
     unsigned char *sig, *data;
     int al, ret = MSG_PROCESS_ERROR;
-    int type = 0, i, j;
+    int type = 0, j;
     unsigned int len;
     X509 *peer;
     const EVP_MD *md = NULL;
+    long hdatalen = 0;
+    void *hdata;
+
     EVP_MD_CTX mctx;
     EVP_MD_CTX_init(&mctx);
 
@@ -3043,6 +3009,10 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
 #ifdef SSL_DEBUG
             fprintf(stderr, "USING TLSv1.2 HASH %s\n", EVP_MD_name(md));
 #endif
+        } else if (pkey->type == EVP_PKEY_RSA) {
+            md = EVP_md5_sha1();
+        } else {
+            md = EVP_sha1();
         }
         if (!PACKET_get_net_2(pkt, &len)) {
             SSLerr(SSL_F_TLS_PROCESS_CERT_VERIFY, SSL_R_LENGTH_MISMATCH);
@@ -3063,101 +3033,45 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
         goto f_err;
     }
 
-    if (SSL_USE_SIGALGS(s)
-            || pkey->type == NID_id_GostR3410_2001
+    hdatalen = BIO_get_mem_data(s->s3->handshake_buffer, &hdata);
+    if (hdatalen <= 0) {
+        SSLerr(SSL_F_TLS_PROCESS_CERT_VERIFY, ERR_R_INTERNAL_ERROR);
+        al = SSL_AD_INTERNAL_ERROR;
+        goto f_err;
+    }
+#ifdef SSL_DEBUG
+    fprintf(stderr, "Using client verify alg %s\n", EVP_MD_name(md));
+#endif
+    if (!EVP_VerifyInit_ex(&mctx, md, NULL)
+        || !EVP_VerifyUpdate(&mctx, hdata, hdatalen)) {
+        SSLerr(SSL_F_TLS_PROCESS_CERT_VERIFY, ERR_R_EVP_LIB);
+        al = SSL_AD_INTERNAL_ERROR;
+        goto f_err;
+    }
+
+    if (pkey->type == NID_id_GostR3410_2001
             || pkey->type == NID_id_GostR3410_2012_256
             || pkey->type == NID_id_GostR3410_2012_512) {
-        long hdatalen = 0;
-        void *hdata;
-        hdatalen = BIO_get_mem_data(s->s3->handshake_buffer, &hdata);
-        if (hdatalen <= 0) {
-            SSLerr(SSL_F_TLS_PROCESS_CERT_VERIFY, ERR_R_INTERNAL_ERROR);
-            al = SSL_AD_INTERNAL_ERROR;
-            goto f_err;
+        unsigned int j1, j2;
+        for (j1 = len - 1, j2 = 0; j2 < len/2; j2++, j1--) {
+            char c = data[j2];
+            data[j2] = data[j1];
+            data[j1] = c;
         }
-#ifdef SSL_DEBUG
-        fprintf(stderr, "Using TLS 1.2 with client verify alg %s\n",
-                EVP_MD_name(md));
-#endif
-        if (!SSL_USE_SIGALGS(s)) {
-            int dgst_nid;
-            if (EVP_PKEY_get_default_digest_nid(pkey, &dgst_nid) <= 0
-                || (md = EVP_get_digestbynid(dgst_nid)) == NULL) {
-                SSLerr(SSL_F_TLS_PROCESS_CERT_VERIFY, ERR_R_INTERNAL_ERROR);
-                al = SSL_AD_INTERNAL_ERROR;
-                goto f_err;
-            }
-        }
-        if (!EVP_VerifyInit_ex(&mctx, md, NULL)
-            || !EVP_VerifyUpdate(&mctx, hdata, hdatalen)) {
-            SSLerr(SSL_F_TLS_PROCESS_CERT_VERIFY, ERR_R_EVP_LIB);
-            al = SSL_AD_INTERNAL_ERROR;
-            goto f_err;
-        }
+    }
 
-        if (pkey->type == NID_id_GostR3410_2001
-                || pkey->type == NID_id_GostR3410_2012_256
-                || pkey->type == NID_id_GostR3410_2012_512) {
-            unsigned int j1, j2;
-            for (j1 = len - 1, j2 = 0; j2 < len/2; j2++, j1--) {
-                char c = data[j2];
-                data[j2] = data[j1];
-                data[j1] = c;
-            }
-        }
+    if (s->version == SSL3_VERSION
+        && !EVP_MD_CTX_ctrl(&mctx, EVP_CTRL_SSL3_MASTER_SECRET,
+                            s->session->master_key_length,
+                            s->session->master_key)) {
+        SSLerr(SSL_F_TLS_PROCESS_CERT_VERIFY, ERR_R_EVP_LIB);
+        al = SSL_AD_INTERNAL_ERROR;
+        goto f_err;
+    }
 
-        if (EVP_VerifyFinal(&mctx, data, len, pkey) <= 0) {
-            al = SSL_AD_DECRYPT_ERROR;
-            SSLerr(SSL_F_TLS_PROCESS_CERT_VERIFY, SSL_R_BAD_SIGNATURE);
-            goto f_err;
-        }
-    } else
-#ifndef OPENSSL_NO_RSA
-    if (pkey->type == EVP_PKEY_RSA) {
-        i = RSA_verify(NID_md5_sha1, s->s3->tmp.cert_verify_md,
-                       MD5_DIGEST_LENGTH + SHA_DIGEST_LENGTH, data, len,
-                       pkey->pkey.rsa);
-        if (i < 0) {
-            al = SSL_AD_DECRYPT_ERROR;
-            SSLerr(SSL_F_TLS_PROCESS_CERT_VERIFY, SSL_R_BAD_RSA_DECRYPT);
-            goto f_err;
-        }
-        if (i == 0) {
-            al = SSL_AD_DECRYPT_ERROR;
-            SSLerr(SSL_F_TLS_PROCESS_CERT_VERIFY, SSL_R_BAD_RSA_SIGNATURE);
-            goto f_err;
-        }
-    } else
-#endif
-#ifndef OPENSSL_NO_DSA
-    if (pkey->type == EVP_PKEY_DSA) {
-        j = DSA_verify(pkey->save_type,
-                       &(s->s3->tmp.cert_verify_md[MD5_DIGEST_LENGTH]),
-                       SHA_DIGEST_LENGTH, data, len, pkey->pkey.dsa);
-        if (j <= 0) {
-            /* bad signature */
-            al = SSL_AD_DECRYPT_ERROR;
-            SSLerr(SSL_F_TLS_PROCESS_CERT_VERIFY, SSL_R_BAD_DSA_SIGNATURE);
-            goto f_err;
-        }
-    } else
-#endif
-#ifndef OPENSSL_NO_EC
-    if (pkey->type == EVP_PKEY_EC) {
-        j = ECDSA_verify(pkey->save_type,
-                         &(s->s3->tmp.cert_verify_md[MD5_DIGEST_LENGTH]),
-                         SHA_DIGEST_LENGTH, data, len, pkey->pkey.ec);
-        if (j <= 0) {
-            /* bad signature */
-            al = SSL_AD_DECRYPT_ERROR;
-            SSLerr(SSL_F_TLS_PROCESS_CERT_VERIFY, SSL_R_BAD_ECDSA_SIGNATURE);
-            goto f_err;
-        }
-    } else
-#endif
-    {
-        SSLerr(SSL_F_TLS_PROCESS_CERT_VERIFY, ERR_R_INTERNAL_ERROR);
-        al = SSL_AD_UNSUPPORTED_CERTIFICATE;
+    if (EVP_VerifyFinal(&mctx, data, len, pkey) <= 0) {
+        al = SSL_AD_DECRYPT_ERROR;
+        SSLerr(SSL_F_TLS_PROCESS_CERT_VERIFY, SSL_R_BAD_SIGNATURE);
         goto f_err;
     }
 
