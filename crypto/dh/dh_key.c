@@ -170,13 +170,15 @@ static int generate_key(DH *dh)
             if (local_prk == NULL)
                 goto err;
             BN_with_flags(prk, priv_key, BN_FLG_CONSTTIME);
-        } else
+        } else {
             prk = priv_key;
+        }
 
         if (!dh->meth->bn_mod_exp(dh, pub_key, dh->g, prk, dh->p, ctx, mont)) {
             BN_free(local_prk);
             goto err;
         }
+        /* We MUST free local_prk before any further use of priv_key */
         BN_free(local_prk);
     }
 
