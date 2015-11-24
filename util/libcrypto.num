@@ -4199,3 +4199,7 @@ X509_get0_notBefore                     4145	1_1_0	EXIST::FUNCTION:
 X509_get0_notAfter                      4146	1_1_0	EXIST::FUNCTION:
 X509_CRL_get0_nextUpdate                4147	1_1_0	EXIST::FUNCTION:
 BIO_get_new_index                       4148	1_1_0	EXIST::FUNCTION:
+OPENSSL_utf82uni                        4149	1_1_0	EXIST::FUNCTION:
+PKCS12_add_friendlyname_utf8            4150	1_1_0	EXIST::FUNCTION:
+OPENSSL_uni2utf8                        4151	1_1_0	EXIST::FUNCTION:
+PKCS12_key_gen_utf8                     4152	1_1_0	EXIST::FUNCTION:

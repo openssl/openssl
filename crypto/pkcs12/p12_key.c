@@ -50,6 +50,29 @@ int PKCS12_key_gen_asc(const char *pass, int passlen, unsigned char *salt,
     return ret;
 }
 
+int PKCS12_key_gen_utf8(const char *pass, int passlen, unsigned char *salt,
+                        int saltlen, int id, int iter, int n,
+                        unsigned char *out, const EVP_MD *md_type)
+{
+    int ret;
+    unsigned char *unipass;
+    int uniplen;
+
+    if (!pass) {
+        unipass = NULL;
+        uniplen = 0;
+    } else if (!OPENSSL_utf82uni(pass, passlen, &unipass, &uniplen)) {
+        PKCS12err(PKCS12_F_PKCS12_KEY_GEN_UTF8, ERR_R_MALLOC_FAILURE);
+        return 0;
+    }
+    ret = PKCS12_key_gen_uni(unipass, uniplen, salt, saltlen,
+                             id, iter, n, out, md_type);
+    if (ret <= 0)
+        return 0;
+    OPENSSL_clear_free(unipass, uniplen);
+    return ret;
+}
+
 int PKCS12_key_gen_uni(unsigned char *pass, int passlen, unsigned char *salt,
                        int saltlen, int id, int iter, int n,
                        unsigned char *out, const EVP_MD *md_type)
