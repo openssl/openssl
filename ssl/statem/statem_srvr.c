@@ -2761,6 +2761,7 @@ MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
         }
     } else
 #endif                          /* OPENSSL_NO_SRP */
+#ifndef OPENSSL_NO_GOST
     if (alg_k & SSL_kGOST) {
         EVP_PKEY_CTX *pkey_ctx;
         EVP_PKEY *client_pub_pkey = NULL, *pk = NULL;
@@ -2854,7 +2855,9 @@ MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
         EVP_PKEY_free(client_pub_pkey);
         EVP_PKEY_CTX_free(pkey_ctx);
         goto f_err;
-    } else {
+    } else
+#endif
+    {
         al = SSL_AD_HANDSHAKE_FAILURE;
         SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE, SSL_R_UNKNOWN_CIPHER_TYPE);
         goto f_err;
@@ -2988,9 +2991,12 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
      * If key is GOST and n is exactly 64, it is bare signature without
      * length field (CryptoPro implementations at least till CSP 4.0)
      */
+#ifndef OPENSSL_NO_GOST
     if (PACKET_remaining(pkt) == 64 && pkey->type == NID_id_GostR3410_2001) {
         len = 64;
-    } else {
+    } else
+#endif
+    {
         if (SSL_USE_SIGALGS(s)) {
             int rv;
 
@@ -3049,16 +3055,13 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
         goto f_err;
     }
 
+#ifndef OPENSSL_NO_GOST
     if (pkey->type == NID_id_GostR3410_2001
             || pkey->type == NID_id_GostR3410_2012_256
             || pkey->type == NID_id_GostR3410_2012_512) {
-        unsigned int j1, j2;
-        for (j1 = len - 1, j2 = 0; j2 < len/2; j2++, j1--) {
-            char c = data[j2];
-            data[j2] = data[j1];
-            data[j1] = c;
-        }
+        BUF_reverse(data, NULL, len);
     }
+#endif
 
     if (s->version == SSL3_VERSION
         && !EVP_MD_CTX_ctrl(&mctx, EVP_CTRL_SSL3_MASTER_SECRET,
