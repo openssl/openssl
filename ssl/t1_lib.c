@@ -2705,7 +2705,7 @@ static int ssl_check_clienthello_tlsext_early(SSL *s)
     }
 }
 /* Initialise digests to default values */
-static void ssl_set_default_md(SSL *s)
+void ssl_set_default_md(SSL *s)
 {
     const EVP_MD **pmd = s->s3->tmp.md;
 #ifndef OPENSSL_NO_DSA
