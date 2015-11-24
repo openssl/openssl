@@ -4663,3 +4663,5 @@ ASYNC_unblock_pause                     5022	EXIST::FUNCTION:
 ASYNC_block_pause                       5023	EXIST::FUNCTION:
 ASYNC_cleanup                           5024	EXIST::FUNCTION:
 ASYNC_init                              5025	EXIST::FUNCTION:
+EVP_MD_CTX_ctrl                         5026	EXIST::FUNCTION:
+EVP_md5_sha1                            5027	EXIST::FUNCTION:MD5
