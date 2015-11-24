@@ -170,6 +170,9 @@ int PKCS12_key_gen_asc(const char *pass, int passlen, unsigned char *salt,
 int PKCS12_key_gen_uni(unsigned char *pass, int passlen, unsigned char *salt,
                        int saltlen, int id, int iter, int n,
                        unsigned char *out, const EVP_MD *md_type);
+int PKCS12_key_gen_utf8(const char *pass, int passlen, unsigned char *salt,
+                        int saltlen, int id, int iter, int n,
+                        unsigned char *out, const EVP_MD *md_type);
 int PKCS12_PBE_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
                         ASN1_TYPE *param, const EVP_CIPHER *cipher,
                         const EVP_MD *md_type, int en_de);
@@ -183,7 +186,10 @@ int PKCS12_setup_mac(PKCS12 *p12, int iter, unsigned char *salt,
                      int saltlen, const EVP_MD *md_type);
 unsigned char *OPENSSL_asc2uni(const char *asc, int asclen,
                                unsigned char **uni, int *unilen);
-char *OPENSSL_uni2asc(unsigned char *uni, int unilen);
+char *OPENSSL_uni2asc(const unsigned char *uni, int unilen);
+unsigned char *OPENSSL_utf82uni(const char *asc, int asclen,
+                                unsigned char **uni, int *unilen);
+char *OPENSSL_uni2utf8(const unsigned char *uni, int unilen);
 
 DECLARE_ASN1_FUNCTIONS(PKCS12)
 DECLARE_ASN1_FUNCTIONS(PKCS12_MAC_DATA)
@@ -237,6 +243,7 @@ int ERR_load_PKCS12_strings(void);
 # define PKCS12_F_PKCS12_ITEM_PACK_SAFEBAG                117
 # define PKCS12_F_PKCS12_KEY_GEN_ASC                      110
 # define PKCS12_F_PKCS12_KEY_GEN_UNI                      111
+# define PKCS12_F_PKCS12_KEY_GEN_UTF8                     116
 # define PKCS12_F_PKCS12_NEWPASS                          128
 # define PKCS12_F_PKCS12_PACK_P7DATA                      114
 # define PKCS12_F_PKCS12_PACK_P7ENCDATA                   115
