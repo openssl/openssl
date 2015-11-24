@@ -307,6 +307,7 @@ SSL *SSL_new(SSL_CTX *ctx)
     s->options = ctx->options;
     s->mode = ctx->mode;
     s->max_cert_list = ctx->max_cert_list;
+    s->references = 1;
 
     if (ctx->cert != NULL) {
         /*
@@ -375,7 +376,6 @@ SSL *SSL_new(SSL_CTX *ctx)
     if (!s->method->ssl_new(s))
         goto err;
 
-    s->references = 1;
     s->server = (ctx->method->ssl_accept == ssl_undefined_function) ? 0 : 1;
 
     SSL_clear(s);
