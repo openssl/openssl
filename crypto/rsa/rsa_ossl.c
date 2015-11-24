@@ -426,8 +426,9 @@ static int rsa_ossl_private_encrypt(int flen, const unsigned char *from,
                 goto err;
             }
             BN_with_flags(d, rsa->d, BN_FLG_CONSTTIME);
-        } else
+        } else {
             d = rsa->d;
+        }
 
         if (rsa->flags & RSA_FLAG_CACHE_PUBLIC)
             if (!BN_MONT_CTX_set_locked
@@ -441,6 +442,7 @@ static int rsa_ossl_private_encrypt(int flen, const unsigned char *from,
             BN_free(local_d);
             goto err;
         }
+        /* We MUST free local_d before any further use of rsa->d */
         BN_free(local_d);
     }
 
@@ -558,8 +560,9 @@ static int rsa_ossl_private_decrypt(int flen, const unsigned char *from,
                 goto err;
             }
             BN_with_flags(d, rsa->d, BN_FLG_CONSTTIME);
-        } else
+        } else {
             d = rsa->d;
+        }
 
         if (rsa->flags & RSA_FLAG_CACHE_PUBLIC)
             if (!BN_MONT_CTX_set_locked
@@ -572,6 +575,7 @@ static int rsa_ossl_private_decrypt(int flen, const unsigned char *from,
             BN_free(local_d);
             goto err;
         }
+        /* We MUST free local_d before any further use of rsa->d */
         BN_free(local_d);
     }
 
@@ -712,19 +716,9 @@ static int rsa_ossl_public_decrypt(int flen, const unsigned char *from,
 static int rsa_ossl_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
 {
     BIGNUM *r1, *m1, *vrfy;
-    BIGNUM *local_dmp1, *local_dmq1, *local_c, *local_r1;
-    BIGNUM *dmp1, *dmq1, *c, *pr1;
     int ret = 0;
 
     BN_CTX_start(ctx);
-
-    local_dmp1 = BN_new();
-    local_dmq1 = BN_new();
-    local_c = BN_new();
-    local_r1 = BN_new();
-    if (local_dmp1 == NULL
-            || local_dmq1 == NULL || local_c == NULL || local_r1 == NULL)
-        goto err;
 
     r1 = BN_CTX_get(ctx);
     m1 = BN_CTX_get(ctx);
@@ -765,6 +759,10 @@ static int rsa_ossl_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
                 goto err;
             }
         }
+        /*
+         * We MUST free local_p and local_q before any further use of rsa->p and
+         * rsa->q
+         */
         BN_free(local_p);
         BN_free(local_q);
     }
@@ -775,44 +773,74 @@ static int rsa_ossl_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
             goto err;
 
     /* compute I mod q */
-    if (!(rsa->flags & RSA_FLAG_NO_CONSTTIME)) {
-        c = local_c;
-        BN_with_flags(c, I, BN_FLG_CONSTTIME);
-        if (!BN_mod(r1, c, rsa->q, ctx))
+    {
+        BIGNUM *local_c = NULL;
+        const BIGNUM *c;
+        if (!(rsa->flags & RSA_FLAG_NO_CONSTTIME)) {
+            local_c = BN_new();
+            if (local_c == NULL)
+                goto err;
+            BN_with_flags(local_c, I, BN_FLG_CONSTTIME);
+            c = local_c;
+        } else {
+            c = I;
+        }
+        if (!BN_mod(r1, c, rsa->q, ctx)) {
+            BN_free(local_c);
             goto err;
-    } else {
-        if (!BN_mod(r1, I, rsa->q, ctx))
+        }
+
+        {
+            BIGNUM *local_dmq1 = NULL, *dmq1;
+            /* compute r1^dmq1 mod q */
+            if (!(rsa->flags & RSA_FLAG_NO_CONSTTIME)) {
+                dmq1 = local_dmq1 = BN_new();
+                if (local_dmq1 == NULL) {
+                    BN_free(local_c);
+                    goto err;
+                }
+                BN_with_flags(dmq1, rsa->dmq1, BN_FLG_CONSTTIME);
+            } else {
+                dmq1 = rsa->dmq1;
+            }
+            if (!rsa->meth->bn_mod_exp(m1, r1, dmq1, rsa->q, ctx,
+                rsa->_method_mod_q)) {
+                BN_free(local_c);
+                BN_free(local_dmq1);
+                goto err;
+            }
+            /* We MUST free local_dmq1 before any further use of rsa->dmq1 */
+            BN_free(local_dmq1);
+        }
+
+        /* compute I mod p */
+        if (!BN_mod(r1, c, rsa->p, ctx)) {
+            BN_free(local_c);
             goto err;
+        }
+        /* We MUST free local_c before any further use of I */
+        BN_free(local_c);
     }
 
-    /* compute r1^dmq1 mod q */
-    if (!(rsa->flags & RSA_FLAG_NO_CONSTTIME)) {
-        dmq1 = local_dmq1;
-        BN_with_flags(dmq1, rsa->dmq1, BN_FLG_CONSTTIME);
-    } else
-        dmq1 = rsa->dmq1;
-    if (!rsa->meth->bn_mod_exp(m1, r1, dmq1, rsa->q, ctx, rsa->_method_mod_q))
-        goto err;
-
-    /* compute I mod p */
-    if (!(rsa->flags & RSA_FLAG_NO_CONSTTIME)) {
-        c = local_c;
-        BN_with_flags(c, I, BN_FLG_CONSTTIME);
-        if (!BN_mod(r1, c, rsa->p, ctx))
+    {
+        BIGNUM *local_dmp1 = NULL, *dmp1;
+        /* compute r1^dmp1 mod p */
+        if (!(rsa->flags & RSA_FLAG_NO_CONSTTIME)) {
+            dmp1 = local_dmp1 = BN_new();
+            if (local_dmp1 == NULL)
+                goto err;
+            BN_with_flags(dmp1, rsa->dmp1, BN_FLG_CONSTTIME);
+        } else {
+            dmp1 = rsa->dmp1;
+        }
+        if (!rsa->meth->bn_mod_exp(r0, r1, dmp1, rsa->p, ctx,
+                                   rsa->_method_mod_p)) {
+            BN_free(local_dmp1);
             goto err;
-    } else {
-        if (!BN_mod(r1, I, rsa->p, ctx))
-            goto err;
+        }
+        /* We MUST free local_dmp1 before any further use of rsa->dmp1 */
+        BN_free(local_dmp1);
     }
-
-    /* compute r1^dmp1 mod p */
-    if (!(rsa->flags & RSA_FLAG_NO_CONSTTIME)) {
-        dmp1 = local_dmp1;
-        BN_with_flags(dmp1, rsa->dmp1, BN_FLG_CONSTTIME);
-    } else
-        dmp1 = rsa->dmp1;
-    if (!rsa->meth->bn_mod_exp(r0, r1, dmp1, rsa->p, ctx, rsa->_method_mod_p))
-        goto err;
 
     if (!BN_sub(r0, r0, m1))
         goto err;
@@ -827,14 +855,24 @@ static int rsa_ossl_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
     if (!BN_mul(r1, r0, rsa->iqmp, ctx))
         goto err;
 
-    /* Turn BN_FLG_CONSTTIME flag on before division operation */
-    if (!(rsa->flags & RSA_FLAG_NO_CONSTTIME)) {
-        pr1 = local_r1;
-        BN_with_flags(pr1, r1, BN_FLG_CONSTTIME);
-    } else
-        pr1 = r1;
-    if (!BN_mod(r0, pr1, rsa->p, ctx))
-        goto err;
+    {
+        BIGNUM *local_r1 = NULL, *pr1;
+        /* Turn BN_FLG_CONSTTIME flag on before division operation */
+        if (!(rsa->flags & RSA_FLAG_NO_CONSTTIME)) {
+            pr1 = local_r1 = BN_new();
+            if (local_r1 == NULL)
+                goto err;
+            BN_with_flags(pr1, r1, BN_FLG_CONSTTIME);
+        } else {
+            pr1 = r1;
+        }
+        if (!BN_mod(r0, pr1, rsa->p, ctx)) {
+            BN_free(local_r1);
+            goto err;
+        }
+        /* We MUST free local_r1 before any further use of r1 */
+        BN_free(local_r1);
+    }
 
     /*
      * If p < q it is occasionally possible for the correction of adding 'p'
@@ -883,23 +921,20 @@ static int rsa_ossl_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
                 if (d == NULL)
                     goto err;
                 BN_with_flags(d, rsa->d, BN_FLG_CONSTTIME);
-            } else
+            } else {
                 d = rsa->d;
+            }
             if (!rsa->meth->bn_mod_exp(r0, I, d, rsa->n, ctx,
                                        rsa->_method_mod_n)) {
                 BN_free(local_d);
                 goto err;
             }
-
+            /* We MUST free local_d before any further use of rsa->d */
             BN_free(local_d);
         }
     }
     ret = 1;
  err:
-    BN_free(local_dmp1);
-    BN_free(local_dmq1);
-    BN_free(local_c);
-    BN_free(local_r1);
     BN_CTX_end(ctx);
     return (ret);
 }
