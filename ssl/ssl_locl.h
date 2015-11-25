@@ -391,38 +391,50 @@
 # define SSL_TLSV1               0x00000004U
 # define SSL_TLSV1_2             0x00000008U
 
-/* Bits for algorithm2 (handshake digests and other extra flags) */
-
-# define SSL_HANDSHAKE_MAC_MD5 0x10
-# define SSL_HANDSHAKE_MAC_SHA 0x20
-# define SSL_HANDSHAKE_MAC_GOST94 0x40
-# define SSL_HANDSHAKE_MAC_SHA256 0x80
-# define SSL_HANDSHAKE_MAC_SHA384 0x100
-# define SSL_HANDSHAKE_MAC_GOST12_256 0x200
-# define SSL_HANDSHAKE_MAC_GOST12_512 0x400
-# define SSL_HANDSHAKE_MAC_DEFAULT (SSL_HANDSHAKE_MAC_MD5 | SSL_HANDSHAKE_MAC_SHA)
-
 /*
  * When adding new digest in the ssl_ciph.c and increment SSL_MD_NUM_IDX make
  * sure to update this constant too
  */
-# define SSL_MAX_DIGEST 9
 
-# define TLS1_PRF_DGST_SHIFT 10
-# define TLS1_PRF_MD5 (SSL_HANDSHAKE_MAC_MD5 << TLS1_PRF_DGST_SHIFT)
-# define TLS1_PRF_SHA1 (SSL_HANDSHAKE_MAC_SHA << TLS1_PRF_DGST_SHIFT)
-# define TLS1_PRF_SHA256 (SSL_HANDSHAKE_MAC_SHA256 << TLS1_PRF_DGST_SHIFT)
-# define TLS1_PRF_SHA384 (SSL_HANDSHAKE_MAC_SHA384 << TLS1_PRF_DGST_SHIFT)
-# define TLS1_PRF_GOST94 (SSL_HANDSHAKE_MAC_GOST94 << TLS1_PRF_DGST_SHIFT)
-# define TLS1_PRF_GOST12_256 (SSL_HANDSHAKE_MAC_GOST12_256 << TLS1_PRF_DGST_SHIFT)
-# define TLS1_PRF_GOST12_512 (SSL_HANDSHAKE_MAC_GOST12_512 << TLS1_PRF_DGST_SHIFT)
-# define TLS1_PRF (TLS1_PRF_MD5 | TLS1_PRF_SHA1)
+# define SSL_MD_MD5_IDX  0
+# define SSL_MD_SHA1_IDX 1
+# define SSL_MD_GOST94_IDX 2
+# define SSL_MD_GOST89MAC_IDX 3
+# define SSL_MD_SHA256_IDX 4
+# define SSL_MD_SHA384_IDX 5
+# define SSL_MD_GOST12_256_IDX  6
+# define SSL_MD_GOST89MAC12_IDX 7
+# define SSL_MD_GOST12_512_IDX  8
+# define SSL_MD_MD5_SHA1_IDX 9
+# define SSL_MAX_DIGEST 10
+
+/* Bits for algorithm2 (handshake digests and other extra flags) */
+
+/* Bits 0-7 are handshake MAC */
+# define SSL_HANDSHAKE_MAC_MASK  0xFF
+# define SSL_HANDSHAKE_MAC_MD5_SHA1 SSL_MD_MD5_SHA1_IDX
+# define SSL_HANDSHAKE_MAC_SHA256   SSL_MD_SHA256_IDX
+# define SSL_HANDSHAKE_MAC_SHA384   SSL_MD_SHA384_IDX
+# define SSL_HANDSHAKE_MAC_GOST94 SSL_MD_GOST94_IDX
+# define SSL_HANDSHAKE_MAC_GOST12_256 SSL_MD_GOST12_256_IDX
+# define SSL_HANDSHAKE_MAC_GOST12_512 SSL_MD_GOST12_512_IDX
+# define SSL_HANDSHAKE_MAC_DEFAULT  SSL_HANDSHAKE_MAC_MD5_SHA1
+
+/* Bits 8-15 bits are PRF */
+# define TLS1_PRF_DGST_SHIFT 8
+# define TLS1_PRF_SHA1_MD5 (SSL_MD_MD5_SHA1_IDX << TLS1_PRF_DGST_SHIFT)
+# define TLS1_PRF_SHA256 (SSL_MD_SHA256_IDX << TLS1_PRF_DGST_SHIFT)
+# define TLS1_PRF_SHA384 (SSL_MD_SHA384_IDX << TLS1_PRF_DGST_SHIFT)
+# define TLS1_PRF_GOST94 (SSL_MD_GOST94_IDX << TLS1_PRF_DGST_SHIFT)
+# define TLS1_PRF_GOST12_256 (SSL_MD_GOST12_256_IDX << TLS1_PRF_DGST_SHIFT)
+# define TLS1_PRF_GOST12_512 (SSL_MD_GOST12_512_IDX << TLS1_PRF_DGST_SHIFT)
+# define TLS1_PRF            (SSL_MD_MD5_SHA1_IDX << TLS1_PRF_DGST_SHIFT)
 
 /*
  * Stream MAC for GOST ciphersuites from cryptopro draft (currently this also
  * goes into algorithm2)
  */
-# define TLS1_STREAM_MAC 0x04
+# define TLS1_STREAM_MAC 0x10000
 
 /*
  * Export and cipher strength information. For each cipher we have to decide
@@ -1239,10 +1251,10 @@ typedef struct ssl3_state_st {
     /* used during startup, digest all incoming/outgoing packets */
     BIO *handshake_buffer;
     /*
-     * When set of handshake digests is determined, buffer is hashed and
-     * freed and MD_CTX-es for all required digests are stored in this array
+     * When handshake digest is determined, buffer is hashed and
+     * freed and MD_CTX for the required digest is stored here.
      */
-    EVP_MD_CTX **handshake_dgst;
+    EVP_MD_CTX *handshake_dgst;
     /*
      * Set whenever an expected ChangeCipherSpec message is processed.
      * Unset when the peer's Finished message is received.
@@ -1890,7 +1902,6 @@ void ssl_update_cache(SSL *s, int mode);
 __owur int ssl_cipher_get_evp(const SSL_SESSION *s, const EVP_CIPHER **enc,
                        const EVP_MD **md, int *mac_pkey_type,
                        int *mac_secret_size, SSL_COMP **comp, int use_etm);
-__owur int ssl_get_handshake_digest(int i, long *mask, const EVP_MD **md);
 __owur int ssl_cipher_get_cert_index(const SSL_CIPHER *c);
 __owur const SSL_CIPHER *ssl_get_cipher_by_char(SSL *ssl, const unsigned char *ptr);
 __owur int ssl_cert_set0_chain(SSL *s, SSL_CTX *ctx, STACK_OF(X509) *chain);
@@ -2128,6 +2139,8 @@ __owur int ssl_add_serverhello_use_srtp_ext(SSL *s, unsigned char *p, int *len,
 __owur int ssl_parse_serverhello_use_srtp_ext(SSL *s, PACKET *pkt, int *al);
 
 __owur int ssl_handshake_hash(SSL *s, unsigned char *out, int outlen);
+__owur const EVP_MD *ssl_handshake_md(SSL *s);
+__owur const EVP_MD *ssl_prf_md(SSL *s);
 
 /* s3_cbc.c */
 __owur char ssl3_cbc_record_digest_supported(const EVP_MD_CTX *ctx);

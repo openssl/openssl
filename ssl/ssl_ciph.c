@@ -212,15 +212,6 @@ static const EVP_CIPHER *ssl_cipher_methods[SSL_ENC_NUM_IDX] = {
 
 static STACK_OF(SSL_COMP) *ssl_comp_methods = NULL;
 
-#define SSL_MD_MD5_IDX  0
-#define SSL_MD_SHA1_IDX 1
-#define SSL_MD_GOST94_IDX 2
-#define SSL_MD_GOST89MAC_IDX 3
-#define SSL_MD_SHA256_IDX 4
-#define SSL_MD_SHA384_IDX 5
-#define SSL_MD_GOST12_256_IDX  6
-#define SSL_MD_GOST89MAC12_IDX 7
-#define SSL_MD_GOST12_512_IDX  8
 /*
  * Constant SSL_MAX_DIGEST equal to size of digests array should be defined
  * in the ssl_locl.h
@@ -238,11 +229,12 @@ static const ssl_cipher_table ssl_cipher_table_mac[SSL_MD_NUM_IDX] = {
     {SSL_SHA384, NID_sha384},   /* SSL_MD_SHA384_IDX 5 */
     {SSL_GOST12_256, NID_id_GostR3411_2012_256},  /* SSL_MD_GOST12_256_IDX 6 */
     {SSL_GOST89MAC12, NID_gost_mac_12},           /* SSL_MD_GOST89MAC12_IDX 7 */
-    {SSL_GOST12_512, NID_id_GostR3411_2012_512}   /* SSL_MD_GOST12_512_IDX 8 */
+    {SSL_GOST12_512, NID_id_GostR3411_2012_512},  /* SSL_MD_GOST12_512_IDX 8 */
+    {0, NID_md5_sha1}           /* SSL_MD_MD5_SHA1_IDX 9 */
 };
 
 static const EVP_MD *ssl_digest_methods[SSL_MD_NUM_IDX] = {
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL
 };
 
 /* Utility function for table lookup */
@@ -275,14 +267,7 @@ static int ssl_mac_pkey_id[SSL_MD_NUM_IDX] = {
 };
 
 static int ssl_mac_secret_size[SSL_MD_NUM_IDX] = {
-    0, 0, 0, 0, 0, 0, 0, 0, 0
-};
-
-static const int ssl_handshake_digest_flag[SSL_MD_NUM_IDX] = {
-    SSL_HANDSHAKE_MAC_MD5, SSL_HANDSHAKE_MAC_SHA,
-    SSL_HANDSHAKE_MAC_GOST94, 0, SSL_HANDSHAKE_MAC_SHA256,
-    SSL_HANDSHAKE_MAC_SHA384, SSL_HANDSHAKE_MAC_GOST12_256, 0,
-    SSL_HANDSHAKE_MAC_GOST12_512,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 };
 
 #define CIPHER_ADD      1
@@ -727,17 +712,22 @@ int ssl_cipher_get_evp(const SSL_SESSION *s, const EVP_CIPHER **enc,
         return (0);
 }
 
-int ssl_get_handshake_digest(int idx, long *mask, const EVP_MD **md)
+static const EVP_MD *ssl_cipher_table_idx(int idx)
 {
-    if (idx < 0 || idx >= SSL_MD_NUM_IDX) {
-        return 0;
-    }
-    *mask = ssl_handshake_digest_flag[idx];
-    if (*mask)
-        *md = ssl_digest_methods[idx];
-    else
-        *md = NULL;
-    return 1;
+    idx &= SSL_HANDSHAKE_MAC_MASK;
+    if (idx < 0 || idx >= SSL_MD_NUM_IDX)
+        return NULL;
+    return ssl_digest_methods[idx];
+}
+
+const EVP_MD *ssl_handshake_md(SSL *s)
+{
+    return ssl_cipher_table_idx(ssl_get_algorithm2(s));
+}
+
+const EVP_MD *ssl_prf_md(SSL *s)
+{
+    return ssl_cipher_table_idx(ssl_get_algorithm2(s) >> TLS1_PRF_DGST_SHIFT);
 }
 
 #define ITEM_SEP(a) \
