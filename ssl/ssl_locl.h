@@ -1266,8 +1266,6 @@ typedef struct ssl3_state_st {
     int num_renegotiations;
     int in_read_app_data;
     struct {
-        /* actually needs to be 32+32+64 for GOST */
-        unsigned char cert_verify_md[EVP_MAX_MD_SIZE * 2];
         /* actually only need to be 16+20 for SSLv3 and 12 for TLS */
         unsigned char finish_md[EVP_MAX_MD_SIZE * 2];
         int finish_md_len;
@@ -1685,7 +1683,6 @@ typedef struct ssl3_enc_method {
     int (*change_cipher_state) (SSL *, int);
     int (*final_finish_mac) (SSL *, const char *, int, unsigned char *);
     int finish_mac_length;
-    int (*cert_verify_mac) (SSL *, int, unsigned char *);
     const char *client_finished_label;
     int client_finished_label_len;
     const char *server_finished_label;
@@ -1948,7 +1945,6 @@ int ssl3_renegotiate_check(SSL *ssl);
 __owur int ssl3_dispatch_alert(SSL *s);
 __owur int ssl3_final_finish_mac(SSL *s, const char *sender, int slen,
                           unsigned char *p);
-__owur int ssl3_cert_verify_mac(SSL *s, int md_nid, unsigned char *p);
 void ssl3_finish_mac(SSL *s, const unsigned char *buf, int len);
 void ssl3_free_digest_list(SSL *s);
 __owur unsigned long ssl3_output_cert_chain(SSL *s, CERT_PKEY *cpk);
@@ -2032,7 +2028,6 @@ __owur int tls1_change_cipher_state(SSL *s, int which);
 __owur int tls1_setup_key_block(SSL *s);
 __owur int tls1_final_finish_mac(SSL *s,
                           const char *str, int slen, unsigned char *p);
-__owur int tls1_cert_verify_mac(SSL *s, int md_nid, unsigned char *p);
 __owur int tls1_generate_master_secret(SSL *s, unsigned char *out,
                                 unsigned char *p, int len);
 __owur int tls1_export_keying_material(SSL *s, unsigned char *out, size_t olen,

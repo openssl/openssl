@@ -560,11 +560,6 @@ int ssl3_digest_cached_records(SSL *s, int keep)
     return 1;
 }
 
-int ssl3_cert_verify_mac(SSL *s, int md_nid, unsigned char *p)
-{
-    return (ssl3_handshake_mac(s, md_nid, NULL, 0, p));
-}
-
 int ssl3_final_finish_mac(SSL *s,
                           const char *sender, int len, unsigned char *p)
 {
