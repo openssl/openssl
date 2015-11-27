@@ -197,18 +197,6 @@ struct evp_md_st {
 
 # endif                         /* !EVP_MD */
 
-struct evp_md_ctx_st {
-    const EVP_MD *digest;
-    ENGINE *engine;             /* functional reference if 'digest' is
-                                 * ENGINE-provided */
-    unsigned long flags;
-    void *md_data;
-    /* Public key context for sign/verify */
-    EVP_PKEY_CTX *pctx;
-    /* Update function: usually copied from EVP_MD */
-    int (*update) (EVP_MD_CTX *ctx, const void *data, size_t count);
-} /* EVP_MD_CTX */ ;
-
 /* values for EVP_MD_CTX flags */
 
 # define EVP_MD_CTX_FLAG_ONESHOT         0x0001/* digest update will be
@@ -467,15 +455,6 @@ typedef int (EVP_PBE_KEYGEN) (EVP_CIPHER_CTX *ctx, const char *pass,
 # define EVP_get_cipherbyobj(a) EVP_get_cipherbynid(OBJ_obj2nid(a))
 
 /* Macros to reduce FIPS dependencies: do NOT use in applications */
-# define M_EVP_MD_size(e)                ((e)->md_size)
-# define M_EVP_MD_block_size(e)          ((e)->block_size)
-# define M_EVP_MD_CTX_set_flags(ctx,flgs) ((ctx)->flags|=(flgs))
-# define M_EVP_MD_CTX_clear_flags(ctx,flgs) ((ctx)->flags&=~(flgs))
-# define M_EVP_MD_CTX_test_flags(ctx,flgs) ((ctx)->flags&(flgs))
-# define M_EVP_MD_type(e)                        ((e)->type)
-# define M_EVP_MD_CTX_type(e)            M_EVP_MD_type(M_EVP_MD_CTX_md(e))
-# define M_EVP_MD_CTX_md(e)                      ((e)->digest)
-
 # define M_EVP_CIPHER_nid(e)             ((e)->nid)
 # define M_EVP_CIPHER_CTX_iv_length(e)   ((e)->cipher->iv_len)
 # define M_EVP_CIPHER_CTX_flags(e)       ((e)->cipher->flags)
@@ -503,9 +482,16 @@ int EVP_MD_block_size(const EVP_MD *md);
 unsigned long EVP_MD_flags(const EVP_MD *md);
 
 const EVP_MD *EVP_MD_CTX_md(const EVP_MD_CTX *ctx);
+int (*EVP_MD_CTX_update_fn(EVP_MD_CTX *ctx))(EVP_MD_CTX *ctx,
+                                             const void *data, size_t count);
+void EVP_MD_CTX_set_update_fn(EVP_MD_CTX *ctx,
+                              int (*update) (EVP_MD_CTX *ctx,
+                                             const void *data, size_t count));
 # define EVP_MD_CTX_size(e)              EVP_MD_size(EVP_MD_CTX_md(e))
 # define EVP_MD_CTX_block_size(e)        EVP_MD_block_size(EVP_MD_CTX_md(e))
 # define EVP_MD_CTX_type(e)              EVP_MD_type(EVP_MD_CTX_md(e))
+EVP_PKEY_CTX *EVP_MD_CTX_pkey_ctx(const EVP_MD_CTX *ctx);
+void *EVP_MD_CTX_md_data(const EVP_MD_CTX *ctx);
 
 int EVP_CIPHER_nid(const EVP_CIPHER *cipher);
 # define EVP_CIPHER_name(e)              OBJ_nid2sn(EVP_CIPHER_nid(e))

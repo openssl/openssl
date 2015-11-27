@@ -57,6 +57,26 @@
  *
  */
 
+/* EVP_MD_CTX related stuff */
+
+struct evp_md_ctx_st {
+    const EVP_MD *digest;
+    ENGINE *engine;             /* functional reference if 'digest' is
+                                 * ENGINE-provided */
+    unsigned long flags;
+    void *md_data;
+    /* Public key context for sign/verify */
+    EVP_PKEY_CTX *pctx;
+    /* Update function: usually copied from EVP_MD */
+    int (*update) (EVP_MD_CTX *ctx, const void *data, size_t count);
+} /* EVP_MD_CTX */ ;
+
+# define M_EVP_MD_CTX_set_flags(ctx,flgs) ((ctx)->flags|=(flgs))
+# define M_EVP_MD_CTX_clear_flags(ctx,flgs) ((ctx)->flags&=~(flgs))
+# define M_EVP_MD_CTX_test_flags(ctx,flgs) ((ctx)->flags&(flgs))
+# define M_EVP_MD_CTX_type(e)            M_EVP_MD_type(M_EVP_MD_CTX_md(e))
+# define M_EVP_MD_CTX_md(e)                      ((e)->digest)
+
 /* Macros to code block cipher wrappers */
 
 /* Wrapper functions for each cipher mode */
