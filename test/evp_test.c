@@ -713,8 +713,7 @@ static int digest_test_run(struct evp_test *t)
         goto err;
     err = NULL;
  err:
-    if (mctx)
-        EVP_MD_CTX_destroy(mctx);
+    EVP_MD_CTX_destroy(mctx);
     t->err = err;
     return 1;
 }
@@ -1129,8 +1128,7 @@ static int mac_test_run(struct evp_test *t)
         goto err;
     err = NULL;
  err:
-    if (mctx)
-        EVP_MD_CTX_destroy(mctx);
+    EVP_MD_CTX_destroy(mctx);
     OPENSSL_free(mac);
     EVP_PKEY_CTX_free(genctx);
     EVP_PKEY_free(key);

@@ -68,17 +68,17 @@
 
 static int init(EVP_MD_CTX *ctx)
 {
-    return SHA1_Init(ctx->md_data);
+    return SHA1_Init(EVP_MD_CTX_md_data(ctx));
 }
 
 static int update(EVP_MD_CTX *ctx, const void *data, size_t count)
 {
-    return SHA1_Update(ctx->md_data, data, count);
+    return SHA1_Update(EVP_MD_CTX_md_data(ctx), data, count);
 }
 
 static int final(EVP_MD_CTX *ctx, unsigned char *md)
 {
-    return SHA1_Final(md, ctx->md_data);
+    return SHA1_Final(md, EVP_MD_CTX_md_data(ctx));
 }
 
 static int ctrl(EVP_MD_CTX *ctx, int cmd, int mslen, void *ms)
@@ -86,7 +86,7 @@ static int ctrl(EVP_MD_CTX *ctx, int cmd, int mslen, void *ms)
     unsigned char padtmp[40];
     unsigned char sha1tmp[SHA_DIGEST_LENGTH];
 
-    SHA_CTX *sha1 = ctx->md_data;
+    SHA_CTX *sha1 = EVP_MD_CTX_md_data(ctx);
 
     if (cmd != EVP_CTRL_SSL3_MASTER_SECRET)
         return 0;
@@ -157,12 +157,12 @@ const EVP_MD *EVP_sha1(void)
 
 static int init224(EVP_MD_CTX *ctx)
 {
-    return SHA224_Init(ctx->md_data);
+    return SHA224_Init(EVP_MD_CTX_md_data(ctx));
 }
 
 static int init256(EVP_MD_CTX *ctx)
 {
-    return SHA256_Init(ctx->md_data);
+    return SHA256_Init(EVP_MD_CTX_md_data(ctx));
 }
 
 /*
@@ -172,12 +172,12 @@ static int init256(EVP_MD_CTX *ctx)
  */
 static int update256(EVP_MD_CTX *ctx, const void *data, size_t count)
 {
-    return SHA256_Update(ctx->md_data, data, count);
+    return SHA256_Update(EVP_MD_CTX_md_data(ctx), data, count);
 }
 
 static int final256(EVP_MD_CTX *ctx, unsigned char *md)
 {
-    return SHA256_Final(md, ctx->md_data);
+    return SHA256_Final(md, EVP_MD_CTX_md_data(ctx));
 }
 
 static const EVP_MD sha224_md = {
@@ -220,23 +220,23 @@ const EVP_MD *EVP_sha256(void)
 
 static int init384(EVP_MD_CTX *ctx)
 {
-    return SHA384_Init(ctx->md_data);
+    return SHA384_Init(EVP_MD_CTX_md_data(ctx));
 }
 
 static int init512(EVP_MD_CTX *ctx)
 {
-    return SHA512_Init(ctx->md_data);
+    return SHA512_Init(EVP_MD_CTX_md_data(ctx));
 }
 
 /* See comment in SHA224/256 section */
 static int update512(EVP_MD_CTX *ctx, const void *data, size_t count)
 {
-    return SHA512_Update(ctx->md_data, data, count);
+    return SHA512_Update(EVP_MD_CTX_md_data(ctx), data, count);
 }
 
 static int final512(EVP_MD_CTX *ctx, unsigned char *md)
 {
-    return SHA512_Final(md, ctx->md_data);
+    return SHA512_Final(md, EVP_MD_CTX_md_data(ctx));
 }
 
 static const EVP_MD sha384_md = {

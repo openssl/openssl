@@ -109,13 +109,16 @@ int PKCS12_key_gen_uni(unsigned char *pass, int passlen, unsigned char *salt,
     int i, j, u, v;
     int ret = 0;
     BIGNUM *Ij, *Bpl1;          /* These hold Ij and B + 1 */
-    EVP_MD_CTX ctx;
+    EVP_MD_CTX *ctx;
 #ifdef  DEBUG_KEYGEN
     unsigned char *tmpout = out;
     int tmpn = n;
 #endif
 
-    EVP_MD_CTX_init(&ctx);
+    ctx = EVP_MD_CTX_create();
+    if (ctx == NULL)
+        goto err;
+
 #ifdef  DEBUG_KEYGEN
     fprintf(stderr, "KEYGEN DEBUG\n");
     fprintf(stderr, "ID %d, ITER %d\n", id, iter);
@@ -151,15 +154,15 @@ int PKCS12_key_gen_uni(unsigned char *pass, int passlen, unsigned char *salt,
     for (i = 0; i < Plen; i++)
         *p++ = pass[i % passlen];
     for (;;) {
-        if (!EVP_DigestInit_ex(&ctx, md_type, NULL)
-            || !EVP_DigestUpdate(&ctx, D, v)
-            || !EVP_DigestUpdate(&ctx, I, Ilen)
-            || !EVP_DigestFinal_ex(&ctx, Ai, NULL))
+        if (!EVP_DigestInit_ex(ctx, md_type, NULL)
+            || !EVP_DigestUpdate(ctx, D, v)
+            || !EVP_DigestUpdate(ctx, I, Ilen)
+            || !EVP_DigestFinal_ex(ctx, Ai, NULL))
             goto err;
         for (j = 1; j < iter; j++) {
-            if (!EVP_DigestInit_ex(&ctx, md_type, NULL)
-                || !EVP_DigestUpdate(&ctx, Ai, u)
-                || !EVP_DigestFinal_ex(&ctx, Ai, NULL))
+            if (!EVP_DigestInit_ex(ctx, md_type, NULL)
+                || !EVP_DigestUpdate(ctx, Ai, u)
+                || !EVP_DigestFinal_ex(ctx, Ai, NULL))
                 goto err;
         }
         memcpy(out, Ai, min(n, u));
@@ -215,7 +218,7 @@ int PKCS12_key_gen_uni(unsigned char *pass, int passlen, unsigned char *salt,
     OPENSSL_free(I);
     BN_free(Ij);
     BN_free(Bpl1);
-    EVP_MD_CTX_cleanup(&ctx);
+    EVP_MD_CTX_destroy(ctx);
     return ret;
 }
 

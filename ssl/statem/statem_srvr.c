@@ -1733,9 +1733,13 @@ int tls_construct_server_key_exchange(SSL *s)
     BIGNUM *r[4];
     int nr[4], kn;
     BUF_MEM *buf;
-    EVP_MD_CTX md_ctx;
+    EVP_MD_CTX *md_ctx = EVP_MD_CTX_create();
 
-    EVP_MD_CTX_init(&md_ctx);
+    if (md_ctx == NULL) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_SERVER_KEY_EXCHANGE, ERR_R_MALLOC_FAILURE);
+        al = SSL_AD_INTERNAL_ERROR;
+        goto f_err;
+    }
 
     type = s->s3->tmp.new_cipher->algorithm_mkey;
     cert = s->cert;
@@ -2040,13 +2044,13 @@ int tls_construct_server_key_exchange(SSL *s)
 #ifdef SSL_DEBUG
             fprintf(stderr, "Using hash %s\n", EVP_MD_name(md));
 #endif
-            if (EVP_SignInit_ex(&md_ctx, md, NULL) <= 0
-                    || EVP_SignUpdate(&md_ctx, &(s->s3->client_random[0]),
+            if (EVP_SignInit_ex(md_ctx, md, NULL) <= 0
+                    || EVP_SignUpdate(md_ctx, &(s->s3->client_random[0]),
                                       SSL3_RANDOM_SIZE) <= 0
-                    || EVP_SignUpdate(&md_ctx, &(s->s3->server_random[0]),
+                    || EVP_SignUpdate(md_ctx, &(s->s3->server_random[0]),
                                       SSL3_RANDOM_SIZE) <= 0
-                    || EVP_SignUpdate(&md_ctx, d, n) <= 0
-                    || EVP_SignFinal(&md_ctx, &(p[2]),
+                    || EVP_SignUpdate(md_ctx, d, n) <= 0
+                    || EVP_SignFinal(md_ctx, &(p[2]),
                                (unsigned int *)&i, pkey) <= 0) {
                 SSLerr(SSL_F_TLS_CONSTRUCT_SERVER_KEY_EXCHANGE, ERR_LIB_EVP);
                 al = SSL_AD_INTERNAL_ERROR;
@@ -2071,7 +2075,7 @@ int tls_construct_server_key_exchange(SSL *s)
         goto f_err;
     }
 
-    EVP_MD_CTX_cleanup(&md_ctx);
+    EVP_MD_CTX_destroy(md_ctx);
     return 1;
  f_err:
     ssl3_send_alert(s, SSL3_AL_FATAL, al);
@@ -2080,7 +2084,7 @@ int tls_construct_server_key_exchange(SSL *s)
     OPENSSL_free(encodedPoint);
     BN_CTX_free(bn_ctx);
 #endif
-    EVP_MD_CTX_cleanup(&md_ctx);
+    EVP_MD_CTX_destroy(md_ctx);
     ossl_statem_set_error(s);
     return 0;
 }
@@ -2884,8 +2888,13 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
     long hdatalen = 0;
     void *hdata;
 
-    EVP_MD_CTX mctx;
-    EVP_MD_CTX_init(&mctx);
+    EVP_MD_CTX *mctx = EVP_MD_CTX_create();
+
+    if (mctx == NULL) {
+        SSLerr(SSL_F_TLS_PROCESS_CERT_VERIFY, ERR_R_MALLOC_FAILURE);
+        al = SSL_AD_INTERNAL_ERROR;
+        goto f_err;
+    }
 
     peer = s->session->peer;
     pkey = X509_get_pubkey(peer);
@@ -2966,8 +2975,8 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
 #ifdef SSL_DEBUG
     fprintf(stderr, "Using client verify alg %s\n", EVP_MD_name(md));
 #endif
-    if (!EVP_VerifyInit_ex(&mctx, md, NULL)
-        || !EVP_VerifyUpdate(&mctx, hdata, hdatalen)) {
+    if (!EVP_VerifyInit_ex(mctx, md, NULL)
+        || !EVP_VerifyUpdate(mctx, hdata, hdatalen)) {
         SSLerr(SSL_F_TLS_PROCESS_CERT_VERIFY, ERR_R_EVP_LIB);
         al = SSL_AD_INTERNAL_ERROR;
         goto f_err;
@@ -2982,7 +2991,7 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
 #endif
 
     if (s->version == SSL3_VERSION
-        && !EVP_MD_CTX_ctrl(&mctx, EVP_CTRL_SSL3_MASTER_SECRET,
+        && !EVP_MD_CTX_ctrl(mctx, EVP_CTRL_SSL3_MASTER_SECRET,
                             s->session->master_key_length,
                             s->session->master_key)) {
         SSLerr(SSL_F_TLS_PROCESS_CERT_VERIFY, ERR_R_EVP_LIB);
@@ -2990,7 +2999,7 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
         goto f_err;
     }
 
-    if (EVP_VerifyFinal(&mctx, data, len, pkey) <= 0) {
+    if (EVP_VerifyFinal(mctx, data, len, pkey) <= 0) {
         al = SSL_AD_DECRYPT_ERROR;
         SSLerr(SSL_F_TLS_PROCESS_CERT_VERIFY, SSL_R_BAD_SIGNATURE);
         goto f_err;
@@ -3004,7 +3013,7 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
     }
     BIO_free(s->s3->handshake_buffer);
     s->s3->handshake_buffer = NULL;
-    EVP_MD_CTX_cleanup(&mctx);
+    EVP_MD_CTX_destroy(mctx);
     EVP_PKEY_free(pkey);
     return ret;
 }

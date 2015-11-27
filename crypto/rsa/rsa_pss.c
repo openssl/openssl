@@ -88,14 +88,17 @@ int RSA_verify_PKCS1_PSS_mgf1(RSA *rsa, const unsigned char *mHash,
     int hLen, maskedDBLen, MSBits, emLen;
     const unsigned char *H;
     unsigned char *DB = NULL;
-    EVP_MD_CTX ctx;
+    EVP_MD_CTX *ctx = EVP_MD_CTX_create();
     unsigned char H_[EVP_MAX_MD_SIZE];
-    EVP_MD_CTX_init(&ctx);
+
+
+    if (ctx == NULL)
+        goto err;
 
     if (mgf1Hash == NULL)
         mgf1Hash = Hash;
 
-    hLen = M_EVP_MD_size(Hash);
+    hLen = EVP_MD_size(Hash);
     if (hLen < 0)
         goto err;
     /*-
@@ -153,15 +156,15 @@ int RSA_verify_PKCS1_PSS_mgf1(RSA *rsa, const unsigned char *mHash,
         RSAerr(RSA_F_RSA_VERIFY_PKCS1_PSS_MGF1, RSA_R_SLEN_CHECK_FAILED);
         goto err;
     }
-    if (!EVP_DigestInit_ex(&ctx, Hash, NULL)
-        || !EVP_DigestUpdate(&ctx, zeroes, sizeof zeroes)
-        || !EVP_DigestUpdate(&ctx, mHash, hLen))
+    if (!EVP_DigestInit_ex(ctx, Hash, NULL)
+        || !EVP_DigestUpdate(ctx, zeroes, sizeof zeroes)
+        || !EVP_DigestUpdate(ctx, mHash, hLen))
         goto err;
     if (maskedDBLen - i) {
-        if (!EVP_DigestUpdate(&ctx, DB + i, maskedDBLen - i))
+        if (!EVP_DigestUpdate(ctx, DB + i, maskedDBLen - i))
             goto err;
     }
-    if (!EVP_DigestFinal_ex(&ctx, H_, NULL))
+    if (!EVP_DigestFinal_ex(ctx, H_, NULL))
         goto err;
     if (memcmp(H_, H, hLen)) {
         RSAerr(RSA_F_RSA_VERIFY_PKCS1_PSS_MGF1, RSA_R_BAD_SIGNATURE);
@@ -171,7 +174,7 @@ int RSA_verify_PKCS1_PSS_mgf1(RSA *rsa, const unsigned char *mHash,
 
  err:
     OPENSSL_free(DB);
-    EVP_MD_CTX_cleanup(&ctx);
+    EVP_MD_CTX_destroy(ctx);
 
     return ret;
 
@@ -193,12 +196,12 @@ int RSA_padding_add_PKCS1_PSS_mgf1(RSA *rsa, unsigned char *EM,
     int ret = 0;
     int hLen, maskedDBLen, MSBits, emLen;
     unsigned char *H, *salt = NULL, *p;
-    EVP_MD_CTX ctx;
+    EVP_MD_CTX *ctx = NULL;
 
     if (mgf1Hash == NULL)
         mgf1Hash = Hash;
 
-    hLen = M_EVP_MD_size(Hash);
+    hLen = EVP_MD_size(Hash);
     if (hLen < 0)
         goto err;
     /*-
@@ -241,16 +244,17 @@ int RSA_padding_add_PKCS1_PSS_mgf1(RSA *rsa, unsigned char *EM,
     }
     maskedDBLen = emLen - hLen - 1;
     H = EM + maskedDBLen;
-    EVP_MD_CTX_init(&ctx);
-    if (!EVP_DigestInit_ex(&ctx, Hash, NULL)
-        || !EVP_DigestUpdate(&ctx, zeroes, sizeof zeroes)
-        || !EVP_DigestUpdate(&ctx, mHash, hLen))
+    ctx = EVP_MD_CTX_create();
+    if (ctx == NULL)
         goto err;
-    if (sLen && !EVP_DigestUpdate(&ctx, salt, sLen))
+    if (!EVP_DigestInit_ex(ctx, Hash, NULL)
+        || !EVP_DigestUpdate(ctx, zeroes, sizeof zeroes)
+        || !EVP_DigestUpdate(ctx, mHash, hLen))
         goto err;
-    if (!EVP_DigestFinal_ex(&ctx, H, NULL))
+    if (sLen && !EVP_DigestUpdate(ctx, salt, sLen))
         goto err;
-    EVP_MD_CTX_cleanup(&ctx);
+    if (!EVP_DigestFinal_ex(ctx, H, NULL))
+        goto err;
 
     /* Generate dbMask in place then perform XOR on it */
     if (PKCS1_MGF1(EM, maskedDBLen, H, hLen, mgf1Hash))
@@ -278,6 +282,7 @@ int RSA_padding_add_PKCS1_PSS_mgf1(RSA *rsa, unsigned char *EM,
     ret = 1;
 
  err:
+    EVP_MD_CTX_destroy(ctx);
     OPENSSL_free(salt);
 
     return ret;

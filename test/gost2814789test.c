@@ -1207,7 +1207,7 @@ int main(int argc, char *argv[])
     u64 ullMaxLen = 6 * 1000 * 1000;
     int ignore = 0;
     ENGINE *impl = NULL;
-    EVP_MD_CTX mctx;
+    EVP_MD_CTX *mctx;
     EVP_CIPHER_CTX ectx;
     EVP_PKEY *mac_key;
     byte bDerive[EVP_MAX_KEY_LENGTH];
@@ -1391,28 +1391,33 @@ int main(int argc, char *argv[])
                  */
                 continue;
             }
-            EVP_MD_CTX_init(&mctx);
+            mctx = EVP_MD_CTX_create();
+            if (mctx == NULL) {
+                fflush(NULL);
+                fprintf(stderr, "ENGINE_ctrl_cmd_string: malloc failure\n");
+                return 14;
+            }
             mac_key = EVP_PKEY_new_mac_key(NID_id_Gost28147_89_MAC, NULL,
                                            bDerive, mdl);
-            EVP_DigestSignInit(&mctx, NULL, md_g89imit, impl, mac_key);
+            EVP_DigestSignInit(mctx, NULL, md_g89imit, impl, mac_key);
             if (G89_MAX_TC_LEN >= tcs[t].ullLen) {
-                EVP_DigestSignUpdate(&mctx, tcs[t].bIn,
+                EVP_DigestSignUpdate(mctx, tcs[t].bIn,
                                      (unsigned int)tcs[t].ullLen);
             } else {
                 for (ullLeft = tcs[t].ullLen;
                      ullLeft >= sizeof(bZB); ullLeft -= sizeof(bZB)) {
                     printf("B");
                     fflush(NULL);
-                    EVP_DigestSignUpdate(&mctx, bZB, sizeof(bZB));
+                    EVP_DigestSignUpdate(mctx, bZB, sizeof(bZB));
                 }
                 printf("b" FMT64 "/" FMT64, ullLeft, tcs[t].ullLen);
                 fflush(NULL);
-                EVP_DigestSignUpdate(&mctx, bZB, (unsigned int)ullLeft);
+                EVP_DigestSignUpdate(mctx, bZB, (unsigned int)ullLeft);
             }
             siglen = 4;
-            OPENSSL_assert(EVP_DigestSignFinal(&mctx, bTest, &siglen));
+            OPENSSL_assert(EVP_DigestSignFinal(mctx, bTest, &siglen));
             EVP_PKEY_free(mac_key);
-            EVP_MD_CTX_cleanup(&mctx);
+            EVP_MD_CTX_destroy(mctx);
             enlu = (int)tcs[t].ullLen;
             enlf = 0;
             l = siglen;

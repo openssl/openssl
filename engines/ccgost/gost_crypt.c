@@ -500,7 +500,7 @@ int gost89_get_asn1_parameters(EVP_CIPHER_CTX *ctx, ASN1_TYPE *params)
 
 int gost_imit_init_cpa(EVP_MD_CTX *ctx)
 {
-    struct ossl_gost_imit_ctx *c = ctx->md_data;
+    struct ossl_gost_imit_ctx *c = EVP_MD_CTX_md_data(ctx);
     memset(c->buffer, 0, sizeof(c->buffer));
     memset(c->partial_block, 0, sizeof(c->partial_block));
     c->count = 0;
@@ -529,7 +529,7 @@ static void mac_block_mesh(struct ossl_gost_imit_ctx *c,
 
 int gost_imit_update(EVP_MD_CTX *ctx, const void *data, size_t count)
 {
-    struct ossl_gost_imit_ctx *c = ctx->md_data;
+    struct ossl_gost_imit_ctx *c = EVP_MD_CTX_md_data(ctx);
     const unsigned char *p = data;
     size_t bytes = count, i;
     if (!(c->key_set)) {
@@ -561,7 +561,7 @@ int gost_imit_update(EVP_MD_CTX *ctx, const void *data, size_t count)
 
 int gost_imit_final(EVP_MD_CTX *ctx, unsigned char *md)
 {
-    struct ossl_gost_imit_ctx *c = ctx->md_data;
+    struct ossl_gost_imit_ctx *c = EVP_MD_CTX_md_data(ctx);
     if (!c->key_set) {
         GOSTerr(GOST_F_GOST_IMIT_FINAL, GOST_R_MAC_KEY_NOT_SET);
         return 0;
@@ -595,9 +595,9 @@ int gost_imit_ctrl(EVP_MD_CTX *ctx, int type, int arg, void *ptr)
                 return 0;
             }
 
-            gost_key(&(((struct ossl_gost_imit_ctx *)(ctx->md_data))->cctx),
+            gost_key(&(((struct ossl_gost_imit_ctx *)(EVP_MD_CTX_md_data(ctx)))->cctx),
                      ptr);
-            ((struct ossl_gost_imit_ctx *)(ctx->md_data))->key_set = 1;
+            ((struct ossl_gost_imit_ctx *)(EVP_MD_CTX_md_data(ctx)))->key_set = 1;
             return 1;
 
         }
@@ -608,13 +608,14 @@ int gost_imit_ctrl(EVP_MD_CTX *ctx, int type, int arg, void *ptr)
 
 int gost_imit_copy(EVP_MD_CTX *to, const EVP_MD_CTX *from)
 {
-    memcpy(to->md_data, from->md_data, sizeof(struct ossl_gost_imit_ctx));
+    memcpy(EVP_MD_CTX_md_data(to), EVP_MD_CTX_md_data(from),
+           sizeof(struct ossl_gost_imit_ctx));
     return 1;
 }
 
 /* Clean up imit ctx */
 int gost_imit_cleanup(EVP_MD_CTX *ctx)
 {
-    memset(ctx->md_data, 0, sizeof(struct ossl_gost_imit_ctx));
+    memset(EVP_MD_CTX_md_data(ctx), 0, sizeof(struct ossl_gost_imit_ctx));
     return 1;
 }

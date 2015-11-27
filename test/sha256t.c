@@ -56,7 +56,7 @@ int main(int argc, char **argv)
 {
     unsigned char md[SHA256_DIGEST_LENGTH];
     int i;
-    EVP_MD_CTX evp;
+    EVP_MD_CTX *evp;
 
     fprintf(stdout, "Testing SHA-256 ");
 
@@ -80,10 +80,15 @@ int main(int argc, char **argv)
         fprintf(stdout, ".");
     fflush(stdout);
 
-    EVP_MD_CTX_init(&evp);
-    EVP_DigestInit_ex(&evp, EVP_sha256(), NULL);
+    evp = EVP_MD_CTX_create();
+    if (evp == NULL) {
+        fflush(stdout);
+        fprintf(stderr, "\nTEST 3 of 3 failed. (malloc failure)\n");
+        return 1;
+    }
+    EVP_DigestInit_ex(evp, EVP_sha256(), NULL);
     for (i = 0; i < 1000000; i += 288)
-        EVP_DigestUpdate(&evp, "aaaaaaaa" "aaaaaaaa" "aaaaaaaa" "aaaaaaaa"
+        EVP_DigestUpdate(evp, "aaaaaaaa" "aaaaaaaa" "aaaaaaaa" "aaaaaaaa"
                          "aaaaaaaa" "aaaaaaaa" "aaaaaaaa" "aaaaaaaa"
                          "aaaaaaaa" "aaaaaaaa" "aaaaaaaa" "aaaaaaaa"
                          "aaaaaaaa" "aaaaaaaa" "aaaaaaaa" "aaaaaaaa"
@@ -93,8 +98,7 @@ int main(int argc, char **argv)
                          "aaaaaaaa" "aaaaaaaa" "aaaaaaaa" "aaaaaaaa"
                          "aaaaaaaa" "aaaaaaaa" "aaaaaaaa" "aaaaaaaa",
                          (1000000 - i) < 288 ? 1000000 - i : 288);
-    EVP_DigestFinal_ex(&evp, md, NULL);
-    EVP_MD_CTX_cleanup(&evp);
+    EVP_DigestFinal_ex(evp, md, NULL);
 
     if (memcmp(md, app_b3, sizeof(app_b3))) {
         fflush(stdout);
@@ -129,14 +133,14 @@ int main(int argc, char **argv)
         fprintf(stdout, ".");
     fflush(stdout);
 
-    EVP_MD_CTX_init(&evp);
-    EVP_DigestInit_ex(&evp, EVP_sha224(), NULL);
+    EVP_MD_CTX_init(evp);
+    EVP_DigestInit_ex(evp, EVP_sha224(), NULL);
     for (i = 0; i < 1000000; i += 64)
-        EVP_DigestUpdate(&evp, "aaaaaaaa" "aaaaaaaa" "aaaaaaaa" "aaaaaaaa"
+        EVP_DigestUpdate(evp, "aaaaaaaa" "aaaaaaaa" "aaaaaaaa" "aaaaaaaa"
                          "aaaaaaaa" "aaaaaaaa" "aaaaaaaa" "aaaaaaaa",
                          (1000000 - i) < 64 ? 1000000 - i : 64);
-    EVP_DigestFinal_ex(&evp, md, NULL);
-    EVP_MD_CTX_cleanup(&evp);
+    EVP_DigestFinal_ex(evp, md, NULL);
+    EVP_MD_CTX_destroy(evp);
 
     if (memcmp(md, addenum_3, sizeof(addenum_3))) {
         fflush(stdout);

@@ -360,10 +360,11 @@ int dsa_builtin_paramgen2(DSA *ret, size_t L, size_t N,
     int counter = 0;
     int r = 0;
     BN_CTX *ctx = NULL;
-    EVP_MD_CTX mctx;
+    EVP_MD_CTX *mctx = EVP_MD_CTX_create();
     unsigned int h = 2;
 
-    EVP_MD_CTX_init(&mctx);
+    if (mctx == NULL)
+        goto err;
 
     if (evpmd == NULL) {
         if (N == 160)
@@ -374,7 +375,7 @@ int dsa_builtin_paramgen2(DSA *ret, size_t L, size_t N,
             evpmd = EVP_sha256();
     }
 
-    mdsize = M_EVP_MD_size(evpmd);
+    mdsize = EVP_MD_size(evpmd);
     /* If unverificable g generation only don't need seed */
     if (!ret->p || !ret->q || idx >= 0) {
         if (seed_len == 0)
@@ -582,15 +583,15 @@ int dsa_builtin_paramgen2(DSA *ret, size_t L, size_t N,
             md[0] = idx & 0xff;
             md[1] = (h >> 8) & 0xff;
             md[2] = h & 0xff;
-            if (!EVP_DigestInit_ex(&mctx, evpmd, NULL))
+            if (!EVP_DigestInit_ex(mctx, evpmd, NULL))
                 goto err;
-            if (!EVP_DigestUpdate(&mctx, seed_tmp, seed_len))
+            if (!EVP_DigestUpdate(mctx, seed_tmp, seed_len))
                 goto err;
-            if (!EVP_DigestUpdate(&mctx, ggen, sizeof(ggen)))
+            if (!EVP_DigestUpdate(mctx, ggen, sizeof(ggen)))
                 goto err;
-            if (!EVP_DigestUpdate(&mctx, md, 3))
+            if (!EVP_DigestUpdate(mctx, md, 3))
                 goto err;
-            if (!EVP_DigestFinal_ex(&mctx, md, NULL))
+            if (!EVP_DigestFinal_ex(mctx, md, NULL))
                 goto err;
             if (!BN_bin2bn(md, mdsize, test))
                 goto err;
@@ -639,7 +640,7 @@ int dsa_builtin_paramgen2(DSA *ret, size_t L, size_t N,
         BN_CTX_end(ctx);
     BN_CTX_free(ctx);
     BN_MONT_CTX_free(mont);
-    EVP_MD_CTX_cleanup(&mctx);
+    EVP_MD_CTX_destroy(mctx);
     return ok;
 }
 
