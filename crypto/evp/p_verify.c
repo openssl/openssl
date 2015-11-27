@@ -70,17 +70,20 @@ int EVP_VerifyFinal(EVP_MD_CTX *ctx, const unsigned char *sigbuf,
     int i = 0;
     EVP_PKEY_CTX *pkctx = NULL;
 
-    if (ctx->flags & EVP_MD_CTX_FLAG_FINALISE) {
+    if (EVP_MD_CTX_test_flags(ctx, EVP_MD_CTX_FLAG_FINALISE)) {
         if (!EVP_DigestFinal_ex(ctx, m, &m_len))
             goto err;
     } else {
         int rv = 0;
-        EVP_MD_CTX tmp_ctx;
-        EVP_MD_CTX_init(&tmp_ctx);
-        rv = EVP_MD_CTX_copy_ex(&tmp_ctx, ctx);
+        EVP_MD_CTX *tmp_ctx = EVP_MD_CTX_create();
+        if (tmp_ctx == NULL) {
+            EVPerr(EVP_F_EVP_VERIFYFINAL, ERR_R_MALLOC_FAILURE);
+            return 0;
+        }
+        rv = EVP_MD_CTX_copy_ex(tmp_ctx, ctx);
         if (rv)
-            rv = EVP_DigestFinal_ex(&tmp_ctx, m, &m_len);
-        EVP_MD_CTX_cleanup(&tmp_ctx);
+            rv = EVP_DigestFinal_ex(tmp_ctx, m, &m_len);
+        EVP_MD_CTX_destroy(tmp_ctx);
         if (!rv)
             return 0;
     }

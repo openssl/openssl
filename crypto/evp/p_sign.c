@@ -72,17 +72,20 @@ int EVP_SignFinal(EVP_MD_CTX *ctx, unsigned char *sigret,
     EVP_PKEY_CTX *pkctx = NULL;
 
     *siglen = 0;
-    if (ctx->flags & EVP_MD_CTX_FLAG_FINALISE) {
+    if (EVP_MD_CTX_test_flags(ctx, EVP_MD_CTX_FLAG_FINALISE)) {
         if (!EVP_DigestFinal_ex(ctx, m, &m_len))
             goto err;
     } else {
         int rv = 0;
-        EVP_MD_CTX tmp_ctx;
-        EVP_MD_CTX_init(&tmp_ctx);
-        rv = EVP_MD_CTX_copy_ex(&tmp_ctx, ctx);
+        EVP_MD_CTX *tmp_ctx = EVP_MD_CTX_create();
+        if (tmp_ctx == NULL) {
+            EVPerr(EVP_F_EVP_SIGNFINAL, ERR_R_MALLOC_FAILURE);
+            return 0;
+        }
+        rv = EVP_MD_CTX_copy_ex(tmp_ctx, ctx);
         if (rv)
-            rv = EVP_DigestFinal_ex(&tmp_ctx, m, &m_len);
-        EVP_MD_CTX_cleanup(&tmp_ctx);
+            rv = EVP_DigestFinal_ex(tmp_ctx, m, &m_len);
+        EVP_MD_CTX_destroy(tmp_ctx);
         if (!rv)
             return 0;
     }
@@ -101,6 +104,6 @@ int EVP_SignFinal(EVP_MD_CTX *ctx, unsigned char *sigret,
     *siglen = sltmp;
     i = 1;
  err:
-        EVP_PKEY_CTX_free(pkctx);
-        return i;
+    EVP_PKEY_CTX_free(pkctx);
+    return i;
 }

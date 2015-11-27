@@ -75,7 +75,7 @@ int PKCS5_PBE_keyivgen(EVP_CIPHER_CTX *cctx, const char *pass, int passlen,
                        ASN1_TYPE *param, const EVP_CIPHER *cipher,
                        const EVP_MD *md, int en_de)
 {
-    EVP_MD_CTX ctx;
+    EVP_MD_CTX *ctx;
     unsigned char md_tmp[EVP_MAX_MD_SIZE];
     unsigned char key[EVP_MAX_KEY_LENGTH], iv[EVP_MAX_IV_LENGTH];
     int i;
@@ -84,7 +84,6 @@ int PKCS5_PBE_keyivgen(EVP_CIPHER_CTX *cctx, const char *pass, int passlen,
     unsigned char *salt;
     int mdsize;
     int rv = 0;
-    EVP_MD_CTX_init(&ctx);
 
     /* Extract useful info from parameter */
     if (param == NULL || param->type != V_ASN1_SEQUENCE ||
@@ -111,24 +110,30 @@ int PKCS5_PBE_keyivgen(EVP_CIPHER_CTX *cctx, const char *pass, int passlen,
     else if (passlen == -1)
         passlen = strlen(pass);
 
-    if (!EVP_DigestInit_ex(&ctx, md, NULL))
+    ctx = EVP_MD_CTX_create();
+    if (ctx == NULL) {
+        EVPerr(EVP_F_PKCS5_PBE_KEYIVGEN, ERR_R_MALLOC_FAILURE);
         goto err;
-    if (!EVP_DigestUpdate(&ctx, pass, passlen))
+    }
+
+    if (!EVP_DigestInit_ex(ctx, md, NULL))
         goto err;
-    if (!EVP_DigestUpdate(&ctx, salt, saltlen))
+    if (!EVP_DigestUpdate(ctx, pass, passlen))
+        goto err;
+    if (!EVP_DigestUpdate(ctx, salt, saltlen))
         goto err;
     PBEPARAM_free(pbe);
-    if (!EVP_DigestFinal_ex(&ctx, md_tmp, NULL))
+    if (!EVP_DigestFinal_ex(ctx, md_tmp, NULL))
         goto err;
     mdsize = EVP_MD_size(md);
     if (mdsize < 0)
         return 0;
     for (i = 1; i < iter; i++) {
-        if (!EVP_DigestInit_ex(&ctx, md, NULL))
+        if (!EVP_DigestInit_ex(ctx, md, NULL))
             goto err;
-        if (!EVP_DigestUpdate(&ctx, md_tmp, mdsize))
+        if (!EVP_DigestUpdate(ctx, md_tmp, mdsize))
             goto err;
-        if (!EVP_DigestFinal_ex(&ctx, md_tmp, NULL))
+        if (!EVP_DigestFinal_ex(ctx, md_tmp, NULL))
             goto err;
     }
     OPENSSL_assert(EVP_CIPHER_key_length(cipher) <= (int)sizeof(md_tmp));
@@ -143,6 +148,6 @@ int PKCS5_PBE_keyivgen(EVP_CIPHER_CTX *cctx, const char *pass, int passlen,
     OPENSSL_cleanse(iv, EVP_MAX_IV_LENGTH);
     rv = 1;
  err:
-    EVP_MD_CTX_cleanup(&ctx);
+    EVP_MD_CTX_destroy(ctx);
     return rv;
 }

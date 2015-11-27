@@ -63,6 +63,7 @@
 #include <openssl/objects.h>
 #include <openssl/x509.h>
 #include "internal/evp_int.h"
+#include "evp_locl.h"
 
 static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
                           const EVP_MD *type, ENGINE *e, EVP_PKEY *pkey,
@@ -157,16 +158,15 @@ int EVP_DigestSignFinal(EVP_MD_CTX *ctx, unsigned char *sigret,
             else
                 r = EVP_DigestFinal_ex(ctx, md, &mdlen);
         } else {
-            EVP_MD_CTX tmp_ctx;
-            EVP_MD_CTX_init(&tmp_ctx);
-            if (!EVP_MD_CTX_copy_ex(&tmp_ctx, ctx))
+            EVP_MD_CTX *tmp_ctx = EVP_MD_CTX_create();
+            if (tmp_ctx == NULL || !EVP_MD_CTX_copy_ex(tmp_ctx, ctx))
                 return 0;
             if (sctx)
-                r = tmp_ctx.pctx->pmeth->signctx(tmp_ctx.pctx,
-                                                 sigret, siglen, &tmp_ctx);
+                r = tmp_ctx->pctx->pmeth->signctx(tmp_ctx->pctx,
+                                                  sigret, siglen, tmp_ctx);
             else
-                r = EVP_DigestFinal_ex(&tmp_ctx, md, &mdlen);
-            EVP_MD_CTX_cleanup(&tmp_ctx);
+                r = EVP_DigestFinal_ex(tmp_ctx, md, &mdlen);
+            EVP_MD_CTX_destroy(tmp_ctx);
         }
         if (sctx || !r)
             return r;
@@ -203,16 +203,15 @@ int EVP_DigestVerifyFinal(EVP_MD_CTX *ctx, const unsigned char *sig,
         } else
             r = EVP_DigestFinal_ex(ctx, md, &mdlen);
     } else {
-        EVP_MD_CTX tmp_ctx;
-        EVP_MD_CTX_init(&tmp_ctx);
-        if (!EVP_MD_CTX_copy_ex(&tmp_ctx, ctx))
+        EVP_MD_CTX *tmp_ctx = EVP_MD_CTX_create();
+        if (tmp_ctx == NULL || !EVP_MD_CTX_copy_ex(tmp_ctx, ctx))
             return -1;
         if (vctx) {
-            r = tmp_ctx.pctx->pmeth->verifyctx(tmp_ctx.pctx,
-                                               sig, siglen, &tmp_ctx);
+            r = tmp_ctx->pctx->pmeth->verifyctx(tmp_ctx->pctx,
+                                                sig, siglen, tmp_ctx);
         } else
-            r = EVP_DigestFinal_ex(&tmp_ctx, md, &mdlen);
-        EVP_MD_CTX_cleanup(&tmp_ctx);
+            r = EVP_DigestFinal_ex(tmp_ctx, md, &mdlen);
+        EVP_MD_CTX_destroy(tmp_ctx);
     }
     if (vctx || !r)
         return r;
