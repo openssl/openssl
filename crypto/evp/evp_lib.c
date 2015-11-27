@@ -60,6 +60,7 @@
 #include "internal/cryptlib.h"
 #include <openssl/evp.h>
 #include <openssl/objects.h>
+#include "evp_locl.h"
 
 int EVP_CIPHER_param_to_asn1(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
 {
@@ -314,6 +315,29 @@ const EVP_MD *EVP_MD_CTX_md(const EVP_MD_CTX *ctx)
     if (!ctx)
         return NULL;
     return ctx->digest;
+}
+
+EVP_PKEY_CTX *EVP_MD_CTX_pkey_ctx(const EVP_MD_CTX *ctx)
+{
+    return ctx->pctx;
+}
+
+void *EVP_MD_CTX_md_data(const EVP_MD_CTX *ctx)
+{
+    return ctx->md_data;
+}
+
+int (*EVP_MD_CTX_update_fn(EVP_MD_CTX *ctx))(EVP_MD_CTX *ctx,
+                                             const void *data, size_t count)
+{
+    return ctx->update;
+}
+
+void EVP_MD_CTX_set_update_fn(EVP_MD_CTX *ctx,
+                              int (*update) (EVP_MD_CTX *ctx,
+                                             const void *data, size_t count))
+{
+    ctx->update = update;
 }
 
 void EVP_MD_CTX_set_flags(EVP_MD_CTX *ctx, int flags)
