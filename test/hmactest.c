@@ -134,7 +134,7 @@ int main(int argc, char *argv[])
     char *p;
 # endif
     int err = 0;
-    HMAC_CTX ctx, ctx2;
+    HMAC_CTX ctx = HMAC_CTX_EMPTY, ctx2 = HMAC_CTX_EMPTY;
     unsigned char buf[EVP_MAX_MD_SIZE];
     unsigned int len;
 

@@ -1298,7 +1298,7 @@ int speed_main(int argc, char **argv)
 
 #if !defined(OPENSSL_NO_MD5)
     if (doit[D_HMAC]) {
-        HMAC_CTX hctx;
+        HMAC_CTX hctx = HMAC_CTX_EMPTY;
 
         HMAC_CTX_init(&hctx);
         HMAC_Init_ex(&hctx, (unsigned char *)"This is a key...",

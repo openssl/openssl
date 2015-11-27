@@ -448,7 +448,8 @@ static int ossl_hmac_copy(EVP_PKEY_CTX *dst, EVP_PKEY_CTX *src)
     sctx = EVP_PKEY_CTX_get_data(src);
     dctx = EVP_PKEY_CTX_get_data(dst);
     dctx->md = sctx->md;
-    HMAC_CTX_init(&dctx->ctx);
+    /* Because HMAC_CTX_copy does HMAC_CTX_init */
+    HMAC_CTX_cleanup(&dctx->ctx);
     if (!HMAC_CTX_copy(&dctx->ctx, &sctx->ctx))
         return 0;
     if (sctx->ktmp.data) {

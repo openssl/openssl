@@ -91,7 +91,7 @@ int PKCS12_gen_mac(PKCS12 *p12, const char *pass, int passlen,
                    unsigned char *mac, unsigned int *maclen)
 {
     const EVP_MD *md_type;
-    HMAC_CTX hmac;
+    HMAC_CTX hmac = HMAC_CTX_EMPTY;
     unsigned char key[EVP_MAX_MD_SIZE], *salt;
     int saltlen, iter;
     int md_size = 0;
