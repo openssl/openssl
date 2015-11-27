@@ -528,7 +528,7 @@ int ssl3_final_finish_mac(SSL *s, const char *sender, int len, unsigned char *p)
         return 0;
 
     if (EVP_MD_CTX_type(s->s3->handshake_dgst) != NID_md5_sha1) {
-        SSLerr(SSL_F_SSL3_HANDSHAKE_MAC, SSL_R_NO_REQUIRED_DIGEST);
+        SSLerr(SSL_F_SSL3_FINAL_FINISH_MAC, SSL_R_NO_REQUIRED_DIGEST);
         return 0;
     }
 
@@ -546,7 +546,7 @@ int ssl3_final_finish_mac(SSL *s, const char *sender, int len, unsigned char *p)
                                s->session->master_key_length,
                                s->session->master_key) <= 0
             || EVP_DigestFinal_ex(&ctx, p, NULL) <= 0) {
-        SSLerr(SSL_F_SSL3_HANDSHAKE_MAC, ERR_R_INTERNAL_ERROR);
+        SSLerr(SSL_F_SSL3_FINAL_FINISH_MAC, ERR_R_INTERNAL_ERROR);
         ret = 0;
     }
 
