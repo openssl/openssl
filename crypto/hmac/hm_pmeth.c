@@ -96,7 +96,6 @@ static int pkey_hmac_copy(EVP_PKEY_CTX *dst, EVP_PKEY_CTX *src)
     sctx = src->data;
     dctx = dst->data;
     dctx->md = sctx->md;
-    HMAC_CTX_init(&dctx->ctx);
     if (!HMAC_CTX_copy(&dctx->ctx, &sctx->ctx))
         return 0;
     if (sctx->ktmp.data) {
@@ -111,9 +110,12 @@ static void pkey_hmac_cleanup(EVP_PKEY_CTX *ctx)
 {
     HMAC_PKEY_CTX *hctx = ctx->data;
 
-    HMAC_CTX_cleanup(&hctx->ctx);
-    OPENSSL_clear_free(hctx->ktmp.data, hctx->ktmp.length);
-    OPENSSL_free(hctx);
+    if (hctx != NULL) {
+        HMAC_CTX_cleanup(&hctx->ctx);
+        OPENSSL_clear_free(hctx->ktmp.data, hctx->ktmp.length);
+        OPENSSL_free(hctx);
+        ctx->data = NULL;
+    }
 }
 
 static int pkey_hmac_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
@@ -132,7 +134,7 @@ static int pkey_hmac_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
 
 static int int_update(EVP_MD_CTX *ctx, const void *data, size_t count)
 {
-    HMAC_PKEY_CTX *hctx = ctx->pctx->data;
+    HMAC_PKEY_CTX *hctx = EVP_MD_CTX_pkey_ctx(ctx)->data;
     if (!HMAC_Update(&hctx->ctx, data, count))
         return 0;
     return 1;
@@ -141,9 +143,10 @@ static int int_update(EVP_MD_CTX *ctx, const void *data, size_t count)
 static int hmac_signctx_init(EVP_PKEY_CTX *ctx, EVP_MD_CTX *mctx)
 {
     HMAC_PKEY_CTX *hctx = ctx->data;
-    HMAC_CTX_set_flags(&hctx->ctx, mctx->flags & ~EVP_MD_CTX_FLAG_NO_INIT);
+    HMAC_CTX_set_flags(&hctx->ctx,
+                       EVP_MD_CTX_test_flags(mctx, ~EVP_MD_CTX_FLAG_NO_INIT));
     EVP_MD_CTX_set_flags(mctx, EVP_MD_CTX_FLAG_NO_INIT);
-    mctx->update = int_update;
+    EVP_MD_CTX_set_update_fn(mctx, int_update);
     return 1;
 }
 

@@ -77,9 +77,10 @@ typedef struct hmac_ctx_st {
     unsigned char key[HMAC_MAX_MD_CBLOCK];
 } HMAC_CTX;
 
+# define HMAC_CTX_EMPTY      { NULL, NULL, NULL, NULL, 0, "" }
 # define HMAC_size(e)    (EVP_MD_size((e)->md))
 
-void HMAC_CTX_init(HMAC_CTX *ctx);
+int HMAC_CTX_init(HMAC_CTX *ctx);
 void HMAC_CTX_cleanup(HMAC_CTX *ctx);
 
 #ifdef OPENSSL_USE_DEPRECATED

@@ -3151,7 +3151,7 @@ int tls_construct_new_session_ticket(SSL *s)
 {
     unsigned char *senc = NULL;
     EVP_CIPHER_CTX ctx;
-    HMAC_CTX hctx;
+    HMAC_CTX hctx = HMAC_CTX_EMPTY;
     unsigned char *p, *macstart;
     const unsigned char *const_p;
     int len, slen_full, slen;

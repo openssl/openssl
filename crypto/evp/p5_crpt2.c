@@ -85,7 +85,7 @@ int PKCS5_PBKDF2_HMAC(const char *pass, int passlen,
     unsigned char digtmp[EVP_MAX_MD_SIZE], *p, itmp[4];
     int cplen, j, k, tkeylen, mdlen;
     unsigned long i = 1;
-    HMAC_CTX hctx_tpl, hctx;
+    HMAC_CTX hctx_tpl = HMAC_CTX_EMPTY, hctx = HMAC_CTX_EMPTY;
 
     mdlen = EVP_MD_size(digest);
     if (mdlen < 0)

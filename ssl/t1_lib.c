@@ -3041,7 +3041,7 @@ static int tls_decrypt_ticket(SSL *s, const unsigned char *etick,
     const unsigned char *p;
     int slen, mlen, renew_ticket = 0;
     unsigned char tick_hmac[EVP_MAX_MD_SIZE];
-    HMAC_CTX hctx;
+    HMAC_CTX hctx = HMAC_CTX_EMPTY;
     EVP_CIPHER_CTX ctx;
     SSL_CTX *tctx = s->initial_ctx;
     /* Need at least keyname + iv + some encrypted data */
