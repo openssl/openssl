@@ -12,7 +12,7 @@ HMAC, HMAC_CTX_init, HMAC_Init, HMAC_Init_ex, HMAC_Update, HMAC_Final, HMAC_CTX_
                int key_len, const unsigned char *d, int n,
                unsigned char *md, unsigned int *md_len);
 
- void HMAC_CTX_init(HMAC_CTX *ctx);
+ int HMAC_CTX_init(HMAC_CTX *ctx);
 
  int HMAC_Init(HMAC_CTX *ctx, const void *key, int key_len,
                const EVP_MD *md);
@@ -74,10 +74,10 @@ must have space for the hash function output.
 HMAC() returns a pointer to the message authentication code or NULL if
 an error occurred.
 
-HMAC_Init_ex(), HMAC_Update() and HMAC_Final() return 1 for success or 0 if
-an error occurred.
+HMAC_CTX_init(), HMAC_Init_ex(), HMAC_Update() and HMAC_Final() return 1
+for success or 0 if an error occurred.
 
-HMAC_CTX_init() and HMAC_CTX_cleanup() do not return values.
+HMAC_CTX_cleanup() do not return values.
 
 =head1 CONFORMING TO
 
@@ -88,6 +88,8 @@ RFC 2104
 L<sha(3)>, L<evp(3)>
 
 =head1 HISTORY
+
+HMAC_CTX_init() did not return a value in OpenSSL versions before 1.1.
 
 HMAC_Init_ex(), HMAC_Update() and HMAC_Final() did not return values in
 versions of OpenSSL before 1.0.0.
