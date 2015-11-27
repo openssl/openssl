@@ -74,6 +74,7 @@ static void ERR_DASYNC_error(int function, int reason, char *file, int line);
 /* Function codes. */
 # define DASYNC_F_BIND_DASYNC                             107
 # define DASYNC_F_CIPHER_AES_128_CBC_CODE                 100
+# define DASYNC_F_DASYNC_AES128_CBC_HMAC_SHA1_INIT_KEY    109
 # define DASYNC_F_DASYNC_AES128_INIT_KEY                  108
 # define DASYNC_F_DASYNC_BN_MOD_EXP                       101
 # define DASYNC_F_DASYNC_MOD_EXP                          102

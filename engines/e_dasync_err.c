@@ -1,5 +1,5 @@
 /* ====================================================================
- * Copyright (c) 1999-2015 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2016 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -69,9 +69,11 @@
 # define ERR_REASON(reason) ERR_PACK(0,0,reason)
 
 static ERR_STRING_DATA DASYNC_str_functs[] = {
-    {ERR_FUNC(DASYNC_F_BIND_DASYNC), "BIND_DASYNC"},
+    {ERR_FUNC(DASYNC_F_BIND_DASYNC), "bind_dasync"},
     {ERR_FUNC(DASYNC_F_CIPHER_AES_128_CBC_CODE), "CIPHER_AES_128_CBC_CODE"},
-    {ERR_FUNC(DASYNC_F_DASYNC_AES128_INIT_KEY), "DASYNC_AES128_INIT_KEY"},
+    {ERR_FUNC(DASYNC_F_DASYNC_AES128_CBC_HMAC_SHA1_INIT_KEY),
+     "dasync_aes128_cbc_hmac_sha1_init_key"},
+    {ERR_FUNC(DASYNC_F_DASYNC_AES128_INIT_KEY), "dasync_aes128_init_key"},
     {ERR_FUNC(DASYNC_F_DASYNC_BN_MOD_EXP), "DASYNC_BN_MOD_EXP"},
     {ERR_FUNC(DASYNC_F_DASYNC_MOD_EXP), "DASYNC_MOD_EXP"},
     {ERR_FUNC(DASYNC_F_DASYNC_PRIVATE_DECRYPT), "DASYNC_PRIVATE_DECRYPT"},
