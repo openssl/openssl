@@ -164,7 +164,7 @@ static ERR_STRING_DATA SSL_str_functs[] = {
      "ssl3_get_server_certificate"},
     {ERR_FUNC(SSL_F_SSL3_GET_SERVER_DONE), "ssl3_get_server_done"},
     {ERR_FUNC(SSL_F_SSL3_GET_SERVER_HELLO), "ssl3_get_server_hello"},
-    {ERR_FUNC(SSL_F_SSL3_HANDSHAKE_MAC), "ssl3_handshake_mac"},
+    {ERR_FUNC(SSL_F_SSL3_FINAL_FINISH_MAC), "ssl3_final_finish_mac"},
     {ERR_FUNC(SSL_F_SSL3_NEW_SESSION_TICKET), "SSL3_NEW_SESSION_TICKET"},
     {ERR_FUNC(SSL_F_SSL3_OUTPUT_CERT_CHAIN), "ssl3_output_cert_chain"},
     {ERR_FUNC(SSL_F_SSL3_PEEK), "ssl3_peek"},
