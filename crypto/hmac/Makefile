@@ -95,3 +95,4 @@ hmac.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
 hmac.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 hmac.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 hmac.o: ../../include/openssl/symhacks.h ../include/internal/cryptlib.h hmac.c
+hmac.o: hmac_lcl.h
