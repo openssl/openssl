@@ -1492,7 +1492,8 @@ static int do_sign_init(EVP_MD_CTX *ctx, EVP_PKEY *pkey,
     EVP_PKEY_CTX *pkctx = NULL;
     int i;
 
-    EVP_MD_CTX_init(ctx);
+    if (ctx == NULL)
+        return 0;
     if (!EVP_DigestSignInit(ctx, &pkctx, md, NULL, pkey))
         return 0;
     for (i = 0; i < sk_OPENSSL_STRING_num(sigopts); i++) {
@@ -1510,13 +1511,16 @@ int do_X509_sign(X509 *x, EVP_PKEY *pkey, const EVP_MD *md,
                  STACK_OF(OPENSSL_STRING) *sigopts)
 {
     int rv;
-    EVP_MD_CTX mctx;
+    EVP_MD_CTX *mctx = EVP_MD_CTX_create();
 
-    EVP_MD_CTX_init(&mctx);
-    rv = do_sign_init(&mctx, pkey, md, sigopts);
+    rv = do_sign_init(mctx, pkey, md, sigopts);
+    /* Note: X509_sign_ctx() calls ASN1_item_sign_ctx(), which destroys
+     * the EVP_MD_CTX we send it, so only destroy it here if the former
+     * isn't called */
     if (rv > 0)
-        rv = X509_sign_ctx(x, &mctx);
-    EVP_MD_CTX_cleanup(&mctx);
+        rv = X509_sign_ctx(x, mctx);
+    else
+        EVP_MD_CTX_destroy(mctx);
     return rv > 0 ? 1 : 0;
 }
 
@@ -1524,13 +1528,15 @@ int do_X509_REQ_sign(X509_REQ *x, EVP_PKEY *pkey, const EVP_MD *md,
                      STACK_OF(OPENSSL_STRING) *sigopts)
 {
     int rv;
-    EVP_MD_CTX mctx;
-
-    EVP_MD_CTX_init(&mctx);
-    rv = do_sign_init(&mctx, pkey, md, sigopts);
+    EVP_MD_CTX *mctx = EVP_MD_CTX_create();
+    rv = do_sign_init(mctx, pkey, md, sigopts);
+    /* Note: X509_REQ_sign_ctx() calls ASN1_item_sign_ctx(), which destroys
+     * the EVP_MD_CTX we send it, so only destroy it here if the former
+     * isn't called */
     if (rv > 0)
-        rv = X509_REQ_sign_ctx(x, &mctx);
-    EVP_MD_CTX_cleanup(&mctx);
+        rv = X509_REQ_sign_ctx(x, mctx);
+    else
+        EVP_MD_CTX_destroy(mctx);
     return rv > 0 ? 1 : 0;
 }
 
@@ -1538,12 +1544,14 @@ int do_X509_CRL_sign(X509_CRL *x, EVP_PKEY *pkey, const EVP_MD *md,
                      STACK_OF(OPENSSL_STRING) *sigopts)
 {
     int rv;
-    EVP_MD_CTX mctx;
-
-    EVP_MD_CTX_init(&mctx);
-    rv = do_sign_init(&mctx, pkey, md, sigopts);
+    EVP_MD_CTX *mctx = EVP_MD_CTX_create();
+    rv = do_sign_init(mctx, pkey, md, sigopts);
+    /* Note: X509_CRL_sign_ctx() calls ASN1_item_sign_ctx(), which destroys
+     * the EVP_MD_CTX we send it, so only destroy it here if the former
+     * isn't called */
     if (rv > 0)
-        rv = X509_CRL_sign_ctx(x, &mctx);
-    EVP_MD_CTX_cleanup(&mctx);
+        rv = X509_CRL_sign_ctx(x, mctx);
+    else
+        EVP_MD_CTX_destroy(mctx);
     return rv > 0 ? 1 : 0;
 }

@@ -3197,19 +3197,23 @@ void ssl_clear_hash_ctx(EVP_MD_CTX **hash)
 /* Retrieve handshake hashes */
 int ssl_handshake_hash(SSL *s, unsigned char *out, int outlen)
 {
-    EVP_MD_CTX ctx;
+    EVP_MD_CTX *ctx = NULL;
     EVP_MD_CTX *hdgst = s->s3->handshake_dgst;
     int ret = EVP_MD_CTX_size(hdgst);
-    EVP_MD_CTX_init(&ctx);
     if (ret < 0 || ret > outlen) {
         ret = 0;
         goto err;
     }
-    if (!EVP_MD_CTX_copy_ex(&ctx, hdgst)
-        || EVP_DigestFinal_ex(&ctx, out, NULL) <= 0)
+    ctx = EVP_MD_CTX_create();
+    if (ctx == NULL) {
+        ret = 0;
+        goto err;
+    }
+    if (!EVP_MD_CTX_copy_ex(ctx, hdgst)
+        || EVP_DigestFinal_ex(ctx, out, NULL) <= 0)
         ret = 0;
  err:
-    EVP_MD_CTX_cleanup(&ctx);
+    EVP_MD_CTX_destroy(ctx);
     return ret;
 }
 

@@ -650,16 +650,16 @@ static int derive_pvk_key(unsigned char *key,
                           const unsigned char *salt, unsigned int saltlen,
                           const unsigned char *pass, int passlen)
 {
-    EVP_MD_CTX mctx;
+    EVP_MD_CTX *mctx = EVP_MD_CTX_create();;
     int rv = 1;
-    EVP_MD_CTX_init(&mctx);
-    if (!EVP_DigestInit_ex(&mctx, EVP_sha1(), NULL)
-        || !EVP_DigestUpdate(&mctx, salt, saltlen)
-        || !EVP_DigestUpdate(&mctx, pass, passlen)
-        || !EVP_DigestFinal_ex(&mctx, key, NULL))
+    if (mctx == NULL
+        || !EVP_DigestInit_ex(mctx, EVP_sha1(), NULL)
+        || !EVP_DigestUpdate(mctx, salt, saltlen)
+        || !EVP_DigestUpdate(mctx, pass, passlen)
+        || !EVP_DigestFinal_ex(mctx, key, NULL))
         rv = 0;
 
-    EVP_MD_CTX_cleanup(&mctx);
+    EVP_MD_CTX_destroy(mctx);
     return rv;
 }
 

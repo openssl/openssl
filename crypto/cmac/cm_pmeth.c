@@ -101,7 +101,7 @@ static int pkey_cmac_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
 
 static int int_update(EVP_MD_CTX *ctx, const void *data, size_t count)
 {
-    if (!CMAC_Update(ctx->pctx->data, data, count))
+    if (!CMAC_Update(EVP_MD_CTX_pkey_ctx(ctx)->data, data, count))
         return 0;
     return 1;
 }
@@ -109,7 +109,7 @@ static int int_update(EVP_MD_CTX *ctx, const void *data, size_t count)
 static int cmac_signctx_init(EVP_PKEY_CTX *ctx, EVP_MD_CTX *mctx)
 {
     EVP_MD_CTX_set_flags(mctx, EVP_MD_CTX_FLAG_NO_INIT);
-    mctx->update = int_update;
+    EVP_MD_CTX_set_update_fn(mctx, int_update);
     return 1;
 }
 

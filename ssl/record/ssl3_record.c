@@ -791,7 +791,6 @@ int n_ssl3_mac(SSL *ssl, unsigned char *md, int send)
 {
     SSL3_RECORD *rec;
     unsigned char *mac_sec, *seq;
-    EVP_MD_CTX md_ctx;
     const EVP_MD_CTX *hash;
     unsigned char *p, rec_char;
     size_t md_size;
@@ -855,30 +854,33 @@ int n_ssl3_mac(SSL *ssl, unsigned char *md, int send)
     } else {
         unsigned int md_size_u;
         /* Chop the digest off the end :-) */
-        EVP_MD_CTX_init(&md_ctx);
+        EVP_MD_CTX *md_ctx = EVP_MD_CTX_create();
+
+        if (md_ctx == NULL)
+            return -1;
 
         rec_char = rec->type;
         p = md;
         s2n(rec->length, p);
-        if (EVP_MD_CTX_copy_ex(&md_ctx, hash) <= 0
-                || EVP_DigestUpdate(&md_ctx, mac_sec, md_size) <= 0
-                || EVP_DigestUpdate(&md_ctx, ssl3_pad_1, npad) <= 0
-                || EVP_DigestUpdate(&md_ctx, seq, 8) <= 0
-                || EVP_DigestUpdate(&md_ctx, &rec_char, 1) <= 0
-                || EVP_DigestUpdate(&md_ctx, md, 2) <= 0
-                || EVP_DigestUpdate(&md_ctx, rec->input, rec->length) <= 0
-                || EVP_DigestFinal_ex(&md_ctx, md, NULL) <= 0
-                || EVP_MD_CTX_copy_ex(&md_ctx, hash) <= 0
-                || EVP_DigestUpdate(&md_ctx, mac_sec, md_size) <= 0
-                || EVP_DigestUpdate(&md_ctx, ssl3_pad_2, npad) <= 0
-                || EVP_DigestUpdate(&md_ctx, md, md_size) <= 0
-                || EVP_DigestFinal_ex(&md_ctx, md, &md_size_u) <= 0) {
-            EVP_MD_CTX_cleanup(&md_ctx);
+        if (EVP_MD_CTX_copy_ex(md_ctx, hash) <= 0
+                || EVP_DigestUpdate(md_ctx, mac_sec, md_size) <= 0
+                || EVP_DigestUpdate(md_ctx, ssl3_pad_1, npad) <= 0
+                || EVP_DigestUpdate(md_ctx, seq, 8) <= 0
+                || EVP_DigestUpdate(md_ctx, &rec_char, 1) <= 0
+                || EVP_DigestUpdate(md_ctx, md, 2) <= 0
+                || EVP_DigestUpdate(md_ctx, rec->input, rec->length) <= 0
+                || EVP_DigestFinal_ex(md_ctx, md, NULL) <= 0
+                || EVP_MD_CTX_copy_ex(md_ctx, hash) <= 0
+                || EVP_DigestUpdate(md_ctx, mac_sec, md_size) <= 0
+                || EVP_DigestUpdate(md_ctx, ssl3_pad_2, npad) <= 0
+                || EVP_DigestUpdate(md_ctx, md, md_size) <= 0
+                || EVP_DigestFinal_ex(md_ctx, md, &md_size_u) <= 0) {
+            EVP_MD_CTX_cleanup(md_ctx);
             return -1;
         }
         md_size = md_size_u;
 
-        EVP_MD_CTX_cleanup(&md_ctx);
+        EVP_MD_CTX_destroy(md_ctx);
     }
 
     ssl3_record_sequence_update(seq);
@@ -892,7 +894,7 @@ int tls1_mac(SSL *ssl, unsigned char *md, int send)
     EVP_MD_CTX *hash;
     size_t md_size;
     int i;
-    EVP_MD_CTX hmac, *mac_ctx;
+    EVP_MD_CTX *hmac = NULL, *mac_ctx;
     unsigned char header[13];
     int stream_mac = (send ? (ssl->mac_flags & SSL_MAC_FLAG_WRITE_MAC_STREAM)
                       : (ssl->mac_flags & SSL_MAC_FLAG_READ_MAC_STREAM));
@@ -916,9 +918,11 @@ int tls1_mac(SSL *ssl, unsigned char *md, int send)
     if (stream_mac) {
         mac_ctx = hash;
     } else {
-        if (!EVP_MD_CTX_copy(&hmac, hash))
+        hmac = EVP_MD_CTX_create();
+        if (hmac == NULL
+                || !EVP_MD_CTX_copy(hmac, hash))
             return -1;
-        mac_ctx = &hmac;
+        mac_ctx = hmac;
     }
 
     if (SSL_IS_DTLS(ssl)) {
@@ -953,16 +957,14 @@ int tls1_mac(SSL *ssl, unsigned char *md, int send)
                                    rec->length + md_size, rec->orig_len,
                                    ssl->s3->read_mac_secret,
                                    ssl->s3->read_mac_secret_size, 0) <= 0) {
-            if (!stream_mac)
-                EVP_MD_CTX_cleanup(&hmac);
+            EVP_MD_CTX_destroy(hmac);
             return -1;
         }
     } else {
         if (EVP_DigestSignUpdate(mac_ctx, header, sizeof(header)) <= 0
                 || EVP_DigestSignUpdate(mac_ctx, rec->input, rec->length) <= 0
                 || EVP_DigestSignFinal(mac_ctx, md, &md_size) <= 0) {
-            if (!stream_mac)
-                EVP_MD_CTX_cleanup(&hmac);
+            EVP_MD_CTX_destroy(hmac);
             return -1;
         }
         if (!send && !SSL_USE_ETM(ssl) && FIPS_mode())
@@ -971,8 +973,7 @@ int tls1_mac(SSL *ssl, unsigned char *md, int send)
                                   rec->length, rec->orig_len);
     }
 
-    if (!stream_mac)
-        EVP_MD_CTX_cleanup(&hmac);
+    EVP_MD_CTX_destroy(hmac);
 
 #ifdef TLS_DEBUG
     fprintf(stderr, "seq=");

@@ -1573,7 +1573,7 @@ MSG_PROCESS_RETURN tls_process_server_certificate(SSL *s, PACKET *pkt)
 
 MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
 {
-    EVP_MD_CTX md_ctx;
+    EVP_MD_CTX *md_ctx;
     int al, j;
     long alg_k, alg_a;
     EVP_PKEY *pkey = NULL;
@@ -1592,7 +1592,12 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
 #endif
     PACKET save_param_start, signature;
 
-    EVP_MD_CTX_init(&md_ctx);
+    md_ctx = EVP_MD_CTX_create();
+    if (md_ctx == NULL) {
+        al = SSL_AD_INTERNAL_ERROR;
+        SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, ERR_R_MALLOC_FAILURE);
+        goto f_err;
+    }
 
     alg_k = s->s3->tmp.new_cipher->algorithm_mkey;
 
@@ -1882,18 +1887,18 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
             SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, SSL_R_WRONG_SIGNATURE_LENGTH);
             goto f_err;
         }
-        if (EVP_VerifyInit_ex(&md_ctx, md, NULL) <= 0
-                || EVP_VerifyUpdate(&md_ctx, &(s->s3->client_random[0]),
+        if (EVP_VerifyInit_ex(md_ctx, md, NULL) <= 0
+                || EVP_VerifyUpdate(md_ctx, &(s->s3->client_random[0]),
                                     SSL3_RANDOM_SIZE) <= 0
-                || EVP_VerifyUpdate(&md_ctx, &(s->s3->server_random[0]),
+                || EVP_VerifyUpdate(md_ctx, &(s->s3->server_random[0]),
                                     SSL3_RANDOM_SIZE) <= 0
-                || EVP_VerifyUpdate(&md_ctx, PACKET_data(&params),
+                || EVP_VerifyUpdate(md_ctx, PACKET_data(&params),
                                     PACKET_remaining(&params)) <= 0) {
             al = SSL_AD_INTERNAL_ERROR;
             SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, ERR_R_EVP_LIB);
             goto f_err;
         }
-        if (EVP_VerifyFinal(&md_ctx, PACKET_data(&signature),
+        if (EVP_VerifyFinal(md_ctx, PACKET_data(&signature),
                             PACKET_remaining(&signature), pkey) <= 0) {
             /* bad signature */
             al = SSL_AD_DECRYPT_ERROR;
@@ -1916,7 +1921,7 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
         }
     }
     EVP_PKEY_free(pkey);
-    EVP_MD_CTX_cleanup(&md_ctx);
+    EVP_MD_CTX_destroy(md_ctx);
     return MSG_PROCESS_CONTINUE_READING;
  f_err:
     ssl3_send_alert(s, SSL3_AL_FATAL, al);
@@ -1933,7 +1938,7 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
     EC_POINT_free(srvr_ecpoint);
     EC_KEY_free(ecdh);
 #endif
-    EVP_MD_CTX_cleanup(&md_ctx);
+    EVP_MD_CTX_destroy(md_ctx);
     ossl_statem_set_error(s);
     return MSG_PROCESS_ERROR;
 }
@@ -2894,13 +2899,17 @@ int tls_construct_client_verify(SSL *s)
     unsigned char *p;
     EVP_PKEY *pkey;
     const EVP_MD *md = s->s3->tmp.md[s->cert->key - s->cert->pkeys];
-    EVP_MD_CTX mctx;
+    EVP_MD_CTX *mctx;
     unsigned u = 0;
     unsigned long n = 0;
     long hdatalen = 0;
     void *hdata;
 
-    EVP_MD_CTX_init(&mctx);
+    mctx = EVP_MD_CTX_create();
+    if (mctx == NULL) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_VERIFY, ERR_R_MALLOC_FAILURE);
+        goto err;
+    }
 
     p = ssl_handshake_start(s);
     pkey = s->cert->key->privatekey;
@@ -2921,13 +2930,13 @@ int tls_construct_client_verify(SSL *s)
 #ifdef SSL_DEBUG
     fprintf(stderr, "Using client alg %s\n", EVP_MD_name(md));
 #endif
-    if (!EVP_SignInit_ex(&mctx, md, NULL)
-        || !EVP_SignUpdate(&mctx, hdata, hdatalen)
+    if (!EVP_SignInit_ex(mctx, md, NULL)
+        || !EVP_SignUpdate(mctx, hdata, hdatalen)
         || (s->version == SSL3_VERSION
-            && !EVP_MD_CTX_ctrl(&mctx, EVP_CTRL_SSL3_MASTER_SECRET,
+            && !EVP_MD_CTX_ctrl(mctx, EVP_CTRL_SSL3_MASTER_SECRET,
                                 s->session->master_key_length,
                                 s->session->master_key))
-        || !EVP_SignFinal(&mctx, p + 2, &u, pkey)) {
+        || !EVP_SignFinal(mctx, p + 2, &u, pkey)) {
         SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_VERIFY, ERR_R_EVP_LIB);
         goto err;
     }
@@ -2949,10 +2958,10 @@ int tls_construct_client_verify(SSL *s)
         goto err;
     }
 
-    EVP_MD_CTX_cleanup(&mctx);
+    EVP_MD_CTX_destroy(mctx);
     return 1;
  err:
-    EVP_MD_CTX_cleanup(&mctx);
+    EVP_MD_CTX_destroy(mctx);
     return 0;
 }
 

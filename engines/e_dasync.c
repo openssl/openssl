@@ -259,7 +259,7 @@ static void dummy_pause_job(void) {
  * implementation
  */
 #undef data
-#define data(ctx) ((SHA_CTX *)(ctx)->md_data)
+#define data(ctx) ((SHA_CTX *)EVP_MD_CTX_md_data(ctx))
 static int dasync_sha1_init(EVP_MD_CTX *ctx)
 {
     dummy_pause_job();

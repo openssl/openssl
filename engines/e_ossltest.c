@@ -365,7 +365,7 @@ static void fill_known_data(unsigned char *md, unsigned int len)
  * the same value.
  */
 #undef data
-#define data(ctx) ((MD5_CTX *)(ctx)->md_data)
+#define data(ctx) ((MD5_CTX *)EVP_MD_CTX_md_data(ctx))
 static int digest_md5_init(EVP_MD_CTX *ctx)
 {
     return MD5_Init(data(ctx));
@@ -392,7 +392,7 @@ static int digest_md5_final(EVP_MD_CTX *ctx, unsigned char *md)
  * SHA1 implementation.
  */
 #undef data
-#define data(ctx) ((SHA_CTX *)(ctx)->md_data)
+#define data(ctx) ((SHA_CTX *)EVP_MD_CTX_md_data(ctx))
 static int digest_sha1_init(EVP_MD_CTX *ctx)
 {
     return SHA1_Init(data(ctx));
@@ -419,7 +419,7 @@ static int digest_sha1_final(EVP_MD_CTX *ctx, unsigned char *md)
  * SHA256 implementation.
  */
 #undef data
-#define data(ctx) ((SHA256_CTX *)(ctx)->md_data)
+#define data(ctx) ((SHA256_CTX *)EVP_MD_CTX_md_data(ctx))
 static int digest_sha256_init(EVP_MD_CTX *ctx)
 {
     return SHA256_Init(data(ctx));
@@ -446,7 +446,7 @@ static int digest_sha256_final(EVP_MD_CTX *ctx, unsigned char *md)
  * SHA384/512 implementation.
  */
 #undef data
-#define data(ctx) ((SHA512_CTX *)(ctx)->md_data)
+#define data(ctx) ((SHA512_CTX *)EVP_MD_CTX_md_data(ctx))
 static int digest_sha384_init(EVP_MD_CTX *ctx)
 {
     return SHA384_Init(data(ctx));

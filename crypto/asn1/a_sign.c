@@ -131,12 +131,15 @@ int ASN1_sign(i2d_of_void *i2d, X509_ALGOR *algor1, X509_ALGOR *algor2,
               ASN1_BIT_STRING *signature, char *data, EVP_PKEY *pkey,
               const EVP_MD *type)
 {
-    EVP_MD_CTX ctx;
+    EVP_MD_CTX *ctx = EVP_MD_CTX_create();
     unsigned char *p, *buf_in = NULL, *buf_out = NULL;
     int i, inl = 0, outl = 0, outll = 0;
     X509_ALGOR *a;
 
-    EVP_MD_CTX_init(&ctx);
+    if (ctx == NULL) {
+        ASN1err(ASN1_F_ASN1_SIGN, ERR_R_MALLOC_FAILURE);
+        goto err;
+    }
     for (i = 0; i < 2; i++) {
         if (i == 0)
             a = algor1;
@@ -182,9 +185,9 @@ int ASN1_sign(i2d_of_void *i2d, X509_ALGOR *algor1, X509_ALGOR *algor2,
     p = buf_in;
 
     i2d(data, &p);
-    if (!EVP_SignInit_ex(&ctx, type, NULL)
-        || !EVP_SignUpdate(&ctx, (unsigned char *)buf_in, inl)
-        || !EVP_SignFinal(&ctx, (unsigned char *)buf_out,
+    if (!EVP_SignInit_ex(ctx, type, NULL)
+        || !EVP_SignUpdate(ctx, (unsigned char *)buf_in, inl)
+        || !EVP_SignFinal(ctx, (unsigned char *)buf_out,
                           (unsigned int *)&outl, pkey)) {
         outl = 0;
         ASN1err(ASN1_F_ASN1_SIGN, ERR_R_EVP_LIB);
@@ -201,7 +204,7 @@ int ASN1_sign(i2d_of_void *i2d, X509_ALGOR *algor1, X509_ALGOR *algor2,
     signature->flags &= ~(ASN1_STRING_FLAG_BITS_LEFT | 0x07);
     signature->flags |= ASN1_STRING_FLAG_BITS_LEFT;
  err:
-    EVP_MD_CTX_cleanup(&ctx);
+    EVP_MD_CTX_destroy(ctx);
     OPENSSL_clear_free((char *)buf_in, (unsigned int)inl);
     OPENSSL_clear_free((char *)buf_out, outll);
     return (outl);
@@ -213,13 +216,17 @@ int ASN1_item_sign(const ASN1_ITEM *it, X509_ALGOR *algor1,
                    X509_ALGOR *algor2, ASN1_BIT_STRING *signature, void *asn,
                    EVP_PKEY *pkey, const EVP_MD *type)
 {
-    EVP_MD_CTX ctx;
-    EVP_MD_CTX_init(&ctx);
-    if (!EVP_DigestSignInit(&ctx, NULL, type, NULL, pkey)) {
-        EVP_MD_CTX_cleanup(&ctx);
+    EVP_MD_CTX *ctx = EVP_MD_CTX_create();
+
+    if (ctx == NULL) {
+        ASN1err(ASN1_F_ASN1_ITEM_SIGN, ERR_R_MALLOC_FAILURE);
         return 0;
     }
-    return ASN1_item_sign_ctx(it, algor1, algor2, signature, asn, &ctx);
+    if (!EVP_DigestSignInit(ctx, NULL, type, NULL, pkey)) {
+        EVP_MD_CTX_destroy(ctx);
+        return 0;
+    }
+    return ASN1_item_sign_ctx(it, algor1, algor2, signature, asn, ctx);
 }
 
 int ASN1_item_sign_ctx(const ASN1_ITEM *it,
@@ -234,7 +241,7 @@ int ASN1_item_sign_ctx(const ASN1_ITEM *it,
     int rv;
 
     type = EVP_MD_CTX_md(ctx);
-    pkey = EVP_PKEY_CTX_get0_pkey(ctx->pctx);
+    pkey = EVP_PKEY_CTX_get0_pkey(EVP_MD_CTX_pkey_ctx(ctx));
 
     if (!type || !pkey) {
         ASN1err(ASN1_F_ASN1_ITEM_SIGN_CTX, ASN1_R_CONTEXT_NOT_INITIALISED);
@@ -307,7 +314,7 @@ int ASN1_item_sign_ctx(const ASN1_ITEM *it,
     signature->flags &= ~(ASN1_STRING_FLAG_BITS_LEFT | 0x07);
     signature->flags |= ASN1_STRING_FLAG_BITS_LEFT;
  err:
-    EVP_MD_CTX_cleanup(ctx);
+    EVP_MD_CTX_destroy(ctx);
     OPENSSL_clear_free((char *)buf_in, (unsigned int)inl);
     OPENSSL_clear_free((char *)buf_out, outll);
     return (outl);

@@ -70,9 +70,9 @@ extern "C" {
 
 typedef struct hmac_ctx_st {
     const EVP_MD *md;
-    EVP_MD_CTX md_ctx;
-    EVP_MD_CTX i_ctx;
-    EVP_MD_CTX o_ctx;
+    EVP_MD_CTX *md_ctx;
+    EVP_MD_CTX *i_ctx;
+    EVP_MD_CTX *o_ctx;
     unsigned int key_length;
     unsigned char key[HMAC_MAX_MD_CBLOCK];
 } HMAC_CTX;

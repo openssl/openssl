@@ -729,7 +729,7 @@ static int rsa_item_sign(EVP_MD_CTX *ctx, const ASN1_ITEM *it, void *asn,
                          ASN1_BIT_STRING *sig)
 {
     int pad_mode;
-    EVP_PKEY_CTX *pkctx = ctx->pctx;
+    EVP_PKEY_CTX *pkctx = EVP_MD_CTX_pkey_ctx(ctx);
     if (EVP_PKEY_CTX_get_rsa_padding(pkctx, &pad_mode) <= 0)
         return 0;
     if (pad_mode == RSA_PKCS1_PADDING)

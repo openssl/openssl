@@ -137,7 +137,7 @@ struct CMS_SignerInfo_st {
     X509 *signer;
     EVP_PKEY *pkey;
     /* Digest and public key context for alternative parameters */
-    EVP_MD_CTX mctx;
+    EVP_MD_CTX *mctx;
     EVP_PKEY_CTX *pctx;
 };
 

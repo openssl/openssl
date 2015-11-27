@@ -157,7 +157,7 @@ static int tls1_P_hash(const EVP_MD *md, const unsigned char *sec,
 {
     int chunk;
     size_t j;
-    EVP_MD_CTX ctx, ctx_tmp, ctx_init;
+    EVP_MD_CTX *ctx, *ctx_tmp, *ctx_init;
     EVP_PKEY *mac_key;
     unsigned char A1[EVP_MAX_MD_SIZE];
     size_t A1_len;
@@ -166,60 +166,62 @@ static int tls1_P_hash(const EVP_MD *md, const unsigned char *sec,
     chunk = EVP_MD_size(md);
     OPENSSL_assert(chunk >= 0);
 
-    EVP_MD_CTX_init(&ctx);
-    EVP_MD_CTX_init(&ctx_tmp);
-    EVP_MD_CTX_init(&ctx_init);
-    EVP_MD_CTX_set_flags(&ctx_init, EVP_MD_CTX_FLAG_NON_FIPS_ALLOW);
+    ctx = EVP_MD_CTX_create();
+    ctx_tmp = EVP_MD_CTX_create();
+    ctx_init = EVP_MD_CTX_create();
+    if (ctx == NULL || ctx_tmp == NULL || ctx_init == NULL)
+        goto err;
+    EVP_MD_CTX_set_flags(ctx_init, EVP_MD_CTX_FLAG_NON_FIPS_ALLOW);
     mac_key = EVP_PKEY_new_mac_key(EVP_PKEY_HMAC, NULL, sec, sec_len);
     if (!mac_key)
         goto err;
-    if (!EVP_DigestSignInit(&ctx_init, NULL, md, NULL, mac_key))
+    if (!EVP_DigestSignInit(ctx_init, NULL, md, NULL, mac_key))
         goto err;
-    if (!EVP_MD_CTX_copy_ex(&ctx, &ctx_init))
+    if (!EVP_MD_CTX_copy_ex(ctx, ctx_init))
         goto err;
-    if (seed1 && !EVP_DigestSignUpdate(&ctx, seed1, seed1_len))
+    if (seed1 && !EVP_DigestSignUpdate(ctx, seed1, seed1_len))
         goto err;
-    if (seed2 && !EVP_DigestSignUpdate(&ctx, seed2, seed2_len))
+    if (seed2 && !EVP_DigestSignUpdate(ctx, seed2, seed2_len))
         goto err;
-    if (seed3 && !EVP_DigestSignUpdate(&ctx, seed3, seed3_len))
+    if (seed3 && !EVP_DigestSignUpdate(ctx, seed3, seed3_len))
         goto err;
-    if (seed4 && !EVP_DigestSignUpdate(&ctx, seed4, seed4_len))
+    if (seed4 && !EVP_DigestSignUpdate(ctx, seed4, seed4_len))
         goto err;
-    if (seed5 && !EVP_DigestSignUpdate(&ctx, seed5, seed5_len))
+    if (seed5 && !EVP_DigestSignUpdate(ctx, seed5, seed5_len))
         goto err;
-    if (!EVP_DigestSignFinal(&ctx, A1, &A1_len))
+    if (!EVP_DigestSignFinal(ctx, A1, &A1_len))
         goto err;
 
     for (;;) {
         /* Reinit mac contexts */
-        if (!EVP_MD_CTX_copy_ex(&ctx, &ctx_init))
+        if (!EVP_MD_CTX_copy_ex(ctx, ctx_init))
             goto err;
-        if (!EVP_DigestSignUpdate(&ctx, A1, A1_len))
+        if (!EVP_DigestSignUpdate(ctx, A1, A1_len))
             goto err;
-        if (olen > chunk && !EVP_MD_CTX_copy_ex(&ctx_tmp, &ctx))
+        if (olen > chunk && !EVP_MD_CTX_copy_ex(ctx_tmp, ctx))
             goto err;
-        if (seed1 && !EVP_DigestSignUpdate(&ctx, seed1, seed1_len))
+        if (seed1 && !EVP_DigestSignUpdate(ctx, seed1, seed1_len))
             goto err;
-        if (seed2 && !EVP_DigestSignUpdate(&ctx, seed2, seed2_len))
+        if (seed2 && !EVP_DigestSignUpdate(ctx, seed2, seed2_len))
             goto err;
-        if (seed3 && !EVP_DigestSignUpdate(&ctx, seed3, seed3_len))
+        if (seed3 && !EVP_DigestSignUpdate(ctx, seed3, seed3_len))
             goto err;
-        if (seed4 && !EVP_DigestSignUpdate(&ctx, seed4, seed4_len))
+        if (seed4 && !EVP_DigestSignUpdate(ctx, seed4, seed4_len))
             goto err;
-        if (seed5 && !EVP_DigestSignUpdate(&ctx, seed5, seed5_len))
+        if (seed5 && !EVP_DigestSignUpdate(ctx, seed5, seed5_len))
             goto err;
 
         if (olen > chunk) {
-            if (!EVP_DigestSignFinal(&ctx, out, &j))
+            if (!EVP_DigestSignFinal(ctx, out, &j))
                 goto err;
             out += j;
             olen -= j;
             /* calc the next A1 value */
-            if (!EVP_DigestSignFinal(&ctx_tmp, A1, &A1_len))
+            if (!EVP_DigestSignFinal(ctx_tmp, A1, &A1_len))
                 goto err;
         } else {                /* last one */
 
-            if (!EVP_DigestSignFinal(&ctx, A1, &A1_len))
+            if (!EVP_DigestSignFinal(ctx, A1, &A1_len))
                 goto err;
             memcpy(out, A1, olen);
             break;
@@ -228,9 +230,9 @@ static int tls1_P_hash(const EVP_MD *md, const unsigned char *sec,
     ret = 1;
  err:
     EVP_PKEY_free(mac_key);
-    EVP_MD_CTX_cleanup(&ctx);
-    EVP_MD_CTX_cleanup(&ctx_tmp);
-    EVP_MD_CTX_cleanup(&ctx_init);
+    EVP_MD_CTX_destroy(ctx);
+    EVP_MD_CTX_destroy(ctx_tmp);
+    EVP_MD_CTX_destroy(ctx_init);
     OPENSSL_cleanse(A1, sizeof(A1));
     return ret;
 }

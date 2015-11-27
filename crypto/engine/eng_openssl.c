@@ -334,7 +334,7 @@ static int test_sha1_init(EVP_MD_CTX *ctx)
 # ifdef TEST_ENG_OPENSSL_SHA_P_INIT
     fprintf(stderr, "(TEST_ENG_OPENSSL_SHA) test_sha1_init() called\n");
 # endif
-    return SHA1_Init(ctx->md_data);
+    return SHA1_Init(EVP_MD_CTX_md_data(ctx));
 }
 
 static int test_sha1_update(EVP_MD_CTX *ctx, const void *data, size_t count)
@@ -342,7 +342,7 @@ static int test_sha1_update(EVP_MD_CTX *ctx, const void *data, size_t count)
 # ifdef TEST_ENG_OPENSSL_SHA_P_UPDATE
     fprintf(stderr, "(TEST_ENG_OPENSSL_SHA) test_sha1_update() called\n");
 # endif
-    return SHA1_Update(ctx->md_data, data, count);
+    return SHA1_Update(EVP_MD_CTX_md_data(ctx), data, count);
 }
 
 static int test_sha1_final(EVP_MD_CTX *ctx, unsigned char *md)
@@ -350,7 +350,7 @@ static int test_sha1_final(EVP_MD_CTX *ctx, unsigned char *md)
 # ifdef TEST_ENG_OPENSSL_SHA_P_FINAL
     fprintf(stderr, "(TEST_ENG_OPENSSL_SHA) test_sha1_final() called\n");
 # endif
-    return SHA1_Final(md, ctx->md_data);
+    return SHA1_Final(md, EVP_MD_CTX_md_data(ctx));
 }
 
 static const EVP_MD test_sha_md = {

@@ -95,17 +95,17 @@ int main(int argc, char *argv[])
     int ret = 0;
     unsigned char md[MDC2_DIGEST_LENGTH];
     int i;
-    EVP_MD_CTX c;
+    EVP_MD_CTX *c;
     static char *text = "Now is the time for all ";
 
 # ifdef CHARSET_EBCDIC
     ebcdic2ascii(text, text, strlen(text));
 # endif
 
-    EVP_MD_CTX_init(&c);
-    EVP_DigestInit_ex(&c, EVP_mdc2(), NULL);
-    EVP_DigestUpdate(&c, (unsigned char *)text, strlen(text));
-    EVP_DigestFinal_ex(&c, &(md[0]), NULL);
+    c = EVP_MD_CTX_create();
+    EVP_DigestInit_ex(c, EVP_mdc2(), NULL);
+    EVP_DigestUpdate(c, (unsigned char *)text, strlen(text));
+    EVP_DigestFinal_ex(c, &(md[0]), NULL);
 
     if (memcmp(md, pad1, MDC2_DIGEST_LENGTH) != 0) {
         for (i = 0; i < MDC2_DIGEST_LENGTH; i++)
@@ -118,11 +118,11 @@ int main(int argc, char *argv[])
     } else
         printf("pad1 - ok\n");
 
-    EVP_DigestInit_ex(&c, EVP_mdc2(), NULL);
+    EVP_DigestInit_ex(c, EVP_mdc2(), NULL);
     /* FIXME: use a ctl function? */
-    ((MDC2_CTX *)c.md_data)->pad_type = 2;
-    EVP_DigestUpdate(&c, (unsigned char *)text, strlen(text));
-    EVP_DigestFinal_ex(&c, &(md[0]), NULL);
+    ((MDC2_CTX *)EVP_MD_CTX_md_data(c))->pad_type = 2;
+    EVP_DigestUpdate(c, (unsigned char *)text, strlen(text));
+    EVP_DigestFinal_ex(c, &(md[0]), NULL);
 
     if (memcmp(md, pad2, MDC2_DIGEST_LENGTH) != 0) {
         for (i = 0; i < MDC2_DIGEST_LENGTH; i++)
@@ -135,7 +135,7 @@ int main(int argc, char *argv[])
     } else
         printf("pad2 - ok\n");
 
-    EVP_MD_CTX_cleanup(&c);
+    EVP_MD_CTX_destroy(c);
 # ifdef OPENSSL_SYS_NETWARE
     if (ret)
         printf("ERROR: %d\n", ret);

@@ -529,7 +529,7 @@ static int ts_compute_imprint(BIO *data, TS_TST_INFO *tst_info,
     TS_MSG_IMPRINT *msg_imprint = tst_info->msg_imprint;
     X509_ALGOR *md_alg_resp = msg_imprint->hash_algo;
     const EVP_MD *md;
-    EVP_MD_CTX md_ctx;
+    EVP_MD_CTX *md_ctx = NULL;
     unsigned char buffer[4096];
     int length;
 
@@ -551,17 +551,24 @@ static int ts_compute_imprint(BIO *data, TS_TST_INFO *tst_info,
         goto err;
     }
 
-    if (!EVP_DigestInit(&md_ctx, md))
+    md_ctx = EVP_MD_CTX_create();
+    if (md_ctx == NULL) {
+        TSerr(TS_F_TS_COMPUTE_IMPRINT, ERR_R_MALLOC_FAILURE);
+        goto err;
+    }
+    if (!EVP_DigestInit(md_ctx, md))
         goto err;
     while ((length = BIO_read(data, buffer, sizeof(buffer))) > 0) {
-        if (!EVP_DigestUpdate(&md_ctx, buffer, length))
+        if (!EVP_DigestUpdate(md_ctx, buffer, length))
             goto err;
     }
-    if (!EVP_DigestFinal(&md_ctx, *imprint, NULL))
+    if (!EVP_DigestFinal(md_ctx, *imprint, NULL))
         goto err;
+    EVP_MD_CTX_destroy(md_ctx);
 
     return 1;
  err:
+    EVP_MD_CTX_destroy(md_ctx);
     X509_ALGOR_free(*md_alg);
     OPENSSL_free(*imprint);
     *imprint_len = 0;

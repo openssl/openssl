@@ -188,17 +188,19 @@ int x9_62_test_internal(BIO *out, int nid, const char *r_in, const char *s_in)
     const char message[] = "abc";
     unsigned char digest[20];
     unsigned int dgst_len = 0;
-    EVP_MD_CTX md_ctx;
+    EVP_MD_CTX *md_ctx = EVP_MD_CTX_create();
     EC_KEY *key = NULL;
     ECDSA_SIG *signature = NULL;
     BIGNUM *r = NULL, *s = NULL;
     BIGNUM *kinv = NULL, *rp = NULL;
 
-    EVP_MD_CTX_init(&md_ctx);
+    if (md_ctx == NULL)
+        goto x962_int_err;
+
     /* get the message digest */
-    if (!EVP_DigestInit(&md_ctx, EVP_sha1())
-        || !EVP_DigestUpdate(&md_ctx, (const void *)message, 3)
-        || !EVP_DigestFinal(&md_ctx, digest, &dgst_len))
+    if (!EVP_DigestInit(md_ctx, EVP_sha1())
+        || !EVP_DigestUpdate(md_ctx, (const void *)message, 3)
+        || !EVP_DigestFinal(md_ctx, digest, &dgst_len))
         goto x962_int_err;
 
     BIO_printf(out, "testing %s: ", OBJ_nid2sn(nid));
@@ -244,7 +246,7 @@ int x9_62_test_internal(BIO *out, int nid, const char *r_in, const char *s_in)
     ECDSA_SIG_free(signature);
     BN_free(r);
     BN_free(s);
-    EVP_MD_CTX_cleanup(&md_ctx);
+    EVP_MD_CTX_destroy(md_ctx);
     BN_clear_free(kinv);
     BN_clear_free(rp);
     return ret;
