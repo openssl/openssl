@@ -195,7 +195,7 @@ default digest algorithm for the signing key will be used (usually SHA1).
 the encryption algorithm to use. For example DES  (56 bits) - B<-des>,
 triple DES (168 bits) - B<-des3>,
 EVP_get_cipherbyname() function) can also be used preceded by a dash, for 
-example B<-aes_128_cbc>. See L<B<enc>|enc(1)> for list of ciphers
+example B<-aes-128-cbc>. See L<B<enc>|enc(1)> for list of ciphers
 supported by your version of OpenSSL.
 
 If not specified triple DES is used. Only used with B<-encrypt>.
