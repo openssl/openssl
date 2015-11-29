@@ -406,7 +406,9 @@
 # define SSL_MD_GOST89MAC12_IDX 7
 # define SSL_MD_GOST12_512_IDX  8
 # define SSL_MD_MD5_SHA1_IDX 9
-# define SSL_MAX_DIGEST 10
+# define SSL_MD_SHA224_IDX 10
+# define SSL_MD_SHA512_IDX 11
+# define SSL_MAX_DIGEST 12
 
 /* Bits for algorithm2 (handshake digests and other extra flags) */
 
