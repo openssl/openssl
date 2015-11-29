@@ -118,7 +118,8 @@ static BIO *init_responder(const char *port);
 static int do_responder(OCSP_REQUEST **preq, BIO **pcbio, BIO *acbio,
                         const char *port);
 static int send_ocsp_response(BIO *cbio, OCSP_RESPONSE *resp);
-static OCSP_RESPONSE *query_responder(BIO *cbio, const char *path,
+static OCSP_RESPONSE *query_responder(BIO *cbio, const char *host,
+                                      const char *path,
                                       const STACK_OF(CONF_VALUE) *headers,
                                       OCSP_REQUEST *req, int req_timeout);
 
@@ -404,13 +405,14 @@ int ocsp_main(int argc, char **argv)
             path = opt_arg();
             break;
         case OPT_ISSUER:
-            X509_free(issuer);
             issuer = load_cert(opt_arg(), FORMAT_PEM,
                                NULL, NULL, "issuer certificate");
             if (issuer == NULL)
                 goto end;
-            if ((issuers = sk_X509_new_null()) == NULL)
-                goto end;
+            if (issuers == NULL) {
+                if ((issuers = sk_X509_new_null()) == NULL)
+                    goto end;
+            }
             sk_X509_push(issuers, issuer);
             break;
         case OPT_CERT:
@@ -493,9 +495,6 @@ int ocsp_main(int argc, char **argv)
     /* Have we anything to do? */
     if (!req && !reqin && !respin && !(port && ridx_filename))
         goto opthelp;
-
-    if (!app_load_modules(NULL))
-        goto end;
 
     out = bio_open_default(outfile, 'w', FORMAT_TEXT);
     if (out == NULL)
@@ -753,6 +752,7 @@ int ocsp_main(int argc, char **argv)
     EVP_PKEY_free(key);
     EVP_PKEY_free(rkey);
     X509_free(cert);
+    sk_X509_pop_free(issuers, X509_free);
     X509_free(rsigner);
     X509_free(rca_cert);
     free_index(rdb);
@@ -783,9 +783,9 @@ static int add_ocsp_cert(OCSP_REQUEST **req, X509 *cert,
         BIO_printf(bio_err, "No issuer certificate specified\n");
         return 0;
     }
-    if (!*req)
+    if (*req == NULL)
         *req = OCSP_REQUEST_new();
-    if (!*req)
+    if (*req == NULL)
         goto err;
     id = OCSP_cert_to_id(cert_id_md, cert, issuer);
     if (!id || !sk_OCSP_CERTID_push(ids, id))
@@ -811,9 +811,9 @@ static int add_ocsp_serial(OCSP_REQUEST **req, char *serial,
         BIO_printf(bio_err, "No issuer certificate specified\n");
         return 0;
     }
-    if (!*req)
+    if (*req == NULL)
         *req = OCSP_REQUEST_new();
-    if (!*req)
+    if (*req == NULL)
         goto err;
     iname = X509_get_subject_name(issuer);
     ikey = X509_get0_pubkey_bitstr(issuer);
@@ -824,7 +824,7 @@ static int add_ocsp_serial(OCSP_REQUEST **req, char *serial,
     }
     id = OCSP_cert_id_new(cert_id_md, iname, ikey, sno);
     ASN1_INTEGER_free(sno);
-    if (!id || !sk_OCSP_CERTID_push(ids, id))
+    if (id == NULL || !sk_OCSP_CERTID_push(ids, id))
         goto err;
     if (!OCSP_request_add0_id(*req, id))
         goto err;
@@ -1029,7 +1029,7 @@ static BIO *init_responder(const char *port)
     return NULL;
 # endif
     bufbio = BIO_new(BIO_f_buffer());
-    if (!bufbio)
+    if (bufbio == NULL)
         goto err;
     acbio = BIO_new(BIO_s_accept());
     if (acbio == NULL
@@ -1178,13 +1178,15 @@ static int send_ocsp_response(BIO *cbio, OCSP_RESPONSE *resp)
     return 1;
 }
 
-static OCSP_RESPONSE *query_responder(BIO *cbio, const char *path,
+static OCSP_RESPONSE *query_responder(BIO *cbio, const char *host,
+                                      const char *path,
                                       const STACK_OF(CONF_VALUE) *headers,
                                       OCSP_REQUEST *req, int req_timeout)
 {
     int fd;
     int rv;
     int i;
+    int add_host = 1;
     OCSP_REQ_CTX *ctx = NULL;
     OCSP_RESPONSE *rsp = NULL;
     fd_set confds;
@@ -1200,7 +1202,7 @@ static OCSP_RESPONSE *query_responder(BIO *cbio, const char *path,
         return NULL;
     }
 
-    if (BIO_get_fd(cbio, &fd) <= 0) {
+    if (BIO_get_fd(cbio, &fd) < 0) {
         BIO_puts(bio_err, "Can't get connection fd\n");
         goto err;
     }
@@ -1218,14 +1220,19 @@ static OCSP_RESPONSE *query_responder(BIO *cbio, const char *path,
     }
 
     ctx = OCSP_sendreq_new(cbio, path, NULL, -1);
-    if (!ctx)
+    if (ctx == NULL)
         return NULL;
 
     for (i = 0; i < sk_CONF_VALUE_num(headers); i++) {
         CONF_VALUE *hdr = sk_CONF_VALUE_value(headers, i);
+        if (add_host == 1 && strcasecmp("host", hdr->name) == 0)
+            add_host = 0;
         if (!OCSP_REQ_CTX_add1_header(ctx, hdr->name, hdr->value))
             goto err;
     }
+
+    if (add_host == 1 && OCSP_REQ_CTX_add1_header(ctx, "Host", host) == 0)
+        goto err;
 
     if (!OCSP_REQ_CTX_set1_req(ctx, req))
         goto err;
@@ -1273,7 +1280,6 @@ OCSP_RESPONSE *process_responder(OCSP_REQUEST *req,
     BIO *cbio = NULL;
     SSL_CTX *ctx = NULL;
     OCSP_RESPONSE *resp = NULL;
-    int found, i;
 
     cbio = BIO_new_connect(host);
     if (!cbio) {
@@ -1293,18 +1299,8 @@ OCSP_RESPONSE *process_responder(OCSP_REQUEST *req,
         sbio = BIO_new_ssl(ctx, 1);
         cbio = BIO_push(sbio, cbio);
     }
-    for (found = i = 0; i < sk_CONF_VALUE_num(headers); i++) {
-       CONF_VALUE *hdr = sk_CONF_VALUE_value(headers, i);
-       if (strcasecmp("host", hdr->name) == 0) {
-           found = 1;
-           break;
-       }
-    }
 
-    if (!found && !X509V3_add_value("Host", host, &headers))
-        BIO_printf(bio_err, "Error setting HTTP Host header\n");
-
-    resp = query_responder(cbio, path, headers, req, req_timeout);
+    resp = query_responder(cbio, host, path, headers, req, req_timeout);
     if (!resp)
         BIO_printf(bio_err, "Error querying OCSP responder\n");
  end:

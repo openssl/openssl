@@ -26,8 +26,4 @@ The size in bytes.
 
 L<dsa(3)>, L<DSA_sign(3)>
 
-=head1 HISTORY
-
-DSA_size() is available in all versions of SSLeay and OpenSSL.
-
 =cut

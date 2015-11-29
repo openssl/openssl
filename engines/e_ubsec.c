@@ -233,14 +233,14 @@ static int bind_helper(ENGINE *e)
 
 #  ifndef OPENSSL_NO_RSA
     /*
-     * We know that the "PKCS1_SSLeay()" functions hook properly to the
+     * We know that the "PKCS1_OpenSSL()" functions hook properly to the
      * Broadcom-specific mod_exp and mod_exp_crt so we use those functions.
      * NB: We don't use ENGINE_openssl() or anything "more generic" because
      * something like the RSAref code may not hook properly, and if you own
      * one of these cards then you have the right to do RSA operations on it
      * anyway!
      */
-    meth1 = RSA_PKCS1_SSLeay();
+    meth1 = RSA_PKCS1_OpenSSL();
     ubsec_rsa.rsa_pub_enc = meth1->rsa_pub_enc;
     ubsec_rsa.rsa_pub_dec = meth1->rsa_pub_dec;
     ubsec_rsa.rsa_priv_enc = meth1->rsa_priv_enc;
@@ -265,7 +265,7 @@ static int bind_helper(ENGINE *e)
 static ENGINE *engine_ubsec(void)
 {
     ENGINE *ret = ENGINE_new();
-    if (!ret)
+    if (ret == NULL)
         return NULL;
     if (!bind_helper(ret)) {
         ENGINE_free(ret);
@@ -611,7 +611,7 @@ static int ubsec_rsa_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa,
         /*
          * Do in software as hardware failed.
          */
-        const RSA_METHOD *meth = RSA_PKCS1_SSLeay();
+        const RSA_METHOD *meth = RSA_PKCS1_OpenSSL();
         to_return = (*meth->rsa_mod_exp) (r0, I, rsa, ctx);
     }
  err:
@@ -679,7 +679,7 @@ static int ubsec_mod_exp_mont(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 
     /* Do in software if the key is too large for the hardware. */
     if (BN_num_bits(m) > max_key_len) {
-        const RSA_METHOD *meth = RSA_PKCS1_SSLeay();
+        const RSA_METHOD *meth = RSA_PKCS1_OpenSSL();
         ret = (*meth->bn_mod_exp) (r, a, p, m, ctx, m_ctx);
     } else {
         ret = ubsec_mod_exp(r, a, p, m, ctx);
@@ -978,7 +978,7 @@ static int ubsec_rand_bytes(unsigned char *buf, int num)
         const RAND_METHOD *meth;
         UBSECerr(UBSEC_F_UBSEC_RAND_BYTES, UBSEC_R_UNIT_FAILURE);
         num = p_UBSEC_ubsec_bits_to_bytes(num);
-        meth = RAND_SSLeay();
+        meth = RAND_OpenSSL();
         meth->seed(buf, num);
         ret = meth->bytes(buf, num);
         goto err;
@@ -994,7 +994,7 @@ static int ubsec_rand_bytes(unsigned char *buf, int num)
         p_UBSEC_ubsec_close(fd);
 
         num = p_UBSEC_ubsec_bits_to_bytes(num);
-        meth = RAND_SSLeay();
+        meth = RAND_OpenSSL();
         meth->seed(buf, num);
         ret = meth->bytes(buf, num);
 

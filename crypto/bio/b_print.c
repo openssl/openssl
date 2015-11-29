@@ -370,7 +370,7 @@ _dopr(char **sbuffer,
                        flags, min, max);
                 break;
             case 'p':
-                value = (long)va_arg(args, void *);
+                value = (size_t)va_arg(args, void *);
                 fmtint(sbuffer, buffer, &currlen, maxlen,
                        value, 16, min, max, flags | DP_F_NUM);
                 break;
@@ -711,7 +711,7 @@ doapr_outch(char **sbuffer,
         *maxlen += 1024;
         if (*buffer == NULL) {
             *buffer = OPENSSL_malloc(*maxlen);
-            if (!*buffer) {
+            if (*buffer == NULL) {
                 /* Panic! Can't really do anything sensible. Just return */
                 return;
             }

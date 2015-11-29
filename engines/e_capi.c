@@ -472,7 +472,7 @@ static int capi_init(ENGINE *e)
 
         /* Setup RSA_METHOD */
         rsa_capi_idx = RSA_get_ex_new_index(0, NULL, NULL, NULL, 0);
-        ossl_rsa_meth = RSA_PKCS1_SSLeay();
+        ossl_rsa_meth = RSA_PKCS1_OpenSSL();
         capi_rsa_method.rsa_pub_enc = ossl_rsa_meth->rsa_pub_enc;
         capi_rsa_method.rsa_pub_dec = ossl_rsa_meth->rsa_pub_dec;
         capi_rsa_method.rsa_mod_exp = ossl_rsa_meth->rsa_mod_exp;
@@ -487,7 +487,7 @@ static int capi_init(ENGINE *e)
     }
 
     ctx = capi_ctx_new();
-    if (!ctx)
+    if (ctx == NULL)
         goto memerr;
 
     ENGINE_set_ex_data(e, capi_idx, ctx);
@@ -584,7 +584,7 @@ IMPLEMENT_DYNAMIC_CHECK_FN()
 static ENGINE *engine_capi(void)
 {
     ENGINE *ret = ENGINE_new();
-    if (!ret)
+    if (ret == NULL)
         return NULL;
     if (!bind_capi(ret)) {
         ENGINE_free(ret);
@@ -643,7 +643,7 @@ static EVP_PKEY *capi_get_pkey(ENGINE *eng, CAPI_KEY * key)
 
     pubkey = OPENSSL_malloc(len);
 
-    if (!pubkey)
+    if (pubkey == NULL)
         goto memerr;
 
     if (!CryptExportKey(key->key, 0, PUBLICKEYBLOB, 0, pubkey, &len)) {
@@ -678,7 +678,7 @@ static EVP_PKEY *capi_get_pkey(ENGINE *eng, CAPI_KEY * key)
         rkey->e = BN_new();
         rkey->n = BN_new();
 
-        if (!rkey->e || !rkey->n)
+        if (rkey->e == NULL || rkey->n == NULL)
             goto memerr;
 
         if (!BN_set_word(rkey->e, rp->pubexp))
@@ -718,7 +718,8 @@ static EVP_PKEY *capi_get_pkey(ENGINE *eng, CAPI_KEY * key)
         dkey->q = BN_new();
         dkey->g = BN_new();
         dkey->pub_key = BN_new();
-        if (!dkey->p || !dkey->q || !dkey->g || !dkey->pub_key)
+        if (dkey->p == NULL || dkey->q == NULL || dkey->g == NULL
+                || dkey->pub_key == NULL)
             goto memerr;
         if (!lend_tobn(dkey->p, btmp, dsa_plen))
             goto memerr;
@@ -1006,11 +1007,11 @@ static DSA_SIG *capi_dsa_do_sign(const unsigned char *digest, int dlen,
         goto err;
     } else {
         ret = DSA_SIG_new();
-        if (!ret)
+        if (ret == NULL)
             goto err;
         ret->r = BN_new();
         ret->s = BN_new();
-        if (!ret->r || !ret->s)
+        if (ret->r == NULL || ret->s == NULL)
             goto err;
         if (!lend_tobn(ret->r, csigbuf, 20)
             || !lend_tobn(ret->s, csigbuf + 20, 20)) {
@@ -1087,7 +1088,7 @@ static char *wide_to_asc(LPCWSTR wstr)
         return NULL;
     }
     str = OPENSSL_malloc(sz);
-    if (!str) {
+    if (str == NULL) {
         CAPIerr(CAPI_F_WIDE_TO_ASC, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
@@ -1201,7 +1202,7 @@ static int capi_list_containers(CAPI_CTX * ctx, BIO *out)
     if (buflen == 0)
         buflen = 1024;
     cname = OPENSSL_malloc(buflen);
-    if (!cname) {
+    if (cname == NULL) {
         CAPIerr(CAPI_F_CAPI_LIST_CONTAINERS, ERR_R_MALLOC_FAILURE);
         goto err;
     }
@@ -1251,7 +1252,7 @@ static CRYPT_KEY_PROV_INFO *capi_get_prov_info(CAPI_CTX * ctx, PCCERT_CONTEXT ce
         (cert, CERT_KEY_PROV_INFO_PROP_ID, NULL, &len))
         return NULL;
     pinfo = OPENSSL_malloc(len);
-    if (!pinfo) {
+    if (pinfo == NULL) {
         CAPIerr(CAPI_F_CAPI_GET_PROV_INFO, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
@@ -1581,7 +1582,7 @@ static CAPI_CTX *capi_ctx_new(void)
 {
     CAPI_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));
 
-    if (!ctx) {
+    if (ctx == NULL) {
         CAPIerr(CAPI_F_CAPI_CTX_NEW, ERR_R_MALLOC_FAILURE);
         return NULL;
     }

@@ -608,7 +608,7 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      SSL_aPSK,
      SSL_eNULL,
      SSL_SHA1,
-     SSL_TLSV1,
+     SSL_SSLV3,
      SSL_NOT_DEFAULT | SSL_NOT_EXP | SSL_STRONG_NONE | SSL_FIPS,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      0,
@@ -623,7 +623,7 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      SSL_aPSK,
      SSL_eNULL,
      SSL_SHA1,
-     SSL_TLSV1,
+     SSL_SSLV3,
      SSL_NOT_DEFAULT | SSL_NOT_EXP | SSL_STRONG_NONE | SSL_FIPS,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      0,
@@ -638,7 +638,7 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      SSL_aRSA,
      SSL_eNULL,
      SSL_SHA1,
-     SSL_TLSV1,
+     SSL_SSLV3,
      SSL_NOT_DEFAULT | SSL_NOT_EXP | SSL_STRONG_NONE | SSL_FIPS,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      0,
@@ -656,7 +656,7 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      SSL_aRSA,
      SSL_AES128,
      SSL_SHA1,
-     SSL_TLSV1,
+     SSL_SSLV3,
      SSL_NOT_EXP | SSL_HIGH | SSL_FIPS,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      128,
@@ -671,7 +671,7 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      SSL_aDH,
      SSL_AES128,
      SSL_SHA1,
-     SSL_TLSV1,
+     SSL_SSLV3,
      SSL_NOT_EXP | SSL_HIGH | SSL_FIPS,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      128,
@@ -686,7 +686,7 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      SSL_aDH,
      SSL_AES128,
      SSL_SHA1,
-     SSL_TLSV1,
+     SSL_SSLV3,
      SSL_NOT_EXP | SSL_HIGH | SSL_FIPS,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      128,
@@ -701,7 +701,7 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      SSL_aDSS,
      SSL_AES128,
      SSL_SHA1,
-     SSL_TLSV1,
+     SSL_SSLV3,
      SSL_NOT_EXP | SSL_HIGH | SSL_FIPS,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      128,
@@ -716,7 +716,7 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      SSL_aRSA,
      SSL_AES128,
      SSL_SHA1,
-     SSL_TLSV1,
+     SSL_SSLV3,
      SSL_NOT_EXP | SSL_HIGH | SSL_FIPS,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      128,
@@ -731,7 +731,7 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      SSL_aNULL,
      SSL_AES128,
      SSL_SHA1,
-     SSL_TLSV1,
+     SSL_SSLV3,
      SSL_NOT_DEFAULT | SSL_NOT_EXP | SSL_HIGH | SSL_FIPS,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      128,
@@ -747,7 +747,7 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      SSL_aRSA,
      SSL_AES256,
      SSL_SHA1,
-     SSL_TLSV1,
+     SSL_SSLV3,
      SSL_NOT_EXP | SSL_HIGH | SSL_FIPS,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      256,
@@ -762,7 +762,7 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      SSL_aDH,
      SSL_AES256,
      SSL_SHA1,
-     SSL_TLSV1,
+     SSL_SSLV3,
      SSL_NOT_EXP | SSL_HIGH | SSL_FIPS,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      256,
@@ -778,7 +778,7 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      SSL_aDH,
      SSL_AES256,
      SSL_SHA1,
-     SSL_TLSV1,
+     SSL_SSLV3,
      SSL_NOT_EXP | SSL_HIGH | SSL_FIPS,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      256,
@@ -794,7 +794,7 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      SSL_aDSS,
      SSL_AES256,
      SSL_SHA1,
-     SSL_TLSV1,
+     SSL_SSLV3,
      SSL_NOT_EXP | SSL_HIGH | SSL_FIPS,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      256,
@@ -810,7 +810,7 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      SSL_aRSA,
      SSL_AES256,
      SSL_SHA1,
-     SSL_TLSV1,
+     SSL_SSLV3,
      SSL_NOT_EXP | SSL_HIGH | SSL_FIPS,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      256,
@@ -826,7 +826,7 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      SSL_aNULL,
      SSL_AES256,
      SSL_SHA1,
-     SSL_TLSV1,
+     SSL_SSLV3,
      SSL_NOT_DEFAULT | SSL_NOT_EXP | SSL_HIGH | SSL_FIPS,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      256,
@@ -942,7 +942,7 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      SSL_aRSA,
      SSL_CAMELLIA128,
      SSL_SHA1,
-     SSL_TLSV1,
+     SSL_SSLV3,
      SSL_NOT_EXP | SSL_HIGH,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      128,
@@ -958,7 +958,7 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      SSL_aDH,
      SSL_CAMELLIA128,
      SSL_SHA1,
-     SSL_TLSV1,
+     SSL_SSLV3,
      SSL_NOT_EXP | SSL_HIGH,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      128,
@@ -974,7 +974,7 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      SSL_aDH,
      SSL_CAMELLIA128,
      SSL_SHA1,
-     SSL_TLSV1,
+     SSL_SSLV3,
      SSL_NOT_EXP | SSL_HIGH,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      128,
@@ -990,7 +990,7 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      SSL_aDSS,
      SSL_CAMELLIA128,
      SSL_SHA1,
-     SSL_TLSV1,
+     SSL_SSLV3,
      SSL_NOT_EXP | SSL_HIGH,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      128,
@@ -1006,7 +1006,7 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      SSL_aRSA,
      SSL_CAMELLIA128,
      SSL_SHA1,
-     SSL_TLSV1,
+     SSL_SSLV3,
      SSL_NOT_EXP | SSL_HIGH,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      128,
@@ -1022,7 +1022,7 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      SSL_aNULL,
      SSL_CAMELLIA128,
      SSL_SHA1,
-     SSL_TLSV1,
+     SSL_SSLV3,
      SSL_NOT_DEFAULT | SSL_NOT_EXP | SSL_HIGH,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      128,
@@ -1144,7 +1144,7 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      },
 
     /* GOST Ciphersuites */
-
+#ifndef OPENSL_NO_GOST
     {
      1,
      "GOST2001-GOST89-GOST89",
@@ -1173,7 +1173,7 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      0,
      0
     },
-
+#endif
 #ifndef OPENSSL_NO_CAMELLIA
     /* Camellia ciphersuites from RFC4132 (256-bit portion) */
 
@@ -1186,7 +1186,7 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      SSL_aRSA,
      SSL_CAMELLIA256,
      SSL_SHA1,
-     SSL_TLSV1,
+     SSL_SSLV3,
      SSL_NOT_EXP | SSL_HIGH,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      256,
@@ -1201,7 +1201,7 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      SSL_aDH,
      SSL_CAMELLIA256,
      SSL_SHA1,
-     SSL_TLSV1,
+     SSL_SSLV3,
      SSL_NOT_EXP | SSL_HIGH,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      256,
@@ -1217,7 +1217,7 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      SSL_aDH,
      SSL_CAMELLIA256,
      SSL_SHA1,
-     SSL_TLSV1,
+     SSL_SSLV3,
      SSL_NOT_EXP | SSL_HIGH,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      256,
@@ -1233,7 +1233,7 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      SSL_aDSS,
      SSL_CAMELLIA256,
      SSL_SHA1,
-     SSL_TLSV1,
+     SSL_SSLV3,
      SSL_NOT_EXP | SSL_HIGH,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      256,
@@ -1249,7 +1249,7 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      SSL_aRSA,
      SSL_CAMELLIA256,
      SSL_SHA1,
-     SSL_TLSV1,
+     SSL_SSLV3,
      SSL_NOT_EXP | SSL_HIGH,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      256,
@@ -1265,7 +1265,7 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      SSL_aNULL,
      SSL_CAMELLIA256,
      SSL_SHA1,
-     SSL_TLSV1,
+     SSL_SSLV3,
      SSL_NOT_DEFAULT | SSL_NOT_EXP | SSL_HIGH,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      256,
@@ -1284,7 +1284,7 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      SSL_aPSK,
      SSL_RC4,
      SSL_SHA1,
-     SSL_TLSV1,
+     SSL_SSLV3,
      SSL_NOT_DEFAULT | SSL_NOT_EXP | SSL_MEDIUM,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      128,
@@ -1300,7 +1300,7 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      SSL_aPSK,
      SSL_3DES,
      SSL_SHA1,
-     SSL_TLSV1,
+     SSL_SSLV3,
      SSL_NOT_EXP | SSL_HIGH | SSL_FIPS,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      112,
@@ -1316,7 +1316,7 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      SSL_aPSK,
      SSL_AES128,
      SSL_SHA1,
-     SSL_TLSV1,
+     SSL_SSLV3,
      SSL_NOT_EXP | SSL_HIGH | SSL_FIPS,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      128,
@@ -1332,7 +1332,7 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      SSL_aPSK,
      SSL_AES256,
      SSL_SHA1,
-     SSL_TLSV1,
+     SSL_SSLV3,
      SSL_NOT_EXP | SSL_HIGH | SSL_FIPS,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      256,
@@ -1348,7 +1348,7 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      SSL_aPSK,
      SSL_RC4,
      SSL_SHA1,
-     SSL_TLSV1,
+     SSL_SSLV3,
      SSL_NOT_DEFAULT | SSL_NOT_EXP | SSL_MEDIUM,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      128,
@@ -1364,7 +1364,7 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      SSL_aPSK,
      SSL_3DES,
      SSL_SHA1,
-     SSL_TLSV1,
+     SSL_SSLV3,
      SSL_NOT_EXP | SSL_HIGH | SSL_FIPS,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      112,
@@ -1380,7 +1380,7 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      SSL_aPSK,
      SSL_AES128,
      SSL_SHA1,
-     SSL_TLSV1,
+     SSL_SSLV3,
      SSL_NOT_EXP | SSL_HIGH | SSL_FIPS,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      128,
@@ -1396,7 +1396,7 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      SSL_aPSK,
      SSL_AES256,
      SSL_SHA1,
-     SSL_TLSV1,
+     SSL_SSLV3,
      SSL_NOT_EXP | SSL_HIGH | SSL_FIPS,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      256,
@@ -1412,7 +1412,7 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      SSL_aRSA,
      SSL_RC4,
      SSL_SHA1,
-     SSL_TLSV1,
+     SSL_SSLV3,
      SSL_NOT_DEFAULT | SSL_NOT_EXP | SSL_MEDIUM,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      128,
@@ -1428,7 +1428,7 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      SSL_aRSA,
      SSL_3DES,
      SSL_SHA1,
-     SSL_TLSV1,
+     SSL_SSLV3,
      SSL_NOT_EXP | SSL_HIGH | SSL_FIPS,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      112,
@@ -1444,7 +1444,7 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      SSL_aRSA,
      SSL_AES128,
      SSL_SHA1,
-     SSL_TLSV1,
+     SSL_SSLV3,
      SSL_NOT_EXP | SSL_HIGH | SSL_FIPS,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      128,
@@ -1460,7 +1460,7 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      SSL_aRSA,
      SSL_AES256,
      SSL_SHA1,
-     SSL_TLSV1,
+     SSL_SSLV3,
      SSL_NOT_EXP | SSL_HIGH | SSL_FIPS,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      256,
@@ -1480,7 +1480,7 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      SSL_aRSA,
      SSL_SEED,
      SSL_SHA1,
-     SSL_TLSV1,
+     SSL_SSLV3,
      SSL_NOT_EXP | SSL_MEDIUM,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      128,
@@ -1496,7 +1496,7 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      SSL_aDH,
      SSL_SEED,
      SSL_SHA1,
-     SSL_TLSV1,
+     SSL_SSLV3,
      SSL_NOT_EXP | SSL_MEDIUM,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      128,
@@ -1512,7 +1512,7 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      SSL_aDH,
      SSL_SEED,
      SSL_SHA1,
-     SSL_TLSV1,
+     SSL_SSLV3,
      SSL_NOT_EXP | SSL_MEDIUM,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      128,
@@ -1528,7 +1528,7 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      SSL_aDSS,
      SSL_SEED,
      SSL_SHA1,
-     SSL_TLSV1,
+     SSL_SSLV3,
      SSL_NOT_EXP | SSL_MEDIUM,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      128,
@@ -1544,7 +1544,7 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      SSL_aRSA,
      SSL_SEED,
      SSL_SHA1,
-     SSL_TLSV1,
+     SSL_SSLV3,
      SSL_NOT_EXP | SSL_MEDIUM,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      128,
@@ -1560,7 +1560,7 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      SSL_aNULL,
      SSL_SEED,
      SSL_SHA1,
-     SSL_TLSV1,
+     SSL_SSLV3,
      SSL_NOT_DEFAULT | SSL_NOT_EXP | SSL_MEDIUM,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      128,
@@ -2277,7 +2277,7 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      SSL_aECDH,
      SSL_eNULL,
      SSL_SHA1,
-     SSL_TLSV1,
+     SSL_SSLV3,
      SSL_NOT_DEFAULT | SSL_NOT_EXP | SSL_STRONG_NONE | SSL_FIPS,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      0,
@@ -2293,7 +2293,7 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      SSL_aECDH,
      SSL_RC4,
      SSL_SHA1,
-     SSL_TLSV1,
+     SSL_SSLV3,
      SSL_NOT_DEFAULT | SSL_NOT_EXP | SSL_MEDIUM,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      128,
@@ -2309,7 +2309,7 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      SSL_aECDH,
      SSL_3DES,
      SSL_SHA1,
-     SSL_TLSV1,
+     SSL_SSLV3,
      SSL_NOT_EXP | SSL_HIGH | SSL_FIPS,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      112,
@@ -2325,7 +2325,7 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      SSL_aECDH,
      SSL_AES128,
      SSL_SHA1,
-     SSL_TLSV1,
+     SSL_SSLV3,
      SSL_NOT_EXP | SSL_HIGH | SSL_FIPS,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      128,
@@ -2341,7 +2341,7 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      SSL_aECDH,
      SSL_AES256,
      SSL_SHA1,
-     SSL_TLSV1,
+     SSL_SSLV3,
      SSL_NOT_EXP | SSL_HIGH | SSL_FIPS,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      256,
@@ -2357,7 +2357,7 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      SSL_aECDSA,
      SSL_eNULL,
      SSL_SHA1,
-     SSL_TLSV1,
+     SSL_SSLV3,
      SSL_NOT_DEFAULT | SSL_NOT_EXP | SSL_STRONG_NONE | SSL_FIPS,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      0,
@@ -2373,7 +2373,7 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      SSL_aECDSA,
      SSL_RC4,
      SSL_SHA1,
-     SSL_TLSV1,
+     SSL_SSLV3,
      SSL_NOT_DEFAULT | SSL_NOT_EXP | SSL_MEDIUM,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      128,
@@ -2389,7 +2389,7 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      SSL_aECDSA,
      SSL_3DES,
      SSL_SHA1,
-     SSL_TLSV1,
+     SSL_SSLV3,
      SSL_NOT_EXP | SSL_HIGH | SSL_FIPS,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      112,
@@ -2405,7 +2405,7 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      SSL_aECDSA,
      SSL_AES128,
      SSL_SHA1,
-     SSL_TLSV1,
+     SSL_SSLV3,
      SSL_NOT_EXP | SSL_HIGH | SSL_FIPS,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      128,
@@ -2421,7 +2421,7 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      SSL_aECDSA,
      SSL_AES256,
      SSL_SHA1,
-     SSL_TLSV1,
+     SSL_SSLV3,
      SSL_NOT_EXP | SSL_HIGH | SSL_FIPS,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      256,
@@ -2437,7 +2437,7 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      SSL_aECDH,
      SSL_eNULL,
      SSL_SHA1,
-     SSL_TLSV1,
+     SSL_SSLV3,
      SSL_NOT_DEFAULT | SSL_NOT_EXP | SSL_STRONG_NONE | SSL_FIPS,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      0,
@@ -2453,7 +2453,7 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      SSL_aECDH,
      SSL_RC4,
      SSL_SHA1,
-     SSL_TLSV1,
+     SSL_SSLV3,
      SSL_NOT_DEFAULT | SSL_NOT_EXP | SSL_MEDIUM,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      128,
@@ -2469,7 +2469,7 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      SSL_aECDH,
      SSL_3DES,
      SSL_SHA1,
-     SSL_TLSV1,
+     SSL_SSLV3,
      SSL_NOT_EXP | SSL_HIGH | SSL_FIPS,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      112,
@@ -2485,7 +2485,7 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      SSL_aECDH,
      SSL_AES128,
      SSL_SHA1,
-     SSL_TLSV1,
+     SSL_SSLV3,
      SSL_NOT_EXP | SSL_HIGH | SSL_FIPS,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      128,
@@ -2501,7 +2501,7 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      SSL_aECDH,
      SSL_AES256,
      SSL_SHA1,
-     SSL_TLSV1,
+     SSL_SSLV3,
      SSL_NOT_EXP | SSL_HIGH | SSL_FIPS,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      256,
@@ -2517,7 +2517,7 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      SSL_aRSA,
      SSL_eNULL,
      SSL_SHA1,
-     SSL_TLSV1,
+     SSL_SSLV3,
      SSL_NOT_DEFAULT | SSL_NOT_EXP | SSL_STRONG_NONE | SSL_FIPS,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      0,
@@ -2533,7 +2533,7 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      SSL_aRSA,
      SSL_RC4,
      SSL_SHA1,
-     SSL_TLSV1,
+     SSL_SSLV3,
      SSL_NOT_DEFAULT | SSL_NOT_EXP | SSL_MEDIUM,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      128,
@@ -2549,7 +2549,7 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      SSL_aRSA,
      SSL_3DES,
      SSL_SHA1,
-     SSL_TLSV1,
+     SSL_SSLV3,
      SSL_NOT_EXP | SSL_HIGH | SSL_FIPS,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      112,
@@ -2565,7 +2565,7 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      SSL_aRSA,
      SSL_AES128,
      SSL_SHA1,
-     SSL_TLSV1,
+     SSL_SSLV3,
      SSL_NOT_EXP | SSL_HIGH | SSL_FIPS,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      128,
@@ -2581,7 +2581,7 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      SSL_aRSA,
      SSL_AES256,
      SSL_SHA1,
-     SSL_TLSV1,
+     SSL_SSLV3,
      SSL_NOT_EXP | SSL_HIGH | SSL_FIPS,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      256,
@@ -2597,7 +2597,7 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      SSL_aNULL,
      SSL_eNULL,
      SSL_SHA1,
-     SSL_TLSV1,
+     SSL_SSLV3,
      SSL_NOT_DEFAULT | SSL_NOT_EXP | SSL_STRONG_NONE | SSL_FIPS,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      0,
@@ -2613,7 +2613,7 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      SSL_aNULL,
      SSL_RC4,
      SSL_SHA1,
-     SSL_TLSV1,
+     SSL_SSLV3,
      SSL_NOT_DEFAULT | SSL_NOT_EXP | SSL_MEDIUM,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      128,
@@ -2629,7 +2629,7 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      SSL_aNULL,
      SSL_3DES,
      SSL_SHA1,
-     SSL_TLSV1,
+     SSL_SSLV3,
      SSL_NOT_DEFAULT | SSL_NOT_EXP | SSL_HIGH | SSL_FIPS,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      112,
@@ -2645,7 +2645,7 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      SSL_aNULL,
      SSL_AES128,
      SSL_SHA1,
-     SSL_TLSV1,
+     SSL_SSLV3,
      SSL_NOT_DEFAULT | SSL_NOT_EXP | SSL_HIGH | SSL_FIPS,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      128,
@@ -2661,7 +2661,7 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      SSL_aNULL,
      SSL_AES256,
      SSL_SHA1,
-     SSL_TLSV1,
+     SSL_SSLV3,
      SSL_NOT_DEFAULT | SSL_NOT_EXP | SSL_HIGH | SSL_FIPS,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      256,
@@ -2679,7 +2679,7 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      SSL_aSRP,
      SSL_3DES,
      SSL_SHA1,
-     SSL_TLSV1,
+     SSL_SSLV3,
      SSL_NOT_EXP | SSL_HIGH,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      112,
@@ -2695,7 +2695,7 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      SSL_aRSA,
      SSL_3DES,
      SSL_SHA1,
-     SSL_TLSV1,
+     SSL_SSLV3,
      SSL_NOT_EXP | SSL_HIGH,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      112,
@@ -2711,7 +2711,7 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      SSL_aDSS,
      SSL_3DES,
      SSL_SHA1,
-     SSL_TLSV1,
+     SSL_SSLV3,
      SSL_NOT_EXP | SSL_HIGH,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      112,
@@ -2727,7 +2727,7 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      SSL_aSRP,
      SSL_AES128,
      SSL_SHA1,
-     SSL_TLSV1,
+     SSL_SSLV3,
      SSL_NOT_EXP | SSL_HIGH,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      128,
@@ -2743,7 +2743,7 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      SSL_aRSA,
      SSL_AES128,
      SSL_SHA1,
-     SSL_TLSV1,
+     SSL_SSLV3,
      SSL_NOT_EXP | SSL_HIGH,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      128,
@@ -2759,7 +2759,7 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      SSL_aDSS,
      SSL_AES128,
      SSL_SHA1,
-     SSL_TLSV1,
+     SSL_SSLV3,
      SSL_NOT_EXP | SSL_HIGH,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      128,
@@ -2775,7 +2775,7 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      SSL_aSRP,
      SSL_AES256,
      SSL_SHA1,
-     SSL_TLSV1,
+     SSL_SSLV3,
      SSL_NOT_EXP | SSL_HIGH,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      256,
@@ -2791,7 +2791,7 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      SSL_aRSA,
      SSL_AES256,
      SSL_SHA1,
-     SSL_TLSV1,
+     SSL_SSLV3,
      SSL_NOT_EXP | SSL_HIGH,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      256,
@@ -2807,7 +2807,7 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      SSL_aDSS,
      SSL_AES256,
      SSL_SHA1,
-     SSL_TLSV1,
+     SSL_SSLV3,
      SSL_NOT_EXP | SSL_HIGH,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      256,
@@ -3086,7 +3086,7 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      SSL_aPSK,
      SSL_RC4,
      SSL_SHA1,
-     SSL_TLSV1,
+     SSL_SSLV3,
      SSL_NOT_DEFAULT | SSL_NOT_EXP | SSL_MEDIUM,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      128,
@@ -3102,7 +3102,7 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      SSL_aPSK,
      SSL_3DES,
      SSL_SHA1,
-     SSL_TLSV1,
+     SSL_SSLV3,
      SSL_NOT_EXP | SSL_HIGH | SSL_FIPS,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      112,
@@ -3118,7 +3118,7 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      SSL_aPSK,
      SSL_AES128,
      SSL_SHA1,
-     SSL_TLSV1,
+     SSL_SSLV3,
      SSL_NOT_EXP | SSL_HIGH | SSL_FIPS,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      128,
@@ -3134,7 +3134,7 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      SSL_aPSK,
      SSL_AES256,
      SSL_SHA1,
-     SSL_TLSV1,
+     SSL_SSLV3,
      SSL_NOT_EXP | SSL_HIGH | SSL_FIPS,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      256,
@@ -3182,7 +3182,7 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      SSL_aPSK,
      SSL_eNULL,
      SSL_SHA1,
-     SSL_TLSV1,
+     SSL_SSLV3,
      SSL_NOT_DEFAULT | SSL_NOT_EXP | SSL_STRONG_NONE | SSL_FIPS,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      0,
@@ -3769,6 +3769,34 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      256,
      256,
      },
+#ifndef OPENSSL_NO_GOST
+    {
+     1,
+     "GOST2012-GOST8912-GOST8912",
+     0x0300ff85,
+     SSL_kGOST,
+     SSL_aGOST12 | SSL_aGOST01,
+     SSL_eGOST2814789CNT12,
+     SSL_GOST89MAC12,
+     SSL_TLSV1,
+     SSL_NOT_EXP | SSL_HIGH,
+     SSL_HANDSHAKE_MAC_GOST12_256 | TLS1_PRF_GOST12_256 | TLS1_STREAM_MAC,
+     256,
+     256},
+    {
+     1,
+     "GOST2012-NULL-GOST12",
+     0x0300ff87,
+     SSL_kGOST,
+     SSL_aGOST12 | SSL_aGOST01,
+     SSL_eNULL,
+     SSL_GOST12_256,
+     SSL_TLSV1,
+     SSL_NOT_EXP | SSL_STRONG_NONE,
+     SSL_HANDSHAKE_MAC_GOST12_256 | TLS1_PRF_GOST12_256,
+     0,
+     0},
+#endif
 
 /* end of list */
 };
@@ -3781,7 +3809,6 @@ const SSL3_ENC_METHOD SSLv3_enc_data = {
     ssl3_change_cipher_state,
     ssl3_final_finish_mac,
     MD5_DIGEST_LENGTH + SHA_DIGEST_LENGTH,
-    ssl3_cert_verify_mac,
     SSL3_MD_CLIENT_FINISHED_CONST, 4,
     SSL3_MD_SERVER_FINISHED_CONST, 4,
     ssl3_alert_code,
@@ -3852,7 +3879,7 @@ int ssl3_new(SSL *s)
 
 void ssl3_free(SSL *s)
 {
-    if (s == NULL)
+    if (s == NULL || s->s3 == NULL)
         return;
 
     ssl3_cleanup_key_block(s);
@@ -4311,7 +4338,7 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
                 return 0;
 #endif
             ptmp = EVP_PKEY_new();
-            if (!ptmp)
+            if (ptmp == NULL)
                 return 0;
 #ifndef OPENSSL_NO_RSA
             else if (s->s3->peer_rsa_tmp)
@@ -4763,9 +4790,9 @@ const SSL_CIPHER *ssl3_get_cipher_by_char(const unsigned char *p)
 {
     SSL_CIPHER c;
     const SSL_CIPHER *cp;
-    unsigned long id;
+    uint32_t id;
 
-    id = 0x03000000L | ((unsigned long)p[0] << 8L) | (unsigned long)p[1];
+    id = 0x03000000 | ((uint32_t)p[0] << 8L) | (uint32_t)p[1];
     c.id = id;
     cp = OBJ_bsearch_ssl_cipher_id(&c, ssl3_ciphers, SSL3_NUM_CIPHERS);
 #ifdef DEBUG_PRINT_UNKNOWN_CIPHERSUITES
@@ -4841,6 +4868,9 @@ SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
         /* Skip TLS v1.2 only ciphersuites if not supported */
         if ((c->algorithm_ssl & SSL_TLSV1_2) && !SSL_USE_TLS1_2_CIPHERS(s))
             continue;
+        /* Skip TLS v1.0 ciphersuites if SSLv3 */
+        if ((c->algorithm_ssl & SSL_TLSV1) && s->version == SSL3_VERSION)
+            continue;
 
         ssl_set_masks(s, c);
         mask_k = s->s3->tmp.mask_k;
@@ -4915,7 +4945,7 @@ int ssl3_get_req_cert_type(SSL *s, unsigned char *p)
 {
     int ret = 0;
     int nostrict = 1;
-    unsigned long alg_k, alg_a = 0;
+    uint32_t alg_k, alg_a = 0;
 
     /* If we have custom certificate types set, use them */
     if (s->cert->ctypes) {
@@ -4933,6 +4963,8 @@ int ssl3_get_req_cert_type(SSL *s, unsigned char *p)
     if (s->version >= TLS1_VERSION) {
         if (alg_k & SSL_kGOST) {
             p[ret++] = TLS_CT_GOST01_SIGN;
+            p[ret++] = TLS_CT_GOST12_SIGN;
+            p[ret++] = TLS_CT_GOST12_512_SIGN;
             return (ret);
         }
     }
@@ -4999,7 +5031,7 @@ static int ssl3_set_req_cert_type(CERT *c, const unsigned char *p, size_t len)
     if (len > 0xff)
         return 0;
     c->ctypes = OPENSSL_malloc(len);
-    if (!c->ctypes)
+    if (c->ctypes == NULL)
         return 0;
     memcpy(c->ctypes, p, len);
     c->ctype_num = len;
@@ -5014,7 +5046,7 @@ int ssl3_shutdown(SSL *s)
      * Don't do anything much if we have not done the handshake or we don't
      * want to send messages :-)
      */
-    if ((s->quiet_shutdown) || (s->state == SSL_ST_BEFORE)) {
+    if (s->quiet_shutdown || SSL_in_before(s)) {
         s->shutdown = (SSL_SENT_SHUTDOWN | SSL_RECEIVED_SHUTDOWN);
         return (1);
     }
@@ -5085,11 +5117,11 @@ static int ssl3_read_internal(SSL *s, void *buf, int len, int peek)
          * makes sense here; so disable handshake processing and try to read
          * application data again.
          */
-        s->in_handshake++;
+        ossl_statem_set_in_handshake(s, 1);
         ret =
             s->method->ssl_read_bytes(s, SSL3_RT_APPLICATION_DATA, NULL, buf,
                                       len, peek);
-        s->in_handshake--;
+        ossl_statem_set_in_handshake(s, 0);
     } else
         s->s3->in_read_app_data = 0;
 
@@ -5128,10 +5160,10 @@ int ssl3_renegotiate_check(SSL *s)
             && !SSL_in_init(s)) {
             /*
              * if we are the server, and we have sent a 'RENEGOTIATE'
-             * message, we need to go to SSL_ST_ACCEPT.
+             * message, we need to set the state machine into the renegotiate
+             * state.
              */
-            /* SSL_ST_ACCEPT */
-            s->state = SSL_ST_RENEGOTIATE;
+            ossl_statem_set_renegotiate(s);
             s->s3->renegotiate = 0;
             s->s3->num_renegotiations++;
             s->s3->total_renegotiations++;
@@ -5228,8 +5260,9 @@ int ssl_generate_master_secret(SSL *s, unsigned char *pms, size_t pmslen,
             s->method->ssl3_enc->generate_master_secret(s,
                                                         s->session->master_key,
                                                         pms, pmslen);
-
+#ifndef OPENSSL_NO_PSK
     err:
+#endif
     if (pms) {
         if (free_pms)
             OPENSSL_clear_free(pms, pmslen);

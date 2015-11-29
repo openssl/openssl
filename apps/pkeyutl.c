@@ -230,9 +230,6 @@ int pkeyutl_main(int argc, char **argv)
     if (ctx == NULL)
         goto opthelp;
 
-    if (!app_load_modules(NULL))
-        goto end;
-
     if (sigfile && (pkey_op != EVP_PKEY_OP_VERIFY)) {
         BIO_printf(bio_err,
                    "%s: Signature file specified for non verify\n", prog);
@@ -379,7 +376,7 @@ static EVP_PKEY_CTX *init_ctx(int *pkeysize,
 
     EVP_PKEY_free(pkey);
 
-    if (!ctx)
+    if (ctx == NULL)
         goto end;
 
     switch (pkey_op) {

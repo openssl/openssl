@@ -284,8 +284,6 @@ sub run {
     my $prefix = "";
     if ( $^O eq "VMS" ) {	# VMS
 	$prefix = "pipe ";
-    } elsif ($^O eq "MSWin32") { # MSYS
-	$prefix = "cmd /c ";
     }
 
     my @r = ();
@@ -357,7 +355,7 @@ operating system.
 =cut
 
 sub top_dir {
-    return __top_file(@_, "");	# This caters for operating systems that have
+    return __top_dir(@_);	# This caters for operating systems that have
 				# a very distinct syntax for directories.
 }
 
@@ -577,6 +575,12 @@ sub __top_file {
     return catfile($directories{TOP},@_,$f);
 }
 
+sub __top_dir {
+    BAIL_OUT("Must run setup() first") if (! $test_name);
+
+    return catdir($directories{TOP},@_);
+}
+
 sub __test_file {
     BAIL_OUT("Must run setup() first") if (! $test_name);
 
@@ -668,7 +672,9 @@ sub __fixup_cmd {
     my $prefix = __top_file("util", "shlib_wrap.sh")." ";
     my $ext = $ENV{"EXE_EXT"} || "";
 
-    if ( $^O eq "VMS" ) {	# VMS
+    if (defined($ENV{EXE_SHELL})) {
+	$prefix = "$ENV{EXE_SHELL} ";
+    } elsif ($^O eq "VMS" ) {	# VMS
 	$prefix = "mcr ";
 	$ext = ".exe";
     } elsif ($^O eq "MSWin32") { # Windows

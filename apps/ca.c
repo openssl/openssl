@@ -98,24 +98,18 @@
 #undef BSIZE
 #define BSIZE 256
 
-#define BASE_SECTION    "ca"
+#define BASE_SECTION            "ca"
 
 #define ENV_DEFAULT_CA          "default_ca"
 
-#define STRING_MASK     "string_mask"
+#define STRING_MASK             "string_mask"
 #define UTF8_IN                 "utf8"
 
-#define ENV_DIR                 "dir"
-#define ENV_CERTS               "certs"
-#define ENV_CRL_DIR             "crl_dir"
-#define ENV_CA_DB               "CA_DB"
 #define ENV_NEW_CERTS_DIR       "new_certs_dir"
-#define ENV_CERTIFICATE "certificate"
+#define ENV_CERTIFICATE         "certificate"
 #define ENV_SERIAL              "serial"
 #define ENV_CRLNUMBER           "crlnumber"
-#define ENV_CRL                 "crl"
 #define ENV_PRIVATE_KEY         "private_key"
-#define ENV_RANDFILE            "RANDFILE"
 #define ENV_DEFAULT_DAYS        "default_days"
 #define ENV_DEFAULT_STARTDATE   "default_startdate"
 #define ENV_DEFAULT_ENDDATE     "default_enddate"
@@ -484,10 +478,13 @@ end_of_options:
     argv = opt_rest();
 
     BIO_printf(bio_err, "Using configuration from %s\n", configfile);
-    if ((conf = app_load_config(configfile)) == NULL)
-        goto end;
-    if (!app_load_modules(conf))
-        goto end;
+    /* We already loaded the default config file */
+    if (configfile != default_config_file) {
+        if ((conf = app_load_config(configfile)) == NULL)
+            goto end;
+        if (!app_load_modules(conf))
+            goto end;
+    }
 
     /* Lets get the config section we are using */
     if (section == NULL) {
@@ -1168,7 +1165,7 @@ end_of_options:
             goto end;
 
         tmptm = ASN1_TIME_new();
-        if (!tmptm)
+        if (tmptm == NULL)
             goto end;
         X509_gmtime_adj(tmptm, 0);
         X509_CRL_set_lastUpdate(crl, tmptm);
@@ -2286,10 +2283,12 @@ static int do_updatedb(CA_DB *db)
     char **rrow, *a_tm_s;
 
     a_tm = ASN1_UTCTIME_new();
+    if (a_tm == NULL)
+        return -1;
 
     /* get actual time and make a string */
     a_tm = X509_gmtime_adj(a_tm, 0);
-    a_tm_s = (char *)OPENSSL_malloc(a_tm->length + 1);
+    a_tm_s = (char *)app_malloc(a_tm->length + 1, "time string");
 
     memcpy(a_tm_s, a_tm->data, a_tm->length);
     a_tm_s[a_tm->length] = '\0';
@@ -2473,7 +2472,7 @@ int make_revoked(X509_REVOKED *rev, const char *str)
 
     if (rev && (reason_code != OCSP_REVOKED_STATUS_NOSTATUS)) {
         rtmp = ASN1_ENUMERATED_new();
-        if (!rtmp || !ASN1_ENUMERATED_set(rtmp, reason_code))
+        if (rtmp == NULL || !ASN1_ENUMERATED_set(rtmp, reason_code))
             goto end;
         if (!X509_REVOKED_add1_ext_i2d(rev, NID_crl_reason, rtmp, 0, 0))
             goto end;
@@ -2579,7 +2578,7 @@ int unpack_revinfo(ASN1_TIME **prevtm, int *preason, ASN1_OBJECT **phold,
 
     if (prevtm) {
         *prevtm = ASN1_UTCTIME_new();
-        if (!*prevtm) {
+        if (*prevtm == NULL) {
             BIO_printf(bio_err, "memory allocation failure\n");
             goto end;
         }
@@ -2625,7 +2624,7 @@ int unpack_revinfo(ASN1_TIME **prevtm, int *preason, ASN1_OBJECT **phold,
                 goto end;
             }
             comp_time = ASN1_GENERALIZEDTIME_new();
-            if (!comp_time) {
+            if (comp_time == NULL) {
                 BIO_printf(bio_err, "memory allocation failure\n");
                 goto end;
             }

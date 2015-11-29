@@ -22,7 +22,7 @@ LIBSRC=	x509_def.c x509_d2.c x509_r2x.c x509_cmp.c \
 	x509type.c x509_lu.c x_all.c x509_txt.c \
 	x509_trs.c by_file.c by_dir.c x509_vpm.c \
 	x_crl.c t_crl.c x_req.c t_req.c x_x509.c t_x509.c \
-	x_x509a.c t_x509a.c x_attrib.c x_exten.c x_name.c
+	x_x509a.c x_attrib.c x_exten.c x_name.c
 LIBOBJ= x509_def.o x509_d2.o x509_r2x.o x509_cmp.o \
 	x509_obj.o x509_req.o x509spki.o x509_vfy.o \
 	x509_set.o x509cset.o x509rset.o x509_err.o \
@@ -30,7 +30,7 @@ LIBOBJ= x509_def.o x509_d2.o x509_r2x.o x509_cmp.o \
 	x509type.o x509_lu.o x_all.o x509_txt.o \
 	x509_trs.o by_file.o by_dir.o x509_vpm.o \
 	x_crl.o t_crl.o x_req.o t_req.o x_x509.o t_x509.o \
-	x_x509a.o t_x509a.o x_attrib.o x_exten.o x_name.o
+	x_x509a.o x_attrib.o x_exten.o x_name.o
 
 SRC= $(LIBSRC)
 
@@ -144,21 +144,7 @@ t_x509.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 t_x509.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
 t_x509.o: ../../include/openssl/x509_vfy.h ../../include/openssl/x509v3.h
 t_x509.o: ../include/internal/asn1_int.h ../include/internal/cryptlib.h
-t_x509.o: ../include/internal/x509_int.h t_x509.c
-t_x509a.o: ../../e_os.h ../../include/openssl/asn1.h
-t_x509a.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
-t_x509a.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
-t_x509a.o: ../../include/openssl/ec.h ../../include/openssl/ecdh.h
-t_x509a.o: ../../include/openssl/ecdsa.h ../../include/openssl/err.h
-t_x509a.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
-t_x509a.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
-t_x509a.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
-t_x509a.o: ../../include/openssl/ossl_typ.h ../../include/openssl/pkcs7.h
-t_x509a.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
-t_x509a.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-t_x509a.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
-t_x509a.o: ../include/internal/cryptlib.h ../include/internal/x509_int.h
-t_x509a.o: t_x509a.c
+t_x509.o: t_x509.c
 x509_att.o: ../../e_os.h ../../include/openssl/asn1.h
 x509_att.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 x509_att.o: ../../include/openssl/conf.h ../../include/openssl/crypto.h

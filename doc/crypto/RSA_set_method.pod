@@ -159,16 +159,6 @@ RSA_new_method() returns NULL and sets an error code that can be obtained
 by L<ERR_get_error(3)> if the allocation fails. Otherwise
 it returns a pointer to the newly allocated structure.
 
-=head1 NOTES
-
-As of version 0.9.7, RSA_METHOD implementations are grouped together with
-other algorithmic APIs (eg. DSA_METHOD, EVP_CIPHER, etc) into B<ENGINE>
-modules. If a default ENGINE is specified for RSA functionality using an
-ENGINE API function, that will override any RSA defaults set using the RSA
-API (ie.  RSA_set_default_method()). For this reason, the ENGINE API is the
-recommended way to control default implementations for use in RSA and other
-cryptographic algorithms.
-
 =head1 BUGS
 
 The behaviour of RSA_flags() is a mis-feature that is left as-is for now
@@ -184,23 +174,5 @@ not currently exist).
 =head1 SEE ALSO
 
 L<rsa(3)>, L<RSA_new(3)>
-
-=head1 HISTORY
-
-RSA_new_method() and RSA_set_default_method() appeared in SSLeay 0.8.
-RSA_get_default_method(), RSA_set_method() and RSA_get_method() as
-well as the rsa_sign and rsa_verify components of RSA_METHOD were
-added in OpenSSL 0.9.4.
-
-RSA_set_default_openssl_method() and RSA_get_default_openssl_method()
-replaced RSA_set_default_method() and RSA_get_default_method()
-respectively, and RSA_set_method() and RSA_new_method() were altered to use
-B<ENGINE>s rather than B<RSA_METHOD>s during development of the engine
-version of OpenSSL 0.9.6. For 0.9.7, the handling of defaults in the ENGINE
-API was restructured so that this change was reversed, and behaviour of the
-other functions resembled more closely the previous behaviour. The
-behaviour of defaults in the ENGINE API now transparently overrides the
-behaviour of defaults in the RSA API without requiring changing these
-function prototypes.
 
 =cut

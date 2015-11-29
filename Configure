@@ -1,6 +1,6 @@
-:
-eval 'exec perl -S $0 ${1+"$@"}'
-    if $running_under_some_shell;
+#! /usr/bin/env perl
+# -*- mode: perl; -*-
+
 ##
 ##  Configure -- OpenSSL source tree configuration script
 ##  If editing this file, run this command before committing
@@ -796,6 +796,86 @@ my $default_ranlib;
 my $perl;
 my $fips=0;
 
+# Explicitelly known options that are possible to disable.  They can
+# be regexps, and will be used like this: /^no-${option}$/
+# For developers: keep it sorted alphabetically
+
+my @disablables = (
+    "aes",
+    "asm",
+    "bf",
+    "camellia",
+    "capieng",
+    "cast",
+    "cmac",
+    "cms",
+    "comp",
+    "ct",
+    "deprecated",
+    "des",
+    "dgram",
+    "dh",
+    "dsa",
+    "dso",
+    "dtls1?",
+    "dynamic[-_]engine",
+    "ec",
+    "ec2m",
+    "ec_nistp_64_gcc_128",
+    "engine",
+    "err",			# Really???
+    "gmp",
+    "gost",
+    "heartbeats",
+    "hmac",
+    "hw(-.+)?",
+    "idea",
+    "jpake",
+    "locking",			# Really???
+    "md2",
+    "md4",
+    "md5",
+    "mdc2",
+    "md[-_]ghost94",
+    "nextprotoneg",
+    "ocb",
+    "ocsp",
+    "posix-io",
+    "psk",
+    "rc2",
+    "rc4",
+    "rc5",
+    "rdrand",
+    "rfc3779",
+    "rijndael",			# Old AES name
+    "rmd160",
+    "rsa",
+    "scrypt",
+    "sct",
+    "sctp",
+    "seed",
+    "sha",
+    "shared",
+    "sock",
+    "srp",
+    "srtp",
+    "sse2",
+    "ssl",
+    "ssl3",
+    "ssl3-method",
+    "ssl-trace",
+    "static-engine",
+    "stdio",
+    "store",
+    "threads",
+    "tls",
+    "tls1",
+    "unit-test",
+    "whirlpool",
+    "zlib",
+    "zlib-dynamic",
+    );
+
 # All of the following is disabled by default (RC5 was enabled before 0.9.8):
 
 my %disabled = ( # "what"         => "comment" [or special keyword "experimental"]
@@ -867,6 +947,7 @@ while($argv_unprocessed)
 	$argvstring=join(' ',@argvcopy);
 
 PROCESS_ARGS:
+	my %unsupported_options = ();
 	foreach (@argvcopy)
 		{
 		s /^-no-/no-/; # some people just can't read the instructions
@@ -878,6 +959,15 @@ PROCESS_ARGS:
 		s /^zlib$/enable-zlib/;
 		s /^zlib-dynamic$/enable-zlib-dynamic/;
 
+		if (/^(no|disable|enable|experimental)-(.+)$/)
+			{
+			my $word = $2;
+			if (!grep { $word =~ /^${_}$/ } @disablables)
+				{
+				$unsupported_options{$_} = 1;
+				next;
+				}
+			}
 		if (/^no-(.+)$/ || /^disable-(.+)$/)
 			{
 			if (!($disabled{$1} eq "experimental"))
@@ -1045,6 +1135,12 @@ PROCESS_ARGS:
 			else
 				{ $options .= " ".$_; }
 			}
+		}
+
+	if (keys %unsupported_options)
+		{
+		die "***** Unsupported options: ",
+			join(", ", keys %unsupported_options), "\n";
 		}
 	}
 
@@ -1635,21 +1731,22 @@ if ($shlib_version_number =~ /(^[0-9]*)\.([0-9\.]*)/)
 	$shlib_minor=$2;
 	}
 
+my $ecc = $cc;
+$ecc = "clang" if `$cc --version 2>&1` =~ /clang/;
+
 if ($strict_warnings)
 	{
-	my $ecc = $cc;
-	$ecc = "clang" if `$cc --version 2>&1` =~ /clang/;
 	my $wopt;
-	die "ERROR --strict-warnings requires gcc or clang" unless ($ecc =~ /gcc$/ or $ecc =~ /clang$/);
+	die "ERROR --strict-warnings requires gcc or clang" unless ($ecc =~ /gcc(-\d(\.\d)*)?$/ or $ecc =~ /clang$/);
 	foreach $wopt (split /\s+/, $gcc_devteam_warn)
 		{
-		$cflags .= " $wopt" unless ($cflags =~ /$wopt/)
+		$cflags .= " $wopt" unless ($cflags =~ /(^|\s)$wopt(\s|$)/)
 		}
 	if ($ecc eq "clang")
 		{
 		foreach $wopt (split /\s+/, $clang_devteam_warn)
 			{
-			$cflags .= " $wopt" unless ($cflags =~ /$wopt/)
+			$cflags .= " $wopt" unless ($cflags =~ /(^|\s)$wopt(\s|$)/)
 			}
 		}
 	}
@@ -1703,7 +1800,7 @@ while (<IN>)
 		s/^CC=.*$/CC= $cc/;
 		s/^AR=\s*ar/AR= $ar/;
 		s/^RANLIB=.*/RANLIB= $ranlib/;
-		s/^MAKEDEPPROG=.*$/MAKEDEPPROG= $cc/ if $cc eq "gcc" || ($cc eq 'cc' && $target =~ /darwin/);
+		s/^MAKEDEPPROG=.*$/MAKEDEPPROG= $cc/ if $ecc eq "gcc" || $ecc eq "clang";
 		}
 	s/^CFLAG=.*$/CFLAG= $cflags/;
 	s/^DEPFLAG=.*$/DEPFLAG=$depflags/;

@@ -63,8 +63,4 @@ L<SMIME_read_CMS(3)>, L<CMS_sign(3)>,
 L<CMS_verify(3)>, L<CMS_encrypt(3)>
 L<CMS_decrypt(3)>
 
-=head1 HISTORY
-
-SMIME_read_CMS() was added to OpenSSL 0.9.8
-
 =cut

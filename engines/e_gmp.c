@@ -170,7 +170,7 @@ static int bind_helper(ENGINE *e)
         return 0;
 
 #  ifndef OPENSSL_NO_RSA
-    meth1 = RSA_PKCS1_SSLeay();
+    meth1 = RSA_PKCS1_OpenSSL();
     e_gmp_rsa.rsa_pub_enc = meth1->rsa_pub_enc;
     e_gmp_rsa.rsa_pub_dec = meth1->rsa_pub_dec;
     e_gmp_rsa.rsa_priv_enc = meth1->rsa_priv_enc;
@@ -186,7 +186,7 @@ static int bind_helper(ENGINE *e)
 static ENGINE *engine_gmp(void)
 {
     ENGINE *ret = ENGINE_new();
-    if (!ret)
+    if (ret == NULL)
         return NULL;
     if (!bind_helper(ret)) {
         ENGINE_free(ret);
@@ -296,7 +296,7 @@ static int gmp2bn(mpz_t g, BIGNUM *bn)
     } else {
         int toret;
         char *tmpchar = OPENSSL_malloc(mpz_sizeinbase(g, 16) + 10);
-        if (!tmpchar)
+        if (tmpchar == NULL)
             return 0;
         mpz_get_str(tmpchar, 16, g);
         toret = BN_hex2bn(&bn, tmpchar);
@@ -326,7 +326,7 @@ static E_GMP_RSA_CTX *e_gmp_get_rsa(RSA *rsa)
     if (hptr)
         return hptr;
     hptr = OPENSSL_malloc(sizeof(*hptr));
-    if (!hptr)
+    if (hptr == NULL)
         return NULL;
     /*
      * These inits could probably be replaced by more intelligent mpz_init2()

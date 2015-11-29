@@ -454,7 +454,12 @@ static int verify_alpn(SSL *client, SSL *server)
     OPENSSL_free(alpn_selected);
     alpn_selected = NULL;
 
-    if (client_proto_len != server_proto_len ||
+    if (client_proto_len != server_proto_len) {
+        BIO_printf(bio_stdout, "ALPN selected protocols differ!\n");
+        goto err;
+    }
+
+    if (client_proto != NULL &&
         memcmp(client_proto, server_proto, client_proto_len) != 0) {
         BIO_printf(bio_stdout, "ALPN selected protocols differ!\n");
         goto err;
@@ -3082,7 +3087,7 @@ static int do_test_cipherlist(void)
         if (tci != NULL)
             if (ci->id >= tci->id) {
                 fprintf(stderr, "testing SSLv3 cipher list order: ");
-                fprintf(stderr, "failed %lx vs. %lx\n", ci->id, tci->id);
+                fprintf(stderr, "failed %x vs. %x\n", ci->id, tci->id);
                 return 0;
             }
         tci = ci;
@@ -3094,7 +3099,7 @@ static int do_test_cipherlist(void)
         if (tci != NULL)
             if (ci->id >= tci->id) {
                 fprintf(stderr, "testing TLSv1 cipher list order: ");
-                fprintf(stderr, "failed %lx vs. %lx\n", ci->id, tci->id);
+                fprintf(stderr, "failed %x vs. %x\n", ci->id, tci->id);
                 return 0;
             }
         tci = ci;

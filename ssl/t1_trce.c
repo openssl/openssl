@@ -537,20 +537,26 @@ static ssl_trace_tbl ssl_point_tbl[] = {
 };
 
 static ssl_trace_tbl ssl_md_tbl[] = {
-    {0, "none"},
-    {1, "md5"},
-    {2, "sha1"},
-    {3, "sha224"},
-    {4, "sha256"},
-    {5, "sha384"},
-    {6, "sha512"}
+    {TLSEXT_hash_none, "none"},
+    {TLSEXT_hash_md5, "md5"},
+    {TLSEXT_hash_sha1, "sha1"},
+    {TLSEXT_hash_sha224, "sha224"},
+    {TLSEXT_hash_sha256, "sha256"},
+    {TLSEXT_hash_sha384, "sha384"},
+    {TLSEXT_hash_sha512, "sha512"},
+    {TLSEXT_hash_gostr3411, "md_gost94"},
+    {TLSEXT_hash_gostr34112012_256, "md_gost2012_256"},
+    {TLSEXT_hash_gostr34112012_512, "md_gost2012_512"}
 };
 
 static ssl_trace_tbl ssl_sig_tbl[] = {
-    {0, "anonymous"},
-    {1, "rsa"},
-    {2, "dsa"},
-    {3, "ecdsa"}
+    {TLSEXT_signature_anonymous, "anonymous"},
+    {TLSEXT_signature_rsa, "rsa"},
+    {TLSEXT_signature_dsa, "dsa"},
+    {TLSEXT_signature_ecdsa, "ecdsa"},
+    {TLSEXT_signature_gostr34102001, "gost2001"},
+    {TLSEXT_signature_gostr34102012_256, "gost2012_256"},
+    {TLSEXT_signature_gostr34102012_512, "gost2012_512"}
 };
 
 static ssl_trace_tbl ssl_hb_tbl[] = {

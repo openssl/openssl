@@ -75,13 +75,13 @@ static int ocsp_certid_print(BIO *bp, OCSP_CERTID *a, int indent)
     BIO_printf(bp, "%*sCertificate ID:\n", indent, "");
     indent += 2;
     BIO_printf(bp, "%*sHash Algorithm: ", indent, "");
-    i2a_ASN1_OBJECT(bp, a->hashAlgorithm->algorithm);
+    i2a_ASN1_OBJECT(bp, a->hashAlgorithm.algorithm);
     BIO_printf(bp, "\n%*sIssuer Name Hash: ", indent, "");
-    i2a_ASN1_STRING(bp, a->issuerNameHash, V_ASN1_OCTET_STRING);
+    i2a_ASN1_STRING(bp, &a->issuerNameHash, V_ASN1_OCTET_STRING);
     BIO_printf(bp, "\n%*sIssuer Key Hash: ", indent, "");
-    i2a_ASN1_STRING(bp, a->issuerKeyHash, V_ASN1_OCTET_STRING);
+    i2a_ASN1_STRING(bp, &a->issuerKeyHash, V_ASN1_OCTET_STRING);
     BIO_printf(bp, "\n%*sSerial Number: ", indent, "");
-    i2a_ASN1_INTEGER(bp, a->serialNumber);
+    i2a_ASN1_INTEGER(bp, &a->serialNumber);
     BIO_printf(bp, "\n");
     return 1;
 }
@@ -144,7 +144,7 @@ int OCSP_REQUEST_print(BIO *bp, OCSP_REQUEST *o, unsigned long flags)
     long l;
     OCSP_CERTID *cid = NULL;
     OCSP_ONEREQ *one = NULL;
-    OCSP_REQINFO *inf = o->tbsRequest;
+    OCSP_REQINFO *inf = &o->tbsRequest;
     OCSP_SIGNATURE *sig = o->optionalSignature;
 
     if (BIO_write(bp, "OCSP Request Data:\n", 19) <= 0)
@@ -172,7 +172,7 @@ int OCSP_REQUEST_print(BIO *bp, OCSP_REQUEST *o, unsigned long flags)
                                  inf->requestExtensions, flags, 4))
         goto err;
     if (sig) {
-        X509_signature_print(bp, sig->signatureAlgorithm, sig->signature);
+        X509_signature_print(bp, &sig->signatureAlgorithm, sig->signature);
         for (i = 0; i < sk_X509_num(sig->certs); i++) {
             X509_print(bp, sk_X509_value(sig->certs, i));
             PEM_write_bio_X509(bp, sk_X509_value(sig->certs, i));
@@ -213,17 +213,16 @@ int OCSP_RESPONSE_print(BIO *bp, OCSP_RESPONSE *o, unsigned long flags)
         return 1;
     }
 
-    i = ASN1_STRING_length(rb->response);
     if ((br = OCSP_response_get1_basic(o)) == NULL)
         goto err;
-    rd = br->tbsResponseData;
+    rd = &br->tbsResponseData;
     l = ASN1_INTEGER_get(rd->version);
     if (BIO_printf(bp, "\n    Version: %lu (0x%lx)\n", l + 1, l) <= 0)
         goto err;
     if (BIO_puts(bp, "    Responder Id: ") <= 0)
         goto err;
 
-    rid = rd->responderId;
+    rid = &rd->responderId;
     switch (rid->type) {
     case V_OCSP_RESPID_NAME:
         X509_NAME_print_ex(bp, rid->value.byName, 0, XN_FLAG_ONELINE);
@@ -286,7 +285,7 @@ int OCSP_RESPONSE_print(BIO *bp, OCSP_RESPONSE *o, unsigned long flags)
     if (!X509V3_extensions_print(bp, "Response Extensions",
                                  rd->responseExtensions, flags, 4))
         goto err;
-    if (X509_signature_print(bp, br->signatureAlgorithm, br->signature) <= 0)
+    if (X509_signature_print(bp, &br->signatureAlgorithm, br->signature) <= 0)
         goto err;
 
     for (i = 0; i < sk_X509_num(br->certs); i++) {

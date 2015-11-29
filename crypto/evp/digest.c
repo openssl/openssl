@@ -126,7 +126,7 @@ EVP_MD_CTX *EVP_MD_CTX_create(void)
 {
     EVP_MD_CTX *ctx = OPENSSL_malloc(sizeof(*ctx));
 
-    if (ctx)
+    if (ctx != NULL)
         EVP_MD_CTX_init(ctx);
 
     return ctx;
@@ -288,7 +288,7 @@ int EVP_MD_CTX_copy_ex(EVP_MD_CTX *out, const EVP_MD_CTX *in)
             out->md_data = tmp_buf;
         else {
             out->md_data = OPENSSL_malloc(out->digest->ctx_size);
-            if (!out->md_data) {
+            if (out->md_data == NULL) {
                 EVPerr(EVP_F_EVP_MD_CTX_COPY_EX, ERR_R_MALLOC_FAILURE);
                 return 0;
             }
@@ -363,4 +363,15 @@ int EVP_MD_CTX_cleanup(EVP_MD_CTX *ctx)
     memset(ctx, 0, sizeof(*ctx));
 
     return 1;
+}
+
+int EVP_MD_CTX_ctrl(EVP_MD_CTX *ctx, int cmd, int p1, void *p2)
+{
+    if (ctx->digest && ctx->digest->md_ctrl) {
+        int ret = ctx->digest->md_ctrl(ctx, cmd, p1, p2);
+        if (ret <= 0)
+            return 0;
+        return 1;
+    }
+    return 0;
 }

@@ -166,7 +166,7 @@ int CONF_modules_load_file(const char *filename, const char *appname,
     CONF *conf = NULL;
     int ret = 0;
     conf = NCONF_new(NULL);
-    if (!conf)
+    if (conf == NULL)
         goto err;
 
     if (filename == NULL) {
@@ -336,7 +336,7 @@ static int module_init(CONF_MODULE *pmod, char *name, char *value,
 
     /* Otherwise add initialized module to list */
     imod = OPENSSL_malloc(sizeof(*imod));
-    if (!imod)
+    if (imod == NULL)
         goto err;
 
     imod->pmod = pmod;
@@ -535,7 +535,7 @@ char *CONF_get1_default_config_file(void)
 
     file = OPENSSL_malloc(len + 1);
 
-    if (!file)
+    if (file == NULL)
         return NULL;
     BUF_strlcpy(file, X509_get_default_cert_area(), len + 1);
 #ifndef OPENSSL_SYS_VMS

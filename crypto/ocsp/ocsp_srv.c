@@ -74,12 +74,12 @@
 
 int OCSP_request_onereq_count(OCSP_REQUEST *req)
 {
-    return sk_OCSP_ONEREQ_num(req->tbsRequest->requestList);
+    return sk_OCSP_ONEREQ_num(req->tbsRequest.requestList);
 }
 
 OCSP_ONEREQ *OCSP_request_onereq_get0(OCSP_REQUEST *req, int i)
 {
-    return sk_OCSP_ONEREQ_value(req->tbsRequest->requestList, i);
+    return sk_OCSP_ONEREQ_value(req->tbsRequest.requestList, i);
 }
 
 OCSP_CERTID *OCSP_onereq_get0_id(OCSP_ONEREQ *one)
@@ -94,13 +94,13 @@ int OCSP_id_get0_info(ASN1_OCTET_STRING **piNameHash, ASN1_OBJECT **pmd,
     if (!cid)
         return 0;
     if (pmd)
-        *pmd = cid->hashAlgorithm->algorithm;
+        *pmd = cid->hashAlgorithm.algorithm;
     if (piNameHash)
-        *piNameHash = cid->issuerNameHash;
+        *piNameHash = &cid->issuerNameHash;
     if (pikeyHash)
-        *pikeyHash = cid->issuerKeyHash;
+        *pikeyHash = &cid->issuerKeyHash;
     if (pserial)
-        *pserial = cid->serialNumber;
+        *pserial = &cid->serialNumber;
     return 1;
 }
 
@@ -145,8 +145,8 @@ OCSP_SINGLERESP *OCSP_basic_add1_status(OCSP_BASICRESP *rsp,
     OCSP_CERTSTATUS *cs;
     OCSP_REVOKEDINFO *ri;
 
-    if (rsp->tbsResponseData->responses == NULL
-        && (rsp->tbsResponseData->responses
+    if (rsp->tbsResponseData.responses == NULL
+        && (rsp->tbsResponseData.responses
                 = sk_OCSP_SINGLERESP_new_null()) == NULL)
         goto err;
 
@@ -184,18 +184,20 @@ OCSP_SINGLERESP *OCSP_basic_add1_status(OCSP_BASICRESP *rsp,
         break;
 
     case V_OCSP_CERTSTATUS_GOOD:
-        cs->value.good = ASN1_NULL_new();
+        if ((cs->value.good = ASN1_NULL_new()) == NULL)
+            goto err;
         break;
 
     case V_OCSP_CERTSTATUS_UNKNOWN:
-        cs->value.unknown = ASN1_NULL_new();
+        if ((cs->value.unknown = ASN1_NULL_new()) == NULL)
+            goto err;
         break;
 
     default:
         goto err;
 
     }
-    if (!(sk_OCSP_SINGLERESP_push(rsp->tbsResponseData->responses, single)))
+    if (!(sk_OCSP_SINGLERESP_push(rsp->tbsResponseData.responses, single)))
         goto err;
     return single;
  err:
@@ -240,7 +242,7 @@ int OCSP_basic_sign(OCSP_BASICRESP *brsp,
         }
     }
 
-    rid = brsp->tbsResponseData->responderId;
+    rid = &brsp->tbsResponseData.responderId;
     if (flags & OCSP_RESPID_KEY) {
         unsigned char md[SHA_DIGEST_LENGTH];
         X509_pubkey_digest(signer, EVP_sha1(), md, NULL);
@@ -256,7 +258,7 @@ int OCSP_basic_sign(OCSP_BASICRESP *brsp,
     }
 
     if (!(flags & OCSP_NOTIME) &&
-        !X509_gmtime_adj(brsp->tbsResponseData->producedAt, 0))
+        !X509_gmtime_adj(brsp->tbsResponseData.producedAt, 0))
         goto err;
 
     /*

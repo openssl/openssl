@@ -73,6 +73,7 @@ B<openssl> B<s_server>
 [B<-dtls1>]
 [B<-dtls1_2>]
 [B<-listen>]
+[B<-async>]
 [B<-no_ssl3>]
 [B<-no_tls1>]
 [B<-no_dhe>]
@@ -311,6 +312,13 @@ Any ClientHellos that arrive will be checked to see if they have a cookie in
 them or not. Any without a cookie will be responded to with a
 HelloVerifyRequest. If a ClientHello with a cookie is received then s_server
 will connect to that peer and complete the handshake.
+
+=item B<-async>
+
+switch on asynchronous mode. Cryptographic operations will be performed
+asynchronously. This will only have an effect if an asynchronous capable engine
+is also used via the B<-engine> option. For test purposes the dummy async engine
+(dasync) can be used (if available).
 
 =item B<-bugs>
 

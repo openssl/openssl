@@ -47,7 +47,7 @@ or B<${section::name}>. By using the form B<$ENV::name> environment
 variables can be substituted. It is also possible to assign values to
 environment variables by using the name B<ENV::name>, this will work
 if the program looks up environment variables using the B<CONF> library
-instead of calling B<getenv()> directly.
+instead of calling getenv() directly.
 
 It is possible to escape certain characters by using any kind of quote
 or the B<\> character. By making the last character of a line a B<\>
@@ -56,7 +56,7 @@ the sequences B<\n>, B<\r>, B<\b> and B<\t> are recognized.
 
 =head1 OPENSSL LIBRARY CONFIGURATION
 
-In OpenSSL 0.9.7 and later applications can automatically configure certain
+Applications can automatically configure certain
 aspects of OpenSSL using the master OpenSSL configuration file, or optionally
 an alternative configuration file. The B<openssl> utility includes this
 functionality: any sub command uses the master OpenSSL configuration file
@@ -106,7 +106,7 @@ as any compliant applications. For example:
  some_new_oid = 1.2.3.4
  some_other_oid = 1.2.3.5
 
-In OpenSSL 0.9.8 it is also possible to set the value to the long name followed
+It is also possible to set the value to the long name followed
 by a comma and the numerical OID form. For example:
 
  shortName = some object long name, 1.2.3.4
@@ -165,7 +165,7 @@ then an attempt will be made to initialize the ENGINE after all commands in
 its section have been processed.
 
 The command B<default_algorithms> sets the default algorithms an ENGINE will
-supply using the functions B<ENGINE_set_default_string()>
+supply using the functions ENGINE_set_default_string().
 
 If the name matches none of the above command names it is assumed to be a
 ctrl command which is sent to the ENGINE. The value of the command is the 

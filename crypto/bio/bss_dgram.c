@@ -512,10 +512,8 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
     switch (cmd) {
     case BIO_CTRL_RESET:
         num = 0;
-    case BIO_C_FILE_SEEK:
         ret = 0;
         break;
-    case BIO_C_FILE_TELL:
     case BIO_CTRL_INFO:
         ret = 0;
         break;
@@ -999,7 +997,7 @@ BIO *BIO_new_dgram_sctp(int fd, int close_flag)
      */
     sockopt_len = (socklen_t) (sizeof(sctp_assoc_t) + 256 * sizeof(uint8_t));
     authchunks = OPENSSL_zalloc(sockopt_len);
-    if (!authchunks) {
+    if (authchunks == NULL) {
         BIO_vfree(bio);
         return (NULL);
     }
@@ -1336,7 +1334,7 @@ static int dgram_sctp_read(BIO *b, char *out, int outl)
             optlen =
                 (socklen_t) (sizeof(sctp_assoc_t) + 256 * sizeof(uint8_t));
             authchunks = OPENSSL_malloc(optlen);
-            if (!authchunks) {
+            if (authchunks == NULL) {
                 BIOerr(BIO_F_DGRAM_SCTP_READ, ERR_R_MALLOC_FAILURE);
                 return -1;
             }

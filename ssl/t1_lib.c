@@ -135,7 +135,6 @@ SSL3_ENC_METHOD const TLSv1_enc_data = {
     tls1_change_cipher_state,
     tls1_final_finish_mac,
     TLS1_FINISH_MAC_LENGTH,
-    tls1_cert_verify_mac,
     TLS_MD_CLIENT_FINISH_CONST, TLS_MD_CLIENT_FINISH_CONST_SIZE,
     TLS_MD_SERVER_FINISH_CONST, TLS_MD_SERVER_FINISH_CONST_SIZE,
     tls1_alert_code,
@@ -154,7 +153,6 @@ SSL3_ENC_METHOD const TLSv1_1_enc_data = {
     tls1_change_cipher_state,
     tls1_final_finish_mac,
     TLS1_FINISH_MAC_LENGTH,
-    tls1_cert_verify_mac,
     TLS_MD_CLIENT_FINISH_CONST, TLS_MD_CLIENT_FINISH_CONST_SIZE,
     TLS_MD_SERVER_FINISH_CONST, TLS_MD_SERVER_FINISH_CONST_SIZE,
     tls1_alert_code,
@@ -173,7 +171,6 @@ SSL3_ENC_METHOD const TLSv1_2_enc_data = {
     tls1_change_cipher_state,
     tls1_final_finish_mac,
     TLS1_FINISH_MAC_LENGTH,
-    tls1_cert_verify_mac,
     TLS_MD_CLIENT_FINISH_CONST, TLS_MD_CLIENT_FINISH_CONST_SIZE,
     TLS_MD_SERVER_FINISH_CONST, TLS_MD_SERVER_FINISH_CONST_SIZE,
     tls1_alert_code,
@@ -441,7 +438,7 @@ static int tls1_get_curvelist(SSL *s, int sess,
             pcurveslen = s->tlsext_ellipticcurvelist_length;
         }
         if (!*pcurves) {
-            if (!s->server || (s->cert && s->cert->ecdh_tmp_auto)) {
+            if (!s->server || s->cert->ecdh_tmp_auto) {
                 *pcurves = eccurves_auto;
                 pcurveslen = sizeof(eccurves_auto);
             } else {
@@ -599,7 +596,7 @@ int tls1_set_curves(unsigned char **pext, size_t *pextlen,
      */
     unsigned long dup_list = 0;
     clist = OPENSSL_malloc(ncurves * 2);
-    if (!clist)
+    if (clist == NULL)
         return 0;
     for (i = 0, p = clist; i < ncurves; i++) {
         unsigned long idmask;
@@ -954,6 +951,11 @@ static const unsigned char tls12_sigalgs[] = {
         tlsext_sigalg(TLSEXT_hash_sha256)
         tlsext_sigalg(TLSEXT_hash_sha224)
         tlsext_sigalg(TLSEXT_hash_sha1)
+#ifndef OPENSSL_NO_GOST
+        TLSEXT_hash_gostr3411, TLSEXT_signature_gostr34102001,
+        TLSEXT_hash_gostr34112012_256, TLSEXT_signature_gostr34102012_256,
+        TLSEXT_hash_gostr34112012_512, TLSEXT_signature_gostr34102012_512
+#endif
 };
 
 #ifndef OPENSSL_NO_EC
@@ -992,7 +994,22 @@ size_t tls12_get_psigalgs(SSL *s, const unsigned char **psigs)
         return s->cert->conf_sigalgslen;
     } else {
         *psigs = tls12_sigalgs;
+#ifndef OPENSSL_NO_GOST
+        /*
+         * We expect that GOST 2001 signature and GOST 34.11-94 hash are present in all engines
+         * and GOST 2012 algorithms are not always present.
+         * It may change when the old algorithms are deprecated.
+         */
+        if ((EVP_get_digestbynid(NID_id_GostR3411_94) != NULL)
+            && (EVP_get_digestbynid(NID_id_GostR3411_2012_256) == NULL)) {
+            return sizeof(tls12_sigalgs) - 4;
+        } else if (EVP_get_digestbynid(NID_id_GostR3411_94) == NULL) {
+            return sizeof(tls12_sigalgs) - 6;
+        }
         return sizeof(tls12_sigalgs);
+#else
+        return sizeof(tls12_sigalgs);
+#endif
     }
 }
 
@@ -1094,6 +1111,9 @@ void ssl_set_client_disabled(SSL *s)
         s->s3->tmp.mask_ssl = SSL_TLSV1_2;
     else
         s->s3->tmp.mask_ssl = 0;
+    /* Disable TLS 1.0 ciphers if using SSL v3 */
+    if (s->client_version == SSL3_VERSION)
+        s->s3->tmp.mask_ssl |= SSL_TLSV1;
     ssl_set_sig_mask(&s->s3->tmp.mask_a, s, SSL_SECOP_SIGALG_MASK);
     /*
      * Disable static DH if we don't include any appropriate signature
@@ -1327,7 +1347,7 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *buf,
                  s->tlsext_session_ticket->data) {
             ticklen = s->tlsext_session_ticket->length;
             s->session->tlsext_tick = OPENSSL_malloc(ticklen);
-            if (!s->session->tlsext_tick)
+            if (s->session->tlsext_tick == NULL)
                 return NULL;
             memcpy(s->session->tlsext_tick,
                    s->tlsext_session_ticket->data, ticklen);
@@ -1711,7 +1731,9 @@ unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *buf,
          * for other cases too.
          */
         if (s->s3->tmp.new_cipher->algorithm_mac == SSL_AEAD
-            || s->s3->tmp.new_cipher->algorithm_enc == SSL_RC4)
+            || s->s3->tmp.new_cipher->algorithm_enc == SSL_RC4
+            || s->s3->tmp.new_cipher->algorithm_enc == SSL_eGOST2814789CNT
+            || s->s3->tmp.new_cipher->algorithm_enc == SSL_eGOST2814789CNT12)
             s->s3->flags &= ~TLS1_FLAGS_ENCRYPT_THEN_MAC;
         else {
             s2n(TLSEXT_TYPE_encrypt_then_mac, ret);
@@ -1787,7 +1809,7 @@ static int tls1_alpn_handle_client_hello(SSL *s, PACKET *pkt, int *al)
     if (r == SSL_TLSEXT_ERR_OK) {
         OPENSSL_free(s->s3->alpn_selected);
         s->s3->alpn_selected = OPENSSL_malloc(selected_len);
-        if (!s->s3->alpn_selected) {
+        if (s->s3->alpn_selected == NULL) {
             *al = SSL_AD_INTERNAL_ERROR;
             return -1;
         }
@@ -1815,10 +1837,11 @@ static int tls1_alpn_handle_client_hello(SSL *s, PACKET *pkt, int *al)
  * Sadly we cannot differentiate 10.6, 10.7 and 10.8.4 (which work), from
  * 10.8..10.8.3 (which don't work).
  */
-static void ssl_check_for_safari(SSL *s, PACKET *pkt)
+static void ssl_check_for_safari(SSL *s, const PACKET *pkt)
 {
     unsigned int type, size;
     unsigned char *eblock1, *eblock2;
+    PACKET tmppkt;
 
     static const unsigned char kSafariExtensionsBlock[] = {
         0x00, 0x0a,             /* elliptic_curves extension */
@@ -1846,10 +1869,12 @@ static void ssl_check_for_safari(SSL *s, PACKET *pkt)
         0x02, 0x03,             /* SHA-1/ECDSA */
     };
 
-    if (!PACKET_forward(pkt, 2)
-            || !PACKET_get_net_2(pkt, &type)
-            || !PACKET_get_net_2(pkt, &size)
-            || !PACKET_forward(pkt, size))
+    tmppkt = *pkt;
+
+    if (!PACKET_forward(&tmppkt, 2)
+            || !PACKET_get_net_2(&tmppkt, &type)
+            || !PACKET_get_net_2(&tmppkt, &size)
+            || !PACKET_forward(&tmppkt, size))
         return;
 
     if (type != TLSEXT_TYPE_server_name)
@@ -1859,9 +1884,9 @@ static void ssl_check_for_safari(SSL *s, PACKET *pkt)
         const size_t len1 = sizeof(kSafariExtensionsBlock);
         const size_t len2 = sizeof(kSafariTLS12ExtensionsBlock);
 
-        if (!PACKET_get_bytes(pkt, &eblock1, len1)
-                || !PACKET_get_bytes(pkt, &eblock2, len2)
-                || PACKET_remaining(pkt))
+        if (!PACKET_get_bytes(&tmppkt, &eblock1, len1)
+                || !PACKET_get_bytes(&tmppkt, &eblock2, len2)
+                || PACKET_remaining(&tmppkt))
             return;
         if (memcmp(eblock1, kSafariExtensionsBlock, len1) != 0)
             return;
@@ -1870,8 +1895,8 @@ static void ssl_check_for_safari(SSL *s, PACKET *pkt)
     } else {
         const size_t len = sizeof(kSafariExtensionsBlock);
 
-        if (!PACKET_get_bytes(pkt, &eblock1, len)
-                || PACKET_remaining(pkt))
+        if (!PACKET_get_bytes(&tmppkt, &eblock1, len)
+                || PACKET_remaining(&tmppkt))
             return;
         if (memcmp(eblock1, kSafariExtensionsBlock, len) != 0)
             return;
@@ -1925,6 +1950,9 @@ static int ssl_scan_clienthello_tlsext(SSL *s, PACKET *pkt, int *al)
         goto ri_check;
 
     if (!PACKET_get_net_2(pkt, &len))
+        goto err;
+
+    if (PACKET_remaining(pkt) != len)
         goto err;
 
     while (PACKET_get_net_2(pkt, &type) && PACKET_get_net_2(pkt, &size)) {
@@ -2490,7 +2518,7 @@ static int ssl_scan_serverhello_tlsext(SSL *s, PACKET *pkt, int *al)
                 return 0;
             }
             s->next_proto_negotiated = OPENSSL_malloc(selected_len);
-            if (!s->next_proto_negotiated) {
+            if (s->next_proto_negotiated == NULL) {
                 *al = TLS1_AD_INTERNAL_ERROR;
                 return 0;
             }
@@ -2522,7 +2550,7 @@ static int ssl_scan_serverhello_tlsext(SSL *s, PACKET *pkt, int *al)
             }
             OPENSSL_free(s->s3->alpn_selected);
             s->s3->alpn_selected = OPENSSL_malloc(len);
-            if (!s->s3->alpn_selected) {
+            if (s->s3->alpn_selected == NULL) {
                 *al = TLS1_AD_INTERNAL_ERROR;
                 return 0;
             }
@@ -2674,18 +2702,26 @@ static int ssl_check_clienthello_tlsext_early(SSL *s)
     }
 }
 /* Initialise digests to default values */
-static void ssl_set_default_md(SSL *s)
+void ssl_set_default_md(SSL *s)
 {
     const EVP_MD **pmd = s->s3->tmp.md;
 #ifndef OPENSSL_NO_DSA
     pmd[SSL_PKEY_DSA_SIGN] = EVP_sha1();
 #endif
 #ifndef OPENSSL_NO_RSA
-    pmd[SSL_PKEY_RSA_SIGN] = EVP_sha1();
-    pmd[SSL_PKEY_RSA_ENC] = EVP_sha1();
+    if (SSL_USE_SIGALGS(s))
+        pmd[SSL_PKEY_RSA_SIGN] = EVP_sha1();
+    else
+        pmd[SSL_PKEY_RSA_SIGN] = EVP_md5_sha1();
+    pmd[SSL_PKEY_RSA_ENC] = pmd[SSL_PKEY_RSA_SIGN];
 #endif
 #ifndef OPENSSL_NO_EC
     pmd[SSL_PKEY_ECC] = EVP_sha1();
+#endif
+#ifndef OPENSSL_NO_GOST
+    pmd[SSL_PKEY_GOST01] = EVP_get_digestbynid(NID_id_GostR3411_94);
+    pmd[SSL_PKEY_GOST12_256] = EVP_get_digestbynid(NID_id_GostR3411_2012_256);
+    pmd[SSL_PKEY_GOST12_512] = EVP_get_digestbynid(NID_id_GostR3411_2012_512);
 #endif
 }
 
@@ -2901,11 +2937,8 @@ int ssl_parse_serverhello_tlsext(SSL *s, PACKET *pkt)
  * ClientHello, and other operations depend on the result, we need to handle
  * any TLS session ticket extension at the same time.
  *
- *   session_id: points at the session ID in the ClientHello. This code will
- *       read past the end of this in order to parse out the session ticket
- *       extension, if any.
- *   len: the length of the session ID.
- *   limit: a pointer to the first byte after the ClientHello.
+ *   session_id: ClientHello session ID.
+ *   ext: ClientHello extensions (including length prefix)
  *   ret: (output) on return, if a ticket was decrypted, then this is set to
  *       point to the resulting session.
  *
@@ -2930,11 +2963,11 @@ int ssl_parse_serverhello_tlsext(SSL *s, PACKET *pkt)
  *   s->ctx->tlsext_ticket_key_cb asked to renew the client's ticket.
  *   Otherwise, s->tlsext_ticket_expected is set to 0.
  */
-int tls1_process_ticket(SSL *s, PACKET *pkt,  unsigned char *session_id,
-                        int len, SSL_SESSION **ret)
+int tls1_process_ticket(SSL *s, const PACKET *ext, const PACKET *session_id,
+                        SSL_SESSION **ret)
 {
     unsigned int i;
-    PACKET bookmark = *pkt;
+    PACKET local_ext = *ext;
     int retv = -1;
 
     *ret = NULL;
@@ -2949,38 +2982,20 @@ int tls1_process_ticket(SSL *s, PACKET *pkt,  unsigned char *session_id,
     if ((s->version <= SSL3_VERSION))
         return 0;
 
-    /* Skip past DTLS cookie */
-    if (SSL_IS_DTLS(s)) {
-        if (!PACKET_get_1(pkt, &i)
-                || !PACKET_forward(pkt, i)) {
-            retv = -1;
-            goto end;
-        }
-    }
-    /* Skip past cipher list and compression algorithm list */
-    if (!PACKET_get_net_2(pkt, &i)
-            || !PACKET_forward(pkt, i)
-            || !PACKET_get_1(pkt, &i)
-            || !PACKET_forward(pkt, i)) {
-        retv = -1;
-        goto end;
-    }
-
-    /* Now at start of extensions */
-    if (!PACKET_get_net_2(pkt, &i)) {
+    if (!PACKET_get_net_2(&local_ext, &i)) {
         retv = 0;
         goto end;
     }
-    while (PACKET_remaining (pkt) >= 4) {
+    while (PACKET_remaining(&local_ext) >= 4) {
         unsigned int type, size;
 
-        if (!PACKET_get_net_2(pkt, &type)
-                || !PACKET_get_net_2(pkt, &size)) {
+        if (!PACKET_get_net_2(&local_ext, &type)
+                || !PACKET_get_net_2(&local_ext, &size)) {
             /* Shouldn't ever happen */
             retv = -1;
             goto end;
         }
-        if (PACKET_remaining(pkt) < size) {
+        if (PACKET_remaining(&local_ext) < size) {
             retv = 0;
             goto end;
         }
@@ -3007,12 +3022,13 @@ int tls1_process_ticket(SSL *s, PACKET *pkt,  unsigned char *session_id,
                 retv = 2;
                 goto end;
             }
-            if (!PACKET_get_bytes(pkt, &etick, size)) {
+            if (!PACKET_get_bytes(&local_ext, &etick, size)) {
                 /* Shouldn't ever happen */
                 retv = -1;
                 goto end;
             }
-            r = tls_decrypt_ticket(s, etick, size, session_id, len, ret);
+            r = tls_decrypt_ticket(s, etick, size, PACKET_data(session_id),
+                                   PACKET_remaining(session_id), ret);
             switch (r) {
             case 2:            /* ticket couldn't be decrypted */
                 s->tlsext_ticket_expected = 1;
@@ -3031,7 +3047,7 @@ int tls1_process_ticket(SSL *s, PACKET *pkt,  unsigned char *session_id,
             }
             goto end;
         } else {
-            if (!PACKET_forward(pkt, size)) {
+            if (!PACKET_forward(&local_ext, size)) {
                 retv = -1;
                 goto end;
             }
@@ -3039,7 +3055,6 @@ int tls1_process_ticket(SSL *s, PACKET *pkt,  unsigned char *session_id,
     }
     retv = 0;
 end:
-    *pkt = bookmark;
     return retv;
 }
 
@@ -3091,10 +3106,13 @@ static int tls_decrypt_ticket(SSL *s, const unsigned char *etick,
         /* Check key name matches */
         if (memcmp(etick, tctx->tlsext_tick_key_name, 16))
             return 2;
-        HMAC_Init_ex(&hctx, tctx->tlsext_tick_hmac_key, 16,
-                     EVP_sha256(), NULL);
-        EVP_DecryptInit_ex(&ctx, EVP_aes_128_cbc(), NULL,
-                           tctx->tlsext_tick_aes_key, etick + 16);
+        if (HMAC_Init_ex(&hctx, tctx->tlsext_tick_hmac_key, 16,
+                         EVP_sha256(), NULL) <= 0
+                || EVP_DecryptInit_ex(&ctx, EVP_aes_128_cbc(), NULL,
+                                      tctx->tlsext_tick_aes_key,
+                                      etick + 16) <= 0) {
+            goto err;
+       }
     }
     /*
      * Attempt to process session ticket, first conduct sanity and integrity
@@ -3102,13 +3120,14 @@ static int tls_decrypt_ticket(SSL *s, const unsigned char *etick,
      */
     mlen = HMAC_size(&hctx);
     if (mlen < 0) {
-        EVP_CIPHER_CTX_cleanup(&ctx);
-        return -1;
+        goto err;
     }
     eticklen -= mlen;
     /* Check HMAC of encrypted ticket */
-    HMAC_Update(&hctx, etick, eticklen);
-    HMAC_Final(&hctx, tick_hmac, NULL);
+    if (HMAC_Update(&hctx, etick, eticklen) <= 0
+            || HMAC_Final(&hctx, tick_hmac, NULL) <= 0) {
+        goto err;
+    }
     HMAC_CTX_cleanup(&hctx);
     if (CRYPTO_memcmp(tick_hmac, etick + eticklen, mlen)) {
         EVP_CIPHER_CTX_cleanup(&ctx);
@@ -3119,11 +3138,11 @@ static int tls_decrypt_ticket(SSL *s, const unsigned char *etick,
     p = etick + 16 + EVP_CIPHER_CTX_iv_length(&ctx);
     eticklen -= 16 + EVP_CIPHER_CTX_iv_length(&ctx);
     sdec = OPENSSL_malloc(eticklen);
-    if (!sdec) {
+    if (sdec == NULL
+            || EVP_DecryptUpdate(&ctx, sdec, &slen, p, eticklen) <= 0) {
         EVP_CIPHER_CTX_cleanup(&ctx);
         return -1;
     }
-    EVP_DecryptUpdate(&ctx, sdec, &slen, p, eticklen);
     if (EVP_DecryptFinal(&ctx, sdec + slen, &mlen) <= 0) {
         EVP_CIPHER_CTX_cleanup(&ctx);
         OPENSSL_free(sdec);
@@ -3156,6 +3175,10 @@ static int tls_decrypt_ticket(SSL *s, const unsigned char *etick,
      * For session parse failure, indicate that we need to send a new ticket.
      */
     return 2;
+err:
+    EVP_CIPHER_CTX_cleanup(&ctx);
+    HMAC_CTX_cleanup(&hctx);
+    return -1;
 }
 
 /* Tables to translate from NIDs to TLS v1.2 ids */
@@ -3171,13 +3194,19 @@ static const tls12_lookup tls12_md[] = {
     {NID_sha224, TLSEXT_hash_sha224},
     {NID_sha256, TLSEXT_hash_sha256},
     {NID_sha384, TLSEXT_hash_sha384},
-    {NID_sha512, TLSEXT_hash_sha512}
+    {NID_sha512, TLSEXT_hash_sha512},
+    {NID_id_GostR3411_94, TLSEXT_hash_gostr3411},
+    {NID_id_GostR3411_2012_256, TLSEXT_hash_gostr34112012_256},
+    {NID_id_GostR3411_2012_512, TLSEXT_hash_gostr34112012_512},
 };
 
 static const tls12_lookup tls12_sig[] = {
     {EVP_PKEY_RSA, TLSEXT_signature_rsa},
     {EVP_PKEY_DSA, TLSEXT_signature_dsa},
-    {EVP_PKEY_EC, TLSEXT_signature_ecdsa}
+    {EVP_PKEY_EC, TLSEXT_signature_ecdsa},
+    {NID_id_GostR3410_2001, TLSEXT_signature_gostr34102001},
+    {NID_id_GostR3410_2012_256, TLSEXT_signature_gostr34102012_256},
+    {NID_id_GostR3410_2012_512, TLSEXT_signature_gostr34102012_512}
 };
 
 static int tls12_find_id(int nid, const tls12_lookup *table, size_t tlen)
@@ -3226,28 +3255,53 @@ typedef struct {
     int nid;
     int secbits;
     const EVP_MD *(*mfunc) (void);
+    unsigned char tlsext_hash;
 } tls12_hash_info;
+
+static const EVP_MD* md_gost94()
+{
+	return EVP_get_digestbynid(NID_id_GostR3411_94);
+}
+
+static const EVP_MD* md_gost2012_256()
+{
+	return EVP_get_digestbynid(NID_id_GostR3411_2012_256);
+}
+
+static const EVP_MD* md_gost2012_512()
+{
+	return EVP_get_digestbynid(NID_id_GostR3411_2012_512);
+}
 
 static const tls12_hash_info tls12_md_info[] = {
 #ifdef OPENSSL_NO_MD5
-    {NID_md5, 64, 0},
+    {NID_md5, 64, 0, TLSEXT_hash_md5},
 #else
-    {NID_md5, 64, EVP_md5},
+    {NID_md5, 64, EVP_md5, TLSEXT_hash_md5},
 #endif
-    {NID_sha1, 80, EVP_sha1},
-    {NID_sha224, 112, EVP_sha224},
-    {NID_sha256, 128, EVP_sha256},
-    {NID_sha384, 192, EVP_sha384},
-    {NID_sha512, 256, EVP_sha512}
+    {NID_sha1, 80, EVP_sha1, TLSEXT_hash_sha1},
+    {NID_sha224, 112, EVP_sha224, TLSEXT_hash_sha224},
+    {NID_sha256, 128, EVP_sha256, TLSEXT_hash_sha256},
+    {NID_sha384, 192, EVP_sha384, TLSEXT_hash_sha384},
+    {NID_sha512, 256, EVP_sha512, TLSEXT_hash_sha512},
+    {NID_id_GostR3411_94,       128, md_gost94, TLSEXT_hash_gostr3411},
+    {NID_id_GostR3411_2012_256, 128, md_gost2012_256, TLSEXT_hash_gostr34112012_256},
+    {NID_id_GostR3411_2012_512, 256, md_gost2012_512, TLSEXT_hash_gostr34112012_512},
 };
 
 static const tls12_hash_info *tls12_get_hash_info(unsigned char hash_alg)
 {
+    unsigned int i;
     if (hash_alg == 0)
         return NULL;
-    if (hash_alg > OSSL_NELEM(tls12_md_info))
-        return NULL;
-    return tls12_md_info + hash_alg - 1;
+
+    for (i=0; i < OSSL_NELEM(tls12_md_info); i++)
+    {
+        if (tls12_md_info[i].tlsext_hash == hash_alg)
+            return tls12_md_info + i;
+    }
+
+    return NULL;
 }
 
 const EVP_MD *tls12_get_hash(unsigned char hash_alg)
@@ -3276,6 +3330,16 @@ static int tls12_get_pkey_idx(unsigned char sig_alg)
     case TLSEXT_signature_ecdsa:
         return SSL_PKEY_ECC;
 #endif
+# ifndef OPENSSL_NO_GOST
+    case TLSEXT_signature_gostr34102001:
+        return SSL_PKEY_GOST01;
+
+    case TLSEXT_signature_gostr34102012_256:
+        return SSL_PKEY_GOST12_256;
+
+    case TLSEXT_signature_gostr34102012_512:
+        return SSL_PKEY_GOST12_512;
+# endif
     }
     return -1;
 }
@@ -3325,7 +3389,7 @@ static int tls12_sigalg_allowed(SSL *s, int op, const unsigned char *ptmp)
  * disabled.
  */
 
-void ssl_set_sig_mask(unsigned long *pmask_a, SSL *s, int op)
+void ssl_set_sig_mask(uint32_t *pmask_a, SSL *s, int op)
 {
     const unsigned char *sigalgs;
     size_t i, sigalgslen;
@@ -3445,7 +3509,7 @@ static int tls1_set_shared_sigalgs(SSL *s)
     nmatch = tls12_shared_sigalgs(s, NULL, pref, preflen, allow, allowlen);
     if (nmatch) {
         salgs = OPENSSL_malloc(nmatch * sizeof(TLS_SIGALGS));
-        if (!salgs)
+        if (salgs == NULL)
             return 0;
         nmatch = tls12_shared_sigalgs(s, salgs, pref, preflen, allow, allowlen);
     } else {
@@ -3550,6 +3614,14 @@ int tls1_process_sigalgs(SSL *s)
         if (pmd[SSL_PKEY_ECC] == NULL)
             pmd[SSL_PKEY_ECC] = EVP_sha1();
 #endif
+# ifndef OPENSSL_NO_GOST
+        if (pmd[SSL_PKEY_GOST01] == NULL)
+            pmd[SSL_PKEY_GOST01] = EVP_get_digestbynid(NID_id_GostR3411_94);
+        if (pmd[SSL_PKEY_GOST12_256] == NULL)
+            pmd[SSL_PKEY_GOST12_256] = EVP_get_digestbynid(NID_id_GostR3411_2012_256);
+        if (pmd[SSL_PKEY_GOST12_512] == NULL)
+            pmd[SSL_PKEY_GOST12_512] = EVP_get_digestbynid(NID_id_GostR3411_2012_512);
+# endif
     }
     return 1;
 }
@@ -3695,16 +3767,10 @@ int tls1_heartbeat(SSL *s)
     }
 
     /* ...and no handshake in progress. */
-    if (SSL_in_init(s) || s->in_handshake) {
+    if (SSL_in_init(s) || ossl_statem_get_in_handshake(s)) {
         SSLerr(SSL_F_TLS1_HEARTBEAT, SSL_R_UNEXPECTED_MESSAGE);
         return -1;
     }
-
-    /*
-     * Check if padding is too long, payload and padding must not exceed 2^14
-     * - 3 = 16381 bytes in total.
-     */
-    OPENSSL_assert(payload + padding <= 16381);
 
     /*-
      * Create HeartBeat message, we just use a sequence number
@@ -3953,7 +4019,6 @@ int tls1_check_chain(SSL *s, X509 *x, EVP_PKEY *pk, STACK_OF(X509) *chain,
         idx = ssl_cert_type(x, pk);
         if (idx == -1)
             return 0;
-        cpk = c->pkeys + idx;
         pvalid = s->s3->tmp.valid_flags + idx;
 
         if (c->cert_flags & SSL_CERT_FLAGS_CHECK_TLS_STRICT)
@@ -4002,6 +4067,21 @@ int tls1_check_chain(SSL *s, X509 *x, EVP_PKEY *pk, STACK_OF(X509) *chain,
             case SSL_PKEY_ECC:
                 rsign = TLSEXT_signature_ecdsa;
                 default_nid = NID_ecdsa_with_SHA1;
+                break;
+
+            case SSL_PKEY_GOST01:
+                rsign = TLSEXT_signature_gostr34102001;
+                default_nid = NID_id_GostR3411_94_with_GostR3410_2001;
+                break;
+
+            case SSL_PKEY_GOST12_256:
+                rsign = TLSEXT_signature_gostr34102012_256;
+                default_nid = NID_id_tc26_signwithdigest_gost3410_2012_256;
+                break;
+
+            case SSL_PKEY_GOST12_512:
+                rsign = TLSEXT_signature_gostr34102012_512;
+                default_nid = NID_id_tc26_signwithdigest_gost3410_2012_512;
                 break;
 
             default:
@@ -4174,6 +4254,9 @@ void tls1_set_cert_validity(SSL *s)
     tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_DH_RSA);
     tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_DH_DSA);
     tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_ECC);
+    tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_GOST01);
+    tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_GOST12_256);
+    tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_GOST12_512);
 }
 
 /* User level utiity function to check a chain is suitable */
@@ -4201,16 +4284,16 @@ DH *ssl_get_auto_dh(SSL *s)
 
     if (dh_secbits >= 128) {
         DH *dhp = DH_new();
-        if (!dhp)
+        if (dhp == NULL)
             return NULL;
         dhp->g = BN_new();
-        if (dhp->g)
+        if (dhp->g != NULL)
             BN_set_word(dhp->g, 2);
         if (dh_secbits >= 192)
             dhp->p = get_rfc3526_prime_8192(NULL);
         else
             dhp->p = get_rfc3526_prime_3072(NULL);
-        if (!dhp->p || !dhp->g) {
+        if (dhp->p == NULL || dhp->g == NULL) {
             DH_free(dhp);
             return NULL;
         }

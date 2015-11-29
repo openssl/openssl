@@ -186,9 +186,6 @@ int asn1parse_main(int argc, char **argv)
     argc = opt_num_rest();
     argv = opt_rest();
 
-    if (!app_load_modules(NULL))
-        goto end;
-
     if (oidfile != NULL) {
         in = bio_open_default(oidfile, 'r', FORMAT_TEXT);
         if (in == NULL)
@@ -279,9 +276,9 @@ int asn1parse_main(int argc, char **argv)
             }
             typ = ASN1_TYPE_get(at);
             if ((typ == V_ASN1_OBJECT)
+                || (typ == V_ASN1_BOOLEAN)
                 || (typ == V_ASN1_NULL)) {
-                BIO_printf(bio_err, "Can't parse %s type\n",
-                           typ == V_ASN1_NULL ? "NULL" : "OBJECT");
+                BIO_printf(bio_err, "Can't parse %s type\n", ASN1_tag2str(typ));
                 ERR_print_errors(bio_err);
                 goto end;
             }

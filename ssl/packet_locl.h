@@ -62,6 +62,7 @@
 # include <string.h>
 # include <openssl/bn.h>
 # include <openssl/buffer.h>
+# include <openssl/crypto.h>
 # include "e_os.h"
 
 # ifdef __cplusplus
@@ -85,7 +86,7 @@ static inline void packet_forward(PACKET *pkt, size_t len)
 /*
  * Returns the number of bytes remaining to be read in the PACKET
  */
-__owur static inline size_t PACKET_remaining(const PACKET *pkt)
+static inline size_t PACKET_remaining(const PACKET *pkt)
 {
     return pkt->remaining;
 }
@@ -106,15 +107,35 @@ static inline unsigned char *PACKET_data(const PACKET *pkt)
  * copy of the data so |buf| must be present for the whole time that the PACKET
  * is being used.
  */
-static inline int PACKET_buf_init(PACKET *pkt, unsigned char *buf, size_t len)
+__owur static inline int PACKET_buf_init(PACKET *pkt, unsigned char *buf,
+                                         size_t len)
 {
     /* Sanity check for negative values. */
-    if (buf + len < buf)
+    if (len > (size_t)(SIZE_MAX / 2))
         return 0;
 
     pkt->curr = buf;
     pkt->remaining = len;
     return 1;
+}
+
+/* Initialize a PACKET to hold zero bytes. */
+static inline void PACKET_null_init(PACKET *pkt)
+{
+    pkt->curr = NULL;
+    pkt->remaining = 0;
+}
+
+/*
+ * Returns 1 if the packet has length |num| and its contents equal the |num|
+ * bytes read from |ptr|. Returns 0 otherwise (lengths or contents not equal).
+ * If lengths are equal, performs the comparison in constant time.
+ */
+__owur static inline int PACKET_equal(const PACKET *pkt, const void *ptr,
+                                      size_t num) {
+    if (PACKET_remaining(pkt) != num)
+        return 0;
+    return CRYPTO_memcmp(pkt->curr, ptr, num) == 0;
 }
 
 /*
@@ -128,9 +149,7 @@ __owur static inline int PACKET_peek_sub_packet(const PACKET *pkt,
     if (PACKET_remaining(pkt) < len)
         return 0;
 
-    PACKET_buf_init(subpkt, pkt->curr, len);
-
-    return 1;
+    return PACKET_buf_init(subpkt, pkt->curr, len);
 }
 
 /*
@@ -294,7 +313,7 @@ __owur static inline int PACKET_get_4(PACKET *pkt, unsigned long *data)
  * underlying buffer gets freed
  */
 __owur static inline int PACKET_peek_bytes(const PACKET *pkt, unsigned char **data,
-                                          size_t len)
+                                           size_t len)
 {
     if (PACKET_remaining(pkt) < len)
         return 0;
@@ -349,6 +368,24 @@ __owur static inline int PACKET_copy_bytes(PACKET *pkt, unsigned char *data,
 }
 
 /*
+ * Copy packet data to |dest|, and set |len| to the number of copied bytes.
+ * If the packet has more than |dest_len| bytes, nothing is copied.
+ * Returns 1 if the packet data fits in |dest_len| bytes, 0 otherwise.
+ * Does not forward PACKET position (because it is typically the last thing
+ * done with a given PACKET).
+ */
+__owur static inline int PACKET_copy_all(const PACKET *pkt, unsigned char *dest,
+                                         size_t dest_len, size_t *len) {
+    if (PACKET_remaining(pkt) > dest_len) {
+        *len = 0;
+        return 0;
+    }
+    *len = pkt->remaining;
+    memcpy(dest, pkt->curr, pkt->remaining);
+    return 1;
+}
+
+/*
  * Copy |pkt| bytes to a newly allocated buffer and store a pointer to the
  * result in |*data|, and the length in |len|.
  * If |*data| is not NULL, the old data is OPENSSL_free'd.
@@ -393,6 +430,8 @@ __owur static inline int PACKET_memdup(const PACKET *pkt, unsigned char **data,
 __owur static inline int PACKET_strndup(const PACKET *pkt, char **data)
 {
     OPENSSL_free(*data);
+
+    /* This will succeed on an empty packet, unless pkt->curr == NULL. */
     *data = BUF_strndup((const char*)pkt->curr, PACKET_remaining(pkt));
     return (*data != NULL);
 }

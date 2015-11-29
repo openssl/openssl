@@ -33,7 +33,7 @@ is also set.
 
 If the B<PKCS7_STREAM> flag is set streaming is performed. This flag should
 only be set if B<PKCS7_STREAM> was also set in the previous call to
-PKCS7_sign() or B<PKCS7_encrypt()>.
+PKCS7_sign() or PKCS7_encrypt().
 
 If cleartext signing is being used and B<PKCS7_STREAM> not set then
 the data must be read twice: once to compute the signature in PKCS7_sign()
@@ -57,9 +57,5 @@ SMIME_write_PKCS7() returns 1 for success or 0 for failure.
 L<ERR_get_error(3)>, L<PKCS7_sign(3)>,
 L<PKCS7_verify(3)>, L<PKCS7_encrypt(3)>
 L<PKCS7_decrypt(3)>
-
-=head1 HISTORY
-
-SMIME_write_PKCS7() was added to OpenSSL 0.9.5
 
 =cut

@@ -241,14 +241,14 @@ static int bind_helper(ENGINE *e)
 
 #  ifndef OPENSSL_NO_RSA
     /*
-     * We know that the "PKCS1_SSLeay()" functions hook properly to the
+     * We know that the "PKCS1_OpenSSL()" functions hook properly to the
      * ibmca-specific mod_exp and mod_exp_crt so we use those functions. NB:
      * We don't use ENGINE_openssl() or anything "more generic" because
      * something like the RSAref code may not hook properly, and if you own
      * one of these cards then you have the right to do RSA operations on it
      * anyway!
      */
-    meth1 = RSA_PKCS1_SSLeay();
+    meth1 = RSA_PKCS1_OpenSSL();
     ibmca_rsa.rsa_pub_enc = meth1->rsa_pub_enc;
     ibmca_rsa.rsa_pub_dec = meth1->rsa_pub_dec;
     ibmca_rsa.rsa_priv_enc = meth1->rsa_priv_enc;

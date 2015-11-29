@@ -282,7 +282,7 @@ CERT *ssl_cert_dup(CERT *cert)
     /* Configured sigalgs copied across */
     if (cert->conf_sigalgs) {
         ret->conf_sigalgs = OPENSSL_malloc(cert->conf_sigalgslen);
-        if (!ret->conf_sigalgs)
+        if (ret->conf_sigalgs == NULL)
             goto err;
         memcpy(ret->conf_sigalgs, cert->conf_sigalgs, cert->conf_sigalgslen);
         ret->conf_sigalgslen = cert->conf_sigalgslen;
@@ -291,7 +291,7 @@ CERT *ssl_cert_dup(CERT *cert)
 
     if (cert->client_sigalgs) {
         ret->client_sigalgs = OPENSSL_malloc(cert->client_sigalgslen);
-        if (!ret->client_sigalgs)
+        if (ret->client_sigalgs == NULL)
             goto err;
         memcpy(ret->client_sigalgs, cert->client_sigalgs,
                cert->client_sigalgslen);
@@ -303,7 +303,7 @@ CERT *ssl_cert_dup(CERT *cert)
     /* Copy any custom client certificate types */
     if (cert->ctypes) {
         ret->ctypes = OPENSSL_malloc(cert->ctype_num);
-        if (!ret->ctypes)
+        if (ret->ctypes == NULL)
             goto err;
         memcpy(ret->ctypes, cert->ctypes, cert->ctype_num);
         ret->ctype_num = cert->ctype_num;
@@ -333,13 +333,13 @@ CERT *ssl_cert_dup(CERT *cert)
         goto err;
     if (!custom_exts_copy(&ret->srv_ext, &cert->srv_ext))
         goto err;
-
+#ifndef OPENSSL_NO_PSK
     if (cert->psk_identity_hint) {
         ret->psk_identity_hint = BUF_strdup(cert->psk_identity_hint);
         if (ret->psk_identity_hint == NULL)
             goto err;
     }
-
+#endif
     return (ret);
 
  err:
@@ -625,7 +625,7 @@ STACK_OF(X509_NAME) *SSL_CTX_get_client_CA_list(const SSL_CTX *ctx)
 
 STACK_OF(X509_NAME) *SSL_get_client_CA_list(const SSL *s)
 {
-    if (s->type == SSL_ST_CONNECT) { /* we are in the client */
+    if (!s->server) { /* we are in the client */
         if (((s->version >> 8) == SSL3_VERSION_MAJOR) && (s->s3 != NULL))
             return (s->s3->tmp.ca_names);
         else
@@ -689,7 +689,7 @@ STACK_OF(X509_NAME) *SSL_load_client_CA_file(const char *file)
 
     sk = sk_X509_NAME_new(xname_cmp);
 
-    in = BIO_new(BIO_s_file_internal());
+    in = BIO_new(BIO_s_file());
 
     if ((sk == NULL) || (in == NULL)) {
         SSLerr(SSL_F_SSL_LOAD_CLIENT_CA_FILE, ERR_R_MALLOC_FAILURE);
@@ -756,7 +756,7 @@ int SSL_add_file_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
 
     oldcmp = sk_X509_NAME_set_cmp_func(stack, xname_cmp);
 
-    in = BIO_new(BIO_s_file_internal());
+    in = BIO_new(BIO_s_file());
 
     if (in == NULL) {
         SSLerr(SSL_F_SSL_ADD_FILE_CERT_SUBJECTS_TO_STACK,
@@ -914,6 +914,12 @@ int ssl_add_cert_chain(SSL *s, CERT_PKEY *cpk, unsigned long *l)
             SSLerr(SSL_F_SSL_ADD_CERT_CHAIN, ERR_R_X509_LIB);
             return (0);
         }
+        /*
+         * It is valid for the chain not to be complete (because normally we
+         * don't include the root cert in the chain). Therefore we deliberately
+         * ignore the error return from this call. We're not actually verifying
+         * the cert - we're just building as much of the chain as we can
+         */
         X509_verify_cert(&xs_ctx);
         /* Don't leave errors in the queue */
         ERR_clear_error();
@@ -968,7 +974,7 @@ int ssl_build_cert_chain(SSL *s, SSL_CTX *ctx, int flags)
     /* Rearranging and check the chain: add everything to a store */
     if (flags & SSL_BUILD_CHAIN_FLAG_CHECK) {
         chain_store = X509_STORE_new();
-        if (!chain_store)
+        if (chain_store == NULL)
             goto err;
         for (i = 0; i < sk_X509_num(cpk->chain); i++) {
             x = sk_X509_value(cpk->chain, i);

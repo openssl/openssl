@@ -258,8 +258,4 @@ The error codes that can be obtained by L<ERR_get_error(3)>.
 
 L<ERR_get_error(3)>
 
-=head1 HISTORY
-
-ASN1_generate_nconf() and ASN1_generate_v3() were added to OpenSSL 0.9.8
-
 =cut

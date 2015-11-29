@@ -72,7 +72,7 @@ int X509_issuer_and_serial_cmp(const X509 *a, const X509 *b)
 
     ai = &a->cert_info;
     bi = &b->cert_info;
-    i = ASN1_INTEGER_cmp(ai->serialNumber, bi->serialNumber);
+    i = ASN1_INTEGER_cmp(&ai->serialNumber, &bi->serialNumber);
     if (i)
         return (i);
     return (X509_NAME_cmp(ai->issuer, bi->issuer));
@@ -94,8 +94,8 @@ unsigned long X509_issuer_and_serial_hash(X509 *a)
         goto err;
     OPENSSL_free(f);
     if (!EVP_DigestUpdate
-        (&ctx, (unsigned char *)a->cert_info.serialNumber->data,
-         (unsigned long)a->cert_info.serialNumber->length))
+        (&ctx, (unsigned char *)a->cert_info.serialNumber.data,
+         (unsigned long)a->cert_info.serialNumber.length))
         goto err;
     if (!EVP_DigestFinal_ex(&ctx, &(md[0]), NULL))
         goto err;
@@ -152,7 +152,7 @@ X509_NAME *X509_get_subject_name(X509 *a)
 
 ASN1_INTEGER *X509_get_serialNumber(X509 *a)
 {
-    return (a->cert_info.serialNumber);
+    return &a->cert_info.serialNumber;
 }
 
 unsigned long X509_subject_name_hash(X509 *x)
@@ -278,7 +278,7 @@ X509 *X509_find_by_issuer_and_serial(STACK_OF(X509) *sk, X509_NAME *name,
     if (!sk)
         return NULL;
 
-    x.cert_info.serialNumber = serial;
+    x.cert_info.serialNumber = *serial;
     x.cert_info.issuer = name;
 
     for (i = 0; i < sk_X509_num(sk); i++) {

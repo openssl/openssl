@@ -69,7 +69,7 @@ static int X509_REVOKED_cmp(const X509_REVOKED *const *a,
 static void setup_idp(X509_CRL *crl, ISSUING_DIST_POINT *idp);
 
 ASN1_SEQUENCE(X509_REVOKED) = {
-        ASN1_SIMPLE(X509_REVOKED,serialNumber, ASN1_INTEGER),
+        ASN1_EMBED(X509_REVOKED,serialNumber, ASN1_INTEGER),
         ASN1_SIMPLE(X509_REVOKED,revocationDate, ASN1_TIME),
         ASN1_SEQUENCE_OF_OPT(X509_REVOKED,extensions, X509_EXTENSION)
 } ASN1_SEQUENCE_END(X509_REVOKED)
@@ -333,7 +333,7 @@ static void setup_idp(X509_CRL *crl, ISSUING_DIST_POINT *idp)
 ASN1_SEQUENCE_ref(X509_CRL, crl_cb, CRYPTO_LOCK_X509_CRL) = {
         ASN1_EMBED(X509_CRL, crl, X509_CRL_INFO),
         ASN1_EMBED(X509_CRL, sig_alg, X509_ALGOR),
-        ASN1_SIMPLE(X509_CRL, signature, ASN1_BIT_STRING)
+        ASN1_EMBED(X509_CRL, signature, ASN1_BIT_STRING)
 } ASN1_SEQUENCE_END_ref(X509_CRL, X509_CRL)
 
 IMPLEMENT_ASN1_FUNCTIONS(X509_REVOKED)
@@ -349,17 +349,17 @@ IMPLEMENT_ASN1_DUP_FUNCTION(X509_CRL)
 static int X509_REVOKED_cmp(const X509_REVOKED *const *a,
                             const X509_REVOKED *const *b)
 {
-    return (ASN1_STRING_cmp((ASN1_STRING *)(*a)->serialNumber,
-                            (ASN1_STRING *)(*b)->serialNumber));
+    return (ASN1_STRING_cmp((ASN1_STRING *)&(*a)->serialNumber,
+                            (ASN1_STRING *)&(*b)->serialNumber));
 }
 
 int X509_CRL_add0_revoked(X509_CRL *crl, X509_REVOKED *rev)
 {
     X509_CRL_INFO *inf;
     inf = &crl->crl;
-    if (!inf->revoked)
+    if (inf->revoked == NULL)
         inf->revoked = sk_X509_REVOKED_new(X509_REVOKED_cmp);
-    if (!inf->revoked || !sk_X509_REVOKED_push(inf->revoked, rev)) {
+    if (inf->revoked == NULL || !sk_X509_REVOKED_push(inf->revoked, rev)) {
         ASN1err(ASN1_F_X509_CRL_ADD0_REVOKED, ERR_R_MALLOC_FAILURE);
         return 0;
     }
@@ -394,7 +394,7 @@ int X509_CRL_get0_by_cert(X509_CRL *crl, X509_REVOKED **ret, X509 *x)
 static int def_crl_verify(X509_CRL *crl, EVP_PKEY *r)
 {
     return (ASN1_item_verify(ASN1_ITEM_rptr(X509_CRL_INFO),
-                             &crl->sig_alg, crl->signature, &crl->crl, r));
+                             &crl->sig_alg, &crl->signature, &crl->crl, r));
 }
 
 static int crl_revoked_issuer_match(X509_CRL *crl, X509_NAME *nm,
@@ -430,7 +430,7 @@ static int def_crl_lookup(X509_CRL *crl,
 {
     X509_REVOKED rtmp, *rev;
     int idx;
-    rtmp.serialNumber = serial;
+    rtmp.serialNumber = *serial;
     /*
      * Sort revoked into serial number order if not already sorted. Do this
      * under a lock to avoid race condition.
@@ -446,7 +446,7 @@ static int def_crl_lookup(X509_CRL *crl,
     /* Need to look for matching name */
     for (; idx < sk_X509_REVOKED_num(crl->crl.revoked); idx++) {
         rev = sk_X509_REVOKED_value(crl->crl.revoked, idx);
-        if (ASN1_INTEGER_cmp(rev->serialNumber, serial))
+        if (ASN1_INTEGER_cmp(&rev->serialNumber, serial))
             return 0;
         if (crl_revoked_issuer_match(crl, issuer, rev)) {
             if (ret)
@@ -478,7 +478,7 @@ X509_CRL_METHOD *X509_CRL_METHOD_new(int (*crl_init) (X509_CRL *crl),
 {
     X509_CRL_METHOD *m;
     m = OPENSSL_malloc(sizeof(*m));
-    if (!m)
+    if (m == NULL)
         return NULL;
     m->crl_init = crl_init;
     m->crl_free = crl_free;

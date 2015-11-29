@@ -166,7 +166,7 @@ BIO *bio_in = NULL;
 BIO *bio_out = NULL;
 BIO *bio_err = NULL;
 
-static void apps_startup()
+static int apps_startup()
 {
 #ifdef SIGPIPE
     signal(SIGPIPE, SIG_IGN);
@@ -174,14 +174,22 @@ static void apps_startup()
     CRYPTO_malloc_init();
     ERR_load_crypto_strings();
     ERR_load_SSL_strings();
-    OpenSSL_add_all_algorithms();
-    OpenSSL_add_ssl_algorithms();
+
     OPENSSL_load_builtin_modules();
-    setup_ui_method();
-    /*SSL_library_init();*/
 #ifndef OPENSSL_NO_ENGINE
     ENGINE_load_builtin_engines();
 #endif
+    if (!app_load_modules(NULL)) {
+        ERR_print_errors(bio_err);
+        BIO_printf(bio_err, "Error loading default configuration\n");
+        return 0;
+    }
+
+    OpenSSL_add_all_algorithms();
+    OpenSSL_add_ssl_algorithms();
+    setup_ui_method();
+    /*SSL_library_init();*/
+    return 1;
 }
 
 static void apps_shutdown()
@@ -209,8 +217,7 @@ static char *make_config_name()
     size_t len;
     char *p;
 
-    if ((t = getenv("OPENSSL_CONF")) != NULL
-        || (t = getenv("SSLEAY_CONF")) != NULL)
+    if ((t = getenv("OPENSSL_CONF")) != NULL)
         return BUF_strdup(t);
 
     t = X509_get_default_cert_area();
@@ -328,7 +335,9 @@ int main(int argc, char *argv[])
 #endif
     }
 
-    apps_startup();
+    if (!apps_startup())
+        goto end;
+
     prog = prog_init();
     pname = opt_progname(argv[0]);
 

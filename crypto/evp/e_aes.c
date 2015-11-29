@@ -1265,7 +1265,7 @@ static int aes_gcm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
             if (gctx->iv != c->iv)
                 OPENSSL_free(gctx->iv);
             gctx->iv = OPENSSL_malloc(arg);
-            if (!gctx->iv)
+            if (gctx->iv == NULL)
                 return 0;
         }
         gctx->ivlen = arg;
@@ -1359,7 +1359,7 @@ static int aes_gcm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
                 gctx_out->iv = out->iv;
             else {
                 gctx_out->iv = OPENSSL_malloc(gctx->ivlen);
-                if (!gctx_out->iv)
+                if (gctx_out->iv == NULL)
                     return 0;
                 memcpy(gctx_out->iv, gctx->iv, gctx->ivlen);
             }

@@ -64,7 +64,6 @@
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 #include "internal/asn1_int.h"
-#include "internal/x509_int.h"
 
 #ifndef OPENSSL_NO_STDIO
 int X509_print_fp(FILE *fp, X509 *x)
@@ -101,7 +100,6 @@ int X509_print_ex(BIO *bp, X509 *x, unsigned long nmflags,
     int ret = 0, i;
     char *m = NULL, mlch = ' ';
     int nmindent = 0;
-    X509_CINF *ci;
     ASN1_INTEGER *bs;
     EVP_PKEY *pkey = NULL;
     const char *neg;
@@ -114,7 +112,6 @@ int X509_print_ex(BIO *bp, X509 *x, unsigned long nmflags,
     if (nmflags == X509_FLAG_COMPAT)
         nmindent = 16;
 
-    ci = &x->cert_info;
     if (!(cflag & X509_FLAG_NO_HEADER)) {
         if (BIO_write(bp, "Certificate:\n", 13) <= 0)
             goto err;
@@ -162,7 +159,8 @@ int X509_print_ex(BIO *bp, X509 *x, unsigned long nmflags,
     }
 
     if (!(cflag & X509_FLAG_NO_SIGNAME)) {
-        if (X509_signature_print(bp, &ci->signature, NULL) <= 0)
+        X509_ALGOR *tsig_alg = X509_get0_tbs_sigalg(x);
+        if (X509_signature_print(bp, tsig_alg, NULL) <= 0)
             goto err;
     }
 
@@ -199,11 +197,14 @@ int X509_print_ex(BIO *bp, X509 *x, unsigned long nmflags,
             goto err;
     }
     if (!(cflag & X509_FLAG_NO_PUBKEY)) {
+        X509_PUBKEY *xpkey = X509_get_X509_PUBKEY(x);
+        ASN1_OBJECT *xpoid;
+        X509_PUBKEY_get0_param(&xpoid, NULL, NULL, NULL, xpkey);
         if (BIO_write(bp, "        Subject Public Key Info:\n", 33) <= 0)
             goto err;
         if (BIO_printf(bp, "%12sPublic Key Algorithm: ", "") <= 0)
             goto err;
-        if (i2a_ASN1_OBJECT(bp, ci->key->algor->algorithm) <= 0)
+        if (i2a_ASN1_OBJECT(bp, xpoid) <= 0)
             goto err;
         if (BIO_puts(bp, "\n") <= 0)
             goto err;
@@ -219,30 +220,35 @@ int X509_print_ex(BIO *bp, X509 *x, unsigned long nmflags,
     }
 
     if (!(cflag & X509_FLAG_NO_IDS)) {
-        if (ci->issuerUID) {
+        ASN1_BIT_STRING *iuid, *suid;
+        X509_get0_uids(&iuid, &suid, x);
+        if (iuid != NULL) {
             if (BIO_printf(bp, "%8sIssuer Unique ID: ", "") <= 0)
                 goto err;
-            if (!X509_signature_dump(bp, ci->issuerUID, 12))
+            if (!X509_signature_dump(bp, iuid, 12))
                 goto err;
         }
-        if (ci->subjectUID) {
+        if (suid != NULL) {
             if (BIO_printf(bp, "%8sSubject Unique ID: ", "") <= 0)
                 goto err;
-            if (!X509_signature_dump(bp, ci->subjectUID, 12))
+            if (!X509_signature_dump(bp, suid, 12))
                 goto err;
         }
     }
 
     if (!(cflag & X509_FLAG_NO_EXTENSIONS))
         X509V3_extensions_print(bp, "X509v3 extensions",
-                                ci->extensions, cflag, 8);
+                                X509_get0_extensions(x), cflag, 8);
 
     if (!(cflag & X509_FLAG_NO_SIGDUMP)) {
-        if (X509_signature_print(bp, &x->sig_alg, x->signature) <= 0)
+        X509_ALGOR *sig_alg;
+        ASN1_BIT_STRING *sig;
+        X509_get0_signature(&sig, &sig_alg, x);
+        if (X509_signature_print(bp, sig_alg, sig) <= 0)
             goto err;
     }
     if (!(cflag & X509_FLAG_NO_AUX)) {
-        if (!X509_CERT_AUX_print(bp, x->aux, 0))
+        if (!X509_aux_print(bp, x, 0))
             goto err;
     }
     ret = 1;
@@ -258,16 +264,19 @@ int X509_ocspid_print(BIO *bp, X509 *x)
     int derlen;
     int i;
     unsigned char SHA1md[SHA_DIGEST_LENGTH];
+    ASN1_BIT_STRING *keybstr;
+    X509_NAME *subj;
 
     /*
      * display the hash of the subject as it would appear in OCSP requests
      */
     if (BIO_printf(bp, "        Subject OCSP hash: ") <= 0)
         goto err;
-    derlen = i2d_X509_NAME(x->cert_info.subject, NULL);
+    subj = X509_get_subject_name(x);
+    derlen = i2d_X509_NAME(subj, NULL);
     if ((der = dertmp = OPENSSL_malloc(derlen)) == NULL)
         goto err;
-    i2d_X509_NAME(x->cert_info.subject, &dertmp);
+    i2d_X509_NAME(subj, &dertmp);
 
     if (!EVP_Digest(der, derlen, SHA1md, NULL, EVP_sha1(), NULL))
         goto err;
@@ -284,8 +293,12 @@ int X509_ocspid_print(BIO *bp, X509 *x)
     if (BIO_printf(bp, "\n        Public key OCSP hash: ") <= 0)
         goto err;
 
-    if (!EVP_Digest(x->cert_info.key->public_key->data,
-                    x->cert_info.key->public_key->length,
+    keybstr = X509_get0_pubkey_bitstr(x);
+
+    if (keybstr == NULL)
+        goto err;
+
+    if (!EVP_Digest(ASN1_STRING_data(keybstr), ASN1_STRING_length(keybstr),
                     SHA1md, NULL, EVP_sha1(), NULL))
         goto err;
     for (i = 0; i < SHA_DIGEST_LENGTH; i++) {
@@ -345,5 +358,59 @@ int X509_signature_print(BIO *bp, X509_ALGOR *sigalg, ASN1_STRING *sig)
         return X509_signature_dump(bp, sig, 9);
     else if (BIO_puts(bp, "\n") <= 0)
         return 0;
+    return 1;
+}
+
+int X509_aux_print(BIO *out, X509 *x, int indent)
+{
+    char oidstr[80], first;
+    STACK_OF(ASN1_OBJECT) *trust, *reject;
+    const unsigned char *alias, *keyid;
+    int keyidlen;
+    int i;
+    if (X509_trusted(x) == 0)
+        return 1;
+    trust = X509_get0_trust_objects(x);
+    reject = X509_get0_reject_objects(x);
+    if (trust) {
+        first = 1;
+        BIO_printf(out, "%*sTrusted Uses:\n%*s", indent, "", indent + 2, "");
+        for (i = 0; i < sk_ASN1_OBJECT_num(trust); i++) {
+            if (!first)
+                BIO_puts(out, ", ");
+            else
+                first = 0;
+            OBJ_obj2txt(oidstr, sizeof oidstr,
+                        sk_ASN1_OBJECT_value(trust, i), 0);
+            BIO_puts(out, oidstr);
+        }
+        BIO_puts(out, "\n");
+    } else
+        BIO_printf(out, "%*sNo Trusted Uses.\n", indent, "");
+    if (reject) {
+        first = 1;
+        BIO_printf(out, "%*sRejected Uses:\n%*s", indent, "", indent + 2, "");
+        for (i = 0; i < sk_ASN1_OBJECT_num(reject); i++) {
+            if (!first)
+                BIO_puts(out, ", ");
+            else
+                first = 0;
+            OBJ_obj2txt(oidstr, sizeof oidstr,
+                        sk_ASN1_OBJECT_value(reject, i), 0);
+            BIO_puts(out, oidstr);
+        }
+        BIO_puts(out, "\n");
+    } else
+        BIO_printf(out, "%*sNo Rejected Uses.\n", indent, "");
+    alias = X509_alias_get0(x, NULL);
+    if (alias)
+        BIO_printf(out, "%*sAlias: %s\n", indent, "", alias);
+    keyid = X509_keyid_get0(x, &keyidlen);
+    if (keyid) {
+        BIO_printf(out, "%*sKey Id: ", indent, "");
+        for (i = 0; i < keyidlen; i++)
+            BIO_printf(out, "%s%02X", i ? ":" : "", keyid[i]);
+        BIO_write(out, "\n", 1);
+    }
     return 1;
 }

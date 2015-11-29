@@ -1,9 +1,16 @@
 language: c
 
 addons:
-    apt_packages:
-        - binutils-mingw-w64
-        - gcc-mingw-w64
+    apt:
+        packages:
+            - clang-3.6
+            - gcc-5
+            - binutils-mingw-w64
+            - gcc-mingw-w64
+            - wine
+        sources:
+            - llvm-toolchain-precise-3.6
+            - ubuntu-toolchain-r-test
 
 os:
     - linux
@@ -11,40 +18,73 @@ os:
 
 compiler:
     - clang
+    - clang-3.6
     - gcc
+    - gcc-5
     - i686-w64-mingw32-gcc
     - x86_64-w64-mingw32-gcc
 
 env:
     - CONFIG_OPTS=""
     - CONFIG_OPTS="shared"
-    - CONFIG_OPTS="-d --strict-warnings"
+    - CONFIG_OPTS="no-asm"
+    - CONFIG_OPTS="--debug --strict-warnings"
 
 matrix:
+    include:
+        - os: linux
+          compiler: clang-3.6
+          env: CONFIG_OPTS="-fsanitize=address"
+        - os: linux
+          compiler: clang-3.6
+          env: CONFIG_OPTS="no-asm --debug --strict-warnings -fno-sanitize-recover -fsanitize=address -fsanitize=undefined"
+        - os: linux
+          compiler: gcc-5
+          env: CONFIG_OPTS="-fsanitize=address"
+        - os: linux
+          compiler: gcc-5
+          env: CONFIG_OPTS="no-asm --debug --strict-warnings -fno-sanitize-recover -fsanitize=address -fsanitize=undefined"
     exclude:
+        - os: osx
+          compiler: clang-3.6
+        - os: osx
+          compiler: gcc-5
         - os: osx
           compiler: i686-w64-mingw32-gcc
         - os: osx
           compiler: x86_64-w64-mingw32-gcc
+        - compiler: i686-w64-mingw32-gcc
+          env: CONFIG_OPTS="shared"
+        - compiler: x86_64-w64-mingw32-gcc
+          env: CONFIG_OPTS="shared"
+        - compiler: i686-w64-mingw32-gcc
+          env: CONFIG_OPTS="no-asm"
+        - compiler: x86_64-w64-mingw32-gcc
+          env: CONFIG_OPTS="no-asm"
+    allow_failures:
+        - compiler: i686-w64-mingw32-gcc
+          env: CONFIG_OPTS="--debug --strict-warnings"
+        - compiler: x86_64-w64-mingw32-gcc
+          env: CONFIG_OPTS="--debug --strict-warnings"
 
 before_script:
     - if [ "$CC" == i686-w64-mingw32-gcc ]; then
           export CROSS_COMPILE=${CC%%gcc}; unset CC;
-          ./Configure mingw $CONFIG_OPTS;
+          ./Configure mingw $CONFIG_OPTS -Wno-pedantic-ms-format;
       elif [ "$CC" == x86_64-w64-mingw32-gcc ]; then
           export CROSS_COMPILE=${CC%%gcc}; unset CC;
-          ./Configure mingw64 $CONFIG_OPTS;
+          ./Configure mingw64 $CONFIG_OPTS -Wno-pedantic-ms-format;
       else
           ./config $CONFIG_OPTS;
       fi
 
 script:
     - make
-    - if [ -z "$CROSS_COMPILE" ]; then make test; fi
+    - if [ -n "$CROSS_COMPILE" ]; then
+          export EXE_SHELL="wine" WINEPREFIX=`pwd`;
+      fi
+    - make test
 
 notifications:
-    recipient:
-        - openssl-commits@openssl.org
     email:
-        on_success: change
-        on_failure: always
+        - openssl-commits@openssl.org

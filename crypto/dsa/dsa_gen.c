@@ -83,16 +83,8 @@ int DSA_generate_parameters_ex(DSA *ret, int bits,
         return ret->meth->dsa_paramgen(ret, bits, seed_in, seed_len,
                                        counter_ret, h_ret, cb);
     else {
-        const EVP_MD *evpmd;
-        size_t qbits = bits >= 2048 ? 256 : 160;
-
-        if (bits >= 2048) {
-            qbits = 256;
-            evpmd = EVP_sha256();
-        } else {
-            qbits = 160;
-            evpmd = EVP_sha1();
-        }
+        const EVP_MD *evpmd = bits >= 2048 ? EVP_sha256() : EVP_sha1();
+        size_t qbits = EVP_MD_size(evpmd) * 8;
 
         return dsa_builtin_paramgen(ret, bits, qbits, evpmd,
                                     seed_in, seed_len, NULL, counter_ret,
@@ -142,13 +134,14 @@ int dsa_builtin_paramgen(DSA *ret, size_t bits, size_t qbits,
         memcpy(seed, seed_in, seed_len);
     }
 
-    if ((ctx = BN_CTX_new()) == NULL)
-        goto err;
-
     if ((mont = BN_MONT_CTX_new()) == NULL)
         goto err;
 
+    if ((ctx = BN_CTX_new()) == NULL)
+        goto err;
+
     BN_CTX_start(ctx);
+
     r0 = BN_CTX_get(ctx);
     g = BN_CTX_get(ctx);
     W = BN_CTX_get(ctx);
@@ -394,7 +387,7 @@ int dsa_builtin_paramgen2(DSA *ret, size_t L, size_t N,
         else
             seed_tmp = OPENSSL_malloc(seed_len);
 
-        if (!seed || !seed_tmp)
+        if (seed == NULL || seed_tmp == NULL)
             goto err;
 
         if (seed_in)
@@ -657,7 +650,7 @@ int dsa_paramgen_check_g(DSA *dsa)
     BN_MONT_CTX *mont = NULL;
     int rv = -1;
     ctx = BN_CTX_new();
-    if (!ctx)
+    if (ctx == NULL)
         return -1;
     BN_CTX_start(ctx);
     if (BN_cmp(dsa->g, BN_value_one()) <= 0)

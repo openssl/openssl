@@ -51,9 +51,4 @@ L<ERR_get_error(3)>,
 L<rand(3)>, L<rsa(3)>, L<RSA_sign(3)>,
 L<RSA_verify(3)>
 
-=head1 HISTORY
-
-RSA_sign_ASN1_OCTET_STRING() and RSA_verify_ASN1_OCTET_STRING() were
-added in SSLeay 0.8.
-
 =cut

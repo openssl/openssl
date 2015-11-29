@@ -94,16 +94,11 @@ static void identity(char *ptr)
 
 static int append_buf(char **buf, const char *s, int *size, int step)
 {
-    int l = strlen(s);
-
     if (*buf == NULL) {
         *size = step;
         *buf = app_malloc(*size, "engine buffer");
         **buf = '\0';
     }
-
-    if (**buf != '\0')
-        l += 2;                 /* ", " */
 
     if (strlen(*buf) + strlen(s) >= (unsigned int)*size) {
         *size += step;
@@ -368,9 +363,6 @@ int engine_main(int argc, char **argv)
             sk_OPENSSL_STRING_push(engines, (char *)ENGINE_get_id(e));
         }
     }
-
-    if (!app_load_modules(NULL))
-        goto end;
 
     for (i = 0; i < sk_OPENSSL_STRING_num(engines); i++) {
         const char *id = sk_OPENSSL_STRING_value(engines, i);

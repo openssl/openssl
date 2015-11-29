@@ -158,7 +158,7 @@ static int bind_helper(ENGINE *e)
 # ifndef OPENSSL_NO_DH
         || !ENGINE_set_DH(e, DH_get_default_method())
 # endif
-        || !ENGINE_set_RAND(e, RAND_SSLeay())
+        || !ENGINE_set_RAND(e, RAND_OpenSSL())
 # ifdef TEST_ENG_OPENSSL_RC4
         || !ENGINE_set_ciphers(e, openssl_ciphers)
 # endif
@@ -186,7 +186,7 @@ static int bind_helper(ENGINE *e)
 static ENGINE *engine_openssl(void)
 {
     ENGINE *ret = ENGINE_new();
-    if (!ret)
+    if (ret == NULL)
         return NULL;
     if (!bind_helper(ret)) {
         ENGINE_free(ret);
@@ -429,7 +429,7 @@ static int ossl_hmac_init(EVP_PKEY_CTX *ctx)
     OSSL_HMAC_PKEY_CTX *hctx;
 
     hctx = OPENSSL_zalloc(sizeof(*hctx));
-    if (!hctx)
+    if (hctx == NULL)
         return 0;
     hctx->ktmp.type = V_ASN1_OCTET_STRING;
     HMAC_CTX_init(&hctx->ctx);
@@ -579,7 +579,7 @@ static int ossl_register_hmac_meth(void)
 {
     EVP_PKEY_METHOD *meth;
     meth = EVP_PKEY_meth_new(EVP_PKEY_HMAC, 0);
-    if (!meth)
+    if (meth == NULL)
         return 0;
     EVP_PKEY_meth_set_init(meth, ossl_hmac_init);
     EVP_PKEY_meth_set_copy(meth, ossl_hmac_copy);

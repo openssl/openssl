@@ -71,10 +71,10 @@
  *       serialNumber       CertificateSerialNumber }
  */
 struct ocsp_cert_id_st {
-    X509_ALGOR *hashAlgorithm;
-    ASN1_OCTET_STRING *issuerNameHash;
-    ASN1_OCTET_STRING *issuerKeyHash;
-    ASN1_INTEGER *serialNumber;
+    X509_ALGOR hashAlgorithm;
+    ASN1_OCTET_STRING issuerNameHash;
+    ASN1_OCTET_STRING issuerKeyHash;
+    ASN1_INTEGER serialNumber;
 };
 
 /*-  Request ::=     SEQUENCE {
@@ -105,7 +105,7 @@ struct ocsp_req_info_st {
  *       certs                [0] EXPLICIT SEQUENCE OF Certificate OPTIONAL }
  */
 struct ocsp_signature_st {
-    X509_ALGOR *signatureAlgorithm;
+    X509_ALGOR signatureAlgorithm;
     ASN1_BIT_STRING *signature;
     STACK_OF(X509) *certs;
 };
@@ -115,7 +115,7 @@ struct ocsp_signature_st {
  *       optionalSignature   [0]     EXPLICIT Signature OPTIONAL }
  */
 struct ocsp_request_st {
-    OCSP_REQINFO *tbsRequest;
+    OCSP_REQINFO tbsRequest;
     OCSP_SIGNATURE *optionalSignature; /* OPTIONAL */
 };
 
@@ -211,7 +211,7 @@ struct ocsp_single_response_st {
  */
 struct ocsp_response_data_st {
     ASN1_INTEGER *version;
-    OCSP_RESPID *responderId;
+    OCSP_RESPID responderId;
     ASN1_GENERALIZEDTIME *producedAt;
     STACK_OF(OCSP_SINGLERESP) *responses;
     STACK_OF(X509_EXTENSION) *responseExtensions;
@@ -244,8 +244,8 @@ struct ocsp_response_data_st {
    * and CeloCom
    */
 struct ocsp_basic_response_st {
-    OCSP_RESPDATA *tbsResponseData;
-    X509_ALGOR *signatureAlgorithm;
+    OCSP_RESPDATA tbsResponseData;
+    X509_ALGOR signatureAlgorithm;
     ASN1_BIT_STRING *signature;
     STACK_OF(X509) *certs;
 };

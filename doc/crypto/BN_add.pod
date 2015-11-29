@@ -49,6 +49,7 @@ BN_add() adds I<a> and I<b> and places the result in I<r> (C<r=a+b>).
 I<r> may be the same B<BIGNUM> as I<a> or I<b>.
 
 BN_sub() subtracts I<b> from I<a> and places the result in I<r> (C<r=a-b>).
+I<r> may be the same B<BIGNUM> as I<a> or I<b>.
 
 BN_mul() multiplies I<a> and I<b> and places the result in I<r> (C<r=a*b>).
 I<r> may be the same B<BIGNUM> as I<a> or I<b>.
@@ -113,14 +114,5 @@ The error codes can be obtained by L<ERR_get_error(3)>.
 
 L<bn(3)>, L<ERR_get_error(3)>, L<BN_CTX_new(3)>,
 L<BN_add_word(3)>, L<BN_set_bit(3)>
-
-=head1 HISTORY
-
-BN_add(), BN_sub(), BN_sqr(), BN_div(), BN_mod(), BN_mod_mul(),
-BN_mod_exp() and BN_gcd() are available in all versions of SSLeay and
-OpenSSL. The I<ctx> argument to BN_mul() was added in SSLeay
-0.9.1b. BN_exp() appeared in SSLeay 0.9.0.
-BN_nnmod(), BN_mod_add(), BN_mod_sub(), and BN_mod_sqr() were added in
-OpenSSL 0.9.7.
 
 =cut

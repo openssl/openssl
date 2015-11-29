@@ -113,8 +113,4 @@ Any error can be obtained from L<ERR_get_error(3)>.
 
 L<ERR_get_error(3)>, L<CMS_decrypt(3)>
 
-=head1 HISTORY
-
-These functions were first was added to OpenSSL 0.9.8
-
 =cut

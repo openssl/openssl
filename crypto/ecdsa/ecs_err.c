@@ -1,6 +1,6 @@
 /* crypto/ecdsa/ecs_err.c */
 /* ====================================================================
- * Copyright (c) 1999-2013 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2015 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -70,7 +70,7 @@
 # define ERR_REASON(reason) ERR_PACK(ERR_LIB_ECDSA,0,reason)
 
 static ERR_STRING_DATA ECDSA_str_functs[] = {
-    {ERR_FUNC(ECDSA_F_ECDSA_DATA_NEW_METHOD), "ECDSA_DATA_NEW_METHOD"},
+    {ERR_FUNC(ECDSA_F_ECDSA_DATA_NEW_METHOD), "ECDSA_DATA_new_method"},
     {ERR_FUNC(ECDSA_F_ECDSA_DO_SIGN), "ECDSA_do_sign"},
     {ERR_FUNC(ECDSA_F_ECDSA_DO_VERIFY), "ECDSA_do_verify"},
     {ERR_FUNC(ECDSA_F_ECDSA_METHOD_NEW), "ECDSA_METHOD_new"},

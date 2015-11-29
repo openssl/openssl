@@ -4,6 +4,59 @@
 
  Changes between 1.0.2 and 1.1.0  [xx XXX xxxx]
 
+  *) Added ASYNC support. Libcrypto now includes the async sub-library to enable
+     cryptographic operations to be performed asynchronously as long as an
+     asynchronous capable engine is used. See the ASYNC_start_job() man page for
+     further details. Libssl has also had this capability integrated with the
+     introduction of the new mode SSL_MODE_ASYNC and associated error
+     SSL_ERROR_WANT_ASYNC. See the SSL_CTX_set_mode() and SSL_get_error() man
+     pages. This work was developed in partnership with Intel Corp.
+     [Matt Caswell]
+
+  *) State machine rewrite. The state machine code has been significantly
+     refactored in order to remove much duplication of code and solve issues
+     with the old code (see ssl/statem/README for further details). This change
+     does have some associated API changes. Notably the SSL_state() function
+     has been removed and replaced by SSL_get_state which now returns an
+     "OSSL_HANDSHAKE_STATE" instead of an int. SSL_set_state() has been removed
+     altogether. The previous handshake states defined in ssl.h and ssl3.h have
+     also been removed.
+     [Matt Caswell]
+
+  *) All instances of the string "ssleay" in the public API were replaced
+     with OpenSSL (case-matching; e.g., OPENSSL_VERSION for #define's)
+     Some error codes related to internal RSA_eay API's were renamed.
+     [Rich Salz]
+
+  *) The demo files in crypto/threads were moved to demo/threads.
+     [Rich Salz]
+
+  *) Removed obsolete engines: 4758cca, aep, atalla, cswift, nuron and sureware.
+     [Matt Caswell]
+
+  *) New ASN.1 embed macro.
+
+     New ASN.1 macro ASN1_EMBED. This is the same as ASN1_SIMPLE except the
+     structure is not allocated: it is part of the parent. That is instead of
+
+     FOO *x;
+
+     it must be:
+
+     FOO x;
+
+     This reduces memory fragmentation and make it impossible to accidentally
+     set a mandatory field to NULL.
+
+     This currently only works for some fields specifically a SEQUENCE, CHOICE,
+     or ASN1_STRING type which is part of a parent SEQUENCE. Since it is
+     equivalent to ASN1_SIMPLE it cannot be tagged, OPTIONAL, SET OF or
+     SEQUENCE OF.
+     [Steve Henson]
+
+  *) Remove EVP_CHECK_DES_KEY, a compile-time option that never compiled.
+     [Emilia Käsper]
+
   *) Removed DES and RC4 ciphersuites from DEFAULT. Also removed RC2 although
      in 1.0.2 EXPORT was already removed and the only RC2 ciphersuite is also
      an EXPORT one. COMPLEMENTOFDEFAULT has been updated accordingly to add
@@ -15,9 +68,11 @@
      though the change is mostly in the more lenient direction, and
      legacy behaviour is preserved as much as possible.
      [Emilia Käsper]
+
   *) Fix no-stdio build.
     [ David Woodhouse <David.Woodhouse@intel.com> and also
       Ivan Nestlerode <ivan.nestlerode@sonos.com> ]
+
   *) New testing framework
      The testing framework has been largely rewritten and is now using
      perl and the perl modules Test::Harness and an extended variant of

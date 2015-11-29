@@ -198,9 +198,6 @@ int verify_main(int argc, char **argv)
         goto end;
     }
 
-    if (!app_load_modules(NULL))
-        goto end;
-
     if ((store = setup_verify(CAfile, CApath, noCAfile, noCApath)) == NULL)
         goto end;
     X509_STORE_set_verify_cb(store, cb);

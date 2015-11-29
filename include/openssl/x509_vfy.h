@@ -143,7 +143,6 @@ typedef struct x509_lookup_method_st {
                          X509_OBJECT *ret);
 } X509_LOOKUP_METHOD;
 
-typedef struct X509_VERIFY_PARAM_ID_st X509_VERIFY_PARAM_ID;
 typedef struct X509_VERIFY_PARAM_st X509_VERIFY_PARAM;
 
 DECLARE_STACK_OF(X509_VERIFY_PARAM)

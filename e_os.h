@@ -221,18 +221,16 @@ extern "C" {
        /*
         * Defining _WIN32_WINNT here in e_os.h implies certain "discipline."
         * Most notably we ought to check for availability of each specific
-        * routine with GetProcAddress() and/or guard NT-specific calls with
-        * GetVersion() < 0x80000000. One can argue that in latter "or" case
-        * we ought to /DELAYLOAD some .DLLs in order to protect ourselves
-        * against run-time link errors. This doesn't seem to be necessary,
-        * because it turned out that already Windows 95, first non-NT Win32
-        * implementation, is equipped with at least NT 3.51 stubs, dummy
-        * routines with same name, but which do nothing. Meaning that it's
-        * apparently sufficient to guard "vanilla" NT calls with GetVersion
-        * alone, while NT 4.0 and above interfaces ought to be linked with
-        * GetProcAddress at run-time.
+        * routine that was introduced after denoted _WIN32_WINNT with
+        * GetProcAddress(). Normally newer functions are masked with higher
+        * _WIN32_WINNT in SDK headers. So that if you wish to use them in
+        * some module, you'd need to override _WIN32_WINNT definition in
+        * the target module in order to "reach for" prototypes, but replace
+        * calls to new functions with indirect calls. Alternatively it
+        * might be possible to achieve the goal by /DELAYLOAD-ing .DLLs
+        * and check for current OS version instead.
         */
-#    define _WIN32_WINNT 0x0400
+#    define _WIN32_WINNT 0x0501
 #   endif
 #   if !defined(OPENSSL_NO_SOCK) && (defined(_WIN32_WINNT) || defined(_WIN32_WCE))
        /*
@@ -328,7 +326,6 @@ extern FILE *_imp___iob;
 #   define R_OK        4
 #  endif
 #  define OPENSSL_CONF  "openssl.cnf"
-#  define SSLEAY_CONF   OPENSSL_CONF
 #  define NUL_DEV       "nul"
 #  define RFILE         ".rnd"
 #  ifdef OPENSSL_SYS_WINCE
@@ -361,7 +358,6 @@ extern FILE *_imp___iob;
 #    include <unixlib.h>
 #   endif
 #   define OPENSSL_CONF        "openssl.cnf"
-#   define SSLEAY_CONF         OPENSSL_CONF
 #   define RFILE               ".rnd"
 #   define LIST_SEPARATOR_CHAR ','
 #   define NUL_DEV             "NLA0:"
@@ -412,7 +408,6 @@ extern int kbhit(void);
 #   define _O_TEXT O_TEXT
 #   define _O_BINARY O_BINARY
 #   define OPENSSL_CONF   "openssl.cnf"
-#   define SSLEAY_CONF    OPENSSL_CONF
 #   define RFILE    ".rnd"
 #   define LIST_SEPARATOR_CHAR ';'
 #   define EXIT(n)  { if (n) printf("ERROR: %d\n", (int)n); exit(n); }
@@ -433,14 +428,13 @@ extern int kbhit(void);
 #   endif
 
 #   define OPENSSL_CONF        "openssl.cnf"
-#   define SSLEAY_CONF         OPENSSL_CONF
 #   define RFILE               ".rnd"
 #   define LIST_SEPARATOR_CHAR ':'
 #   define NUL_DEV             "/dev/null"
 #   define EXIT(n)             exit(n)
 #  endif
 
-#  define SSLeay_getpid()       getpid()
+#  define OpenSSL_getpid()       getpid()
 
 # endif
 
@@ -455,8 +449,8 @@ extern int kbhit(void);
       /* windows world */
 
 #   ifdef OPENSSL_NO_SOCK
-#    define SSLeay_Write(a,b,c)       (-1)
-#    define SSLeay_Read(a,b,c)        (-1)
+#    define OpenSSL_Write(a,b,c)       (-1)
+#    define OpenSSL_Read(a,b,c)        (-1)
 #    define SHUTDOWN(fd)              close(fd)
 #    define SHUTDOWN2(fd)             close(fd)
 #   elif !defined(__DJGPP__)
@@ -477,18 +471,20 @@ struct servent *PASCAL getservbyname(const char *, const char *);
 /*
  * Even though sizeof(SOCKET) is 8, it's safe to cast it to int, because
  * the value constitutes an index in per-process table of limited size
- * and not a real pointer.
+ * and not a real pointer. And we also depend on fact that all processors
+ * Windows run on happen to be two's-complement, which allows to
+ * interchange INVALID_SOCKET and -1.
  */
 #     define socket(d,t,p)   ((int)socket(d,t,p))
 #     define accept(s,f,l)   ((int)accept(s,f,l))
 #    endif
-#    define SSLeay_Write(a,b,c)       send((a),(b),(c),0)
-#    define SSLeay_Read(a,b,c)        recv((a),(b),(c),0)
+#    define OpenSSL_Write(a,b,c)       send((a),(b),(c),0)
+#    define OpenSSL_Read(a,b,c)        recv((a),(b),(c),0)
 #    define SHUTDOWN(fd)              { shutdown((fd),0); closesocket(fd); }
 #    define SHUTDOWN2(fd)             { shutdown((fd),2); closesocket(fd); }
 #   else
-#    define SSLeay_Write(a,b,c)       write_s(a,b,c,0)
-#    define SSLeay_Read(a,b,c)        read_s(a,b,c)
+#    define OpenSSL_Write(a,b,c)       write_s(a,b,c,0)
+#    define OpenSSL_Read(a,b,c)        read_s(a,b,c)
 #    define SHUTDOWN(fd)              close_s(fd)
 #    define SHUTDOWN2(fd)             close_s(fd)
 #   endif
@@ -511,8 +507,8 @@ struct servent *PASCAL getservbyname(const char *, const char *);
 #   else
 #    include <novsock2.h>
 #   endif
-#   define SSLeay_Write(a,b,c)   send((a),(b),(c),0)
-#   define SSLeay_Read(a,b,c) recv((a),(b),(c),0)
+#   define OpenSSL_Write(a,b,c)   send((a),(b),(c),0)
+#   define OpenSSL_Read(a,b,c) recv((a),(b),(c),0)
 #   define SHUTDOWN(fd)    { shutdown((fd),0); closesocket(fd); }
 #   define SHUTDOWN2(fd)      { shutdown((fd),2); closesocket(fd); }
 
@@ -543,7 +539,7 @@ struct servent *PASCAL getservbyname(const char *, const char *);
 #     endif
 #    endif
 #    ifdef FILIO_H
-#     include <sys/filio.h>     /* Added for FIONBIO under unixware */
+#     include <sys/filio.h> /* FIONBIO in some SVR4, e.g. unixware, solaris */
 #    endif
 #    include <netinet/in.h>
 #    include <arpa/inet.h>
@@ -557,16 +553,12 @@ struct servent *PASCAL getservbyname(const char *, const char *);
 #    include <sys/select.h>
 #   endif
 
-#   if defined(sun)
-#    include <sys/filio.h>
+#   ifndef VMS
+#    include <sys/ioctl.h>
 #   else
-#    ifndef VMS
+        /* ioctl is only in VMS > 7.0 and when socketshr is not used */
+#    if !defined(TCPIP_TYPE_SOCKETSHR) && defined(__VMS_VER) && (__VMS_VER > 70000000)
 #     include <sys/ioctl.h>
-#    else
-         /* ioctl is only in VMS > 7.0 and when socketshr is not used */
-#     if !defined(TCPIP_TYPE_SOCKETSHR) && defined(__VMS_VER) && (__VMS_VER > 70000000)
-#      include <sys/ioctl.h>
-#     endif
 #    endif
 #   endif
 
@@ -577,8 +569,8 @@ struct servent *PASCAL getservbyname(const char *, const char *);
 #    endif
 #   endif
 
-#   define SSLeay_Read(a,b,c)     read((a),(b),(c))
-#   define SSLeay_Write(a,b,c)    write((a),(b),(c))
+#   define OpenSSL_Read(a,b,c)     read((a),(b),(c))
+#   define OpenSSL_Write(a,b,c)    write((a),(b),(c))
 #   define SHUTDOWN(fd)    { shutdown((fd),0); closesocket((fd)); }
 #   define SHUTDOWN2(fd)   { shutdown((fd),2); closesocket((fd)); }
 #   ifndef INVALID_SOCKET
@@ -597,22 +589,6 @@ struct servent *PASCAL getservbyname(const char *, const char *);
 #   endif
 #  endif
 
-# endif
-
-# if defined(sun) && !defined(__svr4__) && !defined(__SVR4)
-  /* include headers first, so our defines don't break it */
-#  include <stdlib.h>
-#  include <string.h>
-  /* bcopy can handle overlapping moves according to SunOS 4.1.4 manpage */
-#  define memmove(s1,s2,n) bcopy((s2),(s1),(n))
-#  define strtoul(s,e,b) ((unsigned long int)strtol((s),(e),(b)))
-extern char *sys_errlist[];
-extern int sys_nerr;
-#  define strerror(errnum) \
-        (((errnum)<0 || (errnum)>=sys_nerr) ? NULL : sys_errlist[errnum])
-  /* Being signed SunOS 4.x memcpy breaks ASN1_OBJECT table lookup */
-#  include "internal/o_str.h"
-#  define memcmp OPENSSL_memcmp
 # endif
 
 # ifndef OPENSSL_EXIT

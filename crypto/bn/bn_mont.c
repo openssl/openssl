@@ -517,7 +517,7 @@ BN_MONT_CTX *BN_MONT_CTX_set_locked(BN_MONT_CTX **pmont, int lock,
      * (the losers throw away the work they've done).
      */
     ret = BN_MONT_CTX_new();
-    if (!ret)
+    if (ret == NULL)
         return NULL;
     if (!BN_MONT_CTX_set(ret, mod, ctx)) {
         BN_MONT_CTX_free(ret);

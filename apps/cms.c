@@ -684,9 +684,6 @@ int cms_main(int argc, char **argv)
         goto end;
     }
 
-    if (!app_load_modules(NULL))
-        goto end;
-
     if (need_rand) {
         app_RAND_load_file(NULL, (inrand != NULL));
         if (inrand != NULL)
@@ -1272,7 +1269,7 @@ static STACK_OF(GENERAL_NAMES) *make_names_stack(STACK_OF(OPENSSL_STRING) *ns)
         if (!gen)
             goto err;
         gens = GENERAL_NAMES_new();
-        if (!gens)
+        if (gens == NULL)
             goto err;
         if (!sk_GENERAL_NAME_push(gens, gen))
             goto err;

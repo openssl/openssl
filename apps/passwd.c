@@ -201,9 +201,6 @@ int passwd_main(int argc, char **argv)
         goto opthelp;
 # endif
 
-    if (!app_load_modules(NULL))
-        goto end;
-
     if (infile && in_stdin) {
         BIO_printf(bio_err, "%s: Can't combine -in and -stdin\n", prog);
         goto end;

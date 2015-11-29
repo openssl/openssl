@@ -83,8 +83,6 @@ L<BN_CTX_new(3)>
 
 =head1 HISTORY
 
-B<BN_RECP_CTX> was added in SSLeay 0.9.0. Before that, the function
-BN_reciprocal() was used instead, and the BN_mod_mul_reciprocal()
-arguments were different. BN_RECP_CTX_init was removed in OpenSSL 1.1.0
+BN_RECP_CTX_init was removed in OpenSSL 1.1.0
 
 =cut

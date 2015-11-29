@@ -69,8 +69,6 @@
 # include <openssl/x509.h>
 # include <openssl/pem.h>
 
-# define DEFBITS 512
-
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
     OPT_OUT, OPT_PASSOUT, OPT_ENGINE, OPT_RAND, OPT_CIPHER
@@ -143,9 +141,6 @@ int gendsa_main(int argc, char **argv)
         BIO_printf(bio_err, "Error getting password\n");
         goto end;
     }
-
-    if (!app_load_modules(NULL))
-        goto end;
 
     in = bio_open_default(dsaparams, 'r', FORMAT_PEM);
     if (in == NULL)

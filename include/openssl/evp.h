@@ -427,18 +427,25 @@ struct evp_cipher_st {
 # define         EVP_CTRL_TLS1_1_MULTIBLOCK_DECRYPT      0x1b
 # define         EVP_CTRL_TLS1_1_MULTIBLOCK_MAX_BUFSIZE  0x1c
 
+# define         EVP_CTRL_SSL3_MASTER_SECRET             0x1d
+
 /* EVP_CTRL_SET_SBOX takes the char* specifying S-boxes */
-# define         EVP_CTRL_SET_SBOX                       0x1d
+# define         EVP_CTRL_SET_SBOX                       0x1e
 /* 
  * EVP_CTRL_SBOX_USED takes a 'size_t' and 'char *', pointing at a
  * pre-allocated buffer with specified size 
  */
-# define         EVP_CTRL_SBOX_USED                      0x1e
+# define         EVP_CTRL_SBOX_USED                      0x1f
 /* EVP_CTRL_KEY_MESH takes 'size_t' number of bytes to mesh the key after, 0 switches meshing off */
-# define         EVP_CTRL_KEY_MESH                       0x1f
-/* EVP_CTRL_BLOCK_PADDING_MODE takes the char* specifying padding mode */
-# define         EVP_CTRL_BLOCK_PADDING_MODE             0x20
+# define         EVP_CTRL_KEY_MESH                       0x20
+/* EVP_CTRL_BLOCK_PADDING_MODE takes the padding mode */
+# define         EVP_CTRL_BLOCK_PADDING_MODE             0x21
 
+#define EVP_PADDING_PKCS7     1
+#define EVP_PADDING_ISO7816_4 2
+#define EVP_PADDING_ANSI923   3
+#define EVP_PADDING_ISO10126  4
+#define EVP_PADDING_ZERO      5
 
 /* RFC 5246 defines additional data to be 13 bytes in length */
 # define         EVP_AEAD_TLS1_AAD_LEN           13
@@ -637,6 +644,7 @@ void BIO_set_md(BIO *, const EVP_MD *md);
 
 void EVP_MD_CTX_init(EVP_MD_CTX *ctx);
 int EVP_MD_CTX_cleanup(EVP_MD_CTX *ctx);
+int EVP_MD_CTX_ctrl(EVP_MD_CTX *ctx, int cmd, int p1, void *p2);
 EVP_MD_CTX *EVP_MD_CTX_create(void);
 void EVP_MD_CTX_destroy(EVP_MD_CTX *ctx);
 /*__owur*/ int EVP_MD_CTX_copy_ex(EVP_MD_CTX *out, const EVP_MD_CTX *in);
@@ -779,6 +787,7 @@ const EVP_MD *EVP_md4(void);
 # endif
 # ifndef OPENSSL_NO_MD5
 const EVP_MD *EVP_md5(void);
+const EVP_MD *EVP_md5_sha1(void);
 # endif
 const EVP_MD *EVP_sha1(void);
 const EVP_MD *EVP_dss1(void);
@@ -972,9 +981,6 @@ void OPENSSL_add_all_algorithms_conf(void);
 
 void OpenSSL_add_all_ciphers(void);
 void OpenSSL_add_all_digests(void);
-# define SSLeay_add_all_algorithms() OpenSSL_add_all_algorithms()
-# define SSLeay_add_all_ciphers() OpenSSL_add_all_ciphers()
-# define SSLeay_add_all_digests() OpenSSL_add_all_digests()
 
 int EVP_add_cipher(const EVP_CIPHER *cipher);
 int EVP_add_digest(const EVP_MD *digest);

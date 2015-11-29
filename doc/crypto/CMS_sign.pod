@@ -95,7 +95,7 @@ suitable for many purposes. For finer control of the output format the
 B<certs>, B<signcert> and B<pkey> parameters can all be B<NULL> and the
 B<CMS_PARTIAL> flag set. Then one or more signers can be added using the
 function CMS_sign_add1_signer(), non default digests can be used and custom
-attributes added. B<CMS_final()> must then be called to finalize the
+attributes added. CMS_final() must then be called to finalize the
 structure if streaming is not enabled. 
 
 =head1 BUGS
@@ -112,8 +112,6 @@ occurred. The error can be obtained from ERR_get_error(3).
 L<ERR_get_error(3)>, L<CMS_verify(3)>
 
 =head1 HISTORY
-
-CMS_sign() was added to OpenSSL 0.9.8
 
 The B<CMS_STREAM> flag is only supported for detached data in OpenSSL 0.9.8,
 it is supported for embedded data in OpenSSL 1.0.0 and later.

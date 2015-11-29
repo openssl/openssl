@@ -77,7 +77,7 @@ static int pkey_hmac_init(EVP_PKEY_CTX *ctx)
     HMAC_PKEY_CTX *hctx;
 
     hctx = OPENSSL_zalloc(sizeof(*hctx));
-    if (!hctx)
+    if (hctx == NULL)
         return 0;
     hctx->ktmp.type = V_ASN1_OCTET_STRING;
     HMAC_CTX_init(&hctx->ctx);

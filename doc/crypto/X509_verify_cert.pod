@@ -47,8 +47,4 @@ functiosn which use B<x509_vfy.h>.
 
 L<X509_STORE_CTX_get_error(3)>
 
-=head1 HISTORY
-
-X509_verify_cert() is available in all versions of SSLeay and OpenSSL.
-
 =cut

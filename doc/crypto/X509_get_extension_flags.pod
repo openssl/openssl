@@ -121,7 +121,7 @@ certificate extension values.
 
 X509_get0_subject_key_id() returns the subject key identifier as a
 pointer to an B<ASN1_OCTET_STRING> structure or B<NULL> if the extension
-is absent or an error occured during parsing.
+is absent or an error occurred during parsing.
 
 =head1 SEE ALSO
 

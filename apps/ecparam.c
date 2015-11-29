@@ -220,9 +220,6 @@ int ecparam_main(int argc, char **argv)
     argv = opt_rest();
     private = genkey ? 1 : 0;
 
-    if (!app_load_modules(NULL))
-        goto end;
-
     in = bio_open_default(infile, 'r', informat);
     if (in == NULL)
         goto end;
@@ -320,8 +317,6 @@ int ecparam_main(int argc, char **argv)
     }
 
     if (check) {
-        if (group == NULL)
-            BIO_printf(bio_err, "no elliptic curve parameters\n");
         BIO_printf(bio_err, "checking elliptic curve parameters: ");
         if (!EC_GROUP_check(group, NULL)) {
             BIO_printf(bio_err, "failed\n");

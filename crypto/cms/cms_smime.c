@@ -82,7 +82,7 @@ static int cms_copy_content(BIO *out, BIO *in, unsigned int flags)
 
     tmpout = cms_get_text_bio(out, flags);
 
-    if (!tmpout) {
+    if (tmpout == NULL) {
         CMSerr(CMS_F_CMS_COPY_CONTENT, ERR_R_MALLOC_FAILURE);
         goto err;
     }
@@ -253,7 +253,7 @@ CMS_ContentInfo *CMS_EncryptedData_encrypt(BIO *in, const EVP_CIPHER *cipher,
         return NULL;
     }
     cms = CMS_ContentInfo_new();
-    if (!cms)
+    if (cms == NULL)
         return NULL;
     if (!CMS_EncryptedData_set1_key(cms, cipher, key, keylen))
         return NULL;
@@ -482,7 +482,7 @@ CMS_ContentInfo *CMS_sign(X509 *signcert, EVP_PKEY *pkey,
     int i;
 
     cms = CMS_ContentInfo_new();
-    if (!cms || !CMS_SignedData_init(cms))
+    if (cms == NULL || !CMS_SignedData_init(cms))
         goto merr;
     if (flags & CMS_ASCIICRLF
         && !CMS_set1_eContentType(cms,

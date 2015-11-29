@@ -67,6 +67,9 @@ typedef enum OPTION_choice {
     OPT_STDNAME,
     OPT_SSL3,
     OPT_TLS1,
+    OPT_TLS1_1,
+    OPT_TLS1_2,
+    OPT_PSK,
     OPT_V, OPT_UPPER_V, OPT_S
 } OPTION_CHOICE;
 
@@ -76,14 +79,27 @@ OPTIONS ciphers_options[] = {
     {"V", OPT_UPPER_V, '-', "Even more verbose"},
     {"s", OPT_S, '-', "Only supported ciphers"},
     {"tls1", OPT_TLS1, '-', "TLS1 mode"},
+    {"tls1_1", OPT_TLS1_1, '-', "TLS1.1 mode"},
+    {"tls1_2", OPT_TLS1_2, '-', "TLS1.2 mode"},
 #ifndef OPENSSL_NO_SSL_TRACE
     {"stdname", OPT_STDNAME, '-', "Show standard cipher names"},
 #endif
 #ifndef OPENSSL_NO_SSL3
     {"ssl3", OPT_SSL3, '-', "SSL3 mode"},
 #endif
+#ifndef OPENSSL_NO_PSK
+    {"psk", OPT_PSK, '-', "include ciphersuites requiring PSK"},
+#endif
     {NULL}
 };
+
+static unsigned int dummy_psk(SSL *ssl, const char *hint, char *identity,
+                              unsigned int max_identity_len,
+                              unsigned char *psk,
+                              unsigned int max_psk_len)
+{
+    return 0;
+}
 
 int ciphers_main(int argc, char **argv)
 {
@@ -94,6 +110,9 @@ int ciphers_main(int argc, char **argv)
     int ret = 1, i, verbose = 0, Verbose = 0, use_supported = 0;
 #ifndef OPENSSL_NO_SSL_TRACE
     int stdname = 0;
+#endif
+#ifndef OPENSSL_NO_PSK
+    int psk = 0;
 #endif
     const char *p;
     char *ciphers = NULL, *prog;
@@ -134,6 +153,17 @@ int ciphers_main(int argc, char **argv)
         case OPT_TLS1:
             meth = TLSv1_client_method();
             break;
+        case OPT_TLS1_1:
+            meth = TLSv1_1_client_method();
+            break;
+        case OPT_TLS1_2:
+            meth = TLSv1_2_client_method();
+            break;
+        case OPT_PSK:
+#ifndef OPENSSL_NO_PSK
+            psk = 1;
+#endif
+            break;
         }
     }
     argv = opt_rest();
@@ -144,12 +174,13 @@ int ciphers_main(int argc, char **argv)
     else if (argc != 0)
         goto opthelp;
 
-    if (!app_load_modules(NULL))
-        goto end;
-
     ctx = SSL_CTX_new(meth);
     if (ctx == NULL)
         goto err;
+#ifndef OPENSSL_NO_PSK
+    if (psk)
+        SSL_CTX_set_psk_client_callback(ctx, dummy_psk);
+#endif
     if (ciphers != NULL) {
         if (!SSL_CTX_set_cipher_list(ctx, ciphers)) {
             BIO_printf(bio_err, "Error in cipher list\n");

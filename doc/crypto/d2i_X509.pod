@@ -43,7 +43,7 @@ at B<*out>, and increments it to point after the data just written.
 If the return value is negative an error occurred, otherwise it
 returns the length of the encoded data. 
 
-For OpenSSL 0.9.7 and later if B<*out> is B<NULL> memory will be
+If B<*out> is B<NULL> memory will be
 allocated for a buffer and the encoded data written to it. In this
 case B<*out> is not incremented and it points to the start of the
 data just written.
@@ -82,7 +82,7 @@ empty structure such as that returned by X509_new().
 
 The encoded data is in binary form and may contain embedded zeroes.
 Therefore any FILE pointers or BIOs should be opened in binary mode.
-Functions such as B<strlen()> will B<not> return the correct length
+Functions such as strlen() will B<not> return the correct length
 of the encoded structure.
 
 The ways that B<*in> and B<*out> are incremented after the operation
@@ -98,45 +98,21 @@ another will processed after it.
 Allocate and encode the DER encoding of an X509 structure:
 
  int len;
- unsigned char *buf, *p;
-
- len = i2d_X509(x, NULL);
-
- buf = OPENSSL_malloc(len);
-
- if (buf == NULL)
-	/* error */
-
- p = buf;
-
- i2d_X509(x, &p);
-
-If you are using OpenSSL 0.9.7 or later then this can be
-simplified to:
-
-
- int len;
  unsigned char *buf;
 
  buf = NULL;
-
  len = i2d_X509(x, &buf);
-
  if (len < 0)
 	/* error */
 
 Attempt to decode a buffer:
 
  X509 *x;
-
  unsigned char *buf, *p;
-
  int len;
 
  /* Something to setup buf and len */
-
  p = buf;
-
  x = d2i_X509(NULL, &p, len);
 
  if (x == NULL)
@@ -145,18 +121,14 @@ Attempt to decode a buffer:
 Alternative technique:
 
  X509 *x;
-
  unsigned char *buf, *p;
-
  int len;
 
  /* Something to setup buf and len */
-
  p = buf;
-
  x = NULL;
 
- if(!d2i_X509(&x, &p, len))
+ if (!d2i_X509(&x, &p, len))
     /* Some error */
 
 
@@ -169,35 +141,27 @@ mistake is to attempt to use a buffer directly as follows:
  unsigned char *buf;
 
  len = i2d_X509(x, NULL);
-
  buf = OPENSSL_malloc(len);
-
  if (buf == NULL)
 	/* error */
 
  i2d_X509(x, &buf);
-
  /* Other stuff ... */
-
  OPENSSL_free(buf);
 
 This code will result in B<buf> apparently containing garbage because
 it was incremented after the call to point after the data just written.
-Also B<buf> will no longer contain the pointer allocated by B<OPENSSL_malloc()>
-and the subsequent call to B<OPENSSL_free()> may well crash.
+Also B<buf> will no longer contain the pointer allocated by OPENSSL_malloc()
+and the subsequent call to OPENSSL_free() may well crash.
 
-The auto allocation feature (setting buf to NULL) only works on OpenSSL
-0.9.7 and later. Attempts to use it on earlier versions will typically
-cause a segmentation violation.
-
-Another trap to avoid is misuse of the B<xp> argument to B<d2i_X509()>:
+Another trap to avoid is misuse of the B<xp> argument to d2i_X509():
 
  X509 *x;
 
  if (!d2i_X509(&x, &p, len))
 	/* Some error */
 
-This will probably crash somewhere in B<d2i_X509()>. The reason for this
+This will probably crash somewhere in d2i_X509(). The reason for this
 is that the variable B<x> is uninitialized and an attempt will be made to
 interpret its (invalid) value as an B<X509> structure, typically causing
 a segmentation violation. If B<x> is set to NULL first then this will not
@@ -266,10 +230,5 @@ L<X509_new(3)>,
 L<X509_sign(3)>,
 L<X509V3_get_d2i(3)>,
 L<X509_verify_cert(3)>
-
-=head1 HISTORY
-
-d2i_X509, i2d_X509, d2i_X509_bio, d2i_X509_fp, i2d_X509_bio and i2d_X509_fp
-are available in all versions of SSLeay and OpenSSL.
 
 =cut

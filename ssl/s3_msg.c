@@ -118,7 +118,7 @@ int ssl3_do_change_cipher_spec(SSL *s)
     const char *sender;
     int slen;
 
-    if (s->state & SSL_ST_ACCEPT)
+    if (s->server)
         i = SSL3_CHANGE_CIPHER_SERVER_READ;
     else
         i = SSL3_CHANGE_CIPHER_CLIENT_READ;
@@ -143,7 +143,7 @@ int ssl3_do_change_cipher_spec(SSL *s)
      * we have to record the message digest at this point so we can get it
      * before we read the finished message
      */
-    if (s->state & SSL_ST_CONNECT) {
+    if (!s->server) {
         sender = s->method->ssl3_enc->server_finished_label;
         slen = s->method->ssl3_enc->server_finished_label_len;
     } else {

@@ -536,7 +536,8 @@ v3_scts.o: ../../include/openssl/pkcs7.h ../../include/openssl/safestack.h
 v3_scts.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 v3_scts.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
 v3_scts.o: ../../include/openssl/x509_vfy.h ../../include/openssl/x509v3.h
-v3_scts.o: ../include/internal/cryptlib.h ext_dat.h v3_scts.c
+v3_scts.o: ../include/internal/cryptlib.h ../include/internal/ct_int.h
+v3_scts.o: ext_dat.h v3_scts.c
 v3_skey.o: ../../e_os.h ../../include/openssl/asn1.h
 v3_skey.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 v3_skey.o: ../../include/openssl/conf.h ../../include/openssl/crypto.h

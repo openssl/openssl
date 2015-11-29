@@ -169,7 +169,7 @@ OPTIONS req_options[] = {
     {"multivalue-rdn", OPT_MULTIVALUE_RDN, '-',
      "Enable support for multivalued RDNs"},
     {"days", OPT_DAYS, 'p', "Number of days cert is valid for"},
-    {"set-serial", OPT_SET_SERIAL, 'p', "Serial number to use"},
+    {"set_serial", OPT_SET_SERIAL, 'p', "Serial number to use"},
     {"extensions", OPT_EXTENSIONS, 's',
      "Cert extension section (override value in config file)"},
     {"reqexts", OPT_REQEXTS, 's',
@@ -1442,7 +1442,7 @@ static EVP_PKEY_CTX *set_keygen_ctx(const char *gstr,
     } else
         gctx = EVP_PKEY_CTX_new_id(*pkey_type, keygen_engine);
 
-    if (!gctx) {
+    if (gctx == NULL) {
         BIO_puts(bio_err, "Error allocating keygen context\n");
         ERR_print_errors(bio_err);
         return NULL;

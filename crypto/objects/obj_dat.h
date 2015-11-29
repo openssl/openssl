@@ -62,9 +62,9 @@
  * [including the GNU Public Licence.]
  */
 
-#define NUM_NID 1009
-#define NUM_SN 1002
-#define NUM_LN 1002
+#define NUM_NID 1018
+#define NUM_SN 1011
+#define NUM_LN 1011
 #define NUM_OBJ 936
 
 static const unsigned char lvalues[6604]={
@@ -2658,6 +2658,15 @@ static const ASN1_OBJECT nid_objs[NUM_NID]={
 	&(lvalues[6593]),0},
 {"issuerSignTool","Signing Tool of Issuer",NID_issuerSignTool,5,
 	&(lvalues[6598]),0},
+{"gost89-cbc","gost89-cbc",NID_gost89_cbc,0,NULL,0},
+{"gost89-ecb","gost89-ecb",NID_gost89_ecb,0,NULL,0},
+{"gost89-ctr","gost89-ctr",NID_gost89_ctr,0,NULL,0},
+{"grasshopper-ecb","grasshopper-ecb",NID_grasshopper_ecb,0,NULL,0},
+{"grasshopper-ctr","grasshopper-ctr",NID_grasshopper_ctr,0,NULL,0},
+{"grasshopper-ofb","grasshopper-ofb",NID_grasshopper_ofb,0,NULL,0},
+{"grasshopper-cbc","grasshopper-cbc",NID_grasshopper_cbc,0,NULL,0},
+{"grasshopper-cfb","grasshopper-cfb",NID_grasshopper_cfb,0,NULL,0},
+{"grasshopper-mac","grasshopper-mac",NID_grasshopper_mac,0,NULL,0},
 };
 
 static const unsigned int sn_objs[NUM_SN]={
@@ -3025,10 +3034,19 @@ static const unsigned int sn_objs[NUM_SN]={
 979,	/* "gost2012_256" */
 980,	/* "gost2012_512" */
 813,	/* "gost89" */
+1009,	/* "gost89-cbc" */
 814,	/* "gost89-cnt" */
 975,	/* "gost89-cnt-12" */
+1011,	/* "gost89-ctr" */
+1010,	/* "gost89-ecb" */
 812,	/* "gost94" */
 850,	/* "gost94cc" */
+1015,	/* "grasshopper-cbc" */
+1016,	/* "grasshopper-cfb" */
+1013,	/* "grasshopper-ctr" */
+1012,	/* "grasshopper-ecb" */
+1017,	/* "grasshopper-mac" */
+1014,	/* "grasshopper-ofb" */
 797,	/* "hmacWithMD5" */
 163,	/* "hmacWithSHA1" */
 798,	/* "hmacWithSHA224" */
@@ -4053,8 +4071,17 @@ static const unsigned int ln_objs[NUM_LN]={
 601,	/* "generic cryptogram" */
 99,	/* "givenName" */
 976,	/* "gost-mac-12" */
+1009,	/* "gost89-cbc" */
 814,	/* "gost89-cnt" */
 975,	/* "gost89-cnt-12" */
+1011,	/* "gost89-ctr" */
+1010,	/* "gost89-ecb" */
+1015,	/* "grasshopper-cbc" */
+1016,	/* "grasshopper-cfb" */
+1013,	/* "grasshopper-ctr" */
+1012,	/* "grasshopper-ecb" */
+1017,	/* "grasshopper-mac" */
+1014,	/* "grasshopper-ofb" */
 855,	/* "hmac" */
 780,	/* "hmac-md5" */
 781,	/* "hmac-sha1" */

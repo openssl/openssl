@@ -121,6 +121,9 @@ CMS_RecipientInfo *CMS_add0_recipient_password(CMS_ContentInfo *cms,
 
     /* Setup algorithm identifier for cipher */
     encalg = X509_ALGOR_new();
+    if (encalg == NULL) {
+        goto merr;
+    }
     EVP_CIPHER_CTX_init(&ctx);
 
     if (EVP_EncryptInit_ex(&ctx, kekciph, NULL, NULL, NULL) <= 0) {
@@ -155,11 +158,11 @@ CMS_RecipientInfo *CMS_add0_recipient_password(CMS_ContentInfo *cms,
 
     /* Initialize recipient info */
     ri = M_ASN1_new_of(CMS_RecipientInfo);
-    if (!ri)
+    if (ri == NULL)
         goto merr;
 
     ri->d.pwri = M_ASN1_new_of(CMS_PasswordRecipientInfo);
-    if (!ri->d.pwri)
+    if (ri->d.pwri == NULL)
         goto merr;
     ri->type = CMS_RECIPINFO_PASS;
 
@@ -167,11 +170,11 @@ CMS_RecipientInfo *CMS_add0_recipient_password(CMS_ContentInfo *cms,
     /* Since this is overwritten, free up empty structure already there */
     X509_ALGOR_free(pwri->keyEncryptionAlgorithm);
     pwri->keyEncryptionAlgorithm = X509_ALGOR_new();
-    if (!pwri->keyEncryptionAlgorithm)
+    if (pwri->keyEncryptionAlgorithm == NULL)
         goto merr;
     pwri->keyEncryptionAlgorithm->algorithm = OBJ_nid2obj(wrap_nid);
     pwri->keyEncryptionAlgorithm->parameter = ASN1_TYPE_new();
-    if (!pwri->keyEncryptionAlgorithm->parameter)
+    if (pwri->keyEncryptionAlgorithm->parameter == NULL)
         goto merr;
 
     if (!ASN1_item_pack(encalg, ASN1_ITEM_rptr(X509_ALGOR),
@@ -230,7 +233,7 @@ static int kek_unwrap_key(unsigned char *out, size_t *outlen,
         return 0;
     }
     tmp = OPENSSL_malloc(inlen);
-    if (!tmp)
+    if (tmp == NULL)
         return 0;
     /* setup IV by decrypting last two blocks */
     if (!EVP_DecryptUpdate(ctx, tmp + inlen - 2 * blocklen, &outl,
@@ -388,7 +391,7 @@ int cms_RecipientInfo_pwri_crypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri,
 
         key = OPENSSL_malloc(keylen);
 
-        if (!key)
+        if (key == NULL)
             goto err;
 
         if (!kek_wrap_key(key, &keylen, ec->key, ec->keylen, &kekctx))
@@ -398,7 +401,7 @@ int cms_RecipientInfo_pwri_crypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri,
     } else {
         key = OPENSSL_malloc(pwri->encryptedKey->length);
 
-        if (!key) {
+        if (key == NULL) {
             CMSerr(CMS_F_CMS_RECIPIENTINFO_PWRI_CRYPT, ERR_R_MALLOC_FAILURE);
             goto err;
         }

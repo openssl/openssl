@@ -409,6 +409,7 @@ void ENGINE_load_gmp(void);
 #  ifndef OPENSSL_NO_GOST
 void ENGINE_load_gost(void);
 #  endif
+void ENGINE_load_dasync(void);
 # endif
 void ENGINE_load_cryptodev(void);
 void ENGINE_load_rdrand(void);

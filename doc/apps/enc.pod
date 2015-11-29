@@ -62,8 +62,7 @@ use a salt in the key derivation routines. This is the default.
 =item B<-nosalt>
 
 don't use a salt in the key derivation routines. This option B<SHOULD NOT> be
-used except for test purposes or compatibility with ancient versions of OpenSSL
-and SSLeay.
+used except for test purposes or compatibility with ancient versions of OpenSSL.
 
 =item B<-e>
 
@@ -181,7 +180,7 @@ A password will be prompted for to derive the key and IV if necessary.
 
 The B<-salt> option should B<ALWAYS> be used if the key is being derived
 from a password unless you want compatibility with previous versions of
-OpenSSL and SSLeay.
+OpenSSL.
 
 Without the B<-salt> option it is possible to perform efficient dictionary
 attacks on the password and to attack stream cipher encrypted data. The reason

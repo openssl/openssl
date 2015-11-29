@@ -104,7 +104,7 @@ const RAND_METHOD *RAND_get_rand_method(void)
             funct_ref = e;
         else
 #endif
-            default_RAND_meth = RAND_SSLeay();
+            default_RAND_meth = RAND_OpenSSL();
     }
     return default_RAND_meth;
 }
@@ -195,9 +195,9 @@ static size_t drbg_get_entropy(DRBG_CTX *ctx, unsigned char **pout,
     /* Round up request to multiple of block size */
     min_len = ((min_len + 19) / 20) * 20;
     *pout = OPENSSL_malloc(min_len);
-    if (!*pout)
+    if (*pout == NULL)
         return 0;
-    if (RAND_SSLeay()->bytes(*pout, min_len) <= 0) {
+    if (RAND_OpenSSL()->bytes(*pout, min_len) <= 0) {
         OPENSSL_free(*pout);
         *pout = NULL;
         return 0;
@@ -234,12 +234,12 @@ static size_t drbg_get_adin(DRBG_CTX *ctx, unsigned char **pout)
 static int drbg_rand_add(DRBG_CTX *ctx, const void *in, int inlen,
                          double entropy)
 {
-    return RAND_SSLeay()->add(in, inlen, entropy);
+    return RAND_OpenSSL()->add(in, inlen, entropy);
 }
 
 static int drbg_rand_seed(DRBG_CTX *ctx, const void *in, int inlen)
 {
-    return RAND_SSLeay()->seed(in, inlen);
+    return RAND_OpenSSL()->seed(in, inlen);
 }
 
 int RAND_init_fips(void)

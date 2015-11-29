@@ -183,21 +183,26 @@ X509_STORE *X509_STORE_new(void)
 
     if ((ret = OPENSSL_zalloc(sizeof(*ret))) == NULL)
         return NULL;
-    ret->objs = sk_X509_OBJECT_new(x509_object_cmp);
+    if ((ret->objs = sk_X509_OBJECT_new(x509_object_cmp)) == NULL)
+        goto err;
     ret->cache = 1;
-    ret->get_cert_methods = sk_X509_LOOKUP_new_null();
+    if ((ret->get_cert_methods = sk_X509_LOOKUP_new_null()) == NULL)
+        goto err;
 
     if ((ret->param = X509_VERIFY_PARAM_new()) == NULL)
-        return NULL;
+        goto err;
 
-    if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_X509_STORE, ret, &ret->ex_data)) {
-        sk_X509_OBJECT_free(ret->objs);
-        OPENSSL_free(ret);
-        return NULL;
-    }
+    if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_X509_STORE, ret, &ret->ex_data))
+        goto err;
 
     ret->references = 1;
     return ret;
+err:
+    X509_VERIFY_PARAM_free(ret->param);
+    sk_X509_OBJECT_free(ret->objs);
+    sk_X509_LOOKUP_free(ret->get_cert_methods);
+    OPENSSL_free(ret);
+    return NULL;
 }
 
 static void cleanup(X509_OBJECT *a)
@@ -522,14 +527,10 @@ STACK_OF(X509_CRL) *X509_STORE_get1_crls(X509_STORE_CTX *ctx, X509_NAME *nm)
     X509_CRL *x;
     X509_OBJECT *obj, xobj;
     sk = sk_X509_CRL_new_null();
-    CRYPTO_w_lock(CRYPTO_LOCK_X509_STORE);
-    /* Check cache first */
-    idx = x509_object_idx_cnt(ctx->ctx->objs, X509_LU_CRL, nm, &cnt);
 
     /*
      * Always do lookup to possibly add new CRLs to cache
      */
-    CRYPTO_w_unlock(CRYPTO_LOCK_X509_STORE);
     if (!X509_STORE_get_by_subject(ctx, X509_LU_CRL, nm, &xobj)) {
         sk_X509_CRL_free(sk);
         return NULL;

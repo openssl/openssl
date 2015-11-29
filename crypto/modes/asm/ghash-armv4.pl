@@ -143,7 +143,7 @@ $code=<<___;
 .code	32
 #endif
 
-#ifdef  __APPLE__
+#ifdef  __clang__
 #define ldrplb  ldrbpl
 #define ldrneb  ldrbne
 #endif

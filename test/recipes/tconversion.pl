@@ -68,14 +68,14 @@ sub tconversion {
       }
 
       if ($testtype ne "p7d") {
-	  is(compare_text("$testtype-fff.p", "$testtype-f.p"), 0,
+	  is(cmp_text("$testtype-fff.p", "$testtype-f.p"), 0,
 	     'comparing orig to p');
       }
 
       foreach my $to (@conversionforms) {
 	  next if $to eq "d";
 	  foreach my $from (@conversionforms) {
-	      is(compare_text("$testtype-f.$to", "$testtype-ff.$from$to"), 0,
+	      is(cmp_text("$testtype-f.$to", "$testtype-ff.$from$to"), 0,
 		 "comparing $to to $from$to");
 	  }
       }
@@ -83,6 +83,14 @@ sub tconversion {
     unlink glob "$testtype-f.*";
     unlink glob "$testtype-ff.*";
     unlink glob "$testtype-fff.*";
+}
+
+sub cmp_text {
+    return compare_text(@_, sub {
+        $_[0] =~ s/\R//g;
+        $_[1] =~ s/\R//g;
+        return $_[0] ne $_[1];
+    });
 }
 
 1;

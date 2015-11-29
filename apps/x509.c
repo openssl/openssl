@@ -493,9 +493,6 @@ int x509_main(int argc, char **argv)
     if (!nmflag_set)
         nmflag = XN_FLAG_ONELINE;
 
-    if (!app_load_modules(NULL))
-        goto end;
-
     out = bio_open_default(outfile, 'w', outformat);
     if (out == NULL)
         goto end;
@@ -593,7 +590,7 @@ int x509_main(int argc, char **argv)
 
         if (sno == NULL) {
             sno = ASN1_INTEGER_new();
-            if (!sno || !rand_serial(NULL, sno))
+            if (sno == NULL || !rand_serial(NULL, sno))
                 goto end;
             if (!X509_set_serialNumber(x, sno))
                 goto end;

@@ -67,12 +67,12 @@ CMS_ContentInfo *cms_DigestedData_create(const EVP_MD *md)
     CMS_ContentInfo *cms;
     CMS_DigestedData *dd;
     cms = CMS_ContentInfo_new();
-    if (!cms)
+    if (cms == NULL)
         return NULL;
 
     dd = M_ASN1_new_of(CMS_DigestedData);
 
-    if (!dd)
+    if (dd == NULL)
         goto err;
 
     cms->contentType = OBJ_nid2obj(NID_pkcs7_digest);

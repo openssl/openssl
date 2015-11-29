@@ -70,7 +70,8 @@ int EVP_CIPHER_param_to_asn1(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
     else if (c->cipher->flags & EVP_CIPH_FLAG_DEFAULT_ASN1) {
         switch (EVP_CIPHER_CTX_mode(c)) {
         case EVP_CIPH_WRAP_MODE:
-            ASN1_TYPE_set(type, V_ASN1_NULL, NULL);
+            if (EVP_CIPHER_CTX_nid(c) == NID_id_smime_alg_CMS3DESwrap)
+                ASN1_TYPE_set(type, V_ASN1_NULL, NULL);
             ret = 1;
             break;
 

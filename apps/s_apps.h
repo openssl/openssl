@@ -195,7 +195,7 @@ void tlsext_cb(SSL *s, int client_server, int type, unsigned char *data,
 
 int generate_cookie_callback(SSL *ssl, unsigned char *cookie,
                              unsigned int *cookie_len);
-int verify_cookie_callback(SSL *ssl, unsigned char *cookie,
+int verify_cookie_callback(SSL *ssl, const unsigned char *cookie,
                            unsigned int cookie_len);
 
 typedef struct ssl_excert_st SSL_EXCERT;

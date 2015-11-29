@@ -764,19 +764,19 @@ static int check_id_error(X509_STORE_CTX *ctx, int errcode)
     return ctx->verify_cb(0, ctx);
 }
 
-static int check_hosts(X509 *x, X509_VERIFY_PARAM_ID *id)
+static int check_hosts(X509 *x, X509_VERIFY_PARAM *vpm)
 {
     int i;
-    int n = sk_OPENSSL_STRING_num(id->hosts);
+    int n = sk_OPENSSL_STRING_num(vpm->hosts);
     char *name;
 
-    if (id->peername != NULL) {
-        OPENSSL_free(id->peername);
-        id->peername = NULL;
+    if (vpm->peername != NULL) {
+        OPENSSL_free(vpm->peername);
+        vpm->peername = NULL;
     }
     for (i = 0; i < n; ++i) {
-        name = sk_OPENSSL_STRING_value(id->hosts, i);
-        if (X509_check_host(x, name, 0, id->hostflags, &id->peername) > 0)
+        name = sk_OPENSSL_STRING_value(vpm->hosts, i);
+        if (X509_check_host(x, name, 0, vpm->hostflags, &vpm->peername) > 0)
             return 1;
     }
     return n == 0;
@@ -785,17 +785,16 @@ static int check_hosts(X509 *x, X509_VERIFY_PARAM_ID *id)
 static int check_id(X509_STORE_CTX *ctx)
 {
     X509_VERIFY_PARAM *vpm = ctx->param;
-    X509_VERIFY_PARAM_ID *id = vpm->id;
     X509 *x = ctx->cert;
-    if (id->hosts && check_hosts(x, id) <= 0) {
+    if (vpm->hosts && check_hosts(x, vpm) <= 0) {
         if (!check_id_error(ctx, X509_V_ERR_HOSTNAME_MISMATCH))
             return 0;
     }
-    if (id->email && X509_check_email(x, id->email, id->emaillen, 0) <= 0) {
+    if (vpm->email && X509_check_email(x, vpm->email, vpm->emaillen, 0) <= 0) {
         if (!check_id_error(ctx, X509_V_ERR_EMAIL_MISMATCH))
             return 0;
     }
-    if (id->ip && X509_check_ip(x, id->ip, id->iplen, 0) <= 0) {
+    if (vpm->ip && X509_check_ip(x, vpm->ip, vpm->iplen, 0) <= 0) {
         if (!check_id_error(ctx, X509_V_ERR_IP_ADDRESS_MISMATCH))
             return 0;
     }
@@ -2049,7 +2048,7 @@ X509_CRL *X509_CRL_diff(X509_CRL *base, X509_CRL *newer,
     }
     /* Create new CRL */
     crl = X509_CRL_new();
-    if (!crl || !X509_CRL_set_version(crl, 1))
+    if (crl == NULL || !X509_CRL_set_version(crl, 1))
         goto memerr;
     /* Set issuer name */
     if (!X509_CRL_set_issuer_name(crl, X509_CRL_get_issuer(newer)))
@@ -2088,7 +2087,7 @@ X509_CRL *X509_CRL_diff(X509_CRL *base, X509_CRL *newer,
          * Add only if not also in base. TODO: need something cleverer here
          * for some more complex CRLs covering multiple CAs.
          */
-        if (!X509_CRL_get0_by_serial(base, &rvtmp, rvn->serialNumber)) {
+        if (!X509_CRL_get0_by_serial(base, &rvtmp, &rvn->serialNumber)) {
             rvtmp = X509_REVOKED_dup(rvn);
             if (!rvtmp)
                 goto memerr;
@@ -2267,7 +2266,7 @@ X509_STORE_CTX *X509_STORE_CTX_new(void)
 {
     X509_STORE_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));
 
-    if (!ctx) {
+    if (ctx == NULL) {
         X509err(X509_F_X509_STORE_CTX_NEW, ERR_R_MALLOC_FAILURE);
         return NULL;
     }

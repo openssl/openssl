@@ -12,6 +12,10 @@ B<openssl> B<ciphers>
 [B<-V>]
 [B<-ssl3>]
 [B<-tls1>]
+[B<-tls1_1>]
+[B<-tls1_2>]
+[B<-s>]
+[B<-psk>]
 [B<-stdname>]
 [B<cipherlist>]
 
@@ -31,6 +35,10 @@ Only list supported ciphers: those consistent with the security level. This
 is the actual cipher list an application will support. If this option is
 not used then ciphers excluded by the security level will still be listed.
 
+=item B<-psk>
+
+When combined with B<-s> includes cipher suites which require PSK.
+
 =item B<-v>
 
 Verbose option. List ciphers with a complete description of
@@ -44,11 +52,19 @@ Like B<-v>, but include cipher suite codes in output (hex format).
 
 =item B<-ssl3>
 
-only include SSL v3 ciphers.
+List the ciphers which would be used if SSL v3 was negotiated.
 
 =item B<-tls1>
 
-only include TLS v1 ciphers.
+List the ciphers which would be used if TLS v1.0 was negotiated.
+
+=item B<-tls1_1>
+
+List the ciphers which would be used if TLS v1.1 was negotiated.
+
+=item B<-tls1_2>
+
+List the ciphers which would be used if TLS v1.2 was negotiated.
 
 =item B<-stdname>
 
@@ -162,9 +178,7 @@ export encryption algorithms. Including 40 and 56 bits algorithms.
 
 =item B<EXPORT56>
 
-56 bit export encryption algorithms. In OpenSSL 0.9.8c and later the set of
-56 bit export ciphers is empty unless OpenSSL has been explicitly configured
-with support for experimental ciphers.
+56 bit export encryption algorithms. This list is empty.
 
 =item B<eNULL>, B<NULL>
 
@@ -247,10 +261,15 @@ carry ECDH keys.
 cipher suites using ECDSA authentication, i.e. the certificates carry ECDSA
 keys.
 
-=item B<TLSv1.2>, B<TLSv1>, B<SSLv3>
+=item B<TLSv1.2>, B<TLSv1.0>, B<SSLv3>
 
-TLS v1.2, TLS v1.0 or SSL v3.0 cipher suites respectively. Note:
-there are no ciphersuites specific to TLS v1.1.
+Lists ciphersuites which are only supported in at least TLS v1.2, TLS v1.0
+or SSL v3.0 respectively. Note: there are no ciphersuites specific to TLS v1.1.
+Since this is only the minimum version if, for example, TLS v1.0 is supported
+then both TLS v1.0 and SSL v3.0 ciphersuites are included.
+
+Note: these cipher strings B<do not> change the negotiated version of SSL or
+TLS only the list of cipher suites.
 
 =item B<AES128>, B<AES256>, B<AES>
 
@@ -726,8 +745,6 @@ L<s_client(1)>, L<s_server(1)>, L<ssl(3)>
 
 =head1 HISTORY
 
-The B<COMPLENTOFALL> and B<COMPLEMENTOFDEFAULT> selection options
-for cipherlist strings were added in OpenSSL 0.9.7.
 The B<-V> option for the B<ciphers> command was added in OpenSSL 1.0.0.
 
 =cut

@@ -287,7 +287,7 @@ BIGNUM *BN_new(void)
  BIGNUM *BN_secure_new(void)
  {
      BIGNUM *ret = BN_new();
-     if (ret)
+     if (ret != NULL)
          ret->flags |= BN_FLG_SECURE;
      return (ret);
  }
@@ -924,7 +924,7 @@ int BN_to_montgomery(BIGNUM *r, const BIGNUM *a, BN_MONT_CTX *mont,
     return BN_mod_mul_montgomery(r, a, &(mont->RR), mont, ctx);
 }
 
-void BN_with_flags(BIGNUM *dest, const BIGNUM *b, int n)
+void BN_with_flags(BIGNUM *dest, const BIGNUM *b, int flags)
 {
     dest->d = b->d;
     dest->top = b->top;
@@ -932,7 +932,7 @@ void BN_with_flags(BIGNUM *dest, const BIGNUM *b, int n)
     dest->neg = b->neg;
     dest->flags = ((dest->flags & BN_FLG_MALLOCED)
                    | (b->flags & ~BN_FLG_MALLOCED)
-                   | BN_FLG_STATIC_DATA | n);
+                   | BN_FLG_STATIC_DATA | flags);
 }
 
 BN_GENCB *BN_GENCB_new(void)

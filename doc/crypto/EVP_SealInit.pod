@@ -78,8 +78,4 @@ L<evp(3)>, L<rand(3)>,
 L<EVP_EncryptInit(3)>,
 L<EVP_OpenInit(3)>
 
-=head1 HISTORY
-
-EVP_SealFinal() did not return a value before OpenSSL 0.9.7.
-
 =cut

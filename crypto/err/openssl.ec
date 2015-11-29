@@ -36,6 +36,7 @@ L HMAC		include/openssl/hmac.h		crypto/hmac/hmac_err.c
 L CMS		include/openssl/cms.h		crypto/cms/cms_err.c
 L JPAKE		include/openssl/jpake.h		crypto/jpake/jpake_err.c
 L FIPS		include/openssl/fips.h		crypto/fips_err.h
+L ASYNC		include/openssl/async.h		crypto/async/async_err.c
 
 # additional header files to be scanned for function names
 L NONE		crypto/x509/x509_vfy.h		NONE

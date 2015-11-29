@@ -486,13 +486,13 @@ static int cmd_DHParameters(SSL_CONF_CTX *cctx, const char *value)
     DH *dh = NULL;
     BIO *in = NULL;
     if (cctx->ctx || cctx->ssl) {
-        in = BIO_new(BIO_s_file_internal());
-        if (!in)
+        in = BIO_new(BIO_s_file());
+        if (in == NULL)
             goto end;
         if (BIO_read_filename(in, value) <= 0)
             goto end;
         dh = PEM_read_bio_DHparams(in, NULL, NULL, NULL);
-        if (!dh)
+        if (dh == NULL)
             goto end;
     } else
         return 1;

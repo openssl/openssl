@@ -110,6 +110,9 @@ int SSL_library_init(void)
 #ifndef OPENSSL_NO_MD5
     EVP_add_digest(EVP_md5());
     EVP_add_digest_alias(SN_md5, "ssl3-md5");
+# ifndef OPENSSL_NO_SHA
+    EVP_add_digest(EVP_md5_sha1());
+# endif
 #endif
     EVP_add_digest(EVP_sha1()); /* RSA with sha1 */
     EVP_add_digest_alias(SN_sha1, "ssl3-sha1");

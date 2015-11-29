@@ -2,7 +2,8 @@
 
 =head1 NAME
 
-EVP_SignInit, EVP_SignUpdate, EVP_SignFinal - EVP signing functions
+EVP_SignInit, EVP_SignInit_ex, EVP_SignUpdate, EVP_SignFinal - EVP signing
+functions
 
 =head1 SYNOPSIS
 
@@ -95,12 +96,5 @@ L<EVP_DigestInit(3)>, L<err(3)>,
 L<evp(3)>, L<hmac(3)>, L<md2(3)>,
 L<md5(3)>, L<mdc2(3)>, L<ripemd(3)>,
 L<sha(3)>, L<dgst(1)>
-
-=head1 HISTORY
-
-EVP_SignInit(), EVP_SignUpdate() and EVP_SignFinal() are
-available in all versions of SSLeay and OpenSSL.
-
-EVP_SignInit_ex() was added in OpenSSL 0.9.7.
 
 =cut

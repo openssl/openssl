@@ -100,7 +100,7 @@ static int pkey_dh_init(EVP_PKEY_CTX *ctx)
     DH_PKEY_CTX *dctx;
 
     dctx = OPENSSL_zalloc(sizeof(*dctx));
-    if (!dctx)
+    if (dctx == NULL)
         return 0;
     dctx->prime_len = 1024;
     dctx->subprime_len = -1;
@@ -312,7 +312,7 @@ static DSA *dsa_dh_generate(DH_PKEY_CTX *dctx, BN_GENCB *pcb)
     if (dctx->use_dsa > 2)
         return NULL;
     ret = DSA_new();
-    if (!ret)
+    if (ret == NULL)
         return NULL;
     if (subprime_len == -1) {
         if (prime_len >= 2048)
@@ -370,6 +370,8 @@ static int pkey_dh_paramgen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
 
     if (ctx->pkey_gencb) {
         pcb = BN_GENCB_new();
+        if (pcb == NULL)
+            return 0;
         evp_pkey_set_cb_translate(pcb, ctx);
     } else
         pcb = NULL;
@@ -378,7 +380,7 @@ static int pkey_dh_paramgen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
         DSA *dsa_dh;
         dsa_dh = dsa_dh_generate(dctx, pcb);
         BN_GENCB_free(pcb);
-        if (!dsa_dh)
+        if (dsa_dh == NULL)
             return 0;
         dh = DSA_dup_DH(dsa_dh);
         DSA_free(dsa_dh);
@@ -389,7 +391,7 @@ static int pkey_dh_paramgen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
     }
 #endif
     dh = DH_new();
-    if (!dh) {
+    if (dh == NULL) {
         BN_GENCB_free(pcb);
         return 0;
     }
@@ -411,7 +413,7 @@ static int pkey_dh_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
         return 0;
     }
     dh = DH_new();
-    if (!dh)
+    if (dh == NULL)
         return 0;
     EVP_PKEY_assign(pkey, ctx->pmeth->pkey_id, dh);
     /* Note: if error return, pkey is freed by parent routine */
@@ -460,7 +462,7 @@ static int pkey_dh_derive(EVP_PKEY_CTX *ctx, unsigned char *key,
         ret = 0;
         Zlen = DH_size(dh);
         Z = OPENSSL_malloc(Zlen);
-        if (!Z) {
+        if (Z == NULL) {
             goto err;
         }
         if (DH_compute_key_padded(Z, dhpub, dh) <= 0)

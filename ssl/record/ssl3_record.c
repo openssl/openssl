@@ -846,33 +846,36 @@ int n_ssl3_mac(SSL *ssl, unsigned char *md, int send)
         header[j++] = rec->length & 0xff;
 
         /* Final param == is SSLv3 */
-        ssl3_cbc_digest_record(hash,
-                               md, &md_size,
-                               header, rec->input,
-                               rec->length + md_size, rec->orig_len,
-                               mac_sec, md_size, 1);
+        if (ssl3_cbc_digest_record(hash,
+                                   md, &md_size,
+                                   header, rec->input,
+                                   rec->length + md_size, rec->orig_len,
+                                   mac_sec, md_size, 1) <= 0)
+            return -1;
     } else {
         unsigned int md_size_u;
         /* Chop the digest off the end :-) */
         EVP_MD_CTX_init(&md_ctx);
 
-        EVP_MD_CTX_copy_ex(&md_ctx, hash);
-        EVP_DigestUpdate(&md_ctx, mac_sec, md_size);
-        EVP_DigestUpdate(&md_ctx, ssl3_pad_1, npad);
-        EVP_DigestUpdate(&md_ctx, seq, 8);
         rec_char = rec->type;
-        EVP_DigestUpdate(&md_ctx, &rec_char, 1);
         p = md;
         s2n(rec->length, p);
-        EVP_DigestUpdate(&md_ctx, md, 2);
-        EVP_DigestUpdate(&md_ctx, rec->input, rec->length);
-        EVP_DigestFinal_ex(&md_ctx, md, NULL);
-
-        EVP_MD_CTX_copy_ex(&md_ctx, hash);
-        EVP_DigestUpdate(&md_ctx, mac_sec, md_size);
-        EVP_DigestUpdate(&md_ctx, ssl3_pad_2, npad);
-        EVP_DigestUpdate(&md_ctx, md, md_size);
-        EVP_DigestFinal_ex(&md_ctx, md, &md_size_u);
+        if (EVP_MD_CTX_copy_ex(&md_ctx, hash) <= 0
+                || EVP_DigestUpdate(&md_ctx, mac_sec, md_size) <= 0
+                || EVP_DigestUpdate(&md_ctx, ssl3_pad_1, npad) <= 0
+                || EVP_DigestUpdate(&md_ctx, seq, 8) <= 0
+                || EVP_DigestUpdate(&md_ctx, &rec_char, 1) <= 0
+                || EVP_DigestUpdate(&md_ctx, md, 2) <= 0
+                || EVP_DigestUpdate(&md_ctx, rec->input, rec->length) <= 0
+                || EVP_DigestFinal_ex(&md_ctx, md, NULL) <= 0
+                || EVP_MD_CTX_copy_ex(&md_ctx, hash) <= 0
+                || EVP_DigestUpdate(&md_ctx, mac_sec, md_size) <= 0
+                || EVP_DigestUpdate(&md_ctx, ssl3_pad_2, npad) <= 0
+                || EVP_DigestUpdate(&md_ctx, md, md_size) <= 0
+                || EVP_DigestFinal_ex(&md_ctx, md, &md_size_u) <= 0) {
+            EVP_MD_CTX_cleanup(&md_ctx);
+            return -1;
+        }
         md_size = md_size_u;
 
         EVP_MD_CTX_cleanup(&md_ctx);
@@ -944,17 +947,24 @@ int tls1_mac(SSL *ssl, unsigned char *md, int send)
          * are hashing because that gives an attacker a timing-oracle.
          */
         /* Final param == not SSLv3 */
-        ssl3_cbc_digest_record(mac_ctx,
-                               md, &md_size,
-                               header, rec->input,
-                               rec->length + md_size, rec->orig_len,
-                               ssl->s3->read_mac_secret,
-                               ssl->s3->read_mac_secret_size, 0);
+        if (ssl3_cbc_digest_record(mac_ctx,
+                                   md, &md_size,
+                                   header, rec->input,
+                                   rec->length + md_size, rec->orig_len,
+                                   ssl->s3->read_mac_secret,
+                                   ssl->s3->read_mac_secret_size, 0) <= 0) {
+            if (!stream_mac)
+                EVP_MD_CTX_cleanup(&hmac);
+            return -1;
+        }
     } else {
-        EVP_DigestSignUpdate(mac_ctx, header, sizeof(header));
-        EVP_DigestSignUpdate(mac_ctx, rec->input, rec->length);
-        t = EVP_DigestSignFinal(mac_ctx, md, &md_size);
-        OPENSSL_assert(t > 0);
+        if (EVP_DigestSignUpdate(mac_ctx, header, sizeof(header)) <= 0
+                || EVP_DigestSignUpdate(mac_ctx, rec->input, rec->length) <= 0
+                || EVP_DigestSignFinal(mac_ctx, md, &md_size) <= 0) {
+            if (!stream_mac)
+                EVP_MD_CTX_cleanup(&hmac);
+            return -1;
+        }
         if (!send && !SSL_USE_ETM(ssl) && FIPS_mode())
             tls_fips_digest_extra(ssl->enc_read_ctx,
                                   mac_ctx, rec->input,
@@ -963,6 +973,7 @@ int tls1_mac(SSL *ssl, unsigned char *md, int send)
 
     if (!stream_mac)
         EVP_MD_CTX_cleanup(&hmac);
+
 #ifdef TLS_DEBUG
     fprintf(stderr, "seq=");
     {
@@ -1528,7 +1539,7 @@ int dtls1_get_record(SSL *s)
      * processed at this time.
      */
     if (is_next_epoch) {
-        if ((SSL_in_init(s) || s->in_handshake)) {
+        if ((SSL_in_init(s) || ossl_statem_get_in_handshake(s))) {
             if (dtls1_buffer_record
                 (s, &(DTLS_RECORD_LAYER_get_unprocessed_rcds(&s->rlayer)),
                 rr->seq_num) < 0)

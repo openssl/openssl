@@ -224,8 +224,8 @@ bn_dh.o: ../../include/openssl/crypto.h ../../include/openssl/dh.h
 bn_dh.o: ../../include/openssl/e_os2.h ../../include/openssl/opensslconf.h
 bn_dh.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 bn_dh.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-bn_dh.o: ../../include/openssl/symhacks.h ../include/internal/bn_int.h bn_dh.c
-bn_dh.o: bn_lcl.h
+bn_dh.o: ../../include/openssl/symhacks.h ../include/internal/bn_dh.h
+bn_dh.o: ../include/internal/bn_int.h bn_dh.c bn_lcl.h
 bn_div.o: ../../e_os.h ../../include/openssl/bio.h ../../include/openssl/bn.h
 bn_div.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 bn_div.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h

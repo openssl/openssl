@@ -93,9 +93,7 @@ inside this header file.
 
 =item B<ssl2.h>
 
-That's the sub header file dealing with the SSLv2 protocol only.
-I<Usually you don't have to include it explicitly because
-it's already included by ssl.h>.
+Unused. Present for backwards compatibility only.
 
 =item B<ssl3.h>
 
@@ -175,7 +173,7 @@ definitions in the header files.
 
 =item char *B<SSL_CIPHER_get_version>(SSL_CIPHER *cipher);
 
-Returns a string like "C<TLSv1/SSLv3>" or "C<SSLv2>" which indicates the
+Returns a string like "C<SSLv3>" or "C<TLSv1.2>" which indicates the
 SSL/TLS protocol version to which I<cipher> belongs (i.e. where it was defined
 in the specification the first time).
 
@@ -624,7 +622,9 @@ success or 0 on failure.
 
 =item int B<SSL_shutdown>(SSL *ssl);
 
-=item int B<SSL_state>(const SSL *ssl);
+=item OSSL_HANDSHAKE_STATE B<SSL_get_state>(const SSL *ssl);
+
+Returns the current handshake state.
 
 =item char *B<SSL_state_string>(const SSL *ssl);
 
@@ -758,8 +758,6 @@ L<SSL_get_psk_identity(3)>,
 L<DTLSv1_listen(3)|DTLSv1_listen(3)>
 
 =head1 HISTORY
-
-The L<ssl(3)> document appeared in OpenSSL 0.9.2
 
 B<SSLv2_client_method>, B<SSLv2_server_method> and B<SSLv2_method> where removed
 in OpenSSL 1.1.0.
