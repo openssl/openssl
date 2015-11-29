@@ -148,21 +148,41 @@ struct evp_pkey_st {
 # define EVP_PKEY_MO_DECRYPT     0x0008
 
 # ifndef EVP_MD
-struct evp_md_st {
-    int type;
-    int pkey_type;
-    int md_size;
-    unsigned long flags;
-    int (*init) (EVP_MD_CTX *ctx);
-    int (*update) (EVP_MD_CTX *ctx, const void *data, size_t count);
-    int (*final) (EVP_MD_CTX *ctx, unsigned char *md);
-    int (*copy) (EVP_MD_CTX *to, const EVP_MD_CTX *from);
-    int (*cleanup) (EVP_MD_CTX *ctx);
-    int block_size;
-    int ctx_size;               /* how big does the ctx->md_data need to be */
-    /* control function */
-    int (*md_ctrl) (EVP_MD_CTX *ctx, int cmd, int p1, void *p2);
-} /* EVP_MD */ ;
+EVP_MD *EVP_MD_meth_new(int md_type, int pkey_type);
+EVP_MD *EVP_MD_meth_dup(const EVP_MD *md);
+void EVP_MD_meth_free(EVP_MD *md);
+
+int EVP_MD_meth_set_input_blocksize(EVP_MD *md, int blocksize);
+int EVP_MD_meth_set_result_size(EVP_MD *md, int resultsize);
+int EVP_MD_meth_set_app_datasize(EVP_MD *md, int datasize);
+int EVP_MD_meth_set_flags(EVP_MD *md, unsigned long flags);
+int EVP_MD_meth_set_init(EVP_MD *md, int (*init)(EVP_MD_CTX *ctx));
+int EVP_MD_meth_set_update(EVP_MD *md, int (*update)(EVP_MD_CTX *ctx,
+                                                     const void *data,
+                                                     size_t count));
+int EVP_MD_meth_set_final(EVP_MD *md, int (*final)(EVP_MD_CTX *ctx,
+                                                   unsigned char *md));
+int EVP_MD_meth_set_copy(EVP_MD *md, int (*copy)(EVP_MD_CTX *to,
+                                                 const EVP_MD_CTX *from));
+int EVP_MD_meth_set_cleanup(EVP_MD *md, int (*cleanup)(EVP_MD_CTX *ctx));
+int EVP_MD_meth_set_ctrl(EVP_MD *md, int (*ctrl)(EVP_MD_CTX *ctx, int cmd,
+                                                 int p1, void *p2));
+
+int EVP_MD_meth_get_input_blocksize(const EVP_MD *md);
+int EVP_MD_meth_get_result_size(const EVP_MD *md);
+int EVP_MD_meth_get_app_datasize(const EVP_MD *md);
+unsigned long EVP_MD_meth_get_flags(const EVP_MD *md);
+int (*EVP_MD_meth_get_init(const EVP_MD *md))(EVP_MD_CTX *ctx);
+int (*EVP_MD_meth_get_update(const EVP_MD *md))(EVP_MD_CTX *ctx,
+                                                const void *data,
+                                                size_t count);
+int (*EVP_MD_meth_get_final(const EVP_MD *md))(EVP_MD_CTX *ctx,
+                                               unsigned char *md);
+int (*EVP_MD_meth_get_copy(const EVP_MD *md))(EVP_MD_CTX *to,
+                                              const EVP_MD_CTX *from);
+int (*EVP_MD_meth_get_cleanup(const EVP_MD *md))(EVP_MD_CTX *ctx);
+int (*EVP_MD_meth_get_ctrl(const EVP_MD *md))(EVP_MD_CTX *ctx, int cmd,
+                                              int p1, void *p2);
 
 /* digest can only handle a single block */
 #  define EVP_MD_FLAG_ONESHOT     0x0001

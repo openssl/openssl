@@ -60,6 +60,7 @@
 #include "internal/cryptlib.h"
 #include <openssl/evp.h>
 #include <openssl/objects.h>
+#include "internal/evp_int.h"
 #include "evp_locl.h"
 
 int EVP_CIPHER_param_to_asn1(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
@@ -308,6 +309,128 @@ int EVP_MD_size(const EVP_MD *md)
 unsigned long EVP_MD_flags(const EVP_MD *md)
 {
     return md->flags;
+}
+
+EVP_MD *EVP_MD_meth_new(int md_type, int pkey_type)
+{
+    EVP_MD *md = (EVP_MD *)OPENSSL_zalloc(sizeof(EVP_MD));
+    if (md != NULL) {
+        md->type = md_type;
+        md->pkey_type = pkey_type;
+    }
+    return md;
+}
+EVP_MD *EVP_MD_meth_dup(const EVP_MD *md)
+{
+    EVP_MD *to = EVP_MD_meth_new(md->type, md->pkey_type);
+    if (md != NULL)
+        memcpy(to, md, sizeof(*to));
+    return to;
+}
+void EVP_MD_meth_free(EVP_MD *md)
+{
+    OPENSSL_free(md);
+}
+int EVP_MD_meth_set_input_blocksize(EVP_MD *md, int blocksize)
+{
+    md->block_size = blocksize;
+    return 1;
+}
+int EVP_MD_meth_set_result_size(EVP_MD *md, int resultsize)
+{
+    md->md_size = resultsize;
+    return 1;
+}
+int EVP_MD_meth_set_app_datasize(EVP_MD *md, int datasize)
+{
+    md->ctx_size = datasize;
+    return 1;
+}
+int EVP_MD_meth_set_flags(EVP_MD *md, unsigned long flags)
+{
+    md->flags = flags;
+    return 1;
+}
+int EVP_MD_meth_set_init(EVP_MD *md, int (*init)(EVP_MD_CTX *ctx))
+{
+    md->init = init;
+    return 1;
+}
+int EVP_MD_meth_set_update(EVP_MD *md, int (*update)(EVP_MD_CTX *ctx,
+                                                     const void *data,
+                                                     size_t count))
+{
+    md->update = update;
+    return 1;
+}
+int EVP_MD_meth_set_final(EVP_MD *md, int (*final)(EVP_MD_CTX *ctx,
+                                                   unsigned char *md))
+{
+    md->final = final;
+    return 1;
+}
+int EVP_MD_meth_set_copy(EVP_MD *md, int (*copy)(EVP_MD_CTX *to,
+                                                 const EVP_MD_CTX *from))
+{
+    md->copy = copy;
+    return 1;
+}
+int EVP_MD_meth_set_cleanup(EVP_MD *md, int (*cleanup)(EVP_MD_CTX *ctx))
+{
+    md->cleanup = cleanup;
+    return 1;
+}
+int EVP_MD_meth_set_ctrl(EVP_MD *md, int (*ctrl)(EVP_MD_CTX *ctx, int cmd,
+                                                 int p1, void *p2))
+{
+    md->md_ctrl = ctrl;
+    return 1;
+}
+
+int EVP_MD_meth_get_input_blocksize(const EVP_MD *md)
+{
+    return md->block_size;
+}
+int EVP_MD_meth_get_result_size(const EVP_MD *md)
+{
+    return md->md_size;
+}
+int EVP_MD_meth_get_app_datasize(const EVP_MD *md)
+{
+    return md->ctx_size;
+}
+unsigned long EVP_MD_meth_get_flags(const EVP_MD *md)
+{
+    return md->block_size;
+}
+int (*EVP_MD_meth_get_init(const EVP_MD *md))(EVP_MD_CTX *ctx)
+{
+    return md->init;
+}
+int (*EVP_MD_meth_get_update(const EVP_MD *md))(EVP_MD_CTX *ctx,
+                                                const void *data,
+                                                size_t count)
+{
+    return md->update;
+}
+int (*EVP_MD_meth_get_final(const EVP_MD *md))(EVP_MD_CTX *ctx,
+                                               unsigned char *md)
+{
+    return md->final;
+}
+int (*EVP_MD_meth_get_copy(const EVP_MD *md))(EVP_MD_CTX *to,
+                                              const EVP_MD_CTX *from)
+{
+    return md->copy;
+}
+int (*EVP_MD_meth_get_cleanup(const EVP_MD *md))(EVP_MD_CTX *ctx)
+{
+    return md->cleanup;
+}
+int (*EVP_MD_meth_get_ctrl(const EVP_MD *md))(EVP_MD_CTX *ctx, int cmd,
+                                              int p1, void *p2)
+{
+    return md->md_ctrl;
 }
 
 const EVP_MD *EVP_MD_CTX_md(const EVP_MD_CTX *ctx)
