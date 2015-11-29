@@ -230,11 +230,13 @@ static const ssl_cipher_table ssl_cipher_table_mac[SSL_MD_NUM_IDX] = {
     {SSL_GOST12_256, NID_id_GostR3411_2012_256},  /* SSL_MD_GOST12_256_IDX 6 */
     {SSL_GOST89MAC12, NID_gost_mac_12},           /* SSL_MD_GOST89MAC12_IDX 7 */
     {SSL_GOST12_512, NID_id_GostR3411_2012_512},  /* SSL_MD_GOST12_512_IDX 8 */
-    {0, NID_md5_sha1}           /* SSL_MD_MD5_SHA1_IDX 9 */
+    {0, NID_md5_sha1},          /* SSL_MD_MD5_SHA1_IDX 9 */
+    {0, NID_sha224},            /* SSL_MD_SHA224_IDX 10 */
+    {0, NID_sha512}             /* SSL_MD_SHA512_IDX 11 */
 };
 
 static const EVP_MD *ssl_digest_methods[SSL_MD_NUM_IDX] = {
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL
 };
 
 /* Utility function for table lookup */

@@ -3254,39 +3254,20 @@ int tls12_get_sigid(const EVP_PKEY *pk)
 typedef struct {
     int nid;
     int secbits;
-    const EVP_MD *(*mfunc) (void);
+    int md_idx;
     unsigned char tlsext_hash;
 } tls12_hash_info;
 
-static const EVP_MD* md_gost94()
-{
-	return EVP_get_digestbynid(NID_id_GostR3411_94);
-}
-
-static const EVP_MD* md_gost2012_256()
-{
-	return EVP_get_digestbynid(NID_id_GostR3411_2012_256);
-}
-
-static const EVP_MD* md_gost2012_512()
-{
-	return EVP_get_digestbynid(NID_id_GostR3411_2012_512);
-}
-
 static const tls12_hash_info tls12_md_info[] = {
-#ifdef OPENSSL_NO_MD5
-    {NID_md5, 64, 0, TLSEXT_hash_md5},
-#else
-    {NID_md5, 64, EVP_md5, TLSEXT_hash_md5},
-#endif
-    {NID_sha1, 80, EVP_sha1, TLSEXT_hash_sha1},
-    {NID_sha224, 112, EVP_sha224, TLSEXT_hash_sha224},
-    {NID_sha256, 128, EVP_sha256, TLSEXT_hash_sha256},
-    {NID_sha384, 192, EVP_sha384, TLSEXT_hash_sha384},
-    {NID_sha512, 256, EVP_sha512, TLSEXT_hash_sha512},
-    {NID_id_GostR3411_94,       128, md_gost94, TLSEXT_hash_gostr3411},
-    {NID_id_GostR3411_2012_256, 128, md_gost2012_256, TLSEXT_hash_gostr34112012_256},
-    {NID_id_GostR3411_2012_512, 256, md_gost2012_512, TLSEXT_hash_gostr34112012_512},
+    {NID_md5, 64, SSL_MD_MD5_IDX, TLSEXT_hash_md5},
+    {NID_sha1, 80, SSL_MD_SHA1_IDX, TLSEXT_hash_sha1},
+    {NID_sha224, 112, SSL_MD_SHA224_IDX, TLSEXT_hash_sha224},
+    {NID_sha256, 128, SSL_MD_SHA256_IDX, TLSEXT_hash_sha256},
+    {NID_sha384, 192, SSL_MD_SHA384_IDX, TLSEXT_hash_sha384},
+    {NID_sha512, 256, SSL_MD_SHA512_IDX, TLSEXT_hash_sha512},
+    {NID_id_GostR3411_94,       128, SSL_MD_GOST94_IDX, TLSEXT_hash_gostr3411},
+    {NID_id_GostR3411_2012_256, 128, SSL_MD_GOST12_256_IDX, TLSEXT_hash_gostr34112012_256},
+    {NID_id_GostR3411_2012_512, 256, SSL_MD_GOST12_512_IDX, TLSEXT_hash_gostr34112012_512},
 };
 
 static const tls12_hash_info *tls12_get_hash_info(unsigned char hash_alg)
@@ -3310,9 +3291,9 @@ const EVP_MD *tls12_get_hash(unsigned char hash_alg)
     if (hash_alg == TLSEXT_hash_md5 && FIPS_mode())
         return NULL;
     inf = tls12_get_hash_info(hash_alg);
-    if (!inf || !inf->mfunc)
+    if (!inf)
         return NULL;
-    return inf->mfunc();
+    return ssl_md(inf->md_idx);
 }
 
 static int tls12_get_pkey_idx(unsigned char sig_alg)
@@ -3374,7 +3355,7 @@ static int tls12_sigalg_allowed(SSL *s, int op, const unsigned char *ptmp)
 {
     /* See if we have an entry in the hash table and it is enabled */
     const tls12_hash_info *hinf = tls12_get_hash_info(ptmp[0]);
-    if (!hinf || !hinf->mfunc)
+    if (hinf == NULL || ssl_md(hinf->md_idx) == NULL)
         return 0;
     /* See if public key algorithm allowed */
     if (tls12_get_pkey_idx(ptmp[1]) == -1)
