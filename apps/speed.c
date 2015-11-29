@@ -1687,7 +1687,7 @@ int speed_main(int argc, char **argv)
                 EVP_CIPHER_CTX_cleanup(&ctx);
             }
             if (evp_md) {
-                names[D_EVP] = OBJ_nid2ln(evp_md->type);
+                names[D_EVP] = OBJ_nid2ln(EVP_MD_type(evp_md));
                 print_message(names[D_EVP], save_count, lengths[j]);
 
                 Time_F(START);
