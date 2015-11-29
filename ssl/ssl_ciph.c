@@ -712,7 +712,7 @@ int ssl_cipher_get_evp(const SSL_SESSION *s, const EVP_CIPHER **enc,
         return (0);
 }
 
-static const EVP_MD *ssl_cipher_table_idx(int idx)
+const EVP_MD *ssl_md(int idx)
 {
     idx &= SSL_HANDSHAKE_MAC_MASK;
     if (idx < 0 || idx >= SSL_MD_NUM_IDX)
@@ -722,12 +722,12 @@ static const EVP_MD *ssl_cipher_table_idx(int idx)
 
 const EVP_MD *ssl_handshake_md(SSL *s)
 {
-    return ssl_cipher_table_idx(ssl_get_algorithm2(s));
+    return ssl_md(ssl_get_algorithm2(s));
 }
 
 const EVP_MD *ssl_prf_md(SSL *s)
 {
-    return ssl_cipher_table_idx(ssl_get_algorithm2(s) >> TLS1_PRF_DGST_SHIFT);
+    return ssl_md(ssl_get_algorithm2(s) >> TLS1_PRF_DGST_SHIFT);
 }
 
 #define ITEM_SEP(a) \

@@ -2139,6 +2139,7 @@ __owur int ssl_add_serverhello_use_srtp_ext(SSL *s, unsigned char *p, int *len,
 __owur int ssl_parse_serverhello_use_srtp_ext(SSL *s, PACKET *pkt, int *al);
 
 __owur int ssl_handshake_hash(SSL *s, unsigned char *out, int outlen);
+__owur const EVP_MD *ssl_md(int idx);
 __owur const EVP_MD *ssl_handshake_md(SSL *s);
 __owur const EVP_MD *ssl_prf_md(SSL *s);
 
