@@ -129,3 +129,20 @@ extern const EVP_PKEY_METHOD dsa_pkey_meth;
 extern const EVP_PKEY_METHOD ec_pkey_meth;
 extern const EVP_PKEY_METHOD hmac_pkey_meth;
 extern const EVP_PKEY_METHOD rsa_pkey_meth;
+
+struct evp_md_st {
+    int type;
+    int pkey_type;
+    int md_size;
+    unsigned long flags;
+    int (*init) (EVP_MD_CTX *ctx);
+    int (*update) (EVP_MD_CTX *ctx, const void *data, size_t count);
+    int (*final) (EVP_MD_CTX *ctx, unsigned char *md);
+    int (*copy) (EVP_MD_CTX *to, const EVP_MD_CTX *from);
+    int (*cleanup) (EVP_MD_CTX *ctx);
+    int block_size;
+    int ctx_size;               /* how big does the ctx->md_data need to be */
+    /* control function */
+    int (*md_ctrl) (EVP_MD_CTX *ctx, int cmd, int p1, void *p2);
+} /* EVP_MD */ ;
+
