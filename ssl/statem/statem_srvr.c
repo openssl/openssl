@@ -3015,11 +3015,17 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
 #ifdef SSL_DEBUG
             fprintf(stderr, "USING TLSv1.2 HASH %s\n", EVP_MD_name(md));
 #endif
-        } else if (pkey->type == EVP_PKEY_RSA) {
-            md = EVP_md5_sha1();
         } else {
-            md = EVP_sha1();
+            /* Use default digest for this key type */
+            int idx = ssl_cert_type(NULL, pkey);
+            if (idx >= 0)
+                md = s->s3->tmp.md[idx];
+            if (md == NULL) {
+                al = SSL_AD_INTERNAL_ERROR;
+                goto f_err;
+            }
         }
+
         if (!PACKET_get_net_2(pkt, &len)) {
             SSLerr(SSL_F_TLS_PROCESS_CERT_VERIFY, SSL_R_LENGTH_MISMATCH);
             al = SSL_AD_DECODE_ERROR;
