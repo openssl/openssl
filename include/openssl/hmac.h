@@ -70,9 +70,8 @@ extern "C" {
 
 size_t HMAC_size(HMAC_CTX *e);
 HMAC_CTX *HMAC_CTX_new(void);
-void HMAC_CTX_free(HMAC_CTX *ctx);
 int HMAC_CTX_init(HMAC_CTX *ctx);
-void HMAC_CTX_cleanup(HMAC_CTX *ctx);
+void HMAC_CTX_free(HMAC_CTX *ctx);
 
 #ifdef OPENSSL_USE_DEPRECATED
 
