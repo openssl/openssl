@@ -69,7 +69,7 @@
 typedef struct {
     const EVP_MD *md;           /* MD for HMAC use */
     ASN1_OCTET_STRING ktmp;     /* Temp storage for key */
-    HMAC_CTX ctx;
+    HMAC_CTX *ctx;
 } HMAC_PKEY_CTX;
 
 static int pkey_hmac_init(EVP_PKEY_CTX *ctx)
@@ -80,7 +80,7 @@ static int pkey_hmac_init(EVP_PKEY_CTX *ctx)
     if (hctx == NULL)
         return 0;
     hctx->ktmp.type = V_ASN1_OCTET_STRING;
-    HMAC_CTX_init(&hctx->ctx);
+    hctx->ctx = HMAC_CTX_new();
 
     ctx->data = hctx;
     ctx->keygen_info_count = 0;
@@ -96,7 +96,7 @@ static int pkey_hmac_copy(EVP_PKEY_CTX *dst, EVP_PKEY_CTX *src)
     sctx = src->data;
     dctx = dst->data;
     dctx->md = sctx->md;
-    if (!HMAC_CTX_copy(&dctx->ctx, &sctx->ctx))
+    if (!HMAC_CTX_copy(dctx->ctx, sctx->ctx))
         return 0;
     if (sctx->ktmp.data) {
         if (!ASN1_OCTET_STRING_set(&dctx->ktmp,
@@ -111,7 +111,7 @@ static void pkey_hmac_cleanup(EVP_PKEY_CTX *ctx)
     HMAC_PKEY_CTX *hctx = ctx->data;
 
     if (hctx != NULL) {
-        HMAC_CTX_cleanup(&hctx->ctx);
+        HMAC_CTX_free(hctx->ctx);
         OPENSSL_clear_free(hctx->ktmp.data, hctx->ktmp.length);
         OPENSSL_free(hctx);
         ctx->data = NULL;
@@ -135,7 +135,7 @@ static int pkey_hmac_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
 static int int_update(EVP_MD_CTX *ctx, const void *data, size_t count)
 {
     HMAC_PKEY_CTX *hctx = EVP_MD_CTX_pkey_ctx(ctx)->data;
-    if (!HMAC_Update(&hctx->ctx, data, count))
+    if (!HMAC_Update(hctx->ctx, data, count))
         return 0;
     return 1;
 }
@@ -143,7 +143,7 @@ static int int_update(EVP_MD_CTX *ctx, const void *data, size_t count)
 static int hmac_signctx_init(EVP_PKEY_CTX *ctx, EVP_MD_CTX *mctx)
 {
     HMAC_PKEY_CTX *hctx = ctx->data;
-    HMAC_CTX_set_flags(&hctx->ctx,
+    HMAC_CTX_set_flags(hctx->ctx,
                        EVP_MD_CTX_test_flags(mctx, ~EVP_MD_CTX_FLAG_NO_INIT));
     EVP_MD_CTX_set_flags(mctx, EVP_MD_CTX_FLAG_NO_INIT);
     EVP_MD_CTX_set_update_fn(mctx, int_update);
@@ -163,7 +163,7 @@ static int hmac_signctx(EVP_PKEY_CTX *ctx, unsigned char *sig, size_t *siglen,
     if (!sig)
         return 1;
 
-    if (!HMAC_Final(&hctx->ctx, sig, &hlen))
+    if (!HMAC_Final(hctx->ctx, sig, &hlen))
         return 0;
     *siglen = (size_t)hlen;
     return 1;
@@ -188,7 +188,7 @@ static int pkey_hmac_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 
     case EVP_PKEY_CTRL_DIGESTINIT:
         key = (ASN1_OCTET_STRING *)ctx->pkey->pkey.ptr;
-        if (!HMAC_Init_ex(&hctx->ctx, key->data, key->length, hctx->md,
+        if (!HMAC_Init_ex(hctx->ctx, key->data, key->length, hctx->md,
                           ctx->engine))
             return 0;
         break;

@@ -55,47 +55,23 @@
  * copied and put under another distribution licence
  * [including the GNU Public Licence.]
  */
-#ifndef HEADER_HMAC_H
-# define HEADER_HMAC_H
-
-# include <openssl/opensslconf.h>
-
-# include <openssl/evp.h>
-
-# define HMAC_MAX_MD_CBLOCK      128/* largest known is SHA512 */
+#ifndef HEADER_HMAC_LCL_H
+# define HEADER_HMAC_LCL_H
 
 #ifdef  __cplusplus
 extern "C" {
 #endif
-
-size_t HMAC_size(HMAC_CTX *e);
-HMAC_CTX *HMAC_CTX_new(void);
-void HMAC_CTX_free(HMAC_CTX *ctx);
-int HMAC_CTX_init(HMAC_CTX *ctx);
-void HMAC_CTX_cleanup(HMAC_CTX *ctx);
-
-#ifdef OPENSSL_USE_DEPRECATED
-
-/* deprecated */
-DECLARE_DEPRECATED(__owur int HMAC_Init(HMAC_CTX *ctx, const void *key, int len,
-                     const EVP_MD *md));
-
-#endif
-/*__owur*/ int HMAC_Init_ex(HMAC_CTX *ctx, const void *key, int len,
-                            const EVP_MD *md, ENGINE *impl);
-/*__owur*/ int HMAC_Update(HMAC_CTX *ctx, const unsigned char *data,
-                           size_t len);
-/*__owur*/ int HMAC_Final(HMAC_CTX *ctx, unsigned char *md,
-                          unsigned int *len);
-unsigned char *HMAC(const EVP_MD *evp_md, const void *key, int key_len,
-                    const unsigned char *d, size_t n, unsigned char *md,
-                    unsigned int *md_len);
-__owur int HMAC_CTX_copy(HMAC_CTX *dctx, HMAC_CTX *sctx);
-
-void HMAC_CTX_set_flags(HMAC_CTX *ctx, unsigned long flags);
-
-#ifdef  __cplusplus
+#if 0                            /* emacs indentation fix */
 }
 #endif
+
+typedef struct hmac_ctx_st {
+    const EVP_MD *md;
+    EVP_MD_CTX *md_ctx;
+    EVP_MD_CTX *i_ctx;
+    EVP_MD_CTX *o_ctx;
+    unsigned int key_length;
+    unsigned char key[HMAC_MAX_MD_CBLOCK];
+} HMAC_CTX;
 
 #endif
