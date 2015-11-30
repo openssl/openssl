@@ -134,7 +134,7 @@ int main(int argc, char *argv[])
     char *p;
 # endif
     int err = 0;
-    HMAC_CTX ctx = HMAC_CTX_EMPTY, ctx2 = HMAC_CTX_EMPTY;
+    HMAC_CTX *ctx = NULL, *ctx2 = NULL;
     unsigned char buf[EVP_MAX_MD_SIZE];
     unsigned int len;
 
@@ -165,57 +165,62 @@ int main(int argc, char *argv[])
 # endif                         /* OPENSSL_NO_MD5 */
 
 /* test4 */
-    HMAC_CTX_init(&ctx);
-    if (HMAC_Init_ex(&ctx, NULL, 0, NULL, NULL)) {
+    ctx = HMAC_CTX_new();
+    if (ctx == NULL) {
+        printf("HMAC malloc failure (test 4)\n");
+        err++;
+        goto end;
+    }
+    if (HMAC_Init_ex(ctx, NULL, 0, NULL, NULL)) {
         printf("Should fail to initialise HMAC with empty MD and key (test 4)\n");
         err++;
         goto test5;
     }
-    if (HMAC_Update(&ctx, test[4].data, test[4].data_len)) {
+    if (HMAC_Update(ctx, test[4].data, test[4].data_len)) {
         printf("Should fail HMAC_Update with ctx not set up (test 4)\n");
         err++;
         goto test5;
     }
-    if (HMAC_Init_ex(&ctx, NULL, 0, EVP_sha1(), NULL)) {
+    if (HMAC_Init_ex(ctx, NULL, 0, EVP_sha1(), NULL)) {
         printf("Should fail to initialise HMAC with empty key (test 4)\n");
         err++;
         goto test5;
     }
-    if (HMAC_Update(&ctx, test[4].data, test[4].data_len)) {
+    if (HMAC_Update(ctx, test[4].data, test[4].data_len)) {
         printf("Should fail HMAC_Update with ctx not set up (test 4)\n");
         err++;
         goto test5;
     }
     printf("test 4 ok\n");
 test5:
-    HMAC_CTX_cleanup(&ctx);
-    HMAC_CTX_init(&ctx);
-    if (HMAC_Init_ex(&ctx, test[4].key, test[4].key_len, NULL, NULL)) {
+    HMAC_CTX_cleanup(ctx);
+    HMAC_CTX_init(ctx);
+    if (HMAC_Init_ex(ctx, test[4].key, test[4].key_len, NULL, NULL)) {
         printf("Should fail to initialise HMAC with empty MD (test 5)\n");
         err++;
         goto test6;
     }
-    if (HMAC_Update(&ctx, test[4].data, test[4].data_len)) {
+    if (HMAC_Update(ctx, test[4].data, test[4].data_len)) {
         printf("Should fail HMAC_Update with ctx not set up (test 5)\n");
         err++;
         goto test6;
     }
-    if (HMAC_Init_ex(&ctx, test[4].key, -1, EVP_sha1(), NULL)) {
+    if (HMAC_Init_ex(ctx, test[4].key, -1, EVP_sha1(), NULL)) {
         printf("Should fail to initialise HMAC with invalid key len(test 5)\n");
         err++;
         goto test6;
     }
-    if (!HMAC_Init_ex(&ctx, test[4].key, test[4].key_len, EVP_sha1(), NULL)) {
+    if (!HMAC_Init_ex(ctx, test[4].key, test[4].key_len, EVP_sha1(), NULL)) {
         printf("Failed to initialise HMAC (test 5)\n");
         err++;
         goto test6;
     }
-    if (!HMAC_Update(&ctx, test[4].data, test[4].data_len)) {
+    if (!HMAC_Update(ctx, test[4].data, test[4].data_len)) {
         printf("Error updating HMAC with data (test 5)\n");
         err++;
         goto test6;
     }
-    if (!HMAC_Final(&ctx, buf, &len)) {
+    if (!HMAC_Final(ctx, buf, &len)) {
         printf("Error finalising data (test 5)\n");
         err++;
         goto test6;
@@ -227,22 +232,22 @@ test5:
         err++;
         goto test6;
     }
-    if (HMAC_Init_ex(&ctx, NULL, 0, EVP_sha256(), NULL)) {
+    if (HMAC_Init_ex(ctx, NULL, 0, EVP_sha256(), NULL)) {
         printf("Should disallow changing MD without a new key (test 5)\n");
         err++;
         goto test6;
     }
-    if (!HMAC_Init_ex(&ctx, test[4].key, test[4].key_len, EVP_sha256(), NULL)) {
+    if (!HMAC_Init_ex(ctx, test[4].key, test[4].key_len, EVP_sha256(), NULL)) {
         printf("Failed to reinitialise HMAC (test 5)\n");
         err++;
         goto test6;
     }
-    if (!HMAC_Update(&ctx, test[5].data, test[5].data_len)) {
+    if (!HMAC_Update(ctx, test[5].data, test[5].data_len)) {
         printf("Error updating HMAC with data (sha256) (test 5)\n");
         err++;
         goto test6;
     }
-    if (!HMAC_Final(&ctx, buf, &len)) {
+    if (!HMAC_Final(ctx, buf, &len)) {
         printf("Error finalising data (sha256) (test 5)\n");
         err++;
         goto test6;
@@ -254,17 +259,17 @@ test5:
         err++;
         goto test6;
     }
-    if (!HMAC_Init_ex(&ctx, test[6].key, test[6].key_len, NULL, NULL)) {
+    if (!HMAC_Init_ex(ctx, test[6].key, test[6].key_len, NULL, NULL)) {
         printf("Failed to reinitialise HMAC with key (test 5)\n");
         err++;
         goto test6;
     }
-    if (!HMAC_Update(&ctx, test[6].data, test[6].data_len)) {
+    if (!HMAC_Update(ctx, test[6].data, test[6].data_len)) {
         printf("Error updating HMAC with data (new key) (test 5)\n");
         err++;
         goto test6;
     }
-    if (!HMAC_Final(&ctx, buf, &len)) {
+    if (!HMAC_Final(ctx, buf, &len)) {
         printf("Error finalising data (new key) (test 5)\n");
         err++;
         goto test6;
@@ -278,24 +283,30 @@ test5:
         printf("test 5 ok\n");
     }
 test6:
-    HMAC_CTX_cleanup(&ctx);
-    HMAC_CTX_init(&ctx);
-    if (!HMAC_Init_ex(&ctx, test[7].key, test[7].key_len, EVP_sha1(), NULL)) {
+    HMAC_CTX_cleanup(ctx);
+    HMAC_CTX_init(ctx);
+    ctx2 = HMAC_CTX_new();
+    if (ctx2 == NULL) {
+        printf("HMAC malloc failure (test 6)\n");
+        err++;
+        goto end;
+    }
+    if (!HMAC_Init_ex(ctx, test[7].key, test[7].key_len, EVP_sha1(), NULL)) {
         printf("Failed to initialise HMAC (test 6)\n");
         err++;
         goto end;
     }
-    if (!HMAC_Update(&ctx, test[7].data, test[7].data_len)) {
+    if (!HMAC_Update(ctx, test[7].data, test[7].data_len)) {
         printf("Error updating HMAC with data (test 6)\n");
         err++;
         goto end;
     }
-    if (!HMAC_CTX_copy(&ctx2, &ctx)) {
+    if (!HMAC_CTX_copy(ctx2, ctx)) {
         printf("Failed to copy HMAC_CTX (test 6)\n");
         err++;
         goto end;
     }
-    if (!HMAC_Final(&ctx2, buf, &len)) {
+    if (!HMAC_Final(ctx2, buf, &len)) {
         printf("Error finalising data (test 6)\n");
         err++;
         goto end;
@@ -309,7 +320,8 @@ test6:
         printf("test 6 ok\n");
     }
 end:
-    HMAC_CTX_cleanup(&ctx);
+    HMAC_CTX_free(ctx2);
+    HMAC_CTX_free(ctx);
     EXIT(err);
 }
 
