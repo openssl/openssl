@@ -429,6 +429,24 @@ struct evp_cipher_st {
 
 # define         EVP_CTRL_SSL3_MASTER_SECRET             0x1d
 
+/* EVP_CTRL_SET_SBOX takes the char* specifying S-boxes */
+# define         EVP_CTRL_SET_SBOX                       0x1e
+/* 
+ * EVP_CTRL_SBOX_USED takes a 'size_t' and 'char *', pointing at a
+ * pre-allocated buffer with specified size 
+ */
+# define         EVP_CTRL_SBOX_USED                      0x1f
+/* EVP_CTRL_KEY_MESH takes 'size_t' number of bytes to mesh the key after, 0 switches meshing off */
+# define         EVP_CTRL_KEY_MESH                       0x20
+/* EVP_CTRL_BLOCK_PADDING_MODE takes the padding mode */
+# define         EVP_CTRL_BLOCK_PADDING_MODE             0x21
+
+#define EVP_PADDING_PKCS7     1
+#define EVP_PADDING_ISO7816_4 2
+#define EVP_PADDING_ANSI923   3
+#define EVP_PADDING_ISO10126  4
+#define EVP_PADDING_ZERO      5
+
 /* RFC 5246 defines additional data to be 13 bytes in length */
 # define         EVP_AEAD_TLS1_AAD_LEN           13
 
