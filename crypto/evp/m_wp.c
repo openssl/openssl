@@ -9,6 +9,7 @@
 # include <openssl/objects.h>
 # include <openssl/x509.h>
 # include <openssl/whrlpool.h>
+# include "internal/evp_int.h"
 
 static int init(EVP_MD_CTX *ctx)
 {

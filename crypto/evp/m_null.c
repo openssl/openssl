@@ -61,6 +61,7 @@
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 #include <openssl/x509.h>
+#include "internal/evp_int.h"
 
 static int init(EVP_MD_CTX *ctx)
 {

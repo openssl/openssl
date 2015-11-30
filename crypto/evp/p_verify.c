@@ -61,6 +61,7 @@
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 #include <openssl/x509.h>
+#include "internal/evp_int.h"
 
 int EVP_VerifyFinal(EVP_MD_CTX *ctx, const unsigned char *sigbuf,
                     unsigned int siglen, EVP_PKEY *pkey)
@@ -94,7 +95,7 @@ int EVP_VerifyFinal(EVP_MD_CTX *ctx, const unsigned char *sigbuf,
         goto err;
     if (EVP_PKEY_verify_init(pkctx) <= 0)
         goto err;
-    if (EVP_PKEY_CTX_set_signature_md(pkctx, ctx->digest) <= 0)
+    if (EVP_PKEY_CTX_set_signature_md(pkctx, EVP_MD_CTX_md(ctx)) <= 0)
         goto err;
     i = EVP_PKEY_verify(pkctx, sigbuf, siglen, m, m_len);
  err:
