@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-HMAC, HMAC_CTX_init, HMAC_Init, HMAC_Init_ex, HMAC_Update, HMAC_Final, HMAC_CTX_cleanup - HMAC message authentication code
+HMAC, HMAC_CTX_new, HMAC_CTX_reset, HMAC_CTX_free, HMAC_Init, HMAC_Init_ex, HMAC_Update, HMAC_Final - HMAC message authentication code
 
 =head1 SYNOPSIS
 
@@ -12,7 +12,8 @@ HMAC, HMAC_CTX_init, HMAC_Init, HMAC_Init_ex, HMAC_Update, HMAC_Final, HMAC_CTX_
                int key_len, const unsigned char *d, int n,
                unsigned char *md, unsigned int *md_len);
 
- int HMAC_CTX_init(HMAC_CTX *ctx);
+ HMAC_CTX *HMAC_CTX_new(void);
+ int HMAC_CTX_reset(HMAC_CTX *ctx);
 
  int HMAC_Init(HMAC_CTX *ctx, const void *key, int key_len,
                const EVP_MD *md);
@@ -21,7 +22,7 @@ HMAC, HMAC_CTX_init, HMAC_Init, HMAC_Init_ex, HMAC_Update, HMAC_Final, HMAC_CTX_
  int HMAC_Update(HMAC_CTX *ctx, const unsigned char *data, int len);
  int HMAC_Final(HMAC_CTX *ctx, unsigned char *md, unsigned int *len);
 
- void HMAC_CTX_cleanup(HMAC_CTX *ctx);
+ void HMAC_CTX_free(HMAC_CTX *ctx);
 
 =head1 DESCRIPTION
 
@@ -40,12 +41,15 @@ the output is placed in B<md_len>, unless it is B<NULL>.
 
 B<evp_md> can be EVP_sha1(), EVP_ripemd160() etc.
 
-HMAC_CTX_init() initialises a B<HMAC_CTX> before first use. It must be
-called.
+HMAC_CTX_new() creates a new HMAC_CTX in heap memory.
 
-HMAC_CTX_cleanup() erases the key and other data from the B<HMAC_CTX>
-and releases any associated resources. It must be called when an
-B<HMAC_CTX> is no longer required.
+HMAC_CTX_reset() zeroes an existing B<HMAC_CTX> and associated
+resources, making it suitable for new computations as if it was newly
+created with HMAC_CTX_new().
+
+HMAC_CTX_free() erases the key and other data from the B<HMAC_CTX>,
+releases any associated resources and finally frees the B<HMAC_CTX>
+itself.
 
 The following functions may be used if the message is not completely
 stored in memory:
@@ -57,8 +61,8 @@ with OpenSSL 0.9.6b.
 
 HMAC_Init_ex() initializes or reuses a B<HMAC_CTX> structure to use
 the function B<evp_md> and key B<key>. Either can be NULL, in which
-case the existing one will be reused. HMAC_CTX_init() must have been
-called before the first use of an B<HMAC_CTX> in this
+case the existing one will be reused. B<ctx> must have been created
+with HMAC_CTX_new() before the first use of an B<HMAC_CTX> in this
 function. B<N.B. HMAC_Init() had this undocumented behaviour in
 previous versions of OpenSSL - failure to switch to HMAC_Init_ex() in
 programs that expect it will cause them to stop working>.
@@ -74,10 +78,13 @@ must have space for the hash function output.
 HMAC() returns a pointer to the message authentication code or NULL if
 an error occurred.
 
-HMAC_CTX_init(), HMAC_Init_ex(), HMAC_Update() and HMAC_Final() return 1
+HMAC_CTX_new() returns a pointer to a new B<HMAC_CTX> on success or
+B<NULL> if an error occurred.
+
+HMAC_CTX_reset(), HMAC_Init_ex(), HMAC_Update() and HMAC_Final() return 1
 for success or 0 if an error occurred.
 
-HMAC_CTX_cleanup() do not return values.
+HMAC_CTX_free() do not return values.
 
 =head1 CONFORMING TO
 
@@ -89,7 +96,11 @@ L<sha(3)>, L<evp(3)>
 
 =head1 HISTORY
 
-HMAC_CTX_init() did not return a value in OpenSSL versions before 1.1.
+HMAC_CTX_init() was replaced with HMAC_CTX_reset() in OpenSSL versions 1.1.
+
+HMAC_CTX_cleanup() existed in OpenSSL versions before 1.1.
+
+HMAC_CTX_new() and HMAC_CTX_free() are new in OpenSSL version 1.1.
 
 HMAC_Init_ex(), HMAC_Update() and HMAC_Final() did not return values in
 versions of OpenSSL before 1.0.0.
