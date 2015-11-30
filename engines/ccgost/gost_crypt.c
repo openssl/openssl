@@ -85,20 +85,37 @@ static int gost_imit_cleanup(EVP_MD_CTX *ctx);
 /* Control function, knows how to set MAC key.*/
 static int gost_imit_ctrl(EVP_MD_CTX *ctx, int type, int arg, void *ptr);
 
-EVP_MD imit_gost_cpa = {
-    NID_id_Gost28147_89_MAC,
-    NID_undef,
-    4,
-    0,
-    gost_imit_init_cpa,
-    gost_imit_update,
-    gost_imit_final,
-    gost_imit_copy,
-    gost_imit_cleanup,
-    8,
-    sizeof(struct ossl_gost_imit_ctx),
-    gost_imit_ctrl
-};
+static EVP_MD *_hidden_Gost28147_89_MAC_md = NULL;
+EVP_MD *imit_gost_cpa(void)
+{
+
+    if (_hidden_Gost28147_89_MAC_md == NULL) {
+        EVP_MD *md;
+
+        if ((md = EVP_MD_meth_new(NID_id_Gost28147_89_MAC, NID_undef)) == NULL
+            || !EVP_MD_meth_set_result_size(md, 4)
+            || !EVP_MD_meth_set_input_blocksize(md, 8)
+            || !EVP_MD_meth_set_app_datasize(md,
+                                             sizeof(struct ossl_gost_imit_ctx))
+            || !EVP_MD_meth_set_flags(md, 0)
+            || !EVP_MD_meth_set_init(md, gost_imit_init_cpa)
+            || !EVP_MD_meth_set_update(md, gost_imit_update)
+            || !EVP_MD_meth_set_final(md, gost_imit_final)
+            || !EVP_MD_meth_set_copy(md, gost_imit_copy)
+            || !EVP_MD_meth_set_cleanup(md, gost_imit_cleanup)
+            || !EVP_MD_meth_set_ctrl(md, gost_imit_ctrl)) {
+            EVP_MD_meth_free(md);
+            md = NULL;
+        }
+        _hidden_Gost28147_89_MAC_md = md;
+    }
+    return _hidden_Gost28147_89_MAC_md;
+}
+void imit_gost_cpa_destroy(void)
+{
+    EVP_MD_meth_free(_hidden_Gost28147_89_MAC_md);
+    _hidden_Gost28147_89_MAC_md = NULL;
+}
 
 /*
  * Correspondence between gost parameter OIDs and substitution blocks

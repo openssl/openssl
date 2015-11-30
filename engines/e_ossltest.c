@@ -87,29 +87,34 @@ void ENGINE_load_ossltest(void);
 static int ossltest_digests(ENGINE *e, const EVP_MD **digest,
                           const int **nids, int nid);
 
-static int ossltest_digest_nids[] = {
-    NID_md5, NID_sha1, NID_sha256, NID_sha384, NID_sha512, 0
-};
-
 /* MD5 */
 static int digest_md5_init(EVP_MD_CTX *ctx);
 static int digest_md5_update(EVP_MD_CTX *ctx, const void *data,
                              size_t count);
 static int digest_md5_final(EVP_MD_CTX *ctx, unsigned char *md);
 
-static const EVP_MD digest_md5 = {
-    NID_md5,
-    NID_md5WithRSAEncryption,
-    MD5_DIGEST_LENGTH,
-    0,
-    digest_md5_init,
-    digest_md5_update,
-    digest_md5_final,
-    NULL,
-    NULL,
-    MD5_CBLOCK,
-    sizeof(EVP_MD *) + sizeof(MD5_CTX),
-};
+static EVP_MD *_hidden_md5_md = NULL;
+static const EVP_MD *digest_md5(void)
+{
+    if (_hidden_md5_md == NULL) {
+        EVP_MD *md;
+
+        if ((md = EVP_MD_meth_new(NID_md5, NID_md5WithRSAEncryption)) == NULL
+            || !EVP_MD_meth_set_result_size(md, MD5_DIGEST_LENGTH)
+            || !EVP_MD_meth_set_input_blocksize(md, MD5_CBLOCK)
+            || !EVP_MD_meth_set_app_datasize(md,
+                                             sizeof(EVP_MD *) + sizeof(MD5_CTX))
+            || !EVP_MD_meth_set_flags(md, 0)
+            || !EVP_MD_meth_set_init(md, digest_md5_init)
+            || !EVP_MD_meth_set_update(md, digest_md5_update)
+            || !EVP_MD_meth_set_final(md, digest_md5_final)) {
+            EVP_MD_meth_free(md);
+            md = NULL;
+        }
+        _hidden_md5_md = md;
+    }
+    return _hidden_md5_md;
+}
 
 /* SHA1 */
 static int digest_sha1_init(EVP_MD_CTX *ctx);
@@ -117,19 +122,28 @@ static int digest_sha1_update(EVP_MD_CTX *ctx, const void *data,
                               size_t count);
 static int digest_sha1_final(EVP_MD_CTX *ctx, unsigned char *md);
 
-static const EVP_MD digest_sha1 = {
-    NID_sha1,
-    NID_sha1WithRSAEncryption,
-    SHA_DIGEST_LENGTH,
-    EVP_MD_FLAG_DIGALGID_ABSENT,
-    digest_sha1_init,
-    digest_sha1_update,
-    digest_sha1_final,
-    NULL,
-    NULL,
-    SHA_CBLOCK,
-    sizeof(EVP_MD *) + sizeof(SHA_CTX),
-};
+static EVP_MD *_hidden_sha1_md = NULL;
+static const EVP_MD *digest_sha1(void)
+{
+    if (_hidden_sha1_md == NULL) {
+        EVP_MD *md;
+
+        if ((md = EVP_MD_meth_new(NID_sha1, NID_sha1WithRSAEncryption)) == NULL
+            || !EVP_MD_meth_set_result_size(md, SHA_DIGEST_LENGTH)
+            || !EVP_MD_meth_set_input_blocksize(md, SHA_CBLOCK)
+            || !EVP_MD_meth_set_app_datasize(md,
+                                             sizeof(EVP_MD *) + sizeof(SHA_CTX))
+            || !EVP_MD_meth_set_flags(md, EVP_MD_FLAG_DIGALGID_ABSENT)
+            || !EVP_MD_meth_set_init(md, digest_sha1_init)
+            || !EVP_MD_meth_set_update(md, digest_sha1_update)
+            || !EVP_MD_meth_set_final(md, digest_sha1_final)) {
+            EVP_MD_meth_free(md);
+            md = NULL;
+        }
+        _hidden_sha1_md = md;
+    }
+    return _hidden_sha1_md;
+}
 
 /* SHA256 */
 static int digest_sha256_init(EVP_MD_CTX *ctx);
@@ -137,19 +151,28 @@ static int digest_sha256_update(EVP_MD_CTX *ctx, const void *data,
                                 size_t count);
 static int digest_sha256_final(EVP_MD_CTX *ctx, unsigned char *md);
 
-static const EVP_MD digest_sha256 = {
-    NID_sha256,
-    NID_sha256WithRSAEncryption,
-    SHA256_DIGEST_LENGTH,
-    EVP_MD_FLAG_DIGALGID_ABSENT,
-    digest_sha256_init,
-    digest_sha256_update,
-    digest_sha256_final,
-    NULL,
-    NULL,
-    SHA256_CBLOCK,
-    sizeof(EVP_MD *) + sizeof(SHA256_CTX),
-};
+static EVP_MD *_hidden_sha256_md = NULL;
+static const EVP_MD *digest_sha256(void)
+{
+    if (_hidden_sha256_md == NULL) {
+        EVP_MD *md;
+
+        if ((md = EVP_MD_meth_new(NID_sha256, NID_sha256WithRSAEncryption)) == NULL
+            || !EVP_MD_meth_set_result_size(md, SHA256_DIGEST_LENGTH)
+            || !EVP_MD_meth_set_input_blocksize(md, SHA256_CBLOCK)
+            || !EVP_MD_meth_set_app_datasize(md,
+                                             sizeof(EVP_MD *) + sizeof(SHA256_CTX))
+            || !EVP_MD_meth_set_flags(md, EVP_MD_FLAG_DIGALGID_ABSENT)
+            || !EVP_MD_meth_set_init(md, digest_sha256_init)
+            || !EVP_MD_meth_set_update(md, digest_sha256_update)
+            || !EVP_MD_meth_set_final(md, digest_sha256_final)) {
+            EVP_MD_meth_free(md);
+            md = NULL;
+        }
+        _hidden_sha256_md = md;
+    }
+    return _hidden_sha256_md;
+}
 
 /* SHA384/SHA512 */
 static int digest_sha384_init(EVP_MD_CTX *ctx);
@@ -159,33 +182,87 @@ static int digest_sha512_update(EVP_MD_CTX *ctx, const void *data,
 static int digest_sha384_final(EVP_MD_CTX *ctx, unsigned char *md);
 static int digest_sha512_final(EVP_MD_CTX *ctx, unsigned char *md);
 
-static const EVP_MD digest_sha384 = {
-    NID_sha384,
-    NID_sha384WithRSAEncryption,
-    SHA384_DIGEST_LENGTH,
-    EVP_MD_FLAG_DIGALGID_ABSENT,
-    digest_sha384_init,
-    digest_sha512_update,
-    digest_sha384_final,
-    NULL,
-    NULL,
-    SHA512_CBLOCK,
-    sizeof(EVP_MD *) + sizeof(SHA512_CTX),
-};
+static EVP_MD *_hidden_sha384_md = NULL;
+static const EVP_MD *digest_sha384(void)
+{
+    if (_hidden_sha384_md == NULL) {
+        EVP_MD *md;
 
-static const EVP_MD digest_sha512 = {
-    NID_sha512,
-    NID_sha512WithRSAEncryption,
-    SHA512_DIGEST_LENGTH,
-    EVP_MD_FLAG_DIGALGID_ABSENT,
-    digest_sha512_init,
-    digest_sha512_update,
-    digest_sha512_final,
-    NULL,
-    NULL,
-    SHA512_CBLOCK,
-    sizeof(EVP_MD *) + sizeof(SHA512_CTX),
-};
+        if ((md = EVP_MD_meth_new(NID_sha384, NID_sha384WithRSAEncryption)) == NULL
+            || !EVP_MD_meth_set_result_size(md, SHA384_DIGEST_LENGTH)
+            || !EVP_MD_meth_set_input_blocksize(md, SHA512_CBLOCK)
+            || !EVP_MD_meth_set_app_datasize(md,
+                                             sizeof(EVP_MD *) + sizeof(SHA512_CTX))
+            || !EVP_MD_meth_set_flags(md, EVP_MD_FLAG_DIGALGID_ABSENT)
+            || !EVP_MD_meth_set_init(md, digest_sha384_init)
+            || !EVP_MD_meth_set_update(md, digest_sha512_update)
+            || !EVP_MD_meth_set_final(md, digest_sha384_final)) {
+            EVP_MD_meth_free(md);
+            md = NULL;
+        }
+        _hidden_sha384_md = md;
+    }
+    return _hidden_sha384_md;
+}
+static EVP_MD *_hidden_sha512_md = NULL;
+static const EVP_MD *digest_sha512(void)
+{
+    if (_hidden_sha512_md == NULL) {
+        EVP_MD *md;
+
+        if ((md = EVP_MD_meth_new(NID_sha512, NID_sha512WithRSAEncryption)) == NULL
+            || !EVP_MD_meth_set_result_size(md, SHA512_DIGEST_LENGTH)
+            || !EVP_MD_meth_set_input_blocksize(md, SHA512_CBLOCK)
+            || !EVP_MD_meth_set_app_datasize(md,
+                                             sizeof(EVP_MD *) + sizeof(SHA512_CTX))
+            || !EVP_MD_meth_set_flags(md, EVP_MD_FLAG_DIGALGID_ABSENT)
+            || !EVP_MD_meth_set_init(md, digest_sha512_init)
+            || !EVP_MD_meth_set_update(md, digest_sha512_update)
+            || !EVP_MD_meth_set_final(md, digest_sha512_final)) {
+            EVP_MD_meth_free(md);
+            md = NULL;
+        }
+        _hidden_sha512_md = md;
+    }
+    return _hidden_sha512_md;
+}
+static void destroy_digests(void)
+{
+    EVP_MD_meth_free(_hidden_md5_md);
+    _hidden_md5_md = NULL;
+    EVP_MD_meth_free(_hidden_sha1_md);
+    _hidden_sha1_md = NULL;
+    EVP_MD_meth_free(_hidden_sha256_md);
+    _hidden_sha256_md = NULL;
+    EVP_MD_meth_free(_hidden_sha384_md);
+    _hidden_sha384_md = NULL;
+    EVP_MD_meth_free(_hidden_sha512_md);
+    _hidden_sha512_md = NULL;
+}
+static int ossltest_digest_nids(const int **nids)
+{
+    static int digest_nids[6] = { 0, 0, 0, 0, 0, 0 };
+    static int pos = 0;
+    static int init = 0;
+
+    if (!init) {
+        const EVP_MD *md;
+        if ((md = digest_md5()) != NULL)
+            digest_nids[pos++] = EVP_MD_type(md);
+        if ((md = digest_sha1()) != NULL)
+            digest_nids[pos++] = EVP_MD_type(md);
+        if ((md = digest_sha256()) != NULL)
+            digest_nids[pos++] = EVP_MD_type(md);
+        if ((md = digest_sha384()) != NULL)
+            digest_nids[pos++] = EVP_MD_type(md);
+        if ((md = digest_sha512()) != NULL)
+            digest_nids[pos++] = EVP_MD_type(md);
+        digest_nids[pos] = 0;
+        init = 1;
+    }
+    *nids = digest_nids;
+    return pos;
+}
 
 /* Setup ciphers */
 static int ossltest_ciphers(ENGINE *, const EVP_CIPHER **,
@@ -287,6 +364,7 @@ static int ossltest_finish(ENGINE *e)
 
 static int ossltest_destroy(ENGINE *e)
 {
+    destroy_digests();
     ERR_unload_OSSLTEST_strings();
     return 1;
 }
@@ -297,26 +375,24 @@ static int ossltest_digests(ENGINE *e, const EVP_MD **digest,
     int ok = 1;
     if (!digest) {
         /* We are returning a list of supported nids */
-        *nids = ossltest_digest_nids;
-        return (sizeof(ossltest_digest_nids) -
-                1) / sizeof(ossltest_digest_nids[0]);
+        return ossltest_digest_nids(nids);
     }
     /* We are being asked for a specific digest */
     switch (nid) {
     case NID_md5:
-        *digest = &digest_md5;
+        *digest = digest_md5();
         break;
     case NID_sha1:
-        *digest = &digest_sha1;
+        *digest = digest_sha1();
         break;
     case NID_sha256:
-        *digest = &digest_sha256;
+        *digest = digest_sha256();
         break;
     case NID_sha384:
-        *digest = &digest_sha384;
+        *digest = digest_sha384();
         break;
     case NID_sha512:
-        *digest = &digest_sha512;
+        *digest = digest_sha512();
         break;
     default:
         ok = 0;
