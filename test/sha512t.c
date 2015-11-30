@@ -132,7 +132,7 @@ int main(int argc, char **argv)
                          "aaaaaaaa" "aaaaaaaa" "aaaaaaaa" "aaaaaaaa",
                          (1000000 - i) < 288 ? 1000000 - i : 288);
     EVP_DigestFinal_ex(evp, md, NULL);
-    EVP_MD_CTX_cleanup(evp);
+    EVP_MD_CTX_init(evp);
 
     if (memcmp(md, app_c3, sizeof(app_c3))) {
         fflush(stdout);

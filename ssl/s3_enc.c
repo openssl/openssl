@@ -518,7 +518,7 @@ int ssl3_final_finish_mac(SSL *s, const char *sender, int len, unsigned char *p)
 
     ret = EVP_MD_CTX_size(ctx);
     if (ret < 0) {
-        EVP_MD_CTX_cleanup(ctx);
+        EVP_MD_CTX_init(ctx);
         return 0;
     }
 

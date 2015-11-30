@@ -728,7 +728,7 @@ int CMS_SignerInfo_sign(CMS_SignerInfo *si)
         goto err;
     }
 
-    EVP_MD_CTX_cleanup(mctx);
+    EVP_MD_CTX_init(mctx);
 
     ASN1_STRING_set0(si->signature, abuf, siglen);
 
@@ -736,7 +736,7 @@ int CMS_SignerInfo_sign(CMS_SignerInfo *si)
 
  err:
     OPENSSL_free(abuf);
-    EVP_MD_CTX_cleanup(mctx);
+    EVP_MD_CTX_init(mctx);
     return 0;
 
 }
@@ -780,7 +780,7 @@ int CMS_SignerInfo_verify(CMS_SignerInfo *si)
     if (r <= 0)
         CMSerr(CMS_F_CMS_SIGNERINFO_VERIFY, CMS_R_VERIFICATION_FAILURE);
  err:
-    EVP_MD_CTX_cleanup(mctx);
+    EVP_MD_CTX_init(mctx);
     return r;
 }
 
