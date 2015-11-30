@@ -80,8 +80,6 @@ void ENGINE_load_dasync(void);
 static int dasync_digests(ENGINE *e, const EVP_MD **digest,
                           const int **nids, int nid);
 
-static int dasync_digest_nids[] = { NID_sha1, 0 };
-
 static void dummy_pause_job(void);
 
 /* SHA1 */
@@ -90,19 +88,49 @@ static int dasync_sha1_update(EVP_MD_CTX *ctx, const void *data,
                              size_t count);
 static int dasync_sha1_final(EVP_MD_CTX *ctx, unsigned char *md);
 
-static const EVP_MD dasync_sha1 = {
-    NID_sha1,
-    NID_sha1WithRSAEncryption,
-    SHA_DIGEST_LENGTH,
-    EVP_MD_FLAG_DIGALGID_ABSENT,
-    dasync_sha1_init,
-    dasync_sha1_update,
-    dasync_sha1_final,
-    NULL,
-    NULL,
-    SHA_CBLOCK,
-    sizeof(EVP_MD *) + sizeof(SHA_CTX),
-};
+static EVP_MD *_hidden_sha1_md = NULL;
+static const EVP_MD *dasync_sha1(void)
+{
+    if (_hidden_sha1_md == NULL) {
+        EVP_MD *md;
+
+        if ((md = EVP_MD_meth_new(NID_sha1, NID_sha1WithRSAEncryption)) == NULL
+            || !EVP_MD_meth_set_result_size(md, SHA_DIGEST_LENGTH)
+            || !EVP_MD_meth_set_input_blocksize(md, SHA_CBLOCK)
+            || !EVP_MD_meth_set_app_datasize(md,
+                                             sizeof(EVP_MD *) + sizeof(SHA_CTX))
+            || !EVP_MD_meth_set_flags(md, EVP_MD_FLAG_DIGALGID_ABSENT)
+            || !EVP_MD_meth_set_init(md, dasync_sha1_init)
+            || !EVP_MD_meth_set_update(md, dasync_sha1_update)
+            || !EVP_MD_meth_set_final(md, dasync_sha1_final)) {
+            EVP_MD_meth_free(md);
+            md = NULL;
+        }
+        _hidden_sha1_md = md;
+    }
+    return _hidden_sha1_md;
+}
+static void destroy_digests(void)
+{
+    EVP_MD_meth_free(_hidden_sha1_md);
+    _hidden_sha1_md = NULL;
+}
+static int dasync_digest_nids(const int **nids)
+{
+    static int digest_nids[2] = { 0, 0 };
+    static int pos = 0;
+    static int init = 0;
+
+    if (!init) {
+        const EVP_MD *md;
+        if ((md = dasync_sha1()) != NULL)
+            digest_nids[pos++] = EVP_MD_type(md);
+        digest_nids[pos] = 0;
+        init = 1;
+    }
+    *nids = digest_nids;
+    return pos;
+}
 
 /* RSA */
 
@@ -207,6 +235,7 @@ static int dasync_finish(ENGINE *e)
 
 static int dasync_destroy(ENGINE *e)
 {
+    destroy_digests();
     ERR_unload_DASYNC_strings();
     return 1;
 }
@@ -217,14 +246,12 @@ static int dasync_digests(ENGINE *e, const EVP_MD **digest,
     int ok = 1;
     if (!digest) {
         /* We are returning a list of supported nids */
-        *nids = dasync_digest_nids;
-        return (sizeof(dasync_digest_nids) -
-                1) / sizeof(dasync_digest_nids[0]);
+        return dasync_digest_nids(nids);
     }
     /* We are being asked for a specific digest */
     switch (nid) {
     case NID_sha1:
-        *digest = &dasync_sha1;
+        *digest = dasync_sha1();
         break;
     default:
         ok = 0;

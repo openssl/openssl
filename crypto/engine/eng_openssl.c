@@ -111,6 +111,8 @@
 # undef TEST_ENG_OPENSSL_RC4_P_CIPHER
 #endif
 
+static int openssl_destroy(ENGINE *e);
+
 #ifdef TEST_ENG_OPENSSL_RC4
 static int openssl_ciphers(ENGINE *e, const EVP_CIPHER **cipher,
                            const int **nids, int nid);
@@ -144,6 +146,7 @@ static int bind_helper(ENGINE *e)
 {
     if (!ENGINE_set_id(e, engine_openssl_id)
         || !ENGINE_set_name(e, engine_openssl_name)
+        || !ENGINE_set_destroy_function(e, openssl_destroy)
 #ifndef TEST_ENG_OPENSSL_NO_ALGORITHMS
 # ifndef OPENSSL_NO_RSA
         || !ENGINE_set_RSA(e, RSA_get_default_method())
@@ -326,9 +329,7 @@ static int openssl_ciphers(ENGINE *e, const EVP_CIPHER **cipher,
 #ifdef TEST_ENG_OPENSSL_SHA
 /* Much the same sort of comment as for TEST_ENG_OPENSSL_RC4 */
 # include <openssl/sha.h>
-static const int test_digest_nids[] = { NID_sha1 };
 
-static const int test_digest_nids_number = 1;
 static int test_sha1_init(EVP_MD_CTX *ctx)
 {
 # ifdef TEST_ENG_OPENSSL_SHA_P_INIT
@@ -353,31 +354,60 @@ static int test_sha1_final(EVP_MD_CTX *ctx, unsigned char *md)
     return SHA1_Final(md, EVP_MD_CTX_md_data(ctx));
 }
 
-static const EVP_MD test_sha_md = {
-    NID_sha1,
-    NID_sha1WithRSAEncryption,
-    SHA_DIGEST_LENGTH,
-    0,
-    test_sha1_init,
-    test_sha1_update,
-    test_sha1_final,
-    NULL,
-    NULL,
-    SHA_CBLOCK,
-    sizeof(EVP_MD *) + sizeof(SHA_CTX),
-};
+static EVP_MD *sha1_md = NULL;
+static const EVP_MD *test_sha_md(void)
+{
+    if (sha1_md == NULL) {
+        EVP_MD *md;
+
+        if ((md = EVP_MD_meth_new(NID_sha1, NID_sha1WithRSAEncryption)) == NULL
+            || !EVP_MD_meth_set_result_size(md, SHA_DIGEST_LENGTH)
+            || !EVP_MD_meth_set_input_blocksize(md, SHA_CBLOCK)
+            || !EVP_MD_meth_set_app_datasize(md,
+                                             sizeof(EVP_MD *) + sizeof(SHA_CTX))
+            || !EVP_MD_meth_set_flags(md, 0)
+            || !EVP_MD_meth_set_init(md, test_sha1_init)
+            || !EVP_MD_meth_set_update(md, test_sha1_update)
+            || !EVP_MD_meth_set_final(md, test_sha1_final)) {
+            EVP_MD_meth_free(md);
+            md = NULL;
+        }
+        sha1_md = md;
+    }
+    return sha1_md;
+}
+static void test_sha_md_destroy(void)
+{
+    EVP_MD_meth_free(sha1_md);
+    sha1_md = NULL;
+}
+static int test_digest_nids(const int **nids)
+{
+    static int digest_nids[2] = { 0, 0 };
+    static int pos = 0;
+    static int init = 0;
+
+    if (!init) {
+        const EVP_MD *md;
+        if ((md = test_sha_md()) != NULL)
+            digest_nids[pos++] = EVP_MD_type(md);
+        digest_nids[pos] = 0;
+        init = 1;
+    }
+    *nids = digest_nids;
+    return pos;
+}
 
 static int openssl_digests(ENGINE *e, const EVP_MD **digest,
                            const int **nids, int nid)
 {
     if (!digest) {
         /* We are returning a list of supported nids */
-        *nids = test_digest_nids;
-        return test_digest_nids_number;
+        return test_digest_nids(nids);
     }
     /* We are being asked for a specific digest */
     if (nid == NID_sha1)
-        *digest = &test_sha_md;
+        *digest = test_sha_md();
     else {
 # ifdef TEST_ENG_OPENSSL_SHA_OTHERS
         fprintf(stderr, "(TEST_ENG_OPENSSL_SHA) returning NULL for "
@@ -617,3 +647,10 @@ static int ossl_pkey_meths(ENGINE *e, EVP_PKEY_METHOD **pmeth,
 }
 
 #endif
+
+int openssl_destroy(ENGINE *e)
+{
+    test_sha_md_destroy();
+    return 1;
+}
+

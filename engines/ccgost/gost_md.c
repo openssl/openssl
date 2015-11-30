@@ -19,20 +19,35 @@ static int gost_digest_final(EVP_MD_CTX *ctx, unsigned char *md);
 static int gost_digest_copy(EVP_MD_CTX *to, const EVP_MD_CTX *from);
 static int gost_digest_cleanup(EVP_MD_CTX *ctx);
 
-EVP_MD digest_gost = {
-    NID_id_GostR3411_94,
-    NID_undef,
-    32,
-    0,
-    gost_digest_init,
-    gost_digest_update,
-    gost_digest_final,
-    gost_digest_copy,
-    gost_digest_cleanup,
-    32,
-    sizeof(struct ossl_gost_digest_ctx),
-    NULL
-};
+static EVP_MD *_hidden_GostR3411_94_md = NULL;
+EVP_MD *digest_gost(void)
+{
+
+    if (_hidden_GostR3411_94_md == NULL) {
+        EVP_MD *md;
+
+        if ((md = EVP_MD_meth_new(NID_id_GostR3411_94, NID_undef)) == NULL
+            || !EVP_MD_meth_set_result_size(md, 32)
+            || !EVP_MD_meth_set_input_blocksize(md, 32)
+            || !EVP_MD_meth_set_app_datasize(md,
+                                             sizeof(struct ossl_gost_digest_ctx))
+            || !EVP_MD_meth_set_init(md, gost_digest_init)
+            || !EVP_MD_meth_set_update(md, gost_digest_update)
+            || !EVP_MD_meth_set_final(md, gost_digest_final)
+            || !EVP_MD_meth_set_copy(md, gost_digest_copy)
+            || !EVP_MD_meth_set_cleanup(md, gost_digest_cleanup)) {
+            EVP_MD_meth_free(md);
+            md = NULL;
+        }
+        _hidden_GostR3411_94_md = md;
+    }
+    return _hidden_GostR3411_94_md;
+}
+void digest_gost_destroy(void)
+{
+    EVP_MD_meth_free(_hidden_GostR3411_94_md);
+    _hidden_GostR3411_94_md = NULL;
+}
 
 int gost_digest_init(EVP_MD_CTX *ctx)
 {

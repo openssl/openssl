@@ -143,9 +143,11 @@ struct ossl_gost_digest_ctx {
     gost_ctx cctx;
 };
 /* EVP_MD structure for GOST R 34.11 */
-extern EVP_MD digest_gost;
+EVP_MD *digest_gost(void);
+void digest_gost_destroy(void);
 /* EVP_MD structure for GOST 28147 in MAC mode */
-extern EVP_MD imit_gost_cpa;
+EVP_MD *imit_gost_cpa(void);
+void imit_gost_cpa_destroy(void);
 /* Cipher context used for EVP_CIPHER operation */
 struct ossl_gost_cipher_ctx {
     int paramNID;
