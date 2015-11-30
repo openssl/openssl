@@ -153,20 +153,34 @@ static void ocb_block_xor(const unsigned char *in1,
  */
 static OCB_BLOCK *ocb_lookup_l(OCB128_CONTEXT *ctx, size_t idx)
 {
-    if (idx <= ctx->l_index) {
+    size_t l_index = ctx->l_index;
+
+    if (idx <= l_index) {
         return ctx->l + idx;
     }
 
     /* We don't have it - so calculate it */
-    ctx->l_index++;
-    if (ctx->l_index == ctx->max_l_index) {
-        ctx->max_l_index *= 2;
+    if (idx >= ctx->max_l_index) {
+        /*
+         * Each additional entry allows to process almost double as
+         * much data, so that in linear world the table will need to
+         * be expanded with smaller and smaller increments. Originally
+         * it was doubling in size, which was a waste. Growing it
+         * linearly is not formally optimal, but is simpler to implement.
+         * We grow table by minimally required 4*n that would accommodate
+         * the index.
+         */
+        ctx->max_l_index += (idx - ctx->max_l_index + 4) & ~3;
         ctx->l =
             OPENSSL_realloc(ctx->l, ctx->max_l_index * sizeof(OCB_BLOCK));
         if (!ctx->l)
             return NULL;
     }
-    ocb_double(ctx->l + (idx - 1), ctx->l + idx);
+    while (l_index <= idx) {
+        ocb_double(ctx->l + l_index, ctx->l + l_index + 1);
+        l_index++;
+    }
+    ctx->l_index = l_index;
 
     return ctx->l + idx;
 }
@@ -228,7 +242,7 @@ int CRYPTO_ocb128_init(OCB128_CONTEXT *ctx, void *keyenc, void *keydec,
 {
     memset(ctx, 0, sizeof(*ctx));
     ctx->l_index = 0;
-    ctx->max_l_index = 1;
+    ctx->max_l_index = 5;
     ctx->l = OPENSSL_malloc(ctx->max_l_index * 16);
     if (ctx->l == NULL)
         return 0;
@@ -251,6 +265,13 @@ int CRYPTO_ocb128_init(OCB128_CONTEXT *ctx, void *keyenc, void *keydec,
 
     /* L_0 = double(L_$) */
     ocb_double(&ctx->l_dollar, ctx->l);
+
+    /* L_{i} = double(L_{i-1}) */
+    ocb_double(ctx->l, ctx->l+1);
+    ocb_double(ctx->l+1, ctx->l+2);
+    ocb_double(ctx->l+2, ctx->l+3);
+    ocb_double(ctx->l+3, ctx->l+4);
+    ctx->l_index = 4;   /* enough to process up to 496 bytes */
 
     return 1;
 }
@@ -424,13 +445,13 @@ int CRYPTO_ocb128_encrypt(OCB128_CONTEXT *ctx,
         /* C_i = Offset_i xor ENCIPHER(K, P_i xor Offset_i) */
         inblock = (OCB_BLOCK *)(in + ((i - ctx->blocks_processed - 1) * 16));
         ocb_block16_xor(&ctx->offset, inblock, &tmp1);
+        /* Checksum_i = Checksum_{i-1} xor P_i */
+        ocb_block16_xor(&ctx->checksum, inblock, &ctx->checksum);
         ocb_encrypt(ctx, &tmp1, &tmp2, ctx->keyenc);
         outblock =
             (OCB_BLOCK *)(out + ((i - ctx->blocks_processed - 1) * 16));
         ocb_block16_xor(&ctx->offset, &tmp2, outblock);
 
-        /* Checksum_i = Checksum_{i-1} xor P_i */
-        ocb_block16_xor(&ctx->checksum, inblock, &ctx->checksum);
     }
 
     /*
