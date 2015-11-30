@@ -966,7 +966,7 @@ int ssl3_check_client_hello(SSL *s)
 
 int ssl3_get_client_hello(SSL *s)
 {
-    int i, j, ok, al, ret = -1;
+    int i, j, ok, al, ret = -1, cookie_valid = 0;;
     unsigned int cookie_len;
     long n;
     unsigned long id;
@@ -1154,8 +1154,7 @@ int ssl3_get_client_hello(SSL *s)
                 SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, SSL_R_COOKIE_MISMATCH);
                 goto f_err;
             }
-
-            ret = 2;
+            cookie_valid = 1;
         }
 
         p += cookie_len;
@@ -1491,8 +1490,7 @@ int ssl3_get_client_hello(SSL *s)
         }
     }
 
-    if (ret < 0)
-        ret = 1;
+    ret = cookie_valid ? 2 : 1;
     if (0) {
  f_err:
         ssl3_send_alert(s, SSL3_AL_FATAL, al);
@@ -1502,7 +1500,7 @@ int ssl3_get_client_hello(SSL *s)
 
     if (ciphers != NULL)
         sk_SSL_CIPHER_free(ciphers);
-    return (ret);
+    return ret;
 }
 
 int ssl3_send_server_hello(SSL *s)
