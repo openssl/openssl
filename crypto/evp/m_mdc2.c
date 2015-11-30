@@ -68,6 +68,7 @@
 # ifndef OPENSSL_NO_RSA
 #  include <openssl/rsa.h>
 # endif
+# include "internal/evp_int.h"
 
 static int init(EVP_MD_CTX *ctx)
 {

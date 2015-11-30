@@ -60,6 +60,7 @@
 # include <openssl/md5.h>
 # include <openssl/sha.h>
 # include "internal/cryptlib.h"
+# include "internal/evp_int.h"
 # ifndef OPENSSL_NO_RSA
 #  include <openssl/rsa.h>
 # endif
