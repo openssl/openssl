@@ -1321,7 +1321,7 @@ int X509V3_NAME_from_section(X509_NAME *nm, STACK_OF(CONF_VALUE) *dn_sk,
             spec_char = ((*p == os_toascii[':']) || (*p == os_toascii[','])
                     || (*p == os_toascii['.']));
 #endif
-            if (spec_char){
+            if (spec_char) {
                 p++;
                 if (*p)
                     type = p;
@@ -1333,7 +1333,7 @@ int X509V3_NAME_from_section(X509_NAME *nm, STACK_OF(CONF_VALUE) *dn_sk,
 #else
         plus_char = (*type == os_toascii['+']);
 #endif
-        if (plus_char){
+        if (plus_char) {
             mval = -1;
             type++;
         } else

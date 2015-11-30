@@ -1141,7 +1141,7 @@ static int auto_info(X509_REQ *req, STACK_OF(CONF_VALUE) *dn_sk,
             spec_char = ((*p == os_toascii[':']) || (*p == os_toascii[','])
                     || (*p == os_toascii['.']));
 #endif
-            if (spec_char){
+            if (spec_char) {
                 p++;
                 if (*p)
                     type = p;
@@ -1153,7 +1153,7 @@ static int auto_info(X509_REQ *req, STACK_OF(CONF_VALUE) *dn_sk,
 #else
         plus_char = (*p == os_toascii['+']);
 #endif
-        if (plus_char){
+        if (plus_char) {
             p++;
             mval = -1;
         } else

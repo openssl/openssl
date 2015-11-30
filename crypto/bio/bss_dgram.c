@@ -853,7 +853,7 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
 # else
         d_errno = (data->_errno == EAGAIN);
 # endif
-        if (d_errno){
+        if (d_errno) {
             ret = 1;
             data->_errno = 0;
         } else

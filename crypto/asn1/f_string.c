@@ -134,7 +134,7 @@ int a2i_ASN1_STRING(BIO *bp, ASN1_STRING *bs, char *buf, int size)
              */
             spec_char = (!isxdigit(buf[j]));
 #endif
-            if (spec_char){
+            if (spec_char) {
                 i = j;
                 break;
             }
