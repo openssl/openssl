@@ -53,11 +53,6 @@
 
 #ifndef OPENSSL_NO_OCB
 
-union ublock {
-    unsigned char *chrblk;
-    OCB_BLOCK *ocbblk;
-};
-
 /*
  * Calculate the number of binary trailing zero's in any given number
  */
@@ -88,23 +83,18 @@ static void ocb_block_lshift(OCB_BLOCK *in, size_t shift, OCB_BLOCK *out)
     unsigned char shift_mask;
     int i;
     unsigned char mask[15];
-    union ublock locin;
-    union ublock locout;
-
-    locin.ocbblk = in;
-    locout.ocbblk = out;
 
     shift_mask = 0xff;
     shift_mask <<= (8 - shift);
     for (i = 15; i >= 0; i--) {
         if (i > 0) {
-            mask[i - 1] = locin.chrblk[i] & shift_mask;
+            mask[i - 1] = in->c[i] & shift_mask;
             mask[i - 1] >>= 8 - shift;
         }
-        locout.chrblk[i] = locin.chrblk[i] << shift;
+        out->c[i] = in->c[i] << shift;
 
         if (i != 15) {
-            locout.chrblk[i] ^= mask[i];
+            out->c[i] ^= mask[i];
         }
     }
 }
@@ -115,23 +105,18 @@ static void ocb_block_lshift(OCB_BLOCK *in, size_t shift, OCB_BLOCK *out)
 static void ocb_double(OCB_BLOCK *in, OCB_BLOCK *out)
 {
     unsigned char mask;
-    union ublock locin;
-    union ublock locout;
-
-    locin.ocbblk = in;
-    locout.ocbblk = out;
 
     /*
      * Calculate the mask based on the most significant bit. There are more
      * efficient ways to do this - but this way is constant time
      */
-    mask = locin.chrblk[0] & 0x80;
+    mask = in->c[0] & 0x80;
     mask >>= 7;
     mask *= 135;
 
     ocb_block_lshift(in, 1, out);
 
-    locout.chrblk[15] ^= mask;
+    out->c[15] ^= mask;
 }
 
 /*
@@ -191,13 +176,7 @@ static OCB_BLOCK *ocb_lookup_l(OCB128_CONTEXT *ctx, size_t idx)
 static void ocb_encrypt(OCB128_CONTEXT *ctx, OCB_BLOCK *in, OCB_BLOCK *out,
                         void *keyenc)
 {
-    union ublock locin;
-    union ublock locout;
-
-    locin.ocbblk = in;
-    locout.ocbblk = out;
-
-    ctx->encrypt(locin.chrblk, locout.chrblk, keyenc);
+    ctx->encrypt(in->c, out->c, keyenc);
 }
 
 /*
@@ -206,13 +185,7 @@ static void ocb_encrypt(OCB128_CONTEXT *ctx, OCB_BLOCK *in, OCB_BLOCK *out,
 static void ocb_decrypt(OCB128_CONTEXT *ctx, OCB_BLOCK *in, OCB_BLOCK *out,
                         void *keydec)
 {
-    union ublock locin;
-    union ublock locout;
-
-    locin.ocbblk = in;
-    locout.ocbblk = out;
-
-    ctx->decrypt(locin.chrblk, locout.chrblk, keydec);
+    ctx->decrypt(in->c, out->c, keydec);
 }
 
 /*
@@ -305,9 +278,6 @@ int CRYPTO_ocb128_setiv(OCB128_CONTEXT *ctx, const unsigned char *iv,
     unsigned char ktop[16], tmp[16], mask;
     unsigned char stretch[24], nonce[16];
     size_t bottom, shift;
-    union ublock offset;
-
-    offset.ocbblk = &ctx->offset;
 
     /*
      * Spec says IV is 120 bits or fewer - it allows non byte aligned lengths.
@@ -341,7 +311,7 @@ int CRYPTO_ocb128_setiv(OCB128_CONTEXT *ctx, const unsigned char *iv,
                      &ctx->offset);
     mask = 0xff;
     mask <<= 8 - shift;
-    offset.chrblk[15] |=
+    ctx->offset.c[15] |=
         (*(stretch + (bottom / 8) + 16) & mask) >> (8 - shift);
 
     return 1;
@@ -444,13 +414,13 @@ int CRYPTO_ocb128_encrypt(OCB128_CONTEXT *ctx,
 
         /* C_i = Offset_i xor ENCIPHER(K, P_i xor Offset_i) */
         inblock = (OCB_BLOCK *)(in + ((i - ctx->blocks_processed - 1) * 16));
-        ocb_block16_xor(&ctx->offset, inblock, &tmp1);
+        ocb_block16_xor_misaligned(&ctx->offset, inblock, &tmp1);
         /* Checksum_i = Checksum_{i-1} xor P_i */
-        ocb_block16_xor(&ctx->checksum, inblock, &ctx->checksum);
+        ocb_block16_xor_misaligned(&ctx->checksum, inblock, &ctx->checksum);
         ocb_encrypt(ctx, &tmp1, &tmp2, ctx->keyenc);
         outblock =
             (OCB_BLOCK *)(out + ((i - ctx->blocks_processed - 1) * 16));
-        ocb_block16_xor(&ctx->offset, &tmp2, outblock);
+        ocb_block16_xor_misaligned(&ctx->offset, &tmp2, outblock);
 
     }
 
@@ -517,14 +487,14 @@ int CRYPTO_ocb128_decrypt(OCB128_CONTEXT *ctx,
 
         /* P_i = Offset_i xor DECIPHER(K, C_i xor Offset_i) */
         inblock = (OCB_BLOCK *)(in + ((i - ctx->blocks_processed - 1) * 16));
-        ocb_block16_xor(&ctx->offset, inblock, &tmp1);
+        ocb_block16_xor_misaligned(&ctx->offset, inblock, &tmp1);
         ocb_decrypt(ctx, &tmp1, &tmp2, ctx->keydec);
         outblock =
             (OCB_BLOCK *)(out + ((i - ctx->blocks_processed - 1) * 16));
-        ocb_block16_xor(&ctx->offset, &tmp2, outblock);
+        ocb_block16_xor_misaligned(&ctx->offset, &tmp2, outblock);
 
         /* Checksum_i = Checksum_{i-1} xor P_i */
-        ocb_block16_xor(&ctx->checksum, outblock, &ctx->checksum);
+        ocb_block16_xor_misaligned(&ctx->checksum, outblock, &ctx->checksum);
     }
 
     /*

@@ -144,20 +144,19 @@ struct ccm128_context {
 
 #ifndef OPENSSL_NO_OCB
 
-# ifdef STRICT_ALIGNMENT
-typedef struct {
-    unsigned char a[16];
+typedef union {
+    u64 a[2];
+    unsigned char c[16];
 } OCB_BLOCK;
-#  define ocb_block16_xor(in1,in2,out) \
-    ocb_block_xor((in1)->a,(in2)->a,16,(out)->a)
-# else                          /* STRICT_ALIGNMENT */
-typedef struct {
-    u64 a;
-    u64 b;
-} OCB_BLOCK;
-#  define ocb_block16_xor(in1,in2,out) \
-    (out)->a=(in1)->a^(in2)->a; (out)->b=(in1)->b^(in2)->b;
-# endif                         /* STRICT_ALIGNMENT */
+# define ocb_block16_xor(in1,in2,out) \
+    ( (out)->a[0]=(in1)->a[0]^(in2)->a[0], \
+      (out)->a[1]=(in1)->a[1]^(in2)->a[1] )
+# if STRICT_ALIGNMENT
+#  define ocb_block16_xor_misaligned(in1,in2,out) \
+    ocb_block_xor((in1)->c,(in2)->c,16,(out)->c)
+# else
+#  define ocb_block16_xor_misaligned ocb_block16_xor
+# endif
 
 struct ocb128_context {
     /* Need both encrypt and decrypt key schedules for decryption */
