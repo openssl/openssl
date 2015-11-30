@@ -3027,6 +3027,7 @@ end:
  *       point to the resulting session.
  *
  * Returns:
+ *   -2: fatal error, malloc failure.
  *   -1: fatal error, either from parsing or decrypting the ticket.
  *    2: the ticket couldn't be decrypted.
  *    3: a ticket was successfully decrypted and *psess was set.
@@ -3041,19 +3042,21 @@ static int tls_decrypt_ticket(SSL *s, const unsigned char *etick,
     const unsigned char *p;
     int slen, mlen, renew_ticket = 0;
     unsigned char tick_hmac[EVP_MAX_MD_SIZE];
-    HMAC_CTX hctx = HMAC_CTX_EMPTY;
+    HMAC_CTX *hctx = NULL;
     EVP_CIPHER_CTX ctx;
     SSL_CTX *tctx = s->initial_ctx;
     /* Need at least keyname + iv + some encrypted data */
     if (eticklen < 48)
         return 2;
     /* Initialize session ticket encryption and HMAC contexts */
-    HMAC_CTX_init(&hctx);
+    hctx = HMAC_CTX_new();
+    if (hctx == NULL)
+        return -2;
     EVP_CIPHER_CTX_init(&ctx);
     if (tctx->tlsext_ticket_key_cb) {
         unsigned char *nctick = (unsigned char *)etick;
         int rv = tctx->tlsext_ticket_key_cb(s, nctick, nctick + 16,
-                                            &ctx, &hctx, 0);
+                                            &ctx, hctx, 0);
         if (rv < 0)
             return -1;
         if (rv == 0)
@@ -3064,7 +3067,7 @@ static int tls_decrypt_ticket(SSL *s, const unsigned char *etick,
         /* Check key name matches */
         if (memcmp(etick, tctx->tlsext_tick_key_name, 16))
             return 2;
-        if (HMAC_Init_ex(&hctx, tctx->tlsext_tick_hmac_key, 16,
+        if (HMAC_Init_ex(hctx, tctx->tlsext_tick_hmac_key, 16,
                          EVP_sha256(), NULL) <= 0
                 || EVP_DecryptInit_ex(&ctx, EVP_aes_128_cbc(), NULL,
                                       tctx->tlsext_tick_aes_key,
@@ -3076,17 +3079,17 @@ static int tls_decrypt_ticket(SSL *s, const unsigned char *etick,
      * Attempt to process session ticket, first conduct sanity and integrity
      * checks on ticket.
      */
-    mlen = HMAC_size(&hctx);
+    mlen = HMAC_size(hctx);
     if (mlen < 0) {
         goto err;
     }
     eticklen -= mlen;
     /* Check HMAC of encrypted ticket */
-    if (HMAC_Update(&hctx, etick, eticklen) <= 0
-            || HMAC_Final(&hctx, tick_hmac, NULL) <= 0) {
+    if (HMAC_Update(hctx, etick, eticklen) <= 0
+            || HMAC_Final(hctx, tick_hmac, NULL) <= 0) {
         goto err;
     }
-    HMAC_CTX_cleanup(&hctx);
+    HMAC_CTX_free(hctx);
     if (CRYPTO_memcmp(tick_hmac, etick + eticklen, mlen)) {
         EVP_CIPHER_CTX_cleanup(&ctx);
         return 2;
@@ -3135,7 +3138,7 @@ static int tls_decrypt_ticket(SSL *s, const unsigned char *etick,
     return 2;
 err:
     EVP_CIPHER_CTX_cleanup(&ctx);
-    HMAC_CTX_cleanup(&hctx);
+    HMAC_CTX_free(hctx);
     return -1;
 }
 

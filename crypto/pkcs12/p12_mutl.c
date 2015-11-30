@@ -59,7 +59,7 @@
 
 # include <stdio.h>
 # include "internal/cryptlib.h"
-#include <openssl/crypto.h>
+# include <openssl/crypto.h>
 # include <openssl/hmac.h>
 # include <openssl/rand.h>
 # include <openssl/pkcs12.h>
@@ -91,7 +91,7 @@ int PKCS12_gen_mac(PKCS12 *p12, const char *pass, int passlen,
                    unsigned char *mac, unsigned int *maclen)
 {
     const EVP_MD *md_type;
-    HMAC_CTX hmac = HMAC_CTX_EMPTY;
+    HMAC_CTX *hmac = NULL;
     unsigned char key[EVP_MAX_MD_SIZE], *salt;
     int saltlen, iter;
     int md_size = 0;
@@ -133,15 +133,15 @@ int PKCS12_gen_mac(PKCS12 *p12, const char *pass, int passlen,
         PKCS12err(PKCS12_F_PKCS12_GEN_MAC, PKCS12_R_KEY_GEN_ERROR);
         return 0;
     }
-    HMAC_CTX_init(&hmac);
-    if (!HMAC_Init_ex(&hmac, key, md_size, md_type, NULL)
-        || !HMAC_Update(&hmac, p12->authsafes->d.data->data,
+    hmac = HMAC_CTX_new();
+    if (!HMAC_Init_ex(hmac, key, md_size, md_type, NULL)
+        || !HMAC_Update(hmac, p12->authsafes->d.data->data,
                         p12->authsafes->d.data->length)
-        || !HMAC_Final(&hmac, mac, maclen)) {
-        HMAC_CTX_cleanup(&hmac);
+        || !HMAC_Final(hmac, mac, maclen)) {
+        HMAC_CTX_free(hmac);
         return 0;
     }
-    HMAC_CTX_cleanup(&hmac);
+    HMAC_CTX_free(hmac);
     return 1;
 }
 

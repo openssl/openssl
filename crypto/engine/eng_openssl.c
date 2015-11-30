@@ -450,7 +450,7 @@ static EVP_PKEY *openssl_load_privkey(ENGINE *eng, const char *key_id,
 typedef struct {
     const EVP_MD *md;           /* MD for HMAC use */
     ASN1_OCTET_STRING ktmp;     /* Temp storage for key */
-    HMAC_CTX ctx;
+    HMAC_CTX *ctx;
 } OSSL_HMAC_PKEY_CTX;
 
 static int ossl_hmac_init(EVP_PKEY_CTX *ctx)
@@ -461,7 +461,7 @@ static int ossl_hmac_init(EVP_PKEY_CTX *ctx)
     if (hctx == NULL)
         return 0;
     hctx->ktmp.type = V_ASN1_OCTET_STRING;
-    HMAC_CTX_init(&hctx->ctx);
+    hctx->ctx = HMAC_CTX_new();
     EVP_PKEY_CTX_set_data(ctx, hctx);
     EVP_PKEY_CTX_set0_keygen_info(ctx, NULL, 0);
 # ifdef TEST_ENG_OPENSSL_HMAC_INIT
@@ -478,9 +478,7 @@ static int ossl_hmac_copy(EVP_PKEY_CTX *dst, EVP_PKEY_CTX *src)
     sctx = EVP_PKEY_CTX_get_data(src);
     dctx = EVP_PKEY_CTX_get_data(dst);
     dctx->md = sctx->md;
-    /* Because HMAC_CTX_copy does HMAC_CTX_init */
-    HMAC_CTX_cleanup(&dctx->ctx);
-    if (!HMAC_CTX_copy(&dctx->ctx, &sctx->ctx))
+    if (!HMAC_CTX_copy(dctx->ctx, sctx->ctx))
         return 0;
     if (sctx->ktmp.data) {
         if (!ASN1_OCTET_STRING_set(&dctx->ktmp,
@@ -494,7 +492,7 @@ static void ossl_hmac_cleanup(EVP_PKEY_CTX *ctx)
 {
     OSSL_HMAC_PKEY_CTX *hctx = EVP_PKEY_CTX_get_data(ctx);
 
-    HMAC_CTX_cleanup(&hctx->ctx);
+    HMAC_CTX_free(hctx->ctx);
     OPENSSL_clear_free(hctx->ktmp.data, hctx->ktmp.length);
     OPENSSL_free(hctx);
 }
@@ -515,8 +513,8 @@ static int ossl_hmac_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
 
 static int ossl_int_update(EVP_MD_CTX *ctx, const void *data, size_t count)
 {
-    OSSL_HMAC_PKEY_CTX *hctx = EVP_PKEY_CTX_get_data(ctx->pctx);
-    if (!HMAC_Update(&hctx->ctx, data, count))
+    OSSL_HMAC_PKEY_CTX *hctx = EVP_PKEY_CTX_get_data(EVP_MD_CTX_pkey_ctx(ctx));
+    if (!HMAC_Update(hctx->ctx, data, count))
         return 0;
     return 1;
 }
@@ -524,7 +522,7 @@ static int ossl_int_update(EVP_MD_CTX *ctx, const void *data, size_t count)
 static int ossl_hmac_signctx_init(EVP_PKEY_CTX *ctx, EVP_MD_CTX *mctx)
 {
     EVP_MD_CTX_set_flags(mctx, EVP_MD_CTX_FLAG_NO_INIT);
-    mctx->update = ossl_int_update;
+    EVP_MD_CTX_set_update_fn(mctx, ossl_int_update);
     return 1;
 }
 
@@ -541,7 +539,7 @@ static int ossl_hmac_signctx(EVP_PKEY_CTX *ctx, unsigned char *sig,
     if (!sig)
         return 1;
 
-    if (!HMAC_Final(&hctx->ctx, sig, &hlen))
+    if (!HMAC_Final(hctx->ctx, sig, &hlen))
         return 0;
     *siglen = (size_t)hlen;
     return 1;
@@ -568,7 +566,7 @@ static int ossl_hmac_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
     case EVP_PKEY_CTRL_DIGESTINIT:
         pk = EVP_PKEY_CTX_get0_pkey(ctx);
         key = EVP_PKEY_get0(pk);
-        if (!HMAC_Init_ex(&hctx->ctx, key->data, key->length, hctx->md, NULL))
+        if (!HMAC_Init_ex(hctx->ctx, key->data, key->length, hctx->md, NULL))
             return 0;
         break;
 

@@ -1298,24 +1298,28 @@ int speed_main(int argc, char **argv)
 
 #if !defined(OPENSSL_NO_MD5)
     if (doit[D_HMAC]) {
-        HMAC_CTX hctx = HMAC_CTX_EMPTY;
+        HMAC_CTX *hctx = NULL;
 
-        HMAC_CTX_init(&hctx);
-        HMAC_Init_ex(&hctx, (unsigned char *)"This is a key...",
+        hctx = HMAC_CTX_new();
+        if (hctx == NULL) {
+            BIO_printf(bio_err, "HMAC malloc failure, exiting...");
+            exit(1);
+        }
+        HMAC_Init_ex(hctx, (unsigned char *)"This is a key...",
                      16, EVP_md5(), NULL);
 
         for (j = 0; j < SIZE_NUM; j++) {
             print_message(names[D_HMAC], c[D_HMAC][j], lengths[j]);
             Time_F(START);
             for (count = 0, run = 1; COND(c[D_HMAC][j]); count++) {
-                HMAC_Init_ex(&hctx, NULL, 0, NULL, NULL);
-                HMAC_Update(&hctx, buf, lengths[j]);
-                HMAC_Final(&hctx, &(hmac[0]), NULL);
+                HMAC_Init_ex(hctx, NULL, 0, NULL, NULL);
+                HMAC_Update(hctx, buf, lengths[j]);
+                HMAC_Final(hctx, &(hmac[0]), NULL);
             }
             d = Time_F(STOP);
             print_result(D_HMAC, j, count, d);
         }
-        HMAC_CTX_cleanup(&hctx);
+        HMAC_CTX_free(hctx);
     }
 #endif
     if (doit[D_SHA1]) {
