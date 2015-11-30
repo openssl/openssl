@@ -61,6 +61,7 @@
 #include <string.h>
 #include "internal/cryptlib.h"
 #include <openssl/hmac.h>
+#include "hmac_lcl.h"
 
 int HMAC_Init_ex(HMAC_CTX *ctx, const void *key, int len,
                  const EVP_MD *md, ENGINE *impl)
@@ -163,6 +164,30 @@ int HMAC_Final(HMAC_CTX *ctx, unsigned char *md, unsigned int *len)
     return 0;
 }
 
+size_t HMAC_size(HMAC_CTX *ctx)
+{
+    return EVP_MD_size((ctx)->md);
+}
+
+HMAC_CTX *HMAC_CTX_new(void)
+{
+    HMAC_CTX *ctx = (HMAC_CTX *)OPENSSL_zalloc(sizeof(HMAC_CTX));
+    if (ctx)
+        if (!HMAC_CTX_init(ctx)) {
+            HMAC_CTX_free(ctx);
+            ctx = NULL;
+        }
+    return ctx;
+}
+
+void HMAC_CTX_free(HMAC_CTX *ctx)
+{
+    if (ctx != NULL) {
+        HMAC_CTX_cleanup(ctx);
+        OPENSSL_free(ctx);
+    }
+}
+
 int HMAC_CTX_init(HMAC_CTX *ctx)
 {
     if (ctx->i_ctx == NULL)
@@ -221,22 +246,23 @@ unsigned char *HMAC(const EVP_MD *evp_md, const void *key, int key_len,
                     const unsigned char *d, size_t n, unsigned char *md,
                     unsigned int *md_len)
 {
-    HMAC_CTX c = HMAC_CTX_EMPTY;
+    HMAC_CTX *c = NULL;
     static unsigned char m[EVP_MAX_MD_SIZE];
 
     if (md == NULL)
         md = m;
-    HMAC_CTX_init(&c);
-    if (!HMAC_Init_ex(&c, key, key_len, evp_md, NULL))
+    if ((c = HMAC_CTX_new()) == NULL)
         goto err;
-    if (!HMAC_Update(&c, d, n))
+    if (!HMAC_Init_ex(c, key, key_len, evp_md, NULL))
         goto err;
-    if (!HMAC_Final(&c, md, md_len))
+    if (!HMAC_Update(c, d, n))
         goto err;
-    HMAC_CTX_cleanup(&c);
+    if (!HMAC_Final(c, md, md_len))
+        goto err;
+    HMAC_CTX_free(c);
     return md;
  err:
-    HMAC_CTX_cleanup(&c);
+    HMAC_CTX_free(c);
     return NULL;
 }
 
