@@ -406,7 +406,9 @@
 # define SSL_MD_GOST89MAC12_IDX 7
 # define SSL_MD_GOST12_512_IDX  8
 # define SSL_MD_MD5_SHA1_IDX 9
-# define SSL_MAX_DIGEST 10
+# define SSL_MD_SHA224_IDX 10
+# define SSL_MD_SHA512_IDX 11
+# define SSL_MAX_DIGEST 12
 
 /* Bits for algorithm2 (handshake digests and other extra flags) */
 
@@ -2139,6 +2141,7 @@ __owur int ssl_add_serverhello_use_srtp_ext(SSL *s, unsigned char *p, int *len,
 __owur int ssl_parse_serverhello_use_srtp_ext(SSL *s, PACKET *pkt, int *al);
 
 __owur int ssl_handshake_hash(SSL *s, unsigned char *out, int outlen);
+__owur const EVP_MD *ssl_md(int idx);
 __owur const EVP_MD *ssl_handshake_md(SSL *s);
 __owur const EVP_MD *ssl_prf_md(SSL *s);
 

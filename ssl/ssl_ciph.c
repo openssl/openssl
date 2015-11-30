@@ -230,11 +230,13 @@ static const ssl_cipher_table ssl_cipher_table_mac[SSL_MD_NUM_IDX] = {
     {SSL_GOST12_256, NID_id_GostR3411_2012_256},  /* SSL_MD_GOST12_256_IDX 6 */
     {SSL_GOST89MAC12, NID_gost_mac_12},           /* SSL_MD_GOST89MAC12_IDX 7 */
     {SSL_GOST12_512, NID_id_GostR3411_2012_512},  /* SSL_MD_GOST12_512_IDX 8 */
-    {0, NID_md5_sha1}           /* SSL_MD_MD5_SHA1_IDX 9 */
+    {0, NID_md5_sha1},          /* SSL_MD_MD5_SHA1_IDX 9 */
+    {0, NID_sha224},            /* SSL_MD_SHA224_IDX 10 */
+    {0, NID_sha512}             /* SSL_MD_SHA512_IDX 11 */
 };
 
 static const EVP_MD *ssl_digest_methods[SSL_MD_NUM_IDX] = {
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL
 };
 
 /* Utility function for table lookup */
@@ -712,7 +714,7 @@ int ssl_cipher_get_evp(const SSL_SESSION *s, const EVP_CIPHER **enc,
         return (0);
 }
 
-static const EVP_MD *ssl_cipher_table_idx(int idx)
+const EVP_MD *ssl_md(int idx)
 {
     idx &= SSL_HANDSHAKE_MAC_MASK;
     if (idx < 0 || idx >= SSL_MD_NUM_IDX)
@@ -722,12 +724,12 @@ static const EVP_MD *ssl_cipher_table_idx(int idx)
 
 const EVP_MD *ssl_handshake_md(SSL *s)
 {
-    return ssl_cipher_table_idx(ssl_get_algorithm2(s));
+    return ssl_md(ssl_get_algorithm2(s));
 }
 
 const EVP_MD *ssl_prf_md(SSL *s)
 {
-    return ssl_cipher_table_idx(ssl_get_algorithm2(s) >> TLS1_PRF_DGST_SHIFT);
+    return ssl_md(ssl_get_algorithm2(s) >> TLS1_PRF_DGST_SHIFT);
 }
 
 #define ITEM_SEP(a) \
