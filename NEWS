@@ -7,7 +7,8 @@
 
   Major changes between OpenSSL 1.0.0s and OpenSSL 1.0.0t [under development]
 
-      o
+      o X509_ATTRIBUTE memory leak (CVE-2015-3195)
+      o Race condition handling PSK identify hint (CVE-2015-3196)
 
   Major changes between OpenSSL 1.0.0r and OpenSSL 1.0.0s [11 Jun 2015]
 

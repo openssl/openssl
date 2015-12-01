@@ -4,7 +4,26 @@
 
  Changes between 1.0.0s and 1.0.0t [xx XXX xxxx]
 
-  *)
+  *) X509_ATTRIBUTE memory leak
+
+     When presented with a malformed X509_ATTRIBUTE structure OpenSSL will leak
+     memory. This structure is used by the PKCS#7 and CMS routines so any
+     application which reads PKCS#7 or CMS data from untrusted sources is
+     affected. SSL/TLS is not affected.
+
+     This issue was reported to OpenSSL by Adam Langley (Google/BoringSSL) using
+     libFuzzer.
+     (CVE-2015-3195)
+     [Stephen Henson]
+
+  *) Race condition handling PSK identify hint
+
+     If PSK identity hints are received by a multi-threaded client then
+     the values are wrongly updated in the parent SSL_CTX structure. This can
+     result in a race condition potentially leading to a double free of the
+     identify hint data.
+     (CVE-2015-3196)
+     [Stephen Henson]
 
  Changes between 1.0.0r and 1.0.0s [11 Jun 2015]
 
