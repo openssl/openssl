@@ -9,6 +9,28 @@
      exchange. The LOW ciphers currently doesn't have any ciphers in it.
      [Kurt Roeckx]
 
+  *) Make EVP_MD_CTX, EVP_MD and HMAC_CTX opaque.  For HMAC_CTX, the
+     following constructors and destructors were added:
+
+        HMAC_CTX *HMAC_CTX_new(void);
+        void HMAC_CTX_free(HMAC_CTX *ctx);
+
+     For EVP_MD, a complete API to create, fill and destroy such
+     methods has been added.  See EVP_MD_meth_new(3) for
+     documentation.
+
+     Additional changes:
+     1) HMAC_CTX_cleanup() and EVP_MD_CTX_cleanup() were removed,
+        HMAC_CTX_init() and EVP_MD_CTX_init() should be called instead
+        to reinitialise and already created structure.  Also,
+        HMAC_CTX_init() and EVP_MD_CTX_init() now return 0 for failure
+        and 1 for success (they previously had the return type void).
+     2) For consistency with the majority of our object creators and
+        destructors, EVP_MD_CTX_(create|destroy) were renamed to
+        EVP_MD_CTX_(new|free).  The old names are retained as macros
+        for deprecated builds.
+     [Richard Levitte]
+
   *) Added ASYNC support. Libcrypto now includes the async sub-library to enable
      cryptographic operations to be performed asynchronously as long as an
      asynchronous capable engine is used. See the ASYNC_start_job() man page for
