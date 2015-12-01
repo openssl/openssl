@@ -571,8 +571,7 @@ void BIO_set_md(BIO *, const EVP_MD *md);
 # define EVP_delete_digest_alias(alias) \
         OBJ_NAME_remove(alias,OBJ_NAME_TYPE_MD_METH|OBJ_NAME_ALIAS);
 
-void EVP_MD_CTX_init(EVP_MD_CTX *ctx);
-int EVP_MD_CTX_cleanup(EVP_MD_CTX *ctx);
+int EVP_MD_CTX_init(EVP_MD_CTX *ctx);
 int EVP_MD_CTX_ctrl(EVP_MD_CTX *ctx, int cmd, int p1, void *p2);
 EVP_MD_CTX *EVP_MD_CTX_create(void);
 void EVP_MD_CTX_destroy(EVP_MD_CTX *ctx);
