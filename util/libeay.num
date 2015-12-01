@@ -2066,7 +2066,7 @@ KRB5_APREQBODY_new                      2626	NOEXIST::FUNCTION:
 X509V3_EXT_REQ_add_nconf                2627	EXIST::FUNCTION:
 ENGINE_ctrl_cmd_string                  2628	EXIST::FUNCTION:ENGINE
 i2d_OCSP_RESPDATA                       2629	EXIST::FUNCTION:
-EVP_MD_CTX_init                         2630	EXIST::FUNCTION:
+EVP_MD_CTX_reset                        2630	EXIST::FUNCTION:
 EXTENDED_KEY_USAGE_free                 2631	EXIST::FUNCTION:
 PKCS7_ATTR_SIGN_it                      2632	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:
 PKCS7_ATTR_SIGN_it                      2632	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:
@@ -2162,7 +2162,7 @@ ENGINE_load_builtin_engines             2708	EXIST::FUNCTION:ENGINE
 i2d_OCSP_ONEREQ                         2709	EXIST::FUNCTION:
 OCSP_REQUEST_add_ext                    2710	EXIST::FUNCTION:
 OCSP_RESPBYTES_new                      2711	EXIST::FUNCTION:
-EVP_MD_CTX_create                       2712	EXIST::FUNCTION:
+EVP_MD_CTX_new                          2712	EXIST::FUNCTION:
 OCSP_resp_find_status                   2713	EXIST::FUNCTION:
 X509_ALGOR_it                           2714	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:
 X509_ALGOR_it                           2714	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:
@@ -2427,7 +2427,7 @@ BASIC_CONSTRAINTS_it                    2922	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIA
 BASIC_CONSTRAINTS_it                    2922	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:
 BN_mod_add_quick                        2923	EXIST::FUNCTION:
 EC_POINT_new                            2924	EXIST::FUNCTION:EC
-EVP_MD_CTX_destroy                      2925	EXIST::FUNCTION:
+EVP_MD_CTX_free                         2925	EXIST::FUNCTION:
 OCSP_RESPBYTES_free                     2926	EXIST::FUNCTION:
 EVP_aes_128_cbc                         2927	EXIST::FUNCTION:AES
 OCSP_SINGLERESP_get1_ext_d2i            2928	EXIST::FUNCTION:
