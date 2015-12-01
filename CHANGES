@@ -4,7 +4,17 @@
 
  Changes between 0.9.8zg and 0.9.8zh [xx XXX xxxx]
 
-  *)
+  *) X509_ATTRIBUTE memory leak
+
+     When presented with a malformed X509_ATTRIBUTE structure OpenSSL will leak
+     memory. This structure is used by the PKCS#7 and CMS routines so any
+     application which reads PKCS#7 or CMS data from untrusted sources is
+     affected. SSL/TLS is not affected.
+
+     This issue was reported to OpenSSL by Adam Langley (Google/BoringSSL) using
+     libFuzzer.
+     (CVE-2015-3195)
+     [Stephen Henson]
 
  Changes between 0.9.8zf and 0.9.8zg [11 Jun 2015]
 

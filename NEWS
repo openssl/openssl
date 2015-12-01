@@ -7,7 +7,7 @@
 
   Major changes between OpenSSL 0.9.8zg and OpenSSL 0.9.8zh [under development]
 
-      o
+      o X509_ATTRIBUTE memory leak (CVE-2015-3195)
 
   Major changes between OpenSSL 0.9.8zf and OpenSSL 0.9.8zg [11 Jun 2015]
 
