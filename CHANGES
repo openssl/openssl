@@ -4,6 +4,33 @@
 
  Changes between 1.0.1p and 1.0.1q [xx XXX xxxx]
 
+  *) Certificate verify crash with missing PSS parameter
+
+     The signature verification routines will crash with a NULL pointer
+     dereference if presented with an ASN.1 signature using the RSA PSS
+     algorithm and absent mask generation function parameter. Since these
+     routines are used to verify certificate signature algorithms this can be
+     used to crash any certificate verification operation and exploited in a
+     DoS attack. Any application which performs certificate verification is
+     vulnerable including OpenSSL clients and servers which enable client
+     authentication.
+
+     This issue was reported to OpenSSL by Loïc Jonas Etienne (Qnective AG).
+     (CVE-2015-3194)
+     [Stephen Henson]
+
+  *) X509_ATTRIBUTE memory leak
+
+     When presented with a malformed X509_ATTRIBUTE structure OpenSSL will leak
+     memory. This structure is used by the PKCS#7 and CMS routines so any
+     application which reads PKCS#7 or CMS data from untrusted sources is
+     affected. SSL/TLS is not affected.
+
+     This issue was reported to OpenSSL by Adam Langley (Google/BoringSSL) using
+     libFuzzer.
+     (CVE-2015-3195)
+     [Stephen Henson]
+
   *) Rewrite EVP_DecodeUpdate (base64 decoding) to fix several bugs.
      This changes the decoding behaviour for some invalid messages,
      though the change is mostly in the more lenient direction, and
@@ -13,9 +40,6 @@
   *) In DSA_generate_parameters_ex, if the provided seed is too short,
      return an error
      [Rich Salz and Ismo Puustinen <ismo.puustinen@intel.com>]
-
-  *) Rewrite PSK to support ECDHE_PSK, DHE_PSK and RSA_PSK. Add ciphersuites
-     from RFC4279, RFC4785, RFC5487, RFC5489.
 
  Changes between 1.0.1o and 1.0.1p [9 Jul 2015]
 
@@ -30,10 +54,19 @@
 
      This issue was reported to OpenSSL by Adam Langley/David Benjamin
      (Google/BoringSSL).
+     (CVE-2015-1793)
      [Matt Caswell]
 
- Changes between 1.0.1n and 1.0.1o [12 Jun 2015]
+  *) Race condition handling PSK identify hint
 
+     If PSK identity hints are received by a multi-threaded client then
+     the values are wrongly updated in the parent SSL_CTX structure. This can
+     result in a race condition potentially leading to a double free of the
+     identify hint data.
+     (CVE-2015-3196)
+     [Stephen Henson]
+
+ Changes between 1.0.1n and 1.0.1o [12 Jun 2015]
   *) Fix HMAC ABI incompatibility. The previous version introduced an ABI
      incompatibility in the handling of HMAC. The previous ABI has now been
      restored.
