@@ -71,15 +71,6 @@ struct evp_md_ctx_st {
     int (*update) (EVP_MD_CTX *ctx, const void *data, size_t count);
 } /* EVP_MD_CTX */ ;
 
-# define M_EVP_MD_size(e)                ((e)->md_size)
-# define M_EVP_MD_block_size(e)          ((e)->block_size)
-# define M_EVP_MD_CTX_set_flags(ctx,flgs) ((ctx)->flags|=(flgs))
-# define M_EVP_MD_CTX_clear_flags(ctx,flgs) ((ctx)->flags&=~(flgs))
-# define M_EVP_MD_CTX_test_flags(ctx,flgs) ((ctx)->flags&(flgs))
-# define M_EVP_MD_type(e)                        ((e)->type)
-# define M_EVP_MD_CTX_type(e)            M_EVP_MD_type(M_EVP_MD_CTX_md(e))
-# define M_EVP_MD_CTX_md(e)                      ((e)->digest)
-
 /* Macros to code block cipher wrappers */
 
 /* Wrapper functions for each cipher mode */
