@@ -100,7 +100,7 @@ static int md_new(BIO *bi)
 {
     EVP_MD_CTX *ctx;
 
-    ctx = EVP_MD_CTX_create();
+    ctx = EVP_MD_CTX_new();
     if (ctx == NULL)
         return (0);
 
@@ -114,7 +114,7 @@ static int md_free(BIO *a)
 {
     if (a == NULL)
         return (0);
-    EVP_MD_CTX_destroy(a->ptr);
+    EVP_MD_CTX_free(a->ptr);
     a->ptr = NULL;
     a->init = 0;
     a->flags = 0;

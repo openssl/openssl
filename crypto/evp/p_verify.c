@@ -76,7 +76,7 @@ int EVP_VerifyFinal(EVP_MD_CTX *ctx, const unsigned char *sigbuf,
             goto err;
     } else {
         int rv = 0;
-        EVP_MD_CTX *tmp_ctx = EVP_MD_CTX_create();
+        EVP_MD_CTX *tmp_ctx = EVP_MD_CTX_new();
         if (tmp_ctx == NULL) {
             EVPerr(EVP_F_EVP_VERIFYFINAL, ERR_R_MALLOC_FAILURE);
             return 0;
@@ -84,7 +84,7 @@ int EVP_VerifyFinal(EVP_MD_CTX *ctx, const unsigned char *sigbuf,
         rv = EVP_MD_CTX_copy_ex(tmp_ctx, ctx);
         if (rv)
             rv = EVP_DigestFinal_ex(tmp_ctx, m, &m_len);
-        EVP_MD_CTX_destroy(tmp_ctx);
+        EVP_MD_CTX_free(tmp_ctx);
         if (!rv)
             return 0;
     }

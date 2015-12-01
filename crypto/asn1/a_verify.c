@@ -77,7 +77,7 @@
 int ASN1_verify(i2d_of_void *i2d, X509_ALGOR *a, ASN1_BIT_STRING *signature,
                 char *data, EVP_PKEY *pkey)
 {
-    EVP_MD_CTX *ctx = EVP_MD_CTX_create();
+    EVP_MD_CTX *ctx = EVP_MD_CTX_new();
     const EVP_MD *type;
     unsigned char *p, *buf_in = NULL;
     int ret = -1, i, inl;
@@ -126,7 +126,7 @@ int ASN1_verify(i2d_of_void *i2d, X509_ALGOR *a, ASN1_BIT_STRING *signature,
     }
     ret = 1;
  err:
-    EVP_MD_CTX_destroy(ctx);
+    EVP_MD_CTX_free(ctx);
     return (ret);
 }
 
@@ -151,7 +151,7 @@ int ASN1_item_verify(const ASN1_ITEM *it, X509_ALGOR *a,
         return -1;
     }
 
-    ctx = EVP_MD_CTX_create();
+    ctx = EVP_MD_CTX_new();
     if (ctx == NULL) {
         ASN1err(ASN1_F_ASN1_ITEM_VERIFY, ERR_R_MALLOC_FAILURE);
         goto err;
@@ -225,6 +225,6 @@ int ASN1_item_verify(const ASN1_ITEM *it, X509_ALGOR *a,
     }
     ret = 1;
  err:
-    EVP_MD_CTX_destroy(ctx);
+    EVP_MD_CTX_free(ctx);
     return (ret);
 }

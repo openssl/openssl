@@ -93,7 +93,7 @@ int PEM_SealInit(PEM_ENCODE_SEAL_CTX *ctx, EVP_CIPHER *type, EVP_MD *md_type,
 
     EVP_EncodeInit(&ctx->encode);
 
-    ctx->md = EVP_MD_CTX_create();
+    ctx->md = EVP_MD_CTX_new();
     if (!EVP_SignInit(ctx->md, md_type))
         goto err;
 
@@ -178,7 +178,7 @@ int PEM_SealFinal(PEM_ENCODE_SEAL_CTX *ctx, unsigned char *sig, int *sigl,
 
     ret = 1;
  err:
-    EVP_MD_CTX_destroy(ctx->md);
+    EVP_MD_CTX_free(ctx->md);
     EVP_CIPHER_CTX_cleanup(&ctx->cipher);
     OPENSSL_free(s);
     return (ret);

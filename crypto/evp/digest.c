@@ -345,7 +345,7 @@ int EVP_Digest(const void *data, size_t count,
                unsigned char *md, unsigned int *size, const EVP_MD *type,
                ENGINE *impl)
 {
-    EVP_MD_CTX *ctx = EVP_MD_CTX_create();
+    EVP_MD_CTX *ctx = EVP_MD_CTX_new();
     int ret;
 
     if (ctx == NULL)
@@ -354,7 +354,7 @@ int EVP_Digest(const void *data, size_t count,
     ret = EVP_DigestInit_ex(ctx, type, impl)
         && EVP_DigestUpdate(ctx, data, count)
         && EVP_DigestFinal_ex(ctx, md, size);
-    EVP_MD_CTX_destroy(ctx);
+    EVP_MD_CTX_free(ctx);
 
     return ret;
 }

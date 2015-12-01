@@ -551,7 +551,7 @@ static int ts_compute_imprint(BIO *data, TS_TST_INFO *tst_info,
         goto err;
     }
 
-    md_ctx = EVP_MD_CTX_create();
+    md_ctx = EVP_MD_CTX_new();
     if (md_ctx == NULL) {
         TSerr(TS_F_TS_COMPUTE_IMPRINT, ERR_R_MALLOC_FAILURE);
         goto err;
@@ -564,11 +564,11 @@ static int ts_compute_imprint(BIO *data, TS_TST_INFO *tst_info,
     }
     if (!EVP_DigestFinal(md_ctx, *imprint, NULL))
         goto err;
-    EVP_MD_CTX_destroy(md_ctx);
+    EVP_MD_CTX_free(md_ctx);
 
     return 1;
  err:
-    EVP_MD_CTX_destroy(md_ctx);
+    EVP_MD_CTX_free(md_ctx);
     X509_ALGOR_free(*md_alg);
     OPENSSL_free(*imprint);
     *imprint_len = 0;

@@ -158,7 +158,7 @@ int EVP_DigestSignFinal(EVP_MD_CTX *ctx, unsigned char *sigret,
             else
                 r = EVP_DigestFinal_ex(ctx, md, &mdlen);
         } else {
-            EVP_MD_CTX *tmp_ctx = EVP_MD_CTX_create();
+            EVP_MD_CTX *tmp_ctx = EVP_MD_CTX_new();
             if (tmp_ctx == NULL || !EVP_MD_CTX_copy_ex(tmp_ctx, ctx))
                 return 0;
             if (sctx)
@@ -166,7 +166,7 @@ int EVP_DigestSignFinal(EVP_MD_CTX *ctx, unsigned char *sigret,
                                                   sigret, siglen, tmp_ctx);
             else
                 r = EVP_DigestFinal_ex(tmp_ctx, md, &mdlen);
-            EVP_MD_CTX_destroy(tmp_ctx);
+            EVP_MD_CTX_free(tmp_ctx);
         }
         if (sctx || !r)
             return r;
@@ -203,7 +203,7 @@ int EVP_DigestVerifyFinal(EVP_MD_CTX *ctx, const unsigned char *sig,
         } else
             r = EVP_DigestFinal_ex(ctx, md, &mdlen);
     } else {
-        EVP_MD_CTX *tmp_ctx = EVP_MD_CTX_create();
+        EVP_MD_CTX *tmp_ctx = EVP_MD_CTX_new();
         if (tmp_ctx == NULL || !EVP_MD_CTX_copy_ex(tmp_ctx, ctx))
             return -1;
         if (vctx) {
@@ -211,7 +211,7 @@ int EVP_DigestVerifyFinal(EVP_MD_CTX *ctx, const unsigned char *sig,
                                                 sig, siglen, tmp_ctx);
         } else
             r = EVP_DigestFinal_ex(tmp_ctx, md, &mdlen);
-        EVP_MD_CTX_destroy(tmp_ctx);
+        EVP_MD_CTX_free(tmp_ctx);
     }
     if (vctx || !r)
         return r;

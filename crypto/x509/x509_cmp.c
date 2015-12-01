@@ -82,7 +82,7 @@ int X509_issuer_and_serial_cmp(const X509 *a, const X509 *b)
 unsigned long X509_issuer_and_serial_hash(X509 *a)
 {
     unsigned long ret = 0;
-    EVP_MD_CTX *ctx = EVP_MD_CTX_create();
+    EVP_MD_CTX *ctx = EVP_MD_CTX_new();
     unsigned char md[16];
     char *f;
 
@@ -104,7 +104,7 @@ unsigned long X509_issuer_and_serial_hash(X509 *a)
            ((unsigned long)md[2] << 16L) | ((unsigned long)md[3] << 24L)
         ) & 0xffffffffL;
  err:
-    EVP_MD_CTX_destroy(ctx);
+    EVP_MD_CTX_free(ctx);
     return (ret);
 }
 #endif
@@ -249,7 +249,7 @@ unsigned long X509_NAME_hash(X509_NAME *x)
 
 unsigned long X509_NAME_hash_old(X509_NAME *x)
 {
-    EVP_MD_CTX *md_ctx = EVP_MD_CTX_create();
+    EVP_MD_CTX *md_ctx = EVP_MD_CTX_new();
     unsigned long ret = 0;
     unsigned char md[16];
 
@@ -265,7 +265,7 @@ unsigned long X509_NAME_hash_old(X509_NAME *x)
         ret = (((unsigned long)md[0]) | ((unsigned long)md[1] << 8L) |
                ((unsigned long)md[2] << 16L) | ((unsigned long)md[3] << 24L)
             ) & 0xffffffffL;
-    EVP_MD_CTX_destroy(md_ctx);
+    EVP_MD_CTX_free(md_ctx);
 
     return (ret);
 }

@@ -707,7 +707,7 @@ int PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
         return 0;
     }
 
-    ctx_tmp = EVP_MD_CTX_create();
+    ctx_tmp = EVP_MD_CTX_new();
     if (ctx_tmp == NULL) {
         PKCS7err(PKCS7_F_PKCS7_DATAFINAL, ERR_R_MALLOC_FAILURE);
         return 0;
@@ -854,7 +854,7 @@ int PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
     }
     ret = 1;
  err:
-    EVP_MD_CTX_destroy(ctx_tmp);
+    EVP_MD_CTX_free(ctx_tmp);
     return (ret);
 }
 
@@ -871,7 +871,7 @@ int PKCS7_SIGNER_INFO_sign(PKCS7_SIGNER_INFO *si)
     if (md == NULL)
         return 0;
 
-    mctx = EVP_MD_CTX_create();
+    mctx = EVP_MD_CTX_new();
     if (mctx == NULL) {
         PKCS7err(PKCS7_F_PKCS7_SIGNER_INFO_SIGN, ERR_R_MALLOC_FAILURE);
         goto err;
@@ -908,7 +908,7 @@ int PKCS7_SIGNER_INFO_sign(PKCS7_SIGNER_INFO *si)
         goto err;
     }
 
-    EVP_MD_CTX_destroy(mctx);
+    EVP_MD_CTX_free(mctx);
 
     ASN1_STRING_set0(si->enc_digest, abuf, siglen);
 
@@ -916,7 +916,7 @@ int PKCS7_SIGNER_INFO_sign(PKCS7_SIGNER_INFO *si)
 
  err:
     OPENSSL_free(abuf);
-    EVP_MD_CTX_destroy(mctx);
+    EVP_MD_CTX_free(mctx);
     return 0;
 
 }
@@ -989,7 +989,7 @@ int PKCS7_signatureVerify(BIO *bio, PKCS7 *p7, PKCS7_SIGNER_INFO *si,
     BIO *btmp;
     EVP_PKEY *pkey;
 
-    mdc_tmp = EVP_MD_CTX_create();
+    mdc_tmp = EVP_MD_CTX_new();
     if (mdc_tmp == NULL) {
         PKCS7err(PKCS7_F_PKCS7_SIGNATUREVERIFY, ERR_R_MALLOC_FAILURE);
         goto err;
@@ -1087,7 +1087,7 @@ int PKCS7_signatureVerify(BIO *bio, PKCS7 *p7, PKCS7_SIGNER_INFO *si,
     }
     ret = 1;
  err:
-    EVP_MD_CTX_destroy(mdc_tmp);
+    EVP_MD_CTX_free(mdc_tmp);
     return (ret);
 }
 

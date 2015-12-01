@@ -136,7 +136,7 @@ int EVP_BytesToKey(const EVP_CIPHER *type, const EVP_MD *md,
     if (data == NULL)
         return (nkey);
 
-    c = EVP_MD_CTX_create();
+    c = EVP_MD_CTX_new();
     if (c == NULL)
         goto err;
     for (;;) {
@@ -191,7 +191,7 @@ int EVP_BytesToKey(const EVP_CIPHER *type, const EVP_MD *md,
     }
     rv = type->key_len;
  err:
-    EVP_MD_CTX_destroy(c);
+    EVP_MD_CTX_free(c);
     OPENSSL_cleanse(md_buf, sizeof(md_buf));
     return rv;
 }

@@ -497,7 +497,7 @@ int ssl3_cbc_digest_record(const EVP_MD_CTX *ctx,
             mac_out[j] |= block[j] & is_block_b;
     }
 
-    md_ctx = EVP_MD_CTX_create();
+    md_ctx = EVP_MD_CTX_new();
     if (md_ctx == NULL)
         goto err;
     if (EVP_DigestInit_ex(md_ctx, EVP_MD_CTX_md(ctx), NULL /* engine */ ) <= 0)
@@ -522,11 +522,11 @@ int ssl3_cbc_digest_record(const EVP_MD_CTX *ctx,
     ret = EVP_DigestFinal(md_ctx, md_out, &md_out_size_u);
     if (ret && md_out_size)
         *md_out_size = md_out_size_u;
-    EVP_MD_CTX_destroy(md_ctx);
+    EVP_MD_CTX_free(md_ctx);
 
     return 1;
 err:
-    EVP_MD_CTX_destroy(md_ctx);
+    EVP_MD_CTX_free(md_ctx);
     return 0;
 }
 

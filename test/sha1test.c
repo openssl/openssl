@@ -96,7 +96,7 @@ int main(int argc, char *argv[])
     ebcdic2ascii(test[1], test[1], strlen(test[1]));
 #endif
 
-    c = EVP_MD_CTX_create();
+    c = EVP_MD_CTX_new();
     P = test;
     R = ret;
     i = 1;
@@ -137,7 +137,7 @@ int main(int argc, char *argv[])
         printf("ERROR: %d\n", err);
 #endif
     EXIT(err);
-    EVP_MD_CTX_destroy(c);
+    EVP_MD_CTX_free(c);
     return (0);
 }
 

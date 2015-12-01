@@ -115,7 +115,7 @@ int PKCS12_key_gen_uni(unsigned char *pass, int passlen, unsigned char *salt,
     int tmpn = n;
 #endif
 
-    ctx = EVP_MD_CTX_create();
+    ctx = EVP_MD_CTX_new();
     if (ctx == NULL)
         goto err;
 
@@ -218,7 +218,7 @@ int PKCS12_key_gen_uni(unsigned char *pass, int passlen, unsigned char *salt,
     OPENSSL_free(I);
     BN_free(Ij);
     BN_free(Bpl1);
-    EVP_MD_CTX_destroy(ctx);
+    EVP_MD_CTX_free(ctx);
     return ret;
 }
 
