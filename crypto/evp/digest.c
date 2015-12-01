@@ -119,19 +119,46 @@
 #include "internal/evp_int.h"
 #include "evp_locl.h"
 
-void EVP_MD_CTX_init(EVP_MD_CTX *ctx)
+/* This call frees resources associated with the context */
+int EVP_MD_CTX_init(EVP_MD_CTX *ctx)
 {
+    if (ctx == NULL)
+        return 1;
+
+    /*
+     * Don't assume ctx->md_data was cleaned in EVP_Digest_Final, because
+     * sometimes only copies of the context are ever finalised.
+     */
+    if (ctx->digest && ctx->digest->cleanup
+        && !EVP_MD_CTX_test_flags(ctx, EVP_MD_CTX_FLAG_CLEANED))
+        ctx->digest->cleanup(ctx);
+    if (ctx->digest && ctx->digest->ctx_size && ctx->md_data
+        && !EVP_MD_CTX_test_flags(ctx, EVP_MD_CTX_FLAG_REUSE)) {
+        OPENSSL_clear_free(ctx->md_data, ctx->digest->ctx_size);
+    }
+    EVP_PKEY_CTX_free(ctx->pctx);
+#ifndef OPENSSL_NO_ENGINE
+    if (ctx->engine)
+        /*
+         * The EVP_MD we used belongs to an ENGINE, release the functional
+         * reference we held for this reason.
+         */
+        ENGINE_finish(ctx->engine);
+#endif
     memset(ctx, 0, sizeof(*ctx));
+
+    return 1;
 }
 
 EVP_MD_CTX *EVP_MD_CTX_create(void)
 {
-    EVP_MD_CTX *ctx = OPENSSL_malloc(sizeof(*ctx));
+    return OPENSSL_zalloc(sizeof(EVP_MD_CTX));
+}
 
-    if (ctx != NULL)
-        EVP_MD_CTX_init(ctx);
-
-    return ctx;
+void EVP_MD_CTX_destroy(EVP_MD_CTX *ctx)
+{
+    EVP_MD_CTX_init(ctx);
+    OPENSSL_free(ctx);
 }
 
 int EVP_DigestInit(EVP_MD_CTX *ctx, const EVP_MD *type)
@@ -235,7 +262,7 @@ int EVP_DigestFinal(EVP_MD_CTX *ctx, unsigned char *md, unsigned int *size)
 {
     int ret;
     ret = EVP_DigestFinal_ex(ctx, md, size);
-    EVP_MD_CTX_cleanup(ctx);
+    EVP_MD_CTX_init(ctx);
     return ret;
 }
 
@@ -282,7 +309,7 @@ int EVP_MD_CTX_copy_ex(EVP_MD_CTX *out, const EVP_MD_CTX *in)
         EVP_MD_CTX_set_flags(out, EVP_MD_CTX_FLAG_REUSE);
     } else
         tmp_buf = NULL;
-    EVP_MD_CTX_cleanup(out);
+    EVP_MD_CTX_init(out);
     memcpy(out, in, sizeof(*out));
 
     if (in->md_data && out->digest->ctx_size) {
@@ -303,7 +330,7 @@ int EVP_MD_CTX_copy_ex(EVP_MD_CTX *out, const EVP_MD_CTX *in)
     if (in->pctx) {
         out->pctx = EVP_PKEY_CTX_dup(in->pctx);
         if (!out->pctx) {
-            EVP_MD_CTX_cleanup(out);
+            EVP_MD_CTX_init(out);
             return 0;
         }
     }
@@ -318,53 +345,18 @@ int EVP_Digest(const void *data, size_t count,
                unsigned char *md, unsigned int *size, const EVP_MD *type,
                ENGINE *impl)
 {
-    EVP_MD_CTX ctx;
+    EVP_MD_CTX *ctx = EVP_MD_CTX_create();
     int ret;
 
-    EVP_MD_CTX_init(&ctx);
-    EVP_MD_CTX_set_flags(&ctx, EVP_MD_CTX_FLAG_ONESHOT);
-    ret = EVP_DigestInit_ex(&ctx, type, impl)
-        && EVP_DigestUpdate(&ctx, data, count)
-        && EVP_DigestFinal_ex(&ctx, md, size);
-    EVP_MD_CTX_cleanup(&ctx);
+    if (ctx == NULL)
+        return 0;
+    EVP_MD_CTX_set_flags(ctx, EVP_MD_CTX_FLAG_ONESHOT);
+    ret = EVP_DigestInit_ex(ctx, type, impl)
+        && EVP_DigestUpdate(ctx, data, count)
+        && EVP_DigestFinal_ex(ctx, md, size);
+    EVP_MD_CTX_destroy(ctx);
 
     return ret;
-}
-
-void EVP_MD_CTX_destroy(EVP_MD_CTX *ctx)
-{
-    if (ctx) {
-        EVP_MD_CTX_cleanup(ctx);
-        OPENSSL_free(ctx);
-    }
-}
-
-/* This call frees resources associated with the context */
-int EVP_MD_CTX_cleanup(EVP_MD_CTX *ctx)
-{
-    /*
-     * Don't assume ctx->md_data was cleaned in EVP_Digest_Final, because
-     * sometimes only copies of the context are ever finalised.
-     */
-    if (ctx->digest && ctx->digest->cleanup
-        && !EVP_MD_CTX_test_flags(ctx, EVP_MD_CTX_FLAG_CLEANED))
-        ctx->digest->cleanup(ctx);
-    if (ctx->digest && ctx->digest->ctx_size && ctx->md_data
-        && !EVP_MD_CTX_test_flags(ctx, EVP_MD_CTX_FLAG_REUSE)) {
-        OPENSSL_clear_free(ctx->md_data, ctx->digest->ctx_size);
-    }
-    EVP_PKEY_CTX_free(ctx->pctx);
-#ifndef OPENSSL_NO_ENGINE
-    if (ctx->engine)
-        /*
-         * The EVP_MD we used belongs to an ENGINE, release the functional
-         * reference we held for this reason.
-         */
-        ENGINE_finish(ctx->engine);
-#endif
-    memset(ctx, 0, sizeof(*ctx));
-
-    return 1;
 }
 
 int EVP_MD_CTX_ctrl(EVP_MD_CTX *ctx, int cmd, int p1, void *p2)
