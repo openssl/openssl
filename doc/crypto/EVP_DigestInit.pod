@@ -2,9 +2,9 @@
 
 =head1 NAME
 
-EVP_MD_CTX_init, EVP_MD_CTX_create, EVP_DigestInit_ex, EVP_DigestUpdate,
-EVP_DigestFinal_ex, EVP_MD_CTX_cleanup, EVP_MD_CTX_destroy, EVP_MAX_MD_SIZE,
-EVP_MD_CTX_copy_ex, EVP_DigestInit, EVP_DigestFinal, EVP_MD_CTX_copy, EVP_MD_type,
+EVP_MD_CTX_new, EVP_MD_CTX_reset, EVP_MD_CTX_free, EVP_MD_CTX_copy_ex,
+EVP_DigestInit_ex, EVP_DigestUpdate, EVP_DigestFinal_ex, EVP_MAX_MD_SIZE,
+EVP_DigestInit, EVP_DigestFinal, EVP_MD_CTX_copy, EVP_MD_type,
 EVP_MD_pkey_type, EVP_MD_size, EVP_MD_block_size, EVP_MD_CTX_md, EVP_MD_CTX_size,
 EVP_MD_CTX_block_size, EVP_MD_CTX_type, EVP_md_null, EVP_md2, EVP_md5, EVP_sha1,
 EVP_sha224, EVP_sha256, EVP_sha384, EVP_sha512, EVP_mdc2,
@@ -15,16 +15,14 @@ EVP digest routines
 
  #include <openssl/evp.h>
 
- void EVP_MD_CTX_init(EVP_MD_CTX *ctx);
- EVP_MD_CTX *EVP_MD_CTX_create(void);
+ EVP_MD_CTX *EVP_MD_CTX_new(void);
+ int EVP_MD_CTX_reset(EVP_MD_CTX *ctx);
+ void EVP_MD_CTX_free(EVP_MD_CTX *ctx);
 
  int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl);
  int EVP_DigestUpdate(EVP_MD_CTX *ctx, const void *d, size_t cnt);
  int EVP_DigestFinal_ex(EVP_MD_CTX *ctx, unsigned char *md,
         unsigned int *s);
-
- int EVP_MD_CTX_cleanup(EVP_MD_CTX *ctx);
- void EVP_MD_CTX_destroy(EVP_MD_CTX *ctx);
 
  int EVP_MD_CTX_copy_ex(EVP_MD_CTX *out,const EVP_MD_CTX *in);
 
@@ -42,9 +40,16 @@ EVP digest routines
  int EVP_MD_block_size(const EVP_MD *md);
 
  const EVP_MD *EVP_MD_CTX_md(const EVP_MD_CTX *ctx);
- #define EVP_MD_CTX_size(e)		EVP_MD_size(EVP_MD_CTX_md(e))
- #define EVP_MD_CTX_block_size(e)	EVP_MD_block_size((e)->digest)
- #define EVP_MD_CTX_type(e)		EVP_MD_type((e)->digest)
+ int (*EVP_MD_CTX_update_fn(EVP_MD_CTX *ctx))(EVP_MD_CTX *ctx,
+                                              const void *data, size_t count);
+ void EVP_MD_CTX_set_update_fn(EVP_MD_CTX *ctx,
+                               int (*update) (EVP_MD_CTX *ctx,
+                                              const void *data, size_t count));
+ int EVP_MD_CTX_size(const EVP_MD *ctx);
+ int EVP_MD_CTX_block_size(const EVP_MD *ctx);
+ int EVP_MD_CTX_type(const EVP_MD *ctx);
+ EVP_PKEY_CTX *EVP_MD_CTX_pkey_ctx(const EVP_MD_CTX *ctx);
+ void *EVP_MD_CTX_md_data(const EVP_MD_CTX *ctx);
 
  const EVP_MD *EVP_md_null(void);
  const EVP_MD *EVP_md2(void);
@@ -59,17 +64,21 @@ EVP digest routines
  const EVP_MD *EVP_sha512(void);
 
  const EVP_MD *EVP_get_digestbyname(const char *name);
- #define EVP_get_digestbynid(a) EVP_get_digestbyname(OBJ_nid2sn(a))
- #define EVP_get_digestbyobj(a) EVP_get_digestbynid(OBJ_obj2nid(a))
+ const EVP_MD *EVP_get_digestbynid(int type);
+ const EVP_MD *EVP_get_digestbyobj(const ASN1_OBJECT *o);
 
 =head1 DESCRIPTION
 
 The EVP digest routines are a high level interface to message digests,
 and should be used instead of the cipher-specific functions.
 
-EVP_MD_CTX_init() initializes digest context B<ctx>.
+EVP_MD_CTX_new() allocates, initializes and returns a digest context.
 
-EVP_MD_CTX_create() allocates, initializes and returns a digest context.
+EVP_MD_CTX_reset() resets the digest context B<ctx>.  This can be used
+to reuse an already existing context.
+
+EVP_MD_CTX_free() cleans up digest context B<ctx> and frees up the
+space allocated to it.
 
 EVP_DigestInit_ex() sets up digest context B<ctx> to use a digest
 B<type> from ENGINE B<impl>. B<ctx> must be initialized before calling this
@@ -87,13 +96,6 @@ to the integer at B<s>, at most B<EVP_MAX_MD_SIZE> bytes will be written.
 After calling EVP_DigestFinal_ex() no additional calls to EVP_DigestUpdate()
 can be made, but EVP_DigestInit_ex() can be called to initialize a new
 digest operation.
-
-EVP_MD_CTX_cleanup() cleans up digest context B<ctx>, it should be called
-after a digest context is no longer needed.
-
-EVP_MD_CTX_destroy() cleans up digest context B<ctx> and frees up the
-space allocated to it, it should be called only on a context created
-using EVP_MD_CTX_create().
 
 EVP_MD_CTX_copy_ex() can be used to copy the message digest state from
 B<in> to B<out>. This is useful if large amounts of data are to be
@@ -186,17 +188,9 @@ implementations of digests to be specified.
 If digest contexts are not cleaned up after use
 memory leaks will occur.
 
-Stack allocation of EVP_MD_CTX structures is common, for example:
-
- EVP_MD_CTX mctx;
- EVP_MD_CTX_init(&mctx);
-
-This will cause binary compatibility issues if the size of EVP_MD_CTX
-structure changes (this will only happen with a major release of OpenSSL).
-Applications wishing to avoid this should use EVP_MD_CTX_create() instead:
-
- EVP_MD_CTX *mctx;
- mctx = EVP_MD_CTX_create();
+EVP_MD_CTX_size(), EVP_MD_CTX_block_size(), EVP_MD_CTX_type(),
+EVP_get_digestbynid() and EVP_get_digestbyobj() are defined as
+macros.
 
 
 =head1 EXAMPLE
@@ -230,12 +224,12 @@ digest name passed on the command line.
 	exit(1);
  }
 
- mdctx = EVP_MD_CTX_create();
+ mdctx = EVP_MD_CTX_new();
  EVP_DigestInit_ex(mdctx, md, NULL);
  EVP_DigestUpdate(mdctx, mess1, strlen(mess1));
  EVP_DigestUpdate(mdctx, mess2, strlen(mess2));
  EVP_DigestFinal_ex(mdctx, md_value, &md_len);
- EVP_MD_CTX_destroy(mdctx);
+ EVP_MD_CTX_free(mdctx);
 
  printf("Digest is: ");
  for(i = 0; i < md_len; i++)
@@ -253,6 +247,12 @@ L<dgst(1)>,
 L<evp(3)>
 
 =head1 HISTORY
+
+B<EVP_MD_CTX> became opaque in OpenSSL 1.1.  Consequently, stack
+allocated B<EVP_MD_CTX>s are no longer supported.
+
+EVP_MD_CTX_create() and EVP_MD_CTX_destroy() were renamed to
+EVP_MD_CTX_new() and EVP_MD_CTX_free() in OpenSSL 1.1.
 
 The link between digests and signing algorithms was fixed in OpenSSL 1.0 and
 later, so now EVP_sha1() can be used with RSA and DSA. The legacy EVP_dss1()

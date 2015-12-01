@@ -18,8 +18,8 @@ EVP_DigestSignInit, EVP_DigestSignUpdate, EVP_DigestSignFinal - EVP signing func
 The EVP signature routines are a high level interface to digital signatures.
 
 EVP_DigestSignInit() sets up signing context B<ctx> to use digest B<type> from
-ENGINE B<impl> and private key B<pkey>. B<ctx> must be initialized with
-EVP_MD_CTX_init() before calling this function. If B<pctx> is not NULL the
+ENGINE B<impl> and private key B<pkey>. B<ctx> must be created with
+EVP_MD_CTX_new() before calling this function. If B<pctx> is not NULL the
 EVP_PKEY_CTX of the signing operation will be written to B<*pctx>: this can
 be used to set alternative signing options.
 
