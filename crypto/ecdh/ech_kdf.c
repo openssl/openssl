@@ -72,7 +72,7 @@ int ECDH_KDF_X9_62(unsigned char *out, size_t outlen,
     if (sinfolen > ECDH_KDF_MAX || outlen > ECDH_KDF_MAX
         || Zlen > ECDH_KDF_MAX)
         return 0;
-    mctx = EVP_MD_CTX_create();
+    mctx = EVP_MD_CTX_new();
     if (mctx == NULL)
         return 0;
     mdlen = EVP_MD_size(md);
@@ -106,6 +106,6 @@ int ECDH_KDF_X9_62(unsigned char *out, size_t outlen,
     }
     rv = 1;
  err:
-    EVP_MD_CTX_destroy(mctx);
+    EVP_MD_CTX_free(mctx);
     return rv;
 }

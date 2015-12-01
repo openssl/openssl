@@ -523,7 +523,7 @@ static int create_digest(BIO *input, char *digest, const EVP_MD *md,
         return 0;
 
     if (input) {
-        EVP_MD_CTX *md_ctx = EVP_MD_CTX_create();
+        EVP_MD_CTX *md_ctx = EVP_MD_CTX_new();
         unsigned char buffer[4096];
         int length;
 
@@ -535,10 +535,10 @@ static int create_digest(BIO *input, char *digest, const EVP_MD *md,
             EVP_DigestUpdate(md_ctx, buffer, length);
         }
         if (!EVP_DigestFinal(md_ctx, *md_value, NULL)) {
-            EVP_MD_CTX_destroy(md_ctx);
+            EVP_MD_CTX_free(md_ctx);
             return 0;
         }
-        EVP_MD_CTX_destroy(md_ctx);
+        EVP_MD_CTX_free(md_ctx);
     } else {
         long digest_len;
         *md_value = string_to_hex(digest, &digest_len);

@@ -691,7 +691,7 @@ static int digest_test_run(struct evp_test *t)
     EVP_MD_CTX *mctx;
     unsigned char md[EVP_MAX_MD_SIZE];
     unsigned int md_len;
-    mctx = EVP_MD_CTX_create();
+    mctx = EVP_MD_CTX_new();
     if (!mctx)
         goto err;
     err = "DIGESTINIT_ERROR";
@@ -713,7 +713,7 @@ static int digest_test_run(struct evp_test *t)
         goto err;
     err = NULL;
  err:
-    EVP_MD_CTX_destroy(mctx);
+    EVP_MD_CTX_free(mctx);
     t->err = err;
     return 1;
 }
@@ -1100,7 +1100,7 @@ static int mac_test_run(struct evp_test *t)
         if (!md)
             goto err;
     }
-    mctx = EVP_MD_CTX_create();
+    mctx = EVP_MD_CTX_new();
     if (!mctx)
         goto err;
     err = "DIGESTSIGNINIT_ERROR";
@@ -1128,7 +1128,7 @@ static int mac_test_run(struct evp_test *t)
         goto err;
     err = NULL;
  err:
-    EVP_MD_CTX_destroy(mctx);
+    EVP_MD_CTX_free(mctx);
     OPENSSL_free(mac);
     EVP_PKEY_CTX_free(genctx);
     EVP_PKEY_free(key);

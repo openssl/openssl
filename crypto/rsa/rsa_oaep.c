@@ -242,7 +242,7 @@ int PKCS1_MGF1(unsigned char *mask, long len,
 {
     long i, outlen = 0;
     unsigned char cnt[4];
-    EVP_MD_CTX *c = EVP_MD_CTX_create();
+    EVP_MD_CTX *c = EVP_MD_CTX_new();
     unsigned char md[EVP_MAX_MD_SIZE];
     int mdlen;
     int rv = -1;
@@ -274,6 +274,6 @@ int PKCS1_MGF1(unsigned char *mask, long len,
     }
     rv = 0;
  err:
-    EVP_MD_CTX_destroy(c);
+    EVP_MD_CTX_free(c);
     return rv;
 }

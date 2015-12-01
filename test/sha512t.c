@@ -113,7 +113,7 @@ int main(int argc, char **argv)
         fprintf(stdout, ".");
     fflush(stdout);
 
-    evp = EVP_MD_CTX_create();
+    evp = EVP_MD_CTX_new();
     if (evp == NULL) {
         fflush(stdout);
         fprintf(stderr, "\nTEST 3 of 3 failed. (malloc failure)\n");
@@ -132,7 +132,7 @@ int main(int argc, char **argv)
                          "aaaaaaaa" "aaaaaaaa" "aaaaaaaa" "aaaaaaaa",
                          (1000000 - i) < 288 ? 1000000 - i : 288);
     EVP_DigestFinal_ex(evp, md, NULL);
-    EVP_MD_CTX_init(evp);
+    EVP_MD_CTX_reset(evp);
 
     if (memcmp(md, app_c3, sizeof(app_c3))) {
         fflush(stdout);
@@ -174,7 +174,7 @@ int main(int argc, char **argv)
                          "aaaaaaaa" "aaaaaaaa" "aaaaaaaa" "aaaaaaaa",
                          (1000000 - i) < 64 ? 1000000 - i : 64);
     EVP_DigestFinal_ex(evp, md, NULL);
-    EVP_MD_CTX_destroy(evp);
+    EVP_MD_CTX_free(evp);
 
     if (memcmp(md, app_d3, sizeof(app_d3))) {
         fflush(stdout);

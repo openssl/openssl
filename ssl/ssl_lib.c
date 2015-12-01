@@ -3177,9 +3177,9 @@ void SSL_set_not_resumable_session_callback(SSL *ssl,
 EVP_MD_CTX *ssl_replace_hash(EVP_MD_CTX **hash, const EVP_MD *md)
 {
     ssl_clear_hash_ctx(hash);
-    *hash = EVP_MD_CTX_create();
+    *hash = EVP_MD_CTX_new();
     if (*hash == NULL || (md && EVP_DigestInit_ex(*hash, md, NULL) <= 0)) {
-        EVP_MD_CTX_destroy(*hash);
+        EVP_MD_CTX_free(*hash);
         *hash = NULL;
         return NULL;
     }
@@ -3190,7 +3190,7 @@ void ssl_clear_hash_ctx(EVP_MD_CTX **hash)
 {
 
     if (*hash)
-        EVP_MD_CTX_destroy(*hash);
+        EVP_MD_CTX_free(*hash);
     *hash = NULL;
 }
 
@@ -3204,7 +3204,7 @@ int ssl_handshake_hash(SSL *s, unsigned char *out, int outlen)
         ret = 0;
         goto err;
     }
-    ctx = EVP_MD_CTX_create();
+    ctx = EVP_MD_CTX_new();
     if (ctx == NULL) {
         ret = 0;
         goto err;
@@ -3213,7 +3213,7 @@ int ssl_handshake_hash(SSL *s, unsigned char *out, int outlen)
         || EVP_DigestFinal_ex(ctx, out, NULL) <= 0)
         ret = 0;
  err:
-    EVP_MD_CTX_destroy(ctx);
+    EVP_MD_CTX_free(ctx);
     return ret;
 }
 

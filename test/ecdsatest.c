@@ -188,7 +188,7 @@ int x9_62_test_internal(BIO *out, int nid, const char *r_in, const char *s_in)
     const char message[] = "abc";
     unsigned char digest[20];
     unsigned int dgst_len = 0;
-    EVP_MD_CTX *md_ctx = EVP_MD_CTX_create();
+    EVP_MD_CTX *md_ctx = EVP_MD_CTX_new();
     EC_KEY *key = NULL;
     ECDSA_SIG *signature = NULL;
     BIGNUM *r = NULL, *s = NULL;
@@ -246,7 +246,7 @@ int x9_62_test_internal(BIO *out, int nid, const char *r_in, const char *s_in)
     ECDSA_SIG_free(signature);
     BN_free(r);
     BN_free(s);
-    EVP_MD_CTX_destroy(md_ctx);
+    EVP_MD_CTX_free(md_ctx);
     BN_clear_free(kinv);
     BN_clear_free(rp);
     return ret;

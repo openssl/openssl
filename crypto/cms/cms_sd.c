@@ -287,7 +287,7 @@ CMS_SignerInfo *CMS_add1_signer(CMS_ContentInfo *cms,
 
     si->pkey = pk;
     si->signer = signer;
-    si->mctx = EVP_MD_CTX_create();
+    si->mctx = EVP_MD_CTX_new();
     si->pctx = NULL;
 
     if (si->mctx == NULL) {
@@ -576,7 +576,7 @@ ASN1_OCTET_STRING *CMS_SignerInfo_get0_signature(CMS_SignerInfo *si)
 static int cms_SignerInfo_content_sign(CMS_ContentInfo *cms,
                                        CMS_SignerInfo *si, BIO *chain)
 {
-    EVP_MD_CTX *mctx = EVP_MD_CTX_create();
+    EVP_MD_CTX *mctx = EVP_MD_CTX_new();
     int r = 0;
     EVP_PKEY_CTX *pctx = NULL;
 
@@ -654,7 +654,7 @@ static int cms_SignerInfo_content_sign(CMS_ContentInfo *cms,
     r = 1;
 
  err:
-    EVP_MD_CTX_destroy(mctx);
+    EVP_MD_CTX_free(mctx);
     EVP_PKEY_CTX_free(pctx);
     return r;
 
@@ -696,7 +696,7 @@ int CMS_SignerInfo_sign(CMS_SignerInfo *si)
     if (si->pctx)
         pctx = si->pctx;
     else {
-        EVP_MD_CTX_init(mctx);
+        EVP_MD_CTX_reset(mctx);
         if (EVP_DigestSignInit(mctx, &pctx, md, NULL, si->pkey) <= 0)
             goto err;
     }
@@ -728,7 +728,7 @@ int CMS_SignerInfo_sign(CMS_SignerInfo *si)
         goto err;
     }
 
-    EVP_MD_CTX_init(mctx);
+    EVP_MD_CTX_reset(mctx);
 
     ASN1_STRING_set0(si->signature, abuf, siglen);
 
@@ -736,7 +736,7 @@ int CMS_SignerInfo_sign(CMS_SignerInfo *si)
 
  err:
     OPENSSL_free(abuf);
-    EVP_MD_CTX_init(mctx);
+    EVP_MD_CTX_reset(mctx);
     return 0;
 
 }
@@ -757,7 +757,7 @@ int CMS_SignerInfo_verify(CMS_SignerInfo *si)
     if (md == NULL)
         return -1;
     if (si->mctx == NULL)
-        si->mctx = EVP_MD_CTX_create();
+        si->mctx = EVP_MD_CTX_new();
     mctx = si->mctx;
     if (EVP_DigestVerifyInit(mctx, &si->pctx, md, NULL, si->pkey) <= 0)
         goto err;
@@ -780,7 +780,7 @@ int CMS_SignerInfo_verify(CMS_SignerInfo *si)
     if (r <= 0)
         CMSerr(CMS_F_CMS_SIGNERINFO_VERIFY, CMS_R_VERIFICATION_FAILURE);
  err:
-    EVP_MD_CTX_init(mctx);
+    EVP_MD_CTX_reset(mctx);
     return r;
 }
 
@@ -817,7 +817,7 @@ BIO *cms_SignedData_init_bio(CMS_ContentInfo *cms)
 int CMS_SignerInfo_verify_content(CMS_SignerInfo *si, BIO *chain)
 {
     ASN1_OCTET_STRING *os = NULL;
-    EVP_MD_CTX *mctx = EVP_MD_CTX_create();
+    EVP_MD_CTX *mctx = EVP_MD_CTX_new();
     EVP_PKEY_CTX *pkctx = NULL;
     int r = -1;
     unsigned char mval[EVP_MAX_MD_SIZE];
@@ -886,7 +886,7 @@ int CMS_SignerInfo_verify_content(CMS_SignerInfo *si, BIO *chain)
 
  err:
     EVP_PKEY_CTX_free(pkctx);
-    EVP_MD_CTX_destroy(mctx);
+    EVP_MD_CTX_free(mctx);
     return r;
 
 }

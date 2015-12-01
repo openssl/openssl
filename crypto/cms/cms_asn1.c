@@ -95,7 +95,7 @@ static int cms_si_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
         CMS_SignerInfo *si = (CMS_SignerInfo *)*pval;
         EVP_PKEY_free(si->pkey);
         X509_free(si->signer);
-        EVP_MD_CTX_destroy(si->mctx);
+        EVP_MD_CTX_free(si->mctx);
     }
     return 1;
 }

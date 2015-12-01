@@ -88,7 +88,7 @@ int RSA_verify_PKCS1_PSS_mgf1(RSA *rsa, const unsigned char *mHash,
     int hLen, maskedDBLen, MSBits, emLen;
     const unsigned char *H;
     unsigned char *DB = NULL;
-    EVP_MD_CTX *ctx = EVP_MD_CTX_create();
+    EVP_MD_CTX *ctx = EVP_MD_CTX_new();
     unsigned char H_[EVP_MAX_MD_SIZE];
 
 
@@ -174,7 +174,7 @@ int RSA_verify_PKCS1_PSS_mgf1(RSA *rsa, const unsigned char *mHash,
 
  err:
     OPENSSL_free(DB);
-    EVP_MD_CTX_destroy(ctx);
+    EVP_MD_CTX_free(ctx);
 
     return ret;
 
@@ -244,7 +244,7 @@ int RSA_padding_add_PKCS1_PSS_mgf1(RSA *rsa, unsigned char *EM,
     }
     maskedDBLen = emLen - hLen - 1;
     H = EM + maskedDBLen;
-    ctx = EVP_MD_CTX_create();
+    ctx = EVP_MD_CTX_new();
     if (ctx == NULL)
         goto err;
     if (!EVP_DigestInit_ex(ctx, Hash, NULL)
@@ -282,7 +282,7 @@ int RSA_padding_add_PKCS1_PSS_mgf1(RSA *rsa, unsigned char *EM,
     ret = 1;
 
  err:
-    EVP_MD_CTX_destroy(ctx);
+    EVP_MD_CTX_free(ctx);
     OPENSSL_free(salt);
 
     return ret;

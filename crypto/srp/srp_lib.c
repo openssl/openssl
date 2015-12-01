@@ -78,7 +78,7 @@ static BIGNUM *srp_Calc_k(BIGNUM *N, BIGNUM *g)
     if (BN_ucmp(g, N) >= 0)
         return NULL;
 
-    ctxt = EVP_MD_CTX_create();
+    ctxt = EVP_MD_CTX_new();
     if (ctxt == NULL)
         return NULL;
     if ((tmp = OPENSSL_malloc(longN)) == NULL)
@@ -98,7 +98,7 @@ static BIGNUM *srp_Calc_k(BIGNUM *N, BIGNUM *g)
     EVP_DigestFinal_ex(ctxt, digest, NULL);
     res = BN_bin2bn(digest, sizeof(digest), NULL);
  err:
-    EVP_MD_CTX_destroy(ctxt);
+    EVP_MD_CTX_free(ctxt);
     return res;
 }
 
@@ -119,7 +119,7 @@ BIGNUM *SRP_Calc_u(BIGNUM *A, BIGNUM *B, BIGNUM *N)
 
     longN = BN_num_bytes(N);
 
-    ctxt = EVP_MD_CTX_create();
+    ctxt = EVP_MD_CTX_new();
     if (ctxt == NULL)
         return NULL;
     if ((cAB = OPENSSL_malloc(2 * longN)) == NULL)
@@ -140,7 +140,7 @@ BIGNUM *SRP_Calc_u(BIGNUM *A, BIGNUM *B, BIGNUM *N)
         u = NULL;
     }
  err:
-    EVP_MD_CTX_destroy(ctxt);
+    EVP_MD_CTX_free(ctxt);
 
     return u;
 }
@@ -213,7 +213,7 @@ BIGNUM *SRP_Calc_x(BIGNUM *s, const char *user, const char *pass)
     if ((s == NULL) || (user == NULL) || (pass == NULL))
         return NULL;
 
-    ctxt = EVP_MD_CTX_create();
+    ctxt = EVP_MD_CTX_new();
     if (ctxt == NULL)
         return NULL;
     if ((cs = OPENSSL_malloc(BN_num_bytes(s))) == NULL)
@@ -234,7 +234,7 @@ BIGNUM *SRP_Calc_x(BIGNUM *s, const char *user, const char *pass)
 
     res = BN_bin2bn(dig, sizeof(dig), NULL);
  err:
-    EVP_MD_CTX_destroy(ctxt);
+    EVP_MD_CTX_free(ctxt);
     return res;
 }
 

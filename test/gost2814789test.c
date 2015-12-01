@@ -1391,7 +1391,7 @@ int main(int argc, char *argv[])
                  */
                 continue;
             }
-            mctx = EVP_MD_CTX_create();
+            mctx = EVP_MD_CTX_new();
             if (mctx == NULL) {
                 fflush(NULL);
                 fprintf(stderr, "ENGINE_ctrl_cmd_string: malloc failure\n");
@@ -1417,7 +1417,7 @@ int main(int argc, char *argv[])
             siglen = 4;
             OPENSSL_assert(EVP_DigestSignFinal(mctx, bTest, &siglen));
             EVP_PKEY_free(mac_key);
-            EVP_MD_CTX_destroy(mctx);
+            EVP_MD_CTX_free(mctx);
             enlu = (int)tcs[t].ullLen;
             enlf = 0;
             l = siglen;

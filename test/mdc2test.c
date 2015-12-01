@@ -102,7 +102,7 @@ int main(int argc, char *argv[])
     ebcdic2ascii(text, text, strlen(text));
 # endif
 
-    c = EVP_MD_CTX_create();
+    c = EVP_MD_CTX_new();
     EVP_DigestInit_ex(c, EVP_mdc2(), NULL);
     EVP_DigestUpdate(c, (unsigned char *)text, strlen(text));
     EVP_DigestFinal_ex(c, &(md[0]), NULL);
@@ -135,7 +135,7 @@ int main(int argc, char *argv[])
     } else
         printf("pad2 - ok\n");
 
-    EVP_MD_CTX_destroy(c);
+    EVP_MD_CTX_free(c);
 # ifdef OPENSSL_SYS_NETWARE
     if (ret)
         printf("ERROR: %d\n", ret);

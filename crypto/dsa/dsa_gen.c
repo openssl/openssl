@@ -360,7 +360,7 @@ int dsa_builtin_paramgen2(DSA *ret, size_t L, size_t N,
     int counter = 0;
     int r = 0;
     BN_CTX *ctx = NULL;
-    EVP_MD_CTX *mctx = EVP_MD_CTX_create();
+    EVP_MD_CTX *mctx = EVP_MD_CTX_new();
     unsigned int h = 2;
 
     if (mctx == NULL)
@@ -640,7 +640,7 @@ int dsa_builtin_paramgen2(DSA *ret, size_t L, size_t N,
         BN_CTX_end(ctx);
     BN_CTX_free(ctx);
     BN_MONT_CTX_free(mont);
-    EVP_MD_CTX_destroy(mctx);
+    EVP_MD_CTX_free(mctx);
     return ok;
 }
 

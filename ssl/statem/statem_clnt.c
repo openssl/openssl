@@ -1592,7 +1592,7 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
 #endif
     PACKET save_param_start, signature;
 
-    md_ctx = EVP_MD_CTX_create();
+    md_ctx = EVP_MD_CTX_new();
     if (md_ctx == NULL) {
         al = SSL_AD_INTERNAL_ERROR;
         SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, ERR_R_MALLOC_FAILURE);
@@ -1921,7 +1921,7 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
         }
     }
     EVP_PKEY_free(pkey);
-    EVP_MD_CTX_destroy(md_ctx);
+    EVP_MD_CTX_free(md_ctx);
     return MSG_PROCESS_CONTINUE_READING;
  f_err:
     ssl3_send_alert(s, SSL3_AL_FATAL, al);
@@ -1938,7 +1938,7 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
     EC_POINT_free(srvr_ecpoint);
     EC_KEY_free(ecdh);
 #endif
-    EVP_MD_CTX_destroy(md_ctx);
+    EVP_MD_CTX_free(md_ctx);
     ossl_statem_set_error(s);
     return MSG_PROCESS_ERROR;
 }
@@ -2721,7 +2721,7 @@ psk_err:
          * Compute shared IV and store it in algorithm-specific context
          * data
          */
-        ukm_hash = EVP_MD_CTX_create();
+        ukm_hash = EVP_MD_CTX_new();
         if (EVP_DigestInit(ukm_hash,
                            EVP_get_digestbynid(dgst_nid)) <= 0
                 || EVP_DigestUpdate(ukm_hash, s->s3->client_random,
@@ -2729,12 +2729,12 @@ psk_err:
                 || EVP_DigestUpdate(ukm_hash, s->s3->server_random,
                                     SSL3_RANDOM_SIZE) <= 0
                 || EVP_DigestFinal_ex(ukm_hash, shared_ukm, &md_len) <= 0) {
-            EVP_MD_CTX_destroy(ukm_hash);
+            EVP_MD_CTX_free(ukm_hash);
             SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE,
                    ERR_R_INTERNAL_ERROR);
             goto err;
         }
-        EVP_MD_CTX_destroy(ukm_hash);
+        EVP_MD_CTX_free(ukm_hash);
         if (EVP_PKEY_CTX_ctrl
             (pkey_ctx, -1, EVP_PKEY_OP_ENCRYPT, EVP_PKEY_CTRL_SET_IV, 8,
              shared_ukm) < 0) {
@@ -2905,7 +2905,7 @@ int tls_construct_client_verify(SSL *s)
     long hdatalen = 0;
     void *hdata;
 
-    mctx = EVP_MD_CTX_create();
+    mctx = EVP_MD_CTX_new();
     if (mctx == NULL) {
         SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_VERIFY, ERR_R_MALLOC_FAILURE);
         goto err;
@@ -2958,10 +2958,10 @@ int tls_construct_client_verify(SSL *s)
         goto err;
     }
 
-    EVP_MD_CTX_destroy(mctx);
+    EVP_MD_CTX_free(mctx);
     return 1;
  err:
-    EVP_MD_CTX_destroy(mctx);
+    EVP_MD_CTX_free(mctx);
     return 0;
 }
 

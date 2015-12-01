@@ -1733,7 +1733,7 @@ int tls_construct_server_key_exchange(SSL *s)
     BIGNUM *r[4];
     int nr[4], kn;
     BUF_MEM *buf;
-    EVP_MD_CTX *md_ctx = EVP_MD_CTX_create();
+    EVP_MD_CTX *md_ctx = EVP_MD_CTX_new();
 
     if (md_ctx == NULL) {
         SSLerr(SSL_F_TLS_CONSTRUCT_SERVER_KEY_EXCHANGE, ERR_R_MALLOC_FAILURE);
@@ -2075,7 +2075,7 @@ int tls_construct_server_key_exchange(SSL *s)
         goto f_err;
     }
 
-    EVP_MD_CTX_destroy(md_ctx);
+    EVP_MD_CTX_free(md_ctx);
     return 1;
  f_err:
     ssl3_send_alert(s, SSL3_AL_FATAL, al);
@@ -2084,7 +2084,7 @@ int tls_construct_server_key_exchange(SSL *s)
     OPENSSL_free(encodedPoint);
     BN_CTX_free(bn_ctx);
 #endif
-    EVP_MD_CTX_destroy(md_ctx);
+    EVP_MD_CTX_free(md_ctx);
     ossl_statem_set_error(s);
     return 0;
 }
@@ -2888,7 +2888,7 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
     long hdatalen = 0;
     void *hdata;
 
-    EVP_MD_CTX *mctx = EVP_MD_CTX_create();
+    EVP_MD_CTX *mctx = EVP_MD_CTX_new();
 
     if (mctx == NULL) {
         SSLerr(SSL_F_TLS_PROCESS_CERT_VERIFY, ERR_R_MALLOC_FAILURE);
@@ -3013,7 +3013,7 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
     }
     BIO_free(s->s3->handshake_buffer);
     s->s3->handshake_buffer = NULL;
-    EVP_MD_CTX_destroy(mctx);
+    EVP_MD_CTX_free(mctx);
     EVP_PKEY_free(pkey);
     return ret;
 }

@@ -166,9 +166,9 @@ static int tls1_P_hash(const EVP_MD *md, const unsigned char *sec,
     chunk = EVP_MD_size(md);
     OPENSSL_assert(chunk >= 0);
 
-    ctx = EVP_MD_CTX_create();
-    ctx_tmp = EVP_MD_CTX_create();
-    ctx_init = EVP_MD_CTX_create();
+    ctx = EVP_MD_CTX_new();
+    ctx_tmp = EVP_MD_CTX_new();
+    ctx_init = EVP_MD_CTX_new();
     if (ctx == NULL || ctx_tmp == NULL || ctx_init == NULL)
         goto err;
     EVP_MD_CTX_set_flags(ctx_init, EVP_MD_CTX_FLAG_NON_FIPS_ALLOW);
@@ -230,9 +230,9 @@ static int tls1_P_hash(const EVP_MD *md, const unsigned char *sec,
     ret = 1;
  err:
     EVP_PKEY_free(mac_key);
-    EVP_MD_CTX_destroy(ctx);
-    EVP_MD_CTX_destroy(ctx_tmp);
-    EVP_MD_CTX_destroy(ctx_init);
+    EVP_MD_CTX_free(ctx);
+    EVP_MD_CTX_free(ctx_tmp);
+    EVP_MD_CTX_free(ctx_init);
     OPENSSL_cleanse(A1, sizeof(A1));
     return ret;
 }
@@ -374,7 +374,7 @@ int tls1_change_cipher_state(SSL *s, int which)
             goto err;
         dd = s->enc_write_ctx;
         if (SSL_IS_DTLS(s)) {
-            mac_ctx = EVP_MD_CTX_create();
+            mac_ctx = EVP_MD_CTX_new();
             if (mac_ctx == NULL)
                 goto err;
             s->write_hash = mac_ctx;

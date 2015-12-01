@@ -153,8 +153,8 @@ static int ssl3_generate_key_block(SSL *s, unsigned char *km, int num)
     c = os_toascii[c];          /* 'A' in ASCII */
 #endif
     k = 0;
-    m5 = EVP_MD_CTX_create();
-    s1 = EVP_MD_CTX_create();
+    m5 = EVP_MD_CTX_new();
+    s1 = EVP_MD_CTX_new();
     if (m5 == NULL || s1 == NULL) {
         SSLerr(SSL_F_SSL3_GENERATE_KEY_BLOCK, ERR_R_MALLOC_FAILURE);
         goto err;
@@ -194,8 +194,8 @@ static int ssl3_generate_key_block(SSL *s, unsigned char *km, int num)
     OPENSSL_cleanse(smd, sizeof(smd));
     ret = 1;
  err:
-    EVP_MD_CTX_destroy(m5);
-    EVP_MD_CTX_destroy(s1);
+    EVP_MD_CTX_free(m5);
+    EVP_MD_CTX_free(s1);
     return ret;
 }
 
@@ -447,7 +447,7 @@ void ssl3_free_digest_list(SSL *s)
 {
     BIO_free(s->s3->handshake_buffer);
     s->s3->handshake_buffer = NULL;
-    EVP_MD_CTX_destroy(s->s3->handshake_dgst);
+    EVP_MD_CTX_free(s->s3->handshake_dgst);
     s->s3->handshake_dgst = NULL;
 }
 
@@ -472,7 +472,7 @@ int ssl3_digest_cached_records(SSL *s, int keep)
             return 0;
         }
 
-        s->s3->handshake_dgst = EVP_MD_CTX_create();
+        s->s3->handshake_dgst = EVP_MD_CTX_new();
         if (s->s3->handshake_dgst == NULL) {
             SSLerr(SSL_F_SSL3_DIGEST_CACHED_RECORDS, ERR_R_MALLOC_FAILURE);
             return 0;
@@ -509,7 +509,7 @@ int ssl3_final_finish_mac(SSL *s, const char *sender, int len, unsigned char *p)
         return 0;
     }
 
-    ctx = EVP_MD_CTX_create();
+    ctx = EVP_MD_CTX_new();
     if (ctx == NULL) {
         SSLerr(SSL_F_SSL3_FINAL_FINISH_MAC, ERR_R_MALLOC_FAILURE);
         return 0;
@@ -518,7 +518,7 @@ int ssl3_final_finish_mac(SSL *s, const char *sender, int len, unsigned char *p)
 
     ret = EVP_MD_CTX_size(ctx);
     if (ret < 0) {
-        EVP_MD_CTX_init(ctx);
+        EVP_MD_CTX_reset(ctx);
         return 0;
     }
 
@@ -531,7 +531,7 @@ int ssl3_final_finish_mac(SSL *s, const char *sender, int len, unsigned char *p)
         ret = 0;
     }
 
-    EVP_MD_CTX_destroy(ctx);
+    EVP_MD_CTX_free(ctx);
 
     return ret;
 }
@@ -551,7 +551,7 @@ int ssl3_generate_master_secret(SSL *s, unsigned char *out, unsigned char *p,
 #endif
     };
     unsigned char buf[EVP_MAX_MD_SIZE];
-    EVP_MD_CTX *ctx = EVP_MD_CTX_create();
+    EVP_MD_CTX *ctx = EVP_MD_CTX_new();
     int i, ret = 0;
     unsigned int n;
 #ifdef OPENSSL_SSL_TRACE_CRYPTO
@@ -584,7 +584,7 @@ int ssl3_generate_master_secret(SSL *s, unsigned char *out, unsigned char *p,
         out += n;
         ret += n;
     }
-    EVP_MD_CTX_destroy(ctx);
+    EVP_MD_CTX_free(ctx);
 
 #ifdef OPENSSL_SSL_TRACE_CRYPTO
     if (ret > 0 && s->msg_callback) {

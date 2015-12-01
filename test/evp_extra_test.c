@@ -279,8 +279,8 @@ static int test_EVP_DigestSignInit(void)
     size_t sig_len = 0;
     EVP_MD_CTX *md_ctx, *md_ctx_verify;
 
-    md_ctx = EVP_MD_CTX_create();
-    md_ctx_verify = EVP_MD_CTX_create();
+    md_ctx = EVP_MD_CTX_new();
+    md_ctx_verify = EVP_MD_CTX_new();
     if (md_ctx == NULL || md_ctx_verify == NULL)
         goto out;
 
@@ -319,8 +319,8 @@ static int test_EVP_DigestSignInit(void)
         ERR_print_errors_fp(stderr);
     }
 
-    EVP_MD_CTX_destroy(md_ctx);
-    EVP_MD_CTX_destroy(md_ctx_verify);
+    EVP_MD_CTX_free(md_ctx);
+    EVP_MD_CTX_free(md_ctx_verify);
     EVP_PKEY_free(pkey);
     OPENSSL_free(sig);
 
@@ -333,7 +333,7 @@ static int test_EVP_DigestVerifyInit(void)
     EVP_PKEY *pkey = NULL;
     EVP_MD_CTX *md_ctx;
 
-    md_ctx = EVP_MD_CTX_create();
+    md_ctx = EVP_MD_CTX_new();
 
     pkey = load_example_rsa_key();
     if (pkey == NULL ||
@@ -349,7 +349,7 @@ static int test_EVP_DigestVerifyInit(void)
         ERR_print_errors_fp(stderr);
     }
 
-    EVP_MD_CTX_destroy(md_ctx);
+    EVP_MD_CTX_free(md_ctx);
     EVP_PKEY_free(pkey);
 
     return ret;

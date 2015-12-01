@@ -152,7 +152,7 @@ int DH_KDF_X9_42(unsigned char *out, size_t outlen,
     int derlen;
     if (Zlen > DH_KDF_MAX)
         return 0;
-    mctx = EVP_MD_CTX_create();
+    mctx = EVP_MD_CTX_new();
     if (mctx == NULL)
         return 0;
     mdlen = EVP_MD_size(md);
@@ -188,7 +188,7 @@ int DH_KDF_X9_42(unsigned char *out, size_t outlen,
     rv = 1;
  err:
     OPENSSL_free(der);
-    EVP_MD_CTX_destroy(mctx);
+    EVP_MD_CTX_free(mctx);
     return rv;
 }
 #endif

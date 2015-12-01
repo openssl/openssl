@@ -234,7 +234,7 @@ static int rand_add(const void *buf, int num, double add)
      * hash function.
      */
 
-    m = EVP_MD_CTX_create();
+    m = EVP_MD_CTX_new();
     if (m == NULL)
         goto err;
 
@@ -355,7 +355,7 @@ static int rand_add(const void *buf, int num, double add)
 #endif
     rv = 1;
  err:
-    EVP_MD_CTX_destroy(m);
+    EVP_MD_CTX_free(m);
     return rv;
 }
 
@@ -412,7 +412,7 @@ static int rand_bytes(unsigned char *buf, int num, int pseudo)
     if (num <= 0)
         return 1;
 
-    m = EVP_MD_CTX_create();
+    m = EVP_MD_CTX_new();
     if (m == NULL)
         goto err_mem;
 
@@ -600,7 +600,7 @@ static int rand_bytes(unsigned char *buf, int num, int pseudo)
     ASYNC_unblock_pause();
     CRYPTO_w_unlock(CRYPTO_LOCK_RAND);
 
-    EVP_MD_CTX_destroy(m);
+    EVP_MD_CTX_free(m);
     if (ok)
         return (1);
     else if (pseudo)
@@ -613,11 +613,11 @@ static int rand_bytes(unsigned char *buf, int num, int pseudo)
     }
  err:
     RANDerr(RAND_F_RAND_BYTES, ERR_R_EVP_LIB);
-    EVP_MD_CTX_destroy(m);
+    EVP_MD_CTX_free(m);
     return 0;
  err_mem:
     RANDerr(RAND_F_RAND_BYTES, ERR_R_MALLOC_FAILURE);
-    EVP_MD_CTX_destroy(m);
+    EVP_MD_CTX_free(m);
     return 0;
 
 }

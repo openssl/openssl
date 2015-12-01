@@ -322,7 +322,7 @@ static char *md5crypt(const char *passwd, const char *magic, const char *salt)
     salt_len = strlen(salt_out);
     assert(salt_len <= 8);
 
-    md = EVP_MD_CTX_create();
+    md = EVP_MD_CTX_new();
     if (md == NULL)
         return NULL;
     EVP_DigestInit_ex(md, EVP_md5(), NULL);
@@ -332,7 +332,7 @@ static char *md5crypt(const char *passwd, const char *magic, const char *salt)
     EVP_DigestUpdate(md, "$", 1);
     EVP_DigestUpdate(md, salt_out, salt_len);
 
-    md2 = EVP_MD_CTX_create();
+    md2 = EVP_MD_CTX_new();
     if (md2 == NULL)
         return NULL;
     EVP_DigestInit_ex(md2, EVP_md5(), NULL);
@@ -364,8 +364,8 @@ static char *md5crypt(const char *passwd, const char *magic, const char *salt)
                          (i & 1) ? sizeof buf : passwd_len);
         EVP_DigestFinal_ex(md2, buf, NULL);
     }
-    EVP_MD_CTX_destroy(md2);
-    EVP_MD_CTX_destroy(md);
+    EVP_MD_CTX_free(md2);
+    EVP_MD_CTX_free(md);
 
     {
         /* transform buf into output string */
