@@ -302,7 +302,7 @@ EVP_des_ede_ofb                         309	EXIST::FUNCTION:DES
 EVP_des_ofb                             310	EXIST::FUNCTION:DES
 EVP_desx_cbc                            311	EXIST::FUNCTION:DES
 EVP_dss                                 312	NOEXIST::FUNCTION:
-EVP_dss1                                313	EXIST::FUNCTION:DSA
+EVP_dss1                                313	NOEXIST::FUNCTION:
 EVP_enc_null                            314	EXIST::FUNCTION:
 EVP_get_cipherbyname                    315	EXIST::FUNCTION:
 EVP_get_digestbyname                    316	EXIST::FUNCTION:
@@ -3320,7 +3320,7 @@ X509_policy_check                       3720	EXIST::FUNCTION:
 EVP_PKEY_get_attr_by_NID                3721	EXIST::FUNCTION:
 STORE_set_ex_data                       3722	NOEXIST::FUNCTION:
 ENGINE_get_ECDSA                        3723	EXIST::FUNCTION:ENGINE
-EVP_ecdsa                               3724	EXIST::FUNCTION:
+EVP_ecdsa                               3724	NOEXIST::FUNCTION:
 BN_BLINDING_get_flags                   3725	EXIST::FUNCTION:
 PKCS12_add_cert                         3726	EXIST::FUNCTION:
 STORE_OBJECT_new                        3727	NOEXIST::FUNCTION:
