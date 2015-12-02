@@ -436,7 +436,7 @@ static RSA_METHOD capi_rsa_method = {
     0,                          /* bn_mod_exp */
     0,                          /* init */
     capi_rsa_free,              /* finish */
-    RSA_FLAG_SIGN_VER,          /* flags */
+    0,                          /* flags */
     NULL,                       /* app_data */
     capi_rsa_sign,              /* rsa_sign */
     0                           /* rsa_verify */
