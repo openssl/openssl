@@ -173,7 +173,7 @@ HMAC_CTX *HMAC_CTX_new(void)
 {
     HMAC_CTX *ctx = (HMAC_CTX *)OPENSSL_zalloc(sizeof(HMAC_CTX));
     if (ctx)
-        if (!HMAC_CTX_init(ctx)) {
+        if (!HMAC_CTX_reset(ctx)) {
             HMAC_CTX_free(ctx);
             ctx = NULL;
         }
@@ -201,7 +201,7 @@ void HMAC_CTX_free(HMAC_CTX *ctx)
     }
 }
 
-int HMAC_CTX_init(HMAC_CTX *ctx)
+int HMAC_CTX_reset(HMAC_CTX *ctx)
 {
     hmac_ctx_cleanup(ctx);
     if (ctx->i_ctx == NULL)
