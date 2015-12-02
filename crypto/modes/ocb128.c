@@ -162,7 +162,7 @@ static OCB_BLOCK *ocb_lookup_l(OCB128_CONTEXT *ctx, size_t idx)
         if (!ctx->l)
             return NULL;
     }
-    while (l_index <= idx) {
+    while (l_index < idx) {
         ocb_double(ctx->l + l_index, ctx->l + l_index + 1);
         l_index++;
     }
