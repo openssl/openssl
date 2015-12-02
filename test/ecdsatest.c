@@ -196,7 +196,7 @@ int x9_62_test_internal(BIO *out, int nid, const char *r_in, const char *s_in)
 
     EVP_MD_CTX_init(&md_ctx);
     /* get the message digest */
-    if (!EVP_DigestInit(&md_ctx, EVP_ecdsa())
+    if (!EVP_DigestInit(&md_ctx, EVP_sha1())
         || !EVP_DigestUpdate(&md_ctx, (const void *)message, 3)
         || !EVP_DigestFinal(&md_ctx, digest, &dgst_len))
         goto x962_int_err;

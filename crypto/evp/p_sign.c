@@ -67,7 +67,8 @@ int EVP_SignFinal(EVP_MD_CTX *ctx, unsigned char *sigret,
 {
     unsigned char m[EVP_MAX_MD_SIZE];
     unsigned int m_len = 0;
-    int i = 0, ok = 0, v = 0;
+    int i = 0;
+    size_t sltmp;
     EVP_PKEY_CTX *pkctx = NULL;
 
     *siglen = 0;
@@ -86,43 +87,20 @@ int EVP_SignFinal(EVP_MD_CTX *ctx, unsigned char *sigret,
             return 0;
     }
 
-    if (ctx->digest->flags & EVP_MD_FLAG_PKEY_METHOD_SIGNATURE) {
-        size_t sltmp = (size_t)EVP_PKEY_size(pkey);
-        i = 0;
-        pkctx = EVP_PKEY_CTX_new(pkey, NULL);
-        if (pkctx == NULL)
-            goto err;
-        if (EVP_PKEY_sign_init(pkctx) <= 0)
-            goto err;
-        if (EVP_PKEY_CTX_set_signature_md(pkctx, ctx->digest) <= 0)
-            goto err;
-        if (EVP_PKEY_sign(pkctx, sigret, &sltmp, m, m_len) <= 0)
-            goto err;
-        *siglen = sltmp;
-        i = 1;
+    sltmp = (size_t)EVP_PKEY_size(pkey);
+    i = 0;
+    pkctx = EVP_PKEY_CTX_new(pkey, NULL);
+    if (pkctx == NULL)
+        goto err;
+    if (EVP_PKEY_sign_init(pkctx) <= 0)
+        goto err;
+    if (EVP_PKEY_CTX_set_signature_md(pkctx, ctx->digest) <= 0)
+        goto err;
+    if (EVP_PKEY_sign(pkctx, sigret, &sltmp, m, m_len) <= 0)
+        goto err;
+    *siglen = sltmp;
+    i = 1;
  err:
         EVP_PKEY_CTX_free(pkctx);
         return i;
-    }
-
-    for (i = 0; i < 4; i++) {
-        v = ctx->digest->required_pkey_type[i];
-        if (v == 0)
-            break;
-        if (pkey->type == v) {
-            ok = 1;
-            break;
-        }
-    }
-    if (!ok) {
-        EVPerr(EVP_F_EVP_SIGNFINAL, EVP_R_WRONG_PUBLIC_KEY_TYPE);
-        return (0);
-    }
-
-    if (ctx->digest->sign == NULL) {
-        EVPerr(EVP_F_EVP_SIGNFINAL, EVP_R_NO_SIGN_FUNCTION_CONFIGURED);
-        return (0);
-    }
-    return ctx->digest->sign(ctx->digest->type, m, m_len, sigret, siglen,
-                             pkey->pkey.ptr);
 }

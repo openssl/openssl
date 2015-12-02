@@ -363,7 +363,6 @@ static const EVP_MD test_sha_md = {
     test_sha1_final,
     NULL,
     NULL,
-    EVP_PKEY_RSA_method,
     SHA_CBLOCK,
     sizeof(EVP_MD *) + sizeof(SHA_CTX),
 };

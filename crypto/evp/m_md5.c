@@ -94,7 +94,6 @@ static const EVP_MD md5_md = {
     final,
     NULL,
     NULL,
-    EVP_PKEY_RSA_method,
     MD5_CBLOCK,
     sizeof(EVP_MD *) + sizeof(MD5_CTX),
 };

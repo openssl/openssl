@@ -171,7 +171,6 @@ static const EVP_MD md5_sha1_md = {
     final,
     NULL,
     NULL,
-    EVP_PKEY_RSA_method,
     MD5_CBLOCK,
     sizeof(EVP_MD *) + sizeof(struct md5_sha1_ctx),
     ctrl

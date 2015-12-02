@@ -158,41 +158,14 @@ struct evp_md_st {
     int (*final) (EVP_MD_CTX *ctx, unsigned char *md);
     int (*copy) (EVP_MD_CTX *to, const EVP_MD_CTX *from);
     int (*cleanup) (EVP_MD_CTX *ctx);
-    /* FIXME: prototype these some day */
-    int (*sign) (int type, const unsigned char *m, unsigned int m_length,
-                 unsigned char *sigret, unsigned int *siglen, void *key);
-    int (*verify) (int type, const unsigned char *m, unsigned int m_length,
-                   const unsigned char *sigbuf, unsigned int siglen,
-                   void *key);
-    int required_pkey_type[5];  /* EVP_PKEY_xxx */
     int block_size;
     int ctx_size;               /* how big does the ctx->md_data need to be */
     /* control function */
     int (*md_ctrl) (EVP_MD_CTX *ctx, int cmd, int p1, void *p2);
 } /* EVP_MD */ ;
 
-typedef int evp_sign_method(int type, const unsigned char *m,
-                            unsigned int m_length, unsigned char *sigret,
-                            unsigned int *siglen, void *key);
-typedef int evp_verify_method(int type, const unsigned char *m,
-                              unsigned int m_length,
-                              const unsigned char *sigbuf,
-                              unsigned int siglen, void *key);
-
 /* digest can only handle a single block */
 #  define EVP_MD_FLAG_ONESHOT     0x0001
-
-/*
- * digest is a "clone" digest used
- * which is a copy of an existing
- * one for a specific public key type.
- * EVP_dss1() etc
- */
-#  define EVP_MD_FLAG_PKEY_DIGEST 0x0002
-
-/* Digest uses EVP_PKEY_METHOD for signing instead of MD specific signing */
-
-#  define EVP_MD_FLAG_PKEY_METHOD_SIGNATURE       0x0004
 
 /* DigestAlgorithmIdentifier flags... */
 
@@ -221,38 +194,6 @@ typedef int evp_verify_method(int type, const unsigned char *m,
 /* Minimum Algorithm specific ctrl value */
 
 #  define EVP_MD_CTRL_ALG_CTRL                    0x1000
-
-#  define EVP_PKEY_NULL_method    NULL,NULL,{0,0,0,0}
-
-#  ifndef OPENSSL_NO_DSA
-#   define EVP_PKEY_DSA_method     (evp_sign_method *)DSA_sign, \
-                                (evp_verify_method *)DSA_verify, \
-                                {EVP_PKEY_DSA,EVP_PKEY_DSA2,EVP_PKEY_DSA3, \
-                                        EVP_PKEY_DSA4,0}
-#  else
-#   define EVP_PKEY_DSA_method     EVP_PKEY_NULL_method
-#  endif
-
-#  ifndef OPENSSL_NO_EC
-#   define EVP_PKEY_ECDSA_method   (evp_sign_method *)ECDSA_sign, \
-                                (evp_verify_method *)ECDSA_verify, \
-                                 {EVP_PKEY_EC,0,0,0}
-#  else
-#   define EVP_PKEY_ECDSA_method   EVP_PKEY_NULL_method
-#  endif
-
-#  ifndef OPENSSL_NO_RSA
-#   define EVP_PKEY_RSA_method     (evp_sign_method *)RSA_sign, \
-                                (evp_verify_method *)RSA_verify, \
-                                {EVP_PKEY_RSA,EVP_PKEY_RSA2,0,0}
-#   define EVP_PKEY_RSA_ASN1_OCTET_STRING_method \
-                                (evp_sign_method *)RSA_sign_ASN1_OCTET_STRING, \
-                                (evp_verify_method *)RSA_verify_ASN1_OCTET_STRING, \
-                                {EVP_PKEY_RSA,EVP_PKEY_RSA2,0,0}
-#  else
-#   define EVP_PKEY_RSA_method     EVP_PKEY_NULL_method
-#   define EVP_PKEY_RSA_ASN1_OCTET_STRING_method EVP_PKEY_NULL_method
-#  endif
 
 # endif                         /* !EVP_MD */
 
@@ -772,8 +713,6 @@ const EVP_MD *EVP_md5(void);
 const EVP_MD *EVP_md5_sha1(void);
 # endif
 const EVP_MD *EVP_sha1(void);
-const EVP_MD *EVP_dss1(void);
-const EVP_MD *EVP_ecdsa(void);
 const EVP_MD *EVP_sha224(void);
 const EVP_MD *EVP_sha256(void);
 const EVP_MD *EVP_sha384(void);
