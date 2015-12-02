@@ -97,7 +97,7 @@ my $usage="Usage: Configure [no-<cipher> ...] [enable-<cipher> ...] [experimenta
 # Minimum warning options... any contributions to OpenSSL should at least get
 # past these.
 
-my $gcc_devteam_warn = "-Wall -pedantic -DPEDANTIC -Wno-long-long -Wsign-compare -Wmissing-prototypes -Wshadow -Wformat -Wtype-limits -Werror -rdynamic -DCRYPTO_MDEBUG_ALL -DCRYPTO_MDEBUG_ABORT -DCRYPTO_MDEBUG_BACKTRACE -DREF_CHECK -DDEBUG_UNUSED";
+my $gcc_devteam_warn = "-Wall -pedantic -DPEDANTIC -Wno-long-long -Wsign-compare -Wmissing-prototypes -Wshadow -Wformat -Wtype-limits -Werror -DCRYPTO_MDEBUG_ALL -DCRYPTO_MDEBUG_ABORT -DREF_CHECK -DDEBUG_UNUSED";
 
 # These are used in addition to $gcc_devteam_warn when the compiler is clang.
 # TODO(openssl-team): fix problems and investigate if (at least) the
@@ -107,6 +107,11 @@ my $gcc_devteam_warn = "-Wall -pedantic -DPEDANTIC -Wno-long-long -Wsign-compare
 # -Wunreachable-code -Wunused-parameter -Wlanguage-extension-token
 # -Wextended-offsetof
 my $clang_devteam_warn = "-Wno-unused-parameter -Wno-missing-field-initializers -Wno-language-extension-token -Wno-extended-offsetof -Wconditional-uninitialized -Qunused-arguments -Wincompatible-pointer-types-discards-qualifiers -Wmissing-variable-declarations";
+
+# These are used in addition to $gcc_devteam_warn unless this is a mingw build.
+# This adds backtrace information to the memory leak info.
+my $memleak_devteam_backtrace = "-rdynamic -DCRYPTO_MDEBUG_BACKTRACE";
+
 
 my $strict_warnings = 0;
 
@@ -1745,6 +1750,13 @@ if ($strict_warnings)
 	if ($ecc eq "clang")
 		{
 		foreach $wopt (split /\s+/, $clang_devteam_warn)
+			{
+			$cflags .= " $wopt" unless ($cflags =~ /(^|\s)$wopt(\s|$)/)
+			}
+		}
+	if ($target !~ /^mingw/)
+		{
+		foreach $wopt (split /\s+/, $memleak_devteam_backtrace)
 			{
 			$cflags .= " $wopt" unless ($cflags =~ /(^|\s)$wopt(\s|$)/)
 			}
