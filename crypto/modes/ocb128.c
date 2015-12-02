@@ -78,7 +78,8 @@ static u32 ocb_ntz(u64 n)
 /*
  * Shift a block of 16 bytes left by shift bits
  */
-static void ocb_block_lshift(OCB_BLOCK *in, size_t shift, OCB_BLOCK *out)
+static void ocb_block_lshift(const unsigned char *in, size_t shift,
+                             unsigned char *out)
 {
     unsigned char shift_mask;
     int i;
@@ -88,13 +89,13 @@ static void ocb_block_lshift(OCB_BLOCK *in, size_t shift, OCB_BLOCK *out)
     shift_mask <<= (8 - shift);
     for (i = 15; i >= 0; i--) {
         if (i > 0) {
-            mask[i - 1] = in->c[i] & shift_mask;
+            mask[i - 1] = in[i] & shift_mask;
             mask[i - 1] >>= 8 - shift;
         }
-        out->c[i] = in->c[i] << shift;
+        out[i] = in[i] << shift;
 
         if (i != 15) {
-            out->c[i] ^= mask[i];
+            out[i] ^= mask[i];
         }
     }
 }
@@ -114,7 +115,7 @@ static void ocb_double(OCB_BLOCK *in, OCB_BLOCK *out)
     mask >>= 7;
     mask *= 135;
 
-    ocb_block_lshift(in, 1, out);
+    ocb_block_lshift(in->c, 1, out->c);
 
     out->c[15] ^= mask;
 }
@@ -307,8 +308,7 @@ int CRYPTO_ocb128_setiv(OCB128_CONTEXT *ctx, const unsigned char *iv,
 
     /* Offset_0 = Stretch[1+bottom..128+bottom] */
     shift = bottom % 8;
-    ocb_block_lshift((OCB_BLOCK *)(stretch + (bottom / 8)), shift,
-                     &ctx->offset);
+    ocb_block_lshift(stretch + (bottom / 8), shift, ctx->offset.c);
     mask = 0xff;
     mask <<= 8 - shift;
     ctx->offset.c[15] |=
