@@ -131,7 +131,7 @@ int HMAC_Init_ex(HMAC_CTX *ctx, const void *key, int len,
 int HMAC_Init(HMAC_CTX *ctx, const void *key, int len, const EVP_MD *md)
 {
     if (key && md)
-        HMAC_CTX_init(ctx);
+        HMAC_CTX_reset(ctx);
     return HMAC_Init_ex(ctx, key, len, md, NULL);
 }
 #endif
@@ -225,7 +225,7 @@ int HMAC_CTX_reset(HMAC_CTX *ctx)
 
 int HMAC_CTX_copy(HMAC_CTX *dctx, HMAC_CTX *sctx)
 {
-    if (!HMAC_CTX_init(dctx))
+    if (!HMAC_CTX_reset(dctx))
         goto err;
     if (!EVP_MD_CTX_copy_ex(dctx->i_ctx, sctx->i_ctx))
         goto err;
