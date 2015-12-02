@@ -952,6 +952,7 @@ while($argv_unprocessed)
 	$argvstring=join(' ',@argvcopy);
 
 PROCESS_ARGS:
+	{
 	my %unsupported_options = ();
 	foreach (@argvcopy)
 		{
@@ -1148,7 +1149,7 @@ PROCESS_ARGS:
 			join(", ", keys %unsupported_options), "\n";
 		}
 	}
-
+	}
 
 
 if ($processor eq "386")
