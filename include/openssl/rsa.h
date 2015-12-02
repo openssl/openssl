@@ -107,9 +107,7 @@ struct rsa_meth_st {
      * New sign and verify functions: some libraries don't allow arbitrary
      * data to be signed/verified: this allows them to be used. Note: for
      * this to work the RSA_public_decrypt() and RSA_private_encrypt() should
-     * *NOT* be used RSA_sign(), RSA_verify() should be used instead. Note:
-     * for backwards compatibility this functionality is only enabled if the
-     * RSA_FLAG_SIGN_VER option is set in 'flags'.
+     * *NOT* be used RSA_sign(), RSA_verify() should be used instead.
      */
     int (*rsa_sign) (int type,
                      const unsigned char *m, unsigned int m_length,
@@ -194,12 +192,6 @@ struct rsa_st {
  * bn_mod_exp gets called when private key components are absent.
  */
 # define RSA_FLAG_EXT_PKEY               0x0020
-
-/*
- * This flag in the RSA_METHOD enables the new rsa_sign, rsa_verify
- * functions.
- */
-# define RSA_FLAG_SIGN_VER               0x0040
 
 /*
  * new with 0.9.6j and 0.9.7b; the built-in
