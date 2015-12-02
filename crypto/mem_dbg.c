@@ -117,6 +117,9 @@
 #include <openssl/buffer.h>
 #include <openssl/bio.h>
 #include <openssl/lhash.h>
+#if defined(CRYPTO_MDEBUG_BACKTRACE) && defined(__GNUC__)
+# include <execinfo.h>
+#endif
 
 static int mh_mode = CRYPTO_MEM_CHECK_OFF;
 /*
@@ -175,6 +178,10 @@ typedef struct mem_st
     unsigned long order;
     time_t time;
     APP_INFO *app_info;
+#if defined(CRYPTO_MDEBUG_BACKTRACE) && defined(__GNUC__)
+    void *array[30];
+    size_t array_siz;
+#endif
 } MEM;
 
 static long options =           /* extra information to be recorded */
@@ -515,6 +522,9 @@ void CRYPTO_dbg_malloc(void *addr, int num, const char *file, int line,
                 m->time = time(NULL);
             else
                 m->time = 0;
+#if defined(CRYPTO_MDEBUG_BACKTRACE) && defined(__GNUC__)
+            m->array_siz = backtrace(m->array, OSSL_NELEM(m->array));
+#endif
 
             CRYPTO_THREADID_current(&tmp.threadid);
             m->app_info = NULL;
@@ -608,6 +618,9 @@ void CRYPTO_dbg_realloc(void *addr1, void *addr2, int num,
 #endif
                 mp->addr = addr2;
                 mp->num = num;
+#if defined(CRYPTO_MDEBUG_BACKTRACE) && defined(__GNUC__)
+                mp->array_siz = backtrace(mp->array, OSSL_NELEM(mp->array));
+#endif
                 (void)lh_MEM_insert(mh, mp);
             }
 
@@ -672,41 +685,51 @@ static void print_leak_doall_arg(const MEM *m, MEM_LEAK *l)
 
     amip = m->app_info;
     ami_cnt = 0;
-    if (!amip)
-        return;
-    CRYPTO_THREADID_cpy(&ti, &amip->threadid);
+    if (amip) {
+        CRYPTO_THREADID_cpy(&ti, &amip->threadid);
 
-    do {
-        int buf_len;
-        int info_len;
+        do {
+            int buf_len;
+            int info_len;
 
-        ami_cnt++;
-        memset(buf, '>', ami_cnt);
-        BIO_snprintf(buf + ami_cnt, sizeof buf - ami_cnt,
-                     " thread=%lu, file=%s, line=%d, info=\"",
-                     CRYPTO_THREADID_hash(&amip->threadid), amip->file,
-                     amip->line);
-        buf_len = strlen(buf);
-        info_len = strlen(amip->info);
-        if (128 - buf_len - 3 < info_len) {
-            memcpy(buf + buf_len, amip->info, 128 - buf_len - 3);
-            buf_len = 128 - 3;
-        } else {
-            BUF_strlcpy(buf + buf_len, amip->info, sizeof buf - buf_len);
+            ami_cnt++;
+            memset(buf, '>', ami_cnt);
+            BIO_snprintf(buf + ami_cnt, sizeof buf - ami_cnt,
+                         " thread=%lu, file=%s, line=%d, info=\"",
+                         CRYPTO_THREADID_hash(&amip->threadid), amip->file,
+                         amip->line);
             buf_len = strlen(buf);
+            info_len = strlen(amip->info);
+            if (128 - buf_len - 3 < info_len) {
+                memcpy(buf + buf_len, amip->info, 128 - buf_len - 3);
+                buf_len = 128 - 3;
+            } else {
+                BUF_strlcpy(buf + buf_len, amip->info, sizeof buf - buf_len);
+                buf_len = strlen(buf);
+            }
+            BIO_snprintf(buf + buf_len, sizeof buf - buf_len, "\"\n");
+
+            BIO_puts(l->bio, buf);
+
+            amip = amip->next;
         }
-        BIO_snprintf(buf + buf_len, sizeof buf - buf_len, "\"\n");
-
-        BIO_puts(l->bio, buf);
-
-        amip = amip->next;
+        while (amip && !CRYPTO_THREADID_cmp(&amip->threadid, &ti));
     }
-    while (amip && !CRYPTO_THREADID_cmp(&amip->threadid, &ti));
 
 #ifdef LEVITTE_DEBUG_MEM
     if (amip) {
         fprintf(stderr, "Thread switch detected in backtrace!!!!\n");
         abort();
+    }
+#endif
+#if defined(CRYPTO_MDEBUG_BACKTRACE) && defined(__GNUC__)
+    {
+        size_t i;
+        char **strings = backtrace_symbols(m->array, m->array_siz);
+        for (i = 0; i < m->array_siz; i++)
+            fprintf(stderr, "##> %s\n", strings[i]);
+
+        free(strings);
     }
 #endif
 }
