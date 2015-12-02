@@ -461,6 +461,19 @@ static int aesni_ccm_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                             const unsigned char *in, size_t len);
 
 #  ifndef OPENSSL_NO_OCB
+void aesni_ocb_encrypt(const unsigned char *in, unsigned char *out,
+                       size_t blocks, const void *key,
+                       size_t start_block_num,
+                       unsigned char offset_i[16],
+                       const unsigned char L_[][16],
+                       unsigned char checksum[16]);
+void aesni_ocb_decrypt(const unsigned char *in, unsigned char *out,
+                       size_t blocks, const void *key,
+                       size_t start_block_num,
+                       unsigned char offset_i[16],
+                       const unsigned char L_[][16],
+                       unsigned char checksum[16]);
+
 static int aesni_ocb_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
                               const unsigned char *iv, int enc)
 {
@@ -479,7 +492,9 @@ static int aesni_ocb_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
             if (!CRYPTO_ocb128_init(&octx->ocb,
                                     &octx->ksenc.ks, &octx->ksdec.ks,
                                     (block128_f) aesni_encrypt,
-                                    (block128_f) aesni_decrypt))
+                                    (block128_f) aesni_decrypt,
+                                    enc ? aesni_ocb_encrypt
+                                        : aesni_ocb_decrypt))
                 return 0;
         }
         while (0);
@@ -2348,7 +2363,8 @@ static int aes_ocb_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
                 if (!CRYPTO_ocb128_init(&octx->ocb,
                                         &octx->ksenc.ks, &octx->ksdec.ks,
                                         (block128_f) vpaes_encrypt,
-                                        (block128_f) vpaes_decrypt))
+                                        (block128_f) vpaes_decrypt,
+                                        NULL))
                     return 0;
                 break;
             }
@@ -2358,7 +2374,8 @@ static int aes_ocb_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
             if (!CRYPTO_ocb128_init(&octx->ocb,
                                     &octx->ksenc.ks, &octx->ksdec.ks,
                                     (block128_f) AES_encrypt,
-                                    (block128_f) AES_decrypt))
+                                    (block128_f) AES_decrypt,
+                                    NULL))
                 return 0;
         }
         while (0);

@@ -164,6 +164,7 @@ struct ocb128_context {
     block128_f decrypt;
     void *keyenc;
     void *keydec;
+    ocb128_f stream;    /* direction dependent */
     /* Key dependent variables. Can be reused if key remains the same */
     size_t l_index;
     size_t max_l_index;
