@@ -95,9 +95,6 @@ EVP_MD imit_gost_cpa = {
     gost_imit_final,
     gost_imit_copy,
     gost_imit_cleanup,
-    NULL,
-    NULL,
-    {0, 0, 0, 0, 0},
     8,
     sizeof(struct ossl_gost_imit_ctx),
     gost_imit_ctrl

@@ -87,7 +87,6 @@ static const EVP_MD null_md = {
     final,
     NULL,
     NULL,
-    EVP_PKEY_NULL_method,
     0,
     sizeof(EVP_MD *),
 };

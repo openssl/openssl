@@ -377,8 +377,11 @@ static int pkey_rsa_decrypt(EVP_PKEY_CTX *ctx,
 
 static int check_padding_md(const EVP_MD *md, int padding)
 {
+    int mdnid;
     if (!md)
         return 1;
+
+    mdnid = EVP_MD_type(md);
 
     if (padding == RSA_NO_PADDING) {
         RSAerr(RSA_F_CHECK_PADDING_MD, RSA_R_INVALID_PADDING_MODE);
@@ -386,11 +389,31 @@ static int check_padding_md(const EVP_MD *md, int padding)
     }
 
     if (padding == RSA_X931_PADDING) {
-        if (RSA_X931_hash_id(EVP_MD_type(md)) == -1) {
+        if (RSA_X931_hash_id(mdnid) == -1) {
             RSAerr(RSA_F_CHECK_PADDING_MD, RSA_R_INVALID_X931_DIGEST);
             return 0;
         }
-        return 1;
+    } else {
+        switch(mdnid) {
+        /* List of all supported RSA digests */
+        case NID_sha1:
+        case NID_sha224:
+        case NID_sha256:
+        case NID_sha384:
+        case NID_sha512:
+        case NID_md5:
+        case NID_md5_sha1:
+        case NID_md2:
+        case NID_md4:
+        case NID_mdc2:
+        case NID_ripemd160:
+            return 1;
+
+        default:
+            RSAerr(RSA_F_CHECK_PADDING_MD, RSA_R_INVALID_DIGEST);
+            return 0;
+
+        }
     }
 
     return 1;
