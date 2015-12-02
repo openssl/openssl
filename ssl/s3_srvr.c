@@ -966,7 +966,7 @@ int ssl3_check_client_hello(SSL *s)
 
 int ssl3_get_client_hello(SSL *s)
 {
-    int i, j, ok, al, ret = -1, cookie_valid = 0;;
+    int i, j, ok, al, ret = -1, cookie_valid = 0;
     unsigned int cookie_len;
     long n;
     unsigned long id;
