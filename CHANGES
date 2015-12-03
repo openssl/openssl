@@ -2,7 +2,7 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 1.0.0s and 1.0.0t [xx XXX xxxx]
+ Changes between 1.0.0s and 1.0.0t [3 Dec 2015]
 
   *) X509_ATTRIBUTE memory leak
 
