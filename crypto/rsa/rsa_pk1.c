@@ -98,6 +98,7 @@ int RSA_padding_check_PKCS1_type_1(unsigned char *to, int tlen,
     const unsigned char *p;
 
     p = from;
+    p++;
     if ((num != (flen + 1)) || (*(p++) != 01)) {
         RSAerr(RSA_F_RSA_PADDING_CHECK_PKCS1_TYPE_1,
                RSA_R_BLOCK_TYPE_IS_NOT_01);
