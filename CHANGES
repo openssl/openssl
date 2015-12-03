@@ -2,6 +2,10 @@
  OpenSSL CHANGES
  _______________
 
+ Changes between 1.0.2e and 1.0.2f [xx XXX xxxx]
+
+  *)
+
  Changes between 1.0.2d and 1.0.2e [3 Dec 2015]
 
   *) BN_mod_exp may produce incorrect results on x86_64

@@ -5,6 +5,10 @@
   This file gives a brief overview of the major changes between each OpenSSL
   release. For more details please read the CHANGES file.
 
+  Major changes between OpenSSL 1.0.2e and OpenSSL 1.0.2f [under development]
+
+      o
+
   Major changes between OpenSSL 1.0.2d and OpenSSL 1.0.2e [3 Dec 2015]
 
       o BN_mod_exp may produce incorrect results on x86_64 (CVE-2015-3193)
