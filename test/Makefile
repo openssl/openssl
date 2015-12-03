@@ -588,9 +588,10 @@ clienthellotest.o: ../include/openssl/buffer.h ../include/openssl/comp.h
 clienthellotest.o: ../include/openssl/crypto.h ../include/openssl/dtls1.h
 clienthellotest.o: ../include/openssl/e_os2.h ../include/openssl/ec.h
 clienthellotest.o: ../include/openssl/ecdh.h ../include/openssl/ecdsa.h
-clienthellotest.o: ../include/openssl/evp.h ../include/openssl/hmac.h
-clienthellotest.o: ../include/openssl/kssl.h ../include/openssl/lhash.h
-clienthellotest.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
+clienthellotest.o: ../include/openssl/err.h ../include/openssl/evp.h
+clienthellotest.o: ../include/openssl/hmac.h ../include/openssl/kssl.h
+clienthellotest.o: ../include/openssl/lhash.h ../include/openssl/obj_mac.h
+clienthellotest.o: ../include/openssl/objects.h
 clienthellotest.o: ../include/openssl/opensslconf.h
 clienthellotest.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
 clienthellotest.o: ../include/openssl/pem.h ../include/openssl/pem2.h
