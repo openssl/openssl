@@ -321,8 +321,10 @@ typedef unsigned __int64 uint64_t;
  * some systems (e.g. Mac OS X).
  */
 # ifndef PRIu64
-#  if (__STDC_VERSION__ >= 199901L)
-#   include <inttypes.h>
+#  ifdef __STDC_VERSION__
+#   if (__STDC_VERSION__ >= 199901L)
+#    include <inttypes.h>
+#   endif
 #  endif
 #  ifndef PRIu64
 #   define PRIu64 "lu"
