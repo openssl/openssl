@@ -2,7 +2,7 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 1.0.2 and 1.1.0  [xx XXX xxxx]
+ Changes between 1.0.2e and 1.1.0  [xx XXX xxxx]
 
   *) Remove support for all 40 and 56 bit ciphers.  This includes all the export
      ciphers who are no longer supported and drops support the ephemeral RSA key
@@ -557,6 +557,64 @@
      is enable if DEBUG_UNUSED is set. Add to several functions in evp.h
      whose return value is often ignored. 
      [Steve Henson]
+
+ Changes between 1.0.2d and 1.0.2e [3 Dec 2015]
+
+  *) BN_mod_exp may produce incorrect results on x86_64
+
+     There is a carry propagating bug in the x86_64 Montgomery squaring
+     procedure. No EC algorithms are affected. Analysis suggests that attacks
+     against RSA and DSA as a result of this defect would be very difficult to
+     perform and are not believed likely. Attacks against DH are considered just
+     feasible (although very difficult) because most of the work necessary to
+     deduce information about a private key may be performed offline. The amount
+     of resources required for such an attack would be very significant and
+     likely only accessible to a limited number of attackers. An attacker would
+     additionally need online access to an unpatched system using the target
+     private key in a scenario with persistent DH parameters and a private
+     key that is shared between multiple clients. For example this can occur by
+     default in OpenSSL DHE based SSL/TLS ciphersuites.
+
+     This issue was reported to OpenSSL by Hanno Böck.
+     (CVE-2015-3193)
+     [Andy Polyakov]
+
+  *) Certificate verify crash with missing PSS parameter
+
+     The signature verification routines will crash with a NULL pointer
+     dereference if presented with an ASN.1 signature using the RSA PSS
+     algorithm and absent mask generation function parameter. Since these
+     routines are used to verify certificate signature algorithms this can be
+     used to crash any certificate verification operation and exploited in a
+     DoS attack. Any application which performs certificate verification is
+     vulnerable including OpenSSL clients and servers which enable client
+     authentication.
+
+     This issue was reported to OpenSSL by Loïc Jonas Etienne (Qnective AG).
+     (CVE-2015-3194)
+     [Stephen Henson]
+
+  *) X509_ATTRIBUTE memory leak
+
+     When presented with a malformed X509_ATTRIBUTE structure OpenSSL will leak
+     memory. This structure is used by the PKCS#7 and CMS routines so any
+     application which reads PKCS#7 or CMS data from untrusted sources is
+     affected. SSL/TLS is not affected.
+
+     This issue was reported to OpenSSL by Adam Langley (Google/BoringSSL) using
+     libFuzzer.
+     (CVE-2015-3195)
+     [Stephen Henson]
+
+  *) Rewrite EVP_DecodeUpdate (base64 decoding) to fix several bugs.
+     This changes the decoding behaviour for some invalid messages,
+     though the change is mostly in the more lenient direction, and
+     legacy behaviour is preserved as much as possible.
+     [Emilia Käsper]
+
+  *) In DSA_generate_parameters_ex, if the provided seed is too short,
+     return an error
+     [Rich Salz and Ismo Puustinen <ismo.puustinen@intel.com>]
 
  Changes between 1.0.2c and 1.0.2d [9 Jul 2015]
 
