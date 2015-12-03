@@ -2,6 +2,10 @@
  OpenSSL CHANGES
  _______________
 
+ Changes between 1.0.1q and 1.0.1r [xx XXX xxxx]
+
+  *)
+
  Changes between 1.0.1p and 1.0.1q [3 Dec 2015]
 
   *) Certificate verify crash with missing PSS parameter
