@@ -247,7 +247,7 @@ static int dsa_cb(int p, int n, BN_GENCB *arg)
     (void)BIO_flush(BN_GENCB_get_arg(arg));
 
     if (!ok && (p == 0) && (num > 1)) {
-        BIO_printf((BIO *)arg, "error in dsatest\n");
+        BIO_printf(BN_GENCB_get_arg(arg), "error in dsatest\n");
         return 0;
     }
     return 1;
