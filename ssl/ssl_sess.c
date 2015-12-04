@@ -497,6 +497,10 @@ int ssl_get_new_session(SSL *s, int session)
     ss->ssl_version = s->version;
     ss->verify_result = X509_V_OK;
 
+    /* If client supports extended master secret set it in session */
+    if (s->s3->flags & TLS1_FLAGS_RECEIVED_EXTMS)
+        ss->flags |= SSL_SESS_FLAG_EXTMS;
+
     return (1);
 }
 
@@ -533,8 +537,8 @@ int ssl_get_prev_session(SSL *s, const PACKET *ext, const PACKET *session_id)
     if (len == 0)
         try_session_cache = 0;
 
-    /* sets s->tlsext_ticket_expected */
-    r = tls1_process_ticket(s, ext, session_id, &ret);
+    /* sets s->tlsext_ticket_expected and extended master secret flag */
+    r = tls_check_serverhello_tlsext_early(s, ext, session_id, &ret);
     switch (r) {
     case -1:                   /* Error during processing */
         fatal = 1;
@@ -667,6 +671,20 @@ int ssl_get_prev_session(SSL *s, const PACKET *ext, const PACKET *session_id)
             /* session was from the cache, so remove it */
             SSL_CTX_remove_session(s->session_ctx, ret);
         }
+        goto err;
+    }
+
+    /* Check extended master secret extension consistency */
+    if (ret->flags & SSL_SESS_FLAG_EXTMS) {
+        /* If old session includes extms, but new does not: abort handshake */
+        if (!(s->s3->flags & TLS1_FLAGS_RECEIVED_EXTMS)) {
+            SSLerr(SSL_F_SSL_GET_PREV_SESSION, SSL_R_INCONSISTENT_EXTMS);
+            ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_HANDSHAKE_FAILURE);
+            fatal = 1;
+            goto err;
+        }
+    } else if (s->s3->flags & TLS1_FLAGS_RECEIVED_EXTMS) {
+        /* If new session includes extms, but old does not: do not resume */
         goto err;
     }
 
