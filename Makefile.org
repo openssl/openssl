@@ -437,7 +437,7 @@ rehash.time: certs apps
 test:   tests
 
 test_ordinals:
-	$(MAKE) TESTS=test_ordinals test
+	TOP=$(TOP) PERL=$(PERL) $(PERL) test/run_tests.pl test_ordinals
 
 tests: rehash
 	@(cd test && echo "testing..." && \
