@@ -139,6 +139,8 @@ RFC5280.
  Policy Constraints                 NID_policy_constraints
  Inhibit Any Policy                 NID_inhibit_any_policy
 
+ TLS Feature                        NID_tlsfeature
+
 =head2 NETSCAPE CERTIFICATE EXTENSIONS
 
 The following are (largely obsolete) Netscape certificate extensions.
