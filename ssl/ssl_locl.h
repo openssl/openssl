@@ -2021,8 +2021,9 @@ __owur int tls1_process_heartbeat(SSL *s, unsigned char *p, unsigned int length)
 __owur int dtls1_process_heartbeat(SSL *s, unsigned char *p, unsigned int length);
 #  endif
 
-__owur int tls1_process_ticket(SSL *s, const PACKET *ext,
-                               const PACKET *session_id, SSL_SESSION **ret);
+__owur int tls_check_serverhello_tlsext_early(SSL *s, const PACKET *ext,
+                                              const PACKET *session_id,
+                                              SSL_SESSION **ret);
 
 __owur int tls12_get_sigandhash(unsigned char *p, const EVP_PKEY *pk,
                          const EVP_MD *md);

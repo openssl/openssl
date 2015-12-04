@@ -1699,7 +1699,7 @@ unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *buf,
         }
     }
 #endif
-    if (!s->hit && s->session->flags & SSL_SESS_FLAG_EXTMS) {
+    if (s->s3->flags & TLS1_FLAGS_RECEIVED_EXTMS) {
         s2n(TLSEXT_TYPE_extended_master_secret, ret);
         s2n(0, ret);
     }
@@ -2269,10 +2269,11 @@ static int ssl_scan_clienthello_tlsext(SSL *s, PACKET *pkt, int *al)
         else if (type == TLSEXT_TYPE_encrypt_then_mac)
             s->s3->flags |= TLS1_FLAGS_ENCRYPT_THEN_MAC;
 #endif
-        else if (type == TLSEXT_TYPE_extended_master_secret) {
-            if (!s->hit)
-                s->session->flags |= SSL_SESS_FLAG_EXTMS;
-        }
+        /*
+         * Note: extended master secret extension handled in
+         * tls_check_serverhello_tlsext_early()
+         */
+
         /*
          * If this ClientHello extension was unhandled and this is a
          * nonresumed connection, check whether the extension is a custom
@@ -2365,6 +2366,8 @@ static int ssl_scan_serverhello_tlsext(SSL *s, PACKET *pkt, int *al)
 #ifdef TLSEXT_TYPE_encrypt_then_mac
     s->s3->flags &= ~TLS1_FLAGS_ENCRYPT_THEN_MAC;
 #endif
+
+    s->s3->flags &= ~TLS1_FLAGS_RECEIVED_EXTMS;
 
     if (!PACKET_get_net_2(pkt, &length))
         goto ri_check;
@@ -2554,6 +2557,7 @@ static int ssl_scan_serverhello_tlsext(SSL *s, PACKET *pkt, int *al)
         }
 #endif
         else if (type == TLSEXT_TYPE_extended_master_secret) {
+            s->s3->flags |= TLS1_FLAGS_RECEIVED_EXTMS;
             if (!s->hit)
                 s->session->flags |= SSL_SESS_FLAG_EXTMS;
         }
@@ -2601,6 +2605,19 @@ static int ssl_scan_serverhello_tlsext(SSL *s, PACKET *pkt, int *al)
         SSLerr(SSL_F_SSL_SCAN_SERVERHELLO_TLSEXT,
                SSL_R_UNSAFE_LEGACY_RENEGOTIATION_DISABLED);
         return 0;
+    }
+
+    if (s->hit) {
+        /*
+         * Check extended master secret extension is consistent with
+         * original session.
+         */
+        if (!(s->s3->flags & TLS1_FLAGS_RECEIVED_EXTMS) !=
+            !(s->session->flags & SSL_SESS_FLAG_EXTMS)) {
+            *al = SSL_AD_HANDSHAKE_FAILURE;
+            SSLerr(SSL_F_SSL_SCAN_SERVERHELLO_TLSEXT, SSL_R_INCONSISTENT_EXTMS);
+            return 0;
+            }
     }
 
     return 1;
@@ -2892,8 +2909,11 @@ int ssl_parse_serverhello_tlsext(SSL *s, PACKET *pkt)
 
 /*-
  * Since the server cache lookup is done early on in the processing of the
- * ClientHello, and other operations depend on the result, we need to handle
- * any TLS session ticket extension at the same time.
+ * ClientHello and other operations depend on the result some extensions
+ * need to be handled at the same time.
+ *
+ * Two extensions are currently handled, session ticket and extended master
+ * secret.
  *
  *   session_id: ClientHello session ID.
  *   ext: ClientHello extensions (including length prefix)
@@ -2920,23 +2940,29 @@ int ssl_parse_serverhello_tlsext(SSL *s, PACKET *pkt)
  *   a session ticket or we couldn't use the one it gave us, or if
  *   s->ctx->tlsext_ticket_key_cb asked to renew the client's ticket.
  *   Otherwise, s->tlsext_ticket_expected is set to 0.
+ *
+ *   For extended master secret flag is set if the extension is present.
+ *
  */
-int tls1_process_ticket(SSL *s, const PACKET *ext, const PACKET *session_id,
-                        SSL_SESSION **ret)
+int tls_check_serverhello_tlsext_early(SSL *s, const PACKET *ext,
+                                       const PACKET *session_id,
+                                       SSL_SESSION **ret)
 {
     unsigned int i;
     PACKET local_ext = *ext;
     int retv = -1;
 
+    int have_ticket = 0;
+    int use_ticket = tls_use_ticket(s);
+
     *ret = NULL;
     s->tlsext_ticket_expected = 0;
+    s->s3->flags &= ~TLS1_FLAGS_RECEIVED_EXTMS;
 
     /*
      * If tickets disabled behave as if no ticket present to permit stateful
      * resumption.
      */
-    if (!tls_use_ticket(s))
-        return 0;
     if ((s->version <= SSL3_VERSION))
         return 0;
 
@@ -2957,9 +2983,16 @@ int tls1_process_ticket(SSL *s, const PACKET *ext, const PACKET *session_id,
             retv = 0;
             goto end;
         }
-        if (type == TLSEXT_TYPE_session_ticket) {
+        if (type == TLSEXT_TYPE_session_ticket && use_ticket) {
             int r;
             unsigned char *etick;
+
+            /* Duplicate extension */
+            if (have_ticket != 0) {
+                retv = -1;
+                goto end;
+            }
+            have_ticket = 1;
 
             if (size == 0) {
                 /*
@@ -2968,7 +3001,7 @@ int tls1_process_ticket(SSL *s, const PACKET *ext, const PACKET *session_id,
                  */
                 s->tlsext_ticket_expected = 1;
                 retv = 1;
-                goto end;
+                continue;
             }
             if (s->tls_session_secret_cb) {
                 /*
@@ -2978,7 +3011,7 @@ int tls1_process_ticket(SSL *s, const PACKET *ext, const PACKET *session_id,
                  * calculate the master secret later.
                  */
                 retv = 2;
-                goto end;
+                continue;
             }
             if (!PACKET_get_bytes(&local_ext, &etick, size)) {
                 /* Shouldn't ever happen */
@@ -3003,15 +3036,18 @@ int tls1_process_ticket(SSL *s, const PACKET *ext, const PACKET *session_id,
                 retv = -1;
                 break;
             }
-            goto end;
+            continue;
         } else {
+            if (type == TLSEXT_TYPE_extended_master_secret)
+                s->s3->flags |= TLS1_FLAGS_RECEIVED_EXTMS;
             if (!PACKET_forward(&local_ext, size)) {
                 retv = -1;
                 goto end;
             }
         }
     }
-    retv = 0;
+    if (have_ticket == 0)
+        retv = 0;
 end:
     return retv;
 }

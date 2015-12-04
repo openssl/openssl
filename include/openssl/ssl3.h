@@ -369,6 +369,8 @@ extern "C" {
 /* Set if we encrypt then mac instead of usual mac then encrypt */
 # define TLS1_FLAGS_ENCRYPT_THEN_MAC             0x0100
 
+/* Set if extended master secret extension received from peer */
+# define TLS1_FLAGS_RECEIVED_EXTMS               0x0200
 
 # define SSL3_MT_HELLO_REQUEST                   0
 # define SSL3_MT_CLIENT_HELLO                    1
