@@ -2037,7 +2037,7 @@ void ssl_set_masks(SSL *s, const SSL_CIPHER *cipher)
 #endif
 
 #ifndef OPENSSL_NO_EC
-    have_ecdh_tmp = (c->ecdh_tmp || c->ecdh_tmp_cb || c->ecdh_tmp_auto);
+    have_ecdh_tmp = (c->ecdh_tmp || c->ecdh_tmp_auto);
 #endif
     cpk = &(c->pkeys[SSL_PKEY_RSA_ENC]);
     rsa_enc = pvalid[SSL_PKEY_RSA_ENC] & CERT_PKEY_VALID;
@@ -3139,23 +3139,6 @@ void SSL_set_tmp_dh_callback(SSL *ssl, DH *(*dh) (SSL *ssl, int is_export,
                                                   int keylength))
 {
     SSL_callback_ctrl(ssl, SSL_CTRL_SET_TMP_DH_CB, (void (*)(void))dh);
-}
-#endif
-
-#ifndef OPENSSL_NO_EC
-void SSL_CTX_set_tmp_ecdh_callback(SSL_CTX *ctx,
-                                   EC_KEY *(*ecdh) (SSL *ssl, int is_export,
-                                                    int keylength))
-{
-    SSL_CTX_callback_ctrl(ctx, SSL_CTRL_SET_TMP_ECDH_CB,
-                          (void (*)(void))ecdh);
-}
-
-void SSL_set_tmp_ecdh_callback(SSL *ssl,
-                               EC_KEY *(*ecdh) (SSL *ssl, int is_export,
-                                                int keylength))
-{
-    SSL_callback_ctrl(ssl, SSL_CTRL_SET_TMP_ECDH_CB, (void (*)(void))ecdh);
 }
 #endif
 

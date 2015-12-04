@@ -239,7 +239,6 @@ CERT *ssl_cert_dup(CERT *cert)
             goto err;
         }
     }
-    ret->ecdh_tmp_cb = cert->ecdh_tmp_cb;
     ret->ecdh_tmp_auto = cert->ecdh_tmp_auto;
 #endif
 

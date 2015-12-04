@@ -1570,8 +1570,6 @@ typedef struct cert_st {
 # endif
 # ifndef OPENSSL_NO_EC
     EC_KEY *ecdh_tmp;
-    /* Callback for generating ephemeral ECDH keys */
-    EC_KEY *(*ecdh_tmp_cb) (SSL *ssl, int is_export, int keysize);
     /* Select ECDH parameters automatically */
     int ecdh_tmp_auto;
 # endif

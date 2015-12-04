@@ -217,8 +217,8 @@ SSL_renegotiate_pending                 265	EXIST::FUNCTION:
 SSL_CTX_set_msg_callback                266	EXIST::FUNCTION:
 SSL_set_msg_callback                    267	EXIST::FUNCTION:
 DTLSv1_client_method                    268	EXIST::FUNCTION:
-SSL_CTX_set_tmp_ecdh_callback           269	EXIST::FUNCTION:EC
-SSL_set_tmp_ecdh_callback               270	EXIST::FUNCTION:EC
+SSL_CTX_set_tmp_ecdh_callback           269	NOEXIST::FUNCTION:
+SSL_set_tmp_ecdh_callback               270	NOEXIST::FUNCTION:
 SSL_COMP_get_name                       271	EXIST::FUNCTION:
 SSL_get_current_compression             272	EXIST::FUNCTION:
 DTLSv1_method                           273	EXIST::FUNCTION:

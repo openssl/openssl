@@ -1874,12 +1874,6 @@ int tls_construct_server_key_exchange(SSL *s)
             int nid = tls1_shared_curve(s, -2);
             if (nid != NID_undef)
                 ecdhp = EC_KEY_new_by_curve_name(nid);
-        } else if ((ecdhp == NULL) && s->cert->ecdh_tmp_cb) {
-            ecdhp = s->cert->ecdh_tmp_cb(s,
-                                         SSL_C_IS_EXPORT(s->s3->
-                                                         tmp.new_cipher),
-                                         SSL_C_EXPORT_PKEYLENGTH(s->
-                                                                 s3->tmp.new_cipher));
         }
         if (ecdhp == NULL) {
             al = SSL_AD_HANDSHAKE_FAILURE;
