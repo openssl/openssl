@@ -1568,10 +1568,6 @@ typedef struct cert_st {
     DH *(*dh_tmp_cb) (SSL *ssl, int is_export, int keysize);
     int dh_tmp_auto;
 # endif
-# ifndef OPENSSL_NO_EC
-    /* Select ECDH parameters automatically */
-    int ecdh_tmp_auto;
-# endif
     /* Flags related to certificates */
     uint32_t cert_flags;
     CERT_PKEY pkeys[SSL_PKEY_NUM];

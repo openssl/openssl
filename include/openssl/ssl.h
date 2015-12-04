@@ -1202,7 +1202,6 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 # define SSL_CTRL_SET_CURVES                     91
 # define SSL_CTRL_SET_CURVES_LIST                92
 # define SSL_CTRL_GET_SHARED_CURVE               93
-# define SSL_CTRL_SET_ECDH_AUTO                  94
 # define SSL_CTRL_SET_SIGALGS                    97
 # define SSL_CTRL_SET_SIGALGS_LIST               98
 # define SSL_CTRL_CERT_FLAGS                     99
@@ -1335,10 +1334,6 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
         SSL_ctrl(ctx,SSL_CTRL_SET_CURVES_LIST,0,(char *)s)
 # define SSL_get_shared_curve(s, n) \
         SSL_ctrl(s,SSL_CTRL_GET_SHARED_CURVE,n,NULL)
-# define SSL_CTX_set_ecdh_auto(ctx, onoff) \
-        SSL_CTX_ctrl(ctx,SSL_CTRL_SET_ECDH_AUTO,onoff,NULL)
-# define SSL_set_ecdh_auto(s, onoff) \
-        SSL_ctrl(s,SSL_CTRL_SET_ECDH_AUTO,onoff,NULL)
 # define SSL_CTX_set1_sigalgs(ctx, slist, slistlen) \
         SSL_CTX_ctrl(ctx,SSL_CTRL_SET_SIGALGS,slistlen,(int *)slist)
 # define SSL_CTX_set1_sigalgs_list(ctx, s) \

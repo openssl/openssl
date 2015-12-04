@@ -231,10 +231,6 @@ CERT *ssl_cert_dup(CERT *cert)
     ret->dh_tmp_auto = cert->dh_tmp_auto;
 #endif
 
-#ifndef OPENSSL_NO_EC
-    ret->ecdh_tmp_auto = cert->ecdh_tmp_auto;
-#endif
-
     for (i = 0; i < SSL_PKEY_NUM; i++) {
         CERT_PKEY *cpk = cert->pkeys + i;
         CERT_PKEY *rpk = ret->pkeys + i;

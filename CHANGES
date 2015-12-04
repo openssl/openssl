@@ -13,6 +13,11 @@
      pages. This work was developed in partnership with Intel Corp.
      [Matt Caswell]
 
+  *) SSL_{CTX_}set_ecdh_auto() has been removed and ECDH is support is
+     always enabled now.  If you want to disable the support you should
+     exclude it using the list of supported ciphers.
+     [Kurt Roeckx]
+
   *) SSL_{CTX}_set_tmp_ecdh() which can set 1 EC curve now internally calls
      SSL_{CTX_}set1_curves() which can set a list.
      [Kurt Roeckx]
