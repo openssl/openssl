@@ -232,13 +232,6 @@ CERT *ssl_cert_dup(CERT *cert)
 #endif
 
 #ifndef OPENSSL_NO_EC
-    if (cert->ecdh_tmp) {
-        ret->ecdh_tmp = EC_KEY_dup(cert->ecdh_tmp);
-        if (ret->ecdh_tmp == NULL) {
-            SSLerr(SSL_F_SSL_CERT_DUP, ERR_R_EC_LIB);
-            goto err;
-        }
-    }
     ret->ecdh_tmp_auto = cert->ecdh_tmp_auto;
 #endif
 
@@ -393,9 +386,6 @@ void ssl_cert_free(CERT *c)
 #endif
 #ifndef OPENSSL_NO_DH
     DH_free(c->dh_tmp);
-#endif
-#ifndef OPENSSL_NO_EC
-    EC_KEY_free(c->ecdh_tmp);
 #endif
 
     ssl_cert_clear_certs(c);

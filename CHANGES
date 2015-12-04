@@ -13,6 +13,10 @@
      pages. This work was developed in partnership with Intel Corp.
      [Matt Caswell]
 
+  *) SSL_{CTX}_set_tmp_ecdh() which can set 1 EC curve now internally calls
+     SSL_{CTX_}set1_curves() which can set a list.
+     [Kurt Roeckx]
+
   *) Remove support for SSL_{CTX_}set_tmp_ecdh_callback().  You should set the
      curve you want to support using SSL_{CTX_}set1_curves().
      [Kurt Roeckx]
