@@ -1490,6 +1490,11 @@
 #define NID_proxyCertInfo               663
 #define OBJ_proxyCertInfo               OBJ_id_pe,14L
 
+#define SN_tlsfeature           "tlsfeature"
+#define LN_tlsfeature           "TLS Feature"
+#define NID_tlsfeature          1018
+#define OBJ_tlsfeature          OBJ_id_pe,24L
+
 #define SN_id_qt_cps            "id-qt-cps"
 #define LN_id_qt_cps            "Policy Qualifier CPS"
 #define NID_id_qt_cps           164
