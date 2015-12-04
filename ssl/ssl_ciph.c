@@ -1864,14 +1864,14 @@ const char *SSL_CIPHER_get_name(const SSL_CIPHER *c)
 }
 
 /* number of bits for symmetric cipher */
-int32_t SSL_CIPHER_get_bits(const SSL_CIPHER *c, uint32_t *alg_bits)
+int SSL_CIPHER_get_bits(const SSL_CIPHER *c, int *alg_bits)
 {
-    int32_t ret = 0;
+    int ret = 0;
 
     if (c != NULL) {
         if (alg_bits != NULL)
-            *alg_bits = c->alg_bits;
-        ret = c->strength_bits;
+            *alg_bits = (int) c->alg_bits;
+        ret = (int) c->strength_bits;
     }
     return ret;
 }

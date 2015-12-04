@@ -1391,7 +1391,7 @@ __owur int SSL_clear(SSL *s);
 void SSL_CTX_flush_sessions(SSL_CTX *ctx, long tm);
 
 __owur const SSL_CIPHER *SSL_get_current_cipher(const SSL *s);
-__owur int32_t SSL_CIPHER_get_bits(const SSL_CIPHER *c, uint32_t *alg_bits);
+__owur int SSL_CIPHER_get_bits(const SSL_CIPHER *c, int *alg_bits);
 __owur char *SSL_CIPHER_get_version(const SSL_CIPHER *c);
 __owur const char *SSL_CIPHER_get_name(const SSL_CIPHER *c);
 __owur uint32_t SSL_CIPHER_get_id(const SSL_CIPHER *c);
