@@ -62,12 +62,12 @@
  * [including the GNU Public Licence.]
  */
 
-#define NUM_NID 1020
-#define NUM_SN 1013
-#define NUM_LN 1013
-#define NUM_OBJ 936
+#define NUM_NID 1021
+#define NUM_SN 1014
+#define NUM_LN 1014
+#define NUM_OBJ 937
 
-static const unsigned char lvalues[6604]={
+static const unsigned char lvalues[6612]={
 0x2A,0x86,0x48,0x86,0xF7,0x0D,               /* [  0] OBJ_rsadsi */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,          /* [  6] OBJ_pkcs */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x02,0x02,     /* [ 13] OBJ_md2 */
@@ -998,6 +998,7 @@ static const unsigned char lvalues[6604]={
 0x2A,0x85,0x03,0x64,0x03,                    /* [6588] OBJ_SNILS */
 0x2A,0x85,0x03,0x64,0x6F,                    /* [6593] OBJ_subjectSignTool */
 0x2A,0x85,0x03,0x64,0x70,                    /* [6598] OBJ_issuerSignTool */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x01,0x18,     /* [6603] OBJ_tlsfeature */
 };
 
 static const ASN1_OBJECT nid_objs[NUM_NID]={
@@ -2669,6 +2670,7 @@ static const ASN1_OBJECT nid_objs[NUM_NID]={
 {"grasshopper-mac","grasshopper-mac",NID_grasshopper_mac,0,NULL,0},
 {"ChaCha20-Poly1305","chacha20-poly1305",NID_chacha20_poly1305,0,NULL,0},
 {"ChaCha20","chacha20",NID_chacha20,0,NULL,0},
+{"tlsfeature","TLS Feature",NID_tlsfeature,8,&(lvalues[6603]),0},
 };
 
 static const unsigned int sn_objs[NUM_SN]={
@@ -3656,6 +3658,7 @@ static const unsigned int sn_objs[NUM_SN]={
 293,	/* "textNotice" */
 133,	/* "timeStamping" */
 106,	/* "title" */
+1020,	/* "tlsfeature" */
 682,	/* "tpBasis" */
 375,	/* "trustRoot" */
 436,	/* "ucl" */
@@ -3813,6 +3816,7 @@ static const unsigned int ln_objs[NUM_LN]={
 1007,	/* "Signing Tool of Subject" */
 143,	/* "Strong Extranet ID" */
 398,	/* "Subject Information Access" */
+1020,	/* "TLS Feature" */
 130,	/* "TLS Web Client Authentication" */
 129,	/* "TLS Web Server Authentication" */
 133,	/* "Time Stamping" */
@@ -5244,6 +5248,7 @@ static const unsigned int obj_objs[NUM_OBJ]={
 397,	/* OBJ_ac_proxying                  1 3 6 1 5 5 7 1 10 */
 398,	/* OBJ_sinfo_access                 1 3 6 1 5 5 7 1 11 */
 663,	/* OBJ_proxyCertInfo                1 3 6 1 5 5 7 1 14 */
+1020,	/* OBJ_tlsfeature                   1 3 6 1 5 5 7 1 24 */
 164,	/* OBJ_id_qt_cps                    1 3 6 1 5 5 7 2 1 */
 165,	/* OBJ_id_qt_unotice                1 3 6 1 5 5 7 2 2 */
 293,	/* OBJ_textNotice                   1 3 6 1 5 5 7 2 3 */

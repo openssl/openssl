@@ -4727,3 +4727,5 @@ Poly1305_Update                         5086	EXIST::FUNCTION:POLY1305
 Poly1305_Final                          5087	EXIST::FUNCTION:POLY1305
 EVP_chacha20_poly1305                   5088	EXIST::FUNCTION:CHACHA,POLY1305
 EVP_chacha20                            5089	EXIST::FUNCTION:CHACHA
+TLS_FEATURE_free                        5093	EXIST::FUNCTION:
+TLS_FEATURE_new                         5094	EXIST::FUNCTION:
