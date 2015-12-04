@@ -119,6 +119,31 @@ int SCT_set0_log_id(SCT *sct, unsigned char *log_id, size_t log_id_len)
     return 1;
 }
 
+int SCT_set1_log_id(SCT *sct, const unsigned char *log_id, size_t log_id_len)
+{
+    /* Currently only SHA-256 allowed so length must be SCT_V1_HASHLEN */
+    if (log_id_len != SCT_V1_HASHLEN) {
+        CTerr(CT_F_SCT_SET1_LOG_ID, CT_R_INVALID_LOG_ID_LENGTH);
+        return 0;
+    }
+
+    OPENSSL_free(sct->log_id);
+    if (log_id == NULL || log_id_len == 0) {
+        sct->log_id = NULL;
+    } else {
+        sct->log_id = OPENSSL_memdup(log_id, log_id_len);
+
+        if (sct->log_id == NULL) {
+            CTerr(CT_F_SCT_SET1_LOG_ID, ERR_R_MALLOC_FAILURE);
+            return 0;
+        }
+    }
+
+    sct->log_id_len = log_id_len;
+    return 1;
+}
+
+
 void SCT_set_timestamp(SCT *sct, uint64_t timestamp)
 {
     sct->timestamp = timestamp;
@@ -148,11 +173,43 @@ void SCT_set0_extensions(SCT *sct, unsigned char *ext, size_t ext_len)
     sct->ext_len = ext_len;
 }
 
+int SCT_set1_extensions(SCT *sct, const unsigned char *ext, size_t ext_len)
+{
+    OPENSSL_free(sct->ext);
+    if (sct->ext == NULL || ext_len == 0) {
+        sct->ext = NULL;
+    } else {
+        sct->ext = OPENSSL_memdup(ext, ext_len);
+        if (sct->ext == NULL) {
+            CTerr(CT_F_SCT_SET1_EXTENSIONS, ERR_R_MALLOC_FAILURE);
+            return 0;
+        }
+    }
+    sct->ext_len = ext_len;
+    return 1;
+}
+
 void SCT_set0_signature(SCT *sct, unsigned char *sig, size_t sig_len)
 {
     OPENSSL_free(sct->sig);
     sct->sig = sig;
     sct->sig_len = sig_len;
+}
+
+int SCT_set1_signature(SCT *sct, const unsigned char *sig, size_t sig_len)
+{
+    OPENSSL_free(sct->sig);
+    if (sig == NULL || sig_len == 0) {
+        sct->sig = NULL;
+    } else {
+        sct->sig = OPENSSL_memdup(sig, sig_len);
+        if (sct->sig == NULL) {
+            CTerr(CT_F_SCT_SET1_SIGNATURE, ERR_R_MALLOC_FAILURE);
+            return 0;
+        }
+    }
+    sct->sig_len = sig_len;
+    return 1;
 }
 
 sct_version_t SCT_get_version(const SCT *sct)
@@ -203,6 +260,18 @@ size_t SCT_get0_signature(const SCT *sct, unsigned char **sig)
 {
     *sig = sct->sig;
     return sct->sig_len;
+}
+
+int SCT_is_valid(const SCT *sct)
+{
+    switch (sct->version) {
+    case UNSET_VERSION:
+        return 0;
+    case SCT_V1:
+        return sct->log_id != NULL && SCT_signature_is_valid(sct);
+    default:
+        return sct->sct != NULL; /* Just need cached encoding */
+    }
 }
 
 #endif
