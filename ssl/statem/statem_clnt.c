@@ -283,6 +283,19 @@ int ossl_statem_client_read_transition(SSL *s, int mt)
             if (SSL_IS_DTLS(s) && mt == DTLS1_MT_HELLO_VERIFY_REQUEST) {
                 st->hand_state = DTLS_ST_CR_HELLO_VERIFY_REQUEST;
                 return 1;
+            } else if (s->version >= TLS1_VERSION
+                    && s->tls_session_secret_cb != NULL
+                    && s->session->tlsext_tick != NULL
+                    && mt == SSL3_MT_CHANGE_CIPHER_SPEC) {
+                /*
+                 * Normally, we can tell if the server is resuming the session
+                 * from the session ID. EAP-FAST (RFC 4851), however, relies on
+                 * the next server message after the ServerHello to determine if
+                 * the server is resuming.
+                 */
+                s->hit = 1;
+                st->hand_state = TLS_ST_CR_CHANGE;
+                return 1;
             } else if (!(s->s3->tmp.new_cipher->algorithm_auth
                         & (SSL_aNULL | SSL_aSRP | SSL_aPSK))) {
                 if (mt == SSL3_MT_CERTIFICATE) {
