@@ -1569,7 +1569,6 @@ typedef struct cert_st {
     int dh_tmp_auto;
 # endif
 # ifndef OPENSSL_NO_EC
-    EC_KEY *ecdh_tmp;
     /* Select ECDH parameters automatically */
     int ecdh_tmp_auto;
 # endif

@@ -1868,7 +1868,7 @@ int tls_construct_server_key_exchange(SSL *s)
     if (type & (SSL_kECDHE | SSL_kECDHEPSK)) {
         const EC_GROUP *group;
 
-        ecdhp = cert->ecdh_tmp;
+        ecdhp = NULL;
         if (s->cert->ecdh_tmp_auto) {
             /* Get NID of appropriate shared curve */
             int nid = tls1_shared_curve(s, -2);

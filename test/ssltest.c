@@ -1475,6 +1475,7 @@ int main(int argc, char *argv[])
             goto end;
         }
 
+        SSL_CTX_set_ecdh_auto(s_ctx, 1);
         SSL_CTX_set_tmp_ecdh(s_ctx, ecdh);
         SSL_CTX_set_options(s_ctx, SSL_OP_SINGLE_ECDH_USE);
         EC_KEY_free(ecdh);

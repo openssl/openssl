@@ -4072,27 +4072,24 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 #ifndef OPENSSL_NO_EC
     case SSL_CTRL_SET_TMP_ECDH:
         {
-            EC_KEY *ecdh = NULL;
+            const EC_GROUP *group = NULL;
+            int nid;
 
             if (parg == NULL) {
                 SSLerr(SSL_F_SSL3_CTRL, ERR_R_PASSED_NULL_PARAMETER);
-                return (ret);
+                return 0;
             }
-            if (!EC_KEY_up_ref((EC_KEY *)parg)) {
-                SSLerr(SSL_F_SSL3_CTRL, ERR_R_ECDH_LIB);
-                return (ret);
+            group = EC_KEY_get0_group((const EC_KEY *)parg);
+            if (group == NULL) {
+                SSLerr(SSL_F_SSL3_CTRL, EC_R_MISSING_PARAMETERS);
+                return 0;
             }
-            ecdh = (EC_KEY *)parg;
-            if (!(s->options & SSL_OP_SINGLE_ECDH_USE)) {
-                if (!EC_KEY_generate_key(ecdh)) {
-                    EC_KEY_free(ecdh);
-                    SSLerr(SSL_F_SSL3_CTRL, ERR_R_ECDH_LIB);
-                    return (ret);
-                }
-            }
-            EC_KEY_free(s->cert->ecdh_tmp);
-            s->cert->ecdh_tmp = ecdh;
-            ret = 1;
+            nid = EC_GROUP_get_curve_name(group);
+            if (nid == NID_undef)
+                return 0;
+            return tls1_set_curves(&s->tlsext_ellipticcurvelist,
+                                   &s->tlsext_ellipticcurvelist_length,
+                                   &nid, 1);
         }
         break;
 #endif                          /* !OPENSSL_NO_EC */
@@ -4522,28 +4519,24 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 #ifndef OPENSSL_NO_EC
     case SSL_CTRL_SET_TMP_ECDH:
         {
-            EC_KEY *ecdh = NULL;
+            const EC_GROUP *group = NULL;
+            int nid;
 
             if (parg == NULL) {
-                SSLerr(SSL_F_SSL3_CTX_CTRL, ERR_R_ECDH_LIB);
+                SSLerr(SSL_F_SSL3_CTX_CTRL, ERR_R_PASSED_NULL_PARAMETER);
                 return 0;
             }
-            ecdh = EC_KEY_dup((EC_KEY *)parg);
-            if (ecdh == NULL) {
-                SSLerr(SSL_F_SSL3_CTX_CTRL, ERR_R_EC_LIB);
+            group = EC_KEY_get0_group((const EC_KEY *)parg);
+            if (group == NULL) {
+                SSLerr(SSL_F_SSL3_CTX_CTRL, EC_R_MISSING_PARAMETERS);
                 return 0;
             }
-            if (!(ctx->options & SSL_OP_SINGLE_ECDH_USE)) {
-                if (!EC_KEY_generate_key(ecdh)) {
-                    EC_KEY_free(ecdh);
-                    SSLerr(SSL_F_SSL3_CTX_CTRL, ERR_R_ECDH_LIB);
-                    return 0;
-                }
-            }
-
-            EC_KEY_free(cert->ecdh_tmp);
-            cert->ecdh_tmp = ecdh;
-            return 1;
+            nid = EC_GROUP_get_curve_name(group);
+            if (nid == NID_undef)
+                return 0;
+            return tls1_set_curves(&ctx->tlsext_ellipticcurvelist,
+                                   &ctx->tlsext_ellipticcurvelist_length,
+                                   &nid, 1);
         }
         /* break; */
 #endif                          /* !OPENSSL_NO_EC */

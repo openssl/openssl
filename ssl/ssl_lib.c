@@ -2037,7 +2037,7 @@ void ssl_set_masks(SSL *s, const SSL_CIPHER *cipher)
 #endif
 
 #ifndef OPENSSL_NO_EC
-    have_ecdh_tmp = (c->ecdh_tmp || c->ecdh_tmp_auto);
+    have_ecdh_tmp = c->ecdh_tmp_auto;
 #endif
     cpk = &(c->pkeys[SSL_PKEY_RSA_ENC]);
     rsa_enc = pvalid[SSL_PKEY_RSA_ENC] & CERT_PKEY_VALID;

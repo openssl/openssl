@@ -507,8 +507,9 @@ int tls1_check_curve(SSL *s, const unsigned char *p, size_t len)
 }
 
 /*-
- * Return |nmatch|th shared curve or NID_undef if there is no match.
- * For nmatch == -1, return number of  matches
+ * For nmatch >= 0, return the NID of the |nmatch|th shared curve or NID_undef
+ * if there is no match.
+ * For nmatch == -1, return number of matches
  * For nmatch == -2, return the NID of the curve to use for
  * an EC tmp key, or NID_undef if there is no match.
  */
@@ -842,11 +843,18 @@ static int tls1_check_cert_param(SSL *s, X509 *x, int set_ee_md)
 }
 
 # ifndef OPENSSL_NO_EC
-/* Check EC temporary key is compatible with client extensions */
+/*
+ * tls1_check_ec_tmp_key - Check EC temporary key compatiblity
+ * @s: SSL connection
+ * @cid: Cipher ID we're considering using
+ *
+ * Checks that the kECDHE cipher suite we're considering using
+ * is compatible with the client extensions.
+ *
+ * Returns 0 when the cipher can't be used or 1 when it can.
+ */
 int tls1_check_ec_tmp_key(SSL *s, unsigned long cid)
 {
-    unsigned char curve_id[2];
-    EC_KEY *ec = s->cert->ecdh_tmp;
 #  ifdef OPENSSL_SSL_DEBUG_BROKEN_PROTOCOL
     /* Allow any curve: not just those peer supports */
     if (s->cert->cert_flags & SSL_CERT_FLAG_BROKEN_PROTOCOL)
@@ -857,6 +865,7 @@ int tls1_check_ec_tmp_key(SSL *s, unsigned long cid)
      * curves permitted.
      */
     if (tls1_suiteb(s)) {
+        unsigned char curve_id[2];
         /* Curve to check determined by ciphersuite */
         if (cid == TLS1_CK_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256)
             curve_id[1] = TLSEXT_curve_P_256;
@@ -871,18 +880,8 @@ int tls1_check_ec_tmp_key(SSL *s, unsigned long cid)
         /* If auto assume OK */
         if (s->cert->ecdh_tmp_auto)
             return 1;
-        /* Otherwise check curve is acceptable */
-        else {
-            unsigned char curve_tmp[2];
-            if (!ec)
-                return 0;
-            if (!tls1_set_ec_id(curve_tmp, NULL, ec))
-                return 0;
-            if (!curve_tmp[0] || curve_tmp[1] == curve_id[1])
-                return 1;
+        else
             return 0;
-        }
-
     }
     if (s->cert->ecdh_tmp_auto) {
         /* Need a shared curve */
@@ -891,17 +890,7 @@ int tls1_check_ec_tmp_key(SSL *s, unsigned long cid)
         else
             return 0;
     }
-    if (!ec) {
-        return 0;
-    }
-    if (!tls1_set_ec_id(curve_id, NULL, ec))
-        return 0;
-/* Set this to allow use of invalid curves for testing */
-#  if 0
-    return 1;
-#  else
-    return tls1_check_ec_key(s, curve_id, NULL);
-#  endif
+    return 0;
 }
 # endif                         /* OPENSSL_NO_EC */
 
