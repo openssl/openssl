@@ -259,8 +259,8 @@ static const unsigned char ecformats_default[] = {
     TLSEXT_ECPOINTFORMAT_ansiX962_compressed_char2
 };
 
-/* The client's default curves / the server's 'auto' curves. */
-static const unsigned char eccurves_auto[] = {
+/* The default curves */
+static const unsigned char eccurves_default[] = {
     /* Prefer P-256 which has the fastest and most secure implementations. */
     0, 23,                      /* secp256r1 (23) */
     /* Other >= 256-bit prime curves. */
@@ -438,13 +438,8 @@ static int tls1_get_curvelist(SSL *s, int sess,
             pcurveslen = s->tlsext_ellipticcurvelist_length;
         }
         if (!*pcurves) {
-            if (!s->server || s->cert->ecdh_tmp_auto) {
-                *pcurves = eccurves_auto;
-                pcurveslen = sizeof(eccurves_auto);
-            } else {
-                *pcurves = eccurves_all;
-                pcurveslen = sizeof(eccurves_all);
-            }
+            *pcurves = eccurves_default;
+            pcurveslen = sizeof(eccurves_default);
         }
     }
 
@@ -877,19 +872,11 @@ int tls1_check_ec_tmp_key(SSL *s, unsigned long cid)
         /* Check this curve is acceptable */
         if (!tls1_check_ec_key(s, curve_id, NULL))
             return 0;
-        /* If auto assume OK */
-        if (s->cert->ecdh_tmp_auto)
-            return 1;
-        else
-            return 0;
+        return 1;
     }
-    if (s->cert->ecdh_tmp_auto) {
-        /* Need a shared curve */
-        if (tls1_shared_curve(s, 0))
-            return 1;
-        else
-            return 0;
-    }
+    /* Need a shared curve */
+    if (tls1_shared_curve(s, 0))
+        return 1;
     return 0;
 }
 # endif                         /* OPENSSL_NO_EC */

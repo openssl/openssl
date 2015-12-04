@@ -2010,7 +2010,7 @@ void ssl_set_masks(SSL *s, const SSL_CIPHER *cipher)
     unsigned long mask_k, mask_a, emask_k, emask_a;
 #ifndef OPENSSL_NO_EC
     int have_ecc_cert, ecdsa_ok, ecc_pkey_size;
-    int have_ecdh_tmp, ecdh_ok;
+    int ecdh_ok;
     X509 *x = NULL;
     EVP_PKEY *ecc_pkey = NULL;
     int pk_nid = 0, md_nid = 0;
@@ -2036,9 +2036,6 @@ void ssl_set_masks(SSL *s, const SSL_CIPHER *cipher)
     dh_tmp = dh_tmp_export = 0;
 #endif
 
-#ifndef OPENSSL_NO_EC
-    have_ecdh_tmp = c->ecdh_tmp_auto;
-#endif
     cpk = &(c->pkeys[SSL_PKEY_RSA_ENC]);
     rsa_enc = pvalid[SSL_PKEY_RSA_ENC] & CERT_PKEY_VALID;
     rsa_enc_export = (rsa_enc && EVP_PKEY_size(cpk->privatekey) * 8 <= kl);
@@ -2063,8 +2060,8 @@ void ssl_set_masks(SSL *s, const SSL_CIPHER *cipher)
 
 #ifdef CIPHER_DEBUG
     fprintf(stderr,
-            "rt=%d rte=%d dht=%d ecdht=%d re=%d ree=%d rs=%d ds=%d dhr=%d dhd=%d\n",
-            rsa_tmp, rsa_tmp_export, dh_tmp, have_ecdh_tmp, rsa_enc,
+            "rt=%d rte=%d dht=%d re=%d ree=%d rs=%d ds=%d dhr=%d dhd=%d\n",
+            rsa_tmp, rsa_tmp_export, dh_tmp, rsa_enc,
             rsa_enc_export, rsa_sign, dsa_sign, dh_rsa, dh_dsa);
 #endif
 
@@ -2169,10 +2166,8 @@ void ssl_set_masks(SSL *s, const SSL_CIPHER *cipher)
 #endif
 
 #ifndef OPENSSL_NO_EC
-    if (have_ecdh_tmp) {
-        mask_k |= SSL_kECDHE;
-        emask_k |= SSL_kECDHE;
-    }
+    mask_k |= SSL_kECDHE;
+    emask_k |= SSL_kECDHE;
 #endif
 
 #ifndef OPENSSL_NO_PSK

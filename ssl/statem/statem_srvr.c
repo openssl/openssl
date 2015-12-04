@@ -1730,7 +1730,6 @@ int tls_construct_server_key_exchange(SSL *s)
     DH *dh = NULL, *dhp;
 #endif
 #ifndef OPENSSL_NO_EC
-    EC_KEY *ecdh = NULL, *ecdhp;
     unsigned char *encodedPoint = NULL;
     int encodedlen = 0;
     int curve_id = 0;
@@ -1867,15 +1866,13 @@ int tls_construct_server_key_exchange(SSL *s)
 #ifndef OPENSSL_NO_EC
     if (type & (SSL_kECDHE | SSL_kECDHEPSK)) {
         const EC_GROUP *group;
+        EC_KEY *ecdh = NULL;
 
-        ecdhp = NULL;
-        if (s->cert->ecdh_tmp_auto) {
-            /* Get NID of appropriate shared curve */
-            int nid = tls1_shared_curve(s, -2);
-            if (nid != NID_undef)
-                ecdhp = EC_KEY_new_by_curve_name(nid);
-        }
-        if (ecdhp == NULL) {
+        /* Get NID of appropriate shared curve */
+        int nid = tls1_shared_curve(s, -2);
+        if (nid != NID_undef)
+            ecdh = EC_KEY_new_by_curve_name(nid);
+        if (ecdh == NULL) {
             al = SSL_AD_HANDSHAKE_FAILURE;
             SSLerr(SSL_F_TLS_CONSTRUCT_SERVER_KEY_EXCHANGE,
                    SSL_R_MISSING_TMP_ECDH_KEY);
@@ -1885,18 +1882,6 @@ int tls_construct_server_key_exchange(SSL *s)
         if (s->s3->tmp.ecdh != NULL) {
             SSLerr(SSL_F_TLS_CONSTRUCT_SERVER_KEY_EXCHANGE,
                    ERR_R_INTERNAL_ERROR);
-            goto err;
-        }
-
-        /* Duplicate the ECDH structure. */
-        if (ecdhp == NULL) {
-            SSLerr(SSL_F_TLS_CONSTRUCT_SERVER_KEY_EXCHANGE, ERR_R_ECDH_LIB);
-            goto err;
-        }
-        if (s->cert->ecdh_tmp_auto)
-            ecdh = ecdhp;
-        else if ((ecdh = EC_KEY_dup(ecdhp)) == NULL) {
-            SSLerr(SSL_F_TLS_CONSTRUCT_SERVER_KEY_EXCHANGE, ERR_R_ECDH_LIB);
             goto err;
         }
 

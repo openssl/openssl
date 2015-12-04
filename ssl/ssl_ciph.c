@@ -1415,8 +1415,6 @@ static int check_suiteb_cipher_list(const SSL_METHOD *meth, CERT *c,
         *prule_str = "ECDHE-ECDSA-AES256-GCM-SHA384";
         break;
     }
-    /* Set auto ECDH parameter determination */
-    c->ecdh_tmp_auto = 1;
     return 1;
 # else
     SSLerr(SSL_F_CHECK_SUITEB_CIPHER_LIST,
