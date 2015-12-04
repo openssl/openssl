@@ -868,8 +868,8 @@ int tls1_check_ec_tmp_key(SSL *s, unsigned long cid)
         /* Check this curve is acceptable */
         if (!tls1_check_ec_key(s, curve_id, NULL))
             return 0;
-        /* If auto or setting curve from callback assume OK */
-        if (s->cert->ecdh_tmp_auto || s->cert->ecdh_tmp_cb)
+        /* If auto assume OK */
+        if (s->cert->ecdh_tmp_auto)
             return 1;
         /* Otherwise check curve is acceptable */
         else {
@@ -892,10 +892,7 @@ int tls1_check_ec_tmp_key(SSL *s, unsigned long cid)
             return 0;
     }
     if (!ec) {
-        if (s->cert->ecdh_tmp_cb)
-            return 1;
-        else
-            return 0;
+        return 0;
     }
     if (!tls1_set_ec_id(curve_id, NULL, ec))
         return 0;

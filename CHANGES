@@ -13,6 +13,10 @@
      pages. This work was developed in partnership with Intel Corp.
      [Matt Caswell]
 
+  *) Remove support for SSL_{CTX_}set_tmp_ecdh_callback().  You should set the
+     curve you want to support using SSL_{CTX_}set1_curves().
+     [Kurt Roeckx]
+
   *) State machine rewrite. The state machine code has been significantly
      refactored in order to remove much duplication of code and solve issues
      with the old code (see ssl/statem/README for further details). This change

@@ -4095,11 +4095,6 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
             ret = 1;
         }
         break;
-    case SSL_CTRL_SET_TMP_ECDH_CB:
-        {
-            SSLerr(SSL_F_SSL3_CTRL, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
-            return (ret);
-        }
 #endif                          /* !OPENSSL_NO_EC */
     case SSL_CTRL_SET_TLSEXT_HOSTNAME:
         if (larg == TLSEXT_NAMETYPE_host_name) {
@@ -4423,13 +4418,6 @@ long ssl3_callback_ctrl(SSL *s, int cmd, void (*fp) (void))
         }
         break;
 #endif
-#ifndef OPENSSL_NO_EC
-    case SSL_CTRL_SET_TMP_ECDH_CB:
-        {
-            s->cert->ecdh_tmp_cb = (EC_KEY *(*)(SSL *, int, int))fp;
-        }
-        break;
-#endif
     case SSL_CTRL_SET_TLSEXT_DEBUG_CB:
         s->tlsext_debug_cb = (void (*)(SSL *, int, int,
                                        unsigned char *, int, void *))fp;
@@ -4558,11 +4546,6 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
             return 1;
         }
         /* break; */
-    case SSL_CTRL_SET_TMP_ECDH_CB:
-        {
-            SSLerr(SSL_F_SSL3_CTX_CTRL, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
-            return (0);
-        }
 #endif                          /* !OPENSSL_NO_EC */
     case SSL_CTRL_SET_TLSEXT_SERVERNAME_ARG:
         ctx->tlsext_servername_arg = parg;
@@ -4730,13 +4713,6 @@ long ssl3_ctx_callback_ctrl(SSL_CTX *ctx, int cmd, void (*fp) (void))
     case SSL_CTRL_SET_TMP_DH_CB:
         {
             cert->dh_tmp_cb = (DH *(*)(SSL *, int, int))fp;
-        }
-        break;
-#endif
-#ifndef OPENSSL_NO_EC
-    case SSL_CTRL_SET_TMP_ECDH_CB:
-        {
-            cert->ecdh_tmp_cb = (EC_KEY *(*)(SSL *, int, int))fp;
         }
         break;
 #endif
