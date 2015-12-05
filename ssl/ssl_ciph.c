@@ -399,13 +399,7 @@ static const SSL_CIPHER cipher_aliases[] = {
     {0, "TLSv1.0", 0, 0, 0, 0, 0, SSL_TLSV1, 0, 0, 0, 0},
     {0, SSL_TXT_TLSV1_2, 0, 0, 0, 0, 0, SSL_TLSV1_2, 0, 0, 0, 0},
 
-    /* export flag */
-    {0, SSL_TXT_EXP, 0, 0, 0, 0, 0, 0, SSL_EXPORT, 0, 0, 0},
-    {0, SSL_TXT_EXPORT, 0, 0, 0, 0, 0, 0, SSL_EXPORT, 0, 0, 0},
-
     /* strength classes */
-    {0, SSL_TXT_EXP40, 0, 0, 0, 0, 0, 0, SSL_EXP40, 0, 0, 0},
-    {0, SSL_TXT_EXP56, 0, 0, 0, 0, 0, 0, SSL_EXP56, 0, 0, 0},
     {0, SSL_TXT_LOW, 0, 0, 0, 0, 0, 0, SSL_LOW, 0, 0, 0},
     {0, SSL_TXT_MEDIUM, 0, 0, 0, 0, 0, 0, SSL_MEDIUM, 0, 0, 0},
     {0, SSL_TXT_HIGH, 0, 0, 0, 0, 0, 0, SSL_HIGH, 0, 0, 0},
@@ -413,24 +407,12 @@ static const SSL_CIPHER cipher_aliases[] = {
     {0, SSL_TXT_FIPS, 0, 0, 0, ~SSL_eNULL, 0, 0, SSL_FIPS, 0, 0, 0},
 
     /* "EDH-" aliases to "DHE-" labels (for backward compatibility) */
-    {0, SSL3_TXT_EDH_DSS_DES_40_CBC_SHA, 0,
-     SSL_kDHE, SSL_aDSS, SSL_DES, SSL_SHA1, SSL_SSLV3, SSL_EXPORT | SSL_EXP40,
-     0, 0, 0,},
-    {0, SSL3_TXT_EDH_DSS_DES_64_CBC_SHA, 0,
-     SSL_kDHE, SSL_aDSS, SSL_DES, SSL_SHA1, SSL_SSLV3, SSL_NOT_EXP | SSL_LOW,
-     0, 0, 0,},
     {0, SSL3_TXT_EDH_DSS_DES_192_CBC3_SHA, 0,
      SSL_kDHE, SSL_aDSS, SSL_3DES, SSL_SHA1, SSL_SSLV3,
-     SSL_NOT_EXP | SSL_HIGH | SSL_FIPS, 0, 0, 0,},
-    {0, SSL3_TXT_EDH_RSA_DES_40_CBC_SHA, 0,
-     SSL_kDHE, SSL_aRSA, SSL_DES, SSL_SHA1, SSL_SSLV3, SSL_EXPORT | SSL_EXP40,
-     0, 0, 0,},
-    {0, SSL3_TXT_EDH_RSA_DES_64_CBC_SHA, 0,
-     SSL_kDHE, SSL_aRSA, SSL_DES, SSL_SHA1, SSL_SSLV3, SSL_NOT_EXP | SSL_LOW,
-     0, 0, 0,},
+     SSL_HIGH | SSL_FIPS, 0, 0, 0,},
     {0, SSL3_TXT_EDH_RSA_DES_192_CBC3_SHA, 0,
      SSL_kDHE, SSL_aRSA, SSL_3DES, SSL_SHA1, SSL_SSLV3,
-     SSL_NOT_EXP | SSL_HIGH | SSL_FIPS, 0, 0, 0,},
+     SSL_HIGH | SSL_FIPS, 0, 0, 0,},
 
 };
 
@@ -982,11 +964,7 @@ static void ssl_cipher_apply_rule(uint32_t cipher_id, uint32_t alg_mkey,
                 continue;
             if (alg_ssl && !(alg_ssl & cp->algorithm_ssl))
                 continue;
-            if ((algo_strength & SSL_EXP_MASK)
-                && !(algo_strength & SSL_EXP_MASK & cp->algo_strength))
-                continue;
-            if ((algo_strength & SSL_STRONG_MASK)
-                && !(algo_strength & SSL_STRONG_MASK & cp->algo_strength))
+            if (algo_strength && !(algo_strength & cp->algo_strength))
                 continue;
             if ((algo_strength & SSL_DEFAULT_MASK)
                 && !(algo_strength & SSL_DEFAULT_MASK & cp->algo_strength))
@@ -1249,31 +1227,15 @@ static int ssl_cipher_process_rulestr(const char *rule_str,
                     alg_mac = ca_list[j]->algorithm_mac;
             }
 
-            if (ca_list[j]->algo_strength & SSL_EXP_MASK) {
-                if (algo_strength & SSL_EXP_MASK) {
-                    algo_strength &=
-                        (ca_list[j]->algo_strength & SSL_EXP_MASK) |
-                        ~SSL_EXP_MASK;
-                    if (!(algo_strength & SSL_EXP_MASK)) {
+            if (ca_list[j]->algo_strength) {
+                if (algo_strength) {
+                    algo_strength &= ca_list[j]->algo_strength;
+                    if (!algo_strength) {
                         found = 0;
                         break;
                     }
                 } else
-                    algo_strength |= ca_list[j]->algo_strength & SSL_EXP_MASK;
-            }
-
-            if (ca_list[j]->algo_strength & SSL_STRONG_MASK) {
-                if (algo_strength & SSL_STRONG_MASK) {
-                    algo_strength &=
-                        (ca_list[j]->algo_strength & SSL_STRONG_MASK) |
-                        ~SSL_STRONG_MASK;
-                    if (!(algo_strength & SSL_STRONG_MASK)) {
-                        found = 0;
-                        break;
-                    }
-                } else
-                    algo_strength |=
-                        ca_list[j]->algo_strength & SSL_STRONG_MASK;
+                    algo_strength = ca_list[j]->algo_strength;
             }
 
             if (ca_list[j]->algo_strength & SSL_DEFAULT_MASK) {
@@ -1625,23 +1587,17 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method, STACK
 
 char *SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
 {
-    int is_export, pkl, kl;
-    const char *ver, *exp_str;
+    const char *ver;
     const char *kx, *au, *enc, *mac;
     uint32_t alg_mkey, alg_auth, alg_enc, alg_mac, alg_ssl;
     static const char *format =
-        "%-23s %s Kx=%-8s Au=%-4s Enc=%-9s Mac=%-4s%s\n";
+        "%-23s %s Kx=%-8s Au=%-4s Enc=%-9s Mac=%-4s\n";
 
     alg_mkey = cipher->algorithm_mkey;
     alg_auth = cipher->algorithm_auth;
     alg_enc = cipher->algorithm_enc;
     alg_mac = cipher->algorithm_mac;
     alg_ssl = cipher->algorithm_ssl;
-
-    is_export = SSL_C_IS_EXPORT(cipher);
-    pkl = SSL_C_EXPORT_PKEYLENGTH(cipher);
-    kl = SSL_C_EXPORT_KEYLENGTH(cipher);
-    exp_str = is_export ? " export" : "";
 
     if (alg_ssl & SSL_SSLV3)
         ver = "SSLv3";
@@ -1654,7 +1610,7 @@ char *SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
 
     switch (alg_mkey) {
     case SSL_kRSA:
-        kx = is_export ? (pkl == 512 ? "RSA(512)" : "RSA(1024)") : "RSA";
+        kx = "RSA";
         break;
     case SSL_kDHr:
         kx = "DH/RSA";
@@ -1663,7 +1619,7 @@ char *SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
         kx = "DH/DSS";
         break;
     case SSL_kDHE:
-        kx = is_export ? (pkl == 512 ? "DH(512)" : "DH(1024)") : "DH";
+        kx = "DH";
         break;
     case SSL_kECDHr:
         kx = "ECDH/RSA";
@@ -1735,16 +1691,16 @@ char *SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
 
     switch (alg_enc) {
     case SSL_DES:
-        enc = (is_export && kl == 5) ? "DES(40)" : "DES(56)";
+        enc = "DES(56)";
         break;
     case SSL_3DES:
         enc = "3DES(168)";
         break;
     case SSL_RC4:
-        enc = is_export ? (kl == 5 ? "RC4(40)" : "RC4(56)") : "RC4(128)";
+        enc = "RC4(128)";
         break;
     case SSL_RC2:
-        enc = is_export ? (kl == 5 ? "RC2(40)" : "RC2(56)") : "RC2(128)";
+        enc = "RC2(128)";
         break;
     case SSL_IDEA:
         enc = "IDEA(128)";
@@ -1834,8 +1790,7 @@ char *SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
     } else if (len < 128)
         return ("Buffer too small");
 
-    BIO_snprintf(buf, len, format, cipher->name, ver, kx, au, enc, mac,
-                 exp_str);
+    BIO_snprintf(buf, len, format, cipher->name, ver, kx, au, enc, mac);
 
     return (buf);
 }

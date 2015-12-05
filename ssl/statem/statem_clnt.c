@@ -211,30 +211,6 @@ static int key_exchange_expected(SSL *s)
         return 1;
     }
 
-    /*
-     * Export ciphersuites may have temporary RSA keys if the public key in the
-     * server certificate is longer than the maximum export strength
-     */
-    if ((alg_k & SSL_kRSA) && SSL_C_IS_EXPORT(s->s3->tmp.new_cipher)) {
-        EVP_PKEY *pkey;
-
-        pkey = X509_get_pubkey(s->session->peer);
-        if (pkey == NULL)
-            return -1;
-
-        /*
-         * If the public key in the certificate is shorter than or equal to the
-         * maximum export strength then a temporary RSA key is not allowed
-         */
-        if (EVP_PKEY_bits(pkey)
-                <= SSL_C_EXPORT_PKEYLENGTH(s->s3->tmp.new_cipher))
-            return 0;
-
-        EVP_PKEY_free(pkey);
-
-        return 1;
-    }
-
     return 0;
 }
 
@@ -1622,10 +1598,6 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
 
     save_param_start = *pkt;
 
-#ifndef OPENSSL_NO_RSA
-    RSA_free(s->s3->peer_rsa_tmp);
-    s->s3->peer_rsa_tmp = NULL;
-#endif
 #ifndef OPENSSL_NO_DH
     DH_free(s->s3->peer_dh_tmp);
     s->s3->peer_dh_tmp = NULL;
@@ -1709,51 +1681,8 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
 /* We must check if there is a certificate */
         if (alg_a & (SSL_aRSA|SSL_aDSS))
             pkey = X509_get_pubkey(s->session->peer);
-    } else
-#endif                          /* !OPENSSL_NO_SRP */
-#ifndef OPENSSL_NO_RSA
-    if (alg_k & SSL_kRSA) {
-        PACKET mod, exp;
-        /* Temporary RSA keys only allowed in export ciphersuites */
-        if (!SSL_C_IS_EXPORT(s->s3->tmp.new_cipher)) {
-            al = SSL_AD_UNEXPECTED_MESSAGE;
-            SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, SSL_R_UNEXPECTED_MESSAGE);
-            goto f_err;
-        }
-
-        if (!PACKET_get_length_prefixed_2(pkt, &mod)
-            || !PACKET_get_length_prefixed_2(pkt, &exp)) {
-            SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, SSL_R_LENGTH_MISMATCH);
-            goto f_err;
-        }
-
-        if ((rsa = RSA_new()) == NULL) {
-            SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, ERR_R_MALLOC_FAILURE);
-            goto err;
-        }
-
-        if ((rsa->n = BN_bin2bn(PACKET_data(&mod), PACKET_remaining(&mod),
-                                rsa->n)) == NULL
-            || (rsa->e = BN_bin2bn(PACKET_data(&exp), PACKET_remaining(&exp),
-                                   rsa->e)) == NULL) {
-            SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, ERR_R_BN_LIB);
-            goto err;
-        }
-
-        /* this should be because we are using an export cipher */
-        if (alg_a & SSL_aRSA)
-            pkey = X509_get_pubkey(s->session->peer);
-        else {
-            SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
-            goto err;
-        }
-
-        s->s3->peer_rsa_tmp = rsa;
-        rsa = NULL;
     }
-#else                           /* OPENSSL_NO_RSA */
-    if (0) ;
-#endif
+#endif                          /* !OPENSSL_NO_SRP */
 #ifndef OPENSSL_NO_DH
     else if (alg_k & (SSL_kDHE | SSL_kDHEPSK)) {
         PACKET prime, generator, pub_key;
@@ -1849,14 +1778,6 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
         EC_GROUP_free(ngroup);
 
         group = EC_KEY_get0_group(ecdh);
-
-        if (SSL_C_IS_EXPORT(s->s3->tmp.new_cipher) &&
-            (EC_GROUP_get_degree(group) > 163)) {
-            al = SSL_AD_EXPORT_RESTRICTION;
-            SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE,
-                   SSL_R_ECGROUP_TOO_LARGE_FOR_CIPHER);
-            goto f_err;
-        }
 
         /* Next, get the encoded ECPoint */
         if (((srvr_ecpoint = EC_POINT_new(group)) == NULL) ||
@@ -2445,20 +2366,16 @@ psk_err:
             goto err;
         }
 
-        if (s->s3->peer_rsa_tmp != NULL)
-            rsa = s->s3->peer_rsa_tmp;
-        else {
-            pkey = X509_get_pubkey(s->session->peer);
-            if ((pkey == NULL) || (pkey->type != EVP_PKEY_RSA)
-                || (pkey->pkey.rsa == NULL)) {
-                SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE,
-                       ERR_R_INTERNAL_ERROR);
-                EVP_PKEY_free(pkey);
-                goto err;
-            }
-            rsa = pkey->pkey.rsa;
+        pkey = X509_get_pubkey(s->session->peer);
+        if ((pkey == NULL) || (pkey->type != EVP_PKEY_RSA)
+            || (pkey->pkey.rsa == NULL)) {
+            SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE,
+                   ERR_R_INTERNAL_ERROR);
             EVP_PKEY_free(pkey);
+            goto err;
         }
+        rsa = pkey->pkey.rsa;
+        EVP_PKEY_free(pkey);
 
         pms[0] = s->client_version >> 8;
         pms[1] = s->client_version & 0xff;
@@ -3178,10 +3095,6 @@ int ssl3_check_cert_and_algorithm(SSL *s)
     int i, idx;
     long alg_k, alg_a;
     EVP_PKEY *pkey = NULL;
-    int pkey_bits;
-#ifndef OPENSSL_NO_RSA
-    RSA *rsa;
-#endif
 #ifndef OPENSSL_NO_DH
     DH *dh;
 #endif
@@ -3193,9 +3106,6 @@ int ssl3_check_cert_and_algorithm(SSL *s)
     /* we don't have a certificate */
     if ((alg_a & SSL_aNULL) || (alg_k & SSL_kPSK))
         return (1);
-#ifndef OPENSSL_NO_RSA
-    rsa = s->s3->peer_rsa_tmp;
-#endif
 #ifndef OPENSSL_NO_DH
     dh = s->s3->peer_dh_tmp;
 #endif
@@ -3222,7 +3132,6 @@ int ssl3_check_cert_and_algorithm(SSL *s)
     }
 #endif
     pkey = X509_get_pubkey(s->session->peer);
-    pkey_bits = EVP_PKEY_bits(pkey);
     i = X509_certificate_type(s->session->peer, pkey);
     EVP_PKEY_free(pkey);
 
@@ -3240,27 +3149,11 @@ int ssl3_check_cert_and_algorithm(SSL *s)
     }
 #endif
 #ifndef OPENSSL_NO_RSA
-    if (alg_k & (SSL_kRSA | SSL_kRSAPSK)) {
-        if (!SSL_C_IS_EXPORT(s->s3->tmp.new_cipher) &&
-            !has_bits(i, EVP_PK_RSA | EVP_PKT_ENC)) {
-            SSLerr(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM,
-                   SSL_R_MISSING_RSA_ENCRYPTING_CERT);
-            goto f_err;
-        } else if (SSL_C_IS_EXPORT(s->s3->tmp.new_cipher)) {
-            if (pkey_bits <= SSL_C_EXPORT_PKEYLENGTH(s->s3->tmp.new_cipher)) {
-                if (!has_bits(i, EVP_PK_RSA | EVP_PKT_ENC)) {
-                    SSLerr(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM,
-                           SSL_R_MISSING_RSA_ENCRYPTING_CERT);
-                    goto f_err;
-                }
-                if (rsa != NULL) {
-                    /* server key exchange is not allowed. */
-                    al = SSL_AD_INTERNAL_ERROR;
-                    SSLerr(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM, ERR_R_INTERNAL_ERROR);
-                    goto f_err;
-                }
-            }
-        }
+    if (alg_k & (SSL_kRSA | SSL_kRSAPSK) &&
+        !has_bits(i, EVP_PK_RSA | EVP_PKT_ENC)) {
+        SSLerr(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM,
+               SSL_R_MISSING_RSA_ENCRYPTING_CERT);
+        goto f_err;
     }
 #endif
 #ifndef OPENSSL_NO_DH
@@ -3284,48 +3177,6 @@ int ssl3_check_cert_and_algorithm(SSL *s)
 # endif
 #endif
 
-    if (SSL_C_IS_EXPORT(s->s3->tmp.new_cipher) &&
-        pkey_bits > SSL_C_EXPORT_PKEYLENGTH(s->s3->tmp.new_cipher)) {
-#ifndef OPENSSL_NO_RSA
-        if (alg_k & SSL_kRSA) {
-            if (rsa == NULL) {
-                SSLerr(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM,
-                       SSL_R_MISSING_EXPORT_TMP_RSA_KEY);
-                goto f_err;
-            } else if (RSA_bits(rsa) >
-                SSL_C_EXPORT_PKEYLENGTH(s->s3->tmp.new_cipher)) {
-                /* We have a temporary RSA key but it's too large. */
-                al = SSL_AD_EXPORT_RESTRICTION;
-                SSLerr(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM,
-                       SSL_R_MISSING_EXPORT_TMP_RSA_KEY);
-                goto f_err;
-            }
-        } else
-#endif
-#ifndef OPENSSL_NO_DH
-        if (alg_k & SSL_kDHE) {
-            if (DH_bits(dh) >
-                SSL_C_EXPORT_PKEYLENGTH(s->s3->tmp.new_cipher)) {
-                /* We have a temporary DH key but it's too large. */
-                al = SSL_AD_EXPORT_RESTRICTION;
-                SSLerr(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM,
-                       SSL_R_MISSING_EXPORT_TMP_DH_KEY);
-                goto f_err;
-            }
-        } else if (alg_k & (SSL_kDHr | SSL_kDHd)) {
-            /* The cert should have had an export DH key. */
-            al = SSL_AD_EXPORT_RESTRICTION;
-            SSLerr(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM,
-                   SSL_R_MISSING_EXPORT_TMP_DH_KEY);
-                goto f_err;
-        } else
-#endif
-        {
-            SSLerr(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM,
-                   SSL_R_UNKNOWN_KEY_EXCHANGE_TYPE);
-            goto f_err;
-        }
-    }
     return (1);
  f_err:
     ssl3_send_alert(s, SSL3_AL_FATAL, al);

@@ -294,15 +294,12 @@ static int tls1_generate_key_block(SSL *s, unsigned char *km,
 
 int tls1_change_cipher_state(SSL *s, int which)
 {
-    static const unsigned char empty[] = "";
     unsigned char *p, *mac_secret;
-    unsigned char *exp_label;
     unsigned char tmp1[EVP_MAX_KEY_LENGTH];
     unsigned char tmp2[EVP_MAX_KEY_LENGTH];
     unsigned char iv1[EVP_MAX_IV_LENGTH * 2];
     unsigned char iv2[EVP_MAX_IV_LENGTH * 2];
     unsigned char *ms, *key, *iv;
-    int client_write;
     EVP_CIPHER_CTX *dd;
     const EVP_CIPHER *c;
 #ifndef OPENSSL_NO_COMP
@@ -313,10 +310,9 @@ int tls1_change_cipher_state(SSL *s, int which)
     int *mac_secret_size;
     EVP_MD_CTX *mac_ctx;
     EVP_PKEY *mac_key;
-    int is_export, n, i, j, k, exp_label_len, cl;
+    int n, i, j, k, cl;
     int reuse_dd = 0;
 
-    is_export = SSL_C_IS_EXPORT(s->s3->tmp.new_cipher);
     c = s->s3->tmp.new_sym_enc;
     m = s->s3->tmp.new_hash;
     mac_type = s->s3->tmp.new_mac_pkey_type;
@@ -413,8 +409,7 @@ int tls1_change_cipher_state(SSL *s, int which)
     i = *mac_secret_size = s->s3->tmp.new_mac_secret_size;
 
     cl = EVP_CIPHER_key_length(c);
-    j = is_export ? (cl < SSL_C_EXPORT_KEYLENGTH(s->s3->tmp.new_cipher) ?
-                     cl : SSL_C_EXPORT_KEYLENGTH(s->s3->tmp.new_cipher)) : cl;
+    j = cl;
     /* Was j=(exp)?5:EVP_CIPHER_key_length(c); */
     /* If GCM/CCM mode only part of IV comes from PRF */
     if (EVP_CIPHER_mode(c) == EVP_CIPH_GCM_MODE)
@@ -431,9 +426,6 @@ int tls1_change_cipher_state(SSL *s, int which)
         n += j + j;
         iv = &(p[n]);
         n += k + k;
-        exp_label = (unsigned char *)TLS_MD_CLIENT_WRITE_KEY_CONST;
-        exp_label_len = TLS_MD_CLIENT_WRITE_KEY_CONST_SIZE;
-        client_write = 1;
     } else {
         n = i;
         ms = &(p[n]);
@@ -442,9 +434,6 @@ int tls1_change_cipher_state(SSL *s, int which)
         n += j + k;
         iv = &(p[n]);
         n += k;
-        exp_label = (unsigned char *)TLS_MD_SERVER_WRITE_KEY_CONST;
-        exp_label_len = TLS_MD_SERVER_WRITE_KEY_CONST_SIZE;
-        client_write = 0;
     }
 
     if (n > s->s3->tmp.key_block_length) {
@@ -473,33 +462,6 @@ int tls1_change_cipher_state(SSL *s, int which)
             printf("%02X%c", ms[z], ((z + 1) % 16) ? ' ' : '\n');
     }
 #endif
-    if (is_export) {
-        /*
-         * In here I set both the read and write key/iv to the same value
-         * since only the correct one will be used :-).
-         */
-        if (!tls1_PRF(s,
-                      exp_label, exp_label_len,
-                      s->s3->client_random, SSL3_RANDOM_SIZE,
-                      s->s3->server_random, SSL3_RANDOM_SIZE,
-                      NULL, 0, NULL, 0,
-                      key, j, tmp1, tmp2, EVP_CIPHER_key_length(c)))
-            goto err2;
-        key = tmp1;
-
-        if (k > 0) {
-            if (!tls1_PRF(s,
-                          TLS_MD_IV_BLOCK_CONST, TLS_MD_IV_BLOCK_CONST_SIZE,
-                          s->s3->client_random, SSL3_RANDOM_SIZE,
-                          s->s3->server_random, SSL3_RANDOM_SIZE,
-                          NULL, 0, NULL, 0, empty, 0, iv1, iv2, k * 2))
-                goto err2;
-            if (client_write)
-                iv = iv1;
-            else
-                iv = &(iv1[k]);
-        }
-    }
 
     if (EVP_CIPHER_mode(c) == EVP_CIPH_GCM_MODE) {
         if (!EVP_CipherInit_ex(dd, c, NULL, key, NULL, (which & SSL3_CC_WRITE))

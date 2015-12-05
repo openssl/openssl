@@ -315,7 +315,7 @@ static int send_server_key_exchange(SSL *s)
     unsigned long alg_k = s->s3->tmp.new_cipher->algorithm_mkey;
 
     /*
-     * only send a ServerKeyExchange if DH, fortezza or RSA but we have a
+     * only send a ServerKeyExchange if DH or fortezza but we have a
      * sign only certificate PSK: may send PSK identity hints For
      * ECC ciphersuites, we send a serverKeyExchange message only if
      * the cipher suite is either ECDH-anon or ECDHE. In other cases,
@@ -324,15 +324,6 @@ static int send_server_key_exchange(SSL *s)
      */
     if (   (alg_k & SSL_kDHE)
         || (alg_k & SSL_kECDHE)
-        || ((alg_k & SSL_kRSA)
-            && (s->cert->pkeys[SSL_PKEY_RSA_ENC].privatekey == NULL
-                || (SSL_C_IS_EXPORT(s->s3->tmp.new_cipher)
-                    && EVP_PKEY_size(s->cert->pkeys
-                                     [SSL_PKEY_RSA_ENC].privatekey) *
-                    8 > SSL_C_EXPORT_PKEYLENGTH(s->s3->tmp.new_cipher)
-                   )
-               )
-           )
         /*
          * PSK: send ServerKeyExchange if PSK identity hint if
          * provided
@@ -1723,9 +1714,6 @@ int tls_construct_server_done(SSL *s)
 
 int tls_construct_server_key_exchange(SSL *s)
 {
-#ifndef OPENSSL_NO_RSA
-    RSA *rsa;
-#endif
 #ifndef OPENSSL_NO_DH
     DH *dh = NULL, *dhp;
 #endif
@@ -1769,35 +1757,6 @@ int tls_construct_server_key_exchange(SSL *s)
     if (type & (SSL_kPSK | SSL_kRSAPSK)) {
     } else
 #endif                          /* !OPENSSL_NO_PSK */
-#ifndef OPENSSL_NO_RSA
-    if (type & SSL_kRSA) {
-        rsa = cert->rsa_tmp;
-        if ((rsa == NULL) && (s->cert->rsa_tmp_cb != NULL)) {
-            rsa = s->cert->rsa_tmp_cb(s,
-                                      SSL_C_IS_EXPORT(s->s3->
-                                                      tmp.new_cipher),
-                                      SSL_C_EXPORT_PKEYLENGTH(s->s3->
-                                                              tmp.new_cipher));
-            if (rsa == NULL) {
-                al = SSL_AD_HANDSHAKE_FAILURE;
-                SSLerr(SSL_F_TLS_CONSTRUCT_SERVER_KEY_EXCHANGE,
-                       SSL_R_ERROR_GENERATING_TMP_RSA_KEY);
-                goto f_err;
-            }
-            RSA_up_ref(rsa);
-            cert->rsa_tmp = rsa;
-        }
-        if (rsa == NULL) {
-            al = SSL_AD_HANDSHAKE_FAILURE;
-            SSLerr(SSL_F_TLS_CONSTRUCT_SERVER_KEY_EXCHANGE,
-                   SSL_R_MISSING_TMP_RSA_KEY);
-            goto f_err;
-        }
-        r[0] = rsa->n;
-        r[1] = rsa->e;
-        s->s3->tmp.use_rsa_tmp = 1;
-    } else
-#endif
 #ifndef OPENSSL_NO_DH
     if (type & (SSL_kDHE | SSL_kDHEPSK)) {
         if (s->cert->dh_tmp_auto) {
@@ -1811,11 +1770,7 @@ int tls_construct_server_key_exchange(SSL *s)
         } else
             dhp = cert->dh_tmp;
         if ((dhp == NULL) && (s->cert->dh_tmp_cb != NULL))
-            dhp = s->cert->dh_tmp_cb(s,
-                                     SSL_C_IS_EXPORT(s->s3->
-                                                     tmp.new_cipher),
-                                     SSL_C_EXPORT_PKEYLENGTH(s->s3->
-                                                             tmp.new_cipher));
+            dhp = s->cert->dh_tmp_cb(s, 0, 1024);
         if (dhp == NULL) {
             al = SSL_AD_HANDSHAKE_FAILURE;
             SSLerr(SSL_F_TLS_CONSTRUCT_SERVER_KEY_EXCHANGE,
@@ -1900,13 +1855,6 @@ int tls_construct_server_key_exchange(SSL *s)
             (EC_KEY_get0_public_key(ecdh) == NULL) ||
             (EC_KEY_get0_private_key(ecdh) == NULL)) {
             SSLerr(SSL_F_TLS_CONSTRUCT_SERVER_KEY_EXCHANGE, ERR_R_ECDH_LIB);
-            goto err;
-        }
-
-        if (SSL_C_IS_EXPORT(s->s3->tmp.new_cipher) &&
-            (EC_GROUP_get_degree(group) > 163)) {
-            SSLerr(SSL_F_TLS_CONSTRUCT_SERVER_KEY_EXCHANGE,
-                   SSL_R_ECGROUP_TOO_LARGE_FOR_CIPHER);
             goto err;
         }
 
@@ -2316,30 +2264,15 @@ MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
         size_t j;
 
         /* FIX THIS UP EAY EAY EAY EAY */
-        if (s->s3->tmp.use_rsa_tmp) {
-            if ((s->cert != NULL) && (s->cert->rsa_tmp != NULL))
-                rsa = s->cert->rsa_tmp;
-            /*
-             * Don't do a callback because rsa_tmp should be sent already
-             */
-            if (rsa == NULL) {
-                al = SSL_AD_HANDSHAKE_FAILURE;
-                SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE,
-                       SSL_R_MISSING_TMP_RSA_PKEY);
-                goto f_err;
-
-            }
-        } else {
-            pkey = s->cert->pkeys[SSL_PKEY_RSA_ENC].privatekey;
-            if ((pkey == NULL) ||
-                (pkey->type != EVP_PKEY_RSA) || (pkey->pkey.rsa == NULL)) {
-                al = SSL_AD_HANDSHAKE_FAILURE;
-                SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE,
-                       SSL_R_MISSING_RSA_CERTIFICATE);
-                goto f_err;
-            }
-            rsa = pkey->pkey.rsa;
+        pkey = s->cert->pkeys[SSL_PKEY_RSA_ENC].privatekey;
+        if ((pkey == NULL) ||
+            (pkey->type != EVP_PKEY_RSA) || (pkey->pkey.rsa == NULL)) {
+            al = SSL_AD_HANDSHAKE_FAILURE;
+            SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE,
+                   SSL_R_MISSING_RSA_CERTIFICATE);
+            goto f_err;
         }
+        rsa = pkey->pkey.rsa;
 
         /* SSLv3 and pre-standard DTLS omit the length bytes. */
         if (s->version == SSL3_VERSION || s->version == DTLS1_BAD_VER) {

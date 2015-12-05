@@ -181,8 +181,6 @@ extern "C" {
 
 /* These are used to specify which ciphers to use and not to use */
 
-# define SSL_TXT_EXP40           "EXPORT40"
-# define SSL_TXT_EXP56           "EXPORT56"
 # define SSL_TXT_LOW             "LOW"
 # define SSL_TXT_MEDIUM          "MEDIUM"
 # define SSL_TXT_HIGH            "HIGH"
@@ -267,9 +265,6 @@ extern "C" {
 # define SSL_TXT_TLSV1           "TLSv1"
 # define SSL_TXT_TLSV1_1         "TLSv1.1"
 # define SSL_TXT_TLSV1_2         "TLSv1.2"
-
-# define SSL_TXT_EXP             "EXP"
-# define SSL_TXT_EXPORT          "EXPORT"
 
 # define SSL_TXT_ALL             "ALL"
 
@@ -1113,11 +1108,8 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 # define SSL_ERROR_WANT_CONNECT          7
 # define SSL_ERROR_WANT_ACCEPT           8
 # define SSL_ERROR_WANT_ASYNC            9
-# define SSL_CTRL_NEED_TMP_RSA                   1
-# define SSL_CTRL_SET_TMP_RSA                    2
 # define SSL_CTRL_SET_TMP_DH                     3
 # define SSL_CTRL_SET_TMP_ECDH                   4
-# define SSL_CTRL_SET_TMP_RSA_CB                 5
 # define SSL_CTRL_SET_TMP_DH_CB                  6
 # define SSL_CTRL_GET_SESSION_REUSED             8
 # define SSL_CTRL_GET_CLIENT_CERT_REQUEST        9
@@ -1242,10 +1234,6 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
         SSL_ctrl((ssl),SSL_CTRL_CLEAR_NUM_RENEGOTIATIONS,0,NULL)
 # define SSL_total_renegotiations(ssl) \
         SSL_ctrl((ssl),SSL_CTRL_GET_TOTAL_RENEGOTIATIONS,0,NULL)
-# define SSL_CTX_need_tmp_RSA(ctx) \
-        SSL_CTX_ctrl(ctx,SSL_CTRL_NEED_TMP_RSA,0,NULL)
-# define SSL_CTX_set_tmp_rsa(ctx,rsa) \
-        SSL_CTX_ctrl(ctx,SSL_CTRL_SET_TMP_RSA,0,(char *)rsa)
 # define SSL_CTX_set_tmp_dh(ctx,dh) \
         SSL_CTX_ctrl(ctx,SSL_CTRL_SET_TMP_DH,0,(char *)dh)
 # define SSL_CTX_set_tmp_ecdh(ctx,ecdh) \
@@ -1254,10 +1242,6 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
         SSL_CTX_ctrl(ctx,SSL_CTRL_SET_DH_AUTO,onoff,NULL)
 # define SSL_set_dh_auto(s, onoff) \
         SSL_ctrl(s,SSL_CTRL_SET_DH_AUTO,onoff,NULL)
-# define SSL_need_tmp_RSA(ssl) \
-        SSL_ctrl(ssl,SSL_CTRL_NEED_TMP_RSA,0,NULL)
-# define SSL_set_tmp_rsa(ssl,rsa) \
-        SSL_ctrl(ssl,SSL_CTRL_SET_TMP_RSA,0,(char *)rsa)
 # define SSL_set_tmp_dh(ssl,dh) \
         SSL_ctrl(ssl,SSL_CTRL_SET_TMP_DH,0,(char *)dh)
 # define SSL_set_tmp_ecdh(ssl,ecdh) \
@@ -1749,15 +1733,6 @@ __owur int SSL_get_ex_data_X509_STORE_CTX_idx(void);
         SSL_ctrl(ssl,SSL_CTRL_SET_MAX_SEND_FRAGMENT,m,NULL)
 
      /* NB: the keylength is only applicable when is_export is true */
-# ifndef OPENSSL_NO_RSA
-void SSL_CTX_set_tmp_rsa_callback(SSL_CTX *ctx,
-                                  RSA *(*cb) (SSL *ssl, int is_export,
-                                              int keylength));
-
-void SSL_set_tmp_rsa_callback(SSL *ssl,
-                              RSA *(*cb) (SSL *ssl, int is_export,
-                                          int keylength));
-# endif
 # ifndef OPENSSL_NO_DH
 void SSL_CTX_set_tmp_dh_callback(SSL_CTX *ctx,
                                  DH *(*dh) (SSL *ssl, int is_export,
@@ -2259,7 +2234,6 @@ void ERR_load_SSL_strings(void);
 # define SSL_R_EE_KEY_TOO_SMALL                           399
 # define SSL_R_EMPTY_SRTP_PROTECTION_PROFILE_LIST         354
 # define SSL_R_ENCRYPTED_LENGTH_TOO_LONG                  150
-# define SSL_R_ERROR_GENERATING_TMP_RSA_KEY               282
 # define SSL_R_ERROR_IN_RECEIVED_CIPHER_LIST              151
 # define SSL_R_EXCESSIVE_MESSAGE_SIZE                     152
 # define SSL_R_EXTRA_DATA_IN_MESSAGE                      153
@@ -2294,16 +2268,12 @@ void ERR_load_SSL_strings(void);
 # define SSL_R_MISSING_DSA_SIGNING_CERT                   165
 # define SSL_R_MISSING_ECDH_CERT                          382
 # define SSL_R_MISSING_ECDSA_SIGNING_CERT                 381
-# define SSL_R_MISSING_EXPORT_TMP_DH_KEY                  166
-# define SSL_R_MISSING_EXPORT_TMP_RSA_KEY                 167
 # define SSL_R_MISSING_RSA_CERTIFICATE                    168
 # define SSL_R_MISSING_RSA_ENCRYPTING_CERT                169
 # define SSL_R_MISSING_RSA_SIGNING_CERT                   170
 # define SSL_R_MISSING_SRP_PARAM                          358
 # define SSL_R_MISSING_TMP_DH_KEY                         171
 # define SSL_R_MISSING_TMP_ECDH_KEY                       311
-# define SSL_R_MISSING_TMP_RSA_KEY                        172
-# define SSL_R_MISSING_TMP_RSA_PKEY                       173
 # define SSL_R_MISSING_VERIFY_MESSAGE                     174
 # define SSL_R_MULTIPLE_SGC_RESTARTS                      346
 # define SSL_R_NO_CERTIFICATES_RETURNED                   176
@@ -2395,7 +2365,6 @@ void ERR_load_SSL_strings(void);
 # define SSL_R_TLSV1_ALERT_DECODE_ERROR                   1050
 # define SSL_R_TLSV1_ALERT_DECRYPTION_FAILED              1021
 # define SSL_R_TLSV1_ALERT_DECRYPT_ERROR                  1051
-# define SSL_R_TLSV1_ALERT_EXPORT_RESTRICTION             1060
 # define SSL_R_TLSV1_ALERT_INAPPROPRIATE_FALLBACK         1086
 # define SSL_R_TLSV1_ALERT_INSUFFICIENT_SECURITY          1071
 # define SSL_R_TLSV1_ALERT_INTERNAL_ERROR                 1080

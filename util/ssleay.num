@@ -157,7 +157,7 @@ BIO_new_ssl_connect                     174	EXIST::FUNCTION:
 SSL_get_ex_data_X509_STORE_CTX_idx      175	EXIST:!VMS:FUNCTION:
 SSL_get_ex_d_X509_STORE_CTX_idx         175	EXIST:VMS:FUNCTION:
 SSL_CTX_set_tmp_dh_callback             176	EXIST::FUNCTION:DH
-SSL_CTX_set_tmp_rsa_callback            177	EXIST::FUNCTION:RSA
+SSL_CTX_set_tmp_rsa_callback            177	NOEXIST::FUNCTION:
 SSL_CTX_set_timeout                     178	EXIST::FUNCTION:
 SSL_CTX_get_timeout                     179	EXIST::FUNCTION:
 SSL_CTX_get_cert_store                  180	EXIST::FUNCTION:
@@ -167,7 +167,7 @@ SSL_library_init                        183	EXIST::FUNCTION:
 SSL_COMP_add_compression_method         184	EXIST::FUNCTION:
 SSL_add_file_cert_subjects_to_stack     185	EXIST:!VMS:FUNCTION:
 SSL_add_file_cert_subjs_to_stk          185	EXIST:VMS:FUNCTION:
-SSL_set_tmp_rsa_callback                186	EXIST::FUNCTION:RSA
+SSL_set_tmp_rsa_callback                186	NOEXIST::FUNCTION:
 SSL_set_tmp_dh_callback                 187	EXIST::FUNCTION:DH
 SSL_add_dir_cert_subjects_to_stack      188	EXIST:!VMS:FUNCTION:
 SSL_add_dir_cert_subjs_to_stk           188	EXIST:VMS:FUNCTION:

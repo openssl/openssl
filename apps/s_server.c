@@ -190,9 +190,6 @@ typedef unsigned int u_int;
 # undef FIONBIO
 #endif
 
-#ifndef OPENSSL_NO_RSA
-static RSA *tmp_rsa_cb(SSL *s, int is_export, int keylength);
-#endif
 static int not_resumable_sess_cb(SSL *s, int is_forward_secure);
 static int sv_body(char *hostname, int s, int stype, unsigned char *context);
 static int www_body(char *hostname, int s, int stype, unsigned char *context);
@@ -807,7 +804,7 @@ typedef enum OPTION_choice {
     OPT_DEBUG, OPT_TLSEXTDEBUG, OPT_STATUS, OPT_STATUS_VERBOSE,
     OPT_STATUS_TIMEOUT, OPT_STATUS_URL, OPT_MSG, OPT_MSGFILE, OPT_TRACE,
     OPT_SECURITY_DEBUG, OPT_SECURITY_DEBUG_VERBOSE, OPT_STATE, OPT_CRLF,
-    OPT_QUIET, OPT_BRIEF, OPT_NO_TMP_RSA, OPT_NO_DHE, OPT_NO_ECDHE,
+    OPT_QUIET, OPT_BRIEF, OPT_NO_DHE, OPT_NO_ECDHE,
     OPT_NO_RESUME_EPHEMERAL, OPT_PSK_HINT, OPT_PSK, OPT_SRPVFILE,
     OPT_SRPUSERSEED, OPT_REV, OPT_WWW, OPT_UPPER_WWW, OPT_HTTP, OPT_ASYNC,
     OPT_SSL3,
@@ -866,7 +863,6 @@ OPTIONS s_server_options[] = {
      "Do not load certificates from the default certificates directory"},
     {"nocert", OPT_NOCERT, '-', "Don't use any certificates (Anon-DH)"},
     {"quiet", OPT_QUIET, '-', "No server output"},
-    {"no_tmp_rsa", OPT_NO_TMP_RSA, '-', "Do not generate a tmp RSA key"},
     {"tls1_2", OPT_TLS1_2, '-', "just talk TLSv1.2"},
     {"tls1_1", OPT_TLS1_1, '-', "Just talk TLSv1.1"},
     {"tls1", OPT_TLS1, '-', "Just talk TLSv1"},
@@ -1004,7 +1000,7 @@ int s_server_main(int argc, char *argv[])
 #ifndef OPENSSL_NO_DH
     int no_dhe = 0;
 #endif
-    int no_tmp_rsa = 0, no_ecdhe = 0, nocert = 0, ret = 1;
+    int no_ecdhe = 0, nocert = 0, ret = 1;
     int noCApath = 0, noCAfile = 0;
     int s_cert_format = FORMAT_PEM, s_key_format = FORMAT_PEM;
     int s_dcert_format = FORMAT_PEM, s_dkey_format = FORMAT_PEM;
@@ -1294,9 +1290,6 @@ int s_server_main(int argc, char *argv[])
             break;
         case OPT_BRIEF:
             s_quiet = s_brief = verify_quiet = 1;
-            break;
-        case OPT_NO_TMP_RSA:
-            no_tmp_rsa = 1;
             break;
         case OPT_NO_DHE:
 #ifndef OPENSSL_NO_DH
@@ -1824,13 +1817,6 @@ int s_server_main(int argc, char *argv[])
         if (!set_cert_key_stuff(ctx, s_dcert, s_dkey, s_dchain, build_chain))
             goto end;
     }
-#ifndef OPENSSL_NO_RSA
-    if (!no_tmp_rsa) {
-        SSL_CTX_set_tmp_rsa_callback(ctx, tmp_rsa_cb);
-        if (ctx2)
-            SSL_CTX_set_tmp_rsa_callback(ctx2, tmp_rsa_cb);
-    }
-#endif
 
     if (no_resume_ephemeral) {
         SSL_CTX_set_not_resumable_session_callback(ctx,
@@ -3134,35 +3120,6 @@ static int rev_body(char *hostname, int s, int stype, unsigned char *context)
     BIO_free_all(io);
     return (ret);
 }
-
-#ifndef OPENSSL_NO_RSA
-static RSA *tmp_rsa_cb(SSL *s, int is_export, int keylength)
-{
-    BIGNUM *bn = NULL;
-    static RSA *rsa_tmp = NULL;
-
-    if (!rsa_tmp && ((bn = BN_new()) == NULL))
-        BIO_printf(bio_err, "Allocation error in generating RSA key\n");
-    if (!rsa_tmp && bn) {
-        if (!s_quiet) {
-            BIO_printf(bio_err, "Generating temp (%d bit) RSA key...",
-                       keylength);
-            (void)BIO_flush(bio_err);
-        }
-        if (!BN_set_word(bn, RSA_F4) || ((rsa_tmp = RSA_new()) == NULL) ||
-            !RSA_generate_key_ex(rsa_tmp, keylength, bn, NULL)) {
-            RSA_free(rsa_tmp);
-            rsa_tmp = NULL;
-        }
-        if (!s_quiet) {
-            BIO_printf(bio_err, "\n");
-            (void)BIO_flush(bio_err);
-        }
-        BN_free(bn);
-    }
-    return (rsa_tmp);
-}
-#endif
 
 #define MAX_SESSION_ID_ATTEMPTS 10
 static int generate_session_id(const SSL *ssl, unsigned char *id,
