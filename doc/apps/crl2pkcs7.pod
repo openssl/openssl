@@ -2,63 +2,67 @@
 
 =head1 NAME
 
-crl2pkcs7 - Create a PKCS#7 structure from a CRL and certificates.
+crl2pkcs7 - Create a PKCS#7 structure from a CRL and certificates
 
 =head1 SYNOPSIS
 
 B<openssl> B<crl2pkcs7>
-[B<-inform PEM|DER>]
-[B<-outform PEM|DER>]
-[B<-in filename>]
-[B<-out filename>]
-[B<-certfile filename>]
+[B<-inform> B<PEM>|B<DER>]
+[B<-outform> B<PEM>|B<DER>]
+[B<-in> I<filename>]
+[B<-out> I<filename>]
+[[B<-certfile> I<filename>] ...
 [B<-nocrl>]
 
 =head1 DESCRIPTION
 
-The B<crl2pkcs7> command takes an optional CRL and one or more
-certificates and converts them into a PKCS#7 degenerate "certificates
-only" structure.
+The B<crl2pkcs7> command takes an optional CRL and one or more certificates and converts them into a PKCS#7 degenerate "certificates only" structure.
 
-=head1 COMMAND OPTIONS
+=head1 OPTIONS
 
 =over 4
 
-=item B<-inform DER|PEM>
+=item B<-inform> B<PEM>|B<DER>
 
-This specifies the CRL input format. B<DER> format is DER encoded CRL
-structure.B<PEM> (the default) is a base64 encoded version of
-the DER form with header and footer lines.
+This specifies the CRL input format.
+B<DER> format is DER encoded CRL structure.
+B<PEM> (the default) is a base64 encoded version of the DER form with header and footer lines.
 
-=item B<-outform DER|PEM>
+=item B<-outform> B<PEM>|B<DER>
 
-This specifies the PKCS#7 structure output format. B<DER> format is DER
-encoded PKCS#7 structure.B<PEM> (the default) is a base64 encoded version of
-the DER form with header and footer lines.
+This specifies the PKCS#7 structure output format.
+B<DER> format is DER encoded PKCS#7 structure.
+B<PEM> (the default) is a base64 encoded version of the DER form with header and footer lines.
 
-=item B<-in filename>
+=item B<-in> I<filename>
 
-This specifies the input filename to read a CRL from or standard input if this
-option is not specified.
+Specifies the input filename to read a CRL from or standard input if this option is not specified.
 
-=item B<-out filename>
+=item B<-out> I<filename>
 
-specifies the output filename to write the PKCS#7 structure to or standard
-output by default.
+Specifies the output filename to write the PKCS#7 structure to or standard output if this option is not specified.
 
-=item B<-certfile filename>
+=item B<-certfile> I<filename>
 
-specifies a filename containing one or more certificates in B<PEM> format.
-All certificates in the file will be added to the PKCS#7 structure. This
-option can be used more than once to read certificates form multiple
-files.
+Specifies a filename containing one or more certificates in B<PEM> format.
+All certificates in the file will be added to the PKCS#7 structure.
+This option can be used more than once to read certificates form multiple files.
 
 =item B<-nocrl>
 
-normally a CRL is included in the output file. With this option no CRL is
-included in the output file and a CRL is not read from the input file.
+Normally a CRL is included in the output file.
+With this option, no CRL is included in the output file and a CRL is not read from the input file.
 
 =back
+
+=head1 NOTES
+
+The output file is a PKCS#7 signed data structure containing no signers, just certificates and an optional CRL.
+
+This utility can be used to send certificates and CAs to Netscape as part of the certificate enrollment process.
+This involves sending the DER encoded output as MIME type B<application/x-x509-user-cert>.
+
+The B<PEM> encoded form with the header and footer lines removed can be used to install user certificates and CAs in MSIE using the Xenroll control.
 
 =head1 EXAMPLES
 
@@ -66,23 +70,10 @@ Create a PKCS#7 structure from a certificate and CRL:
 
  openssl crl2pkcs7 -in crl.pem -certfile cert.pem -out p7.pem
 
-Creates a PKCS#7 structure in DER format with no CRL from several
-different certificates:
+Create a PKCS#7 structure in DER format with no CRL from several different certificates:
 
  openssl crl2pkcs7 -nocrl -certfile newcert.pem 
-	-certfile demoCA/cacert.pem -outform DER -out p7.der
-
-=head1 NOTES
-
-The output file is a PKCS#7 signed data structure containing no signers and
-just certificates and an optional CRL.
-
-This utility can be used to send certificates and CAs to Netscape as part of
-the certificate enrollment process. This involves sending the DER encoded output
-as MIME type application/x-x509-user-cert.
-
-The B<PEM> encoded form with the header and footer lines removed can be used to
-install user certificates and CAs in MSIE using the Xenroll control.
+     -certfile demoCA/cacert.pem -outform DER -out p7.der
 
 =head1 SEE ALSO
 

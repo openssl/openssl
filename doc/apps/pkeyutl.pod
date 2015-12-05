@@ -7,14 +7,14 @@ pkeyutl - public key algorithm utility
 =head1 SYNOPSIS
 
 B<openssl> B<pkeyutl>
-[B<-in file>]
-[B<-out file>]
-[B<-sigfile file>]
-[B<-inkey file>]
-[B<-keyform PEM|DER>]
-[B<-passin arg>]
-[B<-peerkey file>]
-[B<-peerform PEM|DER>]
+[B<-in> I<file>]
+[B<-out> I<file>]
+[B<-sigfile> I<file>]
+[B<-inkey> I<file>]
+[B<-keyform> B<PEM>|B<DER>]
+[B<-passin> I<arg>]
+[B<-peerkey> I<file>]
+[B<-peerform> B<PEM>|B<DER>]
 [B<-pubin>]
 [B<-certin>]
 [B<-rev>]
@@ -24,175 +24,168 @@ B<openssl> B<pkeyutl>
 [B<-encrypt>]
 [B<-decrypt>]
 [B<-derive>]
-[B<-pkeyopt opt:value>]
+[B<-pkeyopt> I<opt>B<:>I<value>]
 [B<-hexdump>]
 [B<-asn1parse>]
-[B<-engine id>]
+[B<-engine> I<id>]
 
 =head1 DESCRIPTION
 
-The B<pkeyutl> command can be used to perform public key operations using
-any supported algorithm.
+The B<pkeyutl> command can be used to perform public key operations using any supported algorithm.
 
-=head1 COMMAND OPTIONS
+=head1 OPTIONS
 
 =over 4
 
-=item B<-in filename>
+=item B<-in> I<filename>
 
-This specifies the input filename to read data from or standard input
-if this option is not specified.
+Specifies the input filename to read data from.
+Standard input is the default
 
-=item B<-out filename>
+=item B<-out> I<filename>
 
-specifies the output filename to write to or standard output by
-default.
+Specifies the output filename to write to.
+Standard output is the default.
 
-=item B<-inkey file>
+=item B<-inkey> I<file>
 
-the input key file, by default it should be a private key.
+The input key file.
+By default it should be a private key.
 
-=item B<-keyform PEM|DER>
+=item B<-keyform> B<PEM>|B<DER>
 
-the key format PEM, DER or ENGINE.
+The key format: PEM, DER, or ENGINE.
 
-=item B<-passin arg>
+=item B<-passin> I<arg>
 
-the input key password source. For more information about the format of B<arg>
-see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
+The input key password source.
+For more information about the format of I<arg>, see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
 
+=item B<-peerkey> I<file>
 
-=item B<-peerkey file>
+The peer key file, used by key derivation (agreement) operations.
 
-the peer key file, used by key derivation (agreement) operations.
+=item B<-peerform> B<PEM>|B<DER>
 
-=item B<-peerform PEM|DER>
+The peer key format: PEM, DER or ENGINE.
 
-the peer key format PEM, DER or ENGINE.
+=item B<-engine> I<id>
 
-=item B<-engine id>
-
-specifying an engine (by its unique B<id> string) will cause B<pkeyutl>
-to attempt to obtain a functional reference to the specified engine,
-thus initialising it if needed. The engine will then be set as the default
-for all available algorithms.
-
+Specifying an engine (by its unique I<id> string) will cause B<pkeyutl> to attempt to obtain a functional reference to the specified engine, thus initialising it if needed.
+The engine will then be set as the default for all available algorithms.
 
 =item B<-pubin>
 
-the input file is a public key. 
+The input file is a public key. 
 
 =item B<-certin>
 
-the input is a certificate containing a public key. 
+The input is a certificate containing a public key. 
 
 =item B<-rev>
 
-reverse the order of the input buffer. This is useful for some libraries
-(such as CryptoAPI) which represent the buffer in little endian format.
+Reverse the order of the input buffer.
+This is useful for some libraries (such as CryptoAPI) which represent the buffer in little endian format.
 
 =item B<-sign>
 
-sign the input data and output the signed result. This requires
-a private key.
+Sign the input data and output the signed result.
+This requires a private key.
 
 =item B<-verify>
 
-verify the input data against the signature file and indicate if the
-verification succeeded or failed.
+Verify the input data against the signature file and indicate if the verification succeeded or failed.
 
 =item B<-verifyrecover>
 
-verify the input data and output the recovered data.
+Verify the input data and output the recovered data.
 
 =item B<-encrypt>
 
-encrypt the input data using a public key.
+Encrypt the input data using a public key.
 
 =item B<-decrypt>
 
-decrypt the input data using a private key.
+Decrypt the input data using a private key.
 
 =item B<-derive>
 
-derive a shared secret using the peer key.
+Derive a shared secret using the peer key.
 
 =item B<-hexdump>
 
-hex dump the output data.
+Hex dump the output data.
 
 =item B<-asn1parse>
 
-asn1parse the output data, this is useful when combined with the
-B<-verifyrecover> option when an ASN1 structure is signed.
+B<asn1parse> the output data.
+This is useful when combined with the B<-verifyrecover> option when an ASN1 structure is signed.
 
 =back
 
 =head1 NOTES
 
-The operations and options supported vary according to the key algorithm
-and its implementation. The OpenSSL operations and options are indicated below.
+The operations and options supported vary according to the key algorithm and its implementation.
+The OpenSSL operations and options are indicated below.
 
-Unless otherwise mentioned all algorithms support the B<digest:alg> option
-which specifies the digest in use for sign, verify and verifyrecover operations.
-The value B<alg> should represent a digest name as used in the
-EVP_get_digestbyname() function for example B<sha1>.
+Unless otherwise mentioned, all algorithms support the B<digest>:I<alg> option which specifies the digest in use for sign, verify, and verifyrecover operations.
+The value I<alg> should be a digest name as used in the EVP_get_digestbyname() function, for example, B<sha1>.
 
-=head1 RSA ALGORITHM
+=head2 RSA ALGORITHM
 
-The RSA algorithm supports encrypt, decrypt, sign, verify and verifyrecover
-operations in general. Some padding modes only support some of these 
-operations however.
+The RSA algorithm supports encrypt, decrypt, sign, verify and verifyrecover operations in general.
+However, some padding modes only support some of these operations.
 
 =over 4
 
-=item -B<rsa_padding_mode:mode>
+=item B<-rsa_padding_mode:>I<mode>
 
-This sets the RSA padding mode. Acceptable values for B<mode> are B<pkcs1> for
-PKCS#1 padding, B<sslv23> for SSLv23 padding, B<none> for no padding, B<oaep>
-for B<OAEP> mode, B<x931> for X9.31 mode and B<pss> for PSS.
+This sets the RSA padding mode.
+Acceptable values for B<mode> are:
+  o B<pkcs1> for PKCS#1 padding
+  o B<sslv23> for SSLv23 padding
+  o B<none> for no padding
+  o B<oaep> for B<OAEP> mode
+  o B<x931> for X9.31 mode
+  o B<pss> for PSS
 
-In PKCS#1 padding if the message digest is not set then the supplied data is 
-signed or verified directly instead of using a B<DigestInfo> structure. If a
-digest is set then the a B<DigestInfo> structure is used and its the length
-must correspond to the digest type.
+In PKCS#1 padding, if the message digest is not set then the supplied data is signed or verified directly instead of using a B<DigestInfo> structure.
+If a digest is set then the a B<DigestInfo> structure is used and its length must correspond to the digest type.
 
-For B<oaep> mode only encryption and decryption is supported.
+For B<oaep> mode, only encryption and decryption is supported.
 
-For B<x931> if the digest type is set it is used to format the block data
-otherwise the first byte is used to specify the X9.31 digest ID. Sign,
-verify and verifyrecover are can be performed in this mode.
+For B<x931> mode, if the digest type is set it is used to format the block data.
+Otherwise the first byte is used to specify the X9.31 digest ID.
+Sign, verify, and verifyrecover can be performed in this mode.
 
-For B<pss> mode only sign and verify are supported and the digest type must be
-specified.
+For B<pss> mode only sign and verify are supported, and the digest type must be specified.
 
-=item B<rsa_pss_saltlen:len>
+=item B<rsa_pss_saltlen:>I<len>
 
-For B<pss> mode only this option specifies the salt length. Two special values
-are supported: -1 sets the salt length to the digest length. When signing -2
-sets the salt length to the maximum permissible value. When verifying -2 causes
-the salt length to be automatically determined based on the B<PSS> block
-structure.
+For B<pss> mode, only this option specifies the salt length.
+Two special values are supported.
+-1 sets the salt length to the digest length.
+When signing, -2 sets the salt length to the maximum permissible value.
+When verifying, -2 causes the salt length to be automatically determined based on the B<PSS> block structure.
 
 =back
 
-=head1 DSA ALGORITHM
+=head2 DSA ALGORITHM
 
-The DSA algorithm supports signing and verification operations only. Currently
-there are no additional options other than B<digest>. Only the SHA1
-digest can be used and this digest is assumed by default.
+The DSA algorithm supports signing and verification operations only.
+Currently there are no additional options other than B<digest>.
+Only the SHA1 digest can be used and this digest is assumed by default.
 
-=head1 DH ALGORITHM
+=head2 DH ALGORITHM
 
-The DH algorithm only supports the derivation operation and no additional
-options.
+The DH algorithm only supports the derivation operation and no additional options.
 
-=head1 EC ALGORITHM
+=head2 EC ALGORITHM
 
-The EC algorithm supports sign, verify and derive operations. The sign and
-verify operations use ECDSA and derive uses ECDH. Currently there are no
-additional options other than B<digest>. Only the SHA1 digest can be used and
-this digest is assumed by default.
+The EC algorithm supports sign, verify, and derive operations.
+The sign and verify operations use ECDSA and derive uses ECDH.
+Currently there are no additional options other than B<digest>.
+Only the SHA1 digest can be used and this digest is assumed by default.
 
 =head1 EXAMPLES
 
@@ -210,7 +203,8 @@ Verify the signature (e.g. a DSA key):
 
 Sign data using a message digest value (this is currently only valid for RSA):
 
- openssl pkeyutl -sign -in file -inkey key.pem -out sig -pkeyopt digest:sha256
+ openssl pkeyutl -sign -in file -inkey key.pem -out sig \
+     -pkeyopt digest:sha256
 
 Derive a shared secret value:
 
@@ -218,5 +212,6 @@ Derive a shared secret value:
 
 =head1 SEE ALSO
 
-L<genpkey(1)>, L<pkey(1)>, L<rsautl(1)>
-L<dgst(1)>, L<rsa(1)>, L<genrsa(1)>
+L<genpkey(1)>, L<pkey(1)>, L<rsautl(1)> L<dgst(1)>, L<rsa(1)>, L<genrsa(1)>
+
+=cut

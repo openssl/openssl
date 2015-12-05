@@ -1,4 +1,3 @@
-
 =pod
 
 =head1 NAME
@@ -8,12 +7,12 @@ rsa - RSA key processing tool
 =head1 SYNOPSIS
 
 B<openssl> B<rsa>
-[B<-inform PEM|NET|DER>]
-[B<-outform PEM|NET|DER>]
-[B<-in filename>]
-[B<-passin arg>]
-[B<-out filename>]
-[B<-passout arg>]
+[B<-inform> B<PEM>|B<NET>|B<DER>]
+[B<-outform> B<PEM>|B<NET>|B<DER>]
+[B<-in> I<filename>]
+[B<-passin> I<arg>]
+[B<-out> I<filename>]
+[B<-passout> I<arg>]
 [B<-aes128>]
 [B<-aes192>]
 [B<-aes256>]
@@ -31,105 +30,96 @@ B<openssl> B<rsa>
 [B<-pubout>]
 [B<-RSAPublicKey_in>]
 [B<-RSAPublicKey_out>]
-[B<-engine id>]
+[B<-engine> I<id>]
 
 =head1 DESCRIPTION
 
-The B<rsa> command processes RSA keys. They can be converted between various
-forms and their components printed out. B<Note> this command uses the
-traditional SSLeay compatible format for private key encryption: newer
-applications should use the more secure PKCS#8 format using the B<pkcs8>
-utility.
+The B<rsa> command processes RSA keys.
+They can be converted between various forms and their components printed out.
+B<Note> this command uses the traditional SSLeay compatible format for private key encryption: newer
+applications should use the more secure PKCS#8 format using the B<pkcs8> utility.
 
-=head1 COMMAND OPTIONS
+=head1 OPTIONS
 
 =over 4
 
-=item B<-inform DER|NET|PEM>
+=item B<-inform> B<PEM>|B<NET>|B<DER>
 
-This specifies the input format. The B<DER> option uses an ASN1 DER encoded
-form compatible with the PKCS#1 RSAPrivateKey or SubjectPublicKeyInfo format.
+This specifies the input format.
+The B<DER> option uses an ASN1 DER encoded form compatible with the PKCS#1 RSAPrivateKey or SubjectPublicKeyInfo format.
 The B<PEM> form is the default format: it consists of the B<DER> format base64
-encoded with additional header and footer lines. On input PKCS#8 format private
-keys are also accepted. The B<NET> form is a format is described in the B<NOTES>
-section.
+encoded with additional header and footer lines.
+On input PKCS#8 format private keys are also accepted.
+The B<NET> form is a format is described in the B<NOTES> section.
 
-=item B<-outform DER|NET|PEM>
+=item B<-outform> B<PEM>|B<NET>|B<DER>
 
-This specifies the output format, the options have the same meaning as the 
-B<-inform> option.
+This specifies the output format.
+The options have the same meaning as the  B<-inform> option.
 
-=item B<-in filename>
+=item B<-in> I<filename>
 
 This specifies the input filename to read a key from or standard input if this
-option is not specified. If the key is encrypted a pass phrase will be
-prompted for.
+option is not specified.
+If the key is encrypted a pass phrase will be prompted for.
 
-=item B<-passin arg>
+=item B<-passin> I<arg>
 
-the input file password source. For more information about the format of B<arg>
-see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
+The input file password source.
+For more information about the format of I<arg> see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
 
-=item B<-out filename>
+=item B<-out> I<filename>
 
-This specifies the output filename to write a key to or standard output if this
-option is not specified. If any encryption options are set then a pass phrase
-will be prompted for. The output filename should B<not> be the same as the input
-filename.
+This specifies the output filename to write a key to or standard output if this option is not specified.
+If any encryption options are set then a pass phrase will be prompted for.
+The output filename should B<not> be the same as the input filename.
 
-=item B<-passout password>
+=item B<-passout> I<arg>
 
-the output file password source. For more information about the format of B<arg>
-see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
+The output file password source.
+For more information about the format of I<arg> see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
 
-=item B<-aes128|-aes192|-aes256|-camellia128|-camellia192|-camellia256|-des|-des3|-idea>
+=item B<-aes128> | B<-aes192> | B<-aes256> | B<-camellia128> | B<-camellia192> | B<-camellia256> | B<-des> | B<-des3> | B<-idea>
 
-These options encrypt the private key with the specified
-cipher before outputting it. A pass phrase is prompted for.
-If none of these options is specified the key is written in plain text. This
-means that using the B<rsa> utility to read in an encrypted key with no
-encryption option can be used to remove the pass phrase from a key, or by
-setting the encryption options it can be use to add or change the pass phrase.
+These options encrypt the private key with the specified cipher before outputting it.
+A pass phrase is prompted for.
+If none of these options is specified the key is written in plain text.
+This means that using the B<rsa> utility to read in an encrypted key with no encryption option can be used to remove the pass phrase from a key, or by setting the encryption options it can be used to add or change the pass phrase.
 These options can only be used with PEM format output files.
 
 =item B<-text>
 
-prints out the various public or private key components in
-plain text in addition to the encoded version. 
+Prints out the various public or private key components in plain text in addition to the encoded version. 
 
 =item B<-noout>
 
-this option prevents output of the encoded version of the key.
+Prevents output of the encoded version of the key.
 
 =item B<-modulus>
 
-this option prints out the value of the modulus of the key.
+Prints out the value of the modulus of the key.
 
 =item B<-check>
 
-this option checks the consistency of an RSA private key.
+Checks the consistency of an RSA private key.
 
 =item B<-pubin>
 
-by default a private key is read from the input file: with this
-option a public key is read instead.
+By default a private key is read from the input file: with this option a public key is read instead.
 
 =item B<-pubout>
 
-by default a private key is output: with this option a public
-key will be output instead. This option is automatically set if
-the input is a public key.
+By default a private key is output: with this option a public key will be output instead.
+This option is automatically set if the input is a public key.
 
 =item B<-RSAPublicKey_in>, B<-RSAPublicKey_out>
 
-like B<-pubin> and B<-pubout> except B<RSAPublicKey> format is used instead.
+Like B<-pubin> and B<-pubout>, except B<RSAPublicKey> format is used instead.
 
-=item B<-engine id>
+=item B<-engine> I<id>
 
-specifying an engine (by its unique B<id> string) will cause B<rsa>
-to attempt to obtain a functional reference to the specified engine,
-thus initialising it if needed. The engine will then be set as the default
-for all available algorithms.
+Specifying an engine (by its unique I<id> string) will cause B<rsa> to attempt to obtain a functional reference to the specified engine, thus initialising it if needed.
+The engine will then be set as the default for all available algorithms.
 
 =back
 
@@ -151,15 +141,13 @@ The PEM B<RSAPublicKey> format uses the header and footer lines:
  -----END RSA PUBLIC KEY-----
 
 The B<NET> form is a format compatible with older Netscape servers
-and Microsoft IIS .key files, this uses unsalted RC4 for its encryption.
+and Microsoft IIS .key files; this uses unsalted RC4 for its encryption.
 It is not very secure and so should only be used when necessary.
 
 Some newer version of IIS have additional data in the exported .key
-files. To use these with the utility, view the file with a binary editor
-and look for the string "private-key", then trace back to the byte
-sequence 0x30, 0x82 (this is an ASN1 SEQUENCE). Copy all the data
-from this point onwards to another file and use that as the input
-to the B<rsa> utility with the B<-inform NET> option.
+files.
+To use these with the utility, view the file with a binary editor and look for the string "private-key", then trace back to the byte sequence 0x30, 0x82 (this is an ASN1 SEQUENCE).
+Copy all the data from this point onwards to another file and use that as the input to the B<rsa> utility with the B<-inform NET> option.
 
 =head1 EXAMPLES
 
@@ -189,11 +177,9 @@ Output the public part of a private key in B<RSAPublicKey> format:
 
 =head1 BUGS
 
-The command line password arguments don't currently work with
-B<NET> format.
+The command line password arguments don't currently work with B<NET> format.
 
-There should be an option that automatically handles .key files,
-without having to manually edit them.
+There should be an option that automatically handles .key files, without having to manually edit them.
 
 =head1 SEE ALSO
 

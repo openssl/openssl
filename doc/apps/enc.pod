@@ -6,152 +6,150 @@ enc - symmetric cipher routines
 
 =head1 SYNOPSIS
 
-B<openssl enc -ciphername>
-[B<-in filename>]
-[B<-out filename>]
-[B<-pass arg>]
+B<openssl> B<enc> B<->I<ciphername>
+[B<-in> I<filename>]
+[B<-out> I<filename>]
+[B<-pass> I<arg>]
 [B<-e>]
 [B<-d>]
-[B<-a/-base64>]
+[B<-a>|<-base64>]
 [B<-A>]
-[B<-k password>]
-[B<-kfile filename>]
-[B<-K key>]
-[B<-iv IV>]
-[B<-S salt>]
+[B<-k> I<password>]
+[B<-kfile> I<filename>]
+[B<-K> I<key>]
+[B<-iv> I<IV>]
+[B<-S> I<salt>]
 [B<-salt>]
 [B<-nosalt>]
 [B<-z>]
 [B<-md>]
 [B<-p>]
 [B<-P>]
-[B<-bufsize number>]
+[B<-bufsize> I<number>]
 [B<-nopad>]
 [B<-debug>]
 [B<-none>]
-[B<-engine id>]
+[B<-engine> I<id>]
 
 =head1 DESCRIPTION
 
-The symmetric cipher commands allow data to be encrypted or decrypted
-using various block and stream ciphers using keys based on passwords
-or explicitly provided. Base64 encoding or decoding can also be performed
-either by itself or in addition to the encryption or decryption.
+The symmetric cipher commands allow data to be encrypted or decrypted using various block and stream ciphers using keys based on passwords or explicitly provided.
+Base64 encoding or decoding can also be performed either by itself or in addition to the encryption or decryption.
 
 =head1 OPTIONS
 
 =over 4
 
-=item B<-in filename>
+=item B<-in> I<filename>
 
-the input filename, standard input by default.
+The input filename, standard input by default.
 
-=item B<-out filename>
+=item B<-out> I<filename>
 
-the output filename, standard output by default.
+The output filename, standard output by default.
 
-=item B<-pass arg>
+=item B<-pass> I<arg>
 
-the password source. For more information about the format of B<arg>
-see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
+The password source.
+For more information about the format of I<arg> see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
 
 =item B<-salt>
 
-use a salt in the key derivation routines. This is the default.
+Use a salt in the key derivation routines.
+This is the default.
 
 =item B<-nosalt>
 
-don't use a salt in the key derivation routines. This option B<SHOULD NOT> be
-used except for test purposes or compatibility with ancient versions of OpenSSL.
+Don't use a salt in the key derivation routines.
+This option B<SHOULD NOT> be used except for test purposes or compatibility with ancient versions of OpenSSL.
 
 =item B<-e>
 
-encrypt the input data: this is the default.
+Encrypt the input data.
+This is the default.
 
 =item B<-d>
 
-decrypt the input data.
+Decrypt the input data.
 
 =item B<-a>
 
-base64 process the data. This means that if encryption is taking place
-the data is base64 encoded after encryption. If decryption is set then
-the input data is base64 decoded before being decrypted.
+Base64 process the data.
+This means that if encryption is taking place the data is base64 encoded after encryption.
+If decryption is set then the input data is base64 decoded before being decrypted.
 
 =item B<-base64>
 
-same as B<-a>
+Same as B<-a>
 
 =item B<-A>
 
-if the B<-a> option is set then base64 process the data on one line.
+If the B<-a> option is set then base64 process the data on one line.
 
-=item B<-k password>
+=item B<-k> I<password>
 
-the password to derive the key from. This is for compatibility with previous
-versions of OpenSSL. Superseded by the B<-pass> argument.
+The password to derive the key from.
+This is for compatibility with previous versions of OpenSSL.
+Superseded by the B<-pass> argument.
 
-=item B<-kfile filename>
+=item B<-kfile> I<filename>
 
-read the password to derive the key from the first line of B<filename>.
-This is for compatibility with previous versions of OpenSSL. Superseded by
-the B<-pass> argument.
+Read the password to derive the key from the first line of B<filename>.
+This is for compatibility with previous versions of OpenSSL.
+Superseded by the B<-pass> argument.
 
 =item B<-nosalt>
 
-do not use a salt 
+Do not use a salt 
 
 =item B<-salt>
 
-use salt (randomly generated or provide with B<-S> option) when
-encrypting (this is the default).
+Use salt (randomly generated or provide with B<-S> option) when encrypting (this is the default).
 
-=item B<-S salt>
+=item B<-S> I<salt>
 
-the actual salt to use: this must be represented as a string of hex digits.
+The actual salt to use.
+This must be represented as a string of hex digits.
 
-=item B<-K key>
+=item B<-K> I<key>
 
-the actual key to use: this must be represented as a string comprised only
-of hex digits. If only the key is specified, the IV must additionally specified
-using the B<-iv> option. When both a key and a password are specified, the
-key given with the B<-K> option will be used and the IV generated from the
-password will be taken. It probably does not make much sense to specify
-both key and password.
+The actual key to use.
+This must be represented as a string comprised only of hex digits.
+If only the key is specified, the IV must additionally specified using the B<-iv> option.
+When both a key and a password are specified, the key given with the B<-K> option will be used and the IV generated from the password will be taken.
+It probably does not make much sense to specify both key and password.
 
-=item B<-iv IV>
+=item B<-iv> I<IV>
 
-the actual IV to use: this must be represented as a string comprised only
-of hex digits. When only the key is specified using the B<-K> option, the
-IV must explicitly be defined. When a password is being specified using
-one of the other options, the IV is generated from this password.
+The actual IV to use.
+This must be represented as a string comprised only of hex digits.
+When only the key is specified using the B<-K> option, the IV must explicitly be defined.
+When a password is being specified using one of the other options, the IV is generated from this password.
 
 =item B<-p>
 
-print out the key and IV used.
+Print out the key and IV used.
 
 =item B<-P>
 
-print out the key and IV used then immediately exit: don't do any encryption
-or decryption.
+Print out the key and IV used then immediately exit; don't do any encryption or decryption.
 
-=item B<-bufsize number>
+=item B<-bufsize> I<number>
 
-set the buffer size for I/O
+Set the buffer size for I/O.
 
 =item B<-nopad>
 
-disable standard block padding
+Disable standard block padding.
 
 =item B<-debug>
 
-debug the BIOs used for I/O.
+Debug the BIOs used for I/O.
 
 =item B<-z>
 
-Compress or decompress clear text using zlib before encryption or after
-decryption. This option exists only if OpenSSL with compiled with zlib
-or zlib-dynamic option.
+Compress or decompress clear text using zlib before encryption or after decryption.
+This option exists only if OpenSSL with compiled with zlib or zlib-dynamic option.
 
 =item B<-none>
 
@@ -161,62 +159,42 @@ Use NULL cipher (no encryption or decryption of input).
 
 =head1 NOTES
 
-The program can be called either as B<openssl ciphername> or
-B<openssl enc -ciphername>. But the first form doesn't work with
-engine-provided ciphers, because this form is processed before the
-configuration file is read and any ENGINEs loaded.
+The program can be called either as B<openssl> I<ciphername> or B<openssl enc ->I<ciphername>.
+But the first form doesn't work with engine-provided ciphers, because this form is processed before the configuration file is read and any ENGINEs loaded.
 
-Engines which provide entirely new encryption algorithms (such as ccgost
-engine which provides gost89 algorithm) should be configured in the
-configuration file. Engines, specified in the command line using -engine
-options can only be used for hardware-assisted implementations of
-ciphers, which are supported by OpenSSL core or other engine, specified
-in the configuration file.
+Engines which provide entirely new encryption algorithms (such as ccgost engine which provides gost89 algorithm) should be configured in the configuration file.
+Engines, specified in the command line using B<-engine> options can only be used for hardware-assisted implementations of ciphers, which are supported by OpenSSL core or other engine, specified in the configuration file.
 
-When enc command lists supported ciphers, ciphers provided by engines,
-specified in the configuration files are listed too.
+When enc command lists supported ciphers, ciphers provided by engines, specified in the configuration files are listed too.
 
 A password will be prompted for to derive the key and IV if necessary.
 
-The B<-salt> option should B<ALWAYS> be used if the key is being derived
-from a password unless you want compatibility with previous versions of
-OpenSSL.
+The B<-salt> option should B<ALWAYS> be used if the key is being derived from a password unless you want compatibility with previous versions of OpenSSL.
 
-Without the B<-salt> option it is possible to perform efficient dictionary
-attacks on the password and to attack stream cipher encrypted data. The reason
-for this is that without the salt the same password always generates the same
-encryption key. When the salt is being used the first eight bytes of the
-encrypted data are reserved for the salt: it is generated at random when
-encrypting a file and read from the encrypted file when it is decrypted.
+Without the B<-salt> option it is possible to perform efficient dictionary attacks on the password and to attack stream cipher encrypted data.
+The reason for this is that without the salt the same password always generates the same encryption key.
+When the salt is being used the first eight bytes of the encrypted data are reserved for the salt: it is generated at random when encrypting a file and read from the encrypted file when it is decrypted.
 
-Some of the ciphers do not have large keys and others have security
-implications if not used correctly. A beginner is advised to just use
-a strong block cipher in CBC mode such as bf or des3.
+Some of the ciphers do not have large keys and others have security implications if not used correctly.
+A beginner is advised to just use a strong block cipher in CBC mode such as bf or des3.
 
-All the block ciphers normally use PKCS#5 padding also known as standard block
-padding: this allows a rudimentary integrity or password check to be
-performed. However since the chance of random data passing the test is
-better than 1 in 256 it isn't a very good test.
+All the block ciphers normally use PKCS#5 padding, also known as standard block padding.
+This allows a rudimentary integrity or password check to be performed.
+However, since the chance of random data passing the test is better than 1 in 256, it isn't a very good test.
 
-If padding is disabled then the input data must be a multiple of the cipher
-block length.
+If padding is disabled then the input data must be a multiple of the cipher block length.
 
 All RC2 ciphers have the same key and effective key length.
 
 Blowfish and RC5 algorithms use a 128 bit key.
 
-=head1 SUPPORTED CIPHERS
+=head2 SUPPORTED CIPHERS
 
-Note that some of these ciphers can be disabled at compile time
-and some are available only if an appropriate engine is configured
-in the configuration file. The output of the B<enc> command run with
-unsupported options (for example B<openssl enc -help>) includes a
-list of ciphers, supported by your version of OpenSSL, including
-ones provided by configured engines.
+Note that some of these ciphers can be disabled at compile time, and some are available only if an appropriate engine is configured in the configuration file.
+The output of the B<enc> command run with unsupported options (for example, B<openssl enc -help>) includes a list of ciphers, supported by your version of OpenSSL, including ones provided by configured engines.
 
-The B<enc> program does not support authenticated encryption modes
-like CCM and GCM. The utility does not store or retrieve the
-authentication tag.
+The B<enc> program does not support authenticated encryption modes like CCM and GCM.
+The utility does not store or retrieve the authentication tag.
 
 
  base64             Base 64
@@ -254,7 +232,7 @@ authentication tag.
  desx               DESX algorithm.
 
  gost89             GOST 28147-89 in CFB mode (provided by ccgost engine)
- gost89-cnt        `GOST 28147-89 in CNT mode (provided by ccgost engine) 
+ gost89-cnt         GOST 28147-89 in CNT mode (provided by ccgost engine) 
 
  idea-cbc           IDEA algorithm in CBC mode
  idea               same as idea-cbc
@@ -280,13 +258,13 @@ authentication tag.
  rc5-ecb            RC5 cipher in ECB mode
  rc5-ofb            RC5 cipher in OFB mode
 
- aes-[128|192|256]-cbc	128/192/256 bit AES in CBC mode
- aes[128|192|256]	Alias for aes-[128|192|256]-cbc
- aes-[128|192|256]-cfb	128/192/256 bit AES in 128 bit CFB mode
- aes-[128|192|256]-cfb1	128/192/256 bit AES in 1 bit CFB mode
- aes-[128|192|256]-cfb8	128/192/256 bit AES in 8 bit CFB mode
- aes-[128|192|256]-ecb	128/192/256 bit AES in ECB mode
- aes-[128|192|256]-ofb	128/192/256 bit AES in OFB mode
+ aes-[128|192|256]-cbc    128/192/256 bit AES in CBC mode
+ aes[128|192|256]         Alias for aes-[128|192|256]-cbc
+ aes-[128|192|256]-cfb    128/192/256 bit AES in 128 bit CFB mode
+ aes-[128|192|256]-cfb1   128/192/256 bit AES in 1 bit CFB mode
+ aes-[128|192|256]-cfb8   128/192/256 bit AES in 8 bit CFB mode
+ aes-[128|192|256]-ecb    128/192/256 bit AES in ECB mode
+ aes-[128|192|256]-ofb    128/192/256 bit AES in OFB mode
 
 =head1 EXAMPLES
 
@@ -294,7 +272,7 @@ Just base64 encode a binary file:
 
  openssl base64 -in file.bin -out file.b64
 
-Decode the same file
+Decode the same file:
 
  openssl base64 -d -in file.b64 -out file.bin 
 
@@ -306,8 +284,7 @@ Decrypt a file using a supplied password:
 
  openssl des3 -d -salt -in file.des3 -out file.txt -k mypassword
 
-Encrypt a file then base64 encode it (so it can be sent via mail for example)
-using Blowfish in CBC mode:
+Encrypt a file then base64 encode it (so it can be sent via mail for example) using Blowfish in CBC mode:
 
  openssl bf -a -salt -in file.txt -out file.bf
 
@@ -325,8 +302,7 @@ The B<-A> option when used with large files doesn't work properly.
 
 There should be an option to allow an iteration count to be included.
 
-The B<enc> program only supports a fixed number of algorithms with
-certain parameters. So if, for example, you want to use RC2 with a
-76 bit key or RC4 with an 84 bit key you can't use this program.
+The B<enc> program only supports a fixed number of algorithms with certain parameters.
+So if, for example, you want to use RC2 with a 76 bit key or RC4 with an 84 bit key, you can't use this program.
 
 =cut

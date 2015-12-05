@@ -20,12 +20,9 @@ B<openssl passwd>
 
 =head1 DESCRIPTION
 
-The B<passwd> command computes the hash of a password typed at
-run-time or the hash of each password in a list.  The password list is
-taken from the named file for option B<-in file>, from stdin for
-option B<-stdin>, or from the command line, or from the terminal otherwise.
-The Unix standard algorithm B<crypt> and the MD5-based BSD password
-algorithm B<1> and its Apache variant B<apr1> are available.
+The B<passwd> command computes the hash of a password typed at run-time or the hash of each password in a list.
+The password list is taken from the named file for option B<-in> I<file>, from stdin for option B<-stdin>, or from the command line if I<password> is supplied,  or from the terminal otherwise.
+The Unix standard algorithm B<crypt> and the MD5-based BSD password algorithm B<1> and its Apache variant B<apr1> are available.
 
 =head1 OPTIONS
 
@@ -66,8 +63,7 @@ Don't output warnings when passwords given at the command line are truncated.
 
 =item B<-table>
 
-In the output list, prepend the cleartext password and a TAB character
-to each password hash.
+In the output list, prepend the cleartext password and a TAB character to each password hash.
 
 =back
 
