@@ -533,6 +533,7 @@ static ERR_STRING_DATA SSL_str_reasons[] = {
     {ERR_REASON(SSL_R_ILLEGAL_SUITEB_DIGEST), "illegal Suite B digest"},
     {ERR_REASON(SSL_R_INAPPROPRIATE_FALLBACK), "inappropriate fallback"},
     {ERR_REASON(SSL_R_INCONSISTENT_COMPRESSION), "inconsistent compression"},
+    {ERR_REASON(SSL_R_INCONSISTENT_EXTMS), "inconsistent extms"},
     {ERR_REASON(SSL_R_INVALID_COMMAND), "invalid command"},
     {ERR_REASON(SSL_R_INVALID_COMPRESSION_ALGORITHM),
      "invalid compression algorithm"},
