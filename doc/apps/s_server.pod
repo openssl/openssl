@@ -66,7 +66,6 @@ B<openssl> B<s_server>
 [B<-cipher cipherlist>]
 [B<-serverpref>]
 [B<-quiet>]
-[B<-no_tmp_rsa>]
 [B<-ssl3>]
 [B<-tls1>]
 [B<-dtls>]
@@ -185,11 +184,6 @@ disabling the ephemeral DH cipher suites.
 
 if this option is set then no ECDH parameters will be loaded effectively
 disabling the ephemeral ECDH cipher suites.
-
-=item B<-no_tmp_rsa>
-
-certain export cipher suites sometimes use a temporary RSA key, this option
-disables temporary RSA key generation.
 
 =item B<-crl_check>, B<-crl_check_all>
 

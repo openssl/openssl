@@ -197,18 +197,16 @@ int ssl3_change_cipher_state(SSL *s, int which)
     unsigned char *p, *mac_secret;
     unsigned char exp_key[EVP_MAX_KEY_LENGTH];
     unsigned char exp_iv[EVP_MAX_IV_LENGTH];
-    unsigned char *ms, *key, *iv, *er1, *er2;
+    unsigned char *ms, *key, *iv;
     EVP_CIPHER_CTX *dd;
     const EVP_CIPHER *c;
 #ifndef OPENSSL_NO_COMP
     COMP_METHOD *comp;
 #endif
     const EVP_MD *m;
-    EVP_MD_CTX md;
-    int is_exp, n, i, j, k, cl;
+    int n, i, j, k, cl;
     int reuse_dd = 0;
 
-    is_exp = SSL_C_IS_EXPORT(s->s3->tmp.new_cipher);
     c = s->s3->tmp.new_sym_enc;
     m = s->s3->tmp.new_hash;
     /* m == NULL will lead to a crash later */
@@ -295,9 +293,7 @@ int ssl3_change_cipher_state(SSL *s, int which)
     if (i < 0)
         goto err2;
     cl = EVP_CIPHER_key_length(c);
-    j = is_exp ? (cl < SSL_C_EXPORT_KEYLENGTH(s->s3->tmp.new_cipher) ?
-                  cl : SSL_C_EXPORT_KEYLENGTH(s->s3->tmp.new_cipher)) : cl;
-    /* Was j=(is_exp)?5:EVP_CIPHER_key_length(c); */
+    j = cl;
     k = EVP_CIPHER_iv_length(c);
     if ((which == SSL3_CHANGE_CIPHER_CLIENT_WRITE) ||
         (which == SSL3_CHANGE_CIPHER_SERVER_READ)) {
@@ -307,8 +303,6 @@ int ssl3_change_cipher_state(SSL *s, int which)
         n += j + j;
         iv = &(p[n]);
         n += k + k;
-        er1 = &(s->s3->client_random[0]);
-        er2 = &(s->s3->server_random[0]);
     } else {
         n = i;
         ms = &(p[n]);
@@ -317,8 +311,6 @@ int ssl3_change_cipher_state(SSL *s, int which)
         n += j + k;
         iv = &(p[n]);
         n += k;
-        er1 = &(s->s3->server_random[0]);
-        er2 = &(s->s3->client_random[0]);
     }
 
     if (n > s->s3->tmp.key_block_length) {
@@ -326,28 +318,7 @@ int ssl3_change_cipher_state(SSL *s, int which)
         goto err2;
     }
 
-    EVP_MD_CTX_init(&md);
     memcpy(mac_secret, ms, i);
-    if (is_exp) {
-        /*
-         * In here I set both the read and write key/iv to the same value
-         * since only the correct one will be used :-).
-         */
-        EVP_DigestInit_ex(&md, EVP_md5(), NULL);
-        EVP_DigestUpdate(&md, key, j);
-        EVP_DigestUpdate(&md, er1, SSL3_RANDOM_SIZE);
-        EVP_DigestUpdate(&md, er2, SSL3_RANDOM_SIZE);
-        EVP_DigestFinal_ex(&md, &(exp_key[0]), NULL);
-        key = &(exp_key[0]);
-
-        if (k > 0) {
-            EVP_DigestInit_ex(&md, EVP_md5(), NULL);
-            EVP_DigestUpdate(&md, er1, SSL3_RANDOM_SIZE);
-            EVP_DigestUpdate(&md, er2, SSL3_RANDOM_SIZE);
-            EVP_DigestFinal_ex(&md, &(exp_iv[0]), NULL);
-            iv = &(exp_iv[0]);
-        }
-    }
 
     EVP_CipherInit_ex(dd, c, NULL, key, iv, (which & SSL3_CC_WRITE));
 
@@ -370,7 +341,6 @@ int ssl3_change_cipher_state(SSL *s, int which)
 
     OPENSSL_cleanse(exp_key, sizeof(exp_key));
     OPENSSL_cleanse(exp_iv, sizeof(exp_iv));
-    EVP_MD_CTX_cleanup(&md);
     return (1);
  err:
     SSLerr(SSL_F_SSL3_CHANGE_CIPHER_STATE, ERR_R_MALLOC_FAILURE);

@@ -651,7 +651,6 @@ struct tls_create_ctx_args tls_create_ctx_defaultargs(void)
     ret.ca_file = NULL;
     ret.verify_depth = -1;
     ret.fail_unless_verified = 0;
-    ret.export_p = 0;
 
     return ret;
 }
@@ -781,20 +780,6 @@ SSL_CTX *tls_create_ctx(struct tls_create_ctx_args a, void *apparg)
         /* avoid small subgroup attacks: */
         SSL_CTX_set_options(ret, SSL_OP_SINGLE_DH_USE);
     }
-#ifndef NO_RSA
-    if (!a.client_p && a.export_p) {
-        RSA *tmpkey;
-
-        tmpkey = RSA_generate_key(512, RSA_F4, 0, NULL);
-        if (tmpkey == NULL)
-            goto err;
-        if (!SSL_CTX_set_tmp_rsa(ret, tmpkey)) {
-            RSA_free(tmpkey);
-            goto err;
-        }
-        RSA_free(tmpkey);       /* SSL_CTX_set_tmp_rsa uses a duplicate. */
-    }
-#endif
 
     return ret;
 

@@ -4,6 +4,11 @@
 
  Changes between 1.0.2 and 1.1.0  [xx XXX xxxx]
 
+  *) Remove support for all 40 and 56 bit ciphers.  This includes all the export
+     ciphers who are no longer supported and drops support the ephemeral RSA key
+     exchange. The LOW ciphers currently doesn't have any ciphers in it.
+     [Kurt Roeckx]
+
   *) Added ASYNC support. Libcrypto now includes the async sub-library to enable
      cryptographic operations to be performed asynchronously as long as an
      asynchronous capable engine is used. See the ASYNC_start_job() man page for

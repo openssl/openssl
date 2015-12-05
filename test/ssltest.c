@@ -212,10 +212,6 @@
 #define COMP_ZLIB       1
 
 static int verify_callback(int ok, X509_STORE_CTX *ctx);
-#ifndef OPENSSL_NO_RSA
-static RSA *tmp_rsa_cb(SSL *s, int is_export, int keylength);
-static void free_tmp_rsa(void);
-#endif
 static int app_verify_callback(X509_STORE_CTX *ctx, void *arg);
 #define APP_CALLBACK_STRING "Test Callback Argument"
 struct app_verify_arg {
@@ -1483,10 +1479,6 @@ int main(int argc, char *argv[])
     (void)no_ecdhe;
 #endif
 
-#ifndef OPENSSL_NO_RSA
-    SSL_CTX_set_tmp_rsa_callback(s_ctx, tmp_rsa_cb);
-#endif
-
     if ((!SSL_CTX_load_verify_locations(s_ctx, CAfile, CApath)) ||
         (!SSL_CTX_set_default_verify_paths(s_ctx)) ||
         (!SSL_CTX_load_verify_locations(c_ctx, CAfile, CApath)) ||
@@ -1716,9 +1708,6 @@ int main(int argc, char *argv[])
 
     BIO_free(bio_stdout);
 
-#ifndef OPENSSL_NO_RSA
-    free_tmp_rsa();
-#endif
 #ifndef OPENSSL_NO_ENGINE
     ENGINE_cleanup();
 #endif
@@ -2833,39 +2822,6 @@ static int app_verify_callback(X509_STORE_CTX *ctx, void *arg)
     }
     return (ok);
 }
-
-#ifndef OPENSSL_NO_RSA
-static RSA *rsa_tmp = NULL;
-
-static RSA *tmp_rsa_cb(SSL *s, int is_export, int keylength)
-{
-    BIGNUM *bn = NULL;
-    if (rsa_tmp == NULL) {
-        bn = BN_new();
-        rsa_tmp = RSA_new();
-        if (!bn || !rsa_tmp || !BN_set_word(bn, RSA_F4)) {
-            BIO_printf(bio_err, "Memory error...");
-            goto end;
-        }
-        printf("Generating temp (%d bit) RSA key...", keylength);
-        if (!RSA_generate_key_ex(rsa_tmp, keylength, bn, NULL)) {
-            BIO_printf(bio_err, "Error generating key.");
-            RSA_free(rsa_tmp);
-            rsa_tmp = NULL;
-        }
- end:
-        printf("\n");
-    }
-    BN_free(bn);
-    return (rsa_tmp);
-}
-
-static void free_tmp_rsa(void)
-{
-    RSA_free(rsa_tmp);
-    rsa_tmp = NULL;
-}
-#endif
 
 #ifndef OPENSSL_NO_DH
 /*-

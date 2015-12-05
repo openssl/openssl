@@ -195,14 +195,6 @@ CERT *ssl_cert_dup(CERT *cert)
     ret->references = 1;
     ret->key = &ret->pkeys[cert->key - cert->pkeys];
 
-#ifndef OPENSSL_NO_RSA
-    if (cert->rsa_tmp != NULL) {
-        RSA_up_ref(cert->rsa_tmp);
-        ret->rsa_tmp = cert->rsa_tmp;
-    }
-    ret->rsa_tmp_cb = cert->rsa_tmp_cb;
-#endif
-
 #ifndef OPENSSL_NO_DH
     if (cert->dh_tmp != NULL) {
         ret->dh_tmp = DHparams_dup(cert->dh_tmp);
@@ -377,9 +369,6 @@ void ssl_cert_free(CERT *c)
     }
 #endif
 
-#ifndef OPENSSL_NO_RSA
-    RSA_free(c->rsa_tmp);
-#endif
 #ifndef OPENSSL_NO_DH
     DH_free(c->dh_tmp);
 #endif

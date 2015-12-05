@@ -331,25 +331,6 @@ Use the file path to locate trusted CA certficates.
 
 =item long B<SSL_CTX_set_tmp_dh_callback>(SSL_CTX *ctx, DH *(*cb)(void));
 
-=item long B<SSL_CTX_set_tmp_rsa>(SSL_CTX *ctx, RSA *rsa);
-
-=item SSL_CTX_set_tmp_rsa_callback
-
-C<long B<SSL_CTX_set_tmp_rsa_callback>(SSL_CTX *B<ctx>, RSA *(*B<cb>)(SSL *B<ssl>, int B<export>, int B<keylength>));>
-
-Sets the callback which will be called when a temporary private key is
-required. The B<C<export>> flag will be set if the reason for needing
-a temp key is that an export ciphersuite is in use, in which case,
-B<C<keylength>> will contain the required keylength in bits. Generate a key of
-appropriate size (using ???) and return it.
-
-=item SSL_set_tmp_rsa_callback
-
-long B<SSL_set_tmp_rsa_callback>(SSL *ssl, RSA *(*cb)(SSL *ssl, int export, int keylength));
-
-The same as B<SSL_CTX_set_tmp_rsa_callback>, except it operates on an SSL
-session instead of a context.
-
 =item void B<SSL_CTX_set_verify>(SSL_CTX *ctx, int mode, int (*cb);(void))
 
 =item int B<SSL_CTX_use_PrivateKey>(SSL_CTX *ctx, EVP_PKEY *pkey);
@@ -713,7 +694,6 @@ L<SSL_CTX_set_session_cache_mode(3)>,
 L<SSL_CTX_set_session_id_context(3)>,
 L<SSL_CTX_set_ssl_version(3)>,
 L<SSL_CTX_set_timeout(3)>,
-L<SSL_CTX_set_tmp_rsa_callback(3)>,
 L<SSL_CTX_set_tmp_dh_callback(3)>,
 L<SSL_CTX_set_verify(3)>,
 L<SSL_CTX_use_certificate(3)>,

@@ -34,7 +34,6 @@ struct tls_create_ctx_args {
     const char *ca_file;
     int verify_depth;
     int fail_unless_verified;
-    int export_p;
 };
 struct tls_create_ctx_args tls_create_ctx_defaultargs(void);
 /*

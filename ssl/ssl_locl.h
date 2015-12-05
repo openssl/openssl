@@ -438,68 +438,16 @@
  */
 # define TLS1_STREAM_MAC 0x10000
 
-/*
- * Export and cipher strength information. For each cipher we have to decide
- * whether it is exportable or not. This information is likely to change
- * over time, since the export control rules are no static technical issue.
- *
- * Independent of the export flag the cipher strength is sorted into classes.
- * SSL_EXP40 was denoting the 40bit US export limit of past times, which now
- * is at 56bit (SSL_EXP56). If the exportable cipher class is going to change
- * again (eg. to 64bit) the use of "SSL_EXP*" becomes blurred even more,
- * since SSL_EXP64 could be similar to SSL_LOW.
- * For this reason SSL_MICRO and SSL_MINI macros are included to widen the
- * namespace of SSL_LOW-SSL_HIGH to lower values. As development of speed
- * and ciphers goes, another extension to SSL_SUPER and/or SSL_ULTRA would
- * be possible.
- */
-# define SSL_EXP_MASK            0x00000003U
-# define SSL_STRONG_MASK         0x000001fcU
-# define SSL_DEFAULT_MASK        0X00000200U
+# define SSL_DEFAULT_MASK        0X00000020U
 
-# define SSL_NOT_EXP             0x00000001U
-# define SSL_EXPORT              0x00000002U
+# define SSL_STRONG_NONE         0x00000001U
+# define SSL_LOW                 0x00000002U
+# define SSL_MEDIUM              0x00000004U
+# define SSL_HIGH                0x00000008U
+# define SSL_FIPS                0x00000010U
+# define SSL_NOT_DEFAULT         0x00000020U
 
-# define SSL_STRONG_NONE         0x00000004U
-# define SSL_EXP40               0x00000008U
-# define SSL_MICRO               (SSL_EXP40)
-# define SSL_EXP56               0x00000010U
-# define SSL_MINI                (SSL_EXP56)
-# define SSL_LOW                 0x00000020U
-# define SSL_MEDIUM              0x00000040U
-# define SSL_HIGH                0x00000080U
-# define SSL_FIPS                0x00000100U
-
-# define SSL_NOT_DEFAULT         0x00000200U
-
-/* we have used 000003ff - 22 bits left to go */
-
-/*-
- * Macros to check the export status and cipher strength for export ciphers.
- * Even though the macros for EXPORT and EXPORT40/56 have similar names,
- * their meaning is different:
- * *_EXPORT macros check the 'exportable' status.
- * *_EXPORT40/56 macros are used to check whether a certain cipher strength
- *          is given.
- * Since the SSL_IS_EXPORT* and SSL_EXPORT* macros depend on the correct
- * algorithm structure element to be passed (algorithms, algo_strength) and no
- * typechecking can be done as they are all of type unsigned long, their
- * direct usage is discouraged.
- * Use the SSL_C_* macros instead.
- */
-# define SSL_IS_EXPORT(a)        ((a)&SSL_EXPORT)
-# define SSL_IS_EXPORT56(a)      ((a)&SSL_EXP56)
-# define SSL_IS_EXPORT40(a)      ((a)&SSL_EXP40)
-# define SSL_C_IS_EXPORT(c)      SSL_IS_EXPORT((c)->algo_strength)
-# define SSL_C_IS_EXPORT56(c)    SSL_IS_EXPORT56((c)->algo_strength)
-# define SSL_C_IS_EXPORT40(c)    SSL_IS_EXPORT40((c)->algo_strength)
-
-# define SSL_EXPORT_KEYLENGTH(a,s)       (SSL_IS_EXPORT40(s) ? 5 : \
-                                 (a) == SSL_DES ? 8 : 7)
-# define SSL_EXPORT_PKEYLENGTH(a) (SSL_IS_EXPORT40(a) ? 512 : 1024)
-# define SSL_C_EXPORT_KEYLENGTH(c)       SSL_EXPORT_KEYLENGTH((c)->algorithm_enc, \
-                                (c)->algo_strength)
-# define SSL_C_EXPORT_PKEYLENGTH(c)      SSL_EXPORT_PKEYLENGTH((c)->algo_strength)
+/* we have used 0000003f - 26 bits left to go */
 
 /* Check if an SSL structure is using DTLS */
 # define SSL_IS_DTLS(s)  (s->method->ssl3_enc->enc_flags & SSL_ENC_FLAG_DTLS)
@@ -550,8 +498,7 @@
 # define SSL_PKEY_GOST_EC SSL_PKEY_NUM+1
 
 /*-
- * SSL_kRSA <- RSA_ENC | (RSA_TMP & RSA_SIGN) |
- *          <- (EXPORT & (RSA_ENC | RSA_TMP) & RSA_SIGN)
+ * SSL_kRSA <- RSA_ENC
  * SSL_kDH  <- DH_ENC & (RSA_ENC | RSA_SIGN | DSA_SIGN)
  * SSL_kDHE <- RSA_ENC | RSA_SIGN | DSA_SIGN
  * SSL_aRSA <- RSA_ENC | RSA_SIGN
@@ -1300,7 +1247,6 @@ typedef struct ssl3_state_st {
         int ctype_num;
         char ctype[SSL3_CT_NUMBER];
         STACK_OF(X509_NAME) *ca_names;
-        int use_rsa_tmp;
         int key_block_length;
         unsigned char *key_block;
         const EVP_CIPHER *new_sym_enc;
@@ -1349,8 +1295,6 @@ typedef struct ssl3_state_st {
          */
         uint32_t mask_k;
         uint32_t mask_a;
-        uint32_t export_mask_k;
-        uint32_t export_mask_a;
         /* Client only */
         uint32_t mask_ssl;
     } tmp;
@@ -1392,9 +1336,6 @@ typedef struct ssl3_state_st {
 #   endif                       /* !OPENSSL_NO_EC */
 
     /* For clients: peer temporary key */
-# ifndef OPENSSL_NO_RSA
-    RSA *peer_rsa_tmp;
-# endif
 # ifndef OPENSSL_NO_DH
     DH *peer_dh_tmp;
 # endif
@@ -1559,10 +1500,6 @@ typedef struct cert_st {
      * an index, not a pointer.
      */
     CERT_PKEY *key;
-# ifndef OPENSSL_NO_RSA
-    RSA *rsa_tmp;
-    RSA *(*rsa_tmp_cb) (SSL *ssl, int is_export, int keysize);
-# endif
 # ifndef OPENSSL_NO_DH
     DH *dh_tmp;
     DH *(*dh_tmp_cb) (SSL *ssl, int is_export, int keysize);
