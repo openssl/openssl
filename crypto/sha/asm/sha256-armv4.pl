@@ -175,7 +175,7 @@ $code=<<___;
 #endif
 
 .text
-#if defined(__thumb2__) && !defined(__APPLE__)
+#if defined(__thumb2__)
 .syntax unified
 .thumb
 # define adrl adr
@@ -595,7 +595,7 @@ my $Ktbl="r3";
 $code.=<<___;
 #if __ARM_MAX_ARCH__>=7 && !defined(__KERNEL__)
 
-# if defined(__thumb2__) && !defined(__APPLE__)
+# if defined(__thumb2__)
 #  define INST(a,b,c,d)	.byte	c,d|0xc,a,b
 # else
 #  define INST(a,b,c,d)	.byte	a,b,c,d
