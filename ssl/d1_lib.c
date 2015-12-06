@@ -259,14 +259,24 @@ long dtls1_ctrl(SSL *s, int cmd, long larg, void *parg)
     case SSL_CTRL_CHECK_PROTO_VERSION:
         /*
          * For library-internal use; checks that the current protocol is the
-         * highest enabled version (according to s->ctx->method, as version
-         * negotiation may have changed s->method).
+         * is the highest enabled version.
+         */
+        if (s->max_proto_version == 0 && s->version == DTLS_MAX_VERSION)
+            return 1;
+        if (s->max_proto_version != 0 && s->version == s->max_proto_version)
+            return 1;
+        /* We're not limited by the max_proto_version but might still have
+         * other reasons why we use an older version like not using a
+         * version-flexible SSL_METHOD.  Check s->ctx->method as version
+         * negotiation may have changed s->method.
+         * This check can be removed when we only have version-flexible
+         * SSL_METHODs
          */
         if (s->version == s->ctx->method->version)
             return 1;
         /*
          * Apparently we're using a version-flexible SSL_METHOD (not at its
-         * highest protocol version).
+         * highest protocol version, not limited by max_proto_version).
          */
         if (s->ctx->method->version == DTLS_method()->version) {
 #if DTLS_MAX_VERSION != DTLS1_2_VERSION

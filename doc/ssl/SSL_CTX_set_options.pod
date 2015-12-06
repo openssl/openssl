@@ -153,13 +153,10 @@ own preferences.
 ...
 
 
-=item SSL_OP_NO_SSLv3
+=item SSL_OP_NO_SSLv3, SSL_OP_NO_TLSv1
 
-Do not use the SSLv3 protocol.
-
-=item SSL_OP_NO_TLSv1
-
-Do not use the TLSv1 protocol.
+Do not use the SSLv3 or TLSv1 protocol, respectively.
+You should avoid using those settings and instead use SSL_CTX_set_min_proto_version() and SSL_CTX_set_max_proto_version().
 
 =item SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION
 
@@ -269,6 +266,7 @@ secure renegotiation and 0 if it does not.
 
 L<ssl(3)>, L<SSL_new(3)>, L<SSL_clear(3)>,
 L<SSL_CTX_set_tmp_dh_callback(3)>,
+L<SSL_CTX_set_min_proto_version(3)>,
 L<dhparam(1)>
 
 =head1 HISTORY

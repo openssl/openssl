@@ -1044,10 +1044,17 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
                 protverr = 0;
             }
         } else if (s->client_version >= SSL3_VERSION) {
+            int max_version = TLS_MAX_VERSION;
+
+            if (s->max_proto_version != 0)
+                max_version = s->max_proto_version;
+
             switch(s->client_version) {
             default:
             case TLS1_2_VERSION:
-                if(!(s->options & SSL_OP_NO_TLSv1_2)) {
+                if(!(s->options & SSL_OP_NO_TLSv1_2) &&
+                    (max_version >= TLS1_2_VERSION) &&
+                    (s->min_proto_version <= TLS1_2_VERSION)) {
                     s->version = TLS1_2_VERSION;
                     s->method = TLSv1_2_server_method();
                     protverr = 0;
@@ -1055,7 +1062,9 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
                 }
                 /* Deliberately fall through */
             case TLS1_1_VERSION:
-                if(!(s->options & SSL_OP_NO_TLSv1_1)) {
+                if(!(s->options & SSL_OP_NO_TLSv1_1) &&
+                    (max_version >= TLS1_1_VERSION) &&
+                    (s->min_proto_version <= TLS1_1_VERSION)) {
                     s->version = TLS1_1_VERSION;
                     s->method = TLSv1_1_server_method();
                     protverr = 0;
@@ -1063,7 +1072,9 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
                 }
                 /* Deliberately fall through */
             case TLS1_VERSION:
-                if(!(s->options & SSL_OP_NO_TLSv1)) {
+                if(!(s->options & SSL_OP_NO_TLSv1) &&
+                    (max_version >= TLS1_VERSION) &&
+                    (s->min_proto_version <= TLS1_VERSION)) {
                     s->version = TLS1_VERSION;
                     s->method = TLSv1_server_method();
                     protverr = 0;
@@ -1072,7 +1083,9 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
                 /* Deliberately fall through */
             case SSL3_VERSION:
 #ifndef OPENSSL_NO_SSL3
-                if(!(s->options & SSL_OP_NO_SSLv3)) {
+                if(!(s->options & SSL_OP_NO_SSLv3) &&
+                    (max_version >= SSL3_VERSION) &&
+                    (s->min_proto_version <= SSL3_VERSION)) {
                     s->version = SSL3_VERSION;
                     s->method = SSLv3_server_method();
                     protverr = 0;
@@ -1254,8 +1267,18 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
         }
         if (s->method->version == DTLS_ANY_VERSION) {
             /* Select version to use */
-            if (s->client_version <= DTLS1_2_VERSION &&
-                !(s->options & SSL_OP_NO_DTLSv1_2)) {
+            int max_version = DTLS_MAX_VERSION;
+            int min_version = DTLS_MIN_VERSION;
+
+            if (s->max_proto_version != 0)
+                max_version = s->max_proto_version;
+            if (s->min_proto_version != 0)
+                min_version = s->min_proto_version;
+
+            if (DTLS_VERSION_GE(s->client_version, DTLS1_2_VERSION) &&
+                !(s->options & SSL_OP_NO_DTLSv1_2) &&
+                DTLS_VERSION_GE(max_version, DTLS1_2_VERSION) &&
+                DTLS_VERSION_LE(min_version, DTLS1_2_VERSION)) {
                 s->version = DTLS1_2_VERSION;
                 s->method = DTLSv1_2_server_method();
             } else if (tls1_suiteb(s)) {
@@ -1264,8 +1287,10 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
                 s->version = s->client_version;
                 al = SSL_AD_PROTOCOL_VERSION;
                 goto f_err;
-            } else if (s->client_version <= DTLS1_VERSION &&
-                       !(s->options & SSL_OP_NO_DTLSv1)) {
+            } else if (DTLS_VERSION_GE(s->client_version, DTLS1_VERSION) &&
+                       !(s->options & SSL_OP_NO_DTLSv1) &&
+                        DTLS_VERSION_GE(max_version, DTLS1_VERSION) &&
+                        DTLS_VERSION_LE(min_version, DTLS1_VERSION)) {
                 s->version = DTLS1_VERSION;
                 s->method = DTLSv1_server_method();
             } else {

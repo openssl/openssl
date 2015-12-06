@@ -142,6 +142,10 @@ struct ssl_conf_ctx_st {
     uint32_t *pcert_flags;
     /* Pointer to SSL or SSL_CTX verify_mode or NULL if none */
     uint32_t *pvfy_flags;
+    /* Pointer to SSL or SSL_CTX min_version field or NULL if none */
+    int *min_version;
+    /* Pointer to SSL or SSL_CTX max_version field or NULL if none */
+    int *max_version;
     /* Current flag table being worked on */
     const ssl_flag_tbl *tbl;
     /* Size of table */
@@ -307,11 +311,76 @@ static int cmd_Protocol(SSL_CONF_CTX *cctx, const char *value)
         SSL_FLAG_TBL_INV("SSLv3", SSL_OP_NO_SSLv3),
         SSL_FLAG_TBL_INV("TLSv1", SSL_OP_NO_TLSv1),
         SSL_FLAG_TBL_INV("TLSv1.1", SSL_OP_NO_TLSv1_1),
-        SSL_FLAG_TBL_INV("TLSv1.2", SSL_OP_NO_TLSv1_2)
+        SSL_FLAG_TBL_INV("TLSv1.2", SSL_OP_NO_TLSv1_2),
+        SSL_FLAG_TBL_INV("DTLSv1", SSL_OP_NO_DTLSv1),
+        SSL_FLAG_TBL_INV("DTLSv1.2", SSL_OP_NO_DTLSv1_2)
     };
     cctx->tbl = ssl_protocol_list;
     cctx->ntbl = OSSL_NELEM(ssl_protocol_list);
     return CONF_parse_list(value, ',', 1, ssl_set_option_list, cctx);
+}
+
+/*
+ * protocol_from_string - converts a protocol version string to a number
+ *
+ * Returns -1 on failure or the version on success
+ */
+static int protocol_from_string(const char *value)
+{
+    struct protocol_versions {
+        const char *name;
+        int version;
+    };
+    static const struct protocol_versions versions[] = {
+        {"SSLv3", SSL3_VERSION},
+        {"TLSv1", TLS1_VERSION},
+        {"TLSv1.1", TLS1_1_VERSION},
+        {"TLSv1.2", TLS1_2_VERSION},
+        {"DTLSv1", DTLS1_VERSION},
+        {"DTLSv1.2", DTLS1_2_VERSION}};
+    size_t i;
+    size_t n = OSSL_NELEM(versions);
+
+    for (i = 0; i < n; i++)
+        if (strcmp(versions[i].name, value) == 0)
+            return versions[i].version;
+    return -1;
+}
+
+/*
+ * cmd_MinProtocol - Set min protocol version
+ * @cctx: config structure to save settings in
+ * @value: The min protocol version in string form
+ *
+ * Returns 1 on success and 0 on failure.
+ */
+static int cmd_MinProtocol(SSL_CONF_CTX *cctx, const char *value)
+{
+    int version = protocol_from_string(value);
+
+    if (version < 0)
+        return 0;
+
+    *(cctx->min_version) = version;
+    return 1;
+}
+
+/*
+ * cmd_MaxProtocol - Set max protocol version
+ * @cctx: config structure to save settings in
+ * @value: The max protocol version in string form
+ *
+ * Returns 1 on success and 0 on failure.
+ */
+static int cmd_MaxProtocol(SSL_CONF_CTX *cctx, const char *value)
+{
+    int version = protocol_from_string(value);
+
+    if (version < 0)
+        return 0;
+
+    *(cctx->max_version) = version;
+    return 1;
 }
 
 static int cmd_Options(SSL_CONF_CTX *cctx, const char *value)
@@ -527,6 +596,8 @@ static const ssl_conf_cmd_tbl ssl_conf_cmds[] = {
 #endif
     SSL_CONF_CMD_STRING(CipherString, "cipher", 0),
     SSL_CONF_CMD_STRING(Protocol, NULL, 0),
+    SSL_CONF_CMD_STRING(MinProtocol, "min_protocol", SSL_CONF_FLAG_SERVER | SSL_CONF_FLAG_CLIENT),
+    SSL_CONF_CMD_STRING(MaxProtocol, "max_protocol", SSL_CONF_FLAG_SERVER | SSL_CONF_FLAG_CLIENT),
     SSL_CONF_CMD_STRING(Options, NULL, 0),
     SSL_CONF_CMD_STRING(VerifyMode, NULL, 0),
     SSL_CONF_CMD(Certificate, "cert", SSL_CONF_FLAG_CERTIFICATE,
@@ -831,10 +902,14 @@ void SSL_CONF_CTX_set_ssl(SSL_CONF_CTX *cctx, SSL *ssl)
     cctx->ctx = NULL;
     if (ssl) {
         cctx->poptions = &ssl->options;
+        cctx->min_version = &ssl->min_proto_version;
+        cctx->max_version = &ssl->max_proto_version;
         cctx->pcert_flags = &ssl->cert->cert_flags;
         cctx->pvfy_flags = &ssl->verify_mode;
     } else {
         cctx->poptions = NULL;
+        cctx->min_version = NULL;
+        cctx->max_version = NULL;
         cctx->pcert_flags = NULL;
         cctx->pvfy_flags = NULL;
     }
@@ -846,10 +921,14 @@ void SSL_CONF_CTX_set_ssl_ctx(SSL_CONF_CTX *cctx, SSL_CTX *ctx)
     cctx->ssl = NULL;
     if (ctx) {
         cctx->poptions = &ctx->options;
+        cctx->min_version = &ctx->min_proto_version;
+        cctx->max_version = &ctx->max_proto_version;
         cctx->pcert_flags = &ctx->cert->cert_flags;
         cctx->pvfy_flags = &ctx->verify_mode;
     } else {
         cctx->poptions = NULL;
+        cctx->min_version = NULL;
+        cctx->max_version = NULL;
         cctx->pcert_flags = NULL;
         cctx->pvfy_flags = NULL;
     }
