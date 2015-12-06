@@ -1,0 +1,42 @@
+=pod
+
+=head1 NAME
+
+SSL_CTX_set_min_proto_version, SSL_CTX_set_max_proto_version, SSL_set_min_proto_version, SSL_set_max_proto_version - Set minimum and maximum supported protocol version
+
+=head1 SYNOPSIS
+
+ #include <openssl/ssl.h>
+
+ int SSL_CTX_set_min_proto_version(SSL_CTX *ctx, int version);
+ int SSL_CTX_set_max_proto_version(SSL_CTX *ctx, int version);
+ int SSL_set_min_proto_version(SSL *ssl, int version);
+ int SSL_set_max_proto_version(SSL *ssl, int version);
+
+=head1 DESCRIPTION
+
+The functions set the minimum and maximum supported portocol versions for the B<ctx> or B<ssl>.
+This works in combination with the options set via SSL_CTX_set_options() that allows to disable specific protocol versions.
+You should use these functions instead of disabling a specific protocol version.
+
+When setting the minimum or maximum version to 0 it will use the lowest or highest supported version, respectively, by the library.
+
+Currently supported versions are B<SSL3_VERSION>, B<TLS1_VERSION>, B<TLS1_1_VERSION>, B<TLS1_2_VERSION>, B<DTLS1_VERSION> and B<DTLS1_2_VERSION>.
+
+=head1 RETURN VALUES
+
+The function returns 1 on success and 0 on failure.
+
+=head1 NOTES
+
+All these functions are implemented using macros.
+
+=head1 HISTORY
+
+The functions were added in OpenSSL 1.1.0
+
+=head1 SEE ALSO
+
+L<SSL_CTX_set_options(3)>, L<SSL_CONF_cmd(3)>
+
+=cut

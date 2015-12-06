@@ -852,6 +852,14 @@ static int ssl_set_version(SSL *s)
             s->version = SSL3_VERSION;
 #endif
 
+        if (s->max_proto_version != 0 && (s->version > s->max_proto_version))
+            s->version = s->max_proto_version;
+        if (s->version < s->min_proto_version)
+        {
+            SSLerr(SSL_F_SSL_SET_VERSION, SSL_R_NO_PROTOCOLS_AVAILABLE);
+            return 0;
+        }
+
         if (s->version != TLS1_2_VERSION && tls1_suiteb(s)) {
             SSLerr(SSL_F_SSL_SET_VERSION,
                    SSL_R_ONLY_TLS_1_2_ALLOWED_IN_SUITEB_MODE);
@@ -864,9 +872,17 @@ static int ssl_set_version(SSL *s)
         }
 
     } else if (s->method->version == DTLS_ANY_VERSION) {
-        /* Determine which DTLS version to use */
+        int max_version = DTLS_MAX_VERSION;
+        int min_version = DTLS_MIN_VERSION;
+
+        if (s->max_proto_version != 0)
+            max_version = s->max_proto_version;
+        if (s->min_proto_version != 0)
+            min_version = s->min_proto_version;
+
         /* If DTLS 1.2 disabled correct the version number */
-        if (options & SSL_OP_NO_DTLSv1_2) {
+        if (options & SSL_OP_NO_DTLSv1_2
+            || DTLS_VERSION_GT(DTLS1_2_VERSION, max_version)) {
             if (tls1_suiteb(s)) {
                 SSLerr(SSL_F_SSL_SET_VERSION,
                        SSL_R_ONLY_DTLS_1_2_ALLOWED_IN_SUITEB_MODE);
@@ -875,7 +891,8 @@ static int ssl_set_version(SSL *s)
             /*
              * Disabling all versions is silly: return an error.
              */
-            if (options & SSL_OP_NO_DTLSv1) {
+            if (options & SSL_OP_NO_DTLSv1
+                || DTLS_VERSION_GT(min_version, DTLS1_VERSION)) {
                 SSLerr(SSL_F_SSL_SET_VERSION, SSL_R_WRONG_SSL_VERSION);
                 return 0;
             }
@@ -888,7 +905,8 @@ static int ssl_set_version(SSL *s)
             /*
              * We only support one version: update method
              */
-            if (options & SSL_OP_NO_DTLSv1)
+            if (options & SSL_OP_NO_DTLSv1
+                || DTLS_VERSION_GE(min_version, DTLS1_2_VERSION))
                 s->method = DTLSv1_2_client_method();
             s->version = DTLS1_2_VERSION;
         }
@@ -1129,6 +1147,10 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL *s, PACKET *pkt)
 
     if (s->method->version == TLS_ANY_VERSION) {
         unsigned int sversion;
+        int max_version = TLS_MAX_VERSION;
+
+        if (s->max_proto_version != 0)
+            max_version = s->max_proto_version;
 
         if (!PACKET_get_net_2(pkt, &sversion)) {
             al = SSL_AD_DECODE_ERROR;
@@ -1140,7 +1162,9 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL *s, PACKET *pkt)
 #error Code needs updating for new TLS version
 #endif
 #ifndef OPENSSL_NO_SSL3
-        if ((sversion == SSL3_VERSION) && !(s->options & SSL_OP_NO_SSLv3)) {
+        if ((sversion == SSL3_VERSION) && !(s->options & SSL_OP_NO_SSLv3) &&
+            (s->min_proto_version <= SSL3_VERSION) &&
+            (max_version >= SSL3_VERSION)) {
             if (FIPS_mode()) {
                 SSLerr(SSL_F_TLS_PROCESS_SERVER_HELLO,
                        SSL_R_ONLY_TLS_ALLOWED_IN_FIPS_MODE);
@@ -1150,13 +1174,19 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL *s, PACKET *pkt)
             s->method = SSLv3_client_method();
         } else
 #endif
-        if ((sversion == TLS1_VERSION) && !(s->options & SSL_OP_NO_TLSv1)) {
+        if ((sversion == TLS1_VERSION) && !(s->options & SSL_OP_NO_TLSv1) &&
+            (s->min_proto_version <= TLS1_VERSION) &&
+            (max_version >= TLS1_VERSION)) {
             s->method = TLSv1_client_method();
         } else if ((sversion == TLS1_1_VERSION) &&
-                   !(s->options & SSL_OP_NO_TLSv1_1)) {
+                   !(s->options & SSL_OP_NO_TLSv1_1) &&
+                   (s->min_proto_version <= TLS1_1_VERSION) &&
+                   (max_version >= TLS1_1_VERSION)) {
             s->method = TLSv1_1_client_method();
         } else if ((sversion == TLS1_2_VERSION) &&
-                   !(s->options & SSL_OP_NO_TLSv1_2)) {
+                   !(s->options & SSL_OP_NO_TLSv1_2) &&
+                   (s->min_proto_version <= TLS1_2_VERSION) &&
+                   (max_version >= TLS1_2_VERSION)) {
             s->method = TLSv1_2_client_method();
         } else {
             SSLerr(SSL_F_TLS_PROCESS_SERVER_HELLO, SSL_R_UNSUPPORTED_PROTOCOL);
@@ -1165,7 +1195,8 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL *s, PACKET *pkt)
         }
         s->session->ssl_version = s->version = s->method->version;
 
-        if (!ssl_security(s, SSL_SECOP_VERSION, 0, s->version, NULL)) {
+        if ((s->version < s->min_proto_version)
+            || !ssl_security(s, SSL_SECOP_VERSION, 0, s->version, NULL)) {
             SSLerr(SSL_F_TLS_PROCESS_SERVER_HELLO, SSL_R_VERSION_TOO_LOW);
             al = SSL_AD_PROTOCOL_VERSION;
             goto f_err;
@@ -1174,6 +1205,13 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL *s, PACKET *pkt)
         /* Work out correct protocol version to use */
         unsigned int hversion;
         int options;
+        int max_version = DTLS_MAX_VERSION;
+        int min_version = DTLS_MIN_VERSION;
+
+        if (s->max_proto_version != 0)
+            max_version = s->max_proto_version;
+        if (s->min_proto_version != 0)
+            min_version = s->min_proto_version;
 
         if (!PACKET_get_net_2(pkt, &hversion)) {
             al = SSL_AD_DECODE_ERROR;
@@ -1182,7 +1220,9 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL *s, PACKET *pkt)
         }
 
         options = s->options;
-        if (hversion == DTLS1_2_VERSION && !(options & SSL_OP_NO_DTLSv1_2))
+        if (hversion == DTLS1_2_VERSION && !(options & SSL_OP_NO_DTLSv1_2) &&
+            DTLS_VERSION_LE(min_version, DTLS1_2_VERSION) &&
+            DTLS_VERSION_GE(max_version, DTLS1_2_VERSION))
             s->method = DTLSv1_2_client_method();
         else if (tls1_suiteb(s)) {
             SSLerr(SSL_F_TLS_PROCESS_SERVER_HELLO,
@@ -1190,7 +1230,9 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL *s, PACKET *pkt)
             s->version = hversion;
             al = SSL_AD_PROTOCOL_VERSION;
             goto f_err;
-        } else if (hversion == DTLS1_VERSION && !(options & SSL_OP_NO_DTLSv1))
+        } else if (hversion == DTLS1_VERSION && !(options & SSL_OP_NO_DTLSv1) &&
+            DTLS_VERSION_LE(min_version, DTLS1_VERSION) &&
+            DTLS_VERSION_GE(max_version, DTLS1_VERSION))
             s->method = DTLSv1_client_method();
         else {
             SSLerr(SSL_F_TLS_PROCESS_SERVER_HELLO, SSL_R_WRONG_SSL_VERSION);
