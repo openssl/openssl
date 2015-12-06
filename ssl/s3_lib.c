@@ -245,22 +245,6 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      },
 #endif
 
-/* Cipher 09 */
-    {
-     1,
-     SSL3_TXT_RSA_DES_64_CBC_SHA,
-     SSL3_CK_RSA_DES_64_CBC_SHA,
-     SSL_kRSA,
-     SSL_aRSA,
-     SSL_DES,
-     SSL_SHA1,
-     SSL_SSLV3,
-     SSL_NOT_DEFAULT | SSL_LOW,
-     SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
-     56,
-     56,
-     },
-
 /* Cipher 0A */
     {
      1,
@@ -275,22 +259,6 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      112,
      168,
-     },
-
-/* Cipher 0C */
-    {
-     1,
-     SSL3_TXT_DH_DSS_DES_64_CBC_SHA,
-     SSL3_CK_DH_DSS_DES_64_CBC_SHA,
-     SSL_kDHd,
-     SSL_aDH,
-     SSL_DES,
-     SSL_SHA1,
-     SSL_SSLV3,
-     SSL_NOT_DEFAULT | SSL_LOW,
-     SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
-     56,
-     56,
      },
 
 /* Cipher 0D */
@@ -309,22 +277,6 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      168,
      },
 
-/* Cipher 0F */
-    {
-     1,
-     SSL3_TXT_DH_RSA_DES_64_CBC_SHA,
-     SSL3_CK_DH_RSA_DES_64_CBC_SHA,
-     SSL_kDHr,
-     SSL_aDH,
-     SSL_DES,
-     SSL_SHA1,
-     SSL_SSLV3,
-     SSL_NOT_DEFAULT | SSL_LOW,
-     SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
-     56,
-     56,
-     },
-
 /* Cipher 10 */
     {
      1,
@@ -341,22 +293,6 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      168,
      },
 
-/* Cipher 12 */
-    {
-     1,
-     SSL3_TXT_DHE_DSS_DES_64_CBC_SHA,
-     SSL3_CK_DHE_DSS_DES_64_CBC_SHA,
-     SSL_kDHE,
-     SSL_aDSS,
-     SSL_DES,
-     SSL_SHA1,
-     SSL_SSLV3,
-     SSL_NOT_DEFAULT | SSL_LOW,
-     SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
-     56,
-     56,
-     },
-
 /* Cipher 13 */
     {
      1,
@@ -371,22 +307,6 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      112,
      168,
-     },
-
-/* Cipher 15 */
-    {
-     1,
-     SSL3_TXT_DHE_RSA_DES_64_CBC_SHA,
-     SSL3_CK_DHE_RSA_DES_64_CBC_SHA,
-     SSL_kDHE,
-     SSL_aRSA,
-     SSL_DES,
-     SSL_SHA1,
-     SSL_SSLV3,
-     SSL_NOT_DEFAULT | SSL_LOW,
-     SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
-     56,
-     56,
      },
 
 /* Cipher 16 */
@@ -419,22 +339,6 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      128,
      128,
-     },
-
-/* Cipher 1A */
-    {
-     1,
-     SSL3_TXT_ADH_DES_64_CBC_SHA,
-     SSL3_CK_ADH_DES_64_CBC_SHA,
-     SSL_kDHE,
-     SSL_aNULL,
-     SSL_DES,
-     SSL_SHA1,
-     SSL_SSLV3,
-     SSL_NOT_DEFAULT | SSL_LOW,
-     SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
-     56,
-     56,
      },
 
 /* Cipher 1B */

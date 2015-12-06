@@ -165,8 +165,9 @@ encryption.
 
 =item B<LOW>
 
-"low" encryption cipher suites, currently those using 64 or 56 bit encryption
-algorithms but excluding export cipher suites.
+"low" encryption cipher suites, currently those using 64 or 56 bit
+encryption algorithms but excluding export cipher suites.  All these
+ciphersuites have been removed as of OpenSSL 1.1.0.
 
 =item B<eNULL>, B<NULL>
 
@@ -378,20 +379,14 @@ e.g. DES-CBC3-SHA. In these cases, RSA authentication is used.
  SSL_RSA_WITH_RC4_128_MD5                RC4-MD5
  SSL_RSA_WITH_RC4_128_SHA                RC4-SHA
  SSL_RSA_WITH_IDEA_CBC_SHA               IDEA-CBC-SHA
- SSL_RSA_WITH_DES_CBC_SHA                DES-CBC-SHA
  SSL_RSA_WITH_3DES_EDE_CBC_SHA           DES-CBC3-SHA
 
- SSL_DH_DSS_WITH_DES_CBC_SHA             DH-DSS-DES-CBC-SHA
  SSL_DH_DSS_WITH_3DES_EDE_CBC_SHA        DH-DSS-DES-CBC3-SHA
- SSL_DH_RSA_WITH_DES_CBC_SHA             DH-RSA-DES-CBC-SHA
  SSL_DH_RSA_WITH_3DES_EDE_CBC_SHA        DH-RSA-DES-CBC3-SHA
- SSL_DHE_DSS_WITH_DES_CBC_SHA            DHE-DSS-CBC-SHA
  SSL_DHE_DSS_WITH_3DES_EDE_CBC_SHA       DHE-DSS-DES-CBC3-SHA
- SSL_DHE_RSA_WITH_DES_CBC_SHA            DHE-RSA-DES-CBC-SHA
  SSL_DHE_RSA_WITH_3DES_EDE_CBC_SHA       DHE-RSA-DES-CBC3-SHA
 
  SSL_DH_anon_WITH_RC4_128_MD5            ADH-RC4-MD5
- SSL_DH_anon_WITH_DES_CBC_SHA            ADH-DES-CBC-SHA
  SSL_DH_anon_WITH_3DES_EDE_CBC_SHA       ADH-DES-CBC3-SHA
 
  SSL_FORTEZZA_KEA_WITH_NULL_SHA          Not implemented.
@@ -405,20 +400,14 @@ e.g. DES-CBC3-SHA. In these cases, RSA authentication is used.
  TLS_RSA_WITH_RC4_128_MD5                RC4-MD5
  TLS_RSA_WITH_RC4_128_SHA                RC4-SHA
  TLS_RSA_WITH_IDEA_CBC_SHA               IDEA-CBC-SHA
- TLS_RSA_WITH_DES_CBC_SHA                DES-CBC-SHA
  TLS_RSA_WITH_3DES_EDE_CBC_SHA           DES-CBC3-SHA
 
- TLS_DH_DSS_WITH_DES_CBC_SHA             Not implemented.
  TLS_DH_DSS_WITH_3DES_EDE_CBC_SHA        Not implemented.
- TLS_DH_RSA_WITH_DES_CBC_SHA             Not implemented.
  TLS_DH_RSA_WITH_3DES_EDE_CBC_SHA        Not implemented.
- TLS_DHE_DSS_WITH_DES_CBC_SHA            DHE-DSS-CBC-SHA
  TLS_DHE_DSS_WITH_3DES_EDE_CBC_SHA       DHE-DSS-DES-CBC3-SHA
- TLS_DHE_RSA_WITH_DES_CBC_SHA            DHE-RSA-DES-CBC-SHA
  TLS_DHE_RSA_WITH_3DES_EDE_CBC_SHA       DHE-RSA-DES-CBC3-SHA
 
  TLS_DH_anon_WITH_RC4_128_MD5            ADH-RC4-MD5
- TLS_DH_anon_WITH_DES_CBC_SHA            ADH-DES-CBC-SHA
  TLS_DH_anon_WITH_3DES_EDE_CBC_SHA       ADH-DES-CBC3-SHA
 
 =head2 AES ciphersuites from RFC3268, extending TLS v1.0
