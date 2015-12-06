@@ -66,6 +66,12 @@ my $extern = sub {
 };
 my $type = sub {
     if ($flavour =~ /linux/)	{ ".type\t".join(',',@_); }
+    elsif ($flavour =~ /ios32/)	{ if (join(',',@_) =~ /(\w+),%function/) {
+					"#ifdef __thumb2__\n".
+					".thumb_func	$1\n".
+					"#endif";
+				  }
+			        }
     else			{ ""; }
 };
 my $size = sub {
