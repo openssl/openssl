@@ -403,6 +403,8 @@ Example:
 
 This is a multi-valued extension consisting of a list of TLS extension
 identifiers. Each identifier may be a number (0..65535) or a supported name.
+When a TLS client sends a listed extension, the TLS server is expected to
+include that extension in its reply.
 
 The supported names are: B<status_request> and B<status_request_v2>.
 
