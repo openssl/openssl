@@ -4328,6 +4328,21 @@ int ssl3_shutdown(SSL *s)
             return (ret);
         }
     } else if (!(s->shutdown & SSL_RECEIVED_SHUTDOWN)) {
+        if (SSL_in_init(s)) {
+            /*
+             * We can't shutdown properly if we are in the middle of a
+             * handshake. Doing so is problematic because the peer may send a
+             * CCS before it acts on our close_notify. However we should not
+             * continue to process received handshake messages or CCS once our
+             * close_notify has been sent. Therefore any close_notify from
+             * the peer will be unreadable because we have not moved to the next
+             * cipher state. Its best just to avoid this can-of-worms. Return
+             * an error if we are wanting to wait for a close_notify from the
+             * peer and we are in init.
+             */
+            SSLerr(SSL_F_SSL3_SHUTDOWN, SSL_R_SHUTDOWN_WHILE_IN_INIT);
+            return -1;
+        }
         /*
          * If we are waiting for a close from our peer, we are closed
          */
