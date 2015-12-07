@@ -140,13 +140,14 @@ EVP_get_digestbyname() function for example B<sha1>.
 
 =head1 RSA ALGORITHM
 
-The RSA algorithm supports encrypt, decrypt, sign, verify and verifyrecover
-operations in general. Some padding modes only support some of these 
-operations however.
+The RSA algorithm generally supports the encrypt, decrypt, sign,
+verify and verifyrecover operations. However, some padding modes
+support only a subset of these operations. The following additional
+B<pkeyopt> values are supported:
 
 =over 4
 
-=item -B<rsa_padding_mode:mode>
+=item B<rsa_padding_mode:mode>
 
 This sets the RSA padding mode. Acceptable values for B<mode> are B<pkcs1> for
 PKCS#1 padding, B<sslv23> for SSLv23 padding, B<none> for no padding, B<oaep>
