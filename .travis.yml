@@ -68,6 +68,9 @@ matrix:
           env: CONFIG_OPTS="--debug --strict-warnings"
 
 before_script:
+    - make -f Makefile.org TARFILE=_srcdist.tar NAME=_srcdist dist
+    - tar -xvzf _srcdist.tar.gz
+    - cd _srcdist
     - if [ "$CC" == i686-w64-mingw32-gcc ]; then
           export CROSS_COMPILE=${CC%%gcc}; unset CC;
           ./Configure mingw $CONFIG_OPTS -Wno-pedantic-ms-format;
@@ -77,13 +80,16 @@ before_script:
       else
           ./config $CONFIG_OPTS;
       fi
+    - cd ..
 
 script:
+    - cd _srcdist
     - make
     - if [ -n "$CROSS_COMPILE" ]; then
           export EXE_SHELL="wine" WINEPREFIX=`pwd`;
       fi
     - make test
+    - cd ..
 
 notifications:
     email:
