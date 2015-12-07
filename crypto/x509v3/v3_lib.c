@@ -156,7 +156,7 @@ static const X509V3_EXT_METHOD *standard_exts[] = {
     &v3_ct_scts[0],
     &v3_ct_scts[1],
 #endif
-	&v3_tls_feature,
+    &v3_tls_feature,
 };
 
 /* Number of standard extensions */
