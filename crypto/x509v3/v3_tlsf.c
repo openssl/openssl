@@ -88,20 +88,32 @@ ASN1_ITEM_TEMPLATE_END(TLS_FEATURE)
 
 IMPLEMENT_ASN1_FUNCTIONS(TLS_FEATURE)
 
+typedef struct {
+    long num;
+    const char *name;
+} TLS_FEATURE_NAME;
+
+static TLS_FEATURE_NAME tls_feature_tbl[] = {
+    { 5, "status_request" },
+    { 17, "status_request_v2" },
+    { -1, NULL }
+};
+
 static STACK_OF(CONF_VALUE) *i2v_TLS_FEATURE(const X509V3_EXT_METHOD *method,
                                              TLS_FEATURE *tls_feature,
                                              STACK_OF(CONF_VALUE) *ext_list)
 {
-    int i;
+    int i, j;
     ASN1_INTEGER *ai;
     long tlsextid;
     for (i = 0; i < sk_ASN1_INTEGER_num(tls_feature); i++) {
         ai = sk_ASN1_INTEGER_value(tls_feature, i);
         tlsextid = ASN1_INTEGER_get(ai);
-        if (tlsextid == 5)
-            X509V3_add_value(NULL, "status_request", &ext_list);
-        else if (tlsextid == 17)
-            X509V3_add_value(NULL, "status_request_v2", &ext_list);
+        for (j = 0; tls_feature_tbl[j].num != -1; j++)
+            if (tlsextid == tls_feature_tbl[j].num)
+                break;
+        if (tls_feature_tbl[j].num != -1)
+            X509V3_add_value(NULL, tls_feature_tbl[j].name, &ext_list);
         else
             X509V3_add_value_int(NULL, ai, &ext_list);
     }
@@ -115,7 +127,7 @@ static TLS_FEATURE *v2i_TLS_FEATURE(const X509V3_EXT_METHOD *method,
     char *extval, *endptr;
     ASN1_INTEGER *ai;
     CONF_VALUE *val;
-    int i;
+    int i, j;
     long tlsextid;
 
     if ((tlsf = sk_ASN1_INTEGER_new_null()) == NULL) {
@@ -130,10 +142,11 @@ static TLS_FEATURE *v2i_TLS_FEATURE(const X509V3_EXT_METHOD *method,
         else
             extval = val->name;
 
-        if (OPENSSL_strcasecmp(extval, "status_request") == 0)
-            tlsextid = 5;
-        else if (OPENSSL_strcasecmp(extval, "status_request_v2") == 0)
-            tlsextid = 17;
+        for (j = 0; tls_feature_tbl[j].num != -1; j++)
+            if (OPENSSL_strcasecmp(extval, tls_feature_tbl[j].name) == 0)
+                break;
+        if (tls_feature_tbl[j].num != -1)
+            tlsextid = tls_feature_tbl[j].num;
         else {
             tlsextid = strtol(extval, &endptr, 10);
             if (*endptr || (tlsextid < 0) || (tlsextid > 65535)) {
