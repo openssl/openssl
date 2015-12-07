@@ -99,6 +99,12 @@ static TLS_FEATURE_NAME tls_feature_tbl[] = {
     { -1, NULL }
 };
 
+/*
+ * i2v_TLS_FEATURE converts the TLS_FEATURE structure tls_feature into the
+ * STACK_OF(CONF_VALUE) structure ext_list. STACK_OF(CONF_VALUE) is the format
+ * used by the CONF library to represent a multi-valued extension.  ext_list is
+ * returned.
+ */
 static STACK_OF(CONF_VALUE) *i2v_TLS_FEATURE(const X509V3_EXT_METHOD *method,
                                              TLS_FEATURE *tls_feature,
                                              STACK_OF(CONF_VALUE) *ext_list)
@@ -120,6 +126,11 @@ static STACK_OF(CONF_VALUE) *i2v_TLS_FEATURE(const X509V3_EXT_METHOD *method,
     return ext_list;
 }
 
+/*
+ * v2i_TLS_FEATURE converts the multi-valued extension nval into a TLS_FEATURE
+ * structure, which is returned if the conversion is successful.  In case of
+ * error, NULL is returned.
+ */
 static TLS_FEATURE *v2i_TLS_FEATURE(const X509V3_EXT_METHOD *method,
                                     X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *nval)
 {
