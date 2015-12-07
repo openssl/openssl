@@ -159,7 +159,8 @@ static TLS_FEATURE *v2i_TLS_FEATURE(const X509V3_EXT_METHOD *method,
             tlsextid = tls_feature_tbl[j].num;
         else {
             tlsextid = strtol(extval, &endptr, 10);
-            if (*endptr || (tlsextid < 0) || (tlsextid > 65535)) {
+            if (((*endptr) != '\0') || (extval == endptr) || (tlsextid < 0) ||
+                (tlsextid > 65535)) {
                 X509V3err(X509V3_F_V2I_TLS_FEATURE, X509V3_R_INVALID_SYNTAX);
                 X509V3_conf_err(val);
                 goto err;
