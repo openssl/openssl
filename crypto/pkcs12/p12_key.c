@@ -104,12 +104,12 @@ int PKCS12_key_gen_uni(unsigned char *pass, int passlen, unsigned char *salt,
                        int saltlen, int id, int iter, int n,
                        unsigned char *out, const EVP_MD *md_type)
 {
-    unsigned char *B, *D, *I, *p, *Ai;
+    unsigned char *B = NULL, *D = NULL, *I = NULL, *p = NULL, *Ai = NULL;
     int Slen, Plen, Ilen, Ijlen;
     int i, j, u, v;
     int ret = 0;
-    BIGNUM *Ij, *Bpl1;          /* These hold Ij and B + 1 */
-    EVP_MD_CTX *ctx;
+    BIGNUM *Ij = NULL, *Bpl1 = NULL; /* These hold Ij and B + 1 */
+    EVP_MD_CTX *ctx = NULL;
 #ifdef  DEBUG_KEYGEN
     unsigned char *tmpout = out;
     int tmpn = n;
