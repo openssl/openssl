@@ -650,7 +650,7 @@ static int derive_pvk_key(unsigned char *key,
                           const unsigned char *salt, unsigned int saltlen,
                           const unsigned char *pass, int passlen)
 {
-    EVP_MD_CTX *mctx = EVP_MD_CTX_new();;
+    EVP_MD_CTX *mctx = EVP_MD_CTX_new();
     int rv = 1;
     if (mctx == NULL
         || !EVP_DigestInit_ex(mctx, EVP_sha1(), NULL)
