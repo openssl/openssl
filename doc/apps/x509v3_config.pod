@@ -399,6 +399,18 @@ Example:
  noCheck = ignored
 
 
+=head2 TLS Feature (aka Must Staple)
+
+This is a multi-valued extension consisting of a list of TLS extension
+identifiers. Each identifier may be a number (0..65535) or a supported name.
+
+The supported names are: B<status_request> and B<status_request_v2>.
+
+Example:
+
+ tlsfeature = status_request
+
+
 =head1 DEPRECATED EXTENSIONS
 
 The following extensions are non standard, Netscape specific and largely
