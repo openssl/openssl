@@ -157,8 +157,8 @@ static int tls1_P_hash(const EVP_MD *md, const unsigned char *sec,
 {
     int chunk;
     size_t j;
-    EVP_MD_CTX *ctx, *ctx_tmp, *ctx_init;
-    EVP_PKEY *mac_key;
+    EVP_MD_CTX *ctx = NULL, *ctx_tmp = NULL, *ctx_init = NULL;
+    EVP_PKEY *mac_key = NULL;
     unsigned char A1[EVP_MAX_MD_SIZE];
     size_t A1_len;
     int ret = 0;

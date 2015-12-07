@@ -106,9 +106,9 @@ BIGNUM *SRP_Calc_u(BIGNUM *A, BIGNUM *B, BIGNUM *N)
 {
     /* k = SHA1(PAD(A) || PAD(B) ) -- tls-srp draft 8 */
 
-    BIGNUM *u;
+    BIGNUM *u = NULL;
     unsigned char cu[SHA_DIGEST_LENGTH];
-    unsigned char *cAB;
+    unsigned char *cAB = NULL;
     EVP_MD_CTX *ctxt = NULL;
     int longN;
     if ((A == NULL) || (B == NULL) || (N == NULL))
