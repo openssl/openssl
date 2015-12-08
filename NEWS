@@ -14,8 +14,8 @@
       o libssl internal structures made opaque
       o SSLv2 support removed
       o Kerberos ciphersuite support removed
-      o DES and RC4 removed from DEFAULT ciphersuites
-      o 40 and 56 bit cipher support removed
+      o RC4 removed from DEFAULT ciphersuites in libssl
+      o 40 and 56 bit cipher support removed from libssl
       o All public header files moved to include/openssl, no more symlinking
       o SSL/TLS state machine and record layer rewritten
 
