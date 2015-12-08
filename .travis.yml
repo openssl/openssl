@@ -32,7 +32,7 @@ matrix:
           env: CONFIG_OPTS="-d --strict-warnings"
 
 before_script:
-    - make -f Makefile.org TARFILE=_srcdist.tar NAME=_srcdist dist
+    - sh .travis-create-release.sh $TRAVIS_OS_NAME
     - tar -xvzf _srcdist.tar.gz
     - cd _srcdist
     - if [ "$CC" == i686-w64-mingw32-gcc ]; then
