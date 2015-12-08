@@ -525,8 +525,7 @@ tar-snap: $(TARFILE).list
 dist:   
 	$(PERL) Configure dist
 	@$(MAKE) SDIRS='$(SDIRS)' clean
-	@$(MAKE) TAR='$(TAR)' TARFLAGS='$(TARFLAGS)' \
-	         TARFILE='$(TARFILE)' NAME='$(NAME)' tar
+	@$(MAKE) TAR='$(TAR)' TARFLAGS='$(TARFLAGS)' $(DISTTARVARS) tar
 
 install: all install_docs install_sw
 
