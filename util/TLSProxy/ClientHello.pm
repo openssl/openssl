@@ -70,7 +70,7 @@ sub new
         $records,
         $startoffset,
         $message_frag_lens) = @_;
-    
+
     my $self = $class->SUPER::new(
         $server,
         1,
@@ -118,7 +118,7 @@ sub parse
     #For now we just deal with this as a block of data. In the future we will
     #want to parse this
     my $extension_data = substr($self->data, $ptr);
-    
+
     if (length($extension_data) != $extensions_len) {
         die "Invalid extension length\n";
     }
@@ -169,6 +169,7 @@ sub set_message_contents
 {
     my $self = shift;
     my $data;
+    my $extensions = "";
 
     $data = pack('n', $self->client_version);
     $data .= $self->random;
@@ -178,13 +179,16 @@ sub set_message_contents
     $data .= pack("n*", @{$self->ciphersuites});
     $data .= pack('C', $self->comp_meth_len);
     $data .= pack("C*", @{$self->comp_meths});
-    $data .= pack('n', $self->extensions_len);
+
     foreach my $key (keys %{$self->extension_data}) {
         my $extdata = ${$self->extension_data}{$key};
-        $data .= pack("n", $key);
-        $data .= pack("n", length($extdata));
-        $data .= $extdata;
+        $extensions .= pack("n", $key);
+        $extensions .= pack("n", length($extdata));
+        $extensions .= $extdata;
     }
+
+    $data .= pack('n', length($extensions));
+    $data .= $extensions;
 
     $self->data($data);
 }
@@ -269,5 +273,10 @@ sub extension_data
       $self->{extension_data} = shift;
     }
     return $self->{extension_data};
+}
+sub delete_extension
+{
+    my ($self, $ext_type) = @_;
+    delete $self->{extension_data}{$ext_type};
 }
 1;
