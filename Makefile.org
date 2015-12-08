@@ -506,7 +506,7 @@ TAR_COMMAND=$(TAR) $(TARFLAGS) --files-from $(TARFILE).list \
 $(TARFILE).list:
 	find * \! -name STATUS \! -name TABLE \! -name '*.o' \! -name '*.a' \
 	       \! -name '*.so' \! -name '*.so.*'  \! -name 'openssl' \
-	       \! -name '*test' \! -name '.#*' \! -name '*~' \!	-xtype l \
+	       \! -name '*test' \! -name '.#*' \! -name '*~' \!	-type l \
 	    | sort > $(TARFILE).list
 
 tar: $(TARFILE).list
