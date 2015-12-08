@@ -9,6 +9,15 @@
 
       o Support for extended master secret
       o CCM ciphersuites
+      o Reworked test suite, now based on perl, Test::Harness and Test::More
+      o EVP_MD, EVP_MD_CTX and HMAC_CTX made opaque
+      o libssl internal structures made opaque
+      o SSLv2 support removed
+      o Kerberos ciphersuite support removed
+      o DES and RC4 removed from DEFAULT ciphersuites
+      o 40 and 56 bit cipher support removed
+      o All public header files moved to include/openssl, no more symlinking
+      o SSL/TLS state machine and record layer rewritten
 
   Major changes between OpenSSL 1.0.2d and OpenSSL 1.0.2e [3 Dec 2015]
 
