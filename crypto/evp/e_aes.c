@@ -886,7 +886,8 @@ static int aes_t4_ocb_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
             if (!CRYPTO_ocb128_init(&octx->ocb,
                                     &octx->ksenc.ks, &octx->ksdec.ks,
                                     (block128_f) aes_t4_encrypt,
-                                    (block128_f) aes_t4_decrypt))
+                                    (block128_f) aes_t4_decrypt,
+                                    NULL))
                 return 0;
         }
         while (0);
@@ -2343,6 +2344,29 @@ static int aes_ocb_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
     }
 }
 
+#  ifdef HWAES_CAPABLE
+#   ifdef HWAES_ocb_encrypt
+void HWAES_ocb_encrypt(const unsigned char *in, unsigned char *out,
+                       size_t blocks, const void *key,
+                       size_t start_block_num,
+                       unsigned char offset_i[16],
+                       const unsigned char L_[][16],
+                       unsigned char checksum[16]);
+#   else
+#     define HWAES_ocb_encrypt NULL
+#   endif
+#   ifdef HWAES_ocb_decrypt
+void HWAES_ocb_decrypt(const unsigned char *in, unsigned char *out,
+                       size_t blocks, const void *key,
+                       size_t start_block_num,
+                       unsigned char offset_i[16],
+                       const unsigned char L_[][16],
+                       unsigned char checksum[16]);
+#   else
+#     define HWAES_ocb_decrypt NULL
+#   endif
+#  endif
+
 static int aes_ocb_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
                             const unsigned char *iv, int enc)
 {
@@ -2356,6 +2380,20 @@ static int aes_ocb_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
              * needs both. We could possibly optimise to remove setting the
              * decrypt for an encryption operation.
              */
+#  ifdef HWAES_CAPABLE
+            if (HWAES_CAPABLE) {
+                HWAES_set_encrypt_key(key, ctx->key_len * 8, &octx->ksenc.ks);
+                HWAES_set_decrypt_key(key, ctx->key_len * 8, &octx->ksdec.ks);
+                if (!CRYPTO_ocb128_init(&octx->ocb,
+                                        &octx->ksenc.ks, &octx->ksdec.ks,
+                                        (block128_f) HWAES_encrypt,
+                                        (block128_f) HWAES_decrypt,
+                                        enc ? HWAES_ocb_encrypt
+                                            : HWAES_ocb_decrypt))
+                    return 0;
+                break;
+            }
+#  endif
 #  ifdef VPAES_CAPABLE
             if (VPAES_CAPABLE) {
                 vpaes_set_encrypt_key(key, ctx->key_len * 8, &octx->ksenc.ks);
