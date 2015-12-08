@@ -7,7 +7,8 @@
 
   Major changes between OpenSSL 1.0.2e and OpenSSL 1.1.0 [under development]
 
-      o
+      o Support for extended master secret
+      o CCM ciphersuites
 
   Major changes between OpenSSL 1.0.2d and OpenSSL 1.0.2e [3 Dec 2015]
 
