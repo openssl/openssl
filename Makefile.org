@@ -138,8 +138,8 @@ INSTALL_SUBS= engines apps tools
 # dirs in crypto to build
 SDIRS=  \
 	objects \
-	md2 md4 md5 sha mdc2 hmac ripemd whrlpool \
-	des aes rc2 rc4 rc5 idea bf cast camellia seed modes \
+	md2 md4 md5 sha mdc2 hmac ripemd whrlpool poly1305 \
+	des aes rc2 rc4 rc5 idea bf cast camellia seed chacha modes \
 	bn ec rsa dsa dh dso engine \
 	buffer bio stack lhash rand err \
 	evp asn1 pem x509 x509v3 conf txt_db pkcs7 pkcs12 comp ocsp ui \
