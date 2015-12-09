@@ -169,7 +169,8 @@
 #define SSL_ENC_AES128CCM8_IDX  16
 #define SSL_ENC_AES256CCM8_IDX  17
 #define SSL_ENC_GOST8912_IDX    18
-#define SSL_ENC_NUM_IDX         19
+#define SSL_ENC_CHACHA_IDX      19
+#define SSL_ENC_NUM_IDX         20
 
 /* NB: make sure indices in these tables match values above */
 
@@ -199,6 +200,7 @@ static const ssl_cipher_table ssl_cipher_table_cipher[SSL_ENC_NUM_IDX] = {
     {SSL_AES128CCM8, NID_aes_128_ccm}, /* SSL_ENC_AES128CCM8_IDX 16 */
     {SSL_AES256CCM8, NID_aes_256_ccm}, /* SSL_ENC_AES256CCM8_IDX 17 */
     {SSL_eGOST2814789CNT12, NID_gost89_cnt_12}, /* SSL_ENC_GOST8912_IDX */
+    {SSL_CHACHA20POLY1305, NID_chacha20_poly1305},
 };
 
 static const EVP_CIPHER *ssl_cipher_methods[SSL_ENC_NUM_IDX] = {
