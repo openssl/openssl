@@ -1761,7 +1761,11 @@ if ($strict_warnings)
 			{
 			$cflags .= " $wopt" unless ($cflags =~ /(^|\s)$wopt(\s|$)/)
 			}
-		}
+                if ($target =~ /^BSD-/)
+	                {
+                        $lflags .= " -lexecinfo";
+                        }
+                }
 	}
 
 open(IN,"<Makefile.org") || die "unable to read Makefile.org:$!\n";
