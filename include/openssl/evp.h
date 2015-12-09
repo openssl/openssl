@@ -911,6 +911,12 @@ const EVP_CIPHER *EVP_camellia_256_cfb128(void);
 const EVP_CIPHER *EVP_camellia_256_ofb(void);
 const EVP_CIPHER *EVP_camellia_256_ctr(void);
 # endif
+# ifndef OPENSSL_NO_CHACHA
+const EVP_CIPHER *EVP_chacha20(void);
+#  ifndef OPENSSL_NO_POLY1305
+const EVP_CIPHER *EVP_chacha20_poly1305(void);
+#  endif
+# endif
 
 # ifndef OPENSSL_NO_SEED
 const EVP_CIPHER *EVP_seed_ecb(void);
@@ -1513,6 +1519,7 @@ void ERR_load_EVP_strings(void);
 # define EVP_F_AES_XTS_CIPHER                             175
 # define EVP_F_ALG_MODULE_INIT                            177
 # define EVP_F_CAMELLIA_INIT_KEY                          159
+# define EVP_F_CHACHA20_POLY1305_CTRL                     182
 # define EVP_F_CMAC_INIT                                  173
 # define EVP_F_CMLL_T4_INIT_KEY                           179
 # define EVP_F_D2I_PKEY                                   100
@@ -1600,6 +1607,7 @@ void ERR_load_EVP_strings(void);
 # define EVP_R_CAMELLIA_KEY_SETUP_FAILED                  157
 # define EVP_R_CIPHER_PARAMETER_ERROR                     122
 # define EVP_R_COMMAND_NOT_SUPPORTED                      147
+# define EVP_R_COPY_ERROR                                 173
 # define EVP_R_CTRL_NOT_IMPLEMENTED                       132
 # define EVP_R_CTRL_OPERATION_NOT_IMPLEMENTED             133
 # define EVP_R_DATA_NOT_MULTIPLE_OF_BLOCK_LENGTH          138
