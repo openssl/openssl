@@ -1368,6 +1368,8 @@ kisa 1 6                : SEED-OFB      : seed-ofb
 			: AES-128-CBC-HMAC-SHA256	: aes-128-cbc-hmac-sha256
 			: AES-192-CBC-HMAC-SHA256	: aes-192-cbc-hmac-sha256
 			: AES-256-CBC-HMAC-SHA256	: aes-256-cbc-hmac-sha256
+			: ChaCha20-Poly1305		: chacha20-poly1305
+			: ChaCha20			: chacha20
 
 ISO-US 10046 2 1	: dhpublicnumber		: X9.42 DH
 
