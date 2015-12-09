@@ -18,6 +18,7 @@
       o 40 and 56 bit cipher support removed from libssl
       o All public header files moved to include/openssl, no more symlinking
       o SSL/TLS state machine and record layer rewritten
+      o EC revision: now operations use new EC_KEY_METHOD.
 
   Major changes between OpenSSL 1.0.2d and OpenSSL 1.0.2e [3 Dec 2015]
 
