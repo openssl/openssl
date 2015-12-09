@@ -740,9 +740,6 @@ int ECPKParameters_print_fp(FILE *fp, const EC_GROUP *x, int off);
 /*                      EC_KEY functions                            */
 /********************************************************************/
 
-typedef struct ec_key_st EC_KEY;
-typedef struct ec_key_method_st EC_KEY_METHOD;
-
 /* some values for the encoding_flag */
 # define EC_PKEY_NO_PARAMETERS   0x001
 # define EC_PKEY_NO_PUBKEY       0x002
