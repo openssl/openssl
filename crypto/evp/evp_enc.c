@@ -105,10 +105,8 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
      * previous handle, re-querying for an ENGINE, and having a
      * reinitialisation, when it may all be unecessary.
      */
-    if (ctx->engine && ctx->cipher && (!cipher ||
-                                       (cipher
-                                        && (cipher->nid ==
-                                            ctx->cipher->nid))))
+    if (ctx->engine && ctx->cipher
+        && (!cipher || (cipher && (cipher->nid == ctx->cipher->nid))))
         goto skip_to_init;
 #endif
     if (cipher) {
@@ -531,7 +529,7 @@ int EVP_CIPHER_CTX_cleanup(EVP_CIPHER_CTX *c)
         if (c->cipher->cleanup && !c->cipher->cleanup(c))
             return 0;
         /* Cleanse cipher context data */
-        if (c->cipher_data)
+        if (c->cipher_data && c->cipher->ctx_size)
             OPENSSL_cleanse(c->cipher_data, c->cipher->ctx_size);
     }
     OPENSSL_free(c->cipher_data);
