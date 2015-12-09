@@ -49,6 +49,10 @@
  */
 #include <stddef.h>
 
+#ifdef OPENSSL_NO_POLY1305
+# error POLY1305 is disabled.
+#endif
+
 #define POLY1305_BLOCK_SIZE 16
 
 typedef struct poly1305_context POLY1305;

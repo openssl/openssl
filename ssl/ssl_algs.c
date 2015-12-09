@@ -102,7 +102,7 @@ int SSL_library_init(void)
     EVP_add_cipher(EVP_camellia_128_cbc());
     EVP_add_cipher(EVP_camellia_256_cbc());
 #endif
-#if !defined(OPENSSL_NO_CHACHA20) && !defined(OPENSSL_NO_POLY1305)
+#if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
     EVP_add_cipher(EVP_chacha20_poly1305());
 #endif
 

@@ -57,6 +57,10 @@
 extern "C" {
 #endif
 
+# ifdef OPENSSL_NO_CHACHA
+#  error CHACHA is disabled.
+# endif
+
 /*
  * ChaCha20_ctr32 encrypts |len| bytes from |inp| with the given key and
  * nonce and writes the result to |out|, which may be equal to |inp|.
