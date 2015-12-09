@@ -3527,6 +3527,119 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      256,
      256,
      },
+#if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
+# ifndef OPENSSL_NO_EC
+    /* Cipher CCA8 as per draft-ietf-tls-chacha20-poly1305-03 */
+    {
+     1,
+     TLS1_TXT_ECDHE_RSA_WITH_CHACHA20_POLY1305,
+     TLS1_CK_ECDHE_RSA_WITH_CHACHA20_POLY1305,
+     SSL_kECDHE,
+     SSL_aRSA,
+     SSL_CHACHA20POLY1305,
+     SSL_AEAD,
+     SSL_TLSV1_2,
+     SSL_HIGH,
+     SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256,
+     256,
+     256,
+     },
+    /* Cipher CCA9 */
+    {
+     1,
+     TLS1_TXT_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,
+     TLS1_CK_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,
+     SSL_kECDHE,
+     SSL_aECDSA,
+     SSL_CHACHA20POLY1305,
+     SSL_AEAD,
+     SSL_TLSV1_2,
+     SSL_HIGH,
+     SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256,
+     256,
+     256,
+     },
+# endif
+# ifndef OPENSSL_NO_RSA
+    /* Cipher CCAA */
+    {
+     1,
+     TLS1_TXT_DHE_RSA_WITH_CHACHA20_POLY1305,
+     TLS1_CK_DHE_RSA_WITH_CHACHA20_POLY1305,
+     SSL_kDHE,
+     SSL_aRSA,
+     SSL_CHACHA20POLY1305,
+     SSL_AEAD,
+     SSL_TLSV1_2,
+     SSL_HIGH,
+     SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256,
+     256,
+     256,
+     },
+# endif
+# ifndef OPENSSL_NO_PSK
+    /* Cipher CCAB */
+    {
+     1,
+     TLS1_TXT_PSK_WITH_CHACHA20_POLY1305,
+     TLS1_CK_PSK_WITH_CHACHA20_POLY1305,
+     SSL_kPSK,
+     SSL_aPSK,
+     SSL_CHACHA20POLY1305,
+     SSL_AEAD,
+     SSL_TLSV1_2,
+     SSL_HIGH,
+     SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256,
+     256,
+     256,
+     },
+    /* Cipher CCAC */
+    {
+     1,
+     TLS1_TXT_ECDHE_PSK_WITH_CHACHA20_POLY1305,
+     TLS1_CK_ECDHE_PSK_WITH_CHACHA20_POLY1305,
+     SSL_kECDHEPSK,
+     SSL_aPSK,
+     SSL_CHACHA20POLY1305,
+     SSL_AEAD,
+     SSL_TLSV1_2,
+     SSL_HIGH,
+     SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256,
+     256,
+     256,
+     },
+    /* Cipher CCAD */
+    {
+     1,
+     TLS1_TXT_DHE_PSK_WITH_CHACHA20_POLY1305,
+     TLS1_CK_DHE_PSK_WITH_CHACHA20_POLY1305,
+     SSL_kDHEPSK,
+     SSL_aPSK,
+     SSL_CHACHA20POLY1305,
+     SSL_AEAD,
+     SSL_TLSV1_2,
+     SSL_HIGH,
+     SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256,
+     256,
+     256,
+     },
+    /* Cipher CCAE */
+    {
+     1,
+     TLS1_TXT_RSA_PSK_WITH_CHACHA20_POLY1305,
+     TLS1_CK_RSA_PSK_WITH_CHACHA20_POLY1305,
+     SSL_kRSAPSK,
+     SSL_aRSA,
+     SSL_CHACHA20POLY1305,
+     SSL_AEAD,
+     SSL_TLSV1_2,
+     SSL_HIGH,
+     SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256,
+     256,
+     256,
+     },
+# endif
+#endif
 #ifndef OPENSSL_NO_GOST
     {
      1,
