@@ -774,6 +774,8 @@ static int cipher_test_init(struct evp_test *t, const char *alg)
         || EVP_CIPHER_mode(cipher) == EVP_CIPH_OCB_MODE
         || EVP_CIPHER_mode(cipher) == EVP_CIPH_CCM_MODE)
         cdat->aead = EVP_CIPHER_mode(cipher);
+    else if (EVP_CIPHER_flags(cipher) & EVP_CIPH_FLAG_AEAD_CIPHER)
+        cdat->aead = -1;
     else
         cdat->aead = 0;
 
