@@ -4720,3 +4720,10 @@ EC_KEY_METHOD_get_verify                5079	EXIST::FUNCTION:EC
 ENGINE_unregister_EC                    5080	EXIST::FUNCTION:ENGINE
 EC_KEY_METHOD_get_sign                  5081	EXIST::FUNCTION:EC
 EC_KEY_METHOD_get_compute_key           5082	EXIST::FUNCTION:EC
+Poly1305_Init                           5083	EXIST::FUNCTION:POLY1305
+ChaCha20_ctr32                          5084	EXIST::FUNCTION:CHACHA
+Poly1305_ctx_size                       5085	EXIST::FUNCTION:POLY1305
+Poly1305_Update                         5086	EXIST::FUNCTION:POLY1305
+Poly1305_Final                          5087	EXIST::FUNCTION:POLY1305
+EVP_chacha20_poly1305                   5088	EXIST::FUNCTION:CHACHA,POLY1305
+EVP_chacha20                            5089	EXIST::FUNCTION:CHACHA
