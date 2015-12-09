@@ -3101,7 +3101,10 @@ int tls_construct_client_certificate(SSL *s)
 
 int ssl3_check_cert_and_algorithm(SSL *s)
 {
-    int i, idx;
+    int i;
+#ifndef OPENSSL_NO_EC
+    int idx;
+#endif
     long alg_k, alg_a;
     EVP_PKEY *pkey = NULL;
 #ifndef OPENSSL_NO_DH
@@ -3121,8 +3124,8 @@ int ssl3_check_cert_and_algorithm(SSL *s)
 
     /* This is the passed certificate */
 
-    idx = s->session->peer_type;
 #ifndef OPENSSL_NO_EC
+    idx = s->session->peer_type;
     if (idx == SSL_PKEY_ECC) {
         if (ssl_check_srvr_ecc_cert_and_alg(s->session->peer, s) == 0) {
             /* check failed */
