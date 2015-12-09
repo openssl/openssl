@@ -2001,7 +2001,9 @@ void SSL_set_cert_cb(SSL *s, int (*cb) (SSL *ssl, void *arg), void *arg)
 
 void ssl_set_masks(SSL *s, const SSL_CIPHER *cipher)
 {
+#if !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_GOST)
     CERT_PKEY *cpk;
+#endif
     CERT *c = s->cert;
     uint32_t *pvalid = s->s3->tmp.valid_flags;
     int rsa_enc, rsa_sign, dh_tmp, dh_rsa, dh_dsa, dsa_sign;
@@ -2021,17 +2023,11 @@ void ssl_set_masks(SSL *s, const SSL_CIPHER *cipher)
     dh_tmp = 0;
 #endif
 
-    cpk = &(c->pkeys[SSL_PKEY_RSA_ENC]);
     rsa_enc = pvalid[SSL_PKEY_RSA_ENC] & CERT_PKEY_VALID;
-    cpk = &(c->pkeys[SSL_PKEY_RSA_SIGN]);
     rsa_sign = pvalid[SSL_PKEY_RSA_SIGN] & CERT_PKEY_SIGN;
-    cpk = &(c->pkeys[SSL_PKEY_DSA_SIGN]);
     dsa_sign = pvalid[SSL_PKEY_DSA_SIGN] & CERT_PKEY_SIGN;
-    cpk = &(c->pkeys[SSL_PKEY_DH_RSA]);
     dh_rsa = pvalid[SSL_PKEY_DH_RSA] & CERT_PKEY_VALID;
-    cpk = &(c->pkeys[SSL_PKEY_DH_DSA]);
     dh_dsa = pvalid[SSL_PKEY_DH_DSA] & CERT_PKEY_VALID;
-    cpk = &(c->pkeys[SSL_PKEY_ECC]);
 #ifndef OPENSSL_NO_EC
     have_ecc_cert = pvalid[SSL_PKEY_ECC] & CERT_PKEY_VALID;
 #endif
