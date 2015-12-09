@@ -1314,9 +1314,9 @@ IMPLEMENT_ASN1_FUNCTIONS_const(ECDSA_SIG)
 
 void ECDSA_SIG_get0(BIGNUM **pr, BIGNUM **ps, ECDSA_SIG *sig)
 {
-    if (pr)
+    if (pr != NULL)
         *pr = sig->r;
-    if (ps)
+    if (ps != NULL)
         *ps = sig->s;
 }
 

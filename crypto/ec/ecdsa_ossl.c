@@ -365,7 +365,7 @@ int ossl_ecdsa_verify(int type, const unsigned char *dgst, int dgst_len,
         goto err;
     /* Ensure signature uses DER and doesn't have trailing garbage */
     derlen = i2d_ECDSA_SIG(s, &der);
-    if (derlen != sig_len || memcmp(sigbuf, der, derlen))
+    if (derlen != sig_len || memcmp(sigbuf, der, derlen) != 0)
         goto err;
     ret = ECDSA_do_verify(dgst, dgst_len, s, eckey);
  err:
@@ -402,7 +402,7 @@ int ossl_ecdsa_verify_sig(const unsigned char *dgst, int dgst_len,
     u2 = BN_CTX_get(ctx);
     m = BN_CTX_get(ctx);
     X = BN_CTX_get(ctx);
-    if (!X) {
+    if (X == NULL) {
         ECerr(EC_F_OSSL_ECDSA_VERIFY_SIG, ERR_R_BN_LIB);
         goto err;
     }
