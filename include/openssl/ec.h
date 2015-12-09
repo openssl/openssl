@@ -1131,6 +1131,10 @@ int ECDSA_verify(int type, const unsigned char *dgst, int dgstlen,
  */
 int ECDSA_size(const EC_KEY *eckey);
 
+/********************************************************************/
+/*  EC_KEY_METHOD constructors, destructors, writers and accessors  */
+/********************************************************************/
+
 EC_KEY_METHOD *EC_KEY_METHOD_new(const EC_KEY_METHOD *meth);
 void EC_KEY_METHOD_free(EC_KEY_METHOD *meth);
 void EC_KEY_METHOD_set_init(EC_KEY_METHOD *meth,
