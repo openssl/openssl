@@ -157,8 +157,7 @@ progs.h: progs.pl Makefile
 app_rand.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 app_rand.o: ../include/openssl/buffer.h ../include/openssl/conf.h
 app_rand.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
-app_rand.o: ../include/openssl/ec.h ../include/openssl/ecdh.h
-app_rand.o: ../include/openssl/ecdsa.h ../include/openssl/engine.h
+app_rand.o: ../include/openssl/ec.h ../include/openssl/engine.h
 app_rand.o: ../include/openssl/evp.h ../include/openssl/lhash.h
 app_rand.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
 app_rand.o: ../include/openssl/ocsp.h ../include/openssl/opensslconf.h
@@ -174,7 +173,6 @@ apps.o: ../include/openssl/bn.h ../include/openssl/buffer.h
 apps.o: ../include/openssl/comp.h ../include/openssl/conf.h
 apps.o: ../include/openssl/crypto.h ../include/openssl/dtls1.h
 apps.o: ../include/openssl/e_os2.h ../include/openssl/ec.h
-apps.o: ../include/openssl/ecdh.h ../include/openssl/ecdsa.h
 apps.o: ../include/openssl/engine.h ../include/openssl/err.h
 apps.o: ../include/openssl/evp.h ../include/openssl/hmac.h
 apps.o: ../include/openssl/lhash.h ../include/openssl/obj_mac.h
@@ -194,8 +192,7 @@ apps.o: progs.h
 asn1pars.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 asn1pars.o: ../include/openssl/buffer.h ../include/openssl/conf.h
 asn1pars.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
-asn1pars.o: ../include/openssl/ec.h ../include/openssl/ecdh.h
-asn1pars.o: ../include/openssl/ecdsa.h ../include/openssl/engine.h
+asn1pars.o: ../include/openssl/ec.h ../include/openssl/engine.h
 asn1pars.o: ../include/openssl/err.h ../include/openssl/evp.h
 asn1pars.o: ../include/openssl/lhash.h ../include/openssl/obj_mac.h
 asn1pars.o: ../include/openssl/objects.h ../include/openssl/ocsp.h
@@ -211,7 +208,6 @@ ca.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 ca.o: ../include/openssl/bn.h ../include/openssl/buffer.h
 ca.o: ../include/openssl/conf.h ../include/openssl/crypto.h
 ca.o: ../include/openssl/e_os2.h ../include/openssl/ec.h
-ca.o: ../include/openssl/ecdh.h ../include/openssl/ecdsa.h
 ca.o: ../include/openssl/engine.h ../include/openssl/err.h
 ca.o: ../include/openssl/evp.h ../include/openssl/lhash.h
 ca.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
@@ -227,8 +223,7 @@ ciphers.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 ciphers.o: ../include/openssl/buffer.h ../include/openssl/comp.h
 ciphers.o: ../include/openssl/conf.h ../include/openssl/crypto.h
 ciphers.o: ../include/openssl/dtls1.h ../include/openssl/e_os2.h
-ciphers.o: ../include/openssl/ec.h ../include/openssl/ecdh.h
-ciphers.o: ../include/openssl/ecdsa.h ../include/openssl/engine.h
+ciphers.o: ../include/openssl/ec.h ../include/openssl/engine.h
 ciphers.o: ../include/openssl/err.h ../include/openssl/evp.h
 ciphers.o: ../include/openssl/hmac.h ../include/openssl/lhash.h
 ciphers.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
@@ -247,7 +242,6 @@ cms.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 cms.o: ../include/openssl/buffer.h ../include/openssl/cms.h
 cms.o: ../include/openssl/conf.h ../include/openssl/crypto.h
 cms.o: ../include/openssl/e_os2.h ../include/openssl/ec.h
-cms.o: ../include/openssl/ecdh.h ../include/openssl/ecdsa.h
 cms.o: ../include/openssl/engine.h ../include/openssl/err.h
 cms.o: ../include/openssl/evp.h ../include/openssl/lhash.h
 cms.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
@@ -262,8 +256,7 @@ cms.o: ../include/openssl/x509v3.h apps.h cms.c progs.h
 crl.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 crl.o: ../include/openssl/buffer.h ../include/openssl/conf.h
 crl.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
-crl.o: ../include/openssl/ec.h ../include/openssl/ecdh.h
-crl.o: ../include/openssl/ecdsa.h ../include/openssl/engine.h
+crl.o: ../include/openssl/ec.h ../include/openssl/engine.h
 crl.o: ../include/openssl/err.h ../include/openssl/evp.h
 crl.o: ../include/openssl/lhash.h ../include/openssl/obj_mac.h
 crl.o: ../include/openssl/objects.h ../include/openssl/ocsp.h
@@ -278,8 +271,7 @@ crl.o: progs.h
 crl2p7.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 crl2p7.o: ../include/openssl/buffer.h ../include/openssl/conf.h
 crl2p7.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
-crl2p7.o: ../include/openssl/ec.h ../include/openssl/ecdh.h
-crl2p7.o: ../include/openssl/ecdsa.h ../include/openssl/engine.h
+crl2p7.o: ../include/openssl/ec.h ../include/openssl/engine.h
 crl2p7.o: ../include/openssl/err.h ../include/openssl/evp.h
 crl2p7.o: ../include/openssl/lhash.h ../include/openssl/obj_mac.h
 crl2p7.o: ../include/openssl/objects.h ../include/openssl/ocsp.h
@@ -294,8 +286,7 @@ crl2p7.o: crl2p7.c progs.h
 dgst.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 dgst.o: ../include/openssl/buffer.h ../include/openssl/conf.h
 dgst.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
-dgst.o: ../include/openssl/ec.h ../include/openssl/ecdh.h
-dgst.o: ../include/openssl/ecdsa.h ../include/openssl/engine.h
+dgst.o: ../include/openssl/ec.h ../include/openssl/engine.h
 dgst.o: ../include/openssl/err.h ../include/openssl/evp.h
 dgst.o: ../include/openssl/hmac.h ../include/openssl/lhash.h
 dgst.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
@@ -312,7 +303,6 @@ dhparam.o: ../include/openssl/bn.h ../include/openssl/buffer.h
 dhparam.o: ../include/openssl/conf.h ../include/openssl/crypto.h
 dhparam.o: ../include/openssl/dh.h ../include/openssl/dsa.h
 dhparam.o: ../include/openssl/e_os2.h ../include/openssl/ec.h
-dhparam.o: ../include/openssl/ecdh.h ../include/openssl/ecdsa.h
 dhparam.o: ../include/openssl/engine.h ../include/openssl/err.h
 dhparam.o: ../include/openssl/evp.h ../include/openssl/lhash.h
 dhparam.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
@@ -328,8 +318,7 @@ dsa.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 dsa.o: ../include/openssl/bn.h ../include/openssl/buffer.h
 dsa.o: ../include/openssl/conf.h ../include/openssl/crypto.h
 dsa.o: ../include/openssl/dsa.h ../include/openssl/e_os2.h
-dsa.o: ../include/openssl/ec.h ../include/openssl/ecdh.h
-dsa.o: ../include/openssl/ecdsa.h ../include/openssl/engine.h
+dsa.o: ../include/openssl/ec.h ../include/openssl/engine.h
 dsa.o: ../include/openssl/err.h ../include/openssl/evp.h
 dsa.o: ../include/openssl/lhash.h ../include/openssl/obj_mac.h
 dsa.o: ../include/openssl/objects.h ../include/openssl/ocsp.h
@@ -345,8 +334,7 @@ dsaparam.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 dsaparam.o: ../include/openssl/bn.h ../include/openssl/buffer.h
 dsaparam.o: ../include/openssl/conf.h ../include/openssl/crypto.h
 dsaparam.o: ../include/openssl/dsa.h ../include/openssl/e_os2.h
-dsaparam.o: ../include/openssl/ec.h ../include/openssl/ecdh.h
-dsaparam.o: ../include/openssl/ecdsa.h ../include/openssl/engine.h
+dsaparam.o: ../include/openssl/ec.h ../include/openssl/engine.h
 dsaparam.o: ../include/openssl/err.h ../include/openssl/evp.h
 dsaparam.o: ../include/openssl/lhash.h ../include/openssl/obj_mac.h
 dsaparam.o: ../include/openssl/objects.h ../include/openssl/ocsp.h
@@ -361,8 +349,7 @@ dsaparam.o: dsaparam.c progs.h
 ec.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 ec.o: ../include/openssl/buffer.h ../include/openssl/conf.h
 ec.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
-ec.o: ../include/openssl/ec.h ../include/openssl/ecdh.h
-ec.o: ../include/openssl/ecdsa.h ../include/openssl/engine.h
+ec.o: ../include/openssl/ec.h ../include/openssl/engine.h
 ec.o: ../include/openssl/err.h ../include/openssl/evp.h
 ec.o: ../include/openssl/lhash.h ../include/openssl/obj_mac.h
 ec.o: ../include/openssl/objects.h ../include/openssl/ocsp.h
@@ -378,7 +365,6 @@ ecparam.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 ecparam.o: ../include/openssl/bn.h ../include/openssl/buffer.h
 ecparam.o: ../include/openssl/conf.h ../include/openssl/crypto.h
 ecparam.o: ../include/openssl/e_os2.h ../include/openssl/ec.h
-ecparam.o: ../include/openssl/ecdh.h ../include/openssl/ecdsa.h
 ecparam.o: ../include/openssl/engine.h ../include/openssl/err.h
 ecparam.o: ../include/openssl/evp.h ../include/openssl/lhash.h
 ecparam.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
@@ -394,7 +380,6 @@ enc.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 enc.o: ../include/openssl/buffer.h ../include/openssl/comp.h
 enc.o: ../include/openssl/conf.h ../include/openssl/crypto.h
 enc.o: ../include/openssl/e_os2.h ../include/openssl/ec.h
-enc.o: ../include/openssl/ecdh.h ../include/openssl/ecdsa.h
 enc.o: ../include/openssl/engine.h ../include/openssl/err.h
 enc.o: ../include/openssl/evp.h ../include/openssl/lhash.h
 enc.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
@@ -411,8 +396,7 @@ engine.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 engine.o: ../include/openssl/buffer.h ../include/openssl/comp.h
 engine.o: ../include/openssl/conf.h ../include/openssl/crypto.h
 engine.o: ../include/openssl/dtls1.h ../include/openssl/e_os2.h
-engine.o: ../include/openssl/ec.h ../include/openssl/ecdh.h
-engine.o: ../include/openssl/ecdsa.h ../include/openssl/engine.h
+engine.o: ../include/openssl/ec.h ../include/openssl/engine.h
 engine.o: ../include/openssl/err.h ../include/openssl/evp.h
 engine.o: ../include/openssl/hmac.h ../include/openssl/lhash.h
 engine.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
@@ -431,8 +415,7 @@ errstr.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 errstr.o: ../include/openssl/buffer.h ../include/openssl/comp.h
 errstr.o: ../include/openssl/conf.h ../include/openssl/crypto.h
 errstr.o: ../include/openssl/dtls1.h ../include/openssl/e_os2.h
-errstr.o: ../include/openssl/ec.h ../include/openssl/ecdh.h
-errstr.o: ../include/openssl/ecdsa.h ../include/openssl/engine.h
+errstr.o: ../include/openssl/ec.h ../include/openssl/engine.h
 errstr.o: ../include/openssl/err.h ../include/openssl/evp.h
 errstr.o: ../include/openssl/hmac.h ../include/openssl/lhash.h
 errstr.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
@@ -451,8 +434,7 @@ gendsa.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 gendsa.o: ../include/openssl/bn.h ../include/openssl/buffer.h
 gendsa.o: ../include/openssl/conf.h ../include/openssl/crypto.h
 gendsa.o: ../include/openssl/dsa.h ../include/openssl/e_os2.h
-gendsa.o: ../include/openssl/ec.h ../include/openssl/ecdh.h
-gendsa.o: ../include/openssl/ecdsa.h ../include/openssl/engine.h
+gendsa.o: ../include/openssl/ec.h ../include/openssl/engine.h
 gendsa.o: ../include/openssl/err.h ../include/openssl/evp.h
 gendsa.o: ../include/openssl/lhash.h ../include/openssl/obj_mac.h
 gendsa.o: ../include/openssl/objects.h ../include/openssl/ocsp.h
@@ -467,8 +449,7 @@ gendsa.o: gendsa.c progs.h
 genpkey.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 genpkey.o: ../include/openssl/buffer.h ../include/openssl/conf.h
 genpkey.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
-genpkey.o: ../include/openssl/ec.h ../include/openssl/ecdh.h
-genpkey.o: ../include/openssl/ecdsa.h ../include/openssl/engine.h
+genpkey.o: ../include/openssl/ec.h ../include/openssl/engine.h
 genpkey.o: ../include/openssl/err.h ../include/openssl/evp.h
 genpkey.o: ../include/openssl/lhash.h ../include/openssl/obj_mac.h
 genpkey.o: ../include/openssl/objects.h ../include/openssl/ocsp.h
@@ -484,7 +465,6 @@ genrsa.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 genrsa.o: ../include/openssl/bn.h ../include/openssl/buffer.h
 genrsa.o: ../include/openssl/conf.h ../include/openssl/crypto.h
 genrsa.o: ../include/openssl/e_os2.h ../include/openssl/ec.h
-genrsa.o: ../include/openssl/ecdh.h ../include/openssl/ecdsa.h
 genrsa.o: ../include/openssl/engine.h ../include/openssl/err.h
 genrsa.o: ../include/openssl/evp.h ../include/openssl/lhash.h
 genrsa.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
@@ -500,8 +480,7 @@ genrsa.o: ../include/openssl/x509v3.h apps.h genrsa.c progs.h
 nseq.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 nseq.o: ../include/openssl/buffer.h ../include/openssl/conf.h
 nseq.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
-nseq.o: ../include/openssl/ec.h ../include/openssl/ecdh.h
-nseq.o: ../include/openssl/ecdsa.h ../include/openssl/engine.h
+nseq.o: ../include/openssl/ec.h ../include/openssl/engine.h
 nseq.o: ../include/openssl/err.h ../include/openssl/evp.h
 nseq.o: ../include/openssl/lhash.h ../include/openssl/obj_mac.h
 nseq.o: ../include/openssl/objects.h ../include/openssl/ocsp.h
@@ -518,7 +497,6 @@ ocsp.o: ../include/openssl/bn.h ../include/openssl/buffer.h
 ocsp.o: ../include/openssl/comp.h ../include/openssl/conf.h
 ocsp.o: ../include/openssl/crypto.h ../include/openssl/dtls1.h
 ocsp.o: ../include/openssl/e_os2.h ../include/openssl/ec.h
-ocsp.o: ../include/openssl/ecdh.h ../include/openssl/ecdsa.h
 ocsp.o: ../include/openssl/engine.h ../include/openssl/err.h
 ocsp.o: ../include/openssl/evp.h ../include/openssl/hmac.h
 ocsp.o: ../include/openssl/lhash.h ../include/openssl/obj_mac.h
@@ -537,8 +515,7 @@ openssl.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 openssl.o: ../include/openssl/buffer.h ../include/openssl/comp.h
 openssl.o: ../include/openssl/conf.h ../include/openssl/crypto.h
 openssl.o: ../include/openssl/dtls1.h ../include/openssl/e_os2.h
-openssl.o: ../include/openssl/ec.h ../include/openssl/ecdh.h
-openssl.o: ../include/openssl/ecdsa.h ../include/openssl/engine.h
+openssl.o: ../include/openssl/ec.h ../include/openssl/engine.h
 openssl.o: ../include/openssl/err.h ../include/openssl/evp.h
 openssl.o: ../include/openssl/hmac.h ../include/openssl/lhash.h
 openssl.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
@@ -556,8 +533,7 @@ openssl.o: ../include/openssl/x509v3.h apps.h openssl.c progs.h s_apps.h
 opt.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 opt.o: ../include/openssl/buffer.h ../include/openssl/conf.h
 opt.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
-opt.o: ../include/openssl/ec.h ../include/openssl/ecdh.h
-opt.o: ../include/openssl/ecdsa.h ../include/openssl/engine.h
+opt.o: ../include/openssl/ec.h ../include/openssl/engine.h
 opt.o: ../include/openssl/evp.h ../include/openssl/lhash.h
 opt.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
 opt.o: ../include/openssl/ocsp.h ../include/openssl/opensslconf.h
@@ -571,7 +547,6 @@ passwd.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 passwd.o: ../include/openssl/buffer.h ../include/openssl/conf.h
 passwd.o: ../include/openssl/crypto.h ../include/openssl/des.h
 passwd.o: ../include/openssl/e_os2.h ../include/openssl/ec.h
-passwd.o: ../include/openssl/ecdh.h ../include/openssl/ecdsa.h
 passwd.o: ../include/openssl/engine.h ../include/openssl/err.h
 passwd.o: ../include/openssl/evp.h ../include/openssl/lhash.h
 passwd.o: ../include/openssl/md5.h ../include/openssl/obj_mac.h
@@ -586,8 +561,7 @@ passwd.o: ../include/openssl/x509v3.h apps.h passwd.c progs.h
 pkcs12.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 pkcs12.o: ../include/openssl/buffer.h ../include/openssl/conf.h
 pkcs12.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
-pkcs12.o: ../include/openssl/ec.h ../include/openssl/ecdh.h
-pkcs12.o: ../include/openssl/ecdsa.h ../include/openssl/engine.h
+pkcs12.o: ../include/openssl/ec.h ../include/openssl/engine.h
 pkcs12.o: ../include/openssl/err.h ../include/openssl/evp.h
 pkcs12.o: ../include/openssl/lhash.h ../include/openssl/obj_mac.h
 pkcs12.o: ../include/openssl/objects.h ../include/openssl/ocsp.h
@@ -602,8 +576,7 @@ pkcs12.o: ../include/openssl/x509v3.h apps.h pkcs12.c progs.h
 pkcs7.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 pkcs7.o: ../include/openssl/buffer.h ../include/openssl/conf.h
 pkcs7.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
-pkcs7.o: ../include/openssl/ec.h ../include/openssl/ecdh.h
-pkcs7.o: ../include/openssl/ecdsa.h ../include/openssl/engine.h
+pkcs7.o: ../include/openssl/ec.h ../include/openssl/engine.h
 pkcs7.o: ../include/openssl/err.h ../include/openssl/evp.h
 pkcs7.o: ../include/openssl/lhash.h ../include/openssl/obj_mac.h
 pkcs7.o: ../include/openssl/objects.h ../include/openssl/ocsp.h
@@ -618,8 +591,7 @@ pkcs7.o: pkcs7.c progs.h
 pkcs8.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 pkcs8.o: ../include/openssl/buffer.h ../include/openssl/conf.h
 pkcs8.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
-pkcs8.o: ../include/openssl/ec.h ../include/openssl/ecdh.h
-pkcs8.o: ../include/openssl/ecdsa.h ../include/openssl/engine.h
+pkcs8.o: ../include/openssl/ec.h ../include/openssl/engine.h
 pkcs8.o: ../include/openssl/err.h ../include/openssl/evp.h
 pkcs8.o: ../include/openssl/lhash.h ../include/openssl/obj_mac.h
 pkcs8.o: ../include/openssl/objects.h ../include/openssl/ocsp.h
@@ -634,8 +606,7 @@ pkcs8.o: ../include/openssl/x509v3.h apps.h pkcs8.c progs.h
 pkey.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 pkey.o: ../include/openssl/buffer.h ../include/openssl/conf.h
 pkey.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
-pkey.o: ../include/openssl/ec.h ../include/openssl/ecdh.h
-pkey.o: ../include/openssl/ecdsa.h ../include/openssl/engine.h
+pkey.o: ../include/openssl/ec.h ../include/openssl/engine.h
 pkey.o: ../include/openssl/err.h ../include/openssl/evp.h
 pkey.o: ../include/openssl/lhash.h ../include/openssl/obj_mac.h
 pkey.o: ../include/openssl/objects.h ../include/openssl/ocsp.h
@@ -650,8 +621,7 @@ pkey.o: progs.h
 pkeyparam.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 pkeyparam.o: ../include/openssl/buffer.h ../include/openssl/conf.h
 pkeyparam.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
-pkeyparam.o: ../include/openssl/ec.h ../include/openssl/ecdh.h
-pkeyparam.o: ../include/openssl/ecdsa.h ../include/openssl/engine.h
+pkeyparam.o: ../include/openssl/ec.h ../include/openssl/engine.h
 pkeyparam.o: ../include/openssl/err.h ../include/openssl/evp.h
 pkeyparam.o: ../include/openssl/lhash.h ../include/openssl/obj_mac.h
 pkeyparam.o: ../include/openssl/objects.h ../include/openssl/ocsp.h
@@ -666,8 +636,7 @@ pkeyparam.o: pkeyparam.c progs.h
 pkeyutl.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 pkeyutl.o: ../include/openssl/buffer.h ../include/openssl/conf.h
 pkeyutl.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
-pkeyutl.o: ../include/openssl/ec.h ../include/openssl/ecdh.h
-pkeyutl.o: ../include/openssl/ecdsa.h ../include/openssl/engine.h
+pkeyutl.o: ../include/openssl/ec.h ../include/openssl/engine.h
 pkeyutl.o: ../include/openssl/err.h ../include/openssl/evp.h
 pkeyutl.o: ../include/openssl/lhash.h ../include/openssl/obj_mac.h
 pkeyutl.o: ../include/openssl/objects.h ../include/openssl/ocsp.h
@@ -683,7 +652,6 @@ prime.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 prime.o: ../include/openssl/bn.h ../include/openssl/buffer.h
 prime.o: ../include/openssl/conf.h ../include/openssl/crypto.h
 prime.o: ../include/openssl/e_os2.h ../include/openssl/ec.h
-prime.o: ../include/openssl/ecdh.h ../include/openssl/ecdsa.h
 prime.o: ../include/openssl/engine.h ../include/openssl/evp.h
 prime.o: ../include/openssl/lhash.h ../include/openssl/obj_mac.h
 prime.o: ../include/openssl/objects.h ../include/openssl/ocsp.h
@@ -697,8 +665,7 @@ prime.o: prime.c progs.h
 rand.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 rand.o: ../include/openssl/buffer.h ../include/openssl/conf.h
 rand.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
-rand.o: ../include/openssl/ec.h ../include/openssl/ecdh.h
-rand.o: ../include/openssl/ecdsa.h ../include/openssl/engine.h
+rand.o: ../include/openssl/ec.h ../include/openssl/engine.h
 rand.o: ../include/openssl/err.h ../include/openssl/evp.h
 rand.o: ../include/openssl/lhash.h ../include/openssl/obj_mac.h
 rand.o: ../include/openssl/objects.h ../include/openssl/ocsp.h
@@ -713,8 +680,7 @@ req.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 req.o: ../include/openssl/bn.h ../include/openssl/buffer.h
 req.o: ../include/openssl/conf.h ../include/openssl/crypto.h
 req.o: ../include/openssl/dsa.h ../include/openssl/e_os2.h
-req.o: ../include/openssl/ec.h ../include/openssl/ecdh.h
-req.o: ../include/openssl/ecdsa.h ../include/openssl/engine.h
+req.o: ../include/openssl/ec.h ../include/openssl/engine.h
 req.o: ../include/openssl/err.h ../include/openssl/evp.h
 req.o: ../include/openssl/lhash.h ../include/openssl/obj_mac.h
 req.o: ../include/openssl/objects.h ../include/openssl/ocsp.h
@@ -730,7 +696,6 @@ rsa.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 rsa.o: ../include/openssl/bn.h ../include/openssl/buffer.h
 rsa.o: ../include/openssl/conf.h ../include/openssl/crypto.h
 rsa.o: ../include/openssl/e_os2.h ../include/openssl/ec.h
-rsa.o: ../include/openssl/ecdh.h ../include/openssl/ecdsa.h
 rsa.o: ../include/openssl/engine.h ../include/openssl/err.h
 rsa.o: ../include/openssl/evp.h ../include/openssl/lhash.h
 rsa.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
@@ -746,8 +711,7 @@ rsa.o: rsa.c
 rsautl.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 rsautl.o: ../include/openssl/buffer.h ../include/openssl/conf.h
 rsautl.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
-rsautl.o: ../include/openssl/ec.h ../include/openssl/ecdh.h
-rsautl.o: ../include/openssl/ecdsa.h ../include/openssl/engine.h
+rsautl.o: ../include/openssl/ec.h ../include/openssl/engine.h
 rsautl.o: ../include/openssl/err.h ../include/openssl/evp.h
 rsautl.o: ../include/openssl/lhash.h ../include/openssl/obj_mac.h
 rsautl.o: ../include/openssl/objects.h ../include/openssl/ocsp.h
@@ -764,8 +728,7 @@ s_cb.o: ../include/openssl/bn.h ../include/openssl/buffer.h
 s_cb.o: ../include/openssl/comp.h ../include/openssl/conf.h
 s_cb.o: ../include/openssl/crypto.h ../include/openssl/dh.h
 s_cb.o: ../include/openssl/dtls1.h ../include/openssl/e_os2.h
-s_cb.o: ../include/openssl/ec.h ../include/openssl/ecdh.h
-s_cb.o: ../include/openssl/ecdsa.h ../include/openssl/engine.h
+s_cb.o: ../include/openssl/ec.h ../include/openssl/engine.h
 s_cb.o: ../include/openssl/err.h ../include/openssl/evp.h
 s_cb.o: ../include/openssl/hmac.h ../include/openssl/lhash.h
 s_cb.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
@@ -785,8 +748,7 @@ s_client.o: ../include/openssl/bio.h ../include/openssl/bn.h
 s_client.o: ../include/openssl/buffer.h ../include/openssl/comp.h
 s_client.o: ../include/openssl/conf.h ../include/openssl/crypto.h
 s_client.o: ../include/openssl/dtls1.h ../include/openssl/e_os2.h
-s_client.o: ../include/openssl/ec.h ../include/openssl/ecdh.h
-s_client.o: ../include/openssl/ecdsa.h ../include/openssl/engine.h
+s_client.o: ../include/openssl/ec.h ../include/openssl/engine.h
 s_client.o: ../include/openssl/err.h ../include/openssl/evp.h
 s_client.o: ../include/openssl/hmac.h ../include/openssl/lhash.h
 s_client.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
@@ -808,7 +770,6 @@ s_server.o: ../include/openssl/buffer.h ../include/openssl/comp.h
 s_server.o: ../include/openssl/conf.h ../include/openssl/crypto.h
 s_server.o: ../include/openssl/dh.h ../include/openssl/dtls1.h
 s_server.o: ../include/openssl/e_os2.h ../include/openssl/ec.h
-s_server.o: ../include/openssl/ecdh.h ../include/openssl/ecdsa.h
 s_server.o: ../include/openssl/engine.h ../include/openssl/err.h
 s_server.o: ../include/openssl/evp.h ../include/openssl/hmac.h
 s_server.o: ../include/openssl/lhash.h ../include/openssl/obj_mac.h
@@ -829,8 +790,7 @@ s_socket.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 s_socket.o: ../include/openssl/buffer.h ../include/openssl/comp.h
 s_socket.o: ../include/openssl/conf.h ../include/openssl/crypto.h
 s_socket.o: ../include/openssl/dtls1.h ../include/openssl/e_os2.h
-s_socket.o: ../include/openssl/ec.h ../include/openssl/ecdh.h
-s_socket.o: ../include/openssl/ecdsa.h ../include/openssl/engine.h
+s_socket.o: ../include/openssl/ec.h ../include/openssl/engine.h
 s_socket.o: ../include/openssl/evp.h ../include/openssl/hmac.h
 s_socket.o: ../include/openssl/lhash.h ../include/openssl/obj_mac.h
 s_socket.o: ../include/openssl/objects.h ../include/openssl/ocsp.h
@@ -848,8 +808,7 @@ s_time.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 s_time.o: ../include/openssl/buffer.h ../include/openssl/comp.h
 s_time.o: ../include/openssl/conf.h ../include/openssl/crypto.h
 s_time.o: ../include/openssl/dtls1.h ../include/openssl/e_os2.h
-s_time.o: ../include/openssl/ec.h ../include/openssl/ecdh.h
-s_time.o: ../include/openssl/ecdsa.h ../include/openssl/engine.h
+s_time.o: ../include/openssl/ec.h ../include/openssl/engine.h
 s_time.o: ../include/openssl/err.h ../include/openssl/evp.h
 s_time.o: ../include/openssl/hmac.h ../include/openssl/lhash.h
 s_time.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
@@ -868,8 +827,7 @@ sess_id.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 sess_id.o: ../include/openssl/buffer.h ../include/openssl/comp.h
 sess_id.o: ../include/openssl/conf.h ../include/openssl/crypto.h
 sess_id.o: ../include/openssl/dtls1.h ../include/openssl/e_os2.h
-sess_id.o: ../include/openssl/ec.h ../include/openssl/ecdh.h
-sess_id.o: ../include/openssl/ecdsa.h ../include/openssl/engine.h
+sess_id.o: ../include/openssl/ec.h ../include/openssl/engine.h
 sess_id.o: ../include/openssl/err.h ../include/openssl/evp.h
 sess_id.o: ../include/openssl/hmac.h ../include/openssl/lhash.h
 sess_id.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
@@ -887,8 +845,7 @@ sess_id.o: progs.h sess_id.c
 smime.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 smime.o: ../include/openssl/buffer.h ../include/openssl/conf.h
 smime.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
-smime.o: ../include/openssl/ec.h ../include/openssl/ecdh.h
-smime.o: ../include/openssl/ecdsa.h ../include/openssl/engine.h
+smime.o: ../include/openssl/ec.h ../include/openssl/engine.h
 smime.o: ../include/openssl/err.h ../include/openssl/evp.h
 smime.o: ../include/openssl/lhash.h ../include/openssl/obj_mac.h
 smime.o: ../include/openssl/objects.h ../include/openssl/ocsp.h
@@ -907,7 +864,6 @@ speed.o: ../include/openssl/camellia.h ../include/openssl/cast.h
 speed.o: ../include/openssl/conf.h ../include/openssl/crypto.h
 speed.o: ../include/openssl/des.h ../include/openssl/dsa.h
 speed.o: ../include/openssl/e_os2.h ../include/openssl/ec.h
-speed.o: ../include/openssl/ecdh.h ../include/openssl/ecdsa.h
 speed.o: ../include/openssl/engine.h ../include/openssl/err.h
 speed.o: ../include/openssl/evp.h ../include/openssl/hmac.h
 speed.o: ../include/openssl/idea.h ../include/openssl/lhash.h
@@ -928,8 +884,7 @@ speed.o: progs.h speed.c testdsa.h testrsa.h
 spkac.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 spkac.o: ../include/openssl/buffer.h ../include/openssl/conf.h
 spkac.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
-spkac.o: ../include/openssl/ec.h ../include/openssl/ecdh.h
-spkac.o: ../include/openssl/ecdsa.h ../include/openssl/engine.h
+spkac.o: ../include/openssl/ec.h ../include/openssl/engine.h
 spkac.o: ../include/openssl/err.h ../include/openssl/evp.h
 spkac.o: ../include/openssl/lhash.h ../include/openssl/obj_mac.h
 spkac.o: ../include/openssl/objects.h ../include/openssl/ocsp.h
@@ -945,7 +900,6 @@ srp.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 srp.o: ../include/openssl/bn.h ../include/openssl/buffer.h
 srp.o: ../include/openssl/conf.h ../include/openssl/crypto.h
 srp.o: ../include/openssl/e_os2.h ../include/openssl/ec.h
-srp.o: ../include/openssl/ecdh.h ../include/openssl/ecdsa.h
 srp.o: ../include/openssl/engine.h ../include/openssl/err.h
 srp.o: ../include/openssl/evp.h ../include/openssl/lhash.h
 srp.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
@@ -962,7 +916,6 @@ ts.o: ../include/openssl/bn.h ../include/openssl/buffer.h
 ts.o: ../include/openssl/conf.h ../include/openssl/crypto.h
 ts.o: ../include/openssl/dh.h ../include/openssl/dsa.h
 ts.o: ../include/openssl/e_os2.h ../include/openssl/ec.h
-ts.o: ../include/openssl/ecdh.h ../include/openssl/ecdsa.h
 ts.o: ../include/openssl/engine.h ../include/openssl/err.h
 ts.o: ../include/openssl/evp.h ../include/openssl/lhash.h
 ts.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
@@ -979,8 +932,7 @@ ts.o: ts.c
 verify.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 verify.o: ../include/openssl/buffer.h ../include/openssl/conf.h
 verify.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
-verify.o: ../include/openssl/ec.h ../include/openssl/ecdh.h
-verify.o: ../include/openssl/ecdsa.h ../include/openssl/engine.h
+verify.o: ../include/openssl/ec.h ../include/openssl/engine.h
 verify.o: ../include/openssl/err.h ../include/openssl/evp.h
 verify.o: ../include/openssl/lhash.h ../include/openssl/obj_mac.h
 verify.o: ../include/openssl/objects.h ../include/openssl/ocsp.h
@@ -997,7 +949,6 @@ version.o: ../include/openssl/blowfish.h ../include/openssl/bn.h
 version.o: ../include/openssl/buffer.h ../include/openssl/conf.h
 version.o: ../include/openssl/crypto.h ../include/openssl/des.h
 version.o: ../include/openssl/e_os2.h ../include/openssl/ec.h
-version.o: ../include/openssl/ecdh.h ../include/openssl/ecdsa.h
 version.o: ../include/openssl/engine.h ../include/openssl/evp.h
 version.o: ../include/openssl/idea.h ../include/openssl/lhash.h
 version.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
@@ -1013,8 +964,7 @@ x509.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 x509.o: ../include/openssl/bn.h ../include/openssl/buffer.h
 x509.o: ../include/openssl/conf.h ../include/openssl/crypto.h
 x509.o: ../include/openssl/dsa.h ../include/openssl/e_os2.h
-x509.o: ../include/openssl/ec.h ../include/openssl/ecdh.h
-x509.o: ../include/openssl/ecdsa.h ../include/openssl/engine.h
+x509.o: ../include/openssl/ec.h ../include/openssl/engine.h
 x509.o: ../include/openssl/err.h ../include/openssl/evp.h
 x509.o: ../include/openssl/lhash.h ../include/openssl/obj_mac.h
 x509.o: ../include/openssl/objects.h ../include/openssl/ocsp.h

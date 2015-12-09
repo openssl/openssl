@@ -71,7 +71,6 @@ rsa_ameth.o: ../../include/openssl/asn1t.h ../../include/openssl/bio.h
 rsa_ameth.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
 rsa_ameth.o: ../../include/openssl/cms.h ../../include/openssl/crypto.h
 rsa_ameth.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
-rsa_ameth.o: ../../include/openssl/ecdh.h ../../include/openssl/ecdsa.h
 rsa_ameth.o: ../../include/openssl/err.h ../../include/openssl/evp.h
 rsa_ameth.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
 rsa_ameth.o: ../../include/openssl/objects.h
@@ -87,8 +86,7 @@ rsa_asn1.o: ../../e_os.h ../../include/openssl/asn1.h
 rsa_asn1.o: ../../include/openssl/asn1t.h ../../include/openssl/bio.h
 rsa_asn1.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
 rsa_asn1.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
-rsa_asn1.o: ../../include/openssl/ec.h ../../include/openssl/ecdh.h
-rsa_asn1.o: ../../include/openssl/ecdsa.h ../../include/openssl/err.h
+rsa_asn1.o: ../../include/openssl/ec.h ../../include/openssl/err.h
 rsa_asn1.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
 rsa_asn1.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
 rsa_asn1.o: ../../include/openssl/opensslconf.h
@@ -145,7 +143,6 @@ rsa_lib.o: ../../e_os.h ../../include/openssl/asn1.h
 rsa_lib.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 rsa_lib.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 rsa_lib.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
-rsa_lib.o: ../../include/openssl/ecdh.h ../../include/openssl/ecdsa.h
 rsa_lib.o: ../../include/openssl/engine.h ../../include/openssl/err.h
 rsa_lib.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
 rsa_lib.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
@@ -214,8 +211,7 @@ rsa_pmeth.o: ../../include/openssl/asn1t.h ../../include/openssl/bio.h
 rsa_pmeth.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
 rsa_pmeth.o: ../../include/openssl/cms.h ../../include/openssl/conf.h
 rsa_pmeth.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
-rsa_pmeth.o: ../../include/openssl/ec.h ../../include/openssl/ecdh.h
-rsa_pmeth.o: ../../include/openssl/ecdsa.h ../../include/openssl/err.h
+rsa_pmeth.o: ../../include/openssl/ec.h ../../include/openssl/err.h
 rsa_pmeth.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
 rsa_pmeth.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
 rsa_pmeth.o: ../../include/openssl/opensslconf.h
@@ -252,7 +248,6 @@ rsa_saos.o: ../../e_os.h ../../include/openssl/asn1.h
 rsa_saos.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 rsa_saos.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 rsa_saos.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
-rsa_saos.o: ../../include/openssl/ecdh.h ../../include/openssl/ecdsa.h
 rsa_saos.o: ../../include/openssl/err.h ../../include/openssl/evp.h
 rsa_saos.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
 rsa_saos.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
@@ -266,7 +261,6 @@ rsa_sign.o: ../../e_os.h ../../include/openssl/asn1.h
 rsa_sign.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 rsa_sign.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 rsa_sign.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
-rsa_sign.o: ../../include/openssl/ecdh.h ../../include/openssl/ecdsa.h
 rsa_sign.o: ../../include/openssl/err.h ../../include/openssl/evp.h
 rsa_sign.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
 rsa_sign.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h

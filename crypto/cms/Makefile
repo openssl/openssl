@@ -70,8 +70,7 @@ cms_asn1.o: ../../include/openssl/asn1.h ../../include/openssl/asn1t.h
 cms_asn1.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 cms_asn1.o: ../../include/openssl/cms.h ../../include/openssl/conf.h
 cms_asn1.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
-cms_asn1.o: ../../include/openssl/ec.h ../../include/openssl/ecdh.h
-cms_asn1.o: ../../include/openssl/ecdsa.h ../../include/openssl/evp.h
+cms_asn1.o: ../../include/openssl/ec.h ../../include/openssl/evp.h
 cms_asn1.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
 cms_asn1.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
 cms_asn1.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
@@ -85,8 +84,7 @@ cms_att.o: ../../include/openssl/asn1.h ../../include/openssl/asn1t.h
 cms_att.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 cms_att.o: ../../include/openssl/cms.h ../../include/openssl/conf.h
 cms_att.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
-cms_att.o: ../../include/openssl/ec.h ../../include/openssl/ecdh.h
-cms_att.o: ../../include/openssl/ecdsa.h ../../include/openssl/err.h
+cms_att.o: ../../include/openssl/ec.h ../../include/openssl/err.h
 cms_att.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
 cms_att.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
 cms_att.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
@@ -101,8 +99,7 @@ cms_cd.o: ../../include/openssl/asn1t.h ../../include/openssl/bio.h
 cms_cd.o: ../../include/openssl/buffer.h ../../include/openssl/cms.h
 cms_cd.o: ../../include/openssl/comp.h ../../include/openssl/conf.h
 cms_cd.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
-cms_cd.o: ../../include/openssl/ec.h ../../include/openssl/ecdh.h
-cms_cd.o: ../../include/openssl/ecdsa.h ../../include/openssl/err.h
+cms_cd.o: ../../include/openssl/ec.h ../../include/openssl/err.h
 cms_cd.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
 cms_cd.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
 cms_cd.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
@@ -118,7 +115,6 @@ cms_dd.o: ../../include/openssl/asn1t.h ../../include/openssl/bio.h
 cms_dd.o: ../../include/openssl/buffer.h ../../include/openssl/cms.h
 cms_dd.o: ../../include/openssl/conf.h ../../include/openssl/crypto.h
 cms_dd.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
-cms_dd.o: ../../include/openssl/ecdh.h ../../include/openssl/ecdsa.h
 cms_dd.o: ../../include/openssl/err.h ../../include/openssl/evp.h
 cms_dd.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
 cms_dd.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
@@ -134,7 +130,6 @@ cms_enc.o: ../../include/openssl/asn1t.h ../../include/openssl/bio.h
 cms_enc.o: ../../include/openssl/buffer.h ../../include/openssl/cms.h
 cms_enc.o: ../../include/openssl/conf.h ../../include/openssl/crypto.h
 cms_enc.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
-cms_enc.o: ../../include/openssl/ecdh.h ../../include/openssl/ecdsa.h
 cms_enc.o: ../../include/openssl/err.h ../../include/openssl/evp.h
 cms_enc.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
 cms_enc.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
@@ -151,8 +146,7 @@ cms_env.o: ../../include/openssl/asn1.h ../../include/openssl/asn1t.h
 cms_env.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 cms_env.o: ../../include/openssl/cms.h ../../include/openssl/conf.h
 cms_env.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
-cms_env.o: ../../include/openssl/ec.h ../../include/openssl/ecdh.h
-cms_env.o: ../../include/openssl/ecdsa.h ../../include/openssl/err.h
+cms_env.o: ../../include/openssl/ec.h ../../include/openssl/err.h
 cms_env.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
 cms_env.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
 cms_env.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
@@ -167,8 +161,7 @@ cms_env.o: cms_env.c cms_lcl.h
 cms_err.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 cms_err.o: ../../include/openssl/buffer.h ../../include/openssl/cms.h
 cms_err.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
-cms_err.o: ../../include/openssl/ec.h ../../include/openssl/ecdh.h
-cms_err.o: ../../include/openssl/ecdsa.h ../../include/openssl/err.h
+cms_err.o: ../../include/openssl/ec.h ../../include/openssl/err.h
 cms_err.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
 cms_err.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
 cms_err.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
@@ -182,7 +175,6 @@ cms_ess.o: ../../include/openssl/asn1t.h ../../include/openssl/bio.h
 cms_ess.o: ../../include/openssl/buffer.h ../../include/openssl/cms.h
 cms_ess.o: ../../include/openssl/conf.h ../../include/openssl/crypto.h
 cms_ess.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
-cms_ess.o: ../../include/openssl/ecdh.h ../../include/openssl/ecdsa.h
 cms_ess.o: ../../include/openssl/err.h ../../include/openssl/evp.h
 cms_ess.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
 cms_ess.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
@@ -198,7 +190,6 @@ cms_io.o: ../../include/openssl/asn1.h ../../include/openssl/asn1t.h
 cms_io.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 cms_io.o: ../../include/openssl/cms.h ../../include/openssl/crypto.h
 cms_io.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
-cms_io.o: ../../include/openssl/ecdh.h ../../include/openssl/ecdsa.h
 cms_io.o: ../../include/openssl/err.h ../../include/openssl/evp.h
 cms_io.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
 cms_io.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
@@ -213,8 +204,7 @@ cms_kari.o: ../../include/openssl/asn1.h ../../include/openssl/asn1t.h
 cms_kari.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 cms_kari.o: ../../include/openssl/cms.h ../../include/openssl/conf.h
 cms_kari.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
-cms_kari.o: ../../include/openssl/ec.h ../../include/openssl/ecdh.h
-cms_kari.o: ../../include/openssl/ecdsa.h ../../include/openssl/err.h
+cms_kari.o: ../../include/openssl/ec.h ../../include/openssl/err.h
 cms_kari.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
 cms_kari.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
 cms_kari.o: ../../include/openssl/opensslconf.h
@@ -230,8 +220,7 @@ cms_lib.o: ../../include/openssl/asn1.h ../../include/openssl/asn1t.h
 cms_lib.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 cms_lib.o: ../../include/openssl/cms.h ../../include/openssl/conf.h
 cms_lib.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
-cms_lib.o: ../../include/openssl/ec.h ../../include/openssl/ecdh.h
-cms_lib.o: ../../include/openssl/ecdsa.h ../../include/openssl/err.h
+cms_lib.o: ../../include/openssl/ec.h ../../include/openssl/err.h
 cms_lib.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
 cms_lib.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
 cms_lib.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
@@ -246,8 +235,7 @@ cms_pwri.o: ../../include/openssl/asn1.h ../../include/openssl/asn1t.h
 cms_pwri.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 cms_pwri.o: ../../include/openssl/cms.h ../../include/openssl/conf.h
 cms_pwri.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
-cms_pwri.o: ../../include/openssl/ec.h ../../include/openssl/ecdh.h
-cms_pwri.o: ../../include/openssl/ecdsa.h ../../include/openssl/err.h
+cms_pwri.o: ../../include/openssl/ec.h ../../include/openssl/err.h
 cms_pwri.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
 cms_pwri.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
 cms_pwri.o: ../../include/openssl/opensslconf.h
@@ -264,7 +252,6 @@ cms_sd.o: ../../include/openssl/asn1t.h ../../include/openssl/bio.h
 cms_sd.o: ../../include/openssl/buffer.h ../../include/openssl/cms.h
 cms_sd.o: ../../include/openssl/conf.h ../../include/openssl/crypto.h
 cms_sd.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
-cms_sd.o: ../../include/openssl/ecdh.h ../../include/openssl/ecdsa.h
 cms_sd.o: ../../include/openssl/err.h ../../include/openssl/evp.h
 cms_sd.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
 cms_sd.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
@@ -281,7 +268,6 @@ cms_smime.o: ../../include/openssl/asn1t.h ../../include/openssl/bio.h
 cms_smime.o: ../../include/openssl/buffer.h ../../include/openssl/cms.h
 cms_smime.o: ../../include/openssl/conf.h ../../include/openssl/crypto.h
 cms_smime.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
-cms_smime.o: ../../include/openssl/ecdh.h ../../include/openssl/ecdsa.h
 cms_smime.o: ../../include/openssl/err.h ../../include/openssl/evp.h
 cms_smime.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
 cms_smime.o: ../../include/openssl/objects.h

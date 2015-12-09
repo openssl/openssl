@@ -86,8 +86,7 @@ rand_err.o: rand_err.c
 rand_lib.o: ../../e_os.h ../../include/openssl/asn1.h
 rand_lib.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 rand_lib.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
-rand_lib.o: ../../include/openssl/ec.h ../../include/openssl/ecdh.h
-rand_lib.o: ../../include/openssl/ecdsa.h ../../include/openssl/engine.h
+rand_lib.o: ../../include/openssl/ec.h ../../include/openssl/engine.h
 rand_lib.o: ../../include/openssl/err.h ../../include/openssl/evp.h
 rand_lib.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
 rand_lib.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h

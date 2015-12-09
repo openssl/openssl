@@ -97,8 +97,7 @@ conf_mall.o: ../../e_os.h ../../include/openssl/asn1.h
 conf_mall.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 conf_mall.o: ../../include/openssl/conf.h ../../include/openssl/crypto.h
 conf_mall.o: ../../include/openssl/dso.h ../../include/openssl/e_os2.h
-conf_mall.o: ../../include/openssl/ec.h ../../include/openssl/ecdh.h
-conf_mall.o: ../../include/openssl/ecdsa.h ../../include/openssl/engine.h
+conf_mall.o: ../../include/openssl/ec.h ../../include/openssl/engine.h
 conf_mall.o: ../../include/openssl/err.h ../../include/openssl/evp.h
 conf_mall.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
 conf_mall.o: ../../include/openssl/objects.h
@@ -113,8 +112,7 @@ conf_mod.o: ../../e_os.h ../../include/openssl/asn1.h
 conf_mod.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 conf_mod.o: ../../include/openssl/conf.h ../../include/openssl/crypto.h
 conf_mod.o: ../../include/openssl/dso.h ../../include/openssl/e_os2.h
-conf_mod.o: ../../include/openssl/ec.h ../../include/openssl/ecdh.h
-conf_mod.o: ../../include/openssl/ecdsa.h ../../include/openssl/err.h
+conf_mod.o: ../../include/openssl/ec.h ../../include/openssl/err.h
 conf_mod.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
 conf_mod.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
 conf_mod.o: ../../include/openssl/opensslconf.h
@@ -128,8 +126,7 @@ conf_sap.o: ../../e_os.h ../../include/openssl/asn1.h
 conf_sap.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 conf_sap.o: ../../include/openssl/conf.h ../../include/openssl/crypto.h
 conf_sap.o: ../../include/openssl/dso.h ../../include/openssl/e_os2.h
-conf_sap.o: ../../include/openssl/ec.h ../../include/openssl/ecdh.h
-conf_sap.o: ../../include/openssl/ecdsa.h ../../include/openssl/engine.h
+conf_sap.o: ../../include/openssl/ec.h ../../include/openssl/engine.h
 conf_sap.o: ../../include/openssl/err.h ../../include/openssl/evp.h
 conf_sap.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
 conf_sap.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h

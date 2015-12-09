@@ -90,8 +90,7 @@ gost2001.o: ../../include/openssl/asn1.h ../../include/openssl/asn1t.h
 gost2001.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 gost2001.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 gost2001.o: ../../include/openssl/dsa.h ../../include/openssl/e_os2.h
-gost2001.o: ../../include/openssl/ec.h ../../include/openssl/ecdh.h
-gost2001.o: ../../include/openssl/ecdsa.h ../../include/openssl/engine.h
+gost2001.o: ../../include/openssl/ec.h ../../include/openssl/engine.h
 gost2001.o: ../../include/openssl/err.h ../../include/openssl/evp.h
 gost2001.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
 gost2001.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
@@ -105,8 +104,7 @@ gost2001_keyx.o: ../../include/openssl/asn1.h ../../include/openssl/asn1t.h
 gost2001_keyx.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 gost2001_keyx.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 gost2001_keyx.o: ../../include/openssl/dsa.h ../../include/openssl/e_os2.h
-gost2001_keyx.o: ../../include/openssl/ec.h ../../include/openssl/ecdh.h
-gost2001_keyx.o: ../../include/openssl/ecdsa.h ../../include/openssl/engine.h
+gost2001_keyx.o: ../../include/openssl/ec.h ../../include/openssl/engine.h
 gost2001_keyx.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
 gost2001_keyx.o: ../../include/openssl/obj_mac.h
 gost2001_keyx.o: ../../include/openssl/objects.h
@@ -124,7 +122,6 @@ gost_ameth.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 gost_ameth.o: ../../include/openssl/buffer.h ../../include/openssl/cms.h
 gost_ameth.o: ../../include/openssl/crypto.h ../../include/openssl/dsa.h
 gost_ameth.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
-gost_ameth.o: ../../include/openssl/ecdh.h ../../include/openssl/ecdsa.h
 gost_ameth.o: ../../include/openssl/engine.h ../../include/openssl/err.h
 gost_ameth.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
 gost_ameth.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
@@ -139,8 +136,7 @@ gost_asn1.o: ../../include/openssl/asn1.h ../../include/openssl/asn1t.h
 gost_asn1.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 gost_asn1.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 gost_asn1.o: ../../include/openssl/dsa.h ../../include/openssl/e_os2.h
-gost_asn1.o: ../../include/openssl/ec.h ../../include/openssl/ecdh.h
-gost_asn1.o: ../../include/openssl/ecdsa.h ../../include/openssl/engine.h
+gost_asn1.o: ../../include/openssl/ec.h ../../include/openssl/engine.h
 gost_asn1.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
 gost_asn1.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
 gost_asn1.o: ../../include/openssl/opensslconf.h
@@ -154,8 +150,7 @@ gost_crypt.o: ../../include/openssl/asn1.h ../../include/openssl/asn1t.h
 gost_crypt.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 gost_crypt.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 gost_crypt.o: ../../include/openssl/dsa.h ../../include/openssl/e_os2.h
-gost_crypt.o: ../../include/openssl/ec.h ../../include/openssl/ecdh.h
-gost_crypt.o: ../../include/openssl/ecdsa.h ../../include/openssl/engine.h
+gost_crypt.o: ../../include/openssl/ec.h ../../include/openssl/engine.h
 gost_crypt.o: ../../include/openssl/err.h ../../include/openssl/evp.h
 gost_crypt.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
 gost_crypt.o: ../../include/openssl/objects.h
@@ -170,8 +165,7 @@ gost_ctl.o: ../../include/openssl/asn1.h ../../include/openssl/asn1t.h
 gost_ctl.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 gost_ctl.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 gost_ctl.o: ../../include/openssl/dsa.h ../../include/openssl/e_os2.h
-gost_ctl.o: ../../include/openssl/ec.h ../../include/openssl/ecdh.h
-gost_ctl.o: ../../include/openssl/ecdsa.h ../../include/openssl/engine.h
+gost_ctl.o: ../../include/openssl/ec.h ../../include/openssl/engine.h
 gost_ctl.o: ../../include/openssl/err.h ../../include/openssl/evp.h
 gost_ctl.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
 gost_ctl.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
@@ -185,8 +179,7 @@ gost_eng.o: ../../include/openssl/asn1.h ../../include/openssl/asn1t.h
 gost_eng.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 gost_eng.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 gost_eng.o: ../../include/openssl/dsa.h ../../include/openssl/e_os2.h
-gost_eng.o: ../../include/openssl/ec.h ../../include/openssl/ecdh.h
-gost_eng.o: ../../include/openssl/ecdsa.h ../../include/openssl/engine.h
+gost_eng.o: ../../include/openssl/ec.h ../../include/openssl/engine.h
 gost_eng.o: ../../include/openssl/err.h ../../include/openssl/evp.h
 gost_eng.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
 gost_eng.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
@@ -201,8 +194,7 @@ gost_md.o: ../../include/openssl/asn1.h ../../include/openssl/asn1t.h
 gost_md.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 gost_md.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 gost_md.o: ../../include/openssl/dsa.h ../../include/openssl/e_os2.h
-gost_md.o: ../../include/openssl/ec.h ../../include/openssl/ecdh.h
-gost_md.o: ../../include/openssl/ecdsa.h ../../include/openssl/engine.h
+gost_md.o: ../../include/openssl/ec.h ../../include/openssl/engine.h
 gost_md.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
 gost_md.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
 gost_md.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
@@ -215,8 +207,7 @@ gost_params.o: ../../include/openssl/asn1.h ../../include/openssl/asn1t.h
 gost_params.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 gost_params.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 gost_params.o: ../../include/openssl/dsa.h ../../include/openssl/e_os2.h
-gost_params.o: ../../include/openssl/ec.h ../../include/openssl/ecdh.h
-gost_params.o: ../../include/openssl/ecdsa.h ../../include/openssl/engine.h
+gost_params.o: ../../include/openssl/ec.h ../../include/openssl/engine.h
 gost_params.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
 gost_params.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
 gost_params.o: ../../include/openssl/opensslconf.h
@@ -231,7 +222,6 @@ gost_pmeth.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 gost_pmeth.o: ../../include/openssl/buffer.h ../../include/openssl/conf.h
 gost_pmeth.o: ../../include/openssl/crypto.h ../../include/openssl/dsa.h
 gost_pmeth.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
-gost_pmeth.o: ../../include/openssl/ecdh.h ../../include/openssl/ecdsa.h
 gost_pmeth.o: ../../include/openssl/engine.h ../../include/openssl/err.h
 gost_pmeth.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
 gost_pmeth.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h

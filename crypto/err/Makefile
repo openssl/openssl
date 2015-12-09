@@ -74,7 +74,6 @@ err_all.o: ../../include/openssl/comp.h ../../include/openssl/conf.h
 err_all.o: ../../include/openssl/crypto.h ../../include/openssl/dh.h
 err_all.o: ../../include/openssl/dsa.h ../../include/openssl/dso.h
 err_all.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
-err_all.o: ../../include/openssl/ecdh.h ../../include/openssl/ecdsa.h
 err_all.o: ../../include/openssl/engine.h ../../include/openssl/err.h
 err_all.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
 err_all.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
