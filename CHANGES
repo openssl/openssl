@@ -4,6 +4,16 @@
 
  Changes between 1.0.2e and 1.1.0  [xx XXX xxxx]
 
+  *) New EC_KEY_METHOD, this replaces the older ECDSA_METHOD and ECDH_METHOD
+     and integrates ECDSA and ECDH functionality into EC. Implementations can
+     now redirect key generation and no longer need to convert to or from
+     ECDSA_SIG format.
+
+     Note: the ecdsa.h and ecdh.h headers are now no longer needed and just
+     include the ec.h header file instead.
+
+     [Steve Henson]
+
   *) Remove support for all 40 and 56 bit ciphers.  This includes all the export
      ciphers who are no longer supported and drops support the ephemeral RSA key
      exchange. The LOW ciphers currently doesn't have any ciphers in it.
