@@ -84,7 +84,8 @@ EC_KEY *EC_KEY_new_by_curve_name(int nid)
         EC_KEY_free(ret);
         return NULL;
     }
-    if (ret->meth->set_group && ret->meth->set_group(ret, ret->group) == 0) {
+    if (ret->meth->set_group != NULL
+        && ret->meth->set_group(ret, ret->group) == 0) {
         EC_KEY_free(ret);
         return NULL;
     }
@@ -111,11 +112,11 @@ void EC_KEY_free(EC_KEY *r)
     }
 #endif
 
-    if (r->meth->finish)
+    if (r->meth->finish != NULL)
         r->meth->finish(r);
 
 #ifndef OPENSSL_NO_ENGINE
-    if (r->engine)
+    if (r->engine != NULL)
         ENGINE_finish(r->engine);
 #endif
 
@@ -137,16 +138,16 @@ EC_KEY *EC_KEY_copy(EC_KEY *dest, const EC_KEY *src)
         return NULL;
     }
     if (src->meth != dest->meth) {
-        if (dest->meth->finish)
+        if (dest->meth->finish != NULL)
             dest->meth->finish(dest);
 #ifndef OPENSSL_NO_ENGINE
-        if (dest->engine && ENGINE_finish(dest->engine) == 0)
+        if (dest->engine != NULL && ENGINE_finish(dest->engine) == 0)
             return 0;
         dest->engine = NULL;
 #endif
     }
     /* copy the parameters */
-    if (src->group) {
+    if (src->group != NULL) {
         const EC_METHOD *meth = EC_GROUP_method_of(src->group);
         /* clear the old group */
         EC_GROUP_free(dest->group);
@@ -157,7 +158,7 @@ EC_KEY *EC_KEY_copy(EC_KEY *dest, const EC_KEY *src)
             return NULL;
     }
     /*  copy the public key */
-    if (src->pub_key && src->group) {
+    if (src->pub_key != NULL && src->group != NULL) {
         EC_POINT_free(dest->pub_key);
         dest->pub_key = EC_POINT_new(src->group);
         if (dest->pub_key == NULL)
@@ -166,7 +167,7 @@ EC_KEY *EC_KEY_copy(EC_KEY *dest, const EC_KEY *src)
             return NULL;
     }
     /* copy the private key */
-    if (src->priv_key) {
+    if (src->priv_key != NULL) {
         if (dest->priv_key == NULL) {
             dest->priv_key = BN_new();
             if (dest->priv_key == NULL)
@@ -186,7 +187,7 @@ EC_KEY *EC_KEY_copy(EC_KEY *dest, const EC_KEY *src)
         if (!EC_EX_DATA_set_data
             (&dest->method_data, t, d->dup_func, d->free_func,
              d->clear_free_func))
-            return 0;
+            return NULL;
     }
 
     /* copy the rest */
@@ -197,15 +198,15 @@ EC_KEY *EC_KEY_copy(EC_KEY *dest, const EC_KEY *src)
 
     if (src->meth != dest->meth) {
 #ifndef OPENSSL_NO_ENGINE
-        if (src->engine && ENGINE_init(src->engine) == 0)
-            return 0;
+        if (src->engine != NULL && ENGINE_init(src->engine) == 0)
+            return NULL;
         dest->engine = src->engine;
 #endif
         dest->meth = src->meth;
     }
 
-    if (src->meth->copy && src->meth->copy(dest, src) == 0)
-        return 0;
+    if (src->meth->copy != NULL && src->meth->copy(dest, src) == 0)
+        return NULL;
 
     return dest;
 }
@@ -239,11 +240,11 @@ int EC_KEY_up_ref(EC_KEY *r)
 
 int EC_KEY_generate_key(EC_KEY *eckey)
 {
-    if (!eckey || !eckey->group) {
+    if (eckey == NULL || eckey->group == NULL) {
         ECerr(EC_F_EC_KEY_GENERATE_KEY, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
-    if (eckey->meth->keygen)
+    if (eckey->meth->keygen != NULL)
         return eckey->meth->keygen(eckey);
     ECerr(EC_F_EC_KEY_GENERATE_KEY, EC_R_OPERATION_NOT_SUPPORTED);
     return 0;
@@ -308,7 +309,7 @@ int EC_KEY_check_key(const EC_KEY *eckey)
     const BIGNUM *order = NULL;
     EC_POINT *point = NULL;
 
-    if (!eckey || !eckey->group || !eckey->pub_key) {
+    if (eckey == NULL || eckey->group == NULL || eckey->pub_key == NULL) {
         ECerr(EC_F_EC_KEY_CHECK_KEY, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
@@ -346,7 +347,7 @@ int EC_KEY_check_key(const EC_KEY *eckey)
      * in case the priv_key is present : check if generator * priv_key ==
      * pub_key
      */
-    if (eckey->priv_key) {
+    if (eckey->priv_key != NULL) {
         if (BN_cmp(eckey->priv_key, order) >= 0) {
             ECerr(EC_F_EC_KEY_CHECK_KEY, EC_R_WRONG_ORDER);
             goto err;
@@ -379,7 +380,7 @@ int EC_KEY_set_public_key_affine_coordinates(EC_KEY *key, BIGNUM *x,
     int tmp_nid, is_char_two = 0;
 #endif
 
-    if (!key || !key->group || !x || !y) {
+    if (key == NULL || key->group == NULL || x == NULL || y == NULL) {
         ECerr(EC_F_EC_KEY_SET_PUBLIC_KEY_AFFINE_COORDINATES,
               ERR_R_PASSED_NULL_PARAMETER);
         return 0;
@@ -453,7 +454,7 @@ const EC_GROUP *EC_KEY_get0_group(const EC_KEY *key)
 
 int EC_KEY_set_group(EC_KEY *key, const EC_GROUP *group)
 {
-    if (key->meth->set_group && key->meth->set_group(key, group) == 0)
+    if (key->meth->set_group != NULL && key->meth->set_group(key, group) == 0)
         return 0;
     EC_GROUP_free(key->group);
     key->group = EC_GROUP_dup(group);
@@ -467,7 +468,8 @@ const BIGNUM *EC_KEY_get0_private_key(const EC_KEY *key)
 
 int EC_KEY_set_private_key(EC_KEY *key, const BIGNUM *priv_key)
 {
-    if (key->meth->set_private && key->meth->set_private(key, priv_key) == 0)
+    if (key->meth->set_private != NULL
+        && key->meth->set_private(key, priv_key) == 0)
         return 0;
     BN_clear_free(key->priv_key);
     key->priv_key = BN_dup(priv_key);
@@ -481,7 +483,8 @@ const EC_POINT *EC_KEY_get0_public_key(const EC_KEY *key)
 
 int EC_KEY_set_public_key(EC_KEY *key, const EC_POINT *pub_key)
 {
-    if (key->meth->set_public && key->meth->set_public(key, pub_key) == 0)
+    if (key->meth->set_public != NULL
+        && key->meth->set_public(key, pub_key) == 0)
         return 0;
     EC_POINT_free(key->pub_key);
     key->pub_key = EC_POINT_dup(pub_key, key->group);

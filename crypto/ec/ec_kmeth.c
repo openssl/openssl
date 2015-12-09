@@ -103,7 +103,7 @@ EC_KEY *EC_KEY_new_method(ENGINE *engine)
     }
     ret->meth = EC_KEY_get_default_method();
 #ifndef OPENSSL_NO_ENGINE
-    if (engine) {
+    if (engine != NULL) {
         if (!ENGINE_init(engine)) {
             ECerr(EC_F_EC_KEY_NEW_METHOD, ERR_R_ENGINE_LIB);
             OPENSSL_free(ret);
@@ -112,9 +112,9 @@ EC_KEY *EC_KEY_new_method(ENGINE *engine)
         ret->engine = engine;
     } else
         ret->engine = ENGINE_get_default_EC();
-    if (ret->engine) {
+    if (ret->engine != NULL) {
         ret->meth = ENGINE_get_EC(ret->engine);
-        if (!ret->meth) {
+        if (ret->meth == NULL) {
             ECerr(EC_F_EC_KEY_NEW_METHOD, ERR_R_ENGINE_LIB);
             ENGINE_finish(ret->engine);
             OPENSSL_free(ret);
@@ -126,7 +126,7 @@ EC_KEY *EC_KEY_new_method(ENGINE *engine)
     ret->version = 1;
     ret->conv_form = POINT_CONVERSION_UNCOMPRESSED;
     ret->references = 1;
-    if (ret->meth->init && ret->meth->init(ret) == 0) {
+    if (ret->meth->init != NULL && ret->meth->init(ret) == 0) {
         EC_KEY_free(ret);
         return NULL;
     }
@@ -138,7 +138,7 @@ int ECDH_compute_key(void *out, size_t outlen, const EC_POINT *pub_key,
                      void *(*KDF) (const void *in, size_t inlen, void *out,
                                    size_t *outlen))
 {
-    if (eckey->meth->compute_key)
+    if (eckey->meth->compute_key != NULL)
         return eckey->meth->compute_key(out, outlen, pub_key, eckey, KDF);
     ECerr(EC_F_ECDH_COMPUTE_KEY, EC_R_OPERATION_NOT_SUPPORTED);
     return 0;
@@ -150,7 +150,7 @@ EC_KEY_METHOD *EC_KEY_METHOD_new(const EC_KEY_METHOD *meth)
     ret = OPENSSL_zalloc(sizeof(*meth));
     if (ret == NULL)
         return NULL;
-    if (meth)
+    if (meth != NULL)
         *ret = *meth;
     ret->flags |= EC_KEY_METHOD_DYNAMIC;
     return ret;

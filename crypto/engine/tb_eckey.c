@@ -76,7 +76,7 @@ static void engine_unregister_all_EC(void)
 
 int ENGINE_register_EC(ENGINE *e)
 {
-    if (e->ec_meth)
+    if (e->ec_meth != NULL)
         return engine_table_register(&dh_table,
                                      engine_unregister_all_EC, e, &dummy_nid,
                                      1, 0);
@@ -93,7 +93,7 @@ void ENGINE_register_all_EC()
 
 int ENGINE_set_default_EC(ENGINE *e)
 {
-    if (e->ec_meth)
+    if (e->ec_meth != NULL)
         return engine_table_register(&dh_table,
                                      engine_unregister_all_EC, e, &dummy_nid,
                                      1, 1);
