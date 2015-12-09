@@ -75,8 +75,7 @@ cm_pmeth.o: ../../e_os.h ../../include/openssl/asn1.h
 cm_pmeth.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 cm_pmeth.o: ../../include/openssl/cmac.h ../../include/openssl/conf.h
 cm_pmeth.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
-cm_pmeth.o: ../../include/openssl/ec.h ../../include/openssl/ecdh.h
-cm_pmeth.o: ../../include/openssl/ecdsa.h ../../include/openssl/err.h
+cm_pmeth.o: ../../include/openssl/ec.h ../../include/openssl/err.h
 cm_pmeth.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
 cm_pmeth.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
 cm_pmeth.o: ../../include/openssl/opensslconf.h

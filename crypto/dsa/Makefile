@@ -67,7 +67,6 @@ dsa_ameth.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 dsa_ameth.o: ../../include/openssl/buffer.h ../../include/openssl/cms.h
 dsa_ameth.o: ../../include/openssl/crypto.h ../../include/openssl/dsa.h
 dsa_ameth.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
-dsa_ameth.o: ../../include/openssl/ecdh.h ../../include/openssl/ecdsa.h
 dsa_ameth.o: ../../include/openssl/err.h ../../include/openssl/evp.h
 dsa_ameth.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
 dsa_ameth.o: ../../include/openssl/objects.h
@@ -133,7 +132,6 @@ dsa_lib.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 dsa_lib.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 dsa_lib.o: ../../include/openssl/dh.h ../../include/openssl/dsa.h
 dsa_lib.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
-dsa_lib.o: ../../include/openssl/ecdh.h ../../include/openssl/ecdsa.h
 dsa_lib.o: ../../include/openssl/engine.h ../../include/openssl/err.h
 dsa_lib.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
 dsa_lib.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
@@ -159,7 +157,6 @@ dsa_pmeth.o: ../../include/openssl/asn1t.h ../../include/openssl/bio.h
 dsa_pmeth.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
 dsa_pmeth.o: ../../include/openssl/crypto.h ../../include/openssl/dsa.h
 dsa_pmeth.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
-dsa_pmeth.o: ../../include/openssl/ecdh.h ../../include/openssl/ecdsa.h
 dsa_pmeth.o: ../../include/openssl/err.h ../../include/openssl/evp.h
 dsa_pmeth.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
 dsa_pmeth.o: ../../include/openssl/objects.h

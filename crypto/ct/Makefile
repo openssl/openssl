@@ -76,7 +76,6 @@ ct_lib.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
 ct_lib.o: ../../include/openssl/comp.h ../../include/openssl/crypto.h
 ct_lib.o: ../../include/openssl/dsa.h ../../include/openssl/dtls1.h
 ct_lib.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
-ct_lib.o: ../../include/openssl/ecdh.h ../../include/openssl/ecdsa.h
 ct_lib.o: ../../include/openssl/err.h ../../include/openssl/evp.h
 ct_lib.o: ../../include/openssl/hmac.h ../../include/openssl/lhash.h
 ct_lib.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
