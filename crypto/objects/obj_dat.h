@@ -62,9 +62,9 @@
  * [including the GNU Public Licence.]
  */
 
-#define NUM_NID 1018
-#define NUM_SN 1011
-#define NUM_LN 1011
+#define NUM_NID 1020
+#define NUM_SN 1013
+#define NUM_LN 1013
 #define NUM_OBJ 936
 
 static const unsigned char lvalues[6604]={
@@ -2667,6 +2667,8 @@ static const ASN1_OBJECT nid_objs[NUM_NID]={
 {"grasshopper-cbc","grasshopper-cbc",NID_grasshopper_cbc,0,NULL,0},
 {"grasshopper-cfb","grasshopper-cfb",NID_grasshopper_cfb,0,NULL,0},
 {"grasshopper-mac","grasshopper-mac",NID_grasshopper_mac,0,NULL,0},
+{"ChaCha20-Poly1305","chacha20-poly1305",NID_chacha20_poly1305,0,NULL,0},
+{"ChaCha20","chacha20",NID_chacha20,0,NULL,0},
 };
 
 static const unsigned int sn_objs[NUM_SN]={
@@ -2746,6 +2748,8 @@ static const unsigned int sn_objs[NUM_SN]={
 13,	/* "CN" */
 141,	/* "CRLReason" */
 417,	/* "CSPName" */
+1019,	/* "ChaCha20" */
+1018,	/* "ChaCha20-Poly1305" */
 367,	/* "CrlID" */
 391,	/* "DC" */
 31,	/* "DES-CBC" */
@@ -3973,6 +3977,8 @@ static const unsigned int ln_objs[NUM_LN]={
 677,	/* "certicom-arc" */
 517,	/* "certificate extensions" */
 883,	/* "certificateRevocationList" */
+1019,	/* "chacha20" */
+1018,	/* "chacha20-poly1305" */
 54,	/* "challengePassword" */
 407,	/* "characteristic-two-field" */
 395,	/* "clearance" */
