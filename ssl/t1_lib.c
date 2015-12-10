@@ -2847,30 +2847,13 @@ int ssl_check_serverhello_tlsext(SSL *s)
                                                        s->
                                                        initial_ctx->tlsext_servername_arg);
 
+    /*
+     * Ensure we get sensible values passed to tlsext_status_cb in the event
+     * that we don't receive a status message
+     */
     OPENSSL_free(s->tlsext_ocsp_resp);
     s->tlsext_ocsp_resp = NULL;
     s->tlsext_ocsp_resplen = -1;
-    /*
-     * If we've requested certificate status and we wont get one tell the
-     * callback
-     */
-    if ((s->tlsext_status_type != -1) && !(s->tlsext_status_expected)
-        && !(s->hit) && s->ctx && s->ctx->tlsext_status_cb) {
-        int r;
-        /*
-         * Call callback with resp == NULL and resplen == -1 so callback
-         * knows there is no response
-         */
-        r = s->ctx->tlsext_status_cb(s, s->ctx->tlsext_status_arg);
-        if (r == 0) {
-            al = SSL_AD_BAD_CERTIFICATE_STATUS_RESPONSE;
-            ret = SSL_TLSEXT_ERR_ALERT_FATAL;
-        }
-        if (r < 0) {
-            al = SSL_AD_INTERNAL_ERROR;
-            ret = SSL_TLSEXT_ERR_ALERT_FATAL;
-        }
-    }
 
     switch (ret) {
     case SSL_TLSEXT_ERR_ALERT_FATAL:
