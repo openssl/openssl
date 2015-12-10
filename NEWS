@@ -5,7 +5,7 @@
   This file gives a brief overview of the major changes between each OpenSSL
   release. For more details please read the CHANGES file.
 
-  Major changes between OpenSSL 1.0.2e and OpenSSL 1.1.0 [under development]
+  Major changes between OpenSSL 1.0.2e and OpenSSL 1.1.0 [in pre-release]
 
       o Support for ChaCha20 and Poly1305 added to libcrypto and libssl
       o Support for extended master secret
