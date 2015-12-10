@@ -2211,7 +2211,7 @@ MSG_PROCESS_RETURN tls_process_server_done(SSL *s, PACKET *pkt)
      * |tlsext_ocsp_resplen| values will be set if we actually received a status
      * message, or NULL and -1 otherwise
      */
-    if (s->tlsext_status_expected && s->ctx->tlsext_status_cb != NULL) {
+    if (s->tlsext_status_type != -1 && s->ctx->tlsext_status_cb != NULL) {
         int ret;
         ret = s->ctx->tlsext_status_cb(s, s->ctx->tlsext_status_arg);
         if (ret == 0) {
