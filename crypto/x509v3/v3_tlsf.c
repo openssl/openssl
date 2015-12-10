@@ -114,10 +114,10 @@ static STACK_OF(CONF_VALUE) *i2v_TLS_FEATURE(const X509V3_EXT_METHOD *method,
     for (i = 0; i < sk_ASN1_INTEGER_num(tls_feature); i++) {
         ai = sk_ASN1_INTEGER_value(tls_feature, i);
         tlsextid = ASN1_INTEGER_get(ai);
-        for (j = 0; j < OSSL_NELEM(tls_feature_tbl); j++)
+        for (j = 0; j < (int)OSSL_NELEM(tls_feature_tbl); j++)
             if (tlsextid == tls_feature_tbl[j].num)
                 break;
-        if (j < OSSL_NELEM(tls_feature_tbl))
+        if (j < (int)OSSL_NELEM(tls_feature_tbl))
             X509V3_add_value(NULL, tls_feature_tbl[j].name, &ext_list);
         else
             X509V3_add_value_int(NULL, ai, &ext_list);
@@ -152,10 +152,10 @@ static TLS_FEATURE *v2i_TLS_FEATURE(const X509V3_EXT_METHOD *method,
         else
             extval = val->name;
 
-        for (j = 0; j < OSSL_NELEM(tls_feature_tbl); j++)
+        for (j = 0; j < (int)OSSL_NELEM(tls_feature_tbl); j++)
             if (OPENSSL_strcasecmp(extval, tls_feature_tbl[j].name) == 0)
                 break;
-        if (j < OSSL_NELEM(tls_feature_tbl))
+        if (j < (int)OSSL_NELEM(tls_feature_tbl))
             tlsextid = tls_feature_tbl[j].num;
         else {
             tlsextid = strtol(extval, &endptr, 10);
