@@ -63,6 +63,8 @@ my @dirs = (
 "crypto/srp",
 "crypto/ct",
 "crypto/async",
+"crypto/chacha",
+"crypto/poly1305",
 "ssl",
 "apps",
 "engines",
