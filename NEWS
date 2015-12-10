@@ -7,18 +7,22 @@
 
   Major changes between OpenSSL 1.0.2e and OpenSSL 1.1.0 [under development]
 
+      o Support for ChaCha20 and Poly1305 added to libcrypto and libssl
       o Support for extended master secret
       o CCM ciphersuites
       o Reworked test suite, now based on perl, Test::Harness and Test::More
-      o EVP_MD, EVP_MD_CTX and HMAC_CTX made opaque
+      o Varous libcrypto structures made opaque including: BIGNUM, EVP_MD,
+        EVP_MD_CTX and HMAC_CTX.
       o libssl internal structures made opaque
       o SSLv2 support removed
       o Kerberos ciphersuite support removed
       o RC4 removed from DEFAULT ciphersuites in libssl
       o 40 and 56 bit cipher support removed from libssl
       o All public header files moved to include/openssl, no more symlinking
-      o SSL/TLS state machine and record layer rewritten
+      o SSL/TLS state machine, version negotiation and record layer rewritten
       o EC revision: now operations use new EC_KEY_METHOD.
+      o Support for OCB mode added to libcrypto
+      o Support for asynchronous crypto operations added to libcrypto and libssl
 
   Major changes between OpenSSL 1.0.2d and OpenSSL 1.0.2e [3 Dec 2015]
 
