@@ -73,7 +73,7 @@ static const EC_KEY_METHOD openssl_ec_key_method = {
     ossl_ecdsa_verify_sig
 };
 
-const EC_KEY_METHOD *default_ec_key_meth = &openssl_ec_key_method;
+static const EC_KEY_METHOD *default_ec_key_meth = &openssl_ec_key_method;
 
 const EC_KEY_METHOD *EC_KEY_OpenSSL(void)
 {
