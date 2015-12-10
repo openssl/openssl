@@ -145,7 +145,6 @@ $(EXE): progs.h $(EXE_OBJ) $(DLIBCRYPTO) $(DLIBSSL)
 		APPNAME=$(EXE) OBJECTS="$(EXE_OBJ)" \
 		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
 		link_app.$${shlib_target}
-	@(cd ..; $(MAKE) rehash)
 
 progs.h: progs.pl Makefile
 	$(RM) progs.h
