@@ -491,9 +491,14 @@ static const rfc5114_td rfctd[] = {
 static int run_rfc5114_tests(void)
 {
     int i;
-    for (i = 0; i < (int)OSSL_NELEM(rfctd); i++) {
-        DH *dhA = NULL, *dhB = NULL;
-        unsigned char *Z1 = NULL, *Z2 = NULL;
+    DH *dhA = NULL, *dhB = NULL;
+    unsigned char *Z1 = NULL, *Z2 = NULL;
+ 
+   for (i = 0; i < (int)OSSL_NELEM(rfctd); i++) {
+        dhA = NULL;
+        dhB = NULL;
+        Z1 = NULL;
+        Z2 = NULL;
         const rfc5114_td *td = rfctd + i;
         /* Set up DH structures setting key components */
         dhA = td->get_param();
