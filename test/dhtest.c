@@ -201,18 +201,12 @@ int main(int argc, char *argv[])
  err:
     ERR_print_errors_fp(stderr);
 
-    if (abuf)
-        OPENSSL_free(abuf);
-    if (bbuf)
-        OPENSSL_free(bbuf);
-    if (b)
-        DH_free(b);
-    if (a)
-        DH_free(a);
-    if (_cb)
-        BN_GENCB_free(_cb);
-    if (out)
-        BIO_free(out);
+    OPENSSL_free(abuf);
+    OPENSSL_free(bbuf);
+    DH_free(b);
+    DH_free(a);
+    BN_GENCB_free(_cb);
+    BIO_free(out);
 # ifdef OPENSSL_SYS_NETWARE
     if (ret)
         printf("ERROR: %d\n", ret);
@@ -549,27 +543,19 @@ static int run_rfc5114_tests(void)
     }
     return 1;
  bad_err:
-    if (dhA)
-        DH_free(dhA);
-    if (dhB)
-        DH_free(dhB);
-    if (Z1)
-        OPENSSL_free(Z1);
-    if (Z2)
-        OPENSSL_free(Z2);
+    DH_free(dhA);
+    DH_free(dhB);
+    OPENSSL_free(Z1);
+    OPENSSL_free(Z2);
 
     fprintf(stderr, "Initalisation error RFC5114 set %d\n", i + 1);
     ERR_print_errors_fp(stderr);
     return 0;
  err:
-    if (dhA)
-        DH_free(dhA);
-    if (dhB)
-        DH_free(dhB);
-    if (Z1)
-        OPENSSL_free(Z1);
-    if (Z2)
-        OPENSSL_free(Z2);
+    DH_free(dhA);
+    DH_free(dhB);
+    OPENSSL_free(Z1);
+    OPENSSL_free(Z2);
 
     fprintf(stderr, "Test failed RFC5114 set %d\n", i + 1);
     return 0;
