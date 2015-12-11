@@ -86,13 +86,13 @@ static int run_rfc5114_tests(void);
 
 int main(int argc, char *argv[])
 {
-    BN_GENCB *_cb;
+    BN_GENCB *_cb = NULL;
     DH *a = NULL;
     DH *b = NULL;
-    char buf[12];
+    char buf[12] = {0};
     unsigned char *abuf = NULL, *bbuf = NULL;
     int i, alen, blen, aout, bout, ret = 1;
-    BIO *out;
+    BIO *out = NULL;
 
     CRYPTO_malloc_debug_init();
     CRYPTO_dbg_set_options(V_CRYPTO_MDEBUG_ALL);
@@ -180,6 +180,9 @@ int main(int argc, char *argv[])
 
     blen = DH_size(b);
     bbuf = OPENSSL_malloc(blen);
+    if (!bbuf)
+        goto err;
+
     bout = DH_compute_key(bbuf, a->pub_key, b);
 
     BIO_puts(out, "key2 =");
@@ -198,12 +201,18 @@ int main(int argc, char *argv[])
  err:
     ERR_print_errors_fp(stderr);
 
-    OPENSSL_free(abuf);
-    OPENSSL_free(bbuf);
-    DH_free(b);
-    DH_free(a);
-    BN_GENCB_free(_cb);
-    BIO_free(out);
+    if (abuf)
+        OPENSSL_free(abuf);
+    if (bbuf)
+        OPENSSL_free(bbuf);
+    if (b)
+        DH_free(b);
+    if (a)
+        DH_free(a);
+    if (_cb)
+        BN_GENCB_free(_cb);
+    if (out)
+        BIO_free(out);
 # ifdef OPENSSL_SYS_NETWARE
     if (ret)
         printf("ERROR: %d\n", ret);
@@ -489,7 +498,7 @@ static int run_rfc5114_tests(void)
 {
     int i;
     for (i = 0; i < (int)OSSL_NELEM(rfctd); i++) {
-        DH *dhA, *dhB;
+        DH *dhA = NULL, *dhB = NULL;
         unsigned char *Z1 = NULL, *Z2 = NULL;
         const rfc5114_td *td = rfctd + i;
         /* Set up DH structures setting key components */
@@ -540,10 +549,28 @@ static int run_rfc5114_tests(void)
     }
     return 1;
  bad_err:
+    if (dhA)
+        DH_free(dhA);
+    if (dhB)
+        DH_free(dhB);
+    if (Z1)
+        OPENSSL_free(Z1);
+    if (Z2)
+        OPENSSL_free(Z2);
+
     fprintf(stderr, "Initalisation error RFC5114 set %d\n", i + 1);
     ERR_print_errors_fp(stderr);
     return 0;
  err:
+    if (dhA)
+        DH_free(dhA);
+    if (dhB)
+        DH_free(dhB);
+    if (Z1)
+        OPENSSL_free(Z1);
+    if (Z2)
+        OPENSSL_free(Z2);
+
     fprintf(stderr, "Test failed RFC5114 set %d\n", i + 1);
     return 0;
 }
