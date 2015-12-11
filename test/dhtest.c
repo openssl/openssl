@@ -166,6 +166,9 @@ int main(int argc, char *argv[])
 
     alen = DH_size(a);
     abuf = OPENSSL_malloc(alen);
+    if (!abuf)
+        goto err;
+
     aout = DH_compute_key(abuf, b->pub_key, a);
 
     BIO_puts(out, "key1 =");
@@ -511,6 +514,8 @@ static int run_rfc5114_tests(void)
 
         Z1 = OPENSSL_malloc(DH_size(dhA));
         Z2 = OPENSSL_malloc(DH_size(dhB));
+        if ((!Z1) || (!Z2))
+            goto bad_err;
         /*
          * Work out shared secrets using both sides and compare with expected
          * values.
