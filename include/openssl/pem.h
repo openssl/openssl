@@ -103,7 +103,7 @@ extern "C" {
    * by PEM_SealFinal (at least for now)
    */
 typedef struct PEM_Encode_Seal_st {
-    EVP_ENCODE_CTX encode;
+    EVP_ENCODE_CTX *encode;
     EVP_MD_CTX *md;
     EVP_CIPHER_CTX cipher;
 } PEM_ENCODE_SEAL_CTX;
