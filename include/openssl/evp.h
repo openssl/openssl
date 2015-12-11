@@ -447,22 +447,6 @@ struct evp_cipher_ctx_st {
     unsigned char final[EVP_MAX_BLOCK_LENGTH]; /* possible final block */
 } /* EVP_CIPHER_CTX */ ;
 
-typedef struct evp_Encode_Ctx_st {
-    /* number saved in a partial encode/decode */
-    int num;
-    /*
-     * The length is either the output line length (in input bytes) or the
-     * shortest input line length that is ok.  Once decoding begins, the
-     * length is adjusted up each time a longer line is decoded
-     */
-    int length;
-    /* data to encode */
-    unsigned char enc_data[80];
-    /* number read on current line */
-    int line_num;
-    int expect_nl;
-} EVP_ENCODE_CTX;
-
 /* Password based encryption function */
 typedef int (EVP_PBE_KEYGEN) (EVP_CIPHER_CTX *ctx, const char *pass,
                               int passlen, ASN1_TYPE *param,
@@ -701,6 +685,9 @@ __owur int EVP_SealInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
                         EVP_PKEY **pubk, int npubk);
 __owur int EVP_SealFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl);
 
+EVP_ENCODE_CTX *EVP_ENCODE_CTX_new(void);
+void EVP_ENCODE_CTX_free(EVP_ENCODE_CTX *ctx);
+int EVP_ENCODE_CTX_num(EVP_ENCODE_CTX *ctx);
 void EVP_EncodeInit(EVP_ENCODE_CTX *ctx);
 void EVP_EncodeUpdate(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl,
                       const unsigned char *in, int inl);
