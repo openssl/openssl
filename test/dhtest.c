@@ -110,7 +110,7 @@ int main(int argc, char *argv[])
     BIO_set_fp(out, stdout, BIO_NOCLOSE | BIO_FP_TEXT);
 
     _cb = BN_GENCB_new();
-    if (!_cb)
+    if (_cb == NULL)
         goto err;
     BN_GENCB_set(_cb, &cb, out);
     if (((a = DH_new()) == NULL) || !DH_generate_parameters_ex(a, 64,
@@ -166,7 +166,7 @@ int main(int argc, char *argv[])
 
     alen = DH_size(a);
     abuf = OPENSSL_malloc(alen);
-    if (!abuf)
+    if (abuf == NULL)
         goto err;
 
     aout = DH_compute_key(abuf, b->pub_key, a);
@@ -180,7 +180,7 @@ int main(int argc, char *argv[])
 
     blen = DH_size(b);
     bbuf = OPENSSL_malloc(blen);
-    if (!bbuf)
+    if (bbuf == NULL)
         goto err;
 
     bout = DH_compute_key(bbuf, a->pub_key, b);
@@ -498,7 +498,7 @@ static int run_rfc5114_tests(void)
         /* Set up DH structures setting key components */
         dhA = td->get_param();
         dhB = td->get_param();
-        if (!dhA || !dhB)
+        if ((dhA == NULL) || (dhB == NULL))
             goto bad_err;
 
         dhA->priv_key = BN_bin2bn(td->xA, td->xA_len, NULL);
@@ -507,8 +507,8 @@ static int run_rfc5114_tests(void)
         dhB->priv_key = BN_bin2bn(td->xB, td->xB_len, NULL);
         dhB->pub_key = BN_bin2bn(td->yB, td->yB_len, NULL);
 
-        if (!dhA->priv_key || !dhA->pub_key
-            || !dhB->priv_key || !dhB->pub_key)
+        if ((dhA->priv_key == NULL) || (dhA->pub_key == NULL)
+            || (dhB->priv_key == NULL) || (dhB->pub_key == NULL))
             goto bad_err;
 
         if ((td->Z_len != (size_t)DH_size(dhA))
@@ -517,7 +517,7 @@ static int run_rfc5114_tests(void)
 
         Z1 = OPENSSL_malloc(DH_size(dhA));
         Z2 = OPENSSL_malloc(DH_size(dhB));
-        if ((!Z1) || (!Z2))
+        if ((Z1 == NULL) || (Z2 == NULL))
             goto bad_err;
         /*
          * Work out shared secrets using both sides and compare with expected
