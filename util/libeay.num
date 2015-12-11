@@ -4729,3 +4729,6 @@ EVP_chacha20_poly1305                   5088	EXIST::FUNCTION:CHACHA,POLY1305
 EVP_chacha20                            5089	EXIST::FUNCTION:CHACHA
 TLS_FEATURE_free                        5093	EXIST::FUNCTION:
 TLS_FEATURE_new                         5094	EXIST::FUNCTION:
+EVP_ENCODE_CTX_free                     5095	EXIST::FUNCTION:
+EVP_ENCODE_CTX_num                      5096	EXIST::FUNCTION:
+EVP_ENCODE_CTX_new                      5097	EXIST::FUNCTION:
