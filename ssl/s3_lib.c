@@ -4466,7 +4466,7 @@ long ssl3_ctx_callback_ctrl(SSL_CTX *ctx, int cmd, void (*fp) (void))
 #ifndef OPENSSL_NO_DH
     case SSL_CTRL_SET_TMP_DH_CB:
         {
-            cxt->cert->dh_tmp_cb = (DH *(*)(SSL *, int, int))fp;
+            ctx->cert->dh_tmp_cb = (DH *(*)(SSL *, int, int))fp;
         }
         break;
 #endif
