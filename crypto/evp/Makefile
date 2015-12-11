@@ -378,7 +378,7 @@ encode.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
 encode.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
 encode.o: ../../include/openssl/ossl_typ.h ../../include/openssl/safestack.h
 encode.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-encode.o: ../include/internal/cryptlib.h encode.c
+encode.o: ../include/internal/cryptlib.h encode.c evp_locl.h
 evp_acnf.o: ../../e_os.h ../../include/openssl/asn1.h
 evp_acnf.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 evp_acnf.o: ../../include/openssl/conf.h ../../include/openssl/crypto.h
