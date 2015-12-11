@@ -494,7 +494,7 @@ static int run_rfc5114_tests(void)
     DH *dhA = NULL, *dhB = NULL;
     unsigned char *Z1 = NULL, *Z2 = NULL;
  
-   for (i = 0; i < (int)OSSL_NELEM(rfctd); i++) {
+    for (i = 0; i < (int)OSSL_NELEM(rfctd); i++) {
         dhA = NULL;
         dhB = NULL;
         Z1 = NULL;
