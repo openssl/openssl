@@ -235,8 +235,8 @@ int dtls1_do_write(SSL *s, int type)
 
     if (s->write_hash) {
         if (s->enc_write_ctx
-            && ((EVP_CIPHER_CTX_mode(s->enc_write_ctx) == EVP_CIPH_GCM_MODE) ||
-                (EVP_CIPHER_CTX_mode(s->enc_write_ctx) == EVP_CIPH_CCM_MODE)))
+            && (EVP_CIPHER_CTX_flags(s->enc_write_ctx) &
+                EVP_CIPH_FLAG_AEAD_CIPHER) != 0)
             mac_size = 0;
         else
             mac_size = EVP_MD_CTX_size(s->write_hash);
