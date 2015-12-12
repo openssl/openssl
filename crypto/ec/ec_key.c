@@ -575,3 +575,23 @@ void EC_KEY_clear_flags(EC_KEY *key, int flags)
 {
     key->flags &= ~flags;
 }
+
+size_t EC_KEY_key2buf(const EC_KEY *key, point_conversion_form_t form,
+                        unsigned char **pbuf, BN_CTX *ctx)
+{
+    if (key == NULL || key->pub_key == NULL || key->group == NULL)
+        return 0;
+    return EC_POINT_point2buf(key->group, key->pub_key, form, pbuf, ctx);
+}
+
+int EC_KEY_oct2key(EC_KEY *key, const unsigned char *buf, size_t len,
+                   BN_CTX *ctx)
+{
+    if (key == NULL || key->group == NULL)
+        return 0;
+    if (key->pub_key == NULL)
+        key->pub_key = EC_POINT_new(key->group);
+    if (key->pub_key == NULL)
+        return 0;
+    return EC_POINT_oct2point(key->group, key->pub_key, buf, len, ctx);
+}
