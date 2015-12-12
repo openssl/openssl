@@ -2421,14 +2421,9 @@ MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
             i = 0;
         }
         if (PACKET_remaining(pkt) != i) {
-            if (!(s->options & SSL_OP_SSLEAY_080_CLIENT_DH_BUG)) {
-                SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE,
-                       SSL_R_DH_PUBLIC_VALUE_LENGTH_IS_WRONG);
-                goto err;
-            } else {
-                *pkt = bookmark;
-                i = PACKET_remaining(pkt);
-            }
+            SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE,
+                   SSL_R_DH_PUBLIC_VALUE_LENGTH_IS_WRONG);
+            goto err;
         }
         if (alg_k & SSL_kDHr)
             idx = SSL_PKEY_DH_RSA;
