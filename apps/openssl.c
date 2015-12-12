@@ -761,8 +761,8 @@ static void list_disabled(void)
 #ifdef OPENSSL_NO_DSA
     BIO_puts(bio_out, "DSA\n");
 #endif
-#if defined(OPENSSL_NO_DTLS1) || defined(OPENSSL_NO_DTLS)
-    BIO_puts(bio_out, "DTLS1\n");
+#if defined(OPENSSL_NO_DTLS)
+    BIO_puts(bio_out, "DTLS\n");
 #endif
 #ifdef OPENSSL_NO_EC
     BIO_puts(bio_out, "EC\n");

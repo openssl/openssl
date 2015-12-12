@@ -823,7 +823,7 @@ my @disablables = (
     "dh",
     "dsa",
     "dso",
-    "dtls1?",
+    "dtls",
     "dynamic[-_]engine",
     "ec",
     "ec2m",
