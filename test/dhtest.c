@@ -90,8 +90,10 @@ int main(int argc, char *argv[])
     DH *a = NULL;
     DH *b = NULL;
     char buf[12] = {0};
-    unsigned char *abuf = NULL, *bbuf = NULL;
-    int i, alen, blen, aout, bout, ret = 1;
+    unsigned char *abuf = NULL;
+    unsigned char *bbuf = NULL;
+    int i, alen, blen, aout, bout;
+    int ret = 1;
     BIO *out = NULL;
 
     CRYPTO_malloc_debug_init();
@@ -113,9 +115,8 @@ int main(int argc, char *argv[])
     if (_cb == NULL)
         goto err;
     BN_GENCB_set(_cb, &cb, out);
-    if (((a = DH_new()) == NULL) || !DH_generate_parameters_ex(a, 64,
-                                                               DH_GENERATOR_5,
-                                                               _cb))
+    if (((a = DH_new()) == NULL)
+        || (!DH_generate_parameters_ex(a, 64, DH_GENERATOR_5, _cb)))
         goto err;
 
     if (!DH_check(a, &i))
@@ -491,15 +492,18 @@ static const rfc5114_td rfctd[] = {
 static int run_rfc5114_tests(void)
 {
     int i;
-    DH *dhA = NULL, *dhB = NULL;
-    unsigned char *Z1 = NULL, *Z2 = NULL;
- 
+    DH *dhA = NULL;
+    DH *dhB = NULL;
+    unsigned char *Z1 = NULL;
+    unsigned char *Z2 = NULL;
+    const rfc5114_td *td = NULL;
+
     for (i = 0; i < (int)OSSL_NELEM(rfctd); i++) {
         dhA = NULL;
         dhB = NULL;
         Z1 = NULL;
         Z2 = NULL;
-        const rfc5114_td *td = rfctd + i;
+        td = rfctd + i;
         /* Set up DH structures setting key components */
         dhA = td->get_param();
         dhB = td->get_param();
