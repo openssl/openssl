@@ -2497,37 +2497,11 @@ MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
         }
 
         if (PACKET_remaining(pkt) == 0L) {
-            /* Client Publickey was in Client Certificate */
-
-            if (alg_k & (SSL_kECDHE | SSL_kECDHEPSK)) {
-                al = SSL_AD_HANDSHAKE_FAILURE;
-                SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE,
-                       SSL_R_MISSING_TMP_ECDH_KEY);
-                goto f_err;
-            }
-            if (((clnt_pub_pkey = X509_get_pubkey(s->session->peer))
-                 == NULL) || (clnt_pub_pkey->type != EVP_PKEY_EC)) {
-                /*
-                 * XXX: For now, we do not support client authentication
-                 * using ECDH certificates so this branch (n == 0L) of the
-                 * code is never executed. When that support is added, we
-                 * ought to ensure the key received in the certificate is
-                 * authorized for key agreement. ECDH_compute_key implicitly
-                 * checks that the two ECDH shares are for the same group.
-                 */
-                al = SSL_AD_HANDSHAKE_FAILURE;
-                SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE,
-                       SSL_R_UNABLE_TO_DECODE_ECDH_CERTS);
-                goto f_err;
-            }
-
-            if (EC_POINT_copy(clnt_ecpoint,
-                              EC_KEY_get0_public_key(clnt_pub_pkey->
-                                                     pkey.ec)) == 0) {
-                SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE, ERR_R_EC_LIB);
-                goto err;
-            }
-            s->statem.no_cert_verify = 1;
+            /* We don't support ECDH client auth */
+            al = SSL_AD_HANDSHAKE_FAILURE;
+            SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE,
+                   SSL_R_MISSING_TMP_ECDH_KEY);
+            goto f_err;
         } else {
             /*
              * Get client's public key from encoded point in the

@@ -2470,35 +2470,7 @@ psk_err:
     else if (alg_k & (SSL_kECDHE | SSL_kECDHr | SSL_kECDHe | SSL_kECDHEPSK)) {
         const EC_GROUP *srvr_group = NULL;
         EC_KEY *tkey;
-        int ecdh_clnt_cert = 0;
         int field_size = 0;
-        /*
-         * Did we send out the client's ECDH share for use in premaster
-         * computation as part of client certificate? If so, set
-         * ecdh_clnt_cert to 1.
-         */
-        if ((alg_k & (SSL_kECDHr | SSL_kECDHe)) && (s->cert != NULL)) {
-            /*-
-             * XXX: For now, we do not support client
-             * authentication using ECDH certificates.
-             * To add such support, one needs to add
-             * code that checks for appropriate
-             * conditions and sets ecdh_clnt_cert to 1.
-             * For example, the cert have an ECC
-             * key on the same curve as the server's
-             * and the key should be authorized for
-             * key agreement.
-             *
-             * One also needs to add code in ssl3_connect
-             * to skip sending the certificate verify
-             * message.
-             *
-             * if ((s->cert->key->privatekey != NULL) &&
-             *     (s->cert->key->privatekey->type ==
-             *      EVP_PKEY_EC) && ...)
-             * ecdh_clnt_cert = 1;
-             */
-        }
 
         if (s->s3->peer_ecdh_tmp != NULL) {
             tkey = s->s3->peer_ecdh_tmp;
@@ -2535,30 +2507,10 @@ psk_err:
             SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE, ERR_R_EC_LIB);
             goto err;
         }
-        if (ecdh_clnt_cert) {
-            /*
-             * Reuse key info from our certificate We only need our
-             * private key to perform the ECDH computation.
-             */
-            const BIGNUM *priv_key;
-            tkey = s->cert->key->privatekey->pkey.ec;
-            priv_key = EC_KEY_get0_private_key(tkey);
-            if (priv_key == NULL) {
-                SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE,
-                       ERR_R_MALLOC_FAILURE);
-                goto err;
-            }
-            if (!EC_KEY_set_private_key(clnt_ecdh, priv_key)) {
-                SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE, ERR_R_EC_LIB);
-                goto err;
-            }
-        } else {
-            /* Generate a new ECDH key pair */
-            if (!(EC_KEY_generate_key(clnt_ecdh))) {
-                SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE,
-                       ERR_R_ECDH_LIB);
-                goto err;
-            }
+        /* Generate a new ECDH key pair */
+        if (!(EC_KEY_generate_key(clnt_ecdh))) {
+            SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE, ERR_R_ECDH_LIB);
+            goto err;
         }
 
         /*
@@ -2581,33 +2533,28 @@ psk_err:
             goto err;
         }
 
-        if (ecdh_clnt_cert) {
-            /* Send empty client key exch message */
-            n = 0;
-        } else {
-            /*
-             * First check the size of encoding and allocate memory
-             * accordingly.
-             */
-            encoded_pt_len =
-                EC_KEY_key2buf(clnt_ecdh, POINT_CONVERSION_UNCOMPRESSED,
+        /*
+         * First check the size of encoding and allocate memory
+         * accordingly.
+         */
+        encoded_pt_len =
+            EC_KEY_key2buf(clnt_ecdh, POINT_CONVERSION_UNCOMPRESSED,
                                &encodedPoint, NULL);
 
-            if (encoded_pt_len == 0) {
-                SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE, ERR_R_EC_LIB);
-                goto err;
-            }
-
-            n = encoded_pt_len;
-
-            *p = n;         /* length of encoded point */
-            /* Encoded point will be copied here */
-            p += 1;
-            /* copy the point */
-            memcpy(p, encodedPoint, n);
-            /* increment n to account for length field */
-            n += 1;
+        if (encoded_pt_len == 0) {
+            SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE, ERR_R_EC_LIB);
+            goto err;
         }
+
+        n = encoded_pt_len;
+
+        *p = n;         /* length of encoded point */
+        /* Encoded point will be copied here */
+        p += 1;
+        /* copy the point */
+        memcpy(p, encodedPoint, n);
+        /* increment n to account for length field */
+        n += 1;
 
         /* Free allocated memory */
         OPENSSL_free(encodedPoint);

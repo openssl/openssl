@@ -4722,14 +4722,8 @@ int ssl3_get_req_cert_type(SSL *s, unsigned char *p)
         p[ret++] = SSL3_CT_DSS_SIGN;
 #endif
 #ifndef OPENSSL_NO_EC
-    if ((alg_k & (SSL_kECDHr | SSL_kECDHe)) && (s->version >= TLS1_VERSION)) {
-        if (nostrict || !(alg_a & SSL_aRSA))
-            p[ret++] = TLS_CT_RSA_FIXED_ECDH;
-        if (nostrict || !(alg_a & SSL_aECDSA))
-            p[ret++] = TLS_CT_ECDSA_FIXED_ECDH;
-    }
     /*
-     * ECDSA certs can be used with RSA cipher suites as well so we don't
+     * ECDSA certs can be used with RSA cipher suites too so we don't
      * need to check for SSL_kECDH or SSL_kECDHE
      */
     if (s->version >= TLS1_VERSION) {
