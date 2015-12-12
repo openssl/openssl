@@ -578,16 +578,8 @@ static ECPARAMETERS *ec_asn1_group2parameters(const EC_GROUP *group,
 
     form = EC_GROUP_get_point_conversion_form(group);
 
-    len = EC_POINT_point2oct(group, point, form, NULL, len, NULL);
+    len = EC_POINT_point2buf(group, point, form, &buffer, NULL);
     if (len == 0) {
-        ECerr(EC_F_EC_ASN1_GROUP2PARAMETERS, ERR_R_EC_LIB);
-        goto err;
-    }
-    if ((buffer = OPENSSL_malloc(len)) == NULL) {
-        ECerr(EC_F_EC_ASN1_GROUP2PARAMETERS, ERR_R_MALLOC_FAILURE);
-        goto err;
-    }
-    if (!EC_POINT_point2oct(group, point, form, buffer, len, NULL)) {
         ECerr(EC_F_EC_ASN1_GROUP2PARAMETERS, ERR_R_EC_LIB);
         goto err;
     }
