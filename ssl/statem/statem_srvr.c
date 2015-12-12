@@ -1823,19 +1823,8 @@ int tls_construct_server_key_exchange(SSL *s)
 #endif
 #ifndef OPENSSL_NO_EC
     if (type & (SSL_kECDHE | SSL_kECDHEPSK)) {
-        const EC_GROUP *group;
         EC_KEY *ecdh = NULL;
-
-        /* Get NID of appropriate shared curve */
-        int nid = tls1_shared_curve(s, -2);
-        if (nid != NID_undef)
-            ecdh = EC_KEY_new_by_curve_name(nid);
-        if (ecdh == NULL) {
-            al = SSL_AD_HANDSHAKE_FAILURE;
-            SSLerr(SSL_F_TLS_CONSTRUCT_SERVER_KEY_EXCHANGE,
-                   SSL_R_MISSING_TMP_ECDH_KEY);
-            goto f_err;
-        }
+        int nid;
 
         if (s->s3->tmp.ecdh != NULL) {
             SSLerr(SSL_F_TLS_CONSTRUCT_SERVER_KEY_EXCHANGE,
@@ -1843,36 +1832,23 @@ int tls_construct_server_key_exchange(SSL *s)
             goto err;
         }
 
-        s->s3->tmp.ecdh = ecdh;
-        if ((EC_KEY_get0_public_key(ecdh) == NULL) ||
-            (EC_KEY_get0_private_key(ecdh) == NULL) ||
-            (s->options & SSL_OP_SINGLE_ECDH_USE)) {
-            if (!EC_KEY_generate_key(ecdh)) {
-                SSLerr(SSL_F_TLS_CONSTRUCT_SERVER_KEY_EXCHANGE,
-                       ERR_R_ECDH_LIB);
-                goto err;
-            }
-        }
-
-        if (((group = EC_KEY_get0_group(ecdh)) == NULL) ||
-            (EC_KEY_get0_public_key(ecdh) == NULL) ||
-            (EC_KEY_get0_private_key(ecdh) == NULL)) {
-            SSLerr(SSL_F_TLS_CONSTRUCT_SERVER_KEY_EXCHANGE, ERR_R_ECDH_LIB);
-            goto err;
-        }
-
-        /*
-         * XXX: For now, we only support ephemeral ECDH keys over named
-         * (not generic) curves. For supported named curves, curve_id is
-         * non-zero.
-         */
-        if ((curve_id =
-             tls1_ec_nid2curve_id(EC_GROUP_get_curve_name(group)))
-            == 0) {
+        /* Get NID of appropriate shared curve */
+        nid = tls1_shared_curve(s, -2);
+        curve_id = tls1_ec_nid2curve_id(nid);
+        if (curve_id == 0) {
             SSLerr(SSL_F_TLS_CONSTRUCT_SERVER_KEY_EXCHANGE,
                    SSL_R_UNSUPPORTED_ELLIPTIC_CURVE);
             goto err;
         }
+        ecdh = EC_KEY_new_by_curve_name(nid);
+        if (ecdh == NULL || !EC_KEY_generate_key(ecdh)) {
+            al = SSL_AD_INTERNAL_ERROR;
+            SSLerr(SSL_F_TLS_CONSTRUCT_SERVER_KEY_EXCHANGE,
+                   ERR_R_EC_LIB);
+            goto f_err;
+        }
+
+        s->s3->tmp.ecdh = ecdh;
 
         /*
          * Encode the public key. First check the size of encoding and
@@ -1887,10 +1863,9 @@ int tls_construct_server_key_exchange(SSL *s)
         }
 
         /*
-         * XXX: For now, we only support named (not generic) curves in
-         * ECDH ephemeral key exchanges. In this situation, we need four
-         * additional bytes to encode the entire ServerECDHParams
-         * structure.
+         * We only support named (not generic) curves in ECDH ephemeral key
+         * exchanges. In this situation, we need four additional bytes to
+         * encode the entire ServerECDHParams structure.
          */
         n += 4 + encodedlen;
 
