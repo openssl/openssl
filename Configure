@@ -1032,6 +1032,7 @@ PROCESS_ARGS:
 			{
 			if (open(IN,"<$Makefile"))
 				{
+				my $config_args_found=0;
 				while (<IN>)
 					{
 					chomp;
@@ -1043,11 +1044,19 @@ PROCESS_ARGS:
 							if (grep(/^reconf/,@argvcopy));
 						print "Reconfiguring with: $argvstring\n";
 						$argv_unprocessed=1;
-						close(IN);
-						last PROCESS_ARGS;
+						$config_args_found=1;
+						}
+					elsif (/^CROSS_COMPILE=\s*(.*)/)
+						{
+						$ENV{CROSS_COMPILE}=$1;
+						}
+					elsif (/^CC=\s*(?:\$\(CROSS_COMPILE\))?(.*?)/)
+						{
+						$ENV{CC}=$1;
 						}
 					}
 				close(IN);
+				last PROCESS_ARGS if ($config_args_found);
 				}
 			die "Insufficient data to reconfigure, please do a normal configuration\n";
 			}
