@@ -2339,11 +2339,11 @@ int ssl_parse_clienthello_tlsext(SSL *s, PACKET *pkt)
  */
 static char ssl_next_proto_validate(PACKET *pkt)
 {
-    unsigned int len;
+    PACKET tmp_protocol;
 
     while (PACKET_remaining(pkt)) {
-        if (!PACKET_get_1(pkt, &len)
-                || !PACKET_forward(pkt, len))
+        if (!PACKET_get_length_prefixed_1(pkt, &tmp_protocol)
+                || PACKET_remaining(&tmp_protocol) == 0)
             return 0;
     }
 
