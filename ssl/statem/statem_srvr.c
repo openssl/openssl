@@ -1721,7 +1721,6 @@ int tls_construct_server_key_exchange(SSL *s)
     unsigned char *encodedPoint = NULL;
     int encodedlen = 0;
     int curve_id = 0;
-    BN_CTX *bn_ctx = NULL;
 #endif
     EVP_PKEY *pkey;
     const EVP_MD *md = NULL;
@@ -1879,32 +1878,13 @@ int tls_construct_server_key_exchange(SSL *s)
          * Encode the public key. First check the size of encoding and
          * allocate memory accordingly.
          */
-        encodedlen = EC_POINT_point2oct(group,
-                                        EC_KEY_get0_public_key(ecdh),
-                                        POINT_CONVERSION_UNCOMPRESSED,
-                                        NULL, 0, NULL);
-
-        encodedPoint = (unsigned char *)
-            OPENSSL_malloc(encodedlen * sizeof(unsigned char));
-        bn_ctx = BN_CTX_new();
-        if ((encodedPoint == NULL) || (bn_ctx == NULL)) {
-            SSLerr(SSL_F_TLS_CONSTRUCT_SERVER_KEY_EXCHANGE,
-                   ERR_R_MALLOC_FAILURE);
-            goto err;
-        }
-
-        encodedlen = EC_POINT_point2oct(group,
-                                        EC_KEY_get0_public_key(ecdh),
-                                        POINT_CONVERSION_UNCOMPRESSED,
-                                        encodedPoint, encodedlen, bn_ctx);
+        encodedlen = EC_KEY_key2buf(ecdh, POINT_CONVERSION_UNCOMPRESSED,
+                                    &encodedPoint, NULL);
 
         if (encodedlen == 0) {
-            SSLerr(SSL_F_TLS_CONSTRUCT_SERVER_KEY_EXCHANGE, ERR_R_ECDH_LIB);
+            SSLerr(SSL_F_TLS_CONSTRUCT_SERVER_KEY_EXCHANGE, ERR_R_EC_LIB);
             goto err;
         }
-
-        BN_CTX_free(bn_ctx);
-        bn_ctx = NULL;
 
         /*
          * XXX: For now, we only support named (not generic) curves in
@@ -2082,7 +2062,6 @@ int tls_construct_server_key_exchange(SSL *s)
  err:
 #ifndef OPENSSL_NO_EC
     OPENSSL_free(encodedPoint);
-    BN_CTX_free(bn_ctx);
 #endif
     EVP_MD_CTX_free(md_ctx);
     ossl_statem_set_error(s);
@@ -2176,9 +2155,7 @@ MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
 #endif
 #ifndef OPENSSL_NO_EC
     EC_KEY *srvr_ecdh = NULL;
-    EVP_PKEY *clnt_pub_pkey = NULL;
     EC_POINT *clnt_ecpoint = NULL;
-    BN_CTX *bn_ctx = NULL;
 #endif
     PACKET enc_premaster;
     unsigned char *data, *rsa_decrypt = NULL;
@@ -2581,11 +2558,6 @@ MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
              * Get client's public key from encoded point in the
              * ClientKeyExchange message.
              */
-            if ((bn_ctx = BN_CTX_new()) == NULL) {
-                SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE,
-                       ERR_R_MALLOC_FAILURE);
-                goto err;
-            }
 
             /* Get encoded point length */
             if (!PACKET_get_1(pkt, &i)) {
@@ -2599,7 +2571,7 @@ MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
                 SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE, ERR_R_EC_LIB);
                 goto err;
             }
-            if (EC_POINT_oct2point(group, clnt_ecpoint, data, i, bn_ctx) == 0) {
+            if (EC_POINT_oct2point(group, clnt_ecpoint, data, i, NULL) == 0) {
                 SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE, ERR_R_EC_LIB);
                 goto err;
             }
@@ -2624,10 +2596,8 @@ MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
             goto err;
         }
 
-        EVP_PKEY_free(clnt_pub_pkey);
         EC_POINT_free(clnt_ecpoint);
         EC_KEY_free(srvr_ecdh);
-        BN_CTX_free(bn_ctx);
         EC_KEY_free(s->s3->tmp.ecdh);
         s->s3->tmp.ecdh = NULL;
 
@@ -2780,10 +2750,8 @@ MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
  err:
 #endif
 #ifndef OPENSSL_NO_EC
-    EVP_PKEY_free(clnt_pub_pkey);
     EC_POINT_free(clnt_ecpoint);
     EC_KEY_free(srvr_ecdh);
-    BN_CTX_free(bn_ctx);
     OPENSSL_free(rsa_decrypt);
 #endif
 #ifndef OPENSSL_NO_PSK
