@@ -402,6 +402,11 @@ static int ec_copy_parameters(EVP_PKEY *to, const EVP_PKEY *from)
     EC_GROUP *group = EC_GROUP_dup(EC_KEY_get0_group(from->pkey.ec));
     if (group == NULL)
         return 0;
+    if (to->pkey.ec == NULL) {
+        to->pkey.ec = EC_KEY_new();
+        if (to->pkey.ec == NULL)
+            return 0;
+    }
     if (EC_KEY_set_group(to->pkey.ec, group) == 0)
         return 0;
     EC_GROUP_free(group);
