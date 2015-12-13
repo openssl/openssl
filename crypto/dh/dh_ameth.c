@@ -507,6 +507,11 @@ DH *DHparams_dup(DH *dh)
 
 static int dh_copy_parameters(EVP_PKEY *to, const EVP_PKEY *from)
 {
+    if (to->pkey.dh == NULL) {
+        to->pkey.dh = DH_new();
+        if (to->pkey.dh == NULL)
+            return 0;
+    }
     return int_dh_param_copy(to->pkey.dh, from->pkey.dh,
                              from->ameth == &dhx_asn1_meth);
 }
