@@ -66,17 +66,39 @@
 #endif
 #include "evp_locl.h"
 
-void EVP_CIPHER_CTX_init(EVP_CIPHER_CTX *ctx)
+int EVP_CIPHER_CTX_reset(EVP_CIPHER_CTX *c)
 {
-    memset(ctx, 0, sizeof(*ctx));
+    if (c == NULL)
+        return 1;
+    if (c->cipher != NULL) {
+        if (c->cipher->cleanup && !c->cipher->cleanup(c))
+            return 0;
+        /* Cleanse cipher context data */
+        if (c->cipher_data && c->cipher->ctx_size)
+            OPENSSL_cleanse(c->cipher_data, c->cipher->ctx_size);
+    }
+    OPENSSL_free(c->cipher_data);
+#ifndef OPENSSL_NO_ENGINE
+    if (c->engine)
+        /*
+         * The EVP_CIPHER we used belongs to an ENGINE, release the
+         * functional reference we held for this reason.
+         */
+        ENGINE_finish(c->engine);
+#endif
+    memset(c, 0, sizeof(*c));
+    return 1;
 }
 
 EVP_CIPHER_CTX *EVP_CIPHER_CTX_new(void)
 {
-    EVP_CIPHER_CTX *ctx = OPENSSL_malloc(sizeof(*ctx));
-    if (ctx != NULL)
-        EVP_CIPHER_CTX_init(ctx);
-    return ctx;
+    return OPENSSL_zalloc(sizeof(EVP_CIPHER_CTX));
+}
+
+void EVP_CIPHER_CTX_free(EVP_CIPHER_CTX *ctx)
+{
+    EVP_CIPHER_CTX_reset(ctx);
+    OPENSSL_free(ctx);
 }
 
 int EVP_CipherInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
@@ -513,36 +535,6 @@ int EVP_DecryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
     } else
         *outl = 0;
     return (1);
-}
-
-void EVP_CIPHER_CTX_free(EVP_CIPHER_CTX *ctx)
-{
-    EVP_CIPHER_CTX_cleanup(ctx);
-    OPENSSL_free(ctx);
-}
-
-int EVP_CIPHER_CTX_cleanup(EVP_CIPHER_CTX *c)
-{
-    if (!c)
-        return 0;
-    if (c->cipher != NULL) {
-        if (c->cipher->cleanup && !c->cipher->cleanup(c))
-            return 0;
-        /* Cleanse cipher context data */
-        if (c->cipher_data && c->cipher->ctx_size)
-            OPENSSL_cleanse(c->cipher_data, c->cipher->ctx_size);
-    }
-    OPENSSL_free(c->cipher_data);
-#ifndef OPENSSL_NO_ENGINE
-    if (c->engine)
-        /*
-         * The EVP_CIPHER we used belongs to an ENGINE, release the
-         * functional reference we held for this reason.
-         */
-        ENGINE_finish(c->engine);
-#endif
-    memset(c, 0, sizeof(*c));
-    return 1;
 }
 
 int EVP_CIPHER_CTX_set_key_length(EVP_CIPHER_CTX *c, int keylen)
