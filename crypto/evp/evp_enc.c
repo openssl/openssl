@@ -104,8 +104,7 @@ void EVP_CIPHER_CTX_free(EVP_CIPHER_CTX *ctx)
 int EVP_CipherInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
                    const unsigned char *key, const unsigned char *iv, int enc)
 {
-    if (cipher)
-        EVP_CIPHER_CTX_init(ctx);
+    EVP_CIPHER_CTX_reset(ctx);
     return EVP_CipherInit_ex(ctx, cipher, NULL, key, iv, enc);
 }
 
@@ -139,7 +138,7 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
          */
         if (ctx->cipher) {
             unsigned long flags = ctx->flags;
-            EVP_CIPHER_CTX_cleanup(ctx);
+            EVP_CIPHER_CTX_reset(ctx);
             /* Restore encrypt and flags */
             ctx->encrypt = enc;
             ctx->flags = flags;
@@ -605,7 +604,7 @@ int EVP_CIPHER_CTX_copy(EVP_CIPHER_CTX *out, const EVP_CIPHER_CTX *in)
     }
 #endif
 
-    EVP_CIPHER_CTX_cleanup(out);
+    EVP_CIPHER_CTX_reset(out);
     memcpy(out, in, sizeof(*out));
 
     if (in->cipher_data && in->cipher->ctx_size) {
