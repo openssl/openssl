@@ -587,7 +587,7 @@ int ssl3_enc(SSL *s, int send)
         rec->input = rec->data;
     } else {
         l = rec->length;
-        bs = EVP_CIPHER_block_size(ds->cipher);
+        bs = EVP_CIPHER_CTX_block_size(ds);
 
         /* COMPRESS */
 
@@ -690,9 +690,9 @@ int tls1_enc(SSL *s, int send)
         ret = 1;
     } else {
         l = rec->length;
-        bs = EVP_CIPHER_block_size(ds->cipher);
+        bs = EVP_CIPHER_CTX_block_size(ds);
 
-        if (EVP_CIPHER_flags(ds->cipher) & EVP_CIPH_FLAG_AEAD_CIPHER) {
+        if (EVP_CIPHER_flags(EVP_CIPHER_CTX_cipher(ds)) & EVP_CIPH_FLAG_AEAD_CIPHER) {
             unsigned char buf[EVP_AEAD_TLS1_AAD_LEN], *seq;
 
             seq = send ? RECORD_LAYER_get_write_sequence(&s->rlayer)
@@ -746,7 +746,7 @@ int tls1_enc(SSL *s, int send)
         }
 
         i = EVP_Cipher(ds, rec->data, rec->input, l);
-        if ((EVP_CIPHER_flags(ds->cipher) & EVP_CIPH_FLAG_CUSTOM_CIPHER)
+        if ((EVP_CIPHER_flags(EVP_CIPHER_CTX_cipher(ds)) & EVP_CIPH_FLAG_CUSTOM_CIPHER)
             ? (i < 0)
             : (i == 0))
             return -1;          /* AEAD can fail to verify MAC */
@@ -1064,7 +1064,7 @@ int tls1_cbc_remove_padding(const SSL *s,
 
     padding_length = rec->data[rec->length - 1];
 
-    if (EVP_CIPHER_flags(s->enc_read_ctx->cipher) & EVP_CIPH_FLAG_AEAD_CIPHER) {
+    if (EVP_CIPHER_flags(EVP_CIPHER_CTX_cipher(s->enc_read_ctx)) & EVP_CIPH_FLAG_AEAD_CIPHER) {
         /* padding is already verified */
         rec->length -= padding_length + 1;
         return 1;

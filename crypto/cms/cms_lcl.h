@@ -210,7 +210,7 @@ struct CMS_KeyAgreeRecipientInfo_st {
     /* Public key context associated with current operation */
     EVP_PKEY_CTX *pctx;
     /* Cipher context for CEK wrapping */
-    EVP_CIPHER_CTX ctx;
+    EVP_CIPHER_CTX *ctx;
 };
 
 struct CMS_OriginatorIdentifierOrKey_st {

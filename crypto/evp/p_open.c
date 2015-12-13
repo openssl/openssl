@@ -74,7 +74,7 @@ int EVP_OpenInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
     int i, size = 0, ret = 0;
 
     if (type) {
-        EVP_CIPHER_CTX_init(ctx);
+        EVP_CIPHER_CTX_reset(ctx);
         if (!EVP_DecryptInit_ex(ctx, type, NULL, NULL, NULL))
             return 0;
     }

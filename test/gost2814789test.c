@@ -1208,7 +1208,7 @@ int main(int argc, char *argv[])
     int ignore = 0;
     ENGINE *impl = NULL;
     EVP_MD_CTX *mctx;
-    EVP_CIPHER_CTX ectx;
+    EVP_CIPHER_CTX *ectx;
     EVP_PKEY *mac_key;
     byte bDerive[EVP_MAX_KEY_LENGTH];
     byte bTest[G89_MAX_TC_LEN];
@@ -1357,11 +1357,11 @@ int main(int argc, char *argv[])
             }
             ctype = cp_g89cnt;
  engine_cipher_check:
-            EVP_CIPHER_CTX_init(&ectx);
-            EVP_EncryptInit_ex(&ectx, ctype, impl, bDerive, tcs[t].bIV);
+            ectx = EVP_CIPHER_CTX_new();
+            EVP_EncryptInit_ex(ectx, ctype, impl, bDerive, tcs[t].bIV);
             if (G89_MAX_TC_LEN >= tcs[t].ullLen) {
                 enlu = sizeof(bTest);
-                EVP_EncryptUpdate(&ectx, bTest, &enlu,
+                EVP_EncryptUpdate(ectx, bTest, &enlu,
                                   tcs[t].bIn, (int)tcs[t].ullLen);
                 l = (size_t)tcs[t].ullLen;
             } else {
@@ -1370,18 +1370,18 @@ int main(int argc, char *argv[])
                     printf("B");
                     fflush(NULL);
                     enlu = sizeof(bTS);
-                    EVP_EncryptUpdate(&ectx, bTS, &enlu, bZB, sizeof(bZB));
+                    EVP_EncryptUpdate(ectx, bTS, &enlu, bZB, sizeof(bZB));
                 }
                 printf("b" FMT64 "/" FMT64, ullLeft, tcs[t].ullLen);
                 fflush(NULL);
-                EVP_EncryptUpdate(&ectx, bTS, &enlu, bZB, (int)ullLeft);
+                EVP_EncryptUpdate(ectx, bTS, &enlu, bZB, (int)ullLeft);
                 memcpy(bTest, &bTS[enlu - 16], 16);
                 enlu = (int)tcs[t].ullLen;
                 l = 16;
             }
             enlf = sizeof(bTest1);
-            EVP_EncryptFinal_ex(&ectx, bTest1, &enlf);
-            EVP_CIPHER_CTX_cleanup(&ectx);
+            EVP_EncryptFinal_ex(ectx, bTest1, &enlf);
+            EVP_CIPHER_CTX_free(ectx);
             break;
         case G89_IMIT:
             if (0 != strcmp("id-Gost28147-89-CryptoPro-A-ParamSet",
