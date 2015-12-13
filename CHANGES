@@ -210,6 +210,10 @@
   *) Added HTTP GET support to the ocsp command.
      [Rich Salz]
 
+  *) Changed default digest for the dgst and enc commands from MD5 to
+     sha256
+     [Rich Salz]
+
   *) RAND_pseudo_bytes has been deprecated. Users should use RAND_bytes instead.
      [Matt Caswell]
 
