@@ -568,7 +568,7 @@ struct ec_key_method_st {
     int (*set_public)(EC_KEY *key, const EC_POINT *pub_key);
     int (*keygen)(EC_KEY *key);
     int (*compute_key)(void *out, size_t outlen, const EC_POINT *pub_key,
-                       EC_KEY *ecdh,
+                       const EC_KEY *ecdh,
                        void *(*KDF) (const void *in, size_t inlen,
                                      void *out, size_t *outlen));
 
@@ -591,7 +591,7 @@ struct ec_key_method_st {
 
 int ossl_ec_key_gen(EC_KEY *eckey);
 int ossl_ecdh_compute_key(void *out, size_t outlen, const EC_POINT *pub_key,
-                          EC_KEY *ecdh,
+                          const EC_KEY *ecdh,
                           void *(*KDF) (const void *in, size_t inlen,
                                         void *out, size_t *outlen));
 
