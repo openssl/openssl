@@ -428,24 +428,6 @@ typedef struct evp_cipher_info_st {
     unsigned char iv[EVP_MAX_IV_LENGTH];
 } EVP_CIPHER_INFO;
 
-struct evp_cipher_ctx_st {
-    const EVP_CIPHER *cipher;
-    ENGINE *engine;             /* functional reference if 'cipher' is
-                                 * ENGINE-provided */
-    int encrypt;                /* encrypt or decrypt */
-    int buf_len;                /* number we have left */
-    unsigned char oiv[EVP_MAX_IV_LENGTH]; /* original iv */
-    unsigned char iv[EVP_MAX_IV_LENGTH]; /* working iv */
-    unsigned char buf[EVP_MAX_BLOCK_LENGTH]; /* saved partial block */
-    int num;                    /* used by cfb/ofb/ctr mode */
-    void *app_data;             /* application stuff */
-    int key_len;                /* May change for variable length cipher */
-    unsigned long flags;        /* Various flags */
-    void *cipher_data;          /* per EVP data */
-    int final_used;
-    int block_mask;
-    unsigned char final[EVP_MAX_BLOCK_LENGTH]; /* possible final block */
-} /* EVP_CIPHER_CTX */ ;
 
 /* Password based encryption function */
 typedef int (EVP_PBE_KEYGEN) (EVP_CIPHER_CTX *ctx, const char *pass,
@@ -703,10 +685,10 @@ int EVP_DecodeFinal(EVP_ENCODE_CTX *ctx, unsigned
                     char *out, int *outl);
 int EVP_DecodeBlock(unsigned char *t, const unsigned char *f, int n);
 
-void EVP_CIPHER_CTX_init(EVP_CIPHER_CTX *a);
-int EVP_CIPHER_CTX_cleanup(EVP_CIPHER_CTX *a);
 EVP_CIPHER_CTX *EVP_CIPHER_CTX_new(void);
-void EVP_CIPHER_CTX_free(EVP_CIPHER_CTX *a);
+int EVP_CIPHER_CTX_reset(EVP_CIPHER_CTX *c);
+void EVP_CIPHER_CTX_free(EVP_CIPHER_CTX *c);
+#define EVP_CIPHER_CTX_init(c) EVP_CIPHER_CTX_reset((c))
 int EVP_CIPHER_CTX_set_key_length(EVP_CIPHER_CTX *x, int keylen);
 int EVP_CIPHER_CTX_set_padding(EVP_CIPHER_CTX *c, int pad);
 int EVP_CIPHER_CTX_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr);
