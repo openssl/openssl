@@ -250,7 +250,7 @@ int rsa_main(int argc, char **argv)
     }
     argc = opt_num_rest();
     argv = opt_rest();
-    private = text || (!pubout && !noout) ? 1 : 0;
+    private = (text && !pubin) || (!pubout && !noout) ? 1 : 0;
 
     if (!app_passwd(passinarg, passoutarg, &passin, &passout)) {
         BIO_printf(bio_err, "Error getting passwords\n");
@@ -293,7 +293,7 @@ int rsa_main(int argc, char **argv)
         goto end;
 
     if (text) {
-        assert(private);
+        assert(pubin || private);
         if (!RSA_print(out, rsa, 0)) {
             perror(outfile);
             ERR_print_errors(bio_err);
@@ -364,11 +364,17 @@ int rsa_main(int argc, char **argv)
         EVP_PKEY *pk;
         pk = EVP_PKEY_new();
         EVP_PKEY_set1_RSA(pk, rsa);
-        if (outformat == FORMAT_PVK)
+        if (outformat == FORMAT_PVK) {
+            if (pubin) {
+                BIO_printf(bio_err, "PVK form impossible with public key input\n");
+                EVP_PKEY_free(pk);
+                goto end;
+            }
+            assert(private);
             i = i2b_PVK_bio(out, pk, pvk_encr, 0, passout);
-        else if (pubin || pubout)
+        } else if (pubin || pubout) {
             i = i2b_PublicKey_bio(out, pk);
-        else {
+        } else {
             assert(private);
             i = i2b_PrivateKey_bio(out, pk);
         }
