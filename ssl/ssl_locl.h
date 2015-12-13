@@ -1241,7 +1241,7 @@ typedef struct ssl3_state_st {
         DH *dh;
 #  endif
 #  ifndef OPENSSL_NO_EC
-        EC_KEY *ecdh;           /* holds short lived ECDH key */
+        EVP_PKEY *pkey;            /* holds short lived ECDH key */
 #  endif
         /* used for certificate requests */
         int cert_req;

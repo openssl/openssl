@@ -3760,7 +3760,8 @@ void ssl3_free(SSL *s)
     DH_free(s->s3->peer_dh_tmp);
 #endif
 #ifndef OPENSSL_NO_EC
-    EC_KEY_free(s->s3->tmp.ecdh);
+    EVP_PKEY_free(s->s3->tmp.pkey);
+    s->s3->tmp.pkey = NULL;
     EC_KEY_free(s->s3->peer_ecdh_tmp);
 #endif
 
@@ -3798,8 +3799,8 @@ void ssl3_clear(SSL *s)
     s->s3->peer_dh_tmp = NULL;
 #endif
 #ifndef OPENSSL_NO_EC
-    EC_KEY_free(s->s3->tmp.ecdh);
-    s->s3->tmp.ecdh = NULL;
+    EVP_PKEY_free(s->s3->tmp.pkey);
+    s->s3->tmp.pkey = NULL;
     EC_KEY_free(s->s3->peer_ecdh_tmp);
     s->s3->peer_ecdh_tmp = NULL;
     s->s3->is_probably_safari = 0;
