@@ -2129,7 +2129,6 @@ MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
     DH *dh_srvr, *dh_clnt = NULL;
 #endif
 #ifndef OPENSSL_NO_EC
-    EC_KEY *srvr_ecdh = NULL;
     EC_POINT *clnt_ecpoint = NULL;
 #endif
     PACKET enc_premaster;
@@ -2460,14 +2459,7 @@ MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
         int field_size = 0;
         const EC_KEY *tkey;
         const EC_GROUP *group;
-        const BIGNUM *priv_key;
         unsigned char *shared;
-
-        /* initialize structures for server's ECDH key pair */
-        if ((srvr_ecdh = EC_KEY_new()) == NULL) {
-            SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE, ERR_R_MALLOC_FAILURE);
-            goto err;
-        }
 
         /* Let's get server private key and group information */
         if (alg_k & (SSL_kECDHr | SSL_kECDHe)) {
@@ -2482,13 +2474,6 @@ MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
         }
 
         group = EC_KEY_get0_group(tkey);
-        priv_key = EC_KEY_get0_private_key(tkey);
-
-        if (!EC_KEY_set_group(srvr_ecdh, group) ||
-            !EC_KEY_set_private_key(srvr_ecdh, priv_key)) {
-            SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE, ERR_R_EC_LIB);
-            goto err;
-        }
 
         /* Let's get client's public key */
         if ((clnt_ecpoint = EC_POINT_new(group)) == NULL) {
@@ -2538,7 +2523,7 @@ MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
             goto err;
         }
         i = ECDH_compute_key(shared, (field_size + 7) / 8, clnt_ecpoint,
-                             srvr_ecdh, NULL);
+                             tkey, NULL);
         if (i <= 0) {
             SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE, ERR_R_ECDH_LIB);
             OPENSSL_free(shared);
@@ -2546,7 +2531,6 @@ MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
         }
 
         EC_POINT_free(clnt_ecpoint);
-        EC_KEY_free(srvr_ecdh);
         EC_KEY_free(s->s3->tmp.ecdh);
         s->s3->tmp.ecdh = NULL;
 
@@ -2700,7 +2684,6 @@ MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
 #endif
 #ifndef OPENSSL_NO_EC
     EC_POINT_free(clnt_ecpoint);
-    EC_KEY_free(srvr_ecdh);
     OPENSSL_free(rsa_decrypt);
 #endif
 #ifndef OPENSSL_NO_PSK
