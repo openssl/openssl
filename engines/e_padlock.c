@@ -361,7 +361,7 @@ static int padlock_aes_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 #    define NEAREST_ALIGNED(ptr) ( (unsigned char *)(ptr) +         \
         ( (0x10 - ((size_t)(ptr) & 0x0F)) & 0x0F )      )
 #    define ALIGNED_CIPHER_DATA(ctx) ((struct padlock_cipher_data *)\
-        NEAREST_ALIGNED(ctx->cipher_data))
+        NEAREST_ALIGNED(EVP_CIPHER_CTX_cipher_data(ctx)))
 
 static int
 padlock_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg,
@@ -378,9 +378,9 @@ padlock_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg,
     struct padlock_cipher_data *cdata = ALIGNED_CIPHER_DATA(ctx);
     int ret;
 
-    memcpy(cdata->iv, ctx->iv, AES_BLOCK_SIZE);
+    memcpy(cdata->iv, EVP_CIPHER_CTX_iv(ctx), AES_BLOCK_SIZE);
     if ((ret = padlock_cbc_encrypt(out_arg, in_arg, cdata, nbytes)))
-        memcpy(ctx->iv, cdata->iv, AES_BLOCK_SIZE);
+        memcpy(EVP_CIPHER_CTX_iv_noconst(ctx), cdata->iv, AES_BLOCK_SIZE);
     return ret;
 }
 
@@ -391,13 +391,13 @@ padlock_cfb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg,
     struct padlock_cipher_data *cdata = ALIGNED_CIPHER_DATA(ctx);
     size_t chunk;
 
-    if ((chunk = ctx->num)) {   /* borrow chunk variable */
-        unsigned char *ivp = ctx->iv;
+    if ((chunk = EVP_CIPHER_CTX_num(ctx))) {   /* borrow chunk variable */
+        unsigned char *ivp = EVP_CIPHER_CTX_iv_noconst(ctx);
 
         if (chunk >= AES_BLOCK_SIZE)
             return 0;           /* bogus value */
 
-        if (ctx->encrypt)
+        if (EVP_CIPHER_CTX_encrypting(ctx))
             while (chunk < AES_BLOCK_SIZE && nbytes != 0) {
                 ivp[chunk] = *(out_arg++) = *(in_arg++) ^ ivp[chunk];
                 chunk++, nbytes--;
@@ -408,13 +408,13 @@ padlock_cfb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg,
                 ivp[chunk++] = c, nbytes--;
             }
 
-        ctx->num = chunk % AES_BLOCK_SIZE;
+        EVP_CIPHER_CTX_set_num(ctx, chunk % AES_BLOCK_SIZE);
     }
 
     if (nbytes == 0)
         return 1;
 
-    memcpy(cdata->iv, ctx->iv, AES_BLOCK_SIZE);
+    memcpy(cdata->iv, EVP_CIPHER_CTX_iv(ctx), AES_BLOCK_SIZE);
 
     if ((chunk = nbytes & ~(AES_BLOCK_SIZE - 1))) {
         if (!padlock_cfb_encrypt(out_arg, in_arg, cdata, chunk))
@@ -427,7 +427,7 @@ padlock_cfb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg,
 
         out_arg += chunk;
         in_arg += chunk;
-        ctx->num = nbytes;
+        EVP_CIPHER_CTX_set_num(ctx, nbytes);
         if (cdata->cword.b.encdec) {
             cdata->cword.b.encdec = 0;
             padlock_reload_key();
@@ -450,7 +450,7 @@ padlock_cfb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg,
         }
     }
 
-    memcpy(ctx->iv, cdata->iv, AES_BLOCK_SIZE);
+    memcpy(EVP_CIPHER_CTX_iv_noconst(ctx), cdata->iv, AES_BLOCK_SIZE);
 
     return 1;
 }
@@ -465,8 +465,8 @@ padlock_ofb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg,
     /*
      * ctx->num is maintained in byte-oriented modes, such as CFB and OFB...
      */
-    if ((chunk = ctx->num)) {   /* borrow chunk variable */
-        unsigned char *ivp = ctx->iv;
+    if ((chunk = EVP_CIPHER_CTX_num(ctx))) {   /* borrow chunk variable */
+        unsigned char *ivp = EVP_CIPHER_CTX_iv_noconst(ctx);
 
         if (chunk >= AES_BLOCK_SIZE)
             return 0;           /* bogus value */
@@ -476,13 +476,13 @@ padlock_ofb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg,
             chunk++, nbytes--;
         }
 
-        ctx->num = chunk % AES_BLOCK_SIZE;
+        EVP_CIPHER_CTX_set_num(ctx, chunk % AES_BLOCK_SIZE);
     }
 
     if (nbytes == 0)
         return 1;
 
-    memcpy(cdata->iv, ctx->iv, AES_BLOCK_SIZE);
+    memcpy(cdata->iv, EVP_CIPHER_CTX_iv(ctx), AES_BLOCK_SIZE);
 
     if ((chunk = nbytes & ~(AES_BLOCK_SIZE - 1))) {
         if (!padlock_ofb_encrypt(out_arg, in_arg, cdata, chunk))
@@ -495,7 +495,7 @@ padlock_ofb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg,
 
         out_arg += chunk;
         in_arg += chunk;
-        ctx->num = nbytes;
+        EVP_CIPHER_CTX_set_num(ctx, nbytes);
         padlock_reload_key();   /* empirically found */
         padlock_aes_block(ivp, ivp, cdata);
         padlock_reload_key();   /* empirically found */
@@ -505,7 +505,7 @@ padlock_ofb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg,
         }
     }
 
-    memcpy(ctx->iv, cdata->iv, AES_BLOCK_SIZE);
+    memcpy(EVP_CIPHER_CTX_iv_noconst(ctx), cdata->iv, AES_BLOCK_SIZE);
 
     return 1;
 }
@@ -524,13 +524,14 @@ padlock_ctr_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg,
                    const unsigned char *in_arg, size_t nbytes)
 {
     struct padlock_cipher_data *cdata = ALIGNED_CIPHER_DATA(ctx);
-    unsigned int num = ctx->num;
+    unsigned int num = EVP_CIPHER_CTX_num(ctx);
 
     CRYPTO_ctr128_encrypt_ctr32(in_arg, out_arg, nbytes,
-                                cdata, ctx->iv, ctx->buf, &num,
+                                cdata, EVP_CIPHER_CTX_iv_noconst(ctx),
+                                EVP_CIPHER_CTX_buf_noconst(ctx), &num,
                                 (ctr128_f) padlock_ctr32_encrypt_glue);
 
-    ctx->num = (size_t)num;
+    EVP_CIPHER_CTX_set_num(ctx, (size_t)num);
     return 1;
 }
 
@@ -667,7 +668,7 @@ padlock_aes_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
     if (mode == EVP_CIPH_OFB_MODE || mode == EVP_CIPH_CTR_MODE)
         cdata->cword.b.encdec = 0;
     else
-        cdata->cword.b.encdec = (ctx->encrypt == 0);
+        cdata->cword.b.encdec = (EVP_CIPHER_CTX_encrypting(ctx) == 0);
     cdata->cword.b.rounds = 10 + (key_len - 128) / 32;
     cdata->cword.b.ksize = (key_len - 128) / 64;
 

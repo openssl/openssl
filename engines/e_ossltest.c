@@ -287,7 +287,7 @@ static const EVP_CIPHER ossltest_aes_128_cbc = { \
     EVP_CIPH_FLAG_DEFAULT_ASN1 | EVP_CIPH_CBC_MODE,
     ossltest_aes128_init_key,
     ossltest_aes128_cbc_cipher,
-    NULL,
+    NULL,  /* FIXME: when EVP_CIPHER goes opaque, this should be set to EVP_aes_128_cbc()->ctx_size */
     0, /* We don't know the size of cipher_data at compile time */
     NULL,NULL,NULL,NULL
 };
@@ -569,14 +569,15 @@ static int digest_sha512_final(EVP_MD_CTX *ctx, unsigned char *md)
 int ossltest_aes128_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
                              const unsigned char *iv, int enc)
 {
-    if (ctx->cipher_data == NULL) {
+    if (EVP_CIPHER_CTX_cipher_data(ctx) == NULL) {
         /*
          * Normally cipher_data is allocated automatically for an engine but
          * we don't know the ctx_size as compile time so we have to do it at
          * run time
          */
-        ctx->cipher_data = OPENSSL_zalloc(EVP_aes_128_cbc()->ctx_size);
-        if (ctx->cipher_data == NULL) {
+        /* FIXME: when EVP_CIPHER goes opaque, we won't need this trickery any more */
+        EVP_CIPHER_CTX_new_cipher_data(ctx, EVP_aes_128_cbc()->ctx_size);
+        if (EVP_CIPHER_CTX_cipher_data(ctx) == NULL) {
             OSSLTESTerr(OSSLTEST_F_OSSLTEST_AES128_INIT_KEY,
                         ERR_R_MALLOC_FAILURE);
             return 0;
