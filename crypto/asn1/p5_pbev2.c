@@ -93,7 +93,7 @@ X509_ALGOR *PKCS5_pbe2_set_iv(const EVP_CIPHER *cipher, int iter,
 {
     X509_ALGOR *scheme = NULL, *kalg = NULL, *ret = NULL;
     int alg_nid, keylen;
-    EVP_CIPHER_CTX ctx;
+    EVP_CIPHER_CTX *ctx = NULL;
     unsigned char iv[EVP_MAX_IV_LENGTH];
     PBE2PARAM *pbe2 = NULL;
     ASN1_OBJECT *obj;
@@ -123,14 +123,15 @@ X509_ALGOR *PKCS5_pbe2_set_iv(const EVP_CIPHER *cipher, int iter,
             goto err;
     }
 
-    EVP_CIPHER_CTX_init(&ctx);
+    ctx = EVP_CIPHER_CTX_new();
+    if (ctx == NULL)
+        goto merr;
 
     /* Dummy cipherinit to just setup the IV, and PRF */
-    if (!EVP_CipherInit_ex(&ctx, cipher, NULL, NULL, iv, 0))
+    if (!EVP_CipherInit_ex(ctx, cipher, NULL, NULL, iv, 0))
         goto err;
-    if (EVP_CIPHER_param_to_asn1(&ctx, scheme->parameter) < 0) {
+    if (EVP_CIPHER_param_to_asn1(ctx, scheme->parameter) < 0) {
         ASN1err(ASN1_F_PKCS5_PBE2_SET_IV, ASN1_R_ERROR_SETTING_CIPHER_PARAMS);
-        EVP_CIPHER_CTX_cleanup(&ctx);
         goto err;
     }
     /*
@@ -138,11 +139,12 @@ X509_ALGOR *PKCS5_pbe2_set_iv(const EVP_CIPHER *cipher, int iter,
      * here: just means use default PRF.
      */
     if ((prf_nid == -1) &&
-        EVP_CIPHER_CTX_ctrl(&ctx, EVP_CTRL_PBE_PRF_NID, 0, &prf_nid) <= 0) {
+        EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_PBE_PRF_NID, 0, &prf_nid) <= 0) {
         ERR_clear_error();
         prf_nid = NID_hmacWithSHA1;
     }
-    EVP_CIPHER_CTX_cleanup(&ctx);
+    EVP_CIPHER_CTX_free(ctx);
+    ctx = NULL;
 
     /* If its RC2 then we'd better setup the key length */
 
@@ -182,6 +184,7 @@ X509_ALGOR *PKCS5_pbe2_set_iv(const EVP_CIPHER *cipher, int iter,
     ASN1err(ASN1_F_PKCS5_PBE2_SET_IV, ERR_R_MALLOC_FAILURE);
 
  err:
+    EVP_CIPHER_CTX_free(ctx);
     PBE2PARAM_free(pbe2);
     /* Note 'scheme' is freed as part of pbe2 */
     X509_ALGOR_free(kalg);
