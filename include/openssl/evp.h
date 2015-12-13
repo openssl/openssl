@@ -966,25 +966,30 @@ void *EVP_PKEY_get0(EVP_PKEY *pkey);
 # ifndef OPENSSL_NO_RSA
 struct rsa_st;
 int EVP_PKEY_set1_RSA(EVP_PKEY *pkey, struct rsa_st *key);
+struct rsa_st *EVP_PKEY_get0_RSA(EVP_PKEY *pkey);
 struct rsa_st *EVP_PKEY_get1_RSA(EVP_PKEY *pkey);
 # endif
 # ifndef OPENSSL_NO_DSA
 struct dsa_st;
 int EVP_PKEY_set1_DSA(EVP_PKEY *pkey, struct dsa_st *key);
+struct dsa_st *EVP_PKEY_get0_DSA(EVP_PKEY *pkey);
 struct dsa_st *EVP_PKEY_get1_DSA(EVP_PKEY *pkey);
 # endif
 # ifndef OPENSSL_NO_DH
 struct dh_st;
 int EVP_PKEY_set1_DH(EVP_PKEY *pkey, struct dh_st *key);
+struct dh_st *EVP_PKEY_get0_DH(EVP_PKEY *pkey);
 struct dh_st *EVP_PKEY_get1_DH(EVP_PKEY *pkey);
 # endif
 # ifndef OPENSSL_NO_EC
 struct ec_key_st;
 int EVP_PKEY_set1_EC_KEY(EVP_PKEY *pkey, struct ec_key_st *key);
+struct ec_key_st *EVP_PKEY_get0_EC_KEY(EVP_PKEY *pkey);
 struct ec_key_st *EVP_PKEY_get1_EC_KEY(EVP_PKEY *pkey);
 # endif
 
 EVP_PKEY *EVP_PKEY_new(void);
+void EVP_PKEY_up_ref(EVP_PKEY *pkey);
 void EVP_PKEY_free(EVP_PKEY *pkey);
 
 EVP_PKEY *d2i_PublicKey(int type, EVP_PKEY **a, const unsigned char **pp,
@@ -1543,11 +1548,11 @@ void ERR_load_EVP_strings(void);
 # define EVP_F_EVP_PKEY_ENCRYPT                           105
 # define EVP_F_EVP_PKEY_ENCRYPT_INIT                      139
 # define EVP_F_EVP_PKEY_ENCRYPT_OLD                       152
-# define EVP_F_EVP_PKEY_GET1_DH                           119
-# define EVP_F_EVP_PKEY_GET1_DSA                          120
-# define EVP_F_EVP_PKEY_GET1_ECDSA                        130
-# define EVP_F_EVP_PKEY_GET1_EC_KEY                       131
-# define EVP_F_EVP_PKEY_GET1_RSA                          121
+# define EVP_F_EVP_PKEY_GET0_DH                           119
+# define EVP_F_EVP_PKEY_GET0_DSA                          120
+# define EVP_F_EVP_PKEY_GET0_ECDSA                        130
+# define EVP_F_EVP_PKEY_GET0_EC_KEY                       131
+# define EVP_F_EVP_PKEY_GET0_RSA                          121
 # define EVP_F_EVP_PKEY_KEYGEN                            146
 # define EVP_F_EVP_PKEY_KEYGEN_INIT                       147
 # define EVP_F_EVP_PKEY_NEW                               106
