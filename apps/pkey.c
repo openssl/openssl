@@ -182,18 +182,20 @@ int pkey_main(int argc, char **argv)
 
     if (!noout) {
         if (outformat == FORMAT_PEM) {
-            assert(private);
             if (pubout)
                 PEM_write_bio_PUBKEY(out, pkey);
-            else
+            else {
+                assert(private);
                 PEM_write_bio_PrivateKey(out, pkey, cipher,
                                          NULL, 0, NULL, passout);
+            }
         } else if (outformat == FORMAT_ASN1) {
-            assert(private);
             if (pubout)
                 i2d_PUBKEY_bio(out, pkey);
-            else
+            else {
+                assert(private);
                 i2d_PrivateKey_bio(out, pkey);
+            }
         } else {
             BIO_printf(bio_err, "Bad format specified for key\n");
             goto end;
