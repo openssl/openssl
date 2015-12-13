@@ -1031,8 +1031,9 @@ int ECDH_KDF_X9_62(unsigned char *out, size_t outlen,
                    const EVP_MD *md);
 
 int ECDH_compute_key(void *out, size_t outlen, const EC_POINT *pub_key,
-                     EC_KEY *ecdh, void *(*KDF) (const void *in, size_t inlen,
-                                                 void *out, size_t *outlen));
+                     const EC_KEY *ecdh,
+                     void *(*KDF) (const void *in, size_t inlen,
+                                   void *out, size_t *outlen));
 
 typedef struct ECDSA_SIG_st ECDSA_SIG;
 
@@ -1188,7 +1189,7 @@ void EC_KEY_METHOD_set_compute_key(EC_KEY_METHOD *meth,
                                    int (*ckey)(void *out,
                                                size_t outlen,
                                                const EC_POINT *pub_key,
-                                               EC_KEY *ecdh,
+                                               const EC_KEY *ecdh,
                                                void *(*KDF) (const void *in,
                                                              size_t inlen,
                                                              void *out,
@@ -1236,7 +1237,7 @@ void EC_KEY_METHOD_get_compute_key(EC_KEY_METHOD *meth,
                                    int (**pck)(void *out,
                                                size_t outlen,
                                                const EC_POINT *pub_key,
-                                               EC_KEY *ecdh,
+                                               const EC_KEY *ecdh,
                                                void *(*KDF) (const void *in,
                                                              size_t inlen,
                                                              void *out,
