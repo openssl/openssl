@@ -1559,7 +1559,7 @@ static int check_crl(X509_STORE_CTX *ctx, X509_CRL *crl)
         }
 
         /* Attempt to get issuer certificate public key */
-        ikey = X509_get_pubkey(issuer);
+        ikey = X509_get0_pubkey(issuer);
 
         if (!ikey) {
             ctx->error = X509_V_ERR_UNABLE_TO_DECODE_ISSUER_PUBLIC_KEY;
@@ -1588,7 +1588,6 @@ static int check_crl(X509_STORE_CTX *ctx, X509_CRL *crl)
     ok = 1;
 
  err:
-    EVP_PKEY_free(ikey);
     return ok;
 }
 
@@ -1769,7 +1768,7 @@ static int internal_verify(X509_STORE_CTX *ctx)
         if (!xs->valid
             && (xs != xi
                 || (ctx->param->flags & X509_V_FLAG_CHECK_SS_SIGNATURE))) {
-            if ((pkey = X509_get_pubkey(xi)) == NULL) {
+            if ((pkey = X509_get0_pubkey(xi)) == NULL) {
                 ctx->error = X509_V_ERR_UNABLE_TO_DECODE_ISSUER_PUBLIC_KEY;
                 ctx->current_cert = xi;
                 ok = (*cb) (0, ctx);
@@ -1779,13 +1778,9 @@ static int internal_verify(X509_STORE_CTX *ctx)
                 ctx->error = X509_V_ERR_CERT_SIGNATURE_FAILURE;
                 ctx->current_cert = xs;
                 ok = (*cb) (0, ctx);
-                if (!ok) {
-                    EVP_PKEY_free(pkey);
+                if (!ok)
                     goto end;
-                }
             }
-            EVP_PKEY_free(pkey);
-            pkey = NULL;
         }
 
         xs->valid = 1;
@@ -1973,7 +1968,7 @@ int X509_get_pubkey_parameters(EVP_PKEY *pkey, STACK_OF(X509) *chain)
         return 1;
 
     for (i = 0; i < sk_X509_num(chain); i++) {
-        ktmp = X509_get_pubkey(sk_X509_value(chain, i));
+        ktmp = X509_get0_pubkey(sk_X509_value(chain, i));
         if (ktmp == NULL) {
             X509err(X509_F_X509_GET_PUBKEY_PARAMETERS,
                     X509_R_UNABLE_TO_GET_CERTS_PUBLIC_KEY);
@@ -1981,8 +1976,6 @@ int X509_get_pubkey_parameters(EVP_PKEY *pkey, STACK_OF(X509) *chain)
         }
         if (!EVP_PKEY_missing_parameters(ktmp))
             break;
-        EVP_PKEY_free(ktmp);
-        ktmp = NULL;
     }
     if (ktmp == NULL) {
         X509err(X509_F_X509_GET_PUBKEY_PARAMETERS,
@@ -1992,14 +1985,12 @@ int X509_get_pubkey_parameters(EVP_PKEY *pkey, STACK_OF(X509) *chain)
 
     /* first, populate the other certs */
     for (j = i - 1; j >= 0; j--) {
-        ktmp2 = X509_get_pubkey(sk_X509_value(chain, j));
+        ktmp2 = X509_get0_pubkey(sk_X509_value(chain, j));
         EVP_PKEY_copy_parameters(ktmp2, ktmp);
-        EVP_PKEY_free(ktmp2);
     }
 
     if (pkey != NULL)
         EVP_PKEY_copy_parameters(pkey, ktmp);
-    EVP_PKEY_free(ktmp);
     return 1;
 }
 

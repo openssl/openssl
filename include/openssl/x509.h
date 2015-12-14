@@ -575,6 +575,7 @@ DECLARE_ASN1_FUNCTIONS(X509_VAL)
 DECLARE_ASN1_FUNCTIONS(X509_PUBKEY)
 
 int X509_PUBKEY_set(X509_PUBKEY **x, EVP_PKEY *pkey);
+EVP_PKEY *X509_PUBKEY_get0(X509_PUBKEY *key);
 EVP_PKEY *X509_PUBKEY_get(X509_PUBKEY *key);
 int X509_get_pubkey_parameters(EVP_PKEY *pkey, STACK_OF(X509) *chain);
 int i2d_PUBKEY(EVP_PKEY *a, unsigned char **pp);
@@ -708,6 +709,7 @@ STACK_OF(X509_EXTENSION) *X509_get0_extensions(const X509 *x);
 void X509_get0_uids(ASN1_BIT_STRING **piuid, ASN1_BIT_STRING **psuid, X509 *x);
 X509_ALGOR *X509_get0_tbs_sigalg(X509 *x);
 
+EVP_PKEY *X509_get0_pubkey(X509 *x);
 EVP_PKEY *X509_get_pubkey(X509 *x);
 ASN1_BIT_STRING *X509_get0_pubkey_bitstr(const X509 *x);
 int X509_certificate_type(X509 *x, EVP_PKEY *pubkey /* optional */ );
@@ -1097,7 +1099,7 @@ void ERR_load_X509_strings(void);
 # define X509_F_X509_NAME_ONELINE                         116
 # define X509_F_X509_NAME_PRINT                           117
 # define X509_F_X509_PRINT_EX_FP                          118
-# define X509_F_X509_PUBKEY_GET                           119
+# define X509_F_X509_PUBKEY_GET0                          119
 # define X509_F_X509_PUBKEY_SET                           120
 # define X509_F_X509_REQ_CHECK_PRIVATE_KEY                144
 # define X509_F_X509_REQ_PRINT_EX                         121
