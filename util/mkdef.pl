@@ -63,8 +63,8 @@ my $linux=0;
 my $safe_stack_def = 0;
 
 my @known_platforms = ( "__FreeBSD__", "PERL5",
-			"EXPORT_VAR_AS_FUNCTION", "ZLIB",
-			"OPENSSL_FIPS", "OPENSSL_FIPSCAPABLE" );
+			"EXPORT_VAR_AS_FUNCTION", "ZLIB"
+			);
 my @known_ossl_platforms = ( "VMS", "WIN32", "WINNT", "OS2" );
 my @known_algorithms = ( "RC2", "RC4", "RC5", "IDEA", "DES", "BF",
 			 "CAST", "MD2", "MD4", "MD5", "SHA", "SHA0", "SHA1",
@@ -137,8 +137,6 @@ my $no_jpake; my $no_srp; my $no_ec2m; my $no_nistp_gcc;
 my $no_nextprotoneg; my $no_sctp; my $no_srtp; my $no_ssl_trace;
 my $no_unit_test; my $no_ssl3_method; my $no_ocb;
 
-my $fips;
-
 my $zlib;
 
 
@@ -164,7 +162,6 @@ foreach (@ARGV, split(/ /, $options))
 	}
 	$VMS=1 if $_ eq "VMS";
 	$OS2=1 if $_ eq "OS2";
-	$fips=1 if /^fips/;
 	if ($_ eq "zlib" || $_ eq "enable-zlib" || $_ eq "zlib-dynamic"
 			 || $_ eq "enable-zlib-dynamic") {
 		$zlib = 1;
@@ -1165,12 +1162,6 @@ sub is_valid
 			if ($keyword eq "EXPORT_VAR_AS_FUNCTION" && ($VMSVAX || $W32)) {
 				return 1;
 			}
-			if ($keyword eq "OPENSSL_FIPSCAPABLE") {
-				return 0;
-			}
-			if ($keyword eq "OPENSSL_FIPS" && $fips) {
-				return 1;
-			}
 			if ($keyword eq "ZLIB" && $zlib) { return 1; }
 			return 0;
 		} else {
@@ -1555,7 +1546,6 @@ sub update_numbers
 		next if defined($rsyms{$sym});
 		die "ERROR: Symbol $sym had no info attached to it."
 		    if $i eq "";
-		next if $i =~ /OPENSSL_FIPSCAPABLE/;
 		if (!exists $nums{$s}) {
 			$new_syms++;
 			my $s2 = $s;

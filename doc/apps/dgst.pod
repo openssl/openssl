@@ -13,7 +13,6 @@ B<openssl> B<dgst>
 [B<-hex>]
 [B<-binary>]
 [B<-r>]
-[B<-non-fips-allow>]
 [B<-out filename>]
 [B<-sign filename>]
 [B<-keyform arg>]
@@ -22,7 +21,6 @@ B<openssl> B<dgst>
 [B<-prverify filename>]
 [B<-signature filename>]
 [B<-hmac key>]
-[B<-non-fips-allow>]
 [B<-fips-fingerprint>]
 [B<file...>]
 
@@ -69,11 +67,6 @@ output the digest or signature in binary form.
 =item B<-r>
 
 output the digest in the "coreutils" format used by programs like B<sha1sum>.
-
-=item B<-non-fips-allow>
-
-Allow use of non FIPS digest when in FIPS mode.  This has no effect when not in
-FIPS mode.
 
 =item B<-out filename>
 
@@ -159,10 +152,6 @@ Multiple files can be specified separated by a OS-dependent character.
 The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
 all others. 
 
-=item B<-non-fips-allow>
-
-enable use of non-FIPS algorithms such as MD5 even in FIPS mode.
-
 =item B<-fips-fingerprint>
 
 compute HMAC using a specific key
@@ -219,5 +208,6 @@ prior to verification.
 =head1 HISTORY
 
 The default digest was changed from MD5 to SHA256 in Openssl 1.1.
+The FIPS-related options were removed in OpenSSL 1.1
 
 =cut

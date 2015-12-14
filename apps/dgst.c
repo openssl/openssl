@@ -80,7 +80,7 @@ typedef enum OPTION_choice {
     OPT_C, OPT_R, OPT_RAND, OPT_OUT, OPT_SIGN, OPT_PASSIN, OPT_VERIFY,
     OPT_PRVERIFY, OPT_SIGNATURE, OPT_KEYFORM, OPT_ENGINE, OPT_ENGINE_IMPL,
     OPT_HEX, OPT_BINARY, OPT_DEBUG, OPT_FIPS_FINGERPRINT,
-    OPT_NON_FIPS_ALLOW, OPT_HMAC, OPT_MAC, OPT_SIGOPT, OPT_MACOPT,
+    OPT_HMAC, OPT_MAC, OPT_SIGOPT, OPT_MACOPT,
     OPT_DIGEST
 } OPTION_CHOICE;
 
@@ -106,7 +106,6 @@ OPTIONS dgst_options[] = {
     {"d", OPT_DEBUG, '-', "Print debug info"},
     {"debug", OPT_DEBUG, '-'},
     {"fips-fingerprint", OPT_FIPS_FINGERPRINT, '-'},
-    {"non-fips-allow", OPT_NON_FIPS_ALLOW, '-'},
     {"hmac", OPT_HMAC, 's', "Create hashed MAC with key"},
     {"mac", OPT_MAC, 's', "Create MAC (not neccessarily HMAC)"},
     {"sigopt", OPT_SIGOPT, 's', "Signature parameter in n:v form"},
@@ -133,8 +132,7 @@ int dgst_main(int argc, char **argv)
     const char *sigfile = NULL, *randfile = NULL;
     OPTION_CHOICE o;
     int separator = 0, debug = 0, keyform = FORMAT_PEM, siglen = 0;
-    int i, ret = 1, out_bin = -1, want_pub = 0, do_verify =
-        0, non_fips_allow = 0;
+    int i, ret = 1, out_bin = -1, want_pub = 0, do_verify = 0;
     unsigned char *buf = NULL, *sigbuf = NULL;
     int engine_impl = 0;
 
@@ -204,9 +202,6 @@ int dgst_main(int argc, char **argv)
             break;
         case OPT_FIPS_FINGERPRINT:
             hmac_key = "etaonrishdlcupfm";
-            break;
-        case OPT_NON_FIPS_ALLOW:
-            non_fips_allow = 1;
             break;
         case OPT_HMAC:
             hmac_key = opt_arg();
@@ -321,12 +316,6 @@ int dgst_main(int argc, char **argv)
         EVP_PKEY_CTX_free(mac_ctx);
         if (r == 0)
             goto end;
-    }
-
-    if (non_fips_allow) {
-        EVP_MD_CTX *md_ctx;
-        BIO_get_md_ctx(bmd, &md_ctx);
-        EVP_MD_CTX_set_flags(md_ctx, EVP_MD_CTX_FLAG_NON_FIPS_ALLOW);
     }
 
     if (hmac_key) {
