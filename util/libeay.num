@@ -4231,7 +4231,7 @@ private_SEED_set_key                    4610	1_1_0	NOEXIST::FUNCTION:
 EVP_aes_192_gcm                         4611	1_1_0	EXIST::FUNCTION:AES
 X509_ALGOR_set_md                       4612	1_1_0	EXIST::FUNCTION:
 private_SHA256_Init                     4613	1_1_0	NOEXIST::FUNCTION:
-RAND_init_fips                          4614	1_1_0	EXIST:OPENSSL_FIPS:FUNCTION:
+RAND_init_fips                          4614	1_1_0	NOEXIST::FUNCTION:
 EVP_aes_256_gcm                         4615	1_1_0	EXIST::FUNCTION:AES
 private_SHA384_Init                     4616	1_1_0	NOEXIST::FUNCTION:
 EVP_aes_192_ccm                         4617	1_1_0	EXIST::FUNCTION:AES

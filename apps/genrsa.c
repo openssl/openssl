@@ -78,7 +78,7 @@ static int genrsa_cb(int p, int n, BN_GENCB *cb);
 
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
-    OPT_3, OPT_F4, OPT_NON_FIPS_ALLOW, OPT_ENGINE,
+    OPT_3, OPT_F4, OPT_ENGINE,
     OPT_OUT, OPT_RAND, OPT_PASSOUT, OPT_CIPHER
 } OPTION_CHOICE;
 
@@ -87,7 +87,6 @@ OPTIONS genrsa_options[] = {
     {"3", OPT_3, '-', "Use 3 for the E value"},
     {"F4", OPT_F4, '-', "Use F4 (0x10001) for the E value"},
     {"f4", OPT_F4, '-', "Use F4 (0x10001) for the E value"},
-    {"non-fips-allow", OPT_NON_FIPS_ALLOW, '-'},
     {"out", OPT_OUT, 's', "Output the key to specified file"},
     {"rand", OPT_RAND, 's',
      "Load the file(s) into the random number generator"},
@@ -108,7 +107,7 @@ int genrsa_main(int argc, char **argv)
     BIO *out = NULL;
     RSA *rsa = NULL;
     const EVP_CIPHER *enc = NULL;
-    int ret = 1, non_fips_allow = 0, num = DEFBITS, private = 0;
+    int ret = 1, num = DEFBITS, private = 0;
     unsigned long f4 = RSA_F4;
     char *outfile = NULL, *passoutarg = NULL, *passout = NULL;
     char *inrand = NULL, *prog, *hexe, *dece;
@@ -135,9 +134,6 @@ int genrsa_main(int argc, char **argv)
             break;
         case OPT_F4:
             f4 = RSA_F4;
-            break;
-        case OPT_NON_FIPS_ALLOW:
-            non_fips_allow = 1;
             break;
         case OPT_OUT:
             outfile = opt_arg();
@@ -187,9 +183,6 @@ int genrsa_main(int argc, char **argv)
     rsa = e ? RSA_new_method(e) : RSA_new();
     if (rsa == NULL)
         goto end;
-
-    if (non_fips_allow)
-        rsa->flags |= RSA_FLAG_NON_FIPS_ALLOW;
 
     if (!BN_set_word(bn, f4) || !RSA_generate_key_ex(rsa, num, bn, cb))
         goto end;
