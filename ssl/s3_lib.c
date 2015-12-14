@@ -3762,7 +3762,8 @@ void ssl3_free(SSL *s)
 #ifndef OPENSSL_NO_EC
     EVP_PKEY_free(s->s3->tmp.pkey);
     s->s3->tmp.pkey = NULL;
-    EC_KEY_free(s->s3->peer_ecdh_tmp);
+    EVP_PKEY_free(s->s3->peer_tmp);
+    s->s3->peer_tmp = NULL;
 #endif
 
     sk_X509_NAME_pop_free(s->s3->tmp.ca_names, X509_NAME_free);
@@ -3801,8 +3802,8 @@ void ssl3_clear(SSL *s)
 #ifndef OPENSSL_NO_EC
     EVP_PKEY_free(s->s3->tmp.pkey);
     s->s3->tmp.pkey = NULL;
-    EC_KEY_free(s->s3->peer_ecdh_tmp);
-    s->s3->peer_ecdh_tmp = NULL;
+    EVP_PKEY_free(s->s3->peer_tmp);
+    s->s3->peer_tmp = NULL;
     s->s3->is_probably_safari = 0;
 #endif                         /* !OPENSSL_NO_EC */
 
@@ -4155,19 +4156,20 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
             EVP_PKEY *ptmp;
             int rv = 0;
 #if !defined(OPENSSL_NO_DH) && !defined(OPENSSL_NO_EC)
-            if (!s->s3->peer_dh_tmp && !s->s3->peer_ecdh_tmp)
+            if (s->s3->peer_dh_tmp == NULL && s->s3->peer_tmp == NULL)
                 return 0;
 #endif
             ptmp = EVP_PKEY_new();
             if (ptmp == NULL)
                 return 0;
 #ifndef OPENSSL_NO_DH
-            else if (s->s3->peer_dh_tmp)
+            else if (s->s3->peer_dh_tmp != NULL)
                 rv = EVP_PKEY_set1_DH(ptmp, s->s3->peer_dh_tmp);
 #endif
 #ifndef OPENSSL_NO_EC
-            else if (s->s3->peer_ecdh_tmp)
-                rv = EVP_PKEY_set1_EC_KEY(ptmp, s->s3->peer_ecdh_tmp);
+            else if (s->s3->peer_tmp != NULL)
+                rv = EVP_PKEY_set1_EC_KEY(ptmp,
+                                          EVP_PKEY_get0_EC_KEY(s->s3->peer_tmp));
 #endif
             if (rv) {
                 *(EVP_PKEY **)parg = ptmp;
