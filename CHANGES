@@ -83,8 +83,9 @@
   *) The demo files in crypto/threads were moved to demo/threads.
      [Rich Salz]
 
-  *) Removed obsolete engines: 4758cca, aep, atalla, cswift, nuron and sureware.
-     [Matt Caswell]
+  *) Removed obsolete engines: 4758cca, aep, atalla, cswift, nuron, gmp,
+     and sureware.
+     [Matt Caswell, Rich Salz]
 
   *) New ASN.1 embed macro.
 
