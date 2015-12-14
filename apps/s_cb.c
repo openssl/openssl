@@ -1402,13 +1402,12 @@ static int security_callback_debug(SSL *s, SSL_CTX *ctx,
                 int sig_nid = X509_get_signature_nid(other);
                 BIO_puts(sdb->out, OBJ_nid2sn(sig_nid));
             } else {
-                EVP_PKEY *pkey = X509_get_pubkey(other);
+                EVP_PKEY *pkey = X509_get0_pubkey(other);
                 const char *algname = "";
                 EVP_PKEY_asn1_get0_info(NULL, NULL, NULL, NULL,
                                         &algname, EVP_PKEY_get0_asn1(pkey));
                 BIO_printf(sdb->out, "%s, bits=%d",
                            algname, EVP_PKEY_bits(pkey));
-                EVP_PKEY_free(pkey);
             }
             break;
         }
