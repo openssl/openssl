@@ -1341,7 +1341,7 @@ typedef struct ssl3_state_st {
     DH *peer_dh_tmp;
 # endif
 # ifndef OPENSSL_NO_EC
-    EC_KEY *peer_ecdh_tmp;
+    EVP_PKEY *peer_tmp;
 # endif
 
 } SSL3_STATE;
