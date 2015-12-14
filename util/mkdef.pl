@@ -8,10 +8,11 @@
 # Intermediary files are created, call libeay.num and ssleay.num,
 # The format of these files is:
 #
-#	routine-name	nnnn	info
+#	routine-name	nnnn	vers	info
 #
-# and the "info" part is actually a colon-separated string of fields with
-# the following meaning:
+# The "nnnn" and "vers" fields are the numeric id and version for the symbol
+# respectively. The "info" part is actually a colon-separated string of fields
+# with the following meaning:
 #
 #	existence:platform:kind:algorithms
 #
@@ -57,6 +58,7 @@ my $VMS=0;
 my $W32=0;
 my $NT=0;
 my $OS2=0;
+my $linux=0;
 # Set this to make typesafe STACK definitions appear in DEF
 my $safe_stack_def = 0;
 
@@ -157,6 +159,9 @@ foreach (@ARGV, split(/ /, $options))
 		$VMS=1;
 		$VMSNonVAX=1;
 	}
+	if ($_ eq "linux") {
+		$linux=1;
+	}
 	$VMS=1 if $_ eq "VMS";
 	$OS2=1 if $_ eq "OS2";
 	$fips=1 if /^fips/;
@@ -248,7 +253,7 @@ if (!$libname) {
 }
 
 # If no platform is given, assume WIN32
-if ($W32 + $VMS + $OS2 == 0) {
+if ($W32 + $VMS + $OS2 + $linux == 0) {
 	$W32 = 1;
 }
 
@@ -1299,25 +1304,28 @@ sub print_def_file
 	my $version = get_version();
 	my $what = "OpenSSL: implementation of Secure Socket Layer";
 	my $description = "$what $version, $name - http://$http_vendor";
+	my $prevsymversion = "", $prevprevsymversion = "";
 
-	if ($W32)
-		{ $libname.="32"; }
-	elsif ($OS2)
-		{ # DLL names should not clash on the whole system.
-		  # However, they should not have any particular relationship
-		  # to the name of the static library.  Chose descriptive names
-		  # (must be at most 8 chars).
-		  my %translate = (ssl => 'open_ssl', crypto => 'cryptssl');
-		  $libname = $translate{$name} || $name;
-		  $liboptions = <<EOO;
+	if (!$linux)
+		{
+		if ($W32)
+			{ $libname.="32"; }
+		elsif ($OS2)
+			{ # DLL names should not clash on the whole system.
+			  # However, they should not have any particular relationship
+			  # to the name of the static library.  Chose descriptive names
+			  # (must be at most 8 chars).
+			  my %translate = (ssl => 'open_ssl', crypto => 'cryptssl');
+			  $libname = $translate{$name} || $name;
+			  $liboptions = <<EOO;
 INITINSTANCE
 DATA MULTIPLE NONSHARED
 EOO
-		  # Vendor field can't contain colon, drat; so we omit http://
-		  $description = "\@#$http_vendor:$version#\@$what; DLL for library $name.  Build for EMX -Zmtd";
-		}
+			  # Vendor field can't contain colon, drat; so we omit http://
+			  $description = "\@#$http_vendor:$version#\@$what; DLL for library $name.  Build for EMX -Zmtd";
+			}
 
-	print OUT <<"EOF";
+		print OUT <<"EOF";
 ;
 ; Definition file for the DLL version of the $name library from OpenSSL
 ;
@@ -1326,38 +1334,73 @@ LIBRARY         $libname	$liboptions
 
 EOF
 
-	print "EXPORTS\n";
+		print "EXPORTS\n";
+	}
 
-	(@e)=grep(/^SSLeay(\{[0-9]+\})?\\.*?:.*?:FUNCTION/,@symbols);
-	(@r)=grep(/^\w+(\{[0-9]+\})?\\.*?:.*?:FUNCTION/ && !/^SSLeay(\{[0-9]+\})?\\.*?:.*?:FUNCTION/,@symbols);
+	(@r)=grep(/^\w+(\{[0-9]+\})?\\.*?:.*?:FUNCTION/,@symbols);
 	(@v)=grep(/^\w+(\{[0-9]+\})?\\.*?:.*?:VARIABLE/,@symbols);
 	@symbols=((sort @e),(sort @r), (sort @v));
 
-
-	foreach $sym (@symbols) {
-		(my $s, my $i) = $sym =~ /^(.*?)\\(.*)$/;
-		my $v = 0;
-		$v = 1 if $i =~ /^.*?:.*?:VARIABLE/;
-		if (!defined($nums{$s})) {
-			printf STDERR "Warning: $s does not have a number assigned\n"
-			    if(!$do_update);
+	my ($baseversion, $currversion) = get_openssl_version();
+	my $thisversion;
+	do {
+		if (!defined($thisversion)) {
+			$thisversion = $baseversion;
 		} else {
-			(my $n, my $dummy) = split /\\/, $nums{$s};
-			my %pf = ();
-			my $p = ($i =~ /^[^:]*:([^:]*):/,$1);
-			my $a = ($i =~ /^[^:]*:[^:]*:[^:]*:([^:]*)/,$1);
-			if (is_valid($p,1) && is_valid($a,0)) {
-				my $s2 = ($s =~ /^(.*?)(\{[0-9]+\})?$/, $1);
-				if ($prev eq $s2) {
-					print STDERR "Warning: Symbol '",$s2,"' redefined. old=",($nums{$prev} =~ /^(.*?)\\/,$1),", new=",($nums{$s2} =~ /^(.*?)\\/,$1),"\n";
-				}
-				$prev = $s2;	# To warn about duplicates...
-				if($v && !$OS2) {
-					printf OUT "    %s%-39s @%-8d DATA\n",($W32)?"":"_",$s2,$n;
-				} else {
-					printf OUT "    %s%-39s @%d\n",($W32||$OS2)?"":"_",$s2,$n;
+			$thisversion = get_next_version($thisversion);
+		}
+		foreach $sym (@symbols) {
+			(my $s, my $i) = $sym =~ /^(.*?)\\(.*)$/;
+			my $v = 0;
+			$v = 1 if $i =~ /^.*?:.*?:VARIABLE/;
+			if (!defined($nums{$s})) {
+				die "Error: $s does not have a number assigned\n"
+					if(!$do_update);
+			} else {
+				(my $n, my $symversion, my $dummy) = split /\\/, $nums{$s};
+				next if $symversion ne $thisversion;
+				my %pf = ();
+				my $p = ($i =~ /^[^:]*:([^:]*):/,$1);
+				my $a = ($i =~ /^[^:]*:[^:]*:[^:]*:([^:]*)/,$1);
+				if (is_valid($p,1) && is_valid($a,0)) {
+					my $s2 = ($s =~ /^(.*?)(\{[0-9]+\})?$/, $1);
+					if ($prev eq $s2) {
+						print STDERR "Warning: Symbol '",$s2,
+							"' redefined. old=",($nums{$prev} =~ /^(.*?)\\/,$1),
+							", new=",($nums{$s2} =~ /^(.*?)\\/,$1),"\n";
+					}
+					$prev = $s2;	# To warn about duplicates...
+					if($linux) {
+						if ($symversion ne $prevsymversion) {
+							if ($prevsymversion ne "") {
+								if ($prevprevsymversion ne "") {
+									print OUT "} OPENSSL_"
+												."$prevprevsymversion;\n\n";
+								} else {
+									print OUT "};\n\n";
+								}
+							}
+							print OUT "OPENSSL_$symversion {\n    global:\n";
+							$prevprevsymversion = $prevsymversion;
+							$prevsymversion = $symversion;
+						}
+						print OUT "        $s2;\n";
+					} elsif($v && !$OS2) {
+						printf OUT "    %s%-39s @%-8d DATA\n",
+								($W32)?"":"_",$s2,$n;
+					} else {
+						printf OUT "    %s%-39s @%d\n",
+								($W32||$OS2)?"":"_",$s2,$n;
+					}
 				}
 			}
+		}
+	} while ($thisversion ne $currversion);
+	if ($linux) {
+		if ($prevprevsymversion ne "") {
+			print OUT "    local: *;\n} OPENSSL_$prevprevsymversion;\n\n";
+		} else {
+			print OUT "    local: *;\n};\n\n";
 		}
 	}
 	printf OUT "\n";
@@ -1367,11 +1410,14 @@ sub load_numbers
 {
 	my($name)=@_;
 	my(@a,%ret);
+	my $prevversion;
 
 	$max_num = 0;
 	$num_noinfo = 0;
 	$prev = "";
 	$prev_cnt = 0;
+
+	my ($baseversion, $currversion) = get_openssl_version();
 
 	open(IN,"<$name") || die "unable to open $name:$!\n";
 	while (<IN>) {
@@ -1402,7 +1448,13 @@ sub load_numbers
 			$ret{$a[0]}=$a[1];
 			$num_noinfo++;
 		} else {
-			$ret{$a[0]}=$a[1]."\\".$a[2]; # \\ is a special marker
+			#Sanity check the version number
+			if (defined $prevversion) {
+				check_version_lte($prevversion, $a[2]);
+			}
+			check_version_lte($a[2], $currversion);
+			$prevversion = $a[2];
+			$ret{$a[0]}=$a[1]."\\".$a[2]."\\".$a[3]; # \\ is a special marker
 		}
 		$max_num = $a[1] if $a[1] > $max_num;
 		$prev=$a[0];
@@ -1551,3 +1603,133 @@ sub count_parens
 	return $open - $close;
 }
 
+#Parse opensslv.h to get the current version number. Also work out the base
+#version, i.e. the lowest version number that is binary compatible with this
+#version
+sub get_openssl_version()
+{
+	open (IN, "include/openssl/opensslv.h") || die "Can't open opensslv.h";
+
+	while(<IN>) {
+		if (/OPENSSL_VERSION_TEXT\s+"OpenSSL (\d\.\d\.)(\d[a-z]*)(-| )/) {
+			my $suffix = $2;
+			my $baseversion = $1 =~ s/\./_/gr;
+			close IN;
+			return ($baseversion."0", $baseversion.$suffix);
+		}
+	}
+	die "Can't find OpenSSL version number\n";
+}
+
+#Given an OpenSSL version number, calculate the next version number. If the
+#version number gets to a.b.czz then we go to a.b.(c+1)
+sub get_next_version()
+{
+	my $thisversion = shift;
+
+	my ($base, $letter) = $thisversion =~ /^(\d_\d_\d)([a-z]{0,2})$/;
+
+	if ($letter eq "zz") {
+		my $lastnum = substr($base, -1);
+		return substr($base, 0, length($base)-1).(++$lastnum);
+	}
+	return $base.get_next_letter($letter);
+}
+
+#Given the letters off the end of an OpenSSL version string, calculate what
+#the letters for the next release would be.
+sub get_next_letter()
+{
+	my $thisletter = shift;
+	my $baseletter = "";
+	my $endletter;
+
+	if ($thisletter eq "") {
+		return "a";
+	}
+	if ((length $thisletter) > 1) {
+		($baseletter, $endletter) = $thisletter =~ /([a-z]+)([a-z])/;
+	} else {
+		$endletter = $thisletter;
+	}
+
+	if ($endletter eq "z") {
+		return $thisletter."a";
+	} else {
+		return $baseletter.(++$endletter);
+	}
+}
+
+#Check if a version is less than or equal to the current version. Its a fatal
+#error if not. They must also only differ in letters, or the last number (i.e.
+#the first two numbers must be the same)
+sub check_version_lte()
+{
+	my ($testversion, $currversion) = @_;
+	my $lentv;
+	my $lencv;
+	my $cvbase;
+
+	my ($cvnums) = $currversion =~ /^(\d_\d_\d)[a-z]*$/;
+	my ($tvnums) = $testversion =~ /^(\d_\d_\d)[a-z]*$/;
+
+	#Die if we can't parse the version numbers or they don't look sane
+	die "Invalid version number: $testversion and $currversion\n"
+		if (!defined($cvnums) || !defined($tvnums)
+			|| length($cvnums) != 5
+			|| length($tvnums) != 5);
+
+	#If the base versions (without letters) don't match check they only differ
+	#in the last number
+	if ($cvnums ne $tvnums) {
+		die "Invalid version number: $testversion "
+			."for current version $currversion\n"
+			if (substr($cvnums, -1) < substr($tvnums, -1)
+				|| substr($cvnums, 0, 4) ne substr($tvnums, 0, 4));
+		return;
+	}
+	#If we get here then the base version (i.e. the numbers) are the same - they
+	#only differ in the letters
+
+	$lentv = length $testversion;
+	$lencv = length $currversion;
+
+	#If the testversion has more letters than the current version then it must
+	#be later (or malformed)
+	if ($lentv > $lencv) {
+		die "Invalid version number: $testversion "
+			."is greater than $currversion\n";
+	}
+
+	#Get the last letter from the current version
+	my ($cvletter) = $currversion =~ /([a-z])$/;
+	if (defined $cvletter) {
+		($cvbase) = $currversion =~ /(\d_\d_\d[a-z]*)$cvletter$/;
+	} else {
+		$cvbase = $currversion;
+	}
+	die "Unable to parse version number $currversion" if (!defined $cvbase);
+	my $tvbase;
+	my ($tvletter) = $testversion =~ /([a-z])$/;
+	if (defined $tvletter) {
+		($tvbase) = $testversion =~ /(\d_\d_\d[a-z]*)$tvletter$/;
+	} else {
+		$tvbase = $testversion;
+	}
+	die "Unable to parse version number $testversion" if (!defined $tvbase);
+
+	if ($lencv > $lentv) {
+		#If current version has more letters than testversion then testversion
+		#minus the final letter must be a substring of the current version
+		die "Invalid version number $testversion "
+			."is greater than $currversion or is invalid\n"
+			if (index($cvbase, $tvbase) != 0);
+	} else {
+		#If both versions have the same number of letters then they must be
+		#equal up to the last letter, and the last letter in testversion must
+		#be less than or equal to the last letter in current version.
+		die "Invalid version number $testversion "
+			."is greater than $currversion\n"
+			if (($cvbase ne $tvbase) && ($tvletter gt $cvletter));
+	}
+}

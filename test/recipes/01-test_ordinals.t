@@ -75,17 +75,17 @@ sub testordinals
     while (my $line = <$fh>) {
         my @tokens = split(/(?:\s+|\s*:\s*)/, $line);
         #Check the line looks sane
-        if ($#tokens < 4 || $#tokens > 5) {
+        if ($#tokens < 5 || $#tokens > 6) {
             print STDERR "Invalid line:\n$line\n";
             $ret = 0;
             last;
         }
-        if ($tokens[2] eq "NOEXIST") {
+        if ($tokens[3] eq "NOEXIST") {
             #Ignore this line
             next;
         }
         #Some ordinals can be repeated, e.g. if one is VMS and another is !VMS
-        $newqual = $tokens[3];
+        $newqual = $tokens[4];
         $newqual =~ s/!//g;
         if ($cnt > $tokens[1]
                 || ($cnt == $tokens[1] && ($qualifier ne $newqual
