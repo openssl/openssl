@@ -39,6 +39,8 @@ lib:	$(LIBOBJ)
 poly1305-sparcv9.S:	asm/poly1305-sparcv9.pl
 	$(PERL) asm/poly1305-sparcv9.pl > $@
 
+poly1305-%.S:	asm/poly1305-%.pl;	$(PERL) $< $(PERLASM_SCHEME) $@
+
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
 
