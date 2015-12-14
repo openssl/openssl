@@ -1651,8 +1651,14 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
     if (alg_k & (SSL_kPSK | SSL_kRSAPSK)) {
     } else
 #endif                          /* !OPENSSL_NO_PSK */
+    /*
+     * Dummy "if" to ensure sane C code in the event of various OPENSSL_NO_*
+     * options
+     */
+    if (0) {
+    }
 #ifndef OPENSSL_NO_SRP
-    if (alg_k & SSL_kSRP) {
+    else if (alg_k & SSL_kSRP) {
         PACKET prime, generator, salt, server_pub;
         if (!PACKET_get_length_prefixed_2(pkt, &prime)
             || !PACKET_get_length_prefixed_2(pkt, &generator)
