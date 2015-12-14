@@ -218,6 +218,6 @@ prior to verification.
 
 =head1 HISTORY
 
-The default digest was chaned from MD5 to SHA256 in Openssl 1.1.
+The default digest was changed from MD5 to SHA256 in Openssl 1.1.
 
 =cut
