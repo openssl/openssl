@@ -4732,3 +4732,10 @@ TLS_FEATURE_new                         5094	EXIST::FUNCTION:
 EVP_ENCODE_CTX_free                     5095	EXIST::FUNCTION:
 EVP_ENCODE_CTX_num                      5096	EXIST::FUNCTION:
 EVP_ENCODE_CTX_new                      5097	EXIST::FUNCTION:
+EVP_PKEY_up_ref                         5098	EXIST::FUNCTION:
+EVP_PKEY_get0_EC_KEY                    5099	EXIST::FUNCTION:EC
+EVP_PKEY_get0_DSA                       5100	EXIST::FUNCTION:DSA
+EVP_PKEY_get0_DH                        5101	EXIST::FUNCTION:DH
+X509_get0_pubkey                        5102	EXIST::FUNCTION:
+X509_PUBKEY_get0                        5103	EXIST::FUNCTION:
+EVP_PKEY_get0_RSA                       5104	EXIST::FUNCTION:RSA
