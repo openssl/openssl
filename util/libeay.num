@@ -2928,7 +2928,7 @@ EC_POINT_set_affine_coords_GF2m         3360	EXIST:VMS:FUNCTION:EC,EC2M
 BN_GF2m_mod_exp_arr                     3361	EXIST::FUNCTION:EC2M
 STORE_ATTR_INFO_modify_number           3362	NOEXIST::FUNCTION:
 X509_keyid_get0                         3363	EXIST::FUNCTION:
-ENGINE_load_gmp                         3364	EXIST::FUNCTION:ENGINE,GMP,STATIC_ENGINE
+ENGINE_load_gmp                         3364	NOEXIST::FUNCTION:
 pitem_new                               3365	EXIST::FUNCTION:
 BN_GF2m_mod_mul_arr                     3366	EXIST::FUNCTION:EC2M
 STORE_list_public_key_endp              3367	NOEXIST::FUNCTION:

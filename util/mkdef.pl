@@ -129,7 +129,7 @@ my $no_md2; my $no_md4; my $no_md5; my $no_sha; my $no_ripemd; my $no_mdc2;
 my $no_rsa; my $no_dsa; my $no_dh; my $no_aes; my $no_scrypt;
 my $no_ec; my $no_engine; my $no_hw;
 my $no_chacha; my $no_poly1305;
-my $no_fp_api; my $no_static_engine=1; my $no_gmp; my $no_deprecated;
+my $no_fp_api; my $no_static_engine=1; my $no_deprecated;
 my $no_sct; my $no_rfc3779; my $no_psk; my $no_cms; my $no_capieng;
 my $no_jpake; my $no_srp; my $no_ec2m; my $no_nistp_gcc; 
 my $no_nextprotoneg; my $no_sctp; my $no_srtp; my $no_ssl_trace;
@@ -219,7 +219,6 @@ foreach (@ARGV, split(/ /, $options))
 	elsif (/^no-dso$/)	{ $no_dso=1; }
 	elsif (/^no-engine$/)	{ $no_engine=1; }
 	elsif (/^no-hw$/)	{ $no_hw=1; }
-	elsif (/^no-gmp$/)	{ $no_gmp=1; }
 	elsif (/^no-sct$/)	{ $no_sct=1; }
 	elsif (/^no-rfc3779$/)	{ $no_rfc3779=1; }
 	elsif (/^no-cms$/)	{ $no_cms=1; }
@@ -1207,7 +1206,6 @@ sub is_valid
 			if ($keyword eq "HW" && $no_hw) { return 0; }
 			if ($keyword eq "FP_API" && $no_fp_api) { return 0; }
 			if ($keyword eq "STATIC_ENGINE" && $no_static_engine) { return 0; }
-			if ($keyword eq "GMP" && $no_gmp) { return 0; }
 			if ($keyword eq "SCT" && $no_sct) { return 0; }
 			if ($keyword eq "RFC3779" && $no_rfc3779) { return 0; }
 			if ($keyword eq "PSK" && $no_psk) { return 0; }
