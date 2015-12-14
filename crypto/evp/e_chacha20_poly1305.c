@@ -244,6 +244,8 @@ static int chacha20_poly1305_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                        actx->key.key.d, actx->key.counter);
         Poly1305_Init(POLY1305_ctx(actx), actx->key.buf);
         actx->key.counter[0] = 1;
+        actx->key.partial_len = 0;
+        actx->len.aad = actx->len.text = 0;
         actx->mac_inited = 1;
     }
 
@@ -426,18 +428,14 @@ static int chacha20_poly1305_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg,
             return 0;
         {
             unsigned int len;
-            unsigned char temp[POLY1305_BLOCK_SIZE];
+            unsigned char *aad = ptr, temp[POLY1305_BLOCK_SIZE];
 
-            /*
-             * compose padded aad
-             */
-            memset(temp, 0, sizeof(temp));
-            memcpy(temp, ptr, EVP_AEAD_TLS1_AAD_LEN);
-
-            len = temp[EVP_AEAD_TLS1_AAD_LEN - 2] << 8 |
-                  temp[EVP_AEAD_TLS1_AAD_LEN - 1];
+            len = aad[EVP_AEAD_TLS1_AAD_LEN - 2] << 8 |
+                  aad[EVP_AEAD_TLS1_AAD_LEN - 1];
             if (!ctx->encrypt) {
                 len -= POLY1305_BLOCK_SIZE;     /* discount attached tag */
+                memcpy(temp, aad, EVP_AEAD_TLS1_AAD_LEN - 2);
+                aad = temp;
                 temp[EVP_AEAD_TLS1_AAD_LEN - 2] = (unsigned char)(len >> 8);
                 temp[EVP_AEAD_TLS1_AAD_LEN - 1] = (unsigned char)len;
             }
@@ -448,10 +446,10 @@ static int chacha20_poly1305_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg,
              * draft-ietf-tls-chacha20-poly1305-03
              */
             actx->key.counter[1] = actx->nonce[0];
-            actx->key.counter[2] = actx->nonce[1] ^ CHACHA_U8TOU32(temp);
-            actx->key.counter[3] = actx->nonce[2] ^ CHACHA_U8TOU32(temp+4);
+            actx->key.counter[2] = actx->nonce[1] ^ CHACHA_U8TOU32(aad);
+            actx->key.counter[3] = actx->nonce[2] ^ CHACHA_U8TOU32(aad+4);
             actx->mac_inited = 0;
-            chacha20_poly1305_cipher(ctx, NULL, temp, POLY1305_BLOCK_SIZE);
+            chacha20_poly1305_cipher(ctx, NULL, aad, EVP_AEAD_TLS1_AAD_LEN);
             return POLY1305_BLOCK_SIZE;         /* tag length */
         }
 

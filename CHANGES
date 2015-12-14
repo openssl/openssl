@@ -210,6 +210,10 @@
   *) Added HTTP GET support to the ocsp command.
      [Rich Salz]
 
+  *) Changed default digest for the dgst and enc commands from MD5 to
+     sha256
+     [Rich Salz]
+
   *) RAND_pseudo_bytes has been deprecated. Users should use RAND_bytes instead.
      [Matt Caswell]
 
@@ -234,7 +238,7 @@
 
   *) Added support for OCB mode. OpenSSL has been granted a patent license
      compatible with the OpenSSL license for use of OCB. Details are available
-     at https://www.openssl.org/docs/misc/OCB-patent-grant-OpenSSL.pdf. Support
+     at https://www.openssl.org/source/OCB-patent-grant-OpenSSL.pdf. Support
      for OCB can be removed by calling config with no-ocb.
      [Matt Caswell]
 

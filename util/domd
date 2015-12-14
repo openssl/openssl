@@ -8,6 +8,10 @@ if [ "$1" = "-MD" ]; then
     shift
     MAKEDEPEND=$1
     shift
+    if [ "$MAKEDEPEND" = "ccache" ]; then
+        MAKEDEPEND="$MAKEDEPEND $1"
+        shift
+    fi
 fi
 if [ "$MAKEDEPEND" = "" ]; then MAKEDEPEND=makedepend; fi
 

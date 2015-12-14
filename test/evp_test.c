@@ -1591,21 +1591,28 @@ static int encode_test_run(struct evp_test *t)
     unsigned char *encode_out = NULL, *decode_out = NULL;
     int output_len, chunk_len;
     const char *err = "INTERNAL_ERROR";
-    EVP_ENCODE_CTX decode_ctx;
+    EVP_ENCODE_CTX *decode_ctx = EVP_ENCODE_CTX_new();
+
+    if (decode_ctx == NULL)
+        goto err;
 
     if (edata->encoding == BASE64_CANONICAL_ENCODING) {
-        EVP_ENCODE_CTX encode_ctx;
+        EVP_ENCODE_CTX *encode_ctx = EVP_ENCODE_CTX_new();
+        if (encode_ctx == NULL)
+            goto err;
         encode_out = OPENSSL_malloc(EVP_ENCODE_LENGTH(edata->input_len));
         if (encode_out == NULL)
             goto err;
 
-        EVP_EncodeInit(&encode_ctx);
-        EVP_EncodeUpdate(&encode_ctx, encode_out, &chunk_len,
+        EVP_EncodeInit(encode_ctx);
+        EVP_EncodeUpdate(encode_ctx, encode_out, &chunk_len,
                          edata->input, edata->input_len);
         output_len = chunk_len;
 
-        EVP_EncodeFinal(&encode_ctx, encode_out + chunk_len, &chunk_len);
+        EVP_EncodeFinal(encode_ctx, encode_out + chunk_len, &chunk_len);
         output_len += chunk_len;
+
+        EVP_ENCODE_CTX_free(encode_ctx);
 
         if (check_var_length_output(t, edata->output, edata->output_len,
                                     encode_out, output_len)) {
@@ -1618,15 +1625,15 @@ static int encode_test_run(struct evp_test *t)
     if (decode_out == NULL)
         goto err;
 
-    EVP_DecodeInit(&decode_ctx);
-    if (EVP_DecodeUpdate(&decode_ctx, decode_out, &chunk_len, edata->output,
+    EVP_DecodeInit(decode_ctx);
+    if (EVP_DecodeUpdate(decode_ctx, decode_out, &chunk_len, edata->output,
                          edata->output_len) < 0) {
         err = "DECODE_ERROR";
         goto err;
     }
     output_len = chunk_len;
 
-    if (EVP_DecodeFinal(&decode_ctx, decode_out + chunk_len, &chunk_len) != 1) {
+    if (EVP_DecodeFinal(decode_ctx, decode_out + chunk_len, &chunk_len) != 1) {
         err = "DECODE_ERROR";
         goto err;
     }
@@ -1644,6 +1651,7 @@ static int encode_test_run(struct evp_test *t)
     t->err = err;
     OPENSSL_free(encode_out);
     OPENSSL_free(decode_out);
+    EVP_ENCODE_CTX_free(decode_ctx);
     return 1;
 }
 

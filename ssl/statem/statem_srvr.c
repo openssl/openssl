@@ -1729,7 +1729,6 @@ int tls_construct_server_key_exchange(SSL *s)
     int al, i;
     unsigned long type;
     int n;
-    CERT *cert;
     BIGNUM *r[4];
     int nr[4], kn;
     BUF_MEM *buf;
@@ -1742,7 +1741,6 @@ int tls_construct_server_key_exchange(SSL *s)
     }
 
     type = s->s3->tmp.new_cipher->algorithm_mkey;
-    cert = s->cert;
 
     buf = s->init_buf;
 
@@ -1763,6 +1761,8 @@ int tls_construct_server_key_exchange(SSL *s)
 #endif                          /* !OPENSSL_NO_PSK */
 #ifndef OPENSSL_NO_DH
     if (type & (SSL_kDHE | SSL_kDHEPSK)) {
+        CERT *cert = s->cert;
+
         if (s->cert->dh_tmp_auto) {
             dhp = ssl_get_auto_dh(s);
             if (dhp == NULL) {
@@ -2408,7 +2408,6 @@ MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
     if (alg_k & (SSL_kDHE | SSL_kDHr | SSL_kDHd | SSL_kDHEPSK)) {
         int idx = -1;
         EVP_PKEY *skey = NULL;
-        PACKET bookmark = *pkt;
         unsigned char shared[(OPENSSL_DH_MAX_MODULUS_BITS + 7) / 8];
 
         if (!PACKET_get_net_2(pkt, &i)) {
@@ -2421,14 +2420,9 @@ MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
             i = 0;
         }
         if (PACKET_remaining(pkt) != i) {
-            if (!(s->options & SSL_OP_SSLEAY_080_CLIENT_DH_BUG)) {
-                SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE,
-                       SSL_R_DH_PUBLIC_VALUE_LENGTH_IS_WRONG);
-                goto err;
-            } else {
-                *pkt = bookmark;
-                i = PACKET_remaining(pkt);
-            }
+            SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE,
+                   SSL_R_DH_PUBLIC_VALUE_LENGTH_IS_WRONG);
+            goto err;
         }
         if (alg_k & SSL_kDHr)
             idx = SSL_PKEY_DH_RSA;

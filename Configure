@@ -215,6 +215,8 @@ my $BSDthreads="-pthread -D_THREAD_SAFE -D_REENTRANT";
 #	  cmll_obj => $cmll_obj,
 #	  modes_obj => $modes_obj,
 #	  engines_obj => $engines_obj,
+#	  chacha_obj => $wp_obj,
+#	  poly1305_obj => $cmll_obj,
 #	  dso_scheme => $dso_scheme,
 #	  shared_target => $shared_target,
 #	  shared_cflag => $shared_cflag,
@@ -796,6 +798,7 @@ my $cast_enc="c_enc.o";
 my $rc4_enc="rc4_enc.o rc4_skey.o";
 my $rc5_enc="rc5_enc.o";
 my $cmll_enc="camellia.o cmll_misc.o cmll_cbc.o";
+my $chacha_enc="chacha_enc.o";
 my $processor="";
 my $default_ranlib;
 my $perl;
@@ -823,7 +826,7 @@ my @disablables = (
     "dh",
     "dsa",
     "dso",
-    "dtls1?",
+    "dtls",
     "dynamic[-_]engine",
     "ec",
     "ec2m",
@@ -1032,6 +1035,7 @@ PROCESS_ARGS:
 			{
 			if (open(IN,"<$Makefile"))
 				{
+				my $config_args_found=0;
 				while (<IN>)
 					{
 					chomp;
@@ -1043,11 +1047,19 @@ PROCESS_ARGS:
 							if (grep(/^reconf/,@argvcopy));
 						print "Reconfiguring with: $argvstring\n";
 						$argv_unprocessed=1;
-						close(IN);
-						last PROCESS_ARGS;
+						$config_args_found=1;
+						}
+					elsif (/^CROSS_COMPILE=\s*(.*)/)
+						{
+						$ENV{CROSS_COMPILE}=$1;
+						}
+					elsif (/^CC=\s*(?:\$\(CROSS_COMPILE\))?(.*?)/)
+						{
+						$ENV{CC}=$1;
 						}
 					}
 				close(IN);
+				last PROCESS_ARGS if ($config_args_found);
 				}
 			die "Insufficient data to reconfigure, please do a normal configuration\n";
 			}
@@ -1373,6 +1385,8 @@ my $wp_obj = $table{$target}->{wp_obj};
 my $cmll_obj = $table{$target}->{cmll_obj};
 my $modes_obj = $table{$target}->{modes_obj};
 my $engines_obj = $table{$target}->{engines_obj};
+my $chacha_obj = $table{$target}->{chacha_obj};
+my $poly1305_obj = $table{$target}->{poly1305_obj};
 my $perlasm_scheme = $table{$target}->{perlasm_scheme};
 my $dso_scheme = $table{$target}->{dso_scheme};
 my $shared_target = $table{$target}->{shared_target};
@@ -1483,7 +1497,8 @@ if ($no_asm)
 	{
 	$cpuid_obj=$bn_obj=$ec_obj=
 	$des_obj=$aes_obj=$bf_obj=$cast_obj=$rc4_obj=$rc5_obj=$cmll_obj=
-	$modes_obj=$sha1_obj=$md5_obj=$rmd160_obj=$wp_obj=$engines_obj="";
+	$modes_obj=$sha1_obj=$md5_obj=$rmd160_obj=$wp_obj=$engines_obj=
+	$chacha_obj=$poly1305_obj="";
 	$cflags=~s/\-D[BL]_ENDIAN//		if ($fips);
 	$thread_cflags=~s/\-D[BL]_ENDIAN//	if ($fips);
 	}
@@ -1702,6 +1717,11 @@ if ($ec_obj =~ /ecp_nistz256/)
 	{
 	$cflags.=" -DECP_NISTZ256_ASM";
 	}
+$chacha_obj=$chacha_enc	unless ($chacha_obj =~ /\.o$/);
+if ($poly1305_obj =~ /\.o$/)
+	{
+	$cflags.=" -DPOLY1305_ASM";
+	}
 
 # "Stringify" the C flags string.  This permits it to be made part of a string
 # and works as well on command lines.
@@ -1841,6 +1861,8 @@ while (<IN>)
 	s/^WP_ASM_OBJ=.*$/WP_ASM_OBJ= $wp_obj/;
 	s/^CMLL_ENC=.*$/CMLL_ENC= $cmll_obj/;
 	s/^MODES_ASM_OBJ.=*$/MODES_ASM_OBJ= $modes_obj/;
+	s/^CHACHA_ENC=.*$/CHACHA_ENC= $chacha_obj/;
+	s/^POLY1305_ASM_OBJ=.*$/POLY1305_ASM_OBJ= $poly1305_obj/;
 	s/^ENGINES_ASM_OBJ.=*$/ENGINES_ASM_OBJ= $engines_obj/;
 	s/^PERLASM_SCHEME=.*$/PERLASM_SCHEME= $perlasm_scheme/;
 	s/^PROCESSOR=.*/PROCESSOR= $processor/;
@@ -1900,6 +1922,8 @@ print "RMD160_OBJ_ASM=$rmd160_obj\n";
 print "CMLL_ENC      =$cmll_obj\n";
 print "MODES_OBJ     =$modes_obj\n";
 print "ENGINES_OBJ   =$engines_obj\n";
+print "CHACHA_ENC    =$chacha_obj\n";
+print "POLY1305_OBJ  =$poly1305_obj\n";
 print "PROCESSOR     =$processor\n";
 print "RANLIB        =$ranlib\n";
 print "ARFLAGS       =$arflags\n";
@@ -2328,6 +2352,8 @@ sub print_table_entry
 \$cmll_obj     = $table{$target}->{cmll_obj}
 \$modes_obj    = $table{$target}->{modes_obj}
 \$engines_obj  = $table{$target}->{engines_obj}
+\$chacha_obj   = $table{$target}->{chacha_obj}
+\$poly1305_obj = $table{$target}->{poly1305_obj}
 \$perlasm_scheme = $table{$target}->{perlasm_scheme}
 \$dso_scheme   = $table{$target}->{dso_scheme}
 \$shared_target= $table{$target}->{shared_target}
@@ -2367,6 +2393,8 @@ EOF
 		"cmll_obj",
 		"modes_obj",
 		"engines_obj",
+		"chacha_obj",
+		"poly1305_obj",
 		"perlasm_scheme",
 		"dso_scheme",
 		"shared_target",

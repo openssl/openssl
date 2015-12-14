@@ -259,7 +259,7 @@ static const char *session_id_prefix = NULL;
 
 static int enable_timeouts = 0;
 static long socket_mtu;
-#ifndef OPENSSL_NO_DTLS1
+#ifndef OPENSSL_NO_DTLS
 static int cert_chain = 0;
 #endif
 static int dtlslisten = 0;
@@ -936,7 +936,7 @@ OPTIONS s_server_options[] = {
 #ifndef OPENSSL_NO_SSL3
     {"ssl3", OPT_SSL3, '-', "Just talk SSLv3"},
 #endif
-#ifndef OPENSSL_NO_DTLS1
+#ifndef OPENSSL_NO_DTLS
     {"dtls", OPT_DTLS, '-'},
     {"dtls1", OPT_DTLS1, '-', "Just talk DTLSv1"},
     {"dtls1_2", OPT_DTLS1_2, '-', "Just talk DTLSv1.2"},
@@ -1044,13 +1044,14 @@ int s_server_main(int argc, char *argv[])
         case OPT_PSK_HINT:
         case OPT_PSK:
 #endif
-#ifdef OPENSSL_NO_DTLS1
+#ifdef OPENSSL_NO_DTLS
         case OPT_DTLS:
         case OPT_DTLS1:
         case OPT_DTLS1_2:
         case OPT_TIMEOUT:
         case OPT_MTU:
         case OPT_CHAIN:
+        case OPT_LISTEN:
 #endif
         case OPT_EOF:
         case OPT_ERR:
@@ -1355,7 +1356,7 @@ int s_server_main(int argc, char *argv[])
         case OPT_TLS1:
             meth = TLSv1_server_method();
             break;
-#ifndef OPENSSL_NO_DTLS1
+#ifndef OPENSSL_NO_DTLS
         case OPT_DTLS:
             meth = DTLS_server_method();
             socket_type = SOCK_DGRAM;
@@ -1379,15 +1380,6 @@ int s_server_main(int argc, char *argv[])
             break;
         case OPT_LISTEN:
             dtlslisten = 1;
-            break;
-#else
-        case OPT_DTLS:
-        case OPT_DTLS1:
-        case OPT_DTLS1_2:
-        case OPT_TIMEOUT:
-        case OPT_MTU:
-        case OPT_CHAIN:
-        case OPT_LISTEN:
             break;
 #endif
         case OPT_ID_PREFIX:
@@ -1444,7 +1436,7 @@ int s_server_main(int argc, char *argv[])
     argc = opt_num_rest();
     argv = opt_rest();
 
-#ifndef OPENSSL_NO_DTLS1
+#ifndef OPENSSL_NO_DTLS
     if (www && socket_type == SOCK_DGRAM) {
         BIO_printf(bio_err, "Can't use -HTTP, -www or -WWW with DTLS\n");
         goto end;
@@ -2419,9 +2411,11 @@ static int init_ssl_connection(SSL *con)
     unsigned next_proto_neg_len;
 #endif
     unsigned char *exportedkeymat;
+#ifndef OPENSSL_NO_DTLS
     struct sockaddr_storage client;
+#endif
 
-#ifndef OPENSSL_NO_DTLS1
+#ifndef OPENSSL_NO_DTLS
     if(dtlslisten) {
         i = DTLSv1_listen(con, &client);
         if (i > 0) {

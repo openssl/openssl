@@ -194,7 +194,7 @@ int ec_main(int argc, char **argv)
     argc = opt_num_rest();
     argv = opt_rest();
     private = param_out || pubin || pubout ? 0 : 1;
-    if (text)
+    if (text && !pubin)
         private = 1;
 
     if (!app_passwd(passinarg, passoutarg, &passin, &passout)) {
@@ -237,7 +237,7 @@ int ec_main(int argc, char **argv)
         EC_KEY_set_asn1_flag(eckey, asn1_flag);
 
     if (text) {
-        assert(private);
+        assert(pubin || private);
         if (!EC_KEY_print(out, eckey, 0)) {
             perror(outfile);
             ERR_print_errors(bio_err);

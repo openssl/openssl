@@ -567,7 +567,7 @@ OPTIONS s_client_options[] = {
 #ifndef OPENSSL_NO_SSL3
     {"ssl3", OPT_SSL3, '-', "Just use SSLv3"},
 #endif
-#ifndef OPENSSL_NO_DTLS1
+#ifndef OPENSSL_NO_DTLS
     {"dtls", OPT_DTLS, '-'},
     {"dtls1", OPT_DTLS1, '-', "Just use DTLSv1"},
     {"dtls1_2", OPT_DTLS1_2, '-'},
@@ -954,7 +954,7 @@ int s_client_main(int argc, char **argv)
         case OPT_TLS1:
             meth = TLSv1_client_method();
             break;
-#ifndef OPENSSL_NO_DTLS1
+#ifndef OPENSSL_NO_DTLS
         case OPT_DTLS:
             meth = DTLS_client_method();
             socket_type = SOCK_DGRAM;

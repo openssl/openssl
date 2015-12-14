@@ -59,6 +59,7 @@
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include <openssl/evp.h>
+#include "evp_locl.h"
 
 static unsigned char conv_ascii2bin(unsigned char a);
 #ifndef CHARSET_EBCDIC
@@ -139,6 +140,20 @@ static unsigned char conv_ascii2bin(unsigned char a)
     return data_ascii2bin[a];
 }
 #endif
+
+EVP_ENCODE_CTX *EVP_ENCODE_CTX_new(void)
+{
+    return (EVP_ENCODE_CTX *)OPENSSL_zalloc(sizeof(EVP_ENCODE_CTX));
+}
+
+void EVP_ENCODE_CTX_free(EVP_ENCODE_CTX *ctx)
+{
+    OPENSSL_free(ctx);
+}
+int EVP_ENCODE_CTX_num(EVP_ENCODE_CTX *ctx)
+{
+    return ctx->num;
+}
 
 void EVP_EncodeInit(EVP_ENCODE_CTX *ctx)
 {

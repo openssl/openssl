@@ -600,10 +600,15 @@ int PEM_write_bio(BIO *bp, const char *name, const char *header,
 {
     int nlen, n, i, j, outl;
     unsigned char *buf = NULL;
-    EVP_ENCODE_CTX ctx;
+    EVP_ENCODE_CTX *ctx = EVP_ENCODE_CTX_new();
     int reason = ERR_R_BUF_LIB;
 
-    EVP_EncodeInit(&ctx);
+    if (ctx == NULL) {
+        reason = ERR_R_MALLOC_FAILURE;
+        goto err;
+    }
+
+    EVP_EncodeInit(ctx);
     nlen = strlen(name);
 
     if ((BIO_write(bp, "-----BEGIN ", 11) != 11) ||
@@ -626,25 +631,26 @@ int PEM_write_bio(BIO *bp, const char *name, const char *header,
     i = j = 0;
     while (len > 0) {
         n = (int)((len > (PEM_BUFSIZE * 5)) ? (PEM_BUFSIZE * 5) : len);
-        EVP_EncodeUpdate(&ctx, buf, &outl, &(data[j]), n);
+        EVP_EncodeUpdate(ctx, buf, &outl, &(data[j]), n);
         if ((outl) && (BIO_write(bp, (char *)buf, outl) != outl))
             goto err;
         i += outl;
         len -= n;
         j += n;
     }
-    EVP_EncodeFinal(&ctx, buf, &outl);
+    EVP_EncodeFinal(ctx, buf, &outl);
     if ((outl > 0) && (BIO_write(bp, (char *)buf, outl) != outl))
         goto err;
-    OPENSSL_clear_free(buf, PEM_BUFSIZE * 8);
-    buf = NULL;
     if ((BIO_write(bp, "-----END ", 9) != 9) ||
         (BIO_write(bp, name, nlen) != nlen) ||
         (BIO_write(bp, "-----\n", 6) != 6))
         goto err;
+    OPENSSL_clear_free(buf, PEM_BUFSIZE * 8);
+    EVP_ENCODE_CTX_free(ctx);
     return (i + outl);
  err:
     OPENSSL_clear_free(buf, PEM_BUFSIZE * 8);
+    EVP_ENCODE_CTX_free(ctx);
     PEMerr(PEM_F_PEM_WRITE_BIO, reason);
     return (0);
 }
@@ -670,22 +676,23 @@ int PEM_read(FILE *fp, char **name, char **header, unsigned char **data,
 int PEM_read_bio(BIO *bp, char **name, char **header, unsigned char **data,
                  long *len)
 {
-    EVP_ENCODE_CTX ctx;
+    EVP_ENCODE_CTX *ctx = EVP_ENCODE_CTX_new();
     int end = 0, i, k, bl = 0, hl = 0, nohead = 0;
     char buf[256];
     BUF_MEM *nameB;
     BUF_MEM *headerB;
     BUF_MEM *dataB, *tmpB;
 
+    if (ctx == NULL) {
+        PEMerr(PEM_F_PEM_READ_BIO, ERR_R_MALLOC_FAILURE);
+        return (0);
+    }
+
     nameB = BUF_MEM_new();
     headerB = BUF_MEM_new();
     dataB = BUF_MEM_new();
     if ((nameB == NULL) || (headerB == NULL) || (dataB == NULL)) {
-        BUF_MEM_free(nameB);
-        BUF_MEM_free(headerB);
-        BUF_MEM_free(dataB);
-        PEMerr(PEM_F_PEM_READ_BIO, ERR_R_MALLOC_FAILURE);
-        return (0);
+        goto err;
     }
 
     buf[254] = '\0';
@@ -805,15 +812,15 @@ int PEM_read_bio(BIO *bp, char **name, char **header, unsigned char **data,
         goto err;
     }
 
-    EVP_DecodeInit(&ctx);
-    i = EVP_DecodeUpdate(&ctx,
+    EVP_DecodeInit(ctx);
+    i = EVP_DecodeUpdate(ctx,
                          (unsigned char *)dataB->data, &bl,
                          (unsigned char *)dataB->data, bl);
     if (i < 0) {
         PEMerr(PEM_F_PEM_READ_BIO, PEM_R_BAD_BASE64_DECODE);
         goto err;
     }
-    i = EVP_DecodeFinal(&ctx, (unsigned char *)&(dataB->data[bl]), &k);
+    i = EVP_DecodeFinal(ctx, (unsigned char *)&(dataB->data[bl]), &k);
     if (i < 0) {
         PEMerr(PEM_F_PEM_READ_BIO, PEM_R_BAD_BASE64_DECODE);
         goto err;
@@ -829,11 +836,13 @@ int PEM_read_bio(BIO *bp, char **name, char **header, unsigned char **data,
     OPENSSL_free(nameB);
     OPENSSL_free(headerB);
     OPENSSL_free(dataB);
+    EVP_ENCODE_CTX_free(ctx);
     return (1);
  err:
     BUF_MEM_free(nameB);
     BUF_MEM_free(headerB);
     BUF_MEM_free(dataB);
+    EVP_ENCODE_CTX_free(ctx);
     return (0);
 }
 
