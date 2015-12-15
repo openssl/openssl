@@ -1195,7 +1195,7 @@ void print_ssl_summary(SSL *s)
 }
 
 int config_ctx(SSL_CONF_CTX *cctx, STACK_OF(OPENSSL_STRING) *str,
-               SSL_CTX *ctx, int no_ecdhe, int no_jpake)
+               SSL_CTX *ctx, int no_jpake)
 {
     int i;
 
@@ -1203,9 +1203,6 @@ int config_ctx(SSL_CONF_CTX *cctx, STACK_OF(OPENSSL_STRING) *str,
     for (i = 0; i < sk_OPENSSL_STRING_num(str); i += 2) {
         const char *flag = sk_OPENSSL_STRING_value(str, i);
         const char *arg = sk_OPENSSL_STRING_value(str, i + 1);
-        /* If no_ecdhe or named curve already specified don't need a default. */
-        if (!no_ecdhe && strcmp(flag, "-named_curve") == 0)
-            no_ecdhe = 1;
 #ifndef OPENSSL_NO_JPAKE
         if (!no_jpake && (strcmp(flag, "-cipher") == 0)) {
             BIO_puts(bio_err, "JPAKE sets cipher to PSK\n");
@@ -1218,18 +1215,6 @@ int config_ctx(SSL_CONF_CTX *cctx, STACK_OF(OPENSSL_STRING) *str,
                            flag, arg);
             else
                 BIO_printf(bio_err, "Error with command: \"%s\"\n", flag);
-            ERR_print_errors(bio_err);
-            return 0;
-        }
-    }
-    /*
-     * This is a special case to keep existing s_server functionality: if we
-     * don't have any curve specified *and* we haven't disabled ECDHE then
-     * use P-256.
-     */
-    if (!no_ecdhe) {
-        if (SSL_CONF_cmd(cctx, "-named_curve", "P-256") <= 0) {
-            BIO_puts(bio_err, "Error setting EC curve\n");
             ERR_print_errors(bio_err);
             return 0;
         }

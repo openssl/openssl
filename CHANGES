@@ -54,7 +54,8 @@
 
   *) SSL_{CTX_}set_ecdh_auto() has been removed and ECDH is support is
      always enabled now.  If you want to disable the support you should
-     exclude it using the list of supported ciphers.
+     exclude it using the list of supported ciphers. This also means that the
+     "-no_ecdhe" option has been removed from s_server.
      [Kurt Roeckx]
 
   *) SSL_{CTX}_set_tmp_ecdh() which can set 1 EC curve now internally calls
