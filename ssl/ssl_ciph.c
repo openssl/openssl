@@ -306,12 +306,9 @@ static const SSL_CIPHER cipher_aliases[] = {
      */
     {0, SSL_TXT_kRSA, 0, SSL_kRSA, 0, 0, 0, 0, 0, 0, 0, 0},
 
-    {0, SSL_TXT_kDHr, 0, SSL_kDHr, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_kDHd, 0, SSL_kDHd, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_kDH, 0, SSL_kDHr | SSL_kDHd, 0, 0, 0, 0, 0, 0, 0, 0},
     {0, SSL_TXT_kEDH, 0, SSL_kDHE, 0, 0, 0, 0, 0, 0, 0, 0},
     {0, SSL_TXT_kDHE, 0, SSL_kDHE, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_DH, 0, SSL_kDHr | SSL_kDHd | SSL_kDHE, 0, 0, 0, 0, 0, 0, 0,
+    {0, SSL_TXT_DH, 0, SSL_kDHE, 0, 0, 0, 0, 0, 0, 0,
      0},
 
     {0, SSL_TXT_kECDHr, 0, SSL_kECDHr, 0, 0, 0, 0, 0, 0, 0, 0},
@@ -334,8 +331,6 @@ static const SSL_CIPHER cipher_aliases[] = {
     {0, SSL_TXT_aDSS, 0, 0, SSL_aDSS, 0, 0, 0, 0, 0, 0, 0},
     {0, SSL_TXT_DSS, 0, 0, SSL_aDSS, 0, 0, 0, 0, 0, 0, 0},
     {0, SSL_TXT_aNULL, 0, 0, SSL_aNULL, 0, 0, 0, 0, 0, 0, 0},
-    /* no such ciphersuites supported! */
-    {0, SSL_TXT_aDH, 0, 0, SSL_aDH, 0, 0, 0, 0, 0, 0, 0},
     {0, SSL_TXT_aECDH, 0, 0, SSL_aECDH, 0, 0, 0, 0, 0, 0, 0},
     {0, SSL_TXT_aECDSA, 0, 0, SSL_aECDSA, 0, 0, 0, 0, 0, 0, 0},
     {0, SSL_TXT_ECDSA, 0, 0, SSL_aECDSA, 0, 0, 0, 0, 0, 0, 0},
@@ -506,8 +501,7 @@ void ssl_load_ciphers(void)
     disabled_auth_mask |= SSL_aDSS;
 #endif
 #ifdef OPENSSL_NO_DH
-    disabled_mkey_mask |= SSL_kDHr | SSL_kDHd | SSL_kDHE | SSL_kDHEPSK;
-    disabled_auth_mask |= SSL_aDH;
+    disabled_mkey_mask |= SSL_kDHE | SSL_kDHEPSK;
 #endif
 #ifdef OPENSSL_NO_EC
     disabled_mkey_mask |= SSL_kECDHe | SSL_kECDHr | SSL_kECDHEPSK;
@@ -1614,12 +1608,6 @@ char *SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
     case SSL_kRSA:
         kx = "RSA";
         break;
-    case SSL_kDHr:
-        kx = "DH/RSA";
-        break;
-    case SSL_kDHd:
-        kx = "DH/DSS";
-        break;
     case SSL_kDHE:
         kx = "DH";
         break;
@@ -1660,9 +1648,6 @@ char *SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
         break;
     case SSL_aDSS:
         au = "DSS";
-        break;
-    case SSL_aDH:
-        au = "DH";
         break;
     case SSL_aECDH:
         au = "ECDH";
@@ -1980,10 +1965,6 @@ int ssl_cipher_get_cert_index(const SSL_CIPHER *c)
         return SSL_PKEY_ECC;
     } else if (alg_a & SSL_aECDSA)
         return SSL_PKEY_ECC;
-    else if (alg_k & SSL_kDHr)
-        return SSL_PKEY_DH_RSA;
-    else if (alg_k & SSL_kDHd)
-        return SSL_PKEY_DH_DSA;
     else if (alg_a & SSL_aDSS)
         return SSL_PKEY_DSA_SIGN;
     else if (alg_a & SSL_aRSA)
