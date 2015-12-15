@@ -1211,7 +1211,7 @@ int s_client_main(int argc, char **argv)
         ASYNC_init(1, 0, 0);
     }
 
-    if (!config_ctx(cctx, ssl_args, ctx, 1, jpake_secret == NULL))
+    if (!config_ctx(cctx, ssl_args, ctx, jpake_secret == NULL))
         goto end;
 
     if (!ssl_load_stores(ctx, vfyCApath, vfyCAfile, chCApath, chCAfile,

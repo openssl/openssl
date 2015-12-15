@@ -804,7 +804,7 @@ typedef enum OPTION_choice {
     OPT_DEBUG, OPT_TLSEXTDEBUG, OPT_STATUS, OPT_STATUS_VERBOSE,
     OPT_STATUS_TIMEOUT, OPT_STATUS_URL, OPT_MSG, OPT_MSGFILE, OPT_TRACE,
     OPT_SECURITY_DEBUG, OPT_SECURITY_DEBUG_VERBOSE, OPT_STATE, OPT_CRLF,
-    OPT_QUIET, OPT_BRIEF, OPT_NO_DHE, OPT_NO_ECDHE,
+    OPT_QUIET, OPT_BRIEF, OPT_NO_DHE,
     OPT_NO_RESUME_EPHEMERAL, OPT_PSK_HINT, OPT_PSK, OPT_SRPVFILE,
     OPT_SRPUSERSEED, OPT_REV, OPT_WWW, OPT_UPPER_WWW, OPT_HTTP, OPT_ASYNC,
     OPT_SSL3,
@@ -949,9 +949,6 @@ OPTIONS s_server_options[] = {
 #ifndef OPENSSL_NO_DH
     {"no_dhe", OPT_NO_DHE, '-', "Disable ephemeral DH"},
 #endif
-#ifndef OPENSSL_NO_EC
-    {"no_ecdhe", OPT_NO_ECDHE, '-', "Disable ephemeral ECDH"},
-#endif
 #ifndef OPENSSL_NO_NEXTPROTONEG
     {"nextprotoneg", OPT_NEXTPROTONEG, 's',
      "Set the advertised protocols for the NPN extension (comma-separated list)"},
@@ -1000,7 +997,7 @@ int s_server_main(int argc, char *argv[])
 #ifndef OPENSSL_NO_DH
     int no_dhe = 0;
 #endif
-    int no_ecdhe = 0, nocert = 0, ret = 1;
+    int nocert = 0, ret = 1;
     int noCApath = 0, noCAfile = 0;
     int s_cert_format = FORMAT_PEM, s_key_format = FORMAT_PEM;
     int s_dcert_format = FORMAT_PEM, s_dkey_format = FORMAT_PEM;
@@ -1296,9 +1293,6 @@ int s_server_main(int argc, char *argv[])
 #ifndef OPENSSL_NO_DH
             no_dhe = 1;
 #endif
-            break;
-        case OPT_NO_ECDHE:
-            no_ecdhe = 1;
             break;
         case OPT_NO_RESUME_EPHEMERAL:
             no_resume_ephemeral = 1;
@@ -1670,7 +1664,7 @@ int s_server_main(int argc, char *argv[])
     }
 
     ssl_ctx_add_crls(ctx, crls, 0);
-    if (!config_ctx(cctx, ssl_args, ctx, no_ecdhe, jpake_secret == NULL))
+    if (!config_ctx(cctx, ssl_args, ctx, jpake_secret == NULL))
         goto end;
 
     if (!ssl_load_stores(ctx, vfyCApath, vfyCAfile, chCApath, chCAfile,
@@ -1733,7 +1727,7 @@ int s_server_main(int argc, char *argv[])
         }
 
         ssl_ctx_add_crls(ctx2, crls, 0);
-        if (!config_ctx(cctx, ssl_args, ctx2, no_ecdhe, jpake_secret == NULL))
+        if (!config_ctx(cctx, ssl_args, ctx2, jpake_secret == NULL))
             goto end;
     }
 #ifndef OPENSSL_NO_NEXTPROTONEG
