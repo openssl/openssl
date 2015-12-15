@@ -74,6 +74,10 @@ clean:
 	rm -f *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
 	rm -f arch/*.o arch/*.obj arch/lib arch/tags arch/core arch/.pure arch/.nfs* arch/*.old arch/*.bak arch/fluff
 
+# Different flavours of make disagree on where output goes
+.c.o:
+	$(CC) $(CFLAGS) -c $< -o $@
+
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
 arch/async_null.o: ../../e_os.h ../../include/openssl/async.h
