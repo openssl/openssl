@@ -2390,47 +2390,23 @@ psk_err:
     }
 #endif
 #ifndef OPENSSL_NO_DH
-    else if (alg_k & (SSL_kDHE | SSL_kDHr | SSL_kDHd | SSL_kDHEPSK)) {
+    else if (alg_k & (SSL_kDHE | SSL_kDHEPSK)) {
         DH *dh_srvr, *dh_clnt;
-        if (s->s3->peer_dh_tmp != NULL)
-            dh_srvr = s->s3->peer_dh_tmp;
-        else {
-            /* we get them from the cert */
-            EVP_PKEY *spkey = NULL;
-            dh_srvr = NULL;
-            spkey = X509_get_pubkey(s->session->peer);
-            if (spkey) {
-                dh_srvr = EVP_PKEY_get1_DH(spkey);
-                EVP_PKEY_free(spkey);
-            }
-            if (dh_srvr == NULL) {
-                SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE,
-                       ERR_R_INTERNAL_ERROR);
-                goto err;
-            }
+        if (s->s3->peer_dh_tmp == NULL) {
+            SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE,
+                   ERR_R_INTERNAL_ERROR);
+            goto err;
         }
-        if (s->s3->flags & TLS1_FLAGS_SKIP_CERT_VERIFY) {
-            /* Use client certificate key */
-            EVP_PKEY *clkey = s->cert->key->privatekey;
-            dh_clnt = NULL;
-            if (clkey)
-                dh_clnt = EVP_PKEY_get1_DH(clkey);
-            if (dh_clnt == NULL) {
-                SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE,
-                       ERR_R_INTERNAL_ERROR);
-                goto err;
-            }
-        } else {
-            /* generate a new random key */
-            if ((dh_clnt = DHparams_dup(dh_srvr)) == NULL) {
-                SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE, ERR_R_DH_LIB);
-                goto err;
-            }
-            if (!DH_generate_key(dh_clnt)) {
-                SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE, ERR_R_DH_LIB);
-                DH_free(dh_clnt);
-                goto err;
-            }
+        dh_srvr = s->s3->peer_dh_tmp;
+        /* generate a new random key */
+        if ((dh_clnt = DHparams_dup(dh_srvr)) == NULL) {
+            SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE, ERR_R_DH_LIB);
+            goto err;
+        }
+        if (!DH_generate_key(dh_clnt)) {
+            SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE, ERR_R_DH_LIB);
+            DH_free(dh_clnt);
+            goto err;
         }
 
         pmslen = DH_size(dh_clnt);
@@ -2454,15 +2430,11 @@ psk_err:
         }
         pmslen = n;
 
-        if (s->s3->flags & TLS1_FLAGS_SKIP_CERT_VERIFY)
-            n = 0;
-        else {
-            /* send off the data */
-            n = BN_num_bytes(dh_clnt->pub_key);
-            s2n(n, p);
-            BN_bn2bin(dh_clnt->pub_key, p);
-            n += 2;
-        }
+        /* send off the data */
+        n = BN_num_bytes(dh_clnt->pub_key);
+        s2n(n, p);
+        BN_bn2bin(dh_clnt->pub_key, p);
+        n += 2;
 
         DH_free(dh_clnt);
     }
@@ -2841,7 +2813,6 @@ int tls_construct_client_verify(SSL *s)
  */
 static int ssl3_check_client_certificate(SSL *s)
 {
-    unsigned long alg_k;
     if (!s->cert || !s->cert->key->x509 || !s->cert->key->privatekey)
         return 0;
     /* If no suitable signature algorithm can't use certificate */
@@ -2854,26 +2825,6 @@ static int ssl3_check_client_certificate(SSL *s)
     if (s->cert->cert_flags & SSL_CERT_FLAGS_CHECK_TLS_STRICT &&
         !tls1_check_chain(s, NULL, NULL, NULL, -2))
         return 0;
-    alg_k = s->s3->tmp.new_cipher->algorithm_mkey;
-    /* See if we can use client certificate for fixed DH */
-    if (alg_k & (SSL_kDHr | SSL_kDHd)) {
-        int i = s->session->peer_type;
-        EVP_PKEY *clkey = NULL, *spkey = NULL;
-        clkey = s->cert->key->privatekey;
-        /* If client key not DH assume it can be used */
-        if (EVP_PKEY_id(clkey) != EVP_PKEY_DH)
-            return 1;
-        if (i >= 0)
-            spkey = X509_get_pubkey(s->session->peer);
-        if (spkey) {
-            /* Compare server and client parameters */
-            i = EVP_PKEY_cmp_parameters(clkey, spkey);
-            EVP_PKEY_free(spkey);
-            if (i != 1)
-                return 0;
-        }
-        s->s3->flags |= TLS1_FLAGS_SKIP_CERT_VERIFY;
-    }
     return 1;
 }
 
@@ -3042,20 +2993,7 @@ int ssl3_check_cert_and_algorithm(SSL *s)
         al = SSL_AD_INTERNAL_ERROR;
         SSLerr(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM, ERR_R_INTERNAL_ERROR);
         goto f_err;
-    } else if ((alg_k & SSL_kDHr) && !SSL_USE_SIGALGS(s) &&
-               !has_bits(i, EVP_PK_DH | EVP_PKS_RSA)) {
-        SSLerr(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM,
-               SSL_R_MISSING_DH_RSA_CERT);
-        goto f_err;
     }
-# ifndef OPENSSL_NO_DSA
-    else if ((alg_k & SSL_kDHd) && !SSL_USE_SIGALGS(s) &&
-             !has_bits(i, EVP_PK_DH | EVP_PKS_DSA)) {
-        SSLerr(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM,
-               SSL_R_MISSING_DH_DSA_CERT);
-        goto f_err;
-    }
-# endif
 #endif
 
     return (1);

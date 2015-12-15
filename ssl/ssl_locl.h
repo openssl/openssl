@@ -295,32 +295,28 @@
 /* Bits for algorithm_mkey (key exchange algorithm) */
 /* RSA key exchange */
 # define SSL_kRSA                0x00000001U
-/* DH cert, RSA CA cert */
-# define SSL_kDHr                0x00000002U
-/* DH cert, DSA CA cert */
-# define SSL_kDHd                0x00000004U
 /* tmp DH key no DH cert */
-# define SSL_kDHE                0x00000008U
+# define SSL_kDHE                0x00000002U
 /* synonym */
 # define SSL_kEDH                SSL_kDHE
 /* ECDH cert, RSA CA cert */
-# define SSL_kECDHr              0x00000020U
+# define SSL_kECDHr              0x00000004U
 /* ECDH cert, ECDSA CA cert */
-# define SSL_kECDHe              0x00000040U
+# define SSL_kECDHe              0x00000008U
 /* ephemeral ECDH */
-# define SSL_kECDHE              0x00000080U
+# define SSL_kECDHE              0x00000010U
 /* synonym */
 # define SSL_kEECDH              SSL_kECDHE
 /* PSK */
-# define SSL_kPSK                0x00000100U
+# define SSL_kPSK                0x00000020U
 /* GOST key exchange */
-# define SSL_kGOST       0x00000200U
+# define SSL_kGOST               0x00000040U
 /* SRP */
-# define SSL_kSRP        0x00000400U
+# define SSL_kSRP                0x00000080U
 
-# define SSL_kRSAPSK             0x00000800U
-# define SSL_kECDHEPSK           0x00001000U
-# define SSL_kDHEPSK             0x00002000U
+# define SSL_kRSAPSK             0x00000100U
+# define SSL_kECDHEPSK           0x00000200U
+# define SSL_kDHEPSK             0x00000400U
 
 /* all PSK */
 
@@ -333,20 +329,18 @@
 # define SSL_aDSS                0x00000002U
 /* no auth (i.e. use ADH or AECDH) */
 # define SSL_aNULL               0x00000004U
-/* Fixed DH auth (kDHd or kDHr) */
-# define SSL_aDH                 0x00000008U
 /* Fixed ECDH auth (kECDHe or kECDHr) */
-# define SSL_aECDH               0x00000010U
+# define SSL_aECDH               0x00000008U
 /* ECDSA auth*/
-# define SSL_aECDSA              0x00000040U
+# define SSL_aECDSA              0x00000010U
 /* PSK auth */
-# define SSL_aPSK                0x00000080U
+# define SSL_aPSK                0x00000020U
 /* GOST R 34.10-2001 signature auth */
-# define SSL_aGOST01                     0x00000200U
+# define SSL_aGOST01             0x00000040U
 /* SRP auth */
-# define SSL_aSRP                0x00000400U
+# define SSL_aSRP                0x00000080U
 /* GOST R 34.10-2012 signature auth */
-# define SSL_aGOST12             0x00000800U
+# define SSL_aGOST12             0x00000100U
 
 /* Bits for algorithm_enc (symmetric encryption) */
 # define SSL_DES                 0x00000001U
@@ -485,13 +479,11 @@
 # define SSL_PKEY_RSA_ENC        0
 # define SSL_PKEY_RSA_SIGN       1
 # define SSL_PKEY_DSA_SIGN       2
-# define SSL_PKEY_DH_RSA         3
-# define SSL_PKEY_DH_DSA         4
-# define SSL_PKEY_ECC            5
-# define SSL_PKEY_GOST01         7
-# define SSL_PKEY_GOST12_256     8
-# define SSL_PKEY_GOST12_512     9
-# define SSL_PKEY_NUM            10
+# define SSL_PKEY_ECC            3
+# define SSL_PKEY_GOST01         4
+# define SSL_PKEY_GOST12_256     5
+# define SSL_PKEY_GOST12_512     6
+# define SSL_PKEY_NUM            7
 /*
  * Pseudo-constant. GOST cipher suites can use different certs for 1
  * SSL_CIPHER. So let's see which one we have in fact.

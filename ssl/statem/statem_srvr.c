@@ -322,8 +322,7 @@ static int send_server_key_exchange(SSL *s)
      * the server certificate contains the server's public key for
      * key exchange.
      */
-    if (   (alg_k & SSL_kDHE)
-        || (alg_k & SSL_kECDHE)
+    if (alg_k & (SSL_kDHE|SSL_kECDHE)
         /*
          * PSK: send ServerKeyExchange if PSK identity hint if
          * provided
@@ -2121,7 +2120,7 @@ MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
 #endif
 #ifndef OPENSSL_NO_DH
     BIGNUM *pub = NULL;
-    DH *dh_srvr, *dh_clnt = NULL;
+    DH *dh_srvr;
 #endif
 #ifndef OPENSSL_NO_EC
     EVP_PKEY *ckey = NULL;
@@ -2351,9 +2350,7 @@ MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
     } else
 #endif
 #ifndef OPENSSL_NO_DH
-    if (alg_k & (SSL_kDHE | SSL_kDHr | SSL_kDHd | SSL_kDHEPSK)) {
-        int idx = -1;
-        EVP_PKEY *skey = NULL;
+    if (alg_k & (SSL_kDHE | SSL_kDHEPSK)) {
         unsigned char shared[(OPENSSL_DH_MAX_MODULUS_BITS + 7) / 8];
 
         if (!PACKET_get_net_2(pkt, &i)) {
@@ -2370,21 +2367,7 @@ MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
                    SSL_R_DH_PUBLIC_VALUE_LENGTH_IS_WRONG);
             goto err;
         }
-        if (alg_k & SSL_kDHr)
-            idx = SSL_PKEY_DH_RSA;
-        else if (alg_k & SSL_kDHd)
-            idx = SSL_PKEY_DH_DSA;
-        if (idx >= 0) {
-            skey = s->cert->pkeys[idx].privatekey;
-            if ((skey == NULL) ||
-                (skey->type != EVP_PKEY_DH) || (skey->pkey.dh == NULL)) {
-                al = SSL_AD_HANDSHAKE_FAILURE;
-                SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE,
-                       SSL_R_MISSING_RSA_CERTIFICATE);
-                goto f_err;
-            }
-            dh_srvr = skey->pkey.dh;
-        } else if (s->s3->tmp.dh == NULL) {
+        if (s->s3->tmp.dh == NULL) {
             al = SSL_AD_HANDSHAKE_FAILURE;
             SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE,
                    SSL_R_MISSING_TMP_DH_KEY);
@@ -2393,30 +2376,19 @@ MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
             dh_srvr = s->s3->tmp.dh;
 
         if (PACKET_remaining(pkt) == 0L) {
-            /* Get pubkey from cert */
-            EVP_PKEY *clkey = X509_get_pubkey(s->session->peer);
-            if (clkey) {
-                if (EVP_PKEY_cmp_parameters(clkey, skey) == 1)
-                    dh_clnt = EVP_PKEY_get1_DH(clkey);
-            }
-            if (dh_clnt == NULL) {
-                al = SSL_AD_HANDSHAKE_FAILURE;
-                SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE,
-                       SSL_R_MISSING_TMP_DH_KEY);
-                goto f_err;
-            }
-            EVP_PKEY_free(clkey);
-            pub = dh_clnt->pub_key;
-        } else {
-            if (!PACKET_get_bytes(pkt, &data, i)) {
-                /* We already checked we have enough data */
-                al = SSL_AD_INTERNAL_ERROR;
-                SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE,
-                       ERR_R_INTERNAL_ERROR);
-                goto f_err;
-            }
-            pub = BN_bin2bn(data, i, NULL);
+            al = SSL_AD_HANDSHAKE_FAILURE;
+            SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE,
+                   SSL_R_MISSING_TMP_DH_KEY);
+            goto f_err;
         }
+        if (!PACKET_get_bytes(pkt, &data, i)) {
+            /* We already checked we have enough data */
+            al = SSL_AD_INTERNAL_ERROR;
+            SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE,
+                   ERR_R_INTERNAL_ERROR);
+            goto f_err;
+        }
+        pub = BN_bin2bn(data, i, NULL);
         if (pub == NULL) {
             SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE, SSL_R_BN_LIB);
             goto err;
@@ -2432,19 +2404,12 @@ MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
 
         DH_free(s->s3->tmp.dh);
         s->s3->tmp.dh = NULL;
-        if (dh_clnt)
-            DH_free(dh_clnt);
-        else
-            BN_clear_free(pub);
+        BN_clear_free(pub);
         pub = NULL;
         if (!ssl_generate_master_secret(s, shared, i, 0)) {
             al = SSL_AD_INTERNAL_ERROR;
             SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
             goto f_err;
-        }
-        if (dh_clnt) {
-            s->statem.no_cert_verify = 1;
-            return MSG_PROCESS_CONTINUE_PROCESSING;
         }
     } else
 #endif

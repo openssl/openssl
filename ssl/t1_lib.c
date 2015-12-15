@@ -1078,9 +1078,7 @@ void ssl_set_client_disabled(SSL *s)
      * algorithms.
      */
     if (s->s3->tmp.mask_a & SSL_aRSA)
-        s->s3->tmp.mask_k |= SSL_kDHr | SSL_kECDHr;
-    if (s->s3->tmp.mask_a & SSL_aDSS)
-        s->s3->tmp.mask_k |= SSL_kDHd;
+        s->s3->tmp.mask_k |= SSL_kECDHr;
     if (s->s3->tmp.mask_a & SSL_aECDSA)
         s->s3->tmp.mask_k |= SSL_kECDHe;
 # ifndef OPENSSL_NO_PSK
@@ -4031,13 +4029,11 @@ int tls1_check_chain(SSL *s, X509 *x, EVP_PKEY *pk, STACK_OF(X509) *chain,
             switch (idx) {
             case SSL_PKEY_RSA_ENC:
             case SSL_PKEY_RSA_SIGN:
-            case SSL_PKEY_DH_RSA:
                 rsign = TLSEXT_signature_rsa;
                 default_nid = NID_sha1WithRSAEncryption;
                 break;
 
             case SSL_PKEY_DSA_SIGN:
-            case SSL_PKEY_DH_DSA:
                 rsign = TLSEXT_signature_dsa;
                 default_nid = NID_dsaWithSHA1;
                 break;
@@ -4140,15 +4136,6 @@ int tls1_check_chain(SSL *s, X509 *x, EVP_PKEY *pk, STACK_OF(X509) *chain,
         case EVP_PKEY_EC:
             check_type = TLS_CT_ECDSA_SIGN;
             break;
-        case EVP_PKEY_DH:
-        case EVP_PKEY_DHX:
-            {
-                int cert_type = X509_certificate_type(x, pk);
-                if (cert_type & EVP_PKS_RSA)
-                    check_type = TLS_CT_RSA_FIXED_DH;
-                if (cert_type & EVP_PKS_DSA)
-                    check_type = TLS_CT_DSS_FIXED_DH;
-            }
         }
         if (check_type) {
             const unsigned char *ctypes;
@@ -4229,8 +4216,6 @@ void tls1_set_cert_validity(SSL *s)
     tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_RSA_ENC);
     tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_RSA_SIGN);
     tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_DSA_SIGN);
-    tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_DH_RSA);
-    tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_DH_DSA);
     tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_ECC);
     tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_GOST01);
     tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_GOST12_256);

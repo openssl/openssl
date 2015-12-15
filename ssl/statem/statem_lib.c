@@ -632,17 +632,6 @@ int ssl_cert_type(X509 *x, EVP_PKEY *pkey)
         ret = SSL_PKEY_GOST12_512;
     }
 #endif
-    else if (x && (i == EVP_PKEY_DH || i == EVP_PKEY_DHX)) {
-        /*
-         * For DH two cases: DH certificate signed with RSA and DH
-         * certificate signed with DSA.
-         */
-        i = X509_certificate_type(x, pk);
-        if (i & EVP_PKS_RSA)
-            ret = SSL_PKEY_DH_RSA;
-        else if (i & EVP_PKS_DSA)
-            ret = SSL_PKEY_DH_DSA;
-    }
 
  err:
     if (!pkey)
