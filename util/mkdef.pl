@@ -1110,9 +1110,9 @@ sub maybe_add_info {
 		(my $s, my $i) = split /\\/, $sym;
 		if (defined($nums{$s})) {
 			$i =~ s/^(.*?:.*?:\w+)(\(\w+\))?/$1/;
-			(my $n, my $dummy) = split /\\/, $nums{$s};
+			(my $n, my $vers, my $dummy) = split /\\/, $nums{$s};
 			if (!defined($dummy) || $i ne $dummy) {
-				$nums{$s} = $n."\\".$i;
+				$nums{$s} = $n."\\".$vers."\\".$i;
 				$new_info++;
 				print STDERR "DEBUG: maybe_add_info for $s: \"$dummy\" => \"$i\"\n" if $debug;
 			}
@@ -1122,7 +1122,7 @@ sub maybe_add_info {
 
 	my @s=sort { &parse_number($nums{$a},"n") <=> &parse_number($nums{$b},"n") } keys %nums;
 	foreach $sym (@s) {
-		(my $n, my $i) = split /\\/, $nums{$sym};
+		(my $n, my $vers, my $i) = split /\\/, $nums{$sym};
 		if (!defined($syms{$sym}) && $i !~ /^NOEXIST:/) {
 			$new_info++;
 			print STDERR "DEBUG: maybe_add_info for $sym: -> undefined\n" if $debug;
@@ -1273,7 +1273,7 @@ sub print_test_file
 			}
 			$prev = $s2;	# To warn about duplicates...
 
-			($nn,$ni)=($nums{$s2} =~ /^(.*?)\\(.*)$/);
+			(my $nn, my $vers, my $ni) = split /\\/, $nums{$s2};
 			if ($v) {
 				print OUT "\textern int $s2; /* type unknown */ /* $nn $ni */\n";
 			} else {
@@ -1474,7 +1474,7 @@ sub load_numbers
 sub parse_number
 {
 	(my $str, my $what) = @_;
-	(my $n, my $i) = split(/\\/,$str);
+	(my $n, my $v, my $i) = split(/\\/,$str);
 	if ($what eq "n") {
 		return $n;
 	} else {
@@ -1510,7 +1510,7 @@ sub rewrite_numbers
 	    || $a cmp $b
 	} keys %nums;
 	foreach $sym (@s) {
-		(my $n, my $i) = split /\\/, $nums{$sym};
+		(my $n, my $vers, my $i) = split /\\/, $nums{$sym};
 		next if defined($i) && $i =~ /^.*?:.*?:\w+\(\w+\)/;
 		next if defined($rsyms{$sym});
 		print STDERR "DEBUG: rewrite_numbers for sym = ",$sym,": i = ",$i,", n = ",$n,", rsym{sym} = ",$rsyms{$sym},"syms{sym} = ",$syms{$sym},"\n" if $debug;
@@ -1518,12 +1518,12 @@ sub rewrite_numbers
 			if !defined($i) || $i eq "" || !defined($syms{$sym});
 		my $s2 = $sym;
 		$s2 =~ s/\{[0-9]+\}$//;
-		printf OUT "%s%-39s %d\t%s\n","",$s2,$n,$i;
+		printf OUT "%s%-39s %d\t%s\t%s\n","",$s2,$n,$vers,$i;
 		if (exists $r{$sym}) {
 			(my $s, $i) = split /\\/,$r{$sym};
 			my $s2 = $s;
 			$s2 =~ s/\{[0-9]+\}$//;
-			printf OUT "%s%-39s %d\t%s\n","",$s2,$n,$i;
+			printf OUT "%s%-39s %d\t%s\t%s\n","",$s2,$n,$vers,$i;
 		}
 	}
 }
@@ -1532,6 +1532,10 @@ sub update_numbers
 {
 	(*OUT,$name,*nums,my $start_num, my @symbols)=@_;
 	my $new_syms = 0;
+	my $basevers;
+	my $vers;
+
+	($basevers, $vers) = get_openssl_version();
 
 	print STDERR "Updating $name numbers\n";
 
@@ -1556,11 +1560,11 @@ sub update_numbers
 			$new_syms++;
 			my $s2 = $s;
 			$s2 =~ s/\{[0-9]+\}$//;
-			printf OUT "%s%-39s %d\t%s\n","",$s2, ++$start_num,$i;
+			printf OUT "%s%-39s %d\t%s\t%s\n","",$s2, ++$start_num,$vers,$i;
 			if (exists $r{$s}) {
 				($s, $i) = split /\\/,$r{$s};
 				$s =~ s/\{[0-9]+\}$//;
-				printf OUT "%s%-39s %d\t%s\n","",$s, $start_num,$i;
+				printf OUT "%s%-39s %d\t%s\t%s\n","",$s, $start_num,$vers,$i;
 			}
 		}
 	}
