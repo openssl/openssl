@@ -4985,3 +4985,74 @@ int ssl_generate_master_secret(SSL *s, unsigned char *pms, size_t pmslen,
         s->s3->tmp.pms = NULL;
     return s->session->master_key_length >= 0;
 }
+
+/* Generate a private key from parameters or a curve NID */
+EVP_PKEY *ssl_generate_pkey(EVP_PKEY *pm, int nid)
+{
+    EVP_PKEY_CTX *pctx = NULL;
+    EVP_PKEY *pkey = NULL;
+    if (pm != NULL) {
+        pctx = EVP_PKEY_CTX_new(pm, NULL);
+    } else {
+        /* Generate a new key for this curve */
+        pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_EC, NULL);
+    }
+    if (pctx == NULL)
+        goto err;
+    if (EVP_PKEY_keygen_init(pctx) <= 0)
+        goto err;
+    if (pm == NULL && EVP_PKEY_CTX_set_ec_paramgen_curve_nid(pctx, nid) <= 0)
+        goto err;
+
+    if (EVP_PKEY_keygen(pctx, &pkey) <= 0) {
+        EVP_PKEY_free(pkey);
+        pkey = NULL;
+    }
+
+    err:
+    EVP_PKEY_CTX_free(pctx);
+    return pkey;
+}
+/* Derive premaster or master secret for ECDH/DH */
+int ssl_derive(SSL *s, EVP_PKEY *privkey, EVP_PKEY *pubkey)
+{
+    int rv = 0;
+    unsigned char *pms = NULL;
+    size_t pmslen = 0;
+    EVP_PKEY_CTX *pctx;
+
+    if (privkey == NULL || pubkey == NULL)
+        return 0;
+
+    pctx = EVP_PKEY_CTX_new(privkey, NULL);
+
+    if (EVP_PKEY_derive_init(pctx) <= 0
+        || EVP_PKEY_derive_set_peer(pctx, pubkey) <= 0
+        || EVP_PKEY_derive(pctx, NULL, &pmslen) <= 0) {
+        goto err;
+    }
+
+    pms = OPENSSL_malloc(pmslen);
+    if (pms == NULL)
+        goto err;
+
+    if (EVP_PKEY_derive(pctx, pms, &pmslen) <= 0)
+        goto err;
+
+    if (s->server) {
+        /* For server generate master secret and discard premaster */
+        rv = ssl_generate_master_secret(s, pms, pmslen, 1);
+        pms = NULL;
+    } else {
+        /* For client just save premaster secret */
+        s->s3->tmp.pms = pms;
+        s->s3->tmp.pmslen = pmslen;
+        pms = NULL;
+        rv = 1;
+    }
+
+    err:
+    OPENSSL_clear_free(pms, pmslen);
+    EVP_PKEY_CTX_free(pctx);
+    return rv;
+}
