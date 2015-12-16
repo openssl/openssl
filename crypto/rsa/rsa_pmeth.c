@@ -128,7 +128,7 @@ static int pkey_rsa_copy(EVP_PKEY_CTX *dst, EVP_PKEY_CTX *src)
     dctx->mgf1md = sctx->mgf1md;
     if (sctx->oaep_label) {
         OPENSSL_free(dctx->oaep_label);
-        dctx->oaep_label = BUF_memdup(sctx->oaep_label, sctx->oaep_labellen);
+        dctx->oaep_label = OPENSSL_memdup(sctx->oaep_label, sctx->oaep_labellen);
         if (!dctx->oaep_label)
             return 0;
         dctx->oaep_labellen = sctx->oaep_labellen;

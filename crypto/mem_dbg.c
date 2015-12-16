@@ -704,7 +704,7 @@ static void print_leak_doall_arg(const MEM *m, MEM_LEAK *l)
                 memcpy(buf + buf_len, amip->info, 128 - buf_len - 3);
                 buf_len = 128 - 3;
             } else {
-                BUF_strlcpy(buf + buf_len, amip->info, sizeof buf - buf_len);
+                OPENSSL_strlcpy(buf + buf_len, amip->info, sizeof buf - buf_len);
                 buf_len = strlen(buf);
             }
             BIO_snprintf(buf + buf_len, sizeof buf - buf_len, "\"\n");

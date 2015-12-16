@@ -319,17 +319,24 @@ int CRYPTO_is_mem_check_on(void);
 # define MemCheck_off()  CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_DISABLE)
 # define is_MemCheck_on() CRYPTO_is_mem_check_on()
 
-# define OPENSSL_malloc(num)     CRYPTO_malloc((int)num,__FILE__,__LINE__)
-# define OPENSSL_zalloc(num)     CRYPTO_zalloc((int)num,__FILE__,__LINE__)
-# define OPENSSL_strdup(str)     CRYPTO_strdup((str),__FILE__,__LINE__)
+# define OPENSSL_malloc(num)     CRYPTO_malloc((int)num, __FILE__, __LINE__)
+# define OPENSSL_zalloc(num)     CRYPTO_zalloc((int)num, __FILE__, __LINE__)
+# define OPENSSL_memdup(str, s)  CRYPTO_memdup((str), s, __FILE__, __LINE__)
+# define OPENSSL_strdup(str)     CRYPTO_strdup((str), __FILE__, __LINE__)
+# define OPENSSL_strndup(str, s) CRYPTO_strndup((str), (s), __FILE__, __LINE__)
 # define OPENSSL_realloc(addr,num) \
-        CRYPTO_realloc((char *)addr,(int)num,__FILE__,__LINE__)
+        CRYPTO_realloc((char *)addr, (int)num, __FILE__, __LINE__)
 # define OPENSSL_realloc_clean(addr,old_num,num) \
-        CRYPTO_realloc_clean(addr,old_num,num,__FILE__,__LINE__)
+        CRYPTO_realloc_clean(addr, old_num, num, __FILE__, __LINE__)
 # define OPENSSL_remalloc(addr,num) \
-        CRYPTO_remalloc((char **)addr,(int)num,__FILE__,__LINE__)
+        CRYPTO_remalloc((char **)addr, (int)num, __FILE__, __LINE__)
 # define OPENSSL_clear_free(addr, num) CRYPTO_clear_free(addr, num)
 # define OPENSSL_free(addr)      CRYPTO_free(addr)
+
+size_t OPENSSL_strlcpy(char *dst, const char *src, size_t siz);
+size_t OPENSSL_strlcpy(char *dst, const char *src, size_t siz);
+size_t OPENSSL_strlcat(char *dst, const char *src, size_t siz);
+size_t OPENSSL_strnlen(const char *str, size_t maxlen);
 
 # define OPENSSL_MALLOC_MAX_NELEMS(type)  (((1U<<(sizeof(int)*8-1))-1)/sizeof(type))
 
@@ -469,7 +476,9 @@ void CRYPTO_get_mem_debug_functions(void (**m)
 
 void *CRYPTO_malloc(int num, const char *file, int line);
 void *CRYPTO_zalloc(int num, const char *file, int line);
+void *CRYPTO_memdup(const void *str, size_t siz, const char *file, int line);
 char *CRYPTO_strdup(const char *str, const char *file, int line);
+char *CRYPTO_strndup(const char *str, size_t s, const char *file, int line);
 void CRYPTO_free(void *ptr);
 void CRYPTO_clear_free(void *ptr, size_t num);
 void *CRYPTO_realloc(void *addr, int num, const char *file, int line);
@@ -585,6 +594,7 @@ void ERR_load_CRYPTO_strings(void);
 # define CRYPTO_F_CRYPTO_GET_EX_NEW_INDEX                 100
 # define CRYPTO_F_CRYPTO_GET_NEW_DYNLOCKID                103
 # define CRYPTO_F_CRYPTO_GET_NEW_LOCKID                   101
+# define CRYPTO_F_CRYPTO_MEMDUP                           115
 # define CRYPTO_F_CRYPTO_NEW_EX_DATA                      112
 # define CRYPTO_F_CRYPTO_SET_EX_DATA                      102
 # define CRYPTO_F_DEF_ADD_INDEX                           104

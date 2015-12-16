@@ -255,7 +255,7 @@ int i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
 
 /* Utility functions for d2i_SSL_SESSION */
 
-/* BUF_strndup an OCTET STRING */
+/* OPENSSL_strndup an OCTET STRING */
 
 static int ssl_session_strndup(char **pdst, ASN1_OCTET_STRING *src)
 {
@@ -263,7 +263,7 @@ static int ssl_session_strndup(char **pdst, ASN1_OCTET_STRING *src)
     *pdst = NULL;
     if (src == NULL)
         return 1;
-    *pdst = BUF_strndup((char *)src->data, src->length);
+    *pdst = OPENSSL_strndup((char *)src->data, src->length);
     if (*pdst == NULL)
         return 0;
     return 1;

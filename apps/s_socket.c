@@ -560,7 +560,7 @@ static int do_accept(int acc_sock, int *sock, char **host)
         /* return(0); */
     } else {
         *host = app_malloc(strlen(h1->h_name) + 1, "copy hostname");
-        BUF_strlcpy(*host, h1->h_name, strlen(h1->h_name) + 1);
+        OPENSSL_strlcpy(*host, h1->h_name, strlen(h1->h_name) + 1);
 
         h2 = gethostbyname(*host);
         if (h2 == NULL) {

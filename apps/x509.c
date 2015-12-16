@@ -949,15 +949,15 @@ static ASN1_INTEGER *x509_load_serial(char *CAfile, char *serialfile,
            : (strlen(serialfile))) + 1;
     buf = app_malloc(len, "serial# buffer");
     if (serialfile == NULL) {
-        BUF_strlcpy(buf, CAfile, len);
+        OPENSSL_strlcpy(buf, CAfile, len);
         for (p = buf; *p; p++)
             if (*p == '.') {
                 *p = '\0';
                 break;
             }
-        BUF_strlcat(buf, POSTFIX, len);
+        OPENSSL_strlcat(buf, POSTFIX, len);
     } else
-        BUF_strlcpy(buf, serialfile, len);
+        OPENSSL_strlcpy(buf, serialfile, len);
 
     serial = load_serial(buf, create, NULL);
     if (serial == NULL)

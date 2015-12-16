@@ -1189,8 +1189,8 @@ static int add_DN_object(X509_NAME *n, char *text, const char *def,
         BIO_printf(bio_err, "%s [%s]:", text, def);
     (void)BIO_flush(bio_err);
     if (value != NULL) {
-        BUF_strlcpy(buf, value, sizeof buf);
-        BUF_strlcat(buf, "\n", sizeof buf);
+        OPENSSL_strlcpy(buf, value, sizeof buf);
+        OPENSSL_strlcat(buf, "\n", sizeof buf);
         BIO_printf(bio_err, "%s\n", value);
     } else {
         buf[0] = '\0';
@@ -1208,8 +1208,8 @@ static int add_DN_object(X509_NAME *n, char *text, const char *def,
     else if (buf[0] == '\n') {
         if ((def == NULL) || (def[0] == '\0'))
             return (1);
-        BUF_strlcpy(buf, def, sizeof buf);
-        BUF_strlcat(buf, "\n", sizeof buf);
+        OPENSSL_strlcpy(buf, def, sizeof buf);
+        OPENSSL_strlcat(buf, "\n", sizeof buf);
     } else if ((buf[0] == '.') && (buf[1] == '\n'))
         return (1);
 
@@ -1248,8 +1248,8 @@ static int add_attribute_object(X509_REQ *req, char *text, const char *def,
         BIO_printf(bio_err, "%s [%s]:", text, def);
     (void)BIO_flush(bio_err);
     if (value != NULL) {
-        BUF_strlcpy(buf, value, sizeof buf);
-        BUF_strlcat(buf, "\n", sizeof buf);
+        OPENSSL_strlcpy(buf, value, sizeof buf);
+        OPENSSL_strlcat(buf, "\n", sizeof buf);
         BIO_printf(bio_err, "%s\n", value);
     } else {
         buf[0] = '\0';
@@ -1267,8 +1267,8 @@ static int add_attribute_object(X509_REQ *req, char *text, const char *def,
     else if (buf[0] == '\n') {
         if ((def == NULL) || (def[0] == '\0'))
             return (1);
-        BUF_strlcpy(buf, def, sizeof buf);
-        BUF_strlcat(buf, "\n", sizeof buf);
+        OPENSSL_strlcpy(buf, def, sizeof buf);
+        OPENSSL_strlcat(buf, "\n", sizeof buf);
     } else if ((buf[0] == '.') && (buf[1] == '\n'))
         return (1);
 
@@ -1428,7 +1428,7 @@ static EVP_PKEY_CTX *set_keygen_ctx(const char *gstr,
             return NULL;
         }
         EVP_PKEY_asn1_get0_info(NULL, NULL, NULL, NULL, &anam, ameth);
-        *palgnam = BUF_strdup(anam);
+        *palgnam = OPENSSL_strdup(anam);
 #ifndef OPENSSL_NO_ENGINE
         if (tmpeng)
             ENGINE_finish(tmpeng);

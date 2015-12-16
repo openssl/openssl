@@ -124,7 +124,7 @@ static int pkey_ec_copy(EVP_PKEY_CTX *dst, EVP_PKEY_CTX *src)
     dctx->kdf_md = sctx->kdf_md;
     dctx->kdf_outlen = sctx->kdf_outlen;
     if (sctx->kdf_ukm) {
-        dctx->kdf_ukm = BUF_memdup(sctx->kdf_ukm, sctx->kdf_ukmlen);
+        dctx->kdf_ukm = OPENSSL_memdup(sctx->kdf_ukm, sctx->kdf_ukmlen);
         if (!dctx->kdf_ukm)
             return 0;
     } else

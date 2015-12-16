@@ -131,9 +131,9 @@ static STACK_OF(CONF_VALUE) *i2v_AUTHORITY_INFO_ACCESS(X509V3_EXT_METHOD
                       ERR_R_MALLOC_FAILURE);
             return NULL;
         }
-        BUF_strlcpy(ntmp, objtmp, nlen);
-        BUF_strlcat(ntmp, " - ", nlen);
-        BUF_strlcat(ntmp, vtmp->name, nlen);
+        OPENSSL_strlcpy(ntmp, objtmp, nlen);
+        OPENSSL_strlcat(ntmp, " - ", nlen);
+        OPENSSL_strlcat(ntmp, vtmp->name, nlen);
         OPENSSL_free(vtmp->name);
         vtmp->name = ntmp;
 

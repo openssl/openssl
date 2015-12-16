@@ -1067,7 +1067,7 @@ end_of_options:
             strcpy(buf[2], outdir);
 
 #ifndef OPENSSL_SYS_VMS
-            BUF_strlcat(buf[2], "/", sizeof(buf[2]));
+            OPENSSL_strlcat(buf[2], "/", sizeof(buf[2]));
 #endif
 
             n = (char *)&(buf[2][strlen(buf[2])]);
@@ -1679,7 +1679,7 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
     }
 
     if (BN_is_zero(serial))
-        row[DB_serial] = BUF_strdup("00");
+        row[DB_serial] = OPENSSL_strdup("00");
     else
         row[DB_serial] = BN_bn2hex(serial);
     if (row[DB_serial] == NULL) {
@@ -1898,17 +1898,13 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
         goto end;
 
     /* We now just add it to the database */
-    row[DB_type] = app_malloc(2, "row db type");
-
+    row[DB_type] = OPENSSL_strdup("V");
     tm = X509_get_notAfter(ret);
     row[DB_exp_date] = app_malloc(tm->length + 1, "row expdate");
     memcpy(row[DB_exp_date], tm->data, tm->length);
     row[DB_exp_date][tm->length] = '\0';
-
     row[DB_rev_date] = NULL;
-
-    /* row[DB_serial] done already */
-    row[DB_file] = app_malloc(8, "row file");
+    row[DB_file] = OPENSSL_strdup("unknown");
     row[DB_name] = X509_NAME_oneline(X509_get_subject_name(ret), NULL, 0);
 
     if ((row[DB_type] == NULL) || (row[DB_exp_date] == NULL) ||
@@ -1916,9 +1912,6 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
         BIO_printf(bio_err, "Memory allocation failure\n");
         goto end;
     }
-    BUF_strlcpy(row[DB_file], "unknown", 8);
-    row[DB_type][0] = 'V';
-    row[DB_type][1] = '\0';
 
     irow = app_malloc(sizeof(*irow) * (DB_NUMBER + 1), "row space");
     for (i = 0; i < DB_NUMBER; i++) {
@@ -2118,7 +2111,7 @@ static int do_revoke(X509 *x509, CA_DB *db, int type, char *value)
     if (!bn)
         goto end;
     if (BN_is_zero(bn))
-        row[DB_serial] = BUF_strdup("00");
+        row[DB_serial] = OPENSSL_strdup("00");
     else
         row[DB_serial] = BN_bn2hex(bn);
     BN_free(bn);
@@ -2137,23 +2130,13 @@ static int do_revoke(X509 *x509, CA_DB *db, int type, char *value)
                    row[DB_serial], row[DB_name]);
 
         /* We now just add it to the database */
-        row[DB_type] = app_malloc(2, "row type");
-
+        row[DB_type] = OPENSSL_strdup("V");
         tm = X509_get_notAfter(x509);
         row[DB_exp_date] = app_malloc(tm->length + 1, "row exp_data");
         memcpy(row[DB_exp_date], tm->data, tm->length);
         row[DB_exp_date][tm->length] = '\0';
-
         row[DB_rev_date] = NULL;
-
-        /* row[DB_serial] done already */
-        row[DB_file] = app_malloc(8, "row filename");
-
-        /* row[DB_name] done already */
-
-        BUF_strlcpy(row[DB_file], "unknown", 8);
-        row[DB_type][0] = 'V';
-        row[DB_type][1] = '\0';
+        row[DB_file] = OPENSSL_strdup("unknown");
 
         irow = app_malloc(sizeof(*irow) * (DB_NUMBER + 1), "row ptr");
         for (i = 0; i < DB_NUMBER; i++) {
@@ -2428,14 +2411,14 @@ char *make_revocation_str(int rev_type, char *rev_arg)
         i += strlen(other) + 1;
 
     str = app_malloc(i, "revocation reason");
-    BUF_strlcpy(str, (char *)revtm->data, i);
+    OPENSSL_strlcpy(str, (char *)revtm->data, i);
     if (reason) {
-        BUF_strlcat(str, ",", i);
-        BUF_strlcat(str, reason, i);
+        OPENSSL_strlcat(str, ",", i);
+        OPENSSL_strlcat(str, reason, i);
     }
     if (other) {
-        BUF_strlcat(str, ",", i);
-        BUF_strlcat(str, other, i);
+        OPENSSL_strlcat(str, ",", i);
+        OPENSSL_strlcat(str, other, i);
     }
     ASN1_UTCTIME_free(revtm);
     return str;
@@ -2553,7 +2536,7 @@ int unpack_revinfo(ASN1_TIME **prevtm, int *preason, ASN1_OBJECT **phold,
     ASN1_OBJECT *hold = NULL;
     ASN1_GENERALIZEDTIME *comp_time = NULL;
 
-    tmp = BUF_strdup(str);
+    tmp = OPENSSL_strdup(str);
     if (!tmp) {
         BIO_printf(bio_err, "memory allocation failure\n");
         goto end;

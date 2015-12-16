@@ -3836,7 +3836,7 @@ void ssl3_clear(SSL *s)
 #ifndef OPENSSL_NO_SRP
 static char *srp_password_from_info_cb(SSL *s, void *arg)
 {
-    return BUF_strdup(s->srp_ctx.info);
+    return OPENSSL_strdup(s->srp_ctx.info);
 }
 #endif
 
@@ -3940,7 +3940,7 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
                 SSLerr(SSL_F_SSL3_CTRL, SSL_R_SSL3_EXT_INVALID_SERVERNAME);
                 return 0;
             }
-            if ((s->tlsext_hostname = BUF_strdup((char *)parg)) == NULL) {
+            if ((s->tlsext_hostname = OPENSSL_strdup((char *)parg)) == NULL) {
                 SSLerr(SSL_F_SSL3_CTRL, ERR_R_INTERNAL_ERROR);
                 return 0;
             }
@@ -4359,7 +4359,7 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
             SSLerr(SSL_F_SSL3_CTX_CTRL, SSL_R_INVALID_SRP_USERNAME);
             return 0;
         }
-        if ((ctx->srp_ctx.login = BUF_strdup((char *)parg)) == NULL) {
+        if ((ctx->srp_ctx.login = OPENSSL_strdup((char *)parg)) == NULL) {
             SSLerr(SSL_F_SSL3_CTX_CTRL, ERR_R_INTERNAL_ERROR);
             return 0;
         }

@@ -2289,9 +2289,8 @@ int tls_construct_client_key_exchange(SSL *s)
                    SSL_R_PSK_IDENTITY_NOT_FOUND);
             goto psk_err;
         }
-
         OPENSSL_free(s->s3->tmp.psk);
-        s->s3->tmp.psk = BUF_memdup(psk, psklen);
+        s->s3->tmp.psk = OPENSSL_memdup(psk, psklen);
         OPENSSL_cleanse(psk, psklen);
 
         if (s->s3->tmp.psk == NULL) {
@@ -2300,7 +2299,6 @@ int tls_construct_client_key_exchange(SSL *s)
         }
 
         s->s3->tmp.psklen = psklen;
-
         identitylen = strlen(identity);
         if (identitylen > PSK_MAX_IDENTITY_LEN) {
             SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE,
@@ -2308,7 +2306,7 @@ int tls_construct_client_key_exchange(SSL *s)
             goto psk_err;
         }
         OPENSSL_free(s->session->psk_identity);
-        s->session->psk_identity = BUF_strdup(identity);
+        s->session->psk_identity = OPENSSL_strdup(identity);
         if (s->session->psk_identity == NULL) {
             OPENSSL_cleanse(identity, sizeof(identity));
             goto memerr;
@@ -2658,7 +2656,7 @@ psk_err:
             goto err;
         }
         OPENSSL_free(s->session->srp_username);
-        s->session->srp_username = BUF_strdup(s->srp_ctx.login);
+        s->session->srp_username = OPENSSL_strdup(s->srp_ctx.login);
         if (s->session->srp_username == NULL) {
             SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE,
                    ERR_R_MALLOC_FAILURE);

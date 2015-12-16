@@ -201,7 +201,7 @@ int X509_TRUST_add(int id, int flags, int (*ck) (X509_TRUST *, X509 *, int),
     if (trtmp->flags & X509_TRUST_DYNAMIC_NAME)
         OPENSSL_free(trtmp->name);
     /* dup supplied name */
-    if ((trtmp->name = BUF_strdup(name)) == NULL) {
+    if ((trtmp->name = OPENSSL_strdup(name)) == NULL) {
         X509err(X509_F_X509_TRUST_ADD, ERR_R_MALLOC_FAILURE);
         return 0;
     }

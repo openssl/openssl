@@ -344,8 +344,8 @@ SSL *SSL_new(SSL_CTX *ctx)
 # ifndef OPENSSL_NO_EC
     if (ctx->tlsext_ecpointformatlist) {
         s->tlsext_ecpointformatlist =
-            BUF_memdup(ctx->tlsext_ecpointformatlist,
-                       ctx->tlsext_ecpointformatlist_length);
+            OPENSSL_memdup(ctx->tlsext_ecpointformatlist,
+                           ctx->tlsext_ecpointformatlist_length);
         if (!s->tlsext_ecpointformatlist)
             goto err;
         s->tlsext_ecpointformatlist_length =
@@ -353,8 +353,8 @@ SSL *SSL_new(SSL_CTX *ctx)
     }
     if (ctx->tlsext_ellipticcurvelist) {
         s->tlsext_ellipticcurvelist =
-            BUF_memdup(ctx->tlsext_ellipticcurvelist,
-                       ctx->tlsext_ellipticcurvelist_length);
+            OPENSSL_memdup(ctx->tlsext_ellipticcurvelist,
+                           ctx->tlsext_ellipticcurvelist_length);
         if (!s->tlsext_ellipticcurvelist)
             goto err;
         s->tlsext_ellipticcurvelist_length =
@@ -3042,7 +3042,7 @@ int SSL_CTX_use_psk_identity_hint(SSL_CTX *ctx, const char *identity_hint)
     }
     OPENSSL_free(ctx->cert->psk_identity_hint);
     if (identity_hint != NULL) {
-        ctx->cert->psk_identity_hint = BUF_strdup(identity_hint);
+        ctx->cert->psk_identity_hint = OPENSSL_strdup(identity_hint);
         if (ctx->cert->psk_identity_hint == NULL)
             return 0;
     } else
@@ -3061,7 +3061,7 @@ int SSL_use_psk_identity_hint(SSL *s, const char *identity_hint)
     }
     OPENSSL_free(s->cert->psk_identity_hint);
     if (identity_hint != NULL) {
-        s->cert->psk_identity_hint = BUF_strdup(identity_hint);
+        s->cert->psk_identity_hint = OPENSSL_strdup(identity_hint);
         if (s->cert->psk_identity_hint == NULL)
             return 0;
     } else

@@ -215,7 +215,7 @@ int CRYPTO_get_new_lockid(char *name)
         CRYPTOerr(CRYPTO_F_CRYPTO_GET_NEW_LOCKID, ERR_R_MALLOC_FAILURE);
         return (0);
     }
-    if ((str = BUF_strdup(name)) == NULL) {
+    if ((str = OPENSSL_strdup(name)) == NULL) {
         CRYPTOerr(CRYPTO_F_CRYPTO_GET_NEW_LOCKID, ERR_R_MALLOC_FAILURE);
         return (0);
     }

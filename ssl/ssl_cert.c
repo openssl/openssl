@@ -315,7 +315,7 @@ CERT *ssl_cert_dup(CERT *cert)
         goto err;
 #ifndef OPENSSL_NO_PSK
     if (cert->psk_identity_hint) {
-        ret->psk_identity_hint = BUF_strdup(cert->psk_identity_hint);
+        ret->psk_identity_hint = OPENSSL_strdup(cert->psk_identity_hint);
         if (ret->psk_identity_hint == NULL)
             goto err;
     }

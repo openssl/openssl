@@ -159,7 +159,7 @@ BN_value_one                            166	1_1_0	EXIST::FUNCTION:
 BUF_MEM_free                            167	1_1_0	EXIST::FUNCTION:
 BUF_MEM_grow                            168	1_1_0	EXIST::FUNCTION:
 BUF_MEM_new                             169	1_1_0	EXIST::FUNCTION:
-BUF_strdup                              170	1_1_0	EXIST::FUNCTION:
+BUF_strdup                              170	1_1_0	NOEXIST::FUNCTION:
 CONF_free                               171	1_1_0	EXIST::FUNCTION:
 CONF_get_number                         172	1_1_0	EXIST::FUNCTION:
 CONF_get_section                        173	1_1_0	EXIST::FUNCTION:
@@ -2798,9 +2798,9 @@ X509_REQ_print_ex                       3237	1_1_0	EXIST::FUNCTION:
 ENGINE_up_ref                           3238	1_1_0	EXIST::FUNCTION:ENGINE
 BUF_MEM_grow_clean                      3239	1_1_0	EXIST::FUNCTION:
 CRYPTO_realloc_clean                    3240	1_1_0	EXIST::FUNCTION:
-BUF_strlcat                             3241	1_1_0	EXIST::FUNCTION:
+BUF_strlcat                             3241	1_1_0	NOEXIST::FUNCTION:
 BIO_indent                              3242	1_1_0	EXIST::FUNCTION:
-BUF_strlcpy                             3243	1_1_0	EXIST::FUNCTION:
+BUF_strlcpy                             3243	1_1_0	NOEXIST::FUNCTION:
 OpenSSLDie                              3244	1_1_0	EXIST::FUNCTION:
 OPENSSL_cleanse                         3245	1_1_0	EXIST::FUNCTION:
 ENGINE_setup_bsd_cryptodev              3246	1_1_0	EXIST:__FreeBSD__:FUNCTION:ENGINE
@@ -3062,7 +3062,7 @@ STORE_meth_set_delete_fn                3486	1_1_0	NOEXIST::FUNCTION:
 STORE_method_set_delete_function        3486	1_1_0	NOEXIST::FUNCTION:
 STORE_list_certificate_next             3487	1_1_0	NOEXIST::FUNCTION:
 ASN1_generate_nconf                     3488	1_1_0	EXIST::FUNCTION:
-BUF_memdup                              3489	1_1_0	EXIST::FUNCTION:
+BUF_memdup                              3489	1_1_0	NOEXIST::FUNCTION:
 BN_GF2m_mod_mul                         3490	1_1_0	EXIST::FUNCTION:EC2M
 STORE_meth_get_list_next_fn             3491	1_1_0	NOEXIST::FUNCTION:
 STORE_method_get_list_next_function     3491	1_1_0	NOEXIST::FUNCTION:
@@ -3088,7 +3088,7 @@ ECDSA_get_ex_data                       3509	1_1_0	NOEXIST::FUNCTION:
 SHA224                                  3510	1_1_0	EXIST::FUNCTION:
 BIO_dump_indent_fp                      3511	1_1_0	EXIST::FUNCTION:STDIO
 EC_KEY_set_group                        3512	1_1_0	EXIST::FUNCTION:EC
-BUF_strndup                             3513	1_1_0	EXIST::FUNCTION:
+BUF_strndup                             3513	1_1_0	NOEXIST::FUNCTION:
 STORE_list_certificate_start            3514	1_1_0	NOEXIST::FUNCTION:
 BN_GF2m_mod                             3515	1_1_0	EXIST::FUNCTION:EC2M
 X509_REQ_check_private_key              3516	1_1_0	EXIST::FUNCTION:
@@ -4406,7 +4406,7 @@ X509_VERIFY_PARAM_get0                  4762	1_1_0	EXIST::FUNCTION:
 X509V3_EXT_free                         4763	1_1_0	NOEXIST::FUNCTION:
 BIO_hex_string                          4764	1_1_0	EXIST::FUNCTION:
 X509_VERIFY_PARAM_set_hostflags         4765	1_1_0	EXIST::FUNCTION:
-BUF_strnlen                             4766	1_1_0	EXIST::FUNCTION:
+BUF_strnlen                             4766	1_1_0	NOEXIST::FUNCTION:
 X509_VERIFY_PARAM_get0_peername         4767	1_1_0	EXIST::FUNCTION:
 ECDSA_METHOD_set_app_data               4768	1_1_0	NOEXIST::FUNCTION:
 sk_deep_copy                            4769	1_1_0	EXIST::FUNCTION:
@@ -4742,3 +4742,9 @@ EVP_PKEY_get0_RSA                       5104	1_1_0	EXIST::FUNCTION:RSA
 EC_POINT_point2buf                      5105	1_1_0	EXIST::FUNCTION:EC
 EC_KEY_key2buf                          5106	1_1_0	EXIST::FUNCTION:EC
 EC_KEY_oct2key                          5107	1_1_0	EXIST::FUNCTION:EC
+OPENSSL_strlcpy                         5108	1_1_0	EXIST::FUNCTION:
+OPENSSL_strnlen                         5109	1_1_0	EXIST::FUNCTION:
+OPENSSL_strlcat                         5110	1_1_0	EXIST::FUNCTION:
+OPENSSL_memdup                          5111	1_1_0	NOEXIST::FUNCTION:
+CRYPTO_memdup                           5112	1_1_0	EXIST::FUNCTION:
+CRYPTO_strndup                          5113	1_1_0	EXIST::FUNCTION:

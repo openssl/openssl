@@ -1007,7 +1007,7 @@ static char **lookup_serial(CA_DB *db, ASN1_INTEGER *ser)
     OPENSSL_assert(bn);         /* FIXME: should report an error at this
                                  * point and abort */
     if (BN_is_zero(bn))
-        itmp = BUF_strdup("00");
+        itmp = OPENSSL_strdup("00");
     else
         itmp = BN_bn2hex(bn);
     row[DB_serial] = itmp;
