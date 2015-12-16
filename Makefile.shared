@@ -171,7 +171,7 @@ link_app.gnu:
 	@ $(DO_GNU_APP); $(LINK_APP)
 
 link_a.linux-shared:
-	@if [ $(LIBNAME) != "crypto" -a $(LIBNAME) != "ssl" ]; then echo libname is $(LIBNAME); sleep 2; $(DO_GNU_SO); else \
+	@if [ $(LIBNAME) != "crypto" -a $(LIBNAME) != "ssl" ]; then $(DO_GNU_SO); else \
 	$(PERL) util/mkdef.pl $(LIBNAME) linux >$(LIBNAME).map; \
 	$(CALC_VERSIONS); \
 	SHLIB=lib$(LIBNAME).so; \
@@ -384,7 +384,12 @@ link_a.solaris:
 		($(CC) -v 2>&1 | grep gcc) > /dev/null && MINUSZ='-Wl,-z,'; \
 		SHLIB=lib$(LIBNAME).so; \
 		SHLIB_SUFFIX=;\
-		ALLSYMSFLAGS="$${MINUSZ}allextract"; \
+		if [ $(LIBNAME) != "crypto" -a $(LIBNAME) != "ssl" ]; then \
+			ALLSYMSFLAGS="$${MINUSZ}allextract"; \
+		else \
+			$(PERL) util/mkdef.pl $(LIBNAME) linux >$(LIBNAME).map; \
+			ALLSYMSFLAGS="$${MINUSZ}allextract,-M,$(LIBNAME).map"; \
+		fi; \
 		NOALLSYMSFLAGS="$${MINUSZ}defaultextract"; \
 		SHAREDFLAGS="$(CFLAGS) $(SHARED_LDFLAGS) -h $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX -Wl,-Bsymbolic"; \
 	fi; \
