@@ -4997,15 +4997,21 @@ EVP_PKEY *ssl_generate_pkey(EVP_PKEY *pm, int nid)
     if (pm != NULL) {
         pctx = EVP_PKEY_CTX_new(pm, NULL);
     } else {
-        /* Generate a new key for this curve */
+        /*
+         * Generate a new key for this curve.
+         * Should not be called if EC is disabled: if it is it will
+         * fail with an unknown algorithm error.
+         */
         pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_EC, NULL);
     }
     if (pctx == NULL)
         goto err;
     if (EVP_PKEY_keygen_init(pctx) <= 0)
         goto err;
+#ifndef OPENSSL_NO_EC
     if (pm == NULL && EVP_PKEY_CTX_set_ec_paramgen_curve_nid(pctx, nid) <= 0)
         goto err;
+#endif
 
     if (EVP_PKEY_keygen(pctx, &pkey) <= 0) {
         EVP_PKEY_free(pkey);
