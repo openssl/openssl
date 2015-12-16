@@ -183,7 +183,7 @@ CRYPTO_mem_leaks                        190	1_1_0	EXIST::FUNCTION:
 CRYPTO_mem_leaks_cb                     191	1_1_0	EXIST::FUNCTION:
 CRYPTO_mem_leaks_fp                     192	1_1_0	EXIST::FUNCTION:STDIO
 CRYPTO_realloc                          193	1_1_0	EXIST::FUNCTION:
-CRYPTO_remalloc                         194	1_1_0	EXIST::FUNCTION:
+CRYPTO_remalloc                         194	1_1_0	NOEXIST::FUNCTION:
 CRYPTO_set_add_lock_callback            195	1_1_0	EXIST::FUNCTION:
 CRYPTO_set_id_callback                  196	1_1_0	EXIST::FUNCTION:DEPRECATED
 CRYPTO_set_locking_callback             197	1_1_0	EXIST::FUNCTION:
