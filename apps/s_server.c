@@ -257,9 +257,9 @@ static char *engine_id = NULL;
 #endif
 static const char *session_id_prefix = NULL;
 
+#ifndef OPENSSL_NO_DTLS
 static int enable_timeouts = 0;
 static long socket_mtu;
-#ifndef OPENSSL_NO_DTLS
 static int cert_chain = 0;
 #endif
 static int dtlslisten = 0;
@@ -2028,7 +2028,7 @@ static int sv_body(char *hostname, int s, int stype, unsigned char *context)
         ret = -1;
         goto err;
     }
-
+#ifndef OPENSSL_NO_DTLS
     if (stype == SOCK_DGRAM) {
 
         sbio = BIO_new_dgram(s, BIO_NOCLOSE);
@@ -2065,6 +2065,7 @@ static int sv_body(char *hostname, int s, int stype, unsigned char *context)
         /* turn on cookie exchange */
         SSL_set_options(con, SSL_OP_COOKIE_EXCHANGE);
     } else
+#endif
         sbio = BIO_new_socket(s, BIO_NOCLOSE);
 
     if (s_nbio_test) {

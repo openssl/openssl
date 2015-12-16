@@ -1197,6 +1197,10 @@ if (defined($disabled{"md5"}) || defined($disabled{"sha"})
 	$disabled{"tls1"} = "forced";
 	}
 
+if (defined($disabled{"dgram"}))
+	{
+        $disabled{"dtls"} = "forced";
+        }
 
 if (defined($disabled{"ec"}) || defined($disabled{"dsa"})
     || defined($disabled{"dh"}) || defined($disabled{"stdio"}))
