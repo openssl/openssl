@@ -486,9 +486,9 @@ int srp_main(int argc, char **argv)
                     errors++;
                     goto end;
                 }
-                row[DB_srpid] = BUF_strdup(user);
-                row[DB_srptype] = BUF_strdup("v");
-                row[DB_srpgN] = BUF_strdup(gNid);
+                row[DB_srpid] = OPENSSL_strdup(user);
+                row[DB_srptype] = OPENSSL_strdup("v");
+                row[DB_srpgN] = OPENSSL_strdup(gNid);
 
                 if ((row[DB_srpid] == NULL)
                     || (row[DB_srpgN] == NULL)
@@ -496,7 +496,7 @@ int srp_main(int argc, char **argv)
                     || (row[DB_srpverifier] == NULL)
                     || (row[DB_srpsalt] == NULL)
                     || (userinfo
-                        && ((row[DB_srpinfo] = BUF_strdup(userinfo)) == NULL))
+                        && ((row[DB_srpinfo] = OPENSSL_strdup(userinfo)) == NULL))
                     || !update_index(db, row)) {
                     OPENSSL_free(row[DB_srpid]);
                     OPENSSL_free(row[DB_srpgN]);
@@ -571,7 +571,7 @@ int srp_main(int argc, char **argv)
                     }
 
                     row[DB_srptype][0] = 'v';
-                    row[DB_srpgN] = BUF_strdup(gNid);
+                    row[DB_srpgN] = OPENSSL_strdup(gNid);
 
                     if (row[DB_srpid] == NULL
                         || row[DB_srpgN] == NULL
@@ -579,7 +579,7 @@ int srp_main(int argc, char **argv)
                         || row[DB_srpverifier] == NULL
                         || row[DB_srpsalt] == NULL
                         || (userinfo
-                            && ((row[DB_srpinfo] = BUF_strdup(userinfo))
+                            && ((row[DB_srpinfo] = OPENSSL_strdup(userinfo))
                                 == NULL)))
                         goto end;
 

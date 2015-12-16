@@ -202,8 +202,13 @@ o_init.o: ../include/openssl/lhash.h ../include/openssl/opensslconf.h
 o_init.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
 o_init.o: ../include/openssl/safestack.h ../include/openssl/stack.h
 o_init.o: ../include/openssl/symhacks.h o_init.c
-o_str.o: ../e_os.h ../include/internal/o_str.h ../include/openssl/e_os2.h
-o_str.o: ../include/openssl/opensslconf.h o_str.c
+o_str.o: ../e_os.h ../include/internal/o_str.h ../include/openssl/bio.h
+o_str.o: ../include/openssl/buffer.h ../include/openssl/crypto.h
+o_str.o: ../include/openssl/e_os2.h ../include/openssl/err.h
+o_str.o: ../include/openssl/lhash.h ../include/openssl/opensslconf.h
+o_str.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
+o_str.o: ../include/openssl/safestack.h ../include/openssl/stack.h
+o_str.o: ../include/openssl/symhacks.h include/internal/cryptlib.h o_str.c
 o_time.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
 o_time.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
 o_time.o: ../include/openssl/ossl_typ.h ../include/openssl/safestack.h

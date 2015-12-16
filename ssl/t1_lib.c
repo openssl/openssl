@@ -2577,7 +2577,7 @@ static int ssl_scan_serverhello_tlsext(SSL *s, PACKET *pkt, int *al)
     if (!s->hit && tlsext_servername == 1) {
         if (s->tlsext_hostname) {
             if (s->session->tlsext_hostname == NULL) {
-                s->session->tlsext_hostname = BUF_strdup(s->tlsext_hostname);
+                s->session->tlsext_hostname = OPENSSL_strdup(s->tlsext_hostname);
                 if (!s->session->tlsext_hostname) {
                     *al = SSL_AD_UNRECOGNIZED_NAME;
                     return 0;

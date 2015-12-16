@@ -225,8 +225,8 @@ int X509_PURPOSE_add(int id, int trust, int flags,
         OPENSSL_free(ptmp->sname);
     }
     /* dup supplied name */
-    ptmp->name = BUF_strdup(name);
-    ptmp->sname = BUF_strdup(sname);
+    ptmp->name = OPENSSL_strdup(name);
+    ptmp->sname = OPENSSL_strdup(sname);
     if (!ptmp->name || !ptmp->sname) {
         X509V3err(X509V3_F_X509_PURPOSE_ADD, ERR_R_MALLOC_FAILURE);
         return 0;

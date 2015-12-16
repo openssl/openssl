@@ -3165,7 +3165,7 @@ static int add_session(SSL *ssl, SSL_SESSION *session)
         return 0;
     }
 
-    sess->id = BUF_memdup(SSL_SESSION_get_id(session, NULL), sess->idlen);
+    sess->id = OPENSSL_memdup(SSL_SESSION_get_id(session, NULL), sess->idlen);
     sess->der = app_malloc(sess->derlen, "get session buffer");
     if (!sess->id) {
         BIO_printf(bio_err, "Out of memory adding to external cache\n");

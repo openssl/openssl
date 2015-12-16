@@ -368,7 +368,7 @@ static int cmd_Certificate(SSL_CONF_CTX *cctx, const char *value)
     if (rv > 0 && c && cctx->flags & SSL_CONF_FLAG_REQUIRE_PRIVATE) {
         char **pfilename = &cctx->cert_filename[c->key - c->pkeys];
         OPENSSL_free(*pfilename);
-        *pfilename = BUF_strdup(value);
+        *pfilename = OPENSSL_strdup(value);
         if (!*pfilename)
             rv = 0;
     }
@@ -812,7 +812,7 @@ int SSL_CONF_CTX_set1_prefix(SSL_CONF_CTX *cctx, const char *pre)
 {
     char *tmp = NULL;
     if (pre) {
-        tmp = BUF_strdup(pre);
+        tmp = OPENSSL_strdup(pre);
         if (tmp == NULL)
             return 0;
     }

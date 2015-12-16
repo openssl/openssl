@@ -253,7 +253,7 @@ typedef struct srp_client_arg_st {
 static char *ssl_give_srp_client_pwd_cb(SSL *s, void *arg)
 {
     SRP_CLIENT_ARG *srp_client_arg = (SRP_CLIENT_ARG *)arg;
-    return BUF_strdup((char *)srp_client_arg->srppassin);
+    return OPENSSL_strdup((char *)srp_client_arg->srppassin);
 }
 
 /* SRP server */

@@ -968,7 +968,7 @@ void ERR_add_error_vdata(int num, va_list args)
                 }
                 str = p;
             }
-            BUF_strlcat(str, a, (size_t)s + 1);
+            OPENSSL_strlcat(str, a, (size_t)s + 1);
         }
     }
     ERR_set_error_data(str, ERR_TXT_MALLOCED | ERR_TXT_STRING);

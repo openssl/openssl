@@ -902,7 +902,7 @@ int cms_main(int argc, char **argv)
             secret_keyid = NULL;
         }
         if (pwri_pass) {
-            pwri_tmp = (unsigned char *)BUF_strdup((char *)pwri_pass);
+            pwri_tmp = (unsigned char *)OPENSSL_strdup((char *)pwri_pass);
             if (!pwri_tmp)
                 goto end;
             if (!CMS_add0_recipient_password(cms,

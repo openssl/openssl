@@ -66,7 +66,7 @@ STORE_METHOD *STORE_create_method(char *name)
     STORE_METHOD *store_method = OPENSSL_zalloc(sizeof(*store_method));
 
     if (store_method != NULL)
-        store_method->name = BUF_strdup(name);
+        store_method->name = OPENSSL_strdup(name);
     return store_method;
 }
 

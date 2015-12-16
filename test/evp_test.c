@@ -487,7 +487,7 @@ static int process_test(struct evp_test *t, char *buf, int verbose)
         key = OPENSSL_malloc(sizeof(*key));
         if (!key)
             return 0;
-        key->name = BUF_strdup(value);
+        key->name = OPENSSL_strdup(value);
         key->key = pk;
         key->next = *lst;
         *lst = key;
@@ -521,7 +521,7 @@ static int process_test(struct evp_test *t, char *buf, int verbose)
             fprintf(stderr, "Line %d: multiple result lines\n", t->line);
             return 0;
         }
-        t->expected_err = BUF_strdup(value);
+        t->expected_err = OPENSSL_strdup(value);
         if (!t->expected_err)
             return 0;
     } else {
@@ -554,9 +554,9 @@ static int check_var_length_output(struct evp_test *t,
     }
 
     /* The result printing code expects a non-NULL buffer. */
-    t->out_expected = BUF_memdup(expected, expected_len ? expected_len : 1);
+    t->out_expected = OPENSSL_memdup(expected, expected_len ? expected_len : 1);
     t->out_expected_len = expected_len;
-    t->out_received = BUF_memdup(received, received_len ? received_len : 1);
+    t->out_received = OPENSSL_memdup(received, received_len ? received_len : 1);
     t->out_received_len = received_len;
     if (t->out_expected == NULL || t->out_received == NULL) {
         fprintf(stderr, "Memory allocation error!\n");
@@ -610,7 +610,9 @@ int main(int argc, char **argv)
     CRYPTO_cleanup_all_ex_data();
     ERR_remove_thread_state(NULL);
     ERR_free_strings();
+#ifdef CRYPTO_MDEBUG
     CRYPTO_mem_leaks_fp(stderr);
+#endif
     if (t.errors)
         return 1;
     return 0;
@@ -1052,7 +1054,7 @@ static int mac_test_parse(struct evp_test *t,
     if (strcmp(keyword, "Key") == 0)
         return test_bin(value, &mdata->key, &mdata->key_len);
     if (strcmp(keyword, "Algorithm") == 0) {
-        mdata->alg = BUF_strdup(value);
+        mdata->alg = OPENSSL_strdup(value);
         if (!mdata->alg)
             return 0;
         return 1;
@@ -1554,7 +1556,7 @@ static int encode_test_init(struct evp_test *t, const char *encoding)
         edata->encoding = BASE64_VALID_ENCODING;
     } else if (strcmp(encoding, "invalid") == 0) {
         edata->encoding = BASE64_INVALID_ENCODING;
-        t->expected_err = BUF_strdup("DECODE_ERROR");
+        t->expected_err = OPENSSL_strdup("DECODE_ERROR");
         if (t->expected_err == NULL)
             return 0;
     } else {

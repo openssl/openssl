@@ -402,7 +402,7 @@ int BIO_get_accept_socket(char *host, int bind_mode)
     if (BIO_sock_init() != 1)
         return ((int)INVALID_SOCKET);
 
-    if ((str = BUF_strdup(host)) == NULL)
+    if ((str = OPENSSL_strdup(host)) == NULL)
         return ((int)INVALID_SOCKET);
 
     h = p = NULL;

@@ -106,7 +106,7 @@ static int int_x509_param_set_hosts(X509_VERIFY_PARAM *vpm, int mode,
     if (name == NULL || namelen == 0)
         return 1;
 
-    copy = BUF_strndup(name, namelen);
+    copy = OPENSSL_strndup(name, namelen);
     if (copy == NULL)
         return 0;
 
@@ -308,10 +308,10 @@ static int int_x509_param_set1(char **pdest, size_t *pdestlen,
     void *tmp;
     if (src) {
         if (srclen == 0) {
-            tmp = BUF_strdup(src);
+            tmp = OPENSSL_strdup(src);
             srclen = strlen(src);
         } else
-            tmp = BUF_memdup(src, srclen);
+            tmp = OPENSSL_memdup(src, srclen);
         if (!tmp)
             return 0;
     } else {
@@ -328,7 +328,7 @@ static int int_x509_param_set1(char **pdest, size_t *pdestlen,
 int X509_VERIFY_PARAM_set1_name(X509_VERIFY_PARAM *param, const char *name)
 {
     OPENSSL_free(param->name);
-    param->name = BUF_strdup(name);
+    param->name = OPENSSL_strdup(name);
     if (param->name)
         return 1;
     return 0;

@@ -476,7 +476,7 @@ static const char *get_HWCRHK_LIBNAME(void)
 static long set_HWCRHK_LIBNAME(const char *name)
 {
     free_HWCRHK_LIBNAME();
-    return (((HWCRHK_LIBNAME = BUF_strdup(name)) != NULL) ? 1 : 0);
+    return (((HWCRHK_LIBNAME = OPENSSL_strdup(name)) != NULL) ? 1 : 0);
 }
 
 static const char *n_hwcrhk_Init = "HWCryptoHook_Init";
