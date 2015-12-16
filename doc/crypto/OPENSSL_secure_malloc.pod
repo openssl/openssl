@@ -83,9 +83,4 @@ return no values.
 L<BN_new(3)>,
 L<bn_internal(3)>
 
-=head1 HISTORY
-
-These functions were contributed to the OpenSSL project by
-Akamai Technologies in April, 2014.
-
 =cut

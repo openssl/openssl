@@ -36,10 +36,10 @@ LIB= $(TOP)/libcrypto.a
 SHARED_LIB= libcrypto$(SHLIB_EXT)
 LIBSRC=	cryptlib.c mem.c mem_clr.c mem_dbg.c cversion.c ex_data.c cpt_err.c \
 	ebcdic.c uid.c o_time.c o_str.c o_dir.c thr_id.c lock.c fips_ers.c \
-	o_init.c o_fips.c sec_mem.c
+	o_init.c o_fips.c mem_sec.c
 LIBOBJ= cryptlib.o mem.o mem_dbg.o cversion.o ex_data.o cpt_err.o \
 	ebcdic.o uid.o o_time.o o_str.o o_dir.o thr_id.o lock.o fips_ers.o \
-	o_init.o o_fips.o sec_mem.o $(CPUID_OBJ)
+	o_init.o o_fips.o mem_sec.o $(CPUID_OBJ)
 
 SRC= $(LIBSRC)
 
@@ -187,6 +187,10 @@ mem_dbg.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
 mem_dbg.o: ../include/openssl/ossl_typ.h ../include/openssl/safestack.h
 mem_dbg.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
 mem_dbg.o: include/internal/cryptlib.h mem_dbg.c
+mem_sec.o: ../e_os.h ../include/openssl/crypto.h ../include/openssl/e_os2.h
+mem_sec.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
+mem_sec.o: ../include/openssl/ossl_typ.h ../include/openssl/safestack.h
+mem_sec.o: ../include/openssl/stack.h ../include/openssl/symhacks.h mem_sec.c
 o_dir.o: ../e_os.h ../include/internal/o_dir.h ../include/openssl/e_os2.h
 o_dir.o: ../include/openssl/opensslconf.h LPdir_unix.c o_dir.c
 o_fips.o: ../e_os.h ../include/openssl/bio.h ../include/openssl/buffer.h
@@ -213,10 +217,6 @@ o_time.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
 o_time.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
 o_time.o: ../include/openssl/ossl_typ.h ../include/openssl/safestack.h
 o_time.o: ../include/openssl/stack.h ../include/openssl/symhacks.h o_time.c
-sec_mem.o: ../e_os.h ../include/openssl/crypto.h ../include/openssl/e_os2.h
-sec_mem.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
-sec_mem.o: ../include/openssl/ossl_typ.h ../include/openssl/safestack.h
-sec_mem.o: ../include/openssl/stack.h ../include/openssl/symhacks.h sec_mem.c
 thr_id.o: ../e_os.h ../include/openssl/bio.h ../include/openssl/buffer.h
 thr_id.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
 thr_id.o: ../include/openssl/err.h ../include/openssl/lhash.h
