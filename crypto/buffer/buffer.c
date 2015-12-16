@@ -179,7 +179,7 @@ size_t BUF_MEM_grow_clean(BUF_MEM *str, size_t len)
     if ((str->flags & BUF_MEM_FLAG_SECURE))
         ret = sec_alloc_realloc(str, n);
     else
-        ret = OPENSSL_realloc_clean(str->data, str->max, n);
+        ret = OPENSSL_clear_realloc(str->data, str->max, n);
     if (ret == NULL) {
         BUFerr(BUF_F_BUF_MEM_GROW_CLEAN, ERR_R_MALLOC_FAILURE);
         len = 0;

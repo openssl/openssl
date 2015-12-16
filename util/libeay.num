@@ -2797,7 +2797,7 @@ EVP_des_ede3_ecb                        3236	1_1_0	EXIST::FUNCTION:DES
 X509_REQ_print_ex                       3237	1_1_0	EXIST::FUNCTION:
 ENGINE_up_ref                           3238	1_1_0	EXIST::FUNCTION:ENGINE
 BUF_MEM_grow_clean                      3239	1_1_0	EXIST::FUNCTION:
-CRYPTO_realloc_clean                    3240	1_1_0	EXIST::FUNCTION:
+CRYPTO_clear_realloc                    3240	1_1_0	EXIST::FUNCTION:
 BUF_strlcat                             3241	1_1_0	NOEXIST::FUNCTION:
 BIO_indent                              3242	1_1_0	EXIST::FUNCTION:
 BUF_strlcpy                             3243	1_1_0	NOEXIST::FUNCTION:

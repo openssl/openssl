@@ -337,7 +337,7 @@ void *CRYPTO_realloc(void *str, size_t num, const char *file, int line)
     return ret;
 }
 
-void *CRYPTO_realloc_clean(void *str, size_t old_len, size_t num,
+void *CRYPTO_clear_realloc(void *str, size_t old_len, size_t num,
                            const char *file, int line)
 {
     void *ret = NULL;
