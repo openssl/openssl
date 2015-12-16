@@ -4739,3 +4739,6 @@ EVP_PKEY_get0_DH                        5101	1_1_0	EXIST::FUNCTION:DH
 X509_get0_pubkey                        5102	1_1_0	EXIST::FUNCTION:
 X509_PUBKEY_get0                        5103	1_1_0	EXIST::FUNCTION:
 EVP_PKEY_get0_RSA                       5104	1_1_0	EXIST::FUNCTION:RSA
+EC_POINT_point2buf                      5105	1_1_0	EXIST::FUNCTION:EC
+EC_KEY_key2buf                          5106	1_1_0	EXIST::FUNCTION:EC
+EC_KEY_oct2key                          5107	1_1_0	EXIST::FUNCTION:EC
