@@ -767,7 +767,6 @@ int BIO_vprintf(BIO *bio, const char *format, va_list args)
     int ignored;
 
     dynbuf = NULL;
-    CRYPTO_push_info("doapr()");
     _dopr(&hugebufp, &dynbuf, &hugebufsize, &retlen, &ignored, format, args);
     if (dynbuf) {
         ret = BIO_write(bio, dynbuf, (int)retlen);
@@ -775,7 +774,6 @@ int BIO_vprintf(BIO *bio, const char *format, va_list args)
     } else {
         ret = BIO_write(bio, hugebuf, (int)retlen);
     }
-    CRYPTO_pop_info();
     return (ret);
 }
 
