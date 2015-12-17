@@ -1327,10 +1327,7 @@ typedef struct ssl3_state_st {
 #   endif                       /* !OPENSSL_NO_EC */
 
     /* For clients: peer temporary key */
-# ifndef OPENSSL_NO_DH
-    DH *peer_dh_tmp;
-# endif
-# ifndef OPENSSL_NO_EC
+# if !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH)
     EVP_PKEY *peer_tmp;
 # endif
 
