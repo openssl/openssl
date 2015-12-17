@@ -1680,12 +1680,12 @@ PKCS7_get_smimecap                      2154	1_1_0	EXIST::FUNCTION:
 PKCS7_sign                              2155	1_1_0	EXIST::FUNCTION:
 PKCS7_add_attrib_smimecap               2156	1_1_0	EXIST::FUNCTION:
 CRYPTO_dbg_set_options                  2157	1_1_0	EXIST::FUNCTION:
-CRYPTO_remove_all_info                  2158	1_1_0	EXIST::FUNCTION:
+CRYPTO_remove_all_info                  2158	1_1_0	NOEXIST::FUNCTION:
 CRYPTO_get_mem_debug_functions          2159	1_1_0	EXIST::FUNCTION:
 CRYPTO_is_mem_check_on                  2160	1_1_0	EXIST::FUNCTION:
 CRYPTO_set_mem_debug_functions          2161	1_1_0	EXIST::FUNCTION:
-CRYPTO_pop_info                         2162	1_1_0	EXIST::FUNCTION:
-CRYPTO_push_info_                       2163	1_1_0	EXIST::FUNCTION:
+CRYPTO_mem_debug_pop                    2162	1_1_0	EXIST::FUNCTION:
+CRYPTO_mem_debug_push                   2163	1_1_0	EXIST::FUNCTION:
 CRYPTO_set_mem_debug_options            2164	1_1_0	EXIST::FUNCTION:
 PEM_write_PKCS8PrivateKey_nid           2165	1_1_0	EXIST::FUNCTION:STDIO
 PEM_write_bio_PKCS8PrivateKey_nid       2166	1_1_0	EXIST:!VMS:FUNCTION:

@@ -507,11 +507,12 @@ void OPENSSL_cleanse(void *ptr, size_t len);
 void CRYPTO_set_mem_debug_options(long bits);
 long CRYPTO_get_mem_debug_options(void);
 
-# define CRYPTO_push_info(info) \
-        CRYPTO_push_info_(info, __FILE__, __LINE__);
-int CRYPTO_push_info_(const char *info, const char *file, int line);
-int CRYPTO_pop_info(void);
-int CRYPTO_remove_all_info(void);
+# define OPENSSL_mem_debug_push(info) \
+        CRYPTO_mem_debug_push(info, __FILE__, __LINE__)
+# define OPENSSL_mem_debug_pop() \
+        CRYPTO_mem_debug_pop()
+int CRYPTO_mem_debug_push(const char *info, const char *file, int line);
+int CRYPTO_mem_debug_pop(void);
 
 /*
  * Default debugging functions (enabled by CRYPTO_malloc_debug_init() macro;
