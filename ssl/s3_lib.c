@@ -3488,21 +3488,24 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
     case SSL_CTRL_SET_TMP_DH:
         {
             DH *dh = (DH *)parg;
+            EVP_PKEY *pkdh = NULL;
             if (dh == NULL) {
                 SSLerr(SSL_F_SSL3_CTRL, ERR_R_PASSED_NULL_PARAMETER);
                 return (ret);
             }
+            pkdh = ssl_dh_to_pkey(dh);
+            if (pkdh == NULL) {
+                SSLerr(SSL_F_SSL3_CTRL, ERR_R_MALLOC_FAILURE);
+                return 0;
+            }
             if (!ssl_security(s, SSL_SECOP_TMP_DH,
-                              DH_security_bits(dh), 0, dh)) {
+                              EVP_PKEY_security_bits(pkdh), 0, pkdh)) {
                 SSLerr(SSL_F_SSL3_CTRL, SSL_R_DH_KEY_TOO_SMALL);
-                return (ret);
+                EVP_PKEY_free(pkdh);
+                return ret;
             }
-            if ((dh = DHparams_dup(dh)) == NULL) {
-                SSLerr(SSL_F_SSL3_CTRL, ERR_R_DH_LIB);
-                return (ret);
-            }
-            DH_free(s->cert->dh_tmp);
-            s->cert->dh_tmp = dh;
+            EVP_PKEY_free(s->cert->dh_tmp);
+            s->cert->dh_tmp = pkdh;
             ret = 1;
         }
         break;
@@ -3851,27 +3854,25 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 #ifndef OPENSSL_NO_DH
     case SSL_CTRL_SET_TMP_DH:
         {
-            DH *new = NULL, *dh;
-            CERT *cert;
-
-            cert = ctx->cert;
-            dh = (DH *)parg;
+            DH *dh = (DH *)parg;
+            EVP_PKEY *pkdh = NULL;
+            if (dh == NULL) {
+                SSLerr(SSL_F_SSL3_CTX_CTRL, ERR_R_PASSED_NULL_PARAMETER);
+                return 0;
+            }
+            pkdh = ssl_dh_to_pkey(dh);
+            if (pkdh == NULL) {
+                SSLerr(SSL_F_SSL3_CTX_CTRL, ERR_R_MALLOC_FAILURE);
+                return 0;
+            }
             if (!ssl_ctx_security(ctx, SSL_SECOP_TMP_DH,
-                                  DH_security_bits(dh), 0, dh)) {
+                                  EVP_PKEY_security_bits(pkdh), 0, pkdh)) {
                 SSLerr(SSL_F_SSL3_CTX_CTRL, SSL_R_DH_KEY_TOO_SMALL);
-                return 0;
+                EVP_PKEY_free(pkdh);
+                return 1;
             }
-            if ((new = DHparams_dup(dh)) == NULL) {
-                SSLerr(SSL_F_SSL3_CTX_CTRL, ERR_R_DH_LIB);
-                return 0;
-            }
-            if (!DH_generate_key(new)) {
-                SSLerr(SSL_F_SSL3_CTX_CTRL, ERR_R_DH_LIB);
-                DH_free(new);
-                return 0;
-            }
-            DH_free(cert->dh_tmp);
-            cert->dh_tmp = new;
+            EVP_PKEY_free(ctx->cert->dh_tmp);
+            ctx->cert->dh_tmp = pkdh;
             return 1;
         }
         /*

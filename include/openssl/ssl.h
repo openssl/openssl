@@ -1836,7 +1836,7 @@ __owur const char *SSL_CIPHER_standard_name(const SSL_CIPHER *c);
 /* Sanity check of curve server selects */
 # define SSL_SECOP_CURVE_CHECK           (6 | SSL_SECOP_OTHER_CURVE)
 /* Temporary DH key */
-# define SSL_SECOP_TMP_DH                (7 | SSL_SECOP_OTHER_DH)
+# define SSL_SECOP_TMP_DH                (7 | SSL_SECOP_OTHER_PKEY)
 /* SSL/TLS version */
 # define SSL_SECOP_VERSION               (9 | SSL_SECOP_OTHER_NONE)
 /* Session tickets */
