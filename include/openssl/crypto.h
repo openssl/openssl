@@ -453,9 +453,9 @@ int CRYPTO_set_mem_functions(void *(*m) (size_t), void *(*r) (void *, size_t),
 int CRYPTO_set_mem_ex_functions(void *(*m) (size_t, const char *, int),
                                 void *(*r) (void *, size_t, const char *,
                                             int), void (*f) (void *));
-int CRYPTO_set_mem_debug_functions(void (*m)
-                                    (void *, int, const char *, int, int),
-                                   void (*r) (void *, void *, int,
+int CRYPTO_set_mem_debug_functions(void (*m) (void *, size_t,
+                                              const char *, int, int),
+                                   void (*r) (void *, void *, size_t,
                                               const char *, int, int),
                                    void (*f) (void *, int), void (*so) (long),
                                    long (*go) (void));
@@ -465,23 +465,23 @@ void CRYPTO_get_mem_functions(void *(**m) (size_t),
 void CRYPTO_get_mem_ex_functions(void *(**m) (size_t, const char *, int),
                                  void *(**r) (void *, size_t, const char *,
                                               int), void (**f) (void *));
-void CRYPTO_get_mem_debug_functions(void (**m)
-                                     (void *, int, const char *, int, int),
-                                    void (**r) (void *, void *, int,
+void CRYPTO_get_mem_debug_functions(void (**m) (void *, size_t,
+                                                const char *, int, int),
+                                    void (**r) (void *, void *, size_t,
                                                 const char *, int, int),
                                     void (**f) (void *, int),
                                     void (**so) (long), long (**go) (void));
 
-void *CRYPTO_malloc(int num, const char *file, int line);
-void *CRYPTO_zalloc(int num, const char *file, int line);
+void *CRYPTO_malloc(size_t num, const char *file, int line);
+void *CRYPTO_zalloc(size_t num, const char *file, int line);
 void *CRYPTO_memdup(const void *str, size_t siz, const char *file, int line);
 char *CRYPTO_strdup(const char *str, const char *file, int line);
 char *CRYPTO_strndup(const char *str, size_t s, const char *file, int line);
 void CRYPTO_free(void *ptr);
 void CRYPTO_clear_free(void *ptr, size_t num);
-void *CRYPTO_realloc(void *addr, int num, const char *file, int line);
-void *CRYPTO_realloc_clean(void *addr, int old_num, int num, const char *file,
-                           int line);
+void *CRYPTO_realloc(void *addr, size_t num, const char *file, int line);
+void *CRYPTO_realloc_clean(void *addr, size_t old_num, size_t num,
+                           const char *file, int line);
 
 # define OPENSSL_secure_malloc(num) \
         CRYPTO_secure_malloc((int)num,__FILE__,__LINE__)
@@ -490,7 +490,7 @@ void *CRYPTO_realloc_clean(void *addr, int old_num, int num, const char *file,
 
 int CRYPTO_secure_malloc_init(size_t sz, int minsize);
 void CRYPTO_secure_malloc_done(void);
-void *CRYPTO_secure_malloc(int num, const char *file, int line);
+void *CRYPTO_secure_malloc(size_t num, const char *file, int line);
 void CRYPTO_secure_free(void *ptr);
 int CRYPTO_secure_allocated(const void *ptr);
 int CRYPTO_secure_malloc_initialized(void);
@@ -523,9 +523,9 @@ int CRYPTO_remove_all_info(void);
  * 0:   called before the actual memory allocation has taken place
  * 1:   called after the actual memory allocation has taken place
  */
-void CRYPTO_dbg_malloc(void *addr, int num, const char *file, int line,
+void CRYPTO_dbg_malloc(void *addr, size_t num, const char *file, int line,
                        int before_p);
-void CRYPTO_dbg_realloc(void *addr1, void *addr2, int num, const char *file,
+void CRYPTO_dbg_realloc(void *addr1, void *addr2, size_t num, const char *file,
                         int line, int before_p);
 void CRYPTO_dbg_free(void *addr, int before_p);
 /*-
@@ -544,8 +544,8 @@ long CRYPTO_dbg_get_options(void);
 void CRYPTO_mem_leaks_fp(FILE *);
 # endif
 void CRYPTO_mem_leaks(struct bio_st *bio);
-/* unsigned long order, char *file, int line, int num_bytes, char *addr */
-typedef void *CRYPTO_MEM_LEAK_CB (unsigned long, const char *, int, int,
+/* unsigned long order, char *file, int line, size_t num_bytes, char *addr */
+typedef void *CRYPTO_MEM_LEAK_CB (unsigned long, const char *, int, size_t,
                                   void *);
 void CRYPTO_mem_leaks_cb(CRYPTO_MEM_LEAK_CB *cb);
 
