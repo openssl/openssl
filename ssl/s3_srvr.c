@@ -1729,20 +1729,9 @@ int ssl3_send_server_key_exchange(SSL *s)
             }
 
             s->s3->tmp.dh = dh;
-            if ((dhp->pub_key == NULL ||
-                 dhp->priv_key == NULL ||
-                 (s->options & SSL_OP_SINGLE_DH_USE))) {
-                if (!DH_generate_key(dh)) {
-                    SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE, ERR_R_DH_LIB);
-                    goto err;
-                }
-            } else {
-                dh->pub_key = BN_dup(dhp->pub_key);
-                dh->priv_key = BN_dup(dhp->priv_key);
-                if ((dh->pub_key == NULL) || (dh->priv_key == NULL)) {
-                    SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE, ERR_R_DH_LIB);
-                    goto err;
-                }
+            if (!DH_generate_key(dh)) {
+                SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE, ERR_R_DH_LIB);
+                goto err;
             }
             r[0] = dh->p;
             r[1] = dh->g;
