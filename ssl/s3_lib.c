@@ -3377,11 +3377,13 @@ void ssl3_free(SSL *s)
 
 #ifndef OPENSSL_NO_DH
     DH_free(s->s3->tmp.dh);
-    DH_free(s->s3->peer_dh_tmp);
 #endif
+
 #ifndef OPENSSL_NO_EC
     EVP_PKEY_free(s->s3->tmp.pkey);
     s->s3->tmp.pkey = NULL;
+#endif
+#if !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH)
     EVP_PKEY_free(s->s3->peer_tmp);
     s->s3->peer_tmp = NULL;
 #endif
@@ -3414,15 +3416,15 @@ void ssl3_clear(SSL *s)
 #ifndef OPENSSL_NO_DH
     DH_free(s->s3->tmp.dh);
     s->s3->tmp.dh = NULL;
-    DH_free(s->s3->peer_dh_tmp);
-    s->s3->peer_dh_tmp = NULL;
 #endif
 #ifndef OPENSSL_NO_EC
     EVP_PKEY_free(s->s3->tmp.pkey);
     s->s3->tmp.pkey = NULL;
+    s->s3->is_probably_safari = 0;
+#endif
+#if !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH)
     EVP_PKEY_free(s->s3->peer_tmp);
     s->s3->peer_tmp = NULL;
-    s->s3->is_probably_safari = 0;
 #endif                         /* !OPENSSL_NO_EC */
 
     ssl3_free_digest_list(s);
@@ -3759,34 +3761,17 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
             return 0;
 
     case SSL_CTRL_GET_SERVER_TMP_KEY:
-        if (s->server || !s->session)
+#if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_EC)
+        if (s->server || s->session == NULL || s->s3->peer_tmp == NULL) {
             return 0;
-        else {
-            EVP_PKEY *ptmp;
-            int rv = 0;
-#if !defined(OPENSSL_NO_DH) && !defined(OPENSSL_NO_EC)
-            if (s->s3->peer_dh_tmp == NULL && s->s3->peer_tmp == NULL)
-                return 0;
-#endif
-            ptmp = EVP_PKEY_new();
-            if (ptmp == NULL)
-                return 0;
-#ifndef OPENSSL_NO_DH
-            else if (s->s3->peer_dh_tmp != NULL)
-                rv = EVP_PKEY_set1_DH(ptmp, s->s3->peer_dh_tmp);
-#endif
-#ifndef OPENSSL_NO_EC
-            else if (s->s3->peer_tmp != NULL)
-                rv = EVP_PKEY_set1_EC_KEY(ptmp,
-                                          EVP_PKEY_get0_EC_KEY(s->s3->peer_tmp));
-#endif
-            if (rv) {
-                *(EVP_PKEY **)parg = ptmp;
-                return 1;
-            }
-            EVP_PKEY_free(ptmp);
-            return 0;
+        } else {
+            EVP_PKEY_up_ref(s->s3->peer_tmp);
+            *(EVP_PKEY **)parg = s->s3->peer_tmp;
+            return 1;
         }
+#else
+        return 0;
+#endif
 #ifndef OPENSSL_NO_EC
     case SSL_CTRL_GET_EC_POINT_FORMATS:
         {
