@@ -411,8 +411,8 @@ typedef int (*custom_ext_parse_cb) (SSL *s, unsigned int ext_type,
 # define SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION        0x00040000U
 /* Does nothing: retained for compatibility */
 # define SSL_OP_SINGLE_ECDH_USE                          0x0
-/* If set, always create a new key when using tmp_dh parameters */
-# define SSL_OP_SINGLE_DH_USE                            0x00100000U
+/* Does nothing: retained for compatibility */
+# define SSL_OP_SINGLE_DH_USE                            0x0
 /* Does nothing: retained for compatibiity */
 # define SSL_OP_EPHEMERAL_RSA                            0x0
 /*

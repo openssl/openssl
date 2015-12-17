@@ -3499,13 +3499,6 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
                 SSLerr(SSL_F_SSL3_CTRL, ERR_R_DH_LIB);
                 return (ret);
             }
-            if (!(s->options & SSL_OP_SINGLE_DH_USE)) {
-                if (!DH_generate_key(dh)) {
-                    DH_free(dh);
-                    SSLerr(SSL_F_SSL3_CTRL, ERR_R_DH_LIB);
-                    return (ret);
-                }
-            }
             DH_free(s->cert->dh_tmp);
             s->cert->dh_tmp = dh;
             ret = 1;
@@ -3887,12 +3880,10 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
                 SSLerr(SSL_F_SSL3_CTX_CTRL, ERR_R_DH_LIB);
                 return 0;
             }
-            if (!(ctx->options & SSL_OP_SINGLE_DH_USE)) {
-                if (!DH_generate_key(new)) {
-                    SSLerr(SSL_F_SSL3_CTX_CTRL, ERR_R_DH_LIB);
-                    DH_free(new);
-                    return 0;
-                }
+            if (!DH_generate_key(new)) {
+                SSLerr(SSL_F_SSL3_CTX_CTRL, ERR_R_DH_LIB);
+                DH_free(new);
+                return 0;
             }
             DH_free(cert->dh_tmp);
             cert->dh_tmp = new;
