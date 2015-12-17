@@ -1747,6 +1747,9 @@ char *SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
     case SSL_eGOST2814789CNT12:
         enc = "GOST89(256)";
         break;
+    case SSL_CHACHA20POLY1305:
+        enc = "CHACHA20/POLY1305(256)";
+        break;
     default:
         enc = "unknown";
         break;
