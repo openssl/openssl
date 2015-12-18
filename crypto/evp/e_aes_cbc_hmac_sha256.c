@@ -60,6 +60,7 @@
 # include <openssl/sha.h>
 # include <openssl/rand.h>
 # include "modes_lcl.h"
+# include "internal/evp_int.h"
 
 # ifndef EVP_CIPH_FLAG_AEAD_CIPHER
 #  define EVP_CIPH_FLAG_AEAD_CIPHER       0x200000
