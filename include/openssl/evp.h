@@ -224,7 +224,7 @@ int (*EVP_MD_meth_get_ctrl(const EVP_MD *md))(EVP_MD_CTX *ctx, int cmd,
 # define EVP_MD_CTX_FLAG_CLEANED         0x0002/* context has already been
                                                 * cleaned */
 # define EVP_MD_CTX_FLAG_REUSE           0x0004/* Don't free up ctx->md_data
-                                                * in EVP_MD_CTX_cleanup */
+                                                * in EVP_MD_CTX_reset */
 /*
  * FIPS and pad options are ignored in 1.0.0, definitions are here so we
  * don't accidentally reuse the values for other purposes.
@@ -252,33 +252,51 @@ int (*EVP_MD_meth_get_ctrl(const EVP_MD *md))(EVP_MD_CTX *ctx, int cmd,
  */
 # define EVP_MD_CTX_FLAG_FINALISE        0x0200
 
-struct evp_cipher_st {
-    int nid;
-    int block_size;
-    /* Default value for variable length ciphers */
-    int key_len;
-    int iv_len;
-    /* Various flags */
-    unsigned long flags;
-    /* init key */
-    int (*init) (EVP_CIPHER_CTX *ctx, const unsigned char *key,
-                 const unsigned char *iv, int enc);
-    /* encrypt/decrypt data */
-    int (*do_cipher) (EVP_CIPHER_CTX *ctx, unsigned char *out,
-                      const unsigned char *in, size_t inl);
-    /* cleanup ctx */
-    int (*cleanup) (EVP_CIPHER_CTX *);
-    /* how big ctx->cipher_data needs to be */
-    int ctx_size;
-    /* Populate a ASN1_TYPE with parameters */
-    int (*set_asn1_parameters) (EVP_CIPHER_CTX *, ASN1_TYPE *);
-    /* Get parameters from a ASN1_TYPE */
-    int (*get_asn1_parameters) (EVP_CIPHER_CTX *, ASN1_TYPE *);
-    /* Miscellaneous operations */
-    int (*ctrl) (EVP_CIPHER_CTX *, int type, int arg, void *ptr);
-    /* Application data */
-    void *app_data;
-} /* EVP_CIPHER */ ;
+EVP_CIPHER *EVP_CIPHER_meth_new(int cipher_type, int block_size, int key_len);
+EVP_CIPHER *EVP_CIPHER_meth_dup(const EVP_CIPHER *cipher);
+void EVP_CIPHER_meth_free(EVP_CIPHER *cipher);
+
+int EVP_CIPHER_meth_set_iv_length(EVP_CIPHER *cipher, int iv_len);
+int EVP_CIPHER_meth_set_flags(EVP_CIPHER *cipher, unsigned long flags);
+int EVP_CIPHER_meth_set_impl_ctx_size(EVP_CIPHER *cipher, int ctx_size);
+int EVP_CIPHER_meth_set_init(EVP_CIPHER *cipher,
+                             int (*init) (EVP_CIPHER_CTX *ctx,
+                                          const unsigned char *key,
+                                          const unsigned char *iv,
+                                          int enc));
+int EVP_CIPHER_meth_set_do_cipher(EVP_CIPHER *cipher,
+                                  int (*do_cipher) (EVP_CIPHER_CTX *ctx,
+                                                    unsigned char *out,
+                                                    const unsigned char *in,
+                                                    size_t inl));
+int EVP_CIPHER_meth_set_cleanup(EVP_CIPHER *cipher,
+                                int (*cleanup) (EVP_CIPHER_CTX *));
+int EVP_CIPHER_meth_set_set_asn1_params(EVP_CIPHER *cipher,
+                                        int (*set_asn1_parameters) (EVP_CIPHER_CTX *,
+                                                                    ASN1_TYPE *));
+int EVP_CIPHER_meth_set_get_asn1_params(EVP_CIPHER *cipher,
+                                        int (*get_asn1_parameters) (EVP_CIPHER_CTX *,
+                                                                    ASN1_TYPE *));
+int EVP_CIPHER_meth_set_ctrl(EVP_CIPHER *cipher,
+                             int (*ctrl) (EVP_CIPHER_CTX *, int type,
+                                          int arg, void *ptr));
+
+int (*EVP_CIPHER_meth_get_init(const EVP_CIPHER *cipher))(EVP_CIPHER_CTX *ctx,
+                                                          const unsigned char *key,
+                                                          const unsigned char *iv,
+                                                          int enc);
+int (*EVP_CIPHER_meth_get_do_cipher(const EVP_CIPHER *cipher))(EVP_CIPHER_CTX *ctx,
+                                                               unsigned char *out,
+                                                               const unsigned char *in,
+                                                               size_t inl);
+int (*EVP_CIPHER_meth_get_cleanup(const EVP_CIPHER *cipher))(EVP_CIPHER_CTX *);
+int (*EVP_CIPHER_meth_get_set_asn1_params(const EVP_CIPHER *cipher))(EVP_CIPHER_CTX *,
+                                                                     ASN1_TYPE *);
+int (*EVP_CIPHER_meth_get_get_asn1_params(const EVP_CIPHER *cipher))(EVP_CIPHER_CTX *,
+                                                               ASN1_TYPE *);
+int (*EVP_CIPHER_meth_get_ctrl(const EVP_CIPHER *cipher))(EVP_CIPHER_CTX *,
+                                                          int type, int arg,
+                                                          void *ptr);
 
 /* Values for cipher flags */
 
@@ -503,6 +521,7 @@ void *EVP_MD_CTX_md_data(const EVP_MD_CTX *ctx);
 int EVP_CIPHER_nid(const EVP_CIPHER *cipher);
 # define EVP_CIPHER_name(e)              OBJ_nid2sn(EVP_CIPHER_nid(e))
 int EVP_CIPHER_block_size(const EVP_CIPHER *cipher);
+int EVP_CIPHER_impl_ctx_size(const EVP_CIPHER *cipher);
 int EVP_CIPHER_key_length(const EVP_CIPHER *cipher);
 int EVP_CIPHER_iv_length(const EVP_CIPHER *cipher);
 unsigned long EVP_CIPHER_flags(const EVP_CIPHER *cipher);
