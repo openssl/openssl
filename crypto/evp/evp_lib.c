@@ -242,11 +242,6 @@ unsigned long EVP_CIPHER_flags(const EVP_CIPHER *cipher)
     return cipher->flags;
 }
 
-unsigned long EVP_CIPHER_CTX_flags(const EVP_CIPHER_CTX *ctx)
-{
-    return ctx->cipher->flags;
-}
-
 void *EVP_CIPHER_CTX_get_app_data(const EVP_CIPHER_CTX *ctx)
 {
     return ctx->app_data;

@@ -526,8 +526,7 @@ void EVP_CIPHER_CTX_set_app_data(EVP_CIPHER_CTX *ctx, void *data);
 void *EVP_CIPHER_CTX_cipher_data(const EVP_CIPHER_CTX *ctx);
 void EVP_CIPHER_CTX_new_cipher_data(EVP_CIPHER_CTX *ctx, size_t size);
 # define EVP_CIPHER_CTX_type(c)         EVP_CIPHER_type(EVP_CIPHER_CTX_cipher(c))
-unsigned long EVP_CIPHER_CTX_flags(const EVP_CIPHER_CTX *ctx);
-# define EVP_CIPHER_CTX_mode(e)          (EVP_CIPHER_CTX_flags(e) & EVP_CIPH_MODE)
+# define EVP_CIPHER_CTX_mode(c)         EVP_CIPHER_mode(EVP_CIPHER_CTX_cipher(c))
 
 # define EVP_ENCODE_LENGTH(l)    (((l+2)/3*4)+(l/48+1)*2+80)
 # define EVP_DECODE_LENGTH(l)    ((l+3)/4*3+80)
