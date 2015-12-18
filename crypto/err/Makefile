@@ -66,7 +66,7 @@ err.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
 err.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
 err.o: ../../include/openssl/ossl_typ.h ../../include/openssl/safestack.h
 err.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-err.o: ../include/internal/cryptlib.h err.c
+err.o: ../include/internal/cryptlib.h err.c err_lcl.h
 err_all.o: ../../include/openssl/asn1.h ../../include/openssl/async.h
 err_all.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 err_all.o: ../../include/openssl/buffer.h ../../include/openssl/cms.h
