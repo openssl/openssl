@@ -528,15 +528,15 @@ int enc_main(int argc, char **argv)
                     printf("%02X", salt[i]);
                 printf("\n");
             }
-            if (cipher->key_len > 0) {
+            if (EVP_CIPHER_key_length(cipher) > 0) {
                 printf("key=");
-                for (i = 0; i < cipher->key_len; i++)
+                for (i = 0; i < EVP_CIPHER_key_length(cipher); i++)
                     printf("%02X", key[i]);
                 printf("\n");
             }
-            if (cipher->iv_len > 0) {
+            if (EVP_CIPHER_iv_length(cipher) > 0) {
                 printf("iv =");
-                for (i = 0; i < cipher->iv_len; i++)
+                for (i = 0; i < EVP_CIPHER_iv_length(cipher); i++)
                     printf("%02X", iv[i]);
                 printf("\n");
             }

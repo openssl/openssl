@@ -1644,7 +1644,7 @@ int speed_main(int argc, char **argv)
                 (EVP_CIPHER_flags(evp_cipher) &
                  EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK)) {
                 BIO_printf(bio_err, "%s is not multi-block capable\n",
-                        OBJ_nid2ln(evp_cipher->nid));
+                           OBJ_nid2ln(EVP_CIPHER_nid(evp_cipher)));
                 goto end;
             }
             multiblock_speed(evp_cipher);
@@ -1657,7 +1657,7 @@ int speed_main(int argc, char **argv)
                 EVP_CIPHER_CTX *ctx;
                 int outl;
 
-                names[D_EVP] = OBJ_nid2ln(evp_cipher->nid);
+                names[D_EVP] = OBJ_nid2ln(EVP_CIPHER_nid(evp_cipher));
                 /*
                  * -O3 -fschedule-insns messes up an optimization here!
                  * names[D_EVP] somehow becomes NULL
@@ -2447,7 +2447,7 @@ static void multiblock_speed(const EVP_CIPHER *evp_cipher)
     EVP_EncryptInit_ex(ctx, evp_cipher, NULL, no_key, no_iv);
     EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_MAC_KEY, sizeof(no_key),
                         no_key);
-    alg_name = OBJ_nid2ln(evp_cipher->nid);
+    alg_name = OBJ_nid2ln(EVP_CIPHER_nid(evp_cipher));
 
     for (j = 0; j < num; j++) {
         print_message(alg_name, 0, mblengths[j]);

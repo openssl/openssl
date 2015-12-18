@@ -388,8 +388,8 @@ int PEM_ASN1_write_bio(i2d_of_void *i2d, const char *name, BIO *bp,
             kstr = (unsigned char *)buf;
         }
         RAND_add(data, i, 0);   /* put in the RSA key. */
-        OPENSSL_assert(enc->iv_len <= (int)sizeof(iv));
-        if (RAND_bytes(iv, enc->iv_len) <= 0) /* Generate a salt */
+        OPENSSL_assert(EVP_CIPHER_iv_length(enc) <= (int)sizeof(iv));
+        if (RAND_bytes(iv, EVP_CIPHER_iv_length(enc)) <= 0) /* Generate a salt */
             goto err;
         /*
          * The 'iv' is used as the iv and as a salt.  It is NOT taken from
@@ -401,12 +401,12 @@ int PEM_ASN1_write_bio(i2d_of_void *i2d, const char *name, BIO *bp,
         if (kstr == (unsigned char *)buf)
             OPENSSL_cleanse(buf, PEM_BUFSIZE);
 
-        OPENSSL_assert(strlen(objstr) + 23 + 2 * enc->iv_len + 13 <=
-                       sizeof buf);
+        OPENSSL_assert(strlen(objstr) + 23 + 2 * EVP_CIPHER_iv_length(enc) + 13
+                       <= sizeof buf);
 
         buf[0] = '\0';
         PEM_proc_type(buf, PEM_TYPE_ENCRYPTED);
-        PEM_dek_info(buf, objstr, enc->iv_len, (char *)iv);
+        PEM_dek_info(buf, objstr, EVP_CIPHER_iv_length(enc), (char *)iv);
         /* k=strlen(buf); */
 
         ret = 1;
@@ -544,7 +544,7 @@ int PEM_get_EVP_CIPHER_INFO(char *header, EVP_CIPHER_INFO *cipher)
         PEMerr(PEM_F_PEM_GET_EVP_CIPHER_INFO, PEM_R_UNSUPPORTED_ENCRYPTION);
         return (0);
     }
-    if (!load_iv(header_pp, &(cipher->iv[0]), enc->iv_len))
+    if (!load_iv(header_pp, &(cipher->iv[0]), EVP_CIPHER_iv_length(enc)))
         return (0);
 
     return (1);
