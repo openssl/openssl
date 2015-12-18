@@ -1,4 +1,4 @@
-/* crypto/camellia/camellia.c -*- mode:C; c-file-style: "eay" -*- */
+/* crypto/camellia/camellia.c */
 /* ====================================================================
  * Copyright 2006 NTT (Nippon Telegraph and Telephone Corporation) .
  * ALL RIGHTS RESERVED.
