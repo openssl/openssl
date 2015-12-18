@@ -212,7 +212,7 @@ NULL if no extensions are present.
 =head1 SEE ALSO
 
 L<d2i_X509(3)>,
-L<ERR_get_error(3)|ERR_get_error(3)>,
+L<ERR_get_error(3)>,
 L<X509_CRL_get0_by_serial(3)>,
 L<X509_get0_signature(3)>,
 L<X509_get_ext_d2i(3)>,
