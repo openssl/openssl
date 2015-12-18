@@ -262,13 +262,6 @@ void *EVP_CIPHER_CTX_cipher_data(const EVP_CIPHER_CTX *ctx)
     return ctx->cipher_data;
 }
 
-/* FIXME: temporary until EVP_CIPHER goes opaque */
-void EVP_CIPHER_CTX_new_cipher_data(EVP_CIPHER_CTX *ctx, size_t size)
-{
-    if (ctx->cipher_data == NULL && ctx->cipher->ctx_size == 0)
-        ctx->cipher_data = OPENSSL_zalloc(size);
-}
-
 int EVP_CIPHER_iv_length(const EVP_CIPHER *cipher)
 {
     return cipher->iv_len;
