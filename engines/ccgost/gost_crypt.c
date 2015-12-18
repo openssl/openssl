@@ -12,6 +12,7 @@
 #include <openssl/rand.h>
 #include "e_gost_err.h"
 #include "gost_lcl.h"
+#include <openssl/evp.h>
 
 #if !defined(CCGOST_DEBUG) && !defined(DEBUG)
 # ifndef NDEBUG
@@ -38,39 +39,75 @@ static int gost89_get_asn1_parameters(EVP_CIPHER_CTX *ctx, ASN1_TYPE *params);
 /* Control function */
 static int gost_cipher_ctl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr);
 
-EVP_CIPHER cipher_gost = {
-    NID_id_Gost28147_89,
-    1,                          /* block_size */
-    32,                         /* key_size */
-    8,                          /* iv_len */
-    EVP_CIPH_CFB_MODE | EVP_CIPH_NO_PADDING |
-        EVP_CIPH_CUSTOM_IV | EVP_CIPH_RAND_KEY | EVP_CIPH_ALWAYS_CALL_INIT,
-    gost_cipher_init,
-    gost_cipher_do_cfb,
-    gost_cipher_cleanup,
-    sizeof(struct ossl_gost_cipher_ctx), /* ctx_size */
-    gost89_set_asn1_parameters,
-    gost89_get_asn1_parameters,
-    gost_cipher_ctl,
-    NULL,
-};
+static EVP_CIPHER *_hidden_Gost28147_89_cipher = NULL;
+const EVP_CIPHER *cipher_gost(void)
+{
+    if (_hidden_Gost28147_89_cipher == NULL
+        && ((_hidden_Gost28147_89_cipher =
+             EVP_CIPHER_meth_new(NID_id_Gost28147_89,
+                                 1  /* block_size */,
+                                 32 /* key_size */)) == NULL
+            || !EVP_CIPHER_meth_set_iv_length(_hidden_Gost28147_89_cipher, 8)
+            || !EVP_CIPHER_meth_set_flags(_hidden_Gost28147_89_cipher,
+                                          EVP_CIPH_CFB_MODE |
+                                          EVP_CIPH_NO_PADDING |
+                                          EVP_CIPH_CUSTOM_IV |
+                                          EVP_CIPH_RAND_KEY |
+                                          EVP_CIPH_ALWAYS_CALL_INIT)
+            || !EVP_CIPHER_meth_set_init(_hidden_Gost28147_89_cipher,
+                                         gost_cipher_init)
+            || !EVP_CIPHER_meth_set_do_cipher(_hidden_Gost28147_89_cipher,
+                                              gost_cipher_do_cfb)
+            || !EVP_CIPHER_meth_set_cleanup(_hidden_Gost28147_89_cipher,
+                                            gost_cipher_cleanup)
+            || !EVP_CIPHER_meth_set_impl_ctx_size(_hidden_Gost28147_89_cipher,
+                                                  sizeof(struct ossl_gost_cipher_ctx))
+            || !EVP_CIPHER_meth_set_set_asn1_params(_hidden_Gost28147_89_cipher,
+                                                    gost89_set_asn1_parameters)
+            || !EVP_CIPHER_meth_set_get_asn1_params(_hidden_Gost28147_89_cipher,
+                                                    gost89_get_asn1_parameters)
+            || !EVP_CIPHER_meth_set_ctrl(_hidden_Gost28147_89_cipher,
+                                         gost_cipher_ctl))) {
+        EVP_CIPHER_meth_free(_hidden_Gost28147_89_cipher);
+        _hidden_Gost28147_89_cipher = NULL;
+    }
+    return _hidden_Gost28147_89_cipher;
+}
 
-EVP_CIPHER cipher_gost_cpacnt = {
-    NID_gost89_cnt,
-    1,                          /* block_size */
-    32,                         /* key_size */
-    8,                          /* iv_len */
-    EVP_CIPH_OFB_MODE | EVP_CIPH_NO_PADDING |
-        EVP_CIPH_CUSTOM_IV | EVP_CIPH_RAND_KEY | EVP_CIPH_ALWAYS_CALL_INIT,
-    gost_cipher_init_cpa,
-    gost_cipher_do_cnt,
-    gost_cipher_cleanup,
-    sizeof(struct ossl_gost_cipher_ctx), /* ctx_size */
-    gost89_set_asn1_parameters,
-    gost89_get_asn1_parameters,
-    gost_cipher_ctl,
-    NULL,
-};
+static EVP_CIPHER *_hidden_gost89_cnt = NULL;
+const EVP_CIPHER *cipher_gost_cpacnt(void)
+{
+    if (_hidden_gost89_cnt == NULL
+        && ((_hidden_gost89_cnt =
+             EVP_CIPHER_meth_new(NID_gost89_cnt,
+                                 1  /* block_size */,
+                                 32 /* key_size */)) == NULL
+            || !EVP_CIPHER_meth_set_iv_length(_hidden_gost89_cnt, 8)
+            || !EVP_CIPHER_meth_set_flags(_hidden_gost89_cnt,
+                                          EVP_CIPH_OFB_MODE |
+                                          EVP_CIPH_NO_PADDING |
+                                          EVP_CIPH_CUSTOM_IV |
+                                          EVP_CIPH_RAND_KEY |
+                                          EVP_CIPH_ALWAYS_CALL_INIT)
+            || !EVP_CIPHER_meth_set_init(_hidden_gost89_cnt,
+                                         gost_cipher_init_cpa)
+            || !EVP_CIPHER_meth_set_do_cipher(_hidden_gost89_cnt,
+                                              gost_cipher_do_cnt)
+            || !EVP_CIPHER_meth_set_cleanup(_hidden_gost89_cnt,
+                                            gost_cipher_cleanup)
+            || !EVP_CIPHER_meth_set_impl_ctx_size(_hidden_gost89_cnt,
+                                                  sizeof(struct ossl_gost_cipher_ctx))
+            || !EVP_CIPHER_meth_set_set_asn1_params(_hidden_gost89_cnt,
+                                                    gost89_set_asn1_parameters)
+            || !EVP_CIPHER_meth_set_get_asn1_params(_hidden_gost89_cnt,
+                                                    gost89_get_asn1_parameters)
+            || !EVP_CIPHER_meth_set_ctrl(_hidden_gost89_cnt,
+                                         gost_cipher_ctl))) {
+        EVP_CIPHER_meth_free(_hidden_gost89_cnt);
+        _hidden_gost89_cnt = NULL;
+    }
+    return _hidden_gost89_cnt;
+}
 
 /* Implementation of GOST 28147-89 in MAC (imitovstavka) mode */
 /* Init functions which set specific parameters */
@@ -86,7 +123,7 @@ static int gost_imit_cleanup(EVP_MD_CTX *ctx);
 static int gost_imit_ctrl(EVP_MD_CTX *ctx, int type, int arg, void *ptr);
 
 static EVP_MD *_hidden_Gost28147_89_MAC_md = NULL;
-EVP_MD *imit_gost_cpa(void)
+const EVP_MD *imit_gost_cpa(void)
 {
 
     if (_hidden_Gost28147_89_MAC_md == NULL) {
