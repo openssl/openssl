@@ -1,4 +1,3 @@
-/* crypto/aes/aes_core.c */
 /**
  * rijndael-alg-fst.c
  *

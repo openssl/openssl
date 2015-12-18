@@ -1,4 +1,3 @@
-/* dane.h */
 /*
  * Written by Viktor Dukhovni (viktor@openssl.org) for the OpenSSL project
  * 2015.

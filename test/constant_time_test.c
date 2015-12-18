@@ -1,4 +1,3 @@
-/* crypto/constant_time_test.c */
 /*-
  * Utilities for constant-time cryptography.
  *

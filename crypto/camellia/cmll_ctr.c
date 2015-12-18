@@ -1,4 +1,3 @@
-/* crypto/camellia/camellia_ctr.c */
 /* ====================================================================
  * Copyright (c) 2006 The OpenSSL Project.  All rights reserved.
  *

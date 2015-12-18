@@ -1,6 +1,3 @@
-/* NOCW */
-/* demos/bio/sconnect.c */
-
 /*-
  * A minimal program to do SSL to a passed host and port.
  * It is actually using non-blocking IO but in a very simple manner

@@ -1,4 +1,3 @@
-/* ocsp_prn.c */
 /*
  * Written by Tom Titchener <Tom_Titchener@groove.net> for the OpenSSL
  * project.

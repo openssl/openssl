@@ -1,4 +1,3 @@
-/* crypto/ec/ec_mult.c */
 /*
  * Originally written by Bodo Moeller and Nils Larsch for the OpenSSL project.
  */

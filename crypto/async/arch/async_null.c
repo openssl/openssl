@@ -1,4 +1,3 @@
-/* crypto/async/arch/async_null.c */
 /*
  * Written by Matt Caswell (matt@openssl.org) for the OpenSSL project.
  */

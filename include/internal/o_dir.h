@@ -1,4 +1,3 @@
-/* crypto/o_dir.h */
 /*
  * Copied from Richard Levitte's (richard@levitte.org) LP library.  All
  * symbol names have been changed, with permission from the author.

@@ -1,4 +1,3 @@
-/* crypto/aes/aes_cfb.c */
 /* ====================================================================
  * Copyright (c) 2002-2006 The OpenSSL Project.  All rights reserved.
  *

@@ -1,4 +1,3 @@
-/* crypto/idea/idea.h */
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *

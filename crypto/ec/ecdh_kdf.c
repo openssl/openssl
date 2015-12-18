@@ -1,4 +1,3 @@
-/* crypto/ec/ecdh_kdf.c */
 /*
  * Written by Stephen Henson for the OpenSSL project.
  */

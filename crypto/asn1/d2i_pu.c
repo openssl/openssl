@@ -1,4 +1,3 @@
-/* crypto/asn1/d2i_pu.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *

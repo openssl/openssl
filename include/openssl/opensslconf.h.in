@@ -1,4 +1,3 @@
-/* opensslconf.h */
 {- join("\n",map { "/* $_ */" } @autowarntext) -}
 
 #ifdef  __cplusplus

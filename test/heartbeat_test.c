@@ -1,4 +1,3 @@
-/* test/heartbeat_test.c */
 /*-
  * Unit test for TLS heartbeats.
  *

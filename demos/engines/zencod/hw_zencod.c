@@ -1,4 +1,3 @@
-/* crypto/engine/hw_zencod.c */
  /*
   * Written by Fred Donnat (frederic.donnat@zencod.com) for "zencod" * engine
   * integration in order to redirect crypto computing on a crypto * hardware

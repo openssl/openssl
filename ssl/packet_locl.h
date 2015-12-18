@@ -1,4 +1,3 @@
-/* ssl/packet_locl.h */
 /*
  * Written by Matt Caswell for the OpenSSL project.
  */
