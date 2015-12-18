@@ -62,8 +62,14 @@
 #ifndef OPENSSL_NO_IDEA
 # include <openssl/evp.h>
 # include <openssl/objects.h>
-# include "evp_locl.h"
+# include "internal/evp_int.h"
 # include <openssl/idea.h>
+
+/* Can't use IMPLEMENT_BLOCK_CIPHER because idea_ecb_encrypt is different */
+
+typedef struct {
+    IDEA_KEY_SCHEDULE ks;
+} EVP_IDEA_KEY;
 
 static int idea_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
                          const unsigned char *iv, int enc);
@@ -77,15 +83,9 @@ static int idea_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                            const unsigned char *in, size_t inl)
 {
     BLOCK_CIPHER_ecb_loop()
-        idea_ecb_encrypt(in + i, out + i, ctx->cipher_data);
+        idea_ecb_encrypt(in + i, out + i, &EVP_C_DATA(EVP_IDEA_KEY,ctx)->ks);
     return 1;
 }
-
-/* Can't use IMPLEMENT_BLOCK_CIPHER because idea_ecb_encrypt is different */
-
-typedef struct {
-    IDEA_KEY_SCHEDULE ks;
-} EVP_IDEA_KEY;
 
 BLOCK_CIPHER_func_cbc(idea, idea, EVP_IDEA_KEY, ks)
     BLOCK_CIPHER_func_ofb(idea, idea, 64, EVP_IDEA_KEY, ks)
@@ -105,12 +105,12 @@ static int idea_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
             enc = 1;
     }
     if (enc)
-        idea_set_encrypt_key(key, ctx->cipher_data);
+        idea_set_encrypt_key(key, &EVP_C_DATA(EVP_IDEA_KEY,ctx)->ks);
     else {
         IDEA_KEY_SCHEDULE tmp;
 
         idea_set_encrypt_key(key, &tmp);
-        idea_set_decrypt_key(&tmp, ctx->cipher_data);
+        idea_set_decrypt_key(&tmp, &EVP_C_DATA(EVP_IDEA_KEY,ctx)->ks);
         OPENSSL_cleanse((unsigned char *)&tmp, sizeof(IDEA_KEY_SCHEDULE));
     }
     return 1;

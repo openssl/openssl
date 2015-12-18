@@ -59,6 +59,7 @@
 # include <openssl/objects.h>
 # include <openssl/rc4.h>
 # include <openssl/md5.h>
+# include "internal/evp_int.h"
 
 # ifndef EVP_CIPH_FLAG_AEAD_CIPHER
 #  define EVP_CIPH_FLAG_AEAD_CIPHER       0x200000

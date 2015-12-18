@@ -65,6 +65,8 @@
 # include <openssl/objects.h>
 # include <openssl/rc4.h>
 
+# include "internal/evp_int.h"
+
 /* FIXME: surely this is available elsewhere? */
 # define EVP_RC4_KEY_SIZE                16
 

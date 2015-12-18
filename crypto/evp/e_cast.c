@@ -62,7 +62,7 @@
 #ifndef OPENSSL_NO_CAST
 # include <openssl/evp.h>
 # include <openssl/objects.h>
-# include "evp_locl.h"
+# include "internal/evp_int.h"
 # include <openssl/cast.h>
 
 static int cast_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
