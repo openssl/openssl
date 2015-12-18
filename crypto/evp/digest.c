@@ -312,6 +312,13 @@ int EVP_MD_CTX_copy_ex(EVP_MD_CTX *out, const EVP_MD_CTX *in)
     EVP_MD_CTX_reset(out);
     memcpy(out, in, sizeof(*out));
 
+    /* Null these variables, since they are getting fixed up
+     * properly below.  Anything else may cause a memleak and/or
+     * double free if any of the memory allocations below fail
+     */
+    out->md_data = NULL;
+    out->pctx = NULL;
+
     if (in->md_data && out->digest->ctx_size) {
         if (tmp_buf)
             out->md_data = tmp_buf;
