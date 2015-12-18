@@ -546,39 +546,51 @@ padlock_ctr_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg,
  * of preprocessor magic :-)
  */
 #    define DECLARE_AES_EVP(ksize,lmode,umode)      \
-static const EVP_CIPHER padlock_aes_##ksize##_##lmode = {       \
-        NID_aes_##ksize##_##lmode,              \
-        EVP_CIPHER_block_size_##umode,  \
-        AES_KEY_SIZE_##ksize,           \
-        AES_BLOCK_SIZE,                 \
-        0 | EVP_CIPH_##umode##_MODE,    \
-        padlock_aes_init_key,           \
-        padlock_##lmode##_cipher,       \
-        NULL,                           \
-        sizeof(struct padlock_cipher_data) + 16,        \
-        EVP_CIPHER_set_asn1_iv,         \
-        EVP_CIPHER_get_asn1_iv,         \
-        NULL,                           \
-        NULL                            \
+static EVP_CIPHER *_hidden_aes_##ksize##_##lmode = NULL; \
+static const EVP_CIPHER *padlock_aes_##ksize##_##lmode(void) \
+{                                                                       \
+    if (_hidden_aes_##ksize##_##lmode == NULL                           \
+        && ((_hidden_aes_##ksize##_##lmode =                            \
+             EVP_CIPHER_meth_new(NID_aes_##ksize##_##lmode,             \
+                                 EVP_CIPHER_block_size_##umode,         \
+                                 AES_KEY_SIZE_##ksize)) == NULL         \
+            || !EVP_CIPHER_meth_set_iv_length(_hidden_aes_##ksize##_##lmode, \
+                                              AES_BLOCK_SIZE)           \
+            || !EVP_CIPHER_meth_set_flags(_hidden_aes_##ksize##_##lmode, \
+                                          0 | EVP_CIPH_##umode##_MODE)  \
+            || !EVP_CIPHER_meth_set_init(_hidden_aes_##ksize##_##lmode, \
+                                         padlock_aes_init_key)          \
+            || !EVP_CIPHER_meth_set_do_cipher(_hidden_aes_##ksize##_##lmode, \
+                                              padlock_##lmode##_cipher) \
+            || !EVP_CIPHER_meth_set_impl_ctx_size(_hidden_aes_##ksize##_##lmode, \
+                                                  sizeof(struct padlock_cipher_data) + 16) \
+            || !EVP_CIPHER_meth_set_set_asn1_params(_hidden_aes_##ksize##_##lmode, \
+                                                    EVP_CIPHER_set_asn1_iv) \
+            || !EVP_CIPHER_meth_set_get_asn1_params(_hidden_aes_##ksize##_##lmode, \
+                                                    EVP_CIPHER_get_asn1_iv))) { \
+        EVP_CIPHER_meth_free(_hidden_aes_##ksize##_##lmode);            \
+        _hidden_aes_##ksize##_##lmode = NULL;                           \
+    }                                                                   \
+    return _hidden_aes_##ksize##_##lmode;                               \
 }
 
-DECLARE_AES_EVP(128, ecb, ECB);
-DECLARE_AES_EVP(128, cbc, CBC);
-DECLARE_AES_EVP(128, cfb, CFB);
-DECLARE_AES_EVP(128, ofb, OFB);
-DECLARE_AES_EVP(128, ctr, CTR);
+DECLARE_AES_EVP(128, ecb, ECB)
+DECLARE_AES_EVP(128, cbc, CBC)
+DECLARE_AES_EVP(128, cfb, CFB)
+DECLARE_AES_EVP(128, ofb, OFB)
+DECLARE_AES_EVP(128, ctr, CTR)
 
-DECLARE_AES_EVP(192, ecb, ECB);
-DECLARE_AES_EVP(192, cbc, CBC);
-DECLARE_AES_EVP(192, cfb, CFB);
-DECLARE_AES_EVP(192, ofb, OFB);
-DECLARE_AES_EVP(192, ctr, CTR);
+DECLARE_AES_EVP(192, ecb, ECB)
+DECLARE_AES_EVP(192, cbc, CBC)
+DECLARE_AES_EVP(192, cfb, CFB)
+DECLARE_AES_EVP(192, ofb, OFB)
+DECLARE_AES_EVP(192, ctr, CTR)
 
-DECLARE_AES_EVP(256, ecb, ECB);
-DECLARE_AES_EVP(256, cbc, CBC);
-DECLARE_AES_EVP(256, cfb, CFB);
-DECLARE_AES_EVP(256, ofb, OFB);
-DECLARE_AES_EVP(256, ctr, CTR);
+DECLARE_AES_EVP(256, ecb, ECB)
+DECLARE_AES_EVP(256, cbc, CBC)
+DECLARE_AES_EVP(256, cfb, CFB)
+DECLARE_AES_EVP(256, ofb, OFB)
+DECLARE_AES_EVP(256, ctr, CTR)
 
 static int
 padlock_ciphers(ENGINE *e, const EVP_CIPHER **cipher, const int **nids,
@@ -593,51 +605,51 @@ padlock_ciphers(ENGINE *e, const EVP_CIPHER **cipher, const int **nids,
     /* ... or the requested "cipher" otherwise */
     switch (nid) {
     case NID_aes_128_ecb:
-        *cipher = &padlock_aes_128_ecb;
+        *cipher = padlock_aes_128_ecb();
         break;
     case NID_aes_128_cbc:
-        *cipher = &padlock_aes_128_cbc;
+        *cipher = padlock_aes_128_cbc();
         break;
     case NID_aes_128_cfb:
-        *cipher = &padlock_aes_128_cfb;
+        *cipher = padlock_aes_128_cfb();
         break;
     case NID_aes_128_ofb:
-        *cipher = &padlock_aes_128_ofb;
+        *cipher = padlock_aes_128_ofb();
         break;
     case NID_aes_128_ctr:
-        *cipher = &padlock_aes_128_ctr;
+        *cipher = padlock_aes_128_ctr();
         break;
 
     case NID_aes_192_ecb:
-        *cipher = &padlock_aes_192_ecb;
+        *cipher = padlock_aes_192_ecb();
         break;
     case NID_aes_192_cbc:
-        *cipher = &padlock_aes_192_cbc;
+        *cipher = padlock_aes_192_cbc();
         break;
     case NID_aes_192_cfb:
-        *cipher = &padlock_aes_192_cfb;
+        *cipher = padlock_aes_192_cfb();
         break;
     case NID_aes_192_ofb:
-        *cipher = &padlock_aes_192_ofb;
+        *cipher = padlock_aes_192_ofb();
         break;
     case NID_aes_192_ctr:
-        *cipher = &padlock_aes_192_ctr;
+        *cipher = padlock_aes_192_ctr();
         break;
 
     case NID_aes_256_ecb:
-        *cipher = &padlock_aes_256_ecb;
+        *cipher = padlock_aes_256_ecb();
         break;
     case NID_aes_256_cbc:
-        *cipher = &padlock_aes_256_cbc;
+        *cipher = padlock_aes_256_cbc();
         break;
     case NID_aes_256_cfb:
-        *cipher = &padlock_aes_256_cfb;
+        *cipher = padlock_aes_256_cfb();
         break;
     case NID_aes_256_ofb:
-        *cipher = &padlock_aes_256_ofb;
+        *cipher = padlock_aes_256_ofb();
         break;
     case NID_aes_256_ctr:
-        *cipher = &padlock_aes_256_ctr;
+        *cipher = padlock_aes_256_ctr();
         break;
 
     default:

@@ -146,7 +146,7 @@ struct ossl_gost_digest_ctx {
 EVP_MD *digest_gost(void);
 void digest_gost_destroy(void);
 /* EVP_MD structure for GOST 28147 in MAC mode */
-EVP_MD *imit_gost_cpa(void);
+const EVP_MD *imit_gost_cpa(void);
 void imit_gost_cpa_destroy(void);
 /* Cipher context used for EVP_CIPHER operation */
 struct ossl_gost_cipher_ctx {
@@ -176,8 +176,8 @@ extern struct gost_cipher_info gost_cipher_list[];
 /* Find encryption params from ASN1_OBJECT */
 const struct gost_cipher_info *get_encryption_params(ASN1_OBJECT *obj);
 /* Implementation of GOST 28147-89 cipher in CFB and CNT modes */
-extern EVP_CIPHER cipher_gost;
-extern EVP_CIPHER cipher_gost_cpacnt;
+const EVP_CIPHER *cipher_gost(void);
+const EVP_CIPHER *cipher_gost_cpacnt(void);
 # define EVP_MD_CTRL_KEY_LEN (EVP_MD_CTRL_ALG_CTRL+3)
 # define EVP_MD_CTRL_SET_KEY (EVP_MD_CTRL_ALG_CTRL+4)
 /* EVP_PKEY_METHOD key encryption callbacks */
