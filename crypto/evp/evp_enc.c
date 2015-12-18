@@ -212,7 +212,7 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
         return 0;
     }
 
-    if (!(EVP_CIPHER_CTX_flags(ctx) & EVP_CIPH_CUSTOM_IV)) {
+    if (!(EVP_CIPHER_flags(EVP_CIPHER_CTX_cipher(ctx)) & EVP_CIPH_CUSTOM_IV)) {
         switch (EVP_CIPHER_CTX_mode(ctx)) {
 
         case EVP_CIPH_STREAM_CIPHER:
