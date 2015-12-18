@@ -468,7 +468,7 @@ lint:
 tags TAGS: FORCE
 	rm -f TAGS tags
 	-ctags -R .
-	-etags -R .
+	-etags `find . -name '*.[ch]' -o -name '*.pm'`
 
 FORCE:
 
