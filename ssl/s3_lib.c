@@ -4639,3 +4639,16 @@ int ssl_derive(SSL *s, EVP_PKEY *privkey, EVP_PKEY *pubkey)
     EVP_PKEY_CTX_free(pctx);
     return rv;
 }
+
+EVP_PKEY *ssl_dh_to_pkey(DH *dh)
+{
+    EVP_PKEY *ret;
+    if (dh == NULL)
+        return NULL;
+    ret = EVP_PKEY_new();
+    if (EVP_PKEY_set1_DH(ret, dh) <= 0) {
+        EVP_PKEY_free(ret);
+        return NULL;
+    }
+    return ret;
+}
