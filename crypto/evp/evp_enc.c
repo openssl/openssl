@@ -64,6 +64,7 @@
 #ifndef OPENSSL_NO_ENGINE
 # include <openssl/engine.h>
 #endif
+#include "internal/evp_int.h"
 #include "evp_locl.h"
 
 int EVP_CIPHER_CTX_reset(EVP_CIPHER_CTX *c)
