@@ -715,13 +715,12 @@ int EVP_DecodeFinal(EVP_ENCODE_CTX *ctx, unsigned
 int EVP_DecodeBlock(unsigned char *t, const unsigned char *f, int n);
 
 # if OPENSSL_API_COMPAT < 0x10100000L
-#  EVP_CIPHER_CTX_init(c)      EVP_CIPHER_CTX_reset(c)
-#  EVP_CIPHER_CTX_cleanup(c)   EVP_CIPHER_CTX_reset(c)
+#  define EVP_CIPHER_CTX_init(c)      EVP_CIPHER_CTX_reset(c)
+#  define EVP_CIPHER_CTX_cleanup(c)   EVP_CIPHER_CTX_reset(c)
 # endif
 EVP_CIPHER_CTX *EVP_CIPHER_CTX_new(void);
 int EVP_CIPHER_CTX_reset(EVP_CIPHER_CTX *c);
 void EVP_CIPHER_CTX_free(EVP_CIPHER_CTX *c);
-#define EVP_CIPHER_CTX_init(c) EVP_CIPHER_CTX_reset((c))
 int EVP_CIPHER_CTX_set_key_length(EVP_CIPHER_CTX *x, int keylen);
 int EVP_CIPHER_CTX_set_padding(EVP_CIPHER_CTX *c, int pad);
 int EVP_CIPHER_CTX_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr);
