@@ -1,4 +1,4 @@
-/* ssl/statem/statem_srvr.c -*- mode:C; c-file-style: "eay" -*- */
+/* ssl/statem/statem_srvr.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
