@@ -1,4 +1,3 @@
-/* crypto/srp/srp.h */
 /*
  * Written by Christophe Renou (christophe.renou@edelweb.fr) with the
  * precious help of Peter Sylvester (peter.sylvester@edelweb.fr) for the

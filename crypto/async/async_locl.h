@@ -1,4 +1,3 @@
-/* crypto/async/async_locl.h */
 /*
  * Written by Matt Caswell (matt@openssl.org) for the OpenSSL project.
  */

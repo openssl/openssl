@@ -1,4 +1,3 @@
-/* crypto/seed/seed_ecb.c */
 /* ====================================================================
  * Copyright (c) 2007 The OpenSSL Project.  All rights reserved.
  *

@@ -1,4 +1,3 @@
-/* evp_locl.h */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
  * 2000.

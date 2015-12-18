@@ -1,4 +1,3 @@
-/* crypto/ec/ecdsa_ossl.c */
 /*
  * Written by Nils Larsch for the OpenSSL project
  */

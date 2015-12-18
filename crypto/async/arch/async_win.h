@@ -1,4 +1,3 @@
-/* crypto/async/arch/async_win.h */
 /*
  * Written by Matt Caswell (matt@openssl.org) for the OpenSSL project.
  */

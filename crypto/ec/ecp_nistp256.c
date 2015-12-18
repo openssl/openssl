@@ -1,4 +1,3 @@
-/* crypto/ec/ecp_nistp256.c */
 /*
  * Written by Adam Langley (Google) for the OpenSSL project
  */

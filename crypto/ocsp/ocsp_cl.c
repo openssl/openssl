@@ -1,4 +1,3 @@
-/* ocsp_cl.c */
 /*
  * Written by Tom Titchener <Tom_Titchener@groove.net> for the OpenSSL
  * project.

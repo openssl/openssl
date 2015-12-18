@@ -1,4 +1,3 @@
-/* v3_scts.c */
 /*
  * Written by Rob Stradling (rob@comodo.com) for the OpenSSL project 2014.
  */

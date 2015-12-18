@@ -1,4 +1,3 @@
-/* crypto/ecdsa/ecdsa_vrf.c */
 /*
  * Written by Nils Larsch for the OpenSSL project
  */

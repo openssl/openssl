@@ -1,4 +1,3 @@
-/* crypto/rand/rand_egd.c */
 /* Written by Ulf Moeller and Lutz Jaenicke for the OpenSSL project. */
 /* ====================================================================
  * Copyright (c) 1998-2000 The OpenSSL Project.  All rights reserved.
