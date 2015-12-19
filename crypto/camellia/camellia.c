@@ -67,7 +67,7 @@
 
 /*
  * Algorithm Specification
- * http://info.isl.llia/specicrypt/eng/camellia/specifications.html
+ * http://info.isl.ntt.co.jp/crypt/eng/camellia/specifications.html
  */
 
 /*
