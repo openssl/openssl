@@ -2125,7 +2125,6 @@ MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
 #endif
 #ifndef OPENSSL_NO_EC
     EVP_PKEY *ckey = NULL;
-    EVP_PKEY_CTX *pctx = NULL;
 #endif
     PACKET enc_premaster;
     unsigned char *data, *rsa_decrypt = NULL;
@@ -2656,7 +2655,6 @@ MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
 #endif
 #ifndef OPENSSL_NO_EC
     EVP_PKEY_free(ckey);
-    EVP_PKEY_CTX_free(pctx);
     OPENSSL_free(rsa_decrypt);
 #endif
 #ifndef OPENSSL_NO_PSK
