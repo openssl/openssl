@@ -220,9 +220,9 @@ static void SRP_user_pwd_set_gN(SRP_user_pwd *vinfo, const BIGNUM *g,
 static int SRP_user_pwd_set_ids(SRP_user_pwd *vinfo, const char *id,
                                 const char *info)
 {
-    if (id != NULL && NULL == (vinfo->id = BUF_strdup(id)))
+    if (id != NULL && NULL == (vinfo->id = OPENSSL_strdup(id)))
         return 0;
-    return (info == NULL || NULL != (vinfo->info = BUF_strdup(info)));
+    return (info == NULL || NULL != (vinfo->info = OPENSSL_strdup(info)));
 }
 
 static int SRP_user_pwd_set_sv(SRP_user_pwd *vinfo, const char *s,
@@ -261,7 +261,7 @@ SRP_VBASE *SRP_VBASE_new(char *seed_key)
     vb->default_g = NULL;
     vb->default_N = NULL;
     vb->seed_key = NULL;
-    if ((seed_key != NULL) && (vb->seed_key = BUF_strdup(seed_key)) == NULL) {
+    if ((seed_key != NULL) && (vb->seed_key = OPENSSL_strdup(seed_key)) == NULL) {
         sk_SRP_user_pwd_free(vb->users_pwd);
         sk_SRP_gN_cache_free(vb->gN_cache);
         OPENSSL_free(vb);
@@ -289,7 +289,7 @@ static SRP_gN_cache *SRP_gN_new_init(const char *ch)
     if (newgN == NULL)
         return NULL;
 
-    if ((newgN->b64_bn = BUF_strdup(ch)) == NULL)
+    if ((newgN->b64_bn = OPENSSL_strdup(ch)) == NULL)
         goto err;
 
     len = t_fromb64(tmp, ch);
@@ -394,7 +394,7 @@ int SRP_VBASE_init(SRP_VBASE *vb, char *verifier_file)
             if ((gN = OPENSSL_malloc(sizeof(*gN))) == NULL)
                 goto err;
 
-            if ((gN->id = BUF_strdup(pp[DB_srpid])) == NULL
+            if ((gN->id = OPENSSL_strdup(pp[DB_srpid])) == NULL
                 || (gN->N = SRP_gN_place_bn(vb->gN_cache, pp[DB_srpverifier]))
                         == NULL
                 || (gN->g = SRP_gN_place_bn(vb->gN_cache, pp[DB_srpsalt]))

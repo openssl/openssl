@@ -294,7 +294,7 @@ const char *RAND_file_name(char *buf, size_t size)
     if (OPENSSL_issetugid() == 0)
         s = getenv("RANDFILE");
     if (s != NULL && *s && strlen(s) + 1 < size) {
-        if (BUF_strlcpy(buf, s, size) >= size)
+        if (OPENSSL_strlcpy(buf, s, size) >= size)
             return NULL;
     } else {
         if (OPENSSL_issetugid() == 0)
@@ -305,11 +305,11 @@ const char *RAND_file_name(char *buf, size_t size)
         }
 #endif
         if (s && *s && strlen(s) + strlen(RFILE) + 2 < size) {
-            BUF_strlcpy(buf, s, size);
+            OPENSSL_strlcpy(buf, s, size);
 #ifndef OPENSSL_SYS_VMS
-            BUF_strlcat(buf, "/", size);
+            OPENSSL_strlcat(buf, "/", size);
 #endif
-            BUF_strlcat(buf, RFILE, size);
+            OPENSSL_strlcat(buf, RFILE, size);
         } else
             buf[0] = '\0';      /* no file name */
     }
@@ -324,11 +324,11 @@ const char *RAND_file_name(char *buf, size_t size)
      */
 
     if (!buf[0])
-        if (BUF_strlcpy(buf, "/dev/arandom", size) >= size) {
+        if (OPENSSL_strlcpy(buf, "/dev/arandom", size) >= size) {
             return (NULL);
         }
     if (stat(buf, &sb) == -1)
-        if (BUF_strlcpy(buf, "/dev/arandom", size) >= size) {
+        if (OPENSSL_strlcpy(buf, "/dev/arandom", size) >= size) {
             return (NULL);
         }
 #endif

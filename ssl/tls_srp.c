@@ -179,7 +179,7 @@ int SSL_SRP_CTX_init(struct ssl_st *s)
         goto err;
     }
     if ((ctx->srp_ctx.login != NULL) &&
-        ((s->srp_ctx.login = BUF_strdup(ctx->srp_ctx.login)) == NULL)) {
+        ((s->srp_ctx.login = OPENSSL_strdup(ctx->srp_ctx.login)) == NULL)) {
         SSLerr(SSL_F_SSL_SRP_CTX_INIT, ERR_R_INTERNAL_ERROR);
         goto err;
     }

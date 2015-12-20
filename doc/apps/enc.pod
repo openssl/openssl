@@ -22,7 +22,7 @@ B<openssl enc -ciphername>
 [B<-salt>]
 [B<-nosalt>]
 [B<-z>]
-[B<-md>]
+[B<-md digest>]
 [B<-p>]
 [B<-P>]
 [B<-bufsize number>]
@@ -96,6 +96,11 @@ versions of OpenSSL. Superseded by the B<-pass> argument.
 read the password to derive the key from the first line of B<filename>.
 This is for compatibility with previous versions of OpenSSL. Superseded by
 the B<-pass> argument.
+
+=item B<-md digest>
+
+Use the specified digest to create the key from the passphrase.
+The default algorithm is sha-256.
 
 =item B<-nosalt>
 
@@ -328,5 +333,9 @@ There should be an option to allow an iteration count to be included.
 The B<enc> program only supports a fixed number of algorithms with
 certain parameters. So if, for example, you want to use RC2 with a
 76 bit key or RC4 with an 84 bit key you can't use this program.
+
+=head1 HISTORY
+
+The default digest was changed from MD5 to SHA256 in Openssl 1.1.
 
 =cut

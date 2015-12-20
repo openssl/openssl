@@ -589,6 +589,20 @@ size_t EC_POINT_point2oct(const EC_GROUP *group, const EC_POINT *p,
 int EC_POINT_oct2point(const EC_GROUP *group, EC_POINT *p,
                        const unsigned char *buf, size_t len, BN_CTX *ctx);
 
+/** Encodes an EC_POINT object to an allocated octet string
+ *  \param  group  underlying EC_GROUP object
+ *  \param  point  EC_POINT object
+ *  \param  form   point conversion form
+ *  \param  pbuf   returns pointer to allocated buffer
+ *  \param  len    length of the memory buffer
+ *  \param  ctx    BN_CTX object (optional)
+ *  \return the length of the encoded octet string or 0 if an error occurred
+ */
+
+size_t EC_POINT_point2buf(const EC_GROUP *group, const EC_POINT *point,
+                          point_conversion_form_t form,
+                          unsigned char **pbuf, BN_CTX *ctx);
+
 /* other interfaces to point2oct/oct2point: */
 BIGNUM *EC_POINT_point2bn(const EC_GROUP *, const EC_POINT *,
                           point_conversion_form_t form, BIGNUM *, BN_CTX *);
@@ -887,6 +901,29 @@ int EC_KEY_check_key(const EC_KEY *key);
 int EC_KEY_set_public_key_affine_coordinates(EC_KEY *key, BIGNUM *x,
                                              BIGNUM *y);
 
+/** Encodes an EC_KEY public key to an allocated octet string
+ *  \param  key    key to encode
+ *  \param  form   point conversion form
+ *  \param  pbuf   returns pointer to allocated buffer
+ *  \param  len    length of the memory buffer
+ *  \param  ctx    BN_CTX object (optional)
+ *  \return the length of the encoded octet string or 0 if an error occurred
+ */
+
+size_t EC_KEY_key2buf(const EC_KEY *key, point_conversion_form_t form,
+                      unsigned char **pbuf, BN_CTX *ctx);
+
+/** Decodes a EC_KEY public key from a octet string
+ *  \param  key    key to decode
+ *  \param  buf    memory buffer with the encoded ec point
+ *  \param  len    length of the encoded ec point
+ *  \param  ctx    BN_CTX object (optional)
+ *  \return 1 on success and 0 if an error occurred
+ */
+
+int EC_KEY_oct2key(EC_KEY *key, const unsigned char *buf, size_t len,
+                   BN_CTX *ctx);
+
 /********************************************************************/
 /*        de- and encoding functions for SEC1 ECPrivateKey          */
 /********************************************************************/
@@ -994,8 +1031,9 @@ int ECDH_KDF_X9_62(unsigned char *out, size_t outlen,
                    const EVP_MD *md);
 
 int ECDH_compute_key(void *out, size_t outlen, const EC_POINT *pub_key,
-                     EC_KEY *ecdh, void *(*KDF) (const void *in, size_t inlen,
-                                                 void *out, size_t *outlen));
+                     const EC_KEY *ecdh,
+                     void *(*KDF) (const void *in, size_t inlen,
+                                   void *out, size_t *outlen));
 
 typedef struct ECDSA_SIG_st ECDSA_SIG;
 
@@ -1151,7 +1189,7 @@ void EC_KEY_METHOD_set_compute_key(EC_KEY_METHOD *meth,
                                    int (*ckey)(void *out,
                                                size_t outlen,
                                                const EC_POINT *pub_key,
-                                               EC_KEY *ecdh,
+                                               const EC_KEY *ecdh,
                                                void *(*KDF) (const void *in,
                                                              size_t inlen,
                                                              void *out,
@@ -1199,7 +1237,7 @@ void EC_KEY_METHOD_get_compute_key(EC_KEY_METHOD *meth,
                                    int (**pck)(void *out,
                                                size_t outlen,
                                                const EC_POINT *pub_key,
-                                               EC_KEY *ecdh,
+                                               const EC_KEY *ecdh,
                                                void *(*KDF) (const void *in,
                                                              size_t inlen,
                                                              void *out,

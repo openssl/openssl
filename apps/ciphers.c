@@ -93,6 +93,7 @@ OPTIONS ciphers_options[] = {
     {NULL}
 };
 
+#ifndef OPENSSL_NO_PSK
 static unsigned int dummy_psk(SSL *ssl, const char *hint, char *identity,
                               unsigned int max_identity_len,
                               unsigned char *psk,
@@ -100,6 +101,7 @@ static unsigned int dummy_psk(SSL *ssl, const char *hint, char *identity,
 {
     return 0;
 }
+#endif
 
 int ciphers_main(int argc, char **argv)
 {

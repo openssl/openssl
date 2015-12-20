@@ -292,7 +292,7 @@ int main(int argc, char *argv[])
         goto err;
     (void)BIO_flush(out);
 
-#ifdef OPENSSL_SYS_WIN32
+#if defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_LINUX)
     message(out, "Probable prime generation with coprimes disabled");
 #else
     message(out, "Probable prime generation with coprimes");
@@ -1859,7 +1859,8 @@ int test_small_prime(BIO *bp, BN_CTX *ctx)
     return ret;
 }
 
-#ifndef OPENSSL_SYS_WIN32
+/* We can't test this on platforms where local symbols aren't exported */
+#if !defined(OPENSSL_SYS_WIN32) && !defined(OPENSSL_SYS_LINUX)
 int test_probable_prime_coprime(BIO *bp, BN_CTX *ctx)
 {
     int i, j, ret = 0;

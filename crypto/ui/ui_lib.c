@@ -1,4 +1,4 @@
-/* crypto/ui/ui_lib.c -*- mode:C; c-file-style: "eay" -*- */
+/* crypto/ui/ui_lib.c */
 /*
  * Written by Richard Levitte (richard@levitte.org) for the OpenSSL project
  * 2001.
@@ -238,7 +238,7 @@ int UI_dup_input_string(UI *ui, const char *prompt, int flags,
     char *prompt_copy = NULL;
 
     if (prompt) {
-        prompt_copy = BUF_strdup(prompt);
+        prompt_copy = OPENSSL_strdup(prompt);
         if (prompt_copy == NULL) {
             UIerr(UI_F_UI_DUP_INPUT_STRING, ERR_R_MALLOC_FAILURE);
             return 0;
@@ -266,7 +266,7 @@ int UI_dup_verify_string(UI *ui, const char *prompt, int flags,
     char *prompt_copy = NULL;
 
     if (prompt) {
-        prompt_copy = BUF_strdup(prompt);
+        prompt_copy = OPENSSL_strdup(prompt);
         if (prompt_copy == NULL) {
             UIerr(UI_F_UI_DUP_VERIFY_STRING, ERR_R_MALLOC_FAILURE);
             return -1;
@@ -297,7 +297,7 @@ int UI_dup_input_boolean(UI *ui, const char *prompt, const char *action_desc,
     char *cancel_chars_copy = NULL;
 
     if (prompt) {
-        prompt_copy = BUF_strdup(prompt);
+        prompt_copy = OPENSSL_strdup(prompt);
         if (prompt_copy == NULL) {
             UIerr(UI_F_UI_DUP_INPUT_BOOLEAN, ERR_R_MALLOC_FAILURE);
             goto err;
@@ -305,7 +305,7 @@ int UI_dup_input_boolean(UI *ui, const char *prompt, const char *action_desc,
     }
 
     if (action_desc) {
-        action_desc_copy = BUF_strdup(action_desc);
+        action_desc_copy = OPENSSL_strdup(action_desc);
         if (action_desc_copy == NULL) {
             UIerr(UI_F_UI_DUP_INPUT_BOOLEAN, ERR_R_MALLOC_FAILURE);
             goto err;
@@ -313,7 +313,7 @@ int UI_dup_input_boolean(UI *ui, const char *prompt, const char *action_desc,
     }
 
     if (ok_chars) {
-        ok_chars_copy = BUF_strdup(ok_chars);
+        ok_chars_copy = OPENSSL_strdup(ok_chars);
         if (ok_chars_copy == NULL) {
             UIerr(UI_F_UI_DUP_INPUT_BOOLEAN, ERR_R_MALLOC_FAILURE);
             goto err;
@@ -321,7 +321,7 @@ int UI_dup_input_boolean(UI *ui, const char *prompt, const char *action_desc,
     }
 
     if (cancel_chars) {
-        cancel_chars_copy = BUF_strdup(cancel_chars);
+        cancel_chars_copy = OPENSSL_strdup(cancel_chars);
         if (cancel_chars_copy == NULL) {
             UIerr(UI_F_UI_DUP_INPUT_BOOLEAN, ERR_R_MALLOC_FAILURE);
             goto err;
@@ -350,7 +350,7 @@ int UI_dup_info_string(UI *ui, const char *text)
     char *text_copy = NULL;
 
     if (text) {
-        text_copy = BUF_strdup(text);
+        text_copy = OPENSSL_strdup(text);
         if (text_copy == NULL) {
             UIerr(UI_F_UI_DUP_INFO_STRING, ERR_R_MALLOC_FAILURE);
             return -1;
@@ -372,7 +372,7 @@ int UI_dup_error_string(UI *ui, const char *text)
     char *text_copy = NULL;
 
     if (text) {
-        text_copy = BUF_strdup(text);
+        text_copy = OPENSSL_strdup(text);
         if (text_copy == NULL) {
             UIerr(UI_F_UI_DUP_ERROR_STRING, ERR_R_MALLOC_FAILURE);
             return -1;
@@ -405,13 +405,13 @@ char *UI_construct_prompt(UI *ui, const char *object_desc,
         prompt = OPENSSL_malloc(len + 1);
         if (prompt == NULL)
             return NULL;
-        BUF_strlcpy(prompt, prompt1, len + 1);
-        BUF_strlcat(prompt, object_desc, len + 1);
+        OPENSSL_strlcpy(prompt, prompt1, len + 1);
+        OPENSSL_strlcat(prompt, object_desc, len + 1);
         if (object_name) {
-            BUF_strlcat(prompt, prompt2, len + 1);
-            BUF_strlcat(prompt, object_name, len + 1);
+            OPENSSL_strlcat(prompt, prompt2, len + 1);
+            OPENSSL_strlcat(prompt, object_name, len + 1);
         }
-        BUF_strlcat(prompt, prompt3, len + 1);
+        OPENSSL_strlcat(prompt, prompt3, len + 1);
     }
     return prompt;
 }
@@ -575,7 +575,7 @@ UI_METHOD *UI_create_method(char *name)
     UI_METHOD *ui_method = OPENSSL_zalloc(sizeof(*ui_method));
 
     if (ui_method != NULL)
-        ui_method->name = BUF_strdup(name);
+        ui_method->name = OPENSSL_strdup(name);
     return ui_method;
 }
 
@@ -822,7 +822,7 @@ int UI_set_result(UI *ui, UI_STRING *uis, const char *result)
             return -1;
         }
 
-        BUF_strlcpy(uis->result_buf, result,
+        OPENSSL_strlcpy(uis->result_buf, result,
                     uis->_.string_data.result_maxsize + 1);
         break;
     case UIT_BOOLEAN:

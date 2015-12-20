@@ -344,8 +344,8 @@ SSL *SSL_new(SSL_CTX *ctx)
 # ifndef OPENSSL_NO_EC
     if (ctx->tlsext_ecpointformatlist) {
         s->tlsext_ecpointformatlist =
-            BUF_memdup(ctx->tlsext_ecpointformatlist,
-                       ctx->tlsext_ecpointformatlist_length);
+            OPENSSL_memdup(ctx->tlsext_ecpointformatlist,
+                           ctx->tlsext_ecpointformatlist_length);
         if (!s->tlsext_ecpointformatlist)
             goto err;
         s->tlsext_ecpointformatlist_length =
@@ -353,8 +353,8 @@ SSL *SSL_new(SSL_CTX *ctx)
     }
     if (ctx->tlsext_ellipticcurvelist) {
         s->tlsext_ellipticcurvelist =
-            BUF_memdup(ctx->tlsext_ellipticcurvelist,
-                       ctx->tlsext_ellipticcurvelist_length);
+            OPENSSL_memdup(ctx->tlsext_ellipticcurvelist,
+                           ctx->tlsext_ellipticcurvelist_length);
         if (!s->tlsext_ellipticcurvelist)
             goto err;
         s->tlsext_ellipticcurvelist_length =
@@ -2006,7 +2006,7 @@ void ssl_set_masks(SSL *s, const SSL_CIPHER *cipher)
 #endif
     CERT *c = s->cert;
     uint32_t *pvalid = s->s3->tmp.valid_flags;
-    int rsa_enc, rsa_sign, dh_tmp, dh_rsa, dh_dsa, dsa_sign;
+    int rsa_enc, rsa_sign, dh_tmp, dsa_sign;
     unsigned long mask_k, mask_a;
 #ifndef OPENSSL_NO_EC
     int have_ecc_cert, ecdsa_ok;
@@ -2026,8 +2026,6 @@ void ssl_set_masks(SSL *s, const SSL_CIPHER *cipher)
     rsa_enc = pvalid[SSL_PKEY_RSA_ENC] & CERT_PKEY_VALID;
     rsa_sign = pvalid[SSL_PKEY_RSA_SIGN] & CERT_PKEY_SIGN;
     dsa_sign = pvalid[SSL_PKEY_DSA_SIGN] & CERT_PKEY_SIGN;
-    dh_rsa = pvalid[SSL_PKEY_DH_RSA] & CERT_PKEY_VALID;
-    dh_dsa = pvalid[SSL_PKEY_DH_DSA] & CERT_PKEY_VALID;
 #ifndef OPENSSL_NO_EC
     have_ecc_cert = pvalid[SSL_PKEY_ECC] & CERT_PKEY_VALID;
 #endif
@@ -2063,15 +2061,6 @@ void ssl_set_masks(SSL *s, const SSL_CIPHER *cipher)
 
     if (dh_tmp)
         mask_k |= SSL_kDHE;
-
-    if (dh_rsa)
-        mask_k |= SSL_kDHr;
-
-    if (dh_dsa)
-        mask_k |= SSL_kDHd;
-
-    if (mask_k & (SSL_kDHr | SSL_kDHd))
-        mask_a |= SSL_aDH;
 
     if (rsa_enc || rsa_sign) {
         mask_a |= SSL_aRSA;
@@ -3042,7 +3031,7 @@ int SSL_CTX_use_psk_identity_hint(SSL_CTX *ctx, const char *identity_hint)
     }
     OPENSSL_free(ctx->cert->psk_identity_hint);
     if (identity_hint != NULL) {
-        ctx->cert->psk_identity_hint = BUF_strdup(identity_hint);
+        ctx->cert->psk_identity_hint = OPENSSL_strdup(identity_hint);
         if (ctx->cert->psk_identity_hint == NULL)
             return 0;
     } else
@@ -3061,7 +3050,7 @@ int SSL_use_psk_identity_hint(SSL *s, const char *identity_hint)
     }
     OPENSSL_free(s->cert->psk_identity_hint);
     if (identity_hint != NULL) {
-        s->cert->psk_identity_hint = BUF_strdup(identity_hint);
+        s->cert->psk_identity_hint = OPENSSL_strdup(identity_hint);
         if (s->cert->psk_identity_hint == NULL)
             return 0;
     } else

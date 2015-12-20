@@ -408,8 +408,7 @@ __owur static inline int PACKET_memdup(const PACKET *pkt, unsigned char **data,
     if (length == 0)
         return 1;
 
-    *data = BUF_memdup(pkt->curr, length);
-
+    *data = OPENSSL_memdup(pkt->curr, length);
     if (*data == NULL)
         return 0;
 
@@ -432,7 +431,7 @@ __owur static inline int PACKET_strndup(const PACKET *pkt, char **data)
     OPENSSL_free(*data);
 
     /* This will succeed on an empty packet, unless pkt->curr == NULL. */
-    *data = BUF_strndup((const char*)pkt->curr, PACKET_remaining(pkt));
+    *data = OPENSSL_strndup((const char*)pkt->curr, PACKET_remaining(pkt));
     return (*data != NULL);
 }
 

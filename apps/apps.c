@@ -432,14 +432,14 @@ static char *app_get_pass(char *arg, int keepbio)
     int i;
 
     if (strncmp(arg, "pass:", 5) == 0)
-        return BUF_strdup(arg + 5);
+        return OPENSSL_strdup(arg + 5);
     if (strncmp(arg, "env:", 4) == 0) {
         tmp = getenv(arg + 4);
         if (!tmp) {
             BIO_printf(bio_err, "Can't read environment variable %s\n", arg + 4);
             return NULL;
         }
-        return BUF_strdup(tmp);
+        return OPENSSL_strdup(tmp);
     }
     if (!keepbio || !pwdbio) {
         if (strncmp(arg, "file:", 5) == 0) {
@@ -495,7 +495,7 @@ static char *app_get_pass(char *arg, int keepbio)
     tmp = strchr(tpass, '\n');
     if (tmp)
         *tmp = 0;
-    return BUF_strdup(tpass);
+    return OPENSSL_strdup(tpass);
 }
 
 static CONF *app_load_config_(BIO *in, const char *filename)
@@ -1444,7 +1444,7 @@ int save_serial(char *serialfile, char *suffix, BIGNUM *serial,
     }
 
     if (suffix == NULL)
-        BUF_strlcpy(buf[0], serialfile, BSIZE);
+        OPENSSL_strlcpy(buf[0], serialfile, BSIZE);
     else {
 #ifndef OPENSSL_SYS_VMS
         j = BIO_snprintf(buf[0], sizeof buf[0], "%s.%s", serialfile, suffix);
@@ -1930,7 +1930,7 @@ int pkey_ctrl_string(EVP_PKEY_CTX *ctx, char *value)
 {
     int rv;
     char *stmp, *vtmp = NULL;
-    stmp = BUF_strdup(value);
+    stmp = OPENSSL_strdup(value);
     if (!stmp)
         return -1;
     vtmp = strchr(stmp, ':');

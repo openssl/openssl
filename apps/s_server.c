@@ -257,9 +257,9 @@ static char *engine_id = NULL;
 #endif
 static const char *session_id_prefix = NULL;
 
+#ifndef OPENSSL_NO_DTLS
 static int enable_timeouts = 0;
 static long socket_mtu;
-#ifndef OPENSSL_NO_DTLS1
 static int cert_chain = 0;
 #endif
 static int dtlslisten = 0;
@@ -804,7 +804,7 @@ typedef enum OPTION_choice {
     OPT_DEBUG, OPT_TLSEXTDEBUG, OPT_STATUS, OPT_STATUS_VERBOSE,
     OPT_STATUS_TIMEOUT, OPT_STATUS_URL, OPT_MSG, OPT_MSGFILE, OPT_TRACE,
     OPT_SECURITY_DEBUG, OPT_SECURITY_DEBUG_VERBOSE, OPT_STATE, OPT_CRLF,
-    OPT_QUIET, OPT_BRIEF, OPT_NO_DHE, OPT_NO_ECDHE,
+    OPT_QUIET, OPT_BRIEF, OPT_NO_DHE,
     OPT_NO_RESUME_EPHEMERAL, OPT_PSK_HINT, OPT_PSK, OPT_SRPVFILE,
     OPT_SRPUSERSEED, OPT_REV, OPT_WWW, OPT_UPPER_WWW, OPT_HTTP, OPT_ASYNC,
     OPT_SSL3,
@@ -936,7 +936,7 @@ OPTIONS s_server_options[] = {
 #ifndef OPENSSL_NO_SSL3
     {"ssl3", OPT_SSL3, '-', "Just talk SSLv3"},
 #endif
-#ifndef OPENSSL_NO_DTLS1
+#ifndef OPENSSL_NO_DTLS
     {"dtls", OPT_DTLS, '-'},
     {"dtls1", OPT_DTLS1, '-', "Just talk DTLSv1"},
     {"dtls1_2", OPT_DTLS1_2, '-', "Just talk DTLSv1.2"},
@@ -948,9 +948,6 @@ OPTIONS s_server_options[] = {
 #endif
 #ifndef OPENSSL_NO_DH
     {"no_dhe", OPT_NO_DHE, '-', "Disable ephemeral DH"},
-#endif
-#ifndef OPENSSL_NO_EC
-    {"no_ecdhe", OPT_NO_ECDHE, '-', "Disable ephemeral ECDH"},
 #endif
 #ifndef OPENSSL_NO_NEXTPROTONEG
     {"nextprotoneg", OPT_NEXTPROTONEG, 's',
@@ -1000,7 +997,7 @@ int s_server_main(int argc, char *argv[])
 #ifndef OPENSSL_NO_DH
     int no_dhe = 0;
 #endif
-    int no_ecdhe = 0, nocert = 0, ret = 1;
+    int nocert = 0, ret = 1;
     int noCApath = 0, noCAfile = 0;
     int s_cert_format = FORMAT_PEM, s_key_format = FORMAT_PEM;
     int s_dcert_format = FORMAT_PEM, s_dkey_format = FORMAT_PEM;
@@ -1044,13 +1041,14 @@ int s_server_main(int argc, char *argv[])
         case OPT_PSK_HINT:
         case OPT_PSK:
 #endif
-#ifdef OPENSSL_NO_DTLS1
+#ifdef OPENSSL_NO_DTLS
         case OPT_DTLS:
         case OPT_DTLS1:
         case OPT_DTLS1_2:
         case OPT_TIMEOUT:
         case OPT_MTU:
         case OPT_CHAIN:
+        case OPT_LISTEN:
 #endif
         case OPT_EOF:
         case OPT_ERR:
@@ -1296,9 +1294,6 @@ int s_server_main(int argc, char *argv[])
             no_dhe = 1;
 #endif
             break;
-        case OPT_NO_ECDHE:
-            no_ecdhe = 1;
-            break;
         case OPT_NO_RESUME_EPHEMERAL:
             no_resume_ephemeral = 1;
             break;
@@ -1355,7 +1350,7 @@ int s_server_main(int argc, char *argv[])
         case OPT_TLS1:
             meth = TLSv1_server_method();
             break;
-#ifndef OPENSSL_NO_DTLS1
+#ifndef OPENSSL_NO_DTLS
         case OPT_DTLS:
             meth = DTLS_server_method();
             socket_type = SOCK_DGRAM;
@@ -1379,15 +1374,6 @@ int s_server_main(int argc, char *argv[])
             break;
         case OPT_LISTEN:
             dtlslisten = 1;
-            break;
-#else
-        case OPT_DTLS:
-        case OPT_DTLS1:
-        case OPT_DTLS1_2:
-        case OPT_TIMEOUT:
-        case OPT_MTU:
-        case OPT_CHAIN:
-        case OPT_LISTEN:
             break;
 #endif
         case OPT_ID_PREFIX:
@@ -1444,7 +1430,7 @@ int s_server_main(int argc, char *argv[])
     argc = opt_num_rest();
     argv = opt_rest();
 
-#ifndef OPENSSL_NO_DTLS1
+#ifndef OPENSSL_NO_DTLS
     if (www && socket_type == SOCK_DGRAM) {
         BIO_printf(bio_err, "Can't use -HTTP, -www or -WWW with DTLS\n");
         goto end;
@@ -1678,7 +1664,7 @@ int s_server_main(int argc, char *argv[])
     }
 
     ssl_ctx_add_crls(ctx, crls, 0);
-    if (!config_ctx(cctx, ssl_args, ctx, no_ecdhe, jpake_secret == NULL))
+    if (!config_ctx(cctx, ssl_args, ctx, jpake_secret == NULL))
         goto end;
 
     if (!ssl_load_stores(ctx, vfyCApath, vfyCAfile, chCApath, chCAfile,
@@ -1741,7 +1727,7 @@ int s_server_main(int argc, char *argv[])
         }
 
         ssl_ctx_add_crls(ctx2, crls, 0);
-        if (!config_ctx(cctx, ssl_args, ctx2, no_ecdhe, jpake_secret == NULL))
+        if (!config_ctx(cctx, ssl_args, ctx2, jpake_secret == NULL))
             goto end;
     }
 #ifndef OPENSSL_NO_NEXTPROTONEG
@@ -2042,7 +2028,7 @@ static int sv_body(char *hostname, int s, int stype, unsigned char *context)
         ret = -1;
         goto err;
     }
-
+#ifndef OPENSSL_NO_DTLS
     if (stype == SOCK_DGRAM) {
 
         sbio = BIO_new_dgram(s, BIO_NOCLOSE);
@@ -2079,6 +2065,7 @@ static int sv_body(char *hostname, int s, int stype, unsigned char *context)
         /* turn on cookie exchange */
         SSL_set_options(con, SSL_OP_COOKIE_EXCHANGE);
     } else
+#endif
         sbio = BIO_new_socket(s, BIO_NOCLOSE);
 
     if (s_nbio_test) {
@@ -2419,9 +2406,11 @@ static int init_ssl_connection(SSL *con)
     unsigned next_proto_neg_len;
 #endif
     unsigned char *exportedkeymat;
+#ifndef OPENSSL_NO_DTLS
     struct sockaddr_storage client;
+#endif
 
-#ifndef OPENSSL_NO_DTLS1
+#ifndef OPENSSL_NO_DTLS
     if(dtlslisten) {
         i = DTLSv1_listen(con, &client);
         if (i > 0) {
@@ -3177,7 +3166,7 @@ static int add_session(SSL *ssl, SSL_SESSION *session)
         return 0;
     }
 
-    sess->id = BUF_memdup(SSL_SESSION_get_id(session, NULL), sess->idlen);
+    sess->id = OPENSSL_memdup(SSL_SESSION_get_id(session, NULL), sess->idlen);
     sess->der = app_malloc(sess->derlen, "get session buffer");
     if (!sess->id) {
         BIO_printf(bio_err, "Out of memory adding to external cache\n");

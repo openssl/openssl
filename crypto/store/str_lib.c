@@ -1,4 +1,4 @@
-/* crypto/store/str_lib.c -*- mode:C; c-file-style: "eay" -*- */
+/* crypto/store/str_lib.c */
 /*
  * Written by Richard Levitte (richard@levitte.org) for the OpenSSL project
  * 2003.
@@ -1305,7 +1305,7 @@ int STORE_ATTR_INFO_set_cstr(STORE_ATTR_INFO *attrs, STORE_ATTR_TYPES code,
         return 0;
     }
     if (!ATTR_IS_SET(attrs, code)) {
-        if ((attrs->values[code].cstring = BUF_strndup(cstr, cstr_size)))
+        if ((attrs->values[code].cstring = OPENSSL_strndup(cstr, cstr_size)))
             return 1;
         STOREerr(STORE_F_STORE_ATTR_INFO_SET_CSTR, ERR_R_MALLOC_FAILURE);
         return 0;
@@ -1324,7 +1324,7 @@ int STORE_ATTR_INFO_set_sha1str(STORE_ATTR_INFO *attrs, STORE_ATTR_TYPES code,
     }
     if (!ATTR_IS_SET(attrs, code)) {
         if ((attrs->values[code].sha1string =
-             (unsigned char *)BUF_memdup(sha1str, sha1str_size)))
+             (unsigned char *)OPENSSL_memdup(sha1str, sha1str_size)))
             return 1;
         STOREerr(STORE_F_STORE_ATTR_INFO_SET_SHA1STR, ERR_R_MALLOC_FAILURE);
         return 0;

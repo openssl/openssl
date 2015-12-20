@@ -482,7 +482,7 @@ static int int_dh_param_copy(DH *to, const DH *from, int is_x942)
         to->seed = NULL;
         to->seedlen = 0;
         if (from->seed) {
-            to->seed = BUF_memdup(from->seed, from->seedlen);
+            to->seed = OPENSSL_memdup(from->seed, from->seedlen);
             if (!to->seed)
                 return 0;
             to->seedlen = from->seedlen;
@@ -507,6 +507,11 @@ DH *DHparams_dup(DH *dh)
 
 static int dh_copy_parameters(EVP_PKEY *to, const EVP_PKEY *from)
 {
+    if (to->pkey.dh == NULL) {
+        to->pkey.dh = DH_new();
+        if (to->pkey.dh == NULL)
+            return 0;
+    }
     return int_dh_param_copy(to->pkey.dh, from->pkey.dh,
                              from->ameth == &dhx_asn1_meth);
 }
@@ -765,7 +770,7 @@ static int dh_cms_set_shared_info(EVP_PKEY_CTX *pctx, CMS_RecipientInfo *ri)
 
     if (ukm) {
         dukmlen = ASN1_STRING_length(ukm);
-        dukm = BUF_memdup(ASN1_STRING_data(ukm), dukmlen);
+        dukm = OPENSSL_memdup(ASN1_STRING_data(ukm), dukmlen);
         if (!dukm)
             goto err;
     }
@@ -909,7 +914,7 @@ static int dh_cms_encrypt(CMS_RecipientInfo *ri)
 
     if (ukm) {
         dukmlen = ASN1_STRING_length(ukm);
-        dukm = BUF_memdup(ASN1_STRING_data(ukm), dukmlen);
+        dukm = OPENSSL_memdup(ASN1_STRING_data(ukm), dukmlen);
         if (!dukm)
             goto err;
     }

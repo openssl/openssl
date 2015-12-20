@@ -121,38 +121,36 @@ int X509_PUBKEY_set(X509_PUBKEY **x, EVP_PKEY *pkey)
     return 0;
 }
 
-EVP_PKEY *X509_PUBKEY_get(X509_PUBKEY *key)
+EVP_PKEY *X509_PUBKEY_get0(X509_PUBKEY *key)
 {
     EVP_PKEY *ret = NULL;
 
     if (key == NULL)
         goto error;
 
-    if (key->pkey != NULL) {
-        CRYPTO_add(&key->pkey->references, 1, CRYPTO_LOCK_EVP_PKEY);
+    if (key->pkey != NULL)
         return key->pkey;
-    }
 
     if (key->public_key == NULL)
         goto error;
 
     if ((ret = EVP_PKEY_new()) == NULL) {
-        X509err(X509_F_X509_PUBKEY_GET, ERR_R_MALLOC_FAILURE);
+        X509err(X509_F_X509_PUBKEY_GET0, ERR_R_MALLOC_FAILURE);
         goto error;
     }
 
     if (!EVP_PKEY_set_type(ret, OBJ_obj2nid(key->algor->algorithm))) {
-        X509err(X509_F_X509_PUBKEY_GET, X509_R_UNSUPPORTED_ALGORITHM);
+        X509err(X509_F_X509_PUBKEY_GET0, X509_R_UNSUPPORTED_ALGORITHM);
         goto error;
     }
 
     if (ret->ameth->pub_decode) {
         if (!ret->ameth->pub_decode(ret, key)) {
-            X509err(X509_F_X509_PUBKEY_GET, X509_R_PUBLIC_KEY_DECODE_ERROR);
+            X509err(X509_F_X509_PUBKEY_GET0, X509_R_PUBLIC_KEY_DECODE_ERROR);
             goto error;
         }
     } else {
-        X509err(X509_F_X509_PUBKEY_GET, X509_R_METHOD_NOT_SUPPORTED);
+        X509err(X509_F_X509_PUBKEY_GET0, X509_R_METHOD_NOT_SUPPORTED);
         goto error;
     }
 
@@ -166,13 +164,20 @@ EVP_PKEY *X509_PUBKEY_get(X509_PUBKEY *key)
         key->pkey = ret;
         CRYPTO_w_unlock(CRYPTO_LOCK_EVP_PKEY);
     }
-    CRYPTO_add(&ret->references, 1, CRYPTO_LOCK_EVP_PKEY);
 
     return ret;
 
  error:
     EVP_PKEY_free(ret);
     return (NULL);
+}
+
+EVP_PKEY *X509_PUBKEY_get(X509_PUBKEY *key)
+{
+    EVP_PKEY *ret = X509_PUBKEY_get0(key);
+    if (ret != NULL)
+        EVP_PKEY_up_ref(ret);
+    return ret;
 }
 
 /*

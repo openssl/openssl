@@ -361,7 +361,7 @@ static int capi_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f) (void))
 
     case CAPI_CMD_STORE_NAME:
         OPENSSL_free(ctx->storename);
-        ctx->storename = BUF_strdup(p);
+        ctx->storename = OPENSSL_strdup(p);
         CAPI_trace(ctx, "Setting store name to %s\n", p);
         break;
 
@@ -382,7 +382,7 @@ static int capi_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f) (void))
         break;
 
     case CAPI_CMD_DEBUG_FILE:
-        ctx->debug_file = BUF_strdup(p);
+        ctx->debug_file = OPENSSL_strdup(p);
         CAPI_trace(ctx, "Setting debug file to %s\n", ctx->debug_file);
         break;
 
@@ -1635,7 +1635,7 @@ static int capi_ctx_set_provname(CAPI_CTX * ctx, LPSTR pname, DWORD type,
         CryptReleaseContext(hprov, 0);
     }
     OPENSSL_free(ctx->cspname);
-    ctx->cspname = BUF_strdup(pname);
+    ctx->cspname = OPENSSL_strdup(pname);
     ctx->csptype = type;
     return 1;
 }

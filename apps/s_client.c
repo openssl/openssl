@@ -567,7 +567,7 @@ OPTIONS s_client_options[] = {
 #ifndef OPENSSL_NO_SSL3
     {"ssl3", OPT_SSL3, '-', "Just use SSLv3"},
 #endif
-#ifndef OPENSSL_NO_DTLS1
+#ifndef OPENSSL_NO_DTLS
     {"dtls", OPT_DTLS, '-'},
     {"dtls1", OPT_DTLS1, '-', "Just use DTLSv1"},
     {"dtls1_2", OPT_DTLS1_2, '-'},
@@ -954,7 +954,7 @@ int s_client_main(int argc, char **argv)
         case OPT_TLS1:
             meth = TLSv1_client_method();
             break;
-#ifndef OPENSSL_NO_DTLS1
+#ifndef OPENSSL_NO_DTLS
         case OPT_DTLS:
             meth = DTLS_client_method();
             socket_type = SOCK_DGRAM;
@@ -1211,7 +1211,7 @@ int s_client_main(int argc, char **argv)
         ASYNC_init(1, 0, 0);
     }
 
-    if (!config_ctx(cctx, ssl_args, ctx, 1, jpake_secret == NULL))
+    if (!config_ctx(cctx, ssl_args, ctx, jpake_secret == NULL))
         goto end;
 
     if (!ssl_load_stores(ctx, vfyCApath, vfyCAfile, chCApath, chCAfile,
@@ -2206,10 +2206,9 @@ static void print_stuff(BIO *bio, SSL *s, int full)
                SSL_CIPHER_get_version(c), SSL_CIPHER_get_name(c));
     if (peer != NULL) {
         EVP_PKEY *pktmp;
-        pktmp = X509_get_pubkey(peer);
+        pktmp = X509_get0_pubkey(peer);
         BIO_printf(bio, "Server public key is %d bit\n",
                    EVP_PKEY_bits(pktmp));
-        EVP_PKEY_free(pktmp);
     }
     BIO_printf(bio, "Secure Renegotiation IS%s supported\n",
                SSL_get_secure_renegotiation_support(s) ? "" : " NOT");

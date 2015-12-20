@@ -17,8 +17,6 @@ ASFLAGS= $(INCLUDES) $(ASFLAG)
 AFLAGS= $(ASFLAGS)
 
 GENERAL=Makefile
-TEST=chachatest.c
-APPS=
 
 LIB=$(TOP)/libcrypto.a
 LIBSRC=chacha_enc.c

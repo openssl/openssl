@@ -1,4 +1,4 @@
-/* crypto/engine/e_chil.c -*- mode: C; c-file-style: "eay" -*- */
+/* crypto/engine/e_chil.c */
 /*
  * Written by Richard Levitte (richard@levitte.org), Geoff Thorpe
  * (geoff@geoffthorpe.net) and Dr Stephen N Henson (steve@openssl.org) for
@@ -476,7 +476,7 @@ static const char *get_HWCRHK_LIBNAME(void)
 static long set_HWCRHK_LIBNAME(const char *name)
 {
     free_HWCRHK_LIBNAME();
-    return (((HWCRHK_LIBNAME = BUF_strdup(name)) != NULL) ? 1 : 0);
+    return (((HWCRHK_LIBNAME = OPENSSL_strdup(name)) != NULL) ? 1 : 0);
 }
 
 static const char *n_hwcrhk_Init = "HWCryptoHook_Init";

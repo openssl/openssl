@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-X509_get_pubkey, X509_set_pubkey, X509_get_X509_PUBKEY,
+X509_get_pubkey, X509_get0_pubkey, X509_set_pubkey, X509_get_X509_PUBKEY,
 X509_REQ_get_pubkey, X509_REQ_set_pubkey, X509_REQ_get_X509_PUBKEY - get or
 set certificate or certificate request public key.
 
@@ -11,6 +11,7 @@ set certificate or certificate request public key.
  #include <openssl/x509.h>
 
  EVP_PKEY *X509_get_pubkey(X509 *x);
+ EVP_PKEY *X509_get0_pubkey(X509 *x);
  int X509_set_pubkey(X509 *x, EVP_PKEY *pkey);
  X509_PUBKEY *X509_get_X509_PUBKEY(X509 *x);
 
@@ -23,6 +24,8 @@ set certificate or certificate request public key.
 X509_get_pubkey() attempts to decode the public key for certificate B<x>. If
 successful it returns the public key as an B<EVP_PKEY> pointer with its
 reference count incremented: this means the returned key must be freed up
+after use. X509_get0_pubkey() is similar except it does B<not> increment
+the reference count of the returned B<EVP_PKEY> so it must not be freed up
 after use.
 
 X509_get_X509_PUBKEY() returns an internal pointer to the B<X509_PUBKEY>
@@ -44,9 +47,9 @@ improve performance.
 
 =head1 RETURN VALUES
 
-X509_get_pubkey(), X509_get_X509_PUBKEY(), X509_REQ_get_pubkey() and
-X509_REQ_get_X509_PUBKEY() return a public key or B<NULL> if an error
-occurred.
+X509_get_pubkey(), X509_get0_pubkey(), X509_get_X509_PUBKEY(),
+X509_REQ_get_pubkey() and X509_REQ_get_X509_PUBKEY() return a public key or
+B<NULL> if an error occurred.
 
 X509_set_pubkey() and X509_REQ_set_pubkey() rerturn 1 for success and 0
 for failure.

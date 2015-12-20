@@ -1762,7 +1762,8 @@ int BIO_dgram_sctp_notification_cb(BIO *b,
 int BIO_dgram_sctp_wait_for_dry(BIO *b)
 {
     int is_dry = 0;
-    int n, sockflags, ret;
+    int sockflags = 0;
+    int n, ret;
     union sctp_notification snp;
     struct msghdr msg;
     struct iovec iov;

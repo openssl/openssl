@@ -364,6 +364,12 @@ static int dsa_copy_parameters(EVP_PKEY *to, const EVP_PKEY *from)
 {
     BIGNUM *a;
 
+    if (to->pkey.dsa == NULL) {
+        to->pkey.dsa = DSA_new();
+        if (to->pkey.dsa == NULL)
+            return 0;
+    }
+
     if ((a = BN_dup(from->pkey.dsa->p)) == NULL)
         return 0;
     BN_free(to->pkey.dsa->p);

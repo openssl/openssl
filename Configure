@@ -108,6 +108,9 @@ my $gcc_devteam_warn = "-Wall -pedantic -DPEDANTIC -Wno-long-long -Wsign-compare
 # -Wextended-offsetof
 my $clang_devteam_warn = "-Wno-unused-parameter -Wno-missing-field-initializers -Wno-language-extension-token -Wno-extended-offsetof -Wconditional-uninitialized -Qunused-arguments -Wincompatible-pointer-types-discards-qualifiers -Wmissing-variable-declarations";
 
+# Warn that "make depend" should be run?
+my $warn_make_depend = 0;
+
 # These are used in addition to $gcc_devteam_warn unless this is a mingw build.
 # This adds backtrace information to the memory leak info.
 my $memleak_devteam_backtrace = "-rdynamic -DCRYPTO_MDEBUG_BACKTRACE";
@@ -215,6 +218,8 @@ my $BSDthreads="-pthread -D_THREAD_SAFE -D_REENTRANT";
 #	  cmll_obj => $cmll_obj,
 #	  modes_obj => $modes_obj,
 #	  engines_obj => $engines_obj,
+#	  chacha_obj => $wp_obj,
+#	  poly1305_obj => $cmll_obj,
 #	  dso_scheme => $dso_scheme,
 #	  shared_target => $shared_target,
 #	  shared_cflag => $shared_cflag,
@@ -776,7 +781,6 @@ my $zlib=1;      # but "no-zlib" is default
 my $no_rfc3779=0;
 my $no_asm=0;
 my $no_dso=0;
-my $no_gmp=0;
 my @skip=();
 my $Makefile="Makefile";
 my $des_locl="crypto/des/des_locl.h";
@@ -796,6 +800,7 @@ my $cast_enc="c_enc.o";
 my $rc4_enc="rc4_enc.o rc4_skey.o";
 my $rc5_enc="rc5_enc.o";
 my $cmll_enc="camellia.o cmll_misc.o cmll_cbc.o";
+my $chacha_enc="chacha_enc.o";
 my $processor="";
 my $default_ranlib;
 my $perl;
@@ -823,14 +828,13 @@ my @disablables = (
     "dh",
     "dsa",
     "dso",
-    "dtls1?",
+    "dtls",
     "dynamic[-_]engine",
     "ec",
     "ec2m",
     "ec_nistp_64_gcc_128",
     "engine",
     "err",			# Really???
-    "gmp",
     "gost",
     "heartbeats",
     "hmac",
@@ -888,7 +892,6 @@ my @disablables = (
 my %disabled = ( # "what"         => "comment" [or special keyword "experimental"]
 		 "deprecated" => "default",
 		 "ec_nistp_64_gcc_128" => "default",
-		 "gmp"		  => "default",
 		 "jpake"          => "experimental",
 		 "md2"            => "default",
 		 "rc5"            => "default",
@@ -904,7 +907,7 @@ my @experimental = ();
 
 # This is what $depflags will look like with the above defaults
 # (we need this to see if we should advise the user to run "make depend"):
-my $default_depflags = " -DOPENSSL_NO_DEPRECATED -DOPENSSL_NO_EC_NISTP_64_GCC_128 -DOPENSSL_NO_GMP -DOPENSSL_NO_JPAKE -DOPENSSL_NO_MD2 -DOPENSSL_NO_RC5 -DOPENSSL_NO_SCTP -DOPENSSL_NO_SSL_TRACE -DOPENSSL_NO_STORE -DOPENSSL_NO_UNIT_TEST";
+my $default_depflags = " -DOPENSSL_NO_DEPRECATED -DOPENSSL_NO_EC_NISTP_64_GCC_128 -DOPENSSL_NO_JPAKE -DOPENSSL_NO_MD2 -DOPENSSL_NO_RC5 -DOPENSSL_NO_SCTP -DOPENSSL_NO_SSL_TRACE -DOPENSSL_NO_STORE -DOPENSSL_NO_UNIT_TEST";
 
 # Explicit "no-..." options will be collected in %disabled along with the defaults.
 # To remove something from %disabled, use "enable-foo" (unless it's experimental).
@@ -1032,6 +1035,7 @@ PROCESS_ARGS:
 			{
 			if (open(IN,"<$Makefile"))
 				{
+				my $config_args_found=0;
 				while (<IN>)
 					{
 					chomp;
@@ -1043,11 +1047,19 @@ PROCESS_ARGS:
 							if (grep(/^reconf/,@argvcopy));
 						print "Reconfiguring with: $argvstring\n";
 						$argv_unprocessed=1;
-						close(IN);
-						last PROCESS_ARGS;
+						$config_args_found=1;
+						}
+					elsif (/^CROSS_COMPILE=\s*(.*)/)
+						{
+						$ENV{CROSS_COMPILE}=$1;
+						}
+					elsif (/^CC=\s*(?:\$\(CROSS_COMPILE\))?(.*?)/)
+						{
+						$ENV{CC}=$1;
 						}
 					}
 				close(IN);
+				last PROCESS_ARGS if ($config_args_found);
 				}
 			die "Insufficient data to reconfigure, please do a normal configuration\n";
 			}
@@ -1188,6 +1200,10 @@ if (defined($disabled{"md5"}) || defined($disabled{"sha"})
 	$disabled{"tls1"} = "forced";
 	}
 
+if (defined($disabled{"dgram"}))
+	{
+        $disabled{"dtls"} = "forced";
+        }
 
 if (defined($disabled{"ec"}) || defined($disabled{"dsa"})
     || defined($disabled{"dh"}) || defined($disabled{"stdio"}))
@@ -1373,6 +1389,8 @@ my $wp_obj = $table{$target}->{wp_obj};
 my $cmll_obj = $table{$target}->{cmll_obj};
 my $modes_obj = $table{$target}->{modes_obj};
 my $engines_obj = $table{$target}->{engines_obj};
+my $chacha_obj = $table{$target}->{chacha_obj};
+my $poly1305_obj = $table{$target}->{poly1305_obj};
 my $perlasm_scheme = $table{$target}->{perlasm_scheme};
 my $dso_scheme = $table{$target}->{dso_scheme};
 my $shared_target = $table{$target}->{shared_target};
@@ -1483,7 +1501,8 @@ if ($no_asm)
 	{
 	$cpuid_obj=$bn_obj=$ec_obj=
 	$des_obj=$aes_obj=$bf_obj=$cast_obj=$rc4_obj=$rc5_obj=$cmll_obj=
-	$modes_obj=$sha1_obj=$md5_obj=$rmd160_obj=$wp_obj=$engines_obj="";
+	$modes_obj=$sha1_obj=$md5_obj=$rmd160_obj=$wp_obj=$engines_obj=
+	$chacha_obj=$poly1305_obj="";
 	$cflags=~s/\-D[BL]_ENDIAN//		if ($fips);
 	$thread_cflags=~s/\-D[BL]_ENDIAN//	if ($fips);
 	}
@@ -1702,6 +1721,11 @@ if ($ec_obj =~ /ecp_nistz256/)
 	{
 	$cflags.=" -DECP_NISTZ256_ASM";
 	}
+$chacha_obj=$chacha_enc	unless ($chacha_obj =~ /\.o$/);
+if ($poly1305_obj =~ /\.o$/)
+	{
+	$cflags.=" -DPOLY1305_ASM";
+	}
 
 # "Stringify" the C flags string.  This permits it to be made part of a string
 # and works as well on command lines.
@@ -1841,6 +1865,8 @@ while (<IN>)
 	s/^WP_ASM_OBJ=.*$/WP_ASM_OBJ= $wp_obj/;
 	s/^CMLL_ENC=.*$/CMLL_ENC= $cmll_obj/;
 	s/^MODES_ASM_OBJ.=*$/MODES_ASM_OBJ= $modes_obj/;
+	s/^CHACHA_ENC=.*$/CHACHA_ENC= $chacha_obj/;
+	s/^POLY1305_ASM_OBJ=.*$/POLY1305_ASM_OBJ= $poly1305_obj/;
 	s/^ENGINES_ASM_OBJ.=*$/ENGINES_ASM_OBJ= $engines_obj/;
 	s/^PERLASM_SCHEME=.*$/PERLASM_SCHEME= $perlasm_scheme/;
 	s/^PROCESSOR=.*/PROCESSOR= $processor/;
@@ -1900,6 +1926,8 @@ print "RMD160_OBJ_ASM=$rmd160_obj\n";
 print "CMLL_ENC      =$cmll_obj\n";
 print "MODES_OBJ     =$modes_obj\n";
 print "ENGINES_OBJ   =$engines_obj\n";
+print "CHACHA_ENC    =$chacha_obj\n";
+print "POLY1305_OBJ  =$poly1305_obj\n";
 print "PROCESSOR     =$processor\n";
 print "RANLIB        =$ranlib\n";
 print "ARFLAGS       =$arflags\n";
@@ -2127,14 +2155,8 @@ EOF
 	(system $make_command.$make_targets) == 0 or die "make $make_targets failed"
 		if $make_targets ne "";
 	if ($depflags ne $default_depflags && !$make_depend) {
-		print <<EOF;
-
-Since you've disabled or enabled at least one algorithm, you need to do
-the following before building:
-
-	make depend
-EOF
-	}
+            $warn_make_depend++;
+        }
 }
 
 # create the ms/version32.rc file if needed
@@ -2213,12 +2235,18 @@ EOF
 
 print <<\EOF if ($no_shared_warn);
 
-You gave the option 'shared'.  Normally, that would give you shared libraries.
-Unfortunately, the OpenSSL configuration doesn't include shared library support
-for this platform yet, so it will pretend you gave the option 'no-shared'.  If
-you can inform the developpers (openssl-dev\@openssl.org) how to support shared
-libraries on this platform, they will at least look at it and try their best
-(but please first make sure you have tried with a current version of OpenSSL).
+You gave the option 'shared', which is not supported on this platform, so
+we will pretend you gave the option 'no-shared'.  If you know how to implement
+shared libraries, please let us know (but please first make sure you have
+tried with a current version of OpenSSL).
+EOF
+
+print <<EOF if ($warn_make_depend);
+
+*** Because of configuration changes, you MUST do the following before
+*** building:
+
+	make depend
 EOF
 
 exit(0);
@@ -2328,6 +2356,8 @@ sub print_table_entry
 \$cmll_obj     = $table{$target}->{cmll_obj}
 \$modes_obj    = $table{$target}->{modes_obj}
 \$engines_obj  = $table{$target}->{engines_obj}
+\$chacha_obj   = $table{$target}->{chacha_obj}
+\$poly1305_obj = $table{$target}->{poly1305_obj}
 \$perlasm_scheme = $table{$target}->{perlasm_scheme}
 \$dso_scheme   = $table{$target}->{dso_scheme}
 \$shared_target= $table{$target}->{shared_target}
@@ -2367,6 +2397,8 @@ EOF
 		"cmll_obj",
 		"modes_obj",
 		"engines_obj",
+		"chacha_obj",
+		"poly1305_obj",
 		"perlasm_scheme",
 		"dso_scheme",
 		"shared_target",

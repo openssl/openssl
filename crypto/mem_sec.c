@@ -89,7 +89,7 @@ int CRYPTO_secure_malloc_initialized()
 #endif /* IMPLEMENTED */
 }
 
-void *CRYPTO_secure_malloc(int num, const char *file, int line)
+void *CRYPTO_secure_malloc(size_t num, const char *file, int line)
 {
 #ifdef IMPLEMENTED
     void *ret;

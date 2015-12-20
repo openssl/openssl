@@ -913,14 +913,6 @@ static int ssl_get_keyex(const char **pname, SSL *ssl)
         *pname = "rsa";
         return SSL_kRSA;
     }
-    if (alg_k & SSL_kDHr) {
-        *pname = "dh_rsa";
-        return SSL_kDHr;
-    }
-    if (alg_k & SSL_kDHd) {
-        *pname = "dh_dss";
-        return SSL_kDHd;
-    }
     if (alg_k & SSL_kDHE) {
         *pname = "DHE";
         return SSL_kDHE;
@@ -993,14 +985,6 @@ static int ssl_print_client_keyex(BIO *bio, int indent, SSL *ssl,
         }
         break;
 
-        /* Implicit parameters only allowed for static DH */
-    case SSL_kDHd:
-    case SSL_kDHr:
-        if (msglen == 0) {
-            BIO_indent(bio, indent + 2, 80);
-            BIO_puts(bio, "implicit\n");
-            break;
-        }
     case SSL_kDHE:
     case SSL_kDHEPSK:
         if (!ssl_print_hexbuf(bio, indent + 2, "dh_Yc", 2, &msg, &msglen))
@@ -1040,8 +1024,6 @@ static int ssl_print_server_keyex(BIO *bio, int indent, SSL *ssl,
     }
     switch (id) {
         /* Should never happen */
-    case SSL_kDHd:
-    case SSL_kDHr:
     case SSL_kECDHr:
     case SSL_kECDHe:
         BIO_indent(bio, indent + 2, 80);
@@ -1068,6 +1050,7 @@ static int ssl_print_server_keyex(BIO *bio, int indent, SSL *ssl,
             return 0;
         break;
 
+#ifndef OPENSSL_NO_EC
     case SSL_kECDHE:
     case SSL_kECDHEPSK:
         if (msglen < 1)
@@ -1093,6 +1076,7 @@ static int ssl_print_server_keyex(BIO *bio, int indent, SSL *ssl,
             return 0;
         }
         break;
+#endif
 
     case SSL_kPSK:
     case SSL_kRSAPSK:

@@ -107,9 +107,9 @@ static void (*free_secure_func)(void *) = free;
 /* XXX use correct function pointer types */
 #ifdef CRYPTO_MDEBUG
 /* use default functions from mem_dbg.c */
-static void (*malloc_debug_func) (void *, int, const char *, int, int)
+static void (*malloc_debug_func) (void *, size_t, const char *, int, int)
     = CRYPTO_dbg_malloc;
-static void (*realloc_debug_func) (void *, void *, int, const char *, int,
+static void (*realloc_debug_func) (void *, void *, size_t, const char *, int,
                                    int)
     = CRYPTO_dbg_realloc;
 static void (*free_debug_func) (void *, int) = CRYPTO_dbg_free;
@@ -197,9 +197,9 @@ int CRYPTO_set_secure_mem_ex_functions(void *(*m)(size_t, const char *, int),
     return 1;
 }
 
-int CRYPTO_set_mem_debug_functions(void (*m)
-                                    (void *, int, const char *, int, int),
-                                   void (*r) (void *, void *, int,
+int CRYPTO_set_mem_debug_functions(void (*m) (void *, size_t,
+                                              const char *, int, int),
+                                   void (*r) (void *, void *, size_t,
                                               const char *, int, int),
                                    void (*f) (void *, int), void (*so) (long),
                                    long (*go) (void))
@@ -245,7 +245,7 @@ void CRYPTO_get_secure_mem_functions(void *(**m)(size_t), void (**f)(void *))
             malloc_secure_func : 0;
     if (f != NULL)
         *f=free_secure_func;
-	}
+}
 
 void CRYPTO_get_secure_mem_ex_functions(void *(**m)(size_t,const char *,int),
                                         void (**f)(void *))
@@ -257,9 +257,9 @@ void CRYPTO_get_secure_mem_ex_functions(void *(**m)(size_t,const char *,int),
         *f=free_secure_func;
 }
 
-void CRYPTO_get_mem_debug_functions(void (**m)
-                                     (void *, int, const char *, int, int),
-                                    void (**r) (void *, void *, int,
+void CRYPTO_get_mem_debug_functions(void (**m) (void *, size_t,
+                                                const char *, int, int),
+                                    void (**r) (void *, void *, size_t,
                                                 const char *, int, int),
                                     void (**f) (void *, int),
                                     void (**so) (long), long (**go) (void))
@@ -276,7 +276,7 @@ void CRYPTO_get_mem_debug_functions(void (**m)
         *go = get_debug_options_func;
 }
 
-void *CRYPTO_malloc(int num, const char *file, int line)
+void *CRYPTO_malloc(size_t num, const char *file, int line)
 {
     void *ret = NULL;
 
@@ -291,9 +291,6 @@ void *CRYPTO_malloc(int num, const char *file, int line)
         malloc_debug_func(NULL, num, file, line, 0);
     }
     ret = malloc_ex_func(num, file, line);
-#ifdef LEVITTE_DEBUG_MEM
-    fprintf(stderr, "LEVITTE_DEBUG_MEM:         > 0x%p (%d)\n", ret, num);
-#endif
     if (malloc_debug_func != NULL)
         malloc_debug_func(ret, num, file, line, 1);
 
@@ -312,7 +309,7 @@ void *CRYPTO_malloc(int num, const char *file, int line)
     return ret;
 }
 
-void *CRYPTO_zalloc(int num, const char *file, int line)
+void *CRYPTO_zalloc(size_t num, const char *file, int line)
 {
     void *ret = CRYPTO_malloc(num, file, line);
 
@@ -321,16 +318,7 @@ void *CRYPTO_zalloc(int num, const char *file, int line)
     return ret;
 }
 
-char *CRYPTO_strdup(const char *str, const char *file, int line)
-{
-    char *ret = CRYPTO_malloc(strlen(str) + 1, file, line);
-
-    if (ret != NULL)
-        strcpy(ret, str);
-    return ret;
-}
-
-void *CRYPTO_realloc(void *str, int num, const char *file, int line)
+void *CRYPTO_realloc(void *str, size_t num, const char *file, int line)
 {
     void *ret = NULL;
 
@@ -343,18 +331,14 @@ void *CRYPTO_realloc(void *str, int num, const char *file, int line)
     if (realloc_debug_func != NULL)
         realloc_debug_func(str, NULL, num, file, line, 0);
     ret = realloc_ex_func(str, num, file, line);
-#ifdef LEVITTE_DEBUG_MEM
-    fprintf(stderr, "LEVITTE_DEBUG_MEM:         | 0x%p -> 0x%p (%d)\n", str,
-            ret, num);
-#endif
     if (realloc_debug_func != NULL)
         realloc_debug_func(str, ret, num, file, line, 1);
 
     return ret;
 }
 
-void *CRYPTO_realloc_clean(void *str, int old_len, int num, const char *file,
-                           int line)
+void *CRYPTO_realloc_clean(void *str, size_t old_len, size_t num,
+                           const char *file, int line)
 {
     void *ret = NULL;
 
@@ -378,11 +362,6 @@ void *CRYPTO_realloc_clean(void *str, int old_len, int num, const char *file,
         memcpy(ret, str, old_len);
         OPENSSL_clear_free(str, old_len);
     }
-#ifdef LEVITTE_DEBUG_MEM
-    fprintf(stderr,
-            "LEVITTE_DEBUG_MEM:         | 0x%p -> 0x%p (%d)\n",
-            str, ret, num);
-#endif
     if (realloc_debug_func != NULL)
         realloc_debug_func(str, ret, num, file, line, 1);
 
@@ -393,9 +372,6 @@ void CRYPTO_free(void *str)
 {
     if (free_debug_func != NULL)
         free_debug_func(str, 0);
-#ifdef LEVITTE_DEBUG_MEM
-    fprintf(stderr, "LEVITTE_DEBUG_MEM:         < 0x%p\n", str);
-#endif
     free_func(str);
     if (free_debug_func != NULL)
         free_debug_func(NULL, 1);
@@ -408,13 +384,6 @@ void CRYPTO_clear_free(void *str, size_t num)
     if (num)
         OPENSSL_cleanse(str, num);
     CRYPTO_free(str);
-}
-
-void *CRYPTO_remalloc(void *a, int num, const char *file, int line)
-{
-    OPENSSL_free(a);
-    a = OPENSSL_malloc(num);
-    return (a);
 }
 
 void CRYPTO_set_mem_debug_options(long bits)

@@ -829,7 +829,7 @@ static MIME_HEADER *mime_hdr_new(char *name, char *value)
     int c;
 
     if (name) {
-        if ((tmpname = BUF_strdup(name)) == NULL)
+        if ((tmpname = OPENSSL_strdup(name)) == NULL)
             return NULL;
         for (p = tmpname; *p; p++) {
             c = (unsigned char)*p;
@@ -840,7 +840,7 @@ static MIME_HEADER *mime_hdr_new(char *name, char *value)
         }
     }
     if (value) {
-        if ((tmpval = BUF_strdup(value)) == NULL)
+        if ((tmpval = OPENSSL_strdup(value)) == NULL)
             goto err;
         for (p = tmpval; *p; p++) {
             c = (unsigned char)*p;
@@ -872,7 +872,7 @@ static int mime_hdr_addparam(MIME_HEADER *mhdr, char *name, char *value)
     int c;
     MIME_PARAM *mparam = NULL;
     if (name) {
-        tmpname = BUF_strdup(name);
+        tmpname = OPENSSL_strdup(name);
         if (!tmpname)
             goto err;
         for (p = tmpname; *p; p++) {
@@ -884,7 +884,7 @@ static int mime_hdr_addparam(MIME_HEADER *mhdr, char *name, char *value)
         }
     }
     if (value) {
-        tmpval = BUF_strdup(value);
+        tmpval = OPENSSL_strdup(value);
         if (!tmpval)
             goto err;
     }
