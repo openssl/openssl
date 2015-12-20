@@ -479,25 +479,6 @@ typedef int (EVP_PBE_KEYGEN) (EVP_CIPHER_CTX *ctx, const char *pass,
 # define EVP_get_cipherbynid(a) EVP_get_cipherbyname(OBJ_nid2sn(a))
 # define EVP_get_cipherbyobj(a) EVP_get_cipherbynid(OBJ_obj2nid(a))
 
-/* Macros to reduce FIPS dependencies: do NOT use in applications */
-# define M_EVP_CIPHER_nid(e)             ((e)->nid)
-# define M_EVP_CIPHER_CTX_iv_length(e)   ((e)->cipher->iv_len)
-# define M_EVP_CIPHER_CTX_flags(e)       ((e)->cipher->flags)
-# define M_EVP_CIPHER_CTX_block_size(e)  ((e)->cipher->block_size)
-# define M_EVP_CIPHER_CTX_cipher(e)      ((e)->cipher)
-# define M_EVP_CIPHER_CTX_mode(e)        (M_EVP_CIPHER_CTX_flags(e) & EVP_CIPH_MODE)
-
-# define M_EVP_CIPHER_CTX_set_flags(ctx,flgs) ((ctx)->flags|=(flgs))
-
-# define M_EVP_EncryptInit(ctx,ciph,key,iv) \
-        (EVP_CipherInit(ctx,ciph,key,iv,1))
-# define M_EVP_EncryptInit_ex(ctx,ciph,impl,key,iv) \
-        (EVP_CipherInit_ex(ctx,ciph,impl,key,iv,1))
-# define M_EVP_DecryptInit(ctx,ciph,key,iv) \
-        (EVP_CipherInit(ctx,ciph,key,iv,0))
-# define M_EVP_DecryptInit_ex(ctx,ciph,impl,key,iv) \
-        (EVP_CipherInit_ex(ctx,ciph,impl,key,iv,0))
-
 int EVP_MD_type(const EVP_MD *md);
 # define EVP_MD_nid(e)                   EVP_MD_type(e)
 # define EVP_MD_name(e)                  OBJ_nid2sn(EVP_MD_nid(e))
