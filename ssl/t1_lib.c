@@ -786,16 +786,13 @@ static int tls1_check_cert_param(SSL *s, X509 *x, int set_ee_md)
     unsigned char comp_id, curve_id[2];
     EVP_PKEY *pkey;
     int rv;
-    pkey = X509_get_pubkey(x);
+    pkey = X509_get0_pubkey(x);
     if (!pkey)
         return 0;
     /* If not EC nothing to do */
-    if (pkey->type != EVP_PKEY_EC) {
-        EVP_PKEY_free(pkey);
+    if (pkey->type != EVP_PKEY_EC)
         return 1;
-    }
     rv = tls1_set_ec_id(curve_id, &comp_id, pkey->pkey.ec);
-    EVP_PKEY_free(pkey);
     if (!rv)
         return 0;
     /*
@@ -4254,7 +4251,7 @@ DH *ssl_get_auto_dh(SSL *s)
 static int ssl_security_cert_key(SSL *s, SSL_CTX *ctx, X509 *x, int op)
 {
     int secbits = -1;
-    EVP_PKEY *pkey = X509_get_pubkey(x);
+    EVP_PKEY *pkey = X509_get0_pubkey(x);
     if (pkey) {
         /*
          * If no parameters this will return -1 and fail using the default
@@ -4263,7 +4260,6 @@ static int ssl_security_cert_key(SSL *s, SSL_CTX *ctx, X509 *x, int op)
          * omission of parameters is never (?) done in practice.
          */
         secbits = EVP_PKEY_security_bits(pkey);
-        EVP_PKEY_free(pkey);
     }
     if (s)
         return ssl_security(s, op, secbits, 0, x);

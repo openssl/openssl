@@ -179,10 +179,9 @@ static int ssl_set_pkey(CERT *c, EVP_PKEY *pkey)
 
     if (c->pkeys[i].x509 != NULL) {
         EVP_PKEY *pktmp;
-        pktmp = X509_get_pubkey(c->pkeys[i].x509);
+        pktmp = X509_get0_pubkey(c->pkeys[i].x509);
         if (pktmp == NULL) {
             SSLerr(SSL_F_SSL_SET_PKEY, ERR_R_MALLOC_FAILURE);
-            EVP_PKEY_free(pktmp);
             return 0;
         }
         /*
@@ -190,7 +189,6 @@ static int ssl_set_pkey(CERT *c, EVP_PKEY *pkey)
          * ignored. Some EVP_PKEY types cannot do this.
          */
         EVP_PKEY_copy_parameters(pktmp, pkey);
-        EVP_PKEY_free(pktmp);
         ERR_clear_error();
 
 #ifndef OPENSSL_NO_RSA
@@ -369,7 +367,7 @@ static int ssl_set_cert(CERT *c, X509 *x)
     EVP_PKEY *pkey;
     int i;
 
-    pkey = X509_get_pubkey(x);
+    pkey = X509_get0_pubkey(x);
     if (pkey == NULL) {
         SSLerr(SSL_F_SSL_SET_CERT, SSL_R_X509_LIB);
         return (0);
@@ -378,8 +376,7 @@ static int ssl_set_cert(CERT *c, X509 *x)
     i = ssl_cert_type(x, pkey);
     if (i < 0) {
         SSLerr(SSL_F_SSL_SET_CERT, SSL_R_UNKNOWN_CERTIFICATE_TYPE);
-        EVP_PKEY_free(pkey);
-        return (0);
+        return 0;
     }
 
     if (c->pkeys[i].privatekey != NULL) {
@@ -413,14 +410,12 @@ static int ssl_set_cert(CERT *c, X509 *x)
         }
     }
 
-    EVP_PKEY_free(pkey);
-
     X509_free(c->pkeys[i].x509);
     X509_up_ref(x);
     c->pkeys[i].x509 = x;
     c->key = &(c->pkeys[i]);
 
-    return (1);
+    return 1;
 }
 
 #ifndef OPENSSL_NO_STDIO

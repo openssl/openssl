@@ -1524,7 +1524,7 @@ MSG_PROCESS_RETURN tls_process_server_certificate(SSL *s, PACKET *pkt)
      * VRS 19990621: possible memory leak; sk=null ==> !sk_pop_free() @end
      */
 
-    pkey = X509_get_pubkey(x);
+    pkey = X509_get0_pubkey(x);
 
     if (pkey == NULL || EVP_PKEY_missing_parameters(pkey)) {
         x = NULL;
@@ -1570,7 +1570,6 @@ MSG_PROCESS_RETURN tls_process_server_certificate(SSL *s, PACKET *pkt)
  err:
     ossl_statem_set_error(s);
  done:
-    EVP_PKEY_free(pkey);
     X509_free(x);
     sk_X509_pop_free(sk, X509_free);
     return ret;
@@ -1686,7 +1685,7 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
 
 /* We must check if there is a certificate */
         if (alg_a & (SSL_aRSA|SSL_aDSS))
-            pkey = X509_get_pubkey(s->session->peer);
+            pkey = X509_get0_pubkey(s->session->peer);
     }
 #endif                          /* !OPENSSL_NO_SRP */
 #ifndef OPENSSL_NO_DH
@@ -1739,7 +1738,7 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
             goto f_err;
         }
         if (alg_a & (SSL_aRSA|SSL_aDSS))
-            pkey = X509_get_pubkey(s->session->peer);
+            pkey = X509_get0_pubkey(s->session->peer);
         /* else anonymous DH, so no certificate or pkey. */
     }
 #endif                          /* !OPENSSL_NO_DH */
@@ -1809,11 +1808,11 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
         if (0) ;
 # ifndef OPENSSL_NO_RSA
         else if (alg_a & SSL_aRSA)
-            pkey = X509_get_pubkey(s->session->peer);
+            pkey = X509_get0_pubkey(s->session->peer);
 # endif
 # ifndef OPENSSL_NO_EC
         else if (alg_a & SSL_aECDSA)
-            pkey = X509_get_pubkey(s->session->peer);
+            pkey = X509_get0_pubkey(s->session->peer);
 # endif
         /* else anonymous ECDH, so no certificate or pkey. */
     } else if (alg_k) {
@@ -1912,13 +1911,11 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
             goto f_err;
         }
     }
-    EVP_PKEY_free(pkey);
     EVP_MD_CTX_free(md_ctx);
     return MSG_PROCESS_CONTINUE_READING;
  f_err:
     ssl3_send_alert(s, SSL3_AL_FATAL, al);
  err:
-    EVP_PKEY_free(pkey);
 #ifndef OPENSSL_NO_RSA
     RSA_free(rsa);
 #endif
@@ -2363,12 +2360,11 @@ psk_err:
             goto err;
         }
 
-        pkey = X509_get_pubkey(s->session->peer);
+        pkey = X509_get0_pubkey(s->session->peer);
         if ((pkey == NULL) || (pkey->type != EVP_PKEY_RSA)
             || (pkey->pkey.rsa == NULL)) {
             SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE,
                    ERR_R_INTERNAL_ERROR);
-            EVP_PKEY_free(pkey);
             goto err;
         }
 
@@ -2501,7 +2497,6 @@ psk_err:
         unsigned int md_len;
         unsigned char shared_ukm[32], tmp[256];
         EVP_MD_CTX *ukm_hash;
-        EVP_PKEY *pub_key;
         int dgst_nid = NID_id_GostR3411_94;
         if ((s->s3->tmp.new_cipher->algorithm_auth & SSL_aGOST12) != 0)
             dgst_nid = NID_id_GostR3411_2012_256;
@@ -2522,8 +2517,7 @@ psk_err:
             goto err;
         }
 
-        pkey_ctx = EVP_PKEY_CTX_new(pub_key =
-                                    X509_get_pubkey(peer_cert), NULL);
+        pkey_ctx = EVP_PKEY_CTX_new(X509_get0_pubkey(peer_cert), NULL);
         if (pkey_ctx == NULL) {
             SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE,
                    ERR_R_MALLOC_FAILURE);
@@ -2611,7 +2605,6 @@ psk_err:
             s->s3->flags |= TLS1_FLAGS_SKIP_CERT_VERIFY;
         }
         EVP_PKEY_CTX_free(pkey_ctx);
-        EVP_PKEY_free(pub_key);
 
     }
 #endif
@@ -2963,9 +2956,8 @@ int ssl3_check_cert_and_algorithm(SSL *s)
         goto f_err;
     }
 #endif
-    pkey = X509_get_pubkey(s->session->peer);
+    pkey = X509_get0_pubkey(s->session->peer);
     i = X509_certificate_type(s->session->peer, pkey);
-    EVP_PKEY_free(pkey);
 
     /* Check that we have a certificate if we require one */
     if ((alg_a & SSL_aRSA) && !has_bits(i, EVP_PK_RSA | EVP_PKT_SIGN)) {

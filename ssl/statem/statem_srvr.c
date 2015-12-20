@@ -2553,7 +2553,7 @@ MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
          * EVP_PKEY_derive_set_peer, because it is completely valid to use a
          * client certificate for authorization only.
          */
-        client_pub_pkey = X509_get_pubkey(s->session->peer);
+        client_pub_pkey = X509_get0_pubkey(s->session->peer);
         if (client_pub_pkey) {
             if (EVP_PKEY_derive_set_peer(pkey_ctx, client_pub_pkey) <= 0)
                 ERR_clear_error();
@@ -2595,11 +2595,9 @@ MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
             (pkey_ctx, -1, -1, EVP_PKEY_CTRL_PEER_KEY, 2, NULL) > 0)
             s->statem.no_cert_verify = 1;
 
-        EVP_PKEY_free(client_pub_pkey);
         EVP_PKEY_CTX_free(pkey_ctx);
         return MSG_PROCESS_CONTINUE_PROCESSING;
  gerr:
-        EVP_PKEY_free(client_pub_pkey);
         EVP_PKEY_CTX_free(pkey_ctx);
         goto f_err;
     } else
@@ -2725,7 +2723,7 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
     }
 
     peer = s->session->peer;
-    pkey = X509_get_pubkey(peer);
+    pkey = X509_get0_pubkey(peer);
     type = X509_certificate_type(peer, pkey);
 
     if (!(type & EVP_PKT_SIGN)) {
@@ -2842,7 +2840,6 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
     BIO_free(s->s3->handshake_buffer);
     s->s3->handshake_buffer = NULL;
     EVP_MD_CTX_free(mctx);
-    EVP_PKEY_free(pkey);
     return ret;
 }
 
@@ -2931,14 +2928,13 @@ MSG_PROCESS_RETURN tls_process_client_certificate(SSL *s, PACKET *pkt)
             al = SSL_AD_HANDSHAKE_FAILURE;
             goto f_err;
         }
-        pkey = X509_get_pubkey(sk_X509_value(sk, 0));
+        pkey = X509_get0_pubkey(sk_X509_value(sk, 0));
         if (pkey == NULL) {
             al = SSL3_AD_HANDSHAKE_FAILURE;
             SSLerr(SSL_F_TLS_PROCESS_CLIENT_CERTIFICATE,
                    SSL_R_UNKNOWN_CERTIFICATE_TYPE);
             goto f_err;
         }
-        EVP_PKEY_free(pkey);
     }
 
     X509_free(s->session->peer);

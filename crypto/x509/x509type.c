@@ -71,7 +71,7 @@ int X509_certificate_type(X509 *x, EVP_PKEY *pkey)
         return (0);
 
     if (pkey == NULL)
-        pk = X509_get_pubkey(x);
+        pk = X509_get0_pubkey(x);
     else
         pk = pkey;
 
@@ -122,7 +122,5 @@ int X509_certificate_type(X509 *x, EVP_PKEY *pkey)
         }
     }
 
-    if (pkey == NULL)
-        EVP_PKEY_free(pk);
     return (ret);
 }
