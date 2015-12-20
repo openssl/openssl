@@ -142,7 +142,7 @@ static int pkcs7_encode_rinfo(PKCS7_RECIP_INFO *ri,
     int ret = 0;
     size_t eklen;
 
-    pkey = X509_get_pubkey(ri->cert);
+    pkey = X509_get0_pubkey(ri->cert);
 
     if (!pkey)
         return 0;
@@ -179,7 +179,6 @@ static int pkcs7_encode_rinfo(PKCS7_RECIP_INFO *ri,
     ret = 1;
 
  err:
-    EVP_PKEY_free(pkey);
     EVP_PKEY_CTX_free(pctx);
     OPENSSL_free(ek);
     return ret;
@@ -1072,14 +1071,13 @@ int PKCS7_signatureVerify(BIO *bio, PKCS7 *p7, PKCS7_SIGNER_INFO *si,
     }
 
     os = si->enc_digest;
-    pkey = X509_get_pubkey(x509);
+    pkey = X509_get0_pubkey(x509);
     if (!pkey) {
         ret = -1;
         goto err;
     }
 
     i = EVP_VerifyFinal(mdc_tmp, os->data, os->length, pkey);
-    EVP_PKEY_free(pkey);
     if (i <= 0) {
         PKCS7err(PKCS7_F_PKCS7_SIGNATUREVERIFY, PKCS7_R_SIGNATURE_FAILURE);
         ret = -1;
