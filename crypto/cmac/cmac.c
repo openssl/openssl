@@ -264,5 +264,5 @@ int CMAC_resume(CMAC_CTX *ctx)
      * decrypted block will allow CMAC to continue after calling
      * CMAC_Final().
      */
-    return M_EVP_EncryptInit_ex(ctx->cctx, NULL, NULL, NULL, ctx->tbl);
+    return EVP_EncryptInit_ex(ctx->cctx, NULL, NULL, NULL, ctx->tbl);
 }
