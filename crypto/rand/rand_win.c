@@ -160,39 +160,6 @@ typedef struct tagCURSORINFO {
 #  define CURSOR_SHOWING     0x00000001
 # endif                         /* CURSOR_SHOWING */
 
-# if !defined(OPENSSL_SYS_WINCE)
-typedef BOOL(WINAPI *CRYPTACQUIRECONTEXTW) (HCRYPTPROV *, LPCWSTR, LPCWSTR,
-                                            DWORD, DWORD);
-typedef BOOL(WINAPI *CRYPTGENRANDOM) (HCRYPTPROV, DWORD, BYTE *);
-typedef BOOL(WINAPI *CRYPTRELEASECONTEXT) (HCRYPTPROV, DWORD);
-
-typedef HWND(WINAPI *GETFOREGROUNDWINDOW) (VOID);
-typedef BOOL(WINAPI *GETCURSORINFO) (PCURSORINFO);
-typedef DWORD(WINAPI *GETQUEUESTATUS) (UINT);
-
-typedef HANDLE(WINAPI *CREATETOOLHELP32SNAPSHOT) (DWORD, DWORD);
-typedef BOOL(WINAPI *CLOSETOOLHELP32SNAPSHOT) (HANDLE);
-typedef BOOL(WINAPI *HEAP32FIRST) (LPHEAPENTRY32, DWORD, size_t);
-typedef BOOL(WINAPI *HEAP32NEXT) (LPHEAPENTRY32);
-typedef BOOL(WINAPI *HEAP32LIST) (HANDLE, LPHEAPLIST32);
-typedef BOOL(WINAPI *PROCESS32) (HANDLE, LPPROCESSENTRY32);
-typedef BOOL(WINAPI *THREAD32) (HANDLE, LPTHREADENTRY32);
-typedef BOOL(WINAPI *MODULE32) (HANDLE, LPMODULEENTRY32);
-
-#  include <lmcons.h>
-#  include <lmstats.h>
-/*
- * The NET API is Unicode only.  It requires the use of the UNICODE macro.
- * When UNICODE is defined LPTSTR becomes LPWSTR.  LMSTR was was added to the
- * Platform SDK to allow the NET API to be used in non-Unicode applications
- * provided that Unicode strings were still used for input.  LMSTR is defined
- * as LPWSTR.
- */
-typedef NET_API_STATUS(NET_API_FUNCTION *NETSTATGET)
- (LPWSTR, LPWSTR, DWORD, DWORD, LPBYTE *);
-typedef NET_API_STATUS(NET_API_FUNCTION *NETFREE) (LPBYTE);
-# endif                         /* !OPENSSL_SYS_WINCE */
-
 int RAND_poll(void)
 {
     MEMORYSTATUS mst;
@@ -333,7 +300,7 @@ static void readtimer(void)
 
 static void readscreen(void)
 {
-# if !defined(OPENSSL_SYS_WINCE) && !defined(OPENSSL_SYS_WIN32_CYGWIN)
+# if !defined(OPENSSL_SYS_WIN32_CYGWIN)
     HDC hScrDC;                 /* screen DC */
     HBITMAP hBitmap;            /* handle for our bitmap */
     BITMAP bm;                  /* bitmap properties */
@@ -397,7 +364,7 @@ static void readscreen(void)
     /* Clean up */
     DeleteObject(hBitmap);
     ReleaseDC(NULL, hScrDC);
-# endif                         /* !OPENSSL_SYS_WINCE */
+# endif                         /* !OPENSSL_SYS_CYGWIN */
 }
 
 #endif
