@@ -1960,6 +1960,7 @@ void ERR_load_SSL_strings(void);
 # define SSL_F_SSL3_DIGEST_CACHED_RECORDS                 293
 # define SSL_F_SSL3_DO_CHANGE_CIPHER_SPEC                 292
 # define SSL_F_SSL3_ENC                                   134
+# define SSL_F_SSL3_FINAL_FINISH_MAC                      285
 # define SSL_F_SSL3_GENERATE_KEY_BLOCK                    238
 # define SSL_F_SSL3_GENERATE_MASTER_SECRET                388
 # define SSL_F_SSL3_GET_CERTIFICATE_REQUEST               135
@@ -1978,7 +1979,6 @@ void ERR_load_SSL_strings(void);
 # define SSL_F_SSL3_GET_SERVER_CERTIFICATE                144
 # define SSL_F_SSL3_GET_SERVER_DONE                       145
 # define SSL_F_SSL3_GET_SERVER_HELLO                      146
-# define SSL_F_SSL3_FINAL_FINISH_MAC                      285
 # define SSL_F_SSL3_NEW_SESSION_TICKET                    287
 # define SSL_F_SSL3_OUTPUT_CERT_CHAIN                     147
 # define SSL_F_SSL3_PEEK                                  235
@@ -2049,6 +2049,7 @@ void ERR_load_SSL_strings(void);
 # define SSL_F_SSL_CTX_USE_RSAPRIVATEKEY_FILE             179
 # define SSL_F_SSL_CTX_USE_SERVERINFO                     336
 # define SSL_F_SSL_CTX_USE_SERVERINFO_FILE                337
+# define SSL_F_SSL_DO_CONFIG                              391
 # define SSL_F_SSL_DO_HANDSHAKE                           180
 # define SSL_F_SSL_GET_NEW_SESSION                        181
 # define SSL_F_SSL_GET_PREV_SESSION                       217
@@ -2058,6 +2059,7 @@ void ERR_load_SSL_strings(void);
 # define SSL_F_SSL_GET_SIGN_PKEY                          183
 # define SSL_F_SSL_INIT_WBIO_BUFFER                       184
 # define SSL_F_SSL_LOAD_CLIENT_CA_FILE                    185
+# define SSL_F_SSL_MODULE_INIT                            392
 # define SSL_F_SSL_NEW                                    186
 # define SSL_F_SSL_PARSE_CLIENTHELLO_RENEGOTIATE_EXT      300
 # define SSL_F_SSL_PARSE_CLIENTHELLO_TLSEXT               302
@@ -2256,6 +2258,7 @@ void ERR_load_SSL_strings(void);
 # define SSL_R_INCONSISTENT_EXTMS                         104
 # define SSL_R_INVALID_COMMAND                            280
 # define SSL_R_INVALID_COMPRESSION_ALGORITHM              341
+# define SSL_R_INVALID_CONFIGURATION_NAME                 113
 # define SSL_R_INVALID_NULL_CMD_NAME                      385
 # define SSL_R_INVALID_PURPOSE                            278
 # define SSL_R_INVALID_SEQUENCE_NUMBER                    402
@@ -2360,10 +2363,14 @@ void ERR_load_SSL_strings(void);
 # define SSL_R_SSLV3_ALERT_NO_CERTIFICATE                 1041
 # define SSL_R_SSLV3_ALERT_UNEXPECTED_MESSAGE             1010
 # define SSL_R_SSLV3_ALERT_UNSUPPORTED_CERTIFICATE        1043
+# define SSL_R_SSL_COMMAND_SECTION_EMPTY                  117
+# define SSL_R_SSL_COMMAND_SECTION_NOT_FOUND              125
 # define SSL_R_SSL_CTX_HAS_NO_DEFAULT_SSL_VERSION         228
 # define SSL_R_SSL_HANDSHAKE_FAILURE                      229
 # define SSL_R_SSL_LIBRARY_HAS_NO_CIPHERS                 230
 # define SSL_R_SSL_NEGATIVE_LENGTH                        372
+# define SSL_R_SSL_SECTION_EMPTY                          126
+# define SSL_R_SSL_SECTION_NOT_FOUND                      136
 # define SSL_R_SSL_SESSION_ID_CALLBACK_FAILED             301
 # define SSL_R_SSL_SESSION_ID_CONFLICT                    302
 # define SSL_R_SSL_SESSION_ID_CONTEXT_TOO_LONG            273
@@ -2372,6 +2379,7 @@ void ERR_load_SSL_strings(void);
 # define SSL_R_TLSV1_ALERT_DECODE_ERROR                   1050
 # define SSL_R_TLSV1_ALERT_DECRYPTION_FAILED              1021
 # define SSL_R_TLSV1_ALERT_DECRYPT_ERROR                  1051
+# define SSL_R_TLSV1_ALERT_EXPORT_RESTRICTION             1060
 # define SSL_R_TLSV1_ALERT_INAPPROPRIATE_FALLBACK         1086
 # define SSL_R_TLSV1_ALERT_INSUFFICIENT_SECURITY          1071
 # define SSL_R_TLSV1_ALERT_INTERNAL_ERROR                 1080
@@ -2408,6 +2416,7 @@ void ERR_load_SSL_strings(void);
 # define SSL_R_UNKNOWN_CIPHER_RETURNED                    248
 # define SSL_R_UNKNOWN_CIPHER_TYPE                        249
 # define SSL_R_UNKNOWN_CMD_NAME                           386
+# define SSL_R_UNKNOWN_COMMAND                            139
 # define SSL_R_UNKNOWN_DIGEST                             368
 # define SSL_R_UNKNOWN_KEY_EXCHANGE_TYPE                  250
 # define SSL_R_UNKNOWN_PKEY_TYPE                          251
