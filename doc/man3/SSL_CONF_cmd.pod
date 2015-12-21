@@ -171,6 +171,13 @@ Use server and not client preference order when determining which cipher suite,
 signature algorithm or elliptic curve to use for an incoming connection.
 Equivalent to B<SSL_OP_CIPHER_SERVER_PREFERENCE>. Only used by servers.
 
+=item B<-prioritize_chacha>
+
+Prioritize ChaCha ciphers when the client has a ChaCha20 cipher at the top of
+its preference list. This usually indicates a client without AES hardware
+acceleration (e.g. mobile) is in use. Equivalent to B<SSL_OP_PRIORITIZE_CHACHA>.
+Only used by servers. Requires B<-serverpref>.
+
 =item B<-no_resumption_on_reneg>
 
 set SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION flag. Only used by servers.
@@ -382,21 +389,26 @@ B<Bugs>: enable various bug workarounds. Same as B<SSL_OP_ALL>.
 B<DHSingle>: enable single use DH keys, set by default. Inverse of
 B<SSL_OP_DH_SINGLE>. Only used by servers.
 
-B<ECDHSingle> enable single use ECDH keys, set by default. Inverse of
+B<ECDHSingle>: enable single use ECDH keys, set by default. Inverse of
 B<SSL_OP_ECDH_SINGLE>. Only used by servers.
 
-B<ServerPreference> use server and not client preference order when
+B<ServerPreference>: use server and not client preference order when
 determining which cipher suite, signature algorithm or elliptic curve
 to use for an incoming connection.  Equivalent to
 B<SSL_OP_CIPHER_SERVER_PREFERENCE>. Only used by servers.
 
-B<NoResumptionOnRenegotiation> set
+B<PrioritizeChaCha>: prioritizes ChaCha ciphers when the client has a
+ChaCha20 cipher at the top of its preference list. This usually indicates
+a mobile client is in use. Equivalent to B<SSL_OP_PRIORITIZE_CHACHA>.
+Only used by servers.
+
+B<NoResumptionOnRenegotiation>: set
 B<SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION> flag. Only used by servers.
 
-B<UnsafeLegacyRenegotiation> permits the use of unsafe legacy renegotiation.
+B<UnsafeLegacyRenegotiation>: permits the use of unsafe legacy renegotiation.
 Equivalent to B<SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION>.
 
-B<UnsafeLegacyServerConnect> permits the use of unsafe legacy renegotiation
+B<UnsafeLegacyServerConnect>: permits the use of unsafe legacy renegotiation
 for OpenSSL clients only. Equivalent to B<SSL_OP_LEGACY_SERVER_CONNECT>.
 Set by default.
 
@@ -595,9 +607,11 @@ B<SSL_CONF_TYPE_UNKNOWN>.
 
 B<MinProtocol> and B<MaxProtocol> where added in OpenSSL 1.1.0.
 
+B<AllowNoDHEKEX> and B<PrioritizeChaCha> were added in OpenSSL 1.1.1.
+
 =head1 COPYRIGHT
 
-Copyright 2012-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2012-2017 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

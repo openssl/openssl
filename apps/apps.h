@@ -204,6 +204,7 @@ int set_cert_times(X509 *x, const char *startdate, const char *enddate,
         OPT_S_NOTLS1_3, OPT_S_BUGS, OPT_S_NO_COMP, OPT_S_NOTICKET, \
         OPT_S_SERVERPREF, OPT_S_LEGACYRENEG, OPT_S_LEGACYCONN, \
         OPT_S_ONRESUMP, OPT_S_NOLEGACYCONN, OPT_S_ALLOW_NO_DHE_KEX, \
+        OPT_S_PRIORITIZE_CHACHA, \
         OPT_S_STRICT, OPT_S_SIGALGS, OPT_S_CLIENTSIGALGS, OPT_S_GROUPS, \
         OPT_S_CURVES, OPT_S_NAMEDCURVE, OPT_S_CIPHER, \
         OPT_S_RECORD_PADDING, OPT_S_DEBUGBROKE, OPT_S_COMP, \
@@ -233,6 +234,8 @@ int set_cert_times(X509 *x, const char *startdate, const char *enddate,
             "Disallow initial connection to servers that don't support RI"}, \
         {"allow_no_dhe_kex", OPT_S_ALLOW_NO_DHE_KEX, '-', \
             "In TLSv1.3 allow non-(ec)dhe based key exchange on resumption"}, \
+        {"prioritize_chacha", OPT_S_PRIORITIZE_CHACHA, '-', \
+            "Prioritize ChaCha ciphers when preferred by clients"}, \
         {"strict", OPT_S_STRICT, '-', \
             "Enforce strict certificate checks as per TLS standard"}, \
         {"sigalgs", OPT_S_SIGALGS, 's', \
@@ -270,6 +273,7 @@ int set_cert_times(X509 *x, const char *startdate, const char *enddate,
         case OPT_S_ONRESUMP: \
         case OPT_S_NOLEGACYCONN: \
         case OPT_S_ALLOW_NO_DHE_KEX: \
+        case OPT_S_PRIORITIZE_CHACHA: \
         case OPT_S_STRICT: \
         case OPT_S_SIGALGS: \
         case OPT_S_CLIENTSIGALGS: \

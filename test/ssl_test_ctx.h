@@ -210,6 +210,7 @@ typedef struct {
     int use_sctp;
     /* Whether to expect a session id from the server */
     ssl_session_id_t session_id_expected;
+    char *expected_cipher;
 } SSL_TEST_CTX;
 
 const char *ssl_test_result_name(ssl_test_result_t result);
