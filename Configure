@@ -1053,7 +1053,7 @@ PROCESS_ARGS:
 						{
 						$ENV{CROSS_COMPILE}=$1;
 						}
-					elsif (/^CC=\s*(?:\$\(CROSS_COMPILE\))?(.*?)/)
+					elsif (/^CC=\s*(?:\$\(CROSS_COMPILE\))?(.*?)$/)
 						{
 						$ENV{CC}=$1;
 						}
