@@ -332,7 +332,6 @@ int CRYPTO_is_mem_check_on(void);
 # define OPENSSL_free(addr)      CRYPTO_free(addr)
 
 size_t OPENSSL_strlcpy(char *dst, const char *src, size_t siz);
-size_t OPENSSL_strlcpy(char *dst, const char *src, size_t siz);
 size_t OPENSSL_strlcat(char *dst, const char *src, size_t siz);
 size_t OPENSSL_strnlen(const char *str, size_t maxlen);
 
