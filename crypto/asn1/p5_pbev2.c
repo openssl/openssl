@@ -242,7 +242,7 @@ X509_ALGOR *PKCS5_pbkdf2_set(int iter, unsigned char *salt, int saltlen,
     /* prf can stay NULL if we are using hmacWithSHA1 */
     if (prf_nid > 0 && prf_nid != NID_hmacWithSHA1) {
         kdf->prf = X509_ALGOR_new();
-        if (!kdf->prf)
+        if (kdf->prf == NULL)
             goto merr;
         X509_ALGOR_set0(kdf->prf, OBJ_nid2obj(prf_nid), V_ASN1_NULL, NULL);
     }
@@ -250,7 +250,7 @@ X509_ALGOR *PKCS5_pbkdf2_set(int iter, unsigned char *salt, int saltlen,
     /* Finally setup the keyfunc structure */
 
     keyfunc = X509_ALGOR_new();
-    if (!keyfunc)
+    if (keyfunc == NULL)
         goto merr;
 
     keyfunc->algorithm = OBJ_nid2obj(NID_id_pbkdf2);

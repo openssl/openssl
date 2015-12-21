@@ -33,7 +33,7 @@ is also set.
 
 If the B<PKCS7_STREAM> flag is set streaming is performed. This flag should
 only be set if B<PKCS7_STREAM> was also set in the previous call to
-PKCS7_sign() or B<PKCS7_encrypt()>.
+PKCS7_sign() or PKCS7_encrypt().
 
 If cleartext signing is being used and B<PKCS7_STREAM> not set then
 the data must be read twice: once to compute the signature in PKCS7_sign()

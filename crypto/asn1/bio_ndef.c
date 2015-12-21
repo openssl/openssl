@@ -113,7 +113,7 @@ BIO *BIO_new_NDEF(BIO *out, ASN1_VALUE *val, const ASN1_ITEM *it)
 
     out = BIO_push(asn_bio, out);
 
-    if (!ndef_aux || !asn_bio || !out)
+    if (ndef_aux == NULL || asn_bio == NULL || !out)
         goto err;
 
     BIO_asn1_set_prefix(asn_bio, ndef_prefix, ndef_prefix_free);
@@ -160,7 +160,7 @@ static int ndef_prefix(BIO *b, unsigned char **pbuf, int *plen, void *parg)
 
     derlen = ASN1_item_ndef_i2d(ndef_aux->val, NULL, ndef_aux->it);
     p = OPENSSL_malloc(derlen);
-    if (!p)
+    if (p == NULL)
         return 0;
 
     ndef_aux->derbuf = p;
@@ -229,7 +229,7 @@ static int ndef_suffix(BIO *b, unsigned char **pbuf, int *plen, void *parg)
 
     derlen = ASN1_item_ndef_i2d(ndef_aux->val, NULL, ndef_aux->it);
     p = OPENSSL_malloc(derlen);
-    if (!p)
+    if (p == NULL)
         return 0;
 
     ndef_aux->derbuf = p;

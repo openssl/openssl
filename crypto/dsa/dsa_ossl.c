@@ -144,7 +144,7 @@ static DSA_SIG *dsa_do_sign(const unsigned char *dgst, int dlen, DSA *dsa)
 
     m = BN_new();
     xr = BN_new();
-    if (!m || !xr)
+    if (m == NULL || xr == NULL)
         goto err;
 
     if (!dsa->p || !dsa->q || !dsa->g) {
@@ -242,7 +242,7 @@ static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in,
 
     k = BN_new();
     kq = BN_new();
-    if (!k || !kq)
+    if (k == NULL || kq == NULL)
         goto err;
 
     if (ctx_in == NULL) {
@@ -356,7 +356,7 @@ static int dsa_do_verify(const unsigned char *dgst, int dgst_len,
     u2 = BN_new();
     t1 = BN_new();
     ctx = BN_CTX_new();
-    if (!u1 || !u2 || !t1 || !ctx)
+    if (u1 == NULL || u2 == NULL || t1 == NULL || ctx == NULL)
         goto err;
 
     if (BN_is_zero(sig->r) || BN_is_negative(sig->r) ||

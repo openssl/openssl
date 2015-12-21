@@ -54,6 +54,7 @@
 
 use strict;
 use OpenSSL::Test qw/:DEFAULT cmdstr top_file top_dir/;
+use OpenSSL::Test::Utils;
 use TLSProxy::Proxy;
 
 my $test_name = "test_sslskewith0p";
@@ -63,6 +64,9 @@ plan skip_all => "$test_name can only be performed with OpenSSL configured share
     unless (map { s/\R//; s/^SHARED_LIBS=\s*//; $_ }
 	    grep { /^SHARED_LIBS=/ }
 	    do { local @ARGV = ( top_file("Makefile") ); <> })[0] ne "";
+
+plan skip_all => "dh is not supported by this OpenSSL build"
+    if disabled("dh");
 
 $ENV{OPENSSL_ENGINES} = top_dir("engines");
 $ENV{OPENSSL_ia32cap} = '~0x200000200000000';

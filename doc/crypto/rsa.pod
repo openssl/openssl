@@ -46,11 +46,6 @@ rsa - RSA public key cryptosystem
  int RSA_print(BIO *bp, RSA *x, int offset);
  int RSA_print_fp(FILE *fp, RSA *x, int offset);
 
- int RSA_get_ex_new_index(long argl, char *argp, int (*new_func)(),
-    int (*dup_func)(), void (*free_func)());
- int RSA_set_ex_data(RSA *r,int idx,char *arg);
- char *RSA_get_ex_data(RSA *r, int idx);
-
  int RSA_sign_ASN1_OCTET_STRING(int dummy, unsigned char *m,
     unsigned int m_len, unsigned char *sigret, unsigned int *siglen,
     RSA *rsa);

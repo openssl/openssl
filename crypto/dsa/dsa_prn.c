@@ -99,7 +99,7 @@ int DSA_print(BIO *bp, const DSA *x, int off)
     EVP_PKEY *pk;
     int ret;
     pk = EVP_PKEY_new();
-    if (!pk || !EVP_PKEY_set1_DSA(pk, (DSA *)x))
+    if (pk == NULL || !EVP_PKEY_set1_DSA(pk, (DSA *)x))
         return 0;
     ret = EVP_PKEY_print_private(bp, pk, off, NULL);
     EVP_PKEY_free(pk);
@@ -111,7 +111,7 @@ int DSAparams_print(BIO *bp, const DSA *x)
     EVP_PKEY *pk;
     int ret;
     pk = EVP_PKEY_new();
-    if (!pk || !EVP_PKEY_set1_DSA(pk, (DSA *)x))
+    if (pk == NULL || !EVP_PKEY_set1_DSA(pk, (DSA *)x))
         return 0;
     ret = EVP_PKEY_print_params(bp, pk, 4, NULL);
     EVP_PKEY_free(pk);

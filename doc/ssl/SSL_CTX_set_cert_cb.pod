@@ -15,10 +15,10 @@ SSL_CTX_set_cert_cb, SSL_set_cert_cb - handle certificate callback function
 
 =head1 DESCRIPTION
 
-SSL_CTX_set_cert_cb() and SSL_set_cert_cb() sets the B<cert_cb()> callback,
+SSL_CTX_set_cert_cb() and SSL_set_cert_cb() sets the cert_cb() callback,
 B<arg> value is pointer which is passed to the application callback.
 
-When B<cert_cb()> is NULL, no callback function is used.
+When cert_cb() is NULL, no callback function is used.
 
 cert_cb() is the application defined callback. It is called before a
 certificate will be used by a client or server. The callback can then inspect

@@ -115,22 +115,15 @@ the default method is used.
      /* RSA_FLAG_EXT_PKEY        - rsa_mod_exp is called for private key
       *                            operations, even if p,q,dmp1,dmq1,iqmp
       *                            are NULL
-      * RSA_FLAG_SIGN_VER        - enable rsa_sign and rsa_verify
       * RSA_METHOD_FLAG_NO_CHECK - don't check pub/private match
       */
 	int flags;
 
 	char *app_data; /* ?? */
 
-     /* sign. For backward compatibility, this is used only
-      * if (flags & RSA_FLAG_SIGN_VER)
-      */
 	int (*rsa_sign)(int type,
 		const unsigned char *m, unsigned int m_length,
 		unsigned char *sigret, unsigned int *siglen, const RSA *rsa);
-     /* verify. For backward compatibility, this is used only
-      * if (flags & RSA_FLAG_SIGN_VER)
-      */
 	int (*rsa_verify)(int dtype,
 		const unsigned char *m, unsigned int m_length,
 		const unsigned char *sigbuf, unsigned int siglen,

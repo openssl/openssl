@@ -902,7 +902,7 @@ int cms_main(int argc, char **argv)
             secret_keyid = NULL;
         }
         if (pwri_pass) {
-            pwri_tmp = (unsigned char *)BUF_strdup((char *)pwri_pass);
+            pwri_tmp = (unsigned char *)OPENSSL_strdup((char *)pwri_pass);
             if (!pwri_tmp)
                 goto end;
             if (!CMS_add0_recipient_password(cms,
@@ -1269,7 +1269,7 @@ static STACK_OF(GENERAL_NAMES) *make_names_stack(STACK_OF(OPENSSL_STRING) *ns)
         if (!gen)
             goto err;
         gens = GENERAL_NAMES_new();
-        if (!gens)
+        if (gens == NULL)
             goto err;
         if (!sk_GENERAL_NAME_push(gens, gen))
             goto err;

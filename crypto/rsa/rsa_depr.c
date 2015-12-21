@@ -78,7 +78,7 @@ RSA *RSA_generate_key(int bits, unsigned long e_value,
     RSA *rsa = RSA_new();
     BIGNUM *e = BN_new();
 
-    if (!cb || !rsa || !e)
+    if (cb == NULL || rsa == NULL || e == NULL)
         goto err;
 
     /*

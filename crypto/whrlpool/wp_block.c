@@ -50,9 +50,10 @@ typedef unsigned long long u64;
 #define ROUNDS  10
 
 #define STRICT_ALIGNMENT
-#if defined(__i386) || defined(__i386__) || \
-    defined(__x86_64) || defined(__x86_64__) || \
-    defined(_M_IX86) || defined(_M_AMD64) || defined(_M_X64)
+#if !defined(PEDANTIC) && (defined(__i386) || defined(__i386__) || \
+                           defined(__x86_64) || defined(__x86_64__) || \
+                           defined(_M_IX86) || defined(_M_AMD64) || \
+                           defined(_M_X64))
 /*
  * Well, formally there're couple of other architectures, which permit
  * unaligned loads, specifically those not crossing cache lines, IA-64 and
@@ -82,17 +83,18 @@ typedef unsigned long long u64;
 #endif
 
 #undef ROTATE
-#if defined(_MSC_VER)
-# if defined(_WIN64)            /* applies to both IA-64 and AMD64 */
-#  pragma intrinsic(_rotl64)
-#  define ROTATE(a,n) _rotl64((a),n)
-# endif
-#elif defined(__GNUC__) && __GNUC__>=2
-# if defined(__x86_64) || defined(__x86_64__)
-#  if defined(L_ENDIAN)
-#   define ROTATE(a,n)       ({ u64 ret; asm ("rolq %1,%0"   \
+#ifndef PEDANTIC
+# if defined(_MSC_VER)
+#  if defined(_WIN64)            /* applies to both IA-64 and AMD64 */
+#   pragma intrinsic(_rotl64)
+#   define ROTATE(a,n) _rotl64((a),n)
+#  endif
+# elif defined(__GNUC__) && __GNUC__>=2
+#  if defined(__x86_64) || defined(__x86_64__)
+#   if defined(L_ENDIAN)
+#    define ROTATE(a,n)       ({ u64 ret; asm ("rolq %1,%0"   \
                                    : "=r"(ret) : "J"(n),"0"(a) : "cc"); ret; })
-#  elif defined(B_ENDIAN)
+#   elif defined(B_ENDIAN)
        /*
         * Most will argue that x86_64 is always little-endian. Well, yes, but
         * then we have stratus.com who has modified gcc to "emulate"
@@ -100,16 +102,17 @@ typedef unsigned long long u64;
         * won't do same for x86_64? Naturally no. And this line is waiting
         * ready for that brave soul:-)
         */
-#   define ROTATE(a,n)       ({ u64 ret; asm ("rorq %1,%0"   \
+#    define ROTATE(a,n)       ({ u64 ret; asm ("rorq %1,%0"   \
                                    : "=r"(ret) : "J"(n),"0"(a) : "cc"); ret; })
-#  endif
-# elif defined(__ia64) || defined(__ia64__)
-#  if defined(L_ENDIAN)
-#   define ROTATE(a,n)       ({ u64 ret; asm ("shrp %0=%1,%1,%2"     \
+#   endif
+#  elif defined(__ia64) || defined(__ia64__)
+#   if defined(L_ENDIAN)
+#    define ROTATE(a,n)       ({ u64 ret; asm ("shrp %0=%1,%1,%2"     \
                                    : "=r"(ret) : "r"(a),"M"(64-(n))); ret; })
-#  elif defined(B_ENDIAN)
-#   define ROTATE(a,n)       ({ u64 ret; asm ("shrp %0=%1,%1,%2"     \
+#   elif defined(B_ENDIAN)
+#    define ROTATE(a,n)       ({ u64 ret; asm ("shrp %0=%1,%1,%2"     \
                                    : "=r"(ret) : "r"(a),"M"(n)); ret; })
+#   endif
 #  endif
 # endif
 #endif

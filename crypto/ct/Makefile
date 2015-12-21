@@ -70,12 +70,12 @@ ct_err.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 ct_err.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 ct_err.o: ../../include/openssl/symhacks.h ../include/internal/ct_int.h
 ct_err.o: ct_err.c
-ct_lib.o: ../../e_os.h ../../include/openssl/asn1.h ../../include/openssl/bio.h
+ct_lib.o: ../../e_os.h ../../include/openssl/asn1.h
+ct_lib.o: ../../include/openssl/async.h ../../include/openssl/bio.h
 ct_lib.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
 ct_lib.o: ../../include/openssl/comp.h ../../include/openssl/crypto.h
 ct_lib.o: ../../include/openssl/dsa.h ../../include/openssl/dtls1.h
 ct_lib.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
-ct_lib.o: ../../include/openssl/ecdh.h ../../include/openssl/ecdsa.h
 ct_lib.o: ../../include/openssl/err.h ../../include/openssl/evp.h
 ct_lib.o: ../../include/openssl/hmac.h ../../include/openssl/lhash.h
 ct_lib.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h

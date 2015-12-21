@@ -265,7 +265,7 @@ static int bind_helper(ENGINE *e)
 static ENGINE *engine_ubsec(void)
 {
     ENGINE *ret = ENGINE_new();
-    if (!ret)
+    if (ret == NULL)
         return NULL;
     if (!bind_helper(ret)) {
         ENGINE_free(ret);
@@ -346,7 +346,7 @@ static void free_UBSEC_LIBNAME(void)
 static long set_UBSEC_LIBNAME(const char *name)
 {
     free_UBSEC_LIBNAME();
-    return (((UBSEC_LIBNAME = BUF_strdup(name)) != NULL) ? 1 : 0);
+    return (((UBSEC_LIBNAME = OPENSSL_strdup(name)) != NULL) ? 1 : 0);
 }
 
 static const char *UBSEC_F1 = "ubsec_bytes_to_bits";

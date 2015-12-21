@@ -135,7 +135,7 @@ static int x509_name_ex_new(ASN1_VALUE **val, const ASN1_ITEM *it)
 {
     X509_NAME *ret = OPENSSL_zalloc(sizeof(*ret));
 
-    if (!ret)
+    if (ret == NULL)
         goto memerr;
     if ((ret->entries = sk_X509_NAME_ENTRY_new_null()) == NULL)
         goto memerr;
@@ -361,7 +361,7 @@ static int x509_name_canon(X509_NAME *a)
             set = entry->set;
         }
         tmpentry = X509_NAME_ENTRY_new();
-        if (!tmpentry)
+        if (tmpentry == NULL)
             goto err;
         tmpentry->object = OBJ_dup(entry->object);
         if (!asn1_string_canon(tmpentry->value, entry->value))
@@ -377,7 +377,7 @@ static int x509_name_canon(X509_NAME *a)
 
     p = OPENSSL_malloc(a->canon_enclen);
 
-    if (!p)
+    if (p == NULL)
         goto err;
 
     a->canon_enc = p;

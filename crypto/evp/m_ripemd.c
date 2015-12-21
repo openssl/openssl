@@ -68,20 +68,21 @@
 # ifndef OPENSSL_NO_RSA
 #  include <openssl/rsa.h>
 # endif
+# include "internal/evp_int.h"
 
 static int init(EVP_MD_CTX *ctx)
 {
-    return RIPEMD160_Init(ctx->md_data);
+    return RIPEMD160_Init(EVP_MD_CTX_md_data(ctx));
 }
 
 static int update(EVP_MD_CTX *ctx, const void *data, size_t count)
 {
-    return RIPEMD160_Update(ctx->md_data, data, count);
+    return RIPEMD160_Update(EVP_MD_CTX_md_data(ctx), data, count);
 }
 
 static int final(EVP_MD_CTX *ctx, unsigned char *md)
 {
-    return RIPEMD160_Final(md, ctx->md_data);
+    return RIPEMD160_Final(md, EVP_MD_CTX_md_data(ctx));
 }
 
 static const EVP_MD ripemd160_md = {
@@ -94,7 +95,6 @@ static const EVP_MD ripemd160_md = {
     final,
     NULL,
     NULL,
-    EVP_PKEY_RSA_method,
     RIPEMD160_CBLOCK,
     sizeof(EVP_MD *) + sizeof(RIPEMD160_CTX),
 };

@@ -1,4 +1,4 @@
-/* dso_dl.c -*- mode:C; c-file-style: "eay" -*- */
+/* dso_dl.c */
 /*
  * Written by Richard Levitte (richard@levitte.org) for the OpenSSL project
  * 2000.
@@ -238,7 +238,7 @@ static char *dl_merger(DSO *dso, const char *filespec1, const char *filespec2)
      */
     if (!filespec2 || filespec1[0] == '/') {
         merged = OPENSSL_malloc(strlen(filespec1) + 1);
-        if (!merged) {
+        if (merged == NULL) {
             DSOerr(DSO_F_DL_MERGER, ERR_R_MALLOC_FAILURE);
             return (NULL);
         }
@@ -249,7 +249,7 @@ static char *dl_merger(DSO *dso, const char *filespec1, const char *filespec2)
      */
     else if (!filespec1) {
         merged = OPENSSL_malloc(strlen(filespec2) + 1);
-        if (!merged) {
+        if (merged == NULL) {
             DSOerr(DSO_F_DL_MERGER, ERR_R_MALLOC_FAILURE);
             return (NULL);
         }
@@ -273,7 +273,7 @@ static char *dl_merger(DSO *dso, const char *filespec1, const char *filespec2)
             len--;
         }
         merged = OPENSSL_malloc(len + 2);
-        if (!merged) {
+        if (merged == NULL) {
             DSOerr(DSO_F_DL_MERGER, ERR_R_MALLOC_FAILURE);
             return (NULL);
         }

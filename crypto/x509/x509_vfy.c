@@ -764,19 +764,19 @@ static int check_id_error(X509_STORE_CTX *ctx, int errcode)
     return ctx->verify_cb(0, ctx);
 }
 
-static int check_hosts(X509 *x, X509_VERIFY_PARAM_ID *id)
+static int check_hosts(X509 *x, X509_VERIFY_PARAM *vpm)
 {
     int i;
-    int n = sk_OPENSSL_STRING_num(id->hosts);
+    int n = sk_OPENSSL_STRING_num(vpm->hosts);
     char *name;
 
-    if (id->peername != NULL) {
-        OPENSSL_free(id->peername);
-        id->peername = NULL;
+    if (vpm->peername != NULL) {
+        OPENSSL_free(vpm->peername);
+        vpm->peername = NULL;
     }
     for (i = 0; i < n; ++i) {
-        name = sk_OPENSSL_STRING_value(id->hosts, i);
-        if (X509_check_host(x, name, 0, id->hostflags, &id->peername) > 0)
+        name = sk_OPENSSL_STRING_value(vpm->hosts, i);
+        if (X509_check_host(x, name, 0, vpm->hostflags, &vpm->peername) > 0)
             return 1;
     }
     return n == 0;
@@ -785,17 +785,16 @@ static int check_hosts(X509 *x, X509_VERIFY_PARAM_ID *id)
 static int check_id(X509_STORE_CTX *ctx)
 {
     X509_VERIFY_PARAM *vpm = ctx->param;
-    X509_VERIFY_PARAM_ID *id = vpm->id;
     X509 *x = ctx->cert;
-    if (id->hosts && check_hosts(x, id) <= 0) {
+    if (vpm->hosts && check_hosts(x, vpm) <= 0) {
         if (!check_id_error(ctx, X509_V_ERR_HOSTNAME_MISMATCH))
             return 0;
     }
-    if (id->email && X509_check_email(x, id->email, id->emaillen, 0) <= 0) {
+    if (vpm->email && X509_check_email(x, vpm->email, vpm->emaillen, 0) <= 0) {
         if (!check_id_error(ctx, X509_V_ERR_EMAIL_MISMATCH))
             return 0;
     }
-    if (id->ip && X509_check_ip(x, id->ip, id->iplen, 0) <= 0) {
+    if (vpm->ip && X509_check_ip(x, vpm->ip, vpm->iplen, 0) <= 0) {
         if (!check_id_error(ctx, X509_V_ERR_IP_ADDRESS_MISMATCH))
             return 0;
     }
@@ -1560,7 +1559,7 @@ static int check_crl(X509_STORE_CTX *ctx, X509_CRL *crl)
         }
 
         /* Attempt to get issuer certificate public key */
-        ikey = X509_get_pubkey(issuer);
+        ikey = X509_get0_pubkey(issuer);
 
         if (!ikey) {
             ctx->error = X509_V_ERR_UNABLE_TO_DECODE_ISSUER_PUBLIC_KEY;
@@ -1589,7 +1588,6 @@ static int check_crl(X509_STORE_CTX *ctx, X509_CRL *crl)
     ok = 1;
 
  err:
-    EVP_PKEY_free(ikey);
     return ok;
 }
 
@@ -1770,7 +1768,7 @@ static int internal_verify(X509_STORE_CTX *ctx)
         if (!xs->valid
             && (xs != xi
                 || (ctx->param->flags & X509_V_FLAG_CHECK_SS_SIGNATURE))) {
-            if ((pkey = X509_get_pubkey(xi)) == NULL) {
+            if ((pkey = X509_get0_pubkey(xi)) == NULL) {
                 ctx->error = X509_V_ERR_UNABLE_TO_DECODE_ISSUER_PUBLIC_KEY;
                 ctx->current_cert = xi;
                 ok = (*cb) (0, ctx);
@@ -1780,13 +1778,9 @@ static int internal_verify(X509_STORE_CTX *ctx)
                 ctx->error = X509_V_ERR_CERT_SIGNATURE_FAILURE;
                 ctx->current_cert = xs;
                 ok = (*cb) (0, ctx);
-                if (!ok) {
-                    EVP_PKEY_free(pkey);
+                if (!ok)
                     goto end;
-                }
             }
-            EVP_PKEY_free(pkey);
-            pkey = NULL;
         }
 
         xs->valid = 1;
@@ -1974,7 +1968,7 @@ int X509_get_pubkey_parameters(EVP_PKEY *pkey, STACK_OF(X509) *chain)
         return 1;
 
     for (i = 0; i < sk_X509_num(chain); i++) {
-        ktmp = X509_get_pubkey(sk_X509_value(chain, i));
+        ktmp = X509_get0_pubkey(sk_X509_value(chain, i));
         if (ktmp == NULL) {
             X509err(X509_F_X509_GET_PUBKEY_PARAMETERS,
                     X509_R_UNABLE_TO_GET_CERTS_PUBLIC_KEY);
@@ -1982,8 +1976,6 @@ int X509_get_pubkey_parameters(EVP_PKEY *pkey, STACK_OF(X509) *chain)
         }
         if (!EVP_PKEY_missing_parameters(ktmp))
             break;
-        EVP_PKEY_free(ktmp);
-        ktmp = NULL;
     }
     if (ktmp == NULL) {
         X509err(X509_F_X509_GET_PUBKEY_PARAMETERS,
@@ -1993,14 +1985,12 @@ int X509_get_pubkey_parameters(EVP_PKEY *pkey, STACK_OF(X509) *chain)
 
     /* first, populate the other certs */
     for (j = i - 1; j >= 0; j--) {
-        ktmp2 = X509_get_pubkey(sk_X509_value(chain, j));
+        ktmp2 = X509_get0_pubkey(sk_X509_value(chain, j));
         EVP_PKEY_copy_parameters(ktmp2, ktmp);
-        EVP_PKEY_free(ktmp2);
     }
 
     if (pkey != NULL)
         EVP_PKEY_copy_parameters(pkey, ktmp);
-    EVP_PKEY_free(ktmp);
     return 1;
 }
 
@@ -2049,7 +2039,7 @@ X509_CRL *X509_CRL_diff(X509_CRL *base, X509_CRL *newer,
     }
     /* Create new CRL */
     crl = X509_CRL_new();
-    if (!crl || !X509_CRL_set_version(crl, 1))
+    if (crl == NULL || !X509_CRL_set_version(crl, 1))
         goto memerr;
     /* Set issuer name */
     if (!X509_CRL_set_issuer_name(crl, X509_CRL_get_issuer(newer)))
@@ -2109,19 +2099,6 @@ X509_CRL *X509_CRL_diff(X509_CRL *base, X509_CRL *newer,
     X509err(X509_F_X509_CRL_DIFF, ERR_R_MALLOC_FAILURE);
     X509_CRL_free(crl);
     return NULL;
-}
-
-int X509_STORE_CTX_get_ex_new_index(long argl, void *argp,
-                                    CRYPTO_EX_new *new_func,
-                                    CRYPTO_EX_dup *dup_func,
-                                    CRYPTO_EX_free *free_func)
-{
-    /*
-     * This function is (usually) called only once, by
-     * SSL_get_ex_data_X509_STORE_CTX_idx (ssl/ssl_cert.c).
-     */
-    return CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_X509_STORE_CTX, argl, argp,
-                                   new_func, dup_func, free_func);
 }
 
 int X509_STORE_CTX_set_ex_data(X509_STORE_CTX *ctx, int idx, void *data)
@@ -2267,7 +2244,7 @@ X509_STORE_CTX *X509_STORE_CTX_new(void)
 {
     X509_STORE_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));
 
-    if (!ctx) {
+    if (ctx == NULL) {
         X509err(X509_F_X509_STORE_CTX_NEW, ERR_R_MALLOC_FAILURE);
         return NULL;
     }

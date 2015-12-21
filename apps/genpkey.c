@@ -269,7 +269,7 @@ static int init_keygen_file(EVP_PKEY_CTX **pctx, const char *file, ENGINE *e)
     }
 
     ctx = EVP_PKEY_CTX_new(pkey, e);
-    if (!ctx)
+    if (ctx == NULL)
         goto err;
     if (EVP_PKEY_keygen_init(ctx) <= 0)
         goto err;

@@ -31,13 +31,15 @@ AFLAGS= $(ASFLAGS)
 GENERAL=Makefile engines.com install.com engine_vector.mar
 
 LIB=$(TOP)/libcrypto.a
-LIBNAMES= gmp padlock capi
-LIBSRC=	e_gmp.c \
+LIBNAMES= padlock capi dasync
+LIBSRC=	\
 	e_padlock.c \
-	e_capi.c
-LIBOBJ= e_gmp.o \
+	e_capi.c \
+	e_dasync.c
+LIBOBJ= \
 	e_padlock.o \
 	e_capi.o \
+	e_dasync.o \
 	$(ENGINES_ASM_OBJ)
 
 TESTLIBNAMES= ossltest
@@ -46,11 +48,12 @@ TESTLIBOBJ= e_ossltest.o
 
 SRC= $(LIBSRC)
 
-HEADER=	e_gmp_err.c e_gmp_err.h \
+HEADER=	\
 	e_chil_err.c e_chil_err.h \
 	e_ubsec_err.c e_ubsec_err.h \
 	e_capi_err.c e_capi_err.h \
-	e_ossltest_err.c e_ossltest_err.h
+	e_ossltest_err.c e_ossltest_err.h \
+	e_dasync_err.c e_dasync_err.h
 
 ALL=	$(GENERAL) $(SRC) $(HEADER)
 
@@ -157,7 +160,6 @@ clean:
 e_capi.o: ../include/openssl/asn1.h ../include/openssl/bio.h
 e_capi.o: ../include/openssl/buffer.h ../include/openssl/crypto.h
 e_capi.o: ../include/openssl/e_os2.h ../include/openssl/ec.h
-e_capi.o: ../include/openssl/ecdh.h ../include/openssl/ecdsa.h
 e_capi.o: ../include/openssl/engine.h ../include/openssl/evp.h
 e_capi.o: ../include/openssl/lhash.h ../include/openssl/obj_mac.h
 e_capi.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
@@ -166,24 +168,24 @@ e_capi.o: ../include/openssl/pkcs7.h ../include/openssl/safestack.h
 e_capi.o: ../include/openssl/sha.h ../include/openssl/stack.h
 e_capi.o: ../include/openssl/symhacks.h ../include/openssl/x509.h
 e_capi.o: ../include/openssl/x509_vfy.h e_capi.c
-e_gmp.o: ../include/openssl/asn1.h ../include/openssl/bio.h
-e_gmp.o: ../include/openssl/bn.h ../include/openssl/buffer.h
-e_gmp.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
-e_gmp.o: ../include/openssl/ec.h ../include/openssl/ecdh.h
-e_gmp.o: ../include/openssl/ecdsa.h ../include/openssl/engine.h
-e_gmp.o: ../include/openssl/evp.h ../include/openssl/lhash.h
-e_gmp.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
-e_gmp.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
-e_gmp.o: ../include/openssl/ossl_typ.h ../include/openssl/pkcs7.h
-e_gmp.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
-e_gmp.o: ../include/openssl/sha.h ../include/openssl/stack.h
-e_gmp.o: ../include/openssl/symhacks.h ../include/openssl/x509.h
-e_gmp.o: ../include/openssl/x509_vfy.h e_gmp.c
+e_dasync.o: ../include/openssl/asn1.h ../include/openssl/async.h
+e_dasync.o: ../include/openssl/bio.h ../include/openssl/bn.h
+e_dasync.o: ../include/openssl/buffer.h ../include/openssl/crypto.h
+e_dasync.o: ../include/openssl/e_os2.h ../include/openssl/ec.h
+e_dasync.o: ../include/openssl/engine.h ../include/openssl/err.h
+e_dasync.o: ../include/openssl/evp.h ../include/openssl/lhash.h
+e_dasync.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
+e_dasync.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
+e_dasync.o: ../include/openssl/ossl_typ.h ../include/openssl/pkcs7.h
+e_dasync.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
+e_dasync.o: ../include/openssl/sha.h ../include/openssl/stack.h
+e_dasync.o: ../include/openssl/symhacks.h ../include/openssl/x509.h
+e_dasync.o: ../include/openssl/x509_vfy.h e_dasync.c e_dasync_err.c
+e_dasync.o: e_dasync_err.h
 e_ossltest.o: ../include/openssl/aes.h ../include/openssl/asn1.h
 e_ossltest.o: ../include/openssl/bio.h ../include/openssl/buffer.h
 e_ossltest.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
-e_ossltest.o: ../include/openssl/ec.h ../include/openssl/ecdh.h
-e_ossltest.o: ../include/openssl/ecdsa.h ../include/openssl/engine.h
+e_ossltest.o: ../include/openssl/ec.h ../include/openssl/engine.h
 e_ossltest.o: ../include/openssl/err.h ../include/openssl/evp.h
 e_ossltest.o: ../include/openssl/lhash.h ../include/openssl/md5.h
 e_ossltest.o: ../include/openssl/modes.h ../include/openssl/obj_mac.h
@@ -198,7 +200,6 @@ e_padlock.o: ../include/openssl/aes.h ../include/openssl/asn1.h
 e_padlock.o: ../include/openssl/bio.h ../include/openssl/buffer.h
 e_padlock.o: ../include/openssl/crypto.h ../include/openssl/dso.h
 e_padlock.o: ../include/openssl/e_os2.h ../include/openssl/ec.h
-e_padlock.o: ../include/openssl/ecdh.h ../include/openssl/ecdsa.h
 e_padlock.o: ../include/openssl/engine.h ../include/openssl/err.h
 e_padlock.o: ../include/openssl/evp.h ../include/openssl/lhash.h
 e_padlock.o: ../include/openssl/modes.h ../include/openssl/obj_mac.h

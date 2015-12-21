@@ -590,7 +590,7 @@ int x509_main(int argc, char **argv)
 
         if (sno == NULL) {
             sno = ASN1_INTEGER_new();
-            if (!sno || !rand_serial(NULL, sno))
+            if (sno == NULL || !rand_serial(NULL, sno))
                 goto end;
             if (!X509_set_serialNumber(x, sno))
                 goto end;
@@ -723,7 +723,7 @@ int x509_main(int argc, char **argv)
             } else if (modulus == i) {
                 EVP_PKEY *pkey;
 
-                pkey = X509_get_pubkey(x);
+                pkey = X509_get0_pubkey(x);
                 if (pkey == NULL) {
                     BIO_printf(bio_err, "Modulus=unavailable\n");
                     ERR_print_errors(bio_err);
@@ -742,18 +742,16 @@ int x509_main(int argc, char **argv)
 #endif
                     BIO_printf(out, "Wrong Algorithm type");
                 BIO_printf(out, "\n");
-                EVP_PKEY_free(pkey);
             } else if (pubkey == i) {
                 EVP_PKEY *pkey;
 
-                pkey = X509_get_pubkey(x);
+                pkey = X509_get0_pubkey(x);
                 if (pkey == NULL) {
                     BIO_printf(bio_err, "Error getting public key\n");
                     ERR_print_errors(bio_err);
                     goto end;
                 }
                 PEM_write_bio_PUBKEY(out, pkey);
-                EVP_PKEY_free(pkey);
             } else if (C == i) {
                 unsigned char *d;
                 char *m;
@@ -951,15 +949,15 @@ static ASN1_INTEGER *x509_load_serial(char *CAfile, char *serialfile,
            : (strlen(serialfile))) + 1;
     buf = app_malloc(len, "serial# buffer");
     if (serialfile == NULL) {
-        BUF_strlcpy(buf, CAfile, len);
+        OPENSSL_strlcpy(buf, CAfile, len);
         for (p = buf; *p; p++)
             if (*p == '.') {
                 *p = '\0';
                 break;
             }
-        BUF_strlcat(buf, POSTFIX, len);
+        OPENSSL_strlcat(buf, POSTFIX, len);
     } else
-        BUF_strlcpy(buf, serialfile, len);
+        OPENSSL_strlcpy(buf, serialfile, len);
 
     serial = load_serial(buf, create, NULL);
     if (serial == NULL)
@@ -991,9 +989,8 @@ static int x509_certify(X509_STORE *ctx, char *CAfile, const EVP_MD *digest,
     X509_STORE_CTX xsc;
     EVP_PKEY *upkey;
 
-    upkey = X509_get_pubkey(xca);
+    upkey = X509_get0_pubkey(xca);
     EVP_PKEY_copy_parameters(upkey, pkey);
-    EVP_PKEY_free(upkey);
 
     if (!X509_STORE_CTX_init(&xsc, ctx, x, NULL)) {
         BIO_printf(bio_err, "Error initialising X509 store\n");

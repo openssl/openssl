@@ -1102,10 +1102,10 @@ __owur static int ecp_nistz256_set_from_affine(EC_POINT *out, const EC_GROUP *gr
     int ret = 0;
 
     x = BN_new();
-    if (!x)
+    if (x == NULL)
         return 0;
     y = BN_new();
-    if (!y) {
+    if (y == NULL) {
         BN_free(x);
         return 0;
     }
@@ -1305,13 +1305,13 @@ __owur static int ecp_nistz256_points_mul(const EC_GROUP *group,
          * handled like a normal point.
          */
         new_scalars = OPENSSL_malloc((num + 1) * sizeof(BIGNUM *));
-        if (!new_scalars) {
+        if (new_scalars == NULL) {
             ECerr(EC_F_ECP_NISTZ256_POINTS_MUL, ERR_R_MALLOC_FAILURE);
             goto err;
         }
 
         new_points = OPENSSL_malloc((num + 1) * sizeof(EC_POINT *));
-        if (!new_points) {
+        if (new_points == NULL) {
             ECerr(EC_F_ECP_NISTZ256_POINTS_MUL, ERR_R_MALLOC_FAILURE);
             goto err;
         }
@@ -1410,7 +1410,7 @@ static EC_PRE_COMP *ecp_nistz256_pre_comp_new(const EC_GROUP *group)
 
     ret = OPENSSL_malloc(sizeof(*ret));
 
-    if (!ret) {
+    if (ret == NULL) {
         ECerr(EC_F_ECP_NISTZ256_PRE_COMP_NEW, ERR_R_MALLOC_FAILURE);
         return ret;
     }

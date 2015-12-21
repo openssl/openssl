@@ -61,6 +61,7 @@
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 #include <openssl/x509.h>
+#include "internal/evp_int.h"
 
 static int init(EVP_MD_CTX *ctx)
 {
@@ -87,7 +88,6 @@ static const EVP_MD null_md = {
     final,
     NULL,
     NULL,
-    EVP_PKEY_NULL_method,
     0,
     sizeof(EVP_MD *),
 };

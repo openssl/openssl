@@ -66,7 +66,7 @@ This option prints out the EC parameters in human readable form.
 =item B<-C>
 
 This option converts the EC parameters into C code. The parameters can then
-be loaded by calling the B<get_ec_group_XXX()> function.
+be loaded by calling the get_ec_group_XXX() function.
 
 =item B<-check>
 

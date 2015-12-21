@@ -92,6 +92,7 @@ void OPENSSL_config(const char *config_name)
                                CONF_MFLAGS_DEFAULT_SECTION |
                                CONF_MFLAGS_IGNORE_MISSING_FILE);
 #endif
+    openssl_configured = 1;
 }
 
 void OPENSSL_no_config()

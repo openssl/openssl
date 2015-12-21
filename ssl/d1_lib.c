@@ -90,7 +90,6 @@ const SSL3_ENC_METHOD DTLSv1_enc_data = {
     tls1_change_cipher_state,
     tls1_final_finish_mac,
     TLS1_FINISH_MAC_LENGTH,
-    tls1_cert_verify_mac,
     TLS_MD_CLIENT_FINISH_CONST, TLS_MD_CLIENT_FINISH_CONST_SIZE,
     TLS_MD_SERVER_FINISH_CONST, TLS_MD_SERVER_FINISH_CONST_SIZE,
     tls1_alert_code,
@@ -109,7 +108,6 @@ const SSL3_ENC_METHOD DTLSv1_2_enc_data = {
     tls1_change_cipher_state,
     tls1_final_finish_mac,
     TLS1_FINISH_MAC_LENGTH,
-    tls1_cert_verify_mac,
     TLS_MD_CLIENT_FINISH_CONST, TLS_MD_CLIENT_FINISH_CONST_SIZE,
     TLS_MD_SERVER_FINISH_CONST, TLS_MD_SERVER_FINISH_CONST_SIZE,
     tls1_alert_code,
@@ -155,7 +153,7 @@ int dtls1_new(SSL *s)
     d1->link_mtu = 0;
     d1->mtu = 0;
 
-    if (!d1->buffered_messages || !d1->sent_messages) {
+    if (d1->buffered_messages == NULL || d1->sent_messages == NULL) {
         pqueue_free(d1->buffered_messages);
         pqueue_free(d1->sent_messages);
         OPENSSL_free(d1);

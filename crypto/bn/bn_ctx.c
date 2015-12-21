@@ -204,7 +204,7 @@ BN_CTX *BN_CTX_secure_new(void)
 {
     BN_CTX *ret = BN_CTX_new();
 
-    if (ret)
+    if (ret != NULL)
         ret->flags = BN_FLG_SECURE;
     return ret;
 }
@@ -365,7 +365,7 @@ static BIGNUM *BN_POOL_get(BN_POOL *p, int flag)
         if (item == NULL)
             return NULL;
         for (loop = 0, bn = item->vals; loop++ < BN_CTX_POOL_SIZE; bn++) {
-            BN_init(bn);
+            bn_init(bn);
             if ((flag & BN_FLG_SECURE) != 0)
                 BN_set_flags(bn, BN_FLG_SECURE);
         }

@@ -134,7 +134,7 @@ int ec_GF2m_simple_group_init(EC_GROUP *group)
     group->a = BN_new();
     group->b = BN_new();
 
-    if (!group->field || !group->a || !group->b) {
+    if (group->field == NULL || group->a == NULL || group->b == NULL) {
         BN_free(group->field);
         BN_free(group->a);
         BN_free(group->b);
@@ -326,7 +326,7 @@ int ec_GF2m_simple_point_init(EC_POINT *point)
     point->Y = BN_new();
     point->Z = BN_new();
 
-    if (!point->X || !point->Y || !point->Z) {
+    if (point->X == NULL || point->Y == NULL || point->Z == NULL) {
         BN_free(point->X);
         BN_free(point->Y);
         BN_free(point->Z);

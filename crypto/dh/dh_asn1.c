@@ -70,7 +70,7 @@ static int dh_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
 {
     if (operation == ASN1_OP_NEW_PRE) {
         *pval = (ASN1_VALUE *)DH_new();
-        if (*pval)
+        if (*pval != NULL)
             return 2;
         return 0;
     } else if (operation == ASN1_OP_FREE_PRE) {
@@ -133,10 +133,10 @@ DH *d2i_DHxparams(DH **a, const unsigned char **pp, long length)
     int_dhx942_dh *dhx = NULL;
     DH *dh = NULL;
     dh = DH_new();
-    if (!dh)
+    if (dh == NULL)
         return NULL;
     dhx = d2i_int_dhx(NULL, pp, length);
-    if (!dhx) {
+    if (dhx == NULL) {
         DH_free(dh);
         return NULL;
     }

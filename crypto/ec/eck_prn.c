@@ -119,7 +119,7 @@ int EC_KEY_print(BIO *bp, const EC_KEY *x, int off)
     EVP_PKEY *pk;
     int ret;
     pk = EVP_PKEY_new();
-    if (!pk || !EVP_PKEY_set1_EC_KEY(pk, (EC_KEY *)x))
+    if (pk == NULL || !EVP_PKEY_set1_EC_KEY(pk, (EC_KEY *)x))
         return 0;
     ret = EVP_PKEY_print_private(bp, pk, off, NULL);
     EVP_PKEY_free(pk);
@@ -131,7 +131,7 @@ int ECParameters_print(BIO *bp, const EC_KEY *x)
     EVP_PKEY *pk;
     int ret;
     pk = EVP_PKEY_new();
-    if (!pk || !EVP_PKEY_set1_EC_KEY(pk, (EC_KEY *)x))
+    if (pk == NULL || !EVP_PKEY_set1_EC_KEY(pk, (EC_KEY *)x))
         return 0;
     ret = EVP_PKEY_print_params(bp, pk, 4, NULL);
     EVP_PKEY_free(pk);

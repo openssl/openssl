@@ -62,7 +62,6 @@
 #include <openssl/x509.h>
 #include <openssl/ec.h>
 #include "ec_lcl.h"
-#include <openssl/ecdsa.h>
 #include <openssl/evp.h>
 #include "internal/evp_int.h"
 
@@ -93,7 +92,7 @@ static int pkey_ec_init(EVP_PKEY_CTX *ctx)
     EC_PKEY_CTX *dctx;
 
     dctx = OPENSSL_zalloc(sizeof(*dctx));
-    if (!dctx)
+    if (dctx == NULL)
         return 0;
 
     dctx->cofactor_mode = -1;
@@ -125,7 +124,7 @@ static int pkey_ec_copy(EVP_PKEY_CTX *dst, EVP_PKEY_CTX *src)
     dctx->kdf_md = sctx->kdf_md;
     dctx->kdf_outlen = sctx->kdf_outlen;
     if (sctx->kdf_ukm) {
-        dctx->kdf_ukm = BUF_memdup(sctx->kdf_ukm, sctx->kdf_ukmlen);
+        dctx->kdf_ukm = OPENSSL_memdup(sctx->kdf_ukm, sctx->kdf_ukmlen);
         if (!dctx->kdf_ukm)
             return 0;
     } else
@@ -248,7 +247,7 @@ static int pkey_ec_kdf_derive(EVP_PKEY_CTX *ctx,
     if (!pkey_ec_derive(ctx, NULL, &ktmplen))
         return 0;
     ktmp = OPENSSL_malloc(ktmplen);
-    if (!ktmp)
+    if (ktmp == NULL)
         return 0;
     if (!pkey_ec_derive(ctx, ktmp, &ktmplen))
         goto err;
@@ -442,7 +441,7 @@ static int pkey_ec_paramgen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
         return 0;
     }
     ec = EC_KEY_new();
-    if (!ec)
+    if (ec == NULL)
         return 0;
     ret = EC_KEY_set_group(ec, dctx->gen_group);
     if (ret)

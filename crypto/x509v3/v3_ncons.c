@@ -121,7 +121,7 @@ static void *v2i_NAME_CONSTRAINTS(const X509V3_EXT_METHOD *method,
     GENERAL_SUBTREE *sub = NULL;
 
     ncons = NAME_CONSTRAINTS_new();
-    if (!ncons)
+    if (ncons == NULL)
         goto memerr;
     for (i = 0; i < sk_CONF_VALUE_num(nval); i++) {
         val = sk_CONF_VALUE_value(nval, i);
@@ -137,11 +137,13 @@ static void *v2i_NAME_CONSTRAINTS(const X509V3_EXT_METHOD *method,
         }
         tval.value = val->value;
         sub = GENERAL_SUBTREE_new();
+        if (sub == NULL)
+            goto memerr;
         if (!v2i_GENERAL_NAME_ex(sub->base, method, ctx, &tval, 1))
             goto err;
-        if (!*ptree)
+        if (*ptree == NULL)
             *ptree = sk_GENERAL_SUBTREE_new_null();
-        if (!*ptree || !sk_GENERAL_SUBTREE_push(*ptree, sub))
+        if (*ptree == NULL || !sk_GENERAL_SUBTREE_push(*ptree, sub))
             goto memerr;
         sub = NULL;
     }

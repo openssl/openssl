@@ -143,7 +143,6 @@ typedef struct x509_lookup_method_st {
                          X509_OBJECT *ret);
 } X509_LOOKUP_METHOD;
 
-typedef struct X509_VERIFY_PARAM_ID_st X509_VERIFY_PARAM_ID;
 typedef struct X509_VERIFY_PARAM_st X509_VERIFY_PARAM;
 
 DECLARE_STACK_OF(X509_VERIFY_PARAM)
@@ -495,10 +494,8 @@ int X509_STORE_load_locations(X509_STORE *ctx,
                               const char *file, const char *dir);
 int X509_STORE_set_default_paths(X509_STORE *ctx);
 
-int X509_STORE_CTX_get_ex_new_index(long argl, void *argp,
-                                    CRYPTO_EX_new *new_func,
-                                    CRYPTO_EX_dup *dup_func,
-                                    CRYPTO_EX_free *free_func);
+#define X509_STORE_CTX_get_ex_new_index(l, p, newf, dupf, freef) \
+    CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_X509_STORE_CTX, l, p, newf, dupf, freef)
 int X509_STORE_CTX_set_ex_data(X509_STORE_CTX *ctx, int idx, void *data);
 void *X509_STORE_CTX_get_ex_data(X509_STORE_CTX *ctx, int idx);
 int X509_STORE_CTX_get_error(X509_STORE_CTX *ctx);

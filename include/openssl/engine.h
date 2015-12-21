@@ -83,8 +83,7 @@
 #   include <openssl/dh.h>
 #  endif
 #  ifndef OPENSSL_NO_EC
-#   include <openssl/ecdh.h>
-#   include <openssl/ecdsa.h>
+#   include <openssl/ec.h>
 #  endif
 #  include <openssl/rand.h>
 #  include <openssl/ui.h>
@@ -108,13 +107,12 @@ extern "C" {
 # define ENGINE_METHOD_DSA               (unsigned int)0x0002
 # define ENGINE_METHOD_DH                (unsigned int)0x0004
 # define ENGINE_METHOD_RAND              (unsigned int)0x0008
-# define ENGINE_METHOD_ECDH              (unsigned int)0x0010
-# define ENGINE_METHOD_ECDSA             (unsigned int)0x0020
 # define ENGINE_METHOD_CIPHERS           (unsigned int)0x0040
 # define ENGINE_METHOD_DIGESTS           (unsigned int)0x0080
 # define ENGINE_METHOD_STORE             (unsigned int)0x0100
 # define ENGINE_METHOD_PKEY_METHS        (unsigned int)0x0200
 # define ENGINE_METHOD_PKEY_ASN1_METHS   (unsigned int)0x0400
+# define ENGINE_METHOD_EC                (unsigned int)0x0800
 /* Obvious all-or-nothing cases. */
 # define ENGINE_METHOD_ALL               (unsigned int)0xFFFF
 # define ENGINE_METHOD_NONE              (unsigned int)0x0000
@@ -403,12 +401,10 @@ void ENGINE_load_sureware(void);
 void ENGINE_load_ubsec(void);
 void ENGINE_load_padlock(void);
 void ENGINE_load_capi(void);
-#  ifndef OPENSSL_NO_GMP
-void ENGINE_load_gmp(void);
-#  endif
 #  ifndef OPENSSL_NO_GOST
 void ENGINE_load_gost(void);
 #  endif
+void ENGINE_load_dasync(void);
 # endif
 void ENGINE_load_cryptodev(void);
 void ENGINE_load_rdrand(void);
@@ -438,13 +434,9 @@ int ENGINE_register_DSA(ENGINE *e);
 void ENGINE_unregister_DSA(ENGINE *e);
 void ENGINE_register_all_DSA(void);
 
-int ENGINE_register_ECDH(ENGINE *e);
-void ENGINE_unregister_ECDH(ENGINE *e);
-void ENGINE_register_all_ECDH(void);
-
-int ENGINE_register_ECDSA(ENGINE *e);
-void ENGINE_unregister_ECDSA(ENGINE *e);
-void ENGINE_register_all_ECDSA(void);
+int ENGINE_register_EC(ENGINE *e);
+void ENGINE_unregister_EC(ENGINE *e);
+void ENGINE_register_all_EC(void);
 
 int ENGINE_register_DH(ENGINE *e);
 void ENGINE_unregister_DH(ENGINE *e);
@@ -552,8 +544,7 @@ int ENGINE_set_id(ENGINE *e, const char *id);
 int ENGINE_set_name(ENGINE *e, const char *name);
 int ENGINE_set_RSA(ENGINE *e, const RSA_METHOD *rsa_meth);
 int ENGINE_set_DSA(ENGINE *e, const DSA_METHOD *dsa_meth);
-int ENGINE_set_ECDH(ENGINE *e, const ECDH_METHOD *ecdh_meth);
-int ENGINE_set_ECDSA(ENGINE *e, const ECDSA_METHOD *ecdsa_meth);
+int ENGINE_set_EC(ENGINE *e, const EC_KEY_METHOD *ecdsa_meth);
 int ENGINE_set_DH(ENGINE *e, const DH_METHOD *dh_meth);
 int ENGINE_set_RAND(ENGINE *e, const RAND_METHOD *rand_meth);
 int ENGINE_set_STORE(ENGINE *e, const STORE_METHOD *store_meth);
@@ -574,9 +565,8 @@ int ENGINE_set_pkey_asn1_meths(ENGINE *e, ENGINE_PKEY_ASN1_METHS_PTR f);
 int ENGINE_set_flags(ENGINE *e, int flags);
 int ENGINE_set_cmd_defns(ENGINE *e, const ENGINE_CMD_DEFN *defns);
 /* These functions allow control over any per-structure ENGINE data. */
-int ENGINE_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
-                            CRYPTO_EX_dup *dup_func,
-                            CRYPTO_EX_free *free_func);
+#define ENGINE_get_ex_new_index(l, p, newf, dupf, freef) \
+    CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_ENGINE, l, p, newf, dupf, freef)
 int ENGINE_set_ex_data(ENGINE *e, int idx, void *arg);
 void *ENGINE_get_ex_data(const ENGINE *e, int idx);
 
@@ -598,8 +588,7 @@ const char *ENGINE_get_id(const ENGINE *e);
 const char *ENGINE_get_name(const ENGINE *e);
 const RSA_METHOD *ENGINE_get_RSA(const ENGINE *e);
 const DSA_METHOD *ENGINE_get_DSA(const ENGINE *e);
-const ECDH_METHOD *ENGINE_get_ECDH(const ENGINE *e);
-const ECDSA_METHOD *ENGINE_get_ECDSA(const ENGINE *e);
+const EC_KEY_METHOD *ENGINE_get_EC(const ENGINE *e);
 const DH_METHOD *ENGINE_get_DH(const ENGINE *e);
 const RAND_METHOD *ENGINE_get_RAND(const ENGINE *e);
 const STORE_METHOD *ENGINE_get_STORE(const ENGINE *e);
@@ -677,8 +666,7 @@ int ENGINE_load_ssl_client_cert(ENGINE *e, SSL *s,
 ENGINE *ENGINE_get_default_RSA(void);
 /* Same for the other "methods" */
 ENGINE *ENGINE_get_default_DSA(void);
-ENGINE *ENGINE_get_default_ECDH(void);
-ENGINE *ENGINE_get_default_ECDSA(void);
+ENGINE *ENGINE_get_default_EC(void);
 ENGINE *ENGINE_get_default_DH(void);
 ENGINE *ENGINE_get_default_RAND(void);
 /*
@@ -700,8 +688,7 @@ int ENGINE_set_default_RSA(ENGINE *e);
 int ENGINE_set_default_string(ENGINE *e, const char *def_list);
 /* Same for the other "methods" */
 int ENGINE_set_default_DSA(ENGINE *e);
-int ENGINE_set_default_ECDH(ENGINE *e);
-int ENGINE_set_default_ECDSA(ENGINE *e);
+int ENGINE_set_default_EC(ENGINE *e);
 int ENGINE_set_default_DH(ENGINE *e);
 int ENGINE_set_default_RAND(ENGINE *e);
 int ENGINE_set_default_ciphers(ENGINE *e);

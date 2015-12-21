@@ -180,7 +180,7 @@ static STACK_OF(SCT) *d2i_SCT_LIST(STACK_OF(SCT) **a,
         listlen -= sctlen;
 
         sct = OPENSSL_malloc(sizeof(*sct));
-        if (!sct)
+        if (sct == NULL)
             goto err;
         if (!sk_SCT_push(sk, sct)) {
             OPENSSL_free(sct);
@@ -188,7 +188,7 @@ static STACK_OF(SCT) *d2i_SCT_LIST(STACK_OF(SCT) **a,
         }
 
         sct->sct = OPENSSL_malloc(sctlen);
-        if (!sct->sct)
+        if (sct->sct == NULL)
             goto err;
         memcpy(sct->sct, p, sctlen);
         sct->sct_len = sctlen;

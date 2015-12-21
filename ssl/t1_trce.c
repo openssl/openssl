@@ -461,6 +461,13 @@ static ssl_trace_tbl ssl_ciphers_tbl[] = {
     {0xC0AD, "TLS_ECDHE_ECDSA_WITH_AES_256_CCM"},
     {0xC0AE, "TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8"},
     {0xC0AF, "TLS_ECDHE_ECDSA_WITH_AES_256_CCM_8"},
+    {0xCCA8, "TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305" },
+    {0xCCA9, "TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305" },
+    {0xCCAA, "TLS_DHE_RSA_WITH_CHACHA20_POLY1305" },
+    {0xCCAB, "TLS_PSK_WITH_CHACHA20_POLY1305" },
+    {0xCCAC, "TLS_ECDHE_PSK_WITH_CHACHA20_POLY1305" },
+    {0xCCAD, "TLS_DHE_PSK_WITH_CHACHA20_POLY1305" },
+    {0xCCAE, "TLS_RSA_PSK_WITH_CHACHA20_POLY1305" },
     {0xFEFE, "SSL_RSA_FIPS_WITH_DES_CBC_SHA"},
     {0xFEFF, "SSL_RSA_FIPS_WITH_3DES_EDE_CBC_SHA"},
 };
@@ -537,20 +544,26 @@ static ssl_trace_tbl ssl_point_tbl[] = {
 };
 
 static ssl_trace_tbl ssl_md_tbl[] = {
-    {0, "none"},
-    {1, "md5"},
-    {2, "sha1"},
-    {3, "sha224"},
-    {4, "sha256"},
-    {5, "sha384"},
-    {6, "sha512"}
+    {TLSEXT_hash_none, "none"},
+    {TLSEXT_hash_md5, "md5"},
+    {TLSEXT_hash_sha1, "sha1"},
+    {TLSEXT_hash_sha224, "sha224"},
+    {TLSEXT_hash_sha256, "sha256"},
+    {TLSEXT_hash_sha384, "sha384"},
+    {TLSEXT_hash_sha512, "sha512"},
+    {TLSEXT_hash_gostr3411, "md_gost94"},
+    {TLSEXT_hash_gostr34112012_256, "md_gost2012_256"},
+    {TLSEXT_hash_gostr34112012_512, "md_gost2012_512"}
 };
 
 static ssl_trace_tbl ssl_sig_tbl[] = {
-    {0, "anonymous"},
-    {1, "rsa"},
-    {2, "dsa"},
-    {3, "ecdsa"}
+    {TLSEXT_signature_anonymous, "anonymous"},
+    {TLSEXT_signature_rsa, "rsa"},
+    {TLSEXT_signature_dsa, "dsa"},
+    {TLSEXT_signature_ecdsa, "ecdsa"},
+    {TLSEXT_signature_gostr34102001, "gost2001"},
+    {TLSEXT_signature_gostr34102012_256, "gost2012_256"},
+    {TLSEXT_signature_gostr34102012_512, "gost2012_512"}
 };
 
 static ssl_trace_tbl ssl_hb_tbl[] = {
@@ -900,14 +913,6 @@ static int ssl_get_keyex(const char **pname, SSL *ssl)
         *pname = "rsa";
         return SSL_kRSA;
     }
-    if (alg_k & SSL_kDHr) {
-        *pname = "dh_rsa";
-        return SSL_kDHr;
-    }
-    if (alg_k & SSL_kDHd) {
-        *pname = "dh_dss";
-        return SSL_kDHd;
-    }
     if (alg_k & SSL_kDHE) {
         *pname = "DHE";
         return SSL_kDHE;
@@ -980,14 +985,6 @@ static int ssl_print_client_keyex(BIO *bio, int indent, SSL *ssl,
         }
         break;
 
-        /* Implicit parameters only allowed for static DH */
-    case SSL_kDHd:
-    case SSL_kDHr:
-        if (msglen == 0) {
-            BIO_indent(bio, indent + 2, 80);
-            BIO_puts(bio, "implicit\n");
-            break;
-        }
     case SSL_kDHE:
     case SSL_kDHEPSK:
         if (!ssl_print_hexbuf(bio, indent + 2, "dh_Yc", 2, &msg, &msglen))
@@ -1027,8 +1024,6 @@ static int ssl_print_server_keyex(BIO *bio, int indent, SSL *ssl,
     }
     switch (id) {
         /* Should never happen */
-    case SSL_kDHd:
-    case SSL_kDHr:
     case SSL_kECDHr:
     case SSL_kECDHe:
         BIO_indent(bio, indent + 2, 80);
@@ -1055,6 +1050,7 @@ static int ssl_print_server_keyex(BIO *bio, int indent, SSL *ssl,
             return 0;
         break;
 
+#ifndef OPENSSL_NO_EC
     case SSL_kECDHE:
     case SSL_kECDHEPSK:
         if (msglen < 1)
@@ -1080,6 +1076,7 @@ static int ssl_print_server_keyex(BIO *bio, int indent, SSL *ssl,
             return 0;
         }
         break;
+#endif
 
     case SSL_kPSK:
     case SSL_kRSAPSK:

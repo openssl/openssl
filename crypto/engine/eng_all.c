@@ -1,4 +1,4 @@
-/* crypto/engine/eng_all.c -*- mode: C; c-file-style: "eay" -*- */
+/* crypto/engine/eng_all.c */
 /*
  * Written by Richard Levitte <richard@levitte.org> for the OpenSSL project
  * 2000.
@@ -88,9 +88,6 @@ void ENGINE_load_builtin_engines(void)
 # endif
 # ifndef OPENSSL_NO_GOST
     ENGINE_load_gost();
-# endif
-# ifndef OPENSSL_NO_GMP
-    ENGINE_load_gmp();
 # endif
 # if defined(OPENSSL_SYS_WIN32) && !defined(OPENSSL_NO_CAPIENG)
     ENGINE_load_capi();

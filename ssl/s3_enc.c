@@ -140,41 +140,26 @@
 #include <openssl/evp.h>
 #include <openssl/md5.h>
 
-static const unsigned char ssl3_pad_1[48] = {
-    0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36,
-    0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36,
-    0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36,
-    0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36,
-    0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36,
-    0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36
-};
-
-static const unsigned char ssl3_pad_2[48] = {
-    0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c,
-    0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c,
-    0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c,
-    0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c,
-    0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c,
-    0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c
-};
-
-static int ssl3_handshake_mac(SSL *s, int md_nid,
-                              const char *sender, int len, unsigned char *p);
 static int ssl3_generate_key_block(SSL *s, unsigned char *km, int num)
 {
-    EVP_MD_CTX m5;
-    EVP_MD_CTX s1;
+    EVP_MD_CTX *m5;
+    EVP_MD_CTX *s1;
     unsigned char buf[16], smd[SHA_DIGEST_LENGTH];
     unsigned char c = 'A';
     unsigned int i, j, k;
+    int ret = 0;
 
 #ifdef CHARSET_EBCDIC
     c = os_toascii[c];          /* 'A' in ASCII */
 #endif
     k = 0;
-    EVP_MD_CTX_init(&m5);
-    EVP_MD_CTX_set_flags(&m5, EVP_MD_CTX_FLAG_NON_FIPS_ALLOW);
-    EVP_MD_CTX_init(&s1);
+    m5 = EVP_MD_CTX_new();
+    s1 = EVP_MD_CTX_new();
+    if (m5 == NULL || s1 == NULL) {
+        SSLerr(SSL_F_SSL3_GENERATE_KEY_BLOCK, ERR_R_MALLOC_FAILURE);
+        goto err;
+    }
+    EVP_MD_CTX_set_flags(m5, EVP_MD_CTX_FLAG_NON_FIPS_ALLOW);
     for (i = 0; (int)i < num; i += MD5_DIGEST_LENGTH) {
         k++;
         if (k > sizeof buf) {
@@ -186,30 +171,32 @@ static int ssl3_generate_key_block(SSL *s, unsigned char *km, int num)
         for (j = 0; j < k; j++)
             buf[j] = c;
         c++;
-        EVP_DigestInit_ex(&s1, EVP_sha1(), NULL);
-        EVP_DigestUpdate(&s1, buf, k);
-        EVP_DigestUpdate(&s1, s->session->master_key,
+        EVP_DigestInit_ex(s1, EVP_sha1(), NULL);
+        EVP_DigestUpdate(s1, buf, k);
+        EVP_DigestUpdate(s1, s->session->master_key,
                          s->session->master_key_length);
-        EVP_DigestUpdate(&s1, s->s3->server_random, SSL3_RANDOM_SIZE);
-        EVP_DigestUpdate(&s1, s->s3->client_random, SSL3_RANDOM_SIZE);
-        EVP_DigestFinal_ex(&s1, smd, NULL);
+        EVP_DigestUpdate(s1, s->s3->server_random, SSL3_RANDOM_SIZE);
+        EVP_DigestUpdate(s1, s->s3->client_random, SSL3_RANDOM_SIZE);
+        EVP_DigestFinal_ex(s1, smd, NULL);
 
-        EVP_DigestInit_ex(&m5, EVP_md5(), NULL);
-        EVP_DigestUpdate(&m5, s->session->master_key,
+        EVP_DigestInit_ex(m5, EVP_md5(), NULL);
+        EVP_DigestUpdate(m5, s->session->master_key,
                          s->session->master_key_length);
-        EVP_DigestUpdate(&m5, smd, SHA_DIGEST_LENGTH);
+        EVP_DigestUpdate(m5, smd, SHA_DIGEST_LENGTH);
         if ((int)(i + MD5_DIGEST_LENGTH) > num) {
-            EVP_DigestFinal_ex(&m5, smd, NULL);
+            EVP_DigestFinal_ex(m5, smd, NULL);
             memcpy(km, smd, (num - i));
         } else
-            EVP_DigestFinal_ex(&m5, km, NULL);
+            EVP_DigestFinal_ex(m5, km, NULL);
 
         km += MD5_DIGEST_LENGTH;
     }
     OPENSSL_cleanse(smd, sizeof(smd));
-    EVP_MD_CTX_cleanup(&m5);
-    EVP_MD_CTX_cleanup(&s1);
-    return 1;
+    ret = 1;
+ err:
+    EVP_MD_CTX_free(m5);
+    EVP_MD_CTX_free(s1);
+    return ret;
 }
 
 int ssl3_change_cipher_state(SSL *s, int which)
@@ -217,18 +204,16 @@ int ssl3_change_cipher_state(SSL *s, int which)
     unsigned char *p, *mac_secret;
     unsigned char exp_key[EVP_MAX_KEY_LENGTH];
     unsigned char exp_iv[EVP_MAX_IV_LENGTH];
-    unsigned char *ms, *key, *iv, *er1, *er2;
+    unsigned char *ms, *key, *iv;
     EVP_CIPHER_CTX *dd;
     const EVP_CIPHER *c;
 #ifndef OPENSSL_NO_COMP
     COMP_METHOD *comp;
 #endif
     const EVP_MD *m;
-    EVP_MD_CTX md;
-    int is_exp, n, i, j, k, cl;
+    int n, i, j, k, cl;
     int reuse_dd = 0;
 
-    is_exp = SSL_C_IS_EXPORT(s->s3->tmp.new_cipher);
     c = s->s3->tmp.new_sym_enc;
     m = s->s3->tmp.new_hash;
     /* m == NULL will lead to a crash later */
@@ -253,7 +238,7 @@ int ssl3_change_cipher_state(SSL *s, int which)
             EVP_CIPHER_CTX_init(s->enc_read_ctx);
         dd = s->enc_read_ctx;
 
-        if (!ssl_replace_hash(&s->read_hash, m)) {
+        if (ssl_replace_hash(&s->read_hash, m) == NULL) {
                 SSLerr(SSL_F_SSL3_CHANGE_CIPHER_STATE, ERR_R_INTERNAL_ERROR);
                 goto err2;
         }
@@ -286,7 +271,7 @@ int ssl3_change_cipher_state(SSL *s, int which)
              */
             EVP_CIPHER_CTX_init(s->enc_write_ctx);
         dd = s->enc_write_ctx;
-        if (!ssl_replace_hash(&s->write_hash, m)) {
+        if (ssl_replace_hash(&s->write_hash, m) == NULL) {
                 SSLerr(SSL_F_SSL3_CHANGE_CIPHER_STATE, ERR_R_INTERNAL_ERROR);
                 goto err2;
         }
@@ -315,9 +300,7 @@ int ssl3_change_cipher_state(SSL *s, int which)
     if (i < 0)
         goto err2;
     cl = EVP_CIPHER_key_length(c);
-    j = is_exp ? (cl < SSL_C_EXPORT_KEYLENGTH(s->s3->tmp.new_cipher) ?
-                  cl : SSL_C_EXPORT_KEYLENGTH(s->s3->tmp.new_cipher)) : cl;
-    /* Was j=(is_exp)?5:EVP_CIPHER_key_length(c); */
+    j = cl;
     k = EVP_CIPHER_iv_length(c);
     if ((which == SSL3_CHANGE_CIPHER_CLIENT_WRITE) ||
         (which == SSL3_CHANGE_CIPHER_SERVER_READ)) {
@@ -327,8 +310,6 @@ int ssl3_change_cipher_state(SSL *s, int which)
         n += j + j;
         iv = &(p[n]);
         n += k + k;
-        er1 = &(s->s3->client_random[0]);
-        er2 = &(s->s3->server_random[0]);
     } else {
         n = i;
         ms = &(p[n]);
@@ -337,8 +318,6 @@ int ssl3_change_cipher_state(SSL *s, int which)
         n += j + k;
         iv = &(p[n]);
         n += k;
-        er1 = &(s->s3->server_random[0]);
-        er2 = &(s->s3->client_random[0]);
     }
 
     if (n > s->s3->tmp.key_block_length) {
@@ -346,28 +325,7 @@ int ssl3_change_cipher_state(SSL *s, int which)
         goto err2;
     }
 
-    EVP_MD_CTX_init(&md);
     memcpy(mac_secret, ms, i);
-    if (is_exp) {
-        /*
-         * In here I set both the read and write key/iv to the same value
-         * since only the correct one will be used :-).
-         */
-        EVP_DigestInit_ex(&md, EVP_md5(), NULL);
-        EVP_DigestUpdate(&md, key, j);
-        EVP_DigestUpdate(&md, er1, SSL3_RANDOM_SIZE);
-        EVP_DigestUpdate(&md, er2, SSL3_RANDOM_SIZE);
-        EVP_DigestFinal_ex(&md, &(exp_key[0]), NULL);
-        key = &(exp_key[0]);
-
-        if (k > 0) {
-            EVP_DigestInit_ex(&md, EVP_md5(), NULL);
-            EVP_DigestUpdate(&md, er1, SSL3_RANDOM_SIZE);
-            EVP_DigestUpdate(&md, er2, SSL3_RANDOM_SIZE);
-            EVP_DigestFinal_ex(&md, &(exp_iv[0]), NULL);
-            iv = &(exp_iv[0]);
-        }
-    }
 
     EVP_CipherInit_ex(dd, c, NULL, key, iv, (which & SSL3_CC_WRITE));
 
@@ -390,7 +348,6 @@ int ssl3_change_cipher_state(SSL *s, int which)
 
     OPENSSL_cleanse(exp_key, sizeof(exp_key));
     OPENSSL_cleanse(exp_iv, sizeof(exp_iv));
-    EVP_MD_CTX_cleanup(&md);
     return (1);
  err:
     SSLerr(SSL_F_SSL3_CHANGE_CIPHER_STATE, ERR_R_MALLOC_FAILURE);
@@ -488,68 +445,47 @@ void ssl3_init_finished_mac(SSL *s)
 
 void ssl3_free_digest_list(SSL *s)
 {
-    int i;
     BIO_free(s->s3->handshake_buffer);
     s->s3->handshake_buffer = NULL;
-    if (!s->s3->handshake_dgst)
-        return;
-    for (i = 0; i < SSL_MAX_DIGEST; i++) {
-        if (s->s3->handshake_dgst[i])
-            EVP_MD_CTX_destroy(s->s3->handshake_dgst[i]);
-    }
-    OPENSSL_free(s->s3->handshake_dgst);
+    EVP_MD_CTX_free(s->s3->handshake_dgst);
     s->s3->handshake_dgst = NULL;
 }
 
 void ssl3_finish_mac(SSL *s, const unsigned char *buf, int len)
 {
-    if (s->s3->handshake_dgst == NULL) {
+    if (s->s3->handshake_dgst == NULL)
         BIO_write(s->s3->handshake_buffer, (void *)buf, len);
-    } else {
-        int i;
-        for (i = 0; i < SSL_MAX_DIGEST; i++) {
-            if (s->s3->handshake_dgst[i] != NULL)
-                EVP_DigestUpdate(s->s3->handshake_dgst[i], buf, len);
-        }
-    }
+    else
+        EVP_DigestUpdate(s->s3->handshake_dgst, buf, len);
 }
 
 int ssl3_digest_cached_records(SSL *s, int keep)
 {
-    int i;
-    long mask;
     const EVP_MD *md;
     long hdatalen;
     void *hdata;
 
     if (s->s3->handshake_dgst == NULL) {
-        /* Allocate handshake_dgst array */
-        s->s3->handshake_dgst =
-            OPENSSL_malloc(sizeof(*s->s3->handshake_dgst) * SSL_MAX_DIGEST);
-        if (s->s3->handshake_dgst == NULL) {
-            SSLerr(SSL_F_SSL3_DIGEST_CACHED_RECORDS, ERR_R_MALLOC_FAILURE);
-            return 0;
-        }
         hdatalen = BIO_get_mem_data(s->s3->handshake_buffer, &hdata);
         if (hdatalen <= 0) {
             SSLerr(SSL_F_SSL3_DIGEST_CACHED_RECORDS, SSL_R_BAD_HANDSHAKE_LENGTH);
             return 0;
         }
 
-        /* Loop through bits of algorithm2 field and create MD_CTX-es */
-        for (i = 0; ssl_get_handshake_digest(i, &mask, &md); i++) {
-            if ((mask & ssl_get_algorithm2(s)) && md) {
-                s->s3->handshake_dgst[i] = EVP_MD_CTX_create();
-                if (EVP_MD_nid(md) == NID_md5) {
-                    EVP_MD_CTX_set_flags(s->s3->handshake_dgst[i],
-                                         EVP_MD_CTX_FLAG_NON_FIPS_ALLOW);
-                }
-                EVP_DigestInit_ex(s->s3->handshake_dgst[i], md, NULL);
-                EVP_DigestUpdate(s->s3->handshake_dgst[i], hdata, hdatalen);
-            } else {
-                s->s3->handshake_dgst[i] = NULL;
-            }
+        s->s3->handshake_dgst = EVP_MD_CTX_new();
+        if (s->s3->handshake_dgst == NULL) {
+            SSLerr(SSL_F_SSL3_DIGEST_CACHED_RECORDS, ERR_R_MALLOC_FAILURE);
+            return 0;
         }
+
+        md = ssl_handshake_md(s);
+        if (md == NULL) {
+            SSLerr(SSL_F_SSL3_DIGEST_CACHED_RECORDS, ERR_R_INTERNAL_ERROR);
+            return 0;
+        }
+
+        EVP_DigestInit_ex(s->s3->handshake_dgst, md, NULL);
+        EVP_DigestUpdate(s->s3->handshake_dgst, hdata, hdatalen);
 
     }
     if (keep == 0) {
@@ -560,80 +496,44 @@ int ssl3_digest_cached_records(SSL *s, int keep)
     return 1;
 }
 
-int ssl3_cert_verify_mac(SSL *s, int md_nid, unsigned char *p)
+int ssl3_final_finish_mac(SSL *s, const char *sender, int len, unsigned char *p)
 {
-    return (ssl3_handshake_mac(s, md_nid, NULL, 0, p));
-}
-
-int ssl3_final_finish_mac(SSL *s,
-                          const char *sender, int len, unsigned char *p)
-{
-    int ret, sha1len;
-    ret = ssl3_handshake_mac(s, NID_md5, sender, len, p);
-    if (ret == 0)
-        return 0;
-
-    p += ret;
-
-    sha1len = ssl3_handshake_mac(s, NID_sha1, sender, len, p);
-    if (sha1len == 0)
-        return 0;
-
-    ret += sha1len;
-    return (ret);
-}
-
-static int ssl3_handshake_mac(SSL *s, int md_nid,
-                              const char *sender, int len, unsigned char *p)
-{
-    unsigned int ret;
-    int npad, n;
-    unsigned int i;
-    unsigned char md_buf[EVP_MAX_MD_SIZE];
-    EVP_MD_CTX ctx, *d = NULL;
+    int ret;
+    EVP_MD_CTX *ctx = NULL;
 
     if (!ssl3_digest_cached_records(s, 0))
         return 0;
 
-    /*
-     * Search for digest of specified type in the handshake_dgst array
-     */
-    for (i = 0; i < SSL_MAX_DIGEST; i++) {
-        if (s->s3->handshake_dgst[i]
-            && EVP_MD_CTX_type(s->s3->handshake_dgst[i]) == md_nid) {
-            d = s->s3->handshake_dgst[i];
-            break;
-        }
-    }
-    if (!d) {
-        SSLerr(SSL_F_SSL3_HANDSHAKE_MAC, SSL_R_NO_REQUIRED_DIGEST);
+    if (EVP_MD_CTX_type(s->s3->handshake_dgst) != NID_md5_sha1) {
+        SSLerr(SSL_F_SSL3_FINAL_FINISH_MAC, SSL_R_NO_REQUIRED_DIGEST);
         return 0;
     }
-    EVP_MD_CTX_init(&ctx);
-    EVP_MD_CTX_set_flags(&ctx, EVP_MD_CTX_FLAG_NON_FIPS_ALLOW);
-    EVP_MD_CTX_copy_ex(&ctx, d);
-    n = EVP_MD_CTX_size(&ctx);
-    if (n < 0)
+
+    ctx = EVP_MD_CTX_new();
+    if (ctx == NULL) {
+        SSLerr(SSL_F_SSL3_FINAL_FINISH_MAC, ERR_R_MALLOC_FAILURE);
         return 0;
+    }
+    EVP_MD_CTX_copy_ex(ctx, s->s3->handshake_dgst);
 
-    npad = (48 / n) * n;
-    if (sender != NULL)
-        EVP_DigestUpdate(&ctx, sender, len);
-    EVP_DigestUpdate(&ctx, s->session->master_key,
-                     s->session->master_key_length);
-    EVP_DigestUpdate(&ctx, ssl3_pad_1, npad);
-    EVP_DigestFinal_ex(&ctx, md_buf, &i);
+    ret = EVP_MD_CTX_size(ctx);
+    if (ret < 0) {
+        EVP_MD_CTX_reset(ctx);
+        return 0;
+    }
 
-    EVP_DigestInit_ex(&ctx, EVP_MD_CTX_md(&ctx), NULL);
-    EVP_DigestUpdate(&ctx, s->session->master_key,
-                     s->session->master_key_length);
-    EVP_DigestUpdate(&ctx, ssl3_pad_2, npad);
-    EVP_DigestUpdate(&ctx, md_buf, i);
-    EVP_DigestFinal_ex(&ctx, p, &ret);
+    if ((sender != NULL && EVP_DigestUpdate(ctx, sender, len) <= 0)
+            || EVP_MD_CTX_ctrl(ctx, EVP_CTRL_SSL3_MASTER_SECRET,
+                               s->session->master_key_length,
+                               s->session->master_key) <= 0
+            || EVP_DigestFinal_ex(ctx, p, NULL) <= 0) {
+        SSLerr(SSL_F_SSL3_FINAL_FINISH_MAC, ERR_R_INTERNAL_ERROR);
+        ret = 0;
+    }
 
-    EVP_MD_CTX_cleanup(&ctx);
+    EVP_MD_CTX_free(ctx);
 
-    return ((int)ret);
+    return ret;
 }
 
 int ssl3_generate_master_secret(SSL *s, unsigned char *out, unsigned char *p,
@@ -651,33 +551,43 @@ int ssl3_generate_master_secret(SSL *s, unsigned char *out, unsigned char *p,
 #endif
     };
     unsigned char buf[EVP_MAX_MD_SIZE];
-    EVP_MD_CTX ctx;
+    EVP_MD_CTX *ctx = EVP_MD_CTX_new();
     int i, ret = 0;
     unsigned int n;
 #ifdef OPENSSL_SSL_TRACE_CRYPTO
     unsigned char *tmpout = out;
 #endif
 
-    EVP_MD_CTX_init(&ctx);
+    if (ctx == NULL) {
+        SSLerr(SSL_F_SSL3_GENERATE_MASTER_SECRET, ERR_R_MALLOC_FAILURE);
+        return 0;
+    }
     for (i = 0; i < 3; i++) {
-        EVP_DigestInit_ex(&ctx, s->ctx->sha1, NULL);
-        EVP_DigestUpdate(&ctx, salt[i], strlen((const char *)salt[i]));
-        EVP_DigestUpdate(&ctx, p, len);
-        EVP_DigestUpdate(&ctx, &(s->s3->client_random[0]), SSL3_RANDOM_SIZE);
-        EVP_DigestUpdate(&ctx, &(s->s3->server_random[0]), SSL3_RANDOM_SIZE);
-        EVP_DigestFinal_ex(&ctx, buf, &n);
+        if (EVP_DigestInit_ex(ctx, s->ctx->sha1, NULL) <= 0
+                || EVP_DigestUpdate(ctx, salt[i],
+                                    strlen((const char *)salt[i])) <= 0
+                || EVP_DigestUpdate(ctx, p, len) <= 0
+                || EVP_DigestUpdate(ctx, &(s->s3->client_random[0]),
+                                    SSL3_RANDOM_SIZE) <= 0
+                || EVP_DigestUpdate(ctx, &(s->s3->server_random[0]),
+                                    SSL3_RANDOM_SIZE) <= 0
+                || EVP_DigestFinal_ex(ctx, buf, &n) <= 0
 
-        EVP_DigestInit_ex(&ctx, s->ctx->md5, NULL);
-        EVP_DigestUpdate(&ctx, p, len);
-        EVP_DigestUpdate(&ctx, buf, n);
-        EVP_DigestFinal_ex(&ctx, out, &n);
+                || EVP_DigestInit_ex(ctx, s->ctx->md5, NULL) <= 0
+                || EVP_DigestUpdate(ctx, p, len) <= 0
+                || EVP_DigestUpdate(ctx, buf, n) <= 0
+                || EVP_DigestFinal_ex(ctx, out, &n) <= 0) {
+            SSLerr(SSL_F_SSL3_GENERATE_MASTER_SECRET, ERR_R_INTERNAL_ERROR);
+            ret = 0;
+            break;
+        }
         out += n;
         ret += n;
     }
-    EVP_MD_CTX_cleanup(&ctx);
+    EVP_MD_CTX_free(ctx);
 
 #ifdef OPENSSL_SSL_TRACE_CRYPTO
-    if (s->msg_callback) {
+    if (ret > 0 && s->msg_callback) {
         s->msg_callback(2, s->version, TLS1_RT_CRYPTO_PREMASTER,
                         p, len, s, s->msg_callback_arg);
         s->msg_callback(2, s->version, TLS1_RT_CRYPTO_CLIENT_RANDOM,

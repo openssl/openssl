@@ -183,7 +183,7 @@ int OCSP_parse_url(const char *url, char **phost, char **pport, char **ppath,
     *ppath = NULL;
 
     /* dup the buffer since we are going to mess with it */
-    buf = BUF_strdup(url);
+    buf = OPENSSL_strdup(url);
     if (!buf)
         goto mem_err;
 
@@ -217,9 +217,9 @@ int OCSP_parse_url(const char *url, char **phost, char **pport, char **ppath,
     p = strchr(p, '/');
 
     if (!p)
-        *ppath = BUF_strdup("/");
+        *ppath = OPENSSL_strdup("/");
     else {
-        *ppath = BUF_strdup(p);
+        *ppath = OPENSSL_strdup(p);
         /* Set start of path to 0 so hostname is valid */
         *p = '\0';
     }
@@ -244,11 +244,11 @@ int OCSP_parse_url(const char *url, char **phost, char **pport, char **ppath,
         port = p + 1;
     }
 
-    *pport = BUF_strdup(port);
+    *pport = OPENSSL_strdup(port);
     if (!*pport)
         goto mem_err;
 
-    *phost = BUF_strdup(host);
+    *phost = OPENSSL_strdup(host);
 
     if (!*phost)
         goto mem_err;

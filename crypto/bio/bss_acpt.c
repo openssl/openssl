@@ -350,7 +350,7 @@ static long acpt_ctrl(BIO *b, int cmd, long num, void *ptr)
             if (num == 0) {
                 b->init = 1;
                 OPENSSL_free(data->param_addr);
-                data->param_addr = BUF_strdup(ptr);
+                data->param_addr = OPENSSL_strdup(ptr);
             } else if (num == 1) {
                 data->accept_nbio = (ptr != NULL);
             } else if (num == 2) {

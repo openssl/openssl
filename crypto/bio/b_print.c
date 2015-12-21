@@ -711,7 +711,7 @@ doapr_outch(char **sbuffer,
         *maxlen += 1024;
         if (*buffer == NULL) {
             *buffer = OPENSSL_malloc(*maxlen);
-            if (!*buffer) {
+            if (*buffer == NULL) {
                 /* Panic! Can't really do anything sensible. Just return */
                 return;
             }

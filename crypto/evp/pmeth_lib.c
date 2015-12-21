@@ -160,7 +160,7 @@ static EVP_PKEY_CTX *int_ctx_new(EVP_PKEY *pkey, ENGINE *e, int id)
     }
 
     ret = OPENSSL_zalloc(sizeof(*ret));
-    if (!ret) {
+    if (ret == NULL) {
 #ifndef OPENSSL_NO_ENGINE
         if (e)
             ENGINE_finish(e);
@@ -190,7 +190,7 @@ EVP_PKEY_METHOD *EVP_PKEY_meth_new(int id, int flags)
     EVP_PKEY_METHOD *pmeth;
 
     pmeth = OPENSSL_zalloc(sizeof(*pmeth));
-    if (!pmeth)
+    if (pmeth == NULL)
         return NULL;
 
     pmeth->pkey_id = id;
@@ -277,7 +277,7 @@ EVP_PKEY_CTX *EVP_PKEY_CTX_dup(EVP_PKEY_CTX *pctx)
     }
 #endif
     rctx = OPENSSL_malloc(sizeof(*rctx));
-    if (!rctx)
+    if (rctx == NULL)
         return NULL;
 
     rctx->pmeth = pctx->pmeth;
@@ -311,7 +311,7 @@ int EVP_PKEY_meth_add0(const EVP_PKEY_METHOD *pmeth)
 {
     if (app_pkey_methods == NULL) {
         app_pkey_methods = sk_EVP_PKEY_METHOD_new(pmeth_cmp);
-        if (!app_pkey_methods)
+        if (app_pkey_methods == NULL)
             return 0;
     }
     if (!sk_EVP_PKEY_METHOD_push(app_pkey_methods, pmeth))

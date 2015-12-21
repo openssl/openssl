@@ -130,6 +130,7 @@
 
 #include <openssl/crypto.h>
 #include <openssl/rand.h>
+#include <openssl/async.h>
 #include "rand_lcl.h"
 
 #include <openssl/err.h>
@@ -211,7 +212,7 @@ static int rand_add(const void *buf, int num, double add)
     int i, j, k, st_idx;
     long md_c[2];
     unsigned char local_md[MD_DIGEST_LENGTH];
-    EVP_MD_CTX m;
+    EVP_MD_CTX *m;
     int do_not_lock;
     int rv = 0;
 
@@ -233,7 +234,10 @@ static int rand_add(const void *buf, int num, double add)
      * hash function.
      */
 
-    EVP_MD_CTX_init(&m);
+    m = EVP_MD_CTX_new();
+    if (m == NULL)
+        goto err;
+
     /* check if we already have the lock */
     if (crypto_lock_rand) {
         CRYPTO_THREADID cur;
@@ -283,21 +287,21 @@ static int rand_add(const void *buf, int num, double add)
         j = (num - i);
         j = (j > MD_DIGEST_LENGTH) ? MD_DIGEST_LENGTH : j;
 
-        if (!MD_Init(&m))
+        if (!MD_Init(m))
             goto err;
-        if (!MD_Update(&m, local_md, MD_DIGEST_LENGTH))
+        if (!MD_Update(m, local_md, MD_DIGEST_LENGTH))
             goto err;
         k = (st_idx + j) - STATE_SIZE;
         if (k > 0) {
-            if (!MD_Update(&m, &(state[st_idx]), j - k))
+            if (!MD_Update(m, &(state[st_idx]), j - k))
                 goto err;
-            if (!MD_Update(&m, &(state[0]), k))
+            if (!MD_Update(m, &(state[0]), k))
                 goto err;
-        } else if (!MD_Update(&m, &(state[st_idx]), j))
+        } else if (!MD_Update(m, &(state[st_idx]), j))
             goto err;
 
         /* DO NOT REMOVE THE FOLLOWING CALL TO MD_Update()! */
-        if (!MD_Update(&m, buf, j))
+        if (!MD_Update(m, buf, j))
             goto err;
         /*
          * We know that line may cause programs such as purify and valgrind
@@ -307,9 +311,9 @@ static int rand_add(const void *buf, int num, double add)
          * insecure keys.
          */
 
-        if (!MD_Update(&m, (unsigned char *)&(md_c[0]), sizeof(md_c)))
+        if (!MD_Update(m, (unsigned char *)&(md_c[0]), sizeof(md_c)))
             goto err;
-        if (!MD_Final(&m, local_md))
+        if (!MD_Final(m, local_md))
             goto err;
         md_c[1]++;
 
@@ -351,7 +355,7 @@ static int rand_add(const void *buf, int num, double add)
 #endif
     rv = 1;
  err:
-    EVP_MD_CTX_cleanup(&m);
+    EVP_MD_CTX_free(m);
     return rv;
 }
 
@@ -368,7 +372,7 @@ static int rand_bytes(unsigned char *buf, int num, int pseudo)
     int ok;
     long md_c[2];
     unsigned char local_md[MD_DIGEST_LENGTH];
-    EVP_MD_CTX m;
+    EVP_MD_CTX *m;
 #ifndef GETPID_IS_MEANINGLESS
     pid_t curr_pid = getpid();
 #endif
@@ -408,7 +412,10 @@ static int rand_bytes(unsigned char *buf, int num, int pseudo)
     if (num <= 0)
         return 1;
 
-    EVP_MD_CTX_init(&m);
+    m = EVP_MD_CTX_new();
+    if (m == NULL)
+        goto err_mem;
+
     /* round upwards to multiple of MD_DIGEST_LENGTH/2 */
     num_ceil =
         (1 + (num - 1) / (MD_DIGEST_LENGTH / 2)) * (MD_DIGEST_LENGTH / 2);
@@ -432,6 +439,11 @@ static int rand_bytes(unsigned char *buf, int num, int pseudo)
      */
 
     CRYPTO_w_lock(CRYPTO_LOCK_RAND);
+    /*
+     * We could end up in an async engine while holding this lock so ensure
+     * we don't pause and cause a deadlock
+     */
+    ASYNC_block_pause();
 
     /* prevent rand_bytes() from trying to obtain the lock again */
     CRYPTO_w_lock(CRYPTO_LOCK_RAND2);
@@ -510,32 +522,33 @@ static int rand_bytes(unsigned char *buf, int num, int pseudo)
 
     /* before unlocking, we must clear 'crypto_lock_rand' */
     crypto_lock_rand = 0;
+    ASYNC_unblock_pause();
     CRYPTO_w_unlock(CRYPTO_LOCK_RAND);
 
     while (num > 0) {
         /* num_ceil -= MD_DIGEST_LENGTH/2 */
         j = (num >= MD_DIGEST_LENGTH / 2) ? MD_DIGEST_LENGTH / 2 : num;
         num -= j;
-        if (!MD_Init(&m))
+        if (!MD_Init(m))
             goto err;
 #ifndef GETPID_IS_MEANINGLESS
         if (curr_pid) {         /* just in the first iteration to save time */
-            if (!MD_Update(&m, (unsigned char *)&curr_pid, sizeof curr_pid))
+            if (!MD_Update(m, (unsigned char *)&curr_pid, sizeof curr_pid))
                 goto err;
             curr_pid = 0;
         }
 #endif
         if (curr_time) {        /* just in the first iteration to save time */
-            if (!MD_Update(&m, (unsigned char *)&curr_time, sizeof curr_time))
+            if (!MD_Update(m, (unsigned char *)&curr_time, sizeof curr_time))
                 goto err;
-            if (!MD_Update(&m, (unsigned char *)&tv, sizeof tv))
+            if (!MD_Update(m, (unsigned char *)&tv, sizeof tv))
                 goto err;
             curr_time = 0;
-            rand_hw_seed(&m);
+            rand_hw_seed(m);
         }
-        if (!MD_Update(&m, local_md, MD_DIGEST_LENGTH))
+        if (!MD_Update(m, local_md, MD_DIGEST_LENGTH))
             goto err;
-        if (!MD_Update(&m, (unsigned char *)&(md_c[0]), sizeof(md_c)))
+        if (!MD_Update(m, (unsigned char *)&(md_c[0]), sizeof(md_c)))
             goto err;
 
 #ifndef PURIFY                  /* purify complains */
@@ -546,19 +559,19 @@ static int rand_bytes(unsigned char *buf, int num, int pseudo)
          * builds it is not used: the removal of such a small source of
          * entropy has negligible impact on security.
          */
-        if (!MD_Update(&m, buf, j))
+        if (!MD_Update(m, buf, j))
             goto err;
 #endif
 
         k = (st_idx + MD_DIGEST_LENGTH / 2) - st_num;
         if (k > 0) {
-            if (!MD_Update(&m, &(state[st_idx]), MD_DIGEST_LENGTH / 2 - k))
+            if (!MD_Update(m, &(state[st_idx]), MD_DIGEST_LENGTH / 2 - k))
                 goto err;
-            if (!MD_Update(&m, &(state[0]), k))
+            if (!MD_Update(m, &(state[0]), k))
                 goto err;
-        } else if (!MD_Update(&m, &(state[st_idx]), MD_DIGEST_LENGTH / 2))
+        } else if (!MD_Update(m, &(state[st_idx]), MD_DIGEST_LENGTH / 2))
             goto err;
-        if (!MD_Final(&m, local_md))
+        if (!MD_Final(m, local_md))
             goto err;
 
         for (i = 0; i < MD_DIGEST_LENGTH / 2; i++) {
@@ -571,18 +584,23 @@ static int rand_bytes(unsigned char *buf, int num, int pseudo)
         }
     }
 
-    if (!MD_Init(&m)
-        || !MD_Update(&m, (unsigned char *)&(md_c[0]), sizeof(md_c))
-        || !MD_Update(&m, local_md, MD_DIGEST_LENGTH))
+    if (!MD_Init(m)
+        || !MD_Update(m, (unsigned char *)&(md_c[0]), sizeof(md_c))
+        || !MD_Update(m, local_md, MD_DIGEST_LENGTH))
         goto err;
     CRYPTO_w_lock(CRYPTO_LOCK_RAND);
-    if (!MD_Update(&m, md, MD_DIGEST_LENGTH) || !MD_Final(&m, md)) {
+    /*
+     * Prevent deadlocks if we end up in an async engine
+     */
+    ASYNC_block_pause();
+    if (!MD_Update(m, md, MD_DIGEST_LENGTH) || !MD_Final(m, md)) {
         CRYPTO_w_unlock(CRYPTO_LOCK_RAND);
         goto err;
     }
+    ASYNC_unblock_pause();
     CRYPTO_w_unlock(CRYPTO_LOCK_RAND);
 
-    EVP_MD_CTX_cleanup(&m);
+    EVP_MD_CTX_free(m);
     if (ok)
         return (1);
     else if (pseudo)
@@ -594,8 +612,12 @@ static int rand_bytes(unsigned char *buf, int num, int pseudo)
         return (0);
     }
  err:
-    EVP_MD_CTX_cleanup(&m);
     RANDerr(RAND_F_RAND_BYTES, ERR_R_EVP_LIB);
+    EVP_MD_CTX_free(m);
+    return 0;
+ err_mem:
+    RANDerr(RAND_F_RAND_BYTES, ERR_R_MALLOC_FAILURE);
+    EVP_MD_CTX_free(m);
     return 0;
 
 }
@@ -635,6 +657,10 @@ static int rand_status(void)
 
     if (!do_not_lock) {
         CRYPTO_w_lock(CRYPTO_LOCK_RAND);
+        /*
+         * Prevent deadlocks in case we end up in an async engine
+         */
+        ASYNC_block_pause();
 
         /*
          * prevent rand_bytes() from trying to obtain the lock again
@@ -656,6 +682,7 @@ static int rand_status(void)
         /* before unlocking, we must clear 'crypto_lock_rand' */
         crypto_lock_rand = 0;
 
+        ASYNC_unblock_pause();
         CRYPTO_w_unlock(CRYPTO_LOCK_RAND);
     }
 

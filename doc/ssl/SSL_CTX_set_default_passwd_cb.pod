@@ -2,7 +2,9 @@
 
 =head1 NAME
 
-SSL_CTX_set_default_passwd_cb, SSL_CTX_set_default_passwd_cb_userdata - set passwd callback for encrypted PEM file handling
+SSL_CTX_set_default_passwd_cb, SSL_CTX_set_default_passwd_cb_userdata,
+SSL_set_default_passwd_cb, SSL_set_default_passwd_cb_userdata - set passwd
+callback for encrypted PEM file handling
 
 =head1 SYNOPSIS
 
@@ -10,6 +12,8 @@ SSL_CTX_set_default_passwd_cb, SSL_CTX_set_default_passwd_cb_userdata - set pass
 
  void SSL_CTX_set_default_passwd_cb(SSL_CTX *ctx, pem_password_cb *cb);
  void SSL_CTX_set_default_passwd_cb_userdata(SSL_CTX *ctx, void *u);
+ void SSL_set_default_passwd_cb(SSL *s, pem_password_cb *cb);
+ void SSL_set_default_passwd_cb_userdata(SSL *s, void *u);
 
  int pem_passwd_cb(char *buf, int size, int rwflag, void *userdata);
 
@@ -20,6 +24,9 @@ when loading/storing a PEM certificate with encryption.
 
 SSL_CTX_set_default_passwd_cb_userdata() sets a pointer to B<userdata> which
 will be provided to the password callback on invocation.
+
+SSL_set_default_passwd_cb() and SSL_set_default_passwd_cb_userdata() perform the
+same function as their SSL_CTX counterparts, but using an SSL object.
 
 The pem_passwd_cb(), which must be provided by the application, hands back the
 password to be used during decryption. On invocation a pointer to B<userdata>
@@ -51,8 +58,7 @@ however not usual, as certificate information is considered public.
 
 =head1 RETURN VALUES
 
-SSL_CTX_set_default_passwd_cb() and SSL_CTX_set_default_passwd_cb_userdata()
-do not provide diagnostic information.
+These functions do not provide diagnostic information.
 
 =head1 EXAMPLES
 

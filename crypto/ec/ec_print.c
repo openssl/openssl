@@ -64,17 +64,10 @@ BIGNUM *EC_POINT_point2bn(const EC_GROUP *group,
     size_t buf_len = 0;
     unsigned char *buf;
 
-    buf_len = EC_POINT_point2oct(group, point, form, NULL, 0, ctx);
+    buf_len = EC_POINT_point2buf(group, point, form, &buf, ctx);
+
     if (buf_len == 0)
         return NULL;
-
-    if ((buf = OPENSSL_malloc(buf_len)) == NULL)
-        return NULL;
-
-    if (!EC_POINT_point2oct(group, point, form, buf, buf_len, ctx)) {
-        OPENSSL_free(buf);
-        return NULL;
-    }
 
     ret = BN_bin2bn(buf, buf_len, ret);
 
@@ -129,19 +122,12 @@ char *EC_POINT_point2hex(const EC_GROUP *group,
 {
     char *ret, *p;
     size_t buf_len = 0, i;
-    unsigned char *buf, *pbuf;
+    unsigned char *buf = NULL, *pbuf;
 
-    buf_len = EC_POINT_point2oct(group, point, form, NULL, 0, ctx);
+    buf_len = EC_POINT_point2buf(group, point, form, &buf, ctx);
+
     if (buf_len == 0)
         return NULL;
-
-    if ((buf = OPENSSL_malloc(buf_len)) == NULL)
-        return NULL;
-
-    if (!EC_POINT_point2oct(group, point, form, buf, buf_len, ctx)) {
-        OPENSSL_free(buf);
-        return NULL;
-    }
 
     ret = OPENSSL_malloc(buf_len * 2 + 2);
     if (ret == NULL) {

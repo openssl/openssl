@@ -1490,6 +1490,11 @@
 #define NID_proxyCertInfo               663
 #define OBJ_proxyCertInfo               OBJ_id_pe,14L
 
+#define SN_tlsfeature           "tlsfeature"
+#define LN_tlsfeature           "TLS Feature"
+#define NID_tlsfeature          1020
+#define OBJ_tlsfeature          OBJ_id_pe,24L
+
 #define SN_id_qt_cps            "id-qt-cps"
 #define LN_id_qt_cps            "Policy Qualifier CPS"
 #define NID_id_qt_cps           164
@@ -4300,6 +4305,14 @@
 #define SN_aes_256_cbc_hmac_sha256              "AES-256-CBC-HMAC-SHA256"
 #define LN_aes_256_cbc_hmac_sha256              "aes-256-cbc-hmac-sha256"
 #define NID_aes_256_cbc_hmac_sha256             950
+
+#define SN_chacha20_poly1305            "ChaCha20-Poly1305"
+#define LN_chacha20_poly1305            "chacha20-poly1305"
+#define NID_chacha20_poly1305           1018
+
+#define SN_chacha20             "ChaCha20"
+#define LN_chacha20             "chacha20"
+#define NID_chacha20            1019
 
 #define SN_dhpublicnumber               "dhpublicnumber"
 #define LN_dhpublicnumber               "X9.42 DH"

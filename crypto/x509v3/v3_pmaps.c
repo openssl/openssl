@@ -144,7 +144,7 @@ static void *v2i_POLICY_MAPPINGS(const X509V3_EXT_METHOD *method,
             return NULL;
         }
         pmap = POLICY_MAPPING_new();
-        if (!pmap) {
+        if (pmap == NULL) {
             sk_POLICY_MAPPING_pop_free(pmaps, POLICY_MAPPING_free);
             X509V3err(X509V3_F_V2I_POLICY_MAPPINGS, ERR_R_MALLOC_FAILURE);
             return NULL;

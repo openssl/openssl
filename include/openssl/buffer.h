@@ -60,6 +60,10 @@
 # define HEADER_BUFFER_H
 
 # include <openssl/ossl_typ.h>
+# ifndef HEADER_CRYPTO_H
+#  include <openssl/crypto.h>
+# endif
+
 
 #ifdef  __cplusplus
 extern "C" {
@@ -71,9 +75,17 @@ extern "C" {
 #  include <sys/types.h>
 # endif
 
-/* Already declared in ossl_typ.h */
-/* typedef struct buf_mem_st BUF_MEM; */
-
+/*
+ * These names are outdated as of OpenSSL 1.1; a future release
+ * will move them to be deprecated.
+ */
+# define BUF_strdup(s) OPENSSL_strdup(s)
+# define BUF_strndup(s, size) OPENSSL_strndup(s, size)
+# define BUF_memdup(data, size) OPENSSL_memdup(data, size)
+# define BUF_strlcpy(dst, src, size)  OPENSSL_strlcpy(dst, src, size)
+# define BUF_strlcat(dst, src, size) OPENSSL_strlcat(dst, src, size)
+# define BUF_strnlen(str, maxlen) OPENSSL_strnlen(str, maxlen)
+ 
 struct buf_mem_st {
     size_t length;              /* current number of bytes */
     char *data;
@@ -88,21 +100,7 @@ BUF_MEM *BUF_MEM_new_ex(unsigned long flags);
 void BUF_MEM_free(BUF_MEM *a);
 size_t BUF_MEM_grow(BUF_MEM *str, size_t len);
 size_t BUF_MEM_grow_clean(BUF_MEM *str, size_t len);
-size_t BUF_strnlen(const char *str, size_t maxlen);
-char *BUF_strdup(const char *str);
-
-/*
- * Like strndup, but in addition, explicitly guarantees to never read past the
- * first |siz| bytes of |str|.
- */
-char *BUF_strndup(const char *str, size_t siz);
-
-void *BUF_memdup(const void *data, size_t siz);
 void BUF_reverse(unsigned char *out, unsigned char *in, size_t siz);
-
-/* safe string functions */
-size_t BUF_strlcpy(char *dst, const char *src, size_t siz);
-size_t BUF_strlcat(char *dst, const char *src, size_t siz);
 
 /* BEGIN ERROR CODES */
 /*
@@ -114,12 +112,9 @@ void ERR_load_BUF_strings(void);
 /* Error codes for the BUF functions. */
 
 /* Function codes. */
-# define BUF_F_BUF_MEMDUP                                 103
 # define BUF_F_BUF_MEM_GROW                               100
 # define BUF_F_BUF_MEM_GROW_CLEAN                         105
 # define BUF_F_BUF_MEM_NEW                                101
-# define BUF_F_BUF_STRDUP                                 102
-# define BUF_F_BUF_STRNDUP                                104
 
 /* Reason codes. */
 

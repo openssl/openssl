@@ -12,6 +12,10 @@ B<openssl> B<ciphers>
 [B<-V>]
 [B<-ssl3>]
 [B<-tls1>]
+[B<-tls1_1>]
+[B<-tls1_2>]
+[B<-s>]
+[B<-psk>]
 [B<-stdname>]
 [B<cipherlist>]
 
@@ -31,6 +35,10 @@ Only list supported ciphers: those consistent with the security level. This
 is the actual cipher list an application will support. If this option is
 not used then ciphers excluded by the security level will still be listed.
 
+=item B<-psk>
+
+When combined with B<-s> includes cipher suites which require PSK.
+
 =item B<-v>
 
 Verbose option. List ciphers with a complete description of
@@ -44,11 +52,19 @@ Like B<-v>, but include cipher suite codes in output (hex format).
 
 =item B<-ssl3>
 
-only include SSL v3 ciphers.
+List the ciphers which would be used if SSL v3 was negotiated.
 
 =item B<-tls1>
 
-only include TLS v1 ciphers.
+List the ciphers which would be used if TLS v1.0 was negotiated.
+
+=item B<-tls1_1>
+
+List the ciphers which would be used if TLS v1.1 was negotiated.
+
+=item B<-tls1_2>
+
+List the ciphers which would be used if TLS v1.2 was negotiated.
 
 =item B<-stdname>
 
@@ -149,20 +165,9 @@ encryption.
 
 =item B<LOW>
 
-"low" encryption cipher suites, currently those using 64 or 56 bit encryption
-algorithms but excluding export cipher suites.
-
-=item B<EXP>, B<EXPORT>
-
-export encryption algorithms. Including 40 and 56 bits algorithms.
-
-=item B<EXPORT40>
-
-40 bit export encryption algorithms
-
-=item B<EXPORT56>
-
-56 bit export encryption algorithms. This list is empty.
+"low" encryption cipher suites, currently those using 64 or 56 bit
+encryption algorithms but excluding export cipher suites.  All these
+ciphersuites have been removed as of OpenSSL 1.1.0.
 
 =item B<eNULL>, B<NULL>
 
@@ -245,10 +250,15 @@ carry ECDH keys.
 cipher suites using ECDSA authentication, i.e. the certificates carry ECDSA
 keys.
 
-=item B<TLSv1.2>, B<TLSv1>, B<SSLv3>
+=item B<TLSv1.2>, B<TLSv1.0>, B<SSLv3>
 
-TLS v1.2, TLS v1.0 or SSL v3.0 cipher suites respectively. Note:
-there are no ciphersuites specific to TLS v1.1.
+Lists ciphersuites which are only supported in at least TLS v1.2, TLS v1.0
+or SSL v3.0 respectively. Note: there are no ciphersuites specific to TLS v1.1.
+Since this is only the minimum version if, for example, TLS v1.0 is supported
+then both TLS v1.0 and SSL v3.0 ciphersuites are included.
+
+Note: these cipher strings B<do not> change the negotiated version of SSL or
+TLS only the list of cipher suites.
 
 =item B<AES128>, B<AES256>, B<AES>
 
@@ -366,30 +376,17 @@ e.g. DES-CBC3-SHA. In these cases, RSA authentication is used.
 
  SSL_RSA_WITH_NULL_MD5                   NULL-MD5
  SSL_RSA_WITH_NULL_SHA                   NULL-SHA
- SSL_RSA_EXPORT_WITH_RC4_40_MD5          EXP-RC4-MD5
  SSL_RSA_WITH_RC4_128_MD5                RC4-MD5
  SSL_RSA_WITH_RC4_128_SHA                RC4-SHA
- SSL_RSA_EXPORT_WITH_RC2_CBC_40_MD5      EXP-RC2-CBC-MD5
  SSL_RSA_WITH_IDEA_CBC_SHA               IDEA-CBC-SHA
- SSL_RSA_EXPORT_WITH_DES40_CBC_SHA       EXP-DES-CBC-SHA
- SSL_RSA_WITH_DES_CBC_SHA                DES-CBC-SHA
  SSL_RSA_WITH_3DES_EDE_CBC_SHA           DES-CBC3-SHA
 
- SSL_DH_DSS_WITH_DES_CBC_SHA             DH-DSS-DES-CBC-SHA
  SSL_DH_DSS_WITH_3DES_EDE_CBC_SHA        DH-DSS-DES-CBC3-SHA
- SSL_DH_RSA_WITH_DES_CBC_SHA             DH-RSA-DES-CBC-SHA
  SSL_DH_RSA_WITH_3DES_EDE_CBC_SHA        DH-RSA-DES-CBC3-SHA
- SSL_DHE_DSS_EXPORT_WITH_DES40_CBC_SHA   EXP-DHE-DSS-DES-CBC-SHA
- SSL_DHE_DSS_WITH_DES_CBC_SHA            DHE-DSS-CBC-SHA
  SSL_DHE_DSS_WITH_3DES_EDE_CBC_SHA       DHE-DSS-DES-CBC3-SHA
- SSL_DHE_RSA_EXPORT_WITH_DES40_CBC_SHA   EXP-DHE-RSA-DES-CBC-SHA
- SSL_DHE_RSA_WITH_DES_CBC_SHA            DHE-RSA-DES-CBC-SHA
  SSL_DHE_RSA_WITH_3DES_EDE_CBC_SHA       DHE-RSA-DES-CBC3-SHA
 
- SSL_DH_anon_EXPORT_WITH_RC4_40_MD5      EXP-ADH-RC4-MD5
  SSL_DH_anon_WITH_RC4_128_MD5            ADH-RC4-MD5
- SSL_DH_anon_EXPORT_WITH_DES40_CBC_SHA   EXP-ADH-DES-CBC-SHA
- SSL_DH_anon_WITH_DES_CBC_SHA            ADH-DES-CBC-SHA
  SSL_DH_anon_WITH_3DES_EDE_CBC_SHA       ADH-DES-CBC3-SHA
 
  SSL_FORTEZZA_KEA_WITH_NULL_SHA          Not implemented.
@@ -400,32 +397,17 @@ e.g. DES-CBC3-SHA. In these cases, RSA authentication is used.
 
  TLS_RSA_WITH_NULL_MD5                   NULL-MD5
  TLS_RSA_WITH_NULL_SHA                   NULL-SHA
- TLS_RSA_EXPORT_WITH_RC4_40_MD5          EXP-RC4-MD5
  TLS_RSA_WITH_RC4_128_MD5                RC4-MD5
  TLS_RSA_WITH_RC4_128_SHA                RC4-SHA
- TLS_RSA_EXPORT_WITH_RC2_CBC_40_MD5      EXP-RC2-CBC-MD5
  TLS_RSA_WITH_IDEA_CBC_SHA               IDEA-CBC-SHA
- TLS_RSA_EXPORT_WITH_DES40_CBC_SHA       EXP-DES-CBC-SHA
- TLS_RSA_WITH_DES_CBC_SHA                DES-CBC-SHA
  TLS_RSA_WITH_3DES_EDE_CBC_SHA           DES-CBC3-SHA
 
- TLS_DH_DSS_EXPORT_WITH_DES40_CBC_SHA    Not implemented.
- TLS_DH_DSS_WITH_DES_CBC_SHA             Not implemented.
  TLS_DH_DSS_WITH_3DES_EDE_CBC_SHA        Not implemented.
- TLS_DH_RSA_EXPORT_WITH_DES40_CBC_SHA    Not implemented.
- TLS_DH_RSA_WITH_DES_CBC_SHA             Not implemented.
  TLS_DH_RSA_WITH_3DES_EDE_CBC_SHA        Not implemented.
- TLS_DHE_DSS_EXPORT_WITH_DES40_CBC_SHA   EXP-DHE-DSS-DES-CBC-SHA
- TLS_DHE_DSS_WITH_DES_CBC_SHA            DHE-DSS-CBC-SHA
  TLS_DHE_DSS_WITH_3DES_EDE_CBC_SHA       DHE-DSS-DES-CBC3-SHA
- TLS_DHE_RSA_EXPORT_WITH_DES40_CBC_SHA   EXP-DHE-RSA-DES-CBC-SHA
- TLS_DHE_RSA_WITH_DES_CBC_SHA            DHE-RSA-DES-CBC-SHA
  TLS_DHE_RSA_WITH_3DES_EDE_CBC_SHA       DHE-RSA-DES-CBC3-SHA
 
- TLS_DH_anon_EXPORT_WITH_RC4_40_MD5      EXP-ADH-RC4-MD5
  TLS_DH_anon_WITH_RC4_128_MD5            ADH-RC4-MD5
- TLS_DH_anon_EXPORT_WITH_DES40_CBC_SHA   EXP-ADH-DES-CBC-SHA
- TLS_DH_anon_WITH_DES_CBC_SHA            ADH-DES-CBC-SHA
  TLS_DH_anon_WITH_3DES_EDE_CBC_SHA       ADH-DES-CBC3-SHA
 
 =head2 AES ciphersuites from RFC3268, extending TLS v1.0
@@ -490,10 +472,6 @@ algorithms, such as the B<ccgost> engine, included in the OpenSSL distribution.
 
 Note: these ciphers can also be used in SSL v3.
 
- TLS_RSA_EXPORT1024_WITH_DES_CBC_SHA     EXP1024-DES-CBC-SHA
- TLS_RSA_EXPORT1024_WITH_RC4_56_SHA      EXP1024-RC4-SHA
- TLS_DHE_DSS_EXPORT1024_WITH_DES_CBC_SHA EXP1024-DHE-DSS-DES-CBC-SHA
- TLS_DHE_DSS_EXPORT1024_WITH_RC4_56_SHA  EXP1024-DHE-DSS-RC4-SHA
  TLS_DHE_DSS_WITH_RC4_128_SHA            DHE-DSS-RC4-SHA
 
 =head2 Elliptic curve cipher suites.

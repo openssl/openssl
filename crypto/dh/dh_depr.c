@@ -72,7 +72,7 @@ DH *DH_generate_parameters(int prime_len, int generator,
     if ((ret = DH_new()) == NULL)
         return NULL;
     cb = BN_GENCB_new();
-    if (!cb) {
+    if (cb == NULL) {
         DH_free(ret);
         return NULL;
     }

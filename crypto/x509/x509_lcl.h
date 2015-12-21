@@ -72,12 +72,7 @@ struct X509_VERIFY_PARAM_st {
     int trust;                  /* trust setting to check */
     int depth;                  /* Verify depth */
     STACK_OF(ASN1_OBJECT) *policies; /* Permissible policies */
-    X509_VERIFY_PARAM_ID *id;   /* opaque ID data */
-};
-
-/* internal only structure to hold additional X509_VERIFY_PARAM data */
-
-struct X509_VERIFY_PARAM_ID_st {
+    /* Peer identity details */
     STACK_OF(OPENSSL_STRING) *hosts; /* Set of acceptable names */
     unsigned int hostflags;     /* Flags to control matching features */
     char *peername;             /* Matching hostname in peer certificate */

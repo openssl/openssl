@@ -1701,7 +1701,7 @@ GCM128_CONTEXT *CRYPTO_gcm128_new(void *key, block128_f block)
 {
     GCM128_CONTEXT *ret;
 
-    if ((ret = OPENSSL_malloc(sizeof(*ret))))
+    if ((ret = OPENSSL_malloc(sizeof(*ret))) != NULL)
         CRYPTO_gcm128_init(ret, key, block);
 
     return ret;

@@ -62,7 +62,7 @@
 # include "buildinf.h"
 #endif
 
-unsigned long OpenSSL_version_num()
+unsigned long OpenSSL_version_num(void)
 {
     return OPENSSL_VERSION_NUMBER;
 }

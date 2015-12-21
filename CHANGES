@@ -2,7 +2,69 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 1.0.2 and 1.1.0  [xx XXX xxxx]
+ Changes between 1.0.2e and 1.1.0  [xx XXX xxxx]
+
+  *) Support for ChaCha20 and Poly1305 added to libcrypto and libssl.
+     [Andy Polyakov]
+
+  *) New EC_KEY_METHOD, this replaces the older ECDSA_METHOD and ECDH_METHOD
+     and integrates ECDSA and ECDH functionality into EC. Implementations can
+     now redirect key generation and no longer need to convert to or from
+     ECDSA_SIG format.
+
+     Note: the ecdsa.h and ecdh.h headers are now no longer needed and just
+     include the ec.h header file instead.
+     [Steve Henson]
+
+  *) Remove support for all 40 and 56 bit ciphers.  This includes all the export
+     ciphers who are no longer supported and drops support the ephemeral RSA key
+     exchange. The LOW ciphers currently doesn't have any ciphers in it.
+     [Kurt Roeckx]
+
+  *) Make EVP_MD_CTX, EVP_MD and HMAC_CTX opaque.  For HMAC_CTX, the
+     following constructors and destructors were added:
+
+        HMAC_CTX *HMAC_CTX_new(void);
+        void HMAC_CTX_free(HMAC_CTX *ctx);
+
+     For EVP_MD, a complete API to create, fill and destroy such
+     methods has been added.  See EVP_MD_meth_new(3) for
+     documentation.
+
+     Additional changes:
+     1) HMAC_CTX_cleanup() and EVP_MD_CTX_cleanup() were removed,
+        HMAC_CTX_init() and EVP_MD_CTX_init() should be called instead
+        to reinitialise and already created structure.  Also,
+        HMAC_CTX_init() and EVP_MD_CTX_init() now return 0 for failure
+        and 1 for success (they previously had the return type void).
+     2) For consistency with the majority of our object creators and
+        destructors, EVP_MD_CTX_(create|destroy) were renamed to
+        EVP_MD_CTX_(new|free).  The old names are retained as macros
+        for deprecated builds.
+     [Richard Levitte]
+
+  *) Added ASYNC support. Libcrypto now includes the async sub-library to enable
+     cryptographic operations to be performed asynchronously as long as an
+     asynchronous capable engine is used. See the ASYNC_start_job() man page for
+     further details. Libssl has also had this capability integrated with the
+     introduction of the new mode SSL_MODE_ASYNC and associated error
+     SSL_ERROR_WANT_ASYNC. See the SSL_CTX_set_mode() and SSL_get_error() man
+     pages. This work was developed in partnership with Intel Corp.
+     [Matt Caswell]
+
+  *) SSL_{CTX_}set_ecdh_auto() has been removed and ECDH is support is
+     always enabled now.  If you want to disable the support you should
+     exclude it using the list of supported ciphers. This also means that the
+     "-no_ecdhe" option has been removed from s_server.
+     [Kurt Roeckx]
+
+  *) SSL_{CTX}_set_tmp_ecdh() which can set 1 EC curve now internally calls
+     SSL_{CTX_}set1_curves() which can set a list.
+     [Kurt Roeckx]
+
+  *) Remove support for SSL_{CTX_}set_tmp_ecdh_callback().  You should set the
+     curve you want to support using SSL_{CTX_}set1_curves().
+     [Kurt Roeckx]
 
   *) State machine rewrite. The state machine code has been significantly
      refactored in order to remove much duplication of code and solve issues
@@ -16,13 +78,15 @@
 
   *) All instances of the string "ssleay" in the public API were replaced
      with OpenSSL (case-matching; e.g., OPENSSL_VERSION for #define's)
+     Some error codes related to internal RSA_eay API's were renamed.
      [Rich Salz]
 
   *) The demo files in crypto/threads were moved to demo/threads.
      [Rich Salz]
 
-  *) Removed obsolete engines: 4758cca, aep, atalla, cswift, nuron and sureware.
-     [Matt Caswell]
+  *) Removed obsolete engines: 4758cca, aep, atalla, cswift, nuron, gmp,
+     and sureware.
+     [Matt Caswell, Rich Salz]
 
   *) New ASN.1 embed macro.
 
@@ -58,6 +122,7 @@
      though the change is mostly in the more lenient direction, and
      legacy behaviour is preserved as much as possible.
      [Emilia Käsper]
+
   *) Fix no-stdio build.
     [ David Woodhouse <David.Woodhouse@intel.com> and also
       Ivan Nestlerode <ivan.nestlerode@sonos.com> ]
@@ -140,7 +205,15 @@
      output file readable only by the owner.  This behavior change might
      be noticeable when interacting with other software.
 
+  *) Documented all exdata functions.  Added CRYPTO_free_ex_index.
+     Added a test.
+     [Rich Salz]
+
   *) Added HTTP GET support to the ocsp command.
+     [Rich Salz]
+
+  *) Changed default digest for the dgst and enc commands from MD5 to
+     sha256
      [Rich Salz]
 
   *) RAND_pseudo_bytes has been deprecated. Users should use RAND_bytes instead.
@@ -167,7 +240,7 @@
 
   *) Added support for OCB mode. OpenSSL has been granted a patent license
      compatible with the OpenSSL license for use of OCB. Details are available
-     at https://www.openssl.org/docs/misc/OCB-patent-grant-OpenSSL.pdf. Support
+     at https://www.openssl.org/source/OCB-patent-grant-OpenSSL.pdf. Support
      for OCB can be removed by calling config with no-ocb.
      [Matt Caswell]
 
@@ -524,6 +597,64 @@
      is enable if DEBUG_UNUSED is set. Add to several functions in evp.h
      whose return value is often ignored. 
      [Steve Henson]
+
+ Changes between 1.0.2d and 1.0.2e [3 Dec 2015]
+
+  *) BN_mod_exp may produce incorrect results on x86_64
+
+     There is a carry propagating bug in the x86_64 Montgomery squaring
+     procedure. No EC algorithms are affected. Analysis suggests that attacks
+     against RSA and DSA as a result of this defect would be very difficult to
+     perform and are not believed likely. Attacks against DH are considered just
+     feasible (although very difficult) because most of the work necessary to
+     deduce information about a private key may be performed offline. The amount
+     of resources required for such an attack would be very significant and
+     likely only accessible to a limited number of attackers. An attacker would
+     additionally need online access to an unpatched system using the target
+     private key in a scenario with persistent DH parameters and a private
+     key that is shared between multiple clients. For example this can occur by
+     default in OpenSSL DHE based SSL/TLS ciphersuites.
+
+     This issue was reported to OpenSSL by Hanno Böck.
+     (CVE-2015-3193)
+     [Andy Polyakov]
+
+  *) Certificate verify crash with missing PSS parameter
+
+     The signature verification routines will crash with a NULL pointer
+     dereference if presented with an ASN.1 signature using the RSA PSS
+     algorithm and absent mask generation function parameter. Since these
+     routines are used to verify certificate signature algorithms this can be
+     used to crash any certificate verification operation and exploited in a
+     DoS attack. Any application which performs certificate verification is
+     vulnerable including OpenSSL clients and servers which enable client
+     authentication.
+
+     This issue was reported to OpenSSL by Loïc Jonas Etienne (Qnective AG).
+     (CVE-2015-3194)
+     [Stephen Henson]
+
+  *) X509_ATTRIBUTE memory leak
+
+     When presented with a malformed X509_ATTRIBUTE structure OpenSSL will leak
+     memory. This structure is used by the PKCS#7 and CMS routines so any
+     application which reads PKCS#7 or CMS data from untrusted sources is
+     affected. SSL/TLS is not affected.
+
+     This issue was reported to OpenSSL by Adam Langley (Google/BoringSSL) using
+     libFuzzer.
+     (CVE-2015-3195)
+     [Stephen Henson]
+
+  *) Rewrite EVP_DecodeUpdate (base64 decoding) to fix several bugs.
+     This changes the decoding behaviour for some invalid messages,
+     though the change is mostly in the more lenient direction, and
+     legacy behaviour is preserved as much as possible.
+     [Emilia Käsper]
+
+  *) In DSA_generate_parameters_ex, if the provided seed is too short,
+     return an error
+     [Rich Salz and Ismo Puustinen <ismo.puustinen@intel.com>]
 
  Changes between 1.0.2c and 1.0.2d [9 Jul 2015]
 

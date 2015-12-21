@@ -104,7 +104,7 @@ X509_SIG *PKCS8_set0_pbe(const char *pass, int passlen,
         return NULL;
     }
 
-    if (!(p8 = X509_SIG_new())) {
+    if ((p8 = X509_SIG_new()) == NULL) {
         PKCS12err(PKCS12_F_PKCS8_SET0_PBE, ERR_R_MALLOC_FAILURE);
         ASN1_OCTET_STRING_free(enckey);
         return NULL;

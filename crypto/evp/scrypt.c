@@ -139,7 +139,7 @@ static void scryptROMix(unsigned char *B, uint64_t r, uint64_t N,
         *pV = *pB++;
         *pV |= *pB++ << 8;
         *pV |= *pB++ << 16;
-        *pV |= *pB++ << 24;
+        *pV |= (uint32_t)*pB++ << 24;
     }
 
     for (i = 1; i < N; i++, pV += 32 * r)
@@ -268,7 +268,7 @@ int EVP_PBE_scrypt(const char *pass, size_t passlen,
         return 1;
 
     B = OPENSSL_malloc(Blen + Vlen);
-    if (B == 0)
+    if (B == NULL)
         return 0;
     X = (uint32_t *)(B + Blen);
     T = X + 32 * r;

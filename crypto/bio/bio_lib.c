@@ -471,7 +471,7 @@ BIO *BIO_find_type(BIO *bio, int type)
 {
     int mt, mask;
 
-    if (!bio)
+    if (bio == NULL)
         return NULL;
     mask = type & 0xff;
     do {
@@ -491,7 +491,7 @@ BIO *BIO_find_type(BIO *bio, int type)
 
 BIO *BIO_next(BIO *b)
 {
-    if (!b)
+    if (b == NULL)
         return NULL;
     return b->next_bio;
 }
@@ -559,13 +559,6 @@ void BIO_copy_next_retry(BIO *b)
 {
     BIO_set_flags(b, BIO_get_retry_flags(b->next_bio));
     b->retry_reason = b->next_bio->retry_reason;
-}
-
-int BIO_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
-                         CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func)
-{
-    return CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_BIO, argl, argp,
-                                   new_func, dup_func, free_func);
 }
 
 int BIO_set_ex_data(BIO *bio, int idx, void *data)

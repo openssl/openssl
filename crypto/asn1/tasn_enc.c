@@ -111,7 +111,7 @@ static int asn1_item_flags_i2d(ASN1_VALUE *val, unsigned char **out,
         if (len <= 0)
             return len;
         buf = OPENSSL_malloc(len);
-        if (!buf)
+        if (buf == NULL)
             return -1;
         p = buf;
         ASN1_item_ex_i2d(&val, &p, it, -1, flags);
@@ -423,10 +423,10 @@ static int asn1_set_seq_out(STACK_OF(ASN1_VALUE) *sk, unsigned char **out,
         else {
             derlst = OPENSSL_malloc(sk_ASN1_VALUE_num(sk)
                                     * sizeof(*derlst));
-            if (!derlst)
+            if (derlst == NULL)
                 return 0;
             tmpdat = OPENSSL_malloc(skcontlen);
-            if (!tmpdat) {
+            if (tmpdat == NULL) {
                 OPENSSL_free(derlst);
                 return 0;
             }

@@ -82,7 +82,7 @@ empty structure such as that returned by X509_new().
 
 The encoded data is in binary form and may contain embedded zeroes.
 Therefore any FILE pointers or BIOs should be opened in binary mode.
-Functions such as B<strlen()> will B<not> return the correct length
+Functions such as strlen() will B<not> return the correct length
 of the encoded structure.
 
 The ways that B<*in> and B<*out> are incremented after the operation
@@ -151,17 +151,17 @@ mistake is to attempt to use a buffer directly as follows:
 
 This code will result in B<buf> apparently containing garbage because
 it was incremented after the call to point after the data just written.
-Also B<buf> will no longer contain the pointer allocated by B<OPENSSL_malloc()>
-and the subsequent call to B<OPENSSL_free()> may well crash.
+Also B<buf> will no longer contain the pointer allocated by OPENSSL_malloc()
+and the subsequent call to OPENSSL_free() may well crash.
 
-Another trap to avoid is misuse of the B<xp> argument to B<d2i_X509()>:
+Another trap to avoid is misuse of the B<xp> argument to d2i_X509():
 
  X509 *x;
 
  if (!d2i_X509(&x, &p, len))
 	/* Some error */
 
-This will probably crash somewhere in B<d2i_X509()>. The reason for this
+This will probably crash somewhere in d2i_X509(). The reason for this
 is that the variable B<x> is uninitialized and an attempt will be made to
 interpret its (invalid) value as an B<X509> structure, typically causing
 a segmentation violation. If B<x> is set to NULL first then this will not

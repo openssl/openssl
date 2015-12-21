@@ -175,7 +175,7 @@ static int add_entry(enum Type type, unsigned int hash, const char *filename,
         ep = app_malloc(sizeof(*ep), "collision bucket");
         *ep = nilhentry;
         ep->old_id = ~0;
-        ep->filename = BUF_strdup(filename);
+        ep->filename = OPENSSL_strdup(filename);
         if (bp->last_entry)
             bp->last_entry->next = ep;
         if (bp->first_entry == NULL)
@@ -468,7 +468,7 @@ int rehash_main(int argc, char **argv)
         while (*argv)
             errs += do_dir(*argv++, h);
     } else if ((env = getenv("SSL_CERT_DIR")) != NULL) {
-        m = BUF_strdup(env);
+        m = OPENSSL_strdup(env);
         for (e = strtok(m, ":"); e != NULL; e = strtok(NULL, ":"))
             errs += do_dir(e, h);
         OPENSSL_free(m);

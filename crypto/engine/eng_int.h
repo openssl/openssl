@@ -179,8 +179,7 @@ struct engine_st {
     const RSA_METHOD *rsa_meth;
     const DSA_METHOD *dsa_meth;
     const DH_METHOD *dh_meth;
-    const ECDH_METHOD *ecdh_meth;
-    const ECDSA_METHOD *ecdsa_meth;
+    const EC_KEY_METHOD *ec_meth;
     const RAND_METHOD *rand_meth;
     const STORE_METHOD *store_meth;
     /* Cipher handling is via this callback */

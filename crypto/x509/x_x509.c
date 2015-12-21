@@ -142,13 +142,6 @@ IMPLEMENT_ASN1_FUNCTIONS(X509)
 
 IMPLEMENT_ASN1_DUP_FUNCTION(X509)
 
-int X509_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
-                          CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func)
-{
-    return CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_X509, argl, argp,
-                                   new_func, dup_func, free_func);
-}
-
 int X509_set_ex_data(X509 *r, int idx, void *arg)
 {
     return (CRYPTO_set_ex_data(&r->ex_data, idx, arg));
@@ -175,12 +168,11 @@ X509 *d2i_X509_AUX(X509 **a, const unsigned char **pp, long length)
     /* Save start position */
     q = *pp;
 
-    if (!a || *a == NULL) {
+    if (a == NULL || *a == NULL)
         freeret = 1;
-    }
     ret = d2i_X509(a, &q, length);
     /* If certificate unreadable then forget it */
-    if (!ret)
+    if (ret == NULL)
         return NULL;
     /* update length */
     length -= q - *pp;

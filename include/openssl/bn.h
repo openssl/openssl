@@ -285,9 +285,11 @@ int BN_get_flags(const BIGNUM *b, int n);
 
 /*
  * get a clone of a BIGNUM with changed flags, for *temporary* use only (the
- * two BIGNUMs cannot not be used in parallel!)
+ * two BIGNUMs cannot be used in parallel!). Also only for *read only* use. The
+ * value |dest| should be a newly allocated BIGNUM obtained via BN_new() that
+ * has not been otherwise initialised or used.
  */
-void BN_with_flags(BIGNUM *dest, const BIGNUM *b, int n);
+void BN_with_flags(BIGNUM *dest, const BIGNUM *b, int flags);
 
 /* Wrapper function to make using BN_GENCB easier,  */
 int BN_GENCB_call(BN_GENCB *cb, int a, int b);

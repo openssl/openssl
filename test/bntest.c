@@ -292,7 +292,7 @@ int main(int argc, char *argv[])
         goto err;
     (void)BIO_flush(out);
 
-#ifdef OPENSSL_SYS_WIN32
+#if defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_LINUX)
     message(out, "Probable prime generation with coprimes disabled");
 #else
     message(out, "Probable prime generation with coprimes");
@@ -1023,6 +1023,24 @@ int test_mod_exp(BIO *bp, BN_CTX *ctx)
             return 0;
         }
     }
+
+    /* Regression test for carry propagation bug in sqr8x_reduction */
+    BN_hex2bn(&a, "050505050505");
+    BN_hex2bn(&b, "02");
+    BN_hex2bn(&c,
+        "4141414141414141414141274141414141414141414141414141414141414141"
+        "4141414141414141414141414141414141414141414141414141414141414141"
+        "4141414141414141414141800000000000000000000000000000000000000000"
+        "0000000000000000000000000000000000000000000000000000000000000000"
+        "0000000000000000000000000000000000000000000000000000000000000000"
+        "0000000000000000000000000000000000000000000000000000000001");
+    BN_mod_exp(d, a, b, c, ctx);
+    BN_mul(e, a, a, ctx);
+    if (BN_cmp(d, e)) {
+        fprintf(stderr, "BN_mod_exp and BN_mul produce different results!\n");
+        return 0;
+    }
+
     BN_free(a);
     BN_free(b);
     BN_free(c);
@@ -1841,7 +1859,8 @@ int test_small_prime(BIO *bp, BN_CTX *ctx)
     return ret;
 }
 
-#ifndef OPENSSL_SYS_WIN32
+/* We can't test this on platforms where local symbols aren't exported */
+#if !defined(OPENSSL_SYS_WIN32) && !defined(OPENSSL_SYS_LINUX)
 int test_probable_prime_coprime(BIO *bp, BN_CTX *ctx)
 {
     int i, j, ret = 0;

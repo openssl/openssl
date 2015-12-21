@@ -195,7 +195,7 @@ static size_t drbg_get_entropy(DRBG_CTX *ctx, unsigned char **pout,
     /* Round up request to multiple of block size */
     min_len = ((min_len + 19) / 20) * 20;
     *pout = OPENSSL_malloc(min_len);
-    if (!*pout)
+    if (*pout == NULL)
         return 0;
     if (RAND_OpenSSL()->bytes(*pout, min_len) <= 0) {
         OPENSSL_free(*pout);

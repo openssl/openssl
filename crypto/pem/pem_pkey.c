@@ -173,7 +173,7 @@ EVP_PKEY *PEM_read_bio_Parameters(BIO *bp, EVP_PKEY **x)
 
     if ((slen = pem_check_suffix(nm, "PARAMETERS")) > 0) {
         ret = EVP_PKEY_new();
-        if (!ret)
+        if (ret == NULL)
             goto err;
         if (!EVP_PKEY_set_type_str(ret, nm, slen)
             || !ret->ameth->param_decode

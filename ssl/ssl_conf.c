@@ -268,48 +268,23 @@ static int cmd_Curves(SSL_CONF_CTX *cctx, const char *value)
 /* ECDH temporary parameters */
 static int cmd_ECDHParameters(SSL_CONF_CTX *cctx, const char *value)
 {
-    int onoff = -1, rv = 1;
-    if (cctx->flags & SSL_CONF_FLAG_FILE) {
-        if (*value == '+') {
-            onoff = 1;
-            value++;
-        }
-        if (*value == '-') {
-            onoff = 0;
-            value++;
-        }
-        if (strcasecmp(value, "automatic") == 0) {
-            if (onoff == -1)
-                onoff = 1;
-        } else if (onoff != -1)
-            return 0;
-    } else if (cctx->flags & SSL_CONF_FLAG_CMDLINE) {
-        if (strcmp(value, "auto") == 0)
-            onoff = 1;
-    }
+    int rv = 1;
+    EC_KEY *ecdh;
+    int nid;
 
-    if (onoff != -1) {
-        if (cctx->ctx)
-            rv = SSL_CTX_set_ecdh_auto(cctx->ctx, onoff);
-        else if (cctx->ssl)
-            rv = SSL_set_ecdh_auto(cctx->ssl, onoff);
-    } else {
-        EC_KEY *ecdh;
-        int nid;
-        nid = EC_curve_nist2nid(value);
-        if (nid == NID_undef)
-            nid = OBJ_sn2nid(value);
-        if (nid == 0)
-            return 0;
-        ecdh = EC_KEY_new_by_curve_name(nid);
-        if (!ecdh)
-            return 0;
-        if (cctx->ctx)
-            rv = SSL_CTX_set_tmp_ecdh(cctx->ctx, ecdh);
-        else if (cctx->ssl)
-            rv = SSL_set_tmp_ecdh(cctx->ssl, ecdh);
-        EC_KEY_free(ecdh);
-    }
+    nid = EC_curve_nist2nid(value);
+    if (nid == NID_undef)
+        nid = OBJ_sn2nid(value);
+    if (nid == 0)
+        return 0;
+    ecdh = EC_KEY_new_by_curve_name(nid);
+    if (!ecdh)
+        return 0;
+    if (cctx->ctx)
+        rv = SSL_CTX_set_tmp_ecdh(cctx->ctx, ecdh);
+    else if (cctx->ssl)
+        rv = SSL_set_tmp_ecdh(cctx->ssl, ecdh);
+    EC_KEY_free(ecdh);
 
     return rv > 0;
 }
@@ -393,7 +368,7 @@ static int cmd_Certificate(SSL_CONF_CTX *cctx, const char *value)
     if (rv > 0 && c && cctx->flags & SSL_CONF_FLAG_REQUIRE_PRIVATE) {
         char **pfilename = &cctx->cert_filename[c->key - c->pkeys];
         OPENSSL_free(*pfilename);
-        *pfilename = BUF_strdup(value);
+        *pfilename = OPENSSL_strdup(value);
         if (!*pfilename)
             rv = 0;
     }
@@ -487,12 +462,12 @@ static int cmd_DHParameters(SSL_CONF_CTX *cctx, const char *value)
     BIO *in = NULL;
     if (cctx->ctx || cctx->ssl) {
         in = BIO_new(BIO_s_file());
-        if (!in)
+        if (in == NULL)
             goto end;
         if (BIO_read_filename(in, value) <= 0)
             goto end;
         dh = PEM_read_bio_DHparams(in, NULL, NULL, NULL);
-        if (!dh)
+        if (dh == NULL)
             goto end;
     } else
         return 1;
@@ -837,7 +812,7 @@ int SSL_CONF_CTX_set1_prefix(SSL_CONF_CTX *cctx, const char *pre)
 {
     char *tmp = NULL;
     if (pre) {
-        tmp = BUF_strdup(pre);
+        tmp = OPENSSL_strdup(pre);
         if (tmp == NULL)
             return 0;
     }

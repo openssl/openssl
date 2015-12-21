@@ -147,7 +147,7 @@ int asn1_item_embed_new(ASN1_VALUE **pval, const ASN1_ITEM *it, int embed)
             memset(*pval, 0, it->size);
         } else {
             *pval = OPENSSL_zalloc(it->size);
-            if (!*pval)
+            if (*pval == NULL)
                 goto memerr;
         }
         asn1_set_choice_selector(pval, -1, it);
@@ -173,7 +173,7 @@ int asn1_item_embed_new(ASN1_VALUE **pval, const ASN1_ITEM *it, int embed)
             memset(*pval, 0, it->size);
         } else {
             *pval = OPENSSL_zalloc(it->size);
-            if (!*pval)
+            if (*pval == NULL)
                 goto memerr;
         }
         asn1_do_lock(pval, 0, it);
@@ -341,7 +341,7 @@ static int asn1_primitive_new(ASN1_VALUE **pval, const ASN1_ITEM *it,
 
     case V_ASN1_ANY:
         typ = OPENSSL_malloc(sizeof(*typ));
-        if (!typ)
+        if (typ == NULL)
             return 0;
         typ->value.ptr = NULL;
         typ->type = -1;

@@ -176,3 +176,21 @@ X509_PUBKEY *X509_get_X509_PUBKEY(const X509 *x)
 {
     return x->cert_info.key;
 }
+
+STACK_OF(X509_EXTENSION) *X509_get0_extensions(const X509 *x)
+{
+    return x->cert_info.extensions;
+}
+
+void X509_get0_uids(ASN1_BIT_STRING **piuid, ASN1_BIT_STRING **psuid, X509 *x)
+{
+    if (piuid != NULL)
+        *piuid = x->cert_info.issuerUID;
+    if (psuid != NULL)
+        *psuid = x->cert_info.subjectUID;
+}
+
+X509_ALGOR *X509_get0_tbs_sigalg(X509 *x)
+{
+    return &x->cert_info.signature;
+}

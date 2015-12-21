@@ -247,7 +247,7 @@ static X509_ALGOR *pkcs5_scrypt_set(const unsigned char *salt, size_t saltlen,
     /* Finally setup the keyfunc structure */
 
     keyfunc = X509_ALGOR_new();
-    if (!keyfunc)
+    if (keyfunc == NULL)
         goto merr;
 
     keyfunc->algorithm = OBJ_nid2obj(NID_id_scrypt);

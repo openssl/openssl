@@ -997,7 +997,7 @@ BIO *BIO_new_dgram_sctp(int fd, int close_flag)
      */
     sockopt_len = (socklen_t) (sizeof(sctp_assoc_t) + 256 * sizeof(uint8_t));
     authchunks = OPENSSL_zalloc(sockopt_len);
-    if (!authchunks) {
+    if (authchunks == NULL) {
         BIO_vfree(bio);
         return (NULL);
     }
@@ -1334,7 +1334,7 @@ static int dgram_sctp_read(BIO *b, char *out, int outl)
             optlen =
                 (socklen_t) (sizeof(sctp_assoc_t) + 256 * sizeof(uint8_t));
             authchunks = OPENSSL_malloc(optlen);
-            if (!authchunks) {
+            if (authchunks == NULL) {
                 BIOerr(BIO_F_DGRAM_SCTP_READ, ERR_R_MALLOC_FAILURE);
                 return -1;
             }
@@ -1762,7 +1762,8 @@ int BIO_dgram_sctp_notification_cb(BIO *b,
 int BIO_dgram_sctp_wait_for_dry(BIO *b)
 {
     int is_dry = 0;
-    int n, sockflags, ret;
+    int sockflags = 0;
+    int n, ret;
     union sctp_notification snp;
     struct msghdr msg;
     struct iovec iov;

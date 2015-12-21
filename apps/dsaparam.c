@@ -208,14 +208,14 @@ int dsaparam_main(int argc, char **argv)
 
     if (numbits > 0) {
         cb = BN_GENCB_new();
-        if (!cb) {
+        if (cb == NULL) {
             BIO_printf(bio_err, "Error allocating BN_GENCB object\n");
             goto end;
         }
         BN_GENCB_set(cb, dsa_cb, bio_err);
         assert(need_rand);
         dsa = DSA_new();
-        if (!dsa) {
+        if (dsa == NULL) {
             BIO_printf(bio_err, "Error allocating DSA object\n");
             goto end;
         }

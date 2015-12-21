@@ -195,14 +195,6 @@ CERT *ssl_cert_dup(CERT *cert)
     ret->references = 1;
     ret->key = &ret->pkeys[cert->key - cert->pkeys];
 
-#ifndef OPENSSL_NO_RSA
-    if (cert->rsa_tmp != NULL) {
-        RSA_up_ref(cert->rsa_tmp);
-        ret->rsa_tmp = cert->rsa_tmp;
-    }
-    ret->rsa_tmp_cb = cert->rsa_tmp_cb;
-#endif
-
 #ifndef OPENSSL_NO_DH
     if (cert->dh_tmp != NULL) {
         ret->dh_tmp = DHparams_dup(cert->dh_tmp);
@@ -229,18 +221,6 @@ CERT *ssl_cert_dup(CERT *cert)
     }
     ret->dh_tmp_cb = cert->dh_tmp_cb;
     ret->dh_tmp_auto = cert->dh_tmp_auto;
-#endif
-
-#ifndef OPENSSL_NO_EC
-    if (cert->ecdh_tmp) {
-        ret->ecdh_tmp = EC_KEY_dup(cert->ecdh_tmp);
-        if (ret->ecdh_tmp == NULL) {
-            SSLerr(SSL_F_SSL_CERT_DUP, ERR_R_EC_LIB);
-            goto err;
-        }
-    }
-    ret->ecdh_tmp_cb = cert->ecdh_tmp_cb;
-    ret->ecdh_tmp_auto = cert->ecdh_tmp_auto;
 #endif
 
     for (i = 0; i < SSL_PKEY_NUM; i++) {
@@ -282,7 +262,7 @@ CERT *ssl_cert_dup(CERT *cert)
     /* Configured sigalgs copied across */
     if (cert->conf_sigalgs) {
         ret->conf_sigalgs = OPENSSL_malloc(cert->conf_sigalgslen);
-        if (!ret->conf_sigalgs)
+        if (ret->conf_sigalgs == NULL)
             goto err;
         memcpy(ret->conf_sigalgs, cert->conf_sigalgs, cert->conf_sigalgslen);
         ret->conf_sigalgslen = cert->conf_sigalgslen;
@@ -291,7 +271,7 @@ CERT *ssl_cert_dup(CERT *cert)
 
     if (cert->client_sigalgs) {
         ret->client_sigalgs = OPENSSL_malloc(cert->client_sigalgslen);
-        if (!ret->client_sigalgs)
+        if (ret->client_sigalgs == NULL)
             goto err;
         memcpy(ret->client_sigalgs, cert->client_sigalgs,
                cert->client_sigalgslen);
@@ -303,7 +283,7 @@ CERT *ssl_cert_dup(CERT *cert)
     /* Copy any custom client certificate types */
     if (cert->ctypes) {
         ret->ctypes = OPENSSL_malloc(cert->ctype_num);
-        if (!ret->ctypes)
+        if (ret->ctypes == NULL)
             goto err;
         memcpy(ret->ctypes, cert->ctypes, cert->ctype_num);
         ret->ctype_num = cert->ctype_num;
@@ -335,7 +315,7 @@ CERT *ssl_cert_dup(CERT *cert)
         goto err;
 #ifndef OPENSSL_NO_PSK
     if (cert->psk_identity_hint) {
-        ret->psk_identity_hint = BUF_strdup(cert->psk_identity_hint);
+        ret->psk_identity_hint = OPENSSL_strdup(cert->psk_identity_hint);
         if (ret->psk_identity_hint == NULL)
             goto err;
     }
@@ -389,14 +369,8 @@ void ssl_cert_free(CERT *c)
     }
 #endif
 
-#ifndef OPENSSL_NO_RSA
-    RSA_free(c->rsa_tmp);
-#endif
 #ifndef OPENSSL_NO_DH
     DH_free(c->dh_tmp);
-#endif
-#ifndef OPENSSL_NO_EC
-    EC_KEY_free(c->ecdh_tmp);
 #endif
 
     ssl_cert_clear_certs(c);
@@ -914,6 +888,12 @@ int ssl_add_cert_chain(SSL *s, CERT_PKEY *cpk, unsigned long *l)
             SSLerr(SSL_F_SSL_ADD_CERT_CHAIN, ERR_R_X509_LIB);
             return (0);
         }
+        /*
+         * It is valid for the chain not to be complete (because normally we
+         * don't include the root cert in the chain). Therefore we deliberately
+         * ignore the error return from this call. We're not actually verifying
+         * the cert - we're just building as much of the chain as we can
+         */
         X509_verify_cert(&xs_ctx);
         /* Don't leave errors in the queue */
         ERR_clear_error();
@@ -968,7 +948,7 @@ int ssl_build_cert_chain(SSL *s, SSL_CTX *ctx, int flags)
     /* Rearranging and check the chain: add everything to a store */
     if (flags & SSL_BUILD_CHAIN_FLAG_CHECK) {
         chain_store = X509_STORE_new();
-        if (!chain_store)
+        if (chain_store == NULL)
             goto err;
         for (i = 0; i < sk_X509_num(cpk->chain); i++) {
             x = sk_X509_value(cpk->chain, i);

@@ -230,4 +230,9 @@ sub set_extension
     my ($self, $ext_type, $ext_data) = @_;
     $self->{extension_data}{$ext_type} = $ext_data;
 }
+sub delete_extension
+{
+    my ($self, $ext_type) = @_;
+    delete $self->{extension_data}{$ext_type};
+}
 1;

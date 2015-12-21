@@ -125,12 +125,12 @@ int OCSP_request_set1_name(OCSP_REQUEST *req, X509_NAME *nm)
 int OCSP_request_add1_cert(OCSP_REQUEST *req, X509 *cert)
 {
     OCSP_SIGNATURE *sig;
-    if (!req->optionalSignature)
+    if (req->optionalSignature == NULL)
         req->optionalSignature = OCSP_SIGNATURE_new();
     sig = req->optionalSignature;
-    if (!sig)
+    if (sig == NULL)
         return 0;
-    if (!cert)
+    if (cert == NULL)
         return 1;
     if (sig->certs == NULL
         && (sig->certs = sk_X509_new_null()) == NULL)

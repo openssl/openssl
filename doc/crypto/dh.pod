@@ -25,11 +25,6 @@ dh - Diffie-Hellman key agreement
  DH *DH_new_method(ENGINE *engine);
  const DH_METHOD *DH_OpenSSL(void);
 
- int DH_get_ex_new_index(long argl, char *argp, int (*new_func)(),
-	     int (*dup_func)(), void (*free_func)());
- int DH_set_ex_data(DH *d, int idx, char *arg);
- char *DH_get_ex_data(DH *d, int idx);
-
  DH *	d2i_DHparams(DH **a, unsigned char **pp, long length);
  int	i2d_DHparams(const DH *a, unsigned char **pp);
 

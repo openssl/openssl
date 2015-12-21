@@ -229,12 +229,12 @@ static int add_cert_dir(BY_DIR *ctx, const char *dir, int type)
                 }
             }
             ent = OPENSSL_malloc(sizeof(*ent));
-            if (!ent)
+            if (ent == NULL)
                 return 0;
             ent->dir_type = type;
             ent->hashes = sk_BY_DIR_HASH_new(by_dir_hash_cmp);
             ent->dir = OPENSSL_malloc((unsigned int)len + 1);
-            if (!ent->dir || !ent->hashes) {
+            if (ent->dir == NULL || ent->hashes == NULL) {
                 by_dir_entry_free(ent);
                 return 0;
             }
