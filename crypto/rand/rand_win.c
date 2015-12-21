@@ -364,7 +364,7 @@ static void readscreen(void)
     /* Clean up */
     DeleteObject(hBitmap);
     ReleaseDC(NULL, hScrDC);
-# endif                         /* !OPENSSL_SYS_CYGWIN */
+# endif                         /* !OPENSSL_SYS_WIN32_CYGWIN */
 }
 
 #endif
