@@ -180,6 +180,15 @@ messages, and ignore renegotiation requests via ClientHello.
 In TLSv1.3 allow a non-(ec)dhe based key exchange mode on resumption. This means
 that there will be no forward secrecy for the resumed session.
 
+=item SSL_OP_PRIORITIZE_CHACHA
+
+When SSL_OP_CIPHER_SERVER_PREFERENCE is set, temporarily reprioritize
+ChaCha20-Poly1305 ciphers to the top of the server cipher list if a
+ChaCha20-Poly1305 cipher is at the top of the client cipher list. This helps
+those clients (e.g. mobile) use ChaCha20-Poly1305 if that cipher is anywhere
+in the server cipher list; but still allows other clients to use AES and other
+ciphers. Requires B<SSL_OP_CIPHER_SERVER_PREFERENCE>.
+
 =back
 
 The following options no longer have any effect but their identifiers are
@@ -306,9 +315,11 @@ L<dhparam(1)>
 The attempt to always try to use secure renegotiation was added in
 Openssl 0.9.8m.
 
+B<SSL_OP_PRIORITIZE_CHACHA> was added in OpenSSL 1.1.1.
+
 =head1 COPYRIGHT
 
-Copyright 2001-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2001-2017 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

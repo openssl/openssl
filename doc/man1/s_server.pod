@@ -105,6 +105,7 @@ B<openssl> B<s_server>
 [B<-no_resumption_on_reneg>]
 [B<-no_legacy_server_connect>]
 [B<-allow_no_dhe_kex>]
+[B<-prioritize_chacha>]
 [B<-strict>]
 [B<-sigalgs val>]
 [B<-client_sigalgs val>]
@@ -510,6 +511,10 @@ Disable RFC4507bis session ticket support.
 
 Use the server's cipher preferences, rather than the client's preferences.
 
+=item B<-prioritize_chacha>
+
+Prioritize ChaCha ciphers when preferred by clients. Requires B<-serverpref>.
+
 =item B<-no_resumption_on_reneg>
 
 Set the B<SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION> option.
@@ -718,7 +723,10 @@ L<SSL_CTX_set_max_pipelines(3)>
 
 =head1 HISTORY
 
-The -no_alt_chains options was first added to OpenSSL 1.1.0.
+The -no_alt_chains option was first added to OpenSSL 1.1.0.
+
+The -allow-no-dhe-kex and -prioritize_chacha options were first added to
+OpenSSL 1.1.1.
 
 =head1 COPYRIGHT
 

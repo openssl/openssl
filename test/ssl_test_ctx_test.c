@@ -93,6 +93,8 @@ static int testctx_eq(SSL_TEST_CTX *ctx, SSL_TEST_CTX *ctx2)
                             ctx2->expected_npn_protocol)
             || !TEST_str_eq(ctx->expected_alpn_protocol,
                             ctx2->expected_alpn_protocol)
+            || !TEST_str_eq(ctx->expected_cipher,
+                            ctx2->expected_cipher)
             || !TEST_int_eq(ctx->resumption_expected,
                             ctx2->resumption_expected)
             || !TEST_int_eq(ctx->session_id_expected,

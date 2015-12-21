@@ -4120,6 +4120,9 @@ const SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
     STACK_OF(SSL_CIPHER) *prio, *allow;
     int i, ii, ok;
     unsigned long alg_k = 0, alg_a = 0, mask_k = 0, mask_a = 0;
+#ifndef OPENSSL_NO_CHACHA
+    STACK_OF(SSL_CIPHER) *prio_chacha = NULL;
+#endif
 
     /* Let's see which ciphers we can support */
 
@@ -4145,9 +4148,53 @@ const SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
     }
 #endif
 
-    if (s->options & SSL_OP_CIPHER_SERVER_PREFERENCE || tls1_suiteb(s)) {
+    /* SUITE-B takes precedence over server preference and ChaCha priortiy */
+    if (tls1_suiteb(s)) {
         prio = srvr;
         allow = clnt;
+    } else if (s->options & SSL_OP_CIPHER_SERVER_PREFERENCE) {
+        prio = srvr;
+        allow = clnt;
+#ifndef OPENSSL_NO_CHACHA
+        /* If ChaCha20 is at the top of the client preference list,
+           and there are ChaCha20 ciphers in the server list, then
+           temporarily prioritize all ChaCha20 ciphers in the servers list. */
+        if (s->options & SSL_OP_PRIORITIZE_CHACHA && sk_SSL_CIPHER_num(clnt) > 0) {
+            c = sk_SSL_CIPHER_value(clnt, 0);
+            if (c->algorithm_enc == SSL_CHACHA20POLY1305) {
+                /* ChaCha20 is client preferred, check server... */
+                int num = sk_SSL_CIPHER_num(srvr);
+                int found = 0;
+                for (i = 0; i < num; i++) {
+                    c = sk_SSL_CIPHER_value(srvr, i);
+                    if (c->algorithm_enc == SSL_CHACHA20POLY1305) {
+                        found = 1;
+                        break;
+                    }
+                }
+                if (found) {
+                    prio_chacha = sk_SSL_CIPHER_new_null();
+                    /* if reserve fails, then there's likely a memory issue */
+                    if (prio_chacha != NULL) {
+                        /* Put all ChaCha20 at the top, starting with the one we just found */
+                        sk_SSL_CIPHER_push(prio_chacha, c);
+                        for (i++; i < num; i++) {
+                            c = sk_SSL_CIPHER_value(srvr, i);
+                            if (c->algorithm_enc == SSL_CHACHA20POLY1305)
+                                sk_SSL_CIPHER_push(prio_chacha, c);
+                        }
+                        /* Pull in the rest */
+                        for (i = 0; i < num; i++) {
+                            c = sk_SSL_CIPHER_value(srvr, i);
+                            if (c->algorithm_enc != SSL_CHACHA20POLY1305)
+                                sk_SSL_CIPHER_push(prio_chacha, c);
+                        }
+                        prio = prio_chacha;
+                    }
+                }
+            }
+        }
+# endif
     } else {
         prio = clnt;
         allow = srvr;
@@ -4229,6 +4276,9 @@ const SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
             break;
         }
     }
+#ifndef OPENSSL_NO_CHACHA
+    sk_SSL_CIPHER_free(prio_chacha);
+#endif
     return ret;
 }
 
