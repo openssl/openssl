@@ -434,7 +434,6 @@ static ERR_STRING_DATA SSL_str_reasons[] = {
     {ERR_REASON(SSL_R_BAD_ECC_CERT), "bad ecc cert"},
     {ERR_REASON(SSL_R_BAD_ECDSA_SIGNATURE), "bad ecdsa signature"},
     {ERR_REASON(SSL_R_BAD_ECPOINT), "bad ecpoint"},
-    {ERR_REASON(SSL_R_BAD_GOST_SIGNATURE), "bad gost signature"},
     {ERR_REASON(SSL_R_BAD_HANDSHAKE_LENGTH), "bad handshake length"},
     {ERR_REASON(SSL_R_BAD_HELLO_REQUEST), "bad hello request"},
     {ERR_REASON(SSL_R_BAD_LENGTH), "bad length"},
