@@ -2620,8 +2620,8 @@ MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
 #endif
 #ifndef OPENSSL_NO_EC
     EVP_PKEY_free(ckey);
-    OPENSSL_free(rsa_decrypt);
 #endif
+    OPENSSL_free(rsa_decrypt);
 #ifndef OPENSSL_NO_PSK
     OPENSSL_clear_free(s->s3->tmp.psk, s->s3->tmp.psklen);
     s->s3->tmp.psk = NULL;
