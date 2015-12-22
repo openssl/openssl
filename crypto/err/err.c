@@ -399,8 +399,10 @@ static void int_thread_del_item(const ERR_STATE *d)
         if (int_thread_hash_references == 1
             && int_thread_hash
             && lh_ERR_STATE_num_items(int_thread_hash) == 0) {
+            int_thread_hash_references = 0;
             lh_ERR_STATE_free(int_thread_hash);
             int_thread_hash = NULL;
+            hash = NULL;
         }
     }
     CRYPTO_w_unlock(CRYPTO_LOCK_ERR);
