@@ -413,3 +413,6 @@ SSL_set_default_passwd_cb               447	1_1_0	EXIST::FUNCTION:
 SSL_set_default_passwd_cb_userdata      448	1_1_0	EXIST::FUNCTION:
 SSL_waiting_for_async                   449	1_1_0	EXIST::FUNCTION:
 SSL_get_async_wait_fd                   450	1_1_0	EXIST::FUNCTION:
+SSL_add_ssl_module                      451	1_1_0	EXIST::FUNCTION:
+SSL_CTX_config                          452	1_1_0	EXIST::FUNCTION:
+SSL_config                              453	1_1_0	EXIST::FUNCTION:
