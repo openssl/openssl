@@ -2227,18 +2227,12 @@ MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
         if (s->version == SSL3_VERSION || s->version == DTLS1_BAD_VER) {
             enc_premaster = *pkt;
         } else {
-            PACKET orig = *pkt;
             if (!PACKET_get_length_prefixed_2(pkt, &enc_premaster)
                 || PACKET_remaining(pkt) != 0) {
-                /* Try SSLv3 behaviour for TLS. */
-                if (s->options & SSL_OP_TLS_D5_BUG) {
-                    enc_premaster = orig;
-                } else {
-                    al = SSL_AD_DECODE_ERROR;
-                    SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE,
-                           SSL_R_LENGTH_MISMATCH);
-                    goto f_err;
-                }
+                al = SSL_AD_DECODE_ERROR;
+                SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE,
+                       SSL_R_LENGTH_MISMATCH);
+                goto f_err;
             }
         }
 

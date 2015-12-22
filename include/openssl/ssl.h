@@ -362,11 +362,11 @@ typedef int (*custom_ext_parse_cb) (SSL *s, unsigned int ext_type,
 /* Dead forever, see CVE-2010-4180. */
 # define SSL_OP_NETSCAPE_REUSE_CIPHER_CHANGE_BUG         0x0U
 # define SSL_OP_TLSEXT_PADDING                           0x00000010U
-# define SSL_OP_MICROSOFT_BIG_SSLV3_BUFFER               0x00000020U
+# define SSL_OP_MICROSOFT_BIG_SSLV3_BUFFER               0x0U
 # define SSL_OP_SAFARI_ECDHE_ECDSA_BUG                   0x00000040U
 /* Ancient SSLeay version, retained for compatibility */
 # define SSL_OP_SSLEAY_080_CLIENT_DH_BUG                 0x0
-# define SSL_OP_TLS_D5_BUG                               0x00000100U
+# define SSL_OP_TLS_D5_BUG                               0x0U
 /* Removed from OpenSSL 1.1.0 */
 # define SSL_OP_TLS_BLOCK_PADDING_BUG                    0x0U
 
