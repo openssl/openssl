@@ -1188,8 +1188,6 @@ typedef struct ssl3_state_st {
     /* flags for countermeasure against known-IV weakness */
     int need_empty_fragments;
     int empty_fragment_done;
-    /* The value of 'extra' when the buffers were initialized */
-    int init_extra;
     /* used during startup, digest all incoming/outgoing packets */
     BIO *handshake_buffer;
     /*

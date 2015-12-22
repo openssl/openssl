@@ -3402,8 +3402,6 @@ void ssl3_free(SSL *s)
 
 void ssl3_clear(SSL *s)
 {
-    int init_extra;
-
     ssl3_cleanup_key_block(s);
     sk_X509_NAME_pop_free(s->s3->tmp.ca_names, X509_NAME_free);
     OPENSSL_free(s->s3->tmp.ciphers_raw);
@@ -3427,7 +3425,6 @@ void ssl3_clear(SSL *s)
     s->s3->is_probably_safari = 0;
 #endif                         /* !OPENSSL_NO_EC */
 
-    init_extra = s->s3->init_extra;
     ssl3_free_digest_list(s);
 
     if (s->s3->alpn_selected) {
@@ -3436,7 +3433,6 @@ void ssl3_clear(SSL *s)
     }
 
     memset(s->s3, 0, sizeof(*s->s3));
-    s->s3->init_extra = init_extra;
 
     ssl_free_wbio_buffer(s);
 
