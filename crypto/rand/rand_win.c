@@ -169,7 +169,7 @@ int RAND_poll(void)
 
     /* poll the CryptoAPI PRNG */
     /* The CryptoAPI returns sizeof(buf) bytes of randomness */
-    if (CryptAcquireContextW(&hProvider, NULL, NULL, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT)) {
+    if (CryptAcquireContextW(&hProvider, NULL, NULL, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT | CRYPT_SILENT)) {
         if (CryptGenRandom(hProvider, sizeof(buf), buf) != 0) {
             RAND_add(buf, sizeof(buf), sizeof(buf));
         }
@@ -177,7 +177,7 @@ int RAND_poll(void)
     }
 
     /* poll the Pentium PRG with CryptoAPI */
-    if (CryptAcquireContextW(&hProvider, NULL, INTEL_DEF_PROV, PROV_INTEL_SEC, CRYPT_VERIFYCONTEXT)) {
+    if (CryptAcquireContextW(&hProvider, NULL, INTEL_DEF_PROV, PROV_INTEL_SEC, CRYPT_VERIFYCONTEXT | CRYPT_SILENT)) {
         if (CryptGenRandom(hProvider, sizeof(buf), buf) != 0) {
             RAND_add(buf, sizeof(buf), sizeof(buf));
         }
