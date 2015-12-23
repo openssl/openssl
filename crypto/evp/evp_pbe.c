@@ -66,9 +66,6 @@
 
 /* Password based encryption (PBE) functions */
 
-DECLARE_STACK_OF(EVP_PBE_CTL)
-static STACK_OF(EVP_PBE_CTL) *pbe_algs;
-
 /* Setup a cipher context from a PBE algorithm */
 
 typedef struct {
@@ -78,6 +75,9 @@ typedef struct {
     int md_nid;
     EVP_PBE_KEYGEN *keygen;
 } EVP_PBE_CTL;
+
+DECLARE_STACK_OF(EVP_PBE_CTL)
+static STACK_OF(EVP_PBE_CTL) *pbe_algs;
 
 static const EVP_PBE_CTL builtin_pbe[] = {
     {EVP_PBE_TYPE_OUTER, NID_pbeWithMD2AndDES_CBC,

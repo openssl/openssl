@@ -1883,7 +1883,7 @@ STACK_OF(SSL_CIPHER) *ssl_get_ciphers_by_id(SSL *s)
 /** The old interface to get the same thing as SSL_get_ciphers() */
 const char *SSL_get_cipher_list(const SSL *s, int n)
 {
-    SSL_CIPHER *c;
+    const SSL_CIPHER *c;
     STACK_OF(SSL_CIPHER) *sk;
 
     if (s == NULL)
@@ -1941,7 +1941,7 @@ char *SSL_get_shared_ciphers(const SSL *s, char *buf, int len)
 {
     char *p;
     STACK_OF(SSL_CIPHER) *sk;
-    SSL_CIPHER *c;
+    const SSL_CIPHER *c;
     int i;
 
     if ((s->session == NULL) || (s->session->ciphers == NULL) || (len < 2))

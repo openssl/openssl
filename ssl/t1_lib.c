@@ -1127,7 +1127,7 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *buf,
         STACK_OF(SSL_CIPHER) *cipher_stack = SSL_get_ciphers(s);
 
         for (i = 0; i < sk_SSL_CIPHER_num(cipher_stack); i++) {
-            SSL_CIPHER *c = sk_SSL_CIPHER_value(cipher_stack, i);
+            const SSL_CIPHER *c = sk_SSL_CIPHER_value(cipher_stack, i);
 
             alg_k = c->algorithm_mkey;
             alg_a = c->algorithm_auth;

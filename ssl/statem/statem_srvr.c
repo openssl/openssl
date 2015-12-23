@@ -965,7 +965,7 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
     int i, al = SSL_AD_INTERNAL_ERROR;
     unsigned int j, complen = 0;
     unsigned long id;
-    SSL_CIPHER *c;
+    const SSL_CIPHER *c;
 #ifndef OPENSSL_NO_COMP
     SSL_COMP *comp = NULL;
 #endif
@@ -1295,7 +1295,7 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
     }
 
     if (!s->hit && s->version >= TLS1_VERSION && s->tls_session_secret_cb) {
-        SSL_CIPHER *pref_cipher = NULL;
+        const SSL_CIPHER *pref_cipher = NULL;
 
         s->session->master_key_length = sizeof(s->session->master_key);
         if (s->tls_session_secret_cb(s, s->session->master_key,
@@ -1446,7 +1446,7 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
 WORK_STATE tls_post_process_client_hello(SSL *s, WORK_STATE wst)
 {
     int al = SSL_AD_HANDSHAKE_FAILURE;
-    SSL_CIPHER *cipher;
+    const SSL_CIPHER *cipher;
 
     if (wst == WORK_MORE_A) {
         if (!s->hit) {

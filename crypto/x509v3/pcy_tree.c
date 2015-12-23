@@ -292,7 +292,7 @@ static int tree_init(X509_POLICY_TREE **ptree, STACK_OF(X509) *certs,
 }
 
 static int tree_link_matching_nodes(X509_POLICY_LEVEL *curr,
-                                    const X509_POLICY_DATA *data)
+                                    X509_POLICY_DATA *data)
 {
     X509_POLICY_LEVEL *last = curr - 1;
     X509_POLICY_NODE *node;

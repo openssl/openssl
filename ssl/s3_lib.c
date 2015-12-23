@@ -4105,10 +4105,10 @@ int ssl3_put_cipher_by_char(const SSL_CIPHER *c, unsigned char *p)
     return (2);
 }
 
-SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
+const SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
                                STACK_OF(SSL_CIPHER) *srvr)
 {
-    SSL_CIPHER *c, *ret = NULL;
+    const SSL_CIPHER *c, *ret = NULL;
     STACK_OF(SSL_CIPHER) *prio, *allow;
     int i, ii, ok;
     unsigned long alg_k, alg_a, mask_k, mask_a;
@@ -4201,7 +4201,7 @@ SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
         if (ii >= 0) {
             /* Check security callback permits this cipher */
             if (!ssl_security(s, SSL_SECOP_CIPHER_SHARED,
-                              c->strength_bits, 0, c))
+                              c->strength_bits, 0, (void *)c))
                 continue;
 #if !defined(OPENSSL_NO_EC)
             if ((alg_k & SSL_kECDHE) && (alg_a & SSL_aECDSA)

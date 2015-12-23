@@ -1049,7 +1049,7 @@ int main(int argc, char *argv[])
 
     SSL_CONF_CTX *s_cctx = NULL, *c_cctx = NULL;
     STACK_OF(OPENSSL_STRING) *conf_args = NULL;
-    const char *arg = NULL, *argn = NULL;
+    char *arg = NULL, *argn = NULL;
 
     verbose = 0;
     debug = 0;

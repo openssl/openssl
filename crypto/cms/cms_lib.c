@@ -64,9 +64,6 @@
 IMPLEMENT_ASN1_FUNCTIONS(CMS_ContentInfo)
 IMPLEMENT_ASN1_PRINT_FUNCTION(CMS_ContentInfo)
 
-DECLARE_STACK_OF(CMS_CertificateChoices)
-DECLARE_STACK_OF(CMS_RevocationInfoChoice)
-
 const ASN1_OBJECT *CMS_get0_type(CMS_ContentInfo *cms)
 {
     return cms->contentType;
