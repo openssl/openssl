@@ -164,7 +164,7 @@
 # include <openssl/engine.h>
 #endif
 
-static inline int cert_req_allowed(SSL *s);
+static ossl_inline int cert_req_allowed(SSL *s);
 static int key_exchange_expected(SSL *s);
 static int ssl_set_version(SSL *s);
 static int ca_dn_cmp(const X509_NAME *const *a, const X509_NAME *const *b);
@@ -179,7 +179,7 @@ static int ssl_cipher_list_to_bytes(SSL *s, STACK_OF(SSL_CIPHER) *sk,
  *  1: Yes
  *  0: No
  */
-static inline int cert_req_allowed(SSL *s)
+static ossl_inline int cert_req_allowed(SSL *s)
 {
     /* TLS does not like anon-DH with client cert */
     if ((s->version > SSL3_VERSION
