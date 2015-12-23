@@ -696,7 +696,11 @@ unsigned long ossl_statem_client_max_message_size(SSL *s)
             return SERVER_KEY_EXCH_MAX_LENGTH;
 
         case TLS_ST_CR_CERT_REQ:
-            return SSL3_RT_MAX_PLAIN_LENGTH;
+            /* Set to s->max_cert_list for compatibility with previous releases.
+             * In practice these messages can get quite long if servers are
+             * configured to provide a long list of acceptable CAs
+             */
+            return s->max_cert_list;
 
         case TLS_ST_CR_SRVR_DONE:
             return SERVER_HELLO_DONE_MAX_LENGTH;
