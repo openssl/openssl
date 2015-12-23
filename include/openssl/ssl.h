@@ -325,7 +325,7 @@ typedef struct ssl_session_st SSL_SESSION;
 typedef struct tls_sigalgs_st TLS_SIGALGS;
 typedef struct ssl_conf_ctx_st SSL_CONF_CTX;
 
-DECLARE_STACK_OF(SSL_CIPHER)
+DECLARE_CONST_STACK_OF(SSL_CIPHER)
 
 DECLARE_STACK_OF(danetls_record)
 
@@ -343,7 +343,7 @@ typedef int (*tls_session_ticket_ext_cb_fn) (SSL *s,
 typedef int (*tls_session_secret_cb_fn) (SSL *s, void *secret,
                                          int *secret_len,
                                          STACK_OF(SSL_CIPHER) *peer_ciphers,
-                                         SSL_CIPHER **cipher, void *arg);
+                                         const SSL_CIPHER **cipher, void *arg);
 
 /* Typedefs for handling custom extensions */
 

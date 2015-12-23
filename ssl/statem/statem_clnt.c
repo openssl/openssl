@@ -1090,7 +1090,7 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL *s, PACKET *pkt)
      */
     if (s->version >= TLS1_VERSION && s->tls_session_secret_cb &&
         s->session->tlsext_tick) {
-        SSL_CIPHER *pref_cipher = NULL;
+        const SSL_CIPHER *pref_cipher = NULL;
         s->session->master_key_length = sizeof(s->session->master_key);
         if (s->tls_session_secret_cb(s, s->session->master_key,
                                      &s->session->master_key_length,
@@ -2865,7 +2865,7 @@ int ssl_cipher_list_to_bytes(SSL *s, STACK_OF(SSL_CIPHER) *sk,
                              unsigned char *p)
 {
     int i, j = 0;
-    SSL_CIPHER *c;
+    const SSL_CIPHER *c;
     unsigned char *q;
     int empty_reneg_info_scsv = !s->renegotiate;
     /* Set disabled masks for this session */

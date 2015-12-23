@@ -109,6 +109,8 @@ struct CMS_ContentInfo_st {
     } d;
 };
 
+DECLARE_STACK_OF(CMS_CertificateChoices)
+
 struct CMS_SignedData_st {
     long version;
     STACK_OF(X509_ALGOR) *digestAlgorithms;
