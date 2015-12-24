@@ -1227,11 +1227,8 @@ typedef struct ssl3_state_st {
         int message_type;
         /* used to hold the new cipher we are going to use */
         const SSL_CIPHER *new_cipher;
-#  ifndef OPENSSL_NO_DH
-        DH *dh;
-#  endif
-#  ifndef OPENSSL_NO_EC
-        EVP_PKEY *pkey;            /* holds short lived ECDH key */
+#  if !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH)
+        EVP_PKEY *pkey;            /* holds short lived DH/ECDH key */
 #  endif
         /* used for certificate requests */
         int cert_req;

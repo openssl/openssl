@@ -3375,17 +3375,11 @@ void ssl3_free(SSL *s)
 
     ssl3_cleanup_key_block(s);
 
-#ifndef OPENSSL_NO_DH
-    DH_free(s->s3->tmp.dh);
-#endif
-
-#ifndef OPENSSL_NO_EC
-    EVP_PKEY_free(s->s3->tmp.pkey);
-    s->s3->tmp.pkey = NULL;
-#endif
 #if !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH)
     EVP_PKEY_free(s->s3->peer_tmp);
     s->s3->peer_tmp = NULL;
+    EVP_PKEY_free(s->s3->tmp.pkey);
+    s->s3->tmp.pkey = NULL;
 #endif
 
     sk_X509_NAME_pop_free(s->s3->tmp.ca_names, X509_NAME_free);
@@ -3413,16 +3407,12 @@ void ssl3_clear(SSL *s)
     OPENSSL_free(s->s3->tmp.peer_sigalgs);
     s->s3->tmp.peer_sigalgs = NULL;
 
-#ifndef OPENSSL_NO_DH
-    DH_free(s->s3->tmp.dh);
-    s->s3->tmp.dh = NULL;
-#endif
 #ifndef OPENSSL_NO_EC
-    EVP_PKEY_free(s->s3->tmp.pkey);
-    s->s3->tmp.pkey = NULL;
     s->s3->is_probably_safari = 0;
 #endif
 #if !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH)
+    EVP_PKEY_free(s->s3->tmp.pkey);
+    s->s3->tmp.pkey = NULL;
     EVP_PKEY_free(s->s3->peer_tmp);
     s->s3->peer_tmp = NULL;
 #endif                         /* !OPENSSL_NO_EC */
