@@ -234,31 +234,30 @@ int OBJ_NAME_remove(const char *name, int type)
         return (0);
 }
 
-struct doall {
+typedef struct {
     int type;
     void (*fn) (const OBJ_NAME *, void *arg);
     void *arg;
-};
+} OBJ_DOALL;
 
-static void do_all_fn_doall_arg(const OBJ_NAME *name, struct doall *d)
+static void do_all_fn(const OBJ_NAME *name, OBJ_DOALL *d)
 {
     if (name->type == d->type)
         d->fn(name, d->arg);
 }
 
-static IMPLEMENT_LHASH_DOALL_ARG_FN(do_all_fn, const OBJ_NAME, struct doall)
+IMPLEMENT_LHASH_DOALL_ARG_CONST(OBJ_NAME, OBJ_DOALL);
 
 void OBJ_NAME_do_all(int type, void (*fn) (const OBJ_NAME *, void *arg),
                      void *arg)
 {
-    struct doall d;
+    OBJ_DOALL d;
 
     d.type = type;
     d.fn = fn;
     d.arg = arg;
 
-    lh_OBJ_NAME_doall_arg(names_lh, LHASH_DOALL_ARG_FN(do_all_fn),
-                          struct doall, &d);
+    lh_OBJ_NAME_doall_OBJ_DOALL(names_lh, do_all_fn, &d);
 }
 
 struct doall_sorted {

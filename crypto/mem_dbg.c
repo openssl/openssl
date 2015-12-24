@@ -544,7 +544,7 @@ typedef struct mem_leak_st {
     long bytes;
 } MEM_LEAK;
 
-static void print_leak_doall_arg(const MEM *m, MEM_LEAK *l)
+static void print_leak(const MEM *m, MEM_LEAK *l)
 {
     char buf[1024];
     char *bufp = buf;
@@ -629,7 +629,7 @@ static void print_leak_doall_arg(const MEM *m, MEM_LEAK *l)
 #endif
 }
 
-static IMPLEMENT_LHASH_DOALL_ARG_FN(print_leak, const MEM, MEM_LEAK)
+IMPLEMENT_LHASH_DOALL_ARG_CONST(MEM, MEM_LEAK);
 
 int CRYPTO_mem_leaks(BIO *b)
 {
@@ -645,7 +645,7 @@ int CRYPTO_mem_leaks(BIO *b)
     ml.chunks = 0;
     ml.seen = 0;
     if (mh != NULL)
-        lh_MEM_doall_arg(mh, LHASH_DOALL_ARG_FN(print_leak), MEM_LEAK, &ml);
+        lh_MEM_doall_MEM_LEAK(mh, print_leak, &ml);
     /* Don't count the BIO that was passed in as a "leak" */
     if (ml.seen && ml.chunks >= 1 && ml.bytes >= (int)sizeof (*b)) {
         ml.chunks--;
