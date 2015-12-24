@@ -162,8 +162,6 @@ static unsigned long conf_value_hash(const CONF_VALUE *v)
     return (lh_strhash(v->section) << 2) ^ lh_strhash(v->name);
 }
 
-static IMPLEMENT_LHASH_HASH_FN(conf_value, CONF_VALUE)
-
 static int conf_value_cmp(const CONF_VALUE *a, const CONF_VALUE *b)
 {
     int i;
@@ -183,17 +181,16 @@ static int conf_value_cmp(const CONF_VALUE *a, const CONF_VALUE *b)
         return ((a->name == NULL) ? -1 : 1);
 }
 
-static IMPLEMENT_LHASH_COMP_FN(conf_value, CONF_VALUE)
-
 int _CONF_new_data(CONF *conf)
 {
     if (conf == NULL) {
         return 0;
     }
-    if (conf->data == NULL)
-        if ((conf->data = lh_CONF_VALUE_new()) == NULL) {
+    if (conf->data == NULL) {
+        conf->data = lh_CONF_VALUE_new(conf_value_hash, conf_value_cmp);
+        if (conf->data == NULL)
             return 0;
-        }
+    }
     return 1;
 }
 

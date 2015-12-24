@@ -42,20 +42,15 @@ static STACK_OF(NAME_FUNCS) *name_funcs_stack;
  * casting without the need for macro-generated wrapper functions.
  */
 
-/* static unsigned long obj_name_hash(OBJ_NAME *a); */
-static unsigned long obj_name_hash(const void *a_void);
-/* static int obj_name_cmp(OBJ_NAME *a,OBJ_NAME *b); */
-static int obj_name_cmp(const void *a_void, const void *b_void);
-
-static IMPLEMENT_LHASH_HASH_FN(obj_name, OBJ_NAME)
-static IMPLEMENT_LHASH_COMP_FN(obj_name, OBJ_NAME)
+static unsigned long obj_name_hash(const OBJ_NAME *a);
+static int obj_name_cmp(const OBJ_NAME *a, const OBJ_NAME *b);
 
 int OBJ_NAME_init(void)
 {
     if (names_lh != NULL)
         return (1);
     CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_DISABLE);
-    names_lh = lh_OBJ_NAME_new();
+    names_lh = lh_OBJ_NAME_new(obj_name_hash, obj_name_cmp);
     CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ENABLE);
     return (names_lh != NULL);
 }
@@ -103,12 +98,9 @@ int OBJ_NAME_new_index(unsigned long (*hash_func) (const char *),
     return (ret);
 }
 
-/* static int obj_name_cmp(OBJ_NAME *a, OBJ_NAME *b) */
-static int obj_name_cmp(const void *a_void, const void *b_void)
+static int obj_name_cmp(const OBJ_NAME *a, const OBJ_NAME *b)
 {
     int ret;
-    const OBJ_NAME *a = (const OBJ_NAME *)a_void;
-    const OBJ_NAME *b = (const OBJ_NAME *)b_void;
 
     ret = a->type - b->type;
     if (ret == 0) {
@@ -122,11 +114,9 @@ static int obj_name_cmp(const void *a_void, const void *b_void)
     return (ret);
 }
 
-/* static unsigned long obj_name_hash(OBJ_NAME *a) */
-static unsigned long obj_name_hash(const void *a_void)
+static unsigned long obj_name_hash(const OBJ_NAME *a)
 {
     unsigned long ret;
-    const OBJ_NAME *a = (const OBJ_NAME *)a_void;
 
     if ((name_funcs_stack != NULL)
         && (sk_NAME_FUNCS_num(name_funcs_stack) > a->type)) {

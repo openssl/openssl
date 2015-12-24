@@ -195,6 +195,13 @@ void lh_node_usage_stats_bio(const _LHASH *lh, BIO *out);
 
 # define DECLARE_LHASH_OF(type) \
     LHASH_OF(type) { int dummy; }; \
+    static inline LHASH_OF(type) * \
+        lh_##type##_new(unsigned long (*hfn)(const type *), \
+                        int (*cfn)(const type *, const type *)) \
+    { \
+        return (LHASH_OF(type) *) \
+            lh_new((LHASH_HASH_FN_TYPE) hfn, (LHASH_COMP_FN_TYPE)cfn); \
+    } \
     static inline void lh_##type##_free(LHASH_OF(type) *lh) \
     { \
         lh_free((_LHASH *)lh); \
@@ -245,8 +252,6 @@ void lh_node_usage_stats_bio(const _LHASH *lh, BIO *out);
   ((_LHASH *)CHECKED_PTR_OF(LHASH_OF(type),lh))
 
 /* Define wrapper functions. */
-# define LHM_lh_new(type, name) \
-  ((LHASH_OF(type) *)lh_new(LHASH_HASH_FN(name), LHASH_COMP_FN(name)))
 # define LHM_lh_doall(type, lh,fn) lh_doall(CHECKED_LHASH_OF(type, lh), fn)
 # define LHM_lh_doall_arg(type, lh, fn, arg_type, arg) \
   lh_doall_arg(CHECKED_LHASH_OF(type, lh), fn, CHECKED_PTR_OF(arg_type, arg))

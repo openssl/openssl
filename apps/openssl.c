@@ -700,14 +700,10 @@ static int function_cmp(const FUNCTION * a, const FUNCTION * b)
     return strncmp(a->name, b->name, 8);
 }
 
-static IMPLEMENT_LHASH_COMP_FN(function, FUNCTION)
-
 static unsigned long function_hash(const FUNCTION * a)
 {
     return lh_strhash(a->name);
 }
-
-static IMPLEMENT_LHASH_HASH_FN(function, FUNCTION)
 
 static int SortFnByName(const void *_f1, const void *_f2)
 {
@@ -860,7 +856,7 @@ static LHASH_OF(FUNCTION) *prog_init(void)
     for (i = 0, f = functions; f->name != NULL; ++f, ++i) ;
     qsort(functions, i, sizeof(*functions), SortFnByName);
 
-    if ((ret = lh_FUNCTION_new()) == NULL)
+    if ((ret = lh_FUNCTION_new(function_hash, function_cmp)) == NULL)
         return (NULL);
 
     for (f = functions; f->name != NULL; f++)

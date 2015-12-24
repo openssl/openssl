@@ -134,8 +134,6 @@ static unsigned long added_obj_hash(const ADDED_OBJ *ca)
     return (ret);
 }
 
-static IMPLEMENT_LHASH_HASH_FN(added_obj, ADDED_OBJ)
-
 static int added_obj_cmp(const ADDED_OBJ *ca, const ADDED_OBJ *cb)
 {
     ASN1_OBJECT *a, *b;
@@ -174,13 +172,11 @@ static int added_obj_cmp(const ADDED_OBJ *ca, const ADDED_OBJ *cb)
     }
 }
 
-static IMPLEMENT_LHASH_COMP_FN(added_obj, ADDED_OBJ)
-
 static int init_added(void)
 {
     if (added != NULL)
         return (1);
-    added = lh_ADDED_OBJ_new();
+    added = lh_ADDED_OBJ_new(added_obj_hash, added_obj_cmp);
     return (added != NULL);
 }
 

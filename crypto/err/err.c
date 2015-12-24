@@ -240,11 +240,6 @@ static LHASH_OF(ERR_STATE) *int_thread_hash = NULL;
 static int int_thread_hash_references = 0;
 static int int_err_library_number = ERR_LIB_USER;
 
-/*
- * These are the callbacks provided to "lh_new()" when creating the LHASH
- * tables internal to the "err_defaults" implementation.
- */
-
 static unsigned long get_error_values(int inc, int top, const char **file,
                                       int *line, const char **data,
                                       int *flags);
@@ -258,15 +253,11 @@ static unsigned long err_string_data_hash(const ERR_STRING_DATA *a)
     return (ret ^ ret % 19 * 13);
 }
 
-static IMPLEMENT_LHASH_HASH_FN(err_string_data, ERR_STRING_DATA)
-
 static int err_string_data_cmp(const ERR_STRING_DATA *a,
                                const ERR_STRING_DATA *b)
 {
     return (int)(a->error - b->error);
 }
-
-static IMPLEMENT_LHASH_COMP_FN(err_string_data, ERR_STRING_DATA)
 
 static LHASH_OF(ERR_STRING_DATA) *get_hash(int create, int lockit)
 {
@@ -275,7 +266,8 @@ static LHASH_OF(ERR_STRING_DATA) *get_hash(int create, int lockit)
     if (lockit)
         CRYPTO_w_lock(CRYPTO_LOCK_ERR);
     if (!int_error_hash && create) {
-        int_error_hash = lh_ERR_STRING_DATA_new();
+        int_error_hash = lh_ERR_STRING_DATA_new(err_string_data_hash,
+                                                err_string_data_cmp);
     }
     if (int_error_hash != NULL)
         ret = int_error_hash;
@@ -304,14 +296,10 @@ static unsigned long err_state_hash(const ERR_STATE *a)
     return CRYPTO_THREADID_hash(&a->tid) * 13;
 }
 
-static IMPLEMENT_LHASH_HASH_FN(err_state, ERR_STATE)
-
 static int err_state_cmp(const ERR_STATE *a, const ERR_STATE *b)
 {
     return CRYPTO_THREADID_cmp(&a->tid, &b->tid);
 }
-
-static IMPLEMENT_LHASH_COMP_FN(err_state, ERR_STATE)
 
 static LHASH_OF(ERR_STATE) *int_thread_get(int create, int lockit)
 {
@@ -320,7 +308,7 @@ static LHASH_OF(ERR_STATE) *int_thread_get(int create, int lockit)
     if (lockit)
         CRYPTO_w_lock(CRYPTO_LOCK_ERR);
     if (!int_thread_hash && create) {
-        int_thread_hash = lh_ERR_STATE_new();
+        int_thread_hash = lh_ERR_STATE_new(err_state_hash, err_state_cmp);
     }
     if (int_thread_hash != NULL) {
         int_thread_hash_references++;
