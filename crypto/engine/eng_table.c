@@ -183,7 +183,7 @@ int engine_table_register(ENGINE_TABLE **table, ENGINE_CLEANUP_CB *cleanup,
     return ret;
 }
 
-static void int_unregister_cb_doall_arg(ENGINE_PILE *pile, ENGINE *e)
+static void int_unregister_cb(ENGINE_PILE *pile, ENGINE *e)
 {
     int n;
     /* Iterate the 'c->sk' stack removing any occurrence of 'e' */
@@ -197,15 +197,13 @@ static void int_unregister_cb_doall_arg(ENGINE_PILE *pile, ENGINE *e)
     }
 }
 
-static IMPLEMENT_LHASH_DOALL_ARG_FN(int_unregister_cb, ENGINE_PILE, ENGINE)
+IMPLEMENT_LHASH_DOALL_ARG(ENGINE_PILE, ENGINE);
 
 void engine_table_unregister(ENGINE_TABLE **table, ENGINE *e)
 {
     CRYPTO_w_lock(CRYPTO_LOCK_ENGINE);
     if (int_table_check(table, 0))
-        lh_ENGINE_PILE_doall_arg(&(*table)->piles,
-                                 LHASH_DOALL_ARG_FN(int_unregister_cb),
-                                 ENGINE, e);
+        lh_ENGINE_PILE_doall_ENGINE(&(*table)->piles, int_unregister_cb, e);
     CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
 }
 
@@ -332,12 +330,12 @@ ENGINE *engine_table_select_tmp(ENGINE_TABLE **table, int nid, const char *f,
 
 /* Table enumeration */
 
-static void int_cb_doall_arg(ENGINE_PILE *pile, ENGINE_PILE_DOALL *dall)
+static void int_dall(const ENGINE_PILE *pile, ENGINE_PILE_DOALL *dall)
 {
     dall->cb(pile->nid, pile->sk, pile->funct, dall->arg);
 }
 
-static IMPLEMENT_LHASH_DOALL_ARG_FN(int_cb, ENGINE_PILE, ENGINE_PILE_DOALL)
+IMPLEMENT_LHASH_DOALL_ARG_CONST(ENGINE_PILE, ENGINE_PILE_DOALL);
 
 void engine_table_doall(ENGINE_TABLE *table, engine_table_doall_cb *cb,
                         void *arg)
@@ -346,7 +344,5 @@ void engine_table_doall(ENGINE_TABLE *table, engine_table_doall_cb *cb,
     dall.cb = cb;
     dall.arg = arg;
     if (table)
-        lh_ENGINE_PILE_doall_arg(&table->piles,
-                                 LHASH_DOALL_ARG_FN(int_cb),
-                                 ENGINE_PILE_DOALL, &dall);
+        lh_ENGINE_PILE_doall_ENGINE_PILE_DOALL(&table->piles, int_dall, &dall);
 }

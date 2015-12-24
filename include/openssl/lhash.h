@@ -244,6 +244,22 @@ void lh_node_usage_stats_bio(const _LHASH *lh, BIO *out);
     } \
     LHASH_OF(type)
 
+#define IMPLEMENT_LHASH_DOALL_ARG_CONST(type, argtype) \
+    int_implement_lhash_doall(type, argtype, const type)
+
+#define IMPLEMENT_LHASH_DOALL_ARG(type, argtype) \
+    int_implement_lhash_doall(type, argtype, type)
+
+#define int_implement_lhash_doall(type, argtype, cbargtype) \
+    static inline void \
+        lh_##type##_doall_##argtype(LHASH_OF(type) *lh, \
+                                   void (*fn)(cbargtype *, argtype *), \
+                                   argtype *arg) \
+    { \
+        lh_doall_arg((_LHASH *)lh, (LHASH_DOALL_ARG_FN_TYPE)fn, (void *)arg); \
+    } \
+    LHASH_OF(type)
+
 # define CHECKED_LHASH_OF(type,lh) \
   ((_LHASH *)CHECKED_PTR_OF(LHASH_OF(type),lh))
 

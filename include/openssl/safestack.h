@@ -231,41 +231,17 @@ DEFINE_SPECIAL_STACK_OF(OPENSSL_BLOCK, void)
  */
 
 
-# define lh_ADDED_OBJ_doall_arg(lh,fn,arg_type,arg) \
-  LHM_lh_doall_arg(ADDED_OBJ,lh,fn,arg_type,arg)
 
-# define lh_APP_INFO_doall_arg(lh,fn,arg_type,arg) \
-  LHM_lh_doall_arg(APP_INFO,lh,fn,arg_type,arg)
 
-# define lh_CONF_VALUE_doall_arg(lh,fn,arg_type,arg) \
-  LHM_lh_doall_arg(CONF_VALUE,lh,fn,arg_type,arg)
 
-# define lh_ENGINE_PILE_doall_arg(lh,fn,arg_type,arg) \
-  LHM_lh_doall_arg(ENGINE_PILE,lh,fn,arg_type,arg)
 
-# define lh_ERR_STATE_doall_arg(lh,fn,arg_type,arg) \
-  LHM_lh_doall_arg(ERR_STATE,lh,fn,arg_type,arg)
 
-# define lh_ERR_STRING_DATA_doall_arg(lh,fn,arg_type,arg) \
-  LHM_lh_doall_arg(ERR_STRING_DATA,lh,fn,arg_type,arg)
 
-# define lh_FUNCTION_doall_arg(lh,fn,arg_type,arg) \
-  LHM_lh_doall_arg(FUNCTION,lh,fn,arg_type,arg)
 
-# define lh_MEM_doall_arg(lh,fn,arg_type,arg) \
-  LHM_lh_doall_arg(MEM,lh,fn,arg_type,arg)
 
-# define lh_OBJ_NAME_doall_arg(lh,fn,arg_type,arg) \
-  LHM_lh_doall_arg(OBJ_NAME,lh,fn,arg_type,arg)
 
-# define lh_OPENSSL_CSTRING_doall_arg(lh,fn,arg_type,arg) \
-  LHM_lh_doall_arg(OPENSSL_CSTRING,lh,fn,arg_type,arg)
 
-# define lh_OPENSSL_STRING_doall_arg(lh,fn,arg_type,arg) \
-  LHM_lh_doall_arg(OPENSSL_STRING,lh,fn,arg_type,arg)
 
-# define lh_SSL_SESSION_doall_arg(lh,fn,arg_type,arg) \
-  LHM_lh_doall_arg(SSL_SESSION,lh,fn,arg_type,arg)
 
 # ifdef  __cplusplus
 }
