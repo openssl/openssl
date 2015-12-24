@@ -455,7 +455,7 @@ list-tests:
 report:
 	@$(PERL) util/selftest.pl
 
-update: errors stacks util/libeay.num util/ssleay.num TABLE test_ordinals
+update: errors util/libeay.num util/ssleay.num TABLE test_ordinals
 	@set -e; target=update; $(RECURSIVE_BUILD_CMD)
 
 depend:
@@ -476,9 +476,6 @@ errors:
 	$(PERL) util/mkerr.pl -recurse -write
 	(cd engines; $(MAKE) PERL=$(PERL) errors)
 	(cd crypto/ct; $(MAKE) PERL=$(PERL) errors)
-
-stacks:
-	$(PERL) util/mkstack.pl -write
 
 util/libeay.num::
 	$(PERL) util/mkdef.pl crypto update
