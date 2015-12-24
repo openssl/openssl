@@ -219,14 +219,11 @@ static void int_cleanup_cb_doall(ENGINE_PILE *p)
     OPENSSL_free(p);
 }
 
-static IMPLEMENT_LHASH_DOALL_FN(int_cleanup_cb, ENGINE_PILE)
-
 void engine_table_cleanup(ENGINE_TABLE **table)
 {
     CRYPTO_w_lock(CRYPTO_LOCK_ENGINE);
     if (*table) {
-        lh_ENGINE_PILE_doall(&(*table)->piles,
-                             LHASH_DOALL_FN(int_cleanup_cb));
+        lh_ENGINE_PILE_doall(&(*table)->piles, int_cleanup_cb_doall);
         lh_ENGINE_PILE_free(&(*table)->piles);
         *table = NULL;
     }

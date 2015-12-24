@@ -199,10 +199,6 @@ static void cleanup3_doall(ADDED_OBJ *a)
     OPENSSL_free(a);
 }
 
-static IMPLEMENT_LHASH_DOALL_FN(cleanup1, ADDED_OBJ)
-static IMPLEMENT_LHASH_DOALL_FN(cleanup2, ADDED_OBJ)
-static IMPLEMENT_LHASH_DOALL_FN(cleanup3, ADDED_OBJ)
-
 /*
  * The purpose of obj_cleanup_defer is to avoid EVP_cleanup() attempting to
  * use freed up OIDs. If necessary the actual freeing up of OIDs is delayed.
@@ -224,9 +220,9 @@ void OBJ_cleanup(void)
     if (added == NULL)
         return;
     lh_ADDED_OBJ_set_down_load(added, 0);
-    lh_ADDED_OBJ_doall(added, LHASH_DOALL_FN(cleanup1)); /* zero counters */
-    lh_ADDED_OBJ_doall(added, LHASH_DOALL_FN(cleanup2)); /* set counters */
-    lh_ADDED_OBJ_doall(added, LHASH_DOALL_FN(cleanup3)); /* free objects */
+    lh_ADDED_OBJ_doall(added, cleanup1_doall); /* zero counters */
+    lh_ADDED_OBJ_doall(added, cleanup2_doall); /* set counters */
+    lh_ADDED_OBJ_doall(added, cleanup3_doall); /* free objects */
     lh_ADDED_OBJ_free(added);
     added = NULL;
 }

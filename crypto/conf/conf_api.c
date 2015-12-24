@@ -75,7 +75,6 @@ static void value_free_hash_doall_arg(CONF_VALUE *a,
 static void value_free_stack_doall(CONF_VALUE *a);
 static IMPLEMENT_LHASH_DOALL_ARG_FN(value_free_hash, CONF_VALUE,
                                     LHASH_OF(CONF_VALUE))
-static IMPLEMENT_LHASH_DOALL_FN(value_free_stack, CONF_VALUE)
 
 /* Up until OpenSSL 0.9.5a, this was get_section */
 CONF_VALUE *_CONF_get_section(const CONF *conf, const char *section)
@@ -210,7 +209,7 @@ void _CONF_free_data(CONF *conf)
      * with
      */
 
-    lh_CONF_VALUE_doall(conf->data, LHASH_DOALL_FN(value_free_stack));
+    lh_CONF_VALUE_doall(conf->data, value_free_stack_doall);
     lh_CONF_VALUE_free(conf->data);
 }
 

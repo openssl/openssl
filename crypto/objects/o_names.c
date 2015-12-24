@@ -320,8 +320,6 @@ static void names_lh_free_doall(OBJ_NAME *onp)
         OBJ_NAME_remove(onp->name, onp->type);
 }
 
-static IMPLEMENT_LHASH_DOALL_FN(names_lh_free, OBJ_NAME)
-
 static void name_funcs_free(NAME_FUNCS *ptr)
 {
     OPENSSL_free(ptr);
@@ -338,7 +336,7 @@ void OBJ_NAME_cleanup(int type)
     down_load = lh_OBJ_NAME_get_down_load(names_lh);
     lh_OBJ_NAME_set_down_load(names_lh, 0);
 
-    lh_OBJ_NAME_doall(names_lh, LHASH_DOALL_FN(names_lh_free));
+    lh_OBJ_NAME_doall(names_lh, names_lh_free_doall);
     if (type < 0) {
         lh_OBJ_NAME_free(names_lh);
         sk_NAME_FUNCS_pop_free(name_funcs_stack, name_funcs_free);

@@ -113,15 +113,6 @@ typedef void (*LHASH_DOALL_ARG_FN_TYPE) (void *, void *);
                 return name##_cmp(a,b); }
 # define LHASH_COMP_FN(name) name##_LHASH_COMP
 
-/* Third: "doall" functions */
-# define DECLARE_LHASH_DOALL_FN(name, o_type) \
-        void name##_LHASH_DOALL(void *);
-# define IMPLEMENT_LHASH_DOALL_FN(name, o_type) \
-        void name##_LHASH_DOALL(void *arg) { \
-                o_type *a = arg; \
-                name##_doall(a); }
-# define LHASH_DOALL_FN(name) name##_LHASH_DOALL
-
 /* Fourth: "doall_arg" functions */
 # define DECLARE_LHASH_DOALL_ARG_FN(name, o_type, a_type) \
         void name##_LHASH_DOALL_ARG(void *, void *);
@@ -246,13 +237,17 @@ void lh_node_usage_stats_bio(const _LHASH *lh, BIO *out);
     { \
         lh_set_down_load((_LHASH *)lh, dl); \
     } \
+    static inline void lh_##type##_doall(LHASH_OF(type) *lh, \
+                                         void (*doall)(type *)) \
+    { \
+        lh_doall((_LHASH *)lh, (LHASH_DOALL_FN_TYPE)doall); \
+    } \
     LHASH_OF(type)
 
 # define CHECKED_LHASH_OF(type,lh) \
   ((_LHASH *)CHECKED_PTR_OF(LHASH_OF(type),lh))
 
 /* Define wrapper functions. */
-# define LHM_lh_doall(type, lh,fn) lh_doall(CHECKED_LHASH_OF(type, lh), fn)
 # define LHM_lh_doall_arg(type, lh, fn, arg_type, arg) \
   lh_doall_arg(CHECKED_LHASH_OF(type, lh), fn, CHECKED_PTR_OF(arg_type, arg))
 

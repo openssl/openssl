@@ -231,51 +231,39 @@ DEFINE_SPECIAL_STACK_OF(OPENSSL_BLOCK, void)
  */
 
 
-# define lh_ADDED_OBJ_doall(lh,fn) LHM_lh_doall(ADDED_OBJ,lh,fn)
 # define lh_ADDED_OBJ_doall_arg(lh,fn,arg_type,arg) \
   LHM_lh_doall_arg(ADDED_OBJ,lh,fn,arg_type,arg)
 
-# define lh_APP_INFO_doall(lh,fn) LHM_lh_doall(APP_INFO,lh,fn)
 # define lh_APP_INFO_doall_arg(lh,fn,arg_type,arg) \
   LHM_lh_doall_arg(APP_INFO,lh,fn,arg_type,arg)
 
-# define lh_CONF_VALUE_doall(lh,fn) LHM_lh_doall(CONF_VALUE,lh,fn)
 # define lh_CONF_VALUE_doall_arg(lh,fn,arg_type,arg) \
   LHM_lh_doall_arg(CONF_VALUE,lh,fn,arg_type,arg)
 
-# define lh_ENGINE_PILE_doall(lh,fn) LHM_lh_doall(ENGINE_PILE,lh,fn)
 # define lh_ENGINE_PILE_doall_arg(lh,fn,arg_type,arg) \
   LHM_lh_doall_arg(ENGINE_PILE,lh,fn,arg_type,arg)
 
-# define lh_ERR_STATE_doall(lh,fn) LHM_lh_doall(ERR_STATE,lh,fn)
 # define lh_ERR_STATE_doall_arg(lh,fn,arg_type,arg) \
   LHM_lh_doall_arg(ERR_STATE,lh,fn,arg_type,arg)
 
-# define lh_ERR_STRING_DATA_doall(lh,fn) LHM_lh_doall(ERR_STRING_DATA,lh,fn)
 # define lh_ERR_STRING_DATA_doall_arg(lh,fn,arg_type,arg) \
   LHM_lh_doall_arg(ERR_STRING_DATA,lh,fn,arg_type,arg)
 
-# define lh_FUNCTION_doall(lh,fn) LHM_lh_doall(FUNCTION,lh,fn)
 # define lh_FUNCTION_doall_arg(lh,fn,arg_type,arg) \
   LHM_lh_doall_arg(FUNCTION,lh,fn,arg_type,arg)
 
-# define lh_MEM_doall(lh,fn) LHM_lh_doall(MEM,lh,fn)
 # define lh_MEM_doall_arg(lh,fn,arg_type,arg) \
   LHM_lh_doall_arg(MEM,lh,fn,arg_type,arg)
 
-# define lh_OBJ_NAME_doall(lh,fn) LHM_lh_doall(OBJ_NAME,lh,fn)
 # define lh_OBJ_NAME_doall_arg(lh,fn,arg_type,arg) \
   LHM_lh_doall_arg(OBJ_NAME,lh,fn,arg_type,arg)
 
-# define lh_OPENSSL_CSTRING_doall(lh,fn) LHM_lh_doall(OPENSSL_CSTRING,lh,fn)
 # define lh_OPENSSL_CSTRING_doall_arg(lh,fn,arg_type,arg) \
   LHM_lh_doall_arg(OPENSSL_CSTRING,lh,fn,arg_type,arg)
 
-# define lh_OPENSSL_STRING_doall(lh,fn) LHM_lh_doall(OPENSSL_STRING,lh,fn)
 # define lh_OPENSSL_STRING_doall_arg(lh,fn,arg_type,arg) \
   LHM_lh_doall_arg(OPENSSL_STRING,lh,fn,arg_type,arg)
 
-# define lh_SSL_SESSION_doall(lh,fn) LHM_lh_doall(SSL_SESSION,lh,fn)
 # define lh_SSL_SESSION_doall_arg(lh,fn,arg_type,arg) \
   LHM_lh_doall_arg(SSL_SESSION,lh,fn,arg_type,arg)
 
