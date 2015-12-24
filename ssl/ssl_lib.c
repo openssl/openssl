@@ -2228,8 +2228,6 @@ static int ssl_session_cmp(const SSL_SESSION *a, const SSL_SESSION *b)
  * variable. The reason is that the functions aren't static, they're exposed
  * via ssl.h.
  */
-static IMPLEMENT_LHASH_HASH_FN(ssl_session, SSL_SESSION)
-static IMPLEMENT_LHASH_COMP_FN(ssl_session, SSL_SESSION)
 
 SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
 {
@@ -2266,7 +2264,7 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
     if ((ret->cert = ssl_cert_new()) == NULL)
         goto err;
 
-    ret->sessions = lh_SSL_SESSION_new();
+    ret->sessions = lh_SSL_SESSION_new(ssl_session_hash, ssl_session_cmp);
     if (ret->sessions == NULL)
         goto err;
     ret->cert_store = X509_STORE_new();

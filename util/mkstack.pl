@@ -275,7 +275,6 @@ foreach $type_thing (sort @lhashlst) {
     my $lc_tt = lc $type_thing;
     $new_stackfile .= <<EOF;
 
-# define lh_${type_thing}_new() LHM_lh_new(${type_thing},${lc_tt})
 # define lh_${type_thing}_doall(lh,fn) LHM_lh_doall(${type_thing},lh,fn)
 # define lh_${type_thing}_doall_arg(lh,fn,arg_type,arg) \\
   LHM_lh_doall_arg(${type_thing},lh,fn,arg_type,arg)

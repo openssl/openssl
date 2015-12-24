@@ -306,8 +306,6 @@ static int mem_cmp(const MEM *a, const MEM *b)
 #endif
 }
 
-static IMPLEMENT_LHASH_COMP_FN(mem, MEM)
-
 static unsigned long mem_hash(const MEM *a)
 {
     size_t ret;
@@ -318,16 +316,10 @@ static unsigned long mem_hash(const MEM *a)
     return (ret);
 }
 
-static IMPLEMENT_LHASH_HASH_FN(mem, MEM)
-
-/* static int app_info_cmp(APP_INFO *a, APP_INFO *b) */
-static int app_info_cmp(const void *a_void, const void *b_void)
+static int app_info_cmp(const APP_INFO *a, const APP_INFO *b)
 {
-    return CRYPTO_THREADID_cmp(&((const APP_INFO *)a_void)->threadid,
-                               &((const APP_INFO *)b_void)->threadid);
+    return CRYPTO_THREADID_cmp(&a->threadid, &b->threadid);
 }
-
-static IMPLEMENT_LHASH_COMP_FN(app_info, APP_INFO)
 
 static unsigned long app_info_hash(const APP_INFO *a)
 {
@@ -338,8 +330,6 @@ static unsigned long app_info_hash(const APP_INFO *a)
     ret = ret * 17851 + (ret >> 14) * 7 + (ret >> 4) * 251;
     return (ret);
 }
-
-static IMPLEMENT_LHASH_HASH_FN(app_info, APP_INFO)
 
 static APP_INFO *pop_info(void)
 {
@@ -377,7 +367,7 @@ int CRYPTO_mem_debug_push(const char *info, const char *file, int line)
         if ((ami = OPENSSL_malloc(sizeof(*ami))) == NULL)
             goto err;
         if (amih == NULL) {
-            if ((amih = lh_APP_INFO_new()) == NULL) {
+            if ((amih = lh_APP_INFO_new(app_info_hash, app_info_cmp)) == NULL) {
                 OPENSSL_free(ami);
                 goto err;
             }
@@ -435,7 +425,7 @@ void CRYPTO_mem_debug_malloc(void *addr, size_t num, int before_p,
                 return;
             }
             if (mh == NULL) {
-                if ((mh = lh_MEM_new()) == NULL) {
+                if ((mh = lh_MEM_new(mem_hash, mem_cmp)) == NULL) {
                     OPENSSL_free(addr);
                     OPENSSL_free(m);
                     addr = NULL;

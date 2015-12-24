@@ -106,9 +106,6 @@ static int engine_pile_cmp(const ENGINE_PILE *a, const ENGINE_PILE *b)
     return a->nid - b->nid;
 }
 
-static IMPLEMENT_LHASH_HASH_FN(engine_pile, ENGINE_PILE)
-static IMPLEMENT_LHASH_COMP_FN(engine_pile, ENGINE_PILE)
-
 static int int_table_check(ENGINE_TABLE **t, int create)
 {
     LHASH_OF(ENGINE_PILE) *lh;
@@ -117,7 +114,7 @@ static int int_table_check(ENGINE_TABLE **t, int create)
         return 1;
     if (!create)
         return 0;
-    if ((lh = lh_ENGINE_PILE_new()) == NULL)
+    if ((lh = lh_ENGINE_PILE_new(engine_pile_hash, engine_pile_cmp)) == NULL)
         return 0;
     *t = (ENGINE_TABLE *)lh;
     return 1;
