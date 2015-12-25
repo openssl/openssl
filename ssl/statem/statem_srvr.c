@@ -3066,10 +3066,10 @@ int tls_construct_new_session_ticket(SSL *s)
     } else {
         if (RAND_bytes(iv, 16) <= 0)
             goto err;
-        if (!EVP_EncryptInit_ex(&ctx, EVP_aes_128_cbc(), NULL,
+        if (!EVP_EncryptInit_ex(&ctx, EVP_aes_256_cbc(), NULL,
                                 tctx->tlsext_tick_aes_key, iv))
             goto err;
-        if (!HMAC_Init_ex(hctx, tctx->tlsext_tick_hmac_key, 16,
+        if (!HMAC_Init_ex(hctx, tctx->tlsext_tick_hmac_key, 32,
                           EVP_sha256(), NULL))
             goto err;
         memcpy(key_name, tctx->tlsext_tick_key_name, 16);

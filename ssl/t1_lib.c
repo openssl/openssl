@@ -3101,9 +3101,9 @@ static int tls_decrypt_ticket(SSL *s, const unsigned char *etick,
         /* Check key name matches */
         if (memcmp(etick, tctx->tlsext_tick_key_name, 16))
             return 2;
-        if (HMAC_Init_ex(hctx, tctx->tlsext_tick_hmac_key, 16,
+        if (HMAC_Init_ex(hctx, tctx->tlsext_tick_hmac_key, 32,
                          EVP_sha256(), NULL) <= 0
-                || EVP_DecryptInit_ex(&ctx, EVP_aes_128_cbc(), NULL,
+                || EVP_DecryptInit_ex(&ctx, EVP_aes_256_cbc(), NULL,
                                       tctx->tlsext_tick_aes_key,
                                       etick + 16) <= 0) {
             goto err;

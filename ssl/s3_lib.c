@@ -3909,19 +3909,19 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
         {
             unsigned char *keys = parg;
             if (!keys)
-                return 48;
-            if (larg != 48) {
+                return 80;
+            if (larg != 80) {
                 SSLerr(SSL_F_SSL3_CTX_CTRL, SSL_R_INVALID_TICKET_KEYS_LENGTH);
                 return 0;
             }
             if (cmd == SSL_CTRL_SET_TLSEXT_TICKET_KEYS) {
                 memcpy(ctx->tlsext_tick_key_name, keys, 16);
-                memcpy(ctx->tlsext_tick_hmac_key, keys + 16, 16);
-                memcpy(ctx->tlsext_tick_aes_key, keys + 32, 16);
+                memcpy(ctx->tlsext_tick_hmac_key, keys + 16, 32);
+                memcpy(ctx->tlsext_tick_aes_key, keys + 48, 32);
             } else {
                 memcpy(keys, ctx->tlsext_tick_key_name, 16);
-                memcpy(keys + 16, ctx->tlsext_tick_hmac_key, 16);
-                memcpy(keys + 32, ctx->tlsext_tick_aes_key, 16);
+                memcpy(keys + 16, ctx->tlsext_tick_hmac_key, 32);
+                memcpy(keys + 48, ctx->tlsext_tick_aes_key, 32);
             }
             return 1;
         }
