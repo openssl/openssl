@@ -63,6 +63,7 @@
 #ifndef OPENSSL_NO_ENGINE
 # include <openssl/engine.h>
 #endif
+#include <openssl/evp.h>
 #include "internal/asn1_int.h"
 #include "internal/evp_int.h"
 
