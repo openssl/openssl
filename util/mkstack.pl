@@ -116,7 +116,6 @@ extern "C" {
         ((1 ? p : (int (*)(const type * const *, const type * const *))0)))
 
 # define STACK_OF(type) struct stack_st_##type
-# define PREDECLARE_STACK_OF(type) STACK_OF(type);
 
 # define SKM_DECLARE_STACK_OF(t1, t2, t3) \
     STACK_OF(t1); \
