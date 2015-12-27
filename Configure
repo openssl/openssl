@@ -181,7 +181,7 @@ $config{processor}="";
 my $libdir="";
 my $exe_ext="";
 my $install_prefix= "$ENV{'INSTALL_PREFIX'}";
-my $cross_compile_prefix="";
+$config{cross_compile_prefix}="";
 my $fipslibdir="/usr/local/ssl/fips-2.0/lib/";
 my $nofipscanistercheck=0;
 my $baseaddr="0xFB00000";
@@ -406,36 +406,54 @@ my $build_prefix = "release_";
 my @argvcopy=@ARGV;
 
 if (grep /^reconf(igure)?$/, @argvcopy) {
-    if (open IN, "<$Makefile") {
-	while (<IN>) {
-	    chomp;
-	    if (/^CONFIGURE_ARGS=\s*(.*)\s*/) {
-		my $line = $1;
-		if ($line =~ /^\s*\(/) {
-		    # New form perl expression saved in Makefile, eval it
-		    @argvcopy = eval $line;
-		} else {
-		    # Older form, we split the string and hope for the best
-		    @argvcopy = split /\s+/, $line;
-		}
-		die "Incorrect data to reconfigure, please do a normal configuration\n"
-		    if (grep(/^reconf/,@argvcopy));
-	    } elsif (/^CROSS_COMPILE=\s*(.*)/) {
-		$ENV{CROSS_COMPILE}=$1;
-	    } elsif (/^CC=\s*(?:\$\(CROSS_COMPILE\))?(.*?)$/) {
-		$ENV{CC}=$1;
-	    }
+    if (-f "./configdata.pm") {
+	my $file = "./configdata.pm";
+	unless (my $return = do $file) {
+	    die "couldn't parse $file: $@" if $@;
+            die "couldn't do $file: $!"    unless defined $return;
+            die "couldn't run $file"       unless $return;
 	}
+
+	@argvcopy = defined($configdata::config{perlargv}) ?
+	    @{$configdata::config{perlargv}} : ();
+	die "Incorrect data to reconfigure, please do a normal configuration\n"
+	    if (grep(/^reconf/,@argvcopy));
+	$ENV{CROSS_COMPILE} = $configdata::config{cross_compile_prefix}
+	    if defined($configdata::config{cross_compile_prefix});
+	$ENV{CROSS_COMPILE} = $configdata::config{cc}
+	    if defined($configdata::config{cc});
+
 	print "Reconfiguring with: ", join(" ",@argvcopy), "\n";
 	print "    CROSS_COMPILE = ",$ENV{CROSS_COMPILE},"\n"
 	    if $ENV{CROSS_COMPILE};
 	print "    CC = ",$ENV{CC},"\n" if $ENV{CC};
-	close IN;
+    } elsif (open IN, "<Makefile") {
+        #
+        # THIS SECTION IS TEMPORARY, it helps transitioning from Makefile
+        # centered information gathering the reading configdata.pm
+        #
+        while (<IN>) {
+            chomp;
+            if (/^CONFIGURE_ARGS=\s*(.*)\s*/) {
+                # Older form, we split the string and hope for the best
+                @argvcopy = split /\s+/, $_;
+                die "Incorrect data to reconfigure, please do a normal configuration\n"
+                    if (grep(/^reconf/,@argvcopy));
+            } elsif (/^CROSS_COMPILE=\s*(.*)/) {
+                $ENV{CROSS_COMPILE}=$1;
+            } elsif (/^CC=\s*(?:\$\(CROSS_COMPILE\))?(.*?)$/) {
+                $ENV{CC}=$1;
+            }
+        }
+        #
+        # END OF TEMPORARY SECTION
+        #
     } else {
 	die "Insufficient data to reconfigure, please do a normal configuration\n";
     }
 }
 
+$config{perlargv} = [ @argvcopy ];
 
 my %unsupported_options = ();
 foreach (@argvcopy)
@@ -579,7 +597,7 @@ foreach (@argvcopy)
 			}
 		elsif (/^--cross-compile-prefix=(.*)$/)
 			{
-			$cross_compile_prefix=$1;
+			$config{cross_compile_prefix}=$1;
 			}
 		elsif (/^--config=(.*)$/)
 			{
@@ -768,7 +786,8 @@ $default_ranlib	= which("ranlib") || "true";
 $config{perl}	= $ENV{'PERL'} || which("perl5") || which("perl") || "perl";
 my $make	= $ENV{'MAKE'} || "make";
 
-$cross_compile_prefix=$ENV{'CROSS_COMPILE'} if $cross_compile_prefix eq "";
+$config{cross_compile_prefix} = $ENV{'CROSS_COMPILE'}
+    if $config{cross_compile_prefix} eq "";
 
 $config{prefix} = "/usr/local" if !$config{prefix};
 $config{openssldir} = "ssl" if !$config{openssldir};
@@ -1007,7 +1026,7 @@ if ($target =~ /^BSD\-/)
 if ($target{sys_id} ne "")
 	{
 	#$cflags="-DOPENSSL_SYS_$target{sys_id} $cflags";
-	push @{$config{openssl_sys_defines}}="OPENSSL_SYS_$target{sys_id}";
+	push @{$config{openssl_sys_defines}}, "OPENSSL_SYS_$target{sys_id}";
 	}
 
 if ($target{ranlib} eq "")
@@ -1292,9 +1311,9 @@ while (<IN>)
 	s/^OPTIONS=.*$/OPTIONS=$config{options}/;
 	my $argvstring = "(".join(", ", map { quotify("perl", $_) } @argvcopy).")";
 	s/^CONFIGURE_ARGS=.*$/CONFIGURE_ARGS=$argvstring/;
-	if ($cross_compile_prefix)
+	if ($config{cross_compile_prefix})
 		{
-		s/^CC=.*$/CROSS_COMPILE= $cross_compile_prefix\nCC= \$\(CROSS_COMPILE\)$target{cc}/;
+		s/^CC=.*$/CROSS_COMPILE= $config{cross_compile_prefix}\nCC= \$\(CROSS_COMPILE\)$target{cc}/;
 		s/^AR=\s*/AR= \$\(CROSS_COMPILE\)/;
 		s/^NM=\s*/NM= \$\(CROSS_COMPILE\)/;
 		s/^RANLIB=\s*/RANLIB= \$\(CROSS_COMPILE\)/;
