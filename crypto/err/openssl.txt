@@ -1183,6 +1183,7 @@ SSL_F_SSL_SESSION_SET1_ID:423:SSL_SESSION_set1_id
 SSL_F_SSL_SESSION_SET1_ID_CONTEXT:312:SSL_SESSION_set1_id_context
 SSL_F_SSL_SET_ALPN_PROTOS:344:SSL_set_alpn_protos
 SSL_F_SSL_SET_CERT:191:ssl_set_cert
+SSL_F_SSL_SET_CERT_AND_KEY:621:ssl_set_cert_and_key
 SSL_F_SSL_SET_CIPHER_LIST:271:SSL_set_cipher_list
 SSL_F_SSL_SET_CT_VALIDATION_CALLBACK:399:SSL_set_ct_validation_callback
 SSL_F_SSL_SET_FD:192:SSL_set_fd
@@ -2525,6 +2526,7 @@ SSL_R_LIBRARY_HAS_NO_CIPHERS:161:library has no ciphers
 SSL_R_MISSING_DSA_SIGNING_CERT:165:missing dsa signing cert
 SSL_R_MISSING_ECDSA_SIGNING_CERT:381:missing ecdsa signing cert
 SSL_R_MISSING_FATAL:256:missing fatal
+SSL_R_MISSING_PARAMETERS:290:missing parameters
 SSL_R_MISSING_RSA_CERTIFICATE:168:missing rsa certificate
 SSL_R_MISSING_RSA_ENCRYPTING_CERT:169:missing rsa encrypting cert
 SSL_R_MISSING_RSA_SIGNING_CERT:170:missing rsa signing cert
@@ -2535,6 +2537,7 @@ SSL_R_MISSING_SUPPORTED_GROUPS_EXTENSION:209:missing supported groups extension
 SSL_R_MISSING_TMP_DH_KEY:171:missing tmp dh key
 SSL_R_MISSING_TMP_ECDH_KEY:311:missing tmp ecdh key
 SSL_R_NOT_ON_RECORD_BOUNDARY:182:not on record boundary
+SSL_R_NOT_REPLACING_CERTIFICATE:289:not replacing certificate
 SSL_R_NOT_SERVER:284:not server
 SSL_R_NO_APPLICATION_PROTOCOL:235:no application protocol
 SSL_R_NO_CERTIFICATES_RETURNED:176:no certificates returned
@@ -2577,6 +2580,7 @@ SSL_R_PEM_NAME_BAD_PREFIX:391:pem name bad prefix
 SSL_R_PEM_NAME_TOO_SHORT:392:pem name too short
 SSL_R_PIPELINE_FAILURE:406:pipeline failure
 SSL_R_POST_HANDSHAKE_AUTH_ENCODING_ERR:278:post handshake auth encoding err
+SSL_R_PRIVATE_KEY_MISMATCH:288:private key mismatch
 SSL_R_PROTOCOL_IS_SHUTDOWN:207:protocol is shutdown
 SSL_R_PSK_IDENTITY_NOT_FOUND:223:psk identity not found
 SSL_R_PSK_NO_CLIENT_CB:224:psk no client cb

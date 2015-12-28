@@ -211,6 +211,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_SSL_SESSION_SET1_ID_CONTEXT                312
 # define SSL_F_SSL_SET_ALPN_PROTOS                        344
 # define SSL_F_SSL_SET_CERT                               191
+# define SSL_F_SSL_SET_CERT_AND_KEY                       621
 # define SSL_F_SSL_SET_CIPHER_LIST                        271
 # define SSL_F_SSL_SET_CT_VALIDATION_CALLBACK             399
 # define SSL_F_SSL_SET_FD                                 192
@@ -566,6 +567,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_R_MISSING_DSA_SIGNING_CERT                   165
 # define SSL_R_MISSING_ECDSA_SIGNING_CERT                 381
 # define SSL_R_MISSING_FATAL                              256
+# define SSL_R_MISSING_PARAMETERS                         290
 # define SSL_R_MISSING_RSA_CERTIFICATE                    168
 # define SSL_R_MISSING_RSA_ENCRYPTING_CERT                169
 # define SSL_R_MISSING_RSA_SIGNING_CERT                   170
@@ -576,6 +578,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_R_MISSING_TMP_DH_KEY                         171
 # define SSL_R_MISSING_TMP_ECDH_KEY                       311
 # define SSL_R_NOT_ON_RECORD_BOUNDARY                     182
+# define SSL_R_NOT_REPLACING_CERTIFICATE                  289
 # define SSL_R_NOT_SERVER                                 284
 # define SSL_R_NO_APPLICATION_PROTOCOL                    235
 # define SSL_R_NO_CERTIFICATES_RETURNED                   176
@@ -616,6 +619,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_R_PEM_NAME_TOO_SHORT                         392
 # define SSL_R_PIPELINE_FAILURE                           406
 # define SSL_R_POST_HANDSHAKE_AUTH_ENCODING_ERR           278
+# define SSL_R_PRIVATE_KEY_MISMATCH                       288
 # define SSL_R_PROTOCOL_IS_SHUTDOWN                       207
 # define SSL_R_PSK_IDENTITY_NOT_FOUND                     223
 # define SSL_R_PSK_NO_CLIENT_CB                           224
