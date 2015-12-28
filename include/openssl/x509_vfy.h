@@ -120,8 +120,8 @@ typedef struct x509_object_st {
 
 typedef struct x509_lookup_st X509_LOOKUP;
 
-DECLARE_STACK_OF(X509_LOOKUP)
-DECLARE_STACK_OF(X509_OBJECT)
+DEFINE_STACK_OF(X509_LOOKUP)
+DEFINE_STACK_OF(X509_OBJECT)
 
 /* This is a static that defines the function interface */
 typedef struct x509_lookup_method_st {
@@ -145,7 +145,7 @@ typedef struct x509_lookup_method_st {
 
 typedef struct X509_VERIFY_PARAM_st X509_VERIFY_PARAM;
 
-DECLARE_STACK_OF(X509_VERIFY_PARAM)
+DEFINE_STACK_OF(X509_VERIFY_PARAM)
 
 /*
  * This is used to hold everything.  It is used for all certificate

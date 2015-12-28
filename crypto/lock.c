@@ -121,7 +121,7 @@
 static double OpenSSL_MSVC5_hack = 0.0; /* and for VC1.5 */
 #endif
 
-DECLARE_STACK_OF(CRYPTO_dynlock)
+DEFINE_STACK_OF(CRYPTO_dynlock)
 
 /* real #defines in crypto.h, keep these upto date */
 static const char *const lock_names[CRYPTO_NUM_LOCKS] = {

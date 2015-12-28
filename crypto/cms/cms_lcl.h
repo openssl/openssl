@@ -109,7 +109,7 @@ struct CMS_ContentInfo_st {
     } d;
 };
 
-DECLARE_STACK_OF(CMS_CertificateChoices)
+DEFINE_STACK_OF(CMS_CertificateChoices)
 
 struct CMS_SignedData_st {
     long version;

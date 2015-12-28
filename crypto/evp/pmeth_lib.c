@@ -69,7 +69,7 @@
 
 typedef int sk_cmp_fn_type(const char *const *a, const char *const *b);
 
-DECLARE_CONST_STACK_OF(EVP_PKEY_METHOD)
+DEFINE_CONST_STACK_OF(EVP_PKEY_METHOD)
 static STACK_OF(EVP_PKEY_METHOD) *app_pkey_methods = NULL;
 
 static const EVP_PKEY_METHOD *standard_methods[] = {

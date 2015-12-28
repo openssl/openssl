@@ -142,9 +142,9 @@ typedef struct X509_sig_st {
 
 typedef struct X509_name_entry_st X509_NAME_ENTRY;
 
-DECLARE_STACK_OF(X509_NAME_ENTRY)
+DEFINE_STACK_OF(X509_NAME_ENTRY)
 
-DECLARE_STACK_OF(X509_NAME)
+DEFINE_STACK_OF(X509_NAME)
 
 # define X509_EX_V_NETSCAPE_HACK         0x8000
 # define X509_EX_V_INIT                  0x0001
@@ -152,11 +152,11 @@ typedef struct X509_extension_st X509_EXTENSION;
 
 typedef STACK_OF(X509_EXTENSION) X509_EXTENSIONS;
 
-DECLARE_STACK_OF(X509_EXTENSION)
+DEFINE_STACK_OF(X509_EXTENSION)
 
 typedef struct x509_attributes_st X509_ATTRIBUTE;
 
-DECLARE_STACK_OF(X509_ATTRIBUTE)
+DEFINE_STACK_OF(X509_ATTRIBUTE)
 
 typedef struct X509_req_info_st X509_REQ_INFO;
 
@@ -166,7 +166,7 @@ typedef struct x509_cert_aux_st X509_CERT_AUX;
 
 typedef struct x509_cinf_st X509_CINF;
 
-DECLARE_STACK_OF(X509)
+DEFINE_STACK_OF(X509)
 
 /* This is used for a table of trust checking functions */
 
@@ -179,7 +179,7 @@ typedef struct x509_trust_st {
     void *arg2;
 } X509_TRUST;
 
-DECLARE_STACK_OF(X509_TRUST)
+DEFINE_STACK_OF(X509_TRUST)
 
 /* standard trust ids */
 
@@ -285,11 +285,11 @@ DECLARE_STACK_OF(X509_TRUST)
                         XN_FLAG_FN_LN | \
                         XN_FLAG_FN_ALIGN)
 
-DECLARE_STACK_OF(X509_REVOKED)
+DEFINE_STACK_OF(X509_REVOKED)
 
 typedef struct X509_crl_info_st X509_CRL_INFO;
 
-DECLARE_STACK_OF(X509_CRL)
+DEFINE_STACK_OF(X509_CRL)
 
 typedef struct private_key_st {
     int version;
@@ -317,7 +317,7 @@ typedef struct X509_info_st {
     int references;
 } X509_INFO;
 
-DECLARE_STACK_OF(X509_INFO)
+DEFINE_STACK_OF(X509_INFO)
 
 /*
  * The next 2 structures and their 8 routines were sent to me by Pat Richard

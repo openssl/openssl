@@ -328,7 +328,7 @@ struct bio_st {
     CRYPTO_EX_DATA ex_data;
 };
 
-DECLARE_STACK_OF(BIO)
+DEFINE_STACK_OF(BIO)
 
 typedef struct bio_f_buffer_ctx_struct {
     /*-

@@ -34,7 +34,7 @@ typedef struct name_funcs_st {
     void (*free_func) (const char *, int, const char *);
 } NAME_FUNCS;
 
-DECLARE_STACK_OF(NAME_FUNCS)
+DEFINE_STACK_OF(NAME_FUNCS)
 
 static STACK_OF(NAME_FUNCS) *name_funcs_stack;
 
