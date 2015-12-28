@@ -477,3 +477,5 @@ SSL_stateless                           477	1_1_1	EXIST::FUNCTION:
 SSL_verify_client_post_handshake        478	1_1_1	EXIST::FUNCTION:
 SSL_force_post_handshake_auth           479	1_1_1	EXIST::FUNCTION:
 SSL_export_keying_material_early        480	1_1_1	EXIST::FUNCTION:
+SSL_CTX_use_cert_and_key                481	1_1_1	EXIST::FUNCTION:
+SSL_use_cert_and_key                    482	1_1_1	EXIST::FUNCTION:

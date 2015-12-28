@@ -1505,6 +1505,8 @@ __owur int SSL_use_PrivateKey_ASN1(int pk, SSL *ssl, const unsigned char *d,
                             long len);
 __owur int SSL_use_certificate(SSL *ssl, X509 *x);
 __owur int SSL_use_certificate_ASN1(SSL *ssl, const unsigned char *d, int len);
+__owur int SSL_use_cert_and_key(SSL *ssl, X509 *x509, EVP_PKEY *privatekey,
+                                STACK_OF(X509) *chain, int override);
 
 
 /* serverinfo file format versions */
@@ -1634,6 +1636,8 @@ __owur int SSL_CTX_use_PrivateKey_ASN1(int pk, SSL_CTX *ctx,
 __owur int SSL_CTX_use_certificate(SSL_CTX *ctx, X509 *x);
 __owur int SSL_CTX_use_certificate_ASN1(SSL_CTX *ctx, int len,
                                  const unsigned char *d);
+__owur int SSL_CTX_use_cert_and_key(SSL_CTX *ctx, X509 *x509, EVP_PKEY *privatekey,
+                                    STACK_OF(X509) *chain, int override);
 
 void SSL_CTX_set_default_passwd_cb(SSL_CTX *ctx, pem_password_cb *cb);
 void SSL_CTX_set_default_passwd_cb_userdata(SSL_CTX *ctx, void *u);

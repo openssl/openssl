@@ -403,6 +403,8 @@ Use the file path to locate trusted CA certificates.
 
 =item int B<SSL_CTX_use_certificate_file>(SSL_CTX *ctx, const char *file, int type);
 
+=item int B<SSL_CTX_use_cert_and_key>(SSL_CTX *ctx, X509 *x, EVP_PKEY *pkey, STACK_OF(X509) *chain, int override);
+
 =item X509 *B<SSL_CTX_get0_certificate>(const SSL_CTX *ctx);
 
 =item EVP_PKEY *B<SSL_CTX_get0_privatekey>(const SSL_CTX *ctx);
@@ -711,6 +713,8 @@ Returns the current handshake state.
 =item int B<SSL_use_certificate_ASN1>(SSL *ssl, int len, unsigned char *d);
 
 =item int B<SSL_use_certificate_file>(SSL *ssl, const char *file, int type);
+
+=item int B<SSL_use_cert_and_key>(SSL *ssl, X509 *x, EVP_PKEY *pkey, STACK_OF(X509) *chain, int override);
 
 =item int B<SSL_version>(const SSL *ssl);
 
