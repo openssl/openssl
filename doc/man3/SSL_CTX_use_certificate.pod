@@ -12,6 +12,7 @@ SSL_CTX_use_RSAPrivateKey_ASN1, SSL_CTX_use_RSAPrivateKey_file,
 SSL_use_PrivateKey_file, SSL_use_PrivateKey_ASN1, SSL_use_PrivateKey,
 SSL_use_RSAPrivateKey, SSL_use_RSAPrivateKey_ASN1,
 SSL_use_RSAPrivateKey_file, SSL_CTX_check_private_key, SSL_check_private_key
+SSL_CTX_use_cert_and_key, SSL_use_cert_and_key
 - load certificate and key data
 
 =head1 SYNOPSIS
@@ -44,6 +45,9 @@ SSL_use_RSAPrivateKey_file, SSL_CTX_check_private_key, SSL_check_private_key
 
  int SSL_CTX_check_private_key(const SSL_CTX *ctx);
  int SSL_check_private_key(const SSL *ssl);
+
+ int SSL_CTX_use_cert_and_key(SSL_CTX *ctx, X509 *x, EVP_PKEY *pkey, STACK_OF(X509) *chain, int override);
+ int SSL_use_cert_and_key(SSL *ssl, X509 *x, EVP_PKEY *pkey, STACK_OF(X509) *chain, int override);
 
 =head1 DESCRIPTION
 
@@ -94,6 +98,19 @@ key pair the new certificate needs to be set with SSL_use_certificate()
 or SSL_CTX_use_certificate() before setting the private key with
 SSL_CTX_use_PrivateKey() or SSL_use_PrivateKey().
 
+SSL_CTX_use_cert_and_key() and SSL_use_cert_and_key() assign the B<x> X.509
+certificate, B<pkey> private key, and B<chain> certificates onto the corresponding
+B<ssl> or B<ctx>. The B<x> and B<pkey> arguments must match each
+other. If the  B<override> argument is 0, then B<x>, B<pkey> and B<chain>
+are set only if all were not previously set. If B<override> is non-0, then the
+certificate, private key and chain certs are always set. If B<pkey> is NULL,
+then the public key of B<x> is used as the private key. This
+is intended to be used with hardware (via the ENGINE inteface) that stores
+the private key securely, such that it cannot be accessed by OpenSSL. The
+reference count of the public key is incremented; it is not copied nor
+duplicated. This allows all private key validations checks to succeed
+without an actual private key being assigned via SSL_CTX_use_PrivateKey(),
+etc.
 
 SSL_CTX_use_PrivateKey_ASN1() adds the private key of type B<pk>
 stored at memory location B<d> (length B<len>) to B<ctx>.
@@ -158,6 +175,28 @@ is considered public anyway.)
 On success, the functions return 1.
 Otherwise check out the error stack to find out the reason.
 
+For SSL_use_cert_and_key() and SSL_CTX_use_cert_and_key(), the return values are:
+
+=over 4
+
+=item Z<>2
+
+on success of replacing an existing certificate/private key (B<override> is non-0)
+
+=item Z<>1
+
+on success if no existing certificate
+
+=item Z<>0
+
+on failure to replace an existing certificate (B<override> = 0)
+
+=item Z<>-1
+
+other failure
+
+=back
+
 =head1 SEE ALSO
 
 L<ssl(7)>, L<SSL_new(3)>, L<SSL_clear(3)>,
@@ -170,7 +209,7 @@ L<SSL_CTX_add_extra_chain_cert(3)>
 
 =head1 COPYRIGHT
 
-Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2017 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

@@ -1036,3 +1036,124 @@ int SSL_CTX_use_serverinfo_file(SSL_CTX *ctx, const char *file)
     BIO_free(bin);
     return ret;
 }
+
+static int ssl_set_cert_and_key(SSL *ssl, SSL_CTX *ctx, X509 *x509, EVP_PKEY *privatekey,
+                                STACK_OF(X509) *chain, int override)
+{
+    int ret = -1;
+    int i;
+    int rv;
+    CERT *c = ssl ? ssl->cert : ctx->cert;
+    STACK_OF(X509) *dup_chain = NULL;
+    EVP_PKEY *pubkey = NULL;
+
+    /* Do all security checks before anything else */
+    rv = ssl_security_cert(ssl, ctx, x509, 0, 1);
+    if (rv != 1) {
+        SSLerr(SSL_F_SSL_SET_CERT_AND_KEY, rv);
+        goto out;
+    }
+    for (i = 0; i < sk_X509_num(chain); i++) {
+        rv = ssl_security_cert(ssl, ctx, sk_X509_value(chain, i), 0, 0);
+        if (rv != 1) {
+            SSLerr(SSL_F_SSL_SET_CERT_AND_KEY, rv);
+            goto out;
+        }
+    }
+
+    pubkey = X509_get_pubkey(x509); /* bumps reference */
+    if (pubkey == NULL)
+        goto out;
+    if (privatekey == NULL)
+        privatekey = pubkey;
+    else {
+        /* For RSA, which has no parameters, missing returns 0 */
+        if (EVP_PKEY_missing_parameters(privatekey)) {
+            if (EVP_PKEY_missing_parameters(pubkey)) {
+                /* nobody has parameters? - error */
+                SSLerr(SSL_F_SSL_SET_CERT_AND_KEY, SSL_R_MISSING_PARAMETERS);
+                goto out;
+            } else {
+                /* copy to privatekey from pubkey */
+                EVP_PKEY_copy_parameters(privatekey, pubkey);
+            }
+        } else if (EVP_PKEY_missing_parameters(pubkey)) {
+            /* copy to pubkey from privatekey */
+            EVP_PKEY_copy_parameters(pubkey, privatekey);
+        } /* else both have parameters */
+
+        /* Copied from ssl_set_cert/pkey */
+#ifndef OPENSSL_NO_RSA
+        if ((EVP_PKEY_id(privatekey) == EVP_PKEY_RSA) &&
+            ((RSA_flags(EVP_PKEY_get0_RSA(privatekey)) & RSA_METHOD_FLAG_NO_CHECK)))
+            /* no-op */ ;
+        else
+#endif
+        /* check that key <-> cert match */
+        if (EVP_PKEY_cmp(pubkey, privatekey) != 1) {
+            SSLerr(SSL_F_SSL_SET_CERT_AND_KEY, SSL_R_PRIVATE_KEY_MISMATCH);
+            goto out;
+        }
+    }
+    i = ssl_cert_type(x509, privatekey);
+    if (i < 0) {
+        SSLerr(SSL_F_SSL_SET_CERT_AND_KEY, SSL_R_UNKNOWN_CERTIFICATE_TYPE);
+        goto out;
+    }
+
+    if (c->pkeys[i].x509 == NULL &&
+        c->pkeys[i].privatekey == NULL &&
+        c->pkeys[i].chain == NULL) {
+        /* nothing there - will be success */
+        ret = 1;
+    } else if (override == 0) {
+        /* something already there, and no override */
+        ret = 0;
+        goto out;
+    } else {
+        /* something already there, will be override */
+        ret = 2;
+    }
+
+    /* this is the only thing that could fail */
+    if (chain != NULL) {
+        dup_chain = X509_chain_up_ref(chain);
+        if  (dup_chain == NULL) {
+            SSLerr(SSL_F_SSL_SET_CERT_AND_KEY, ERR_R_MALLOC_FAILURE);
+            ret = -1;
+            goto out;
+        }
+    }
+    sk_X509_pop_free(c->pkeys[i].chain, X509_free);
+    c->pkeys[i].chain = dup_chain;
+
+    X509_free(c->pkeys[i].x509);
+    X509_up_ref(x509);
+    c->pkeys[i].x509 = x509;
+
+    EVP_PKEY_free(c->pkeys[i].privatekey);
+    EVP_PKEY_up_ref(privatekey);
+    c->pkeys[i].privatekey = privatekey;
+
+    c->key = &(c->pkeys[i]);
+
+ out:
+    EVP_PKEY_free(pubkey);
+    return ret;
+}
+
+int SSL_use_cert_and_key(SSL *ssl, X509 *x509, EVP_PKEY *privatekey,
+                         STACK_OF(X509) *chain, int override)
+{
+    if (ssl == NULL)
+        return -1;
+    return ssl_set_cert_and_key(ssl, NULL, x509, privatekey, chain, override);
+}
+
+int SSL_CTX_use_cert_and_key(SSL_CTX *ctx, X509 *x509, EVP_PKEY *privatekey,
+                             STACK_OF(X509) *chain, int override)
+{
+    if (ctx == NULL)
+        return -1;
+    return ssl_set_cert_and_key(NULL, ctx, x509, privatekey, chain, override);
+}
