@@ -123,7 +123,7 @@ typedef struct {
     STACK_OF(X509_ATTRIBUTE) *attrib;
 } PKCS12_SAFEBAG;
 
-DECLARE_STACK_OF(PKCS12_SAFEBAG)
+DEFINE_STACK_OF(PKCS12_SAFEBAG)
 
 typedef struct pkcs12_bag_st {
     ASN1_OBJECT *type;

@@ -157,7 +157,7 @@ extern "C" {
 # define SMIME_CRLFEOL           0x800
 # define SMIME_STREAM            0x1000
     struct X509_algor_st;
-DECLARE_STACK_OF(X509_ALGOR)
+DEFINE_STACK_OF(X509_ALGOR)
 
 # define ASN1_STRING_FLAG_BITS_LEFT 0x08/* Set if 0x07 has bits left value */
 /*
@@ -230,7 +230,7 @@ typedef struct asn1_string_table_st {
     unsigned long flags;
 } ASN1_STRING_TABLE;
 
-DECLARE_STACK_OF(ASN1_STRING_TABLE)
+DEFINE_STACK_OF(ASN1_STRING_TABLE)
 
 /* size limits: this stuff is taken straight from RFC2459 */
 
@@ -469,9 +469,9 @@ typedef const ASN1_ITEM *ASN1_ITEM_EXP (void);
                                 ASN1_STRFLGS_DUMP_UNKNOWN | \
                                 ASN1_STRFLGS_DUMP_DER)
 
-DECLARE_STACK_OF(ASN1_INTEGER)
+DEFINE_STACK_OF(ASN1_INTEGER)
 
-DECLARE_STACK_OF(ASN1_GENERALSTRING)
+DEFINE_STACK_OF(ASN1_GENERALSTRING)
 
 typedef struct asn1_type_st {
     int type;
@@ -504,7 +504,7 @@ typedef struct asn1_type_st {
     } value;
 } ASN1_TYPE;
 
-DECLARE_STACK_OF(ASN1_TYPE)
+DEFINE_STACK_OF(ASN1_TYPE)
 
 typedef STACK_OF(ASN1_TYPE) ASN1_SEQUENCE_ANY;
 
@@ -565,7 +565,7 @@ ASN1_OBJECT *d2i_ASN1_OBJECT(ASN1_OBJECT **a, const unsigned char **pp,
 
 DECLARE_ASN1_ITEM(ASN1_OBJECT)
 
-DECLARE_STACK_OF(ASN1_OBJECT)
+DEFINE_STACK_OF(ASN1_OBJECT)
 
 ASN1_STRING *ASN1_STRING_new(void);
 void ASN1_STRING_free(ASN1_STRING *a);

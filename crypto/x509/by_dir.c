@@ -90,8 +90,8 @@ typedef struct lookup_dir_st {
     STACK_OF(BY_DIR_ENTRY) *dirs;
 } BY_DIR;
 
-DECLARE_STACK_OF(BY_DIR_HASH)
-DECLARE_STACK_OF(BY_DIR_ENTRY)
+DEFINE_STACK_OF(BY_DIR_HASH)
+DEFINE_STACK_OF(BY_DIR_ENTRY)
 
 static int dir_ctrl(X509_LOOKUP *ctx, int cmd, const char *argp, long argl,
                     char **ret);

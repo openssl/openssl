@@ -61,7 +61,7 @@
 #include "obj_xref.h"
 #include "e_os.h"
 
-DECLARE_STACK_OF(nid_triple)
+DEFINE_STACK_OF(nid_triple)
 
 static STACK_OF(nid_triple) *sig_app, *sigx_app;
 

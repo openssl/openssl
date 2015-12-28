@@ -257,7 +257,7 @@ typedef struct bio_st BIO_dummy;
 struct crypto_ex_data_st {
     STACK_OF(void) *sk;
 };
-DECLARE_STACK_OF(void)
+DEFINE_STACK_OF(void)
 
 /*
  * Per class, we have a STACK of function pointers.

@@ -125,7 +125,7 @@ typedef struct ex_callback_st {
     CRYPTO_EX_dup *dup_func;
 } EX_CALLBACK;
 
-DECLARE_STACK_OF(EX_CALLBACK)
+DEFINE_STACK_OF(EX_CALLBACK)
 
 /*
  * The state for each class.  This could just be a typedef, but

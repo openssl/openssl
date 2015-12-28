@@ -78,7 +78,7 @@ typedef struct {
     char *param_value;          /* Param value e.g. "sha1" */
 } MIME_PARAM;
 
-DECLARE_STACK_OF(MIME_PARAM)
+DEFINE_STACK_OF(MIME_PARAM)
 
 typedef struct {
     char *name;                 /* Name of line e.g. "content-type" */
@@ -86,7 +86,7 @@ typedef struct {
     STACK_OF(MIME_PARAM) *params; /* Zero or more parameters */
 } MIME_HEADER;
 
-DECLARE_STACK_OF(MIME_HEADER)
+DEFINE_STACK_OF(MIME_HEADER)
 
 static int asn1_output_data(BIO *out, BIO *data, ASN1_VALUE *val, int flags,
                             const ASN1_ITEM *it);
