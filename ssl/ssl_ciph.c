@@ -375,8 +375,8 @@ static const SSL_CIPHER cipher_aliases[] = {
      0, 0},
     {0, SSL_TXT_CAMELLIA128, 0, 0, 0, SSL_CAMELLIA128, 0, 0, 0, 0, 0, 0},
     {0, SSL_TXT_CAMELLIA256, 0, 0, 0, SSL_CAMELLIA256, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_CAMELLIA, 0, 0, 0, SSL_CAMELLIA128 | SSL_CAMELLIA256, 0, 0, 0,
-     0, 0, 0},
+    {0, SSL_TXT_CAMELLIA, 0, 0, 0, SSL_CAMELLIA, 0, 0, 0, 0, 0, 0},
+    {0, SSL_TXT_CHACHA20, 0, 0, 0, SSL_CHACHA20, 0, 0, 0, 0, 0, 0 },
 
     /* MAC aliases */
     {0, SSL_TXT_MD5, 0, 0, 0, 0, SSL_MD5, 0, 0, 0, 0, 0},
