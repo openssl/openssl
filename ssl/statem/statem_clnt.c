@@ -2253,6 +2253,7 @@ int tls_construct_client_key_exchange(SSL *s)
 #ifndef OPENSSL_NO_RSA
     unsigned char *q;
     EVP_PKEY *pkey = NULL;
+    EVP_PKEY_CTX *pctx = NULL;
 #endif
 #if !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH)
     EVP_PKEY *ckey = NULL, *skey = NULL;
@@ -2347,7 +2348,7 @@ psk_err:
     }
 #ifndef OPENSSL_NO_RSA
     else if (alg_k & (SSL_kRSA | SSL_kRSAPSK)) {
-        RSA *rsa;
+        size_t enclen;
         pmslen = SSL_MAX_MASTER_KEY_LENGTH;
         pms = OPENSSL_malloc(pmslen);
         if (pms == NULL)
@@ -2370,8 +2371,6 @@ psk_err:
             EVP_PKEY_free(pkey);
             goto err;
         }
-        rsa = pkey->pkey.rsa;
-        EVP_PKEY_free(pkey);
 
         pms[0] = s->client_version >> 8;
         pms[1] = s->client_version & 0xff;
@@ -2382,18 +2381,29 @@ psk_err:
         /* Fix buf for TLS and beyond */
         if (s->version > SSL3_VERSION)
             p += 2;
-        n = RSA_public_encrypt(pmslen, pms, p, rsa, RSA_PKCS1_PADDING);
+        pctx = EVP_PKEY_CTX_new(pkey, NULL);
+        EVP_PKEY_free(pkey);
+        pkey = NULL;
+        if (pctx == NULL || EVP_PKEY_encrypt_init(pctx) <= 0
+            || EVP_PKEY_encrypt(pctx, NULL, &enclen, pms, pmslen) <= 0) {
+            SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE,
+                   ERR_R_EVP_LIB);
+            goto err;
+        }
+        if (EVP_PKEY_encrypt(pctx, p, &enclen, pms, pmslen) <= 0) {
+            SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE,
+                   SSL_R_BAD_RSA_ENCRYPT);
+            goto err;
+        }
+        n = enclen;
+        EVP_PKEY_CTX_free(pctx);
+        pctx = NULL;
 # ifdef PKCS1_CHECK
         if (s->options & SSL_OP_PKCS1_CHECK_1)
             p[1]++;
         if (s->options & SSL_OP_PKCS1_CHECK_2)
             tmp_buf[0] = 0x70;
 # endif
-        if (n <= 0) {
-            SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE,
-                   SSL_R_BAD_RSA_ENCRYPT);
-            goto err;
-        }
 
         /* Fix buf for TLS and beyond */
         if (s->version > SSL3_VERSION) {
@@ -2655,6 +2665,9 @@ psk_err:
  err:
     OPENSSL_clear_free(pms, pmslen);
     s->s3->tmp.pms = NULL;
+#ifndef OPENSSL_NO_RSA
+    EVP_PKEY_CTX_free(pctx);
+#endif
 #ifndef OPENSSL_NO_EC
     OPENSSL_free(encodedPoint);
 #endif
