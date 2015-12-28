@@ -364,6 +364,7 @@
 
 # define SSL_AES                 (SSL_AES128|SSL_AES256|SSL_AES128GCM|SSL_AES256GCM|SSL_AES128CCM|SSL_AES256CCM|SSL_AES128CCM8|SSL_AES256CCM8)
 # define SSL_CAMELLIA            (SSL_CAMELLIA128|SSL_CAMELLIA256)
+# define SSL_CHACHA20            (SSL_CHACHA20POLY1305)
 
 /* Bits for algorithm_mac (symmetric authentication) */
 
