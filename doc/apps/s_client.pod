@@ -22,6 +22,8 @@ B<openssl> B<s_client>
 [B<-CAfile filename>]
 [B<-no-CAfile>]
 [B<-no-CApath>]
+[B<-dane_tlsa_domain domain>]
+[B<-dane_tlsa_rrdata rrdata>]
 [B<-attime timestamp>]
 [B<-check_ss_sig>]
 [B<-crl_check>]
@@ -168,6 +170,45 @@ Do not load the trusted CA certificates from the default file location
 =item B<-no-CApath>
 
 Do not load the trusted CA certificates from the default directory location
+
+=item B<-dane_tlsa_domain domain>
+
+Enable RFC6698/RFC7671 DANE TLSA authentication and specify the
+TLSA base domain which becomes the default SNI hint and the primary
+reference identifier for hostname checks.  This must be used in
+combination with at least one instance of the B<-dane_tlsa_rrdata>
+option below.
+
+When DANE authentication succeeds, the diagnostic output will include
+the lowest (closest to 0) depth at which a TLSA record authenticated
+a chain certificate.  When that TLSA record is a "2 1 0" trust
+anchor public key that signed (rather than matched) the top-most
+certificate of the chain, the result is reported as "TA public key
+verified".  Otherwise, either the TLSA record "matched TA certificate"
+at a positive depth or else "matched EE certificate" at depth 0.
+
+=item B<-dane_tlsa_rrdata rrdata>
+
+Use one or more times to specify the RRDATA fields of the DANE TLSA
+RRset associated with the target service.  The B<rrdata> value is
+specied in "presentation form", that is four whitespace separated
+fields that specify the usage, selector, matching type and associated
+data, with the last of these encoded in hexadecimal.  Optional
+whitespace is ignored in the associated data field.  For example:
+
+  $ openssl s_client -starttls smtp -connect smtp.example.com:25 \
+    -dane_tlsa_domain smtp.example.com \
+    -dane_tlsa_rrdata "2 1 1
+      B111DD8A1C2091A89BD4FD60C57F0716CCE50FEEFF8137CDBEE0326E 02CF362B" \
+    -dane_tlsa_rrdata "2 1 1
+      60B87575447DCBA2A36B7D11AC09FB24A9DB406FEE12D2CC90180517 616E8A18"
+  CONNECTED(00000003)
+  ...
+  DANE TLSA 2 1 1 matched TA certificate at depth 1
+  Verified peername: smtp.example.com
+  ...
+      Verify return code: 0 (ok)
+  ...
 
 =item B<-attime>, B<-check_ss_sig>, B<-crl_check>, B<-crl_check_all>,
 B<explicit_policy>, B<-extended_crl>, B<-ignore_critical>, B<-inhibit_any>,
