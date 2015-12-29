@@ -347,6 +347,22 @@ static int protocol_from_string(const char *value)
     return -1;
 }
 
+static int min_max_proto(SSL_CONF_CTX *cctx, const char *value, int *bound)
+{
+    int method_version;
+    int new_version;
+
+    if (cctx->ctx != NULL)
+        method_version = cctx->ctx->method->version;
+    else if (cctx->ssl != NULL)
+        method_version = cctx->ssl->ctx->method->version;
+    else
+        return 0;
+    if ((new_version = protocol_from_string(value)) < 0)
+        return 0;
+    return ssl_set_version_bound(method_version, new_version, bound);
+}
+
 /*
  * cmd_MinProtocol - Set min protocol version
  * @cctx: config structure to save settings in
@@ -356,13 +372,7 @@ static int protocol_from_string(const char *value)
  */
 static int cmd_MinProtocol(SSL_CONF_CTX *cctx, const char *value)
 {
-    int version = protocol_from_string(value);
-
-    if (version < 0)
-        return 0;
-
-    *(cctx->min_version) = version;
-    return 1;
+    return min_max_proto(cctx, value, cctx->min_version);
 }
 
 /*
@@ -374,13 +384,7 @@ static int cmd_MinProtocol(SSL_CONF_CTX *cctx, const char *value)
  */
 static int cmd_MaxProtocol(SSL_CONF_CTX *cctx, const char *value)
 {
-    int version = protocol_from_string(value);
-
-    if (version < 0)
-        return 0;
-
-    *(cctx->max_version) = version;
-    return 1;
+    return min_max_proto(cctx, value, cctx->max_version);
 }
 
 static int cmd_Options(SSL_CONF_CTX *cctx, const char *value)

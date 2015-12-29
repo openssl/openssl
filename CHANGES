@@ -9,7 +9,9 @@
      SSL_set_max_proto_version(), or via the SSL_CONF's MinProtocol and
      MaxProtcol.  It's recommended to use the new APIs to disable
      protocols instead of disabling individual protocols using
-     SSL_set_options() or SSL_CONF's Protocol.
+     SSL_set_options() or SSL_CONF's Protocol.  This change also
+     removes support for disabling TLS 1.2 in the OpenSSL TLS
+     client at compile time by defining OPENSSL_NO_TLS1_2_CLIENT.
      [Kurt Roeckx]
 
   *) Support for ChaCha20 and Poly1305 added to libcrypto and libssl.

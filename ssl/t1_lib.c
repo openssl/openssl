@@ -208,7 +208,10 @@ void tls1_free(SSL *s)
 void tls1_clear(SSL *s)
 {
     ssl3_clear(s);
-    s->version = s->method->version;
+    if (s->method->version == TLS_ANY_VERSION)
+        s->version = TLS_MAX_VERSION;
+    else
+        s->version = s->method->version;
 }
 
 #ifndef OPENSSL_NO_EC
