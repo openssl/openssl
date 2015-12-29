@@ -416,3 +416,14 @@ SSL_get_async_wait_fd                   450	1_1_0	EXIST::FUNCTION:
 SSL_add_ssl_module                      451	1_1_0	EXIST::FUNCTION:
 SSL_CTX_config                          452	1_1_0	EXIST::FUNCTION:
 SSL_config                              453	1_1_0	EXIST::FUNCTION:
+SSL_dane_tlsa_add                       454	1_1_0	EXIST::FUNCTION:
+SSL_set1_host                           455	1_1_0	EXIST::FUNCTION:
+SSL_get0_peername                       456	1_1_0	EXIST::FUNCTION:
+SSL_add1_host                           457	1_1_0	EXIST::FUNCTION:
+SSL_CTX_dane_mtype_set                  458	1_1_0	EXIST::FUNCTION:
+SSL_CTX_dane_enable                     459	1_1_0	EXIST::FUNCTION:
+SSL_get0_dane_authority                 460	1_1_0	EXIST::FUNCTION:
+SSL_get0_dane_tlsa                      461	1_1_0	EXIST::FUNCTION:
+SSL_set_hostflags                       462	1_1_0	EXIST::FUNCTION:
+SSL_dane_enable                         463	1_1_0	EXIST::FUNCTION:
+SSL_get0_dane                           464	1_1_0	EXIST::FUNCTION:

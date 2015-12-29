@@ -4735,3 +4735,5 @@ OPENSSL_strlcat                         5110	1_1_0	EXIST::FUNCTION:
 OPENSSL_memdup                          5111	1_1_0	NOEXIST::FUNCTION:
 CRYPTO_memdup                           5112	1_1_0	EXIST::FUNCTION:
 CRYPTO_strndup                          5113	1_1_0	EXIST::FUNCTION:
+X509_VERIFY_PARAM_move_peername         5114	1_1_0	EXIST::FUNCTION:
+X509_STORE_CTX_set0_dane                5115	1_1_0	EXIST::FUNCTION:
