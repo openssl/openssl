@@ -152,6 +152,12 @@
 
      [Richard Levitte]
 
+  *) Revamped memory debug; only -DCRYPTO_MDEBUG and -DCRYPTO_MDEBUG_ABORT
+     are used; the latter aborts on memory leaks (usually checked on exit).
+     Some undocumented "set malloc, etc., hooks" functions were removed
+     and others were changed.  All are now documented.
+     [Rich Salz]
+
   *) In DSA_generate_parameters_ex, if the provided seed is too short,
      return an error
      [Rich Salz and Ismo Puustinen <ismo.puustinen@intel.com>]
