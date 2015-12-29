@@ -135,19 +135,23 @@ static const SSL_METHOD *tls1_get_method(int ver)
     return NULL;
 }
 
-IMPLEMENT_tls_meth_func(TLS_ANY_VERSION, TLS_method,
+IMPLEMENT_tls_meth_func(TLS_ANY_VERSION, 0, 0,
+                        TLS_method,
                         ossl_statem_accept,
                         ossl_statem_connect, tls1_get_method, TLSv1_2_enc_data)
 
-IMPLEMENT_tls_meth_func(TLS1_2_VERSION, TLSv1_2_method,
+IMPLEMENT_tls_meth_func(TLS1_2_VERSION, 0, SSL_OP_NO_TLSv1_2,
+                        TLSv1_2_method,
                         ossl_statem_accept,
                         ossl_statem_connect, tls1_get_method, TLSv1_2_enc_data)
 
-IMPLEMENT_tls_meth_func(TLS1_1_VERSION, TLSv1_1_method,
+IMPLEMENT_tls_meth_func(TLS1_1_VERSION, SSL_METHOD_NO_SUITEB, SSL_OP_NO_TLSv1_1,
+                        TLSv1_1_method,
                         ossl_statem_accept,
                         ossl_statem_connect, tls1_get_method, TLSv1_1_enc_data)
 
-IMPLEMENT_tls_meth_func(TLS1_VERSION, TLSv1_method,
+IMPLEMENT_tls_meth_func(TLS1_VERSION, SSL_METHOD_NO_SUITEB, SSL_OP_NO_TLSv1,
+                        TLSv1_method,
                         ossl_statem_accept,
                         ossl_statem_connect, tls1_get_method, TLSv1_enc_data)
 
@@ -178,22 +182,26 @@ static const SSL_METHOD *tls1_get_server_method(int ver)
     return NULL;
 }
 
-IMPLEMENT_tls_meth_func(TLS_ANY_VERSION, TLS_server_method,
+IMPLEMENT_tls_meth_func(TLS_ANY_VERSION, 0, 0,
+                        TLS_server_method,
                         ossl_statem_accept,
                         ssl_undefined_function,
                         tls1_get_server_method, TLSv1_2_enc_data)
 
-IMPLEMENT_tls_meth_func(TLS1_2_VERSION, TLSv1_2_server_method,
+IMPLEMENT_tls_meth_func(TLS1_2_VERSION, 0, SSL_OP_NO_TLSv1_2,
+                        TLSv1_2_server_method,
                         ossl_statem_accept,
                         ssl_undefined_function,
                         tls1_get_server_method, TLSv1_2_enc_data)
 
-IMPLEMENT_tls_meth_func(TLS1_1_VERSION, TLSv1_1_server_method,
+IMPLEMENT_tls_meth_func(TLS1_1_VERSION, SSL_METHOD_NO_SUITEB, SSL_OP_NO_TLSv1_1,
+                        TLSv1_1_server_method,
                         ossl_statem_accept,
                         ssl_undefined_function,
                         tls1_get_server_method, TLSv1_1_enc_data)
 
-IMPLEMENT_tls_meth_func(TLS1_VERSION, TLSv1_server_method,
+IMPLEMENT_tls_meth_func(TLS1_VERSION, SSL_METHOD_NO_SUITEB, SSL_OP_NO_TLSv1,
+                        TLSv1_server_method,
                         ossl_statem_accept,
                         ssl_undefined_function,
                         tls1_get_server_method, TLSv1_enc_data)
@@ -226,22 +234,26 @@ static const SSL_METHOD *tls1_get_client_method(int ver)
     return NULL;
 }
 
-IMPLEMENT_tls_meth_func(TLS_ANY_VERSION, TLS_client_method,
+IMPLEMENT_tls_meth_func(TLS_ANY_VERSION, 0, 0,
+                        TLS_client_method,
                         ssl_undefined_function,
                         ossl_statem_connect,
                         tls1_get_client_method, TLSv1_2_enc_data)
 
-IMPLEMENT_tls_meth_func(TLS1_2_VERSION, TLSv1_2_client_method,
+IMPLEMENT_tls_meth_func(TLS1_2_VERSION, 0, SSL_OP_NO_TLSv1_2,
+                        TLSv1_2_client_method,
                         ssl_undefined_function,
                         ossl_statem_connect,
                         tls1_get_client_method, TLSv1_2_enc_data)
 
-IMPLEMENT_tls_meth_func(TLS1_1_VERSION, TLSv1_1_client_method,
+IMPLEMENT_tls_meth_func(TLS1_1_VERSION, SSL_METHOD_NO_SUITEB, SSL_OP_NO_TLSv1_1,
+                        TLSv1_1_client_method,
                         ssl_undefined_function,
                         ossl_statem_connect,
                         tls1_get_client_method, TLSv1_1_enc_data)
 
-IMPLEMENT_tls_meth_func(TLS1_VERSION, TLSv1_client_method,
+IMPLEMENT_tls_meth_func(TLS1_VERSION, SSL_METHOD_NO_SUITEB, SSL_OP_NO_TLSv1,
+                        TLSv1_client_method,
                         ssl_undefined_function,
                         ossl_statem_connect,
                         tls1_get_client_method, TLSv1_enc_data)
@@ -268,19 +280,19 @@ static const SSL_METHOD *dtls1_get_method(int ver)
         return NULL;
 }
 
-IMPLEMENT_dtls1_meth_func(DTLS1_VERSION,
+IMPLEMENT_dtls1_meth_func(DTLS1_VERSION, SSL_METHOD_NO_SUITEB, SSL_OP_NO_DTLSv1,
                           DTLSv1_method,
                           ossl_statem_accept,
                           ossl_statem_connect,
                           dtls1_get_method, DTLSv1_enc_data)
 
-IMPLEMENT_dtls1_meth_func(DTLS1_2_VERSION,
+IMPLEMENT_dtls1_meth_func(DTLS1_2_VERSION, 0, SSL_OP_NO_DTLSv1_2,
                           DTLSv1_2_method,
                           ossl_statem_accept,
                           ossl_statem_connect,
                           dtls1_get_method, DTLSv1_2_enc_data)
 
-IMPLEMENT_dtls1_meth_func(DTLS_ANY_VERSION,
+IMPLEMENT_dtls1_meth_func(DTLS_ANY_VERSION, 0, 0,
                           DTLS_method,
                           ossl_statem_accept,
                           ossl_statem_connect,
@@ -303,19 +315,19 @@ static const SSL_METHOD *dtls1_get_server_method(int ver)
         return NULL;
 }
 
-IMPLEMENT_dtls1_meth_func(DTLS1_VERSION,
+IMPLEMENT_dtls1_meth_func(DTLS1_VERSION, SSL_METHOD_NO_SUITEB, SSL_OP_NO_DTLSv1,
                           DTLSv1_server_method,
                           ossl_statem_accept,
                           ssl_undefined_function,
                           dtls1_get_server_method, DTLSv1_enc_data)
 
-IMPLEMENT_dtls1_meth_func(DTLS1_2_VERSION,
+IMPLEMENT_dtls1_meth_func(DTLS1_2_VERSION, 0, SSL_OP_NO_DTLSv1_2,
                           DTLSv1_2_server_method,
                           ossl_statem_accept,
                           ssl_undefined_function,
                           dtls1_get_server_method, DTLSv1_2_enc_data)
 
-IMPLEMENT_dtls1_meth_func(DTLS_ANY_VERSION,
+IMPLEMENT_dtls1_meth_func(DTLS_ANY_VERSION, 0, 0,
                           DTLS_server_method,
                           ossl_statem_accept,
                           ssl_undefined_function,
@@ -338,19 +350,19 @@ static const SSL_METHOD *dtls1_get_client_method(int ver)
         return NULL;
 }
 
-IMPLEMENT_dtls1_meth_func(DTLS1_VERSION,
+IMPLEMENT_dtls1_meth_func(DTLS1_VERSION, SSL_METHOD_NO_SUITEB, SSL_OP_NO_DTLSv1,
                           DTLSv1_client_method,
                           ssl_undefined_function,
                           ossl_statem_connect,
                           dtls1_get_client_method, DTLSv1_enc_data)
 
-IMPLEMENT_dtls1_meth_func(DTLS1_2_VERSION,
+IMPLEMENT_dtls1_meth_func(DTLS1_2_VERSION, 0, SSL_OP_NO_DTLSv1_2,
                           DTLSv1_2_client_method,
                           ssl_undefined_function,
                           ossl_statem_connect,
                           dtls1_get_client_method, DTLSv1_2_enc_data)
 
-IMPLEMENT_dtls1_meth_func(DTLS_ANY_VERSION,
+IMPLEMENT_dtls1_meth_func(DTLS_ANY_VERSION, 0, 0,
                           DTLS_client_method,
                           ssl_undefined_function,
                           ossl_statem_connect,

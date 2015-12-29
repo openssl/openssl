@@ -471,8 +471,8 @@
  * flags because it may not be set to correct version yet.
  */
 # define SSL_CLIENT_USE_TLS1_2_CIPHERS(s)        \
-                ((SSL_IS_DTLS(s) && s->client_version <= DTLS1_2_VERSION) || \
-                (!SSL_IS_DTLS(s) && s->client_version >= TLS1_2_VERSION))
+    ((!SSL_IS_DTLS(s) && s->client_version >= TLS1_2_VERSION) || \
+     (SSL_IS_DTLS(s) && DTLS_VERSION_GE(s->client_version, DTLS1_2_VERSION)))
 
 # ifdef TLSEXT_TYPE_encrypt_then_mac
 #  define SSL_USE_ETM(s) (s->s3->flags & TLS1_FLAGS_ENCRYPT_THEN_MAC)
@@ -535,6 +535,8 @@ struct ssl_cipher_st {
 /* Used to hold SSL/TLS functions */
 struct ssl_method_st {
     int version;
+    unsigned flags;
+    unsigned long mask;
     int (*ssl_new) (SSL *s);
     void (*ssl_clear) (SSL *s);
     void (*ssl_free) (SSL *s);
@@ -1685,12 +1687,20 @@ extern const SSL3_ENC_METHOD SSLv3_enc_data;
 extern const SSL3_ENC_METHOD DTLSv1_enc_data;
 extern const SSL3_ENC_METHOD DTLSv1_2_enc_data;
 
-# define IMPLEMENT_tls_meth_func(version, func_name, s_accept, s_connect, \
-                                s_get_meth, enc_data) \
+/*
+ * Flags for SSL methods
+ */
+#define SSL_METHOD_NO_FIPS      (1U<<0)
+#define SSL_METHOD_NO_SUITEB    (1U<<1)
+
+# define IMPLEMENT_tls_meth_func(version, flags, mask, func_name, s_accept, \
+                                 s_connect, s_get_meth, enc_data) \
 const SSL_METHOD *func_name(void)  \
         { \
         static const SSL_METHOD func_name##_data= { \
                 version, \
+                flags, \
+                mask, \
                 tls1_new, \
                 tls1_clear, \
                 tls1_free, \
@@ -1727,6 +1737,8 @@ const SSL_METHOD *func_name(void)  \
         { \
         static const SSL_METHOD func_name##_data= { \
                 SSL3_VERSION, \
+                SSL_METHOD_NO_FIPS | SSL_METHOD_NO_SUITEB, \
+                SSL_OP_NO_SSLv3, \
                 ssl3_new, \
                 ssl3_clear, \
                 ssl3_free, \
@@ -1758,12 +1770,14 @@ const SSL_METHOD *func_name(void)  \
         return &func_name##_data; \
         }
 
-# define IMPLEMENT_dtls1_meth_func(version, func_name, s_accept, s_connect, \
-                                        s_get_meth, enc_data) \
+# define IMPLEMENT_dtls1_meth_func(version, flags, mask, func_name, s_accept, \
+                                        s_connect, s_get_meth, enc_data) \
 const SSL_METHOD *func_name(void)  \
         { \
         static const SSL_METHOD func_name##_data= { \
                 version, \
+                flags, \
+                mask, \
                 dtls1_new, \
                 dtls1_clear, \
                 dtls1_free, \
@@ -1910,6 +1924,12 @@ __owur int ssl3_set_handshake_header(SSL *s, int htype, unsigned long len);
 __owur int ssl3_handshake_write(SSL *s);
 
 __owur int ssl_allow_compression(SSL *s);
+
+__owur int ssl_set_client_hello_version(SSL *s);
+__owur int ssl_check_version_downgrade(SSL *s);
+__owur int ssl_set_version_bound(int method_version, int version, int *bound);
+__owur int ssl_choose_server_version(SSL *s);
+__owur int ssl_choose_client_version(SSL *s, int version);
 
 __owur long tls1_default_timeout(void);
 __owur int dtls1_do_write(SSL *s, int type);

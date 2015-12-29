@@ -261,7 +261,8 @@ static void (*get_callback(SSL *s))(const SSL *, int, int)
  *   1: Success
  * <=0: NBIO or error
  */
-static int state_machine(SSL *s, int server) {
+static int state_machine(SSL *s, int server)
+{
     BUF_MEM *buf = NULL;
     unsigned long Time = (unsigned long)time(NULL);
     void (*cb) (const SSL *ssl, int type, int val) = NULL;
@@ -336,19 +337,15 @@ static int state_machine(SSL *s, int server) {
                 goto end;
             }
         } else {
-            if ((s->version >> 8) != SSL3_VERSION_MAJOR
-                    && s->version != TLS_ANY_VERSION) {
+            if ((s->version >> 8) != SSL3_VERSION_MAJOR) {
                 SSLerr(SSL_F_STATE_MACHINE, ERR_R_INTERNAL_ERROR);
                 goto end;
             }
         }
 
-        if (!SSL_IS_DTLS(s)) {
-            if (s->version != TLS_ANY_VERSION &&
-                    !ssl_security(s, SSL_SECOP_VERSION, 0, s->version, NULL)) {
-                SSLerr(SSL_F_STATE_MACHINE, SSL_R_VERSION_TOO_LOW);
-                goto end;
-            }
+        if (!ssl_security(s, SSL_SECOP_VERSION, 0, s->version, NULL)) {
+            SSLerr(SSL_F_STATE_MACHINE, SSL_R_VERSION_TOO_LOW);
+            goto end;
         }
 
         if (s->init_buf == NULL) {
