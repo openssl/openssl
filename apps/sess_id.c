@@ -74,7 +74,7 @@ typedef enum OPTION_choice {
 OPTIONS sess_id_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
     {"inform", OPT_INFORM, 'F', "Input format - default PEM (DER or PEM)"},
-    {"outform", OPT_OUTFORM, 'F',
+    {"outform", OPT_OUTFORM, 'f',
      "Output format - default PEM (PEM, DER or NSS)"},
     {"in", OPT_IN, 's', "Input file - default stdin"},
     {"out", OPT_OUT, 's', "Output file - default stdout"},
@@ -114,7 +114,8 @@ int sess_id_main(int argc, char **argv)
                 goto opthelp;
             break;
         case OPT_OUTFORM:
-            if (!opt_format(opt_arg(), OPT_FMT_PEMDER, &outformat))
+            if (!opt_format(opt_arg(), OPT_FMT_PEMDER | OPT_FMT_NSS,
+                            &outformat))
                 goto opthelp;
             break;
         case OPT_IN:
