@@ -59,6 +59,7 @@ RANDTEST=	randtest
 DHTEST=		dhtest
 DSATEST=	dsatest
 SSLTEST=	ssltest
+DANETEST=	danetest
 RSATEST=	rsa_test
 ENGINETEST=	enginetest
 EVPTEST=	evp_test
@@ -90,7 +91,7 @@ EXE=	$(NPTEST)$(EXE_EXT) $(BNTEST)$(EXE_EXT) $(ECTEST)$(EXE_EXT) \
 	$(DESTEST)$(EXE_EXT) $(SHA1TEST)$(EXE_EXT) $(SHA256TEST)$(EXE_EXT) $(SHA512TEST)$(EXE_EXT) \
 	$(MDC2TEST)$(EXE_EXT) $(RMDTEST)$(EXE_EXT) \
 	$(RANDTEST)$(EXE_EXT) $(DHTEST)$(EXE_EXT) $(ENGINETEST)$(EXE_EXT) \
-	$(GOST2814789TEST)$(EXE_EXT) \
+	$(GOST2814789TEST)$(EXE_EXT) $(DANETEST)$(EXE_EXT) \
 	$(BFTEST)$(EXE_EXT) $(CASTTEST)$(EXE_EXT) $(SSLTEST)$(EXE_EXT) \
 	$(EXPTEST)$(EXE_EXT) $(DSATEST)$(EXE_EXT) $(RSATEST)$(EXE_EXT) \
 	$(EVPTEST)$(EXE_EXT) $(EVPEXTRATEST)$(EXE_EXT) $(IGETEST)$(EXE_EXT) \
@@ -108,7 +109,7 @@ OBJ=	$(NPTEST).o $(BNTEST).o $(ECTEST).o \
 	$(HMACTEST).o $(WPTEST).o \
 	$(RC2TEST).o $(RC4TEST).o $(RC5TEST).o \
 	$(DESTEST).o $(SHA1TEST).o $(SHA256TEST).o $(SHA512TEST).o \
-	$(MDC2TEST).o $(RMDTEST).o \
+	$(MDC2TEST).o $(RMDTEST).o $(DANETEST).o \
 	$(RANDTEST).o $(DHTEST).o $(ENGINETEST).o $(CASTTEST).o \
 	$(BFTEST).o  $(SSLTEST).o  $(DSATEST).o  $(EXPTEST).o $(RSATEST).o \
 	$(EVPTEST).o $(EVPEXTRATEST).o $(IGETEST).o $(JPAKETEST).o $(V3NAMETEST).o \
@@ -120,7 +121,7 @@ SRC=	$(NPTEST).c $(BNTEST).c $(ECTEST).c \
 	$(ECDSATEST).c $(ECDHTEST).c $(GMDIFFTEST).c $(PBELUTEST).c $(IDEATEST).c \
 	$(MD2TEST).c  $(MD4TEST).c $(MD5TEST).c \
 	$(HMACTEST).c $(WPTEST).c \
-	$(RC2TEST).c $(RC4TEST).c $(RC5TEST).c \
+	$(RC2TEST).c $(RC4TEST).c $(RC5TEST).c $(DANETEST).c \
 	$(DESTEST).c $(SHA1TEST).c $(MDC2TEST).c $(RMDTEST).c \
 	$(RANDTEST).c $(DHTEST).c $(ENGINETEST).c $(CASTTEST).c \
 	$(BFTEST).c  $(SSLTEST).c $(DSATEST).c   $(EXPTEST).c $(RSATEST).c \
@@ -317,6 +318,9 @@ $(METHTEST)$(EXE_EXT): $(METHTEST).o $(DLIBCRYPTO)
 $(SSLTEST)$(EXE_EXT): $(SSLTEST).o $(DLIBSSL) $(DLIBCRYPTO)
 	@target=$(SSLTEST); $(BUILD_CMD)
 
+$(DANETEST)$(EXE_EXT): $(DANETEST).o $(DLIBSSL) $(DLIBCRYPTO)
+	@target=$(DANETEST); $(BUILD_CMD)
+
 $(ENGINETEST)$(EXE_EXT): $(ENGINETEST).o $(DLIBCRYPTO)
 	@target=$(ENGINETEST); $(BUILD_CMD)
 
@@ -435,6 +439,23 @@ clienthellotest.o: clienthellotest.c
 constant_time_test.o: ../e_os.h ../include/internal/constant_time_locl.h
 constant_time_test.o: ../include/openssl/e_os2.h
 constant_time_test.o: ../include/openssl/opensslconf.h constant_time_test.c
+danetest.o: ../e_os.h ../include/internal/dane.h ../include/openssl/asn1.h
+danetest.o: ../include/openssl/bio.h ../include/openssl/buffer.h
+danetest.o: ../include/openssl/comp.h ../include/openssl/conf.h
+danetest.o: ../include/openssl/crypto.h ../include/openssl/dtls1.h
+danetest.o: ../include/openssl/e_os2.h ../include/openssl/ec.h
+danetest.o: ../include/openssl/engine.h ../include/openssl/err.h
+danetest.o: ../include/openssl/evp.h ../include/openssl/hmac.h
+danetest.o: ../include/openssl/lhash.h ../include/openssl/obj_mac.h
+danetest.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
+danetest.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
+danetest.o: ../include/openssl/pem.h ../include/openssl/pem2.h
+danetest.o: ../include/openssl/pkcs7.h ../include/openssl/safestack.h
+danetest.o: ../include/openssl/sha.h ../include/openssl/srtp.h
+danetest.o: ../include/openssl/ssl.h ../include/openssl/ssl2.h
+danetest.o: ../include/openssl/ssl3.h ../include/openssl/stack.h
+danetest.o: ../include/openssl/symhacks.h ../include/openssl/tls1.h
+danetest.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h danetest.c
 destest.o: ../include/openssl/des.h ../include/openssl/e_os2.h
 destest.o: ../include/openssl/opensslconf.h destest.c
 dhtest.o: ../e_os.h ../include/openssl/bio.h ../include/openssl/bn.h

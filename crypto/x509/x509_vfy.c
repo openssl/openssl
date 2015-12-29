@@ -114,6 +114,7 @@
 
 static int build_chain(X509_STORE_CTX *ctx);
 static int verify_chain(X509_STORE_CTX *ctx);
+static int dane_verify(X509_STORE_CTX *ctx);
 static int null_callback(int ok, X509_STORE_CTX *e);
 static int check_issued(X509_STORE_CTX *ctx, X509 *x, X509 *issuer);
 static X509 *find_issuer(X509_STORE_CTX *ctx, STACK_OF(X509) *sk, X509 *x);
@@ -125,6 +126,7 @@ static int check_revocation(X509_STORE_CTX *ctx);
 static int check_cert(X509_STORE_CTX *ctx);
 static int check_policy(X509_STORE_CTX *ctx);
 static int get_issuer_sk(X509 **issuer, X509_STORE_CTX *ctx, X509 *x);
+static int check_dane_issuer(X509_STORE_CTX *ctx, int depth);
 
 static int get_crl_score(X509_STORE_CTX *ctx, X509 **pissuer,
                          unsigned int *preasons, X509_CRL *crl, X509 *x);
@@ -237,6 +239,7 @@ static int verify_chain(X509_STORE_CTX *ctx)
 
 int X509_verify_cert(X509_STORE_CTX *ctx)
 {
+    struct dane_st *dane = (struct dane_st *)ctx->dane;
 
     if (ctx->cert == NULL) {
         X509err(X509_F_X509_VERIFY_CERT, X509_R_NO_CERT_SET_FOR_US_TO_VERIFY);
@@ -264,6 +267,14 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
     X509_up_ref(ctx->cert);
     ctx->num_untrusted = 1;
 
+    /*
+     * If dane->trecs is an empty stack, we'll fail, since the user enabled
+     * DANE.  If none of the TLSA records were usable, and it makes sense to
+     * keep going with an unauthenticated handshake, they can handle that in
+     * the verify callback, or not set SSL_VERIFY_PEER.
+     */
+    if (DANETLS_ENABLED(dane))
+        return dane_verify(ctx);
     return verify_chain(ctx);
 }
 
@@ -565,8 +576,17 @@ static int check_trust(X509_STORE_CTX *ctx, int num_untrusted)
     X509 *x = NULL;
     X509 *mx;
     int (*cb) (int xok, X509_STORE_CTX *xctx) = ctx->verify_cb;
+    struct dane_st *dane = (struct dane_st *)ctx->dane;
     int num = sk_X509_num(ctx->chain);
     int trust;
+
+    if (DANETLS_HAS_TA(dane) && num_untrusted > 0) {
+        switch (trust = check_dane_issuer(ctx, num_untrusted)) {
+        case X509_TRUST_TRUSTED:
+        case X509_TRUST_REJECTED:
+            return trust;
+        }
+    }
 
     /*
      * Check trusted certificates in chain at depth num_untrusted and up.
@@ -637,7 +657,14 @@ static int check_trust(X509_STORE_CTX *ctx, int num_untrusted)
     return X509_TRUST_UNTRUSTED;
 
  trusted:
-    return X509_TRUST_TRUSTED;
+    if (!DANETLS_ENABLED(dane))
+        return X509_TRUST_TRUSTED;
+    if (dane->pdpth < 0)
+        dane->pdpth = num_untrusted;
+    /* With DANE, PKIX alone is not trusted until we have both */
+    if (dane->mdpth >= 0)
+        return X509_TRUST_TRUSTED;
+    return X509_TRUST_UNTRUSTED;
 }
 
 static int check_revocation(X509_STORE_CTX *ctx)
@@ -1524,6 +1551,17 @@ static int internal_verify(X509_STORE_CTX *ctx)
     ctx->error_depth = n;
     xi = sk_X509_value(ctx->chain, n);
 
+    /*
+     * With DANE-verified bare public key TA signatures, it remains only to
+     * check the timestamps of the top certificate.  We report the issuer as
+     * NULL, since all we have is a bare key.
+     */
+    if (ctx->bare_ta_signed) {
+        xs = xi;
+        xi = NULL;
+        goto check_cert;
+    }
+
     if (ctx->check_issued(ctx, xi, xi))
         xs = xi;
     else {
@@ -2074,6 +2112,7 @@ int X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store, X509 *x509,
     ctx->tree = NULL;
     ctx->parent = NULL;
     ctx->dane = NULL;
+    ctx->bare_ta_signed = 0;
     /* Zero ex_data to make sure we're cleanup-safe */
     memset(&ctx->ex_data, 0, sizeof(ctx->ex_data));
 
@@ -2270,15 +2309,311 @@ void X509_STORE_CTX_set0_dane(X509_STORE_CTX *ctx, struct dane_st *dane)
     ctx->dane = dane;
 }
 
+static unsigned char *dane_i2d(
+    X509 *cert,
+    uint8_t selector,
+    unsigned int *i2dlen)
+{
+    unsigned char *buf = NULL;
+    int len;
+
+    /*
+     * Extract ASN.1 DER form of certificate or public key.
+     */
+    switch (selector) {
+    case DANETLS_SELECTOR_CERT:
+        len = i2d_X509(cert, &buf);
+        break;
+    case DANETLS_SELECTOR_SPKI:
+        len = i2d_X509_PUBKEY(X509_get_X509_PUBKEY(cert), &buf);
+        break;
+    default:
+        X509err(X509_F_DANE_I2D, X509_R_BAD_SELECTOR);
+        return NULL;
+    }
+
+    if (len < 0 || buf == NULL) {
+        X509err(X509_F_DANE_I2D, ERR_R_MALLOC_FAILURE);
+        return NULL;
+    }
+
+    *i2dlen = (unsigned int)len;
+    return buf;
+}
+
+#define DANETLS_NONE 256        /* impossible uint8_t */
+
+static int dane_match(X509_STORE_CTX *ctx, X509 *cert, int depth)
+{
+    struct dane_st *dane = (struct dane_st *)ctx->dane;
+    unsigned usage = DANETLS_NONE;
+    unsigned selector = DANETLS_NONE;
+    unsigned ordinal = DANETLS_NONE;
+    unsigned mtype = DANETLS_NONE;
+    unsigned char *i2dbuf = NULL;
+    unsigned int i2dlen = 0;
+    unsigned char mdbuf[EVP_MAX_MD_SIZE];
+    unsigned char *cmpbuf = NULL;
+    unsigned int cmplen = 0;
+    int i;
+    int recnum;
+    int matched = 0;
+    danetls_record *t = NULL;
+    uint32_t mask;
+
+    mask = (depth == 0) ? DANETLS_EE_MASK : DANETLS_TA_MASK;
+
+    /*
+     * The trust store is not applicable with DANE-TA(2)
+     */
+    if (depth >= ctx->num_untrusted)
+        mask &= DANETLS_PKIX_MASK;
+
+    /*
+     * If we've previously matched a PKIX-?? record, no need to test any
+     * furher PKIX-?? records,  it remains to just build the PKIX chain.
+     * Had the match been a DANE-?? record, we'd be done already.
+     */
+    if (dane->mdpth >= 0)
+        mask &= ~DANETLS_PKIX_MASK;
+
+    /*-
+     * https://tools.ietf.org/html/rfc7671#section-5.1
+     * https://tools.ietf.org/html/rfc7671#section-5.2
+     * https://tools.ietf.org/html/rfc7671#section-5.3
+     * https://tools.ietf.org/html/rfc7671#section-5.4
+     *
+     * We handle DANE-EE(3) records first as they require no chain building
+     * and no expiration or hostname checks.  We also process digests with
+     * higher ordinals first and ignore lower priorities except Full(0) which
+     * is always processed (last).  If none match, we then process PKIX-EE(1).
+     *
+     * NOTE: This relies on DANE usages sorting before the corresponding PKIX
+     * usages in SSL_dane_tlsa_add(), and also on descending sorting of digest
+     * priorities.  See twin comment in ssl/ssl_lib.c.
+     *
+     * We expect that most TLSA RRsets will have just a single usage, so we
+     * don't go out of our way to cache multiple selector-specific i2d buffers
+     * across usages, but if the selector happens to remain the same as switch
+     * usages, that's OK.  Thus, a set of "3 1 1", "3 0 1", "1 1 1", "1 0 1",
+     * records would result in us generating each of the certificate and public
+     * key DER forms twice, but more typically we'd just see multiple "3 1 1"
+     * or multiple "3 0 1" records.
+     *
+     * As soon as we find a match at any given depth, we stop, because either
+     * we've matched a DANE-?? record and the peer is authenticated, or, after
+     * exhausing all DANE-?? records, we've matched a PKIX-?? record, which is
+     * sufficient for DANE, and what remains to do is ordinary PKIX validation.
+     */
+    recnum = (dane->umask & mask) ? sk_danetls_record_num(dane->trecs) : 0;
+    for (i = 0; matched == 0 && i < recnum; ++i) {
+        t = sk_danetls_record_value(dane->trecs, i);
+        if ((DANETLS_USAGE_BIT(t->usage) & mask) == 0)
+            continue;
+        if (t->usage != usage) {
+            usage = t->usage;
+
+            /* Reset digest agility for each usage/selector pair */
+            mtype = DANETLS_NONE;
+            ordinal = dane->dctx->mdord[t->mtype];
+        }
+        if (t->selector != selector) {
+            selector = t->selector;
+
+            /* Update per-selector state */
+            OPENSSL_free(i2dbuf);
+            i2dbuf = dane_i2d(cert, selector, &i2dlen);
+            if (i2dbuf == NULL)
+                return -1;
+
+            /* Reset digest agility for each usage/selector pair */
+            mtype = DANETLS_NONE;
+            ordinal = dane->dctx->mdord[t->mtype];
+        } else if (t->mtype != DANETLS_MATCHING_FULL) {
+            /*-
+             * Digest agility:
+             *
+             *     <https://tools.ietf.org/html/rfc7671#section-9>
+             *
+             * For a fixed selector, after processing all records with the
+             * highest mtype ordinal, ignore all mtypes with lower ordinals
+             * other than "Full".
+             */
+            if (dane->dctx->mdord[t->mtype] < ordinal)
+                continue;
+        }
+
+        /*
+         * Each time we hit a (new selector or) mtype, re-compute the relevant
+         * digest, more complex caching is not worth the code space.
+         */
+        if (t->mtype != mtype) {
+            const EVP_MD *md = dane->dctx->mdevp[mtype = t->mtype];
+            cmpbuf = i2dbuf;
+            cmplen = i2dlen;
+
+            if (md != NULL) {
+		cmpbuf = mdbuf;
+		if (!EVP_Digest(i2dbuf, i2dlen, cmpbuf, &cmplen, md, 0)) {
+		    matched = -1;
+                    break;
+                }
+            }
+        }
+
+        /*
+         * Squirrel away the certificate and depth if we have a match.  Any
+         * DANE match is dispositive, but with PKIX we still need to build a
+         * full chain.
+         */
+        if (cmplen == t->dlen &&
+            memcmp(cmpbuf, t->data, cmplen) == 0) {
+            if (DANETLS_USAGE_BIT(usage) & DANETLS_DANE_MASK)
+                matched = 1;
+            if (matched || dane->mdpth < 0) {
+                dane->mdpth = depth;
+                dane->mtlsa = t;
+                OPENSSL_free(dane->mcert);
+                dane->mcert = cert;
+                X509_up_ref(cert);
+            }
+            break;
+        }
+    }
+
+    /* Clear the one-element DER cache */
+    OPENSSL_free(i2dbuf);
+    return matched;
+}
+
+static int check_dane_issuer(X509_STORE_CTX *ctx, int depth)
+{
+    struct dane_st *dane = (struct dane_st *)ctx->dane;
+    int matched = 0;
+    X509 *cert;
+
+    if (!DANETLS_HAS_TA(dane) || depth == 0)
+        return  X509_TRUST_UNTRUSTED;
+
+    /*
+     * Record any DANE trust anchor matches, for the first depth to test, if
+     * there's one at that depth. (This'll be false for length 1 chains looking
+     * for an exact match for the leaf certificate).
+     */
+    cert = sk_X509_value(ctx->chain, depth);
+    if (cert != NULL && (matched = dane_match(ctx, cert, depth)) < 0)
+        return  X509_TRUST_REJECTED;
+    if (matched > 0) {
+        ctx->num_untrusted = depth - 1;
+        return  X509_TRUST_TRUSTED;
+    }
+
+    return  X509_TRUST_UNTRUSTED;
+}
+
+static int check_dane_pkeys(X509_STORE_CTX *ctx)
+{
+    struct dane_st *dane = (struct dane_st *)ctx->dane;
+    danetls_record *t;
+    int num = ctx->num_untrusted;
+    X509 *cert = sk_X509_value(ctx->chain, num - 1);
+    int recnum = sk_danetls_record_num(dane->trecs);
+    int i;
+
+    for (i = 0; i < recnum; ++i) {
+        t = sk_danetls_record_value(dane->trecs, i);
+        if (t->usage != DANETLS_USAGE_DANE_TA ||
+            t->selector != DANETLS_SELECTOR_SPKI ||
+            t->mtype != DANETLS_MATCHING_FULL ||
+            X509_verify(cert, t->spki) <= 0)
+            continue;
+
+        /* Clear PKIX-?? matches that failed to panned out to a full chain */
+        X509_free(dane->mcert);
+        dane->mcert = NULL;
+
+        /* Record match via a bare TA public key */
+        ctx->bare_ta_signed = 1;
+        dane->mdpth = num - 1;
+        dane->mtlsa = t;
+
+        /* Prune any excess chain certificates */
+        num = sk_X509_num(ctx->chain);
+        for (; num > ctx->num_untrusted; --num)
+            X509_free(sk_X509_pop(ctx->chain));
+
+        return X509_TRUST_TRUSTED;
+    }
+
+    return X509_TRUST_UNTRUSTED;
+}
+
+static void dane_reset(struct dane_st *dane)
+{
+    /*
+     * Reset state to verify another chain, or clear after failure.
+     */
+    X509_free(dane->mcert);
+    dane->mcert = NULL;
+    dane->mtlsa = NULL;
+    dane->mdpth = -1;
+    dane->pdpth = -1;
+}
+
+static int dane_verify(X509_STORE_CTX *ctx)
+{
+    X509 *cert = ctx->cert;
+    int (*cb)(int xok, X509_STORE_CTX *xctx) = ctx->verify_cb;
+    struct dane_st *dane = (struct dane_st *)ctx->dane;
+    int matched;
+    int done;
+
+    dane_reset(dane);
+
+    matched = dane_match(ctx, ctx->cert, 0);
+    done = matched != 0 || (!DANETLS_HAS_TA(dane) && dane->mdpth < 0);
+
+    if (done)
+        X509_get_pubkey_parameters(NULL, ctx->chain);
+
+    if (matched > 0) {
+        ctx->error_depth = 0;
+        ctx->current_cert = cert;
+        return cb(1, ctx);
+    }
+
+    if (matched < 0) {
+        ctx->error_depth = 0;
+        ctx->current_cert = cert;
+        ctx->error = X509_V_ERR_OUT_OF_MEM;
+        return -1;
+    }
+
+    if (done) {
+        /* Fail early, TA-based success is not possible */
+        ctx->current_cert = cert;
+        ctx->error_depth = 0;
+        ctx->error = X509_V_ERR_CERT_UNTRUSTED;
+        return cb(0, ctx);
+    }
+
+    /*
+     * Chain verification for usages 0/1/2.  TLSA record matching of depth > 0
+     * certificates happens in-line with building the rest of the chain.
+     */
+    return verify_chain(ctx);
+}
+
 static int build_chain(X509_STORE_CTX *ctx)
 {
+    struct dane_st *dane = (struct dane_st *)ctx->dane;
     int (*cb) (int, X509_STORE_CTX *) = ctx->verify_cb;
     int num = sk_X509_num(ctx->chain);
     X509 *cert = sk_X509_value(ctx->chain, num - 1);
     int ss = cert_self_signed(cert);
     STACK_OF(X509) *sktmp = NULL;
     unsigned int search;
-    int may_trusted = 1;
+    int may_trusted = 0;
     int may_alternate = 0;
     int trust = X509_TRUST_UNTRUSTED;
     int alt_untrusted = 0;
@@ -2294,14 +2629,19 @@ static int build_chain(X509_STORE_CTX *ctx)
 #define S_DOALTERNATE      (1 << 2)     /* Retry with pruned alternate chain */
     /*
      * Set up search policy, untrusted if possible, trusted-first if enabled.
-     * If not trusted-first, and alternate chains are not disabled, try
-     * building an alternate chain if no luck with untrusted first.
+     * If we're doing DANE and not doing PKIX-TA/PKIX-EE, we never look in the
+     * trust_store, otherwise we might look there first.  If not trusted-first,
+     * and alternate chains are not disabled, try building an alternate chain
+     * if no luck with untrusted first.
      */
     search = (ctx->untrusted != NULL) ? S_DOUNTRUSTED : 0;
-    if (search == 0 || ctx->param->flags & X509_V_FLAG_TRUSTED_FIRST)
-        search |= S_DOTRUSTED;
-    else if (!(ctx->param->flags & X509_V_FLAG_NO_ALT_CHAINS))
-        may_alternate = 1;
+    if (DANETLS_HAS_PKIX(dane) || !DANETLS_HAS_DANE(dane)) {
+        if (search == 0 || ctx->param->flags & X509_V_FLAG_TRUSTED_FIRST)
+            search |= S_DOTRUSTED;
+        else if (!(ctx->param->flags & X509_V_FLAG_NO_ALT_CHAINS))
+            may_alternate = 1;
+        may_trusted = 1;
+    }
 
     /*
      * Shallow-copy the stack of untrusted certificates (with TLS, this is
@@ -2311,6 +2651,17 @@ static int build_chain(X509_STORE_CTX *ctx)
     if (ctx->untrusted && (sktmp = sk_X509_dup(ctx->untrusted)) == NULL) {
         X509err(X509_F_BUILD_CHAIN, ERR_R_MALLOC_FAILURE);
         return 0;
+    }
+
+    /* Include any untrusted full certificates from DNS */
+    if (DANETLS_ENABLED(dane) && dane->certs != NULL) {
+        for (i = 0; i < sk_X509_num(dane->certs); ++i) {
+            if (!sk_X509_push(sktmp, sk_X509_value(dane->certs, i))) {
+                sk_X509_free(sktmp);
+                X509err(X509_F_BUILD_CHAIN, ERR_R_MALLOC_FAILURE);
+                return 0;
+            }
+        }
     }
 
     /*
@@ -2381,6 +2732,10 @@ static int build_chain(X509_STORE_CTX *ctx)
                  * case we may prune some more untrusted certificates and try
                  * again.  Thus the S_DOALTERNATE bit may yet be turned on
                  * again with an even shorter untrusted chain!
+                 *
+                 * If in the process we threw away our matching PKIX-TA trust
+                 * anchor, reset DANE trust.  We might find a suitable trusted
+                 * certificate among the ones from the trust store.
                  */
                 if ((search & S_DOALTERNATE) != 0) {
                     OPENSSL_assert(num > i && i > 0 && ss == 0);
@@ -2388,6 +2743,16 @@ static int build_chain(X509_STORE_CTX *ctx)
                     for (; num > i; --num)
                         X509_free(sk_X509_pop(ctx->chain));
                     ctx->num_untrusted = num;
+
+                    if (DANETLS_ENABLED(dane) &&
+                        dane->mdpth >= ctx->num_untrusted) {
+                        dane->mdpth = -1;
+                        X509_free(dane->mcert);
+                        dane->mcert = NULL;
+                    }
+                    if (DANETLS_ENABLED(dane) &&
+                        dane->pdpth >= ctx->num_untrusted)
+                        dane->pdpth = -1;
                 }
 
                 /*
@@ -2426,6 +2791,13 @@ static int build_chain(X509_STORE_CTX *ctx)
                  * trust.  If not done, and not self-signed look deeper.
                  * Whether or not we're doing "trusted first", we no longer
                  * look for untrusted certificates from the peer's chain.
+                 *
+                 * At this point ctx->num_trusted and num must reflect the
+                 * correct number of untrusted certificates, since the DANE
+                 * logic in check_trust() depends on distinguishing CAs from
+                 * "the wire" from CAs from the trust store.  In particular, the
+                 * certificate at depth "num" should be the new trusted
+                 * certificate with ctx->num_untrusted <= num.
                  */
                 if (ok) {
                     OPENSSL_assert(ctx->num_untrusted <= num);
@@ -2497,14 +2869,27 @@ static int build_chain(X509_STORE_CTX *ctx)
              * certificates over and over.
              */
             (void) sk_X509_delete_ptr(sktmp, x);
+
+            /*
+             * Check for DANE-TA trust of the topmost untrusted certificate.
+             */
+            switch (trust = check_dane_issuer(ctx, ctx->num_untrusted - 1)) {
+            case X509_TRUST_TRUSTED:
+            case X509_TRUST_REJECTED:
+                search = 0;
+                continue;
+            }
         }
     }
     sk_X509_free(sktmp);
 
     /*
-     * Last chance to make a trusted chain, check for direct leaf PKIX trust.
+     * Last chance to make a trusted chain, either bare DANE-TA public-key
+     * signers, or else direct leaf PKIX trust.
      */
     if (sk_X509_num(ctx->chain) <= depth) {
+        if (trust == X509_TRUST_UNTRUSTED && DANETLS_HAS_DANE_TA(dane))
+            trust = check_dane_pkeys(ctx);
         if (trust == X509_TRUST_UNTRUSTED &&
             sk_X509_num(ctx->chain) == ctx->num_untrusted)
             trust = check_trust(ctx, 1);
@@ -2522,6 +2907,9 @@ static int build_chain(X509_STORE_CTX *ctx)
         ctx->error_depth = num-1;
         if (num > depth)
             ctx->error = X509_V_ERR_CERT_CHAIN_TOO_LONG;
+        else if (DANETLS_ENABLED(dane) &&
+                 (!DANETLS_HAS_PKIX(dane) || dane->pdpth >= 0))
+            ctx->error = X509_V_ERR_CERT_UNTRUSTED;
         else if (ss && sk_X509_num(ctx->chain) == 1)
             ctx->error = X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT;
         else if (ss)
@@ -2530,6 +2918,8 @@ static int build_chain(X509_STORE_CTX *ctx)
             ctx->error = X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY;
         else
             ctx->error = X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT;
+        if (DANETLS_ENABLED(dane))
+            dane_reset(dane);
         return cb(0, ctx);
     }
 }

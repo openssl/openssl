@@ -264,6 +264,8 @@ struct x509_store_ctx_st {      /* X509_STORE_CTX */
     X509_STORE_CTX *parent;
     CRYPTO_EX_DATA ex_data;
     struct dane_st *dane;
+    /* signed via bare TA public key, rather than CA certificate */
+    int bare_ta_signed;
 } /* X509_STORE_CTX */ ;
 
 void X509_STORE_CTX_set_depth(X509_STORE_CTX *ctx, int depth);
