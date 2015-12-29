@@ -2,7 +2,9 @@
 
 =head1 NAME
 
-SSL_CTX_set_min_proto_version, SSL_CTX_set_max_proto_version, SSL_set_min_proto_version, SSL_set_max_proto_version - Set minimum and maximum supported protocol version
+SSL_CTX_set_min_proto_version, SSL_CTX_set_max_proto_version,
+SSL_set_min_proto_version, SSL_set_max_proto_version - Set minimum
+and maximum supported protocol version
 
 =head1 SYNOPSIS
 
@@ -15,17 +17,23 @@ SSL_CTX_set_min_proto_version, SSL_CTX_set_max_proto_version, SSL_set_min_proto_
 
 =head1 DESCRIPTION
 
-The functions set the minimum and maximum supported portocol versions for the B<ctx> or B<ssl>.
-This works in combination with the options set via SSL_CTX_set_options() that allows to disable specific protocol versions.
-You should use these functions instead of disabling a specific protocol version.
+The functions set the minimum and maximum supported portocol versions
+for the B<ctx> or B<ssl>.
+This works in combination with the options set via SSL_CTX_set_options()
+that also make it possible to disable specific protocol versions.
+Use these functions instead of disabling specific protocol versions.
 
-When setting the minimum or maximum version to 0 it will use the lowest or highest supported version, respectively, by the library.
+Setting the minimum or maximum version to 0, will enable protocol
+versions down to the lowest version, or up to the highest version
+supported by the library, respectively.
 
-Currently supported versions are B<SSL3_VERSION>, B<TLS1_VERSION>, B<TLS1_1_VERSION>, B<TLS1_2_VERSION>, B<DTLS1_VERSION> and B<DTLS1_2_VERSION>.
+Currently supported versions are B<SSL3_VERSION>, B<TLS1_VERSION>,
+B<TLS1_1_VERSION>, B<TLS1_2_VERSION> for TLS and B<DTLS1_VERSION>,
+B<DTLS1_2_VERSION> for DTLS.
 
 =head1 RETURN VALUES
 
-The function returns 1 on success and 0 on failure.
+Both functions return 1 on success and 0 on failure.
 
 =head1 NOTES
 

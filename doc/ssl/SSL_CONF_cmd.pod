@@ -112,13 +112,19 @@ operations are permitted.
 =item B<-min_protocol>, B<-max_protocol>
 
 Sets the minimum and maximum supported protocol.
-Currently supported protocol values are B<SSLv3>, B<TLSv1>, B<TLSv1.1>, B<TLSv1.2>, B<DTLSv1> and B<DTLSv1.2>.
+Currently supported protocol values are B<SSLv3>, B<TLSv1>,
+B<TLSv1.1>, B<TLSv1.2> for TLS and B<DTLSv1>, B<DTLSv1.2> for DTLS.
+If the either bound is not specified then only the other bound applies,
+if specified.
+To restrict the supported protocol versions use these commands rather
+than the deprecated alternative commands below.
 
 =item B<-no_ssl3>, B<-no_tls1>, B<-no_tls1_1>, B<-no_tls1_2>
 
 Disables protocol support for SSLv3, TLS 1.0, TLS 1.1 or TLS 1.2
-by setting the corresponding options B<SSL_OP_NO_SSL3>,
-B<SSL_OP_NO_TLS1>, B<SSL_OP_NO_TLS1_1> and B<SSL_OP_NO_TLS1_2> respectively.
+by setting the corresponding options B<SSL_OP_NO_SSL3>, B<SSL_OP_NO_TLS1>,
+B<SSL_OP_NO_TLS1_1> and B<SSL_OP_NO_TLS1_2> respectively.
+These options are deprecated, instead use B<-min_protocol> and B<-max_protocol>.
 
 =item B<-bugs>
 
@@ -267,33 +273,44 @@ can be either the B<NIST> name (e.g. B<P-256>) or an OpenSSL OID name
 
 This sets the minimum supported SSL, TLS or DTLS version.
 
-Currently supported protocol values are B<SSLv3>, B<TLSv1>, B<TLSv1.1>, B<TLSv1.2>, B<DTLSv1> and B<DTLSv1.2>.
+Currently supported protocol values are B<SSLv3>, B<TLSv1>, B<TLSv1.1>,
+B<TLSv1.2>, B<DTLSv1> and B<DTLSv1.2>.
 
 =item B<MaxProtocol>
 
 This sets the maximum supported SSL, TLS or DTLS version.
 
-Currently supported protocol values are B<SSLv3>, B<TLSv1>, B<TLSv1.1>, B<TLSv1.2>, B<DTLSv1> and B<DTLSv1.2>.
+Currently supported protocol values are B<SSLv3>, B<TLSv1>, B<TLSv1.1>,
+B<TLSv1.2>, B<DTLSv1> and B<DTLSv1.2>.
 
 =item B<Protocol>
 
-This can be used to enable or disable certain versions of the SSL, TLS or DTLS protocol.
+This can be used to enable or disable certain versions of the SSL,
+TLS or DTLS protocol.
 
-The B<value> argument is a comma separated list of supported protocols to enable or disable.
+The B<value> argument is a comma separated list of supported protocols
+to enable or disable.
 If a protocol is preceded by B<-> that version is disabled.
 
 All protocol versions are enabled by default.
-You need to disable at least 1 protocol version for this setting have any effect.
-Only enabling some protocol versions does not disable the other protocol versions.
+You need to disable at least one protocol version for this setting have any
+effect.
+Only enabling some protocol versions does not disable the other protocol
+versions.
 
-Currently supported protocol values are B<SSLv3>, B<TLSv1>, B<TLSv1.1>, B<TLSv1.2>, B<DTLSv1> and B<DTLSv1.2>.
+Currently supported protocol values are B<SSLv3>, B<TLSv1>, B<TLSv1.1>,
+B<TLSv1.2>, B<DTLSv1> and B<DTLSv1.2>.
 The special value B<ALL> refers to all supported versions.
 
-This can't enable protocols that are disabled using B<MinProtocol> or B<MaxProtocol>, but can disable protocols that are still allowed by them.
+This can't enable protocols that are disabled using B<MinProtocol>
+or B<MaxProtocol>, but can disable protocols that are still allowed
+by them.
 
 The B<Protocol> command is fragile and deprecated; do not use it.
 Use B<MinProtocol> and B<MaxProtocol> instead.
-If you do use B<Protocol>, make sure that the resulting range of enabled protocols has no "holes", e.g. if TLS 1.0 and TLS 1.2 are both enabled, make sure to also leave TLS 1.1 enabled.
+If you do use B<Protocol>, make sure that the resulting range of enabled
+protocols has no "holes", e.g. if TLS 1.0 and TLS 1.2 are both enabled, make
+sure to also leave TLS 1.1 enabled.
 
 =item B<Options>
 
@@ -453,8 +470,11 @@ The following also disables SSLv3:
 
  SSL_CONF_cmd(ctx, "Protocol", "-SSLv3");
 
-The following will first enable all protocols, and then disable SSLv3.
-If nothing was disabled before it has the same effect as "-SSLv3", but if things were disables it will first enable them again before disabling SSLv3.
+The following will first enable all protocols, and then disable
+SSLv3.
+If no protocol versions were disabled before this has the same effect as
+"-SSLv3", but if some versions were disables this will re-enable them before
+disabling SSLv3.
 
  SSL_CONF_cmd(ctx, "Protocol", "ALL,-SSLv3");
 
@@ -510,8 +530,8 @@ L<SSL_CONF_cmd_argv(3)>
 
 SSL_CONF_cmd() was first added to OpenSSL 1.0.2
 
-B<SSL_OP_NO_SSL2> doesn't have effect anymore since 1.1.0 but the define is kept
-for backward compatibility.
+B<SSL_OP_NO_SSL2> doesn't have effect since 1.1.0, but the macro is retained
+for backwards compatibility.
 
 B<SSL_CONF_TYPE_NONE> was first added to OpenSSL 1.1.0. In earlier versions of
 OpenSSL passing a command which didn't take an argument would return
