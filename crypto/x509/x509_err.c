@@ -74,6 +74,7 @@ static ERR_STRING_DATA X509_str_functs[] = {
     {ERR_FUNC(X509_F_BUILD_CHAIN), "build_chain"},
     {ERR_FUNC(X509_F_BY_FILE_CTRL), "by_file_ctrl"},
     {ERR_FUNC(X509_F_CHECK_POLICY), "check_policy"},
+    {ERR_FUNC(X509_F_DANE_I2D), "dane_i2d"},
     {ERR_FUNC(X509_F_DIR_CTRL), "dir_ctrl"},
     {ERR_FUNC(X509_F_GET_CERT_BY_SUBJECT), "get_cert_by_subject"},
     {ERR_FUNC(X509_F_NETSCAPE_SPKI_B64_DECODE), "NETSCAPE_SPKI_b64_decode"},
@@ -134,6 +135,7 @@ static ERR_STRING_DATA X509_str_functs[] = {
 
 static ERR_STRING_DATA X509_str_reasons[] = {
     {ERR_REASON(X509_R_AKID_MISMATCH), "akid mismatch"},
+    {ERR_REASON(X509_R_BAD_SELECTOR), "bad selector"},
     {ERR_REASON(X509_R_BAD_X509_FILETYPE), "bad x509 filetype"},
     {ERR_REASON(X509_R_BASE64_DECODE_ERROR), "base64 decode error"},
     {ERR_REASON(X509_R_CANT_CHECK_DH_KEY), "cant check dh key"},

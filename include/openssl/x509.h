@@ -1073,6 +1073,7 @@ void ERR_load_X509_strings(void);
 # define X509_F_BUILD_CHAIN                               106
 # define X509_F_BY_FILE_CTRL                              101
 # define X509_F_CHECK_POLICY                              145
+# define X509_F_DANE_I2D                                  107
 # define X509_F_DIR_CTRL                                  102
 # define X509_F_GET_CERT_BY_SUBJECT                       103
 # define X509_F_NETSCAPE_SPKI_B64_DECODE                  129
@@ -1119,6 +1120,7 @@ void ERR_load_X509_strings(void);
 
 /* Reason codes. */
 # define X509_R_AKID_MISMATCH                             110
+# define X509_R_BAD_SELECTOR                              133
 # define X509_R_BAD_X509_FILETYPE                         100
 # define X509_R_BASE64_DECODE_ERROR                       118
 # define X509_R_CANT_CHECK_DH_KEY                         114
