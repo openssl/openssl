@@ -70,6 +70,7 @@
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 #include <openssl/objects.h>
+#include <internal/dane.h>
 #include <internal/x509_int.h>
 #include "x509_lcl.h"
 
@@ -2072,6 +2073,7 @@ int X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store, X509 *x509,
     ctx->current_reasons = 0;
     ctx->tree = NULL;
     ctx->parent = NULL;
+    ctx->dane = NULL;
     /* Zero ex_data to make sure we're cleanup-safe */
     memset(&ctx->ex_data, 0, sizeof(ctx->ex_data));
 
@@ -2261,6 +2263,11 @@ void X509_STORE_CTX_set0_param(X509_STORE_CTX *ctx, X509_VERIFY_PARAM *param)
 {
     X509_VERIFY_PARAM_free(ctx->param);
     ctx->param = param;
+}
+
+void X509_STORE_CTX_set0_dane(X509_STORE_CTX *ctx, struct dane_st *dane)
+{
+    ctx->dane = dane;
 }
 
 static int build_chain(X509_STORE_CTX *ctx)

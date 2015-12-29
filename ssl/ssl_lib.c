@@ -197,6 +197,333 @@ struct ssl_async_args {
     } f;
 };
 
+static const struct {
+    uint8_t mtype;
+    uint8_t ord;
+    int     nid;
+} dane_mds[] = {
+    { DANETLS_MATCHING_FULL, 0, NID_undef },
+    { DANETLS_MATCHING_2256, 1, NID_sha256 },
+    { DANETLS_MATCHING_2512, 2, NID_sha512 },
+};
+
+static int dane_ctx_enable(struct dane_ctx_st *dctx)
+{
+    const EVP_MD **mdevp;
+    uint8_t *mdord;
+    uint8_t mdmax = DANETLS_MATCHING_LAST;
+    int n = ((int) mdmax) + 1;          /* int to handle PrivMatch(255) */
+    size_t i;
+
+    mdevp = OPENSSL_zalloc(n * sizeof(*mdevp));
+    mdord = OPENSSL_zalloc(n * sizeof(*mdord));
+
+    if (mdord == NULL || mdevp == NULL) {
+        OPENSSL_free(mdevp);
+        SSLerr(SSL_F_DANE_CTX_ENABLE, ERR_R_MALLOC_FAILURE);
+        return 0;
+    }
+
+    /* Install default entries */
+    for (i = 0; i < OSSL_NELEM(dane_mds); ++i) {
+        const EVP_MD *md;
+
+        if (dane_mds[i].nid == NID_undef ||
+            (md = EVP_get_digestbynid(dane_mds[i].nid)) == NULL)
+            continue;
+        mdevp[dane_mds[i].mtype] = md;
+        mdord[dane_mds[i].mtype] = dane_mds[i].ord;
+    }
+
+    dctx->mdevp = mdevp;
+    dctx->mdord = mdord;
+    dctx->mdmax = mdmax;
+
+    return 1;
+}
+
+static void dane_ctx_final(struct dane_ctx_st *dctx)
+{
+    OPENSSL_free(dctx->mdevp);
+    dctx->mdevp = NULL;
+
+    OPENSSL_free(dctx->mdord);
+    dctx->mdord = NULL;
+    dctx->mdmax = 0;
+}
+
+static void tlsa_free(danetls_record *t)
+{
+    if (t == NULL)
+        return;
+    OPENSSL_free(t->data);
+    EVP_PKEY_free(t->spki);
+    OPENSSL_free(t);
+}
+
+static void dane_final(struct dane_st *dane)
+{
+    sk_danetls_record_pop_free(dane->trecs, tlsa_free);
+    dane->trecs = NULL;
+
+    sk_X509_pop_free(dane->certs, X509_free);
+    dane->certs = NULL;
+
+    X509_free(dane->mcert);
+    dane->mcert = NULL;
+    dane->mtlsa = NULL;
+    dane->mdpth = -1;
+    dane->pdpth = -1;
+}
+
+/*
+ * dane_copy - Copy dane configuration, sans verification state.
+ */
+static int ssl_dane_dup(SSL *to, SSL *from)
+{
+    int num;
+    int i;
+
+    if (!DANETLS_ENABLED(&from->dane))
+        return 1;
+
+    dane_final(&to->dane);
+
+    num  = sk_danetls_record_num(from->dane.trecs);
+    for (i = 0; i < num; ++i) {
+        danetls_record *t = sk_danetls_record_value(from->dane.trecs, i);
+        if (SSL_dane_tlsa_add(to, t->usage, t->selector, t->mtype,
+                              t->data, t->dlen) <= 0)
+            return 0;
+    }
+    return 1;
+}
+
+static int dane_mtype_set(
+    struct dane_ctx_st *dctx,
+    const EVP_MD *md,
+    uint8_t mtype,
+    uint8_t ord)
+{
+    int i;
+
+    if (mtype == DANETLS_MATCHING_FULL && md != NULL) {
+        SSLerr(SSL_F_DANE_MTYPE_SET,
+                SSL_R_DANE_CANNOT_OVERRIDE_MTYPE_FULL);
+        return 0;
+    }
+
+    if (mtype > dctx->mdmax) {
+        const EVP_MD **mdevp;
+        uint8_t *mdord;
+        int n = ((int) mtype) + 1;
+
+        mdevp = OPENSSL_realloc(dctx->mdevp, n * sizeof(*mdevp));
+        if (mdevp == NULL) {
+            SSLerr(SSL_F_DANE_MTYPE_SET, ERR_R_MALLOC_FAILURE);
+            return -1;
+        }
+        dctx->mdevp = mdevp;
+
+        mdord = OPENSSL_realloc(dctx->mdord, n * sizeof(*mdord));
+        if (mdord == NULL) {
+            SSLerr(SSL_F_DANE_MTYPE_SET, ERR_R_MALLOC_FAILURE);
+            return -1;
+        }
+        dctx->mdord = mdord;
+
+        /* Zero-fill any gaps */
+        for (i = dctx->mdmax+1; i < mtype; ++i) {
+            mdevp[i] = NULL;
+            mdord[i] = 0;
+        }
+
+        dctx->mdmax = mtype;
+    }
+
+    dctx->mdevp[mtype] = md;
+    /* Coerce ordinal of disabled matching types to 0 */
+    dctx->mdord[mtype] = (md == NULL) ? 0 : ord;
+
+    return 1;
+}
+
+static const EVP_MD *tlsa_md_get(struct dane_st *dane, uint8_t mtype)
+{
+    if (mtype > dane->dctx->mdmax)
+        return NULL;
+    return dane->dctx->mdevp[mtype];
+}
+
+static int dane_tlsa_add(
+    struct dane_st *dane,
+    uint8_t usage,
+    uint8_t selector,
+    uint8_t mtype,
+    unsigned char *data,
+    size_t dlen)
+{
+    danetls_record *t;
+    const EVP_MD *md = NULL;
+    int ilen = (int)dlen;
+    int i;
+
+    if (dane->trecs == NULL) {
+        SSLerr(SSL_F_DANE_TLSA_ADD, SSL_R_DANE_NOT_ENABLED);
+        return -1;
+    }
+
+    if (ilen < 0 || dlen != (size_t)ilen) {
+        SSLerr(SSL_F_DANE_TLSA_ADD, SSL_R_DANE_TLSA_BAD_DATA_LENGTH);
+        return 0;
+    }
+
+    if (usage > DANETLS_USAGE_LAST) {
+        SSLerr(SSL_F_DANE_TLSA_ADD, SSL_R_DANE_TLSA_BAD_CERTIFICATE_USAGE);
+        return 0;
+    }
+
+    if (selector > DANETLS_SELECTOR_LAST) {
+        SSLerr(SSL_F_DANE_TLSA_ADD, SSL_R_DANE_TLSA_BAD_SELECTOR);
+        return 0;
+    }
+
+    if (mtype != DANETLS_MATCHING_FULL) {
+        md = tlsa_md_get(dane, mtype);
+        if (md == NULL) {
+            SSLerr(SSL_F_DANE_TLSA_ADD, SSL_R_DANE_TLSA_BAD_MATCHING_TYPE);
+            return 0;
+        }
+    }
+
+    if (md != NULL && dlen != (size_t)EVP_MD_size(md)) {
+        SSLerr(SSL_F_DANE_TLSA_ADD, SSL_R_DANE_TLSA_BAD_DIGEST_LENGTH);
+        return 0;
+    }
+    if (!data) {
+        SSLerr(SSL_F_DANE_TLSA_ADD, SSL_R_DANE_TLSA_NULL_DATA);
+        return 0;
+    }
+
+    if ((t = OPENSSL_zalloc(sizeof(*t))) == NULL) {
+        SSLerr(SSL_F_DANE_TLSA_ADD, ERR_R_MALLOC_FAILURE);
+        return -1;
+    }
+
+    t->usage = usage;
+    t->selector = selector;
+    t->mtype = mtype;
+    t->data = OPENSSL_malloc(ilen);
+    if (t->data == NULL) {
+        tlsa_free(t);
+        SSLerr(SSL_F_DANE_TLSA_ADD, ERR_R_MALLOC_FAILURE);
+        return -1;
+    }
+    memcpy(t->data, data, ilen);
+    t->dlen = ilen;
+
+    /* Validate and cache full certificate or public key */
+    if (mtype == DANETLS_MATCHING_FULL) {
+        const unsigned char *p = data;
+        X509 *cert = NULL;
+        EVP_PKEY *pkey = NULL;
+
+        switch (selector) {
+        case DANETLS_SELECTOR_CERT:
+            if (!d2i_X509(&cert, &p, dlen) || p < data ||
+                dlen != (size_t)(p - data)) {
+                tlsa_free(t);
+                SSLerr(SSL_F_DANE_TLSA_ADD, SSL_R_DANE_TLSA_BAD_CERTIFICATE);
+                return 0;
+            }
+            if (X509_get0_pubkey(cert) == NULL) {
+                tlsa_free(t);
+                SSLerr(SSL_F_DANE_TLSA_ADD, SSL_R_DANE_TLSA_BAD_CERTIFICATE);
+                return 0;
+            }
+
+            if ((DANETLS_USAGE_BIT(usage) & DANETLS_TA_MASK) == 0) {
+                X509_free(cert);
+                break;
+            }
+
+            /*
+             * For usage DANE-TA(2), we support authentication via "2 0 0" TLSA
+             * records that contain full certificates of trust-anchors that are
+             * not present in the wire chain.  For usage PKIX-TA(0), we augment
+             * the chain with untrusted Full(0) certificates from DNS, in case
+             * they are missing from the chain.
+             */
+            if ((dane->certs == NULL &&
+                 (dane->certs = sk_X509_new_null()) == NULL) ||
+                !sk_X509_push(dane->certs, cert)) {
+                SSLerr(SSL_F_DANE_TLSA_ADD, ERR_R_MALLOC_FAILURE);
+                X509_free(cert);
+                tlsa_free(t);
+                return -1;
+            }
+            break;
+
+        case DANETLS_SELECTOR_SPKI:
+            if (!d2i_PUBKEY(&pkey, &p, dlen) || p < data ||
+                dlen != (size_t)(p - data)) {
+                tlsa_free(t);
+                SSLerr(SSL_F_DANE_TLSA_ADD, SSL_R_DANE_TLSA_BAD_PUBLIC_KEY);
+                return 0;
+            }
+
+            /*
+             * For usage DANE-TA(2), we support authentication via "2 1 0" TLSA
+             * records that contain full bare keys of trust-anchors that are
+             * not present in the wire chain.
+             */
+            if (usage == DANETLS_USAGE_DANE_TA)
+                t->spki = pkey;
+            else
+                EVP_PKEY_free(pkey);
+            break;
+        }
+    }
+
+    /*-
+     * Find the right insertion point for the new record.
+     *
+     * See crypto/x509/x509_vfy.c.  We sort DANE-EE(3) records first, so that
+     * they can be processed first, as they require no chain building, and no
+     * expiration or hostname checks.  Because DANE-EE(3) is numerically
+     * largest, this is accomplished via descending sort by "usage".
+     *
+     * We also sort in descending order by matching ordinal to simplify
+     * the implementation of digest agility in the verification code.
+     *
+     * The choice of order for the selector is not significant, so we
+     * use the same descending order for consistency.
+     */
+    for (i = 0; i < sk_danetls_record_num(dane->trecs); ++i) {
+        danetls_record *rec = sk_danetls_record_value(dane->trecs, i);
+        if (rec->usage > usage)
+            continue;
+        if (rec->usage < usage)
+            break;
+        if (rec->selector > selector)
+            continue;
+        if (rec->selector < selector)
+            break;
+        if (dane->dctx->mdord[rec->mtype] > dane->dctx->mdord[mtype])
+            continue;
+        break;
+    }
+
+    if (!sk_danetls_record_insert(dane->trecs, t, i)) {
+        tlsa_free(t);
+        SSLerr(SSL_F_DANE_TLSA_ADD, ERR_R_MALLOC_FAILURE);
+        return -1;
+    }
+    dane->umask |= DANETLS_USAGE_BIT(usage);
+
+    return 1;
+}
+
 static void clear_ciphers(SSL *s)
 {
     /* clear the current cipher */
@@ -236,6 +563,16 @@ int SSL_clear(SSL *s)
     s->init_buf = NULL;
     clear_ciphers(s);
     s->first_packet = 0;
+
+    /* Reset DANE verification result state */
+    s->dane.mdpth = -1;
+    s->dane.pdpth = -1;
+    X509_free(s->dane.mcert);
+    s->dane.mcert = NULL;
+    s->dane.mtlsa = NULL;
+
+    /* Clear the verification result peername */
+    X509_VERIFY_PARAM_move_peername(s->param, NULL);
 
     /*
      * Check to see if we were changed into a different method, if so, revert
@@ -497,6 +834,121 @@ int SSL_set_trust(SSL *s, int trust)
     return X509_VERIFY_PARAM_set_trust(s->param, trust);
 }
 
+int SSL_set1_host(SSL *s, const char *hostname)
+{
+    return X509_VERIFY_PARAM_set1_host(s->param, hostname, 0);
+}
+
+int SSL_add1_host(SSL *s, const char *hostname)
+{
+    return X509_VERIFY_PARAM_add1_host(s->param, hostname, 0);
+}
+
+void SSL_set_hostflags(SSL *s, unsigned int flags)
+{
+    X509_VERIFY_PARAM_set_hostflags(s->param, flags);
+}
+
+const char *SSL_get0_peername(SSL *s)
+{
+    return X509_VERIFY_PARAM_get0_peername(s->param);
+}
+
+int SSL_CTX_dane_enable(SSL_CTX *ctx)
+{
+    return dane_ctx_enable(&ctx->dane);
+}
+
+int SSL_dane_enable(SSL *s, const char *basedomain)
+{
+    struct dane_st *dane = &s->dane;
+
+    if (s->ctx->dane.mdmax == 0) {
+        SSLerr(SSL_F_SSL_DANE_ENABLE, SSL_R_CONTEXT_NOT_DANE_ENABLED);
+        return 0;
+    }
+    if (dane->trecs != NULL) {
+        SSLerr(SSL_F_SSL_DANE_ENABLE, SSL_R_DANE_ALREADY_ENABLED);
+        return 0;
+    }
+
+    /* Primary RFC6125 reference identifier */
+    if (!X509_VERIFY_PARAM_set1_host(s->param, basedomain, 0)) {
+        SSLerr(SSL_F_SSL_DANE_ENABLE, SSL_R_ERROR_SETTING_TLSA_BASE_DOMAIN);
+        return -1;
+    }
+
+    /* Default SNI name */
+    if (s->tlsext_hostname == NULL) {
+	if (!SSL_set_tlsext_host_name(s, basedomain))
+	    return -1;
+    }
+
+    dane->mdpth = -1;
+    dane->pdpth = -1;
+    dane->dctx = &s->ctx->dane;
+    dane->trecs = sk_danetls_record_new_null();
+
+    if (dane->trecs == NULL) {
+        SSLerr(SSL_F_SSL_DANE_ENABLE, ERR_R_MALLOC_FAILURE);
+        return -1;
+    }
+    return 1;
+}
+
+int SSL_get0_dane_authority(SSL *s, X509 **mcert, EVP_PKEY **mspki)
+{
+    struct dane_st *dane = &s->dane;
+
+    if (!DANETLS_ENABLED(dane))
+        return -1;
+    if (dane->mtlsa) {
+        if (mcert)
+            *mcert = dane->mcert;
+        if (mspki)
+            *mspki = (dane->mcert == NULL) ? dane->mtlsa->spki : NULL;
+    }
+    return dane->mdpth;
+}
+
+int SSL_get0_dane_tlsa(SSL *s, uint8_t *usage, uint8_t *selector,
+                       uint8_t *mtype, unsigned const char **data, size_t *dlen)
+{
+    struct dane_st *dane = &s->dane;
+
+    if (!DANETLS_ENABLED(dane))
+        return -1;
+    if (dane->mtlsa) {
+        if (usage)
+            *usage = dane->mtlsa->usage;
+        if (selector)
+            *selector = dane->mtlsa->selector;
+        if (mtype)
+            *mtype = dane->mtlsa->mtype;
+        if (data)
+            *data = dane->mtlsa->data;
+        if (dlen)
+            *dlen = dane->mtlsa->dlen;
+    }
+    return dane->mdpth;
+}
+
+struct dane_st *SSL_get0_dane(SSL *s)
+{
+    return &s->dane;
+}
+
+int SSL_dane_tlsa_add(SSL *s, uint8_t usage, uint8_t selector,
+                      uint8_t mtype, unsigned char *data, size_t dlen)
+{
+    return dane_tlsa_add(&s->dane, usage, selector, mtype, data, dlen);
+}
+
+int SSL_CTX_dane_mtype_set(SSL_CTX *ctx, const EVP_MD *md, uint8_t mtype, uint8_t ord)
+{
+    return dane_mtype_set(&ctx->dane, md, mtype, ord);
+}
+
 int SSL_CTX_set1_param(SSL_CTX *ctx, X509_VERIFY_PARAM *vpm)
 {
     return X509_VERIFY_PARAM_set1(ctx->param, vpm);
@@ -543,6 +995,7 @@ void SSL_free(SSL *s)
 #endif
 
     X509_VERIFY_PARAM_free(s->param);
+    dane_final(&s->dane);
     CRYPTO_free_ex_data(CRYPTO_EX_INDEX_SSL, s, &s->ex_data);
 
     if (s->bbio != NULL) {
@@ -877,9 +1330,10 @@ int SSL_copy_session_id(SSL *t, const SSL *f)
      * what if we are setup for one protocol version but want to talk another
      */
     if (t->method != f->method) {
-        t->method->ssl_free(t); /* cleanup current */
-        t->method = f->method;  /* change method */
-        t->method->ssl_new(t);  /* setup new */
+        t->method->ssl_free(t);
+        t->method = f->method;
+        if (t->method->ssl_new(t) == 0)
+            return 0;
     }
 
     CRYPTO_add(&f->cert->references, 1, CRYPTO_LOCK_SSL_CERT);
@@ -1922,6 +2376,7 @@ void SSL_CTX_free(SSL_CTX *a)
 #endif
 
     X509_VERIFY_PARAM_free(a->param);
+    dane_ctx_final(&a->dane);
 
     /*
      * Free internal session cache. However: the remove_cb() may reference
@@ -2346,24 +2801,23 @@ const SSL_METHOD *SSL_get_ssl_method(SSL *s)
 
 int SSL_set_ssl_method(SSL *s, const SSL_METHOD *meth)
 {
-    int conn = -1;
     int ret = 1;
 
     if (s->method != meth) {
-        if (s->handshake_func != NULL)
-            conn = (s->handshake_func == s->method->ssl_connect);
+        const SSL_METHOD *sm = s->method;
+        int (*hf)(SSL *) = s->handshake_func;
 
-        if (s->method->version == meth->version)
+        if (sm->version == meth->version)
             s->method = meth;
         else {
-            s->method->ssl_free(s);
+            sm->ssl_free(s);
             s->method = meth;
             ret = s->method->ssl_new(s);
         }
 
-        if (conn == 1)
+        if (hf == sm->ssl_connect)
             s->handshake_func = meth->ssl_connect;
-        else if (conn == 0)
+        else if (hf == sm->ssl_accept)
             s->handshake_func = meth->ssl_accept;
     }
     return (ret);
@@ -2554,14 +3008,23 @@ SSL *SSL_dup(SSL *s)
     SSL *ret;
     int i;
 
+    /* If we're not quiescent, just up_ref! */
+    if (!SSL_in_init(s) || !SSL_in_before(s)) {
+        CRYPTO_add(&s->references, 1, CRYPTO_LOCK_SSL);
+        return s;
+    }
+
+    /*
+     * Otherwise, copy configuration state, and session if set.
+     */
     if ((ret = SSL_new(SSL_get_SSL_CTX(s))) == NULL)
         return (NULL);
 
-    ret->version = s->version;
-    ret->method = s->method;
-
     if (s->session != NULL) {
-        /* This copies session-id, SSL_METHOD, sid_ctx, and 'cert' */
+        /*
+         * Arranges to share the same session via up_ref.  This "copies"
+         * session-id, SSL_METHOD, sid_ctx, and 'cert'
+         */
         if (!SSL_copy_session_id(ret, s))
             goto err;
     } else {
@@ -2571,10 +3034,8 @@ SSL *SSL_dup(SSL *s)
          * point to the same object, and thus we can't use
          * SSL_copy_session_id.
          */
-
-        ret->method->ssl_free(ret);
-        ret->method = s->method;
-        ret->method->ssl_new(ret);
+        if (!SSL_set_ssl_method(ret, s->method))
+            goto err;
 
         if (s->cert != NULL) {
             ssl_cert_free(ret->cert);
@@ -2587,6 +3048,8 @@ SSL *SSL_dup(SSL *s)
             goto err;
     }
 
+    ssl_dane_dup(ret, s);
+    ret->version = s->version;
     ret->options = s->options;
     ret->mode = s->mode;
     SSL_set_max_cert_list(ret, SSL_get_max_cert_list(s));
@@ -2617,19 +3080,15 @@ SSL *SSL_dup(SSL *s)
         } else
             ret->wbio = ret->rbio;
     }
-    ret->rwstate = s->rwstate;
-    ret->handshake_func = s->handshake_func;
+
     ret->server = s->server;
-    ret->renegotiate = s->renegotiate;
-    ret->new_session = s->new_session;
-    ret->quiet_shutdown = s->quiet_shutdown;
+    if (s->handshake_func) {
+        if (s->server)
+            SSL_set_accept_state(ret);
+        else
+            SSL_set_connect_state(ret);
+    }
     ret->shutdown = s->shutdown;
-    ret->statem = s->statem;      /* SSL_dup does not really work at any state,
-                                   * though */
-    RECORD_LAYER_dup(&ret->rlayer, &s->rlayer);
-    ret->init_num = 0;          /* would have to copy ret->init_buf,
-                                 * ret->init_msg, ret->init_num,
-                                 * ret->init_off */
     ret->hit = s->hit;
 
     ret->default_passwd_callback = s->default_passwd_callback;
