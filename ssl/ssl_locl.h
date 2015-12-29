@@ -169,6 +169,7 @@
 #include "record/record.h"
 #include "statem/statem.h"
 #include "packet_locl.h"
+#include "internal/dane.h"
 
 # ifdef OPENSSL_BUILD_SHLIBSSL
 #  undef OPENSSL_EXTERN
@@ -925,6 +926,9 @@ struct ssl_ctx_st {
     unsigned char *alpn_client_proto_list;
     unsigned alpn_client_proto_list_len;
 
+    /* Shared DANE context */
+    struct dane_ctx_st dane;
+
     /* SRTP profiles we are willing to do from RFC 5764 */
     STACK_OF(SRTP_PROTECTION_PROFILE) *srtp_profiles;
     /*
@@ -1007,6 +1011,10 @@ struct ssl_st {
     void *msg_callback_arg;
     int hit;                    /* reusing a previous session */
     X509_VERIFY_PARAM *param;
+
+    /* Per connection DANE state */
+    struct dane_st dane;
+
     /* crypto */
     STACK_OF(SSL_CIPHER) *cipher_list;
     STACK_OF(SSL_CIPHER) *cipher_list_by_id;
