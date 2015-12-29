@@ -240,8 +240,8 @@ struct x509_store_ctx_st {      /* X509_STORE_CTX */
     /* The following is built up */
     /* if 0, rebuild chain */
     int valid;
-    /* index of last untrusted cert */
-    int last_untrusted;
+    /* number of untrusted certs */
+    int num_untrusted;
     /* chain of X509s - built up and trusted */
     STACK_OF(X509) *chain;
     /* Valid policy tree */
