@@ -1429,10 +1429,8 @@ __owur int SSL_use_certificate_chain_file(SSL *ssl, const char *file);
 __owur STACK_OF(X509_NAME) *SSL_load_client_CA_file(const char *file);
 __owur int SSL_add_file_cert_subjects_to_stack(STACK_OF(X509_NAME) *stackCAs,
                                         const char *file);
-# ifndef OPENSSL_SYS_VMS
 int SSL_add_dir_cert_subjects_to_stack(STACK_OF(X509_NAME) *stackCAs,
                                        const char *dir);
-# endif
 
 void SSL_load_error_strings(void);
 __owur const char *SSL_state_string(const SSL *s);
