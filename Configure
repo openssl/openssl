@@ -319,6 +319,7 @@ my @disable_cascades = (
     "ec"		=> [ "ecdsa", "ecdh", "gost" ],
     "dsa"		=> [ "gost" ],
     "dh"		=> [ "gost" ],
+    "psk"		=> [ "jpake" ],
 
     "dgram"		=> [ "dtls" ],
     "dtls"		=> [ @dtls ],
