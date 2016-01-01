@@ -3357,7 +3357,7 @@ int ssl3_new(SSL *s)
     if ((s3 = OPENSSL_zalloc(sizeof(*s3))) == NULL)
         goto err;
     s->s3 = s3;
-    
+
 #ifndef OPENSSL_NO_SRP
     if (!SSL_SRP_CTX_init(s))
           goto err;
@@ -4279,8 +4279,8 @@ int ssl3_get_req_cert_type(SSL *s, unsigned char *p)
 # ifndef OPENSSL_NO_DSA
         p[ret++] = SSL3_CT_DSS_EPHEMERAL_DH;
 # endif
-    }
 #endif                          /* !OPENSSL_NO_DH */
+    }
 #ifndef OPENSSL_NO_RSA
     if (!(alg_a & SSL_aRSA))
         p[ret++] = SSL3_CT_RSA_SIGN;
@@ -4631,6 +4631,7 @@ int ssl_derive(SSL *s, EVP_PKEY *privkey, EVP_PKEY *pubkey)
     return rv;
 }
 
+#ifndef OPENSSL_NO_DH
 EVP_PKEY *ssl_dh_to_pkey(DH *dh)
 {
     EVP_PKEY *ret;
@@ -4643,3 +4644,4 @@ EVP_PKEY *ssl_dh_to_pkey(DH *dh)
     }
     return ret;
 }
+#endif
