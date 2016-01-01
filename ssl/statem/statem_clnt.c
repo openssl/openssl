@@ -2378,8 +2378,6 @@ psk_err:
         if (s->version > SSL3_VERSION)
             p += 2;
         pctx = EVP_PKEY_CTX_new(pkey, NULL);
-        EVP_PKEY_free(pkey);
-        pkey = NULL;
         if (pctx == NULL || EVP_PKEY_encrypt_init(pctx) <= 0
             || EVP_PKEY_encrypt(pctx, NULL, &enclen, pms, pmslen) <= 0) {
             SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE,
