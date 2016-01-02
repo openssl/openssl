@@ -78,22 +78,22 @@
      exchange. The LOW ciphers currently doesn't have any ciphers in it.
      [Kurt Roeckx]
 
-  *) Make EVP_MD_CTX, EVP_MD and HMAC_CTX opaque.  For HMAC_CTX, the
-     following constructors and destructors were added:
+  *) Made EVP_MD_CTX, EVP_MD, EVP_CIPHER_CTX, EVP_CIPHER and HMAC_CTX
+     opaque.  For HMAC_CTX, the following constructors and destructors
+     were added:
 
         HMAC_CTX *HMAC_CTX_new(void);
         void HMAC_CTX_free(HMAC_CTX *ctx);
 
-     For EVP_MD, a complete API to create, fill and destroy such
-     methods has been added.  See EVP_MD_meth_new(3) for
-     documentation.
+     For EVP_MD and EVP_CIPHR, complete APIs to create, fill and
+     destroy such methods has been added.  See EVP_MD_meth_new(3) and
+     EVP_CIPHER_meth_new(3) for documentation.
 
      Additional changes:
-     1) HMAC_CTX_cleanup() and EVP_MD_CTX_cleanup() were removed,
-        HMAC_CTX_init() and EVP_MD_CTX_init() should be called instead
-        to reinitialise and already created structure.  Also,
-        HMAC_CTX_init() and EVP_MD_CTX_init() now return 0 for failure
-        and 1 for success (they previously had the return type void).
+     1) EVP_MD_CTX_cleanup(), EVP_CIPHER_CTX_cleanup() and
+        HMAC_CTX_cleanup() were removed.  HMAC_CTX_reset() and
+        EVP_MD_CTX_reset() should be called instead to reinitialise
+        an already created structure.
      2) For consistency with the majority of our object creators and
         destructors, EVP_MD_CTX_(create|destroy) were renamed to
         EVP_MD_CTX_(new|free).  The old names are retained as macros
