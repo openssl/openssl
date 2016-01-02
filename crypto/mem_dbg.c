@@ -145,9 +145,8 @@ typedef struct app_mem_info_st
  * For application-defined information (static C-string `info')
  * to be displayed in memory leak list.
  * Each thread has its own stack.  For applications, there is
- *   CRYPTO_push_info("...")     to push an entry,
- *   CRYPTO_pop_info()           to pop an entry,
- *   CRYPTO_remove_all_info()    to pop all entries.
+ *   OPENSSL_mem_debug_push("...")     to push an entry,
+ *   OPENSSL_mem_debug_pop()     to pop an entry,
  */
 {
     CRYPTO_THREADID threadid;
@@ -384,7 +383,7 @@ static APP_INFO *pop_info(void)
     return (ret);
 }
 
-int CRYPTO_push_info_(const char *info, const char *file, int line)
+int CRYPTO_mem_debug_push(const char *info, const char *file, int line)
 {
     APP_INFO *ami, *amim;
     int ret = 0;
@@ -420,7 +419,7 @@ int CRYPTO_push_info_(const char *info, const char *file, int line)
     return (ret);
 }
 
-int CRYPTO_pop_info(void)
+int CRYPTO_mem_debug_pop(void)
 {
     int ret = 0;
 
@@ -429,21 +428,6 @@ int CRYPTO_pop_info(void)
         MemCheck_off();         /* obtain MALLOC2 lock */
 
         ret = (pop_info() != NULL);
-
-        MemCheck_on();          /* release MALLOC2 lock */
-    }
-    return (ret);
-}
-
-int CRYPTO_remove_all_info(void)
-{
-    int ret = 0;
-
-    if (is_MemCheck_on()) {     /* _must_ be true */
-        MemCheck_off();         /* obtain MALLOC2 lock */
-
-        while (pop_info() != NULL)
-            ret++;
 
         MemCheck_on();          /* release MALLOC2 lock */
     }

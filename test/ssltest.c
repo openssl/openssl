@@ -1711,6 +1711,7 @@ int main(int argc, char *argv[])
 #ifndef OPENSSL_NO_ENGINE
     ENGINE_cleanup();
 #endif
+    CONF_modules_unload(1);
     CRYPTO_cleanup_all_ex_data();
     ERR_free_strings();
     ERR_remove_thread_state(NULL);

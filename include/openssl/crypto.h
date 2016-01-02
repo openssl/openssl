@@ -326,12 +326,11 @@ int CRYPTO_is_mem_check_on(void);
 # define OPENSSL_strndup(str, s) CRYPTO_strndup((str), (s), __FILE__, __LINE__)
 # define OPENSSL_realloc(addr,num) \
         CRYPTO_realloc((char *)addr, (int)num, __FILE__, __LINE__)
-# define OPENSSL_realloc_clean(addr,old_num,num) \
-        CRYPTO_realloc_clean(addr, old_num, num, __FILE__, __LINE__)
+# define OPENSSL_clear_realloc(addr, old_num, num) \
+        CRYPTO_clear_realloc(addr, old_num, num, __FILE__, __LINE__)
 # define OPENSSL_clear_free(addr, num) CRYPTO_clear_free(addr, num)
 # define OPENSSL_free(addr)      CRYPTO_free(addr)
 
-size_t OPENSSL_strlcpy(char *dst, const char *src, size_t siz);
 size_t OPENSSL_strlcpy(char *dst, const char *src, size_t siz);
 size_t OPENSSL_strlcat(char *dst, const char *src, size_t siz);
 size_t OPENSSL_strnlen(const char *str, size_t maxlen);
@@ -480,7 +479,7 @@ char *CRYPTO_strndup(const char *str, size_t s, const char *file, int line);
 void CRYPTO_free(void *ptr);
 void CRYPTO_clear_free(void *ptr, size_t num);
 void *CRYPTO_realloc(void *addr, size_t num, const char *file, int line);
-void *CRYPTO_realloc_clean(void *addr, size_t old_num, size_t num,
+void *CRYPTO_clear_realloc(void *addr, size_t old_num, size_t num,
                            const char *file, int line);
 
 # define OPENSSL_secure_malloc(num) \
@@ -507,11 +506,12 @@ void OPENSSL_cleanse(void *ptr, size_t len);
 void CRYPTO_set_mem_debug_options(long bits);
 long CRYPTO_get_mem_debug_options(void);
 
-# define CRYPTO_push_info(info) \
-        CRYPTO_push_info_(info, __FILE__, __LINE__);
-int CRYPTO_push_info_(const char *info, const char *file, int line);
-int CRYPTO_pop_info(void);
-int CRYPTO_remove_all_info(void);
+# define OPENSSL_mem_debug_push(info) \
+        CRYPTO_mem_debug_push(info, __FILE__, __LINE__)
+# define OPENSSL_mem_debug_pop() \
+        CRYPTO_mem_debug_pop()
+int CRYPTO_mem_debug_push(const char *info, const char *file, int line);
+int CRYPTO_mem_debug_pop(void);
 
 /*
  * Default debugging functions (enabled by CRYPTO_malloc_debug_init() macro;

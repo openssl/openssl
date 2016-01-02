@@ -1188,8 +1188,6 @@ typedef struct ssl3_state_st {
     /* flags for countermeasure against known-IV weakness */
     int need_empty_fragments;
     int empty_fragment_done;
-    /* The value of 'extra' when the buffers were initialized */
-    int init_extra;
     /* used during startup, digest all incoming/outgoing packets */
     BIO *handshake_buffer;
     /*
@@ -1229,11 +1227,8 @@ typedef struct ssl3_state_st {
         int message_type;
         /* used to hold the new cipher we are going to use */
         const SSL_CIPHER *new_cipher;
-#  ifndef OPENSSL_NO_DH
-        DH *dh;
-#  endif
-#  ifndef OPENSSL_NO_EC
-        EVP_PKEY *pkey;            /* holds short lived ECDH key */
+#  if !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH)
+        EVP_PKEY *pkey;            /* holds short lived DH/ECDH key */
 #  endif
         /* used for certificate requests */
         int cert_req;
@@ -1329,10 +1324,7 @@ typedef struct ssl3_state_st {
 #   endif                       /* !OPENSSL_NO_EC */
 
     /* For clients: peer temporary key */
-# ifndef OPENSSL_NO_DH
-    DH *peer_dh_tmp;
-# endif
-# ifndef OPENSSL_NO_EC
+# if !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH)
     EVP_PKEY *peer_tmp;
 # endif
 
@@ -1494,7 +1486,7 @@ typedef struct cert_st {
      */
     CERT_PKEY *key;
 # ifndef OPENSSL_NO_DH
-    DH *dh_tmp;
+    EVP_PKEY *dh_tmp;
     DH *(*dh_tmp_cb) (SSL *ssl, int is_export, int keysize);
     int dh_tmp_auto;
 # endif
@@ -1864,6 +1856,7 @@ __owur int ssl_generate_master_secret(SSL *s, unsigned char *pms, size_t pmslen,
                                       int free_pms);
 __owur EVP_PKEY *ssl_generate_pkey(EVP_PKEY *pm, int nid);
 __owur int ssl_derive(SSL *s, EVP_PKEY *privkey, EVP_PKEY *pubkey);
+__owur EVP_PKEY *ssl_dh_to_pkey(DH *dh);
 
 __owur const SSL_CIPHER *ssl3_get_cipher_by_char(const unsigned char *p);
 __owur int ssl3_put_cipher_by_char(const SSL_CIPHER *c, unsigned char *p);

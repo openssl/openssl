@@ -197,27 +197,8 @@ CERT *ssl_cert_dup(CERT *cert)
 
 #ifndef OPENSSL_NO_DH
     if (cert->dh_tmp != NULL) {
-        ret->dh_tmp = DHparams_dup(cert->dh_tmp);
-        if (ret->dh_tmp == NULL) {
-            SSLerr(SSL_F_SSL_CERT_DUP, ERR_R_DH_LIB);
-            goto err;
-        }
-        if (cert->dh_tmp->priv_key) {
-            BIGNUM *b = BN_dup(cert->dh_tmp->priv_key);
-            if (!b) {
-                SSLerr(SSL_F_SSL_CERT_DUP, ERR_R_BN_LIB);
-                goto err;
-            }
-            ret->dh_tmp->priv_key = b;
-        }
-        if (cert->dh_tmp->pub_key) {
-            BIGNUM *b = BN_dup(cert->dh_tmp->pub_key);
-            if (!b) {
-                SSLerr(SSL_F_SSL_CERT_DUP, ERR_R_BN_LIB);
-                goto err;
-            }
-            ret->dh_tmp->pub_key = b;
-        }
+        ret->dh_tmp = cert->dh_tmp;
+        EVP_PKEY_up_ref(ret->dh_tmp);
     }
     ret->dh_tmp_cb = cert->dh_tmp_cb;
     ret->dh_tmp_auto = cert->dh_tmp_auto;
@@ -370,7 +351,7 @@ void ssl_cert_free(CERT *c)
 #endif
 
 #ifndef OPENSSL_NO_DH
-    DH_free(c->dh_tmp);
+    EVP_PKEY_free(c->dh_tmp);
 #endif
 
     ssl_cert_clear_certs(c);

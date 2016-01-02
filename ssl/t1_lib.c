@@ -786,16 +786,13 @@ static int tls1_check_cert_param(SSL *s, X509 *x, int set_ee_md)
     unsigned char comp_id, curve_id[2];
     EVP_PKEY *pkey;
     int rv;
-    pkey = X509_get_pubkey(x);
+    pkey = X509_get0_pubkey(x);
     if (!pkey)
         return 0;
     /* If not EC nothing to do */
-    if (pkey->type != EVP_PKEY_EC) {
-        EVP_PKEY_free(pkey);
+    if (pkey->type != EVP_PKEY_EC)
         return 1;
-    }
     rv = tls1_set_ec_id(curve_id, &comp_id, pkey->pkey.ec);
-    EVP_PKEY_free(pkey);
     if (!rv)
         return 0;
     /*
@@ -2848,29 +2845,12 @@ int ssl_check_serverhello_tlsext(SSL *s)
                                                        initial_ctx->tlsext_servername_arg);
 
     /*
-     * If we've requested certificate status and we wont get one tell the
-     * callback
+     * Ensure we get sensible values passed to tlsext_status_cb in the event
+     * that we don't receive a status message
      */
-    if ((s->tlsext_status_type != -1) && !(s->tlsext_status_expected)
-        && s->ctx && s->ctx->tlsext_status_cb) {
-        int r;
-        /*
-         * Set resp to NULL, resplen to -1 so callback knows there is no
-         * response.
-         */
-        OPENSSL_free(s->tlsext_ocsp_resp);
-        s->tlsext_ocsp_resp = NULL;
-        s->tlsext_ocsp_resplen = -1;
-        r = s->ctx->tlsext_status_cb(s, s->ctx->tlsext_status_arg);
-        if (r == 0) {
-            al = SSL_AD_BAD_CERTIFICATE_STATUS_RESPONSE;
-            ret = SSL_TLSEXT_ERR_ALERT_FATAL;
-        }
-        if (r < 0) {
-            al = SSL_AD_INTERNAL_ERROR;
-            ret = SSL_TLSEXT_ERR_ALERT_FATAL;
-        }
-    }
+    OPENSSL_free(s->tlsext_ocsp_resp);
+    s->tlsext_ocsp_resp = NULL;
+    s->tlsext_ocsp_resplen = -1;
 
     switch (ret) {
     case SSL_TLSEXT_ERR_ALERT_FATAL:
@@ -4270,13 +4250,17 @@ DH *ssl_get_auto_dh(SSL *s)
 
 static int ssl_security_cert_key(SSL *s, SSL_CTX *ctx, X509 *x, int op)
 {
-    int secbits;
-    EVP_PKEY *pkey = X509_get_pubkey(x);
+    int secbits = -1;
+    EVP_PKEY *pkey = X509_get0_pubkey(x);
     if (pkey) {
+        /*
+         * If no parameters this will return -1 and fail using the default
+         * security callback for any non-zero security level. This will
+         * reject keys which omit parameters but this only affects DSA and
+         * omission of parameters is never (?) done in practice.
+         */
         secbits = EVP_PKEY_security_bits(pkey);
-        EVP_PKEY_free(pkey);
-    } else
-        secbits = -1;
+    }
     if (s)
         return ssl_security(s, op, secbits, 0, x);
     else

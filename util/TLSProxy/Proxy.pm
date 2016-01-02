@@ -173,7 +173,7 @@ sub clientstart
         LocalPort   => $self->proxy_port,
         Proto       => "tcp",
         Listen      => SOMAXCONN,
-        Reuse       => 1
+        ReuseAddr   => 1
     );
 
     if ($proxy_sock) {

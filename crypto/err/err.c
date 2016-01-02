@@ -276,9 +276,7 @@ static LHASH_OF(ERR_STRING_DATA) *get_hash(int create, int lockit)
     if (lockit)
         CRYPTO_w_lock(CRYPTO_LOCK_ERR);
     if (!int_error_hash && create) {
-        CRYPTO_push_info("get_hash (err.c)");
         int_error_hash = lh_ERR_STRING_DATA_new();
-        CRYPTO_pop_info();
     }
     if (int_error_hash != NULL)
         ret = int_error_hash;
@@ -323,9 +321,7 @@ static LHASH_OF(ERR_STATE) *int_thread_get(int create, int lockit)
     if (lockit)
         CRYPTO_w_lock(CRYPTO_LOCK_ERR);
     if (!int_thread_hash && create) {
-        CRYPTO_push_info("int_thread_get (err.c)");
         int_thread_hash = lh_ERR_STATE_new();
-        CRYPTO_pop_info();
     }
     if (int_thread_hash != NULL) {
         int_thread_hash_references++;
@@ -403,8 +399,10 @@ static void int_thread_del_item(const ERR_STATE *d)
         if (int_thread_hash_references == 1
             && int_thread_hash
             && lh_ERR_STATE_num_items(int_thread_hash) == 0) {
+            int_thread_hash_references = 0;
             lh_ERR_STATE_free(int_thread_hash);
             int_thread_hash = NULL;
+            hash = NULL;
         }
     }
     CRYPTO_w_unlock(CRYPTO_LOCK_ERR);

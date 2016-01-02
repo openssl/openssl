@@ -133,5 +133,6 @@ int SSL_library_init(void)
 #endif
     /* initialize cipher/digest methods table */
     ssl_load_ciphers();
+    SSL_add_ssl_module();
     return (1);
 }

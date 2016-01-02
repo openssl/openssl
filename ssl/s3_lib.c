@@ -3357,7 +3357,7 @@ int ssl3_new(SSL *s)
     if ((s3 = OPENSSL_zalloc(sizeof(*s3))) == NULL)
         goto err;
     s->s3 = s3;
-    
+
 #ifndef OPENSSL_NO_SRP
     if (!SSL_SRP_CTX_init(s))
           goto err;
@@ -3375,15 +3375,11 @@ void ssl3_free(SSL *s)
 
     ssl3_cleanup_key_block(s);
 
-#ifndef OPENSSL_NO_DH
-    DH_free(s->s3->tmp.dh);
-    DH_free(s->s3->peer_dh_tmp);
-#endif
-#ifndef OPENSSL_NO_EC
-    EVP_PKEY_free(s->s3->tmp.pkey);
-    s->s3->tmp.pkey = NULL;
+#if !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH)
     EVP_PKEY_free(s->s3->peer_tmp);
     s->s3->peer_tmp = NULL;
+    EVP_PKEY_free(s->s3->tmp.pkey);
+    s->s3->tmp.pkey = NULL;
 #endif
 
     sk_X509_NAME_pop_free(s->s3->tmp.ca_names, X509_NAME_free);
@@ -3402,8 +3398,6 @@ void ssl3_free(SSL *s)
 
 void ssl3_clear(SSL *s)
 {
-    int init_extra;
-
     ssl3_cleanup_key_block(s);
     sk_X509_NAME_pop_free(s->s3->tmp.ca_names, X509_NAME_free);
     OPENSSL_free(s->s3->tmp.ciphers_raw);
@@ -3413,21 +3407,16 @@ void ssl3_clear(SSL *s)
     OPENSSL_free(s->s3->tmp.peer_sigalgs);
     s->s3->tmp.peer_sigalgs = NULL;
 
-#ifndef OPENSSL_NO_DH
-    DH_free(s->s3->tmp.dh);
-    s->s3->tmp.dh = NULL;
-    DH_free(s->s3->peer_dh_tmp);
-    s->s3->peer_dh_tmp = NULL;
-#endif
 #ifndef OPENSSL_NO_EC
+    s->s3->is_probably_safari = 0;
+#endif
+#if !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH)
     EVP_PKEY_free(s->s3->tmp.pkey);
     s->s3->tmp.pkey = NULL;
     EVP_PKEY_free(s->s3->peer_tmp);
     s->s3->peer_tmp = NULL;
-    s->s3->is_probably_safari = 0;
 #endif                         /* !OPENSSL_NO_EC */
 
-    init_extra = s->s3->init_extra;
     ssl3_free_digest_list(s);
 
     if (s->s3->alpn_selected) {
@@ -3436,7 +3425,6 @@ void ssl3_clear(SSL *s)
     }
 
     memset(s->s3, 0, sizeof(*s->s3));
-    s->s3->init_extra = init_extra;
 
     ssl_free_wbio_buffer(s);
 
@@ -3490,28 +3478,24 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
     case SSL_CTRL_SET_TMP_DH:
         {
             DH *dh = (DH *)parg;
+            EVP_PKEY *pkdh = NULL;
             if (dh == NULL) {
                 SSLerr(SSL_F_SSL3_CTRL, ERR_R_PASSED_NULL_PARAMETER);
                 return (ret);
             }
+            pkdh = ssl_dh_to_pkey(dh);
+            if (pkdh == NULL) {
+                SSLerr(SSL_F_SSL3_CTRL, ERR_R_MALLOC_FAILURE);
+                return 0;
+            }
             if (!ssl_security(s, SSL_SECOP_TMP_DH,
-                              DH_security_bits(dh), 0, dh)) {
+                              EVP_PKEY_security_bits(pkdh), 0, pkdh)) {
                 SSLerr(SSL_F_SSL3_CTRL, SSL_R_DH_KEY_TOO_SMALL);
-                return (ret);
+                EVP_PKEY_free(pkdh);
+                return ret;
             }
-            if ((dh = DHparams_dup(dh)) == NULL) {
-                SSLerr(SSL_F_SSL3_CTRL, ERR_R_DH_LIB);
-                return (ret);
-            }
-            if (!(s->options & SSL_OP_SINGLE_DH_USE)) {
-                if (!DH_generate_key(dh)) {
-                    DH_free(dh);
-                    SSLerr(SSL_F_SSL3_CTRL, ERR_R_DH_LIB);
-                    return (ret);
-                }
-            }
-            DH_free(s->cert->dh_tmp);
-            s->cert->dh_tmp = dh;
+            EVP_PKEY_free(s->cert->dh_tmp);
+            s->cert->dh_tmp = pkdh;
             ret = 1;
         }
         break;
@@ -3770,34 +3754,17 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
             return 0;
 
     case SSL_CTRL_GET_SERVER_TMP_KEY:
-        if (s->server || !s->session)
+#if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_EC)
+        if (s->server || s->session == NULL || s->s3->peer_tmp == NULL) {
             return 0;
-        else {
-            EVP_PKEY *ptmp;
-            int rv = 0;
-#if !defined(OPENSSL_NO_DH) && !defined(OPENSSL_NO_EC)
-            if (s->s3->peer_dh_tmp == NULL && s->s3->peer_tmp == NULL)
-                return 0;
-#endif
-            ptmp = EVP_PKEY_new();
-            if (ptmp == NULL)
-                return 0;
-#ifndef OPENSSL_NO_DH
-            else if (s->s3->peer_dh_tmp != NULL)
-                rv = EVP_PKEY_set1_DH(ptmp, s->s3->peer_dh_tmp);
-#endif
-#ifndef OPENSSL_NO_EC
-            else if (s->s3->peer_tmp != NULL)
-                rv = EVP_PKEY_set1_EC_KEY(ptmp,
-                                          EVP_PKEY_get0_EC_KEY(s->s3->peer_tmp));
-#endif
-            if (rv) {
-                *(EVP_PKEY **)parg = ptmp;
-                return 1;
-            }
-            EVP_PKEY_free(ptmp);
-            return 0;
+        } else {
+            EVP_PKEY_up_ref(s->s3->peer_tmp);
+            *(EVP_PKEY **)parg = s->s3->peer_tmp;
+            return 1;
         }
+#else
+        return 0;
+#endif
 #ifndef OPENSSL_NO_EC
     case SSL_CTRL_GET_EC_POINT_FORMATS:
         {
@@ -3877,29 +3844,25 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 #ifndef OPENSSL_NO_DH
     case SSL_CTRL_SET_TMP_DH:
         {
-            DH *new = NULL, *dh;
-            CERT *cert;
-
-            cert = ctx->cert;
-            dh = (DH *)parg;
+            DH *dh = (DH *)parg;
+            EVP_PKEY *pkdh = NULL;
+            if (dh == NULL) {
+                SSLerr(SSL_F_SSL3_CTX_CTRL, ERR_R_PASSED_NULL_PARAMETER);
+                return 0;
+            }
+            pkdh = ssl_dh_to_pkey(dh);
+            if (pkdh == NULL) {
+                SSLerr(SSL_F_SSL3_CTX_CTRL, ERR_R_MALLOC_FAILURE);
+                return 0;
+            }
             if (!ssl_ctx_security(ctx, SSL_SECOP_TMP_DH,
-                                  DH_security_bits(dh), 0, dh)) {
+                                  EVP_PKEY_security_bits(pkdh), 0, pkdh)) {
                 SSLerr(SSL_F_SSL3_CTX_CTRL, SSL_R_DH_KEY_TOO_SMALL);
-                return 0;
+                EVP_PKEY_free(pkdh);
+                return 1;
             }
-            if ((new = DHparams_dup(dh)) == NULL) {
-                SSLerr(SSL_F_SSL3_CTX_CTRL, ERR_R_DH_LIB);
-                return 0;
-            }
-            if (!(ctx->options & SSL_OP_SINGLE_DH_USE)) {
-                if (!DH_generate_key(new)) {
-                    SSLerr(SSL_F_SSL3_CTX_CTRL, ERR_R_DH_LIB);
-                    DH_free(new);
-                    return 0;
-                }
-            }
-            DH_free(cert->dh_tmp);
-            cert->dh_tmp = new;
+            EVP_PKEY_free(ctx->cert->dh_tmp);
+            ctx->cert->dh_tmp = pkdh;
             return 1;
         }
         /*
@@ -4316,8 +4279,8 @@ int ssl3_get_req_cert_type(SSL *s, unsigned char *p)
 # ifndef OPENSSL_NO_DSA
         p[ret++] = SSL3_CT_DSS_EPHEMERAL_DH;
 # endif
-    }
 #endif                          /* !OPENSSL_NO_DH */
+    }
 #ifndef OPENSSL_NO_RSA
     if (!(alg_a & SSL_aRSA))
         p[ret++] = SSL3_CT_RSA_SIGN;
@@ -4667,3 +4630,18 @@ int ssl_derive(SSL *s, EVP_PKEY *privkey, EVP_PKEY *pubkey)
     EVP_PKEY_CTX_free(pctx);
     return rv;
 }
+
+#ifndef OPENSSL_NO_DH
+EVP_PKEY *ssl_dh_to_pkey(DH *dh)
+{
+    EVP_PKEY *ret;
+    if (dh == NULL)
+        return NULL;
+    ret = EVP_PKEY_new();
+    if (EVP_PKEY_set1_DH(ret, dh) <= 0) {
+        EVP_PKEY_free(ret);
+        return NULL;
+    }
+    return ret;
+}
+#endif

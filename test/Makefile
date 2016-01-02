@@ -623,7 +623,7 @@ p5_crpt2_test.o: ../include/openssl/pkcs7.h ../include/openssl/safestack.h
 p5_crpt2_test.o: ../include/openssl/sha.h ../include/openssl/stack.h
 p5_crpt2_test.o: ../include/openssl/symhacks.h ../include/openssl/x509.h
 p5_crpt2_test.o: ../include/openssl/x509_vfy.h p5_crpt2_test.c
-packettest.o: ../e_os.h ../include/openssl/bn.h ../include/openssl/buffer.h
+packettest.o: ../include/openssl/bn.h ../include/openssl/buffer.h
 packettest.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
 packettest.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
 packettest.o: ../include/openssl/ossl_typ.h ../include/openssl/safestack.h

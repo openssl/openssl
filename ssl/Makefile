@@ -24,7 +24,7 @@ LIBSRC=	\
 	statem/statem_dtls.c d1_srtp.c \
 	ssl_lib.c ssl_err2.c ssl_cert.c ssl_sess.c \
 	ssl_ciph.c ssl_stat.c ssl_rsa.c \
-	ssl_asn1.c ssl_txt.c ssl_algs.c ssl_conf.c \
+	ssl_asn1.c ssl_txt.c ssl_algs.c ssl_conf.c  ssl_mcnf.c \
 	bio_ssl.c ssl_err.c t1_reneg.c tls_srp.c t1_trce.c ssl_utst.c \
 	record/ssl3_buffer.c record/ssl3_record.c record/dtls1_bitmap.c \
 	statem/statem.c
@@ -36,7 +36,7 @@ LIBOBJ= \
 	statem/statem_dtls.o d1_srtp.o\
 	ssl_lib.o ssl_err2.o ssl_cert.o ssl_sess.o \
 	ssl_ciph.o ssl_stat.o ssl_rsa.o \
-	ssl_asn1.o ssl_txt.o ssl_algs.o ssl_conf.o \
+	ssl_asn1.o ssl_txt.o ssl_algs.o ssl_conf.o ssl_mcnf.o \
 	bio_ssl.o ssl_err.o t1_reneg.o tls_srp.o t1_trce.o ssl_utst.o \
 	record/ssl3_buffer.o record/ssl3_record.o record/dtls1_bitmap.o \
 	statem/statem.o
@@ -548,6 +548,26 @@ ssl_lib.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
 ssl_lib.o: ../include/openssl/tls1.h ../include/openssl/x509.h
 ssl_lib.o: ../include/openssl/x509_vfy.h ../include/openssl/x509v3.h
 ssl_lib.o: packet_locl.h record/record.h ssl_lib.c ssl_locl.h statem/statem.h
+ssl_mcnf.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/async.h
+ssl_mcnf.o: ../include/openssl/bio.h ../include/openssl/bn.h
+ssl_mcnf.o: ../include/openssl/buffer.h ../include/openssl/comp.h
+ssl_mcnf.o: ../include/openssl/conf.h ../include/openssl/crypto.h
+ssl_mcnf.o: ../include/openssl/dsa.h ../include/openssl/dtls1.h
+ssl_mcnf.o: ../include/openssl/e_os2.h ../include/openssl/ec.h
+ssl_mcnf.o: ../include/openssl/err.h ../include/openssl/evp.h
+ssl_mcnf.o: ../include/openssl/hmac.h ../include/openssl/lhash.h
+ssl_mcnf.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
+ssl_mcnf.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
+ssl_mcnf.o: ../include/openssl/ossl_typ.h ../include/openssl/pem.h
+ssl_mcnf.o: ../include/openssl/pem2.h ../include/openssl/pkcs7.h
+ssl_mcnf.o: ../include/openssl/pqueue.h ../include/openssl/rsa.h
+ssl_mcnf.o: ../include/openssl/safestack.h ../include/openssl/sha.h
+ssl_mcnf.o: ../include/openssl/srtp.h ../include/openssl/ssl.h
+ssl_mcnf.o: ../include/openssl/ssl2.h ../include/openssl/ssl3.h
+ssl_mcnf.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
+ssl_mcnf.o: ../include/openssl/tls1.h ../include/openssl/x509.h
+ssl_mcnf.o: ../include/openssl/x509_vfy.h packet_locl.h record/record.h
+ssl_mcnf.o: ssl_locl.h ssl_mcnf.c statem/statem.h
 ssl_rsa.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/async.h
 ssl_rsa.o: ../include/openssl/bio.h ../include/openssl/bn.h
 ssl_rsa.o: ../include/openssl/buffer.h ../include/openssl/comp.h

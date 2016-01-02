@@ -362,11 +362,11 @@ typedef int (*custom_ext_parse_cb) (SSL *s, unsigned int ext_type,
 /* Dead forever, see CVE-2010-4180. */
 # define SSL_OP_NETSCAPE_REUSE_CIPHER_CHANGE_BUG         0x0U
 # define SSL_OP_TLSEXT_PADDING                           0x00000010U
-# define SSL_OP_MICROSOFT_BIG_SSLV3_BUFFER               0x00000020U
+# define SSL_OP_MICROSOFT_BIG_SSLV3_BUFFER               0x0U
 # define SSL_OP_SAFARI_ECDHE_ECDSA_BUG                   0x00000040U
 /* Ancient SSLeay version, retained for compatibility */
 # define SSL_OP_SSLEAY_080_CLIENT_DH_BUG                 0x0
-# define SSL_OP_TLS_D5_BUG                               0x00000100U
+# define SSL_OP_TLS_D5_BUG                               0x0U
 /* Removed from OpenSSL 1.1.0 */
 # define SSL_OP_TLS_BLOCK_PADDING_BUG                    0x0U
 
@@ -411,8 +411,8 @@ typedef int (*custom_ext_parse_cb) (SSL *s, unsigned int ext_type,
 # define SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION        0x00040000U
 /* Does nothing: retained for compatibility */
 # define SSL_OP_SINGLE_ECDH_USE                          0x0
-/* If set, always create a new key when using tmp_dh parameters */
-# define SSL_OP_SINGLE_DH_USE                            0x00100000U
+/* Does nothing: retained for compatibility */
+# define SSL_OP_SINGLE_DH_USE                            0x0
 /* Does nothing: retained for compatibiity */
 # define SSL_OP_EPHEMERAL_RSA                            0x0
 /*
@@ -1429,10 +1429,8 @@ __owur int SSL_use_certificate_chain_file(SSL *ssl, const char *file);
 __owur STACK_OF(X509_NAME) *SSL_load_client_CA_file(const char *file);
 __owur int SSL_add_file_cert_subjects_to_stack(STACK_OF(X509_NAME) *stackCAs,
                                         const char *file);
-# ifndef OPENSSL_SYS_VMS
 int SSL_add_dir_cert_subjects_to_stack(STACK_OF(X509_NAME) *stackCAs,
                                        const char *dir);
-# endif
 
 void SSL_load_error_strings(void);
 __owur const char *SSL_state_string(const SSL *s);
@@ -1796,6 +1794,10 @@ __owur int SSL_CONF_cmd(SSL_CONF_CTX *cctx, const char *cmd, const char *value);
 __owur int SSL_CONF_cmd_argv(SSL_CONF_CTX *cctx, int *pargc, char ***pargv);
 __owur int SSL_CONF_cmd_value_type(SSL_CONF_CTX *cctx, const char *cmd);
 
+void SSL_add_ssl_module(void);
+int SSL_config(SSL *s, const char *name);
+int SSL_CTX_config(SSL_CTX *ctx, const char *name);
+
 # ifndef OPENSSL_NO_SSL_TRACE
 void SSL_trace(int write_p, int version, int content_type,
                const void *buf, size_t len, SSL *ssl, void *arg);
@@ -1832,7 +1834,7 @@ __owur const char *SSL_CIPHER_standard_name(const SSL_CIPHER *c);
 /* Sanity check of curve server selects */
 # define SSL_SECOP_CURVE_CHECK           (6 | SSL_SECOP_OTHER_CURVE)
 /* Temporary DH key */
-# define SSL_SECOP_TMP_DH                (7 | SSL_SECOP_OTHER_DH)
+# define SSL_SECOP_TMP_DH                (7 | SSL_SECOP_OTHER_PKEY)
 /* SSL/TLS version */
 # define SSL_SECOP_VERSION               (9 | SSL_SECOP_OTHER_NONE)
 /* Session tickets */
@@ -1956,6 +1958,7 @@ void ERR_load_SSL_strings(void);
 # define SSL_F_SSL3_DIGEST_CACHED_RECORDS                 293
 # define SSL_F_SSL3_DO_CHANGE_CIPHER_SPEC                 292
 # define SSL_F_SSL3_ENC                                   134
+# define SSL_F_SSL3_FINAL_FINISH_MAC                      285
 # define SSL_F_SSL3_GENERATE_KEY_BLOCK                    238
 # define SSL_F_SSL3_GENERATE_MASTER_SECRET                388
 # define SSL_F_SSL3_GET_CERTIFICATE_REQUEST               135
@@ -1974,7 +1977,6 @@ void ERR_load_SSL_strings(void);
 # define SSL_F_SSL3_GET_SERVER_CERTIFICATE                144
 # define SSL_F_SSL3_GET_SERVER_DONE                       145
 # define SSL_F_SSL3_GET_SERVER_HELLO                      146
-# define SSL_F_SSL3_FINAL_FINISH_MAC                      285
 # define SSL_F_SSL3_NEW_SESSION_TICKET                    287
 # define SSL_F_SSL3_OUTPUT_CERT_CHAIN                     147
 # define SSL_F_SSL3_PEEK                                  235
@@ -2045,6 +2047,7 @@ void ERR_load_SSL_strings(void);
 # define SSL_F_SSL_CTX_USE_RSAPRIVATEKEY_FILE             179
 # define SSL_F_SSL_CTX_USE_SERVERINFO                     336
 # define SSL_F_SSL_CTX_USE_SERVERINFO_FILE                337
+# define SSL_F_SSL_DO_CONFIG                              391
 # define SSL_F_SSL_DO_HANDSHAKE                           180
 # define SSL_F_SSL_GET_NEW_SESSION                        181
 # define SSL_F_SSL_GET_PREV_SESSION                       217
@@ -2054,6 +2057,7 @@ void ERR_load_SSL_strings(void);
 # define SSL_F_SSL_GET_SIGN_PKEY                          183
 # define SSL_F_SSL_INIT_WBIO_BUFFER                       184
 # define SSL_F_SSL_LOAD_CLIENT_CA_FILE                    185
+# define SSL_F_SSL_MODULE_INIT                            392
 # define SSL_F_SSL_NEW                                    186
 # define SSL_F_SSL_PARSE_CLIENTHELLO_RENEGOTIATE_EXT      300
 # define SSL_F_SSL_PARSE_CLIENTHELLO_TLSEXT               302
@@ -2170,7 +2174,6 @@ void ERR_load_SSL_strings(void);
 # define SSL_R_BAD_ECC_CERT                               304
 # define SSL_R_BAD_ECDSA_SIGNATURE                        305
 # define SSL_R_BAD_ECPOINT                                306
-# define SSL_R_BAD_GOST_SIGNATURE                         406
 # define SSL_R_BAD_HANDSHAKE_LENGTH                       332
 # define SSL_R_BAD_HELLO_REQUEST                          105
 # define SSL_R_BAD_LENGTH                                 271
@@ -2252,6 +2255,7 @@ void ERR_load_SSL_strings(void);
 # define SSL_R_INCONSISTENT_EXTMS                         104
 # define SSL_R_INVALID_COMMAND                            280
 # define SSL_R_INVALID_COMPRESSION_ALGORITHM              341
+# define SSL_R_INVALID_CONFIGURATION_NAME                 113
 # define SSL_R_INVALID_NULL_CMD_NAME                      385
 # define SSL_R_INVALID_PURPOSE                            278
 # define SSL_R_INVALID_SEQUENCE_NUMBER                    402
@@ -2356,10 +2360,14 @@ void ERR_load_SSL_strings(void);
 # define SSL_R_SSLV3_ALERT_NO_CERTIFICATE                 1041
 # define SSL_R_SSLV3_ALERT_UNEXPECTED_MESSAGE             1010
 # define SSL_R_SSLV3_ALERT_UNSUPPORTED_CERTIFICATE        1043
+# define SSL_R_SSL_COMMAND_SECTION_EMPTY                  117
+# define SSL_R_SSL_COMMAND_SECTION_NOT_FOUND              125
 # define SSL_R_SSL_CTX_HAS_NO_DEFAULT_SSL_VERSION         228
 # define SSL_R_SSL_HANDSHAKE_FAILURE                      229
 # define SSL_R_SSL_LIBRARY_HAS_NO_CIPHERS                 230
 # define SSL_R_SSL_NEGATIVE_LENGTH                        372
+# define SSL_R_SSL_SECTION_EMPTY                          126
+# define SSL_R_SSL_SECTION_NOT_FOUND                      136
 # define SSL_R_SSL_SESSION_ID_CALLBACK_FAILED             301
 # define SSL_R_SSL_SESSION_ID_CONFLICT                    302
 # define SSL_R_SSL_SESSION_ID_CONTEXT_TOO_LONG            273
@@ -2368,6 +2376,7 @@ void ERR_load_SSL_strings(void);
 # define SSL_R_TLSV1_ALERT_DECODE_ERROR                   1050
 # define SSL_R_TLSV1_ALERT_DECRYPTION_FAILED              1021
 # define SSL_R_TLSV1_ALERT_DECRYPT_ERROR                  1051
+# define SSL_R_TLSV1_ALERT_EXPORT_RESTRICTION             1060
 # define SSL_R_TLSV1_ALERT_INAPPROPRIATE_FALLBACK         1086
 # define SSL_R_TLSV1_ALERT_INSUFFICIENT_SECURITY          1071
 # define SSL_R_TLSV1_ALERT_INTERNAL_ERROR                 1080
@@ -2404,6 +2413,7 @@ void ERR_load_SSL_strings(void);
 # define SSL_R_UNKNOWN_CIPHER_RETURNED                    248
 # define SSL_R_UNKNOWN_CIPHER_TYPE                        249
 # define SSL_R_UNKNOWN_CMD_NAME                           386
+# define SSL_R_UNKNOWN_COMMAND                            139
 # define SSL_R_UNKNOWN_DIGEST                             368
 # define SSL_R_UNKNOWN_KEY_EXCHANGE_TYPE                  250
 # define SSL_R_UNKNOWN_PKEY_TYPE                          251

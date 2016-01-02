@@ -127,7 +127,7 @@ char *opt_progname(const char *argv0)
     q = strrchr(p, '.');
     strncpy(prog, p, sizeof prog - 1);
     prog[sizeof prog - 1] = '\0';
-    if (q == NULL || q - p >= sizeof prog)
+    if (q != NULL && q - p < sizeof prog)
         prog[q - p] = '\0';
     return prog;
 }

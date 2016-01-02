@@ -193,24 +193,10 @@ int ssl3_get_record(SSL *s)
     unsigned char md[EVP_MAX_MD_SIZE];
     short version;
     unsigned mac_size;
-    size_t extra;
     unsigned empty_record_count = 0;
 
     rr = RECORD_LAYER_get_rrec(&s->rlayer);
     sess = s->session;
-
-    if (s->options & SSL_OP_MICROSOFT_BIG_SSLV3_BUFFER)
-        extra = SSL3_RT_MAX_EXTRA;
-    else
-        extra = 0;
-    if (extra && !s->s3->init_extra) {
-        /*
-         * An application error: SLS_OP_MICROSOFT_BIG_SSLV3_BUFFER set after
-         * ssl3_setup_buffers() was done
-         */
-        SSLerr(SSL_F_SSL3_GET_RECORD, ERR_R_INTERNAL_ERROR);
-        return -1;
-    }
 
  again:
     /* check if we have the header */
@@ -349,7 +335,7 @@ int ssl3_get_record(SSL *s)
      */
 
     /* check is not needed I believe */
-    if (rr->length > SSL3_RT_MAX_ENCRYPTED_LENGTH + extra) {
+    if (rr->length > SSL3_RT_MAX_ENCRYPTED_LENGTH) {
         al = SSL_AD_RECORD_OVERFLOW;
         SSLerr(SSL_F_SSL3_GET_RECORD, SSL_R_ENCRYPTED_LENGTH_TOO_LONG);
         goto f_err;
@@ -453,7 +439,7 @@ int ssl3_get_record(SSL *s)
         if (i < 0 || mac == NULL
             || CRYPTO_memcmp(md, mac, (size_t)mac_size) != 0)
             enc_err = -1;
-        if (rr->length > SSL3_RT_MAX_COMPRESSED_LENGTH + extra + mac_size)
+        if (rr->length > SSL3_RT_MAX_COMPRESSED_LENGTH + mac_size)
             enc_err = -1;
     }
 
@@ -473,7 +459,7 @@ int ssl3_get_record(SSL *s)
 
     /* r->length is now just compressed */
     if (s->expand != NULL) {
-        if (rr->length > SSL3_RT_MAX_COMPRESSED_LENGTH + extra) {
+        if (rr->length > SSL3_RT_MAX_COMPRESSED_LENGTH) {
             al = SSL_AD_RECORD_OVERFLOW;
             SSLerr(SSL_F_SSL3_GET_RECORD, SSL_R_COMPRESSED_LENGTH_TOO_LONG);
             goto f_err;
@@ -485,7 +471,7 @@ int ssl3_get_record(SSL *s)
         }
     }
 
-    if (rr->length > SSL3_RT_MAX_PLAIN_LENGTH + extra) {
+    if (rr->length > SSL3_RT_MAX_PLAIN_LENGTH) {
         al = SSL_AD_RECORD_OVERFLOW;
         SSLerr(SSL_F_SSL3_GET_RECORD, SSL_R_DATA_LENGTH_TOO_LONG);
         goto f_err;

@@ -432,7 +432,7 @@ int X509_chain_check_suiteb(int *perror_depth, X509 *x, STACK_OF(X509) *chain,
             rv = X509_V_ERR_SUITE_B_INVALID_VERSION;
             goto end;
         }
-        pk = X509_get_pubkey(x);
+        pk = X509_get0_pubkey(x);
         rv = check_suite_b(pk, sign_nid, &tflags);
         if (rv != X509_V_OK)
             goto end;

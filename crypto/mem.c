@@ -120,8 +120,8 @@ static long (*get_debug_options_func) (void) = CRYPTO_dbg_get_options;
  * applications can use CRYPTO_malloc_debug_init() to select above case at
  * run-time
  */
-static void (*malloc_debug_func) (void *, int, const char *, int, int) = NULL;
-static void (*realloc_debug_func) (void *, void *, int, const char *, int,
+static void (*malloc_debug_func) (void *, size_t, const char *, int, int) = NULL;
+static void (*realloc_debug_func) (void *, void *, size_t, const char *, int,
                                    int)
     = NULL;
 static void (*free_debug_func) (void *, int) = NULL;
@@ -337,7 +337,7 @@ void *CRYPTO_realloc(void *str, size_t num, const char *file, int line)
     return ret;
 }
 
-void *CRYPTO_realloc_clean(void *str, size_t old_len, size_t num,
+void *CRYPTO_clear_realloc(void *str, size_t old_len, size_t num,
                            const char *file, int line)
 {
     void *ret = NULL;
