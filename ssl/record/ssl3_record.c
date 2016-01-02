@@ -953,10 +953,6 @@ int tls1_mac(SSL *ssl, unsigned char *md, int send)
             EVP_MD_CTX_free(hmac);
             return -1;
         }
-        if (!send && !SSL_USE_ETM(ssl) && FIPS_mode())
-            tls_fips_digest_extra(ssl->enc_read_ctx,
-                                  mac_ctx, rec->input,
-                                  rec->length, rec->orig_len);
     }
 
     EVP_MD_CTX_free(hmac);

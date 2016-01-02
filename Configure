@@ -771,8 +771,6 @@ my $openssldir="";
 my $exe_ext="";
 my $install_prefix= "$ENV{'INSTALL_PREFIX'}";
 my $cross_compile_prefix="";
-my $fipslibdir="/usr/local/ssl/fips-2.0/lib/";
-my $nofipscanistercheck=0;
 my $baseaddr="0xFB00000";
 my $no_threads=0;
 my $threads=0;
@@ -804,7 +802,6 @@ my $chacha_enc="chacha_enc.o";
 my $processor="";
 my $default_ranlib;
 my $perl;
-my $fips=0;
 
 # Explicitelly known options that are possible to disable.  They can
 # be regexps, and will be used like this: /^no-${option}$/
@@ -1065,20 +1062,11 @@ PROCESS_ARGS:
 			}
 		elsif (/^386$/)
 			{ $processor=386; }
-		elsif (/^fips$/)
-			{
-			$fips=1;
-			}
 		elsif (/^rsaref$/)
 			{
 			# No RSAref support any more since it's not needed.
 			# The check for the option is there so scripts aren't
 			# broken
-			}
-		elsif (/^nofipscanistercheck$/)
-			{
-			$fips = 1;
-			$nofipscanistercheck = 1;
 			}
 		elsif (/^[-+]/)
 			{
@@ -1105,10 +1093,6 @@ PROCESS_ARGS:
 			elsif (/^--with-zlib-include=(.*)$/)
 				{
 				$withargs{"zlib-include"}="-I$1";
-				}
-			elsif (/^--with-fipslibdir=(.*)$/)
-				{
-				$fipslibdir="$1/";
 				}
 			elsif (/^--with-baseaddr=(.*)$/)
 				{
@@ -1261,11 +1245,6 @@ if ($d) {
 	       && $target !~ /^debug-/
 	       && !($table{$target}->{debug_cflags}
 		    || $table{$target}->{debug_lflags})));
-
-if ($fips)
-	{
-	delete $disabled{"shared"} if ($disabled{"shared"} eq "default");
-	}
 
 foreach (sort (keys %disabled))
 	{
@@ -1503,8 +1482,6 @@ if ($no_asm)
 	$des_obj=$aes_obj=$bf_obj=$cast_obj=$rc4_obj=$rc5_obj=$cmll_obj=
 	$modes_obj=$sha1_obj=$md5_obj=$rmd160_obj=$wp_obj=$engines_obj=
 	$chacha_obj=$poly1305_obj="";
-	$cflags=~s/\-D[BL]_ENDIAN//		if ($fips);
-	$thread_cflags=~s/\-D[BL]_ENDIAN//	if ($fips);
 	}
 elsif (defined($disabled{ec2m}))
 	{
@@ -1552,7 +1529,7 @@ if(!defined($disabled{"deprecated"}))
 my $shared_mark = "";
 if ($shared_target eq "")
 	{
-	$no_shared_warn = 1 if !$no_shared && !$fips;
+	$no_shared_warn = 1 if !$no_shared;
 	$no_shared = 1;
 	}
 if (!$no_shared)
@@ -1654,11 +1631,6 @@ $cflags.=" -DOPENSSL_IA32_SSE2" if (!$no_sse2 && $bn_obj =~ /86/);
 $cflags.=" -DOPENSSL_BN_ASM_MONT" if ($bn_obj =~ /-mont/);
 $cflags.=" -DOPENSSL_BN_ASM_MONT5" if ($bn_obj =~ /-mont5/);
 $cflags.=" -DOPENSSL_BN_ASM_GF2m" if ($bn_obj =~ /-gf2m/);
-
-if ($fips)
-	{
-	$openssl_other_defines.="#define OPENSSL_FIPS\n";
-	}
 
 $cpuid_obj="mem_clr.o"	unless ($cpuid_obj =~ /\.o$/);
 $des_obj=$des_enc	unless ($des_obj =~ /\.o$/);
@@ -1812,7 +1784,6 @@ while (<IN>)
 			}
 		}
 	$sdirs = 0 unless /\\$/;
-        s/fips // if (/^DIRS=/ && !$fips);
         s/engines // if (/^DIRS=/ && $disabled{"engine"});
 	s/ccgost// if (/^ENGDIRS=/ && $disabled{"gost"});
 	s/^VERSION=.*/VERSION=$version/;
@@ -1874,9 +1845,6 @@ while (<IN>)
 	s/^PERL=.*/PERL= $perl/;
 	s/^LIBZLIB=.*/LIBZLIB=$withargs{"zlib-lib"}/;
 	s/^ZLIB_INCLUDE=.*/ZLIB_INCLUDE=$withargs{"zlib-include"}/;
-	s/^FIPSLIBDIR=.*/FIPSLIBDIR=$fipslibdir/;
-	s/^FIPSCANLIB=.*/FIPSCANLIB=libcrypto/ if $fips;
-	s/^SHARED_FIPS=.*/SHARED_FIPS=/;
 	s/^SHLIBDIRS=.*/SHLIBDIRS= crypto ssl/;
 	s/^BASEADDR=.*/BASEADDR=$baseaddr/;
 	s/^SHLIB_TARGET=.*/SHLIB_TARGET=$shared_target/;

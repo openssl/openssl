@@ -35,11 +35,11 @@ GENERAL=Makefile README crypto-lib.com install.com
 LIB= $(TOP)/libcrypto.a
 SHARED_LIB= libcrypto$(SHLIB_EXT)
 LIBSRC=	cryptlib.c mem.c mem_clr.c mem_dbg.c cversion.c ex_data.c cpt_err.c \
-	ebcdic.c uid.c o_time.c o_str.c o_dir.c thr_id.c lock.c fips_ers.c \
-	o_init.c o_fips.c mem_sec.c
+	ebcdic.c uid.c o_time.c o_str.c o_dir.c thr_id.c lock.c \
+	o_init.c mem_sec.c
 LIBOBJ= cryptlib.o mem.o mem_dbg.o cversion.o ex_data.o cpt_err.o \
-	ebcdic.o uid.o o_time.o o_str.o o_dir.o thr_id.o lock.o fips_ers.o \
-	o_init.o o_fips.o mem_sec.o $(CPUID_OBJ)
+	ebcdic.o uid.o o_time.o o_str.o o_dir.o thr_id.o lock.o \
+	o_init.o mem_sec.o $(CPUID_OBJ)
 
 SRC= $(LIBSRC)
 
@@ -51,13 +51,6 @@ top:
 	@(cd ..; $(MAKE) DIRS=$(DIR) all)
 
 all: shared
-
-fips: cryptlib.o thr_id.o uid.o $(CPUID_OBJ)
-	[ -n "$(SDIRS)" ] && for i in $(SDIRS) ; do \
-		    ( obj=`$(PERL) $(TOP)/util/fipsobj.pl $$i` && \
-			cd $$i && echo "making fips in $(DIR)/$$i..." && \
-		    $(MAKE) -e TOP=../.. DIR=$$i INCLUDES='$(INCLUDES)' $$obj ) || exit 1; \
-		done;
 
 buildinf.h: ../Makefile
 	$(PERL) $(TOP)/util/mkbuildinf.pl "$(CC) $(CFLAGS)" "$(PLATFORM)" >buildinf.h
@@ -161,7 +154,6 @@ ex_data.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
 ex_data.o: ../include/openssl/ossl_typ.h ../include/openssl/safestack.h
 ex_data.o: ../include/openssl/stack.h ../include/openssl/symhacks.h ex_data.c
 ex_data.o: include/internal/cryptlib.h
-fips_ers.o: ../include/openssl/opensslconf.h fips_ers.c
 lock.o: ../e_os.h ../include/openssl/bio.h ../include/openssl/buffer.h
 lock.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
 lock.o: ../include/openssl/err.h ../include/openssl/lhash.h
@@ -193,13 +185,6 @@ mem_sec.o: ../include/openssl/ossl_typ.h ../include/openssl/safestack.h
 mem_sec.o: ../include/openssl/stack.h ../include/openssl/symhacks.h mem_sec.c
 o_dir.o: ../e_os.h ../include/internal/o_dir.h ../include/openssl/e_os2.h
 o_dir.o: ../include/openssl/opensslconf.h LPdir_unix.c o_dir.c
-o_fips.o: ../e_os.h ../include/openssl/bio.h ../include/openssl/buffer.h
-o_fips.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
-o_fips.o: ../include/openssl/err.h ../include/openssl/lhash.h
-o_fips.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
-o_fips.o: ../include/openssl/ossl_typ.h ../include/openssl/safestack.h
-o_fips.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
-o_fips.o: include/internal/cryptlib.h o_fips.c
 o_init.o: ../e_os.h ../include/openssl/bio.h ../include/openssl/crypto.h
 o_init.o: ../include/openssl/e_os2.h ../include/openssl/err.h
 o_init.o: ../include/openssl/lhash.h ../include/openssl/opensslconf.h

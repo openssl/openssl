@@ -557,9 +557,6 @@ unsigned int *OPENSSL_ia32cap_loc(void);
 # define OPENSSL_ia32cap ((OPENSSL_ia32cap_loc())[0])
 int OPENSSL_isservice(void);
 
-int FIPS_mode(void);
-int FIPS_mode_set(int r);
-
 void OPENSSL_init(void);
 
 struct tm *OPENSSL_gmtime(const time_t *timer, struct tm *result);
