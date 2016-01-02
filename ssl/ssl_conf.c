@@ -332,6 +332,7 @@ static int protocol_from_string(const char *value)
         int version;
     };
     static const struct protocol_versions versions[] = {
+        {"None", 0},
         {"SSLv3", SSL3_VERSION},
         {"TLSv1", TLS1_VERSION},
         {"TLSv1.1", TLS1_1_VERSION},
