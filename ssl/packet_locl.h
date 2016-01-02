@@ -65,6 +65,8 @@
 # include <openssl/crypto.h>
 # include <openssl/e_os2.h>
 
+# include "internal/numbers.h"
+
 # ifdef __cplusplus
 extern "C" {
 # endif
@@ -111,13 +113,8 @@ __owur static ossl_inline int PACKET_buf_init(PACKET *pkt, unsigned char *buf,
                                               size_t len)
 {
     /* Sanity check for negative values. */
-#ifdef SIZE_MAX
     if (len > (size_t)(SIZE_MAX / 2))
         return 0;
-#else
-    if (len > ((size_t)2 << (sizeof(size_t) * 8 - 1)))
-        return 0;
-#endif
 
     pkt->curr = buf;
     pkt->remaining = len;
