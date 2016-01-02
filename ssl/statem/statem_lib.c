@@ -834,6 +834,11 @@ int ssl_check_version_downgrade(SSL *s)
  */
 int ssl_set_version_bound(int method_version, int version, int *bound)
 {
+    if (version == 0) {
+        *bound = version;
+        return 1;
+    }
+
     /*-
      * Restrict TLS methods to TLS protocol versions.
      * Restrict DTLS methods to DTLS protocol versions.
