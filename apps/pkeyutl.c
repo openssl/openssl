@@ -420,7 +420,6 @@ static EVP_PKEY_CTX *init_ctx(int *pkeysize,
         goto end;
 
     if ((keyform == FORMAT_ENGINE) && (strncmp(ENGINE_get_name(e),"pkcs11 engine", strlen("pkcs11 engine"))==0)) {
-      fprintf(stderr, "engine name = \"%s\"\n", ENGINE_get_name(e));
       ctx = EVP_PKEY_CTX_new(pkey, NULL);
     } else {
       ctx = EVP_PKEY_CTX_new(pkey, e);
