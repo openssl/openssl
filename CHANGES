@@ -4,6 +4,10 @@
 
  Changes between 1.0.2g and 1.1.0  [xx XXX xxxx]
 
+  *) Change the ECC default curve list to be this, in order: x25519,
+     secp256r1, secp521r1, secp384r1.
+     [Rich Salz]
+
   *) RC4 based libssl ciphersuites are now classed as "weak" ciphers and are
      disabled by default. They can be re-enabled using the
      enable-weak-ssl-ciphers option to Configure.
