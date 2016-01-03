@@ -367,6 +367,11 @@ static const char *alpn_client;
 static const char *alpn_server;
 static const char *alpn_expected;
 static unsigned char *alpn_selected;
+static const char *server_min_proto;
+static const char *server_max_proto;
+static const char *client_min_proto;
+static const char *client_max_proto;
+static const char *should_negotiate;
 
 /*-
  * next_protos_parse parses a comma separated list of strings into a string
@@ -776,6 +781,7 @@ static void sv_usage(void)
 #endif
     fprintf(stderr, " -tls1         - use TLSv1\n");
 #ifndef OPENSSL_NO_DTLS
+    fprintf(stderr, " -dtls        - use DTLS\n");
     fprintf(stderr, " -dtls1        - use DTLSv1\n");
     fprintf(stderr, " -dtls12       - use DTLSv1.2\n");
 #endif
@@ -818,6 +824,11 @@ static void sv_usage(void)
     fprintf(stderr, " -alpn_server <string> - have server side offer ALPN\n");
     fprintf(stderr,
             " -alpn_expected <string> - the ALPN protocol that should be negotiated\n");
+    fprintf(stderr, " -server_min_proto <string> - Minimum version the server should support\n");
+    fprintf(stderr, " -server_max_proto <string> - Maximum version the server should support\n");
+    fprintf(stderr, " -client_min_proto <string> - Minimum version the client should support\n");
+    fprintf(stderr, " -client_max_proto <string> - Maximum version the client should support\n");
+    fprintf(stderr, " -should_negotiate <string> - The version that should be negotiated, fail-client or fail-server\n");
 }
 
 static void print_key_details(BIO *out, EVP_PKEY *key)
@@ -942,13 +953,58 @@ static void lock_dbg_cb(int mode, int type, const char *file, int line)
     }
 }
 
+/*
+ * protocol_from_string - converts a protocol version string to a number
+ *
+ * Returns -1 on failure or the version on success
+ */
+static int protocol_from_string(const char *value)
+{
+    struct protocol_versions {
+        const char *name;
+        int version;
+    };
+    static const struct protocol_versions versions[] = {
+        {"ssl3", SSL3_VERSION},
+        {"tls1", TLS1_VERSION},
+        {"tls1.1", TLS1_1_VERSION},
+        {"tls1.2", TLS1_2_VERSION},
+        {"dtls1", DTLS1_VERSION},
+        {"dtls1.2", DTLS1_2_VERSION}};
+    size_t i;
+    size_t n = OSSL_NELEM(versions);
+
+    for (i = 0; i < n; i++)
+        if (strcmp(versions[i].name, value) == 0)
+            return versions[i].version;
+    return -1;
+}
+
+/*
+ * set_protocol_version - Sets protocol version minimum or maximum
+ *
+ * Returns 0 on failure and 1 on success
+ */
+static int set_protocol_version(const char *version, SSL *ssl, int setting)
+{
+    if (version != NULL) {
+        int ver = protocol_from_string(version);
+        if (ver < 0) {
+            BIO_printf(bio_err, "Error parsing: %s\n", version);
+            return 0;
+        }
+        return SSL_ctrl(ssl, setting, ver, NULL);
+    }
+    return 1;
+}
+
 int main(int argc, char *argv[])
 {
     char *CApath = NULL, *CAfile = NULL;
     int badop = 0;
     int bio_pair = 0;
     int force = 0;
-    int dtls1 = 0, dtls12 = 0, tls1 = 0, ssl3 = 0, ret = 1;
+    int dtls1 = 0, dtls12 = 0, dtls = 0, tls1 = 0, ssl3 = 0, ret = 1;
     int client_auth = 0;
     int server_auth = 0, i;
     struct app_verify_arg app_verify_arg =
@@ -1136,6 +1192,11 @@ int main(int argc, char *argv[])
             no_protocol = 1;
 #endif
             dtls12 = 1;
+        } else if (strcmp(*argv, "-dtls") == 0) {
+#ifdef OPENSSL_NO_DTLS
+            no_protocol = 1;
+#endif
+            dtls = 1;
         } else if (strncmp(*argv, "-num", 4) == 0) {
             if (--argc < 1)
                 goto bad;
@@ -1225,6 +1286,26 @@ int main(int argc, char *argv[])
             if (--argc < 1)
                 goto bad;
             alpn_expected = *(++argv);
+        } else if (strcmp(*argv, "-server_min_proto") == 0) {
+            if (--argc < 1)
+                goto bad;
+            server_min_proto = *(++argv);
+        } else if (strcmp(*argv, "-server_max_proto") == 0) {
+            if (--argc < 1)
+                goto bad;
+            server_max_proto = *(++argv);
+        } else if (strcmp(*argv, "-client_min_proto") == 0) {
+            if (--argc < 1)
+                goto bad;
+            client_min_proto = *(++argv);
+        } else if (strcmp(*argv, "-client_max_proto") == 0) {
+            if (--argc < 1)
+                goto bad;
+            client_max_proto = *(++argv);
+        } else if (strcmp(*argv, "-should_negotiate") == 0) {
+            if (--argc < 1)
+                goto bad;
+            should_negotiate = *(++argv);
         } else {
             int rv;
             arg = argv[0];
@@ -1283,8 +1364,8 @@ int main(int argc, char *argv[])
         goto end;
     }
 
-    if (ssl3 + tls1 + dtls1 + dtls12 > 1) {
-        fprintf(stderr, "At most one of -ssl3, -tls1, -dtls1 or -dtls12 should "
+    if (ssl3 + tls1 + dtls + dtls1 + dtls12 > 1) {
+        fprintf(stderr, "At most one of -ssl3, -tls1, -dtls, -dtls1 or -dtls12 should "
                 "be requested.\n");
         EXIT(1);
     }
@@ -1301,10 +1382,10 @@ int main(int argc, char *argv[])
         goto end;
     }
 
-    if (!ssl3 && !tls1 && !dtls1 && !dtls12 && number > 1 && !reuse && !force) {
+    if (!ssl3 && !tls1 && !dtls && !dtls1 && !dtls12 && number > 1 && !reuse && !force) {
         fprintf(stderr, "This case cannot work.  Use -f to perform "
                 "the test anyway (and\n-d to see what happens), "
-                "or add one of -ssl3, -tls1, -dtls1, -dtls12, -reuse\n"
+                "or add one of -ssl3, -tls1, -dtls, -dtls1, -dtls12, -reuse\n"
                 "to avoid protocol mismatch.\n");
         EXIT(1);
     }
@@ -1378,6 +1459,8 @@ int main(int argc, char *argv[])
         meth = DTLSv1_method();
     else if (dtls12)
         meth = DTLSv1_2_method();
+    else if (dtls)
+        meth = DTLS_method();
     else
 #endif
     if (tls1)
@@ -1659,6 +1742,15 @@ int main(int argc, char *argv[])
     c_ssl = SSL_new(c_ctx);
     s_ssl = SSL_new(s_ctx);
 
+    if (!set_protocol_version(server_min_proto, s_ssl, SSL_CTRL_SET_MIN_PROTO_VERSION))
+        goto end;
+    if (!set_protocol_version(server_max_proto, s_ssl, SSL_CTRL_SET_MAX_PROTO_VERSION))
+        goto end;
+    if (!set_protocol_version(client_min_proto, c_ssl, SSL_CTRL_SET_MIN_PROTO_VERSION))
+        goto end;
+    if (!set_protocol_version(client_max_proto, c_ssl, SSL_CTRL_SET_MAX_PROTO_VERSION))
+        goto end;
+
     BIO_printf(bio_stdout, "Doing handshakes=%d bytes=%ld\n", number, bytes);
     for (i = 0; i < number; i++) {
         if (!reuse) {
@@ -1672,6 +1764,23 @@ int main(int argc, char *argv[])
         else
             ret = doit(s_ssl, c_ssl, bytes);
 	if (ret)  break;
+    }
+
+    if (should_negotiate && ret == 0 &&
+        strcmp(should_negotiate, "fail-server") != 0 &&
+        strcmp(should_negotiate, "fail-client") != 0) {
+        int version = protocol_from_string(should_negotiate);
+        if (version < 0) {
+            BIO_printf(bio_err, "Error parsing: %s\n", should_negotiate);
+            ret = 1;
+            goto err;
+        }
+        if (SSL_version(c_ssl) != version) {
+            BIO_printf(bio_err, "Unxpected version negotiated. "
+                "Expected: %s, got %s\n", should_negotiate, SSL_get_version(c_ssl));
+            ret = 1;
+            goto err;
+        }
     }
 
     if (!verbose) {
@@ -1696,6 +1805,7 @@ int main(int argc, char *argv[])
 #endif
     }
 
+ err:
     SSL_free(s_ssl);
     SSL_free(c_ssl);
 
@@ -1728,6 +1838,8 @@ int doit_biopair(SSL *s_ssl, SSL *c_ssl, long count,
     BIO *s_ssl_bio = NULL, *c_ssl_bio = NULL;
     BIO *server = NULL, *server_io = NULL, *client = NULL, *client_io = NULL;
     int ret = 1;
+    int err_in_client = 0;
+    int err_in_server = 0;
 
     size_t bufsiz = 256;        /* small buffer for testing */
 
@@ -1820,6 +1932,7 @@ int doit_biopair(SSL *s_ssl, SSL *c_ssl, long count,
                 if (r < 0) {
                     if (!BIO_should_retry(c_ssl_bio)) {
                         fprintf(stderr, "ERROR in CLIENT\n");
+                        err_in_client = 1;
                         goto err;
                     }
                     /*
@@ -1845,6 +1958,7 @@ int doit_biopair(SSL *s_ssl, SSL *c_ssl, long count,
                 if (r < 0) {
                     if (!BIO_should_retry(c_ssl_bio)) {
                         fprintf(stderr, "ERROR in CLIENT\n");
+                        err_in_client = 1;
                         goto err;
                     }
                     /*
@@ -1897,6 +2011,7 @@ int doit_biopair(SSL *s_ssl, SSL *c_ssl, long count,
                 if (r < 0) {
                     if (!BIO_should_retry(s_ssl_bio)) {
                         fprintf(stderr, "ERROR in SERVER\n");
+                        err_in_server = 1;
                         goto err;
                     }
                     /* Ignore "BIO_should_retry". */
@@ -1917,6 +2032,7 @@ int doit_biopair(SSL *s_ssl, SSL *c_ssl, long count,
                 if (r < 0) {
                     if (!BIO_should_retry(s_ssl_bio)) {
                         fprintf(stderr, "ERROR in SERVER\n");
+                        err_in_server = 1;
                         goto err;
                     }
                     /* blah, blah */
@@ -2084,6 +2200,11 @@ int doit_biopair(SSL *s_ssl, SSL *c_ssl, long count,
     BIO_free(s_ssl_bio);
     BIO_free(c_ssl_bio);
 
+    if (should_negotiate != NULL && strcmp(should_negotiate, "fail-client") == 0)
+        ret = (err_in_client != 0) ? 0 : 1;
+    else if (should_negotiate != NULL && strcmp(should_negotiate, "fail-server") == 0)
+        ret = (err_in_server != 0) ? 0 : 1;
+
     return ret;
 }
 
@@ -2109,6 +2230,8 @@ int doit(SSL *s_ssl, SSL *c_ssl, long count)
     int c_write, s_write;
     int do_server = 0, do_client = 0;
     int max_frag = 5 * 1024;
+    int err_in_client = 0;
+    int err_in_server = 0;
 
     bufsiz = count > 40 * 1024 ? 40 * 1024 : count;
 
@@ -2201,6 +2324,7 @@ int doit(SSL *s_ssl, SSL *c_ssl, long count)
                             c_w = 1;
                     } else {
                         fprintf(stderr, "ERROR in CLIENT\n");
+                        err_in_client = 1;
                         ERR_print_errors(bio_err);
                         goto err;
                     }
@@ -2229,6 +2353,7 @@ int doit(SSL *s_ssl, SSL *c_ssl, long count)
                             c_w = 1;
                     } else {
                         fprintf(stderr, "ERROR in CLIENT\n");
+                        err_in_client = 1;
                         ERR_print_errors(bio_err);
                         goto err;
                     }
@@ -2265,6 +2390,7 @@ int doit(SSL *s_ssl, SSL *c_ssl, long count)
                             s_w = 1;
                     } else {
                         fprintf(stderr, "ERROR in SERVER\n");
+                        err_in_server = 1;
                         ERR_print_errors(bio_err);
                         goto err;
                     }
@@ -2300,6 +2426,7 @@ int doit(SSL *s_ssl, SSL *c_ssl, long count)
                             s_w = 1;
                     } else {
                         fprintf(stderr, "ERROR in SERVER\n");
+                        err_in_server = 1;
                         ERR_print_errors(bio_err);
                         goto err;
                     }
@@ -2369,6 +2496,11 @@ int doit(SSL *s_ssl, SSL *c_ssl, long count)
     BIO_free_all(s_bio);
     OPENSSL_free(cbuf);
     OPENSSL_free(sbuf);
+
+    if (should_negotiate != NULL && strcmp(should_negotiate, "fail-client") == 0)
+        ret = (err_in_client != 0) ? 0 : 1;
+    else if (should_negotiate != NULL && strcmp(should_negotiate, "fail-server") == 0)
+        ret = (err_in_server != 0) ? 0 : 1;
 
     return (ret);
 }

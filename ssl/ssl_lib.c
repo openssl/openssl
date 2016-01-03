@@ -293,6 +293,8 @@ SSL *SSL_new(SSL_CTX *ctx)
     RECORD_LAYER_init(&s->rlayer, s);
 
     s->options = ctx->options;
+    s->min_proto_version = ctx->min_proto_version;
+    s->max_proto_version = ctx->max_proto_version;
     s->mode = ctx->mode;
     s->max_cert_list = ctx->max_cert_list;
     s->references = 1;
@@ -1198,6 +1200,12 @@ long SSL_ctrl(SSL *s, int cmd, long larg, void *parg)
             return 1;
         else
             return 0;
+    case SSL_CTRL_SET_MIN_PROTO_VERSION:
+        return ssl_set_version_bound(s->ctx->method->version, (int)larg,
+                                     &s->min_proto_version);
+    case SSL_CTRL_SET_MAX_PROTO_VERSION:
+        return ssl_set_version_bound(s->ctx->method->version, (int)larg,
+                                     &s->max_proto_version);
     default:
         return (s->method->ssl_ctrl(s, cmd, larg, parg));
     }
@@ -1314,6 +1322,12 @@ long SSL_CTX_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
         return (ctx->cert->cert_flags |= larg);
     case SSL_CTRL_CLEAR_CERT_FLAGS:
         return (ctx->cert->cert_flags &= ~larg);
+    case SSL_CTRL_SET_MIN_PROTO_VERSION:
+        return ssl_set_version_bound(ctx->method->version, (int)larg,
+                                     &ctx->min_proto_version);
+    case SSL_CTRL_SET_MAX_PROTO_VERSION:
+        return ssl_set_version_bound(ctx->method->version, (int)larg,
+                                     &ctx->max_proto_version);
     default:
         return (ctx->method->ssl_ctx_ctrl(ctx, cmd, larg, parg));
     }
@@ -1781,7 +1795,7 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
     }
 
     if (FIPS_mode() && (meth->version < TLS1_VERSION)) {
-        SSLerr(SSL_F_SSL_CTX_NEW, SSL_R_ONLY_TLS_ALLOWED_IN_FIPS_MODE);
+        SSLerr(SSL_F_SSL_CTX_NEW, SSL_R_AT_LEAST_TLS_1_0_NEEDED_IN_FIPS_MODE);
         return NULL;
     }
 
@@ -1794,6 +1808,8 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
         goto err;
 
     ret->method = meth;
+    ret->min_proto_version = 0;
+    ret->max_proto_version = 0;
     ret->session_cache_mode = SSL_SESS_CACHE_SERVER;
     ret->session_cache_size = SSL_SESSION_CACHE_MAX_SIZE_DEFAULT;
     /* We take the system default. */

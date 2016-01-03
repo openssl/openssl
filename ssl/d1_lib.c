@@ -235,7 +235,7 @@ void dtls1_clear(SSL *s)
     if (s->options & SSL_OP_CISCO_ANYCONNECT)
         s->client_version = s->version = DTLS1_BAD_VER;
     else if (s->method->version == DTLS_ANY_VERSION)
-        s->version = DTLS1_2_VERSION;
+        s->version = DTLS_MAX_VERSION;
     else
         s->version = s->method->version;
 }
@@ -256,28 +256,6 @@ long dtls1_ctrl(SSL *s, int cmd, long larg, void *parg)
     case DTLS_CTRL_LISTEN:
         ret = dtls1_listen(s, parg);
         break;
-    case SSL_CTRL_CHECK_PROTO_VERSION:
-        /*
-         * For library-internal use; checks that the current protocol is the
-         * highest enabled version (according to s->ctx->method, as version
-         * negotiation may have changed s->method).
-         */
-        if (s->version == s->ctx->method->version)
-            return 1;
-        /*
-         * Apparently we're using a version-flexible SSL_METHOD (not at its
-         * highest protocol version).
-         */
-        if (s->ctx->method->version == DTLS_method()->version) {
-#if DTLS_MAX_VERSION != DTLS1_2_VERSION
-# error Code needs update for DTLS_method() support beyond DTLS1_2_VERSION.
-#endif
-            if (!(s->options & SSL_OP_NO_DTLSv1_2))
-                return s->version == DTLS1_2_VERSION;
-            if (!(s->options & SSL_OP_NO_DTLSv1))
-                return s->version == DTLS1_VERSION;
-        }
-        return 0;               /* Unexpected state; fail closed. */
     case DTLS_CTRL_SET_LINK_MTU:
         if (larg < (long)dtls1_link_min_mtu())
             return 0;
@@ -698,8 +676,8 @@ int dtls1_listen(SSL *s, struct sockaddr *client)
         /*
          * Verify client version is supported
          */
-        if ((clientvers > (unsigned int)s->method->version &&
-                              s->method->version != DTLS_ANY_VERSION)) {
+        if (DTLS_VERSION_LT(clientvers, (unsigned int)s->method->version) &&
+            s->method->version != DTLS_ANY_VERSION) {
             SSLerr(SSL_F_DTLS1_LISTEN, SSL_R_WRONG_VERSION_NUMBER);
             goto end;
         }
