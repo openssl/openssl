@@ -432,7 +432,7 @@ sub do_link_rule
 		#compile exe as DLL for windows phone/store/universal for testing binaries
 		#$ret.="\t\$(MKLIB) /out:$target @<<\n";
 		#$ret.="\t$files \n<<\n";
-		$ret.="\t\$(LINK) /dll /EXPORT:winrt_main \$(LFLAGS) $efile$target @<<\n";
+		$ret.="\t\$(LINK) /dll /EXPORT:main \$(LFLAGS) $efile$target @<<\n";
 		$ret.="\t\$(APP_EX_OBJ) $files $libs\n<<\n";
 		}
 	else
