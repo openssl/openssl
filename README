@@ -90,11 +90,12 @@
 
  In order to avoid spam, this is a moderated mailing list, and it might
  take a day for the ticket to show up.  (We also scan posts to make sure
- that security disclosures aren't publically posted by mistake.) Mail to
- this address is recorded in the public RT (request tracker) database (see
- https://www.openssl.org/support/rt.html for details) and also forwarded
- the public openssl-dev mailing list.  Confidential mail may be sent to
- openssl-security@openssl.org (PGP key available from the key servers).
+ that security disclosures aren't publically posted by mistake.) Mail
+ to this address is recorded in the public RT (request tracker) database
+ (see https://www.openssl.org/community/index.html#bugs for details) and
+ also forwarded the public openssl-dev mailing list.  Confidential mail
+ may be sent to openssl-security@openssl.org (PGP key available from the
+ key servers).
 
  Please do NOT use this for general assistance or support queries.
  Just because something doesn't work the way you expect does not mean it
