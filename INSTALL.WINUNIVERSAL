@@ -51,13 +51,13 @@
 
  SINGLE PLATFORM INSTALL
  -----------------------------------------------------------------------
- Firstly you should run Configure with platform VC-WINCORE
+ Firstly you should run Configure with platform VC-WINUNIVERSAL
 
- > perl Configure no-asm no-hw no-dso VC-WINCORE
+ > perl Configure no-asm no-hw no-dso VC-WINUNIVERSAL
 
  Next you need to build the Makefiles:
 
-   > ms\do_wincore
+   > ms\do_winuniversal
 
  Then from CMD.exe, the following environment variables must be set for nmake build.
 
