@@ -4,7 +4,6 @@
  * (aljim@microsoft.com) for the OpenSSL project 2014.
  */
 #if defined(OPENSSL_WINAPP)
-# define main winrt_main
 //Include stdio.h to replace fprintf
 # include<stdio.h>
 # ifdef getenv

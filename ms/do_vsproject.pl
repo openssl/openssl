@@ -348,7 +348,7 @@ my $cppOutputFile = <<'END_MESSAGE';
 #include <fstream>
 #include "..\ms\vstemplates\winrtcomponent.h"
 #define echo(A) OutputDebugStringA(A);OutputDebugStringA("\n");
-typedef int (__cdecl *winrt_main)(int Argc, char *ARGV[]);
+typedef int (__cdecl *mainptr)(int Argc, char *ARGV[]);
 int errorlevel=0;
 
 std::string LocalFolderFile(Platform::String^ file)
@@ -402,7 +402,7 @@ void dynload(Platform::String^ modName, int argc, std::string* argv_const, winrt
   }
 
   module = LoadPackagedLibrary(modName->Data(), 0);
-  winrt_main pMain = (winrt_main) GetProcAddress(module, "winrt_main");
+  mainptr pMain = (mainptr) GetProcAddress(module, "main");
   if (!pMain)
   {
     errorlevel = 1;
