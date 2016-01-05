@@ -550,7 +550,7 @@ typedef void *CRYPTO_MEM_LEAK_CB (unsigned long, const char *, int, size_t,
 void CRYPTO_mem_leaks_cb(CRYPTO_MEM_LEAK_CB *cb);
 
 /* die if we have to */
-void OpenSSLDie(const char *file, int line, const char *assertion);
+noreturn void OpenSSLDie(const char *file, int line, const char *assertion);
 # define OPENSSL_assert(e)       (void)((e) ? 0 : (OpenSSLDie(__FILE__, __LINE__, #e),1))
 
 unsigned int *OPENSSL_ia32cap_loc(void);
