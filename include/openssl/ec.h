@@ -791,13 +791,13 @@ void EC_KEY_free(EC_KEY *key);
  *  \param  src  src EC_KEY object
  *  \return dst or NULL if an error occurred.
  */
-EC_KEY *EC_KEY_copy(EC_KEY *dst, const EC_KEY *src);
+EC_KEY *EC_KEY_copy(EC_KEY *dst, EC_KEY *src);
 
 /** Creates a new EC_KEY object and copies the content from src to it.
  *  \param  src  the source EC_KEY object
  *  \return newly created EC_KEY object or NULL if an error occurred.
  */
-EC_KEY *EC_KEY_dup(const EC_KEY *src);
+EC_KEY *EC_KEY_dup(EC_KEY *src);
 
 /** Increases the internal reference count of a EC_KEY object.
  *  \param  key  EC_KEY object
@@ -851,23 +851,12 @@ unsigned EC_KEY_get_enc_flags(const EC_KEY *key);
 void EC_KEY_set_enc_flags(EC_KEY *eckey, unsigned int flags);
 point_conversion_form_t EC_KEY_get_conv_form(const EC_KEY *key);
 void EC_KEY_set_conv_form(EC_KEY *eckey, point_conversion_form_t cform);
-/* functions to set/get method specific data  */
-void *EC_KEY_get_key_method_data(EC_KEY *key,
-                                 void *(*dup_func) (void *),
-                                 void (*free_func) (void *),
-                                 void (*clear_free_func) (void *));
-/** Sets the key method data of an EC_KEY object, if none has yet been set.
- *  \param  key              EC_KEY object
- *  \param  data             opaque data to install.
- *  \param  dup_func         a function that duplicates |data|.
- *  \param  free_func        a function that frees |data|.
- *  \param  clear_free_func  a function that wipes and frees |data|.
- *  \return the previously set data pointer, or NULL if |data| was inserted.
- */
-void *EC_KEY_insert_key_method_data(EC_KEY *key, void *data,
-                                    void *(*dup_func) (void *),
-                                    void (*free_func) (void *),
-                                    void (*clear_free_func) (void *));
+
+#define EC_KEY_get_ex_new_index(l, p, newf, dupf, freef) \
+    CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_EC_KEY, l, p, newf, dupf, freef)
+int EC_KEY_set_ex_data(EC_KEY *key, int idx, void *arg);
+void *EC_KEY_get_ex_data(const EC_KEY *key, int idx);
+
 /* wrapper functions for the underlying EC_GROUP object */
 void EC_KEY_set_asn1_flag(EC_KEY *eckey, int asn1_flag);
 
@@ -1023,6 +1012,8 @@ int EC_KEY_print_fp(FILE *fp, const EC_KEY *key, int off);
 const EC_KEY_METHOD *EC_KEY_OpenSSL(void);
 const EC_KEY_METHOD *EC_KEY_get_default_method(void);
 void EC_KEY_set_default_method(const EC_KEY_METHOD *meth);
+const EC_KEY_METHOD *EC_KEY_get_method(const EC_KEY *key);
+int EC_KEY_set_method(EC_KEY *key, const EC_KEY_METHOD *meth);
 EC_KEY *EC_KEY_new_method(ENGINE *engine);
 
 int ECDH_KDF_X9_62(unsigned char *out, size_t outlen,

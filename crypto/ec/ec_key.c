@@ -120,19 +120,16 @@ void EC_KEY_free(EC_KEY *r)
         ENGINE_finish(r->engine);
 #endif
 
+    CRYPTO_free_ex_data(CRYPTO_EX_INDEX_EC_KEY, r, &r->ex_data);
     EC_GROUP_free(r->group);
     EC_POINT_free(r->pub_key);
     BN_clear_free(r->priv_key);
 
-    EC_EX_DATA_free_all_data(&r->method_data);
-
     OPENSSL_clear_free((void *)r, sizeof(EC_KEY));
 }
 
-EC_KEY *EC_KEY_copy(EC_KEY *dest, const EC_KEY *src)
+EC_KEY *EC_KEY_copy(EC_KEY *dest, EC_KEY *src)
 {
-    EC_EXTRA_DATA *d;
-
     if (dest == NULL || src == NULL) {
         ECerr(EC_F_EC_KEY_COPY, ERR_R_PASSED_NULL_PARAMETER);
         return NULL;
@@ -176,25 +173,15 @@ EC_KEY *EC_KEY_copy(EC_KEY *dest, const EC_KEY *src)
         if (!BN_copy(dest->priv_key, src->priv_key))
             return NULL;
     }
-    /* copy method/extra data */
-    EC_EX_DATA_free_all_data(&dest->method_data);
-
-    for (d = src->method_data; d != NULL; d = d->next) {
-        void *t = d->dup_func(d->data);
-
-        if (t == NULL)
-            return 0;
-        if (!EC_EX_DATA_set_data
-            (&dest->method_data, t, d->dup_func, d->free_func,
-             d->clear_free_func))
-            return NULL;
-    }
 
     /* copy the rest */
     dest->enc_flag = src->enc_flag;
     dest->conv_form = src->conv_form;
     dest->version = src->version;
     dest->flags = src->flags;
+    if (!CRYPTO_dup_ex_data(CRYPTO_EX_INDEX_EC_KEY,
+                            &dest->ex_data, &src->ex_data))
+        return NULL;
 
     if (src->meth != dest->meth) {
 #ifndef OPENSSL_NO_ENGINE
@@ -211,9 +198,10 @@ EC_KEY *EC_KEY_copy(EC_KEY *dest, const EC_KEY *src)
     return dest;
 }
 
-EC_KEY *EC_KEY_dup(const EC_KEY *ec_key)
+EC_KEY *EC_KEY_dup(EC_KEY *ec_key)
 {
     EC_KEY *ret = EC_KEY_new_method(ec_key->engine);
+
     if (ret == NULL)
         return NULL;
     if (EC_KEY_copy(ret, ec_key) == NULL) {
@@ -511,41 +499,6 @@ void EC_KEY_set_conv_form(EC_KEY *key, point_conversion_form_t cform)
     key->conv_form = cform;
     if (key->group != NULL)
         EC_GROUP_set_point_conversion_form(key->group, cform);
-}
-
-void *EC_KEY_get_key_method_data(EC_KEY *key,
-                                 void *(*dup_func) (void *),
-                                 void (*free_func) (void *),
-                                 void (*clear_free_func) (void *))
-{
-    void *ret;
-
-    CRYPTO_r_lock(CRYPTO_LOCK_EC);
-    ret =
-        EC_EX_DATA_get_data(key->method_data, dup_func, free_func,
-                            clear_free_func);
-    CRYPTO_r_unlock(CRYPTO_LOCK_EC);
-
-    return ret;
-}
-
-void *EC_KEY_insert_key_method_data(EC_KEY *key, void *data,
-                                    void *(*dup_func) (void *),
-                                    void (*free_func) (void *),
-                                    void (*clear_free_func) (void *))
-{
-    EC_EXTRA_DATA *ex_data;
-
-    CRYPTO_w_lock(CRYPTO_LOCK_EC);
-    ex_data =
-        EC_EX_DATA_get_data(key->method_data, dup_func, free_func,
-                            clear_free_func);
-    if (ex_data == NULL)
-        EC_EX_DATA_set_data(&key->method_data, data, dup_func, free_func,
-                            clear_free_func);
-    CRYPTO_w_unlock(CRYPTO_LOCK_EC);
-
-    return ex_data;
 }
 
 void EC_KEY_set_asn1_flag(EC_KEY *key, int flag)
