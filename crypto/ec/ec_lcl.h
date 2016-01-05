@@ -198,13 +198,14 @@ struct ec_method_st {
     int (*field_set_to_one) (const EC_GROUP *, BIGNUM *r, BN_CTX *);
 } /* EC_METHOD */ ;
 
-typedef struct ec_extra_data_st {
-    struct ec_extra_data_st *next;
-    void *data;
-    void *(*dup_func) (void *);
-    void (*free_func) (void *);
-    void (*clear_free_func) (void *);
-} EC_EXTRA_DATA;                /* used in EC_GROUP */
+/*
+ * Types and functions to manipulate pre-computed values.
+ */
+typedef struct nistp224_pre_comp_st NISTP224_PRE_COMP;
+typedef struct nistp256_pre_comp_st NISTP256_PRE_COMP;
+typedef struct nistp512_pre_comp_st NISTP521_PRE_COMP;
+typedef struct nistz256_pre_comp_st NISTZ256_PRE_COMP;
+typedef struct ec_pre_comp_st EC_PRE_COMP;
 
 struct ec_group_st {
     const EC_METHOD *meth;
@@ -216,7 +217,6 @@ struct ec_group_st {
     unsigned char *seed;        /* optional seed for parameters (appears in
                                  * ASN1) */
     size_t seed_len;
-    EC_EXTRA_DATA *extra_data;  /* linked list */
     /*
      * The following members are handled by the method functions, even if
      * they appear generic
@@ -254,7 +254,25 @@ struct ec_group_st {
                            BN_CTX *);
     /* data for ECDSA inverse */
     BN_MONT_CTX *mont_data;
+
+    /* precomputed values for speed. */
+    enum {
+        pct_none,
+        pct_nistp224, pct_nistp256, pct_nistp521, pct_nistz256,
+        pct_ec } pre_comp_type;
+    union {
+        NISTP224_PRE_COMP *nistp224;
+        NISTP256_PRE_COMP *nistp256;
+        NISTP521_PRE_COMP *nistp521;
+        NISTZ256_PRE_COMP *nistz256;
+        EC_PRE_COMP *ec;
+    } pre_comp;
 } /* EC_GROUP */ ;
+
+#define SETPRECOMP(g, type, pre) \
+    g->pre_comp_type = pct_##type, g->pre_comp.type = pre
+#define HAVEPRECOMP(g, type) \
+    g->pre_comp_type == pct_##type && g->pre_comp.type != NULL
 
 struct ec_key_st {
     const EC_KEY_METHOD *meth;
@@ -267,30 +285,8 @@ struct ec_key_st {
     point_conversion_form_t conv_form;
     int references;
     int flags;
-    EC_EXTRA_DATA *method_data;
+    CRYPTO_EX_DATA ex_data;
 } /* EC_KEY */ ;
-
-/*
- * Basically a 'mixin' for extra data, but available for EC_GROUPs/EC_KEYs
- * only (with visibility limited to 'package' level for now). We use the
- * function pointers as index for retrieval; this obviates global
- * ex_data-style index tables.
- */
-int EC_EX_DATA_set_data(EC_EXTRA_DATA **, void *data,
-                        void *(*dup_func) (void *),
-                        void (*free_func) (void *),
-                        void (*clear_free_func) (void *));
-void *EC_EX_DATA_get_data(const EC_EXTRA_DATA *, void *(*dup_func) (void *),
-                          void (*free_func) (void *),
-                          void (*clear_free_func) (void *));
-void EC_EX_DATA_free_data(EC_EXTRA_DATA **, void *(*dup_func) (void *),
-                          void (*free_func) (void *),
-                          void (*clear_free_func) (void *));
-void EC_EX_DATA_clear_free_data(EC_EXTRA_DATA **, void *(*dup_func) (void *),
-                                void (*free_func) (void *),
-                                void (*clear_free_func) (void *));
-void EC_EX_DATA_free_all_data(EC_EXTRA_DATA **);
-void EC_EX_DATA_clear_free_all_data(EC_EXTRA_DATA **);
 
 struct ec_point_st {
     const EC_METHOD *meth;
@@ -305,6 +301,18 @@ struct ec_point_st {
     int Z_is_one;               /* enable optimized point arithmetics for
                                  * special case */
 } /* EC_POINT */ ;
+
+NISTP224_PRE_COMP *EC_nistp224_pre_comp_dup(NISTP224_PRE_COMP *);
+NISTP256_PRE_COMP *EC_nistp256_pre_comp_dup(NISTP256_PRE_COMP *);
+NISTP521_PRE_COMP *EC_nistp521_pre_comp_dup(NISTP521_PRE_COMP *);
+NISTZ256_PRE_COMP *EC_nistz256_pre_comp_dup(NISTZ256_PRE_COMP *);
+NISTP256_PRE_COMP *EC_nistp256_pre_comp_dup(NISTP256_PRE_COMP *);
+EC_PRE_COMP *EC_ec_pre_comp_dup(EC_PRE_COMP *);
+void EC_nistp224_pre_comp_free(NISTP224_PRE_COMP *);
+void EC_nistp256_pre_comp_free(NISTP256_PRE_COMP *);
+void EC_nistp521_pre_comp_free(NISTP521_PRE_COMP *);
+void EC_nistz256_pre_comp_free(NISTZ256_PRE_COMP *);
+void EC_ec_pre_comp_free(EC_PRE_COMP *);
 
 /*
  * method functions in ec_mult.c (ec_lib.c uses these as defaults if
