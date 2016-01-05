@@ -350,6 +350,16 @@ typedef unsigned __int64 uint64_t;
 #  endif
 # endif
 
+# ifdef __STDC_VERSION__
+#  if (__STDC_VERSION__ >= 201112L)
+#   include <stdnoreturn.h>
+#  elif defined(__GNUC__)
+#   define noreturn __attribute__((noreturn))
+#  else
+#   define noreturn
+#  endif
+# endif
+
 #ifdef  __cplusplus
 }
 #endif
