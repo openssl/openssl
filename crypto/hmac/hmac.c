@@ -61,6 +61,7 @@
 #include <string.h>
 #include "internal/cryptlib.h"
 #include <openssl/hmac.h>
+#include <openssl/opensslconf.h>
 #include "hmac_lcl.h"
 
 int HMAC_Init_ex(HMAC_CTX *ctx, const void *key, int len,
@@ -127,7 +128,7 @@ int HMAC_Init_ex(HMAC_CTX *ctx, const void *key, int len,
     return 0;
 }
 
-#ifndef OPENSSL_NO_DEPRECATED
+#if OPENSSL_API_COMPAT < 0x10100000L
 int HMAC_Init(HMAC_CTX *ctx, const void *key, int len, const EVP_MD *md)
 {
     if (key && md)

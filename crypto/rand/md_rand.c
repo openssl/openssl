@@ -128,6 +128,7 @@
 # include <time.h>
 #endif
 
+#include <openssl/opensslconf.h>
 #include <openssl/crypto.h>
 #include <openssl/rand.h>
 #include <openssl/async.h>
@@ -172,7 +173,7 @@ static int rand_seed(const void *buf, int num);
 static int rand_add(const void *buf, int num, double add_entropy);
 static int rand_bytes(unsigned char *buf, int num, int pseudo);
 static int rand_nopseudo_bytes(unsigned char *buf, int num);
-#ifndef OPENSSL_NO_DEPRECATED
+#if OPENSSL_API_COMPAT < 0x10100000L
 static int rand_pseudo_bytes(unsigned char *buf, int num);
 #endif
 static int rand_status(void);
@@ -182,7 +183,7 @@ static RAND_METHOD rand_meth = {
     rand_nopseudo_bytes,
     rand_cleanup,
     rand_add,
-#ifndef OPENSSL_NO_DEPRECATED
+#if OPENSSL_API_COMPAT < 0x10100000L
     rand_pseudo_bytes,
 #else
     NULL,
@@ -627,7 +628,7 @@ static int rand_nopseudo_bytes(unsigned char *buf, int num)
     return rand_bytes(buf, num, 0);
 }
 
-#ifndef OPENSSL_NO_DEPRECATED
+#if OPENSSL_API_COMPAT < 0x10100000L
 /*
  * pseudo-random bytes that are guaranteed to be unique but not unpredictable
  */

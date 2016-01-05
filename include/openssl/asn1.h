@@ -61,6 +61,7 @@
 
 # include <time.h>
 # include <openssl/e_os2.h>
+# include <openssl/opensslconf.h>
 # include <openssl/bio.h>
 # include <openssl/stack.h>
 # include <openssl/safestack.h>
@@ -68,7 +69,7 @@
 # include <openssl/symhacks.h>
 
 # include <openssl/ossl_typ.h>
-# ifdef OPENSSL_USE_DEPRECATED
+# if OPENSSL_API_COMPAT < 0x10100000L
 #  include <openssl/bn.h>
 # endif
 

@@ -60,11 +60,12 @@
 #ifndef HEADER_UI_H
 # define HEADER_UI_H
 
-# ifdef OPENSSL_USE_DEPRECATED
+# if OPENSSL_API_COMPAT < 0x10100000L
 #  include <openssl/crypto.h>
 # endif
 # include <openssl/safestack.h>
 # include <openssl/ossl_typ.h>
+# include <openssl/opensslconf.h>
 
 #ifdef  __cplusplus
 extern "C" {

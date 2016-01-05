@@ -75,8 +75,9 @@ static void *dummy = &dummy;
 #include <openssl/dsa.h>
 #include <openssl/rand.h>
 #include <openssl/sha.h>
+#include <openssl/opensslconf.h>
 
-#ifndef OPENSSL_NO_DEPRECATED
+#if OPENSSL_API_COMPAT < 0x00908000L
 DSA *DSA_generate_parameters(int bits,
                              unsigned char *seed_in, int seed_len,
                              int *counter_ret, unsigned long *h_ret,
