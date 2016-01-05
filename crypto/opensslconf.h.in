@@ -1,20 +1,44 @@
 /* crypto/opensslconf.h.in */
 
 /*
- * Applications should use -DOPENSSL_USE_DEPRECATED to enable access to
- * deprecated functions. But if the library has been built to disable
- * deprecated functions then this will not work
+ * Applications should use -DOPENSSL_API_COMPAT=<version> to suppress the
+ * declarations of functions deprecated in or before <version>. Otherwise, they
+ * still won't see them if the library has been built to disable deprecated
+ * functions.
  */
-#if defined(OPENSSL_NO_DEPRECATED) && defined(OPENSSL_USE_DEPRECATED)
-#error "OPENSSL_USE_DEPRECATED has been defined, but OpenSSL has been built without support for deprecated functions"
+#if defined(OPENSSL_NO_DEPRECATED)
+# define DECLARE_DEPRECATED(f)
+#elif __GNUC__ > 3 || (__GNUC__ == 3 && __GNUC_MINOR__ > 0)
+# define DECLARE_DEPRECATED(f)    f __attribute__ ((deprecated));
+#else
+# define DECLARE_DEPRECATED(f)   f;
 #endif
 
-/* Test for support for deprecated attribute */
-#if __GNUC__ > 3 || \
-  (__GNUC__ == 3 && __GNUC_MINOR__ > 0)
-#define DECLARE_DEPRECATED(f)    f __attribute__ ((deprecated))
+#ifndef OPENSSL_MIN_API
+#define OPENSSL_MIN_API 0
+#endif
+
+#if !defined(OPENSSL_API_COMPAT) || OPENSSL_API_COMPAT < OPENSSL_MIN_API
+#undef OPENSSL_API_COMPAT
+#define OPENSSL_API_COMPAT OPENSSL_MIN_API
+#endif
+
+#if OPENSSL_API_COMPAT < 0x10100000L
+# define DEPRECATEDIN_1_1_0(f)   DECLARE_DEPRECATED(f)
 #else
-#define DECLARE_DEPRECATED(f)    f
+# define DEPRECATEDIN_1_1_0(f)
+#endif
+
+#if OPENSSL_API_COMPAT < 0x10000000L
+# define DEPRECATEDIN_1_0_0(f)   DECLARE_DEPRECATED(f)
+#else
+# define DEPRECATEDIN_1_0_0(f)
+#endif
+
+#if OPENSSL_API_COMPAT < 0x00908000L
+# define DEPRECATEDIN_0_9_8(f)   DECLARE_DEPRECATED(f)
+#else
+# define DEPRECATEDIN_0_9_8(f)
 #endif
 
 /* Generate 80386 code? */

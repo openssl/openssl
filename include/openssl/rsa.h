@@ -59,12 +59,13 @@
 #ifndef HEADER_RSA_H
 # define HEADER_RSA_H
 
+# include <openssl/opensslconf.h>
 # include <openssl/asn1.h>
 
 # include <openssl/bio.h>
 # include <openssl/crypto.h>
 # include <openssl/ossl_typ.h>
-# ifdef OPENSSL_USE_DEPRECATED
+# if OPENSSL_API_COMPAT < 0x10100000L
 #  include <openssl/bn.h>
 # endif
 
@@ -212,7 +213,7 @@ struct rsa_st {
  * private key operations.
  */
 # define RSA_FLAG_NO_CONSTTIME           0x0100
-# ifdef OPENSSL_USE_DEPRECATED
+# if OPENSSL_API_COMPAT < 0x00908000L
 /* deprecated name for the flag*/
 /*
  * new with 0.9.7h; the built-in RSA
@@ -316,11 +317,9 @@ int RSA_size(const RSA *rsa);
 int RSA_security_bits(const RSA *rsa);
 
 /* Deprecated version */
-# ifdef OPENSSL_USE_DEPRECATED
-DECLARE_DEPRECATED(RSA *RSA_generate_key(int bits, unsigned long e, void
-                                          (*callback) (int, int, void *),
-                                         void *cb_arg));
-# endif                         /* defined(OPENSSL_USE_DEPRECATED) */
+DEPRECATEDIN_0_9_8(RSA *RSA_generate_key(int bits, unsigned long e, void
+                                         (*callback) (int, int, void *),
+                                         void *cb_arg))
 
 /* New version */
 int RSA_generate_key_ex(RSA *rsa, int bits, BIGNUM *e, BN_GENCB *cb);

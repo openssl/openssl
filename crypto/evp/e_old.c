@@ -57,7 +57,9 @@
  *
  */
 
-#ifdef OPENSSL_NO_DEPRECATED
+#include <openssl/opensslconf.h>
+
+#if OPENSSL_API_COMPAT >= 0x00908000L
 static void *dummy = &dummy;
 #else
 

@@ -59,6 +59,7 @@
 #include <stdio.h>
 #include <time.h>
 #include "internal/cryptlib.h"
+#include <openssl/opensslconf.h>
 #include <openssl/rand.h>
 
 #ifndef OPENSSL_NO_ENGINE
@@ -159,7 +160,7 @@ int RAND_bytes(unsigned char *buf, int num)
     return (-1);
 }
 
-#ifndef OPENSSL_NO_DEPRECATED
+#if OPENSSL_API_COMPAT < 0x10100000L
 int RAND_pseudo_bytes(unsigned char *buf, int num)
 {
     const RAND_METHOD *meth = RAND_get_rand_method();

@@ -67,7 +67,7 @@
 # endif
 
 # include <openssl/ossl_typ.h>
-# ifdef OPENSSL_USE_DEPRECATED
+# if OPENSSL_API_COMPAT < 0x10100000L
 #  include <openssl/evp.h>
 #  include <openssl/bn.h>
 #  include <openssl/x509.h>

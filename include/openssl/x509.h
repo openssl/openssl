@@ -65,6 +65,7 @@
 # define HEADER_X509_H
 
 # include <openssl/e_os2.h>
+# include <openssl/opensslconf.h>
 # include <openssl/symhacks.h>
 # include <openssl/buffer.h>
 # include <openssl/evp.h>
@@ -77,7 +78,7 @@
 #  include <openssl/ec.h>
 # endif
 
-# ifdef OPENSSL_USE_DEPRECATED
+# if OPENSSL_API_COMPAT < 0x10100000L
 #  ifndef OPENSSL_NO_RSA
 #   include <openssl/rsa.h>
 #  endif

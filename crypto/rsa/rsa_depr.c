@@ -61,10 +61,11 @@
 #include <stdio.h>
 #include <time.h>
 #include "internal/cryptlib.h"
+#include <openssl/opensslconf.h>
 #include <openssl/bn.h>
 #include <openssl/rsa.h>
 
-#ifdef OPENSSL_NO_DEPRECATED
+#if OPENSSL_API_COMPAT >= 0x00908000L
 
 static void *dummy = &dummy;
 

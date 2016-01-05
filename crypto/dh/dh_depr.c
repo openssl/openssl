@@ -59,10 +59,11 @@
 #include "internal/cryptlib.h"
 #include <openssl/bn.h>
 #include <openssl/dh.h>
+#include <openssl/opensslconf.h>
 
 static void *dummy = &dummy;
 
-#ifndef OPENSSL_NO_DEPRECATED
+#if OPENSSL_API_COMPAT < 0x00908000L
 DH *DH_generate_parameters(int prime_len, int generator,
                            void (*callback) (int, int, void *), void *cb_arg)
 {

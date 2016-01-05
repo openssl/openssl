@@ -71,7 +71,7 @@
 #  error ENGINE is disabled.
 # endif
 
-# ifdef OPENSSL_USE_DEPRECATED
+# if OPENSSL_API_COMPAT < 0x10100000L
 #  include <openssl/bn.h>
 #  ifndef OPENSSL_NO_RSA
 #   include <openssl/rsa.h>

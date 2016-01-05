@@ -62,11 +62,12 @@
 #include <time.h>
 #include "internal/cryptlib.h"
 #include "bn_lcl.h"
+#include <openssl/opensslconf.h>
 #include <openssl/rand.h>
 
 static void *dummy = &dummy;
 
-#ifndef OPENSSL_NO_DEPRECATED
+#if OPENSSL_API_COMPAT < 0x00908000L
 BIGNUM *BN_generate_prime(BIGNUM *ret, int bits, int safe,
                           const BIGNUM *add, const BIGNUM *rem,
                           void (*callback) (int, int, void *), void *cb_arg)
