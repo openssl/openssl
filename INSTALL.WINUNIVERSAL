@@ -45,7 +45,7 @@
 
  Once all configuration are build run
 
- > ms\do_packwincore.bat
+ > ms\do_packwinuniversal.bat
 
  To pack the build output into vsout\package
 
