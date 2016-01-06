@@ -41,7 +41,7 @@ to adjust the supported digest algorithms.  This must be done before
 any SSL handles are created for the context.
 
 The B<mtype> argument specifies a DANE TLSA matching type and the
-the B<md> argument specifies the associated digest algorithm handle.
+B<md> argument specifies the associated digest algorithm handle.
 The B<ord> argument specifies a strength ordinal.  Algorithms with
 a larger strength ordinal are considered more secure.  Strength
 ordinals are used to implement RFC7671 digest algorithm agility.
@@ -181,7 +181,7 @@ the lifetime of the SSL connection.
     }
 
     ret = SSL_dane_tlsa_add(ssl, usage, selector, mtype, data, len);
-    /* free data as approriate */
+    /* free data as appropriate */
 
     if (ret < 0)
         /* handle SSL library internal error */

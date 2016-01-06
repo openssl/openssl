@@ -35,7 +35,7 @@ that can match the peer's certificate.  Any previous names set via
 SSL_set1_host() or SSL_add1_host() are retained, no change is made
 if B<name> is NULL or empty.  When multiple names are configured,
 the peer is considered verified when any name matches.  This function
-is required for DANE TLA in the presence of service name indirection
+is required for DANE TLSA in the presence of service name indirection
 via CNAME, MX or SRV records as specified in RFC7671, RFC7672 or
 RFC7673.
 
