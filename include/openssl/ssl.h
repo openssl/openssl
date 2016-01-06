@@ -327,8 +327,6 @@ typedef struct ssl_conf_ctx_st SSL_CONF_CTX;
 
 DEFINE_CONST_STACK_OF(SSL_CIPHER)
 
-DECLARE_STACK_OF(danetls_record)
-
 /* SRTP protection profiles for use with the use_srtp extension (RFC 5764)*/
 typedef struct srtp_protection_profile_st {
     const char *name;

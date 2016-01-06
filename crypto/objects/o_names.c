@@ -7,6 +7,7 @@
 #include <openssl/objects.h>
 #include <openssl/safestack.h>
 #include <openssl/e_os2.h>
+#include "o_names.h"
 
 /*
  * Later versions of DEC C has started to add lnkage information to certain
@@ -28,13 +29,11 @@ DECLARE_LHASH_OF(OBJ_NAME);
 static LHASH_OF(OBJ_NAME) *names_lh = NULL;
 static int names_type_num = OBJ_NAME_TYPE_NUM;
 
-typedef struct name_funcs_st {
+struct name_funcs_st {
     unsigned long (*hash_func) (const char *name);
     int (*cmp_func) (const char *a, const char *b);
     void (*free_func) (const char *, int, const char *);
-} NAME_FUNCS;
-
-DEFINE_STACK_OF(NAME_FUNCS)
+};
 
 static STACK_OF(NAME_FUNCS) *name_funcs_stack;
 

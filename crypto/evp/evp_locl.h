@@ -295,3 +295,6 @@ struct evp_Encode_Ctx_st {
     int line_num;
     int expect_nl;
 };
+
+typedef struct evp_pbe_st EVP_PBE_CTL;
+DEFINE_STACK_OF(EVP_PBE_CTL)

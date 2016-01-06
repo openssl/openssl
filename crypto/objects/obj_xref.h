@@ -6,6 +6,8 @@ typedef struct {
     int pkey_id;
 } nid_triple;
 
+DEFINE_STACK_OF(nid_triple)
+
 static const nid_triple sigoid_srt[] = {
     {NID_md2WithRSAEncryption, NID_md2, NID_rsaEncryption},
     {NID_md5WithRSAEncryption, NID_md5, NID_rsaEncryption},
