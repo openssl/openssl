@@ -1204,7 +1204,7 @@ for ($i=0;$i<7;$i++) {
 
 	# above map() describes stack layout with 5 temporary
 	# 256-bit vectors on top, then we take extra word for
-	# OPENSS_ia32cap_P copy.
+	# OPENSSL_ia32cap_P copy.
 	&stack_push(8*5+1);
 						if ($sse2) {
 	&call	("_picup_eax");
@@ -1354,7 +1354,7 @@ for ($i=0;$i<7;$i++) {
 	# above map() describes stack layout with 18 temporary
 	# 256-bit vectors on top, then we take extra words for
 	# !in1infty, !in2infty, result of check for zero and
-	# OPENSS_ia32cap_P copy. [one unused word for padding]
+	# OPENSSL_ia32cap_P copy. [one unused word for padding]
 	&stack_push(8*18+5);
 						if ($sse2) {
 	&call	("_picup_eax");
@@ -1627,7 +1627,7 @@ for ($i=0;$i<7;$i++) {
 
 	# above map() describes stack layout with 15 temporary
 	# 256-bit vectors on top, then we take extra words for
-	# !in1infty, !in2infty, and OPENSS_ia32cap_P copy.
+	# !in1infty, !in2infty, and OPENSSL_ia32cap_P copy.
 	&stack_push(8*15+3);
 						if ($sse2) {
 	&call	("_picup_eax");
