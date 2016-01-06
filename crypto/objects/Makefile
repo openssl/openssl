@@ -21,7 +21,7 @@ LIBOBJ= o_names.o obj_dat.o obj_lib.o obj_err.o obj_xref.o
 
 SRC= $(LIBSRC)
 
-HEADER=	obj_dat.h obj_xref.h
+HEADER=	obj_dat.h obj_xref.h o_names.h
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 

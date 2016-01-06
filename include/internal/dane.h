@@ -97,6 +97,8 @@ typedef struct danetls_record_st {
     EVP_PKEY *spki;
 } danetls_record;
 
+DEFINE_STACK_OF(danetls_record)
+
 /*
  * Shared DANE context
  */
