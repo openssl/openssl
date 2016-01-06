@@ -233,9 +233,6 @@ int pkcs8_main(int argc, char **argv)
         goto end;
     }
 
-    if (!app_load_modules(NULL))
-        goto end;
-
     if ((pbe_nid == -1) && !cipher)
         pbe_nid = NID_pbeWithMD5AndDES_CBC;
 

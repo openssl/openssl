@@ -39,7 +39,7 @@ LIBOBJ= set_key.o  ecb_enc.o  cbc_enc.o \
 
 SRC= $(LIBSRC)
 
-HEADER=	des_locl.h rpc_des.h spr.h des_ver.h
+HEADER=	des_locl.h rpc_des.h spr.h
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 
@@ -114,7 +114,7 @@ ecb_enc.o: ../../include/openssl/des.h ../../include/openssl/e_os2.h
 ecb_enc.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
 ecb_enc.o: ../../include/openssl/ossl_typ.h ../../include/openssl/safestack.h
 ecb_enc.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-ecb_enc.o: des_locl.h des_ver.h ecb_enc.c
+ecb_enc.o: des_locl.h ecb_enc.c
 enc_read.o: ../../e_os.h ../../include/openssl/bio.h
 enc_read.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 enc_read.o: ../../include/openssl/des.h ../../include/openssl/e_os2.h
@@ -161,8 +161,7 @@ read2pwd.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 read2pwd.o: ../../include/openssl/symhacks.h ../../include/openssl/ui.h
 read2pwd.o: read2pwd.c
 rpc_enc.o: ../../include/openssl/des.h ../../include/openssl/e_os2.h
-rpc_enc.o: ../../include/openssl/opensslconf.h des_locl.h des_ver.h rpc_des.h
-rpc_enc.o: rpc_enc.c
+rpc_enc.o: ../../include/openssl/opensslconf.h des_locl.h rpc_des.h rpc_enc.c
 set_key.o: ../../include/openssl/crypto.h ../../include/openssl/des.h
 set_key.o: ../../include/openssl/e_os2.h ../../include/openssl/opensslconf.h
 set_key.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h

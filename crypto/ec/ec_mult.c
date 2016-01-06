@@ -101,7 +101,7 @@ static EC_PRE_COMP *ec_pre_comp_new(const EC_GROUP *group)
         return NULL;
 
     ret = OPENSSL_zalloc(sizeof(*ret));
-    if (!ret) {
+    if (ret == NULL) {
         ECerr(EC_F_EC_PRE_COMP_NEW, ERR_R_MALLOC_FAILURE);
         return ret;
     }
@@ -296,10 +296,10 @@ int ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
     val_sub = OPENSSL_malloc(totalnum * sizeof val_sub[0]);
 
     /* Ensure wNAF is initialised in case we end up going to err */
-    if (wNAF)
+    if (wNAF != NULL)
         wNAF[0] = NULL;         /* preliminary pivot */
 
-    if (!wsize || !wNAF_len || !wNAF || !val_sub) {
+    if (wsize == NULL || wNAF_len == NULL || wNAF == NULL || val_sub == NULL) {
         ECerr(EC_F_EC_WNAF_MUL, ERR_R_MALLOC_FAILURE);
         goto err;
     }
@@ -657,7 +657,7 @@ int ec_wNAF_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
                                              * and store */
 
     points = OPENSSL_malloc(sizeof(*points) * (num + 1));
-    if (!points) {
+    if (points == NULL) {
         ECerr(EC_F_EC_WNAF_PRECOMPUTE_MULT, ERR_R_MALLOC_FAILURE);
         goto err;
     }

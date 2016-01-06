@@ -15,7 +15,7 @@ my @sstacklst;
 my @asn1setlst;
 my @p12stklst;
 my @lhashlst;
-my @source = (<include/openssl/*.h>, <crypto/*.[ch]>, <crypto/*/*.[ch]>, <ssl/*.[ch]>, <apps/*.[ch]>);
+my @source = (<include/openssl/*.h>, <crypto/include/internal/*.h>, <crypto/*.[ch]>, <crypto/*/*.[ch]>, <ssl/*.[ch]>, <apps/*.[ch]>);
 foreach $file (@source) {
     next if -l $file;
 

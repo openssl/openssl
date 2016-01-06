@@ -9,7 +9,7 @@
 #include "gost_lcl.h"
 #include <string.h>
 #include <openssl/rand.h>
-#include <openssl/ecdsa.h>
+#include <openssl/ec.h>
 #include <openssl/err.h>
 #include "e_gost_err.h"
 #ifdef DEBUG_SIGN

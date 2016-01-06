@@ -60,7 +60,7 @@
 #include <string.h>
 #include <stdlib.h>
 /*
- * If you wish to build this outside of SSLeay, remove the following lines
+ * If you wish to build this outside of OpenSSL, remove the following lines
  * and things should work as expected
  */
 #include "internal/cryptlib.h"

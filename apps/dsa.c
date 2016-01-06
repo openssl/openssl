@@ -194,16 +194,13 @@ int dsa_main(int argc, char **argv)
     argc = opt_num_rest();
     argv = opt_rest();
     private = pubin || pubout ? 0 : 1;
-    if (text)
+    if (text && !pubin)
         private = 1;
 
     if (!app_passwd(passinarg, passoutarg, &passin, &passout)) {
         BIO_printf(bio_err, "Error getting passwords\n");
         goto end;
     }
-
-    if (!app_load_modules(NULL))
-        goto end;
 
     BIO_printf(bio_err, "read DSA key\n");
     {
@@ -230,7 +227,7 @@ int dsa_main(int argc, char **argv)
         goto end;
 
     if (text) {
-        assert(private);
+        assert(pubin || private);
         if (!DSA_print(out, dsa, 0)) {
             perror(outfile);
             ERR_print_errors(bio_err);
@@ -270,6 +267,11 @@ int dsa_main(int argc, char **argv)
         pk = EVP_PKEY_new();
         EVP_PKEY_set1_DSA(pk, dsa);
         if (outformat == FORMAT_PVK) {
+            if (pubin) {
+                BIO_printf(bio_err, "PVK form impossible with public key input\n");
+                EVP_PKEY_free(pk);
+                goto end;
+            }
             assert(private);
             i = i2b_PVK_bio(out, pk, pvk_encr, 0, passout);
         }

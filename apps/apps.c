@@ -118,9 +118,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#if !defined(OPENSSL_SYS_WIN32) && !defined(OPENSSL_SYS_WINCE) && !defined(NETWARE_CLIB)
-# include <strings.h>
-#endif
 #ifndef NO_SYS_TYPES_H
 # include <sys/types.h>
 #endif
@@ -435,14 +432,14 @@ static char *app_get_pass(char *arg, int keepbio)
     int i;
 
     if (strncmp(arg, "pass:", 5) == 0)
-        return BUF_strdup(arg + 5);
+        return OPENSSL_strdup(arg + 5);
     if (strncmp(arg, "env:", 4) == 0) {
         tmp = getenv(arg + 4);
         if (!tmp) {
             BIO_printf(bio_err, "Can't read environment variable %s\n", arg + 4);
             return NULL;
         }
-        return BUF_strdup(tmp);
+        return OPENSSL_strdup(tmp);
     }
     if (!keepbio || !pwdbio) {
         if (strncmp(arg, "file:", 5) == 0) {
@@ -498,7 +495,7 @@ static char *app_get_pass(char *arg, int keepbio)
     tmp = strchr(tpass, '\n');
     if (tmp)
         *tmp = 0;
-    return BUF_strdup(tpass);
+    return OPENSSL_strdup(tpass);
 }
 
 static CONF *app_load_config_(BIO *in, const char *filename)
@@ -649,7 +646,7 @@ int load_cert_crl_http(const char *url, X509 **pcert, X509_CRL **pcrl)
     if (!bio || !BIO_set_conn_port(bio, port))
         goto err;
     rctx = OCSP_REQ_CTX_new(bio, 1024);
-    if (!rctx)
+    if (rctx == NULL)
         goto err;
     if (!OCSP_REQ_CTX_http(rctx, "GET", path))
         goto err;
@@ -859,7 +856,7 @@ EVP_PKEY *load_pubkey(const char *file, int format, int maybe_stdin,
         rsa = d2i_RSAPublicKey_bio(key, NULL);
         if (rsa) {
             pkey = EVP_PKEY_new();
-            if (pkey)
+            if (pkey != NULL)
                 EVP_PKEY_set1_RSA(pkey, rsa);
             RSA_free(rsa);
         } else
@@ -869,9 +866,9 @@ EVP_PKEY *load_pubkey(const char *file, int format, int maybe_stdin,
         rsa = PEM_read_bio_RSAPublicKey(key, NULL,
                                         (pem_password_cb *)password_callback,
                                         &cb_data);
-        if (rsa) {
+        if (rsa != NULL) {
             pkey = EVP_PKEY_new();
-            if (pkey)
+            if (pkey != NULL)
                 EVP_PKEY_set1_RSA(pkey, rsa);
             RSA_free(rsa);
         } else
@@ -1255,7 +1252,7 @@ X509_STORE *setup_verify(char *CAfile, char *CApath, int noCAfile, int noCApath)
     X509_STORE *store = X509_STORE_new();
     X509_LOOKUP *lookup;
 
-    if (!store)
+    if (store == NULL)
         goto end;
 
     if(CAfile != NULL || !noCAfile) {
@@ -1447,7 +1444,7 @@ int save_serial(char *serialfile, char *suffix, BIGNUM *serial,
     }
 
     if (suffix == NULL)
-        BUF_strlcpy(buf[0], serialfile, BSIZE);
+        OPENSSL_strlcpy(buf[0], serialfile, BSIZE);
     else {
 #ifndef OPENSSL_SYS_VMS
         j = BIO_snprintf(buf[0], sizeof buf[0], "%s.%s", serialfile, suffix);
@@ -1544,7 +1541,7 @@ int rand_serial(BIGNUM *b, ASN1_INTEGER *ai)
     else
         btmp = BN_new();
 
-    if (!btmp)
+    if (btmp == NULL)
         return 0;
 
     if (!BN_pseudo_rand(btmp, SERIAL_RAND_BITS, 0, 0))
@@ -1904,7 +1901,7 @@ int bio_to_mem(unsigned char **out, int maxlen, BIO *in)
     int len, ret;
     unsigned char tbuf[1024];
     mem = BIO_new(BIO_s_mem());
-    if (!mem)
+    if (mem == NULL)
         return -1;
     for (;;) {
         if ((maxlen != -1) && maxlen < 1024)
@@ -1933,7 +1930,7 @@ int pkey_ctrl_string(EVP_PKEY_CTX *ctx, char *value)
 {
     int rv;
     char *stmp, *vtmp = NULL;
-    stmp = BUF_strdup(value);
+    stmp = OPENSSL_strdup(value);
     if (!stmp)
         return -1;
     vtmp = strchr(stmp, ':');
@@ -2887,3 +2884,17 @@ BIO *bio_open_default_quiet(const char *filename, char mode, int format)
     return bio_open_default_(filename, mode, format, 1);
 }
 
+void wait_for_async(SSL *s)
+{
+    int width, fd;
+    fd_set asyncfds;
+
+    fd = SSL_get_async_wait_fd(s);
+    if (fd < 0)
+        return;
+
+    width = fd + 1;
+    FD_ZERO(&asyncfds);
+    openssl_fdset(fd, &asyncfds);
+    select(width, (void *)&asyncfds, NULL, NULL, NULL);
+}

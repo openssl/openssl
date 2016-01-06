@@ -39,8 +39,4 @@ ASN1_OBJECT_free() returns no value.
 
 L<ERR_get_error(3)>, L<d2i_ASN1_OBJECT(3)>
 
-=head1 HISTORY
-
-ASN1_OBJECT_new() and ASN1_OBJECT_free() are available in all versions of SSLeay and OpenSSL.
-
 =cut

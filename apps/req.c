@@ -169,7 +169,7 @@ OPTIONS req_options[] = {
     {"multivalue-rdn", OPT_MULTIVALUE_RDN, '-',
      "Enable support for multivalued RDNs"},
     {"days", OPT_DAYS, 'p', "Number of days cert is valid for"},
-    {"set-serial", OPT_SET_SERIAL, 'p', "Serial number to use"},
+    {"set_serial", OPT_SET_SERIAL, 'p', "Serial number to use"},
     {"extensions", OPT_EXTENSIONS, 's',
      "Cert extension section (override value in config file)"},
     {"reqexts", OPT_REQEXTS, 's',
@@ -1189,8 +1189,8 @@ static int add_DN_object(X509_NAME *n, char *text, const char *def,
         BIO_printf(bio_err, "%s [%s]:", text, def);
     (void)BIO_flush(bio_err);
     if (value != NULL) {
-        BUF_strlcpy(buf, value, sizeof buf);
-        BUF_strlcat(buf, "\n", sizeof buf);
+        OPENSSL_strlcpy(buf, value, sizeof buf);
+        OPENSSL_strlcat(buf, "\n", sizeof buf);
         BIO_printf(bio_err, "%s\n", value);
     } else {
         buf[0] = '\0';
@@ -1208,8 +1208,8 @@ static int add_DN_object(X509_NAME *n, char *text, const char *def,
     else if (buf[0] == '\n') {
         if ((def == NULL) || (def[0] == '\0'))
             return (1);
-        BUF_strlcpy(buf, def, sizeof buf);
-        BUF_strlcat(buf, "\n", sizeof buf);
+        OPENSSL_strlcpy(buf, def, sizeof buf);
+        OPENSSL_strlcat(buf, "\n", sizeof buf);
     } else if ((buf[0] == '.') && (buf[1] == '\n'))
         return (1);
 
@@ -1248,8 +1248,8 @@ static int add_attribute_object(X509_REQ *req, char *text, const char *def,
         BIO_printf(bio_err, "%s [%s]:", text, def);
     (void)BIO_flush(bio_err);
     if (value != NULL) {
-        BUF_strlcpy(buf, value, sizeof buf);
-        BUF_strlcat(buf, "\n", sizeof buf);
+        OPENSSL_strlcpy(buf, value, sizeof buf);
+        OPENSSL_strlcat(buf, "\n", sizeof buf);
         BIO_printf(bio_err, "%s\n", value);
     } else {
         buf[0] = '\0';
@@ -1267,8 +1267,8 @@ static int add_attribute_object(X509_REQ *req, char *text, const char *def,
     else if (buf[0] == '\n') {
         if ((def == NULL) || (def[0] == '\0'))
             return (1);
-        BUF_strlcpy(buf, def, sizeof buf);
-        BUF_strlcat(buf, "\n", sizeof buf);
+        OPENSSL_strlcpy(buf, def, sizeof buf);
+        OPENSSL_strlcat(buf, "\n", sizeof buf);
     } else if ((buf[0] == '.') && (buf[1] == '\n'))
         return (1);
 
@@ -1428,7 +1428,7 @@ static EVP_PKEY_CTX *set_keygen_ctx(const char *gstr,
             return NULL;
         }
         EVP_PKEY_asn1_get0_info(NULL, NULL, NULL, NULL, &anam, ameth);
-        *palgnam = BUF_strdup(anam);
+        *palgnam = OPENSSL_strdup(anam);
 #ifndef OPENSSL_NO_ENGINE
         if (tmpeng)
             ENGINE_finish(tmpeng);
@@ -1442,7 +1442,7 @@ static EVP_PKEY_CTX *set_keygen_ctx(const char *gstr,
     } else
         gctx = EVP_PKEY_CTX_new_id(*pkey_type, keygen_engine);
 
-    if (!gctx) {
+    if (gctx == NULL) {
         BIO_puts(bio_err, "Error allocating keygen context\n");
         ERR_print_errors(bio_err);
         return NULL;
@@ -1492,7 +1492,8 @@ static int do_sign_init(EVP_MD_CTX *ctx, EVP_PKEY *pkey,
     EVP_PKEY_CTX *pkctx = NULL;
     int i;
 
-    EVP_MD_CTX_init(ctx);
+    if (ctx == NULL)
+        return 0;
     if (!EVP_DigestSignInit(ctx, &pkctx, md, NULL, pkey))
         return 0;
     for (i = 0; i < sk_OPENSSL_STRING_num(sigopts); i++) {
@@ -1510,13 +1511,16 @@ int do_X509_sign(X509 *x, EVP_PKEY *pkey, const EVP_MD *md,
                  STACK_OF(OPENSSL_STRING) *sigopts)
 {
     int rv;
-    EVP_MD_CTX mctx;
+    EVP_MD_CTX *mctx = EVP_MD_CTX_new();
 
-    EVP_MD_CTX_init(&mctx);
-    rv = do_sign_init(&mctx, pkey, md, sigopts);
+    rv = do_sign_init(mctx, pkey, md, sigopts);
+    /* Note: X509_sign_ctx() calls ASN1_item_sign_ctx(), which destroys
+     * the EVP_MD_CTX we send it, so only destroy it here if the former
+     * isn't called */
     if (rv > 0)
-        rv = X509_sign_ctx(x, &mctx);
-    EVP_MD_CTX_cleanup(&mctx);
+        rv = X509_sign_ctx(x, mctx);
+    else
+        EVP_MD_CTX_free(mctx);
     return rv > 0 ? 1 : 0;
 }
 
@@ -1524,13 +1528,15 @@ int do_X509_REQ_sign(X509_REQ *x, EVP_PKEY *pkey, const EVP_MD *md,
                      STACK_OF(OPENSSL_STRING) *sigopts)
 {
     int rv;
-    EVP_MD_CTX mctx;
-
-    EVP_MD_CTX_init(&mctx);
-    rv = do_sign_init(&mctx, pkey, md, sigopts);
+    EVP_MD_CTX *mctx = EVP_MD_CTX_new();
+    rv = do_sign_init(mctx, pkey, md, sigopts);
+    /* Note: X509_REQ_sign_ctx() calls ASN1_item_sign_ctx(), which destroys
+     * the EVP_MD_CTX we send it, so only destroy it here if the former
+     * isn't called */
     if (rv > 0)
-        rv = X509_REQ_sign_ctx(x, &mctx);
-    EVP_MD_CTX_cleanup(&mctx);
+        rv = X509_REQ_sign_ctx(x, mctx);
+    else
+        EVP_MD_CTX_free(mctx);
     return rv > 0 ? 1 : 0;
 }
 
@@ -1538,12 +1544,14 @@ int do_X509_CRL_sign(X509_CRL *x, EVP_PKEY *pkey, const EVP_MD *md,
                      STACK_OF(OPENSSL_STRING) *sigopts)
 {
     int rv;
-    EVP_MD_CTX mctx;
-
-    EVP_MD_CTX_init(&mctx);
-    rv = do_sign_init(&mctx, pkey, md, sigopts);
+    EVP_MD_CTX *mctx = EVP_MD_CTX_new();
+    rv = do_sign_init(mctx, pkey, md, sigopts);
+    /* Note: X509_CRL_sign_ctx() calls ASN1_item_sign_ctx(), which destroys
+     * the EVP_MD_CTX we send it, so only destroy it here if the former
+     * isn't called */
     if (rv > 0)
-        rv = X509_CRL_sign_ctx(x, &mctx);
-    EVP_MD_CTX_cleanup(&mctx);
+        rv = X509_CRL_sign_ctx(x, mctx);
+    else
+        EVP_MD_CTX_free(mctx);
     return rv > 0 ? 1 : 0;
 }

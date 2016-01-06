@@ -2,18 +2,17 @@
 
 =head1 NAME
 
-dgst, sha, sha1, mdc2, ripemd160, sha224, sha256, sha384, sha512, md2, md4, md5, dss1 - message digests
+dgst, sha, sha1, mdc2, ripemd160, sha224, sha256, sha384, sha512, md4, md5 - message digests
 
 =head1 SYNOPSIS
 
 B<openssl> B<dgst> 
-[B<-sha|-sha1|-mdc2|-ripemd160|-sha224|-sha256|-sha384|-sha512|-md2|-md4|-md5|-dss1>]
+[B<-sha|-sha1|-mdc2|-ripemd160|-sha224|-sha256|-sha384|-sha512|-md4|-md5>]
 [B<-c>]
 [B<-d>]
 [B<-hex>]
 [B<-binary>]
 [B<-r>]
-[B<-non-fips-allow>]
 [B<-out filename>]
 [B<-sign filename>]
 [B<-keyform arg>]
@@ -22,7 +21,6 @@ B<openssl> B<dgst>
 [B<-prverify filename>]
 [B<-signature filename>]
 [B<-hmac key>]
-[B<-non-fips-allow>]
 [B<-fips-fingerprint>]
 [B<file...>]
 
@@ -35,6 +33,13 @@ B<openssl>
 The digest functions output the message digest of a supplied file or files
 in hexadecimal.  The digest functions also generate and verify digital
 signatures using message digests.
+
+The generic name, B<dgst>, may be used with an option specifying the
+algorithm to be used.
+The default digest is I<sha256>.
+The digest name may also be used as the command name.
+To see the list of supported algorithms, use the <Ilist --digest-commands>
+command.
 
 =head1 OPTIONS
 
@@ -62,11 +67,6 @@ output the digest or signature in binary form.
 =item B<-r>
 
 output the digest in the "coreutils" format used by programs like B<sha1sum>.
-
-=item B<-non-fips-allow>
-
-Allow use of non FIPS digest when in FIPS mode.  This has no effect when not in
-FIPS mode.
 
 =item B<-out filename>
 
@@ -152,10 +152,6 @@ Multiple files can be specified separated by a OS-dependent character.
 The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
 all others. 
 
-=item B<-non-fips-allow>
-
-enable use of non-FIPS algorithms such as MD5 even in FIPS mode.
-
 =item B<-fips-fingerprint>
 
 compute HMAC using a specific key
@@ -209,5 +205,9 @@ Hex signatures cannot be verified using B<openssl>.  Instead, use "xxd -r"
 or similar program to transform the hex signature into a binary signature
 prior to verification.
 
+=head1 HISTORY
+
+The default digest was changed from MD5 to SHA256 in Openssl 1.1.
+The FIPS-related options were removed in OpenSSL 1.1
 
 =cut

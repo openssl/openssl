@@ -129,9 +129,4 @@ L<SSL_CTX_set_session_id_context(3)>,
 L<SSL_CTX_set_timeout(3)>,
 L<SSL_CTX_flush_sessions(3)>
 
-=head1 HISTORY
-
-SSL_SESS_CACHE_NO_INTERNAL_STORE and SSL_SESS_CACHE_NO_INTERNAL
-were introduced in OpenSSL 0.9.6h.
-
 =cut

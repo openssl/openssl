@@ -78,7 +78,7 @@ int RSA_X931_derive_ex(RSA *rsa, BIGNUM *p1, BIGNUM *p2, BIGNUM *q1,
         goto err;
 
     ctx = BN_CTX_new();
-    if (!ctx)
+    if (ctx == NULL)
         goto err;
     BN_CTX_start(ctx);
 
@@ -101,9 +101,9 @@ int RSA_X931_derive_ex(RSA *rsa, BIGNUM *p1, BIGNUM *p2, BIGNUM *q1,
      * test programs to output selective parameters.
      */
 
-    if (Xp && !rsa->p) {
+    if (Xp && rsa->p == NULL) {
         rsa->p = BN_new();
-        if (!rsa->p)
+        if (rsa->p == NULL)
             goto err;
 
         if (!BN_X931_derive_prime_ex(rsa->p, p1, p2,
@@ -111,16 +111,16 @@ int RSA_X931_derive_ex(RSA *rsa, BIGNUM *p1, BIGNUM *p2, BIGNUM *q1,
             goto err;
     }
 
-    if (Xq && !rsa->q) {
+    if (Xq && rsa->q == NULL) {
         rsa->q = BN_new();
-        if (!rsa->q)
+        if (rsa->q == NULL)
             goto err;
         if (!BN_X931_derive_prime_ex(rsa->q, q1, q2,
                                      Xq, Xq1, Xq2, e, ctx, cb))
             goto err;
     }
 
-    if (!rsa->p || !rsa->q) {
+    if (rsa->p == NULL || rsa->q == NULL) {
         BN_CTX_end(ctx);
         BN_CTX_free(ctx);
         return 2;
@@ -153,7 +153,7 @@ int RSA_X931_derive_ex(RSA *rsa, BIGNUM *p1, BIGNUM *p2, BIGNUM *q1,
         goto err;               /* LCM((p-1)(q-1)) */
 
     ctx2 = BN_CTX_new();
-    if (!ctx2)
+    if (ctx2 == NULL)
         goto err;
 
     rsa->d = BN_mod_inverse(NULL, rsa->e, r0, ctx2); /* d */
@@ -196,7 +196,7 @@ int RSA_X931_generate_key_ex(RSA *rsa, int bits, const BIGNUM *e,
     BN_CTX *ctx = NULL;
 
     ctx = BN_CTX_new();
-    if (!ctx)
+    if (ctx == NULL)
         goto error;
 
     BN_CTX_start(ctx);
@@ -207,7 +207,7 @@ int RSA_X931_generate_key_ex(RSA *rsa, int bits, const BIGNUM *e,
 
     rsa->p = BN_new();
     rsa->q = BN_new();
-    if (!rsa->p || !rsa->q)
+    if (rsa->p == NULL || rsa->q == NULL)
         goto error;
 
     /* Generate two primes from Xp, Xq */

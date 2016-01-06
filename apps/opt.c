@@ -80,8 +80,7 @@ static char prog[40];
 #if defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_NETWARE)
 char *opt_progname(const char *argv0)
 {
-    int i;
-    int n;
+    size_t i, n;
     const char *p;
     char *q;
 
@@ -128,7 +127,7 @@ char *opt_progname(const char *argv0)
     q = strrchr(p, '.');
     strncpy(prog, p, sizeof prog - 1);
     prog[sizeof prog - 1] = '\0';
-    if (q == NULL || q - p >= sizeof prog)
+    if (q != NULL && q - p < sizeof prog)
         prog[q - p] = '\0';
     return prog;
 }

@@ -149,7 +149,7 @@ static int conn_state(BIO *b, BIO_CONNECT *c)
                             break;
                         }
                     OPENSSL_free(c->param_port);
-                    c->param_port = BUF_strdup(p);
+                    c->param_port = OPENSSL_strdup(p);
                 }
             }
 
@@ -189,7 +189,7 @@ static int conn_state(BIO *b, BIO_CONNECT *c)
             c->state = BIO_CONN_S_CREATE_SOCKET;
 
             ret = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-            if (ret == INVALID_SOCKET) {
+            if (ret == (int)INVALID_SOCKET) {
                 SYSerr(SYS_F_SOCKET, get_last_socket_error());
                 ERR_add_error_data(4, "host=", c->param_hostname,
                                    ":", c->param_port);
@@ -313,7 +313,7 @@ BIO_METHOD *BIO_s_connect(void)
 static int conn_new(BIO *bi)
 {
     bi->init = 0;
-    bi->num = INVALID_SOCKET;
+    bi->num = (int)INVALID_SOCKET;
     bi->flags = 0;
     if ((bi->ptr = (char *)BIO_CONNECT_new()) == NULL)
         return (0);
@@ -326,12 +326,12 @@ static void conn_close_socket(BIO *bio)
     BIO_CONNECT *c;
 
     c = (BIO_CONNECT *)bio->ptr;
-    if (bio->num != INVALID_SOCKET) {
+    if (bio->num != (int)INVALID_SOCKET) {
         /* Only do a shutdown if things were established */
         if (c->state == BIO_CONN_S_OK)
             shutdown(bio->num, 2);
         closesocket(bio->num);
-        bio->num = INVALID_SOCKET;
+        bio->num = (int)INVALID_SOCKET;
     }
 }
 
@@ -403,7 +403,7 @@ static long conn_ctrl(BIO *b, int cmd, long num, void *ptr)
 {
     BIO *dbio;
     int *ip;
-    const char **pptr;
+    const char **pptr = NULL;
     long ret = 1;
     BIO_CONNECT *data;
 
@@ -426,19 +426,28 @@ static long conn_ctrl(BIO *b, int cmd, long num, void *ptr)
     case BIO_C_GET_CONNECT:
         if (ptr != NULL) {
             pptr = (const char **)ptr;
-            if (num == 0) {
-                *pptr = data->param_hostname;
+        }
 
-            } else if (num == 1) {
-                *pptr = data->param_port;
-            } else if (num == 2) {
-                *pptr = (char *)&(data->ip[0]);
-            } else if (num == 3) {
-                *((int *)ptr) = data->port;
+        if (b->init) {
+            if (pptr != NULL) {
+                ret = 1;
+                if (num == 0) {
+                    *pptr = data->param_hostname;
+                } else if (num == 1) {
+                    *pptr = data->param_port;
+                } else if (num == 2) {
+                    *pptr = (char *)&(data->ip[0]);
+                } else {
+                    ret = 0;
+                }
             }
-            if ((!b->init) || (ptr == NULL))
+            if (num == 3) {
+                ret = data->port;
+            }
+        } else {
+            if (pptr != NULL)
                 *pptr = "not initialized";
-            ret = 1;
+            ret = 0;
         }
         break;
     case BIO_C_SET_CONNECT:
@@ -446,10 +455,10 @@ static long conn_ctrl(BIO *b, int cmd, long num, void *ptr)
             b->init = 1;
             if (num == 0) {
                 OPENSSL_free(data->param_hostname);
-                data->param_hostname = BUF_strdup(ptr);
+                data->param_hostname = OPENSSL_strdup(ptr);
             } else if (num == 1) {
                 OPENSSL_free(data->param_port);
-                data->param_port = BUF_strdup(ptr);
+                data->param_port = OPENSSL_strdup(ptr);
             } else if (num == 2) {
                 char buf[16];
                 unsigned char *p = ptr;
@@ -457,14 +466,14 @@ static long conn_ctrl(BIO *b, int cmd, long num, void *ptr)
                 BIO_snprintf(buf, sizeof buf, "%d.%d.%d.%d",
                              p[0], p[1], p[2], p[3]);
                 OPENSSL_free(data->param_hostname);
-                data->param_hostname = BUF_strdup(buf);
+                data->param_hostname = OPENSSL_strdup(buf);
                 memcpy(&(data->ip[0]), ptr, 4);
             } else if (num == 3) {
                 char buf[DECIMAL_SIZE(int) + 1];
 
                 BIO_snprintf(buf, sizeof buf, "%d", *(int *)ptr);
                 OPENSSL_free(data->param_port);
-                data->param_port = BUF_strdup(buf);
+                data->param_port = OPENSSL_strdup(buf);
                 data->port = *(int *)ptr;
             }
         }

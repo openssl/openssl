@@ -45,8 +45,4 @@ can be obtained by L<ERR_get_error(3)>.
 
 L<BN_CTX_new(3)>
 
-=head1 HISTORY
-
-BN_CTX_start(), BN_CTX_get() and BN_CTX_end() were added in OpenSSL 0.9.5.
-
 =cut

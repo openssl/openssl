@@ -82,7 +82,7 @@ static int pkey_dsa_init(EVP_PKEY_CTX *ctx)
 {
     DSA_PKEY_CTX *dctx;
     dctx = OPENSSL_malloc(sizeof(*dctx));
-    if (!dctx)
+    if (dctx == NULL)
         return 0;
     dctx->nbits = 1024;
     dctx->qbits = 160;
@@ -255,13 +255,13 @@ static int pkey_dsa_paramgen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
     int ret;
     if (ctx->pkey_gencb) {
         pcb = BN_GENCB_new();
-        if (!pcb)
+        if (pcb == NULL)
             return 0;
         evp_pkey_set_cb_translate(pcb, ctx);
     } else
         pcb = NULL;
     dsa = DSA_new();
-    if (!dsa) {
+    if (dsa == NULL) {
         BN_GENCB_free(pcb);
         return 0;
     }
@@ -283,7 +283,7 @@ static int pkey_dsa_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
         return 0;
     }
     dsa = DSA_new();
-    if (!dsa)
+    if (dsa == NULL)
         return 0;
     EVP_PKEY_assign_DSA(pkey, dsa);
     /* Note: if error return, pkey is freed by parent routine */

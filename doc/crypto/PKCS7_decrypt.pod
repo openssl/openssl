@@ -48,8 +48,4 @@ mentioned in PKCS7_sign() also applies to PKCS7_verify().
 
 L<ERR_get_error(3)>, L<PKCS7_encrypt(3)>
 
-=head1 HISTORY
-
-PKCS7_decrypt() was added to OpenSSL 0.9.5
-
 =cut

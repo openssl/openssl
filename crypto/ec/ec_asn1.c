@@ -383,7 +383,7 @@ static int ec_asn1_group2fieldid(const EC_GROUP *group, X9_62_FIELDID *field)
                 goto err;
 
             char_two->p.tpBasis = ASN1_INTEGER_new();
-            if (!char_two->p.tpBasis) {
+            if (char_two->p.tpBasis == NULL) {
                 ECerr(EC_F_EC_ASN1_GROUP2FIELDID, ERR_R_MALLOC_FAILURE);
                 goto err;
             }
@@ -398,7 +398,7 @@ static int ec_asn1_group2fieldid(const EC_GROUP *group, X9_62_FIELDID *field)
                 goto err;
 
             char_two->p.ppBasis = X9_62_PENTANOMIAL_new();
-            if (!char_two->p.ppBasis) {
+            if (char_two->p.ppBasis == NULL) {
                 ECerr(EC_F_EC_ASN1_GROUP2FIELDID, ERR_R_MALLOC_FAILURE);
                 goto err;
             }
@@ -411,7 +411,7 @@ static int ec_asn1_group2fieldid(const EC_GROUP *group, X9_62_FIELDID *field)
 
             /* for ONB the parameters are (asn1) NULL */
             char_two->p.onBasis = ASN1_NULL_new();
-            if (!char_two->p.onBasis) {
+            if (char_two->p.onBasis == NULL) {
                 ECerr(EC_F_EC_ASN1_GROUP2FIELDID, ERR_R_MALLOC_FAILURE);
                 goto err;
             }
@@ -578,16 +578,8 @@ static ECPARAMETERS *ec_asn1_group2parameters(const EC_GROUP *group,
 
     form = EC_GROUP_get_point_conversion_form(group);
 
-    len = EC_POINT_point2oct(group, point, form, NULL, len, NULL);
+    len = EC_POINT_point2buf(group, point, form, &buffer, NULL);
     if (len == 0) {
-        ECerr(EC_F_EC_ASN1_GROUP2PARAMETERS, ERR_R_EC_LIB);
-        goto err;
-    }
-    if ((buffer = OPENSSL_malloc(len)) == NULL) {
-        ECerr(EC_F_EC_ASN1_GROUP2PARAMETERS, ERR_R_MALLOC_FAILURE);
-        goto err;
-    }
-    if (!EC_POINT_point2oct(group, point, form, buffer, len, NULL)) {
         ECerr(EC_F_EC_ASN1_GROUP2PARAMETERS, ERR_R_EC_LIB);
         goto err;
     }
@@ -1028,6 +1020,10 @@ EC_KEY *d2i_ECPrivateKey(EC_KEY **a, const unsigned char **in, long len)
     if (priv_key->privateKey) {
         if (ret->priv_key == NULL)
             ret->priv_key = BN_secure_new();
+        if (ret->priv_key == NULL) {
+            ECerr(EC_F_D2I_ECPRIVATEKEY, ERR_R_MALLOC_FAILURE);
+            goto err;
+        }
         ret->priv_key = BN_bin2bn(ASN1_STRING_data(priv_key->privateKey),
                                   ASN1_STRING_length(priv_key->privateKey),
                                   ret->priv_key);
@@ -1297,4 +1293,55 @@ int i2o_ECPublicKey(EC_KEY *a, unsigned char **out)
     if (!new_buffer)
         *out += buf_len;
     return buf_len;
+}
+
+ASN1_SEQUENCE(ECDSA_SIG) = {
+        ASN1_SIMPLE(ECDSA_SIG, r, CBIGNUM),
+        ASN1_SIMPLE(ECDSA_SIG, s, CBIGNUM)
+} static_ASN1_SEQUENCE_END(ECDSA_SIG)
+
+DECLARE_ASN1_FUNCTIONS_const(ECDSA_SIG)
+DECLARE_ASN1_ENCODE_FUNCTIONS_const(ECDSA_SIG, ECDSA_SIG)
+IMPLEMENT_ASN1_FUNCTIONS_const(ECDSA_SIG)
+
+void ECDSA_SIG_get0(BIGNUM **pr, BIGNUM **ps, ECDSA_SIG *sig)
+{
+    if (pr != NULL)
+        *pr = sig->r;
+    if (ps != NULL)
+        *ps = sig->s;
+}
+
+int ECDSA_size(const EC_KEY *r)
+{
+    int ret, i;
+    ASN1_INTEGER bs;
+    BIGNUM *order = NULL;
+    unsigned char buf[4];
+    const EC_GROUP *group;
+
+    if (r == NULL)
+        return 0;
+    group = EC_KEY_get0_group(r);
+    if (group == NULL)
+        return 0;
+
+    if ((order = BN_new()) == NULL)
+        return 0;
+    if (!EC_GROUP_get_order(group, order, NULL)) {
+        BN_clear_free(order);
+        return 0;
+    }
+    i = BN_num_bits(order);
+    bs.length = (i + 7) / 8;
+    bs.data = buf;
+    bs.type = V_ASN1_INTEGER;
+    /* If the top bit is set the asn1 encoding is 1 larger. */
+    buf[0] = 0xff;
+
+    i = i2d_ASN1_INTEGER(&bs, NULL);
+    i += i;                     /* r and s */
+    ret = ASN1_object_size(1, i, V_ASN1_SEQUENCE);
+    BN_clear_free(order);
+    return (ret);
 }

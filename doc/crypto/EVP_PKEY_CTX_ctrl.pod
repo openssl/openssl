@@ -108,8 +108,8 @@ for DH parameter generation. If not specified 2 is used.
 
 The EVP_PKEY_CTX_set_ec_paramgen_curve_nid() sets the EC curve for EC parameter
 generation to B<nid>. For EC parameter generation this macro must be called
-or an error occurs because there is no default curve. In OpenSSL 1.0.2 and
-later this function can also be called to set the curve explicitly when
+or an error occurs because there is no default curve.
+This function can also be called to set the curve explicitly when
 generating an EC key.
 
 The EVP_PKEY_CTX_set_ec_param_enc() sets the EC parameter encoding to
@@ -117,7 +117,7 @@ B<param_enc> when generating EC parameters or an EC key. The encoding can be
 B<OPENSSL_EC_EXPLICIT_CURVE> for explicit parameters (the default in versions
 of OpenSSL before 1.1.0) or B<OPENSSL_EC_NAMED_CURVE> to use named curve form.
 For maximum compatibility the named curve form should be used. Note: the
-B<OPENSSL_EC_NAMED_CURVE> value was only added to OpenSSL 1.1.0: previous
+B<OPENSSL_EC_NAMED_CURVE> value was only added to OpenSSL 1.1.0; previous
 versions should use 0 instead.
 
 =head1 RETURN VALUES

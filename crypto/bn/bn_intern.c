@@ -74,7 +74,7 @@ signed char *bn_compute_wNAF(const BIGNUM *scalar, int w, size_t *ret_len)
 
     if (BN_is_zero(scalar)) {
         r = OPENSSL_malloc(1);
-        if (!r) {
+        if (r == NULL) {
             BNerr(BN_F_BN_COMPUTE_WNAF, ERR_R_MALLOC_FAILURE);
             goto err;
         }

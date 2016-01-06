@@ -123,10 +123,4 @@ same id is already in the cache.
 
 L<ssl(3)>, L<SSL_get_version(3)>
 
-=head1 HISTORY
-
-SSL_CTX_set_generate_session_id(), SSL_set_generate_session_id()
-and SSL_has_matching_session_id() have been introduced in
-OpenSSL 0.9.7.
-
 =cut

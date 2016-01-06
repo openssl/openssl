@@ -195,52 +195,13 @@ CERT *ssl_cert_dup(CERT *cert)
     ret->references = 1;
     ret->key = &ret->pkeys[cert->key - cert->pkeys];
 
-#ifndef OPENSSL_NO_RSA
-    if (cert->rsa_tmp != NULL) {
-        RSA_up_ref(cert->rsa_tmp);
-        ret->rsa_tmp = cert->rsa_tmp;
-    }
-    ret->rsa_tmp_cb = cert->rsa_tmp_cb;
-#endif
-
 #ifndef OPENSSL_NO_DH
     if (cert->dh_tmp != NULL) {
-        ret->dh_tmp = DHparams_dup(cert->dh_tmp);
-        if (ret->dh_tmp == NULL) {
-            SSLerr(SSL_F_SSL_CERT_DUP, ERR_R_DH_LIB);
-            goto err;
-        }
-        if (cert->dh_tmp->priv_key) {
-            BIGNUM *b = BN_dup(cert->dh_tmp->priv_key);
-            if (!b) {
-                SSLerr(SSL_F_SSL_CERT_DUP, ERR_R_BN_LIB);
-                goto err;
-            }
-            ret->dh_tmp->priv_key = b;
-        }
-        if (cert->dh_tmp->pub_key) {
-            BIGNUM *b = BN_dup(cert->dh_tmp->pub_key);
-            if (!b) {
-                SSLerr(SSL_F_SSL_CERT_DUP, ERR_R_BN_LIB);
-                goto err;
-            }
-            ret->dh_tmp->pub_key = b;
-        }
+        ret->dh_tmp = cert->dh_tmp;
+        EVP_PKEY_up_ref(ret->dh_tmp);
     }
     ret->dh_tmp_cb = cert->dh_tmp_cb;
     ret->dh_tmp_auto = cert->dh_tmp_auto;
-#endif
-
-#ifndef OPENSSL_NO_EC
-    if (cert->ecdh_tmp) {
-        ret->ecdh_tmp = EC_KEY_dup(cert->ecdh_tmp);
-        if (ret->ecdh_tmp == NULL) {
-            SSLerr(SSL_F_SSL_CERT_DUP, ERR_R_EC_LIB);
-            goto err;
-        }
-    }
-    ret->ecdh_tmp_cb = cert->ecdh_tmp_cb;
-    ret->ecdh_tmp_auto = cert->ecdh_tmp_auto;
 #endif
 
     for (i = 0; i < SSL_PKEY_NUM; i++) {
@@ -282,7 +243,7 @@ CERT *ssl_cert_dup(CERT *cert)
     /* Configured sigalgs copied across */
     if (cert->conf_sigalgs) {
         ret->conf_sigalgs = OPENSSL_malloc(cert->conf_sigalgslen);
-        if (!ret->conf_sigalgs)
+        if (ret->conf_sigalgs == NULL)
             goto err;
         memcpy(ret->conf_sigalgs, cert->conf_sigalgs, cert->conf_sigalgslen);
         ret->conf_sigalgslen = cert->conf_sigalgslen;
@@ -291,7 +252,7 @@ CERT *ssl_cert_dup(CERT *cert)
 
     if (cert->client_sigalgs) {
         ret->client_sigalgs = OPENSSL_malloc(cert->client_sigalgslen);
-        if (!ret->client_sigalgs)
+        if (ret->client_sigalgs == NULL)
             goto err;
         memcpy(ret->client_sigalgs, cert->client_sigalgs,
                cert->client_sigalgslen);
@@ -303,7 +264,7 @@ CERT *ssl_cert_dup(CERT *cert)
     /* Copy any custom client certificate types */
     if (cert->ctypes) {
         ret->ctypes = OPENSSL_malloc(cert->ctype_num);
-        if (!ret->ctypes)
+        if (ret->ctypes == NULL)
             goto err;
         memcpy(ret->ctypes, cert->ctypes, cert->ctype_num);
         ret->ctype_num = cert->ctype_num;
@@ -333,13 +294,13 @@ CERT *ssl_cert_dup(CERT *cert)
         goto err;
     if (!custom_exts_copy(&ret->srv_ext, &cert->srv_ext))
         goto err;
-
+#ifndef OPENSSL_NO_PSK
     if (cert->psk_identity_hint) {
-        ret->psk_identity_hint = BUF_strdup(cert->psk_identity_hint);
+        ret->psk_identity_hint = OPENSSL_strdup(cert->psk_identity_hint);
         if (ret->psk_identity_hint == NULL)
             goto err;
     }
-
+#endif
     return (ret);
 
  err:
@@ -389,14 +350,8 @@ void ssl_cert_free(CERT *c)
     }
 #endif
 
-#ifndef OPENSSL_NO_RSA
-    RSA_free(c->rsa_tmp);
-#endif
 #ifndef OPENSSL_NO_DH
-    DH_free(c->dh_tmp);
-#endif
-#ifndef OPENSSL_NO_EC
-    EC_KEY_free(c->ecdh_tmp);
+    EVP_PKEY_free(c->dh_tmp);
 #endif
 
     ssl_cert_clear_certs(c);
@@ -531,6 +486,7 @@ int ssl_verify_cert_chain(SSL *s, STACK_OF(X509) *sk)
     int i;
     X509_STORE *verify_store;
     X509_STORE_CTX ctx;
+    X509_VERIFY_PARAM *param;
 
     if (s->cert->verify_store)
         verify_store = s->cert->verify_store;
@@ -545,9 +501,15 @@ int ssl_verify_cert_chain(SSL *s, STACK_OF(X509) *sk)
         SSLerr(SSL_F_SSL_VERIFY_CERT_CHAIN, ERR_R_X509_LIB);
         return (0);
     }
+    param = X509_STORE_CTX_get0_param(&ctx);
+
     /* Set suite B flags if needed */
     X509_STORE_CTX_set_flags(&ctx, tls1_suiteb(s));
     X509_STORE_CTX_set_ex_data(&ctx, SSL_get_ex_data_X509_STORE_CTX_idx(), s);
+
+    /* Verify via DANE if enabled */
+    if (DANETLS_ENABLED(&s->dane))
+        X509_STORE_CTX_set0_dane(&ctx, &s->dane);
 
     /*
      * We need to inherit the verify parameters. These can be determined by
@@ -557,9 +519,9 @@ int ssl_verify_cert_chain(SSL *s, STACK_OF(X509) *sk)
 
     X509_STORE_CTX_set_default(&ctx, s->server ? "ssl_client" : "ssl_server");
     /*
-     * Anything non-default in "param" should overwrite anything in the ctx.
+     * Anything non-default in "s->param" should overwrite anything in the ctx.
      */
-    X509_VERIFY_PARAM_set1(X509_STORE_CTX_get0_param(&ctx), s->param);
+    X509_VERIFY_PARAM_set1(param, s->param);
 
     if (s->verify_callback)
         X509_STORE_CTX_set_verify_cb(&ctx, s->verify_callback);
@@ -579,6 +541,10 @@ int ssl_verify_cert_chain(SSL *s, STACK_OF(X509) *sk)
     }
 
     s->verify_result = ctx.error;
+
+    /* Move peername from the store context params to the SSL handle's */
+    X509_VERIFY_PARAM_move_peername(s->param, param);
+
     X509_STORE_CTX_cleanup(&ctx);
 
     return (i);
@@ -625,7 +591,7 @@ STACK_OF(X509_NAME) *SSL_CTX_get_client_CA_list(const SSL_CTX *ctx)
 
 STACK_OF(X509_NAME) *SSL_get_client_CA_list(const SSL *s)
 {
-    if (s->type == SSL_ST_CONNECT) { /* we are in the client */
+    if (!s->server) { /* we are in the client */
         if (((s->version >> 8) == SSL3_VERSION_MAJOR) && (s->s3 != NULL))
             return (s->s3->tmp.ca_names);
         else
@@ -689,7 +655,7 @@ STACK_OF(X509_NAME) *SSL_load_client_CA_file(const char *file)
 
     sk = sk_X509_NAME_new(xname_cmp);
 
-    in = BIO_new(BIO_s_file_internal());
+    in = BIO_new(BIO_s_file());
 
     if ((sk == NULL) || (in == NULL)) {
         SSLerr(SSL_F_SSL_LOAD_CLIENT_CA_FILE, ERR_R_MALLOC_FAILURE);
@@ -756,7 +722,7 @@ int SSL_add_file_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
 
     oldcmp = sk_X509_NAME_set_cmp_func(stack, xname_cmp);
 
-    in = BIO_new(BIO_s_file_internal());
+    in = BIO_new(BIO_s_file());
 
     if (in == NULL) {
         SSLerr(SSL_F_SSL_ADD_FILE_CERT_SUBJECTS_TO_STACK,
@@ -914,6 +880,12 @@ int ssl_add_cert_chain(SSL *s, CERT_PKEY *cpk, unsigned long *l)
             SSLerr(SSL_F_SSL_ADD_CERT_CHAIN, ERR_R_X509_LIB);
             return (0);
         }
+        /*
+         * It is valid for the chain not to be complete (because normally we
+         * don't include the root cert in the chain). Therefore we deliberately
+         * ignore the error return from this call. We're not actually verifying
+         * the cert - we're just building as much of the chain as we can
+         */
         X509_verify_cert(&xs_ctx);
         /* Don't leave errors in the queue */
         ERR_clear_error();
@@ -968,7 +940,7 @@ int ssl_build_cert_chain(SSL *s, SSL_CTX *ctx, int flags)
     /* Rearranging and check the chain: add everything to a store */
     if (flags & SSL_BUILD_CHAIN_FLAG_CHECK) {
         chain_store = X509_STORE_new();
-        if (!chain_store)
+        if (chain_store == NULL)
             goto err;
         for (i = 0; i < sk_X509_num(cpk->chain); i++) {
             x = sk_X509_value(cpk->chain, i);
@@ -1123,15 +1095,21 @@ static int ssl_security_default_callback(SSL *s, SSL_CTX *ctx, int op,
             break;
         }
     case SSL_SECOP_VERSION:
-        /* SSLv3 not allowed on level 2 */
-        if (nid <= SSL3_VERSION && level >= 2)
-            return 0;
-        /* TLS v1.1 and above only for level 3 */
-        if (nid <= TLS1_VERSION && level >= 3)
-            return 0;
-        /* TLS v1.2 only for level 4 and above */
-        if (nid <= TLS1_1_VERSION && level >= 4)
-            return 0;
+        if (!SSL_IS_DTLS(s)) {
+            /* SSLv3 not allowed at level 2 */
+            if (nid <= SSL3_VERSION && level >= 2)
+                return 0;
+            /* TLS v1.1 and above only for level 3 */
+            if (nid <= TLS1_VERSION && level >= 3)
+                return 0;
+            /* TLS v1.2 only for level 4 and above */
+            if (nid <= TLS1_1_VERSION && level >= 4)
+                return 0;
+        } else {
+            /* DTLS v1.2 only for level 4 and above */
+            if (DTLS_VERSION_LT(nid, DTLS1_2_VERSION) && level >= 4)
+                return 0;
+        }
         break;
 
     case SSL_SECOP_COMPRESSION:

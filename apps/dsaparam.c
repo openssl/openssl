@@ -86,7 +86,7 @@ static int dsa_cb(int p, int n, BN_GENCB *cb);
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
     OPT_INFORM, OPT_OUTFORM, OPT_IN, OPT_OUT, OPT_TEXT, OPT_C,
-    OPT_NOOUT, OPT_GENKEY, OPT_RAND, OPT_NON_FIPS_ALLOW, OPT_ENGINE,
+    OPT_NOOUT, OPT_GENKEY, OPT_RAND, OPT_ENGINE,
     OPT_TIMEBOMB
 } OPTION_CHOICE;
 
@@ -101,7 +101,6 @@ OPTIONS dsaparam_options[] = {
     {"noout", OPT_NOOUT, '-', "No output"},
     {"genkey", OPT_GENKEY, '-', "Generate a DSA key"},
     {"rand", OPT_RAND, 's', "Files to use for random number input"},
-    {"non-fips-allow", OPT_NON_FIPS_ALLOW, '-'},
 # ifdef GENCB_TEST
     {"timebomb", OPT_TIMEBOMB, 'p', "Interrupt keygen after 'pnum' seconds"},
 # endif
@@ -116,7 +115,7 @@ int dsaparam_main(int argc, char **argv)
     DSA *dsa = NULL;
     BIO *in = NULL, *out = NULL;
     BN_GENCB *cb = NULL;
-    int numbits = -1, num = 0, genkey = 0, need_rand = 0, non_fips_allow = 0;
+    int numbits = -1, num = 0, genkey = 0, need_rand = 0;
     int informat = FORMAT_PEM, outformat = FORMAT_PEM, noout = 0, C = 0;
     int ret = 1, i, text = 0, private = 0;
 # ifdef GENCB_TEST
@@ -175,16 +174,10 @@ int dsaparam_main(int argc, char **argv)
         case OPT_NOOUT:
             noout = 1;
             break;
-        case OPT_NON_FIPS_ALLOW:
-            non_fips_allow = 1;
-            break;
         }
     }
     argc = opt_num_rest();
     argv = opt_rest();
-
-    if (!app_load_modules(NULL))
-        goto end;
 
     if (argc == 1) {
         if (!opt_int(argv[0], &num))
@@ -211,19 +204,17 @@ int dsaparam_main(int argc, char **argv)
 
     if (numbits > 0) {
         cb = BN_GENCB_new();
-        if (!cb) {
+        if (cb == NULL) {
             BIO_printf(bio_err, "Error allocating BN_GENCB object\n");
             goto end;
         }
         BN_GENCB_set(cb, dsa_cb, bio_err);
         assert(need_rand);
         dsa = DSA_new();
-        if (!dsa) {
+        if (dsa == NULL) {
             BIO_printf(bio_err, "Error allocating DSA object\n");
             goto end;
         }
-        if (non_fips_allow)
-            dsa->flags |= DSA_FLAG_NON_FIPS_ALLOW;
         BIO_printf(bio_err, "Generating DSA parameters, %d bit long prime\n",
                    num);
         BIO_printf(bio_err, "This could take some time\n");
@@ -312,8 +303,6 @@ int dsaparam_main(int argc, char **argv)
         assert(need_rand);
         if ((dsakey = DSAparams_dup(dsa)) == NULL)
             goto end;
-        if (non_fips_allow)
-            dsakey->flags |= DSA_FLAG_NON_FIPS_ALLOW;
         if (!DSA_generate_key(dsakey)) {
             ERR_print_errors(bio_err);
             DSA_free(dsakey);

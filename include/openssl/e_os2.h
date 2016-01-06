@@ -262,8 +262,12 @@ extern "C" {
 #  define OPENSSL_GLOBAL_REF(name) _shadow_##name
 # endif
 
-# ifdef OPENSSL_SYS_MSDOS
-#  define ossl_ssize_t long
+# ifdef _WIN32
+#  ifdef _WIN64
+#   define ossl_ssize_t __int64
+#  else
+#   define ossl_ssize_t int
+#  endif
 # endif
 
 # if defined(__ultrix) && !defined(ssize_t)
@@ -317,11 +321,32 @@ typedef unsigned __int64 uint64_t;
  * some systems (e.g. Mac OS X).
  */
 # ifndef PRIu64
-#  if (__STDC_VERSION__ >= 199901L)
-#   include <inttypes.h>
+#  ifdef __STDC_VERSION__
+#   if (__STDC_VERSION__ >= 199901L)
+#    include <inttypes.h>
+#   endif
 #  endif
 #  ifndef PRIu64
 #   define PRIu64 "lu"
+#  endif
+# endif
+
+/* ossl_inline: portable inline definition usable in public headers */
+# if !defined(inline) && !defined(__cplusplus)
+#  if defined(__STDC_VERSION__) && __STDC_VERSION__>=199901L
+   /* just use inline */
+#   define ossl_inline inline
+#  elif defined(__GNUC__) && __GNUC__>=2
+#   define ossl_inline __inline__
+#  elif defined(_MSC_VER)
+  /*
+   * Visual Studio: inline is available in C++ only, however
+   * __inline is available for C, see
+   * http://msdn.microsoft.com/en-us/library/z8y1yy88.aspx
+   */
+#   define ossl_inline __inline
+#  else
+#   define ossl_inline
 #  endif
 # endif
 

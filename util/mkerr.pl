@@ -3,6 +3,7 @@
 my $config = "crypto/err/openssl.ec";
 my $hprefix = "openssl/";
 my $debug = 0;
+my $unref = 0;
 my $rebuild = 0;
 my $static = 1;
 my $recurse = 0;
@@ -26,6 +27,7 @@ while (@ARGV) {
 		$hprefix = shift @ARGV;
 	} elsif($arg eq "-debug") {
 		$debug = 1;
+		$unref = 1;
 		shift @ARGV;
 	} elsif($arg eq "-rebuild") {
 		$rebuild = 1;
@@ -41,6 +43,9 @@ while (@ARGV) {
 		shift @ARGV;
 	} elsif($arg eq "-staticloader") {
 		$staticloader = "static ";
+		shift @ARGV;
+	} elsif($arg eq "-unref") {
+		$unref = 1;
 		shift @ARGV;
 	} elsif($arg eq "-write") {
 		$dowrite = 1;
@@ -98,6 +103,8 @@ Options:
   -staticloader Prefix generated functions with the 'static' scope modifier.
                 Default: don't write any scope modifier prefix.
 
+  -unref        Print out unreferenced function and reason codes.
+
   -write        Actually (over)write the generated code to the header and C 
                 source files as assigned to each library through the config 
                 file.
@@ -116,7 +123,7 @@ EOF
 }
 
 if($recurse) {
-	@source = ( <crypto/*.c>, <crypto/*/*.c>, <ssl/*.c> )
+	@source = ( <crypto/*.c>, <crypto/*/*.c>, <ssl/*.c>, <ssl/*/*.c> )
 } else {
 	@source = @ARGV;
 }
@@ -328,9 +335,18 @@ foreach $file (@source) {
 	next if exists $cskip{$file};
 	print STDERR "File loaded: ".$file."\r" if $debug;
 	open(IN, "<$file") || die "Can't open source file $file\n";
+	my $func;
+	my $linenr = 0;
 	while(<IN>) {
 		# skip obsoleted source files entirely!
 		last if(/^#error\s+obsolete/);
+		$linenr++;
+		if (!/;$/ && /^\**([a-zA-Z_].*[\s*])?([A-Za-z_0-9]+)\(.*([),]|$)/)
+			{
+			/^([^()]*(\([^()]*\)[^()]*)*)\(/;
+			$1 =~ /([A-Za-z_0-9]*)$/;
+			$func = $1;
+			}
 
 		if(/(([A-Z0-9]+)_F_([A-Z0-9_]+))/) {
 			next unless exists $csrc{$2};
@@ -340,7 +356,11 @@ foreach $file (@source) {
 				$fcodes{$1} = "X";
 				$fnew{$2}++;
 			}
-			$notrans{$1} = 1 unless exists $ftrans{$3};
+			$ftrans{$3} = $func unless exists $ftrans{$3};
+            if (uc $func ne $3) {
+                print STDERR "ERROR: mismatch $file:$linenr $func:$3\n";
+                $errcount++;
+            }
 			print STDERR "Function: $1\t= $fcodes{$1} (lib: $2, name: $3)\n" if $debug; 
 		}
 		if(/(([A-Z0-9]+)_R_[A-Z0-9_]+)/) {
@@ -795,7 +815,7 @@ foreach (keys %rcodes) {
 	push (@runref, $_) unless exists $urcodes{$_};
 }
 
-if($debug && @funref) {
+if($unref && @funref) {
 	print STDERR "The following function codes were not referenced:\n";
 	foreach(sort @funref)
 	{
@@ -803,7 +823,7 @@ if($debug && @funref) {
 	}
 }
 
-if($debug && @runref) {
+if($unref && @runref) {
 	print STDERR "The following reason codes were not referenced:\n";
 	foreach(sort @runref)
 	{

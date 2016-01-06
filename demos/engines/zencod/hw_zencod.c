@@ -309,14 +309,14 @@ static int bind_helper(ENGINE *e)
     }
 #  ifndef OPENSSL_NO_RSA
     /*
-     * We know that the "PKCS1_SSLeay()" functions hook properly to the
+     * We know that the "PKCS1_OpenSSL()" functions hook properly to the
      * Zencod-specific mod_exp and mod_exp_crt so we use those functions. NB:
      * We don't use ENGINE_openssl() or anything "more generic" because
      * something like the RSAref code may not hook properly, and if you own
      * one of these cards then you have the right to do RSA operations on it
      * anyway!
      */
-    meth_rsa = RSA_PKCS1_SSLeay();
+    meth_rsa = RSA_PKCS1_OpenSSL();
 
     zencod_rsa.rsa_pub_enc = meth_rsa->rsa_pub_enc;
     zencod_rsa.rsa_pub_dec = meth_rsa->rsa_pub_dec;
@@ -358,9 +358,9 @@ static int bind_helper(ENGINE *e)
 #  endif
 
     /*
-     * We use OpenSSL (SSLeay) meth to supply what we don't provide ;-*)
+     * We use OpenSSL meth to supply what we don't provide ;-*)
      */
-    meth_rand = RAND_SSLeay();
+    meth_rand = RAND_OpenSSL();
 
     /* meth_rand->seed ; */
     /* zencod_rand.seed = meth_rand->seed ; */
@@ -592,7 +592,7 @@ static int zencod_init(ENGINE *e)
     ptr_zencod_rc4_cipher = ptr_rc4_1;
 
     /*
-     * We should peform a test to see if there is actually any unit runnig on
+     * We should perform a test to see if there is actually any unit runnig on
      * the system ... Even if the cryptozen library is loaded the module coul
      * not be loaded on the system ... For now we may just open and close the
      * device !!
@@ -776,7 +776,7 @@ static int RSA_zencod_rsa_mod_exp(BIGNUM *r0, const BIGNUM *i, RSA *rsa)
     if (RSA_size(rsa) * 8 > ZENBRIDGE_MAX_KEYSIZE_RSA_CRT) {
         const RSA_METHOD *meth;
 
-        meth = RSA_PKCS1_SSLeay();
+        meth = RSA_PKCS1_OpenSSL();
         return meth->rsa_mod_exp(r0, i, rsa);
     } else {
         zen_nb_t y, x, p, q, dmp1, dmq1, iqmp;
@@ -827,7 +827,7 @@ static int RSA_zencod_bn_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
     if (BN_num_bits(m) > ZENBRIDGE_MAX_KEYSIZE_RSA) {
         const RSA_METHOD *meth;
 
-        meth = RSA_PKCS1_SSLeay();
+        meth = RSA_PKCS1_OpenSSL();
         return meth->bn_mod_exp(r, a, p, m, ctx, m_ctx);
     } else {
         zen_nb_t y, x, e, n;

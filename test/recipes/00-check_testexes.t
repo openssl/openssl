@@ -12,7 +12,7 @@ my $OpenSSL_ver = "";
 my $Makefile = top_file("Makefile");
 if (open(FH, $Makefile)) {
     $OpenSSL_ver =
-	(map { chomp; s/^VERSION=([^\s]*)\s*$//; $1 } grep { /^VERSION=/ } <FH>)[0];
+	(map { s/\R//; s/^VERSION=([^\s]*)\s*$//; $1 } grep { /^VERSION=/ } <FH>)[0];
     close FH;
 }
 
@@ -24,14 +24,14 @@ plan skip_all => "because MINFO not found. If you want this test to run, please 
 my $MINFO_ver = "";
 
 while(<FH>) {
-    chomp;
+    s/\R//;	# chomp;
     if (/^VERSION=([^\s]*)\s*$/) {
 	$MINFO_ver = $1;
     }
     last if /^RELATIVE_DIRECTORY=test$/;
 }
 while(<FH>) {
-    chomp;
+    s/\R//;	# chomp;
     last if /^EXE=/;
 }
 close FH;

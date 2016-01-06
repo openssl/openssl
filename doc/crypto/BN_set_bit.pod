@@ -57,10 +57,4 @@ can be obtained by L<ERR_get_error(3)>.
 
 L<bn(3)>, L<BN_num_bytes(3)>, L<BN_add(3)>
 
-=head1 HISTORY
-
-BN_set_bit(), BN_clear_bit(), BN_is_bit_set(), BN_mask_bits(),
-BN_lshift(), BN_lshift1(), BN_rshift(), and BN_rshift1() are available
-in all versions of SSLeay and OpenSSL.
-
 =cut

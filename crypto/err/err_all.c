@@ -76,10 +76,6 @@
 #ifndef OPENSSL_NO_DSA
 # include <openssl/dsa.h>
 #endif
-#ifndef OPENSSL_NO_EC
-# include <openssl/ecdsa.h>
-# include <openssl/ecdh.h>
-#endif
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 #include <openssl/pem2.h>
@@ -105,6 +101,8 @@
 #ifndef OPENSSL_NO_JPAKE
 # include <openssl/jpake.h>
 #endif
+#include <internal/ct_int.h>
+#include <openssl/async.h>
 
 void ERR_load_crypto_strings(void)
 {
@@ -136,8 +134,6 @@ void ERR_load_crypto_strings(void)
 # endif
 # ifndef OPENSSL_NO_EC
     ERR_load_EC_strings();
-    ERR_load_ECDSA_strings();
-    ERR_load_ECDH_strings();
 # endif
     /* skip ERR_load_SSL_strings() because it is not in this library */
     ERR_load_BIO_strings();
@@ -161,5 +157,9 @@ void ERR_load_crypto_strings(void)
 # ifndef OPENSSL_NO_JPAKE
     ERR_load_JPAKE_strings();
 # endif
+# ifndef OPENSSL_NO_CT
+    ERR_load_CT_strings();
+# endif
+    ERR_load_ASYNC_strings();
 #endif
 }

@@ -38,18 +38,13 @@ rsa - RSA public key cryptosystem
  const RSA_METHOD *RSA_get_default_method(void);
  int RSA_set_method(RSA *rsa, const RSA_METHOD *meth);
  const RSA_METHOD *RSA_get_method(const RSA *rsa);
- RSA_METHOD *RSA_PKCS1_SSLeay(void);
+ RSA_METHOD *RSA_PKCS1_OpenSSL(void);
  RSA_METHOD *RSA_null_method(void);
  int RSA_flags(const RSA *rsa);
  RSA *RSA_new_method(ENGINE *engine);
 
  int RSA_print(BIO *bp, RSA *x, int offset);
  int RSA_print_fp(FILE *fp, RSA *x, int offset);
-
- int RSA_get_ex_new_index(long argl, char *argp, int (*new_func)(),
-    int (*dup_func)(), void (*free_func)());
- int RSA_set_ex_data(RSA *r,int idx,char *arg);
- char *RSA_get_ex_data(RSA *r, int idx);
 
  int RSA_sign_ASN1_OCTET_STRING(int dummy, unsigned char *m,
     unsigned int m_len, unsigned char *sigret, unsigned int *siglen,

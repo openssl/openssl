@@ -153,10 +153,10 @@ CMS_ContentInfo *CMS_EnvelopedData_create(const EVP_CIPHER *cipher)
     CMS_ContentInfo *cms;
     CMS_EnvelopedData *env;
     cms = CMS_ContentInfo_new();
-    if (!cms)
+    if (cms == NULL)
         goto merr;
     env = cms_enveloped_data_init(cms);
-    if (!env)
+    if (env == NULL)
         goto merr;
     if (!cms_EncryptedContent_init(env->encryptedContentInfo,
                                    cipher, NULL, 0))
@@ -208,7 +208,7 @@ static int cms_RecipientInfo_ktri_init(CMS_RecipientInfo *ri, X509 *recip,
 
     if (flags & CMS_KEY_PARAM) {
         ktri->pctx = EVP_PKEY_CTX_new(ktri->pkey, NULL);
-        if (!ktri->pctx)
+        if (ktri->pctx == NULL)
             return 0;
         if (EVP_PKEY_encrypt_init(ktri->pctx) <= 0)
             return 0;
@@ -236,7 +236,7 @@ CMS_RecipientInfo *CMS_add1_recipient_cert(CMS_ContentInfo *cms,
     if (!ri)
         goto merr;
 
-    pk = X509_get_pubkey(recip);
+    pk = X509_get0_pubkey(recip);
     if (!pk) {
         CMSerr(CMS_F_CMS_ADD1_RECIPIENT_CERT, CMS_R_ERROR_GETTING_PUBLIC_KEY);
         goto err;
@@ -264,15 +264,12 @@ CMS_RecipientInfo *CMS_add1_recipient_cert(CMS_ContentInfo *cms,
     if (!sk_CMS_RecipientInfo_push(env->recipientInfos, ri))
         goto merr;
 
-    EVP_PKEY_free(pk);
-
     return ri;
 
  merr:
     CMSerr(CMS_F_CMS_ADD1_RECIPIENT_CERT, ERR_R_MALLOC_FAILURE);
  err:
     M_ASN1_free_of(ri, CMS_RecipientInfo);
-    EVP_PKEY_free(pk);
     return NULL;
 
 }
@@ -362,7 +359,7 @@ static int cms_RecipientInfo_ktri_encrypt(CMS_ContentInfo *cms,
             goto err;
     } else {
         pctx = EVP_PKEY_CTX_new(ktri->pkey, NULL);
-        if (!pctx)
+        if (pctx == NULL)
             return 0;
 
         if (EVP_PKEY_encrypt_init(pctx) <= 0)
@@ -420,7 +417,7 @@ static int cms_RecipientInfo_ktri_decrypt(CMS_ContentInfo *cms,
     }
 
     ktri->pctx = EVP_PKEY_CTX_new(pkey, NULL);
-    if (!ktri->pctx)
+    if (ktri->pctx == NULL)
         return 0;
 
     if (EVP_PKEY_decrypt_init(ktri->pctx) <= 0)
@@ -685,7 +682,7 @@ static int cms_RecipientInfo_kekri_encrypt(CMS_ContentInfo *cms,
 
     wkey = OPENSSL_malloc(ec->keylen + 8);
 
-    if (!wkey) {
+    if (wkey == NULL) {
         CMSerr(CMS_F_CMS_RECIPIENTINFO_KEKRI_ENCRYPT, ERR_R_MALLOC_FAILURE);
         goto err;
     }
@@ -755,7 +752,7 @@ static int cms_RecipientInfo_kekri_decrypt(CMS_ContentInfo *cms,
 
     ukey = OPENSSL_malloc(kekri->encryptedKey->length - 8);
 
-    if (!ukey) {
+    if (ukey == NULL) {
         CMSerr(CMS_F_CMS_RECIPIENTINFO_KEKRI_DECRYPT, ERR_R_MALLOC_FAILURE);
         goto err;
     }

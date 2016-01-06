@@ -45,10 +45,4 @@ ERR_get_next_error_library() returns a new library number.
 
 L<err(3)>, L<ERR_load_strings(3)>
 
-=head1 HISTORY
-
-ERR_load_error_strings() and ERR_PACK() are available in all versions
-of SSLeay and OpenSSL. ERR_get_next_error_library() was added in
-SSLeay 0.9.0.
-
 =cut

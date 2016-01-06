@@ -75,8 +75,6 @@
 
 # ifndef OPENSSL_NO_EC
 #  include <openssl/ec.h>
-#  include <openssl/ecdsa.h>
-#  include <openssl/ecdh.h>
 # endif
 
 # ifdef OPENSSL_USE_DEPRECATED
@@ -233,8 +231,7 @@ DECLARE_STACK_OF(X509_TRUST)
 
 # define XN_FLAG_SEP_MASK        (0xf << 16)
 
-# define XN_FLAG_COMPAT          0/* Traditional SSLeay: use old
-                                   * X509_NAME_print */
+# define XN_FLAG_COMPAT          0/* Traditional; use old X509_NAME_print */
 # define XN_FLAG_SEP_COMMA_PLUS  (1 << 16)/* RFC2253 ,+ */
 # define XN_FLAG_SEP_CPLUS_SPC   (2 << 16)/* ,+ spaced: more readable */
 # define XN_FLAG_SEP_SPLUS_SPC   (3 << 16)/* ;+ spaced */
@@ -578,6 +575,7 @@ DECLARE_ASN1_FUNCTIONS(X509_VAL)
 DECLARE_ASN1_FUNCTIONS(X509_PUBKEY)
 
 int X509_PUBKEY_set(X509_PUBKEY **x, EVP_PKEY *pkey);
+EVP_PKEY *X509_PUBKEY_get0(X509_PUBKEY *key);
 EVP_PKEY *X509_PUBKEY_get(X509_PUBKEY *key);
 int X509_get_pubkey_parameters(EVP_PKEY *pkey, STACK_OF(X509) *chain);
 int i2d_PUBKEY(EVP_PKEY *a, unsigned char **pp);
@@ -616,8 +614,8 @@ DECLARE_ASN1_FUNCTIONS(X509_CINF)
 DECLARE_ASN1_FUNCTIONS(X509)
 DECLARE_ASN1_FUNCTIONS(X509_CERT_AUX)
 
-int X509_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
-                          CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func);
+#define X509_get_ex_new_index(l, p, newf, dupf, freef) \
+    CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_X509, l, p, newf, dupf, freef)
 int X509_set_ex_data(X509 *r, int idx, void *arg);
 void *X509_get_ex_data(X509 *r, int idx);
 int i2d_X509_AUX(X509 *a, unsigned char **pp);
@@ -628,6 +626,7 @@ int i2d_re_X509_tbs(X509 *x, unsigned char **pp);
 void X509_get0_signature(ASN1_BIT_STRING **psig, X509_ALGOR **palg, X509 *x);
 int X509_get_signature_nid(const X509 *x);
 
+int X509_trusted(const X509 *x);
 int X509_alias_set1(X509 *x, unsigned char *name, int len);
 int X509_keyid_set1(X509 *x, unsigned char *id, int len);
 unsigned char *X509_alias_get0(X509 *x, int *len);
@@ -639,6 +638,9 @@ int X509_add1_trust_object(X509 *x, ASN1_OBJECT *obj);
 int X509_add1_reject_object(X509 *x, ASN1_OBJECT *obj);
 void X509_trust_clear(X509 *x);
 void X509_reject_clear(X509 *x);
+
+STACK_OF(ASN1_OBJECT) *X509_get0_trust_objects(X509 *x);
+STACK_OF(ASN1_OBJECT) *X509_get0_reject_objects(X509 *x);
 
 DECLARE_ASN1_FUNCTIONS(X509_REVOKED)
 DECLARE_ASN1_FUNCTIONS(X509_CRL_INFO)
@@ -703,7 +705,11 @@ int X509_get_signature_type(const X509 *x);
  * i2d_X509_NAME(X509_get_X509_PUBKEY(x),&buf)
  */
 X509_PUBKEY *X509_get_X509_PUBKEY(const X509 *x);
+STACK_OF(X509_EXTENSION) *X509_get0_extensions(const X509 *x);
+void X509_get0_uids(ASN1_BIT_STRING **piuid, ASN1_BIT_STRING **psuid, X509 *x);
+X509_ALGOR *X509_get0_tbs_sigalg(X509 *x);
 
+EVP_PKEY *X509_get0_pubkey(X509 *x);
 EVP_PKEY *X509_get_pubkey(X509 *x);
 ASN1_BIT_STRING *X509_get0_pubkey_bitstr(const X509 *x);
 int X509_certificate_type(X509 *x, EVP_PKEY *pubkey /* optional */ );
@@ -804,6 +810,7 @@ int X509_CRL_match(const X509_CRL *a, const X509_CRL *b);
 int X509_print_ex_fp(FILE *bp, X509 *x, unsigned long nmflag,
                      unsigned long cflag);
 int X509_print_fp(FILE *bp, X509 *x);
+int X509_aux_print(BIO *out, X509 *x, int indent);
 int X509_CRL_print_fp(FILE *bp, X509_CRL *x);
 int X509_REQ_print_fp(FILE *bp, X509_REQ *req);
 int X509_NAME_print_ex_fp(FILE *fp, X509_NAME *nm, int indent,
@@ -817,7 +824,6 @@ int X509_print_ex(BIO *bp, X509 *x, unsigned long nmflag,
                   unsigned long cflag);
 int X509_print(BIO *bp, X509 *x);
 int X509_ocspid_print(BIO *bp, X509 *x);
-int X509_CERT_AUX_print(BIO *bp, X509_CERT_AUX *x, int indent);
 int X509_CRL_print(BIO *bp, X509_CRL *x);
 int X509_REQ_print_ex(BIO *bp, X509_REQ *x, unsigned long nmflag,
                       unsigned long cflag);
@@ -1064,6 +1070,7 @@ void ERR_load_X509_strings(void);
 
 /* Function codes. */
 # define X509_F_ADD_CERT_DIR                              100
+# define X509_F_BUILD_CHAIN                               106
 # define X509_F_BY_FILE_CTRL                              101
 # define X509_F_CHECK_POLICY                              145
 # define X509_F_DIR_CTRL                                  102
@@ -1093,7 +1100,7 @@ void ERR_load_X509_strings(void);
 # define X509_F_X509_NAME_ONELINE                         116
 # define X509_F_X509_NAME_PRINT                           117
 # define X509_F_X509_PRINT_EX_FP                          118
-# define X509_F_X509_PUBKEY_GET                           119
+# define X509_F_X509_PUBKEY_GET0                          119
 # define X509_F_X509_PUBKEY_SET                           120
 # define X509_F_X509_REQ_CHECK_PRIVATE_KEY                144
 # define X509_F_X509_REQ_PRINT_EX                         121

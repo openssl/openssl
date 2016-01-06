@@ -229,7 +229,7 @@ int GENERAL_NAME_set0_othername(GENERAL_NAME *gen,
 {
     OTHERNAME *oth;
     oth = OTHERNAME_new();
-    if (!oth)
+    if (oth == NULL)
         return 0;
     oth->type_id = oid;
     oth->value = value;

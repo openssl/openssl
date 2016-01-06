@@ -40,13 +40,6 @@ ECDSA_SIG_new, ECDSA_SIG_free, i2d_ECDSA_SIG, d2i_ECDSA_SIG, ECDSA_size, ECDSA_s
  const ECDSA_METHOD*	ECDSA_get_default_method(void);
  int		ECDSA_set_method(EC_KEY *eckey,const ECDSA_METHOD *meth);
 
- int		ECDSA_get_ex_new_index(long argl, void *argp,
-			CRYPTO_EX_new *new_func,
-			CRYPTO_EX_dup *dup_func,
-			CRYPTO_EX_free *free_func);
- int		ECDSA_set_ex_data(EC_KEY *d, int idx, void *arg);
- void*		ECDSA_get_ex_data(EC_KEY *d, int idx);
-
 =head1 DESCRIPTION
 
 The B<ECDSA_SIG> structure consists of two BIGNUMs for the
@@ -194,13 +187,5 @@ ANSI X9.62, US Federal Information Processing Standard FIPS 186-2
 =head1 SEE ALSO
 
 L<dsa(3)>, L<rsa(3)>
-
-=head1 HISTORY
-
-The ecdsa implementation was first introduced in OpenSSL 0.9.8
-
-=head1 AUTHOR
-
-Nils Larsch for the OpenSSL project (http://www.openssl.org).
 
 =cut

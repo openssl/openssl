@@ -83,6 +83,11 @@ ASN1_SEQUENCE(X509_CERT_AUX) = {
 
 IMPLEMENT_ASN1_FUNCTIONS(X509_CERT_AUX)
 
+int X509_trusted(const X509 *x)
+{
+    return x->aux ? 1 : 0;
+}
+
 static X509_CERT_AUX *aux_get(X509 *x)
 {
     if (x == NULL)
@@ -197,4 +202,18 @@ void X509_reject_clear(X509 *x)
         sk_ASN1_OBJECT_pop_free(x->aux->reject, ASN1_OBJECT_free);
         x->aux->reject = NULL;
     }
+}
+
+STACK_OF(ASN1_OBJECT) *X509_get0_trust_objects(X509 *x)
+{
+    if (x->aux != NULL)
+        return x->aux->trust;
+    return NULL;
+}
+
+STACK_OF(ASN1_OBJECT) *X509_get0_reject_objects(X509 *x)
+{
+    if (x->aux != NULL)
+        return x->aux->reject;
+    return NULL;
 }

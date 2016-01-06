@@ -49,9 +49,4 @@ more probability).
 L<bn(3)>, L<DH_size(3)>, L<DSA_size(3)>,
 L<RSA_size(3)>
 
-=head1 HISTORY
-
-BN_num_bytes(), BN_num_bits() and BN_num_bits_word() are available in
-all versions of SSLeay and OpenSSL.
-
 =cut

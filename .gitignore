@@ -82,6 +82,8 @@ tags
 TAGS
 cscope.out
 *.d
+crypto.map
+ssl.map
 
 # Windows
 /tmp32

@@ -50,10 +50,6 @@ functions directly.
 It is difficult to securely use stream ciphers. For example, do not perform
 multiple encryptions using the same key stream.
 
-=head1 HISTORY
-
-RC4_set_key() and RC4() are available in all versions of SSLeay and OpenSSL.
-
 =head1 SEE ALSO
 
 L<EVP_EncryptInit(3)>

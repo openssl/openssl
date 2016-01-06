@@ -214,9 +214,6 @@ int rsautl_main(int argc, char **argv)
         goto end;
     }
 
-    if (!app_load_modules(NULL))
-        goto end;
-
 /* FIXME: seed PRNG only if needed */
     app_RAND_load_file(NULL, 0);
 

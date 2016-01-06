@@ -49,13 +49,4 @@ B<(BN_ULONG)-1> if an error occurred.
 
 L<bn(3)>, L<ERR_get_error(3)>, L<BN_add(3)>
 
-=head1 HISTORY
-
-BN_add_word() and BN_mod_word() are available in all versions of
-SSLeay and OpenSSL. BN_div_word() was added in SSLeay 0.8, and
-BN_sub_word() and BN_mul_word() in SSLeay 0.9.0.
-
-Before 0.9.8a the return value for BN_div_word() and BN_mod_word()
-in case of an error was 0.
-
 =cut

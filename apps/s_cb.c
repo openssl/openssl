@@ -736,8 +736,8 @@ void tlsext_cb(SSL *s, int client_server, int type,
 int generate_cookie_callback(SSL *ssl, unsigned char *cookie,
                              unsigned int *cookie_len)
 {
-    unsigned char *buffer, result[EVP_MAX_MD_SIZE];
-    unsigned int length, resultlength;
+    unsigned char *buffer;
+    unsigned int length;
     union {
         struct sockaddr sa;
         struct sockaddr_in s4;
@@ -797,78 +797,23 @@ int generate_cookie_callback(SSL *ssl, unsigned char *cookie,
 
     /* Calculate HMAC of buffer using the secret */
     HMAC(EVP_sha1(), cookie_secret, COOKIE_SECRET_LENGTH,
-         buffer, length, result, &resultlength);
+         buffer, length, cookie, cookie_len);
     OPENSSL_free(buffer);
-
-    memcpy(cookie, result, resultlength);
-    *cookie_len = resultlength;
 
     return 1;
 }
 
-int verify_cookie_callback(SSL *ssl, unsigned char *cookie,
+int verify_cookie_callback(SSL *ssl, const unsigned char *cookie,
                            unsigned int cookie_len)
 {
-    unsigned char *buffer, result[EVP_MAX_MD_SIZE];
-    unsigned int length, resultlength;
-    union {
-        struct sockaddr sa;
-        struct sockaddr_in s4;
-#if OPENSSL_USE_IPV6
-        struct sockaddr_in6 s6;
-#endif
-    } peer;
+    unsigned char result[EVP_MAX_MD_SIZE];
+    unsigned int resultlength;
 
-    /* If secret isn't initialized yet, the cookie can't be valid */
-    if (!cookie_initialized)
-        return 0;
-
-    /* Read peer information */
-    (void)BIO_dgram_get_peer(SSL_get_rbio(ssl), &peer);
-
-    /* Create buffer with peer's address and port */
-    length = 0;
-    switch (peer.sa.sa_family) {
-    case AF_INET:
-        length += sizeof(struct in_addr);
-        length += sizeof(peer.s4.sin_port);
-        break;
-#if OPENSSL_USE_IPV6
-    case AF_INET6:
-        length += sizeof(struct in6_addr);
-        length += sizeof(peer.s6.sin6_port);
-        break;
-#endif
-    default:
-        OPENSSL_assert(0);
-        break;
-    }
-    buffer = app_malloc(length, "cookie verify buffer");
-
-    switch (peer.sa.sa_family) {
-    case AF_INET:
-        memcpy(buffer, &peer.s4.sin_port, sizeof(peer.s4.sin_port));
-        memcpy(buffer + sizeof(peer.s4.sin_port),
-               &peer.s4.sin_addr, sizeof(struct in_addr));
-        break;
-#if OPENSSL_USE_IPV6
-    case AF_INET6:
-        memcpy(buffer, &peer.s6.sin6_port, sizeof(peer.s6.sin6_port));
-        memcpy(buffer + sizeof(peer.s6.sin6_port),
-               &peer.s6.sin6_addr, sizeof(struct in6_addr));
-        break;
-#endif
-    default:
-        OPENSSL_assert(0);
-        break;
-    }
-
-    /* Calculate HMAC of buffer using the secret */
-    HMAC(EVP_sha1(), cookie_secret, COOKIE_SECRET_LENGTH,
-         buffer, length, result, &resultlength);
-    OPENSSL_free(buffer);
-
-    if (cookie_len == resultlength
+    /* Note: we check cookie_initialized because if it's not,
+     * it cannot be valid */
+    if (cookie_initialized
+        && generate_cookie_callback(ssl, result, &resultlength)
+        && cookie_len == resultlength
         && memcmp(result, cookie, resultlength) == 0)
         return 1;
 
@@ -1195,7 +1140,7 @@ void print_ssl_summary(SSL *s)
 }
 
 int config_ctx(SSL_CONF_CTX *cctx, STACK_OF(OPENSSL_STRING) *str,
-               SSL_CTX *ctx, int no_ecdhe, int no_jpake)
+               SSL_CTX *ctx, int no_jpake)
 {
     int i;
 
@@ -1203,9 +1148,6 @@ int config_ctx(SSL_CONF_CTX *cctx, STACK_OF(OPENSSL_STRING) *str,
     for (i = 0; i < sk_OPENSSL_STRING_num(str); i += 2) {
         const char *flag = sk_OPENSSL_STRING_value(str, i);
         const char *arg = sk_OPENSSL_STRING_value(str, i + 1);
-        /* If no_ecdhe or named curve already specified don't need a default. */
-        if (!no_ecdhe && strcmp(flag, "-named_curve") == 0)
-            no_ecdhe = 1;
 #ifndef OPENSSL_NO_JPAKE
         if (!no_jpake && (strcmp(flag, "-cipher") == 0)) {
             BIO_puts(bio_err, "JPAKE sets cipher to PSK\n");
@@ -1218,18 +1160,6 @@ int config_ctx(SSL_CONF_CTX *cctx, STACK_OF(OPENSSL_STRING) *str,
                            flag, arg);
             else
                 BIO_printf(bio_err, "Error with command: \"%s\"\n", flag);
-            ERR_print_errors(bio_err);
-            return 0;
-        }
-    }
-    /*
-     * This is a special case to keep existing s_server functionality: if we
-     * don't have any curve specified *and* we haven't disabled ECDHE then
-     * use P-256.
-     */
-    if (!no_ecdhe) {
-        if (SSL_CONF_cmd(cctx, "-named_curve", "P-256") <= 0) {
-            BIO_puts(bio_err, "Error setting EC curve\n");
             ERR_print_errors(bio_err);
             return 0;
         }
@@ -1279,8 +1209,10 @@ int ssl_load_stores(SSL_CTX *ctx,
 {
     X509_STORE *vfy = NULL, *ch = NULL;
     int rv = 0;
-    if (vfyCApath || vfyCAfile) {
+    if (vfyCApath != NULL || vfyCAfile != NULL) {
         vfy = X509_STORE_new();
+        if (vfy == NULL)
+            goto err;
         if (!X509_STORE_load_locations(vfy, vfyCAfile, vfyCApath))
             goto err;
         add_crls_store(vfy, crls);
@@ -1288,8 +1220,10 @@ int ssl_load_stores(SSL_CTX *ctx,
         if (crl_download)
             store_setup_crl_download(vfy);
     }
-    if (chCApath || chCAfile) {
+    if (chCApath != NULL || chCAfile != NULL) {
         ch = X509_STORE_new();
+        if (ch == NULL)
+            goto err;
         if (!X509_STORE_load_locations(ch, chCAfile, chCApath))
             goto err;
         SSL_CTX_set1_chain_cert_store(ctx, ch);
@@ -1398,13 +1332,12 @@ static int security_callback_debug(SSL *s, SSL_CTX *ctx,
                 int sig_nid = X509_get_signature_nid(other);
                 BIO_puts(sdb->out, OBJ_nid2sn(sig_nid));
             } else {
-                EVP_PKEY *pkey = X509_get_pubkey(other);
+                EVP_PKEY *pkey = X509_get0_pubkey(other);
                 const char *algname = "";
                 EVP_PKEY_asn1_get0_info(NULL, NULL, NULL, NULL,
                                         &algname, EVP_PKEY_get0_asn1(pkey));
                 BIO_printf(sdb->out, "%s, bits=%d",
                            algname, EVP_PKEY_bits(pkey));
-                EVP_PKEY_free(pkey);
             }
             break;
         }

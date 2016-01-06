@@ -179,12 +179,4 @@ To change the point conversion form to B<compressed>:
 
 L<ecparam(1)>, L<dsa(1)>, L<rsa(1)>
 
-=head1 HISTORY
-
-The ec command was first introduced in OpenSSL 0.9.8.
-
-=head1 AUTHOR
-
-Nils Larsch for the OpenSSL project (http://www.openssl.org).
-
 =cut

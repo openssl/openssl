@@ -159,10 +159,6 @@ int ssl3_setup_read_buffer(SSL *s)
     if (b->buf == NULL) {
         len = SSL3_RT_MAX_PLAIN_LENGTH
             + SSL3_RT_MAX_ENCRYPTED_OVERHEAD + headerlen + align;
-        if (s->options & SSL_OP_MICROSOFT_BIG_SSLV3_BUFFER) {
-            s->s3->init_extra = 1;
-            len += SSL3_RT_MAX_EXTRA;
-        }
 #ifndef OPENSSL_NO_COMP
         if (ssl_allow_compression(s))
             len += SSL3_RT_MAX_COMPRESSED_OVERHEAD;

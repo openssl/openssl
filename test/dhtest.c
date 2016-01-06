@@ -86,13 +86,15 @@ static int run_rfc5114_tests(void);
 
 int main(int argc, char *argv[])
 {
-    BN_GENCB *_cb;
+    BN_GENCB *_cb = NULL;
     DH *a = NULL;
     DH *b = NULL;
-    char buf[12];
-    unsigned char *abuf = NULL, *bbuf = NULL;
-    int i, alen, blen, aout, bout, ret = 1;
-    BIO *out;
+    char buf[12] = {0};
+    unsigned char *abuf = NULL;
+    unsigned char *bbuf = NULL;
+    int i, alen, blen, aout, bout;
+    int ret = 1;
+    BIO *out = NULL;
 
     CRYPTO_malloc_debug_init();
     CRYPTO_dbg_set_options(V_CRYPTO_MDEBUG_ALL);
@@ -110,12 +112,11 @@ int main(int argc, char *argv[])
     BIO_set_fp(out, stdout, BIO_NOCLOSE | BIO_FP_TEXT);
 
     _cb = BN_GENCB_new();
-    if (!_cb)
+    if (_cb == NULL)
         goto err;
     BN_GENCB_set(_cb, &cb, out);
-    if (((a = DH_new()) == NULL) || !DH_generate_parameters_ex(a, 64,
-                                                               DH_GENERATOR_5,
-                                                               _cb))
+    if (((a = DH_new()) == NULL)
+        || (!DH_generate_parameters_ex(a, 64, DH_GENERATOR_5, _cb)))
         goto err;
 
     if (!DH_check(a, &i))
@@ -166,6 +167,9 @@ int main(int argc, char *argv[])
 
     alen = DH_size(a);
     abuf = OPENSSL_malloc(alen);
+    if (abuf == NULL)
+        goto err;
+
     aout = DH_compute_key(abuf, b->pub_key, a);
 
     BIO_puts(out, "key1 =");
@@ -177,6 +181,9 @@ int main(int argc, char *argv[])
 
     blen = DH_size(b);
     bbuf = OPENSSL_malloc(blen);
+    if (bbuf == NULL)
+        goto err;
+
     bout = DH_compute_key(bbuf, a->pub_key, b);
 
     BIO_puts(out, "key2 =");
@@ -485,14 +492,22 @@ static const rfc5114_td rfctd[] = {
 static int run_rfc5114_tests(void)
 {
     int i;
+    DH *dhA = NULL;
+    DH *dhB = NULL;
+    unsigned char *Z1 = NULL;
+    unsigned char *Z2 = NULL;
+    const rfc5114_td *td = NULL;
+
     for (i = 0; i < (int)OSSL_NELEM(rfctd); i++) {
-        DH *dhA, *dhB;
-        unsigned char *Z1 = NULL, *Z2 = NULL;
-        const rfc5114_td *td = rfctd + i;
+        dhA = NULL;
+        dhB = NULL;
+        Z1 = NULL;
+        Z2 = NULL;
+        td = rfctd + i;
         /* Set up DH structures setting key components */
         dhA = td->get_param();
         dhB = td->get_param();
-        if (!dhA || !dhB)
+        if ((dhA == NULL) || (dhB == NULL))
             goto bad_err;
 
         dhA->priv_key = BN_bin2bn(td->xA, td->xA_len, NULL);
@@ -501,8 +516,8 @@ static int run_rfc5114_tests(void)
         dhB->priv_key = BN_bin2bn(td->xB, td->xB_len, NULL);
         dhB->pub_key = BN_bin2bn(td->yB, td->yB_len, NULL);
 
-        if (!dhA->priv_key || !dhA->pub_key
-            || !dhB->priv_key || !dhB->pub_key)
+        if ((dhA->priv_key == NULL) || (dhA->pub_key == NULL)
+            || (dhB->priv_key == NULL) || (dhB->pub_key == NULL))
             goto bad_err;
 
         if ((td->Z_len != (size_t)DH_size(dhA))
@@ -511,13 +526,15 @@ static int run_rfc5114_tests(void)
 
         Z1 = OPENSSL_malloc(DH_size(dhA));
         Z2 = OPENSSL_malloc(DH_size(dhB));
+        if ((Z1 == NULL) || (Z2 == NULL))
+            goto bad_err;
         /*
          * Work out shared secrets using both sides and compare with expected
          * values.
          */
-        if (!DH_compute_key(Z1, dhB->pub_key, dhA))
+        if (DH_compute_key(Z1, dhB->pub_key, dhA) == -1)
             goto bad_err;
-        if (!DH_compute_key(Z2, dhA->pub_key, dhB))
+        if (DH_compute_key(Z2, dhA->pub_key, dhB) == -1)
             goto bad_err;
 
         if (memcmp(Z1, td->Z, td->Z_len))
@@ -535,10 +552,20 @@ static int run_rfc5114_tests(void)
     }
     return 1;
  bad_err:
+    DH_free(dhA);
+    DH_free(dhB);
+    OPENSSL_free(Z1);
+    OPENSSL_free(Z2);
+
     fprintf(stderr, "Initalisation error RFC5114 set %d\n", i + 1);
     ERR_print_errors_fp(stderr);
     return 0;
  err:
+    DH_free(dhA);
+    DH_free(dhB);
+    OPENSSL_free(Z1);
+    OPENSSL_free(Z2);
+
     fprintf(stderr, "Test failed RFC5114 set %d\n", i + 1);
     return 0;
 }

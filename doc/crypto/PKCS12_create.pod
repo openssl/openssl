@@ -46,11 +46,6 @@ export grade software which could use signing only keys of arbitrary size but
 had restrictions on the permissible sizes of keys which could be used for
 encryption.
 
-=head1 NEW FUNCTIONALITY IN OPENSSL 0.9.8
-
-Some additional functionality was added to PKCS12_create() in OpenSSL
-0.9.8. These extensions are detailed below.
-
 If a certificate contains an B<alias> or B<keyid> then this will be
 used for the corresponding B<friendlyName> or B<localKeyID> in the
 PKCS12 structure.
@@ -67,9 +62,5 @@ B<mac_iter> can be set to -1 and the MAC will then be omitted entirely.
 =head1 SEE ALSO
 
 L<d2i_PKCS12(3)>
-
-=head1 HISTORY
-
-PKCS12_create was added in OpenSSL 0.9.3
 
 =cut

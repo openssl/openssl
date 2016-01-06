@@ -1,4 +1,4 @@
-/* crypto/store/str_lib.c -*- mode:C; c-file-style: "eay" -*- */
+/* crypto/store/str_lib.c */
 /*
  * Written by Richard Levitte (richard@levitte.org) for the OpenSSL project
  * 2003.
@@ -187,13 +187,6 @@ int STORE_ctrl(STORE *store, int cmd, long i, void *p, void (*f) (void))
     return 0;
 }
 
-int STORE_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
-                           CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func)
-{
-    return CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_STORE, argl, argp,
-                                   new_func, dup_func, free_func);
-}
-
 int STORE_set_ex_data(STORE *r, int idx, void *arg)
 {
     return (CRYPTO_set_ex_data(&r->ex_data, idx, arg));
@@ -266,11 +259,11 @@ int STORE_store_certificate(STORE *s, X509 *data, OPENSSL_ITEM attributes[],
     STORE_OBJECT *object;
     int i;
 
-    check_store(s, STORE_F_STORE_CERTIFICATE,
+    check_store(s, STORE_F_STORE_STORE_CERTIFICATE,
                 store_object, STORE_R_NO_STORE_OBJECT_FUNCTION);
 
     object = STORE_OBJECT_new();
-    if (!object) {
+    if (object == NULL) {
         STOREerr(STORE_F_STORE_STORE_CERTIFICATE, ERR_R_MALLOC_FAILURE);
         return 0;
     }
@@ -471,12 +464,12 @@ int STORE_store_private_key(STORE *s, EVP_PKEY *data,
                 store_object, STORE_R_NO_STORE_OBJECT_FUNCTION);
 
     object = STORE_OBJECT_new();
-    if (!object) {
+    if (object == NULL) {
         STOREerr(STORE_F_STORE_STORE_PRIVATE_KEY, ERR_R_MALLOC_FAILURE);
         return 0;
     }
     object->data.key = EVP_PKEY_new();
-    if (!object->data.key) {
+    if (object->data.key == NULL) {
         STOREerr(STORE_F_STORE_STORE_PRIVATE_KEY, ERR_R_MALLOC_FAILURE);
         return 0;
     }
@@ -655,12 +648,12 @@ int STORE_store_public_key(STORE *s, EVP_PKEY *data,
                 store_object, STORE_R_NO_STORE_OBJECT_FUNCTION);
 
     object = STORE_OBJECT_new();
-    if (!object) {
+    if (object == NULL) {
         STOREerr(STORE_F_STORE_STORE_PUBLIC_KEY, ERR_R_MALLOC_FAILURE);
         return 0;
     }
     object->data.key = EVP_PKEY_new();
-    if (!object->data.key) {
+    if (object->data.key == NULL) {
         STOREerr(STORE_F_STORE_STORE_PUBLIC_KEY, ERR_R_MALLOC_FAILURE);
         return 0;
     }
@@ -862,7 +855,7 @@ int STORE_store_crl(STORE *s, X509_CRL *data, OPENSSL_ITEM attributes[],
                 store_object, STORE_R_NO_STORE_OBJECT_FUNCTION);
 
     object = STORE_OBJECT_new();
-    if (!object) {
+    if (object == NULL) {
         STOREerr(STORE_F_STORE_STORE_CRL, ERR_R_MALLOC_FAILURE);
         return 0;
     }
@@ -991,7 +984,7 @@ int STORE_store_number(STORE *s, BIGNUM *data, OPENSSL_ITEM attributes[],
                 store_object, STORE_R_NO_STORE_OBJECT_NUMBER_FUNCTION);
 
     object = STORE_OBJECT_new();
-    if (!object) {
+    if (object == NULL) {
         STOREerr(STORE_F_STORE_STORE_NUMBER, ERR_R_MALLOC_FAILURE);
         return 0;
     }
@@ -1075,7 +1068,7 @@ int STORE_store_arbitrary(STORE *s, BUF_MEM *data, OPENSSL_ITEM attributes[],
                 store_object, STORE_R_NO_STORE_OBJECT_ARBITRARY_FUNCTION);
 
     object = STORE_OBJECT_new();
-    if (!object) {
+    if (object == NULL) {
         STOREerr(STORE_F_STORE_STORE_ARBITRARY, ERR_R_MALLOC_FAILURE);
         return 0;
     }
@@ -1312,7 +1305,7 @@ int STORE_ATTR_INFO_set_cstr(STORE_ATTR_INFO *attrs, STORE_ATTR_TYPES code,
         return 0;
     }
     if (!ATTR_IS_SET(attrs, code)) {
-        if ((attrs->values[code].cstring = BUF_strndup(cstr, cstr_size)))
+        if ((attrs->values[code].cstring = OPENSSL_strndup(cstr, cstr_size)))
             return 1;
         STOREerr(STORE_F_STORE_ATTR_INFO_SET_CSTR, ERR_R_MALLOC_FAILURE);
         return 0;
@@ -1331,7 +1324,7 @@ int STORE_ATTR_INFO_set_sha1str(STORE_ATTR_INFO *attrs, STORE_ATTR_TYPES code,
     }
     if (!ATTR_IS_SET(attrs, code)) {
         if ((attrs->values[code].sha1string =
-             (unsigned char *)BUF_memdup(sha1str, sha1str_size)))
+             (unsigned char *)OPENSSL_memdup(sha1str, sha1str_size)))
             return 1;
         STOREerr(STORE_F_STORE_ATTR_INFO_SET_SHA1STR, ERR_R_MALLOC_FAILURE);
         return 0;
@@ -1449,7 +1442,7 @@ void *STORE_parse_attrs_start(OPENSSL_ITEM *attributes)
 {
     if (attributes) {
         struct attr_list_ctx_st *context = OPENSSL_malloc(sizeof(*context));
-        if (context)
+        if (context != NULL)
             context->attributes = attributes;
         else
             STOREerr(STORE_F_STORE_PARSE_ATTRS_START, ERR_R_MALLOC_FAILURE);
@@ -1473,7 +1466,7 @@ STORE_ATTR_INFO *STORE_parse_attrs_next(void *handle)
             case STORE_ATTR_FRIENDLYNAME:
             case STORE_ATTR_EMAIL:
             case STORE_ATTR_FILENAME:
-                if (!attrs)
+                if (attrs == NULL)
                     attrs = STORE_ATTR_INFO_new();
                 if (attrs == NULL) {
                     STOREerr(STORE_F_STORE_PARSE_ATTRS_NEXT,
@@ -1490,7 +1483,7 @@ STORE_ATTR_INFO *STORE_parse_attrs_next(void *handle)
             case STORE_ATTR_SUBJECTKEYID:
             case STORE_ATTR_ISSUERSERIALHASH:
             case STORE_ATTR_CERTHASH:
-                if (!attrs)
+                if (attrs == NULL)
                     attrs = STORE_ATTR_INFO_new();
                 if (attrs == NULL) {
                     STOREerr(STORE_F_STORE_PARSE_ATTRS_NEXT,
@@ -1504,7 +1497,7 @@ STORE_ATTR_INFO *STORE_parse_attrs_next(void *handle)
                 break;
             case STORE_ATTR_ISSUER:
             case STORE_ATTR_SUBJECT:
-                if (!attrs)
+                if (attrs == NULL)
                     attrs = STORE_ATTR_INFO_new();
                 if (attrs == NULL) {
                     STOREerr(STORE_F_STORE_PARSE_ATTRS_NEXT,
@@ -1516,7 +1509,7 @@ STORE_ATTR_INFO *STORE_parse_attrs_next(void *handle)
                                           context->attributes->value);
                 break;
             case STORE_ATTR_SERIAL:
-                if (!attrs)
+                if (attrs == NULL)
                     attrs = STORE_ATTR_INFO_new();
                 if (attrs == NULL) {
                     STOREerr(STORE_F_STORE_PARSE_ATTRS_NEXT,

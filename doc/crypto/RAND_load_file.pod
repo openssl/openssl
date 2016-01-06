@@ -24,7 +24,7 @@ too small for the path name, an error occurs.
 
 RAND_load_file() reads a number of bytes from file B<filename> and
 adds them to the PRNG. If B<max_bytes> is non-negative,
-up to to B<max_bytes> are read; starting with OpenSSL 0.9.5,
+up to to B<max_bytes> are read;
 if B<max_bytes> is -1, the complete file is read.
 
 RAND_write_file() writes a number of random bytes (currently 1024) to
@@ -44,10 +44,5 @@ error.
 =head1 SEE ALSO
 
 L<rand(3)>, L<RAND_add(3)>, L<RAND_cleanup(3)>
-
-=head1 HISTORY
-
-RAND_load_file(), RAND_write_file() and RAND_file_name() are available in
-all versions of SSLeay and OpenSSL.
 
 =cut

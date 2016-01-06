@@ -21,7 +21,7 @@ BIO_get_bind_mode, BIO_do_accept - accept BIO
  long BIO_set_accept_bios(BIO *b, char *bio);
 
  long BIO_set_bind_mode(BIO *b, long mode);
- long BIO_get_bind_mode(BIO *b, long dummy);
+ long BIO_get_bind_mode(BIO *b);
 
  #define BIO_BIND_NORMAL		0
  #define BIO_BIND_REUSEADDR_IF_UNUSED	1

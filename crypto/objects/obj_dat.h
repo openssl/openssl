@@ -62,12 +62,12 @@
  * [including the GNU Public Licence.]
  */
 
-#define NUM_NID 1009
-#define NUM_SN 1002
-#define NUM_LN 1002
-#define NUM_OBJ 936
+#define NUM_NID 1021
+#define NUM_SN 1014
+#define NUM_LN 1014
+#define NUM_OBJ 937
 
-static const unsigned char lvalues[6604]={
+static const unsigned char lvalues[6612]={
 0x2A,0x86,0x48,0x86,0xF7,0x0D,               /* [  0] OBJ_rsadsi */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,          /* [  6] OBJ_pkcs */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x02,0x02,     /* [ 13] OBJ_md2 */
@@ -998,6 +998,7 @@ static const unsigned char lvalues[6604]={
 0x2A,0x85,0x03,0x64,0x03,                    /* [6588] OBJ_SNILS */
 0x2A,0x85,0x03,0x64,0x6F,                    /* [6593] OBJ_subjectSignTool */
 0x2A,0x85,0x03,0x64,0x70,                    /* [6598] OBJ_issuerSignTool */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x01,0x18,     /* [6603] OBJ_tlsfeature */
 };
 
 static const ASN1_OBJECT nid_objs[NUM_NID]={
@@ -2658,6 +2659,18 @@ static const ASN1_OBJECT nid_objs[NUM_NID]={
 	&(lvalues[6593]),0},
 {"issuerSignTool","Signing Tool of Issuer",NID_issuerSignTool,5,
 	&(lvalues[6598]),0},
+{"gost89-cbc","gost89-cbc",NID_gost89_cbc,0,NULL,0},
+{"gost89-ecb","gost89-ecb",NID_gost89_ecb,0,NULL,0},
+{"gost89-ctr","gost89-ctr",NID_gost89_ctr,0,NULL,0},
+{"grasshopper-ecb","grasshopper-ecb",NID_grasshopper_ecb,0,NULL,0},
+{"grasshopper-ctr","grasshopper-ctr",NID_grasshopper_ctr,0,NULL,0},
+{"grasshopper-ofb","grasshopper-ofb",NID_grasshopper_ofb,0,NULL,0},
+{"grasshopper-cbc","grasshopper-cbc",NID_grasshopper_cbc,0,NULL,0},
+{"grasshopper-cfb","grasshopper-cfb",NID_grasshopper_cfb,0,NULL,0},
+{"grasshopper-mac","grasshopper-mac",NID_grasshopper_mac,0,NULL,0},
+{"ChaCha20-Poly1305","chacha20-poly1305",NID_chacha20_poly1305,0,NULL,0},
+{"ChaCha20","chacha20",NID_chacha20,0,NULL,0},
+{"tlsfeature","TLS Feature",NID_tlsfeature,8,&(lvalues[6603]),0},
 };
 
 static const unsigned int sn_objs[NUM_SN]={
@@ -2737,6 +2750,8 @@ static const unsigned int sn_objs[NUM_SN]={
 13,	/* "CN" */
 141,	/* "CRLReason" */
 417,	/* "CSPName" */
+1019,	/* "ChaCha20" */
+1018,	/* "ChaCha20-Poly1305" */
 367,	/* "CrlID" */
 391,	/* "DC" */
 31,	/* "DES-CBC" */
@@ -3025,10 +3040,19 @@ static const unsigned int sn_objs[NUM_SN]={
 979,	/* "gost2012_256" */
 980,	/* "gost2012_512" */
 813,	/* "gost89" */
+1009,	/* "gost89-cbc" */
 814,	/* "gost89-cnt" */
 975,	/* "gost89-cnt-12" */
+1011,	/* "gost89-ctr" */
+1010,	/* "gost89-ecb" */
 812,	/* "gost94" */
 850,	/* "gost94cc" */
+1015,	/* "grasshopper-cbc" */
+1016,	/* "grasshopper-cfb" */
+1013,	/* "grasshopper-ctr" */
+1012,	/* "grasshopper-ecb" */
+1017,	/* "grasshopper-mac" */
+1014,	/* "grasshopper-ofb" */
 797,	/* "hmacWithMD5" */
 163,	/* "hmacWithSHA1" */
 798,	/* "hmacWithSHA224" */
@@ -3634,6 +3658,7 @@ static const unsigned int sn_objs[NUM_SN]={
 293,	/* "textNotice" */
 133,	/* "timeStamping" */
 106,	/* "title" */
+1020,	/* "tlsfeature" */
 682,	/* "tpBasis" */
 375,	/* "trustRoot" */
 436,	/* "ucl" */
@@ -3791,6 +3816,7 @@ static const unsigned int ln_objs[NUM_LN]={
 1007,	/* "Signing Tool of Subject" */
 143,	/* "Strong Extranet ID" */
 398,	/* "Subject Information Access" */
+1020,	/* "TLS Feature" */
 130,	/* "TLS Web Client Authentication" */
 129,	/* "TLS Web Server Authentication" */
 133,	/* "Time Stamping" */
@@ -3955,6 +3981,8 @@ static const unsigned int ln_objs[NUM_LN]={
 677,	/* "certicom-arc" */
 517,	/* "certificate extensions" */
 883,	/* "certificateRevocationList" */
+1019,	/* "chacha20" */
+1018,	/* "chacha20-poly1305" */
 54,	/* "challengePassword" */
 407,	/* "characteristic-two-field" */
 395,	/* "clearance" */
@@ -4053,8 +4081,17 @@ static const unsigned int ln_objs[NUM_LN]={
 601,	/* "generic cryptogram" */
 99,	/* "givenName" */
 976,	/* "gost-mac-12" */
+1009,	/* "gost89-cbc" */
 814,	/* "gost89-cnt" */
 975,	/* "gost89-cnt-12" */
+1011,	/* "gost89-ctr" */
+1010,	/* "gost89-ecb" */
+1015,	/* "grasshopper-cbc" */
+1016,	/* "grasshopper-cfb" */
+1013,	/* "grasshopper-ctr" */
+1012,	/* "grasshopper-ecb" */
+1017,	/* "grasshopper-mac" */
+1014,	/* "grasshopper-ofb" */
 855,	/* "hmac" */
 780,	/* "hmac-md5" */
 781,	/* "hmac-sha1" */
@@ -5211,6 +5248,7 @@ static const unsigned int obj_objs[NUM_OBJ]={
 397,	/* OBJ_ac_proxying                  1 3 6 1 5 5 7 1 10 */
 398,	/* OBJ_sinfo_access                 1 3 6 1 5 5 7 1 11 */
 663,	/* OBJ_proxyCertInfo                1 3 6 1 5 5 7 1 14 */
+1020,	/* OBJ_tlsfeature                   1 3 6 1 5 5 7 1 24 */
 164,	/* OBJ_id_qt_cps                    1 3 6 1 5 5 7 2 1 */
 165,	/* OBJ_id_qt_unotice                1 3 6 1 5 5 7 2 2 */
 293,	/* OBJ_textNotice                   1 3 6 1 5 5 7 2 3 */

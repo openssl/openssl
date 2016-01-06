@@ -44,8 +44,4 @@ None of the functions return a value.
 
 L<conf(3)>, L<OPENSSL_config(3)>
 
-=head1 HISTORY
-
-These functions first appeared in OpenSSL 0.9.7.
-
 =cut

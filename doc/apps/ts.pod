@@ -28,6 +28,7 @@ B<-reply>
 [B<-passin> password_src]
 [B<-signer> tsa_cert.pem]
 [B<-inkey> private.pem]
+[B<-sha1|-sha224|-sha256|-sha384|-sha512>]
 [B<-chain> certs_file.pem]
 [B<-policy> object_id]
 [B<-in> response.tsr]
@@ -215,6 +216,11 @@ variable of the config file. (Optional)
 The signer private key of the TSA in PEM format. Overrides the
 B<signer_key> config file option. (Optional)
 
+=item B<-sha1|-sha224|-sha256|-sha384|-sha512>
+
+Signing digest to use. Overrides the B<signer_digest> config file
+option. (Optional)
+
 =item B<-chain> certs_file.pem
 
 The collection of certificates in PEM format that will all
@@ -395,6 +401,11 @@ option. (Optional)
 
 The private key of the TSA in PEM format. The same as the B<-inkey>
 command line option. (Optional)
+
+=item B<signer_digest>
+
+Signing digest to use. The same as the
+B<-sha1|-sha224|-sha256|-sha384|-sha512> command line option. (Optional)
 
 =item B<default_policy>
 
@@ -580,10 +591,6 @@ test/testtsa).
 =back
 
 =cut
-
-=head1 AUTHOR
-
-Zoltan Glozik <zglozik@opentsa.org>, OpenTSA project (http://www.opentsa.org)
 
 =head1 SEE ALSO
 

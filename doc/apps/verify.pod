@@ -283,9 +283,8 @@ certificate. If a certificate is found which is its own issuer it is assumed
 to be the root CA.
 
 The process of 'looking up the issuers certificate' itself involves a number
-of steps. In versions of OpenSSL before 0.9.5a the first certificate whose
-subject name matched the issuer of the current certificate was assumed to be
-the issuers certificate. In OpenSSL 0.9.6 and later all certificates
+of steps.
+Ater all certificates
 whose subject name matches the issuer name of the current certificate are 
 subject to further tests. The relevant authority key identifier components
 of the current certificate (if present) must match the subject key identifier
@@ -308,7 +307,7 @@ the B<CERTIFICATE EXTENSIONS> section of the B<x509> utility.
 
 The third operation is to check the trust settings on the root CA. The root
 CA should be trusted for the supplied purpose. For compatibility with previous
-versions of SSLeay and OpenSSL a certificate with no trust settings is considered
+versions of OpenSSL, a certificate with no trust settings is considered
 to be valid for all purposes. 
 
 The final operation is to check the validity of the certificate chain. The validity

@@ -71,7 +71,6 @@ L<ERR_get_error(3)>
 
 =head1 HISTORY
 
-RSA_check_key() appeared in OpenSSL 0.9.4.
 RSA_check_key_ex() appeared after OpenSSL 1.0.2.
 
 =cut

@@ -97,7 +97,7 @@ CMS_ReceiptRequest *CMS_ReceiptRequest_create0(unsigned char *id, int idlen,
     CMS_ReceiptRequest *rr = NULL;
 
     rr = CMS_ReceiptRequest_new();
-    if (!rr)
+    if (rr == NULL)
         goto merr;
     if (id)
         ASN1_STRING_set0(rr->signedContentIdentifier, id, idlen);

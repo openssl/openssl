@@ -66,17 +66,16 @@ B<openssl> B<s_server>
 [B<-cipher cipherlist>]
 [B<-serverpref>]
 [B<-quiet>]
-[B<-no_tmp_rsa>]
 [B<-ssl3>]
 [B<-tls1>]
 [B<-dtls>]
 [B<-dtls1>]
 [B<-dtls1_2>]
 [B<-listen>]
+[B<-async>]
 [B<-no_ssl3>]
 [B<-no_tls1>]
 [B<-no_dhe>]
-[B<-no_ecdhe>]
 [B<-bugs>]
 [B<-brief>]
 [B<-www>]
@@ -179,16 +178,6 @@ a static set of parameters hard coded into the s_server program will be used.
 
 if this option is set then no DH parameters will be loaded effectively
 disabling the ephemeral DH cipher suites.
-
-=item B<-no_ecdhe>
-
-if this option is set then no ECDH parameters will be loaded effectively
-disabling the ephemeral ECDH cipher suites.
-
-=item B<-no_tmp_rsa>
-
-certain export cipher suites sometimes use a temporary RSA key, this option
-disables temporary RSA key generation.
 
 =item B<-crl_check>, B<-crl_check_all>
 
@@ -311,6 +300,13 @@ Any ClientHellos that arrive will be checked to see if they have a cookie in
 them or not. Any without a cookie will be responded to with a
 HelloVerifyRequest. If a ClientHello with a cookie is received then s_server
 will connect to that peer and complete the handshake.
+
+=item B<-async>
+
+switch on asynchronous mode. Cryptographic operations will be performed
+asynchronously. This will only have an effect if an asynchronous capable engine
+is also used via the B<-engine> option. For test purposes the dummy async engine
+(dasync) can be used (if available).
 
 =item B<-bugs>
 

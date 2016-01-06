@@ -159,8 +159,7 @@ static BIGNUM *rsa_get_public_exp(const BIGNUM *d, const BIGNUM *p,
 
 BN_BLINDING *RSA_setup_blinding(RSA *rsa, BN_CTX *in_ctx)
 {
-    BIGNUM *local_n = NULL;
-    BIGNUM *e, *n;
+    BIGNUM *e;
     BN_CTX *ctx;
     BN_BLINDING *ret = NULL;
 
@@ -196,19 +195,25 @@ BN_BLINDING *RSA_setup_blinding(RSA *rsa, BN_CTX *in_ctx)
                  0.0);
     }
 
-    if (!(rsa->flags & RSA_FLAG_NO_CONSTTIME)) {
-        /* Set BN_FLG_CONSTTIME flag */
-        local_n = n = BN_new();
-        if (!local_n) {
-            RSAerr(RSA_F_RSA_SETUP_BLINDING, ERR_R_MALLOC_FAILURE);
-            goto err;
+    {
+        BIGNUM *local_n = NULL, *n;
+        if (!(rsa->flags & RSA_FLAG_NO_CONSTTIME)) {
+            /* Set BN_FLG_CONSTTIME flag */
+            local_n = n = BN_new();
+            if (local_n == NULL) {
+                RSAerr(RSA_F_RSA_SETUP_BLINDING, ERR_R_MALLOC_FAILURE);
+                goto err;
+            }
+            BN_with_flags(n, rsa->n, BN_FLG_CONSTTIME);
+        } else {
+            n = rsa->n;
         }
-        BN_with_flags(n, rsa->n, BN_FLG_CONSTTIME);
-    } else
-        n = rsa->n;
 
-    ret = BN_BLINDING_create_param(NULL, e, n, ctx,
-                                   rsa->meth->bn_mod_exp, rsa->_method_mod_n);
+        ret = BN_BLINDING_create_param(NULL, e, n, ctx, rsa->meth->bn_mod_exp,
+                                       rsa->_method_mod_n);
+        /* We MUST free local_n before any further use of rsa->n */
+        BN_free(local_n);
+    }
     if (ret == NULL) {
         RSAerr(RSA_F_RSA_SETUP_BLINDING, ERR_R_BN_LIB);
         goto err;
@@ -220,7 +225,6 @@ BN_BLINDING *RSA_setup_blinding(RSA *rsa, BN_CTX *in_ctx)
         BN_CTX_free(ctx);
     if (e != rsa->e)
         BN_free(e);
-    BN_free(local_n);
 
     return ret;
 }

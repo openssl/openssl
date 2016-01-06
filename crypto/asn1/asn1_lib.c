@@ -284,7 +284,9 @@ int ASN1_STRING_copy(ASN1_STRING *dst, const ASN1_STRING *str)
     dst->type = str->type;
     if (!ASN1_STRING_set(dst, str->data, str->length))
         return 0;
-    dst->flags = str->flags;
+    /* Copy flags but preserve embed value */
+    dst->flags &= ASN1_STRING_FLAG_EMBED;
+    dst->flags |= str->flags & ~ASN1_STRING_FLAG_EMBED;
     return 1;
 }
 
@@ -294,7 +296,7 @@ ASN1_STRING *ASN1_STRING_dup(const ASN1_STRING *str)
     if (!str)
         return NULL;
     ret = ASN1_STRING_new();
-    if (!ret)
+    if (ret == NULL)
         return NULL;
     if (!ASN1_STRING_copy(ret, str)) {
         ASN1_STRING_free(ret);
@@ -363,7 +365,8 @@ void ASN1_STRING_free(ASN1_STRING *a)
         return;
     if (!(a->flags & ASN1_STRING_FLAG_NDEF))
         OPENSSL_free(a->data);
-    OPENSSL_free(a);
+    if (!(a->flags & ASN1_STRING_FLAG_EMBED))
+        OPENSSL_free(a);
 }
 
 void ASN1_STRING_clear_free(ASN1_STRING *a)

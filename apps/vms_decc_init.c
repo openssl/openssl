@@ -68,6 +68,8 @@
 # include <stdlib.h>
 # include <unixlib.h>
 
+# include "apps.h"
+
 /* Global storage. */
 
 /* Flag to sense if decc_init() was called. */

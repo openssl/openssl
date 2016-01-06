@@ -67,7 +67,8 @@
 
 static int asn1_item_embed_new(ASN1_VALUE **pval, const ASN1_ITEM *it,
                                int embed);
-static int asn1_primitive_new(ASN1_VALUE **pval, const ASN1_ITEM *it);
+static int asn1_primitive_new(ASN1_VALUE **pval, const ASN1_ITEM *it,
+                              int embed);
 static void asn1_item_clear(ASN1_VALUE **pval, const ASN1_ITEM *it);
 static int asn1_template_new(ASN1_VALUE **pval, const ASN1_TEMPLATE *tt);
 static void asn1_template_clear(ASN1_VALUE **pval, const ASN1_TEMPLATE *tt);
@@ -102,8 +103,7 @@ int asn1_item_embed_new(ASN1_VALUE **pval, const ASN1_ITEM *it, int embed)
         asn1_cb = 0;
 
 #ifdef CRYPTO_MDEBUG
-    if (it->sname)
-        CRYPTO_push_info(it->sname);
+    OPENSSL_mem_debug_push(it->sname ? it->sname : "asn1_item_embed_new");
 #endif
 
     switch (it->itype) {
@@ -120,12 +120,12 @@ int asn1_item_embed_new(ASN1_VALUE **pval, const ASN1_ITEM *it, int embed)
         if (it->templates) {
             if (!asn1_template_new(pval, it->templates))
                 goto memerr;
-        } else if (!asn1_primitive_new(pval, it))
+        } else if (!asn1_primitive_new(pval, it, embed))
             goto memerr;
         break;
 
     case ASN1_ITYPE_MSTRING:
-        if (!asn1_primitive_new(pval, it))
+        if (!asn1_primitive_new(pval, it, embed))
             goto memerr;
         break;
 
@@ -136,15 +136,18 @@ int asn1_item_embed_new(ASN1_VALUE **pval, const ASN1_ITEM *it, int embed)
                 goto auxerr;
             if (i == 2) {
 #ifdef CRYPTO_MDEBUG
-                if (it->sname)
-                    CRYPTO_pop_info();
+                OPENSSL_mem_debug_pop();
 #endif
                 return 1;
             }
         }
-        *pval = OPENSSL_zalloc(it->size);
-        if (!*pval)
-            goto memerr;
+        if (embed) {
+            memset(*pval, 0, it->size);
+        } else {
+            *pval = OPENSSL_zalloc(it->size);
+            if (*pval == NULL)
+                goto memerr;
+        }
         asn1_set_choice_selector(pval, -1, it);
         if (asn1_cb && !asn1_cb(ASN1_OP_NEW_POST, pval, it, NULL))
             goto auxerr;
@@ -158,8 +161,7 @@ int asn1_item_embed_new(ASN1_VALUE **pval, const ASN1_ITEM *it, int embed)
                 goto auxerr;
             if (i == 2) {
 #ifdef CRYPTO_MDEBUG
-                if (it->sname)
-                    CRYPTO_pop_info();
+                OPENSSL_mem_debug_pop();
 #endif
                 return 1;
             }
@@ -168,7 +170,7 @@ int asn1_item_embed_new(ASN1_VALUE **pval, const ASN1_ITEM *it, int embed)
             memset(*pval, 0, it->size);
         } else {
             *pval = OPENSSL_zalloc(it->size);
-            if (!*pval)
+            if (*pval == NULL)
                 goto memerr;
         }
         asn1_do_lock(pval, 0, it);
@@ -183,16 +185,14 @@ int asn1_item_embed_new(ASN1_VALUE **pval, const ASN1_ITEM *it, int embed)
         break;
     }
 #ifdef CRYPTO_MDEBUG
-    if (it->sname)
-        CRYPTO_pop_info();
+    OPENSSL_mem_debug_pop();
 #endif
     return 1;
 
  memerr:
     ASN1err(ASN1_F_ASN1_ITEM_EMBED_NEW, ERR_R_MALLOC_FAILURE);
 #ifdef CRYPTO_MDEBUG
-    if (it->sname)
-        CRYPTO_pop_info();
+    OPENSSL_mem_debug_pop();
 #endif
     return 0;
 
@@ -200,8 +200,7 @@ int asn1_item_embed_new(ASN1_VALUE **pval, const ASN1_ITEM *it, int embed)
     ASN1err(ASN1_F_ASN1_ITEM_EMBED_NEW, ASN1_R_AUX_ERROR);
     ASN1_item_ex_free(pval, it);
 #ifdef CRYPTO_MDEBUG
-    if (it->sname)
-        CRYPTO_pop_info();
+    OPENSSL_mem_debug_pop();
 #endif
     return 0;
 
@@ -261,8 +260,8 @@ static int asn1_template_new(ASN1_VALUE **pval, const ASN1_TEMPLATE *tt)
         return 1;
     }
 #ifdef CRYPTO_MDEBUG
-    if (tt->field_name)
-        CRYPTO_push_info(tt->field_name);
+    OPENSSL_mem_debug_push(tt->field_name
+            ? tt->field_name : "asn1_template_new");
 #endif
     /* If SET OF or SEQUENCE OF, its a STACK */
     if (tt->flags & ASN1_TFLG_SK_MASK) {
@@ -281,8 +280,7 @@ static int asn1_template_new(ASN1_VALUE **pval, const ASN1_TEMPLATE *tt)
     ret = asn1_item_embed_new(pval, it, embed);
  done:
 #ifdef CRYPTO_MDEBUG
-    if (it->sname)
-        CRYPTO_pop_info();
+    OPENSSL_mem_debug_pop();
 #endif
     return ret;
 }
@@ -301,7 +299,8 @@ static void asn1_template_clear(ASN1_VALUE **pval, const ASN1_TEMPLATE *tt)
  * all the old functions.
  */
 
-static int asn1_primitive_new(ASN1_VALUE **pval, const ASN1_ITEM *it)
+static int asn1_primitive_new(ASN1_VALUE **pval, const ASN1_ITEM *it,
+                              int embed)
 {
     ASN1_TYPE *typ;
     ASN1_STRING *str;
@@ -335,7 +334,7 @@ static int asn1_primitive_new(ASN1_VALUE **pval, const ASN1_ITEM *it)
 
     case V_ASN1_ANY:
         typ = OPENSSL_malloc(sizeof(*typ));
-        if (!typ)
+        if (typ == NULL)
             return 0;
         typ->value.ptr = NULL;
         typ->type = -1;
@@ -343,10 +342,17 @@ static int asn1_primitive_new(ASN1_VALUE **pval, const ASN1_ITEM *it)
         break;
 
     default:
-        str = ASN1_STRING_type_new(utype);
+        if (embed) {
+            str = *(ASN1_STRING **)pval;
+            memset(str, 0, sizeof(*str));
+            str->type = utype;
+            str->flags = ASN1_STRING_FLAG_EMBED;
+        } else {
+            str = ASN1_STRING_type_new(utype);
+            *pval = (ASN1_VALUE *)str;
+        }
         if (it->itype == ASN1_ITYPE_MSTRING && str)
             str->flags |= ASN1_STRING_FLAG_MSTRING;
-        *pval = (ASN1_VALUE *)str;
         break;
     }
     if (*pval)

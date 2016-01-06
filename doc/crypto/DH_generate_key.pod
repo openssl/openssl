@@ -42,9 +42,4 @@ The error codes can be obtained by L<ERR_get_error(3)>.
 
 L<dh(3)>, L<ERR_get_error(3)>, L<rand(3)>, L<DH_size(3)>
 
-=head1 HISTORY
-
-DH_generate_key() and DH_compute_key() are available in all versions
-of SSLeay and OpenSSL.
-
 =cut

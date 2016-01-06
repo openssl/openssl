@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-BN_new, BN_init, BN_clear, BN_free, BN_clear_free - allocate and free BIGNUMs
+BN_new, BN_clear, BN_free, BN_clear_free - allocate and free BIGNUMs
 
 =head1 SYNOPSIS
 
@@ -37,32 +37,12 @@ by L<ERR_get_error(3)>.
 
 BN_clear(), BN_free() and BN_clear_free() have no return values.
 
-=head1 REMOVED FUNCTIONALITY
-
- void BN_init(BIGNUM *);
-
-BN_init() is no longer available as of OpenSSL 1.1.0. It was used to initialize
-an existing uninitialized B<BIGNUM>. Typically this would be done as follows:
-
- BIGNUM a;
- BN_init(&a);
-
-Applications should replace use of BN_init with BN_new instead:
-
- BIGNUM *a;
- a = BN_new();
- if(!a) /* Handle error */
- ...
- BN_free(a);
-
 =head1 SEE ALSO
 
 L<bn(3)>, L<ERR_get_error(3)>
 
 =head1 HISTORY
 
-BN_new(), BN_clear(), BN_free() and BN_clear_free() are available in
-all versions on SSLeay and OpenSSL.  BN_init() was added in SSLeay
-0.9.1b and removed in OpenSSL 1.1.0.
+BN_init() was removed in OpenSSL 1.1.0; use BN_new() instead.
 
 =cut

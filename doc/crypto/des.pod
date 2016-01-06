@@ -312,11 +312,6 @@ functions directly.
 Single-key DES is insecure due to its short key size.  ECB mode is
 not suitable for most applications; see L<des_modes(7)>.
 
-=head1 AUTHOR
-
-Eric Young (eay@cryptsoft.com). Modified for the OpenSSL project
-(http://www.openssl.org).
-
 =head1 SEE ALSO
 
 L<des_modes(7)>,

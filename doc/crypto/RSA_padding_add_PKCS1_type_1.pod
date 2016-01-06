@@ -110,15 +110,4 @@ L<RSA_public_encrypt(3)>,
 L<RSA_private_decrypt(3)>,
 L<RSA_sign(3)>, L<RSA_verify(3)>
 
-=head1 HISTORY
-
-RSA_padding_add_PKCS1_type_1(), RSA_padding_check_PKCS1_type_1(),
-RSA_padding_add_PKCS1_type_2(), RSA_padding_check_PKCS1_type_2(),
-RSA_padding_add_SSLv23(), RSA_padding_check_SSLv23(),
-RSA_padding_add_none() and RSA_padding_check_none() appeared in
-SSLeay 0.9.0.
-
-RSA_padding_add_PKCS1_OAEP() and RSA_padding_check_PKCS1_OAEP() were
-added in OpenSSL 0.9.2b.
-
 =cut

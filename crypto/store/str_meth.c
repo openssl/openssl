@@ -1,4 +1,4 @@
-/* crypto/store/str_meth.c -*- mode:C; c-file-style: "eay" -*- */
+/* crypto/store/str_meth.c */
 /*
  * Written by Richard Levitte (richard@levitte.org) for the OpenSSL project
  * 2003.
@@ -65,8 +65,8 @@ STORE_METHOD *STORE_create_method(char *name)
 {
     STORE_METHOD *store_method = OPENSSL_zalloc(sizeof(*store_method));
 
-    if (store_method)
-        store_method->name = BUF_strdup(name);
+    if (store_method != NULL)
+        store_method->name = OPENSSL_strdup(name);
     return store_method;
 }
 

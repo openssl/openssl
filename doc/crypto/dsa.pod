@@ -35,11 +35,6 @@ dsa - Digital Signature Algorithm
  DSA *DSA_new_method(ENGINE *engine);
  const DSA_METHOD *DSA_OpenSSL(void);
 
- int DSA_get_ex_new_index(long argl, char *argp, int (*new_func)(),
-	     int (*dup_func)(), void (*free_func)());
- int DSA_set_ex_data(DSA *d, int idx, char *arg);
- char *DSA_get_ex_data(DSA *d, int idx);
-
  DSA_SIG *DSA_SIG_new(void);
  void	DSA_SIG_free(DSA_SIG *a);
  int	i2d_DSA_SIG(const DSA_SIG *a, unsigned char **pp);

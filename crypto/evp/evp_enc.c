@@ -74,7 +74,7 @@ void EVP_CIPHER_CTX_init(EVP_CIPHER_CTX *ctx)
 EVP_CIPHER_CTX *EVP_CIPHER_CTX_new(void)
 {
     EVP_CIPHER_CTX *ctx = OPENSSL_malloc(sizeof(*ctx));
-    if (ctx)
+    if (ctx != NULL)
         EVP_CIPHER_CTX_init(ctx);
     return ctx;
 }
@@ -105,10 +105,8 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
      * previous handle, re-querying for an ENGINE, and having a
      * reinitialisation, when it may all be unecessary.
      */
-    if (ctx->engine && ctx->cipher && (!cipher ||
-                                       (cipher
-                                        && (cipher->nid ==
-                                            ctx->cipher->nid))))
+    if (ctx->engine && ctx->cipher
+        && (!cipher || (cipher && (cipher->nid == ctx->cipher->nid))))
         goto skip_to_init;
 #endif
     if (cipher) {
@@ -159,7 +157,7 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
         ctx->cipher = cipher;
         if (ctx->cipher->ctx_size) {
             ctx->cipher_data = OPENSSL_zalloc(ctx->cipher->ctx_size);
-            if (!ctx->cipher_data) {
+            if (ctx->cipher_data == NULL) {
                 EVPerr(EVP_F_EVP_CIPHERINIT_EX, ERR_R_MALLOC_FAILURE);
                 return 0;
             }
@@ -531,7 +529,7 @@ int EVP_CIPHER_CTX_cleanup(EVP_CIPHER_CTX *c)
         if (c->cipher->cleanup && !c->cipher->cleanup(c))
             return 0;
         /* Cleanse cipher context data */
-        if (c->cipher_data)
+        if (c->cipher_data && c->cipher->ctx_size)
             OPENSSL_cleanse(c->cipher_data, c->cipher->ctx_size);
     }
     OPENSSL_free(c->cipher_data);
@@ -620,7 +618,7 @@ int EVP_CIPHER_CTX_copy(EVP_CIPHER_CTX *out, const EVP_CIPHER_CTX *in)
 
     if (in->cipher_data && in->cipher->ctx_size) {
         out->cipher_data = OPENSSL_malloc(in->cipher->ctx_size);
-        if (!out->cipher_data) {
+        if (out->cipher_data == NULL) {
             EVPerr(EVP_F_EVP_CIPHER_CTX_COPY, ERR_R_MALLOC_FAILURE);
             return 0;
         }

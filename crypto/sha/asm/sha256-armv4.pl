@@ -175,10 +175,9 @@ $code=<<___;
 #endif
 
 .text
-#if defined(__thumb2__) && !defined(__APPLE__)
+#if defined(__thumb2__)
 .syntax unified
 .thumb
-# define adrl adr
 #else
 .code   32
 #endif
@@ -469,7 +468,8 @@ $code.=<<___;
 
 .global	sha256_block_data_order_neon
 .type	sha256_block_data_order_neon,%function
-.align	4
+.align	5
+.skip	16
 sha256_block_data_order_neon:
 .LNEON:
 	stmdb	sp!,{r4-r12,lr}
@@ -595,7 +595,7 @@ my $Ktbl="r3";
 $code.=<<___;
 #if __ARM_MAX_ARCH__>=7 && !defined(__KERNEL__)
 
-# if defined(__thumb2__) && !defined(__APPLE__)
+# if defined(__thumb2__)
 #  define INST(a,b,c,d)	.byte	c,d|0xc,a,b
 # else
 #  define INST(a,b,c,d)	.byte	a,b,c,d
@@ -606,16 +606,11 @@ $code.=<<___;
 sha256_block_data_order_armv8:
 .LARMv8:
 	vld1.32	{$ABCD,$EFGH},[$ctx]
-# ifdef	__APPLE__
 	sub	$Ktbl,$Ktbl,#256+32
-# elif	defined(__thumb2__)
-	adr	$Ktbl,.LARMv8
-	sub	$Ktbl,$Ktbl,#.LARMv8-K256
-# else
-	adrl	$Ktbl,K256
-# endif
 	add	$len,$inp,$len,lsl#6	@ len to point at the end of inp
+	b	.Loop_v8
 
+.align	4
 .Loop_v8:
 	vld1.8		{@MSG[0]-@MSG[1]},[$inp]!
 	vld1.8		{@MSG[2]-@MSG[3]},[$inp]!

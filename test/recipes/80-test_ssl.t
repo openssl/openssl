@@ -11,8 +11,8 @@ use OpenSSL::Test::Utils;
 
 setup("test_ssl");
 
-my ($no_rsa, $no_dsa, $no_dh, $no_ec, $no_srp, $no_psk) =
-    disabled qw/rsa dsa dh ec srp psk/;
+my ($no_rsa, $no_dsa, $no_dh, $no_ec, $no_srp, $no_psk, $no_ssl3, $no_dtls) =
+    disabled qw/rsa dsa dh ec srp psk ssl3 dtls/;
 
 my $digest = "-sha1";
 my @reqcmd = ("openssl", "req");
@@ -55,7 +55,7 @@ my $P2intermediate="tmp_intP2.ss";
 plan tests =>
     1				# For testss
     + 1				# For ssltest -test_cipherlist
-    + 8				# For the first testssl
+    + 9				# For the first testssl
     + 16			# For the first testsslproxy
     + 16			# For the second testsslproxy
     ;
@@ -316,7 +316,7 @@ sub testssl {
     }
 
 
-    # plan tests => 7;
+    # plan tests => 9;
 
     subtest 'standard SSL tests' => sub {
 	######################################################################
@@ -414,7 +414,7 @@ sub testssl {
 		      map { split(/:/, $_) }
 		      run(app(["openssl", "ciphers", "${_}:$ciphers"]),
                           capture => 1);
-		  chomp @c;
+		  map { s/\R//; } @c;  # chomp @c;
 		  $protocolciphersuitcount += scalar @c;
 		  $_ => [ @c ] } @protocols;
 
@@ -468,11 +468,19 @@ sub testssl {
 		 'test tlsv1 with 1024bit RSA, 1024bit DHE, multiple handshakes');
 	    }
 	}
-	ok(run(test([@ssltest, "-tls1", "-cipher", "PSK", "-psk", "abc123", @extra])),
-	   'test tls1 with PSK');
+    {
+        SKIP: {
+	        skip "skipping PSK tests", 2
+	        if ($no_psk);
 
-	ok(run(test([@ssltest, "-bio_pair", "-tls1", "-cipher", "PSK", "-psk", "abc123", @extra])),
-	   'test tls1 with PSK via BIO pair');
+	        ok(run(test([@ssltest, "-tls1", "-cipher", "PSK", "-psk", "abc123", @extra])),
+	        'test tls1 with PSK');
+
+	        ok(run(test([@ssltest, "-bio_pair", "-tls1", "-cipher", "PSK", "-psk", "abc123", @extra])),
+	        'test tls1 with PSK via BIO pair');
+        }
+    }
+
     };
 
     subtest 'Next Protocol Negotiation Tests' => sub {
@@ -558,6 +566,516 @@ sub testssl {
 	      ok(run(test([@ssltest, "-cipher", "AES128-SHA256", "-bytes", "8m"])));
 	    }
 	}
+    };
+
+    subtest 'Version min/max tests' => sub {
+
+	plan tests => 425;
+
+	SKIP : {
+            skip "ssl3 disabled", 76 if $no_ssl3;
+
+            ok(run(test([@ssltest, "-server_min_proto", "ssl3", "-server_max_proto", "ssl3", "-client_min_proto", "ssl3", "-client_max_proto", "ssl3", "-should_negotiate", "ssl3"])));
+            ok(run(test([@ssltest, "-server_min_proto", "ssl3", "-server_max_proto", "ssl3", "-client_min_proto", "ssl3", "-client_max_proto", "tls1", "-should_negotiate", "ssl3"])));
+            ok(run(test([@ssltest, "-server_min_proto", "ssl3", "-server_max_proto", "ssl3", "-client_min_proto", "ssl3", "-client_max_proto", "tls1.1", "-should_negotiate", "ssl3"])));
+            ok(run(test([@ssltest, "-server_min_proto", "ssl3", "-server_max_proto", "ssl3", "-client_min_proto", "ssl3", "-client_max_proto", "tls1.2", "-should_negotiate", "ssl3"])));
+            ok(run(test([@ssltest, "-server_min_proto", "ssl3", "-server_max_proto", "ssl3", "-client_min_proto", "tls1", "-client_max_proto", "tls1", "-should_negotiate", "fail-client"])));
+            ok(run(test([@ssltest, "-server_min_proto", "ssl3", "-server_max_proto", "ssl3", "-client_min_proto", "tls1", "-client_max_proto", "tls1.1", "-should_negotiate", "fail-client"])));
+            ok(run(test([@ssltest, "-server_min_proto", "ssl3", "-server_max_proto", "ssl3", "-client_min_proto", "tls1", "-client_max_proto", "tls1.2", "-should_negotiate", "fail-client"])));
+            ok(run(test([@ssltest, "-server_min_proto", "ssl3", "-server_max_proto", "ssl3", "-client_min_proto", "tls1.1", "-client_max_proto", "tls1.1", "-should_negotiate", "fail-client"])));
+            ok(run(test([@ssltest, "-server_min_proto", "ssl3", "-server_max_proto", "ssl3", "-client_min_proto", "tls1.1", "-client_max_proto", "tls1.2", "-should_negotiate", "fail-client"])));
+            ok(run(test([@ssltest, "-server_min_proto", "ssl3", "-server_max_proto", "ssl3", "-client_min_proto", "tls1.2", "-client_max_proto", "tls1.2", "-should_negotiate", "fail-client"])));
+            ok(run(test([@ssltest, "-server_min_proto", "ssl3", "-server_max_proto", "ssl3", "-client_min_proto", "ssl3", "-should_negotiate", "ssl3"])));
+            ok(run(test([@ssltest, "-server_min_proto", "ssl3", "-server_max_proto", "ssl3", "-client_min_proto", "tls1", "-should_negotiate", "fail-client"])));
+            ok(run(test([@ssltest, "-server_min_proto", "ssl3", "-server_max_proto", "ssl3", "-client_min_proto", "tls1.1", "-should_negotiate", "fail-client"])));
+            ok(run(test([@ssltest, "-server_min_proto", "ssl3", "-server_max_proto", "ssl3", "-client_min_proto", "tls1.2", "-should_negotiate", "fail-client"])));
+            ok(run(test([@ssltest, "-server_min_proto", "ssl3", "-server_max_proto", "ssl3", "-client_max_proto", "ssl3", "-should_negotiate", "ssl3"])));
+            ok(run(test([@ssltest, "-server_min_proto", "ssl3", "-server_max_proto", "ssl3", "-client_max_proto", "tls1", "-should_negotiate", "ssl3"])));
+            ok(run(test([@ssltest, "-server_min_proto", "ssl3", "-server_max_proto", "ssl3", "-client_max_proto", "tls1.1", "-should_negotiate", "ssl3"])));
+            ok(run(test([@ssltest, "-server_min_proto", "ssl3", "-server_max_proto", "ssl3", "-client_max_proto", "tls1.2", "-should_negotiate", "ssl3"])));
+            ok(run(test([@ssltest, "-server_min_proto", "ssl3", "-server_max_proto", "ssl3", "-should_negotiate", "ssl3"])));
+
+            ok(run(test([@ssltest, "-server_min_proto", "ssl3", "-server_max_proto", "tls1", "-client_min_proto", "ssl3", "-client_max_proto", "ssl3", "-should_negotiate", "ssl3"])));
+            ok(run(test([@ssltest, "-server_min_proto", "ssl3", "-server_max_proto", "tls1", "-client_min_proto", "ssl3", "-client_max_proto", "tls1", "-should_negotiate", "tls1"])));
+            ok(run(test([@ssltest, "-server_min_proto", "ssl3", "-server_max_proto", "tls1", "-client_min_proto", "ssl3", "-client_max_proto", "tls1.1", "-should_negotiate", "tls1"])));
+            ok(run(test([@ssltest, "-server_min_proto", "ssl3", "-server_max_proto", "tls1", "-client_min_proto", "ssl3", "-client_max_proto", "tls1.2", "-should_negotiate", "tls1"])));
+            ok(run(test([@ssltest, "-server_min_proto", "ssl3", "-server_max_proto", "tls1", "-client_min_proto", "tls1", "-client_max_proto", "tls1", "-should_negotiate", "tls1"])));
+            ok(run(test([@ssltest, "-server_min_proto", "ssl3", "-server_max_proto", "tls1", "-client_min_proto", "tls1", "-client_max_proto", "tls1.1", "-should_negotiate", "tls1"])));
+            ok(run(test([@ssltest, "-server_min_proto", "ssl3", "-server_max_proto", "tls1", "-client_min_proto", "tls1", "-client_max_proto", "tls1.2", "-should_negotiate", "tls1"])));
+            ok(run(test([@ssltest, "-server_min_proto", "ssl3", "-server_max_proto", "tls1", "-client_min_proto", "tls1.1", "-client_max_proto", "tls1.1", "-should_negotiate", "fail-client"])));
+            ok(run(test([@ssltest, "-server_min_proto", "ssl3", "-server_max_proto", "tls1", "-client_min_proto", "tls1.1", "-client_max_proto", "tls1.2", "-should_negotiate", "fail-client"])));
+            ok(run(test([@ssltest, "-server_min_proto", "ssl3", "-server_max_proto", "tls1", "-client_min_proto", "tls1.2", "-client_max_proto", "tls1.2", "-should_negotiate", "fail-client"])));
+            ok(run(test([@ssltest, "-server_min_proto", "ssl3", "-server_max_proto", "tls1", "-client_min_proto", "ssl3", "-should_negotiate", "tls1"])));
+            ok(run(test([@ssltest, "-server_min_proto", "ssl3", "-server_max_proto", "tls1", "-client_min_proto", "tls1", "-should_negotiate", "tls1"])));
+            ok(run(test([@ssltest, "-server_min_proto", "ssl3", "-server_max_proto", "tls1", "-client_min_proto", "tls1.1", "-should_negotiate", "fail-client"])));
+            ok(run(test([@ssltest, "-server_min_proto", "ssl3", "-server_max_proto", "tls1", "-client_min_proto", "tls1.2", "-should_negotiate", "fail-client"])));
+            ok(run(test([@ssltest, "-server_min_proto", "ssl3", "-server_max_proto", "tls1", "-client_max_proto", "ssl3", "-should_negotiate", "ssl3"])));
+            ok(run(test([@ssltest, "-server_min_proto", "ssl3", "-server_max_proto", "tls1", "-client_max_proto", "tls1", "-should_negotiate", "tls1"])));
+            ok(run(test([@ssltest, "-server_min_proto", "ssl3", "-server_max_proto", "tls1", "-client_max_proto", "tls1.1", "-should_negotiate", "tls1"])));
+            ok(run(test([@ssltest, "-server_min_proto", "ssl3", "-server_max_proto", "tls1", "-client_max_proto", "tls1.2", "-should_negotiate", "tls1"])));
+            ok(run(test([@ssltest, "-server_min_proto", "ssl3", "-server_max_proto", "tls1", "-should_negotiate", "tls1"])));
+
+            ok(run(test([@ssltest, "-server_min_proto", "ssl3", "-server_max_proto", "tls1.1", "-client_min_proto", "ssl3", "-client_max_proto", "ssl3", "-should_negotiate", "ssl3"])));
+            ok(run(test([@ssltest, "-server_min_proto", "ssl3", "-server_max_proto", "tls1.1", "-client_min_proto", "ssl3", "-client_max_proto", "tls1", "-should_negotiate", "tls1"])));
+            ok(run(test([@ssltest, "-server_min_proto", "ssl3", "-server_max_proto", "tls1.1", "-client_min_proto", "ssl3", "-client_max_proto", "tls1.1", "-should_negotiate", "tls1.1"])));
+            ok(run(test([@ssltest, "-server_min_proto", "ssl3", "-server_max_proto", "tls1.1", "-client_min_proto", "ssl3", "-client_max_proto", "tls1.2", "-should_negotiate", "tls1.1"])));
+            ok(run(test([@ssltest, "-server_min_proto", "ssl3", "-server_max_proto", "tls1.1", "-client_min_proto", "tls1", "-client_max_proto", "tls1", "-should_negotiate", "tls1"])));
+            ok(run(test([@ssltest, "-server_min_proto", "ssl3", "-server_max_proto", "tls1.1", "-client_min_proto", "tls1", "-client_max_proto", "tls1.1", "-should_negotiate", "tls1.1"])));
+            ok(run(test([@ssltest, "-server_min_proto", "ssl3", "-server_max_proto", "tls1.1", "-client_min_proto", "tls1", "-client_max_proto", "tls1.2", "-should_negotiate", "tls1.1"])));
+            ok(run(test([@ssltest, "-server_min_proto", "ssl3", "-server_max_proto", "tls1.1", "-client_min_proto", "tls1.1", "-client_max_proto", "tls1.1", "-should_negotiate", "tls1.1"])));
+            ok(run(test([@ssltest, "-server_min_proto", "ssl3", "-server_max_proto", "tls1.1", "-client_min_proto", "tls1.1", "-client_max_proto", "tls1.2", "-should_negotiate", "tls1.1"])));
+            ok(run(test([@ssltest, "-server_min_proto", "ssl3", "-server_max_proto", "tls1.1", "-client_min_proto", "tls1.2", "-client_max_proto", "tls1.2", "-should_negotiate", "fail-client"])));
+            ok(run(test([@ssltest, "-server_min_proto", "ssl3", "-server_max_proto", "tls1.1", "-client_min_proto", "ssl3", "-should_negotiate", "tls1.1"])));
+            ok(run(test([@ssltest, "-server_min_proto", "ssl3", "-server_max_proto", "tls1.1", "-client_min_proto", "tls1", "-should_negotiate", "tls1.1"])));
+            ok(run(test([@ssltest, "-server_min_proto", "ssl3", "-server_max_proto", "tls1.1", "-client_min_proto", "tls1.1", "-should_negotiate", "tls1.1"])));
+            ok(run(test([@ssltest, "-server_min_proto", "ssl3", "-server_max_proto", "tls1.1", "-client_min_proto", "tls1.2", "-should_negotiate", "fail-client"])));
+            ok(run(test([@ssltest, "-server_min_proto", "ssl3", "-server_max_proto", "tls1.1", "-client_max_proto", "ssl3", "-should_negotiate", "ssl3"])));
+            ok(run(test([@ssltest, "-server_min_proto", "ssl3", "-server_max_proto", "tls1.1", "-client_max_proto", "tls1", "-should_negotiate", "tls1"])));
+            ok(run(test([@ssltest, "-server_min_proto", "ssl3", "-server_max_proto", "tls1.1", "-client_max_proto", "tls1.1", "-should_negotiate", "tls1.1"])));
+            ok(run(test([@ssltest, "-server_min_proto", "ssl3", "-server_max_proto", "tls1.1", "-client_max_proto", "tls1.2", "-should_negotiate", "tls1.1"])));
+            ok(run(test([@ssltest, "-server_min_proto", "ssl3", "-server_max_proto", "tls1.1", "-should_negotiate", "tls1.1"])));
+
+            ok(run(test([@ssltest, "-server_min_proto", "ssl3", "-server_max_proto", "tls1.2", "-client_min_proto", "ssl3", "-client_max_proto", "ssl3", "-should_negotiate", "ssl3"])));
+            ok(run(test([@ssltest, "-server_min_proto", "ssl3", "-server_max_proto", "tls1.2", "-client_min_proto", "ssl3", "-client_max_proto", "tls1", "-should_negotiate", "tls1"])));
+            ok(run(test([@ssltest, "-server_min_proto", "ssl3", "-server_max_proto", "tls1.2", "-client_min_proto", "ssl3", "-client_max_proto", "tls1.1", "-should_negotiate", "tls1.1"])));
+            ok(run(test([@ssltest, "-server_min_proto", "ssl3", "-server_max_proto", "tls1.2", "-client_min_proto", "ssl3", "-client_max_proto", "tls1.2", "-should_negotiate", "tls1.2"])));
+            ok(run(test([@ssltest, "-server_min_proto", "ssl3", "-server_max_proto", "tls1.2", "-client_min_proto", "tls1", "-client_max_proto", "tls1", "-should_negotiate", "tls1"])));
+            ok(run(test([@ssltest, "-server_min_proto", "ssl3", "-server_max_proto", "tls1.2", "-client_min_proto", "tls1", "-client_max_proto", "tls1.1", "-should_negotiate", "tls1.1"])));
+            ok(run(test([@ssltest, "-server_min_proto", "ssl3", "-server_max_proto", "tls1.2", "-client_min_proto", "tls1", "-client_max_proto", "tls1.2", "-should_negotiate", "tls1.2"])));
+            ok(run(test([@ssltest, "-server_min_proto", "ssl3", "-server_max_proto", "tls1.2", "-client_min_proto", "tls1.1", "-client_max_proto", "tls1.1", "-should_negotiate", "tls1.1"])));
+            ok(run(test([@ssltest, "-server_min_proto", "ssl3", "-server_max_proto", "tls1.2", "-client_min_proto", "tls1.1", "-client_max_proto", "tls1.2", "-should_negotiate", "tls1.2"])));
+            ok(run(test([@ssltest, "-server_min_proto", "ssl3", "-server_max_proto", "tls1.2", "-client_min_proto", "tls1.2", "-client_max_proto", "tls1.2", "-should_negotiate", "tls1.2"])));
+            ok(run(test([@ssltest, "-server_min_proto", "ssl3", "-server_max_proto", "tls1.2", "-client_min_proto", "ssl3", "-should_negotiate", "tls1.2"])));
+            ok(run(test([@ssltest, "-server_min_proto", "ssl3", "-server_max_proto", "tls1.2", "-client_min_proto", "tls1", "-should_negotiate", "tls1.2"])));
+            ok(run(test([@ssltest, "-server_min_proto", "ssl3", "-server_max_proto", "tls1.2", "-client_min_proto", "tls1.1", "-should_negotiate", "tls1.2"])));
+            ok(run(test([@ssltest, "-server_min_proto", "ssl3", "-server_max_proto", "tls1.2", "-client_min_proto", "tls1.2", "-should_negotiate", "tls1.2"])));
+            ok(run(test([@ssltest, "-server_min_proto", "ssl3", "-server_max_proto", "tls1.2", "-client_max_proto", "ssl3", "-should_negotiate", "ssl3"])));
+            ok(run(test([@ssltest, "-server_min_proto", "ssl3", "-server_max_proto", "tls1.2", "-client_max_proto", "tls1", "-should_negotiate", "tls1"])));
+            ok(run(test([@ssltest, "-server_min_proto", "ssl3", "-server_max_proto", "tls1.2", "-client_max_proto", "tls1.1", "-should_negotiate", "tls1.1"])));
+            ok(run(test([@ssltest, "-server_min_proto", "ssl3", "-server_max_proto", "tls1.2", "-client_max_proto", "tls1.2", "-should_negotiate", "tls1.2"])));
+            ok(run(test([@ssltest, "-server_min_proto", "ssl3", "-server_max_proto", "tls1.2", "-should_negotiate", "tls1.2"])));
+        }
+
+        SKIP : {
+            skip "ssl3 disabled", 6 if $no_ssl3;
+            ok(run(test([@ssltest, "-server_min_proto", "tls1", "-server_max_proto", "tls1", "-client_min_proto", "ssl3", "-client_max_proto", "ssl3", "-should_negotiate", "fail-server"])));
+            ok(run(test([@ssltest, "-server_min_proto", "tls1", "-server_max_proto", "tls1", "-client_min_proto", "ssl3", "-client_max_proto", "tls1", "-should_negotiate", "tls1"])));
+            ok(run(test([@ssltest, "-server_min_proto", "tls1", "-server_max_proto", "tls1", "-client_min_proto", "ssl3", "-client_max_proto", "tls1.1", "-should_negotiate", "tls1"])));
+            ok(run(test([@ssltest, "-server_min_proto", "tls1", "-server_max_proto", "tls1", "-client_min_proto", "ssl3", "-client_max_proto", "tls1.2", "-should_negotiate", "tls1"])));
+            ok(run(test([@ssltest, "-server_min_proto", "tls1", "-server_max_proto", "tls1", "-client_min_proto", "ssl3", "-should_negotiate", "tls1"])));
+            ok(run(test([@ssltest, "-server_min_proto", "tls1", "-server_max_proto", "tls1", "-client_max_proto", "ssl3", "-should_negotiate", "fail-server"])));
+        }
+        ok(run(test([@ssltest, "-server_min_proto", "tls1", "-server_max_proto", "tls1", "-client_min_proto", "tls1", "-client_max_proto", "tls1", "-should_negotiate", "tls1"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1", "-server_max_proto", "tls1", "-client_min_proto", "tls1", "-client_max_proto", "tls1.1", "-should_negotiate", "tls1"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1", "-server_max_proto", "tls1", "-client_min_proto", "tls1", "-client_max_proto", "tls1.2", "-should_negotiate", "tls1"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1", "-server_max_proto", "tls1", "-client_min_proto", "tls1.1", "-client_max_proto", "tls1.1", "-should_negotiate", "fail-client"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1", "-server_max_proto", "tls1", "-client_min_proto", "tls1.1", "-client_max_proto", "tls1.2", "-should_negotiate", "fail-client"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1", "-server_max_proto", "tls1", "-client_min_proto", "tls1.2", "-client_max_proto", "tls1.2", "-should_negotiate", "fail-client"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1", "-server_max_proto", "tls1", "-client_min_proto", "tls1", "-should_negotiate", "tls1"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1", "-server_max_proto", "tls1", "-client_min_proto", "tls1.1", "-should_negotiate", "fail-client"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1", "-server_max_proto", "tls1", "-client_min_proto", "tls1.1", "-should_negotiate", "fail-client"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1", "-server_max_proto", "tls1", "-client_max_proto", "tls1", "-should_negotiate", "tls1"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1", "-server_max_proto", "tls1", "-client_max_proto", "tls1.1", "-should_negotiate", "tls1"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1", "-server_max_proto", "tls1", "-client_max_proto", "tls1.2", "-should_negotiate", "tls1"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1", "-server_max_proto", "tls1", "-should_negotiate", "tls1"])));
+
+        SKIP : {
+            skip "ssl3 disabled", 6 if $no_ssl3;
+            ok(run(test([@ssltest, "-server_min_proto", "tls1", "-server_max_proto", "tls1.1", "-client_min_proto", "ssl3", "-client_max_proto", "ssl3", "-should_negotiate", "fail-server"])));
+            ok(run(test([@ssltest, "-server_min_proto", "tls1", "-server_max_proto", "tls1.1", "-client_min_proto", "ssl3", "-client_max_proto", "tls1", "-should_negotiate", "tls1"])));
+            ok(run(test([@ssltest, "-server_min_proto", "tls1", "-server_max_proto", "tls1.1", "-client_min_proto", "ssl3", "-client_max_proto", "tls1.1", "-should_negotiate", "tls1.1"])));
+            ok(run(test([@ssltest, "-server_min_proto", "tls1", "-server_max_proto", "tls1.1", "-client_min_proto", "ssl3", "-client_max_proto", "tls1.2", "-should_negotiate", "tls1.1"])));
+            ok(run(test([@ssltest, "-server_min_proto", "tls1", "-server_max_proto", "tls1.1", "-client_min_proto", "ssl3", "-should_negotiate", "tls1.1"])));
+            ok(run(test([@ssltest, "-server_min_proto", "tls1", "-server_max_proto", "tls1.1", "-client_max_proto", "ssl3", "-should_negotiate", "fail-server"])));
+        }
+        ok(run(test([@ssltest, "-server_min_proto", "tls1", "-server_max_proto", "tls1.1", "-client_min_proto", "tls1", "-client_max_proto", "tls1", "-should_negotiate", "tls1"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1", "-server_max_proto", "tls1.1", "-client_min_proto", "tls1", "-client_max_proto", "tls1.1", "-should_negotiate", "tls1.1"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1", "-server_max_proto", "tls1.1", "-client_min_proto", "tls1", "-client_max_proto", "tls1.2", "-should_negotiate", "tls1.1"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1", "-server_max_proto", "tls1.1", "-client_min_proto", "tls1.1", "-client_max_proto", "tls1.1", "-should_negotiate", "tls1.1"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1", "-server_max_proto", "tls1.1", "-client_min_proto", "tls1.1", "-client_max_proto", "tls1.2", "-should_negotiate", "tls1.1"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1", "-server_max_proto", "tls1.1", "-client_min_proto", "tls1.2", "-client_max_proto", "tls1.2", "-should_negotiate", "fail-client"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1", "-server_max_proto", "tls1.1", "-client_min_proto", "tls1", "-should_negotiate", "tls1.1"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1", "-server_max_proto", "tls1.1", "-client_min_proto", "tls1.1", "-should_negotiate", "tls1.1"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1", "-server_max_proto", "tls1.1", "-client_min_proto", "tls1.2", "-should_negotiate", "fail-client"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1", "-server_max_proto", "tls1.1", "-client_max_proto", "tls1", "-should_negotiate", "tls1"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1", "-server_max_proto", "tls1.1", "-client_max_proto", "tls1.1", "-should_negotiate", "tls1.1"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1", "-server_max_proto", "tls1.1", "-client_max_proto", "tls1.2", "-should_negotiate", "tls1.1"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1", "-server_max_proto", "tls1.1", "-should_negotiate", "tls1.1"])));
+
+        SKIP : {
+            skip "ssl3 disabled", 6 if $no_ssl3;
+            ok(run(test([@ssltest, "-server_min_proto", "tls1", "-server_max_proto", "tls1.2", "-client_min_proto", "ssl3", "-client_max_proto", "ssl3", "-should_negotiate", "fail-server"])));
+            ok(run(test([@ssltest, "-server_min_proto", "tls1", "-server_max_proto", "tls1.2", "-client_min_proto", "ssl3", "-client_max_proto", "tls1", "-should_negotiate", "tls1"])));
+            ok(run(test([@ssltest, "-server_min_proto", "tls1", "-server_max_proto", "tls1.2", "-client_min_proto", "ssl3", "-client_max_proto", "tls1.1", "-should_negotiate", "tls1.1"])));
+            ok(run(test([@ssltest, "-server_min_proto", "tls1", "-server_max_proto", "tls1.2", "-client_min_proto", "ssl3", "-client_max_proto", "tls1.2", "-should_negotiate", "tls1.2"])));
+            ok(run(test([@ssltest, "-server_min_proto", "tls1", "-server_max_proto", "tls1.2", "-client_min_proto", "ssl3", "-should_negotiate", "tls1.2"])));
+            ok(run(test([@ssltest, "-server_min_proto", "tls1", "-server_max_proto", "tls1.2", "-client_max_proto", "ssl3", "-should_negotiate", "fail-server"])));
+        }
+        ok(run(test([@ssltest, "-server_min_proto", "tls1", "-server_max_proto", "tls1.2", "-client_min_proto", "tls1", "-client_max_proto", "tls1", "-should_negotiate", "tls1"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1", "-server_max_proto", "tls1.1", "-client_min_proto", "tls1", "-client_max_proto", "tls1.1", "-should_negotiate", "tls1.1"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1", "-server_max_proto", "tls1.2", "-client_min_proto", "tls1", "-client_max_proto", "tls1.2", "-should_negotiate", "tls1.2"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1", "-server_max_proto", "tls1.2", "-client_min_proto", "tls1.1", "-client_max_proto", "tls1.1", "-should_negotiate", "tls1.1"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1", "-server_max_proto", "tls1.2", "-client_min_proto", "tls1.1", "-client_max_proto", "tls1.2", "-should_negotiate", "tls1.2"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1", "-server_max_proto", "tls1.2", "-client_min_proto", "tls1.2", "-client_max_proto", "tls1.2", "-should_negotiate", "tls1.2"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1", "-server_max_proto", "tls1.2", "-client_min_proto", "tls1", "-should_negotiate", "tls1.2"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1", "-server_max_proto", "tls1.2", "-client_min_proto", "tls1.1", "-should_negotiate", "tls1.2"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1", "-server_max_proto", "tls1.2", "-client_min_proto", "tls1.2", "-should_negotiate", "tls1.2"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1", "-server_max_proto", "tls1.2", "-client_max_proto", "tls1", "-should_negotiate", "tls1"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1", "-server_max_proto", "tls1.2", "-client_max_proto", "tls1.1", "-should_negotiate", "tls1.1"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1", "-server_max_proto", "tls1.2", "-client_max_proto", "tls1.2", "-should_negotiate", "tls1.2"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1", "-server_max_proto", "tls1.2", "-should_negotiate", "tls1.2"])));
+
+        SKIP : {
+            skip "ssl3 disabled", 6 if $no_ssl3;
+            ok(run(test([@ssltest, "-server_min_proto", "tls1.1", "-server_max_proto", "tls1.1", "-client_min_proto", "ssl3", "-client_max_proto", "ssl3", "-should_negotiate", "fail-server"])));
+            ok(run(test([@ssltest, "-server_min_proto", "tls1.1", "-server_max_proto", "tls1.1", "-client_min_proto", "ssl3", "-client_max_proto", "tls1", "-should_negotiate", "fail-server"])));
+            ok(run(test([@ssltest, "-server_min_proto", "tls1.1", "-server_max_proto", "tls1.1", "-client_min_proto", "ssl3", "-client_max_proto", "tls1.1", "-should_negotiate", "tls1.1"])));
+            ok(run(test([@ssltest, "-server_min_proto", "tls1.1", "-server_max_proto", "tls1.1", "-client_min_proto", "ssl3", "-client_max_proto", "tls1.2", "-should_negotiate", "tls1.1"])));
+            ok(run(test([@ssltest, "-server_min_proto", "tls1.1", "-server_max_proto", "tls1.1", "-client_min_proto", "ssl3", "-should_negotiate", "tls1.1"])));
+            ok(run(test([@ssltest, "-server_min_proto", "tls1.1", "-server_max_proto", "tls1.1", "-client_max_proto", "ssl3", "-should_negotiate", "fail-server"])));
+        }
+        ok(run(test([@ssltest, "-server_min_proto", "tls1.1", "-server_max_proto", "tls1.1", "-client_min_proto", "tls1", "-client_max_proto", "tls1", "-should_negotiate", "fail-server"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1.1", "-server_max_proto", "tls1.1", "-client_min_proto", "tls1", "-client_max_proto", "tls1.1", "-should_negotiate", "tls1.1"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1.1", "-server_max_proto", "tls1.1", "-client_min_proto", "tls1", "-client_max_proto", "tls1.2", "-should_negotiate", "tls1.1"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1.1", "-server_max_proto", "tls1.1", "-client_min_proto", "tls1.1", "-client_max_proto", "tls1.1", "-should_negotiate", "tls1.1"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1.1", "-server_max_proto", "tls1.1", "-client_min_proto", "tls1.1", "-client_max_proto", "tls1.2", "-should_negotiate", "tls1.1"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1.1", "-server_max_proto", "tls1.1", "-client_min_proto", "tls1.2", "-client_max_proto", "tls1.2", "-should_negotiate", "fail-client"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1.1", "-server_max_proto", "tls1.1", "-client_min_proto", "tls1", "-should_negotiate", "tls1.1"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1.1", "-server_max_proto", "tls1.1", "-client_min_proto", "tls1.1", "-should_negotiate", "tls1.1"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1.1", "-server_max_proto", "tls1.1", "-client_min_proto", "tls1.2", "-should_negotiate", "fail-client"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1.1", "-server_max_proto", "tls1.1", "-client_max_proto", "tls1", "-should_negotiate", "fail-server"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1.1", "-server_max_proto", "tls1.1", "-client_max_proto", "tls1.1", "-should_negotiate", "tls1.1"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1.1", "-server_max_proto", "tls1.1", "-client_max_proto", "tls1.2", "-should_negotiate", "tls1.1"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1.1", "-server_max_proto", "tls1.1", "-should_negotiate", "tls1.1"])));
+
+        SKIP : {
+            skip "ssl3 disabled", 6 if $no_ssl3;
+            ok(run(test([@ssltest, "-server_min_proto", "tls1.1", "-server_max_proto", "tls1.2", "-client_min_proto", "ssl3", "-client_max_proto", "ssl3", "-should_negotiate", "fail-server"])));
+            ok(run(test([@ssltest, "-server_min_proto", "tls1.1", "-server_max_proto", "tls1.2", "-client_min_proto", "ssl3", "-client_max_proto", "tls1", "-should_negotiate", "fail-server"])));
+            ok(run(test([@ssltest, "-server_min_proto", "tls1.1", "-server_max_proto", "tls1.2", "-client_min_proto", "ssl3", "-client_max_proto", "tls1.1", "-should_negotiate", "tls1.1"])));
+            ok(run(test([@ssltest, "-server_min_proto", "tls1.1", "-server_max_proto", "tls1.2", "-client_min_proto", "ssl3", "-client_max_proto", "tls1.2", "-should_negotiate", "tls1.2"])));
+            ok(run(test([@ssltest, "-server_min_proto", "tls1.1", "-server_max_proto", "tls1.2", "-client_min_proto", "ssl3", "-should_negotiate", "tls1.2"])));
+            ok(run(test([@ssltest, "-server_min_proto", "tls1.1", "-server_max_proto", "tls1.2", "-client_max_proto", "ssl3", "-should_negotiate", "fail-server"])));
+        }
+        ok(run(test([@ssltest, "-server_min_proto", "tls1.1", "-server_max_proto", "tls1.2", "-client_min_proto", "tls1", "-client_max_proto", "tls1", "-should_negotiate", "fail-server"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1.1", "-server_max_proto", "tls1.2", "-client_min_proto", "tls1", "-client_max_proto", "tls1.1", "-should_negotiate", "tls1.1"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1.1", "-server_max_proto", "tls1.2", "-client_min_proto", "tls1", "-client_max_proto", "tls1.2", "-should_negotiate", "tls1.2"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1.1", "-server_max_proto", "tls1.2", "-client_min_proto", "tls1.1", "-client_max_proto", "tls1.1", "-should_negotiate", "tls1.1"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1.1", "-server_max_proto", "tls1.2", "-client_min_proto", "tls1.1", "-client_max_proto", "tls1.2", "-should_negotiate", "tls1.2"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1.1", "-server_max_proto", "tls1.2", "-client_min_proto", "tls1.2", "-client_max_proto", "tls1.2", "-should_negotiate", "tls1.2"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1.1", "-server_max_proto", "tls1.2", "-client_min_proto", "tls1", "-should_negotiate", "tls1.2"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1.1", "-server_max_proto", "tls1.2", "-client_min_proto", "tls1.1", "-should_negotiate", "tls1.2"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1.1", "-server_max_proto", "tls1.2", "-client_min_proto", "tls1.2", "-should_negotiate", "tls1.2"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1.1", "-server_max_proto", "tls1.2", "-client_max_proto", "tls1", "-should_negotiate", "fail-server"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1.1", "-server_max_proto", "tls1.2", "-client_max_proto", "tls1.1", "-should_negotiate", "tls1.1"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1.1", "-server_max_proto", "tls1.2", "-client_max_proto", "tls1.2", "-should_negotiate", "tls1.2"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1.1", "-server_max_proto", "tls1.2", "-client_max_proto", "tls1.2", "-should_negotiate", "tls1.2"])));
+
+        SKIP : {
+            skip "ssl3 disabled", 6 if $no_ssl3;
+            ok(run(test([@ssltest, "-server_min_proto", "tls1.2", "-server_max_proto", "tls1.2", "-client_min_proto", "ssl3", "-client_max_proto", "ssl3", "-should_negotiate", "fail-server"])));
+            ok(run(test([@ssltest, "-server_min_proto", "tls1.2", "-server_max_proto", "tls1.2", "-client_min_proto", "ssl3", "-client_max_proto", "tls1", "-should_negotiate", "fail-server"])));
+            ok(run(test([@ssltest, "-server_min_proto", "tls1.2", "-server_max_proto", "tls1.2", "-client_min_proto", "ssl3", "-client_max_proto", "tls1.1", "-should_negotiate", "fail-server"])));
+            ok(run(test([@ssltest, "-server_min_proto", "tls1.2", "-server_max_proto", "tls1.2", "-client_min_proto", "ssl3", "-client_max_proto", "tls1.2", "-should_negotiate", "tls1.2"])));
+            ok(run(test([@ssltest, "-server_min_proto", "tls1.2", "-server_max_proto", "tls1.2", "-client_min_proto", "ssl3", "-should_negotiate", "tls1.2"])));
+            ok(run(test([@ssltest, "-server_min_proto", "tls1.2", "-server_max_proto", "tls1.2", "-client_max_proto", "ssl3", "-should_negotiate", "fail-server"])));
+        }
+        ok(run(test([@ssltest, "-server_min_proto", "tls1.2", "-server_max_proto", "tls1.2", "-client_min_proto", "tls1", "-client_max_proto", "tls1", "-should_negotiate", "fail-server"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1.2", "-server_max_proto", "tls1.2", "-client_min_proto", "tls1", "-client_max_proto", "tls1.1", "-should_negotiate", "fail-server"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1.2", "-server_max_proto", "tls1.2", "-client_min_proto", "tls1", "-client_max_proto", "tls1.2", "-should_negotiate", "tls1.2"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1.2", "-server_max_proto", "tls1.2", "-client_min_proto", "tls1.1", "-client_max_proto", "tls1.1", "-should_negotiate", "fail-server"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1.2", "-server_max_proto", "tls1.2", "-client_min_proto", "tls1.1", "-client_max_proto", "tls1.2", "-should_negotiate", "tls1.2"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1.2", "-server_max_proto", "tls1.2", "-client_min_proto", "tls1.2", "-client_max_proto", "tls1.2", "-should_negotiate", "tls1.2"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1.2", "-server_max_proto", "tls1.2", "-client_min_proto", "tls1", "-should_negotiate", "tls1.2"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1.2", "-server_max_proto", "tls1.2", "-client_min_proto", "tls1.1", "-should_negotiate", "tls1.2"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1.2", "-server_max_proto", "tls1.2", "-client_min_proto", "tls1.2", "-should_negotiate", "tls1.2"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1.2", "-server_max_proto", "tls1.2", "-client_max_proto", "tls1", "-should_negotiate", "fail-server"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1.2", "-server_max_proto", "tls1.2", "-client_max_proto", "tls1.1", "-should_negotiate", "fail-server"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1.2", "-server_max_proto", "tls1.2", "-client_max_proto", "tls1.2", "-should_negotiate", "tls1.2"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1.2", "-server_max_proto", "tls1.2", "-should_negotiate", "tls1.2"])));
+
+        SKIP : {
+            skip "ssl3 disabled", 6 if $no_ssl3;
+            ok(run(test([@ssltest, "-server_min_proto", "ssl3", "-client_min_proto", "ssl3", "-client_max_proto", "ssl3", "-should_negotiate", "ssl3"])));
+            ok(run(test([@ssltest, "-server_min_proto", "ssl3", "-client_min_proto", "ssl3", "-client_max_proto", "tls1", "-should_negotiate", "tls1"])));
+            ok(run(test([@ssltest, "-server_min_proto", "ssl3", "-client_min_proto", "ssl3", "-client_max_proto", "tls1.1", "-should_negotiate", "tls1.1"])));
+            ok(run(test([@ssltest, "-server_min_proto", "ssl3", "-client_min_proto", "ssl3", "-client_max_proto", "tls1.2", "-should_negotiate", "tls1.2"])));
+            ok(run(test([@ssltest, "-server_min_proto", "ssl3", "-client_min_proto", "ssl3", "-should_negotiate", "tls1.2"])));
+            ok(run(test([@ssltest, "-server_min_proto", "ssl3", "-client_max_proto", "ssl3", "-should_negotiate", "ssl3"])));
+        }
+        ok(run(test([@ssltest, "-server_min_proto", "ssl3", "-client_min_proto", "tls1", "-client_max_proto", "tls1", "-should_negotiate", "tls1"])));
+        ok(run(test([@ssltest, "-server_min_proto", "ssl3", "-client_min_proto", "tls1", "-client_max_proto", "tls1.1", "-should_negotiate", "tls1.1"])));
+        ok(run(test([@ssltest, "-server_min_proto", "ssl3", "-client_min_proto", "tls1", "-client_max_proto", "tls1.2", "-should_negotiate", "tls1.2"])));
+        ok(run(test([@ssltest, "-server_min_proto", "ssl3", "-client_min_proto", "tls1.1", "-client_max_proto", "tls1.1", "-should_negotiate", "tls1.1"])));
+        ok(run(test([@ssltest, "-server_min_proto", "ssl3", "-client_min_proto", "tls1.1", "-client_max_proto", "tls1.2", "-should_negotiate", "tls1.2"])));
+        ok(run(test([@ssltest, "-server_min_proto", "ssl3", "-client_min_proto", "tls1.2", "-client_max_proto", "tls1.2", "-should_negotiate", "tls1.2"])));
+        ok(run(test([@ssltest, "-server_min_proto", "ssl3", "-client_min_proto", "tls1", "-should_negotiate", "tls1.2"])));
+        ok(run(test([@ssltest, "-server_min_proto", "ssl3", "-client_min_proto", "tls1.1", "-should_negotiate", "tls1.2"])));
+        ok(run(test([@ssltest, "-server_min_proto", "ssl3", "-client_min_proto", "tls1.2", "-should_negotiate", "tls1.2"])));
+        ok(run(test([@ssltest, "-server_min_proto", "ssl3", "-client_max_proto", "tls1", "-should_negotiate", "tls1"])));
+        ok(run(test([@ssltest, "-server_min_proto", "ssl3", "-client_max_proto", "tls1.1", "-should_negotiate", "tls1.1"])));
+        ok(run(test([@ssltest, "-server_min_proto", "ssl3", "-client_max_proto", "tls1.2", "-should_negotiate", "tls1.2"])));
+        ok(run(test([@ssltest, "-server_min_proto", "ssl3", "-should_negotiate", "tls1.2"])));
+
+        SKIP : {
+            skip "ssl3 disabled", 6 if $no_ssl3;
+            ok(run(test([@ssltest, "-server_min_proto", "tls1", "-client_min_proto", "ssl3", "-client_max_proto", "ssl3", "-should_negotiate", "fail-server"])));
+            ok(run(test([@ssltest, "-server_min_proto", "tls1", "-client_min_proto", "ssl3", "-client_max_proto", "tls1", "-should_negotiate", "tls1"])));
+            ok(run(test([@ssltest, "-server_min_proto", "tls1", "-client_min_proto", "ssl3", "-client_max_proto", "tls1.1", "-should_negotiate", "tls1.1"])));
+            ok(run(test([@ssltest, "-server_min_proto", "tls1", "-client_min_proto", "ssl3", "-client_max_proto", "tls1.2", "-should_negotiate", "tls1.2"])));
+            ok(run(test([@ssltest, "-server_min_proto", "tls1", "-client_min_proto", "ssl3", "-should_negotiate", "tls1.2"])));
+            ok(run(test([@ssltest, "-server_min_proto", "tls1", "-client_max_proto", "ssl3", "-should_negotiate", "fail-server"])));
+        }
+        ok(run(test([@ssltest, "-server_min_proto", "tls1", "-client_min_proto", "tls1", "-client_max_proto", "tls1", "-should_negotiate", "tls1"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1", "-client_min_proto", "tls1", "-client_max_proto", "tls1.1", "-should_negotiate", "tls1.1"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1", "-client_min_proto", "tls1", "-client_max_proto", "tls1.2", "-should_negotiate", "tls1.2"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1", "-client_min_proto", "tls1.1", "-client_max_proto", "tls1.1", "-should_negotiate", "tls1.1"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1", "-client_min_proto", "tls1.1", "-client_max_proto", "tls1.2", "-should_negotiate", "tls1.2"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1", "-client_min_proto", "tls1.2", "-client_max_proto", "tls1.2", "-should_negotiate", "tls1.2"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1", "-client_min_proto", "tls1", "-should_negotiate", "tls1.2"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1", "-client_min_proto", "tls1.1", "-should_negotiate", "tls1.2"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1", "-client_min_proto", "tls1.2", "-should_negotiate", "tls1.2"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1", "-client_max_proto", "tls1", "-should_negotiate", "tls1"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1", "-client_max_proto", "tls1.1", "-should_negotiate", "tls1.1"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1", "-client_max_proto", "tls1.2", "-should_negotiate", "tls1.2"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1", "-should_negotiate", "tls1.2"])));
+
+        SKIP : {
+            skip "ssl3 disabled", 6 if $no_ssl3;
+            ok(run(test([@ssltest, "-server_min_proto", "tls1.1", "-client_min_proto", "ssl3", "-client_max_proto", "ssl3", "-should_negotiate", "fail-server"])));
+            ok(run(test([@ssltest, "-server_min_proto", "tls1.1", "-client_min_proto", "ssl3", "-client_max_proto", "tls1", "-should_negotiate", "fail-server"])));
+            ok(run(test([@ssltest, "-server_min_proto", "tls1.1", "-client_min_proto", "ssl3", "-client_max_proto", "tls1.1", "-should_negotiate", "tls1.1"])));
+            ok(run(test([@ssltest, "-server_min_proto", "tls1.1", "-client_min_proto", "ssl3", "-client_max_proto", "tls1.2", "-should_negotiate", "tls1.2"])));
+            ok(run(test([@ssltest, "-server_min_proto", "tls1.1", "-client_min_proto", "ssl3", "-should_negotiate", "tls1.2"])));
+            ok(run(test([@ssltest, "-server_min_proto", "tls1.1", "-client_max_proto", "ssl3", "-should_negotiate", "fail-server"])));
+        }
+        ok(run(test([@ssltest, "-server_min_proto", "tls1.1", "-client_min_proto", "tls1", "-client_max_proto", "tls1", "-should_negotiate", "fail-server"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1.1", "-client_min_proto", "tls1", "-client_max_proto", "tls1.1", "-should_negotiate", "tls1.1"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1.1", "-client_min_proto", "tls1", "-client_max_proto", "tls1.2", "-should_negotiate", "tls1.2"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1.1", "-client_min_proto", "tls1.1", "-client_max_proto", "tls1.1", "-should_negotiate", "tls1.1"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1.1", "-client_min_proto", "tls1.1", "-client_max_proto", "tls1.2", "-should_negotiate", "tls1.2"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1.1", "-client_min_proto", "tls1.2", "-client_max_proto", "tls1.2", "-should_negotiate", "tls1.2"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1.1", "-client_min_proto", "tls1", "-should_negotiate", "tls1.2"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1.1", "-client_min_proto", "tls1.1", "-should_negotiate", "tls1.2"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1.1", "-client_min_proto", "tls1.2", "-should_negotiate", "tls1.2"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1.1", "-client_max_proto", "tls1", "-should_negotiate", "fail-server"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1.1", "-client_max_proto", "tls1.1", "-should_negotiate", "tls1.1"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1.1", "-client_max_proto", "tls1.2", "-should_negotiate", "tls1.2"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1.1", "-client_max_proto", "tls1.2", "-should_negotiate", "tls1.2"])));
+
+        SKIP : {
+            skip "ssl3 disabled", 6 if $no_ssl3;
+            ok(run(test([@ssltest, "-server_min_proto", "tls1.2", "-client_min_proto", "ssl3", "-client_max_proto", "ssl3", "-should_negotiate", "fail-server"])));
+            ok(run(test([@ssltest, "-server_min_proto", "tls1.2", "-client_min_proto", "ssl3", "-client_max_proto", "tls1", "-should_negotiate", "fail-server"])));
+            ok(run(test([@ssltest, "-server_min_proto", "tls1.2", "-client_min_proto", "ssl3", "-client_max_proto", "tls1.1", "-should_negotiate", "fail-server"])));
+            ok(run(test([@ssltest, "-server_min_proto", "tls1.2", "-client_min_proto", "ssl3", "-client_max_proto", "tls1.2", "-should_negotiate", "tls1.2"])));
+            ok(run(test([@ssltest, "-server_min_proto", "tls1.2", "-client_min_proto", "ssl3", "-should_negotiate", "tls1.2"])));
+            ok(run(test([@ssltest, "-server_min_proto", "tls1.2", "-client_max_proto", "ssl3", "-should_negotiate", "fail-server"])));
+        }
+        ok(run(test([@ssltest, "-server_min_proto", "tls1.2", "-client_min_proto", "tls1", "-client_max_proto", "tls1", "-should_negotiate", "fail-server"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1.2", "-client_min_proto", "tls1", "-client_max_proto", "tls1.1", "-should_negotiate", "fail-server"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1.2", "-client_min_proto", "tls1", "-client_max_proto", "tls1.2", "-should_negotiate", "tls1.2"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1.2", "-client_min_proto", "tls1.1", "-client_max_proto", "tls1.1", "-should_negotiate", "fail-server"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1.2", "-client_min_proto", "tls1.1", "-client_max_proto", "tls1.2", "-should_negotiate", "tls1.2"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1.2", "-client_min_proto", "tls1.2", "-client_max_proto", "tls1.2", "-should_negotiate", "tls1.2"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1.2", "-client_min_proto", "tls1", "-should_negotiate", "tls1.2"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1.2", "-client_min_proto", "tls1.1", "-should_negotiate", "tls1.2"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1.2", "-client_min_proto", "tls1.2", "-should_negotiate", "tls1.2"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1.2", "-client_max_proto", "tls1", "-should_negotiate", "fail-server"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1.2", "-client_max_proto", "tls1.1", "-should_negotiate", "fail-server"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1.2", "-client_max_proto", "tls1.2", "-should_negotiate", "tls1.2"])));
+        ok(run(test([@ssltest, "-server_min_proto", "tls1.2", "-should_negotiate", "tls1.2"])));
+
+        SKIP : {
+            skip "ssl3 disabled", 19 if $no_ssl3;
+            ok(run(test([@ssltest, "-server_max_proto", "ssl3", "-client_min_proto", "ssl3", "-client_max_proto", "ssl3", "-should_negotiate", "ssl3"])));
+            ok(run(test([@ssltest, "-server_max_proto", "ssl3", "-client_min_proto", "ssl3", "-client_max_proto", "tls1", "-should_negotiate", "ssl3"])));
+            ok(run(test([@ssltest, "-server_max_proto", "ssl3", "-client_min_proto", "ssl3", "-client_max_proto", "tls1.1", "-should_negotiate", "ssl3"])));
+            ok(run(test([@ssltest, "-server_max_proto", "ssl3", "-client_min_proto", "ssl3", "-client_max_proto", "tls1.2", "-should_negotiate", "ssl3"])));
+            ok(run(test([@ssltest, "-server_max_proto", "ssl3", "-client_min_proto", "tls1", "-client_max_proto", "tls1", "-should_negotiate", "fail-client"])));
+            ok(run(test([@ssltest, "-server_max_proto", "ssl3", "-client_min_proto", "tls1", "-client_max_proto", "tls1.1", "-should_negotiate", "fail-client"])));
+            ok(run(test([@ssltest, "-server_max_proto", "ssl3", "-client_min_proto", "tls1", "-client_max_proto", "tls1.2", "-should_negotiate", "fail-client"])));
+            ok(run(test([@ssltest, "-server_max_proto", "ssl3", "-client_min_proto", "tls1.1", "-client_max_proto", "tls1.1", "-should_negotiate", "fail-client"])));
+            ok(run(test([@ssltest, "-server_max_proto", "ssl3", "-client_min_proto", "tls1.1", "-client_max_proto", "tls1.2", "-should_negotiate", "fail-client"])));
+            ok(run(test([@ssltest, "-server_max_proto", "ssl3", "-client_min_proto", "tls1.2", "-client_max_proto", "tls1.2", "-should_negotiate", "fail-client"])));
+            ok(run(test([@ssltest, "-server_max_proto", "ssl3", "-client_min_proto", "ssl3", "-should_negotiate", "ssl3"])));
+            ok(run(test([@ssltest, "-server_max_proto", "ssl3", "-client_min_proto", "tls1", "-should_negotiate", "fail-client"])));
+            ok(run(test([@ssltest, "-server_max_proto", "ssl3", "-client_min_proto", "tls1.1", "-should_negotiate", "fail-client"])));
+            ok(run(test([@ssltest, "-server_max_proto", "ssl3", "-client_min_proto", "tls1.2", "-should_negotiate", "fail-client"])));
+            ok(run(test([@ssltest, "-server_max_proto", "ssl3", "-client_max_proto", "ssl3", "-should_negotiate", "ssl3"])));
+            ok(run(test([@ssltest, "-server_max_proto", "ssl3", "-client_max_proto", "tls1", "-should_negotiate", "ssl3"])));
+            ok(run(test([@ssltest, "-server_max_proto", "ssl3", "-client_max_proto", "tls1.1", "-should_negotiate", "ssl3"])));
+            ok(run(test([@ssltest, "-server_max_proto", "ssl3", "-client_max_proto", "tls1.2", "-should_negotiate", "ssl3"])));
+            ok(run(test([@ssltest, "-server_max_proto", "ssl3", "-should_negotiate", "ssl3"])));
+        }
+
+        SKIP : {
+            skip "ssl3 disabled", 6 if $no_ssl3;
+            ok(run(test([@ssltest, "-server_max_proto", "tls1", "-client_min_proto", "ssl3", "-client_max_proto", "ssl3", "-should_negotiate", "ssl3"])));
+            ok(run(test([@ssltest, "-server_max_proto", "tls1", "-client_min_proto", "ssl3", "-client_max_proto", "tls1", "-should_negotiate", "tls1"])));
+            ok(run(test([@ssltest, "-server_max_proto", "tls1", "-client_min_proto", "ssl3", "-client_max_proto", "tls1.1", "-should_negotiate", "tls1"])));
+            ok(run(test([@ssltest, "-server_max_proto", "tls1", "-client_min_proto", "ssl3", "-client_max_proto", "tls1.2", "-should_negotiate", "tls1"])));
+            ok(run(test([@ssltest, "-server_max_proto", "tls1", "-client_min_proto", "ssl3", "-should_negotiate", "tls1"])));
+            ok(run(test([@ssltest, "-server_max_proto", "tls1", "-client_max_proto", "ssl3", "-should_negotiate", "ssl3"])));
+        }
+        ok(run(test([@ssltest, "-server_max_proto", "tls1", "-client_min_proto", "tls1", "-client_max_proto", "tls1", "-should_negotiate", "tls1"])));
+        ok(run(test([@ssltest, "-server_max_proto", "tls1", "-client_min_proto", "tls1", "-client_max_proto", "tls1.1", "-should_negotiate", "tls1"])));
+        ok(run(test([@ssltest, "-server_max_proto", "tls1", "-client_min_proto", "tls1", "-client_max_proto", "tls1.2", "-should_negotiate", "tls1"])));
+        ok(run(test([@ssltest, "-server_max_proto", "tls1", "-client_min_proto", "tls1.1", "-client_max_proto", "tls1.1", "-should_negotiate", "fail-client"])));
+        ok(run(test([@ssltest, "-server_max_proto", "tls1", "-client_min_proto", "tls1.1", "-client_max_proto", "tls1.2", "-should_negotiate", "fail-client"])));
+        ok(run(test([@ssltest, "-server_max_proto", "tls1", "-client_min_proto", "tls1.2", "-client_max_proto", "tls1.2", "-should_negotiate", "fail-client"])));
+        ok(run(test([@ssltest, "-server_max_proto", "tls1", "-client_min_proto", "tls1", "-should_negotiate", "tls1"])));
+        ok(run(test([@ssltest, "-server_max_proto", "tls1", "-client_min_proto", "tls1.1", "-should_negotiate", "fail-client"])));
+        ok(run(test([@ssltest, "-server_max_proto", "tls1", "-client_min_proto", "tls1.2", "-should_negotiate", "fail-client"])));
+        ok(run(test([@ssltest, "-server_max_proto", "tls1", "-client_max_proto", "tls1", "-should_negotiate", "tls1"])));
+        ok(run(test([@ssltest, "-server_max_proto", "tls1", "-client_max_proto", "tls1.1", "-should_negotiate", "tls1"])));
+        ok(run(test([@ssltest, "-server_max_proto", "tls1", "-client_max_proto", "tls1.2", "-should_negotiate", "tls1"])));
+        ok(run(test([@ssltest, "-server_max_proto", "tls1", "-should_negotiate", "tls1"])));
+
+        SKIP : {
+            skip "ssl3 disabled", 6 if $no_ssl3;
+            ok(run(test([@ssltest, "-server_max_proto", "tls1.1", "-client_min_proto", "ssl3", "-client_max_proto", "ssl3", "-should_negotiate", "ssl3"])));
+            ok(run(test([@ssltest, "-server_max_proto", "tls1.1", "-client_min_proto", "ssl3", "-client_max_proto", "tls1", "-should_negotiate", "tls1"])));
+            ok(run(test([@ssltest, "-server_max_proto", "tls1.1", "-client_min_proto", "ssl3", "-client_max_proto", "tls1.1", "-should_negotiate", "tls1.1"])));
+            ok(run(test([@ssltest, "-server_max_proto", "tls1.1", "-client_min_proto", "ssl3", "-client_max_proto", "tls1.2", "-should_negotiate", "tls1.1"])));
+            ok(run(test([@ssltest, "-server_max_proto", "tls1.1", "-client_min_proto", "ssl3", "-should_negotiate", "tls1.1"])));
+            ok(run(test([@ssltest, "-server_max_proto", "tls1.1", "-client_max_proto", "ssl3", "-should_negotiate", "ssl3"])));
+        }
+        ok(run(test([@ssltest, "-server_max_proto", "tls1.1", "-client_min_proto", "tls1", "-client_max_proto", "tls1", "-should_negotiate", "tls1"])));
+        ok(run(test([@ssltest, "-server_max_proto", "tls1.1", "-client_min_proto", "tls1", "-client_max_proto", "tls1.1", "-should_negotiate", "tls1.1"])));
+        ok(run(test([@ssltest, "-server_max_proto", "tls1.1", "-client_min_proto", "tls1", "-client_max_proto", "tls1.2", "-should_negotiate", "tls1.1"])));
+        ok(run(test([@ssltest, "-server_max_proto", "tls1.1", "-client_min_proto", "tls1.1", "-client_max_proto", "tls1.1", "-should_negotiate", "tls1.1"])));
+        ok(run(test([@ssltest, "-server_max_proto", "tls1.1", "-client_min_proto", "tls1.1", "-client_max_proto", "tls1.2", "-should_negotiate", "tls1.1"])));
+        ok(run(test([@ssltest, "-server_max_proto", "tls1.1", "-client_min_proto", "tls1.2", "-client_max_proto", "tls1.2", "-should_negotiate", "fail-client"])));
+        ok(run(test([@ssltest, "-server_max_proto", "tls1.1", "-client_min_proto", "tls1", "-should_negotiate", "tls1.1"])));
+        ok(run(test([@ssltest, "-server_max_proto", "tls1.1", "-client_min_proto", "tls1.1", "-should_negotiate", "tls1.1"])));
+        ok(run(test([@ssltest, "-server_max_proto", "tls1.1", "-client_min_proto", "tls1.2", "-should_negotiate", "fail-client"])));
+        ok(run(test([@ssltest, "-server_max_proto", "tls1.1", "-client_max_proto", "tls1", "-should_negotiate", "tls1"])));
+        ok(run(test([@ssltest, "-server_max_proto", "tls1.1", "-client_max_proto", "tls1.1", "-should_negotiate", "tls1.1"])));
+        ok(run(test([@ssltest, "-server_max_proto", "tls1.1", "-client_max_proto", "tls1.2", "-should_negotiate", "tls1.1"])));
+        ok(run(test([@ssltest, "-server_max_proto", "tls1.1", "-should_negotiate", "tls1.1"])));
+
+        SKIP : {
+            skip "ssl3 disabled", 6 if $no_ssl3;
+            ok(run(test([@ssltest, "-server_max_proto", "tls1.2", "-client_min_proto", "ssl3", "-client_max_proto", "ssl3", "-should_negotiate", "ssl3"])));
+            ok(run(test([@ssltest, "-server_max_proto", "tls1.2", "-client_min_proto", "ssl3", "-client_max_proto", "tls1", "-should_negotiate", "tls1"])));
+            ok(run(test([@ssltest, "-server_max_proto", "tls1.2", "-client_min_proto", "ssl3", "-client_max_proto", "tls1.1", "-should_negotiate", "tls1.1"])));
+            ok(run(test([@ssltest, "-server_max_proto", "tls1.2", "-client_min_proto", "ssl3", "-client_max_proto", "tls1.2", "-should_negotiate", "tls1.2"])));
+            ok(run(test([@ssltest, "-server_max_proto", "tls1.2", "-client_min_proto", "ssl3", "-should_negotiate", "tls1.2"])));
+            ok(run(test([@ssltest, "-server_max_proto", "tls1.2", "-client_max_proto", "ssl3", "-should_negotiate", "ssl3"])));
+        }
+        ok(run(test([@ssltest, "-server_max_proto", "tls1.2", "-client_min_proto", "tls1", "-client_max_proto", "tls1", "-should_negotiate", "tls1"])));
+        ok(run(test([@ssltest, "-server_max_proto", "tls1.2", "-client_min_proto", "tls1", "-client_max_proto", "tls1.1", "-should_negotiate", "tls1.1"])));
+        ok(run(test([@ssltest, "-server_max_proto", "tls1.2", "-client_min_proto", "tls1", "-client_max_proto", "tls1.2", "-should_negotiate", "tls1.2"])));
+        ok(run(test([@ssltest, "-server_max_proto", "tls1.2", "-client_min_proto", "tls1.1", "-client_max_proto", "tls1.1", "-should_negotiate", "tls1.1"])));
+        ok(run(test([@ssltest, "-server_max_proto", "tls1.2", "-client_min_proto", "tls1.1", "-client_max_proto", "tls1.2", "-should_negotiate", "tls1.2"])));
+        ok(run(test([@ssltest, "-server_max_proto", "tls1.2", "-client_min_proto", "tls1.2", "-client_max_proto", "tls1.2", "-should_negotiate", "tls1.2"])));
+        ok(run(test([@ssltest, "-server_max_proto", "tls1.2", "-client_min_proto", "tls1", "-should_negotiate", "tls1.2"])));
+        ok(run(test([@ssltest, "-server_max_proto", "tls1.2", "-client_min_proto", "tls1.1", "-should_negotiate", "tls1.2"])));
+        ok(run(test([@ssltest, "-server_max_proto", "tls1.2", "-client_min_proto", "tls1.2", "-should_negotiate", "tls1.2"])));
+        ok(run(test([@ssltest, "-server_max_proto", "tls1.2", "-client_max_proto", "tls1", "-should_negotiate", "tls1"])));
+        ok(run(test([@ssltest, "-server_max_proto", "tls1.2", "-client_max_proto", "tls1.1", "-should_negotiate", "tls1.1"])));
+        ok(run(test([@ssltest, "-server_max_proto", "tls1.2", "-client_max_proto", "tls1.2", "-should_negotiate", "tls1.2"])));
+        ok(run(test([@ssltest, "-server_max_proto", "tls1.2", "-should_negotiate", "tls1.2"])));
+
+        SKIP : {
+            skip "ssl3 disabled", 6 if $no_ssl3;
+            ok(run(test([@ssltest, "-client_min_proto", "ssl3", "-client_max_proto", "ssl3", "-should_negotiate", "ssl3"])));
+            ok(run(test([@ssltest, "-client_min_proto", "ssl3", "-client_max_proto", "tls1", "-should_negotiate", "tls1"])));
+            ok(run(test([@ssltest, "-client_min_proto", "ssl3", "-client_max_proto", "tls1.1", "-should_negotiate", "tls1.1"])));
+            ok(run(test([@ssltest, "-client_min_proto", "ssl3", "-client_max_proto", "tls1.2", "-should_negotiate", "tls1.2"])));
+            ok(run(test([@ssltest, "-client_min_proto", "ssl3", "-should_negotiate", "tls1.2"])));
+            ok(run(test([@ssltest, "-client_max_proto", "ssl3", "-should_negotiate", "ssl3"])));
+        }
+        ok(run(test([@ssltest, "-client_min_proto", "tls1", "-client_max_proto", "tls1", "-should_negotiate", "tls1"])));
+        ok(run(test([@ssltest, "-client_min_proto", "tls1", "-client_max_proto", "tls1.1", "-should_negotiate", "tls1.1"])));
+        ok(run(test([@ssltest, "-client_min_proto", "tls1", "-client_max_proto", "tls1.2", "-should_negotiate", "tls1.2"])));
+        ok(run(test([@ssltest, "-client_min_proto", "tls1.1", "-client_max_proto", "tls1.1", "-should_negotiate", "tls1.1"])));
+        ok(run(test([@ssltest, "-client_min_proto", "tls1.1", "-client_max_proto", "tls1.2", "-should_negotiate", "tls1.2"])));
+        ok(run(test([@ssltest, "-client_min_proto", "tls1.2", "-client_max_proto", "tls1.2", "-should_negotiate", "tls1.2"])));
+        ok(run(test([@ssltest, "-client_min_proto", "tls1", "-should_negotiate", "tls1.2"])));
+        ok(run(test([@ssltest, "-client_min_proto", "tls1.1", "-should_negotiate", "tls1.2"])));
+        ok(run(test([@ssltest, "-client_min_proto", "tls1.2", "-should_negotiate", "tls1.2"])));
+        ok(run(test([@ssltest, "-client_max_proto", "tls1", "-should_negotiate", "tls1"])));
+        ok(run(test([@ssltest, "-client_max_proto", "tls1.1", "-should_negotiate", "tls1.1"])));
+        ok(run(test([@ssltest, "-client_max_proto", "tls1.2", "-should_negotiate", "tls1.2"])));
+        ok(run(test([@ssltest, "-should_negotiate", "tls1.2"])));
+
+        SKIP : {
+            skip "dtls disabled", 64 if $no_dtls;
+
+            ok(run(test([@ssltest, "-dtls", "-server_min_proto", "dtls1", "-server_max_proto", "dtls1", "-client_min_proto", "dtls1", "-client_max_proto", "dtls1", "-should_negotiate", "dtls1"])));
+            ok(run(test([@ssltest, "-dtls", "-server_min_proto", "dtls1", "-server_max_proto", "dtls1", "-client_min_proto", "dtls1", "-client_max_proto", "dtls1.2", "-should_negotiate", "dtls1"])));
+            ok(run(test([@ssltest, "-dtls", "-server_min_proto", "dtls1", "-server_max_proto", "dtls1", "-client_min_proto", "dtls1.2", "-client_max_proto", "dtls1.2", "-should_negotiate", "fail-client"])));
+            ok(run(test([@ssltest, "-dtls", "-server_min_proto", "dtls1", "-server_max_proto", "dtls1", "-client_min_proto", "dtls1", "-should_negotiate", "dtls1"])));
+            ok(run(test([@ssltest, "-dtls", "-server_min_proto", "dtls1", "-server_max_proto", "dtls1", "-client_min_proto", "dtls1.2", "-should_negotiate", "fail-client"])));
+            ok(run(test([@ssltest, "-dtls", "-server_min_proto", "dtls1", "-server_max_proto", "dtls1", "-client_max_proto", "dtls1", "-should_negotiate", "dtls1"])));
+            ok(run(test([@ssltest, "-dtls", "-server_min_proto", "dtls1", "-server_max_proto", "dtls1", "-client_max_proto", "dtls1.2", "-should_negotiate", "dtls1"])));
+            ok(run(test([@ssltest, "-dtls", "-server_min_proto", "dtls1", "-server_max_proto", "dtls1", "-should_negotiate", "dtls1"])));
+
+            ok(run(test([@ssltest, "-dtls", "-server_min_proto", "dtls1", "-server_max_proto", "dtls1.2", "-client_min_proto", "dtls1", "-client_max_proto", "dtls1", "-should_negotiate", "dtls1"])));
+            ok(run(test([@ssltest, "-dtls", "-server_min_proto", "dtls1", "-server_max_proto", "dtls1.2", "-client_min_proto", "dtls1", "-client_max_proto", "dtls1.2", "-should_negotiate", "dtls1.2"])));
+            ok(run(test([@ssltest, "-dtls", "-server_min_proto", "dtls1", "-server_max_proto", "dtls1.2", "-client_min_proto", "dtls1.2", "-client_max_proto", "dtls1.2", "-should_negotiate", "dtls1.2"])));
+            ok(run(test([@ssltest, "-dtls", "-server_min_proto", "dtls1", "-server_max_proto", "dtls1.2", "-client_min_proto", "dtls1", "-should_negotiate", "dtls1.2"])));
+            ok(run(test([@ssltest, "-dtls", "-server_min_proto", "dtls1", "-server_max_proto", "dtls1.2", "-client_min_proto", "dtls1.2", "-should_negotiate", "dtls1.2"])));
+            ok(run(test([@ssltest, "-dtls", "-server_min_proto", "dtls1", "-server_max_proto", "dtls1.2", "-client_max_proto", "dtls1", "-should_negotiate", "dtls1"])));
+            ok(run(test([@ssltest, "-dtls", "-server_min_proto", "dtls1", "-server_max_proto", "dtls1.2", "-client_max_proto", "dtls1.2", "-should_negotiate", "dtls1.2"])));
+            ok(run(test([@ssltest, "-dtls", "-server_min_proto", "dtls1", "-server_max_proto", "dtls1.2", "-should_negotiate", "dtls1.2"])));
+
+            ok(run(test([@ssltest, "-dtls", "-server_min_proto", "dtls1.2", "-server_max_proto", "dtls1.2", "-client_min_proto", "dtls1", "-client_max_proto", "dtls1", "-should_negotiate", "fail-server"])));
+            ok(run(test([@ssltest, "-dtls", "-server_min_proto", "dtls1.2", "-server_max_proto", "dtls1.2", "-client_min_proto", "dtls1", "-client_max_proto", "dtls1.2", "-should_negotiate", "dtls1.2"])));
+            ok(run(test([@ssltest, "-dtls", "-server_min_proto", "dtls1.2", "-server_max_proto", "dtls1.2", "-client_min_proto", "dtls1.2", "-client_max_proto", "dtls1.2", "-should_negotiate", "dtls1.2"])));
+            ok(run(test([@ssltest, "-dtls", "-server_min_proto", "dtls1.2", "-server_max_proto", "dtls1.2", "-client_min_proto", "dtls1", "-should_negotiate", "dtls1.2"])));
+            ok(run(test([@ssltest, "-dtls", "-server_min_proto", "dtls1.2", "-server_max_proto", "dtls1.2", "-client_min_proto", "dtls1.2", "-should_negotiate", "dtls1.2"])));
+            ok(run(test([@ssltest, "-dtls", "-server_min_proto", "dtls1.2", "-server_max_proto", "dtls1.2", "-client_max_proto", "dtls1", "-should_negotiate", "fail-server"])));
+            ok(run(test([@ssltest, "-dtls", "-server_min_proto", "dtls1.2", "-server_max_proto", "dtls1.2", "-client_max_proto", "dtls1.2", "-should_negotiate", "dtls1.2"])));
+            ok(run(test([@ssltest, "-dtls", "-server_min_proto", "dtls1.2", "-server_max_proto", "dtls1.2", "-should_negotiate", "dtls1.2"])));
+
+            ok(run(test([@ssltest, "-dtls", "-server_max_proto", "dtls1", "-client_min_proto", "dtls1", "-client_max_proto", "dtls1", "-should_negotiate", "dtls1"])));
+            ok(run(test([@ssltest, "-dtls", "-server_max_proto", "dtls1", "-client_min_proto", "dtls1", "-client_max_proto", "dtls1.2", "-should_negotiate", "dtls1"])));
+            ok(run(test([@ssltest, "-dtls", "-server_max_proto", "dtls1", "-client_min_proto", "dtls1.2", "-client_max_proto", "dtls1.2", "-should_negotiate", "fail-client"])));
+            ok(run(test([@ssltest, "-dtls", "-server_max_proto", "dtls1", "-client_min_proto", "dtls1", "-should_negotiate", "dtls1"])));
+            ok(run(test([@ssltest, "-dtls", "-server_max_proto", "dtls1", "-client_min_proto", "dtls1.2", "-should_negotiate", "fail-client"])));
+            ok(run(test([@ssltest, "-dtls", "-server_max_proto", "dtls1", "-client_max_proto", "dtls1", "-should_negotiate", "dtls1"])));
+            ok(run(test([@ssltest, "-dtls", "-server_max_proto", "dtls1", "-client_max_proto", "dtls1.2", "-should_negotiate", "dtls1"])));
+            ok(run(test([@ssltest, "-dtls", "-server_max_proto", "dtls1", "-should_negotiate", "dtls1"])));
+
+            ok(run(test([@ssltest, "-dtls", "-server_max_proto", "dtls1.2", "-client_min_proto", "dtls1", "-client_max_proto", "dtls1", "-should_negotiate", "dtls1"])));
+            ok(run(test([@ssltest, "-dtls", "-server_max_proto", "dtls1.2", "-client_min_proto", "dtls1", "-client_max_proto", "dtls1.2", "-should_negotiate", "dtls1.2"])));
+            ok(run(test([@ssltest, "-dtls", "-server_max_proto", "dtls1.2", "-client_min_proto", "dtls1.2", "-client_max_proto", "dtls1.2", "-should_negotiate", "dtls1.2"])));
+            ok(run(test([@ssltest, "-dtls", "-server_max_proto", "dtls1.2", "-client_min_proto", "dtls1", "-should_negotiate", "dtls1.2"])));
+            ok(run(test([@ssltest, "-dtls", "-server_max_proto", "dtls1.2", "-client_min_proto", "dtls1.2", "-should_negotiate", "dtls1.2"])));
+            ok(run(test([@ssltest, "-dtls", "-server_max_proto", "dtls1.2", "-client_max_proto", "dtls1", "-should_negotiate", "dtls1"])));
+            ok(run(test([@ssltest, "-dtls", "-server_max_proto", "dtls1.2", "-client_max_proto", "dtls1.2", "-should_negotiate", "dtls1.2"])));
+            ok(run(test([@ssltest, "-dtls", "-server_max_proto", "dtls1.2", "-should_negotiate", "dtls1.2"])));
+
+            ok(run(test([@ssltest, "-dtls", "-server_min_proto", "dtls1", "-client_min_proto", "dtls1", "-client_max_proto", "dtls1", "-should_negotiate", "dtls1"])));
+            ok(run(test([@ssltest, "-dtls", "-server_min_proto", "dtls1", "-client_min_proto", "dtls1", "-client_max_proto", "dtls1.2", "-should_negotiate", "dtls1.2"])));
+            ok(run(test([@ssltest, "-dtls", "-server_min_proto", "dtls1", "-client_min_proto", "dtls1.2", "-client_max_proto", "dtls1.2", "-should_negotiate", "dtls1.2"])));
+            ok(run(test([@ssltest, "-dtls", "-server_min_proto", "dtls1", "-client_min_proto", "dtls1", "-should_negotiate", "dtls1.2"])));
+            ok(run(test([@ssltest, "-dtls", "-server_min_proto", "dtls1", "-client_min_proto", "dtls1.2", "-should_negotiate", "dtls1.2"])));
+            ok(run(test([@ssltest, "-dtls", "-server_min_proto", "dtls1", "-client_max_proto", "dtls1", "-should_negotiate", "dtls1"])));
+            ok(run(test([@ssltest, "-dtls", "-server_min_proto", "dtls1", "-client_max_proto", "dtls1.2", "-should_negotiate", "dtls1.2"])));
+            ok(run(test([@ssltest, "-dtls", "-server_min_proto", "dtls1", "-should_negotiate", "dtls1.2"])));
+
+            ok(run(test([@ssltest, "-dtls", "-server_min_proto", "dtls1.2", "-client_min_proto", "dtls1", "-client_max_proto", "dtls1", "-should_negotiate", "fail-server"])));
+            ok(run(test([@ssltest, "-dtls", "-server_min_proto", "dtls1.2", "-client_min_proto", "dtls1", "-client_max_proto", "dtls1.2", "-should_negotiate", "dtls1.2"])));
+            ok(run(test([@ssltest, "-dtls", "-server_min_proto", "dtls1.2", "-client_min_proto", "dtls1.2", "-client_max_proto", "dtls1.2", "-should_negotiate", "dtls1.2"])));
+            ok(run(test([@ssltest, "-dtls", "-server_min_proto", "dtls1.2", "-client_min_proto", "dtls1", "-should_negotiate", "dtls1.2"])));
+            ok(run(test([@ssltest, "-dtls", "-server_min_proto", "dtls1.2", "-client_min_proto", "dtls1.2", "-should_negotiate", "dtls1.2"])));
+            ok(run(test([@ssltest, "-dtls", "-server_min_proto", "dtls1.2", "-client_max_proto", "dtls1", "-should_negotiate", "fail-server"])));
+            ok(run(test([@ssltest, "-dtls", "-server_min_proto", "dtls1.2", "-client_max_proto", "dtls1.2", "-should_negotiate", "dtls1.2"])));
+            ok(run(test([@ssltest, "-dtls", "-server_min_proto", "dtls1.2", "-should_negotiate", "dtls1.2"])));
+
+            ok(run(test([@ssltest, "-dtls", "-client_min_proto", "dtls1", "-client_max_proto", "dtls1", "-should_negotiate", "dtls1"])));
+            ok(run(test([@ssltest, "-dtls", "-client_min_proto", "dtls1", "-client_max_proto", "dtls1.2", "-should_negotiate", "dtls1.2"])));
+            ok(run(test([@ssltest, "-dtls", "-client_min_proto", "dtls1.2", "-client_max_proto", "dtls1.2", "-should_negotiate", "dtls1.2"])));
+            ok(run(test([@ssltest, "-dtls", "-client_min_proto", "dtls1", "-should_negotiate", "dtls1.2"])));
+            ok(run(test([@ssltest, "-dtls", "-client_min_proto", "dtls1.2", "-should_negotiate", "dtls1.2"])));
+            ok(run(test([@ssltest, "-dtls", "-client_max_proto", "dtls1", "-should_negotiate", "dtls1"])));
+            ok(run(test([@ssltest, "-dtls", "-client_max_proto", "dtls1.2", "-should_negotiate", "dtls1.2"])));
+            ok(run(test([@ssltest, "-dtls", "-should_negotiate", "dtls1.2"])));
+        }
     };
 }
 

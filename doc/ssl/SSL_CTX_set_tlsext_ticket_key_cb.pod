@@ -185,8 +185,4 @@ L<SSL_CTX_sess_number(3)>,
 L<SSL_CTX_sess_set_get_cb(3)>,
 L<SSL_CTX_set_session_id_context(3)>,
 
-=head1 HISTORY
-
-This function was introduced in OpenSSL 0.9.8h
-
 =cut

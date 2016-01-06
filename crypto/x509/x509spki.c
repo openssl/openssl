@@ -111,7 +111,7 @@ char *NETSCAPE_SPKI_b64_encode(NETSCAPE_SPKI *spki)
     der_len = i2d_NETSCAPE_SPKI(spki, NULL);
     der_spki = OPENSSL_malloc(der_len);
     b64_str = OPENSSL_malloc(der_len * 2);
-    if (!der_spki || !b64_str) {
+    if (der_spki == NULL || b64_str == NULL) {
         X509err(X509_F_NETSCAPE_SPKI_B64_ENCODE, ERR_R_MALLOC_FAILURE);
         OPENSSL_free(der_spki);
         OPENSSL_free(b64_str);

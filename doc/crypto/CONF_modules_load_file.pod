@@ -130,8 +130,4 @@ return value of the failing module (this will always be zero or negative).
 L<conf(5)>, L<OPENSSL_config(3)>,
 L<CONF_free(3)>, L<err(3)>
 
-=head1 HISTORY
-
-CONF_modules_load_file and CONF_modules_load first appeared in OpenSSL 0.9.7.
-
 =cut

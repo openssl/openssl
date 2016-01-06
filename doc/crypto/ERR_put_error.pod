@@ -36,9 +36,4 @@ no values.
 
 L<err(3)>, L<ERR_load_strings(3)>
 
-=head1 HISTORY
-
-ERR_put_error() is available in all versions of SSLeay and OpenSSL.
-ERR_add_error_data() was added in SSLeay 0.9.0.
-
 =cut

@@ -232,9 +232,6 @@ int crl_main(int argc, char **argv)
     if (!nmflag_set)
         nmflag = XN_FLAG_ONELINE;
 
-    if (!app_load_modules(NULL))
-        goto end;
-
     x = load_crl(infile, informat);
     if (x == NULL)
         goto end;
@@ -256,14 +253,13 @@ int crl_main(int argc, char **argv)
             BIO_printf(bio_err, "Error getting CRL issuer certificate\n");
             goto end;
         }
-        pkey = X509_get_pubkey(xobj.data.x509);
+        pkey = X509_get0_pubkey(xobj.data.x509);
         X509_OBJECT_free_contents(&xobj);
         if (!pkey) {
             BIO_printf(bio_err, "Error getting CRL issuer public key\n");
             goto end;
         }
         i = X509_CRL_verify(x, pkey);
-        EVP_PKEY_free(pkey);
         if (i < 0)
             goto end;
         if (i == 0)

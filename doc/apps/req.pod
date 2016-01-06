@@ -621,8 +621,7 @@ for more information.
 
 The variable B<OPENSSL_CONF> if defined allows an alternative configuration
 file location to be specified, it will be overridden by the B<-config> command
-line switch if it is present. For compatibility reasons the B<SSLEAY_CONF>
-environment variable serves the same purpose but its use is discouraged.
+line switch if it is present.
 
 =head1 BUGS
 

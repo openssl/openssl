@@ -179,7 +179,7 @@ int SSL_SRP_CTX_init(struct ssl_st *s)
         goto err;
     }
     if ((ctx->srp_ctx.login != NULL) &&
-        ((s->srp_ctx.login = BUF_strdup(ctx->srp_ctx.login)) == NULL)) {
+        ((s->srp_ctx.login = OPENSSL_strdup(ctx->srp_ctx.login)) == NULL)) {
         SSLerr(SSL_F_SSL_SRP_CTX_INIT, ERR_R_INTERNAL_ERROR);
         goto err;
     }
@@ -393,7 +393,8 @@ int srp_generate_client_master_secret(SSL *s)
  err:
     BN_clear_free(K);
     BN_clear_free(x);
-    OPENSSL_clear_free(passwd, strlen(passwd));
+    if (passwd != NULL)
+        OPENSSL_clear_free(passwd, strlen(passwd));
     BN_clear_free(u);
     return ret;
 }

@@ -88,11 +88,16 @@ static int ts_find_name(STACK_OF(GENERAL_NAME) *gen_names,
                         GENERAL_NAME *name);
 
 /*
- * Local mapping between response codes and descriptions.
- * Don't forget to change TS_STATUS_BUF_SIZE when modifying
- * the elements of this array.
+ * This must be large enough to hold all values in ts_status_text (with
+ * comma separator) or all text fields in ts_failure_info (also with comma).
  */
-static const char *ts_status_text[] = { "granted",
+#define TS_STATUS_BUF_SIZE      256
+
+/*
+ * Local mapping between response codes and descriptions.
+ */
+static const char *ts_status_text[] = {
+    "granted",
     "grantedWithMods",
     "rejection",
     "waiting",
@@ -101,12 +106,6 @@ static const char *ts_status_text[] = { "granted",
 };
 
 #define TS_STATUS_TEXT_SIZE     OSSL_NELEM(ts_status_text)
-
-/*
- * This must be greater or equal to the sum of the strings in TS_status_text
- * plus the number of its elements.
- */
-#define TS_STATUS_BUF_SIZE      256
 
 static struct {
     int code;
@@ -121,8 +120,6 @@ static struct {
     {TS_INFO_ADD_INFO_NOT_AVAILABLE, "addInfoNotAvailable"},
     {TS_INFO_SYSTEM_FAILURE, "systemFailure"}
 };
-
-#define TS_FAILURE_INFO_SIZE    OSSL_NELEM(ts_failure_info)
 
 
 /*-
@@ -220,7 +217,8 @@ static int ts_verify_cert(X509_STORE *store, STACK_OF(X509) *untrusted,
     int ret = 1;
 
     *chain = NULL;
-    X509_STORE_CTX_init(&cert_ctx, store, signer, untrusted);
+    if (!X509_STORE_CTX_init(&cert_ctx, store, signer, untrusted))
+        return 0;
     X509_STORE_CTX_set_purpose(&cert_ctx, X509_PURPOSE_TIMESTAMP_SIGN);
     i = X509_verify_cert(&cert_ctx);
     if (i <= 0) {
@@ -445,7 +443,7 @@ static int ts_check_status_info(TS_RESP *response)
         return 1;
 
     /* There was an error, get the description in status_text. */
-    if (0 <= status && status < (long)TS_STATUS_TEXT_SIZE)
+    if (0 <= status && status < (long) OSSL_NELEM(ts_status_text))
         status_text = ts_status_text[status];
     else
         status_text = "unknown code";
@@ -462,7 +460,7 @@ static int ts_check_status_info(TS_RESP *response)
             if (ASN1_BIT_STRING_get_bit(info->failure_info,
                                         ts_failure_info[i].code)) {
                 if (!first)
-                    strcpy(failure_text, ",");
+                    strcat(failure_text, ",");
                 else
                     first = 0;
                 strcat(failure_text, ts_failure_info[i].text);
@@ -532,7 +530,7 @@ static int ts_compute_imprint(BIO *data, TS_TST_INFO *tst_info,
     TS_MSG_IMPRINT *msg_imprint = tst_info->msg_imprint;
     X509_ALGOR *md_alg_resp = msg_imprint->hash_algo;
     const EVP_MD *md;
-    EVP_MD_CTX md_ctx;
+    EVP_MD_CTX *md_ctx = NULL;
     unsigned char buffer[4096];
     int length;
 
@@ -554,17 +552,24 @@ static int ts_compute_imprint(BIO *data, TS_TST_INFO *tst_info,
         goto err;
     }
 
-    if (!EVP_DigestInit(&md_ctx, md))
+    md_ctx = EVP_MD_CTX_new();
+    if (md_ctx == NULL) {
+        TSerr(TS_F_TS_COMPUTE_IMPRINT, ERR_R_MALLOC_FAILURE);
+        goto err;
+    }
+    if (!EVP_DigestInit(md_ctx, md))
         goto err;
     while ((length = BIO_read(data, buffer, sizeof(buffer))) > 0) {
-        if (!EVP_DigestUpdate(&md_ctx, buffer, length))
+        if (!EVP_DigestUpdate(md_ctx, buffer, length))
             goto err;
     }
-    if (!EVP_DigestFinal(&md_ctx, *imprint, NULL))
+    if (!EVP_DigestFinal(md_ctx, *imprint, NULL))
         goto err;
+    EVP_MD_CTX_free(md_ctx);
 
     return 1;
  err:
+    EVP_MD_CTX_free(md_ctx);
     X509_ALGOR_free(*md_alg);
     OPENSSL_free(*imprint);
     *imprint_len = 0;

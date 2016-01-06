@@ -126,9 +126,6 @@ int rand_main(int argc, char **argv)
     if (sscanf(argv[0], "%d", &num) != 1 || num < 0)
         goto opthelp;
 
-    if (!app_load_modules(NULL))
-        goto end;
-
     app_RAND_load_file(NULL, (inrand != NULL));
     if (inrand != NULL)
         BIO_printf(bio_err, "%ld semi-random bytes loaded\n",

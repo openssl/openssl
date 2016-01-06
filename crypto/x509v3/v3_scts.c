@@ -61,8 +61,9 @@
 #include <openssl/asn1.h>
 #include <openssl/x509v3.h>
 #include "ext_dat.h"
+#include "internal/ct_int.h"
 
-#ifndef OPENSSL_NO_SCT
+#ifndef OPENSSL_NO_CT
 /* Signature and hash algorithms from RFC 5246 */
 #define TLSEXT_hash_sha256                              4
 
@@ -82,27 +83,6 @@
                          l|=((uint64_t)(*((c)++)))<< 8, \
                          l|=((uint64_t)(*((c)++))))
 
-typedef struct SCT_st {
-    /* The encoded SCT */
-    unsigned char *sct;
-    unsigned short sctlen;
-    /*
-     * Components of the SCT.  "logid", "ext" and "sig" point to addresses
-     * inside "sct".
-     */
-    unsigned char version;
-    unsigned char *logid;
-    unsigned short logidlen;
-    uint64_t timestamp;
-    unsigned char *ext;
-    unsigned short extlen;
-    unsigned char hash_alg;
-    unsigned char sig_alg;
-    unsigned char *sig;
-    unsigned short siglen;
-} SCT;
-
-DECLARE_STACK_OF(SCT)
 
 static void SCT_LIST_free(STACK_OF(SCT) *a);
 static STACK_OF(SCT) *d2i_SCT_LIST(STACK_OF(SCT) **a,
@@ -162,14 +142,6 @@ static void timestamp_print(BIO *out, uint64_t timestamp)
     ASN1_GENERALIZEDTIME_free(gen);
 }
 
-static void SCT_free(SCT *sct)
-{
-    if (!sct)
-        return;
-    OPENSSL_free(sct->sct);
-    OPENSSL_free(sct);
-}
-
 static void SCT_LIST_free(STACK_OF(SCT) *a)
 {
     sk_SCT_pop_free(a, SCT_free);
@@ -208,7 +180,7 @@ static STACK_OF(SCT) *d2i_SCT_LIST(STACK_OF(SCT) **a,
         listlen -= sctlen;
 
         sct = OPENSSL_malloc(sizeof(*sct));
-        if (!sct)
+        if (sct == NULL)
             goto err;
         if (!sk_SCT_push(sk, sct)) {
             OPENSSL_free(sct);
@@ -216,10 +188,10 @@ static STACK_OF(SCT) *d2i_SCT_LIST(STACK_OF(SCT) **a,
         }
 
         sct->sct = OPENSSL_malloc(sctlen);
-        if (!sct->sct)
+        if (sct->sct == NULL)
             goto err;
         memcpy(sct->sct, p, sctlen);
-        sct->sctlen = sctlen;
+        sct->sct_len = sctlen;
         p += sctlen;
         p2 = sct->sct;
 
@@ -237,8 +209,8 @@ static STACK_OF(SCT) *d2i_SCT_LIST(STACK_OF(SCT) **a,
                 goto err;
             sctlen -= 43;
 
-            sct->logid = p2;
-            sct->logidlen = 32;
+            sct->log_id = p2;
+            sct->log_id_len = 32;
             p2 += 32;
 
             n2l8(p2, sct->timestamp);
@@ -247,7 +219,7 @@ static STACK_OF(SCT) *d2i_SCT_LIST(STACK_OF(SCT) **a,
             if (sctlen < fieldlen)
                 goto err;
             sct->ext = p2;
-            sct->extlen = fieldlen;
+            sct->ext_len = fieldlen;
             p2 += fieldlen;
             sctlen -= fieldlen;
 
@@ -267,7 +239,7 @@ static STACK_OF(SCT) *d2i_SCT_LIST(STACK_OF(SCT) **a,
             if (sctlen != fieldlen)
                 goto err;
             sct->sig = p2;
-            sct->siglen = fieldlen;
+            sct->sig_len = fieldlen;
         }
     }
 
@@ -298,25 +270,25 @@ static int i2r_SCT_LIST(X509V3_EXT_METHOD *method, STACK_OF(SCT) *sct_list,
             BIO_printf(out, "v1(0)");
 
             BIO_printf(out, "\n%*sLog ID    : ", indent + 4, "");
-            BIO_hex_string(out, indent + 16, 16, sct->logid, sct->logidlen);
+            BIO_hex_string(out, indent + 16, 16, sct->log_id, sct->log_id_len);
 
             BIO_printf(out, "\n%*sTimestamp : ", indent + 4, "");
             timestamp_print(out, sct->timestamp);
 
             BIO_printf(out, "\n%*sExtensions: ", indent + 4, "");
-            if (sct->extlen == 0)
+            if (sct->ext_len == 0)
                 BIO_printf(out, "none");
             else
-                BIO_hex_string(out, indent + 16, 16, sct->ext, sct->extlen);
+                BIO_hex_string(out, indent + 16, 16, sct->ext, sct->ext_len);
 
             BIO_printf(out, "\n%*sSignature : ", indent + 4, "");
             tls12_signature_print(out, sct->hash_alg, sct->sig_alg);
             BIO_printf(out, "\n%*s            ", indent + 4, "");
-            BIO_hex_string(out, indent + 16, 16, sct->sig, sct->siglen);
+            BIO_hex_string(out, indent + 16, 16, sct->sig, sct->sig_len);
         } else {                /* Unknown version */
 
             BIO_printf(out, "unknown\n%*s", indent + 16, "");
-            BIO_hex_string(out, indent + 16, 16, sct->sct, sct->sctlen);
+            BIO_hex_string(out, indent + 16, 16, sct->sct, sct->sct_len);
         }
 
         if (++i < sk_SCT_num(sct_list))

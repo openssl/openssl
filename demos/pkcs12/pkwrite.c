@@ -18,7 +18,7 @@ int main(int argc, char **argv)
         fprintf(stderr, "Usage: pkwrite infile password name p12file\n");
         exit(1);
     }
-    SSLeay_add_all_algorithms();
+    OpenSSL_add_all_algorithms();
     ERR_load_crypto_strings();
     if ((fp = fopen(argv[1], "r")) == NULL) {
         fprintf(stderr, "Error opening file %s\n", argv[1]);

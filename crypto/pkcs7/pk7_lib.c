@@ -523,7 +523,7 @@ int PKCS7_RECIP_INFO_set(PKCS7_RECIP_INFO *p7i, X509 *x509)
           ASN1_INTEGER_dup(X509_get_serialNumber(x509))))
         return 0;
 
-    pkey = X509_get_pubkey(x509);
+    pkey = X509_get0_pubkey(x509);
 
     if (!pkey || !pkey->ameth || !pkey->ameth->pkey_ctrl) {
         PKCS7err(PKCS7_F_PKCS7_RECIP_INFO_SET,
@@ -543,15 +543,12 @@ int PKCS7_RECIP_INFO_set(PKCS7_RECIP_INFO *p7i, X509 *x509)
         goto err;
     }
 
-    EVP_PKEY_free(pkey);
-
     X509_up_ref(x509);
     p7i->cert = x509;
 
     return 1;
 
  err:
-    EVP_PKEY_free(pkey);
     return 0;
 }
 

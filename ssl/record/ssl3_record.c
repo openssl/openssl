@@ -193,24 +193,10 @@ int ssl3_get_record(SSL *s)
     unsigned char md[EVP_MAX_MD_SIZE];
     short version;
     unsigned mac_size;
-    size_t extra;
     unsigned empty_record_count = 0;
 
     rr = RECORD_LAYER_get_rrec(&s->rlayer);
     sess = s->session;
-
-    if (s->options & SSL_OP_MICROSOFT_BIG_SSLV3_BUFFER)
-        extra = SSL3_RT_MAX_EXTRA;
-    else
-        extra = 0;
-    if (extra && !s->s3->init_extra) {
-        /*
-         * An application error: SLS_OP_MICROSOFT_BIG_SSLV3_BUFFER set after
-         * ssl3_setup_buffers() was done
-         */
-        SSLerr(SSL_F_SSL3_GET_RECORD, ERR_R_INTERNAL_ERROR);
-        return -1;
-    }
 
  again:
     /* check if we have the header */
@@ -349,7 +335,7 @@ int ssl3_get_record(SSL *s)
      */
 
     /* check is not needed I believe */
-    if (rr->length > SSL3_RT_MAX_ENCRYPTED_LENGTH + extra) {
+    if (rr->length > SSL3_RT_MAX_ENCRYPTED_LENGTH) {
         al = SSL_AD_RECORD_OVERFLOW;
         SSLerr(SSL_F_SSL3_GET_RECORD, SSL_R_ENCRYPTED_LENGTH_TOO_LONG);
         goto f_err;
@@ -453,7 +439,7 @@ int ssl3_get_record(SSL *s)
         if (i < 0 || mac == NULL
             || CRYPTO_memcmp(md, mac, (size_t)mac_size) != 0)
             enc_err = -1;
-        if (rr->length > SSL3_RT_MAX_COMPRESSED_LENGTH + extra + mac_size)
+        if (rr->length > SSL3_RT_MAX_COMPRESSED_LENGTH + mac_size)
             enc_err = -1;
     }
 
@@ -473,7 +459,7 @@ int ssl3_get_record(SSL *s)
 
     /* r->length is now just compressed */
     if (s->expand != NULL) {
-        if (rr->length > SSL3_RT_MAX_COMPRESSED_LENGTH + extra) {
+        if (rr->length > SSL3_RT_MAX_COMPRESSED_LENGTH) {
             al = SSL_AD_RECORD_OVERFLOW;
             SSLerr(SSL_F_SSL3_GET_RECORD, SSL_R_COMPRESSED_LENGTH_TOO_LONG);
             goto f_err;
@@ -485,7 +471,7 @@ int ssl3_get_record(SSL *s)
         }
     }
 
-    if (rr->length > SSL3_RT_MAX_PLAIN_LENGTH + extra) {
+    if (rr->length > SSL3_RT_MAX_PLAIN_LENGTH) {
         al = SSL_AD_RECORD_OVERFLOW;
         SSLerr(SSL_F_SSL3_GET_RECORD, SSL_R_DATA_LENGTH_TOO_LONG);
         goto f_err;
@@ -791,7 +777,6 @@ int n_ssl3_mac(SSL *ssl, unsigned char *md, int send)
 {
     SSL3_RECORD *rec;
     unsigned char *mac_sec, *seq;
-    EVP_MD_CTX md_ctx;
     const EVP_MD_CTX *hash;
     unsigned char *p, rec_char;
     size_t md_size;
@@ -846,36 +831,42 @@ int n_ssl3_mac(SSL *ssl, unsigned char *md, int send)
         header[j++] = rec->length & 0xff;
 
         /* Final param == is SSLv3 */
-        ssl3_cbc_digest_record(hash,
-                               md, &md_size,
-                               header, rec->input,
-                               rec->length + md_size, rec->orig_len,
-                               mac_sec, md_size, 1);
+        if (ssl3_cbc_digest_record(hash,
+                                   md, &md_size,
+                                   header, rec->input,
+                                   rec->length + md_size, rec->orig_len,
+                                   mac_sec, md_size, 1) <= 0)
+            return -1;
     } else {
         unsigned int md_size_u;
         /* Chop the digest off the end :-) */
-        EVP_MD_CTX_init(&md_ctx);
+        EVP_MD_CTX *md_ctx = EVP_MD_CTX_new();
 
-        EVP_MD_CTX_copy_ex(&md_ctx, hash);
-        EVP_DigestUpdate(&md_ctx, mac_sec, md_size);
-        EVP_DigestUpdate(&md_ctx, ssl3_pad_1, npad);
-        EVP_DigestUpdate(&md_ctx, seq, 8);
+        if (md_ctx == NULL)
+            return -1;
+
         rec_char = rec->type;
-        EVP_DigestUpdate(&md_ctx, &rec_char, 1);
         p = md;
         s2n(rec->length, p);
-        EVP_DigestUpdate(&md_ctx, md, 2);
-        EVP_DigestUpdate(&md_ctx, rec->input, rec->length);
-        EVP_DigestFinal_ex(&md_ctx, md, NULL);
-
-        EVP_MD_CTX_copy_ex(&md_ctx, hash);
-        EVP_DigestUpdate(&md_ctx, mac_sec, md_size);
-        EVP_DigestUpdate(&md_ctx, ssl3_pad_2, npad);
-        EVP_DigestUpdate(&md_ctx, md, md_size);
-        EVP_DigestFinal_ex(&md_ctx, md, &md_size_u);
+        if (EVP_MD_CTX_copy_ex(md_ctx, hash) <= 0
+                || EVP_DigestUpdate(md_ctx, mac_sec, md_size) <= 0
+                || EVP_DigestUpdate(md_ctx, ssl3_pad_1, npad) <= 0
+                || EVP_DigestUpdate(md_ctx, seq, 8) <= 0
+                || EVP_DigestUpdate(md_ctx, &rec_char, 1) <= 0
+                || EVP_DigestUpdate(md_ctx, md, 2) <= 0
+                || EVP_DigestUpdate(md_ctx, rec->input, rec->length) <= 0
+                || EVP_DigestFinal_ex(md_ctx, md, NULL) <= 0
+                || EVP_MD_CTX_copy_ex(md_ctx, hash) <= 0
+                || EVP_DigestUpdate(md_ctx, mac_sec, md_size) <= 0
+                || EVP_DigestUpdate(md_ctx, ssl3_pad_2, npad) <= 0
+                || EVP_DigestUpdate(md_ctx, md, md_size) <= 0
+                || EVP_DigestFinal_ex(md_ctx, md, &md_size_u) <= 0) {
+            EVP_MD_CTX_reset(md_ctx);
+            return -1;
+        }
         md_size = md_size_u;
 
-        EVP_MD_CTX_cleanup(&md_ctx);
+        EVP_MD_CTX_free(md_ctx);
     }
 
     ssl3_record_sequence_update(seq);
@@ -889,7 +880,7 @@ int tls1_mac(SSL *ssl, unsigned char *md, int send)
     EVP_MD_CTX *hash;
     size_t md_size;
     int i;
-    EVP_MD_CTX hmac, *mac_ctx;
+    EVP_MD_CTX *hmac = NULL, *mac_ctx;
     unsigned char header[13];
     int stream_mac = (send ? (ssl->mac_flags & SSL_MAC_FLAG_WRITE_MAC_STREAM)
                       : (ssl->mac_flags & SSL_MAC_FLAG_READ_MAC_STREAM));
@@ -913,9 +904,11 @@ int tls1_mac(SSL *ssl, unsigned char *md, int send)
     if (stream_mac) {
         mac_ctx = hash;
     } else {
-        if (!EVP_MD_CTX_copy(&hmac, hash))
+        hmac = EVP_MD_CTX_new();
+        if (hmac == NULL
+                || !EVP_MD_CTX_copy(hmac, hash))
             return -1;
-        mac_ctx = &hmac;
+        mac_ctx = hmac;
     }
 
     if (SSL_IS_DTLS(ssl)) {
@@ -944,25 +937,30 @@ int tls1_mac(SSL *ssl, unsigned char *md, int send)
          * are hashing because that gives an attacker a timing-oracle.
          */
         /* Final param == not SSLv3 */
-        ssl3_cbc_digest_record(mac_ctx,
-                               md, &md_size,
-                               header, rec->input,
-                               rec->length + md_size, rec->orig_len,
-                               ssl->s3->read_mac_secret,
-                               ssl->s3->read_mac_secret_size, 0);
+        if (ssl3_cbc_digest_record(mac_ctx,
+                                   md, &md_size,
+                                   header, rec->input,
+                                   rec->length + md_size, rec->orig_len,
+                                   ssl->s3->read_mac_secret,
+                                   ssl->s3->read_mac_secret_size, 0) <= 0) {
+            EVP_MD_CTX_free(hmac);
+            return -1;
+        }
     } else {
-        EVP_DigestSignUpdate(mac_ctx, header, sizeof(header));
-        EVP_DigestSignUpdate(mac_ctx, rec->input, rec->length);
-        t = EVP_DigestSignFinal(mac_ctx, md, &md_size);
-        OPENSSL_assert(t > 0);
+        if (EVP_DigestSignUpdate(mac_ctx, header, sizeof(header)) <= 0
+                || EVP_DigestSignUpdate(mac_ctx, rec->input, rec->length) <= 0
+                || EVP_DigestSignFinal(mac_ctx, md, &md_size) <= 0) {
+            EVP_MD_CTX_free(hmac);
+            return -1;
+        }
         if (!send && !SSL_USE_ETM(ssl) && FIPS_mode())
             tls_fips_digest_extra(ssl->enc_read_ctx,
                                   mac_ctx, rec->input,
                                   rec->length, rec->orig_len);
     }
 
-    if (!stream_mac)
-        EVP_MD_CTX_cleanup(&hmac);
+    EVP_MD_CTX_free(hmac);
+
 #ifdef TLS_DEBUG
     fprintf(stderr, "seq=");
     {
@@ -1528,7 +1526,7 @@ int dtls1_get_record(SSL *s)
      * processed at this time.
      */
     if (is_next_epoch) {
-        if ((SSL_in_init(s) || s->in_handshake)) {
+        if ((SSL_in_init(s) || ossl_statem_get_in_handshake(s))) {
             if (dtls1_buffer_record
                 (s, &(DTLS_RECORD_LAYER_get_unprocessed_rcds(&s->rlayer)),
                 rr->seq_num) < 0)

@@ -168,8 +168,7 @@
 # include "./testdsa.h"
 #endif
 #ifndef OPENSSL_NO_EC
-# include <openssl/ecdsa.h>
-# include <openssl/ecdh.h>
+# include <openssl/ec.h>
 #endif
 #include <openssl/modes.h>
 
@@ -850,9 +849,6 @@ int speed_main(int argc, char **argv)
     argc = opt_num_rest();
     argv = opt_rest();
 
-    if (!app_load_modules(NULL))
-        goto end;
-
     /* Remaining arguments are algorithms. */
     for ( ; *argv; argv++) {
         if (found(*argv, doit_choices, &i)) {
@@ -872,7 +868,7 @@ int speed_main(int argc, char **argv)
 #ifndef OPENSSL_NO_RSA
 # ifndef RSA_NULL
         if (strcmp(*argv, "openssl") == 0) {
-            RSA_set_default_method(RSA_PKCS1_SSLeay());
+            RSA_set_default_method(RSA_PKCS1_OpenSSL());
             continue;
         }
 # endif
@@ -1301,24 +1297,28 @@ int speed_main(int argc, char **argv)
 
 #if !defined(OPENSSL_NO_MD5)
     if (doit[D_HMAC]) {
-        HMAC_CTX hctx;
+        HMAC_CTX *hctx = NULL;
 
-        HMAC_CTX_init(&hctx);
-        HMAC_Init_ex(&hctx, (unsigned char *)"This is a key...",
+        hctx = HMAC_CTX_new();
+        if (hctx == NULL) {
+            BIO_printf(bio_err, "HMAC malloc failure, exiting...");
+            exit(1);
+        }
+        HMAC_Init_ex(hctx, (unsigned char *)"This is a key...",
                      16, EVP_md5(), NULL);
 
         for (j = 0; j < SIZE_NUM; j++) {
             print_message(names[D_HMAC], c[D_HMAC][j], lengths[j]);
             Time_F(START);
             for (count = 0, run = 1; COND(c[D_HMAC][j]); count++) {
-                HMAC_Init_ex(&hctx, NULL, 0, NULL, NULL);
-                HMAC_Update(&hctx, buf, lengths[j]);
-                HMAC_Final(&hctx, &(hmac[0]), NULL);
+                HMAC_Init_ex(hctx, NULL, 0, NULL, NULL);
+                HMAC_Update(hctx, buf, lengths[j]);
+                HMAC_Final(hctx, &(hmac[0]), NULL);
             }
             d = Time_F(STOP);
             print_result(D_HMAC, j, count, d);
         }
-        HMAC_CTX_cleanup(&hctx);
+        HMAC_CTX_free(hctx);
     }
 #endif
     if (doit[D_SHA1]) {
@@ -1690,7 +1690,7 @@ int speed_main(int argc, char **argv)
                 EVP_CIPHER_CTX_cleanup(&ctx);
             }
             if (evp_md) {
-                names[D_EVP] = OBJ_nid2ln(evp_md->type);
+                names[D_EVP] = OBJ_nid2ln(EVP_MD_type(evp_md));
                 print_message(names[D_EVP], save_count, lengths[j]);
 
                 Time_F(START);
@@ -2044,8 +2044,8 @@ int speed_main(int argc, char **argv)
  show_res:
 #endif
     if (!mr) {
-        printf("%s\n", SSLeay_version(SSLEAY_VERSION));
-        printf("%s\n", SSLeay_version(SSLEAY_BUILT_ON));
+        printf("%s\n", OpenSSL_version(OPENSSL_VERSION));
+        printf("%s\n", OpenSSL_version(OPENSSL_BUILT_ON));
         printf("options:");
         printf("%s ", BN_options());
 #ifndef OPENSSL_NO_MD2
@@ -2066,7 +2066,7 @@ int speed_main(int argc, char **argv)
 #ifndef OPENSSL_NO_BF
         printf("%s ", BF_options());
 #endif
-        printf("\n%s\n", SSLeay_version(SSLEAY_CFLAGS));
+        printf("\n%s\n", OpenSSL_version(OPENSSL_CFLAGS));
     }
 
     if (pr_header) {

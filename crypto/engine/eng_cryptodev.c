@@ -42,22 +42,9 @@
 # endif
 #endif
 
-#ifndef HAVE_CRYPTODEV
-
-void ENGINE_load_cryptodev(void)
-{
-    /* This is a NOP on platforms without /dev/crypto */
-    return;
-}
-
-#else
-
-# include <sys/types.h>
+#include <sys/types.h>
+#ifdef HAVE_CRYPTODEV
 # include <crypto/cryptodev.h>
-# include <openssl/dh.h>
-# include <openssl/dsa.h>
-# include <openssl/err.h>
-# include <openssl/rsa.h>
 # include <sys/ioctl.h>
 # include <errno.h>
 # include <stdio.h>
@@ -67,6 +54,23 @@ void ENGINE_load_cryptodev(void)
 # include <syslog.h>
 # include <errno.h>
 # include <string.h>
+#endif
+#ifndef OPENSSL_NO_DH
+# include <openssl/dh.h>
+#endif
+#include <openssl/dsa.h>
+#include <openssl/err.h>
+#include <openssl/rsa.h>
+
+#ifndef HAVE_CRYPTODEV
+
+void ENGINE_load_cryptodev(void)
+{
+    /* This is a NOP on platforms without /dev/crypto */
+    return;
+}
+
+#else
 
 struct dev_crypto_state {
     struct session_op d_sess;
@@ -123,11 +127,13 @@ static DSA_SIG *cryptodev_dsa_do_sign(const unsigned char *dgst, int dlen,
                                       DSA *dsa);
 static int cryptodev_dsa_verify(const unsigned char *dgst, int dgst_len,
                                 DSA_SIG *sig, DSA *dsa);
+#ifndef OPENSSL_NO_DH
 static int cryptodev_mod_exp_dh(const DH *dh, BIGNUM *r, const BIGNUM *a,
                                 const BIGNUM *p, const BIGNUM *m, BN_CTX *ctx,
                                 BN_MONT_CTX *m_ctx);
 static int cryptodev_dh_compute_key(unsigned char *key, const BIGNUM *pub_key,
                                     DH *dh);
+#endif
 static int cryptodev_ctrl(ENGINE *e, int cmd, long i, void *p,
                           void (*f) (void));
 void ENGINE_load_cryptodev(void);
@@ -1127,12 +1133,12 @@ cryptodev_bn_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
     kop.crk_iparams = 3;
 
     if (cryptodev_asym(&kop, BN_num_bytes(m), r, 0, NULL)) {
-        const RSA_METHOD *meth = RSA_PKCS1_SSLeay();
+        const RSA_METHOD *meth = RSA_PKCS1_OpenSSL();
         printf("OCF asym process failed, Running in software\n");
         ret = meth->bn_mod_exp(r, a, p, m, ctx, in_mont);
 
     } else if (ECANCELED == kop.crk_status) {
-        const RSA_METHOD *meth = RSA_PKCS1_SSLeay();
+        const RSA_METHOD *meth = RSA_PKCS1_OpenSSL();
         printf("OCF hardware operation cancelled. Running in Software\n");
         ret = meth->bn_mod_exp(r, a, p, m, ctx, in_mont);
     }
@@ -1183,12 +1189,12 @@ cryptodev_rsa_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
     kop.crk_iparams = 6;
 
     if (cryptodev_asym(&kop, BN_num_bytes(rsa->n), r0, 0, NULL)) {
-        const RSA_METHOD *meth = RSA_PKCS1_SSLeay();
+        const RSA_METHOD *meth = RSA_PKCS1_OpenSSL();
         printf("OCF asym process failed, running in Software\n");
         ret = (*meth->rsa_mod_exp) (r0, I, rsa, ctx);
 
     } else if (ECANCELED == kop.crk_status) {
-        const RSA_METHOD *meth = RSA_PKCS1_SSLeay();
+        const RSA_METHOD *meth = RSA_PKCS1_OpenSSL();
         printf("OCF hardware operation cancelled. Running in Software\n");
         ret = (*meth->rsa_mod_exp) (r0, I, rsa, ctx);
     }
@@ -1231,6 +1237,8 @@ cryptodev_dsa_dsa_mod_exp(DSA *dsa, BIGNUM *t1, BIGNUM *g,
     int ret = 0;
 
     t2 = BN_new();
+    if (t2 == NULL)
+        goto err;
 
     /* v = ( g^u1 * y^u2 mod p ) mod q */
     /* let t1 = g ^ u1 mod p */
@@ -1287,6 +1295,8 @@ static DSA_SIG *cryptodev_dsa_do_sign(const unsigned char *dgst, int dlen,
     if (cryptodev_asym(&kop, BN_num_bytes(dsa->q), r,
                        BN_num_bytes(dsa->q), s) == 0) {
         dsaret = DSA_SIG_new();
+        if (dsaret == NULL)
+            goto err;
         dsaret->r = r;
         dsaret->s = s;
     } else {
@@ -1358,6 +1368,7 @@ static DSA_METHOD cryptodev_dsa = {
     NULL                        /* app_data */
 };
 
+#ifndef OPENSSL_NO_DH
 static int
 cryptodev_mod_exp_dh(const DH *dh, BIGNUM *r, const BIGNUM *a,
                      const BIGNUM *p, const BIGNUM *m, BN_CTX *ctx,
@@ -1419,6 +1430,8 @@ static DH_METHOD cryptodev_dh = {
     NULL                        /* app_data */
 };
 
+#endif /* ndef OPENSSL_NO_DH */
+
 /*
  * ctrl right now is just a wrapper that doesn't do much
  * but I expect we'll want some options soon.
@@ -1475,7 +1488,7 @@ void ENGINE_load_cryptodev(void)
     }
 
     if (ENGINE_set_RSA(engine, &cryptodev_rsa)) {
-        const RSA_METHOD *rsa_meth = RSA_PKCS1_SSLeay();
+        const RSA_METHOD *rsa_meth = RSA_PKCS1_OpenSSL();
 
         cryptodev_rsa.bn_mod_exp = rsa_meth->bn_mod_exp;
         cryptodev_rsa.rsa_mod_exp = rsa_meth->rsa_mod_exp;
@@ -1506,6 +1519,7 @@ void ENGINE_load_cryptodev(void)
             cryptodev_dsa.dsa_do_verify = cryptodev_dsa_verify;
     }
 
+#ifndef OPENSSL_NO_DH
     if (ENGINE_set_DH(engine, &cryptodev_dh)) {
         const DH_METHOD *dh_meth = DH_OpenSSL();
 
@@ -1518,6 +1532,7 @@ void ENGINE_load_cryptodev(void)
                 cryptodev_dh.compute_key = cryptodev_dh_compute_key;
         }
     }
+#endif
 
     ENGINE_add(engine);
     ENGINE_free(engine);

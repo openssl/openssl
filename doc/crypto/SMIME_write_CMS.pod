@@ -57,8 +57,4 @@ L<ERR_get_error(3)>, L<CMS_sign(3)>,
 L<CMS_verify(3)>, L<CMS_encrypt(3)>
 L<CMS_decrypt(3)>
 
-=head1 HISTORY
-
-SMIME_write_CMS() was added to OpenSSL 0.9.8
-
 =cut

@@ -68,23 +68,12 @@
 extern "C" {
 #endif
 
-typedef struct hmac_ctx_st {
-    const EVP_MD *md;
-    EVP_MD_CTX md_ctx;
-    EVP_MD_CTX i_ctx;
-    EVP_MD_CTX o_ctx;
-    unsigned int key_length;
-    unsigned char key[HMAC_MAX_MD_CBLOCK];
-} HMAC_CTX;
-
-# define HMAC_size(e)    (EVP_MD_size((e)->md))
-
-void HMAC_CTX_init(HMAC_CTX *ctx);
-void HMAC_CTX_cleanup(HMAC_CTX *ctx);
+size_t HMAC_size(HMAC_CTX *e);
+HMAC_CTX *HMAC_CTX_new(void);
+int HMAC_CTX_reset(HMAC_CTX *ctx);
+void HMAC_CTX_free(HMAC_CTX *ctx);
 
 #ifdef OPENSSL_USE_DEPRECATED
-/* deprecated */
-# define HMAC_cleanup(ctx) HMAC_CTX_cleanup(ctx)
 
 /* deprecated */
 DECLARE_DEPRECATED(__owur int HMAC_Init(HMAC_CTX *ctx, const void *key, int len,

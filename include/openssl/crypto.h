@@ -145,19 +145,6 @@
 extern "C" {
 #endif
 
-/* Backward compatibility to SSLeay */
-/*
- * This is more to be used to check the correct DLL is being used in the MS
- * world.
- */
-# define SSLEAY_VERSION_NUMBER   OPENSSL_VERSION_NUMBER
-# define SSLEAY_VERSION          0
-/* #define SSLEAY_OPTIONS       1 no longer supported */
-# define SSLEAY_CFLAGS           2
-# define SSLEAY_BUILT_ON         3
-# define SSLEAY_PLATFORM         4
-# define SSLEAY_DIR              5
-
 /*
  * When changing the CRYPTO_LOCK_* list, be sure to maintin the text lock
  * names in cryptlib.c
@@ -243,7 +230,7 @@ typedef struct {
 } CRYPTO_dynlock;
 
 /*
- * The following can be used to detect memory leaks in the SSLeay library. It
+ * The following can be used to detect memory leaks in the OpenSSL library. It
  * used, it turns on malloc checking
  */
 
@@ -269,33 +256,29 @@ typedef struct bio_st BIO_dummy;
 
 struct crypto_ex_data_st {
     STACK_OF(void) *sk;
-    /* gcc is screwing up this data structure :-( */
-    int dummy;
 };
 DECLARE_STACK_OF(void)
 
 /*
- * Per class, we have a STACK of CRYPTO_EX_DATA_FUNCS for each CRYPTO_EX_DATA
- * entry.
+ * Per class, we have a STACK of function pointers.
  */
-# define CRYPTO_EX_INDEX_BIO             0
-# define CRYPTO_EX_INDEX_SSL             1
-# define CRYPTO_EX_INDEX_SSL_CTX         2
-# define CRYPTO_EX_INDEX_SSL_SESSION     3
-# define CRYPTO_EX_INDEX_X509_STORE      4
-# define CRYPTO_EX_INDEX_X509_STORE_CTX  5
-# define CRYPTO_EX_INDEX_RSA             6
-# define CRYPTO_EX_INDEX_DSA             7
-# define CRYPTO_EX_INDEX_DH              8
-# define CRYPTO_EX_INDEX_ENGINE          9
-# define CRYPTO_EX_INDEX_X509            10
-# define CRYPTO_EX_INDEX_UI              11
-# define CRYPTO_EX_INDEX_ECDSA           12
-# define CRYPTO_EX_INDEX_ECDH            13
-# define CRYPTO_EX_INDEX_COMP            14
-# define CRYPTO_EX_INDEX_STORE           15
-# define CRYPTO_EX_INDEX_APP             16
-# define CRYPTO_EX_INDEX__COUNT          17
+# define CRYPTO_EX_INDEX_SSL              0
+# define CRYPTO_EX_INDEX_SSL_CTX          1
+# define CRYPTO_EX_INDEX_SSL_SESSION      2
+# define CRYPTO_EX_INDEX_X509             3
+# define CRYPTO_EX_INDEX_X509_STORE       4
+# define CRYPTO_EX_INDEX_X509_STORE_CTX   5
+# define CRYPTO_EX_INDEX_DH               6
+# define CRYPTO_EX_INDEX_DSA              7
+# define CRYPTO_EX_INDEX_ECDH             8
+# define CRYPTO_EX_INDEX_ECDSA            9
+# define CRYPTO_EX_INDEX_RSA             10
+# define CRYPTO_EX_INDEX_ENGINE          11
+# define CRYPTO_EX_INDEX_UI              12
+# define CRYPTO_EX_INDEX_BIO             13
+# define CRYPTO_EX_INDEX_STORE           14
+# define CRYPTO_EX_INDEX_APP             15
+# define CRYPTO_EX_INDEX__COUNT          16
 
 /*
  * This is the default callbacks, but we can have others as well: this is
@@ -336,29 +319,46 @@ int CRYPTO_is_mem_check_on(void);
 # define MemCheck_off()  CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_DISABLE)
 # define is_MemCheck_on() CRYPTO_is_mem_check_on()
 
-# define OPENSSL_malloc(num)     CRYPTO_malloc((int)num,__FILE__,__LINE__)
-# define OPENSSL_zalloc(num)     CRYPTO_zalloc((int)num,__FILE__,__LINE__)
-# define OPENSSL_strdup(str)     CRYPTO_strdup((str),__FILE__,__LINE__)
+# define OPENSSL_malloc(num)     CRYPTO_malloc((int)num, __FILE__, __LINE__)
+# define OPENSSL_zalloc(num)     CRYPTO_zalloc((int)num, __FILE__, __LINE__)
+# define OPENSSL_memdup(str, s)  CRYPTO_memdup((str), s, __FILE__, __LINE__)
+# define OPENSSL_strdup(str)     CRYPTO_strdup((str), __FILE__, __LINE__)
+# define OPENSSL_strndup(str, s) CRYPTO_strndup((str), (s), __FILE__, __LINE__)
 # define OPENSSL_realloc(addr,num) \
-        CRYPTO_realloc((char *)addr,(int)num,__FILE__,__LINE__)
-# define OPENSSL_realloc_clean(addr,old_num,num) \
-        CRYPTO_realloc_clean(addr,old_num,num,__FILE__,__LINE__)
-# define OPENSSL_remalloc(addr,num) \
-        CRYPTO_remalloc((char **)addr,(int)num,__FILE__,__LINE__)
+        CRYPTO_realloc((char *)addr, (int)num, __FILE__, __LINE__)
+# define OPENSSL_clear_realloc(addr, old_num, num) \
+        CRYPTO_clear_realloc(addr, old_num, num, __FILE__, __LINE__)
 # define OPENSSL_clear_free(addr, num) CRYPTO_clear_free(addr, num)
 # define OPENSSL_free(addr)      CRYPTO_free(addr)
 
+size_t OPENSSL_strlcpy(char *dst, const char *src, size_t siz);
+size_t OPENSSL_strlcat(char *dst, const char *src, size_t siz);
+size_t OPENSSL_strnlen(const char *str, size_t maxlen);
+
 # define OPENSSL_MALLOC_MAX_NELEMS(type)  (((1U<<(sizeof(int)*8-1))-1)/sizeof(type))
 
-const char *SSLeay_version(int type);
-unsigned long SSLeay(void);
+unsigned long OpenSSL_version_num(void);
+const char *OpenSSL_version(int type);
+# define OPENSSL_VERSION          0
+# define OPENSSL_CFLAGS           1
+# define OPENSSL_BUILT_ON         2
+# define OPENSSL_PLATFORM         3
+# define OPENSSL_DIR              4
 
 int OPENSSL_issetugid(void);
 
-/* Within a given class, get/register a new index */
-int CRYPTO_get_ex_new_index(int class_index, long argl, void *argp,
+typedef void CRYPTO_EX_new (void *parent, void *ptr, CRYPTO_EX_DATA *ad,
+                           int idx, long argl, void *argp);
+typedef void CRYPTO_EX_free (void *parent, void *ptr, CRYPTO_EX_DATA *ad,
+                             int idx, long argl, void *argp);
+typedef int CRYPTO_EX_dup (CRYPTO_EX_DATA *to, CRYPTO_EX_DATA *from,
+                           void *srcp, int idx, long argl, void *argp);
+__owur int CRYPTO_get_ex_new_index(int class_index, long argl, void *argp,
                             CRYPTO_EX_new *new_func, CRYPTO_EX_dup *dup_func,
                             CRYPTO_EX_free *free_func);
+/* No longer use an index. */
+int CRYPTO_free_ex_index(int class_index, int idx);
+
 /*
  * Initialise/duplicate/free CRYPTO_EX_DATA variables corresponding to a
  * given class (invokes whatever per-class callbacks are applicable)
@@ -366,7 +366,9 @@ int CRYPTO_get_ex_new_index(int class_index, long argl, void *argp,
 int CRYPTO_new_ex_data(int class_index, void *obj, CRYPTO_EX_DATA *ad);
 int CRYPTO_dup_ex_data(int class_index, CRYPTO_EX_DATA *to,
                        CRYPTO_EX_DATA *from);
+
 void CRYPTO_free_ex_data(int class_index, void *obj, CRYPTO_EX_DATA *ad);
+
 /*
  * Get/set data in a CRYPTO_EX_DATA variable corresponding to a particular
  * index (relative to the class type involved)
@@ -450,9 +452,9 @@ int CRYPTO_set_mem_functions(void *(*m) (size_t), void *(*r) (void *, size_t),
 int CRYPTO_set_mem_ex_functions(void *(*m) (size_t, const char *, int),
                                 void *(*r) (void *, size_t, const char *,
                                             int), void (*f) (void *));
-int CRYPTO_set_mem_debug_functions(void (*m)
-                                    (void *, int, const char *, int, int),
-                                   void (*r) (void *, void *, int,
+int CRYPTO_set_mem_debug_functions(void (*m) (void *, size_t,
+                                              const char *, int, int),
+                                   void (*r) (void *, void *, size_t,
                                               const char *, int, int),
                                    void (*f) (void *, int), void (*so) (long),
                                    long (*go) (void));
@@ -462,22 +464,23 @@ void CRYPTO_get_mem_functions(void *(**m) (size_t),
 void CRYPTO_get_mem_ex_functions(void *(**m) (size_t, const char *, int),
                                  void *(**r) (void *, size_t, const char *,
                                               int), void (**f) (void *));
-void CRYPTO_get_mem_debug_functions(void (**m)
-                                     (void *, int, const char *, int, int),
-                                    void (**r) (void *, void *, int,
+void CRYPTO_get_mem_debug_functions(void (**m) (void *, size_t,
+                                                const char *, int, int),
+                                    void (**r) (void *, void *, size_t,
                                                 const char *, int, int),
                                     void (**f) (void *, int),
                                     void (**so) (long), long (**go) (void));
 
-void *CRYPTO_malloc(int num, const char *file, int line);
-void *CRYPTO_zalloc(int num, const char *file, int line);
+void *CRYPTO_malloc(size_t num, const char *file, int line);
+void *CRYPTO_zalloc(size_t num, const char *file, int line);
+void *CRYPTO_memdup(const void *str, size_t siz, const char *file, int line);
 char *CRYPTO_strdup(const char *str, const char *file, int line);
+char *CRYPTO_strndup(const char *str, size_t s, const char *file, int line);
 void CRYPTO_free(void *ptr);
 void CRYPTO_clear_free(void *ptr, size_t num);
-void *CRYPTO_realloc(void *addr, int num, const char *file, int line);
-void *CRYPTO_realloc_clean(void *addr, int old_num, int num, const char *file,
-                           int line);
-void *CRYPTO_remalloc(void *addr, int num, const char *file, int line);
+void *CRYPTO_realloc(void *addr, size_t num, const char *file, int line);
+void *CRYPTO_clear_realloc(void *addr, size_t old_num, size_t num,
+                           const char *file, int line);
 
 # define OPENSSL_secure_malloc(num) \
         CRYPTO_secure_malloc((int)num,__FILE__,__LINE__)
@@ -486,7 +489,7 @@ void *CRYPTO_remalloc(void *addr, int num, const char *file, int line);
 
 int CRYPTO_secure_malloc_init(size_t sz, int minsize);
 void CRYPTO_secure_malloc_done(void);
-void *CRYPTO_secure_malloc(int num, const char *file, int line);
+void *CRYPTO_secure_malloc(size_t num, const char *file, int line);
 void CRYPTO_secure_free(void *ptr);
 int CRYPTO_secure_allocated(const void *ptr);
 int CRYPTO_secure_malloc_initialized(void);
@@ -503,11 +506,12 @@ void OPENSSL_cleanse(void *ptr, size_t len);
 void CRYPTO_set_mem_debug_options(long bits);
 long CRYPTO_get_mem_debug_options(void);
 
-# define CRYPTO_push_info(info) \
-        CRYPTO_push_info_(info, __FILE__, __LINE__);
-int CRYPTO_push_info_(const char *info, const char *file, int line);
-int CRYPTO_pop_info(void);
-int CRYPTO_remove_all_info(void);
+# define OPENSSL_mem_debug_push(info) \
+        CRYPTO_mem_debug_push(info, __FILE__, __LINE__)
+# define OPENSSL_mem_debug_pop() \
+        CRYPTO_mem_debug_pop()
+int CRYPTO_mem_debug_push(const char *info, const char *file, int line);
+int CRYPTO_mem_debug_pop(void);
 
 /*
  * Default debugging functions (enabled by CRYPTO_malloc_debug_init() macro;
@@ -519,9 +523,9 @@ int CRYPTO_remove_all_info(void);
  * 0:   called before the actual memory allocation has taken place
  * 1:   called after the actual memory allocation has taken place
  */
-void CRYPTO_dbg_malloc(void *addr, int num, const char *file, int line,
+void CRYPTO_dbg_malloc(void *addr, size_t num, const char *file, int line,
                        int before_p);
-void CRYPTO_dbg_realloc(void *addr1, void *addr2, int num, const char *file,
+void CRYPTO_dbg_realloc(void *addr1, void *addr2, size_t num, const char *file,
                         int line, int before_p);
 void CRYPTO_dbg_free(void *addr, int before_p);
 /*-
@@ -540,8 +544,8 @@ long CRYPTO_dbg_get_options(void);
 void CRYPTO_mem_leaks_fp(FILE *);
 # endif
 void CRYPTO_mem_leaks(struct bio_st *bio);
-/* unsigned long order, char *file, int line, int num_bytes, char *addr */
-typedef void *CRYPTO_MEM_LEAK_CB (unsigned long, const char *, int, int,
+/* unsigned long order, char *file, int line, size_t num_bytes, char *addr */
+typedef void *CRYPTO_MEM_LEAK_CB (unsigned long, const char *, int, size_t,
                                   void *);
 void CRYPTO_mem_leaks_cb(CRYPTO_MEM_LEAK_CB *cb);
 
@@ -587,11 +591,13 @@ void ERR_load_CRYPTO_strings(void);
 # define CRYPTO_F_CRYPTO_GET_EX_NEW_INDEX                 100
 # define CRYPTO_F_CRYPTO_GET_NEW_DYNLOCKID                103
 # define CRYPTO_F_CRYPTO_GET_NEW_LOCKID                   101
+# define CRYPTO_F_CRYPTO_MEMDUP                           115
 # define CRYPTO_F_CRYPTO_NEW_EX_DATA                      112
 # define CRYPTO_F_CRYPTO_SET_EX_DATA                      102
 # define CRYPTO_F_DEF_ADD_INDEX                           104
 # define CRYPTO_F_DEF_GET_CLASS                           105
 # define CRYPTO_F_FIPS_MODE_SET                           109
+# define CRYPTO_F_GET_AND_LOCK                            113
 # define CRYPTO_F_INT_DUP_EX_DATA                         106
 # define CRYPTO_F_INT_FREE_EX_DATA                        107
 # define CRYPTO_F_INT_NEW_EX_DATA                         108

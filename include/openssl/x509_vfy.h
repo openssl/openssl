@@ -143,7 +143,6 @@ typedef struct x509_lookup_method_st {
                          X509_OBJECT *ret);
 } X509_LOOKUP_METHOD;
 
-typedef struct X509_VERIFY_PARAM_ID_st X509_VERIFY_PARAM_ID;
 typedef struct X509_VERIFY_PARAM_st X509_VERIFY_PARAM;
 
 DECLARE_STACK_OF(X509_VERIFY_PARAM)
@@ -241,8 +240,8 @@ struct x509_store_ctx_st {      /* X509_STORE_CTX */
     /* The following is built up */
     /* if 0, rebuild chain */
     int valid;
-    /* index of last untrusted cert */
-    int last_untrusted;
+    /* number of untrusted certs */
+    int num_untrusted;
     /* chain of X509s - built up and trusted */
     STACK_OF(X509) *chain;
     /* Valid policy tree */
@@ -264,6 +263,7 @@ struct x509_store_ctx_st {      /* X509_STORE_CTX */
     /* For CRL path validation: parent context */
     X509_STORE_CTX *parent;
     CRYPTO_EX_DATA ex_data;
+    struct dane_st *dane;
 } /* X509_STORE_CTX */ ;
 
 void X509_STORE_CTX_set_depth(X509_STORE_CTX *ctx, int depth);
@@ -283,7 +283,7 @@ void X509_STORE_CTX_set_depth(X509_STORE_CTX *ctx, int depth);
                 X509_LOOKUP_ctrl((x),X509_L_ADD_DIR,(name),(long)(type),NULL)
 
 # define         X509_V_OK                                       0
-/* illegal error (for uninitialized values, to avoid X509_V_OK): 1 */
+# define         X509_V_ERR_UNSPECIFIED                          1
 
 # define         X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT            2
 # define         X509_V_ERR_UNABLE_TO_GET_CRL                    3
@@ -495,10 +495,8 @@ int X509_STORE_load_locations(X509_STORE *ctx,
                               const char *file, const char *dir);
 int X509_STORE_set_default_paths(X509_STORE *ctx);
 
-int X509_STORE_CTX_get_ex_new_index(long argl, void *argp,
-                                    CRYPTO_EX_new *new_func,
-                                    CRYPTO_EX_dup *dup_func,
-                                    CRYPTO_EX_free *free_func);
+#define X509_STORE_CTX_get_ex_new_index(l, p, newf, dupf, freef) \
+    CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_X509_STORE_CTX, l, p, newf, dupf, freef)
 int X509_STORE_CTX_set_ex_data(X509_STORE_CTX *ctx, int idx, void *data);
 void *X509_STORE_CTX_get_ex_data(X509_STORE_CTX *ctx, int idx);
 int X509_STORE_CTX_get_error(X509_STORE_CTX *ctx);
@@ -531,6 +529,12 @@ X509_VERIFY_PARAM *X509_STORE_CTX_get0_param(X509_STORE_CTX *ctx);
 void X509_STORE_CTX_set0_param(X509_STORE_CTX *ctx, X509_VERIFY_PARAM *param);
 int X509_STORE_CTX_set_default(X509_STORE_CTX *ctx, const char *name);
 
+/*
+ * Bridge opacity barrier between libcrypt and libssl, also needed to support
+ * offline testing in test/danetest.c
+ */
+void X509_STORE_CTX_set0_dane(X509_STORE_CTX *ctx, struct dane_st *dane);
+
 /* X509_VERIFY_PARAM functions */
 
 X509_VERIFY_PARAM *X509_VERIFY_PARAM_new(void);
@@ -561,6 +565,7 @@ int X509_VERIFY_PARAM_add1_host(X509_VERIFY_PARAM *param,
 void X509_VERIFY_PARAM_set_hostflags(X509_VERIFY_PARAM *param,
                                      unsigned int flags);
 char *X509_VERIFY_PARAM_get0_peername(X509_VERIFY_PARAM *);
+void X509_VERIFY_PARAM_move_peername(X509_VERIFY_PARAM *, X509_VERIFY_PARAM *);
 int X509_VERIFY_PARAM_set1_email(X509_VERIFY_PARAM *param,
                                  const char *email, size_t emaillen);
 int X509_VERIFY_PARAM_set1_ip(X509_VERIFY_PARAM *param,

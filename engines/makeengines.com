@@ -94,7 +94,7 @@ $! library that isn't necessarely ported to VMS.
 $!
 $ ENGINES = "," + P6
 $ IF ENGINES .EQS. "," THEN -
-	ENGINES = ",4758cca,padlock,capi,"
+	ENGINES = ",padlock,capi,"
 $!
 $! GOST requires a 64-bit integer type, unavailable on VAX.
 $!
@@ -155,7 +155,6 @@ $   ENGINE_ = "engine_vector.mar"
 $   TV_OBJ_NAME = OBJ_DIR + F$PARSE(ENGINE_,,,"NAME","SYNTAX_ONLY") + ".OBJ"
 $   TV_OBJ = ",''TV_OBJ_NAME'"
 $ ENDIF
-$ ENGINE_4758CCA = "e_4758cca"
 $ ENGINE_padlock = "e_padlock"
 $ ENGINE_capi = "e_capi"
 $ 

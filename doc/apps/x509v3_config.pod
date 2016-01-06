@@ -399,6 +399,20 @@ Example:
  noCheck = ignored
 
 
+=head2 TLS Feature (aka Must Staple)
+
+This is a multi-valued extension consisting of a list of TLS extension
+identifiers. Each identifier may be a number (0..65535) or a supported name.
+When a TLS client sends a listed extension, the TLS server is expected to
+include that extension in its reply.
+
+The supported names are: B<status_request> and B<status_request_v2>.
+
+Example:
+
+ tlsfeature = status_request
+
+
 =head1 DEPRECATED EXTENSIONS
 
 The following extensions are non standard, Netscape specific and largely
@@ -507,16 +521,6 @@ will only recognize the last value. This can be worked around by using the form:
 
  email.1=steve@here
  email.2=steve@there
-
-=head1 HISTORY
-
-The X509v3 extension code was first added to OpenSSL 0.9.2.
-
-Policy mappings, inhibit any policy and name constraints support was added in
-OpenSSL 0.9.8
-
-The B<directoryName> and B<otherName> option as well as the B<ASN1> option
-for arbitrary extensions was added in OpenSSL 0.9.8
 
 =head1 SEE ALSO
 

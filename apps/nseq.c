@@ -109,9 +109,6 @@ int nseq_main(int argc, char **argv)
     argc = opt_num_rest();
     argv = opt_rest();
 
-    if (!app_load_modules(NULL))
-        goto end;
-
     in = bio_open_default(infile, 'r', FORMAT_PEM);
     if (in == NULL)
         goto end;
@@ -121,8 +118,10 @@ int nseq_main(int argc, char **argv)
 
     if (toseq) {
         seq = NETSCAPE_CERT_SEQUENCE_new();
+        if (seq == NULL)
+            goto end;
         seq->certs = sk_X509_new_null();
-        if (!seq->certs)
+        if (seq->certs == NULL)
             goto end;
         while ((x509 = PEM_read_bio_X509(in, NULL, NULL, NULL)))
             sk_X509_push(seq->certs, x509);

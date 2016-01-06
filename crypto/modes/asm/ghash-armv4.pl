@@ -136,14 +136,14 @@ $code=<<___;
 #include "arm_arch.h"
 
 .text
-#if defined(__thumb2__) && !defined(__APPLE__)
+#if defined(__thumb2__)
 .syntax	unified
 .thumb
 #else
 .code	32
 #endif
 
-#ifdef  __APPLE__
+#ifdef  __clang__
 #define ldrplb  ldrbpl
 #define ldrneb  ldrbne
 #endif

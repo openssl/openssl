@@ -240,6 +240,25 @@ static int test_PACKET_copy_bytes(unsigned char buf[BUF_LEN])
     return 1;
 }
 
+static int test_PACKET_copy_all(unsigned char buf[BUF_LEN])
+{
+    unsigned char tmp[BUF_LEN];
+    PACKET pkt;
+    size_t len;
+
+    if (       !PACKET_buf_init(&pkt, buf, BUF_LEN)
+               || !PACKET_copy_all(&pkt, tmp, BUF_LEN, &len)
+               || len != BUF_LEN
+               || memcmp(buf, tmp, BUF_LEN) != 0
+               || PACKET_remaining(&pkt) != BUF_LEN
+               || PACKET_copy_all(&pkt, tmp, BUF_LEN - 1, &len)) {
+        fprintf(stderr, "test_PACKET_copy_bytes() failed\n");
+        return 0;
+    }
+
+    return 1;
+}
+
 static int test_PACKET_memdup(unsigned char buf[BUF_LEN])
 {
     unsigned char *data = NULL;
@@ -314,13 +333,46 @@ static int test_PACKET_buf_init()
     unsigned char buf[BUF_LEN];
     PACKET pkt;
 
-    /* Also tests PACKET_get_len() */
+    /* Also tests PACKET_remaining() */
     if (       !PACKET_buf_init(&pkt, buf, 4)
             ||  PACKET_remaining(&pkt) != 4
             || !PACKET_buf_init(&pkt, buf, BUF_LEN)
             ||  PACKET_remaining(&pkt) != BUF_LEN
             ||  PACKET_buf_init(&pkt, buf, -1)) {
         fprintf(stderr, "test_PACKET_buf_init() failed\n");
+        return 0;
+        }
+
+    return 1;
+}
+
+static int test_PACKET_null_init()
+{
+    PACKET pkt;
+
+    PACKET_null_init(&pkt);
+    if (       PACKET_remaining(&pkt) != 0
+            || PACKET_forward(&pkt, 1)) {
+        fprintf(stderr, "test_PACKET_null_init() failed\n");
+        return 0;
+        }
+
+    return 1;
+}
+
+static int test_PACKET_equal(unsigned char buf[BUF_LEN])
+{
+    PACKET pkt;
+
+    if (       !PACKET_buf_init(&pkt, buf, 4)
+            || !PACKET_equal(&pkt, buf, 4)
+            ||  PACKET_equal(&pkt, buf + 1, 4)
+            || !PACKET_buf_init(&pkt, buf, BUF_LEN)
+            || !PACKET_equal(&pkt, buf, BUF_LEN)
+            ||  PACKET_equal(&pkt, buf, BUF_LEN - 1)
+            ||  PACKET_equal(&pkt, buf, BUF_LEN + 1)
+            ||  PACKET_equal(&pkt, buf, 0)) {
+        fprintf(stderr, "test_PACKET_equal() failed\n");
         return 0;
         }
 
@@ -417,7 +469,9 @@ int main(int argc, char **argv)
     i = 0;
 
     if (       !test_PACKET_buf_init()
+            || !test_PACKET_null_init()
             || !test_PACKET_remaining(buf)
+            || !test_PACKET_equal(buf)
             || !test_PACKET_get_1(buf)
             || !test_PACKET_get_4(buf)
             || !test_PACKET_get_net_2(buf)
@@ -426,6 +480,7 @@ int main(int argc, char **argv)
             || !test_PACKET_get_sub_packet(buf)
             || !test_PACKET_get_bytes(buf)
             || !test_PACKET_copy_bytes(buf)
+            || !test_PACKET_copy_all(buf)
             || !test_PACKET_memdup(buf)
             || !test_PACKET_strndup()
             || !test_PACKET_forward(buf)

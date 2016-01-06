@@ -85,16 +85,11 @@ int X509_set_serialNumber(X509 *x, ASN1_INTEGER *serial)
     ASN1_INTEGER *in;
 
     if (x == NULL)
-        return (0);
-    in = x->cert_info.serialNumber;
-    if (in != serial) {
-        in = ASN1_INTEGER_dup(serial);
-        if (in != NULL) {
-            ASN1_INTEGER_free(x->cert_info.serialNumber);
-            x->cert_info.serialNumber = in;
-        }
-    }
-    return (in != NULL);
+        return 0;
+    in = &x->cert_info.serialNumber;
+    if (in != serial)
+        return ASN1_STRING_copy(in, serial);
+    return 1;
 }
 
 int X509_set_issuer_name(X509 *x, X509_NAME *name)
@@ -180,4 +175,22 @@ int X509_get_signature_type(const X509 *x)
 X509_PUBKEY *X509_get_X509_PUBKEY(const X509 *x)
 {
     return x->cert_info.key;
+}
+
+STACK_OF(X509_EXTENSION) *X509_get0_extensions(const X509 *x)
+{
+    return x->cert_info.extensions;
+}
+
+void X509_get0_uids(ASN1_BIT_STRING **piuid, ASN1_BIT_STRING **psuid, X509 *x)
+{
+    if (piuid != NULL)
+        *piuid = x->cert_info.issuerUID;
+    if (psuid != NULL)
+        *psuid = x->cert_info.subjectUID;
+}
+
+X509_ALGOR *X509_get0_tbs_sigalg(X509 *x)
+{
+    return &x->cert_info.signature;
 }

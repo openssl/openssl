@@ -74,7 +74,8 @@
 # define CLCERTS         0x8
 # define CACERTS         0x10
 
-int get_cert_chain(X509 *cert, X509_STORE *store, STACK_OF(X509) **chain);
+static int get_cert_chain(X509 *cert, X509_STORE *store,
+                          STACK_OF(X509) **chain);
 int dump_certs_keys_p12(BIO *out, PKCS12 *p12, char *pass, int passlen,
                         int options, char *pempass, const EVP_CIPHER *enc);
 int dump_certs_pkeys_bags(BIO *out, STACK_OF(PKCS12_SAFEBAG) *bags,
@@ -354,9 +355,6 @@ int pkcs12_main(int argc, char **argv)
         mpass = macpass;
     }
 
-    if (!app_load_modules(NULL))
-        goto end;
-
     if (export_cert || inrand) {
         app_RAND_load_file(NULL, (inrand != NULL));
         if (inrand != NULL)
@@ -448,7 +446,7 @@ int pkcs12_main(int argc, char **argv)
             vret = get_cert_chain(ucert, store, &chain2);
             X509_STORE_free(store);
 
-            if (!vret) {
+            if (vret == X509_V_OK) {
                 /* Exclude verified certificate */
                 for (i = 1; i < sk_X509_num(chain2); i++)
                     sk_X509_push(certs, sk_X509_value(chain2, i));
@@ -456,7 +454,7 @@ int pkcs12_main(int argc, char **argv)
                 X509_free(sk_X509_value(chain2, 0));
                 sk_X509_free(chain2);
             } else {
-                if (vret >= 0)
+                if (vret != X509_V_ERR_UNSPECIFIED)
                     BIO_printf(bio_err, "Error %s getting chain.\n",
                                X509_verify_cert_error_string(vret));
                 else
@@ -487,7 +485,7 @@ int pkcs12_main(int argc, char **argv)
             goto export_end;
         }
         if (!twopass)
-            BUF_strlcpy(macpass, pass, sizeof macpass);
+            OPENSSL_strlcpy(macpass, pass, sizeof macpass);
 
         p12 = PKCS12_create(cpass, name, key, ucert, certs,
                             key_pbe, cert_pbe, iter, -1, keytype);
@@ -545,7 +543,7 @@ int pkcs12_main(int argc, char **argv)
     }
 
     if (!twopass)
-        BUF_strlcpy(macpass, pass, sizeof macpass);
+        OPENSSL_strlcpy(macpass, pass, sizeof macpass);
 
     if ((options & INFO) && p12->mac)
         BIO_printf(bio_err, "MAC Iteration %ld\n",
@@ -721,36 +719,25 @@ int dump_certs_pkeys_bag(BIO *out, PKCS12_SAFEBAG *bag, char *pass,
 
 /* Given a single certificate return a verified chain or NULL if error */
 
-/* Hope this is OK .... */
-
-int get_cert_chain(X509 *cert, X509_STORE *store, STACK_OF(X509) **chain)
+static int get_cert_chain(X509 *cert, X509_STORE *store,
+                          STACK_OF(X509) **chain)
 {
     X509_STORE_CTX store_ctx;
-    STACK_OF(X509) *chn;
+    STACK_OF(X509) *chn = NULL;
     int i = 0;
 
-    /*
-     * FIXME: Should really check the return status of X509_STORE_CTX_init
-     * for an error, but how that fits into the return value of this function
-     * is less obvious.
-     */
-    X509_STORE_CTX_init(&store_ctx, store, cert, NULL);
-    if (X509_verify_cert(&store_ctx) <= 0) {
-        i = X509_STORE_CTX_get_error(&store_ctx);
-        if (i == 0)
-            /*
-             * avoid returning 0 if X509_verify_cert() did not set an
-             * appropriate error value in the context
-             */
-            i = -1;
-        chn = NULL;
-        goto err;
-    } else
+    if (!X509_STORE_CTX_init(&store_ctx, store, cert, NULL)) {
+        *chain = NULL;
+        return X509_V_ERR_UNSPECIFIED;
+    }
+
+    if (X509_verify_cert(&store_ctx) > 0)
         chn = X509_STORE_CTX_get1_chain(&store_ctx);
- err:
+    else if ((i = X509_STORE_CTX_get_error(&store_ctx)) == 0)
+        i = X509_V_ERR_UNSPECIFIED;
+
     X509_STORE_CTX_cleanup(&store_ctx);
     *chain = chn;
-
     return i;
 }
 

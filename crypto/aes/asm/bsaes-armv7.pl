@@ -731,6 +731,7 @@ $code.=<<___;
 .thumb
 #else
 .code   32
+# undef __thumb2__
 #endif
 
 .type	_bsaes_decrypt8,%function

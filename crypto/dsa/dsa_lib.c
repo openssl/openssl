@@ -234,13 +234,6 @@ int DSA_size(const DSA *r)
     return (ret);
 }
 
-int DSA_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
-                         CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func)
-{
-    return CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_DSA, argl, argp,
-                                   new_func, dup_func, free_func);
-}
-
 int DSA_set_ex_data(DSA *d, int idx, void *arg)
 {
     return (CRYPTO_set_ex_data(&d->ex_data, idx, arg));
@@ -253,7 +246,9 @@ void *DSA_get_ex_data(DSA *d, int idx)
 
 int DSA_security_bits(const DSA *d)
 {
-    return BN_security_bits(BN_num_bits(d->p), BN_num_bits(d->q));
+    if (d->p && d->q)
+        return BN_security_bits(BN_num_bits(d->p), BN_num_bits(d->q));
+    return -1;
 }
 
 #ifndef OPENSSL_NO_DH

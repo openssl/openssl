@@ -1,6 +1,6 @@
 /* crypto/x509/x509_err.c */
 /* ====================================================================
- * Copyright (c) 1999-2012 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2015 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -70,11 +70,12 @@
 # define ERR_REASON(reason) ERR_PACK(ERR_LIB_X509,0,reason)
 
 static ERR_STRING_DATA X509_str_functs[] = {
-    {ERR_FUNC(X509_F_ADD_CERT_DIR), "ADD_CERT_DIR"},
-    {ERR_FUNC(X509_F_BY_FILE_CTRL), "BY_FILE_CTRL"},
-    {ERR_FUNC(X509_F_CHECK_POLICY), "CHECK_POLICY"},
-    {ERR_FUNC(X509_F_DIR_CTRL), "DIR_CTRL"},
-    {ERR_FUNC(X509_F_GET_CERT_BY_SUBJECT), "GET_CERT_BY_SUBJECT"},
+    {ERR_FUNC(X509_F_ADD_CERT_DIR), "add_cert_dir"},
+    {ERR_FUNC(X509_F_BUILD_CHAIN), "build_chain"},
+    {ERR_FUNC(X509_F_BY_FILE_CTRL), "by_file_ctrl"},
+    {ERR_FUNC(X509_F_CHECK_POLICY), "check_policy"},
+    {ERR_FUNC(X509_F_DIR_CTRL), "dir_ctrl"},
+    {ERR_FUNC(X509_F_GET_CERT_BY_SUBJECT), "get_cert_by_subject"},
     {ERR_FUNC(X509_F_NETSCAPE_SPKI_B64_DECODE), "NETSCAPE_SPKI_b64_decode"},
     {ERR_FUNC(X509_F_NETSCAPE_SPKI_B64_ENCODE), "NETSCAPE_SPKI_b64_encode"},
     {ERR_FUNC(X509_F_X509AT_ADD1_ATTR), "X509at_add1_attr"},
@@ -109,7 +110,7 @@ static ERR_STRING_DATA X509_str_functs[] = {
     {ERR_FUNC(X509_F_X509_NAME_ONELINE), "X509_NAME_oneline"},
     {ERR_FUNC(X509_F_X509_NAME_PRINT), "X509_NAME_print"},
     {ERR_FUNC(X509_F_X509_PRINT_EX_FP), "X509_print_ex_fp"},
-    {ERR_FUNC(X509_F_X509_PUBKEY_GET), "X509_PUBKEY_get"},
+    {ERR_FUNC(X509_F_X509_PUBKEY_GET0), "X509_PUBKEY_get0"},
     {ERR_FUNC(X509_F_X509_PUBKEY_SET), "X509_PUBKEY_set"},
     {ERR_FUNC(X509_F_X509_REQ_CHECK_PRIVATE_KEY),
      "X509_REQ_check_private_key"},

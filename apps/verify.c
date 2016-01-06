@@ -198,9 +198,6 @@ int verify_main(int argc, char **argv)
         goto end;
     }
 
-    if (!app_load_modules(NULL))
-        goto end;
-
     if ((store = setup_verify(CAfile, CApath, noCAfile, noCApath)) == NULL)
         goto end;
     X509_STORE_set_verify_cb(store, cb);
@@ -266,16 +263,17 @@ static int check(X509_STORE *ctx, char *file,
     x = load_cert(file, FORMAT_PEM, NULL, e, "certificate file");
     if (x == NULL)
         goto end;
-    printf("%s: ", (file == NULL) ? "stdin" : file);
 
     csc = X509_STORE_CTX_new();
     if (csc == NULL) {
-        ERR_print_errors(bio_err);
+        printf("error %s: X.509 store context allocation failed\n",
+               (file == NULL) ? "stdin" : file);
         goto end;
     }
     X509_STORE_set_flags(ctx, vflags);
     if (!X509_STORE_CTX_init(csc, ctx, x, uchain)) {
-        ERR_print_errors(bio_err);
+        printf("error %s: X.509 store context initialization failed\n",
+               (file == NULL) ? "stdin" : file);
         goto end;
     }
     if (tchain)
@@ -284,32 +282,34 @@ static int check(X509_STORE *ctx, char *file,
         X509_STORE_CTX_set0_crls(csc, crls);
     i = X509_verify_cert(csc);
     if (i > 0) {
-        printf("OK\n");
+        printf("%s: OK\n", (file == NULL) ? "stdin" : file);
         ret = 1;
-	if (show_chain) {
-	    int j;
+        if (show_chain) {
+            int j;
 
-	    chain = X509_STORE_CTX_get1_chain(csc);
-	    num_untrusted = X509_STORE_CTX_get_num_untrusted(csc);
-	    printf("Chain:\n");
-	    for (j = 0; j < sk_X509_num(chain); j++) {
-		X509 *cert = sk_X509_value(chain, j);
-		printf("depth=%d: ", j);
-		X509_NAME_print_ex_fp(stdout,
-				      X509_get_subject_name(cert),
-				      0, XN_FLAG_ONELINE);
-		if (j < num_untrusted)
-		    printf(" (untrusted)");
-		printf("\n");
-	    }
-	    sk_X509_pop_free(chain, X509_free);
-	}
+            chain = X509_STORE_CTX_get1_chain(csc);
+            num_untrusted = X509_STORE_CTX_get_num_untrusted(csc);
+            printf("Chain:\n");
+            for (j = 0; j < sk_X509_num(chain); j++) {
+                X509 *cert = sk_X509_value(chain, j);
+                printf("depth=%d: ", j);
+                X509_NAME_print_ex_fp(stdout,
+                                      X509_get_subject_name(cert),
+                                      0, XN_FLAG_ONELINE);
+                if (j < num_untrusted)
+                    printf(" (untrusted)");
+                printf("\n");
+            }
+            sk_X509_pop_free(chain, X509_free);
+        }
+    } else {
+        printf("error %s: verification failed\n", (file == NULL) ? "stdin" : file);
     }
     X509_STORE_CTX_free(csc);
 
  end:
     if (i <= 0)
-	ERR_print_errors(bio_err);
+        ERR_print_errors(bio_err);
     X509_free(x);
 
     return ret;
@@ -327,8 +327,8 @@ static int cb(int ok, X509_STORE_CTX *ctx)
                             0, XN_FLAG_ONELINE);
             BIO_printf(bio_err, "\n");
         }
-        BIO_printf(bio_err, "%serror %d at %d depth lookup:%s\n",
-               X509_STORE_CTX_get0_parent_ctx(ctx) ? "[CRL path]" : "",
+        BIO_printf(bio_err, "%serror %d at %d depth lookup: %s\n",
+               X509_STORE_CTX_get0_parent_ctx(ctx) ? "[CRL path] " : "",
                cert_error,
                X509_STORE_CTX_get_error_depth(ctx),
                X509_verify_cert_error_string(cert_error));

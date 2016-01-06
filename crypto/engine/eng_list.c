@@ -260,6 +260,7 @@ int ENGINE_add(ENGINE *e)
     }
     if ((e->id == NULL) || (e->name == NULL)) {
         ENGINEerr(ENGINE_F_ENGINE_ADD, ENGINE_R_ID_OR_NAME_MISSING);
+        return 0;
     }
     CRYPTO_w_lock(CRYPTO_LOCK_ENGINE);
     if (!engine_list_add(e)) {
@@ -301,8 +302,7 @@ static void engine_cpy(ENGINE *dest, const ENGINE *src)
     dest->dh_meth = src->dh_meth;
 #endif
 #ifndef OPENSSL_NO_EC
-    dest->ecdh_meth = src->ecdh_meth;
-    dest->ecdsa_meth = src->ecdsa_meth;
+    dest->ec_meth = src->ec_meth;
 #endif
     dest->rand_meth = src->rand_meth;
     dest->store_meth = src->store_meth;
@@ -331,7 +331,7 @@ ENGINE *ENGINE_by_id(const char *id)
     iterator = engine_list_head;
     while (iterator && (strcmp(id, iterator->id) != 0))
         iterator = iterator->next;
-    if (iterator) {
+    if (iterator != NULL) {
         /*
          * We need to return a structural reference. If this is an ENGINE
          * type that returns copies, make a duplicate - otherwise increment
@@ -339,7 +339,7 @@ ENGINE *ENGINE_by_id(const char *id)
          */
         if (iterator->flags & ENGINE_FLAGS_BY_ID_COPY) {
             ENGINE *cp = ENGINE_new();
-            if (!cp)
+            if (cp == NULL)
                 iterator = NULL;
             else {
                 engine_cpy(cp, iterator);
@@ -351,7 +351,7 @@ ENGINE *ENGINE_by_id(const char *id)
         }
     }
     CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
-    if (iterator)
+    if (iterator != NULL)
         return iterator;
     /*
      * Prevent infinite recusrion if we're looking for the dynamic engine.

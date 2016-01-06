@@ -107,9 +107,7 @@ struct rsa_meth_st {
      * New sign and verify functions: some libraries don't allow arbitrary
      * data to be signed/verified: this allows them to be used. Note: for
      * this to work the RSA_public_decrypt() and RSA_private_encrypt() should
-     * *NOT* be used RSA_sign(), RSA_verify() should be used instead. Note:
-     * for backwards compatibility this functionality is only enabled if the
-     * RSA_FLAG_SIGN_VER option is set in 'flags'.
+     * *NOT* be used RSA_sign(), RSA_verify() should be used instead.
      */
     int (*rsa_sign) (int type,
                      const unsigned char *m, unsigned int m_length,
@@ -194,12 +192,6 @@ struct rsa_st {
  * bn_mod_exp gets called when private key components are absent.
  */
 # define RSA_FLAG_EXT_PKEY               0x0020
-
-/*
- * This flag in the RSA_METHOD enables the new rsa_sign, rsa_verify
- * functions.
- */
-# define RSA_FLAG_SIGN_VER               0x0040
 
 /*
  * new with 0.9.6j and 0.9.7b; the built-in
@@ -365,8 +357,8 @@ int RSA_set_method(RSA *rsa, const RSA_METHOD *meth);
 /* This function needs the memory locking malloc callbacks to be installed */
 int RSA_memory_lock(RSA *r);
 
-/* these are the actual SSLeay RSA functions */
-const RSA_METHOD *RSA_PKCS1_SSLeay(void);
+/* these are the actual RSA functions */
+const RSA_METHOD *RSA_PKCS1_OpenSSL(void);
 
 const RSA_METHOD *RSA_null_method(void);
 
@@ -478,8 +470,8 @@ int RSA_padding_add_PKCS1_PSS_mgf1(RSA *rsa, unsigned char *EM,
                                    const EVP_MD *Hash, const EVP_MD *mgf1Hash,
                                    int sLen);
 
-int RSA_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
-                         CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func);
+#define RSA_get_ex_new_index(l, p, newf, dupf, freef) \
+    CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_RSA, l, p, newf, dupf, freef)
 int RSA_set_ex_data(RSA *r, int idx, void *arg);
 void *RSA_get_ex_data(const RSA *r, int idx);
 
@@ -535,10 +527,10 @@ void ERR_load_RSA_strings(void);
 # define RSA_F_RSA_CHECK_KEY                              123
 # define RSA_F_RSA_CHECK_KEY_EX                           160
 # define RSA_F_RSA_CMS_DECRYPT                            159
-# define RSA_F_RSA_EAY_PRIVATE_DECRYPT                    101
-# define RSA_F_RSA_EAY_PRIVATE_ENCRYPT                    102
-# define RSA_F_RSA_EAY_PUBLIC_DECRYPT                     103
-# define RSA_F_RSA_EAY_PUBLIC_ENCRYPT                     104
+# define RSA_F_RSA_OSSL_PRIVATE_DECRYPT                   101
+# define RSA_F_RSA_OSSL_PRIVATE_ENCRYPT                   102
+# define RSA_F_RSA_OSSL_PUBLIC_DECRYPT                    103
+# define RSA_F_RSA_OSSL_PUBLIC_ENCRYPT                    104
 # define RSA_F_RSA_GENERATE_KEY                           105
 # define RSA_F_RSA_ITEM_VERIFY                            148
 # define RSA_F_RSA_MEMORY_LOCK                            130

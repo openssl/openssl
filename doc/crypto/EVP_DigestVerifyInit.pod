@@ -18,8 +18,8 @@ EVP_DigestVerifyInit, EVP_DigestVerifyUpdate, EVP_DigestVerifyFinal - EVP signat
 The EVP signature routines are a high level interface to digital signatures.
 
 EVP_DigestVerifyInit() sets up verification context B<ctx> to use digest
-B<type> from ENGINE B<impl> and public key B<pkey>. B<ctx> must be initialized
-with EVP_MD_CTX_init() before calling this function. If B<pctx> is not NULL the
+B<type> from ENGINE B<impl> and public key B<pkey>. B<ctx> must be created
+with EVP_MD_CTX_new() before calling this function. If B<pctx> is not NULL the
 EVP_PKEY_CTX of the verification operation will be written to B<*pctx>: this
 can be used to set alternative verification options.
 
@@ -36,10 +36,11 @@ B<sig> of length B<siglen>.
 EVP_DigestVerifyInit() and EVP_DigestVerifyUpdate() return 1 for success and 0
 for failure.
 
-Unlike other functions the return value 0 from EVP_DigestVerifyFinal() only
-indicates that the signature did not verify successfully (that is tbs did
-not match the original data or the signature was of invalid form) it is not an
-indication of a more serious error.
+EVP_DigestVerifyFinal() returns 1 for success; any other value indicates
+failure.  A return value of zero indicates that the signature did not verify
+successfully (that is, tbs did not match the original data or the signature had
+an invalid form), while other values indicate a more serious error (and
+sometimes also indicate an invalid signature form).
 
 The error codes can be obtained from L<ERR_get_error(3)>.
 

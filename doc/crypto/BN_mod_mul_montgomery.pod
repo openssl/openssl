@@ -96,11 +96,6 @@ L<BN_CTX_new(3)>
 
 =head1 HISTORY
 
-BN_MONT_CTX_new(), BN_MONT_CTX_free(), BN_MONT_CTX_set(),
-BN_mod_mul_montgomery(), BN_from_montgomery() and BN_to_montgomery()
-are available in all versions of SSLeay and OpenSSL.
-
-BN_MONT_CTX_init() and BN_MONT_CTX_copy() were added in SSLeay 0.9.1b.
-BN_MONT_CTX_init was removed in OpenSSL 1.1.0
+BN_MONT_CTX_init() was removed in OpenSSL 1.1.0
 
 =cut

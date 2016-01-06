@@ -94,8 +94,4 @@ structure just added or NULL if an error occurs.
 L<ERR_get_error(3)>, L<CMS_sign(3)>,
 L<CMS_final(3)>,
 
-=head1 HISTORY
-
-CMS_add1_signer() was added to OpenSSL 0.9.8
-
 =cut

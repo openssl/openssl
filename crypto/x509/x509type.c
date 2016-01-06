@@ -71,7 +71,7 @@ int X509_certificate_type(X509 *x, EVP_PKEY *pkey)
         return (0);
 
     if (pkey == NULL)
-        pk = X509_get_pubkey(x);
+        pk = X509_get0_pubkey(x);
     else
         pk = pkey;
 
@@ -94,6 +94,8 @@ int X509_certificate_type(X509 *x, EVP_PKEY *pkey)
         ret = EVP_PK_DH | EVP_PKT_EXCH;
         break;
     case NID_id_GostR3410_2001:
+    case NID_id_GostR3410_2012_256:
+    case NID_id_GostR3410_2012_512:
         ret = EVP_PKT_EXCH | EVP_PKT_SIGN;
         break;
     default:
@@ -120,7 +122,5 @@ int X509_certificate_type(X509 *x, EVP_PKEY *pkey)
         }
     }
 
-    if (pkey == NULL)
-        EVP_PKEY_free(pk);
     return (ret);
 }

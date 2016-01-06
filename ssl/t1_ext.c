@@ -183,7 +183,7 @@ int custom_exts_copy(custom_ext_methods *dst, const custom_ext_methods *src)
 {
     if (src->meths_count) {
         dst->meths =
-            BUF_memdup(src->meths,
+            OPENSSL_memdup(src->meths,
                        sizeof(custom_ext_method) * src->meths_count);
         if (dst->meths == NULL)
             return 0;

@@ -205,9 +205,9 @@ int main(int argc, char *argv[])
     printf("About to beef up the engine-type list\n");
     for (loop = 0; loop < 512; loop++) {
         sprintf(buf, "id%i", loop);
-        id = BUF_strdup(buf);
+        id = OPENSSL_strdup(buf);
         sprintf(buf, "Fake engine type %i", loop);
-        name = BUF_strdup(buf);
+        name = OPENSSL_strdup(buf);
         if (((block[loop] = ENGINE_new()) == NULL) ||
             !ENGINE_set_id(block[loop], id) ||
             !ENGINE_set_name(block[loop], name)) {

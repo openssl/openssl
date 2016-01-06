@@ -1,6 +1,6 @@
 /* crypto/ui/ui_err.c */
 /* ====================================================================
- * Copyright (c) 1999-2006 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2015 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -70,8 +70,8 @@
 # define ERR_REASON(reason) ERR_PACK(ERR_LIB_UI,0,reason)
 
 static ERR_STRING_DATA UI_str_functs[] = {
-    {ERR_FUNC(UI_F_GENERAL_ALLOCATE_BOOLEAN), "GENERAL_ALLOCATE_BOOLEAN"},
-    {ERR_FUNC(UI_F_GENERAL_ALLOCATE_PROMPT), "GENERAL_ALLOCATE_PROMPT"},
+    {ERR_FUNC(UI_F_GENERAL_ALLOCATE_BOOLEAN), "general_allocate_boolean"},
+    {ERR_FUNC(UI_F_GENERAL_ALLOCATE_PROMPT), "general_allocate_prompt"},
     {ERR_FUNC(UI_F_GENERAL_ALLOCATE_STRING), "GENERAL_ALLOCATE_STRING"},
     {ERR_FUNC(UI_F_UI_CTRL), "UI_ctrl"},
     {ERR_FUNC(UI_F_UI_DUP_ERROR_STRING), "UI_dup_error_string"},

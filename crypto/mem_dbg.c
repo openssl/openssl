@@ -117,6 +117,9 @@
 #include <openssl/buffer.h>
 #include <openssl/bio.h>
 #include <openssl/lhash.h>
+#if defined(CRYPTO_MDEBUG_BACKTRACE) && defined(__GNUC__)
+# include <execinfo.h>
+#endif
 
 static int mh_mode = CRYPTO_MEM_CHECK_OFF;
 /*
@@ -142,9 +145,8 @@ typedef struct app_mem_info_st
  * For application-defined information (static C-string `info')
  * to be displayed in memory leak list.
  * Each thread has its own stack.  For applications, there is
- *   CRYPTO_push_info("...")     to push an entry,
- *   CRYPTO_pop_info()           to pop an entry,
- *   CRYPTO_remove_all_info()    to pop all entries.
+ *   OPENSSL_mem_debug_push("...")     to push an entry,
+ *   OPENSSL_mem_debug_pop()     to pop an entry,
  */
 {
     CRYPTO_THREADID threadid;
@@ -175,6 +177,10 @@ typedef struct mem_st
     unsigned long order;
     time_t time;
     APP_INFO *app_info;
+#if defined(CRYPTO_MDEBUG_BACKTRACE) && defined(__GNUC__)
+    void *array[30];
+    size_t array_siz;
+#endif
 } MEM;
 
 static long options =           /* extra information to be recorded */
@@ -321,9 +327,9 @@ static IMPLEMENT_LHASH_COMP_FN(mem, MEM)
 
 static unsigned long mem_hash(const MEM *a)
 {
-    unsigned long ret;
+    size_t ret;
 
-    ret = (unsigned long)a->addr;
+    ret = (size_t)a->addr;
 
     ret = ret * 17851 + (ret >> 14) * 7 + (ret >> 4) * 251;
     return (ret);
@@ -366,15 +372,6 @@ static APP_INFO *pop_info(void)
                 next->references++;
                 (void)lh_APP_INFO_insert(amih, next);
             }
-#ifdef LEVITTE_DEBUG_MEM
-            if (CRYPTO_THREADID_cmp(&ret->threadid, &tmp.threadid)) {
-                fprintf(stderr,
-                        "pop_info(): deleted info has other thread ID (%lu) than the current thread (%lu)!!!!\n",
-                        CRYPTO_THREADID_hash(&ret->threadid),
-                        CRYPTO_THREADID_hash(&tmp.threadid));
-                abort();
-            }
-#endif
             if (--(ret->references) <= 0) {
                 ret->next = NULL;
                 if (next != NULL)
@@ -386,7 +383,7 @@ static APP_INFO *pop_info(void)
     return (ret);
 }
 
-int CRYPTO_push_info_(const char *info, const char *file, int line)
+int CRYPTO_mem_debug_push(const char *info, const char *file, int line)
 {
     APP_INFO *ami, *amim;
     int ret = 0;
@@ -413,18 +410,8 @@ int CRYPTO_push_info_(const char *info, const char *file, int line)
         ami->references = 1;
         ami->next = NULL;
 
-        if ((amim = lh_APP_INFO_insert(amih, ami)) != NULL) {
-#ifdef LEVITTE_DEBUG_MEM
-            if (CRYPTO_THREADID_cmp(&ami->threadid, &amim->threadid)) {
-                fprintf(stderr,
-                        "CRYPTO_push_info(): previous info has other thread ID (%lu) than the current thread (%lu)!!!!\n",
-                        CRYPTO_THREADID_hash(&amim->threadid),
-                        CRYPTO_THREADID_hash(&ami->threadid));
-                abort();
-            }
-#endif
+        if ((amim = lh_APP_INFO_insert(amih, ami)) != NULL)
             ami->next = amim;
-        }
  err:
         MemCheck_on();          /* release MALLOC2 lock */
     }
@@ -432,7 +419,7 @@ int CRYPTO_push_info_(const char *info, const char *file, int line)
     return (ret);
 }
 
-int CRYPTO_pop_info(void)
+int CRYPTO_mem_debug_pop(void)
 {
     int ret = 0;
 
@@ -447,23 +434,8 @@ int CRYPTO_pop_info(void)
     return (ret);
 }
 
-int CRYPTO_remove_all_info(void)
-{
-    int ret = 0;
-
-    if (is_MemCheck_on()) {     /* _must_ be true */
-        MemCheck_off();         /* obtain MALLOC2 lock */
-
-        while (pop_info() != NULL)
-            ret++;
-
-        MemCheck_on();          /* release MALLOC2 lock */
-    }
-    return (ret);
-}
-
 static unsigned long break_order_num = 0;
-void CRYPTO_dbg_malloc(void *addr, int num, const char *file, int line,
+void CRYPTO_dbg_malloc(void *addr, size_t num, const char *file, int line,
                        int before_p)
 {
     MEM *m, *mm;
@@ -507,14 +479,13 @@ void CRYPTO_dbg_malloc(void *addr, int num, const char *file, int line,
                 m->order = order;
             }
             m->order = order++;
-#ifdef LEVITTE_DEBUG_MEM
-            fprintf(stderr, "LEVITTE_DEBUG_MEM: [%5ld] %c 0x%p (%d)\n",
-                    m->order, (before_p & 128) ? '*' : '+', m->addr, m->num);
-#endif
             if (options & V_CRYPTO_MDEBUG_TIME)
                 m->time = time(NULL);
             else
                 m->time = 0;
+#if defined(CRYPTO_MDEBUG_BACKTRACE) && defined(__GNUC__)
+            m->array_siz = backtrace(m->array, OSSL_NELEM(m->array));
+#endif
 
             CRYPTO_THREADID_current(&tmp.threadid);
             m->app_info = NULL;
@@ -555,10 +526,6 @@ void CRYPTO_dbg_free(void *addr, int before_p)
             m.addr = addr;
             mp = lh_MEM_delete(mh, &m);
             if (mp != NULL) {
-#ifdef LEVITTE_DEBUG_MEM
-                fprintf(stderr, "LEVITTE_DEBUG_MEM: [%5ld] - 0x%p (%d)\n",
-                        mp->order, mp->addr, mp->num);
-#endif
                 app_info_free(mp->app_info);
                 OPENSSL_free(mp);
             }
@@ -572,16 +539,10 @@ void CRYPTO_dbg_free(void *addr, int before_p)
     }
 }
 
-void CRYPTO_dbg_realloc(void *addr1, void *addr2, int num,
+void CRYPTO_dbg_realloc(void *addr1, void *addr2, size_t num,
                         const char *file, int line, int before_p)
 {
     MEM m, *mp;
-
-#ifdef LEVITTE_DEBUG_MEM
-    fprintf(stderr,
-            "LEVITTE_DEBUG_MEM: --> CRYPTO_dbg_malloc(addr1 = %p, addr2 = %p, num = %d, file = \"%s\", line = %d, before_p = %d)\n",
-            addr1, addr2, num, file, line, before_p);
-#endif
 
     switch (before_p) {
     case 0:
@@ -601,13 +562,11 @@ void CRYPTO_dbg_realloc(void *addr1, void *addr2, int num,
             m.addr = addr1;
             mp = lh_MEM_delete(mh, &m);
             if (mp != NULL) {
-#ifdef LEVITTE_DEBUG_MEM
-                fprintf(stderr,
-                        "LEVITTE_DEBUG_MEM: [%5ld] * 0x%p (%d) -> 0x%p (%d)\n",
-                        mp->order, mp->addr, mp->num, addr2, num);
-#endif
                 mp->addr = addr2;
                 mp->num = num;
+#if defined(CRYPTO_MDEBUG_BACKTRACE) && defined(__GNUC__)
+                mp->array_siz = backtrace(mp->array, OSSL_NELEM(mp->array));
+#endif
                 (void)lh_MEM_insert(mh, mp);
             }
 
@@ -661,8 +620,8 @@ static void print_leak_doall_arg(const MEM *m, MEM_LEAK *l)
         bufp += strlen(bufp);
     }
 
-    BIO_snprintf(bufp, BUF_REMAIN, "number=%d, address=%08lX\n",
-                 m->num, (unsigned long)m->addr);
+    BIO_snprintf(bufp, BUF_REMAIN, "number=%d, address=%p\n",
+                 m->num, m->addr);
     bufp += strlen(bufp);
 
     BIO_puts(l->bio, buf);
@@ -672,41 +631,45 @@ static void print_leak_doall_arg(const MEM *m, MEM_LEAK *l)
 
     amip = m->app_info;
     ami_cnt = 0;
-    if (!amip)
-        return;
-    CRYPTO_THREADID_cpy(&ti, &amip->threadid);
-
-    do {
-        int buf_len;
-        int info_len;
-
-        ami_cnt++;
-        memset(buf, '>', ami_cnt);
-        BIO_snprintf(buf + ami_cnt, sizeof buf - ami_cnt,
-                     " thread=%lu, file=%s, line=%d, info=\"",
-                     CRYPTO_THREADID_hash(&amip->threadid), amip->file,
-                     amip->line);
-        buf_len = strlen(buf);
-        info_len = strlen(amip->info);
-        if (128 - buf_len - 3 < info_len) {
-            memcpy(buf + buf_len, amip->info, 128 - buf_len - 3);
-            buf_len = 128 - 3;
-        } else {
-            BUF_strlcpy(buf + buf_len, amip->info, sizeof buf - buf_len);
-            buf_len = strlen(buf);
-        }
-        BIO_snprintf(buf + buf_len, sizeof buf - buf_len, "\"\n");
-
-        BIO_puts(l->bio, buf);
-
-        amip = amip->next;
-    }
-    while (amip && !CRYPTO_THREADID_cmp(&amip->threadid, &ti));
-
-#ifdef LEVITTE_DEBUG_MEM
     if (amip) {
-        fprintf(stderr, "Thread switch detected in backtrace!!!!\n");
-        abort();
+        CRYPTO_THREADID_cpy(&ti, &amip->threadid);
+
+        do {
+            int buf_len;
+            int info_len;
+
+            ami_cnt++;
+            memset(buf, '>', ami_cnt);
+            BIO_snprintf(buf + ami_cnt, sizeof buf - ami_cnt,
+                         " thread=%lu, file=%s, line=%d, info=\"",
+                         CRYPTO_THREADID_hash(&amip->threadid), amip->file,
+                         amip->line);
+            buf_len = strlen(buf);
+            info_len = strlen(amip->info);
+            if (128 - buf_len - 3 < info_len) {
+                memcpy(buf + buf_len, amip->info, 128 - buf_len - 3);
+                buf_len = 128 - 3;
+            } else {
+                OPENSSL_strlcpy(buf + buf_len, amip->info, sizeof buf - buf_len);
+                buf_len = strlen(buf);
+            }
+            BIO_snprintf(buf + buf_len, sizeof buf - buf_len, "\"\n");
+
+            BIO_puts(l->bio, buf);
+
+            amip = amip->next;
+        }
+        while (amip && !CRYPTO_THREADID_cmp(&amip->threadid, &ti));
+    }
+
+#if defined(CRYPTO_MDEBUG_BACKTRACE) && defined(__GNUC__)
+    {
+        size_t i;
+        char **strings = backtrace_symbols(m->array, m->array_siz);
+        for (i = 0; i < m->array_siz; i++)
+            fprintf(stderr, "##> %s\n", strings[i]);
+
+        free(strings);
     }
 #endif
 }
@@ -792,7 +755,7 @@ void CRYPTO_mem_leaks_fp(FILE *fp)
     MemCheck_off();
     b = BIO_new(BIO_s_file());
     MemCheck_on();
-    if (!b)
+    if (b == NULL)
         return;
     BIO_set_fp(b, fp, BIO_NOCLOSE);
     CRYPTO_mem_leaks(b);

@@ -167,10 +167,19 @@ size_t CRYPTO_128_unwrap_pad(void *key, const unsigned char *icv,
 #ifndef OPENSSL_NO_OCB
 typedef struct ocb128_context OCB128_CONTEXT;
 
+typedef void (*ocb128_f) (const unsigned char *in, unsigned char *out,
+                          size_t blocks, const void *key,
+                          size_t start_block_num,
+                          unsigned char offset_i[16],
+                          const unsigned char L_[][16],
+                          unsigned char checksum[16]);
+
 OCB128_CONTEXT *CRYPTO_ocb128_new(void *keyenc, void *keydec,
-                                  block128_f encrypt, block128_f decrypt);
+                                  block128_f encrypt, block128_f decrypt,
+                                  ocb128_f stream);
 int CRYPTO_ocb128_init(OCB128_CONTEXT *ctx, void *keyenc, void *keydec,
-                       block128_f encrypt, block128_f decrypt);
+                       block128_f encrypt, block128_f decrypt,
+                       ocb128_f stream);
 int CRYPTO_ocb128_copy_ctx(OCB128_CONTEXT *dest, OCB128_CONTEXT *src,
                            void *keyenc, void *keydec);
 int CRYPTO_ocb128_setiv(OCB128_CONTEXT *ctx, const unsigned char *iv,

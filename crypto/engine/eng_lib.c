@@ -163,7 +163,7 @@ static int int_cleanup_check(int create)
 static ENGINE_CLEANUP_ITEM *int_cleanup_item(ENGINE_CLEANUP_CB *cb)
 {
     ENGINE_CLEANUP_ITEM *item = OPENSSL_malloc(sizeof(*item));
-    if (!item)
+    if (item == NULL)
         return NULL;
     item->cb = cb;
     return item;
@@ -211,14 +211,6 @@ void ENGINE_cleanup(void)
 }
 
 /* Now the "ex_data" support */
-
-int ENGINE_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
-                            CRYPTO_EX_dup *dup_func,
-                            CRYPTO_EX_free *free_func)
-{
-    return CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_ENGINE, argl, argp,
-                                   new_func, dup_func, free_func);
-}
 
 int ENGINE_set_ex_data(ENGINE *e, int idx, void *arg)
 {

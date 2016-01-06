@@ -24,14 +24,8 @@ engine - ENGINE cryptographic module support
  void ENGINE_load_openssl(void);
  void ENGINE_load_dynamic(void);
  #ifndef OPENSSL_NO_STATIC_ENGINE
- void ENGINE_load_4758cca(void);
- void ENGINE_load_aep(void);
- void ENGINE_load_atalla(void);
  void ENGINE_load_chil(void);
- void ENGINE_load_cswift(void);
  void ENGINE_load_gmp(void);
- void ENGINE_load_nuron(void);
- void ENGINE_load_sureware(void);
  void ENGINE_load_ubsec(void);
  #endif
  void ENGINE_load_cryptodev(void);
@@ -99,12 +93,6 @@ engine - ENGINE cryptographic module support
          long i, void *p, void (*f)(void), int cmd_optional);
  int ENGINE_ctrl_cmd_string(ENGINE *e, const char *cmd_name, const char *arg,
          int cmd_optional);
-
- int ENGINE_set_ex_data(ENGINE *e, int idx, void *arg);
- void *ENGINE_get_ex_data(const ENGINE *e, int idx);
-
- int ENGINE_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
-         CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func);
 
  ENGINE *ENGINE_new(void);
  int ENGINE_free(ENGINE *e);
@@ -581,16 +569,6 @@ supports certain specific commands it might want to use (eg. application "foo"
 might query various ENGINEs to see if they implement "FOO_GET_VENDOR_LOGO_GIF" -
 and ENGINE could therefore decide whether or not to support this "foo"-specific
 extension).
-
-=head2 Future developments
-
-The ENGINE API and internal architecture is currently being reviewed. Slated for
-possible release in 0.9.8 is support for transparent loading of "dynamic"
-ENGINEs (built as self-contained shared-libraries). This would allow ENGINE
-implementations to be provided independently of OpenSSL libraries and/or
-OpenSSL-based applications, and would also remove any requirement for
-applications to explicitly use the "dynamic" ENGINE to bind to shared-library
-implementations.
 
 =head1 SEE ALSO
 

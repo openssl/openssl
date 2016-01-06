@@ -257,6 +257,8 @@ struct ec_group_st {
 } /* EC_GROUP */ ;
 
 struct ec_key_st {
+    const EC_KEY_METHOD *meth;
+    ENGINE *engine;
     int version;
     EC_GROUP *group;
     EC_POINT *pub_key;
@@ -552,3 +554,61 @@ int ec_precompute_mont_data(EC_GROUP *);
  */
 const EC_METHOD *EC_GFp_nistz256_method(void);
 #endif
+
+/* EC_METHOD definitions */
+
+struct ec_key_method_st {
+    const char *name;
+    int32_t flags;
+    int (*init)(EC_KEY *key);
+    void (*finish)(EC_KEY *key);
+    int (*copy)(EC_KEY *dest, const EC_KEY *src);
+    int (*set_group)(EC_KEY *key, const EC_GROUP *grp);
+    int (*set_private)(EC_KEY *key, const BIGNUM *priv_key);
+    int (*set_public)(EC_KEY *key, const EC_POINT *pub_key);
+    int (*keygen)(EC_KEY *key);
+    int (*compute_key)(void *out, size_t outlen, const EC_POINT *pub_key,
+                       const EC_KEY *ecdh,
+                       void *(*KDF) (const void *in, size_t inlen,
+                                     void *out, size_t *outlen));
+
+    int (*sign)(int type, const unsigned char *dgst, int dlen, unsigned char
+                *sig, unsigned int *siglen, const BIGNUM *kinv,
+                const BIGNUM *r, EC_KEY *eckey);
+    int (*sign_setup)(EC_KEY *eckey, BN_CTX *ctx_in, BIGNUM **kinvp,
+                      BIGNUM **rp);
+    ECDSA_SIG *(*sign_sig)(const unsigned char *dgst, int dgst_len,
+                           const BIGNUM *in_kinv, const BIGNUM *in_r,
+                           EC_KEY *eckey);
+
+    int (*verify)(int type, const unsigned char *dgst, int dgst_len,
+                  const unsigned char *sigbuf, int sig_len, EC_KEY *eckey);
+    int (*verify_sig)(const unsigned char *dgst, int dgst_len,
+                      const ECDSA_SIG *sig, EC_KEY *eckey);
+} /* EC_KEY_METHOD */ ;
+
+#define EC_KEY_METHOD_DYNAMIC   1
+
+int ossl_ec_key_gen(EC_KEY *eckey);
+int ossl_ecdh_compute_key(void *out, size_t outlen, const EC_POINT *pub_key,
+                          const EC_KEY *ecdh,
+                          void *(*KDF) (const void *in, size_t inlen,
+                                        void *out, size_t *outlen));
+
+struct ECDSA_SIG_st {
+    BIGNUM *r;
+    BIGNUM *s;
+};
+
+int ossl_ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in, BIGNUM **kinvp,
+                          BIGNUM **rp);
+int ossl_ecdsa_sign(int type, const unsigned char *dgst, int dlen,
+                    unsigned char *sig, unsigned int *siglen,
+                    const BIGNUM *kinv, const BIGNUM *r, EC_KEY *eckey);
+ECDSA_SIG *ossl_ecdsa_sign_sig(const unsigned char *dgst, int dgst_len,
+                               const BIGNUM *in_kinv, const BIGNUM *in_r,
+                               EC_KEY *eckey);
+int ossl_ecdsa_verify(int type, const unsigned char *dgst, int dgst_len,
+                      const unsigned char *sigbuf, int sig_len, EC_KEY *eckey);
+int ossl_ecdsa_verify_sig(const unsigned char *dgst, int dgst_len,
+                          const ECDSA_SIG *sig, EC_KEY *eckey);

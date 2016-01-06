@@ -412,10 +412,7 @@ L<crypto(3)>, L<ssl(3)>, L<x509v3_config(5)>
 
 =head1 HISTORY
 
-The openssl(1) document appeared in OpenSSL 0.9.2.
-The B<list->I<XXX>B<-commands> pseudo-commands were added in OpenSSL 0.9.3;
 The B<list->I<XXX>B<-algorithms> pseudo-commands were added in OpenSSL 1.0.0;
-the B<no->I<XXX> pseudo-commands were added in OpenSSL 0.9.5a.
 For notes on the availability of other commands, see their individual
 manual pages.
 

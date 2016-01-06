@@ -177,10 +177,7 @@ L<bn(3)>, L<ERR_get_error(3)>, L<rand(3)>
 
 =head1 HISTORY
 
-The B<cb_arg> arguments to BN_generate_prime() and to BN_is_prime()
-were added in SSLeay 0.9.0. The B<ret> argument to BN_generate_prime()
-was added in SSLeay 0.9.1.
-BN_is_prime_fasttest() was added in OpenSSL 0.9.5. BN_GENCB_new, BN_GENCB_free
-and BN_GENCB_get_arg were added in OpenSSL 1.1.0
+BN_GENCB_new(), BN_GENCB_free(),
+and BN_GENCB_get_arg() were added in OpenSSL 1.1.0
 
 =cut

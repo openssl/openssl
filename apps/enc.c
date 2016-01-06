@@ -84,7 +84,7 @@ typedef enum OPTION_choice {
     OPT_E, OPT_IN, OPT_OUT, OPT_PASS, OPT_ENGINE, OPT_D, OPT_P, OPT_V,
     OPT_NOPAD, OPT_SALT, OPT_NOSALT, OPT_DEBUG, OPT_UPPER_P, OPT_UPPER_A,
     OPT_A, OPT_Z, OPT_BUFSIZE, OPT_K, OPT_KFILE, OPT_UPPER_K, OPT_NONE,
-    OPT_UPPER_S, OPT_IV, OPT_MD, OPT_NON_FIPS_ALLOW, OPT_CIPHER
+    OPT_UPPER_S, OPT_IV, OPT_MD, OPT_CIPHER
 } OPTION_CHOICE;
 
 OPTIONS enc_options[] = {
@@ -111,7 +111,6 @@ OPTIONS enc_options[] = {
     {"S", OPT_UPPER_S, 's', "Salt, in hex"},
     {"iv", OPT_IV, 's', "IV in hex"},
     {"md", OPT_MD, 's', "Use specified digest to create key from passphrase"},
-    {"non-fips-allow", OPT_NON_FIPS_ALLOW, '-'},
     {"none", OPT_NONE, '-', "Don't encrypt"},
     {"", OPT_CIPHER, '-', "Any supported cipher"},
 #ifdef ZLIB
@@ -140,7 +139,7 @@ int enc_main(int argc, char **argv)
     int bsize = BSIZE, verbose = 0, debug = 0, olb64 = 0, nosalt = 0;
     int enc = 1, printkey = 0, i, k;
     int base64 = 0, informat = FORMAT_BINARY, outformat = FORMAT_BINARY;
-    int ret = 1, inl, nopad = 0, non_fips_allow = 0;
+    int ret = 1, inl, nopad = 0;
     unsigned char key[EVP_MAX_KEY_LENGTH], iv[EVP_MAX_IV_LENGTH];
     unsigned char *buff = NULL, salt[PKCS5_SALT_LEN];
     unsigned long n;
@@ -279,9 +278,6 @@ int enc_main(int argc, char **argv)
             if (!opt_md(opt_arg(), &dgst))
                 goto opthelp;
             break;
-        case OPT_NON_FIPS_ALLOW:
-            non_fips_allow = 1;
-            break;
         case OPT_CIPHER:
             if (!opt_cipher(opt_unknown(), &c))
                 goto opthelp;
@@ -295,9 +291,6 @@ int enc_main(int argc, char **argv)
     argc = opt_num_rest();
     argv = opt_rest();
 
-    if (!app_load_modules(NULL))
-        goto end;
-
     if (cipher && EVP_CIPHER_flags(cipher) & EVP_CIPH_FLAG_AEAD_CIPHER) {
         BIO_printf(bio_err, "%s: AEAD ciphers not supported\n", prog);
         goto end;
@@ -309,7 +302,7 @@ int enc_main(int argc, char **argv)
     }
 
     if (dgst == NULL)
-        dgst = EVP_md5();
+        dgst = EVP_sha256();
 
     /* It must be large enough for a base64 encoded line */
     if (base64 && bsize < 80)
@@ -503,9 +496,6 @@ int enc_main(int argc, char **argv)
          */
 
         BIO_get_cipher_ctx(benc, &ctx);
-
-        if (non_fips_allow)
-            EVP_CIPHER_CTX_set_flags(ctx, EVP_CIPH_FLAG_NON_FIPS_ALLOW);
 
         if (!EVP_CipherInit_ex(ctx, cipher, NULL, NULL, NULL, enc)) {
             BIO_printf(bio_err, "Error setting cipher %s\n",

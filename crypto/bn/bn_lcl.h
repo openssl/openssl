@@ -292,23 +292,11 @@ struct bn_gencb_st {
  * (with draws in between).  Very small exponents are often selected
  * with low Hamming weight, so we use  w = 1  for b <= 23.
  */
-# if 1
-#  define BN_window_bits_for_exponent_size(b) \
+# define BN_window_bits_for_exponent_size(b) \
                 ((b) > 671 ? 6 : \
                  (b) > 239 ? 5 : \
                  (b) >  79 ? 4 : \
                  (b) >  23 ? 3 : 1)
-# else
-/*
- * Old SSLeay/OpenSSL table. Maximum window size was 5, so this table differs
- * for b==1024; but it coincides for other interesting values (b==160,
- * b==512).
- */
-#  define BN_window_bits_for_exponent_size(b) \
-                ((b) > 255 ? 5 : \
-                 (b) > 127 ? 4 : \
-                 (b) >  17 ? 3 : 1)
-# endif
 
 /*
  * BN_mod_exp_mont_conttime is based on the assumption that the L1 data cache
@@ -650,10 +638,10 @@ unsigned __int64 _umul128(unsigned __int64 a, unsigned __int64 b,
         }
 # endif                         /* !BN_LLONG */
 
-void BN_init(BIGNUM *a);
 void BN_RECP_CTX_init(BN_RECP_CTX *recp);
 void BN_MONT_CTX_init(BN_MONT_CTX *ctx);
 
+void bn_init(BIGNUM *a);
 void bn_mul_normal(BN_ULONG *r, BN_ULONG *a, int na, BN_ULONG *b, int nb);
 void bn_mul_comba8(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b);
 void bn_mul_comba4(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b);

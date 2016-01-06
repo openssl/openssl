@@ -73,10 +73,6 @@
 #include <openssl/pem.h>
 #include "s_apps.h"
 #include <openssl/err.h>
-#ifdef WIN32_STUFF
-# include "winmain.h"
-# include "wintext.h"
-#endif
 #if !defined(OPENSSL_SYS_MSDOS)
 # include OPENSSL_UNISTD
 #endif
@@ -166,9 +162,6 @@ int s_time_main(int argc, char **argv)
         0, ver;
     long bytes_read = 0, finishtime = 0;
     OPTION_CHOICE o;
-#ifdef OPENSSL_SYS_WIN32
-    int exitNow = 0;            /* Set when it's time to exit main */
-#endif
 
     meth = TLS_client_method();
     verify_depth = 0;
@@ -281,14 +274,6 @@ int s_time_main(int argc, char **argv)
     for (;;) {
         if (finishtime < (long)time(NULL))
             break;
-#ifdef WIN32_STUFF
-
-        if (flushWinMsgs(0) == -1)
-            goto end;
-
-        if (waitingToDie || exitNow) /* we're dead */
-            goto end;
-#endif
 
         if ((scon = doConnection(NULL, host, ctx)) == NULL)
             goto end;
@@ -377,14 +362,6 @@ int s_time_main(int argc, char **argv)
     for (;;) {
         if (finishtime < (long)time(NULL))
             break;
-
-#ifdef WIN32_STUFF
-        if (flushWinMsgs(0) == -1)
-            goto end;
-
-        if (waitingToDie || exitNow) /* we're dead */
-            goto end;
-#endif
 
         if ((doConnection(scon, host, ctx)) == NULL)
             goto end;

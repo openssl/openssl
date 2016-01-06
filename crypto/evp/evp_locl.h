@@ -57,6 +57,20 @@
  *
  */
 
+/* EVP_MD_CTX related stuff */
+
+struct evp_md_ctx_st {
+    const EVP_MD *digest;
+    ENGINE *engine;             /* functional reference if 'digest' is
+                                 * ENGINE-provided */
+    unsigned long flags;
+    void *md_data;
+    /* Public key context for sign/verify */
+    EVP_PKEY_CTX *pctx;
+    /* Update function: usually copied from EVP_MD */
+    int (*update) (EVP_MD_CTX *ctx, const void *data, size_t count);
+} /* EVP_MD_CTX */ ;
+
 /* Macros to code block cipher wrappers */
 
 /* Wrapper functions for each cipher mode */
@@ -265,3 +279,19 @@ int PKCS5_v2_PBKDF2_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass,
                              int passlen, ASN1_TYPE *param,
                              const EVP_CIPHER *c, const EVP_MD *md,
                              int en_de);
+
+struct evp_Encode_Ctx_st {
+    /* number saved in a partial encode/decode */
+    int num;
+    /*
+     * The length is either the output line length (in input bytes) or the
+     * shortest input line length that is ok.  Once decoding begins, the
+     * length is adjusted up each time a longer line is decoded
+     */
+    int length;
+    /* data to encode */
+    unsigned char enc_data[80];
+    /* number read on current line */
+    int line_num;
+    int expect_nl;
+};

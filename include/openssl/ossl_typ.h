@@ -137,6 +137,10 @@ typedef struct evp_pkey_asn1_method_st EVP_PKEY_ASN1_METHOD;
 typedef struct evp_pkey_method_st EVP_PKEY_METHOD;
 typedef struct evp_pkey_ctx_st EVP_PKEY_CTX;
 
+typedef struct evp_Encode_Ctx_st EVP_ENCODE_CTX;
+
+typedef struct hmac_ctx_st HMAC_CTX;
+
 typedef struct dh_st DH;
 typedef struct dh_method DH_METHOD;
 
@@ -146,10 +150,10 @@ typedef struct dsa_method DSA_METHOD;
 typedef struct rsa_st RSA;
 typedef struct rsa_meth_st RSA_METHOD;
 
-typedef struct rand_meth_st RAND_METHOD;
+typedef struct ec_key_st EC_KEY;
+typedef struct ec_key_method_st EC_KEY_METHOD;
 
-typedef struct ecdh_method ECDH_METHOD;
-typedef struct ecdsa_method ECDSA_METHOD;
+typedef struct rand_meth_st RAND_METHOD;
 
 typedef struct x509_st X509;
 typedef struct X509_algor_st X509_ALGOR;
@@ -190,13 +194,6 @@ typedef struct ISSUING_DIST_POINT_st ISSUING_DIST_POINT;
 typedef struct NAME_CONSTRAINTS_st NAME_CONSTRAINTS;
 
 typedef struct crypto_ex_data_st CRYPTO_EX_DATA;
-/* Callback types for crypto.h */
-typedef int CRYPTO_EX_new (void *parent, void *ptr, CRYPTO_EX_DATA *ad,
-                           int idx, long argl, void *argp);
-typedef void CRYPTO_EX_free (void *parent, void *ptr, CRYPTO_EX_DATA *ad,
-                             int idx, long argl, void *argp);
-typedef int CRYPTO_EX_dup (CRYPTO_EX_DATA *to, CRYPTO_EX_DATA *from,
-                           void *from_d, int idx, long argl, void *argp);
 
 typedef struct ocsp_req_ctx_st OCSP_REQ_CTX;
 typedef struct ocsp_response_st OCSP_RESPONSE;

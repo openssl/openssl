@@ -67,7 +67,7 @@ const char *get_gost_engine_param(int param)
     tmp = getenv(gost_envnames[param]);
     if (tmp) {
         OPENSSL_free(gost_params[param]);
-        gost_params[param] = BUF_strdup(tmp);
+        gost_params[param] = OPENSSL_strdup(tmp);
         return gost_params[param];
     }
     return NULL;
@@ -85,7 +85,7 @@ int gost_set_default_param(int param, const char *value)
     if (!tmp)
         tmp = value;
     OPENSSL_free(gost_params[param]);
-    gost_params[param] = BUF_strdup(tmp);
+    gost_params[param] = OPENSSL_strdup(tmp);
 
     return 1;
 }

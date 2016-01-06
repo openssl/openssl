@@ -57,7 +57,7 @@
  */
 
 /*
- * sign-it.cpp - Simple test app using SSLeay envelopes to sign data
+ * sign-it.cpp - Simple test app using EVP envelopes to sign data
  * 29.9.1996, Sampo Kellomaki <sampo@iki.fi>
  */
 

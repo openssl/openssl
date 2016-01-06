@@ -64,12 +64,4 @@ L<ssl(3)>, L<SSL_CTX_set_verify(3)>,
 L<SSL_get_verify_result(3)>,
 L<SSL_CTX_load_verify_locations(3)>
 
-=head1 HISTORY
-
-Previous to OpenSSL 0.9.7, the I<arg> argument to B<SSL_CTX_set_cert_verify_callback>
-was ignored, and I<callback> was called simply as
- int (*callback)(X509_STORE_CTX *)
-To compile software written for previous versions of OpenSSL, a dummy
-argument will have to be added to I<callback>.
-
 =cut

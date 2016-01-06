@@ -39,9 +39,4 @@ None of the functions return a value.
 L<conf(5)>, L<OPENSSL_config(3)>,
 L<CONF_modules_load_file(3)>
 
-=head1 HISTORY
-
-CONF_modules_free(), CONF_modules_unload(), and CONF_modules_finish()
-first appeared in OpenSSL 0.9.7.
-
 =cut

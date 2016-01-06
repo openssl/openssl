@@ -98,7 +98,7 @@ static int pkey_rsa_init(EVP_PKEY_CTX *ctx)
 {
     RSA_PKEY_CTX *rctx;
     rctx = OPENSSL_zalloc(sizeof(*rctx));
-    if (!rctx)
+    if (rctx == NULL)
         return 0;
     rctx->nbits = 1024;
     rctx->pad_mode = RSA_PKCS1_PADDING;
@@ -128,7 +128,7 @@ static int pkey_rsa_copy(EVP_PKEY_CTX *dst, EVP_PKEY_CTX *src)
     dctx->mgf1md = sctx->mgf1md;
     if (sctx->oaep_label) {
         OPENSSL_free(dctx->oaep_label);
-        dctx->oaep_label = BUF_memdup(sctx->oaep_label, sctx->oaep_labellen);
+        dctx->oaep_label = OPENSSL_memdup(sctx->oaep_label, sctx->oaep_labellen);
         if (!dctx->oaep_label)
             return 0;
         dctx->oaep_labellen = sctx->oaep_labellen;
@@ -141,7 +141,7 @@ static int setup_tbuf(RSA_PKEY_CTX *ctx, EVP_PKEY_CTX *pk)
     if (ctx->tbuf)
         return 1;
     ctx->tbuf = OPENSSL_malloc(EVP_PKEY_size(pk->pkey));
-    if (!ctx->tbuf)
+    if (ctx->tbuf == NULL)
         return 0;
     return 1;
 }
@@ -377,8 +377,11 @@ static int pkey_rsa_decrypt(EVP_PKEY_CTX *ctx,
 
 static int check_padding_md(const EVP_MD *md, int padding)
 {
+    int mdnid;
     if (!md)
         return 1;
+
+    mdnid = EVP_MD_type(md);
 
     if (padding == RSA_NO_PADDING) {
         RSAerr(RSA_F_CHECK_PADDING_MD, RSA_R_INVALID_PADDING_MODE);
@@ -386,11 +389,31 @@ static int check_padding_md(const EVP_MD *md, int padding)
     }
 
     if (padding == RSA_X931_PADDING) {
-        if (RSA_X931_hash_id(EVP_MD_type(md)) == -1) {
+        if (RSA_X931_hash_id(mdnid) == -1) {
             RSAerr(RSA_F_CHECK_PADDING_MD, RSA_R_INVALID_X931_DIGEST);
             return 0;
         }
-        return 1;
+    } else {
+        switch(mdnid) {
+        /* List of all supported RSA digests */
+        case NID_sha1:
+        case NID_sha224:
+        case NID_sha256:
+        case NID_sha384:
+        case NID_sha512:
+        case NID_md5:
+        case NID_md5_sha1:
+        case NID_md2:
+        case NID_md4:
+        case NID_mdc2:
+        case NID_ripemd160:
+            return 1;
+
+        default:
+            RSAerr(RSA_F_CHECK_PADDING_MD, RSA_R_INVALID_DIGEST);
+            return 0;
+
+        }
     }
 
     return 1;
@@ -634,17 +657,17 @@ static int pkey_rsa_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
     RSA_PKEY_CTX *rctx = ctx->data;
     BN_GENCB *pcb;
     int ret;
-    if (!rctx->pub_exp) {
+    if (rctx->pub_exp == NULL) {
         rctx->pub_exp = BN_new();
-        if (!rctx->pub_exp || !BN_set_word(rctx->pub_exp, RSA_F4))
+        if (rctx->pub_exp == NULL || !BN_set_word(rctx->pub_exp, RSA_F4))
             return 0;
     }
     rsa = RSA_new();
-    if (!rsa)
+    if (rsa == NULL)
         return 0;
     if (ctx->pkey_gencb) {
         pcb = BN_GENCB_new();
-        if (!pcb) {
+        if (pcb == NULL) {
             RSA_free(rsa);
             return 0;
         }

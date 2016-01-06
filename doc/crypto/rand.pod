@@ -25,7 +25,7 @@ rand - pseudo-random number generator
 
  void RAND_set_rand_method(const RAND_METHOD *meth);
  const RAND_METHOD *RAND_get_rand_method(void);
- RAND_METHOD *RAND_SSLeay(void);
+ RAND_METHOD *RAND_OpenSSL(void);
 
  void RAND_cleanup(void);
 
@@ -61,108 +61,6 @@ seeding process whenever the application is started.
 
 L<RAND_bytes(3)> describes how to obtain random data from the
 PRNG. 
-
-=head1 INTERNALS
-
-The RAND_SSLeay() method implements a PRNG based on a cryptographic
-hash function.
-
-The following description of its design is based on the SSLeay
-documentation:
-
-First up I will state the things I believe I need for a good RNG.
-
-=over 4
-
-=item 1
-
-A good hashing algorithm to mix things up and to convert the RNG 'state'
-to random numbers.
-
-=item 2
-
-An initial source of random 'state'.
-
-=item 3
-
-The state should be very large.  If the RNG is being used to generate
-4096 bit RSA keys, 2 2048 bit random strings are required (at a minimum).
-If your RNG state only has 128 bits, you are obviously limiting the
-search space to 128 bits, not 2048.  I'm probably getting a little
-carried away on this last point but it does indicate that it may not be
-a bad idea to keep quite a lot of RNG state.  It should be easier to
-break a cipher than guess the RNG seed data.
-
-=item 4
-
-Any RNG seed data should influence all subsequent random numbers
-generated.  This implies that any random seed data entered will have
-an influence on all subsequent random numbers generated.
-
-=item 5
-
-When using data to seed the RNG state, the data used should not be
-extractable from the RNG state.  I believe this should be a
-requirement because one possible source of 'secret' semi random
-data would be a private key or a password.  This data must
-not be disclosed by either subsequent random numbers or a
-'core' dump left by a program crash.
-
-=item 6
-
-Given the same initial 'state', 2 systems should deviate in their RNG state
-(and hence the random numbers generated) over time if at all possible.
-
-=item 7
-
-Given the random number output stream, it should not be possible to determine
-the RNG state or the next random number.
-
-=back
-
-The algorithm is as follows.
-
-There is global state made up of a 1023 byte buffer (the 'state'), a
-working hash value ('md'), and a counter ('count').
-
-Whenever seed data is added, it is inserted into the 'state' as
-follows.
-
-The input is chopped up into units of 20 bytes (or less for
-the last block).  Each of these blocks is run through the hash
-function as follows:  The data passed to the hash function
-is the current 'md', the same number of bytes from the 'state'
-(the location determined by in incremented looping index) as
-the current 'block', the new key data 'block', and 'count'
-(which is incremented after each use).
-The result of this is kept in 'md' and also xored into the
-'state' at the same locations that were used as input into the
-hash function. I
-believe this system addresses points 1 (hash function; currently
-SHA-1), 3 (the 'state'), 4 (via the 'md'), 5 (by the use of a hash
-function and xor).
-
-When bytes are extracted from the RNG, the following process is used.
-For each group of 10 bytes (or less), we do the following:
-
-Input into the hash function the local 'md' (which is initialized from
-the global 'md' before any bytes are generated), the bytes that are to
-be overwritten by the random bytes, and bytes from the 'state'
-(incrementing looping index). From this digest output (which is kept
-in 'md'), the top (up to) 10 bytes are returned to the caller and the
-bottom 10 bytes are xored into the 'state'.
-
-Finally, after we have finished 'num' random bytes for the caller,
-'count' (which is incremented) and the local and global 'md' are fed
-into the hash function and the results are kept in the global 'md'.
-
-I believe the above addressed points 1 (use of SHA-1), 6 (by hashing
-into the 'state' the 'old' data from the caller that is about to be
-overwritten) and 7 (by not using the 10 bytes given to the caller to
-update the 'state', but they are used to update 'md').
-
-So of the points raised, only 2 is not addressed (but see
-L<RAND_add(3)>).
 
 =head1 SEE ALSO
 

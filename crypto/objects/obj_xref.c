@@ -147,16 +147,16 @@ int OBJ_find_sigid_by_algs(int *psignid, int dig_nid, int pkey_nid)
 int OBJ_add_sigid(int signid, int dig_id, int pkey_id)
 {
     nid_triple *ntr;
-    if (!sig_app)
+    if (sig_app == NULL)
         sig_app = sk_nid_triple_new(sig_sk_cmp);
-    if (!sig_app)
+    if (sig_app == NULL)
         return 0;
-    if (!sigx_app)
+    if (sigx_app == NULL)
         sigx_app = sk_nid_triple_new(sigx_cmp);
-    if (!sigx_app)
+    if (sigx_app == NULL)
         return 0;
     ntr = OPENSSL_malloc(sizeof(*ntr));
-    if (!ntr)
+    if (ntr == NULL)
         return 0;
     ntr->sign_id = signid;
     ntr->hash_id = dig_id;

@@ -422,7 +422,7 @@ bn_mul_add_words:
 
 // This loop spins in 3*(n+10) ticks on Itanium and in 2*(n+10) on
 // Itanium 2. Yes, unlike previous versions it scales:-) Previous
-// version was peforming *all* additions in IALU and was starving
+// version was performing *all* additions in IALU and was starving
 // for those even on Itanium 2. In this version one addition is
 // moved to FPU and is folded with multiplication. This is at cost
 // of propogating the result from previous call to this subroutine

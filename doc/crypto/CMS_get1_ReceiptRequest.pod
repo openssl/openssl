@@ -60,10 +60,4 @@ L<ERR_get_error(3)>, L<CMS_sign(3)>,
 L<CMS_sign_receipt(3)>, L<CMS_verify(3)>
 L<CMS_verify_receipt(3)>
 
-=head1 HISTORY
-
-CMS_ReceiptRequest_create0(), CMS_add1_ReceiptRequest(),
-CMS_get1_ReceiptRequest() and CMS_ReceiptRequest_get0_values() were added to
-OpenSSL 0.9.8
-
 =cut

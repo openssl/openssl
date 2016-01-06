@@ -193,17 +193,17 @@ int version_main(int argc, char **argv)
         version = 1;
 
     if (version) {
-        if (SSLeay() == SSLEAY_VERSION_NUMBER) {
-            printf("%s\n", SSLeay_version(SSLEAY_VERSION));
+        if (OpenSSL_version_num() == OPENSSL_VERSION_NUMBER) {
+            printf("%s\n", OpenSSL_version(OPENSSL_VERSION));
         } else {
             printf("%s (Library: %s)\n",
-                   OPENSSL_VERSION_TEXT, SSLeay_version(SSLEAY_VERSION));
+                   OPENSSL_VERSION_TEXT, OpenSSL_version(OPENSSL_VERSION));
         }
     }
     if (date)
-        printf("%s\n", SSLeay_version(SSLEAY_BUILT_ON));
+        printf("%s\n", OpenSSL_version(OPENSSL_BUILT_ON));
     if (platform)
-        printf("%s\n", SSLeay_version(SSLEAY_PLATFORM));
+        printf("%s\n", OpenSSL_version(OPENSSL_PLATFORM));
     if (options) {
         printf("options:  ");
         printf("%s ", BN_options());
@@ -225,9 +225,9 @@ int version_main(int argc, char **argv)
         printf("\n");
     }
     if (cflags)
-        printf("%s\n", SSLeay_version(SSLEAY_CFLAGS));
+        printf("%s\n", OpenSSL_version(OPENSSL_CFLAGS));
     if (dir)
-        printf("%s\n", SSLeay_version(SSLEAY_DIR));
+        printf("%s\n", OpenSSL_version(OPENSSL_DIR));
     ret = 0;
  end:
     return (ret);

@@ -153,9 +153,4 @@ L<X509_STORE_CTX_get_error(3)>
 L<X509_STORE_set_verify_cb_func(3)>
 L<X509_STORE_CTX_get_ex_new_index(3)>
 
-=head1 HISTORY
-
-X509_STORE_CTX_set_verify_cb() is available in all versions of SSLeay and
-OpenSSL.
-
 =cut

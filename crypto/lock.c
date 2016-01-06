@@ -118,7 +118,7 @@
 #include <openssl/safestack.h>
 
 #if defined(OPENSSL_SYS_WIN32)
-static double SSLeay_MSVC5_hack = 0.0; /* and for VC1.5 */
+static double OpenSSL_MSVC5_hack = 0.0; /* and for VC1.5 */
 #endif
 
 DECLARE_STACK_OF(CRYPTO_dynlock)
@@ -207,7 +207,7 @@ int CRYPTO_get_new_lockid(char *name)
      * using /MT. Without this, the application cannot use any floating point
      * printf's. It also seems to be needed for Visual C 1.5 (win16)
      */
-    SSLeay_MSVC5_hack = (double)name[0] * (double)name[1];
+    OpenSSL_MSVC5_hack = (double)name[0] * (double)name[1];
 #endif
 
     if ((app_locks == NULL)
@@ -215,7 +215,7 @@ int CRYPTO_get_new_lockid(char *name)
         CRYPTOerr(CRYPTO_F_CRYPTO_GET_NEW_LOCKID, ERR_R_MALLOC_FAILURE);
         return (0);
     }
-    if ((str = BUF_strdup(name)) == NULL) {
+    if ((str = OPENSSL_strdup(name)) == NULL) {
         CRYPTOerr(CRYPTO_F_CRYPTO_GET_NEW_LOCKID, ERR_R_MALLOC_FAILURE);
         return (0);
     }

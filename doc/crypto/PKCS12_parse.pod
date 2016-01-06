@@ -50,8 +50,4 @@ Attributes currently cannot be stored in the private key B<EVP_PKEY> structure.
 
 L<d2i_PKCS12(3)>
 
-=head1 HISTORY
-
-PKCS12_parse was added in OpenSSL 0.9.3
-
 =cut

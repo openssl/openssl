@@ -99,7 +99,7 @@ int PKCS8_pkey_set0(PKCS8_PRIV_KEY_INFO *priv, ASN1_OBJECT *aobj,
         int pmtype;
         ASN1_OCTET_STRING *oct;
         oct = ASN1_OCTET_STRING_new();
-        if (!oct)
+        if (oct == NULL)
             return 0;
         oct->data = penc;
         ppenc = &oct->data;

@@ -47,8 +47,4 @@ mentioned in CMS_verify() also applies to CMS_decompress().
 
 L<ERR_get_error(3)>, L<CMS_compress(3)>
 
-=head1 HISTORY
-
-CMS_uncompress() was added to OpenSSL 0.9.8
-
 =cut

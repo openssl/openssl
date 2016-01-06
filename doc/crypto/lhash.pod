@@ -234,69 +234,13 @@ without any "const" qualifiers.
 
 lh_<type>_insert() returns B<NULL> both for success and error.
 
-=head1 INTERNALS
-
-The following description is based on the SSLeay documentation:
-
-The B<lhash> library implements a hash table described in the
-I<Communications of the ACM> in 1991.  What makes this hash table
-different is that as the table fills, the hash table is increased (or
-decreased) in size via OPENSSL_realloc().  When a 'resize' is done, instead of
-all hashes being redistributed over twice as many 'buckets', one
-bucket is split.  So when an 'expand' is done, there is only a minimal
-cost to redistribute some values.  Subsequent inserts will cause more
-single 'bucket' redistributions but there will never be a sudden large
-cost due to redistributing all the 'buckets'.
-
-The state for a particular hash table is kept in the B<LHASH> structure.
-The decision to increase or decrease the hash table size is made
-depending on the 'load' of the hash table.  The load is the number of
-items in the hash table divided by the size of the hash table.  The
-default values are as follows.  If (hash->up_load E<lt> load) =E<gt>
-expand.  if (hash-E<gt>down_load E<gt> load) =E<gt> contract.  The
-B<up_load> has a default value of 1 and B<down_load> has a default value
-of 2.  These numbers can be modified by the application by just
-playing with the B<up_load> and B<down_load> variables.  The 'load' is
-kept in a form which is multiplied by 256.  So
-hash-E<gt>up_load=8*256; will cause a load of 8 to be set.
-
-If you are interested in performance the field to watch is
-num_comp_calls.  The hash library keeps track of the 'hash' value for
-each item so when a lookup is done, the 'hashes' are compared, if
-there is a match, then a full compare is done, and
-hash-E<gt>num_comp_calls is incremented.  If num_comp_calls is not equal
-to num_delete plus num_retrieve it means that your hash function is
-generating hashes that are the same for different values.  It is
-probably worth changing your hash function if this is the case because
-even if your hash table has 10 items in a 'bucket', it can be searched
-with 10 B<unsigned long> compares and 10 linked list traverses.  This
-will be much less expensive that 10 calls to your compare function.
-
-lh_strhash() is a demo string hashing function:
-
- unsigned long lh_strhash(const char *c);
-
-Since the B<LHASH> routines would normally be passed structures, this
-routine would not normally be passed to lh_<type>_new(), rather it would be
-used in the function passed to lh_<type>_new().
-
 =head1 SEE ALSO
 
 L<lh_stats(3)>
 
 =head1 HISTORY
 
-The B<lhash> library is available in all versions of SSLeay and OpenSSL.
-lh_error() was added in SSLeay 0.9.1b.
-
-This manpage is derived from the SSLeay documentation.
-
-In OpenSSL 0.9.7, all lhash functions that were passed function pointers
-were changed for better type safety, and the function types LHASH_COMP_FN_TYPE,
-LHASH_HASH_FN_TYPE, LHASH_DOALL_FN_TYPE and LHASH_DOALL_ARG_FN_TYPE 
-became available.
-
-In OpenSSL 1.0.0, the lhash interface was revamped for even better
+In OpenSSL 1.0.0, the lhash interface was revamped for better
 type checking.
 
 =cut

@@ -46,6 +46,6 @@ L<err(3)>, L<ERR_get_error(3)>
 =head1 HISTORY
 
 ERR_GET_LIB(), ERR_GET_FUNC() and ERR_GET_REASON() are available in
-all versions of SSLeay and OpenSSL.
+all versions of OpenSSL.
 
 =cut

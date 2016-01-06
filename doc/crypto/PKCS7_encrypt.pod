@@ -74,7 +74,6 @@ L<ERR_get_error(3)>, L<PKCS7_decrypt(3)>
 
 =head1 HISTORY
 
-PKCS7_decrypt() was added to OpenSSL 0.9.5
-The B<PKCS7_STREAM> flag was first supported in OpenSSL 1.0.0.
+The B<PKCS7_STREAM> flag was added in OpenSSL 1.0.0.
 
 =cut

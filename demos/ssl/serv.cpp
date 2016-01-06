@@ -2,7 +2,7 @@
    30.9.1996, Sampo Kellomaki <sampo@iki.fi> */
 
 
-/* mangled to work with SSLeay-0.9.0b and OpenSSL 0.9.2b
+/* mangled to work with OpenSSL 0.9.2b
    Simplified to be even more minimal
    12/98 - 4/99 Wade Scholine <wades@mail.cybg.com> */
 
@@ -17,7 +17,7 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 
-#include <openssl/rsa.h>       /* SSLeay stuff */
+#include <openssl/rsa.h>
 #include <openssl/crypto.h>
 #include <openssl/x509.h>
 #include <openssl/pem.h>
@@ -54,7 +54,7 @@ void main ()
   /* SSL preliminaries. We keep the certificate and key with the context. */
 
   SSL_load_error_strings();
-  SSLeay_add_ssl_algorithms();
+  OpenSSL_add_ssl_algorithms();
   meth = TLS_server_method();
   ctx = SSL_CTX_new (meth);
   if (!ctx) {

@@ -170,6 +170,17 @@ link_a.gnu:
 link_app.gnu:
 	@ $(DO_GNU_APP); $(LINK_APP)
 
+link_a.linux-shared:
+	@if [ $(LIBNAME) != "crypto" -a $(LIBNAME) != "ssl" ]; then echo libname is $(LIBNAME); sleep 2; $(DO_GNU_SO); else \
+	$(PERL) util/mkdef.pl $(LIBNAME) linux >$(LIBNAME).map; \
+	$(CALC_VERSIONS); \
+	SHLIB=lib$(LIBNAME).so; \
+	SHLIB_SUFFIX=; \
+	ALLSYMSFLAGS='-Wl,--whole-archive,--version-script=$(LIBNAME).map'; \
+	NOALLSYMSFLAGS='-Wl,--no-whole-archive'; \
+	SHAREDFLAGS="$(CFLAGS) $(SHARED_LDFLAGS) -shared -Wl,-Bsymbolic -Wl,-soname=$$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX"; \
+	fi; $(LINK_SO_A)
+
 link_o.bsd:
 	@if $(DETECT_GNU_LD); then $(DO_GNU_SO); else \
 	$(CALC_VERSIONS); \
@@ -566,7 +577,7 @@ symlink.cygwin symlink.alpha-osf1 symlink.tru64 symlink.tru64-rpath:
 
 # Compatibility targets
 link_o.bsd-gcc-shared link_o.linux-shared link_o.gnu-shared: link_o.gnu
-link_a.bsd-gcc-shared link_a.linux-shared link_a.gnu-shared: link_a.gnu
+link_a.bsd-gcc-shared link_a.gnu-shared: link_a.gnu
 link_app.bsd-gcc-shared link_app.linux-shared link_app.gnu-shared: link_app.gnu
 symlink.bsd-gcc-shared symlink.bsd-shared symlink.linux-shared symlink.gnu-shared: symlink.gnu
 link_o.bsd-shared: link_o.bsd

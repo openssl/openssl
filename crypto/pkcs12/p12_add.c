@@ -76,15 +76,19 @@ PKCS12_SAFEBAG *PKCS12_item_pack_safebag(void *obj, const ASN1_ITEM *it,
     bag->type = OBJ_nid2obj(nid1);
     if (!ASN1_item_pack(obj, it, &bag->value.octet)) {
         PKCS12err(PKCS12_F_PKCS12_ITEM_PACK_SAFEBAG, ERR_R_MALLOC_FAILURE);
-        return NULL;
+        goto err;
     }
     if ((safebag = PKCS12_SAFEBAG_new()) == NULL) {
         PKCS12err(PKCS12_F_PKCS12_ITEM_PACK_SAFEBAG, ERR_R_MALLOC_FAILURE);
-        return NULL;
+        goto err;
     }
     safebag->value.bag = bag;
     safebag->type = OBJ_nid2obj(nid2);
     return safebag;
+
+ err:
+    PKCS12_BAGS_free(bag);
+    return NULL;
 }
 
 /* Turn PKCS8 object into a keybag */
@@ -129,6 +133,7 @@ PKCS12_SAFEBAG *PKCS12_MAKE_SHKEYBAG(int pbe_nid, const char *pass,
           PKCS8_encrypt(pbe_nid, pbe_ciph, pass, passlen, salt, saltlen, iter,
                         p8))) {
         PKCS12err(PKCS12_F_PKCS12_MAKE_SHKEYBAG, ERR_R_MALLOC_FAILURE);
+        PKCS12_SAFEBAG_free(bag);
         return NULL;
     }
 
@@ -147,14 +152,18 @@ PKCS7 *PKCS12_pack_p7data(STACK_OF(PKCS12_SAFEBAG) *sk)
     p7->type = OBJ_nid2obj(NID_pkcs7_data);
     if ((p7->d.data = ASN1_OCTET_STRING_new()) == NULL) {
         PKCS12err(PKCS12_F_PKCS12_PACK_P7DATA, ERR_R_MALLOC_FAILURE);
-        return NULL;
+        goto err;
     }
 
     if (!ASN1_item_pack(sk, ASN1_ITEM_rptr(PKCS12_SAFEBAGS), &p7->d.data)) {
         PKCS12err(PKCS12_F_PKCS12_PACK_P7DATA, PKCS12_R_CANT_PACK_STRUCTURE);
-        return NULL;
+        goto err;
     }
     return p7;
+
+ err:
+    PKCS7_free(p7);
+    return NULL;
 }
 
 /* Unpack SAFEBAGS from PKCS#7 data ContentInfo */
@@ -185,7 +194,7 @@ PKCS7 *PKCS12_pack_p7encdata(int pbe_nid, const char *pass, int passlen,
     if (!PKCS7_set_type(p7, NID_pkcs7_encrypted)) {
         PKCS12err(PKCS12_F_PKCS12_PACK_P7ENCDATA,
                   PKCS12_R_ERROR_SETTING_ENCRYPTED_DATA_TYPE);
-        return NULL;
+        goto err;
     }
 
     pbe_ciph = EVP_get_cipherbynid(pbe_nid);
@@ -197,7 +206,7 @@ PKCS7 *PKCS12_pack_p7encdata(int pbe_nid, const char *pass, int passlen,
 
     if (!pbe) {
         PKCS12err(PKCS12_F_PKCS12_PACK_P7ENCDATA, ERR_R_MALLOC_FAILURE);
-        return NULL;
+        goto err;
     }
     X509_ALGOR_free(p7->d.encrypted->enc_data->algorithm);
     p7->d.encrypted->enc_data->algorithm = pbe;
@@ -206,10 +215,14 @@ PKCS7 *PKCS12_pack_p7encdata(int pbe_nid, const char *pass, int passlen,
           PKCS12_item_i2d_encrypt(pbe, ASN1_ITEM_rptr(PKCS12_SAFEBAGS), pass,
                                   passlen, bags, 1))) {
         PKCS12err(PKCS12_F_PKCS12_PACK_P7ENCDATA, PKCS12_R_ENCRYPT_ERROR);
-        return NULL;
+        goto err;
     }
 
     return p7;
+
+ err:
+    PKCS7_free(p7);
+    return NULL;
 }
 
 STACK_OF(PKCS12_SAFEBAG) *PKCS12_unpack_p7encdata(PKCS7 *p7, const char *pass,

@@ -111,33 +111,8 @@ DSA_new_method() returns NULL and sets an error code that can be
 obtained by L<ERR_get_error(3)> if the allocation
 fails. Otherwise it returns a pointer to the newly allocated structure.
 
-=head1 NOTES
-
-As of version 0.9.7, DSA_METHOD implementations are grouped together with other
-algorithmic APIs (eg. RSA_METHOD, EVP_CIPHER, etc) in B<ENGINE> modules. If a
-default ENGINE is specified for DSA functionality using an ENGINE API function,
-that will override any DSA defaults set using the DSA API (ie.
-DSA_set_default_method()). For this reason, the ENGINE API is the recommended way
-to control default implementations for use in DSA and other cryptographic
-algorithms.
-
 =head1 SEE ALSO
 
 L<dsa(3)>, L<DSA_new(3)>
-
-=head1 HISTORY
-
-DSA_set_default_method(), DSA_get_default_method(), DSA_set_method(),
-DSA_new_method() and DSA_OpenSSL() were added in OpenSSL 0.9.4.
-
-DSA_set_default_openssl_method() and DSA_get_default_openssl_method() replaced
-DSA_set_default_method() and DSA_get_default_method() respectively, and
-DSA_set_method() and DSA_new_method() were altered to use B<ENGINE>s rather than
-B<DSA_METHOD>s during development of the engine version of OpenSSL 0.9.6. For
-0.9.7, the handling of defaults in the ENGINE API was restructured so that this
-change was reversed, and behaviour of the other functions resembled more closely
-the previous behaviour. The behaviour of defaults in the ENGINE API now
-transparently overrides the behaviour of defaults in the DSA API without
-requiring changing these function prototypes.
 
 =cut

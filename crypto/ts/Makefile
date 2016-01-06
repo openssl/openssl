@@ -76,7 +76,6 @@ ts_asn1.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 ts_asn1.o: ../../include/openssl/conf.h ../../include/openssl/crypto.h
 ts_asn1.o: ../../include/openssl/dh.h ../../include/openssl/dsa.h
 ts_asn1.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
-ts_asn1.o: ../../include/openssl/ecdh.h ../../include/openssl/ecdsa.h
 ts_asn1.o: ../../include/openssl/err.h ../../include/openssl/evp.h
 ts_asn1.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
 ts_asn1.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
@@ -92,7 +91,6 @@ ts_conf.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 ts_conf.o: ../../include/openssl/conf.h ../../include/openssl/crypto.h
 ts_conf.o: ../../include/openssl/dh.h ../../include/openssl/dsa.h
 ts_conf.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
-ts_conf.o: ../../include/openssl/ecdh.h ../../include/openssl/ecdsa.h
 ts_conf.o: ../../include/openssl/engine.h ../../include/openssl/err.h
 ts_conf.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
 ts_conf.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
@@ -109,8 +107,7 @@ ts_err.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 ts_err.o: ../../include/openssl/buffer.h ../../include/openssl/conf.h
 ts_err.o: ../../include/openssl/crypto.h ../../include/openssl/dh.h
 ts_err.o: ../../include/openssl/dsa.h ../../include/openssl/e_os2.h
-ts_err.o: ../../include/openssl/ec.h ../../include/openssl/ecdh.h
-ts_err.o: ../../include/openssl/ecdsa.h ../../include/openssl/err.h
+ts_err.o: ../../include/openssl/ec.h ../../include/openssl/err.h
 ts_err.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
 ts_err.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
 ts_err.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
@@ -125,7 +122,6 @@ ts_lib.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
 ts_lib.o: ../../include/openssl/conf.h ../../include/openssl/crypto.h
 ts_lib.o: ../../include/openssl/dh.h ../../include/openssl/dsa.h
 ts_lib.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
-ts_lib.o: ../../include/openssl/ecdh.h ../../include/openssl/ecdsa.h
 ts_lib.o: ../../include/openssl/err.h ../../include/openssl/evp.h
 ts_lib.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
 ts_lib.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
@@ -141,8 +137,7 @@ ts_req_print.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 ts_req_print.o: ../../include/openssl/buffer.h ../../include/openssl/conf.h
 ts_req_print.o: ../../include/openssl/crypto.h ../../include/openssl/dh.h
 ts_req_print.o: ../../include/openssl/dsa.h ../../include/openssl/e_os2.h
-ts_req_print.o: ../../include/openssl/ec.h ../../include/openssl/ecdh.h
-ts_req_print.o: ../../include/openssl/ecdsa.h ../../include/openssl/err.h
+ts_req_print.o: ../../include/openssl/ec.h ../../include/openssl/err.h
 ts_req_print.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
 ts_req_print.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
 ts_req_print.o: ../../include/openssl/opensslconf.h
@@ -159,7 +154,6 @@ ts_req_utils.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 ts_req_utils.o: ../../include/openssl/conf.h ../../include/openssl/crypto.h
 ts_req_utils.o: ../../include/openssl/dh.h ../../include/openssl/dsa.h
 ts_req_utils.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
-ts_req_utils.o: ../../include/openssl/ecdh.h ../../include/openssl/ecdsa.h
 ts_req_utils.o: ../../include/openssl/err.h ../../include/openssl/evp.h
 ts_req_utils.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
 ts_req_utils.o: ../../include/openssl/objects.h
@@ -177,8 +171,7 @@ ts_rsp_print.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 ts_rsp_print.o: ../../include/openssl/buffer.h ../../include/openssl/conf.h
 ts_rsp_print.o: ../../include/openssl/crypto.h ../../include/openssl/dh.h
 ts_rsp_print.o: ../../include/openssl/dsa.h ../../include/openssl/e_os2.h
-ts_rsp_print.o: ../../include/openssl/ec.h ../../include/openssl/ecdh.h
-ts_rsp_print.o: ../../include/openssl/ecdsa.h ../../include/openssl/err.h
+ts_rsp_print.o: ../../include/openssl/ec.h ../../include/openssl/err.h
 ts_rsp_print.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
 ts_rsp_print.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
 ts_rsp_print.o: ../../include/openssl/opensslconf.h
@@ -195,7 +188,6 @@ ts_rsp_sign.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 ts_rsp_sign.o: ../../include/openssl/conf.h ../../include/openssl/crypto.h
 ts_rsp_sign.o: ../../include/openssl/dh.h ../../include/openssl/dsa.h
 ts_rsp_sign.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
-ts_rsp_sign.o: ../../include/openssl/ecdh.h ../../include/openssl/ecdsa.h
 ts_rsp_sign.o: ../../include/openssl/err.h ../../include/openssl/evp.h
 ts_rsp_sign.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
 ts_rsp_sign.o: ../../include/openssl/objects.h
@@ -213,7 +205,6 @@ ts_rsp_utils.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 ts_rsp_utils.o: ../../include/openssl/conf.h ../../include/openssl/crypto.h
 ts_rsp_utils.o: ../../include/openssl/dh.h ../../include/openssl/dsa.h
 ts_rsp_utils.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
-ts_rsp_utils.o: ../../include/openssl/ecdh.h ../../include/openssl/ecdsa.h
 ts_rsp_utils.o: ../../include/openssl/err.h ../../include/openssl/evp.h
 ts_rsp_utils.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
 ts_rsp_utils.o: ../../include/openssl/objects.h
@@ -231,7 +222,6 @@ ts_rsp_verify.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 ts_rsp_verify.o: ../../include/openssl/conf.h ../../include/openssl/crypto.h
 ts_rsp_verify.o: ../../include/openssl/dh.h ../../include/openssl/dsa.h
 ts_rsp_verify.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
-ts_rsp_verify.o: ../../include/openssl/ecdh.h ../../include/openssl/ecdsa.h
 ts_rsp_verify.o: ../../include/openssl/err.h ../../include/openssl/evp.h
 ts_rsp_verify.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
 ts_rsp_verify.o: ../../include/openssl/objects.h
@@ -249,7 +239,6 @@ ts_verify_ctx.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 ts_verify_ctx.o: ../../include/openssl/conf.h ../../include/openssl/crypto.h
 ts_verify_ctx.o: ../../include/openssl/dh.h ../../include/openssl/dsa.h
 ts_verify_ctx.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
-ts_verify_ctx.o: ../../include/openssl/ecdh.h ../../include/openssl/ecdsa.h
 ts_verify_ctx.o: ../../include/openssl/err.h ../../include/openssl/evp.h
 ts_verify_ctx.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
 ts_verify_ctx.o: ../../include/openssl/objects.h

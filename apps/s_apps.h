@@ -195,7 +195,7 @@ void tlsext_cb(SSL *s, int client_server, int type, unsigned char *data,
 
 int generate_cookie_callback(SSL *ssl, unsigned char *cookie,
                              unsigned int *cookie_len);
-int verify_cookie_callback(SSL *ssl, unsigned char *cookie,
+int verify_cookie_callback(SSL *ssl, const unsigned char *cookie,
                            unsigned int cookie_len);
 
 typedef struct ssl_excert_st SSL_EXCERT;
@@ -207,7 +207,7 @@ int load_excert(SSL_EXCERT **pexc);
 void print_ssl_summary(SSL *s);
 #ifdef HEADER_SSL_H
 int config_ctx(SSL_CONF_CTX *cctx, STACK_OF(OPENSSL_STRING) *str,
-               SSL_CTX *ctx, int no_ecdhe, int no_jpake);
+               SSL_CTX *ctx, int no_jpake);
 int ssl_ctx_add_crls(SSL_CTX *ctx, STACK_OF(X509_CRL) *crls,
                      int crl_download);
 int ssl_load_stores(SSL_CTX *ctx, const char *vfyCApath,

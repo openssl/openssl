@@ -182,10 +182,6 @@ example:
   export TSGET
   tsget file1.tsq
 
-=head1 AUTHOR
-
-Zoltan Glozik <zglozik@opentsa.org>, OpenTSA project (http://www.opentsa.org)
-
 =head1 SEE ALSO
 
 L<openssl(1)>, L<ts(1)>, L<curl(1)>, 

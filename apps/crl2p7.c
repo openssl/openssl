@@ -138,7 +138,7 @@ int crl2pkcs7_main(int argc, char **argv)
             if ((certflst == NULL)
                 && (certflst = sk_OPENSSL_STRING_new_null()) == NULL)
                 goto end;
-            if (!sk_OPENSSL_STRING_push(certflst, *(++argv))) {
+            if (!sk_OPENSSL_STRING_push(certflst, opt_arg())) {
                 sk_OPENSSL_STRING_free(certflst);
                 goto end;
             }
@@ -147,9 +147,6 @@ int crl2pkcs7_main(int argc, char **argv)
     }
     argc = opt_num_rest();
     argv = opt_rest();
-
-    if (!app_load_modules(NULL))
-        goto end;
 
     if (!nocrl) {
         in = bio_open_default(infile, 'r', informat);

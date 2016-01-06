@@ -220,10 +220,10 @@ static int tree_init(X509_POLICY_TREE **ptree, STACK_OF(X509) *certs,
 
     /* If we get this far initialize the tree */
     tree = OPENSSL_zalloc(sizeof(*tree));
-    if (!tree)
+    if (tree == NULL)
         return 0;
     tree->levels = OPENSSL_zalloc(sizeof(*tree->levels) * n);
-    if (!tree->levels) {
+    if (tree->levels == NULL) {
         OPENSSL_free(tree);
         return 0;
     }
@@ -233,7 +233,7 @@ static int tree_init(X509_POLICY_TREE **ptree, STACK_OF(X509) *certs,
     /* Root data: initialize to anyPolicy */
     data = policy_data_new(NULL, OBJ_nid2obj(NID_any_policy), 0);
 
-    if (!data || !level_add_node(level, data, NULL, tree))
+    if (data == NULL || !level_add_node(level, data, NULL, tree))
         goto bad_tree;
 
     for (i = n - 2; i >= 0; i--) {
@@ -478,9 +478,9 @@ static int tree_prune(X509_POLICY_TREE *tree, X509_POLICY_LEVEL *curr)
 static int tree_add_auth_node(STACK_OF(X509_POLICY_NODE) **pnodes,
                               X509_POLICY_NODE *pcy)
 {
-    if (!*pnodes) {
+    if (*pnodes == NULL) {
         *pnodes = policy_node_cmp_new();
-        if (!*pnodes)
+        if (*pnodes == NULL)
             return 0;
     } else if (sk_X509_POLICY_NODE_find(*pnodes, pcy) != -1)
         return 1;
@@ -584,7 +584,7 @@ static int tree_calculate_user_set(X509_POLICY_TREE *tree,
              * from anyPolicy.
              */
             extra = policy_data_new(NULL, oid, node_critical(anyPolicy));
-            if (!extra)
+            if (extra == NULL)
                 return 0;
             extra->qualifier_set = anyPolicy->data->qualifier_set;
             extra->flags = POLICY_DATA_FLAG_SHARED_QUALIFIERS
