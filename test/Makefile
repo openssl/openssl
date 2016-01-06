@@ -549,7 +549,8 @@ gost2814789test.o: ../include/openssl/pkcs7.h ../include/openssl/safestack.h
 gost2814789test.o: ../include/openssl/sha.h ../include/openssl/stack.h
 gost2814789test.o: ../include/openssl/symhacks.h ../include/openssl/x509.h
 gost2814789test.o: ../include/openssl/x509_vfy.h gost2814789test.c
-heartbeat_test.o: ../e_os.h ../include/openssl/asn1.h
+heartbeat_test.o: ../e_os.h ../include/internal/dane.h
+heartbeat_test.o: ../include/internal/numbers.h ../include/openssl/asn1.h
 heartbeat_test.o: ../include/openssl/async.h ../include/openssl/bio.h
 heartbeat_test.o: ../include/openssl/bn.h ../include/openssl/buffer.h
 heartbeat_test.o: ../include/openssl/comp.h ../include/openssl/crypto.h
@@ -623,12 +624,12 @@ p5_crpt2_test.o: ../include/openssl/pkcs7.h ../include/openssl/safestack.h
 p5_crpt2_test.o: ../include/openssl/sha.h ../include/openssl/stack.h
 p5_crpt2_test.o: ../include/openssl/symhacks.h ../include/openssl/x509.h
 p5_crpt2_test.o: ../include/openssl/x509_vfy.h p5_crpt2_test.c
-packettest.o: ../include/openssl/bn.h ../include/openssl/buffer.h
-packettest.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
-packettest.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
-packettest.o: ../include/openssl/ossl_typ.h ../include/openssl/safestack.h
-packettest.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
-packettest.o: ../ssl/packet_locl.h packettest.c
+packettest.o: ../include/internal/numbers.h ../include/openssl/bn.h
+packettest.o: ../include/openssl/buffer.h ../include/openssl/crypto.h
+packettest.o: ../include/openssl/e_os2.h ../include/openssl/opensslconf.h
+packettest.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
+packettest.o: ../include/openssl/safestack.h ../include/openssl/stack.h
+packettest.o: ../include/openssl/symhacks.h ../ssl/packet_locl.h packettest.c
 pbelutest.o: ../include/openssl/asn1.h ../include/openssl/bio.h
 pbelutest.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
 pbelutest.o: ../include/openssl/evp.h ../include/openssl/obj_mac.h
@@ -668,7 +669,8 @@ sha1test.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
 sha1test.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
 sha1test.o: ../include/openssl/safestack.h ../include/openssl/sha.h
 sha1test.o: ../include/openssl/stack.h ../include/openssl/symhacks.h sha1test.c
-ssltest.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/async.h
+ssltest.o: ../e_os.h ../include/internal/dane.h ../include/internal/numbers.h
+ssltest.o: ../include/openssl/asn1.h ../include/openssl/async.h
 ssltest.o: ../include/openssl/bio.h ../include/openssl/bn.h
 ssltest.o: ../include/openssl/buffer.h ../include/openssl/comp.h
 ssltest.o: ../include/openssl/conf.h ../include/openssl/crypto.h
