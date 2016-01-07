@@ -160,7 +160,7 @@ foreach (@ARGV, split(/ /, $options))
 	if ($_ eq "linux") {
 		$linux=1;
 	}
-	$VMS=1 if $_ eq "VMS";
+	$VMS=$VMSNonVAX=1 if $_ eq "VMS";
 	$OS2=1 if $_ eq "OS2";
 	if ($_ eq "zlib" || $_ eq "enable-zlib" || $_ eq "zlib-dynamic"
 			 || $_ eq "enable-zlib-dynamic") {
@@ -253,10 +253,12 @@ if (!$libname) {
 if ($W32 + $VMS + $OS2 + $linux == 0) {
 	$W32 = 1;
 }
+die "Please, only one platform at a time"
+    if ($W32 + $VMS + $OS2 + $linux > 1);
 
 if (!$do_ssl && !$do_crypto)
 	{
-	print STDERR "usage: $0 ( ssl | crypto ) [ 16 | 32 | NT | OS2 ]\n";
+	print STDERR "usage: $0 ( ssl | crypto ) [ 16 | 32 | NT | OS2 | linux | VMS ]\n";
 	exit(1);
 	}
 
@@ -1296,27 +1298,30 @@ sub print_def_file
 	my $what = "OpenSSL: implementation of Secure Socket Layer";
 	my $description = "$what $version, $name - http://$http_vendor";
 	my $prevsymversion = "", $prevprevsymversion = "";
+        # For VMS
+        my $prevnum = 0;
+        my $symbolcount = 0;
 
-	if (!$linux)
-		{
-		if ($W32)
-			{ $libname.="32"; }
-		elsif ($OS2)
-			{ # DLL names should not clash on the whole system.
-			  # However, they should not have any particular relationship
-			  # to the name of the static library.  Chose descriptive names
-			  # (must be at most 8 chars).
-			  my %translate = (ssl => 'open_ssl', crypto => 'cryptssl');
-			  $libname = $translate{$name} || $name;
-			  $liboptions = <<EOO;
+	if ($W32)
+		{ $libname.="32"; }
+	elsif ($OS2)
+		{ # DLL names should not clash on the whole system.
+		  # However, they should not have any particular relationship
+		  # to the name of the static library.  Chose descriptive names
+		  # (must be at most 8 chars).
+		  my %translate = (ssl => 'open_ssl', crypto => 'cryptssl');
+		  $libname = $translate{$name} || $name;
+		  $liboptions = <<EOO;
 INITINSTANCE
 DATA MULTIPLE NONSHARED
 EOO
-			  # Vendor field can't contain colon, drat; so we omit http://
-			  $description = "\@#$http_vendor:$version#\@$what; DLL for library $name.  Build for EMX -Zmtd";
-			}
+		  # Vendor field can't contain colon, drat; so we omit http://
+		  $description = "\@#$http_vendor:$version#\@$what; DLL for library $name.  Build for EMX -Zmtd";
+		}
 
-		print OUT <<"EOF";
+        if ($W32 || $OS2)
+                {
+                print OUT <<"EOF";
 ;
 ; Definition file for the DLL version of the $name library from OpenSSL
 ;
@@ -1326,11 +1331,32 @@ LIBRARY         $libname	$liboptions
 EOF
 
 		print "EXPORTS\n";
-	}
+                }
+        elsif ($VMS)
+                {
+                my $libref = $name eq "ssl" ? "LIBCRYPTO.EXE /SHARE" : "";
+                print OUT <<"EOF";
+IDENTIFICATION="LIB$libname V$version"
+LIB$libname.OLB /LIBRARY
+$libref
+SYMBOL_VECTOR=(-
+EOF
+                }
 
 	(@r)=grep(/^\w+(\{[0-9]+\})?\\.*?:.*?:FUNCTION/,@symbols);
 	(@v)=grep(/^\w+(\{[0-9]+\})?\\.*?:.*?:VARIABLE/,@symbols);
-	@symbols=((sort @e),(sort @r), (sort @v));
+        if ($VMS) {
+            # VMS needs to have the symbols on slot number order
+            @symbols=(map { $_->[1] }
+                      sort { $a->[0] <=> $b->[0] }
+                      map { (my $s, my $i) = $_ =~ /^(.*?)\\(.*)$/;
+                            die "Error: $s doesn't have a number assigned\n"
+                                if !defined($nums{$s});
+                            (my $n, my @rest) = split /\\/, $nums{$s};
+                            [ $n, $_ ] } (@e, @r, @v));
+        } else {
+            @symbols=((sort @e),(sort @r), (sort @v));
+        }
 
 	my ($baseversion, $currversion) = get_openssl_version();
 	my $thisversion;
@@ -1376,6 +1402,27 @@ EOF
 							$prevsymversion = $symversion;
 						}
 						print OUT "        $s2;\n";
+                                        } elsif ($VMS) {
+                                            while(++$prevnum < $n) {
+                                                if ($symbolcount > 1023) {
+                                                    print OUT ")\nSYMBOL_VECTOR=(-\n";
+                                                    $symbolcount = 0;
+                                                }
+                                                print OUT $symbolcount
+                                                    ? "    ," : "    ";
+                                                print OUT "dummy$prevnum=PRIVATE_PROCEDURE -\n";
+                                                $symbolcount++;
+                                            }
+                                            (my $s_uc = $s) =~ tr/a-z/A-Z/;
+                                            if ($symbolcount > 1023) {
+                                                print OUT ")\nSYMBOL_VECTOR=(-\n";
+                                                $symbolcount = 0;
+                                            }
+                                            print OUT $symbolcount
+                                                ? "    ," : "    ";
+                                            print OUT "$s_uc/$s="
+                                                , ($v ? "DATA" : "PROCEDURE"), " -\n";
+                                            $symbolcount++;
 					} elsif($v && !$OS2) {
 						printf OUT "    %s%-39s @%-8d DATA\n",
 								($W32)?"":"_",$s2,$n;
@@ -1393,7 +1440,14 @@ EOF
 		} else {
 			print OUT "    local: *;\n};\n\n";
 		}
-	}
+	} elsif ($VMS) {
+            print OUT ")\n";
+            (my $libvmaj, my $libvmin, my $libvedit) =
+                $currversion =~ /^(\d+)_(\d+)_(\d+)$/;
+            # The reason to multiply the edit number with 100 is to make space
+            # for the possibility that we want to encode the patch letters
+            print OUT "GSMATCH=LEQUAL,",($libvmaj * 100 + $libvmin),",",($libvedit * 100),"\n";
+        }
 	printf OUT "\n";
 }
 
