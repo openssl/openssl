@@ -157,6 +157,19 @@ size_t CRYPTO_secure_used()
 #endif /* IMPLEMENTED */
 }
 
+size_t CRYPTO_secure_actual_size(void *ptr)
+{
+#ifdef IMPLEMENTED
+    size_t actual_size;
+
+    LOCK();
+    actual_size = sh_actual_size(ptr);
+    UNLOCK();
+    return actual_size;
+#else
+    return 0;
+#endif
+}
 /* END OF PAGE ...
 
    ... START OF PAGE */
