@@ -980,7 +980,6 @@ sub do_defs
 			$a .= ",RC5" if($s =~ /EVP_rc5/);
 			$a .= ",RMD160" if($s =~ /EVP_ripemd/);
 			$a .= ",RSA" if($s =~ /EVP_(Open|Seal)(Final|Init)/);
-			$a .= ",RSA" if($s =~ /PEM_Seal(Final|Init|Update)/);
 			$a .= ",RSA" if($s =~ /RSAPrivateKey/);
 			$a .= ",RSA" if($s =~ /SSLv23?_((client|server)_)?method/);
 

@@ -99,8 +99,7 @@ sub var_add
 	@a=grep(!/(^md5)|(_md5$)/,@a) if $no_md5;
 
 	@a=grep(!/(^d2i_r_)|(^i2d_r_)/,@a) if $no_rsa;
-	@a=grep(!/(^p_open$)|(^p_seal$)/,@a) if $no_rsa;
-	@a=grep(!/(^pem_seal$)/,@a) if $no_rsa;
+	@a=grep(!/(^p_open$)/,@a) if $no_rsa;
 
 	@a=grep(!/(m_dss$)|(m_dss1$)/,@a) if $no_dsa;
 	@a=grep(!/(^d2i_s_)|(^i2d_s_)|(_dsap$)/,@a) if $no_dsa;
