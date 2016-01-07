@@ -301,27 +301,29 @@ static ossl_ssize_t checked_uint8(const char *in, void *out)
     return cp - in;
 }
 
+struct tlsa_field {
+    void *var;
+    const char *name;
+    ossl_ssize_t (*parser)(const char *, void *);
+};
+
 static int tlsa_import_rr(SSL *ssl, const char *rrdata)
 {
-    int ret;
-    uint8_t usage;
-    uint8_t selector;
-    uint8_t mtype;
-    unsigned char *data = NULL;
-    const char *cp = rrdata;
-    ossl_ssize_t len = 0;
-    struct tlsa_field {
-        void *var;
-        const char *name;
-        ossl_ssize_t (*parser)(const char *, void *);
-    } tlsa_fields[] = {
+    static uint8_t usage;
+    static uint8_t selector;
+    static uint8_t mtype;
+    static unsigned char *data = NULL;
+    static struct tlsa_field tlsa_fields[] = {
         { &usage, "usage", checked_uint8 },
         { &selector, "selector", checked_uint8 },
         { &mtype, "mtype", checked_uint8 },
         { &data, "data", hexdecode },
         { NULL, }
     };
+    int ret;
     struct tlsa_field *f;
+    const char *cp = rrdata;
+    ossl_ssize_t len = 0;
 
     for (f = tlsa_fields; f->var; ++f) {
         if ((len = f->parser(cp += len, f->var)) <= 0) {
@@ -452,22 +454,28 @@ static int test_tlsafile(SSL_CTX *ctx, const char *basename,
 
 int main(int argc, char *argv[])
 {
-    progname = argv[0];
     FILE *f;
     BIO *bio_err;
     SSL_CTX *ctx = NULL;
     const char *basedomain;
     const char *CAfile;
     const char *tlsafile;
+    const char *p;
     int ret = 1;
 
+    progname = argv[0];
     if (argc != 4) {
         usage();
         EXIT(1);
     }
     basedomain = argv[1];
+    basedomain++; /* Force a use! */
     CAfile = argv[2];
     tlsafile = argv[3];
+
+    p = getenv("OPENSSL_DEBUG_MEMORY");
+    if (p != NULL && strcmp(p, "on") == 0)
+        CRYPTO_set_mem_debug(1);
 
     f = fopen(tlsafile, "r");
     if (f == NULL) {
@@ -477,17 +485,6 @@ int main(int argc, char *argv[])
     }
 
     bio_err = BIO_new_fp(stderr, BIO_NOCLOSE | BIO_FP_TEXT);
-
-    /* enable memory leak checking unless explicitly disabled */
-    if (!((getenv("OPENSSL_DEBUG_MEMORY") != NULL)
-          && (0 == strcmp(getenv("OPENSSL_DEBUG_MEMORY"), "off")))) {
-        CRYPTO_malloc_debug_init();
-        CRYPTO_set_mem_debug_options(V_CRYPTO_MDEBUG_ALL);
-    } else {
-        /* OPENSSL_DEBUG_MEMORY=off */
-        CRYPTO_set_mem_debug_functions(0, 0, 0, 0, 0);
-    }
-    CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
 
     SSL_library_init();
     SSL_load_error_strings();

@@ -69,19 +69,19 @@ clean:
 rsa_ameth.o: ../../e_os.h ../../include/openssl/asn1.h
 rsa_ameth.o: ../../include/openssl/asn1t.h ../../include/openssl/bio.h
 rsa_ameth.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
-rsa_ameth.o: ../../include/openssl/cms.h ../../include/openssl/crypto.h
-rsa_ameth.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
-rsa_ameth.o: ../../include/openssl/err.h ../../include/openssl/evp.h
-rsa_ameth.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
-rsa_ameth.o: ../../include/openssl/objects.h
+rsa_ameth.o: ../../include/openssl/cms.h ../../include/openssl/conf.h
+rsa_ameth.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
+rsa_ameth.o: ../../include/openssl/ec.h ../../include/openssl/err.h
+rsa_ameth.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
+rsa_ameth.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
 rsa_ameth.o: ../../include/openssl/opensslconf.h
 rsa_ameth.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 rsa_ameth.o: ../../include/openssl/pkcs7.h ../../include/openssl/rsa.h
 rsa_ameth.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
 rsa_ameth.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 rsa_ameth.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
-rsa_ameth.o: ../include/internal/asn1_int.h ../include/internal/cryptlib.h
-rsa_ameth.o: rsa_ameth.c
+rsa_ameth.o: ../../include/openssl/x509v3.h ../include/internal/asn1_int.h
+rsa_ameth.o: ../include/internal/cryptlib.h rsa_ameth.c
 rsa_asn1.o: ../../e_os.h ../../include/openssl/asn1.h
 rsa_asn1.o: ../../include/openssl/asn1t.h ../../include/openssl/bio.h
 rsa_asn1.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
