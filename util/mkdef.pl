@@ -116,6 +116,12 @@ my @known_algorithms = ( "RC2", "RC4", "RC5", "IDEA", "DES", "BF",
                          "APPLINK"
                      );
 
+my %disabled_algorithms;
+
+foreach (@known_algorithms) {
+    $disabled_algorithms{$_} = 0;
+}
+
 my $options="";
 open(IN,"<Makefile") || die "unable to open Makefile!\n";
 while(<IN>) {
@@ -123,23 +129,7 @@ while(<IN>) {
 }
 close(IN);
 
-# The following ciphers may be excluded (by Configure). This means functions
-# defined with ifndef(NO_XXX) are not included in the .def file, and everything
-# in directory xxx is ignored.
-my $no_rc2; my $no_rc4; my $no_rc5; my $no_idea; my $no_des; my $no_bf;
-my $no_cast; my $no_whirlpool; my $no_camellia; my $no_seed;
-my $no_md2; my $no_md4; my $no_md5; my $no_sha; my $no_ripemd; my $no_mdc2;
-my $no_rsa; my $no_dsa; my $no_dh; my $no_aes; my $no_scrypt;
-my $no_ec; my $no_engine; my $no_hw;
-my $no_chacha; my $no_poly1305;
-my $no_fp_api; my $no_static_engine=1; my $no_deprecated;
-my $no_sct; my $no_rfc3779; my $no_psk; my $no_cms; my $no_capieng;
-my $no_jpake; my $no_srp; my $no_ec2m; my $no_nistp_gcc; 
-my $no_nextprotoneg; my $no_sctp; my $no_srtp; my $no_ssl_trace;
-my $no_unit_test; my $no_ssl3_method; my $no_ocb; my $no_crypto_mdebug;
-
 my $zlib;
-
 
 foreach (@ARGV, split(/ /, $options))
 	{
@@ -178,8 +168,6 @@ foreach (@ARGV, split(/ /, $options))
 		$do_crypto=1;
 		$libname=$_;
 	}
-	$no_static_engine=1 if $_ eq "no-static-engine";
-	$no_static_engine=0 if $_ eq "enable-static-engine";
 	$do_update=1 if $_ eq "update";
 	$do_rewrite=1 if $_ eq "rewrite";
 	$do_ctest=1 if $_ eq "ctest";
@@ -187,60 +175,15 @@ foreach (@ARGV, split(/ /, $options))
 	$do_checkexist=1 if $_ eq "exist";
 	#$safe_stack_def=1 if $_ eq "-DDEBUG_SAFESTACK";
 
-	if    (/^no-rc2$/)      { $no_rc2=1; }
-	elsif (/^no-rc4$/)      { $no_rc4=1; }
-	elsif (/^no-rc5$/)      { $no_rc5=1; }
-	elsif (/^no-idea$/)     { $no_idea=1; }
-	elsif (/^no-des$/)      { $no_des=1; $no_mdc2=1; }
-	elsif (/^no-bf$/)       { $no_bf=1; }
-	elsif (/^no-cast$/)     { $no_cast=1; }
-	elsif (/^no-whirlpool$/)     { $no_whirlpool=1; }
-	elsif (/^no-md2$/)      { $no_md2=1; }
-	elsif (/^no-md4$/)      { $no_md4=1; }
-	elsif (/^no-md5$/)      { $no_md5=1; }
-	elsif (/^no-sha$/)      { $no_sha=1; }
-	elsif (/^no-ripemd$/)   { $no_ripemd=1; }
-	elsif (/^no-mdc2$/)     { $no_mdc2=1; }
-	elsif (/^no-rsa$/)      { $no_rsa=1; }
-	elsif (/^no-dsa$/)      { $no_dsa=1; }
-	elsif (/^no-dh$/)       { $no_dh=1; }
-	elsif (/^no-ec$/)       { $no_ec=1; }
-	elsif (/^no-aes$/)	{ $no_aes=1; }
-	elsif (/^no-camellia$/)	{ $no_camellia=1; }
-	elsif (/^no-seed$/)     { $no_seed=1; }
-	elsif (/^no-scrypt$/)   { $no_scrypt=1; }
-	elsif (/^no-chacha$/)   { $no_chacha=1; }
-	elsif (/^no-poly1305$/) { $no_poly1305=1; }
-	elsif (/^no-evp$/)	{ $no_evp=1; }
-	elsif (/^no-lhash$/)	{ $no_lhash=1; }
-	elsif (/^no-stack$/)	{ $no_stack=1; }
-	elsif (/^no-err$/)	{ $no_err=1; }
-	elsif (/^no-buffer$/)	{ $no_buffer=1; }
-	elsif (/^no-bio$/)	{ $no_bio=1; }
-	#elsif (/^no-locking$/)	{ $no_locking=1; }
-	elsif (/^no-comp$/)	{ $no_comp=1; }
-	elsif (/^no-dso$/)	{ $no_dso=1; }
-	elsif (/^no-engine$/)	{ $no_engine=1; }
-	elsif (/^no-hw$/)	{ $no_hw=1; }
-	elsif (/^no-sct$/)	{ $no_sct=1; }
-	elsif (/^no-rfc3779$/)	{ $no_rfc3779=1; }
-	elsif (/^no-cms$/)	{ $no_cms=1; }
-	elsif (/^no-ec2m$/)	{ $no_ec2m=1; }
- 	elsif (/^no-ec-nistp224-64-gcc-128$/)	{ $no_nistp_gcc=1; }
-	elsif (/^no-nextprotoneg$/)	{ $no_nextprotoneg=1; }
-	elsif (/^no-ssl3-method$/) { $no_ssl3_method=1; }
-	elsif (/^no-ssl-trace$/) { $no_ssl_trace=1; }
-	elsif (/^no-capieng$/)	{ $no_capieng=1; }
-	elsif (/^no-jpake$/)	{ $no_jpake=1; }
-	elsif (/^no-srp$/)	{ $no_srp=1; }
-	elsif (/^no-sctp$/)	{ $no_sctp=1; }
-	elsif (/^no-srtp$/)	{ $no_srtp=1; }
-	elsif (/^no-unit-test$/){ $no_unit_test=1; }
-	elsif (/^no-deprecated$/) { $no_deprecated=1; }
-	elsif (/^no-ocb/){ $no_ocb=1; }
-	elsif (/^no-crypto-mdebug/){ $no_crypto_mdebug=1; }
+	if (/^(enable|disable|no)-(.*)$/) {
+		my $alg = uc $2;
+        $alg =~ tr/-/_/;
+		if (exists $disabled_algorithms{$alg}) {
+			$disabled_algorithms{$alg} = $1 eq "enable" ? 0 : 1;
+		}
 	}
 
+	}
 
 if (!$libname) { 
 	if ($do_ssl) {
@@ -1169,61 +1112,7 @@ sub is_valid
 			return 0;
 		} else {
 			# algorithms
-			if ($keyword eq "RC2" && $no_rc2) { return 0; }
-			if ($keyword eq "RC4" && $no_rc4) { return 0; }
-			if ($keyword eq "RC5" && $no_rc5) { return 0; }
-			if ($keyword eq "IDEA" && $no_idea) { return 0; }
-			if ($keyword eq "DES" && $no_des) { return 0; }
-			if ($keyword eq "BF" && $no_bf) { return 0; }
-			if ($keyword eq "CAST" && $no_cast) { return 0; }
-			if ($keyword eq "MD2" && $no_md2) { return 0; }
-			if ($keyword eq "MD4" && $no_md4) { return 0; }
-			if ($keyword eq "MD5" && $no_md5) { return 0; }
-			if ($keyword eq "SHA" && $no_sha) { return 0; }
-			if ($keyword eq "RMD160" && $no_ripemd) { return 0; }
-			if ($keyword eq "MDC2" && $no_mdc2) { return 0; }
-			if ($keyword eq "WHIRLPOOL" && $no_whirlpool) { return 0; }
-			if ($keyword eq "RSA" && $no_rsa) { return 0; }
-			if ($keyword eq "DSA" && $no_dsa) { return 0; }
-			if ($keyword eq "DH" && $no_dh) { return 0; }
-			if ($keyword eq "EC" && $no_ec) { return 0; }
-			if ($keyword eq "AES" && $no_aes) { return 0; }
-			if ($keyword eq "CAMELLIA" && $no_camellia) { return 0; }
-			if ($keyword eq "SEED" && $no_seed) { return 0; }
-			if ($keyword eq "SCRYPT" && $no_scrypt) { return 0; }
-			if ($keyword eq "CHACHA" && $no_chacha) { return 0; }
-			if ($keyword eq "POLY1305" && $no_poly1305) { return 0; }
-			if ($keyword eq "EVP" && $no_evp) { return 0; }
-			if ($keyword eq "LHASH" && $no_lhash) { return 0; }
-			if ($keyword eq "STACK" && $no_stack) { return 0; }
-			if ($keyword eq "ERR" && $no_err) { return 0; }
-			if ($keyword eq "BUFFER" && $no_buffer) { return 0; }
-			if ($keyword eq "BIO" && $no_bio) { return 0; }
-			if ($keyword eq "COMP" && $no_comp) { return 0; }
-			if ($keyword eq "DSO" && $no_dso) { return 0; }
-			if ($keyword eq "ENGINE" && $no_engine) { return 0; }
-			if ($keyword eq "HW" && $no_hw) { return 0; }
-			if ($keyword eq "FP_API" && $no_fp_api) { return 0; }
-			if ($keyword eq "STATIC_ENGINE" && $no_static_engine) { return 0; }
-			if ($keyword eq "SCT" && $no_sct) { return 0; }
-			if ($keyword eq "RFC3779" && $no_rfc3779) { return 0; }
-			if ($keyword eq "PSK" && $no_psk) { return 0; }
-			if ($keyword eq "CMS" && $no_cms) { return 0; }
-			if ($keyword eq "EC_NISTP_64_GCC_128" && $no_nistp_gcc)
-					{ return 0; }
-			if ($keyword eq "EC2M" && $no_ec2m) { return 0; }
-			if ($keyword eq "NEXTPROTONEG" && $no_nextprotoneg) { return 0; }
-			if ($keyword eq "SSL3_METHOD" && $no_ssl3_method) { return 0; }
-			if ($keyword eq "SSL_TRACE" && $no_ssl_trace) { return 0; }
-			if ($keyword eq "CAPIENG" && $no_capieng) { return 0; }
-			if ($keyword eq "JPAKE" && $no_jpake) { return 0; }
-			if ($keyword eq "SRP" && $no_srp) { return 0; }
-			if ($keyword eq "SCTP" && $no_sctp) { return 0; }
-			if ($keyword eq "SRTP" && $no_srtp) { return 0; }
-			if ($keyword eq "UNIT_TEST" && $no_unit_test) { return 0; }
-			if ($keyword eq "DEPRECATED" && $no_deprecated) { return 0; }
-			if ($keyword eq "OCB" && $no_ocb) { return 0; }
-			if ($keyword eq "CRYPTO_MDEBUG" && $no_crypto_mdebug) { return 0; }
+			if ($disabled_algorithms{$keyword} == 1) { return 0;}
 
 			# Nothing recognise as true
 			return 1;
