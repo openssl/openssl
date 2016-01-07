@@ -164,21 +164,6 @@ pem_pkey.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 pem_pkey.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
 pem_pkey.o: ../../include/openssl/x509_vfy.h ../include/internal/asn1_int.h
 pem_pkey.o: ../include/internal/cryptlib.h pem_pkey.c
-pem_seal.o: ../../e_os.h ../../include/openssl/asn1.h
-pem_seal.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
-pem_seal.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
-pem_seal.o: ../../include/openssl/ec.h ../../include/openssl/err.h
-pem_seal.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
-pem_seal.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
-pem_seal.o: ../../include/openssl/opensslconf.h
-pem_seal.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-pem_seal.o: ../../include/openssl/pem.h ../../include/openssl/pem2.h
-pem_seal.o: ../../include/openssl/pkcs7.h ../../include/openssl/rand.h
-pem_seal.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
-pem_seal.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
-pem_seal.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
-pem_seal.o: ../../include/openssl/x509_vfy.h ../include/internal/cryptlib.h
-pem_seal.o: pem_seal.c
 pem_sign.o: ../../e_os.h ../../include/openssl/asn1.h
 pem_sign.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 pem_sign.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
