@@ -325,7 +325,7 @@ typedef struct ssl_session_st SSL_SESSION;
 typedef struct tls_sigalgs_st TLS_SIGALGS;
 typedef struct ssl_conf_ctx_st SSL_CONF_CTX;
 
-DEFINE_CONST_STACK_OF(SSL_CIPHER)
+DEFINE_STACK_OF_CONST(SSL_CIPHER)
 
 /* SRTP protection profiles for use with the use_srtp extension (RFC 5764)*/
 typedef struct srtp_protection_profile_st {
