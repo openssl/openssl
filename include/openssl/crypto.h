@@ -323,8 +323,8 @@ int CRYPTO_mem_ctrl(int mode);
         CRYPTO_clear_free(addr, num)
 #  define OPENSSL_free(addr) \
         CRYPTO_free(addr)
-#  define OPENSSL_memdup(str) \
-        CRYPTO_memdup(str, NULL, 0)
+#  define OPENSSL_memdup(str, s) \
+        CRYPTO_memdup(str, s, NULL, 0)
 #  define OPENSSL_strdup(str) \
         CRYPTO_strdup(str, NULL, 0)
 #  define OPENSSL_strndup(str, s) \
