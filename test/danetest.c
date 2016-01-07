@@ -527,7 +527,9 @@ end:
     ERR_free_strings();
     ERR_remove_thread_state(NULL);
     EVP_cleanup();
+#ifdef CRYPTO_MDEBUG
     CRYPTO_mem_leaks(bio_err);
+#endif
     BIO_free(bio_err);
     EXIT(ret);
 }
