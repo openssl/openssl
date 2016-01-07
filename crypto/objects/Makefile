@@ -80,7 +80,7 @@ o_names.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
 o_names.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
 o_names.o: ../../include/openssl/ossl_typ.h ../../include/openssl/safestack.h
 o_names.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-o_names.o: o_names.c
+o_names.o: o_names.c o_names.h
 obj_dat.o: ../../e_os.h ../../include/openssl/asn1.h
 obj_dat.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 obj_dat.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h

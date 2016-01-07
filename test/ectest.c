@@ -1637,16 +1637,11 @@ static const char rnd_seed[] =
 
 int main(int argc, char *argv[])
 {
+    char *p;
 
-    /* enable memory leak checking unless explicitly disabled */
-    if (!((getenv("OPENSSL_DEBUG_MEMORY") != NULL)
-          && (0 == strcmp(getenv("OPENSSL_DEBUG_MEMORY"), "off")))) {
-        CRYPTO_malloc_debug_init();
-        CRYPTO_set_mem_debug_options(V_CRYPTO_MDEBUG_ALL);
-    } else {
-        /* OPENSSL_DEBUG_MEMORY=off */
-        CRYPTO_set_mem_debug_functions(0, 0, 0, 0, 0);
-    }
+    p = getenv("OPENSSL_DEBUG_MEMORY");
+    if (p != NULL && strcmp(p, "on") == 0)
+        CRYPTO_set_mem_debug(1);
     CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
     ERR_load_crypto_strings();
 
@@ -1669,7 +1664,9 @@ int main(int argc, char *argv[])
     CRYPTO_cleanup_all_ex_data();
     ERR_free_strings();
     ERR_remove_thread_state(NULL);
+#ifdef CRYPTO_MDEBUG
     CRYPTO_mem_leaks_fp(stderr);
+#endif
 
     return 0;
 }

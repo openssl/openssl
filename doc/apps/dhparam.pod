@@ -103,7 +103,7 @@ this option prints out the DH parameters in human readable form.
 =item B<-C>
 
 this option converts the parameters into C code. The parameters can then
-be loaded by calling the B<get_dh>I<numbits>B<()> function.
+be loaded by calling the get_dhNNNN() function.
 
 =item B<-engine id>
 

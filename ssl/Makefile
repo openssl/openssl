@@ -98,7 +98,8 @@ clean:
 	
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
-bio_ssl.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/async.h
+bio_ssl.o: ../e_os.h ../include/internal/dane.h ../include/internal/numbers.h
+bio_ssl.o: ../include/openssl/asn1.h ../include/openssl/async.h
 bio_ssl.o: ../include/openssl/bio.h ../include/openssl/bn.h
 bio_ssl.o: ../include/openssl/buffer.h ../include/openssl/comp.h
 bio_ssl.o: ../include/openssl/crypto.h ../include/openssl/dsa.h
@@ -117,7 +118,8 @@ bio_ssl.o: ../include/openssl/ssl3.h ../include/openssl/stack.h
 bio_ssl.o: ../include/openssl/symhacks.h ../include/openssl/tls1.h
 bio_ssl.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h bio_ssl.c
 bio_ssl.o: packet_locl.h record/record.h ssl_locl.h statem/statem.h
-d1_lib.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/async.h
+d1_lib.o: ../e_os.h ../include/internal/dane.h ../include/internal/numbers.h
+d1_lib.o: ../include/openssl/asn1.h ../include/openssl/async.h
 d1_lib.o: ../include/openssl/bio.h ../include/openssl/bn.h
 d1_lib.o: ../include/openssl/buffer.h ../include/openssl/comp.h
 d1_lib.o: ../include/openssl/crypto.h ../include/openssl/dsa.h
@@ -137,7 +139,8 @@ d1_lib.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
 d1_lib.o: ../include/openssl/tls1.h ../include/openssl/x509.h
 d1_lib.o: ../include/openssl/x509_vfy.h d1_lib.c packet_locl.h record/record.h
 d1_lib.o: ssl_locl.h statem/statem.h
-d1_msg.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/async.h
+d1_msg.o: ../e_os.h ../include/internal/dane.h ../include/internal/numbers.h
+d1_msg.o: ../include/openssl/asn1.h ../include/openssl/async.h
 d1_msg.o: ../include/openssl/bio.h ../include/openssl/bn.h
 d1_msg.o: ../include/openssl/buffer.h ../include/openssl/comp.h
 d1_msg.o: ../include/openssl/crypto.h ../include/openssl/dsa.h
@@ -156,7 +159,8 @@ d1_msg.o: ../include/openssl/ssl3.h ../include/openssl/stack.h
 d1_msg.o: ../include/openssl/symhacks.h ../include/openssl/tls1.h
 d1_msg.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h d1_msg.c
 d1_msg.o: packet_locl.h record/record.h ssl_locl.h statem/statem.h
-d1_srtp.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/async.h
+d1_srtp.o: ../e_os.h ../include/internal/dane.h ../include/internal/numbers.h
+d1_srtp.o: ../include/openssl/asn1.h ../include/openssl/async.h
 d1_srtp.o: ../include/openssl/bio.h ../include/openssl/bn.h
 d1_srtp.o: ../include/openssl/buffer.h ../include/openssl/comp.h
 d1_srtp.o: ../include/openssl/crypto.h ../include/openssl/dsa.h
@@ -175,7 +179,8 @@ d1_srtp.o: ../include/openssl/ssl3.h ../include/openssl/stack.h
 d1_srtp.o: ../include/openssl/symhacks.h ../include/openssl/tls1.h
 d1_srtp.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h d1_srtp.c
 d1_srtp.o: packet_locl.h record/record.h ssl_locl.h statem/statem.h
-methods.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/async.h
+methods.o: ../e_os.h ../include/internal/dane.h ../include/internal/numbers.h
+methods.o: ../include/openssl/asn1.h ../include/openssl/async.h
 methods.o: ../include/openssl/bio.h ../include/openssl/bn.h
 methods.o: ../include/openssl/buffer.h ../include/openssl/comp.h
 methods.o: ../include/openssl/crypto.h ../include/openssl/dsa.h
@@ -194,7 +199,8 @@ methods.o: ../include/openssl/ssl3.h ../include/openssl/stack.h
 methods.o: ../include/openssl/symhacks.h ../include/openssl/tls1.h
 methods.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h methods.c
 methods.o: packet_locl.h record/record.h ssl_locl.h statem/statem.h
-record/dtls1_bitmap.o: ../e_os.h ../include/openssl/asn1.h
+record/dtls1_bitmap.o: ../e_os.h ../include/internal/dane.h
+record/dtls1_bitmap.o: ../include/internal/numbers.h ../include/openssl/asn1.h
 record/dtls1_bitmap.o: ../include/openssl/async.h ../include/openssl/bio.h
 record/dtls1_bitmap.o: ../include/openssl/bn.h ../include/openssl/buffer.h
 record/dtls1_bitmap.o: ../include/openssl/comp.h ../include/openssl/crypto.h
@@ -218,7 +224,8 @@ record/dtls1_bitmap.o: ../include/openssl/x509_vfy.h record/../packet_locl.h
 record/dtls1_bitmap.o: record/../record/record.h record/../ssl_locl.h
 record/dtls1_bitmap.o: record/../statem/statem.h record/dtls1_bitmap.c
 record/dtls1_bitmap.o: record/record_locl.h
-record/rec_layer_d1.o: ../e_os.h ../include/openssl/asn1.h
+record/rec_layer_d1.o: ../e_os.h ../include/internal/dane.h
+record/rec_layer_d1.o: ../include/internal/numbers.h ../include/openssl/asn1.h
 record/rec_layer_d1.o: ../include/openssl/async.h ../include/openssl/bio.h
 record/rec_layer_d1.o: ../include/openssl/bn.h ../include/openssl/buffer.h
 record/rec_layer_d1.o: ../include/openssl/comp.h ../include/openssl/crypto.h
@@ -242,7 +249,8 @@ record/rec_layer_d1.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h
 record/rec_layer_d1.o: record/../packet_locl.h record/../record/record.h
 record/rec_layer_d1.o: record/../ssl_locl.h record/../statem/statem.h
 record/rec_layer_d1.o: record/rec_layer_d1.c record/record_locl.h
-record/rec_layer_s3.o: ../e_os.h ../include/openssl/asn1.h
+record/rec_layer_s3.o: ../e_os.h ../include/internal/dane.h
+record/rec_layer_s3.o: ../include/internal/numbers.h ../include/openssl/asn1.h
 record/rec_layer_s3.o: ../include/openssl/async.h ../include/openssl/bio.h
 record/rec_layer_s3.o: ../include/openssl/bn.h ../include/openssl/buffer.h
 record/rec_layer_s3.o: ../include/openssl/comp.h ../include/openssl/crypto.h
@@ -266,7 +274,8 @@ record/rec_layer_s3.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h
 record/rec_layer_s3.o: record/../packet_locl.h record/../record/record.h
 record/rec_layer_s3.o: record/../ssl_locl.h record/../statem/statem.h
 record/rec_layer_s3.o: record/rec_layer_s3.c record/record_locl.h
-record/ssl3_buffer.o: ../e_os.h ../include/openssl/asn1.h
+record/ssl3_buffer.o: ../e_os.h ../include/internal/dane.h
+record/ssl3_buffer.o: ../include/internal/numbers.h ../include/openssl/asn1.h
 record/ssl3_buffer.o: ../include/openssl/async.h ../include/openssl/bio.h
 record/ssl3_buffer.o: ../include/openssl/bn.h ../include/openssl/buffer.h
 record/ssl3_buffer.o: ../include/openssl/comp.h ../include/openssl/crypto.h
@@ -290,6 +299,7 @@ record/ssl3_buffer.o: record/../record/record.h record/../ssl_locl.h
 record/ssl3_buffer.o: record/../statem/statem.h record/record_locl.h
 record/ssl3_buffer.o: record/ssl3_buffer.c
 record/ssl3_record.o: ../e_os.h ../include/internal/constant_time_locl.h
+record/ssl3_record.o: ../include/internal/dane.h ../include/internal/numbers.h
 record/ssl3_record.o: ../include/openssl/asn1.h ../include/openssl/async.h
 record/ssl3_record.o: ../include/openssl/bio.h ../include/openssl/bn.h
 record/ssl3_record.o: ../include/openssl/buffer.h ../include/openssl/comp.h
@@ -314,6 +324,7 @@ record/ssl3_record.o: record/../packet_locl.h record/../record/record.h
 record/ssl3_record.o: record/../ssl_locl.h record/../statem/statem.h
 record/ssl3_record.o: record/record_locl.h record/ssl3_record.c
 s3_cbc.o: ../e_os.h ../include/internal/constant_time_locl.h
+s3_cbc.o: ../include/internal/dane.h ../include/internal/numbers.h
 s3_cbc.o: ../include/openssl/asn1.h ../include/openssl/async.h
 s3_cbc.o: ../include/openssl/bio.h ../include/openssl/bn.h
 s3_cbc.o: ../include/openssl/buffer.h ../include/openssl/comp.h
@@ -334,7 +345,8 @@ s3_cbc.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
 s3_cbc.o: ../include/openssl/tls1.h ../include/openssl/x509.h
 s3_cbc.o: ../include/openssl/x509_vfy.h packet_locl.h record/record.h s3_cbc.c
 s3_cbc.o: ssl_locl.h statem/statem.h
-s3_enc.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/async.h
+s3_enc.o: ../e_os.h ../include/internal/dane.h ../include/internal/numbers.h
+s3_enc.o: ../include/openssl/asn1.h ../include/openssl/async.h
 s3_enc.o: ../include/openssl/bio.h ../include/openssl/bn.h
 s3_enc.o: ../include/openssl/buffer.h ../include/openssl/comp.h
 s3_enc.o: ../include/openssl/crypto.h ../include/openssl/dsa.h
@@ -354,7 +366,8 @@ s3_enc.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
 s3_enc.o: ../include/openssl/tls1.h ../include/openssl/x509.h
 s3_enc.o: ../include/openssl/x509_vfy.h packet_locl.h record/record.h s3_enc.c
 s3_enc.o: ssl_locl.h statem/statem.h
-s3_lib.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/async.h
+s3_lib.o: ../e_os.h ../include/internal/dane.h ../include/internal/numbers.h
+s3_lib.o: ../include/openssl/asn1.h ../include/openssl/async.h
 s3_lib.o: ../include/openssl/bio.h ../include/openssl/bn.h
 s3_lib.o: ../include/openssl/buffer.h ../include/openssl/comp.h
 s3_lib.o: ../include/openssl/crypto.h ../include/openssl/dh.h
@@ -375,7 +388,8 @@ s3_lib.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
 s3_lib.o: ../include/openssl/tls1.h ../include/openssl/x509.h
 s3_lib.o: ../include/openssl/x509_vfy.h packet_locl.h record/record.h s3_lib.c
 s3_lib.o: ssl_locl.h statem/statem.h
-s3_msg.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/async.h
+s3_msg.o: ../e_os.h ../include/internal/dane.h ../include/internal/numbers.h
+s3_msg.o: ../include/openssl/asn1.h ../include/openssl/async.h
 s3_msg.o: ../include/openssl/bio.h ../include/openssl/bn.h
 s3_msg.o: ../include/openssl/buffer.h ../include/openssl/comp.h
 s3_msg.o: ../include/openssl/crypto.h ../include/openssl/dsa.h
@@ -394,7 +408,8 @@ s3_msg.o: ../include/openssl/ssl3.h ../include/openssl/stack.h
 s3_msg.o: ../include/openssl/symhacks.h ../include/openssl/tls1.h
 s3_msg.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h packet_locl.h
 s3_msg.o: record/record.h s3_msg.c ssl_locl.h statem/statem.h
-ssl_algs.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/async.h
+ssl_algs.o: ../e_os.h ../include/internal/dane.h ../include/internal/numbers.h
+ssl_algs.o: ../include/openssl/asn1.h ../include/openssl/async.h
 ssl_algs.o: ../include/openssl/bio.h ../include/openssl/bn.h
 ssl_algs.o: ../include/openssl/buffer.h ../include/openssl/comp.h
 ssl_algs.o: ../include/openssl/crypto.h ../include/openssl/dsa.h
@@ -413,7 +428,8 @@ ssl_algs.o: ../include/openssl/ssl3.h ../include/openssl/stack.h
 ssl_algs.o: ../include/openssl/symhacks.h ../include/openssl/tls1.h
 ssl_algs.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h
 ssl_algs.o: packet_locl.h record/record.h ssl_algs.c ssl_locl.h statem/statem.h
-ssl_asn1.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/asn1t.h
+ssl_asn1.o: ../e_os.h ../include/internal/dane.h ../include/internal/numbers.h
+ssl_asn1.o: ../include/openssl/asn1.h ../include/openssl/asn1t.h
 ssl_asn1.o: ../include/openssl/async.h ../include/openssl/bio.h
 ssl_asn1.o: ../include/openssl/bn.h ../include/openssl/buffer.h
 ssl_asn1.o: ../include/openssl/comp.h ../include/openssl/crypto.h
@@ -433,7 +449,8 @@ ssl_asn1.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
 ssl_asn1.o: ../include/openssl/tls1.h ../include/openssl/x509.h
 ssl_asn1.o: ../include/openssl/x509_vfy.h packet_locl.h record/record.h
 ssl_asn1.o: ssl_asn1.c ssl_locl.h statem/statem.h
-ssl_cert.o: ../e_os.h ../include/internal/o_dir.h ../include/openssl/asn1.h
+ssl_cert.o: ../e_os.h ../include/internal/dane.h ../include/internal/numbers.h
+ssl_cert.o: ../include/internal/o_dir.h ../include/openssl/asn1.h
 ssl_cert.o: ../include/openssl/async.h ../include/openssl/bio.h
 ssl_cert.o: ../include/openssl/bn.h ../include/openssl/buffer.h
 ssl_cert.o: ../include/openssl/comp.h ../include/openssl/conf.h
@@ -454,7 +471,8 @@ ssl_cert.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
 ssl_cert.o: ../include/openssl/tls1.h ../include/openssl/x509.h
 ssl_cert.o: ../include/openssl/x509_vfy.h ../include/openssl/x509v3.h
 ssl_cert.o: packet_locl.h record/record.h ssl_cert.c ssl_locl.h statem/statem.h
-ssl_ciph.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/async.h
+ssl_ciph.o: ../e_os.h ../include/internal/dane.h ../include/internal/numbers.h
+ssl_ciph.o: ../include/openssl/asn1.h ../include/openssl/async.h
 ssl_ciph.o: ../include/openssl/bio.h ../include/openssl/bn.h
 ssl_ciph.o: ../include/openssl/buffer.h ../include/openssl/comp.h
 ssl_ciph.o: ../include/openssl/crypto.h ../include/openssl/dsa.h
@@ -474,7 +492,8 @@ ssl_ciph.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
 ssl_ciph.o: ../include/openssl/tls1.h ../include/openssl/x509.h
 ssl_ciph.o: ../include/openssl/x509_vfy.h packet_locl.h record/record.h
 ssl_ciph.o: ssl_ciph.c ssl_locl.h statem/statem.h
-ssl_conf.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/async.h
+ssl_conf.o: ../e_os.h ../include/internal/dane.h ../include/internal/numbers.h
+ssl_conf.o: ../include/openssl/asn1.h ../include/openssl/async.h
 ssl_conf.o: ../include/openssl/bio.h ../include/openssl/bn.h
 ssl_conf.o: ../include/openssl/buffer.h ../include/openssl/comp.h
 ssl_conf.o: ../include/openssl/conf.h ../include/openssl/crypto.h
@@ -526,7 +545,8 @@ ssl_err2.o: ../include/openssl/ssl2.h ../include/openssl/ssl3.h
 ssl_err2.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
 ssl_err2.o: ../include/openssl/tls1.h ../include/openssl/x509.h
 ssl_err2.o: ../include/openssl/x509_vfy.h ssl_err2.c
-ssl_lib.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/async.h
+ssl_lib.o: ../e_os.h ../include/internal/dane.h ../include/internal/numbers.h
+ssl_lib.o: ../include/openssl/asn1.h ../include/openssl/async.h
 ssl_lib.o: ../include/openssl/bio.h ../include/openssl/bn.h
 ssl_lib.o: ../include/openssl/buffer.h ../include/openssl/comp.h
 ssl_lib.o: ../include/openssl/conf.h ../include/openssl/crypto.h
@@ -548,7 +568,8 @@ ssl_lib.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
 ssl_lib.o: ../include/openssl/tls1.h ../include/openssl/x509.h
 ssl_lib.o: ../include/openssl/x509_vfy.h ../include/openssl/x509v3.h
 ssl_lib.o: packet_locl.h record/record.h ssl_lib.c ssl_locl.h statem/statem.h
-ssl_mcnf.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/async.h
+ssl_mcnf.o: ../e_os.h ../include/internal/dane.h ../include/internal/numbers.h
+ssl_mcnf.o: ../include/openssl/asn1.h ../include/openssl/async.h
 ssl_mcnf.o: ../include/openssl/bio.h ../include/openssl/bn.h
 ssl_mcnf.o: ../include/openssl/buffer.h ../include/openssl/comp.h
 ssl_mcnf.o: ../include/openssl/conf.h ../include/openssl/crypto.h
@@ -568,7 +589,8 @@ ssl_mcnf.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
 ssl_mcnf.o: ../include/openssl/tls1.h ../include/openssl/x509.h
 ssl_mcnf.o: ../include/openssl/x509_vfy.h packet_locl.h record/record.h
 ssl_mcnf.o: ssl_locl.h ssl_mcnf.c statem/statem.h
-ssl_rsa.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/async.h
+ssl_rsa.o: ../e_os.h ../include/internal/dane.h ../include/internal/numbers.h
+ssl_rsa.o: ../include/openssl/asn1.h ../include/openssl/async.h
 ssl_rsa.o: ../include/openssl/bio.h ../include/openssl/bn.h
 ssl_rsa.o: ../include/openssl/buffer.h ../include/openssl/comp.h
 ssl_rsa.o: ../include/openssl/crypto.h ../include/openssl/dsa.h
@@ -587,7 +609,8 @@ ssl_rsa.o: ../include/openssl/ssl3.h ../include/openssl/stack.h
 ssl_rsa.o: ../include/openssl/symhacks.h ../include/openssl/tls1.h
 ssl_rsa.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h
 ssl_rsa.o: packet_locl.h record/record.h ssl_locl.h ssl_rsa.c statem/statem.h
-ssl_sess.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/async.h
+ssl_sess.o: ../e_os.h ../include/internal/dane.h ../include/internal/numbers.h
+ssl_sess.o: ../include/openssl/asn1.h ../include/openssl/async.h
 ssl_sess.o: ../include/openssl/bio.h ../include/openssl/bn.h
 ssl_sess.o: ../include/openssl/buffer.h ../include/openssl/comp.h
 ssl_sess.o: ../include/openssl/crypto.h ../include/openssl/dsa.h
@@ -607,7 +630,8 @@ ssl_sess.o: ../include/openssl/ssl3.h ../include/openssl/stack.h
 ssl_sess.o: ../include/openssl/symhacks.h ../include/openssl/tls1.h
 ssl_sess.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h
 ssl_sess.o: packet_locl.h record/record.h ssl_locl.h ssl_sess.c statem/statem.h
-ssl_stat.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/async.h
+ssl_stat.o: ../e_os.h ../include/internal/dane.h ../include/internal/numbers.h
+ssl_stat.o: ../include/openssl/asn1.h ../include/openssl/async.h
 ssl_stat.o: ../include/openssl/bio.h ../include/openssl/bn.h
 ssl_stat.o: ../include/openssl/buffer.h ../include/openssl/comp.h
 ssl_stat.o: ../include/openssl/crypto.h ../include/openssl/dsa.h
@@ -626,7 +650,8 @@ ssl_stat.o: ../include/openssl/ssl3.h ../include/openssl/stack.h
 ssl_stat.o: ../include/openssl/symhacks.h ../include/openssl/tls1.h
 ssl_stat.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h
 ssl_stat.o: packet_locl.h record/record.h ssl_locl.h ssl_stat.c statem/statem.h
-ssl_txt.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/async.h
+ssl_txt.o: ../e_os.h ../include/internal/dane.h ../include/internal/numbers.h
+ssl_txt.o: ../include/openssl/asn1.h ../include/openssl/async.h
 ssl_txt.o: ../include/openssl/bio.h ../include/openssl/bn.h
 ssl_txt.o: ../include/openssl/buffer.h ../include/openssl/comp.h
 ssl_txt.o: ../include/openssl/crypto.h ../include/openssl/dsa.h
@@ -645,7 +670,8 @@ ssl_txt.o: ../include/openssl/ssl3.h ../include/openssl/stack.h
 ssl_txt.o: ../include/openssl/symhacks.h ../include/openssl/tls1.h
 ssl_txt.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h
 ssl_txt.o: packet_locl.h record/record.h ssl_locl.h ssl_txt.c statem/statem.h
-ssl_utst.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/async.h
+ssl_utst.o: ../e_os.h ../include/internal/dane.h ../include/internal/numbers.h
+ssl_utst.o: ../include/openssl/asn1.h ../include/openssl/async.h
 ssl_utst.o: ../include/openssl/bio.h ../include/openssl/bn.h
 ssl_utst.o: ../include/openssl/buffer.h ../include/openssl/comp.h
 ssl_utst.o: ../include/openssl/crypto.h ../include/openssl/dsa.h
@@ -664,28 +690,31 @@ ssl_utst.o: ../include/openssl/ssl3.h ../include/openssl/stack.h
 ssl_utst.o: ../include/openssl/symhacks.h ../include/openssl/tls1.h
 ssl_utst.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h
 ssl_utst.o: packet_locl.h record/record.h ssl_locl.h ssl_utst.c statem/statem.h
-statem/statem.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/async.h
-statem/statem.o: ../include/openssl/bio.h ../include/openssl/bn.h
-statem/statem.o: ../include/openssl/buffer.h ../include/openssl/comp.h
-statem/statem.o: ../include/openssl/crypto.h ../include/openssl/dsa.h
-statem/statem.o: ../include/openssl/dtls1.h ../include/openssl/e_os2.h
-statem/statem.o: ../include/openssl/ec.h ../include/openssl/err.h
-statem/statem.o: ../include/openssl/evp.h ../include/openssl/hmac.h
-statem/statem.o: ../include/openssl/lhash.h ../include/openssl/obj_mac.h
-statem/statem.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
-statem/statem.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
-statem/statem.o: ../include/openssl/pem.h ../include/openssl/pem2.h
-statem/statem.o: ../include/openssl/pkcs7.h ../include/openssl/pqueue.h
-statem/statem.o: ../include/openssl/rand.h ../include/openssl/rsa.h
-statem/statem.o: ../include/openssl/safestack.h ../include/openssl/sha.h
-statem/statem.o: ../include/openssl/srtp.h ../include/openssl/ssl.h
-statem/statem.o: ../include/openssl/ssl2.h ../include/openssl/ssl3.h
-statem/statem.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
-statem/statem.o: ../include/openssl/tls1.h ../include/openssl/x509.h
-statem/statem.o: ../include/openssl/x509_vfy.h statem/../packet_locl.h
-statem/statem.o: statem/../record/record.h statem/../ssl_locl.h
-statem/statem.o: statem/../statem/statem.h statem/statem.c statem/statem_locl.h
-statem/statem_clnt.o: ../e_os.h ../include/openssl/asn1.h
+statem/statem.o: ../e_os.h ../include/internal/dane.h
+statem/statem.o: ../include/internal/numbers.h ../include/openssl/asn1.h
+statem/statem.o: ../include/openssl/async.h ../include/openssl/bio.h
+statem/statem.o: ../include/openssl/bn.h ../include/openssl/buffer.h
+statem/statem.o: ../include/openssl/comp.h ../include/openssl/crypto.h
+statem/statem.o: ../include/openssl/dsa.h ../include/openssl/dtls1.h
+statem/statem.o: ../include/openssl/e_os2.h ../include/openssl/ec.h
+statem/statem.o: ../include/openssl/err.h ../include/openssl/evp.h
+statem/statem.o: ../include/openssl/hmac.h ../include/openssl/lhash.h
+statem/statem.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
+statem/statem.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
+statem/statem.o: ../include/openssl/ossl_typ.h ../include/openssl/pem.h
+statem/statem.o: ../include/openssl/pem2.h ../include/openssl/pkcs7.h
+statem/statem.o: ../include/openssl/pqueue.h ../include/openssl/rand.h
+statem/statem.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
+statem/statem.o: ../include/openssl/sha.h ../include/openssl/srtp.h
+statem/statem.o: ../include/openssl/ssl.h ../include/openssl/ssl2.h
+statem/statem.o: ../include/openssl/ssl3.h ../include/openssl/stack.h
+statem/statem.o: ../include/openssl/symhacks.h ../include/openssl/tls1.h
+statem/statem.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h
+statem/statem.o: statem/../packet_locl.h statem/../record/record.h
+statem/statem.o: statem/../ssl_locl.h statem/../statem/statem.h statem/statem.c
+statem/statem.o: statem/statem_locl.h
+statem/statem_clnt.o: ../e_os.h ../include/internal/dane.h
+statem/statem_clnt.o: ../include/internal/numbers.h ../include/openssl/asn1.h
 statem/statem_clnt.o: ../include/openssl/async.h ../include/openssl/bio.h
 statem/statem_clnt.o: ../include/openssl/bn.h ../include/openssl/buffer.h
 statem/statem_clnt.o: ../include/openssl/comp.h ../include/openssl/crypto.h
@@ -710,7 +739,8 @@ statem/statem_clnt.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h
 statem/statem_clnt.o: statem/../packet_locl.h statem/../record/record.h
 statem/statem_clnt.o: statem/../ssl_locl.h statem/../statem/statem.h
 statem/statem_clnt.o: statem/statem_clnt.c statem/statem_locl.h
-statem/statem_dtls.o: ../e_os.h ../include/openssl/asn1.h
+statem/statem_dtls.o: ../e_os.h ../include/internal/dane.h
+statem/statem_dtls.o: ../include/internal/numbers.h ../include/openssl/asn1.h
 statem/statem_dtls.o: ../include/openssl/async.h ../include/openssl/bio.h
 statem/statem_dtls.o: ../include/openssl/bn.h ../include/openssl/buffer.h
 statem/statem_dtls.o: ../include/openssl/comp.h ../include/openssl/crypto.h
@@ -733,7 +763,8 @@ statem/statem_dtls.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h
 statem/statem_dtls.o: statem/../packet_locl.h statem/../record/record.h
 statem/statem_dtls.o: statem/../ssl_locl.h statem/../statem/statem.h
 statem/statem_dtls.o: statem/statem_dtls.c statem/statem_locl.h
-statem/statem_lib.o: ../e_os.h ../include/openssl/asn1.h
+statem/statem_lib.o: ../e_os.h ../include/internal/dane.h
+statem/statem_lib.o: ../include/internal/numbers.h ../include/openssl/asn1.h
 statem/statem_lib.o: ../include/openssl/async.h ../include/openssl/bio.h
 statem/statem_lib.o: ../include/openssl/bn.h ../include/openssl/buffer.h
 statem/statem_lib.o: ../include/openssl/comp.h ../include/openssl/crypto.h
@@ -757,6 +788,7 @@ statem/statem_lib.o: statem/../packet_locl.h statem/../record/record.h
 statem/statem_lib.o: statem/../ssl_locl.h statem/../statem/statem.h
 statem/statem_lib.o: statem/statem_lib.c statem/statem_locl.h
 statem/statem_srvr.o: ../e_os.h ../include/internal/constant_time_locl.h
+statem/statem_srvr.o: ../include/internal/dane.h ../include/internal/numbers.h
 statem/statem_srvr.o: ../include/openssl/asn1.h ../include/openssl/async.h
 statem/statem_srvr.o: ../include/openssl/bio.h ../include/openssl/bn.h
 statem/statem_srvr.o: ../include/openssl/buffer.h ../include/openssl/comp.h
@@ -781,7 +813,8 @@ statem/statem_srvr.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h
 statem/statem_srvr.o: statem/../packet_locl.h statem/../record/record.h
 statem/statem_srvr.o: statem/../ssl_locl.h statem/../statem/statem.h
 statem/statem_srvr.o: statem/statem_locl.h statem/statem_srvr.c
-t1_enc.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/async.h
+t1_enc.o: ../e_os.h ../include/internal/dane.h ../include/internal/numbers.h
+t1_enc.o: ../include/openssl/asn1.h ../include/openssl/async.h
 t1_enc.o: ../include/openssl/bio.h ../include/openssl/bn.h
 t1_enc.o: ../include/openssl/buffer.h ../include/openssl/comp.h
 t1_enc.o: ../include/openssl/crypto.h ../include/openssl/dsa.h
@@ -801,7 +834,8 @@ t1_enc.o: ../include/openssl/ssl3.h ../include/openssl/stack.h
 t1_enc.o: ../include/openssl/symhacks.h ../include/openssl/tls1.h
 t1_enc.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h packet_locl.h
 t1_enc.o: record/record.h ssl_locl.h statem/statem.h t1_enc.c
-t1_ext.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/async.h
+t1_ext.o: ../e_os.h ../include/internal/dane.h ../include/internal/numbers.h
+t1_ext.o: ../include/openssl/asn1.h ../include/openssl/async.h
 t1_ext.o: ../include/openssl/bio.h ../include/openssl/bn.h
 t1_ext.o: ../include/openssl/buffer.h ../include/openssl/comp.h
 t1_ext.o: ../include/openssl/crypto.h ../include/openssl/dsa.h
@@ -820,7 +854,8 @@ t1_ext.o: ../include/openssl/ssl3.h ../include/openssl/stack.h
 t1_ext.o: ../include/openssl/symhacks.h ../include/openssl/tls1.h
 t1_ext.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h packet_locl.h
 t1_ext.o: record/record.h ssl_locl.h statem/statem.h t1_ext.c
-t1_lib.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/async.h
+t1_lib.o: ../e_os.h ../include/internal/dane.h ../include/internal/numbers.h
+t1_lib.o: ../include/openssl/asn1.h ../include/openssl/async.h
 t1_lib.o: ../include/openssl/bio.h ../include/openssl/bn.h
 t1_lib.o: ../include/openssl/buffer.h ../include/openssl/comp.h
 t1_lib.o: ../include/openssl/conf.h ../include/openssl/crypto.h
@@ -842,7 +877,8 @@ t1_lib.o: ../include/openssl/symhacks.h ../include/openssl/tls1.h
 t1_lib.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h
 t1_lib.o: ../include/openssl/x509v3.h packet_locl.h record/record.h ssl_locl.h
 t1_lib.o: statem/statem.h t1_lib.c
-t1_reneg.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/async.h
+t1_reneg.o: ../e_os.h ../include/internal/dane.h ../include/internal/numbers.h
+t1_reneg.o: ../include/openssl/asn1.h ../include/openssl/async.h
 t1_reneg.o: ../include/openssl/bio.h ../include/openssl/bn.h
 t1_reneg.o: ../include/openssl/buffer.h ../include/openssl/comp.h
 t1_reneg.o: ../include/openssl/crypto.h ../include/openssl/dsa.h
@@ -861,7 +897,8 @@ t1_reneg.o: ../include/openssl/ssl3.h ../include/openssl/stack.h
 t1_reneg.o: ../include/openssl/symhacks.h ../include/openssl/tls1.h
 t1_reneg.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h
 t1_reneg.o: packet_locl.h record/record.h ssl_locl.h statem/statem.h t1_reneg.c
-t1_trce.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/async.h
+t1_trce.o: ../e_os.h ../include/internal/dane.h ../include/internal/numbers.h
+t1_trce.o: ../include/openssl/asn1.h ../include/openssl/async.h
 t1_trce.o: ../include/openssl/bio.h ../include/openssl/bn.h
 t1_trce.o: ../include/openssl/buffer.h ../include/openssl/comp.h
 t1_trce.o: ../include/openssl/crypto.h ../include/openssl/dsa.h
@@ -880,7 +917,8 @@ t1_trce.o: ../include/openssl/ssl3.h ../include/openssl/stack.h
 t1_trce.o: ../include/openssl/symhacks.h ../include/openssl/tls1.h
 t1_trce.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h
 t1_trce.o: packet_locl.h record/record.h ssl_locl.h statem/statem.h t1_trce.c
-tls_srp.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/async.h
+tls_srp.o: ../e_os.h ../include/internal/dane.h ../include/internal/numbers.h
+tls_srp.o: ../include/openssl/asn1.h ../include/openssl/async.h
 tls_srp.o: ../include/openssl/bio.h ../include/openssl/bn.h
 tls_srp.o: ../include/openssl/buffer.h ../include/openssl/comp.h
 tls_srp.o: ../include/openssl/crypto.h ../include/openssl/dsa.h

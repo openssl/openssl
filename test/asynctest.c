@@ -282,8 +282,7 @@ int main(int argc, char **argv)
 #ifdef ASYNC_NULL
     fprintf(stderr, "NULL implementation - skipping async tests\n");
 #else
-    CRYPTO_malloc_debug_init();
-    CRYPTO_set_mem_debug_options(V_CRYPTO_MDEBUG_ALL);
+    CRYPTO_set_mem_debug(1);
     CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
 
     if (       !test_ASYNC_init()
