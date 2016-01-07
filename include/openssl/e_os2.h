@@ -350,14 +350,12 @@ typedef unsigned __int64 uint64_t;
 #  endif
 # endif
 
-# ifdef __STDC_VERSION__
-#  if (__STDC_VERSION__ >= 201112L)
-#   include <stdnoreturn.h>
-#  endif
+# if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L
+#  define ossl_noreturn _Noreturn
 # elif defined(__GNUC__)
-#  define noreturn __attribute__((noreturn))
+#  define ossl_noreturn __attribute__((noreturn))
 # else
-#  define noreturn
+#  define ossl_noreturn
 # endif
 
 #ifdef  __cplusplus
