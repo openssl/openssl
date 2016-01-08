@@ -675,6 +675,7 @@ __owur int EVP_DigestVerifyInit(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
 __owur int EVP_DigestVerifyFinal(EVP_MD_CTX *ctx, const unsigned char *sig,
                                  size_t siglen);
 
+# ifndef OPENSSL_NO_RSA
 __owur int EVP_OpenInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
                         const unsigned char *ek, int ekl,
                         const unsigned char *iv, EVP_PKEY *priv);
@@ -684,6 +685,7 @@ __owur int EVP_SealInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
                         unsigned char **ek, int *ekl, unsigned char *iv,
                         EVP_PKEY **pubk, int npubk);
 __owur int EVP_SealFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl);
+# endif
 
 EVP_ENCODE_CTX *EVP_ENCODE_CTX_new(void);
 void EVP_ENCODE_CTX_free(EVP_ENCODE_CTX *ctx);
