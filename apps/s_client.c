@@ -559,7 +559,7 @@ static int tlsa_import_rr(SSL *con, const char *rrdata)
     static uint8_t selector;
     static uint8_t mtype;
     static unsigned char *data;
-    static tlsa_field tlsa_fields[] = {
+    static struct tlsa_field tlsa_fields[] = {
         { &usage, "usage", checked_uint8 },
         { &selector, "selector", checked_uint8 },
         { &mtype, "mtype", checked_uint8 },
