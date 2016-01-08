@@ -469,7 +469,6 @@ int main(int argc, char *argv[])
         EXIT(1);
     }
     basedomain = argv[1];
-    basedomain++; /* Force a use! */
     CAfile = argv[2];
     tlsafile = argv[3];
 
@@ -507,7 +506,7 @@ int main(int argc, char *argv[])
         goto end;
     }
 
-    if (test_tlsafile(ctx, argv[1], f, tlsafile) <= 0) {
+    if (test_tlsafile(ctx, basedomain, f, tlsafile) <= 0) {
         print_errors();
         goto end;
     }
