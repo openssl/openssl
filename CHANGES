@@ -4,6 +4,20 @@
 
  Changes between 1.0.2e and 1.1.0  [xx XXX xxxx]
 
+  *) Support for RFC6698/RFC7671 DANE TLSA peer authentication.
+
+     Obtaining and performing DNSSEC validation of TLSA records is
+     the application's responsibility.  The application provides
+     the TLSA records of its choice to OpenSSL, and these are then
+     used to authenticate the peer.
+
+     The TLSA records need not even come from DNS.  They can, for
+     example, be used to implement local end-entity certificate or
+     trust-anchor "pinning", where the "pin" data takes the form
+     of TLSA records, which can augment or replace verification
+     based on the usual WebPKI public certification authorities.
+     [Viktor Dukhovni]
+
   *) Revert default OPENSSL_NO_DEPRECATED setting.  Instead OpenSSL
      continues to support deprecated interfaces in default builds.
      However, applications are strongly advised to compile their
