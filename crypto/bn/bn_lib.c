@@ -295,7 +295,7 @@ BIGNUM *BN_new(void)
      return (ret);
  }
 
-/* This is used both by bn_expand2() and bn_dup_expand() */
+/* This is used by bn_expand2() */
 /* The caller MUST check that words > b->dmax before calling this */
 static BN_ULONG *bn_expand_internal(const BIGNUM *b, int words)
 {
