@@ -912,21 +912,6 @@ sub do_defs
 
 			$p = $plats;
 			$a = $algs;
-			$a .= ",BF" if($s =~ /EVP_bf/);
-			$a .= ",CAST" if($s =~ /EVP_cast/);
-			$a .= ",DES" if($s =~ /EVP_des/);
-			$a .= ",DSA" if($s =~ /EVP_dss/);
-			$a .= ",IDEA" if($s =~ /EVP_idea/);
-			$a .= ",MD2" if($s =~ /EVP_md2/);
-			$a .= ",MD4" if($s =~ /EVP_md4/);
-			$a .= ",MD5" if($s =~ /EVP_md5/);
-			$a .= ",RC2" if($s =~ /EVP_rc2/);
-			$a .= ",RC4" if($s =~ /EVP_rc4/);
-			$a .= ",RC5" if($s =~ /EVP_rc5/);
-			$a .= ",RMD160" if($s =~ /EVP_ripemd/);
-			$a .= ",RSA" if($s =~ /EVP_(Open|Seal)(Final|Init)/);
-			$a .= ",RSA" if($s =~ /RSAPrivateKey/);
-			$a .= ",RSA" if($s =~ /SSLv23?_((client|server)_)?method/);
 
 			$platform{$s} =
 			    &reduce_platforms((defined($platform{$s})?$platform{$s}.',':"").$p);
