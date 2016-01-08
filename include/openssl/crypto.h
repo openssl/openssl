@@ -295,10 +295,11 @@ DEFINE_STACK_OF(void)
  * Set standard debugging functions (not done by default unless CRYPTO_MDEBUG
  * is defined)
  */
-# if defined CRYPTO_MDEBUG_ABORT
-#  ifndef CRYPTO_MDEBUG
-#   define CRYPTO_MDEBUG
-#  endif
+# if defined(CRYPTO_MDEBUG_ABORT) && !defined(CRYPTO_MDEBUG)
+#  define CRYPTO_MDEBUG
+# endif
+# ifndef CRYPTO_MDEBUG
+#  define OPENSSL_NO_CRYPTO_MDEBUG
 # endif
 
 int CRYPTO_mem_ctrl(int mode);
@@ -493,9 +494,10 @@ size_t CRYPTO_secure_used(void);
 
 void OPENSSL_cleanse(void *ptr, size_t len);
 
-# define OPENSSL_mem_debug_push(info) \
+# ifndef OPENSSL_NO_CRYPTO_MDEBUG
+#  define OPENSSL_mem_debug_push(info) \
         CRYPTO_mem_debug_push(info, __FILE__, __LINE__)
-# define OPENSSL_mem_debug_pop() \
+#  define OPENSSL_mem_debug_pop() \
         CRYPTO_mem_debug_pop()
 int CRYPTO_mem_debug_push(const char *info, const char *file, int line);
 int CRYPTO_mem_debug_pop(void);
@@ -512,10 +514,11 @@ void CRYPTO_mem_debug_realloc(void *addr1, void *addr2, size_t num, int flag,
         const char *file, int line);
 void CRYPTO_mem_debug_free(void *addr, int flag);
 
-# ifndef OPENSSL_NO_STDIO
+#  ifndef OPENSSL_NO_STDIO
 void CRYPTO_mem_leaks_fp(FILE *);
-# endif
+#  endif
 void CRYPTO_mem_leaks(struct bio_st *bio);
+# endif
 
 /* die if we have to */
 void OpenSSLDie(const char *file, int line, const char *assertion);

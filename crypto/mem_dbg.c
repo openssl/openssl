@@ -134,7 +134,7 @@
  */
 static int mh_mode = CRYPTO_MEM_CHECK_OFF;
 
-#ifdef CRYPTO_MDEBUG
+#ifndef OPENSSL_NO_CRYPTO_MDEBUG
 static unsigned long order = 0; /* number of memory requests */
 
 DECLARE_LHASH_OF(MEM);
@@ -272,7 +272,7 @@ int CRYPTO_mem_ctrl(int mode)
 #endif
 }
 
-#ifdef CRYPTO_MDEBUG
+#ifndef OPENSSL_NO_CRYPTO_MDEBUG
 
 static int mem_check_on(void)
 {
