@@ -431,13 +431,7 @@ int CRYPTO_THREADID_cmp(const CRYPTO_THREADID *a, const CRYPTO_THREADID *b);
 void CRYPTO_THREADID_cpy(CRYPTO_THREADID *dest, const CRYPTO_THREADID *src);
 unsigned long CRYPTO_THREADID_hash(const CRYPTO_THREADID *id);
 DEPRECATEDIN_1_0_0(void CRYPTO_set_id_callback(unsigned long (*func) (void)))
-/*
- * mkdef.pl cannot handle this next one so not inside DEPRECATEDIN_1_0_0,
- * but still conditional on a lower or unknown source API version.
- */
-# if OPENSSL_API_COMPAT < 0x10000000L
-unsigned long (*CRYPTO_get_id_callback(void)) (void);
-# endif
+DEPRECATEDIN_1_0_0(unsigned long (*CRYPTO_get_id_callback(void)) (void))
 DEPRECATEDIN_1_0_0(unsigned long CRYPTO_thread_id(void))
 
 const char *CRYPTO_get_lock_name(int type);
