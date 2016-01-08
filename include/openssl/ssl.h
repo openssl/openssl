@@ -1417,8 +1417,8 @@ void SSL_set_verify_depth(SSL *s, int depth);
 void SSL_set_cert_cb(SSL *s, int (*cb) (SSL *ssl, void *arg), void *arg);
 # ifndef OPENSSL_NO_RSA
 __owur int SSL_use_RSAPrivateKey(SSL *ssl, RSA *rsa);
-# endif
 __owur int SSL_use_RSAPrivateKey_ASN1(SSL *ssl, const unsigned char *d, long len);
+# endif
 __owur int SSL_use_PrivateKey(SSL *ssl, EVP_PKEY *pkey);
 __owur int SSL_use_PrivateKey_ASN1(int pk, SSL *ssl, const unsigned char *d,
                             long len);
@@ -1430,10 +1430,16 @@ __owur int SSL_CTX_use_serverinfo(SSL_CTX *ctx, const unsigned char *serverinfo,
                            size_t serverinfo_length);
 __owur int SSL_CTX_use_serverinfo_file(SSL_CTX *ctx, const char *file);
 
+#ifndef OPENSSL_NO_RSA
 __owur int SSL_use_RSAPrivateKey_file(SSL *ssl, const char *file, int type);
+#endif
+
 __owur int SSL_use_PrivateKey_file(SSL *ssl, const char *file, int type);
 __owur int SSL_use_certificate_file(SSL *ssl, const char *file, int type);
+
+#ifndef OPENSSL_NO_RSA
 __owur int SSL_CTX_use_RSAPrivateKey_file(SSL_CTX *ctx, const char *file, int type);
+#endif
 __owur int SSL_CTX_use_PrivateKey_file(SSL_CTX *ctx, const char *file, int type);
 __owur int SSL_CTX_use_certificate_file(SSL_CTX *ctx, const char *file, int type);
 /* PEM type */
@@ -1504,9 +1510,9 @@ void SSL_CTX_set_cert_cb(SSL_CTX *c, int (*cb) (SSL *ssl, void *arg),
                          void *arg);
 # ifndef OPENSSL_NO_RSA
 __owur int SSL_CTX_use_RSAPrivateKey(SSL_CTX *ctx, RSA *rsa);
-# endif
 __owur int SSL_CTX_use_RSAPrivateKey_ASN1(SSL_CTX *ctx, const unsigned char *d,
                                    long len);
+# endif
 __owur int SSL_CTX_use_PrivateKey(SSL_CTX *ctx, EVP_PKEY *pkey);
 __owur int SSL_CTX_use_PrivateKey_ASN1(int pk, SSL_CTX *ctx,
                                 const unsigned char *d, long len);
