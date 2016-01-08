@@ -546,20 +546,20 @@ static ossl_ssize_t checked_uint8(const char **inptr, void *out)
     return 1;
 }
 
+struct tlsa_field {
+    void *var;
+    const char *name;
+    ossl_ssize_t (*parser)(const char **, void *);
+};
+
 static int tlsa_import_rr(SSL *con, const char *rrdata)
 {
-    int ret;
-    uint8_t usage;
-    uint8_t selector;
-    uint8_t mtype;
-    unsigned char *data = NULL;
-    const char *cp = rrdata;
-    ossl_ssize_t len = 0;
-    struct tlsa_field {
-        void *var;
-        const char *name;
-        ossl_ssize_t (*parser)(const char **, void *);
-    } tlsa_fields[] = {
+    /* Not necessary to re-init these values; the "parsers" do that. */
+    static uint8_t usage;
+    static uint8_t selector;
+    static uint8_t mtype;
+    static unsigned char *data;
+    static tlsa_field tlsa_fields[] = {
         { &usage, "usage", checked_uint8 },
         { &selector, "selector", checked_uint8 },
         { &mtype, "mtype", checked_uint8 },
@@ -567,6 +567,9 @@ static int tlsa_import_rr(SSL *con, const char *rrdata)
         { NULL, }
     };
     struct tlsa_field *f;
+    int ret;
+    const char *cp = rrdata;
+    ossl_ssize_t len = 0;
 
     for (f = tlsa_fields; f->var; ++f) {
         /* Returns number of bytes produced, advances cp to next field */
@@ -2424,7 +2427,7 @@ static void print_stuff(BIO *bio, SSL *s, int full)
     }
     if ((mdpth = SSL_get0_dane_authority(s, NULL, &mspki)) >= 0) {
         uint8_t usage, selector, mtype;
-        (void) SSL_get0_dane_tlsa(s, &usage, &selector, &mtype, NULL, NULL);
+        mdpth = SSL_get0_dane_tlsa(s, &usage, &selector, &mtype, NULL, NULL);
         BIO_printf(bio, "DANE TLSA %d %d %d %s at depth %d\n",
                    usage, selector, mtype,
                    (mspki != NULL) ? "TA public key verified certificate" :
