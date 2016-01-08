@@ -544,6 +544,9 @@ void *EVP_CIPHER_CTX_get_app_data(const EVP_CIPHER_CTX *ctx);
 void EVP_CIPHER_CTX_set_app_data(EVP_CIPHER_CTX *ctx, void *data);
 void *EVP_CIPHER_CTX_cipher_data(const EVP_CIPHER_CTX *ctx);
 # define EVP_CIPHER_CTX_type(c)         EVP_CIPHER_type(EVP_CIPHER_CTX_cipher(c))
+# if OPENSSL_API_COMPAT < 0x10100000L
+#  define EVP_CIPHER_CTX_flags(c)       EVP_CIPHER_flags(EVP_CIPHER_CTX_cipher(c))
+# endif
 # define EVP_CIPHER_CTX_mode(c)         EVP_CIPHER_mode(EVP_CIPHER_CTX_cipher(c))
 
 # define EVP_ENCODE_LENGTH(l)    (((l+2)/3*4)+(l/48+1)*2+80)
@@ -711,6 +714,10 @@ int EVP_DecodeFinal(EVP_ENCODE_CTX *ctx, unsigned
                     char *out, int *outl);
 int EVP_DecodeBlock(unsigned char *t, const unsigned char *f, int n);
 
+# if OPENSSL_API_COMPAT < 0x10100000L
+#  EVP_CIPHER_CTX_init(c)      EVP_CIPHER_CTX_reset(c)
+#  EVP_CIPHER_CTX_cleanup(c)   EVP_CIPHER_CTX_reset(c)
+# endif
 EVP_CIPHER_CTX *EVP_CIPHER_CTX_new(void);
 int EVP_CIPHER_CTX_reset(EVP_CIPHER_CTX *c);
 void EVP_CIPHER_CTX_free(EVP_CIPHER_CTX *c);
