@@ -1681,7 +1681,8 @@ sub check_version_lte()
 sub do_deprecated()
 {
 	my ($decl, $plats, $algs) = @_;
-	$decl =~ /^\s*(DEPRECATEDIN_\d_\d_\d)\s*\((.*)\)\s*$/;
+	$decl =~ /^\s*(DEPRECATEDIN_\d+_\d+_\d+)\s*\((.*)\)\s*$/
+            or die "Bad DEPRECTEDIN: $decl\n";
 	my $info1 .= "#INFO:";
 	$info1 .= join(',', @{$plats}) . ":";
 	my $info2 = $info1;
