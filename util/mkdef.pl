@@ -101,7 +101,9 @@ my @known_algorithms = ( "RC2", "RC4", "RC5", "IDEA", "DES", "BF",
 			 # NEXTPROTONEG
 			 "NEXTPROTONEG",
 			 # Deprecated functions
-			 "DEPRECATED",
+			 "DEPRECATEDIN_0_9_8",
+			 "DEPRECATEDIN_1_0_0",
+			 "DEPRECATEDIN_1_1_0",
 			 # SCTP
 		 	 "SCTP",
 			 # SRTP
@@ -174,8 +176,23 @@ foreach (@ARGV, split(/ /, $options))
 	$do_ctestall=1 if $_ eq "ctestall";
 	$do_checkexist=1 if $_ eq "exist";
 	#$safe_stack_def=1 if $_ eq "-DDEBUG_SAFESTACK";
-
-	if (/^(enable|disable|no)-(.*)$/) {
+	if (/^--api=(\d+)\.(\d+)\.(\d+)$/) {
+		my $apiv = sprintf "%x%02x%02x", $1, $2, $3;
+		foreach (keys %disabled_algorithms) {
+			if (/^DEPRECATEDIN_(\d+)_(\d+)_(\d+)$/) {
+				my $depv = sprintf "%x%02x%02x", $1, $2, $3;
+				$disabled_algorithms{$_} = 1 if $apiv ge $depv;
+			}
+		}
+	}
+	if (/^no-deprecated$/) {
+		foreach (keys %disabled_algorithms) {
+			if (/^DEPRECATEDIN_/) {
+				$disabled_algorithms{$_} = 1;
+			}
+		}
+	}
+	elsif (/^(enable|disable|no)-(.*)$/) {
 		my $alg = uc $2;
         $alg =~ tr/-/_/;
 		if (exists $disabled_algorithms{$alg}) {
@@ -439,14 +456,15 @@ sub do_defs
 		print STDERR "DEBUG: parsing ----------\n" if $debug;
 		while(<IN>) {
 			if($parens > 0) {
-				#Inside a DECLARE_DEPRECATED
+				#Inside a DEPRECATEDIN
 				$stored_multiline .= $_;
 				chomp $stored_multiline;
-				print STDERR "DEBUG: Continuing multiline DEPRECATED: $stored_multiline\n" if $debug;
+				print STDERR "DEBUG: Continuing multiline DEPRECATEDIN: $stored_multiline\n" if $debug;
 				$parens = count_parens($stored_multiline);
 				if ($parens == 0) {
-					$stored_multiline =~ /^\s*DECLARE_DEPRECATED\s*\(\s*(\w*(\s|\*|\w)*)/;
-					$def .= "$1(void);";
+					$def .= do_deprecated($stored_multiline,
+							\@current_platforms,
+							\@current_algorithms);
 				}
 				next;
 			}
@@ -840,14 +858,16 @@ sub do_defs
 					&$make_variant("_shadow_$2","_shadow_$2",
 						      "EXPORT_VAR_AS_FUNCTION",
 						      "FUNCTION");
-				} elsif (/^\s*DECLARE_DEPRECATED\s*\(\s*(\w*(\s|\*|\w)*)/) {
+				} elsif (/^\s*DEPRECATEDIN/) {
 					$parens = count_parens($_);
 					if ($parens == 0) {
-						$def .= "$1(void);";
+						$def .= do_deprecated($_,
+							\@current_platforms,
+							\@current_algorithms);
 					} else {
 						$stored_multiline = $_;
 						chomp $stored_multiline;
-						print STDERR "DEBUG: Found multiline DEPRECATED starting with: $stored_multiline\n" if $debug;
+						print STDERR "DEBUG: Found multiline DEPRECATEDIN starting with: $stored_multiline\n" if $debug;
 						next;
 					}
 				} elsif ($tag{'CONST_STRICT'} != 1) {
@@ -1656,4 +1676,16 @@ sub check_version_lte()
 			."is greater than $currversion\n"
 			if (($cvbase ne $tvbase) && ($tvletter gt $cvletter));
 	}
+}
+
+sub do_deprecated()
+{
+	my ($decl, $plats, $algs) = @_;
+	$decl =~ /^\s*(DEPRECATEDIN_\d_\d_\d)\s*\((.*)\)\s*$/;
+	my $info1 .= "#INFO:";
+	$info1 .= join(',', @{$plats}) . ":";
+	my $info2 = $info1;
+	$info1 .= join(',',@{$algs}, $1) . ";";
+	$info2 .= join(',',@{$algs}) . ";";
+	return $info1 . $2 . ";" . $info2;
 }
