@@ -834,6 +834,7 @@ my @disablables = (
     "cmac",
     "cms",
     "comp",
+    "crypto-mdebug",
     "ct",
     "deprecated",
     "des",
