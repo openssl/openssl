@@ -65,9 +65,10 @@
 #include <limits.h>
 #include "internal/cryptlib.h"
 #include "bn_lcl.h"
+#include <openssl/opensslconf.h>
 
 /* This stuff appears to be completely unused, so is deprecated */
-#ifndef OPENSSL_NO_DEPRECATED
+#if OPENSSL_API_COMPAT < 0x00908000L
 /*-
  * For a 32 bit machine
  * 2 -   4 ==  128
@@ -258,7 +259,7 @@ void BN_free(BIGNUM *a)
     if (a->flags & BN_FLG_MALLOCED)
         OPENSSL_free(a);
     else {
-#ifndef OPENSSL_NO_DEPRECATED
+#if OPENSSL_API_COMPAT < 0x00908000L
         a->flags |= BN_FLG_FREE;
 #endif
         a->d = NULL;
@@ -294,7 +295,7 @@ BIGNUM *BN_new(void)
      return (ret);
  }
 
-/* This is used both by bn_expand2() and bn_dup_expand() */
+/* This is used by bn_expand2() */
 /* The caller MUST check that words > b->dmax before calling this */
 static BN_ULONG *bn_expand_internal(const BIGNUM *b, int words)
 {

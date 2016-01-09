@@ -989,7 +989,7 @@ int SSL_set_session_secret_cb(SSL *s,
                                                             int *secret_len,
                                                             STACK_OF(SSL_CIPHER)
                                                             *peer_ciphers,
-                                                            SSL_CIPHER
+                                                            const SSL_CIPHER
                                                             **cipher,
                                                             void *arg),
                               void *arg)

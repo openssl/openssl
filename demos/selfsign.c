@@ -16,6 +16,7 @@ int main()
     X509 *x509 = NULL;
     EVP_PKEY *pkey = NULL;
 
+    CRYPTO_set_mem_debug(1);
     CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
 
     bio_err = BIO_new_fp(stderr, BIO_NOCLOSE);

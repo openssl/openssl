@@ -113,3 +113,10 @@ struct x509_crl_method_st {
                        ASN1_INTEGER *ser, X509_NAME *issuer);
     int (*crl_verify) (X509_CRL *crl, EVP_PKEY *pk);
 };
+
+typedef struct lookup_dir_hashes_st BY_DIR_HASH;
+typedef struct lookup_dir_entry_st BY_DIR_ENTRY;
+DEFINE_STACK_OF(BY_DIR_HASH)
+DEFINE_STACK_OF(BY_DIR_ENTRY)
+typedef STACK_OF(X509_NAME_ENTRY) STACK_OF_X509_NAME_ENTRY;
+DEFINE_STACK_OF(STACK_OF_X509_NAME_ENTRY)

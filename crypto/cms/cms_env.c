@@ -65,8 +65,6 @@
 
 /* CMS EnvelopedData Utilities */
 
-DECLARE_STACK_OF(CMS_RecipientInfo)
-
 CMS_EnvelopedData *cms_get0_enveloped(CMS_ContentInfo *cms)
 {
     if (OBJ_obj2nid(cms->contentType) != NID_pkcs7_enveloped) {

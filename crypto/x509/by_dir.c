@@ -73,25 +73,23 @@
 #include <openssl/lhash.h>
 #include <openssl/x509.h>
 #include "internal/x509_int.h"
+#include "x509_lcl.h"
 
-typedef struct lookup_dir_hashes_st {
+struct lookup_dir_hashes_st {
     unsigned long hash;
     int suffix;
-} BY_DIR_HASH;
+};
 
-typedef struct lookup_dir_entry_st {
+struct lookup_dir_entry_st {
     char *dir;
     int dir_type;
     STACK_OF(BY_DIR_HASH) *hashes;
-} BY_DIR_ENTRY;
+};
 
 typedef struct lookup_dir_st {
     BUF_MEM *buffer;
     STACK_OF(BY_DIR_ENTRY) *dirs;
 } BY_DIR;
-
-DECLARE_STACK_OF(BY_DIR_HASH)
-DECLARE_STACK_OF(BY_DIR_ENTRY)
 
 static int dir_ctrl(X509_LOOKUP *ctx, int cmd, const char *argp, long argl,
                     char **ret);

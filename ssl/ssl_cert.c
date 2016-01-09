@@ -486,6 +486,7 @@ int ssl_verify_cert_chain(SSL *s, STACK_OF(X509) *sk)
     int i;
     X509_STORE *verify_store;
     X509_STORE_CTX ctx;
+    X509_VERIFY_PARAM *param;
 
     if (s->cert->verify_store)
         verify_store = s->cert->verify_store;
@@ -500,9 +501,15 @@ int ssl_verify_cert_chain(SSL *s, STACK_OF(X509) *sk)
         SSLerr(SSL_F_SSL_VERIFY_CERT_CHAIN, ERR_R_X509_LIB);
         return (0);
     }
+    param = X509_STORE_CTX_get0_param(&ctx);
+
     /* Set suite B flags if needed */
     X509_STORE_CTX_set_flags(&ctx, tls1_suiteb(s));
     X509_STORE_CTX_set_ex_data(&ctx, SSL_get_ex_data_X509_STORE_CTX_idx(), s);
+
+    /* Verify via DANE if enabled */
+    if (DANETLS_ENABLED(&s->dane))
+        X509_STORE_CTX_set0_dane(&ctx, &s->dane);
 
     /*
      * We need to inherit the verify parameters. These can be determined by
@@ -512,9 +519,9 @@ int ssl_verify_cert_chain(SSL *s, STACK_OF(X509) *sk)
 
     X509_STORE_CTX_set_default(&ctx, s->server ? "ssl_client" : "ssl_server");
     /*
-     * Anything non-default in "param" should overwrite anything in the ctx.
+     * Anything non-default in "s->param" should overwrite anything in the ctx.
      */
-    X509_VERIFY_PARAM_set1(X509_STORE_CTX_get0_param(&ctx), s->param);
+    X509_VERIFY_PARAM_set1(param, s->param);
 
     if (s->verify_callback)
         X509_STORE_CTX_set_verify_cb(&ctx, s->verify_callback);
@@ -534,6 +541,10 @@ int ssl_verify_cert_chain(SSL *s, STACK_OF(X509) *sk)
     }
 
     s->verify_result = ctx.error;
+
+    /* Move peername from the store context params to the SSL handle's */
+    X509_VERIFY_PARAM_move_peername(s->param, param);
+
     X509_STORE_CTX_cleanup(&ctx);
 
     return (i);

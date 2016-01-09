@@ -118,17 +118,19 @@ ec2_smpl.o: ec2_smpl.c ec_lcl.h
 ec_ameth.o: ../../e_os.h ../../include/openssl/asn1.h
 ec_ameth.o: ../../include/openssl/asn1t.h ../../include/openssl/bio.h
 ec_ameth.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
-ec_ameth.o: ../../include/openssl/cms.h ../../include/openssl/crypto.h
-ec_ameth.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
-ec_ameth.o: ../../include/openssl/err.h ../../include/openssl/evp.h
-ec_ameth.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
-ec_ameth.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
+ec_ameth.o: ../../include/openssl/cms.h ../../include/openssl/conf.h
+ec_ameth.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
+ec_ameth.o: ../../include/openssl/ec.h ../../include/openssl/err.h
+ec_ameth.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
+ec_ameth.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
+ec_ameth.o: ../../include/openssl/opensslconf.h
 ec_ameth.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 ec_ameth.o: ../../include/openssl/pkcs7.h ../../include/openssl/safestack.h
 ec_ameth.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 ec_ameth.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
-ec_ameth.o: ../../include/openssl/x509_vfy.h ../include/internal/asn1_int.h
-ec_ameth.o: ../include/internal/cryptlib.h ec_ameth.c
+ec_ameth.o: ../../include/openssl/x509_vfy.h ../../include/openssl/x509v3.h
+ec_ameth.o: ../include/internal/asn1_int.h ../include/internal/cryptlib.h
+ec_ameth.o: ec_ameth.c
 ec_asn1.o: ../../include/openssl/asn1.h ../../include/openssl/asn1t.h
 ec_asn1.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 ec_asn1.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h

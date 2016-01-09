@@ -87,7 +87,7 @@ struct async_job_st {
     OSSL_ASYNC_FD wake_fd;
 };
 
-DECLARE_STACK_OF(ASYNC_JOB)
+DEFINE_STACK_OF(ASYNC_JOB)
 
 struct async_pool_st {
     STACK_OF(ASYNC_JOB) *jobs;

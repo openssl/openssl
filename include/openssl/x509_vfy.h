@@ -120,8 +120,8 @@ typedef struct x509_object_st {
 
 typedef struct x509_lookup_st X509_LOOKUP;
 
-DECLARE_STACK_OF(X509_LOOKUP)
-DECLARE_STACK_OF(X509_OBJECT)
+DEFINE_STACK_OF(X509_LOOKUP)
+DEFINE_STACK_OF(X509_OBJECT)
 
 /* This is a static that defines the function interface */
 typedef struct x509_lookup_method_st {
@@ -145,7 +145,7 @@ typedef struct x509_lookup_method_st {
 
 typedef struct X509_VERIFY_PARAM_st X509_VERIFY_PARAM;
 
-DECLARE_STACK_OF(X509_VERIFY_PARAM)
+DEFINE_STACK_OF(X509_VERIFY_PARAM)
 
 /*
  * This is used to hold everything.  It is used for all certificate
@@ -263,6 +263,9 @@ struct x509_store_ctx_st {      /* X509_STORE_CTX */
     /* For CRL path validation: parent context */
     X509_STORE_CTX *parent;
     CRYPTO_EX_DATA ex_data;
+    struct dane_st *dane;
+    /* signed via bare TA public key, rather than CA certificate */
+    int bare_ta_signed;
 } /* X509_STORE_CTX */ ;
 
 void X509_STORE_CTX_set_depth(X509_STORE_CTX *ctx, int depth);
@@ -528,6 +531,12 @@ X509_VERIFY_PARAM *X509_STORE_CTX_get0_param(X509_STORE_CTX *ctx);
 void X509_STORE_CTX_set0_param(X509_STORE_CTX *ctx, X509_VERIFY_PARAM *param);
 int X509_STORE_CTX_set_default(X509_STORE_CTX *ctx, const char *name);
 
+/*
+ * Bridge opacity barrier between libcrypt and libssl, also needed to support
+ * offline testing in test/danetest.c
+ */
+void X509_STORE_CTX_set0_dane(X509_STORE_CTX *ctx, struct dane_st *dane);
+
 /* X509_VERIFY_PARAM functions */
 
 X509_VERIFY_PARAM *X509_VERIFY_PARAM_new(void);
@@ -558,6 +567,7 @@ int X509_VERIFY_PARAM_add1_host(X509_VERIFY_PARAM *param,
 void X509_VERIFY_PARAM_set_hostflags(X509_VERIFY_PARAM *param,
                                      unsigned int flags);
 char *X509_VERIFY_PARAM_get0_peername(X509_VERIFY_PARAM *);
+void X509_VERIFY_PARAM_move_peername(X509_VERIFY_PARAM *, X509_VERIFY_PARAM *);
 int X509_VERIFY_PARAM_set1_email(X509_VERIFY_PARAM *param,
                                  const char *email, size_t emaillen);
 int X509_VERIFY_PARAM_set1_ip(X509_VERIFY_PARAM *param,

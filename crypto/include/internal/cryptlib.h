@@ -79,6 +79,13 @@
 extern "C" {
 #endif
 
+typedef struct ex_callback_st EX_CALLBACK;
+
+DEFINE_STACK_OF(EX_CALLBACK)
+
+DEFINE_STACK_OF(CRYPTO_dynlock)
+
+
 # ifndef OPENSSL_SYS_VMS
 #  define X509_CERT_AREA          OPENSSLDIR
 #  define X509_CERT_DIR           OPENSSLDIR "/certs"

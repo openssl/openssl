@@ -15,10 +15,10 @@ CFLAGS= $(INCLUDES) $(CFLAG)
 GENERAL=Makefile
 
 LIB=$(TOP)/libcrypto.a
-LIBSRC= pem_sign.c pem_seal.c pem_info.c pem_lib.c pem_all.c pem_err.c \
+LIBSRC= pem_sign.c pem_info.c pem_lib.c pem_all.c pem_err.c \
 	pem_x509.c pem_xaux.c pem_oth.c pem_pk8.c pem_pkey.c pvkfmt.c
 
-LIBOBJ=	pem_sign.o pem_seal.o pem_info.o pem_lib.o pem_all.o pem_err.o \
+LIBOBJ=	pem_sign.o pem_info.o pem_lib.o pem_all.o pem_err.o \
 	pem_x509.o pem_xaux.o pem_oth.o pem_pk8.o pem_pkey.o pvkfmt.o
 
 SRC= $(LIBSRC)
@@ -164,21 +164,6 @@ pem_pkey.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 pem_pkey.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
 pem_pkey.o: ../../include/openssl/x509_vfy.h ../include/internal/asn1_int.h
 pem_pkey.o: ../include/internal/cryptlib.h pem_pkey.c
-pem_seal.o: ../../e_os.h ../../include/openssl/asn1.h
-pem_seal.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
-pem_seal.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
-pem_seal.o: ../../include/openssl/ec.h ../../include/openssl/err.h
-pem_seal.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
-pem_seal.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
-pem_seal.o: ../../include/openssl/opensslconf.h
-pem_seal.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-pem_seal.o: ../../include/openssl/pem.h ../../include/openssl/pem2.h
-pem_seal.o: ../../include/openssl/pkcs7.h ../../include/openssl/rand.h
-pem_seal.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
-pem_seal.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
-pem_seal.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
-pem_seal.o: ../../include/openssl/x509_vfy.h ../include/internal/cryptlib.h
-pem_seal.o: pem_seal.c
 pem_sign.o: ../../e_os.h ../../include/openssl/asn1.h
 pem_sign.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 pem_sign.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h

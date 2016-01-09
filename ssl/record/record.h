@@ -321,7 +321,6 @@ void RECORD_LAYER_release(RECORD_LAYER *rl);
 int RECORD_LAYER_read_pending(RECORD_LAYER *rl);
 int RECORD_LAYER_write_pending(RECORD_LAYER *rl);
 int RECORD_LAYER_set_data(RECORD_LAYER *rl, const unsigned char *buf, int len);
-void RECORD_LAYER_dup(RECORD_LAYER *dst, RECORD_LAYER *src);
 void RECORD_LAYER_reset_read_sequence(RECORD_LAYER *rl);
 void RECORD_LAYER_reset_write_sequence(RECORD_LAYER *rl);
 int RECORD_LAYER_setup_comp_buffer(RECORD_LAYER *rl);

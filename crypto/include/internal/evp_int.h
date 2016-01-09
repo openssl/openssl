@@ -120,6 +120,8 @@ struct evp_pkey_method_st {
     int (*ctrl_str) (EVP_PKEY_CTX *ctx, const char *type, const char *value);
 } /* EVP_PKEY_METHOD */ ;
 
+DEFINE_STACK_OF_CONST(EVP_PKEY_METHOD)
+
 void evp_pkey_set_cb_translate(BN_GENCB *cb, EVP_PKEY_CTX *ctx);
 
 extern const EVP_PKEY_METHOD cmac_pkey_meth;

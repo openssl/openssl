@@ -208,15 +208,6 @@ int RECORD_LAYER_set_data(RECORD_LAYER *rl, const unsigned char *buf, int len)
     return 1;
 }
 
-void RECORD_LAYER_dup(RECORD_LAYER *dst, RECORD_LAYER *src)
-{
-    /*
-     * Currently only called from SSL_dup...which only seems to expect the
-     * rstate to be duplicated and nothing else from the RECORD_LAYER???
-     */
-    dst->rstate = src->rstate;
-}
-
 void RECORD_LAYER_reset_read_sequence(RECORD_LAYER *rl)
 {
     memset(rl->read_sequence, 0, sizeof(rl->read_sequence));

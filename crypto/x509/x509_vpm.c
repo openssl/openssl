@@ -444,6 +444,24 @@ char *X509_VERIFY_PARAM_get0_peername(X509_VERIFY_PARAM *param)
     return param->peername;
 }
 
+/*
+ * Move peername from one param structure to another, freeing any name present
+ * at the target.  If the source is a NULL parameter structure, free and zero
+ * the target peername.
+ */
+void X509_VERIFY_PARAM_move_peername(X509_VERIFY_PARAM *to,
+                                     X509_VERIFY_PARAM *from)
+{
+    char *peername = (from != NULL) ? from->peername : NULL;
+
+    if (to->peername != peername) {
+        OPENSSL_free(to->peername);
+        to->peername = peername;
+    }
+    if (from)
+        from->peername = NULL;
+}
+
 int X509_VERIFY_PARAM_set1_email(X509_VERIFY_PARAM *param,
                                  const char *email, size_t emaillen)
 {

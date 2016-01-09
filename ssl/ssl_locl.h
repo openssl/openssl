@@ -169,6 +169,7 @@
 #include "record/record.h"
 #include "statem/statem.h"
 #include "packet_locl.h"
+#include "internal/dane.h"
 
 # ifdef OPENSSL_BUILD_SHLIBSSL
 #  undef OPENSSL_EXTERN
@@ -692,7 +693,7 @@ struct ssl_comp_st {
     COMP_METHOD *method;
 };
 
-DECLARE_STACK_OF(SSL_COMP)
+DEFINE_STACK_OF(SSL_COMP)
 DECLARE_LHASH_OF(SSL_SESSION);
 
 
@@ -925,6 +926,9 @@ struct ssl_ctx_st {
     unsigned char *alpn_client_proto_list;
     unsigned alpn_client_proto_list_len;
 
+    /* Shared DANE context */
+    struct dane_ctx_st dane;
+
     /* SRTP profiles we are willing to do from RFC 5764 */
     STACK_OF(SRTP_PROTECTION_PROFILE) *srtp_profiles;
     /*
@@ -1007,6 +1011,10 @@ struct ssl_st {
     void *msg_callback_arg;
     int hit;                    /* reusing a previous session */
     X509_VERIFY_PARAM *param;
+
+    /* Per connection DANE state */
+    struct dane_st dane;
+
     /* crypto */
     STACK_OF(SSL_CIPHER) *cipher_list;
     STACK_OF(SSL_CIPHER) *cipher_list_by_id;
@@ -1902,8 +1910,9 @@ __owur int ssl3_final_finish_mac(SSL *s, const char *sender, int slen,
 void ssl3_finish_mac(SSL *s, const unsigned char *buf, int len);
 void ssl3_free_digest_list(SSL *s);
 __owur unsigned long ssl3_output_cert_chain(SSL *s, CERT_PKEY *cpk);
-__owur SSL_CIPHER *ssl3_choose_cipher(SSL *ssl, STACK_OF(SSL_CIPHER) *clnt,
-                               STACK_OF(SSL_CIPHER) *srvr);
+__owur const SSL_CIPHER *ssl3_choose_cipher(SSL *ssl,
+                                            STACK_OF(SSL_CIPHER) *clnt,
+                                            STACK_OF(SSL_CIPHER) *srvr);
 __owur int ssl3_digest_cached_records(SSL *s, int keep);
 __owur int ssl3_new(SSL *s);
 void ssl3_free(SSL *s);

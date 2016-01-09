@@ -144,10 +144,11 @@
 # define HEADER_SSL_H
 
 # include <openssl/e_os2.h>
+# include <openssl/opensslconf.h>
 
 # include <openssl/comp.h>
 # include <openssl/bio.h>
-# ifdef OPENSSL_USE_DEPRECATED
+# if OPENSSL_API_COMPAT < 0x10100000L
 #  include <openssl/x509.h>
 #  include <openssl/crypto.h>
 #  include <openssl/lhash.h>
@@ -325,7 +326,7 @@ typedef struct ssl_session_st SSL_SESSION;
 typedef struct tls_sigalgs_st TLS_SIGALGS;
 typedef struct ssl_conf_ctx_st SSL_CONF_CTX;
 
-DECLARE_STACK_OF(SSL_CIPHER)
+DEFINE_STACK_OF_CONST(SSL_CIPHER)
 
 /* SRTP protection profiles for use with the use_srtp extension (RFC 5764)*/
 typedef struct srtp_protection_profile_st {
@@ -333,7 +334,7 @@ typedef struct srtp_protection_profile_st {
     unsigned long id;
 } SRTP_PROTECTION_PROFILE;
 
-DECLARE_STACK_OF(SRTP_PROTECTION_PROFILE)
+DEFINE_STACK_OF(SRTP_PROTECTION_PROFILE)
 
 typedef int (*tls_session_ticket_ext_cb_fn) (SSL *s,
                                              const unsigned char *data,
@@ -341,7 +342,7 @@ typedef int (*tls_session_ticket_ext_cb_fn) (SSL *s,
 typedef int (*tls_session_secret_cb_fn) (SSL *s, void *secret,
                                          int *secret_len,
                                          STACK_OF(SSL_CIPHER) *peer_ciphers,
-                                         SSL_CIPHER **cipher, void *arg);
+                                         const SSL_CIPHER **cipher, void *arg);
 
 /* Typedefs for handling custom extensions */
 
@@ -1533,6 +1534,27 @@ __owur int SSL_set_purpose(SSL *s, int purpose);
 __owur int SSL_CTX_set_trust(SSL_CTX *s, int trust);
 __owur int SSL_set_trust(SSL *s, int trust);
 
+__owur int SSL_set1_host(SSL *s, const char *hostname);
+__owur int SSL_add1_host(SSL *s, const char *hostname);
+__owur const char *SSL_get0_peername(SSL *s);
+void SSL_set_hostflags(SSL *s, unsigned int flags);
+
+__owur int SSL_CTX_dane_enable(SSL_CTX *ctx);
+__owur int SSL_CTX_dane_mtype_set(SSL_CTX *ctx, const EVP_MD *md,
+                                  uint8_t mtype, uint8_t ord);
+__owur int SSL_dane_enable(SSL *s, const char *basedomain);
+__owur int SSL_dane_tlsa_add(SSL *s, uint8_t usage, uint8_t selector,
+                             uint8_t mtype, unsigned char *data, size_t dlen);
+__owur int SSL_get0_dane_authority(SSL *s, X509 **mcert, EVP_PKEY **mspki);
+__owur int SSL_get0_dane_tlsa(SSL *s, uint8_t *usage, uint8_t *selector,
+                              uint8_t *mtype, unsigned const char **data,
+                              size_t *dlen);
+/*
+ * Bridge opacity barrier between libcrypt and libssl, also needed to support
+ * offline testing in test/danetest.c
+ */
+struct dane_st *SSL_get0_dane(SSL *ssl);
+
 __owur int SSL_CTX_set1_param(SSL_CTX *ctx, X509_VERIFY_PARAM *vpm);
 __owur int SSL_set1_param(SSL *ssl, X509_VERIFY_PARAM *vpm);
 
@@ -1919,6 +1941,9 @@ void ERR_load_SSL_strings(void);
 /* Function codes. */
 # define SSL_F_CHECK_SUITEB_CIPHER_LIST                   331
 # define SSL_F_D2I_SSL_SESSION                            103
+# define SSL_F_DANE_CTX_ENABLE                            347
+# define SSL_F_DANE_MTYPE_SET                             393
+# define SSL_F_DANE_TLSA_ADD                              394
 # define SSL_F_DO_DTLS1_WRITE                             245
 # define SSL_F_DO_SSL3_WRITE                              104
 # define SSL_F_DTLS1_ACCEPT                               246
@@ -2059,6 +2084,7 @@ void ERR_load_SSL_strings(void);
 # define SSL_F_SSL_CTX_USE_RSAPRIVATEKEY_FILE             179
 # define SSL_F_SSL_CTX_USE_SERVERINFO                     336
 # define SSL_F_SSL_CTX_USE_SERVERINFO_FILE                337
+# define SSL_F_SSL_DANE_ENABLE                            395
 # define SSL_F_SSL_DO_CONFIG                              391
 # define SSL_F_SSL_DO_HANDSHAKE                           180
 # define SSL_F_SSL_GET_NEW_SESSION                        181
@@ -2232,8 +2258,20 @@ void ERR_load_SSL_strings(void);
 # define SSL_R_COMPRESSION_ID_NOT_WITHIN_PRIVATE_RANGE    307
 # define SSL_R_COMPRESSION_LIBRARY_ERROR                  142
 # define SSL_R_CONNECTION_TYPE_NOT_SET                    144
+# define SSL_R_CONTEXT_NOT_DANE_ENABLED                   167
 # define SSL_R_COOKIE_GEN_CALLBACK_FAILURE                400
 # define SSL_R_COOKIE_MISMATCH                            308
+# define SSL_R_DANE_ALREADY_ENABLED                       172
+# define SSL_R_DANE_CANNOT_OVERRIDE_MTYPE_FULL            173
+# define SSL_R_DANE_NOT_ENABLED                           175
+# define SSL_R_DANE_TLSA_BAD_CERTIFICATE                  180
+# define SSL_R_DANE_TLSA_BAD_CERTIFICATE_USAGE            184
+# define SSL_R_DANE_TLSA_BAD_DATA_LENGTH                  189
+# define SSL_R_DANE_TLSA_BAD_DIGEST_LENGTH                192
+# define SSL_R_DANE_TLSA_BAD_MATCHING_TYPE                200
+# define SSL_R_DANE_TLSA_BAD_PUBLIC_KEY                   201
+# define SSL_R_DANE_TLSA_BAD_SELECTOR                     202
+# define SSL_R_DANE_TLSA_NULL_DATA                        203
 # define SSL_R_DATA_BETWEEN_CCS_AND_FINISHED              145
 # define SSL_R_DATA_LENGTH_TOO_LONG                       146
 # define SSL_R_DECRYPTION_FAILED                          147
@@ -2253,6 +2291,7 @@ void ERR_load_SSL_strings(void);
 # define SSL_R_EMPTY_SRTP_PROTECTION_PROFILE_LIST         354
 # define SSL_R_ENCRYPTED_LENGTH_TOO_LONG                  150
 # define SSL_R_ERROR_IN_RECEIVED_CIPHER_LIST              151
+# define SSL_R_ERROR_SETTING_TLSA_BASE_DOMAIN             204
 # define SSL_R_EXCESSIVE_MESSAGE_SIZE                     152
 # define SSL_R_EXTRA_DATA_IN_MESSAGE                      153
 # define SSL_R_FAILED_TO_INIT_ASYNC                       405

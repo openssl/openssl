@@ -95,9 +95,7 @@ int RAND_set_rand_engine(ENGINE *engine);
 RAND_METHOD *RAND_OpenSSL(void);
 void RAND_cleanup(void);
 int RAND_bytes(unsigned char *buf, int num);
-#ifdef OPENSSL_USE_DEPRECATED
-DECLARE_DEPRECATED(int RAND_pseudo_bytes(unsigned char *buf, int num));
-#endif
+DEPRECATEDIN_1_1_0(int RAND_pseudo_bytes(unsigned char *buf, int num))
 void RAND_seed(const void *buf, int num);
 #if defined(__ANDROID__) && defined(__NDK_FPABI__)
 __NDK_FPABI__	/* __attribute__((pcs("aapcs"))) on ARM */
@@ -117,10 +115,6 @@ int RAND_poll(void);
 void RAND_screen(void);
 int RAND_event(UINT, WPARAM, LPARAM);
 
-# endif
-
-# ifdef OPENSSL_FIPS
-int RAND_init_fips(void);
 # endif
 
 /* BEGIN ERROR CODES */

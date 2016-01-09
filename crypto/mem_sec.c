@@ -148,6 +148,15 @@ int CRYPTO_secure_allocated(const void *ptr)
 #endif /* IMPLEMENTED */
 }
 
+size_t CRYPTO_secure_used()
+{
+#ifdef IMPLEMENTED
+    return secure_mem_used;
+#else
+    return 0;
+#endif /* IMPLEMENTED */
+}
+
 /* END OF PAGE ...
 
    ... START OF PAGE */

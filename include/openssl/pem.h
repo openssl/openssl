@@ -98,16 +98,6 @@ extern "C" {
 # define PEM_STRING_PARAMETERS   "PARAMETERS"
 # define PEM_STRING_CMS          "CMS"
 
-  /*
-   * Note that this structure is initialised by PEM_SealInit and cleaned up
-   * by PEM_SealFinal (at least for now)
-   */
-typedef struct PEM_Encode_Seal_st {
-    EVP_ENCODE_CTX *encode;
-    EVP_MD_CTX *md;
-    EVP_CIPHER_CTX cipher;
-} PEM_ENCODE_SEAL_CTX;
-
 # define PEM_TYPE_ENCRYPTED      10
 # define PEM_TYPE_MIC_ONLY       20
 # define PEM_TYPE_MIC_CLEAR      30
@@ -376,14 +366,6 @@ STACK_OF(X509_INFO) *PEM_X509_INFO_read(FILE *fp, STACK_OF(X509_INFO) *sk,
                                         pem_password_cb *cb, void *u);
 #endif
 
-int PEM_SealInit(PEM_ENCODE_SEAL_CTX *ctx, EVP_CIPHER *type,
-                 EVP_MD *md_type, unsigned char **ek, int *ekl,
-                 unsigned char *iv, EVP_PKEY **pubk, int npubk);
-int PEM_SealUpdate(PEM_ENCODE_SEAL_CTX *ctx, unsigned char *out, int *outl,
-                   unsigned char *in, int inl);
-int PEM_SealFinal(PEM_ENCODE_SEAL_CTX *ctx, unsigned char *sig, int *sigl,
-                  unsigned char *out, int *outl, EVP_PKEY *priv);
-
 int PEM_SignInit(EVP_MD_CTX *ctx, EVP_MD *type);
 int PEM_SignUpdate(EVP_MD_CTX *ctx, unsigned char *d, unsigned int cnt);
 int PEM_SignFinal(EVP_MD_CTX *ctx, unsigned char *sigret,
@@ -516,8 +498,6 @@ void ERR_load_PEM_strings(void);
 # define PEM_F_PEM_READ_BIO_PRIVATEKEY                    123
 # define PEM_F_PEM_READ_DHPARAMS                          142
 # define PEM_F_PEM_READ_PRIVATEKEY                        124
-# define PEM_F_PEM_SEALFINAL                              110
-# define PEM_F_PEM_SEALINIT                               111
 # define PEM_F_PEM_SIGNFINAL                              112
 # define PEM_F_PEM_WRITE                                  113
 # define PEM_F_PEM_WRITE_BIO                              114

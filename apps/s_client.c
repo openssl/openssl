@@ -138,6 +138,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 #include <openssl/e_os2.h>
 
 /*
@@ -183,6 +184,7 @@ extern int verify_error;
 extern int verify_return_error;
 extern int verify_quiet;
 
+static char *prog;
 static int async = 0;
 static int c_nbio = 0;
 static int c_tlsextdebug = 0;
@@ -201,6 +203,21 @@ static int c_brief = 0;
 
 static void print_stuff(BIO *berr, SSL *con, int full);
 static int ocsp_resp_cb(SSL *s, void *arg);
+
+static int saved_errno;
+
+static void save_errno(void)
+{
+    saved_errno = errno;
+    errno = 0;
+}
+
+static int restore_errno(void)
+{
+    int ret = errno;
+    errno = saved_errno;
+    return ret;
+}
 
 #ifndef OPENSSL_NO_PSK
 /* Default PSK identity and key */
@@ -455,6 +472,146 @@ static int serverinfo_cli_parse_cb(SSL *s, unsigned int ext_type,
     return 1;
 }
 
+/*
+ * Hex decoder that tolerates optional whitespace.  Returns number of bytes
+ * produced, advances inptr to end of input string.
+ */
+static ossl_ssize_t hexdecode(const char **inptr, void *result)
+{
+    unsigned char **out = (unsigned char **)result;
+    const char *in = *inptr;
+    unsigned char *ret = OPENSSL_malloc(strlen(in)/2);
+    unsigned char *cp = ret;
+    uint8_t byte;
+    int nibble = 0;
+
+    if (ret == NULL)
+        return -1;
+
+    for (byte = 0; *in; ++in) {
+        char c;
+
+        if (isspace(*in))
+            continue;
+        c = tolower(*in);
+        if ('0' <= c && c <= '9') {
+            byte |= c - '0';
+        } else if ('a' <= c && c <= 'f') {
+            byte |= c - 'a' + 10;
+        } else {
+            OPENSSL_free(ret);
+            return 0;
+        }
+        if ((nibble ^= 1) == 0) {
+            *cp++ = byte;
+            byte = 0;
+        } else {
+            byte <<= 4;
+        }
+    }
+    if (nibble != 0) {
+        OPENSSL_free(ret);
+        return 0;
+    }
+    *inptr = in;
+
+    return cp - (*out = ret);
+}
+
+/*
+ * Decode unsigned 0..255, returns 1 on success, <= 0 on failure. Advances
+ * inptr to next field skipping leading whitespace.
+ */
+static ossl_ssize_t checked_uint8(const char **inptr, void *out)
+{
+    uint8_t *result = (uint8_t *)out;
+    const char *in = *inptr;
+    char *endp;
+    long v;
+    int e;
+
+    save_errno();
+    v = strtol(in, &endp, 10);
+    e = restore_errno();
+
+    if (((v == LONG_MIN || v == LONG_MAX) && e == ERANGE) ||
+        endp == in || !isspace(*endp) ||
+        v != (*result = (uint8_t) v)) {
+        return -1;
+    }
+    for (in = endp; isspace(*in); ++in)
+        continue;
+
+    *inptr = in;
+    return 1;
+}
+
+struct tlsa_field {
+    void *var;
+    const char *name;
+    ossl_ssize_t (*parser)(const char **, void *);
+};
+
+static int tlsa_import_rr(SSL *con, const char *rrdata)
+{
+    /* Not necessary to re-init these values; the "parsers" do that. */
+    static uint8_t usage;
+    static uint8_t selector;
+    static uint8_t mtype;
+    static unsigned char *data;
+    static struct tlsa_field tlsa_fields[] = {
+        { &usage, "usage", checked_uint8 },
+        { &selector, "selector", checked_uint8 },
+        { &mtype, "mtype", checked_uint8 },
+        { &data, "data", hexdecode },
+        { NULL, }
+    };
+    struct tlsa_field *f;
+    int ret;
+    const char *cp = rrdata;
+    ossl_ssize_t len = 0;
+
+    for (f = tlsa_fields; f->var; ++f) {
+        /* Returns number of bytes produced, advances cp to next field */
+        if ((len = f->parser(&cp, f->var)) <= 0) {
+            BIO_printf(bio_err, "%s: warning: bad TLSA %s field in: %s\n",
+                       prog, f->name, rrdata);
+            return 0;
+        }
+    }
+    /* The data field is last, so len is its length */
+    ret = SSL_dane_tlsa_add(con, usage, selector, mtype, data, len);
+    OPENSSL_free(data);
+
+    if (ret == 0) {
+        ERR_print_errors(bio_err);
+        BIO_printf(bio_err, "%s: warning: unusable TLSA rrdata: %s\n",
+                   prog, rrdata);
+        return 0;
+    }
+    if (ret < 0) {
+        ERR_print_errors(bio_err);
+        BIO_printf(bio_err, "%s: warning: error loading TLSA rrdata: %s\n",
+                   prog, rrdata);
+        return 0;
+    }
+    return ret;
+}
+
+static int tlsa_import_rrset(SSL *con, STACK_OF(OPENSSL_STRING) *rrset)
+{
+    int num = sk_OPENSSL_STRING_num(rrset);
+    int count = 0;
+    int i;
+
+    for (i = 0; i < num; ++i) {
+        char *rrdata = sk_OPENSSL_STRING_value(rrset, i);
+        if (tlsa_import_rr(con, rrdata) > 0)
+            ++count;
+    }
+    return count > 0;
+}
+
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
     OPT_HOST, OPT_PORT, OPT_CONNECT, OPT_UNIX, OPT_XMPPHOST, OPT_VERIFY,
@@ -478,7 +635,8 @@ typedef enum OPTION_choice {
     OPT_V_ENUM,
     OPT_X_ENUM,
     OPT_S_ENUM,
-    OPT_FALLBACKSCSV, OPT_NOCMDS, OPT_PROXY
+    OPT_FALLBACKSCSV, OPT_NOCMDS, OPT_PROXY, OPT_DANE_TLSA_DOMAIN,
+    OPT_DANE_TLSA_RRDATA
 } OPTION_CHOICE;
 
 OPTIONS s_client_options[] = {
@@ -503,6 +661,9 @@ OPTIONS s_client_options[] = {
      "Do not load the default certificates file"},
     {"no-CApath", OPT_NOCAPATH, '-',
      "Do not load certificates from the default certificates directory"},
+    {"dane_tlsa_domain", OPT_DANE_TLSA_DOMAIN, 's', "DANE TLSA base domain"},
+    {"dane_tlsa_rrdata", OPT_DANE_TLSA_RRDATA, 's',
+     "DANE TLSA rrdata presentation form"},
     {"reconnect", OPT_RECONNECT, '-',
      "Drop and re-make the connection with the same Session-ID"},
     {"pause", OPT_PAUSE, '-', "Sleep  after each read and write system call"},
@@ -648,11 +809,13 @@ int s_client_main(int argc, char **argv)
     SSL_EXCERT *exc = NULL;
     SSL_CONF_CTX *cctx = NULL;
     STACK_OF(OPENSSL_STRING) *ssl_args = NULL;
+    char *dane_tlsa_domain = NULL;
+    STACK_OF(OPENSSL_STRING) *dane_tlsa_rrset = NULL;
     STACK_OF(X509_CRL) *crls = NULL;
     const SSL_METHOD *meth = TLS_client_method();
     char *CApath = NULL, *CAfile = NULL, *cbuf = NULL, *sbuf = NULL;
     char *mbuf = NULL, *proxystr = NULL, *connectstr = NULL;
-    char *cert_file = NULL, *key_file = NULL, *chain_file = NULL, *prog;
+    char *cert_file = NULL, *key_file = NULL, *chain_file = NULL;
     char *chCApath = NULL, *chCAfile = NULL, *host = SSL_HOST_NAME;
     char *inrand = NULL;
     char *passarg = NULL, *pass = NULL, *vfyCApath = NULL, *vfyCAfile = NULL;
@@ -1032,6 +1195,18 @@ int s_client_main(int argc, char **argv)
         case OPT_VERIFYCAFILE:
             vfyCAfile = opt_arg();
             break;
+        case OPT_DANE_TLSA_DOMAIN:
+            dane_tlsa_domain = opt_arg();
+            break;
+        case OPT_DANE_TLSA_RRDATA:
+            if (dane_tlsa_rrset == NULL)
+                dane_tlsa_rrset = sk_OPENSSL_STRING_new_null();
+            if (dane_tlsa_rrset == NULL ||
+                !sk_OPENSSL_STRING_push(dane_tlsa_rrset, opt_arg())) {
+                BIO_printf(bio_err, "%s: Memory allocation failure\n", prog);
+                goto end;
+            }
+            break;
         case OPT_NEXTPROTONEG:
             next_proto_neg_in = opt_arg();
             break;
@@ -1336,6 +1511,15 @@ int s_client_main(int argc, char **argv)
     }
 # endif
 
+    if (dane_tlsa_domain != NULL) {
+        if (SSL_CTX_dane_enable(ctx) <= 0) {
+            BIO_printf(bio_err,
+                       "%s: Error enabling DANE TLSA authentication.\n", prog);
+            ERR_print_errors(bio_err);
+            goto end;
+        }
+    }
+
     con = SSL_new(ctx);
     if (sess_in) {
         SSL_SESSION *sess;
@@ -1369,6 +1553,29 @@ int s_client_main(int argc, char **argv)
             ERR_print_errors(bio_err);
             goto end;
         }
+    }
+
+    if (dane_tlsa_domain != NULL) {
+        if (SSL_dane_enable(con, dane_tlsa_domain) <= 0) {
+            BIO_printf(bio_err, "%s: Error enabling DANE TLSA "
+                       "authentication.\n", prog);
+            ERR_print_errors(bio_err);
+            goto end;
+        }
+        if (dane_tlsa_rrset == NULL) {
+            BIO_printf(bio_err, "%s: DANE TLSA authentication requires at "
+                       "least one -dane_tlsa_rrset option.\n", prog);
+            goto end;
+        }
+        if (tlsa_import_rrset(con, dane_tlsa_rrset) <= 0) {
+            BIO_printf(bio_err, "%s: Failed to import any TLSA "
+                       "records.\n", prog);
+            goto end;
+        }
+    } else if (dane_tlsa_rrset != NULL) {
+            BIO_printf(bio_err, "%s: DANE TLSA authentication requires the "
+                       "-dane_tlsa_domain option.\n", prog);
+            goto end;
     }
 
  re_start:
@@ -2133,6 +2340,7 @@ int s_client_main(int argc, char **argv)
     X509_VERIFY_PARAM_free(vpm);
     ssl_excert_free(exc);
     sk_OPENSSL_STRING_free(ssl_args);
+    sk_OPENSSL_STRING_free(dane_tlsa_rrset);
     SSL_CONF_CTX_free(cctx);
     OPENSSL_clear_free(cbuf, BUFSIZZ);
     OPENSSL_clear_free(sbuf, BUFSIZZ);
@@ -2153,6 +2361,9 @@ static void print_stuff(BIO *bio, SSL *s, int full)
     const SSL_CIPHER *c;
     X509_NAME *xn;
     int i;
+    int mdpth;
+    EVP_PKEY *mspki;
+    const char *peername;
 #ifndef OPENSSL_NO_COMP
     const COMP_METHOD *comp, *expansion;
 #endif
@@ -2214,6 +2425,18 @@ static void print_stuff(BIO *bio, SSL *s, int full)
                    BIO_number_read(SSL_get_rbio(s)),
                    BIO_number_written(SSL_get_wbio(s)));
     }
+    if ((mdpth = SSL_get0_dane_authority(s, NULL, &mspki)) >= 0) {
+        uint8_t usage, selector, mtype;
+        mdpth = SSL_get0_dane_tlsa(s, &usage, &selector, &mtype, NULL, NULL);
+        BIO_printf(bio, "DANE TLSA %d %d %d %s at depth %d\n",
+                   usage, selector, mtype,
+                   (mspki != NULL) ? "TA public key verified certificate" :
+                   mdpth ? "matched TA certificate" : "matched EE certificate",
+                   mdpth);
+    }
+    if (SSL_get_verify_result(s) == X509_V_OK &&
+        (peername = SSL_get0_peername(s)) != NULL)
+        BIO_printf(bio, "Verified peername: %s\n", peername);
     BIO_printf(bio, (SSL_cache_hit(s) ? "---\nReused, " : "---\nNew, "));
     c = SSL_get_current_cipher(s);
     BIO_printf(bio, "%s, Cipher is %s\n",

@@ -118,6 +118,7 @@
 #include <openssl/buffer.h>
 #include <openssl/bio.h>
 #include <openssl/err.h>
+#include <openssl/opensslconf.h>
 
 DECLARE_LHASH_OF(ERR_STRING_DATA);
 DECLARE_LHASH_OF(ERR_STATE);
@@ -861,7 +862,7 @@ void ERR_remove_thread_state(const CRYPTO_THREADID *id)
     int_thread_del_item(&tmp);
 }
 
-#ifndef OPENSSL_NO_DEPRECATED
+#if OPENSSL_API_COMPAT < 0x10000000L
 void ERR_remove_state(unsigned long pid)
 {
     ERR_remove_thread_state(NULL);

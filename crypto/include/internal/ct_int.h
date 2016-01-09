@@ -114,7 +114,7 @@ typedef struct {
     log_entry_type_t entry_type;
 } SCT;
 
-DECLARE_STACK_OF(SCT)
+DEFINE_STACK_OF(SCT)
 
 /*
  * Allocate new SCT.

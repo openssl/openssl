@@ -129,6 +129,7 @@
 # ifndef OPENSSL_NO_STDIO
 #  include <stdio.h>            /* FILE */
 # endif
+# include <openssl/opensslconf.h>
 # include <openssl/ossl_typ.h>
 # include <openssl/crypto.h>
 
@@ -270,14 +271,10 @@ extern "C" {
 # define BN_FLG_CONSTTIME        0x04
 # define BN_FLG_SECURE           0x08
 
-# ifdef OPENSSL_USE_DEPRECATED
+# if OPENSSL_API_COMPAT < 0x00908000L
 /* deprecated name for the flag */
 #  define BN_FLG_EXP_CONSTTIME BN_FLG_CONSTTIME
-# endif
-
-# ifdef OPENSSL_USE_DEPRECATED
-#  define BN_FLG_FREE             0x8000
-                                       /* used for debuging */
+#  define BN_FLG_FREE            0x8000 /* used for debuging */
 # endif
 
 void BN_set_flags(BIGNUM *b, int n);
@@ -343,7 +340,7 @@ int BN_is_odd(const BIGNUM *a);
 
 void BN_zero_ex(BIGNUM *a);
 
-# ifndef OPENSSL_USE_DEPRECATED
+# if OPENSSL_API_COMPAT >= 0x00908000L
 #  define BN_zero(a)      BN_zero_ex(a)
 # else
 #  define BN_zero(a)      (BN_set_word((a),0))
@@ -475,23 +472,21 @@ BIGNUM *BN_mod_sqrt(BIGNUM *ret,
 void BN_consttime_swap(BN_ULONG swap, BIGNUM *a, BIGNUM *b, int nwords);
 
 /* Deprecated versions */
-# ifdef OPENSSL_USE_DEPRECATED
-DECLARE_DEPRECATED(BIGNUM *BN_generate_prime(BIGNUM *ret, int bits, int safe,
+DEPRECATEDIN_0_9_8(BIGNUM *BN_generate_prime(BIGNUM *ret, int bits, int safe,
                                              const BIGNUM *add,
                                              const BIGNUM *rem,
                                              void (*callback) (int, int,
                                                                void *),
-                                             void *cb_arg));
-DECLARE_DEPRECATED(int
+                                             void *cb_arg))
+DEPRECATEDIN_0_9_8(int
                    BN_is_prime(const BIGNUM *p, int nchecks,
                                void (*callback) (int, int, void *),
-                               BN_CTX *ctx, void *cb_arg));
-DECLARE_DEPRECATED(int
+                               BN_CTX *ctx, void *cb_arg))
+DEPRECATEDIN_0_9_8(int
                    BN_is_prime_fasttest(const BIGNUM *p, int nchecks,
                                         void (*callback) (int, int, void *),
                                         BN_CTX *ctx, void *cb_arg,
-                                        int do_trial_division));
-# endif                         /* defined(OPENSSL_USE_DEPRECATED) */
+                                        int do_trial_division))
 
 /* Newer versions */
 int BN_generate_prime_ex(BIGNUM *ret, int bits, int safe, const BIGNUM *add,
@@ -535,12 +530,10 @@ int BN_BLINDING_invert(BIGNUM *n, BN_BLINDING *b, BN_CTX *ctx);
 int BN_BLINDING_convert_ex(BIGNUM *n, BIGNUM *r, BN_BLINDING *b, BN_CTX *);
 int BN_BLINDING_invert_ex(BIGNUM *n, const BIGNUM *r, BN_BLINDING *b,
                           BN_CTX *);
-# ifdef OPENSSL_USE_DEPRECATED
-DECLARE_DEPRECATED(unsigned long
-                   BN_BLINDING_get_thread_id(const BN_BLINDING *));
-DECLARE_DEPRECATED(void
-                   BN_BLINDING_set_thread_id(BN_BLINDING *, unsigned long));
-# endif
+DEPRECATEDIN_1_0_0(unsigned long
+                   BN_BLINDING_get_thread_id(const BN_BLINDING *))
+DEPRECATEDIN_1_0_0(void
+                   BN_BLINDING_set_thread_id(BN_BLINDING *, unsigned long))
 CRYPTO_THREADID *BN_BLINDING_thread_id(BN_BLINDING *);
 unsigned long BN_BLINDING_get_flags(const BN_BLINDING *);
 void BN_BLINDING_set_flags(BN_BLINDING *, unsigned long);
@@ -554,11 +547,9 @@ BN_BLINDING *BN_BLINDING_create_param(BN_BLINDING *b,
                                                          BN_MONT_CTX *m_ctx),
                                       BN_MONT_CTX *m_ctx);
 
-# ifdef OPENSSL_USE_DEPRECATED
-DECLARE_DEPRECATED(void BN_set_params(int mul, int high, int low, int mont));
-DECLARE_DEPRECATED(int BN_get_params(int which)); /* 0, mul, 1 high, 2 low, 3
-                                                   * mont */
-# endif
+DEPRECATEDIN_0_9_8(void BN_set_params(int mul, int high, int low, int mont))
+DEPRECATEDIN_0_9_8(int BN_get_params(int which)) /* 0, mul, 1 high, 2 low, 3
+                                                  * mont */
 
 BN_RECP_CTX *BN_RECP_CTX_new(void);
 void BN_RECP_CTX_free(BN_RECP_CTX *recp);
