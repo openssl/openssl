@@ -96,7 +96,7 @@ extern "C" {
     } \
     static ossl_inline t2 *sk_##t1##_value(const STACK_OF(t1) *sk, int idx) \
     { \
-        return sk_value((_STACK *)sk, idx); \
+        return (t2 *)sk_value((_STACK *)sk, idx); \
     } \
     static ossl_inline STACK_OF(t1) *sk_##t1##_new(int (*cmpf)(const t3 * const *a, const t3 * const *b)) \
     { \
@@ -116,11 +116,11 @@ extern "C" {
     } \
     static ossl_inline t2 *sk_##t1##_delete(STACK_OF(t1) *sk, int i) \
     { \
-        return sk_delete((_STACK *)sk, i); \
+        return (t2 *)sk_delete((_STACK *)sk, i); \
     } \
     static ossl_inline t2 *sk_##t1##_delete_ptr(STACK_OF(t1) *sk, t2 *ptr) \
     { \
-        return sk_delete_ptr((_STACK *)sk, (void *)ptr); \
+        return (t2 *)sk_delete_ptr((_STACK *)sk, (void *)ptr); \
     } \
     static ossl_inline int sk_##t1##_push(STACK_OF(t1) *sk, t2 *ptr) \
     { \
@@ -148,7 +148,7 @@ extern "C" {
     } \
     static ossl_inline t2 *sk_##t1##_set(STACK_OF(t1) *sk, int idx, t2 *ptr) \
     { \
-        return sk_set((_STACK *)sk, idx, (void *)ptr); \
+        return (t2 *)sk_set((_STACK *)sk, idx, (void *)ptr); \
     } \
     static ossl_inline int sk_##t1##_find(STACK_OF(t1) *sk, t2 *ptr) \
     { \
