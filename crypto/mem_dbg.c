@@ -331,29 +331,31 @@ static unsigned long app_info_hash(const APP_INFO *a)
     return (ret);
 }
 
-static APP_INFO *pop_info(void)
+/* returns 1 if there was an info to pop, 0 if the stack was empty. */
+static int pop_info(void)
 {
     APP_INFO tmp;
-    APP_INFO *ret = NULL;
+    APP_INFO *current = NULL;
 
     if (amih != NULL) {
         CRYPTO_THREADID_current(&tmp.threadid);
-        if ((ret = lh_APP_INFO_delete(amih, &tmp)) != NULL) {
-            APP_INFO *next = ret->next;
+        if ((current = lh_APP_INFO_delete(amih, &tmp)) != NULL) {
+            APP_INFO *next = current->next;
 
             if (next != NULL) {
                 next->references++;
                 (void)lh_APP_INFO_insert(amih, next);
             }
-            if (--(ret->references) <= 0) {
-                ret->next = NULL;
+            if (--(current->references) <= 0) {
+                current->next = NULL;
                 if (next != NULL)
                     next->references--;
-                OPENSSL_free(ret);
+                OPENSSL_free(current);
             }
+            return 1;
         }
     }
-    return (ret);
+    return 0;
 }
 
 int CRYPTO_mem_debug_push(const char *info, const char *file, int line)
@@ -396,7 +398,7 @@ int CRYPTO_mem_debug_pop(void)
 
     if (mem_check_on()) {
         CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_DISABLE);
-        ret = (pop_info() != NULL);
+        ret = pop_info();
         CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ENABLE);
     }
     return (ret);
