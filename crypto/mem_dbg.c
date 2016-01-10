@@ -643,12 +643,12 @@ static void print_leak_doall_arg(const MEM *m, MEM_LEAK *l)
 
 static IMPLEMENT_LHASH_DOALL_ARG_FN(print_leak, const MEM, MEM_LEAK)
 
-void CRYPTO_mem_leaks(BIO *b)
+int CRYPTO_mem_leaks(BIO *b)
 {
     MEM_LEAK ml;
 
     if (mh == NULL && amih == NULL)
-        return;
+        return 1;
 
     CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_DISABLE);
 
@@ -665,7 +665,6 @@ void CRYPTO_mem_leaks(BIO *b)
     }
     if (ml.chunks != 0) {
         BIO_printf(b, "%ld bytes leaked in %d chunks\n", ml.bytes, ml.chunks);
-        abort();
     } else {
         /*
          * Make sure that, if we found no leaks, memory-leak debugging itself
@@ -697,15 +696,17 @@ void CRYPTO_mem_leaks(BIO *b)
         CRYPTO_w_unlock(CRYPTO_LOCK_MALLOC);
     }
     CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ENABLE);
+    return ml.chunks == 0 ? 1 : 0;
 }
 
 # ifndef OPENSSL_NO_STDIO
-void CRYPTO_mem_leaks_fp(FILE *fp)
+int CRYPTO_mem_leaks_fp(FILE *fp)
 {
     BIO *b;
+    int ret;
 
     if (mh == NULL)
-        return;
+        return 0;
     /*
      * Need to turn off memory checking when allocated BIOs ... especially as
      * we're creating them at a time when we're trying to check we've not
@@ -715,10 +716,11 @@ void CRYPTO_mem_leaks_fp(FILE *fp)
     b = BIO_new(BIO_s_file());
     CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ENABLE);
     if (b == NULL)
-        return;
+        return -1;
     BIO_set_fp(b, fp, BIO_NOCLOSE);
-    CRYPTO_mem_leaks(b);
+    ret = CRYPTO_mem_leaks(b);
     BIO_free(b);
+    return ret;
 }
 # endif
 

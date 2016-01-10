@@ -509,9 +509,9 @@ void CRYPTO_mem_debug_realloc(void *addr1, void *addr2, size_t num, int flag,
 void CRYPTO_mem_debug_free(void *addr, int flag);
 
 #  ifndef OPENSSL_NO_STDIO
-void CRYPTO_mem_leaks_fp(FILE *);
+int CRYPTO_mem_leaks_fp(FILE *);
 #  endif
-void CRYPTO_mem_leaks(struct bio_st *bio);
+int CRYPTO_mem_leaks(struct bio_st *bio);
 # endif
 
 /* die if we have to */
