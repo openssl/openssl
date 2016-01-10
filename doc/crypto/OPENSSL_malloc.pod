@@ -132,16 +132,17 @@ OPENSSL_mem_debug_pop() removes identifying state from the stack.
 
 At the end of the program, calling CRYPTO_mem_leaks() or
 CRYPTO_mem_leaks_fp() will report all "leaked" memory, writing it
-to the specified BIO B<b> or FILE B<fp>.
-It will then L<abort(3)> if there were any unfree'd allocations.
+to the specified BIO B<b> or FILE B<fp>. These functions return 1 if
+there are no leaks, 0 if there are leaks and -1 if an error occurred.
 
 =head1 RETURN VALUES
 
 OPENSSL_malloc_init(), OPENSSL_free(), OPENSSL_clear_free()
-CRYPTO_free(), CRYPTO_clear_free(),
-CRYPTO_get_mem_functions(), and
-CRYPTO_mem_leaks()
+CRYPTO_free(), CRYPTO_clear_free() and CRYPTO_get_mem_functions()
 return no value.
+
+CRYPTO_mem_leaks() and CRYPTO_mem_leaks_fp() return 1 if there
+are no leaks, 0 if there are leaks and -1 if an error occurred.
 
 OPENSSL_malloc(), OPENSSL_zalloc(), OPENSSL_realloc(),
 OPENSSL_clear_realloc(),
