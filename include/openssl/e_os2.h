@@ -348,6 +348,8 @@ typedef unsigned __int64 uint64_t;
 #  else
 #   define ossl_inline
 #  endif
+# else
+#  define ossl_inline inline
 # endif
 
 #ifdef  __cplusplus
