@@ -429,7 +429,7 @@ int main(int argc, char *argv[])
     BIO_free(bio_in);
     BIO_free_all(bio_out);
     apps_shutdown();
-#ifdef CRYPTO_MDEBUG
+#ifndef OPENSSL_NO_CRYPTO_MDEBUG
     CRYPTO_mem_leaks(bio_err);
 #endif
     BIO_free(bio_err);

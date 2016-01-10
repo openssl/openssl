@@ -300,7 +300,7 @@ int main(int argc, char *argv[])
     BN_free(m);
     BN_CTX_free(ctx);
     ERR_remove_thread_state(NULL);
-#ifdef CRYPTO_MDEBUG
+#ifndef OPENSSL_NO_CRYPTO_MDEBUG
     CRYPTO_mem_leaks(out);
 #endif
     BIO_free(out);

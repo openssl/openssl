@@ -132,7 +132,9 @@
  * checking temporarily. State CRYPTO_MEM_CHECK_ENABLE without ..._ON makes
  * no sense whatsoever.
  */
+#ifndef OPENSSL_NO_CRYPTO_MDEBUG
 static int mh_mode = CRYPTO_MEM_CHECK_OFF;
+#endif
 
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG
 static unsigned long order = 0; /* number of memory requests */
@@ -203,7 +205,7 @@ static void app_info_free(APP_INFO *inf)
 
 int CRYPTO_mem_ctrl(int mode)
 {
-#ifndef CRYPTO_MDEBUG
+#ifdef OPENSSL_NO_CRYPTO_MDEBUG
     return mode - mode;
 #else
     int ret = mh_mode;
@@ -663,9 +665,7 @@ void CRYPTO_mem_leaks(BIO *b)
     }
     if (ml.chunks != 0) {
         BIO_printf(b, "%ld bytes leaked in %d chunks\n", ml.bytes, ml.chunks);
-# ifdef CRYPTO_MDEBUG_ABORT
         abort();
-# endif
     } else {
         /*
          * Make sure that, if we found no leaks, memory-leak debugging itself

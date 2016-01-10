@@ -249,10 +249,10 @@ typedef struct {
  * The following can be used to detect memory leaks in the library. If
  * used, it turns on malloc checking
  */
-# define CRYPTO_MEM_CHECK_OFF     0x0
-# define CRYPTO_MEM_CHECK_ON      0x1
-# define CRYPTO_MEM_CHECK_ENABLE  0x2
-# define CRYPTO_MEM_CHECK_DISABLE 0x3
+# define CRYPTO_MEM_CHECK_OFF     0x0   /* Control only */
+# define CRYPTO_MEM_CHECK_ON      0x1   /* Control and mode bit */
+# define CRYPTO_MEM_CHECK_ENABLE  0x2   /* Control and mode bit */
+# define CRYPTO_MEM_CHECK_DISABLE 0x3   /* Control only */
 
 /* predec of the BIO type */
 typedef struct bio_st BIO_dummy;
@@ -291,20 +291,9 @@ DEFINE_STACK_OF(void)
 #define OPENSSL_malloc_init() \
     CRYPTO_set_mem_functions(CRYPTO_malloc, CRYPTO_realloc, CRYPTO_free)
 
-/*
- * Set standard debugging functions (not done by default unless CRYPTO_MDEBUG
- * is defined)
- */
-# if defined(CRYPTO_MDEBUG_ABORT) && !defined(CRYPTO_MDEBUG)
-#  define CRYPTO_MDEBUG
-# endif
-# ifndef CRYPTO_MDEBUG
-#  define OPENSSL_NO_CRYPTO_MDEBUG
-# endif
-
 int CRYPTO_mem_ctrl(int mode);
 
-# ifdef CRYPTO_MDEBUG
+# ifndef OPENSSL_NO_CRYPTO_MDEBUG
 #  define OPENSSL_malloc(num) \
         CRYPTO_malloc(num, __FILE__, __LINE__)
 #  define OPENSSL_zalloc(num) \

@@ -211,7 +211,7 @@ int main(int argc, char *argv[])
     ERR_remove_thread_state(NULL);
     EVP_cleanup();
     CRYPTO_cleanup_all_ex_data();
-#ifdef CRYPTO_MDEBUG
+#ifndef OPENSSL_NO_CRYPTO_MDEBUG
     CRYPTO_mem_leaks(err);
 #endif
     BIO_free(err);
