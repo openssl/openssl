@@ -4,7 +4,8 @@
 
  Changes between 1.0.1q and 1.0.1r [xx XXX xxxx]
 
-  *)
+  *) Reject DH handshakes with parameters shorter than 1024 bits.
+     [Kurt Roeckx]
 
  Changes between 1.0.1p and 1.0.1q [3 Dec 2015]
 
