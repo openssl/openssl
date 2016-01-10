@@ -85,7 +85,7 @@
  then debugging symbols will be compiled in.
 
  By default in 1.0.0 OpenSSL will compile builtin ENGINES into the
- separate shared librariesy. If you specify the "enable-static-engine"
+ separate shared libraries. If you specify the "enable-static-engine"
  option on the command line to Configure the shared library build
  (ms\ntdll.mak) will compile the engines into libeay32.dll instead.
 
