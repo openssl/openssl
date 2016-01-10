@@ -4,7 +4,9 @@
 
  Changes between 1.0.1s and 1.0.1t [xx XXX xxxx]
 
-  *)
+  *) Remove LOW from the DEFAULT cipher list.  This removes singles DES from the
+     default.
+     [Kurt Roeckx]
 
  Changes between 1.0.1r and 1.0.1s [1 Mar 2016]
 
