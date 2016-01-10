@@ -3610,7 +3610,7 @@ int ssl3_check_cert_and_algorithm(SSL *s)
             DH_free(dh_srvr);
         }
 
-        if ((!SSL_C_IS_EXPORT(s->s3->tmp.new_cipher) && dh_size < 768)
+        if ((!SSL_C_IS_EXPORT(s->s3->tmp.new_cipher) && dh_size < 1024)
             || (SSL_C_IS_EXPORT(s->s3->tmp.new_cipher) && dh_size < 512)) {
             SSLerr(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM, SSL_R_DH_KEY_TOO_SMALL);
             goto f_err;
