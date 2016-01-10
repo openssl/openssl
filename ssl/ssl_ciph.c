@@ -1581,24 +1581,24 @@ char *SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
 {
     const char *ver;
     const char *kx, *au, *enc, *mac;
-    uint32_t alg_mkey, alg_auth, alg_enc, alg_mac, alg_ssl;
+    uint32_t alg_mkey, alg_auth, alg_enc, alg_mac;
     static const char *format =
         "%-23s %s Kx=%-8s Au=%-4s Enc=%-9s Mac=%-4s\n";
+
+    if (buf == NULL) {
+        len = 128;
+        buf = OPENSSL_malloc(len);
+        if (buf == NULL)
+            return NULL;
+    } else if (len < 128)
+        return NULL;
 
     alg_mkey = cipher->algorithm_mkey;
     alg_auth = cipher->algorithm_auth;
     alg_enc = cipher->algorithm_enc;
     alg_mac = cipher->algorithm_mac;
-    alg_ssl = cipher->algorithm_ssl;
 
-    if (alg_ssl & SSL_SSLV3)
-        ver = "SSLv3";
-    else if (alg_ssl & SSL_TLSV1)
-        ver = "TLSv1.0";
-    else if (alg_ssl & SSL_TLSV1_2)
-        ver = "TLSv1.2";
-    else
-        ver = "unknown";
+    ver = SSL_CIPHER_get_version(cipher);
 
     switch (alg_mkey) {
     case SSL_kRSA:
@@ -1768,14 +1768,6 @@ char *SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
         break;
     }
 
-    if (buf == NULL) {
-        len = 128;
-        buf = OPENSSL_malloc(len);
-        if (buf == NULL)
-            return ("OPENSSL_malloc Error");
-    } else if (len < 128)
-        return ("Buffer too small");
-
     BIO_snprintf(buf, len, format, cipher->name, ver, kx, au, enc, mac);
 
     return (buf);
@@ -1783,15 +1775,19 @@ char *SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
 
 char *SSL_CIPHER_get_version(const SSL_CIPHER *c)
 {
-    int i;
+    uint32_t alg_ssl;
 
     if (c == NULL)
-        return ("(NONE)");
-    i = (int)(c->id >> 24L);
-    if (i == 3)
-        return ("TLSv1/SSLv3");
-    else
-        return ("unknown");
+        return "(NONE)";
+    alg_ssl = c->algorithm_ssl;
+
+    if (alg_ssl & SSL_SSLV3)
+        return "SSLv3";
+    if (alg_ssl & SSL_TLSV1)
+        return "TLSv1.0";
+    if (alg_ssl & SSL_TLSV1_2)
+        return "TLSv1.2";
+    return "unknown";
 }
 
 /* return the actual cipher being used */
