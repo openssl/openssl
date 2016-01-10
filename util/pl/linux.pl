@@ -11,7 +11,7 @@ $rm='/bin/rm -f';
 
 $cc='gcc';
 if ($debug)
-	{ $cflags="-g2 -ggdb -DREF_CHECK -DCRYPTO_MDEBUG"; }
+	{ $cflags="-g2 -ggdb -DREF_CHECK"; }
 elsif ($profile)
 	{ $cflags="-pg -O3"; }
 else

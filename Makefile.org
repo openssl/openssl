@@ -46,7 +46,6 @@ OPENSSLDIR=/usr/local/ssl
 # LOCK_DEBUG - turns on lots of lock debug output :-)
 # REF_CHECK - turn on some xyz_free() assertions.
 # REF_PRINT - prints some stuff on structure free.
-# CRYPTO_MDEBUG - turns on my 'memory leak' detecting stuff
 # MFUNC - Make all Malloc/Free/Realloc calls call
 #       CRYPTO_malloc/CRYPTO_free/CRYPTO_realloc which can be setup to
 #       call application defined callbacks via CRYPTO_set_mem_functions()

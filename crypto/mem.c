@@ -74,7 +74,7 @@ static void *(*realloc_wrapper)(void *, size_t, const char *, int)
 static void (*free_wrapper)(void *)
     = CRYPTO_free;
 
-#ifdef CRYPTO_MDEBUG
+#ifndef OPENSSL_NO_CRYPTO_MDEBUG
 static int call_malloc_debug = 1;
 #else
 static int call_malloc_debug = 0;
@@ -125,7 +125,7 @@ void *CRYPTO_malloc(size_t num, const char *file, int line)
         return NULL;
 
     allow_customize = 0;
-#ifdef CRYPTO_MDEBUG
+#ifndef OPENSSL_NO_CRYPTO_MDEBUG
     if (call_malloc_debug) {
         CRYPTO_mem_debug_malloc(NULL, num, 0, file, line);
         ret = malloc(num);
@@ -174,7 +174,7 @@ void *CRYPTO_realloc(void *str, size_t num, const char *file, int line)
     }
 
     allow_customize = 0;
-#ifdef CRYPTO_MDEBUG
+#ifndef OPENSSL_NO_CRYPTO_MDEBUG
     if (call_malloc_debug) {
         void *ret;
         CRYPTO_mem_debug_realloc(str, NULL, num, 0, file, line);
@@ -211,7 +211,7 @@ void *CRYPTO_clear_realloc(void *str, size_t old_len, size_t num,
 
     /* Allocate new memory.  Call malloc and do a copy, so that we can
      * cleanse the old buffer. */
-#ifdef CRYPTO_MDEBUG
+#ifndef OPENSSL_NO_CRYPTO_MDEBUG
     if (call_malloc_debug) {
         CRYPTO_mem_debug_realloc(str, NULL, num, 0, file, line);
         ret = malloc(num);
@@ -233,7 +233,7 @@ void *CRYPTO_clear_realloc(void *str, size_t old_len, size_t num,
 
 void CRYPTO_free(void *str)
 {
-#ifdef CRYPTO_MDEBUG
+#ifndef OPENSSL_NO_CRYPTO_MDEBUG
     if (call_malloc_debug) {
         CRYPTO_mem_debug_free(str, 0);
         free(str);

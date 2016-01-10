@@ -56,12 +56,23 @@
 #include <string.h>
 #include <openssl/bio.h>
 #include <openssl/crypto.h>
+#include <setjmp.h>
+
+#ifndef OPENSSL_NO_CRYPTO_MDEBUG
+static sigjmp_buf env;
+
+static void handler(int sig)
+{
+    siglongjmp(env, 1);
+}
+#endif
 
 int main(int argc, char **argv)
 {
-#ifdef CRYPTO_MDEBUG
+#ifndef OPENSSL_NO_CRYPTO_MDEBUG
     char *p;
     char *lost;
+    int aborted = 0;
 
     p = getenv("OPENSSL_DEBUG_MEMORY");
     if (p != NULL && strcmp(p, "on") == 0)
@@ -74,15 +85,19 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    if (argv[1] && strcmp(argv[1], "freeit") == 0)
-        OPENSSL_free(lost);
+    signal(SIGABRT, handler);
 
-    CRYPTO_mem_leaks_fp(stderr);
-    return 0;
+    if (argv[1] && strcmp(argv[1], "freeit") == 0) {
+        OPENSSL_free(lost);
+        lost = NULL;
+    }
+
+    if (sigsetjmp(env, 0) == 0)
+        CRYPTO_mem_leaks_fp(stderr);
+    else
+        aborted = 1;
+    return ((lost != NULL) ^ (aborted == 1));
 #else
-    if (argv[1] && strcmp(argv[1], "freeit") == 0)
-        return 0;
-    fprintf(stderr, "Leak simulated\n");
-    return 1;
+    return 0;
 #endif
 }

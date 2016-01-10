@@ -516,7 +516,7 @@ int main(int argc, char *argv[])
     BIO_free(out);
     CRYPTO_cleanup_all_ex_data();
     ERR_remove_thread_state(NULL);
-#ifdef CRYPTO_MDEBUG
+#ifndef OPENSSL_NO_CRYPTO_MDEBUG
     CRYPTO_mem_leaks_fp(stderr);
 #endif
     EXIT(ret);
