@@ -123,6 +123,9 @@ my %disabled_algorithms;
 foreach (@known_algorithms) {
     $disabled_algorithms{$_} = 0;
 }
+# disabled by default
+$disabled_algorithms{"CRYPTO_MDEBUG"} = 1;
+$disabled_algorithms{"STATIC_ENGINE"} = 1;
 
 my $options="";
 open(IN,"<Makefile") || die "unable to open Makefile!\n";
