@@ -4,6 +4,10 @@
 
  Changes between 1.0.2e and 1.1.0  [xx XXX xxxx]
 
+  *) The return value for SSL_CIPHER_description() for error conditions
+     has changed.
+     [Rich Salz]
+
   *) Support for RFC6698/RFC7671 DANE TLSA peer authentication.
 
      Obtaining and performing DNSSEC validation of TLSA records is

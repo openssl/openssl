@@ -41,14 +41,12 @@ When combined with B<-s> includes cipher suites which require PSK.
 
 =item B<-v>
 
-Verbose option. List ciphers with a complete description of
-protocol version, key exchange,
-authentication, encryption and mac algorithms used along with any key size
-restrictions and whether the algorithm is classed as an "export" cipher.
+Verbose output: For each ciphersuite, list details as provided by
+L<SSL_CIPHER_description(3)>.
 
 =item B<-V>
 
-Like B<-v>, but include cipher suite codes in output (hex format).
+Like B<-v>, but include the official cipher suite values in hex.
 
 =item B<-ssl3>
 
