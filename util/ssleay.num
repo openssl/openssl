@@ -427,3 +427,9 @@ SSL_get0_dane_tlsa                      461	1_1_0	EXIST::FUNCTION:
 SSL_set_hostflags                       462	1_1_0	EXIST::FUNCTION:
 SSL_dane_enable                         463	1_1_0	EXIST::FUNCTION:
 SSL_get0_dane                           464	1_1_0	EXIST::FUNCTION:
+SSL_CTX_set_options                     465	1_1_0	EXIST::FUNCTION:
+SSL_CTX_clear_options                   466	1_1_0	EXIST::FUNCTION:
+SSL_CTX_get_options                     467	1_1_0	EXIST::FUNCTION:
+SSL_clear_options                       468	1_1_0	EXIST::FUNCTION:
+SSL_set_options                         469	1_1_0	EXIST::FUNCTION:
+SSL_get_options                         470	1_1_0	EXIST::FUNCTION:

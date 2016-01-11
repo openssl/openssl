@@ -315,7 +315,11 @@ Use the file path to locate trusted CA certficates.
 
 =item void B<SSL_CTX_set_msg_callback_arg>(SSL_CTX *ctx, void *arg);
 
-=item void B<SSL_CTX_set_options>(SSL_CTX *ctx, unsigned long op);
+=item unsigned long B<SSL_CTX_clear_options>(SSL_CTX *ctx, unsigned long op);
+
+=item unsigned long B<SSL_CTX_get_options>(SSL_CTX *ctx);
+
+=item unsigned long B<SSL_CTX_set_options>(SSL_CTX *ctx, unsigned long op);
 
 =item void B<SSL_CTX_set_quiet_shutdown>(SSL_CTX *ctx, int mode);
 
@@ -596,7 +600,11 @@ fresh handle for each connection.
 
 =item void B<SSL_set_msg_callback_arg>(SSL *ctx, void *arg);
 
-=item void B<SSL_set_options>(SSL *ssl, unsigned long op);
+=item unsigned long B<SSL_clear_options>(SSL *ssl, unsigned long op);
+
+=item unsigned long B<SSL_get_options>(SSL *ssl);
+
+=item unsigned long B<SSL_set_options>(SSL *ssl, unsigned long op);
 
 =item void B<SSL_set_quiet_shutdown>(SSL *ssl, int mode);
 
