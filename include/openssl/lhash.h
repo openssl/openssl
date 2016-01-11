@@ -184,60 +184,60 @@ void lh_node_usage_stats_bio(const _LHASH *lh, BIO *out);
 
 # define LHASH_OF(type) struct lhash_st_##type
 
-# define DECLARE_LHASH_OF(type) \
+# define DEFINE_LHASH_OF(type) \
     LHASH_OF(type) { int dummy; }; \
-    static inline LHASH_OF(type) * \
+    static ossl_inline LHASH_OF(type) * \
         lh_##type##_new(unsigned long (*hfn)(const type *), \
                         int (*cfn)(const type *, const type *)) \
     { \
         return (LHASH_OF(type) *) \
             lh_new((LHASH_HASH_FN_TYPE) hfn, (LHASH_COMP_FN_TYPE)cfn); \
     } \
-    static inline void lh_##type##_free(LHASH_OF(type) *lh) \
+    static ossl_inline void lh_##type##_free(LHASH_OF(type) *lh) \
     { \
         lh_free((_LHASH *)lh); \
     } \
-    static inline type *lh_##type##_insert(LHASH_OF(type) *lh, type *d) \
+    static ossl_inline type *lh_##type##_insert(LHASH_OF(type) *lh, type *d) \
     { \
         return lh_insert((_LHASH *)lh, d); \
     } \
-    static inline type *lh_##type##_delete(LHASH_OF(type) *lh, const type *d) \
+    static ossl_inline type *lh_##type##_delete(LHASH_OF(type) *lh, const type *d) \
     { \
         return lh_delete((_LHASH *)lh, d); \
     } \
-    static inline type *lh_##type##_retrieve(LHASH_OF(type) *lh, const type *d) \
+    static ossl_inline type *lh_##type##_retrieve(LHASH_OF(type) *lh, const type *d) \
     { \
         return lh_retrieve((_LHASH *)lh, d); \
     } \
-    static inline int lh_##type##_error(LHASH_OF(type) *lh) \
+    static ossl_inline int lh_##type##_error(LHASH_OF(type) *lh) \
     { \
         return lh_error((_LHASH *)lh); \
     } \
-    static inline unsigned long lh_##type##_num_items(LHASH_OF(type) *lh) \
+    static ossl_inline unsigned long lh_##type##_num_items(LHASH_OF(type) *lh) \
     { \
         return lh_num_items((_LHASH *)lh); \
     } \
-    static inline void lh_##type##_node_stats_bio(const LHASH_OF(type) *lh, BIO *out) \
+    static ossl_inline void lh_##type##_node_stats_bio(const LHASH_OF(type) *lh, BIO *out) \
     { \
         lh_node_stats_bio((_LHASH *)lh, out); \
     } \
-    static inline void lh_##type##_node_usage_stats_bio(const LHASH_OF(type) *lh, BIO *out) \
+    static ossl_inline void lh_##type##_node_usage_stats_bio(const LHASH_OF(type) *lh, BIO *out) \
     { \
         lh_node_usage_stats_bio((_LHASH *)lh, out); \
     } \
-    static inline void lh_##type##_stats_bio(const LHASH_OF(type) *lh, BIO *out) \
+    static ossl_inline void lh_##type##_stats_bio(const LHASH_OF(type) *lh, BIO *out) \
     { \
         lh_stats_bio((_LHASH *)lh, out); \
     } \
-    static inline unsigned long lh_##type##_get_down_load(LHASH_OF(type) *lh) \
+    static ossl_inline unsigned long lh_##type##_get_down_load(LHASH_OF(type) *lh) \
     { \
         return lh_get_down_load((_LHASH *)lh); \
     } \
-    static inline void lh_##type##_set_down_load(LHASH_OF(type) *lh, unsigned long dl) \
+    static ossl_inline void lh_##type##_set_down_load(LHASH_OF(type) *lh, unsigned long dl) \
     { \
         lh_set_down_load((_LHASH *)lh, dl); \
     } \
-    static inline void lh_##type##_doall(LHASH_OF(type) *lh, \
+    static ossl_inline void lh_##type##_doall(LHASH_OF(type) *lh, \
                                          void (*doall)(type *)) \
     { \
         lh_doall((_LHASH *)lh, (LHASH_DOALL_FN_TYPE)doall); \
@@ -251,7 +251,7 @@ void lh_node_usage_stats_bio(const _LHASH *lh, BIO *out);
     int_implement_lhash_doall(type, argtype, type)
 
 #define int_implement_lhash_doall(type, argtype, cbargtype) \
-    static inline void \
+    static ossl_inline void \
         lh_##type##_doall_##argtype(LHASH_OF(type) *lh, \
                                    void (*fn)(cbargtype *, argtype *), \
                                    argtype *arg) \
@@ -267,8 +267,8 @@ void lh_node_usage_stats_bio(const _LHASH *lh, BIO *out);
 # define LHM_lh_doall_arg(type, lh, fn, arg_type, arg) \
   lh_doall_arg(CHECKED_LHASH_OF(type, lh), fn, CHECKED_PTR_OF(arg_type, arg))
 
-DECLARE_LHASH_OF(OPENSSL_STRING);
-DECLARE_LHASH_OF(OPENSSL_CSTRING);
+DEFINE_LHASH_OF(OPENSSL_STRING);
+DEFINE_LHASH_OF(OPENSSL_CSTRING);
 
 #ifdef  __cplusplus
 }

@@ -20,7 +20,7 @@ typedef struct function_st {
     const OPTIONS *help;
 } FUNCTION;
 
-DECLARE_LHASH_OF(FUNCTION);
+DEFINE_LHASH_OF(FUNCTION);
 
 EOF
 
