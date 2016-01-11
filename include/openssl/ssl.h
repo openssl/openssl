@@ -569,18 +569,12 @@ typedef int (*custom_ext_parse_cb) (SSL *s, unsigned int ext_type,
  * cannot be used to clear bits.
  */
 
-# define SSL_CTX_set_options(ctx,op) \
-        SSL_CTX_ctrl((ctx),SSL_CTRL_OPTIONS,(op),NULL)
-# define SSL_CTX_clear_options(ctx,op) \
-        SSL_CTX_ctrl((ctx),SSL_CTRL_CLEAR_OPTIONS,(op),NULL)
-# define SSL_CTX_get_options(ctx) \
-        SSL_CTX_ctrl((ctx),SSL_CTRL_OPTIONS,0,NULL)
-# define SSL_set_options(ssl,op) \
-        SSL_ctrl((ssl),SSL_CTRL_OPTIONS,(op),NULL)
-# define SSL_clear_options(ssl,op) \
-        SSL_ctrl((ssl),SSL_CTRL_CLEAR_OPTIONS,(op),NULL)
-# define SSL_get_options(ssl) \
-        SSL_ctrl((ssl),SSL_CTRL_OPTIONS,0,NULL)
+unsigned long SSL_CTX_get_options(const SSL_CTX *ctx);
+unsigned long SSL_get_options(const SSL* s);
+unsigned long SSL_CTX_clear_options(SSL_CTX *ctx, unsigned long op);
+unsigned long SSL_clear_options(SSL *s, unsigned long op);
+unsigned long SSL_CTX_set_options(SSL_CTX *ctx, unsigned long op);
+unsigned long SSL_set_options(SSL *s, unsigned long op);
 
 # define SSL_CTX_set_mode(ctx,op) \
         SSL_CTX_ctrl((ctx),SSL_CTRL_MODE,(op),NULL)
@@ -1140,7 +1134,6 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 # define SSL_CTRL_SESS_MISSES                    29
 # define SSL_CTRL_SESS_TIMEOUTS                  30
 # define SSL_CTRL_SESS_CACHE_FULL                31
-# define SSL_CTRL_OPTIONS                        32
 # define SSL_CTRL_MODE                           33
 # define SSL_CTRL_GET_READ_AHEAD                 40
 # define SSL_CTRL_SET_READ_AHEAD                 41
@@ -1188,7 +1181,6 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 # define DTLS_CTRL_HANDLE_TIMEOUT        74
 # define DTLS_CTRL_LISTEN                        75
 # define SSL_CTRL_GET_RI_SUPPORT                 76
-# define SSL_CTRL_CLEAR_OPTIONS                  77
 # define SSL_CTRL_CLEAR_MODE                     78
 # define SSL_CTRL_SET_NOT_RESUMABLE_SESS_CB      79
 # define SSL_CTRL_GET_EXTRA_CHAIN_CERTS          82
