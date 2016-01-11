@@ -229,6 +229,19 @@ static ERR_STRING_DATA ERR_str_reasons[] = {
 
 static CRYPTO_ONCE err_init;
 static CRYPTO_THREAD_LOCAL err_key;
+static CRYPTO_MUTEX err_lock;
+
+static void err_do_clean(void *p)
+{
+    ERR_STATE_free(p);
+}
+
+static void err_do_init(void)
+{
+    CRYPTO_THREAD_LOCAL_init(&err_key, err_do_clean);
+
+    CRYPTO_MUTEX_init(&err_lock);
+}
 
 /* Predeclarations of the "err_defaults" functions */
 static LHASH_OF(ERR_STRING_DATA) *get_hash(int create, int lockit);
@@ -264,7 +277,7 @@ static LHASH_OF(ERR_STRING_DATA) *get_hash(int create, int lockit)
     LHASH_OF(ERR_STRING_DATA) *ret = NULL;
 
     if (lockit)
-        CRYPTO_w_lock(CRYPTO_LOCK_ERR);
+        CRYPTO_MUTEX_lock_write(&err_lock);
     if (!int_error_hash && create) {
         int_error_hash = lh_ERR_STRING_DATA_new(err_string_data_hash,
                                                 err_string_data_cmp);
@@ -272,7 +285,7 @@ static LHASH_OF(ERR_STRING_DATA) *get_hash(int create, int lockit)
     if (int_error_hash != NULL)
         ret = int_error_hash;
     if (lockit)
-        CRYPTO_w_unlock(CRYPTO_LOCK_ERR);
+        CRYPTO_MUTEX_unlock(&err_lock);
 
     return ret;
 }
@@ -282,11 +295,11 @@ static ERR_STRING_DATA *int_err_get_item(const ERR_STRING_DATA *d)
     ERR_STRING_DATA *p = NULL;
     LHASH_OF(ERR_STRING_DATA) *hash;
 
-    CRYPTO_r_lock(CRYPTO_LOCK_ERR);
+    CRYPTO_MUTEX_lock_read(&err_lock);
     hash = get_hash(0, 0);
     if (hash)
         p = lh_ERR_STRING_DATA_retrieve(hash, d);
-    CRYPTO_r_unlock(CRYPTO_LOCK_ERR);
+    CRYPTO_MUTEX_unlock(&err_lock);
 
     return p;
 }
@@ -313,16 +326,16 @@ static void build_SYS_str_reasons(void)
     static int init = 1;
     int i;
 
-    CRYPTO_r_lock(CRYPTO_LOCK_ERR);
+    CRYPTO_MUTEX_lock_read(&err_lock);
     if (!init) {
-        CRYPTO_r_unlock(CRYPTO_LOCK_ERR);
+        CRYPTO_MUTEX_unlock(&err_lock);
         return;
     }
 
-    CRYPTO_r_unlock(CRYPTO_LOCK_ERR);
-    CRYPTO_w_lock(CRYPTO_LOCK_ERR);
+    CRYPTO_MUTEX_unlock(&err_lock);
+    CRYPTO_MUTEX_lock_write(&err_lock);
     if (!init) {
-        CRYPTO_w_unlock(CRYPTO_LOCK_ERR);
+        CRYPTO_MUTEX_unlock(&err_lock);
         return;
     }
 
@@ -350,7 +363,7 @@ static void build_SYS_str_reasons(void)
 
     init = 0;
 
-    CRYPTO_w_unlock(CRYPTO_LOCK_ERR);
+    CRYPTO_MUTEX_unlock(&err_lock);
 }
 #endif
 
@@ -389,6 +402,8 @@ static void ERR_STATE_free(ERR_STATE *s)
 void ERR_load_ERR_strings(void)
 {
 #ifndef OPENSSL_NO_ERR
+    CRYPTO_ONCE_run(&err_init, err_do_init);
+
     err_load_strings(0, ERR_str_libraries);
     err_load_strings(0, ERR_str_reasons);
     err_load_strings(ERR_LIB_SYS, ERR_str_functs);
@@ -401,7 +416,7 @@ static void err_load_strings(int lib, ERR_STRING_DATA *str)
 {
     LHASH_OF(ERR_STRING_DATA) *hash;
 
-    CRYPTO_w_lock(CRYPTO_LOCK_ERR);
+    CRYPTO_MUTEX_lock_write(&err_lock);
     hash = get_hash(1, 0);
     if (hash) {
         for (; str->error; str++) {
@@ -410,7 +425,7 @@ static void err_load_strings(int lib, ERR_STRING_DATA *str)
             (void)lh_ERR_STRING_DATA_insert(hash, str);
         }
     }
-    CRYPTO_w_unlock(CRYPTO_LOCK_ERR);
+    CRYPTO_MUTEX_unlock(&err_lock);
 }
 
 void ERR_load_strings(int lib, ERR_STRING_DATA *str)
@@ -423,7 +438,7 @@ void ERR_unload_strings(int lib, ERR_STRING_DATA *str)
 {
     LHASH_OF(ERR_STRING_DATA) *hash;
 
-    CRYPTO_w_lock(CRYPTO_LOCK_ERR);
+    CRYPTO_MUTEX_lock_write(&err_lock);
     hash = get_hash(0, 0);
     if (hash) {
         for (; str->error; str++) {
@@ -432,15 +447,15 @@ void ERR_unload_strings(int lib, ERR_STRING_DATA *str)
             (void)lh_ERR_STRING_DATA_delete(hash, str);
         }
     }
-    CRYPTO_w_unlock(CRYPTO_LOCK_ERR);
+    CRYPTO_MUTEX_unlock(&err_lock);
 }
 
 void ERR_free_strings(void)
 {
-    CRYPTO_w_lock(CRYPTO_LOCK_ERR);
+    CRYPTO_MUTEX_lock_write(&err_lock);
     lh_ERR_STRING_DATA_free(int_error_hash);
     int_error_hash = NULL;
-    CRYPTO_w_unlock(CRYPTO_LOCK_ERR);
+    CRYPTO_MUTEX_unlock(&err_lock);
 }
 
 /********************************************************/
@@ -727,16 +742,6 @@ void ERR_remove_state(unsigned long pid)
 }
 #endif
 
-static void err_do_clean(void *p)
-{
-    ERR_STATE_free(p);
-}
-
-static void err_do_init(void)
-{
-    CRYPTO_THREAD_LOCAL_init(&err_key, err_do_clean);
-}
-
 ERR_STATE *ERR_get_state(void)
 {
     ERR_STATE *state = NULL;
@@ -763,9 +768,9 @@ int ERR_get_next_error_library(void)
 {
     int ret;
 
-    CRYPTO_w_lock(CRYPTO_LOCK_ERR);
+    CRYPTO_MUTEX_lock_write(&err_lock);
     ret = int_err_library_number++;
-    CRYPTO_w_unlock(CRYPTO_LOCK_ERR);
+    CRYPTO_MUTEX_unlock(&err_lock);
     return ret;
 }
 
