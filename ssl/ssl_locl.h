@@ -694,7 +694,7 @@ struct ssl_comp_st {
 };
 
 DEFINE_STACK_OF(SSL_COMP)
-DECLARE_LHASH_OF(SSL_SESSION);
+DEFINE_LHASH_OF(SSL_SESSION);
 
 
 struct ssl_ctx_st {

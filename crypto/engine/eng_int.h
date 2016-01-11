@@ -218,7 +218,7 @@ struct engine_st {
 
 typedef struct st_engine_pile ENGINE_PILE;
 
-DECLARE_LHASH_OF(ENGINE_PILE);
+DEFINE_LHASH_OF(ENGINE_PILE);
 
 #ifdef  __cplusplus
 }
