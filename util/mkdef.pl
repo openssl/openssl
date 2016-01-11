@@ -1235,6 +1235,7 @@ EOF
                 my $libref = $name eq "ssl" ? "LIBCRYPTO.EXE /SHARE" : "";
                 print OUT <<"EOF";
 IDENTIFICATION="LIB$libname V$version"
+CASE_SENSITIVE=YES
 LIB$libname.OLB /LIBRARY
 $libref
 SYMBOL_VECTOR=(-
