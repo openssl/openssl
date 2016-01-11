@@ -422,3 +422,18 @@ unsigned long lh_num_items(const _LHASH *lh)
 {
     return lh ? lh->num_items : 0;
 }
+
+unsigned long lh_get_down_load(const _LHASH *lh)
+{
+    return lh->down_load;
+}
+
+void lh_set_down_load(_LHASH *lh, unsigned long down_load)
+{
+    lh->down_load = down_load;
+}
+
+int lh_error(_LHASH *lh)
+{
+    return lh->error;
+}

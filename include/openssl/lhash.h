@@ -166,7 +166,7 @@ typedef struct lhash_st {
  * Indicates a malloc() error in the last call, this is only bad in
  * lh_insert().
  */
-# define lh_error(lh)    ((lh)->error)
+int lh_error(_LHASH *lh);
 
 _LHASH *lh_new(LHASH_HASH_FN_TYPE h, LHASH_COMP_FN_TYPE c);
 void lh_free(_LHASH *lh);
@@ -177,6 +177,8 @@ void lh_doall(_LHASH *lh, LHASH_DOALL_FN_TYPE func);
 void lh_doall_arg(_LHASH *lh, LHASH_DOALL_ARG_FN_TYPE func, void *arg);
 unsigned long lh_strhash(const char *c);
 unsigned long lh_num_items(const _LHASH *lh);
+unsigned long lh_get_down_load(const _LHASH *lh);
+void lh_set_down_load(_LHASH *lh, unsigned long down_load);
 
 # ifndef OPENSSL_NO_STDIO
 void lh_stats(const _LHASH *lh, FILE *fp);
@@ -191,7 +193,53 @@ void lh_node_usage_stats_bio(const _LHASH *lh, BIO *out);
 
 # define LHASH_OF(type) struct lhash_st_##type
 
-# define DECLARE_LHASH_OF(type) LHASH_OF(type) { int dummy; }
+# define DECLARE_LHASH_OF(type) \
+    LHASH_OF(type) { int dummy; }; \
+    static inline void lh_##type##_free(LHASH_OF(type) *lh) \
+    { \
+        lh_free((_LHASH *)lh); \
+    } \
+    static inline type *lh_##type##_insert(LHASH_OF(type) *lh, type *d) \
+    { \
+        return lh_insert((_LHASH *)lh, d); \
+    } \
+    static inline type *lh_##type##_delete(LHASH_OF(type) *lh, const type *d) \
+    { \
+        return lh_delete((_LHASH *)lh, d); \
+    } \
+    static inline type *lh_##type##_retrieve(LHASH_OF(type) *lh, const type *d) \
+    { \
+        return lh_retrieve((_LHASH *)lh, d); \
+    } \
+    static inline int lh_##type##_error(LHASH_OF(type) *lh) \
+    { \
+        return lh_error((_LHASH *)lh); \
+    } \
+    static inline unsigned long lh_##type##_num_items(LHASH_OF(type) *lh) \
+    { \
+        return lh_num_items((_LHASH *)lh); \
+    } \
+    static inline void lh_##type##_node_stats_bio(const LHASH_OF(type) *lh, BIO *out) \
+    { \
+        lh_node_stats_bio((_LHASH *)lh, out); \
+    } \
+    static inline void lh_##type##_node_usage_stats_bio(const LHASH_OF(type) *lh, BIO *out) \
+    { \
+        lh_node_usage_stats_bio((_LHASH *)lh, out); \
+    } \
+    static inline void lh_##type##_stats_bio(const LHASH_OF(type) *lh, BIO *out) \
+    { \
+        lh_stats_bio((_LHASH *)lh, out); \
+    } \
+    static inline unsigned long lh_##type##_get_down_load(LHASH_OF(type) *lh) \
+    { \
+        return lh_get_down_load((_LHASH *)lh); \
+    } \
+    static inline void lh_##type##_set_down_load(LHASH_OF(type) *lh, unsigned long dl) \
+    { \
+        lh_set_down_load((_LHASH *)lh, dl); \
+    } \
+    LHASH_OF(type)
 
 # define CHECKED_LHASH_OF(type,lh) \
   ((_LHASH *)CHECKED_PTR_OF(LHASH_OF(type),lh))
@@ -199,29 +247,9 @@ void lh_node_usage_stats_bio(const _LHASH *lh, BIO *out);
 /* Define wrapper functions. */
 # define LHM_lh_new(type, name) \
   ((LHASH_OF(type) *)lh_new(LHASH_HASH_FN(name), LHASH_COMP_FN(name)))
-# define LHM_lh_error(type, lh) \
-  lh_error(CHECKED_LHASH_OF(type,lh))
-# define LHM_lh_insert(type, lh, inst) \
-  ((type *)lh_insert(CHECKED_LHASH_OF(type, lh), \
-                     CHECKED_PTR_OF(type, inst)))
-# define LHM_lh_retrieve(type, lh, inst) \
-  ((type *)lh_retrieve(CHECKED_LHASH_OF(type, lh), \
-                       CHECKED_PTR_OF(type, inst)))
-# define LHM_lh_delete(type, lh, inst) \
-  ((type *)lh_delete(CHECKED_LHASH_OF(type, lh),                        \
-                     CHECKED_PTR_OF(type, inst)))
 # define LHM_lh_doall(type, lh,fn) lh_doall(CHECKED_LHASH_OF(type, lh), fn)
 # define LHM_lh_doall_arg(type, lh, fn, arg_type, arg) \
   lh_doall_arg(CHECKED_LHASH_OF(type, lh), fn, CHECKED_PTR_OF(arg_type, arg))
-# define LHM_lh_num_items(type, lh) lh_num_items(CHECKED_LHASH_OF(type, lh))
-# define LHM_lh_down_load(type, lh) (CHECKED_LHASH_OF(type, lh)->down_load)
-# define LHM_lh_node_stats_bio(type, lh, out) \
-  lh_node_stats_bio(CHECKED_LHASH_OF(type, lh), out)
-# define LHM_lh_node_usage_stats_bio(type, lh, out) \
-  lh_node_usage_stats_bio(CHECKED_LHASH_OF(type, lh), out)
-# define LHM_lh_stats_bio(type, lh, out) \
-  lh_stats_bio(CHECKED_LHASH_OF(type, lh), out)
-# define LHM_lh_free(type, lh) lh_free(CHECKED_LHASH_OF(type, lh))
 
 DECLARE_LHASH_OF(OPENSSL_STRING);
 DECLARE_LHASH_OF(OPENSSL_CSTRING);

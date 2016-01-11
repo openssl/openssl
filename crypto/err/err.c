@@ -119,9 +119,7 @@
 #include <openssl/bio.h>
 #include <openssl/err.h>
 #include <openssl/opensslconf.h>
-
-DECLARE_LHASH_OF(ERR_STRING_DATA);
-DECLARE_LHASH_OF(ERR_STATE);
+#include "err_lcl.h"
 
 static void err_load_strings(int lib, ERR_STRING_DATA *str);
 

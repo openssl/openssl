@@ -58,7 +58,7 @@
 #include "eng_int.h"
 
 /* The type of the items in the table */
-typedef struct st_engine_pile {
+struct st_engine_pile {
     /* The 'nid' of this algorithm/mode */
     int nid;
     /* ENGINEs that implement this algorithm/mode. */
@@ -69,9 +69,7 @@ typedef struct st_engine_pile {
      * Zero if 'sk' is newer than the cached 'funct', non-zero otherwise
      */
     int uptodate;
-} ENGINE_PILE;
-
-DECLARE_LHASH_OF(ENGINE_PILE);
+};
 
 /* The type exposed in eng_int.h */
 struct st_engine_table {

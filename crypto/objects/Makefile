@@ -21,7 +21,7 @@ LIBOBJ= o_names.o obj_dat.o obj_lib.o obj_err.o obj_xref.o
 
 SRC= $(LIBSRC)
 
-HEADER=	obj_dat.h obj_xref.h o_names.h
+HEADER=	obj_dat.h obj_xref.h obj_lcl.h
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 
@@ -80,7 +80,7 @@ o_names.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
 o_names.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
 o_names.o: ../../include/openssl/ossl_typ.h ../../include/openssl/safestack.h
 o_names.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-o_names.o: o_names.c o_names.h
+o_names.o: o_names.c obj_lcl.h
 obj_dat.o: ../../e_os.h ../../include/openssl/asn1.h
 obj_dat.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 obj_dat.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
