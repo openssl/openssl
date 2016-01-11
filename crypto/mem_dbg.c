@@ -139,10 +139,6 @@ static int mh_mode = CRYPTO_MEM_CHECK_OFF;
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG
 static unsigned long order = 0; /* number of memory requests */
 
-DECLARE_LHASH_OF(MEM);
-static LHASH_OF(MEM) *mh = NULL; /* hash-table of memory requests (address as
-                                  * key); access requires MALLOC2 lock */
-
 /*-
  * For application-defined information (static C-string `info')
  * to be displayed in memory leak list.
@@ -150,25 +146,24 @@ static LHASH_OF(MEM) *mh = NULL; /* hash-table of memory requests (address as
  *   OPENSSL_mem_debug_push("...")     to push an entry,
  *   OPENSSL_mem_debug_pop()     to pop an entry,
  */
-typedef struct app_mem_info_st {
+struct app_mem_info_st {
     CRYPTO_THREADID threadid;
     const char *file;
     int line;
     const char *info;
     struct app_mem_info_st *next; /* tail of thread's stack */
     int references;
-} APP_INFO;
+};
 
 /*
  * hash-table with those app_mem_info_st's that are at the
  * top of their thread's stack (with `thread' as key); access requires
  * MALLOC2 lock
  */
-DECLARE_LHASH_OF(APP_INFO);
 static LHASH_OF(APP_INFO) *amih = NULL;
 
 /* memory-block description */
-typedef struct mem_st {
+struct mem_st {
     void *addr;
     int num;
     const char *file;
@@ -181,7 +176,10 @@ typedef struct mem_st {
     void *array[30];
     size_t array_siz;
 #endif
-} MEM;
+};
+
+static LHASH_OF(MEM) *mh = NULL; /* hash-table of memory requests (address as
+                                  * key); access requires MALLOC2 lock */
 
 /* num_disable > 0 iff mh_mode == CRYPTO_MEM_CHECK_ON (w/o ..._ENABLE) */
 static unsigned int num_disable = 0;

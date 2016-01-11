@@ -276,22 +276,9 @@ foreach $type_thing (sort @lhashlst) {
     $new_stackfile .= <<EOF;
 
 # define lh_${type_thing}_new() LHM_lh_new(${type_thing},${lc_tt})
-# define lh_${type_thing}_insert(lh,inst) LHM_lh_insert(${type_thing},lh,inst)
-# define lh_${type_thing}_retrieve(lh,inst) LHM_lh_retrieve(${type_thing},lh,inst)
-# define lh_${type_thing}_delete(lh,inst) LHM_lh_delete(${type_thing},lh,inst)
 # define lh_${type_thing}_doall(lh,fn) LHM_lh_doall(${type_thing},lh,fn)
 # define lh_${type_thing}_doall_arg(lh,fn,arg_type,arg) \\
   LHM_lh_doall_arg(${type_thing},lh,fn,arg_type,arg)
-# define lh_${type_thing}_error(lh) LHM_lh_error(${type_thing},lh)
-# define lh_${type_thing}_num_items(lh) LHM_lh_num_items(${type_thing},lh)
-# define lh_${type_thing}_down_load(lh) LHM_lh_down_load(${type_thing},lh)
-# define lh_${type_thing}_node_stats_bio(lh,out) \\
-  LHM_lh_node_stats_bio(${type_thing},lh,out)
-# define lh_${type_thing}_node_usage_stats_bio(lh,out) \\
-  LHM_lh_node_usage_stats_bio(${type_thing},lh,out)
-# define lh_${type_thing}_stats_bio(lh,out) \\
-  LHM_lh_stats_bio(${type_thing},lh,out)
-# define lh_${type_thing}_free(lh) LHM_lh_free(${type_thing},lh)
 EOF
 }
 

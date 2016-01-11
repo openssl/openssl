@@ -153,7 +153,6 @@
  * required type of "FUNCTION*"). This removes the necessity for
  * macro-generated wrapper functions.
  */
-DECLARE_LHASH_OF(FUNCTION);
 static LHASH_OF(FUNCTION) *prog_init(void);
 static int do_cmd(LHASH_OF(FUNCTION) *prog, int argc, char *argv[]);
 static void list_pkey(void);

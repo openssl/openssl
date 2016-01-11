@@ -20,7 +20,7 @@ LIBOBJ=err.o err_all.o err_prn.o
 
 SRC= $(LIBSRC)
 
-HEADER=	
+HEADER=	err_lcl.h
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 

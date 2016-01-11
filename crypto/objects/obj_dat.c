@@ -65,6 +65,7 @@
 #include <openssl/objects.h>
 #include <openssl/bn.h>
 #include "internal/asn1_int.h"
+#include "obj_lcl.h"
 
 /* obj_dat.h is generated from objects.h by obj_dat.pl */
 #include "obj_dat.h"
@@ -78,11 +79,10 @@ DECLARE_OBJ_BSEARCH_CMP_FN(const ASN1_OBJECT *, unsigned int, obj);
 #define ADDED_LNAME     2
 #define ADDED_NID       3
 
-typedef struct added_obj_st {
+struct added_obj_st {
     int type;
     ASN1_OBJECT *obj;
-} ADDED_OBJ;
-DECLARE_LHASH_OF(ADDED_OBJ);
+};
 
 static int new_nid = NUM_NID;
 static LHASH_OF(ADDED_OBJ) *added = NULL;
@@ -227,7 +227,7 @@ void OBJ_cleanup(void)
     }
     if (added == NULL)
         return;
-    lh_ADDED_OBJ_down_load(added) = 0;
+    lh_ADDED_OBJ_set_down_load(added, 0);
     lh_ADDED_OBJ_doall(added, LHASH_DOALL_FN(cleanup1)); /* zero counters */
     lh_ADDED_OBJ_doall(added, LHASH_DOALL_FN(cleanup2)); /* set counters */
     lh_ADDED_OBJ_doall(added, LHASH_DOALL_FN(cleanup3)); /* free objects */

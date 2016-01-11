@@ -7,7 +7,7 @@
 #include <openssl/objects.h>
 #include <openssl/safestack.h>
 #include <openssl/e_os2.h>
-#include "o_names.h"
+#include "obj_lcl.h"
 
 /*
  * Later versions of DEC C has started to add lnkage information to certain
@@ -25,7 +25,6 @@
  * I use the ex_data stuff to manage the identifiers for the obj_name_types
  * that applications may define.  I only really use the free function field.
  */
-DECLARE_LHASH_OF(OBJ_NAME);
 static LHASH_OF(OBJ_NAME) *names_lh = NULL;
 static int names_type_num = OBJ_NAME_TYPE_NUM;
 
@@ -346,8 +345,8 @@ void OBJ_NAME_cleanup(int type)
         return;
 
     free_type = type;
-    down_load = lh_OBJ_NAME_down_load(names_lh);
-    lh_OBJ_NAME_down_load(names_lh) = 0;
+    down_load = lh_OBJ_NAME_get_down_load(names_lh);
+    lh_OBJ_NAME_set_down_load(names_lh, 0);
 
     lh_OBJ_NAME_doall(names_lh, LHASH_DOALL_FN(names_lh_free));
     if (type < 0) {
@@ -356,5 +355,5 @@ void OBJ_NAME_cleanup(int type)
         names_lh = NULL;
         name_funcs_stack = NULL;
     } else
-        lh_OBJ_NAME_down_load(names_lh) = down_load;
+        lh_OBJ_NAME_set_down_load(names_lh, down_load);
 }
