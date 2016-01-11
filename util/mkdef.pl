@@ -38,6 +38,9 @@
 #   exclude.
 #
 
+use lib ".";
+use configdata;
+
 my $debug=0;
 
 my $crypto_num= "util/libeay.num";
@@ -128,16 +131,9 @@ foreach (@known_algorithms) {
 # disabled by default
 $disabled_algorithms{"STATIC_ENGINE"} = 1;
 
-my $options="";
-open(IN,"<Makefile") || die "unable to open Makefile!\n";
-while(<IN>) {
-    $options=$1 if (/^OPTIONS=(.*)$/);
-}
-close(IN);
-
 my $zlib;
 
-foreach (@ARGV, split(/ /, $options))
+foreach (@ARGV, split(/ /, $config{options}))
 	{
 	$debug=1 if $_ eq "debug";
 	$W32=1 if $_ eq "32";
@@ -1177,14 +1173,7 @@ sub print_test_file
 }
 
 sub get_version {
-   local *MF;
-   my $v = '?';
-   open MF, 'Makefile' or return $v;
-   while (<MF>) {
-     $v = $1, last if /^VERSION=(.*?)\s*$/;
-   }
-   close MF;
-   return $v;
+   return $config{version};
 }
 
 sub print_def_file
