@@ -4724,3 +4724,6 @@ CRYPTO_mem_debug_push                   5118	1_1_0	EXIST::FUNCTION:CRYPTO_MDEBUG
 CRYPTO_set_mem_debug                    5119	1_1_0	EXIST::FUNCTION:
 CRYPTO_mem_debug_pop                    5120	1_1_0	EXIST::FUNCTION:CRYPTO_MDEBUG
 CRYPTO_secure_actual_size               5121	1_1_0	EXIST::FUNCTION:
+lh_get_down_load                        5122	1_1_0	EXIST::FUNCTION:
+lh_error                                5123	1_1_0	EXIST::FUNCTION:
+lh_set_down_load                        5124	1_1_0	EXIST::FUNCTION:
