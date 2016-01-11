@@ -372,8 +372,8 @@ static void usage()
     BIO_printf(bio_err, "-hexdump        hex dump output\n");
 #ifndef OPENSSL_NO_ENGINE
     BIO_printf(bio_err,
-               "-engine e       use engine e, possibly a hardware device.\n");
-    BIO_printf(bio_err, "-engine_impl    access key through the engine\n");
+               "-engine e       use engine e, maybe a hardware device, for loading keys.\n");
+    BIO_printf(bio_err, "-engine_impl    also use engine given by -engine for crypto operations\n");
 #endif
     BIO_printf(bio_err, "-passin arg     pass phrase source\n");
 
