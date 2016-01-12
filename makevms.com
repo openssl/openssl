@@ -240,7 +240,7 @@ $ WRITE H_FILE "#endif"
 $
 $!
 $! Defined the full SDIRS here.  It will be pruned depending on configuration.
-$! This is an exact copy of what's found in Makefile.org, with spaces replaced
+$! This is an exact copy of what's found in Makefile.in, with spaces replaced
 $! with commas.
 $!
 $ SDIRS := -
