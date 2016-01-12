@@ -117,7 +117,7 @@ int main(int argc, char **argv)
 
     bio_err = BIO_new_fp(stderr, BIO_NOCLOSE | BIO_FP_TEXT);
 
-    CRYPTO_set_mem_debug_functions(1)
+    CRYPTO_set_mem_debug(1);
     CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
 #endif
 
