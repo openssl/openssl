@@ -318,8 +318,9 @@ sure to also leave TLS 1.1 enabled.
 =item B<Options>
 
 The B<value> argument is a comma separated list of various flags to set.
-If a flag string is preceded B<-> it is disabled. See the
-B<SSL_CTX_set_options> function for more details of individual options.
+If a flag string is preceded B<-> it is disabled.
+See the L<SSL_CTX_set_options(3)> function for more details of
+individual options.
 
 Each option is listed below. Where an operation is enabled by default
 the B<-flag> syntax is needed to disable it.
@@ -527,7 +528,8 @@ L<SSL_CONF_CTX_new(3)>,
 L<SSL_CONF_CTX_set_flags(3)>,
 L<SSL_CONF_CTX_set1_prefix(3)>,
 L<SSL_CONF_CTX_set_ssl_ctx(3)>,
-L<SSL_CONF_cmd_argv(3)>
+L<SSL_CONF_cmd_argv(3)>,
+L<SSL_CTX_set_options(3)>
 
 =head1 HISTORY
 

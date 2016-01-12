@@ -56,7 +56,7 @@ CRYPTO_mem_leaks, CRYPTO_mem_leaks_fp - Memory allocation functions
  #define CRYPTO_MEM_CHECK_DISABLE
  #define CRYPTO_MEM_CHECK_ENABLE
 
- int CRYPTO_mem_ctrl(int flags);
+ int CRYPTO_mem_ctrl(int mode);
 
  int OPENSSL_mem_debug_push(const char *info)
  int OPENSLS_mem_debug_pop)(void)
@@ -112,12 +112,14 @@ This is most useful for identifying memory leaks.
 CRYPTO_set_mem_debug() turns this tracking on and off.  It is normally
 called at startup, but can be called at any time.
 
-Finer-grain control of the tracking can be done with CRYPTO_mem_ctrl().
-The most common case is to enable tracking, which is done by using
-the B<CRYPTO_MEM_CHECK_ON> constant; it can be turned off by using
-the B<CRYPTO_MEM_CHECK_OFF> value.  The disable and enable values are
-most commonly used within OpenSSL to termporarily suspend and restore
-tracking of library internals.
+CRYPTO_mem_ctrl() provides fine-grained control of memory leak tracking.
+To enable tracking call CRYPTO_mem_ctrl() with a B<mode> argument of
+the B<CRYPTO_MEM_CHECK_ON>.
+To disable tracking call CRYPTO_mem_ctrl() with a B<mode> argument of
+the B<CRYPTO_MEM_CHECK_OFF>.
+The B<CRYPTO_MEM_CHECK_DISABLE> and B<CRYPTO_MEM_CHECK_ENABLE> modes
+are used internally within OpenSSL to temporarily suspend and resume
+tracking.
 
 While checking memory, it can be useful to store additional context
 about what is being done.
@@ -129,19 +131,18 @@ This must be a global or other static string; it is not copied.
 OPENSSL_mem_debug_pop() removes identifying state from the stack.
 
 At the end of the program, calling CRYPTO_mem_leaks() or
-CRYPTO_mem_leaks_fp() will
-report all "leaked" memory, writing it to the specified BIO B<b>
-or FILE B<fp>.
-Depending on how OpenSSL is built, it may then abort if there
-are any unfree'd allocations, for debugging.
+CRYPTO_mem_leaks_fp() will report all "leaked" memory, writing it
+to the specified BIO B<b> or FILE B<fp>. These functions return 1 if
+there are no leaks, 0 if there are leaks and -1 if an error occurred.
 
 =head1 RETURN VALUES
 
 OPENSSL_malloc_init(), OPENSSL_free(), OPENSSL_clear_free()
-CRYPTO_free(), CRYPTO_clear_free(),
-CRYPTO_get_mem_functions(), and
-CRYPTO_mem_leaks()
+CRYPTO_free(), CRYPTO_clear_free() and CRYPTO_get_mem_functions()
 return no value.
+
+CRYPTO_mem_leaks() and CRYPTO_mem_leaks_fp() return 1 if there
+are no leaks, 0 if there are leaks and -1 if an error occurred.
 
 OPENSSL_malloc(), OPENSSL_zalloc(), OPENSSL_realloc(),
 OPENSSL_clear_realloc(),
@@ -154,7 +155,7 @@ CRYPTO_set_mem_functions() and CRYPTO_set_mem_debug()
 return 1 on success or 0 on failure (almost
 always because allocations have already happened).
 
-CRYPTO_mem_ctrl() return the previous value of the flag.
+CRYPTO_mem_ctrl() returns the previous value of the mode.
 
 OPENSSL_mem_debug_push() and OPENSSL_mem_debug_pop()
 return 1 on success or 0 on failure.

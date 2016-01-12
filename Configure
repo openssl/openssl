@@ -4,7 +4,7 @@
 ##
 ##  Configure -- OpenSSL source tree configuration script
 ##  If editing this file, run this command before committing
-##	make -f Makefile.org TABLE
+##	make -f Makefile.in TABLE
 ##
 
 require 5.000;
@@ -100,7 +100,7 @@ my $usage="Usage: Configure [no-<cipher> ...] [enable-<cipher> ...] [experimenta
 # Minimum warning options... any contributions to OpenSSL should at least get
 # past these.
 
-my $gcc_devteam_warn = "-Wall -pedantic -DPEDANTIC -Wno-long-long -Wsign-compare -Wmissing-prototypes -Wshadow -Wformat -Wtype-limits -Werror -DCRYPTO_MDEBUG -DCRYPTO_MDEBUG_ABORT -DREF_CHECK -DDEBUG_UNUSED";
+my $gcc_devteam_warn = "-Wall -pedantic -DPEDANTIC -Wno-long-long -Wsign-compare -Wmissing-prototypes -Wshadow -Wformat -Wtype-limits -Werror -DREF_CHECK -DDEBUG_UNUSED";
 
 # These are used in addition to $gcc_devteam_warn when the compiler is clang.
 # TODO(openssl-team): fix problems and investigate if (at least) the
@@ -908,19 +908,20 @@ my %disabled = ( # "what"         => "comment" [or special keyword "experimental
 		 "jpake"          => "experimental",
 		 "md2"            => "default",
 		 "rc5"            => "default",
-		 "sctp"       => "default",
+		 "sctp"           => "default",
 		 "shared"         => "default",
 		 "ssl-trace"	  => "default",
 		 "store"	  => "experimental",
 		 "unit-test"	  => "default",
 		 "zlib"           => "default",
-		 "zlib-dynamic"   => "default"
+		 "zlib-dynamic"   => "default",
+		 "crypto-mdebug"  => "default",
 	       );
 my @experimental = ();
 
 # This is what $depflags will look like with the above defaults
 # (we need this to see if we should advise the user to run "make depend"):
-my $default_depflags = " -DOPENSSL_NO_DEPRECATED -DOPENSSL_NO_EC_NISTP_64_GCC_128 -DOPENSSL_NO_JPAKE -DOPENSSL_NO_MD2 -DOPENSSL_NO_RC5 -DOPENSSL_NO_SCTP -DOPENSSL_NO_SSL_TRACE -DOPENSSL_NO_STORE -DOPENSSL_NO_UNIT_TEST";
+my $default_depflags = " -DOPENSSL_NO_CRYPTO_MDEBUG -DOPENSSL_NO_EC_NISTP_64_GCC_128 -DOPENSSL_NO_JPAKE -DOPENSSL_NO_MD2 -DOPENSSL_NO_RC5 -DOPENSSL_NO_SCTP -DOPENSSL_NO_SSL_TRACE -DOPENSSL_NO_STORE -DOPENSSL_NO_UNIT_TEST";
 
 # Explicit "no-..." options will be collected in %disabled along with the defaults.
 # To remove something from %disabled, use "enable-foo" (unless it's experimental).
@@ -1569,7 +1570,7 @@ if (defined($disabled{"deprecated"})) {
         $api = $maxapi;
 }
 
-# You will find shlib_mark1 and shlib_mark2 explained in Makefile.org
+# You will find shlib_mark1 and shlib_mark2 explained in Makefile.in
 my $shared_mark = "";
 if ($shared_target eq "")
 	{
@@ -1821,10 +1822,10 @@ if ($strict_warnings)
                 }
 	}
 
-open(IN,"<Makefile.org") || die "unable to read Makefile.org:$!\n";
+open(IN,"<Makefile.in") || die "unable to read Makefile.in$!\n";
 unlink("$Makefile.new") || die "unable to remove old $Makefile.new:$!\n" if -e "$Makefile.new";
 open(OUT,">$Makefile.new") || die "unable to create $Makefile.new:$!\n";
-print OUT "### Generated automatically from Makefile.org by Configure.\n\n";
+print OUT "### Generated automatically from Makefile.in by Configure.\n\n";
 my $sdirs=0;
 
 while (<IN>)
@@ -1932,7 +1933,7 @@ while (<IN>)
 	}
 close(IN);
 close(OUT);
-rename($Makefile,"$Makefile.bak") || die "unable to rename $Makefile\n" if -e $Makefile;
+rename($Makefile,"$Makefile.orig") || die "unable to rename $Makefile\n" if -e $Makefile;
 rename("$Makefile.new",$Makefile) || die "unable to rename $Makefile.new\n";
 
 print "CC            =$cc\n";
@@ -2159,6 +2160,27 @@ print "IDEA uses u$type[$idea_int]\n" if $idea_int != $def_int;
 print "RC2 uses u$type[$rc2_int]\n" if $rc2_int != $def_int;
 print "BF_PTR used\n" if $bf_ptr == 1;
 print "BF_PTR2 used\n" if $bf_ptr == 2;
+
+# Copy all Makefile.in to Makefile (except top-level)
+use File::Find;
+use IO::File;
+find(sub {
+        return if ($_ ne "Makefile.in" || $File::Find::dir eq ".");
+        my $in = IO::File->new($_, "r") or
+            die sprintf "Error reading Makefile.in in %s: !$\n",
+                $File::Find::dir;
+        my $out = IO::File->new("Makefile", "w") or
+            die sprintf "Error writing Makefile in %s: !$\n",
+                $File::Find::dir;
+        print $out "# Generated from $_, do not edit\n";
+        while (my $line = <$in>) { print $out $line }
+        $in->close() or
+            die sprintf "Error reading Makefile.in in %s: !$\n",
+                $File::Find::dir;
+        $out->close() or
+            die sprintf "Error writing Makefile.in in %s: !$\n",
+                $File::Find::dir;
+    }, ".");
 
 {
     my $perlguess = $perl =~ m@^/@ ? $perl : '/usr/local/bin/perl';

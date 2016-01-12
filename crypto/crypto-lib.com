@@ -116,7 +116,7 @@ $ ELSE
 $!
 $!   Define The Different Encryption Types.
 $!   NOTE: Some might think this list ugly.  However, it's made this way to
-$!   reflect the SDIRS variable in [-]Makefile.org as closely as possible,
+$!   reflect the SDIRS variable in [-]Makefile.in as closely as possible,
 $!   thereby making it fairly easy to verify that the lists are the same.
 $!
 $   ET_WHIRLPOOL = "WHRLPOOL"

@@ -242,14 +242,11 @@ IMPLEMENT_DYNAMIC_CHECK_FN()
  */
 # include <openssl/rc4.h>
 # define TEST_RC4_KEY_SIZE               16
-static const int test_cipher_nids[] = { NID_rc4, NID_rc4_40 };
-
-static const int test_cipher_nids_number = 2;
 typedef struct {
     unsigned char key[TEST_RC4_KEY_SIZE];
     RC4_KEY ks;
 } TEST_RC4_KEY;
-# define test(ctx) ((TEST_RC4_KEY *)(ctx)->cipher_data)
+# define test(ctx) ((TEST_RC4_KEY *)EVP_CIPHER_CTX_cipher_data(ctx))
 static int test_rc4_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
                              const unsigned char *iv, int enc)
 {
@@ -272,47 +269,86 @@ static int test_rc4_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     return 1;
 }
 
-static const EVP_CIPHER test_r4_cipher = {
-    NID_rc4,
-    1, TEST_RC4_KEY_SIZE, 0,
-    EVP_CIPH_VARIABLE_LENGTH,
-    test_rc4_init_key,
-    test_rc4_cipher,
-    NULL,
-    sizeof(TEST_RC4_KEY),
-    NULL,
-    NULL,
-    NULL,
-    NULL
-};
+static EVP_CIPHER *r4_cipher = NULL;
+static const EVP_CIPHER *test_r4_cipher(void)
+{
+    if (r4_cipher == NULL) {
+        EVP_CIPHER *cipher;
 
-static const EVP_CIPHER test_r4_40_cipher = {
-    NID_rc4_40,
-    1, 5 /* 40 bit */ , 0,
-    EVP_CIPH_VARIABLE_LENGTH,
-    test_rc4_init_key,
-    test_rc4_cipher,
-    NULL,
-    sizeof(TEST_RC4_KEY),
-    NULL,
-    NULL,
-    NULL,
-    NULL
-};
+        if ((cipher = EVP_CIPHER_meth_new(NID_rc4, 1, TEST_RC4_KEY_SIZE)) == NULL
+            || !EVP_CIPHER_meth_set_iv_length(cipher, 0)
+            || !EVP_CIPHER_meth_set_flags(cipher, EVP_CIPH_VARIABLE_LENGTH)
+            || !EVP_CIPHER_meth_set_init(cipher, test_rc4_init_key)
+            || !EVP_CIPHER_meth_set_do_cipher(cipher, test_rc4_cipher)
+            || !EVP_CIPHER_meth_set_impl_ctx_size(cipher, sizeof(TEST_RC4_KEY))) {
+            EVP_CIPHER_meth_free(cipher);
+            cipher = NULL;
+        }
+        r4_cipher = cipher;
+    }
+    return r4_cipher;
+}
+static void test_r4_cipher_destroy(void)
+{
+    EVP_CIPHER_meth_free(r4_cipher);
+    r4_cipher = NULL;
+}
+
+static EVP_CIPHER *r4_40_cipher = NULL;
+static const EVP_CIPHER *test_r4_40_cipher(void)
+{
+    if (r4_40_cipher == NULL) {
+        EVP_CIPHER *cipher;
+
+        if ((cipher = EVP_CIPHER_meth_new(NID_rc4, 1, 5 /* 40 bits */)) == NULL
+            || !EVP_CIPHER_meth_set_iv_length(cipher, 0)
+            || !EVP_CIPHER_meth_set_flags(cipher, EVP_CIPH_VARIABLE_LENGTH)
+            || !EVP_CIPHER_meth_set_init(cipher, test_rc4_init_key)
+            || !EVP_CIPHER_meth_set_do_cipher(cipher, test_rc4_cipher)
+            || !EVP_CIPHER_meth_set_impl_ctx_size(cipher, sizeof(TEST_RC4_KEY))) {
+            EVP_CIPHER_meth_free(cipher);
+            cipher = NULL;
+        }
+        r4_40_cipher = cipher;
+    }
+    return r4_40_cipher;
+}
+static void test_r4_40_cipher_destroy(void)
+{
+    EVP_CIPHER_meth_free(r4_40_cipher);
+    r4_40_cipher = NULL;
+}
+static int test_cipher_nids(const int **nids)
+{
+    static int cipher_nids[4] = { 0, 0, 0 };
+    static int pos = 0;
+    static int init = 0;
+
+    if (!init) {
+        const EVP_CIPHER *cipher;
+        if ((cipher = test_r4_cipher()) != NULL)
+            cipher_nids[pos++] = EVP_CIPHER_nid(cipher);
+        if ((cipher = test_r4_40_cipher()) != NULL)
+            cipher_nids[pos++] = EVP_CIPHER_nid(cipher);
+        cipher_nids[pos] = 0;
+        init = 1;
+    }
+    *nids = cipher_nids;
+    return pos;
+}
 
 static int openssl_ciphers(ENGINE *e, const EVP_CIPHER **cipher,
                            const int **nids, int nid)
 {
     if (!cipher) {
         /* We are returning a list of supported nids */
-        *nids = test_cipher_nids;
-        return test_cipher_nids_number;
+        return test_cipher_nids(nids);
     }
     /* We are being asked for a specific cipher */
     if (nid == NID_rc4)
-        *cipher = &test_r4_cipher;
+        *cipher = test_r4_cipher();
     else if (nid == NID_rc4_40)
-        *cipher = &test_r4_40_cipher;
+        *cipher = test_r4_40_cipher();
     else {
 # ifdef TEST_ENG_OPENSSL_RC4_OTHERS
         fprintf(stderr, "(TEST_ENG_OPENSSL_RC4) returning NULL for "
@@ -648,6 +684,8 @@ static int ossl_pkey_meths(ENGINE *e, EVP_PKEY_METHOD **pmeth,
 int openssl_destroy(ENGINE *e)
 {
     test_sha_md_destroy();
+    test_r4_cipher_destroy();
+    test_r4_40_cipher_destroy();
     return 1;
 }
 

@@ -16,6 +16,8 @@ typedef struct function_st {
     const OPTIONS *help;
 } FUNCTION;
 
+DEFINE_LHASH_OF(FUNCTION);
+
 extern int asn1parse_main(int argc, char *argv[]);
 extern int ca_main(int argc, char *argv[]);
 extern int ciphers_main(int argc, char *argv[]);

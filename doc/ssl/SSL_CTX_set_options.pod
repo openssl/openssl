@@ -23,8 +23,6 @@ SSL_get_secure_renegotiation_support - manipulate SSL options
 
 =head1 DESCRIPTION
 
-Note: all these functions are implemented using macros.
-
 SSL_CTX_set_options() adds the options set via bitmask in B<options> to B<ctx>.
 Options already set before are not cleared!
 
@@ -42,6 +40,7 @@ SSL_get_options() returns the options set for B<ssl>.
 
 SSL_get_secure_renegotiation_support() indicates whether the peer supports
 secure renegotiation.
+Note, this is implemented via a macro.
 
 =head1 NOTES
 

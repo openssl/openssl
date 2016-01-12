@@ -340,7 +340,7 @@ int PEM_ASN1_write_bio(i2d_of_void *i2d, const char *name, BIO *bp,
                        void *x, const EVP_CIPHER *enc, unsigned char *kstr,
                        int klen, pem_password_cb *callback, void *u)
 {
-    EVP_CIPHER_CTX ctx;
+    EVP_CIPHER_CTX *ctx = NULL;
     int dsize = 0, i = 0, j = 0, ret = 0;
     unsigned char *p, *data = NULL;
     const char *objstr = NULL;
@@ -388,8 +388,8 @@ int PEM_ASN1_write_bio(i2d_of_void *i2d, const char *name, BIO *bp,
             kstr = (unsigned char *)buf;
         }
         RAND_add(data, i, 0);   /* put in the RSA key. */
-        OPENSSL_assert(enc->iv_len <= (int)sizeof(iv));
-        if (RAND_bytes(iv, enc->iv_len) <= 0) /* Generate a salt */
+        OPENSSL_assert(EVP_CIPHER_iv_length(enc) <= (int)sizeof(iv));
+        if (RAND_bytes(iv, EVP_CIPHER_iv_length(enc)) <= 0) /* Generate a salt */
             goto err;
         /*
          * The 'iv' is used as the iv and as a salt.  It is NOT taken from
@@ -401,21 +401,20 @@ int PEM_ASN1_write_bio(i2d_of_void *i2d, const char *name, BIO *bp,
         if (kstr == (unsigned char *)buf)
             OPENSSL_cleanse(buf, PEM_BUFSIZE);
 
-        OPENSSL_assert(strlen(objstr) + 23 + 2 * enc->iv_len + 13 <=
-                       sizeof buf);
+        OPENSSL_assert(strlen(objstr) + 23 + 2 * EVP_CIPHER_iv_length(enc) + 13
+                       <= sizeof buf);
 
         buf[0] = '\0';
         PEM_proc_type(buf, PEM_TYPE_ENCRYPTED);
-        PEM_dek_info(buf, objstr, enc->iv_len, (char *)iv);
+        PEM_dek_info(buf, objstr, EVP_CIPHER_iv_length(enc), (char *)iv);
         /* k=strlen(buf); */
 
-        EVP_CIPHER_CTX_init(&ctx);
         ret = 1;
-        if (!EVP_EncryptInit_ex(&ctx, enc, NULL, key, iv)
-            || !EVP_EncryptUpdate(&ctx, data, &j, data, i)
-            || !EVP_EncryptFinal_ex(&ctx, &(data[j]), &i))
+        if ((ctx = EVP_CIPHER_CTX_new()) == NULL
+            || !EVP_EncryptInit_ex(ctx, enc, NULL, key, iv)
+            || !EVP_EncryptUpdate(ctx, data, &j, data, i)
+            || !EVP_EncryptFinal_ex(ctx, &(data[j]), &i))
             ret = 0;
-        EVP_CIPHER_CTX_cleanup(&ctx);
         if (ret == 0)
             goto err;
         i += j;
@@ -429,7 +428,7 @@ int PEM_ASN1_write_bio(i2d_of_void *i2d, const char *name, BIO *bp,
  err:
     OPENSSL_cleanse(key, sizeof(key));
     OPENSSL_cleanse(iv, sizeof(iv));
-    OPENSSL_cleanse((char *)&ctx, sizeof(ctx));
+    EVP_CIPHER_CTX_free(ctx);
     OPENSSL_cleanse(buf, PEM_BUFSIZE);
     OPENSSL_clear_free(data, (unsigned int)dsize);
     return (ret);
@@ -440,7 +439,7 @@ int PEM_do_header(EVP_CIPHER_INFO *cipher, unsigned char *data, long *plen,
 {
     int i = 0, j, o, klen;
     long len;
-    EVP_CIPHER_CTX ctx;
+    EVP_CIPHER_CTX *ctx;
     unsigned char key[EVP_MAX_KEY_LENGTH];
     char buf[PEM_BUFSIZE];
 
@@ -466,13 +465,15 @@ int PEM_do_header(EVP_CIPHER_INFO *cipher, unsigned char *data, long *plen,
         return 0;
 
     j = (int)len;
-    EVP_CIPHER_CTX_init(&ctx);
-    o = EVP_DecryptInit_ex(&ctx, cipher->cipher, NULL, key, &(cipher->iv[0]));
+    ctx = EVP_CIPHER_CTX_new();
+    if (ctx == NULL)
+        return 0;
+    o = EVP_DecryptInit_ex(ctx, cipher->cipher, NULL, key, &(cipher->iv[0]));
     if (o)
-        o = EVP_DecryptUpdate(&ctx, data, &i, data, j);
+        o = EVP_DecryptUpdate(ctx, data, &i, data, j);
     if (o)
-        o = EVP_DecryptFinal_ex(&ctx, &(data[i]), &j);
-    EVP_CIPHER_CTX_cleanup(&ctx);
+        o = EVP_DecryptFinal_ex(ctx, &(data[i]), &j);
+    EVP_CIPHER_CTX_free(ctx);
     OPENSSL_cleanse((char *)buf, sizeof(buf));
     OPENSSL_cleanse((char *)key, sizeof(key));
     if (o)
@@ -543,7 +544,7 @@ int PEM_get_EVP_CIPHER_INFO(char *header, EVP_CIPHER_INFO *cipher)
         PEMerr(PEM_F_PEM_GET_EVP_CIPHER_INFO, PEM_R_UNSUPPORTED_ENCRYPTION);
         return (0);
     }
-    if (!load_iv(header_pp, &(cipher->iv[0]), enc->iv_len))
+    if (!load_iv(header_pp, &(cipher->iv[0]), EVP_CIPHER_iv_length(enc)))
         return (0);
 
     return (1);

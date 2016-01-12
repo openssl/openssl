@@ -220,7 +220,7 @@ int CMS_RecipientInfo_kari_set0_pkey(CMS_RecipientInfo *ri, EVP_PKEY *pk)
 EVP_CIPHER_CTX *CMS_RecipientInfo_kari_get0_ctx(CMS_RecipientInfo *ri)
 {
     if (ri->type == CMS_RECIPINFO_AGREE)
-        return &ri->d.kari->ctx;
+        return ri->d.kari->ctx;
     return NULL;
 }
 
@@ -239,22 +239,22 @@ static int cms_kek_cipher(unsigned char **pout, size_t *poutlen,
     int rv = 0;
     unsigned char *out = NULL;
     int outlen;
-    keklen = EVP_CIPHER_CTX_key_length(&kari->ctx);
+    keklen = EVP_CIPHER_CTX_key_length(kari->ctx);
     if (keklen > EVP_MAX_KEY_LENGTH)
         return 0;
     /* Derive KEK */
     if (EVP_PKEY_derive(kari->pctx, kek, &keklen) <= 0)
         goto err;
     /* Set KEK in context */
-    if (!EVP_CipherInit_ex(&kari->ctx, NULL, NULL, kek, NULL, enc))
+    if (!EVP_CipherInit_ex(kari->ctx, NULL, NULL, kek, NULL, enc))
         goto err;
     /* obtain output length of ciphered key */
-    if (!EVP_CipherUpdate(&kari->ctx, NULL, &outlen, in, inlen))
+    if (!EVP_CipherUpdate(kari->ctx, NULL, &outlen, in, inlen))
         goto err;
     out = OPENSSL_malloc(outlen);
     if (out == NULL)
         goto err;
-    if (!EVP_CipherUpdate(&kari->ctx, out, &outlen, in, inlen))
+    if (!EVP_CipherUpdate(kari->ctx, out, &outlen, in, inlen))
         goto err;
     *pout = out;
     *poutlen = (size_t)outlen;
@@ -264,7 +264,8 @@ static int cms_kek_cipher(unsigned char **pout, size_t *poutlen,
     OPENSSL_cleanse(kek, keklen);
     if (!rv)
         OPENSSL_free(out);
-    EVP_CIPHER_CTX_cleanup(&kari->ctx);
+    EVP_CIPHER_CTX_reset(kari->ctx);
+    /* FIXME: WHY IS kari->pctx freed here?  /RL */
     EVP_PKEY_CTX_free(kari->pctx);
     kari->pctx = NULL;
     return rv;
@@ -374,7 +375,7 @@ int cms_RecipientInfo_kari_init(CMS_RecipientInfo *ri, X509 *recip,
 static int cms_wrap_init(CMS_KeyAgreeRecipientInfo *kari,
                          const EVP_CIPHER *cipher)
 {
-    EVP_CIPHER_CTX *ctx = &kari->ctx;
+    EVP_CIPHER_CTX *ctx = kari->ctx;
     const EVP_CIPHER *kekcipher;
     int keylen = EVP_CIPHER_key_length(cipher);
     /* If a suitable wrap algorithm is already set nothing to do */

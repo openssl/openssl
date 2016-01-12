@@ -77,24 +77,28 @@ unsigned char *PKCS12_pbe_crypt(X509_ALGOR *algor, const char *pass,
 {
     unsigned char *out = NULL;
     int outlen, i;
-    EVP_CIPHER_CTX ctx;
+    EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
 
-    EVP_CIPHER_CTX_init(&ctx);
+    if (ctx == NULL) {
+        PKCS12err(PKCS12_F_PKCS12_PBE_CRYPT, ERR_R_MALLOC_FAILURE);
+        goto err;
+    }
+
     /* Decrypt data */
     if (!EVP_PBE_CipherInit(algor->algorithm, pass, passlen,
-                            algor->parameter, &ctx, en_de)) {
+                            algor->parameter, ctx, en_de)) {
         PKCS12err(PKCS12_F_PKCS12_PBE_CRYPT,
                   PKCS12_R_PKCS12_ALGOR_CIPHERINIT_ERROR);
         goto err;
     }
 
-    if ((out = OPENSSL_malloc(inlen + EVP_CIPHER_CTX_block_size(&ctx)))
+    if ((out = OPENSSL_malloc(inlen + EVP_CIPHER_CTX_block_size(ctx)))
             == NULL) {
         PKCS12err(PKCS12_F_PKCS12_PBE_CRYPT, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
-    if (!EVP_CipherUpdate(&ctx, out, &i, in, inlen)) {
+    if (!EVP_CipherUpdate(ctx, out, &i, in, inlen)) {
         OPENSSL_free(out);
         out = NULL;
         PKCS12err(PKCS12_F_PKCS12_PBE_CRYPT, ERR_R_EVP_LIB);
@@ -102,7 +106,7 @@ unsigned char *PKCS12_pbe_crypt(X509_ALGOR *algor, const char *pass,
     }
 
     outlen = i;
-    if (!EVP_CipherFinal_ex(&ctx, out + i, &i)) {
+    if (!EVP_CipherFinal_ex(ctx, out + i, &i)) {
         OPENSSL_free(out);
         out = NULL;
         PKCS12err(PKCS12_F_PKCS12_PBE_CRYPT,
@@ -115,7 +119,7 @@ unsigned char *PKCS12_pbe_crypt(X509_ALGOR *algor, const char *pass,
     if (data)
         *data = out;
  err:
-    EVP_CIPHER_CTX_cleanup(&ctx);
+    EVP_CIPHER_CTX_free(ctx);
     return out;
 
 }

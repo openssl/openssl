@@ -19,8 +19,9 @@ and maximum supported protocol version
 
 The functions set the minimum and maximum supported portocol versions
 for the B<ctx> or B<ssl>.
-This works in combination with the options set via SSL_CTX_set_options()
-that also make it possible to disable specific protocol versions.
+This works in combination with the options set via
+L<SSL_CTX_set_options(3)> that also make it possible to disable
+specific protocol versions.
 Use these functions instead of disabling specific protocol versions.
 
 Setting the minimum or maximum version to 0, will enable protocol
