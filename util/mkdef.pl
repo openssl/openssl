@@ -1304,7 +1304,7 @@ EOF
 						print OUT "        $s2;\n";
                                         } elsif ($VMS) {
                                             while(++$prevnum < $n) {
-                                                my $symline="SPARE -";
+                                                my $symline="SPARE, SPARE -";
                                                 if ($symvtextcount + length($symline) + 1 > 1024) {
                                                     print OUT ")\nSYMBOL_VECTOR=(-\n";
                                                     $symvtextcount = 16; # length of "SYMBOL_VECTOR=(-"
@@ -1316,8 +1316,13 @@ EOF
                                                 $symvtextcount += length($symline);
                                             }
                                             (my $s_uc = $s) =~ tr/a-z/A-Z/;
-                                            my $symline="$s_uc/$s="
-                                                , ($v ? "DATA" : "PROCEDURE"), " -\n";
+                                            my $symtype=
+                                                $v ? "DATA" : "PROCEDURE";
+                                            my $symline=
+                                                ($s_uc ne $s
+                                                 ? "$s_uc/$s=$symtype, $s=$symtype"
+                                                 : "$s=$symtype, SPARE")
+                                                ." -";
                                             if ($symvtextcount + length($symline) + 1 > 1024) {
                                                 print OUT ")\nSYMBOL_VECTOR=(-\n";
                                                 $symvtextcount = 16; # length of "SYMBOL_VECTOR=(-"
