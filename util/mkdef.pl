@@ -1198,7 +1198,7 @@ sub print_def_file
 	my $prevsymversion = "", $prevprevsymversion = "";
         # For VMS
         my $prevnum = 0;
-        my $symbolcount = 0;
+        my $symvtextcount = 0;
 
 	if ($W32)
 		{ $libname.="32"; }
@@ -1240,6 +1240,7 @@ LIB$libname.OLB /LIBRARY
 $libref
 SYMBOL_VECTOR=(-
 EOF
+                $symvtextcount = 16; # length of "SYMBOL_VECTOR=(-"
                 }
 
 	(@r)=grep(/^\w+(\{[0-9]+\})?\\.*?:.*?:FUNCTION/,@symbols);
@@ -1303,25 +1304,29 @@ EOF
 						print OUT "        $s2;\n";
                                         } elsif ($VMS) {
                                             while(++$prevnum < $n) {
-                                                if ($symbolcount > 1023) {
+                                                my $symline="dummy$prevcount=PRIVATE_PROCEDURE -";
+                                                if ($symvtextcount + length($symline) + 1 > 1024) {
                                                     print OUT ")\nSYMBOL_VECTOR=(-\n";
-                                                    $symbolcount = 0;
+                                                    $symvtextcount = 16; # length of "SYMBOL_VECTOR=(-"
                                                 }
-                                                print OUT $symbolcount
-                                                    ? "    ," : "    ";
-                                                print OUT "dummy$prevnum=PRIVATE_PROCEDURE -\n";
-                                                $symbolcount++;
+                                                if ($symvtextcount > 16) {
+                                                    $symline = ",".$symline;
+                                                }
+                                                print OUT "    $symline\n";
+                                                $symvtextcount += length($symline);
                                             }
                                             (my $s_uc = $s) =~ tr/a-z/A-Z/;
-                                            if ($symbolcount > 1023) {
-                                                print OUT ")\nSYMBOL_VECTOR=(-\n";
-                                                $symbolcount = 0;
-                                            }
-                                            print OUT $symbolcount
-                                                ? "    ," : "    ";
-                                            print OUT "$s_uc/$s="
+                                            my $symline="$s_uc/$s="
                                                 , ($v ? "DATA" : "PROCEDURE"), " -\n";
-                                            $symbolcount++;
+                                            if ($symvtextcount + length($symline) + 1 > 1024) {
+                                                print OUT ")\nSYMBOL_VECTOR=(-\n";
+                                                $symvtextcount = 16; # length of "SYMBOL_VECTOR=(-"
+                                            }
+                                            if ($symvtextcount > 16) {
+                                                $symline = ",".$symline;
+                                            }
+                                            print OUT "    $symline\n";
+                                            $symvtextcount += length($symline);
 					} elsif($v && !$OS2) {
 						printf OUT "    %s%-39s @%-8d DATA\n",
 								($W32)?"":"_",$s2,$n;
