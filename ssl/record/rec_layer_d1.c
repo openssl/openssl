@@ -355,7 +355,7 @@ int dtls1_process_buffered_records(SSL *s)
             if (!dtls1_process_record(s))
                 return (0);
             if (dtls1_buffer_record(s, &(s->rlayer.d->processed_rcds),
-                SSL3_RECORD_get_seq_num(&s->rlayer.rrec)) < 0)
+                SSL3_RECORD_get_seq_num(s->rlayer.rrec)) < 0)
                 return -1;
         }
     }
@@ -464,7 +464,7 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
      * s->s3->rrec.off,     - offset into 'data' for next read
      * s->s3->rrec.length,  - number of bytes.
      */
-    rr = &s->rlayer.rrec;
+    rr = s->rlayer.rrec;
 
     /*
      * We are not handshaking and have no data yet, so process data buffered
