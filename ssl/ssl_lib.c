@@ -669,6 +669,8 @@ SSL *SSL_new(SSL_CTX *ctx)
     s->max_send_fragment = ctx->max_send_fragment;
     s->split_send_fragment = ctx->split_send_fragment;
     s->max_pipelines = ctx->max_pipelines;
+    if (s->max_pipelines > 1)
+        RECORD_LAYER_set_read_ahead(&s->rlayer, 1);
 
     CRYPTO_add(&ctx->references, 1, CRYPTO_LOCK_SSL_CTX);
     s->ctx = ctx;
@@ -1662,6 +1664,8 @@ long SSL_ctrl(SSL *s, int cmd, long larg, void *parg)
         if (larg < 1 || larg > SSL_MAX_PIPELINES)
             return 0;
         s->max_pipelines = larg;
+        if (larg > 1)
+            RECORD_LAYER_set_read_ahead(&s->rlayer, 1);
     case SSL_CTRL_GET_RI_SUPPORT:
         if (s->s3)
             return s->s3->send_connection_binding;
