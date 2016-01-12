@@ -120,10 +120,6 @@ int app_RAND_load_file(const char *file, int dont_warn)
     int consider_randfile = (file == NULL);
     char buffer[200];
 
-#ifdef OPENSSL_SYS_WINDOWS
-    RAND_screen();
-#endif
-
     if (file == NULL)
         file = RAND_file_name(buffer, sizeof buffer);
     else if (RAND_egd(file) > 0) {

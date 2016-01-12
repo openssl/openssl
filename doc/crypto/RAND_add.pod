@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-RAND_add, RAND_seed, RAND_status, RAND_event, RAND_screen - add
+RAND_add, RAND_seed, RAND_status, RAND_event - add
 entropy to the PRNG
 
 =head1 SYNOPSIS
@@ -16,7 +16,6 @@ entropy to the PRNG
  int  RAND_status(void);
 
  int  RAND_event(UINT iMsg, WPARAM wParam, LPARAM lParam);
- void RAND_screen(void);
 
 =head1 DESCRIPTION
 
@@ -48,13 +47,6 @@ B<iMsg>, B<wParam> and B<lParam> arguments of I<all> messages sent to
 the window procedure. It will estimate the entropy contained in the
 event message (if any), and add it to the PRNG. The program can then
 process the messages as usual.
-
-The RAND_screen() function is available for the convenience of Windows
-programmers. It adds the current contents of the screen to the PRNG.
-For applications that can catch Windows events, seeding the PRNG by
-calling RAND_event() is a significantly better source of
-randomness. It should be noted that both methods cannot be used on
-servers that run without user interaction.
 
 =head1 RETURN VALUES
 

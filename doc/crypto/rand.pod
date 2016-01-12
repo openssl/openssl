@@ -30,7 +30,6 @@ rand - pseudo-random number generator
  void RAND_cleanup(void);
 
  /* For Win32 only */
- void RAND_screen(void);
  int RAND_event(UINT, WPARAM, LPARAM);
 
 =head1 DESCRIPTION
