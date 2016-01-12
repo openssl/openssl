@@ -2178,7 +2178,7 @@ find(sub {
             die sprintf "Error reading Makefile.in in %s: !$\n",
                 $File::Find::dir;
         $out->close() or
-            die sprintf "Error writing Makefile.in in %s: !$\n",
+            die sprintf "Error writing Makefile in %s: !$\n",
                 $File::Find::dir;
     }, ".");
 
