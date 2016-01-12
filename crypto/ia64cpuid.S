@@ -127,45 +127,6 @@ OPENSSL_wipe_cpu:
 	br.ret.sptk	b0		};;
 .endp	OPENSSL_wipe_cpu#
 
-.global	OPENSSL_cleanse#
-.proc	OPENSSL_cleanse#
-OPENSSL_cleanse:
-{ .mib;	cmp.eq		p6,p0=0,r33	    // len==0
-#if defined(_HPUX_SOURCE) && !defined(_LP64)
-	addp4		r32=0,r32
-#endif
-(p6)	br.ret.spnt	b0		};;
-{ .mib;	and		r2=7,r32
-	cmp.leu		p6,p0=15,r33	    // len>=15
-(p6)	br.cond.dptk	.Lot		};;
-
-.Little:
-{ .mib;	st1		[r32]=r0,1
-	cmp.ltu		p6,p7=1,r33	}  // len>1
-{ .mbb;	add		r33=-1,r33	   // len--
-(p6)	br.cond.dptk	.Little
-(p7)	br.ret.sptk.many	b0	};;
-
-.Lot:
-{ .mib;	cmp.eq		p6,p0=0,r2
-(p6)	br.cond.dptk	.Laligned	};;
-{ .mmi;	st1		[r32]=r0,1;;
-	and		r2=7,r32	}
-{ .mib;	add		r33=-1,r33
-	br		.Lot		};;
-
-.Laligned:
-{ .mmi;	st8		[r32]=r0,8
-	and		r2=-8,r33	    // len&~7
-	add		r33=-8,r33	};; // len-=8
-{ .mib;	cmp.ltu		p6,p0=8,r2	    // ((len+8)&~7)>8
-(p6)	br.cond.dptk	.Laligned	};;
-
-{ .mbb;	cmp.eq		p6,p7=r0,r33
-(p7)	br.cond.dpnt	.Little
-(p6)	br.ret.sptk.many	b0	};;
-.endp	OPENSSL_cleanse#
-
 .global	OPENSSL_instrument_bus#
 .proc	OPENSSL_instrument_bus#
 OPENSSL_instrument_bus:

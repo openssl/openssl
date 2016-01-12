@@ -216,7 +216,7 @@ $ GOSUB CHECK_OPT_FILE
 $!
 $! Define The Different Encryption "library" Strings.
 $!
-$ LIB_ = "cryptlib,mem,mem_clr,mem_dbg,cversion,ex_data,cpt_err,"+ -
+$ LIB_ = "cryptlib,mem,mem_dbg,cversion,ex_data,cpt_err,"+ -
 	"ebcdic,uid,o_time,o_str,o_dir,thr_id,lock,fips_ers,"+ -
 	"o_init,o_fips"
 $ LIB_OBJECTS = "o_names,obj_dat,obj_lib,obj_err,obj_xref"

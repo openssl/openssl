@@ -26,7 +26,7 @@ EX_LIBS=
 CFLAGS= $(INCLUDE) $(CFLAG)
 ASFLAGS= $(INCLUDE) $(ASFLAG)
 AFLAGS=$(ASFLAGS)
-CPUID_OBJ=mem_clr.o
+CPUID_OBJ=
 
 LIBS=
 
@@ -34,7 +34,7 @@ GENERAL=Makefile README crypto-lib.com install.com
 
 LIB= $(TOP)/libcrypto.a
 SHARED_LIB= libcrypto$(SHLIB_EXT)
-LIBSRC=	cryptlib.c mem.c mem_clr.c mem_dbg.c cversion.c ex_data.c cpt_err.c \
+LIBSRC=	cryptlib.c mem.c mem_dbg.c cversion.c ex_data.c cpt_err.c \
 	ebcdic.c uid.c o_time.c o_str.c o_dir.c thr_id.c lock.c fips_ers.c \
 	o_init.c o_fips.c mem_sec.c
 LIBOBJ= cryptlib.o mem.o mem_dbg.o cversion.o ex_data.o cpt_err.o \
@@ -176,10 +176,6 @@ mem.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
 mem.o: ../include/openssl/ossl_typ.h ../include/openssl/safestack.h
 mem.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
 mem.o: include/internal/cryptlib.h mem.c
-mem_clr.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
-mem_clr.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
-mem_clr.o: ../include/openssl/ossl_typ.h ../include/openssl/safestack.h
-mem_clr.o: ../include/openssl/stack.h ../include/openssl/symhacks.h mem_clr.c
 mem_dbg.o: ../e_os.h ../include/openssl/bio.h ../include/openssl/buffer.h
 mem_dbg.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
 mem_dbg.o: ../include/openssl/err.h ../include/openssl/lhash.h

@@ -182,41 +182,6 @@ OPENSSL_ia32_cpuid:
 	or	%r9,%rax
 	ret
 .size	OPENSSL_ia32_cpuid,.-OPENSSL_ia32_cpuid
-
-.globl  OPENSSL_cleanse
-.type   OPENSSL_cleanse,\@abi-omnipotent
-.align  16
-OPENSSL_cleanse:
-	xor	%rax,%rax
-	cmp	\$15,$arg2
-	jae	.Lot
-	cmp	\$0,$arg2
-	je	.Lret
-.Little:
-	mov	%al,($arg1)
-	sub	\$1,$arg2
-	lea	1($arg1),$arg1
-	jnz	.Little
-.Lret:
-	ret
-.align	16
-.Lot:
-	test	\$7,$arg1
-	jz	.Laligned
-	mov	%al,($arg1)
-	lea	-1($arg2),$arg2
-	lea	1($arg1),$arg1
-	jmp	.Lot
-.Laligned:
-	mov	%rax,($arg1)
-	lea	-8($arg2),$arg2
-	test	\$-8,$arg2
-	lea	8($arg1),$arg1
-	jnz	.Laligned
-	cmp	\$0,$arg2
-	jne	.Little
-	ret
-.size	OPENSSL_cleanse,.-OPENSSL_cleanse
 ___
 
 print<<___ if (!$win64);

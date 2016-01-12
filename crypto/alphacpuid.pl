@@ -86,43 +86,6 @@ OPENSSL_rdtsc:
 	rpcc	$0
 	ret	($26)
 .end	OPENSSL_rdtsc
-
-.globl	OPENSSL_cleanse
-.ent	OPENSSL_cleanse
-OPENSSL_cleanse:
-	.frame	$30,0,$26
-	.prologue 0
-	beq	$17,.Ldone
-	and	$16,7,$0
-	bic	$17,7,$at
-	beq	$at,.Little
-	beq	$0,.Laligned
-
-.Little:
-	subq	$0,8,$0
-	ldq_u	$1,0($16)
-	mov	$16,$2
-.Lalign:
-	mskbl	$1,$16,$1
-	lda	$16,1($16)
-	subq	$17,1,$17
-	addq	$0,1,$0
-	beq	$17,.Lout
-	bne	$0,.Lalign
-.Lout:	stq_u	$1,0($2)
-	beq	$17,.Ldone
-	bic	$17,7,$at
-	beq	$at,.Little
-
-.Laligned:
-	stq	$31,0($16)
-	subq	$17,8,$17
-	lda	$16,8($16)
-	bic	$17,7,$at
-	bne	$at,.Laligned
-	bne	$17,.Little
-.Ldone: ret	($26)
-.end	OPENSSL_cleanse
 ___
 {
 my ($out,$cnt,$max)=("\$16","\$17","\$18");
