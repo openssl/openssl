@@ -180,7 +180,7 @@ int dsaparam_main(int argc, char **argv)
     argv = opt_rest();
 
     if (argc == 1) {
-        if (!opt_int(argv[0], &num))
+        if (!opt_int(argv[0], &num) || num < 0)
             goto end;
         /* generate a key */
         numbits = num;

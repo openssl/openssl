@@ -58,6 +58,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 #include "apps.h"
 #include <openssl/bio.h>
 #include <openssl/err.h>
@@ -142,7 +143,7 @@ int enc_main(int argc, char **argv)
     int ret = 1, inl, nopad = 0;
     unsigned char key[EVP_MAX_KEY_LENGTH], iv[EVP_MAX_IV_LENGTH];
     unsigned char *buff = NULL, salt[PKCS5_SALT_LEN];
-    unsigned long n;
+    long n;
 #ifdef ZLIB
     int do_zlib = 0;
     BIO *bzl = NULL;
@@ -236,7 +237,8 @@ int enc_main(int argc, char **argv)
             k = i >= 1 && p[i] == 'k';
             if (k)
                 p[i] = '\0';
-            if (!opt_ulong(opt_arg(), &n))
+            if (!opt_long(opt_arg(), &n)
+                    || n < 0 || (k && n >= LONG_MAX / 1024))
                 goto opthelp;
             if (k)
                 n *= 1024;
