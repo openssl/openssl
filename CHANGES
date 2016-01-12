@@ -85,7 +85,7 @@
         HMAC_CTX *HMAC_CTX_new(void);
         void HMAC_CTX_free(HMAC_CTX *ctx);
 
-     For EVP_MD and EVP_CIPHR, complete APIs to create, fill and
+     For EVP_MD and EVP_CIPHER, complete APIs to create, fill and
      destroy such methods has been added.  See EVP_MD_meth_new(3) and
      EVP_CIPHER_meth_new(3) for documentation.
 
