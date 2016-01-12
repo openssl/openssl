@@ -120,7 +120,7 @@
 
 #define RECORD_LAYER_get_rbuf(rl)               (&(rl)->rbuf)
 #define RECORD_LAYER_get_wbuf(rl)               ((rl)->wbuf)
-#define RECORD_LAYER_get_rrec(rl)               (&(rl)->rrec)
+#define RECORD_LAYER_get_rrec(rl)               ((rl)->rrec)
 #define RECORD_LAYER_get_wrec(rl)               (&(rl)->wrec)
 #define RECORD_LAYER_set_packet(rl, p)          ((rl)->packet = (p))
 #define RECORD_LAYER_reset_packet_length(rl)    ((rl)->packet_length = 0)
@@ -128,9 +128,11 @@
 #define RECORD_LAYER_set_rstate(rl, st)         ((rl)->rstate = (st))
 #define RECORD_LAYER_get_read_sequence(rl)      ((rl)->read_sequence)
 #define RECORD_LAYER_get_write_sequence(rl)     ((rl)->write_sequence)
+#define RECORD_LAYER_get_numrpipes(rl)          ((rl)->numrpipes)
+#define RECORD_LAYER_set_numrpipes(rl, n)       ((rl)->numrpipes = (n))
 #define DTLS_RECORD_LAYER_get_r_epoch(rl)       ((rl)->d->r_epoch)
 
-__owur int ssl3_read_n(SSL *s, int n, int max, int extend);
+__owur int ssl3_read_n(SSL *s, int n, int max, int extend, int clearold);
 
 void RECORD_LAYER_set_write_sequence(RECORD_LAYER *rl, const unsigned char *ws);
 DTLS1_BITMAP *dtls1_get_bitmap(SSL *s, SSL3_RECORD *rr,
@@ -189,13 +191,13 @@ int ssl3_release_write_buffer(SSL *s);
 #define SSL3_RECORD_is_sslv2_record(r) \
             ((r)->rec_version == SSL2_VERSION)
 
-void SSL3_RECORD_clear(SSL3_RECORD *r);
-void SSL3_RECORD_release(SSL3_RECORD *r);
-int SSL3_RECORD_setup(SSL3_RECORD *r);
+void SSL3_RECORD_clear(SSL3_RECORD *r, unsigned int num_recs);
+void SSL3_RECORD_release(SSL3_RECORD *r, unsigned int num_recs);
+int SSL3_RECORD_setup(SSL3_RECORD *r, unsigned int num_recs);
 void SSL3_RECORD_set_seq_num(SSL3_RECORD *r, const unsigned char *seq_num);
 int ssl3_get_record(SSL *s);
 __owur int ssl3_do_compress(SSL *ssl, SSL3_RECORD *wr);
-__owur int ssl3_do_uncompress(SSL *ssl);
+__owur int ssl3_do_uncompress(SSL *ssl, SSL3_RECORD *rr);
 void ssl3_cbc_copy_mac(unsigned char *out,
                        const SSL3_RECORD *rec, unsigned md_size);
 __owur int ssl3_cbc_remove_padding(const SSL *s,

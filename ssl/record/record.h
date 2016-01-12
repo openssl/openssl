@@ -253,13 +253,16 @@ typedef struct record_layer_st {
     /* where we are when reading */
     int rstate;
 
+    /* How many pipelines can be used to read data */
+    unsigned int numrpipes;
+    /* How many pipelines can be used to write data */
     unsigned int numwpipes;
     /* read IO goes into here */
     SSL3_BUFFER rbuf;
     /* write IO goes into here */
     SSL3_BUFFER wbuf[SSL_MAX_PIPELINES];
     /* each decoded record goes in here */
-    SSL3_RECORD rrec;
+    SSL3_RECORD rrec[SSL_MAX_PIPELINES];
     /* goes out from here */
     SSL3_RECORD wrec;
 
