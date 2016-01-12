@@ -20,6 +20,8 @@ typedef struct function_st {
     const OPTIONS *help;
 } FUNCTION;
 
+DEFINE_LHASH_OF(FUNCTION);
+
 EOF
 
 grep(s/\.o//, @ARGV);

@@ -1644,7 +1644,7 @@ int speed_main(int argc, char **argv)
                 (EVP_CIPHER_flags(evp_cipher) &
                  EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK)) {
                 BIO_printf(bio_err, "%s is not multi-block capable\n",
-                        OBJ_nid2ln(evp_cipher->nid));
+                           OBJ_nid2ln(EVP_CIPHER_nid(evp_cipher)));
                 goto end;
             }
             multiblock_speed(evp_cipher);
@@ -1654,40 +1654,40 @@ int speed_main(int argc, char **argv)
 #endif
         for (j = 0; j < SIZE_NUM; j++) {
             if (evp_cipher) {
-                EVP_CIPHER_CTX ctx;
+                EVP_CIPHER_CTX *ctx;
                 int outl;
 
-                names[D_EVP] = OBJ_nid2ln(evp_cipher->nid);
+                names[D_EVP] = OBJ_nid2ln(EVP_CIPHER_nid(evp_cipher));
                 /*
                  * -O3 -fschedule-insns messes up an optimization here!
                  * names[D_EVP] somehow becomes NULL
                  */
                 print_message(names[D_EVP], save_count, lengths[j]);
 
-                EVP_CIPHER_CTX_init(&ctx);
+                ctx = EVP_CIPHER_CTX_new();
                 if (decrypt)
-                    EVP_DecryptInit_ex(&ctx, evp_cipher, NULL, key16, iv);
+                    EVP_DecryptInit_ex(ctx, evp_cipher, NULL, key16, iv);
                 else
-                    EVP_EncryptInit_ex(&ctx, evp_cipher, NULL, key16, iv);
-                EVP_CIPHER_CTX_set_padding(&ctx, 0);
+                    EVP_EncryptInit_ex(ctx, evp_cipher, NULL, key16, iv);
+                EVP_CIPHER_CTX_set_padding(ctx, 0);
 
                 Time_F(START);
                 if (decrypt)
                     for (count = 0, run = 1;
                          COND(save_count * 4 * lengths[0] / lengths[j]);
                          count++)
-                        EVP_DecryptUpdate(&ctx, buf, &outl, buf, lengths[j]);
+                        EVP_DecryptUpdate(ctx, buf, &outl, buf, lengths[j]);
                 else
                     for (count = 0, run = 1;
                          COND(save_count * 4 * lengths[0] / lengths[j]);
                          count++)
-                        EVP_EncryptUpdate(&ctx, buf, &outl, buf, lengths[j]);
+                        EVP_EncryptUpdate(ctx, buf, &outl, buf, lengths[j]);
                 if (decrypt)
-                    EVP_DecryptFinal_ex(&ctx, buf, &outl);
+                    EVP_DecryptFinal_ex(ctx, buf, &outl);
                 else
-                    EVP_EncryptFinal_ex(&ctx, buf, &outl);
+                    EVP_EncryptFinal_ex(ctx, buf, &outl);
                 d = Time_F(STOP);
-                EVP_CIPHER_CTX_cleanup(&ctx);
+                EVP_CIPHER_CTX_free(ctx);
             }
             if (evp_md) {
                 names[D_EVP] = OBJ_nid2ln(EVP_MD_type(evp_md));
@@ -2438,16 +2438,16 @@ static void multiblock_speed(const EVP_CIPHER *evp_cipher)
     int j, count, num = OSSL_NELEM(lengths);
     const char *alg_name;
     unsigned char *inp, *out, no_key[32], no_iv[16];
-    EVP_CIPHER_CTX ctx;
+    EVP_CIPHER_CTX *ctx;
     double d = 0.0;
 
     inp = app_malloc(mblengths[num - 1], "multiblock input buffer");
     out = app_malloc(mblengths[num - 1] + 1024, "multiblock output buffer");
-    EVP_CIPHER_CTX_init(&ctx);
-    EVP_EncryptInit_ex(&ctx, evp_cipher, NULL, no_key, no_iv);
-    EVP_CIPHER_CTX_ctrl(&ctx, EVP_CTRL_AEAD_SET_MAC_KEY, sizeof(no_key),
+    ctx = EVP_CIPHER_CTX_new();
+    EVP_EncryptInit_ex(ctx, evp_cipher, NULL, no_key, no_iv);
+    EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_MAC_KEY, sizeof(no_key),
                         no_key);
-    alg_name = OBJ_nid2ln(evp_cipher->nid);
+    alg_name = OBJ_nid2ln(EVP_CIPHER_nid(evp_cipher));
 
     for (j = 0; j < num; j++) {
         print_message(alg_name, 0, mblengths[j]);
@@ -2469,16 +2469,14 @@ static void multiblock_speed(const EVP_CIPHER *evp_cipher)
             mb_param.len = len;
             mb_param.interleave = 8;
 
-            packlen = EVP_CIPHER_CTX_ctrl(&ctx,
-                                          EVP_CTRL_TLS1_1_MULTIBLOCK_AAD,
+            packlen = EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_TLS1_1_MULTIBLOCK_AAD,
                                           sizeof(mb_param), &mb_param);
 
             if (packlen > 0) {
                 mb_param.out = out;
                 mb_param.inp = inp;
                 mb_param.len = len;
-                EVP_CIPHER_CTX_ctrl(&ctx,
-                                    EVP_CTRL_TLS1_1_MULTIBLOCK_ENCRYPT,
+                EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_TLS1_1_MULTIBLOCK_ENCRYPT,
                                     sizeof(mb_param), &mb_param);
             } else {
                 int pad;
@@ -2487,10 +2485,9 @@ static void multiblock_speed(const EVP_CIPHER *evp_cipher)
                 len += 16;
                 aad[11] = len >> 8;
                 aad[12] = len;
-                pad = EVP_CIPHER_CTX_ctrl(&ctx,
-                                          EVP_CTRL_AEAD_TLS1_AAD,
+                pad = EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_TLS1_AAD,
                                           EVP_AEAD_TLS1_AAD_LEN, aad);
-                EVP_Cipher(&ctx, out, inp, len + pad);
+                EVP_Cipher(ctx, out, inp, len + pad);
             }
         }
         d = Time_F(STOP);
@@ -2528,4 +2525,5 @@ static void multiblock_speed(const EVP_CIPHER *evp_cipher)
 
     OPENSSL_free(inp);
     OPENSSL_free(out);
+    EVP_CIPHER_CTX_free(ctx);
 }

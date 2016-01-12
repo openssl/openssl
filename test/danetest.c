@@ -88,7 +88,7 @@ static int restore_errno(void)
     return ret;
 }
 
-static void usage(void)
+static void test_usage(void)
 {
     fprintf(stderr, "usage: %s: danetest basedomain CAfile tlsafile\n", progname);
 }
@@ -465,7 +465,7 @@ int main(int argc, char *argv[])
 
     progname = argv[0];
     if (argc != 4) {
-        usage();
+        test_usage();
         EXIT(1);
     }
     basedomain = argv[1];
@@ -526,7 +526,7 @@ end:
     ERR_free_strings();
     ERR_remove_thread_state(NULL);
     EVP_cleanup();
-#ifdef CRYPTO_MDEBUG
+#ifndef OPENSSL_NO_CRYPTO_MDEBUG
     CRYPTO_mem_leaks(bio_err);
 #endif
     BIO_free(bio_err);

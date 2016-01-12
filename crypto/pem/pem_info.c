@@ -301,7 +301,6 @@ int PEM_X509_INFO_write_bio(BIO *bp, X509_INFO *xi, EVP_CIPHER *enc,
                             unsigned char *kstr, int klen,
                             pem_password_cb *cb, void *u)
 {
-    EVP_CIPHER_CTX ctx;
     int i, ret = 0;
     unsigned char *data = NULL;
     const char *objstr = NULL;
@@ -346,11 +345,13 @@ int PEM_X509_INFO_write_bio(BIO *bp, X509_INFO *xi, EVP_CIPHER *enc,
             }
 
             /* create the right magic header stuff */
-            OPENSSL_assert(strlen(objstr) + 23 + 2 * enc->iv_len + 13 <=
+            OPENSSL_assert(strlen(objstr) + 23
+                           + 2 * EVP_CIPHER_iv_length(enc) + 13 <=
                            sizeof buf);
             buf[0] = '\0';
             PEM_proc_type(buf, PEM_TYPE_ENCRYPTED);
-            PEM_dek_info(buf, objstr, enc->iv_len, (char *)iv);
+            PEM_dek_info(buf, objstr, EVP_CIPHER_iv_length(enc),
+                         (char *)iv);
 
             /* use the normal code to write things out */
             i = PEM_write_bio(bp, PEM_STRING_RSA, buf, data, i);
@@ -381,7 +382,6 @@ int PEM_X509_INFO_write_bio(BIO *bp, X509_INFO *xi, EVP_CIPHER *enc,
     ret = 1;
 
  err:
-    OPENSSL_cleanse((char *)&ctx, sizeof(ctx));
     OPENSSL_cleanse(buf, PEM_BUFSIZE);
     return (ret);
 }

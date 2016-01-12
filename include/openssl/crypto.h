@@ -249,10 +249,10 @@ typedef struct {
  * The following can be used to detect memory leaks in the library. If
  * used, it turns on malloc checking
  */
-# define CRYPTO_MEM_CHECK_OFF     0x0
-# define CRYPTO_MEM_CHECK_ON      0x1
-# define CRYPTO_MEM_CHECK_ENABLE  0x2
-# define CRYPTO_MEM_CHECK_DISABLE 0x3
+# define CRYPTO_MEM_CHECK_OFF     0x0   /* Control only */
+# define CRYPTO_MEM_CHECK_ON      0x1   /* Control and mode bit */
+# define CRYPTO_MEM_CHECK_ENABLE  0x2   /* Control and mode bit */
+# define CRYPTO_MEM_CHECK_DISABLE 0x3   /* Control only */
 
 /* predec of the BIO type */
 typedef struct bio_st BIO_dummy;
@@ -291,20 +291,9 @@ DEFINE_STACK_OF(void)
 #define OPENSSL_malloc_init() \
     CRYPTO_set_mem_functions(CRYPTO_malloc, CRYPTO_realloc, CRYPTO_free)
 
-/*
- * Set standard debugging functions (not done by default unless CRYPTO_MDEBUG
- * is defined)
- */
-# if defined(CRYPTO_MDEBUG_ABORT) && !defined(CRYPTO_MDEBUG)
-#  define CRYPTO_MDEBUG
-# endif
-# ifndef CRYPTO_MDEBUG
-#  define OPENSSL_NO_CRYPTO_MDEBUG
-# endif
-
 int CRYPTO_mem_ctrl(int mode);
 
-# ifdef CRYPTO_MDEBUG
+# ifndef OPENSSL_NO_CRYPTO_MDEBUG
 #  define OPENSSL_malloc(num) \
         CRYPTO_malloc(num, __FILE__, __LINE__)
 #  define OPENSSL_zalloc(num) \
@@ -327,6 +316,8 @@ int CRYPTO_mem_ctrl(int mode);
         CRYPTO_secure_malloc(num, __FILE__, __LINE__)
 #  define OPENSSL_secure_free(addr) \
         CRYPTO_secure_free(addr)
+#  define OPENSSL_secure_actual_size(ptr) \
+        CRYPTO_secure_actual_size(ptr)
 # else
 #  define OPENSSL_malloc(num) \
         CRYPTO_malloc(num, NULL, 0)
@@ -350,6 +341,8 @@ int CRYPTO_mem_ctrl(int mode);
         CRYPTO_secure_malloc(num, NULL, 0)
 #  define OPENSSL_secure_free(addr) \
         CRYPTO_secure_free(addr)
+#  define OPENSSL_secure_actual_size(ptr) \
+        CRYPTO_secure_actual_size(ptr)
 
 # endif
 
@@ -490,6 +483,7 @@ void *CRYPTO_secure_malloc(size_t num, const char *file, int line);
 void CRYPTO_secure_free(void *ptr);
 int CRYPTO_secure_allocated(const void *ptr);
 int CRYPTO_secure_malloc_initialized(void);
+size_t CRYPTO_secure_actual_size(void *ptr);
 size_t CRYPTO_secure_used(void);
 
 void OPENSSL_cleanse(void *ptr, size_t len);
@@ -503,7 +497,7 @@ int CRYPTO_mem_debug_push(const char *info, const char *file, int line);
 int CRYPTO_mem_debug_pop(void);
 
 /*-
- * Debugging functions (enabled by CRYPTO_set_mem_debug_functions(1))
+ * Debugging functions (enabled by CRYPTO_set_mem_debug(1))
  * The flag argument has the following significance:
  *   0:   called before the actual memory allocation has taken place
  *   1:   called after the actual memory allocation has taken place
@@ -515,9 +509,9 @@ void CRYPTO_mem_debug_realloc(void *addr1, void *addr2, size_t num, int flag,
 void CRYPTO_mem_debug_free(void *addr, int flag);
 
 #  ifndef OPENSSL_NO_STDIO
-void CRYPTO_mem_leaks_fp(FILE *);
+int CRYPTO_mem_leaks_fp(FILE *);
 #  endif
-void CRYPTO_mem_leaks(struct bio_st *bio);
+int CRYPTO_mem_leaks(struct bio_st *bio);
 # endif
 
 /* die if we have to */

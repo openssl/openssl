@@ -315,6 +315,8 @@ typedef struct ERR_string_data_st {
     const char *string;
 } ERR_STRING_DATA;
 
+DEFINE_LHASH_OF(ERR_STRING_DATA);
+
 void ERR_put_error(int lib, int func, int reason, const char *file, int line);
 void ERR_set_error_data(char *data, int flags);
 

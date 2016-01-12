@@ -65,6 +65,7 @@
 #include <openssl/objects.h>
 #include <openssl/bn.h>
 #include "internal/asn1_int.h"
+#include "obj_lcl.h"
 
 /* obj_dat.h is generated from objects.h by obj_dat.pl */
 #include "obj_dat.h"
@@ -78,11 +79,10 @@ DECLARE_OBJ_BSEARCH_CMP_FN(const ASN1_OBJECT *, unsigned int, obj);
 #define ADDED_LNAME     2
 #define ADDED_NID       3
 
-typedef struct added_obj_st {
+struct added_obj_st {
     int type;
     ASN1_OBJECT *obj;
-} ADDED_OBJ;
-DECLARE_LHASH_OF(ADDED_OBJ);
+};
 
 static int new_nid = NUM_NID;
 static LHASH_OF(ADDED_OBJ) *added = NULL;
@@ -134,8 +134,6 @@ static unsigned long added_obj_hash(const ADDED_OBJ *ca)
     return (ret);
 }
 
-static IMPLEMENT_LHASH_HASH_FN(added_obj, ADDED_OBJ)
-
 static int added_obj_cmp(const ADDED_OBJ *ca, const ADDED_OBJ *cb)
 {
     ASN1_OBJECT *a, *b;
@@ -174,13 +172,11 @@ static int added_obj_cmp(const ADDED_OBJ *ca, const ADDED_OBJ *cb)
     }
 }
 
-static IMPLEMENT_LHASH_COMP_FN(added_obj, ADDED_OBJ)
-
 static int init_added(void)
 {
     if (added != NULL)
         return (1);
-    added = lh_ADDED_OBJ_new();
+    added = lh_ADDED_OBJ_new(added_obj_hash, added_obj_cmp);
     return (added != NULL);
 }
 
@@ -203,10 +199,6 @@ static void cleanup3_doall(ADDED_OBJ *a)
     OPENSSL_free(a);
 }
 
-static IMPLEMENT_LHASH_DOALL_FN(cleanup1, ADDED_OBJ)
-static IMPLEMENT_LHASH_DOALL_FN(cleanup2, ADDED_OBJ)
-static IMPLEMENT_LHASH_DOALL_FN(cleanup3, ADDED_OBJ)
-
 /*
  * The purpose of obj_cleanup_defer is to avoid EVP_cleanup() attempting to
  * use freed up OIDs. If necessary the actual freeing up of OIDs is delayed.
@@ -227,10 +219,10 @@ void OBJ_cleanup(void)
     }
     if (added == NULL)
         return;
-    lh_ADDED_OBJ_down_load(added) = 0;
-    lh_ADDED_OBJ_doall(added, LHASH_DOALL_FN(cleanup1)); /* zero counters */
-    lh_ADDED_OBJ_doall(added, LHASH_DOALL_FN(cleanup2)); /* set counters */
-    lh_ADDED_OBJ_doall(added, LHASH_DOALL_FN(cleanup3)); /* free objects */
+    lh_ADDED_OBJ_set_down_load(added, 0);
+    lh_ADDED_OBJ_doall(added, cleanup1_doall); /* zero counters */
+    lh_ADDED_OBJ_doall(added, cleanup2_doall); /* set counters */
+    lh_ADDED_OBJ_doall(added, cleanup3_doall); /* free objects */
     lh_ADDED_OBJ_free(added);
     added = NULL;
 }

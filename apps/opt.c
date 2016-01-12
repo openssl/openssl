@@ -57,6 +57,7 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <ctype.h>
+#include <limits.h>
 #include <openssl/bio.h>
 
 #define MAX_OPT_HELP_WIDTH 30
@@ -350,30 +351,16 @@ int opt_pair(const char *name, const OPT_PAIR* pairs, int *result)
     return 0;
 }
 
-/* See if cp looks like a hex number, in case user left off the 0x */
-static int scanforhex(const char *cp)
-{
-    if (*cp == '0' && (cp[1] == 'x' || cp[1] == 'X'))
-        return 16;
-    for (; *cp; cp++)
-        /* Look for a hex digit that isn't a regular digit. */
-        if (isxdigit(*cp) && !isdigit(*cp))
-            return 16;
-    return 0;
-}
-
 /* Parse an int, put it into *result; return 0 on failure, else 1. */
 int opt_int(const char *value, int *result)
 {
-    const char *fmt = "%d";
-    int base = scanforhex(value);
+    long l;
 
-    if (base == 16)
-        fmt = "%x";
-    else if (*value == '0')
-        fmt = "%o";
-    if (sscanf(value, fmt, result) != 1) {
-        BIO_printf(bio_err, "%s: Can't parse \"%s\" as a number\n",
+    if (!opt_long(value, &l))
+        return 0;
+    *result = (int)l;
+    if (*result != l) {
+        BIO_printf(bio_err, "%s: Value \"%s\" outside integer range\n",
                    prog, value);
         return 0;
     }
@@ -383,15 +370,22 @@ int opt_int(const char *value, int *result)
 /* Parse a long, put it into *result; return 0 on failure, else 1. */
 int opt_long(const char *value, long *result)
 {
-    char *endptr;
-    int base = scanforhex(value);
+    int oerrno = errno;
+    long l;
+    char *endp;
 
-    *result = strtol(value, &endptr, base);
-    if (*endptr) {
-        BIO_printf(bio_err,
-                   "%s: Bad char %c in number %s\n", prog, *endptr, value);
+    l = strtol(value, &endp, 0);
+    if (*endp
+            || endp == value
+            || ((l == LONG_MAX || l == LONG_MIN) && errno == ERANGE)
+            || (l == 0 && errno != 0)) {
+        BIO_printf(bio_err, "%s: Can't parse \"%s\" as a number\n",
+                   prog, value);
+        errno = oerrno;
         return 0;
     }
+    *result = l;
+    errno = oerrno;
     return 1;
 }
 
@@ -400,15 +394,22 @@ int opt_long(const char *value, long *result)
  */
 int opt_ulong(const char *value, unsigned long *result)
 {
+    int oerrno = errno;
     char *endptr;
-    int base = scanforhex(value);
+    unsigned long l;
 
-    *result = strtoul(value, &endptr, base);
-    if (*endptr) {
-        BIO_printf(bio_err,
-                   "%s: Bad char %c in number %s\n", prog, *endptr, value);
+    l = strtoul(value, &endptr, 0);
+    if (*endptr
+            || endptr == value
+            || ((l == ULONG_MAX) && errno == ERANGE)
+            || (l == 0 && errno != 0)) {
+        BIO_printf(bio_err, "%s: Can't parse \"%s\" as an unsigned number\n",
+                   prog, value);
+        errno = oerrno;
         return 0;
     }
+    *result = l;
+    errno = oerrno;
     return 1;
 }
 
@@ -421,7 +422,7 @@ enum range { OPT_V_ENUM };
 
 int opt_verify(int opt, X509_VERIFY_PARAM *vpm)
 {
-    unsigned long ul;
+    long l;
     int i;
     ASN1_OBJECT *otmp;
     X509_PURPOSE *xptmp;
@@ -468,9 +469,10 @@ int opt_verify(int opt, X509_VERIFY_PARAM *vpm)
             X509_VERIFY_PARAM_set_depth(vpm, i);
         break;
     case OPT_V_ATTIME:
-        opt_ulong(opt_arg(), &ul);
-        if (ul)
-            X509_VERIFY_PARAM_set_time(vpm, (time_t)ul);
+        /* If we have C99 we could use intmax_t for all time_t values */
+        opt_long(opt_arg(), &l);
+        if (l)
+            X509_VERIFY_PARAM_set_time(vpm, (time_t)l);
         break;
     case OPT_V_VERIFY_HOSTNAME:
         if (!X509_VERIFY_PARAM_set1_host(vpm, opt_arg(), 0))
@@ -558,11 +560,9 @@ int opt_verify(int opt, X509_VERIFY_PARAM *vpm)
 int opt_next(void)
 {
     char *p;
-    char *endptr;
     const OPTIONS *o;
-    int dummy;
-    int base;
-    long val;
+    int ival;
+    unsigned long uval;
 
     /* Look at current arg; at end of the list? */
     arg = NULL;
@@ -613,10 +613,6 @@ int opt_next(void)
         }
 
         /* Syntax-check value. */
-        /*
-         * Do some basic syntax-checking on the value.  These tests aren't
-         * perfect (ignore range overflow) but they catch common failures.
-         */
         switch (o->valtype) {
         default:
         case 's':
@@ -645,35 +641,27 @@ int opt_next(void)
             return -1;
         case 'p':
         case 'n':
-            base = scanforhex(arg);
-            val = strtol(arg, &endptr, base);
-            if (*endptr == '\0') {
-                if (o->valtype == 'p' && val <= 0) {
-                    BIO_printf(bio_err,
-                               "%s: Non-positive number \"%s\" for -%s\n",
-                               prog, arg, o->name);
-                    return -1;
-                }
-                break;
+            if (!opt_int(arg, &ival)
+                    || (o->valtype == 'p' && ival <= 0)) {
+                BIO_printf(bio_err,
+                           "%s: Non-positive number \"%s\" for -%s\n",
+                           prog, arg, o->name);
+                return -1;
             }
-            BIO_printf(bio_err,
-                       "%s: Invalid number \"%s\" for -%s\n",
-                       prog, arg, o->name);
-            return -1;
+            break;
         case 'u':
-            base = scanforhex(arg);
-            strtoul(arg, &endptr, base);
-            if (*endptr == '\0')
-                break;
-            BIO_printf(bio_err,
-                       "%s: Invalid number \"%s\" for -%s\n",
-                       prog, arg, o->name);
-            return -1;
+            if (!opt_ulong(arg, &uval)) {
+                BIO_printf(bio_err,
+                           "%s: Invalid number \"%s\" for -%s\n",
+                           prog, arg, o->name);
+                return -1;
+            }
+            break;
         case 'f':
         case 'F':
             if (opt_format(arg,
                            o->valtype == 'F' ? OPT_FMT_PEMDER
-                           : OPT_FMT_ANY, &dummy))
+                           : OPT_FMT_ANY, &ival))
                 break;
             BIO_printf(bio_err,
                        "%s: Invalid format \"%s\" for -%s\n",

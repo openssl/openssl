@@ -330,14 +330,13 @@ int tls1_change_cipher_state(SSL *s, int which)
 
         if (s->enc_read_ctx != NULL)
             reuse_dd = 1;
-        else if ((s->enc_read_ctx =
-                  OPENSSL_malloc(sizeof(*s->enc_read_ctx))) == NULL)
+        else if ((s->enc_read_ctx = EVP_CIPHER_CTX_new()) == NULL)
             goto err;
         else
             /*
              * make sure it's intialized in case we exit later with an error
              */
-            EVP_CIPHER_CTX_init(s->enc_read_ctx);
+            EVP_CIPHER_CTX_reset(s->enc_read_ctx);
         dd = s->enc_read_ctx;
         mac_ctx = ssl_replace_hash(&s->read_hash, NULL);
         if (mac_ctx == NULL)
@@ -405,7 +404,7 @@ int tls1_change_cipher_state(SSL *s, int which)
     }
 
     if (reuse_dd)
-        EVP_CIPHER_CTX_cleanup(dd);
+        EVP_CIPHER_CTX_reset(dd);
 
     p = s->s3->tmp.key_block;
     i = *mac_secret_size = s->s3->tmp.new_mac_secret_size;

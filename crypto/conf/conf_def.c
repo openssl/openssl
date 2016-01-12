@@ -652,7 +652,7 @@ static char *scan_dquote(CONF *conf, char *p)
     return (p);
 }
 
-static void dump_value_doall_arg(CONF_VALUE *a, BIO *out)
+static void dump_value_doall_arg(const CONF_VALUE *a, BIO *out)
 {
     if (a->name)
         BIO_printf(out, "[%s] %s=%s\n", a->section, a->name, a->value);
@@ -660,12 +660,11 @@ static void dump_value_doall_arg(CONF_VALUE *a, BIO *out)
         BIO_printf(out, "[[%s]]\n", a->section);
 }
 
-static IMPLEMENT_LHASH_DOALL_ARG_FN(dump_value, CONF_VALUE, BIO)
+IMPLEMENT_LHASH_DOALL_ARG_CONST(CONF_VALUE, BIO);
 
 static int def_dump(const CONF *conf, BIO *out)
 {
-    lh_CONF_VALUE_doall_arg(conf->data, LHASH_DOALL_ARG_FN(dump_value),
-                            BIO, out);
+    lh_CONF_VALUE_doall_BIO(conf->data, dump_value_doall_arg, out);
     return 1;
 }
 

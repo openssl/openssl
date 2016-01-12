@@ -228,14 +228,13 @@ int ssl3_change_cipher_state(SSL *s, int which)
     if (which & SSL3_CC_READ) {
         if (s->enc_read_ctx != NULL)
             reuse_dd = 1;
-        else if ((s->enc_read_ctx =
-                  OPENSSL_malloc(sizeof(*s->enc_read_ctx))) == NULL)
+        else if ((s->enc_read_ctx = EVP_CIPHER_CTX_new()) == NULL)
             goto err;
         else
             /*
              * make sure it's intialized in case we exit later with an error
              */
-            EVP_CIPHER_CTX_init(s->enc_read_ctx);
+            EVP_CIPHER_CTX_reset(s->enc_read_ctx);
         dd = s->enc_read_ctx;
 
         if (ssl_replace_hash(&s->read_hash, m) == NULL) {
@@ -262,14 +261,13 @@ int ssl3_change_cipher_state(SSL *s, int which)
     } else {
         if (s->enc_write_ctx != NULL)
             reuse_dd = 1;
-        else if ((s->enc_write_ctx =
-                  OPENSSL_malloc(sizeof(*s->enc_write_ctx))) == NULL)
+        else if ((s->enc_write_ctx = EVP_CIPHER_CTX_new()) == NULL)
             goto err;
         else
             /*
              * make sure it's intialized in case we exit later with an error
              */
-            EVP_CIPHER_CTX_init(s->enc_write_ctx);
+            EVP_CIPHER_CTX_reset(s->enc_write_ctx);
         dd = s->enc_write_ctx;
         if (ssl_replace_hash(&s->write_hash, m) == NULL) {
                 SSLerr(SSL_F_SSL3_CHANGE_CIPHER_STATE, ERR_R_INTERNAL_ERROR);
@@ -293,7 +291,7 @@ int ssl3_change_cipher_state(SSL *s, int which)
     }
 
     if (reuse_dd)
-        EVP_CIPHER_CTX_cleanup(dd);
+        EVP_CIPHER_CTX_reset(dd);
 
     p = s->s3->tmp.key_block;
     i = EVP_MD_size(m);

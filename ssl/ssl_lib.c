@@ -1609,10 +1609,6 @@ long SSL_ctrl(SSL *s, int cmd, long larg, void *parg)
         s->msg_callback_arg = parg;
         return 1;
 
-    case SSL_CTRL_OPTIONS:
-        return (s->options |= larg);
-    case SSL_CTRL_CLEAR_OPTIONS:
-        return (s->options &= ~larg);
     case SSL_CTRL_MODE:
         return (s->mode |= larg);
     case SSL_CTRL_CLEAR_MODE:
@@ -1759,10 +1755,6 @@ long SSL_CTX_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
         return (ctx->stats.sess_timeout);
     case SSL_CTRL_SESS_CACHE_FULL:
         return (ctx->stats.sess_cache_full);
-    case SSL_CTRL_OPTIONS:
-        return (ctx->options |= larg);
-    case SSL_CTRL_CLEAR_OPTIONS:
-        return (ctx->options &= ~larg);
     case SSL_CTRL_MODE:
         return (ctx->mode |= larg);
     case SSL_CTRL_CLEAR_MODE:
@@ -2236,8 +2228,6 @@ static int ssl_session_cmp(const SSL_SESSION *a, const SSL_SESSION *b)
  * variable. The reason is that the functions aren't static, they're exposed
  * via ssl.h.
  */
-static IMPLEMENT_LHASH_HASH_FN(ssl_session, SSL_SESSION)
-static IMPLEMENT_LHASH_COMP_FN(ssl_session, SSL_SESSION)
 
 SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
 {
@@ -2274,7 +2264,7 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
     if ((ret->cert = ssl_cert_new()) == NULL)
         goto err;
 
-    ret->sessions = lh_SSL_SESSION_new();
+    ret->sessions = lh_SSL_SESSION_new(ssl_session_hash, ssl_session_cmp);
     if (ret->sessions == NULL)
         goto err;
     ret->cert_store = X509_STORE_new();
@@ -3129,13 +3119,11 @@ SSL *SSL_dup(SSL *s)
 void ssl_clear_cipher_ctx(SSL *s)
 {
     if (s->enc_read_ctx != NULL) {
-        EVP_CIPHER_CTX_cleanup(s->enc_read_ctx);
-        OPENSSL_free(s->enc_read_ctx);
+        EVP_CIPHER_CTX_free(s->enc_read_ctx);
         s->enc_read_ctx = NULL;
     }
     if (s->enc_write_ctx != NULL) {
-        EVP_CIPHER_CTX_cleanup(s->enc_write_ctx);
-        OPENSSL_free(s->enc_write_ctx);
+        EVP_CIPHER_CTX_free(s->enc_write_ctx);
         s->enc_write_ctx = NULL;
     }
 #ifndef OPENSSL_NO_COMP
@@ -3761,6 +3749,37 @@ void SSL_CTX_set0_security_ex_data(SSL_CTX *ctx, void *ex)
 void *SSL_CTX_get0_security_ex_data(const SSL_CTX *ctx)
 {
     return ctx->cert->sec_ex;
+}
+
+
+/*
+ * Get/Set/Clear options in SSL_CTX or SSL, formerly macros, now functions that
+ * can return unsigned long, instead of the generic long return value from the
+ * control interface.
+ */
+unsigned long SSL_CTX_get_options(const SSL_CTX *ctx)
+{
+    return ctx->options;
+}
+unsigned long SSL_get_options(const SSL* s)
+{
+    return s->options;
+}
+unsigned long SSL_CTX_set_options(SSL_CTX *ctx, unsigned long op)
+{
+    return ctx->options |= op;
+}
+unsigned long SSL_set_options(SSL *s, unsigned long op)
+{
+    return s->options |= op;
+}
+unsigned long SSL_CTX_clear_options(SSL_CTX *ctx, unsigned long op)
+{
+    return ctx->options &= ~op;
+}
+unsigned long SSL_clear_options(SSL *s, unsigned long op)
+{
+    return s->options &= ~op;
 }
 
 IMPLEMENT_OBJ_BSEARCH_GLOBAL_CMP_FN(SSL_CIPHER, SSL_CIPHER, ssl_cipher_id);

@@ -3060,7 +3060,7 @@ static int tls_decrypt_ticket(SSL *s, const unsigned char *etick,
     int slen, mlen, renew_ticket = 0;
     unsigned char tick_hmac[EVP_MAX_MD_SIZE];
     HMAC_CTX *hctx = NULL;
-    EVP_CIPHER_CTX ctx;
+    EVP_CIPHER_CTX *ctx;
     SSL_CTX *tctx = s->initial_ctx;
     /* Need at least keyname + iv + some encrypted data */
     if (eticklen < 48)
@@ -3069,11 +3069,11 @@ static int tls_decrypt_ticket(SSL *s, const unsigned char *etick,
     hctx = HMAC_CTX_new();
     if (hctx == NULL)
         return -2;
-    EVP_CIPHER_CTX_init(&ctx);
+    ctx = EVP_CIPHER_CTX_new();
     if (tctx->tlsext_ticket_key_cb) {
         unsigned char *nctick = (unsigned char *)etick;
         int rv = tctx->tlsext_ticket_key_cb(s, nctick, nctick + 16,
-                                            &ctx, hctx, 0);
+                                            ctx, hctx, 0);
         if (rv < 0)
             return -1;
         if (rv == 0)
@@ -3086,7 +3086,7 @@ static int tls_decrypt_ticket(SSL *s, const unsigned char *etick,
             return 2;
         if (HMAC_Init_ex(hctx, tctx->tlsext_tick_hmac_key, 16,
                          EVP_sha256(), NULL) <= 0
-                || EVP_DecryptInit_ex(&ctx, EVP_aes_128_cbc(), NULL,
+                || EVP_DecryptInit_ex(ctx, EVP_aes_128_cbc(), NULL,
                                       tctx->tlsext_tick_aes_key,
                                       etick + 16) <= 0) {
             goto err;
@@ -3108,26 +3108,27 @@ static int tls_decrypt_ticket(SSL *s, const unsigned char *etick,
     }
     HMAC_CTX_free(hctx);
     if (CRYPTO_memcmp(tick_hmac, etick + eticklen, mlen)) {
-        EVP_CIPHER_CTX_cleanup(&ctx);
+        EVP_CIPHER_CTX_free(ctx);
         return 2;
     }
     /* Attempt to decrypt session data */
     /* Move p after IV to start of encrypted ticket, update length */
-    p = etick + 16 + EVP_CIPHER_CTX_iv_length(&ctx);
-    eticklen -= 16 + EVP_CIPHER_CTX_iv_length(&ctx);
+    p = etick + 16 + EVP_CIPHER_CTX_iv_length(ctx);
+    eticklen -= 16 + EVP_CIPHER_CTX_iv_length(ctx);
     sdec = OPENSSL_malloc(eticklen);
     if (sdec == NULL
-            || EVP_DecryptUpdate(&ctx, sdec, &slen, p, eticklen) <= 0) {
-        EVP_CIPHER_CTX_cleanup(&ctx);
+            || EVP_DecryptUpdate(ctx, sdec, &slen, p, eticklen) <= 0) {
+        EVP_CIPHER_CTX_free(ctx);
         return -1;
     }
-    if (EVP_DecryptFinal(&ctx, sdec + slen, &mlen) <= 0) {
-        EVP_CIPHER_CTX_cleanup(&ctx);
+    if (EVP_DecryptFinal(ctx, sdec + slen, &mlen) <= 0) {
+        EVP_CIPHER_CTX_free(ctx);
         OPENSSL_free(sdec);
         return 2;
     }
     slen += mlen;
-    EVP_CIPHER_CTX_cleanup(&ctx);
+    EVP_CIPHER_CTX_free(ctx);
+    ctx = NULL;
     p = sdec;
 
     sess = d2i_SSL_SESSION(NULL, &p, slen);
@@ -3154,7 +3155,7 @@ static int tls_decrypt_ticket(SSL *s, const unsigned char *etick,
      */
     return 2;
 err:
-    EVP_CIPHER_CTX_cleanup(&ctx);
+    EVP_CIPHER_CTX_free(ctx);
     HMAC_CTX_free(hctx);
     return -1;
 }

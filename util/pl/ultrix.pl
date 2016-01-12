@@ -11,7 +11,7 @@ $rm='/bin/rm -f';
 
 $cc='cc';
 if ($debug)
-	{ $cflags="-g -DREF_CHECK -DCRYPTO_MDEBUG"; }
+	{ $cflags="-g -DREF_CHECK"; }
 else
 	{ $cflags="-O2"; }
 

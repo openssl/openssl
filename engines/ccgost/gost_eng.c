@@ -153,8 +153,8 @@ static int bind_gost(ENGINE *e, const char *id)
         || !ENGINE_register_digests(e)
         || !ENGINE_register_pkey_meths(e)
         /* These two actually should go in LIST_ADD command */
-        || !EVP_add_cipher(&cipher_gost)
-        || !EVP_add_cipher(&cipher_gost_cpacnt)
+        || !EVP_add_cipher(cipher_gost())
+        || !EVP_add_cipher(cipher_gost_cpacnt())
         || !EVP_add_digest(digest_gost())
         || !EVP_add_digest(imit_gost_cpa())
         ) {
@@ -202,9 +202,9 @@ static int gost_ciphers(ENGINE *e, const EVP_CIPHER **cipher,
     }
 
     if (nid == NID_id_Gost28147_89) {
-        *cipher = &cipher_gost;
+        *cipher = cipher_gost();
     } else if (nid == NID_gost89_cnt) {
-        *cipher = &cipher_gost_cpacnt;
+        *cipher = cipher_gost_cpacnt();
     } else {
         ok = 0;
         *cipher = NULL;

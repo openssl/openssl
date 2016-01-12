@@ -113,7 +113,8 @@ operations are permitted.
 
 Sets the minimum and maximum supported protocol.
 Currently supported protocol values are B<SSLv3>, B<TLSv1>,
-B<TLSv1.1>, B<TLSv1.2> for TLS and B<DTLSv1>, B<DTLSv1.2> for DTLS.
+B<TLSv1.1>, B<TLSv1.2> for TLS and B<DTLSv1>, B<DTLSv1.2> for DTLS,
+and B<None> for no limit.
 If the either bound is not specified then only the other bound applies,
 if specified.
 To restrict the supported protocol versions use these commands rather
@@ -275,6 +276,7 @@ This sets the minimum supported SSL, TLS or DTLS version.
 
 Currently supported protocol values are B<SSLv3>, B<TLSv1>, B<TLSv1.1>,
 B<TLSv1.2>, B<DTLSv1> and B<DTLSv1.2>.
+The value B<None> will disable the limit.
 
 =item B<MaxProtocol>
 
@@ -282,6 +284,7 @@ This sets the maximum supported SSL, TLS or DTLS version.
 
 Currently supported protocol values are B<SSLv3>, B<TLSv1>, B<TLSv1.1>,
 B<TLSv1.2>, B<DTLSv1> and B<DTLSv1.2>.
+The value B<None> will disable the limit.
 
 =item B<Protocol>
 
@@ -315,8 +318,9 @@ sure to also leave TLS 1.1 enabled.
 =item B<Options>
 
 The B<value> argument is a comma separated list of various flags to set.
-If a flag string is preceded B<-> it is disabled. See the
-B<SSL_CTX_set_options> function for more details of individual options.
+If a flag string is preceded B<-> it is disabled.
+See the L<SSL_CTX_set_options(3)> function for more details of
+individual options.
 
 Each option is listed below. Where an operation is enabled by default
 the B<-flag> syntax is needed to disable it.
@@ -524,7 +528,8 @@ L<SSL_CONF_CTX_new(3)>,
 L<SSL_CONF_CTX_set_flags(3)>,
 L<SSL_CONF_CTX_set1_prefix(3)>,
 L<SSL_CONF_CTX_set_ssl_ctx(3)>,
-L<SSL_CONF_cmd_argv(3)>
+L<SSL_CONF_cmd_argv(3)>,
+L<SSL_CTX_set_options(3)>
 
 =head1 HISTORY
 

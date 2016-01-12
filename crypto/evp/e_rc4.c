@@ -65,6 +65,8 @@
 # include <openssl/objects.h>
 # include <openssl/rc4.h>
 
+# include "internal/evp_int.h"
+
 /* FIXME: surely this is available elsewhere? */
 # define EVP_RC4_KEY_SIZE                16
 
@@ -72,7 +74,7 @@ typedef struct {
     RC4_KEY ks;                 /* working key */
 } EVP_RC4_KEY;
 
-# define data(ctx) ((EVP_RC4_KEY *)(ctx)->cipher_data)
+# define data(ctx) ((EVP_RC4_KEY *)EVP_CIPHER_CTX_cipher_data(ctx))
 
 static int rc4_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
                         const unsigned char *iv, int enc);
