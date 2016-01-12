@@ -135,7 +135,6 @@
 # define INTEL_DEF_PROV L"Intel Hardware Cryptographic Service Provider"
 
 static void readtimer(void);
-static void readscreen(void);
 
 /*
  * It appears like CURSORINFO, PCURSORINFO and LPCURSORINFO are only defined
@@ -236,13 +235,6 @@ int RAND_event(UINT iMsg, WPARAM wParam, LPARAM lParam)
     return (RAND_status());
 }
 
-void RAND_screen(void)
-{                               /* function available for backward
-                                 * compatibility */
-    RAND_poll();
-    readscreen();
-}
-
 /* feed timing information to the PRNG */
 static void readtimer(void)
 {
@@ -278,93 +270,6 @@ static void readtimer(void)
         w = GetTickCount();
         RAND_add(&w, sizeof(w), 0);
     }
-}
-
-/* feed screen contents to PRNG */
-/*****************************************************************************
- *
- * Created 960901 by Gertjan van Oosten, gertjan@West.NL, West Consulting B.V.
- *
- * Code adapted from
- * <URL:http://support.microsoft.com/default.aspx?scid=kb;[LN];97193>;
- * the original copyright message is:
- *
- *   (C) Copyright Microsoft Corp. 1993.  All rights reserved.
- *
- *   You have a royalty-free right to use, modify, reproduce and
- *   distribute the Sample Files (and/or any modified version) in
- *   any way you find useful, provided that you agree that
- *   Microsoft has no warranty obligations or liability for any
- *   Sample Application Files which are modified.
- */
-
-static void readscreen(void)
-{
-# if !defined(OPENSSL_SYS_WIN32_CYGWIN)
-    HDC hScrDC;                 /* screen DC */
-    HBITMAP hBitmap;            /* handle for our bitmap */
-    BITMAP bm;                  /* bitmap properties */
-    unsigned int size;          /* size of bitmap */
-    char *bmbits;               /* contents of bitmap */
-    int w;                      /* screen width */
-    int h;                      /* screen height */
-    int y;                      /* y-coordinate of screen lines to grab */
-    int n = 16;                 /* number of screen lines to grab at a time */
-    BITMAPINFOHEADER bi;        /* info about the bitmap */
-
-    if (check_winnt() && OPENSSL_isservice() > 0)
-        return;
-
-    /* Get a reference to the screen DC */
-    hScrDC = GetDC(NULL);
-
-    /* Get screen resolution */
-    w = GetDeviceCaps(hScrDC, HORZRES);
-    h = GetDeviceCaps(hScrDC, VERTRES);
-
-    /* Create a bitmap compatible with the screen DC */
-    hBitmap = CreateCompatibleBitmap(hScrDC, w, n);
-
-    /* Get bitmap properties */
-    GetObject(hBitmap, sizeof(BITMAP), (LPSTR) & bm);
-    size = (unsigned int)bm.bmWidthBytes * bm.bmHeight * bm.bmPlanes;
-
-    bi.biSize = sizeof(BITMAPINFOHEADER);
-    bi.biWidth = bm.bmWidth;
-    bi.biHeight = bm.bmHeight;
-    bi.biPlanes = bm.bmPlanes;
-    bi.biBitCount = bm.bmBitsPixel;
-    bi.biCompression = BI_RGB;
-    bi.biSizeImage = 0;
-    bi.biXPelsPerMeter = 0;
-    bi.biYPelsPerMeter = 0;
-    bi.biClrUsed = 0;
-    bi.biClrImportant = 0;
-
-    bmbits = OPENSSL_malloc(size);
-    if (bmbits != NULL) {
-        /* Now go through the whole screen, repeatedly grabbing n lines */
-        for (y = 0; y < h - n; y += n) {
-            unsigned char md[MD_DIGEST_LENGTH];
-
-            /* Copy the bits of the current line range into the buffer */
-            GetDIBits(hScrDC, hBitmap, y, n,
-                      bmbits, (BITMAPINFO *) & bi, DIB_RGB_COLORS);
-
-            /* Get the hash of the bitmap */
-            MD(bmbits, size, md);
-
-            /* Seed the random generator with the hash value */
-            RAND_add(md, MD_DIGEST_LENGTH, 0);
-        }
-
-        OPENSSL_free(bmbits);
-    }
-
-    /* Clean up */
-    DeleteObject(hBitmap);
-    ReleaseDC(NULL, hScrDC);
-# endif                         /* !OPENSSL_SYS_WIN32_CYGWIN */
 }
 
 #endif
