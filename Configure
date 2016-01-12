@@ -4,7 +4,7 @@
 ##
 ##  Configure -- OpenSSL source tree configuration script
 ##  If editing this file, run this command before committing
-##	make -f Makefile.org TABLE
+##	make -f Makefile.in TABLE
 ##
 
 require 5.000;
@@ -1570,7 +1570,7 @@ if (defined($disabled{"deprecated"})) {
         $api = $maxapi;
 }
 
-# You will find shlib_mark1 and shlib_mark2 explained in Makefile.org
+# You will find shlib_mark1 and shlib_mark2 explained in Makefile.in
 my $shared_mark = "";
 if ($shared_target eq "")
 	{
@@ -1822,10 +1822,10 @@ if ($strict_warnings)
                 }
 	}
 
-open(IN,"<Makefile.org") || die "unable to read Makefile.org:$!\n";
+open(IN,"<Makefile.in") || die "unable to read Makefile.in$!\n";
 unlink("$Makefile.new") || die "unable to remove old $Makefile.new:$!\n" if -e "$Makefile.new";
 open(OUT,">$Makefile.new") || die "unable to create $Makefile.new:$!\n";
-print OUT "### Generated automatically from Makefile.org by Configure.\n\n";
+print OUT "### Generated automatically from Makefile.in by Configure.\n\n";
 my $sdirs=0;
 
 while (<IN>)
@@ -1933,7 +1933,7 @@ while (<IN>)
 	}
 close(IN);
 close(OUT);
-rename($Makefile,"$Makefile.bak") || die "unable to rename $Makefile\n" if -e $Makefile;
+rename($Makefile,"$Makefile.orig") || die "unable to rename $Makefile\n" if -e $Makefile;
 rename("$Makefile.new",$Makefile) || die "unable to rename $Makefile.new\n";
 
 print "CC            =$cc\n";
@@ -2160,6 +2160,27 @@ print "IDEA uses u$type[$idea_int]\n" if $idea_int != $def_int;
 print "RC2 uses u$type[$rc2_int]\n" if $rc2_int != $def_int;
 print "BF_PTR used\n" if $bf_ptr == 1;
 print "BF_PTR2 used\n" if $bf_ptr == 2;
+
+# Copy all Makefile.in to Makefile (except top-level)
+use File::Find;
+use IO::File;
+find(sub {
+        return if ($_ ne "Makefile.in" || $File::Find::dir eq ".");
+        my $in = IO::File->new($_, "r") or
+            die sprintf "Error reading Makefile.in in %s: !$\n",
+                $File::Find::dir;
+        my $out = IO::File->new("Makefile", "w") or
+            die sprintf "Error writing Makefile in %s: !$\n",
+                $File::Find::dir;
+        print $out "# Generated from $_, do not edit\n";
+        while (my $line = <$in>) { print $out $line }
+        $in->close() or
+            die sprintf "Error reading Makefile.in in %s: !$\n",
+                $File::Find::dir;
+        $out->close() or
+            die sprintf "Error writing Makefile.in in %s: !$\n",
+                $File::Find::dir;
+    }, ".");
 
 {
     my $perlguess = $perl =~ m@^/@ ? $perl : '/usr/local/bin/perl';

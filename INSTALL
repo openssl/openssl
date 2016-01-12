@@ -141,7 +141,7 @@
      generic configurations "cc" or "gcc" should usually work on 32 bit
      systems.
 
-     Configure creates the file Makefile.ssl from Makefile.org and
+     Configure creates the file Makefile.ssl from Makefile.in and
      defines various macros in crypto/opensslconf.h (generated from
      crypto/opensslconf.h.in).
 
@@ -390,7 +390,7 @@
 		rm -f $F; ln -s $OPENSSL_SOURCE/$F $F
 		echo $F '->' $OPENSSL_SOURCE/$F
 	done
-	make -f Makefile.org clean
+	make -f Makefile.in clean
 
  OPENSSL_SOURCE is an environment variable that contains the absolute (this
  is important!) path to the OpenSSL source tree.

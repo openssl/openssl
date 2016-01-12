@@ -4,6 +4,11 @@
 
  Changes between 1.0.2e and 1.1.0  [xx XXX xxxx]
 
+  *) The distribution now has Makefile.in files, which are used to
+     create Makefile's when Configure is run.  *Configure must be run
+     before trying to build now.*
+     [Rich Salz]
+
   *) The return value for SSL_CIPHER_description() for error conditions
      has changed.
      [Rich Salz]
