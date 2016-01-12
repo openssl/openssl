@@ -497,7 +497,7 @@ int CRYPTO_mem_debug_push(const char *info, const char *file, int line);
 int CRYPTO_mem_debug_pop(void);
 
 /*-
- * Debugging functions (enabled by CRYPTO_set_mem_debug_functions(1))
+ * Debugging functions (enabled by CRYPTO_set_mem_debug(1))
  * The flag argument has the following significance:
  *   0:   called before the actual memory allocation has taken place
  *   1:   called after the actual memory allocation has taken place
