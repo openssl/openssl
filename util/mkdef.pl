@@ -1304,7 +1304,7 @@ EOF
 						print OUT "        $s2;\n";
                                         } elsif ($VMS) {
                                             while(++$prevnum < $n) {
-                                                my $symline="dummy$prevcount=PRIVATE_PROCEDURE -";
+                                                my $symline="SPARE -";
                                                 if ($symvtextcount + length($symline) + 1 > 1024) {
                                                     print OUT ")\nSYMBOL_VECTOR=(-\n";
                                                     $symvtextcount = 16; # length of "SYMBOL_VECTOR=(-"
