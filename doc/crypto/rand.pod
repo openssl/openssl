@@ -28,7 +28,6 @@ rand - pseudo-random number generator
  RAND_METHOD *RAND_OpenSSL(void);
 
  /* For Win32 only */
- void RAND_screen(void);
  int RAND_event(UINT, WPARAM, LPARAM);
 
 Deprecated:
