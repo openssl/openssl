@@ -279,19 +279,33 @@ int ossltest_aes128_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 int ossltest_aes128_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                                const unsigned char *in, size_t inl);
 
-static const EVP_CIPHER ossltest_aes_128_cbc = { \
-    NID_aes_128_cbc,
-    16, /* block size */
-    16, /* key len */
-    16, /* iv len */
-    EVP_CIPH_FLAG_DEFAULT_ASN1 | EVP_CIPH_CBC_MODE,
-    ossltest_aes128_init_key,
-    ossltest_aes128_cbc_cipher,
-    NULL,
-    0, /* We don't know the size of cipher_data at compile time */
-    NULL,NULL,NULL,NULL
-};
-
+static EVP_CIPHER *_hidden_aes_128_cbc = NULL;
+static const EVP_CIPHER *ossltest_aes_128_cbc(void)
+{
+    if (_hidden_aes_128_cbc == NULL
+        && ((_hidden_aes_128_cbc = EVP_CIPHER_meth_new(NID_aes_128_cbc,
+                                                       16 /* block size */,
+                                                       16 /* key len */)) == NULL
+            || !EVP_CIPHER_meth_set_iv_length(_hidden_aes_128_cbc,16)
+            || !EVP_CIPHER_meth_set_flags(_hidden_aes_128_cbc,
+                                          EVP_CIPH_FLAG_DEFAULT_ASN1
+                                          | EVP_CIPH_CBC_MODE)
+            || !EVP_CIPHER_meth_set_init(_hidden_aes_128_cbc,
+                                         ossltest_aes128_init_key)
+            || !EVP_CIPHER_meth_set_do_cipher(_hidden_aes_128_cbc,
+                                              ossltest_aes128_cbc_cipher)
+            || !EVP_CIPHER_meth_set_impl_ctx_size(_hidden_aes_128_cbc,
+                                                  EVP_CIPHER_impl_ctx_size(EVP_aes_128_cbc())))) {
+        EVP_CIPHER_meth_free(_hidden_aes_128_cbc);
+        _hidden_aes_128_cbc = NULL;
+    }
+    return _hidden_aes_128_cbc;
+}
+static void destroy_ciphers(void)
+{
+    EVP_CIPHER_meth_free(_hidden_aes_128_cbc);
+    _hidden_aes_128_cbc = NULL;
+}
 
 static int bind_ossltest(ENGINE *e)
 {
@@ -365,6 +379,7 @@ static int ossltest_finish(ENGINE *e)
 static int ossltest_destroy(ENGINE *e)
 {
     destroy_digests();
+    destroy_ciphers();
     ERR_unload_OSSLTEST_strings();
     return 1;
 }
@@ -415,7 +430,7 @@ static int ossltest_ciphers(ENGINE *e, const EVP_CIPHER **cipher,
     /* We are being asked for a specific cipher */
     switch (nid) {
     case NID_aes_128_cbc:
-        *cipher = &ossltest_aes_128_cbc;
+        *cipher = ossltest_aes_128_cbc();
         break;
     default:
         ok = 0;
@@ -569,20 +584,7 @@ static int digest_sha512_final(EVP_MD_CTX *ctx, unsigned char *md)
 int ossltest_aes128_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
                              const unsigned char *iv, int enc)
 {
-    if (ctx->cipher_data == NULL) {
-        /*
-         * Normally cipher_data is allocated automatically for an engine but
-         * we don't know the ctx_size as compile time so we have to do it at
-         * run time
-         */
-        ctx->cipher_data = OPENSSL_zalloc(EVP_aes_128_cbc()->ctx_size);
-        if (ctx->cipher_data == NULL) {
-            OSSLTESTerr(OSSLTEST_F_OSSLTEST_AES128_INIT_KEY,
-                        ERR_R_MALLOC_FAILURE);
-            return 0;
-        }
-    }
-    return EVP_aes_128_cbc()->init(ctx, key, iv, enc);
+    return EVP_CIPHER_meth_get_init(EVP_aes_128_cbc()) (ctx, key, iv, enc);
 }
 
 int ossltest_aes128_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
@@ -599,7 +601,7 @@ int ossltest_aes128_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     memcpy(tmpbuf, in, inl);
 
     /* Go through the motions of encrypting it */
-    ret = EVP_aes_128_cbc()->do_cipher(ctx, out, in, inl);
+    ret = EVP_CIPHER_meth_get_do_cipher(EVP_aes_128_cbc())(ctx, out, in, inl);
 
     /* Throw it all away and just use the plaintext as the output */
     memcpy(out, tmpbuf, inl);

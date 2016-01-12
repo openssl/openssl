@@ -105,5 +105,9 @@
 #  define UINT64_MAX __MAXUINT__(uint64_t)
 # endif
 
+# ifndef SIZE_MAX
+#  define SIZE_MAX __MAXUINT__(size_t)
+# endif
+
 #endif
 

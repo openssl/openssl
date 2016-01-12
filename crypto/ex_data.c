@@ -111,21 +111,17 @@
 #include "internal/cryptlib.h"
 #include <openssl/lhash.h>
 
-
-
 /*
  * Each structure type (sometimes called a class), that supports
  * exdata has a stack of callbacks for each instance.
  */
-typedef struct ex_callback_st {
+struct ex_callback_st {
     long argl;                  /* Arbitary long */
     void *argp;                 /* Arbitary void * */
     CRYPTO_EX_new *new_func;
     CRYPTO_EX_free *free_func;
     CRYPTO_EX_dup *dup_func;
-} EX_CALLBACK;
-
-DECLARE_STACK_OF(EX_CALLBACK)
+};
 
 /*
  * The state for each class.  This could just be a typedef, but

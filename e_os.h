@@ -654,23 +654,6 @@ struct servent *getservbyname(const char *name, const char *proto);
 # endif
 /* end vxworks */
 
-# if !defined(inline) && !defined(__cplusplus)
-#  if defined(__STDC_VERSION__) && __STDC_VERSION__>=199901L
-   /* do nothing, inline works */
-#  elif defined(__GNUC__) && __GNUC__>=2
-#   define inline __inline__
-#  elif defined(_MSC_VER)
-  /*
-   * Visual Studio: inline is available in C++ only, however
-   * __inline is available for C, see
-   * http://msdn.microsoft.com/en-us/library/z8y1yy88.aspx
-   */
-#   define inline __inline
-#  else
-#   define inline
-#  endif
-# endif
-
 #define OSSL_NELEM(x)    (sizeof(x)/sizeof(x[0]))
 
 #ifdef  __cplusplus

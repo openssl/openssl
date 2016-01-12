@@ -516,20 +516,13 @@ int main(void)
 {
     int ret = 1;
     BIO *out;
+    char *p;
 
     out = BIO_new_fp(stdout, BIO_NOCLOSE | BIO_FP_TEXT);
 
-    /* enable memory leak checking unless explicitly disabled */
-    if (!((getenv("OPENSSL_DEBUG_MEMORY") != NULL) &&
-          (0 == strcmp(getenv("OPENSSL_DEBUG_MEMORY"), "off")))) {
-        CRYPTO_malloc_debug_init();
-        CRYPTO_set_mem_debug_options(V_CRYPTO_MDEBUG_ALL);
-    } else {
-        /* OPENSSL_DEBUG_MEMORY=off */
-        CRYPTO_set_mem_debug_functions(0, 0, 0, 0, 0);
-    }
-    CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
-
+    p = getenv("OPENSSL_DEBUG_MEMORY");
+    if (p != NULL && strcmp(p, "on") == 0)
+        CRYPTO_set_mem_debug(1);
     ERR_load_crypto_strings();
 
     /* initialize the prng */
@@ -552,7 +545,9 @@ int main(void)
     CRYPTO_cleanup_all_ex_data();
     ERR_remove_thread_state(NULL);
     ERR_free_strings();
+#ifndef OPENSSL_NO_CRYPTO_MDEBUG
     CRYPTO_mem_leaks(out);
+#endif
     BIO_free(out);
     return ret;
 }

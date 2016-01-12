@@ -284,8 +284,9 @@ _bn_mul_comba4:
 	.if	0
 	BNOP	sploopNxM?,3
 	;; Above mentioned m*2*(n+1)+10 does not apply in n=m=4 case,
-	;; because of read-after-write penalties, it's rather
-	;; n*2*(n+3)+10, or 66 cycles [plus various overheads]...
+	;; because of low-counter effect, when prologue phase finishes
+	;; before SPKERNEL instruction is reached. As result it's 25%
+	;; slower than expected...
 	MVK	4,B0		; N, RILC
 ||	MVK	4,A0		; M, outer loop counter
 ||	MV	ARG1,A5		; copy ap

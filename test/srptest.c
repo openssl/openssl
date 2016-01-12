@@ -126,8 +126,7 @@ int main(int argc, char **argv)
     BIO *bio_err;
     bio_err = BIO_new_fp(stderr, BIO_NOCLOSE | BIO_FP_TEXT);
 
-    CRYPTO_malloc_debug_init();
-    CRYPTO_dbg_set_options(V_CRYPTO_MDEBUG_ALL);
+    CRYPTO_set_mem_debug(1);
     CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
 
     ERR_load_crypto_strings();
@@ -147,7 +146,9 @@ int main(int argc, char **argv)
     CRYPTO_cleanup_all_ex_data();
     ERR_remove_thread_state(NULL);
     ERR_free_strings();
+#ifndef OPENSSL_NO_CRYPTO_MDEBUG
     CRYPTO_mem_leaks(bio_err);
+#endif
     BIO_free(bio_err);
 
     return 0;

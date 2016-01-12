@@ -315,6 +315,8 @@ typedef struct ERR_string_data_st {
     const char *string;
 } ERR_STRING_DATA;
 
+DEFINE_LHASH_OF(ERR_STRING_DATA);
+
 void ERR_put_error(int lib, int func, int reason, const char *file, int line);
 void ERR_set_error_data(char *data, int flags);
 
@@ -351,10 +353,8 @@ void ERR_load_crypto_strings(void);
 void ERR_free_strings(void);
 
 void ERR_remove_thread_state(const CRYPTO_THREADID *tid);
-# ifdef OPENSSL_USE_DEPRECATED
-DECLARE_DEPRECATED(void ERR_remove_state(unsigned long pid)); /* if zero we
-                                                               * look it up */
-# endif
+DEPRECATEDIN_1_0_0(void ERR_remove_state(unsigned long pid)) /* if zero we
+                                                              * look it up */
 ERR_STATE *ERR_get_state(void);
 
 LHASH_OF(ERR_STRING_DATA) *ERR_get_string_table(void);

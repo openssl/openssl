@@ -35,6 +35,7 @@ for primality
 
 Deprecated:
 
+ #if OPENSSL_API_COMPAT < 0x00908000L
  BIGNUM *BN_generate_prime(BIGNUM *ret, int num, int safe, BIGNUM *add,
      BIGNUM *rem, void (*callback)(int, int, void *), void *cb_arg);
 
@@ -44,6 +45,7 @@ Deprecated:
  int BN_is_prime_fasttest(const BIGNUM *a, int checks,
      void (*callback)(int, int, void *), BN_CTX *ctx, void *cb_arg,
      int do_trial_division);
+ #endif
 
 =head1 DESCRIPTION
 

@@ -63,8 +63,8 @@ my $linux=0;
 my $safe_stack_def = 0;
 
 my @known_platforms = ( "__FreeBSD__", "PERL5",
-			"EXPORT_VAR_AS_FUNCTION", "ZLIB",
-			"OPENSSL_FIPS", "OPENSSL_FIPSCAPABLE" );
+			"EXPORT_VAR_AS_FUNCTION", "ZLIB"
+			);
 my @known_ossl_platforms = ( "VMS", "WIN32", "WINNT", "OS2" );
 my @known_algorithms = ( "RC2", "RC4", "RC5", "IDEA", "DES", "BF",
 			 "CAST", "MD2", "MD4", "MD5", "SHA", "SHA0", "SHA1",
@@ -81,6 +81,7 @@ my @known_algorithms = ( "RC2", "RC4", "RC5", "IDEA", "DES", "BF",
 			 "LOCKING",
 			 # External "algorithms"
 			 "FP_API", "STDIO", "SOCK", "DGRAM",
+                         "CRYPTO_MDEBUG",
 			 # Engines
                          "STATIC_ENGINE", "ENGINE", "HW", "GMP",
                          # X.509v3 Signed Certificate Timestamps
@@ -100,7 +101,9 @@ my @known_algorithms = ( "RC2", "RC4", "RC5", "IDEA", "DES", "BF",
 			 # NEXTPROTONEG
 			 "NEXTPROTONEG",
 			 # Deprecated functions
-			 "DEPRECATED",
+			 "DEPRECATEDIN_0_9_8",
+			 "DEPRECATEDIN_1_0_0",
+			 "DEPRECATEDIN_1_1_0",
 			 # SCTP
 		 	 "SCTP",
 			 # SRTP
@@ -115,6 +118,14 @@ my @known_algorithms = ( "RC2", "RC4", "RC5", "IDEA", "DES", "BF",
                          "APPLINK"
                      );
 
+my %disabled_algorithms;
+
+foreach (@known_algorithms) {
+    $disabled_algorithms{$_} = 0;
+}
+# disabled by default
+$disabled_algorithms{"STATIC_ENGINE"} = 1;
+
 my $options="";
 open(IN,"<Makefile") || die "unable to open Makefile!\n";
 while(<IN>) {
@@ -122,25 +133,7 @@ while(<IN>) {
 }
 close(IN);
 
-# The following ciphers may be excluded (by Configure). This means functions
-# defined with ifndef(NO_XXX) are not included in the .def file, and everything
-# in directory xxx is ignored.
-my $no_rc2; my $no_rc4; my $no_rc5; my $no_idea; my $no_des; my $no_bf;
-my $no_cast; my $no_whirlpool; my $no_camellia; my $no_seed;
-my $no_md2; my $no_md4; my $no_md5; my $no_sha; my $no_ripemd; my $no_mdc2;
-my $no_rsa; my $no_dsa; my $no_dh; my $no_aes; my $no_scrypt;
-my $no_ec; my $no_engine; my $no_hw;
-my $no_chacha; my $no_poly1305;
-my $no_fp_api; my $no_static_engine=1; my $no_deprecated;
-my $no_sct; my $no_rfc3779; my $no_psk; my $no_cms; my $no_capieng;
-my $no_jpake; my $no_srp; my $no_ec2m; my $no_nistp_gcc; 
-my $no_nextprotoneg; my $no_sctp; my $no_srtp; my $no_ssl_trace;
-my $no_unit_test; my $no_ssl3_method; my $no_ocb;
-
-my $fips;
-
 my $zlib;
-
 
 foreach (@ARGV, split(/ /, $options))
 	{
@@ -162,9 +155,8 @@ foreach (@ARGV, split(/ /, $options))
 	if ($_ eq "linux") {
 		$linux=1;
 	}
-	$VMS=1 if $_ eq "VMS";
+	$VMS=$VMSNonVAX=1 if $_ eq "VMS";
 	$OS2=1 if $_ eq "OS2";
-	$fips=1 if /^fips/;
 	if ($_ eq "zlib" || $_ eq "enable-zlib" || $_ eq "zlib-dynamic"
 			 || $_ eq "enable-zlib-dynamic") {
 		$zlib = 1;
@@ -180,68 +172,37 @@ foreach (@ARGV, split(/ /, $options))
 		$do_crypto=1;
 		$libname=$_;
 	}
-	$no_static_engine=1 if $_ eq "no-static-engine";
-	$no_static_engine=0 if $_ eq "enable-static-engine";
 	$do_update=1 if $_ eq "update";
 	$do_rewrite=1 if $_ eq "rewrite";
 	$do_ctest=1 if $_ eq "ctest";
 	$do_ctestall=1 if $_ eq "ctestall";
 	$do_checkexist=1 if $_ eq "exist";
 	#$safe_stack_def=1 if $_ eq "-DDEBUG_SAFESTACK";
-
-	if    (/^no-rc2$/)      { $no_rc2=1; }
-	elsif (/^no-rc4$/)      { $no_rc4=1; }
-	elsif (/^no-rc5$/)      { $no_rc5=1; }
-	elsif (/^no-idea$/)     { $no_idea=1; }
-	elsif (/^no-des$/)      { $no_des=1; $no_mdc2=1; }
-	elsif (/^no-bf$/)       { $no_bf=1; }
-	elsif (/^no-cast$/)     { $no_cast=1; }
-	elsif (/^no-whirlpool$/)     { $no_whirlpool=1; }
-	elsif (/^no-md2$/)      { $no_md2=1; }
-	elsif (/^no-md4$/)      { $no_md4=1; }
-	elsif (/^no-md5$/)      { $no_md5=1; }
-	elsif (/^no-sha$/)      { $no_sha=1; }
-	elsif (/^no-ripemd$/)   { $no_ripemd=1; }
-	elsif (/^no-mdc2$/)     { $no_mdc2=1; }
-	elsif (/^no-rsa$/)      { $no_rsa=1; }
-	elsif (/^no-dsa$/)      { $no_dsa=1; }
-	elsif (/^no-dh$/)       { $no_dh=1; }
-	elsif (/^no-ec$/)       { $no_ec=1; }
-	elsif (/^no-aes$/)	{ $no_aes=1; }
-	elsif (/^no-camellia$/)	{ $no_camellia=1; }
-	elsif (/^no-seed$/)     { $no_seed=1; }
-	elsif (/^no-scrypt$/)   { $no_scrypt=1; }
-	elsif (/^no-chacha$/)   { $no_chacha=1; }
-	elsif (/^no-poly1305$/) { $no_poly1305=1; }
-	elsif (/^no-evp$/)	{ $no_evp=1; }
-	elsif (/^no-lhash$/)	{ $no_lhash=1; }
-	elsif (/^no-stack$/)	{ $no_stack=1; }
-	elsif (/^no-err$/)	{ $no_err=1; }
-	elsif (/^no-buffer$/)	{ $no_buffer=1; }
-	elsif (/^no-bio$/)	{ $no_bio=1; }
-	#elsif (/^no-locking$/)	{ $no_locking=1; }
-	elsif (/^no-comp$/)	{ $no_comp=1; }
-	elsif (/^no-dso$/)	{ $no_dso=1; }
-	elsif (/^no-engine$/)	{ $no_engine=1; }
-	elsif (/^no-hw$/)	{ $no_hw=1; }
-	elsif (/^no-sct$/)	{ $no_sct=1; }
-	elsif (/^no-rfc3779$/)	{ $no_rfc3779=1; }
-	elsif (/^no-cms$/)	{ $no_cms=1; }
-	elsif (/^no-ec2m$/)	{ $no_ec2m=1; }
- 	elsif (/^no-ec-nistp224-64-gcc-128$/)	{ $no_nistp_gcc=1; }
-	elsif (/^no-nextprotoneg$/)	{ $no_nextprotoneg=1; }
-	elsif (/^no-ssl3-method$/) { $no_ssl3_method=1; }
-	elsif (/^no-ssl-trace$/) { $no_ssl_trace=1; }
-	elsif (/^no-capieng$/)	{ $no_capieng=1; }
-	elsif (/^no-jpake$/)	{ $no_jpake=1; }
-	elsif (/^no-srp$/)	{ $no_srp=1; }
-	elsif (/^no-sctp$/)	{ $no_sctp=1; }
-	elsif (/^no-srtp$/)	{ $no_srtp=1; }
-	elsif (/^no-unit-test$/){ $no_unit_test=1; }
-	elsif (/^no-deprecated$/) { $no_deprecated=1; }
-	elsif (/^no-ocb/){ $no_ocb=1; }
+	if (/^--api=(\d+)\.(\d+)\.(\d+)$/) {
+		my $apiv = sprintf "%x%02x%02x", $1, $2, $3;
+		foreach (keys %disabled_algorithms) {
+			if (/^DEPRECATEDIN_(\d+)_(\d+)_(\d+)$/) {
+				my $depv = sprintf "%x%02x%02x", $1, $2, $3;
+				$disabled_algorithms{$_} = 1 if $apiv ge $depv;
+			}
+		}
+	}
+	if (/^no-deprecated$/) {
+		foreach (keys %disabled_algorithms) {
+			if (/^DEPRECATEDIN_/) {
+				$disabled_algorithms{$_} = 1;
+			}
+		}
+	}
+	elsif (/^(enable|disable|no)-(.*)$/) {
+		my $alg = uc $2;
+        $alg =~ tr/-/_/;
+		if (exists $disabled_algorithms{$alg}) {
+			$disabled_algorithms{$alg} = $1 eq "enable" ? 0 : 1;
+		}
 	}
 
+	}
 
 if (!$libname) { 
 	if ($do_ssl) {
@@ -256,10 +217,12 @@ if (!$libname) {
 if ($W32 + $VMS + $OS2 + $linux == 0) {
 	$W32 = 1;
 }
+die "Please, only one platform at a time"
+    if ($W32 + $VMS + $OS2 + $linux > 1);
 
 if (!$do_ssl && !$do_crypto)
 	{
-	print STDERR "usage: $0 ( ssl | crypto ) [ 16 | 32 | NT | OS2 ]\n";
+	print STDERR "usage: $0 ( ssl | crypto ) [ 16 | 32 | NT | OS2 | linux | VMS ]\n";
 	exit(1);
 	}
 
@@ -495,14 +458,15 @@ sub do_defs
 		print STDERR "DEBUG: parsing ----------\n" if $debug;
 		while(<IN>) {
 			if($parens > 0) {
-				#Inside a DECLARE_DEPRECATED
+				#Inside a DEPRECATEDIN
 				$stored_multiline .= $_;
 				chomp $stored_multiline;
-				print STDERR "DEBUG: Continuing multiline DEPRECATED: $stored_multiline\n" if $debug;
+				print STDERR "DEBUG: Continuing multiline DEPRECATEDIN: $stored_multiline\n" if $debug;
 				$parens = count_parens($stored_multiline);
 				if ($parens == 0) {
-					$stored_multiline =~ /^\s*DECLARE_DEPRECATED\s*\(\s*(\w*(\s|\*|\w)*)/;
-					$def .= "$1(void);";
+					$def .= do_deprecated($stored_multiline,
+							\@current_platforms,
+							\@current_algorithms);
 				}
 				next;
 			}
@@ -896,14 +860,16 @@ sub do_defs
 					&$make_variant("_shadow_$2","_shadow_$2",
 						      "EXPORT_VAR_AS_FUNCTION",
 						      "FUNCTION");
-				} elsif (/^\s*DECLARE_DEPRECATED\s*\(\s*(\w*(\s|\*|\w)*)/) {
+				} elsif (/^\s*DEPRECATEDIN/) {
 					$parens = count_parens($_);
 					if ($parens == 0) {
-						$def .= "$1(void);";
+						$def .= do_deprecated($_,
+							\@current_platforms,
+							\@current_algorithms);
 					} else {
 						$stored_multiline = $_;
 						chomp $stored_multiline;
-						print STDERR "DEBUG: Found multiline DEPRECATED starting with: $stored_multiline\n" if $debug;
+						print STDERR "DEBUG: Found multiline DEPRECATEDIN starting with: $stored_multiline\n" if $debug;
 						next;
 					}
 				} elsif ($tag{'CONST_STRICT'} != 1) {
@@ -968,22 +934,6 @@ sub do_defs
 
 			$p = $plats;
 			$a = $algs;
-			$a .= ",BF" if($s =~ /EVP_bf/);
-			$a .= ",CAST" if($s =~ /EVP_cast/);
-			$a .= ",DES" if($s =~ /EVP_des/);
-			$a .= ",DSA" if($s =~ /EVP_dss/);
-			$a .= ",IDEA" if($s =~ /EVP_idea/);
-			$a .= ",MD2" if($s =~ /EVP_md2/);
-			$a .= ",MD4" if($s =~ /EVP_md4/);
-			$a .= ",MD5" if($s =~ /EVP_md5/);
-			$a .= ",RC2" if($s =~ /EVP_rc2/);
-			$a .= ",RC4" if($s =~ /EVP_rc4/);
-			$a .= ",RC5" if($s =~ /EVP_rc5/);
-			$a .= ",RMD160" if($s =~ /EVP_ripemd/);
-			$a .= ",RSA" if($s =~ /EVP_(Open|Seal)(Final|Init)/);
-			$a .= ",RSA" if($s =~ /PEM_Seal(Final|Init|Update)/);
-			$a .= ",RSA" if($s =~ /RSAPrivateKey/);
-			$a .= ",RSA" if($s =~ /SSLv23?_((client|server)_)?method/);
 
 			$platform{$s} =
 			    &reduce_platforms((defined($platform{$s})?$platform{$s}.',':"").$p);
@@ -1165,70 +1115,11 @@ sub is_valid
 			if ($keyword eq "EXPORT_VAR_AS_FUNCTION" && ($VMSVAX || $W32)) {
 				return 1;
 			}
-			if ($keyword eq "OPENSSL_FIPSCAPABLE") {
-				return 0;
-			}
-			if ($keyword eq "OPENSSL_FIPS" && $fips) {
-				return 1;
-			}
 			if ($keyword eq "ZLIB" && $zlib) { return 1; }
 			return 0;
 		} else {
 			# algorithms
-			if ($keyword eq "RC2" && $no_rc2) { return 0; }
-			if ($keyword eq "RC4" && $no_rc4) { return 0; }
-			if ($keyword eq "RC5" && $no_rc5) { return 0; }
-			if ($keyword eq "IDEA" && $no_idea) { return 0; }
-			if ($keyword eq "DES" && $no_des) { return 0; }
-			if ($keyword eq "BF" && $no_bf) { return 0; }
-			if ($keyword eq "CAST" && $no_cast) { return 0; }
-			if ($keyword eq "MD2" && $no_md2) { return 0; }
-			if ($keyword eq "MD4" && $no_md4) { return 0; }
-			if ($keyword eq "MD5" && $no_md5) { return 0; }
-			if ($keyword eq "SHA" && $no_sha) { return 0; }
-			if ($keyword eq "RMD160" && $no_ripemd) { return 0; }
-			if ($keyword eq "MDC2" && $no_mdc2) { return 0; }
-			if ($keyword eq "WHIRLPOOL" && $no_whirlpool) { return 0; }
-			if ($keyword eq "RSA" && $no_rsa) { return 0; }
-			if ($keyword eq "DSA" && $no_dsa) { return 0; }
-			if ($keyword eq "DH" && $no_dh) { return 0; }
-			if ($keyword eq "EC" && $no_ec) { return 0; }
-			if ($keyword eq "AES" && $no_aes) { return 0; }
-			if ($keyword eq "CAMELLIA" && $no_camellia) { return 0; }
-			if ($keyword eq "SEED" && $no_seed) { return 0; }
-			if ($keyword eq "SCRYPT" && $no_scrypt) { return 0; }
-			if ($keyword eq "CHACHA" && $no_chacha) { return 0; }
-			if ($keyword eq "POLY1305" && $no_poly1305) { return 0; }
-			if ($keyword eq "EVP" && $no_evp) { return 0; }
-			if ($keyword eq "LHASH" && $no_lhash) { return 0; }
-			if ($keyword eq "STACK" && $no_stack) { return 0; }
-			if ($keyword eq "ERR" && $no_err) { return 0; }
-			if ($keyword eq "BUFFER" && $no_buffer) { return 0; }
-			if ($keyword eq "BIO" && $no_bio) { return 0; }
-			if ($keyword eq "COMP" && $no_comp) { return 0; }
-			if ($keyword eq "DSO" && $no_dso) { return 0; }
-			if ($keyword eq "ENGINE" && $no_engine) { return 0; }
-			if ($keyword eq "HW" && $no_hw) { return 0; }
-			if ($keyword eq "FP_API" && $no_fp_api) { return 0; }
-			if ($keyword eq "STATIC_ENGINE" && $no_static_engine) { return 0; }
-			if ($keyword eq "SCT" && $no_sct) { return 0; }
-			if ($keyword eq "RFC3779" && $no_rfc3779) { return 0; }
-			if ($keyword eq "PSK" && $no_psk) { return 0; }
-			if ($keyword eq "CMS" && $no_cms) { return 0; }
-			if ($keyword eq "EC_NISTP_64_GCC_128" && $no_nistp_gcc)
-					{ return 0; }
-			if ($keyword eq "EC2M" && $no_ec2m) { return 0; }
-			if ($keyword eq "NEXTPROTONEG" && $no_nextprotoneg) { return 0; }
-			if ($keyword eq "SSL3_METHOD" && $no_ssl3_method) { return 0; }
-			if ($keyword eq "SSL_TRACE" && $no_ssl_trace) { return 0; }
-			if ($keyword eq "CAPIENG" && $no_capieng) { return 0; }
-			if ($keyword eq "JPAKE" && $no_jpake) { return 0; }
-			if ($keyword eq "SRP" && $no_srp) { return 0; }
-			if ($keyword eq "SCTP" && $no_sctp) { return 0; }
-			if ($keyword eq "SRTP" && $no_srtp) { return 0; }
-			if ($keyword eq "UNIT_TEST" && $no_unit_test) { return 0; }
-			if ($keyword eq "DEPRECATED" && $no_deprecated) { return 0; }
-			if ($keyword eq "OCB" && $no_ocb) { return 0; }
+			if ($disabled_algorithms{$keyword} == 1) { return 0;}
 
 			# Nothing recognise as true
 			return 1;
@@ -1305,27 +1196,30 @@ sub print_def_file
 	my $what = "OpenSSL: implementation of Secure Socket Layer";
 	my $description = "$what $version, $name - http://$http_vendor";
 	my $prevsymversion = "", $prevprevsymversion = "";
+        # For VMS
+        my $prevnum = 0;
+        my $symvtextcount = 0;
 
-	if (!$linux)
-		{
-		if ($W32)
-			{ $libname.="32"; }
-		elsif ($OS2)
-			{ # DLL names should not clash on the whole system.
-			  # However, they should not have any particular relationship
-			  # to the name of the static library.  Chose descriptive names
-			  # (must be at most 8 chars).
-			  my %translate = (ssl => 'open_ssl', crypto => 'cryptssl');
-			  $libname = $translate{$name} || $name;
-			  $liboptions = <<EOO;
+	if ($W32)
+		{ $libname.="32"; }
+	elsif ($OS2)
+		{ # DLL names should not clash on the whole system.
+		  # However, they should not have any particular relationship
+		  # to the name of the static library.  Chose descriptive names
+		  # (must be at most 8 chars).
+		  my %translate = (ssl => 'open_ssl', crypto => 'cryptssl');
+		  $libname = $translate{$name} || $name;
+		  $liboptions = <<EOO;
 INITINSTANCE
 DATA MULTIPLE NONSHARED
 EOO
-			  # Vendor field can't contain colon, drat; so we omit http://
-			  $description = "\@#$http_vendor:$version#\@$what; DLL for library $name.  Build for EMX -Zmtd";
-			}
+		  # Vendor field can't contain colon, drat; so we omit http://
+		  $description = "\@#$http_vendor:$version#\@$what; DLL for library $name.  Build for EMX -Zmtd";
+		}
 
-		print OUT <<"EOF";
+        if ($W32 || $OS2)
+                {
+                print OUT <<"EOF";
 ;
 ; Definition file for the DLL version of the $name library from OpenSSL
 ;
@@ -1335,11 +1229,34 @@ LIBRARY         $libname	$liboptions
 EOF
 
 		print "EXPORTS\n";
-	}
+                }
+        elsif ($VMS)
+                {
+                my $libref = $name eq "ssl" ? "LIBCRYPTO.EXE /SHARE" : "";
+                print OUT <<"EOF";
+IDENTIFICATION="V$version"
+CASE_SENSITIVE=YES
+LIB$libname.OLB /LIBRARY
+$libref
+SYMBOL_VECTOR=(-
+EOF
+                $symvtextcount = 16; # length of "SYMBOL_VECTOR=(-"
+                }
 
 	(@r)=grep(/^\w+(\{[0-9]+\})?\\.*?:.*?:FUNCTION/,@symbols);
 	(@v)=grep(/^\w+(\{[0-9]+\})?\\.*?:.*?:VARIABLE/,@symbols);
-	@symbols=((sort @e),(sort @r), (sort @v));
+        if ($VMS) {
+            # VMS needs to have the symbols on slot number order
+            @symbols=(map { $_->[1] }
+                      sort { $a->[0] <=> $b->[0] }
+                      map { (my $s, my $i) = $_ =~ /^(.*?)\\(.*)$/;
+                            die "Error: $s doesn't have a number assigned\n"
+                                if !defined($nums{$s});
+                            (my $n, my @rest) = split /\\/, $nums{$s};
+                            [ $n, $_ ] } (@e, @r, @v));
+        } else {
+            @symbols=((sort @e),(sort @r), (sort @v));
+        }
 
 	my ($baseversion, $currversion) = get_openssl_version();
 	my $thisversion;
@@ -1385,6 +1302,36 @@ EOF
 							$prevsymversion = $symversion;
 						}
 						print OUT "        $s2;\n";
+                                        } elsif ($VMS) {
+                                            while(++$prevnum < $n) {
+                                                my $symline="SPARE, SPARE -";
+                                                if ($symvtextcount + length($symline) + 1 > 1024) {
+                                                    print OUT ")\nSYMBOL_VECTOR=(-\n";
+                                                    $symvtextcount = 16; # length of "SYMBOL_VECTOR=(-"
+                                                }
+                                                if ($symvtextcount > 16) {
+                                                    $symline = ",".$symline;
+                                                }
+                                                print OUT "    $symline\n";
+                                                $symvtextcount += length($symline);
+                                            }
+                                            (my $s_uc = $s) =~ tr/a-z/A-Z/;
+                                            my $symtype=
+                                                $v ? "DATA" : "PROCEDURE";
+                                            my $symline=
+                                                ($s_uc ne $s
+                                                 ? "$s_uc/$s=$symtype, $s=$symtype"
+                                                 : "$s=$symtype, SPARE")
+                                                ." -";
+                                            if ($symvtextcount + length($symline) + 1 > 1024) {
+                                                print OUT ")\nSYMBOL_VECTOR=(-\n";
+                                                $symvtextcount = 16; # length of "SYMBOL_VECTOR=(-"
+                                            }
+                                            if ($symvtextcount > 16) {
+                                                $symline = ",".$symline;
+                                            }
+                                            print OUT "    $symline\n";
+                                            $symvtextcount += length($symline);
 					} elsif($v && !$OS2) {
 						printf OUT "    %s%-39s @%-8d DATA\n",
 								($W32)?"":"_",$s2,$n;
@@ -1402,7 +1349,14 @@ EOF
 		} else {
 			print OUT "    local: *;\n};\n\n";
 		}
-	}
+	} elsif ($VMS) {
+            print OUT ")\n";
+            (my $libvmaj, my $libvmin, my $libvedit) =
+                $currversion =~ /^(\d+)_(\d+)_(\d+)$/;
+            # The reason to multiply the edit number with 100 is to make space
+            # for the possibility that we want to encode the patch letters
+            print OUT "GSMATCH=LEQUAL,",($libvmaj * 100 + $libvmin),",",($libvedit * 100),"\n";
+        }
 	printf OUT "\n";
 }
 
@@ -1555,7 +1509,6 @@ sub update_numbers
 		next if defined($rsyms{$sym});
 		die "ERROR: Symbol $sym had no info attached to it."
 		    if $i eq "";
-		next if $i =~ /OPENSSL_FIPSCAPABLE/;
 		if (!exists $nums{$s}) {
 			$new_syms++;
 			my $s2 = $s;
@@ -1736,4 +1689,17 @@ sub check_version_lte()
 			."is greater than $currversion\n"
 			if (($cvbase ne $tvbase) && ($tvletter gt $cvletter));
 	}
+}
+
+sub do_deprecated()
+{
+	my ($decl, $plats, $algs) = @_;
+	$decl =~ /^\s*(DEPRECATEDIN_\d+_\d+_\d+)\s*\((.*)\)\s*$/
+            or die "Bad DEPRECTEDIN: $decl\n";
+	my $info1 .= "#INFO:";
+	$info1 .= join(',', @{$plats}) . ":";
+	my $info2 = $info1;
+	$info1 .= join(',',@{$algs}, $1) . ";";
+	$info2 .= join(',',@{$algs}) . ";";
+	return $info1 . $2 . ";" . $info2;
 }

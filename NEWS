@@ -12,7 +12,7 @@
       o CCM ciphersuites
       o Reworked test suite, now based on perl, Test::Harness and Test::More
       o Varous libcrypto structures made opaque including: BIGNUM, EVP_MD,
-        EVP_MD_CTX and HMAC_CTX.
+        EVP_MD_CTX, HMAC_CTX, EVP_CIPHER and EVP_CIPHER_CTX.
       o libssl internal structures made opaque
       o SSLv2 support removed
       o Kerberos ciphersuite support removed
@@ -23,6 +23,12 @@
       o EC revision: now operations use new EC_KEY_METHOD.
       o Support for OCB mode added to libcrypto
       o Support for asynchronous crypto operations added to libcrypto and libssl
+      o Deprecated interfaces can now be disabled at build time either
+        relative to the latest relate via the "no-deprecated" Configure
+        argument, or via the "--api=1.1.0|1.0.0|0.9.8" option.
+      o Application software can be compiled with -DOPENSSL_API_COMPAT=version
+        to ensure that features deprecated before that version are not exposed.
+      o Support for RFC6698/RFC7671 DANE TLSA peer authentication
 
   Major changes between OpenSSL 1.0.2d and OpenSSL 1.0.2e [3 Dec 2015]
 

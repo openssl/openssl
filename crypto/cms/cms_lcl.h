@@ -109,6 +109,8 @@ struct CMS_ContentInfo_st {
     } d;
 };
 
+DEFINE_STACK_OF(CMS_CertificateChoices)
+
 struct CMS_SignedData_st {
     long version;
     STACK_OF(X509_ALGOR) *digestAlgorithms;
@@ -208,7 +210,7 @@ struct CMS_KeyAgreeRecipientInfo_st {
     /* Public key context associated with current operation */
     EVP_PKEY_CTX *pctx;
     /* Cipher context for CEK wrapping */
-    EVP_CIPHER_CTX ctx;
+    EVP_CIPHER_CTX *ctx;
 };
 
 struct CMS_OriginatorIdentifierOrKey_st {

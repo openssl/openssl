@@ -208,15 +208,6 @@ int RECORD_LAYER_set_data(RECORD_LAYER *rl, const unsigned char *buf, int len)
     return 1;
 }
 
-void RECORD_LAYER_dup(RECORD_LAYER *dst, RECORD_LAYER *src)
-{
-    /*
-     * Currently only called from SSL_dup...which only seems to expect the
-     * rstate to be duplicated and nothing else from the RECORD_LAYER???
-     */
-    dst->rstate = src->rstate;
-}
-
 void RECORD_LAYER_reset_read_sequence(RECORD_LAYER *rl)
 {
     memset(rl->read_sequence, 0, sizeof(rl->read_sequence));
@@ -507,7 +498,7 @@ int ssl3_write_bytes(SSL *s, int type, const void *buf_, int len)
         u_len >= 4 * (max_send_fragment = s->max_send_fragment) &&
         s->compress == NULL && s->msg_callback == NULL &&
         !SSL_USE_ETM(s) && SSL_USE_EXPLICIT_IV(s) &&
-        EVP_CIPHER_flags(s->enc_write_ctx->cipher) &
+        EVP_CIPHER_flags(EVP_CIPHER_CTX_cipher(s->enc_write_ctx)) &
         EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK) {
         unsigned char aad[13];
         EVP_CTRL_TLS1_1_MULTIBLOCK_PARAM mb_param;

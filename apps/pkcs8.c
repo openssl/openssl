@@ -121,7 +121,7 @@ int pkcs8_main(int argc, char **argv)
     int informat = FORMAT_PEM, outformat = FORMAT_PEM, topk8 = 0, pbe_nid = -1;
     int private = 0;
 #ifndef OPENSSL_NO_SCRYPT
-    unsigned long scrypt_N = 0, scrypt_r = 0, scrypt_p = 0;
+    long scrypt_N = 0, scrypt_r = 0, scrypt_p = 0;
 #endif
 
     prog = opt_init(argc, argv, pkcs8_options);
@@ -210,15 +210,15 @@ int pkcs8_main(int argc, char **argv)
                 cipher = EVP_aes_256_cbc();
             break;
         case OPT_SCRYPT_N:
-            if (!opt_ulong(opt_arg(), &scrypt_N))
+            if (!opt_long(opt_arg(), &scrypt_N) || scrypt_N <= 0)
                 goto opthelp;
             break;
         case OPT_SCRYPT_R:
-            if (!opt_ulong(opt_arg(), &scrypt_r))
+            if (!opt_long(opt_arg(), &scrypt_r) || scrypt_r <= 0)
                 goto opthelp;
             break;
         case OPT_SCRYPT_P:
-            if (!opt_ulong(opt_arg(), &scrypt_p))
+            if (!opt_long(opt_arg(), &scrypt_p) || scrypt_p <= 0)
                 goto opthelp;
             break;
 #endif

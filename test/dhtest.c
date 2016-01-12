@@ -96,13 +96,8 @@ int main(int argc, char *argv[])
     int ret = 1;
     BIO *out = NULL;
 
-    CRYPTO_malloc_debug_init();
-    CRYPTO_dbg_set_options(V_CRYPTO_MDEBUG_ALL);
+    CRYPTO_set_mem_debug(1);
     CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
-
-# ifdef OPENSSL_SYS_WIN32
-    CRYPTO_malloc_init();
-# endif
 
     RAND_seed(rnd_seed, sizeof rnd_seed);
 

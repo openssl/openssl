@@ -104,8 +104,6 @@ static ERR_STRING_DATA PEM_str_functs[] = {
     {ERR_FUNC(PEM_F_PEM_READ_BIO_PRIVATEKEY), "PEM_read_bio_PrivateKey"},
     {ERR_FUNC(PEM_F_PEM_READ_DHPARAMS), "PEM_read_DHparams"},
     {ERR_FUNC(PEM_F_PEM_READ_PRIVATEKEY), "PEM_read_PrivateKey"},
-    {ERR_FUNC(PEM_F_PEM_SEALFINAL), "PEM_SealFinal"},
-    {ERR_FUNC(PEM_F_PEM_SEALINIT), "PEM_SealInit"},
     {ERR_FUNC(PEM_F_PEM_SIGNFINAL), "PEM_SignFinal"},
     {ERR_FUNC(PEM_F_PEM_WRITE), "PEM_write"},
     {ERR_FUNC(PEM_F_PEM_WRITE_BIO), "PEM_write_bio"},

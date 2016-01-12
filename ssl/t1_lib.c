@@ -208,7 +208,10 @@ void tls1_free(SSL *s)
 void tls1_clear(SSL *s)
 {
     ssl3_clear(s);
-    s->version = s->method->version;
+    if (s->method->version == TLS_ANY_VERSION)
+        s->version = TLS_MAX_VERSION;
+    else
+        s->version = s->method->version;
 }
 
 #ifndef OPENSSL_NO_EC
@@ -786,16 +789,13 @@ static int tls1_check_cert_param(SSL *s, X509 *x, int set_ee_md)
     unsigned char comp_id, curve_id[2];
     EVP_PKEY *pkey;
     int rv;
-    pkey = X509_get_pubkey(x);
+    pkey = X509_get0_pubkey(x);
     if (!pkey)
         return 0;
     /* If not EC nothing to do */
-    if (pkey->type != EVP_PKEY_EC) {
-        EVP_PKEY_free(pkey);
+    if (pkey->type != EVP_PKEY_EC)
         return 1;
-    }
     rv = tls1_set_ec_id(curve_id, &comp_id, pkey->pkey.ec);
-    EVP_PKEY_free(pkey);
     if (!rv)
         return 0;
     /*
@@ -1127,7 +1127,7 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *buf,
         STACK_OF(SSL_CIPHER) *cipher_stack = SSL_get_ciphers(s);
 
         for (i = 0; i < sk_SSL_CIPHER_num(cipher_stack); i++) {
-            SSL_CIPHER *c = sk_SSL_CIPHER_value(cipher_stack, i);
+            const SSL_CIPHER *c = sk_SSL_CIPHER_value(cipher_stack, i);
 
             alg_k = c->algorithm_mkey;
             alg_a = c->algorithm_auth;
@@ -2848,29 +2848,12 @@ int ssl_check_serverhello_tlsext(SSL *s)
                                                        initial_ctx->tlsext_servername_arg);
 
     /*
-     * If we've requested certificate status and we wont get one tell the
-     * callback
+     * Ensure we get sensible values passed to tlsext_status_cb in the event
+     * that we don't receive a status message
      */
-    if ((s->tlsext_status_type != -1) && !(s->tlsext_status_expected)
-        && s->ctx && s->ctx->tlsext_status_cb) {
-        int r;
-        /*
-         * Set resp to NULL, resplen to -1 so callback knows there is no
-         * response.
-         */
-        OPENSSL_free(s->tlsext_ocsp_resp);
-        s->tlsext_ocsp_resp = NULL;
-        s->tlsext_ocsp_resplen = -1;
-        r = s->ctx->tlsext_status_cb(s, s->ctx->tlsext_status_arg);
-        if (r == 0) {
-            al = SSL_AD_BAD_CERTIFICATE_STATUS_RESPONSE;
-            ret = SSL_TLSEXT_ERR_ALERT_FATAL;
-        }
-        if (r < 0) {
-            al = SSL_AD_INTERNAL_ERROR;
-            ret = SSL_TLSEXT_ERR_ALERT_FATAL;
-        }
-    }
+    OPENSSL_free(s->tlsext_ocsp_resp);
+    s->tlsext_ocsp_resp = NULL;
+    s->tlsext_ocsp_resplen = -1;
 
     switch (ret) {
     case SSL_TLSEXT_ERR_ALERT_FATAL:
@@ -3077,7 +3060,7 @@ static int tls_decrypt_ticket(SSL *s, const unsigned char *etick,
     int slen, mlen, renew_ticket = 0;
     unsigned char tick_hmac[EVP_MAX_MD_SIZE];
     HMAC_CTX *hctx = NULL;
-    EVP_CIPHER_CTX ctx;
+    EVP_CIPHER_CTX *ctx;
     SSL_CTX *tctx = s->initial_ctx;
     /* Need at least keyname + iv + some encrypted data */
     if (eticklen < 48)
@@ -3086,11 +3069,11 @@ static int tls_decrypt_ticket(SSL *s, const unsigned char *etick,
     hctx = HMAC_CTX_new();
     if (hctx == NULL)
         return -2;
-    EVP_CIPHER_CTX_init(&ctx);
+    ctx = EVP_CIPHER_CTX_new();
     if (tctx->tlsext_ticket_key_cb) {
         unsigned char *nctick = (unsigned char *)etick;
         int rv = tctx->tlsext_ticket_key_cb(s, nctick, nctick + 16,
-                                            &ctx, hctx, 0);
+                                            ctx, hctx, 0);
         if (rv < 0)
             return -1;
         if (rv == 0)
@@ -3103,7 +3086,7 @@ static int tls_decrypt_ticket(SSL *s, const unsigned char *etick,
             return 2;
         if (HMAC_Init_ex(hctx, tctx->tlsext_tick_hmac_key, 16,
                          EVP_sha256(), NULL) <= 0
-                || EVP_DecryptInit_ex(&ctx, EVP_aes_128_cbc(), NULL,
+                || EVP_DecryptInit_ex(ctx, EVP_aes_128_cbc(), NULL,
                                       tctx->tlsext_tick_aes_key,
                                       etick + 16) <= 0) {
             goto err;
@@ -3125,26 +3108,27 @@ static int tls_decrypt_ticket(SSL *s, const unsigned char *etick,
     }
     HMAC_CTX_free(hctx);
     if (CRYPTO_memcmp(tick_hmac, etick + eticklen, mlen)) {
-        EVP_CIPHER_CTX_cleanup(&ctx);
+        EVP_CIPHER_CTX_free(ctx);
         return 2;
     }
     /* Attempt to decrypt session data */
     /* Move p after IV to start of encrypted ticket, update length */
-    p = etick + 16 + EVP_CIPHER_CTX_iv_length(&ctx);
-    eticklen -= 16 + EVP_CIPHER_CTX_iv_length(&ctx);
+    p = etick + 16 + EVP_CIPHER_CTX_iv_length(ctx);
+    eticklen -= 16 + EVP_CIPHER_CTX_iv_length(ctx);
     sdec = OPENSSL_malloc(eticklen);
     if (sdec == NULL
-            || EVP_DecryptUpdate(&ctx, sdec, &slen, p, eticklen) <= 0) {
-        EVP_CIPHER_CTX_cleanup(&ctx);
+            || EVP_DecryptUpdate(ctx, sdec, &slen, p, eticklen) <= 0) {
+        EVP_CIPHER_CTX_free(ctx);
         return -1;
     }
-    if (EVP_DecryptFinal(&ctx, sdec + slen, &mlen) <= 0) {
-        EVP_CIPHER_CTX_cleanup(&ctx);
+    if (EVP_DecryptFinal(ctx, sdec + slen, &mlen) <= 0) {
+        EVP_CIPHER_CTX_free(ctx);
         OPENSSL_free(sdec);
         return 2;
     }
     slen += mlen;
-    EVP_CIPHER_CTX_cleanup(&ctx);
+    EVP_CIPHER_CTX_free(ctx);
+    ctx = NULL;
     p = sdec;
 
     sess = d2i_SSL_SESSION(NULL, &p, slen);
@@ -3171,7 +3155,7 @@ static int tls_decrypt_ticket(SSL *s, const unsigned char *etick,
      */
     return 2;
 err:
-    EVP_CIPHER_CTX_cleanup(&ctx);
+    EVP_CIPHER_CTX_free(ctx);
     HMAC_CTX_free(hctx);
     return -1;
 }
@@ -4270,13 +4254,17 @@ DH *ssl_get_auto_dh(SSL *s)
 
 static int ssl_security_cert_key(SSL *s, SSL_CTX *ctx, X509 *x, int op)
 {
-    int secbits;
-    EVP_PKEY *pkey = X509_get_pubkey(x);
+    int secbits = -1;
+    EVP_PKEY *pkey = X509_get0_pubkey(x);
     if (pkey) {
+        /*
+         * If no parameters this will return -1 and fail using the default
+         * security callback for any non-zero security level. This will
+         * reject keys which omit parameters but this only affects DSA and
+         * omission of parameters is never (?) done in practice.
+         */
         secbits = EVP_PKEY_security_bits(pkey);
-        EVP_PKEY_free(pkey);
-    } else
-        secbits = -1;
+    }
     if (s)
         return ssl_security(s, op, secbits, 0, x);
     else

@@ -4,6 +4,63 @@
 
  Changes between 1.0.2e and 1.1.0  [xx XXX xxxx]
 
+  *) The return value for SSL_CIPHER_description() for error conditions
+     has changed.
+     [Rich Salz]
+
+  *) Support for RFC6698/RFC7671 DANE TLSA peer authentication.
+
+     Obtaining and performing DNSSEC validation of TLSA records is
+     the application's responsibility.  The application provides
+     the TLSA records of its choice to OpenSSL, and these are then
+     used to authenticate the peer.
+
+     The TLSA records need not even come from DNS.  They can, for
+     example, be used to implement local end-entity certificate or
+     trust-anchor "pinning", where the "pin" data takes the form
+     of TLSA records, which can augment or replace verification
+     based on the usual WebPKI public certification authorities.
+     [Viktor Dukhovni]
+
+  *) Revert default OPENSSL_NO_DEPRECATED setting.  Instead OpenSSL
+     continues to support deprecated interfaces in default builds.
+     However, applications are strongly advised to compile their
+     source files with -DOPENSSL_API_COMPAT=0x10100000L, which hides
+     the declarations of all interfaces deprecated in 0.9.8, 1.0.0
+     or the 1.1.0 releases.
+
+     In environments in which all applications have been ported to
+     not use any deprecated interfaces OpenSSL's Configure script
+     should be used with the --api=1.1.0 option to entirely remove
+     support for the deprecated features from the library and
+     unconditionally disable them in the installed headers.
+     Essentially the same effect can be achieved with the "no-deprecated"
+     argument to Configure, except that this will always restrict
+     the build to just the latest API, rather than a fixed API
+     version.
+
+     As applications are ported to future revisions of the API,
+     they should update their compile-time OPENSSL_API_COMPAT define
+     accordingly, but in most cases should be able to continue to
+     compile with later releases.
+
+     The OPENSSL_API_COMPAT versions for 1.0.0, and 0.9.8 are
+     0x10000000L and 0x00908000L, respectively.  However those
+     versions did not support the OPENSSL_API_COMPAT feature, and
+     so applications are not typically tested for explicit support
+     of just the undeprecated features of either release.
+     [Viktor Dukhovni]
+
+  *) Add support for setting the minimum and maximum supported protocol.
+     It can bet set via the SSL_set_min_proto_version() and
+     SSL_set_max_proto_version(), or via the SSL_CONF's MinProtocol and
+     MaxProtcol.  It's recommended to use the new APIs to disable
+     protocols instead of disabling individual protocols using
+     SSL_set_options() or SSL_CONF's Protocol.  This change also
+     removes support for disabling TLS 1.2 in the OpenSSL TLS
+     client at compile time by defining OPENSSL_NO_TLS1_2_CLIENT.
+     [Kurt Roeckx]
+
   *) Support for ChaCha20 and Poly1305 added to libcrypto and libssl.
      [Andy Polyakov]
 
@@ -21,22 +78,22 @@
      exchange. The LOW ciphers currently doesn't have any ciphers in it.
      [Kurt Roeckx]
 
-  *) Make EVP_MD_CTX, EVP_MD and HMAC_CTX opaque.  For HMAC_CTX, the
-     following constructors and destructors were added:
+  *) Made EVP_MD_CTX, EVP_MD, EVP_CIPHER_CTX, EVP_CIPHER and HMAC_CTX
+     opaque.  For HMAC_CTX, the following constructors and destructors
+     were added:
 
         HMAC_CTX *HMAC_CTX_new(void);
         void HMAC_CTX_free(HMAC_CTX *ctx);
 
-     For EVP_MD, a complete API to create, fill and destroy such
-     methods has been added.  See EVP_MD_meth_new(3) for
-     documentation.
+     For EVP_MD and EVP_CIPHER, complete APIs to create, fill and
+     destroy such methods has been added.  See EVP_MD_meth_new(3) and
+     EVP_CIPHER_meth_new(3) for documentation.
 
      Additional changes:
-     1) HMAC_CTX_cleanup() and EVP_MD_CTX_cleanup() were removed,
-        HMAC_CTX_init() and EVP_MD_CTX_init() should be called instead
-        to reinitialise and already created structure.  Also,
-        HMAC_CTX_init() and EVP_MD_CTX_init() now return 0 for failure
-        and 1 for success (they previously had the return type void).
+     1) EVP_MD_CTX_cleanup(), EVP_CIPHER_CTX_cleanup() and
+        HMAC_CTX_cleanup() were removed.  HMAC_CTX_reset() and
+        EVP_MD_CTX_reset() should be called instead to reinitialise
+        an already created structure.
      2) For consistency with the majority of our object creators and
         destructors, EVP_MD_CTX_(create|destroy) were renamed to
         EVP_MD_CTX_(new|free).  The old names are retained as macros
@@ -141,6 +198,12 @@
         perldoc test/testlib/OpenSSL/Test.pm
 
      [Richard Levitte]
+
+  *) Revamped memory debug; only -DCRYPTO_MDEBUG and -DCRYPTO_MDEBUG_ABORT
+     are used; the latter aborts on memory leaks (usually checked on exit).
+     Some undocumented "set malloc, etc., hooks" functions were removed
+     and others were changed.  All are now documented.
+     [Rich Salz]
 
   *) In DSA_generate_parameters_ex, if the provided seed is too short,
      return an error

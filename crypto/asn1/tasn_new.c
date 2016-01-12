@@ -102,9 +102,8 @@ int asn1_item_embed_new(ASN1_VALUE **pval, const ASN1_ITEM *it, int embed)
     else
         asn1_cb = 0;
 
-#ifdef CRYPTO_MDEBUG
-    if (it->sname)
-        CRYPTO_push_info(it->sname);
+#ifndef OPENSSL_NO_CRYPTO_MDEBUG
+    OPENSSL_mem_debug_push(it->sname ? it->sname : "asn1_item_embed_new");
 #endif
 
     switch (it->itype) {
@@ -136,9 +135,8 @@ int asn1_item_embed_new(ASN1_VALUE **pval, const ASN1_ITEM *it, int embed)
             if (!i)
                 goto auxerr;
             if (i == 2) {
-#ifdef CRYPTO_MDEBUG
-                if (it->sname)
-                    CRYPTO_pop_info();
+#ifndef OPENSSL_NO_CRYPTO_MDEBUG
+                OPENSSL_mem_debug_pop();
 #endif
                 return 1;
             }
@@ -162,9 +160,8 @@ int asn1_item_embed_new(ASN1_VALUE **pval, const ASN1_ITEM *it, int embed)
             if (!i)
                 goto auxerr;
             if (i == 2) {
-#ifdef CRYPTO_MDEBUG
-                if (it->sname)
-                    CRYPTO_pop_info();
+#ifndef OPENSSL_NO_CRYPTO_MDEBUG
+                OPENSSL_mem_debug_pop();
 #endif
                 return 1;
             }
@@ -187,26 +184,23 @@ int asn1_item_embed_new(ASN1_VALUE **pval, const ASN1_ITEM *it, int embed)
             goto auxerr;
         break;
     }
-#ifdef CRYPTO_MDEBUG
-    if (it->sname)
-        CRYPTO_pop_info();
+#ifndef OPENSSL_NO_CRYPTO_MDEBUG
+    OPENSSL_mem_debug_pop();
 #endif
     return 1;
 
  memerr:
     ASN1err(ASN1_F_ASN1_ITEM_EMBED_NEW, ERR_R_MALLOC_FAILURE);
-#ifdef CRYPTO_MDEBUG
-    if (it->sname)
-        CRYPTO_pop_info();
+#ifndef OPENSSL_NO_CRYPTO_MDEBUG
+    OPENSSL_mem_debug_pop();
 #endif
     return 0;
 
  auxerr:
     ASN1err(ASN1_F_ASN1_ITEM_EMBED_NEW, ASN1_R_AUX_ERROR);
     ASN1_item_ex_free(pval, it);
-#ifdef CRYPTO_MDEBUG
-    if (it->sname)
-        CRYPTO_pop_info();
+#ifndef OPENSSL_NO_CRYPTO_MDEBUG
+    OPENSSL_mem_debug_pop();
 #endif
     return 0;
 
@@ -265,9 +259,9 @@ static int asn1_template_new(ASN1_VALUE **pval, const ASN1_TEMPLATE *tt)
         *pval = NULL;
         return 1;
     }
-#ifdef CRYPTO_MDEBUG
-    if (tt->field_name)
-        CRYPTO_push_info(tt->field_name);
+#ifndef OPENSSL_NO_CRYPTO_MDEBUG
+    OPENSSL_mem_debug_push(tt->field_name
+            ? tt->field_name : "asn1_template_new");
 #endif
     /* If SET OF or SEQUENCE OF, its a STACK */
     if (tt->flags & ASN1_TFLG_SK_MASK) {
@@ -285,9 +279,8 @@ static int asn1_template_new(ASN1_VALUE **pval, const ASN1_TEMPLATE *tt)
     /* Otherwise pass it back to the item routine */
     ret = asn1_item_embed_new(pval, it, embed);
  done:
-#ifdef CRYPTO_MDEBUG
-    if (it->sname)
-        CRYPTO_pop_info();
+#ifndef OPENSSL_NO_CRYPTO_MDEBUG
+    OPENSSL_mem_debug_pop();
 #endif
     return ret;
 }

@@ -567,7 +567,7 @@ static void load_builtin_compressions(void)
             SSL_COMP *comp = NULL;
             COMP_METHOD *method = COMP_zlib();
 
-            MemCheck_off();
+            CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_DISABLE);
             ssl_comp_methods = sk_SSL_COMP_new(sk_comp_cmp);
             if (COMP_get_type(method) != NID_undef
                 && ssl_comp_methods != NULL) {
@@ -580,7 +580,7 @@ static void load_builtin_compressions(void)
                     sk_SSL_COMP_sort(ssl_comp_methods);
                 }
             }
-            MemCheck_on();
+            CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ENABLE);
         }
     }
 
@@ -1349,12 +1349,8 @@ static int check_suiteb_cipher_list(const SSL_METHOD *meth, CERT *c,
     /* Check version: if TLS 1.2 ciphers allowed we can use Suite B */
 
     if (!(meth->ssl3_enc->enc_flags & SSL_ENC_FLAG_TLS1_2_CIPHERS)) {
-        if (meth->ssl3_enc->enc_flags & SSL_ENC_FLAG_DTLS)
-            SSLerr(SSL_F_CHECK_SUITEB_CIPHER_LIST,
-                   SSL_R_ONLY_DTLS_1_2_ALLOWED_IN_SUITEB_MODE);
-        else
-            SSLerr(SSL_F_CHECK_SUITEB_CIPHER_LIST,
-                   SSL_R_ONLY_TLS_1_2_ALLOWED_IN_SUITEB_MODE);
+        SSLerr(SSL_F_CHECK_SUITEB_CIPHER_LIST,
+               SSL_R_AT_LEAST_TLS_1_2_NEEDED_IN_SUITEB_MODE);
         return 0;
     }
 # ifndef OPENSSL_NO_EC
@@ -1585,24 +1581,24 @@ char *SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
 {
     const char *ver;
     const char *kx, *au, *enc, *mac;
-    uint32_t alg_mkey, alg_auth, alg_enc, alg_mac, alg_ssl;
+    uint32_t alg_mkey, alg_auth, alg_enc, alg_mac;
     static const char *format =
         "%-23s %s Kx=%-8s Au=%-4s Enc=%-9s Mac=%-4s\n";
+
+    if (buf == NULL) {
+        len = 128;
+        buf = OPENSSL_malloc(len);
+        if (buf == NULL)
+            return NULL;
+    } else if (len < 128)
+        return NULL;
 
     alg_mkey = cipher->algorithm_mkey;
     alg_auth = cipher->algorithm_auth;
     alg_enc = cipher->algorithm_enc;
     alg_mac = cipher->algorithm_mac;
-    alg_ssl = cipher->algorithm_ssl;
 
-    if (alg_ssl & SSL_SSLV3)
-        ver = "SSLv3";
-    else if (alg_ssl & SSL_TLSV1)
-        ver = "TLSv1.0";
-    else if (alg_ssl & SSL_TLSV1_2)
-        ver = "TLSv1.2";
-    else
-        ver = "unknown";
+    ver = SSL_CIPHER_get_version(cipher);
 
     switch (alg_mkey) {
     case SSL_kRSA:
@@ -1772,14 +1768,6 @@ char *SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
         break;
     }
 
-    if (buf == NULL) {
-        len = 128;
-        buf = OPENSSL_malloc(len);
-        if (buf == NULL)
-            return ("OPENSSL_malloc Error");
-    } else if (len < 128)
-        return ("Buffer too small");
-
     BIO_snprintf(buf, len, format, cipher->name, ver, kx, au, enc, mac);
 
     return (buf);
@@ -1787,15 +1775,19 @@ char *SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
 
 char *SSL_CIPHER_get_version(const SSL_CIPHER *c)
 {
-    int i;
+    uint32_t alg_ssl;
 
     if (c == NULL)
-        return ("(NONE)");
-    i = (int)(c->id >> 24L);
-    if (i == 3)
-        return ("TLSv1/SSLv3");
-    else
-        return ("unknown");
+        return "(NONE)";
+    alg_ssl = c->algorithm_ssl;
+
+    if (alg_ssl & SSL_SSLV3)
+        return "SSLv3";
+    if (alg_ssl & SSL_TLSV1)
+        return "TLSv1.0";
+    if (alg_ssl & SSL_TLSV1_2)
+        return "TLSv1.2";
+    return "unknown";
 }
 
 /* return the actual cipher being used */
@@ -1906,10 +1898,10 @@ int SSL_COMP_add_compression_method(int id, COMP_METHOD *cm)
         return 0;
     }
 
-    MemCheck_off();
+    CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_DISABLE);
     comp = OPENSSL_malloc(sizeof(*comp));
     if (comp == NULL) {
-        MemCheck_on();
+        CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ENABLE);
         SSLerr(SSL_F_SSL_COMP_ADD_COMPRESSION_METHOD, ERR_R_MALLOC_FAILURE);
         return (1);
     }
@@ -1919,20 +1911,20 @@ int SSL_COMP_add_compression_method(int id, COMP_METHOD *cm)
     load_builtin_compressions();
     if (ssl_comp_methods && sk_SSL_COMP_find(ssl_comp_methods, comp) >= 0) {
         OPENSSL_free(comp);
-        MemCheck_on();
+        CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ENABLE);
         SSLerr(SSL_F_SSL_COMP_ADD_COMPRESSION_METHOD,
                SSL_R_DUPLICATE_COMPRESSION_ID);
         return (1);
-    } else if ((ssl_comp_methods == NULL)
+    }
+    if ((ssl_comp_methods == NULL)
                || !sk_SSL_COMP_push(ssl_comp_methods, comp)) {
         OPENSSL_free(comp);
-        MemCheck_on();
+        CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ENABLE);
         SSLerr(SSL_F_SSL_COMP_ADD_COMPRESSION_METHOD, ERR_R_MALLOC_FAILURE);
         return (1);
-    } else {
-        MemCheck_on();
-        return (0);
     }
+    CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ENABLE);
+    return (0);
 }
 #endif
 

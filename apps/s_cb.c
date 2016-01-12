@@ -736,8 +736,8 @@ void tlsext_cb(SSL *s, int client_server, int type,
 int generate_cookie_callback(SSL *ssl, unsigned char *cookie,
                              unsigned int *cookie_len)
 {
-    unsigned char *buffer, result[EVP_MAX_MD_SIZE];
-    unsigned int length, resultlength;
+    unsigned char *buffer;
+    unsigned int length;
     union {
         struct sockaddr sa;
         struct sockaddr_in s4;
@@ -797,11 +797,8 @@ int generate_cookie_callback(SSL *ssl, unsigned char *cookie,
 
     /* Calculate HMAC of buffer using the secret */
     HMAC(EVP_sha1(), cookie_secret, COOKIE_SECRET_LENGTH,
-         buffer, length, result, &resultlength);
+         buffer, length, cookie, cookie_len);
     OPENSSL_free(buffer);
-
-    memcpy(cookie, result, resultlength);
-    *cookie_len = resultlength;
 
     return 1;
 }
@@ -809,66 +806,14 @@ int generate_cookie_callback(SSL *ssl, unsigned char *cookie,
 int verify_cookie_callback(SSL *ssl, const unsigned char *cookie,
                            unsigned int cookie_len)
 {
-    unsigned char *buffer, result[EVP_MAX_MD_SIZE];
-    unsigned int length, resultlength;
-    union {
-        struct sockaddr sa;
-        struct sockaddr_in s4;
-#if OPENSSL_USE_IPV6
-        struct sockaddr_in6 s6;
-#endif
-    } peer;
+    unsigned char result[EVP_MAX_MD_SIZE];
+    unsigned int resultlength;
 
-    /* If secret isn't initialized yet, the cookie can't be valid */
-    if (!cookie_initialized)
-        return 0;
-
-    /* Read peer information */
-    (void)BIO_dgram_get_peer(SSL_get_rbio(ssl), &peer);
-
-    /* Create buffer with peer's address and port */
-    length = 0;
-    switch (peer.sa.sa_family) {
-    case AF_INET:
-        length += sizeof(struct in_addr);
-        length += sizeof(peer.s4.sin_port);
-        break;
-#if OPENSSL_USE_IPV6
-    case AF_INET6:
-        length += sizeof(struct in6_addr);
-        length += sizeof(peer.s6.sin6_port);
-        break;
-#endif
-    default:
-        OPENSSL_assert(0);
-        break;
-    }
-    buffer = app_malloc(length, "cookie verify buffer");
-
-    switch (peer.sa.sa_family) {
-    case AF_INET:
-        memcpy(buffer, &peer.s4.sin_port, sizeof(peer.s4.sin_port));
-        memcpy(buffer + sizeof(peer.s4.sin_port),
-               &peer.s4.sin_addr, sizeof(struct in_addr));
-        break;
-#if OPENSSL_USE_IPV6
-    case AF_INET6:
-        memcpy(buffer, &peer.s6.sin6_port, sizeof(peer.s6.sin6_port));
-        memcpy(buffer + sizeof(peer.s6.sin6_port),
-               &peer.s6.sin6_addr, sizeof(struct in6_addr));
-        break;
-#endif
-    default:
-        OPENSSL_assert(0);
-        break;
-    }
-
-    /* Calculate HMAC of buffer using the secret */
-    HMAC(EVP_sha1(), cookie_secret, COOKIE_SECRET_LENGTH,
-         buffer, length, result, &resultlength);
-    OPENSSL_free(buffer);
-
-    if (cookie_len == resultlength
+    /* Note: we check cookie_initialized because if it's not,
+     * it cannot be valid */
+    if (cookie_initialized
+        && generate_cookie_callback(ssl, result, &resultlength)
+        && cookie_len == resultlength
         && memcmp(result, cookie, resultlength) == 0)
         return 1;
 

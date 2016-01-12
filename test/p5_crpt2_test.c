@@ -180,8 +180,7 @@ int main(int argc, char **argv)
     int i;
     testdata *test = test_cases;
 
-    CRYPTO_malloc_debug_init();
-    CRYPTO_set_mem_debug_options(V_CRYPTO_MDEBUG_ALL);
+    CRYPTO_set_mem_debug(1);
     CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
 
     OpenSSL_add_all_digests();
@@ -206,6 +205,8 @@ int main(int argc, char **argv)
     CRYPTO_cleanup_all_ex_data();
     ERR_remove_thread_state(NULL);
     ERR_free_strings();
+#ifndef OPENSSL_NO_CRYPTO_MDEBUG
     CRYPTO_mem_leaks_fp(stderr);
+# endif
     return 0;
 }

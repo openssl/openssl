@@ -2,7 +2,15 @@
 
 =head1 NAME
 
-SSL_CTX_new, SSLv3_method, SSLv3_server_method, SSLv3_client_method, TLSv1_method, TLSv1_server_method, TLSv1_client_method, TLSv1_1_method, TLSv1_1_server_method, TLSv1_1_client_method, TLS_method, TLS_server_method, TLS_client_method, SSLv23_method, SSLv23_server_method, SSLv23_client_method - create a new SSL_CTX object as framework for TLS/SSL enabled functions
+SSL_CTX_new, SSLv3_method, SSLv3_server_method, SSLv3_client_method,
+TLSv1_method, TLSv1_server_method, TLSv1_client_method, TLSv1_1_method,
+TLSv1_1_server_method, TLSv1_1_client_method, TLS_method,
+TLS_server_method, TLS_client_method, SSLv23_method, SSLv23_server_method,
+SSLv23_client_method, DTLS_method, DTLS_server_method, DTLS_client_method,
+DTLSv1_method, DTLSv1_server_method, DTLSv1_client_method,
+DTLSv1_2_method, DTLSv1_2_server_method, DTLSv1_2_client_method -
+create a new SSL_CTX object as framework for TLS/SSL or DTLS enabled
+functions
 
 =head1 SYNOPSIS
 
@@ -10,51 +18,86 @@ SSL_CTX_new, SSLv3_method, SSLv3_server_method, SSLv3_client_method, TLSv1_metho
 
  SSL_CTX *SSL_CTX_new(const SSL_METHOD *method);
 
+ const SSL_METHOD *TLS_method(void);
+ const SSL_METHOD *TLS_server_method(void);
+ const SSL_METHOD *TLS_client_method(void);
+
+ #define SSLv23_method           TLS_method
+ #define SSLv23_server_method    TLS_server_method
+ #define SSLv23_client_method    TLS_client_method
+
+ #ifndef OPENSSL_NO_SSL3_METHOD
+ const SSL_METHOD *SSLv3_method(void);
+ const SSL_METHOD *SSLv3_server_method(void);
+ const SSL_METHOD *SSLv3_client_method(void);
+ #endif
+
+ const SSL_METHOD *TLSv1_method(void);
+ const SSL_METHOD *TLSv1_server_method(void);
+ const SSL_METHOD *TLSv1_client_method(void);
+
+ const SSL_METHOD *TLSv1_1_method(void);
+ const SSL_METHOD *TLSv1_1_server_method(void);
+ const SSL_METHOD *TLSv1_1_client_method(void);
+
+ const SSL_METHOD *TLSv1_2_method(void);
+ const SSL_METHOD *TLSv1_2_server_method(void);
+ const SSL_METHOD *TLSv1_2_client_method(void);
+
+ const SSL_METHOD *DTLS_method(void);
+ const SSL_METHOD *DTLS_server_method(void);
+ const SSL_METHOD *DTLS_client_method(void);
+
+ const SSL_METHOD *DTLSv1_method(void);
+ const SSL_METHOD *DTLSv1_server_method(void);
+ const SSL_METHOD *DTLSv1_client_method(void);
+
+ const SSL_METHOD *DTLSv1_2_method(void);
+ const SSL_METHOD *DTLSv1_2_server_method(void);
+ const SSL_METHOD *DTLSv1_2_client_method(void);
+
 =head1 DESCRIPTION
 
-SSL_CTX_new() creates a new B<SSL_CTX> object as framework to establish
-TLS/SSL enabled connections.
+SSL_CTX_new() creates a new B<SSL_CTX> object as framework to
+establish TLS/SSL or DTLS enabled connections.
 
 =head1 NOTES
 
-The SSL_CTX object uses B<method> as connection method. The methods exist
-in a generic type (for client and server use), a server only type, and a
-client only type. B<method> can be of the following types:
+The SSL_CTX object uses B<method> as connection method.
+The methods exist in a generic type (for client and server use), a server only
+type, and a client only type.
+B<method> can be of the following types:
 
 =over 4
 
-=item SSLv3_method(void), SSLv3_server_method(void), SSLv3_client_method(void)
+=item SSLv3_method(), SSLv3_server_method(), SSLv3_client_method()
 
-A TLS/SSL connection established with these methods will only understand the
-SSLv3 protocol. A client will send out SSLv3 client hello messages
-and will indicate that it only understands SSLv3. A server will only understand
-SSLv3 client hello messages.
+An SSL connection established with these methods will only understand
+the SSLv3 protocol.
+A client will send out a SSLv3 client hello messages and will
+indicate that it supports SSLv3.
+A server will only understand SSLv3 client hello message and only
+support the SSLv3 protocol.
 
-=item TLSv1_method(void), TLSv1_server_method(void), TLSv1_client_method(void)
+=item TLSv1_method(), TLSv1_server_method(), TLSv1_client_method()
 
-A TLS/SSL connection established with these methods will only understand the
-TLSv1 protocol. A client will send out TLSv1 client hello messages
-and will indicate that it only understands TLSv1. A server will only understand
-TLSv1 client hello messages.
+A TLS connection established with these methods will only understand
+the TLS 1.0 protocol.
 
-=item TLSv1_1_method(void), TLSv1_1_server_method(void), TLSv1_1_client_method(void)
+=item TLSv1_1_method(), TLSv1_1_server_method(), TLSv1_1_client_method()
 
-A TLS/SSL connection established with these methods will only understand the
-TLSv1.1 protocol. A client will send out TLSv1.1 client hello messages
-and will indicate that it only understands TLSv1.1. A server will only
-understand TLSv1.1 client hello messages.
+A TLS connection established with these methods will only understand
+the TLS 1.1 protocol.
 
-=item TLSv1_2_method(void), TLSv1_2_server_method(void), TLSv1_2_client_method(void)
+=item TLSv1_2_method(), TLSv1_2_server_method(), TLSv1_2_client_method()
 
-A TLS/SSL connection established with these methods will only understand the
-TLSv1.2 protocol. A client will send out TLSv1.2 client hello messages
-and will indicate that it only understands TLSv1.2. A server will only
-understand TLSv1.2 client hello messages.
+A TLS connection established with these methods will only understand
+the TLS 1.2 protocol.
 
-=item TLS_method(void), TLS_server_method(void), TLS_client_method(void)
+=item TLS_method(), TLS_server_method(), TLS_client_method()
 
-A TLS/SSL connection established with these methods may understand the
-SSLv3, TLSv1, TLSv1.1 and TLSv1.2 protocols.
+A TLS/SSL connection established with these methods may understand
+the SSLv3, TLSv1, TLSv1.1 and TLSv1.2 protocols.
 
 If extensions are required (for example server name)
 a client will send out TLSv1 client hello messages including extensions and
@@ -62,26 +105,50 @@ will indicate that it also understands TLSv1.1, TLSv1.2 and permits a
 fallback to SSLv3. A server will support SSLv3, TLSv1, TLSv1.1 and TLSv1.2
 protocols. This is the best choice when compatibility is a concern.
 
-=item SSLv23_method(void), SSLv23_server_method(void), SSLv23_client_method(void)
+=item SSLv23_method(), SSLv23_server_method(), SSLv23_client_method()
 
-Use of these functions is deprecated. They have been replaced with TLS_Method(),
+Use of these functions is deprecated. They have been replaced with TLS_method(),
 TLS_server_method() and TLS_client_method() respectively. New code should use
 those functions instead.
 
+=item DTLS_method(), DTLS_server_method(), DTLS_client_method()
+
+A DTLS connection established with those methods understands all
+supported DTLS protocols.
+Currently supported protocols are DTLS 1.0 and DTLS 1.2.
+
+=item DTLSv1_method(), DTLSv1_server_method(), DTLSv1_client_method()
+
+A DTLS connection established with these methods will only understand
+the DTLS 1.0 protocol.
+
+=item DTLSv1_2_method(), DTLSv1_2_server_method(), DTLSv1_2_client_method()
+
+A DTLS connection established with these methods will only understand
+the DTLS 1.2 protocol.
+
 =back
 
-The list of protocols available can later be limited using the
-SSL_OP_NO_SSLv3, SSL_OP_NO_TLSv1, SSL_OP_NO_TLSv1_1 and SSL_OP_NO_TLSv1_2
-options of the SSL_CTX_set_options() or SSL_set_options() functions.
-Using these options it is possible to choose e.g. TLS_server_method() and
-be able to negotiate with all possible clients, but to only allow newer
-protocols like TLSv1, TLSv1.1 or TLS v1.2.
+TLS_method(), TLS_server_method(), TLS_client_method(), DTLS_method(),
+DTLS_server_method() and DTLS_client_method() are the version
+flexible methods.
+All other methods only support one specific protocol version.
+Use these methods instead of the other version specific methods.
 
-Applications which never want to support SSLv3 can set SSL_OP_NO_SSLv3.
+If you want to limit the supported protocols for the version flexible
+methods you can use SSL_CTX_set_min_proto_version(),
+SSL_set_min_proto_version(), SSL_CTX_set_max_proto_version() and
+SSL_set_max_proto_version() functions.
+They can also be limited by setting an option like B<SSL_OP_NO_SSLv3>
+via the L<SSL_CTX_set_options(3)> or L<SSL_set_options(3)> functions,
+but that's not recommended.
+Using these functions it is possible to choose e.g. TLS_server_method()
+and be able to negotiate with all possible clients, but to only
+allow newer protocols like TLS 1.0, TLS 1.1 or TLS 1.2.
 
-SSL_CTX_new() initializes the list of ciphers, the session cache setting,
-the callbacks, the keys and certificates and the options to its default
-values.
+SSL_CTX_new() initializes the list of ciphers, the session cache
+setting, the callbacks, the keys and certificates and the options
+to its default values.
 
 =head1 RETURN VALUES
 
@@ -102,14 +169,18 @@ The return value points to an allocated SSL_CTX object.
 
 =head1 HISTORY
 
-SSLv2_method, SSLv2_server_method and SSLv2_client_method where removed in
-OpenSSL 1.1.0. SSLv23_method, SSLv23_server_method and SSLv23_client_method were
-deprecated and TLS_method, TLS_server_method and TLS_client_method
-were introduced in OpenSSL 1.1.0.
+Support for SSLv2 and the corresponding SSLv2_method(),
+SSLv2_server_method() and SSLv2_client_method() functions where
+removed in OpenSSL 1.1.0.
+
+SSLv23_method(), SSLv23_server_method() and SSLv23_client_method()
+were deprecated and the preferred TLS_method(), TLS_server_method()
+and TLS_client_method() functions were introduced in OpenSSL 1.1.0.
 
 =head1 SEE ALSO
 
 L<SSL_CTX_free(3)>, L<SSL_accept(3)>,
+L<SSL_CTX_set_min_proto_version(3)>,
 L<ssl(3)>,  L<SSL_set_connect_state(3)>
 
 =cut

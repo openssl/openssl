@@ -153,7 +153,6 @@
  * required type of "FUNCTION*"). This removes the necessity for
  * macro-generated wrapper functions.
  */
-DECLARE_LHASH_OF(FUNCTION);
 static LHASH_OF(FUNCTION) *prog_init(void);
 static int do_cmd(LHASH_OF(FUNCTION) *prog, int argc, char *argv[]);
 static void list_pkey(void);
@@ -171,11 +170,11 @@ static int apps_startup()
 #ifdef SIGPIPE
     signal(SIGPIPE, SIG_IGN);
 #endif
-    CRYPTO_malloc_init();
     ERR_load_crypto_strings();
     ERR_load_SSL_strings();
 
     OPENSSL_load_builtin_modules();
+    SSL_add_ssl_module();
 #ifndef OPENSSL_NO_ENGINE
     ENGINE_load_builtin_engines();
 #endif
@@ -310,15 +309,8 @@ int main(int argc, char *argv[])
 #endif
 
     p = getenv("OPENSSL_DEBUG_MEMORY");
-    if (p == NULL)
-        /* if not set, use compiled-in default */
-        ;
-    else if (strcmp(p, "off") != 0) {
-        CRYPTO_malloc_debug_init();
-        CRYPTO_set_mem_debug_options(V_CRYPTO_MDEBUG_ALL);
-    } else {
-        CRYPTO_set_mem_debug_functions(0, 0, 0, 0, 0);
-    }
+    if (p != NULL && strcmp(p, "on") == 0)
+        CRYPTO_set_mem_debug(1);
     CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
     CRYPTO_set_locking_callback(lock_dbg_cb);
 
@@ -436,7 +428,9 @@ int main(int argc, char *argv[])
     BIO_free(bio_in);
     BIO_free_all(bio_out);
     apps_shutdown();
+#ifndef OPENSSL_NO_CRYPTO_MDEBUG
     CRYPTO_mem_leaks(bio_err);
+#endif
     BIO_free(bio_err);
     return (ret);
 }
@@ -706,14 +700,10 @@ static int function_cmp(const FUNCTION * a, const FUNCTION * b)
     return strncmp(a->name, b->name, 8);
 }
 
-static IMPLEMENT_LHASH_COMP_FN(function, FUNCTION)
-
 static unsigned long function_hash(const FUNCTION * a)
 {
     return lh_strhash(a->name);
 }
-
-static IMPLEMENT_LHASH_HASH_FN(function, FUNCTION)
 
 static int SortFnByName(const void *_f1, const void *_f2)
 {
@@ -866,7 +856,7 @@ static LHASH_OF(FUNCTION) *prog_init(void)
     for (i = 0, f = functions; f->name != NULL; ++f, ++i) ;
     qsort(functions, i, sizeof(*functions), SortFnByName);
 
-    if ((ret = lh_FUNCTION_new()) == NULL)
+    if ((ret = lh_FUNCTION_new(function_hash, function_cmp)) == NULL)
         return (NULL);
 
     for (f = functions; f->name != NULL; f++)

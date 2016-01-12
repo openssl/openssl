@@ -98,7 +98,7 @@ int main(int argc, char *argv[])
 {
     ENGINE *block[512];
     char buf[256];
-    const char *id, *name;
+    const char *id, *name, *p;
     ENGINE *ptr;
     int loop;
     int to_return = 1;
@@ -107,16 +107,9 @@ int main(int argc, char *argv[])
     ENGINE *new_h3 = NULL;
     ENGINE *new_h4 = NULL;
 
-    /* enable memory leak checking unless explicitly disabled */
-    if (!((getenv("OPENSSL_DEBUG_MEMORY") != NULL)
-          && (0 == strcmp(getenv("OPENSSL_DEBUG_MEMORY"), "off")))) {
-        CRYPTO_malloc_debug_init();
-        CRYPTO_set_mem_debug_options(V_CRYPTO_MDEBUG_ALL);
-    } else {
-        /* OPENSSL_DEBUG_MEMORY=off */
-        CRYPTO_set_mem_debug_functions(0, 0, 0, 0, 0);
-    }
-    CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
+    p = getenv("OPENSSL_DEBUG_MEMORY");
+    if (p != NULL && strcmp(p, "on") == 0)
+        CRYPTO_set_mem_debug(1);
     ERR_load_crypto_strings();
 
     memset(block, 0, sizeof(block));
@@ -256,7 +249,9 @@ int main(int argc, char *argv[])
     CRYPTO_cleanup_all_ex_data();
     ERR_free_strings();
     ERR_remove_thread_state(NULL);
+#ifndef OPENSSL_NO_CRYPTO_MDEBUG
     CRYPTO_mem_leaks_fp(stderr);
+#endif
     return to_return;
 }
 #endif

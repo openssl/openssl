@@ -71,7 +71,7 @@
 #  error ENGINE is disabled.
 # endif
 
-# ifdef OPENSSL_USE_DEPRECATED
+# if OPENSSL_API_COMPAT < 0x10100000L
 #  include <openssl/bn.h>
 #  ifndef OPENSSL_NO_RSA
 #   include <openssl/rsa.h>
@@ -733,14 +733,6 @@ void ENGINE_add_conf_module(void);
  * same static data as the calling application (or library), and thus whether
  * these callbacks need to be set or not.
  */
-typedef void *(*dyn_MEM_malloc_cb) (size_t);
-typedef void *(*dyn_MEM_realloc_cb) (void *, size_t);
-typedef void (*dyn_MEM_free_cb) (void *);
-typedef struct st_dynamic_MEM_fns {
-    dyn_MEM_malloc_cb malloc_cb;
-    dyn_MEM_realloc_cb realloc_cb;
-    dyn_MEM_free_cb free_cb;
-} dynamic_MEM_fns;
 /*
  * FIXME: Perhaps the memory and locking code (crypto.h) should declare and
  * use these types so we (and any other dependant code) can simplify a bit??
@@ -763,7 +755,6 @@ typedef struct st_dynamic_LOCK_fns {
 /* The top-level structure */
 typedef struct st_dynamic_fns {
     void *static_state;
-    dynamic_MEM_fns mem_fns;
     dynamic_LOCK_fns lock_fns;
 } dynamic_fns;
 
@@ -812,9 +803,6 @@ typedef int (*dynamic_bind_engine) (ENGINE *e, const char *id,
         OPENSSL_EXPORT \
         int bind_engine(ENGINE *e, const char *id, const dynamic_fns *fns) { \
                 if(ENGINE_get_static_state() == fns->static_state) goto skip_cbs; \
-                if(!CRYPTO_set_mem_functions(fns->mem_fns.malloc_cb, \
-                        fns->mem_fns.realloc_cb, fns->mem_fns.free_cb)) \
-                        return 0; \
                 CRYPTO_set_locking_callback(fns->lock_fns.lock_locking_cb); \
                 CRYPTO_set_add_lock_callback(fns->lock_fns.lock_add_lock_cb); \
                 CRYPTO_set_dynlock_create_callback(fns->lock_fns.dynlock_create_cb); \

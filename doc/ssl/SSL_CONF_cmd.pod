@@ -74,7 +74,7 @@ B<prime256v1>). Curve names are case sensitive.
 
 =item B<-named_curve>
 
-This sets the temporary curve used for ephemeral ECDH modes. Only used by 
+This sets the temporary curve used for ephemeral ECDH modes. Only used by
 servers
 
 The B<value> argument is a curve name or the special value B<auto> which
@@ -85,7 +85,7 @@ can be either the B<NIST> name (e.g. B<P-256>) or an OpenSSL OID name
 =item B<-cipher>
 
 Sets the cipher suite list to B<value>. Note: syntax checking of B<value> is
-currently not performed unless a B<SSL> or B<SSL_CTX> structure is 
+currently not performed unless a B<SSL> or B<SSL_CTX> structure is
 associated with B<cctx>.
 
 =item B<-cert>
@@ -109,11 +109,23 @@ Attempts to use the file B<value> as the set of temporary DH parameters for
 the appropriate context. This option is only supported if certificate
 operations are permitted.
 
+=item B<-min_protocol>, B<-max_protocol>
+
+Sets the minimum and maximum supported protocol.
+Currently supported protocol values are B<SSLv3>, B<TLSv1>,
+B<TLSv1.1>, B<TLSv1.2> for TLS and B<DTLSv1>, B<DTLSv1.2> for DTLS,
+and B<None> for no limit.
+If the either bound is not specified then only the other bound applies,
+if specified.
+To restrict the supported protocol versions use these commands rather
+than the deprecated alternative commands below.
+
 =item B<-no_ssl3>, B<-no_tls1>, B<-no_tls1_1>, B<-no_tls1_2>
 
-Disables protocol support for SSLv3, TLS 1.0, TLS 1.1 or TLS 1.2 
-by setting the corresponding options B<SSL_OP_NO_SSL3>,
-B<SSL_OP_NO_TLS1>, B<SSL_OP_NO_TLS1_1> and B<SSL_OP_NO_TLS1_2> respectively.
+Disables protocol support for SSLv3, TLS 1.0, TLS 1.1 or TLS 1.2
+by setting the corresponding options B<SSL_OP_NO_SSL3>, B<SSL_OP_NO_TLS1>,
+B<SSL_OP_NO_TLS1_1> and B<SSL_OP_NO_TLS1_2> respectively.
+These options are deprecated, instead use B<-min_protocol> and B<-max_protocol>.
 
 =item B<-bugs>
 
@@ -177,7 +189,7 @@ Note: the command prefix (if set) alters the recognised B<cmd> values.
 =item B<CipherString>
 
 Sets the cipher suite list to B<value>. Note: syntax checking of B<value> is
-currently not performed unless an B<SSL> or B<SSL_CTX> structure is 
+currently not performed unless an B<SSL> or B<SSL_CTX> structure is
 associated with B<cctx>.
 
 =item B<Certificate>
@@ -250,7 +262,7 @@ B<prime256v1>). Curve names are case sensitive.
 
 =item B<ECDHParameters>
 
-This sets the temporary curve used for ephemeral ECDH modes. Only used by 
+This sets the temporary curve used for ephemeral ECDH modes. Only used by
 servers
 
 The B<value> argument is a curve name or the special value B<Automatic> which
@@ -258,22 +270,57 @@ picks an appropriate curve based on client and server preferences. The curve
 can be either the B<NIST> name (e.g. B<P-256>) or an OpenSSL OID name
 (e.g B<prime256v1>). Curve names are case sensitive.
 
+=item B<MinProtocol>
+
+This sets the minimum supported SSL, TLS or DTLS version.
+
+Currently supported protocol values are B<SSLv3>, B<TLSv1>, B<TLSv1.1>,
+B<TLSv1.2>, B<DTLSv1> and B<DTLSv1.2>.
+The value B<None> will disable the limit.
+
+=item B<MaxProtocol>
+
+This sets the maximum supported SSL, TLS or DTLS version.
+
+Currently supported protocol values are B<SSLv3>, B<TLSv1>, B<TLSv1.1>,
+B<TLSv1.2>, B<DTLSv1> and B<DTLSv1.2>.
+The value B<None> will disable the limit.
+
 =item B<Protocol>
 
-The supported versions of the SSL or TLS protocol.
+This can be used to enable or disable certain versions of the SSL,
+TLS or DTLS protocol.
 
-The B<value> argument is a comma separated list of supported protocols to
-enable or disable. If an protocol is preceded by B<-> that version is disabled.
-All versions are enabled by default, though applications may choose to
-explicitly disable some. Currently supported protocol values are 
-B<SSLv3>, B<TLSv1>, B<TLSv1.1> and B<TLSv1.2>. The special value B<ALL> refers
-to all supported versions.
+The B<value> argument is a comma separated list of supported protocols
+to enable or disable.
+If a protocol is preceded by B<-> that version is disabled.
+
+All protocol versions are enabled by default.
+You need to disable at least one protocol version for this setting have any
+effect.
+Only enabling some protocol versions does not disable the other protocol
+versions.
+
+Currently supported protocol values are B<SSLv3>, B<TLSv1>, B<TLSv1.1>,
+B<TLSv1.2>, B<DTLSv1> and B<DTLSv1.2>.
+The special value B<ALL> refers to all supported versions.
+
+This can't enable protocols that are disabled using B<MinProtocol>
+or B<MaxProtocol>, but can disable protocols that are still allowed
+by them.
+
+The B<Protocol> command is fragile and deprecated; do not use it.
+Use B<MinProtocol> and B<MaxProtocol> instead.
+If you do use B<Protocol>, make sure that the resulting range of enabled
+protocols has no "holes", e.g. if TLS 1.0 and TLS 1.2 are both enabled, make
+sure to also leave TLS 1.1 enabled.
 
 =item B<Options>
 
 The B<value> argument is a comma separated list of various flags to set.
-If a flag string is preceded B<-> it is disabled. See the
-B<SSL_CTX_set_options> function for more details of individual options.
+If a flag string is preceded B<-> it is disabled.
+See the L<SSL_CTX_set_options(3)> function for more details of
+individual options.
 
 Each option is listed below. Where an operation is enabled by default
 the B<-flag> syntax is needed to disable it.
@@ -404,7 +451,7 @@ can be checked instead. If -3 is returned a required argument is missing
 and an error is indicated. If 0 is returned some other error occurred and
 this can be reported back to the user.
 
-The function SSL_CONF_cmd_value_type() can be used by applications to 
+The function SSL_CONF_cmd_value_type() can be used by applications to
 check for the existence of a command or to perform additional syntax
 checking or translation of the command value. For example if the return
 value is B<SSL_CONF_TYPE_FILE> an application could translate a relative
@@ -416,11 +463,31 @@ Set supported signature algorithms:
 
  SSL_CONF_cmd(ctx, "SignatureAlgorithms", "ECDSA+SHA256:RSA+SHA256:DSA+SHA256");
 
-Enable all protocols except SSLv3:
+There are various ways to select the supported procotols.
+
+This set the minimum protocol version to TLSv1, and so disables SSLv3.
+This is the recommended way to disable protocols.
+
+ SSL_CONF_cmd(ctx, "MinProtocol", "TLSv1");
+
+The following also disables SSLv3:
+
+ SSL_CONF_cmd(ctx, "Protocol", "-SSLv3");
+
+The following will first enable all protocols, and then disable
+SSLv3.
+If no protocol versions were disabled before this has the same effect as
+"-SSLv3", but if some versions were disables this will re-enable them before
+disabling SSLv3.
 
  SSL_CONF_cmd(ctx, "Protocol", "ALL,-SSLv3");
 
 Only enable TLSv1.2:
+
+ SSL_CONF_cmd(ctx, "MinProtocol", "TLSv1.2");
+ SSL_CONF_cmd(ctx, "MaxProtocol", "TLSv1.2");
+
+This also only enables TLSv1.2:
 
  SSL_CONF_cmd(ctx, "Protocol", "-ALL,TLSv1.2");
 
@@ -461,17 +528,20 @@ L<SSL_CONF_CTX_new(3)>,
 L<SSL_CONF_CTX_set_flags(3)>,
 L<SSL_CONF_CTX_set1_prefix(3)>,
 L<SSL_CONF_CTX_set_ssl_ctx(3)>,
-L<SSL_CONF_cmd_argv(3)>
+L<SSL_CONF_cmd_argv(3)>,
+L<SSL_CTX_set_options(3)>
 
 =head1 HISTORY
 
 SSL_CONF_cmd() was first added to OpenSSL 1.0.2
 
-B<SSL_OP_NO_SSL2> doesn't have effect anymore since 1.1.0 but the define is kept
-for backward compatibility.
+B<SSL_OP_NO_SSL2> doesn't have effect since 1.1.0, but the macro is retained
+for backwards compatibility.
 
 B<SSL_CONF_TYPE_NONE> was first added to OpenSSL 1.1.0. In earlier versions of
 OpenSSL passing a command which didn't take an argument would return
 B<SSL_CONF_TYPE_UNKNOWN>.
+
+B<MinProtocol> and B<MaxProtocol> where added in OpenSSL 1.1.0.
 
 =cut

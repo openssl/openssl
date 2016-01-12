@@ -35,6 +35,9 @@ my $usage="Usage: Configure [no-<cipher> ...] [enable-<cipher> ...] [experimenta
 #
 # --cross-compile-prefix Add specified prefix to binutils components.
 #
+# --api         One of 0.9.8, 1.0.0 or 1.1.0.  Do not compile support for
+#               interfaces deprecated as of the specified OpenSSL version.
+#
 # no-hw-xxx     do not compile support for specific crypto hardware.
 #               Generic OpenSSL-style methods relating to this support
 #               are always compiled but return NULL if the hardware
@@ -97,7 +100,7 @@ my $usage="Usage: Configure [no-<cipher> ...] [enable-<cipher> ...] [experimenta
 # Minimum warning options... any contributions to OpenSSL should at least get
 # past these.
 
-my $gcc_devteam_warn = "-Wall -pedantic -DPEDANTIC -Wno-long-long -Wsign-compare -Wmissing-prototypes -Wshadow -Wformat -Wtype-limits -Werror -DCRYPTO_MDEBUG_ALL -DCRYPTO_MDEBUG_ABORT -DREF_CHECK -DDEBUG_UNUSED";
+my $gcc_devteam_warn = "-Wall -pedantic -DPEDANTIC -Wno-long-long -Wsign-compare -Wmissing-prototypes -Wshadow -Wformat -Wtype-limits -Werror -DREF_CHECK -DDEBUG_UNUSED";
 
 # These are used in addition to $gcc_devteam_warn when the compiler is clang.
 # TODO(openssl-team): fix problems and investigate if (at least) the
@@ -136,6 +139,16 @@ my $bits2="SIXTY_FOUR_BIT ";
 # sometimes -D_REENTRANT. FreeBSD 5.x expands it as -lc_r, which
 # seems to be sufficient?
 my $BSDthreads="-pthread -D_THREAD_SAFE -D_REENTRANT";
+
+#
+# API compability name to version number mapping.
+#
+my $maxapi = "1.1.0";           # API for "no-deprecated" builds
+my $apitable = {
+    "1.1.0" => "0x10100000L",
+    "1.0.0" => "0x10000000L",
+    "0.9.8" => "0x00908000L",
+};
 
 # table of known configurations, read in from files
 #
@@ -821,6 +834,7 @@ my @disablables = (
     "cmac",
     "cms",
     "comp",
+    "crypto-mdebug",
     "ct",
     "deprecated",
     "des",
@@ -890,24 +904,24 @@ my @disablables = (
 # All of the following is disabled by default (RC5 was enabled before 0.9.8):
 
 my %disabled = ( # "what"         => "comment" [or special keyword "experimental"]
-		 "deprecated" => "default",
 		 "ec_nistp_64_gcc_128" => "default",
 		 "jpake"          => "experimental",
 		 "md2"            => "default",
 		 "rc5"            => "default",
-		 "sctp"       => "default",
+		 "sctp"           => "default",
 		 "shared"         => "default",
 		 "ssl-trace"	  => "default",
 		 "store"	  => "experimental",
 		 "unit-test"	  => "default",
 		 "zlib"           => "default",
-		 "zlib-dynamic"   => "default"
+		 "zlib-dynamic"   => "default",
+		 "crypto-mdebug"  => "default",
 	       );
 my @experimental = ();
 
 # This is what $depflags will look like with the above defaults
 # (we need this to see if we should advise the user to run "make depend"):
-my $default_depflags = " -DOPENSSL_NO_DEPRECATED -DOPENSSL_NO_EC_NISTP_64_GCC_128 -DOPENSSL_NO_JPAKE -DOPENSSL_NO_MD2 -DOPENSSL_NO_RC5 -DOPENSSL_NO_SCTP -DOPENSSL_NO_SSL_TRACE -DOPENSSL_NO_STORE -DOPENSSL_NO_UNIT_TEST";
+my $default_depflags = " -DOPENSSL_NO_CRYPTO_MDEBUG -DOPENSSL_NO_EC_NISTP_64_GCC_128 -DOPENSSL_NO_JPAKE -DOPENSSL_NO_MD2 -DOPENSSL_NO_RC5 -DOPENSSL_NO_SCTP -DOPENSSL_NO_SSL_TRACE -DOPENSSL_NO_STORE -DOPENSSL_NO_UNIT_TEST";
 
 # Explicit "no-..." options will be collected in %disabled along with the defaults.
 # To remove something from %disabled, use "enable-foo" (unless it's experimental).
@@ -932,6 +946,7 @@ my $openssl_other_defines;
 my $libs;
 my $target;
 my $options;
+my $api;
 my $make_depend=0;
 my %withargs=();
 my $build_prefix = "release_";
@@ -1053,7 +1068,7 @@ PROCESS_ARGS:
 						{
 						$ENV{CROSS_COMPILE}=$1;
 						}
-					elsif (/^CC=\s*(?:\$\(CROSS_COMPILE\))?(.*?)/)
+					elsif (/^CC=\s*(?:\$\(CROSS_COMPILE\))?(.*?)$/)
 						{
 						$ENV{CC}=$1;
 						}
@@ -1085,6 +1100,10 @@ PROCESS_ARGS:
 			if (/^--prefix=(.*)$/)
 				{
 				$prefix=$1;
+				}
+			elsif (/^--api=(.*)$/)
+				{
+				$api=$1;
 				}
 			elsif (/^--libdir=(.*)$/)
 				{
@@ -1156,6 +1175,10 @@ PROCESS_ARGS:
 				{ $options .= " ".$_; }
 			}
 		}
+
+        if (defined($api) && !exists $apitable->{$api}) {
+		die "***** Unsupported api compatibility level: $api\n",
+        }
 
 	if (keys %unsupported_options)
 		{
@@ -1542,11 +1565,10 @@ if ($zlib)
 		}
 	}
 
-#Build the library with OPENSSL_USE_DEPRECATED if deprecation is not disabled
-if(!defined($disabled{"deprecated"}))
-	{
-	$cflags = "-DOPENSSL_USE_DEPRECATED $cflags";
-	}
+# With "deprecated" disable all deprecated features.
+if (defined($disabled{"deprecated"})) {
+        $api = $maxapi;
+}
 
 # You will find shlib_mark1 and shlib_mark2 explained in Makefile.org
 my $shared_mark = "";
@@ -1744,7 +1766,7 @@ open(IN,'<include/openssl/opensslv.h') || die "unable to read opensslv.h:$!\n";
 while (<IN>)
 	{
 	$version=$1 if /OPENSSL.VERSION.TEXT.*OpenSSL (\S+) /;
-	$version_num=$1 if /OPENSSL.VERSION.NUMBER.*0x(\S+)/;
+	$version_num=$1 if /OPENSSL.VERSION.NUMBER.*(0x\S+)/;
 	$shlib_version_number=$1 if /SHLIB_VERSION_NUMBER *"([^"]+)"/;
 	$shlib_version_history=$1 if /SHLIB_VERSION_HISTORY *"([^"]*)"/;
 	}
@@ -1762,6 +1784,12 @@ if ($shlib_version_number =~ /(^[0-9]*)\.([0-9\.]*)/)
 	$shlib_major=$1;
 	$shlib_minor=$2;
 	}
+
+if (defined($api)) {
+    my $apiflag = sprintf("-DOPENSSL_API_COMPAT=%s", $apitable->{$api});
+    $default_depflags .= " $apiflag";
+    $cflags .= " $apiflag";
+}
 
 my $ecc = $cc;
 $ecc = "clang" if `$cc --version 2>&1` =~ /clang/;
@@ -1991,6 +2019,11 @@ print OUT "#ifdef  __cplusplus\n";
 print OUT "extern \"C\" {\n";
 print OUT "#endif\n";
 print OUT "/* OpenSSL was configured with the following options: */\n";
+
+my $openssl_api_defines = "";
+if (defined($api)) {
+    $openssl_api_defines = sprintf "#define OPENSSL_MIN_API %s\n", $apitable->{$api};
+}
 my $openssl_algorithm_defines_trans = $openssl_algorithm_defines;
 $openssl_experimental_defines =~ s/^\s*#\s*define\s+OPENSSL_NO_(.*)/#ifndef OPENSSL_EXPERIMENTAL_$1\n# ifndef OPENSSL_NO_$1\n#  define OPENSSL_NO_$1\n# endif\n#endif/mg;
 $openssl_algorithm_defines_trans =~ s/^\s*#\s*define\s+OPENSSL_(.*)/# if defined(OPENSSL_$1) \&\& !defined($1)\n#  define $1\n# endif/mg;
@@ -1999,9 +2032,11 @@ $openssl_algorithm_defines = "   /* no ciphers excluded */\n" if $openssl_algori
 $openssl_thread_defines =~ s/^\s*#\s*define\s+(.*)/#ifndef $1\n# define $1\n#endif/mg;
 $openssl_sys_defines =~ s/^\s*#\s*define\s+(.*)/#ifndef $1\n# define $1\n#endif/mg;
 $openssl_other_defines =~ s/^\s*#\s*define\s+(.*)/#ifndef $1\n# define $1\n#endif/mg;
+
 print OUT $openssl_sys_defines;
 print OUT "#ifndef OPENSSL_DOING_MAKEDEPEND\n\n";
 print OUT $openssl_experimental_defines;
+print OUT $openssl_api_defines;
 print OUT "\n";
 print OUT $openssl_algorithm_defines;
 print OUT "\n#endif /* OPENSSL_DOING_MAKEDEPEND */\n\n";
@@ -2162,7 +2197,7 @@ EOF
 # create the ms/version32.rc file if needed
 if ($IsMK1MF && ($target !~ /^netware/)) {
 	my ($v1, $v2, $v3, $v4);
-	if ($version_num =~ /(^[0-9a-f]{1})([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})/i) {
+	if ($version_num =~ /^0x([0-9a-f]{1})([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{1})L$/i) {
 		$v1=hex $1;
 		$v2=hex $2;
 		$v3=hex $3;

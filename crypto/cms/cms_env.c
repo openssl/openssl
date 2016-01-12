@@ -65,8 +65,6 @@
 
 /* CMS EnvelopedData Utilities */
 
-DECLARE_STACK_OF(CMS_RecipientInfo)
-
 CMS_EnvelopedData *cms_get0_enveloped(CMS_ContentInfo *cms)
 {
     if (OBJ_obj2nid(cms->contentType) != NID_pkcs7_enveloped) {
@@ -236,7 +234,7 @@ CMS_RecipientInfo *CMS_add1_recipient_cert(CMS_ContentInfo *cms,
     if (!ri)
         goto merr;
 
-    pk = X509_get_pubkey(recip);
+    pk = X509_get0_pubkey(recip);
     if (!pk) {
         CMSerr(CMS_F_CMS_ADD1_RECIPIENT_CERT, CMS_R_ERROR_GETTING_PUBLIC_KEY);
         goto err;
@@ -264,15 +262,12 @@ CMS_RecipientInfo *CMS_add1_recipient_cert(CMS_ContentInfo *cms,
     if (!sk_CMS_RecipientInfo_push(env->recipientInfos, ri))
         goto merr;
 
-    EVP_PKEY_free(pk);
-
     return ri;
 
  merr:
     CMSerr(CMS_F_CMS_ADD1_RECIPIENT_CERT, ERR_R_MALLOC_FAILURE);
  err:
     M_ASN1_free_of(ri, CMS_RecipientInfo);
-    EVP_PKEY_free(pk);
     return NULL;
 
 }

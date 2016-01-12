@@ -197,27 +197,8 @@ CERT *ssl_cert_dup(CERT *cert)
 
 #ifndef OPENSSL_NO_DH
     if (cert->dh_tmp != NULL) {
-        ret->dh_tmp = DHparams_dup(cert->dh_tmp);
-        if (ret->dh_tmp == NULL) {
-            SSLerr(SSL_F_SSL_CERT_DUP, ERR_R_DH_LIB);
-            goto err;
-        }
-        if (cert->dh_tmp->priv_key) {
-            BIGNUM *b = BN_dup(cert->dh_tmp->priv_key);
-            if (!b) {
-                SSLerr(SSL_F_SSL_CERT_DUP, ERR_R_BN_LIB);
-                goto err;
-            }
-            ret->dh_tmp->priv_key = b;
-        }
-        if (cert->dh_tmp->pub_key) {
-            BIGNUM *b = BN_dup(cert->dh_tmp->pub_key);
-            if (!b) {
-                SSLerr(SSL_F_SSL_CERT_DUP, ERR_R_BN_LIB);
-                goto err;
-            }
-            ret->dh_tmp->pub_key = b;
-        }
+        ret->dh_tmp = cert->dh_tmp;
+        EVP_PKEY_up_ref(ret->dh_tmp);
     }
     ret->dh_tmp_cb = cert->dh_tmp_cb;
     ret->dh_tmp_auto = cert->dh_tmp_auto;
@@ -370,7 +351,7 @@ void ssl_cert_free(CERT *c)
 #endif
 
 #ifndef OPENSSL_NO_DH
-    DH_free(c->dh_tmp);
+    EVP_PKEY_free(c->dh_tmp);
 #endif
 
     ssl_cert_clear_certs(c);
@@ -505,6 +486,7 @@ int ssl_verify_cert_chain(SSL *s, STACK_OF(X509) *sk)
     int i;
     X509_STORE *verify_store;
     X509_STORE_CTX ctx;
+    X509_VERIFY_PARAM *param;
 
     if (s->cert->verify_store)
         verify_store = s->cert->verify_store;
@@ -519,9 +501,15 @@ int ssl_verify_cert_chain(SSL *s, STACK_OF(X509) *sk)
         SSLerr(SSL_F_SSL_VERIFY_CERT_CHAIN, ERR_R_X509_LIB);
         return (0);
     }
+    param = X509_STORE_CTX_get0_param(&ctx);
+
     /* Set suite B flags if needed */
     X509_STORE_CTX_set_flags(&ctx, tls1_suiteb(s));
     X509_STORE_CTX_set_ex_data(&ctx, SSL_get_ex_data_X509_STORE_CTX_idx(), s);
+
+    /* Verify via DANE if enabled */
+    if (DANETLS_ENABLED(&s->dane))
+        X509_STORE_CTX_set0_dane(&ctx, &s->dane);
 
     /*
      * We need to inherit the verify parameters. These can be determined by
@@ -531,9 +519,9 @@ int ssl_verify_cert_chain(SSL *s, STACK_OF(X509) *sk)
 
     X509_STORE_CTX_set_default(&ctx, s->server ? "ssl_client" : "ssl_server");
     /*
-     * Anything non-default in "param" should overwrite anything in the ctx.
+     * Anything non-default in "s->param" should overwrite anything in the ctx.
      */
-    X509_VERIFY_PARAM_set1(X509_STORE_CTX_get0_param(&ctx), s->param);
+    X509_VERIFY_PARAM_set1(param, s->param);
 
     if (s->verify_callback)
         X509_STORE_CTX_set_verify_cb(&ctx, s->verify_callback);
@@ -553,6 +541,10 @@ int ssl_verify_cert_chain(SSL *s, STACK_OF(X509) *sk)
     }
 
     s->verify_result = ctx.error;
+
+    /* Move peername from the store context params to the SSL handle's */
+    X509_VERIFY_PARAM_move_peername(s->param, param);
+
     X509_STORE_CTX_cleanup(&ctx);
 
     return (i);
@@ -1103,15 +1095,21 @@ static int ssl_security_default_callback(SSL *s, SSL_CTX *ctx, int op,
             break;
         }
     case SSL_SECOP_VERSION:
-        /* SSLv3 not allowed on level 2 */
-        if (nid <= SSL3_VERSION && level >= 2)
-            return 0;
-        /* TLS v1.1 and above only for level 3 */
-        if (nid <= TLS1_VERSION && level >= 3)
-            return 0;
-        /* TLS v1.2 only for level 4 and above */
-        if (nid <= TLS1_1_VERSION && level >= 4)
-            return 0;
+        if (!SSL_IS_DTLS(s)) {
+            /* SSLv3 not allowed at level 2 */
+            if (nid <= SSL3_VERSION && level >= 2)
+                return 0;
+            /* TLS v1.1 and above only for level 3 */
+            if (nid <= TLS1_VERSION && level >= 3)
+                return 0;
+            /* TLS v1.2 only for level 4 and above */
+            if (nid <= TLS1_1_VERSION && level >= 4)
+                return 0;
+        } else {
+            /* DTLS v1.2 only for level 4 and above */
+            if (DTLS_VERSION_LT(nid, DTLS1_2_VERSION) && level >= 4)
+                return 0;
+        }
         break;
 
     case SSL_SECOP_COMPRESSION:

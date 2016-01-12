@@ -103,7 +103,7 @@ X509_ALGOR *PKCS5_pbe2_set_scrypt(const EVP_CIPHER *cipher,
     X509_ALGOR *scheme = NULL, *kalg = NULL, *ret = NULL;
     int alg_nid;
     size_t keylen = 0;
-    EVP_CIPHER_CTX ctx;
+    EVP_CIPHER_CTX *ctx = NULL;
     unsigned char iv[EVP_MAX_IV_LENGTH];
     PBE2PARAM *pbe2 = NULL;
     ASN1_OBJECT *obj;
@@ -146,18 +146,20 @@ X509_ALGOR *PKCS5_pbe2_set_scrypt(const EVP_CIPHER *cipher,
             goto err;
     }
 
-    EVP_CIPHER_CTX_init(&ctx);
+    ctx = EVP_CIPHER_CTX_new();
+    if (ctx == NULL)
+        goto merr;
 
     /* Dummy cipherinit to just setup the IV */
-    if (EVP_CipherInit_ex(&ctx, cipher, NULL, NULL, iv, 0) == 0)
+    if (EVP_CipherInit_ex(ctx, cipher, NULL, NULL, iv, 0) == 0)
         goto err;
-    if (EVP_CIPHER_param_to_asn1(&ctx, scheme->parameter) < 0) {
+    if (EVP_CIPHER_param_to_asn1(ctx, scheme->parameter) < 0) {
         ASN1err(ASN1_F_PKCS5_PBE2_SET_SCRYPT,
                 ASN1_R_ERROR_SETTING_CIPHER_PARAMS);
-        EVP_CIPHER_CTX_cleanup(&ctx);
         goto err;
     }
-    EVP_CIPHER_CTX_cleanup(&ctx);
+    EVP_CIPHER_CTX_free(ctx);
+    ctx = NULL;
 
     /* If its RC2 then we'd better setup the key length */
 
@@ -199,6 +201,7 @@ X509_ALGOR *PKCS5_pbe2_set_scrypt(const EVP_CIPHER *cipher,
     PBE2PARAM_free(pbe2);
     X509_ALGOR_free(kalg);
     X509_ALGOR_free(ret);
+    EVP_CIPHER_CTX_free(ctx);
 
     return NULL;
 

@@ -109,7 +109,7 @@ X509_POLICY_NODE *level_find_node(const X509_POLICY_LEVEL *level,
 }
 
 X509_POLICY_NODE *level_add_node(X509_POLICY_LEVEL *level,
-                                 const X509_POLICY_DATA *data,
+                                 X509_POLICY_DATA *data,
                                  X509_POLICY_NODE *parent,
                                  X509_POLICY_TREE *tree)
 {

@@ -67,7 +67,7 @@
 # endif
 
 # include <openssl/ossl_typ.h>
-# ifdef OPENSSL_USE_DEPRECATED
+# if OPENSSL_API_COMPAT < 0x10100000L
 #  include <openssl/evp.h>
 #  include <openssl/bn.h>
 #  include <openssl/x509.h>
@@ -244,7 +244,7 @@ typedef struct STORE_OBJECT_st {
         BUF_MEM *arbitrary;
     } data;
 } STORE_OBJECT;
-DECLARE_STACK_OF(STORE_OBJECT)
+DEFINE_STACK_OF(STORE_OBJECT)
 STORE_OBJECT *STORE_OBJECT_new(void);
 void STORE_OBJECT_free(STORE_OBJECT *data);
 

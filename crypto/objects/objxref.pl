@@ -68,6 +68,8 @@ typedef struct {
     int pkey_id;
 } nid_triple;
 
+DEFINE_STACK_OF(nid_triple)
+
 static const nid_triple sigoid_srt[] = {
 EOF
 

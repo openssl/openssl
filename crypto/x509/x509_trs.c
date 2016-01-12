@@ -116,8 +116,7 @@ int X509_check_trust(X509 *x, int id, int flags)
 {
     X509_TRUST *pt;
     int idx;
-    if (id == -1)
-        return 1;
+
     /* We get this as a default value */
     if (id == 0) {
         int rv;

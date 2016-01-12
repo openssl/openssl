@@ -21,7 +21,7 @@ LIBOBJ= o_names.o obj_dat.o obj_lib.o obj_err.o obj_xref.o
 
 SRC= $(LIBSRC)
 
-HEADER=	obj_dat.h obj_xref.h
+HEADER=	obj_dat.h obj_xref.h obj_lcl.h
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 
@@ -74,13 +74,13 @@ clean:
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
 o_names.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
-o_names.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
-o_names.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
-o_names.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
-o_names.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
-o_names.o: ../../include/openssl/ossl_typ.h ../../include/openssl/safestack.h
-o_names.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-o_names.o: o_names.c
+o_names.o: ../../include/openssl/bn.h ../../include/openssl/crypto.h
+o_names.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
+o_names.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
+o_names.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
+o_names.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+o_names.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+o_names.o: ../../include/openssl/symhacks.h o_names.c obj_lcl.h
 obj_dat.o: ../../e_os.h ../../include/openssl/asn1.h
 obj_dat.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 obj_dat.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
@@ -90,29 +90,30 @@ obj_dat.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
 obj_dat.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 obj_dat.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 obj_dat.o: ../../include/openssl/symhacks.h ../include/internal/asn1_int.h
-obj_dat.o: ../include/internal/cryptlib.h obj_dat.c obj_dat.h
+obj_dat.o: ../include/internal/cryptlib.h obj_dat.c obj_dat.h obj_lcl.h
 obj_err.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
-obj_err.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
-obj_err.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
-obj_err.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
-obj_err.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
-obj_err.o: ../../include/openssl/ossl_typ.h ../../include/openssl/safestack.h
-obj_err.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-obj_err.o: obj_err.c
+obj_err.o: ../../include/openssl/bn.h ../../include/openssl/crypto.h
+obj_err.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
+obj_err.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
+obj_err.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
+obj_err.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+obj_err.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+obj_err.o: ../../include/openssl/symhacks.h obj_err.c
 obj_lib.o: ../../e_os.h ../../include/openssl/asn1.h
-obj_lib.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
-obj_lib.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
-obj_lib.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
-obj_lib.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
-obj_lib.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
-obj_lib.o: ../../include/openssl/ossl_typ.h ../../include/openssl/safestack.h
-obj_lib.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-obj_lib.o: ../include/internal/asn1_int.h ../include/internal/cryptlib.h
-obj_lib.o: obj_lib.c
+obj_lib.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
+obj_lib.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
+obj_lib.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
+obj_lib.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
+obj_lib.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
+obj_lib.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+obj_lib.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+obj_lib.o: ../../include/openssl/symhacks.h ../include/internal/asn1_int.h
+obj_lib.o: ../include/internal/cryptlib.h obj_lib.c
 obj_xref.o: ../../e_os.h ../../include/openssl/asn1.h
-obj_xref.o: ../../include/openssl/bio.h ../../include/openssl/crypto.h
-obj_xref.o: ../../include/openssl/e_os2.h ../../include/openssl/obj_mac.h
-obj_xref.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
+obj_xref.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
+obj_xref.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
+obj_xref.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
+obj_xref.o: ../../include/openssl/opensslconf.h
 obj_xref.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 obj_xref.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 obj_xref.o: ../../include/openssl/symhacks.h obj_xref.c obj_xref.h

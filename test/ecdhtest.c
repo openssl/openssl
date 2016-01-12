@@ -452,13 +452,8 @@ int main(int argc, char *argv[])
     int ret = 1;
     BIO *out;
 
-    CRYPTO_malloc_debug_init();
-    CRYPTO_dbg_set_options(V_CRYPTO_MDEBUG_ALL);
+    CRYPTO_set_mem_debug(1);
     CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
-
-# ifdef OPENSSL_SYS_WIN32
-    CRYPTO_malloc_init();
-# endif
 
     RAND_seed(rnd_seed, sizeof rnd_seed);
 
@@ -521,7 +516,9 @@ int main(int argc, char *argv[])
     BIO_free(out);
     CRYPTO_cleanup_all_ex_data();
     ERR_remove_thread_state(NULL);
+#ifndef OPENSSL_NO_CRYPTO_MDEBUG
     CRYPTO_mem_leaks_fp(stderr);
+#endif
     EXIT(ret);
 }
 #endif

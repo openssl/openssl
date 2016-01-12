@@ -63,12 +63,12 @@
 #ifndef OPENSSL_NO_ENGINE
 # include <openssl/engine.h>
 #endif
+#include <openssl/evp.h>
 #include "internal/asn1_int.h"
 #include "internal/evp_int.h"
 
 typedef int sk_cmp_fn_type(const char *const *a, const char *const *b);
 
-DECLARE_STACK_OF(EVP_PKEY_METHOD)
 static STACK_OF(EVP_PKEY_METHOD) *app_pkey_methods = NULL;
 
 static const EVP_PKEY_METHOD *standard_methods[] = {
