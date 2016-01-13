@@ -285,7 +285,7 @@ extern "C" {
 # endif
 
 /* Standard integer types */
-# if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L || \
+# if (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L) || \
      defined(__osf__) || defined(__sgi) || defined(__hpux) || \
      defined(OPENSSL_SYS_VMS)
 #  include <inttypes.h>
