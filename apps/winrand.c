@@ -133,13 +133,5 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
         return 0;
     }
 
-    if (RAND_event(iMsg, wParam, lParam) == 1 && seeded == 0) {
-        seeded = 1;
-        if (RAND_write_file(filename) <= 0)
-            MessageBox(hwnd, "Couldn't write random file!",
-                       "OpenSSL", MB_OK | MB_ICONERROR);
-        PostQuitMessage(0);
-    }
-
     return DefWindowProc(hwnd, iMsg, wParam, lParam);
 }
