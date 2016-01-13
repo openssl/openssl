@@ -126,6 +126,7 @@ int app_RAND_load_file(const char *file, int dont_warn)
 
     if (file == NULL)
         file = RAND_file_name(buffer, sizeof buffer);
+#ifndef OPENSSL_NO_EGD
     else if (RAND_egd(file) > 0) {
         /*
          * we try if the given filename is an EGD socket. if it is, we don't
@@ -134,6 +135,7 @@ int app_RAND_load_file(const char *file, int dont_warn)
         egdsocket = 1;
         return 1;
     }
+#endif
     if (file == NULL || !RAND_load_file(file, -1)) {
         if (RAND_status() == 0) {
             if (!dont_warn) {
@@ -161,7 +163,9 @@ long app_RAND_load_files(char *name)
     char *p, *n;
     int last;
     long tot = 0;
+#ifndef OPENSSL_NO_EGD
     int egd;
+#endif
 
     for (;;) {
         last = 0;
@@ -174,10 +178,12 @@ long app_RAND_load_files(char *name)
         if (*n == '\0')
             break;
 
+#ifndef OPENSSL_NO_EGD
         egd = RAND_egd(n);
         if (egd > 0)
             tot += egd;
         else
+#endif
             tot += RAND_load_file(n, -1);
         if (last)
             break;
