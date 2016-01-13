@@ -387,3 +387,8 @@ SSL_has_pending                         386	1_1_0	EXIST::FUNCTION:
 SSL_CIPHER_get_auth_nid                 387	1_1_0	EXIST::FUNCTION:
 SSL_CIPHER_get_kx_nid                   388	1_1_0	EXIST::FUNCTION:
 SSL_CIPHER_is_aead                      389	1_1_0	EXIST::FUNCTION:
+SSL_CIPHER_get_auth_nid                 390	1_1_0	EXIST::FUNCTION:
+SSL_CIPHER_get_kx_nid                   391	1_1_0	EXIST::FUNCTION:
+SSL_CIPHER_is_aead                      392	1_1_0	EXIST::FUNCTION:
+SSL_set_default_read_buffer_len         393	1_1_0	EXIST::FUNCTION:
+SSL_CTX_set_default_read_buffer_len     394	1_1_0	EXIST::FUNCTION:
