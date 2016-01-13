@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-RAND_add, RAND_seed, RAND_status, RAND_event - add
+RAND_add, RAND_seed, RAND_status - add
 entropy to the PRNG
 
 =head1 SYNOPSIS
@@ -14,8 +14,6 @@ entropy to the PRNG
  void RAND_add(const void *buf, int num, double entropy);
 
  int  RAND_status(void);
-
- int  RAND_event(UINT iMsg, WPARAM wParam, LPARAM lParam);
 
 =head1 DESCRIPTION
 
@@ -41,16 +39,9 @@ or L<RAND_load_file(3)>.
 
 RAND_seed() is equivalent to RAND_add() when B<num == entropy>.
 
-RAND_event() collects the entropy from Windows events such as mouse
-movements and other user interaction. It should be called with the
-B<iMsg>, B<wParam> and B<lParam> arguments of I<all> messages sent to
-the window procedure. It will estimate the entropy contained in the
-event message (if any), and add it to the PRNG. The program can then
-process the messages as usual.
-
 =head1 RETURN VALUES
 
-RAND_status() and RAND_event() return 1 if the PRNG has been seeded
+RAND_status() returns 1 if the PRNG has been seeded
 with enough data, 0 otherwise.
 
 The other functions do not return values.
