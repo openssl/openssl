@@ -281,7 +281,7 @@ static int check(X509_STORE *ctx, char *file,
     if (crls)
         X509_STORE_CTX_set0_crls(csc, crls);
     i = X509_verify_cert(csc);
-    if (i > 0) {
+    if (i > 0 && X509_STORE_CTX_get_error(csc) == X509_V_OK) {
         printf("%s: OK\n", (file == NULL) ? "stdin" : file);
         ret = 1;
         if (show_chain) {
