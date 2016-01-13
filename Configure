@@ -2089,8 +2089,8 @@ while (<IN>)
 		{ printf OUT "#%s EIGHT_BIT\n",($b8)?"define":"undef"; }
 	elsif	(/^#((define)|(undef))\s+BN_LLONG\s*$/)
 		{ printf OUT "#%s BN_LLONG\n",($bn_ll)?"define":"undef"; }
-	elsif	(/^\#define\s+DES_LONG\s+.*/)
-		{ printf OUT "#define DES_LONG unsigned %s\n",
+	elsif	(/^\#define\s+OSSL_DES_LONG\s+.*/)
+		{ printf OUT "#define OSSL_DES_LONG unsigned %s\n",
 			($des_int)?'int':'long'; }
 	elsif	(/^\#(define|undef)\s+DES_PTR/)
 		{ printf OUT "#%s DES_PTR\n",($des_ptr)?'define':'undef'; }
