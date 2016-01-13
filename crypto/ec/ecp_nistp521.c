@@ -1585,7 +1585,7 @@ static void batch_mul(felem x_out, felem y_out, felem z_out,
 }
 
 /* Precomputation for the group generator. */
-struct nistp512_pre_comp_st {
+struct nistp521_pre_comp_st {
     felem g_pre_comp[16][3];
     int references;
 };
@@ -2104,7 +2104,7 @@ int ec_GFp_nistp521_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
 
 int ec_GFp_nistp521_have_precompute_mult(const EC_GROUP *group)
 {
-    return HAVEPRECOMP(group, nistp512);
+    return HAVEPRECOMP(group, nistp521);
 }
 
 #else
