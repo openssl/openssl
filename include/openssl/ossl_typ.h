@@ -201,7 +201,8 @@ typedef struct ocsp_req_ctx_st OCSP_REQ_CTX;
 typedef struct ocsp_response_st OCSP_RESPONSE;
 typedef struct ocsp_responder_id_st OCSP_RESPID;
 
-#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L
+#if (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L) \
+    && !defined(OPENSSL_SYS_VMS);
 typedef intmax_t ossl_intmax_t;
 typedef uintmax_t ossl_uintmax_t;
 #else
