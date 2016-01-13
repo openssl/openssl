@@ -1808,6 +1808,9 @@ __owur int SSL_get_ex_data_X509_STORE_CTX_idx(void);
 # define SSL_set_max_pipelines(ssl,m) \
         SSL_ctrl(ssl,SSL_CTRL_SET_MAX_PIPELINES,m,NULL)
 
+void SSL_CTX_set_default_read_buffer_len(SSL_CTX *ctx, size_t len);
+void SSL_set_default_read_buffer_len(SSL *s, size_t len);
+
      /* NB: the keylength is only applicable when is_export is true */
 # ifndef OPENSSL_NO_DH
 void SSL_CTX_set_tmp_dh_callback(SSL_CTX *ctx,

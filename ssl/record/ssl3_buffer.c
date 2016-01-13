@@ -120,16 +120,13 @@ void SSL3_BUFFER_set_data(SSL3_BUFFER *b, const unsigned char *d, int n)
 }
 
 /*
- * Clear the contents of an SSL3_BUFFER but retain any memory allocated
+ * Clear the contents of an SSL3_BUFFER but retain any memory allocated. Also
+ * retains the default_len setting
  */
 void SSL3_BUFFER_clear(SSL3_BUFFER *b)
 {
-    unsigned char *buf = b->buf;
-    size_t len = b->len;
-
-    memset(b, 0, sizeof(*b));
-    b->buf = buf;
-    b->len = len;
+    b->offset = 0;
+    b->left = 0;
 }
 
 void SSL3_BUFFER_release(SSL3_BUFFER *b)
@@ -162,6 +159,8 @@ int ssl3_setup_read_buffer(SSL *s)
         if (ssl_allow_compression(s))
             len += SSL3_RT_MAX_COMPRESSED_OVERHEAD;
 #endif
+        if (b->default_len > len)
+            len = b->default_len;
         if ((p = OPENSSL_malloc(len)) == NULL)
             goto err;
         b->buf = p;
