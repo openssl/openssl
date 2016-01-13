@@ -114,9 +114,11 @@ static void ec_group_free_precomp(EC_GROUP *group)
     switch (group->pre_comp_type) {
     default:
         break;
+#ifdef ECP_NISTZ256_REFERENCE_IMPLEMENTATION
     case pct_nistz256:
         EC_nistz256_pre_comp_free(group->pre_comp.nistz256);
         break;
+#endif
 #ifndef OPENSSL_NO_EC_NISTP_64_GCC_128
     case pct_nistp224:
         EC_nistp224_pre_comp_free(group->pre_comp.nistp224);
@@ -190,9 +192,11 @@ int EC_GROUP_copy(EC_GROUP *dest, const EC_GROUP *src)
     default:
         dest->pre_comp.ec = NULL;
         break;
+#ifdef ECP_NISTZ256_REFERENCE_IMPLEMENTATION
     case pct_nistz256:
         dest->pre_comp.nistz256 = EC_nistz256_pre_comp_dup(src->pre_comp.nistz256);
         break;
+#endif
 #ifndef OPENSSL_NO_EC_NISTP_64_GCC_128
     case pct_nistp224:
         dest->pre_comp.nistp224 = EC_nistp224_pre_comp_dup(src->pre_comp.nistp224);
