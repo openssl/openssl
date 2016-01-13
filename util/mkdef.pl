@@ -123,8 +123,6 @@ my %disabled_algorithms;
 foreach (@known_algorithms) {
     $disabled_algorithms{$_} = 0;
 }
-# disabled by default
-$disabled_algorithms{"STATIC_ENGINE"} = 1;
 
 my $options="";
 open(IN,"<Makefile") || die "unable to open Makefile!\n";
@@ -1198,7 +1196,7 @@ sub print_def_file
 	my $prevsymversion = "", $prevprevsymversion = "";
         # For VMS
         my $prevnum = 0;
-        my $symvtextcount = 0;
+        my $symbolcount = 0;
 
 	if ($W32)
 		{ $libname.="32"; }
@@ -1234,13 +1232,11 @@ EOF
                 {
                 my $libref = $name eq "ssl" ? "LIBCRYPTO.EXE /SHARE" : "";
                 print OUT <<"EOF";
-IDENTIFICATION="V$version"
-CASE_SENSITIVE=YES
+IDENTIFICATION="LIB$libname V$version"
 LIB$libname.OLB /LIBRARY
 $libref
 SYMBOL_VECTOR=(-
 EOF
-                $symvtextcount = 16; # length of "SYMBOL_VECTOR=(-"
                 }
 
 	(@r)=grep(/^\w+(\{[0-9]+\})?\\.*?:.*?:FUNCTION/,@symbols);
@@ -1304,34 +1300,25 @@ EOF
 						print OUT "        $s2;\n";
                                         } elsif ($VMS) {
                                             while(++$prevnum < $n) {
-                                                my $symline="SPARE, SPARE -";
-                                                if ($symvtextcount + length($symline) + 1 > 1024) {
+                                                if ($symbolcount > 1023) {
                                                     print OUT ")\nSYMBOL_VECTOR=(-\n";
-                                                    $symvtextcount = 16; # length of "SYMBOL_VECTOR=(-"
+                                                    $symbolcount = 0;
                                                 }
-                                                if ($symvtextcount > 16) {
-                                                    $symline = ",".$symline;
-                                                }
-                                                print OUT "    $symline\n";
-                                                $symvtextcount += length($symline);
+                                                print OUT $symbolcount
+                                                    ? "    ," : "    ";
+                                                print OUT "dummy$prevnum=PRIVATE_PROCEDURE -\n";
+                                                $symbolcount++;
                                             }
                                             (my $s_uc = $s) =~ tr/a-z/A-Z/;
-                                            my $symtype=
-                                                $v ? "DATA" : "PROCEDURE";
-                                            my $symline=
-                                                ($s_uc ne $s
-                                                 ? "$s_uc/$s=$symtype, $s=$symtype"
-                                                 : "$s=$symtype, SPARE")
-                                                ." -";
-                                            if ($symvtextcount + length($symline) + 1 > 1024) {
+                                            if ($symbolcount > 1023) {
                                                 print OUT ")\nSYMBOL_VECTOR=(-\n";
-                                                $symvtextcount = 16; # length of "SYMBOL_VECTOR=(-"
+                                                $symbolcount = 0;
                                             }
-                                            if ($symvtextcount > 16) {
-                                                $symline = ",".$symline;
-                                            }
-                                            print OUT "    $symline\n";
-                                            $symvtextcount += length($symline);
+                                            print OUT $symbolcount
+                                                ? "    ," : "    ";
+                                            print OUT "$s_uc/$s="
+                                                , ($v ? "DATA" : "PROCEDURE"), " -\n";
+                                            $symbolcount++;
 					} elsif($v && !$OS2) {
 						printf OUT "    %s%-39s @%-8d DATA\n",
 								($W32)?"":"_",$s2,$n;

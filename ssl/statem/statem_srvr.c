@@ -2926,7 +2926,7 @@ int tls_construct_server_certificate(SSL *s)
 int tls_construct_new_session_ticket(SSL *s)
 {
     unsigned char *senc = NULL;
-    EVP_CIPHER_CTX *ctx;
+    EVP_CIPHER_CTX ctx;
     HMAC_CTX *hctx = NULL;
     unsigned char *p, *macstart;
     const unsigned char *const_p;
@@ -2953,7 +2953,7 @@ int tls_construct_new_session_ticket(SSL *s)
         return 0;
     }
 
-    ctx = EVP_CIPHER_CTX_new();
+    EVP_CIPHER_CTX_init(&ctx);
     hctx = HMAC_CTX_new();
 
     p = senc;
@@ -3000,12 +3000,12 @@ int tls_construct_new_session_ticket(SSL *s)
      * all the work otherwise use generated values from parent ctx.
      */
     if (tctx->tlsext_ticket_key_cb) {
-        if (tctx->tlsext_ticket_key_cb(s, key_name, iv, ctx, hctx, 1) < 0)
+        if (tctx->tlsext_ticket_key_cb(s, key_name, iv, &ctx, hctx, 1) < 0)
             goto err;
     } else {
         if (RAND_bytes(iv, 16) <= 0)
             goto err;
-        if (!EVP_EncryptInit_ex(ctx, EVP_aes_128_cbc(), NULL,
+        if (!EVP_EncryptInit_ex(&ctx, EVP_aes_128_cbc(), NULL,
                                 tctx->tlsext_tick_aes_key, iv))
             goto err;
         if (!HMAC_Init_ex(hctx, tctx->tlsext_tick_hmac_key, 16,
@@ -3028,13 +3028,13 @@ int tls_construct_new_session_ticket(SSL *s)
     memcpy(p, key_name, 16);
     p += 16;
     /* output IV */
-    memcpy(p, iv, EVP_CIPHER_CTX_iv_length(ctx));
-    p += EVP_CIPHER_CTX_iv_length(ctx);
+    memcpy(p, iv, EVP_CIPHER_CTX_iv_length(&ctx));
+    p += EVP_CIPHER_CTX_iv_length(&ctx);
     /* Encrypt session data */
-    if (!EVP_EncryptUpdate(ctx, p, &len, senc, slen))
+    if (!EVP_EncryptUpdate(&ctx, p, &len, senc, slen))
         goto err;
     p += len;
-    if (!EVP_EncryptFinal(ctx, p, &len))
+    if (!EVP_EncryptFinal(&ctx, p, &len))
         goto err;
     p += len;
 
@@ -3043,10 +3043,8 @@ int tls_construct_new_session_ticket(SSL *s)
     if (!HMAC_Final(hctx, p, &hlen))
         goto err;
 
-    EVP_CIPHER_CTX_free(ctx);
+    EVP_CIPHER_CTX_cleanup(&ctx);
     HMAC_CTX_free(hctx);
-    ctx = NULL;
-    hctx = NULL;
 
     p += hlen;
     /* Now write out lengths: p points to end of data written */
@@ -3062,7 +3060,7 @@ int tls_construct_new_session_ticket(SSL *s)
     return 1;
  err:
     OPENSSL_free(senc);
-    EVP_CIPHER_CTX_free(ctx);
+    EVP_CIPHER_CTX_cleanup(&ctx);
     HMAC_CTX_free(hctx);
     ossl_statem_set_error(s);
     return 0;

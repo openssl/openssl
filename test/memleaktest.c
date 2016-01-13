@@ -59,10 +59,9 @@
 
 int main(int argc, char **argv)
 {
-#ifndef OPENSSL_NO_CRYPTO_MDEBUG
+#ifdef CRYPTO_MDEBUG
     char *p;
     char *lost;
-    int noleak;
 
     p = getenv("OPENSSL_DEBUG_MEMORY");
     if (p != NULL && strcmp(p, "on") == 0)
@@ -75,17 +74,15 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    if (argv[1] && strcmp(argv[1], "freeit") == 0) {
+    if (argv[1] && strcmp(argv[1], "freeit") == 0)
         OPENSSL_free(lost);
-        lost = NULL;
-    }
 
-    noleak = CRYPTO_mem_leaks_fp(stderr);
-    /* If -1 return value something bad happened */
-    if (noleak == -1)
-        return 1;
-    return ((lost != NULL) ^ (noleak == 0));
-#else
+    CRYPTO_mem_leaks_fp(stderr);
     return 0;
+#else
+    if (argv[1] && strcmp(argv[1], "freeit") == 0)
+        return 0;
+    fprintf(stderr, "Leak simulated\n");
+    return 1;
 #endif
 }

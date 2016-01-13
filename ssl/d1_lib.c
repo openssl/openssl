@@ -515,7 +515,7 @@ int dtls1_listen(SSL *s, struct sockaddr *client)
     /*
      * We only peek at incoming ClientHello's until we're sure we are going to
      * to respond with a HelloVerifyRequest. If its a ClientHello with a valid
-     * cookie then we leave it in the BIO for accept to handle.
+     * cookie then we leave it in the BIO for dtls1_accept to handle.
      */
     BIO_ctrl(SSL_get_rbio(s), BIO_CTRL_DGRAM_SET_PEEK_MODE, 1, NULL);
 

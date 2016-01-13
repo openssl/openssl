@@ -15,4 +15,4 @@ plan tests => 1;
 
 note("Expect some failures and expired certificate");
 ok(run(app(["openssl", "verify", "-CApath", top_dir("certs", "demo"),
-	    glob(top_file("certs", "demo", "*.pem"))])), "verying demo certs");
+	    glob(top_file("certs", "demo", "*.pem"))])), "verifying demo certs");

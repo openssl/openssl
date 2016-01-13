@@ -12,7 +12,7 @@ my $recipesdir = catdir($top, "test", "recipes");
 my $testlib = catdir($top, "test", "testlib");
 my $utillib = catdir($top, "util");
 
-# It seems that $switches is getting interpretted with 'eval' or something
+# It seems that $switches is getting interpreted with 'eval' or something
 # like that, and that we need to take care of backslashes or they will
 # disappear along the way.
 $testlib =~ s|\\|\\\\|g if $^O eq "MSWin32";

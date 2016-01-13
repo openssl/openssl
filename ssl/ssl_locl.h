@@ -685,13 +685,16 @@ typedef struct srp_ctx_st {
 
 # endif
 
+typedef struct ssl_comp_st SSL_COMP;
+
 struct ssl_comp_st {
     int id;
     const char *name;
     COMP_METHOD *method;
 };
 
-DEFINE_LHASH_OF(SSL_SESSION);
+DEFINE_STACK_OF(SSL_COMP)
+DECLARE_LHASH_OF(SSL_SESSION);
 
 
 struct ssl_ctx_st {
