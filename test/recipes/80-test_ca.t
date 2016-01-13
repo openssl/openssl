@@ -13,7 +13,8 @@ setup("test_ca");
 my $perl = $^X;
 $ENV{OPENSSL} = cmdstr(app(["openssl"]));
 my $CA_pl = top_file("apps", "CA.pl");
-my $std_openssl_cnf = top_file("apps", "openssl.cnf");
+my $std_openssl_cnf = $^O eq "VMS"
+    ? top_file("apps", "openssl-vms.cnf") : top_file("apps", "openssl.cnf");
 
 ($perl) = quotify($perl) unless $^O eq "VMS"; # never quotify a command on VMS. Ever!
 
@@ -46,9 +47,10 @@ unlink "newcert.pem", "newreq.pem";
 
 
 sub yes {
+    my $cntr = 10;
     open(PIPE, "|-", join(" ",@_));
     local $SIG{PIPE} = "IGNORE";
-    1 while print PIPE "y\n";
+    1 while $cntr-- > 0 && print PIPE "y\n";
     close PIPE;
     return 0;
 }

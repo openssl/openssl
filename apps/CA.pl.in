@@ -164,7 +164,7 @@ if ($WHAT eq '-newcert' ) {
     my @files = @ARGV ? @ARGV : ( $NEWCERT );
     my $file;
     foreach $file (@files) {
-        my $status = run("$VERIFY -CAfile ${CATOP}/$CACERT $file");
+        my $status = run("$VERIFY \"-CAfile\" ${CATOP}/$CACERT $file");
         $RET = $status if $status != 0;
     }
 } elsif ($WHAT eq '-crl' ) {

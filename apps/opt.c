@@ -75,6 +75,11 @@ static const OPTIONS *unknown;
 static const OPTIONS *opts;
 static char prog[40];
 
+#if !defined(__STDC_VERSION__) || __STDC_VERSION__ < 199901L
+#define opt_imax opt_long
+#define opt_umax opt_ulong
+#endif
+
 /*
  * Return the simple name of the program; removing various platform gunk.
  */
@@ -181,10 +186,13 @@ char *opt_init(int ac, char **av, const OPTIONS *o)
         /* Make sure options are legit. */
         assert(o->name[0] != '-');
         assert(o->retval > 0);
-        assert(i == 0 || i == '-'
-               || i == 'n' || i == 'p' || i == 'u'
-               || i == 's' || i == '<' || i == '>' || i == '/'
-               || i == 'f' || i == 'F');
+        switch (i) {
+        case   0: case '-': case '/': case '<': case '>': case 'F': case 'M':
+        case 'L': case 'U': case 'f': case 'n': case 'p': case 's': case 'u':
+            break;
+        default:
+            assert(0);
+        }
 
         /* Make sure there are no duplicates. */
         for (next = o + 1; next->name; ++next) {
@@ -389,6 +397,53 @@ int opt_long(const char *value, long *result)
     return 1;
 }
 
+#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L
+
+/* Parse an intmax_t, put it into *result; return 0 on failure, else 1. */
+int opt_imax(const char *value, intmax_t *result)
+{
+    int oerrno = errno;
+    intmax_t m;
+    char *endp;
+
+    m = strtoimax(value, &endp, 0);
+    if (*endp
+            || endp == value
+            || ((m == INTMAX_MAX || m == INTMAX_MIN) && errno == ERANGE)
+            || (m == 0 && errno != 0)) {
+        BIO_printf(bio_err, "%s: Can't parse \"%s\" as a number\n",
+                   prog, value);
+        errno = oerrno;
+        return 0;
+    }
+    *result = m;
+    errno = oerrno;
+    return 1;
+}
+
+/* Parse a uintmax_t, put it into *result; return 0 on failure, else 1. */
+int opt_umax(const char *value, uintmax_t *result)
+{
+    int oerrno = errno;
+    uintmax_t m;
+    char *endp;
+
+    m = strtoumax(value, &endp, 0);
+    if (*endp
+            || endp == value
+            || (m == UINTMAX_MAX && errno == ERANGE)
+            || (m == 0 && errno != 0)) {
+        BIO_printf(bio_err, "%s: Can't parse \"%s\" as a number\n",
+                   prog, value);
+        errno = oerrno;
+        return 0;
+    }
+    *result = m;
+    errno = oerrno;
+    return 1;
+}
+#endif
+
 /*
  * Parse an unsigned long, put it into *result; return 0 on failure, else 1.
  */
@@ -422,8 +477,8 @@ enum range { OPT_V_ENUM };
 
 int opt_verify(int opt, X509_VERIFY_PARAM *vpm)
 {
-    long l;
     int i;
+    ossl_intmax_t t = 0;
     ASN1_OBJECT *otmp;
     X509_PURPOSE *xptmp;
     const X509_VERIFY_PARAM *vtmp;
@@ -469,10 +524,14 @@ int opt_verify(int opt, X509_VERIFY_PARAM *vpm)
             X509_VERIFY_PARAM_set_depth(vpm, i);
         break;
     case OPT_V_ATTIME:
-        /* If we have C99 we could use intmax_t for all time_t values */
-        opt_long(opt_arg(), &l);
-        if (l)
-            X509_VERIFY_PARAM_set_time(vpm, (time_t)l);
+        if (!opt_imax(opt_arg(), &t))
+            return 0;
+        if (t != (time_t)t) {
+            BIO_printf(bio_err, "%s: epoch time out of range %s\n",
+                       prog, opt_arg());
+            return 0;
+        }
+        X509_VERIFY_PARAM_set_time(vpm, (time_t)t);
         break;
     case OPT_V_VERIFY_HOSTNAME:
         if (!X509_VERIFY_PARAM_set1_host(vpm, opt_arg(), 0))
@@ -562,7 +621,10 @@ int opt_next(void)
     char *p;
     const OPTIONS *o;
     int ival;
-    unsigned long uval;
+    long lval;
+    unsigned long ulval;
+    ossl_intmax_t imval;
+    ossl_uintmax_t umval;
 
     /* Look at current arg; at end of the list? */
     arg = NULL;
@@ -649,8 +711,32 @@ int opt_next(void)
                 return -1;
             }
             break;
+        case 'M':
+            if (!opt_imax(arg, &imval)) {
+                BIO_printf(bio_err,
+                           "%s: Invalid number \"%s\" for -%s\n",
+                           prog, arg, o->name);
+                return -1;
+            }
+            break;
+        case 'U':
+            if (!opt_umax(arg, &umval)) {
+                BIO_printf(bio_err,
+                           "%s: Invalid number \"%s\" for -%s\n",
+                           prog, arg, o->name);
+                return -1;
+            }
+            break;
+        case 'L':
+            if (!opt_long(arg, &lval)) {
+                BIO_printf(bio_err,
+                           "%s: Invalid number \"%s\" for -%s\n",
+                           prog, arg, o->name);
+                return -1;
+            }
+            break;
         case 'u':
-            if (!opt_ulong(arg, &uval)) {
+            if (!opt_ulong(arg, &ulval)) {
                 BIO_printf(bio_err,
                            "%s: Invalid number \"%s\" for -%s\n",
                            prog, arg, o->name);

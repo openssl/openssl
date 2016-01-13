@@ -10,7 +10,7 @@
 /.dir-locals.el
 
 # Top level excludes
-/Makefile.bak
+/Makefile.orig
 /Makefile
 /MINFO
 /TABLE
@@ -21,6 +21,8 @@
 /makefile.*
 /out.*
 /tmp.*
+
+**/Makefile
 
 /test/*.ss
 /test/*.srl

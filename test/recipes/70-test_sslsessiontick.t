@@ -60,6 +60,9 @@ use File::Temp qw(tempfile);
 my $test_name = "test_sslsessiontick";
 setup($test_name);
 
+plan skip_all => "TLSProxy isn't usable on $^O"
+    if $^O =~ /^VMS$/;
+
 plan skip_all => "$test_name can only be performed with OpenSSL configured shared"
     unless (map { s/\R//; s/^SHARED_LIBS=\s*//; $_ }
 	    grep { /^SHARED_LIBS=/ }

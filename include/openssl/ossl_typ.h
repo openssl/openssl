@@ -55,6 +55,8 @@
 #ifndef HEADER_OPENSSL_TYPES_H
 # define HEADER_OPENSSL_TYPES_H
 
+#include <limits.h>
+
 #ifdef  __cplusplus
 extern "C" {
 #endif
@@ -198,6 +200,20 @@ typedef struct crypto_ex_data_st CRYPTO_EX_DATA;
 typedef struct ocsp_req_ctx_st OCSP_REQ_CTX;
 typedef struct ocsp_response_st OCSP_RESPONSE;
 typedef struct ocsp_responder_id_st OCSP_RESPID;
+
+#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L
+typedef intmax_t ossl_intmax_t;
+typedef uintmax_t ossl_uintmax_t;
+#else
+/*
+ * Not long long, because the C-library can only be expected to provide
+ * strtoll(), strtoull() at the same time as intmax_t and strtoimax(),
+ * strtoumax().  Since we use these for parsing arguments, we need the
+ * conversion functions, not just the sizes.
+ */
+typedef long ossl_intmax_t;
+typedef unsigned long ossl_uintmax_t;
+#endif
 
 #ifdef  __cplusplus
 }
