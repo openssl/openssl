@@ -121,13 +121,6 @@
 # include <tlhelp32.h>
 
 /*
- * Limit the time spent walking through the heap, processes, threads and
- * modules to a maximum of 1000 milliseconds each, unless CryptoGenRandom
- * failed
- */
-# define MAXDELAY 1000
-
-/*
  * Intel hardware RNG CSP -- available from
  * http://developer.intel.com/design/security/rng/redist_license.htm
  */
@@ -135,29 +128,6 @@
 # define INTEL_DEF_PROV L"Intel Hardware Cryptographic Service Provider"
 
 static void readtimer(void);
-
-/*
- * It appears like CURSORINFO, PCURSORINFO and LPCURSORINFO are only defined
- * when WINVER is 0x0500 and up, which currently only happens on Win2000.
- * Unfortunately, those are typedefs, so they're a little bit difficult to
- * detect properly.  On the other hand, the macro CURSOR_SHOWING is defined
- * within the same conditional, so it can be use to detect the absence of
- * said typedefs.
- */
-
-# ifndef CURSOR_SHOWING
-/*
- * Information about the global cursor.
- */
-typedef struct tagCURSORINFO {
-    DWORD cbSize;
-    DWORD flags;
-    HCURSOR hCursor;
-    POINT ptScreenPos;
-} CURSORINFO, *PCURSORINFO, *LPCURSORINFO;
-
-#  define CURSOR_SHOWING     0x00000001
-# endif                         /* CURSOR_SHOWING */
 
 int RAND_poll(void)
 {
@@ -195,44 +165,6 @@ int RAND_poll(void)
     RAND_add(&w, sizeof(w), 1);
 
     return (1);
-}
-
-int RAND_event(UINT iMsg, WPARAM wParam, LPARAM lParam)
-{
-    double add_entropy = 0;
-
-    switch (iMsg) {
-    case WM_KEYDOWN:
-        {
-            static WPARAM key;
-            if (key != wParam)
-                add_entropy = 0.05;
-            key = wParam;
-        }
-        break;
-    case WM_MOUSEMOVE:
-        {
-            static int lastx, lasty, lastdx, lastdy;
-            int x, y, dx, dy;
-
-            x = LOWORD(lParam);
-            y = HIWORD(lParam);
-            dx = lastx - x;
-            dy = lasty - y;
-            if (dx != 0 && dy != 0 && dx - lastdx != 0 && dy - lastdy != 0)
-                add_entropy = .2;
-            lastx = x, lasty = y;
-            lastdx = dx, lastdy = dy;
-        }
-        break;
-    }
-
-    readtimer();
-    RAND_add(&iMsg, sizeof(iMsg), add_entropy);
-    RAND_add(&wParam, sizeof(wParam), 0);
-    RAND_add(&lParam, sizeof(lParam), 0);
-
-    return (RAND_status());
 }
 
 /* feed timing information to the PRNG */
