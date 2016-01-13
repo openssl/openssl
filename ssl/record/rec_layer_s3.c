@@ -241,6 +241,16 @@ int ssl3_pending(const SSL *s)
     return num;
 }
 
+void SSL_CTX_set_default_read_buffer_len(SSL_CTX *ctx, size_t len)
+{
+    ctx->default_read_buf_len = len;
+}
+
+void SSL_set_default_read_buffer_len(SSL *s, size_t len)
+{
+    SSL3_BUFFER_set_default_len(RECORD_LAYER_get_rbuf(&s->rlayer), len);
+}
+
 const char *SSL_rstate_string_long(const SSL *s)
 {
     const char *str;

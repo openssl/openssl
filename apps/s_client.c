@@ -652,7 +652,7 @@ typedef enum OPTION_choice {
     OPT_CHAINCAFILE, OPT_VERIFYCAFILE, OPT_NEXTPROTONEG, OPT_ALPN,
     OPT_SERVERINFO, OPT_STARTTLS, OPT_SERVERNAME, OPT_JPAKE,
     OPT_USE_SRTP, OPT_KEYMATEXPORT, OPT_KEYMATEXPORTLEN, OPT_SMTPHOST,
-    OPT_ASYNC, OPT_SPLIT_SEND_FRAG, OPT_MAX_PIPELINES,
+    OPT_ASYNC, OPT_SPLIT_SEND_FRAG, OPT_MAX_PIPELINES, OPT_READ_BUF,
     OPT_V_ENUM,
     OPT_X_ENUM,
     OPT_S_ENUM,
@@ -748,6 +748,8 @@ OPTIONS s_client_options[] = {
      "Size used to split data for encrypt/decrypt pipelines"},
     {"max_pipelines", OPT_MAX_PIPELINES, 'n',
      "Maximum number of encrypt/decrypt pipelines to be used"},
+    {"read_buf", OPT_READ_BUF, 'n',
+     "Default read buffer size to be used for connections"},
     OPT_S_OPTIONS,
     OPT_V_OPTIONS,
     OPT_X_OPTIONS,
@@ -875,6 +877,7 @@ int s_client_main(int argc, char **argv)
     int socket_family = AF_UNSPEC, socket_type = SOCK_STREAM;
     int starttls_proto = PROTO_OFF, crl_format = FORMAT_PEM, crl_download = 0;
     int write_tty, read_tty, write_ssl, read_ssl, tty_on, ssl_pending;
+    int read_buf_len = 0;
     int fallback_scsv = 0;
     long socket_mtu = 0, randamt = 0;
     OPTION_CHOICE o;
@@ -1349,6 +1352,9 @@ int s_client_main(int argc, char **argv)
         case OPT_MAX_PIPELINES:
             max_pipelines = atoi(opt_arg());
             break;
+        case OPT_READ_BUF:
+            read_buf_len = atoi(opt_arg());
+            break;
         }
     }
     argc = opt_num_rest();
@@ -1536,6 +1542,10 @@ int s_client_main(int argc, char **argv)
     }
     if (max_pipelines > 0) {
         SSL_CTX_set_max_pipelines(ctx, max_pipelines);
+    }
+
+    if (read_buf_len > 0) {
+        SSL_CTX_set_default_read_buffer_len(ctx, read_buf_len);
     }
 
     if (!config_ctx(cctx, ssl_args, ctx, jpake_secret == NULL))

@@ -814,8 +814,8 @@ typedef enum OPTION_choice {
     OPT_QUIET, OPT_BRIEF, OPT_NO_DHE,
     OPT_NO_RESUME_EPHEMERAL, OPT_PSK_HINT, OPT_PSK, OPT_SRPVFILE,
     OPT_SRPUSERSEED, OPT_REV, OPT_WWW, OPT_UPPER_WWW, OPT_HTTP, OPT_ASYNC,
-    OPT_SSL_CONFIG, OPT_SPLIT_SEND_FRAG, OPT_MAX_PIPELINES, OPT_SSL3,
-    OPT_TLS1_2, OPT_TLS1_1, OPT_TLS1, OPT_DTLS, OPT_DTLS1,
+    OPT_SSL_CONFIG, OPT_SPLIT_SEND_FRAG, OPT_MAX_PIPELINES, OPT_READ_BUF,
+    OPT_SSL3, OPT_TLS1_2, OPT_TLS1_1, OPT_TLS1, OPT_DTLS, OPT_DTLS1,
     OPT_DTLS1_2, OPT_TIMEOUT, OPT_MTU, OPT_CHAIN, OPT_LISTEN,
     OPT_ID_PREFIX, OPT_RAND, OPT_SERVERNAME, OPT_SERVERNAME_FATAL,
     OPT_CERT2, OPT_KEY2, OPT_NEXTPROTONEG, OPT_ALPN, OPT_JPAKE,
@@ -951,6 +951,8 @@ OPTIONS s_server_options[] = {
      "Size used to split data for encrypt/decrypt pipelines"},
     {"max_pipelines", OPT_MAX_PIPELINES, 'n',
      "Maximum number of encrypt/decrypt pipelines to be used"},
+    {"read_buf", OPT_READ_BUF, 'n',
+     "Default read buffer size to be used for connections"},
     OPT_S_OPTIONS,
     OPT_V_OPTIONS,
     OPT_X_OPTIONS,
@@ -1060,6 +1062,7 @@ int s_server_main(int argc, char *argv[])
     X509 *s_cert2 = NULL;
     tlsextctx tlsextcbp = { NULL, NULL, SSL_TLSEXT_ERR_ALERT_WARNING };
     const char *ssl_config = NULL;
+    int read_buf_len = 0;
 #ifndef OPENSSL_NO_NEXTPROTONEG
     const char *next_proto_neg_in = NULL;
     tlsextnextprotoctx next_proto = { NULL, 0 };
@@ -1539,6 +1542,10 @@ int s_server_main(int argc, char *argv[])
         case OPT_MAX_PIPELINES:
             max_pipelines = atoi(opt_arg());
             break;
+        case OPT_READ_BUF:
+            read_buf_len = atoi(opt_arg());
+            break;
+
         }
     }
     argc = opt_num_rest();
@@ -1778,6 +1785,10 @@ int s_server_main(int argc, char *argv[])
     }
     if (max_pipelines > 0) {
         SSL_CTX_set_max_pipelines(ctx, max_pipelines);
+    }
+
+    if (read_buf_len > 0) {
+        SSL_CTX_set_default_read_buffer_len(ctx, read_buf_len);
     }
 
 #ifndef OPENSSL_NO_SRTP

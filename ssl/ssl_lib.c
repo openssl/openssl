@@ -671,6 +671,8 @@ SSL *SSL_new(SSL_CTX *ctx)
     s->max_pipelines = ctx->max_pipelines;
     if (s->max_pipelines > 1)
         RECORD_LAYER_set_read_ahead(&s->rlayer, 1);
+    if (ctx->default_read_buf_len > 0)
+        SSL_set_default_read_buffer_len(s, ctx->default_read_buf_len);
 
     CRYPTO_add(&ctx->references, 1, CRYPTO_LOCK_SSL_CTX);
     s->ctx = ctx;
