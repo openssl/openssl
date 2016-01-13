@@ -377,6 +377,13 @@ extern FILE *_imp___iob;
      So, what we do here is to change 0 to 1 to get the default success status,
      and everything else is shifted up to fit into the status number field, and
      the status is tagged as an error, which I believe is what is wanted here.
+
+     Finally, we add the VMS C facility code 0x35a000, because there are some
+     programs, such as Perl, that will reinterpret the code back to something
+     POSIXly.  'man perlvms' explains it further.
+     NOTE: the perlvms manual wants to turn all codes 2 to 255 into success
+     codes (status type = 1).  I couldn't disagree more.  Fortunately, the
+     status type doesn't seem to bother Perl.
      -- Richard Levitte
   */
 #   define EXIT(n)             do { int __VMS_EXIT = n; \
@@ -385,6 +392,7 @@ extern FILE *_imp___iob;
                                      else \
                                        __VMS_EXIT = (n << 3) | 2; \
                                      __VMS_EXIT |= 0x10000000; \
+                                     __VMS_EXIT |=   0x35a000; \
                                      exit(__VMS_EXIT); } while(0)
 #   define NO_SYS_PARAM_H
 #   define NO_SYS_UN_H
