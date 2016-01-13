@@ -199,15 +199,15 @@ void lh_node_usage_stats_bio(const _LHASH *lh, BIO *out);
     } \
     static ossl_inline type *lh_##type##_insert(LHASH_OF(type) *lh, type *d) \
     { \
-        return lh_insert((_LHASH *)lh, d); \
+        return (type *)lh_insert((_LHASH *)lh, d); \
     } \
     static ossl_inline type *lh_##type##_delete(LHASH_OF(type) *lh, const type *d) \
     { \
-        return lh_delete((_LHASH *)lh, d); \
+        return (type *)lh_delete((_LHASH *)lh, d); \
     } \
     static ossl_inline type *lh_##type##_retrieve(LHASH_OF(type) *lh, const type *d) \
     { \
-        return lh_retrieve((_LHASH *)lh, d); \
+        return (type *)lh_retrieve((_LHASH *)lh, d); \
     } \
     static ossl_inline int lh_##type##_error(LHASH_OF(type) *lh) \
     { \
