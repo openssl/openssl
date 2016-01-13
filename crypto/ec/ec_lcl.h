@@ -203,7 +203,7 @@ struct ec_method_st {
  */
 typedef struct nistp224_pre_comp_st NISTP224_PRE_COMP;
 typedef struct nistp256_pre_comp_st NISTP256_PRE_COMP;
-typedef struct nistp512_pre_comp_st NISTP521_PRE_COMP;
+typedef struct nistp521_pre_comp_st NISTP521_PRE_COMP;
 typedef struct nistz256_pre_comp_st NISTZ256_PRE_COMP;
 typedef struct ec_pre_comp_st EC_PRE_COMP;
 
