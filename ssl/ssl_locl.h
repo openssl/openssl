@@ -843,6 +843,9 @@ struct ssl_ctx_st {
     /* Up to how many pipelines should we use? If 0 then 1 is assumed */
     unsigned int max_pipelines;
 
+    /* The default read buffer length to use (0 means not set) */
+    size_t default_read_buf_len;
+
 #  ifndef OPENSSL_NO_ENGINE
     /*
      * Engine to pass requests for client certs to

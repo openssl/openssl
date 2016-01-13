@@ -381,3 +381,5 @@ SSL_get_ct_validation_callback          380	1_1_0	EXIST::FUNCTION:CT
 SSL_get0_peer_scts                      381	1_1_0	EXIST::FUNCTION:CT
 SSL_CTX_set_ct_validation_callback      382	1_1_0	EXIST::FUNCTION:CT
 SSL_CTX_get_ct_validation_callback      383	1_1_0	EXIST::FUNCTION:CT
+SSL_set_default_read_buffer_len         384	1_1_0	EXIST::FUNCTION:
+SSL_CTX_set_default_read_buffer_len     385	1_1_0	EXIST::FUNCTION:
