@@ -157,24 +157,6 @@ void SSL3_RECORD_release(SSL3_RECORD *r, unsigned int num_recs)
     }
 }
 
-int SSL3_RECORD_setup(SSL3_RECORD *r, unsigned int num_recs)
-{
-    unsigned int i;
-
-    for (i = 0; i < num_recs; i++) {
-        if (r[i].comp == NULL)
-            r[i].comp = (unsigned char *)
-                OPENSSL_malloc(SSL3_RT_MAX_ENCRYPTED_LENGTH);
-        if (r[i].comp == NULL) {
-            if (i > 0)
-                SSL3_RECORD_release(r, i);
-            return 0;
-        }
-    }
-
-    return 1;
-}
-
 void SSL3_RECORD_set_seq_num(SSL3_RECORD *r, const unsigned char *seq_num)
 {
     memcpy(r->seq_num, seq_num, SEQ_NUM_SIZE);
@@ -626,16 +608,23 @@ int ssl3_do_uncompress(SSL *ssl, SSL3_RECORD *rr)
 #ifndef OPENSSL_NO_COMP
     int i;
 
+    if (rr->comp == NULL) {
+        rr->comp = (unsigned char *)
+            OPENSSL_malloc(SSL3_RT_MAX_ENCRYPTED_LENGTH);
+    }
+    if (rr->comp == NULL)
+        return 0;
+
     i = COMP_expand_block(ssl->expand, rr->comp,
                           SSL3_RT_MAX_PLAIN_LENGTH, rr->data,
                           (int)rr->length);
     if (i < 0)
-        return (0);
+        return 0;
     else
         rr->length = i;
     rr->data = rr->comp;
 #endif
-    return (1);
+    return 1;
 }
 
 int ssl3_do_compress(SSL *ssl, SSL3_RECORD *wr)
