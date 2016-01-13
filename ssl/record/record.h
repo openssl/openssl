@@ -325,7 +325,6 @@ int RECORD_LAYER_write_pending(RECORD_LAYER *rl);
 int RECORD_LAYER_set_data(RECORD_LAYER *rl, const unsigned char *buf, int len);
 void RECORD_LAYER_reset_read_sequence(RECORD_LAYER *rl);
 void RECORD_LAYER_reset_write_sequence(RECORD_LAYER *rl);
-int RECORD_LAYER_setup_comp_buffer(RECORD_LAYER *rl);
 int RECORD_LAYER_is_sslv2_record(RECORD_LAYER *rl);
 unsigned int RECORD_LAYER_get_rrec_length(RECORD_LAYER *rl);
 __owur int ssl3_pending(const SSL *s);

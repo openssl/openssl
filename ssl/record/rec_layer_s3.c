@@ -223,11 +223,6 @@ void RECORD_LAYER_reset_write_sequence(RECORD_LAYER *rl)
     memset(rl->write_sequence, 0, sizeof(rl->write_sequence));
 }
 
-int RECORD_LAYER_setup_comp_buffer(RECORD_LAYER *rl)
-{
-    return SSL3_RECORD_setup((rl)->rrec, SSL_MAX_PIPELINES);
-}
-
 int ssl3_pending(const SSL *s)
 {
     unsigned int i;
