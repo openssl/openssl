@@ -260,8 +260,6 @@ int tls1_change_cipher_state(SSL *s, int which)
                        SSL_R_COMPRESSION_LIBRARY_ERROR);
                 goto err2;
             }
-            if (!RECORD_LAYER_setup_comp_buffer(&s->rlayer))
-                goto err;
         }
 #endif
         /*
