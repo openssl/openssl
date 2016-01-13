@@ -1418,6 +1418,7 @@ sub read_options
 		"no-unit-test" => 0,
 		"no-deprecated" => 0,
 		"no-ocb" => 0,
+		"no-crypto-mdebug" => 0,
 		"fips" => \$fips,
 		"fipscanisterbuild" => [\$fips, \$fipscanisterbuild],
 		"fipscanisteronly" => [\$fips, \$fipscanisterbuild, \$fipscanisteronly],
