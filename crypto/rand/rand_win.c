@@ -119,7 +119,6 @@
 #  define _WIN32_WINNT 0x0400
 # endif
 # include <wincrypt.h>
-# include <tlhelp32.h>
 
 /*
  * Intel hardware RNG CSP -- available from
