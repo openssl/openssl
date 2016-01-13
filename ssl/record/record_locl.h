@@ -193,7 +193,6 @@ int ssl3_release_write_buffer(SSL *s);
 
 void SSL3_RECORD_clear(SSL3_RECORD *r, unsigned int num_recs);
 void SSL3_RECORD_release(SSL3_RECORD *r, unsigned int num_recs);
-int SSL3_RECORD_setup(SSL3_RECORD *r, unsigned int num_recs);
 void SSL3_RECORD_set_seq_num(SSL3_RECORD *r, const unsigned char *seq_num);
 int ssl3_get_record(SSL *s);
 __owur int ssl3_do_compress(SSL *ssl, SSL3_RECORD *wr);
