@@ -598,6 +598,11 @@ static int get_client_hello(SSL *s)
         s->s2->tmp.cipher_spec_length = i;
         n2s(p, i);
         s->s2->tmp.session_id_length = i;
+        if ((i < 0) || (i > SSL_MAX_SSL_SESSION_ID_LENGTH)) {
+            ssl2_return_error(s, SSL2_PE_UNDEFINED_ERROR);
+            SSLerr(SSL_F_GET_CLIENT_HELLO, SSL_R_LENGTH_MISMATCH);
+            return -1;
+        }
         n2s(p, i);
         s->s2->challenge_length = i;
         if ((i < SSL2_MIN_CHALLENGE_LENGTH) ||
