@@ -1759,7 +1759,7 @@ RAND_status                             2254	1_1_0	EXIST::FUNCTION:
 bn_dump1                                2255	1_1_0	NOEXIST::FUNCTION:
 DES_check_key_parity                    2256	1_1_0	EXIST::FUNCTION:DES
 lh_num_items                            2257	1_1_0	EXIST::FUNCTION:
-RAND_event                              2258	1_1_0	EXIST:WIN32:FUNCTION:
+RAND_event                              2258	1_1_0	NOEXIST:WIN32:FUNCTION:
 DSO_new                                 2259	1_1_0	EXIST::FUNCTION:
 DSO_new_method                          2260	1_1_0	EXIST::FUNCTION:
 DSO_free                                2261	1_1_0	EXIST::FUNCTION:

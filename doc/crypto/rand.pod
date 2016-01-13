@@ -29,9 +29,6 @@ rand - pseudo-random number generator
 
  void RAND_cleanup(void);
 
- /* For Win32 only */
- int RAND_event(UINT, WPARAM, LPARAM);
-
 =head1 DESCRIPTION
 
 Since the introduction of the ENGINE API, the recommended way of controlling
