@@ -20,15 +20,17 @@ sub test_ocsp {
     my $CAfile = shift;
     my $expected_exit = shift;
 
+    run(app(["openssl", "base64", "-d",
+             "-in", catfile($ocspdir,$inputfile),
+             "-out", "ocsp-resp-fff.dat"]));
     with({ exit_checker => sub { return shift == $expected_exit; } },
-	 sub { ok(run(pipe(app(["openssl", "base64", "-d",
-				"-in", catfile($ocspdir,$inputfile)]),
-			   app(["openssl", "ocsp", "-respin", "-",
-				"-partial_chain", @check_time,
-				"-CAfile", catfile($ocspdir, $CAfile),
-				"-verify_other", catfile($ocspdir, $CAfile),
-				"-no-CApath"]))),
-		  $title); });
+         sub { ok(run(app(["openssl", "ocsp", "-respin", "ocsp-resp-fff.dat",
+                           "-partial_chain", @check_time,
+                           "-CAfile", catfile($ocspdir, $CAfile),
+                           "-verify_other", catfile($ocspdir, $CAfile),
+                           "-no-CApath"])),
+                  $title); });
+    unlink "ocsp-resp-fff.dat";
 }
 
 plan tests => 10;
