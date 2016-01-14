@@ -2817,7 +2817,17 @@ BIO *bio_open_owner(const char *filename, int format, int private)
 #endif
     }
 
-    fd = open(filename, mode, 0600);
+#ifdef OPENSSL_SYS_VMS
+    /* VMS doesn't have O_BINARY, it just doesn't make sense.  But,
+     * it still needs to know that we're going binary, or fdopen()
+     * will fail with "invalid argument"...  so we tell VMS what the
+     * context is.
+     */
+    if (!textmode)
+        fd = open(filename, mode, 0600, "ctx=bin");
+    else
+#endif
+        fd = open(filename, mode, 0600);
     if (fd < 0)
         goto err;
     fp = fdopen(fd, modestr('w', format));
