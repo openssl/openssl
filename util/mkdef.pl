@@ -1572,7 +1572,7 @@ sub get_openssl_version()
 	while(<IN>) {
 		if (/OPENSSL_VERSION_TEXT\s+"OpenSSL (\d\.\d\.)(\d[a-z]*)(-| )/) {
 			my $suffix = $2;
-			my $baseversion = $1 =~ s/\./_/gr;
+			(my $baseversion = $1) =~ s/\./_/g;
 			close IN;
 			return ($baseversion."0", $baseversion.$suffix);
 		}
