@@ -545,7 +545,8 @@ int main(void)
     ERR_remove_thread_state(NULL);
     ERR_free_strings();
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG
-    CRYPTO_mem_leaks(out);
+    if (CRYPTO_mem_leaks(out) <= 0)
+        ret = 1;
 #endif
     BIO_free(out);
     return ret;

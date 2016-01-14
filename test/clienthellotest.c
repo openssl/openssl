@@ -217,7 +217,8 @@ int main(int argc, char *argv[])
     EVP_cleanup();
     CRYPTO_cleanup_all_ex_data();
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG
-    CRYPTO_mem_leaks(err);
+    if (CRYPTO_mem_leaks(err) <= 0)
+        testresult = 0;
 #endif
     BIO_free(err);
 

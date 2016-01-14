@@ -300,7 +300,8 @@ int main(int argc, char *argv[])
     BN_CTX_free(ctx);
     ERR_remove_thread_state(NULL);
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG
-    CRYPTO_mem_leaks(out);
+    if (CRYPTO_mem_leaks(out) <= 0)
+        goto err;
 #endif
     BIO_free(out);
     printf("\n");
