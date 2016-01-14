@@ -189,7 +189,6 @@ static int async = 0;
 static int c_nbio = 0;
 static int c_tlsextdebug = 0;
 static int c_status_req = 0;
-static int c_Pause = 0;
 static int c_debug = 0;
 static int c_msg = 0;
 static int c_showcerts = 0;
@@ -619,7 +618,7 @@ typedef enum OPTION_choice {
     OPT_CERTFORM, OPT_CRLFORM, OPT_VERIFY_RET_ERROR, OPT_VERIFY_QUIET,
     OPT_BRIEF, OPT_PREXIT, OPT_CRLF, OPT_QUIET, OPT_NBIO,
     OPT_SSL_CLIENT_ENGINE, OPT_RAND, OPT_IGN_EOF, OPT_NO_IGN_EOF,
-    OPT_PAUSE, OPT_DEBUG, OPT_TLSEXTDEBUG, OPT_STATUS, OPT_WDEBUG,
+    OPT_DEBUG, OPT_TLSEXTDEBUG, OPT_STATUS, OPT_WDEBUG,
     OPT_MSG, OPT_MSGFILE, OPT_ENGINE, OPT_TRACE, OPT_SECURITY_DEBUG,
     OPT_SECURITY_DEBUG_VERBOSE, OPT_SHOWCERTS, OPT_NBIO_TEST, OPT_STATE,
     OPT_PSK_IDENTITY, OPT_PSK, OPT_SRPUSER, OPT_SRPPASS, OPT_SRP_STRENGTH,
@@ -666,7 +665,6 @@ OPTIONS s_client_options[] = {
      "DANE TLSA rrdata presentation form"},
     {"reconnect", OPT_RECONNECT, '-',
      "Drop and re-make the connection with the same Session-ID"},
-    {"pause", OPT_PAUSE, '-', "Sleep  after each read and write system call"},
     {"showcerts", OPT_SHOWCERTS, '-', "Show all certificates in the chain"},
     {"debug", OPT_DEBUG, '-', "Extra output"},
     {"msg", OPT_MSG, '-', "Show protocol messages"},
@@ -677,9 +675,6 @@ OPTIONS s_client_options[] = {
     {"quiet", OPT_QUIET, '-', "No s_client output"},
     {"ign_eof", OPT_IGN_EOF, '-', "Ignore input eof (default when -quiet)"},
     {"no_ign_eof", OPT_NO_IGN_EOF, '-', "Don't ignore input eof"},
-    {"tls1_2", OPT_TLS1_2, '-', "Just use TLSv1.2"},
-    {"tls1_1", OPT_TLS1_1, '-', "Just use TLSv1.1"},
-    {"tls1", OPT_TLS1, '-', "Just use TLSv1"},
     {"starttls", OPT_STARTTLS, 's',
      "Use the appropriate STARTTLS command before starting TLS"},
     {"xmpphost", OPT_XMPPHOST, 's',
@@ -729,12 +724,25 @@ OPTIONS s_client_options[] = {
 #ifndef OPENSSL_NO_SSL3
     {"ssl3", OPT_SSL3, '-', "Just use SSLv3"},
 #endif
+#ifndef OPENSSL_NO_TLS1
+    {"tls1", OPT_TLS1, '-', "Just use TLSv1"},
+#endif
+#ifndef OPENSSL_NO_TLS1_1
+    {"tls1_1", OPT_TLS1_1, '-', "Just use TLSv1.1"},
+#endif
+#ifndef OPENSSL_NO_TLS1_2
+    {"tls1_2", OPT_TLS1_2, '-', "Just use TLSv1.2"},
+#endif
 #ifndef OPENSSL_NO_DTLS
     {"dtls", OPT_DTLS, '-'},
-    {"dtls1", OPT_DTLS1, '-', "Just use DTLSv1"},
-    {"dtls1_2", OPT_DTLS1_2, '-'},
     {"timeout", OPT_TIMEOUT, '-'},
     {"mtu", OPT_MTU, 'p', "Set the link layer MTU"},
+#endif
+#ifndef OPENSSL_NO_DTLS1
+    {"dtls1", OPT_DTLS1, '-', "Just use DTLSv1"},
+#endif
+#ifndef OPENSSL_NO_DTLS1_2
+    {"dtls1_2", OPT_DTLS1_2, '-'},
 #endif
 #ifndef OPENSSL_NO_SSL_TRACE
     {"trace", OPT_TRACE, '-'},
@@ -864,7 +872,6 @@ int s_client_main(int argc, char **argv)
 #endif
 
     prog = opt_progname(argv[0]);
-    c_Pause = 0;
     c_quiet = 0;
     c_ign_eof = 0;
     c_debug = 0;
@@ -1014,9 +1021,6 @@ int s_client_main(int argc, char **argv)
         case OPT_NO_IGN_EOF:
             c_ign_eof = 0;
             break;
-        case OPT_PAUSE:
-            c_Pause = 1;
-            break;
         case OPT_DEBUG:
             c_debug = 1;
             break;
@@ -1114,41 +1118,48 @@ int s_client_main(int argc, char **argv)
 #endif
             break;
         case OPT_TLS1_2:
+#ifndef OPENSSL_NO_TLS1_2
             meth = TLSv1_2_client_method();
+#endif
             break;
         case OPT_TLS1_1:
+#ifndef OPENSSL_NO_TLS1_1
             meth = TLSv1_1_client_method();
+#endif
             break;
         case OPT_TLS1:
+#ifndef OPENSSL_NO_TLS1
             meth = TLSv1_client_method();
+#endif
             break;
-#ifndef OPENSSL_NO_DTLS
         case OPT_DTLS:
+#ifndef OPENSSL_NO_DTLS
             meth = DTLS_client_method();
             socket_type = SOCK_DGRAM;
+#endif
             break;
         case OPT_DTLS1:
+#ifndef OPENSSL_NO_DTLS1
             meth = DTLSv1_client_method();
             socket_type = SOCK_DGRAM;
+#endif
             break;
         case OPT_DTLS1_2:
+#ifndef OPENSSL_NO_DTLS1_2
             meth = DTLSv1_2_client_method();
             socket_type = SOCK_DGRAM;
-            break;
-        case OPT_TIMEOUT:
-            enable_timeouts = 1;
-            break;
-        case OPT_MTU:
-            socket_mtu = atol(opt_arg());
-            break;
-#else
-        case OPT_DTLS:
-        case OPT_DTLS1:
-        case OPT_DTLS1_2:
-        case OPT_TIMEOUT:
-        case OPT_MTU:
-            break;
 #endif
+            break;
+        case OPT_TIMEOUT:
+#ifndef OPENSSL_NO_DTLS
+            enable_timeouts = 1;
+#endif
+            break;
+        case OPT_MTU:
+#ifndef OPENSSL_NO_DTLS
+            socket_mtu = atol(opt_arg());
+#endif
+            break;
         case OPT_FALLBACKSCSV:
             fallback_scsv = 1;
             break;
@@ -1602,9 +1613,6 @@ int s_client_main(int argc, char **argv)
         }
     }
 #endif
-    if (c_Pause & 0x01)
-        SSL_set_debug(con, 1);
-
     if (socket_type == SOCK_DGRAM) {
 
         sbio = BIO_new_dgram(s, BIO_NOCLOSE);
@@ -1654,7 +1662,6 @@ int s_client_main(int argc, char **argv)
     }
 
     if (c_debug) {
-        SSL_set_debug(con, 1);
         BIO_set_callback(sbio, bio_dump_callback);
         BIO_set_callback_arg(sbio, (char *)bio_c_out);
     }

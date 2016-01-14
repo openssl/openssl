@@ -1754,7 +1754,7 @@ DES_crypt                               2249	1_1_0	EXIST::FUNCTION:DES
 PEM_write_bio_X509_REQ_NEW              2250	1_1_0	EXIST::FUNCTION:
 PEM_write_X509_REQ_NEW                  2251	1_1_0	EXIST::FUNCTION:
 BIO_callback_ctrl                       2252	1_1_0	EXIST::FUNCTION:
-RAND_egd                                2253	1_1_0	EXIST::FUNCTION:
+RAND_egd                                2253	1_1_0	EXIST::FUNCTION:EGD
 RAND_status                             2254	1_1_0	EXIST::FUNCTION:
 bn_dump1                                2255	1_1_0	NOEXIST::FUNCTION:
 DES_check_key_parity                    2256	1_1_0	EXIST::FUNCTION:DES
@@ -1809,7 +1809,7 @@ X509_ALGOR_cmp                          2398	1_1_0	EXIST::FUNCTION:
 EVP_CIPHER_CTX_set_key_length           2399	1_1_0	EXIST::FUNCTION:
 EVP_CIPHER_CTX_ctrl                     2400	1_1_0	EXIST::FUNCTION:
 BN_mod_exp_mont_word                    2401	1_1_0	EXIST::FUNCTION:
-RAND_egd_bytes                          2402	1_1_0	EXIST::FUNCTION:
+RAND_egd_bytes                          2402	1_1_0	EXIST::FUNCTION:EGD
 X509_REQ_get1_email                     2403	1_1_0	EXIST::FUNCTION:
 X509_get1_email                         2404	1_1_0	EXIST::FUNCTION:
 X509_email_free                         2405	1_1_0	EXIST::FUNCTION:
@@ -2436,7 +2436,7 @@ X509V3_EXT_nconf_nid                    2942	1_1_0	EXIST::FUNCTION:
 ASN1_SEQUENCE_it                        2943	1_1_0	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:
 ASN1_SEQUENCE_it                        2943	1_1_0	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:
 UI_set_default_method                   2944	1_1_0	EXIST::FUNCTION:
-RAND_query_egd_bytes                    2945	1_1_0	EXIST::FUNCTION:
+RAND_query_egd_bytes                    2945	1_1_0	EXIST::FUNCTION:EGD
 UI_method_get_writer                    2946	1_1_0	EXIST::FUNCTION:
 UI_OpenSSL                              2947	1_1_0	EXIST::FUNCTION:
 PEM_def_callback                        2948	1_1_0	EXIST::FUNCTION:
@@ -3790,7 +3790,7 @@ d2i_TS_ACCURACY                         4194	1_1_0	EXIST::FUNCTION:
 DSO_global_lookup                       4195	1_1_0	EXIST::FUNCTION:
 TS_CONF_set_tsa_name                    4196	1_1_0	EXIST::FUNCTION:
 i2d_ASN1_SET_ANY                        4197	1_1_0	EXIST::FUNCTION:
-ENGINE_load_gost                        4198	1_1_0	EXIST::FUNCTION:ENGINE,GOST,STATIC_ENGINE
+ENGINE_load_gost                        4198	1_1_0	NOEXIST::FUNCTION:
 WHIRLPOOL_BitUpdate                     4199	1_1_0	EXIST::FUNCTION:WHIRLPOOL
 ASN1_PCTX_get_flags                     4200	1_1_0	EXIST::FUNCTION:
 TS_TST_INFO_get_ext_by_NID              4201	1_1_0	EXIST::FUNCTION:
@@ -3847,7 +3847,7 @@ b2i_PVK_bio                             4250	1_1_0	EXIST::FUNCTION:RC4
 ASN1_UTCTIME_adj                        4251	1_1_0	EXIST::FUNCTION:
 TS_TST_INFO_new                         4252	1_1_0	EXIST::FUNCTION:
 EVP_MD_do_all_sorted                    4253	1_1_0	EXIST::FUNCTION:
-TS_CONF_set_default_engine              4254	1_1_0	EXIST::FUNCTION:
+TS_CONF_set_default_engine              4254	1_1_0	EXIST::FUNCTION:ENGINE
 TS_ACCURACY_set_seconds                 4255	1_1_0	EXIST::FUNCTION:
 TS_TST_INFO_get_time                    4256	1_1_0	EXIST::FUNCTION:
 PKCS8_pkey_get0                         4257	1_1_0	EXIST::FUNCTION:
@@ -4071,7 +4071,7 @@ EVP_PKEY_meth_find                      4469	1_1_0	EXIST::FUNCTION:
 EVP_PKEY_id                             4470	1_1_0	EXIST::FUNCTION:
 TS_TST_INFO_set_serial                  4471	1_1_0	EXIST::FUNCTION:
 a2i_GENERAL_NAME                        4472	1_1_0	EXIST::FUNCTION:
-TS_CONF_set_crypto_device               4473	1_1_0	EXIST::FUNCTION:
+TS_CONF_set_crypto_device               4473	1_1_0	EXIST::FUNCTION:ENGINE
 EVP_PKEY_verify_init                    4474	1_1_0	EXIST::FUNCTION:
 TS_CONF_set_policies                    4475	1_1_0	EXIST::FUNCTION:
 ASN1_PCTX_new                           4476	1_1_0	EXIST::FUNCTION:
@@ -4759,3 +4759,8 @@ EC_KEY_set_ex_data                      5153	1_1_0	EXIST::FUNCTION:EC
 EC_KEY_get_ex_data                      5154	1_1_0	EXIST::FUNCTION:EC
 EC_KEY_set_method                       5155	1_1_0	EXIST::FUNCTION:EC
 EC_KEY_get_method                       5156	1_1_0	EXIST::FUNCTION:EC
+OCSP_SINGLERESP_get0_id                 5157	1_1_0	EXIST::FUNCTION:
+TS_STATUS_INFO_get0_status              5158	1_1_0	EXIST::FUNCTION:
+OCSP_resp_get0_produced_at              5159	1_1_0	EXIST::FUNCTION:
+TS_STATUS_INFO_get0_failure_info        5160	1_1_0	EXIST::FUNCTION:
+TS_STATUS_INFO_get0_text                5161	1_1_0	EXIST::FUNCTION:

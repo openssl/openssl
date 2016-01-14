@@ -4,6 +4,17 @@
 
  Changes between 1.0.2e and 1.1.0  [xx XXX xxxx]
 
+  *) The GOST engine was out of date and therefore it has been removed. An up
+     to date GOST engine is now being maintained in an external repository.
+     See: https://wiki.openssl.org/index.php/Binaries. Libssl still retains
+     support for GOST ciphersuites (these are only activated if a GOST engine
+     is present).
+     [Matt Caswell]
+
+  *) EGD is no longer supported by default; use enable-egd when
+     configuring.
+     [Ben Kaduk and Rich Salz]
+
   *) The distribution now has Makefile.in files, which are used to
      create Makefile's when Configure is run.  *Configure must be run
      before trying to build now.*

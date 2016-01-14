@@ -915,6 +915,7 @@ extern "C" {
 # define SSL_SESSION_get_app_data(s)     (SSL_SESSION_get_ex_data(s,0))
 # define SSL_CTX_get_app_data(ctx)       (SSL_CTX_get_ex_data(ctx,0))
 # define SSL_CTX_set_app_data(ctx,arg)   (SSL_CTX_set_ex_data(ctx,0,(char *)arg))
+DEPRECATEDIN_1_1_0(void SSL_set_debug(SSL *s, int debug))
 
 
 /*
@@ -1030,6 +1031,9 @@ size_t SSL_get_peer_finished(const SSL *s, void *buf, size_t count);
 # define SSL_VERIFY_CLIENT_ONCE          0x04
 
 # define OpenSSL_add_ssl_algorithms()    SSL_library_init()
+# if OPENSSL_API_COMPAT < 0x10100000L
+#  define SSLeay_add_ssl_algorithms()    SSL_library_init()
+# endif
 
 /* More backward compatibility */
 # define SSL_get_cipher(s) \
@@ -1810,7 +1814,6 @@ void SSL_set_not_resumable_session_callback(SSL *ssl,
                                                        int
                                                        is_forward_secure));
 
-void SSL_set_debug(SSL *s, int debug);
 __owur int SSL_cache_hit(SSL *s);
 __owur int SSL_is_server(SSL *s);
 

@@ -727,11 +727,25 @@ typedef struct {
 #endif
 
 static const version_info tls_version_table[] = {
+#ifndef OPENSSL_NO_TLS1_2
     { TLS1_2_VERSION, TLSv1_2_client_method, TLSv1_2_server_method },
+#else
+    { TLS1_2_VERSION, NULL, NULL },
+#endif
+#ifndef OPENSSL_NO_TLS1_1
     { TLS1_1_VERSION, TLSv1_1_client_method, TLSv1_1_server_method },
+#else
+    { TLS1_1_VERSION, NULL, NULL },
+#endif
+#ifndef OPENSSL_NO_TLS1
     { TLS1_VERSION, TLSv1_client_method, TLSv1_server_method },
+#else
+    { TLS1_VERSION, NULL, NULL },
+#endif
 #ifndef OPENSSL_NO_SSL3
     { SSL3_VERSION, SSLv3_client_method, SSLv3_server_method },
+#else
+    { SSL3_VERSION, NULL, NULL },
 #endif
     { 0, NULL, NULL },
 };
@@ -741,8 +755,16 @@ static const version_info tls_version_table[] = {
 #endif
 
 static const version_info dtls_version_table[] = {
+#ifndef OPENSSL_NO_DTLS1_2
     { DTLS1_2_VERSION, DTLSv1_2_client_method, DTLSv1_2_server_method },
+#else
+    { DTLS1_2_VERSION, NULL, NULL },
+#endif
+#ifndef OPENSSL_NO_DTLS1
     { DTLS1_VERSION, DTLSv1_client_method, DTLSv1_server_method },
+#else
+    { DTLS1_VERSION, NULL, NULL },
+#endif
     { 0, NULL, NULL },
 };
 

@@ -529,12 +529,8 @@ int ssl_get_prev_session(SSL *s, const PACKET *ext, const PACKET *session_id)
     int fatal = 0;
     int try_session_cache = 1;
     int r;
-    size_t len = PACKET_remaining(session_id);
 
-    if (len > SSL_MAX_SSL_SESSION_ID_LENGTH)
-        goto err;
-
-    if (len == 0)
+    if (PACKET_remaining(session_id) == 0)
         try_session_cache = 0;
 
     /* sets s->tlsext_ticket_expected and extended master secret flag */

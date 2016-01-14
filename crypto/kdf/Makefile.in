@@ -1,11 +1,11 @@
 #
-# OpenSSL/crypto/err/Makefile
+# OpenSSL/crypto/kdf/Makefile
 #
 
-DIR=	err
+DIR=	kdf
 TOP=	../..
 CC=	cc
-INCLUDES= -I.. -I$(TOP) -I../../include
+INCLUDES=
 CFLAG=-g
 MAKEFILE=	Makefile
 AR=		ar r
@@ -15,12 +15,12 @@ CFLAGS= $(INCLUDES) $(CFLAG)
 GENERAL=Makefile
 
 LIB=$(TOP)/libcrypto.a
-LIBSRC=err.c err_all.c err_prn.c
-LIBOBJ=err.o err_all.o err_prn.o
+LIBSRC=tls1_prf.c
+LIBOBJ=tls1_prf.o
 
 SRC= $(LIBSRC)
 
-HEADER=	err_lcl.h
+HEADER=
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 
@@ -36,6 +36,14 @@ lib:	$(LIBOBJ)
 
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
+
+tags:
+	ctags $(SRC)
+
+tests:
+
+lint:
+	lint -DLINT $(INCLUDES) $(SRC)>fluff
 
 update: depend
 

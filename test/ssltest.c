@@ -776,14 +776,20 @@ static void sv_usage(void)
     fprintf(stderr, " -srpuser user  - SRP username to use\n");
     fprintf(stderr, " -srppass arg   - password for 'user'\n");
 #endif
-#ifndef OPENSSL_NO_SSL3_METHOD
+#ifndef OPENSSL_NO_SSL3
     fprintf(stderr, " -ssl3         - use SSLv3\n");
 #endif
+#ifndef OPENSSL_NO_TLS1
     fprintf(stderr, " -tls1         - use TLSv1\n");
+#endif
 #ifndef OPENSSL_NO_DTLS
     fprintf(stderr, " -dtls        - use DTLS\n");
+#ifndef OPENSSL_NO_DTLS1
     fprintf(stderr, " -dtls1        - use DTLSv1\n");
+#endif
+#ifndef OPENSSL_NO_DTLS1_2
     fprintf(stderr, " -dtls12       - use DTLSv1.2\n");
+#endif
 #endif
     fprintf(stderr, " -CApath arg   - PEM format directory of CA's\n");
     fprintf(stderr, " -CAfile arg   - PEM format file of CA's\n");
@@ -1046,7 +1052,7 @@ int main(int argc, char *argv[])
 #ifdef OPENSSL_FIPS
     int fips_mode = 0;
 #endif
-    int no_protocol = 0;
+    int no_protocol;
 
     SSL_CONF_CTX *s_cctx = NULL, *c_cctx = NULL;
     STACK_OF(OPENSSL_STRING) *conf_args = NULL;
@@ -1173,24 +1179,12 @@ int main(int argc, char *argv[])
         else if (strcmp(*argv, "-tls1") == 0) {
             tls1 = 1;
         } else if (strcmp(*argv, "-ssl3") == 0) {
-#ifdef OPENSSL_NO_SSL3_METHOD
-            no_protocol = 1;
-#endif
             ssl3 = 1;
         } else if (strcmp(*argv, "-dtls1") == 0) {
-#ifdef OPENSSL_NO_DTLS
-            no_protocol = 1;
-#endif
             dtls1 = 1;
         } else if (strcmp(*argv, "-dtls12") == 0) {
-#ifdef OPENSSL_NO_DTLS
-            no_protocol = 1;
-#endif
             dtls12 = 1;
         } else if (strcmp(*argv, "-dtls") == 0) {
-#ifdef OPENSSL_NO_DTLS
-            no_protocol = 1;
-#endif
             dtls = 1;
         } else if (strncmp(*argv, "-num", 4) == 0) {
             if (--argc < 1)
@@ -1365,6 +1359,28 @@ int main(int argc, char *argv[])
         EXIT(1);
     }
 
+#ifdef OPENSSL_NO_SSL3
+    if (ssl3)
+        no_protocol = 1;
+    else
+#endif
+#ifdef OPENSSL_NO_TLS1
+    if (tls1)
+        no_protocol = 1;
+    else
+#endif
+#if defined(OPENSSL_NO_DTLS) || defined(OPENSSL_NO_DTLS1)
+    if (dtls1)
+        no_protocol = 1;
+    else
+#endif
+#if defined(OPENSSL_NO_DTLS) || defined(OPENSSL_NO_DTLS1_2)
+    if (dtls12)
+        no_protocol = 1;
+    else
+#endif
+        no_protocol = 0;
+
     /*
      * Testing was requested for a compiled-out protocol (e.g. SSLv3).
      * Ideally, we would error out, but the generic test wrapper can't know
@@ -1444,23 +1460,31 @@ int main(int argc, char *argv[])
      * (Otherwise we exit early.) However the compiler doesn't know this, so
      * we ifdef.
      */
+#ifndef OPENSSL_NO_DTLS
+#ifndef OPENSSL_NO_DTLS1
+    if (dtls1)
+        meth = DTLSv1_method();
+    else
+#endif
+#ifndef OPENSSL_NO_DTLS1_2
+    if (dtls12)
+        meth = DTLSv1_2_method();
+    else
+#endif
+    if (dtls)
+        meth = DTLS_method();
+    else
+#endif
 #ifndef OPENSSL_NO_SSL3
     if (ssl3)
         meth = SSLv3_method();
     else
 #endif
-#ifndef OPENSSL_NO_DTLS
-    if (dtls1)
-        meth = DTLSv1_method();
-    else if (dtls12)
-        meth = DTLSv1_2_method();
-    else if (dtls)
-        meth = DTLS_method();
-    else
-#endif
+#ifndef OPENSSL_NO_TLS1
     if (tls1)
         meth = TLSv1_method();
     else
+#endif
         meth = TLS_method();
 
     c_ctx = SSL_CTX_new(meth);
@@ -3163,9 +3187,11 @@ static unsigned int psk_server_callback(SSL *ssl, const char *identity,
 
 static int do_test_cipherlist(void)
 {
+#if !defined(OPENSSL_NO_SSL3) || !defined(OPENSSL_NO_TLS1)
     int i = 0;
     const SSL_METHOD *meth;
     const SSL_CIPHER *ci, *tci = NULL;
+#endif
 
 #ifndef OPENSSL_NO_SSL3
     meth = SSLv3_method();
@@ -3180,6 +3206,7 @@ static int do_test_cipherlist(void)
         tci = ci;
     }
 #endif
+#ifndef OPENSSL_NO_TLS1
     meth = TLSv1_method();
     tci = NULL;
     while ((ci = meth->get_cipher(i++)) != NULL) {
@@ -3191,6 +3218,7 @@ static int do_test_cipherlist(void)
             }
         tci = ci;
     }
+#endif
 
     return 1;
 }

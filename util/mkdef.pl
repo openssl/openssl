@@ -84,6 +84,8 @@ my @known_algorithms = ( "RC2", "RC4", "RC5", "IDEA", "DES", "BF",
                          "CRYPTO_MDEBUG",
 			 # Engines
                          "STATIC_ENGINE", "ENGINE", "HW", "GMP",
+			 # Entropy Gathering
+			 "EGD",
                          # X.509v3 Signed Certificate Timestamps
                          "SCT",
 			 # RFC3779
@@ -1570,7 +1572,7 @@ sub get_openssl_version()
 	while(<IN>) {
 		if (/OPENSSL_VERSION_TEXT\s+"OpenSSL (\d\.\d\.)(\d[a-z]*)(-| )/) {
 			my $suffix = $2;
-			my $baseversion = $1 =~ s/\./_/gr;
+			(my $baseversion = $1) =~ s/\./_/g;
 			close IN;
 			return ($baseversion."0", $baseversion.$suffix);
 		}

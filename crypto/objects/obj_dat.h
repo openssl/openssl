@@ -62,9 +62,9 @@
  * [including the GNU Public Licence.]
  */
 
-#define NUM_NID 1021
-#define NUM_SN 1014
-#define NUM_LN 1014
+#define NUM_NID 1022
+#define NUM_SN 1015
+#define NUM_LN 1015
 #define NUM_OBJ 937
 
 static const unsigned char lvalues[6612]={
@@ -2671,6 +2671,7 @@ static const ASN1_OBJECT nid_objs[NUM_NID]={
 {"ChaCha20-Poly1305","chacha20-poly1305",NID_chacha20_poly1305,0,NULL,0},
 {"ChaCha20","chacha20",NID_chacha20,0,NULL,0},
 {"tlsfeature","TLS Feature",NID_tlsfeature,8,&(lvalues[6603]),0},
+{"TLS1-PRF","tls1-prf",NID_tls1_prf,0,NULL,0},
 };
 
 static const unsigned int sn_objs[NUM_SN]={
@@ -2878,6 +2879,7 @@ static const unsigned int sn_objs[NUM_SN]={
 1006,	/* "SNILS" */
 16,	/* "ST" */
 143,	/* "SXNetID" */
+1021,	/* "TLS1-PRF" */
 458,	/* "UID" */
  0,	/* "UNDEF" */
 11,	/* "X500" */
@@ -4674,6 +4676,7 @@ static const unsigned int ln_objs[NUM_LN]={
 459,	/* "textEncodedORAddress" */
 293,	/* "textNotice" */
 106,	/* "title" */
+1021,	/* "tls1-prf" */
 682,	/* "tpBasis" */
 436,	/* "ucl" */
  0,	/* "undefined" */
