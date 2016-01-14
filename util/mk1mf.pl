@@ -83,8 +83,6 @@ while(<IN>) {
 }
 close(IN);
 
-$debug = 1 if $mf_platform =~ /^debug-/;
-
 if ($mf_fipscanisterinternal eq "y") {
 	$fips = 1;
 	$fipscanisterbuild = 1;
@@ -1401,6 +1399,7 @@ sub read_options
 		"rsaref" => 0,
 		"gcc" => \$gcc,
 		"debug" => \$debug,
+		"--debug" => \$debug,
 		"profile" => \$profile,
 		"shlib" => \$shlib,
 		"dll" => \$shlib,
@@ -1418,6 +1417,7 @@ sub read_options
 		"no-unit-test" => 0,
 		"no-deprecated" => 0,
 		"no-ocb" => 0,
+		"no-crypto-mdebug" => 0,
 		"fips" => \$fips,
 		"fipscanisterbuild" => [\$fips, \$fipscanisterbuild],
 		"fipscanisteronly" => [\$fips, \$fipscanisterbuild, \$fipscanisteronly],

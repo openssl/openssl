@@ -1101,8 +1101,7 @@ static int sign(X509 *x, EVP_PKEY *pkey, int days, int clrext,
     if (X509_gmtime_adj(X509_get_notBefore(x), 0) == NULL)
         goto err;
 
-    if (X509_gmtime_adj(X509_get_notAfter(x), (long)60 * 60 * 24 * days) ==
-        NULL)
+    if (X509_time_adj_ex(X509_get_notAfter(x), days, 0, NULL) == NULL)
         goto err;
 
     if (!X509_set_pubkey(x, pkey))

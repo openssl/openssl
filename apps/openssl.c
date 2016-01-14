@@ -432,7 +432,7 @@ int main(int argc, char *argv[])
     CRYPTO_mem_leaks(bio_err);
 #endif
     BIO_free(bio_err);
-    return (ret);
+    EXIT(ret);
 }
 
 OPTIONS exit_options[] = {

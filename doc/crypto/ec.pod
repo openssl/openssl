@@ -136,10 +136,6 @@ ec - Elliptic Curve functions
  void EC_KEY_set_enc_flags(EC_KEY *eckey, unsigned int flags);
  point_conversion_form_t EC_KEY_get_conv_form(const EC_KEY *key);
  void EC_KEY_set_conv_form(EC_KEY *eckey, point_conversion_form_t cform);
- void *EC_KEY_get_key_method_data(EC_KEY *key, 
-	void *(*dup_func)(void *), void (*free_func)(void *), void (*clear_free_func)(void *));
- void EC_KEY_insert_key_method_data(EC_KEY *key, void *data,
-	void *(*dup_func)(void *), void (*free_func)(void *), void (*clear_free_func)(void *));
  void EC_KEY_set_asn1_flag(EC_KEY *eckey, int asn1_flag);
  int EC_KEY_precompute_mult(EC_KEY *key, BN_CTX *ctx);
  int EC_KEY_generate_key(EC_KEY *key);
@@ -162,7 +158,8 @@ ec - Elliptic Curve functions
  #define EVP_PKEY_CTX_set_ec_paramgen_curve_nid(ctx, nid) \
 	EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_EC, EVP_PKEY_OP_PARAMGEN, \
 				EVP_PKEY_CTRL_EC_PARAMGEN_CURVE_NID, nid, NULL)
-
+ const EC_KEY_METHOD *EC_KEY_get_method(const EC_KEY *key);
+ int EC_KEY_set_method(EC_KEY *key, const EC_KEY_METHOD *meth);
 
 =head1 DESCRIPTION
 

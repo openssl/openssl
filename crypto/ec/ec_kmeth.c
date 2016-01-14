@@ -93,6 +93,31 @@ void EC_KEY_set_default_method(const EC_KEY_METHOD *meth)
         default_ec_key_meth = meth;
 }
 
+const EC_KEY_METHOD *EC_KEY_get_method(const EC_KEY *key)
+{
+    return key->meth;
+}
+
+int EC_KEY_set_method(EC_KEY *key, const EC_KEY_METHOD *meth)
+{
+    void (*finish)(EC_KEY *key) = key->meth->finish;
+
+    if (finish != NULL)
+        finish(key);
+
+#ifndef OPENSSL_NO_ENGINE
+    if (key->engine != NULL) {
+        ENGINE_finish(key->engine);
+        key->engine = NULL;
+    }
+#endif
+
+    key->meth = meth;
+    if (meth->init != NULL)
+        return meth->init(key);
+    return 1;
+}
+
 EC_KEY *EC_KEY_new_method(ENGINE *engine)
 {
     EC_KEY *ret = OPENSSL_zalloc(sizeof(*ret));
@@ -101,6 +126,11 @@ EC_KEY *EC_KEY_new_method(ENGINE *engine)
         ECerr(EC_F_EC_KEY_NEW_METHOD, ERR_R_MALLOC_FAILURE);
         return (NULL);
     }
+    if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_EC_KEY, ret, &ret->ex_data)) {
+        OPENSSL_free(ret);
+        return NULL;
+    }
+
     ret->meth = EC_KEY_get_default_method();
 #ifndef OPENSSL_NO_ENGINE
     if (engine != NULL) {
@@ -146,8 +176,8 @@ int ECDH_compute_key(void *out, size_t outlen, const EC_POINT *pub_key,
 
 EC_KEY_METHOD *EC_KEY_METHOD_new(const EC_KEY_METHOD *meth)
 {
-    EC_KEY_METHOD *ret;
-    ret = OPENSSL_zalloc(sizeof(*meth));
+    EC_KEY_METHOD *ret = OPENSSL_zalloc(sizeof(*meth));
+
     if (ret == NULL)
         return NULL;
     if (meth != NULL)

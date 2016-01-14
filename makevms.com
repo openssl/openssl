@@ -240,7 +240,7 @@ $ WRITE H_FILE "#endif"
 $
 $!
 $! Defined the full SDIRS here.  It will be pruned depending on configuration.
-$! This is an exact copy of what's found in Makefile.org, with spaces replaced
+$! This is an exact copy of what's found in Makefile.in, with spaces replaced
 $! with commas.
 $!
 $ SDIRS := -
@@ -585,8 +585,8 @@ $   WRITE H_FILE "#define RC4_CHUNK unsigned long long"
 $   WRITE H_FILE "#endif"
 $!
 $   WRITE H_FILE "#if defined(HEADER_DES_LOCL_H)"
-$   WRITE H_FILE "#undef DES_LONG"
-$   WRITE H_FILE "#define DES_LONG unsigned int"
+$   WRITE H_FILE "#undef OSSL_DES_LONG"
+$   WRITE H_FILE "#define OSSL_DES_LONG unsigned int"
 $   WRITE H_FILE "#undef DES_PTR"
 $   WRITE H_FILE "#define DES_PTR"
 $   WRITE H_FILE "#undef DES_RISC1"
@@ -622,8 +622,8 @@ $   WRITE H_FILE "#define RC4_CHUNK unsigned long"
 $   WRITE H_FILE "#endif"
 $!
 $   WRITE H_FILE "#if defined(HEADER_DES_LOCL_H)"
-$   WRITE H_FILE "#undef DES_LONG"
-$   WRITE H_FILE "#define DES_LONG unsigned long"
+$   WRITE H_FILE "#undef OSSL_DES_LONG"
+$   WRITE H_FILE "#define OSSL_DES_LONG unsigned long"
 $   WRITE H_FILE "#undef DES_PTR"
 $   WRITE H_FILE "#define DES_PTR"
 $   WRITE H_FILE "#undef DES_RISC1"

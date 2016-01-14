@@ -66,6 +66,8 @@
 #  error DES is disabled.
 # endif
 
+# define DES_LONG OSSL_DES_LONG
+
 # ifdef OPENSSL_BUILD_SHLIBCRYPTO
 #  undef OPENSSL_EXTERN
 #  define OPENSSL_EXTERN OPENSSL_EXPORT

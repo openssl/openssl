@@ -273,15 +273,14 @@ DEFINE_STACK_OF(void)
 # define CRYPTO_EX_INDEX_X509_STORE_CTX   5
 # define CRYPTO_EX_INDEX_DH               6
 # define CRYPTO_EX_INDEX_DSA              7
-# define CRYPTO_EX_INDEX_ECDH             8
-# define CRYPTO_EX_INDEX_ECDSA            9
-# define CRYPTO_EX_INDEX_RSA             10
-# define CRYPTO_EX_INDEX_ENGINE          11
-# define CRYPTO_EX_INDEX_UI              12
-# define CRYPTO_EX_INDEX_BIO             13
-# define CRYPTO_EX_INDEX_STORE           14
-# define CRYPTO_EX_INDEX_APP             15
-# define CRYPTO_EX_INDEX__COUNT          16
+# define CRYPTO_EX_INDEX_EC_KEY           8
+# define CRYPTO_EX_INDEX_RSA              9
+# define CRYPTO_EX_INDEX_ENGINE          10
+# define CRYPTO_EX_INDEX_UI              11
+# define CRYPTO_EX_INDEX_BIO             12
+# define CRYPTO_EX_INDEX_STORE           13
+# define CRYPTO_EX_INDEX_APP             14
+# define CRYPTO_EX_INDEX__COUNT          15
 
 /*
  * This is the default callbacks, but we can have others as well: this is

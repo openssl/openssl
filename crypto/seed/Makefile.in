@@ -1,0 +1,62 @@
+#
+# crypto/seed/Makefile
+#
+
+DIR=	seed
+TOP=	../..
+CC=	cc
+CPP=	$(CC) -E
+INCLUDES=
+CFLAG=-g
+MAKEFILE=	Makefile
+AR=		ar r
+
+CFLAGS= $(INCLUDES) $(CFLAG)
+
+GENERAL=Makefile
+
+LIB=$(TOP)/libcrypto.a
+LIBSRC=seed.c seed_ecb.c seed_cbc.c seed_cfb.c seed_ofb.c
+LIBOBJ=seed.o seed_ecb.o seed_cbc.o seed_cfb.o seed_ofb.o
+
+SRC= $(LIBSRC)
+
+HEADER= seed_locl.h
+
+ALL=    $(GENERAL) $(SRC) $(HEADER)
+
+top:
+	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR) sub_all)
+
+all:	lib
+
+lib:	$(LIBOBJ)
+	$(AR) $(LIB) $(LIBOBJ)
+	$(RANLIB) $(LIB) || echo Never mind.
+	@touch lib
+
+files:
+	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
+
+tags:
+	ctags $(SRC)
+
+tests:
+
+lint:
+	lint -DLINT $(INCLUDES) $(SRC)>fluff
+
+update: depend
+
+depend:
+	@[ -n "$(MAKEDEPEND)" ] # should be set by upper Makefile...
+	$(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(LIBSRC)
+
+dclean:
+	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
+	mv -f Makefile.new $(MAKEFILE)
+
+clean:
+	rm -f *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
+
+# DO NOT DELETE THIS LINE -- make depend depends on it.

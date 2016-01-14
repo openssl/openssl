@@ -2947,7 +2947,7 @@ EC_POINT_bn2point                       3398	1_1_0	EXIST::FUNCTION:EC
 X509_VERIFY_PARAM_set_depth             3399	1_1_0	EXIST::FUNCTION:
 EC_KEY_set_asn1_flag                    3400	1_1_0	EXIST::FUNCTION:EC
 STORE_get_method                        3401	1_1_0	NOEXIST::FUNCTION:
-EC_KEY_get_key_method_data              3402	1_1_0	EXIST::FUNCTION:EC
+EC_KEY_get_key_method_data              3402	1_1_0	NOEXIST::FUNCTION:
 ECDSA_sign_ex                           3403	1_1_0	EXIST::FUNCTION:EC
 STORE_parse_attrs_end                   3404	1_1_0	NOEXIST::FUNCTION:
 EC_GROUP_get_point_conversion_form      3405	1_1_0	EXIST:!VMS:FUNCTION:EC
@@ -3113,7 +3113,7 @@ STORE_meth_set_cleanup_fn               3554	1_1_0	NOEXIST::FUNCTION:
 STORE_method_set_cleanup_function       3554	1_1_0	NOEXIST::FUNCTION:
 EC_GROUP_check                          3555	1_1_0	EXIST::FUNCTION:EC
 d2i_ECPrivateKey_bio                    3556	1_1_0	EXIST::FUNCTION:EC
-EC_KEY_insert_key_method_data           3557	1_1_0	EXIST::FUNCTION:EC
+EC_KEY_insert_key_method_data           3557	1_1_0	NOEXIST::FUNCTION:
 STORE_meth_get_lock_store_fn            3558	1_1_0	NOEXIST::FUNCTION:
 STORE_method_get_lock_store_function    3558	1_1_0	NOEXIST::FUNCTION:
 X509_VERIFY_PARAM_get_depth             3559	1_1_0	EXIST::FUNCTION:
@@ -4755,3 +4755,7 @@ EVP_CIPHER_CTX_buf_noconst              5149	1_1_0	EXIST::FUNCTION:
 EVP_CIPHER_meth_set_flags               5150	1_1_0	EXIST::FUNCTION:
 EVP_CIPHER_meth_set_iv_length           5151	1_1_0	EXIST::FUNCTION:
 EVP_CIPHER_meth_set_get_asn1_params     5152	1_1_0	EXIST::FUNCTION:
+EC_KEY_set_ex_data                      5153	1_1_0	EXIST::FUNCTION:EC
+EC_KEY_get_ex_data                      5154	1_1_0	EXIST::FUNCTION:EC
+EC_KEY_set_method                       5155	1_1_0	EXIST::FUNCTION:EC
+EC_KEY_get_method                       5156	1_1_0	EXIST::FUNCTION:EC

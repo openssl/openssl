@@ -53,10 +53,10 @@
  *
  */
 
-#include <openssl/opensslconf.h>
-
 #ifndef HEADER_E_OS2_H
 # define HEADER_E_OS2_H
+
+# include <openssl/opensslconf.h>
 
 #ifdef  __cplusplus
 extern "C" {
@@ -285,7 +285,9 @@ extern "C" {
 # endif
 
 /* Standard integer types */
-# if defined(__osf__) || defined(__sgi) || defined(__hpux) || defined(OPENSSL_SYS_VMS)
+# if (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L) || \
+     defined(__osf__) || defined(__sgi) || defined(__hpux) || \
+     defined(OPENSSL_SYS_VMS)
 #  include <inttypes.h>
 # elif defined(OPENSSL_SYS_UEFI)
 typedef INT8 int8_t;
@@ -314,21 +316,11 @@ typedef unsigned __int64 uint64_t;
 # endif
 
 /*
- * We need a format operator for some client tools for uint64_t.
- * This is an attempt at doing so in a portable manner.
- * If we can't use a built-in definition, we'll revert to the previous
- * behavior that was hard-coded but now causing compiler warnings on
- * some systems (e.g. Mac OS X).
+ * We need a format operator for some client tools for uint64_t.  If inttypes.h
+ * isn't available or did not define it, just go with hard-coded.
  */
 # ifndef PRIu64
-#  ifdef __STDC_VERSION__
-#   if (__STDC_VERSION__ >= 199901L)
-#    include <inttypes.h>
-#   endif
-#  endif
-#  ifndef PRIu64
-#   define PRIu64 "lu"
-#  endif
+#  define PRIu64 "lu"
 # endif
 
 /* ossl_inline: portable inline definition usable in public headers */

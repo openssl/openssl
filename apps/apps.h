@@ -116,6 +116,7 @@
 # include <assert.h>
 
 # include <openssl/e_os2.h>
+# include <openssl/ossl_typ.h>
 # include <openssl/bio.h>
 # include <openssl/x509.h>
 # include <openssl/lhash.h>
@@ -185,7 +186,7 @@ void wait_for_async(SSL *s);
         { "purpose", OPT_V_PURPOSE, 's' }, \
         { "verify_name", OPT_V_VERIFY_NAME, 's' }, \
         { "verify_depth", OPT_V_VERIFY_DEPTH, 'p' }, \
-        { "attime", OPT_V_ATTIME, 'p' }, \
+        { "attime", OPT_V_ATTIME, 'M' }, \
         { "verify_hostname", OPT_V_VERIFY_HOSTNAME, 's' }, \
         { "verify_email", OPT_V_VERIFY_EMAIL, 's' }, \
         { "verify_ip", OPT_V_VERIFY_IP, 's' }, \
@@ -384,6 +385,11 @@ int opt_format(const char *s, unsigned long flags, int *result);
 int opt_int(const char *arg, int *result);
 int opt_ulong(const char *arg, unsigned long *result);
 int opt_long(const char *arg, long *result);
+#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L && \
+    defined(INTMAX_MAX) && defined(UINTMAX_MAX)
+int opt_imax(const char *arg, intmax_t *result);
+int opt_umax(const char *arg, uintmax_t *result);
+#endif
 int opt_pair(const char *arg, const OPT_PAIR * pairs, int *result);
 int opt_cipher(const char *name, const EVP_CIPHER **cipherp);
 int opt_md(const char *name, const EVP_MD **mdp);
