@@ -51,10 +51,8 @@ if (!$init) {
 		 @d = ( "enc", @{$variant{$t}}, "-d" );
 	     }
 
-	     ok(run(app([$cmd, @e],
-			stdin => $test, stdout => $cipherfile))
-		&& run(app([$cmd, @d],
-			   stdin => $cipherfile, stdout => $clearfile))
+	     ok(run(app([$cmd, @e, "-in", $test, "-out", $cipherfile]))
+		&& run(app([$cmd, @d, "-in", $cipherfile, "-out", $clearfile]))
 		&& compare_text($test,$clearfile) == 0, $t);
 	     unlink $cipherfile, $clearfile;
 	 }
