@@ -53,8 +53,7 @@
         INSTALL.NW      Netware
         INSTALL.OS2     OS/2
         INSTALL.VMS     VMS
-        INSTALL.W32     Windows (32bit)
-        INSTALL.W64     Windows (64bit)
+        INSTALL.WIN     Windows
         INSTALL.WCE     Windows CE
 
  SUPPORT
