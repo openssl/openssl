@@ -107,7 +107,7 @@ OPTIONS pkeyutl_options[] = {
     {"peerkey", OPT_PEERKEY, 's'},
     {"passin", OPT_PASSIN, 's', "Pass phrase source"},
     {"peerform", OPT_PEERFORM, 'F'},
-    {"keyform", OPT_KEYFORM, 'F', "Private key format - default PEM"},
+    {"keyform", OPT_KEYFORM, 's', "Private key format - default PEM"},
     {"pkeyopt", OPT_PKEYOPT, 's', "Public key options as opt:value"},
 #ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
@@ -173,11 +173,11 @@ int pkeyutl_main(int argc, char **argv)
             passinarg = opt_arg();
             break;
         case OPT_PEERFORM:
-            if (!opt_format(opt_arg(), OPT_FMT_PEMDER, &peerform))
+	     if (!opt_format(opt_arg(), OPT_FMT_PEMDER, &peerform))
                 goto opthelp;
             break;
         case OPT_KEYFORM:
-            if (!opt_format(opt_arg(), OPT_FMT_PEMDER, &keyform))
+	  if (!opt_format(opt_arg(), (OPT_FMT_ENGINE | OPT_FMT_PEMDER), &keyform))
                 goto opthelp;
             break;
         case OPT_ENGINE:
