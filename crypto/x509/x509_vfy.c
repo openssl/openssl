@@ -618,7 +618,7 @@ static int check_trust(X509_STORE_CTX *ctx, int num_untrusted)
         return X509_TRUST_UNTRUSTED;
     }
 
-    if (num_untrusted > num && ctx->param->flags & X509_V_FLAG_PARTIAL_CHAIN) {
+    if (num_untrusted == num && ctx->param->flags & X509_V_FLAG_PARTIAL_CHAIN) {
         /*
          * Last-resort call with no new trusted certificates, check the leaf
          * for a direct trust store match.
@@ -2894,12 +2894,12 @@ static int build_chain(X509_STORE_CTX *ctx)
      * Last chance to make a trusted chain, either bare DANE-TA public-key
      * signers, or else direct leaf PKIX trust.
      */
-    if (sk_X509_num(ctx->chain) <= depth) {
+    num = sk_X509_num(ctx->chain);
+    if (num <= depth) {
         if (trust == X509_TRUST_UNTRUSTED && DANETLS_HAS_DANE_TA(dane))
             trust = check_dane_pkeys(ctx);
-        if (trust == X509_TRUST_UNTRUSTED &&
-            sk_X509_num(ctx->chain) == ctx->num_untrusted)
-            trust = check_trust(ctx, ctx->num_untrusted+1);
+        if (trust == X509_TRUST_UNTRUSTED && num == ctx->num_untrusted)
+            trust = check_trust(ctx, num);
     }
 
     switch (trust) {
