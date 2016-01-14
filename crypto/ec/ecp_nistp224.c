@@ -1560,6 +1560,7 @@ int ec_GFp_nistp224_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
 
     /* throw away old precomputation */
     EC_nistp224_pre_comp_free(group->pre_comp.nistp224);
+    group->pre_comp.nistp224 = NULL;
     if (ctx == NULL)
         if ((ctx = new_ctx = BN_CTX_new()) == NULL)
             return 0;

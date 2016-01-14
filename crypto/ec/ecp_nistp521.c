@@ -2009,6 +2009,7 @@ int ec_GFp_nistp521_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
 
     /* throw away old precomputation */
     EC_nistp521_pre_comp_free(group->pre_comp.nistp521);
+    group->pre_comp.nistp521 = NULL;
     if (ctx == NULL)
         if ((ctx = new_ctx = BN_CTX_new()) == NULL)
             return 0;
