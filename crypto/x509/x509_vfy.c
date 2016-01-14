@@ -580,7 +580,11 @@ static int check_trust(X509_STORE_CTX *ctx, int num_untrusted)
     int num = sk_X509_num(ctx->chain);
     int trust;
 
-    if (DANETLS_HAS_TA(dane) && num_untrusted > 0) {
+    /*
+     * Check for a DANE issuer at depth 1 or greater, if it is a DANE-TA(2)
+     * match, we're done, otherwise we'll merely record the match depth.
+     */
+    if (DANETLS_HAS_TA(dane) && num_untrusted > 0 && num_untrusted < num) {
         switch (trust = check_dane_issuer(ctx, num_untrusted)) {
         case X509_TRUST_TRUSTED:
         case X509_TRUST_REJECTED:
@@ -614,12 +618,13 @@ static int check_trust(X509_STORE_CTX *ctx, int num_untrusted)
         return X509_TRUST_UNTRUSTED;
     }
 
-    if (ctx->param->flags & X509_V_FLAG_PARTIAL_CHAIN) {
+    if (num_untrusted > num && ctx->param->flags & X509_V_FLAG_PARTIAL_CHAIN) {
         /*
          * Last-resort call with no new trusted certificates, check the leaf
          * for a direct trust store match.
          */
-        x = sk_X509_value(ctx->chain, 0);
+        i = 0;
+        x = sk_X509_value(ctx->chain, i);
         mx = lookup_cert_match(ctx, x);
         if (!mx)
             return X509_TRUST_UNTRUSTED;
@@ -2894,7 +2899,7 @@ static int build_chain(X509_STORE_CTX *ctx)
             trust = check_dane_pkeys(ctx);
         if (trust == X509_TRUST_UNTRUSTED &&
             sk_X509_num(ctx->chain) == ctx->num_untrusted)
-            trust = check_trust(ctx, 1);
+            trust = check_trust(ctx, ctx->num_untrusted+1);
     }
 
     switch (trust) {
