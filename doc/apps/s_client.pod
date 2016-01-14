@@ -52,7 +52,6 @@ B<openssl> B<s_client>
 [B<-verify_name name>]
 [B<-x509_strict>]
 [B<-reconnect>]
-[B<-pause>]
 [B<-showcerts>]
 [B<-debug>]
 [B<-msg>]
@@ -225,10 +224,6 @@ L<verify(1)> manual page for details.
 
 reconnects to the same server 5 times using the same session ID, this can
 be used as a test that session caching is working.
-
-=item B<-pause>
-
-pauses 1 second between each read and write call.
 
 =item B<-showcerts>
 
