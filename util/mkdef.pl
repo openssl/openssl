@@ -84,6 +84,8 @@ my @known_algorithms = ( "RC2", "RC4", "RC5", "IDEA", "DES", "BF",
                          "CRYPTO_MDEBUG",
 			 # Engines
                          "STATIC_ENGINE", "ENGINE", "HW", "GMP",
+			 # Entropy Gathering
+			 "EGD",
                          # X.509v3 Signed Certificate Timestamps
                          "SCT",
 			 # RFC3779
