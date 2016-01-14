@@ -77,6 +77,7 @@ static int gost_engine_finish(ENGINE *e)
 static int gost_engine_destroy(ENGINE *e)
 {
     digest_gost_destroy();
+    cipher_gost_destroy();
     imit_gost_cpa_destroy();
 
     gost_param_free();
