@@ -109,6 +109,14 @@ const EVP_CIPHER *cipher_gost_cpacnt(void)
     return _hidden_gost89_cnt;
 }
 
+void cipher_gost_destroy(void)
+{
+    EVP_CIPHER_meth_free(_hidden_Gost28147_89_cipher);
+    _hidden_Gost28147_89_cipher = NULL;
+    EVP_CIPHER_meth_free(_hidden_gost89_cnt);
+    _hidden_gost89_cnt = NULL;
+}
+
 /* Implementation of GOST 28147-89 in MAC (imitovstavka) mode */
 /* Init functions which set specific parameters */
 static int gost_imit_init_cpa(EVP_MD_CTX *ctx);
