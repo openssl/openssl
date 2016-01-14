@@ -2150,6 +2150,8 @@ int X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store, X509 *x509,
 
     if (store && store->get_crl)
         ctx->get_crl = store->get_crl;
+    else
+        ctx->get_crl = NULL;
 
     if (store && store->check_crl)
         ctx->check_crl = store->check_crl;
