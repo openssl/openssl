@@ -344,6 +344,26 @@ static int get_issuer_sk(X509 **issuer, X509_STORE_CTX *ctx, X509 *x)
         return 0;
 }
 
+static STACK_OF(X509) *lookup_certs_sk(X509_STORE_CTX *ctx, X509_NAME *nm)
+{
+    STACK_OF(X509) *sk = NULL;
+    X509 *x;
+    int i;
+    for (i = 0; i < sk_X509_num(ctx->other_ctx); i++) {
+        x = sk_X509_value(ctx->other_ctx, i);
+        if (X509_NAME_cmp(nm, X509_get_subject_name(x)) == 0) {
+            if (sk == NULL)
+                sk = sk_X509_new_null();
+            if (sk == NULL || sk_X509_push(sk, x) == 0) {
+                sk_X509_pop_free(sk, X509_free);
+                return NULL;
+            }
+            X509_up_ref(x);
+        }
+    }
+    return sk;
+}
+
 /*
  * Check a certificate chains extensions for consistency with the supplied
  * purpose
@@ -2226,6 +2246,7 @@ void X509_STORE_CTX_trusted_stack(X509_STORE_CTX *ctx, STACK_OF(X509) *sk)
 {
     ctx->other_ctx = sk;
     ctx->get_issuer = get_issuer_sk;
+    ctx->lookup_certs = lookup_certs_sk;
 }
 
 void X509_STORE_CTX_cleanup(X509_STORE_CTX *ctx)
