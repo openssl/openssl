@@ -109,7 +109,7 @@ EC_GROUP *EC_GROUP_new(const EC_METHOD *meth)
     return NULL;
 }
 
-static void ec_group_free_precomp(EC_GROUP *group)
+void EC_pre_comp_free(EC_GROUP *group)
 {
     switch (group->pre_comp_type) {
     default:
@@ -145,7 +145,7 @@ void EC_GROUP_free(EC_GROUP *group)
     if (group->meth->group_finish != 0)
         group->meth->group_finish(group);
 
-    ec_group_free_precomp(group);
+    EC_pre_comp_free(group);
     BN_MONT_CTX_free(group->mont_data);
     EC_POINT_free(group->generator);
     BN_free(group->order);
@@ -164,7 +164,7 @@ void EC_GROUP_clear_free(EC_GROUP *group)
     else if (group->meth->group_finish != 0)
         group->meth->group_finish(group);
 
-    ec_group_free_precomp(group);
+    EC_pre_comp_free(group);
     BN_MONT_CTX_free(group->mont_data);
     EC_POINT_clear_free(group->generator);
     BN_clear_free(group->order);

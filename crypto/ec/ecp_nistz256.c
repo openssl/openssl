@@ -769,8 +769,7 @@ __owur static int ecp_nistz256_mult_precompute(EC_GROUP *group, BN_CTX *ctx)
     unsigned char *precomp_storage = NULL;
 
     /* if there is an old NISTZ256_PRE_COMP object, throw it away */
-    EC_nistz256_pre_comp_free(group->pre_comp.nistz256);
-    group->pre_comp.nistz256 = NULL;
+    EC_pre_comp_free(group);
     generator = EC_GROUP_get0_generator(group);
     if (generator == NULL) {
         ECerr(EC_F_ECP_NISTZ256_MULT_PRECOMPUTE, EC_R_UNDEFINED_GENERATOR);
