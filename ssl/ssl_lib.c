@@ -3052,8 +3052,6 @@ SSL *SSL_dup(SSL *s)
 
     SSL_set_info_callback(ret, SSL_get_info_callback(s));
 
-    ret->debug = s->debug;
-
     /* copy app data, a little dangerous perhaps */
     if (!CRYPTO_dup_ex_data(CRYPTO_EX_INDEX_SSL, &ret->ex_data, &s->ex_data))
         goto err;
@@ -3663,11 +3661,6 @@ int ssl_handshake_hash(SSL *s, unsigned char *out, int outlen)
  err:
     EVP_MD_CTX_free(ctx);
     return ret;
-}
-
-void SSL_set_debug(SSL *s, int debug)
-{
-    s->debug = debug;
 }
 
 int SSL_cache_hit(SSL *s)

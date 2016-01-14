@@ -1810,7 +1810,6 @@ void SSL_set_not_resumable_session_callback(SSL *ssl,
                                                        int
                                                        is_forward_secure));
 
-void SSL_set_debug(SSL *s, int debug);
 __owur int SSL_cache_hit(SSL *s);
 __owur int SSL_is_server(SSL *s);
 
