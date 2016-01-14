@@ -1,4 +1,3 @@
-/* ssl/ssl.h */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -717,11 +716,11 @@ void (*SSL_CTX_sess_get_remove_cb(SSL_CTX *ctx)) (struct ssl_ctx_st *ctx,
 void SSL_CTX_sess_set_get_cb(SSL_CTX *ctx,
                              SSL_SESSION *(*get_session_cb) (struct ssl_st
                                                              *ssl,
-                                                             unsigned char
+                                                             const unsigned char
                                                              *data, int len,
                                                              int *copy));
 SSL_SESSION *(*SSL_CTX_sess_get_get_cb(SSL_CTX *ctx)) (struct ssl_st *ssl,
-                                                       unsigned char *Data,
+                                                       const unsigned char *data,
                                                        int len, int *copy);
 void SSL_CTX_set_info_callback(SSL_CTX *ctx,
                                void (*cb) (const SSL *ssl, int type,
@@ -915,6 +914,7 @@ extern "C" {
 # define SSL_SESSION_get_app_data(s)     (SSL_SESSION_get_ex_data(s,0))
 # define SSL_CTX_get_app_data(ctx)       (SSL_CTX_get_ex_data(ctx,0))
 # define SSL_CTX_set_app_data(ctx,arg)   (SSL_CTX_set_ex_data(ctx,0,(char *)arg))
+DEPRECATEDIN_1_1_0(void SSL_set_debug(SSL *s, int debug))
 
 
 /*
@@ -1030,6 +1030,9 @@ size_t SSL_get_peer_finished(const SSL *s, void *buf, size_t count);
 # define SSL_VERIFY_CLIENT_ONCE          0x04
 
 # define OpenSSL_add_ssl_algorithms()    SSL_library_init()
+# if OPENSSL_API_COMPAT < 0x10100000L
+#  define SSLeay_add_ssl_algorithms()    SSL_library_init()
+# endif
 
 /* More backward compatibility */
 # define SSL_get_cipher(s) \
@@ -1367,6 +1370,7 @@ void BIO_ssl_shutdown(BIO *ssl_bio);
 
 __owur int SSL_CTX_set_cipher_list(SSL_CTX *, const char *str);
 __owur SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth);
+void SSL_CTX_up_ref(SSL_CTX *ctx);
 void SSL_CTX_free(SSL_CTX *);
 __owur long SSL_CTX_set_timeout(SSL_CTX *ctx, long t);
 __owur long SSL_CTX_get_timeout(const SSL_CTX *ctx);
@@ -1526,6 +1530,7 @@ __owur int SSL_CTX_set_session_id_context(SSL_CTX *ctx, const unsigned char *sid
                                    unsigned int sid_ctx_len);
 
 SSL *SSL_new(SSL_CTX *ctx);
+void SSL_up_ref(SSL *s);
 __owur int SSL_set_session_id_context(SSL *ssl, const unsigned char *sid_ctx,
                                unsigned int sid_ctx_len);
 
@@ -1810,7 +1815,6 @@ void SSL_set_not_resumable_session_callback(SSL *ssl,
                                                        int
                                                        is_forward_secure));
 
-void SSL_set_debug(SSL *s, int debug);
 __owur int SSL_cache_hit(SSL *s);
 __owur int SSL_is_server(SSL *s);
 
@@ -1989,6 +1993,7 @@ void ERR_load_SSL_strings(void);
 # define SSL_F_SSL3_SETUP_KEY_BLOCK                       157
 # define SSL_F_SSL3_SETUP_READ_BUFFER                     156
 # define SSL_F_SSL3_SETUP_WRITE_BUFFER                    291
+# define SSL_F_SSL3_SHUTDOWN                              396
 # define SSL_F_SSL3_WRITE_BYTES                           158
 # define SSL_F_SSL3_WRITE_PENDING                         159
 # define SSL_F_SSL_ACCEPT                                 390
@@ -2341,6 +2346,7 @@ void ERR_load_SSL_strings(void);
 # define SSL_R_SCSV_RECEIVED_WHEN_RENEGOTIATING           345
 # define SSL_R_SERVERHELLO_TLSEXT                         275
 # define SSL_R_SESSION_ID_CONTEXT_UNINITIALIZED           277
+# define SSL_R_SHUTDOWN_WHILE_IN_INIT                     407
 # define SSL_R_SIGNATURE_ALGORITHMS_ERROR                 360
 # define SSL_R_SIGNATURE_FOR_NON_SIGNING_CERTIFICATE      220
 # define SSL_R_SRP_A_CALC                                 361

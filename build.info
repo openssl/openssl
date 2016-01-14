@@ -1,0 +1,7 @@
+{- use File::Spec::Functions qw/catdir abs2rel/; -}
+LIBS=libcrypto libssl
+ORDINALS[libcrypto]=crypto
+ORDINALS[libssl]=ssl
+INCLUDE[libcrypto]={- catdir(abs2rel($builddir,$sourcedir),"include") -} . crypto/include include
+INCLUDE[libssl]={- catdir(abs2rel($builddir,$sourcedir),"include") -} . include
+DEPEND[libssl]=libcrypto

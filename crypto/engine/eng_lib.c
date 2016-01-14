@@ -1,4 +1,3 @@
-/* crypto/engine/eng_lib.c */
 /*
  * Written by Geoff Thorpe (geoff@geoffthorpe.net) for the OpenSSL project
  * 2000.
@@ -72,8 +71,8 @@ ENGINE *ENGINE_new(void)
         return NULL;
     }
     ret->struct_ref = 1;
-    engine_ref_debug(ret, 0, 1)
-        CRYPTO_new_ex_data(CRYPTO_EX_INDEX_ENGINE, ret, &ret->ex_data);
+    engine_ref_debug(ret, 0, 1);
+    CRYPTO_new_ex_data(CRYPTO_EX_INDEX_ENGINE, ret, &ret->ex_data);
     return ret;
 }
 

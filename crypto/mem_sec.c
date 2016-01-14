@@ -110,6 +110,15 @@ void *CRYPTO_secure_malloc(size_t num, const char *file, int line)
 #endif /* IMPLEMENTED */
 }
 
+void *CRYPTO_secure_zalloc(size_t num, const char *file, int line)
+{
+    void *ret = CRYPTO_secure_malloc(num, file, line);
+
+    if (ret != NULL)
+        memset(ret, 0, num);
+    return ret;
+}
+
 void CRYPTO_secure_free(void *ptr)
 {
 #ifdef IMPLEMENTED

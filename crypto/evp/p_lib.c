@@ -1,4 +1,3 @@
-/* crypto/evp/p_lib.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -78,6 +77,7 @@
 #endif
 
 #include "internal/asn1_int.h"
+#include "internal/evp_int.h"
 
 static void EVP_PKEY_free_it(EVP_PKEY *x);
 
@@ -275,7 +275,7 @@ int EVP_PKEY_assign(EVP_PKEY *pkey, int type, void *key)
     return (key != NULL);
 }
 
-void *EVP_PKEY_get0(EVP_PKEY *pkey)
+void *EVP_PKEY_get0(const EVP_PKEY *pkey)
 {
     return pkey->pkey.ptr;
 }

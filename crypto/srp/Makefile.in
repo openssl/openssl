@@ -6,9 +6,6 @@ CFLAG=-g
 INSTALL_PREFIX=
 OPENSSLDIR=     /usr/local/ssl
 INSTALLTOP=/usr/local/ssl
-MAKEDEPPROG=	makedepend
-MAKEDEPEND=	$(TOP)/util/domd $(TOP) -MD $(MAKEDEPPROG)
-MAKEFILE=	Makefile.ssl
 AR=		ar r
 
 CFLAGS= $(INCLUDES) $(CFLAG)
@@ -36,22 +33,8 @@ lib:	$(LIBOBJ)
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
 
-tags:
-	ctags $(SRC)
-
-tests:
-
-lint:
-	lint -DLINT $(INCLUDES) $(SRC)>fluff
-
-update: depend
-
 depend:
-	$(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(LIBSRC)
-
-dclean:
-	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
-	mv -f Makefile.new $(MAKEFILE)
+	$(TOP)/util/domd $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(LIBSRC)
 
 clean:
 	rm -f *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff

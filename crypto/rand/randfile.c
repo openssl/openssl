@@ -1,4 +1,3 @@
-/* crypto/rand/randfile.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -129,7 +128,6 @@ int RAND_load_file(const char *file, long bytes)
         return (0);
 
 #ifndef OPENSSL_NO_POSIX_IO
-# ifdef PURIFY
     /*
      * struct stat can have padding and unused fields that may not be
      * initialized in the call to stat(). We need to clear the entire
@@ -137,7 +135,6 @@ int RAND_load_file(const char *file, long bytes)
      * applications such as Valgrind.
      */
     memset(&sb, 0, sizeof(sb));
-# endif
     if (stat(file, &sb) < 0)
         return (0);
     RAND_add(&sb, sizeof(sb), 0.0);
@@ -171,12 +168,8 @@ int RAND_load_file(const char *file, long bytes)
         i = fread(buf, 1, n, in);
         if (i <= 0)
             break;
-#ifdef PURIFY
+
         RAND_add(buf, i, (double)i);
-#else
-        /* even if n != i, use the full array */
-        RAND_add(buf, n, (double)i);
-#endif
         ret += i;
         if (bytes > 0) {
             bytes -= n;

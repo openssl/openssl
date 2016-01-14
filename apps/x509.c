@@ -152,7 +152,7 @@ OPTIONS x509_options[] = {
     {"setalias", OPT_SETALIAS, 's', "Set certificate alias"},
     {"days", OPT_DAYS, 'n',
      "How long till expiry of a signed certificate - def 30 days"},
-    {"checkend", OPT_CHECKEND, 'p',
+    {"checkend", OPT_CHECKEND, 'M',
      "Check whether the cert expires in the next arg seconds"},
     {OPT_MORE_STR, 1, 1, "Exit 1 if so, 0 if not"},
     {"signkey", OPT_SIGNKEY, '<', "Self sign cert with arg"},
@@ -225,7 +225,8 @@ int x509_main(int argc, char **argv)
     int ocsp_uri = 0, trustout = 0, clrtrust = 0, clrreject = 0, aliasout = 0;
     int ret = 1, i, num = 0, badsig = 0, clrext = 0, nocert = 0;
     int text = 0, serial = 0, subject = 0, issuer = 0, startdate = 0;
-    int checkoffset = 0, enddate = 0;
+    int enddate = 0;
+    time_t checkoffset = 0;
     unsigned long nmflag = 0, certflag = 0;
     char nmflag_set = 0;
     OPTION_CHOICE o;
@@ -466,8 +467,18 @@ int x509_main(int argc, char **argv)
             enddate = ++num;
             break;
         case OPT_CHECKEND:
-            checkoffset = atoi(opt_arg());
             checkend = 1;
+            {
+                intmax_t temp = 0;
+                if (!opt_imax(opt_arg(), &temp))
+                    goto opthelp;
+                checkoffset = (time_t)temp;
+                if ((intmax_t)checkoffset != temp) {
+                    BIO_printf(bio_err, "%s: checkend time out of range %s\n",
+                               prog, opt_arg());
+                    goto opthelp;
+                }
+            }
             break;
         case OPT_CHECKHOST:
             checkhost = opt_arg();
@@ -731,13 +742,13 @@ int x509_main(int argc, char **argv)
                 }
                 BIO_printf(out, "Modulus=");
 #ifndef OPENSSL_NO_RSA
-                if (pkey->type == EVP_PKEY_RSA)
-                    BN_print(out, pkey->pkey.rsa->n);
+                if (EVP_PKEY_id(pkey) == EVP_PKEY_RSA)
+                    BN_print(out, EVP_PKEY_get0_RSA(pkey)->n);
                 else
 #endif
 #ifndef OPENSSL_NO_DSA
-                if (pkey->type == EVP_PKEY_DSA)
-                    BN_print(out, pkey->pkey.dsa->pub_key);
+                if (EVP_PKEY_id(pkey) == EVP_PKEY_DSA)
+                    BN_print(out, EVP_PKEY_get0_DSA(pkey)->pub_key);
                 else
 #endif
                     BIO_printf(out, "Wrong Algorithm type");

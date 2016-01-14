@@ -1,5 +1,3 @@
-/* crypto/objects/obj_mac.h */
-
 /*
  * THIS FILE IS GENERATED FROM objects.txt by objects.pl via the following
  * command: perl objects.pl objects.txt obj_mac.num obj_mac.h
@@ -1558,6 +1556,51 @@
 #define LN_dvcs         "dvcs"
 #define NID_dvcs                297
 #define OBJ_dvcs                OBJ_id_kp,10L
+
+#define SN_ipsec_IKE            "ipsecIKE"
+#define LN_ipsec_IKE            "ipsec Internet Key Exchange"
+#define NID_ipsec_IKE           1022
+#define OBJ_ipsec_IKE           OBJ_id_kp,17L
+
+#define SN_capwapAC             "capwapAC"
+#define LN_capwapAC             "Ctrl/provision WAP Access"
+#define NID_capwapAC            1023
+#define OBJ_capwapAC            OBJ_id_kp,18L
+
+#define SN_capwapWTP            "capwapWTP"
+#define LN_capwapWTP            "Ctrl/Provision WAP Termination"
+#define NID_capwapWTP           1024
+#define OBJ_capwapWTP           OBJ_id_kp,19L
+
+#define SN_sshClient            "secureShellClient"
+#define LN_sshClient            "SSH Client"
+#define NID_sshClient           1025
+#define OBJ_sshClient           OBJ_id_kp,21L
+
+#define SN_sshServer            "secureShellServer"
+#define LN_sshServer            "SSH Server"
+#define NID_sshServer           1026
+#define OBJ_sshServer           OBJ_id_kp,22L
+
+#define SN_sendRouter           "sendRouter"
+#define LN_sendRouter           "Send Router"
+#define NID_sendRouter          1027
+#define OBJ_sendRouter          OBJ_id_kp,23L
+
+#define SN_sendProxiedRouter            "sendProxiedRouter"
+#define LN_sendProxiedRouter            "Send Proxied Router"
+#define NID_sendProxiedRouter           1028
+#define OBJ_sendProxiedRouter           OBJ_id_kp,24L
+
+#define SN_sendOwner            "sendOwner"
+#define LN_sendOwner            "Send Owner"
+#define NID_sendOwner           1029
+#define OBJ_sendOwner           OBJ_id_kp,25L
+
+#define SN_sendProxiedOwner             "sendProxiedOwner"
+#define LN_sendProxiedOwner             "Send Proxied Owner"
+#define NID_sendProxiedOwner            1030
+#define OBJ_sendProxiedOwner            OBJ_id_kp,26L
 
 #define SN_id_it_caProtEncCert          "id-it-caProtEncCert"
 #define NID_id_it_caProtEncCert         298
@@ -4463,3 +4506,37 @@
 #define SN_id_scrypt            "id-scrypt"
 #define NID_id_scrypt           973
 #define OBJ_id_scrypt           1L,3L,6L,1L,4L,1L,11591L,4L,11L
+
+#define SN_tls1_prf             "TLS1-PRF"
+#define LN_tls1_prf             "tls1-prf"
+#define NID_tls1_prf            1021
+
+#define SN_id_pkinit            "id-pkinit"
+#define NID_id_pkinit           1031
+#define OBJ_id_pkinit           1L,3L,6L,1L,5L,2L,3L
+
+#define SN_pkInitClientAuth             "pkInitClientAuth"
+#define LN_pkInitClientAuth             "PKINIT Client Auth"
+#define NID_pkInitClientAuth            1032
+#define OBJ_pkInitClientAuth            OBJ_id_pkinit,4L
+
+#define SN_pkInitKDC            "pkInitKDC"
+#define LN_pkInitKDC            "Signing KDC Response"
+#define NID_pkInitKDC           1033
+#define OBJ_pkInitKDC           OBJ_id_pkinit,5L
+
+#define SN_Curve25519           "Curve25519"
+#define NID_Curve25519          1034
+#define OBJ_Curve25519          1L,3L,6L,1L,4L,1L,11591L,15L,1L
+
+#define SN_Curve448             "Curve448"
+#define NID_Curve448            1035
+#define OBJ_Curve448            1L,3L,6L,1L,4L,1L,11591L,15L,2L
+
+#define SN_Curve25519ph         "Curve25519ph"
+#define NID_Curve25519ph                1036
+#define OBJ_Curve25519ph                1L,3L,6L,1L,4L,1L,11591L,15L,3L
+
+#define SN_Curve448ph           "Curve448ph"
+#define NID_Curve448ph          1037
+#define OBJ_Curve448ph          1L,3L,6L,1L,4L,1L,11591L,15L,4L

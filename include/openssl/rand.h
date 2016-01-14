@@ -1,4 +1,3 @@
-/* crypto/rand/rand.h */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -105,9 +104,11 @@ int RAND_load_file(const char *file, long max_bytes);
 int RAND_write_file(const char *file);
 const char *RAND_file_name(char *file, size_t num);
 int RAND_status(void);
+# ifndef OPENSSL_NO_EGD
 int RAND_query_egd_bytes(const char *path, unsigned char *buf, int bytes);
 int RAND_egd(const char *path);
 int RAND_egd_bytes(const char *path, int bytes);
+# endif
 int RAND_poll(void);
 
 # if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_WIN32)

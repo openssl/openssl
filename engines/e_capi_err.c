@@ -1,4 +1,3 @@
-/* e_capi_err.c */
 /* ====================================================================
  * Copyright (c) 1999-2014 The OpenSSL Project.  All rights reserved.
  *

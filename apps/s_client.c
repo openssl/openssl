@@ -173,8 +173,6 @@ typedef unsigned int u_int;
 # undef FIONBIO
 #endif
 
-#define SSL_HOST_NAME   "localhost"
-
 #undef BUFSIZZ
 #define BUFSIZZ 1024*8
 #define S_CLIENT_IRC_READ_TIMEOUT 8
@@ -189,7 +187,6 @@ static int async = 0;
 static int c_nbio = 0;
 static int c_tlsextdebug = 0;
 static int c_status_req = 0;
-static int c_Pause = 0;
 static int c_debug = 0;
 static int c_msg = 0;
 static int c_showcerts = 0;
@@ -218,6 +215,27 @@ static int restore_errno(void)
     errno = saved_errno;
     return ret;
 }
+
+static void do_ssl_shutdown(SSL *ssl)
+{
+    int ret;
+
+    do {
+        /* We only do unidirectional shutdown */
+        ret = SSL_shutdown(ssl);
+        if (ret < 0) {
+            switch (SSL_get_error(ssl, ret)) {
+            case SSL_ERROR_WANT_READ:
+            case SSL_ERROR_WANT_WRITE:
+            case SSL_ERROR_WANT_ASYNC:
+                /* We just do busy waiting. Nothing clever */
+                continue;
+            }
+            ret = 0;
+        }
+    } while (ret < 0);
+}
+
 
 #ifndef OPENSSL_NO_PSK
 /* Default PSK identity and key */
@@ -614,12 +632,13 @@ static int tlsa_import_rrset(SSL *con, STACK_OF(OPENSSL_STRING) *rrset)
 
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
-    OPT_HOST, OPT_PORT, OPT_CONNECT, OPT_UNIX, OPT_XMPPHOST, OPT_VERIFY,
+    OPT_4, OPT_6, OPT_HOST, OPT_PORT, OPT_CONNECT, OPT_UNIX,
+    OPT_XMPPHOST, OPT_VERIFY,
     OPT_CERT, OPT_CRL, OPT_CRL_DOWNLOAD, OPT_SESS_OUT, OPT_SESS_IN,
     OPT_CERTFORM, OPT_CRLFORM, OPT_VERIFY_RET_ERROR, OPT_VERIFY_QUIET,
     OPT_BRIEF, OPT_PREXIT, OPT_CRLF, OPT_QUIET, OPT_NBIO,
     OPT_SSL_CLIENT_ENGINE, OPT_RAND, OPT_IGN_EOF, OPT_NO_IGN_EOF,
-    OPT_PAUSE, OPT_DEBUG, OPT_TLSEXTDEBUG, OPT_STATUS, OPT_WDEBUG,
+    OPT_DEBUG, OPT_TLSEXTDEBUG, OPT_STATUS, OPT_WDEBUG,
     OPT_MSG, OPT_MSGFILE, OPT_ENGINE, OPT_TRACE, OPT_SECURITY_DEBUG,
     OPT_SECURITY_DEBUG_VERBOSE, OPT_SHOWCERTS, OPT_NBIO_TEST, OPT_STATE,
     OPT_PSK_IDENTITY, OPT_PSK, OPT_SRPUSER, OPT_SRPPASS, OPT_SRP_STRENGTH,
@@ -644,10 +663,14 @@ OPTIONS s_client_options[] = {
     {"host", OPT_HOST, 's', "Use -connect instead"},
     {"port", OPT_PORT, 'p', "Use -connect instead"},
     {"connect", OPT_CONNECT, 's',
-     "TCP/IP where to connect (default is " SSL_HOST_NAME ":" PORT_STR ")"},
+     "TCP/IP where to connect (default is :" PORT ")"},
     {"proxy", OPT_PROXY, 's',
      "Connect to via specified proxy to the real server"},
+#ifdef AF_UNIX
     {"unix", OPT_UNIX, 's', "Connect over unix domain sockets"},
+#endif
+    {"4", OPT_4, '-', "Use IPv4 only"},
+    {"6", OPT_6, '-', "Use IPv6 only"},
     {"verify", OPT_VERIFY, 'p', "Turn on peer certificate verification"},
     {"cert", OPT_CERT, '<', "Certificate file to use, PEM format assumed"},
     {"certform", OPT_CERTFORM, 'F',
@@ -666,7 +689,6 @@ OPTIONS s_client_options[] = {
      "DANE TLSA rrdata presentation form"},
     {"reconnect", OPT_RECONNECT, '-',
      "Drop and re-make the connection with the same Session-ID"},
-    {"pause", OPT_PAUSE, '-', "Sleep  after each read and write system call"},
     {"showcerts", OPT_SHOWCERTS, '-', "Show all certificates in the chain"},
     {"debug", OPT_DEBUG, '-', "Extra output"},
     {"msg", OPT_MSG, '-', "Show protocol messages"},
@@ -677,9 +699,6 @@ OPTIONS s_client_options[] = {
     {"quiet", OPT_QUIET, '-', "No s_client output"},
     {"ign_eof", OPT_IGN_EOF, '-', "Ignore input eof (default when -quiet)"},
     {"no_ign_eof", OPT_NO_IGN_EOF, '-', "Don't ignore input eof"},
-    {"tls1_2", OPT_TLS1_2, '-', "Just use TLSv1.2"},
-    {"tls1_1", OPT_TLS1_1, '-', "Just use TLSv1.1"},
-    {"tls1", OPT_TLS1, '-', "Just use TLSv1"},
     {"starttls", OPT_STARTTLS, 's',
      "Use the appropriate STARTTLS command before starting TLS"},
     {"xmpphost", OPT_XMPPHOST, 's',
@@ -729,12 +748,25 @@ OPTIONS s_client_options[] = {
 #ifndef OPENSSL_NO_SSL3
     {"ssl3", OPT_SSL3, '-', "Just use SSLv3"},
 #endif
+#ifndef OPENSSL_NO_TLS1
+    {"tls1", OPT_TLS1, '-', "Just use TLSv1"},
+#endif
+#ifndef OPENSSL_NO_TLS1_1
+    {"tls1_1", OPT_TLS1_1, '-', "Just use TLSv1.1"},
+#endif
+#ifndef OPENSSL_NO_TLS1_2
+    {"tls1_2", OPT_TLS1_2, '-', "Just use TLSv1.2"},
+#endif
 #ifndef OPENSSL_NO_DTLS
     {"dtls", OPT_DTLS, '-'},
-    {"dtls1", OPT_DTLS1, '-', "Just use DTLSv1"},
-    {"dtls1_2", OPT_DTLS1_2, '-'},
     {"timeout", OPT_TIMEOUT, '-'},
     {"mtu", OPT_MTU, 'p', "Set the link layer MTU"},
+#endif
+#ifndef OPENSSL_NO_DTLS1
+    {"dtls1", OPT_DTLS1, '-', "Just use DTLSv1"},
+#endif
+#ifndef OPENSSL_NO_DTLS1_2
+    {"dtls1_2", OPT_DTLS1_2, '-'},
 #endif
 #ifndef OPENSSL_NO_SSL_TRACE
     {"trace", OPT_TRACE, '-'},
@@ -816,12 +848,12 @@ int s_client_main(int argc, char **argv)
     char *CApath = NULL, *CAfile = NULL, *cbuf = NULL, *sbuf = NULL;
     char *mbuf = NULL, *proxystr = NULL, *connectstr = NULL;
     char *cert_file = NULL, *key_file = NULL, *chain_file = NULL;
-    char *chCApath = NULL, *chCAfile = NULL, *host = SSL_HOST_NAME;
+    char *chCApath = NULL, *chCAfile = NULL, *host = NULL;
+    char *port = BUF_strdup(PORT);
     char *inrand = NULL;
     char *passarg = NULL, *pass = NULL, *vfyCApath = NULL, *vfyCAfile = NULL;
     char *sess_in = NULL, *sess_out = NULL, *crl_file = NULL, *p;
     char *jpake_secret = NULL, *xmpphost = NULL;
-    const char *unix_path = NULL;
     const char *ehlo = "mail.example.com";
     struct sockaddr peer;
     struct timeval timeout, *timeoutp;
@@ -833,12 +865,12 @@ int s_client_main(int argc, char **argv)
     int enable_timeouts = 0, sdebug = 0, peerlen = sizeof peer;
     int reconnect = 0, verify = SSL_VERIFY_NONE, vpmtouched = 0;
     int ret = 1, in_init = 1, i, nbio_test = 0, s = -1, k, width, state = 0;
-    int sbuf_len, sbuf_off, socket_type = SOCK_STREAM, cmdletters = 1;
+    int sbuf_len, sbuf_off, cmdletters = 1;
+    int socket_family = AF_UNSPEC, socket_type = SOCK_STREAM;
     int starttls_proto = PROTO_OFF, crl_format = FORMAT_PEM, crl_download = 0;
     int write_tty, read_tty, write_ssl, read_ssl, tty_on, ssl_pending;
     int fallback_scsv = 0;
     long socket_mtu = 0, randamt = 0;
-    unsigned short port = PORT;
     OPTION_CHOICE o;
 #ifndef OPENSSL_NO_ENGINE
     ENGINE *ssl_client_engine = NULL;
@@ -864,7 +896,6 @@ int s_client_main(int argc, char **argv)
 #endif
 
     prog = opt_progname(argv[0]);
-    c_Pause = 0;
     c_quiet = 0;
     c_ign_eof = 0;
     c_debug = 0;
@@ -898,22 +929,72 @@ int s_client_main(int argc, char **argv)
             opt_help(s_client_options);
             ret = 0;
             goto end;
+        case OPT_4:
+#ifdef AF_UNIX
+            if (socket_family == AF_UNIX) {
+                OPENSSL_free(host); host = NULL;
+                OPENSSL_free(port); port = NULL;
+            }
+#endif
+            socket_family = AF_INET;
+            break;
+        case OPT_6:
+            if (1) {
+#ifdef AF_INET6
+#ifdef AF_UNIX
+                if (socket_family == AF_UNIX) {
+                    OPENSSL_free(host); host = NULL;
+                    OPENSSL_free(port); port = NULL;
+                }
+#endif
+                socket_family = AF_INET6;
+            } else {
+#endif
+                BIO_printf(bio_err, "%s: IPv6 domain sockets unsupported\n", prog);
+                goto end;
+            }
+            break;
         case OPT_HOST:
-            host = opt_arg();
+#ifdef AF_UNIX
+            if (socket_family == AF_UNIX) {
+                OPENSSL_free(host); host = NULL;
+                OPENSSL_free(port); port = NULL;
+                socket_family = AF_UNSPEC;
+            }
+#endif
+            OPENSSL_free(host); host = BUF_strdup(opt_arg());
             break;
         case OPT_PORT:
-            port = atoi(opt_arg());
+#ifdef AF_UNIX
+            if (socket_family == AF_UNIX) {
+                OPENSSL_free(host); host = NULL;
+                OPENSSL_free(port); port = NULL;
+                socket_family = AF_UNSPEC;
+            }
+#endif
+            OPENSSL_free(port); port = BUF_strdup(opt_arg());
             break;
         case OPT_CONNECT:
+#ifdef AF_UNIX
+            if (socket_family == AF_UNIX) {
+                socket_family = AF_UNSPEC;
+            }
+#endif
+            OPENSSL_free(host); host = NULL;
+            OPENSSL_free(port); port = NULL;
             connectstr = opt_arg();
             break;
         case OPT_PROXY:
             proxystr = opt_arg();
             starttls_proto = PROTO_CONNECT;
             break;
+#ifdef AF_UNIX
         case OPT_UNIX:
-            unix_path = opt_arg();
+            socket_family = AF_UNIX;
+            OPENSSL_free(host); host = BUF_strdup(opt_arg());
+            OPENSSL_free(port); port = NULL;
             break;
+#endif
         case OPT_XMPPHOST:
             xmpphost = opt_arg();
             break;
@@ -1014,9 +1095,6 @@ int s_client_main(int argc, char **argv)
         case OPT_NO_IGN_EOF:
             c_ign_eof = 0;
             break;
-        case OPT_PAUSE:
-            c_Pause = 1;
-            break;
         case OPT_DEBUG:
             c_debug = 1;
             break;
@@ -1114,41 +1192,48 @@ int s_client_main(int argc, char **argv)
 #endif
             break;
         case OPT_TLS1_2:
+#ifndef OPENSSL_NO_TLS1_2
             meth = TLSv1_2_client_method();
+#endif
             break;
         case OPT_TLS1_1:
+#ifndef OPENSSL_NO_TLS1_1
             meth = TLSv1_1_client_method();
+#endif
             break;
         case OPT_TLS1:
+#ifndef OPENSSL_NO_TLS1
             meth = TLSv1_client_method();
+#endif
             break;
-#ifndef OPENSSL_NO_DTLS
         case OPT_DTLS:
+#ifndef OPENSSL_NO_DTLS
             meth = DTLS_client_method();
             socket_type = SOCK_DGRAM;
+#endif
             break;
         case OPT_DTLS1:
+#ifndef OPENSSL_NO_DTLS1
             meth = DTLSv1_client_method();
             socket_type = SOCK_DGRAM;
+#endif
             break;
         case OPT_DTLS1_2:
+#ifndef OPENSSL_NO_DTLS1_2
             meth = DTLSv1_2_client_method();
             socket_type = SOCK_DGRAM;
-            break;
-        case OPT_TIMEOUT:
-            enable_timeouts = 1;
-            break;
-        case OPT_MTU:
-            socket_mtu = atol(opt_arg());
-            break;
-#else
-        case OPT_DTLS:
-        case OPT_DTLS1:
-        case OPT_DTLS1_2:
-        case OPT_TIMEOUT:
-        case OPT_MTU:
-            break;
 #endif
+            break;
+        case OPT_TIMEOUT:
+#ifndef OPENSSL_NO_DTLS
+            enable_timeouts = 1;
+#endif
+            break;
+        case OPT_MTU:
+#ifndef OPENSSL_NO_DTLS
+            socket_mtu = atol(opt_arg());
+#endif
+            break;
         case OPT_FALLBACKSCSV:
             fallback_scsv = 1;
             break;
@@ -1254,18 +1339,41 @@ int s_client_main(int argc, char **argv)
     argv = opt_rest();
 
     if (proxystr) {
+        int res;
+        char *tmp_host = host, *tmp_port = port;
         if (connectstr == NULL) {
             BIO_printf(bio_err, "%s: -proxy requires use of -connect\n", prog);
             goto opthelp;
         }
-        if (!extract_host_port(proxystr, &host, NULL, &port))
+        res = BIO_parse_hostserv(proxystr, &host, &port, BIO_PARSE_PRIO_HOST);
+        if (tmp_host != host)
+            OPENSSL_free(tmp_host);
+        if (tmp_port != port)
+            OPENSSL_free(tmp_port);
+        if (!res) {
+            BIO_printf(bio_err, "%s: -proxy argument malformed or ambiguous\n",
+                       prog);
             goto end;
+        }
+    } else {
+        int res = 1;
+        char *tmp_host = host, *tmp_port = port;
+        if (connectstr != NULL)
+            res = BIO_parse_hostserv(connectstr, &host, &port,
+                                     BIO_PARSE_PRIO_HOST);
+        if (tmp_host != host)
+            OPENSSL_free(tmp_host);
+        if (tmp_port != port)
+            OPENSSL_free(tmp_port);
+        if (!res) {
+            BIO_printf(bio_err,
+                       "%s: -connect argument malformed or ambiguous\n",
+                       prog);
+            goto end;
+        }
     }
-    else if (connectstr != NULL
-            && !extract_host_port(connectstr, &host, NULL, &port))
-        goto end;
 
-    if (unix_path && (socket_type != SOCK_STREAM)) {
+    if (socket_family == AF_UNIX && socket_type != SOCK_STREAM) {
         BIO_printf(bio_err,
                    "Can't use unix sockets and datagrams together\n");
         goto end;
@@ -1320,9 +1428,8 @@ int s_client_main(int argc, char **argv)
     }
 
     if (chain_file) {
-        chain = load_certs(chain_file, FORMAT_PEM,
-                           NULL, e, "client certificate chain");
-        if (!chain)
+        if (!load_certs(chain_file, &chain, FORMAT_PEM, NULL, e,
+                        "client certificate chain"))
             goto end;
     }
 
@@ -1579,12 +1686,7 @@ int s_client_main(int argc, char **argv)
     }
 
  re_start:
-#ifdef NO_SYS_UN_H
-    if (init_client(&s, host, port, socket_type) == 0)
-#else
-    if ((!unix_path && (init_client(&s, host, port, socket_type) == 0)) ||
-        (unix_path && (init_client_unix(&s, unix_path) == 0)))
-#endif
+    if (init_client(&s, host, port, socket_family, socket_type) == 0)
     {
         BIO_printf(bio_err, "connect:errno=%d\n", get_last_socket_error());
         SHUTDOWN(s);
@@ -1602,9 +1704,6 @@ int s_client_main(int argc, char **argv)
         }
     }
 #endif
-    if (c_Pause & 0x01)
-        SSL_set_debug(con, 1);
-
     if (socket_type == SOCK_DGRAM) {
 
         sbio = BIO_new_dgram(s, BIO_NOCLOSE);
@@ -1654,7 +1753,6 @@ int s_client_main(int argc, char **argv)
     }
 
     if (c_debug) {
-        SSL_set_debug(con, 1);
         BIO_set_callback(sbio, bio_dump_callback);
         BIO_set_callback_arg(sbio, (char *)bio_c_out);
     }
@@ -1996,7 +2094,7 @@ int s_client_main(int argc, char **argv)
                     reconnect--;
                     BIO_printf(bio_c_out,
                                "drop connection and then reconnect\n");
-                    SSL_shutdown(con);
+                    do_ssl_shutdown(con);
                     SSL_set_connect_state(con);
                     SHUTDOWN(SSL_get_fd(con));
                     goto re_start;
@@ -2314,7 +2412,7 @@ int s_client_main(int argc, char **argv)
  shut:
     if (in_init)
         print_stuff(bio_c_out, con, full_log);
-    SSL_shutdown(con);
+    do_ssl_shutdown(con);
     SHUTDOWN(SSL_get_fd(con));
  end:
     if (con != NULL) {
@@ -2337,6 +2435,8 @@ int s_client_main(int argc, char **argv)
 #ifndef OPENSSL_NO_SRP
     OPENSSL_free(srp_arg.srppassin);
 #endif
+    OPENSSL_free(host);
+    OPENSSL_free(port);
     X509_VERIFY_PARAM_free(vpm);
     ssl_excert_free(exc);
     sk_OPENSSL_STRING_free(ssl_args);

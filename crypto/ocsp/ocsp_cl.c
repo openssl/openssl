@@ -1,4 +1,3 @@
-/* ocsp_cl.c */
 /*
  * Written by Tom Titchener <Tom_Titchener@groove.net> for the OpenSSL
  * project.
@@ -242,6 +241,13 @@ OCSP_SINGLERESP *OCSP_resp_get0(OCSP_BASICRESP *bs, int idx)
     return sk_OCSP_SINGLERESP_value(bs->tbsResponseData.responses, idx);
 }
 
+ASN1_GENERALIZEDTIME *OCSP_resp_get0_produced_at(OCSP_BASICRESP* bs)
+{
+    if (!bs)
+        return NULL;
+    return bs->tbsResponseData.producedAt;
+}
+
 /* Look single response matching a given certificate ID */
 
 int OCSP_resp_find(OCSP_BASICRESP *bs, OCSP_CERTID *id, int last)
@@ -385,4 +391,9 @@ int OCSP_check_validity(ASN1_GENERALIZEDTIME *thisupd,
     }
 
     return ret;
+}
+
+OCSP_CERTID *OCSP_SINGLERESP_get0_id(OCSP_SINGLERESP *single)
+{
+    return single->certId;
 }

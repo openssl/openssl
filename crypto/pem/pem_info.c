@@ -1,4 +1,3 @@
-/* crypto/pem/pem_info.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -362,7 +361,7 @@ int PEM_X509_INFO_write_bio(BIO *bp, X509_INFO *xi, EVP_CIPHER *enc,
 #ifndef OPENSSL_NO_RSA
             /* normal optionally encrypted stuff */
             if (PEM_write_bio_RSAPrivateKey(bp,
-                                            xi->x_pkey->dec_pkey->pkey.rsa,
+                                            EVP_PKEY_get0_RSA(xi->x_pkey->dec_pkey),
                                             enc, kstr, klen, cb, u) <= 0)
                 goto err;
 #endif

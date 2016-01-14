@@ -1,4 +1,3 @@
-/* e_os.h */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -90,7 +89,7 @@ extern "C" {
  */
 #  define DEVRANDOM "/dev/urandom","/dev/random","/dev/srandom"
 # endif
-# ifndef DEVRANDOM_EGD
+# if !defined(OPENSSL_NO_EGD) && !defined(DEVRANDOM_EGD)
 /*
  * set this to a comma-separated list of 'egd' sockets to try out. These
  * sockets will be tried in the order listed in case accessing the device
@@ -498,6 +497,7 @@ struct servent *PASCAL getservbyname(const char *, const char *);
           * configured for BSD
           */
 #   if defined(NETWARE_BSDSOCK)
+#    include <netdb.h>
 #    include <sys/socket.h>
 #    include <netinet/in.h>
 #    include <sys/time.h>
@@ -546,6 +546,7 @@ struct servent *PASCAL getservbyname(const char *, const char *);
 #    endif
 #    include <netinet/in.h>
 #    include <arpa/inet.h>
+#    include <netinet/tcp.h>
 #   endif
 
 #   ifdef OPENSSL_SYS_AIX

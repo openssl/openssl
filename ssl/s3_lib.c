@@ -1,4 +1,3 @@
-/* ssl/s3_lib.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -3284,7 +3283,7 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      SSL_GOST12_256,
      SSL_TLSV1,
      SSL_STRONG_NONE,
-     SSL_HANDSHAKE_MAC_GOST12_256 | TLS1_PRF_GOST12_256,
+     SSL_HANDSHAKE_MAC_GOST12_256 | TLS1_PRF_GOST12_256 | TLS1_STREAM_MAC,
      0,
      0},
 #endif
@@ -3534,13 +3533,16 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 #endif                          /* !OPENSSL_NO_EC */
     case SSL_CTRL_SET_TLSEXT_HOSTNAME:
         if (larg == TLSEXT_NAMETYPE_host_name) {
+            size_t len;
+
             OPENSSL_free(s->tlsext_hostname);
             s->tlsext_hostname = NULL;
 
             ret = 1;
             if (parg == NULL)
                 break;
-            if (strlen((char *)parg) > TLSEXT_MAXLEN_host_name) {
+            len = strlen((char *)parg);
+            if (len == 0 || len > TLSEXT_MAXLEN_host_name) {
                 SSLerr(SSL_F_SSL3_CTRL, SSL_R_SSL3_EXT_INVALID_SERVERNAME);
                 return 0;
             }
@@ -3797,7 +3799,7 @@ long ssl3_callback_ctrl(SSL *s, int cmd, void (*fp) (void))
 #endif
     case SSL_CTRL_SET_TLSEXT_DEBUG_CB:
         s->tlsext_debug_cb = (void (*)(SSL *, int, int,
-                                       unsigned char *, int, void *))fp;
+                                       const unsigned char *, int, void *))fp;
         break;
 
     case SSL_CTRL_SET_NOT_RESUMABLE_SESS_CB:
@@ -4325,6 +4327,21 @@ int ssl3_shutdown(SSL *s)
             return (ret);
         }
     } else if (!(s->shutdown & SSL_RECEIVED_SHUTDOWN)) {
+        if (SSL_in_init(s)) {
+            /*
+             * We can't shutdown properly if we are in the middle of a
+             * handshake. Doing so is problematic because the peer may send a
+             * CCS before it acts on our close_notify. However we should not
+             * continue to process received handshake messages or CCS once our
+             * close_notify has been sent. Therefore any close_notify from
+             * the peer will be unreadable because we have not moved to the next
+             * cipher state. Its best just to avoid this can-of-worms. Return
+             * an error if we are wanting to wait for a close_notify from the
+             * peer and we are in init.
+             */
+            SSLerr(SSL_F_SSL3_SHUTDOWN, SSL_R_SHUTDOWN_WHILE_IN_INIT);
+            return -1;
+        }
         /*
          * If we are waiting for a close from our peer, we are closed
          */

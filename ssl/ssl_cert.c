@@ -214,7 +214,7 @@ CERT *ssl_cert_dup(CERT *cert)
 
         if (cpk->privatekey != NULL) {
             rpk->privatekey = cpk->privatekey;
-            CRYPTO_add(&cpk->privatekey->references, 1, CRYPTO_LOCK_EVP_PKEY);
+            EVP_PKEY_up_ref(cpk->privatekey);
         }
 
         if (cpk->chain) {
@@ -1062,9 +1062,16 @@ static int ssl_security_default_callback(SSL *s, SSL_CTX *ctx, int op,
         level = SSL_CTX_get_security_level(ctx);
     else
         level = SSL_get_security_level(s);
-    /* Level 0: anything goes */
-    if (level <= 0)
+
+    if (level <= 0) {
+        /*
+         * No EDH keys weaker than 1024-bits even at level 0, otherwise,
+         * anything goes.
+         */
+        if (op == SSL_SECOP_TMP_DH && bits < 80)
+            return 0;
         return 1;
+    }
     if (level > 5)
         level = 5;
     minbits = minbits_table[level - 1];

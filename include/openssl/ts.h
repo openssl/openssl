@@ -1,4 +1,3 @@
-/* crypto/ts/ts.h */
 /*
  * Written by Zoltan Glozik (zglozik@opentsa.org) for the OpenSSL project
  * 2002, 2003, 2004.
@@ -225,6 +224,11 @@ int TS_REQ_set_version(TS_REQ *a, long version);
 long TS_REQ_get_version(const TS_REQ *a);
 
 int TS_STATUS_INFO_set_status(TS_STATUS_INFO *a, int i);
+ASN1_INTEGER *TS_STATUS_INFO_get0_status(TS_STATUS_INFO *a);
+
+STACK_OF(ASN1_UTF8STRING) *TS_STATUS_INFO_get0_text(TS_STATUS_INFO *a);
+
+ASN1_BIT_STRING *TS_STATUS_INFO_get0_failure_info(TS_STATUS_INFO *a);
 
 int TS_REQ_set_msg_imprint(TS_REQ *a, TS_MSG_IMPRINT *msg_imprint);
 TS_MSG_IMPRINT *TS_REQ_get_msg_imprint(TS_REQ *a);
@@ -557,9 +561,11 @@ EVP_PKEY *TS_CONF_load_key(const char *file, const char *pass);
 const char *TS_CONF_get_tsa_section(CONF *conf, const char *section);
 int TS_CONF_set_serial(CONF *conf, const char *section, TS_serial_cb cb,
                        TS_RESP_CTX *ctx);
+#ifndef OPENSSL_NO_ENGINE
 int TS_CONF_set_crypto_device(CONF *conf, const char *section,
                               const char *device);
 int TS_CONF_set_default_engine(const char *name);
+#endif
 int TS_CONF_set_signer_cert(CONF *conf, const char *section,
                             const char *cert, TS_RESP_CTX *ctx);
 int TS_CONF_set_certs(CONF *conf, const char *section, const char *certs,

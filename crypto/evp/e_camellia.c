@@ -1,4 +1,3 @@
-/* crypto/evp/e_camellia.c */
 /* ====================================================================
  * Copyright (c) 2006 The OpenSSL Project.  All rights reserved.
  *
@@ -119,10 +118,10 @@ static int cmll_t4_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
                             const unsigned char *iv, int enc)
 {
     int ret, mode, bits;
-    EVP_CAMELLIA_KEY *dat = (EVP_CAMELLIA_KEY *) ctx->cipher_data;
+    EVP_CAMELLIA_KEY *dat = (EVP_CAMELLIA_KEY *) EVP_CIPHER_CTX_cipher_data(ctx);
 
-    mode = ctx->cipher->flags & EVP_CIPH_MODE;
-    bits = ctx->key_len * 8;
+    mode = EVP_CIPHER_CTX_mode(ctx);
+    bits = EVP_CIPHER_CTX_key_length(ctx) * 8;
 
     cmll_t4_set_key(key, bits, &dat->ks);
 

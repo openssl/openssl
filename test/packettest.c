@@ -1,4 +1,3 @@
-/* test/packettest.c */
 /*
  * Written by Matt Caswell for the OpenSSL project.
  */
@@ -198,7 +197,7 @@ static int test_PACKET_get_sub_packet(unsigned char buf[BUF_LEN])
 
 static int test_PACKET_get_bytes(unsigned char buf[BUF_LEN])
 {
-    unsigned char *bytes;
+    const unsigned char *bytes;
     PACKET pkt;
 
     if (       !PACKET_buf_init(&pkt, buf, BUF_LEN)
@@ -311,7 +310,7 @@ static int test_PACKET_strndup()
 
 static int test_PACKET_forward(unsigned char buf[BUF_LEN])
 {
-    unsigned char *byte;
+    const unsigned char *byte;
     PACKET pkt;
 
     if (       !PACKET_buf_init(&pkt, buf, BUF_LEN)

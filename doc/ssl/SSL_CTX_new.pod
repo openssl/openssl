@@ -2,9 +2,9 @@
 
 =head1 NAME
 
-SSL_CTX_new, SSLv3_method, SSLv3_server_method, SSLv3_client_method,
-TLSv1_method, TLSv1_server_method, TLSv1_client_method, TLSv1_1_method,
-TLSv1_1_server_method, TLSv1_1_client_method, TLS_method,
+SSL_CTX_new, SSL_CTX_up_ref, SSLv3_method, SSLv3_server_method,
+SSLv3_client_method, TLSv1_method, TLSv1_server_method, TLSv1_client_method,
+TLSv1_1_method, TLSv1_1_server_method, TLSv1_1_client_method, TLS_method,
 TLS_server_method, TLS_client_method, SSLv23_method, SSLv23_server_method,
 SSLv23_client_method, DTLS_method, DTLS_server_method, DTLS_client_method,
 DTLSv1_method, DTLSv1_server_method, DTLSv1_client_method,
@@ -17,6 +17,7 @@ functions
  #include <openssl/ssl.h>
 
  SSL_CTX *SSL_CTX_new(const SSL_METHOD *method);
+ void SSL_CTX_up_ref(SSL_CTX *ctx);
 
  const SSL_METHOD *TLS_method(void);
  const SSL_METHOD *TLS_server_method(void);
@@ -59,7 +60,12 @@ functions
 =head1 DESCRIPTION
 
 SSL_CTX_new() creates a new B<SSL_CTX> object as framework to
-establish TLS/SSL or DTLS enabled connections.
+establish TLS/SSL or DTLS enabled connections. An B<SSL_CTX> object is
+reference counted. Creating an B<SSL_CTX> object for the first time increments
+the reference count. Freeing it (using SSL_CTX_free) decrements it. When the
+reference count drops to zero, any memory or resources allocated to the
+B<SSL_CTX> object are freed. SSL_CTX_up_ref() increments the reference count for
+an existing B<SSL_CTX> structure.
 
 =head1 NOTES
 

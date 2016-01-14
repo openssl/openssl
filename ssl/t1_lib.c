@@ -1,4 +1,3 @@
-/* ssl/t1_lib.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -793,9 +792,9 @@ static int tls1_check_cert_param(SSL *s, X509 *x, int set_ee_md)
     if (!pkey)
         return 0;
     /* If not EC nothing to do */
-    if (pkey->type != EVP_PKEY_EC)
+    if (EVP_PKEY_id(pkey) != EVP_PKEY_EC)
         return 1;
-    rv = tls1_set_ec_id(curve_id, &comp_id, pkey->pkey.ec);
+    rv = tls1_set_ec_id(curve_id, &comp_id, EVP_PKEY_get0_EC_KEY(pkey));
     if (!rv)
         return 0;
     /*
@@ -990,10 +989,10 @@ int tls12_check_peer_sigalg(const EVP_MD **pmd, SSL *s,
         return 0;
     }
 #ifndef OPENSSL_NO_EC
-    if (pkey->type == EVP_PKEY_EC) {
+    if (EVP_PKEY_id(pkey) == EVP_PKEY_EC) {
         unsigned char curve_id[2], comp_id;
         /* Check compression and curve matches extensions */
-        if (!tls1_set_ec_id(curve_id, &comp_id, pkey->pkey.ec))
+        if (!tls1_set_ec_id(curve_id, &comp_id, EVP_PKEY_get0_EC_KEY(pkey)))
             return 0;
         if (!s->server && !tls1_check_ec_key(s, curve_id, &comp_id)) {
             SSLerr(SSL_F_TLS12_CHECK_PEER_SIGALG, SSL_R_WRONG_CURVE);
@@ -1737,7 +1736,7 @@ static int tls1_alpn_handle_client_hello(SSL *s, PACKET *pkt, int *al)
     unsigned int data_len;
     unsigned int proto_len;
     const unsigned char *selected;
-    unsigned char *data;
+    const unsigned char *data;
     unsigned char selected_len;
     int r;
 
@@ -1796,7 +1795,7 @@ static int tls1_alpn_handle_client_hello(SSL *s, PACKET *pkt, int *al)
 static void ssl_check_for_safari(SSL *s, const PACKET *pkt)
 {
     unsigned int type, size;
-    unsigned char *eblock1, *eblock2;
+    const unsigned char *eblock1, *eblock2;
     PACKET tmppkt;
 
     static const unsigned char kSafariExtensionsBlock[] = {
@@ -1867,7 +1866,7 @@ static int ssl_scan_clienthello_tlsext(SSL *s, PACKET *pkt, int *al)
     unsigned int type;
     unsigned int size;
     unsigned int len;
-    unsigned char *data;
+    const unsigned char *data;
     int renegotiate_seen = 0;
 
     s->servername_done = 0;
@@ -1955,7 +1954,7 @@ static int ssl_scan_clienthello_tlsext(SSL *s, PACKET *pkt, int *al)
  */
 
         else if (type == TLSEXT_TYPE_server_name) {
-            unsigned char *sdata;
+            const unsigned char *sdata;
             unsigned int servname_type;
             unsigned int dsize;
             PACKET ssubpkt;
@@ -2376,7 +2375,7 @@ static int ssl_scan_serverhello_tlsext(SSL *s, PACKET *pkt, int *al)
     }
 
     while (PACKET_get_net_2(pkt, &type) && PACKET_get_net_2(pkt, &size)) {
-        unsigned char *data;
+        const unsigned char *data;
         PACKET spkt;
 
         if (!PACKET_get_sub_packet(pkt, &spkt, size)
@@ -2966,7 +2965,7 @@ int tls_check_serverhello_tlsext_early(SSL *s, const PACKET *ext,
         }
         if (type == TLSEXT_TYPE_session_ticket && use_ticket) {
             int r;
-            unsigned char *etick;
+            const unsigned char *etick;
 
             /* Duplicate extension */
             if (have_ticket != 0) {
@@ -3227,7 +3226,7 @@ int tls12_get_sigandhash(unsigned char *p, const EVP_PKEY *pk,
 
 int tls12_get_sigid(const EVP_PKEY *pk)
 {
-    return tls12_find_id(pk->type, tls12_sig, OSSL_NELEM(tls12_sig));
+    return tls12_find_id(EVP_PKEY_id(pk), tls12_sig, OSSL_NELEM(tls12_sig));
 }
 
 typedef struct {
@@ -4110,7 +4109,7 @@ int tls1_check_chain(SSL *s, X509 *x, EVP_PKEY *pk, STACK_OF(X509) *chain,
     if (!s->server && strict_mode) {
         STACK_OF(X509_NAME) *ca_dn;
         int check_type = 0;
-        switch (pk->type) {
+        switch (EVP_PKEY_id(pk)) {
         case EVP_PKEY_RSA:
             check_type = TLS_CT_RSA_SIGN;
             break;

@@ -69,7 +69,7 @@
 static EVP_PKEY_CTX *init_ctx(int *pkeysize,
                               char *keyfile, int keyform, int key_type,
                               char *passinarg, int pkey_op, ENGINE *e,
-			      const int impl);
+                              const int impl);
 
 static int setup_peer(EVP_PKEY_CTX *ctx, int peerform, const char *file);
 
@@ -107,7 +107,7 @@ OPTIONS pkeyutl_options[] = {
     {"peerkey", OPT_PEERKEY, 's'},
     {"passin", OPT_PASSIN, 's', "Pass phrase source"},
     {"peerform", OPT_PEERFORM, 'F'},
-    {"keyform", OPT_KEYFORM, 'F', "Private key format - default PEM"},
+    {"keyform", OPT_KEYFORM, 'f', "Private key format - default PEM"},
     {"pkeyopt", OPT_PKEYOPT, 's', "Public key options as opt:value"},
 #ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
@@ -153,9 +153,9 @@ int pkeyutl_main(int argc, char **argv)
         case OPT_SIGFILE:
             sigfile = opt_arg();
             break;
-	case OPT_ENGINE_IMPL:
-	    engine_impl = 1;
-	    break;
+        case OPT_ENGINE_IMPL:
+            engine_impl = 1;
+            break;
         case OPT_INKEY:
             ctx = init_ctx(&keysize, opt_arg(), keyform, key_type,
                            passinarg, pkey_op, e, engine_impl);
@@ -173,11 +173,11 @@ int pkeyutl_main(int argc, char **argv)
             passinarg = opt_arg();
             break;
         case OPT_PEERFORM:
-            if (!opt_format(opt_arg(), OPT_FMT_PEMDER, &peerform))
+	     if (!opt_format(opt_arg(), OPT_FMT_PEMDER, &peerform))
                 goto opthelp;
             break;
         case OPT_KEYFORM:
-            if (!opt_format(opt_arg(), OPT_FMT_PEMDER, &keyform))
+	  if (!opt_format(opt_arg(), (OPT_FMT_ENGINE | OPT_FMT_PEMDER), &keyform))
                 goto opthelp;
             break;
         case OPT_ENGINE:
@@ -338,7 +338,7 @@ int pkeyutl_main(int argc, char **argv)
 static EVP_PKEY_CTX *init_ctx(int *pkeysize,
                               char *keyfile, int keyform, int key_type,
                               char *passinarg, int pkey_op, ENGINE *e,
-			      const int engine_impl)
+                              const int engine_impl)
 {
     EVP_PKEY *pkey = NULL;
     EVP_PKEY_CTX *ctx = NULL;
@@ -380,10 +380,10 @@ static EVP_PKEY_CTX *init_ctx(int *pkeysize,
     if (!pkey)
         goto end;
 
- #ifndef OPENSSL_NO_ENGINE
+#ifndef OPENSSL_NO_ENGINE
     if (engine_impl)
         impl = e;
- #endif
+#endif
     
     ctx = EVP_PKEY_CTX_new(pkey, impl);
 

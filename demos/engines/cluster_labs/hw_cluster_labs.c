@@ -1,4 +1,3 @@
-/* crypto/engine/hw_cluster_labs.c */
 /*
  * Written by Jan Tschirschwitz (jan.tschirschwitz@cluster-labs.com for the
  * OpenSSL project 2000.

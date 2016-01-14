@@ -1,4 +1,3 @@
-/* crypto/ec/ec_lib.c */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -328,13 +327,18 @@ int EC_GROUP_set_generator(EC_GROUP *group, const EC_POINT *generator,
     } else
         BN_zero(group->cofactor);
 
+ 
     /*
-     * We ignore the return value because some groups have an order with
+     * Some groups have an order with
      * factors of two, which makes the Montgomery setup fail.
      * |group->mont_data| will be NULL in this case.
      */
-    ec_precompute_mont_data(group);
+    if (BN_is_odd(group->order)) {
+        return ec_precompute_mont_data(group);
+    }
 
+    BN_MONT_CTX_free(group->mont_data);
+    group->mont_data = NULL;
     return 1;
 }
 
@@ -350,19 +354,41 @@ BN_MONT_CTX *EC_GROUP_get_mont_data(const EC_GROUP *group)
 
 int EC_GROUP_get_order(const EC_GROUP *group, BIGNUM *order, BN_CTX *ctx)
 {
+    if (group->order == NULL)
+        return 0;
     if (!BN_copy(order, group->order))
         return 0;
 
     return !BN_is_zero(order);
 }
 
+const BIGNUM *EC_GROUP_get0_order(const EC_GROUP *group)
+{
+    return group->order;
+}
+
+int EC_GROUP_order_bits(const EC_GROUP *group)
+{
+    if (group->order)
+        return BN_num_bits(group->order);
+    return 0;
+}
+
 int EC_GROUP_get_cofactor(const EC_GROUP *group, BIGNUM *cofactor,
                           BN_CTX *ctx)
 {
+
+    if (group->cofactor == NULL)
+        return 0;
     if (!BN_copy(cofactor, group->cofactor))
         return 0;
 
     return !BN_is_zero(group->cofactor);
+}
+
+const BIGNUM *EC_GROUP_get0_cofactor(const EC_GROUP *group)
+{
+    return group->cofactor;
 }
 
 void EC_GROUP_set_curve_name(EC_GROUP *group, int nid)
@@ -537,16 +563,18 @@ int EC_GROUP_cmp(const EC_GROUP *a, const EC_GROUP *b, BN_CTX *ctx)
         r = 1;
 
     if (!r) {
+        const BIGNUM *ao, *bo, *ac, *bc;
         /* compare the order and cofactor */
-        if (!EC_GROUP_get_order(a, a1, ctx) ||
-            !EC_GROUP_get_order(b, b1, ctx) ||
-            !EC_GROUP_get_cofactor(a, a2, ctx) ||
-            !EC_GROUP_get_cofactor(b, b2, ctx)) {
+        ao = EC_GROUP_get0_order(a);
+        bo = EC_GROUP_get0_order(b);
+        ac = EC_GROUP_get0_cofactor(a);
+        bc = EC_GROUP_get0_cofactor(b);
+        if (ao == NULL || bo == NULL) {
             BN_CTX_end(ctx);
             BN_CTX_free(ctx_new);
             return -1;
         }
-        if (BN_cmp(a1, b1) || BN_cmp(a2, b2))
+        if (BN_cmp(ao, bo) || BN_cmp(ac, bc))
             r = 1;
     }
 
@@ -571,7 +599,7 @@ EC_POINT *EC_POINT_new(const EC_GROUP *group)
         return NULL;
     }
 
-    ret = OPENSSL_malloc(sizeof(*ret));
+    ret = OPENSSL_zalloc(sizeof(*ret));
     if (ret == NULL) {
         ECerr(EC_F_EC_POINT_NEW, ERR_R_MALLOC_FAILURE);
         return NULL;

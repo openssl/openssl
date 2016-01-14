@@ -1,4 +1,3 @@
-/* crypto/ts/ts_resp_utils.c */
 /*
  * Written by Zoltan Glozik (zglozik@stones.com) for the OpenSSL project
  * 2002.
@@ -396,4 +395,19 @@ void *TS_TST_INFO_get_ext_d2i(TS_TST_INFO *a, int nid, int *crit, int *idx)
 int TS_STATUS_INFO_set_status(TS_STATUS_INFO *a, int i)
 {
     return ASN1_INTEGER_set(a->status, i);
+}
+
+ASN1_INTEGER *TS_STATUS_INFO_get0_status(TS_STATUS_INFO *a)
+{
+    return a->status;
+}
+
+STACK_OF(ASN1_UTF8STRING) *TS_STATUS_INFO_get0_text(TS_STATUS_INFO *a)
+{
+    return a->text;
+}
+
+ASN1_BIT_STRING *TS_STATUS_INFO_get0_failure_info(TS_STATUS_INFO *a)
+{
+    return a->failure_info;
 }

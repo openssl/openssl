@@ -1,4 +1,3 @@
-/* include/openssl/async.h */
 /*
  * Written by Matt Caswell (matt@openssl.org) for the OpenSSL project.
  */
@@ -56,7 +55,7 @@
 
 #include <stdlib.h>
 
-#if defined(_WIN32) || defined(__CYGWIN__)
+#if defined(_WIN32)
 #include <windows.h>
 #define OSSL_ASYNC_FD   HANDLE
 #else

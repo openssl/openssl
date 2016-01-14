@@ -1,4 +1,3 @@
-/* evp_int.h */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
  * 2015.
@@ -131,6 +130,7 @@ extern const EVP_PKEY_METHOD dsa_pkey_meth;
 extern const EVP_PKEY_METHOD ec_pkey_meth;
 extern const EVP_PKEY_METHOD hmac_pkey_meth;
 extern const EVP_PKEY_METHOD rsa_pkey_meth;
+extern const EVP_PKEY_METHOD tls1_prf_pkey_meth;
 
 struct evp_md_st {
     int type;
@@ -386,3 +386,32 @@ const EVP_CIPHER *EVP_##cname##_ecb(void) { return &cname##_ecb; }
                              (fl)|EVP_CIPH_FLAG_DEFAULT_ASN1, \
                              cipher##_init_key, NULL, NULL, NULL, NULL)
 
+
+/*
+ * Type needs to be a bit field Sub-type needs to be for variations on the
+ * method, as in, can it do arbitrary encryption....
+ */
+struct evp_pkey_st {
+    int type;
+    int save_type;
+    int references;
+    const EVP_PKEY_ASN1_METHOD *ameth;
+    ENGINE *engine;
+    union {
+        char *ptr;
+# ifndef OPENSSL_NO_RSA
+        struct rsa_st *rsa;     /* RSA */
+# endif
+# ifndef OPENSSL_NO_DSA
+        struct dsa_st *dsa;     /* DSA */
+# endif
+# ifndef OPENSSL_NO_DH
+        struct dh_st *dh;       /* DH */
+# endif
+# ifndef OPENSSL_NO_EC
+        struct ec_key_st *ec;   /* ECC */
+# endif
+    } pkey;
+    int save_parameters;
+    STACK_OF(X509_ATTRIBUTE) *attributes; /* [ 0 ] */
+} /* EVP_PKEY */ ;

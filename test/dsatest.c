@@ -1,4 +1,3 @@
-/* crypto/dsa/dsatest.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -248,7 +247,7 @@ static int dsa_cb(int p, int n, BN_GENCB *arg)
     (void)BIO_flush(BN_GENCB_get_arg(arg));
 
     if (!ok && (p == 0) && (num > 1)) {
-        BIO_printf((BIO *)arg, "error in dsatest\n");
+        BIO_printf(BN_GENCB_get_arg(arg), "error in dsatest\n");
         return 0;
     }
     return 1;

@@ -36,26 +36,14 @@ lib:	$(LIBOBJ)
 	$(RANLIB) $(LIB) || echo Never mind.
 	@touch lib
 
+poly1305-sparcv9.S:	asm/poly1305-sparcv9.pl
+	$(PERL) asm/poly1305-sparcv9.pl > $@
+
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
 
-tags:
-	ctags $(SRC)
-
-tests:
-
-lint:
-	lint -DLINT $(INCLUDES) $(SRC)>fluff
-
-update:	depend
-
 depend:
-	@[ -n "$(MAKEDEPEND)" ] # should be set by upper Makefile...
-	$(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(LIBSRC)
-
-dclean:
-	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
-	mv -f Makefile.new $(MAKEFILE)
+	$(TOP)/util/domd $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(LIBSRC)
 
 clean:
 	rm -f *.s *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff

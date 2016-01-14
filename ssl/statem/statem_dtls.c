@@ -1,4 +1,3 @@
-/* ssl/statem/statem_dtls.c */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -1066,7 +1065,7 @@ int dtls1_get_queue_priority(unsigned short seq, int is_ccs)
 
 int dtls1_retransmit_buffered_messages(SSL *s)
 {
-    pqueue sent = s->d1->sent_messages;
+    pqueue *sent = s->d1->sent_messages;
     piterator iter;
     pitem *item;
     hm_fragment *frag;

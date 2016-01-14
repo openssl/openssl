@@ -1,4 +1,3 @@
-/* dso_dl.c */
 /*
  * Written by Richard Levitte (richard@levitte.org) for the OpenSSL project
  * 2000.
@@ -237,23 +236,21 @@ static char *dl_merger(DSO *dso, const char *filespec1, const char *filespec2)
      * if the second file specification is missing.
      */
     if (!filespec2 || filespec1[0] == '/') {
-        merged = OPENSSL_malloc(strlen(filespec1) + 1);
+        merged = OPENSSL_strdup(filespec1);
         if (merged == NULL) {
             DSOerr(DSO_F_DL_MERGER, ERR_R_MALLOC_FAILURE);
             return (NULL);
         }
-        strcpy(merged, filespec1);
     }
     /*
      * If the first file specification is missing, the second one rules.
      */
     else if (!filespec1) {
-        merged = OPENSSL_malloc(strlen(filespec2) + 1);
+        merged = OPENSSL_strdup(filespec2);
         if (merged == NULL) {
             DSOerr(DSO_F_DL_MERGER, ERR_R_MALLOC_FAILURE);
             return (NULL);
         }
-        strcpy(merged, filespec2);
     } else
         /*
          * This part isn't as trivial as it looks.  It assumes that the
@@ -268,7 +265,7 @@ static char *dl_merger(DSO *dso, const char *filespec1, const char *filespec2)
         spec2len = (filespec2 ? strlen(filespec2) : 0);
         len = spec2len + (filespec1 ? strlen(filespec1) : 0);
 
-        if (filespec2 && filespec2[spec2len - 1] == '/') {
+        if (spec2len && filespec2[spec2len - 1] == '/') {
             spec2len--;
             len--;
         }

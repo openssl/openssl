@@ -1,4 +1,3 @@
-/* crypto/cms/cms_env.c */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -62,6 +61,7 @@
 #include <openssl/aes.h>
 #include "cms_lcl.h"
 #include "internal/asn1_int.h"
+#include "internal/evp_int.h"
 
 /* CMS EnvelopedData Utilities */
 

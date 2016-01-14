@@ -29,8 +29,7 @@ install:	FORCE.install
 		cd install; \
 			make -f unix/makefile CFLAGS='-I. -DPROTOTYPES=1 -O -c' RSAREFLIB=librsaref.a librsaref.a
 
-FORCE.update:
-update:		FORCE.update
+generate:
 		perl ../../../util/mkerr.pl -conf rsaref.ec \
 			-nostatic -staticloader -write rsaref.c
 
@@ -111,11 +110,5 @@ $(SHLIB).aix:	$(LIB) install/librsaref.a
 		touch $(SHLIB).aix
 
 depend:
-		sed -e '/^# DO NOT DELETE.*/,$$d' < Makefile > Makefile.tmp
-		echo '# DO NOT DELETE THIS LINE -- make depend depends on it.' >> Makefile.tmp
-		gcc -M $(CFLAGS) $(SRC) >> Makefile.tmp
-		perl ../../../util/clean-depend.pl < Makefile.tmp > Makefile.new
-		rm -f Makefile.tmp Makefile
-		mv Makefile.new Makefile
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.

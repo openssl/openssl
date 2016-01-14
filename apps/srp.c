@@ -365,7 +365,7 @@ int srp_main(int argc, char **argv)
             if (verbose)
                 BIO_printf(bio_err,
                            "trying to read " ENV_DEFAULT_SRP
-                           " in \" BASE_SECTION \"\n");
+                           " in " BASE_SECTION "\n");
 
             section = NCONF_get_string(conf, BASE_SECTION, ENV_DEFAULT_SRP);
             if (section == NULL) {

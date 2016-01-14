@@ -38,6 +38,9 @@
 #   exclude.
 #
 
+use lib ".";
+use configdata;
+
 my $debug=0;
 
 my $crypto_num= "util/libeay.num";
@@ -84,6 +87,8 @@ my @known_algorithms = ( "RC2", "RC4", "RC5", "IDEA", "DES", "BF",
                          "CRYPTO_MDEBUG",
 			 # Engines
                          "STATIC_ENGINE", "ENGINE", "HW", "GMP",
+			 # Entropy Gathering
+			 "EGD",
                          # X.509v3 Signed Certificate Timestamps
                          "SCT",
 			 # RFC3779
@@ -126,16 +131,9 @@ foreach (@known_algorithms) {
 # disabled by default
 $disabled_algorithms{"STATIC_ENGINE"} = 1;
 
-my $options="";
-open(IN,"<Makefile") || die "unable to open Makefile!\n";
-while(<IN>) {
-    $options=$1 if (/^OPTIONS=(.*)$/);
-}
-close(IN);
-
 my $zlib;
 
-foreach (@ARGV, split(/ /, $options))
+foreach (@ARGV, split(/ /, $config{options}))
 	{
 	$debug=1 if $_ eq "debug";
 	$W32=1 if $_ eq "32";
@@ -294,7 +292,6 @@ $crypto.=" include/openssl/comp.h" ; # unless $no_comp;
 $crypto.=" include/openssl/ocsp.h";
 $crypto.=" include/openssl/ui.h";
 #$crypto.=" include/openssl/store.h";
-$crypto.=" include/openssl/pqueue.h";
 $crypto.=" include/openssl/cms.h";
 $crypto.=" include/openssl/jpake.h";
 $crypto.=" include/openssl/srp.h";
@@ -1031,7 +1028,8 @@ sub reduce_platforms
 	return $ret;
 }
 
-sub info_string {
+sub info_string
+{
 	(my $symbol, my $exist, my $platforms, my $kind, my $algorithms) = @_;
 
 	my %a = defined($algorithms) ?
@@ -1049,13 +1047,13 @@ sub info_string {
 	return $ret;
 }
 
-sub maybe_add_info {
+sub maybe_add_info
+{
 	(my $name, *nums, my @symbols) = @_;
 	my $sym;
 	my $new_info = 0;
 	my %syms=();
 
-	print STDERR "Updating $name info\n";
 	foreach $sym (@symbols) {
 		(my $s, my $i) = split /\\/, $sym;
 		if (defined($nums{$s})) {
@@ -1079,12 +1077,11 @@ sub maybe_add_info {
 		}
 	}
 	if ($new_info) {
-		print STDERR "$new_info old symbols got an info update\n";
+		print STDERR "$name: $new_info old symbols have updated info\n";
 		if (!$do_rewrite) {
 			print STDERR "You should do a rewrite to fix this.\n";
 		}
 	} else {
-		print STDERR "No old symbols needed info update\n";
 	}
 }
 
@@ -1174,15 +1171,9 @@ sub print_test_file
 	}
 }
 
-sub get_version {
-   local *MF;
-   my $v = '?';
-   open MF, 'Makefile' or return $v;
-   while (<MF>) {
-     $v = $1, last if /^VERSION=(.*?)\s*$/;
-   }
-   close MF;
-   return $v;
+sub get_version
+{
+   return $config{version};
 }
 
 sub print_def_file
@@ -1441,8 +1432,6 @@ sub rewrite_numbers
 	(*OUT,$name,*nums,@symbols)=@_;
 	my $thing;
 
-	print STDERR "Rewriting $name\n";
-
 	my @r = grep(/^\w+(\{[0-9]+\})?\\.*?:.*?:\w+\(\w+\)/,@symbols);
 	my $r; my %r; my %rsyms;
 	foreach $r (@r) {
@@ -1491,8 +1480,6 @@ sub update_numbers
 
 	($basevers, $vers) = get_openssl_version();
 
-	print STDERR "Updating $name numbers\n";
-
 	my @r = grep(/^\w+(\{[0-9]+\})?\\.*?:.*?:\w+\(\w+\)/,@symbols);
 	my $r; my %r; my %rsyms;
 	foreach $r (@r) {
@@ -1522,9 +1509,9 @@ sub update_numbers
 		}
 	}
 	if($new_syms) {
-		print STDERR "$new_syms New symbols added\n";
+		print STDERR "$name: Added $new_syms new symbols\n";
 	} else {
-		print STDERR "No New symbols Added\n";
+		print STDERR "$name: No new symbols added\n";
 	}
 }
 
@@ -1570,7 +1557,7 @@ sub get_openssl_version()
 	while(<IN>) {
 		if (/OPENSSL_VERSION_TEXT\s+"OpenSSL (\d\.\d\.)(\d[a-z]*)(-| )/) {
 			my $suffix = $2;
-			my $baseversion = $1 =~ s/\./_/gr;
+			(my $baseversion = $1) =~ s/\./_/g;
 			close IN;
 			return ($baseversion."0", $baseversion.$suffix);
 		}

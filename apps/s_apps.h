@@ -1,4 +1,3 @@
-/* apps/s_apps.h */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -147,20 +146,14 @@ typedef fd_mask fd_set;
 # define FD_ZERO(p)      memset((p), 0, sizeof(*(p)))
 #endif
 
-#define PORT            4433
-#define PORT_STR        "4433"
+#define PORT            "4433"
 #define PROTOCOL        "tcp"
 
-int do_server(int port, int type, int *ret,
-              int (*cb) (char *hostname, int s, int stype,
+int do_server(int *accept_sock, const char *host, const char *port,
+              int family, int type,
+              int (*cb) (const char *hostname, int s, int stype,
                          unsigned char *context), unsigned char *context,
               int naccept);
-#ifndef NO_SYS_UN_H
-int do_server_unix(const char *path, int *ret,
-                   int (*cb) (char *hostname, int s, int stype,
-                              unsigned char *context), unsigned char *context,
-                   int naccept);
-#endif
 #ifdef HEADER_X509_H
 int verify_callback(int ok, X509_STORE_CTX *ctx);
 #endif
@@ -173,14 +166,9 @@ int ssl_print_point_formats(BIO *out, SSL *s);
 int ssl_print_curves(BIO *out, SSL *s, int noshared);
 #endif
 int ssl_print_tmp_key(BIO *out, SSL *s);
-int init_client(int *sock, const char *server, int port, int type);
-#ifndef NO_SYS_UN_H
-int init_client_unix(int *sock, const char *server);
-#endif
+int init_client(int *sock, const char *host, const char *port,
+                int family, int type);
 int should_retry(int i);
-int extract_port(const char *str, unsigned short *port_ptr);
-int extract_host_port(char *str, char **host_ptr, unsigned char *ip,
-                      unsigned short *p);
 
 long bio_dump_callback(BIO *bio, int cmd, const char *argp,
                        int argi, long argl, long ret);
@@ -189,7 +177,7 @@ long bio_dump_callback(BIO *bio, int cmd, const char *argp,
 void apps_ssl_info_callback(const SSL *s, int where, int ret);
 void msg_cb(int write_p, int version, int content_type, const void *buf,
             size_t len, SSL *ssl, void *arg);
-void tlsext_cb(SSL *s, int client_server, int type, unsigned char *data,
+void tlsext_cb(SSL *s, int client_server, int type, const unsigned char *data,
                int len, void *arg);
 #endif
 

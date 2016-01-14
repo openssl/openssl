@@ -1,0 +1,3 @@
+LIBS=../../libcrypto
+SOURCE[../../libcrypto]=\
+        rmd_dgst.c rmd_one.c {- $target{rmd160_asm_src} -}

@@ -78,14 +78,20 @@ OPTIONS ciphers_options[] = {
     {"v", OPT_V, '-', "Verbose listing of the SSL/TLS ciphers"},
     {"V", OPT_UPPER_V, '-', "Even more verbose"},
     {"s", OPT_S, '-', "Only supported ciphers"},
-    {"tls1", OPT_TLS1, '-', "TLS1 mode"},
-    {"tls1_1", OPT_TLS1_1, '-', "TLS1.1 mode"},
-    {"tls1_2", OPT_TLS1_2, '-', "TLS1.2 mode"},
-#ifndef OPENSSL_NO_SSL_TRACE
-    {"stdname", OPT_STDNAME, '-', "Show standard cipher names"},
-#endif
 #ifndef OPENSSL_NO_SSL3
     {"ssl3", OPT_SSL3, '-', "SSL3 mode"},
+#endif
+#ifndef OPENSSL_NO_TLS1
+    {"tls1", OPT_TLS1, '-', "TLS1 mode"},
+#endif
+#ifndef OPENSSL_NO_TLS1_1
+    {"tls1_1", OPT_TLS1_1, '-', "TLS1.1 mode"},
+#endif
+#ifndef OPENSSL_NO_TLS1_2
+    {"tls1_2", OPT_TLS1_2, '-', "TLS1.2 mode"},
+#endif
+#ifndef OPENSSL_NO_SSL_TRACE
+    {"stdname", OPT_STDNAME, '-', "Show standard cipher names"},
 #endif
 #ifndef OPENSSL_NO_PSK
     {"psk", OPT_PSK, '-', "include ciphersuites requiring PSK"},
@@ -153,13 +159,19 @@ int ciphers_main(int argc, char **argv)
 #endif
             break;
         case OPT_TLS1:
+#ifndef OPENSSL_NO_TLS1
             meth = TLSv1_client_method();
+#endif
             break;
         case OPT_TLS1_1:
+#ifndef OPENSSL_NO_TLS1_1
             meth = TLSv1_1_client_method();
+#endif
             break;
         case OPT_TLS1_2:
+#ifndef OPENSSL_NO_TLS1_2
             meth = TLSv1_2_client_method();
+#endif
             break;
         case OPT_PSK:
 #ifndef OPENSSL_NO_PSK

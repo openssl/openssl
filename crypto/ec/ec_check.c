@@ -1,4 +1,3 @@
-/* crypto/ec/ec_check.c */
 /* ====================================================================
  * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
  *
@@ -59,7 +58,7 @@
 int EC_GROUP_check(const EC_GROUP *group, BN_CTX *ctx)
 {
     int ret = 0;
-    BIGNUM *order;
+    const BIGNUM *order;
     BN_CTX *new_ctx = NULL;
     EC_POINT *point = NULL;
 
@@ -93,7 +92,8 @@ int EC_GROUP_check(const EC_GROUP *group, BN_CTX *ctx)
     /* check the order of the generator */
     if ((point = EC_POINT_new(group)) == NULL)
         goto err;
-    if (!EC_GROUP_get_order(group, order, ctx))
+    order = EC_GROUP_get0_order(group);
+    if (order == NULL)
         goto err;
     if (BN_is_zero(order)) {
         ECerr(EC_F_EC_GROUP_CHECK, EC_R_UNDEFINED_ORDER);

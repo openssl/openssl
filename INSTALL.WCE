@@ -8,6 +8,8 @@
   * Appropriate SDK might be required
   * Perl for Win32 [commonly recommended ActiveState Perl is available
     from http://www.activestate.com/Products/ActivePerl/]
+    You also need the perl module Text::Template.
+    Please read README.PERL for more information.
 
   * wcecompat compatibility library available at
     http://www.essemer.com.au/windowsce/
@@ -66,10 +68,6 @@
  Next you need to build the Makefiles:
 
  > ms\do_ms
-
- If you get errors about things not having numbers assigned then check the
- troubleshooting section in INSTALL.W32: you probably won't be able to compile
- it as it stands.
 
  Then from the VC++ environment at a prompt do:
 

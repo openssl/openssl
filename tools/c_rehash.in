@@ -1,10 +1,12 @@
-#!/usr/local/bin/perl
+#!{- $config{perl} -}
+
+# {- join("\n# ", @autowarntext) -}
 
 # Perl c_rehash script, scan all files in a directory
 # and add symbolic links to their hash values.
 
-my $dir;
-my $prefix;
+my $dir = {- quotify1($config{openssldir}) -};
+my $prefix = {- quotify1($config{prefix}) -};
 
 my $errorcount = 0;
 my $openssl = $ENV{OPENSSL} || "openssl";

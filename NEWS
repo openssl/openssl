@@ -5,13 +5,13 @@
   This file gives a brief overview of the major changes between each OpenSSL
   release. For more details please read the CHANGES file.
 
-  Major changes between OpenSSL 1.0.2e and OpenSSL 1.1.0 [in pre-release]
+  Major changes between OpenSSL 1.0.2f and OpenSSL 1.1.0 [in pre-release]
 
       o Support for ChaCha20 and Poly1305 added to libcrypto and libssl
       o Support for extended master secret
       o CCM ciphersuites
       o Reworked test suite, now based on perl, Test::Harness and Test::More
-      o Varous libcrypto structures made opaque including: BIGNUM, EVP_MD,
+      o Various libcrypto structures made opaque including: BIGNUM, EVP_MD,
         EVP_MD_CTX, HMAC_CTX, EVP_CIPHER and EVP_CIPHER_CTX.
       o libssl internal structures made opaque
       o SSLv2 support removed
@@ -24,11 +24,20 @@
       o Support for OCB mode added to libcrypto
       o Support for asynchronous crypto operations added to libcrypto and libssl
       o Deprecated interfaces can now be disabled at build time either
-        relative to the latest relate via the "no-deprecated" Configure
+        relative to the latest release via the "no-deprecated" Configure
         argument, or via the "--api=1.1.0|1.0.0|0.9.8" option.
       o Application software can be compiled with -DOPENSSL_API_COMPAT=version
-        to ensure that features deprecated before that version are not exposed.
+        to ensure that features deprecated in that version are not exposed.
       o Support for RFC6698/RFC7671 DANE TLSA peer authentication
+      o Change of Configure to use --prefix as the main installation
+        directory location rather than --openssldir.  The latter becomes
+        the directory for certs, private key and openssl.cnf exclusively.
+      o Reworked BIO networking library, with full support for IPv6.
+
+  Major changes between OpenSSL 1.0.2e and OpenSSL 1.0.2f [28 Jan 2016]
+
+      o DH small subgroups (CVE-2016-0701)
+      o SSLv2 doesn't block disabled ciphers (CVE-2015-3197)
 
   Major changes between OpenSSL 1.0.2d and OpenSSL 1.0.2e [3 Dec 2015]
 
@@ -299,7 +308,7 @@
   Major changes between OpenSSL 0.9.8e and OpenSSL 0.9.8f [11 Oct 2007]:
 
       o Add gcc 4.2 support.
-      o Add support for AES and SSE2 assembly lanugauge optimization
+      o Add support for AES and SSE2 assembly language optimization
         for VC++ build.
       o Support for RFC4507bis and server name extensions if explicitly 
         selected at compile time.

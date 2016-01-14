@@ -1,4 +1,3 @@
-/* crypto/md5/md5_one.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *

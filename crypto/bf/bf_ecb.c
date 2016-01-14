@@ -1,4 +1,3 @@
-/* crypto/bf/bf_ecb.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -68,13 +67,7 @@
 
 const char *BF_options(void)
 {
-#ifdef BF_PTR
     return ("blowfish(ptr)");
-#elif defined(BF_PTR2)
-    return ("blowfish(ptr2)");
-#else
-    return ("blowfish(idx)");
-#endif
 }
 
 void BF_ecb_encrypt(const unsigned char *in, unsigned char *out,

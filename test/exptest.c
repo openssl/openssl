@@ -1,4 +1,3 @@
-/* crypto/bn/exptest.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -67,7 +66,7 @@
 #include <openssl/rand.h>
 #include <openssl/err.h>
 
-#define NUM_BITS        (BN_BITS*2)
+#define NUM_BITS        (BN_BITS2 * 4)
 
 static const char rnd_seed[] =
     "string to make the random number generator think it has entropy";

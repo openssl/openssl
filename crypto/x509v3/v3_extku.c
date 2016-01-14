@@ -1,4 +1,3 @@
-/* v3_extku.c */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
  * 1999.

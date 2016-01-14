@@ -1,4 +1,3 @@
-/* ssl/packet_locl.h */
 /*
  * Written by Matt Caswell for the OpenSSL project.
  */
@@ -73,7 +72,7 @@ extern "C" {
 
 typedef struct {
     /* Pointer to where we are currently reading from */
-    unsigned char *curr;
+    const unsigned char *curr;
     /* Number of bytes remaining */
     size_t remaining;
 } PACKET;
@@ -96,10 +95,8 @@ static ossl_inline size_t PACKET_remaining(const PACKET *pkt)
 /*
  * Returns a pointer to the PACKET's current position.
  * For use in non-PACKETized APIs.
- * TODO(openssl-team): this should return 'const unsigned char*' but can't
- * currently because legacy code passes 'unsigned char*'s around.
  */
-static ossl_inline unsigned char *PACKET_data(const PACKET *pkt)
+static ossl_inline const unsigned char *PACKET_data(const PACKET *pkt)
 {
     return pkt->curr;
 }
@@ -109,7 +106,8 @@ static ossl_inline unsigned char *PACKET_data(const PACKET *pkt)
  * copy of the data so |buf| must be present for the whole time that the PACKET
  * is being used.
  */
-__owur static ossl_inline int PACKET_buf_init(PACKET *pkt, unsigned char *buf,
+__owur static ossl_inline int PACKET_buf_init(PACKET *pkt,
+                                              const unsigned char *buf,
                                               size_t len)
 {
     /* Sanity check for negative values. */
@@ -326,7 +324,7 @@ __owur static ossl_inline int PACKET_get_4(PACKET *pkt, unsigned long *data)
  * underlying buffer gets freed
  */
 __owur static ossl_inline int PACKET_peek_bytes(const PACKET *pkt,
-                                                unsigned char **data,
+                                                const unsigned char **data,
                                                 size_t len)
 {
     if (PACKET_remaining(pkt) < len)
@@ -344,7 +342,7 @@ __owur static ossl_inline int PACKET_peek_bytes(const PACKET *pkt,
  * freed
  */
 __owur static ossl_inline int PACKET_get_bytes(PACKET *pkt,
-                                               unsigned char **data,
+                                               const unsigned char **data,
                                                size_t len)
 {
     if (!PACKET_peek_bytes(pkt, data, len))
@@ -476,7 +474,7 @@ __owur static ossl_inline int PACKET_get_length_prefixed_1(PACKET *pkt,
                                                            PACKET *subpkt)
 {
     unsigned int length;
-    unsigned char *data;
+    const unsigned char *data;
     PACKET tmp = *pkt;
     if (!PACKET_get_1(&tmp, &length) ||
         !PACKET_get_bytes(&tmp, &data, (size_t)length)) {
@@ -501,7 +499,7 @@ __owur static ossl_inline int PACKET_get_length_prefixed_2(PACKET *pkt,
                                                            PACKET *subpkt)
 {
     unsigned int length;
-    unsigned char *data;
+    const unsigned char *data;
     PACKET tmp = *pkt;
     if (!PACKET_get_net_2(&tmp, &length) ||
         !PACKET_get_bytes(&tmp, &data, (size_t)length)) {
@@ -526,7 +524,7 @@ __owur static ossl_inline int PACKET_get_length_prefixed_3(PACKET *pkt,
                                                            PACKET *subpkt)
 {
     unsigned long length;
-    unsigned char *data;
+    const unsigned char *data;
     PACKET tmp = *pkt;
     if (!PACKET_get_net_3(&tmp, &length) ||
         !PACKET_get_bytes(&tmp, &data, (size_t)length)) {

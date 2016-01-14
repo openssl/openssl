@@ -17,7 +17,7 @@ OpenSSL::Test::Simple - a few very simple test functions
 
   use OpenSSL::Test::Simple;
 
-  simple_test("my_test_name", "des", "destest");
+  simple_test("my_test_name", "destest", "des");
 
 =head1 DESCRIPTION
 
@@ -52,12 +52,18 @@ A complete recipe looks like this:
 #  algorithm		(used to check if it's at all supported)
 #  name of binary	(the program that does the actual test)
 sub simple_test {
-    my ($name, $prgr, $algo, @rest) = @_;
+    my ($name, $prgr, @algos) = @_;
 
     setup($name);
 
-    plan skip_all => "$algo is not supported by this OpenSSL build"
-        if $algo && disabled($algo);
+    if (scalar(disabled(@algos))) {
+	if (scalar(@algos) == 1) {
+	    plan skip_all => $algos[0]." is not supported by this OpenSSL build";
+	} else {
+	    my $last = pop @algos;
+	    plan skip_all => join(", ", @algos)." and $last are not supported by this OpenSSL build";
+	}
+    }
 
     plan tests => 1;
 
