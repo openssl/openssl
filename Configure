@@ -1270,7 +1270,6 @@ print "Configuring for $target\n";
 my ($d, $t) = $target =~ m/^(debug-)?(.*)$/;
 if ($d) {
     $build_prefix = "debug_";
-    $target = $t;
 
     # If we do not find debug-foo in the table, the target is set to foo,
     # but only if the foo target has a noon-empty debug_cflags or debug_lflags
