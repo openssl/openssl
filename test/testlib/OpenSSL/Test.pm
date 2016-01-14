@@ -675,7 +675,7 @@ sub __fixup_cmd {
     if (defined($ENV{EXE_SHELL})) {
 	$prefix = "$ENV{EXE_SHELL} ";
     } elsif ($^O eq "VMS" ) {	# VMS
-	$prefix = "mcr ";
+	$prefix = ($prog =~ /^[<\[]/ ? "mcr " : "mcr []");
 	$ext = ".exe";
     } elsif ($^O eq "MSWin32") { # Windows
 	$prefix = "";
