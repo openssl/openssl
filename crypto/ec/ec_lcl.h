@@ -308,6 +308,8 @@ NISTP521_PRE_COMP *EC_nistp521_pre_comp_dup(NISTP521_PRE_COMP *);
 NISTZ256_PRE_COMP *EC_nistz256_pre_comp_dup(NISTZ256_PRE_COMP *);
 NISTP256_PRE_COMP *EC_nistp256_pre_comp_dup(NISTP256_PRE_COMP *);
 EC_PRE_COMP *EC_ec_pre_comp_dup(EC_PRE_COMP *);
+
+void EC_pre_comp_free(EC_GROUP *group);
 void EC_nistp224_pre_comp_free(NISTP224_PRE_COMP *);
 void EC_nistp256_pre_comp_free(NISTP256_PRE_COMP *);
 void EC_nistp521_pre_comp_free(NISTP521_PRE_COMP *);

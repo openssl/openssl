@@ -562,7 +562,7 @@ int ec_wNAF_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
     int ret = 0;
 
     /* if there is an old EC_PRE_COMP object, throw it away */
-    EC_ec_pre_comp_free(group->pre_comp.ec);
+    EC_pre_comp_free(group);
     if ((pre_comp = ec_pre_comp_new(group)) == NULL)
         return 0;
 

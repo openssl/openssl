@@ -2184,8 +2184,7 @@ int ec_GFp_nistp256_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
     felem x_tmp, y_tmp, z_tmp;
 
     /* throw away old precomputation */
-    EC_nistp256_pre_comp_free(group->pre_comp.nistp256);
-    group->pre_comp.nistp256 = NULL;
+    EC_pre_comp_free(group);
     if (ctx == NULL)
         if ((ctx = new_ctx = BN_CTX_new()) == NULL)
             return 0;

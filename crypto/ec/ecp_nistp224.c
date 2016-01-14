@@ -1559,8 +1559,7 @@ int ec_GFp_nistp224_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
     felem tmp_felems[32];
 
     /* throw away old precomputation */
-    EC_nistp224_pre_comp_free(group->pre_comp.nistp224);
-    group->pre_comp.nistp224 = NULL;
+    EC_pre_comp_free(group);
     if (ctx == NULL)
         if ((ctx = new_ctx = BN_CTX_new()) == NULL)
             return 0;

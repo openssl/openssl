@@ -2008,8 +2008,7 @@ int ec_GFp_nistp521_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
     felem tmp_felems[16];
 
     /* throw away old precomputation */
-    EC_nistp521_pre_comp_free(group->pre_comp.nistp521);
-    group->pre_comp.nistp521 = NULL;
+    EC_pre_comp_free(group);
     if (ctx == NULL)
         if ((ctx = new_ctx = BN_CTX_new()) == NULL)
             return 0;
