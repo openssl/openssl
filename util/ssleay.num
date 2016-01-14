@@ -295,7 +295,7 @@ SSL_srp_server_param_with_username      336	1_1_0	EXIST:!VMS:FUNCTION:SRP
 SSL_srp_server_param_with_un            336	1_1_0	EXIST:VMS:FUNCTION:SRP
 SRP_have_to_put_srp_username            337	1_1_0	NOEXIST::FUNCTION:
 SSL_SRP_CTX_free                        338	1_1_0	EXIST::FUNCTION:SRP
-SSL_set_debug                           339	1_1_0	NOEXIST::FUNCTION:
+SSL_set_debug                           339	1_1_0	EXIST::FUNCTION:DEPRECATEDIN_1_1_0
 SSL_SESSION_get0_peer                   340	1_1_0	EXIST::FUNCTION:
 TLSv1_2_client_method                   341	1_1_0	EXIST::FUNCTION:
 SSL_SESSION_set1_id_context             342	1_1_0	EXIST::FUNCTION:
