@@ -3673,6 +3673,16 @@ int SSL_is_server(SSL *s)
     return s->server;
 }
 
+#if OPENSSL_API_COMPAT < 0x10100000L
+void SSL_set_debug(SSL *s, int debug)
+{
+    /* Old function was do-nothing anyway... */
+    (void)s;
+    (void)debug;
+}
+#endif
+
+
 void SSL_set_security_level(SSL *s, int level)
 {
     s->cert->sec_level = level;
