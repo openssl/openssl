@@ -1865,7 +1865,8 @@ int main(int argc, char *argv[])
     ERR_remove_thread_state(NULL);
     EVP_cleanup();
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG
-    CRYPTO_mem_leaks(bio_err);
+    if (CRYPTO_mem_leaks(bio_err) <= 0)
+        ret = 1;
 #endif
     BIO_free(bio_err);
     EXIT(ret);
