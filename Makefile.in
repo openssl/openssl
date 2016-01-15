@@ -422,9 +422,6 @@ gentests:
 	@(cd test && echo "generating dummy tests (if needed)..." && \
 	$(CLEARENV) && $(MAKE) -e $(BUILDENV) TESTS='$(TESTS)' OPENSSL_DEBUG_MEMORY=on generate );
 
-dclean:
-	@set -e; target=dclean; $(RECURSIVE_BUILD_CMD)
-
 rehash: rehash.time
 rehash.time: certs build_apps
 	@if [ -z "$(CROSS_COMPILE)" ]; then \
@@ -461,9 +458,6 @@ update: errors util/libeay.num util/ssleay.num TABLE test_ordinals
 
 depend:
 	@set -e; target=depend; $(RECURSIVE_BUILD_CMD)
-
-lint:
-	@set -e; target=lint; $(RECURSIVE_BUILD_CMD)
 
 tags TAGS: FORCE
 	rm -f TAGS tags
