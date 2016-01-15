@@ -7,3 +7,4 @@ state_machine: state_machine.o
 
 test: state_machine
 	./state_machine 10000 ../../apps/server.pem ../../apps/server.pem
+# DO NOT DELETE THIS LINE -- make depend depends on it.
