@@ -6,7 +6,7 @@
 
   *) EGD is no longer supported by default; use enable-egd when
      configuring.
-     [Ben Kaduv and Rich Salz]
+     [Ben Kaduk and Rich Salz]
 
   *) The distribution now has Makefile.in files, which are used to
      create Makefile's when Configure is run.  *Configure must be run
