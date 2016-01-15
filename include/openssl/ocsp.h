@@ -259,6 +259,7 @@ ASN1_OCTET_STRING *OCSP_resp_get0_signature(OCSP_BASICRESP *bs);
 
 int OCSP_resp_count(OCSP_BASICRESP *bs);
 OCSP_SINGLERESP *OCSP_resp_get0(OCSP_BASICRESP *bs, int idx);
+ASN1_GENERALIZEDTIME *OCSP_resp_get_produced_at(OCSP_BASICRESP* bs);
 int OCSP_resp_find(OCSP_BASICRESP *bs, OCSP_CERTID *id, int last);
 int OCSP_single_get0_status(OCSP_SINGLERESP *single, int *reason,
                             ASN1_GENERALIZEDTIME **revtime,
