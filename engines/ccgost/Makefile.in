@@ -21,9 +21,6 @@ top:
 
 all: lib
 
-tags:
-	ctags $(SRC)
-
 errors:
 	$(PERL) ../../util/mkerr.pl -conf gost.ec -nostatic -write $(SRC)
 
@@ -61,8 +58,6 @@ install:
 		mv -f $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/engines/$${pfx}$(LIBNAME)$$sfx.new $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/engines/$${pfx}$(LIBNAME)$$sfx; \
 	fi
 
-tests:
-
 update: local_depend
 	@if [ -z "$(THIS)" ]; then $(MAKE) -f $(TOP)/Makefile reflect THIS=$@; fi
 
@@ -73,13 +68,6 @@ local_depend:
 
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
-
-lint:
-	lint -DLINT $(INCLUDES) $(SRC)>fluff
-
-dclean:
-	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
-	mv -f Makefile.new $(MAKEFILE)
 
 clean:
 	rm -f *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff *.so *.sl *.dll *.dylib

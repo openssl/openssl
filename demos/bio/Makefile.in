@@ -20,3 +20,4 @@ client-conf: client-conf.o
 clean:	
 	rm -f $(EXAMPLES) *.o
 
+# DO NOT DELETE THIS LINE -- make depend depends on it.
