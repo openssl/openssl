@@ -395,9 +395,8 @@ int pkcs12_main(int argc, char **argv)
 
         /* Load in all certs in input file */
         if (!(options & NOCERTS)) {
-            certs = load_certs(infile, FORMAT_PEM, NULL, e,
-                               "certificates");
-            if (!certs)
+            if (!load_certs(infile, &certs, FORMAT_PEM, NULL, e,
+                            "certificates"))
                 goto export_end;
 
             if (key) {
@@ -425,13 +424,9 @@ int pkcs12_main(int argc, char **argv)
 
         /* Add any more certificates asked for */
         if (certfile) {
-            STACK_OF(X509) *morecerts = NULL;
-            if ((morecerts = load_certs(certfile, FORMAT_PEM, NULL, e,
-                                        "certificates from certfile")) == NULL)
+            if (!load_certs(certfile, &certs, FORMAT_PEM, NULL, e,
+                            "certificates from certfile"))
                 goto export_end;
-            while (sk_X509_num(morecerts) > 0)
-                sk_X509_push(certs, sk_X509_shift(morecerts));
-            sk_X509_free(morecerts);
         }
 
         /* If chaining get chain from user cert */

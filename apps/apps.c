@@ -921,13 +921,13 @@ static int load_certs_crls(const char *file, int format,
 
     BIO_free(bio);
 
-    if (pcerts) {
+    if (pcerts && *pcerts == NULL) {
         *pcerts = sk_X509_new_null();
         if (!*pcerts)
             goto end;
     }
 
-    if (pcrls) {
+    if (pcrls && *pcrls == NULL) {
         *pcrls = sk_X509_CRL_new_null();
         if (!*pcrls)
             goto end;
@@ -986,24 +986,22 @@ void* app_malloc(int sz, const char *what)
     return vp;
 }
 
-
-
-STACK_OF(X509) *load_certs(const char *file, int format,
-                           const char *pass, ENGINE *e, const char *desc)
+/*
+ * Initialize or extend, if *certs != NULL,  a certificate stack.
+ */
+int load_certs(const char *file, STACK_OF(X509) **certs, int format,
+               const char *pass, ENGINE *e, const char *desc)
 {
-    STACK_OF(X509) *certs;
-    if (!load_certs_crls(file, format, pass, e, desc, &certs, NULL))
-        return NULL;
-    return certs;
+    return load_certs_crls(file, format, pass, e, desc, certs, NULL);
 }
 
-STACK_OF(X509_CRL) *load_crls(const char *file, int format,
-                              const char *pass, ENGINE *e, const char *desc)
+/*
+ * Initialize or extend, if *crls != NULL,  a certificate stack.
+ */
+int load_crls(const char *file, STACK_OF(X509_CRL) **crls, int format,
+              const char *pass, ENGINE *e, const char *desc)
 {
-    STACK_OF(X509_CRL) *crls;
-    if (!load_certs_crls(file, format, pass, e, desc, NULL, &crls))
-        return NULL;
-    return crls;
+    return load_certs_crls(file, format, pass, e, desc, NULL, crls);
 }
 
 #define X509V3_EXT_UNKNOWN_MASK         (0xfL << 16)
