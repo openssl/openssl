@@ -54,8 +54,8 @@ of the DANE TLSA parameter acronyms) is mapped to C<EVP_sha256()>
 with a strength ordinal of C<1> and matching type C<SHA2-512(2)>
 is mapped to C<EVP_sha512()> with a strength ordinal of C<2>.
 
-SSL_dane_enable() may be called before the SSL handshake is
-initiated with L<SSL_connect(3)> to enable DANE for that connection.
+SSL_dane_enable() must be called before the SSL handshake is initiated with
+L<SSL_connect(3)> if (and only if) you want to enable DANE for that connection.
 (The connection must be associated with a DANE-enabled SSL context).
 The B<basedomain> argument specifies the RFC7671 TLSA base domain,
 which will be the primary peer reference identifier for certificate
@@ -210,9 +210,9 @@ the lifetime of the SSL connection.
     const char *peername = SSL_get0_peername(ssl);
     EVP_PKEY *mspki = NULL;
 
-    int depth = SSL_get0_dane_authority(s, NULL, &mspki);
+    int depth = SSL_get0_dane_authority(ssl, NULL, &mspki);
     if (depth >= 0) {
-        (void) SSL_get0_dane_tlsa(s, &usage, &selector, &mtype, NULL, NULL);
+        (void) SSL_get0_dane_tlsa(ssl, &usage, &selector, &mtype, NULL, NULL);
         printf("DANE TLSA %d %d %d %s at depth %d\n", usage, selector, mtype,
                (mspki != NULL) ? "TA public key verified certificate" :
                depth ? "matched TA certificate" : "matched EE certificate",
