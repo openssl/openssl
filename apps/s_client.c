@@ -1331,9 +1331,8 @@ int s_client_main(int argc, char **argv)
     }
 
     if (chain_file) {
-        chain = load_certs(chain_file, FORMAT_PEM,
-                           NULL, e, "client certificate chain");
-        if (!chain)
+        if (!load_certs(chain_file, &chain, FORMAT_PEM, NULL, e,
+                        "client certificate chain"))
             goto end;
     }
 
