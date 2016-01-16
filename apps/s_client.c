@@ -189,7 +189,6 @@ static int async = 0;
 static int c_nbio = 0;
 static int c_tlsextdebug = 0;
 static int c_status_req = 0;
-static int c_Pause = 0;
 static int c_debug = 0;
 static int c_msg = 0;
 static int c_showcerts = 0;
@@ -619,7 +618,7 @@ typedef enum OPTION_choice {
     OPT_CERTFORM, OPT_CRLFORM, OPT_VERIFY_RET_ERROR, OPT_VERIFY_QUIET,
     OPT_BRIEF, OPT_PREXIT, OPT_CRLF, OPT_QUIET, OPT_NBIO,
     OPT_SSL_CLIENT_ENGINE, OPT_RAND, OPT_IGN_EOF, OPT_NO_IGN_EOF,
-    OPT_PAUSE, OPT_DEBUG, OPT_TLSEXTDEBUG, OPT_STATUS, OPT_WDEBUG,
+    OPT_DEBUG, OPT_TLSEXTDEBUG, OPT_STATUS, OPT_WDEBUG,
     OPT_MSG, OPT_MSGFILE, OPT_ENGINE, OPT_TRACE, OPT_SECURITY_DEBUG,
     OPT_SECURITY_DEBUG_VERBOSE, OPT_SHOWCERTS, OPT_NBIO_TEST, OPT_STATE,
     OPT_PSK_IDENTITY, OPT_PSK, OPT_SRPUSER, OPT_SRPPASS, OPT_SRP_STRENGTH,
@@ -666,7 +665,6 @@ OPTIONS s_client_options[] = {
      "DANE TLSA rrdata presentation form"},
     {"reconnect", OPT_RECONNECT, '-',
      "Drop and re-make the connection with the same Session-ID"},
-    {"pause", OPT_PAUSE, '-', "Sleep  after each read and write system call"},
     {"showcerts", OPT_SHOWCERTS, '-', "Show all certificates in the chain"},
     {"debug", OPT_DEBUG, '-', "Extra output"},
     {"msg", OPT_MSG, '-', "Show protocol messages"},
@@ -864,7 +862,6 @@ int s_client_main(int argc, char **argv)
 #endif
 
     prog = opt_progname(argv[0]);
-    c_Pause = 0;
     c_quiet = 0;
     c_ign_eof = 0;
     c_debug = 0;
@@ -1013,9 +1010,6 @@ int s_client_main(int argc, char **argv)
             break;
         case OPT_NO_IGN_EOF:
             c_ign_eof = 0;
-            break;
-        case OPT_PAUSE:
-            c_Pause = 1;
             break;
         case OPT_DEBUG:
             c_debug = 1;
@@ -1602,9 +1596,6 @@ int s_client_main(int argc, char **argv)
         }
     }
 #endif
-    if (c_Pause & 0x01)
-        SSL_set_debug(con, 1);
-
     if (socket_type == SOCK_DGRAM) {
 
         sbio = BIO_new_dgram(s, BIO_NOCLOSE);
@@ -1654,7 +1645,6 @@ int s_client_main(int argc, char **argv)
     }
 
     if (c_debug) {
-        SSL_set_debug(con, 1);
         BIO_set_callback(sbio, bio_dump_callback);
         BIO_set_callback_arg(sbio, (char *)bio_c_out);
     }

@@ -2796,7 +2796,7 @@ BIO *bio_open_owner(const char *filename, int format, int private)
 {
     FILE *fp = NULL;
     BIO *b = NULL;
-    int fd = -1, bflags, mode, binmode;
+    int fd = -1, bflags, mode, textmode;
 
     if (!private || filename == NULL || strcmp(filename, "-") == 0)
         return bio_open_default(filename, 'w', format);
@@ -2808,8 +2808,8 @@ BIO *bio_open_owner(const char *filename, int format, int private)
 #ifdef O_TRUNC
     mode |= O_TRUNC;
 #endif
-    binmode = istext(format);
-    if (binmode) {
+    textmode = istext(format);
+    if (!textmode) {
 #ifdef O_BINARY
         mode |= O_BINARY;
 #elif defined(_O_BINARY)
@@ -2817,14 +2817,24 @@ BIO *bio_open_owner(const char *filename, int format, int private)
 #endif
     }
 
-    fd = open(filename, mode, 0600);
+#ifdef OPENSSL_SYS_VMS
+    /* VMS doesn't have O_BINARY, it just doesn't make sense.  But,
+     * it still needs to know that we're going binary, or fdopen()
+     * will fail with "invalid argument"...  so we tell VMS what the
+     * context is.
+     */
+    if (!textmode)
+        fd = open(filename, mode, 0600, "ctx=bin");
+    else
+#endif
+        fd = open(filename, mode, 0600);
     if (fd < 0)
         goto err;
     fp = fdopen(fd, modestr('w', format));
     if (fp == NULL)
         goto err;
     bflags = BIO_CLOSE;
-    if (!binmode)
+    if (textmode)
         bflags |= BIO_FP_TEXT;
     b = BIO_new_fp(fp, bflags);
     if (b)

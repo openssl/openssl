@@ -227,10 +227,10 @@ static const felem gmul[2][16][3] = {
 };
 
 /* Precomputation for the group generator. */
-typedef struct {
+struct nistp224_pre_comp_st {
     felem g_pre_comp[2][16][3];
     int references;
-} NISTP224_PRE_COMP;
+};
 
 const EC_METHOD *EC_GFp_nistp224_method(void)
 {
@@ -1209,44 +1209,19 @@ static NISTP224_PRE_COMP *nistp224_pre_comp_new()
     return ret;
 }
 
-static void *nistp224_pre_comp_dup(void *src_)
+NISTP224_PRE_COMP *EC_nistp224_pre_comp_dup(NISTP224_PRE_COMP *p)
 {
-    NISTP224_PRE_COMP *src = src_;
-
-    /* no need to actually copy, these objects never change! */
-    CRYPTO_add(&src->references, 1, CRYPTO_LOCK_EC_PRE_COMP);
-
-    return src_;
+    if (p != NULL)
+        CRYPTO_add(&p->references, 1, CRYPTO_LOCK_EC_PRE_COMP);
+    return p;
 }
 
-static void nistp224_pre_comp_free(void *pre_)
+void EC_nistp224_pre_comp_free(NISTP224_PRE_COMP *p)
 {
-    int i;
-    NISTP224_PRE_COMP *pre = pre_;
-
-    if (!pre)
+    if (p == NULL
+        || CRYPTO_add(&p->references, -1, CRYPTO_LOCK_EC_PRE_COMP) > 0)
         return;
-
-    i = CRYPTO_add(&pre->references, -1, CRYPTO_LOCK_EC_PRE_COMP);
-    if (i > 0)
-        return;
-
-    OPENSSL_free(pre);
-}
-
-static void nistp224_pre_comp_clear_free(void *pre_)
-{
-    int i;
-    NISTP224_PRE_COMP *pre = pre_;
-
-    if (!pre)
-        return;
-
-    i = CRYPTO_add(&pre->references, -1, CRYPTO_LOCK_EC_PRE_COMP);
-    if (i > 0)
-        return;
-
-    OPENSSL_clear_free(pre, sizeof(*pre));
+    OPENSSL_free(p);
 }
 
 /******************************************************************************/
@@ -1413,10 +1388,7 @@ int ec_GFp_nistp224_points_mul(const EC_GROUP *group, EC_POINT *r,
         goto err;
 
     if (scalar != NULL) {
-        pre = EC_EX_DATA_get_data(group->extra_data,
-                                  nistp224_pre_comp_dup,
-                                  nistp224_pre_comp_free,
-                                  nistp224_pre_comp_clear_free);
+        pre = group->pre_comp.nistp224;
         if (pre)
             /* we have precomputation, try to use it */
             g_pre_comp = (const felem(*)[16][3])pre->g_pre_comp;
@@ -1587,9 +1559,7 @@ int ec_GFp_nistp224_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
     felem tmp_felems[32];
 
     /* throw away old precomputation */
-    EC_EX_DATA_free_data(&group->extra_data, nistp224_pre_comp_dup,
-                         nistp224_pre_comp_free,
-                         nistp224_pre_comp_clear_free);
+    EC_pre_comp_free(group);
     if (ctx == NULL)
         if ((ctx = new_ctx = BN_CTX_new()) == NULL)
             return 0;
@@ -1692,29 +1662,20 @@ int ec_GFp_nistp224_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
     }
     make_points_affine(31, &(pre->g_pre_comp[0][1]), tmp_felems);
 
-    if (!EC_EX_DATA_set_data(&group->extra_data, pre, nistp224_pre_comp_dup,
-                             nistp224_pre_comp_free,
-                             nistp224_pre_comp_clear_free))
-        goto err;
-    ret = 1;
+    SETPRECOMP(group, nistp224, pre);
     pre = NULL;
+    ret = 1;
  err:
     BN_CTX_end(ctx);
     EC_POINT_free(generator);
     BN_CTX_free(new_ctx);
-    nistp224_pre_comp_free(pre);
+    EC_nistp224_pre_comp_free(pre);
     return ret;
 }
 
 int ec_GFp_nistp224_have_precompute_mult(const EC_GROUP *group)
 {
-    if (EC_EX_DATA_get_data(group->extra_data, nistp224_pre_comp_dup,
-                            nistp224_pre_comp_free,
-                            nistp224_pre_comp_clear_free)
-        != NULL)
-        return 1;
-    else
-        return 0;
+    return HAVEPRECOMP(group, nistp224);
 }
 
 #else

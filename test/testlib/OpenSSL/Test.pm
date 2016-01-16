@@ -87,7 +87,6 @@ sub __cwd;
 sub __apps_file;
 sub __results_file;
 sub __test_log;
-sub __cwd;
 sub __fixup_cmd;
 sub __build_cmd;
 
@@ -607,7 +606,7 @@ sub __test_log {
 }
 
 sub __cwd {
-    my $dir = shift;
+    my $dir = catdir(shift);
     my %opts = @_;
     my $abscurdir = rel2abs(curdir());
     my $absdir = rel2abs($dir);
@@ -675,7 +674,7 @@ sub __fixup_cmd {
     if (defined($ENV{EXE_SHELL})) {
 	$prefix = "$ENV{EXE_SHELL} ";
     } elsif ($^O eq "VMS" ) {	# VMS
-	$prefix = "mcr ";
+	$prefix = ($prog =~ /^[<\[]/ ? "mcr " : "mcr []");
 	$ext = ".exe";
     } elsif ($^O eq "MSWin32") { # Windows
 	$prefix = "";

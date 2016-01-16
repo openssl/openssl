@@ -915,6 +915,7 @@ extern "C" {
 # define SSL_SESSION_get_app_data(s)     (SSL_SESSION_get_ex_data(s,0))
 # define SSL_CTX_get_app_data(ctx)       (SSL_CTX_get_ex_data(ctx,0))
 # define SSL_CTX_set_app_data(ctx,arg)   (SSL_CTX_set_ex_data(ctx,0,(char *)arg))
+DEPRECATEDIN_1_1_0(void SSL_set_debug(SSL *s, int debug))
 
 
 /*
@@ -1810,7 +1811,6 @@ void SSL_set_not_resumable_session_callback(SSL *ssl,
                                                        int
                                                        is_forward_secure));
 
-void SSL_set_debug(SSL *s, int debug);
 __owur int SSL_cache_hit(SSL *s);
 __owur int SSL_is_server(SSL *s);
 

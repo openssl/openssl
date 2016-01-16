@@ -89,7 +89,7 @@ sub testordinals
         $newqual =~ s/!//g;
         if ($cnt > $tokens[1]
                 || ($cnt == $tokens[1] && ($qualifier ne $newqual
-                                           || $qualifier eq "FUNCTION"))) {
+                                           || $qualifier eq ""))) {
             print STDERR "Invalid ordinal detected: ".$tokens[1]."\n";
             $ret = 0;
             last;

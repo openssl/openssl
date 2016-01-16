@@ -1065,11 +1065,6 @@ struct ssl_st {
                                          unsigned int max_psk_len);
 #  endif
     SSL_CTX *ctx;
-    /*
-     * set this flag to 1 and a sleep(1) is put into all SSL_read() and
-     * SSL_write() calls, good for nbio debuging :-)
-     */
-    int debug;
     /* extra application data */
     long verify_result;
     CRYPTO_EX_DATA ex_data;

@@ -109,6 +109,34 @@ EC_GROUP *EC_GROUP_new(const EC_METHOD *meth)
     return NULL;
 }
 
+void EC_pre_comp_free(EC_GROUP *group)
+{
+    switch (group->pre_comp_type) {
+    default:
+        break;
+#ifdef ECP_NISTZ256_REFERENCE_IMPLEMENTATION
+    case pct_nistz256:
+        EC_nistz256_pre_comp_free(group->pre_comp.nistz256);
+        break;
+#endif
+#ifndef OPENSSL_NO_EC_NISTP_64_GCC_128
+    case pct_nistp224:
+        EC_nistp224_pre_comp_free(group->pre_comp.nistp224);
+        break;
+    case pct_nistp256:
+        EC_nistp256_pre_comp_free(group->pre_comp.nistp256);
+        break;
+    case pct_nistp521:
+        EC_nistp521_pre_comp_free(group->pre_comp.nistp521);
+        break;
+#endif
+    case pct_ec:
+        EC_ec_pre_comp_free(group->pre_comp.ec);
+        break;
+    }
+    group->pre_comp.ec = NULL;
+}
+
 void EC_GROUP_free(EC_GROUP *group)
 {
     if (!group)
@@ -117,7 +145,7 @@ void EC_GROUP_free(EC_GROUP *group)
     if (group->meth->group_finish != 0)
         group->meth->group_finish(group);
 
-    EC_EX_DATA_free_all_data(&group->extra_data);
+    EC_pre_comp_free(group);
     BN_MONT_CTX_free(group->mont_data);
     EC_POINT_free(group->generator);
     BN_free(group->order);
@@ -136,10 +164,8 @@ void EC_GROUP_clear_free(EC_GROUP *group)
     else if (group->meth->group_finish != 0)
         group->meth->group_finish(group);
 
-    EC_EX_DATA_clear_free_all_data(&group->extra_data);
-
+    EC_pre_comp_free(group);
     BN_MONT_CTX_free(group->mont_data);
-
     EC_POINT_clear_free(group->generator);
     BN_clear_free(group->order);
     BN_clear_free(group->cofactor);
@@ -149,8 +175,6 @@ void EC_GROUP_clear_free(EC_GROUP *group)
 
 int EC_GROUP_copy(EC_GROUP *dest, const EC_GROUP *src)
 {
-    EC_EXTRA_DATA *d;
-
     if (dest->meth->group_copy == 0) {
         ECerr(EC_F_EC_GROUP_COPY, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
         return 0;
@@ -162,17 +186,31 @@ int EC_GROUP_copy(EC_GROUP *dest, const EC_GROUP *src)
     if (dest == src)
         return 1;
 
-    EC_EX_DATA_free_all_data(&dest->extra_data);
-
-    for (d = src->extra_data; d != NULL; d = d->next) {
-        void *t = d->dup_func(d->data);
-
-        if (t == NULL)
-            return 0;
-        if (!EC_EX_DATA_set_data
-            (&dest->extra_data, t, d->dup_func, d->free_func,
-             d->clear_free_func))
-            return 0;
+    /* Copy precomputed */
+    dest->pre_comp_type = src->pre_comp_type;
+    switch (src->pre_comp_type) {
+    default:
+        dest->pre_comp.ec = NULL;
+        break;
+#ifdef ECP_NISTZ256_REFERENCE_IMPLEMENTATION
+    case pct_nistz256:
+        dest->pre_comp.nistz256 = EC_nistz256_pre_comp_dup(src->pre_comp.nistz256);
+        break;
+#endif
+#ifndef OPENSSL_NO_EC_NISTP_64_GCC_128
+    case pct_nistp224:
+        dest->pre_comp.nistp224 = EC_nistp224_pre_comp_dup(src->pre_comp.nistp224);
+        break;
+    case pct_nistp256:
+        dest->pre_comp.nistp256 = EC_nistp256_pre_comp_dup(src->pre_comp.nistp256);
+        break;
+    case pct_nistp521:
+        dest->pre_comp.nistp521 = EC_nistp521_pre_comp_dup(src->pre_comp.nistp521);
+        break;
+#endif
+    case pct_ec:
+        dest->pre_comp.ec = EC_ec_pre_comp_dup(src->pre_comp.ec);
+        break;
     }
 
     if (src->mont_data != NULL) {
@@ -516,151 +554,6 @@ int EC_GROUP_cmp(const EC_GROUP *a, const EC_GROUP *b, BN_CTX *ctx)
     BN_CTX_free(ctx_new);
 
     return r;
-}
-
-/* this has 'package' visibility */
-int EC_EX_DATA_set_data(EC_EXTRA_DATA **ex_data, void *data,
-                        void *(*dup_func) (void *),
-                        void (*free_func) (void *),
-                        void (*clear_free_func) (void *))
-{
-    EC_EXTRA_DATA *d;
-
-    if (ex_data == NULL)
-        return 0;
-
-    for (d = *ex_data; d != NULL; d = d->next) {
-        if (d->dup_func == dup_func && d->free_func == free_func
-            && d->clear_free_func == clear_free_func) {
-            ECerr(EC_F_EC_EX_DATA_SET_DATA, EC_R_SLOT_FULL);
-            return 0;
-        }
-    }
-
-    if (data == NULL)
-        /* no explicit entry needed */
-        return 1;
-
-    d = OPENSSL_malloc(sizeof(*d));
-    if (d == NULL)
-        return 0;
-
-    d->data = data;
-    d->dup_func = dup_func;
-    d->free_func = free_func;
-    d->clear_free_func = clear_free_func;
-
-    d->next = *ex_data;
-    *ex_data = d;
-
-    return 1;
-}
-
-/* this has 'package' visibility */
-void *EC_EX_DATA_get_data(const EC_EXTRA_DATA *ex_data,
-                          void *(*dup_func) (void *),
-                          void (*free_func) (void *),
-                          void (*clear_free_func) (void *))
-{
-    const EC_EXTRA_DATA *d;
-
-    for (d = ex_data; d != NULL; d = d->next) {
-        if (d->dup_func == dup_func && d->free_func == free_func
-            && d->clear_free_func == clear_free_func)
-            return d->data;
-    }
-
-    return NULL;
-}
-
-/* this has 'package' visibility */
-void EC_EX_DATA_free_data(EC_EXTRA_DATA **ex_data,
-                          void *(*dup_func) (void *),
-                          void (*free_func) (void *),
-                          void (*clear_free_func) (void *))
-{
-    EC_EXTRA_DATA **p;
-
-    if (ex_data == NULL)
-        return;
-
-    for (p = ex_data; *p != NULL; p = &((*p)->next)) {
-        if ((*p)->dup_func == dup_func && (*p)->free_func == free_func
-            && (*p)->clear_free_func == clear_free_func) {
-            EC_EXTRA_DATA *next = (*p)->next;
-
-            (*p)->free_func((*p)->data);
-            OPENSSL_free(*p);
-
-            *p = next;
-            return;
-        }
-    }
-}
-
-/* this has 'package' visibility */
-void EC_EX_DATA_clear_free_data(EC_EXTRA_DATA **ex_data,
-                                void *(*dup_func) (void *),
-                                void (*free_func) (void *),
-                                void (*clear_free_func) (void *))
-{
-    EC_EXTRA_DATA **p;
-
-    if (ex_data == NULL)
-        return;
-
-    for (p = ex_data; *p != NULL; p = &((*p)->next)) {
-        if ((*p)->dup_func == dup_func && (*p)->free_func == free_func
-            && (*p)->clear_free_func == clear_free_func) {
-            EC_EXTRA_DATA *next = (*p)->next;
-
-            (*p)->clear_free_func((*p)->data);
-            OPENSSL_free(*p);
-
-            *p = next;
-            return;
-        }
-    }
-}
-
-/* this has 'package' visibility */
-void EC_EX_DATA_free_all_data(EC_EXTRA_DATA **ex_data)
-{
-    EC_EXTRA_DATA *d;
-
-    if (ex_data == NULL)
-        return;
-
-    d = *ex_data;
-    while (d) {
-        EC_EXTRA_DATA *next = d->next;
-
-        d->free_func(d->data);
-        OPENSSL_free(d);
-
-        d = next;
-    }
-    *ex_data = NULL;
-}
-
-/* this has 'package' visibility */
-void EC_EX_DATA_clear_free_all_data(EC_EXTRA_DATA **ex_data)
-{
-    EC_EXTRA_DATA *d;
-
-    if (ex_data == NULL)
-        return;
-
-    d = *ex_data;
-    while (d) {
-        EC_EXTRA_DATA *next = d->next;
-
-        d->clear_free_func(d->data);
-        OPENSSL_free(d);
-
-        d = next;
-    }
-    *ex_data = NULL;
 }
 
 /* functions for EC_POINT objects */
@@ -1090,4 +983,14 @@ int ec_precompute_mont_data(EC_GROUP *group)
 
     BN_CTX_free(ctx);
     return ret;
+}
+
+int EC_KEY_set_ex_data(EC_KEY *key, int idx, void *arg)
+{
+    return CRYPTO_set_ex_data(&key->ex_data, idx, arg);
+}
+
+void *EC_KEY_get_ex_data(const EC_KEY *key, int idx)
+{
+    return CRYPTO_get_ex_data(&key->ex_data, idx);
 }

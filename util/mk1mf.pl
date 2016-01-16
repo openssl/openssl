@@ -83,8 +83,6 @@ while(<IN>) {
 }
 close(IN);
 
-$debug = 1 if $mf_platform =~ /^debug-/;
-
 if ($mf_fipscanisterinternal eq "y") {
 	$fips = 1;
 	$fipscanisterbuild = 1;
@@ -142,6 +140,7 @@ and [options] can be one of
 	no-srp					- No SRP
 	no-ec					- No EC
 	no-engine				- No engine
+	no-egd					- No EGD
 	no-hw					- No hw
 	nasm 					- Use NASM for x86 asm
 	nw-nasm					- Use NASM x86 asm for NetWare
@@ -1392,6 +1391,7 @@ sub read_options
 		"no-ec" => \$no_ec,
 		"no-gost" => \$no_gost,
 		"no-engine" => \$no_engine,
+		"no-egd" => 0,
 		"no-hw" => \$no_hw,
 		"just-ssl" =>
 			[\$no_rc2, \$no_idea, \$no_des, \$no_bf, \$no_cast,
@@ -1401,6 +1401,7 @@ sub read_options
 		"rsaref" => 0,
 		"gcc" => \$gcc,
 		"debug" => \$debug,
+		"--debug" => \$debug,
 		"profile" => \$profile,
 		"shlib" => \$shlib,
 		"dll" => \$shlib,

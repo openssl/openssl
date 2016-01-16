@@ -67,10 +67,6 @@
 
  > ms\do_ms
 
- If you get errors about things not having numbers assigned then check the
- troubleshooting section in INSTALL.W32: you probably won't be able to compile
- it as it stands.
-
  Then from the VC++ environment at a prompt do:
 
    > nmake -f ms\cedll.mak

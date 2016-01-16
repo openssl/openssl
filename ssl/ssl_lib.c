@@ -3052,8 +3052,6 @@ SSL *SSL_dup(SSL *s)
 
     SSL_set_info_callback(ret, SSL_get_info_callback(s));
 
-    ret->debug = s->debug;
-
     /* copy app data, a little dangerous perhaps */
     if (!CRYPTO_dup_ex_data(CRYPTO_EX_INDEX_SSL, &ret->ex_data, &s->ex_data))
         goto err;
@@ -3665,11 +3663,6 @@ int ssl_handshake_hash(SSL *s, unsigned char *out, int outlen)
     return ret;
 }
 
-void SSL_set_debug(SSL *s, int debug)
-{
-    s->debug = debug;
-}
-
 int SSL_cache_hit(SSL *s)
 {
     return s->hit;
@@ -3679,6 +3672,16 @@ int SSL_is_server(SSL *s)
 {
     return s->server;
 }
+
+#if OPENSSL_API_COMPAT < 0x10100000L
+void SSL_set_debug(SSL *s, int debug)
+{
+    /* Old function was do-nothing anyway... */
+    (void)s;
+    (void)debug;
+}
+#endif
+
 
 void SSL_set_security_level(SSL *s, int level)
 {
