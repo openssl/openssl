@@ -208,22 +208,19 @@ int verify_main(int argc, char **argv)
     ERR_clear_error();
 
     if (untfile) {
-        untrusted = load_certs(untfile, FORMAT_PEM,
-                               NULL, e, "untrusted certificates");
-        if (!untrusted)
+        if (!load_certs(untfile, &untrusted, FORMAT_PEM, NULL, e,
+                        "untrusted certificates"))
             goto end;
     }
 
     if (trustfile) {
-        trusted = load_certs(trustfile, FORMAT_PEM,
-                             NULL, e, "trusted certificates");
-        if (!trusted)
+        if (!load_certs(trustfile, &trusted, FORMAT_PEM, NULL, e,
+                        "trusted certificates"))
             goto end;
     }
 
     if (crlfile) {
-        crls = load_crls(crlfile, FORMAT_PEM, NULL, e, "other CRLs");
-        if (!crls)
+        if (!load_crls(crlfile, &crls, FORMAT_PEM, NULL, e, "other CRLs"))
             goto end;
     }
 
