@@ -866,6 +866,7 @@ my @disablables = (
     "ocb",
     "ocsp",
     "poly1305",
+    "blake2",
     "posix-io",
     "psk",
     "rc2",
@@ -1410,6 +1411,7 @@ my $modes_obj = $table{$target}->{modes_obj};
 my $engines_obj = $table{$target}->{engines_obj};
 my $chacha_obj = $table{$target}->{chacha_obj};
 my $poly1305_obj = $table{$target}->{poly1305_obj};
+my $blake2_obj = $table{$target}->{blake2_obj};
 my $perlasm_scheme = $table{$target}->{perlasm_scheme};
 my $dso_scheme = $table{$target}->{dso_scheme};
 my $shared_target = $table{$target}->{shared_target};
@@ -1952,6 +1954,7 @@ print "MODES_OBJ     =$modes_obj\n";
 print "ENGINES_OBJ   =$engines_obj\n";
 print "CHACHA_ENC    =$chacha_obj\n";
 print "POLY1305_OBJ  =$poly1305_obj\n";
+print "BLAKE2_OBJ    =$blake2_obj\n";
 print "PROCESSOR     =$processor\n";
 print "RANLIB        =$ranlib\n";
 print "ARFLAGS       =$arflags\n";
@@ -2410,6 +2413,7 @@ sub print_table_entry
 \$engines_obj  = $table{$target}->{engines_obj}
 \$chacha_obj   = $table{$target}->{chacha_obj}
 \$poly1305_obj = $table{$target}->{poly1305_obj}
+\$blake2_obj   = $table{$target}->{blake2_obj}
 \$perlasm_scheme = $table{$target}->{perlasm_scheme}
 \$dso_scheme   = $table{$target}->{dso_scheme}
 \$shared_target= $table{$target}->{shared_target}
@@ -2451,6 +2455,7 @@ EOF
 		"engines_obj",
 		"chacha_obj",
 		"poly1305_obj",
+                "blake2_obj",
 		"perlasm_scheme",
 		"dso_scheme",
 		"shared_target",
