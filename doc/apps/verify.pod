@@ -17,6 +17,7 @@ B<openssl> B<verify>
 [B<-crl_download>]
 [B<-crl_check>]
 [B<-crl_check_all>]
+[B<-engine id>]
 [B<-explicit_policy>]
 [B<-extended_crl>]
 [B<-help>]
@@ -59,8 +60,8 @@ The B<verify> command verifies certificate chains.
 
 =item B<-CAfile file>
 
-A file of trusted certificates. The file should contain multiple certificates
-in PEM format concatenated together.
+A B<file> of trusted certificates.
+The file should contain one or more certificates in PEM format.
 
 =item B<-CApath directory>
 
@@ -91,7 +92,11 @@ because it doesn't add any security.
 
 =item B<-CRLfile file>
 
-File containing one or more CRL's (in PEM format) to load.
+The B<file> should contain one or more CRLs in PEM format.
+This option can be specified more than once to include CRLs from multiple
+B<files>.
+If you want to enable an B<engine> via the B<-engine> option, that option has
+to be specified before this one.
 
 =item B<-crl_download>
 
@@ -106,6 +111,15 @@ If a valid CRL cannot be found an error occurs.
 
 Checks the validity of B<all> certificates in the chain by attempting
 to look up valid CRLs.
+
+=item B<-engine id>
+
+Specifying an engine B<id> will cause L<verify(1)> to attempt to load the
+specified engine.
+The engine will then be set as the default for all its supported algorithms.
+If you want to load certificates or CRLs that require engine support via any of
+the B<-trusted>, B<-untrusted> or B<-CRLfile> options, the B<-engine> option
+must be specified before those options.
 
 =item B<-explicit_policy>
 
@@ -144,7 +158,9 @@ rejections may take place.
 
 =item B<-partial_chain>
 
-Allow partial certificate chain if at least one certificate is in trusted store.
+Allow verification to succeed even if a I<complete> chain cannot be built to a
+self-signed trust-anchor, provided it is possible to construct a chain to a
+trusted certificate that might not be self-signed.
 
 =item B<-policy arg>
 
@@ -178,9 +194,10 @@ P-256 and P-384.
 
 =item B<-trusted_first>
 
-Use certificates in CA file or CA directory before certificates in untrusted
-file when building the trust chain to verify certificates.
-This is mainly useful in environments with Bridge CA or Cross-Certified CAs.
+When constructing the certificate chain, use the trusted certificates specified
+via B<-CAfile>, B<-CApath> or B<-trusted> before any certificates specified via
+B<-untrusted>.
+This can be useful in environments with Bridge or Cross-Certified CAs.
 
 =item B<-no_alt_chains>
 
@@ -188,21 +205,33 @@ When building a certificate chain, if the first certificate chain found is not
 trusted, then OpenSSL will continue to check to see if an alternative chain can
 be found that is trusted. With this option that behaviour is suppressed so that
 only the first chain found is ever used. Using this option will force the
-behaviour to match that of OpenSSL versions prior to 1.1.0. 
+behaviour to match that of OpenSSL versions prior to 1.1.0.
 
 =item B<-untrusted file>
 
-A file of untrusted certificates. The file should contain one or more
-certificates in PEM format.
+A B<file> of additional untrusted certificates (intermediate issuer CAs) used
+to constuct a certificate chain from the subject certificate to a trust-anchor.
+The B<file> should contain one or more certificates in PEM format.
+This option can be specified more than once to include untrusted certiificates
+from multiple B<files>.
+If you want to enable an B<engine> via the B<-engine> option, that option has
+to be specified before this one.
 
 =item B<-trusted file>
 
-A file of trusted certificates. The file contain one or more
-certificates in PEM format.
-With this option, no additional (e.g., default) certificate lists
-are consulted. That is, the only trusted issuers are those listed
-in B<file>.
-This option cannot be used with the B<-CAfile> or B<-CApath> options.
+A B<file> of trusted certificates, which must be self-signed, unless the
+B<-partial_chain> option is specified.
+The B<file> contain one or more certificates in PEM format.
+With this option, no additional (e.g., default) certificate lists are
+consulted.
+That is, the only trust-anchors are those listed in B<file>.
+This option can be specified more than once to include trusted certificates
+from multiple B<files>.
+This option implies the B<-no-CAfile> and B<-no-CApath> options.
+This option cannot be used in combination with either of the B<-CAfile> or
+B<-CApath> options.
+If you want to enable an B<engine> via the B<-engine> option, that option has
+to be specified before this one.
 
 =item B<-use_deltas>
 
@@ -233,9 +262,15 @@ the subject certificate.
 
 =item B<-verify_name name>
 
-Use default verification options like trust model and required certificate
+Use default verification policies like trust model and required certificate
 policies identified by B<name>.
-Supported usages include: default, pkcs7, smime_sign, ssl_client, ssl_server.
+Supported policy names include: B<default>, B<pkcs7>, B<smime_sign>,
+B<ssl_client>, B<ssl_server>.
+This checks not only the purpose of the leaf certificate, but also the
+trust settings of the trusted CAs.
+When in doubt, use this option rather than B<-purpose>.
+The B<-verify_name> option more closely matches how certificates are checked in
+e.g. SSL and S/MIME.
 
 =item B<-x509_strict>
 
@@ -277,20 +312,21 @@ determined.
 The verify operation consists of a number of separate steps.
 
 Firstly a certificate chain is built up starting from the supplied certificate
-and ending in the root CA. It is an error if the whole chain cannot be built
-up. The chain is built up by looking up the issuers certificate of the current
-certificate. If a certificate is found which is its own issuer it is assumed 
-to be the root CA.
+and ending in the root CA.
+It is an error if the whole chain cannot be built up.
+The chain is built up by looking up the issuers certificate of the current
+certificate.
+If a certificate is found which is its own issuer it is assumed to be the root
+CA.
 
-The process of 'looking up the issuers certificate' itself involves a number
-of steps.
-Ater all certificates
-whose subject name matches the issuer name of the current certificate are 
-subject to further tests. The relevant authority key identifier components
-of the current certificate (if present) must match the subject key identifier
-(if present) and issuer and serial number of the candidate issuer, in addition
-the keyUsage extension of the candidate issuer (if present) must permit
-certificate signing.
+The process of 'looking up the issuers certificate' itself involves a number of
+steps.
+Ater all certificates whose subject name matches the issuer name of the current
+certificate are subject to further tests.
+The relevant authority key identifier components of the current certificate (if
+present) must match the subject key identifier (if present) and issuer and
+serial number of the candidate issuer, in addition the keyUsage extension of
+the candidate issuer (if present) must permit certificate signing.
 
 The lookup first looks in the list of untrusted certificates and if no match
 is found the remaining lookups are from the trusted certificates. The root CA
@@ -305,10 +341,10 @@ compatible with the supplied purpose and all other certificates must also be val
 CA certificates. The precise extensions required are described in more detail in
 the B<CERTIFICATE EXTENSIONS> section of the B<x509> utility.
 
-The third operation is to check the trust settings on the root CA. The root
-CA should be trusted for the supplied purpose. For compatibility with previous
-versions of OpenSSL, a certificate with no trust settings is considered
-to be valid for all purposes. 
+The third operation is to check the trust settings on the root CA. The root CA
+should be trusted for the supplied purpose.
+For compatibility with previous versions of OpenSSL, a certificate with no
+trust settings is considered to be valid for all purposes.
 
 The final operation is to check the validity of the certificate chain. The validity
 period is checked against the current system time and the notBefore and notAfter
@@ -333,7 +369,7 @@ problem was detected starting with zero for the certificate being verified itsel
 then 1 for the CA that signed the certificate and so on. Finally a text version
 of the error number is presented.
 
-An exhaustive list of the error codes and messages is shown below, this also
+An partial list of the error codes and messages is shown below, this also
 includes the name of the error code as defined in the header file x509_vfy.h
 Some of the error codes are defined but never returned: these are described
 as "unused".

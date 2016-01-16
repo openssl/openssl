@@ -8,10 +8,6 @@ use OpenSSL::Test qw/:DEFAULT top_dir top_file/;
 
 setup("test_verify");
 
-# Note for now, at most one trusted and one untrusted PEM file can be
-# specified.  The verify(1) option parser does not accumulate content
-# from multiple trusted or untrusted files.
-#
 sub verify {
     my ($cert, $vname, $trusted, $untrusted, @opts) = @_;
     my @args = qw(openssl verify -verify_name);
