@@ -78,7 +78,7 @@ static EVP_PKEY_CTX *init_ctx(int *pkeysize,
                               int   impl);
 
 static int setup_peer(BIO *err, EVP_PKEY_CTX *ctx, int peerform,
-                      const char *file);
+                      const char *file, ENGINE* e);
 
 static int do_keyop(EVP_PKEY_CTX *ctx, int pkey_op,
                     unsigned char *out, size_t *poutlen,
@@ -149,7 +149,7 @@ int MAIN(int argc, char **argv)
         } else if (!strcmp(*argv, "-peerkey")) {
             if (--argc < 1)
                 badarg = 1;
-            else if (!setup_peer(bio_err, ctx, peerform, *(++argv)))
+            else if (!setup_peer(bio_err, ctx, peerform, *(++argv), e))
                 badarg = 1;
         } else if (!strcmp(*argv, "-passin")) {
             if (--argc < 1)
@@ -479,16 +479,20 @@ static EVP_PKEY_CTX *init_ctx(int *pkeysize,
 }
 
 static int setup_peer(BIO *err, EVP_PKEY_CTX *ctx, int peerform,
-                      const char *file)
+                      const char *file, ENGINE* e)
 {
     EVP_PKEY *peer = NULL;
+    ENGINE* engine = NULL;
     int ret;
     if (!ctx) {
         BIO_puts(err, "-peerkey command before -inkey\n");
         return 0;
     }
 
-    peer = load_pubkey(bio_err, file, peerform, 0, NULL, NULL, "Peer Key");
+    if (peerform == FORMAT_ENGINE)
+      engine = e;
+
+    peer = load_pubkey(bio_err, file, peerform, 0, NULL, engine, "Peer Key");
 
     if (!peer) {
         BIO_printf(bio_err, "Error reading peer key %s\n", file);
