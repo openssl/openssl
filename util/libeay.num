@@ -3847,7 +3847,7 @@ b2i_PVK_bio                             4250	1_1_0	EXIST::FUNCTION:RC4
 ASN1_UTCTIME_adj                        4251	1_1_0	EXIST::FUNCTION:
 TS_TST_INFO_new                         4252	1_1_0	EXIST::FUNCTION:
 EVP_MD_do_all_sorted                    4253	1_1_0	EXIST::FUNCTION:
-TS_CONF_set_default_engine              4254	1_1_0	EXIST::FUNCTION:
+TS_CONF_set_default_engine              4254	1_1_0	EXIST::FUNCTION:ENGINE
 TS_ACCURACY_set_seconds                 4255	1_1_0	EXIST::FUNCTION:
 TS_TST_INFO_get_time                    4256	1_1_0	EXIST::FUNCTION:
 PKCS8_pkey_get0                         4257	1_1_0	EXIST::FUNCTION:
@@ -4071,7 +4071,7 @@ EVP_PKEY_meth_find                      4469	1_1_0	EXIST::FUNCTION:
 EVP_PKEY_id                             4470	1_1_0	EXIST::FUNCTION:
 TS_TST_INFO_set_serial                  4471	1_1_0	EXIST::FUNCTION:
 a2i_GENERAL_NAME                        4472	1_1_0	EXIST::FUNCTION:
-TS_CONF_set_crypto_device               4473	1_1_0	EXIST::FUNCTION:
+TS_CONF_set_crypto_device               4473	1_1_0	EXIST::FUNCTION:ENGINE
 EVP_PKEY_verify_init                    4474	1_1_0	EXIST::FUNCTION:
 TS_CONF_set_policies                    4475	1_1_0	EXIST::FUNCTION:
 ASN1_PCTX_new                           4476	1_1_0	EXIST::FUNCTION:
