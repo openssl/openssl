@@ -872,16 +872,22 @@ int SSL_dane_enable(SSL *s, const char *basedomain)
         return 0;
     }
 
+    /*
+     * Default SNI name.  This rejects empty names, while set1_host below
+     * accepts them and disables host name checks.  To avoid side-effects with
+     * invalid input, set the SNI name first.
+     */
+    if (s->tlsext_hostname == NULL) {
+	if (!SSL_set_tlsext_host_name(s, basedomain)) {
+            SSLerr(SSL_F_SSL_DANE_ENABLE, SSL_R_ERROR_SETTING_TLSA_BASE_DOMAIN);
+	    return -1;
+        }
+    }
+
     /* Primary RFC6125 reference identifier */
     if (!X509_VERIFY_PARAM_set1_host(s->param, basedomain, 0)) {
         SSLerr(SSL_F_SSL_DANE_ENABLE, SSL_R_ERROR_SETTING_TLSA_BASE_DOMAIN);
         return -1;
-    }
-
-    /* Default SNI name */
-    if (s->tlsext_hostname == NULL) {
-	if (!SSL_set_tlsext_host_name(s, basedomain))
-	    return -1;
     }
 
     dane->mdpth = -1;
