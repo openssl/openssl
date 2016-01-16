@@ -56,7 +56,7 @@
 
 #include <stdlib.h>
 
-#if defined(_WIN32) || defined(__CYGWIN__)
+#if defined(_WIN32)
 #include <windows.h>
 #define OSSL_ASYNC_FD   HANDLE
 #else

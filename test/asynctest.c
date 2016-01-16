@@ -62,12 +62,12 @@
 #include <openssl/crypto.h>
 #include <../apps/apps.h>
 
-#if defined(OPENSSL_SYS_UNIX) && defined(OPENSSL_THREADS)
+#if (defined(OPENSSL_SYS_UNIX) || defined(OPENSSL_SYS_CYGWIN)) && defined(OPENSSL_THREADS)
 # include <unistd.h>
 # if _POSIX_VERSION >= 200112L
 #  define ASYNC_POSIX
 # endif
-#elif defined(_WIN32) || defined(__CYGWIN__)
+#elif defined(_WIN32)
 # define ASYNC_WIN
 #endif
 
