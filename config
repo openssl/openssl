@@ -806,6 +806,7 @@ case "$GUESSOS" in
 	fi
 	;;
   # these are all covered by the catchall below
+  i[3456]86-*-cygwin) OUT="Cygwin-x86" ;;
   *-*-cygwin) OUT="Cygwin-${MACHINE}" ;;
   x86pc-*-qnx6) OUT="QNX6-i386" ;;
   *-*-qnx6) OUT="QNX6" ;;
