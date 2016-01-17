@@ -90,7 +90,6 @@ static int x509_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
     switch (operation) {
 
     case ASN1_OP_NEW_POST:
-        ret->valid = 0;
         ret->name = NULL;
         ret->ex_flags = 0;
         ret->ex_pathlen = -1;
