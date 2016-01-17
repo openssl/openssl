@@ -323,15 +323,7 @@ case "${SYSTEM}:${RELEASE}:${VERSION}:${MACHINE}" in
 	echo "${MACHINE}-whatever-mingw"; exit 0;
 	;;
     CYGWIN*)
-	case "$RELEASE" in
-	    [bB]*|1.0|1.[12].*)
-		echo "${MACHINE}-whatever-cygwin_pre1.3"
-		;;
-	    *)
-		echo "${MACHINE}-whatever-cygwin"
-		;;
-	esac
-	exit 0
+	echo "${MACHINE}-pc-cygwin"; exit 0
 	;;
 
     vxworks*)
@@ -814,8 +806,7 @@ case "$GUESSOS" in
 	fi
 	;;
   # these are all covered by the catchall below
-  *-*-cygwin_pre1.3) OUT="Cygwin-pre1.3" ;;
-  *-*-cygwin) OUT="Cygwin" ;;
+  *-*-cygwin) OUT="Cygwin-${MACHINE}" ;;
   x86pc-*-qnx6) OUT="QNX6-i386" ;;
   *-*-qnx6) OUT="QNX6" ;;
   x86-*-android|i?86-*-android) OUT="android-x86" ;;
