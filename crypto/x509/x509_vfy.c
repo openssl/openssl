@@ -193,7 +193,6 @@ static X509 *lookup_cert_match(X509_STORE_CTX *ctx, X509 *x)
 
 static int verify_chain(X509_STORE_CTX *ctx)
 {
-    int (*cb) (int xok, X509_STORE_CTX *xctx) = ctx->verify_cb;
     int err;
     int ok;
 
@@ -214,7 +213,7 @@ static int verify_chain(X509_STORE_CTX *ctx)
     if (err != X509_V_OK) {
         ctx->error = err;
         ctx->current_cert = sk_X509_value(ctx->chain, ctx->error_depth);
-        if ((ok = cb(0, ctx)) == 0)
+        if ((ok = ctx->verify_cb(0, ctx)) == 0)
             return ok;
     }
 
@@ -373,11 +372,9 @@ static int check_chain_extensions(X509_STORE_CTX *ctx)
 {
     int i, ok = 0, must_be_ca, plen = 0;
     X509 *x;
-    int (*cb) (int xok, X509_STORE_CTX *xctx);
     int proxy_path_length = 0;
     int purpose;
     int allow_proxy_certs;
-    cb = ctx->verify_cb;
 
     /*-
      *  must_be_ca can have 1 of 3 values:
@@ -415,7 +412,7 @@ static int check_chain_extensions(X509_STORE_CTX *ctx)
             ctx->error = X509_V_ERR_UNHANDLED_CRITICAL_EXTENSION;
             ctx->error_depth = i;
             ctx->current_cert = x;
-            ok = cb(0, ctx);
+            ok = ctx->verify_cb(0, ctx);
             if (!ok)
                 goto end;
         }
@@ -423,7 +420,7 @@ static int check_chain_extensions(X509_STORE_CTX *ctx)
             ctx->error = X509_V_ERR_PROXY_CERTIFICATES_NOT_ALLOWED;
             ctx->error_depth = i;
             ctx->current_cert = x;
-            ok = cb(0, ctx);
+            ok = ctx->verify_cb(0, ctx);
             if (!ok)
                 goto end;
         }
@@ -457,7 +454,7 @@ static int check_chain_extensions(X509_STORE_CTX *ctx)
         if (ret == 0) {
             ctx->error_depth = i;
             ctx->current_cert = x;
-            ok = cb(0, ctx);
+            ok = ctx->verify_cb(0, ctx);
             if (!ok)
                 goto end;
         }
@@ -469,7 +466,7 @@ static int check_chain_extensions(X509_STORE_CTX *ctx)
                 ctx->error = X509_V_ERR_INVALID_PURPOSE;
                 ctx->error_depth = i;
                 ctx->current_cert = x;
-                ok = cb(0, ctx);
+                ok = ctx->verify_cb(0, ctx);
                 if (!ok)
                     goto end;
             }
@@ -481,7 +478,7 @@ static int check_chain_extensions(X509_STORE_CTX *ctx)
             ctx->error = X509_V_ERR_PATH_LENGTH_EXCEEDED;
             ctx->error_depth = i;
             ctx->current_cert = x;
-            ok = cb(0, ctx);
+            ok = ctx->verify_cb(0, ctx);
             if (!ok)
                 goto end;
         }
@@ -498,7 +495,7 @@ static int check_chain_extensions(X509_STORE_CTX *ctx)
                 ctx->error = X509_V_ERR_PROXY_PATH_LENGTH_EXCEEDED;
                 ctx->error_depth = i;
                 ctx->current_cert = x;
-                ok = cb(0, ctx);
+                ok = ctx->verify_cb(0, ctx);
                 if (!ok)
                     goto end;
             }
@@ -595,7 +592,6 @@ static int check_trust(X509_STORE_CTX *ctx, int num_untrusted)
     int i, ok = 0;
     X509 *x = NULL;
     X509 *mx;
-    int (*cb) (int xok, X509_STORE_CTX *xctx) = ctx->verify_cb;
     struct dane_st *dane = (struct dane_st *)ctx->dane;
     int num = sk_X509_num(ctx->chain);
     int trust;
@@ -676,7 +672,7 @@ static int check_trust(X509_STORE_CTX *ctx, int num_untrusted)
     ctx->error_depth = i;
     ctx->current_cert = x;
     ctx->error = X509_V_ERR_CERT_REJECTED;
-    ok = cb(0, ctx);
+    ok = ctx->verify_cb(0, ctx);
     if (!ok)
         return X509_TRUST_REJECTED;
     return X509_TRUST_UNTRUSTED;
@@ -1568,9 +1564,6 @@ static int internal_verify(X509_STORE_CTX *ctx)
     int ok = 0, n;
     X509 *xs, *xi;
     EVP_PKEY *pkey = NULL;
-    int (*cb) (int xok, X509_STORE_CTX *xctx);
-
-    cb = ctx->verify_cb;
 
     n = sk_X509_num(ctx->chain) - 1;
     ctx->error_depth = n;
@@ -1597,7 +1590,7 @@ static int internal_verify(X509_STORE_CTX *ctx)
         if (n <= 0) {
             ctx->error = X509_V_ERR_UNABLE_TO_VERIFY_LEAF_SIGNATURE;
             ctx->current_cert = xi;
-            ok = cb(0, ctx);
+            ok = ctx->verify_cb(0, ctx);
             goto end;
         } else {
             n--;
@@ -1622,13 +1615,13 @@ static int internal_verify(X509_STORE_CTX *ctx)
             if ((pkey = X509_get0_pubkey(xi)) == NULL) {
                 ctx->error = X509_V_ERR_UNABLE_TO_DECODE_ISSUER_PUBLIC_KEY;
                 ctx->current_cert = xi;
-                ok = (*cb) (0, ctx);
+                ok = ctx->verify_cb(0, ctx);
                 if (!ok)
                     goto end;
             } else if (X509_verify(xs, pkey) <= 0) {
                 ctx->error = X509_V_ERR_CERT_SIGNATURE_FAILURE;
                 ctx->current_cert = xs;
-                ok = (*cb) (0, ctx);
+                ok = ctx->verify_cb(0, ctx);
                 if (!ok)
                     goto end;
             }
@@ -1642,7 +1635,7 @@ static int internal_verify(X509_STORE_CTX *ctx)
         /* The last error (if any) is still in the error value */
         ctx->current_issuer = xi;
         ctx->current_cert = xs;
-        ok = (*cb) (1, ctx);
+        ok = ctx->verify_cb(1, ctx);
         if (!ok)
             goto end;
 
@@ -2584,10 +2577,21 @@ static void dane_reset(struct dane_st *dane)
     dane->pdpth = -1;
 }
 
+static int check_leaf_suiteb(X509_STORE_CTX *ctx, X509 *cert)
+{
+    int err = X509_chain_check_suiteb(NULL, cert, NULL, ctx->param->flags);
+
+    if (err == X509_V_OK)
+        return 1;
+    ctx->current_cert = cert;
+    ctx->error_depth = 0;
+    ctx->error = err;
+    return ctx->verify_cb(0, ctx);
+}
+
 static int dane_verify(X509_STORE_CTX *ctx)
 {
     X509 *cert = ctx->cert;
-    int (*cb)(int xok, X509_STORE_CTX *xctx) = ctx->verify_cb;
     struct dane_st *dane = (struct dane_st *)ctx->dane;
     int matched;
     int done;
@@ -2601,9 +2605,11 @@ static int dane_verify(X509_STORE_CTX *ctx)
         X509_get_pubkey_parameters(NULL, ctx->chain);
 
     if (matched > 0) {
+        if (!check_leaf_suiteb(ctx, cert))
+            return 0;
         ctx->error_depth = 0;
         ctx->current_cert = cert;
-        return cb(1, ctx);
+        return ctx->verify_cb(1, ctx);
     }
 
     if (matched < 0) {
@@ -2615,10 +2621,12 @@ static int dane_verify(X509_STORE_CTX *ctx)
 
     if (done) {
         /* Fail early, TA-based success is not possible */
+        if (!check_leaf_suiteb(ctx, cert))
+            return 0;
         ctx->current_cert = cert;
         ctx->error_depth = 0;
         ctx->error = X509_V_ERR_CERT_UNTRUSTED;
-        return cb(0, ctx);
+        return ctx->verify_cb(0, ctx);
     }
 
     /*
@@ -2631,7 +2639,6 @@ static int dane_verify(X509_STORE_CTX *ctx)
 static int build_chain(X509_STORE_CTX *ctx)
 {
     struct dane_st *dane = (struct dane_st *)ctx->dane;
-    int (*cb) (int, X509_STORE_CTX *) = ctx->verify_cb;
     int num = sk_X509_num(ctx->chain);
     X509 *cert = sk_X509_value(ctx->chain, num - 1);
     int ss = cert_self_signed(cert);
@@ -2944,6 +2951,6 @@ static int build_chain(X509_STORE_CTX *ctx)
             ctx->error = X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT;
         if (DANETLS_ENABLED(dane))
             dane_reset(dane);
-        return cb(0, ctx);
+        return ctx->verify_cb(0, ctx);
     }
 }
