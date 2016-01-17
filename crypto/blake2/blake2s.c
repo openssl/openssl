@@ -16,7 +16,7 @@
 #include <stdio.h>
 #include <openssl/blake2.h>
 
-#include "blake2_loc.h"
+#include "internal/blake2_locl.h"
 #include "blake2_impl.h"
 
 static const uint32_t blake2s_IV[8] =
@@ -173,7 +173,7 @@ int BLAKE2s_Init(BLAKE2S_CTX *c)
   return blake2s_init_param( c, P );
 }
 
-int BLAKE2s_InitKey(BLAKE2B_CTX *c, const void *key, size_t keylen)
+int BLAKE2s_InitKey(BLAKE2S_CTX *c, const void *key, size_t keylen)
 {
   blake2s_param P[1];
 
@@ -265,12 +265,12 @@ static int blake2s_compress( blake2s_state *S, const uint8_t block[BLAKE2S_BLOCK
 }
 
 
-int BLAKE2s_Update(BLAKE2S_CTX *c, const void *data, size_t datalen);
+int BLAKE2s_Update(BLAKE2S_CTX *c, const void *data, size_t datalen)
 {
   const uint8_t *in = data;
   while( datalen > 0 )
   {
-    size_t left = S->buflen;
+    size_t left = c->buflen;
     size_t fill = 2 * BLAKE2S_BLOCKBYTES - left;
 
     if( datalen > fill )
