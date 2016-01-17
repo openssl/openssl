@@ -150,7 +150,7 @@ div:
 	rm -f a.out
 	gcc -I.. -g div.c ../../libcrypto.a
 
-update: bn_prime.h depend
+generate: bn_prime.h
 
 depend:
 	@[ -n "$(MAKEDEPEND)" ] # should be set by upper Makefile...

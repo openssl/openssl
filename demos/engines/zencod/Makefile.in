@@ -24,8 +24,7 @@ all:
 		@echo 'gnu:      Generic GNU-based system (gcc and GNU ld)'
 		@echo ''
 
-FORCE.update:
-update:		FORCE.update
+generate:
 		perl ../../../util/mkerr.pl -conf hw_zencod.ec \
 			-nostatic -staticloader -write hw_zencod.c
 
