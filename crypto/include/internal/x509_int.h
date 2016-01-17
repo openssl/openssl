@@ -192,7 +192,6 @@ struct x509_st {
     X509_CINF cert_info;
     X509_ALGOR sig_alg;
     ASN1_BIT_STRING signature;
-    int valid;
     int references;
     char *name;
     CRYPTO_EX_DATA ex_data;
