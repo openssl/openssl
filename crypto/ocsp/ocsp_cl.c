@@ -242,7 +242,7 @@ OCSP_SINGLERESP *OCSP_resp_get0(OCSP_BASICRESP *bs, int idx)
     return sk_OCSP_SINGLERESP_value(bs->tbsResponseData.responses, idx);
 }
 
-ASN1_GENERALIZEDTIME *OCSP_resp_get_produced_at(OCSP_BASICRESP* bs)
+ASN1_GENERALIZEDTIME *OCSP_resp_get0_produced_at(OCSP_BASICRESP* bs)
 {
     if (!bs)
         return NULL;

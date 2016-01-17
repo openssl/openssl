@@ -4760,7 +4760,7 @@ EC_KEY_get_ex_data                      5154	1_1_0	EXIST::FUNCTION:EC
 EC_KEY_set_method                       5155	1_1_0	EXIST::FUNCTION:EC
 EC_KEY_get_method                       5156	1_1_0	EXIST::FUNCTION:EC
 OCSP_SINGLERESP_get0_id                 5157	1_1_0	EXIST::FUNCTION:
-TS_STATUS_INFO_get_status               5158	1_1_0	EXIST::FUNCTION:
-OCSP_resp_get_produced_at               5159	1_1_0	EXIST::FUNCTION:
-TS_STATUS_INFO_get_failure_info         5160	1_1_0	EXIST::FUNCTION:
-TS_STATUS_INFO_get_text                 5161	1_1_0	EXIST::FUNCTION:
+TS_STATUS_INFO_get0_status              5158	1_1_0	EXIST::FUNCTION:
+OCSP_resp_get0_produced_at              5159	1_1_0	EXIST::FUNCTION:
+TS_STATUS_INFO_get0_failure_info        5160	1_1_0	EXIST::FUNCTION:
+TS_STATUS_INFO_get0_text                5161	1_1_0	EXIST::FUNCTION:
