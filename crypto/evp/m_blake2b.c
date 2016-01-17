@@ -5,6 +5,7 @@
 
 # include <openssl/evp.h>
 # include <openssl/blake2.h>
+# include "internal/blake2_locl.h"
 # include "internal/evp_int.h"
 
 static int init(EVP_MD_CTX *ctx)
@@ -23,8 +24,8 @@ static int final(EVP_MD_CTX *ctx, unsigned char *md)
 }
 
 static const EVP_MD blake2b_md = {
-    NID_blake2b,
-    NID_blakd2bWithRSAEncryption,
+    NID_undef,
+    NID_undef,
     BLAKE2B_DIGEST_LENGTH,
     0,
     init,
@@ -32,12 +33,12 @@ static const EVP_MD blake2b_md = {
     final,
     NULL,
     NULL,
-    BLAKE2B_CBLOCK,
-    sizeof(EVP_MD *) + sizeof(MD5_CTX),
+    0,
+    sizeof(EVP_MD *) + sizeof(BLAKE2B_CTX),
 };
 
-const EVP_MD *EVP_md5(void)
+const EVP_MD *EVP_blake2b(void)
 {
-    return (&md5_md);
+    return (&blake2b_md);
 }
 #endif

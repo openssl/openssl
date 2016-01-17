@@ -25,7 +25,7 @@ unsigned char *BLAKE2b(const unsigned char *data, size_t datalen,
     const unsigned char *key, size_t keylen, unsigned char *md);
 
 int BLAKE2s_Init(BLAKE2S_CTX *c);
-int BLAKE2s_InitKey(BLAKE2B_CTX *c, const void *key, size_t keylen);
+int BLAKE2s_InitKey(BLAKE2S_CTX *c, const void *key, size_t keylen);
 int BLAKE2s_Update(BLAKE2S_CTX *c, const void *data, size_t datalen);
 int BLAKE2s_Final(unsigned char *md, BLAKE2S_CTX *c);
 unsigned char *BLAKE2s(const unsigned char *data, size_t datalen,

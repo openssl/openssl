@@ -17,8 +17,8 @@ AFLAGS= $(ASFLAGS)
 GENERAL=Makefile
 
 LIB=$(TOP)/libcrypto.a
-LIBSRC=blake2d.c blake2s.c
-LIBOBJ=blake2d.o blake2s.o
+LIBSRC=blake2b.c blake2s.c
+LIBOBJ=blake2b.o blake2s.o
 
 SRC= $(LIBSRC)
 
