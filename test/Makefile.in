@@ -152,6 +152,9 @@ generate: $(SRC)
 $(SRC):
 	@sh $(TOP)/util/point.sh dummytest.c $@
 
+tests: exe apps
+	TOP=$(TOP) PERL=$(PERL) $(PERL) run_tests.pl $(TESTS)
+
 errors:
 
 list-tests:
