@@ -203,7 +203,7 @@ sub do_test_rule {
     my $ret = <<"EOF";
 $target: $deps force.$target
 	TOP=. BIN_D=\$(BIN_D) TEST_D=\$(TEST_D) \\
-	    PERL=\$(PERL) \$(PERL) test/$test_cmd
+	    PERL=\$(PERL) \$(PERL) test/$test_cmd \$(TESTS)
 force.$target:
 
 EOF
