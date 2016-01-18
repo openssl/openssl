@@ -1,16 +1,16 @@
 /*
-   BLAKE2 reference source code package - reference C implementations
-
-   Written in 2012 by Samuel Neves <sneves@dei.uc.pt>
-
-   This version of BLAKE2 has been contributed under the OpenSSL license to the
-   OpenSSL project by the BKAKE2 authors.  More information about the BLAKE2
-   hash function can be found at https://blake2.net.
-*/
+ * BLAKE2 reference source code package - reference C implementations
+ *
+ * Written in 2012 by Samuel Neves <sneves@dei.uc.pt>
+ *
+ * This version of BLAKE2 has been contributed under the OpenSSL license to the
+ * OpenSSL project by the BKAKE2 authors.  More information about the BLAKE2
+ * hash function can be found at https://blake2.net.
+ */
 
 /* crypto/blake2/blake2_impl.h */
 /* ====================================================================
- * Copyright (c) 1999-2016 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 2012 Samuel Neves.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
