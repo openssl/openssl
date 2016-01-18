@@ -112,7 +112,7 @@ $target: $deps force.$target
 	set BIN_D=\$(BIN_D)
 	set TEST_D=\$(TEST_D)
 	set PERL=\$(PERL)
-	\$(PERL) test\\$test_cmd
+	\$(PERL) test\\$test_cmd \$(TESTS)
 force.$target:
 EOF
 }
