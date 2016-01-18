@@ -16,8 +16,8 @@ fi
 if [ "$MAKEDEPEND" = "" ]; then MAKEDEPEND=makedepend; fi
 
 cp Makefile Makefile.save
-if ${MAKEDEPEND} --version 2>&1 | grep -q "clang" ||
-   echo $MAKEDEPEND | grep -q "gcc"; then
+if ${MAKEDEPEND} --version 2>&1 | grep "clang" > /dev/null ||
+   echo $MAKEDEPEND | grep "gcc" > /dev/null; then
     args=""
     while [ $# -gt 0 ]; do
 	if [ "$1" != "--" ]; then args="$args $1"; fi
