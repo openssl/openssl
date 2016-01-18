@@ -1,0 +1,4 @@
+The code uses NATIVE_LITTLE_ENDIAN in #if statements.  Is this right?
+
+The code used #pragma pack, which I removed.  The layout for the param structs
+is required to be fully packed, but I think it will be on all platforms.
