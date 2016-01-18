@@ -3594,6 +3594,100 @@ void SSL_CTX_set_msg_callback(SSL_CTX *ctx,
     SSL_CTX_callback_ctrl(ctx, SSL_CTRL_SET_MSG_CALLBACK, (void (*)(void))cb);
 }
 
+int ssl_ctx_log_rsa_client_key_exchange(SSL_CTX *ctx,
+    const uint8_t *encrypted_premaster, size_t encrypted_premaster_len,
+    const uint8_t *premaster, size_t premaster_len)
+{
+    char *keylog_file;
+    BIO *bio;
+    char *out = NULL;
+    size_t out_len = 0; // Without '\0' terminator
+    int ret;
+
+    if ((keylog_file = getenv("SSLKEYLOGFILE")) == NULL) {
+        return 1;
+    }
+
+    if (encrypted_premaster_len < 8) {
+        SSLerr(SSL_F_SSL_CTX_LOG_RSA_CLIENT_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    if ((bio = BIO_new_file(keylog_file, "a")) == NULL) {
+        return 1;
+    }
+
+    out_len = 4 + 8*2 + 1 + premaster_len*2 + 1;
+    if (!(out = OPENSSL_malloc(out_len+1))) {
+        return 0;
+    }
+
+    strcpy(out, "RSA ");
+    for (size_t i = 0; i < 8; i++) {
+        sprintf(out + strlen(out), "%02x", encrypted_premaster[i]);
+    }
+    strcat(out, " ");
+    for (size_t i = 0; i < premaster_len; i++) {
+        sprintf(out + strlen(out), "%02x", premaster[i]);
+    }
+    strcat(out, "\n");
+
+    CRYPTO_w_lock(CRYPTO_LOCK_SSL_CTX);
+    ret = BIO_write(bio, out, out_len) >= 0 && BIO_flush(bio);
+    CRYPTO_w_unlock(CRYPTO_LOCK_SSL_CTX);
+
+    OPENSSL_free(out);
+    BIO_free(bio);
+    return ret;
+}
+
+int ssl_ctx_log_master_secret(SSL_CTX *ctx,
+    const uint8_t *client_random, size_t client_random_len,
+    const uint8_t *master, size_t master_len)
+{
+    char *keylog_file;
+    BIO *bio;
+    char *out = NULL;
+    size_t out_len = 0; // Without '\0' terminator
+    int ret;
+
+    if ((keylog_file = getenv("SSLKEYLOGFILE")) == NULL) {
+        return 1;
+    }
+
+    if (client_random_len != 32) {
+        SSLerr(SSL_F_SSL_CTX_LOG_MASTER_SECRET, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    if ((bio = BIO_new_file(keylog_file, "a")) == NULL) {
+        return 1;
+    }
+
+    out_len = 14 + 32*2 + 1 + master_len*2 + 1;
+    if (!(out = OPENSSL_malloc(out_len+1))) {
+        return 0;
+    }
+
+    strcpy(out, "CLIENT_RANDOM ");
+    for (size_t i = 0; i < 32; i++) {
+        sprintf(out + strlen(out), "%02x", client_random[i]);
+    }
+    strcat(out, " ");
+    for (size_t i = 0; i < master_len; i++) {
+        sprintf(out + strlen(out), "%02x", master[i]);
+    }
+    strcat(out, "\n");
+
+    CRYPTO_w_lock(CRYPTO_LOCK_SSL_CTX);
+    ret = BIO_write(bio, out, out_len) >= 0 && BIO_flush(bio);
+    CRYPTO_w_unlock(CRYPTO_LOCK_SSL_CTX);
+
+    OPENSSL_free(out);
+    BIO_free(bio);
+    return ret;
+}
+
 void SSL_set_msg_callback(SSL *ssl,
                           void (*cb) (int write_p, int version,
                                       int content_type, const void *buf,
