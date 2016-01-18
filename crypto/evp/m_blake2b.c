@@ -4,6 +4,7 @@
 #ifndef OPENSSL_NO_BLAKE2
 
 # include <openssl/evp.h>
+# include <openssl/objects.h>
 # include <openssl/blake2.h>
 # include "internal/blake2_locl.h"
 # include "internal/evp_int.h"
@@ -24,8 +25,8 @@ static int final(EVP_MD_CTX *ctx, unsigned char *md)
 }
 
 static const EVP_MD blake2b_md = {
-    NID_undef,
-    NID_undef,
+    NID_blake2b,
+    0,
     BLAKE2B_DIGEST_LENGTH,
     0,
     init,
