@@ -49,8 +49,6 @@ files:
 
 errors:
 
-update: depend
-
 depend:
 
 clean:
