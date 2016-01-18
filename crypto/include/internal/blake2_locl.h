@@ -107,41 +107,6 @@ extern "C" {
   } blake2bp_state;
 #pragma pack(pop)
 
-  /* Streaming API */
-  int blake2s_init( blake2s_state *S, const uint8_t outlen );
-  int blake2s_init_key( blake2s_state *S, const uint8_t outlen, const void *key, const uint8_t keylen );
-  int blake2s_init_param( blake2s_state *S, const blake2s_param *P );
-  int blake2s_update( blake2s_state *S, const uint8_t *in, uint64_t inlen );
-  int blake2s_final( blake2s_state *S, uint8_t *out, uint8_t outlen );
-
-  int blake2b_init( blake2b_state *S, const uint8_t outlen );
-  int blake2b_init_key( blake2b_state *S, const uint8_t outlen, const void *key, const uint8_t keylen );
-  int blake2b_init_param( blake2b_state *S, const blake2b_param *P );
-  int blake2b_update( blake2b_state *S, const uint8_t *in, uint64_t inlen );
-  int blake2b_final( blake2b_state *S, uint8_t *out, uint8_t outlen );
-
-  int blake2sp_init( blake2sp_state *S, const uint8_t outlen );
-  int blake2sp_init_key( blake2sp_state *S, const uint8_t outlen, const void *key, const uint8_t keylen );
-  int blake2sp_update( blake2sp_state *S, const uint8_t *in, uint64_t inlen );
-  int blake2sp_final( blake2sp_state *S, uint8_t *out, uint8_t outlen );
-
-  int blake2bp_init( blake2bp_state *S, const uint8_t outlen );
-  int blake2bp_init_key( blake2bp_state *S, const uint8_t outlen, const void *key, const uint8_t keylen );
-  int blake2bp_update( blake2bp_state *S, const uint8_t *in, uint64_t inlen );
-  int blake2bp_final( blake2bp_state *S, uint8_t *out, uint8_t outlen );
-
-  /* Simple API */
-  int blake2s( uint8_t *out, const void *in, const void *key, const uint8_t outlen, const uint64_t inlen, uint8_t keylen );
-  int blake2b( uint8_t *out, const void *in, const void *key, const uint8_t outlen, const uint64_t inlen, uint8_t keylen );
-
-  int blake2sp( uint8_t *out, const void *in, const void *key, const uint8_t outlen, const uint64_t inlen, uint8_t keylen );
-  int blake2bp( uint8_t *out, const void *in, const void *key, const uint8_t outlen, const uint64_t inlen, uint8_t keylen );
-
-  static inline int blake2( uint8_t *out, const void *in, const void *key, const uint8_t outlen, const uint64_t inlen, uint8_t keylen )
-  {
-    return blake2b( out, in, key, outlen, inlen, keylen );
-  }
-
 #if defined(__cplusplus)
 }
 #endif

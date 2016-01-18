@@ -158,7 +158,7 @@ my $apitable = {
 # - old style config-string, colon seperated fields with exactly the
 #   following structure.:
 #
-#	$cc : $cflags : $unistd : $thread_cflag : $sys_id : $lflags : $bn_ops : $cpuid_obj : $bn_obj : $ec_obj : $des_obj : $aes_obj : $bf_obj : $md5_obj : $sha1_obj : $cast_obj : $rc4_obj : $rmd160_obj : $rc5_obj : $wp_obj : $cmll_obj : $modes_obj : $engines_obj : $perlasm_scheme : $dso_scheme : $shared_target : $shared_cflag : $shared_ldflag : $shared_extension : $ranlib : $arflags : $multilib
+#	$cc : $cflags : $unistd : $thread_cflag : $sys_id : $lflags : $bn_ops : $cpuid_obj : $bn_obj : $ec_obj : $des_obj : $aes_obj : $bf_obj : $md5_obj : $sha1_obj : $cast_obj : $rc4_obj : $rmd160_obj : $blake2_obj : $rc5_obj : $wp_obj : $cmll_obj : $modes_obj : $engines_obj : $perlasm_scheme : $dso_scheme : $shared_target : $shared_cflag : $shared_ldflag : $shared_extension : $ranlib : $arflags : $multilib
 #
 #   We use the stringtohash function - defined below - to combine with the
 #   fields and form a proper hash table from the string.
@@ -185,6 +185,7 @@ my $apitable = {
 #	  cast_obj => $cast_obj,
 #	  rc4_obj => $rc4_obj,
 #	  rmd160_obj => $rmd160_obj,
+#         blake2_obj => $blake2_obj,
 #	  rc5_obj => $rc5_obj,
 #	  wp_obj => $wp_obj,
 #	  cmll_obj => $cmll_obj,
@@ -227,6 +228,7 @@ my $apitable = {
 #	  cast_obj => $cast_obj,
 #	  rc4_obj => $rc4_obj,
 #	  rmd160_obj => $rmd160_obj,
+#         blake2_obj => $blake2_obj,
 #	  rc5_obj => $rc5_obj,
 #	  wp_obj => $wp_obj,
 #	  cmll_obj => $cmll_obj,
@@ -510,6 +512,7 @@ sub stringtohash {
 	"cast_obj",
 	"rc4_obj",
 	"rmd160_obj",
+        "blake2_obj",
 	"rc5_obj",
 	"wp_obj",
 	"cmll_obj",
@@ -828,6 +831,7 @@ my @disablables = (
     "aes",
     "asm",
     "bf",
+    "blake2",
     "camellia",
     "capieng",
     "cast",
@@ -866,7 +870,6 @@ my @disablables = (
     "ocb",
     "ocsp",
     "poly1305",
-    "blake2",
     "posix-io",
     "psk",
     "rc2",
