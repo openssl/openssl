@@ -87,8 +87,9 @@ static const EVP_PKEY_METHOD *standard_methods[] = {
     &hmac_pkey_meth,
     &cmac_pkey_meth,
 #ifndef OPENSSL_NO_DH
-    &dhx_pkey_meth
+    &dhx_pkey_meth,
 #endif
+    &tls1_prf_pkey_meth
 };
 
 DECLARE_OBJ_BSEARCH_CMP_FN(const EVP_PKEY_METHOD *, const EVP_PKEY_METHOD *,

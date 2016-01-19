@@ -1428,3 +1428,6 @@ secg-scheme 14 3 : dhSinglePass-cofactorDH-sha512kdf-scheme
 
 # SCRYPT algorithm
 1 3 6 1 4 1 11591 4 11		: id-scrypt
+
+# NID for TLS1 PRF
+                            : TLS1-PRF          : tls1-prf
