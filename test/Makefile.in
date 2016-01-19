@@ -152,13 +152,11 @@ generate: $(SRC)
 $(SRC):
 	@sh $(TOP)/util/point.sh dummytest.c $@
 
+tests: exe apps
+	TOP=$(TOP) PERL=$(PERL) $(PERL) run_tests.pl $(TESTS)
+
 errors:
 
-tags:
-	ctags $(SRC)
-
-tests:	exe apps
-	TOP=$(TOP) PERL=$(PERL) $(PERL) run_tests.pl $(TESTS)
 list-tests:
 	@TOP=$(TOP) PERL=$(PERL) $(PERL) run_tests.pl list
 
@@ -172,11 +170,6 @@ depend: local_depend
 	@if [ -z "$(THIS)" ]; then $(MAKE) -f $(TOP)/Makefile reflect THIS=$@; fi
 local_depend:
 	@[ -z "$(THIS)" ] || $(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(SRC)
-
-dclean:
-	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
-	mv -f Makefile.new $(MAKEFILE)
-	rm -f newkey.pem testkey.pem testreq.pem
 
 clean:
 	rm -f .rnd tmp.bntest tmp.bctest *.o *.obj *.dll lib tags core .pure .nfs* *.old *.bak fluff $(EXE) *.ss *.srl log *.log dummytest

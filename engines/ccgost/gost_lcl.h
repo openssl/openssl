@@ -145,6 +145,7 @@ struct ossl_gost_digest_ctx {
 /* EVP_MD structure for GOST R 34.11 */
 EVP_MD *digest_gost(void);
 void digest_gost_destroy(void);
+void cipher_gost_destroy(void);
 /* EVP_MD structure for GOST 28147 in MAC mode */
 const EVP_MD *imit_gost_cpa(void);
 void imit_gost_cpa_destroy(void);

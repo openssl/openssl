@@ -270,7 +270,7 @@ static int des_ede_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
     dat->stream.cbc = NULL;
 # if defined(SPARC_DES_CAPABLE)
     if (SPARC_DES_CAPABLE) {
-        int mode = ctx->cipher->flags & EVP_CIPH_MODE;
+        int mode = EVP_CIPHER_CTX_mode(ctx);
 
         if (mode == EVP_CIPH_CBC_MODE) {
             des_t4_key_expand(&deskey[0], &dat->ks1);
@@ -297,7 +297,7 @@ static int des_ede3_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
     dat->stream.cbc = NULL;
 # if defined(SPARC_DES_CAPABLE)
     if (SPARC_DES_CAPABLE) {
-        int mode = ctx->cipher->flags & EVP_CIPH_MODE;
+        int mode = EVP_CIPHER_CTX_mode(ctx);
 
         if (mode == EVP_CIPH_CBC_MODE) {
             des_t4_key_expand(&deskey[0], &dat->ks1);

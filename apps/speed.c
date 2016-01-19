@@ -94,16 +94,8 @@
 # include <signal.h>
 #endif
 
-#if defined(_WIN32) || defined(__CYGWIN__)
+#if defined(_WIN32)
 # include <windows.h>
-# if defined(__CYGWIN__) && !defined(_WIN32)
-  /*
-   * <windows.h> should define _WIN32, which normally is mutually exclusive
-   * with __CYGWIN__, but if it didn't...
-   */
-#  define _WIN32
-  /* this is done because Cygwin alarm() fails sometimes. */
-# endif
 #endif
 
 #include <openssl/bn.h>
