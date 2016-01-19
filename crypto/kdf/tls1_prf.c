@@ -142,7 +142,7 @@ static int pkey_tls1_prf_derive(EVP_PKEY_CTX *ctx, unsigned char *key,
                                 size_t *keylen)
 {
     TLS1_PRF_PKEY_CTX *kctx = ctx->data;
-    if (kctx->md == NULL || kctx->sec == NULL || kctx->seed == NULL)
+    if (kctx->md == NULL || kctx->sec == NULL || kctx->seedlen == 0)
         return 0;
     return tls1_prf_alg(kctx->md, kctx->sec, kctx->seclen,
                         kctx->seed, kctx->seedlen,
