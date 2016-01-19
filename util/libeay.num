@@ -3790,7 +3790,7 @@ d2i_TS_ACCURACY                         4194	1_1_0	EXIST::FUNCTION:
 DSO_global_lookup                       4195	1_1_0	EXIST::FUNCTION:
 TS_CONF_set_tsa_name                    4196	1_1_0	EXIST::FUNCTION:
 i2d_ASN1_SET_ANY                        4197	1_1_0	EXIST::FUNCTION:
-ENGINE_load_gost                        4198	1_1_0	EXIST::FUNCTION:ENGINE,GOST,STATIC_ENGINE
+ENGINE_load_gost                        4198	1_1_0	NOEXIST::FUNCTION:
 WHIRLPOOL_BitUpdate                     4199	1_1_0	EXIST::FUNCTION:WHIRLPOOL
 ASN1_PCTX_get_flags                     4200	1_1_0	EXIST::FUNCTION:
 TS_TST_INFO_get_ext_by_NID              4201	1_1_0	EXIST::FUNCTION:
