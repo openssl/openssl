@@ -86,9 +86,6 @@ void ENGINE_load_builtin_engines(void)
     ENGINE_load_padlock();
 #  endif
 # endif
-# ifndef OPENSSL_NO_GOST
-    ENGINE_load_gost();
-# endif
 # if defined(OPENSSL_SYS_WIN32) && !defined(OPENSSL_NO_CAPIENG)
     ENGINE_load_capi();
 # endif
