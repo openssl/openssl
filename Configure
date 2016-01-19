@@ -1449,7 +1449,7 @@ if ($target =~ /\-icc$/)	# Intel C compiler
 # linker only when --prefix is not /usr.
 if ($target =~ /^BSD\-/)
 	{
-	$shared_ldflag.=" -Wl,-rpath,\$(LIBRPATH)" if ($prefix !~ m|^/usr[/]*$|);
+	$shared_ldflag.=" -Wl,-rpath,\$\$(LIBRPATH)" if ($prefix !~ m|^/usr[/]*$|);
 	}
 
 if ($sys_id ne "")
