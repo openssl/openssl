@@ -1139,6 +1139,41 @@ cryptodev_engine_digests(ENGINE *e, const EVP_MD **digest,
     return (*digest != NULL);
 }
 
+static int cryptodev_engine_destroy(ENGINE *e)
+{
+    EVP_CIPHER_meth_free(rc4_cipher);
+    rc4_cipher = NULL;
+    EVP_CIPHER_meth_free(des_cbc_cipher);
+    des_cbc_cipher = NULL;
+    EVP_CIPHER_meth_free(des3_cbc_cipher);
+    des3_cbc_cipher = NULL;
+    EVP_CIPHER_meth_free(bf_cbc_cipher);
+    bf_cbc_cipher = NULL;
+    EVP_CIPHER_meth_free(cast_cbc_cipher);
+    cast_cbc_cipher = NULL;
+    EVP_CIPHER_meth_free(aes_cbc_cipher);
+    aes_cbc_cipher = NULL;
+    EVP_CIPHER_meth_free(aes_192_cbc_cipher);
+    aes_192_cbc_cipher = NULL;
+    EVP_CIPHER_meth_free(aes_256_cbc_cipher);
+    aes_256_cbc_cipher = NULL;
+# ifdef CRYPTO_AES_CTR
+    EVP_CIPHER_meth_free(aes_ctr_cipher);
+    aes_ctr_cipher = NULL;
+    EVP_CIPHER_meth_free(aes_192_ctr_cipher);
+    aes_192_ctr_cipher = NULL;
+    EVP_CIPHER_meth_free(aes_256_ctr_cipher);
+    aes_256_ctr_cipher = NULL;
+# endif
+# ifdef USE_CRYPTODEV_DIGESTS
+    EVP_MD_meth_free(sha1_md);
+    sha1_md = NULL;
+    EVP_MD_meth_free(md5_md);
+    md5_md = NULL;
+# endif
+    return 1;
+}
+
 /*
  * Convert a BIGNUM to the representation that /dev/crypto needs.
  * Upon completion of use, the caller is responsible for freeing
@@ -1608,6 +1643,7 @@ void ENGINE_load_cryptodev(void)
 
     if (!ENGINE_set_id(engine, "cryptodev") ||
         !ENGINE_set_name(engine, "BSD cryptodev engine") ||
+        !ENGINE_set_destroy_function(engine, cryptodev_engine_destroy) ||
         !ENGINE_set_ciphers(engine, cryptodev_engine_ciphers) ||
         !ENGINE_set_digests(engine, cryptodev_engine_digests) ||
         !ENGINE_set_ctrl_function(engine, cryptodev_ctrl) ||
