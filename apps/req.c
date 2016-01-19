@@ -811,7 +811,7 @@ int req_main(int argc, char **argv)
         fprintf(stdout, "Modulus=");
 #ifndef OPENSSL_NO_RSA
         if (EVP_PKEY_base_id(tpubkey) == EVP_PKEY_RSA)
-            BN_print(out, tpubkey->pkey.rsa->n);
+            BN_print(out, EVP_PKEY_get0_RSA(tpubkey)->n);
         else
 #endif
             fprintf(stdout, "Wrong Algorithm type");

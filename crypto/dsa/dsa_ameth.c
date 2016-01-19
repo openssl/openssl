@@ -66,6 +66,7 @@
 # include <openssl/cms.h>
 #endif
 #include "internal/asn1_int.h"
+#include "internal/evp_int.h"
 
 static int dsa_pub_decode(EVP_PKEY *pkey, X509_PUBKEY *pubkey)
 {

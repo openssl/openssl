@@ -612,7 +612,7 @@ int ssl_cert_type(X509 *x, EVP_PKEY *pkey)
     if (pk == NULL)
         goto err;
 
-    i = pk->type;
+    i = EVP_PKEY_id(pk);
     if (i == EVP_PKEY_RSA) {
         ret = SSL_PKEY_RSA_ENC;
     } else if (i == EVP_PKEY_DSA) {

@@ -2080,7 +2080,6 @@ MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
     unsigned long alg_k;
 #ifndef OPENSSL_NO_RSA
     RSA *rsa = NULL;
-    EVP_PKEY *pkey = NULL;
 #endif
 #if !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH)
     EVP_PKEY *ckey = NULL;
@@ -2173,15 +2172,13 @@ MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
         size_t j;
 
         /* FIX THIS UP EAY EAY EAY EAY */
-        pkey = s->cert->pkeys[SSL_PKEY_RSA_ENC].privatekey;
-        if ((pkey == NULL) ||
-            (pkey->type != EVP_PKEY_RSA) || (pkey->pkey.rsa == NULL)) {
+        rsa = EVP_PKEY_get0_RSA(s->cert->pkeys[SSL_PKEY_RSA_ENC].privatekey);
+        if (rsa == NULL) {
             al = SSL_AD_HANDSHAKE_FAILURE;
             SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE,
                    SSL_R_MISSING_RSA_CERTIFICATE);
             goto f_err;
         }
-        rsa = pkey->pkey.rsa;
 
         /* SSLv3 and pre-standard DTLS omit the length bytes. */
         if (s->version == SSL3_VERSION || s->version == DTLS1_BAD_VER) {
@@ -2694,7 +2691,8 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
      * length field (CryptoPro implementations at least till CSP 4.0)
      */
 #ifndef OPENSSL_NO_GOST
-    if (PACKET_remaining(pkt) == 64 && pkey->type == NID_id_GostR3410_2001) {
+    if (PACKET_remaining(pkt) == 64
+        && EVP_PKEY_id(pkey) == NID_id_GostR3410_2001) {
         len = 64;
     } else
 #endif
@@ -2764,10 +2762,12 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
     }
 
 #ifndef OPENSSL_NO_GOST
-    if (pkey->type == NID_id_GostR3410_2001
-            || pkey->type == NID_id_GostR3410_2012_256
-            || pkey->type == NID_id_GostR3410_2012_512) {
-        BUF_reverse(data, NULL, len);
+    {
+        int pktype = EVP_PKEY_id(pkey);
+        if (pktype == NID_id_GostR3410_2001
+            || pktype == NID_id_GostR3410_2012_256
+            || pktype == NID_id_GostR3410_2012_512)
+            BUF_reverse(data, NULL, len);
     }
 #endif
 

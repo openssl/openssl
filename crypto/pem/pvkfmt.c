@@ -450,11 +450,12 @@ static int do_i2b(unsigned char **out, EVP_PKEY *pk, int ispub)
     unsigned char *p;
     unsigned int bitlen, magic = 0, keyalg;
     int outlen, noinc = 0;
-    if (pk->type == EVP_PKEY_DSA) {
-        bitlen = check_bitlen_dsa(pk->pkey.dsa, ispub, &magic);
+    int pktype = EVP_PKEY_id(pk);
+    if (pktype == EVP_PKEY_DSA) {
+        bitlen = check_bitlen_dsa(EVP_PKEY_get0_DSA(pk), ispub, &magic);
         keyalg = MS_KEYALG_DSS_SIGN;
-    } else if (pk->type == EVP_PKEY_RSA) {
-        bitlen = check_bitlen_rsa(pk->pkey.rsa, ispub, &magic);
+    } else if (pktype == EVP_PKEY_RSA) {
+        bitlen = check_bitlen_rsa(EVP_PKEY_get0_RSA(pk), ispub, &magic);
         keyalg = MS_KEYALG_RSA_KEYX;
     } else
         return -1;
@@ -484,9 +485,9 @@ static int do_i2b(unsigned char **out, EVP_PKEY *pk, int ispub)
     write_ledword(&p, magic);
     write_ledword(&p, bitlen);
     if (keyalg == MS_KEYALG_DSS_SIGN)
-        write_dsa(&p, pk->pkey.dsa, ispub);
+        write_dsa(&p, EVP_PKEY_get0_DSA(pk), ispub);
     else
-        write_rsa(&p, pk->pkey.rsa, ispub);
+        write_rsa(&p, EVP_PKEY_get0_RSA(pk), ispub);
     if (!noinc)
         *out += outlen;
     return outlen;
@@ -797,7 +798,7 @@ static int i2b_PVK(unsigned char **out, EVP_PKEY *pk, int enclevel,
 
     write_ledword(&p, MS_PVKMAGIC);
     write_ledword(&p, 0);
-    if (pk->type == EVP_PKEY_DSA)
+    if (EVP_PKEY_id(pk) == EVP_PKEY_DSA)
         write_ledword(&p, MS_KEYTYPE_SIGN);
     else
         write_ledword(&p, MS_KEYTYPE_KEYX);

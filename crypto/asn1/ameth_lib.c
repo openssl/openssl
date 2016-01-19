@@ -64,6 +64,7 @@
 # include <openssl/engine.h>
 #endif
 #include "internal/asn1_int.h"
+#include "internal/evp_int.h"
 
 /* Keep this sorted in type order !! */
 static const EVP_PKEY_ASN1_METHOD *standard_methods[] = {

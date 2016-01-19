@@ -212,7 +212,7 @@ int TS_RESP_CTX_set_signer_key(TS_RESP_CTX *ctx, EVP_PKEY *key)
 {
     EVP_PKEY_free(ctx->signer_key);
     ctx->signer_key = key;
-    CRYPTO_add(&ctx->signer_key->references, +1, CRYPTO_LOCK_EVP_PKEY);
+    EVP_PKEY_up_ref(ctx->signer_key);
 
     return 1;
 }

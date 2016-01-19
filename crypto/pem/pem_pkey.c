@@ -72,6 +72,7 @@
 # include <openssl/dh.h>
 #endif
 #include "internal/asn1_int.h"
+#include "internal/evp_int.h"
 
 int pem_check_suffix(const char *pem_str, const char *suffix);
 
