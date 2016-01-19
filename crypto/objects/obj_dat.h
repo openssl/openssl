@@ -62,9 +62,9 @@
  * [including the GNU Public Licence.]
  */
 
-#define NUM_NID 1023
-#define NUM_SN 1016
-#define NUM_LN 1016
+#define NUM_NID 1024
+#define NUM_SN 1017
+#define NUM_LN 1017
 #define NUM_OBJ 939
 
 static const unsigned char lvalues[6634]={
@@ -2673,6 +2673,7 @@ static const ASN1_OBJECT nid_objs[NUM_NID]={
 {"ChaCha20-Poly1305","chacha20-poly1305",NID_chacha20_poly1305,0,NULL,0},
 {"ChaCha20","chacha20",NID_chacha20,0,NULL,0},
 {"tlsfeature","TLS Feature",NID_tlsfeature,8,&(lvalues[6603]),0},
+{"TLS1-PRF","tls1-prf",NID_tls1_prf,0,NULL,0},
 {"BLAKE2b","blake2b",NID_blake2b,11,&(lvalues[6611]),0},
 {"BLAKE2s","blake2s",NID_blake2s,11,&(lvalues[6622]),0},
 };
@@ -2715,8 +2716,8 @@ static const unsigned int sn_objs[NUM_SN]={
 93,	/* "BF-CFB" */
 92,	/* "BF-ECB" */
 94,	/* "BF-OFB" */
-1021,	/* "BLAKE2b" */
-1022,	/* "BLAKE2s" */
+1022,	/* "BLAKE2b" */
+1023,	/* "BLAKE2s" */
 14,	/* "C" */
 751,	/* "CAMELLIA-128-CBC" */
 962,	/* "CAMELLIA-128-CCM" */
@@ -2884,6 +2885,7 @@ static const unsigned int sn_objs[NUM_SN]={
 1006,	/* "SNILS" */
 16,	/* "ST" */
 143,	/* "SXNetID" */
+1021,	/* "TLS1-PRF" */
 458,	/* "UID" */
  0,	/* "UNDEF" */
 11,	/* "X500" */
@@ -3910,8 +3912,8 @@ static const unsigned int ln_objs[NUM_LN]={
 93,	/* "bf-cfb" */
 92,	/* "bf-ecb" */
 94,	/* "bf-ofb" */
-1021,	/* "blake2b" */
-1022,	/* "blake2s" */
+1022,	/* "blake2b" */
+1023,	/* "blake2s" */
 921,	/* "brainpoolP160r1" */
 922,	/* "brainpoolP160t1" */
 923,	/* "brainpoolP192r1" */
@@ -4682,6 +4684,7 @@ static const unsigned int ln_objs[NUM_LN]={
 459,	/* "textEncodedORAddress" */
 293,	/* "textNotice" */
 106,	/* "title" */
+1021,	/* "tls1-prf" */
 682,	/* "tpBasis" */
 436,	/* "ucl" */
  0,	/* "undefined" */
@@ -5653,7 +5656,7 @@ static const unsigned int obj_objs[NUM_OBJ]={
 955,	/* OBJ_jurisdictionLocalityName     1 3 6 1 4 1 311 60 2 1 1 */
 956,	/* OBJ_jurisdictionStateOrProvinceName 1 3 6 1 4 1 311 60 2 1 2 */
 957,	/* OBJ_jurisdictionCountryName      1 3 6 1 4 1 311 60 2 1 3 */
-1021,	/* OBJ_blake2b                      1 3 6 1 4 1 1722 12 2 1 16 */
-1022,	/* OBJ_blake2s                      1 3 6 1 4 1 1722 12 2 2 8 */
+1022,	/* OBJ_blake2b                      1 3 6 1 4 1 1722 12 2 1 16 */
+1023,	/* OBJ_blake2s                      1 3 6 1 4 1 1722 12 2 2 8 */
 };
 

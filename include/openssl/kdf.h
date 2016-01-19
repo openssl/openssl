@@ -1,9 +1,10 @@
-/* crypto/async/arch/async_win.h */
+/* kdf.h */
 /*
- * Written by Matt Caswell (matt@openssl.org) for the OpenSSL project.
+ * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
+ * project.
  */
 /* ====================================================================
- * Copyright (c) 2015 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 2016 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -51,36 +52,30 @@
  * ====================================================================
  */
 
-/*
- * This is the same detection used in cryptlib to set up the thread local
- * storage that we depend on, so just copy that
- */
-#if defined(_WIN32)
-#include <openssl/async.h>
-# define ASYNC_WIN
-# define ASYNC_ARCH
+#ifndef HEADER_KDF_H
+# define HEADER_KDF_H
 
-# include <windows.h>
-# include "internal/cryptlib.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-typedef struct async_fibre_st {
-    LPVOID fibre;
-    int converted;
-} async_fibre;
+# define EVP_PKEY_CTRL_TLS_MD       (EVP_PKEY_ALG_CTRL)
+# define EVP_PKEY_CTRL_TLS_SECRET   (EVP_PKEY_ALG_CTRL + 1)
+# define EVP_PKEY_CTRL_TLS_SEED     (EVP_PKEY_ALG_CTRL + 2)
 
-# define async_fibre_swapcontext(o,n,r) \
-        (SwitchToFiber((n)->fibre), 1)
-# define async_fibre_makecontext(c) \
-        ((c)->fibre = CreateFiber(0, async_start_func_win, 0))
-# define async_fibre_free(f)             (DeleteFiber((f)->fibre))
+# define EVP_PKEY_CTX_set_tls1_prf_md(pctx, md) \
+            EVP_PKEY_CTX_ctrl(pctx, -1, EVP_PKEY_OP_DERIVE, \
+                              EVP_PKEY_CTRL_TLS_MD, 0, (void *)md)
 
-async_ctx *async_get_ctx(void);
-int async_set_ctx(async_ctx *ctx);
+# define EVP_PKEY_CTX_set1_tls1_prf_secret(pctx, sec, seclen) \
+            EVP_PKEY_CTX_ctrl(pctx, -1, EVP_PKEY_OP_DERIVE, \
+                              EVP_PKEY_CTRL_TLS_SECRET, seclen, (void *)sec)
 
-int async_fibre_init_dispatcher(async_fibre *fibre);
-VOID CALLBACK async_start_func_win(PVOID unused);
+# define EVP_PKEY_CTX_add1_tls1_prf_seed(pctx, seed, seedlen) \
+            EVP_PKEY_CTX_ctrl(pctx, -1, EVP_PKEY_OP_DERIVE, \
+                              EVP_PKEY_CTRL_TLS_SEED, seedlen, (void *)seed)
 
-async_pool *async_get_pool(void);
-int async_set_pool(async_pool *pool);
-
+#ifdef  __cplusplus
+}
+#endif
 #endif

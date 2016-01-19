@@ -2037,12 +2037,12 @@
 
 #define SN_blake2b              "BLAKE2b"
 #define LN_blake2b              "blake2b"
-#define NID_blake2b             1021
+#define NID_blake2b             1022
 #define OBJ_blake2b             1L,3L,6L,1L,4L,1L,1722L,12L,2L,1L,16L
 
 #define SN_blake2s              "BLAKE2s"
 #define LN_blake2s              "blake2s"
-#define NID_blake2s             1022
+#define NID_blake2s             1023
 #define OBJ_blake2s             1L,3L,6L,1L,4L,1L,1722L,12L,2L,2L,8L
 
 #define SN_sxnet                "SXNetID"
@@ -4473,3 +4473,7 @@
 #define SN_id_scrypt            "id-scrypt"
 #define NID_id_scrypt           973
 #define OBJ_id_scrypt           1L,3L,6L,1L,4L,1L,11591L,4L,11L
+
+#define SN_tls1_prf             "TLS1-PRF"
+#define LN_tls1_prf             "tls1-prf"
+#define NID_tls1_prf            1021

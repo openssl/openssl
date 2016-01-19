@@ -660,7 +660,7 @@ algorithm 29		: RSA-SHA1-2		: sha1WithRSA
 1 3 36 3 3 1 2		: RSA-RIPEMD160		: ripemd160WithRSA
 
 1 3 6 1 4 1 1722 12 2 1 16 : BLAKE2b            : blake2b
-1 3 6 1 4 1 1722 12 2 2 8 : BLAKE2s            : blake2s
+1 3 6 1 4 1 1722 12 2 2 8  : BLAKE2s            : blake2s
 
 !Cname sxnet
 1 3 101 1 4 1		: SXNetID		: Strong Extranet ID
@@ -1431,3 +1431,6 @@ secg-scheme 14 3 : dhSinglePass-cofactorDH-sha512kdf-scheme
 
 # SCRYPT algorithm
 1 3 6 1 4 1 11591 4 11		: id-scrypt
+
+# NID for TLS1 PRF
+                            : TLS1-PRF          : tls1-prf

@@ -1018,5 +1018,6 @@ grasshopper_mac		1017
 chacha20_poly1305		1018
 chacha20		1019
 tlsfeature		1020
-blake2b		1021
-blake2s		1022
+tls1_prf		1021
+blake2b		1022
+blake2s		1023

@@ -645,12 +645,12 @@
 
 #  define SN_blake2b                      "BLAKE2b"
 #  define LN_blake2b                      "blake2b"
-#  define NID_blake2b                     1021
+#  define NID_blake2b                     1022
 #  define OBJ_blake2b                     1,3,6,1,4,1,1722,12,2,1,16
 
 #  define SN_blake2s                      "BLAKE2s"
 #  define LN_blake2s                      "blake2"
-#  define NID_blake2s                     1022
+#  define NID_blake2s                     1023
 #  define OBJ_blake2s                     1,3,6,1,4,1,1722,12,2,2,8
 
 /*-
