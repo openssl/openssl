@@ -108,6 +108,7 @@
 # define EVP_PKEY_EC     NID_X9_62_id_ecPublicKey
 # define EVP_PKEY_HMAC   NID_hmac
 # define EVP_PKEY_CMAC   NID_cmac
+# define EVP_PKEY_TLS1_PRF NID_tls1_prf
 
 #ifdef  __cplusplus
 extern "C" {
