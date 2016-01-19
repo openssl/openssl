@@ -107,7 +107,7 @@ OPTIONS pkeyutl_options[] = {
     {"peerkey", OPT_PEERKEY, 's'},
     {"passin", OPT_PASSIN, 's', "Pass phrase source"},
     {"peerform", OPT_PEERFORM, 'F'},
-    {"keyform", OPT_KEYFORM, 's', "Private key format - default PEM"},
+    {"keyform", OPT_KEYFORM, 'f', "Private key format - default PEM"},
     {"pkeyopt", OPT_PKEYOPT, 's', "Public key options as opt:value"},
 #ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
