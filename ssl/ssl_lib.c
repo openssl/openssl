@@ -2500,9 +2500,8 @@ void ssl_set_masks(SSL *s, const SSL_CIPHER *cipher)
     mask_a = 0;
 
 #ifdef CIPHER_DEBUG
-    fprintf(stderr,
-            "dht=%d re=%d rs=%d ds=%d dhr=%d dhd=%d\n",
-            dh_tmp, rsa_enc, rsa_sign, dsa_sign, dh_rsa, dh_dsa);
+    fprintf(stderr, "dht=%d re=%d rs=%d ds=%d\n",
+            dh_tmp, rsa_enc, rsa_sign, dsa_sign);
 #endif
 
 #ifndef OPENSSL_NO_GOST
