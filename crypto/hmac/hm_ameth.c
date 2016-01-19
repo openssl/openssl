@@ -75,7 +75,7 @@ static int hmac_size(const EVP_PKEY *pkey)
 
 static void hmac_key_free(EVP_PKEY *pkey)
 {
-    ASN1_OCTET_STRING *os = (ASN1_OCTET_STRING *)pkey->pkey.ptr;
+    ASN1_OCTET_STRING *os = EVP_PKEY_get0(pkey);
     if (os) {
         if (os->data)
             OPENSSL_cleanse(os->data, os->length);
@@ -121,7 +121,7 @@ static int old_hmac_decode(EVP_PKEY *pkey,
 static int old_hmac_encode(const EVP_PKEY *pkey, unsigned char **pder)
 {
     int inc;
-    ASN1_OCTET_STRING *os = (ASN1_OCTET_STRING *)pkey->pkey.ptr;
+    ASN1_OCTET_STRING *os = EVP_PKEY_get0(pkey);
     if (pder) {
         if (!*pder) {
             *pder = OPENSSL_malloc(os->length);

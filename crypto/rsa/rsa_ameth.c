@@ -67,6 +67,7 @@
 # include <openssl/cms.h>
 #endif
 #include "internal/asn1_int.h"
+#include "internal/evp_int.h"
 
 #ifndef OPENSSL_NO_CMS
 static int rsa_cms_sign(CMS_SignerInfo *si);

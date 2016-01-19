@@ -114,35 +114,6 @@
 extern "C" {
 #endif
 
-/*
- * Type needs to be a bit field Sub-type needs to be for variations on the
- * method, as in, can it do arbitrary encryption....
- */
-struct evp_pkey_st {
-    int type;
-    int save_type;
-    int references;
-    const EVP_PKEY_ASN1_METHOD *ameth;
-    ENGINE *engine;
-    union {
-        char *ptr;
-# ifndef OPENSSL_NO_RSA
-        struct rsa_st *rsa;     /* RSA */
-# endif
-# ifndef OPENSSL_NO_DSA
-        struct dsa_st *dsa;     /* DSA */
-# endif
-# ifndef OPENSSL_NO_DH
-        struct dh_st *dh;       /* DH */
-# endif
-# ifndef OPENSSL_NO_EC
-        struct ec_key_st *ec;   /* ECC */
-# endif
-    } pkey;
-    int save_parameters;
-    STACK_OF(X509_ATTRIBUTE) *attributes; /* [ 0 ] */
-} /* EVP_PKEY */ ;
-
 # define EVP_PKEY_MO_SIGN        0x0001
 # define EVP_PKEY_MO_VERIFY      0x0002
 # define EVP_PKEY_MO_ENCRYPT     0x0004
@@ -959,7 +930,7 @@ int EVP_PKEY_size(EVP_PKEY *pkey);
 int EVP_PKEY_set_type(EVP_PKEY *pkey, int type);
 int EVP_PKEY_set_type_str(EVP_PKEY *pkey, const char *str, int len);
 int EVP_PKEY_assign(EVP_PKEY *pkey, int type, void *key);
-void *EVP_PKEY_get0(EVP_PKEY *pkey);
+void *EVP_PKEY_get0(const EVP_PKEY *pkey);
 
 # ifndef OPENSSL_NO_RSA
 struct rsa_st;

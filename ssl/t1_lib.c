@@ -793,9 +793,9 @@ static int tls1_check_cert_param(SSL *s, X509 *x, int set_ee_md)
     if (!pkey)
         return 0;
     /* If not EC nothing to do */
-    if (pkey->type != EVP_PKEY_EC)
+    if (EVP_PKEY_id(pkey) != EVP_PKEY_EC)
         return 1;
-    rv = tls1_set_ec_id(curve_id, &comp_id, pkey->pkey.ec);
+    rv = tls1_set_ec_id(curve_id, &comp_id, EVP_PKEY_get0_EC_KEY(pkey));
     if (!rv)
         return 0;
     /*
@@ -990,10 +990,10 @@ int tls12_check_peer_sigalg(const EVP_MD **pmd, SSL *s,
         return 0;
     }
 #ifndef OPENSSL_NO_EC
-    if (pkey->type == EVP_PKEY_EC) {
+    if (EVP_PKEY_id(pkey) == EVP_PKEY_EC) {
         unsigned char curve_id[2], comp_id;
         /* Check compression and curve matches extensions */
-        if (!tls1_set_ec_id(curve_id, &comp_id, pkey->pkey.ec))
+        if (!tls1_set_ec_id(curve_id, &comp_id, EVP_PKEY_get0_EC_KEY(pkey)))
             return 0;
         if (!s->server && !tls1_check_ec_key(s, curve_id, &comp_id)) {
             SSLerr(SSL_F_TLS12_CHECK_PEER_SIGALG, SSL_R_WRONG_CURVE);
@@ -3227,7 +3227,7 @@ int tls12_get_sigandhash(unsigned char *p, const EVP_PKEY *pk,
 
 int tls12_get_sigid(const EVP_PKEY *pk)
 {
-    return tls12_find_id(pk->type, tls12_sig, OSSL_NELEM(tls12_sig));
+    return tls12_find_id(EVP_PKEY_id(pk), tls12_sig, OSSL_NELEM(tls12_sig));
 }
 
 typedef struct {
@@ -4110,7 +4110,7 @@ int tls1_check_chain(SSL *s, X509 *x, EVP_PKEY *pk, STACK_OF(X509) *chain,
     if (!s->server && strict_mode) {
         STACK_OF(X509_NAME) *ca_dn;
         int check_type = 0;
-        switch (pk->type) {
+        switch (EVP_PKEY_id(pk)) {
         case EVP_PKEY_RSA:
             check_type = TLS_CT_RSA_SIGN;
             break;

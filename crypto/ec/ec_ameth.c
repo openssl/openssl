@@ -66,6 +66,7 @@
 #endif
 #include <openssl/asn1t.h>
 #include "internal/asn1_int.h"
+#include "internal/evp_int.h"
 
 #ifndef OPENSSL_NO_CMS
 static int ecdh_cms_decrypt(CMS_RecipientInfo *ri);

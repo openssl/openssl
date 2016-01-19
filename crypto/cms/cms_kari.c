@@ -367,7 +367,7 @@ int cms_RecipientInfo_kari_init(CMS_RecipientInfo *ri, X509 *recip,
     if (!cms_kari_create_ephemeral_key(kari, pk))
         return 0;
 
-    CRYPTO_add(&pk->references, 1, CRYPTO_LOCK_EVP_PKEY);
+    EVP_PKEY_up_ref(pk);
     rek->pkey = pk;
     return 1;
 }
