@@ -327,6 +327,8 @@ int BLAKE2s_Final(unsigned char *md, BLAKE2S_CTX *c)
     }
 
     memcpy(md, buffer, BLAKE2S_DIGEST_LENGTH);
+    secure_zero_memory(buffer, BLAKE2S_OUTBYTES);
+    secure_zero_memory(c, sizeof(BLAKE2S_CTX));
     return 1;
 }
 
@@ -335,6 +337,9 @@ unsigned char *BLAKE2s(const unsigned char *data, size_t datalen,
                        unsigned char *md)
 {
     BLAKE2S_CTX S[1];
+    /* The OpenSSL hash functions generally store the result in a static array
+     * if the md pointer passed in is NULL. */
+    static uint8_t staticDigestBuf[BLAKE2S_DIGEST_LENGTH];
 
     /* Verify parameters */
     if (NULL == data && datalen > 0) {
@@ -342,7 +347,7 @@ unsigned char *BLAKE2s(const unsigned char *data, size_t datalen,
     }
 
     if (NULL == md) {
-        return NULL;
+        md = staticDigestBuf;
     }
 
     if (NULL == key && keylen > 0) {

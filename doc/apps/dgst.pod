@@ -2,12 +2,12 @@
 
 =head1 NAME
 
-dgst, sha, sha1, mdc2, ripemd160, sha224, sha256, sha384, sha512, md4, md5 - message digests
+dgst, sha, sha1, mdc2, ripemd160, sha224, sha256, sha384, sha512, md4, md5, blake2b, blake2s - message digests
 
 =head1 SYNOPSIS
 
 B<openssl> B<dgst> 
-[B<-sha|-sha1|-mdc2|-ripemd160|-sha224|-sha256|-sha384|-sha512|-md4|-md5>]
+[B<-sha|-sha1|-mdc2|-ripemd160|-sha224|-sha256|-sha384|-sha512|-md4|-md5|-blake2b|-blake2s>]
 [B<-c>]
 [B<-d>]
 [B<-hex>]

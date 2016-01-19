@@ -1,0 +1,93 @@
+=pod
+
+=head1 NAME
+
+BLAKE2b, BLAKE2s, BLAKE2b_Init, BLAKE2b_InitKey, BLAKE2b_Update, BLAKE2b_Final,
+BLAKE2s_Init, BLAKE2s_InitKey, BLAKE2s_Update, BLAKE2s_Final - BLAKE2b and
+BLAKE2s hash functions
+
+=head1 SYNOPSIS
+
+ #include <openssl/blake2.h>
+
+ unsigned char *BLAKE2b(const unsigned char *data, size_t datalen,
+                        const unsigned char *key, size_t keylen,
+                        unsigned char *md);
+
+ int BLAKE2b_Init(BLAKE2B_CTX *c);
+ int BLAKE2b_InitKey(BLAKE2B_CTX *c, const void *key, size_t keylen);
+ int BLAKE2b_Update(BLAKE2B_CTX *c, const void *data, size_t datalen);
+ int BLAKE2b_Final(unsigned char *md, BLAKE2B_CTX *c);
+
+ unsigned char *BLAKE2s(const unsigned char *data, size_t datalen,
+                        const unsigned char *key, size_t keylen,
+                        unsigned char *md);
+
+ int BLAKE2s_Init(BLAKE2S_CTX *c);
+ int BLAKE2s_InitKey(BLAKE2S_CTX *c, const void *key, size_t keylen);
+ int BLAKE2s_Update(BLAKE2S_CTX *c, const void *data, size_t datalen);
+ int BLAKE2s_Final(unsigned char *md, BLAKE2S_CTX *c);
+
+=head1 DESCRIPTION
+
+BLAKE2b is a cryptographic hash function with a 512 bit output, which is more
+efficient on hardware supporting 64-bit arithmetic.  BLAKE2s is a cryptographic
+hash function with a 256 bit output, which is more efficient on hardware
+supporting 32-bit arithmetic.
+
+BLAKE2b() and BLAKE2s() compute the BLAKE2b and BLAKE2s message digest
+respectively of the B<datalen> bytes at B<data> and place it in B<md> (which
+must have space for BLAKE2B_DIGEST_LENGTH  == 64 or BLAKE2S_DIGEST_LENGTH == 32
+bytes of output).  If B<md> is NULL, the digest is placed in a static array.
+
+The following functions may be used if the message is not completely stored in
+memory:
+
+BLAKE2b_Init() initializes a B<BLAKE2b_CTX> structure.
+
+BLAKE2b_InitKey() initializes a B<BLAKE2b_CTX> structure with a secret key
+which can be used to produce a MAC of the data as an alternative to using HMAC.
+
+BLAKE2b_Update() can be called repeatedly with chunks of the message to be
+hashed (B<datalen> bytes at B<data>).
+
+BLAKE2b_Final() places the message digest in B<md>, which must have space for
+BLAKE2B_DIGEST_LENGTH == 64 bytes of output, and erases the B<BLAKE2B_CTX>.
+
+BLAKE2s_Init(), BLAKE2s_InitKey(), BLAKE2s_Update(), and BLAKE2s_Final(),
+are analogous using a B<BLAKE2s_CTX> structure.
+
+Applications should use the higher level functions L<EVP_DigestInit(3)>
+etc. instead of calling the hash functions directly.
+
+=head1 NOTE
+
+BLAKE2b and BLAKE2s are recommended only for applications needing very high
+hashing speed, where the alternative might be to use less secure hash functions
+such as MD5 or SHA1.  The BLAKE2 functions, on CPUs with SIMD support, are
+faster than these legacy hash functions, and have no known practical attacks.
+The BLAKE2 functions are also immune to length extension attacks, unlike the
+MD5 and SHA families, and can be keyed for use in producing MACs.
+
+While there has been extensive cryptanalysis of BLAKE2, for applications
+needing the highest levels of cryptographic security, the SHA-256 and SHA-512
+should be used instead.  These SHA functions remain strong after many years of
+analysis.
+
+=head1 RETURN VALUES
+
+BLAKE2b(), and BLAKE2s() return pointers to the hash value. 
+
+BLAKE2b_Init(), BLAKE2b_InitKey(), BLAKE2b_Update(), BLAKE2b_Final(),
+BLAKE2s_Init(), BLAKE2s_InitKey(), BLAKE2s_Update(), and BLAKE2s_Final() return
+1 for success, 0 otherwise.
+
+=head1 CONFORMING TO
+
+RFC 7693
+
+=head1 SEE ALSO
+
+L<EVP_DigestInit(3)>
+
+=cut
