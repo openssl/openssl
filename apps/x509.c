@@ -731,13 +731,13 @@ int x509_main(int argc, char **argv)
                 }
                 BIO_printf(out, "Modulus=");
 #ifndef OPENSSL_NO_RSA
-                if (pkey->type == EVP_PKEY_RSA)
-                    BN_print(out, pkey->pkey.rsa->n);
+                if (EVP_PKEY_id(pkey) == EVP_PKEY_RSA)
+                    BN_print(out, EVP_PKEY_get0_RSA(pkey)->n);
                 else
 #endif
 #ifndef OPENSSL_NO_DSA
-                if (pkey->type == EVP_PKEY_DSA)
-                    BN_print(out, pkey->pkey.dsa->pub_key);
+                if (EVP_PKEY_id(pkey) == EVP_PKEY_DSA)
+                    BN_print(out, EVP_PKEY_get0_DSA(pkey)->pub_key);
                 else
 #endif
                     BIO_printf(out, "Wrong Algorithm type");

@@ -196,8 +196,8 @@ static int ssl_set_pkey(CERT *c, EVP_PKEY *pkey)
          * Don't check the public/private key, this is mostly for smart
          * cards.
          */
-        if ((pkey->type == EVP_PKEY_RSA) &&
-            (RSA_flags(pkey->pkey.rsa) & RSA_METHOD_FLAG_NO_CHECK)) ;
+        if (EVP_PKEY_id(pkey) == EVP_PKEY_RSA
+            && RSA_flags(EVP_PKEY_get0_RSA(pkey)) & RSA_METHOD_FLAG_NO_CHECK);
         else
 #endif
         if (!X509_check_private_key(c->pkeys[i].x509, pkey)) {
@@ -208,7 +208,7 @@ static int ssl_set_pkey(CERT *c, EVP_PKEY *pkey)
     }
 
     EVP_PKEY_free(c->pkeys[i].privatekey);
-    CRYPTO_add(&pkey->references, 1, CRYPTO_LOCK_EVP_PKEY);
+    EVP_PKEY_up_ref(pkey);
     c->pkeys[i].privatekey = pkey;
     c->key = &(c->pkeys[i]);
     return (1);
@@ -392,9 +392,9 @@ static int ssl_set_cert(CERT *c, X509 *x)
          * Don't check the public/private key, this is mostly for smart
          * cards.
          */
-        if ((c->pkeys[i].privatekey->type == EVP_PKEY_RSA) &&
-            (RSA_flags(c->pkeys[i].privatekey->pkey.rsa) &
-             RSA_METHOD_FLAG_NO_CHECK)) ;
+        if (EVP_PKEY_id(c->pkeys[i].privatekey) == EVP_PKEY_RSA
+            && RSA_flags(EVP_PKEY_get0_RSA(c->pkeys[i].privatekey)) &
+               RSA_METHOD_FLAG_NO_CHECK) ;
         else
 #endif                          /* OPENSSL_NO_RSA */
         if (!X509_check_private_key(x, c->pkeys[i].privatekey)) {
