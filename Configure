@@ -820,6 +820,10 @@ my $default_ranlib;
 my $perl;
 my $fips=0;
 
+# Known TLS and DTLS protocols
+my @tls = qw(ssl3 tls1 tls1_1 tls1_2);
+my @dtls = qw(dtls1 dtls1_2);
+
 # Explicitelly known options that are possible to disable.  They can
 # be regexps, and will be used like this: /^no-${option}$/
 # For developers: keep it sorted alphabetically
@@ -847,6 +851,8 @@ my @disablables = (
     "dynamic[-_]engine",
     "ec",
     "ec2m",
+    "ecdh",
+    "ecdsa",
     "ec_nistp_64_gcc_128",
     "engine",
     "err",			# Really???
@@ -887,20 +893,22 @@ my @disablables = (
     "srtp",
     "sse2",
     "ssl",
-    "ssl3",
-    "ssl3-method",
     "ssl-trace",
     "static-engine",
     "stdio",
     "store",
     "threads",
     "tls",
-    "tls1",
     "unit-test",
     "whirlpool",
     "zlib",
     "zlib-dynamic",
     );
+foreach my $proto ((@tls, @dtls))
+	{
+	push(@disablables, $proto);
+	push(@disablables, "$proto-method");
+	}
 
 # All of the following is disabled by default (RC5 was enabled before 0.9.8):
 
@@ -1000,18 +1008,34 @@ PROCESS_ARGS:
 			{
 			if (!($disabled{$1} eq "experimental"))
 				{
-				if ($1 eq "ssl")
+				foreach my $proto ((@tls, @dtls))
 					{
+					if ($1 eq "$proto-method")
+						{
+						$disabled{"$proto"} = "option($proto-method)";
+						last;
+						}
+					}
+				if ($1 eq "dtls")
+					{
+                                        foreach my $proto (@dtls)
+						{
+						$disabled{$proto} = "option(dtls)";
+						}
+					}
+				elsif ($1 eq "ssl")
+					{
+					# Last one of its kind
 					$disabled{"ssl3"} = "option(ssl)";
 					}
 				elsif ($1 eq "tls")
 					{
-					$disabled{"tls1"} = "option(tls)"
-					}
-				elsif ($1 eq "ssl3-method")
-					{
-					$disabled{"ssl3-method"} = "option(ssl)";
-					$disabled{"ssl3"} = "option(ssl)";
+                                        # XXX: Tests will fail if all SSL/TLS
+                                        # protocols are disabled.
+                                        foreach my $proto (@tls)
+						{
+						$disabled{$proto} = "option(tls)";
+						}
 					}
 				else
 					{
@@ -1216,19 +1240,89 @@ if (defined($disabled{"ec"}))
 	$disabled{"ecdh"} = "forced";
 	}
 
-# SSL 3.0 and TLS requires MD5 and SHA and either RSA or DSA+DH
+# SSL 3.0 requires MD5 and SHA and either RSA or DSA+DH
 if (defined($disabled{"md5"}) || defined($disabled{"sha"})
     || (defined($disabled{"rsa"})
-        && (defined($disabled{"dsa"}) || defined($disabled{"dh"}))))
+	&& (defined($disabled{"dsa"}) || defined($disabled{"dh"}))))
 	{
 	$disabled{"ssl3"} = "forced";
+	$disabled{"ssl"} = "forced";
+	}
+
+# (D)TLS 1.0 and TLS 1.1 require MD5 and SHA and either RSA or DSA+DH
+# or ECDSA + ECDH.  (XXX: We don't support PSK-only builds).
+#
+if (defined($disabled{"md5"}) || defined($disabled{"sha"})
+    || (defined($disabled{"rsa"})
+	&& (defined($disabled{"dsa"}) || defined($disabled{"dh"}))
+	&& (defined($disabled{"ecdsa"}) || defined($disabled{"ecdh"}))))
+	{
 	$disabled{"tls1"} = "forced";
+	$disabled{"dtls1"} = "forced";
+	$disabled{"tls1_1"} = "forced";
+	}
+
+# (D)TLS 1.2 requires either RSA or DSA+DH or ECDSA + ECDH
+# So if all are missing, we can't do either TLS or DTLS.
+# (XXX: We don't support PSK-only builds).
+#
+if (defined($disabled{"rsa"})
+    && (defined($disabled{"dsa"}) || defined($disabled{"dh"}))
+    && (defined($disabled{"ecdsa"}) || defined($disabled{"ecdh"})))
+	{
+	$disabled{"tls"} = "forced";
+	$disabled{"dtls"} = "forced";
+	foreach my $proto ((@tls, @dtls))
+		{
+		$disabled{"$proto"} = "forced";
+		}
+	}
+
+
+# Avoid protocol support holes.  Also disable all versions below N, if version
+# N is disabled while N+1 is enabled.
+#
+my $prev_disabled = 1;
+my $force_disable = 0;
+foreach my $proto (reverse(@tls))
+	{
+	if ($force_disable)
+		{
+		$disabled{$proto} = 1;
+		}
+	elsif (! defined($disabled{$proto}))
+		{
+		$prev_disabled = 0;
+		}
+	elsif (! $prev_disabled)
+		{
+		$force_disable = 1;
+		}
+	}
+my $prev_disabled = 1;
+my $force_disable = 0;
+foreach my $proto (reverse(@dtls))
+	{
+	if ($force_disable)
+		{
+		$disabled{$proto} = 1;
+		}
+	elsif (! defined($disabled{$proto}))
+		{
+		$prev_disabled = 0;
+		}
+	elsif (! $prev_disabled)
+		{
+		$force_disable = 1;
+		}
 	}
 
 if (defined($disabled{"dgram"}))
 	{
-        $disabled{"dtls"} = "forced";
-        }
+	$disabled{"dtls"} = "forced";
+	$disabled{"dtls1"} = "forced";
+	$disabled{"dtls1_2"} = "forced";
+	}
 
 if (defined($disabled{"ec"}) || defined($disabled{"dsa"})
     || defined($disabled{"dh"}) || defined($disabled{"stdio"}))
@@ -1643,7 +1737,7 @@ if ($target =~ /\-icc$/)	# Intel C compiler
 # linker only when --prefix is not /usr.
 if ($target =~ /^BSD\-/)
 	{
-	$shared_ldflag.=" -Wl,-rpath,\$(LIBRPATH)" if ($prefix !~ m|^/usr[/]*$|);
+	$shared_ldflag.=" -Wl,-rpath,\$\$(LIBRPATH)" if ($prefix !~ m|^/usr[/]*$|);
 	}
 
 if ($sys_id ne "")
@@ -1838,7 +1932,6 @@ while (<IN>)
 	$sdirs = 0 unless /\\$/;
         s/fips // if (/^DIRS=/ && !$fips);
         s/engines // if (/^DIRS=/ && $disabled{"engine"});
-	s/ccgost// if (/^ENGDIRS=/ && $disabled{"gost"});
 	s/^VERSION=.*/VERSION=$version/;
 	s/^MAJOR=.*/MAJOR=$major/;
 	s/^MINOR=.*/MINOR=$minor/;

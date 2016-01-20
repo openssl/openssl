@@ -61,6 +61,7 @@
 #include <openssl/err.h>
 #include <openssl/x509v3.h>
 #include <openssl/pkcs12.h>
+#include <openssl/kdf.h>
 #include "internal/numbers.h"
 
 /* Remove spaces from beginning and end of a string */
@@ -293,6 +294,7 @@ static const struct evp_test_method pdecrypt_test_method;
 static const struct evp_test_method pverify_recover_test_method;
 static const struct evp_test_method pbe_test_method;
 static const struct evp_test_method encode_test_method;
+static const struct evp_test_method kdf_test_method;
 
 static const struct evp_test_method *evp_test_list[] = {
     &digest_test_method,
@@ -304,6 +306,7 @@ static const struct evp_test_method *evp_test_list[] = {
     &pverify_recover_test_method,
     &pbe_test_method,
     &encode_test_method,
+    &kdf_test_method,
     NULL
 };
 
@@ -1663,4 +1666,116 @@ static const struct evp_test_method encode_test_method = {
     encode_test_cleanup,
     encode_test_parse,
     encode_test_run,
+};
+
+/*
+ * KDF operations: initially just TLS1 PRF but can be adapted.
+ */
+
+struct kdf_data {
+    /* Context for this operation */
+    EVP_PKEY_CTX *ctx;
+    /* Expected output */
+    unsigned char *output;
+    size_t output_len;
+};
+
+/*
+ * Perform public key operation setup: lookup key, allocated ctx and call
+ * the appropriate initialisation function
+ */
+static int kdf_test_init(struct evp_test *t, const char *name)
+{
+    struct kdf_data *kdata;
+
+    kdata = OPENSSL_malloc(sizeof(*kdata));
+    if (kdata == NULL)
+        return 0;
+    kdata->ctx = NULL;
+    kdata->output = NULL;
+    t->data = kdata;
+    kdata->ctx = EVP_PKEY_CTX_new_id(OBJ_sn2nid(name), NULL);
+    if (kdata->ctx == NULL)
+        return 0;
+    if (EVP_PKEY_derive_init(kdata->ctx) <= 0)
+        return 0;
+    return 1;
+}
+
+static void kdf_test_cleanup(struct evp_test *t)
+{
+    struct kdf_data *kdata = t->data;
+    OPENSSL_free(kdata->output);
+    EVP_PKEY_CTX_free(kdata->ctx);
+}
+
+static int kdf_ctrl(EVP_PKEY_CTX *ctx, int op, const char *value)
+{
+    unsigned char *buf = NULL;
+    size_t buf_len;
+    int rv = 0;
+    if (test_bin(value, &buf, &buf_len) == 0)
+        return 0;
+    if (EVP_PKEY_CTX_ctrl(ctx, -1, -1, op, buf_len, buf) <= 0)
+        goto err;
+    rv = 1;
+    err:
+    OPENSSL_free(buf);
+    return rv;
+}
+
+static int kdf_test_parse(struct evp_test *t,
+                          const char *keyword, const char *value)
+{
+    struct kdf_data *kdata = t->data;
+    if (strcmp(keyword, "Output") == 0)
+        return test_bin(value, &kdata->output, &kdata->output_len);
+    else if (strcmp(keyword, "MD") == 0) {
+        const EVP_MD *md = EVP_get_digestbyname(value);
+        if (md == NULL)
+            return 0;
+        if (EVP_PKEY_CTX_set_tls1_prf_md(kdata->ctx, md) <= 0)
+            return 0;
+        return 1;
+    } else if (strcmp(keyword, "Secret") == 0) {
+        return kdf_ctrl(kdata->ctx, EVP_PKEY_CTRL_TLS_SECRET, value);
+    } else if (strncmp("Seed", keyword, 4) == 0) {
+        return kdf_ctrl(kdata->ctx, EVP_PKEY_CTRL_TLS_SEED, value);
+    }
+    return 0;
+}
+
+static int kdf_test_run(struct evp_test *t)
+{
+    struct kdf_data *kdata = t->data;
+    unsigned char *out = NULL;
+    size_t out_len = kdata->output_len;
+    const char *err = "INTERNAL_ERROR";
+    out = OPENSSL_malloc(out_len);
+    if (!out) {
+        fprintf(stderr, "Error allocating output buffer!\n");
+        exit(1);
+    }
+    err = "KDF_DERIVE_ERROR";
+    if (EVP_PKEY_derive(kdata->ctx, out, &out_len) <= 0)
+        goto err;
+    err = "KDF_LENGTH_MISMATCH";
+    if (out_len != kdata->output_len)
+        goto err;
+    err = "KDF_MISMATCH";
+    if (check_output(t, kdata->output, out, out_len))
+        goto err;
+    err = NULL;
+ err:
+    OPENSSL_free(out);
+    t->err = err;
+    return 1;
+}
+
+static const struct evp_test_method kdf_test_method = {
+    "KDF",
+    kdf_test_init,
+    kdf_test_cleanup,
+    kdf_test_parse,
+    kdf_test_run
 };

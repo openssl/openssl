@@ -401,9 +401,6 @@ void ENGINE_load_sureware(void);
 void ENGINE_load_ubsec(void);
 void ENGINE_load_padlock(void);
 void ENGINE_load_capi(void);
-#  ifndef OPENSSL_NO_GOST
-void ENGINE_load_gost(void);
-#  endif
 void ENGINE_load_dasync(void);
 # endif
 void ENGINE_load_cryptodev(void);
