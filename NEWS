@@ -29,6 +29,9 @@
       o Application software can be compiled with -DOPENSSL_API_COMPAT=version
         to ensure that features deprecated in that version are not exposed.
       o Support for RFC6698/RFC7671 DANE TLSA peer authentication
+      o Change of Configure to use --prefix as the main installation
+        directory location rather than --openssldir.  The latter becomes
+        the directory for certs, private key and openssl.cnf exclusively.
 
   Major changes between OpenSSL 1.0.2d and OpenSSL 1.0.2e [3 Dec 2015]
 

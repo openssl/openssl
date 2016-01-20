@@ -21,10 +21,15 @@ my $usage="Usage: Configure [no-<cipher> ...] [enable-<cipher> ...] [experimenta
 # --config      add the given configuration file, which will be read after
 #               any "Configurations*" files that are found in the same
 #               directory as this script.
-# --openssldir  install OpenSSL in OPENSSLDIR (Default: DIR/ssl if the
-#               --prefix option is given; /usr/local/ssl otherwise)
-# --prefix      prefix for the OpenSSL include, lib and bin directories
-#               (Default: the OPENSSLDIR directory)
+# --prefix      prefix for the OpenSSL installation, which includes the
+#               directories bin, lib, include, share/man, share/doc/openssl
+#               This becomes the value of INSTALLTOP in Makefile
+#               (Default: /usr/local)
+# --openssldir  OpenSSL data area, such as openssl.cnf, certificates and keys.
+#               If it's a relative directory, it will be added on the directory
+#               given with --prefix.
+#               This becomes the value of OPENSSLDIR in Makefile and in C.
+#               (Default: PREFIX/ssl)
 #
 # --install_prefix  Additional prefix for package builders (empty by
 #               default).  This needn't be set in advance, you can
@@ -1056,8 +1061,6 @@ my $IsMK1MF=scalar grep /^$target$/,@MK1MF_Builds;
 $exe_ext=".exe" if ($target eq "Cygwin" || $target eq "DJGPP" || $target =~ /^mingw/);
 $exe_ext=".nlm" if ($target =~ /netware/);
 $exe_ext=".pm"  if ($target =~ /vos/);
-$openssldir="/usr/local/ssl" if ($openssldir eq "" and $prefix eq "");
-$prefix=$openssldir if $prefix eq "";
 
 $default_ranlib= &which("ranlib") or $default_ranlib="true";
 $perl=$ENV{'PERL'} or $perl=&which("perl5") or $perl=&which("perl")
@@ -1066,11 +1069,10 @@ my $make = $ENV{'MAKE'} || "make";
 
 $cross_compile_prefix=$ENV{'CROSS_COMPILE'} if $cross_compile_prefix eq "";
 
-chop $openssldir if $openssldir =~ /\/$/;
-chop $prefix if $prefix =~ /.\/$/;
-
-$openssldir=$prefix . "/ssl" if $openssldir eq "";
-$openssldir=$prefix . "/" . $openssldir if $openssldir !~ /(^\/|^[a-zA-Z]:[\\\/])/;
+$prefix = "/usr/local" if !$prefix;
+$openssldir = "ssl" if !$openssldir;
+$openssldir = catdir($prefix, $openssldir)
+    unless file_name_is_absolute($openssldir);
 
 
 print "IsMK1MF=$IsMK1MF\n";

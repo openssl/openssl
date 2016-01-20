@@ -9,7 +9,7 @@
 
 use Cwd;
 
-$INSTALLTOP="/usr/local/ssl";
+$INSTALLTOP="/usr/local";
 $OPENSSLDIR="/usr/local/ssl";
 $OPTIONS="";
 $ssl_version="";
