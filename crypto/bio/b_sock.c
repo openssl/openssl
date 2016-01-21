@@ -467,6 +467,12 @@ int BIO_get_accept_socket(char *host, int bind_mode)
                 hint.ai_family = AF_INET;
                 h = NULL;
             }
+        } else {
+            /*
+             * If no host specified, assume '*' is the intention and treat
+             * in the same manner as '*' is above.
+             */
+            hint.ai_family = AF_INET;
         }
 
         if ((*p_getaddrinfo.f) (h, p, &hint, &res))
