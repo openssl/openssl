@@ -8,6 +8,8 @@
   * Appropriate SDK might be required
   * Perl for Win32 [commonly recommended ActiveState Perl is available
     from http://www.activestate.com/Products/ActivePerl/]
+    You also need the perl module Text::Template.
+    Please read README.PERL for more information.
 
   * wcecompat compatibility library available at
     http://www.essemer.com.au/windowsce/
