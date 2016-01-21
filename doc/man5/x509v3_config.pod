@@ -353,6 +353,12 @@ The B<ia5org> option changes the type of the I<organization> field. In RFC2459
 it can only be of type DisplayText. In RFC3280 IA5Strring is also permissible.
 Some software (for example some versions of MSIE) may require ia5org.
 
+ASN1 type of explicitText can be specified by prepending B<UTF8>,
+B<BMP> or B<VISIBLE> prefix followed by colon. For example:
+
+ [notice]
+ explicitText="UTF8:Explicit Text Here"
+
 =head2 Policy Constraints
 
 This is a multi-valued extension which consisting of the names
