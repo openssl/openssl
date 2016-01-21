@@ -811,15 +811,19 @@ int DTLSv1_listen(SSL *s, BIO_ADDR *client)
                 s->msg_callback(1, 0, SSL3_RT_HEADER, buf,
                                 DTLS1_RT_HEADER_LENGTH, s, s->msg_callback_arg);
 
+
+            if ((tmpclient = BIO_ADDR_new()) == NULL) {
+                SSLerr(SSL_F_DTLSV1_LISTEN, ERR_R_MALLOC_FAILURE);
+                goto end;
+            }
+
             /*
              * This is unneccessary if rbio and wbio are one and the same - but
-             * maybe they're not.
+             * maybe they're not. We ignore errors here - some BIOs do not
+             * support this.
              */
-            if ((tmpclient = BIO_ADDR_new()) == NULL
-                || BIO_dgram_get_peer(rbio, tmpclient) <= 0
-                || BIO_dgram_set_peer(wbio, tmpclient) <= 0) {
-                SSLerr(SSL_F_DTLSV1_LISTEN, ERR_R_INTERNAL_ERROR);
-                goto end;
+            if(BIO_dgram_get_peer(rbio, tmpclient) > 0) {
+                (void)BIO_dgram_set_peer(wbio, tmpclient);
             }
             BIO_ADDR_free(tmpclient);
             tmpclient = NULL;
@@ -868,10 +872,9 @@ int DTLSv1_listen(SSL *s, BIO_ADDR *client)
      */
     ossl_statem_set_hello_verify_done(s);
 
-    if(BIO_dgram_get_peer(rbio, client) <= 0) {
-        SSLerr(SSL_F_DTLSV1_LISTEN, ERR_R_INTERNAL_ERROR);
-        return -1;
-    }
+    /* Some BIOs may not support this. If we fail we clear the client address */
+    if (BIO_dgram_get_peer(rbio, client) <= 0)
+        BIO_ADDR_clear(client);
 
     ret = 1;
     clearpkt = 0;
