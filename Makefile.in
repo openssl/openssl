@@ -160,7 +160,6 @@ LIBS=   libcrypto.a libssl.a
 SHARED_CRYPTO=libcrypto$(SHLIB_EXT)
 SHARED_SSL=libssl$(SHLIB_EXT)
 SHARED_LIBS={- '$(SHARED_CRYPTO) $(SHARED_SSL)' if (!$config{no_shared}) -}
-SHARED_LIBS_LINK_EXTS={- $config{shared_link_extensions} -}
 SHARED_LDFLAGS={- $target{shared_ldflag} -}
 
 GENERAL=        Makefile
@@ -311,20 +310,6 @@ libssl$(SHLIB_EXT): libcrypto$(SHLIB_EXT) libssl.a
 		echo "There's no support for shared libraries on this platform" >&2; \
 		exit 1; \
 	fi
-
-clean-shared:
-	@set -e; for i in $(SHLIBDIRS); do \
-		if [ -n "$(SHARED_LIBS_LINK_EXTS)" ]; then \
-			tmp="$(SHARED_LIBS_LINK_EXTS)"; \
-			for j in $${tmp:-x}; do \
-				( set -x; rm -f lib$$i$$j ); \
-			done; \
-		fi; \
-		( set -x; rm -f lib$$i$(SHLIB_EXT) ); \
-		if expr "$(PLATFORM)" : "Cygwin" >/dev/null; then \
-			( set -x; rm -f cyg$$i$(SHLIB_EXT) lib$$i$(SHLIB_EXT).a ); \
-		fi; \
-	done
 
 link-shared:
 	@ set -e; for i in $(SHLIBDIRS); do \
