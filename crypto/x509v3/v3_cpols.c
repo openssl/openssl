@@ -31,6 +31,8 @@ static POLICYINFO *policy_section(X509V3_CTX *ctx,
 static POLICYQUALINFO *notice_section(X509V3_CTX *ctx,
                                       STACK_OF(CONF_VALUE) *unot, int ia5org);
 static int nref_nos(STACK_OF(ASN1_INTEGER) *nnums, STACK_OF(CONF_VALUE) *nos);
+static int displaytext_str2tag(const char *tagstr, unsigned int *tag_len);
+static int displaytext_get_tag_len(const char *tagstr);
 
 const X509V3_EXT_METHOD v3_cpols = {
     NID_certificate_policies, 0, ASN1_ITEM_ref(CERTIFICATEPOLICIES),
@@ -242,13 +244,48 @@ static POLICYINFO *policy_section(X509V3_CTX *ctx,
 
 }
 
+static int displaytext_get_tag_len(const char *tagstr)
+{
+    char *colon = strchr(tagstr, ':');
+
+    return (colon == NULL) ? -1 : colon - tagstr;
+}
+
+static int displaytext_str2tag(const char *tagstr, unsigned int *tag_len)
+{
+    int len;
+
+    *tag_len = 0;
+    len = displaytext_get_tag_len(tagstr);
+
+    if (len == -1)
+        return V_ASN1_VISIBLESTRING;
+    *tag_len = len;
+    if (len == sizeof("UTF8") - 1 && strncmp(tagstr, "UTF8", len) == 0)
+        return V_ASN1_UTF8STRING;
+    if (len == sizeof("UTF8String") - 1 && strncmp(tagstr, "UTF8String", len) == 0)
+        return V_ASN1_UTF8STRING;
+    if (len == sizeof("BMP") - 1 && strncmp(tagstr, "BMP", len) == 0)
+        return V_ASN1_BMPSTRING;
+    if (len == sizeof("BMPSTRING") - 1 && strncmp(tagstr, "BMPSTRING", len) == 0)
+        return V_ASN1_BMPSTRING;
+    if (len == sizeof("VISIBLE") - 1 && strncmp(tagstr, "VISIBLE", len) == 0)
+        return V_ASN1_VISIBLESTRING;
+    if (len == sizeof("VISIBLESTRING") - 1 && strncmp(tagstr, "VISIBLESTRING", len) == 0)
+        return V_ASN1_VISIBLESTRING;
+    *tag_len = 0;
+    return V_ASN1_VISIBLESTRING;
+}
+
 static POLICYQUALINFO *notice_section(X509V3_CTX *ctx,
                                       STACK_OF(CONF_VALUE) *unot, int ia5org)
 {
-    int i, ret;
+    int i, ret, len, tag;
+    unsigned int tag_len;
     CONF_VALUE *cnf;
     USERNOTICE *not;
     POLICYQUALINFO *qual;
+    char *value = NULL;
 
     if ((qual = POLICYQUALINFO_new()) == NULL)
         goto merr;
@@ -261,11 +298,15 @@ static POLICYQUALINFO *notice_section(X509V3_CTX *ctx,
     qual->d.usernotice = not;
     for (i = 0; i < sk_CONF_VALUE_num(unot); i++) {
         cnf = sk_CONF_VALUE_value(unot, i);
+        value = cnf->value;
         if (strcmp(cnf->name, "explicitText") == 0) {
-            if ((not->exptext = ASN1_VISIBLESTRING_new()) == NULL)
+            tag = displaytext_str2tag(value, &tag_len);
+            if ((not->exptext = ASN1_STRING_type_new(tag)) == NULL)
                 goto merr;
-            if (!ASN1_STRING_set(not->exptext, cnf->value,
-                                 strlen(cnf->value)))
+            if (tag_len != 0)
+                value += tag_len + 1;
+            len = strlen(value);
+            if (!ASN1_STRING_set(not->exptext, value, len))
                 goto merr;
         } else if (strcmp(cnf->name, "organization") == 0) {
             NOTICEREF *nref;
