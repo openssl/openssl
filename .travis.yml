@@ -84,6 +84,7 @@ before_script:
 
 script:
     - cd _srcdist
+    - make depend
     - make
     - if [ -n "$CROSS_COMPILE" ]; then
           export EXE_SHELL="wine" WINEPREFIX=`pwd`;
