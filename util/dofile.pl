@@ -7,7 +7,13 @@
 
 use strict;
 use warnings;
-use Text::Template;
+
+# Because we know that Text::Template isn't a core Perl module, we use
+# a fallback in case it's not installed on the system
+use File::Basename;
+use File::Spec::Functions;
+use lib catdir(dirname(__FILE__));
+use with_fallback qw(Text::Template);
 
 # We actually expect to get the following hash tables from configdata:
 #
