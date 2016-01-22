@@ -81,14 +81,14 @@ Create an B<X509_NAME> structure:
  nm = X509_NAME_new();
  if (nm == NULL)
 	/* Some error */
- if (!X509_NAME_add_entry_by_txt(nm, MBSTRING_ASC,
-			"C", "UK", -1, -1, 0))
+ if (!X509_NAME_add_entry_by_txt(nm, "C", MBSTRING_ASC, 
+			"UK", -1, -1, 0))
 	/* Error */
- if (!X509_NAME_add_entry_by_txt(nm, MBSTRING_ASC,
-			"O", "Disorganized Organization", -1, -1, 0))
+ if (!X509_NAME_add_entry_by_txt(nm, "O", MBSTRING_ASC,
+			"Disorganized Organization", -1, -1, 0))
 	/* Error */
- if (!X509_NAME_add_entry_by_txt(nm, MBSTRING_ASC,
-			"CN", "Joe Bloggs", -1, -1, 0))
+ if (!X509_NAME_add_entry_by_txt(nm, "CN", MBSTRING_ASC,
+			"Joe Bloggs", -1, -1, 0))
 	/* Error */
 
 =head1 RETURN VALUES
@@ -109,7 +109,7 @@ can result in invalid field types its use is strongly discouraged.
 
 =head1 SEE ALSO
 
-L<ERR_get_error(3)|ERR_get_error(3)>, L<d2i_X509_NAME(3)|d2i_X509_NAME(3)>
+L<ERR_get_error(3)>, L<d2i_X509_NAME(3)>
 
 =head1 HISTORY
 

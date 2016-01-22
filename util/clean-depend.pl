@@ -3,6 +3,11 @@
 # Written by Ben Laurie <ben@algroup.co.uk> 19 Jan 1999
 
 use strict;
+use Cwd;
+
+my $path = getcwd();
+$path =~ /([^\/]+)$/;
+$path = $1;
 
 while(<STDIN>) {
     print;
@@ -11,24 +16,40 @@ while(<STDIN>) {
 
 my %files;
 
+# Fetch all the dependency output first
 my $thisfile="";
 while(<STDIN>) {
     my ($dummy, $file,$deps)=/^((.*):)? (.*)$/;
-    my $origfile="";
     $thisfile=$file if defined $file;
     next if !defined $deps;
-    $origfile=$thisfile;
-    $origfile=~s/\.o$/.c/;
     my @deps=split ' ',$deps;
-    @deps=grep(!/^\//,@deps);
     @deps=grep(!/^\\$/,@deps);
-    @deps=grep(!/^$origfile$/,@deps);
-# pull out the kludged kerberos header (if present).
-    @deps=grep(!/^[.\/]+\/krb5.h/,@deps);
     push @{$files{$thisfile}},@deps;
 }
 
 my $file;
+
+# Time to clean out possible system directories and normalise quirks
+# from different makedepend methods
+foreach $file (sort keys %files) {
+    # This gets around a quirk with gcc, which removes all directory
+    # information from the original file
+    my $tmpfile=$file;
+    $tmpfile=~s/\.o$/.c/;
+    (my $origfile)=grep(/(^|\/)${tmpfile}$/,@{$files{$file}});
+    my $newfile=$origfile;
+    $newfile=~s/\.c$/.o/;
+    if ($newfile ne $file) {
+        $files{$newfile} = $files{$file};
+        delete $files{$file};
+        $file = $newfile;
+    }
+
+    @{$files{$file}} =
+        grep(!/^\//,
+             grep(!/^$origfile$/, @{$files{$file}}));
+}
+
 foreach $file (sort keys %files) {
     my $len=0;
     my $dep;
@@ -40,6 +61,8 @@ foreach $file (sort keys %files) {
 
     # Remove leading ./ before sorting
     my @deps = map { $_ =~ s/^\.\///; $_ } @{$files{$file}};
+    # Remove ../thisdir/
+    @deps = map { $_ =~ s|^../$path/||; $_ } @deps;
 
     foreach $dep (sort @deps) {
 	$dep=~s/^\.\///;

@@ -3,7 +3,7 @@
 =head1 NAME
 
 d2i_X509_CRL, i2d_X509_CRL, d2i_X509_CRL_bio, d2i_X509_CRL_fp,
-i2d_X509_CRL_bio, i2d_X509_CRL_fp - PKCS#10 certificate request functions.
+i2d_X509_CRL_bio, i2d_X509_CRL_fp, i2d_re_X509_CRL_tbs - CRL functions.
 
 =head1 SYNOPSIS
 
@@ -18,17 +18,19 @@ i2d_X509_CRL_bio, i2d_X509_CRL_fp - PKCS#10 certificate request functions.
  int i2d_X509_CRL_bio(BIO *bp, X509_CRL *x);
  int i2d_X509_CRL_fp(FILE *fp, X509_CRL *x);
 
+ int i2d_re_X509_CRL_tbs(X509_CRL *x, unsigned char **out);
+
 =head1 DESCRIPTION
 
 These functions decode and encode an X509 CRL (certificate revocation
 list).
 
-Othewise the functions behave in a similar way to d2i_X509() and i2d_X509()
-described in the L<d2i_X509(3)|d2i_X509(3)> manual page.
+Otherwise the functions behave in a similar way to d2i_X509() and i2d_X509()
+described in the L<d2i_X509(3)> manual page.
 
 =head1 SEE ALSO
 
-L<d2i_X509(3)|d2i_X509(3)>
+L<d2i_X509(3)>
 
 =head1 HISTORY
 

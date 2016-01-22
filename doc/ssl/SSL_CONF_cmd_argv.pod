@@ -14,7 +14,7 @@ SSL_CONF_cmd_argv - SSL configuration command line processing.
 
 The function SSL_CONF_cmd_argv() processes at most two command line
 arguments from B<pargv> and B<pargc>. The values of B<pargv> and B<pargc>
-are updated to reflect the number of command options procesed. The B<pargc>
+are updated to reflect the number of command options processed. The B<pargc>
 argument can be set to B<NULL> is it is not used.
 
 =head1 RETURN VALUES
@@ -29,11 +29,11 @@ to an error: for example a syntax error in the argument.
 
 =head1 SEE ALSO
 
-L<SSL_CONF_CTX_new(3)|SSL_CONF_CTX_new(3)>,
-L<SSL_CONF_CTX_set_flags(3)|SSL_CONF_CTX_set_flags(3)>,
-L<SSL_CONF_CTX_set1_prefix(3)|SSL_CONF_CTX_set1_prefix(3)>,
-L<SSL_CONF_CTX_set_ssl_ctx(3)|SSL_CONF_CTX_set_ssl_ctx(3)>,
-L<SSL_CONF_cmd(3)|SSL_CONF_cmd(3)>
+L<SSL_CONF_CTX_new(3)>,
+L<SSL_CONF_CTX_set_flags(3)>,
+L<SSL_CONF_CTX_set1_prefix(3)>,
+L<SSL_CONF_CTX_set_ssl_ctx(3)>,
+L<SSL_CONF_cmd(3)>
 
 =head1 HISTORY
 

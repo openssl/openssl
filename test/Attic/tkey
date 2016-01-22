@@ -1,0 +1,73 @@
+#!/bin/sh
+
+t=$1
+ktype=$2
+ptype=$3
+
+if ../util/shlib_wrap.sh ../apps/openssl no-$ktype; then
+  echo skipping $ktype $ptype conversion test
+  exit 0
+fi
+
+if [ $ptype = "public" ]; then
+    cmd="../util/shlib_wrap.sh ../apps/openssl $ktype -pubin -pubout"
+else
+    cmd="../util/shlib_wrap.sh ../apps/openssl $ktype"
+fi
+
+echo testing $ktype $ptype conversions
+cp $t $ktype-fff.p
+
+echo "p -> d"
+$cmd -in $ktype-fff.p -inform p -outform d >$ktype-f.d || exit 1
+echo "p -> p"
+$cmd -in $ktype-fff.p -inform p -outform p >$ktype-f.p || exit 1
+
+echo "d -> d"
+$cmd -in $ktype-f.d -inform d -outform d >$ktype-ff.d1 || exit 1
+echo "p -> d"
+$cmd -in $ktype-f.p -inform p -outform d >$ktype-ff.d3 || exit 1
+
+echo "d -> p"
+$cmd -in $ktype-f.d -inform d -outform p >$ktype-ff.p1 || exit 1
+echo "p -> p"
+$cmd -in $ktype-f.p -inform p -outform p >$ktype-ff.p3 || exit 1
+
+cmp $ktype-fff.p $ktype-f.p || exit 1
+cmp $ktype-fff.p $ktype-ff.p1 || exit 1
+cmp $ktype-fff.p $ktype-ff.p3 || exit 1
+cmp $ktype-f.p $ktype-ff.p1 || exit 1
+cmp $ktype-f.p $ktype-ff.p3 || exit 1
+
+/bin/rm -f $ktype-f.* $ktype-ff.* $ktype-fff.*
+
+[ $ptype = "public" ] && exit 0
+
+
+echo testing $ktype PKCS#8 conversions
+cmd="../util/shlib_wrap.sh ../apps/openssl pkey"
+
+$cmd -in $t -out $ktype-fff.p
+
+echo "p -> d"
+$cmd -in $ktype-fff.p -inform p -outform d >$ktype-f.d || exit 1
+echo "p -> p"
+$cmd -in $ktype-fff.p -inform p -outform p >$ktype-f.p || exit 1
+
+echo "d -> d"
+$cmd -in $ktype-f.d -inform d -outform d >$ktype-ff.d1 || exit 1
+echo "p -> d"
+$cmd -in $ktype-f.p -inform p -outform d >$ktype-ff.d3 || exit 1
+
+echo "d -> p"
+$cmd -in $ktype-f.d -inform d -outform p >$ktype-ff.p1 || exit 1
+echo "p -> p"
+$cmd -in $ktype-f.p -inform p -outform p >$ktype-ff.p3 || exit 1
+
+cmp $ktype-fff.p $ktype-f.p || exit 1
+cmp $ktype-fff.p $ktype-ff.p1 || exit 1
+cmp $ktype-fff.p $ktype-ff.p3 || exit 1
+cmp $ktype-f.p $ktype-ff.p1 || exit 1
+cmp $ktype-f.p $ktype-ff.p3 || exit 1
+
+/bin/rm -f $ktype-f.* $ktype-ff.* $ktype-fff.*

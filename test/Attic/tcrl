@@ -1,0 +1,37 @@
+#!/bin/sh
+
+cmd='../util/shlib_wrap.sh ../apps/openssl crl'
+
+if [ "$1"x != "x" ]; then
+	t=$1
+else
+	t=testcrl.pem
+fi
+
+echo testing crl conversions
+cp $t crl-fff.p
+
+echo "p -> d"
+$cmd -in crl-fff.p -inform p -outform d >crl-f.d || exit 1
+echo "p -> p"
+$cmd -in crl-fff.p -inform p -outform p >crl-f.p || exit 1
+
+echo "d -> d"
+$cmd -in crl-f.d -inform d -outform d >crl-ff.d1 || exit 1
+echo "p -> d"
+$cmd -in crl-f.p -inform p -outform d >crl-ff.d3 || exit 1
+
+
+echo "d -> p"
+$cmd -in crl-f.d -inform d -outform p >crl-ff.p1 || exit 1
+echo "p -> p"
+$cmd -in crl-f.p -inform p -outform p >crl-ff.p3 || exit 1
+
+cmp crl-fff.p crl-f.p || exit 1
+cmp crl-fff.p crl-ff.p1 || exit 1
+cmp crl-fff.p crl-ff.p3 || exit 1
+cmp crl-f.p crl-ff.p1 || exit 1
+cmp crl-f.p crl-ff.p3 || exit 1
+
+/bin/rm -f crl-f.* crl-ff.* crl-fff.*
+exit 0

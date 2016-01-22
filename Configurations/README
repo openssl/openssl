@@ -1,0 +1,296 @@
+Configurations of OpenSSL target platforms
+------------------------------------------
+
+Target configurations are a collection of facts that we know about
+different platforms and their capabilities.  We organise them in a
+hash table, where each entry represent a specific target.
+
+In each table entry, the following keys are significant:
+
+        inherit_from    => Other targets to inherit values from.
+                           Explained further below. [1]
+        template        => Set to 1 if this isn't really a platform
+                           target.  Instead, this target is a template
+                           upon which other targets can be built.
+                           Explained further below.  [1]
+
+        sys_id          => System identity for systems where that
+                           is difficult to determine automatically.
+
+        cc              => The compiler command, usually one of "cc",
+                           "gcc" or "clang".  This command is normally
+                           also used to link object files and
+                           libraries into the final program.
+        cflags          => Flags that are used at all times when
+                           compiling.
+        debug_cflags    => Extra compilation flags used when making a
+                           debug build (when Configure receives the
+                           --debug option).  Typically something like
+                           "-g -O0".
+        release_cflags  => Extra compilation flags used when making a
+                           release build (when Configure receives the
+                           --release option, or doesn't receive the
+                           --debug option).  Typically something like
+                           "-O" or "-O3".
+        thread_cflags   => Extra compilation flags used when
+                           compiling with threading enabled.
+                           Explained further below.  [2]
+        shared_cflag    => Extra compilation flags used when
+                           compiling for shared libraries, typically
+                           something like "-fPIC".
+
+        ld              => the linker command, usually not defined
+                           (meaning the compiler command is used
+                           instead).
+                           (NOTE: this is here for future use, it's
+                           not implemented yet)
+        lflags          => the flags that are used at all times when
+                           linking.  These can have a % sign in them
+                           showing where the OpenSSL libraries should
+                           appear, otherwise these flags will come
+                           last.  So in a typical links situation,
+                           this is a quick table of results:
+
+                           "-foo%-bar"  > -foo -lssl -lcrypto -bar
+                           "-foo%"      > -foo -lssl -lcrypto
+                           "-foo"       > -lssl -lcrypto -foo
+
+        debug_lflags    => Like debug_cflags, but used when linking.
+        release_lflags  => Like release_cflags, but used when linking.
+        shared_lflags   => Like shared_cflags, but used when linking.
+
+        ar              => The library archive command, the default is
+                           "ar".
+                           (NOTE: this is here for future use, it's
+                           not implemented yet)
+        arflags         => Flags to be used with the library archive
+                           command.
+
+        ranlib          => The library archive indexing command, the
+                           default is 'ranlib' it it exists.
+
+        unistd          => An alternative header to the typical
+                           '<unistd.h>'.  This is very rarely needed.
+
+        shared_extension => File name extension used for shared
+                            libraries. 
+        obj_extension   => File name extension used for object files.
+                           On unix, this defaults to ".o" (NOTE: this
+                           is here for future use, it's not
+                           implemented yet)
+        exe_extension   => File name extension used for executable
+                           files.  On unix, this defaults to "" (NOTE:
+                           this is here for future use, it's not
+                           implemented yet)
+
+        dso_scheme      => The type of dynamic shared objects to build
+                           for.  This mostly comes into play with
+                           engines, but can be used for other purposes
+                           as well.  Valid values are "DLFCN"
+                           (dlopen() et al), "DLFCN_NO_H" (for systems
+                           that use dlopen() et al but do not have
+                           fcntl.h), "DL" (shl_load() et al), "WIN32"
+                           and "VMS".
+        perlasm_scheme  => The perlasm method used to created the
+                           assembler files used when compiling with
+                           assembler implementations.
+        shared_target   => The shared library building method used.
+                           This is a target found in Makefile.shared.
+        build_scheme    => The scheme used to build up a Makefile.
+                           In its simplest form, the value is a string
+                           with the name of the build scheme.
+                           The value may also take the form of a list
+                           of strings, if the build_scheme is to have
+                           some options.  In this case, the first
+                           string in the list is the name of the build
+                           scheme.
+                           Currently recognised build schemes are
+                           "mk1mf" and "unixmake".  Others may appear
+                           in the future.
+
+        multilib        => On systems that support having multiple
+                           implementations of a library (typically a
+                           32-bit and a 64-bit variant), this is used
+                           to have the different variants in different
+                           directories.
+
+        bn_ops          => Building options (was just bignum options
+                           in the earlier history of this option,
+                           hence the name).  This a string of words
+                           that describe properties on the designated
+                           target platform, such as the type of
+                           integers used to build up the bitnum,
+                           different ways to implement certain ciphers
+                           and so on.  To fully comprehend the
+                           meaning, the best is to read the affected
+                           source.
+                           The valid words are:
+
+                           DES_PTR      use a pointer to DES_SPtrans
+                                        rather that DES_SPtrans
+                                        directly in D_ENCRYPT.
+                           DES_RISC1    Alternate implementations of
+                           DES_RISC2    D_ENCRYPT for certain RISC
+                                        processors.
+                           DES_UNROLL   do not loop around calls to
+                                        D_ENCRYPT.
+                           DES_INT      have unsigned int as the
+                                        integer type for DES rather
+                                        than unsigned long.
+                           BN_LLONG     use 'unsigned long long' in
+                                        some bignum calculations.
+                                        This has no value when
+                                        SIXTY_FOUR_BIT or
+                                        SIXTY_FOUR_BIT_LONG is given.
+                           RC4_CHAR     makes the basic RC4 unif of
+                                        calculation an unsigned char.
+                           RC4_LONG     makes the basic RC4 unif of
+                                        calculation an unsigned long.
+                           RC4_INDEX    go through input and output
+                                        data by indexing into them
+                                        rather than incrementing the
+                                        pointer.
+                           RC4_CHUNK    sets the chunk type to
+                                        unsigned long.
+                           RC4_CHUNK_LL sets the chunk type to
+                                        unsigned long long.
+                                        both these chunk sizes are for
+                                        handling data in chunks on
+                                        processors that do not have
+                                        byte load/store instructions.
+                           MD2_CHAR     makes the basic MD2 unit of
+                                        calculation an unsigned char.
+                           MD2_LONG     makes the basic MD2 unit of
+                                        calculation an unsigned long.
+                           IDEA_SHORT   makes the basic IDEA unit of
+                                        calculation an unsigned short.
+                           IDEA_LONG    makes the basic IDEA unit of
+                                        calculation an unsigned long.
+                           RC2_SHORT    makes the basic RC2 unit of
+                                        calculation an unsigned short.
+                           RC2_LONG     makes the basic RC2 unit of
+                                        calculation an unsigned long.
+                           BF_PTR       use different pointer based
+                           BF_PTR2      versions of BF_ENC.
+                           SIXTY_FOUR_BIT       processor registers
+                                                are 64 bits, long is
+                                                32 bits, long long is
+                                                64 bits.
+                           SIXTY_FOUR_BIT_LONG  processor registers
+                                                are 64 bits, long is
+                                                64 bits.
+                           THIRTY_TWO_BIT       processor registers
+                                                are 32 bits.
+                           EXPORT_VAR_AS_FN     for shared libraries,
+                                                export vars as
+                                                accessor functions.
+
+        cpuid_obj       => assembler implementation of cpuid code as
+                           well as OPENSSL_cleanse().
+                           Default to mem_clr.o
+        bn_obj          => assembler implementation of core bignum
+                           functions.
+                           Defaults to bn_asm.o
+        ec_obj          => assembler implementation of core EC
+                           functions.
+        des_obj         => assembler implementation of core DES
+                           encryption functions.
+                           Defaults to 'des_enc.o fcrypt_b.o'
+        aes_obj         => assembler implementation of core AES
+                           functions.
+                           Defaults to 'aes_core.o aes_cbc.o'
+        bf_obj          => assembler implementation of core BF
+                           functions.
+                           Defaults to 'bf_enc.o'
+        md5_obj         => assembler implementation of core MD5
+                           functions.
+        sha1_obj        => assembler implementation of core SHA1,
+                           functions, and also possibly SHA256 and
+                           SHA512 ones.
+        cast_obj        => assembler implementation of core BF
+                           functions.
+                           Defaults to 'c_enc.o'
+        rc4_obj         => assembler implementation of core BF
+                           functions.
+                           Defaults to 'rc4_enc.o rc4_skey.o'
+        rmd160_obj      => assembler implementation of core RMD160
+                           functions.
+        rc5_obj         => assembler implementation of core RC4
+                           functions.
+                           Defaults to 'rc5_enc.o'
+        wp_obj          => assembler implementation of core WHIRLPOOL
+                           functions.
+        cmll_obj        => assembler implementation of core CAMELLIA
+                           functions.
+                           Defaults to 'camellia.o cmll_misc.o cmll_cbc.o'
+        modes_obj       => assembler implementation of the
+                           functions gcm_gmult_4bit and gcm_ghash_4bit.
+        engines_obj     => assembler implementation of core parts of
+                           the padlock engine.  This is mandatory on
+                           any platform where the padlock engine might
+                           actually be built.
+
+
+[1] as part of the target configuration, one can have a key called
+    'inherit_from' that indicate what other configurations to inherit
+    data from.  These are resolved recursively.
+
+    Inheritance works as a set of default values that can be overriden
+    by corresponding key values in the inheriting configuration.
+
+    Note 1: any configuration table can be used as a template.
+    Note 2: pure templates have the attribute 'template => 1' and
+            cannot be used as build targets.
+
+    If several configurations are given in the 'inherit_from' array,
+    the values of same attribute are concatenated with space
+    separation.  With this, it's possible to have several smaller
+    templates for different configuration aspects that can be combined
+    into a complete configuration.
+
+    instead of a scalar value or an array, a value can be a code block
+    of the form 'sub { /* your code here */ }'.  This code block will
+    be called with the list of inherited values for that key as
+    arguments.  In fact, the concatenation of strings is really done
+    by using 'sub { join(" ",@_) }' on the list of inherited values.
+
+    An example:
+
+        "foo" => {
+                template => 1,
+                haha => "ha ha",
+                hoho => "ho",
+                ignored => "This should not appear in the end result",
+        },
+        "bar" => {
+                template => 1,
+                haha => "ah",
+                hoho => "haho",
+                hehe => "hehe"
+        },
+        "laughter" => {
+                inherit_from => [ "foo", "bar" ],
+                hehe => sub { join(" ",(@_,"!!!")) },
+                ignored => "",
+        }
+
+        The entry for "laughter" will become as follows after processing:
+
+        "laughter" => {
+                haha => "ha ha ah",
+                hoho => "ho haho",
+                hehe => "hehe !!!",
+                ignored => ""
+        }
+
+[2] OpenSSL is built with threading capabilities unless the user
+    specifies 'no-threads'.  The value of the key 'thread_cflags' may
+    be "(unknown)", in which case the user MUST give some compilation
+    flags to Configure.
+
+
+Historically, the target configurations came in form of a string with
+values separated by colons.  This use is deprecated, although
+currently somewhat supported.  The string form looks like this:
+
+   "target" => "{cc}:{cflags}:{unistd}:{thread_cflag}:{sys_id}:{lflags}:{bn_ops}:{cpuid_obj}:{bn_obj}:{ec_obj}:{des_obj}:{aes_obj}:{bf_obj}:{md5_obj}:{sha1_obj}:{cast_obj}:{rc4_obj}:{rmd160_obj}:{rc5_obj}:{wp_obj}:{cmll_obj}:{modes_obj}:{engines_obj}:{perlasm_scheme}:{dso_scheme}:{shared_target}:{shared_cflag}:{shared_ldflag}:{shared_extension}:{ranlib}:{arflags}:{multilib}"

@@ -7,7 +7,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -53,49 +53,56 @@
  *
  */
 
-/* NB: This file contains deprecated functions (compatibility wrappers to the
- * "new" versions). */
+/*
+ * NB: This file contains deprecated functions (compatibility wrappers to the
+ * "new" versions).
+ */
 
 #include <stdio.h>
 #include <time.h>
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
+#include <openssl/opensslconf.h>
 #include <openssl/bn.h>
 #include <openssl/rsa.h>
 
-#ifdef OPENSSL_NO_DEPRECATED
+#if OPENSSL_API_COMPAT >= 0x00908000L
 
-static void *dummy=&dummy;
+static void *dummy = &dummy;
 
 #else
 
 RSA *RSA_generate_key(int bits, unsigned long e_value,
-	     void (*callback)(int,int,void *), void *cb_arg)
-	{
-	BN_GENCB cb;
-	int i;
-	RSA *rsa = RSA_new();
-	BIGNUM *e = BN_new();
+                      void (*callback) (int, int, void *), void *cb_arg)
+{
+    int i;
+    BN_GENCB *cb = BN_GENCB_new();
+    RSA *rsa = RSA_new();
+    BIGNUM *e = BN_new();
 
-	if(!rsa || !e) goto err;
+    if (cb == NULL || rsa == NULL || e == NULL)
+        goto err;
 
-	/* The problem is when building with 8, 16, or 32 BN_ULONG,
-	 * unsigned long can be larger */
-	for (i=0; i<(int)sizeof(unsigned long)*8; i++)
-		{
-		if (e_value & (1UL<<i))
-			if (BN_set_bit(e,i) == 0)
-				goto err;
-		}
+    /*
+     * The problem is when building with 8, 16, or 32 BN_ULONG, unsigned long
+     * can be larger
+     */
+    for (i = 0; i < (int)sizeof(unsigned long) * 8; i++) {
+        if (e_value & (1UL << i))
+            if (BN_set_bit(e, i) == 0)
+                goto err;
+    }
 
-	BN_GENCB_set_old(&cb, callback, cb_arg);
+    BN_GENCB_set_old(cb, callback, cb_arg);
 
-	if(RSA_generate_key_ex(rsa, bits, e, &cb)) {
-		BN_free(e);
-		return rsa;
-	}
-err:
-	if(e) BN_free(e);
-	if(rsa) RSA_free(rsa);
-	return 0;
-	}
+    if (RSA_generate_key_ex(rsa, bits, e, cb)) {
+        BN_free(e);
+        BN_GENCB_free(cb);
+        return rsa;
+    }
+ err:
+    BN_free(e);
+    RSA_free(rsa);
+    BN_GENCB_free(cb);
+    return 0;
+}
 #endif

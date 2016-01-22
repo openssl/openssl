@@ -5,21 +5,21 @@
  * This package is an SSL implementation written
  * by Eric Young (eay@cryptsoft.com).
  * The implementation was written so as to conform with Netscapes SSL.
- * 
+ *
  * This library is free for commercial and non-commercial use as long as
  * the following conditions are aheared to.  The following conditions
  * apply to all code found in this distribution, be it the RC4, RSA,
  * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
  * included with this distribution is covered by the same copyright terms
  * except that the holder is Tim Hudson (tjh@cryptsoft.com).
- * 
+ *
  * Copyright remains Eric Young's, and as such any Copyright notices in
  * the code are not to be removed.
  * If this package is used in a product, Eric Young should be given attribution
  * as the author of the parts of the library used.
  * This can be in the form of a textual message at program startup or
  * in documentation (online or textual) provided with the package.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -34,10 +34,10 @@
  *     Eric Young (eay@cryptsoft.com)"
  *    The word 'cryptographic' can be left out if the rouines from the library
  *    being used are not cryptographic related :-).
- * 4. If you include any Windows specific code (or a derivative thereof) from 
+ * 4. If you include any Windows specific code (or a derivative thereof) from
  *    the apps directory (application code) you must include an acknowledgement:
  *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -49,7 +49,7 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- * 
+ *
  * The licence and distribution terms for any publically available version or
  * derivative of this code cannot be changed.  i.e. this code cannot simply be
  * copied and put under another distribution licence
@@ -57,154 +57,223 @@
  */
 
 #include <stdio.h>
-#include "cryptlib.h"
-
-#ifndef OPENSSL_NO_SHA
+#include "internal/cryptlib.h"
 
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 #include <openssl/sha.h>
 #ifndef OPENSSL_NO_RSA
-#include <openssl/rsa.h>
+# include <openssl/rsa.h>
 #endif
-
-#ifdef OPENSSL_FIPS
-#include <openssl/fips.h>
-#endif
-
+#include "internal/evp_int.h"
 
 static int init(EVP_MD_CTX *ctx)
-	{ return SHA1_Init(ctx->md_data); }
+{
+    return SHA1_Init(EVP_MD_CTX_md_data(ctx));
+}
 
-static int update(EVP_MD_CTX *ctx,const void *data,size_t count)
-	{ return SHA1_Update(ctx->md_data,data,count); }
+static int update(EVP_MD_CTX *ctx, const void *data, size_t count)
+{
+    return SHA1_Update(EVP_MD_CTX_md_data(ctx), data, count);
+}
 
-static int final(EVP_MD_CTX *ctx,unsigned char *md)
-	{ return SHA1_Final(md,ctx->md_data); }
+static int final(EVP_MD_CTX *ctx, unsigned char *md)
+{
+    return SHA1_Final(md, EVP_MD_CTX_md_data(ctx));
+}
 
-static const EVP_MD sha1_md=
-	{
-	NID_sha1,
-	NID_sha1WithRSAEncryption,
-	SHA_DIGEST_LENGTH,
-	EVP_MD_FLAG_PKEY_METHOD_SIGNATURE|EVP_MD_FLAG_DIGALGID_ABSENT|EVP_MD_FLAG_FIPS,
-	init,
-	update,
-	final,
-	NULL,
-	NULL,
-	EVP_PKEY_NULL_method,
-	SHA_CBLOCK,
-	sizeof(EVP_MD *)+sizeof(SHA_CTX),
-	};
+static int ctrl(EVP_MD_CTX *ctx, int cmd, int mslen, void *ms)
+{
+    unsigned char padtmp[40];
+    unsigned char sha1tmp[SHA_DIGEST_LENGTH];
+
+    SHA_CTX *sha1 = EVP_MD_CTX_md_data(ctx);
+
+    if (cmd != EVP_CTRL_SSL3_MASTER_SECRET)
+        return 0;
+
+    /* SSLv3 client auth handling: see RFC-6101 5.6.8 */
+    if (mslen != 48)
+        return 0;
+
+    /* At this point hash contains all handshake messages, update
+     * with master secret and pad_1.
+     */
+
+    if (SHA1_Update(sha1, ms, mslen) <= 0)
+        return 0;
+
+    /* Set padtmp to pad_1 value */
+    memset(padtmp, 0x36, sizeof(padtmp));
+
+    if (!SHA1_Update(sha1, padtmp, sizeof(padtmp)))
+        return 0;
+
+    if (!SHA1_Final(sha1tmp, sha1))
+        return 0;
+
+    /* Reinitialise context */
+
+    if (!SHA1_Init(sha1))
+        return 0;
+
+    if (SHA1_Update(sha1, ms, mslen) <= 0)
+        return 0;
+
+    /* Set padtmp to pad_2 value */
+    memset(padtmp, 0x5c, sizeof(padtmp));
+
+    if (!SHA1_Update(sha1, padtmp, sizeof(padtmp)))
+        return 0;
+
+    if (!SHA1_Update(sha1, sha1tmp, sizeof(sha1tmp)))
+        return 0;
+
+    /* Now when ctx is finalised it will return the SSL v3 hash value */
+    OPENSSL_cleanse(sha1tmp, sizeof(sha1tmp));
+
+    return 1;
+
+}
+
+static const EVP_MD sha1_md = {
+    NID_sha1,
+    NID_sha1WithRSAEncryption,
+    SHA_DIGEST_LENGTH,
+    EVP_MD_FLAG_DIGALGID_ABSENT,
+    init,
+    update,
+    final,
+    NULL,
+    NULL,
+    SHA_CBLOCK,
+    sizeof(EVP_MD *) + sizeof(SHA_CTX),
+    ctrl
+};
 
 const EVP_MD *EVP_sha1(void)
-	{
-	return(&sha1_md);
-	}
-#endif
+{
+    return (&sha1_md);
+}
 
-#ifndef OPENSSL_NO_SHA256
 static int init224(EVP_MD_CTX *ctx)
-	{ return SHA224_Init(ctx->md_data); }
+{
+    return SHA224_Init(EVP_MD_CTX_md_data(ctx));
+}
+
 static int init256(EVP_MD_CTX *ctx)
-	{ return SHA256_Init(ctx->md_data); }
+{
+    return SHA256_Init(EVP_MD_CTX_md_data(ctx));
+}
+
 /*
  * Even though there're separate SHA224_[Update|Final], we call
  * SHA256 functions even in SHA224 context. This is what happens
  * there anyway, so we can spare few CPU cycles:-)
  */
-static int update256(EVP_MD_CTX *ctx,const void *data,size_t count)
-	{ return SHA256_Update(ctx->md_data,data,count); }
-static int final256(EVP_MD_CTX *ctx,unsigned char *md)
-	{ return SHA256_Final(md,ctx->md_data); }
+static int update256(EVP_MD_CTX *ctx, const void *data, size_t count)
+{
+    return SHA256_Update(EVP_MD_CTX_md_data(ctx), data, count);
+}
 
-static const EVP_MD sha224_md=
-	{
-	NID_sha224,
-	NID_sha224WithRSAEncryption,
-	SHA224_DIGEST_LENGTH,
-	EVP_MD_FLAG_PKEY_METHOD_SIGNATURE|EVP_MD_FLAG_DIGALGID_ABSENT|EVP_MD_FLAG_FIPS,
-	init224,
-	update256,
-	final256,
-	NULL,
-	NULL,
-	EVP_PKEY_NULL_method,
-	SHA256_CBLOCK,
-	sizeof(EVP_MD *)+sizeof(SHA256_CTX),
-	};
+static int final256(EVP_MD_CTX *ctx, unsigned char *md)
+{
+    return SHA256_Final(md, EVP_MD_CTX_md_data(ctx));
+}
+
+static const EVP_MD sha224_md = {
+    NID_sha224,
+    NID_sha224WithRSAEncryption,
+    SHA224_DIGEST_LENGTH,
+    EVP_MD_FLAG_DIGALGID_ABSENT,
+    init224,
+    update256,
+    final256,
+    NULL,
+    NULL,
+    SHA256_CBLOCK,
+    sizeof(EVP_MD *) + sizeof(SHA256_CTX),
+};
 
 const EVP_MD *EVP_sha224(void)
-	{ return(&sha224_md); }
+{
+    return (&sha224_md);
+}
 
-static const EVP_MD sha256_md=
-	{
-	NID_sha256,
-	NID_sha256WithRSAEncryption,
-	SHA256_DIGEST_LENGTH,
-	EVP_MD_FLAG_PKEY_METHOD_SIGNATURE|EVP_MD_FLAG_DIGALGID_ABSENT|EVP_MD_FLAG_FIPS,
-	init256,
-	update256,
-	final256,
-	NULL,
-	NULL,
-	EVP_PKEY_NULL_method,
-	SHA256_CBLOCK,
-	sizeof(EVP_MD *)+sizeof(SHA256_CTX),
-	};
+static const EVP_MD sha256_md = {
+    NID_sha256,
+    NID_sha256WithRSAEncryption,
+    SHA256_DIGEST_LENGTH,
+    EVP_MD_FLAG_DIGALGID_ABSENT,
+    init256,
+    update256,
+    final256,
+    NULL,
+    NULL,
+    SHA256_CBLOCK,
+    sizeof(EVP_MD *) + sizeof(SHA256_CTX),
+};
 
 const EVP_MD *EVP_sha256(void)
-	{ return(&sha256_md); }
-#endif	/* ifndef OPENSSL_NO_SHA256 */
+{
+    return (&sha256_md);
+}
 
-#ifndef OPENSSL_NO_SHA512
 static int init384(EVP_MD_CTX *ctx)
-	{ return SHA384_Init(ctx->md_data); }
-static int init512(EVP_MD_CTX *ctx)
-	{ return SHA512_Init(ctx->md_data); }
-/* See comment in SHA224/256 section */
-static int update512(EVP_MD_CTX *ctx,const void *data,size_t count)
-	{ return SHA512_Update(ctx->md_data,data,count); }
-static int final512(EVP_MD_CTX *ctx,unsigned char *md)
-	{ return SHA512_Final(md,ctx->md_data); }
+{
+    return SHA384_Init(EVP_MD_CTX_md_data(ctx));
+}
 
-static const EVP_MD sha384_md=
-	{
-	NID_sha384,
-	NID_sha384WithRSAEncryption,
-	SHA384_DIGEST_LENGTH,
-	EVP_MD_FLAG_PKEY_METHOD_SIGNATURE|EVP_MD_FLAG_DIGALGID_ABSENT|EVP_MD_FLAG_FIPS,
-	init384,
-	update512,
-	final512,
-	NULL,
-	NULL,
-	EVP_PKEY_NULL_method,
-	SHA512_CBLOCK,
-	sizeof(EVP_MD *)+sizeof(SHA512_CTX),
-	};
+static int init512(EVP_MD_CTX *ctx)
+{
+    return SHA512_Init(EVP_MD_CTX_md_data(ctx));
+}
+
+/* See comment in SHA224/256 section */
+static int update512(EVP_MD_CTX *ctx, const void *data, size_t count)
+{
+    return SHA512_Update(EVP_MD_CTX_md_data(ctx), data, count);
+}
+
+static int final512(EVP_MD_CTX *ctx, unsigned char *md)
+{
+    return SHA512_Final(md, EVP_MD_CTX_md_data(ctx));
+}
+
+static const EVP_MD sha384_md = {
+    NID_sha384,
+    NID_sha384WithRSAEncryption,
+    SHA384_DIGEST_LENGTH,
+    EVP_MD_FLAG_DIGALGID_ABSENT,
+    init384,
+    update512,
+    final512,
+    NULL,
+    NULL,
+    SHA512_CBLOCK,
+    sizeof(EVP_MD *) + sizeof(SHA512_CTX),
+};
 
 const EVP_MD *EVP_sha384(void)
-	{ return(&sha384_md); }
+{
+    return (&sha384_md);
+}
 
-static const EVP_MD sha512_md=
-	{
-	NID_sha512,
-	NID_sha512WithRSAEncryption,
-	SHA512_DIGEST_LENGTH,
-	EVP_MD_FLAG_PKEY_METHOD_SIGNATURE|EVP_MD_FLAG_DIGALGID_ABSENT|EVP_MD_FLAG_FIPS,
-	init512,
-	update512,
-	final512,
-	NULL,
-	NULL,
-	EVP_PKEY_NULL_method,
-	SHA512_CBLOCK,
-	sizeof(EVP_MD *)+sizeof(SHA512_CTX),
-	};
+static const EVP_MD sha512_md = {
+    NID_sha512,
+    NID_sha512WithRSAEncryption,
+    SHA512_DIGEST_LENGTH,
+    EVP_MD_FLAG_DIGALGID_ABSENT,
+    init512,
+    update512,
+    final512,
+    NULL,
+    NULL,
+    SHA512_CBLOCK,
+    sizeof(EVP_MD *) + sizeof(SHA512_CTX),
+};
 
 const EVP_MD *EVP_sha512(void)
-	{ return(&sha512_md); }
-#endif	/* ifndef OPENSSL_NO_SHA512 */
-
+{
+    return (&sha512_md);
+}

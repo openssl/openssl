@@ -1,0 +1,36 @@
+#!/bin/sh
+
+T=testcert
+KEY=512
+CA=../certs/testca.pem
+
+/bin/rm -f $T.1 $T.2 $T.key
+
+if test "$OSTYPE" = msdosdjgpp; then
+    PATH=../apps\;$PATH;
+else
+    PATH=../apps:$PATH;
+fi
+export PATH
+
+echo "generating certificate request"
+
+echo "string to make the random number generator think it has entropy" >> ./.rnd
+
+if ../util/shlib_wrap.sh ../apps/openssl no-rsa >/dev/null; then
+  req_new='-newkey dsa:../apps/dsa512.pem'
+else
+  req_new='-new'
+  echo "There should be a 2 sequences of .'s and some +'s."
+  echo "There should not be more that at most 80 per line"
+fi
+
+rm -f testkey.pem testreq.pem
+
+echo Generating request
+../util/shlib_wrap.sh ../apps/openssl req -config test.cnf $req_new -out testreq.pem || exit 1
+
+echo Verifying signature on request
+../util/shlib_wrap.sh ../apps/openssl req -config test.cnf -verify -in testreq.pem -noout || exit 1
+
+exit 0

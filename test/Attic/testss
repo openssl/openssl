@@ -1,0 +1,143 @@
+#!/bin/sh
+
+digest='-sha1'
+reqcmd="../util/shlib_wrap.sh ../apps/openssl req"
+x509cmd="../util/shlib_wrap.sh ../apps/openssl x509 $digest"
+verifycmd="../util/shlib_wrap.sh ../apps/openssl verify"
+dummycnf="../apps/openssl.cnf"
+
+CAkey="keyCA.ss"
+CAcert="certCA.ss"
+CAserial="certCA.srl"
+CAreq="reqCA.ss"
+CAconf="CAss.cnf"
+CAreq2="req2CA.ss"	# temp
+
+Uconf="Uss.cnf"
+Ukey="keyU.ss"
+Ureq="reqU.ss"
+Ucert="certU.ss"
+
+Dkey="keyD.ss"
+Dreq="reqD.ss"
+Dcert="certD.ss"
+
+Ekey="keyE.ss"
+Ereq="reqE.ss"
+Ecert="certE.ss"
+
+P1conf="P1ss.cnf"
+P1key="keyP1.ss"
+P1req="reqP1.ss"
+P1cert="certP1.ss"
+P1intermediate="tmp_intP1.ss"
+
+P2conf="P2ss.cnf"
+P2key="keyP2.ss"
+P2req="reqP2.ss"
+P2cert="certP2.ss"
+P2intermediate="tmp_intP2.ss"
+
+
+echo string to make the random number generator think it has entropy >> ./.rnd
+
+req_dsa='-newkey dsa:../apps/dsa1024.pem'
+
+if ../util/shlib_wrap.sh ../apps/openssl no-rsa >/dev/null; then
+  req_new=$req_dsa
+else
+  req_new='-new'
+fi
+
+echo make cert request
+$reqcmd -config $CAconf -out $CAreq -keyout $CAkey $req_new || exit 1
+
+echo convert request into self-signed cert
+$x509cmd -CAcreateserial -in $CAreq -days 30 -req -out $CAcert -signkey $CAkey -extfile $CAconf -extensions v3_ca >err.ss || exit 1
+
+echo convert cert into a cert request
+$x509cmd -in $CAcert -x509toreq -signkey $CAkey -out $CAreq2 >err.ss || exit 1
+
+echo verify request 1
+$reqcmd -config $dummycnf -verify -in $CAreq -noout || exit 1
+
+echo verify request 1
+$reqcmd -config $dummycnf -verify -in $CAreq2 -noout || exit 1
+
+echo verify signature
+$verifycmd -CAfile $CAcert $CAcert || exit 1
+
+echo make a user cert request
+$reqcmd -config $Uconf -out $Ureq -keyout $Ukey $req_new >err.ss || exit 1
+
+echo sign user cert request
+$x509cmd -CAcreateserial -in $Ureq -days 30 -req -out $Ucert -CA $CAcert -CAkey $CAkey -CAserial $CAserial -extfile $Uconf -extensions v3_ee >err.ss || exit 1
+$verifycmd -CAfile $CAcert $Ucert || exit 1
+
+echo Certificate details
+$x509cmd -subject -issuer -startdate -enddate -noout -in $Ucert || exit 1
+
+if ../util/shlib_wrap.sh ../apps/openssl no-dsa >/dev/null; then
+        echo skipping DSA certificate creation
+else
+        echo make a DSA user cert request
+        CN2="DSA Certificate" $reqcmd -config $Uconf -out $Dreq -keyout $Dkey $req_dsa >err.ss || exit 1
+
+        echo sign DSA user cert request
+        $x509cmd -CAcreateserial -in $Dreq -days 30 -req -out $Dcert -CA $CAcert -CAkey $CAkey -CAserial $CAserial -extfile $Uconf -extensions v3_ee_dsa >err.ss || exit 1
+        $verifycmd -CAfile $CAcert $Dcert || exit 1
+
+        echo DSA Certificate details
+        $x509cmd -subject -issuer -startdate -enddate -noout -in $Dcert || exit 1
+
+fi
+
+if ../util/shlib_wrap.sh ../apps/openssl no-ec >/dev/null; then
+        echo skipping ECDSA/ECDH certificate creation
+else
+        echo make an ECDSA/ECDH user cert request
+        ../util/shlib_wrap.sh ../apps/openssl ecparam -name P-256 -out ecp.ss || exit 1
+        CN2="ECDSA Certificate" $reqcmd -config $Uconf -out $Ereq -keyout $Ekey -newkey ec:ecp.ss >err.ss || exit 1
+
+        echo sign ECDSA/ECDH user cert request
+        $x509cmd -CAcreateserial -in $Ereq -days 30 -req -out $Ecert -CA $CAcert -CAkey $CAkey -CAserial $CAserial -extfile $Uconf -extensions v3_ee_ec >err.ss || exit 1
+        $verifycmd -CAfile $CAcert $Ecert || exit 1
+
+        echo ECDSA Certificate details
+        $x509cmd -subject -issuer -startdate -enddate -noout -in $Ecert || exit 1
+
+fi
+
+echo make a proxy cert request
+$reqcmd -config $P1conf -out $P1req -keyout $P1key $req_new >err.ss || exit 1
+
+echo sign proxy with user cert
+$x509cmd -CAcreateserial -in $P1req -days 30 -req -out $P1cert -CA $Ucert -CAkey $Ukey -extfile $P1conf -extensions v3_proxy >err.ss || exit 1
+
+cat $Ucert > $P1intermediate
+$verifycmd -CAfile $CAcert -untrusted $P1intermediate $P1cert
+echo Certificate details
+$x509cmd -subject -issuer -startdate -enddate -noout -in $P1cert
+
+echo make another proxy cert request
+$reqcmd -config $P2conf -out $P2req -keyout $P2key $req_new >err.ss || exit 1
+
+echo sign second proxy cert request with the first proxy cert
+$x509cmd -CAcreateserial -in $P2req -days 30 -req -out $P2cert -CA $P1cert -CAkey $P1key -extfile $P2conf -extensions v3_proxy >err.ss || exit 1
+
+echo Certificate details
+cat $Ucert $P1cert > $P2intermediate
+$verifycmd -CAfile $CAcert -untrusted $P2intermediate $P2cert
+$x509cmd -subject -issuer -startdate -enddate -noout -in $P2cert
+
+echo The generated CA certificate is $CAcert
+echo The generated CA private key is $CAkey
+echo The generated user certificate is $Ucert
+echo The generated user private key is $Ukey
+echo The first generated proxy certificate is $P1cert
+echo The first generated proxy private key is $P1key
+echo The second generated proxy certificate is $P2cert
+echo The second generated proxy private key is $P2key
+
+/bin/rm err.ss
+exit 0

@@ -12,6 +12,7 @@ B<openssl dhparam>
 [B<-in> I<filename>]
 [B<-out> I<filename>]
 [B<-dsaparam>]
+[B<-check>]
 [B<-noout>]
 [B<-text>]
 [B<-C>]
@@ -64,15 +65,21 @@ exchange more efficient.  Beware that with such DSA-style DH
 parameters, a fresh DH key should be created for each use to
 avoid small-subgroup attacks that may be possible otherwise.
 
+=item B<-check>
+
+check if the parameters are valid primes and generator.
+
 =item B<-2>, B<-5>
 
-The generator to use, either 2 or 5. 2 is the default. If present then the
-input file is ignored and parameters are generated instead.
+The generator to use, either 2 or 5. If present then the
+input file is ignored and parameters are generated instead. If not
+present but B<numbits> is present, parameters are generated with the
+default generator 2.
 
 =item B<-rand> I<file(s)>
 
 a file or files containing random data used to seed the random number
-generator, or an EGD socket (see L<RAND_egd(3)|RAND_egd(3)>).
+generator, or an EGD socket (see L<RAND_egd(3)>).
 Multiple files can be specified separated by a OS-dependent character.
 The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
 all others.
@@ -80,9 +87,10 @@ all others.
 =item I<numbits>
 
 this option specifies that a parameter set should be generated of size
-I<numbits>. It must be the last option. If not present then a value of 512
-is used. If this option is present then the input file is ignored and 
-parameters are generated instead.
+I<numbits>. It must be the last option. If this option is present then
+the input file is ignored and parameters are generated instead. If
+this option is not present but a generator (B<-2> or B<-5>) is
+present, parameters are generated with a default length of 2048 bits.
 
 =item B<-noout>
 
@@ -95,7 +103,7 @@ this option prints out the DH parameters in human readable form.
 =item B<-C>
 
 this option converts the parameters into C code. The parameters can then
-be loaded by calling the B<get_dh>I<numbits>B<()> function.
+be loaded by calling the get_dhNNNN() function.
 
 =item B<-engine id>
 
@@ -109,7 +117,7 @@ for all available algorithms.
 =head1 WARNINGS
 
 The program B<dhparam> combines the functionality of the programs B<dh> and
-B<gendh> in previous versions of OpenSSL and SSLeay. The B<dh> and B<gendh>
+B<gendh> in previous versions of OpenSSL. The B<dh> and B<gendh>
 programs are retained for now but may have different purposes in future 
 versions of OpenSSL.
 
@@ -131,11 +139,6 @@ There should be a way to generate and manipulate DH keys.
 
 =head1 SEE ALSO
 
-L<dsaparam(1)|dsaparam(1)>
-
-=head1 HISTORY
-
-The B<dhparam> command was added in OpenSSL 0.9.5.
-The B<-dsaparam> option was added in OpenSSL 0.9.6.
+L<dsaparam(1)>
 
 =cut

@@ -15,12 +15,12 @@ d2i_ASN1_OBJECT, i2d_ASN1_OBJECT - ASN1 OBJECT IDENTIFIER functions
 
 These functions decode and encode an ASN1 OBJECT IDENTIFIER.
 
-Othewise these behave in a similar way to d2i_X509() and i2d_X509()
-described in the L<d2i_X509(3)|d2i_X509(3)> manual page.
+Otherwise these behave in a similar way to d2i_X509() and i2d_X509()
+described in the L<d2i_X509(3)> manual page.
 
 =head1 SEE ALSO
 
-L<d2i_X509(3)|d2i_X509(3)>
+L<d2i_X509(3)>
 
 =head1 HISTORY
 

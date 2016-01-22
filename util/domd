@@ -8,13 +8,16 @@ if [ "$1" = "-MD" ]; then
     shift
     MAKEDEPEND=$1
     shift
+    if [ "$MAKEDEPEND" = "ccache" ]; then
+        MAKEDEPEND="$MAKEDEPEND $1"
+        shift
+    fi
 fi
 if [ "$MAKEDEPEND" = "" ]; then MAKEDEPEND=makedepend; fi
 
 cp Makefile Makefile.save
-# fake the presence of Kerberos
-touch $TOP/krb5.h
-if expr "$MAKEDEPEND" : '.*cc' > /dev/null; then
+if ${MAKEDEPEND} --version 2>&1 | grep "clang" > /dev/null ||
+   echo $MAKEDEPEND | grep "gcc" > /dev/null; then
     args=""
     while [ $# -gt 0 ]; do
 	if [ "$1" != "--" ]; then args="$args $1"; fi
@@ -32,7 +35,5 @@ else
     RC=$?
 fi
 mv Makefile.new Makefile
-# unfake the presence of Kerberos
-rm $TOP/krb5.h
 
 exit $RC

@@ -131,7 +131,7 @@ print <<"EOF";
 #define CONF_ALPHA_NUMERIC_PUNCT (CONF_ALPHA|CONF_NUMBER|CONF_UNDER| \\
 					CONF_PUNCTUATION)
 
-#define KEYTYPES(c)		((unsigned short *)((c)->meth_data))
+#define KEYTYPES(c)		((const unsigned short *)((c)->meth_data))
 #ifndef CHARSET_EBCDIC
 #define IS_COMMENT(c,a)		(KEYTYPES(c)[(a)&0xff]&CONF_COMMENT)
 #define IS_FCOMMENT(c,a)	(KEYTYPES(c)[(a)&0xff]&CONF_FCOMMENT)
@@ -164,7 +164,7 @@ print <<"EOF";
 
 EOF
 
-print "static unsigned short CONF_type_default[256]={";
+print "static const unsigned short CONF_type_default[256]={";
 
 for ($i=0; $i<256; $i++)
 	{
@@ -174,7 +174,7 @@ for ($i=0; $i<256; $i++)
 
 print "\n\t};\n\n";
 
-print "static unsigned short CONF_type_win32[256]={";
+print "static const unsigned short CONF_type_win32[256]={";
 
 for ($i=0; $i<256; $i++)
 	{

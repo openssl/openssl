@@ -56,7 +56,7 @@ the input is a certificate containing an RSA public key.
 =item B<-sign>
 
 sign the input data and output the signed result. This requires
-and RSA private key.
+an RSA private key.
 
 =item B<-verify>
 
@@ -180,4 +180,4 @@ which it can be seen agrees with the recovered value above.
 
 =head1 SEE ALSO
 
-L<dgst(1)|dgst(1)>, L<rsa(1)|rsa(1)>, L<genrsa(1)|genrsa(1)>
+L<dgst(1)>, L<rsa(1)>, L<genrsa(1)>

@@ -1,25 +1,24 @@
-/* apps/errstr.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
  * by Eric Young (eay@cryptsoft.com).
  * The implementation was written so as to conform with Netscapes SSL.
- * 
+ *
  * This library is free for commercial and non-commercial use as long as
  * the following conditions are aheared to.  The following conditions
  * apply to all code found in this distribution, be it the RC4, RSA,
  * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
  * included with this distribution is covered by the same copyright terms
  * except that the holder is Tim Hudson (tjh@cryptsoft.com).
- * 
+ *
  * Copyright remains Eric Young's, and as such any Copyright notices in
  * the code are not to be removed.
  * If this package is used in a product, Eric Young should be given attribution
  * as the author of the parts of the library used.
  * This can be in the form of a textual message at program startup or
  * in documentation (online or textual) provided with the package.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -34,10 +33,10 @@
  *     Eric Young (eay@cryptsoft.com)"
  *    The word 'cryptographic' can be left out if the rouines from the library
  *    being used are not cryptographic related :-).
- * 4. If you include any Windows specific code (or a derivative thereof) from 
+ * 4. If you include any Windows specific code (or a derivative thereof) from
  *    the apps directory (application code) you must include an acknowledgement:
  *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -49,7 +48,7 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- * 
+ *
  * The licence and distribution terms for any publically available version or
  * derivative of this code cannot be changed.  i.e. this code cannot simply be
  * copied and put under another distribution licence
@@ -65,64 +64,60 @@
 #include <openssl/err.h>
 #include <openssl/ssl.h>
 
-#undef PROG
-#define PROG	errstr_main
+typedef enum OPTION_choice {
+    OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
+    OPT_STATS
+} OPTION_CHOICE;
 
-int MAIN(int, char **);
+OPTIONS errstr_options[] = {
+    {OPT_HELP_STR, 1, '-', "Usage: %s [options] errnum...\n"},
+    {OPT_HELP_STR, 1, '-', "  errnum  Error number\n"},
+    {"help", OPT_HELP, '-', "Display this summary"},
+    {"stats", OPT_STATS, '-',
+     "Print internal hashtable statistics (long!)"},
+    {NULL}
+};
 
-int MAIN(int argc, char **argv)
-	{
-	int i,ret=0;
-	char buf[256];
-	unsigned long l;
+int errstr_main(int argc, char **argv)
+{
+    OPTION_CHOICE o;
+    char buf[256], *prog;
+    int ret = 1;
+    unsigned long l;
 
-	apps_startup();
+    prog = opt_init(argc, argv, errstr_options);
+    while ((o = opt_next()) != OPT_EOF) {
+        switch (o) {
+        case OPT_EOF:
+        case OPT_ERR:
+            BIO_printf(bio_err, "%s: Use -help for summary.\n", prog);
+            goto end;
+        case OPT_HELP:
+            opt_help(errstr_options);
+            ret = 0;
+            goto end;
+        case OPT_STATS:
+            lh_ERR_STRING_DATA_node_stats_bio(ERR_get_string_table(),
+                                              bio_out);
+            lh_ERR_STRING_DATA_stats_bio(ERR_get_string_table(), bio_out);
+            lh_ERR_STRING_DATA_node_usage_stats_bio(ERR_get_string_table(),
+                                                    bio_out);
+            ret = 0;
+            goto end;
+        }
+    }
+    argc = opt_num_rest();
+    argv = opt_rest();
 
-	if (bio_err == NULL)
-		if ((bio_err=BIO_new(BIO_s_file())) != NULL)
-			BIO_set_fp(bio_err,stderr,BIO_NOCLOSE|BIO_FP_TEXT);
-
-	SSL_load_error_strings();
-
-	if ((argc > 1) && (strcmp(argv[1],"-stats") == 0))
-		{
-		BIO *out=NULL;
-
-		out=BIO_new(BIO_s_file());
-		if ((out != NULL) && BIO_set_fp(out,stdout,BIO_NOCLOSE))
-			{
-#ifdef OPENSSL_SYS_VMS
-			{
-			BIO *tmpbio = BIO_new(BIO_f_linebuffer());
-			out = BIO_push(tmpbio, out);
-			}
-#endif
-			lh_ERR_STRING_DATA_node_stats_bio(
-						  ERR_get_string_table(), out);
-			lh_ERR_STRING_DATA_stats_bio(ERR_get_string_table(),
-						     out);
-			lh_ERR_STRING_DATA_node_usage_stats_bio(
-						    ERR_get_string_table(),out);
-			}
-		if (out != NULL) BIO_free_all(out);
-		argc--;
-		argv++;
-		}
-
-	for (i=1; i<argc; i++)
-		{
-		if (sscanf(argv[i],"%lx",&l))
-			{
-			ERR_error_string_n(l, buf, sizeof buf);
-			printf("%s\n",buf);
-			}
-		else
-			{
-			printf("%s: bad error code\n",argv[i]);
-			printf("usage: errstr [-stats] <errno> ...\n");
-			ret++;
-			}
-		}
-	apps_shutdown();
-	OPENSSL_EXIT(ret);
-	}
+    ret = 0;
+    for (argv = opt_rest(); *argv; argv++) {
+        if (!opt_ulong(*argv, &l))
+            ret++;
+        else {
+            ERR_error_string_n(l, buf, sizeof buf);
+            BIO_printf(bio_out, "%s\n", buf);
+        }
+    }
+ end:
+    return (ret);
+}

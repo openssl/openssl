@@ -48,7 +48,7 @@ present.
 =item B<-passin password>
 
 the input file password source. For more information about the format of B<arg>
-see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)|openssl(1)>.
+see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
 
 =item B<-challenge string>
 
@@ -128,6 +128,6 @@ to be used in a "replay attack".
 
 =head1 SEE ALSO
 
-L<ca(1)|ca(1)>
+L<ca(1)>
 
 =cut

@@ -14,10 +14,6 @@ BN_swap - exchange BIGNUMs
 
 BN_swap() exchanges the values of I<a> and I<b>.
 
-L<bn(3)|bn(3)>
-
-=head1 HISTORY
-
-BN_swap was added in OpenSSL 0.9.7.
+L<bn(3)>
 
 =cut

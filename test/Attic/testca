@@ -1,0 +1,31 @@
+#!/bin/sh
+
+set -e
+
+PERL="$1"
+
+if test "$OSTYPE" = msdosdjgpp; then
+    PATH="../apps\;$PATH"
+else
+    PATH="../apps:$PATH"
+fi
+export PATH
+
+export SSLEAY_CONFIG OPENSSL
+
+/bin/rm -fr demoCA
+
+SSLEAY_CONFIG="-config CAss.cnf"
+OPENSSL="`pwd`/../util/opensslwrap.sh"
+
+$PERL ../apps/CA.pl -newca </dev/null
+
+SSLEAY_CONFIG="-config Uss.cnf"
+$PERL ../apps/CA.pl -newreq
+
+SSLEAY_CONFIG="-config ../apps/openssl.cnf"
+yes | $PERL ../apps/CA.pl -sign
+
+$PERL ../apps/CA.pl -verify newcert.pem
+
+/bin/rm -fr demoCA newcert.pem newreq.pem

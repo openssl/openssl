@@ -59,7 +59,7 @@ the key format PEM, DER or ENGINE.
 =item B<-passin arg>
 
 the input key password source. For more information about the format of B<arg>
-see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)|openssl(1)>.
+see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
 
 
 =item B<-peerkey file>
@@ -140,13 +140,14 @@ EVP_get_digestbyname() function for example B<sha1>.
 
 =head1 RSA ALGORITHM
 
-The RSA algorithm supports encrypt, decrypt, sign, verify and verifyrecover
-operations in general. Some padding modes only support some of these 
-operations however.
+The RSA algorithm generally supports the encrypt, decrypt, sign,
+verify and verifyrecover operations. However, some padding modes
+support only a subset of these operations. The following additional
+B<pkeyopt> values are supported:
 
 =over 4
 
-=item -B<rsa_padding_mode:mode>
+=item B<rsa_padding_mode:mode>
 
 This sets the RSA padding mode. Acceptable values for B<mode> are B<pkcs1> for
 PKCS#1 padding, B<sslv23> for SSLv23 padding, B<none> for no padding, B<oaep>
@@ -157,7 +158,7 @@ signed or verified directly instead of using a B<DigestInfo> structure. If a
 digest is set then the a B<DigestInfo> structure is used and its the length
 must correspond to the digest type.
 
-For B<oeap> mode only encryption and decryption is supported.
+For B<oaep> mode only encryption and decryption is supported.
 
 For B<x931> if the digest type is set it is used to format the block data
 otherwise the first byte is used to specify the X9.31 digest ID. Sign,
@@ -218,5 +219,5 @@ Derive a shared secret value:
 
 =head1 SEE ALSO
 
-L<genpkey(1)|genpkey(1)>, L<pkey(1)|pkey(1)>, L<rsautl(1)|rsautl(1)>
-L<dgst(1)|dgst(1)>, L<rsa(1)|rsa(1)>, L<genrsa(1)|genrsa(1)>
+L<genpkey(1)>, L<pkey(1)>, L<rsautl(1)>
+L<dgst(1)>, L<rsa(1)>, L<genrsa(1)>

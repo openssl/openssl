@@ -10,6 +10,7 @@ BIO_get_mem_ptr, BIO_new_mem_buf - memory BIO
  #include <openssl/bio.h>
 
  BIO_METHOD *	BIO_s_mem(void);
+ BIO_METHOD *	BIO_s_secmem(void);
 
  BIO_set_mem_eof_return(BIO *b,int v)
  long BIO_get_mem_data(BIO *b, char **pp)
@@ -25,6 +26,9 @@ BIO_s_mem() return the memory BIO method function.
 A memory BIO is a source/sink BIO which uses memory for its I/O. Data
 written to a memory BIO is stored in a BUF_MEM structure which is extended
 as appropriate to accommodate the stored data.
+
+BIO_s_secmem() is like BIO_s_mem() except that the secure heap is used
+for buffer storage.
 
 Any data written to a memory BIO can be recalled by reading from it.
 Unless the memory BIO is read only any data read from it is deleted from
@@ -78,6 +82,9 @@ an internal copy operation, if a BIO contains a lot of data and it is
 read in small chunks the operation can be very slow. The use of a read only
 memory BIO avoids this problem. If the BIO must be read write then adding
 a buffering BIO to the chain will speed up the process.
+
+Calling BIO_set_mem_buf() on a BIO created with BIO_new_secmem() will
+give undefined results, including perhaps a program crash.
 
 =head1 BUGS
 

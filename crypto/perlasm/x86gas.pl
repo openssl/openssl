@@ -183,9 +183,7 @@ sub ::align
 sub ::picmeup
 { my($dst,$sym,$base,$reflabel)=@_;
 
-    if (defined($base) && $sym eq "OPENSSL_ia32cap_P" && !$::macosx)
-    {	&::lea($dst,&::DWP("$sym-$reflabel",$base));	}
-    elsif (($::pic && ($::elf || $::aout)) || $::macosx)
+    if (($::pic && ($::elf || $::aout)) || $::macosx)
     {	if (!defined($base))
 	{   &::call(&::label("PIC_me_up"));
 	    &::set_label("PIC_me_up");
@@ -198,6 +196,8 @@ sub ::picmeup
 	    &::mov($dst,&::DWP("$indirect-$reflabel",$base));
 	    $non_lazy_ptr{"$nmdecor$sym"}=$indirect;
 	}
+	elsif ($sym eq "OPENSSL_ia32cap_P" && $::elf>0)
+	{   &::lea($dst,&::DWP("$sym-$reflabel",$base));   }
 	else
 	{   &::lea($dst,&::DWP("_GLOBAL_OFFSET_TABLE_+[.-$reflabel]",
 			    $base));

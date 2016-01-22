@@ -14,15 +14,15 @@ d2i_X509_NAME, i2d_X509_NAME - X509_NAME encoding functions
 =head1 DESCRIPTION
 
 These functions decode and encode an B<X509_NAME> structure which is the
-the same as the B<Name> type defined in RFC2459 (and elsewhere) and used
+same as the B<Name> type defined in RFC2459 (and elsewhere) and used
 for example in certificate subject and issuer names.
 
-Othewise the functions behave in a similar way to d2i_X509() and i2d_X509()
-described in the L<d2i_X509(3)|d2i_X509(3)> manual page.
+Otherwise the functions behave in a similar way to d2i_X509() and i2d_X509()
+described in the L<d2i_X509(3)> manual page.
 
 =head1 SEE ALSO
 
-L<d2i_X509(3)|d2i_X509(3)>
+L<d2i_X509(3)>
 
 =head1 HISTORY
 

@@ -14,14 +14,20 @@ B<openssl> B<pkcs8>
 [B<-passin arg>]
 [B<-out filename>]
 [B<-passout arg>]
+[B<-iter count>]
 [B<-noiter>]
 [B<-nocrypt>]
 [B<-nooct>]
 [B<-embed>]
 [B<-nsdb>]
 [B<-v2 alg>]
+[B<-v2prf alg>]
 [B<-v1 alg>]
 [B<-engine id>]
+[B<-scrypt>]
+[B<-scrypt_N N>]
+[B<-scrypt_r r>]
+[B<-scrypt_p p>]
 
 =head1 DESCRIPTION
 
@@ -61,7 +67,7 @@ prompted for.
 =item B<-passin arg>
 
 the input file password source. For more information about the format of B<arg>
-see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)|openssl(1)>.
+see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
 
 =item B<-out filename>
 
@@ -73,7 +79,13 @@ filename.
 =item B<-passout arg>
 
 the output file password source. For more information about the format of B<arg>
-see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)|openssl(1)>.
+see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
+
+=item B<-iter count>
+
+When creating new PKCS#8 containers, use a given number of iterations on
+the password in deriving the encryption key for the PKCS#8 output.
+High values increase the time required to brute-force a PKCS#8 container.
 
 =item B<-nocrypt>
 
@@ -118,6 +130,12 @@ private keys with OpenSSL then this doesn't matter.
 The B<alg> argument is the encryption algorithm to use, valid values include
 B<des>, B<des3> and B<rc2>. It is recommended that B<des3> is used.
 
+=item B<-v2prf alg>
+
+This option sets the PRF algorithm to use with PKCS#5 v2.0. A typical value
+values would be B<hmacWithSHA256>. If this option isn't set then the default
+for the cipher is used or B<hmacWithSHA1> if there is no default.
+
 =item B<-v1 alg>
 
 This option specifies a PKCS#5 v1.5 or PKCS#12 algorithm to use. A complete
@@ -129,6 +147,17 @@ specifying an engine (by its unique B<id> string) will cause B<pkcs8>
 to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed. The engine will then be set as the default
 for all available algorithms.
+
+=item B<-scrypt>
+
+uses the B<scrypt> algorithm for private key encryption using default
+parameters: currently N=1024, r=8 and p=16 and AES in CBC mode with a 256 bit
+key. These parameters can be modified using the B<-scrypt_N>, B<-scrypt_r>,
+B<-scrypt_p> and B<-v2> options.
+
+B<-scrypt_N N> B<-scrypt_r r> B<-scrypt_p p>
+
+sets the scrypt B<N>, B<r> or B<p> parameters.
 
 =back
 
@@ -195,6 +224,11 @@ DES:
 
  openssl pkcs8 -in key.pem -topk8 -v2 des3 -out enckey.pem
 
+Convert a private from traditional to PKCS#5 v2.0 format using AES with
+256 bits in CBC mode and B<hmacWithSHA256> PRF:
+
+ openssl pkcs8 -in key.pem -topk8 -v2 aes-256-cbc -v2prf hmacWithSHA256 -out enckey.pem
+
 Convert a private key to PKCS#8 using a PKCS#5 1.5 compatible algorithm
 (DES):
 
@@ -212,6 +246,11 @@ Read a DER unencrypted PKCS#8 format private key:
 Convert a private key from any PKCS#8 format to traditional format:
 
  openssl pkcs8 -in pk8.pem -out key.pem
+ 
+Convert a private key to PKCS#8 format, encrypting with AES-256 and with 
+one million iterations of the password:
+
+ openssl pkcs8 -in raw.pem -topk8 -v2 aes-256-cbc -iter 1000000 -out pk8.pem
 
 =head1 STANDARDS
 
@@ -237,7 +276,11 @@ the old format at present.
 
 =head1 SEE ALSO
 
-L<dsa(1)|dsa(1)>, L<rsa(1)|rsa(1)>, L<genrsa(1)|genrsa(1)>,
-L<gendsa(1)|gendsa(1)> 
+L<dsa(1)>, L<rsa(1)>, L<genrsa(1)>,
+L<gendsa(1)> 
+
+=head1 HISTORY
+
+The B<-iter> option was added to OpenSSL 1.1.0.
 
 =cut

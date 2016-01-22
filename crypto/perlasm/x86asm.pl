@@ -131,6 +131,14 @@ sub ::rdrand
     {	&::generic("rdrand",@_);	}
 }
 
+sub ::rdseed
+{ my ($dst)=@_;
+    if ($dst =~ /(e[a-dsd][ixp])/)
+    {	&::data_byte(0x0f,0xc7,0xf8|$regrm{$dst});	}
+    else
+    {	&::generic("rdrand",@_);	}
+}
+
 sub rxb {
  local *opcode=shift;
  my ($dst,$src1,$src2,$rxb)=@_;
@@ -247,6 +255,8 @@ sub ::asm_init
     $elf=$cpp=$coff=$aout=$macosx=$win32=$netware=$mwerks=$android=0;
     if    (($type eq "elf"))
     {	$elf=1;			require "x86gas.pl";	}
+    elsif (($type eq "elf-1"))
+    {	$elf=-1;		require "x86gas.pl";	}
     elsif (($type eq "a\.out"))
     {	$aout=1;		require "x86gas.pl";	}
     elsif (($type eq "coff" or $type eq "gaswin"))

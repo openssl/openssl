@@ -11,8 +11,8 @@ SSL_CTX_set_msg_callback, SSL_CTX_set_msg_callback_arg, SSL_set_msg_callback, SS
  void SSL_CTX_set_msg_callback(SSL_CTX *ctx, void (*cb)(int write_p, int version, int content_type, const void *buf, size_t len, SSL *ssl, void *arg));
  void SSL_CTX_set_msg_callback_arg(SSL_CTX *ctx, void *arg);
 
- void SSL_set_msg_callback(SSL_CTX *ctx, void (*cb)(int write_p, int version, int content_type, const void *buf, size_t len, SSL *ssl, void *arg));
- void SSL_set_msg_callback_arg(SSL_CTX *ctx, void *arg);
+ void SSL_set_msg_callback(SSL *ssl, void (*cb)(int write_p, int version, int content_type, const void *buf, size_t len, SSL *ssl, void *arg));
+ void SSL_set_msg_callback_arg(SSL *ssl, void *arg);
 
 =head1 DESCRIPTION
 
@@ -25,7 +25,7 @@ available for arbitrary application use.
 
 SSL_CTX_set_msg_callback() and SSL_CTX_set_msg_callback_arg() specify
 default settings that will be copied to new B<SSL> objects by
-L<SSL_new(3)|SSL_new(3)>. SSL_set_msg_callback() and
+L<SSL_new(3)>. SSL_set_msg_callback() and
 SSL_set_msg_callback_arg() modify the actual settings of an B<SSL>
 object. Using a B<0> pointer for I<cb> disables the message callback.
 
@@ -89,11 +89,6 @@ I<version> will be B<SSL3_VERSION>.
 
 =head1 SEE ALSO
 
-L<ssl(3)|ssl(3)>, L<SSL_new(3)|SSL_new(3)>
-
-=head1 HISTORY
-
-SSL_CTX_set_msg_callback(), SSL_CTX_set_msg_callback_arg(),
-SSL_set_msg_callback() and SSL_get_msg_callback_arg() were added in OpenSSL 0.9.7.
+L<ssl(3)>, L<SSL_new(3)>
 
 =cut

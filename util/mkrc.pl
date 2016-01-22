@@ -1,6 +1,6 @@
 #!/bin/env perl
 #
-open FD,"crypto/opensslv.h";
+open FD,"include/openssl/opensslv.h";
 while(<FD>) {
     if (/OPENSSL_VERSION_NUMBER\s+(0x[0-9a-f]+)/i) {
 	$ver = hex($1);
@@ -57,7 +57,7 @@ BEGIN
             VALUE "ProductVersion", "$version\\0"
             // Optional:
             //VALUE "Comments", "\\0"
-            VALUE "LegalCopyright", "Copyright © 1998-2006 The OpenSSL Project. Copyright © 1995-1998 Eric A. Young, Tim J. Hudson. All rights reserved.\\0"
+            VALUE "LegalCopyright", "Copyright Â© 1998-2015 The OpenSSL Project. Copyright Â© 1995-1998 Eric A. Young, Tim J. Hudson. All rights reserved.\\0"
             //VALUE "LegalTrademarks", "\\0"
             //VALUE "PrivateBuild", "\\0"
             //VALUE "SpecialBuild", "\\0"

@@ -35,6 +35,10 @@ open STDOUT,">$output";
 
 $code.=<<___;
 	.text
+
+	.if	.ASSEMBLER_VERSION<7000000
+	.asg	0,__TI_EABI__
+	.endif
 	.if	__TI_EABI__
 	.asg	gcm_gmult_1bit,_gcm_gmult_1bit
 	.asg	gcm_gmult_4bit,_gcm_gmult_4bit
@@ -149,7 +153,7 @@ ___
 #    8/2                                         S1  L1x S2      |        ....
 #####...                                         ................|............
 $code.=<<___;
-	XORMPY	$H0,$xia,$H0x		; 0	; H·(Xi[i]<<1)
+	XORMPY	$H0,$xia,$H0x		; 0	; HÂ·(Xi[i]<<1)
 ||	XORMPY	$H01u,$xib,$H01y
 || [A0]	LDBU	*--${xip},$x0
 	XORMPY	$H1,$xia,$H1x		; 1
@@ -158,7 +162,7 @@ $code.=<<___;
 	XORMPY	$H3,$xia,$H3x		; 3
 ||	XORMPY	$H3u,$xib,$H3y
 ||[!A0]	MVK.D	15,A0				; *--${xip} counter
-	XOR.L	$H0x,$Z0,$Z0		; 4	; Z^=H·(Xi[i]<<1)
+	XOR.L	$H0x,$Z0,$Z0		; 4	; Z^=HÂ·(Xi[i]<<1)
 || [A0]	SUB.S	A0,1,A0
 	XOR.L	$H1x,$Z1,$Z1		; 5
 ||	AND.D	$H01y,$FF000000,$H0z

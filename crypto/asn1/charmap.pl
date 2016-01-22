@@ -1,5 +1,8 @@
 #!/usr/local/bin/perl -w
 
+# Written by Dr Stephen N Henson (steve@openssl.org).
+# Licensed under the terms of the OpenSSL license.
+
 use strict;
 
 my ($i, @arr);
@@ -68,7 +71,7 @@ print <<EOF;
  * Mask of various character properties
  */
 
-static unsigned char char_type[] = {
+static const unsigned char char_type[] = {
 EOF
 
 for($i = 0; $i < 128; $i++) {

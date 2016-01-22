@@ -35,12 +35,6 @@ ERR_free_strings() return no values.
 
 =head1 SEE ALSO
 
-L<err(3)|err(3)>, L<ERR_error_string(3)|ERR_error_string(3)>
-
-=head1 HISTORY
-
-ERR_load_error_strings(), SSL_load_error_strings() and
-ERR_free_strings() are available in all versions of SSLeay and
-OpenSSL.
+L<err(3)>, L<ERR_error_string(3)>
 
 =cut

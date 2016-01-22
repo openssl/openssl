@@ -1,3 +1,55 @@
+/*
+ * Written by sms and contributed to the OpenSSL project.
+ */
+/* ====================================================================
+ * Copyright (c) 2010 The OpenSSL Project.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in
+ *    the documentation and/or other materials provided with the
+ *    distribution.
+ *
+ * 3. All advertising materials mentioning features or use of this
+ *    software must display the following acknowledgment:
+ *    "This product includes software developed by the OpenSSL Project
+ *    for use in the OpenSSL Toolkit. (http://www.OpenSSL.org/)"
+ *
+ * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
+ *    endorse or promote products derived from this software without
+ *    prior written permission. For written permission, please contact
+ *    licensing@OpenSSL.org.
+ *
+ * 5. Products derived from this software may not be called "OpenSSL"
+ *    nor may "OpenSSL" appear in their names without prior written
+ *    permission of the OpenSSL Project.
+ *
+ * 6. Redistributions of any form whatsoever must retain the following
+ *    acknowledgment:
+ *    "This product includes software developed by the OpenSSL Project
+ *    for use in the OpenSSL Toolkit (http://www.OpenSSL.org/)"
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
+ * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
+ * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+ * OF THE POSSIBILITY OF SUCH DAMAGE.
+ * ====================================================================
+ */
+
 #if defined( __VMS) && !defined( OPENSSL_NO_DECC_INIT) && \
  defined( __DECC) && !defined( __VAX) && (__CRTL_VER >= 70301000)
 # define USE_DECC_INIT 1
@@ -6,22 +58,17 @@
 #ifdef USE_DECC_INIT
 
 /*
- * 2010-04-26 SMS.
- *
- *----------------------------------------------------------------------
- *
- *       decc_init()
- *
- *    On non-VAX systems, uses LIB$INITIALIZE to set a collection of C
- *    RTL features without using the DECC$* logical name method.
- *
- *----------------------------------------------------------------------
+ * ----------------------------------------------------------------------
+ * decc_init() On non-VAX systems, uses LIB$INITIALIZE to set a collection
+ * of C RTL features without using the DECC$* logical name method.
+ * ----------------------------------------------------------------------
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <unixlib.h>
+# include <stdio.h>
+# include <stdlib.h>
+# include <unixlib.h>
 
+# include "apps.h"
 
 /* Global storage. */
 
@@ -29,41 +76,74 @@
 
 int decc_init_done = -1;
 
-
 /* Structure to hold a DECC$* feature name and its desired value. */
 
-typedef struct
-{
+typedef struct {
     char *name;
     int value;
 } decc_feat_t;
 
-
-/* Array of DECC$* feature names and their desired values.
- * Note: DECC$ARGV_PARSE_STYLE is the urgent one.
+/*
+ * Array of DECC$* feature names and their desired values. Note:
+ * DECC$ARGV_PARSE_STYLE is the urgent one.
  */
 
-decc_feat_t decc_feat_array[] =
-{
- /* Preserve command-line case with SET PROCESS/PARSE_STYLE=EXTENDED */
- { "DECC$ARGV_PARSE_STYLE", 1 },
+decc_feat_t decc_feat_array[] = {
+    /* Preserve command-line case with SET PROCESS/PARSE_STYLE=EXTENDED */
+    {"DECC$ARGV_PARSE_STYLE", 1},
 
- /* Preserve case for file names on ODS5 disks. */
- { "DECC$EFS_CASE_PRESERVE", 1 },
+    /* Preserve case for file names on ODS5 disks. */
+    {"DECC$EFS_CASE_PRESERVE", 1},
 
- /* Enable multiple dots (and most characters) in ODS5 file names,
-  * while preserving VMS-ness of ";version".
-  */
- { "DECC$EFS_CHARSET", 1 },
+    /*
+     * Enable multiple dots (and most characters) in ODS5 file names, while
+     * preserving VMS-ness of ";version".
+     */
+    {"DECC$EFS_CHARSET", 1},
 
- /* List terminator. */
- { (char *)NULL, 0 }
+    /* List terminator. */
+    {(char *)NULL, 0}
 };
 
+char **copy_argv(int *argc, char *argv[])
+{
+    /*-
+     * The note below is for historical purpose.  On VMS now we always
+     * copy argv "safely."
+     *
+     * 2011-03-22 SMS.
+     * If we have 32-bit pointers everywhere, then we're safe, and
+     * we bypass this mess, as on non-VMS systems.
+     * Problem 1: Compaq/HP C before V7.3 always used 32-bit
+     * pointers for argv[].
+     * Fix 1: For a 32-bit argv[], when we're using 64-bit pointers
+     * everywhere else, we always allocate and use a 64-bit
+     * duplicate of argv[].
+     * Problem 2: Compaq/HP C V7.3 (Alpha, IA64) before ECO1 failed
+     * to NULL-terminate a 64-bit argv[].  (As this was written, the
+     * compiler ECO was available only on IA64.)
+     * Fix 2: Unless advised not to (VMS_TRUST_ARGV), we test a
+     * 64-bit argv[argc] for NULL, and, if necessary, use a
+     * (properly) NULL-terminated (64-bit) duplicate of argv[].
+     * The same code is used in either case to duplicate argv[].
+     * Some of these decisions could be handled in preprocessing,
+     * but the code tends to get even uglier, and the penalty for
+     * deciding at compile- or run-time is tiny.
+     */
+
+    int i, count = *argc;
+    char **newargv = app_malloc(sizeof(*newargv) * (count + 1), "argv copy");
+
+    for (i = 0; i < count; i++)
+        newargv[i] = argv[i];
+    newargv[i] = NULL;
+    *argc = i;
+    return newargv;
+}
 
 /* LIB$INITIALIZE initialization function. */
 
-static void decc_init( void)
+static void decc_init(void)
 {
     char *openssl_debug_decc_init;
     int verbose = 0;
@@ -75,12 +155,10 @@ static void decc_init( void)
     int sts;
 
     /* Get debug option. */
-    openssl_debug_decc_init = getenv( "OPENSSL_DEBUG_DECC_INIT");
-    if (openssl_debug_decc_init != NULL)
-    {
-        verbose = strtol( openssl_debug_decc_init, NULL, 10);
-        if (verbose <= 0)
-        {
+    openssl_debug_decc_init = getenv("OPENSSL_DEBUG_DECC_INIT");
+    if (openssl_debug_decc_init != NULL) {
+        verbose = strtol(openssl_debug_decc_init, NULL, 10);
+        if (verbose <= 0) {
             verbose = 1;
         }
     }
@@ -90,99 +168,89 @@ static void decc_init( void)
 
     /* Loop through all items in the decc_feat_array[]. */
 
-    for (i = 0; decc_feat_array[ i].name != NULL; i++)
-    {
+    for (i = 0; decc_feat_array[i].name != NULL; i++) {
         /* Get the feature index. */
-        feat_index = decc$feature_get_index( decc_feat_array[ i].name);
-        if (feat_index >= 0)
-        {
+        feat_index = decc$feature_get_index(decc_feat_array[i].name);
+        if (feat_index >= 0) {
             /* Valid item.  Collect its properties. */
-            feat_value = decc$feature_get_value( feat_index, 1);
-            feat_value_min = decc$feature_get_value( feat_index, 2);
-            feat_value_max = decc$feature_get_value( feat_index, 3);
+            feat_value = decc$feature_get_value(feat_index, 1);
+            feat_value_min = decc$feature_get_value(feat_index, 2);
+            feat_value_max = decc$feature_get_value(feat_index, 3);
 
             /* Check the validity of our desired value. */
-            if ((decc_feat_array[ i].value >= feat_value_min) &&
-             (decc_feat_array[ i].value <= feat_value_max))
-            {
+            if ((decc_feat_array[i].value >= feat_value_min) &&
+                (decc_feat_array[i].value <= feat_value_max)) {
                 /* Valid value.  Set it if necessary. */
-                if (feat_value != decc_feat_array[ i].value)
-                {
-                    sts = decc$feature_set_value( feat_index,
-                     1,
-                     decc_feat_array[ i].value);
+                if (feat_value != decc_feat_array[i].value) {
+                    sts = decc$feature_set_value(feat_index,
+                                                 1, decc_feat_array[i].value);
 
-                     if (verbose > 1)
-                     {
-                         fprintf( stderr, " %s = %d, sts = %d.\n",
-                          decc_feat_array[ i].name,
-                          decc_feat_array[ i].value,
-                          sts);
-                     }
+                    if (verbose > 1) {
+                        fprintf(stderr, " %s = %d, sts = %d.\n",
+                                decc_feat_array[i].name,
+                                decc_feat_array[i].value, sts);
+                    }
                 }
-            }
-            else
-            {
+            } else {
                 /* Invalid DECC feature value. */
-                fprintf( stderr,
-                 " INVALID DECC$FEATURE VALUE, %d: %d <= %s <= %d.\n",
-                 feat_value,
-                 feat_value_min, decc_feat_array[ i].name, feat_value_max);
+                fprintf(stderr,
+                        " INVALID DECC$FEATURE VALUE, %d: %d <= %s <= %d.\n",
+                        feat_value,
+                        feat_value_min, decc_feat_array[i].name,
+                        feat_value_max);
             }
-        }
-        else
-        {
+        } else {
             /* Invalid DECC feature name. */
-            fprintf( stderr,
-             " UNKNOWN DECC$FEATURE: %s.\n", decc_feat_array[ i].name);
+            fprintf(stderr,
+                    " UNKNOWN DECC$FEATURE: %s.\n", decc_feat_array[i].name);
         }
     }
 
-    if (verbose > 0)
-    {
-        fprintf( stderr, " DECC_INIT complete.\n");
+    if (verbose > 0) {
+        fprintf(stderr, " DECC_INIT complete.\n");
     }
 }
 
 /* Get "decc_init()" into a valid, loaded LIB$INITIALIZE PSECT. */
 
-#pragma nostandard
+# pragma nostandard
 
-/* Establish the LIB$INITIALIZE PSECTs, with proper alignment and
- * other attributes.  Note that "nopic" is significant only on VAX.
+/*
+ * Establish the LIB$INITIALIZE PSECTs, with proper alignment and other
+ * attributes.  Note that "nopic" is significant only on VAX.
  */
-#pragma extern_model save
+# pragma extern_model save
 
-#if __INITIAL_POINTER_SIZE == 64
-# define PSECT_ALIGN 3
-#else
-# define PSECT_ALIGN 2
-#endif
+# if __INITIAL_POINTER_SIZE == 64
+#  define PSECT_ALIGN 3
+# else
+#  define PSECT_ALIGN 2
+# endif
 
-#pragma extern_model strict_refdef "LIB$INITIALIZ" PSECT_ALIGN, nopic, nowrt
-const int spare[ 8] = { 0 };
+# pragma extern_model strict_refdef "LIB$INITIALIZ" PSECT_ALIGN, nopic, nowrt
+const int spare[8] = { 0 };
 
-#pragma extern_model strict_refdef "LIB$INITIALIZE" PSECT_ALIGN, nopic, nowrt
-void (*const x_decc_init)() = decc_init;
+# pragma extern_model strict_refdef "LIB$INITIALIZE" PSECT_ALIGN, nopic, nowrt
+void (*const x_decc_init) () = decc_init;
 
-#pragma extern_model restore
+# pragma extern_model restore
 
 /* Fake reference to ensure loading the LIB$INITIALIZE PSECT. */
 
-#pragma extern_model save
+# pragma extern_model save
 
-int LIB$INITIALIZE( void);
+int LIB$INITIALIZE(void);
 
-#pragma extern_model strict_refdef
-int dmy_lib$initialize = (int) LIB$INITIALIZE;
+# pragma extern_model strict_refdef
+int dmy_lib$initialize = (int)LIB$INITIALIZE;
 
-#pragma extern_model restore
+# pragma extern_model restore
 
-#pragma standard
+# pragma standard
 
-#else /* def USE_DECC_INIT */
+#else                           /* def USE_DECC_INIT */
 
 /* Dummy code to avoid a %CC-W-EMPTYFILE complaint. */
-int decc_init_dummy( void);
+int decc_init_dummy(void);
 
-#endif /* def USE_DECC_INIT */
+#endif                          /* def USE_DECC_INIT */

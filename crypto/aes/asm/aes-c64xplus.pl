@@ -44,6 +44,10 @@ open STDOUT,">$output";
 
 $code=<<___;
 	.text
+
+	.if	.ASSEMBLER_VERSION<7000000
+	.asg	0,__TI_EABI__
+	.endif
 	.if	__TI_EABI__
 	.nocmp
 	.asg	AES_encrypt,_AES_encrypt
@@ -85,18 +89,18 @@ _AES_encrypt:
 __encrypt:
 	.if	__TI_EABI__
    [B2]	LDNDW	*INP++,A9:A8			; load input
-||	MVKL	\$PCR_OFFSET(AES_Te,_AES_encrypt),$TEA
-||	ADDKPC	_AES_encrypt,B0
+||	MVKL	\$PCR_OFFSET(AES_Te,__encrypt),$TEA
+||	ADDKPC	__encrypt,B0
    [B2]	LDNDW	*INP++,B9:B8
-||	MVKH	\$PCR_OFFSET(AES_Te,_AES_encrypt),$TEA
+||	MVKH	\$PCR_OFFSET(AES_Te,__encrypt),$TEA
 ||	ADD	0,KEY,$KPA
 ||	ADD	4,KEY,$KPB
 	.else
    [B2]	LDNDW	*INP++,A9:A8			; load input
-||	MVKL	(AES_Te-_AES_encrypt),$TEA
-||	ADDKPC	_AES_encrypt,B0
+||	MVKL	(AES_Te-__encrypt),$TEA
+||	ADDKPC	__encrypt,B0
    [B2]	LDNDW	*INP++,B9:B8
-||	MVKH	(AES_Te-_AES_encrypt),$TEA
+||	MVKH	(AES_Te-__encrypt),$TEA
 ||	ADD	0,KEY,$KPA
 ||	ADD	4,KEY,$KPB
 	.endif
@@ -297,18 +301,18 @@ _AES_decrypt:
 __decrypt:
 	.if	__TI_EABI__
    [B2]	LDNDW	*INP++,A9:A8			; load input
-||	MVKL	\$PCR_OFFSET(AES_Td,_AES_decrypt),$TEA
-||	ADDKPC	_AES_decrypt,B0
+||	MVKL	\$PCR_OFFSET(AES_Td,__decrypt),$TEA
+||	ADDKPC	__decrypt,B0
    [B2]	LDNDW	*INP++,B9:B8
-||	MVKH	\$PCR_OFFSET(AES_Td,_AES_decrypt),$TEA
+||	MVKH	\$PCR_OFFSET(AES_Td,__decrypt),$TEA
 ||	ADD	0,KEY,$KPA
 ||	ADD	4,KEY,$KPB
 	.else
    [B2]	LDNDW	*INP++,A9:A8			; load input
-||	MVKL	(AES_Td-_AES_decrypt),$TEA
-||	ADDKPC	_AES_decrypt,B0
+||	MVKL	(AES_Td-__decrypt),$TEA
+||	ADDKPC	__decrypt,B0
    [B2]	LDNDW	*INP++,B9:B8
-||	MVKH	(AES_Td-_AES_decrypt),$TEA
+||	MVKH	(AES_Td-__decrypt),$TEA
 ||	ADD	0,KEY,$KPA
 ||	ADD	4,KEY,$KPB
 	.endif
@@ -546,16 +550,16 @@ __set_encrypt_key:
 	.if	__TI_EABI__
    [A0]	ADD	0,KEY,$KPA
 || [A0]	ADD	4,KEY,$KPB
-|| [A0]	MVKL	\$PCR_OFFSET(AES_Te4,_AES_set_encrypt_key),$TEA
-|| [A0]	ADDKPC	_AES_set_encrypt_key,B6
-   [A0]	MVKH	\$PCR_OFFSET(AES_Te4,_AES_set_encrypt_key),$TEA
+|| [A0]	MVKL	\$PCR_OFFSET(AES_Te4,__set_encrypt_key),$TEA
+|| [A0]	ADDKPC	__set_encrypt_key,B6
+   [A0]	MVKH	\$PCR_OFFSET(AES_Te4,__set_encrypt_key),$TEA
    [A0]	ADD	B6,$TEA,$TEA			; AES_Te4
 	.else
    [A0]	ADD	0,KEY,$KPA
 || [A0]	ADD	4,KEY,$KPB
-|| [A0]	MVKL	(AES_Te4-_AES_set_encrypt_key),$TEA
-|| [A0]	ADDKPC	_AES_set_encrypt_key,B6
-   [A0]	MVKH	(AES_Te4-_AES_set_encrypt_key),$TEA
+|| [A0]	MVKL	(AES_Te4-__set_encrypt_key),$TEA
+|| [A0]	ADDKPC	__set_encrypt_key,B6
+   [A0]	MVKH	(AES_Te4-__set_encrypt_key),$TEA
    [A0]	ADD	B6,$TEA,$TEA			; AES_Te4
 	.endif
 	NOP
@@ -887,7 +891,7 @@ ret?:						; B0 holds rounds or zero
 	MVC	B0,ILC
 ||	SUB	B0,1,B0
 
-	GMPY4	$K[0],A24,$Kx9[0]		; ·0x09
+	GMPY4	$K[0],A24,$Kx9[0]		; Â·0x09
 ||	GMPY4	$K[1],A24,$Kx9[1]
 ||	MVK	0x00000D0D,A25
 ||	MVK	0x00000E0E,B25
@@ -896,14 +900,14 @@ ret?:						; B0 holds rounds or zero
 ||	MVKH	0x0D0D0000,A25
 ||	MVKH	0x0E0E0000,B25
 
-	GMPY4	$K[0],B24,$KxB[0]		; ·0x0B
+	GMPY4	$K[0],B24,$KxB[0]		; Â·0x0B
 ||	GMPY4	$K[1],B24,$KxB[1]
 	GMPY4	$K[2],B24,$KxB[2]
 ||	GMPY4	$K[3],B24,$KxB[3]
 
 	SPLOOP	11				; InvMixColumns
 ;;====================================================================
-	GMPY4	$K[0],A25,$KxD[0]		; ·0x0D
+	GMPY4	$K[0],A25,$KxD[0]		; Â·0x0D
 ||	GMPY4	$K[1],A25,$KxD[1]
 ||	SWAP2	$Kx9[0],$Kx9[0]			; rotate by 16
 ||	SWAP2	$Kx9[1],$Kx9[1]
@@ -920,7 +924,7 @@ ret?:						; B0 holds rounds or zero
 || [B0]	LDW	*${KPA}[6],$K[2]
 || [B0]	LDW	*${KPB}[7],$K[3]
 
-	GMPY4	$s[0],B25,$KxE[0]		; ·0x0E
+	GMPY4	$s[0],B25,$KxE[0]		; Â·0x0E
 ||	GMPY4	$s[1],B25,$KxE[1]
 ||	XOR	$Kx9[0],$KxB[0],$KxB[0]
 ||	XOR	$Kx9[1],$KxB[1],$KxB[1]
@@ -940,7 +944,7 @@ ret?:						; B0 holds rounds or zero
 
 	XOR	$KxE[0],$KxD[0],$KxE[0]
 ||	XOR	$KxE[1],$KxD[1],$KxE[1]
-|| [B0]	GMPY4	$K[0],A24,$Kx9[0]		; ·0x09
+|| [B0]	GMPY4	$K[0],A24,$Kx9[0]		; Â·0x09
 || [B0]	GMPY4	$K[1],A24,$Kx9[1]
 ||	ADDAW	$KPA,4,$KPA
 	XOR	$KxE[2],$KxD[2],$KxE[2]
@@ -951,7 +955,7 @@ ret?:						; B0 holds rounds or zero
 
 	XOR	$KxB[0],$KxE[0],$KxE[0]
 ||	XOR	$KxB[1],$KxE[1],$KxE[1]
-|| [B0]	GMPY4	$K[0],B24,$KxB[0]		; ·0x0B
+|| [B0]	GMPY4	$K[0],B24,$KxB[0]		; Â·0x0B
 || [B0]	GMPY4	$K[1],B24,$KxB[1]
 	XOR	$KxB[2],$KxE[2],$KxE[2]
 ||	XOR	$KxB[3],$KxE[3],$KxE[3]

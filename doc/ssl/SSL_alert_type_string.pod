@@ -228,6 +228,6 @@ Probably B<value> does not contain a correct alert message.
 
 =head1 SEE ALSO
 
-L<ssl(3)|ssl(3)>, L<SSL_CTX_set_info_callback(3)|SSL_CTX_set_info_callback(3)>
+L<ssl(3)>, L<SSL_CTX_set_info_callback(3)>
 
 =cut

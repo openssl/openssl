@@ -122,7 +122,7 @@ elsif ($FLAVOR =~ /CE/)
     }
 
     $cc=($ENV{CC} or "cl");
-    $base_cflags=' /W3 /WX /GF /Gy /nologo -DUNICODE -D_UNICODE -DOPENSSL_SYSNAME_WINCE -DWIN32_LEAN_AND_MEAN -DL_ENDIAN -DDSO_WIN32 -DNO_CHMOD -DOPENSSL_SMALL_FOOTPRINT';
+    $base_cflags=' /W3 /WX /GF /Gy /nologo -DUNICODE -D_UNICODE -DOPENSSL_SYS_WINCE -DWIN32_LEAN_AND_MEAN -DL_ENDIAN -DDSO_WIN32 -DNO_CHMOD -DOPENSSL_SMALL_FOOTPRINT';
     $base_cflags.=" $wcecdefs";
     $base_cflags.=' -I$(WCECOMPAT)/include'		if (defined($ENV{'WCECOMPAT'}));
     $base_cflags.=' -I$(PORTSDK_LIBPATH)/../../include'	if (defined($ENV{'PORTSDK_LIBPATH'}));
@@ -284,10 +284,6 @@ $(OBJ_D)\applink.obj:	ms\applink.c
 	$(CC) /Fo$(OBJ_D)\applink.obj $(APP_CFLAGS) -c ms\applink.c
 $(OBJ_D)\uplink.obj:	ms\uplink.c ms\applink.c
 	$(CC) /Fo$(OBJ_D)\uplink.obj $(SHLIB_CFLAGS) -c ms\uplink.c
-$(INCO_D)\applink.c:	ms\applink.c
-	$(CP) ms\applink.c $(INCO_D)\applink.c
-
-EXHEADER= $(EXHEADER) $(INCO_D)\applink.c
 
 LIBS_DEP=$(LIBS_DEP) $(OBJ_D)\applink.obj
 CRYPTOOBJ=$(OBJ_D)\uplink.obj $(CRYPTOOBJ)
@@ -303,6 +299,30 @@ elsif ($shlib && $FLAVOR =~ /CE/)
 	$lib_cflag.=" -D_WINDLL";
 	$lib_cflag.=" -D_DLL" if (!$fipscanisterbuild);
 	}
+
+sub do_rehash_rule {
+    my ($target, $deps) = @_;
+    my $ret = <<"EOF";
+$target: $deps
+	set OPENSSL=\$(BIN_D)${o}openssl.exe
+	set OPENSSL_DEBUG_MEMORY=on
+	\$(PERL) tools/c_rehash certs/demo
+	echo off > $target
+EOF
+    return $ret
+}
+sub do_test_rule {
+    my ($target, $deps, $test_cmd) = @_;
+    my $ret = <<"EOF";
+$target: $deps force.$target
+	set TOP=.
+	set BIN_D=\$(BIN_D)
+	set TEST_D=\$(TEST_D)
+	set PERL=\$(PERL)
+	\$(PERL) test\\$test_cmd
+force.$target:
+EOF
+}
 
 sub do_lib_rule
 	{
@@ -369,7 +389,7 @@ sub do_link_rule
 	my($target,$files,$dep_libs,$libs,$standalone)=@_;
 	local($ret,$_);
 	$file =~ s/\//$o/g if $o ne '/';
-	$n=&bname($targer);
+	$n=&bname($target);
 	$ret.="$target: $files $dep_libs\n";
 	if ($standalone == 1)
 		{
@@ -405,7 +425,7 @@ sub do_rlink_rule
 	my $files = "$rl_start $rl_mid $rl_end";
 
 	$file =~ s/\//$o/g if $o ne '/';
-	$n=&bname($targer);
+	$n=&bname($target);
 	$ret.="$target: $files $dep_libs \$(FIPS_SHA1_EXE)\n";
 	$ret.="\t\$(PERL) ms\\segrenam.pl \$\$a $rl_start\n";
 	$ret.="\t\$(PERL) ms\\segrenam.pl \$\$b $rl_mid\n";

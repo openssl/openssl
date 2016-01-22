@@ -1,6 +1,9 @@
 #!/usr/local/bin/perl
 
-# define for pentium pro friendly version
+# This flag makes the inner loop one cycle longer, but generates 
+# code that runs %30 faster on the pentium pro/II, 44% faster
+# of PIII, while only %7 slower on the pentium.
+# By default, this flag is on.
 $ppro=1;
 
 $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
@@ -140,11 +143,11 @@ sub E_CAST {
     &rotl(	$tmp4,		&LB($tmp1));
 
     if ($ppro) {
-	&mov(	$tmp2,		$tmp4);		# B
 	&xor(	$tmp1,		$tmp1);
+	&mov(	$tmp2,		0xff);
 	
 	&movb(	&LB($tmp1),	&HB($tmp4));	# A
-	&and(	$tmp2,		0xff);
+	&and(	$tmp2,		$tmp4);
 
 	&shr(	$tmp4,		16); 		#
 	&xor(	$tmp3,		$tmp3);

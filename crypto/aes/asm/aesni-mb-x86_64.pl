@@ -15,8 +15,8 @@
 #			asymptotic	measured
 #			---------------------------
 # Westmere		5.00/4=1.25	5.13/4=1.28
-# Atom			15.0/4=3.75	15.7/4=3.93
-# Sandy Bridge		5.06/4=1.27	5.15/4=1.29
+# Atom			15.0/4=3.75	?15.7/4=3.93
+# Sandy Bridge		5.06/4=1.27	5.18/4=1.29
 # Ivy Bridge		5.06/4=1.27	5.14/4=1.29
 # Haswell		4.44/4=1.11	4.44/4=1.11
 # Bulldozer		5.75/4=1.44	5.76/4=1.44
@@ -27,8 +27,8 @@
 #
 #			asymptotic	measured
 #			---------------------------
-# Sandy Bridge		5.06/8=0.64	7.05/8=0.88(*)
-# Ivy Bridge		5.06/8=0.64	7.02/8=0.88(*)
+# Sandy Bridge		5.06/8=0.64	7.10/8=0.89(*)
+# Ivy Bridge		5.06/8=0.64	7.14/8=0.89(*)
 # Haswell		5.00/8=0.63	5.00/8=0.63
 # Bulldozer		5.75/8=0.72	5.77/8=0.72
 #
@@ -61,6 +61,10 @@ if (!$avx && $win64 && ($flavour =~ /nasm/ || $ENV{ASM} =~ /nasm/) &&
 if (!$avx && $win64 && ($flavour =~ /masm/ || $ENV{ASM} =~ /ml64/) &&
 	   `ml64 2>&1` =~ /Version ([0-9]+)\./) {
 	$avx = ($1>=10) + ($1>=11);
+}
+
+if (!$avx && `$ENV{CC} -v 2>&1` =~ /((?:^clang|LLVM) version|.*based on LLVM) ([3-9]\.[0-9]+)/) {
+	$avx = ($2>=3.0) + ($2>3.0);
 }
 
 open OUT,"| \"$^X\" $xlate $flavour $output";
@@ -115,7 +119,7 @@ $code.=<<___;
 	push	%r15
 ___
 $code.=<<___ if ($win64);
-	lea	-0x78(%rsp),%rsp
+	lea	-0xa8(%rsp),%rsp
 	movaps	%xmm6,(%rsp)
 	movaps	%xmm7,0x10(%rsp)
 	movaps	%xmm8,0x20(%rsp)
@@ -123,6 +127,9 @@ $code.=<<___ if ($win64);
 	movaps	%xmm10,0x40(%rsp)
 	movaps	%xmm11,0x50(%rsp)
 	movaps	%xmm12,0x60(%rsp)
+	movaps	%xmm13,-0x68(%rax)	# not used, saved to share se_handler 
+	movaps	%xmm14,-0x58(%rax)
+	movaps	%xmm15,-0x48(%rax)
 ___
 $code.=<<___;
 	# stack layout
@@ -188,7 +195,11 @@ $code.=<<___;
 	sub	$offset,$sink
 
 	aesenc		$rndkey1,@out[0]
+	prefetcht0	31(@inptr[0],$offset)	# prefetch input
+	prefetcht0	31(@inptr[1],$offset)
 	aesenc		$rndkey1,@out[1]
+	prefetcht0	31(@inptr[2],$offset)
+	prefetcht0	31(@inptr[2],$offset)
 	aesenc		$rndkey1,@out[2]
 	aesenc		$rndkey1,@out[3]
 	movups		0x30-0x78($key),$rndkey1
@@ -199,8 +210,8 @@ $code.=<<___;
 	 cmp		`32+4*$i`(%rsp),$one
 	aesenc		$rndkey,@out[0]
 	aesenc		$rndkey,@out[1]
-	 cmovge		$sink,@inptr[$i]	# cancel input
 	aesenc		$rndkey,@out[2]
+	 cmovge		$sink,@inptr[$i]	# cancel input
 	 cmovg		$sink,@outptr[$i]	# sink output
 	aesenc		$rndkey,@out[3]
 	movups		`0x40+16*$i-0x78`($key),$rndkey
@@ -209,7 +220,11 @@ ___
 $code.=<<___;
 	 movdqa		$counters,$mask
 	aesenc		$rndkey0,@out[0]
+	prefetcht0	15(@outptr[0],$offset)	# prefetch output
+	prefetcht0	15(@outptr[1],$offset)
 	aesenc		$rndkey0,@out[1]
+	prefetcht0	15(@outptr[2],$offset)
+	prefetcht0	15(@outptr[3],$offset)
 	aesenc		$rndkey0,@out[2]
 	aesenc		$rndkey0,@out[3]
 	movups		0x80-0x78($key),$rndkey0
@@ -260,13 +275,15 @@ $code.=<<___;
 	aesenc		$rndkey0,@out[2]
 	aesenc		$rndkey0,@out[3]
 	movups		0xe0-0x78($key),$rndkey0
+	jmp	.Lenc4x_tail
 
+.align	32
 .Lenc4x_tail:
 	aesenc		$rndkey1,@out[0]
 	aesenc		$rndkey1,@out[1]
 	aesenc		$rndkey1,@out[2]
-	 movdqu		(@inptr[0],$offset),@inp[0]
 	aesenc		$rndkey1,@out[3]
+	 movdqu		(@inptr[0],$offset),@inp[0]
 	movdqu		0x10-0x78($key),$rndkey1
 
 	aesenclast	$rndkey0,@out[0]
@@ -313,13 +330,16 @@ $code.=<<___;
 .Lenc4x_done:
 ___
 $code.=<<___ if ($win64);
-	movaps	-0xa8(%rax),%xmm6
-	movaps	-0x98(%rax),%xmm7
-	movaps	-0x88(%rax),%xmm8
-	movaps	-0x78(%rax),%xmm9
-	movaps	-0x68(%rax),%xmm10
-	movaps	-0x58(%rax),%xmm11
-	movaps	-0x48(%rax),%xmm12
+	movaps	-0xd8(%rax),%xmm6
+	movaps	-0xc8(%rax),%xmm7
+	movaps	-0xb8(%rax),%xmm8
+	movaps	-0xa8(%rax),%xmm9
+	movaps	-0x98(%rax),%xmm10
+	movaps	-0x88(%rax),%xmm11
+	movaps	-0x78(%rax),%xmm12
+	#movaps	-0x68(%rax),%xmm13
+	#movaps	-0x58(%rax),%xmm14
+	#movaps	-0x48(%rax),%xmm15
 ___
 $code.=<<___;
 	mov	-48(%rax),%r15
@@ -329,6 +349,7 @@ $code.=<<___;
 	mov	-16(%rax),%rbp
 	mov	-8(%rax),%rbx
 	lea	(%rax),%rsp
+.Lenc4x_epilogue:
 	ret
 .size	aesni_multi_cbc_encrypt,.-aesni_multi_cbc_encrypt
 
@@ -357,7 +378,7 @@ $code.=<<___;
 	push	%r15
 ___
 $code.=<<___ if ($win64);
-	lea	-0x78(%rsp),%rsp
+	lea	-0xa8(%rsp),%rsp
 	movaps	%xmm6,(%rsp)
 	movaps	%xmm7,0x10(%rsp)
 	movaps	%xmm8,0x20(%rsp)
@@ -365,6 +386,9 @@ $code.=<<___ if ($win64);
 	movaps	%xmm10,0x40(%rsp)
 	movaps	%xmm11,0x50(%rsp)
 	movaps	%xmm12,0x60(%rsp)
+	movaps	%xmm13,-0x68(%rax)	# not used, saved to share se_handler 
+	movaps	%xmm14,-0x58(%rax)
+	movaps	%xmm15,-0x48(%rax)
 ___
 $code.=<<___;
 	# stack layout
@@ -426,7 +450,11 @@ $code.=<<___;
 	sub	$offset,$sink
 
 	aesdec		$rndkey1,@out[0]
+	prefetcht0	31(@inptr[0],$offset)	# prefetch input
+	prefetcht0	31(@inptr[1],$offset)
 	aesdec		$rndkey1,@out[1]
+	prefetcht0	31(@inptr[2],$offset)
+	prefetcht0	31(@inptr[3],$offset)
 	aesdec		$rndkey1,@out[2]
 	aesdec		$rndkey1,@out[3]
 	movups		0x30-0x78($key),$rndkey1
@@ -437,8 +465,8 @@ $code.=<<___;
 	 cmp		`32+4*$i`(%rsp),$one
 	aesdec		$rndkey,@out[0]
 	aesdec		$rndkey,@out[1]
-	 cmovge		$sink,@inptr[$i]	# cancel input
 	aesdec		$rndkey,@out[2]
+	 cmovge		$sink,@inptr[$i]	# cancel input
 	 cmovg		$sink,@outptr[$i]	# sink output
 	aesdec		$rndkey,@out[3]
 	movups		`0x40+16*$i-0x78`($key),$rndkey
@@ -447,7 +475,11 @@ ___
 $code.=<<___;
 	 movdqa		$counters,$mask
 	aesdec		$rndkey0,@out[0]
+	prefetcht0	15(@outptr[0],$offset)	# prefetch output
+	prefetcht0	15(@outptr[1],$offset)
 	aesdec		$rndkey0,@out[1]
+	prefetcht0	15(@outptr[2],$offset)
+	prefetcht0	15(@outptr[3],$offset)
 	aesdec		$rndkey0,@out[2]
 	aesdec		$rndkey0,@out[3]
 	movups		0x80-0x78($key),$rndkey0
@@ -498,7 +530,9 @@ $code.=<<___;
 	aesdec		$rndkey0,@out[2]
 	aesdec		$rndkey0,@out[3]
 	movups		0xe0-0x78($key),$rndkey0
+	jmp	.Ldec4x_tail
 
+.align	32
 .Ldec4x_tail:
 	aesdec		$rndkey1,@out[0]
 	aesdec		$rndkey1,@out[1]
@@ -512,12 +546,12 @@ $code.=<<___;
 	movdqu		0x20-0x78($key),$rndkey0
 
 	aesdeclast	@inp[0],@out[0]
-	 movdqu		-16(@inptr[0],$offset),@inp[0]	# load next IV
 	aesdeclast	@inp[1],@out[1]
+	 movdqu		-16(@inptr[0],$offset),@inp[0]	# load next IV
 	 movdqu		-16(@inptr[1],$offset),@inp[1]
 	aesdeclast	@inp[2],@out[2]
-	 movdqu		-16(@inptr[2],$offset),@inp[2]
 	aesdeclast	@inp[3],@out[3]
+	 movdqu		-16(@inptr[2],$offset),@inp[2]
 	 movdqu		-16(@inptr[3],$offset),@inp[3]
 
 	movups		@out[0],-16(@outptr[0],$offset)
@@ -546,13 +580,16 @@ $code.=<<___;
 .Ldec4x_done:
 ___
 $code.=<<___ if ($win64);
-	movaps	-0xa8(%rax),%xmm6
-	movaps	-0x98(%rax),%xmm7
-	movaps	-0x88(%rax),%xmm8
-	movaps	-0x78(%rax),%xmm9
-	movaps	-0x68(%rax),%xmm10
-	movaps	-0x58(%rax),%xmm11
-	movaps	-0x48(%rax),%xmm12
+	movaps	-0xd8(%rax),%xmm6
+	movaps	-0xc8(%rax),%xmm7
+	movaps	-0xb8(%rax),%xmm8
+	movaps	-0xa8(%rax),%xmm9
+	movaps	-0x98(%rax),%xmm10
+	movaps	-0x88(%rax),%xmm11
+	movaps	-0x78(%rax),%xmm12
+	#movaps	-0x68(%rax),%xmm13
+	#movaps	-0x58(%rax),%xmm14
+	#movaps	-0x48(%rax),%xmm15
 ___
 $code.=<<___;
 	mov	-48(%rax),%r15
@@ -562,6 +599,7 @@ $code.=<<___;
 	mov	-16(%rax),%rbp
 	mov	-8(%rax),%rbx
 	lea	(%rax),%rsp
+.Ldec4x_epilogue:
 	ret
 .size	aesni_multi_cbc_decrypt,.-aesni_multi_cbc_decrypt
 ___
@@ -682,7 +720,13 @@ $code.=<<___ if ($i);
 ___
 $code.=<<___;
 	vaesenc		$rndkey,@out[1],@out[1]
+	prefetcht0	31(@ptr[$i])			# prefetch input
 	vaesenc		$rndkey,@out[2],@out[2]
+___
+$code.=<<___ if ($i>1);
+	prefetcht0	15(@ptr[$i-2])			# prefetch output
+___
+$code.=<<___;
 	vaesenc		$rndkey,@out[3],@out[3]
 	 lea		(@ptr[$i],$offset),$offset
 	 cmovge		%rsp,@ptr[$i]			# cancel input
@@ -703,6 +747,8 @@ ___
 }
 $code.=<<___;
 	 vmovdqu	32(%rsp),$counters
+	prefetcht0	15(@ptr[$i-2])			# prefetch output
+	prefetcht0	15(@ptr[$i-1])
 	cmp	\$11,$rounds
 	jb	.Lenc8x_tail
 
@@ -836,6 +882,7 @@ $code.=<<___;
 	mov	-16(%rax),%rbp
 	mov	-8(%rax),%rbx
 	lea	(%rax),%rsp
+.Lenc8x_epilogue:
 	ret
 .size	aesni_multi_cbc_encrypt_avx,.-aesni_multi_cbc_encrypt_avx
 
@@ -958,7 +1005,13 @@ $code.=<<___ if ($i);
 ___
 $code.=<<___;
 	vaesdec		$rndkey,@out[1],@out[1]
+	prefetcht0	31(@ptr[$i])			# prefetch input
 	vaesdec		$rndkey,@out[2],@out[2]
+___
+$code.=<<___ if ($i>1);
+	prefetcht0	15(@ptr[$i-2])			# prefetch output
+___
+$code.=<<___;
 	vaesdec		$rndkey,@out[3],@out[3]
 	 lea		(@ptr[$i],$offset),$offset
 	 cmovge		%rsp,@ptr[$i]			# cancel input
@@ -979,6 +1032,8 @@ ___
 }
 $code.=<<___;
 	 vmovdqu	32(%rsp),$counters
+	prefetcht0	15(@ptr[$i-2])			# prefetch output
+	prefetcht0	15(@ptr[$i-1])
 	cmp	\$11,$rounds
 	jb	.Ldec8x_tail
 
@@ -1133,10 +1188,155 @@ $code.=<<___;
 	mov	-16(%rax),%rbp
 	mov	-8(%rax),%rbx
 	lea	(%rax),%rsp
+.Ldec8x_epilogue:
 	ret
 .size	aesni_multi_cbc_decrypt_avx,.-aesni_multi_cbc_decrypt_avx
 ___
 						}}}
+
+if ($win64) {
+# EXCEPTION_DISPOSITION handler (EXCEPTION_RECORD *rec,ULONG64 frame,
+#		CONTEXT *context,DISPATCHER_CONTEXT *disp)
+$rec="%rcx";
+$frame="%rdx";
+$context="%r8";
+$disp="%r9";
+
+$code.=<<___;
+.extern	__imp_RtlVirtualUnwind
+.type	se_handler,\@abi-omnipotent
+.align	16
+se_handler:
+	push	%rsi
+	push	%rdi
+	push	%rbx
+	push	%rbp
+	push	%r12
+	push	%r13
+	push	%r14
+	push	%r15
+	pushfq
+	sub	\$64,%rsp
+
+	mov	120($context),%rax	# pull context->Rax
+	mov	248($context),%rbx	# pull context->Rip
+
+	mov	8($disp),%rsi		# disp->ImageBase
+	mov	56($disp),%r11		# disp->HandlerData
+
+	mov	0(%r11),%r10d		# HandlerData[0]
+	lea	(%rsi,%r10),%r10	# prologue label
+	cmp	%r10,%rbx		# context->Rip<.Lprologue
+	jb	.Lin_prologue
+
+	mov	152($context),%rax	# pull context->Rsp
+
+	mov	4(%r11),%r10d		# HandlerData[1]
+	lea	(%rsi,%r10),%r10	# epilogue label
+	cmp	%r10,%rbx		# context->Rip>=.Lepilogue
+	jae	.Lin_prologue
+
+	mov	16(%rax),%rax		# pull saved stack pointer
+
+	mov	-8(%rax),%rbx
+	mov	-16(%rax),%rbp
+	mov	-24(%rax),%r12
+	mov	-32(%rax),%r13
+	mov	-40(%rax),%r14
+	mov	-48(%rax),%r15
+	mov	%rbx,144($context)	# restore context->Rbx
+	mov	%rbp,160($context)	# restore context->Rbp
+	mov	%r12,216($context)	# restore cotnext->R12
+	mov	%r13,224($context)	# restore cotnext->R13
+	mov	%r14,232($context)	# restore cotnext->R14
+	mov	%r15,240($context)	# restore cotnext->R15
+
+	lea	-56-10*16(%rax),%rsi
+	lea	512($context),%rdi	# &context.Xmm6
+	mov	\$20,%ecx
+	.long	0xa548f3fc		# cld; rep movsq
+
+.Lin_prologue:
+	mov	8(%rax),%rdi
+	mov	16(%rax),%rsi
+	mov	%rax,152($context)	# restore context->Rsp
+	mov	%rsi,168($context)	# restore context->Rsi
+	mov	%rdi,176($context)	# restore context->Rdi
+
+	mov	40($disp),%rdi		# disp->ContextRecord
+	mov	$context,%rsi		# context
+	mov	\$154,%ecx		# sizeof(CONTEXT)
+	.long	0xa548f3fc		# cld; rep movsq
+
+	mov	$disp,%rsi
+	xor	%rcx,%rcx		# arg1, UNW_FLAG_NHANDLER
+	mov	8(%rsi),%rdx		# arg2, disp->ImageBase
+	mov	0(%rsi),%r8		# arg3, disp->ControlPc
+	mov	16(%rsi),%r9		# arg4, disp->FunctionEntry
+	mov	40(%rsi),%r10		# disp->ContextRecord
+	lea	56(%rsi),%r11		# &disp->HandlerData
+	lea	24(%rsi),%r12		# &disp->EstablisherFrame
+	mov	%r10,32(%rsp)		# arg5
+	mov	%r11,40(%rsp)		# arg6
+	mov	%r12,48(%rsp)		# arg7
+	mov	%rcx,56(%rsp)		# arg8, (NULL)
+	call	*__imp_RtlVirtualUnwind(%rip)
+
+	mov	\$1,%eax		# ExceptionContinueSearch
+	add	\$64,%rsp
+	popfq
+	pop	%r15
+	pop	%r14
+	pop	%r13
+	pop	%r12
+	pop	%rbp
+	pop	%rbx
+	pop	%rdi
+	pop	%rsi
+	ret
+.size	se_handler,.-se_handler
+
+.section	.pdata
+.align	4
+	.rva	.LSEH_begin_aesni_multi_cbc_encrypt
+	.rva	.LSEH_end_aesni_multi_cbc_encrypt
+	.rva	.LSEH_info_aesni_multi_cbc_encrypt
+	.rva	.LSEH_begin_aesni_multi_cbc_decrypt
+	.rva	.LSEH_end_aesni_multi_cbc_decrypt
+	.rva	.LSEH_info_aesni_multi_cbc_decrypt
+___
+$code.=<<___ if ($avx);
+	.rva	.LSEH_begin_aesni_multi_cbc_encrypt_avx
+	.rva	.LSEH_end_aesni_multi_cbc_encrypt_avx
+	.rva	.LSEH_info_aesni_multi_cbc_encrypt_avx
+	.rva	.LSEH_begin_aesni_multi_cbc_decrypt_avx
+	.rva	.LSEH_end_aesni_multi_cbc_decrypt_avx
+	.rva	.LSEH_info_aesni_multi_cbc_decrypt_avx
+___
+$code.=<<___;
+.section	.xdata
+.align	8
+.LSEH_info_aesni_multi_cbc_encrypt:
+	.byte	9,0,0,0
+	.rva	se_handler
+	.rva	.Lenc4x_body,.Lenc4x_epilogue		# HandlerData[]
+.LSEH_info_aesni_multi_cbc_decrypt:
+	.byte	9,0,0,0
+	.rva	se_handler
+	.rva	.Ldec4x_body,.Ldec4x_epilogue		# HandlerData[]
+___
+$code.=<<___ if ($avx);
+.LSEH_info_aesni_multi_cbc_encrypt_avx:
+	.byte	9,0,0,0
+	.rva	se_handler
+	.rva	.Lenc8x_body,.Lenc8x_epilogue		# HandlerData[]
+.LSEH_info_aesni_multi_cbc_decrypt_avx:
+	.byte	9,0,0,0
+	.rva	se_handler
+	.rva	.Ldec8x_body,.Ldec8x_epilogue		# HandlerData[]
+___
+}
+####################################################################
 
 sub rex {
   local *opcode=shift;

@@ -1,0 +1,41 @@
+#!/bin/sh
+
+cmd='../util/shlib_wrap.sh ../apps/openssl req -config ../apps/openssl.cnf'
+
+if [ "$1"x != "x" ]; then
+	t=$1
+else
+	t=testreq.pem
+fi
+
+if $cmd -in $t -inform p -noout -text 2>&1 | fgrep -i 'Unknown Public Key'; then
+  echo "skipping req conversion test for $t"
+  exit 0
+fi
+
+echo testing req conversions
+cp $t req-fff.p
+
+echo "p -> d"
+$cmd -in req-fff.p -inform p -outform d >req-f.d || exit 1
+echo "p -> p"
+$cmd -in req-fff.p -inform p -outform p >req-f.p || exit 1
+
+echo "d -> d"
+$cmd -verify -in req-f.d -inform d -outform d >req-ff.d1 || exit 1
+echo "p -> d"
+$cmd -verify -in req-f.p -inform p -outform d >req-ff.d3 || exit 1
+
+echo "d -> p"
+$cmd -in req-f.d -inform d -outform p >req-ff.p1 || exit 1
+echo "p -> p"
+$cmd -in req-f.p -inform p -outform p >req-ff.p3 || exit 1
+
+cmp req-fff.p req-f.p || exit 1
+cmp req-fff.p req-ff.p1 || exit 1
+cmp req-fff.p req-ff.p3 || exit 1
+cmp req-f.p req-ff.p1 || exit 1
+cmp req-f.p req-ff.p3 || exit 1
+
+/bin/rm -f req-f.* req-ff.* req-fff.*
+exit 0

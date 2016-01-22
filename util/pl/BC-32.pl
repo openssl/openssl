@@ -18,7 +18,7 @@ $out_def="out32";
 $tmp_def="tmp32";
 $inc_def="inc32";
 #enable max error messages, disable most common warnings
-$cflags="-DWIN32_LEAN_AND_MEAN -q -w-ccc -w-rch -w-pia -w-aus -w-par -w-inl  -c -tWC -tWM -DOPENSSL_SYSNAME_WIN32 -DL_ENDIAN -DDSO_WIN32 -D_stricmp=stricmp -D_strnicmp=strnicmp ";
+$cflags="-DWIN32_LEAN_AND_MEAN -q -w-ccc -w-rch -w-pia -w-aus -w-par -w-inl  -c -tWC -tWM -DOPENSSL_SYS_WIN32 -DL_ENDIAN -DDSO_WIN32 -D_stricmp=stricmp -D_strnicmp=strnicmp ";
 if ($debug)
 {
     $cflags.="-Od -y -v -vi- -D_DEBUG";
@@ -38,7 +38,7 @@ $efile="";
 $exep='.exe';
 if ($no_sock)
 	{ $ex_libs=""; }
-else	{ $ex_libs="cw32mt.lib import32.lib"; }
+else	{ $ex_libs="cw32mt.lib import32.lib crypt32.lib ws2_32.lib"; }
 
 # static library stuff
 $mklib='tlib /P64';
@@ -51,8 +51,8 @@ $lfile='';
 $shlib_ex_obj="";
 $app_ex_obj="c0x32.obj"; 
 
-$asm='nasmw -f obj -d__omf__';
-$asm.=" /Zi" if $debug;
+$asm=(`nasm -v 2>NUL` ge `nasmw -v 2>NUL`?"nasm":"nasmw")." -f obj -d__omf__";
+$asm.=" -g" if $debug;
 $afile='-o';
 
 $bn_mulw_obj='';
@@ -94,6 +94,29 @@ if ($shlib)
 	$tmp_def="tmp32dll";
 	}
 
+sub do_rehash_rule {
+    my ($target, $deps) = @_;
+    my $ret = <<"EOF";
+$target: $deps
+	set OPENSSL=\$(BIN_D)${o}openssl.exe
+	set OPENSSL_DEBUG_MEMORY=on
+	\$(PERL) tools/c_rehash certs/demo
+EOF
+    return $ret
+}
+sub do_test_rule {
+    my ($target, $deps, $test_cmd) = @_;
+    my $ret = <<"EOF";
+$target: $deps force.$target
+	set TOP=.
+	set BIN_D=\$(BIN_D)
+	set TEST_D=\$(TEST_D)
+	set PERL=\$(PERL)
+	\$(PERL) test\\$test_cmd
+force.$target:
+EOF
+}
+
 sub do_lib_rule
 	{
 	local($objs,$target,$name,$shlib)=@_;
@@ -130,7 +153,7 @@ sub do_link_rule
 	local($ret,$_);
 	
 	$file =~ s/\//$o/g if $o ne '/';
-	$n=&bname($targer);
+	$n=&bname($target);
 	$ret.="$target: $files $dep_libs\n";
 	$ret.="\t\$(LINK) \$(LFLAGS) $files \$(APP_EX_OBJ), $target,, $libs\n\n";
 	return($ret);

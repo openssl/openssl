@@ -26,7 +26,7 @@ EVP_PKEY_keygen_init, EVP_PKEY_keygen, EVP_PKEY_paramgen_init, EVP_PKEY_paramgen
 =head1 DESCRIPTION
 
 The EVP_PKEY_keygen_init() function initializes a public key algorithm
-context using key B<pkey> for a key genration operation.
+context using key B<pkey> for a key generation operation.
 
 The EVP_PKEY_keygen() function performs a key generation operation, the 
 generated key is written to B<ppkey>.
@@ -44,7 +44,7 @@ parameters available is returned. Any non negative value returns the value of
 that parameter. EVP_PKEY_CTX_gen_keygen_info() with a non-negative value for
 B<idx> should only be called within the generation callback.
 
-If the callback returns 0 then the key genration operation is aborted and an
+If the callback returns 0 then the key generation operation is aborted and an
 error occurs. This might occur during a time consuming operation where
 a user clicks on a "cancel" button.
 
@@ -64,7 +64,7 @@ once on the same context if several operations are performed using the same
 parameters.
 
 The meaning of the parameters passed to the callback will depend on the
-algorithm and the specifiic implementation of the algorithm. Some might not
+algorithm and the specific implementation of the algorithm. Some might not
 give any useful information at all during key or parameter generation. Others
 might not even call the callback.
 
@@ -146,13 +146,13 @@ Example of generation callback for OpenSSL public key implementations:
 
 =head1 SEE ALSO
 
-L<EVP_PKEY_CTX_new(3)|EVP_PKEY_CTX_new(3)>,
-L<EVP_PKEY_encrypt(3)|EVP_PKEY_encrypt(3)>,
-L<EVP_PKEY_decrypt(3)|EVP_PKEY_decrypt(3)>,
-L<EVP_PKEY_sign(3)|EVP_PKEY_sign(3)>,
-L<EVP_PKEY_verify(3)|EVP_PKEY_verify(3)>,
-L<EVP_PKEY_verify_recover(3)|EVP_PKEY_verify_recover(3)>,
-L<EVP_PKEY_derive(3)|EVP_PKEY_derive(3)> 
+L<EVP_PKEY_CTX_new(3)>,
+L<EVP_PKEY_encrypt(3)>,
+L<EVP_PKEY_decrypt(3)>,
+L<EVP_PKEY_sign(3)>,
+L<EVP_PKEY_verify(3)>,
+L<EVP_PKEY_verify_recover(3)>,
+L<EVP_PKEY_derive(3)> 
 
 =head1 HISTORY
 

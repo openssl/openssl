@@ -37,9 +37,6 @@ for (;;)
 		$lib =~ s/^.*\/([^\/]+)$/$1/;
 		}
 
-	if ($key eq "EXHEADER")
-		{ $exheader.=&var_add($dir,$val); }
-
 	if ($key eq "HEADER")
 		{ $header.=&var_add($dir,$val); }
 
@@ -94,7 +91,6 @@ sub var_add
 	@a=grep(!/^e_.*_c$/,@a) if $no_cast;
 	@a=grep(!/^e_rc4$/,@a) if $no_rc4;
 
-	@a=grep(!/(^s2_)|(^s23_)/,@a) if $no_ssl2;
 	@a=grep(!/(^s3_)|(^s23_)/,@a) if $no_ssl3;
 
 	@a=grep(!/(_sock$)|(_acpt$)|(_conn$)|(^pxy_)/,@a) if $no_sock;
@@ -103,8 +99,7 @@ sub var_add
 	@a=grep(!/(^md5)|(_md5$)/,@a) if $no_md5;
 
 	@a=grep(!/(^d2i_r_)|(^i2d_r_)/,@a) if $no_rsa;
-	@a=grep(!/(^p_open$)|(^p_seal$)/,@a) if $no_rsa;
-	@a=grep(!/(^pem_seal$)/,@a) if $no_rsa;
+	@a=grep(!/(^p_open$)/,@a) if $no_rsa;
 
 	@a=grep(!/(m_dss$)|(m_dss1$)/,@a) if $no_dsa;
 	@a=grep(!/(^d2i_s_)|(^i2d_s_)|(_dsap$)/,@a) if $no_dsa;

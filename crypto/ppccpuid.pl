@@ -23,6 +23,14 @@ $code=<<___;
 .machine	"any"
 .text
 
+.globl	.OPENSSL_fpu_probe
+.align	4
+.OPENSSL_fpu_probe:
+	fmr	f0,f0
+	blr
+	.long	0
+	.byte	0,12,0x14,0,0,0,0,0
+.size	.OPENSSL_fpu_probe,.-.OPENSSL_fpu_probe
 .globl	.OPENSSL_ppc64_probe
 .align	4
 .OPENSSL_ppc64_probe:
@@ -41,6 +49,16 @@ $code=<<___;
 	.long	0
 	.byte	0,12,0x14,0,0,0,0,0
 .size	.OPENSSL_altivec_probe,.-..OPENSSL_altivec_probe
+
+.globl	.OPENSSL_crypto207_probe
+.align	4
+.OPENSSL_crypto207_probe:
+	lvx_u	v0,0,r1
+	vcipher	v0,v0,v0
+	blr
+	.long	0
+	.byte	0,12,0x14,0,0,0,0,0
+.size	.OPENSSL_crypto207_probe,.-.OPENSSL_crypto207_probe
 
 .globl	.OPENSSL_wipe_cpu
 .align	4
@@ -92,8 +110,19 @@ Ladd:	lwarx	r5,0,r3
 .globl	.OPENSSL_rdtsc
 .align	4
 .OPENSSL_rdtsc:
+___
+$code.=<<___	if ($flavour =~ /64/);
+	mftb	r3
+___
+$code.=<<___	if ($flavour !~ /64/);
+Loop_rdtsc:
+	mftbu	r5
 	mftb	r3
 	mftbu	r4
+	cmplw	r4,r5
+	bne	Loop_rdtsc
+___
+$code.=<<___;
 	blr
 	.long	0
 	.byte	0,12,0x14,0,0,0,0,0

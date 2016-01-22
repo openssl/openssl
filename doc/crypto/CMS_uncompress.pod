@@ -45,10 +45,6 @@ mentioned in CMS_verify() also applies to CMS_decompress().
 
 =head1 SEE ALSO
 
-L<ERR_get_error(3)|ERR_get_error(3)>, L<CMS_compress(3)|CMS_compress(3)>
-
-=head1 HISTORY
-
-CMS_uncompress() was added to OpenSSL 0.9.8
+L<ERR_get_error(3)>, L<CMS_compress(3)>
 
 =cut

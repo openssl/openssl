@@ -34,8 +34,6 @@ my @dirs = (
 "crypto/dso",
 "crypto/dh",
 "crypto/ec",
-"crypto/ecdh",
-"crypto/ecdsa",
 "crypto/buffer",
 "crypto/bio",
 "crypto/stack",
@@ -58,25 +56,16 @@ my @dirs = (
 "crypto/engine",
 "crypto/ocsp",
 "crypto/ui",
-"crypto/krb5",
 #"crypto/store",
 "crypto/pqueue",
 "crypto/whrlpool",
 "crypto/ts",
 "crypto/srp",
-"fips",
-"fips/aes",
-"fips/cmac",
-"fips/des",
-"fips/dsa",
-"fips/dh",
-"fips/ecdh",
-"fips/ecdsa",
-"fips/hmac",
-"fips/rand",
-"fips/rsa",
-"fips/utl",
-"fips/sha",
+"crypto/ct",
+"crypto/async",
+"crypto/chacha",
+"crypto/poly1305",
+"crypto/kdf",
 "ssl",
 "apps",
 "engines",
@@ -110,7 +99,7 @@ while (<IN>)
 	{
 	chop;
 	s/#.*//;
-	if (/^(\S+)\s*=\s*(.*)$/)
+	if (/^([^\s=]+)\s*=\s*(.*)$/)
 		{
 		$o="";
 		($s,$b)=($1,$2);

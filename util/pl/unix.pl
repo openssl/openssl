@@ -59,7 +59,6 @@ $bf_enc_src="";
 	  'x86_64-mont' => 'crypto/bn',
 	  'x86_64-mont5' => 'crypto/bn',
 	  'x86_64-gf2m' => 'crypto/bn',
-	  'modexp512-x86_64' => 'crypto/bn',
 	  'aes-x86_64' => 'crypto/aes',
 	  'vpaes-x86_64' => 'crypto/aes',
 	  'bsaes-x86_64' => 'crypto/aes',
@@ -77,6 +76,9 @@ $bf_enc_src="";
 	  'aesni-mb-x86_64' => 'crypto/aes',
 	  'sha1-mb-x86_64' => 'crypto/sha',
 	  'sha256-mb-x86_64' => 'crypto/sha',
+	  'ecp_nistz256-x86_64' => 'crypto/ec',
+	  'wp-x86_64' => 'crypto/whrlpool',
+	  'cmll-x86_64' => 'crypto/camellia',
          );
 
 # If I were feeling more clever, these could probably be extracted
@@ -138,7 +140,7 @@ sub special_compile_target
 		{
 		return << "EOF";
 \$(TMP_D)/x86_64-gcc.o:	crypto/bn/asm/x86_64-gcc.c
-	\$(CC) \$(CFLAGS) -c -o \$@ crypto/bn/asm/x86_64-gcc.c
+	\$(CC) \$(LIB_CFLAGS) -c -o \$@ crypto/bn/asm/x86_64-gcc.c
 EOF
 		}
 	return undef;
@@ -184,262 +186,29 @@ sub which
 		}
 	}
 
-sub fixtests
-  {
-  my ($str, $tests) = @_;
+sub do_rehash_rule {
+    my ($target, $deps) = @_;
+    my $ret = <<"EOF";
+$target: $deps
+	(OPENSSL="`pwd`/util/opensslwrap.sh"; \\
+	OPENSSL_DEBUG_MEMORY=on; \\
+	export OPENSSL OPENSSL_DEBUG_MEMORY; \\
+	\$(PERL) tools/c_rehash certs/demo; \\
+	touch $target)
+EOF
+    return $ret
+}
+sub do_test_rule {
+    my ($target, $deps, $test_cmd) = @_;
+    my $ret = <<"EOF";
+$target: $deps force.$target
+	TOP=. BIN_D=\$(BIN_D) TEST_D=\$(TEST_D) \\
+	    PERL=\$(PERL) \$(PERL) test/$test_cmd
+force.$target:
 
-  foreach my $t (keys %$tests)
-    {
-    $str =~ s/(\.\/)?\$\($t\)/\$(TEST_D)\/$tests->{$t}/g;
-    }
-
-  return $str;
-  }
-
-sub fixdeps
-  {
-  my ($str, $fakes) = @_;
-
-  my @t = split(/\s+/, $str);
-  $str = '';
-  foreach my $t (@t)
-    {
-    $str .= ' ' if $str ne '';
-    if (exists($fakes->{$t}))
-      {
-      $str .= $fakes->{$t};
-      next;
-      }
-    if ($t =~ /^[^\/]+$/)
-      {
-      $str .= '$(TEST_D)/' . $t;
-      }
-    else
-      {
-      $str .= $t;
-      }
-    }
-
-  return $str;
-  }
-
-sub fixrules
-  {
-  my ($str) = @_;
-
-  # Compatible with -j...
-  $str =~ s/^(\s+@?)/$1cd \$(TEST_D) && /;
-  return $str;
-
-  # Compatible with not -j.
-  my @t = split("\n", $str);
-  $str = '';
-  my $prev;
-  foreach my $t (@t)
-    {
-    $t =~ s/^\s+//;
-    if (!$prev)
-      {
-      if ($t =~ /^@/)
-	{
-        $t =~ s/^@/\@cd \$(TEST_D) && /;
-        }
-      elsif ($t !~ /^\s*#/)
-	{
-        $t = 'cd $(TEST_D) && ' . $t;
-        }
-      }
-    $str .= "\t$t\n";
-    $prev = $t =~/\\$/;
-    }
-  return $str;
+EOF
+    return $ret;
 }
 
-sub copy_scripts
-  {
-  my ($sed, $src, @targets) = @_;
-
-  my $s = '';
-  foreach my $t (@targets)
-    {
-    # Copy first so we get file modes...
-    $s .= "\$(TEST_D)/$t: \$(SRC_D)/$src/$t\n\tcp \$(SRC_D)/$src/$t \$(TEST_D)/$t\n";
-    $s .= "\tsed -e 's/\\.\\.\\/apps/..\\/\$(OUT_D)/' -e 's/\\.\\.\\/util/..\\/\$(TEST_D)/' < \$(SRC_D)/$src/$t > \$(TEST_D)/$t\n" if $sed;
-    $s .= "\n";
-    }
-  return $s;
-  }
-
-sub get_tests
-  {
-  my ($makefile) = @_;
-
-  open(M, $makefile) || die "Can't open $makefile: $!";
-  my %targets;
-  my %deps;
-  my %tests;
-  my %alltests;
-  my %fakes;
-  while (my $line = <M>)
-    {
-    chomp $line;
-    while ($line =~ /^(.*)\\$/)
-      {
-      $line = $1 . <M>;
-      }
-
-    if ($line =~ /^alltests:(.*)$/)
-      {
-      my @t = split(/\s+/, $1);
-      foreach my $t (@t)
-	{
-	$targets{$t} = '';
-	$alltests{$t} = undef;
-        }
-      }
-
-    if (($line =~ /^(?<t>\S+):(?<d>.*)$/ && exists $targets{$1})
-	|| $line =~ /^(?<t>test_(ss|gen) .*):(?<d>.*)/)
-      {
-      my $t = $+{t};
-      my $d = $+{d};
-      # If there are multiple targets stupid FreeBSD make runs the
-      # rules once for each dependency that matches one of the
-      # targets. Running the same rule twice concurrently causes
-      # breakage, so replace with a fake target.
-      if ($t =~ /\s/)
-        {
-	++$fake;
-	my @targets = split /\s+/, $t;
-	$t = "_fake$fake";
-	foreach my $f (@targets)
-	  {
-	  $fakes{$f} = $t;
-	  }
-	}
-      $deps{$t} = $d;
-      $deps{$t} =~ s/#.*$//;
-      for (;;)
-	{
-	$line = <M>;
-	chomp $line;
-	last if $line eq '';
-	$targets{$t} .= "$line\n";
-        }
-      next;
-      }
-
-    if ($line =~ /^(\S+TEST)=\s*(\S+)$/)
-      {
-      $tests{$1} = $2;
-      next;
-      }
-    }
-
-  delete $alltests{test_jpake} if $no_jpake;
-  delete $targets{test_ige} if $no_ige;
-  delete $alltests{test_md2} if $no_md2;
-  delete $alltests{test_rc5} if $no_rc5;
-
-  my $tests;
-  foreach my $t (keys %tests)
-    {
-    $tests .= "$t = $tests{$t}\n";
-    }
-
-  my $each;
-  foreach my $t (keys %targets)
-    {
-    next if $t eq '';
-
-    my $d = $deps{$t};
-    $d =~ s/\.\.\/apps/\$(BIN_D)/g;
-    $d =~ s/\.\.\/util/\$(TEST_D)/g;
-    $d = fixtests($d, \%tests);
-    $d = fixdeps($d, \%fakes);
-
-    my $r = $targets{$t};
-    $r =~ s/\.\.\/apps/..\/\$(BIN_D)/g;
-    $r =~ s/\.\.\/util/..\/\$(TEST_D)/g;
-    $r =~ s/\.\.\/(\S+)/\$(SRC_D)\/$1/g;
-    $r = fixrules($r);
-
-    next if $r eq '';
-
-    $t =~ s/\s+/ \$(TEST_D)\//g;
-
-    $each .= "$t: test_scripts $d\n\t\@echo '$t test started'\n$r\t\@echo '$t test done'\n\n";
-    }
-
-  # FIXME: Might be a clever way to figure out what needs copying
-  my @copies = ( 'bctest',
-		 'testgen',
-		 'cms-test.pl',
-		 'tx509',
-		 'test.cnf',
-		 'testenc',
-		 'tocsp',
-		 'testca',
-		 'CAss.cnf',
-		 'testtsa',
-		 'CAtsa.cnf',
-		 'Uss.cnf',
-		 'P1ss.cnf',
-		 'P2ss.cnf',
-		 'tcrl',
-		 'tsid',
-		 'treq',
-		 'tpkcs7',
-		 'tpkcs7d',
-		 'testcrl.pem',
-		 'testx509.pem',
-		 'v3-cert1.pem',
-		 'v3-cert2.pem',
-		 'testreq2.pem',
-		 'testp7.pem',
-		 'pkcs7-1.pem',
-		 'trsa',
-		 'testrsa.pem',
-		 'testsid.pem',
-		 'testss',
-		 'testssl',
-		 'testsslproxy',
-		 'serverinfo.pem',
-	       );
-  my $copies = copy_scripts(1, 'test', @copies);
-  $copies .= copy_scripts(0, 'test', ('smcont.txt'));
-
-  my @utils = ( 'shlib_wrap.sh',
-		'opensslwrap.sh',
-	      );
-  $copies .= copy_scripts(1, 'util', @utils);
-
-  my @apps = ( 'CA.sh',
-	       'openssl.cnf',
-	       'server2.pem',
-	     );
-  $copies .= copy_scripts(1, 'apps', @apps);
-
-  $copies .= copy_scripts(1, 'crypto/evp', ('evptests.txt'));
-
-  $scripts = "test_scripts: \$(TEST_D)/CA.sh \$(TEST_D)/opensslwrap.sh \$(TEST_D)/openssl.cnf \$(TEST_D)/shlib_wrap.sh ocsp smime\n";
-  $scripts .= "\nocsp:\n\tcp -R test/ocsp-tests \$(TEST_D)\n";
-  $scripts .= "\smime:\n\tcp -R test/smime-certs \$(TEST_D)\n";
-
-  my $all = 'test:';
-  foreach my $t (keys %alltests)
-    {
-    if (exists($fakes{$t}))
-      {
-      $all .= " $fakes{$t}";
-      }
-    else
-      {
-      $all .= " $t";
-      }
-    }
-
-  return "$scripts\n$copies\n$tests\n$all\n\n$each";
-  }
 
 1;

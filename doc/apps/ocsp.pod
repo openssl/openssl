@@ -25,10 +25,40 @@ B<openssl> B<ocsp>
 [B<-nonce>]
 [B<-no_nonce>]
 [B<-url URL>]
-[B<-host host:n>]
+[B<-host host:port>]
+[B<-header>]
 [B<-path>]
 [B<-CApath dir>]
 [B<-CAfile file>]
+[B<-no-CAfile>]
+[B<-no-CApath>]
+[B<-attime timestamp>]
+[B<-check_ss_sig>]
+[B<-crl_check>]
+[B<-crl_check_all>]
+[B<-explicit_policy>]
+[B<-extended_crl>]
+[B<-ignore_critical>]
+[B<-inhibit_any>]
+[B<-inhibit_map>]
+[B<-issuer_checks>]
+[B<-partial_chain>]
+[B<-policy arg>]
+[B<-policy_check>]
+[B<-policy_print>]
+[B<-purpose purpose>]
+[B<-suiteB_128>]
+[B<-suiteB_128_only>]
+[B<-suiteB_192>]
+[B<-trusted_first>]
+[B<-no_alt_chains>]
+[B<-use_deltas>]
+[B<-verify_depth num>]
+[B<-verify_email email>]
+[B<-verify_hostname hostname>]
+[B<-verify_ip ip>]
+[B<-verify_name name>]
+[B<-x509_strict>]
 [B<-VAfile file>]
 [B<-validity_period n>]
 [B<-status_age n>]
@@ -40,6 +70,7 @@ B<openssl> B<ocsp>
 [B<-no_cert_verify>]
 [B<-no_chain>]
 [B<-no_cert_checks>]
+[B<-no_explicit>]
 [B<-port num>]
 [B<-index file>]
 [B<-CA file>]
@@ -133,10 +164,39 @@ if the B<host> option is present then the OCSP request is sent to the host
 B<hostname> on port B<port>. B<path> specifies the HTTP path name to use
 or "/" by default.
 
+=item B<-header name=value>
+
+Adds the header B<name> with the specified B<value> to the OCSP request
+that is sent to the responder.
+This may be repeated.
+
+=item B<-timeout seconds>
+
+connection timeout to the OCSP responder in seconds
+
 =item B<-CAfile file>, B<-CApath pathname>
 
 file or pathname containing trusted CA certificates. These are used to verify
 the signature on the OCSP response.
+
+=item B<-no-CAfile>
+
+Do not load the trusted CA certificates from the default file location
+
+=item B<-no-CApath>
+
+Do not load the trusted CA certificates from the default directory location
+
+=item B<-attime>, B<-check_ss_sig>, B<-crl_check>, B<-crl_check_all>,
+B<explicit_policy>, B<-extended_crl>, B<-ignore_critical>, B<-inhibit_any>,
+B<-inhibit_map>, B<-issuer_checks>, B<-partial_chain>, B<-policy>,
+B<-policy_check>, B<-policy_print>, B<-purpose>, B<-suiteB_128>,
+B<-suiteB_128_only>, B<-suiteB_192>, B<-trusted_first>, B<-no_alt_chains>,
+B<-use_deltas>, B<-verify_depth>, B<-verify_email>, B<-verify_hostname>,
+B<-verify_ip>, B<-verify_name>, B<-x509_strict>
+
+Set different certificate verification options.
+See L<B<verify>|verify(1)> manual page for details.
 
 =item B<-verify_other file>
 
@@ -185,6 +245,10 @@ testing purposes.
 do not use certificates in the response as additional untrusted CA
 certificates.
 
+=item B<-no_explicit>
+
+do not explicitly trust the root CA if it is set to be trusted for OCSP signing.
+
 =item B<-no_cert_checks>
 
 don't perform any additional checks on the OCSP response signers certificate.
@@ -207,10 +271,12 @@ information is immediately available. In this case the age of the B<notBefore> f
 is checked to see it is not older than B<age> seconds old. By default this additional
 check is not performed.
 
-=item B<-md5|-sha1|-sha256|-ripemod160|...>
+=item B<-[digest]>
 
 this option sets digest algorithm to use for certificate identification
-in the OCSP request. By default SHA-1 is used. 
+in the OCSP request.
+Any digest supported by the OpenSSL B<dgst> command can be used.
+The default is SHA-1.
 
 =back
 
@@ -297,8 +363,9 @@ CA certificate in the request. If there is a match and the OCSPSigning
 extended key usage is present in the OCSP responder certificate then the
 OCSP verify succeeds.
 
-Otherwise the root CA of the OCSP responders CA is checked to see if it
-is trusted for OCSP signing. If it is the OCSP verify succeeds.
+Otherwise, if B<-no_explicit> is B<not> set the root CA of the OCSP responders
+CA is checked to see if it is trusted for OCSP signing. If it is the OCSP
+verify succeeds.
 
 If none of these checks is successful then the OCSP verify fails.
 
@@ -369,3 +436,9 @@ second file.
 
  openssl ocsp -index demoCA/index.txt -rsigner rcert.pem -CA demoCA/cacert.pem
      -reqin req.der -respout resp.der
+
+=head1 HISTORY
+
+The -no_alt_chains options was first added to OpenSSL 1.1.0.
+
+=cut

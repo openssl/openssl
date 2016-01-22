@@ -1,7 +1,7 @@
 /* cli.cpp  -  Minimal ssleay client for Unix
    30.9.1996, Sampo Kellomaki <sampo@iki.fi> */
 
-/* mangled to work with SSLeay-0.9.0b and OpenSSL 0.9.2b
+/* mangled to work with OpenSSL 0.9.2b
    Simplified to be even more minimal
    12/98 - 4/99 Wade Scholine <wades@mail.cybg.com> */
 
@@ -37,19 +37,17 @@ void main ()
   char     buf [4096];
   SSL_METHOD *meth;
 
-  SSLeay_add_ssl_algorithms();
-  meth = SSLv2_client_method();
+  OpenSSL_add_ssl_algorithms();
+  meth = TLS_client_method();
   SSL_load_error_strings();
   ctx = SSL_CTX_new (meth);                        CHK_NULL(ctx);
 
-  CHK_SSL(err);
-  
   /* ----------------------------------------------- */
   /* Create a socket and connect to server using normal socket calls. */
   
   sd = socket (AF_INET, SOCK_STREAM, 0);       CHK_ERR(sd, "socket");
  
-  memset (&sa, '\0', sizeof(sa));
+  memset(&sa, 0, sizeof(sa));
   sa.sin_family      = AF_INET;
   sa.sin_addr.s_addr = inet_addr ("127.0.0.1");   /* Server IP */
   sa.sin_port        = htons     (1111);          /* Server Port number */

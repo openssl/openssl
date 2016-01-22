@@ -22,7 +22,11 @@
 # [1] and [2], with MOVBE twist suggested by Ilya Albrekht and Max
 # Locktyukhin of Intel Corp. who verified that it reduces shuffles
 # pressure with notable relative improvement, achieving 1.0 cycle per
-# byte processed with 128-bit key on Haswell processor.
+# byte processed with 128-bit key on Haswell processor, 0.74 - on
+# Broadwell, 0.63 - on Skylake... [Mentioned results are raw profiled
+# measurements for favourable packet size, one divisible by 96.
+# Applications using the EVP interface will observe a few percent
+# worse performance.]
 #
 # [1] http://rt.openssl.org/Ticket/Display.html?id=2900&user=guest&pass=guest
 # [2] http://www.intel.com/content/dam/www/public/us/en/documents/software-support/enabling-high-performance-gcm.pdf
@@ -51,6 +55,10 @@ if (!$avx && $win64 && ($flavour =~ /nasm/ || $ENV{ASM} =~ /nasm/) &&
 if (!$avx && $win64 && ($flavour =~ /masm/ || $ENV{ASM} =~ /ml64/) &&
 	    `ml64 2>&1` =~ /Version ([0-9]+)\./) {
 	$avx = ($1>=10) + ($1>=11);
+}
+
+if (!$avx && `$ENV{CC} -v 2>&1` =~ /((?:^clang|LLVM) version|.*based on LLVM) ([3-9]\.[0-9]+)/) {
+	$avx = ($2>=3.0) + ($2>3.0);
 }
 
 open OUT,"| \"$^X\" $xlate $flavour $output";
@@ -88,7 +96,7 @@ _aesni_ctr32_ghash_6x:
 
 .align	32
 .Loop6x:
-	add		\$6<<24,$counter
+	add		\$`6<<24`,$counter
 	jc		.Lhandle_ctr32		# discard $inout[1-5]?
 	vmovdqu		0x00-0x20($Xip),$Hkey	# $Hkey^1
 	  vpaddb	$T2,$inout5,$T1		# next counter value
@@ -516,7 +524,7 @@ _aesni_ctr32_6x:
 	vmovups		0x10-0x80($key),$rndkey
 	lea		0x20-0x80($key),%r12
 	vpxor		$Z0,$T1,$inout0
-	add		\$6<<24,$counter
+	add		\$`6<<24`,$counter
 	jc		.Lhandle_ctr32_2
 	vpaddb		$T2,$T1,$inout1
 	vpaddb		$T2,$inout1,$inout2

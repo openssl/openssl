@@ -30,6 +30,7 @@
 # Core 2(**)	29.6/41.1/14.3		21.9/25.2(***)
 # Nehalem	29.6/40.3/14.6		10.0/11.8
 # Atom		57.3/74.2/32.1		60.9/77.2(***)
+# Silvermont	52.7/64.0/19.5		48.8/60.8(***)
 #
 # (*)	"Hyper-threading" in the context refers rather to cache shared
 #	among multiple cores, than to specifically Intel HTT. As vast
@@ -1059,7 +1060,7 @@ _vpaes_consts:
 .Lk_dsbo:	# decryption sbox final output
 	.quad	0x1387EA537EF94000, 0xC7AA6DB9D4943E2D
 	.quad	0x12D7560F93441D00, 0xCA4B8159D8C58E9C
-.asciz	"Vector Permutaion AES for x86_64/SSSE3, Mike Hamburg (Stanford University)"
+.asciz	"Vector Permutation AES for x86_64/SSSE3, Mike Hamburg (Stanford University)"
 .align	64
 .size	_vpaes_consts,.-_vpaes_consts
 ___

@@ -40,7 +40,7 @@ Any of the following flags (ored together) can be passed in the B<flags>
 parameter.
 
 If B<PKCS7_REUSE_DIGEST> is set then an attempt is made to copy the content
-digest value from the PKCS7 struture: to add a signer to an existing structure.
+digest value from the PKCS7 structure: to add a signer to an existing structure.
 An error occurs if a matching digest value cannot be found to copy. The
 returned PKCS7 structure will be valid and finalized when this flag is set.
 
@@ -77,8 +77,8 @@ structure just added or NULL if an error occurs.
 
 =head1 SEE ALSO
 
-L<ERR_get_error(3)|ERR_get_error(3)>, L<PKCS7_sign(3)|PKCS7_sign(3)>,
-L<PKCS7_final(3)|PKCS7_final(3)>,
+L<ERR_get_error(3)>, L<PKCS7_sign(3)>,
+L<PKCS7_final(3)>,
 
 =head1 HISTORY
 

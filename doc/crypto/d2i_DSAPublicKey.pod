@@ -49,7 +49,7 @@ d2i_DSA_SIG(), i2d_DSA_SIG() decode and encode a DSA signature using a
 B<Dss-Sig-Value> structure as defined in RFC2459.
 
 The usage of all of these functions is similar to the d2i_X509() and
-i2d_X509() described in the L<d2i_X509(3)|d2i_X509(3)> manual page.
+i2d_X509() described in the L<d2i_X509(3)> manual page.
 
 =head1 NOTES
 
@@ -68,13 +68,13 @@ If B<write_params> is zero then only the B<pub_key> field is encoded as an
 B<INTEGER>. If B<write_params> is 1 then a B<SEQUENCE> consisting of the
 B<p>, B<q>, B<g> and B<pub_key> respectively fields are encoded.
 
-The B<DSAPrivateKey> functions also use a non standard structure consiting
+The B<DSAPrivateKey> functions also use a non standard structure consisting
 consisting of a SEQUENCE containing the B<p>, B<q>, B<g> and B<pub_key> and
 B<priv_key> fields respectively.
 
 =head1 SEE ALSO
 
-L<d2i_X509(3)|d2i_X509(3)>
+L<d2i_X509(3)>
 
 =head1 HISTORY
 

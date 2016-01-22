@@ -55,7 +55,7 @@ X509_STORE_CTX_get_error() returns B<X509_V_OK> or an error code.
 
 X509_STORE_CTX_get_error_depth() returns a non-negative error depth.
 
-X509_STORE_CTX_get_current_cert() returns the cerificate which caused the
+X509_STORE_CTX_get_current_cert() returns the certificate which caused the
 error or B<NULL> if no certificate is relevant to the error.
 
 X509_verify_cert_error_string() returns a human readable error string for
@@ -296,7 +296,7 @@ thread safe but will never happen unless an invalid code is passed.
 
 =head1 SEE ALSO
 
-L<X509_verify_cert(3)|X509_verify_cert(3)>
+L<X509_verify_cert(3)>
 
 =head1 HISTORY
 

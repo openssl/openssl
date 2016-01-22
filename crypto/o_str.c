@@ -1,6 +1,7 @@
-/* crypto/o_str.c -*- mode:C; c-file-style: "eay" -*- */
-/* Written by Richard Levitte (richard@levitte.org) for the OpenSSL
- * project 2003.
+/* crypto/o_str.c */
+/*
+ * Written by Richard Levitte (richard@levitte.org) for the OpenSSL project
+ * 2003.
  */
 /* ====================================================================
  * Copyright (c) 2003 The OpenSSL Project.  All rights reserved.
@@ -10,7 +11,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -57,55 +58,140 @@
  */
 
 #include <ctype.h>
+#include <limits.h>
 #include <e_os.h>
-#include "o_str.h"
+#include <openssl/crypto.h>
+#include "internal/cryptlib.h"
+#include "internal/o_str.h"
 
 #if !defined(OPENSSL_IMPLEMENTS_strncasecmp) && \
-    !defined(OPENSSL_SYSNAME_WIN32) && !defined(OPENSSL_SYSNAME_WINCE) && \
+    !defined(OPENSSL_SYS_WIN32) && !defined(OPENSSL_SYS_WINCE) && \
     !defined(NETWARE_CLIB)
 # include <strings.h>
 #endif
 
 int OPENSSL_strncasecmp(const char *str1, const char *str2, size_t n)
-	{
+{
 #if defined(OPENSSL_IMPLEMENTS_strncasecmp)
-	while (*str1 && *str2 && n)
-		{
-		int res = toupper(*str1) - toupper(*str2);
-		if (res) return res < 0 ? -1 : 1;
-		str1++;
-		str2++;
-		n--;
-		}
-	if (n == 0)
-		return 0;
-	if (*str1)
-		return 1;
-	if (*str2)
-		return -1;
-	return 0;
+    while (*str1 && *str2 && n) {
+        int res = toupper(*str1) - toupper(*str2);
+        if (res)
+            return res < 0 ? -1 : 1;
+        str1++;
+        str2++;
+        n--;
+    }
+    if (n == 0)
+        return 0;
+    if (*str1)
+        return 1;
+    if (*str2)
+        return -1;
+    return 0;
 #else
-	/* Recursion hazard warning! Whenever strncasecmp is #defined as
-	 * OPENSSL_strncasecmp, OPENSSL_IMPLEMENTS_strncasecmp must be
-	 * defined as well. */
-	return strncasecmp(str1, str2, n);
+    /*
+     * Recursion hazard warning! Whenever strncasecmp is #defined as
+     * OPENSSL_strncasecmp, OPENSSL_IMPLEMENTS_strncasecmp must be defined as
+     * well.
+     */
+    return strncasecmp(str1, str2, n);
 #endif
-	}
+}
+
 int OPENSSL_strcasecmp(const char *str1, const char *str2)
-	{
+{
 #if defined(OPENSSL_IMPLEMENTS_strncasecmp)
-	return OPENSSL_strncasecmp(str1, str2, (size_t)-1);
+    return OPENSSL_strncasecmp(str1, str2, (size_t)-1);
 #else
-	return strcasecmp(str1, str2);
+    return strcasecmp(str1, str2);
 #endif
-	}
+}
 
-int OPENSSL_memcmp(const void *v1,const void *v2,size_t n)
-	{
-	const unsigned char *c1=v1,*c2=v2;
-	int ret=0;
+int OPENSSL_memcmp(const void *v1, const void *v2, size_t n)
+{
+    const unsigned char *c1 = v1, *c2 = v2;
+    int ret = 0;
 
-	while(n && (ret=*c1-*c2)==0) n--,c1++,c2++;
+    while (n && (ret = *c1 - *c2) == 0)
+        n--, c1++, c2++;
 
-	return ret;
-	}
+    return ret;
+}
+
+char *CRYPTO_strdup(const char *str, const char* file, int line)
+{
+    char *ret;
+
+    if (str == NULL)
+        return NULL;
+    ret = CRYPTO_malloc(strlen(str) + 1, file, line);
+    if (ret != NULL)
+        strcpy(ret, str);
+    return ret;
+}
+
+char *CRYPTO_strndup(const char *str, size_t s, const char* file, int line)
+{
+    const char *cp;
+    size_t maxlen;
+    char *ret;
+
+    if (str == NULL)
+        return NULL;
+
+    /* Get length. */
+    for (cp = str, maxlen = s; maxlen-- != 0 && *cp != '\0'; ++cp)
+        continue;
+    maxlen = cp - str;
+
+    ret = CRYPTO_malloc(maxlen + 1, file, line);
+    if (ret) {
+        memcpy(ret, str, maxlen);
+        ret[maxlen] = '\0';
+    }
+    return ret;
+}
+
+void *CRYPTO_memdup(const void *data, size_t siz, const char* file, int line)
+{
+    void *ret;
+
+    if (data == NULL || siz >= INT_MAX)
+        return NULL;
+
+    ret = CRYPTO_malloc(siz, file, line);
+    if (ret == NULL) {
+        CRYPTOerr(CRYPTO_F_CRYPTO_MEMDUP, ERR_R_MALLOC_FAILURE);
+        return NULL;
+    }
+    return memcpy(ret, data, siz);
+}
+
+size_t OPENSSL_strnlen(const char *str, size_t maxlen)
+{
+    const char *p;
+
+    for (p = str; maxlen-- != 0 && *p != '\0'; ++p) ;
+
+    return p - str;
+}
+
+size_t OPENSSL_strlcpy(char *dst, const char *src, size_t size)
+{
+    size_t l = 0;
+    for (; size > 1 && *src; size--) {
+        *dst++ = *src++;
+        l++;
+    }
+    if (size)
+        *dst = '\0';
+    return l + strlen(src);
+}
+
+size_t OPENSSL_strlcat(char *dst, const char *src, size_t size)
+{
+    size_t l = 0;
+    for (; size > 0 && *dst; size--, dst++)
+        l++;
+    return l + OPENSSL_strlcpy(dst, src, size);
+}

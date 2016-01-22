@@ -4,6 +4,7 @@
 
 EVP_PKEY_set1_RSA, EVP_PKEY_set1_DSA, EVP_PKEY_set1_DH, EVP_PKEY_set1_EC_KEY,
 EVP_PKEY_get1_RSA, EVP_PKEY_get1_DSA, EVP_PKEY_get1_DH, EVP_PKEY_get1_EC_KEY,
+EVP_PKEY_get0_RSA, EVP_PKEY_get0_DSA, EVP_PKEY_get0_DH, EVP_PKEY_get0_EC_KEY,
 EVP_PKEY_assign_RSA, EVP_PKEY_assign_DSA, EVP_PKEY_assign_DH, EVP_PKEY_assign_EC_KEY,
 EVP_PKEY_type - EVP_PKEY assignment functions.
 
@@ -21,6 +22,11 @@ EVP_PKEY_type - EVP_PKEY assignment functions.
  DH *EVP_PKEY_get1_DH(EVP_PKEY *pkey);
  EC_KEY *EVP_PKEY_get1_EC_KEY(EVP_PKEY *pkey);
 
+ RSA *EVP_PKEY_get0_RSA(EVP_PKEY *pkey);
+ DSA *EVP_PKEY_get0_DSA(EVP_PKEY *pkey);
+ DH *EVP_PKEY_get0_DH(EVP_PKEY *pkey);
+ EC_KEY *EVP_PKEY_get0_EC_KEY(EVP_PKEY *pkey);
+
  int EVP_PKEY_assign_RSA(EVP_PKEY *pkey,RSA *key);
  int EVP_PKEY_assign_DSA(EVP_PKEY *pkey,DSA *key);
  int EVP_PKEY_assign_DH(EVP_PKEY *pkey,DH *key);
@@ -37,7 +43,13 @@ EVP_PKEY_get1_RSA(), EVP_PKEY_get1_DSA(), EVP_PKEY_get1_DH() and
 EVP_PKEY_get1_EC_KEY() return the referenced key in B<pkey> or
 B<NULL> if the key is not of the correct type.
 
-EVP_PKEY_assign_RSA() EVP_PKEY_assign_DSA(), EVP_PKEY_assign_DH()
+EVP_PKEY_get0_RSA(), EVP_PKEY_get0_DSA(), EVP_PKEY_get0_DH() and
+EVP_PKEY_get0_EC_KEY() also return the referenced key in B<pkey> or
+B<NULL> if the key is not of the correct type but the reference
+count of the returned key is B<not> incremented and so must not
+be freed up after use.
+
+EVP_PKEY_assign_RSA(), EVP_PKEY_assign_DSA(), EVP_PKEY_assign_DH()
 and EVP_PKEY_assign_EC_KEY() also set the referenced key to B<key>
 however these use the supplied B<key> internally and so B<key>
 will be freed when the parent B<pkey> is freed.
@@ -54,8 +66,8 @@ In accordance with the OpenSSL naming convention the key obtained
 from or assigned to the B<pkey> using the B<1> functions must be
 freed as well as B<pkey>.
 
-EVP_PKEY_assign_RSA() EVP_PKEY_assign_DSA(), EVP_PKEY_assign_DH()
-EVP_PKEY_assign_EC_KEY() are implemented as macros.
+EVP_PKEY_assign_RSA(), EVP_PKEY_assign_DSA(), EVP_PKEY_assign_DH()
+and EVP_PKEY_assign_EC_KEY() are implemented as macros.
 
 =head1 RETURN VALUES
 
@@ -66,12 +78,12 @@ EVP_PKEY_get1_RSA(), EVP_PKEY_get1_DSA(), EVP_PKEY_get1_DH() and
 EVP_PKEY_get1_EC_KEY() return the referenced key or B<NULL> if 
 an error occurred.
 
-EVP_PKEY_assign_RSA() EVP_PKEY_assign_DSA(), EVP_PKEY_assign_DH()
+EVP_PKEY_assign_RSA(), EVP_PKEY_assign_DSA(), EVP_PKEY_assign_DH()
 and EVP_PKEY_assign_EC_KEY() return 1 for success and 0 for failure.
 
 =head1 SEE ALSO
 
-L<EVP_PKEY_new(3)|EVP_PKEY_new(3)>
+L<EVP_PKEY_new(3)>
 
 =head1 HISTORY
 

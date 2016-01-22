@@ -47,8 +47,8 @@ sub round2_step
     $code .= " mov	%edx,		%r12d		/* (NEXT STEP) z' = %edx */\n" if ($pos == -1);
     $code .= <<EOF;
 	not	%r11d				/* not z */
-	lea	$T_i($dst,%r10d),$dst		/* Const + dst + ... */
 	and	$x,		%r12d		/* x & z */
+	lea	$T_i($dst,%r10d),$dst		/* Const + dst + ... */
 	and	$y,		%r11d		/* y & (not z) */
 	mov	$k_next*4(%rsi),%r10d		/* (NEXT STEP) X[$k_next] */
 	or	%r11d,		%r12d		/* (y & (not z)) | (x & z) */
@@ -65,6 +65,7 @@ EOF
 #   %r10d = X[k_next]
 #   %r11d = y' (copy of y for the next step)
 # Each round3_step() takes about 4.2 clocks (8 instructions, 1.9 IPC)
+{ my $round3_alter=0;
 sub round3_step
 {
     my ($pos, $dst, $x, $y, $z, $k_next, $T_i, $s) = @_;
@@ -75,10 +76,20 @@ sub round3_step
 	mov	$k_next*4(%rsi),%r10d		/* (NEXT STEP) X[$k_next] */
 	xor	$x,		%r11d		/* x ^ ... */
 	add	%r11d,		$dst		/* dst += ... */
+EOF
+    $code .= <<EOF if ($round3_alter);
 	rol	\$$s,		$dst		/* dst <<< s */
 	mov	$x,		%r11d		/* (NEXT STEP) y' = $x */
+EOF
+    $code .= <<EOF if (!$round3_alter);
+	mov	$x,		%r11d		/* (NEXT STEP) y' = $x */
+	rol	\$$s,		$dst		/* dst <<< s */
+EOF
+    $code .= <<EOF;
 	add	$x,		$dst		/* dst += x */
 EOF
+    $round3_alter^=1;
+}
 }
 
 # round4_step() does:
@@ -105,6 +116,7 @@ sub round4_step
 EOF
 }
 
+no warnings qw(uninitialized);
 my $flavour = shift;
 my $output  = shift;
 if ($flavour =~ /\./) { $output = $flavour; undef $flavour; }
@@ -116,7 +128,6 @@ $0 =~ m/(.*[\/\\])[^\/\\]+$/; my $dir=$1; my $xlate;
 ( $xlate="${dir}../../perlasm/x86_64-xlate.pl" and -f $xlate) or
 die "can't locate x86_64-xlate.pl";
 
-no warnings qw(uninitialized);
 open OUT,"| \"$^X\" $xlate $flavour $output";
 *STDOUT=*OUT;
 

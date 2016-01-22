@@ -35,6 +35,8 @@ $::code.=<<___;
 .align	32
 ${alg}${bits}_t4_cbc_encrypt:
 	save		%sp, -$::frame, %sp
+	cmp		$len, 0
+	be,pn		$::size_t_cc, .L${bits}_cbc_enc_abort
 	sub		$inp, $out, $blk_init	! $inp!=$out
 ___
 $::code.=<<___ if (!$::evp);
@@ -123,6 +125,7 @@ $::code.=<<___ if (!$::evp);
 	std		%f2, [$ivec + 8]
 ___
 $::code.=<<___;
+.L${bits}_cbc_enc_abort:
 	ret
 	restore
 
@@ -249,6 +252,8 @@ $::code.=<<___;
 .align	32
 ${alg}${bits}_t4_cbc_decrypt:
 	save		%sp, -$::frame, %sp
+	cmp		$len, 0
+	be,pn		$::size_t_cc, .L${bits}_cbc_dec_abort
 	sub		$inp, $out, $blk_init	! $inp!=$out
 ___
 $::code.=<<___ if (!$::evp);
@@ -341,6 +346,7 @@ $::code.=<<___ if (!$::evp);
 	std		%f14, [$ivec + 8]
 ___
 $::code.=<<___;
+.L${bits}_cbc_dec_abort:
 	ret
 	restore
 
@@ -1243,6 +1249,7 @@ $code.=<<___;
 	fxor		%f8,  %f4, %f4
 	fxor		%f10, %f6, %f6
 
+	subcc		$len, 2, $len
 	stda		%f0, [$out]0xe2		! ASI_BLK_INIT, T4-specific
 	add		$out, 8, $out
 	stda		%f2, [$out]0xe2		! ASI_BLK_INIT, T4-specific

@@ -33,14 +33,14 @@ is also set.
 
 If the B<PKCS7_STREAM> flag is set streaming is performed. This flag should
 only be set if B<PKCS7_STREAM> was also set in the previous call to
-PKCS7_sign() or B<PKCS7_encrypt()>.
+PKCS7_sign() or PKCS7_encrypt().
 
 If cleartext signing is being used and B<PKCS7_STREAM> not set then
 the data must be read twice: once to compute the signature in PKCS7_sign()
 and once to output the S/MIME message.
 
 If streaming is performed the content is output in BER format using indefinite
-length constructuted encoding except in the case of signed data with detached
+length constructed encoding except in the case of signed data with detached
 content where the content is absent and DER format is used.
 
 =head1 BUGS
@@ -54,12 +54,8 @@ SMIME_write_PKCS7() returns 1 for success or 0 for failure.
 
 =head1 SEE ALSO
 
-L<ERR_get_error(3)|ERR_get_error(3)>, L<PKCS7_sign(3)|PKCS7_sign(3)>,
-L<PKCS7_verify(3)|PKCS7_verify(3)>, L<PKCS7_encrypt(3)|PKCS7_encrypt(3)>
-L<PKCS7_decrypt(3)|PKCS7_decrypt(3)>
-
-=head1 HISTORY
-
-SMIME_write_PKCS7() was added to OpenSSL 0.9.5
+L<ERR_get_error(3)>, L<PKCS7_sign(3)>,
+L<PKCS7_verify(3)>, L<PKCS7_encrypt(3)>
+L<PKCS7_decrypt(3)>
 
 =cut

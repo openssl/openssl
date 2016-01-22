@@ -31,11 +31,11 @@ i2d_CMS_bio_stream() returns 1 for success or 0 for failure.
 
 =head1 SEE ALSO
 
-L<ERR_get_error(3)|ERR_get_error(3)>, L<CMS_sign(3)|CMS_sign(3)>,
-L<CMS_verify(3)|CMS_verify(3)>, L<CMS_encrypt(3)|CMS_encrypt(3)>
-L<CMS_decrypt(3)|CMS_decrypt(3)>,
-L<SMIME_write_CMS(3)|SMIME_write_CMS(3)>,
-L<PEM_write_bio_CMS_stream(3)|PEM_write_bio_CMS_stream(3)>
+L<ERR_get_error(3)>, L<CMS_sign(3)>,
+L<CMS_verify(3)>, L<CMS_encrypt(3)>
+L<CMS_decrypt(3)>,
+L<SMIME_write_CMS(3)>,
+L<PEM_write_bio_CMS_stream(3)>
 
 =head1 HISTORY
 
