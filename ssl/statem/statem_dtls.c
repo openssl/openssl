@@ -1066,7 +1066,7 @@ int dtls1_get_queue_priority(unsigned short seq, int is_ccs)
 
 int dtls1_retransmit_buffered_messages(SSL *s)
 {
-    pqueue sent = s->d1->sent_messages;
+    pqueue *sent = s->d1->sent_messages;
     piterator iter;
     pitem *item;
     hm_fragment *frag;

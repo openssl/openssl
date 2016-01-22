@@ -119,7 +119,6 @@
 #include "../ssl_locl.h"
 #include <openssl/evp.h>
 #include <openssl/buffer.h>
-#include <openssl/pqueue.h>
 #include <openssl/rand.h>
 #include "record_locl.h"
 
@@ -165,9 +164,9 @@ void DTLS_RECORD_LAYER_clear(RECORD_LAYER *rl)
     DTLS_RECORD_LAYER *d;
     pitem *item = NULL;
     DTLS1_RECORD_DATA *rdata;
-    pqueue unprocessed_rcds;
-    pqueue processed_rcds;
-    pqueue buffered_app_data;
+    pqueue *unprocessed_rcds;
+    pqueue *processed_rcds;
+    pqueue *buffered_app_data;
 
     d = rl->d;
     

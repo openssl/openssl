@@ -292,7 +292,6 @@ $crypto.=" include/openssl/comp.h" ; # unless $no_comp;
 $crypto.=" include/openssl/ocsp.h";
 $crypto.=" include/openssl/ui.h";
 #$crypto.=" include/openssl/store.h";
-$crypto.=" include/openssl/pqueue.h";
 $crypto.=" include/openssl/cms.h";
 $crypto.=" include/openssl/jpake.h";
 $crypto.=" include/openssl/srp.h";
