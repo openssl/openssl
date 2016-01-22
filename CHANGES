@@ -4,6 +4,27 @@
 
  Changes between 1.0.2e and 1.1.0  [xx XXX xxxx]
 
+  *) To clarify their intended purposes, the Configure options
+     --prefix and --openssldir change their semantics, and become more
+     straightforward and less interdependent.
+
+     --prefix shall be used exclusively to give the location INSTALLTOP
+     where programs, scripts, libraries, include files and manuals are
+     going to be installed.  The default is now /usr/local.
+
+     --openssldir shall be used exclusively to give the default
+     location OPENSSLDIR where certificates, private keys, CRLs are
+     managed.  This is also where the default openssl.cnf gets
+     installed.
+     If the directory given with this option is a relative path, the
+     values of both the --prefix value and the --openssldir value will
+     be combined to become OPENSSLDIR.
+     The default for --openssldir is INSTALLTOP/ssl.
+
+     Anyone who uses --openssldir to specify where OpenSSL is to be
+     installed MUST change to use --prefix instead.
+     [Richard Levitte]
+
   *) The GOST engine was out of date and therefore it has been removed. An up
      to date GOST engine is now being maintained in an external repository.
      See: https://wiki.openssl.org/index.php/Binaries. Libssl still retains
