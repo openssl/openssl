@@ -29,8 +29,7 @@ install:	FORCE.install
 		cd install; \
 			make -f unix/makefile CFLAGS='-I. -DPROTOTYPES=1 -O -c' RSAREFLIB=librsaref.a librsaref.a
 
-FORCE.update:
-update:		FORCE.update
+generate:
 		perl ../../../util/mkerr.pl -conf rsaref.ec \
 			-nostatic -staticloader -write rsaref.c
 

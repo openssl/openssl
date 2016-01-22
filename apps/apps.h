@@ -443,12 +443,10 @@ EVP_PKEY *load_key(const char *file, int format, int maybe_stdin,
                    const char *pass, ENGINE *e, const char *key_descrip);
 EVP_PKEY *load_pubkey(const char *file, int format, int maybe_stdin,
                       const char *pass, ENGINE *e, const char *key_descrip);
-STACK_OF(X509) *load_certs(const char *file, int format,
-                           const char *pass, ENGINE *e,
-                           const char *cert_descrip);
-STACK_OF(X509_CRL) *load_crls(const char *file, int format,
-                              const char *pass, ENGINE *e,
-                              const char *cert_descrip);
+int load_certs(const char *file, STACK_OF(X509) **certs, int format,
+               const char *pass, ENGINE *e, const char *cert_descrip);
+int load_crls(const char *file, STACK_OF(X509_CRL) **crls, int format,
+              const char *pass, ENGINE *e, const char *cert_descrip);
 X509_STORE *setup_verify(char *CAfile, char *CApath,
                          int noCAfile, int noCApath);
 int ctx_set_verify_locations(SSL_CTX *ctx, const char *CAfile,

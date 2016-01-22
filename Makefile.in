@@ -132,7 +132,6 @@ FIPSCANLIB=
 BASEADDR=
 
 DIRS=   crypto ssl engines apps test tools
-ENGDIRS= ccgost
 SHLIBDIRS= crypto ssl
 INSTALL_SUBS= engines apps tools
 
@@ -212,7 +211,7 @@ BUILDENV=	LC_ALL=C PLATFORM='$(PLATFORM)' PROCESSOR='$(PROCESSOR)'\
 		AS='$(CC)' ASFLAG='$(CFLAG) -c'			\
 		AR='$(AR)' NM='$(NM)' RANLIB='$(RANLIB)'	\
 		CROSS_COMPILE='$(CROSS_COMPILE)'	\
-		PERL='$(PERL)' ENGDIRS='$(ENGDIRS)'		\
+		PERL='$(PERL)'	\
 		SDIRS='$(SDIRS)' LIBRPATH='$(INSTALLTOP)/$(LIBDIR)'	\
 		INSTALL_PREFIX='$(INSTALL_PREFIX)'		\
 		INSTALLTOP='$(INSTALLTOP)' OPENSSLDIR='$(OPENSSLDIR)'	\
@@ -436,8 +435,6 @@ rehash.time: certs build_apps
 
 test:   tests
 
-test_ordinals:
-	TOP=$(TOP) PERL=$(PERL) $(PERL) test/run_tests.pl test_ordinals
 
 tests: rehash
 	@(cd test && echo "testing..." && \
@@ -453,12 +450,6 @@ list-tests:
 report:
 	@$(PERL) util/selftest.pl
 
-update: errors util/libeay.num util/ssleay.num TABLE test_ordinals
-	@set -e; target=update; $(RECURSIVE_BUILD_CMD)
-
-depend:
-	@set -e; target=depend; $(RECURSIVE_BUILD_CMD)
-
 tags TAGS: FORCE
 	rm -f TAGS tags
 	-ctags -R .
@@ -466,17 +457,29 @@ tags TAGS: FORCE
 
 FORCE:
 
+depend:
+	@set -e; target=depend; $(RECURSIVE_BUILD_CMD)
+
+update: generate errors ordinals depend
+
+generate:
+	(cd apps && $(MAKE) generate)
+	(cd crypto/bn && $(MAKE) generate)
+	(cd crypto/objects && $(MAKE) generate)
+
 errors:
 	$(PERL) util/ck_errf.pl -strict */*.c */*/*.c
 	$(PERL) util/mkerr.pl -recurse -write
 	(cd engines; $(MAKE) PERL=$(PERL) errors)
 	(cd crypto/ct; $(MAKE) PERL=$(PERL) errors)
 
+ordinals: util/libeay.num util/ssleay.num test_ordinals TABLE
 util/libeay.num::
 	$(PERL) util/mkdef.pl crypto update
-
 util/ssleay.num::
 	$(PERL) util/mkdef.pl ssl update
+test_ordinals:
+	TOP=$(TOP) PERL=$(PERL) $(PERL) test/run_tests.pl test_ordinals
 
 TABLE: Configure Configurations/*.conf
 	(echo 'Output of `Configure TABLE'"':"; \

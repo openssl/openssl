@@ -78,7 +78,7 @@ int X509_certificate_type(X509 *x, EVP_PKEY *pkey)
     if (pk == NULL)
         return (0);
 
-    switch (pk->type) {
+    switch (EVP_PKEY_id(pk)) {
     case EVP_PKEY_RSA:
         ret = EVP_PK_RSA | EVP_PKT_SIGN;
 /*              if (!sign only extension) */

@@ -1992,6 +1992,7 @@ void ERR_load_SSL_strings(void);
 # define SSL_F_SSL3_SETUP_KEY_BLOCK                       157
 # define SSL_F_SSL3_SETUP_READ_BUFFER                     156
 # define SSL_F_SSL3_SETUP_WRITE_BUFFER                    291
+# define SSL_F_SSL3_SHUTDOWN                              396
 # define SSL_F_SSL3_WRITE_BYTES                           158
 # define SSL_F_SSL3_WRITE_PENDING                         159
 # define SSL_F_SSL_ACCEPT                                 390
@@ -2344,6 +2345,7 @@ void ERR_load_SSL_strings(void);
 # define SSL_R_SCSV_RECEIVED_WHEN_RENEGOTIATING           345
 # define SSL_R_SERVERHELLO_TLSEXT                         275
 # define SSL_R_SESSION_ID_CONTEXT_UNINITIALIZED           277
+# define SSL_R_SHUTDOWN_WHILE_IN_INIT                     407
 # define SSL_R_SIGNATURE_ALGORITHMS_ERROR                 360
 # define SSL_R_SIGNATURE_FOR_NON_SIGNING_CERTIFICATE      220
 # define SSL_R_SRP_A_CALC                                 361

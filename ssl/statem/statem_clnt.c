@@ -1683,7 +1683,7 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
 #ifdef SSL_DEBUG
             fprintf(stderr, "USING TLSv1.2 HASH %s\n", EVP_MD_name(md));
 #endif
-        } else if (pkey->type == EVP_PKEY_RSA) {
+        } else if (EVP_PKEY_id(pkey) == EVP_PKEY_RSA) {
             md = EVP_md5_sha1();
         } else {
             md = EVP_sha1();
@@ -2191,8 +2191,7 @@ psk_err:
         }
 
         pkey = X509_get0_pubkey(s->session->peer);
-        if ((pkey == NULL) || (pkey->type != EVP_PKEY_RSA)
-            || (pkey->pkey.rsa == NULL)) {
+        if (EVP_PKEY_get0_RSA(pkey) == NULL) {
             SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE,
                    ERR_R_INTERNAL_ERROR);
             goto err;
@@ -2273,9 +2272,7 @@ psk_err:
         } else {
             /* Get the Server Public Key from Cert */
             skey = X509_get0_pubkey(s->session->peer);
-            if ((skey == NULL)
-                || (skey->type != EVP_PKEY_EC)
-                || (skey->pkey.ec == NULL)) {
+            if ((skey == NULL) || EVP_PKEY_get0_EC_KEY(skey) == NULL) {
                 SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE,
                        ERR_R_INTERNAL_ERROR);
                 goto err;
@@ -2609,10 +2606,12 @@ int tls_construct_client_verify(SSL *s)
         goto err;
     }
 #ifndef OPENSSL_NO_GOST
-    if (pkey->type == NID_id_GostR3410_2001
-            || pkey->type == NID_id_GostR3410_2012_256
-            || pkey->type == NID_id_GostR3410_2012_512) {
-        BUF_reverse(p + 2, NULL, u);
+    {
+        int pktype = EVP_PKEY_id(pkey);
+        if (pktype == NID_id_GostR3410_2001
+            || pktype == NID_id_GostR3410_2012_256
+            || pktype == NID_id_GostR3410_2012_512)
+            BUF_reverse(p + 2, NULL, u);
     }
 #endif
 

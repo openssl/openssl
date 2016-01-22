@@ -106,11 +106,9 @@ uninstall:
 	done
 	$(RM) $(INSTALL_PREFIX)$(OPENSSLDIR)/openssl.cnf
 
-update: openssl-vms.cnf local_depend
+generate: openssl-vms.cnf
 
-depend: local_depend
-	@if [ -z "$(THIS)" ]; then $(MAKE) -f $(TOP)/Makefile reflect THIS=$@; fi
-local_depend:
+depend:
 	@[ -z "$(THIS)" ] || $(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(EXE_SRC)
 
 clean:

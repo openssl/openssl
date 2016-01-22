@@ -115,7 +115,6 @@ int verify_main(int argc, char **argv)
     X509_VERIFY_PARAM *vpm = NULL;
     char *prog, *CApath = NULL, *CAfile = NULL;
     int noCApath = 0, noCAfile = 0;
-    char *untfile = NULL, *trustfile = NULL, *crlfile = NULL;
     int vpmtouched = 0, crl_download = 0, show_chain = 0, i = 0, ret = 1;
     OPTION_CHOICE o;
 
@@ -167,13 +166,24 @@ int verify_main(int argc, char **argv)
             noCAfile = 1;
             break;
         case OPT_UNTRUSTED:
-            untfile = opt_arg();
+            /* Zero or more times */
+            if (!load_certs(opt_arg(), &untrusted, FORMAT_PEM, NULL, e,
+                            "untrusted certificates"))
+                goto end;
             break;
         case OPT_TRUSTED:
-            trustfile = opt_arg();
+            /* Zero or more times */
+            noCAfile = 1;
+            noCApath = 1;
+            if (!load_certs(opt_arg(), &trusted, FORMAT_PEM, NULL, e,
+                            "trusted certificates"))
+                goto end;
             break;
         case OPT_CRLFILE:
-            crlfile = opt_arg();
+            /* Zero or more times */
+            if (!load_crls(opt_arg(), &crls, FORMAT_PEM, NULL, e,
+                           "other CRLs"))
+                goto end;
             break;
         case OPT_CRL_DOWNLOAD:
             crl_download = 1;
@@ -182,6 +192,7 @@ int verify_main(int argc, char **argv)
             show_chain = 1;
             break;
         case OPT_ENGINE:
+            /* Specify *before* -trusted/-untrusted/-CRLfile */
             e = setup_engine(opt_arg(), 0);
             break;
         case OPT_VERBOSE:
@@ -191,7 +202,7 @@ int verify_main(int argc, char **argv)
     }
     argc = opt_num_rest();
     argv = opt_rest();
-    if (trustfile && (CAfile || CApath)) {
+    if (trusted != NULL && (CAfile || CApath)) {
         BIO_printf(bio_err,
                    "%s: Cannot use -trusted with -CAfile or -CApath\n",
                    prog);
@@ -206,26 +217,6 @@ int verify_main(int argc, char **argv)
         X509_STORE_set1_param(store, vpm);
 
     ERR_clear_error();
-
-    if (untfile) {
-        untrusted = load_certs(untfile, FORMAT_PEM,
-                               NULL, e, "untrusted certificates");
-        if (!untrusted)
-            goto end;
-    }
-
-    if (trustfile) {
-        trusted = load_certs(trustfile, FORMAT_PEM,
-                             NULL, e, "trusted certificates");
-        if (!trusted)
-            goto end;
-    }
-
-    if (crlfile) {
-        crls = load_crls(crlfile, FORMAT_PEM, NULL, e, "other CRLs");
-        if (!crls)
-            goto end;
-    }
 
     if (crl_download)
         store_setup_crl_download(store);

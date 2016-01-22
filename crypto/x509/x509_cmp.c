@@ -367,8 +367,8 @@ static int check_suite_b(EVP_PKEY *pkey, int sign_nid, unsigned long *pflags)
 {
     const EC_GROUP *grp = NULL;
     int curve_nid;
-    if (pkey && pkey->type == EVP_PKEY_EC)
-        grp = EC_KEY_get0_group(pkey->pkey.ec);
+    if (pkey && EVP_PKEY_id(pkey) == EVP_PKEY_EC)
+        grp = EC_KEY_get0_group(EVP_PKEY_get0_EC_KEY(pkey));
     if (!grp)
         return X509_V_ERR_SUITE_B_INVALID_ALGORITHM;
     curve_nid = EC_GROUP_get_curve_name(grp);
@@ -398,17 +398,29 @@ int X509_chain_check_suiteb(int *perror_depth, X509 *x, STACK_OF(X509) *chain,
                             unsigned long flags)
 {
     int rv, i, sign_nid;
-    EVP_PKEY *pk = NULL;
-    unsigned long tflags;
+    EVP_PKEY *pk;
+    unsigned long tflags = flags;
+
     if (!(flags & X509_V_FLAG_SUITEB_128_LOS))
         return X509_V_OK;
-    tflags = flags;
+
     /* If no EE certificate passed in must be first in chain */
     if (x == NULL) {
         x = sk_X509_value(chain, 0);
         i = 1;
     } else
         i = 0;
+
+    pk = X509_get0_pubkey(x);
+
+    /*
+     * With DANE-EE(3) success, or DANE-EE(3)/PKIX-EE(1) failure we don't build
+     * a chain all, just report trust success or failure, but must also report
+     * Suite-B errors if applicable.  This is indicated via a NULL chain
+     * pointer.  All we need to do is check the leaf key algorithm.
+     */
+    if (chain == NULL)
+        return check_suite_b(pk, -1, &tflags);
 
     if (X509_get_version(x) != 2) {
         rv = X509_V_ERR_SUITE_B_INVALID_VERSION;
@@ -417,7 +429,6 @@ int X509_chain_check_suiteb(int *perror_depth, X509 *x, STACK_OF(X509) *chain,
         goto end;
     }
 
-    pk = X509_get0_pubkey(x);
     /* Check EE key only */
     rv = check_suite_b(pk, -1, &tflags);
     if (rv != X509_V_OK) {
