@@ -201,8 +201,8 @@ void dtls1_free(SSL *s)
 
 void dtls1_clear(SSL *s)
 {
-    pqueue buffered_messages;
-    pqueue sent_messages;
+    pqueue *buffered_messages;
+    pqueue *sent_messages;
     unsigned int mtu;
     unsigned int link_mtu;
 
