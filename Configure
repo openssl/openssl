@@ -1131,7 +1131,7 @@ $config{export_var_as_fn}	=0;
 my $def_int="unsigned int";
 $config{rc4_int}		=$def_int;
 $config{rc2_int}		=$def_int;
-($config{b64l},$config{b64},$config{b32},$config{b16},$config{b8})=(0,0,1,0,0);
+($config{b64l},$config{b64},$config{b32})=(0,0,1);
 
 foreach (sort split(/\s+/,$target{bn_ops})) {
     $config{bn_ll}=1				if /BN_LLONG/;
@@ -1295,8 +1295,6 @@ print "\n";
 print "SIXTY_FOUR_BIT_LONG mode\n" if $config{b64l};
 print "SIXTY_FOUR_BIT mode\n" if $config{b64};
 print "THIRTY_TWO_BIT mode\n" if $config{b32};
-print "SIXTEEN_BIT mode\n" if $config{b16};
-print "EIGHT_BIT mode\n" if $config{b8};
 print "BN_LLONG mode\n" if $config{bn_ll};
 print "RC4 uses $config{rc4_int}\n" if $config{rc4_int} != $def_int;
 print "RC2 uses $config{rc2_int}\n" if $config{rc2_int} != $def_int;
