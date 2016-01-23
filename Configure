@@ -275,7 +275,6 @@ my @disablables = (
     "ec_nistp_64_gcc_128",
     "engine",
     "err",			# Really???
-    "gost",
     "heartbeats",
     "hmac",
     "hw(-.+)?",
@@ -358,9 +357,7 @@ my @disable_cascades = (
     "zlib"		=> [ "zlib-dynamic" ],
     "rijndael"		=> [ "aes" ],
     "des"		=> [ "mdc2" ],
-    "ec"		=> [ "ecdsa", "ecdh", "gost" ],
-    "dsa"		=> [ "gost" ],
-    "dh"		=> [ "gost" ],
+    "ec"		=> [ "ecdsa", "ecdh" ],
     "psk"		=> [ "jpake" ],
 
     "dgram"		=> [ "dtls" ],
@@ -761,8 +758,6 @@ foreach (sort (keys %disabled))
 		{ $no_sse2 = 1; }
 	elsif (/^engine$/)
 		{ @{$config{dirs}} = grep !/^engine$/, @{$config{dirs}}; }
-	elsif (/^gost$/)
-		{ @{$config{engdirs}} = grep !/^ccgost$/, @{$config{engdirs}}; }
 	else
 		{
 		my ($ALGO, $algo);
