@@ -290,7 +290,7 @@ In each table entry, the following keys are significant:
 
 
 Historically, the target configurations came in form of a string with
-values separated by colons.  This use is deprecated, although
-currently somewhat supported.  The string form looks like this:
+values separated by colons.  This use is deprecated.  The string form
+looked like this:
 
    "target" => "{cc}:{cflags}:{unistd}:{thread_cflag}:{sys_id}:{lflags}:{bn_ops}:{cpuid_obj}:{bn_obj}:{ec_obj}:{des_obj}:{aes_obj}:{bf_obj}:{md5_obj}:{sha1_obj}:{cast_obj}:{rc4_obj}:{rmd160_obj}:{rc5_obj}:{wp_obj}:{cmll_obj}:{modes_obj}:{engines_obj}:{perlasm_scheme}:{dso_scheme}:{shared_target}:{shared_cflag}:{shared_ldflag}:{shared_extension}:{ranlib}:{arflags}:{multilib}"
