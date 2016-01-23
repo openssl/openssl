@@ -115,17 +115,13 @@
 #include <openssl/rand.h>
 
 /*
- * NB: these functions have been "upgraded", the deprecated versions (which
- * are compatibility wrappers using these functions) are in bn_depr.c. -
- * Geoff
- */
-
-/*
  * The quick sieve algorithm approach to weeding out primes is Philip
  * Zimmermann's, as implemented in PGP.  I have had a read of his comments
  * and implemented my own version.
  */
 #include "bn_prime.h"
+
+#define NUMPRIMES OSSL_NELEM(primes)
 
 static int witness(BIGNUM *w, const BIGNUM *a, const BIGNUM *a1,
                    const BIGNUM *a1_odd, int k, BN_CTX *ctx,
