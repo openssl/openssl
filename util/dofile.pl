@@ -83,7 +83,7 @@ sub broken {
 my $prev_linecount = 0;
 my $text =
     @ARGV
-    ? join("", map { my $x = my $y = Text::Template::_load_text($_);
+    ? join("", map { my $x = Text::Template::_load_text($_);
                      my $linecount = $x =~ tr/\n//;
                      $prev_linecount = ($linecount += $prev_linecount);
                      $lines{$linecount} = $_;
