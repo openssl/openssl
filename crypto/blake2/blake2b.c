@@ -20,6 +20,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <stdio.h>
+#include <openssl/crypto.h>
 
 #include "internal/blake2_locl.h"
 #include "blake2_impl.h"
@@ -206,7 +207,7 @@ int BLAKE2b_InitKey(BLAKE2B_CTX *c, const void *key, size_t keylen) {
     memset(block, 0, BLAKE2B_BLOCKBYTES);
     memcpy(block, key, keylen);
     BLAKE2b_Update(c, block, BLAKE2B_BLOCKBYTES);
-    secure_zero_memory(block, BLAKE2B_BLOCKBYTES); /* Burn the key from stack */
+    OPENSSL_cleanse(block, BLAKE2B_BLOCKBYTES); /* Burn the key from stack */
     return 1;
 }
 
@@ -328,8 +329,8 @@ int BLAKE2b_Final(unsigned char *md, BLAKE2B_CTX *c)
     }
 
     memcpy(md, buffer, BLAKE2B_DIGEST_LENGTH);
-    secure_zero_memory(buffer, BLAKE2B_OUTBYTES);
-    secure_zero_memory(c, sizeof(BLAKE2B_CTX));
+    OPENSSL_cleanse(buffer, BLAKE2B_OUTBYTES);
+    OPENSSL_cleanse(c, sizeof(BLAKE2B_CTX));
     return 1;
 }
 
