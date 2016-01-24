@@ -4764,3 +4764,5 @@ TS_STATUS_INFO_get0_status              5158	1_1_0	EXIST::FUNCTION:
 OCSP_resp_get0_produced_at              5159	1_1_0	EXIST::FUNCTION:
 TS_STATUS_INFO_get0_failure_info        5160	1_1_0	EXIST::FUNCTION:
 TS_STATUS_INFO_get0_text                5161	1_1_0	EXIST::FUNCTION:
+EVP_blake2b                             5162	1_1_0	EXIST::FUNCTION:BLAKE2
+EVP_blake2s                             5163	1_1_0	EXIST::FUNCTION:BLAKE2
