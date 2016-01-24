@@ -153,9 +153,9 @@ int pkeyutl_main(int argc, char **argv)
         case OPT_SIGFILE:
             sigfile = opt_arg();
             break;
-	case OPT_ENGINE_IMPL:
-	    engine_impl = 1;
-	    break;
+        case OPT_ENGINE_IMPL:
+            engine_impl = 1;
+            break;
         case OPT_INKEY:
             ctx = init_ctx(&keysize, opt_arg(), keyform, key_type,
                            passinarg, pkey_op, e, engine_impl);
@@ -338,7 +338,7 @@ int pkeyutl_main(int argc, char **argv)
 static EVP_PKEY_CTX *init_ctx(int *pkeysize,
                               char *keyfile, int keyform, int key_type,
                               char *passinarg, int pkey_op, ENGINE *e,
-			      const int engine_impl)
+                              const int engine_impl)
 {
     EVP_PKEY *pkey = NULL;
     EVP_PKEY_CTX *ctx = NULL;
@@ -380,10 +380,10 @@ static EVP_PKEY_CTX *init_ctx(int *pkeysize,
     if (!pkey)
         goto end;
 
- #ifndef OPENSSL_NO_ENGINE
+#ifndef OPENSSL_NO_ENGINE
     if (engine_impl)
         impl = e;
- #endif
+#endif
     
     ctx = EVP_PKEY_CTX_new(pkey, impl);
 
