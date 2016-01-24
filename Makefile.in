@@ -423,7 +423,7 @@ gentests:
 	$(CLEARENV) && $(MAKE) -e $(BUILDENV) TESTS='$(TESTS)' OPENSSL_DEBUG_MEMORY=on generate );
 
 rehash: rehash.time
-rehash.time: certs build_apps
+rehash.time: certs build_apps build_tools
 	@if [ -z "$(CROSS_COMPILE)" ]; then \
 		(OPENSSL="`pwd`/util/opensslwrap.sh"; \
 		[ -x "apps/openssl.exe" ] && OPENSSL="apps/openssl.exe" || :; \

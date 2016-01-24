@@ -150,6 +150,7 @@ my $apitable = {
 
 my $base_target = "BASE";   # The template that all other inherit from
 our %table = ();
+our %config = ();
 
 # Forward declarations ###############################################
 
@@ -172,12 +173,15 @@ foreach (sort glob($pattern) ) {
     &read_config($_);
 }
 
-my $prefix="";
+
+$config{perl};
+$config{prefix}="";
+$config{openssldir}="";
+$config{processor}="";
 my $libdir="";
-my $openssldir="";
 my $exe_ext="";
 my $install_prefix= "$ENV{'INSTALL_PREFIX'}";
-my $cross_compile_prefix="";
+$config{cross_compile_prefix}="";
 my $fipslibdir="/usr/local/ssl/fips-2.0/lib/";
 my $nofipscanistercheck=0;
 my $baseaddr="0xFB00000";
@@ -190,9 +194,7 @@ my $no_asm=0;
 my $no_dso=0;
 my @skip=();
 my $Makefile="Makefile";
-my $processor="";
 my $default_ranlib;
-my $perl;
 my $fips=0;
 
 # Known TLS and DTLS protocols
@@ -308,7 +310,7 @@ my @experimental = ();
 # Note: => pair form used for aesthetics, not to truly make a hash table
 my @disable_cascades = (
     # "what"		=> [ "cascade", ... ]
-    sub { $processor eq "386" }
+    sub { $config{processor} eq "386" }
 			=> [ "sse2" ],
     "ssl"		=> [ "ssl3" ],
     "ssl3-method"	=> [ "ssl3" ],
@@ -318,6 +320,7 @@ my @disable_cascades = (
     "ec"		=> [ "ecdsa", "ecdh", "gost" ],
     "dsa"		=> [ "gost" ],
     "dh"		=> [ "gost" ],
+    "psk"		=> [ "jpake" ],
 
     "dgram"		=> [ "dtls" ],
     "dtls"		=> [ @dtls ],
@@ -387,14 +390,15 @@ my $no_sse2=0;
 
 my $flags="";
 my $depflags="";
-my $openssl_experimental_defines="";
-my $openssl_algorithm_defines="";
-my $openssl_thread_defines="";
-my $openssl_sys_defines="";
-my $openssl_other_defines="";
+$config{openssl_experimental_defines}=[];
+$config{openssl_api_defines}=[];
+$config{openssl_algorithm_defines}=[];
+$config{openssl_thread_defines}=[];
+$config{openssl_sys_defines}=[];
+$config{openssl_other_defines}=[];
 my $libs="";
 my $target="";
-my $options="";
+$config{options}="";
 my $api;
 my $make_depend=0;
 my %withargs=();
@@ -403,36 +407,54 @@ my $build_prefix = "release_";
 my @argvcopy=@ARGV;
 
 if (grep /^reconf(igure)?$/, @argvcopy) {
-    if (open IN, "<$Makefile") {
-	while (<IN>) {
-	    chomp;
-	    if (/^CONFIGURE_ARGS=\s*(.*)\s*/) {
-		my $line = $1;
-		if ($line =~ /^\s*\(/) {
-		    # New form perl expression saved in Makefile, eval it
-		    @argvcopy = eval $line;
-		} else {
-		    # Older form, we split the string and hope for the best
-		    @argvcopy = split /\s+/, $line;
-		}
-		die "Incorrect data to reconfigure, please do a normal configuration\n"
-		    if (grep(/^reconf/,@argvcopy));
-	    } elsif (/^CROSS_COMPILE=\s*(.*)/) {
-		$ENV{CROSS_COMPILE}=$1;
-	    } elsif (/^CC=\s*(?:\$\(CROSS_COMPILE\))?(.*?)$/) {
-		$ENV{CC}=$1;
-	    }
+    if (-f "./configdata.pm") {
+	my $file = "./configdata.pm";
+	unless (my $return = do $file) {
+	    die "couldn't parse $file: $@" if $@;
+            die "couldn't do $file: $!"    unless defined $return;
+            die "couldn't run $file"       unless $return;
 	}
+
+	@argvcopy = defined($configdata::config{perlargv}) ?
+	    @{$configdata::config{perlargv}} : ();
+	die "Incorrect data to reconfigure, please do a normal configuration\n"
+	    if (grep(/^reconf/,@argvcopy));
+	$ENV{CROSS_COMPILE} = $configdata::config{cross_compile_prefix}
+	    if defined($configdata::config{cross_compile_prefix});
+	$ENV{CROSS_COMPILE} = $configdata::config{cc}
+	    if defined($configdata::config{cc});
+
 	print "Reconfiguring with: ", join(" ",@argvcopy), "\n";
 	print "    CROSS_COMPILE = ",$ENV{CROSS_COMPILE},"\n"
 	    if $ENV{CROSS_COMPILE};
 	print "    CC = ",$ENV{CC},"\n" if $ENV{CC};
-	close IN;
+    } elsif (open IN, "<Makefile") {
+        #
+        # THIS SECTION IS TEMPORARY, it helps transitioning from Makefile
+        # centered information gathering the reading configdata.pm
+        #
+        while (<IN>) {
+            chomp;
+            if (/^CONFIGURE_ARGS=\s*(.*)\s*/) {
+                # Older form, we split the string and hope for the best
+                @argvcopy = split /\s+/, $_;
+                die "Incorrect data to reconfigure, please do a normal configuration\n"
+                    if (grep(/^reconf/,@argvcopy));
+            } elsif (/^CROSS_COMPILE=\s*(.*)/) {
+                $ENV{CROSS_COMPILE}=$1;
+            } elsif (/^CC=\s*(?:\$\(CROSS_COMPILE\))?(.*?)$/) {
+                $ENV{CC}=$1;
+            }
+        }
+        #
+        # END OF TEMPORARY SECTION
+        #
     } else {
 	die "Insufficient data to reconfigure, please do a normal configuration\n";
     }
 }
 
+$config{perlargv} = [ @argvcopy ];
 
 my %unsupported_options = ();
 foreach (@argvcopy)
@@ -520,7 +542,7 @@ foreach (@argvcopy)
 		$build_prefix = "release_";
 		}
 	elsif (/^386$/)
-		{ $processor=386; }
+		{ $config{processor}=386; }
 	elsif (/^fips$/)
 		{
 		$fips=1;
@@ -540,7 +562,7 @@ foreach (@argvcopy)
 		{
 		if (/^--prefix=(.*)$/)
 			{
-			$prefix=$1;
+			$config{prefix}=$1;
 			}
 		elsif (/^--api=(.*)$/)
 			{
@@ -552,7 +574,7 @@ foreach (@argvcopy)
 			}
 		elsif (/^--openssldir=(.*)$/)
 			{
-			$openssldir=$1;
+			$config{openssldir}=$1;
 			}
 		elsif (/^--install.prefix=(.*)$/)
 			{
@@ -576,7 +598,7 @@ foreach (@argvcopy)
 			}
 		elsif (/^--cross-compile-prefix=(.*)$/)
 			{
-			$cross_compile_prefix=$1;
+			$config{cross_compile_prefix}=$1;
 			}
 		elsif (/^--config=(.*)$/)
 			{
@@ -609,10 +631,10 @@ foreach (@argvcopy)
 		# we really only write OPTIONS to the Makefile out of
 		# nostalgia.)
 
-		if ($options eq "")
-			{ $options = $_; }
+		if ($config{options} eq "")
+			{ $config{options} = $_; }
 		else
-			{ $options .= " ".$_; }
+			{ $config{options} .= " ".$_; }
 		}
 
         if (defined($api) && !exists $apitable->{$api}) {
@@ -647,35 +669,35 @@ while (@tocheckfor) {
 }
 
 if ($target eq "TABLE") {
-	foreach $target (sort keys %table) {
-		print_table_entry($target, "TABLE");
-	}
-	exit 0;
+    foreach (sort keys %table) {
+	print_table_entry($_, "TABLE");
+    }
+    exit 0;
 }
 
 if ($target eq "LIST") {
-	foreach (sort keys %table) {
-		print;
-		print "\n";
-	}
-	exit 0;
+    foreach (sort keys %table) {
+	print $_,"\n" unless $table{$_}->{template};
+    }
+    exit 0;
 }
 
 if ($target eq "HASH") {
-	print "%table = (\n";
-	foreach (sort keys %table) {
-		print_table_entry($_, "HASH");
-	}
-	exit 0;
+    print "%table = (\n";
+    foreach (sort keys %table) {
+	print_table_entry($_, "HASH");
+    }
+    exit 0;
 }
 
+# Backward compatibility?
 if ($target =~ m/^CygWin32(-.*)$/) {
-	$target = "Cygwin".$1;
+    $target = "Cygwin".$1;
 }
 
 foreach (sort (keys %disabled))
 	{
-	$options .= " no-$_";
+	$config{options} .= " no-$_";
 
 	printf "    no-%-12s %-10s", $_, "[$disabled{$_}]";
 
@@ -700,7 +722,7 @@ foreach (sort (keys %disabled))
 
 		if (/^asm$/ || /^err$/ || /^hw$/ || /^hw-/)
 			{
-			$openssl_other_defines .= "#define OPENSSL_NO_$ALGO\n";
+			push @{$config{openssl_other_defines}}, "OPENSSL_NO_$ALGO";
 			print " OPENSSL_NO_$ALGO";
 
 			if (/^err$/)	{ $flags .= "-DOPENSSL_NO_ERR "; }
@@ -710,7 +732,7 @@ foreach (sort (keys %disabled))
 			{
 			($ALGO,$algo) = ("RMD160","rmd160") if ($algo eq "ripemd");
 
-			$openssl_algorithm_defines .= "#define OPENSSL_NO_$ALGO\n";
+			push @{$config{openssl_algorithm_defines}}, "OPENSSL_NO_$ALGO";
 			print " OPENSSL_NO_$ALGO";
 
 			push @skip, $algo;
@@ -735,7 +757,7 @@ foreach (sort @experimental)
 	($ALGO = $_) =~ tr/[a-z]/[A-Z]/;
 
 	# opensslconf.h will set OPENSSL_NO_... unless OPENSSL_EXPERIMENTAL_... is defined
-	$openssl_experimental_defines .= "#define OPENSSL_NO_$ALGO\n";
+	push @{$config{openssl_experimental_defines}}, "OPENSSL_NO_$ALGO";
 	$exp_cflags .= " -DOPENSSL_EXPERIMENTAL_$ALGO";
 	}
 
@@ -751,7 +773,7 @@ if ($d) {
 	$target = $t;
     }
 }
-
+$config{target} = $target;
 delete $table{$base_target}->{template}; # or the next test will fail.
 my %target = ( %{$table{$base_target}}, resolve_config($target) );
 
@@ -761,21 +783,20 @@ $exe_ext=".exe" if ($target eq "Cygwin" || $target eq "DJGPP" || $target =~ /^mi
 $exe_ext=".nlm" if ($target =~ /netware/);
 $exe_ext=".pm"  if ($target =~ /vos/);
 
-$default_ranlib= &which("ranlib") or $default_ranlib="true";
-$perl=$ENV{'PERL'} or $perl=&which("perl5") or $perl=&which("perl")
-  or $perl="perl";
-my $make = $ENV{'MAKE'} || "make";
+$default_ranlib	= which("ranlib") || "true";
+$config{perl}	= $ENV{'PERL'} || which("perl5") || which("perl") || "perl";
+my $make	= $ENV{'MAKE'} || "make";
 
-$cross_compile_prefix=$ENV{'CROSS_COMPILE'} if $cross_compile_prefix eq "";
+$config{cross_compile_prefix} = $ENV{'CROSS_COMPILE'}
+    if $config{cross_compile_prefix} eq "";
 
-$prefix = "/usr/local" if !$prefix;
-$openssldir = "ssl" if !$openssldir;
-$openssldir = catdir($prefix, $openssldir)
-    unless file_name_is_absolute($openssldir);
-
+$config{prefix} = "/usr/local" if !$config{prefix};
+$config{openssldir} = "ssl" if !$config{openssldir};
+$config{openssldir} = catdir($config{prefix}, $config{openssldir})
+    unless file_name_is_absolute($config{openssldir});
 
 # Allow environment CC to override compiler...
-my $cc = $ENV{CC} || $target{cc};
+$target{cc} = $ENV{CC} || $target{cc};
 
 # For cflags and lflags, add the debug_ or release_ attributes
 # Do it in such a way that no spurious space is appended (hence the grep).
@@ -786,50 +807,20 @@ my $lflags = join(" ",
 		  grep { $_ } ($target{lflags},
 			       $target{$build_prefix."lflags"}));
 
-my $unistd = $target{unistd};
-my $thread_cflag = $target{thread_cflag};
-my $sys_id = $target{sys_id};
-my $bn_ops = $target{bn_ops};
-my $cpuid_obj = $target{cpuid_obj};
-my $bn_obj = $target{bn_obj};
-my $ec_obj = $target{ec_obj};
-my $des_obj = $target{des_obj};
-my $aes_obj = $target{aes_obj};
-my $bf_obj = $target{bf_obj};
-my $md5_obj = $target{md5_obj};
-my $sha1_obj = $target{sha1_obj};
-my $cast_obj = $target{cast_obj};
-my $rc4_obj = $target{rc4_obj};
-my $rmd160_obj = $target{rmd160_obj};
-my $rc5_obj = $target{rc5_obj};
-my $wp_obj = $target{wp_obj};
-my $cmll_obj = $target{cmll_obj};
-my $modes_obj = $target{modes_obj};
-my $engines_obj = $target{engines_obj};
-my $chacha_obj = $target{chacha_obj};
-my $poly1305_obj = $target{poly1305_obj};
-my $blake2_obj = $target{blake2_obj};
-my $perlasm_scheme = $target{perlasm_scheme};
-my $dso_scheme = $target{dso_scheme};
-my $shared_target = $target{shared_target};
-my $shared_cflag = $target{shared_cflag};
-my $shared_ldflag = $target{shared_ldflag};
-my $shared_extension = $target{shared_extension};
-my $ranlib = $ENV{'RANLIB'} || $target{ranlib};
-my $ar = $ENV{'AR'} || "ar";
-my $arflags = $target{arflags};
-my $multilib = $target{multilib};
-my @build_scheme =
-    ref($target{build_scheme}) eq "ARRAY"
-    ? @{$target{build_scheme}} : ( $target{build_scheme} );
+$target{ranlib} = $ENV{'RANLIB'} || $target{ranlib} || $default_ranlib;
+$target{ar} = $ENV{'AR'} || "ar";
+# Make sure build_scheme is consistent.
+$target{build_scheme} = [ $target{build_scheme} ]
+    if ref($target{build_scheme}) ne "ARRAY";
 
-# if $prefix/lib$multilib is not an existing directory, then
+# if $config{prefix}/lib$target{multilib} is not an existing directory, then
 # assume that it's not searched by linker automatically, in
-# which case adding $multilib suffix causes more grief than
+# which case adding $target{multilib} suffix causes more grief than
 # we're ready to tolerate, so don't...
-$multilib="" if !-d "$prefix/lib$multilib";
+$target{multilib}="" if !-d "$config{prefix}/lib$target{multilib}";
 
-$libdir="lib$multilib" if $libdir eq "";
+$libdir="lib$target{multilib}" if $libdir eq "";
+$config{enginesdir}=$config{prefix} . "/" . $libdir  . "/engines";
 
 $cflags = "$cflags$exp_cflags";
 
@@ -838,10 +829,10 @@ my ($prelflags,$postlflags)=split('%',$lflags);
 if (defined($postlflags))	{ $lflags=$postlflags;	}
 else				{ $lflags=$prelflags; undef $prelflags;	}
 
-if ($target =~ /^mingw/ && `$cc --target-help 2>&1` !~ m/\-mno\-cygwin/m)
+if ($target =~ /^mingw/ && `$target{cc} --target-help 2>&1` !~ m/\-mno\-cygwin/m)
 	{
 	$cflags =~ s/\-mno\-cygwin\s*//;
-	$shared_ldflag =~ s/\-mno\-cygwin\s*//;
+	$target{shared_ldflag} =~ s/\-mno\-cygwin\s*//;
 	}
 
 if ($target =~ /linux.*\-mips/ && !$no_asm && $flags !~ /\-m(ips|arch=)/) {
@@ -863,32 +854,32 @@ else			{ $no_user_cflags=1;       }
 # by a define "DSO_<name>" ... we translate the "dso_scheme" config
 # string entry into using the following logic;
 my $dso_cflags;
-if (!$no_dso && $dso_scheme ne "")
+if (!$no_dso && $target{dso_scheme} ne "")
 	{
-	$dso_scheme =~ tr/[a-z]/[A-Z]/;
-	if ($dso_scheme eq "DLFCN")
+	$target{dso_scheme} =~ tr/[a-z]/[A-Z]/;
+	if ($target{dso_scheme} eq "DLFCN")
 		{
 		$dso_cflags = "-DDSO_DLFCN -DHAVE_DLFCN_H";
 		}
-	elsif ($dso_scheme eq "DLFCN_NO_H")
+	elsif ($target{dso_scheme} eq "DLFCN_NO_H")
 		{
 		$dso_cflags = "-DDSO_DLFCN";
 		}
 	else
 		{
-		$dso_cflags = "-DDSO_$dso_scheme";
+		$dso_cflags = "-DDSO_$target{dso_scheme}";
 		}
 	$cflags = "$dso_cflags $cflags";
 	}
 
 my $thread_cflags;
-my $thread_defines;
-if ($thread_cflag ne "(unknown)" && !$no_threads)
+my @thread_defines;
+if ($target{thread_cflag} ne "(unknown)" && !$no_threads)
 	{
 	# If we know how to do it, support threads by default.
 	$threads = 1;
 	}
-if ($thread_cflag eq "(unknown)" && $threads)
+if ($target{thread_cflag} eq "(unknown)" && $threads)
 	{
 	# If the user asked for "threads", [s]he is also expected to
 	# provide any system-dependent compiler options that are
@@ -900,18 +891,18 @@ if ($thread_cflag eq "(unknown)" && $threads)
 		exit(1);
 		}
 	$thread_cflags="-DOPENSSL_THREADS $cflags" ;
-	$thread_defines .= "#define OPENSSL_THREADS\n";
+	push @thread_defines, "OPENSSL_THREADS";
 	}
 else
 	{
-	$thread_cflags="-DOPENSSL_THREADS $thread_cflag $cflags";
-	$thread_defines .= "#define OPENSSL_THREADS\n";
+	$thread_cflags="-DOPENSSL_THREADS $target{thread_cflag} $cflags";
+	push @thread_defines, "OPENSSL_THREADS";
 #	my $def;
-#	foreach $def (split ' ',$thread_cflag)
+#	foreach $def (split ' ',$target{thread_cflag})
 #		{
 #		if ($def =~ s/^-D// && $def !~ /^_/)
 #			{
-#			$thread_defines .= "#define $def\n";
+#			push @thread_defines, "$def";
 #			}
 #		}
 	}
@@ -927,7 +918,7 @@ if ($no_asm)
 if ($threads)
 	{
 	$cflags=$thread_cflags;
-	$openssl_thread_defines .= $thread_defines;
+	push @{$config{openssl_thread_defines}}, @thread_defines;
 	}
 
 if ($zlib)
@@ -957,31 +948,31 @@ if (defined($disabled{"deprecated"})) {
 
 # You will find shlib_mark1 and shlib_mark2 explained in Makefile.in
 my $shared_mark = "";
-if ($shared_target eq "")
+if ($target{shared_target} eq "")
 	{
 	$no_shared_warn = 1 if !$no_shared && !$fips;
 	$no_shared = 1;
 	}
 if (!$no_shared)
 	{
-	if ($shared_cflag ne "")
+	if ($target{shared_cflag} ne "")
 		{
-		$cflags = "$shared_cflag -DOPENSSL_PIC $cflags";
+		$cflags = "$target{shared_cflag} -DOPENSSL_PIC $cflags";
 		}
 	}
 
-if ($build_scheme[0] ne "mk1mf")
+if ($target{build_scheme}->[0] ne "mk1mf")
 	{
 	# add {no-}static-engine to options to allow mkdef.pl to work without extra arguments
 	if ($no_shared)
 		{
-		$openssl_other_defines.="#define OPENSSL_NO_DYNAMIC_ENGINE\n";
-		$options.=" static-engine";
+		push @{$config{openssl_other_defines}}, "OPENSSL_NO_DYNAMIC_ENGINE";
+		$config{options}.=" static-engine";
 		}
 	else
 		{
-		$openssl_other_defines.="#define OPENSSL_NO_STATIC_ENGINE\n";
-		$options.=" no-static-engine";
+		push @{$config{openssl_other_defines}}, "OPENSSL_NO_STATIC_ENGINE";
+		$config{options}.=" no-static-engine";
 		}
 	}
 
@@ -991,7 +982,7 @@ if ($build_scheme[0] ne "mk1mf")
 if ($target =~ /\-icc$/)	# Intel C compiler
 	{
 	my $iccver=0;
-	if (open(FD,"$cc -V 2>&1 |"))
+	if (open(FD,"$target{cc} -V 2>&1 |"))
 		{
 		while(<FD>) { $iccver=$1 if (/Version ([0-9]+)\./); }
 		close(FD);
@@ -1030,128 +1021,186 @@ if ($target =~ /\-icc$/)	# Intel C compiler
 # linker only when --prefix is not /usr.
 if ($target =~ /^BSD\-/)
 	{
-	$shared_ldflag.=" -Wl,-rpath,\$\$(LIBRPATH)" if ($prefix !~ m|^/usr[/]*$|);
+	$target{shared_ldflag}.=" -Wl,-rpath,\$\$(LIBRPATH)" if ($config{prefix} !~ m|^/usr[/]*$|);
 	}
 
-if ($sys_id ne "")
+if ($target{sys_id} ne "")
 	{
-	#$cflags="-DOPENSSL_SYS_$sys_id $cflags";
-	$openssl_sys_defines="#define OPENSSL_SYS_$sys_id\n";
+	#$cflags="-DOPENSSL_SYS_$target{sys_id} $cflags";
+	push @{$config{openssl_sys_defines}}, "OPENSSL_SYS_$target{sys_id}";
 	}
 
-if ($ranlib eq "")
+if ($target{ranlib} eq "")
 	{
-	$ranlib = $default_ranlib;
+	$target{ranlib} = $default_ranlib;
 	}
 
 if (!$no_asm) {
-    $cpuid_obj=$table{BASE}->{cpuid_obj} if ($processor eq "386");
-    $cpuid_obj.=" uplink.o uplink-x86.o" if ($cflags =~ /\-DOPENSSL_USE_APPLINK/);
+    $target{cpuid_obj}=$table{BASE}->{cpuid_obj} if ($config{processor} eq "386");
+    $target{cpuid_obj}.=" uplink.o uplink-x86.o" if ($cflags =~ /\-DOPENSSL_USE_APPLINK/);
 
-    $bn_obj =~ s/\w+-gf2m.o// if (defined($disabled{ec2m}));
+    $target{bn_obj} =~ s/\w+-gf2m.o// if (defined($disabled{ec2m}));
 
     # bn-586 is the only one implementing bn_*_part_words
-    $cflags.=" -DOPENSSL_BN_ASM_PART_WORDS" if ($bn_obj =~ /bn-586/);
-    $cflags.=" -DOPENSSL_IA32_SSE2" if (!$no_sse2 && $bn_obj =~ /86/);
+    $cflags.=" -DOPENSSL_BN_ASM_PART_WORDS" if ($target{bn_obj} =~ /bn-586/);
+    $cflags.=" -DOPENSSL_IA32_SSE2" if (!$no_sse2 && $target{bn_obj} =~ /86/);
 
-    $cflags.=" -DOPENSSL_BN_ASM_MONT" if ($bn_obj =~ /-mont/);
-    $cflags.=" -DOPENSSL_BN_ASM_MONT5" if ($bn_obj =~ /-mont5/);
-    $cflags.=" -DOPENSSL_BN_ASM_GF2m" if ($bn_obj =~ /-gf2m/);
+    $cflags.=" -DOPENSSL_BN_ASM_MONT" if ($target{bn_obj} =~ /-mont/);
+    $cflags.=" -DOPENSSL_BN_ASM_MONT5" if ($target{bn_obj} =~ /-mont5/);
+    $cflags.=" -DOPENSSL_BN_ASM_GF2m" if ($target{bn_obj} =~ /-gf2m/);
 
     if ($fips) {
-	$openssl_other_defines.="#define OPENSSL_FIPS\n";
+	push @{$config{openssl_other_defines}}, "OPENSSL_FIPS";
     }
 
-    if ($sha1_obj =~ /\.o$/) {
-	$cflags.=" -DSHA1_ASM"   if ($sha1_obj =~ /sx86/ || $sha1_obj =~ /sha1/);
-	$cflags.=" -DSHA256_ASM" if ($sha1_obj =~ /sha256/);
-	$cflags.=" -DSHA512_ASM" if ($sha1_obj =~ /sha512/);
-	if ($sha1_obj =~ /sse2/) {
+    if ($target{sha1_obj} =~ /\.o$/) {
+	$cflags.=" -DSHA1_ASM"   if ($target{sha1_obj} =~ /sx86/ || $target{sha1_obj} =~ /sha1/);
+	$cflags.=" -DSHA256_ASM" if ($target{sha1_obj} =~ /sha256/);
+	$cflags.=" -DSHA512_ASM" if ($target{sha1_obj} =~ /sha512/);
+	if ($target{sha1_obj} =~ /sse2/) {
 	    if ($no_sse2) {
-		$sha1_obj =~ s/\S*sse2\S+//;
+		$target{sha1_obj} =~ s/\S*sse2\S+//;
 	    } elsif ($cflags !~ /OPENSSL_IA32_SSE2/) {
 		$cflags.=" -DOPENSSL_IA32_SSE2";
 	    }
 	}
     }
-    if ($md5_obj =~ /\.o$/) {
+    if ($target{md5_obj} =~ /\.o$/) {
 	$cflags.=" -DMD5_ASM";
     }
-    $cast_obj=$table{BASE}->{cast_obj} if (!$no_shared); # CAST assembler is not PIC
-    if ($rmd160_obj =~ /\.o$/) {
+    $target{cast_obj}=$table{BASE}->{cast_obj} if (!$no_shared); # CAST assembler is not PIC
+    if ($target{rmd160_obj} =~ /\.o$/) {
 	$cflags.=" -DRMD160_ASM";
     }
-    if ($aes_obj =~ /\.o$/) {
-	$cflags.=" -DAES_ASM" if ($aes_obj =~ m/\baes\-/);;
+    if ($target{aes_obj} =~ /\.o$/) {
+	$cflags.=" -DAES_ASM" if ($target{aes_obj} =~ m/\baes\-/);;
 	# aes-ctr.o is not a real file, only indication that assembler
 	# module implements AES_ctr32_encrypt...
-	$cflags.=" -DAES_CTR_ASM" if ($aes_obj =~ s/\s*aes\-ctr\.o//);
+	$cflags.=" -DAES_CTR_ASM" if ($target{aes_obj} =~ s/\s*aes\-ctr\.o//);
 	# aes-xts.o indicates presence of AES_xts_[en|de]crypt...
-	$cflags.=" -DAES_XTS_ASM" if ($aes_obj =~ s/\s*aes\-xts\.o//);
-	$aes_obj =~ s/\s*(vpaes|aesni)\-x86\.o//g if ($no_sse2);
-	$cflags.=" -DVPAES_ASM" if ($aes_obj =~ m/vpaes/);
-	$cflags.=" -DBSAES_ASM" if ($aes_obj =~ m/bsaes/);
+	$cflags.=" -DAES_XTS_ASM" if ($target{aes_obj} =~ s/\s*aes\-xts\.o//);
+	$target{aes_obj} =~ s/\s*(vpaes|aesni)\-x86\.o//g if ($no_sse2);
+	$cflags.=" -DVPAES_ASM" if ($target{aes_obj} =~ m/vpaes/);
+	$cflags.=" -DBSAES_ASM" if ($target{aes_obj} =~ m/bsaes/);
     }
-    if ($wp_obj =~ /mmx/ && $processor eq "386") {
-	$wp_obj=$table{BASE}->{wp_obj};
+    if ($target{wp_obj} =~ /mmx/ && $config{processor} eq "386") {
+	$target{wp_obj}=$table{BASE}->{wp_obj};
     } elsif (!$disabled{"whirlpool"}) {
 	$cflags.=" -DWHIRLPOOL_ASM";
     }
-    if ($modes_obj =~ /ghash\-/) {
+    if ($target{modes_obj} =~ /ghash\-/) {
 	$cflags.=" -DGHASH_ASM";
     }
-    if ($ec_obj =~ /ecp_nistz256/) {
+    if ($target{ec_obj} =~ /ecp_nistz256/) {
 	$cflags.=" -DECP_NISTZ256_ASM";
     }
-    if ($poly1305_obj =~ /\.o$/) {
+    if ($target{poly1305_obj} =~ /\.o$/) {
 	$cflags.=" -DPOLY1305_ASM";
     }
 }
+
+
+# Deal with bn_ops ###################################################
+
+$config{des_ptr}		=0;
+$config{des_risc1}		=0;
+$config{des_risc2}		=0;
+$config{des_unroll}		=0;
+$config{bn_ll}			=0;
+$config{rc4_idx}		=0;
+$config{bf_ptr}			=0;
+$config{export_var_as_fn}	=0;
+my $def_int="unsigned int";
+$config{rc4_int}		=$def_int;
+$config{rc4_chunk}		="";
+$config{md2_int}		=$def_int;
+$config{idea_int}		=$def_int;
+$config{rc2_int}		=$def_int;
+($config{b64l},$config{b64},$config{b32},$config{b16},$config{b8})=(0,0,1,0,0);
+
+$config{des_int} = "unsigned long";
+
+foreach (sort split(/\s+/,$target{bn_ops})) {
+    $config{des_ptr}=1				if /DES_PTR/;
+    $config{des_risc1}=1			if /DES_RISC1/;
+    $config{des_risc2}=1			if /DES_RISC2/;
+    $config{des_unroll}=1			if /DES_UNROLL/;
+    $config{des_int}="unsigned int"		if /DES_INT/;
+    $config{bn_ll}=1				if /BN_LLONG/;
+    $config{rc4_int}="unsigned char"		if /RC4_CHAR/;
+    $config{rc4_int}="unsigned long"		if /RC4_LONG/;
+    $config{rc4_idx}=1				if /RC4_INDEX/;
+    $config{rc4_chunk}="unsigned long"		if /RC4_CHUNK/;
+    $config{rc4_chunk}="unsigned long long"	if /RC4_CHUNK_LL/;
+    $config{md2_int}="unsigned char"		if /MD2_CHAR/;
+    $config{md2_int}="unsigned long"		if /MD2_LONG/;
+    $config{idea_int}="unsigned char"		if /IDEA_CHAR/;
+    $config{idea_int}="unsigned long"		if /IDEA_LONG/;
+    $config{rc2_int}="unsigned char"		if /RC2_CHAR/;
+    $config{rc2_int}="unsigned long"		if /RC2_LONG/;
+    $config{bf_ptr}=1				if $_ eq "BF_PTR";
+    $config{bf_ptr}=2				if $_ eq "BF_PTR2";
+    ($config{b64l},$config{b64},$config{b32},$config{b16},$config{b8})
+	=(0,1,0,0,0)				if /SIXTY_FOUR_BIT/;
+    ($config{b64l},$config{b64},$config{b32},$config{b16},$config{b8})
+	=(1,0,0,0,0)				if /SIXTY_FOUR_BIT_LONG/;
+    ($config{b64l},$config{b64},$config{b32},$config{b16},$config{b8})
+	=(0,0,1,0,0)				if /THIRTY_TWO_BIT/;
+    ($config{b64l},$config{b64},$config{b32},$config{b16},$config{b8})
+	=(0,0,0,1,0)				if /SIXTEEN_BIT/;
+    ($config{b64l},$config{b64},$config{b32},$config{b16},$config{b8})
+	=(0,0,0,0,1)				if /EIGHT_BIT/;
+    $config{export_var_as_fn}=1			if /EXPORT_VAR_AS_FN/;
+}
+
+
+# Hack cflags for better warnings (dev option) #######################
 
 # "Stringify" the C flags string.  This permits it to be made part of a string
 # and works as well on command lines.
 $cflags =~ s/([\\\"])/\\\1/g;
 
-my $version = "unknown";
-my $version_num = "unknown";
-my $major = "unknown";
-my $minor = "unknown";
-my $shlib_version_number = "unknown";
-my $shlib_version_history = "unknown";
-my $shlib_major = "unknown";
-my $shlib_minor = "unknown";
+$config{version} = "unknown";
+$config{version_num} = "unknown";
+$config{major} = "unknown";
+$config{minor} = "unknown";
+$config{shlib_version_number} = "unknown";
+$config{shlib_version_history} = "unknown";
+$config{shlib_major} = "unknown";
+$config{shlib_minor} = "unknown";
 
 open(IN,'<include/openssl/opensslv.h') || die "unable to read opensslv.h:$!\n";
 while (<IN>)
 	{
-	$version=$1 if /OPENSSL.VERSION.TEXT.*OpenSSL (\S+) /;
-	$version_num=$1 if /OPENSSL.VERSION.NUMBER.*(0x\S+)/;
-	$shlib_version_number=$1 if /SHLIB_VERSION_NUMBER *"([^"]+)"/;
-	$shlib_version_history=$1 if /SHLIB_VERSION_HISTORY *"([^"]*)"/;
+	$config{version}=$1 if /OPENSSL.VERSION.TEXT.*OpenSSL (\S+) /;
+	$config{version_num}=$1 if /OPENSSL.VERSION.NUMBER.*(0x\S+)/;
+	$config{shlib_version_number}=$1 if /SHLIB_VERSION_NUMBER *"([^"]+)"/;
+	$config{shlib_version_history}=$1 if /SHLIB_VERSION_HISTORY *"([^"]*)"/;
 	}
 close(IN);
-if ($shlib_version_history ne "") { $shlib_version_history .= ":"; }
+if ($config{shlib_version_history} ne "") { $config{shlib_version_history} .= ":"; }
 
-if ($version =~ /(^[0-9]*)\.([0-9\.]*)/)
+if ($config{version} =~ /(^[0-9]*)\.([0-9\.]*)/)
 	{
-	$major=$1;
-	$minor=$2;
+	$config{major}=$1;
+	$config{minor}=$2;
 	}
 
-if ($shlib_version_number =~ /(^[0-9]*)\.([0-9\.]*)/)
+if ($config{shlib_version_number} =~ /(^[0-9]*)\.([0-9\.]*)/)
 	{
-	$shlib_major=$1;
-	$shlib_minor=$2;
+	$config{shlib_major}=$1;
+	$config{shlib_minor}=$2;
 	}
 
 if (defined($api)) {
+    $config{openssl_api_defines} = [ "OPENSSL_MIN_API=".$apitable->{$api} ];
     my $apiflag = sprintf("-DOPENSSL_API_COMPAT=%s", $apitable->{$api});
     $default_depflags .= " $apiflag";
     $cflags .= " $apiflag";
 }
 
-my $ecc = $cc;
-$ecc = "clang" if `$cc --version 2>&1` =~ /clang/;
+my $ecc = $target{cc};
+$ecc = "clang" if `$target{cc} --version 2>&1` =~ /clang/;
 
 if ($strict_warnings)
 	{
@@ -1174,15 +1223,60 @@ if ($strict_warnings)
 			{
 			$cflags .= " $wopt" unless ($cflags =~ /(^|\s)$wopt(\s|$)/)
 			}
-                if ($target =~ /^BSD-/)
-	                {
-                        $lflags .= " -lexecinfo";
-                        }
-                }
+		if ($target =~ /^BSD-/)
+			{
+			$lflags .= " -lexecinfo";
+			}
+		}
 	}
 
-open(IN,"<Makefile.in") || die "unable to read Makefile.in$!\n";
-unlink("$Makefile.new") || die "unable to remove old $Makefile.new:$!\n" if -e "$Makefile.new";
+# Write down our configuration where it fits #########################
+
+open(OUT,">configdata.pm") || die "unable to create configdata.pm: $!\n";
+print OUT <<"EOF";
+package configdata;
+
+use strict;
+use warnings;
+
+use Exporter;
+#use vars qw(\@ISA \@EXPORT);
+our \@ISA = qw(Exporter);
+our \@EXPORT = qw(\%config \%target);
+
+EOF
+print OUT "our %config = (\n";
+foreach (sort keys %config) {
+    if (ref($config{$_}) eq "ARRAY") {
+	print OUT "  ", $_, " => [ ", join(", ",
+					   map { quotify("perl", $_) }
+					   @{$config{$_}}), " ],\n";
+    } else {
+	print OUT "  ", $_, " => ", quotify("perl", $config{$_}), ",\n"
+    }
+}
+print OUT <<"EOF";
+);
+
+EOF
+print OUT "our %target = (\n";
+foreach (sort keys %target) {
+    if (ref($target{$_}) eq "ARRAY") {
+	print OUT "  ", $_, " => [ ", join(", ",
+					   map { quotify("perl", $_) }
+					   @{$target{$_}}), " ],\n";
+    } else {
+	print OUT "  ", $_, " => ", quotify("perl", $target{$_}), ",\n"
+    }
+}
+print OUT <<"EOF";
+);
+
+1;
+EOF
+close(OUT);
+
+open(IN,"<Makefile.in") || die "unable to read Makefile.in: $!\n";
 open(OUT,">$Makefile.new") || die "unable to create $Makefile.new:$!\n";
 print OUT "### Generated automatically from Makefile.in by Configure.\n\n";
 my $sdirs=0;
@@ -1201,64 +1295,64 @@ while (<IN>)
 	$sdirs = 0 unless /\\$/;
         s/fips // if (/^DIRS=/ && !$fips);
         s/engines // if (/^DIRS=/ && $disabled{"engine"});
-	s/^VERSION=.*/VERSION=$version/;
-	s/^MAJOR=.*/MAJOR=$major/;
-	s/^MINOR=.*/MINOR=$minor/;
-	s/^SHLIB_VERSION_NUMBER=.*/SHLIB_VERSION_NUMBER=$shlib_version_number/;
-	s/^SHLIB_VERSION_HISTORY=.*/SHLIB_VERSION_HISTORY=$shlib_version_history/;
-	s/^SHLIB_MAJOR=.*/SHLIB_MAJOR=$shlib_major/;
-	s/^SHLIB_MINOR=.*/SHLIB_MINOR=$shlib_minor/;
-	s/^SHLIB_EXT=.*/SHLIB_EXT=$shared_extension/;
-	s/^INSTALLTOP=.*$/INSTALLTOP=$prefix/;
-	s/^MULTILIB=.*$/MULTILIB=$multilib/;
-	s/^OPENSSLDIR=.*$/OPENSSLDIR=$openssldir/;
+	s/^VERSION=.*/VERSION=$config{version}/;
+	s/^MAJOR=.*/MAJOR=$config{major}/;
+	s/^MINOR=.*/MINOR=$config{minor}/;
+	s/^SHLIB_VERSION_NUMBER=.*/SHLIB_VERSION_NUMBER=$config{shlib_version_number}/;
+	s/^SHLIB_VERSION_HISTORY=.*/SHLIB_VERSION_HISTORY=$config{shlib_version_history}/;
+	s/^SHLIB_MAJOR=.*/SHLIB_MAJOR=$config{shlib_major}/;
+	s/^SHLIB_MINOR=.*/SHLIB_MINOR=$config{shlib_minor}/;
+	s/^SHLIB_EXT=.*/SHLIB_EXT=$target{shared_extension}/;
+	s/^INSTALLTOP=.*$/INSTALLTOP=$config{prefix}/;
+	s/^MULTILIB=.*$/MULTILIB=$target{multilib}/;
+	s/^OPENSSLDIR=.*$/OPENSSLDIR=$config{openssldir}/;
 	s/^LIBDIR=.*$/LIBDIR=$libdir/;
 	s/^INSTALL_PREFIX=.*$/INSTALL_PREFIX=$install_prefix/;
 	s/^PLATFORM=.*$/PLATFORM=$target/;
-	s/^OPTIONS=.*$/OPTIONS=$options/;
+	s/^OPTIONS=.*$/OPTIONS=$config{options}/;
 	my $argvstring = "(".join(", ", map { quotify("perl", $_) } @argvcopy).")";
 	s/^CONFIGURE_ARGS=.*$/CONFIGURE_ARGS=$argvstring/;
-	if ($cross_compile_prefix)
+	if ($config{cross_compile_prefix})
 		{
-		s/^CC=.*$/CROSS_COMPILE= $cross_compile_prefix\nCC= \$\(CROSS_COMPILE\)$cc/;
+		s/^CC=.*$/CROSS_COMPILE= $config{cross_compile_prefix}\nCC= \$\(CROSS_COMPILE\)$target{cc}/;
 		s/^AR=\s*/AR= \$\(CROSS_COMPILE\)/;
 		s/^NM=\s*/NM= \$\(CROSS_COMPILE\)/;
 		s/^RANLIB=\s*/RANLIB= \$\(CROSS_COMPILE\)/;
-		s/^MAKEDEPPROG=.*$/MAKEDEPPROG= \$\(CROSS_COMPILE\)$cc/ if $cc eq "gcc";
+		s/^MAKEDEPPROG=.*$/MAKEDEPPROG= \$\(CROSS_COMPILE\)$target{cc}/ if $target{cc} eq "gcc";
 		}
 	else	{
-		s/^CC=.*$/CC= $cc/;
-		s/^AR=\s*ar/AR= $ar/;
-		s/^RANLIB=.*/RANLIB= $ranlib/;
-		s/^MAKEDEPPROG=.*$/MAKEDEPPROG= $cc/ if $ecc eq "gcc" || $ecc eq "clang";
+		s/^CC=.*$/CC= $target{cc}/;
+		s/^AR=\s*ar/AR= $target{ar}/;
+		s/^RANLIB=.*/RANLIB= $target{ranlib}/;
+		s/^MAKEDEPPROG=.*$/MAKEDEPPROG= $target{cc}/ if $ecc eq "gcc" || $ecc eq "clang";
 		}
 	s/^CFLAG=.*$/CFLAG= $cflags/;
 	s/^DEPFLAG=.*$/DEPFLAG=$depflags/;
 	s/^PEX_LIBS=.*$/PEX_LIBS= $prelflags/;
 	s/^EX_LIBS=.*$/EX_LIBS= $lflags/;
 	s/^EXE_EXT=.*$/EXE_EXT= $exe_ext/;
-	s/^CPUID_OBJ=.*$/CPUID_OBJ= $cpuid_obj/;
-	s/^BN_ASM=.*$/BN_ASM= $bn_obj/;
-	s/^EC_ASM=.*$/EC_ASM= $ec_obj/;
-	s/^DES_ENC=.*$/DES_ENC= $des_obj/;
-	s/^AES_ENC=.*$/AES_ENC= $aes_obj/;
-	s/^BF_ENC=.*$/BF_ENC= $bf_obj/;
-	s/^CAST_ENC=.*$/CAST_ENC= $cast_obj/;
-	s/^RC4_ENC=.*$/RC4_ENC= $rc4_obj/;
-	s/^RC5_ENC=.*$/RC5_ENC= $rc5_obj/;
-	s/^MD5_ASM_OBJ=.*$/MD5_ASM_OBJ= $md5_obj/;
-	s/^SHA1_ASM_OBJ=.*$/SHA1_ASM_OBJ= $sha1_obj/;
-	s/^RMD160_ASM_OBJ=.*$/RMD160_ASM_OBJ= $rmd160_obj/;
-	s/^WP_ASM_OBJ=.*$/WP_ASM_OBJ= $wp_obj/;
-	s/^CMLL_ENC=.*$/CMLL_ENC= $cmll_obj/;
-	s/^MODES_ASM_OBJ.=*$/MODES_ASM_OBJ= $modes_obj/;
-	s/^CHACHA_ENC=.*$/CHACHA_ENC= $chacha_obj/;
-	s/^POLY1305_ASM_OBJ=.*$/POLY1305_ASM_OBJ= $poly1305_obj/;
-	s/^ENGINES_ASM_OBJ.=*$/ENGINES_ASM_OBJ= $engines_obj/;
-	s/^PERLASM_SCHEME=.*$/PERLASM_SCHEME= $perlasm_scheme/;
-	s/^PROCESSOR=.*/PROCESSOR= $processor/;
-	s/^ARFLAGS=.*/ARFLAGS= $arflags/;
-	s/^PERL=.*/PERL= $perl/;
+	s/^CPUID_OBJ=.*$/CPUID_OBJ= $target{cpuid_obj}/;
+	s/^BN_ASM=.*$/BN_ASM= $target{bn_obj}/;
+	s/^EC_ASM=.*$/EC_ASM= $target{ec_obj}/;
+	s/^DES_ENC=.*$/DES_ENC= $target{des_obj}/;
+	s/^AES_ENC=.*$/AES_ENC= $target{aes_obj}/;
+	s/^BF_ENC=.*$/BF_ENC= $target{bf_obj}/;
+	s/^CAST_ENC=.*$/CAST_ENC= $target{cast_obj}/;
+	s/^RC4_ENC=.*$/RC4_ENC= $target{rc4_obj}/;
+	s/^RC5_ENC=.*$/RC5_ENC= $target{rc5_obj}/;
+	s/^MD5_ASM_OBJ=.*$/MD5_ASM_OBJ= $target{md5_obj}/;
+	s/^SHA1_ASM_OBJ=.*$/SHA1_ASM_OBJ= $target{sha1_obj}/;
+	s/^RMD160_ASM_OBJ=.*$/RMD160_ASM_OBJ= $target{rmd160_obj}/;
+	s/^WP_ASM_OBJ=.*$/WP_ASM_OBJ= $target{wp_obj}/;
+	s/^CMLL_ENC=.*$/CMLL_ENC= $target{cmll_obj}/;
+	s/^MODES_ASM_OBJ.=*$/MODES_ASM_OBJ= $target{modes_obj}/;
+	s/^ENGINES_ASM_OBJ.=*$/ENGINES_ASM_OBJ= $target{engines_obj}/;
+	s/^CHACHA_ENC=.*$/CHACHA_ENC= $target{chacha_obj}/;
+	s/^POLY1305_ASM_OBJ=.*$/POLY1305_ASM_OBJ= $target{poly1305_obj}/;
+	s/^PERLASM_SCHEME=.*$/PERLASM_SCHEME= $target{perlasm_scheme}/;
+	s/^PROCESSOR=.*/PROCESSOR= $config{processor}/;
+	s/^ARFLAGS=.*/ARFLAGS= $target{arflags}/;
+	s/^PERL=.*/PERL= $config{perl}/;
 	s/^LIBZLIB=.*/LIBZLIB=$withargs{"zlib-lib"}/;
 	s/^ZLIB_INCLUDE=.*/ZLIB_INCLUDE=$withargs{"zlib-include"}/;
 	s/^FIPSLIBDIR=.*/FIPSLIBDIR=$fipslibdir/;
@@ -1266,260 +1360,88 @@ while (<IN>)
 	s/^SHARED_FIPS=.*/SHARED_FIPS=/;
 	s/^SHLIBDIRS=.*/SHLIBDIRS= crypto ssl/;
 	s/^BASEADDR=.*/BASEADDR=$baseaddr/;
-	s/^SHLIB_TARGET=.*/SHLIB_TARGET=$shared_target/;
+	s/^SHLIB_TARGET=.*/SHLIB_TARGET=$target{shared_target}/;
 	s/^SHLIB_MARK=.*/SHLIB_MARK=$shared_mark/;
 	s/^SHARED_LIBS=.*/SHARED_LIBS=\$(SHARED_CRYPTO) \$(SHARED_SSL)/ if (!$no_shared);
-	if ($shared_extension ne "" && $shared_extension =~ /^\.s([ol])\.[^\.]*$/)
+	if ($target{shared_extension} ne "" && $target{shared_extension} =~ /^\.s([ol])\.[^\.]*$/)
 		{
 		my $sotmp = $1;
 		s/^SHARED_LIBS_LINK_EXTS=.*/SHARED_LIBS_LINK_EXTS=.s$sotmp/;
 		}
-	elsif ($shared_extension ne "" && $shared_extension =~ /^\.[^\.]*\.dylib$/)
+	elsif ($target{shared_extension} ne "" && $target{shared_extension} =~ /^\.[^\.]*\.dylib$/)
 		{
 		s/^SHARED_LIBS_LINK_EXTS=.*/SHARED_LIBS_LINK_EXTS=.dylib/;
 		}
-	elsif ($shared_extension ne "" && $shared_extension =~ /^\.s([ol])\.[^\.]*\.[^\.]*$/)
+	elsif ($target{shared_extension} ne "" && $target{shared_extension} =~ /^\.s([ol])\.[^\.]*\.[^\.]*$/)
 		{
 		my $sotmp = $1;
 		s/^SHARED_LIBS_LINK_EXTS=.*/SHARED_LIBS_LINK_EXTS=.s$sotmp.\$(SHLIB_MAJOR) .s$sotmp/;
 		}
-	elsif ($shared_extension ne "" && $shared_extension =~ /^\.[^\.]*\.[^\.]*\.dylib$/)
+	elsif ($target{shared_extension} ne "" && $target{shared_extension} =~ /^\.[^\.]*\.[^\.]*\.dylib$/)
 		{
 		s/^SHARED_LIBS_LINK_EXTS=.*/SHARED_LIBS_LINK_EXTS=.\$(SHLIB_MAJOR).dylib .dylib/;
 		}
-	s/^SHARED_LDFLAGS=.*/SHARED_LDFLAGS=$shared_ldflag/;
+	s/^SHARED_LDFLAGS=.*/SHARED_LDFLAGS=$target{shared_ldflag}/;
 	print OUT $_."\n";
 	}
 close(IN);
 close(OUT);
-rename($Makefile,"$Makefile.orig") || die "unable to rename $Makefile\n" if -e $Makefile;
 rename("$Makefile.new",$Makefile) || die "unable to rename $Makefile.new\n";
 
-print "IsMK1MF       =", ($build_scheme[0] eq "mk1mf" ? "yes" : "no"), "\n";
-print "CC            =$cc\n";
+print "IsMK1MF       =", ($target{build_scheme}->[0] eq "mk1mf" ? "yes" : "no"), "\n";
+print "CC            =$target{cc}\n";
 print "CFLAG         =$cflags\n";
 print "EX_LIBS       =$lflags\n";
-print "CPUID_OBJ     =$cpuid_obj\n";
-print "BN_ASM        =$bn_obj\n";
-print "EC_ASM        =$ec_obj\n";
-print "DES_ENC       =$des_obj\n";
-print "AES_ENC       =$aes_obj\n";
-print "BF_ENC        =$bf_obj\n";
-print "CAST_ENC      =$cast_obj\n";
-print "RC4_ENC       =$rc4_obj\n";
-print "RC5_ENC       =$rc5_obj\n";
-print "MD5_OBJ_ASM   =$md5_obj\n";
-print "SHA1_OBJ_ASM  =$sha1_obj\n";
-print "RMD160_OBJ_ASM=$rmd160_obj\n";
-print "CMLL_ENC      =$cmll_obj\n";
-print "MODES_OBJ     =$modes_obj\n";
-print "ENGINES_OBJ   =$engines_obj\n";
-print "CHACHA_ENC    =$chacha_obj\n";
-print "POLY1305_OBJ  =$poly1305_obj\n";
-print "BLAKE2_OBJ    =$blake2_obj\n";
-print "PROCESSOR     =$processor\n";
-print "RANLIB        =$ranlib\n";
-print "ARFLAGS       =$arflags\n";
-print "PERL          =$perl\n";
+print "CPUID_OBJ     =$target{cpuid_obj}\n";
+print "BN_ASM        =$target{bn_obj}\n";
+print "EC_ASM        =$target{ec_obj}\n";
+print "DES_ENC       =$target{des_obj}\n";
+print "AES_ENC       =$target{aes_obj}\n";
+print "BF_ENC        =$target{bf_obj}\n";
+print "CAST_ENC      =$target{cast_obj}\n";
+print "RC4_ENC       =$target{rc4_obj}\n";
+print "RC5_ENC       =$target{rc5_obj}\n";
+print "MD5_OBJ_ASM   =$target{md5_obj}\n";
+print "SHA1_OBJ_ASM  =$target{sha1_obj}\n";
+print "RMD160_OBJ_ASM=$target{rmd160_obj}\n";
+print "CMLL_ENC      =$target{cmll_obj}\n";
+print "MODES_OBJ     =$target{modes_obj}\n";
+print "ENGINES_OBJ   =$target{engines_obj}\n";
+print "CHACHA_ENC    =$target{chacha_obj}\n";
+print "POLY1305_OBJ  =$target{poly1305_obj}\n";
+print "BLAKE2_OBJ    =$target{blake2_obj}\n";
+print "PROCESSOR     =$config{processor}\n";
+print "RANLIB        =$target{ranlib}\n";
+print "ARFLAGS       =$target{arflags}\n";
+print "PERL          =$config{perl}\n";
 
-my $des_ptr=0;
-my $des_risc1=0;
-my $des_risc2=0;
-my $des_unroll=0;
-my $bn_ll=0;
-my $def_int=2;
-my $rc4_int=$def_int;
-my $md2_int=$def_int;
-my $idea_int=$def_int;
-my $rc2_int=$def_int;
-my $rc4_idx=0;
-my $rc4_chunk=0;
-my $bf_ptr=0;
-my @type=("char","short","int","long");
-my ($b64l,$b64,$b32,$b16,$b8)=(0,0,1,0,0);
-my $export_var_as_fn=0;
-
-my $des_int;
-
-foreach (sort split(/\s+/,$bn_ops))
-	{
-	$des_ptr=1 if /DES_PTR/;
-	$des_risc1=1 if /DES_RISC1/;
-	$des_risc2=1 if /DES_RISC2/;
-	$des_unroll=1 if /DES_UNROLL/;
-	$des_int=1 if /DES_INT/;
-	$bn_ll=1 if /BN_LLONG/;
-	$rc4_int=0 if /RC4_CHAR/;
-	$rc4_int=3 if /RC4_LONG/;
-	$rc4_idx=1 if /RC4_INDEX/;
-	$rc4_chunk=1 if /RC4_CHUNK/;
-	$rc4_chunk=2 if /RC4_CHUNK_LL/;
-	$md2_int=0 if /MD2_CHAR/;
-	$md2_int=3 if /MD2_LONG/;
-	$idea_int=1 if /IDEA_SHORT/;
-	$idea_int=3 if /IDEA_LONG/;
-	$rc2_int=1 if /RC2_SHORT/;
-	$rc2_int=3 if /RC2_LONG/;
-	$bf_ptr=1 if $_ eq "BF_PTR";
-	$bf_ptr=2 if $_ eq "BF_PTR2";
-	($b64l,$b64,$b32,$b16,$b8)=(0,1,0,0,0) if /SIXTY_FOUR_BIT/;
-	($b64l,$b64,$b32,$b16,$b8)=(1,0,0,0,0) if /SIXTY_FOUR_BIT_LONG/;
-	($b64l,$b64,$b32,$b16,$b8)=(0,0,1,0,0) if /THIRTY_TWO_BIT/;
-	($b64l,$b64,$b32,$b16,$b8)=(0,0,0,1,0) if /SIXTEEN_BIT/;
-	($b64l,$b64,$b32,$b16,$b8)=(0,0,0,0,1) if /EIGHT_BIT/;
-	$export_var_as_fn=1 if /EXPORT_VAR_AS_FN/;
-	}
-
-open(IN,'<crypto/opensslconf.h.in') || die "unable to read crypto/opensslconf.h.in:$!\n";
-unlink("include/openssl/opensslconf.h.new") || die "unable to remove old include/openssl/opensslconf.h.new:$!\n" if -e "include/openssl/opensslconf.h.new";
-open(OUT,'>include/openssl/opensslconf.h.new') || die "unable to create include/openssl/opensslconf.h.new:$!\n";
-print OUT "/* opensslconf.h */\n";
-print OUT "/* WARNING: Generated automatically from opensslconf.h.in by Configure. */\n\n";
-
-print OUT "#ifdef  __cplusplus\n";
-print OUT "extern \"C\" {\n";
-print OUT "#endif\n";
-print OUT "/* OpenSSL was configured with the following options: */\n";
-
-my $openssl_api_defines = "";
-if (defined($api)) {
-    $openssl_api_defines = sprintf "#define OPENSSL_MIN_API %s\n", $apitable->{$api};
-}
-my $openssl_algorithm_defines_trans = $openssl_algorithm_defines;
-$openssl_experimental_defines =~ s/^\s*#\s*define\s+OPENSSL_NO_(.*)/#ifndef OPENSSL_EXPERIMENTAL_$1\n# ifndef OPENSSL_NO_$1\n#  define OPENSSL_NO_$1\n# endif\n#endif/mg;
-$openssl_algorithm_defines_trans =~ s/^\s*#\s*define\s+OPENSSL_(.*)/# if defined(OPENSSL_$1) \&\& !defined($1)\n#  define $1\n# endif/mg;
-$openssl_algorithm_defines =~ s/^\s*#\s*define\s+(.*)/#ifndef $1\n# define $1\n#endif/mg;
-$openssl_algorithm_defines = "   /* no ciphers excluded */\n" if $openssl_algorithm_defines eq "";
-$openssl_thread_defines =~ s/^\s*#\s*define\s+(.*)/#ifndef $1\n# define $1\n#endif/mg;
-$openssl_sys_defines =~ s/^\s*#\s*define\s+(.*)/#ifndef $1\n# define $1\n#endif/mg;
-$openssl_other_defines =~ s/^\s*#\s*define\s+(.*)/#ifndef $1\n# define $1\n#endif/mg;
-
-print OUT $openssl_sys_defines;
-print OUT "#ifndef OPENSSL_DOING_MAKEDEPEND\n\n";
-print OUT $openssl_experimental_defines;
-print OUT $openssl_api_defines;
-print OUT "\n";
-print OUT $openssl_algorithm_defines;
-print OUT "\n#endif /* OPENSSL_DOING_MAKEDEPEND */\n\n";
-print OUT $openssl_thread_defines;
-print OUT $openssl_other_defines,"\n";
-
-print OUT "/* The OPENSSL_NO_* macros are also defined as NO_* if the application\n";
-print OUT "   asks for it.  This is a transient feature that is provided for those\n";
-print OUT "   who haven't had the time to do the appropriate changes in their\n";
-print OUT "   applications.  */\n";
-print OUT "#ifdef OPENSSL_ALGORITHM_DEFINES\n";
-print OUT $openssl_algorithm_defines_trans;
-print OUT "#endif\n\n";
-
-print OUT "#define OPENSSL_CPUID_OBJ\n\n" if ($cpuid_obj ne "mem_clr.o");
-
-while (<IN>)
-	{
-	if	(/^#define\s+OPENSSLDIR/)
-		{
-		my $foo = $openssldir;
-		$foo =~ s/\\/\\\\/g;
-		print OUT "#define OPENSSLDIR \"$foo\"\n";
-		}
-	elsif	(/^#define\s+ENGINESDIR/)
-		{
-		my $foo = "$prefix/$libdir/engines";
-		$foo =~ s/\\/\\\\/g;
-		print OUT "#define ENGINESDIR \"$foo\"\n";
-		}
-	elsif	(/^#((define)|(undef))\s+OPENSSL_EXPORT_VAR_AS_FUNCTION/)
-		{ printf OUT "#undef OPENSSL_EXPORT_VAR_AS_FUNCTION\n"
-			if $export_var_as_fn;
-		  printf OUT "#%s OPENSSL_EXPORT_VAR_AS_FUNCTION\n",
-			($export_var_as_fn)?"define":"undef"; }
-	elsif	(/^#define\s+OPENSSL_UNISTD/)
-		{
-		print OUT "#define OPENSSL_UNISTD $unistd\n";
-		}
-	elsif	(/^#((define)|(undef))\s+SIXTY_FOUR_BIT_LONG/)
-		{ printf OUT "#%s SIXTY_FOUR_BIT_LONG\n",($b64l)?"define":"undef"; }
-	elsif	(/^#((define)|(undef))\s+SIXTY_FOUR_BIT/)
-		{ printf OUT "#%s SIXTY_FOUR_BIT\n",($b64)?"define":"undef"; }
-	elsif	(/^#((define)|(undef))\s+THIRTY_TWO_BIT/)
-		{ printf OUT "#%s THIRTY_TWO_BIT\n",($b32)?"define":"undef"; }
-	elsif	(/^#((define)|(undef))\s+SIXTEEN_BIT/)
-		{ printf OUT "#%s SIXTEEN_BIT\n",($b16)?"define":"undef"; }
-	elsif	(/^#((define)|(undef))\s+EIGHT_BIT/)
-		{ printf OUT "#%s EIGHT_BIT\n",($b8)?"define":"undef"; }
-	elsif	(/^#((define)|(undef))\s+BN_LLONG\s*$/)
-		{ printf OUT "#%s BN_LLONG\n",($bn_ll)?"define":"undef"; }
-	elsif	(/^\#define\s+OSSL_DES_LONG\s+.*/)
-		{ printf OUT "#define OSSL_DES_LONG unsigned %s\n",
-			($des_int)?'int':'long'; }
-	elsif	(/^\#(define|undef)\s+DES_PTR/)
-		{ printf OUT "#%s DES_PTR\n",($des_ptr)?'define':'undef'; }
-	elsif	(/^\#(define|undef)\s+DES_RISC1/)
-		{ printf OUT "#%s DES_RISC1\n",($des_risc1)?'define':'undef'; }
-	elsif	(/^\#(define|undef)\s+DES_RISC2/)
-		{ printf OUT "#%s DES_RISC2\n",($des_risc2)?'define':'undef'; }
-	elsif	(/^\#(define|undef)\s+DES_UNROLL/)
-		{ printf OUT "#%s DES_UNROLL\n",($des_unroll)?'define':'undef'; }
-	elsif	(/^#define\s+RC4_INT\s/)
-		{ printf OUT "#define RC4_INT unsigned %s\n",$type[$rc4_int]; }
-	elsif	(/^#undef\s+RC4_CHUNK/)
-		{
-		printf OUT "#undef RC4_CHUNK\n" if $rc4_chunk==0;
-		printf OUT "#define RC4_CHUNK unsigned long\n" if $rc4_chunk==1;
-		printf OUT "#define RC4_CHUNK unsigned long long\n" if $rc4_chunk==2;
-		}
-	elsif	(/^#((define)|(undef))\s+RC4_INDEX/)
-		{ printf OUT "#%s RC4_INDEX\n",($rc4_idx)?"define":"undef"; }
-	elsif (/^#(define|undef)\s+I386_ONLY/)
-		{ printf OUT "#%s I386_ONLY\n", ($processor eq "386")?
-			"define":"undef"; }
-	elsif	(/^#define\s+MD2_INT\s/)
-		{ printf OUT "#define MD2_INT unsigned %s\n",$type[$md2_int]; }
-	elsif	(/^#define\s+IDEA_INT\s/)
-		{printf OUT "#define IDEA_INT unsigned %s\n",$type[$idea_int];}
-	elsif	(/^#define\s+RC2_INT\s/)
-		{printf OUT "#define RC2_INT unsigned %s\n",$type[$rc2_int];}
-	elsif (/^#(define|undef)\s+BF_PTR/)
-		{
-		printf OUT "#undef BF_PTR\n" if $bf_ptr == 0;
-		printf OUT "#define BF_PTR\n" if $bf_ptr == 1;
-		printf OUT "#define BF_PTR2\n" if $bf_ptr == 2;
-	        }
-	else
-		{ print OUT $_; }
-	}
-close(IN);
-print OUT "#ifdef  __cplusplus\n";
-print OUT "}\n";
-print OUT "#endif\n";
-close(OUT);
-rename("include/openssl/opensslconf.h","include/openssl/opensslconf.h.bak") || die "unable to rename include/openssl/opensslconf.h\n" if -e "include/openssl/opensslconf.h";
+system("$config{perl} -I. -Mconfigdata util/dofile.pl < crypto/opensslconf.h.in > include/openssl/opensslconf.h.new");
+exit 1 if $? != 0;
 rename("include/openssl/opensslconf.h.new","include/openssl/opensslconf.h") || die "unable to rename include/openssl/opensslconf.h.new\n";
 
 
 # Fix the date
 
-print "SIXTY_FOUR_BIT_LONG mode\n" if $b64l;
-print "SIXTY_FOUR_BIT mode\n" if $b64;
-print "THIRTY_TWO_BIT mode\n" if $b32;
-print "SIXTEEN_BIT mode\n" if $b16;
-print "EIGHT_BIT mode\n" if $b8;
-print "DES_PTR used\n" if $des_ptr;
-print "DES_RISC1 used\n" if $des_risc1;
-print "DES_RISC2 used\n" if $des_risc2;
-print "DES_UNROLL used\n" if $des_unroll;
-print "DES_INT used\n" if $des_int;
-print "BN_LLONG mode\n" if $bn_ll;
-print "RC4 uses u$type[$rc4_int]\n" if $rc4_int != $def_int;
-print "RC4_INDEX mode\n" if $rc4_idx;
-print "RC4_CHUNK is undefined\n" if $rc4_chunk==0;
-print "RC4_CHUNK is unsigned long\n" if $rc4_chunk==1;
-print "RC4_CHUNK is unsigned long long\n" if $rc4_chunk==2;
-print "MD2 uses u$type[$md2_int]\n" if $md2_int != $def_int;
-print "IDEA uses u$type[$idea_int]\n" if $idea_int != $def_int;
-print "RC2 uses u$type[$rc2_int]\n" if $rc2_int != $def_int;
-print "BF_PTR used\n" if $bf_ptr == 1;
-print "BF_PTR2 used\n" if $bf_ptr == 2;
+print "SIXTY_FOUR_BIT_LONG mode\n" if $config{b64l};
+print "SIXTY_FOUR_BIT mode\n" if $config{b64};
+print "THIRTY_TWO_BIT mode\n" if $config{b32};
+print "SIXTEEN_BIT mode\n" if $config{b16};
+print "EIGHT_BIT mode\n" if $config{b8};
+print "DES_PTR used\n" if $config{des_ptr};
+print "DES_RISC1 used\n" if $config{des_risc1};
+print "DES_RISC2 used\n" if $config{des_risc2};
+print "DES_UNROLL used\n" if $config{des_unroll};
+print "DES_INT used\n" if $config{des_int} =~ / int$/;
+print "BN_LLONG mode\n" if $config{bn_ll};
+print "RC4 uses $config{rc4_int}\n" if $config{rc4_int} != $def_int;
+print "RC4_INDEX mode\n" if $config{rc4_idx};
+print "RC4_CHUNK is undefined\n" unless $config{rc4_chunk};
+print "RC4_CHUNK is $config{rc4_chunk}\n" if $config{rc4_chunk};
+print "MD2 uses $config{md2_int}\n" if $config{md2_int} != $def_int;
+print "IDEA uses $config{idea_int}\n" if $config{idea_int} != $def_int;
+print "RC2 uses $config{rc2_int}\n" if $config{rc2_int} != $def_int;
+print "BF_PTR used\n" if $config{bf_ptr} == 1;
+print "BF_PTR2 used\n" if $config{bf_ptr} == 2;
 
 # Copy all Makefile.in to Makefile (except top-level)
 use File::Find;
@@ -1544,18 +1466,11 @@ find(sub {
 
 my %builders = (
     unixmake => sub {
-	my $perlguess = $perl =~ m@^/@ ? $perl : '/usr/local/bin/perl';
-	my $make_command = "$make PERL=\'$perlguess\'";
+	my $make_command = "$make PERL=\'$config{perl}\'";
 	my $make_targets = "";
 	$make_targets .= " depend" if $depflags ne $default_depflags && $make_depend;
 	(system $make_command.$make_targets) == 0 or die "make $make_targets failed"
 	    if $make_targets ne "";
-	&dofile("tools/c_rehash",$perlguess,
-		'^#!/'		 => '#!%s',
-		'^my \$dir;$'	 => 'my $dir = "' . $openssldir . '";',
-		'^my \$prefix;$' => 'my $prefix = "' . $prefix . '";');
-	&dofile("apps/CA.pl",$perlguess,
-		'^#!/'		 => '#!%s');
 	if ($depflags ne $default_depflags && !$make_depend) {
             $warn_make_depend++;
         }
@@ -1574,9 +1489,9 @@ EOF
 	close(OUT);
 
 	# create the ms/version32.rc file if needed
-	if (! grep /^netware/, @build_scheme) {
+	if (! grep /^netware/, @{$target{build_scheme}}) {
 	    my ($v1, $v2, $v3, $v4);
-	    if ($version_num =~ /^0x([0-9a-f]{1})([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{1})L$/i) {
+	    if ($config{version_num} =~ /^0x([0-9a-f]{1})([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{1})L$/i) {
 		$v1=hex $1;
 		$v2=hex $2;
 		$v3=hex $3;
@@ -1608,7 +1523,7 @@ BEGIN
 	    // Required:
 	    VALUE "CompanyName", "The OpenSSL Project, http://www.openssl.org/\\0"
 	    VALUE "FileDescription", "OpenSSL Shared Library\\0"
-	    VALUE "FileVersion", "$version\\0"
+	    VALUE "FileVersion", "$config{version}\\0"
 #if defined(CRYPTO)
 	    VALUE "InternalName", "libeay32\\0"
 	    VALUE "OriginalFilename", "libeay32.dll\\0"
@@ -1617,7 +1532,7 @@ BEGIN
 	    VALUE "OriginalFilename", "ssleay32.dll\\0"
 #endif
 	    VALUE "ProductName", "The OpenSSL Toolkit\\0"
-	    VALUE "ProductVersion", "$version\\0"
+	    VALUE "ProductVersion", "$config{version}\\0"
 	    // Optional:
 	    //VALUE "Comments", "\\0"
 	    VALUE "LegalCopyright", "Copyright © 1998-2015 The OpenSSL Project. Copyright © 1995-1998 Eric A. Young, Tim J. Hudson. All rights reserved.\\0"
@@ -1637,7 +1552,7 @@ EOF
     },
     );
 
-my ($builder, @builder_opts) = @build_scheme;
+my ($builder, @builder_opts) = @{$target{build_scheme}};
 $builders{$builder}->(@builder_opts);
 
 print <<"EOF";
@@ -1888,6 +1803,75 @@ sub usage
 	exit(1);
 	}
 
+# Configuration printer ##############################################
+
+sub print_table_entry
+{
+    my $target = shift;
+    my %target = resolve_config($target);
+    my $type = shift;
+
+    # Don't print the templates
+    return if $target{template};
+
+    my @sequence = (
+	"cc",
+	"cflags",
+	"debug_cflags",
+	"release_cflags",
+	"unistd",
+	"thread_cflag",
+	"sys_id",
+	"lflags",
+	"debug_lflags",
+	"release_lflags",
+	"bn_ops",
+	"cpuid_obj",
+	"bn_obj",
+	"ec_obj",
+	"des_obj",
+	"aes_obj",
+	"bf_obj",
+	"md5_obj",
+	"sha1_obj",
+	"cast_obj",
+	"rc4_obj",
+	"rmd160_obj",
+	"rc5_obj",
+	"wp_obj",
+	"cmll_obj",
+	"modes_obj",
+	"engines_obj",
+	"perlasm_scheme",
+	"dso_scheme",
+	"shared_target",
+	"shared_cflag",
+	"shared_ldflag",
+	"shared_extension",
+	"ranlib",
+	"arflags",
+	"multilib",
+	);
+
+    if ($type eq "TABLE") {
+	print "\n";
+	print "*** $target\n";
+	printf "\$%-12s = %s\n", $_, $target{$_} foreach (@sequence);
+    } elsif ($type eq "HASH") {
+	my $largest =
+	    length((sort { length($a) <=> length($b) } @sequence)[-1]);
+	print "    '$target' => {\n";
+	foreach (@sequence) {
+	    if ($target{$_}) {
+		print "      '",$_,"'"," " x ($largest - length($_))," => '",$target{$_},"',\n";
+	    }
+	}
+	print "    },\n";
+    }
+}
+
+# Utility routines ###################################################
+
 sub which
 	{
 	my($name)=@_;
@@ -1900,25 +1884,6 @@ sub which
 			 system("$path/$name$exe_ext -e " . '\'exit($]<5.0);\''));
 			}
 		}
-	}
-
-sub dofile
-	{
-	my $f; my $p; my %m; my @a; my $k; my $ff;
-	($f,$p,%m)=@_;
-
-	open(IN,"<$f.in") || open(IN,"<$f") || die "unable to open $f:$!\n";
-	@a=<IN>;
-	close(IN);
-	foreach $k (keys %m)
-		{
-		grep(/$k/ && ($_=sprintf($m{$k}."\n",$p)),@a);
-		}
-	open(OUT,">$f.new") || die "unable to open $f.new:$!\n";
-	print OUT @a;
-	close(OUT);
-	rename($f,"$f.bak") || die "unable to rename $f\n" if -e $f;
-	rename("$f.new",$f) || die "unable to rename $f.new\n";
 	}
 
 sub print_table_entry
