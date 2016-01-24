@@ -24,7 +24,6 @@
 
 # include <openssl/evp.h>
 # include <openssl/objects.h>
-# include <openssl/blake2.h>
 # include "internal/blake2_locl.h"
 # include "internal/evp_int.h"
 

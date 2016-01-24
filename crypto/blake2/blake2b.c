@@ -20,7 +20,6 @@
 #include <stdint.h>
 #include <string.h>
 #include <stdio.h>
-#include <openssl/blake2.h>
 
 #include "internal/blake2_locl.h"
 #include "blake2_impl.h"
