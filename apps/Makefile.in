@@ -63,9 +63,11 @@ ALL=    $(GENERAL) $(EXE_SRC) $(HEADER)
 top:
 	@(cd ..; $(MAKE) DIRS=$(DIR) all)
 
-all:	exe
+all:	exe scripts
 
 exe:	$(EXE)
+
+scripts: $(SCRIPTS)
 
 openssl-vms.cnf: openssl.cnf
 	$(PERL) $(TOP)/VMS/VMSify-conf.pl < openssl.cnf > openssl-vms.cnf
