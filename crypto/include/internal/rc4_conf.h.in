@@ -1,3 +1,4 @@
+{- join("\n",map { "/* $_ */" } @autowarntext) -}
 /* ====================================================================
  * Copyright (c) 2016 The OpenSSL Project.  All rights reserved.
  *

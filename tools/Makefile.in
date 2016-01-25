@@ -59,7 +59,7 @@ clean:
 errors:
 
 c_rehash: c_rehash.in
-	$(PERL) -I$(TOP) -Mconfigdata $(TOP)/util/dofile.pl < c_rehash.in > c_rehash.new
+	$(PERL) -I$(TOP) -Mconfigdata $(TOP)/util/dofile.pl -otools/Makefile c_rehash.in > c_rehash.new
 	mv c_rehash.new c_rehash
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.

@@ -8,6 +8,8 @@
 use strict;
 use warnings;
 
+use Getopt::Std;
+
 # Because we know that Text::Template isn't a core Perl module, we use
 # a fallback in case it's not installed on the system
 use File::Basename;
@@ -74,6 +76,19 @@ sub broken {
     undef;
 }
 
+# Check options ######################################################
+
+my %opts = ();
+
+# -o ORIGINATOR
+#		declares ORIGINATOR as the originating script.
+getopt('o', \%opts);
+
+my @autowarntext = ("WARNING: do not edit!",
+		    "Generated"
+		    . (defined($opts{o}) ? " by ".$opts{o} : "")
+		    . (scalar(@ARGV) > 0 ? " from ".join(", ",@ARGV) : ""));
+
 # Template reading ###################################################
 
 # Read in all the templates into $text, while keeping track of each
@@ -100,6 +115,7 @@ $template->fill_in(OUTPUT => \*STDOUT,
                    HASH => { config => \%config,
                              target => \%target,
                              withargs => \%withargs,
+                             autowarntext => \@autowarntext,
                              quotify1 => \&quotify1,
                              quotify_l => \&quotify_l },
                    DELIMITERS => [ "{-", "-}" ],

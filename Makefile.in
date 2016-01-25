@@ -1,6 +1,7 @@
 ##
 ## Makefile for OpenSSL
 ##
+## {- join("\n## ", @autowarntext) -}
 
 VERSION={- $config{version} -}
 MAJOR={- $config{major} -}

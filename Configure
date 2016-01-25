@@ -1752,7 +1752,7 @@ sub run_dofile()
     my $out = shift;
 
     # should we remove $out ?
-    system("$config{perl} -I. -Mconfigdata util/dofile.pl <$in >$out.new");
+    system("$config{perl} -I. -Mconfigdata util/dofile.pl -o\"Configure\" $in > $out.new");
     exit 1 if $? != 0;
     rename("$out.new", $out) || die "Can't rename $out.new, $!";
 }
