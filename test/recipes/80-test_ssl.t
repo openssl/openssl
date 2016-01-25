@@ -657,6 +657,7 @@ sub testssl {
         my $n = ((@protos+2) * (@protos+3))/2 - 2;
         my $ntests = $n * $n;
 	plan tests => $ntests;
+      SKIP: {
         skip "TLS disabled", 1 if $ntests == 1;
 
         my $should;
@@ -690,7 +691,7 @@ sub testssl {
                 print STDERR "\nFailed: @args\n";
             }
             ok($ok);
-        }}}}
+        }}}}}
     };
 
     subtest 'DTLS Version min/max tests' => sub {
@@ -703,6 +704,7 @@ sub testssl {
         my $n = ((@protos+2) * (@protos+3))/2 - 2;
         my $ntests = $n * $n;
 	plan tests => $ntests;
+      SKIP: {
         skip "DTLS disabled", 1 if $ntests == 1;
 
         my $should;
@@ -736,7 +738,7 @@ sub testssl {
                 print STDERR "\nFailed: @args\n";
             }
             ok($ok);
-        }}}}
+        }}}}}
     };
 }
 
