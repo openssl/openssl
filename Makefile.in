@@ -105,7 +105,7 @@ RMD160_ASM_OBJ= {- $target{rmd160_obj} -}
 WP_ASM_OBJ= {- $target{wp_obj} -}
 CMLL_ENC= {- $target{cmll_obj} -}
 MODES_ASM_OBJ= {- $target{modes_obj} -}
-ENGINES_ASM_OBJ= {- $target{engines_obj} -}
+PADLOCK_ASM_OBJ= {- $target{padlock_obj} -}
 CHACHA_ENC= {- $target{chacha_obj} -}
 POLY1305_ASM_OBJ= {- $target{poly1305_obj} -}
 PERLASM_SCHEME= {- $target{perlasm_scheme} -}
@@ -228,7 +228,7 @@ BUILDENV=	LC_ALL=C PLATFORM='$(PLATFORM)' PROCESSOR='$(PROCESSOR)'\
 		RMD160_ASM_OBJ='$(RMD160_ASM_OBJ)'		\
 		WP_ASM_OBJ='$(WP_ASM_OBJ)'			\
 		MODES_ASM_OBJ='$(MODES_ASM_OBJ)'		\
-		ENGINES_ASM_OBJ='$(ENGINES_ASM_OBJ)'		\
+		PADLOCK_ASM_OBJ='$(PADLOCK_ASM_OBJ)'		\
 		CHACHA_ENC='$(CHACHA_ENC)'			\
 		POLY1305_ASM_OBJ='$(POLY1305_ASM_OBJ)'		\
 		PERLASM_SCHEME='$(PERLASM_SCHEME)'		\
