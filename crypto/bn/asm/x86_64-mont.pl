@@ -775,20 +775,20 @@ bn_sqr8x_mont:
 	# 4096. this is done to allow memory disambiguation logic
 	# do its job.
 	#
-	lea	-64(%rsp,$num,4),%r11
+	lea	-64(%rsp,$num,2),%r11
 	mov	($n0),$n0		# *n0
 	sub	$aptr,%r11
 	and	\$4095,%r11
 	cmp	%r11,%r10
 	jb	.Lsqr8x_sp_alt
 	sub	%r11,%rsp		# align with $aptr
-	lea	-64(%rsp,$num,4),%rsp	# alloca(frame+4*$num)
+	lea	-64(%rsp,$num,2),%rsp	# alloca(frame+2*$num)
 	jmp	.Lsqr8x_sp_done
 
 .align	32
 .Lsqr8x_sp_alt:
-	lea	4096-64(,$num,4),%r10	# 4096-frame-4*$num
-	lea	-64(%rsp,$num,4),%rsp	# alloca(frame+4*$num)
+	lea	4096-64(,$num,2),%r10	# 4096-frame-2*$num
+	lea	-64(%rsp,$num,2),%rsp	# alloca(frame+2*$num)
 	sub	%r10,%r11
 	mov	\$0,%r10
 	cmovc	%r10,%r11
@@ -798,37 +798,17 @@ bn_sqr8x_mont:
 	mov	$num,%r10	
 	neg	$num
 
-	lea	64(%rsp,$num,2),%r11	# copy of modulus
 	mov	$n0,  32(%rsp)
 	mov	%rax, 40(%rsp)		# save original %rsp
 .Lsqr8x_body:
 
-	mov	$num,$i
-	movq	%r11, %xmm2		# save pointer to modulus copy
-	shr	\$3+2,$i
-	mov	OPENSSL_ia32cap_P+8(%rip),%eax
-	jmp	.Lsqr8x_copy_n
-
-.align	32
-.Lsqr8x_copy_n:
-	movq	8*0($nptr),%xmm0
-	movq	8*1($nptr),%xmm1
-	movq	8*2($nptr),%xmm3
-	movq	8*3($nptr),%xmm4
-	lea	8*4($nptr),$nptr
-	movdqa	%xmm0,16*0(%r11)
-	movdqa	%xmm1,16*1(%r11)
-	movdqa	%xmm3,16*2(%r11)
-	movdqa	%xmm4,16*3(%r11)
-	lea	16*4(%r11),%r11
-	dec	$i
-	jnz	.Lsqr8x_copy_n
-
+	movq	$nptr, %xmm2		# save pointer to modulus
 	pxor	%xmm0,%xmm0
 	movq	$rptr,%xmm1		# save $rptr
 	movq	%r10, %xmm3		# -$num
 ___
 $code.=<<___ if ($addx);
+	mov	OPENSSL_ia32cap_P+8(%rip),%eax
 	and	\$0x80100,%eax
 	cmp	\$0x80100,%eax
 	jne	.Lsqr8x_nox
@@ -837,7 +817,6 @@ $code.=<<___ if ($addx);
 
 	pxor	%xmm0,%xmm0
 	lea	48(%rsp),%rax
-	lea	64(%rsp,$num,2),%rdx
 	shr	\$3+2,$num
 	mov	40(%rsp),%rsi		# restore %rsp
 	jmp	.Lsqr8x_zero
@@ -850,7 +829,6 @@ $code.=<<___;
 
 	pxor	%xmm0,%xmm0
 	lea	48(%rsp),%rax
-	lea	64(%rsp,$num,2),%rdx
 	shr	\$3+2,$num
 	mov	40(%rsp),%rsi		# restore %rsp
 	jmp	.Lsqr8x_zero
@@ -862,11 +840,6 @@ $code.=<<___;
 	movdqa	%xmm0,16*2(%rax)
 	movdqa	%xmm0,16*3(%rax)
 	lea	16*4(%rax),%rax
-	movdqa	%xmm0,16*0(%rdx)	# wipe n
-	movdqa	%xmm0,16*1(%rdx)
-	movdqa	%xmm0,16*2(%rdx)
-	movdqa	%xmm0,16*3(%rdx)
-	lea	16*4(%rdx),%rdx
 	dec	$num
 	jnz	.Lsqr8x_zero
 
