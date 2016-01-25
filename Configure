@@ -1354,9 +1354,7 @@ print "RANLIB        =$target{ranlib}\n";
 print "ARFLAGS       =$target{arflags}\n";
 print "PERL          =$config{perl}\n";
 
-run_dofile("$Makefile.in","$Makefile.new");
-
-run_dofile("include/openssl/opensslconf.h.in", "include/openssl/opensslconf.h");
+run_dofile("$Makefile.in","$Makefile");
 
 run_dofile("include/openssl/opensslconf.h.in", "include/openssl/opensslconf.h");
 
