@@ -1346,25 +1346,14 @@ print "SHA1_OBJ_ASM  =$target{sha1_obj}\n";
 print "RMD160_OBJ_ASM=$target{rmd160_obj}\n";
 print "CMLL_ENC      =$target{cmll_obj}\n";
 print "MODES_OBJ     =$target{modes_obj}\n";
-print "ENGINES_OBJ   =$target{engines_obj}\n";
+print "PADLOCK_OBJ   =$target{padlock_obj}\n";
 print "CHACHA_ENC    =$target{chacha_obj}\n";
 print "POLY1305_OBJ  =$target{poly1305_obj}\n";
 print "PROCESSOR     =$config{processor}\n";
 print "RANLIB        =$target{ranlib}\n";
 print "ARFLAGS       =$target{arflags}\n";
 print "PERL          =$config{perl}\n";
-
-run_dofile("$Makefile.in","$Makefile");
-
-run_dofile("include/openssl/opensslconf.h.in", "include/openssl/opensslconf.h");
-
-foreach my $alg ( 'bf', 'bn', 'des', 'rc4' ) {
-    run_dofile("crypto/include/internal/${alg}_conf.h.in",
-	       "crypto/include/internal/${alg}_conf.h");
-}
-
-# Fix the date
-
+print "\n";
 print "SIXTY_FOUR_BIT_LONG mode\n" if $config{b64l};
 print "SIXTY_FOUR_BIT mode\n" if $config{b64};
 print "THIRTY_TWO_BIT mode\n" if $config{b32};
@@ -1385,6 +1374,15 @@ print "IDEA uses $config{idea_int}\n" if $config{idea_int} != $def_int;
 print "RC2 uses $config{rc2_int}\n" if $config{rc2_int} != $def_int;
 print "BF_PTR used\n" if $config{bf_ptr} == 1;
 print "BF_PTR2 used\n" if $config{bf_ptr} == 2;
+
+run_dofile("$Makefile.in","$Makefile");
+
+run_dofile("include/openssl/opensslconf.h.in", "include/openssl/opensslconf.h");
+
+foreach my $alg ( 'bf', 'bn', 'des', 'rc4' ) {
+    run_dofile("crypto/include/internal/${alg}_conf.h.in",
+	       "crypto/include/internal/${alg}_conf.h");
+}
 
 # Copy all Makefile.in to Makefile (except top-level)
 use File::Find;
@@ -1769,13 +1767,14 @@ sub print_table_entry
     return if $target{template};
 
     my @sequence = (
+	"sys_id",
 	"cc",
 	"cflags",
 	"debug_cflags",
 	"release_cflags",
-	"unistd",
 	"thread_cflag",
-	"sys_id",
+	"unistd",
+	"ld",
 	"lflags",
 	"debug_lflags",
 	"release_lflags",
@@ -1795,16 +1794,20 @@ sub print_table_entry
 	"wp_obj",
 	"cmll_obj",
 	"modes_obj",
-	"engines_obj",
+	"padlock_obj",
 	"perlasm_scheme",
 	"dso_scheme",
 	"shared_target",
 	"shared_cflag",
 	"shared_ldflag",
 	"shared_extension",
+	"obj_extension",
+	"exe_extension",
 	"ranlib",
+	"ar",
 	"arflags",
 	"multilib",
+	"build_scheme",
 	);
 
     if ($type eq "TABLE") {
