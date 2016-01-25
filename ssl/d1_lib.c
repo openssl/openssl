@@ -916,7 +916,7 @@ int dtls1_process_heartbeat(SSL *s, unsigned char *p, unsigned int length)
     unsigned int padding = 16;  /* Use minimum padding */
 
     if (s->msg_callback)
-        s->msg_callback(0, s->version, TLS1_RT_HEARTBEAT,
+        s->msg_callback(0, s->version, DTLS1_RT_HEARTBEAT,
                         p, length, s, s->msg_callback_arg);
 
     /* Read type and payload length first */
@@ -961,10 +961,10 @@ int dtls1_process_heartbeat(SSL *s, unsigned char *p, unsigned int length)
             return -1;
         }
 
-        r = dtls1_write_bytes(s, TLS1_RT_HEARTBEAT, buffer, write_length);
+        r = dtls1_write_bytes(s, DTLS1_RT_HEARTBEAT, buffer, write_length);
 
         if (r >= 0 && s->msg_callback)
-            s->msg_callback(1, s->version, TLS1_RT_HEARTBEAT,
+            s->msg_callback(1, s->version, DTLS1_RT_HEARTBEAT,
                             buffer, write_length, s, s->msg_callback_arg);
 
         OPENSSL_free(buffer);
@@ -998,8 +998,8 @@ int dtls1_heartbeat(SSL *s)
     unsigned int padding = 16;  /* Use minimum padding */
 
     /* Only send if peer supports and accepts HB requests... */
-    if (!(s->tlsext_heartbeat & SSL_TLSEXT_HB_ENABLED) ||
-        s->tlsext_heartbeat & SSL_TLSEXT_HB_DONT_SEND_REQUESTS) {
+    if (!(s->tlsext_heartbeat & SSL_DTLSEXT_HB_ENABLED) ||
+        s->tlsext_heartbeat & SSL_DTLSEXT_HB_DONT_SEND_REQUESTS) {
         SSLerr(SSL_F_DTLS1_HEARTBEAT, SSL_R_TLS_HEARTBEAT_PEER_DOESNT_ACCEPT);
         return -1;
     }
@@ -1050,10 +1050,10 @@ int dtls1_heartbeat(SSL *s)
         goto err;
     }
 
-    ret = dtls1_write_bytes(s, TLS1_RT_HEARTBEAT, buf, 3 + payload + padding);
+    ret = dtls1_write_bytes(s, DTLS1_RT_HEARTBEAT, buf, 3 + payload + padding);
     if (ret >= 0) {
         if (s->msg_callback)
-            s->msg_callback(1, s->version, TLS1_RT_HEARTBEAT,
+            s->msg_callback(1, s->version, DTLS1_RT_HEARTBEAT,
                             buf, 3 + payload + padding,
                             s, s->msg_callback_arg);
 

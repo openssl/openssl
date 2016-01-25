@@ -318,6 +318,7 @@ my %disabled = ( # "what"         => "comment" [or special keyword "experimental
 		 "unit-test"	  => "default",
 		 "zlib"           => "default",
 		 "crypto-mdebug"  => "default",
+		 "heartbeats"     => "default",
 	       );
 my @experimental = ();
 

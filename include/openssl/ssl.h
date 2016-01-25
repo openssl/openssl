@@ -601,7 +601,7 @@ unsigned long SSL_set_options(SSL *s, unsigned long op);
 
 # ifndef OPENSSL_NO_HEARTBEATS
 #  define SSL_heartbeat(ssl) \
-        SSL_ctrl((ssl),SSL_CTRL_TLS_EXT_SEND_HEARTBEAT,0,NULL)
+        SSL_ctrl((ssl),SSL_CTRL_DTLS_EXT_SEND_HEARTBEAT,0,NULL)
 # endif
 
 # define SSL_CTX_set_cert_flags(ctx,op) \
@@ -1177,9 +1177,9 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 # define SSL_CTRL_SET_TLS_EXT_SRP_STRENGTH               80
 # define SSL_CTRL_SET_TLS_EXT_SRP_PASSWORD               81
 # ifndef OPENSSL_NO_HEARTBEATS
-#  define SSL_CTRL_TLS_EXT_SEND_HEARTBEAT                         85
-#  define SSL_CTRL_GET_TLS_EXT_HEARTBEAT_PENDING          86
-#  define SSL_CTRL_SET_TLS_EXT_HEARTBEAT_NO_REQUESTS      87
+#  define SSL_CTRL_DTLS_EXT_SEND_HEARTBEAT               85
+#  define SSL_CTRL_GET_DTLS_EXT_HEARTBEAT_PENDING        86
+#  define SSL_CTRL_SET_DTLS_EXT_HEARTBEAT_NO_REQUESTS    87
 # endif
 # define DTLS_CTRL_GET_TIMEOUT           73
 # define DTLS_CTRL_HANDLE_TIMEOUT        74
@@ -2125,11 +2125,9 @@ void ERR_load_SSL_strings(void);
 # define SSL_F_TLS1_CHECK_SERVERHELLO_TLSEXT              274
 # define SSL_F_TLS1_EXPORT_KEYING_MATERIAL                314
 # define SSL_F_TLS1_GET_CURVELIST                         338
-# define SSL_F_TLS1_HEARTBEAT                             315
 # define SSL_F_TLS1_PREPARE_CLIENTHELLO_TLSEXT            275
 # define SSL_F_TLS1_PREPARE_SERVERHELLO_TLSEXT            276
 # define SSL_F_TLS1_PRF                                   284
-# define SSL_F_TLS1_PROCESS_HEARTBEAT                     341
 # define SSL_F_TLS1_SETUP_KEY_BLOCK                       211
 # define SSL_F_TLS1_SET_SERVER_SIGALGS                    335
 # define SSL_F_TLS_CLIENT_KEY_EXCHANGE_POST_WORK          354

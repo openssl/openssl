@@ -1176,22 +1176,6 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
             dest = s->rlayer.alert_fragment;
             dest_len = &s->rlayer.alert_fragment_len;
         }
-#ifndef OPENSSL_NO_HEARTBEATS
-        else if (SSL3_RECORD_get_type(rr)== TLS1_RT_HEARTBEAT) {
-            /* We can ignore 0 return values */
-            if (tls1_process_heartbeat(s, SSL3_RECORD_get_data(rr),
-                    SSL3_RECORD_get_length(rr)) < 0) {
-                return -1;
-            }
-
-            /* Exit and notify application to read again */
-            SSL3_RECORD_set_length(rr, 0);
-            s->rwstate = SSL_READING;
-            BIO_clear_retry_flags(SSL_get_rbio(s));
-            BIO_set_retry_read(SSL_get_rbio(s));
-            return (-1);
-        }
-#endif
 
         if (dest_maxlen > 0) {
             n = dest_maxlen - *dest_len; /* available space in 'dest' */
