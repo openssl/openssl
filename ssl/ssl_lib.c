@@ -1055,6 +1055,8 @@ void SSL_free(SSL *s)
 
     SSL_CTX_free(s->ctx);
 
+    ASYNC_WAIT_CTX_free(s->waitctx);
+
 #if !defined(OPENSSL_NO_NEXTPROTONEG)
     OPENSSL_free(s->next_proto_negotiated);
 #endif
@@ -1399,12 +1401,24 @@ int SSL_waiting_for_async(SSL *s)
     return 0;
 }
 
-int SSL_get_async_wait_fd(SSL *s)
+int SSL_get_all_async_fds(SSL *s, OSSL_ASYNC_FD *fds, size_t *numfds)
 {
-    if (!s->job)
-        return -1;
+    ASYNC_WAIT_CTX *ctx = s->waitctx;
 
-    return ASYNC_get_wait_fd(s->job);
+    if (ctx == NULL)
+        return 0;
+    return ASYNC_WAIT_CTX_get_all_fds(ctx, fds, numfds);
+}
+
+int SSL_get_changed_async_fds(SSL *s, OSSL_ASYNC_FD *addfd, size_t *numaddfds,
+                              OSSL_ASYNC_FD *delfd, size_t *numdelfds)
+{
+    ASYNC_WAIT_CTX *ctx = s->waitctx;
+
+    if (ctx == NULL)
+        return 0;
+    return ASYNC_WAIT_CTX_get_changed_fds(ctx, addfd, numaddfds, delfd,
+                                          numdelfds);
 }
 
 int SSL_accept(SSL *s)
@@ -1435,7 +1449,12 @@ long SSL_get_default_timeout(const SSL *s)
 static int ssl_start_async_job(SSL *s, struct ssl_async_args *args,
                           int (*func)(void *)) {
     int ret;
-    switch(ASYNC_start_job(&s->job, &ret, func, args,
+    if (s->waitctx == NULL) {
+        s->waitctx = ASYNC_WAIT_CTX_new();
+        if (s->waitctx == NULL)
+            return -1;
+    }
+    switch(ASYNC_start_job(&s->job, s->waitctx, &ret, func, args,
         sizeof(struct ssl_async_args))) {
     case ASYNC_ERR:
         s->rwstate = SSL_NOTHING;

@@ -57,9 +57,11 @@
 
 #if defined(_WIN32)
 #include <windows.h>
-#define OSSL_ASYNC_FD   HANDLE
+#define OSSL_ASYNC_FD       HANDLE
+#define OSSL_BAD_ASYNC_FD   INVALID_HANDLE_VALUE
 #else
-#define OSSL_ASYNC_FD   int
+#define OSSL_ASYNC_FD       int
+#define OSSL_BAD_ASYNC_FD   -1
 #endif
 
 
@@ -68,6 +70,7 @@ extern "C" {
 # endif
 
 typedef struct async_job_st ASYNC_JOB;
+typedef struct async_wait_ctx_st ASYNC_WAIT_CTX;
 
 #define ASYNC_ERR      0
 #define ASYNC_NO_JOBS  1
@@ -77,14 +80,28 @@ typedef struct async_job_st ASYNC_JOB;
 int ASYNC_init_thread(size_t max_size, size_t init_size);
 void ASYNC_cleanup_thread(void);
 
-int ASYNC_start_job(ASYNC_JOB **job, int *ret, int (*func)(void *),
-                         void *args, size_t size);
+ASYNC_WAIT_CTX *ASYNC_WAIT_CTX_new(void);
+void ASYNC_WAIT_CTX_free(ASYNC_WAIT_CTX *ctx);
+int ASYNC_WAIT_CTX_set_wait_fd(ASYNC_WAIT_CTX *ctx, const void *key,
+                               OSSL_ASYNC_FD fd,
+                               void *custom_data,
+                               void (*cleanup)(ASYNC_WAIT_CTX *, const void *,
+                                               OSSL_ASYNC_FD, void *));
+int ASYNC_WAIT_CTX_get_fd(ASYNC_WAIT_CTX *ctx, const void *key,
+                        OSSL_ASYNC_FD *fd, void **custom_data);
+int ASYNC_WAIT_CTX_get_all_fds(ASYNC_WAIT_CTX *ctx, OSSL_ASYNC_FD *fd,
+                               size_t *numfds);
+int ASYNC_WAIT_CTX_get_changed_fds(ASYNC_WAIT_CTX *ctx, OSSL_ASYNC_FD *addfd,
+                                   size_t *numaddfds, OSSL_ASYNC_FD *delfd,
+                                   size_t *numdelfds);
+int ASYNC_WAIT_CTX_clear_fd(ASYNC_WAIT_CTX *ctx, const void *key);
+
+int ASYNC_start_job(ASYNC_JOB **job, ASYNC_WAIT_CTX *ctx, int *ret,
+                    int (*func)(void *), void *args, size_t size);
 int ASYNC_pause_job(void);
 
-OSSL_ASYNC_FD ASYNC_get_wait_fd(ASYNC_JOB *job);
 ASYNC_JOB *ASYNC_get_current_job(void);
-void ASYNC_wake(ASYNC_JOB *job);
-void ASYNC_clear_wake(ASYNC_JOB *job);
+ASYNC_WAIT_CTX *ASYNC_get_wait_ctx(ASYNC_JOB *job);
 void ASYNC_block_pause(void);
 void ASYNC_unblock_pause(void);
 

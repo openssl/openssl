@@ -103,36 +103,4 @@ void async_fibre_free(async_fibre *fibre)
     fibre->fibre.uc_stack.ss_sp = NULL;
 }
 
-int async_pipe(OSSL_ASYNC_FD *pipefds)
-{
-    if (pipe(pipefds) == 0)
-        return 1;
-
-    return 0;
-}
-
-int async_close_fd(OSSL_ASYNC_FD fd)
-{
-    if (close(fd) != 0)
-        return 0;
-
-    return 1;
-}
-
-int async_write1(OSSL_ASYNC_FD fd, const void *buf)
-{
-    if (write(fd, buf, 1) > 0)
-        return 1;
-
-    return 0;
-}
-
-int async_read1(OSSL_ASYNC_FD fd, void *buf)
-{
-    if (read(fd, buf, 1) > 0)
-        return 1;
-
-    return 0;
-}
-
 #endif
