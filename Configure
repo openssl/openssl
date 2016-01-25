@@ -1413,10 +1413,24 @@ print "RANLIB        =$target{ranlib}\n";
 print "ARFLAGS       =$target{arflags}\n";
 print "PERL          =$config{perl}\n";
 
-system("$config{perl} -I. -Mconfigdata util/dofile.pl < crypto/opensslconf.h.in > include/openssl/opensslconf.h.new");
-exit 1 if $? != 0;
-rename("include/openssl/opensslconf.h.new","include/openssl/opensslconf.h") || die "unable to rename include/openssl/opensslconf.h.new\n";
+sub
+run_dofile()
+{
+    my $in = shift;
+    my $out = shift;
 
+    # should we remove $out ?
+    system("$config{perl} -I. -Mconfigdata util/dofile.pl <$in >$out.new");
+    exit 1 if $? != 0;
+    rename("$out.new", $out) || die "Can't rename $out.new, $!";
+}
+
+&run_dofile("include/openssl/opensslconf.h.in", "include/openssl/opensslconf.h");
+
+foreach my $alg ( 'bf', 'bn', 'des', 'rc4' ) {
+    &run_dofile("crypto/include/internal/${alg}_conf.h.in",
+        "crypto/include/internal/${alg}_conf.h");
+}
 
 # Fix the date
 
