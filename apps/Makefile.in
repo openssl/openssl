@@ -140,7 +140,7 @@ progs.h: progs.pl Makefile
 	$(RM) openssl.o
 
 CA.pl: CA.pl.in
-	$(PERL) -I$(TOP) -Mconfigdata $(TOP)/util/dofile.pl < CA.pl.in > CA.pl.new
+	$(PERL) -I$(TOP) -Mconfigdata $(TOP)/util/dofile.pl -oapps/Makefile CA.pl.in > CA.pl.new
 	mv CA.pl.new CA.pl
 
 
