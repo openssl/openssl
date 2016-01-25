@@ -61,6 +61,8 @@
 
 # include <openssl/e_os2.h>
 
+# include "internal/des_conf.h"
+
 # if defined(OPENSSL_SYS_WIN32)
 #  ifndef OPENSSL_SYS_MSDOS
 #   define OPENSSL_SYS_MSDOS

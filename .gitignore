@@ -42,7 +42,8 @@
 
 # Auto generated headers
 /crypto/buildinf.h
-/crypto/opensslconf.h
+/openssl/include/opensslconf.h
+/crypto/include/internal/*_conf.h
 
 # Auto generated assembly language source files
 *.s
