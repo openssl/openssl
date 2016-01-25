@@ -462,11 +462,17 @@ int ecparam_main(int argc, char **argv)
 
         assert(need_rand);
 
-        if (EC_KEY_set_group(eckey, group) == 0)
+        if (EC_KEY_set_group(eckey, group) == 0) {
+            BIO_printf(bio_err, "unable to set group when generating key\n");
+            EC_KEY_free(eckey);
+            ERR_print_errors(bio_err);
             goto end;
+        }
 
         if (!EC_KEY_generate_key(eckey)) {
+            BIO_printf(bio_err, "unable to generate key\n");
             EC_KEY_free(eckey);
+            ERR_print_errors(bio_err);
             goto end;
         }
         assert(private);
