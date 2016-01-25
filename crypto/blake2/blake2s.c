@@ -50,11 +50,6 @@ static inline void blake2s_set_lastnode(BLAKE2S_CTX *S)
     S->f[1] = -1;
 }
 
-static inline void blake2s_clear_lastnode(BLAKE2S_CTX *S)
-{
-    S->f[1] = 0;
-}
-
 /* Some helper functions, not necessarily useful */
 static inline void blake2s_set_lastblock(BLAKE2S_CTX *S)
 {
@@ -64,74 +59,11 @@ static inline void blake2s_set_lastblock(BLAKE2S_CTX *S)
   S->f[0] = -1;
 }
 
-static inline void blake2s_clear_lastblock(BLAKE2S_CTX *S)
-{
-  if(S->last_node) {
-      blake2s_clear_lastnode(S);
-  }
-  S->f[0] = 0;
-}
-
 static inline void blake2s_increment_counter(BLAKE2S_CTX *S,
                                              const uint32_t inc)
 {
     S->t[0] += inc;
     S->t[1] += (S->t[0] < inc);
-}
-
-/* Parameter-related functions */
-static inline void BLAKE2S_PARAM_set_digest_length(BLAKE2S_PARAM *P,
-                                                   const uint8_t digest_length)
-{
-    P->digest_length = digest_length;
-}
-
-static inline void BLAKE2S_PARAM_set_fanout(BLAKE2S_PARAM *P,
-                                            const uint8_t fanout)
-{
-    P->fanout = fanout;
-}
-
-static inline void BLAKE2S_PARAM_set_max_depth(BLAKE2S_PARAM *P,
-                                               const uint8_t depth)
-{
-    P->depth = depth;
-}
-
-static inline void BLAKE2S_PARAM_set_leaf_length(BLAKE2S_PARAM *P,
-                                                 const uint32_t leaf_length)
-{
-    store32(&P->leaf_length, leaf_length);
-}
-
-static inline void BLAKE2S_PARAM_set_node_offset(BLAKE2S_PARAM *P,
-                                                 const uint64_t node_offset)
-{
-    store48(P->node_offset, node_offset);
-}
-
-static inline void BLAKE2S_PARAM_set_node_depth(BLAKE2S_PARAM *P,
-                                                const uint8_t node_depth)
-{
-    P->node_depth = node_depth;
-}
-
-static inline void BLAKE2S_PARAM_set_inner_length(BLAKE2S_PARAM *P,
-                                                  const uint8_t inner_length)
-{
-    P->inner_length = inner_length;
-}
-
-static inline void BLAKE2S_PARAM_set_salt(BLAKE2S_PARAM *P,
-                                          const uint8_t salt[BLAKE2S_SALTBYTES])
-{
-    memcpy(P->salt, salt, BLAKE2S_SALTBYTES);
-}
-
-static inline void BLAKE2S_PARAM_set_personal(BLAKE2S_PARAM *P,
-                                  const uint8_t personal[BLAKE2S_PERSONALBYTES])
-{
-    memcpy(P->personal, personal, BLAKE2S_PERSONALBYTES);
 }
 
 static inline void blake2s_init0(BLAKE2S_CTX *S)
