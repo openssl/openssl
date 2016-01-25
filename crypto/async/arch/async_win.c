@@ -127,42 +127,6 @@ VOID CALLBACK async_start_func_win(PVOID unused)
     async_start_func();
 }
 
-int async_pipe(OSSL_ASYNC_FD *pipefds)
-{
-    if (CreatePipe(&pipefds[0], &pipefds[1], NULL, 256) == 0)
-        return 0;
-
-    return 1;
-}
-
-int async_close_fd(OSSL_ASYNC_FD fd)
-{
-    if (CloseHandle(fd) == 0)
-        return 0;
-
-    return 1;
-}
-
-int async_write1(OSSL_ASYNC_FD fd, const void *buf)
-{
-    DWORD numwritten = 0;
-
-    if (WriteFile(fd, buf, 1, &numwritten, NULL) && numwritten == 1)
-        return 1;
-
-    return 0;
-}
-
-int async_read1(OSSL_ASYNC_FD fd, void *buf)
-{
-    DWORD numread = 0;
-
-    if (ReadFile(fd, buf, 1, &numread, NULL) && numread == 1)
-        return 1;
-
-    return 0;
-}
-
 async_pool *async_get_pool(void)
 {
     return (async_pool *)TlsGetValue(asyncwinpool);

@@ -391,7 +391,7 @@ SSL_get_state                           446	1_1_0	EXIST::FUNCTION:
 SSL_set_default_passwd_cb               447	1_1_0	EXIST::FUNCTION:
 SSL_set_default_passwd_cb_userdata      448	1_1_0	EXIST::FUNCTION:
 SSL_waiting_for_async                   449	1_1_0	EXIST::FUNCTION:
-SSL_get_async_wait_fd                   450	1_1_0	EXIST::FUNCTION:
+SSL_get_all_async_fds                   450	1_1_0	EXIST::FUNCTION:
 SSL_add_ssl_module                      451	1_1_0	EXIST::FUNCTION:
 SSL_CTX_config                          452	1_1_0	EXIST::FUNCTION:
 SSL_config                              453	1_1_0	EXIST::FUNCTION:
@@ -417,3 +417,4 @@ SSL_CTX_up_ref                          472	1_1_0	EXIST::FUNCTION:
 DTLSv1_listen                           473	1_1_0	EXIST::FUNCTION:
 SSL_get0_verified_chain                 474	1_1_0	EXIST::FUNCTION:
 OPENSSL_init_ssl                        475	1_1_0	EXIST::FUNCTION:
+SSL_get_changed_async_fds               476	1_1_0	EXIST::FUNCTION:
