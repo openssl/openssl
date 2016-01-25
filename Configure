@@ -187,7 +187,7 @@ my $nofipscanistercheck=0;
 my $baseaddr="0xFB00000";
 my $no_threads=0;
 my $threads=0;
-my $no_shared=0; # but "no-shared" is default
+$config{no_shared}=0; # but "no-shared" is default
 my $zlib=1;      # but "no-zlib" is default
 my $no_rfc3779=0;
 my $no_asm=0;
@@ -705,7 +705,7 @@ foreach (sort (keys %disabled))
 	elsif (/^threads$/)
 		{ $no_threads = 1; }
 	elsif (/^shared$/)
-		{ $no_shared = 1; }
+		{ $config{no_shared} = 1; }
 	elsif (/^zlib$/)
 		{ $zlib = 0; }
 	elsif (/^static-engine$/)
@@ -949,10 +949,10 @@ if (defined($disabled{"deprecated"})) {
 my $shared_mark = "";
 if ($target{shared_target} eq "")
 	{
-	$no_shared_warn = 1 if !$no_shared && !$fips;
-	$no_shared = 1;
+	$no_shared_warn = 1 if !$config{no_shared} && !$fips;
+	$config{no_shared} = 1;
 	}
-if (!$no_shared)
+if (!$config{no_shared})
 	{
 	if ($target{shared_cflag} ne "")
 		{
@@ -963,7 +963,7 @@ if (!$no_shared)
 if ($target{build_scheme}->[0] ne "mk1mf")
 	{
 	# add {no-}static-engine to options to allow mkdef.pl to work without extra arguments
-	if ($no_shared)
+	if ($config{no_shared})
 		{
 		push @{$config{openssl_other_defines}}, "OPENSSL_NO_DYNAMIC_ENGINE";
 		$config{options}.=" static-engine";
@@ -1067,7 +1067,7 @@ if (!$no_asm) {
     if ($target{md5_obj} =~ /\.o$/) {
 	$cflags.=" -DMD5_ASM";
     }
-    $target{cast_obj}=$table{BASE}->{cast_obj} if (!$no_shared); # CAST assembler is not PIC
+    $target{cast_obj}=$table{BASE}->{cast_obj} if (!$config{no_shared}); # CAST assembler is not PIC
     if ($target{rmd160_obj} =~ /\.o$/) {
 	$cflags.=" -DRMD160_ASM";
     }
@@ -1361,7 +1361,7 @@ while (<IN>)
 	s/^BASEADDR=.*/BASEADDR=$baseaddr/;
 	s/^SHLIB_TARGET=.*/SHLIB_TARGET=$target{shared_target}/;
 	s/^SHLIB_MARK=.*/SHLIB_MARK=$shared_mark/;
-	s/^SHARED_LIBS=.*/SHARED_LIBS=\$(SHARED_CRYPTO) \$(SHARED_SSL)/ if (!$no_shared);
+	s/^SHARED_LIBS=.*/SHARED_LIBS=\$(SHARED_CRYPTO) \$(SHARED_SSL)/ if (!$config{no_shared});
 	if ($target{shared_extension} ne "" && $target{shared_extension} =~ /^\.s([ol])\.[^\.]*$/)
 		{
 		my $sotmp = $1;

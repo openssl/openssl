@@ -67,9 +67,7 @@ plan skip_all => "$test_name needs the engine feature enabled"
     if disabled("engine");
 
 plan skip_all => "$test_name can only be performed with OpenSSL configured shared"
-    unless (map { s/\R//; s/^SHARED_LIBS=\s*//; $_ }
-	    grep { /^SHARED_LIBS=/ }
-	    do { local @ARGV = ( top_file("Makefile") ); <> })[0] ne "";
+    if config("no_shared");
 
 $ENV{OPENSSL_ENGINES} = top_dir("engines");
 $ENV{OPENSSL_ia32cap} = '~0x200000200000000';
