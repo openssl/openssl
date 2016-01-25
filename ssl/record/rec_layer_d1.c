@@ -628,7 +628,7 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
             dest_len = &s->rlayer.d->alert_fragment_len;
         }
 #ifndef OPENSSL_NO_HEARTBEATS
-        else if (SSL3_RECORD_get_type(rr) == TLS1_RT_HEARTBEAT) {
+        else if (SSL3_RECORD_get_type(rr) == DTLS1_RT_HEARTBEAT) {
             /* We allow a 0 return */
             if (dtls1_process_heartbeat(s, SSL3_RECORD_get_data(rr),
                     SSL3_RECORD_get_length(rr)) < 0) {

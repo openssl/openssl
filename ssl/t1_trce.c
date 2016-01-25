@@ -116,7 +116,7 @@ static ssl_trace_tbl ssl_content_tbl[] = {
     {SSL3_RT_ALERT, "Alert"},
     {SSL3_RT_HANDSHAKE, "Handshake"},
     {SSL3_RT_APPLICATION_DATA, "ApplicationData"},
-    {TLS1_RT_HEARTBEAT, "HeartBeat"}
+    {DTLS1_RT_HEARTBEAT, "HeartBeat"}
 };
 
 /* Handshake types */
@@ -1400,7 +1400,7 @@ void SSL_trace(int write_p, int version, int content_type,
                        SSL_alert_type_string_long(msg[0] << 8),
                        msg[0], SSL_alert_desc_string_long(msg[1]), msg[1]);
         }
-    case TLS1_RT_HEARTBEAT:
+    case DTLS1_RT_HEARTBEAT:
         ssl_print_heartbeat(bio, 4, msg, msglen);
         break;
 

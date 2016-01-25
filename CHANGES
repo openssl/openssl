@@ -4,6 +4,11 @@
 
  Changes between 1.0.2f and 1.1.0  [xx XXX xxxx]
 
+  *) Heartbeat for TLS has been removed and is disabled by default
+     for DTLS; configure with enable-heartbeats.  Code that uses the
+     old #define's might need to be updated.
+     [Emilia Käsper, Rich Salz]
+
   *) Rename REF_CHECK to REF_DEBUG.
      [Rich Salz]
 
