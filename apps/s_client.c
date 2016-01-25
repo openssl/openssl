@@ -218,6 +218,27 @@ static int restore_errno(void)
     return ret;
 }
 
+static void do_ssl_shutdown(SSL *ssl)
+{
+    int ret;
+
+    do {
+        /* We only do unidirectional shutdown */
+        ret = SSL_shutdown(ssl);
+        if (ret < 0) {
+            switch (SSL_get_error(ssl, ret)) {
+            case SSL_ERROR_WANT_READ:
+            case SSL_ERROR_WANT_WRITE:
+            case SSL_ERROR_WANT_ASYNC:
+                /* We just do busy waiting. Nothing clever */
+                continue;
+            }
+            ret = 0;
+        }
+    } while (ret < 0);
+}
+
+
 #ifndef OPENSSL_NO_PSK
 /* Default PSK identity and key */
 static char *psk_identity = "Client_identity";
@@ -2002,7 +2023,7 @@ int s_client_main(int argc, char **argv)
                     reconnect--;
                     BIO_printf(bio_c_out,
                                "drop connection and then reconnect\n");
-                    SSL_shutdown(con);
+                    do_ssl_shutdown(con);
                     SSL_set_connect_state(con);
                     SHUTDOWN(SSL_get_fd(con));
                     goto re_start;
@@ -2320,7 +2341,7 @@ int s_client_main(int argc, char **argv)
  shut:
     if (in_init)
         print_stuff(bio_c_out, con, full_log);
-    SSL_shutdown(con);
+    do_ssl_shutdown(con);
     SHUTDOWN(SSL_get_fd(con));
  end:
     if (con != NULL) {

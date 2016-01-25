@@ -190,10 +190,11 @@ struct ssl_async_args {
     SSL *s;
     void *buf;
     int num;
-    int type;
+    enum { READFUNC, WRITEFUNC,  OTHERFUNC} type;
     union {
-        int (*func1)(SSL *, void *, int);
-        int (*func2)(SSL *, const void *, int);
+        int (*func_read)(SSL *, void *, int);
+        int (*func_write)(SSL *, const void *, int);
+        int (*func_other)(SSL *);
     } f;
 };
 
@@ -1469,10 +1470,15 @@ static int ssl_io_intern(void *vargs)
     s = args->s;
     buf = args->buf;
     num = args->num;
-    if (args->type == 1)
-        return args->f.func1(s, buf, num);
-    else
-        return args->f.func2(s, buf, num);
+    switch (args->type) {
+    case READFUNC:
+        return args->f.func_read(s, buf, num);
+    case WRITEFUNC:
+        return args->f.func_write(s, buf, num);
+    case OTHERFUNC:
+        return args->f.func_other(s);
+    }
+    return -1;
 }
 
 int SSL_read(SSL *s, void *buf, int num)
@@ -1493,8 +1499,8 @@ int SSL_read(SSL *s, void *buf, int num)
         args.s = s;
         args.buf = buf;
         args.num = num;
-        args.type = 1;
-        args.f.func1 = s->method->ssl_read;
+        args.type = READFUNC;
+        args.f.func_read = s->method->ssl_read;
 
         return ssl_start_async_job(s, &args, ssl_io_intern);
     } else {
@@ -1518,8 +1524,8 @@ int SSL_peek(SSL *s, void *buf, int num)
         args.s = s;
         args.buf = buf;
         args.num = num;
-        args.type = 1;
-        args.f.func1 = s->method->ssl_peek;
+        args.type = READFUNC;
+        args.f.func_read = s->method->ssl_peek;
 
         return ssl_start_async_job(s, &args, ssl_io_intern);
     } else {
@@ -1546,8 +1552,8 @@ int SSL_write(SSL *s, const void *buf, int num)
         args.s = s;
         args.buf = (void *)buf;
         args.num = num;
-        args.type = 2;
-        args.f.func2 = s->method->ssl_write;
+        args.type = WRITEFUNC;
+        args.f.func_write = s->method->ssl_write;
 
         return ssl_start_async_job(s, &args, ssl_io_intern);
     } else {
@@ -1567,6 +1573,18 @@ int SSL_shutdown(SSL *s)
     if (s->handshake_func == 0) {
         SSLerr(SSL_F_SSL_SHUTDOWN, SSL_R_UNINITIALIZED);
         return -1;
+    }
+
+    if((s->mode & SSL_MODE_ASYNC) && ASYNC_get_current_job() == NULL) {
+        struct ssl_async_args args;
+
+        args.s = s;
+        args.type = OTHERFUNC;
+        args.f.func_other = s->method->ssl_shutdown;
+
+        return ssl_start_async_job(s, &args, ssl_io_intern);
+    } else {
+        return s->method->ssl_shutdown(s);
     }
 
     return s->method->ssl_shutdown(s);
