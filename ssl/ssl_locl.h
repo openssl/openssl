@@ -1390,6 +1390,30 @@ typedef struct hm_fragment_st {
     unsigned char *reassembly;
 } hm_fragment;
 
+typedef struct pqueue_st pqueue;
+typedef struct pitem_st pitem;
+
+struct pitem_st {
+    unsigned char priority[8];  /* 64-bit value in big-endian encoding */
+    void *data;
+    pitem *next;
+};
+
+typedef struct pitem_st *piterator;
+
+pitem *pitem_new(unsigned char *prio64be, void *data);
+void pitem_free(pitem *item);
+pqueue* pqueue_new(void);
+void pqueue_free(pqueue *pq);
+pitem *pqueue_insert(pqueue *pq, pitem *item);
+pitem *pqueue_peek(pqueue *pq);
+pitem *pqueue_pop(pqueue *pq);
+pitem *pqueue_find(pqueue *pq, unsigned char *prio64be);
+pitem *pqueue_iterator(pqueue *pq);
+pitem *pqueue_next(piterator *iter);
+void pqueue_print(pqueue *pq);
+int pqueue_size(pqueue *pq);
+
 typedef struct dtls1_state_st {
     unsigned char cookie[DTLS1_COOKIE_LENGTH];
     unsigned int cookie_len;
@@ -1401,9 +1425,9 @@ typedef struct dtls1_state_st {
     unsigned short handshake_read_seq;
 
     /* Buffered handshake messages */
-    pqueue buffered_messages;
+    pqueue *buffered_messages;
     /* Buffered (sent) handshake records */
-    pqueue sent_messages;
+    pqueue *sent_messages;
 
     unsigned int link_mtu;      /* max on-the-wire DTLS packet size */
     unsigned int mtu;           /* max DTLS packet size */

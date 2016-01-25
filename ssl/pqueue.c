@@ -57,14 +57,13 @@
  *
  */
 
-#include "internal/cryptlib.h"
+#include "ssl_locl.h"
 #include <openssl/bn.h>
-#include <openssl/pqueue.h>
 
-typedef struct _pqueue {
+struct pqueue_st {
     pitem *items;
     int count;
-} pqueue_s;
+};
 
 pitem *pitem_new(unsigned char *prio64be, void *data)
 {
@@ -85,19 +84,19 @@ void pitem_free(pitem *item)
     OPENSSL_free(item);
 }
 
-pqueue_s *pqueue_new()
+pqueue *pqueue_new()
 {
-    pqueue_s *pq = OPENSSL_zalloc(sizeof(*pq));
+    pqueue *pq = OPENSSL_zalloc(sizeof(*pq));
 
     return pq;
 }
 
-void pqueue_free(pqueue_s *pq)
+void pqueue_free(pqueue *pq)
 {
     OPENSSL_free(pq);
 }
 
-pitem *pqueue_insert(pqueue_s *pq, pitem *item)
+pitem *pqueue_insert(pqueue *pq, pitem *item)
 {
     pitem *curr, *next;
 
@@ -133,12 +132,12 @@ pitem *pqueue_insert(pqueue_s *pq, pitem *item)
     return item;
 }
 
-pitem *pqueue_peek(pqueue_s *pq)
+pitem *pqueue_peek(pqueue *pq)
 {
     return pq->items;
 }
 
-pitem *pqueue_pop(pqueue_s *pq)
+pitem *pqueue_pop(pqueue *pq)
 {
     pitem *item = pq->items;
 
@@ -148,7 +147,7 @@ pitem *pqueue_pop(pqueue_s *pq)
     return item;
 }
 
-pitem *pqueue_find(pqueue_s *pq, unsigned char *prio64be)
+pitem *pqueue_find(pqueue *pq, unsigned char *prio64be)
 {
     pitem *next;
     pitem *found = NULL;
@@ -173,7 +172,7 @@ pitem *pqueue_find(pqueue_s *pq, unsigned char *prio64be)
     return found;
 }
 
-void pqueue_print(pqueue_s *pq)
+void pqueue_print(pqueue *pq)
 {
     pitem *item = pq->items;
 
@@ -187,7 +186,7 @@ void pqueue_print(pqueue_s *pq)
     }
 }
 
-pitem *pqueue_iterator(pqueue_s *pq)
+pitem *pqueue_iterator(pqueue *pq)
 {
     return pqueue_peek(pq);
 }
@@ -206,7 +205,7 @@ pitem *pqueue_next(pitem **item)
     return ret;
 }
 
-int pqueue_size(pqueue_s *pq)
+int pqueue_size(pqueue *pq)
 {
     pitem *item = pq->items;
     int count = 0;
