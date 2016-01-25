@@ -30,6 +30,9 @@ The environment is mapped onto a section called B<ENV>.
 
 Comments can be included by preceding them with the B<#> character
 
+Other files can be included using the B<.include> directive followed
+by a filename. There can be no recursive includes.
+
 Each section in a configuration file consists of a number of name and
 value pairs of the form B<name=value>
 
