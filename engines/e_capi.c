@@ -1637,7 +1637,7 @@ static int cert_issuer_match(STACK_OF(X509_NAME) *ca_dn, X509 *x)
 static BOOL WINAPI client_cert_find_callback(PCCERT_CONTEXT cert_context,
                                              void* find_arg)
 {
-    // Verify the certificate key usage is appropriate or not specified.
+    /* Verify the certificate key usage is appropriate or not specified. */
     BYTE key_usage;
     DWORD size = 0;
     DWORD err;
@@ -1649,21 +1649,21 @@ static BOOL WINAPI client_cert_find_callback(PCCERT_CONTEXT cert_context,
     }
     else {
         err = GetLastError();
-        // If |err| is non-zero, it's an actual error. Otherwise the extension
-        // just isn't present, and we treat it as if everything was allowed.
+        /* If |err| is non-zero, it's an actual error. Otherwise the extension
+         * just isn't present, and we treat it as if everything was allowed. */
         if (err) {
             return FALSE;
         }
     }
 
-    // Verify the current time is within the certificate's validity period.
+    /* Verify the current time is within the certificate's validity period. */
     if (CertVerifyTimeValidity(NULL, cert_context->pCertInfo) != 0)
         return FALSE;
 
-    // Verify private key metadata is associated with this certificate.
-    // TODO(ppi): Is this really needed? Isn't it equivalent to leaving
-    // CERT_CHAIN_FIND_BY_ISSUER_NO_KEY_FLAG not set in |find_flags| argument of
-    // CertFindChainInStore()?
+    /* Verify private key metadata is associated with this certificate.
+     * TODO(ppi): Is this really needed? Isn't it equivalent to leaving
+     * CERT_CHAIN_FIND_BY_ISSUER_NO_KEY_FLAG not set in |find_flags| argument of
+     * CertFindChainInStore()? */
     if (!CertGetCertificateContextProperty(
         cert_context, CERT_KEY_PROV_INFO_PROP_ID, NULL, &size)) {
             return FALSE;
@@ -1717,7 +1717,7 @@ static int capi_load_ssl_client_cert(ENGINE *e, SSL *ssl,
         issuers[i].cbData = i2d_X509_NAME(nm, &(issuers[i].pbData));
     }
 
-    // Enumerate the client certificates.
+    /* Enumerate the client certificates. */
     memset(&find_by_issuer_para, 0, sizeof(find_by_issuer_para));
     find_by_issuer_para.cbSize = sizeof(find_by_issuer_para);
     find_by_issuer_para.pszUsageIdentifier = szOID_PKIX_KP_CLIENT_AUTH;
@@ -1726,7 +1726,6 @@ static int capi_load_ssl_client_cert(ENGINE *e, SSL *ssl,
     find_by_issuer_para.pfnFindCallback = client_cert_find_callback;
 
     for (;;) {
-        // Find a certificate chain.
         chain_context = CertFindChainInStore(hstore,
                                              X509_ASN_ENCODING,
                                              find_flags,
@@ -1737,7 +1736,7 @@ static int capi_load_ssl_client_cert(ENGINE *e, SSL *ssl,
         if (!chain_context)
             break;
 
-        // Get the leaf certificate.
+        /* Get the leaf certificate. */
         cert = chain_context->rgpChain[0]->rgpElement[0]->pCertContext;
         if (!cert)
             break;
