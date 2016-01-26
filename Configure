@@ -1146,27 +1146,6 @@ $config{makedepprog} = "makedepend";
 if ($target{cc} eq "gcc" || ($target{cc} eq 'cc' && $config{target} =~ /darwin/)) {
     $config{makedepprog} = $target{cc};
 }
-# On different platforms, shared library suffixes takes interesting forms.
-# On Most Unixen, it's .so.{version} or .sl.{version}, while on MacOS X,
-# it's .{version}.dylib.  We're want to separate the two so we can calculate
-# symlinks.
-# FIXME: is this actually needed any more?  Makefile.shared seems to just
-# symlink a file name without SOVER to the file with full SOVER, nothing in
-# between.
-if ($target{shared_extension} =~ /^(|(?<e>\.s[ol])(?<v>\..*)|(?<v>\..*)(?<e>\.dylib))$/) {
-    my @vernums = split /\./, $+{v};
-    shift @vernums;             # Because the initial period in shlib_extension.
-    my @s = ();
-    while (@vernums) {
-	pop @vernums;
-	push @s, join(".", $+{e} eq ".dylib" ? "" : $+{e},
-		      @vernums,
-		      $+{e} eq ".dylib" ? $+{e} : () );
-    }
-    $config{shared_link_extensions} = join(" ", @s);
-} else {
-    $config{shared_link_extensions} = "";
-}
 $config{depflags} =~ s/^\s*//;
 
 
