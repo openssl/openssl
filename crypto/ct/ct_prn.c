@@ -100,14 +100,13 @@ void SCT_print(SCT *sct, BIO *out, int indent)
     BIO_printf(out, "\n%*sVersion   : ", indent + 4, "");
 
     if (sct->version == 0) {    /* SCT v1 */
-        BIO_printf(out, "v1(0)");
+        BIO_printf(out, "v1 (0x0)");
 
         BIO_printf(out, "\n%*sLog ID    : ", indent + 4, "");
         BIO_hex_string(out, indent + 16, 16, sct->log_id, sct->log_id_len);
 
         BIO_printf(out, "\n%*sTimestamp : ", indent + 4, "");
         timestamp_print(out, sct->timestamp);
-        BIO_printf(out, " (%"PRIu64")", sct->timestamp);
 
         BIO_printf(out, "\n%*sExtensions: ", indent + 4, "");
         if (sct->ext_len == 0)
