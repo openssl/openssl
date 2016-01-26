@@ -4,6 +4,20 @@
 
  Changes between 1.0.2e and 1.1.0  [xx XXX xxxx]
 
+  *) Configuration and writing out the results from it has changed.
+     Files such as Makefile include/openssl/opensslconf.h and are now
+     produced through general templates, such as Makefile.in and
+     crypto/opensslconf.h.in and some help from the perl module
+     Text::Template.
+
+     Also, the center of configuration information is no longer
+     Makefile.  Instead, Configure produces a perl module in
+     configdata.pm which holds most of the config data (in the hash
+     table %config), the target data that comes from the target
+     configuration in one of the Configurations/*.conf files (in
+     %target).
+     [Richard Levitte]
+
   *) To clarify their intended purposes, the Configure options
      --prefix and --openssldir change their semantics, and become more
      straightforward and less interdependent.

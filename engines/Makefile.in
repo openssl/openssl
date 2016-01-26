@@ -13,7 +13,7 @@ CFLAG=-g
 MAKEFILE=	Makefile
 AR=		ar r
 
-ENGINES_ASM_OBJ=
+PADLOCK_ASM_OBJ=
 
 PEX_LIBS=
 EX_LIBS=
@@ -34,7 +34,7 @@ LIBOBJ= \
 	e_padlock.o \
 	e_capi.o \
 	e_dasync.o \
-	$(ENGINES_ASM_OBJ)
+	$(PADLOCK_ASM_OBJ)
 
 TESTLIBNAMES= ossltest
 TESTLIBSRC= e_ossltest.c

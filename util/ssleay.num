@@ -433,3 +433,5 @@ SSL_CTX_get_options                     467	1_1_0	EXIST::FUNCTION:
 SSL_clear_options                       468	1_1_0	EXIST::FUNCTION:
 SSL_set_options                         469	1_1_0	EXIST::FUNCTION:
 SSL_get_options                         470	1_1_0	EXIST::FUNCTION:
+SSL_up_ref                              471	1_1_0	EXIST::FUNCTION:
+SSL_CTX_up_ref                          472	1_1_0	EXIST::FUNCTION:

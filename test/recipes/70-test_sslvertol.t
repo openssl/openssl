@@ -67,7 +67,7 @@ plan skip_all => "$test_name needs the engine feature enabled"
     if disabled("engine");
 
 plan skip_all => "$test_name can only be performed with OpenSSL configured shared"
-    if config("no_shared");
+    if disabled("shared");
 
 $ENV{OPENSSL_ENGINES} = top_dir("engines");
 $ENV{OPENSSL_ia32cap} = '~0x200000200000000';

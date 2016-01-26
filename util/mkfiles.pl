@@ -57,7 +57,6 @@ my @dirs = (
 "crypto/ocsp",
 "crypto/ui",
 #"crypto/store",
-"crypto/pqueue",
 "crypto/whrlpool",
 "crypto/ts",
 "crypto/srp",
@@ -70,7 +69,6 @@ my @dirs = (
 "ssl",
 "apps",
 "engines",
-"engines/ccgost",
 "test",
 "tools"
 );
