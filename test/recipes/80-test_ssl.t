@@ -560,7 +560,7 @@ sub testssl {
 	plan tests => 1;
 
       SKIP: {
-	  skip "TLSv1.0 is not supported by this OpenSSL build", 7
+	  skip "TLSv1.0 is not supported by this OpenSSL build", 1
 	      if $no_tls1;
 
 	  ok(run(test([@ssltest, "-bio_pair", "-tls1", "-custom_ext"])),
