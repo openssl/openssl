@@ -4,6 +4,8 @@
 
 SSL_SESSION_get_time, SSL_SESSION_set_time, SSL_SESSION_get_timeout, SSL_SESSION_set_timeout - retrieve and manipulate session time and timeout settings
 
+SSL_SESSION_get0_hostname - retrieve the hostname for the session
+
 =head1 SYNOPSIS
 
  #include <openssl/ssl.h>
@@ -17,6 +19,8 @@ SSL_SESSION_get_time, SSL_SESSION_set_time, SSL_SESSION_get_timeout, SSL_SESSION
  long SSL_set_time(SSL_SESSION *s, long tm);
  long SSL_get_timeout(const SSL_SESSION *s);
  long SSL_set_timeout(SSL_SESSION *s, long tm);
+
+ const char *SSL_SESSION_get0_hostname(const SSL_SESSION *s);
 
 =head1 DESCRIPTION
 
@@ -36,6 +40,9 @@ to B<tm>.
 The SSL_get_time(), SSL_set_time(), SSL_get_timeout(), and SSL_set_timeout()
 functions are synonyms for the SSL_SESSION_*() counterparts.
 
+SSL_SESSION_get0_hostname returns the pointer to the hostname for session B<s>.
+The caller must not free the returned pointer.
+
 =head1 NOTES
 
 Sessions are expired by examining the creation time and the timeout value.
@@ -51,6 +58,8 @@ SSL_SESSION_get_time() and SSL_SESSION_get_timeout() return the currently
 valid values.
 
 SSL_SESSION_set_time() and SSL_SESSION_set_timeout() return 1 on success.
+
+SSL_SESSION_get0_hostname returns the current value.
 
 If any of the function is passed the NULL pointer for the session B<s>, 
 0 is returned.

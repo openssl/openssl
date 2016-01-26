@@ -1458,6 +1458,7 @@ __owur long SSL_SESSION_get_time(const SSL_SESSION *s);
 __owur long SSL_SESSION_set_time(SSL_SESSION *s, long t);
 __owur long SSL_SESSION_get_timeout(const SSL_SESSION *s);
 __owur long SSL_SESSION_set_timeout(SSL_SESSION *s, long t);
+__owur const char *SSL_SESSION_get0_hostname(const SSL_SESSION *s);
 __owur int SSL_SESSION_has_ticket(const SSL_SESSION *s);
 __owur unsigned long SSL_SESSION_get_ticket_lifetime_hint(const SSL_SESSION *s);
 void SSL_SESSION_get0_ticket(const SSL_SESSION *s, unsigned char **tick,
