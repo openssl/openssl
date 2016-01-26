@@ -745,6 +745,11 @@ SSL *SSL_new(SSL_CTX *ctx)
     return (NULL);
 }
 
+void SSL_up_ref(SSL *s)
+{
+    CRYPTO_add(&s->references, 1, CRYPTO_LOCK_SSL);
+}
+
 int SSL_CTX_set_session_id_context(SSL_CTX *ctx, const unsigned char *sid_ctx,
                                    unsigned int sid_ctx_len)
 {
@@ -2346,6 +2351,11 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
  err2:
     SSL_CTX_free(ret);
     return (NULL);
+}
+
+void SSL_CTX_up_ref(SSL_CTX *ctx)
+{
+    CRYPTO_add(&ctx->references, 1, CRYPTO_LOCK_SSL_CTX);
 }
 
 void SSL_CTX_free(SSL_CTX *a)
