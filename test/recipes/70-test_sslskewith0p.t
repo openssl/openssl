@@ -67,7 +67,7 @@ plan skip_all => "$test_name needs the engine feature enabled"
     if disabled("engine");
 
 plan skip_all => "$test_name can only be performed with OpenSSL configured shared"
-    if config("no_shared");
+    if disabled("shared");
 
 plan skip_all => "dh is not supported by this OpenSSL build"
     if disabled("dh");

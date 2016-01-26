@@ -14,11 +14,11 @@ setup("test_ssl");
 my ($no_rsa, $no_dsa, $no_dh, $no_ec, $no_srp, $no_psk,
     $no_ssl3, $no_tls1, $no_tls1_1, $no_tls1_2,
     $no_dtls, $no_dtls1, $no_dtls1_2) =
-    disabled qw/rsa dsa dh ec srp psk
-                ssl3 tls1 tls1_1 tls1_2
-                dtls dtls1 dtls1_2/;
-my $no_anytls = $no_ssl3 && $no_tls1 && $no_tls1_1 && $no_tls1_2;
-my $no_anydtls = $no_dtls && $no_dtls1 && $no_dtls1_2;
+    anydisabled qw/rsa dsa dh ec srp psk
+                   ssl3 tls1 tls1_1 tls1_2
+                   dtls dtls1 dtls1_2/;
+my $no_anytls = alldisabled(available_protocols("tls"));
+my $no_anydtls = alldisabled(available_protocols("dtls"));
 
 plan skip_all => "No SSL/TLS/DTLS protocol is support by this OpenSSL build"
     if $no_anytls && $no_anydtls;
