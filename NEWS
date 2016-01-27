@@ -7,7 +7,7 @@
 
   Major changes between OpenSSL 1.0.1q and OpenSSL 1.0.1r [under development]
 
-      o
+      o SSLv2 doesn't block disabled ciphers (CVE-2015-3197)
 
   Major changes between OpenSSL 1.0.1p and OpenSSL 1.0.1q [3 Dec 2015]
 

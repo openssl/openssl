@@ -4,6 +4,18 @@
 
  Changes between 1.0.1q and 1.0.1r [xx XXX xxxx]
 
+  *) SSLv2 doesn't block disabled ciphers
+
+     A malicious client can negotiate SSLv2 ciphers that have been disabled on
+     the server and complete SSLv2 handshakes even if all SSLv2 ciphers have
+     been disabled, provided that the SSLv2 protocol was not also disabled via
+     SSL_OP_NO_SSLv2.
+
+     This issue was reported to OpenSSL on 26th December 2015 by Nimrod Aviram
+     and Sebastian Schinzel.
+     (CVE-2015-3197)
+     [Viktor Dukhovni]
+
   *) Reject DH handshakes with parameters shorter than 1024 bits.
      [Kurt Roeckx]
 
