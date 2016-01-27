@@ -1397,6 +1397,20 @@ static void internal_curve_test(void)
         fprintf(stdout, " failed\n\n");
         ABORT;
     }
+
+    /* Test all built-in curves and let the library choose the EC_METHOD */
+    for (n = 0; n < crv_len; n++) {
+        EC_GROUP *group = NULL;
+        int nid = curves[n].nid;
+        fprintf(stdout, "%s:\n", OBJ_nid2sn(nid));
+        fflush(stdout);
+        if ((group = EC_GROUP_new_by_curve_name(nid)) == NULL) {
+            ABORT;
+        }
+        group_order_tests(group);
+        EC_GROUP_free(group);
+    }
+
     OPENSSL_free(curves);
     return;
 }
