@@ -470,6 +470,9 @@ sub testssl {
 		  $protocolciphersuitcount += scalar @c;
 		  $_ => [ @c ] } @protocols;
 
+        plan skip_all => "None of the ciphersuites to test are available in this OpenSSL build"
+            if $protocolciphersuitcount + scalar(@protocols) == 0;
+
         # The count of protocols is because in addition to the ciphersuits
         # we got above, we're running a weak DH test for each protocol
 	plan tests => $protocolciphersuitcount + scalar(@protocols);
