@@ -109,7 +109,7 @@
      [Emilia Käsper]
 
   *) In DSA_generate_parameters_ex, if the provided seed is too short,
-     return an error
+     use a random seed, as already documented.
      [Rich Salz and Ismo Puustinen <ismo.puustinen@intel.com>]
 
  Changes between 1.0.2c and 1.0.2d [9 Jul 2015]
