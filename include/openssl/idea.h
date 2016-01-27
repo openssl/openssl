@@ -58,11 +58,13 @@
 #ifndef HEADER_IDEA_H
 # define HEADER_IDEA_H
 
-# include <openssl/opensslconf.h>/* IDEA_INT, OPENSSL_NO_IDEA */
+# include <openssl/opensslconf.h>
 
 # ifdef OPENSSL_NO_IDEA
 #  error IDEA is disabled.
 # endif
+
+typedef unsigned int IDEA_INT;
 
 # define IDEA_ENCRYPT    1
 # define IDEA_DECRYPT    0
