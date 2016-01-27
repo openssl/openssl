@@ -61,16 +61,45 @@
 #include <openssl/buffer.h>
 #include "internal/bn_int.h"
 
-int ASN1_bn_print(BIO *bp, const char *number, const BIGNUM *num,
-                  unsigned char *buf, int off)
+/* Number of octets per line */
+#define ASN1_BUF_PRINT_WIDTH    15
+/* Maximum indent */
+#define ASN1_PRINT_MAX_INDENT 128
+
+int ASN1_buf_print(BIO *bp, unsigned char *buf, size_t buflen, int indent)
 {
-    int n, i;
+    size_t i;
+
+    for (i = 0; i < buflen; i++) {
+        if ((i % ASN1_BUF_PRINT_WIDTH) == 0) {
+            if (i > 0 && BIO_puts(bp, "\n") <= 0)
+                return 0;
+            if (!BIO_indent(bp, indent, ASN1_PRINT_MAX_INDENT))
+                return 0;
+        }
+        /*
+         * Use colon separators for each octet for compatibility as
+         * this fuction is used to print out key components.
+         */
+        if (BIO_printf(bp, "%02x%s", buf[i],
+                       (i == buflen - 1) ? "" : ":") <= 0)
+                return 0;
+    }
+    if (BIO_write(bp, "\n", 1) <= 0)
+        return 0;
+    return 1;
+}
+
+int ASN1_bn_print(BIO *bp, const char *number, const BIGNUM *num,
+                  unsigned char *buf, int indent)
+{
+    int n;
     const char *neg;
 
     if (num == NULL)
-        return (1);
+        return 1;
     neg = (BN_is_negative(num)) ? "-" : "";
-    if (!BIO_indent(bp, off, 128))
+    if (!BIO_indent(bp, indent, ASN1_PRINT_MAX_INDENT))
         return 0;
     if (BN_is_zero(num)) {
         if (BIO_printf(bp, "%s 0\n", number) <= 0)
@@ -85,7 +114,7 @@ int ASN1_bn_print(BIO *bp, const char *number, const BIGNUM *num,
             return (0);
     } else {
         buf[0] = 0;
-        if (BIO_printf(bp, "%s%s", number,
+        if (BIO_printf(bp, "%s%s\n", number,
                        (neg[0] == '-') ? " (Negative)" : "") <= 0)
             return (0);
         n = BN_bn2bin(num, &buf[1]);
@@ -95,17 +124,8 @@ int ASN1_bn_print(BIO *bp, const char *number, const BIGNUM *num,
         else
             buf++;
 
-        for (i = 0; i < n; i++) {
-            if ((i % 15) == 0) {
-                if (BIO_puts(bp, "\n") <= 0 || !BIO_indent(bp, off + 4, 128))
-                    return 0;
-            }
-            if (BIO_printf(bp, "%02x%s", buf[i], ((i + 1) == n) ? "" : ":")
-                <= 0)
-                return (0);
-        }
-        if (BIO_write(bp, "\n", 1) <= 0)
-            return (0);
+        if (ASN1_buf_print(bp, buf, n, indent + 4) == 0)
+            return 0;
     }
-    return (1);
+    return 1;
 }
