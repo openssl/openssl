@@ -126,52 +126,13 @@ In each table entry, the following keys are significant:
                            source.
                            The valid words are:
 
-                           DES_PTR      use a pointer to DES_SPtrans
-                                        rather that DES_SPtrans
-                                        directly in D_ENCRYPT.
-                           DES_RISC1    Alternate implementations of
-                           DES_RISC2    D_ENCRYPT for certain RISC
-                                        processors.
-                           DES_UNROLL   do not loop around calls to
-                                        D_ENCRYPT.
-                           DES_INT      have unsigned int as the
-                                        integer type for DES rather
-                                        than unsigned long.
                            BN_LLONG     use 'unsigned long long' in
                                         some bignum calculations.
                                         This has no value when
                                         SIXTY_FOUR_BIT or
                                         SIXTY_FOUR_BIT_LONG is given.
-                           RC4_CHAR     makes the basic RC4 unif of
+                           RC4_CHAR     makes the basic RC4 unit of
                                         calculation an unsigned char.
-                           RC4_LONG     makes the basic RC4 unif of
-                                        calculation an unsigned long.
-                           RC4_INDEX    go through input and output
-                                        data by indexing into them
-                                        rather than incrementing the
-                                        pointer.
-                           RC4_CHUNK    sets the chunk type to
-                                        unsigned long.
-                           RC4_CHUNK_LL sets the chunk type to
-                                        unsigned long long.
-                                        both these chunk sizes are for
-                                        handling data in chunks on
-                                        processors that do not have
-                                        byte load/store instructions.
-                           MD2_CHAR     makes the basic MD2 unit of
-                                        calculation an unsigned char.
-                           MD2_LONG     makes the basic MD2 unit of
-                                        calculation an unsigned long.
-                           IDEA_SHORT   makes the basic IDEA unit of
-                                        calculation an unsigned short.
-                           IDEA_LONG    makes the basic IDEA unit of
-                                        calculation an unsigned long.
-                           RC2_SHORT    makes the basic RC2 unit of
-                                        calculation an unsigned short.
-                           RC2_LONG     makes the basic RC2 unit of
-                                        calculation an unsigned long.
-                           BF_PTR       use different pointer based
-                           BF_PTR2      versions of BF_ENC.
                            SIXTY_FOUR_BIT       processor registers
                                                 are 64 bits, long is
                                                 32 bits, long long is

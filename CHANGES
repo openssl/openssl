@@ -4,6 +4,14 @@
 
  Changes between 1.0.2e and 1.1.0  [xx XXX xxxx]
 
+  *) Removed many obsolete configuration items, including
+        DES_PTR, DES_RISC1, DES_RISC2, DES_INT
+        MD2_CHAR, MD2_INT, MD2_LONG
+        BF_PTR, BF_PTR2
+        IDEA_SHORT, IDEA_LONG
+        RC2_SHORT, RC2_LONG, RC4_LONG, RC4_CHUNK, RC4_INDEX
+     [Rich Salz, with advice from Andy Polyakov]
+
   *) Configuration and writing out the results from it has changed.
      Files such as Makefile include/openssl/opensslconf.h and are now
      produced through general templates, such as Makefile.in and

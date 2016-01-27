@@ -58,10 +58,12 @@
 #ifndef HEADER_RC2_H
 # define HEADER_RC2_H
 
-# include <openssl/opensslconf.h>/* OPENSSL_NO_RC2, RC2_INT */
+# include <openssl/opensslconf.h>
 # ifdef OPENSSL_NO_RC2
 #  error RC2 is disabled.
 # endif
+
+typedef unsigned int RC2_INT;
 
 # define RC2_ENCRYPT     1
 # define RC2_DECRYPT     0

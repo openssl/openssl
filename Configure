@@ -65,32 +65,8 @@ my $usage="Usage: Configure [no-<cipher> ...] [enable-<cipher> ...] [experimenta
 # DEBUG_SAFESTACK use type-safe stacks to enforce type-safety on stack items
 #		provided to stack calls. Generates unique stack functions for
 #		each possible stack type.
-# DES_PTR	use pointer lookup vs arrays in the DES in crypto/des/des_locl.h
-# DES_RISC1	use different DES_ENCRYPT macro that helps reduce register
-#		dependancies but needs to more registers, good for RISC CPU's
-# DES_RISC2	A different RISC variant.
-# DES_UNROLL	unroll the inner DES loop, sometimes helps, somtimes hinders.
-# DES_INT	use 'int' instead of 'long' for DES_LONG in crypto/des/des.h
-#		This is used on the DEC Alpha where long is 8 bytes
-#		and int is 4
 # BN_LLONG	use the type 'long long' in crypto/bn/bn.h
-# MD2_CHAR	use 'char' instead of 'int' for MD2_INT in crypto/md2/md2.h
-# MD2_LONG	use 'long' instead of 'int' for MD2_INT in crypto/md2/md2.h
-# IDEA_SHORT	use 'short' instead of 'int' for IDEA_INT in crypto/idea/idea.h
-# IDEA_LONG	use 'long' instead of 'int' for IDEA_INT in crypto/idea/idea.h
-# RC2_SHORT	use 'short' instead of 'int' for RC2_INT in crypto/rc2/rc2.h
-# RC2_LONG	use 'long' instead of 'int' for RC2_INT in crypto/rc2/rc2.h
 # RC4_CHAR	use 'char' instead of 'int' for RC4_INT in crypto/rc4/rc4.h
-# RC4_LONG	use 'long' instead of 'int' for RC4_INT in crypto/rc4/rc4.h
-# RC4_INDEX	define RC4_INDEX in crypto/rc4/rc4_locl.h.  This turns on
-#		array lookups instead of pointer use.
-# RC4_CHUNK	enables code that handles data aligned at long (natural CPU
-#		word) boundary.
-# RC4_CHUNK_LL	enables code that handles data aligned at long long boundary
-#		(intended for 64-bit CPUs running 32-bit OS).
-# BF_PTR	use 'pointer arithmatic' for Blowfish (unsafe on Alpha).
-# BF_PTR2	intel specific version (generic version is more efficient).
-#
 # Following are set automatically by this script
 #
 # MD5_ASM	use some extra md5 assember,
@@ -124,10 +100,8 @@ my $memleak_devteam_backtrace = "-rdynamic -DCRYPTO_MDEBUG_BACKTRACE";
 
 my $strict_warnings = 0;
 
-my $x86_gcc_des="DES_PTR DES_RISC1 DES_UNROLL";
-
-# MD2_CHAR slags pentium pros
-my $x86_gcc_opts="RC4_INDEX MD2_INT";
+my $x86_gcc_des="";
+my $x86_gcc_opts="";
 
 # As for $BSDthreads. Idea is to maintain "collective" set of flags,
 # which would cover all BSD flavors. -pthread applies to them all,
@@ -1152,44 +1126,16 @@ $config{depflags} =~ s/^\s*//;
 
 # Deal with bn_ops ###################################################
 
-$config{des_ptr}		=0;
-$config{des_risc1}		=0;
-$config{des_risc2}		=0;
-$config{des_unroll}		=0;
 $config{bn_ll}			=0;
-$config{rc4_idx}		=0;
-$config{bf_ptr}			=0;
 $config{export_var_as_fn}	=0;
 my $def_int="unsigned int";
 $config{rc4_int}		=$def_int;
-$config{rc4_chunk}		="";
-$config{md2_int}		=$def_int;
-$config{idea_int}		=$def_int;
 $config{rc2_int}		=$def_int;
 ($config{b64l},$config{b64},$config{b32},$config{b16},$config{b8})=(0,0,1,0,0);
 
-$config{des_int} = "unsigned long";
-
 foreach (sort split(/\s+/,$target{bn_ops})) {
-    $config{des_ptr}=1				if /DES_PTR/;
-    $config{des_risc1}=1			if /DES_RISC1/;
-    $config{des_risc2}=1			if /DES_RISC2/;
-    $config{des_unroll}=1			if /DES_UNROLL/;
-    $config{des_int}="unsigned int"		if /DES_INT/;
     $config{bn_ll}=1				if /BN_LLONG/;
     $config{rc4_int}="unsigned char"		if /RC4_CHAR/;
-    $config{rc4_int}="unsigned long"		if /RC4_LONG/;
-    $config{rc4_idx}=1				if /RC4_INDEX/;
-    $config{rc4_chunk}="unsigned long"		if /RC4_CHUNK/;
-    $config{rc4_chunk}="unsigned long long"	if /RC4_CHUNK_LL/;
-    $config{md2_int}="unsigned char"		if /MD2_CHAR/;
-    $config{md2_int}="unsigned long"		if /MD2_LONG/;
-    $config{idea_int}="unsigned char"		if /IDEA_CHAR/;
-    $config{idea_int}="unsigned long"		if /IDEA_LONG/;
-    $config{rc2_int}="unsigned char"		if /RC2_CHAR/;
-    $config{rc2_int}="unsigned long"		if /RC2_LONG/;
-    $config{bf_ptr}=1				if $_ eq "BF_PTR";
-    $config{bf_ptr}=2				if $_ eq "BF_PTR2";
     ($config{b64l},$config{b64},$config{b32},$config{b16},$config{b8})
 	=(0,1,0,0,0)				if /SIXTY_FOUR_BIT/;
     ($config{b64l},$config{b64},$config{b32},$config{b16},$config{b8})
@@ -1351,27 +1297,15 @@ print "SIXTY_FOUR_BIT mode\n" if $config{b64};
 print "THIRTY_TWO_BIT mode\n" if $config{b32};
 print "SIXTEEN_BIT mode\n" if $config{b16};
 print "EIGHT_BIT mode\n" if $config{b8};
-print "DES_PTR used\n" if $config{des_ptr};
-print "DES_RISC1 used\n" if $config{des_risc1};
-print "DES_RISC2 used\n" if $config{des_risc2};
-print "DES_UNROLL used\n" if $config{des_unroll};
-print "DES_INT used\n" if $config{des_int} =~ / int$/;
 print "BN_LLONG mode\n" if $config{bn_ll};
 print "RC4 uses $config{rc4_int}\n" if $config{rc4_int} != $def_int;
-print "RC4_INDEX mode\n" if $config{rc4_idx};
-print "RC4_CHUNK is undefined\n" unless $config{rc4_chunk};
-print "RC4_CHUNK is $config{rc4_chunk}\n" if $config{rc4_chunk};
-print "MD2 uses $config{md2_int}\n" if $config{md2_int} != $def_int;
-print "IDEA uses $config{idea_int}\n" if $config{idea_int} != $def_int;
 print "RC2 uses $config{rc2_int}\n" if $config{rc2_int} != $def_int;
-print "BF_PTR used\n" if $config{bf_ptr} == 1;
-print "BF_PTR2 used\n" if $config{bf_ptr} == 2;
 
 run_dofile("$Makefile.in","$Makefile");
 
 run_dofile("include/openssl/opensslconf.h.in", "include/openssl/opensslconf.h");
 
-foreach my $alg ( 'bf', 'bn', 'des', 'rc4' ) {
+foreach my $alg ( 'bn' ) {
     run_dofile("crypto/include/internal/${alg}_conf.h.in",
 	       "crypto/include/internal/${alg}_conf.h");
 }
