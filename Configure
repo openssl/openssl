@@ -1142,10 +1142,11 @@ if (!$no_asm) {
     }
 }
 
-$config{makedepprog} = "makedepend";
-if ($target{cc} eq "gcc" || ($target{cc} eq 'cc' && $config{target} =~ /darwin/)) {
-    $config{makedepprog} = $target{cc};
-}
+my $ecc = $target{cc};
+$ecc = "clang" if `$target{cc} --version 2>&1` =~ /clang/;
+
+$config{makedepprog} =
+    $ecc eq "gcc" || $ecc eq "clang" ? $target{cc} : "makedepend";
 $config{depflags} =~ s/^\s*//;
 
 
@@ -1215,9 +1216,6 @@ if (defined($config{api})) {
     $default_depflags .= " $apiflag";
     $config{cflags} .= " $apiflag";
 }
-
-my $ecc = $target{cc};
-$ecc = "clang" if `$target{cc} --version 2>&1` =~ /clang/;
 
 if ($strict_warnings)
 	{
