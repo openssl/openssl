@@ -1,4 +1,3 @@
-
 /*
  * THIS FILE IS GENERATED FROM objects.txt by objects.pl via the following
  * command: perl objects.pl objects.txt obj_mac.num obj_mac.h
