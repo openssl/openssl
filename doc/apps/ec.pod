@@ -23,6 +23,7 @@ B<openssl> B<ec>
 [B<-pubout>]
 [B<-conv_form arg>]
 [B<-param_enc arg>]
+[B<-no_public>]
 [B<-engine id>]
 
 =head1 DESCRIPTION
@@ -127,6 +128,10 @@ explicitly given (see RFC 3279 for the definition of the
 EC parameters structures). The default value is B<named_curve>.
 B<Note> the B<implicitlyCA> alternative ,as specified in RFC 3279,
 is currently not implemented in OpenSSL.
+
+=item B<-no_public>
+
+This option omits the public key components from the private key output.
 
 =item B<-engine id>
 
