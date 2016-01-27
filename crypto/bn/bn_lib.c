@@ -313,22 +313,13 @@ static BN_ULONG *bn_expand_internal(const BIGNUM *b, int words)
         return (NULL);
     }
     if (BN_get_flags(b,BN_FLG_SECURE))
-        a = A = OPENSSL_secure_malloc(words * sizeof(*a));
+        a = A = OPENSSL_secure_zalloc(words * sizeof(*a));
     else
-        a = A = OPENSSL_malloc(words * sizeof(*a));
+        a = A = OPENSSL_zalloc(words * sizeof(*a));
     if (A == NULL) {
         BNerr(BN_F_BN_EXPAND_INTERNAL, ERR_R_MALLOC_FAILURE);
         return (NULL);
     }
-#ifdef PURIFY
-    /*
-     * Valgrind complains in BN_consttime_swap because we process the whole
-     * array even if it's not initialised yet. This doesn't matter in that
-     * function - what's important is constant time operation (we're not
-     * actually going to use the data)
-     */
-    memset(a, 0, sizeof(*a) * words);
-#endif
 
 #if 1
     B = b->d;

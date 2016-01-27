@@ -4,6 +4,10 @@
 
  Changes between 1.0.2f and 1.1.0  [xx XXX xxxx]
 
+  *) Always DPURIFY. Remove the use of uninitialized memory in the
+     RNG, and other conditional uses of DPURIFY. This makes -DPURIFY a no-op.
+     [Emilia Käsper]
+
   *) Removed many obsolete configuration items, including
         DES_PTR, DES_RISC1, DES_RISC2, DES_INT
         MD2_CHAR, MD2_INT, MD2_LONG

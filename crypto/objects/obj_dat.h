@@ -5647,4 +5647,3 @@ static const unsigned int obj_objs[NUM_OBJ]={
 956,	/* OBJ_jurisdictionStateOrProvinceName 1 3 6 1 4 1 311 60 2 1 2 */
 957,	/* OBJ_jurisdictionCountryName      1 3 6 1 4 1 311 60 2 1 3 */
 };
-
