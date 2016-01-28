@@ -221,8 +221,6 @@ extern "C" {
  */
 # define BIO_FLAGS_MEM_RDONLY    0x200
 
-typedef struct bio_st BIO;
-
 void BIO_set_flags(BIO *b, int flags);
 int BIO_test_flags(const BIO *b, int flags);
 void BIO_clear_flags(BIO *b, int flags);

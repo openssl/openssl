@@ -1116,17 +1116,21 @@ my $def_int="unsigned int";
 $config{rc4_int}		=$def_int;
 ($config{b64l},$config{b64},$config{b32})=(0,0,1);
 
+my $count = 0;
 foreach (sort split(/\s+/,$target{bn_ops})) {
-    $config{bn_ll}=1				if /BN_LLONG/;
-    $config{rc4_int}="unsigned char"		if /RC4_CHAR/;
-    ($config{b64l},$config{b64},$config{b32},$config{b16},$config{b8})
-	=(0,1,0,0,0)				if /SIXTY_FOUR_BIT/;
-    ($config{b64l},$config{b64},$config{b32},$config{b16},$config{b8})
-	=(1,0,0,0,0)				if /SIXTY_FOUR_BIT_LONG/;
-    ($config{b64l},$config{b64},$config{b32},$config{b16},$config{b8})
-	=(0,0,1,0,0)				if /THIRTY_TWO_BIT/;
-    $config{export_var_as_fn}=1			if /EXPORT_VAR_AS_FN/;
+    $count++ if /SIXTY_FOUR_BIT|SIXTY_FOUR_BIT_LONG|THIRTY_TWO_BIT/;
+    $config{export_var_as_fn}=1                 if $_ eq 'EXPORT_VAR_AS_FN';
+    $config{bn_ll}=1				if $_ eq 'BN_LLONG';
+    $config{rc4_int}="unsigned char"		if $_ eq 'RC4_CHAR';
+    ($config{b64l},$config{b64},$config{b32})
+	=(0,1,0)				if $_ eq 'SIXTY_FOUR_BIT';
+    ($config{b64l},$config{b64},$config{b32})
+	=(1,0,0)				if $_ eq 'SIXTY_FOUR_BIT_LONG';
+    ($config{b64l},$config{b64},$config{b32})
+	=(0,0,1)				if $_ eq 'THIRTY_TWO_BIT';
 }
+die "Exactly one of SIXTY_FOUR_BIT|SIXTY_FOUR_BIT_LONG|THIRTY_TWO_BIT can be set in bn_ops\n"
+    if $count > 1;
 
 
 # Hack cflags for better warnings (dev option) #######################

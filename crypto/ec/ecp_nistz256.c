@@ -179,7 +179,6 @@ static BN_ULONG is_zero(BN_ULONG in)
 {
     in |= (0 - in);
     in = ~in;
-    in &= BN_MASK2;
     in >>= BN_BITS2 - 1;
     return in;
 }
