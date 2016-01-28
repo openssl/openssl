@@ -2,6 +2,10 @@
  OpenSSL CHANGES
  _______________
 
+ Changes between 1.0.2f and 1.0.2g [xx XXX xxxx]
+
+  *)
+
  Changes between 1.0.2e and 1.0.2f [28 Jan 2016]
 
   *) DH small subgroups
