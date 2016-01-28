@@ -121,8 +121,6 @@
  */
 #include "bn_prime.h"
 
-#define NUMPRIMES OSSL_NELEM(primes)
-
 static int witness(BIGNUM *w, const BIGNUM *a, const BIGNUM *a1,
                    const BIGNUM *a1_odd, int k, BN_CTX *ctx,
                    BN_MONT_CTX *mont);
