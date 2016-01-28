@@ -16,6 +16,9 @@
         RC2_SHORT, RC2_LONG, RC4_LONG, RC4_CHUNK, RC4_INDEX
      [Rich Salz, with advice from Andy Polyakov]
 
+  *) Many BN internals have been moved to an internal header file.
+     [Rich Salz with help from Andy Polyakov]
+
   *) Configuration and writing out the results from it has changed.
      Files such as Makefile include/openssl/opensslconf.h and are now
      produced through general templates, such as Makefile.in and

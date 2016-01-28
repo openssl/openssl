@@ -229,13 +229,6 @@
                          *((c)++)=(unsigned char)(((l)>> 8)&0xff), \
                          *((c)++)=(unsigned char)(((l)    )&0xff))
 
-# define n2l6(c,l)       (l =((BN_ULLONG)(*((c)++)))<<40, \
-                         l|=((BN_ULLONG)(*((c)++)))<<32, \
-                         l|=((BN_ULLONG)(*((c)++)))<<24, \
-                         l|=((BN_ULLONG)(*((c)++)))<<16, \
-                         l|=((BN_ULLONG)(*((c)++)))<< 8, \
-                         l|=((BN_ULLONG)(*((c)++))))
-
 /* NOTE - c is not incremented as per l2c */
 # define l2cn(l1,l2,c,n) { \
                         c+=n; \
