@@ -384,7 +384,6 @@ foreach $lib (keys %csrc)
 	my $hfile = $hinc{$lib};
 	my $cfile = $csrc{$lib};
 	if(!$fnew{$lib} && !$rnew{$lib}) {
-		print STDERR "$lib:\t\tNo new error codes\n";
 		next unless $rebuild;
 	} else {
 		print STDERR "$lib:\t\t$fnew{$lib} New Functions,";
