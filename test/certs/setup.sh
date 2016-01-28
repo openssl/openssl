@@ -2,7 +2,7 @@
 
 # Primary root: root-cert
 # root certs variants: CA:false, key2, DN2
-# trust variants: +serverAuth -serverAuth +clientAuth
+# trust variants: +serverAuth -serverAuth +clientAuth +anyEKU -anyEKU
 #
 ./mkcert.sh genroot "Root CA" root-key root-cert
 ./mkcert.sh genss "Root CA" root-key root-nonca
@@ -15,6 +15,16 @@ openssl x509 -in root-cert.pem -trustout \
     -addreject serverAuth -out root-serverAuth.pem
 openssl x509 -in root-cert.pem -trustout \
     -addtrust clientAuth -out root+clientAuth.pem
+openssl x509 -in root-cert.pem -trustout \
+    -addreject anyExtendedKeyUsage -out root-anyEKU.pem
+openssl x509 -in root-cert.pem -trustout \
+    -addtrust anyExtendedKeyUsage -out root+anyEKU.pem
+openssl x509 -in root-cert2.pem -trustout \
+    -addtrust serverAuth -out root2+serverAuth.pem
+openssl x509 -in root-cert2.pem -trustout \
+    -addreject serverAuth -out root2-serverAuth.pem
+openssl x509 -in root-cert2.pem -trustout \
+    -addtrust clientAuth -out root2+clientAuth.pem
 
 # Primary intermediate ca: ca-cert
 # ca variants: CA:false, key2, DN2, issuer2, expired
