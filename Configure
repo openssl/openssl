@@ -97,11 +97,7 @@ my $warn_make_depend = 0;
 # This adds backtrace information to the memory leak info.
 my $memleak_devteam_backtrace = "-rdynamic -DCRYPTO_MDEBUG_BACKTRACE";
 
-
 my $strict_warnings = 0;
-
-my $x86_gcc_des="";
-my $x86_gcc_opts="";
 
 # As for $BSDthreads. Idea is to maintain "collective" set of flags,
 # which would cover all BSD flavors. -pthread applies to them all,
@@ -1669,6 +1665,7 @@ sub run_dofile()
     my $in = shift;
     my $out = shift;
 
+    die "Can't open $in, $!" unless -f $in;
     # should we remove $out ?
     system("$config{perl} -I. -Mconfigdata util/dofile.pl -o\"Configure\" $in > $out.new");
     exit 1 if $? != 0;
