@@ -5,6 +5,10 @@
   This file gives a brief overview of the major changes between each OpenSSL
   release. For more details please read the CHANGES file.
 
+  Major changes between OpenSSL 1.0.1r and OpenSSL 1.0.1s [under development]
+
+      o
+
   Major changes between OpenSSL 1.0.1q and OpenSSL 1.0.1r [28 Jan 2016]
 
       o Protection for DH small subgroup attacks
