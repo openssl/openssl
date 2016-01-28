@@ -442,9 +442,9 @@ depend:
 update: generate errors ordinals depend
 
 generate:
-	(cd apps && $(MAKE) generate)
-	(cd crypto/bn && $(MAKE) generate)
-	(cd crypto/objects && $(MAKE) generate)
+	(cd apps && PERL='${PERL}' $(MAKE) generate)
+	(cd crypto/bn && PERL='${PERL}' $(MAKE) generate)
+	(cd crypto/objects && PERL='${PERL}' $(MAKE) generate)
 
 errors:
 	$(PERL) util/ck_errf.pl -strict */*.c */*/*.c

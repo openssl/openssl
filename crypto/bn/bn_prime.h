@@ -57,7 +57,10 @@
  */
 
 typedef unsigned short prime_t;
-static const prime_t primes[] = {
+# define NUMPRIMES 2048
+
+static const prime_t primes[2048] = {
+
        2,    3,    5,    7,   11,   13,   17,   19, 
       23,   29,   31,   37,   41,   43,   47,   53, 
       59,   61,   67,   71,   73,   79,   83,   89, 
