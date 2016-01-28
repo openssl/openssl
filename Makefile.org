@@ -179,7 +179,7 @@ SHARED_LDFLAGS=
 GENERAL=        Makefile
 BASENAME=       openssl
 NAME=           $(BASENAME)-$(VERSION)
-TARFILE=        $(NAME).tar
+TARFILE=        ../$(NAME).tar
 EXHEADER=       e_os2.h
 HEADER=         e_os.h
 
