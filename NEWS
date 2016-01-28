@@ -5,7 +5,7 @@
   This file gives a brief overview of the major changes between each OpenSSL
   release. For more details please read the CHANGES file.
 
-  Major changes between OpenSSL 1.0.1q and OpenSSL 1.0.1r [under development]
+  Major changes between OpenSSL 1.0.1q and OpenSSL 1.0.1r [28 Jan 2016]
 
       o Protection for DH small subgroup attacks
       o SSLv2 doesn't block disabled ciphers (CVE-2015-3197)
