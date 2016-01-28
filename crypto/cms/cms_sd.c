@@ -280,6 +280,7 @@ CMS_SignerInfo *CMS_add1_signer(CMS_ContentInfo *cms,
     si = M_ASN1_new_of(CMS_SignerInfo);
     if (!si)
         goto merr;
+    /* Call for side-effect of computing hash and caching extensions */
     X509_check_purpose(signer, -1, -1);
 
     CRYPTO_add(&pk->references, 1, CRYPTO_LOCK_EVP_PKEY);

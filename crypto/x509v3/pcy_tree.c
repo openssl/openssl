@@ -186,7 +186,6 @@ static int tree_init(X509_POLICY_TREE **ptree, STACK_OF(X509) *certs,
         uint32_t ex_flags;
         x = sk_X509_value(certs, i);
         ex_flags = X509_get_extension_flags(x);
-        X509_check_purpose(x, -1, -1);
         cache = policy_cache_set(x);
         /* If cache NULL something bad happened: return immediately */
         if (cache == NULL)
