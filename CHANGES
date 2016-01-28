@@ -4,6 +4,13 @@
 
  Changes between 1.0.1q and 1.0.1r [xx XXX xxxx]
 
+  *) Protection for DH small subgroup attacks
+
+     As a precautionary measure the SSL_OP_SINGLE_DH_USE option has been
+     switched on by default and cannot be disabled. This could have some
+     performance impact.
+     [Matt Caswell]
+
   *) SSLv2 doesn't block disabled ciphers
 
      A malicious client can negotiate SSLv2 ciphers that have been disabled on
