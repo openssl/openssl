@@ -64,7 +64,7 @@
 # endif
 # include <stddef.h>
 
-typdef unsigned char MD2_INT;
+typedef unsigned char MD2_INT;
 
 # define MD2_DIGEST_LENGTH       16
 # define MD2_BLOCK               16
