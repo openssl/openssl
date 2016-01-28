@@ -1142,10 +1142,6 @@ foreach (sort split(/\s+/,$target{bn_ops})) {
 	=(1,0,0,0,0)				if /SIXTY_FOUR_BIT_LONG/;
     ($config{b64l},$config{b64},$config{b32},$config{b16},$config{b8})
 	=(0,0,1,0,0)				if /THIRTY_TWO_BIT/;
-    ($config{b64l},$config{b64},$config{b32},$config{b16},$config{b8})
-	=(0,0,0,1,0)				if /SIXTEEN_BIT/;
-    ($config{b64l},$config{b64},$config{b32},$config{b16},$config{b8})
-	=(0,0,0,0,1)				if /EIGHT_BIT/;
     $config{export_var_as_fn}=1			if /EXPORT_VAR_AS_FN/;
 }
 
