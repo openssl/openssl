@@ -133,7 +133,7 @@ static void x509_verify_param_zero(X509_VERIFY_PARAM *param)
         return;
     param->name = NULL;
     param->purpose = 0;
-    param->trust = 0;
+    param->trust = X509_TRUST_DEFAULT;
     /*
      * param->inh_flags = X509_VP_FLAG_DEFAULT;
      */
@@ -243,7 +243,7 @@ int X509_VERIFY_PARAM_inherit(X509_VERIFY_PARAM *dest,
         to_overwrite = 0;
 
     x509_verify_param_copy(purpose, 0);
-    x509_verify_param_copy(trust, 0);
+    x509_verify_param_copy(trust, X509_TRUST_DEFAULT);
     x509_verify_param_copy(depth, -1);
 
     /* If overwrite or check time not set, copy across */
@@ -511,7 +511,7 @@ static const X509_VERIFY_PARAM default_table[] = {
      "default",                 /* X509 default parameters */
      0,                         /* Check time */
      0,                         /* internal flags */
-     0,                         /* flags */
+     X509_V_FLAG_TRUSTED_FIRST, /* flags */
      0,                         /* purpose */
      0,                         /* trust */
      100,                       /* depth */

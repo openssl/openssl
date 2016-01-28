@@ -276,7 +276,7 @@ static int trust_1oidany(X509_TRUST *trust, X509 *x, int flags)
 
 static int trust_1oid(X509_TRUST *trust, X509 *x, int flags)
 {
-    if (x->aux)
+    if (x->aux && (x->aux->trust || x->aux->reject))
         return obj_trust(trust->arg1, x, flags);
     return X509_TRUST_UNTRUSTED;
 }
@@ -293,23 +293,26 @@ static int trust_compat(X509_TRUST *trust, X509 *x, int flags)
 
 static int obj_trust(int id, X509 *x, int flags)
 {
-    ASN1_OBJECT *obj;
+    X509_CERT_AUX *ax = x->aux;
     int i;
-    X509_CERT_AUX *ax;
-    ax = x->aux;
+
     if (!ax)
         return X509_TRUST_UNTRUSTED;
     if (ax->reject) {
         for (i = 0; i < sk_ASN1_OBJECT_num(ax->reject); i++) {
-            obj = sk_ASN1_OBJECT_value(ax->reject, i);
-            if (OBJ_obj2nid(obj) == id)
+            ASN1_OBJECT *obj = sk_ASN1_OBJECT_value(ax->reject, i);
+            int nid = OBJ_obj2nid(obj);
+
+            if (nid == id || nid == NID_anyExtendedKeyUsage)
                 return X509_TRUST_REJECTED;
         }
     }
     if (ax->trust) {
         for (i = 0; i < sk_ASN1_OBJECT_num(ax->trust); i++) {
-            obj = sk_ASN1_OBJECT_value(ax->trust, i);
-            if (OBJ_obj2nid(obj) == id)
+            ASN1_OBJECT *obj = sk_ASN1_OBJECT_value(ax->trust, i);
+            int nid = OBJ_obj2nid(obj);
+
+            if (nid == id || nid == NID_anyExtendedKeyUsage)
                 return X509_TRUST_TRUSTED;
         }
         /*

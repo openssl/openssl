@@ -496,14 +496,25 @@ int opt_verify(int opt, X509_VERIFY_PARAM *vpm)
         X509_VERIFY_PARAM_add0_policy(vpm, otmp);
         break;
     case OPT_V_PURPOSE:
+        /* purpose name -> purpose index */
         i = X509_PURPOSE_get_by_sname(opt_arg());
         if (i < 0) {
             BIO_printf(bio_err, "%s: Invalid purpose %s\n", prog, opt_arg());
             return 0;
         }
+
+        /* purpose index -> purpose object */
         xptmp = X509_PURPOSE_get0(i);
+
+        /* purpose object -> purpose value */
         i = X509_PURPOSE_get_id(xptmp);
-        X509_VERIFY_PARAM_set_purpose(vpm, i);
+
+        if (!X509_VERIFY_PARAM_set_purpose(vpm, i)) {
+            BIO_printf(bio_err,
+                       "%s: Internal error setting purpose %s\n",
+                       prog, opt_arg());
+            return 0;
+        }
         break;
     case OPT_V_VERIFY_NAME:
         vtmp = X509_VERIFY_PARAM_lookup(opt_arg());
