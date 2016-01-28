@@ -199,8 +199,9 @@ DEFINE_STACK_OF(X509_TRUST)
 # define X509_TRUST_MAX          8
 
 /* trust_flags values */
-# define X509_TRUST_DYNAMIC      1
-# define X509_TRUST_DYNAMIC_NAME 2
+# define X509_TRUST_DYNAMIC      (1U << 0)
+# define X509_TRUST_DYNAMIC_NAME (1U << 1)
+# define X509_TRUST_NO_SS_COMPAT (1U << 2)
 
 /* check_trust return codes */
 
