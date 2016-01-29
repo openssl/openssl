@@ -17,7 +17,7 @@ if [ -z "$MAKEDEPEND" ] ; then
     MAKEDEPEND=makedepend
 fi
 
-if ${MAKEDEPEND} --version 2>&1 | egrep "clang|gcc" >/dev/null
+if ${MAKEDEPEND} --version 2>&1 | egrep "clang|gcc" >/dev/null ; then
     args=""
     while [ $# -gt 0 ]; do
         if [ "$1" != '--' ] ; then
