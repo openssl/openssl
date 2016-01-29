@@ -75,12 +75,6 @@ static const OPTIONS *unknown;
 static const OPTIONS *opts;
 static char prog[40];
 
-#if !defined(__STDC_VERSION__) || __STDC_VERSION__ < 199901L || \
-    !defined(INTMAX_MAX) && !defined(UINTMAX_MAX)
-#define opt_imax opt_long
-#define opt_umax opt_ulong
-#endif
-
 /*
  * Return the simple name of the program; removing various platform gunk.
  */
