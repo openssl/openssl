@@ -1,0 +1,25 @@
+#!/bin/sh
+## Wrapper to portably run makedepend or equivalent compiler built-in.
+## Runs on Makefile.in, generates Makefile
+## {- join("\n## ", @autowarntext) -}
+
+{- "MAKEDEPEND=" . quotify1($config{makedepprog}) -}
+
+case "${MAKEDEPEND}" in
+makedepend)
+    cp Makefile.in Makefile
+    ${MAKEDEPEND} -DOPENSSL_DOING_MAKEDEPEND $@ || exit 1
+    ;;
+*)
+    args="-Werror -M"
+    while [ $# -gt 0 ]; do
+        if [ "$1" != '--' ] ; then
+            args="$args $1"
+        fi
+        shift
+    done
+    ${MAKEDEPEND} -DOPENSSL_DOING_MAKEDEPEND $args >Makefile.tmp || exit 1
+    cat Makefile.in Makefile.tmp >Makefile
+    rm Makefile.tmp
+    ;;
+esac

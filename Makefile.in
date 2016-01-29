@@ -74,7 +74,6 @@ PERL= {- $config{perl} -}
 RM= rm -f
 TAR= tar
 TARFLAGS= --no-recursion
-MAKEDEPPROG=$(CROSS_COMPILE){- $config{makedepprog} -}
 LIBDIR={- $config{libdir} -}
 
 # We let the C compiler driver to take care of .s files. This is done in
@@ -209,9 +208,7 @@ BUILDENV=	LC_ALL=C PLATFORM='$(PLATFORM)' PROCESSOR='$(PROCESSOR)'\
 		INSTALL_PREFIX='$(INSTALL_PREFIX)'		\
 		INSTALLTOP='$(INSTALLTOP)' OPENSSLDIR='$(OPENSSLDIR)'	\
 		LIBDIR='$(LIBDIR)'				\
-		MAKEDEPEND='$$$${TOP}/util/domd $$$${TOP} -MD $(MAKEDEPPROG)' \
 		DEPFLAG='$(DEPFLAG)'                    	\
-		MAKEDEPPROG='$(MAKEDEPPROG)'			\
 		SHARED_LDFLAGS='$(SHARED_LDFLAGS)'		\
 		ZLIB_INCLUDE='$(ZLIB_INCLUDE)' LIBZLIB='$(LIBZLIB)'	\
 		EXE_EXT='$(EXE_EXT)' SHARED_LIBS='$(SHARED_LIBS)'	\
