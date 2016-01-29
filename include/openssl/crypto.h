@@ -542,7 +542,7 @@ int OPENSSL_gmtime_diff(int *pday, int *psec,
  * into a defined order as the return value when a != b is undefined, other
  * than to be non-zero.
  */
-int CRYPTO_memcmp(const void *a, const void *b, size_t len);
+int CRYPTO_memcmp(const volatile void *a, const volatile void *b, size_t len);
 
 /* BEGIN ERROR CODES */
 /*
