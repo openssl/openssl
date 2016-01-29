@@ -811,7 +811,7 @@ $config{openssldir} = catdir($config{prefix}, $config{openssldir})
 # Allow environment CC to override compiler...
 $target{cc} = $ENV{CC} || $target{cc};
 
-# For cflags and lflags, add the debug_ or release_ attributes
+# For cflags, lflags and ex_libs, add the debug_ or release_ attributes
 # Do it in such a way that no spurious space is appended (hence the grep).
 $config{cflags} = join(" ",
 		       grep { $_ ne "" } ($target{cflags},
@@ -819,6 +819,9 @@ $config{cflags} = join(" ",
 $config{lflags} = join(" ",
 		       grep { $_ ne "" } ($target{lflags},
 					  $target{$build_prefix."lflags"}));
+$config{ex_libs} = join(" ",
+			grep { $_  ne "" } ($target{ex_libs},
+					    $target{$build_prefix."ex_libs"}));
 
 $target{ranlib} = $ENV{'RANLIB'} || $target{ranlib} || $default_ranlib;
 $target{ar} = $ENV{'AR'} || "ar";
@@ -838,11 +841,6 @@ $config{libdir}="lib$target{multilib}" if $config{libdir} eq "";
 $config{enginesdir}=$config{prefix} . "/" . $config{libdir}  . "/engines";
 
 $config{cflags} .= "$exp_cflags";
-
-# '%' in $config{lflags} is used to split flags to "pre-" and post-flags
-my ($pre,$post)=split('%',$config{lflags});
-if (defined($post))	{ $config{prelflags}=$pre; $config{lflags}=$post;	}
-else			{ $config{prelflags}="";   $config{lflags}=$pre;	}
 
 if ($target =~ /^mingw/ && `$target{cc} --target-help 2>&1` !~ m/-mno-cygwin/m)
 	{
@@ -922,7 +920,7 @@ else
 #		}
 	}
 
-$config{lflags}="$libs$config{lflags}" if ($libs ne "");
+$config{ex_libs}="$libs$config{ex_libs}" if ($libs ne "");
 
 if ($no_asm)
 	{
@@ -943,11 +941,11 @@ if ($zlib)
 		{
 		if (defined($withargs{"zlib-lib"}))
 			{
-			$config{lflags} .= " -L" . $withargs{"zlib-lib"} . " -lz";
+			$config{ex_libs} .= " -L" . $withargs{"zlib-lib"} . " -lz";
 			}
 		else
 			{
-			$config{lflags} .= " -lz";
+			$config{ex_libs} .= " -lz";
 			}
 		}
 	else
@@ -1010,17 +1008,17 @@ if ($target =~ /-icc$/)	# Intel C compiler
 		}
 	if ($iccver>=9)
 		{
-		$config{lflags}.=" -i-static";
-		$config{lflags}=~s/-no_cpprt/-no-cpprt/;
+		$config{ex_libs}.=" -i-static";
+		$config{ex_libs}=~s/-no_cpprt/-no-cpprt/;
 		}
 	if ($iccver>=10)
 		{
-		$config{lflags}=~s/-i-static/-static-intel/;
+		$config{ex_libs}=~s/-i-static/-static-intel/;
 		}
 	if ($iccver>=11)
 		{
 		$config{cflags}.=" -no-intel-extensions";	# disable Cilk
-		$config{lflags}=~s/-no-cpprt/-no-cxxlib/;
+		$config{ex_libs}=~s/-no-cpprt/-no-cxxlib/;
 		}
 	}
 
@@ -1178,7 +1176,7 @@ if ($strict_warnings)
 			}
 		if ($target =~ /^BSD-/)
 			{
-			$config{lflags} .= " -lexecinfo";
+			$config{ex_libs} .= " -lexecinfo";
 			}
 		}
 	}
@@ -1261,7 +1259,8 @@ close(OUT);
 print "IsMK1MF       =", ($target{build_scheme}->[0] eq "mk1mf" ? "yes" : "no"), "\n";
 print "CC            =$target{cc}\n";
 print "CFLAG         =$config{cflags}\n";
-print "EX_LIBS       =$config{lflags}\n";
+print "LFLAGS        =$config{lflags}\n";
+print "EX_LIBS       =$config{ex_libs}\n";
 print "CPUID_OBJ     =$target{cpuid_obj}\n";
 print "BN_ASM        =$target{bn_obj}\n";
 print "EC_ASM        =$target{ec_obj}\n";
@@ -1693,8 +1692,11 @@ sub print_table_entry
 	"unistd",
 	"ld",
 	"lflags",
+	"ex_libs",
 	"debug_lflags",
+	"debug_ex_libs",
 	"release_lflags",
+	"release_ex_libs",
 	"bn_ops",
 	"cpuid_obj",
 	"bn_obj",

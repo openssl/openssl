@@ -10,7 +10,7 @@ CFLAG=-g
 MAKEFILE=	Makefile
 AR=		ar r
 
-PEX_LIBS=
+LDFLAGS=
 EX_LIBS=
 
 CFLAGS= $(INCLUDES) $(CFLAG)
