@@ -169,6 +169,8 @@ static unsigned char* unescape(const char *input, size_t input_len,
 static int test_bin(const char *value, unsigned char **buf, size_t *buflen)
 {
     long len;
+
+    *buflen = 0;
     if (!*value) {
         /*
          * Don't return NULL for zero length buffer.
