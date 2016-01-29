@@ -291,7 +291,7 @@ int OCSP_SINGLERESP_add_ext(OCSP_SINGLERESP *x, X509_EXTENSION *ex, int loc)
 /* Nonce handling functions */
 
 /*
- * Add a nonce to an extension stack. A nonce can be specificed or if NULL a
+ * Add a nonce to an extension stack. A nonce can be specified or if NULL a
  * random nonce will be generated. Note: OpenSSL 0.9.7d and later create an
  * OCTET STRING containing the nonce, previous versions used the raw nonce.
  */

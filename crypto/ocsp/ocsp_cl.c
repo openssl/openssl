@@ -142,7 +142,7 @@ int OCSP_request_add1_cert(OCSP_REQUEST *req, X509 *cert)
 }
 
 /*
- * Sign an OCSP request set the requestorName to the subjec name of an
+ * Sign an OCSP request set the requestorName to the subject name of an
  * optional signers certificate and include one or more optional certificates
  * in the request. Behaves like PKCS7_sign().
  */
@@ -222,7 +222,7 @@ ASN1_OCTET_STRING *OCSP_resp_get0_signature(OCSP_BASICRESP *bs)
 }
 
 /*
- * Return number of OCSP_SINGLERESP reponses present in a basic response.
+ * Return number of OCSP_SINGLERESP responses present in a basic response.
  */
 
 int OCSP_resp_count(OCSP_BASICRESP *bs)

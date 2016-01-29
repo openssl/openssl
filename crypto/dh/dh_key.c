@@ -31,7 +31,7 @@
  *    must display the following acknowledgement:
  *    "This product includes cryptographic software written by
  *     Eric Young (eay@cryptsoft.com)"
- *    The word 'cryptographic' can be left out if the rouines from the library
+ *    The word 'cryptographic' can be left out if the routines from the library
  *    being used are not cryptographic related :-).
  * 4. If you include any Windows specific code (or a derivative thereof) from
  *    the apps directory (application code) you must include an acknowledgement:
@@ -257,7 +257,7 @@ static int dh_bn_mod_exp(const DH *dh, BIGNUM *r,
 {
     /*
      * If a is only one word long and constant time is false, use the faster
-     * exponenentiation function.
+     * exponentiation function.
      */
     if (bn_get_top(a) == 1 && ((dh->flags & DH_FLAG_NO_EXP_CONSTTIME) != 0)) {
         BN_ULONG A = bn_get_words(a)[0];
