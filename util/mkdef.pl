@@ -40,11 +40,12 @@
 
 use lib ".";
 use configdata;
+use File::Spec::Functions;
 
 my $debug=0;
 
-my $crypto_num= "util/libeay.num";
-my $ssl_num=    "util/ssleay.num";
+my $crypto_num= catfile($config{sourcedir},"util","libeay.num");
+my $ssl_num=    catfile($config{sourcedir},"util","ssleay.num");
 my $libname;
 
 my $do_update = 0;
@@ -384,8 +385,9 @@ sub do_defs
 
 	foreach $file (split(/\s+/,$symhacksfile." ".$files))
 		{
-		print STDERR "DEBUG: starting on $file:\n" if $debug;
-		open(IN,"<$file") || die "unable to open $file:$!\n";
+		my $fn = catfile($config{sourcedir},$file);
+		print STDERR "DEBUG: starting on $fn:\n" if $debug;
+		open(IN,"<$fn") || die "unable to open $fn:$!\n";
 		my $line = "", my $def= "";
 		my %tag = (
 			(map { $_ => 0 } @known_platforms),
@@ -1552,7 +1554,8 @@ sub count_parens
 #version
 sub get_openssl_version()
 {
-	open (IN, "include/openssl/opensslv.h") || die "Can't open opensslv.h";
+	my $fn = catfile($config{sourcedir},"include","openssl","opensslv.h");
+	open (IN, "$fn") || die "Can't open opensslv.h";
 
 	while(<IN>) {
 		if (/OPENSSL_VERSION_TEXT\s+"OpenSSL (\d\.\d\.)(\d[a-z]*)(-| )/) {
