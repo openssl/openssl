@@ -884,7 +884,7 @@ if (!$no_dso && $target{dso_scheme} ne "")
 	$config{cflags} = "$dso_cflags $config{cflags}";
 	}
 
-my $thread_cflags;
+my $thread_cflags = "";
 my @thread_defines;
 if ($target{thread_cflag} ne "(unknown)" && !$no_threads)
 	{
@@ -902,21 +902,13 @@ if ($target{thread_cflag} eq "(unknown)" && $threads)
 		print "provide any system-specific compiler options\n";
 		exit(1);
 		}
-	$thread_cflags="-DOPENSSL_THREADS $config{cflags}" ;
+	$thread_cflags="-DOPENSSL_THREADS" ;
 	push @thread_defines, "OPENSSL_THREADS";
 	}
 else
 	{
-	$thread_cflags="-DOPENSSL_THREADS $target{thread_cflag} $config{cflags}";
+	$thread_cflags="-DOPENSSL_THREADS $target{thread_cflag}";
 	push @thread_defines, "OPENSSL_THREADS";
-#	my $def;
-#	foreach $def (split ' ',$target{thread_cflag})
-#		{
-#		if ($def =~ s/^-D// && $def !~ /^_/)
-#			{
-#			push @thread_defines, "$def";
-#			}
-#		}
 	}
 
 $config{ex_libs}="$libs$config{ex_libs}" if ($libs ne "");
@@ -924,12 +916,11 @@ $config{ex_libs}="$libs$config{ex_libs}" if ($libs ne "");
 if ($no_asm)
 	{
 	$config{cflags}=~s/-D[BL]_ENDIAN//		if ($config{fips});
-	$thread_cflags=~s/-D[BL]_ENDIAN//	if ($config{fips});
 	}
 
 if ($threads)
 	{
-	$config{cflags}=$thread_cflags;
+	$config{cflags} = "$thread_cflags $config{cflags}" if $thread_cflags;
 	push @{$config{openssl_thread_defines}}, @thread_defines;
 	}
 
