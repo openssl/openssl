@@ -4,7 +4,7 @@
  */
 
 /*
- * History: This file was originally part of ocsp.c and was transfered to
+ * History: This file was originally part of ocsp.c and was transferred to
  * Richard Levitte from CertCo by Kathy Weinhold in mid-spring 2000 to be
  * included in OpenSSL or released as a patch kit.
  */
