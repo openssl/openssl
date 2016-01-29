@@ -1052,10 +1052,12 @@ if (!$no_asm) {
 	$config{cflags}.=" -DVPAES_ASM" if ($target{aes_obj} =~ m/vpaes/);
 	$config{cflags}.=" -DBSAES_ASM" if ($target{aes_obj} =~ m/bsaes/);
     }
-    if ($target{wp_obj} =~ /mmx/ && $config{processor} eq "386") {
-	$target{wp_obj}=$table{BASE}->{wp_obj};
-    } elsif (!$disabled{"whirlpool"}) {
-	$config{cflags}.=" -DWHIRLPOOL_ASM";
+    if ($target{wp_obj} =~ /mmx/) {
+        if ($config{processor} eq "386") {
+	    $target{wp_obj}=$table{BASE}->{wp_obj};
+	} elsif (!$disabled{"whirlpool"}) {
+	    $config{cflags}.=" -DWHIRLPOOL_ASM";
+	}
     }
     if ($target{modes_obj} =~ /ghash-/) {
 	$config{cflags}.=" -DGHASH_ASM";
