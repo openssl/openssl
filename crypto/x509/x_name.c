@@ -324,7 +324,7 @@ static int x509_name_ex_print(BIO *out, ASN1_VALUE **pval,
  * it all strings are converted to UTF8, leading, trailing and multiple
  * spaces collapsed, converted to lower case and the leading SEQUENCE header
  * removed. In future we could also normalize the UTF8 too. By doing this
- * comparison of Name structures can be rapidly perfomed by just using
+ * comparison of Name structures can be rapidly performed by just using
  * memcmp() of the canonical encoding. By omitting the leading SEQUENCE name
  * constraints of type dirName can also be checked with a simple memcmp().
  */

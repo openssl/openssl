@@ -288,7 +288,7 @@ static int ocsp_check_ids(STACK_OF(OCSP_SINGLERESP) *sresp, OCSP_CERTID **ret)
         tmpid = sk_OCSP_SINGLERESP_value(sresp, i)->certId;
         /* Check to see if IDs match */
         if (OCSP_id_issuer_cmp(cid, tmpid)) {
-            /* If algoritm mismatch let caller deal with it */
+            /* If algorithm mismatch let caller deal with it */
             if (OBJ_cmp(tmpid->hashAlgorithm.algorithm,
                         cid->hashAlgorithm.algorithm))
                 return 2;

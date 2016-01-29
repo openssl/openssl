@@ -569,7 +569,7 @@ static ASN1_STRING *rsa_ctx_to_pss(EVP_PKEY_CTX *pkctx)
 
 /*
  * From PSS AlgorithmIdentifier set public key parameters. If pkey isn't NULL
- * then the EVP_MD_CTX is setup and initalised. If it is NULL parameters are
+ * then the EVP_MD_CTX is setup and initialised. If it is NULL parameters are
  * passed to pkctx instead.
  */
 
