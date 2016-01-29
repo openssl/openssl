@@ -932,7 +932,7 @@ if ($no_asm)
 
 if ($threads)
 	{
-	$config{cflags}.=$thread_cflags;
+	$config{cflags}=$thread_cflags;
 	push @{$config{openssl_thread_defines}}, @thread_defines;
 	}
 
