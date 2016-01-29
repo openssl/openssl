@@ -1292,6 +1292,9 @@ print "RC2 uses $config{rc2_int}\n" if $config{rc2_int} != $def_int;
 
 run_dofile("$Makefile.in","$Makefile");
 
+run_dofile("util/domd.in", "util/domd");
+chmod 0755, "util/domd";
+
 run_dofile("include/openssl/opensslconf.h.in", "include/openssl/opensslconf.h");
 
 foreach my $alg ( 'bn' ) {
@@ -1664,8 +1667,9 @@ sub run_dofile()
     my $in = shift;
     my $out = shift;
 
+    unlink $out || warn "Can't remove $out, $!"
+        if -f $out;
     die "Can't open $in, $!" unless -f $in;
-    # should we remove $out ?
     system("$config{perl} -I. -Mconfigdata util/dofile.pl -o\"Configure\" $in > $out.new");
     exit 1 if $? != 0;
     rename("$out.new", $out) || die "Can't rename $out.new, $!";

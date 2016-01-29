@@ -153,8 +153,7 @@ div:
 generate: bn_prime.h
 
 depend:
-	@[ -n "$(MAKEDEPEND)" ] # should be set by upper Makefile...
-	$(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(LIBSRC)
+	$(TOP)/util/domd $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(LIBSRC)
 
 clean:
 	rm -f *.s *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
