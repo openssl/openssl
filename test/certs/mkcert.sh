@@ -85,6 +85,10 @@ genroot() {
     local akid="authorityKeyIdentifier = keyid"
 
     exts=$(printf "%s\n%s\n%s\n" "$skid" "$akid" "basicConstraints = CA:true")
+    for eku in "$@"
+    do
+        exts=$(printf "%s\nextendedKeyUsage = %s\n" "$exts" "$eku")
+    done
     csr=$(req "$key" "$cn") || return 1
     echo "$csr" |
        cert "$cert" "$exts" -signkey "${key}.pem" -set_serial 1 -days "${DAYS}"
@@ -100,10 +104,14 @@ genca() {
     local akid="authorityKeyIdentifier = keyid"
 
     exts=$(printf "%s\n%s\n%s\n" "$skid" "$akid" "basicConstraints = CA:true")
+    for eku in "$@"
+    do
+        exts=$(printf "%s\nextendedKeyUsage = %s\n" "$exts" "$eku")
+    done
     csr=$(req "$key" "$cn") || return 1
     echo "$csr" |
         cert "$cert" "$exts" -CA "${cacert}.pem" -CAkey "${cakey}.pem" \
-	    -set_serial 2 -days "${DAYS}" "$@"
+	    -set_serial 2 -days "${DAYS}"
 }
 
 genee() {

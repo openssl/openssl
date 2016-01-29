@@ -117,13 +117,9 @@ int X509_check_trust(X509 *x, int id, int flags)
     int idx;
 
     /* We get this as a default value */
-    if (id == 0) {
-        int rv;
-        rv = obj_trust(NID_anyExtendedKeyUsage, x, 0);
-        if (rv != X509_TRUST_UNTRUSTED)
-            return rv;
-        return trust_compat(NULL, x, 0);
-    }
+    if (id == X509_TRUST_DEFAULT)
+        return obj_trust(NID_anyExtendedKeyUsage, x,
+                         flags | X509_TRUST_DO_SS_COMPAT);
     idx = X509_TRUST_get_by_id(id);
     if (idx == -1)
         return default_trust(id, x, flags);
@@ -265,20 +261,25 @@ int X509_TRUST_get_trust(X509_TRUST *xp)
 
 static int trust_1oidany(X509_TRUST *trust, X509 *x, int flags)
 {
-    if (x->aux && (x->aux->trust || x->aux->reject))
-        return obj_trust(trust->arg1, x, flags);
     /*
-     * we don't have any trust settings: for compatibility we return trusted
-     * if it is self signed
+     * Declare the chain verified if the desired trust OID is not rejected in
+     * any auxiliary trust info for this certificate, and the OID is either
+     * expressly trusted, or else either "anyEKU" is trusted, or the
+     * certificate is self-signed.
      */
-    return trust_compat(trust, x, flags);
+    flags |= X509_TRUST_DO_SS_COMPAT | X509_TRUST_OK_ANY_EKU;
+    return obj_trust(trust->arg1, x, flags);
 }
 
 static int trust_1oid(X509_TRUST *trust, X509 *x, int flags)
 {
-    if (x->aux && (x->aux->trust || x->aux->reject))
-        return obj_trust(trust->arg1, x, flags);
-    return X509_TRUST_UNTRUSTED;
+    /*
+     * Declare the chain verified only if the desired trust OID is not
+     * rejected and is expressly trusted.  Neither "anyEKU" nor "compat"
+     * trust in self-signed certificates apply.
+     */
+    flags &= ~(X509_TRUST_DO_SS_COMPAT | X509_TRUST_OK_ANY_EKU);
+    return obj_trust(trust->arg1, x, flags);
 }
 
 static int trust_compat(X509_TRUST *trust, X509 *x, int flags)
@@ -296,23 +297,24 @@ static int obj_trust(int id, X509 *x, int flags)
     X509_CERT_AUX *ax = x->aux;
     int i;
 
-    if (!ax)
-        return X509_TRUST_UNTRUSTED;
-    if (ax->reject) {
+    if (ax && ax->reject) {
         for (i = 0; i < sk_ASN1_OBJECT_num(ax->reject); i++) {
             ASN1_OBJECT *obj = sk_ASN1_OBJECT_value(ax->reject, i);
             int nid = OBJ_obj2nid(obj);
 
-            if (nid == id || nid == NID_anyExtendedKeyUsage)
+            if (nid == id || (nid == NID_anyExtendedKeyUsage &&
+                (flags & X509_TRUST_OK_ANY_EKU)))
                 return X509_TRUST_REJECTED;
         }
     }
-    if (ax->trust) {
+
+    if (ax && ax->trust) {
         for (i = 0; i < sk_ASN1_OBJECT_num(ax->trust); i++) {
             ASN1_OBJECT *obj = sk_ASN1_OBJECT_value(ax->trust, i);
             int nid = OBJ_obj2nid(obj);
 
-            if (nid == id || nid == NID_anyExtendedKeyUsage)
+            if (nid == id || (nid == NID_anyExtendedKeyUsage &&
+                (flags & X509_TRUST_OK_ANY_EKU)))
                 return X509_TRUST_TRUSTED;
         }
         /*
@@ -331,5 +333,12 @@ static int obj_trust(int id, X509 *x, int flags)
          */
         return X509_TRUST_REJECTED;
     }
-    return X509_TRUST_UNTRUSTED;
+
+    if ((flags & X509_TRUST_DO_SS_COMPAT) == 0)
+        return X509_TRUST_UNTRUSTED;
+
+    /*
+     * Not rejected, and there is no list of accepted uses, try compat.
+     */
+    return trust_compat(NULL, x, flags);
 }

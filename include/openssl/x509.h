@@ -201,7 +201,12 @@ DEFINE_STACK_OF(X509_TRUST)
 /* trust_flags values */
 # define X509_TRUST_DYNAMIC      (1U << 0)
 # define X509_TRUST_DYNAMIC_NAME (1U << 1)
+/* No compat trust if self-signed, preempts "DO_SS" */
 # define X509_TRUST_NO_SS_COMPAT (1U << 2)
+/* Compat trust if no explicit accepted trust EKUs */
+# define X509_TRUST_DO_SS_COMPAT (1U << 3)
+/* Accept "anyEKU" as a wildcard trust OID */
+# define X509_TRUST_OK_ANY_EKU   (1U << 4)
 
 /* check_trust return codes */
 
