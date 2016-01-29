@@ -10,7 +10,9 @@
 require 5.000;
 use strict;
 use File::Basename;
-use File::Spec::Functions;
+use File::Spec::Functions qw/:DEFAULT abs2rel rel2abs catpath splitpath/;
+use File::Path qw/make_path/;
+use Cwd qw/:DEFAULT realpath/;
 
 # see INSTALL for instructions.
 
@@ -139,6 +141,14 @@ sub resolve_config;
 
 # Information collection #############################################
 
+# Unified build supports separate build dir
+my $srcdir = catdir(realpath(dirname($0))); # catdir ensures local syntax
+my $blddir = catdir(realpath("."));       # catdir ensures local syntax
+my $dofile = abs2rel(catfile($srcdir, "util/dofile.pl"));
+
+$config{sourcedir} = abs2rel($srcdir);
+$config{builddir} = abs2rel($blddir);
+
 # Collect version numbers
 $config{version} = "unknown";
 $config{version_num} = "unknown";
@@ -146,8 +156,7 @@ $config{shlib_version_number} = "unknown";
 $config{shlib_version_history} = "unknown";
 
 collect_information(
-    '<include/openssl/opensslv.h',
-    undef,
+    collect_from_file(catfile($srcdir,'include/openssl/opensslv.h')),
     qr/OPENSSL.VERSION.TEXT.*OpenSSL (\S+) / => sub { $config{version} = $1; },
     qr/OPENSSL.VERSION.NUMBER.*(0x\S+)/	     => sub { $config{version_num}=$1 },
     qr/SHLIB_VERSION_NUMBER *"([^"]+)"/	     => sub { $config{shlib_version_number}=$1 },
@@ -166,8 +175,8 @@ die "erroneous version information in opensslv.h: ",
 
 # Collect target configurations
 
-my ($vol, $dir, $dummy) = File::Spec->splitpath($0);
-my $pattern = File::Spec->catpath($vol, $dir, "Configurations/*.conf");
+my ($vol, $dir, $dummy) = splitpath($0);
+my $pattern = catpath($vol, catdir($dir, "Configurations"), "*.conf");
 foreach (sort glob($pattern) ) {
     &read_config($_);
 }
@@ -1005,67 +1014,60 @@ if ($target{ranlib} eq "")
 	}
 
 if (!$no_asm) {
-    $target{cpuid_obj}=$table{BASE}->{cpuid_obj} if ($config{processor} eq "386");
-    $target{cpuid_obj}.=" uplink.o uplink-x86.o" if ($config{cflags} =~ /-DOPENSSL_USE_APPLINK/);
+    $target{cpuid_asm_src}=$table{BASE}->{cpuid_asm_src} if ($config{processor} eq "386");
+    $target{cpuid_asm_src}.=" uplink.c uplink-x86.s" if ($config{cflags} =~ /-DOPENSSL_USE_APPLINK/);
 
-    $target{bn_obj} =~ s/\w+-gf2m.o// if (defined($disabled{ec2m}));
+    $target{bn_asm_src} =~ s/\w+-gf2m.c// if (defined($disabled{ec2m}));
 
     # bn-586 is the only one implementing bn_*_part_words
-    $config{cflags}.=" -DOPENSSL_BN_ASM_PART_WORDS" if ($target{bn_obj} =~ /bn-586/);
-    $config{cflags}.=" -DOPENSSL_IA32_SSE2" if (!$no_sse2 && $target{bn_obj} =~ /86/);
+    $config{cflags}.=" -DOPENSSL_BN_ASM_PART_WORDS" if ($target{bn_asm_src} =~ /bn-586/);
+    $config{cflags}.=" -DOPENSSL_IA32_SSE2" if (!$no_sse2 && $target{bn_asm_src} =~ /86/);
 
-    $config{cflags}.=" -DOPENSSL_BN_ASM_MONT" if ($target{bn_obj} =~ /-mont/);
-    $config{cflags}.=" -DOPENSSL_BN_ASM_MONT5" if ($target{bn_obj} =~ /-mont5/);
-    $config{cflags}.=" -DOPENSSL_BN_ASM_GF2m" if ($target{bn_obj} =~ /-gf2m/);
+    $config{cflags}.=" -DOPENSSL_BN_ASM_MONT" if ($target{bn_asm_src} =~ /-mont/);
+    $config{cflags}.=" -DOPENSSL_BN_ASM_MONT5" if ($target{bn_asm_src} =~ /-mont5/);
+    $config{cflags}.=" -DOPENSSL_BN_ASM_GF2m" if ($target{bn_asm_src} =~ /-gf2m/);
 
     if ($config{fips}) {
 	push @{$config{openssl_other_defines}}, "OPENSSL_FIPS";
     }
 
-    if ($target{sha1_obj} =~ /\.o$/) {
-	$config{cflags}.=" -DSHA1_ASM"   if ($target{sha1_obj} =~ /sx86/ || $target{sha1_obj} =~ /sha1/);
-	$config{cflags}.=" -DSHA256_ASM" if ($target{sha1_obj} =~ /sha256/);
-	$config{cflags}.=" -DSHA512_ASM" if ($target{sha1_obj} =~ /sha512/);
-	if ($target{sha1_obj} =~ /sse2/) {
-	    if ($no_sse2) {
-		$target{sha1_obj} =~ s/\S*sse2\S+//;
-	    } elsif ($config{cflags} !~ /OPENSSL_IA32_SSE2/) {
-		$config{cflags}.=" -DOPENSSL_IA32_SSE2";
-	    }
-	}
+    if ($target{sha1_asm_src}) {
+	$config{cflags}.=" -DSHA1_ASM"   if ($target{sha1_asm_src} =~ /sx86/ || $target{sha1_asm_src} =~ /sha1/);
+	$config{cflags}.=" -DSHA256_ASM" if ($target{sha1_asm_src} =~ /sha256/);
+	$config{cflags}.=" -DSHA512_ASM" if ($target{sha1_asm_src} =~ /sha512/);
     }
-    if ($target{md5_obj} =~ /\.o$/) {
+    if ($target{md5_asm_src}) {
 	$config{cflags}.=" -DMD5_ASM";
     }
-    $target{cast_obj}=$table{BASE}->{cast_obj} if (!$config{no_shared}); # CAST assembler is not PIC
-    if ($target{rmd160_obj} =~ /\.o$/) {
+    $target{cast_asm_src}=$table{BASE}->{cast_asm_src} if (!$config{no_shared}); # CAST assembler is not PIC
+    if ($target{rmd160_asm_src}) {
 	$config{cflags}.=" -DRMD160_ASM";
     }
-    if ($target{aes_obj} =~ /\.o$/) {
-	$config{cflags}.=" -DAES_ASM" if ($target{aes_obj} =~ m/\baes-/);;
-	# aes-ctr.o is not a real file, only indication that assembler
+    if ($target{aes_asm_src}) {
+	$config{cflags}.=" -DAES_ASM" if ($target{aes_asm_src} =~ m/\baes-/);;
+	# aes-ctr.fake is not a real file, only indication that assembler
 	# module implements AES_ctr32_encrypt...
-	$config{cflags}.=" -DAES_CTR_ASM" if ($target{aes_obj} =~ s/\s*aes-ctr\.o//);
-	# aes-xts.o indicates presence of AES_xts_[en|de]crypt...
-	$config{cflags}.=" -DAES_XTS_ASM" if ($target{aes_obj} =~ s/\s*aes-xts\.o//);
-	$target{aes_obj} =~ s/\s*(vpaes|aesni)-x86\.o//g if ($no_sse2);
-	$config{cflags}.=" -DVPAES_ASM" if ($target{aes_obj} =~ m/vpaes/);
-	$config{cflags}.=" -DBSAES_ASM" if ($target{aes_obj} =~ m/bsaes/);
+	$config{cflags}.=" -DAES_CTR_ASM" if ($target{aes_asm_src} =~ s/\s*aes-ctr\.fake//);
+	# aes-xts.fake indicates presence of AES_xts_[en|de]crypt...
+	$config{cflags}.=" -DAES_XTS_ASM" if ($target{aes_asm_src} =~ s/\s*aes-xts\.fake//);
+	$target{aes_asm_src} =~ s/\s*(vpaes|aesni)-x86\.s//g if ($no_sse2);
+	$config{cflags}.=" -DVPAES_ASM" if ($target{aes_asm_src} =~ m/vpaes/);
+	$config{cflags}.=" -DBSAES_ASM" if ($target{aes_asm_src} =~ m/bsaes/);
     }
-    if ($target{wp_obj} =~ /mmx/) {
+    if ($target{wp_asm_src} =~ /mmx/) {
         if ($config{processor} eq "386") {
-	    $target{wp_obj}=$table{BASE}->{wp_obj};
+	    $target{wp_asm_src}=$table{BASE}->{wp_asm_src};
 	} elsif (!$disabled{"whirlpool"}) {
 	    $config{cflags}.=" -DWHIRLPOOL_ASM";
 	}
     }
-    if ($target{modes_obj} =~ /ghash-/) {
+    if ($target{modes_asm_src} =~ /ghash-/) {
 	$config{cflags}.=" -DGHASH_ASM";
     }
-    if ($target{ec_obj} =~ /ecp_nistz256/) {
+    if ($target{ec_asm_src} =~ /ecp_nistz256/) {
 	$config{cflags}.=" -DECP_NISTZ256_ASM";
     }
-    if ($target{poly1305_obj} =~ /\.o$/) {
+    if ($target{poly1305_asm_src} ne "") {
 	$config{cflags}.=" -DPOLY1305_ASM";
     }
 }
@@ -1144,6 +1146,375 @@ if ($strict_warnings)
 		}
 	}
 
+# If we use the unified build, collect information from build.info files
+my %unified_info = ();
+
+if ($target{build_scheme}->[0] eq "unified") {
+    use lib catdir(dirname(__FILE__),"util");
+    use with_fallback qw(Text::Template);
+
+    # Helpers to produce clean paths with no /../ in the middle and so on.
+    sub int_absolutedir {
+        my $dir = shift;
+
+        # Required, because realpath only works properly with existing dirs
+        make_path($dir);
+
+        my $res = realpath($dir);
+        return $res;
+    }
+
+    sub cleandir {
+        my $dir = shift;
+        my $base = shift || ".";
+
+        my $res = abs2rel(int_absolutedir($dir), rel2abs($base));
+        #print STDERR "DEBUG[cleandir]: $dir , $base => $res\n";
+        return $res;
+    }
+
+    sub cleanfile {
+        my $file = shift;
+        my $base = shift || ".";
+        my $d = dirname($file);
+        my $f = basename($file);
+
+        my $res = abs2rel(catfile(int_absolutedir($d), $f), rel2abs($base));
+        #print STDERR "DEBUG[cleanfile]: $d , $f => $res\n";
+        return $res;
+    }
+
+    my @build_infos = ( [ ".", "build.info" ] );
+    foreach (@{$config{dirs}}) {
+        push @build_infos, [ $_, "build.info" ]
+            if (-f catfile($srcdir, $_, "build.info"));
+    }
+    foreach (@{$config{sdirs}}) {
+        push @build_infos, [ catdir("crypto", $_), "build.info" ]
+            if (-f catfile($srcdir, "crypto", $_, "build.info"));
+    }
+    foreach (@{$config{engdirs}}) {
+        push @build_infos, [ catdir("engines", $_), "build.info" ]
+            if (-f catfile($srcdir, "engines", $_, "build.info"));
+    }
+
+    foreach (@build_infos) {
+        my $sourced = catdir($srcdir, $_->[0]);
+        my $buildd = catdir($blddir, $_->[0]);
+
+        make_path($buildd);
+
+        my $f = $_->[1];
+        # The basic things we're trying to build
+        my @programs = ();
+        my @libraries = ();
+        my @engines = ();
+        my @scripts = ();
+        my @extra = ();
+        my @intermediates = ();
+        my @rawlines = ();
+
+        my %ordinals = ();
+        my %sources = ();
+        my %includes = ();
+        my %depends = ();
+        my %renames = ();
+        my %sharednames = ();
+
+        my $template = Text::Template->new(TYPE => 'FILE',
+                                           SOURCE => catfile($sourced, $f));
+        die "Something went wrong with $sourced/$f: $!\n" unless $template;
+        my @text =
+            split /^/m,
+            $template->fill_in(HASH => { config => \%config,
+                                         target => \%target,
+                                         builddir => abs2rel($buildd, $blddir),
+                                         sourcedir => abs2rel($sourced, $blddir),
+                                         buildtop => abs2rel($blddir, $blddir),
+                                         sourcetop => abs2rel($srcdir, $blddir) },
+                               DELIMITERS => [ "{-", "-}" ]);
+
+        # The top item of this stack has the following values
+        # -2 positive already run and we found ELSE (following ELSIF should fail)
+        # -1 positive already run (skip until ENDIF)
+        # 0 negatives so far (if we're at a condition, check it)
+        # 1 last was positive (don't skip lines until next ELSE, ELSIF or ENDIF)
+        # 2 positive ELSE (following ELSIF should fail)
+        my @skip = ();
+        collect_information(
+            collect_from_array([ @text ],
+                               qr/\\$/ => sub { my $l1 = shift; my $l2 = shift;
+                                                $l1 =~ s/\\$//; $l1.$l2 }),
+            # Info we're looking for
+            qr/^\s*IF\[((?:\\.|[^\\\]])*)\]\s*$/
+            => sub { push @skip, !! $1; },
+            qr/^\s*ELSIF\[((?:\\.|[^\\\]])*)\]\s*$/
+            => sub { die "ELSIF out of scope" if ! @skip;
+                     die "ELSIF following ELSE" if abs($skip[$#skip]) == 2;
+                     $skip[$#skip] = -1 if $skip[$#skip] != 0;
+                     $skip[$#skip] = !! $1
+                         if $skip[$#skip] == 0; },
+            qr/^\s*ELSE\s*$/
+            => sub { die "ELSE out of scope" if ! @skip;
+                     $skip[$#skip] = -2 if $skip[$#skip] != 0;
+                     $skip[$#skip] = 2 if $skip[$#skip] == 0; },
+            qr/^\s*ENDIF\s*$/
+            => sub { die "ENDIF out of scope" if ! @skip;
+                     pop @skip; },
+            qr/^\s*PROGRAMS\s*=\s*(.*)\s*$/
+            => sub { push @programs, split(/\s+/, $1)
+                         if !@skip || $skip[$#skip] > 0 },
+            qr/^\s*LIBS\s*=\s*(.*)\s*$/
+            => sub { push @libraries, split(/\s+/, $1)
+                         if !@skip || $skip[$#skip] > 0 },
+            qr/^\s*ENGINES\s*=\s*(.*)\s*$/
+            => sub { push @engines, split(/\s+/, $1)
+                         if !@skip || $skip[$#skip] > 0 },
+            qr/^\s*SCRIPTS\s*=\s*(.*)\s*$/
+            => sub { push @scripts, split(/\s+/, $1)
+                         if !@skip || $skip[$#skip] > 0 },
+            qr/^\s*EXTRA\s*=\s*(.*)\s*$/
+            => sub { push @extra, split(/\s+/, $1)
+                         if !@skip || $skip[$#skip] > 0 },
+
+            qr/^\s*ORDINALS\[((?:\\.|[^\\\]])+)\]\s*=\s*(.*)\s*$/,
+            => sub { push @{$ordinals{$1}}, split(/\s+/, $2)
+                         if !@skip || $skip[$#skip] > 0 },
+            qr/^\s*SOURCE\[((?:\\.|[^\\\]])+)\]\s*=\s*(.*)\s*$/
+            => sub { push @{$sources{$1}}, split(/\s+/, $2)
+                         if !@skip || $skip[$#skip] > 0 },
+            qr/^\s*INCLUDE\[((?:\\.|[^\\\]])+)\]\s*=\s*(.*)\s*$/
+            => sub { push @{$includes{$1}}, split(/\s+/, $2)
+                         if !@skip || $skip[$#skip] > 0 },
+            qr/^\s*DEPEND\[((?:\\.|[^\\\]])+)\]\s*=\s*(.*)\s*$/
+            => sub { push @{$depends{$1}}, split(/\s+/, $2)
+                         if !@skip || $skip[$#skip] > 0 },
+            qr/^\s*RENAME\[((?:\\.|[^\\\]])+)\]\s*=\s*(.*)\s*$/
+            => sub { push @{$renames{$1}}, split(/\s+/, $2)
+                         if !@skip || $skip[$#skip] > 0 },
+            qr/^\s*SHARED_NAME\[((?:\\.|[^\\\]])+)\]\s*=\s*(.*)\s*$/
+            => sub { push @{$sharednames{$1}}, split(/\s+/, $2)
+                         if !@skip || $skip[$#skip] > 0 },
+            qr/^\s*BEGINRAW\[((?:\\.|[^\\\]])+)\]\s*$/
+            => sub {
+                my $lineiterator = shift;
+                my $target_kind = $1;
+                while (defined $lineiterator->()) {
+                    chomp;
+                    if (/^\s*ENDRAW\[((?:\\.|[^\\\]])+)\]\s*$/) {
+                        die "ENDRAW doesn't match BEGINRAW"
+                            if $1 ne $target_kind;
+                        last;
+                    }
+                    next if @skip && $skip[$#skip] <= 0;
+                    push @rawlines,  $_
+                        if ($target_kind eq $target{build_file}
+                            || $target_kind eq $target{build_file}."(".$target{build_scheme}->[1].")");
+                }
+            },
+            qr/^(?:#.*|\s*)$/ => sub { },
+            "OTHERWISE" => sub { die "Something wrong with this line:\n$_\nat $sourced/$f" }
+            );
+        die "runaway IF?" if (@skip);
+
+        foreach (keys %renames) {
+            die "$_ renamed to more than one thing: "
+                ,join(" ", @{$renames{$_}}),"\n"
+                if scalar @{$renames{$_}} > 1;
+            my $dest = cleanfile(catfile($buildd, $_), $blddir);
+            my $to = cleanfile(catfile($buildd, $renames{$_}->[0]), $blddir);
+            die "$dest renamed to more than one thing: "
+                ,$unified_info{rename}->{$dest}, $to
+                unless !defined($unified_info{rename}->{$dest})
+                or $unified_info{rename}->{$dest} eq $to;
+            $unified_info{rename}->{$dest} = $to;
+        }
+
+        foreach (@programs) {
+            my $program = cleanfile(catfile($buildd, $_), $blddir);
+            if ($unified_info{rename}->{$program}) {
+                $program = $unified_info{rename}->{$program};
+            }
+            $unified_info{programs}->{$program} = 1;
+        }
+
+        foreach (@libraries) {
+            my $library = cleanfile(catfile($buildd, $_), $blddir);
+            if ($unified_info{rename}->{$library}) {
+                $library = $unified_info{rename}->{$library};
+            }
+            $unified_info{libraries}->{$library} = 1;
+        }
+
+        die <<"EOF" if $config{no_shared} && scalar @engines;
+ENGINES can only be used if configured with 'shared'.
+This is usually a fault in a build.info file.
+EOF
+        foreach (@engines) {
+            my $library = cleanfile(catfile($buildd, $_), $blddir);
+            if ($unified_info{rename}->{$library}) {
+                $library = $unified_info{rename}->{$library};
+            }
+            $unified_info{engines}->{$library} = 1;
+        }
+
+        foreach (@scripts) {
+            my $script = cleanfile(catfile($buildd, $_), $blddir);
+            if ($unified_info{rename}->{$script}) {
+                $script = $unified_info{rename}->{$script};
+            }
+            $unified_info{scripts}->{$script} = 1;
+        }
+
+        foreach (@extra) {
+            my $extra = cleanfile(catfile($buildd, $_), $blddir);
+            $unified_info{extra}->{$extra} = 1;
+        }
+
+        push @{$unified_info{rawlines}}, @rawlines;
+
+        if (!$config{no_shared}) {
+            # Check sharednames.
+            foreach (keys %sharednames) {
+                my $dest = cleanfile(catfile($buildd, $_), $blddir);
+                if ($unified_info{rename}->{$dest}) {
+                    $dest = $unified_info{rename}->{$dest};
+                }
+                die "shared_name for $dest with multiple values: "
+                    ,join(" ", @{$sharednames{$_}}),"\n"
+                    if scalar @{$sharednames{$_}} > 1;
+                my $to = cleanfile(catfile($buildd, $sharednames{$_}->[0]),
+                                   $blddir);
+                die "shared_name found for a library $dest that isn't defined\n"
+                    unless $unified_info{libraries}->{$dest};
+                die "shared_name for $dest with multiple values: "
+                    ,$unified_info{sharednames}->{$dest}, ", ", $to
+                    unless !defined($unified_info{sharednames}->{$dest})
+                    or $unified_info{sharednames}->{$dest} eq $to;
+                $unified_info{sharednames}->{$dest} = $to;
+            }
+
+            # Additionally, we set up sharednames for libraries that don't
+            # have any, as themselves.
+            foreach (keys %{$unified_info{libraries}}) {
+                if (!defined $unified_info{sharednames}->{$_}) {
+                    $unified_info{sharednames}->{$_} = $_
+                }
+            }
+        }
+
+        foreach (keys %ordinals) {
+            my $dest = $_;
+            my $ddest = cleanfile(catfile($buildd, $_), $blddir);
+            if ($unified_info{rename}->{$ddest}) {
+                $ddest = $unified_info{rename}->{$ddest};
+            }
+            foreach (@{$ordinals{$dest}}) {
+                my %known_ordinals =
+                    (
+                     crypto =>
+                     cleanfile(catfile($sourced, "util", "libeay.num"), $blddir),
+                     ssl =>
+                     cleanfile(catfile($sourced, "util", "ssleay.num"), $blddir)
+                    );
+                my $o = $known_ordinals{$_};
+                die "Ordinals for $ddest defined more than once\n"
+                    if $unified_info{ordinals}->{$ddest};
+                $unified_info{ordinals}->{$ddest} = [ $_, $o ];
+            }
+        }
+
+        foreach (keys %sources) {
+            my $dest = $_;
+            my $ddest = cleanfile(catfile($buildd, $_), $blddir);
+            if ($unified_info{rename}->{$ddest}) {
+                $ddest = $unified_info{rename}->{$ddest};
+            }
+            foreach (@{$sources{$dest}}) {
+                my $s = cleanfile(catfile($sourced, $_), $blddir);
+
+                # If it isn't in the source tree, we assume it's generated
+                # in the build tree
+                if (! -f $s) {
+                    $s = cleanfile(catfile($buildd, $_), $blddir);
+                }
+                # We recognise C and asm files
+                if ($s =~ /\.[csS]\b$/) {
+                    (my $o = $_) =~ s/\.[csS]\b$/.o/;
+                    $o = cleanfile(catfile($buildd, $o), $blddir);
+                    $unified_info{sources}->{$ddest}->{$o} = 1;
+                    $unified_info{sources}->{$o}->{$s} = 1;
+                } else {
+                    $unified_info{sources}->{$ddest}->{$s} = 1;
+                }
+            }
+        }
+
+        foreach (keys %depends) {
+            my $dest = $_;
+            my $ddest = cleanfile(catfile($buildd, $_), $blddir);
+            if ($unified_info{rename}->{$ddest}) {
+                $ddest = $unified_info{rename}->{$ddest};
+            }
+            foreach (@{$depends{$dest}}) {
+                my $d = cleanfile(catfile($sourced, $_), $blddir);
+
+                # If it isn't found in the source, let's assume it's generated
+                # and that the Makefile template has the lines
+                if (! -f $d) {
+                    $d = cleanfile(catfile($buildd, $_), $blddir);
+                }
+                # Take note if the file to depend on is being renamed
+                if ($unified_info{rename}->{$d}) {
+                    $d = $unified_info{rename}->{$d};
+                }
+                $unified_info{depends}->{$ddest}->{$d} = 1;
+                # If we depend on a header file, let's make sure it
+                # can get included
+                if ($d =~ /\.h$/) {
+                    my $i = dirname($d);
+                    push @{$unified_info{includes}->{$ddest}}, $i
+                        unless grep { $_ eq $i } @{$unified_info{includes}->{$ddest}};
+                }
+            }
+        }
+
+        foreach (keys %includes) {
+            my $dest = $_;
+            my $ddest = cleanfile(catfile($buildd, $_), $blddir);
+            if ($unified_info{rename}->{$ddest}) {
+                $ddest = $unified_info{rename}->{$ddest};
+            }
+            foreach (@{$includes{$dest}}) {
+                my $i = cleandir(catdir($sourced, $_), $blddir);
+                push @{$unified_info{includes}->{$ddest}}, $i
+                    unless grep { $_ eq $i } @{$unified_info{includes}->{$ddest}};
+            }
+        }
+    }
+
+    ### Make unified_info a bit more efficient
+    # One level structures
+    foreach (("programs", "libraries", "engines", "scripts", "extra")) {
+        $unified_info{$_} = [ sort keys %{$unified_info{$_}} ];
+    }
+    # Two level structures
+    foreach my $l1 (("sources", "ldadd", "depends")) {
+        foreach my $l2 (sort keys %{$unified_info{$l1}}) {
+            $unified_info{$l1}->{$l2} =
+                [ sort keys %{$unified_info{$l1}->{$l2}} ];
+        }
+    }
+}
+
+# For the schemes that need it, we provide the old *_obj configs
+# from the *_asm_obj ones
+foreach (grep /_asm_src$/, keys %target) {
+    my $src = $_;
+    (my $obj = $_) =~ s/_asm_src$/_obj/;
+    ($target{$obj} = $target{$src}) =~ s/\.[csS]\b/.o/g;
+}
+
 # Write down our configuration where it fits #########################
 
 open(OUT,">configdata.pm") || die "unable to create configdata.pm: $!\n";
@@ -1156,7 +1527,7 @@ use warnings;
 use Exporter;
 #use vars qw(\@ISA \@EXPORT);
 our \@ISA = qw(Exporter);
-our \@EXPORT = qw(\%config \%target %withargs);
+our \@EXPORT = qw(\%config \%target %withargs %unified_info);
 
 EOF
 print OUT "our %config = (\n";
@@ -1215,9 +1586,59 @@ foreach (sort keys %withargs) {
 print OUT <<"EOF";
 );
 
-1;
 EOF
+if ($target{build_scheme}->[0] eq "unified") {
+    my $recurse;
+    $recurse = sub {
+        my $indent = shift;
+        foreach (@_) {
+            if (ref $_ eq "ARRAY") {
+                print OUT " "x$indent, "[\n";
+                foreach (@$_) {
+                    $recurse->($indent + 4, $_);
+                }
+                print OUT " "x$indent, "],\n";
+            } elsif (ref $_ eq "HASH") {
+                my %h = %$_;
+                print OUT " "x$indent, "{\n";
+                foreach (sort keys %h) {
+                    if (ref $h{$_} eq "") {
+                        print OUT " "x($indent + 4), quotify("perl", $_), " => ", quotify("perl", $h{$_}), ",\n";
+                    } else {
+                        print OUT " "x($indent + 4), quotify("perl", $_), " =>\n";
+                        $recurse->($indent + 8, $h{$_});
+                    }
+                }
+                print OUT " "x$indent, "},\n";
+            } else {
+                print OUT " "x$indent, quotify("perl", $_), ",\n";
+            }
+        }
+    };
+    print OUT "our %unified_info = (\n";
+    foreach (sort keys %unified_info) {
+        if (ref $unified_info{$_} eq "") {
+            print OUT " "x4, quotify("perl", $_), " => ", quotify("perl", $unified_info{$_}), ",\n";
+        } else {
+            print OUT " "x4, quotify("perl", $_), " =>\n";
+            $recurse->(8, $unified_info{$_});
+        }
+    }
+    print OUT <<"EOF";
+);
+
+EOF
+}
+print OUT "1;\n";
 close(OUT);
+
+die <<"EOF" if $target{build_scheme}->[0] ne "unified" && $srcdir ne $blddir;
+
+***** Trying building anywhere else than in the source tree will not
+***** work for target $config{target}.  To make it possible, it needs
+***** to use the "unified" build scheme.
+
+EOF
 
 print "IsMK1MF       =", ($target{build_scheme}->[0] eq "mk1mf" ? "yes" : "no"), "\n";
 print "CC            =$target{cc}\n";
@@ -1252,48 +1673,61 @@ print "THIRTY_TWO_BIT mode\n" if $config{b32};
 print "BN_LLONG mode\n" if $config{bn_ll};
 print "RC4 uses $config{rc4_int}\n" if $config{rc4_int} != $def_int;
 
-run_dofile("Makefile.in","Makefile");
+make_path(catdir($blddir, "include/openssl"));
+run_dofile(catfile($blddir, "include/openssl/opensslconf.h"),
+           catfile($srcdir, "include/openssl/opensslconf.h.in"));
 
-run_dofile("util/domd.in", "util/domd");
-chmod 0755, "util/domd";
-
-run_dofile("include/openssl/opensslconf.h.in", "include/openssl/opensslconf.h");
-
+make_path(catdir($blddir, "crypto/include/internal"));
 foreach my $alg ( 'bn' ) {
-    run_dofile("crypto/include/internal/${alg}_conf.h.in",
-	       "crypto/include/internal/${alg}_conf.h");
+    run_dofile(catfile($blddir, "crypto/include/internal/${alg}_conf.h"),
+               catfile($srcdir, "crypto/include/internal/${alg}_conf.h.in"));
 }
 
-# Copy all Makefile.in to Makefile (except top-level)
-use File::Find;
-use IO::File;
-find(
-    {
-        preprocess => sub {
-            grep(!/^\./, @_);
+###
+### When the old "unixmake" scheme goes away, so does this function
+###
+sub build_Makefile {
+    run_dofile("Makefile","Makefile.in");
+
+    # Copy all Makefile.in to Makefile (except top-level)
+    use File::Find;
+    use IO::File;
+    find(
+        {
+            preprocess => sub {
+                grep(!/^\./, @_);
+            },
+            wanted => sub {
+                return if ($_ ne "Makefile.in" || $File::Find::dir eq ".");
+                my $in = IO::File->new($_, "r") or
+                    die sprintf "Error reading Makefile.in in %s: !$\n",
+                    $File::Find::dir;
+                my $out = IO::File->new("Makefile", "w") or
+                    die sprintf "Error writing Makefile in %s: !$\n",
+                    $File::Find::dir;
+                print $out "# Generated from $_, do not edit\n";
+                while (my $line = <$in>) { print $out $line }
+                $in->close() or
+                    die sprintf "Error reading Makefile.in in %s: !$\n",
+                    $File::Find::dir;
+                $out->close() or
+                    die sprintf "Error writing Makefile in %s: !$\n",
+                    $File::Find::dir;
+            },
         },
-        wanted => sub {
-            return if ($_ ne "Makefile.in" || $File::Find::dir eq ".");
-            my $in = IO::File->new($_, "r") or
-                die sprintf "Error reading Makefile.in in %s: !$\n",
-                $File::Find::dir;
-            my $out = IO::File->new("Makefile", "w") or
-                die sprintf "Error writing Makefile in %s: !$\n",
-                $File::Find::dir;
-            print $out "# Generated from $_, do not edit\n";
-            while (my $line = <$in>) { print $out $line }
-            $in->close() or
-                die sprintf "Error reading Makefile.in in %s: !$\n",
-                $File::Find::dir;
-            $out->close() or
-                die sprintf "Error writing Makefile in %s: !$\n",
-                $File::Find::dir;
-        },
-    },
-    ".");
+        ".");
+}
 
 my %builders = (
+    unified => sub {
+        die "unified build currently does nothing";
+    },
     unixmake => sub {
+        build_Makefile();
+
+        run_dofile("util/domd", "util/domd.in");
+        chmod 0755, "util/domd";
+
 	my $make_command = "$make PERL=\'$config{perl}\'";
 	my $make_targets = "";
 	$make_targets .= " depend" if $config{depflags} ne $default_depflags && $make_depend;
@@ -1304,6 +1738,9 @@ my %builders = (
         }
     },
     mk1mf => sub {
+        # The only reason we do this is to have something to build MINFO from
+        build_Makefile();
+
 	open (OUT,">crypto/buildinf.h") || die "Can't open buildinf.h";
 	printf OUT <<"EOF";
 #ifndef MK1MF_BUILD
@@ -1633,13 +2070,17 @@ sub usage
 
 sub run_dofile()
 {
-    my $in = shift;
     my $out = shift;
+    my @templates = @_;
 
     unlink $out || warn "Can't remove $out, $!"
         if -f $out;
-    die "Can't open $in, $!" unless -f $in;
-    system("$config{perl} -I. -Mconfigdata util/dofile.pl -o\"Configure\" $in > $out.new");
+    foreach (@templates) {
+        die "Can't open $_, $!" unless -f $_;
+    }
+    my $cmd = "$config{perl} \"-I.\" \"-Mconfigdata\" $dofile -o\"Configure\" \"".join("\" \"",@templates)."\" > \"$out.new\"";
+    #print STDERR "DEBUG[run_dofile]: \$cmd = $cmd\n";
+    system($cmd);
     exit 1 if $? != 0;
     rename("$out.new", $out) || die "Can't rename $out.new, $!";
 }
@@ -1748,34 +2189,87 @@ sub quotify {
     map { $processor->($_); } @_;
 }
 
-# collect_information($filename, $line_continue, $regexp => $CODEref, ...)
-# $filename is the file to read.
-# $line_continue is either undef (which is a noop), or two arguments, where
-# the first is a regexp detecting a line continuation ending, and the
-# following argument is a CODEref that takes care of concatenating two
-# lines.
+# collect_from_file($filename, $line_concat_cond_re, $line_concat)
+# $filename is a file name to read from
+# $line_concat_cond_re is a regexp detecting a line continuation ending
+# $line_concat is a CODEref that takes care of concatenating two lines
+sub collect_from_file {
+    my $filename = shift;
+    my $line_concat_cond_re = shift;
+    my $line_concat = shift;
+
+    open my $fh, $filename || die "unable to read $filename: $!\n";
+    return sub {
+        my $saved_line = "";
+        $_ = "";
+        while (<$fh>) {
+            chomp;
+            if (defined $line_concat) {
+                $_ = $line_concat->($saved_line, $_);
+                $saved_line = "";
+            }
+            if (defined $line_concat_cond_re && /$line_concat_cond_re/) {
+                $saved_line = $_;
+                next;
+            }
+            return $_;
+        }
+        die "$filename ending with continuation line\n" if $_;
+        close $fh;
+        return undef;
+    }
+}
+
+# collect_from_array($array, $line_concat_cond_re, $line_concat)
+# $array is an ARRAYref of lines
+# $line_concat_cond_re is a regexp detecting a line continuation ending
+# $line_concat is a CODEref that takes care of concatenating two lines
+sub collect_from_array {
+    my $array = shift;
+    my $line_concat_cond_re = shift;
+    my $line_concat = shift;
+    my @array = (@$array);
+
+    return sub {
+        my $saved_line = "";
+        $_ = "";
+        while (defined($_ = shift @array)) {
+            chomp;
+            if (defined $line_concat) {
+                $_ = $line_concat->($saved_line, $_);
+                $saved_line = "";
+            }
+            if (defined $line_concat_cond_re && /$line_concat_cond_re/) {
+                $saved_line = $_;
+                next;
+            }
+            return $_;
+        }
+        die "input text ending with continuation line\n" if $_;
+        return undef;
+    }
+}
+
+# collect_information($lineiterator, $line_continue, $regexp => $CODEref, ...)
+# $lineiterator is a CODEref that delivers one line at a time.
 # All following arguments are regex/CODEref pairs, where the regexp detects a
 # line and the CODEref does something with the result of the regexp.
 sub collect_information {
-    my $filename = shift;
-    my $line_continue_re = shift;
-    my $line_concat = defined($line_continue_re) ? shift : undef;
+    my $lineiterator = shift;
     my %collectors = @_;
 
-    my $saved_line = "";
-    open IN, $filename || die "unable to read $filename: $!\n";
-    while(<IN>) {
-	chomp;
-	if (defined $line_concat) {
-	    $_ = $line_concat->($saved_line, $_);
-	}
-	if (defined $line_continue_re && /$line_continue_re/) {
-	    $saved_line = $_;
-	    next;
-	}
-	foreach my $re (keys %collectors) {
-	    if (/$re/) { $collectors{$re}->() };
-	}
+    while(defined($_ = $lineiterator->())) {
+        chomp;
+        my $found = 0;
+        foreach my $re (keys %collectors) {
+            if ($re ne "OTHERWISE" && /$re/) {
+                $collectors{$re}->($lineiterator);
+                $found = 1;
+            };
+        }
+        if ($collectors{"OTHERWISE"}) {
+            $collectors{"OTHERWISE"}->($lineiterator, $_)
+                unless $found || !defined $collectors{"OTHERWISE"};
+        }
     }
-    close IN;
 }

@@ -158,4 +158,8 @@ depend:
 clean:
 	rm -f *.s *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
 
+# Different flavours of make disagree on where output goes
+.c.o:
+	$(CC) $(CFLAGS) -c $< -o $@
+
 # DO NOT DELETE THIS LINE -- make depend depends on it.
