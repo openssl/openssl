@@ -32,6 +32,9 @@ matrix:
           env: CONFIG_OPTS="-d --strict-warnings"
 
 before_script:
+    - sh .travis-create-release.sh $TRAVIS_OS_NAME
+    - tar -xvzf _srcdist.tar.gz
+    - cd _srcdist
     - if [ "$CC" == i686-w64-mingw32-gcc ]; then
           export CROSS_COMPILE=${CC%%gcc}; unset CC;
           ./Configure mingw $CONFIG_OPTS;
@@ -44,10 +47,13 @@ before_script:
           fi;
           ./config $CONFIG_OPTS;
       fi
+    - cd ..
 
 script:
+    - cd _srcdist
     - make
     - if [ -z "$CROSS_COMPILE" ]; then make test; fi
+    - cd ..
 
 notifications:
     email:
