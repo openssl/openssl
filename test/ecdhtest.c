@@ -416,7 +416,7 @@ static int ecdh_kat(BIO *out, const ecdh_kat_t *kat)
     EC_KEY *key1 = NULL, *key2 = NULL;
     BIGNUM *bnz = NULL;
     unsigned char *Ztmp = NULL, *Z = NULL;
-    size_t Ztmplen;
+    size_t Ztmplen, Zlen;
     BIO_puts(out, "Testing ECDH shared secret with ");
     BIO_puts(out, OBJ_nid2sn(kat->nid));
     if(!BN_hex2bn(&bnz, kat->Z))
@@ -426,14 +426,15 @@ static int ecdh_kat(BIO *out, const ecdh_kat_t *kat)
     if (!key1 || !key2)
         goto err;
     Ztmplen = (EC_GROUP_get_degree(EC_KEY_get0_group(key1)) + 7) / 8;
-    if (BN_num_bytes(bnz) > Ztmplen)
+    Zlen = BN_num_bytes(bnz);
+    if (Zlen > Ztmplen)
         goto err;
     if((Ztmp = OPENSSL_zalloc(Ztmplen)) == NULL)
         goto err;
     if((Z = OPENSSL_zalloc(Ztmplen)) == NULL)
         goto err;
     /* Z offset compensates for bn2bin stripping leading 0x00 bytes */
-    if(!BN_bn2bin(bnz, Z + Ztmplen - BN_num_bytes(bnz)))
+    if(!BN_bn2bin(bnz, Z + Ztmplen - Zlen))
         goto err;
     if (!ECDH_compute_key(Ztmp, Ztmplen,
                           EC_KEY_get0_public_key(key2), key1, 0))
