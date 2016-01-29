@@ -138,6 +138,15 @@
 #  define openssl_fdset(a,b) FD_SET(a, b)
 # endif
 
+# if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L && \
+     defined(INTMAX_MAX) && defined(UINTMAX_MAX)
+int opt_imax(const char *value, intmax_t *result);
+int opt_umax(const char *value, uintmax_t *result);
+# else
+#  define opt_imax opt_long
+#  define opt_umax opt_ulong
+# endif
+
 int app_RAND_load_file(const char *file, int dont_warn);
 int app_RAND_write_file(const char *file);
 /*
