@@ -313,7 +313,7 @@ static void dgram_adjust_rcv_timeout(BIO *b)
         }
 
         /*
-         * Adjust socket timeout if next handhake message timer will expire
+         * Adjust socket timeout if next handshake message timer will expire
          * earlier.
          */
         if ((data->socket_timeout.tv_sec == 0

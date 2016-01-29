@@ -229,7 +229,7 @@ static int asn1_parse2(BIO *bp, const unsigned char **pp, long length,
                 }
                 BIO_printf(bp, ":%u", p[0]);
             } else if (tag == V_ASN1_BMPSTRING) {
-                /* do the BMP thang */
+                /* do the BMP thing */
             } else if (tag == V_ASN1_OCTET_STRING) {
                 int i, printable = 1;
 

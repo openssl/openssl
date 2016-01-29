@@ -294,7 +294,7 @@ BIGNUM *int_bn_mod_inverse(BIGNUM *in,
         /*
          * Binary inversion algorithm; requires odd modulus. This is faster
          * than the general algorithm if the modulus is sufficiently small
-         * (about 400 .. 500 bits on 32-bit sytems, but much more on 64-bit
+         * (about 400 .. 500 bits on 32-bit systems, but much more on 64-bit
          * systems)
          */
         int shift;

@@ -198,7 +198,7 @@ BIO *BIO_new_fp(FILE *stream, int close_flag)
         return (NULL);
 
     BIO_set_flags(ret, BIO_FLAGS_UPLINK); /* redundant, left for
-                                           * documentation puposes */
+                                           * documentation purposes */
     BIO_set_fp(ret, stream, close_flag);
     return (ret);
 }
