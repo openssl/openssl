@@ -185,14 +185,18 @@ static int tree_init(X509_POLICY_TREE **ptree, STACK_OF(X509) *certs,
     for (i = n - 2; i >= 0; i--) {
         uint32_t ex_flags;
         x = sk_X509_value(certs, i);
-        ex_flags = X509_get_extension_flags(x);
+
+        /*
+         * Note, this modifies x->ex_flags.  If cache NULL something bad
+         * happened: return immediately
+         */
         cache = policy_cache_set(x);
-        /* If cache NULL something bad happened: return immediately */
         if (cache == NULL)
             return 0;
         /*
          * If inconsistent extensions keep a note of it but continue
          */
+        ex_flags = X509_get_extension_flags(x);
         if (ex_flags & EXFLAG_INVALID_POLICY)
             ret = -1;
         /*
