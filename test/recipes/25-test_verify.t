@@ -19,7 +19,7 @@ sub verify {
     run(app([@args]));
 }
 
-plan tests => 76;
+plan tests => 81;
 
 # Canonical success
 ok(verify("ee-cert", "sslserver", ["root-cert"], ["ca-cert"]),
@@ -28,6 +28,10 @@ ok(verify("ee-cert", "sslserver", ["root-cert"], ["ca-cert"]),
 # Root CA variants
 ok(!verify("ee-cert", "sslserver", [qw(root-nonca)], [qw(ca-cert)]),
    "fail trusted non-ca root");
+ok(!verify("ee-cert", "sslserver", [qw(nroot+serverAuth)], [qw(ca-cert)]),
+   "fail server trust non-ca root");
+ok(!verify("ee-cert", "sslserver", [qw(nroot+anyEKU)], [qw(ca-cert)]),
+   "fail wildcard trust non-ca root");
 ok(!verify("ee-cert", "sslserver", [qw(root-cert2)], [qw(ca-cert)]),
    "fail wrong root key");
 ok(!verify("ee-cert", "sslserver", [qw(root-name2)], [qw(ca-cert)]),
@@ -99,7 +103,13 @@ ok(!verify("ee-cert", "sslserver", [qw(root-cert root2+clientAuth ca-root2)],
 
 # CA variants
 ok(!verify("ee-cert", "sslserver", [qw(root-cert)], [qw(ca-nonca)]),
-   "fail non-CA intermediate");
+   "fail non-CA untrusted intermediate");
+ok(!verify("ee-cert", "sslserver", [qw(root-cert ca-nonca)], []),
+   "fail non-CA trusted intermediate");
+ok(!verify("ee-cert", "sslserver", [qw(root-cert nca+serverAuth)], []),
+   "fail non-CA server trust intermediate");
+ok(!verify("ee-cert", "sslserver", [qw(root-cert nca+anyEKU)], []),
+   "fail non-CA wildcard trust intermediate");
 ok(!verify("ee-cert", "sslserver", [qw(root-cert)], [qw(ca-cert2)]),
    "fail wrong intermediate CA key");
 ok(!verify("ee-cert", "sslserver", [qw(root-cert)], [qw(ca-name2)]),

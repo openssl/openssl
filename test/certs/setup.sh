@@ -27,6 +27,10 @@ openssl x509 -in root-cert2.pem -trustout \
     -addreject serverAuth -out root2-serverAuth.pem
 openssl x509 -in root-cert2.pem -trustout \
     -addtrust clientAuth -out root2+clientAuth.pem
+openssl x509 -in root-nonca.pem -trustout \
+    -addtrust serverAuth -out nroot+serverAuth.pem
+openssl x509 -in root-nonca.pem -trustout \
+    -addtrust anyExtendedKeyUsage -out nroot+anyEKU.pem
 
 # primary client-EKU root: croot-cert
 # trust variants: +serverAuth -serverAuth +clientAuth +anyEKU -anyEKU
@@ -87,6 +91,10 @@ openssl x509 -in ca-cert.pem -trustout \
     -addreject anyExtendedKeyUsage -out ca-anyEKU.pem
 openssl x509 -in ca-cert.pem -trustout \
     -addtrust anyExtendedKeyUsage -out ca+anyEKU.pem
+openssl x509 -in ca-nonca.pem -trustout \
+    -addtrust serverAuth -out nca+serverAuth.pem
+openssl x509 -in ca-nonca.pem -trustout \
+    -addtrust serverAuth -out nca+anyEKU.pem
 
 # client intermediate ca: cca-cert
 # trust variants: +serverAuth, -serverAuth, +clientAuth, -clientAuth
