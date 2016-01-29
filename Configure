@@ -192,7 +192,6 @@ my $zlib=1;      # but "no-zlib" is default
 my $no_rfc3779=0;
 my $no_asm=0;
 my $no_dso=0;
-my $Makefile="Makefile";
 my $default_ranlib;
 $config{fips}=0;
 
@@ -1124,7 +1123,6 @@ $config{bn_ll}			=0;
 $config{export_var_as_fn}	=0;
 my $def_int="unsigned int";
 $config{rc4_int}		=$def_int;
-$config{rc2_int}		=$def_int;
 ($config{b64l},$config{b64},$config{b32})=(0,0,1);
 
 foreach (sort split(/\s+/,$target{bn_ops})) {
@@ -1288,9 +1286,8 @@ print "SIXTY_FOUR_BIT mode\n" if $config{b64};
 print "THIRTY_TWO_BIT mode\n" if $config{b32};
 print "BN_LLONG mode\n" if $config{bn_ll};
 print "RC4 uses $config{rc4_int}\n" if $config{rc4_int} != $def_int;
-print "RC2 uses $config{rc2_int}\n" if $config{rc2_int} != $def_int;
 
-run_dofile("$Makefile.in","$Makefile");
+run_dofile("Makefile.in","Makefile");
 
 run_dofile("util/domd.in", "util/domd");
 chmod 0755, "util/domd";
