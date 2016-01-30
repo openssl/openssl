@@ -34,7 +34,7 @@ This module provides utility functions for the testing framework.
 
 =cut
 
-use OpenSSL::Test qw/:DEFAULT top_file/;
+use OpenSSL::Test qw/:DEFAULT bldtop_file/;
 
 =over 4
 
@@ -75,9 +75,9 @@ my $configdata_loaded = 0;
 
 sub load_configdata {
     # We eval it so it doesn't run at compile time of this file.
-    # The latter would have top_dir() complain that setup() hasn't
+    # The latter would have bldtop_file() complain that setup() hasn't
     # been run yet.
-    my $configdata = top_file("configdata.pm");
+    my $configdata = bldtop_file("configdata.pm");
     eval { require $configdata;
 	   %available_protocols = %configdata::available_protocols;
 	   %disabled = %configdata::disabled;

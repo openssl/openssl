@@ -6,11 +6,11 @@ use warnings;
 use POSIX;
 use File::Spec::Functions qw/devnull catfile/;
 use File::Copy;
-use OpenSSL::Test qw/:DEFAULT with pipe top_dir/;
+use OpenSSL::Test qw/:DEFAULT with pipe srctop_dir/;
 
 setup("test_ocsp");
 
-my $ocspdir=top_dir("test", "ocsp-tests");
+my $ocspdir=srctop_dir("test", "ocsp-tests");
 # 17 December 2012 so we don't get certificate expiry errors.
 my @check_time=("-attime", "1355875200");
 
