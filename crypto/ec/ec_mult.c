@@ -67,7 +67,7 @@
 #include "ec_lcl.h"
 
 /*
- * This file implements the wNAF-based interleaving multi-exponentation method
+ * This file implements the wNAF-based interleaving multi-exponentiation method
  * (<URL:http://www.informatik.tu-darmstadt.de/TI/Mitarbeiter/moeller.html#multiexp>);
  * for multiplication with precomputation, we use wNAF splitting
  * (<URL:http://www.informatik.tu-darmstadt.de/TI/Mitarbeiter/moeller.html#fastexp>).

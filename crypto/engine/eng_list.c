@@ -219,7 +219,7 @@ ENGINE *ENGINE_get_next(ENGINE *e)
     CRYPTO_w_lock(CRYPTO_LOCK_ENGINE);
     ret = e->next;
     if (ret) {
-        /* Return a valid structural refernce to the next ENGINE */
+        /* Return a valid structural reference to the next ENGINE */
         ret->struct_ref++;
         engine_ref_debug(ret, 0, 1)
     }
@@ -353,7 +353,7 @@ ENGINE *ENGINE_by_id(const char *id)
     if (iterator != NULL)
         return iterator;
     /*
-     * Prevent infinite recusrion if we're looking for the dynamic engine.
+     * Prevent infinite recursion if we're looking for the dynamic engine.
      */
     if (strcmp(id, "dynamic")) {
 # ifdef OPENSSL_SYS_VMS
