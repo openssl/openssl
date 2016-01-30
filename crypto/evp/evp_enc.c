@@ -124,7 +124,7 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
      * Whether it's nice or not, "Inits" can be used on "Final"'d contexts so
      * this context may already have an ENGINE! Try to avoid releasing the
      * previous handle, re-querying for an ENGINE, and having a
-     * reinitialisation, when it may all be unecessary.
+     * reinitialisation, when it may all be unnecessary.
      */
     if (ctx->engine && ctx->cipher
         && (!cipher || (cipher && (cipher->nid == ctx->cipher->nid))))
@@ -159,7 +159,7 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
                 /*
                  * One positive side-effect of US's export control history,
                  * is that we should at least be able to avoid using US
-                 * mispellings of "initialisation"?
+                 * misspellings of "initialisation"?
                  */
                 EVPerr(EVP_F_EVP_CIPHERINIT_EX, EVP_R_INITIALIZATION_ERROR);
                 return 0;

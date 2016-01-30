@@ -375,7 +375,7 @@ int dsa_builtin_paramgen2(DSA *ret, size_t L, size_t N,
     }
 
     mdsize = EVP_MD_size(evpmd);
-    /* If unverificable g generation only don't need seed */
+    /* If unverifiable g generation only don't need seed */
     if (!ret->p || !ret->q || idx >= 0) {
         if (seed_len == 0)
             seed_len = mdsize;
