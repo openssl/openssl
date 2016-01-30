@@ -37,6 +37,15 @@
  package that we know of is ActiveState Perl, available from
  http://www.activestate.com/ActivePerl.
 
+ Notes on Perl on VMS
+ --------------------
+
+ You will need to install Perl separately.  One way to do so is to
+ download the source from http://perl.org/, unpacking it, reading
+ README.vms and follow instructions.  Another way is to download a
+ .PCSI file from http://sourceforge.net/projects/vmsperlkit/files/
+ and install it using the POLYCENTER install tool.
+
  Notes on Perl modules we use
  ----------------------------
 
@@ -97,3 +106,12 @@
     seen the tests succeed!):
 
         $ cpan -f -i Text::Template
+
+    Note: on VMS, you must quote any argument that contains upper case
+    characters, so the lines above would be:
+
+        $ cpan -i "Text::Template"
+
+    and:
+
+        $ cpan -f -i "Text::Template"
