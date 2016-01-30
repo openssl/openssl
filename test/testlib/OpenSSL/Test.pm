@@ -713,7 +713,7 @@ sub __fixup_cmd {
     if (defined($exe_shell)) {
 	$prefix = "$exe_shell ";
     } elsif ($^O eq "VMS" ) {	# VMS
-	$prefix = ($prog =~ /^[<\[]/ ? "mcr " : "mcr []");
+	$prefix = ($prog =~ /^(?:[\$a-z0-9_]+:)?[<\[]/i ? "mcr " : "mcr []");
 	$ext = ".exe";
     } elsif ($^O eq "MSWin32") { # Windows
 	$prefix = "";
