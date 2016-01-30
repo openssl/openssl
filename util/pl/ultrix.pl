@@ -11,7 +11,7 @@ $rm='/bin/rm -f';
 
 $cc='cc';
 if ($debug)
-	{ $cflags="-g -DREF_CHECK"; }
+	{ $cflags="-g -DREF_DEBUG"; }
 else
 	{ $cflags="-O2"; }
 

@@ -108,12 +108,7 @@ int engine_unlocked_finish(ENGINE *e, int unlock_for_handlers)
         if (!to_return)
             return 0;
     }
-#ifdef REF_CHECK
-    if (e->funct_ref < 0) {
-        fprintf(stderr, "ENGINE_finish, bad functional reference count\n");
-        abort();
-    }
-#endif
+    REF_ASSERT_ISNT(e->funct_ref < 0);
     /* Release the structural reference too */
     if (!engine_free_util(e, 0)) {
         ENGINEerr(ENGINE_F_ENGINE_UNLOCKED_FINISH, ENGINE_R_FINISH_FAILED);

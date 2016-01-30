@@ -71,15 +71,26 @@ extern "C" {
 #endif
 
 /* Used to checking reference counts, most while doing perl5 stuff :-) */
+# if defined(OPENSSL_NO_STDIO)
+#  if defined(REF_DEBUG)
+#   error "REF_DEBUG requires stdio"
+#  endif
+#  if defined(REF_PRINT)
+#   error "REF_PRINT requires stdio"
+#  endif
+# endif
+
+# if defined(REF_DEBUG)
+#  define REF_ASSERT_ISNT(test) \
+    (void)((test) ? (OpenSSLDie(__FILE__, __LINE__, "refcount error"), 1) : 0)
+# else
+#  define REF_ASSERT_ISNT(i)
+# endif
 # ifdef REF_PRINT
-#  undef REF_PRINT
-#  define REF_PRINT(a,b)  fprintf(stderr,"%08X:%4d:%s\n",(int)b,b->references,a)
-# endif
-# if defined(OPENSSL_NO_STDIO) && defined(REF_CHECK)
-#  error "Cannot have REF_CHECK with no-stdio"
-# endif
-# if defined(OPENSSL_NO_STDIO) && defined(REF_PRINT)
-#  error "Cannot have REF_PRINT with no-stdio"
+#  define REF_PRINT_COUNT(a, b) \
+        fprintf(stderr, "%p:%4d:%s\n", b, b->references, a)
+# else
+#  define REF_PRINT_COUNT(a, b)
 # endif
 
 # ifndef DEVRANDOM

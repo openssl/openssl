@@ -241,9 +241,13 @@ static void int_thread_del_item(const ERR_STATE *);
 /*
  * The internal state
  */
+
+/* This is a struct so that REF_PRINT_COUNT works. */
+static struct refcount {
+    int references;
+} refcount = { 0 };
 static LHASH_OF(ERR_STRING_DATA) *int_error_hash = NULL;
 static LHASH_OF(ERR_STATE) *int_thread_hash = NULL;
-static int int_thread_hash_references = 0;
 static int int_err_library_number = ERR_LIB_USER;
 
 static unsigned long get_error_values(int inc, int top, const char **file,
@@ -317,7 +321,7 @@ static LHASH_OF(ERR_STATE) *int_thread_get(int create, int lockit)
         int_thread_hash = lh_ERR_STATE_new(err_state_hash, err_state_cmp);
     }
     if (int_thread_hash != NULL) {
-        int_thread_hash_references++;
+        refcount.references++;
         ret = int_thread_hash;
     }
     if (lockit)
@@ -332,19 +336,12 @@ static void int_thread_release(LHASH_OF(ERR_STATE) **hash)
     if (hash == NULL || *hash == NULL)
         return;
 
-    i = CRYPTO_add(&int_thread_hash_references, -1, CRYPTO_LOCK_ERR);
+    i = CRYPTO_add(&refcount.references, -1, CRYPTO_LOCK_ERR);
 
-#ifdef REF_PRINT
-    fprintf(stderr, "%4d:%s\n", int_thread_hash_references, "ERR");
-#endif
+    REF_PRINT_COUNT(&refcount, "ERR");
     if (i > 0)
         return;
-#ifdef REF_CHECK
-    if (i < 0) {
-        fprintf(stderr, "int_thread_release, bad reference count\n");
-        abort();                /* ok */
-    }
-#endif
+    REF_ASSERT_ISNT(i < 0);
     *hash = NULL;
 }
 
@@ -389,10 +386,10 @@ static void int_thread_del_item(const ERR_STATE *d)
         p = lh_ERR_STATE_delete(hash, d);
         /* If there are no other references, and we just removed the
          * last item, delete the int_thread_hash */
-        if (int_thread_hash_references == 1
+        if (refcount.references == 1
             && int_thread_hash
             && lh_ERR_STATE_num_items(int_thread_hash) == 0) {
-            int_thread_hash_references = 0;
+            refcount.references = 0;
             lh_ERR_STATE_free(int_thread_hash);
             int_thread_hash = NULL;
             hash = NULL;
