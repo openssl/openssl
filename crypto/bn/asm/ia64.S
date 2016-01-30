@@ -495,7 +495,7 @@ bn_sqr_words:
 // scalability. The decision will very likely be reconsidered after the
 // benchmark program is profiled. I.e. if perfomance gain on Itanium
 // will appear larger than loss on "wider" IA-64, then the loop should
-// be explicitely split and the epilogue compressed.
+// be explicitly split and the epilogue compressed.
 .L_bn_sqr_words_ctop:
 { .mfi;	(p16)	ldf8		f32=[r33],8
 	(p25)	xmpy.lu		f42=f41,f41

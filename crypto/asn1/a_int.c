@@ -186,7 +186,7 @@ static size_t i2c_ibuf(const unsigned char *b, size_t blen, int neg,
 
 /*
  * convert content octets into a big endian buffer. Returns the length
- * of buffer or 0 on error: for malformed INTEGER. If output bufer is
+ * of buffer or 0 on error: for malformed INTEGER. If output buffer is
  * NULL just return length.
  */
 

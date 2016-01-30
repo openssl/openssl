@@ -172,7 +172,7 @@ const unsigned char os_toebcdic[256] = {
  * systems. It is a modified version of the BS2000 table.
  *
  * Bijective EBCDIC (character set IBM-1047) to US-ASCII table: This table is
- * bijective - there are no ambigous or duplicate characters.
+ * bijective - there are no ambiguous or duplicate characters.
  */
 const unsigned char os_toascii[256] = {
     0x00, 0x01, 0x02, 0x03, 0x85, 0x09, 0x86, 0x7f, /* 00-0f: */

@@ -10,7 +10,7 @@
 #include "obj_lcl.h"
 
 /*
- * Later versions of DEC C has started to add lnkage information to certain
+ * Later versions of DEC C has started to add linkage information to certain
  * functions, which makes it tricky to use them as values to regular function
  * pointers.  One way is to define a macro that takes care of casting them
  * correctly.

@@ -86,7 +86,7 @@ static int zlib_stateful_expand_block(COMP_CTX *ctx, unsigned char *out,
                                       unsigned int olen, unsigned char *in,
                                       unsigned int ilen);
 
-/* memory allocations functions for zlib intialization */
+/* memory allocations functions for zlib initialisation */
 static void *zlib_zalloc(void *opaque, unsigned int no, unsigned int size)
 {
     void *p;
