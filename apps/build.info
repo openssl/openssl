@@ -15,3 +15,9 @@ DEPEND[openssl]=../libssl
 
 SCRIPTS=CA.pl
 SOURCE[CA.pl]=CA.pl.in
+
+BEGINRAW[Makefile]
+{- $builddir -}/progs.h: {- $sourcedir -}/progs.pl {- $builddir -}/../Makefile
+	$(RM) {- $builddir -}/progs.h
+	$(PERL) {- $sourcedir -}/progs.pl $(COMMANDS) >{- $builddir -}/progs.h
+ENDRAW[Makefile]

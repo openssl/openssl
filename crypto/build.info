@@ -8,3 +8,39 @@ EXTRA=  ../ms/uplink-x86.pl ../ms/uplink.c ../ms/applink.c \
         ppccpuid.pl pariscid.pl alphacpuid.pl arm64cpuid.pl armv4cpuid.pl
 
 DEPEND[cversion.o]=buildinf.h
+
+BEGINRAW[Makefile]
+crypto/buildinf.h : Makefile
+	$(PERL) $(SRCDIR)/util/mkbuildinf.pl "$(CC) $(CFLAGS)" "$(PLATFORM)" > crypto/buildinf.h
+
+##### APPLINK, UPLINK and CPUID assembler implementations
+
+{- $builddir -}/applink.o:	$(SRCDIR)/ms/applink.c
+	$(CC) $(CFLAGS) -c -o $@ $(TOP)/ms/applink.c
+
+{- $builddir -}/uplink.o:	$(SRCDIR)/ms/uplink.c {- $builddir -}/applink.o
+	$(CC) $(CFLAGS) -c -o $@ $(TOP)/ms/uplink.c
+
+{- $builddir -}/uplink-x86.s:	$(SRCDIR)/ms/uplink-x86.pl
+	$(PERL) $(TOP)/ms/uplink-x86.pl $(PERLASM_SCHEME) > $@
+
+{- $builddir -}/x86cpuid.s:	{- $sourcedir -}/x86cpuid.pl {- $sourcedir -}/perlasm/x86asm.pl
+	$(PERL) {- $sourcedir -}/x86cpuid.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) > $@
+
+{- $builddir -}/x86_64cpuid.s:	{- $sourcedir -}/x86_64cpuid.pl
+	$(PERL) {- $sourcedir -}/x86_64cpuid.pl $(PERLASM_SCHEME) > $@
+{- $builddir -}/ia64cpuid.s:	{- $sourcedir -}/ia64cpuid.S
+	$(CC) $(CFLAGS) -E {- $sourcedir -}/ia64cpuid.S > $@
+{- $builddir -}/ppccpuid.s:	{- $sourcedir -}/ppccpuid.pl
+	$(PERL) {- $sourcedir -}/ppccpuid.pl $(PERLASM_SCHEME) $@
+{- $builddir -}/pariscid.s:	{- $sourcedir -}/pariscid.pl
+	$(PERL) {- $sourcedir -}/pariscid.pl $(PERLASM_SCHEME) $@
+{- $builddir -}/alphacpuid.s:	{- $sourcedir -}/alphacpuid.pl
+	(preproc=$$$$.$@.S; trap "rm $$preproc" INT; \
+	$(PERL) {- $sourcedir -}/alphacpuid.pl > $$preproc && \
+	$(CC) -E -P $$preproc > $@ && rm $$preproc)
+{- $builddir -}/arm64cpuid.S:	{- $sourcedir -}/arm64cpuid.pl
+	$(PERL) {- $sourcedir -}/arm64cpuid.pl $(PERLASM_SCHEME) > $@
+{- $builddir -}/armv4cpuid.S:	{- $sourcedir -}/armv4cpuid.pl
+	$(PERL) {- $sourcedir -}/armv4cpuid.pl $(PERLASM_SCHEME) > $@
+ENDRAW[Makefile]
