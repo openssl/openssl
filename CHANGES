@@ -3,6 +3,25 @@
  _______________
 
  Changes between 1.0.2f and 1.1.0  [xx XXX xxxx]
+
+  *) New "unified" build system
+
+     The "unified" build system is aimed to be a common system for all
+     platforms we support.  With it comes new support for VMS.
+
+     This system builds supports building in a differnt directory tree
+     than the source tree.  It produces one Makefile (for unix family
+     or lookalikes), or one descrip.mms (for VMS).
+
+     The source of information to make the Makefile / descrip.mms is
+     small files called 'build.info', holding the necessary
+     information for each directory with source to compile, and a
+     template in Configurations, like unix-Makefile.tmpl or
+     descrip.mms.tmpl.
+
+     We rely heavily on the perl module Text::Template.
+     [Richard Levitte]
+
   *) Added support for auto-initialisation and de-initialisation of the library.
      OpenSSL no longer requires explicit init or deinit routines to be called,
      except in certain circumstances. See the
