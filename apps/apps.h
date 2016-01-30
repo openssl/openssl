@@ -145,6 +145,8 @@ int opt_umax(const char *value, uintmax_t *result);
 # else
 #  define opt_imax opt_long
 #  define opt_umax opt_ulong
+#  define intmax_t long
+#  define uintmax_t unsigned long
 # endif
 
 int app_RAND_load_file(const char *file, int dont_warn);
