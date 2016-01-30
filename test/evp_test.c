@@ -1228,6 +1228,22 @@ static void pkey_test_cleanup(struct evp_test *t)
     EVP_PKEY_CTX_free(kdata->ctx);
 }
 
+static int pkey_test_ctrl(EVP_PKEY_CTX *pctx, const char *value)
+{
+    int rv;
+    char *p, *tmpval;
+
+    tmpval = OPENSSL_strdup(value);
+    if (tmpval == NULL)
+        return 0;
+    p = strchr(tmpval, ':');
+    if (p != NULL)
+        *p++ = 0;
+    rv = EVP_PKEY_CTX_ctrl_str(pctx, tmpval, p);
+    OPENSSL_free(tmpval);
+    return rv > 0;
+}
+
 static int pkey_test_parse(struct evp_test *t,
                            const char *keyword, const char *value)
 {
@@ -1236,14 +1252,8 @@ static int pkey_test_parse(struct evp_test *t,
         return test_bin(value, &kdata->input, &kdata->input_len);
     if (strcmp(keyword, "Output") == 0)
         return test_bin(value, &kdata->output, &kdata->output_len);
-    if (strcmp(keyword, "Ctrl") == 0) {
-        char *p = strchr(value, ':');
-        if (p)
-            *p++ = 0;
-        if (EVP_PKEY_CTX_ctrl_str(kdata->ctx, value, p) <= 0)
-            return 0;
-        return 1;
-    }
+    if (strcmp(keyword, "Ctrl") == 0)
+        return pkey_test_ctrl(kdata->ctx, value);
     return 0;
 }
 
@@ -1362,14 +1372,8 @@ static int pderive_test_parse(struct evp_test *t,
     }
     if (strcmp(keyword, "SharedSecret") == 0)
         return test_bin(value, &kdata->output, &kdata->output_len);
-    if (strcmp(keyword, "Ctrl") == 0) {
-        char *p = strchr(value, ':');
-        if (p)
-            *p++ = 0;
-        if (EVP_PKEY_CTX_ctrl_str(kdata->ctx, value, p) <= 0)
-            return 0;
-        return 1;
-    }
+    if (strcmp(keyword, "Ctrl") == 0)
+        return pkey_test_ctrl(kdata->ctx, value);
     return 0;
 }
 
