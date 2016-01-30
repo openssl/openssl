@@ -92,7 +92,7 @@ static CMS_SignedData *cms_signed_data_init(CMS_ContentInfo *cms)
     return cms_get0_signed(cms);
 }
 
-/* Just initialize SignedData e.g. for certs only structure */
+/* Just initialise SignedData e.g. for certs only structure */
 
 int CMS_SignedData_init(CMS_ContentInfo *cms)
 {
