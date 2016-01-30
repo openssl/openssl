@@ -305,7 +305,7 @@ void CRYPTO_destroy_dynlockid(int i)
     pointer = sk_CRYPTO_dynlock_value(dyn_locks, i);
     if (pointer != NULL) {
         --pointer->references;
-#ifdef REF_CHECK
+#ifdef REF_DEBUG
         if (pointer->references < 0) {
             OPENSSL_showfatal("CRYPTO_destroy_dynlockid, bad reference count\n");
             abort();

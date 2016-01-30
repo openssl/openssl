@@ -335,17 +335,10 @@ void ssl_cert_free(CERT *c)
         return;
 
     i = CRYPTO_add(&c->references, -1, CRYPTO_LOCK_SSL_CERT);
-#ifdef REF_PRINT
-    REF_PRINT("CERT", c);
-#endif
+    REF_PRINT_COUNT("CERT", c);
     if (i > 0)
         return;
-#ifdef REF_CHECK
-    if (i < 0) {
-        fprintf(stderr, "ssl_cert_free, bad reference count\n");
-        abort();                /* ok */
-    }
-#endif
+    REF_ASSERT_ISNT(i < 0);
 
 #ifndef OPENSSL_NO_DH
     EVP_PKEY_free(c->dh_tmp);

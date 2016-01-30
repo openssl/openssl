@@ -76,7 +76,7 @@ ENGINESDIR={- use File::Spec::Functions;
 #           NULL encryption ciphers.
 #
 # LOCK_DEBUG - turns on lots of lock debug output :-)
-# REF_CHECK - turn on some xyz_free() assertions.
+# REF_DEBUG - turn on some xyz_free() assertions.
 # REF_PRINT - prints some stuff on structure free.
 # MFUNC - Make all Malloc/Free/Realloc calls call
 #       CRYPTO_malloc/CRYPTO_free/CRYPTO_realloc which can be setup to

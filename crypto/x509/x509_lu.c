@@ -229,17 +229,10 @@ void X509_STORE_free(X509_STORE *vfy)
         return;
 
     i = CRYPTO_add(&vfy->references, -1, CRYPTO_LOCK_X509_STORE);
-#ifdef REF_PRINT
-    REF_PRINT("X509_STORE", vfy);
-#endif
+    REF_PRINT_COUNT("X509_STORE", vfy);
     if (i > 0)
         return;
-#ifdef REF_CHECK
-    if (i < 0) {
-        fprintf(stderr, "X509_STORE_free, bad reference count\n");
-        abort();                /* ok */
-    }
-#endif
+    REF_ASSERT_ISNT(i < 0);
 
     sk = vfy->get_cert_methods;
     for (i = 0; i < sk_X509_LOOKUP_num(sk); i++) {

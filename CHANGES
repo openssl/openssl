@@ -4,6 +4,9 @@
 
  Changes between 1.0.2f and 1.1.0  [xx XXX xxxx]
 
+  *) Rename REF_CHECK to REF_DEBUG.
+     [Rich Salz]
+
   *) New "unified" build system
 
      The "unified" build system is aimed to be a common system for all

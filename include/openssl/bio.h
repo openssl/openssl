@@ -857,6 +857,7 @@ void ERR_load_BIO_strings(void);
 # define BIO_F_BIO_PUTS                                   110
 # define BIO_F_BIO_READ                                   111
 # define BIO_F_BIO_SOCKET                                 140
+# define BIO_F_BIO_SOCKET_NBIO                            142
 # define BIO_F_BIO_SOCK_INFO                              141
 # define BIO_F_BIO_SOCK_INIT                              112
 # define BIO_F_BIO_WRITE                                  113

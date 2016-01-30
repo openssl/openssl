@@ -55,9 +55,6 @@
  *
  */
 
-#ifdef REF_CHECK
-# include <assert.h>
-#endif
 #include <stdio.h>
 #include "ssl_locl.h"
 #include <openssl/conf.h>

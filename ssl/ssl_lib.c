@@ -142,7 +142,7 @@
  * OTHERWISE.
  */
 
-#ifdef REF_CHECK
+#ifdef REF_DEBUG
 # include <assert.h>
 #endif
 #include <stdio.h>
@@ -995,17 +995,10 @@ void SSL_free(SSL *s)
         return;
 
     i = CRYPTO_add(&s->references, -1, CRYPTO_LOCK_SSL);
-#ifdef REF_PRINT
-    REF_PRINT("SSL", s);
-#endif
+    REF_PRINT_COUNT("SSL", s);
     if (i > 0)
         return;
-#ifdef REF_CHECK
-    if (i < 0) {
-        fprintf(stderr, "SSL_free, bad reference count\n");
-        abort();                /* ok */
-    }
-#endif
+    REF_ASSERT_ISNT(i < 0);
 
     X509_VERIFY_PARAM_free(s->param);
     dane_final(&s->dane);
@@ -2400,17 +2393,10 @@ void SSL_CTX_free(SSL_CTX *a)
         return;
 
     i = CRYPTO_add(&a->references, -1, CRYPTO_LOCK_SSL_CTX);
-#ifdef REF_PRINT
-    REF_PRINT("SSL_CTX", a);
-#endif
+    REF_PRINT_COUNT("SSL_CTX", a);
     if (i > 0)
         return;
-#ifdef REF_CHECK
-    if (i < 0) {
-        fprintf(stderr, "SSL_CTX_free, bad reference count\n");
-        abort();                /* ok */
-    }
-#endif
+    REF_ASSERT_ISNT(i < 0);
 
     X509_VERIFY_PARAM_free(a->param);
     dane_ctx_final(&a->dane);
@@ -3274,8 +3260,11 @@ void ssl_free_wbio_buffer(SSL *s)
     if (s->bbio == s->wbio) {
         /* remove buffering */
         s->wbio = BIO_pop(s->wbio);
-#ifdef REF_CHECK                /* not the usual REF_CHECK, but this avoids
-                                 * adding one more preprocessor symbol */
+#ifdef REF_DEBUG
+        /*
+         * not the usual REF_DEBUG, but this avoids
+         * adding one more preprocessor symbol
+         */
         assert(s->wbio != NULL);
 #endif
     }
