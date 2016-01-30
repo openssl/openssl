@@ -23,18 +23,35 @@ In each table entry, the following keys are significant:
                            libraries into the final program.
         cflags          => Flags that are used at all times when
                            compiling.
+        defines         => As an alternative, macro definitions may be
+                           present here instead of in `cflags'.  If
+                           given here, they MUST be as an array of the
+                           string such as "MACRO=value", or just
+                           "MACRO" for definitions without value.
         debug_cflags    => Extra compilation flags used when making a
                            debug build (when Configure receives the
                            --debug option).  Typically something like
                            "-g -O0".
+        debug_defines   => Similarly to `debug_cflags', this gets
+                           combined with `defines' during a debug
+                           build.  The value here MUST also be an
+                           array of the same form as for `defines'.
         release_cflags  => Extra compilation flags used when making a
                            release build (when Configure receives the
                            --release option, or doesn't receive the
                            --debug option).  Typically something like
                            "-O" or "-O3".
+        release_defines => Similarly to `release_cflags', this gets
+                           combined with `defines' during a release
+                           build.  The value here MUST also be an
+                           array of the same form as for `defines'.
         thread_cflags   => Extra compilation flags used when
                            compiling with threading enabled.
                            Explained further below.  [2]
+        thread_defines  => Similarly to `thread_cflags', this gets
+                           combined with `defines' when threading is
+                           enabled.  The value here MUST also be an
+                           array of the same form as for `defines'.
         shared_cflag    => Extra compilation flags used when
                            compiling for shared libraries, typically
                            something like "-fPIC".
