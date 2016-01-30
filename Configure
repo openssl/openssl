@@ -320,7 +320,6 @@ my %disabled = ( # "what"         => "comment" [or special keyword "experimental
 		 "ssl-trace"	  => "default",
 		 "unit-test"	  => "default",
 		 "zlib"           => "default",
-		 "zlib-dynamic"   => "default",
 		 "crypto-mdebug"  => "default",
 	       );
 my @experimental = ();
@@ -383,13 +382,13 @@ while ((my $first, my $second) = (shift @list, shift @list)) {
     unshift @list, $second;
 }
 
-# Construct the string of what $config{depflags} should look like with the defaults
-# from %disabled above.  (we need this to see if we should advise the user
-# to run "make depend"):
-my $default_depflags = join(" ",
-    map { my $x = $_; $x =~ tr{[a-z]-}{[A-Z]_}; "-DOPENSSL_NO_$x"; }
-    grep { $disabled{$_} !~ /\(no-depflags\)$/ }
-    sort keys %disabled);
+# Construct the string of what $config{depdefines} should look like with
+# the defaults from %disabled above.  (we need this to see if we should
+# advise the user to run "make depend"):
+my @default_depdefines =
+    map { my $x = $_; $x =~ tr{[a-z]-}{[A-Z]_}; "OPENSSL_NO_$x"; }
+    grep { $disabled{$_} !~ /\(no-depdefines\)$/ }
+    sort keys %disabled;
 
 # Explicit "no-..." options will be collected in %disabled along with the defaults.
 # To remove something from %disabled, use "enable-foo" (unless it's experimental).
@@ -404,8 +403,9 @@ my $no_sse2=0;
 
 &usage if ($#ARGV < 0);
 
-my $flags="";
-$config{depflags}="";
+my $user_cflags="";
+my @user_defines=();
+$config{depdefines}=[];
 $config{openssl_experimental_defines}=[];
 $config{openssl_api_defines}=[];
 $config{openssl_algorithm_defines}=[];
@@ -623,10 +623,14 @@ foreach (@argvcopy)
 			{
 			$libs.=$_." ";
 			}
+		elsif (/^-D(.*)$/)
+			{
+			push @user_defines, $1;
+			}
 		else	# common if (/^[-+]/), just pass down...
 			{
 			$_ =~ s/%([0-9a-f]{1,2})/chr(hex($1))/gei;
-			$flags.=$_." ";
+			$user_cflags.=$_." ";
 			}
 		}
 	elsif ($_ =~ /^([^:]+):(.+)$/)
@@ -747,7 +751,7 @@ foreach (sort (keys %disabled))
 			push @{$config{openssl_other_defines}}, "OPENSSL_NO_$ALGO";
 			print " OPENSSL_NO_$ALGO";
 
-			if (/^err$/)	{ $flags .= "-DOPENSSL_NO_ERR "; }
+			if (/^err$/)	{ push @user_defines, "OPENSSL_NO_ERR"; }
 			elsif (/^asm$/)	{ $no_asm = 1; }
 			}
 		else
@@ -755,7 +759,7 @@ foreach (sort (keys %disabled))
 			($ALGO,$algo) = ("RMD160","rmd160") if ($algo eq "ripemd");
 
 			push @{$config{openssl_algorithm_defines}}, "OPENSSL_NO_$ALGO";
-			$config{depflags} .= " -DOPENSSL_NO_$ALGO";
+			push @{$config{depdefines}}, "OPENSSL_NO_$ALGO";
 			print " OPENSSL_NO_$ALGO";
 
 			# fix-up crypto/directory name(s)
@@ -770,8 +774,6 @@ foreach (sort (keys %disabled))
 	print "\n";
 	}
 
-my $exp_cflags = "";
-
 foreach (sort @experimental)
 	{
 	my $ALGO;
@@ -779,7 +781,6 @@ foreach (sort @experimental)
 
 	# opensslconf.h will set OPENSSL_NO_... unless OPENSSL_EXPERIMENTAL_... is defined
 	push @{$config{openssl_experimental_defines}}, "OPENSSL_NO_$ALGO";
-	$exp_cflags .= " -DOPENSSL_EXPERIMENTAL_$ALGO";
 	}
 
 print "Configuring for $target\n";
@@ -820,9 +821,11 @@ $config{openssldir} = catdir($config{prefix}, $config{openssldir})
 # Allow environment CC to override compiler...
 $target{cc} = $ENV{CC} || $target{cc};
 
-# For cflags, lflags, plib_lflags and ex_libs, add the debug_ or release_
-# attributes.
+# For cflags, lflags, plib_lflags, ex_libs and defines, add the debug_
+# or release_ attributes.
 # Do it in such a way that no spurious space is appended (hence the grep).
+$config{defines} = [ @{$target{defines}},
+                     @{$target{$build_prefix."defines"}} ];
 $config{cflags} = join(" ",
 		       grep { $_ ne "" } ($target{cflags},
 					  $target{$build_prefix."cflags"}));
@@ -856,7 +859,9 @@ $target{multilib}="" if !-d "$config{prefix}/lib$target{multilib}";
 $config{libdir}="lib$target{multilib}" if $config{libdir} eq "";
 $config{enginesdir}=$config{prefix} . "/" . $config{libdir}  . "/engines";
 
-$config{cflags} .= "$exp_cflags";
+push @{$config{defines}},
+    map { (my $x = $_) =~ s/^OPENSSL_NO_/OPENSSL_EXPERIMENTAL_/; $x }
+        @{$config{openssl_experimental_defines}};
 
 if ($target =~ /^mingw/ && `$target{cc} --target-help 2>&1` !~ m/-mno-cygwin/m)
 	{
@@ -864,7 +869,7 @@ if ($target =~ /^mingw/ && `$target{cc} --target-help 2>&1` !~ m/-mno-cygwin/m)
 	$target{shared_ldflag} =~ s/-mno-cygwin\s*//;
 	}
 
-if ($target =~ /linux.*-mips/ && !$no_asm && $flags !~ /-m(ips|arch=)/) {
+if ($target =~ /linux.*-mips/ && !$no_asm && $user_cflags !~ /-m(ips|arch=)/) {
 	# minimally required architecture flags for assembly modules
 	$config{cflags}="-mips2 $config{cflags}" if ($target =~ /mips32/);
 	$config{cflags}="-mips3 $config{cflags}" if ($target =~ /mips64/);
@@ -872,9 +877,12 @@ if ($target =~ /linux.*-mips/ && !$no_asm && $flags !~ /-m(ips|arch=)/) {
 
 my $no_shared_warn=0;
 my $no_user_cflags=0;
+my $no_user_defines=0;
 
-if ($flags ne "")	{ $config{cflags}="$flags$config{cflags}"; }
+if ($user_cflags ne "")	{ $config{cflags}="$user_cflags$config{cflags}"; }
 else			{ $no_user_cflags=1;       }
+if (@user_defines)	{ $config{defines}=[ @user_defines, @{$config{defines}} ]; }
+else			{ $no_user_defines=1;       }
 
 # The DSO code currently always implements all functions so that no
 # applications will have to worry about that from a compilation point
@@ -882,23 +890,23 @@ else			{ $no_user_cflags=1;       }
 # has support compiled in for them. Currently each method is enabled
 # by a define "DSO_<name>" ... we translate the "dso_scheme" config
 # string entry into using the following logic;
-my $dso_cflags;
 if (!$no_dso && $target{dso_scheme} ne "")
 	{
 	$target{dso_scheme} =~ tr/[a-z]/[A-Z]/;
 	if ($target{dso_scheme} eq "DLFCN")
 		{
-		$dso_cflags = "-DDSO_DLFCN -DHAVE_DLFCN_H";
+		$config{defines} = [ "DSO_DLFCN", "HAVE_DLFCN_H",
+				     @{$config{defines}} ]
 		}
 	elsif ($target{dso_scheme} eq "DLFCN_NO_H")
 		{
-		$dso_cflags = "-DDSO_DLFCN";
+		$config{defines} = [ "DSO_DLFCN", @{$config{defines}} ]
 		}
 	else
 		{
-		$dso_cflags = "-DDSO_$target{dso_scheme}";
+		$config{defines} = [ "DSO_$target{dso_scheme}",
+				     @{$config{defines}} ]
 		}
-	$config{cflags} = "$dso_cflags $config{cflags}";
 	}
 
 my $thread_cflags = "";
@@ -913,37 +921,38 @@ if ($target{thread_cflag} eq "(unknown)" && $threads)
 	# If the user asked for "threads", [s]he is also expected to
 	# provide any system-dependent compiler options that are
 	# necessary.
-	if ($no_user_cflags)
+	if ($no_user_cflags && $no_user_defines)
 		{
 		print "You asked for multi-threading support, but didn't\n";
 		print "provide any system-specific compiler options\n";
 		exit(1);
 		}
-	$thread_cflags="-DOPENSSL_THREADS" ;
 	push @thread_defines, "OPENSSL_THREADS";
 	}
 else
 	{
-	$thread_cflags="-DOPENSSL_THREADS $target{thread_cflag}";
-	push @thread_defines, "OPENSSL_THREADS";
+	$thread_cflags=" $target{thread_cflag}";
+	push @thread_defines, @{$target{thread_defines}}, "OPENSSL_THREADS";
 	}
 
 $config{ex_libs}="$libs$config{ex_libs}" if ($libs ne "");
 
 if ($no_asm)
 	{
-	$config{cflags}=~s/-D[BL]_ENDIAN//		if ($config{fips});
+	@{$config{defines}} = grep !/^[BL]_ENDIAN$/, @{$config{defines}}
+	    if ($config{fips});
 	}
 
 if ($threads)
 	{
 	$config{cflags} = "$thread_cflags $config{cflags}" if $thread_cflags;
+	push @{$config{defines}}, @thread_defines;
 	push @{$config{openssl_thread_defines}}, @thread_defines;
 	}
 
 if ($zlib)
 	{
-	$config{cflags} = "-DZLIB $config{cflags}";
+	push @{$config{defines}}, "ZLIB";
 	if (defined($disabled{"zlib-dynamic"}))
 		{
 		if (defined($withargs{zlib_lib}))
@@ -957,7 +966,7 @@ if ($zlib)
 		}
 	else
 		{
-		$config{cflags} = "-DZLIB_SHARED $config{cflags}";
+		push @{$config{defines}}, "ZLIB_SHARED";
 		}
 	}
 
@@ -975,7 +984,8 @@ if (!$config{no_shared})
 	{
 	if ($target{shared_cflag} ne "")
 		{
-		$config{cflags} = "$target{shared_cflag} -DOPENSSL_PIC $config{cflags}";
+		push @{$config{defines}}, "OPENSSL_PIC";
+		$config{cflags} = "$target{shared_cflag} $config{cflags}";
 		}
 	}
 
@@ -1012,7 +1022,6 @@ if ($target =~ /^BSD-/)
 
 if ($target{sys_id} ne "")
 	{
-	#$config{cflags}="-DOPENSSL_SYS_$target{sys_id} $config{cflags}";
 	push @{$config{openssl_sys_defines}}, "OPENSSL_SYS_$target{sys_id}";
 	}
 
@@ -1023,44 +1032,44 @@ if ($target{ranlib} eq "")
 
 if (!$no_asm) {
     $target{cpuid_asm_src}=$table{BASE}->{cpuid_asm_src} if ($config{processor} eq "386");
-    $target{cpuid_asm_src}.=" uplink.c uplink-x86.s" if ($config{cflags} =~ /-DOPENSSL_USE_APPLINK/);
+    $target{cpuid_asm_src}.=" uplink.c uplink-x86.s" if (grep { $_ eq "OPENSSL_USE_APPLINK"} @{$config{defines}});
 
     $target{bn_asm_src} =~ s/\w+-gf2m.c// if (defined($disabled{ec2m}));
 
     # bn-586 is the only one implementing bn_*_part_words
-    $config{cflags}.=" -DOPENSSL_BN_ASM_PART_WORDS" if ($target{bn_asm_src} =~ /bn-586/);
-    $config{cflags}.=" -DOPENSSL_IA32_SSE2" if (!$no_sse2 && $target{bn_asm_src} =~ /86/);
+    push @{$config{defines}}, "OPENSSL_BN_ASM_PART_WORDS" if ($target{bn_asm_src} =~ /bn-586/);
+    push @{$config{defines}}, "OPENSSL_IA32_SSE2" if (!$no_sse2 && $target{bn_asm_src} =~ /86/);
 
-    $config{cflags}.=" -DOPENSSL_BN_ASM_MONT" if ($target{bn_asm_src} =~ /-mont/);
-    $config{cflags}.=" -DOPENSSL_BN_ASM_MONT5" if ($target{bn_asm_src} =~ /-mont5/);
-    $config{cflags}.=" -DOPENSSL_BN_ASM_GF2m" if ($target{bn_asm_src} =~ /-gf2m/);
+    push @{$config{defines}}, "OPENSSL_BN_ASM_MONT" if ($target{bn_asm_src} =~ /-mont/);
+    push @{$config{defines}}, "OPENSSL_BN_ASM_MONT5" if ($target{bn_asm_src} =~ /-mont5/);
+    push @{$config{defines}}, "OPENSSL_BN_ASM_GF2m" if ($target{bn_asm_src} =~ /-gf2m/);
 
     if ($config{fips}) {
 	push @{$config{openssl_other_defines}}, "OPENSSL_FIPS";
     }
 
     if ($target{sha1_asm_src}) {
-	$config{cflags}.=" -DSHA1_ASM"   if ($target{sha1_asm_src} =~ /sx86/ || $target{sha1_asm_src} =~ /sha1/);
-	$config{cflags}.=" -DSHA256_ASM" if ($target{sha1_asm_src} =~ /sha256/);
-	$config{cflags}.=" -DSHA512_ASM" if ($target{sha1_asm_src} =~ /sha512/);
+	push @{$config{defines}}, "SHA1_ASM"   if ($target{sha1_asm_src} =~ /sx86/ || $target{sha1_asm_src} =~ /sha1/);
+	push @{$config{defines}}, "SHA256_ASM" if ($target{sha1_asm_src} =~ /sha256/);
+	push @{$config{defines}}, "SHA512_ASM" if ($target{sha1_asm_src} =~ /sha512/);
     }
     if ($target{md5_asm_src}) {
-	$config{cflags}.=" -DMD5_ASM";
+	push @{$config{defines}}, "MD5_ASM";
     }
     $target{cast_asm_src}=$table{BASE}->{cast_asm_src} if (!$config{no_shared}); # CAST assembler is not PIC
     if ($target{rmd160_asm_src}) {
-	$config{cflags}.=" -DRMD160_ASM";
+	push @{$config{defines}}, "RMD160_ASM";
     }
     if ($target{aes_asm_src}) {
-	$config{cflags}.=" -DAES_ASM" if ($target{aes_asm_src} =~ m/\baes-/);;
+	push @{$config{defines}}, "AES_ASM" if ($target{aes_asm_src} =~ m/\baes-/);;
 	# aes-ctr.fake is not a real file, only indication that assembler
 	# module implements AES_ctr32_encrypt...
-	$config{cflags}.=" -DAES_CTR_ASM" if ($target{aes_asm_src} =~ s/\s*aes-ctr\.fake//);
+	push @{$config{defines}}, "AES_CTR_ASM" if ($target{aes_asm_src} =~ s/\s*aes-ctr\.fake//);
 	# aes-xts.fake indicates presence of AES_xts_[en|de]crypt...
-	$config{cflags}.=" -DAES_XTS_ASM" if ($target{aes_asm_src} =~ s/\s*aes-xts\.fake//);
+	push @{$config{defines}}, "AES_XTS_ASM" if ($target{aes_asm_src} =~ s/\s*aes-xts\.fake//);
 	$target{aes_asm_src} =~ s/\s*(vpaes|aesni)-x86\.s//g if ($no_sse2);
-	$config{cflags}.=" -DVPAES_ASM" if ($target{aes_asm_src} =~ m/vpaes/);
-	$config{cflags}.=" -DBSAES_ASM" if ($target{aes_asm_src} =~ m/bsaes/);
+	push @{$config{defines}}, "VPAES_ASM" if ($target{aes_asm_src} =~ m/vpaes/);
+	push @{$config{defines}}, "BSAES_ASM" if ($target{aes_asm_src} =~ m/bsaes/);
     }
     if ($target{wp_asm_src} =~ /mmx/) {
         if ($config{processor} eq "386") {
@@ -1070,13 +1079,13 @@ if (!$no_asm) {
 	}
     }
     if ($target{modes_asm_src} =~ /ghash-/) {
-	$config{cflags}.=" -DGHASH_ASM";
+	push @{$config{defines}}, "GHASH_ASM";
     }
     if ($target{ec_asm_src} =~ /ecp_nistz256/) {
-	$config{cflags}.=" -DECP_NISTZ256_ASM";
+	push @{$config{defines}}, "ECP_NISTZ256_ASM";
     }
     if ($target{poly1305_asm_src} ne "") {
-	$config{cflags}.=" -DPOLY1305_ASM";
+	push @{$config{defines}}, "POLY1305_ASM";
     }
 }
 
@@ -1129,9 +1138,9 @@ $config{cflags} =~ s/([\\\"])/\\\1/g;
 
 if (defined($config{api})) {
     $config{openssl_api_defines} = [ "OPENSSL_MIN_API=".$apitable->{$config{api}} ];
-    my $apiflag = sprintf("-DOPENSSL_API_COMPAT=%s", $apitable->{$config{api}});
-    $default_depflags .= " $apiflag";
-    $config{cflags} .= " $apiflag";
+    my $apiflag = sprintf("OPENSSL_API_COMPAT=%s", $apitable->{$config{api}});
+    push @default_depdefines, $apiflag;
+    push @{$config{defines}}, $apiflag;
 }
 
 if ($strict_warnings)
@@ -1671,6 +1680,7 @@ EOF
 print "IsMK1MF       =", ($builder eq "mk1mf" ? "yes" : "no"), "\n";
 print "CC            =$target{cc}\n";
 print "CFLAG         =$config{cflags}\n";
+print "DEFINES       =",join(" ", @{$config{defines}}),"\n";
 print "LFLAG         =$config{lflags}\n";
 print "PLIB_LFLAG    =$config{plib_lflags}\n";
 print "EX_LIBS       =$config{ex_libs}\n";
@@ -1755,12 +1765,16 @@ my %builders = (
 
         my $make_command = "$make PERL=\'$config{perl}\'";
         my $make_targets = "";
+        my $need_make_depend =
+            join(" ", @{$config{depdefines}}) ne join(" ", @default_depdefines);
         $make_targets .= " depend"
-            if $config{depflags} ne $default_depflags && $make_depend;
+            if $need_make_depend && $make_depend;
+
         (system $make_command.$make_targets) == 0
             or die "make $make_targets failed"
             if $make_targets ne "";
-        if ($config{depflags} ne $default_depflags && !$make_depend) {
+
+        if ($need_make_depend && !$make_depend) {
             $warn_make_depend++;
         }
     },
@@ -1770,15 +1784,18 @@ my %builders = (
         run_dofile("util/domd", "util/domd.in");
         chmod 0755, "util/domd";
 
-	my $make_command = "$make PERL=\'$config{perl}\'";
-	my $make_targets = "";
-	$make_targets .= " depend"
-	    if $config{depflags} ne $default_depflags && $make_depend;
-	(system $make_command.$make_targets) == 0
-	    or die "make $make_targets failed"
-	    if $make_targets ne "";
+        my $make_command = "$make PERL=\'$config{perl}\'";
+        my $make_targets = "";
+        my $need_make_depend =
+            join(" ", @{$config{depdefines}}) ne join(" ", @default_depdefines);
+        $make_targets .= " depend"
+            if $need_make_depend && $make_depend;
 
-	if ($config{depflags} ne $default_depflags && !$make_depend) {
+        (system $make_command.$make_targets) == 0
+            or die "make $make_targets failed"
+            if $make_targets ne "";
+
+        if ($need_make_depend && !$make_depend) {
             $warn_make_depend++;
         }
     },
@@ -1919,10 +1936,10 @@ sub asm {
 sub _add {
     my $separator = shift;
 
-    # If there's any ARRAY in the collection of values, we will return
-    # an ARRAY of combined values, otherwise a string of joined values
-    # with $separator as the separator.
-    my $found_array = 0;
+    # If there's any ARRAY in the collection of values OR the separator
+    # is undef, we will return an ARRAY of combined values, otherwise a
+    # string of joined values with $separator as the separator.
+    my $found_array = !defined($separator);
 
     my @values =
 	map {
@@ -2145,8 +2162,11 @@ sub print_table_entry
 	"sys_id",
 	"cc",
 	"cflags",
+	"defines",
 	"debug_cflags",
+	"debug_defines",
 	"release_cflags",
+	"release_defines",
 	"thread_cflag",
 	"unistd",
 	"ld",

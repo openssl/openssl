@@ -60,8 +60,8 @@ OPENSSLDIR={- $config{openssldir} -}
 
 CROSS_COMPILE= {- $config{cross_compile_prefix} -}
 CC= $(CROSS_COMPILE){- $target{cc} -}
-CFLAG= {- $config{cflags} -}
-DEPFLAG= {- $config{depflags} -}
+CFLAG={- join(" ",map { "-D".$_} @{$config{defines}}) -} {- $config{cflags} -}
+DEPFLAG= {- join(" ",map { "-D".$_} @{$config{depdefines}}) -}
 LDFLAG= {- $config{lflags} -}
 PLIB_LDFLAG= {- $config{plib_lflags} -}
 EX_LIBS= {- $config{ex_libs} -}
