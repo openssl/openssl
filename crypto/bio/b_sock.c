@@ -449,7 +449,7 @@ int BIO_get_accept_socket(char *host, int bind_mode)
         /*
          * '::port' enforces IPv6 wildcard listener. Some OSes, e.g. Solaris,
          * default to IPv6 without any hint. Also note that commonly IPv6
-         * wildchar socket can service IPv4 connections just as well...
+         * wildcard socket can service IPv4 connections just as well...
          */
         memset(&hint, 0, sizeof(hint));
         hint.ai_flags = AI_PASSIVE;
