@@ -567,3 +567,16 @@ int X509_NAME_print(BIO *bp, X509_NAME *name, int obase)
     OPENSSL_free(b);
     return 0;
 }
+
+int X509_NAME_get0_der(const unsigned char **pder, size_t *pderlen,
+                       X509_NAME *nm)
+{
+    /* Make sure encoding is valid */
+    if (i2d_X509_NAME(nm, NULL) <= 0)
+        return 0;
+    if (pder != NULL)
+        *pder = (unsigned char *)nm->bytes->data;
+    if (pderlen != NULL)
+        *pderlen = nm->bytes->length;
+    return 1;
+}
