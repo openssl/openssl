@@ -372,6 +372,23 @@ do_$(SHLIB_TARGET):
 			LIBDEPS="$$libs $(EX_LIBS)" \
 			link_a.$(SHLIB_TARGET); \
 		libs="-l$$i $$libs"; \
+		case "$(PLATFORM)" in \
+		Cygwin*) \
+			rm -f apps/cyg$$i-$(SHLIB_MAJOR).$(SHLIB_MINOR).dll; \
+			rm -f test/cyg$$i-$(SHLIB_MAJOR).$(SHLIB_MINOR).dll; \
+			cp cyg$$i-$(SHLIB_MAJOR).$(SHLIB_MINOR).dll apps/; \
+			cp cyg$$i-$(SHLIB_MAJOR).$(SHLIB_MINOR).dll test/; \
+			;; \
+		mingw*) \
+			case $$i in \
+				crypto) i=libeay32;; \
+				ssl) i=ssleay32;; \
+			esac; \
+			rm -f apps/$$i.dll; \
+			rm -f test/$$i.dll; \
+			cp $$i.dll apps/; \
+			cp $$i.dll test/; \
+		esac; \
 	done
 
 libcrypto.pc: Makefile

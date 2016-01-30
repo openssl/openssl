@@ -228,6 +228,13 @@ install_dev:
 			fn2=`basename $$fn $(SHLIB_EXT)`$(SHLIB_EXT_SIMPLE); \
 			ln -sf $$fn $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/$$fn2; \
 		fi; \
+		: {- output_off() unless windowsdll(); "" -}; \
+		echo "install $$s.a -> $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/$$fn.a"; \
+		cp $$s.a $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/$$fn.a.new; \
+		chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/$$fn.a.new; \
+		mv -f $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/$$fn.a.new \
+		      $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/$$fn.a; \
+		: {- output_on() -}; \
 	done
 	@ : {- output_on() -}
 	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/pkgconfig
@@ -263,6 +270,10 @@ uninstall_dev:
 		fi; \
 		echo "$(RM) $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/$$fn"; \
 		$(RM) $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/$$fn; \
+		: {- output_off() unless windowsdll(); "" -}; \
+		echo "$(RM) $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/$$fn.a"; \
+		$(RM) $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/$$fn.a; \
+		: {- output_on() -}; \
 	done
 	@echo "$(RM) $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/pkgconfig/libcrypto.pc"
 	@$(RM) $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/pkgconfig/libcrypto.pc
@@ -297,6 +308,16 @@ install_runtime:
 	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(INSTALL_PREFIX)$(INSTALLTOP)/bin
 	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(INSTALL_PREFIX)$(OPENSSLDIR)/misc
 	@echo "*** Installing runtime files"
+	: {- output_off() unless windowsdll(); "" -};
+	@set -e; for s in $(SHLIBS); do \
+		fn=`basename $$i`; \
+		echo "install $$s -> $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$fn"; \
+		cp $$s $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$fn.new; \
+		chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$fn.new; \
+		mv -f $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$fn.new \
+		      $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$fn; \
+	done
+	: {- output_on() -};
 	@set -e; for x in $(PROGRAMS); do \
 		fn=`basename $$x`; \
 		echo "install $$x -> $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$fn"; \
@@ -346,6 +367,13 @@ uninstall_runtime:
 		echo "$(RM) $(INSTALL_PREFIX)$(OPENSSLDIR)/misc/$$fn"; \
 		$(RM) $(INSTALL_PREFIX)$(OPENSSLDIR)/misc/$$fn; \
 	done
+	: {- output_off() unless windowsdll(); "" -};
+	@set -e; for s in $(SHLIBS); do \
+		fn=`basename $$i`; \
+		echo "$(RM) $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$fn"; \
+		$(RM) $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$fn; \
+	done
+	: {- output_on() -};
 	$(RM) $(INSTALL_PREFIX)$(OPENSSLDIR)/openssl.cnf
 
 # A method to extract all names from a .pod file
@@ -667,6 +695,12 @@ $targets : $lib\$(LIB_EXT) $deps $ordinalsfile
                 CC="\$(CC)" CFLAGS="\$(CFLAGS)" LDFLAGS="\$(LDFLAGS)" \\
                 SHARED_LDFLAGS="\$(SHARED_LDFLAGS)" SHLIB_EXT=\$(SHLIB_EXT) \\
                 link_a.$shlib_target
+EOF
+	  . (windowsdll() ? <<"EOF" : "");
+	rm -f apps/$shlib\$(SHLIB_EXT)
+	rm -f test/$shlib\$(SHLIB_EXT)
+	cp -p $shlib\$(SHLIB_EXT) apps/
+	cp -p $shlib\$(SHLIB_EXT) test/
 EOF
   }
   sub obj2dynlib {

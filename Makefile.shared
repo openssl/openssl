@@ -310,12 +310,8 @@ link_a.cygwin:
 	ALLSYMSFLAGS='-Wl,--whole-archive'; \
 	NOALLSYMSFLAGS='-Wl,--no-whole-archive'; \
 	SHAREDFLAGS="$(CFLAGS) $(SHARED_LDFLAGS) -shared $$base -Wl,-Bsymbolic -Wl,--out-implib,lib$(LIBNAME).dll.a $$extras"; \
-	[ -f apps/$$dll_name ] && rm apps/$$dll_name; \
-	[ -f test/$$dll_name ] && rm test/$$dll_name; \
 	$(LINK_SO_A) || exit 1; \
-	rm $$extras; \
-	cp -p $$dll_name apps/; \
-	cp -p $$dll_name test/
+	rm $$extras
 link_app.cygwin:
 	@if expr "$(CFLAGS)" : '.*OPENSSL_USE_APPLINK' > /dev/null; then \
 		LIBDEPS="$(SRCDIR)/crypto/applink.o $${LIBDEPS:-$(LIBDEPS)}"; \
