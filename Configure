@@ -578,6 +578,8 @@ foreach (@argvcopy)
 		if (/^--prefix=(.*)$/)
 			{
 			$config{prefix}=$1;
+			die "Directory given with --prefix MUST be absolute\n"
+				unless file_name_is_absolute($config{prefix});
 			}
 		elsif (/^--api=(.*)$/)
 			{
@@ -813,11 +815,6 @@ my $make	= $ENV{'MAKE'} || "make";
 $config{cross_compile_prefix} = $ENV{'CROSS_COMPILE'}
     if $config{cross_compile_prefix} eq "";
 
-$config{prefix} = "/usr/local" if !$config{prefix};
-$config{openssldir} = "ssl" if !$config{openssldir};
-$config{openssldir} = catdir($config{prefix}, $config{openssldir})
-    unless file_name_is_absolute($config{openssldir});
-
 # Allow environment CC to override compiler...
 $target{cc} = $ENV{CC} || $target{cc};
 
@@ -849,15 +846,6 @@ $target{build_scheme} = [ $target{build_scheme} ]
 
 my ($builder, $builder_platform, @builder_opts) =
     @{$target{build_scheme}};
-
-# if $config{prefix}/lib$target{multilib} is not an existing directory, then
-# assume that it's not searched by linker automatically, in
-# which case adding $target{multilib} suffix causes more grief than
-# we're ready to tolerate, so don't...
-$target{multilib}="" if !-d "$config{prefix}/lib$target{multilib}";
-
-$config{libdir}="lib$target{multilib}" if $config{libdir} eq "";
-$config{enginesdir}=$config{prefix} . "/" . $config{libdir}  . "/engines";
 
 push @{$config{defines}},
     map { (my $x = $_) =~ s/^OPENSSL_NO_/OPENSSL_EXPERIMENTAL_/; $x }
@@ -1007,19 +995,6 @@ if ($builder ne "mk1mf")
 #
 # Platform fix-ups
 #
-# Unlike other OSes (like Solaris, Linux, Tru64, IRIX) BSD run-time
-# linkers (tested OpenBSD, NetBSD and FreeBSD) "demand" RPATH set on
-# .so objects. Apparently application RPATH is not global and does
-# not apply to .so linked with other .so. Problem manifests itself
-# when libssl.so fails to load libcrypto.so. One can argue that we
-# should engrave this into Makefile.shared rules or into BSD-* config
-# lines above. Meanwhile let's try to be cautious and pass -rpath to
-# linker only when --prefix is not /usr.
-if ($target =~ /^BSD-/)
-	{
-	$target{shared_ldflag}.=" -Wl,-rpath,\$\$(LIBRPATH)" if ($config{prefix} !~ m|^/usr[/]*$|);
-	}
-
 if ($target{sys_id} ne "")
 	{
 	push @{$config{openssl_sys_defines}}, "OPENSSL_SYS_$target{sys_id}";
