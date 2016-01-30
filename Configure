@@ -405,6 +405,7 @@ my $no_sse2=0;
 
 my $user_cflags="";
 my @user_defines=();
+my $unified = 0;
 $config{depdefines}=[];
 $config{openssl_experimental_defines}=[];
 $config{openssl_api_defines}=[];
@@ -575,7 +576,11 @@ foreach (@argvcopy)
 		}
 	elsif (/^[-+]/)
 		{
-		if (/^--prefix=(.*)$/)
+		if (/^--unified$/)
+			{
+			$unified=1;
+			}
+		elsif (/^--prefix=(.*)$/)
 			{
 			$config{prefix}=$1;
 			die "Directory given with --prefix MUST be absolute\n"
@@ -843,6 +848,15 @@ $target{nm} = "nm";
 # Make sure build_scheme is consistent.
 $target{build_scheme} = [ $target{build_scheme} ]
     if ref($target{build_scheme}) ne "ARRAY";
+
+###### TO BE REMOVED BEFORE FINAL RELEASE
+######
+###### If the user has chosen --unified, we give it to them.
+if ($target{build_file} eq "Makefile"
+    && $target{build_scheme}->[0] eq "unixmake"
+    && $unified) {
+    $target{build_scheme} = [ "unified", "unix" ];
+}
 
 my ($builder, $builder_platform, @builder_opts) =
     @{$target{build_scheme}};
@@ -1884,6 +1898,39 @@ print <<"EOF" if ($warn_make_depend);
 
 	make depend
 EOF
+
+###### TO BE REMOVED BEFORE FINAL RELEASE
+######
+###### If the user hasn't chosen --unified, try to nudge them.
+if ($target{build_file} eq "Makefile"
+    && $target{build_scheme}->[0] eq "unixmake"
+    && !$unified) {
+
+    my $plausible_builddir =
+        abs2rel(rel2abs("../_openssl-build_$target"),rel2abs("."));
+    my $plausible_to_sourcedir =
+        abs2rel(rel2abs("."),rel2abs("../_openssl-build_$target"));
+    print <<"EOF";
+
+----------------------------------------------------------------------
+Please consider configuring with the flag --unified .
+It's to test out a new "unified" building system.
+
+One cool feature is that you can have your build directory elsewhere,
+for example:
+
+    make clean          # Clean the current configuration away
+    mkdir $plausible_builddir
+    cd $plausible_builddir
+    $plausible_to_sourcedir/config --unified
+    make
+    make test
+
+Please report any problem you have.
+----------------------------------------------------------------------
+
+EOF
+}
 
 exit(0);
 
