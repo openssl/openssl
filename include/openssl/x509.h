@@ -873,6 +873,9 @@ ASN1_OBJECT *X509_NAME_ENTRY_get_object(X509_NAME_ENTRY *ne);
 ASN1_STRING *X509_NAME_ENTRY_get_data(X509_NAME_ENTRY *ne);
 int X509_NAME_ENTRY_set(const X509_NAME_ENTRY *ne);
 
+int X509_NAME_get0_der(const unsigned char **pder, size_t *pderlen,
+                       X509_NAME *nm);
+
 int X509v3_get_ext_count(const STACK_OF(X509_EXTENSION) *x);
 int X509v3_get_ext_by_NID(const STACK_OF(X509_EXTENSION) *x,
                           int nid, int lastpos);
