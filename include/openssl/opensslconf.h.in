@@ -123,13 +123,6 @@ EOF
 /* Generate 80386 code? */
 {- $config{processor} eq "386" ? "#define" : "#undef" -} I386_ONLY
 
-#if !defined(VMS) && !defined(__VMS) /* VMS uses logical names instead */
-# if defined(HEADER_CRYPTLIB_H) && !defined(OPENSSLDIR)
-#  define ENGINESDIR {- quotify1($config{enginesdir}) -}
-#  define OPENSSLDIR {- quotify1($config{openssldir}) -}
-# endif
-#endif
-
 #undef OPENSSL_UNISTD
 #define OPENSSL_UNISTD {- $target{unistd} -}
 

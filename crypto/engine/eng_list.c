@@ -355,13 +355,8 @@ ENGINE *ENGINE_by_id(const char *id)
      * Prevent infinite recursion if we're looking for the dynamic engine.
      */
     if (strcmp(id, "dynamic")) {
-# ifdef OPENSSL_SYS_VMS
-        if ((load_dir = getenv("OPENSSL_ENGINES")) == 0)
-            load_dir = "SSLROOT:[ENGINES]";
-# else
         if ((load_dir = getenv("OPENSSL_ENGINES")) == 0)
             load_dir = ENGINESDIR;
-# endif
         iterator = ENGINE_by_id("dynamic");
         if (!iterator || !ENGINE_ctrl_cmd_string(iterator, "ID", id, 0) ||
             !ENGINE_ctrl_cmd_string(iterator, "DIR_LOAD", "2", 0) ||
