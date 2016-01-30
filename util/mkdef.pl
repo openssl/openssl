@@ -1225,12 +1225,8 @@ EOF
                 }
         elsif ($VMS)
                 {
-                my $libref = $name eq "ssl" ? "LIBCRYPTO.EXE /SHARE" : "";
                 print OUT <<"EOF";
-IDENTIFICATION="V$version"
 CASE_SENSITIVE=YES
-LIB$libname.OLB /LIBRARY
-$libref
 SYMBOL_VECTOR=(-
 EOF
                 $symvtextcount = 16; # length of "SYMBOL_VECTOR=(-"
@@ -1297,34 +1293,35 @@ EOF
 						print OUT "        $s2;\n";
                                         } elsif ($VMS) {
                                             while(++$prevnum < $n) {
-                                                my $symline="SPARE, SPARE -";
-                                                if ($symvtextcount + length($symline) + 1 > 1024) {
+                                                my $symline=" ,SPARE -\n  ,SPARE -\n";
+                                                if ($symvtextcount + length($symline) - 2 > 1024) {
                                                     print OUT ")\nSYMBOL_VECTOR=(-\n";
                                                     $symvtextcount = 16; # length of "SYMBOL_VECTOR=(-"
                                                 }
-                                                if ($symvtextcount > 16) {
-                                                    $symline = ",".$symline;
+                                                if ($symvtextcount == 16) {
+                                                    # Take away first comma
+                                                    $symline =~ s/,//;
                                                 }
-                                                print OUT "    $symline\n";
-                                                $symvtextcount += length($symline);
+                                                print OUT $symline;
+                                                $symvtextcount += length($symline) - 2;
                                             }
                                             (my $s_uc = $s) =~ tr/a-z/A-Z/;
                                             my $symtype=
                                                 $v ? "DATA" : "PROCEDURE";
                                             my $symline=
                                                 ($s_uc ne $s
-                                                 ? "$s_uc/$s=$symtype, $s=$symtype"
-                                                 : "$s=$symtype, SPARE")
-                                                ." -";
-                                            if ($symvtextcount + length($symline) + 1 > 1024) {
+                                                 ? " ,$s_uc/$s=$symtype -\n  ,$s=$symtype -\n"
+                                                 : " ,$s=$symtype -\n  ,SPARE -\n");
+                                            if ($symvtextcount + length($symline) - 2 > 1024) {
                                                 print OUT ")\nSYMBOL_VECTOR=(-\n";
                                                 $symvtextcount = 16; # length of "SYMBOL_VECTOR=(-"
                                             }
-                                            if ($symvtextcount > 16) {
-                                                $symline = ",".$symline;
+                                            if ($symvtextcount == 16) {
+                                                # Take away first comma
+                                                $symline =~ s/,//;
                                             }
-                                            print OUT "    $symline\n";
-                                            $symvtextcount += length($symline);
+                                            print OUT $symline;
+                                            $symvtextcount += length($symline) - 2;
 					} elsif($v && !$OS2) {
 						printf OUT "    %s%-39s @%-8d DATA\n",
 								($W32)?"":"_",$s2,$n;
