@@ -20,3 +20,10 @@ ELSE
  DEPEND[libossltest]=../libcrypto
  INCLUDE[libossltest]={- rel2abs(catdir($builddir,"../include")) -} ../include
 ENDIF
+
+BEGINRAW[Makefile]
+{- $builddir -}/e_padlock-x86.s:	{- $sourcedir -}/asm/e_padlock-x86.pl
+	$(PERL) {- $sourcedir -}/asm/e_padlock-x86.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) > $@
+{- $builddir -}/e_padlock-x86_64.s:	{- $sourcedir -}/asm/e_padlock-x86_64.pl
+	$(PERL) {- $sourcedir -}/asm/e_padlock-x86_64.pl $(PERLASM_SCHEME) > $@
+ENDRAW[Makefile]
