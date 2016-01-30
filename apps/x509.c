@@ -468,12 +468,16 @@ int x509_main(int argc, char **argv)
             break;
         case OPT_CHECKEND:
             checkend = 1;
-            if (!opt_imax(opt_arg(), &checkoffset))
-                goto opthelp;
-            if (checkoffset != (time_t)checkoffset) {
-                BIO_printf(bio_err, "%s: checkend time out of range %s\n",
-                           prog, opt_arg());
-                goto opthelp;
+            {
+                intmax_t temp = 0;
+                if (!opt_imax(opt_arg(), &temp))
+                    goto opthelp;
+                checkoffset = (time_t)temp;
+                if ((intmax_t)checkoffset != temp) {
+                    BIO_printf(bio_err, "%s: checkend time out of range %s\n",
+                               prog, opt_arg());
+                    goto opthelp;
+                }
             }
             break;
         case OPT_CHECKHOST:
