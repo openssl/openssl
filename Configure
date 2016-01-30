@@ -1072,11 +1072,19 @@ if (!$no_asm) {
     }
 }
 
+# Is the compiler gcc or clang?  $ecc is used below to see if error-checking
+# can be turned on.
 my $ecc = $target{cc};
-$ecc = "clang" if `$target{cc} --version 2>&1` =~ /clang/;
+my $ccpcc = "$config{cross_compile_prefix}$target{cc}";
+$config{makedepprog} = 'makedepend';
+open(PIPE, "$ccpcc --version 2>&1 | head -2 |");
+while ( <PIPE> ) {
+    $config{makedepprog} = $ccpcc if /clang|gcc/;
+    $ecc = "clang" if /clang/;
+    $ecc = "gcc" if /gcc/;
+}
+close(PIPE);
 
-$config{makedepprog} =
-    $ecc eq "gcc" || $ecc eq "clang" ? $target{cc} : "makedepend";
 $config{depflags} =~ s/^\s*//;
 
 
@@ -1121,7 +1129,8 @@ if (defined($config{api})) {
 if ($strict_warnings)
 	{
 	my $wopt;
-	die "ERROR --strict-warnings requires gcc or clang" unless ($ecc =~ /gcc(-\d(\.\d)*)?$/ or $ecc =~ /clang$/);
+	die "ERROR --strict-warnings requires gcc or clang"
+            unless $ecc eq 'gcc' || $ecc eq 'clang';
 	foreach $wopt (split /\s+/, $gcc_devteam_warn)
 		{
 		$config{cflags} .= " $wopt" unless ($config{cflags} =~ /(^|\s)$wopt(\s|$)/)

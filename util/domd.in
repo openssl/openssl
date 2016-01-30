@@ -6,20 +6,21 @@
 {- "MAKEDEPEND=" . quotify1($config{makedepprog}) -}
 
 case "${MAKEDEPEND}" in
+cat)
+    ;;
 makedepend)
-    cp Makefile.in Makefile
     ${MAKEDEPEND} -DOPENSSL_DOING_MAKEDEPEND $@ || exit 1
     ;;
 *)
-    args="-Werror -M"
+    args="-Werror -MM"
     while [ $# -gt 0 ]; do
         if [ "$1" != '--' ] ; then
             args="$args $1"
         fi
         shift
     done
-    ${MAKEDEPEND} -DOPENSSL_DOING_MAKEDEPEND $args >Makefile.tmp || exit 1
-    cat Makefile.in Makefile.tmp >Makefile
-    rm Makefile.tmp
+    sed -e '/DO NOT DELETE THIS LINE/q' Makefile >Makefile.tmp
+    ${MAKEDEPEND} -DOPENSSL_DOING_MAKEDEPEND $args >>Makefile.tmp || exit 1
+    mv Makefile.tmp Makefile
     ;;
 esac
