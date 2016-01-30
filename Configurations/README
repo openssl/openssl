@@ -163,6 +163,8 @@ In each table entry, the following keys are significant:
                                                 export vars as
                                                 accessor functions.
 
+        apps_extra_src  => Extra source to build apps/openssl, as
+                           needed by the target.
         cpuid_asm_src   => assembler implementation of cpuid code as
                            well as OPENSSL_cleanse().
                            Default to mem_clr.c
