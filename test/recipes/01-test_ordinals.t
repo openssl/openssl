@@ -53,14 +53,14 @@
 # Hudson (tjh@cryptsoft.com).
 
 use strict;
-use OpenSSL::Test qw/:DEFAULT top_file/;
+use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_ordinals");
 
 plan tests => 2;
 
-ok(testordinals(top_file("util", "libeay.num")), "Test libeay.num");
-ok(testordinals(top_file("util", "ssleay.num")), "Test ssleay.num");
+ok(testordinals(srctop_file("util", "libeay.num")), "Test libeay.num");
+ok(testordinals(srctop_file("util", "ssleay.num")), "Test ssleay.num");
 
 sub testordinals
 {

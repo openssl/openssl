@@ -4,19 +4,19 @@ use strict;
 
 use File::Spec::Functions;
 use File::Basename;
-use OpenSSL::Test qw/:DEFAULT top_file/;
+use OpenSSL::Test qw/:DEFAULT bldtop_file/;
 
 setup("check_testexes");
 
 my $OpenSSL_ver = "";
-my $Makefile = top_file("Makefile");
+my $Makefile = bldtop_file("Makefile");
 if (open(FH, $Makefile)) {
     $OpenSSL_ver =
 	(map { s/\R//; s/^VERSION=([^\s]*)\s*$//; $1 } grep { /^VERSION=/ } <FH>)[0];
     close FH;
 }
 
-my $MINFO = top_file("MINFO");
+my $MINFO = bldtop_file("MINFO");
 
 plan skip_all => "because MINFO not found. If you want this test to run, please do 'perl util/mkfiles.pl > MINFO'"
     unless open(FH,$MINFO);
@@ -50,7 +50,7 @@ my @expected_tests =
 plan tests => scalar @expected_tests;
 
 my @found_tests =
-    map { basename($_) } glob(top_file("test", "recipes", "*.t"));
+    map { basename($_) } glob(bldtop_file("test", "recipes", "*.t"));
 
 foreach my $test (sort @expected_tests) {
     ok(scalar(grep(/^[0-9][0-9]-test_$test\.t$/, @found_tests)),

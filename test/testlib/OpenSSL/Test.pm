@@ -7,11 +7,12 @@ use Test::More 0.96;
 
 use Exporter;
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS);
-$VERSION = "0.7";
+$VERSION = "0.8";
 @ISA = qw(Exporter);
 @EXPORT = (@Test::More::EXPORT, qw(setup indir app perlapp test perltest run));
-@EXPORT_OK = (@Test::More::EXPORT_OK, qw(top_dir top_file pipe with cmdstr
-                                         quotify));
+@EXPORT_OK = (@Test::More::EXPORT_OK, qw(bldtop_dir bldtop_file
+                                         srctop_dir srctop_file
+                                         pipe with cmdstr quotify));
 
 =head1 NAME
 
@@ -37,8 +38,9 @@ In addition to the Test::More functions, it also provides functions that
 easily find the diverse programs within a OpenSSL build tree, as well as
 some other useful functions.
 
-This module I<depends> on the environment variable C<$TOP>.  Without it,
-it refuses to work.  See L</ENVIRONMENT> below.
+This module I<depends> on the environment variables C<$TOP> or C<$SRCTOP>
+and C<$BLDTOP>.  Without one of the combinations it refuses to work.
+See L</ENVIRONMENT> below.
 
 =cut
 
@@ -55,7 +57,7 @@ my $test_name = undef;
 
 # Directories we want to keep track of TOP, APPS, TEST and RESULTS are the
 # ones we're interested in, corresponding to the environment variables TOP
-# (mandatory), BIN_D, TEST_D and RESULT_D.
+# (mandatory), BIN_D, TEST_D, UTIL_D and RESULT_D.
 my %directories = ();
 
 # A bool saying if we shall stop all testing if the current recipe has failing
@@ -80,8 +82,10 @@ my %hooks = (
 my $debug = 0;
 
 # Declare some utility functions that are defined at the end
-sub top_file;
-sub top_dir;
+sub bldtop_file;
+sub bldtop_dir;
+sub srctop_file;
+sub srctop_dir;
 sub quotify;
 
 # Declare some private functions that are defined at the end
@@ -108,9 +112,10 @@ If it's not used in a OpenSSL test recipe, the rest of the recipe will
 most likely refuse to run.
 
 C<setup> checks for environment variables (see L</ENVIRONMENT> below),
-check that C<$TOP/Configure> exists, C<chdir> into the results directory
-(defined by the C<$RESULT_D> environment variable if defined, otherwise
-C<$TEST_D> if defined, otherwise C<$TOP/test>).
+checks that C<$TOP/Configure> or C<$SRCTOP/Configure> exists, C<chdir>
+into the results directory (defined by the C<$RESULT_D> environment
+variable if defined, otherwise C<$BLDTOP/test> or C<$TOP/test>, whichever
+is defined).
 
 =back
 
@@ -120,12 +125,15 @@ sub setup {
     $test_name = shift;
 
     BAIL_OUT("setup() must receive a name") unless $test_name;
-    BAIL_OUT("setup() needs \$TOP to be defined") unless $ENV{TOP};
+    BAIL_OUT("setup() needs \$TOP or \$SRCTOP and \$BLDTOP to be defined")
+        unless $ENV{TOP} || ($ENV{SRCTOP} && $ENV{BLDTOP});
+    BAIL_OUT("setup() found both \$TOP and \$SRCTOP or \$BLDTOP...")
+        if $ENV{TOP} && ($ENV{SRCTOP} || $ENV{BLDTOP});
 
     __env();
 
     BAIL_OUT("setup() expects the file Configure in the \$TOP directory")
-	unless -f top_file("Configure");
+	unless -f srctop_file("Configure");
 
     __cwd($directories{RESULTS});
 
@@ -203,10 +211,12 @@ Both of these functions take a reference to a list that is a command and
 its arguments, and some additional options (described further on).
 
 C<app> expects to find the given command (the first item in the given list
-reference) as an executable in C<$BIN_D> (if defined, otherwise C<$TOP/apps>).
+reference) as an executable in C<$BIN_D> (if defined, otherwise C<$TOP/apps>
+or C<$BLDTOP/apps>).
 
 C<test> expects to find the given command (the first item in the given list
-reference) as an executable in C<$TEST_D> (if defined, otherwise C<$TOP/test>).
+reference) as an executable in C<$TEST_D> (if defined, otherwise C<$TOP/test>
+or C<$BLDTOP/test>).
 
 Both return a CODEREF to be used by C<run>, C<pipe> or C<cmdstr>.
 
@@ -354,11 +364,11 @@ END {
 
 The following functions are exported on request when using C<OpenSSL::Test>.
 
-  # To only get the top_file function.
-  use OpenSSL::Test qw/top_file/;
+  # To only get the bldtop_file and srctop_file functions.
+  use OpenSSL::Test qw/bldtop_file srctop_file/;
 
-  # To only get the top_file function in addition to the default ones.
-  use OpenSSL::Test qw/:DEFAULT top_file/;
+  # To only get the bldtop_file function in addition to the default ones.
+  use OpenSSL::Test qw/:DEFAULT bldtop_file/;
 
 =cut
 
@@ -366,38 +376,76 @@ The following functions are exported on request when using C<OpenSSL::Test>.
 
 =over 4
 
-=item B<top_dir LIST>
+=item B<bldtop_dir LIST>
 
 LIST is a list of directories that make up a path from the top of the OpenSSL
-source directory (as indicated by the environment variable C<$TOP>).
-C<top_dir> returns the resulting directory as a string, adapted to the local
+build directory (as indicated by the environment variable C<$TOP> or
+C<$BLDTOP>).
+C<bldtop_dir> returns the resulting directory as a string, adapted to the local
 operating system.
 
 =back
 
 =cut
 
-sub top_dir {
-    return __top_dir(@_);	# This caters for operating systems that have
+sub bldtop_dir {
+    return __bldtop_dir(@_);	# This caters for operating systems that have
 				# a very distinct syntax for directories.
 }
 
 =over 4
 
-=item B<top_file LIST, FILENAME>
+=item B<bldtop_file LIST, FILENAME>
 
 LIST is a list of directories that make up a path from the top of the OpenSSL
-source directory (as indicated by the environment variable C<$TOP>) and
-FILENAME is the name of a file located in that directory path.
-C<top_file> returns the resulting file path as a string, adapted to the local
+build directory (as indicated by the environment variable C<$TOP> or
+C<$BLDTOP>) and FILENAME is the name of a file located in that directory path.
+C<bldtop_file> returns the resulting file path as a string, adapted to the local
 operating system.
 
 =back
 
 =cut
 
-sub top_file {
-    return __top_file(@_);
+sub bldtop_file {
+    return __bldtop_file(@_);
+}
+
+=over 4
+
+=item B<srctop_dir LIST>
+
+LIST is a list of directories that make up a path from the top of the OpenSSL
+source directory (as indicated by the environment variable C<$TOP> or
+C<$SRCTOP>).
+C<srctop_dir> returns the resulting directory as a string, adapted to the local
+operating system.
+
+=back
+
+=cut
+
+sub srctop_dir {
+    return __srctop_dir(@_);	# This caters for operating systems that have
+				# a very distinct syntax for directories.
+}
+
+=over 4
+
+=item B<srctop_file LIST, FILENAME>
+
+LIST is a list of directories that make up a path from the top of the OpenSSL
+source directory (as indicated by the environment variable C<$TOP> or
+C<$SRCTOP>) and FILENAME is the name of a file located in that directory path.
+C<srctop_file> returns the resulting file path as a string, adapted to the local
+operating system.
+
+=back
+
+=cut
+
+sub srctop_file {
+    return __srctop_file(@_);
 }
 
 =over 4
@@ -583,25 +631,39 @@ failures will result in a C<BAIL_OUT> at the end of its run.
 =cut
 
 sub __env {
-    $directories{TOP}     = $ENV{TOP},
-    $directories{APPS}    = $ENV{BIN_D}    || catdir($directories{TOP},"apps");
-    $directories{TEST}    = $ENV{TEST_D}   || catdir($directories{TOP},"test");
+    $directories{SRCTOP}  = $ENV{SRCTOP} || $ENV{TOP};
+    $directories{BLDTOP}  = $ENV{BLDTOP} || $ENV{TOP};
+    $directories{APPS}    = $ENV{BIN_D}  || __bldtop_dir("apps");
+    $directories{TEST}    = $ENV{TEST_D} || __bldtop_dir("test");
     $directories{RESULTS} = $ENV{RESULT_D} || $directories{TEST};
 
     $end_with_bailout	  = $ENV{STOPTEST} ? 1 : 0;
 };
 
-sub __top_file {
+sub __srctop_file {
     BAIL_OUT("Must run setup() first") if (! $test_name);
 
     my $f = pop;
-    return catfile($directories{TOP},@_,$f);
+    return catfile($directories{SRCTOP},@_,$f);
 }
 
-sub __top_dir {
+sub __srctop_dir {
     BAIL_OUT("Must run setup() first") if (! $test_name);
 
-    return catdir($directories{TOP},@_);
+    return catdir($directories{SRCTOP},@_);
+}
+
+sub __bldtop_file {
+    BAIL_OUT("Must run setup() first") if (! $test_name);
+
+    my $f = pop;
+    return catfile($directories{BLDTOP},@_,$f);
+}
+
+sub __bldtop_dir {
+    BAIL_OUT("Must run setup() first") if (! $test_name);
+
+    return catdir($directories{BLDTOP},@_);
 }
 
 sub __test_file {
@@ -680,7 +742,7 @@ sub __cwd {
     # For each of these directory variables, figure out where they are relative
     # to the directory we want to move to if they aren't absolute (if they are,
     # they don't change!)
-    my @dirtags = ("TOP", "TEST", "APPS", "RESULTS");
+    my @dirtags = sort keys %directories;
     foreach (@dirtags) {
 	if (!file_name_is_absolute($directories{$_})) {
 	    my $newpath = abs2rel(rel2abs($directories{$_}), rel2abs($dir));
@@ -693,7 +755,8 @@ sub __cwd {
 	print STDERR "  \$directories{TEST}    = \"$directories{TEST}\"\n";
 	print STDERR "  \$directories{RESULTS} = \"$directories{RESULTS}\"\n";
 	print STDERR "  \$directories{APPS}    = \"$directories{APPS}\"\n";
-	print STDERR "  \$directories{TOP}     = \"$directories{TOP}\"\n";
+	print STDERR "  \$directories{SRCTOP}  = \"$directories{SRCTOP}\"\n";
+	print STDERR "  \$directories{BLDTOP}  = \"$directories{BLDTOP}\"\n";
 	print STDERR "  \$test_log             = \"",__test_log(),"\"\n";
 	print STDERR "\n";
 	print STDERR "  current directory is \"",curdir(),"\"\n";
@@ -707,7 +770,7 @@ sub __fixup_cmd {
     my $prog = shift;
     my $exe_shell = shift;
 
-    my $prefix = __top_file("util", "shlib_wrap.sh")." ";
+    my $prefix = __bldtop_file("util", "shlib_wrap.sh")." ";
     my $ext = $ENV{"EXE_EXT"} || "";
 
     if (defined($exe_shell)) {
