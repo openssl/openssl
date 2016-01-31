@@ -121,7 +121,6 @@
 # include <openssl/md5.h>
 #endif
 #include <openssl/hmac.h>
-#include <openssl/evp.h>
 #include <openssl/sha.h>
 #ifndef OPENSSL_NO_RMD160
 # include <openssl/ripemd.h>
@@ -163,8 +162,6 @@
 # include <openssl/ec.h>
 #endif
 #include <openssl/modes.h>
-
-#include <openssl/bn.h>
 
 #ifndef HAVE_FORK
 # if defined(OPENSSL_SYS_VMS) || defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_OS2) || defined(OPENSSL_SYS_NETWARE)
