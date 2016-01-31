@@ -252,40 +252,6 @@ static int eckey_priv_decode(EVP_PKEY *pkey, PKCS8_PRIV_KEY_INFO *p8)
         goto ecerr;
     }
 
-    /* calculate public key (if necessary) */
-    if (EC_KEY_get0_public_key(eckey) == NULL) {
-        const BIGNUM *priv_key;
-        const EC_GROUP *group;
-        EC_POINT *pub_key;
-        /*
-         * the public key was not included in the SEC1 private key =>
-         * calculate the public key
-         */
-        group = EC_KEY_get0_group(eckey);
-        pub_key = EC_POINT_new(group);
-        if (pub_key == NULL) {
-            ECerr(EC_F_ECKEY_PRIV_DECODE, ERR_R_EC_LIB);
-            goto ecliberr;
-        }
-        if (!EC_POINT_copy(pub_key, EC_GROUP_get0_generator(group))) {
-            EC_POINT_free(pub_key);
-            ECerr(EC_F_ECKEY_PRIV_DECODE, ERR_R_EC_LIB);
-            goto ecliberr;
-        }
-        priv_key = EC_KEY_get0_private_key(eckey);
-        if (!EC_POINT_mul(group, pub_key, priv_key, NULL, NULL, NULL)) {
-            EC_POINT_free(pub_key);
-            ECerr(EC_F_ECKEY_PRIV_DECODE, ERR_R_EC_LIB);
-            goto ecliberr;
-        }
-        if (EC_KEY_set_public_key(eckey, pub_key) == 0) {
-            EC_POINT_free(pub_key);
-            ECerr(EC_F_ECKEY_PRIV_DECODE, ERR_R_EC_LIB);
-            goto ecliberr;
-        }
-        EC_POINT_free(pub_key);
-    }
-
     EVP_PKEY_assign_EC_KEY(pkey, eckey);
     return 1;
 
