@@ -980,38 +980,6 @@ if ($target{build_scheme}->[0] ne "mk1mf")
 #
 # Platform fix-ups
 #
-if ($target =~ /-icc$/)	# Intel C compiler
-	{
-	my $iccver=0;
-	if (open(FD,"$target{cc} -V 2>&1 |"))
-		{
-		while(<FD>) { $iccver=$1 if (/Version ([0-9]+)\./); }
-		close(FD);
-		}
-	if ($iccver>=8)
-		{
-		$config{cflags}=~s/-KPIC/-fPIC/;
-		# Eliminate unnecessary dependency from libirc.a. This is
-		# essential for shared library support, as otherwise
-		# apps/openssl can end up in endless loop upon startup...
-		$config{cflags}.=" -Dmemcpy=__builtin_memcpy -Dmemset=__builtin_memset";
-		}
-	if ($iccver>=9)
-		{
-		$config{ex_libs}.=" -i-static";
-		$config{ex_libs}=~s/-no_cpprt/-no-cpprt/;
-		}
-	if ($iccver>=10)
-		{
-		$config{ex_libs}=~s/-i-static/-static-intel/;
-		}
-	if ($iccver>=11)
-		{
-		$config{cflags}.=" -no-intel-extensions";	# disable Cilk
-		$config{ex_libs}=~s/-no-cpprt/-no-cxxlib/;
-		}
-	}
-
 # Unlike other OSes (like Solaris, Linux, Tru64, IRIX) BSD run-time
 # linkers (tested OpenBSD, NetBSD and FreeBSD) "demand" RPATH set on
 # .so objects. Apparently application RPATH is not global and does
