@@ -18,7 +18,10 @@ EC_GROUP_copy, EC_GROUP_dup, EC_GROUP_method_of, EC_GROUP_set_generator, EC_GROU
  const EC_POINT *EC_GROUP_get0_generator(const EC_GROUP *group);
 
  int EC_GROUP_get_order(const EC_GROUP *group, BIGNUM *order, BN_CTX *ctx);
+ const BIGNUM *EC_GROUP_get0_order(const EC_GROUP *group);
+ const BIGNUM *EC_GROUP_order_bits(const EC_GROUP *group);
  int EC_GROUP_get_cofactor(const EC_GROUP *group, BIGNUM *cofactor, BN_CTX *ctx);
+ const BIGNUM *EC_GROUP_get0_cofactor(const EC_GROUP *group);
 
  void EC_GROUP_set_curve_name(EC_GROUP *group, int nid);
  int EC_GROUP_get_curve_name(const EC_GROUP *group);
@@ -161,6 +164,10 @@ EC_GROUP_get0_generator returns the generator for the given curve or NULL on err
 EC_GROUP_get_order, EC_GROUP_get_cofactor, EC_GROUP_get_curve_name, EC_GROUP_get_asn1_flag, EC_GROUP_get_point_conversion_form
 and EC_GROUP_get_degree return the order, cofactor, curve name (NID), ASN1 flag, point_conversion_form and degree for the
 specified curve respectively. If there is no curve name associated with a curve then EC_GROUP_get_curve_name will return 0.
+
+EC_GROUP_get0_order() returns an internal pointer to the group order.
+EC_GROUP_get_order_bits() returns the number of bits in the group order.
+EC_GROUP_get0_cofactor() returns an internal pointer to the group cofactor.
 
 EC_GROUP_get0_seed returns a pointer to the seed that was used to generate the parameter b, or NULL if the seed is not
 specified. EC_GROUP_get_seed_len returns the length of the seed or 0 if the seed is not specified.

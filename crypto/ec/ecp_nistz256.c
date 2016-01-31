@@ -756,7 +756,7 @@ __owur static int ecp_nistz256_mult_precompute(EC_GROUP *group, BN_CTX *ctx)
      * implicit value of infinity at index zero. We use window of size 7, and
      * therefore require ceil(256/7) = 37 tables.
      */
-    BIGNUM *order;
+    const BIGNUM *order;
     EC_POINT *P = NULL, *T = NULL;
     const EC_POINT *generator;
     NISTZ256_PRE_COMP *pre_comp;
@@ -793,12 +793,9 @@ __owur static int ecp_nistz256_mult_precompute(EC_GROUP *group, BN_CTX *ctx)
     }
 
     BN_CTX_start(ctx);
-    order = BN_CTX_get(ctx);
 
+    order = EC_GROUP_get0_order(group);
     if (order == NULL)
-        goto err;
-
-    if (!EC_GROUP_get_order(group, order, ctx))
         goto err;
 
     if (BN_is_zero(order)) {
