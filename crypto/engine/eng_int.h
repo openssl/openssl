@@ -87,7 +87,7 @@ extern "C" {
                 (unsigned int)(e), (isfunct ? "funct" : "struct"), \
                 ((isfunct) ? ((e)->funct_ref - (diff)) : ((e)->struct_ref - (diff))), \
                 ((isfunct) ? (e)->funct_ref : (e)->struct_ref), \
-                (__FILE__), (__LINE__));
+                (__FILE__), (__LINE__))
 
 # else
 
