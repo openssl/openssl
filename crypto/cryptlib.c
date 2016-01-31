@@ -465,7 +465,9 @@ void OpenSSLDie(const char *file, int line, const char *assertion)
 #endif
 }
 
-int CRYPTO_memcmp(const volatile void *in_a, const volatile void *in_b, size_t len)
+int CRYPTO_memcmp(const volatile void * volatile in_a,
+                  const volatile void * volatile in_b,
+                  size_t len)
 {
     size_t i;
     const volatile unsigned char *a = in_a;
