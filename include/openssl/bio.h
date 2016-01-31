@@ -655,7 +655,7 @@ long BIO_debug_callback(BIO *bio, int cmd, const char *argp, int argi,
 
 BIO_METHOD *BIO_s_mem(void);
 BIO_METHOD *BIO_s_secmem(void);
-BIO *BIO_new_mem_buf(void *buf, int len);
+BIO *BIO_new_mem_buf(const void *buf, int len);
 BIO_METHOD *BIO_s_socket(void);
 BIO_METHOD *BIO_s_connect(void);
 BIO_METHOD *BIO_s_accept(void);
