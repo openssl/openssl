@@ -594,7 +594,7 @@ EC_POINT *EC_POINT_new(const EC_GROUP *group)
         return NULL;
     }
 
-    ret = OPENSSL_malloc(sizeof(*ret));
+    ret = OPENSSL_zalloc(sizeof(*ret));
     if (ret == NULL) {
         ECerr(EC_F_EC_POINT_NEW, ERR_R_MALLOC_FAILURE);
         return NULL;
