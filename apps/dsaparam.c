@@ -55,9 +55,11 @@
  * [including the GNU Public Licence.]
  */
 
-#include <openssl/opensslconf.h> /* for OPENSSL_NO_DSA */
+#include <openssl/opensslconf.h>
+#ifdef OPENSSL_NO_DSA
+NON_EMPTY_TRANSLATION_UNIT
+#else
 
-#ifndef OPENSSL_NO_DSA
 # include <stdio.h>
 # include <stdlib.h>
 # include <time.h>
@@ -347,10 +349,4 @@ static int dsa_cb(int p, int n, BN_GENCB *cb)
 # endif
     return 1;
 }
-#else                           /* !OPENSSL_NO_DSA */
-
-# if PEDANTIC
-static void *dummy = &dummy;
-# endif
-
 #endif

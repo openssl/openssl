@@ -56,7 +56,10 @@
  */
 
 #include <openssl/opensslconf.h>
-#ifndef OPENSSL_NO_EC
+#ifdef OPENSSL_NO_EC
+NON_EMPTY_TRANSLATION_UNIT
+#else
+
 # include <stdio.h>
 # include <stdlib.h>
 # include <string.h>
@@ -307,10 +310,4 @@ int ec_main(int argc, char **argv)
     OPENSSL_free(passout);
     return (ret);
 }
-#else                           /* !OPENSSL_NO_EC */
-
-# if PEDANTIC
-static void *dummy = &dummy;
-# endif
-
 #endif

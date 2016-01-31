@@ -56,12 +56,16 @@
  *
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include "apps.h"
-#include <openssl/err.h>
-#ifndef OPENSSL_NO_ENGINE
+#include <openssl/opensslconf.h>
+#ifdef OPENSSL_NO_ENGINE
+NON_EMPTY_TRANSLATION_UNIT
+#else
+
+# include "apps.h"
+# include <stdio.h>
+# include <stdlib.h>
+# include <string.h>
+# include <openssl/err.h>
 # include <openssl/engine.h>
 # include <openssl/ssl.h>
 
@@ -483,10 +487,4 @@ int engine_main(int argc, char **argv)
     BIO_free_all(out);
     return (ret);
 }
-#else
-
-# if PEDANTIC
-static void *dummy = &dummy;
-# endif
-
 #endif

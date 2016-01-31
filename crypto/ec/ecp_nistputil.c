@@ -18,7 +18,9 @@
  */
 
 #include <openssl/opensslconf.h>
-#ifndef OPENSSL_NO_EC_NISTP_64_GCC_128
+#ifdef OPENSSL_NO_EC_NISTP_64_GCC_128
+NON_EMPTY_TRANSLATION_UNIT
+#else
 
 /*
  * Common utility functions for ecp_nistp224.c, ecp_nistp256.c, ecp_nistp521.c.
@@ -212,6 +214,4 @@ void ec_GFp_nistp_recode_scalar_bits(unsigned char *sign,
     *sign = s & 1;
     *digit = d;
 }
-#else
-static void *dummy = &dummy;
 #endif
