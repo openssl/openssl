@@ -238,7 +238,7 @@ const EVP_PKEY_ASN1_METHOD *ENGINE_pkey_asn1_find_str(ENGINE **pe,
     /* If found obtain a structural reference to engine */
     if (fstr.e) {
         fstr.e->struct_ref++;
-        engine_ref_debug(fstr.e, 0, 1)
+        engine_ref_debug(fstr.e, 0, 1);
     }
     *pe = fstr.e;
     CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
