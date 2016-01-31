@@ -55,8 +55,11 @@
  * [including the GNU Public Licence.]
  */
 
-#include <openssl/opensslconf.h> /* for OPENSSL_NO_DSA */
-#ifndef OPENSSL_NO_DSA
+#include <openssl/opensslconf.h>
+#ifdef OPENSSL_NO_DSA
+NON_EMPTY_TRANSLATION_UNIT
+#else
+
 # include <stdio.h>
 # include <string.h>
 # include <sys/types.h>
@@ -185,10 +188,4 @@ int gendsa_main(int argc, char **argv)
     OPENSSL_free(passout);
     return (ret);
 }
-#else                           /* !OPENSSL_NO_DSA */
-
-# if PEDANTIC
-static void *dummy = &dummy;
-# endif
-
 #endif

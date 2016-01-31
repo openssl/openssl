@@ -26,7 +26,9 @@
  */
 
 #include <openssl/opensslconf.h>
-#ifndef OPENSSL_NO_EC_NISTP_64_GCC_128
+#ifdef OPENSSL_NO_EC_NISTP_64_GCC_128
+NON_EMPTY_TRANSLATION_UNIT
+#else
 
 # include <stdint.h>
 # include <string.h>
@@ -2311,6 +2313,4 @@ int ec_GFp_nistp256_have_precompute_mult(const EC_GROUP *group)
 {
     return HAVEPRECOMP(group, nistp256);
 }
-#else
-static void *dummy = &dummy;
 #endif

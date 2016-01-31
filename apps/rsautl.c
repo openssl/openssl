@@ -57,7 +57,9 @@
  */
 
 #include <openssl/opensslconf.h>
-#ifndef OPENSSL_NO_RSA
+#ifdef OPENSSL_NO_RSA
+NON_EMPTY_TRANSLATION_UNIT
+#else
 
 # include "apps.h"
 # include <string.h>
@@ -319,11 +321,4 @@ int rsautl_main(int argc, char **argv)
     OPENSSL_free(passin);
     return ret;
 }
-
-#else                           /* !OPENSSL_NO_RSA */
-
-# if PEDANTIC
-static void *dummy = &dummy;
-# endif
-
 #endif

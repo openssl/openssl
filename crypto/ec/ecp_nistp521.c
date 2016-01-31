@@ -26,7 +26,9 @@
  */
 
 #include <openssl/opensslconf.h>
-#ifndef OPENSSL_NO_EC_NISTP_64_GCC_128
+#ifdef OPENSSL_NO_EC_NISTP_64_GCC_128
+NON_EMPTY_TRANSLATION_UNIT
+#else
 
 # ifndef OPENSSL_SYS_VMS
 #  include <stdint.h>
@@ -2106,6 +2108,4 @@ int ec_GFp_nistp521_have_precompute_mult(const EC_GROUP *group)
     return HAVEPRECOMP(group, nistp521);
 }
 
-#else
-static void *dummy = &dummy;
 #endif
