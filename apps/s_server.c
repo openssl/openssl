@@ -1892,8 +1892,7 @@ int s_server_main(int argc, char *argv[])
                                                        not_resumable_sess_cb);
     }
 #ifndef OPENSSL_NO_PSK
-    if (psk_key != NULL)
-    {
+    if (psk_key != NULL) {
         if (s_debug)
             BIO_printf(bio_s_out,
                        "PSK key given, setting server callback\n");
