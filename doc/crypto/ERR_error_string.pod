@@ -20,9 +20,12 @@ error message
 =head1 DESCRIPTION
 
 ERR_error_string() generates a human-readable string representing the
-error code I<e>, and places it at I<buf>. I<buf> must be at least 120
+error code I<e>, and places it at I<buf>. I<buf> must be at least 256
 bytes long. If I<buf> is B<NULL>, the error string is placed in a
 static buffer.
+Note that this function is not thread-safe and does no checks on the size
+of the buffer; use ERR_error_string_n() instead.
+
 ERR_error_string_n() is a variant of ERR_error_string() that writes
 at most I<len> characters (including the terminating 0)
 and truncates the string if necessary.
