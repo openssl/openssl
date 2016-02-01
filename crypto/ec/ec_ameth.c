@@ -383,48 +383,45 @@ static int do_EC_KEY_print(BIO *bp, const EC_KEY *x, int off, int ktype)
 {
     unsigned char *buffer = NULL;
     const char *ecstr;
-    size_t buf_len = 0, i;
+    size_t priv_len = 0, pub_len = 0, buf_len = 0;
     int ret = 0, reason = ERR_R_BIO_LIB;
     BIGNUM *pub_key = NULL;
     BN_CTX *ctx = NULL;
     const EC_GROUP *group;
-    const EC_POINT *public_key;
-    const BIGNUM *priv_key;
+    const EC_POINT *public_key = NULL;
 
     if (x == NULL || (group = EC_KEY_get0_group(x)) == NULL) {
         reason = ERR_R_PASSED_NULL_PARAMETER;
         goto err;
     }
 
-    ctx = BN_CTX_new();
-    if (ctx == NULL) {
-        reason = ERR_R_MALLOC_FAILURE;
-        goto err;
-    }
-
     if (ktype > 0) {
         public_key = EC_KEY_get0_public_key(x);
         if (public_key != NULL) {
-            if ((pub_key = EC_POINT_point2bn(group, public_key,
-                                             EC_KEY_get_conv_form(x), NULL,
-                                             ctx)) == NULL) {
+            pub_len = EC_POINT_point2oct(group, public_key,
+                                         EC_KEY_get_conv_form(x),
+                                         NULL, 0, NULL);
+            if (pub_len == 0) {
                 reason = ERR_R_EC_LIB;
                 goto err;
             }
-            buf_len = (size_t)BN_num_bytes(pub_key);
+            buf_len = pub_len;
         }
     }
 
-    if (ktype == 2) {
-        priv_key = EC_KEY_get0_private_key(x);
-        if (priv_key && (i = (size_t)BN_num_bytes(priv_key)) > buf_len)
-            buf_len = i;
-    } else
-        priv_key = NULL;
+    if (ktype == 2 && EC_KEY_get0_private_key(x) != NULL) {
+        priv_len = EC_KEY_priv2oct(x, NULL, 0);
+        if (priv_len == 0) {
+            reason = ERR_R_EC_LIB;
+            goto err;
+        }
+        if (priv_len > buf_len)
+            buf_len = priv_len;
+    }
 
-    if (ktype > 0) {
-        buf_len += 10;
-        if ((buffer = OPENSSL_malloc(buf_len)) == NULL) {
+    if (buf_len != 0) {
+        buffer = OPENSSL_malloc(buf_len);
+        if (buffer == NULL) {
             reason = ERR_R_MALLOC_FAILURE;
             goto err;
         }
@@ -442,12 +439,26 @@ static int do_EC_KEY_print(BIO *bp, const EC_KEY *x, int off, int ktype)
                    EC_GROUP_order_bits(group)) <= 0)
         goto err;
 
-    if ((priv_key != NULL) && !ASN1_bn_print(bp, "priv:", priv_key,
-                                             buffer, off))
-        goto err;
-    if ((pub_key != NULL) && !ASN1_bn_print(bp, "pub: ", pub_key,
-                                            buffer, off))
-        goto err;
+    if (priv_len != 0) {
+        if (BIO_printf(bp, "%*spriv:\n", off, "") <= 0)
+            goto err;
+        if (EC_KEY_priv2oct(x, buffer, priv_len) == 0)
+            goto err;
+        if (ASN1_buf_print(bp, buffer, priv_len, off + 4) == 0)
+            goto err;
+    }
+
+    if (pub_len != 0) {
+        if (BIO_printf(bp, "%*spub:\n", off, "") <= 0)
+            goto err;
+        if (EC_POINT_point2oct(group, public_key,
+                               EC_KEY_get_conv_form(x),
+                               buffer, pub_len, NULL) == 0)
+            goto err;
+        if (ASN1_buf_print(bp, buffer, pub_len, off + 4) == 0)
+            goto err;
+    }
+
     if (!ECPKParameters_print(bp, group, off))
         goto err;
     ret = 1;
@@ -456,8 +467,8 @@ static int do_EC_KEY_print(BIO *bp, const EC_KEY *x, int off, int ktype)
         ECerr(EC_F_DO_EC_KEY_PRINT, reason);
     BN_free(pub_key);
     BN_CTX_free(ctx);
-    OPENSSL_free(buffer);
-    return (ret);
+    OPENSSL_clear_free(buffer, buf_len);
+    return ret;
 }
 
 static int eckey_param_decode(EVP_PKEY *pkey,

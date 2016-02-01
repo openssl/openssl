@@ -1013,19 +1013,10 @@ EC_KEY *d2i_ECPrivateKey(EC_KEY **a, const unsigned char **in, long len)
     ret->version = priv_key->version;
 
     if (priv_key->privateKey) {
-        if (ret->priv_key == NULL)
-            ret->priv_key = BN_secure_new();
-        if (ret->priv_key == NULL) {
-            ECerr(EC_F_D2I_ECPRIVATEKEY, ERR_R_MALLOC_FAILURE);
+        ASN1_OCTET_STRING *pkey = priv_key->privateKey;
+        if (EC_KEY_oct2priv(ret, ASN1_STRING_data(pkey),
+                            ASN1_STRING_length(pkey)) == 0)
             goto err;
-        }
-        ret->priv_key = BN_bin2bn(ASN1_STRING_data(priv_key->privateKey),
-                                  ASN1_STRING_length(priv_key->privateKey),
-                                  ret->priv_key);
-        if (ret->priv_key == NULL) {
-            ECerr(EC_F_D2I_ECPRIVATEKEY, ERR_R_BN_LIB);
-            goto err;
-        }
     } else {
         ECerr(EC_F_D2I_ECPRIVATEKEY, EC_R_MISSING_PRIVATE_KEY);
         goto err;
@@ -1085,10 +1076,10 @@ int i2d_ECPrivateKey(EC_KEY *a, unsigned char **out)
 {
     int ret = 0, ok = 0;
     unsigned char *buffer = NULL;
-    size_t buf_len = 0, tmp_len, bn_len;
+    size_t buf_len = 0, tmp_len;
     EC_PRIVATEKEY *priv_key = NULL;
 
-    if (a == NULL || a->group == NULL || a->priv_key == NULL ||
+    if (a == NULL || a->group == NULL ||
         (!(a->enc_flag & EC_PKEY_NO_PUBKEY) && a->pub_key == NULL)) {
         ECerr(EC_F_I2D_ECPRIVATEKEY, ERR_R_PASSED_NULL_PARAMETER);
         goto err;
@@ -1101,14 +1092,10 @@ int i2d_ECPrivateKey(EC_KEY *a, unsigned char **out)
 
     priv_key->version = a->version;
 
-    bn_len = (size_t)BN_num_bytes(a->priv_key);
+    buf_len = EC_KEY_priv2oct(a, NULL, 0);
 
-    /* Octetstring may need leading zeros if BN is to short */
-
-    buf_len = (EC_GROUP_get_degree(a->group) + 7) / 8;
-
-    if (bn_len > buf_len) {
-        ECerr(EC_F_I2D_ECPRIVATEKEY, EC_R_BUFFER_TOO_SMALL);
+    if (buf_len == 0) {
+        ECerr(EC_F_I2D_ECPRIVATEKEY, ERR_R_EC_LIB);
         goto err;
     }
 
@@ -1118,13 +1105,9 @@ int i2d_ECPrivateKey(EC_KEY *a, unsigned char **out)
         goto err;
     }
 
-    if (!BN_bn2bin(a->priv_key, buffer + buf_len - bn_len)) {
-        ECerr(EC_F_I2D_ECPRIVATEKEY, ERR_R_BN_LIB);
+    if (EC_KEY_priv2oct(a, buffer, buf_len) == 0) {
+        ECerr(EC_F_I2D_ECPRIVATEKEY, ERR_R_EC_LIB);
         goto err;
-    }
-
-    if (buf_len - bn_len > 0) {
-        memset(buffer, 0, buf_len - bn_len);
     }
 
     if (!ASN1_OCTET_STRING_set(priv_key->privateKey, buffer, buf_len)) {
