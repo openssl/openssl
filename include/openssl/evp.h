@@ -58,18 +58,9 @@
 #ifndef HEADER_ENVELOPE_H
 # define HEADER_ENVELOPE_H
 
-# ifdef OPENSSL_ALGORITHM_DEFINES
-#  include <openssl/opensslconf.h>
-# else
-#  define OPENSSL_ALGORITHM_DEFINES
-#  include <openssl/opensslconf.h>
-#  undef OPENSSL_ALGORITHM_DEFINES
-# endif
-
+# include <openssl/opensslconf.h>
 # include <openssl/ossl_typ.h>
-
 # include <openssl/symhacks.h>
-
 # include <openssl/bio.h>
 
 # define EVP_MAX_MD_SIZE                 64/* longest known is SHA512 */
