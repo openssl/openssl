@@ -1505,12 +1505,12 @@ static int check_policy(X509_STORE_CTX *ctx)
         return 1;
     ret = X509_policy_check(&ctx->tree, &ctx->explicit_policy, ctx->chain,
                             ctx->param->policies, ctx->param->flags);
-    if (ret == 0) {
+    if (ret == X509_PCY_TREE_INTERNAL) {
         X509err(X509_F_CHECK_POLICY, ERR_R_MALLOC_FAILURE);
         return 0;
     }
     /* Invalid or inconsistent extensions */
-    if (ret == -1) {
+    if (ret == X509_PCY_TREE_INVALID) {
         /*
          * Locate certificates with bad extensions and notify callback.
          */
@@ -1527,10 +1527,14 @@ static int check_policy(X509_STORE_CTX *ctx)
         }
         return 1;
     }
-    if (ret == -2) {
+    if (ret == X509_PCY_TREE_FAILURE) {
         ctx->current_cert = NULL;
         ctx->error = X509_V_ERR_NO_EXPLICIT_POLICY;
         return ctx->verify_cb(0, ctx);
+    }
+    if (ret != X509_PCY_TREE_VALID) {
+        X509err(X509_F_CHECK_POLICY, ERR_R_INTERNAL_ERROR);
+        return 0;
     }
 
     if (ctx->param->flags & X509_V_FLAG_NOTIFY_POLICY) {
