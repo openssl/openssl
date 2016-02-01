@@ -3799,7 +3799,7 @@ long ssl3_callback_ctrl(SSL *s, int cmd, void (*fp) (void))
 #endif
     case SSL_CTRL_SET_TLSEXT_DEBUG_CB:
         s->tlsext_debug_cb = (void (*)(SSL *, int, int,
-                                       unsigned char *, int, void *))fp;
+                                       const unsigned char *, int, void *))fp;
         break;
 
     case SSL_CTRL_SET_NOT_RESUMABLE_SESS_CB:

@@ -4,6 +4,12 @@
 
  Changes between 1.0.2f and 1.1.0  [xx XXX xxxx]
 
+  *) The signature of the session callback configured with
+     SSL_CTX_sess_set_get_cb was changed. The read-only input buffer
+     was explicitly marked as 'const unsigned char*' instead of
+     'unsigned char*'.
+     [Emilia Käsper]
+
   *) Always DPURIFY. Remove the use of uninitialized memory in the
      RNG, and other conditional uses of DPURIFY. This makes -DPURIFY a no-op.
      [Emilia Käsper]

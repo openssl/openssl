@@ -1736,7 +1736,7 @@ static int tls1_alpn_handle_client_hello(SSL *s, PACKET *pkt, int *al)
     unsigned int data_len;
     unsigned int proto_len;
     const unsigned char *selected;
-    unsigned char *data;
+    const unsigned char *data;
     unsigned char selected_len;
     int r;
 
@@ -1795,7 +1795,7 @@ static int tls1_alpn_handle_client_hello(SSL *s, PACKET *pkt, int *al)
 static void ssl_check_for_safari(SSL *s, const PACKET *pkt)
 {
     unsigned int type, size;
-    unsigned char *eblock1, *eblock2;
+    const unsigned char *eblock1, *eblock2;
     PACKET tmppkt;
 
     static const unsigned char kSafariExtensionsBlock[] = {
@@ -1866,7 +1866,7 @@ static int ssl_scan_clienthello_tlsext(SSL *s, PACKET *pkt, int *al)
     unsigned int type;
     unsigned int size;
     unsigned int len;
-    unsigned char *data;
+    const unsigned char *data;
     int renegotiate_seen = 0;
 
     s->servername_done = 0;
@@ -1954,7 +1954,7 @@ static int ssl_scan_clienthello_tlsext(SSL *s, PACKET *pkt, int *al)
  */
 
         else if (type == TLSEXT_TYPE_server_name) {
-            unsigned char *sdata;
+            const unsigned char *sdata;
             unsigned int servname_type;
             unsigned int dsize;
             PACKET ssubpkt;
@@ -2375,7 +2375,7 @@ static int ssl_scan_serverhello_tlsext(SSL *s, PACKET *pkt, int *al)
     }
 
     while (PACKET_get_net_2(pkt, &type) && PACKET_get_net_2(pkt, &size)) {
-        unsigned char *data;
+        const unsigned char *data;
         PACKET spkt;
 
         if (!PACKET_get_sub_packet(pkt, &spkt, size)
@@ -2965,7 +2965,7 @@ int tls_check_serverhello_tlsext_early(SSL *s, const PACKET *ext,
         }
         if (type == TLSEXT_TYPE_session_ticket && use_ticket) {
             int r;
-            unsigned char *etick;
+            const unsigned char *etick;
 
             /* Duplicate extension */
             if (have_ticket != 0) {

@@ -489,7 +489,8 @@ int dtls1_listen(SSL *s, struct sockaddr *client)
     int next, n, ret = 0, clearpkt = 0;
     unsigned char cookie[DTLS1_COOKIE_LENGTH];
     unsigned char seq[SEQ_NUM_SIZE];
-    unsigned char *data, *p, *buf;
+    const unsigned char *data;
+    unsigned char *p, *buf;
     unsigned long reclen, fragoff, fraglen, msglen;
     unsigned int rectype, versmajor, msgseq, msgtype, clientvers, cookielen;
     BIO *rbio, *wbio;
