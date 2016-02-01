@@ -3216,7 +3216,7 @@ static int add_session(SSL *ssl, SSL_SESSION *session)
     return 0;
 }
 
-static SSL_SESSION *get_session(SSL *ssl, unsigned char *id, int idlen,
+static SSL_SESSION *get_session(SSL *ssl, const unsigned char *id, int idlen,
                                 int *do_copy)
 {
     simple_ssl_session *sess;
