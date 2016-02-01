@@ -1501,10 +1501,29 @@ static int cert_crl(X509_STORE_CTX *ctx, X509_CRL *crl, X509 *x)
 static int check_policy(X509_STORE_CTX *ctx)
 {
     int ret;
+
     if (ctx->parent)
         return 1;
+    /*
+     * With DANE, the trust anchor might be a bare public key, not a
+     * certificate!  In that case our chain does not have the trust anchor
+     * certificate as a top-most element.  This comports well with RFC5280
+     * chain verification, since there too, the trust anchor is not part of the
+     * chain to be verified.  In particular, X509_policy_check() does not look
+     * at the TA cert, but assumes that it is present as the top-most chain
+     * element.  We therefore temporarily push a NULL cert onto the chain if it
+     * was verified via a bare public key, and pop it off right after the
+     * X509_policy_check() call.
+     */
+    if (ctx->bare_ta_signed && !sk_X509_push(ctx->chain, NULL)) {
+        X509err(X509_F_CHECK_POLICY, ERR_R_MALLOC_FAILURE);
+        return 0;
+    }
     ret = X509_policy_check(&ctx->tree, &ctx->explicit_policy, ctx->chain,
                             ctx->param->policies, ctx->param->flags);
+    if (ctx->bare_ta_signed)
+        sk_X509_pop(ctx->chain);
+
     if (ret == X509_PCY_TREE_INTERNAL) {
         X509err(X509_F_CHECK_POLICY, ERR_R_MALLOC_FAILURE);
         return 0;
