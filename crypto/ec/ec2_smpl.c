@@ -85,6 +85,7 @@ const EC_METHOD *EC_GF2m_simple_method(void)
         ec_GF2m_simple_group_set_curve,
         ec_GF2m_simple_group_get_curve,
         ec_GF2m_simple_group_get_degree,
+        0, /* group_order_bits */
         ec_GF2m_simple_group_check_discriminant,
         ec_GF2m_simple_point_init,
         ec_GF2m_simple_point_finish,

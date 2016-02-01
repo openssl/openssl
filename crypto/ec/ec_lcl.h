@@ -112,6 +112,7 @@ struct ec_method_st {
                             BN_CTX *);
     /* used by EC_GROUP_get_degree: */
     int (*group_get_degree) (const EC_GROUP *);
+    int (*group_order_bits) (const EC_GROUP *);
     /* used by EC_GROUP_check: */
     int (*group_check_discriminant) (const EC_GROUP *, BN_CTX *);
     /*
