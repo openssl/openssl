@@ -83,6 +83,9 @@
 /* Use default functions for poin2oct, oct2point and compressed coordinates */
 #define EC_FLAGS_DEFAULT_OCT    0x1
 
+/* Use custom formats for EC_GROUP, EC_POINT and EC_KEY */
+#define EC_FLAGS_CUSTOM_CURVE   0x2
+
 /*
  * Structure details are not part of the exported interface, so all this may
  * change in future versions.
@@ -195,6 +198,20 @@ struct ec_method_st {
     int (*field_decode) (const EC_GROUP *, BIGNUM *r, const BIGNUM *a,
                          BN_CTX *);
     int (*field_set_to_one) (const EC_GROUP *, BIGNUM *r, BN_CTX *);
+    /* private key operations */
+    size_t (*priv2oct)(const EC_KEY *eckey, unsigned char *buf, size_t len);
+    int (*oct2priv)(EC_KEY *eckey, unsigned char *buf, size_t len);
+    int (*set_private)(EC_KEY *eckey, const BIGNUM *priv_key);
+    int (*keygen)(EC_KEY *eckey);
+    int (*keycheck)(const EC_KEY *eckey);
+    int (*keygenpub)(EC_KEY *eckey);
+    int (*keycopy)(EC_KEY *dst, const EC_KEY *src);
+    void (*keyfinish)(EC_KEY *eckey);
+    /* custom ECDH operation */
+    int (*ecdh_compute_key)(void *out, size_t outlen, const EC_POINT *pub_key,
+                            const EC_KEY *ecdh,
+                            void *(*KDF) (const void *in, size_t inlen,
+                                          void *out, size_t *outlen));
 } /* EC_METHOD */ ;
 
 /*
