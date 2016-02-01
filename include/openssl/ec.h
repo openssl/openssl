@@ -934,6 +934,26 @@ size_t EC_KEY_key2buf(const EC_KEY *key, point_conversion_form_t form,
 int EC_KEY_oct2key(EC_KEY *key, const unsigned char *buf, size_t len,
                    BN_CTX *ctx);
 
+/** Decodes an EC_KEY private key from an octet string
+ *  \param  key    key to decode
+ *  \param  buf    memory buffer with the encoded private key
+ *  \param  len    length of the encoded key
+ *  \return 1 on success and 0 if an error occurred
+ */
+
+int EC_KEY_oct2priv(EC_KEY *key, unsigned char *buf, size_t len);
+
+/** Encodes a EC_KEY private key to an octet string
+ *  \param  key    key to encode
+ *  \param  buf    memory buffer for the result. If NULL the function returns
+ *                 required buffer size.
+ *  \param  len    length of the memory buffer
+ *  \return the length of the encoded octet string or 0 if an error occurred
+ */
+
+size_t EC_KEY_priv2oct(const EC_KEY *key, unsigned char *buf, size_t len);
+
+
 /********************************************************************/
 /*        de- and encoding functions for SEC1 ECPrivateKey          */
 /********************************************************************/
