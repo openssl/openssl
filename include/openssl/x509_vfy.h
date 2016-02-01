@@ -55,16 +55,15 @@
  * [including the GNU Public Licence.]
  */
 
-#ifndef HEADER_X509_H
-# include <openssl/x509.h>
-/*
- * openssl/x509.h ends up #include-ing this file at about the only
- * appropriate moment.
- */
-#endif
-
 #ifndef HEADER_X509_VFY_H
 # define HEADER_X509_VFY_H
+
+/*
+ * Protect against recursion, x509.h and x509_vfy.h each include the other.
+ */
+# ifndef HEADER_X509_H
+#  include <openssl/x509.h>
+# endif
 
 # include <openssl/opensslconf.h>
 # include <openssl/lhash.h>
@@ -582,6 +581,19 @@ int X509_VERIFY_PARAM_get_count(void);
 const X509_VERIFY_PARAM *X509_VERIFY_PARAM_get0(int id);
 const X509_VERIFY_PARAM *X509_VERIFY_PARAM_lookup(const char *name);
 void X509_VERIFY_PARAM_table_cleanup(void);
+
+/* Non positive return values are errors */
+#define X509_PCY_TREE_FAILURE  -2 /* Failure to satisfy explicit policy */
+#define X509_PCY_TREE_INVALID  -1 /* Inconsistent or invalid extensions */
+#define X509_PCY_TREE_INTERNAL  0 /* Internal error, most likely malloc */
+
+/*
+ * Positive return values form a bit mask, all but the first are internal to
+ * the library and don't appear in results from X509_policy_check().
+ */
+#define X509_PCY_TREE_VALID     1 /* The policy tree is valid */
+#define X509_PCY_TREE_EMPTY     2 /* The policy tree is empty */
+#define X509_PCY_TREE_EXPLICIT  4 /* Explicit policy required */
 
 int X509_policy_check(X509_POLICY_TREE **ptree, int *pexplicit_policy,
                       STACK_OF(X509) *certs,
