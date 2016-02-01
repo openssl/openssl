@@ -245,6 +245,7 @@ const EC_METHOD *EC_GFp_nistp224_method(void)
         ec_GFp_nistp224_group_set_curve,
         ec_GFp_simple_group_get_curve,
         ec_GFp_simple_group_get_degree,
+        0, /* group_order_bits */
         ec_GFp_simple_group_check_discriminant,
         ec_GFp_simple_point_init,
         ec_GFp_simple_point_finish,

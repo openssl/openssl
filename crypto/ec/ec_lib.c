@@ -373,6 +373,8 @@ const BIGNUM *EC_GROUP_get0_order(const EC_GROUP *group)
 
 int EC_GROUP_order_bits(const EC_GROUP *group)
 {
+    if (group->meth->group_order_bits)
+        return group->meth->group_order_bits(group);
     if (group->order)
         return BN_num_bits(group->order);
     return 0;
