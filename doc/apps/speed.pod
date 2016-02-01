@@ -8,6 +8,9 @@ speed - test library performance
 
 B<openssl speed>
 [B<-engine id>]
+[B<-elapsed>]
+[B<-evp algo>]
+[B<-decrypt>]
 [B<md2>]
 [B<mdc2>]
 [B<md5>]
@@ -48,6 +51,19 @@ specifying an engine (by its unique B<id> string) will cause B<speed>
 to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed. The engine will then be set as the default
 for all available algorithms.
+
+=item B<-elapsed>
+
+Measure time in real time instead of CPU time. It can be useful when testing
+speed of hardware engines.
+
+=item B<-evp algo>
+
+Use the specified cipher or message digest algorithm via the EVP interface.
+
+=item B<-decrypt>
+
+Time the decryption instead of encryption. Affects only the EVP testing.
 
 =item B<[zero or more test algorithms]>
 
