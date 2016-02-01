@@ -342,7 +342,7 @@ static int ec_asn1_group2fieldid(const EC_GROUP *group, X9_62_FIELDID *field)
             ECerr(EC_F_EC_ASN1_GROUP2FIELDID, ERR_R_ASN1_LIB);
             goto err;
         }
-    } else                      /* nid == NID_X9_62_characteristic_two_field */
+    } else if (nid == NID_X9_62_characteristic_two_field)
 #ifdef OPENSSL_NO_EC2M
     {
         ECerr(EC_F_EC_ASN1_GROUP2FIELDID, EC_R_GF2M_NOT_SUPPORTED);
@@ -417,6 +417,10 @@ static int ec_asn1_group2fieldid(const EC_GROUP *group, X9_62_FIELDID *field)
         }
     }
 #endif
+    else {
+        ECerr(EC_F_EC_ASN1_GROUP2FIELDID, EC_R_UNSUPPORTED_FIELD);
+        goto err;
+    }
 
     ok = 1;
 
@@ -1050,9 +1054,11 @@ EC_KEY *d2i_ECPrivateKey(EC_KEY **a, const unsigned char **in, long len)
             goto err;
         }
     } else {
-        if (!EC_POINT_mul
-            (ret->group, ret->pub_key, ret->priv_key, NULL, NULL, NULL)) {
-            ECerr(EC_F_D2I_ECPRIVATEKEY, ERR_R_EC_LIB);
+        if (ret->group->meth->keygenpub != NULL) {
+            if (ret->group->meth->keygenpub(ret) == 0)
+                goto err;
+        } else if (!EC_POINT_mul(ret->group, ret->pub_key, ret->priv_key, NULL,
+                                 NULL, NULL)) {
             goto err;
         }
         /* Remember the original private-key-only encoding. */
