@@ -3037,6 +3037,10 @@ static EC_GROUP *ec_group_new_from_data(const ec_list_element curve)
     const EC_CURVE_DATA *data;
     const unsigned char *params;
 
+    /* If no curve data curve method must handle everything */
+    if (curve.data == NULL)
+        return EC_GROUP_new(curve.meth != NULL ? curve.meth() : NULL);
+
     if ((ctx = BN_CTX_new()) == NULL) {
         ECerr(EC_F_EC_GROUP_NEW_FROM_DATA, ERR_R_MALLOC_FAILURE);
         goto err;

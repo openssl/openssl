@@ -103,6 +103,10 @@ int ossl_ecdh_compute_key(void *out, size_t outlen, const EC_POINT *pub_key,
         return -1;
     }
 
+    if (ecdh->group->meth->ecdh_compute_key != 0)
+        return ecdh->group->meth->ecdh_compute_key(out, outlen, pub_key, ecdh,
+                                                   KDF);
+
     if ((ctx = BN_CTX_new()) == NULL)
         goto err;
     BN_CTX_start(ctx);
