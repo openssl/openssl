@@ -568,12 +568,12 @@ size_t EC_KEY_priv2oct(const EC_KEY *eckey, unsigned char *buf, size_t len)
     /* Octetstring may need leading zeros if BN is to short */
 
     if (bn_len > buf_len) {
-        ECerr(EC_F_I2D_ECPRIVATEKEY, EC_R_BUFFER_TOO_SMALL);
+        ECerr(EC_F_EC_KEY_PRIV2OCT, EC_R_BUFFER_TOO_SMALL);
         return 0;
     }
 
     if (!BN_bn2bin(eckey->priv_key, buf + buf_len - bn_len)) {
-        ECerr(EC_F_I2D_ECPRIVATEKEY, ERR_R_BN_LIB);
+        ECerr(EC_F_EC_KEY_PRIV2OCT, ERR_R_BN_LIB);
         return 0;
     }
 
@@ -591,12 +591,12 @@ int EC_KEY_oct2priv(EC_KEY *eckey, unsigned char *buf, size_t len)
     if (eckey->priv_key == NULL)
         eckey->priv_key = BN_secure_new();
     if (eckey->priv_key == NULL) {
-        ECerr(EC_F_D2I_ECPRIVATEKEY, ERR_R_MALLOC_FAILURE);
+        ECerr(EC_F_EC_KEY_OCT2PRIV, ERR_R_MALLOC_FAILURE);
         return 0;
     }
     eckey->priv_key = BN_bin2bn(buf, len, eckey->priv_key);
     if (eckey->priv_key == NULL) {
-        ECerr(EC_F_D2I_ECPRIVATEKEY, ERR_R_BN_LIB);
+        ECerr(EC_F_EC_KEY_OCT2PRIV, ERR_R_BN_LIB);
         return 0;
     }
     return 1;

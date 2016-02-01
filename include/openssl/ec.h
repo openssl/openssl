@@ -1499,8 +1499,10 @@ void ERR_load_EC_strings(void);
 # define EC_F_EC_KEY_GENERATE_KEY                         179
 # define EC_F_EC_KEY_NEW                                  182
 # define EC_F_EC_KEY_NEW_METHOD                           245
+# define EC_F_EC_KEY_OCT2PRIV                             255
 # define EC_F_EC_KEY_PRINT                                180
 # define EC_F_EC_KEY_PRINT_FP                             181
+# define EC_F_EC_KEY_PRIV2OCT                             256
 # define EC_F_EC_KEY_SET_PUBLIC_KEY_AFFINE_COORDINATES    229
 # define EC_F_EC_POINTS_MAKE_AFFINE                       136
 # define EC_F_EC_POINT_ADD                                112
