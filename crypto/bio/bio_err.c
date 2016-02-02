@@ -117,6 +117,8 @@ static ERR_STRING_DATA BIO_str_functs[] = {
 
 static ERR_STRING_DATA BIO_str_reasons[] = {
     {ERR_REASON(BIO_R_ACCEPT_ERROR), "accept error"},
+    {ERR_REASON(BIO_R_ADDRINFO_ADDR_IS_NOT_AF_INET),
+     "addrinfo addr is not af inet"},
     {ERR_REASON(BIO_R_AMBIGUOUS_HOST_OR_SERVICE), "ambiguous host or service"},
     {ERR_REASON(BIO_R_BAD_FOPEN_MODE), "bad fopen mode"},
     {ERR_REASON(BIO_R_BAD_HOSTNAME_LOOKUP), "bad hostname lookup"},
