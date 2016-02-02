@@ -228,7 +228,7 @@ int EVP_PBE_scrypt(const char *pass, size_t passlen,
      */
 
     if (16 * r <= LOG2_UINT64_MAX) {
-        if (N >= (1UL << (16 * r)))
+        if (N >= (((uint64_t)1) << (16 * r)))
             return 0;
     }
 
