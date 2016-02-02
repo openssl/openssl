@@ -497,6 +497,7 @@ struct servent *PASCAL getservbyname(const char *, const char *);
           * configured for BSD
           */
 #   if defined(NETWARE_BSDSOCK)
+#    include <netdb.h>
 #    include <sys/socket.h>
 #    include <netinet/in.h>
 #    include <sys/time.h>
@@ -545,6 +546,7 @@ struct servent *PASCAL getservbyname(const char *, const char *);
 #    endif
 #    include <netinet/in.h>
 #    include <arpa/inet.h>
+#    include <netinet/tcp.h>
 #   endif
 
 #   ifdef OPENSSL_SYS_AIX

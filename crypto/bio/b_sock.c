@@ -58,15 +58,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
-#define USE_SOCKETS
-#include "internal/cryptlib.h"
-#include <openssl/bio.h>
-#if defined(OPENSSL_SYS_NETWARE) && defined(NETWARE_BSDSOCK)
-# include <netdb.h>
-# if defined(NETWARE_CLIB)
-#  include <sys/ioctl.h>
+#include "bio_lcl.h"
+#if defined(NETWARE_CLIB)
+# include <sys/ioctl.h>
 NETDB_DEFINE_CONTEXT
-# endif
 #endif
 #ifndef OPENSSL_NO_SOCK
 # include <openssl/dso.h>
