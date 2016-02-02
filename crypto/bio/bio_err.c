@@ -1,5 +1,6 @@
+/* crypto/bio/bio_err.c */
 /* ====================================================================
- * Copyright (c) 1999-2015 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2016 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -70,6 +71,7 @@
 
 static ERR_STRING_DATA BIO_str_functs[] = {
     {ERR_FUNC(BIO_F_ACPT_STATE), "acpt_state"},
+    {ERR_FUNC(BIO_F_ADDR_STRINGS), "addr_strings"},
     {ERR_FUNC(BIO_F_BIO_ACCEPT), "BIO_accept"},
     {ERR_FUNC(BIO_F_BIO_BER_GET_HEADER), "BIO_BER_GET_HEADER"},
     {ERR_FUNC(BIO_F_BIO_CALLBACK_CTRL), "BIO_callback_ctrl"},
@@ -79,6 +81,7 @@ static ERR_STRING_DATA BIO_str_functs[] = {
     {ERR_FUNC(BIO_F_BIO_GET_ACCEPT_SOCKET), "BIO_get_accept_socket"},
     {ERR_FUNC(BIO_F_BIO_GET_HOST_IP), "BIO_get_host_ip"},
     {ERR_FUNC(BIO_F_BIO_GET_PORT), "BIO_get_port"},
+    {ERR_FUNC(BIO_F_BIO_LOOKUP), "BIO_lookup"},
     {ERR_FUNC(BIO_F_BIO_MAKE_PAIR), "bio_make_pair"},
     {ERR_FUNC(BIO_F_BIO_NEW), "BIO_new"},
     {ERR_FUNC(BIO_F_BIO_NEW_FILE), "BIO_new_file"},
@@ -87,6 +90,7 @@ static ERR_STRING_DATA BIO_str_functs[] = {
     {ERR_FUNC(BIO_F_BIO_NREAD0), "BIO_nread0"},
     {ERR_FUNC(BIO_F_BIO_NWRITE), "BIO_nwrite"},
     {ERR_FUNC(BIO_F_BIO_NWRITE0), "BIO_nwrite0"},
+    {ERR_FUNC(BIO_F_BIO_PARSE_HOSTSERV), "BIO_parse_hostserv"},
     {ERR_FUNC(BIO_F_BIO_PUTS), "BIO_puts"},
     {ERR_FUNC(BIO_F_BIO_READ), "BIO_read"},
     {ERR_FUNC(BIO_F_BIO_SOCK_INIT), "BIO_sock_init"},
@@ -108,6 +112,7 @@ static ERR_STRING_DATA BIO_str_functs[] = {
 
 static ERR_STRING_DATA BIO_str_reasons[] = {
     {ERR_REASON(BIO_R_ACCEPT_ERROR), "accept error"},
+    {ERR_REASON(BIO_R_AMBIGUOUS_HOST_OR_SERVICE), "ambiguous host or service"},
     {ERR_REASON(BIO_R_BAD_FOPEN_MODE), "bad fopen mode"},
     {ERR_REASON(BIO_R_BAD_HOSTNAME_LOOKUP), "bad hostname lookup"},
     {ERR_REASON(BIO_R_BROKEN_PIPE), "broken pipe"},
@@ -124,6 +129,7 @@ static ERR_STRING_DATA BIO_str_reasons[] = {
     {ERR_REASON(BIO_R_INVALID_IP_ADDRESS), "invalid ip address"},
     {ERR_REASON(BIO_R_IN_USE), "in use"},
     {ERR_REASON(BIO_R_KEEPALIVE), "keepalive"},
+    {ERR_REASON(BIO_R_MALFORMED_HOST_OR_SERVICE), "malformed host or service"},
     {ERR_REASON(BIO_R_NBIO_CONNECT_ERROR), "nbio connect error"},
     {ERR_REASON(BIO_R_NO_ACCEPT_PORT_SPECIFIED), "no accept port specified"},
     {ERR_REASON(BIO_R_NO_HOSTNAME_SPECIFIED), "no hostname specified"},
@@ -137,6 +143,8 @@ static ERR_STRING_DATA BIO_str_reasons[] = {
     {ERR_REASON(BIO_R_UNABLE_TO_LISTEN_SOCKET), "unable to listen socket"},
     {ERR_REASON(BIO_R_UNINITIALIZED), "uninitialized"},
     {ERR_REASON(BIO_R_UNSUPPORTED_METHOD), "unsupported method"},
+    {ERR_REASON(BIO_R_UNSUPPORTED_PROTOCOL_FAMILY),
+     "unsupported protocol family"},
     {ERR_REASON(BIO_R_WRITE_TO_READ_ONLY_BIO), "write to read only BIO"},
     {ERR_REASON(BIO_R_WSASTARTUP), "WSAStartup"},
     {0, NULL}

@@ -810,6 +810,7 @@ void ERR_load_BIO_strings(void);
 
 /* Function codes. */
 # define BIO_F_ACPT_STATE                                 100
+# define BIO_F_ADDR_STRINGS                               134
 # define BIO_F_BIO_ACCEPT                                 101
 # define BIO_F_BIO_BER_GET_HEADER                         102
 # define BIO_F_BIO_CALLBACK_CTRL                          131
@@ -819,6 +820,7 @@ void ERR_load_BIO_strings(void);
 # define BIO_F_BIO_GET_ACCEPT_SOCKET                      105
 # define BIO_F_BIO_GET_HOST_IP                            106
 # define BIO_F_BIO_GET_PORT                               107
+# define BIO_F_BIO_LOOKUP                                 135
 # define BIO_F_BIO_MAKE_PAIR                              121
 # define BIO_F_BIO_NEW                                    108
 # define BIO_F_BIO_NEW_FILE                               109
@@ -827,6 +829,7 @@ void ERR_load_BIO_strings(void);
 # define BIO_F_BIO_NREAD0                                 124
 # define BIO_F_BIO_NWRITE                                 125
 # define BIO_F_BIO_NWRITE0                                122
+# define BIO_F_BIO_PARSE_HOSTSERV                         136
 # define BIO_F_BIO_PUTS                                   110
 # define BIO_F_BIO_READ                                   111
 # define BIO_F_BIO_SOCK_INIT                              112
@@ -846,6 +849,7 @@ void ERR_load_BIO_strings(void);
 
 /* Reason codes. */
 # define BIO_R_ACCEPT_ERROR                               100
+# define BIO_R_AMBIGUOUS_HOST_OR_SERVICE                  129
 # define BIO_R_BAD_FOPEN_MODE                             101
 # define BIO_R_BAD_HOSTNAME_LOOKUP                        102
 # define BIO_R_BROKEN_PIPE                                124
@@ -859,6 +863,7 @@ void ERR_load_BIO_strings(void);
 # define BIO_R_INVALID_IP_ADDRESS                         108
 # define BIO_R_IN_USE                                     123
 # define BIO_R_KEEPALIVE                                  109
+# define BIO_R_MALFORMED_HOST_OR_SERVICE                  130
 # define BIO_R_NBIO_CONNECT_ERROR                         110
 # define BIO_R_NO_ACCEPT_PORT_SPECIFIED                   111
 # define BIO_R_NO_HOSTNAME_SPECIFIED                      112
@@ -872,6 +877,7 @@ void ERR_load_BIO_strings(void);
 # define BIO_R_UNABLE_TO_LISTEN_SOCKET                    119
 # define BIO_R_UNINITIALIZED                              120
 # define BIO_R_UNSUPPORTED_METHOD                         121
+# define BIO_R_UNSUPPORTED_PROTOCOL_FAMILY                131
 # define BIO_R_WRITE_TO_READ_ONLY_BIO                     126
 # define BIO_R_WSASTARTUP                                 122
 
