@@ -75,8 +75,8 @@ int engine_unlocked_init(ENGINE *e)
          */
         e->struct_ref++;
         e->funct_ref++;
-        engine_ref_debug(e, 0, 1)
-            engine_ref_debug(e, 1, 1)
+        engine_ref_debug(e, 0, 1);
+        engine_ref_debug(e, 1, 1);
     }
     return to_return;
 }

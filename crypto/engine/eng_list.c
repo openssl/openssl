@@ -141,9 +141,9 @@ static int engine_list_add(ENGINE *e)
      * Having the engine in the list assumes a structural reference.
      */
     e->struct_ref++;
-    engine_ref_debug(e, 0, 1)
-        /* However it came to be, e is the last item in the list. */
-        engine_list_tail = e;
+    engine_ref_debug(e, 0, 1);
+    /* However it came to be, e is the last item in the list. */
+    engine_list_tail = e;
     e->next = NULL;
     return 1;
 }
@@ -188,7 +188,7 @@ ENGINE *ENGINE_get_first(void)
     ret = engine_list_head;
     if (ret) {
         ret->struct_ref++;
-        engine_ref_debug(ret, 0, 1)
+        engine_ref_debug(ret, 0, 1);
     }
     CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
     return ret;
@@ -202,7 +202,7 @@ ENGINE *ENGINE_get_last(void)
     ret = engine_list_tail;
     if (ret) {
         ret->struct_ref++;
-        engine_ref_debug(ret, 0, 1)
+        engine_ref_debug(ret, 0, 1);
     }
     CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
     return ret;
@@ -221,7 +221,7 @@ ENGINE *ENGINE_get_next(ENGINE *e)
     if (ret) {
         /* Return a valid structural refernce to the next ENGINE */
         ret->struct_ref++;
-        engine_ref_debug(ret, 0, 1)
+        engine_ref_debug(ret, 0, 1);
     }
     CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
     /* Release the structural reference to the previous ENGINE */
@@ -241,7 +241,7 @@ ENGINE *ENGINE_get_prev(ENGINE *e)
     if (ret) {
         /* Return a valid structural reference to the next ENGINE */
         ret->struct_ref++;
-        engine_ref_debug(ret, 0, 1)
+        engine_ref_debug(ret, 0, 1);
     }
     CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
     /* Release the structural reference to the previous ENGINE */
@@ -346,7 +346,7 @@ ENGINE *ENGINE_by_id(const char *id)
             }
         } else {
             iterator->struct_ref++;
-            engine_ref_debug(iterator, 0, 1)
+            engine_ref_debug(iterator, 0, 1);
         }
     }
     CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
