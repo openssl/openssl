@@ -60,12 +60,12 @@
  * [including the GNU Public Licence.]
  */
 
-#define NUM_NID 1022
-#define NUM_SN 1015
-#define NUM_LN 1015
-#define NUM_OBJ 937
+#define NUM_NID 1023
+#define NUM_SN 1016
+#define NUM_LN 1016
+#define NUM_OBJ 938
 
-static const unsigned char lvalues[6612]={
+static const unsigned char lvalues[6620]={
 0x2A,0x86,0x48,0x86,0xF7,0x0D,               /* [  0] OBJ_rsadsi */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,          /* [  6] OBJ_pkcs */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x02,0x02,     /* [ 13] OBJ_md2 */
@@ -997,6 +997,7 @@ static const unsigned char lvalues[6612]={
 0x2A,0x85,0x03,0x64,0x6F,                    /* [6593] OBJ_subjectSignTool */
 0x2A,0x85,0x03,0x64,0x70,                    /* [6598] OBJ_issuerSignTool */
 0x2B,0x06,0x01,0x05,0x05,0x07,0x01,0x18,     /* [6603] OBJ_tlsfeature */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x03,0x11,     /* [6611] OBJ_ipsec_IKE */
 };
 
 static const ASN1_OBJECT nid_objs[NUM_NID]={
@@ -2670,6 +2671,8 @@ static const ASN1_OBJECT nid_objs[NUM_NID]={
 {"ChaCha20","chacha20",NID_chacha20,0,NULL,0},
 {"tlsfeature","TLS Feature",NID_tlsfeature,8,&(lvalues[6603]),0},
 {"TLS1-PRF","tls1-prf",NID_tls1_prf,0,NULL,0},
+{"ipsecIKE","ipsec Internet Key Exchange",NID_ipsec_IKE,8,
+	&(lvalues[6611]),0},
 };
 
 static const unsigned int sn_objs[NUM_SN]={
@@ -3337,6 +3340,7 @@ static const unsigned int sn_objs[NUM_SN]={
 869,	/* "internationaliSDNNumber" */
 142,	/* "invalidityDate" */
 294,	/* "ipsecEndSystem" */
+1022,	/* "ipsecIKE" */
 295,	/* "ipsecTunnel" */
 296,	/* "ipsecUser" */
 86,	/* "issuerAltName" */
@@ -4344,6 +4348,7 @@ static const unsigned int ln_objs[NUM_LN]={
 461,	/* "info" */
 101,	/* "initials" */
 869,	/* "internationaliSDNNumber" */
+1022,	/* "ipsec Internet Key Exchange" */
 749,	/* "ipsec3" */
 750,	/* "ipsec4" */
 181,	/* "iso" */
@@ -5263,6 +5268,7 @@ static const unsigned int obj_objs[NUM_OBJ]={
 133,	/* OBJ_time_stamp                   1 3 6 1 5 5 7 3 8 */
 180,	/* OBJ_OCSP_sign                    1 3 6 1 5 5 7 3 9 */
 297,	/* OBJ_dvcs                         1 3 6 1 5 5 7 3 10 */
+1022,	/* OBJ_ipsec_IKE                    1 3 6 1 5 5 7 3 17 */
 298,	/* OBJ_id_it_caProtEncCert          1 3 6 1 5 5 7 4 1 */
 299,	/* OBJ_id_it_signKeyPairTypes       1 3 6 1 5 5 7 4 2 */
 300,	/* OBJ_id_it_encKeyPairTypes        1 3 6 1 5 5 7 4 3 */

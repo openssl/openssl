@@ -1557,6 +1557,11 @@
 #define NID_dvcs                297
 #define OBJ_dvcs                OBJ_id_kp,10L
 
+#define SN_ipsec_IKE            "ipsecIKE"
+#define LN_ipsec_IKE            "ipsec Internet Key Exchange"
+#define NID_ipsec_IKE           1022
+#define OBJ_ipsec_IKE           OBJ_id_kp,17L
+
 #define SN_id_it_caProtEncCert          "id-it-caProtEncCert"
 #define NID_id_it_caProtEncCert         298
 #define OBJ_id_it_caProtEncCert         OBJ_id_it,1L
