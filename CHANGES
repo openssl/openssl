@@ -4,6 +4,10 @@
 
  Changes between 1.0.2f and 1.1.0  [xx XXX xxxx]
 
+  *) RSA_padding_check_PKCS1_type_1 now accepts inputs with and without
+     the leading 0-byte.
+     [Emilia Käsper]
+
   *) The signature of the session callback configured with
      SSL_CTX_sess_set_get_cb was changed. The read-only input buffer
      was explicitly marked as 'const unsigned char*' instead of
