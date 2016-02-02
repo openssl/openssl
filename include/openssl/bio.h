@@ -731,26 +731,42 @@ enum BIO_lookup_type {
 int BIO_lookup(const char *host, const char *service,
                enum BIO_lookup_type lookup_type,
                int family, int socktype, BIO_ADDRINFO **res);
-struct hostent *BIO_gethostbyname(const char *name);
-/*-
- * We might want a thread-safe interface too:
- * struct hostent *BIO_gethostbyname_r(const char *name,
- *     struct hostent *result, void *buffer, size_t buflen);
- * or something similar (caller allocates a struct hostent,
- * pointed to by "result", and additional buffer space for the various
- * substructures; if the buffer does not suffice, NULL is returned
- * and an appropriate error code is set).
- */
 int BIO_sock_error(int sock);
 int BIO_socket_ioctl(int fd, long type, void *arg);
 int BIO_socket_nbio(int fd, int mode);
-int BIO_get_port(const char *str, unsigned short *port_ptr);
-int BIO_get_host_ip(const char *str, unsigned char *ip);
-int BIO_get_accept_socket(char *host_port, int mode);
-int BIO_accept(int sock, char **ip_port);
 int BIO_sock_init(void);
 void BIO_sock_cleanup(void);
 int BIO_set_tcp_ndelay(int sock, int turn_on);
+
+DEPRECATEDIN_1_1_0(struct hostent *BIO_gethostbyname(const char *name))
+DEPRECATEDIN_1_1_0(int BIO_get_port(const char *str, unsigned short *port_ptr))
+DEPRECATEDIN_1_1_0(int BIO_get_host_ip(const char *str, unsigned char *ip))
+DEPRECATEDIN_1_1_0(int BIO_get_accept_socket(char *host_port, int mode))
+DEPRECATEDIN_1_1_0(int BIO_accept(int sock, char **ip_port))
+
+union BIO_sock_info_u {
+    BIO_ADDR *addr;
+};
+enum BIO_sock_info_type {
+    BIO_SOCK_INFO_ADDRESS
+};
+int BIO_sock_info(int sock,
+                  enum BIO_sock_info_type type, union BIO_sock_info_u *info);
+
+# define BIO_SOCK_REUSEADDR    0x01
+# define BIO_SOCK_V6_ONLY      0x02
+# define BIO_SOCK_KEEPALIVE    0x04
+# define BIO_SOCK_NONBLOCK     0x08
+# define BIO_SOCK_NODELAY      0x10
+
+int BIO_socket(int domain, int socktype, int protocol, int options);
+int BIO_connect(int sock, const BIO_ADDR *addr, int options);
+int BIO_listen(int sock, const BIO_ADDR *addr, int options);
+int BIO_accept_ex(int accept_sock, BIO_ADDR *addr, int options);
+# if OPENSSL_API_COMPAT >= 0x10100000L
+#  define BIO_accept(as,s,a) BIO_accept_ex((as),(s),(a))
+# endif
+int BIO_closesocket(int sock);
 
 BIO *BIO_new_socket(int sock, int close_flag);
 BIO *BIO_new_dgram(int fd, int close_flag);
