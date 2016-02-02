@@ -59,6 +59,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include "apps.h"
 #include <openssl/bio.h>
 #include <openssl/err.h>
@@ -66,6 +67,7 @@
 #include <openssl/rand.h>
 #include <openssl/ts.h>
 #include <openssl/bn.h>
+#include <openssl/x509_vfy.h>
 
 /* Request nonce length, in bits (must be a multiple of 8). */
 #define NONCE_LENGTH            64
@@ -109,10 +111,10 @@ static int save_ts_serial(const char *serialfile, ASN1_INTEGER *serial);
 
 /* Verify related functions. */
 static int verify_command(char *data, char *digest, char *queryfile,
-                          char *in, int token_in,
+                          char *in, int token_in, time_t attime,
                           char *CApath, char *CAfile, char *untrusted);
 static TS_VERIFY_CTX *create_verify_ctx(char *data, char *digest,
-                                        char *queryfile,
+                                        char *queryfile, time_t attime,
                                         char *CApath, char *CAfile,
                                         char *untrusted);
 static X509_STORE *create_cert_store(char *CApath, char *CAfile);
@@ -125,7 +127,7 @@ typedef enum OPTION_choice {
     OPT_IN, OPT_TOKEN_IN, OPT_OUT, OPT_TOKEN_OUT, OPT_TEXT,
     OPT_REPLY, OPT_QUERYFILE, OPT_PASSIN, OPT_INKEY, OPT_SIGNER,
     OPT_CHAIN, OPT_VERIFY, OPT_CAPATH, OPT_CAFILE, OPT_UNTRUSTED,
-    OPT_MD
+    OPT_TS_ATTIME, OPT_MD
 } OPTION_CHOICE;
 
 OPTIONS ts_options[] = {
@@ -155,6 +157,7 @@ OPTIONS ts_options[] = {
     {"CApath", OPT_CAPATH, '/', "Path to trusted CA files"},
     {"CAfile", OPT_CAFILE, '<', "File with trusted CA certs"},
     {"untrusted", OPT_UNTRUSTED, '<', "File with untrusted certs"},
+    {"attime", OPT_TS_ATTIME, 's', "Do certificate checks at time TIMESTAMP"},
     {"", OPT_MD, '-', "Any supported digest"},
 #ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
@@ -183,7 +186,7 @@ static char* opt_helplist[] = {
 #endif
     "  or",
     "ts -verify -CApath dir -CAfile file.pem -untrusted file.pem",
-    "           [-data file] [-digest hexstring]",
+    "           [-data file] [-digest hexstring] [-attime TIMESTAMP]",
     "           [-queryfile file] -in file [-token_in]",
     NULL,
 };
@@ -204,6 +207,10 @@ int ts_main(int argc, char **argv)
     int token_in = 0;
     /* Output is ContentInfo instead of TimeStampResp. */
     int token_out = 0;
+
+    /* default check time == now */
+    time_t attime = time(NULL);
+    ossl_intmax_t t = 0;
 
     prog = opt_init(argc, argv, ts_options);
     while ((o = opt_next()) != OPT_EOF) {
@@ -292,6 +299,19 @@ int ts_main(int argc, char **argv)
         case OPT_ENGINE:
             engine = opt_arg();
             break;
+	case OPT_TS_ATTIME:
+	    if (!opt_imax(opt_arg(), &t)) {
+        	ret = 0;
+		goto end;
+	    }
+            if (t != (time_t)t) {
+                BIO_printf(bio_err, "%s: epoch time out of range %s\n",
+                       prog, opt_arg());
+                ret = 0;
+		goto end;
+	    }
+	    attime = (time_t) t;
+	    break;
         case OPT_MD:
             if (!opt_md(opt_unknown(), &md))
                 goto opthelp;
@@ -348,7 +368,7 @@ int ts_main(int argc, char **argv)
     case OPT_VERIFY:
         if ((in == NULL) || !EXACTLY_ONE(queryfile, data, digest))
             goto opthelp;
-        ret = !verify_command(data, digest, queryfile, in, token_in,
+        ret = !verify_command(data, digest, queryfile, in, token_in, attime,
                               CApath, CAfile, untrusted);
     }
 
@@ -846,7 +866,7 @@ static int save_ts_serial(const char *serialfile, ASN1_INTEGER *serial)
  */
 
 static int verify_command(char *data, char *digest, char *queryfile,
-                          char *in, int token_in,
+                          char *in, int token_in, time_t attime,
                           char *CApath, char *CAfile, char *untrusted)
 {
     BIO *in_bio = NULL;
@@ -865,7 +885,7 @@ static int verify_command(char *data, char *digest, char *queryfile,
             goto end;
     }
 
-    if ((verify_ctx = create_verify_ctx(data, digest, queryfile,
+    if ((verify_ctx = create_verify_ctx(data, digest, queryfile, attime,
                                         CApath, CAfile, untrusted)) == NULL)
         goto end;
 
@@ -890,7 +910,7 @@ static int verify_command(char *data, char *digest, char *queryfile,
 }
 
 static TS_VERIFY_CTX *create_verify_ctx(char *data, char *digest,
-                                        char *queryfile,
+                                        char *queryfile, time_t attime,
                                         char *CApath, char *CAfile,
                                         char *untrusted)
 {
@@ -940,6 +960,10 @@ static TS_VERIFY_CTX *create_verify_ctx(char *data, char *digest,
     if (untrusted
         && TS_VERIFY_CTS_set_certs(ctx, TS_CONF_load_certs(untrusted)) == NULL)
         goto err;
+
+    /* set attime parameter to X509_STORE object */
+    X509_VERIFY_PARAM_set_time(TS_VERIFY_CTX_get_store_param(ctx), attime);
+
     ret = 1;
 
  err:

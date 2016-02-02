@@ -510,6 +510,7 @@ TS_VERIFY_CTX *TS_VERIFY_CTX_new(void);
 void TS_VERIFY_CTX_init(TS_VERIFY_CTX *ctx);
 void TS_VERIFY_CTX_free(TS_VERIFY_CTX *ctx);
 void TS_VERIFY_CTX_cleanup(TS_VERIFY_CTX *ctx);
+X509_VERIFY_PARAM *TS_VERIFY_CTX_get_store_param(TS_VERIFY_CTX *ctx);
 int TS_VERIFY_CTX_set_flags(TS_VERIFY_CTX *ctx, int f);
 int TS_VERIFY_CTX_add_flags(TS_VERIFY_CTX *ctx, int f);
 BIO *TS_VERIFY_CTX_set_data(TS_VERIFY_CTX *ctx, BIO *b);
