@@ -4,7 +4,11 @@
 
  Changes between 1.0.2f and 1.0.2g [xx XXX xxxx]
 
-  *)
+  *) Change the req app to generate a 2048-bit RSA/DSA key by default,
+     if no keysize is specified with default_bits. This fixes an
+     omission in an earlier change that changed all RSA/DSA key generation
+     apps to use 2048 bits by default.
+     [Emilia Käsper]
 
  Changes between 1.0.2e and 1.0.2f [28 Jan 2016]
 
