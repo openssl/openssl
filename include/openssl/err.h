@@ -257,6 +257,8 @@ typedef struct err_state_st {
 # define SYS_F_WSASTARTUP        9/* Winsock stuff */
 # define SYS_F_OPENDIR           10
 # define SYS_F_FREAD             11
+# define SYS_F_GETADDRINFO       12
+# define SYS_F_GETNAMEINFO       13
 
 /* reasons */
 # define ERR_R_SYS_LIB   ERR_LIB_SYS/* 2 */
