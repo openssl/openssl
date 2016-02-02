@@ -88,6 +88,12 @@ static int wsa_init_done = 0;
 #  define WSAAPI
 # endif
 
+/*
+ * We are currently using deprecated functions here, and GCC warns
+ * us about them, but since we know, we don't want to hear it.
+ */
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+
 # if OPENSSL_API_COMPAT < 0x10100000L
 static int get_ip(const char *str, unsigned char *ip);
 int BIO_get_host_ip(const char *str, unsigned char *ip)
