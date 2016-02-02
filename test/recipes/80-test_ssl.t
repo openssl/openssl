@@ -329,7 +329,7 @@ sub testssl {
 
     subtest 'standard SSL tests' => sub {
 	######################################################################
-	plan tests => 27;
+	plan tests => 29;
 
       SKIP: {
 	  skip "SSLv3 is not supported by this OpenSSL build", 4
@@ -410,7 +410,7 @@ sub testssl {
 	}
 
       SKIP: {
-	  skip "Neither SSLv3 nor any TLS version are supported by this OpenSSL build", 6
+	  skip "Neither SSLv3 nor any TLS version are supported by this OpenSSL build", 8
 	      if $no_anytls;
 
 	SKIP: {
@@ -430,6 +430,12 @@ sub testssl {
 	     'test sslv2/sslv3 with both client and server authentication via BIO pair');
 	  ok(run(test([@ssltest, "-bio_pair", "-server_auth", "-client_auth", "-app_verify", @CA, @extra])),
 	     'test sslv2/sslv3 with both client and server authentication via BIO pair and app verify');
+
+	  ok(run(test([@ssltest, "-ipv4", @extra])),
+	     'test TLS via IPv4');
+	  ok(run(test([@ssltest, "-ipv6", @extra])),
+	     'test TLS via IPv6');
+
 	}
     };
 
