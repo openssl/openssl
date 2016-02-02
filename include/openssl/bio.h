@@ -870,6 +870,7 @@ void ERR_load_BIO_strings(void);
 
 /* Reason codes. */
 # define BIO_R_ACCEPT_ERROR                               100
+# define BIO_R_ADDRINFO_ADDR_IS_NOT_AF_INET               141
 # define BIO_R_AMBIGUOUS_HOST_OR_SERVICE                  129
 # define BIO_R_BAD_FOPEN_MODE                             101
 # define BIO_R_BAD_HOSTNAME_LOOKUP                        102
