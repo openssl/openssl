@@ -4769,3 +4769,6 @@ X509_NAME_get0_der                      5163	1_1_0	EXIST::FUNCTION:
 EC_GROUP_order_bits                     5164	1_1_0	EXIST::FUNCTION:EC
 EC_GROUP_get0_order                     5165	1_1_0	EXIST::FUNCTION:EC
 EC_GROUP_get0_cofactor                  5166	1_1_0	EXIST::FUNCTION:EC
+BN_bn2lebinpad                          5167	1_1_0	EXIST::FUNCTION:
+BN_lebin2bn                             5168	1_1_0	EXIST::FUNCTION:
+BN_bn2binpad                            5169	1_1_0	EXIST::FUNCTION:
