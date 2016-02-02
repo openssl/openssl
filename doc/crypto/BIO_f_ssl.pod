@@ -169,7 +169,8 @@ unencrypted example in L<BIO_s_connect(3)>.
 
  /* We might want to do other things with ssl here */
 
- BIO_set_conn_hostname(sbio, "localhost:https");
+ /* An empty host part means the loopback address */
+ BIO_set_conn_hostname(sbio, ":https");
 
  out = BIO_new_fp(stdout, BIO_NOCLOSE);
  if(BIO_do_connect(sbio) <= 0) {

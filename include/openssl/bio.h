@@ -382,15 +382,6 @@ struct bio_dgram_sctp_prinfo {
 };
 # endif
 
-/* connect BIO stuff */
-# define BIO_CONN_S_BEFORE               1
-# define BIO_CONN_S_GET_IP               2
-# define BIO_CONN_S_GET_PORT             3
-# define BIO_CONN_S_CREATE_SOCKET        4
-# define BIO_CONN_S_CONNECT              5
-# define BIO_CONN_S_OK                   6
-# define BIO_CONN_S_BLOCKED_CONNECT      7
-# define BIO_CONN_S_NBIO                 8
 /*
  * #define BIO_CONN_get_param_hostname BIO_ctrl
  */
@@ -455,31 +446,47 @@ struct bio_dgram_sctp_prinfo {
 # define BIO_C_SET_EX_ARG                        153
 # define BIO_C_GET_EX_ARG                        154
 
+# define BIO_C_SET_CONNECT_MODE                  155
+
 # define BIO_set_app_data(s,arg)         BIO_set_ex_data(s,0,arg)
 # define BIO_get_app_data(s)             BIO_get_ex_data(s,0)
 
-/* BIO_s_connect() and BIO_s_socks4a_connect() */
-# define BIO_set_conn_hostname(b,name) BIO_ctrl(b,BIO_C_SET_CONNECT,0,(char *)name)
-# define BIO_set_conn_port(b,port) BIO_ctrl(b,BIO_C_SET_CONNECT,1,(char *)port)
-# define BIO_set_conn_ip(b,ip)     BIO_ctrl(b,BIO_C_SET_CONNECT,2,(char *)ip)
-# define BIO_set_conn_int_port(b,port) BIO_ctrl(b,BIO_C_SET_CONNECT,3,(char *)port)
-# define BIO_get_conn_hostname(b)  BIO_ptr_ctrl(b,BIO_C_GET_CONNECT,0)
-# define BIO_get_conn_port(b)      BIO_ptr_ctrl(b,BIO_C_GET_CONNECT,1)
-# define BIO_get_conn_ip(b)               BIO_ptr_ctrl(b,BIO_C_GET_CONNECT,2)
-# define BIO_get_conn_int_port(b) BIO_ctrl(b,BIO_C_GET_CONNECT,3,NULL)
+/* IP families we support, for BIO_s_connect() and BIO_s_accept() */
+/* Note: the underlying operating system may not support some of them */
+# define BIO_FAMILY_IPV4                         4
+# define BIO_FAMILY_IPV6                         6
+# define BIO_FAMILY_IPANY                        256
 
-# define BIO_set_nbio(b,n)       BIO_ctrl(b,BIO_C_SET_NBIO,(n),NULL)
+/* BIO_s_connect() */
+# define BIO_set_conn_hostname(b,name) BIO_ctrl(b,BIO_C_SET_CONNECT,0,(char *)name)
+# define BIO_set_conn_port(b,port)     BIO_ctrl(b,BIO_C_SET_CONNECT,1,(char *)port)
+# define BIO_set_conn_address(b,addr)  BIO_ctrl(b,BIO_C_SET_CONNECT,2,(char *)addr)
+# define BIO_set_conn_ip_family(b,f)   BIO_int_ctrl(b,BIO_C_SET_CONNECT,3,f)
+# define BIO_get_conn_hostname(b)      ((const char *)BIO_ptr_ctrl(b,BIO_C_GET_CONNECT,0,NULL))
+# define BIO_get_conn_port(b)          ((const char *)BIO_ptr_ctrl(b,BIO_C_GET_CONNECT,1,NULL))
+# define BIO_get_conn_address(b)       ((const BIO_ADDR *)BIO_ptr_ctrl(b,BIO_C_GET_CONNECT,2,NULL))
+# define BIO_get_conn_ip_family(b)     BIO_ctrl(b,BIO_C_GET_CONNECT,3,NULL)
+# define BIO_set_conn_mode(b,n)        BIO_ctrl(b,BIO_C_SET_CONNECT_MODE,(n),NULL)
+
+# define BIO_set_nbio(b,n)             BIO_ctrl(b,BIO_C_SET_NBIO,(n),NULL)
 
 /* BIO_s_accept() */
-# define BIO_set_accept_port(b,name) BIO_ctrl(b,BIO_C_SET_ACCEPT,0,(char *)name)
-# define BIO_get_accept_port(b)  BIO_ptr_ctrl(b,BIO_C_GET_ACCEPT,0)
+# define BIO_set_accept_name(b,name)   BIO_ctrl(b,BIO_C_SET_ACCEPT,0,(char *)name)
+# define BIO_set_accept_port(b,port)   BIO_ctrl(b,BIO_C_SET_ACCEPT,1,(char *)port)
+# define BIO_get_accept_name(b)        ((const char *)BIO_ptr_ctrl(b,BIO_C_GET_ACCEPT,0))
+# define BIO_get_accept_port(b)        ((const char *)BIO_ptr_ctrl(b,BIO_C_GET_ACCEPT,1))
+# define BIO_get_peer_name(b)          ((const char *)BIO_ptr_ctrl(b,BIO_C_GET_ACCEPT,2))
+# define BIO_get_peer_port(b)          ((const char *)BIO_ptr_ctrl(b,BIO_C_GET_ACCEPT,3))
 /* #define BIO_set_nbio(b,n)    BIO_ctrl(b,BIO_C_SET_NBIO,(n),NULL) */
-# define BIO_set_nbio_accept(b,n) BIO_ctrl(b,BIO_C_SET_ACCEPT,1,(n)?(void *)"a":NULL)
-# define BIO_set_accept_bios(b,bio) BIO_ctrl(b,BIO_C_SET_ACCEPT,2,(char *)bio)
+# define BIO_set_nbio_accept(b,n)      BIO_ctrl(b,BIO_C_SET_ACCEPT,2,(n)?(void *)"a":NULL)
+# define BIO_set_accept_bios(b,bio)    BIO_ctrl(b,BIO_C_SET_ACCEPT,3,(char *)bio)
+# define BIO_set_accept_ip_family(b,f) BIO_int_ctrl(b,BIO_C_SET_ACCEPT,4,f)
+# define BIO_get_accept_ip_family(b)   BIO_ctrl(b,BIO_C_GET_ACCEPT,4,NULL)
 
+/* Aliases kept for backward compatibility */
 # define BIO_BIND_NORMAL                 0
-# define BIO_BIND_REUSEADDR_IF_UNUSED    1
-# define BIO_BIND_REUSEADDR              2
+# define BIO_BIND_REUSEADDR              BIO_SOCK_REUSEADDR
+# define BIO_BIND_REUSEADDR_IF_UNUSED    BIO_SOCK_REUSEADDR
 # define BIO_set_bind_mode(b,mode) BIO_ctrl(b,BIO_C_SET_BIND_MODE,mode,NULL)
 # define BIO_get_bind_mode(b)    BIO_ctrl(b,BIO_C_GET_BIND_MODE,0,NULL)
 
@@ -637,7 +644,7 @@ long BIO_ctrl(BIO *bp, int cmd, long larg, void *parg);
 long BIO_callback_ctrl(BIO *b, int cmd,
                        void (*fp) (struct bio_st *, int, const char *, int,
                                    long, long));
-char *BIO_ptr_ctrl(BIO *bp, int cmd, long larg);
+void *BIO_ptr_ctrl(BIO *bp, int cmd, long larg);
 long BIO_int_ctrl(BIO *bp, int cmd, long larg, int iarg);
 BIO *BIO_push(BIO *b, BIO *append);
 BIO *BIO_pop(BIO *b);
@@ -763,9 +770,6 @@ int BIO_socket(int domain, int socktype, int protocol, int options);
 int BIO_connect(int sock, const BIO_ADDR *addr, int options);
 int BIO_listen(int sock, const BIO_ADDR *addr, int options);
 int BIO_accept_ex(int accept_sock, BIO_ADDR *addr, int options);
-# if OPENSSL_API_COMPAT >= 0x10100000L
-#  define BIO_accept(as,s,a) BIO_accept_ex((as),(s),(a))
-# endif
 int BIO_closesocket(int sock);
 
 BIO *BIO_new_socket(int sock, int close_flag);
@@ -895,7 +899,7 @@ void ERR_load_BIO_strings(void);
 # define BIO_R_NO_ACCEPT_PORT_SPECIFIED                   111
 # define BIO_R_NO_HOSTNAME_SPECIFIED                      112
 # define BIO_R_NO_PORT_DEFINED                            113
-# define BIO_R_NO_PORT_SPECIFIED                          114
+# define BIO_R_NO_SERVICE_SPECIFIED                       114
 # define BIO_R_NO_SUCH_FILE                               128
 # define BIO_R_NULL_PARAMETER                             115
 # define BIO_R_TAG_MISMATCH                               116
