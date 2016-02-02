@@ -221,6 +221,9 @@ extern "C" {
  */
 # define BIO_FLAGS_MEM_RDONLY    0x200
 
+typedef union bio_addr_st BIO_ADDR;
+typedef struct bio_addrinfo_st BIO_ADDRINFO;
+
 void BIO_set_flags(BIO *b, int flags);
 int BIO_test_flags(const BIO *b, int flags);
 void BIO_clear_flags(BIO *b, int flags);
@@ -699,6 +702,35 @@ int BIO_dump_indent_fp(FILE *fp, const char *s, int len, int indent);
 int BIO_hex_string(BIO *out, int indent, int width, unsigned char *data,
                    int datalen);
 
+BIO_ADDR *BIO_ADDR_new(void);
+int BIO_ADDR_rawmake(BIO_ADDR *ap, int family,
+                     const void *where, size_t wherelen, unsigned short port);
+void BIO_ADDR_free(BIO_ADDR *);
+int BIO_ADDR_family(const BIO_ADDR *ap);
+int BIO_ADDR_rawaddress(const BIO_ADDR *ap, void *p, size_t *l);
+unsigned short BIO_ADDR_rawport(const BIO_ADDR *ap);
+char *BIO_ADDR_hostname_string(const BIO_ADDR *ap, int numeric);
+char *BIO_ADDR_service_string(const BIO_ADDR *ap, int numeric);
+char *BIO_ADDR_path_string(const BIO_ADDR *ap);
+
+const BIO_ADDRINFO *BIO_ADDRINFO_next(const BIO_ADDRINFO *bai);
+int BIO_ADDRINFO_family(const BIO_ADDRINFO *bai);
+int BIO_ADDRINFO_socktype(const BIO_ADDRINFO *bai);
+int BIO_ADDRINFO_protocol(const BIO_ADDRINFO *bai);
+const BIO_ADDR *BIO_ADDRINFO_address(const BIO_ADDRINFO *bai);
+void BIO_ADDRINFO_free(BIO_ADDRINFO *bai);
+
+enum BIO_hostserv_priorities {
+    BIO_PARSE_PRIO_HOST, BIO_PARSE_PRIO_SERV
+};
+int BIO_parse_hostserv(const char *hostserv, char **host, char **service,
+                       enum BIO_hostserv_priorities hostserv_prio);
+enum BIO_lookup_type {
+    BIO_LOOKUP_CLIENT, BIO_LOOKUP_SERVER
+};
+int BIO_lookup(const char *host, const char *service,
+               enum BIO_lookup_type lookup_type,
+               int family, int socktype, BIO_ADDRINFO **res);
 struct hostent *BIO_gethostbyname(const char *name);
 /*-
  * We might want a thread-safe interface too:
