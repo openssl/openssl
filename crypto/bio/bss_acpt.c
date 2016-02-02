@@ -63,6 +63,12 @@
 
 #ifndef OPENSSL_NO_SOCK
 
+/*
+ * We are currently using deprecated functions here, and GCC warns
+ * us about them, but since we know, we don't want to hear it.
+ */
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+
 # if (defined(OPENSSL_SYS_VMS) && __VMS_VER < 70000000)
 /* FIONBIO used as a switch to enable ioctl, and that isn't in VMS < 7.0 */
 #  undef FIONBIO
