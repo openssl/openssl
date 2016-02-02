@@ -435,7 +435,7 @@ DEPRECATEDIN_1_0_0(unsigned long
                    BN_BLINDING_get_thread_id(const BN_BLINDING *))
 DEPRECATEDIN_1_0_0(void
                    BN_BLINDING_set_thread_id(BN_BLINDING *, unsigned long))
-CRYPTO_THREADID *BN_BLINDING_thread_id(BN_BLINDING *);
+CRYPTO_THREAD_ID BN_BLINDING_thread_id(BN_BLINDING *);
 unsigned long BN_BLINDING_get_flags(const BN_BLINDING *);
 void BN_BLINDING_set_flags(BN_BLINDING *, unsigned long);
 BN_BLINDING *BN_BLINDING_create_param(BN_BLINDING *b,

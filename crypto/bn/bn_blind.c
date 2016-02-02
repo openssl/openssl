@@ -123,7 +123,7 @@ struct bn_blinding_st {
     unsigned long thread_id;    /* added in OpenSSL 0.9.6j and 0.9.7b; used
                                  * only by crypto/rsa/rsa_eay.c, rsa_lib.c */
 #endif
-    CRYPTO_THREADID tid;
+    CRYPTO_THREAD_ID tid;
     CRYPTO_MUTEX lock;
     int counter;
     unsigned long flags;
@@ -165,7 +165,7 @@ BN_BLINDING *BN_BLINDING_new(const BIGNUM *A, const BIGNUM *Ai, BIGNUM *mod)
      * use.
      */
     ret->counter = -1;
-    CRYPTO_THREADID_current(&ret->tid);
+    ret->tid = CRYPTO_THREAD_get_current_id();
     return (ret);
  err:
     BN_BLINDING_free(ret);
@@ -286,9 +286,9 @@ void BN_BLINDING_set_thread_id(BN_BLINDING *b, unsigned long n)
 }
 #endif
 
-CRYPTO_THREADID *BN_BLINDING_thread_id(BN_BLINDING *b)
+CRYPTO_THREAD_ID BN_BLINDING_thread_id(BN_BLINDING *b)
 {
-    return &b->tid;
+    return b->tid;
 }
 
 unsigned long BN_BLINDING_get_flags(const BN_BLINDING *b)

@@ -249,7 +249,6 @@ static BN_BLINDING *rsa_get_blinding(RSA *rsa, int *local, BN_CTX *ctx)
 {
     BN_BLINDING *ret;
     int got_write_lock = 0;
-    CRYPTO_THREADID cur;
 
     CRYPTO_MUTEX_lock_read(&rsa->lock);
 
@@ -266,8 +265,9 @@ static BN_BLINDING *rsa_get_blinding(RSA *rsa, int *local, BN_CTX *ctx)
     if (ret == NULL)
         goto err;
 
-    CRYPTO_THREADID_current(&cur);
-    if (!CRYPTO_THREADID_cmp(&cur, BN_BLINDING_thread_id(ret))) {
+    if (!CRYPTO_THREAD_compare_id(CRYPTO_THREAD_get_current_id(),
+                                  BN_BLINDING_thread_id(ret)))
+    {
         /* rsa->blinding is ours! */
 
         *local = 1;
