@@ -175,6 +175,9 @@ static ERR_STRING_DATA ERR_str_functs[] = {
     {ERR_PACK(0, SYS_F_FREAD, 0), "fread"},
     {ERR_PACK(0, SYS_F_GETADDRINFO, 0), "getaddrinfo"},
     {ERR_PACK(0, SYS_F_GETNAMEINFO, 0), "getnameinfo"},
+    {ERR_PACK(0, SYS_F_SETSOCKOPT, 0), "setsockopt"},
+    {ERR_PACK(0, SYS_F_GETSOCKOPT, 0), "getsockopt"},
+    {ERR_PACK(0, SYS_F_GETSOCKNAME, 0), "getsockname"},
     {0, NULL},
 };
 

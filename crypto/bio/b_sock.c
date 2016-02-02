@@ -88,6 +88,7 @@ static int wsa_init_done = 0;
 #  define WSAAPI
 # endif
 
+# if OPENSSL_API_COMPAT < 0x10100000L
 static int get_ip(const char *str, unsigned char *ip);
 int BIO_get_host_ip(const char *str, unsigned char *ip)
 {
@@ -194,6 +195,7 @@ int BIO_get_port(const char *str, unsigned short *port_ptr)
     }
     return (1);
 }
+# endif
 
 int BIO_sock_error(int sock)
 {
@@ -218,6 +220,7 @@ int BIO_sock_error(int sock)
         return (j);
 }
 
+# if OPENSSL_API_COMPAT < 0x10100000L
 struct hostent *BIO_gethostbyname(const char *name)
 {
     /*
@@ -230,6 +233,7 @@ struct hostent *BIO_gethostbyname(const char *name)
     return gethostbyname(name);
 # endif
 }
+# endif
 
 int BIO_sock_init(void)
 {
@@ -338,6 +342,7 @@ int BIO_socket_ioctl(int fd, long type, void *arg)
 }
 # endif                         /* __VMS_VER */
 
+# if OPENSSL_API_COMPAT < 0x10100000L
 /*
  * The reason I have implemented this instead of using sscanf is because
  * Visual C 1.52c gives an unresolved external when linking a DLL :-(
@@ -697,6 +702,7 @@ int BIO_accept(int sock, char **addr)
  end:
     return (ret);
 }
+# endif
 
 int BIO_set_tcp_ndelay(int s, int on)
 {
@@ -728,4 +734,34 @@ int BIO_socket_nbio(int s, int mode)
 # endif
     return (ret == 0);
 }
+
+int BIO_sock_info(int sock,
+                  enum BIO_sock_info_type type, union BIO_sock_info_u *info)
+{
+    switch (type) {
+    case BIO_SOCK_INFO_ADDRESS:
+        {
+            socklen_t addr_len;
+            int ret = 0;
+            addr_len = sizeof(*info->addr);
+            ret = getsockname(sock, BIO_ADDR_sockaddr_noconst(info->addr),
+                              &addr_len);
+            if (ret == -1) {
+                SYSerr(SYS_F_GETSOCKNAME, get_last_socket_error());
+                BIOerr(BIO_F_BIO_SOCK_INFO, BIO_R_GETSOCKNAME_ERROR);
+                return 0;
+            }
+            if (addr_len > sizeof(*info->addr)) {
+                BIOerr(BIO_F_BIO_SOCK_INFO, BIO_R_GETSOCKNAME_TRUNCATED_ADDRESS);
+                return 0;
+            }
+        }
+        break;
+    default:
+        BIOerr(BIO_F_BIO_SOCK_INFO, BIO_R_UNKNOWN_INFO_TYPE);
+        return 0;
+    }
+    return 1;
+}
+
 #endif
