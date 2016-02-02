@@ -1060,7 +1060,12 @@ int SSL_shutdown(SSL *s)
         return -1;
     }
 
-    return s->method->ssl_shutdown(s);
+    if (!SSL_in_init(s)) {
+        return s->method->ssl_shutdown(s);
+    } else {
+        SSLerr(SSL_F_SSL_SHUTDOWN, SSL_R_SHUTDOWN_WHILE_IN_INIT);
+        return -1;
+    }
 }
 
 int SSL_renegotiate(SSL *s)
