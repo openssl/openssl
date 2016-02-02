@@ -894,9 +894,12 @@ void ERR_load_BIO_strings(void);
 # define BIO_R_IN_USE                                     123
 # define BIO_R_KEEPALIVE                                  109
 # define BIO_R_LISTEN_V6_ONLY                             136
+# define BIO_R_LOOKUP_RETURNED_NOTHING                    142
 # define BIO_R_MALFORMED_HOST_OR_SERVICE                  130
 # define BIO_R_NBIO_CONNECT_ERROR                         110
+# define BIO_R_NO_ACCEPT_ADDR_OR_SERVICE_SPECIFIED        143
 # define BIO_R_NO_ACCEPT_PORT_SPECIFIED                   111
+# define BIO_R_NO_HOSTNAME_OR_SERVICE_SPECIFIED           144
 # define BIO_R_NO_HOSTNAME_SPECIFIED                      112
 # define BIO_R_NO_PORT_DEFINED                            113
 # define BIO_R_NO_SERVICE_SPECIFIED                       114
@@ -909,8 +912,10 @@ void ERR_load_BIO_strings(void);
 # define BIO_R_UNABLE_TO_LISTEN_SOCKET                    119
 # define BIO_R_UNABLE_TO_NODELAY                          138
 # define BIO_R_UNABLE_TO_REUSEADDR                        139
+# define BIO_R_UNAVAILABLE_IP_FAMILY                      145
 # define BIO_R_UNINITIALIZED                              120
 # define BIO_R_UNKNOWN_INFO_TYPE                          140
+# define BIO_R_UNSUPPORTED_IP_FAMILY                      146
 # define BIO_R_UNSUPPORTED_METHOD                         121
 # define BIO_R_UNSUPPORTED_PROTOCOL_FAMILY                131
 # define BIO_R_WRITE_TO_READ_ONLY_BIO                     126
