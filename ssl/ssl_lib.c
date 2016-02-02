@@ -2362,6 +2362,13 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
      * deployed might change this.
      */
     ret->options |= SSL_OP_LEGACY_SERVER_CONNECT;
+    /*
+     * Disable compression by default to prevent CRIME. Applications can
+     * re-enable compression by configuring
+     * SSL_CTX_clear_options(ctx, SSL_OP_NO_COMPRESSION);
+     * or by using the SSL_CONF library.
+     */
+    ret->options |= SSL_OP_NO_COMPRESSION;
 
     return (ret);
  err:
