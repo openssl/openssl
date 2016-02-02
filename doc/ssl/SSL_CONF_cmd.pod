@@ -131,9 +131,9 @@ These options are deprecated, instead use B<-min_protocol> and B<-max_protocol>.
 
 Various bug workarounds are set, same as setting B<SSL_OP_ALL>.
 
-=item B<-no_comp>
+=item B<-comp>
 
-Disables support for SSL/TLS compression, same as setting B<SSL_OP_NO_COMPRESS>.
+Enables support for SSL/TLS compression, same as clearing B<SSL_OP_NO_COMPRESSION>.
 
 =item B<-no_ticket>
 
@@ -494,6 +494,10 @@ This also only enables TLSv1.2:
 Disable TLS session tickets:
 
  SSL_CONF_cmd(ctx, "Options", "-SessionTicket");
+
+Enable compression:
+
+ SSL_CONF_cmd(ctx, "Options", "Compression");
 
 Set supported curves to P-256, P-384:
 

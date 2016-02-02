@@ -4,6 +4,12 @@
 
  Changes between 1.0.2f and 1.1.0  [xx XXX xxxx]
 
+  *) CRIME protection: disable compression by default, even if OpenSSL is
+     compiled with zlib enabled. Applications can still enable compression
+     by calling SSL_CTX_clear_options(ctx, SSL_OP_NO_COMPRESSION), or by
+     using the SSL_CONF library to configure compression.
+     [Emilia Käsper]
+
   *) The signature of the session callback configured with
      SSL_CTX_sess_set_get_cb was changed. The read-only input buffer
      was explicitly marked as 'const unsigned char*' instead of
