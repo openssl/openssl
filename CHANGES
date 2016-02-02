@@ -4,6 +4,10 @@
 
  Changes between 1.0.2f and 1.1.0  [xx XXX xxxx]
 
+  *) RSA_padding_check_PKCS1_type_1 now accepts inputs with and without
+     the leading 0-byte.
+     [Emilia Käsper]
+
   *) CRIME protection: disable compression by default, even if OpenSSL is
      compiled with zlib enabled. Applications can still enable compression
      by calling SSL_CTX_clear_options(ctx, SSL_OP_NO_COMPRESSION), or by
