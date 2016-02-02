@@ -11,10 +11,10 @@ B<openssl> B<pkeyutl>
 [B<-out file>]
 [B<-sigfile file>]
 [B<-inkey file>]
-[B<-keyform PEM|DER>]
+[B<-keyform PEM|DER|ENGINE>]
 [B<-passin arg>]
 [B<-peerkey file>]
-[B<-peerform PEM|DER>]
+[B<-peerform PEM|DER|ENGINE>]
 [B<-pubin>]
 [B<-certin>]
 [B<-rev>]
@@ -52,7 +52,7 @@ default.
 
 the input key file, by default it should be a private key.
 
-=item B<-keyform PEM|DER>
+=item B<-keyform PEM|DER|ENGINE>
 
 the key format PEM, DER or ENGINE.
 
@@ -66,7 +66,7 @@ see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
 
 the peer key file, used by key derivation (agreement) operations.
 
-=item B<-peerform PEM|DER>
+=item B<-peerform PEM|DER|ENGINE>
 
 the peer key format PEM, DER or ENGINE.
 
