@@ -3557,7 +3557,7 @@ static unsigned int psk_server_callback(SSL *ssl, const char *identity,
 
 static int do_test_cipherlist(void)
 {
-#if !defined(OPENSSL_NO_SSL3) || !defined(OPENSSL_NO_TLS1)
+#if !defined(OPENSSL_NO_SSL3_METHOD) || !defined(OPENSSL_NO_TLS1_METHOD)
     int i = 0;
     const SSL_METHOD *meth;
     const SSL_CIPHER *ci, *tci = NULL;
@@ -3569,7 +3569,7 @@ static int do_test_cipherlist(void)
     OPENSSL_init_crypto(0, NULL);
 #endif
 
-#ifndef OPENSSL_NO_SSL3
+#ifndef OPENSSL_NO_SSL3_METHOD
     meth = SSLv3_method();
     tci = NULL;
     while ((ci = meth->get_cipher(i++)) != NULL) {
@@ -3582,7 +3582,7 @@ static int do_test_cipherlist(void)
         tci = ci;
     }
 #endif
-#ifndef OPENSSL_NO_TLS1
+#ifndef OPENSSL_NO_TLS1_METHOD
     meth = TLSv1_method();
     tci = NULL;
     while ((ci = meth->get_cipher(i++)) != NULL) {

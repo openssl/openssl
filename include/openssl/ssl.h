@@ -1656,25 +1656,35 @@ __owur const SSL_METHOD *TLS_method(void);
 __owur const SSL_METHOD *TLS_server_method(void);
 __owur const SSL_METHOD *TLS_client_method(void);
 
+# ifndef OPENSSL_NO_TLS1_METHOD
 __owur const SSL_METHOD *TLSv1_method(void); /* TLSv1.0 */
 __owur const SSL_METHOD *TLSv1_server_method(void); /* TLSv1.0 */
 __owur const SSL_METHOD *TLSv1_client_method(void); /* TLSv1.0 */
+# endif
 
+# ifndef OPENSSL_NO_TLS1_1_METHOD
 __owur const SSL_METHOD *TLSv1_1_method(void); /* TLSv1.1 */
 __owur const SSL_METHOD *TLSv1_1_server_method(void); /* TLSv1.1 */
 __owur const SSL_METHOD *TLSv1_1_client_method(void); /* TLSv1.1 */
+# endif
 
+# ifndef OPENSSL_NO_TLS1_2_METHOD
 __owur const SSL_METHOD *TLSv1_2_method(void); /* TLSv1.2 */
 __owur const SSL_METHOD *TLSv1_2_server_method(void); /* TLSv1.2 */
 __owur const SSL_METHOD *TLSv1_2_client_method(void); /* TLSv1.2 */
+# endif
 
+# ifndef OPENSSL_NO_DTLS1_METHOD
 __owur const SSL_METHOD *DTLSv1_method(void); /* DTLSv1.0 */
 __owur const SSL_METHOD *DTLSv1_server_method(void); /* DTLSv1.0 */
 __owur const SSL_METHOD *DTLSv1_client_method(void); /* DTLSv1.0 */
+# endif
 
+# ifndef OPENSSL_NO_DTLS1_2_METHOD
 __owur const SSL_METHOD *DTLSv1_2_method(void); /* DTLSv1.2 */
 __owur const SSL_METHOD *DTLSv1_2_server_method(void); /* DTLSv1.2 */
 __owur const SSL_METHOD *DTLSv1_2_client_method(void); /* DTLSv1.2 */
+#endif
 
 __owur const SSL_METHOD *DTLS_method(void); /* DTLS 1.0 and 1.2 */
 __owur const SSL_METHOD *DTLS_server_method(void); /* DTLS 1.0 and 1.2 */
