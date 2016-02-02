@@ -737,14 +737,9 @@ int generate_cookie_callback(SSL *ssl, unsigned char *cookie,
                              unsigned int *cookie_len)
 {
     unsigned char *buffer;
-    unsigned int length;
-    union {
-        struct sockaddr sa;
-        struct sockaddr_in s4;
-#if OPENSSL_USE_IPV6
-        struct sockaddr_in6 s6;
-#endif
-    } peer;
+    size_t length;
+    unsigned short port;
+    BIO_ADDR *peer = NULL;
 
     /* Initialize a random secret */
     if (!cookie_initialized) {
@@ -755,50 +750,31 @@ int generate_cookie_callback(SSL *ssl, unsigned char *cookie,
         cookie_initialized = 1;
     }
 
+    peer = BIO_ADDR_new();
+    if (peer == NULL) {
+        BIO_printf(bio_err, "memory full\n");
+        return 0;
+    }
+
     /* Read peer information */
-    (void)BIO_dgram_get_peer(SSL_get_rbio(ssl), &peer);
+    (void)BIO_dgram_get_peer(SSL_get_rbio(ssl), peer);
 
     /* Create buffer with peer's address and port */
-    length = 0;
-    switch (peer.sa.sa_family) {
-    case AF_INET:
-        length += sizeof(struct in_addr);
-        length += sizeof(peer.s4.sin_port);
-        break;
-#if OPENSSL_USE_IPV6
-    case AF_INET6:
-        length += sizeof(struct in6_addr);
-        length += sizeof(peer.s6.sin6_port);
-        break;
-#endif
-    default:
-        OPENSSL_assert(0);
-        break;
-    }
+    BIO_ADDR_rawaddress(peer, NULL, &length);
+    OPENSSL_assert(length != 0);
+    port = BIO_ADDR_rawport(peer);
+    length += sizeof(port);
     buffer = app_malloc(length, "cookie generate buffer");
 
-    switch (peer.sa.sa_family) {
-    case AF_INET:
-        memcpy(buffer, &peer.s4.sin_port, sizeof(peer.s4.sin_port));
-        memcpy(buffer + sizeof(peer.s4.sin_port),
-               &peer.s4.sin_addr, sizeof(struct in_addr));
-        break;
-#if OPENSSL_USE_IPV6
-    case AF_INET6:
-        memcpy(buffer, &peer.s6.sin6_port, sizeof(peer.s6.sin6_port));
-        memcpy(buffer + sizeof(peer.s6.sin6_port),
-               &peer.s6.sin6_addr, sizeof(struct in6_addr));
-        break;
-#endif
-    default:
-        OPENSSL_assert(0);
-        break;
-    }
+    memcpy(buffer, &port, sizeof(port));
+    BIO_ADDR_rawaddress(peer, buffer + sizeof(port), NULL);
 
     /* Calculate HMAC of buffer using the secret */
     HMAC(EVP_sha1(), cookie_secret, COOKIE_SECRET_LENGTH,
          buffer, length, cookie, cookie_len);
+
     OPENSSL_free(buffer);
+    BIO_ADDR_free(peer);
 
     return 1;
 }

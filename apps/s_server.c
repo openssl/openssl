@@ -2432,12 +2432,15 @@ static int init_ssl_connection(SSL *con)
     unsigned next_proto_neg_len;
 #endif
     unsigned char *exportedkeymat;
-#ifndef OPENSSL_NO_DTLS
-    struct sockaddr_storage client;
-#endif
 
 #ifndef OPENSSL_NO_DTLS
     if(dtlslisten) {
+        BIO_ADDR *client = NULL;
+
+        if ((client = BIO_ADDR_new()) == NULL) {
+            BIO_printf(bio_err, "ERROR - memory\n");
+            return 0;
+        }
         i = DTLSv1_listen(con, &client);
         if (i > 0) {
             BIO *wbio;
@@ -2448,11 +2451,12 @@ static int init_ssl_connection(SSL *con)
                 BIO_get_fd(wbio, &fd);
             }
 
-            if(!wbio || connect(fd, (struct sockaddr *)&client,
-                                sizeof(struct sockaddr_storage))) {
+            if(!wbio || BIO_connect(fd, client, 0) == 0) {
                 BIO_printf(bio_err, "ERROR - unable to connect\n");
+                BIO_ADDR_free(client);
                 return 0;
             }
+            BIO_ADDR_free(client);
             dtlslisten = 0;
             i = SSL_accept(con);
         }

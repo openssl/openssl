@@ -75,7 +75,7 @@
 static void get_current_time(struct timeval *t);
 static int dtls1_set_handshake_header(SSL *s, int type, unsigned long len);
 static int dtls1_handshake_write(SSL *s);
-int dtls1_listen(SSL *s, struct sockaddr *client);
+int dtls1_listen(SSL *s, BIO_ADDR *client);
 static unsigned int dtls1_link_min_mtu(void);
 
 /* XDTLS:  figure out the right values */
@@ -484,7 +484,7 @@ static void get_current_time(struct timeval *t)
 #define LISTEN_SEND_VERIFY_REQUEST  1
 
 
-int dtls1_listen(SSL *s, struct sockaddr *client)
+int dtls1_listen(SSL *s, BIO_ADDR *client)
 {
     int next, n, ret = 0, clearpkt = 0;
     unsigned char cookie[DTLS1_COOKIE_LENGTH];
@@ -495,7 +495,7 @@ int dtls1_listen(SSL *s, struct sockaddr *client)
     unsigned int rectype, versmajor, msgseq, msgtype, clientvers, cookielen;
     BIO *rbio, *wbio;
     BUF_MEM *bufm;
-    struct sockaddr_storage tmpclient;
+    BIO_ADDR *tmpclient = NULL;
     PACKET pkt, msgpkt, msgpayload, session, cookiepkt;
 
     /* Ensure there is no state left over from a previous invocation */
@@ -805,11 +805,14 @@ int dtls1_listen(SSL *s, struct sockaddr *client)
              * This is unneccessary if rbio and wbio are one and the same - but
              * maybe they're not.
              */
-            if(BIO_dgram_get_peer(rbio, &tmpclient) <= 0
-               || BIO_dgram_set_peer(wbio, &tmpclient) <= 0) {
+            if ((tmpclient = BIO_ADDR_new()) == NULL
+                || BIO_dgram_get_peer(rbio, tmpclient) <= 0
+                || BIO_dgram_set_peer(wbio, tmpclient) <= 0) {
                 SSLerr(SSL_F_DTLS1_LISTEN, ERR_R_INTERNAL_ERROR);
                 goto end;
             }
+            BIO_ADDR_free(tmpclient);
+            tmpclient = NULL;
 
             if (BIO_write(wbio, buf, reclen) < (int)reclen) {
                 if(BIO_should_retry(wbio)) {
@@ -863,6 +866,7 @@ int dtls1_listen(SSL *s, struct sockaddr *client)
     ret = 1;
     clearpkt = 0;
 end:
+    BIO_ADDR_free(tmpclient);
     BIO_ctrl(SSL_get_rbio(s), BIO_CTRL_DGRAM_SET_PEEK_MODE, 0, NULL);
     if (clearpkt) {
         /* Dump this packet. Ignore return value */
