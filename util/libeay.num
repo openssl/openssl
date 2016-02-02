@@ -46,7 +46,7 @@ BF_options                              45	1_1_0	EXIST::FUNCTION:BF
 BF_set_key                              46	1_1_0	EXIST::FUNCTION:BF
 BIO_CONNECT_free                        47	1_1_0	NOEXIST::FUNCTION:
 BIO_CONNECT_new                         48	1_1_0	NOEXIST::FUNCTION:
-BIO_accept                              51	1_1_0	EXIST::FUNCTION:
+BIO_accept                              51	1_1_0	EXIST::FUNCTION:DEPRECATEDIN_1_1_0
 BIO_ctrl                                52	1_1_0	EXIST::FUNCTION:
 BIO_int_ctrl                            53	1_1_0	EXIST::FUNCTION:
 BIO_debug_callback                      54	1_1_0	EXIST::FUNCTION:
@@ -63,13 +63,13 @@ BIO_fd_should_retry                     64	1_1_0	EXIST::FUNCTION:
 BIO_find_type                           65	1_1_0	EXIST::FUNCTION:
 BIO_free                                66	1_1_0	EXIST::FUNCTION:
 BIO_free_all                            67	1_1_0	EXIST::FUNCTION:
-BIO_get_accept_socket                   69	1_1_0	EXIST::FUNCTION:
+BIO_get_accept_socket                   69	1_1_0	EXIST::FUNCTION:DEPRECATEDIN_1_1_0
 BIO_get_filter_bio                      70	1_1_0	NOEXIST::FUNCTION:
-BIO_get_host_ip                         71	1_1_0	EXIST::FUNCTION:
-BIO_get_port                            72	1_1_0	EXIST::FUNCTION:
+BIO_get_host_ip                         71	1_1_0	EXIST::FUNCTION:DEPRECATEDIN_1_1_0
+BIO_get_port                            72	1_1_0	EXIST::FUNCTION:DEPRECATEDIN_1_1_0
 BIO_get_retry_BIO                       73	1_1_0	EXIST::FUNCTION:
 BIO_get_retry_reason                    74	1_1_0	EXIST::FUNCTION:
-BIO_gethostbyname                       75	1_1_0	EXIST::FUNCTION:
+BIO_gethostbyname                       75	1_1_0	EXIST::FUNCTION:DEPRECATEDIN_1_1_0
 BIO_gets                                76	1_1_0	EXIST::FUNCTION:
 BIO_new                                 78	1_1_0	EXIST::FUNCTION:
 BIO_new_accept                          79	1_1_0	EXIST::FUNCTION:
@@ -4789,3 +4789,9 @@ BIO_ADDR_new                            5183	1_1_0	EXIST::FUNCTION:
 BIO_ADDR_rawmake                        5184	1_1_0	EXIST::FUNCTION:
 BIO_ADDRINFO_free                       5185	1_1_0	EXIST::FUNCTION:
 BIO_parse_hostserv                      5186	1_1_0	EXIST::FUNCTION:
+BIO_accept_ex                           5187	1_1_0	EXIST::FUNCTION:
+BIO_connect                             5188	1_1_0	EXIST::FUNCTION:
+BIO_closesocket                         5189	1_1_0	EXIST::FUNCTION:
+BIO_sock_info                           5190	1_1_0	EXIST::FUNCTION:
+BIO_socket                              5191	1_1_0	EXIST::FUNCTION:
+BIO_listen                              5192	1_1_0	EXIST::FUNCTION:
