@@ -89,8 +89,8 @@
 #define STRING_MASK     "string_mask"
 #define UTF8_IN         "utf8"
 
-#define DEFAULT_KEY_LENGTH      512
-#define MIN_KEY_LENGTH          384
+#define DEFAULT_KEY_LENGTH      2048
+#define MIN_KEY_LENGTH          512
 
 static int make_REQ(X509_REQ *req, EVP_PKEY *pkey, char *dn, int mutlirdn,
                     int attribs, unsigned long chtype);
