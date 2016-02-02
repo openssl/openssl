@@ -830,8 +830,8 @@ static void sv_usage(void)
     fprintf(stderr, " -psk arg      - PSK in hex (without 0x)\n");
 #endif
 #ifndef OPENSSL_NO_SRP
-    fprintf(stderr, " -srpuser user  - SRP username to use\n");
-    fprintf(stderr, " -srppass arg   - password for 'user'\n");
+    fprintf(stderr, " -srpuser user - SRP username to use\n");
+    fprintf(stderr, " -srppass arg  - password for 'user'\n");
 #endif
 #ifndef OPENSSL_NO_SSL3
     fprintf(stderr, " -ssl3         - use SSLv3\n");
@@ -840,7 +840,7 @@ static void sv_usage(void)
     fprintf(stderr, " -tls1         - use TLSv1\n");
 #endif
 #ifndef OPENSSL_NO_DTLS
-    fprintf(stderr, " -dtls        - use DTLS\n");
+    fprintf(stderr, " -dtls         - use DTLS\n");
 #ifndef OPENSSL_NO_DTLS1
     fprintf(stderr, " -dtls1        - use DTLSv1\n");
 #endif
@@ -1056,6 +1056,7 @@ int main(int argc, char *argv[])
     int fips_mode = 0;
 #endif
     int no_protocol;
+    int min_version = 0, max_version = 0;
 
 #ifndef OPENSSL_NO_CT
     /*
@@ -1186,12 +1187,12 @@ int main(int argc, char *argv[])
                 goto bad;
             srp_server_arg.expected_user = srp_client_arg.srplogin =
                 *(++argv);
-            tls1 = 1;
+            min_version = TLS1_VERSION;
         } else if (strcmp(*argv, "-srppass") == 0) {
             if (--argc < 1)
                 goto bad;
             srp_server_arg.pass = srp_client_arg.srppassin = *(++argv);
-            tls1 = 1;
+            min_version = TLS1_VERSION;
         }
 #endif
         else if (strcmp(*argv, "-tls1") == 0) {
@@ -1495,37 +1496,27 @@ int main(int argc, char *argv[])
     }
 #endif
 
-    /*
-     * At this point, ssl3/tls1 is only set if the protocol is available.
-     * (Otherwise we exit early.) However the compiler doesn't know this, so
-     * we ifdef.
-     */
+#ifndef OPENSSL_NO_TLS
+    meth = TLS_method();
+    if (ssl3) {
+        min_version = SSL3_VERSION;
+        max_version = SSL3_VERSION;
+    } else if (tls1) {
+        min_version = TLS1_VERSION;
+        max_version = TLS1_VERSION;
+    }
+#endif
 #ifndef OPENSSL_NO_DTLS
-#ifndef OPENSSL_NO_DTLS1
-    if (dtls1)
-        meth = DTLSv1_method();
-    else
-#endif
-#ifndef OPENSSL_NO_DTLS1_2
-    if (dtls12)
-        meth = DTLSv1_2_method();
-    else
-#endif
-    if (dtls)
+    if (dtls || dtls1 || dtls12)
         meth = DTLS_method();
-    else
+    if (dtls1) {
+        min_version = DTLS1_VERSION;
+        max_version = DTLS1_VERSION;
+    } else if (dtls12) {
+        min_version = DTLS1_2_VERSION;
+        max_version = DTLS1_2_VERSION;
+    }
 #endif
-#ifndef OPENSSL_NO_SSL3
-    if (ssl3)
-        meth = SSLv3_method();
-    else
-#endif
-#ifndef OPENSSL_NO_TLS1
-    if (tls1)
-        meth = TLSv1_method();
-    else
-#endif
-        meth = TLS_method();
 
     c_ctx = SSL_CTX_new(meth);
     s_ctx = SSL_CTX_new(meth);
@@ -1542,6 +1533,15 @@ int main(int argc, char *argv[])
     SSL_CTX_set_security_level(c_ctx, 0);
     SSL_CTX_set_security_level(s_ctx, 0);
     SSL_CTX_set_security_level(s_ctx2, 0);
+
+    if (SSL_CTX_set_min_proto_version(c_ctx, min_version) == 0)
+        goto end;
+    if (SSL_CTX_set_max_proto_version(c_ctx, max_version) == 0)
+        goto end;
+    if (SSL_CTX_set_min_proto_version(s_ctx, min_version) == 0)
+        goto end;
+    if (SSL_CTX_set_max_proto_version(s_ctx, max_version) == 0)
+        goto end;
 
     if (cipher != NULL) {
         if (!SSL_CTX_set_cipher_list(c_ctx, cipher)

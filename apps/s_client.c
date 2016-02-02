@@ -928,6 +928,7 @@ int s_client_main(int argc, char **argv)
     char *ctlog_file = NULL;
     ct_validation_cb ct_validation = NULL;
 #endif
+    int min_version = 0, max_version = 0;
 
     FD_ZERO(&readfds);
     FD_ZERO(&writefds);
@@ -1199,25 +1200,30 @@ int s_client_main(int argc, char **argv)
 #ifndef OPENSSL_NO_SRP
         case OPT_SRPUSER:
             srp_arg.srplogin = opt_arg();
-            meth = TLSv1_client_method();
+            if (min_version < TLS1_VERSION)
+                min_version = TLS1_VERSION;
             break;
         case OPT_SRPPASS:
             srppass = opt_arg();
-            meth = TLSv1_client_method();
+            if (min_version < TLS1_VERSION)
+                min_version = TLS1_VERSION;
             break;
         case OPT_SRP_STRENGTH:
             srp_arg.strength = atoi(opt_arg());
             BIO_printf(bio_err, "SRP minimal length for N is %d\n",
                        srp_arg.strength);
-            meth = TLSv1_client_method();
+            if (min_version < TLS1_VERSION)
+                min_version = TLS1_VERSION;
             break;
         case OPT_SRP_LATEUSER:
             srp_lateuser = 1;
-            meth = TLSv1_client_method();
+            if (min_version < TLS1_VERSION)
+                min_version = TLS1_VERSION;
             break;
         case OPT_SRP_MOREGROUPS:
             srp_arg.amp = 1;
-            meth = TLSv1_client_method();
+            if (min_version < TLS1_VERSION)
+                min_version = TLS1_VERSION;
             break;
 #else
         case OPT_SRPUSER:
@@ -1231,24 +1237,20 @@ int s_client_main(int argc, char **argv)
             ssl_config = opt_arg();
             break;
         case OPT_SSL3:
-#ifndef OPENSSL_NO_SSL3
-            meth = SSLv3_client_method();
-#endif
+            min_version = SSL3_VERSION;
+            max_version = SSL3_VERSION;
             break;
         case OPT_TLS1_2:
-#ifndef OPENSSL_NO_TLS1_2
-            meth = TLSv1_2_client_method();
-#endif
+            min_version = TLS1_2_VERSION;
+            max_version = TLS1_2_VERSION;
             break;
         case OPT_TLS1_1:
-#ifndef OPENSSL_NO_TLS1_1
-            meth = TLSv1_1_client_method();
-#endif
+            min_version = TLS1_1_VERSION;
+            max_version = TLS1_1_VERSION;
             break;
         case OPT_TLS1:
-#ifndef OPENSSL_NO_TLS1
-            meth = TLSv1_client_method();
-#endif
+            min_version = TLS1_VERSION;
+            max_version = TLS1_VERSION;
             break;
         case OPT_DTLS:
 #ifndef OPENSSL_NO_DTLS
@@ -1258,13 +1260,17 @@ int s_client_main(int argc, char **argv)
             break;
         case OPT_DTLS1:
 #ifndef OPENSSL_NO_DTLS1
-            meth = DTLSv1_client_method();
+            meth = DTLS_client_method();
+            min_version = DTLS1_VERSION;
+            max_version = DTLS1_VERSION;
             socket_type = SOCK_DGRAM;
 #endif
             break;
         case OPT_DTLS1_2:
 #ifndef OPENSSL_NO_DTLS1_2
-            meth = DTLSv1_2_client_method();
+            meth = DTLS_client_method();
+            min_version = DTLS1_2_VERSION;
+            max_version = DTLS1_2_VERSION;
             socket_type = SOCK_DGRAM;
 #endif
             break;
@@ -1565,6 +1571,11 @@ int s_client_main(int argc, char **argv)
         goto end;
         }
     }
+
+    if (SSL_CTX_set_min_proto_version(ctx, min_version) == 0)
+        goto end;
+    if (SSL_CTX_set_max_proto_version(ctx, max_version) == 0)
+        goto end;
 
     if (vpmtouched && !SSL_CTX_set1_param(ctx, vpm)) {
         BIO_printf(bio_err, "Error setting verify params\n");

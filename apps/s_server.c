@@ -1066,6 +1066,7 @@ int s_server_main(int argc, char *argv[])
     char *srpuserseed = NULL;
     char *srp_verifier_file = NULL;
 #endif
+    int min_version = 0, max_version = 0;
 
     local_argc = argc;
     local_argv = argv;
@@ -1389,13 +1390,15 @@ int s_server_main(int argc, char *argv[])
         case OPT_SRPVFILE:
 #ifndef OPENSSL_NO_SRP
             srp_verifier_file = opt_arg();
-            meth = TLSv1_server_method();
+            if (min_version < TLS1_VERSION)
+                min_version = TLS1_VERSION;
 #endif
             break;
         case OPT_SRPUSERSEED:
 #ifndef OPENSSL_NO_SRP
             srpuserseed = opt_arg();
-            meth = TLSv1_server_method();
+            if (min_version < TLS1_VERSION)
+                min_version = TLS1_VERSION;
 #endif
             break;
         case OPT_REV:
@@ -1414,24 +1417,20 @@ int s_server_main(int argc, char *argv[])
             ssl_config = opt_arg();
             break;
         case OPT_SSL3:
-#ifndef OPENSSL_NO_SSL3
-            meth = SSLv3_server_method();
-#endif
+            min_version = SSL3_VERSION;
+            max_version = SSL3_VERSION;
             break;
         case OPT_TLS1_2:
-#ifndef OPENSSL_NO_TLS1_2
-            meth = TLSv1_2_server_method();
-#endif
+            min_version = TLS1_2_VERSION;
+            max_version = TLS1_2_VERSION;
             break;
         case OPT_TLS1_1:
-#ifndef OPENSSL_NO_TLS1_1
-            meth = TLSv1_1_server_method();
-#endif
+            min_version = TLS1_1_VERSION;
+            max_version = TLS1_1_VERSION;
             break;
         case OPT_TLS1:
-#ifndef OPENSSL_NO_TLS1
-            meth = TLSv1_server_method();
-#endif
+            min_version = TLS1_VERSION;
+            max_version = TLS1_VERSION;
             break;
         case OPT_DTLS:
 #ifndef OPENSSL_NO_DTLS
@@ -1440,14 +1439,18 @@ int s_server_main(int argc, char *argv[])
 #endif
             break;
         case OPT_DTLS1:
-#ifndef OPENSSL_NO_DTLS1
-            meth = DTLSv1_server_method();
+#ifndef OPENSSL_NO_DTLS
+            meth = DTLS_server_method();
+            min_version = DTLS1_VERSION;
+            max_version = DTLS1_VERSION;
             socket_type = SOCK_DGRAM;
 #endif
             break;
         case OPT_DTLS1_2:
-#ifndef OPENSSL_NO_DTLS1_2
-            meth = DTLSv1_2_server_method();
+#ifndef OPENSSL_NO_DTLS
+            meth = DTLS_server_method();
+            min_version = DTLS1_2_VERSION;
+            max_version = DTLS1_2_VERSION;
             socket_type = SOCK_DGRAM;
 #endif
             break;
@@ -1728,6 +1731,10 @@ int s_server_main(int argc, char *argv[])
         goto end;
         }
     }
+    if (SSL_CTX_set_min_proto_version(ctx, min_version) == 0)
+        goto end;
+    if (SSL_CTX_set_max_proto_version(ctx, max_version) == 0)
+        goto end;
 
     if (session_id_prefix) {
         if (strlen(session_id_prefix) >= 32)
