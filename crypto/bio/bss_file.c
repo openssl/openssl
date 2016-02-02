@@ -84,7 +84,6 @@
 
 # include <stdio.h>
 # include <errno.h>
-# include "internal/cryptlib.h"
 # include "bio_lcl.h"
 # include <openssl/err.h>
 
