@@ -130,6 +130,7 @@ sub disabled {
 }
 
 sub available_protocols {
+    load_configdata() unless $configdata_loaded;
     my $protocol_class = shift;
     if (exists $available_protocols{lc $protocol_class}) {
 	return @{$available_protocols{lc $protocol_class}}
