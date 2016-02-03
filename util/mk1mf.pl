@@ -670,7 +670,7 @@ EX_LIBS=$ex_libs
 # The OpenSSL directory
 SRC_D=$src_dir
 
-LINK=$link
+LINK_CMD=$link
 LFLAGS=$lflags
 RSC=$rsc
 FIPSLINK=\$(PERL) util${o}fipslink.pl
