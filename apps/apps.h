@@ -285,11 +285,11 @@ void wait_for_async(SSL *s);
 # define OPT_S_ENUM \
         OPT_S__FIRST=3000, \
         OPT_S_NOSSL3, OPT_S_NOTLS1, OPT_S_NOTLS1_1, OPT_S_NOTLS1_2, \
-        OPT_S_BUGS, OPT_S_COMP, OPT_S_ECDHSINGLE, OPT_S_NOTICKET, \
+        OPT_S_BUGS, OPT_S_NO_COMP, OPT_S_ECDHSINGLE, OPT_S_NOTICKET, \
         OPT_S_SERVERPREF, OPT_S_LEGACYRENEG, OPT_S_LEGACYCONN, \
         OPT_S_ONRESUMP, OPT_S_NOLEGACYCONN, OPT_S_STRICT, OPT_S_SIGALGS, \
         OPT_S_CLIENTSIGALGS, OPT_S_CURVES, OPT_S_NAMEDCURVE, OPT_S_CIPHER, \
-        OPT_S_DHPARAM, OPT_S_DEBUGBROKE, \
+        OPT_S_DHPARAM, OPT_S_DEBUGBROKE, OPT_S_COMP, \
         OPT_S__LAST
 
 # define OPT_S_OPTIONS \
@@ -298,6 +298,7 @@ void wait_for_async(SSL *s);
         {"no_tls1_1", OPT_S_NOTLS1_1, '-' }, \
         {"no_tls1_2", OPT_S_NOTLS1_2, '-' }, \
         {"bugs", OPT_S_BUGS, '-' }, \
+        {"no_comp", OPT_S_NO_COMP, '-', "Disable SSL/TLS compression (default)" }, \
         {"comp", OPT_S_COMP, '-', "Use SSL/TLS-level compression" }, \
         {"ecdh_single", OPT_S_ECDHSINGLE, '-' }, \
         {"no_ticket", OPT_S_NOTICKET, '-' }, \
@@ -327,6 +328,7 @@ void wait_for_async(SSL *s);
         case OPT_S_NOTLS1_1: \
         case OPT_S_NOTLS1_2: \
         case OPT_S_BUGS: \
+        case OPT_S_NO_COMP: \
         case OPT_S_COMP: \
         case OPT_S_ECDHSINGLE: \
         case OPT_S_NOTICKET: \
