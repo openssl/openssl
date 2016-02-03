@@ -1,4 +1,3 @@
-/* crypto/err/err.h */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -258,6 +257,11 @@ typedef struct err_state_st {
 # define SYS_F_WSASTARTUP        9/* Winsock stuff */
 # define SYS_F_OPENDIR           10
 # define SYS_F_FREAD             11
+# define SYS_F_GETADDRINFO       12
+# define SYS_F_GETNAMEINFO       13
+# define SYS_F_SETSOCKOPT        14
+# define SYS_F_GETSOCKOPT        15
+# define SYS_F_GETSOCKNAME       16
 
 /* reasons */
 # define ERR_R_SYS_LIB   ERR_LIB_SYS/* 2 */

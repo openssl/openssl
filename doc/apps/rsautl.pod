@@ -10,6 +10,7 @@ B<openssl> B<rsautl>
 [B<-in file>]
 [B<-out file>]
 [B<-inkey file>]
+[B<-keyform PEM|DER|ENGINE>]
 [B<-pubin>]
 [B<-certin>]
 [B<-sign>]
@@ -44,6 +45,10 @@ default.
 =item B<-inkey file>
 
 the input key file, by default it should be an RSA private key.
+
+=item B<-keyform PEM|DER|ENGINE>
+
+the key format PEM, DER or ENGINE.
 
 =item B<-pubin>
 

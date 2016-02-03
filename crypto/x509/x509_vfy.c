@@ -1,4 +1,3 @@
-/* crypto/x509/x509_vfy.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -193,7 +192,6 @@ static X509 *lookup_cert_match(X509_STORE_CTX *ctx, X509 *x)
 
 static int verify_chain(X509_STORE_CTX *ctx)
 {
-    int (*cb) (int xok, X509_STORE_CTX *xctx) = ctx->verify_cb;
     int err;
     int ok;
 
@@ -214,7 +212,7 @@ static int verify_chain(X509_STORE_CTX *ctx)
     if (err != X509_V_OK) {
         ctx->error = err;
         ctx->current_cert = sk_X509_value(ctx->chain, ctx->error_depth);
-        if ((ok = cb(0, ctx)) == 0)
+        if ((ok = ctx->verify_cb(0, ctx)) == 0)
             return ok;
     }
 
@@ -365,19 +363,72 @@ static STACK_OF(X509) *lookup_certs_sk(X509_STORE_CTX *ctx, X509_NAME *nm)
 }
 
 /*
+ * Check EE or CA certificate purpose.  For trusted certificates explicit local
+ * auxiliary trust can be used to override EKU-restrictions.
+ */
+static int check_purpose(X509_STORE_CTX *ctx, X509 *x, int purpose, int depth,
+                         int must_be_ca)
+{
+    int tr_ok = X509_TRUST_UNTRUSTED;
+
+    /*
+     * For trusted certificates we want to see whether any auxiliary trust
+     * settings trump the purpose constraints.
+     *
+     * This is complicated by the fact that the trust ordinals in
+     * ctx->param->trust are entirely independent of the purpose ordinals in
+     * ctx->param->purpose!
+     *
+     * What connects them is their mutual initialization via calls from
+     * X509_STORE_CTX_set_default() into X509_VERIFY_PARAM_lookup() which sets
+     * related values of both param->trust and param->purpose.  It is however
+     * typically possible to infer associated trust values from a purpose value
+     * via the X509_PURPOSE API.
+     *
+     * Therefore, we can only check for trust overrides when the purpose we're
+     * checking is the same as ctx->param->purpose and ctx->param->trust is
+     * also set.
+     */
+    if (depth >= ctx->num_untrusted && purpose == ctx->param->purpose)
+        tr_ok = X509_check_trust(x, ctx->param->trust, X509_TRUST_NO_SS_COMPAT);
+
+    switch (tr_ok) {
+    case X509_TRUST_TRUSTED:
+        return 1;
+    case X509_TRUST_REJECTED:
+        break;
+    default:
+        switch (X509_check_purpose(x, purpose, must_be_ca > 0)) {
+        case 1:
+            return 1;
+        case 0:
+            break;
+        default:
+            if ((ctx->param->flags & X509_V_FLAG_X509_STRICT) == 0)
+                return 1;
+        }
+        break;
+    }
+
+    ctx->error = X509_V_ERR_INVALID_PURPOSE;
+    ctx->error_depth = depth;
+    ctx->current_cert = x;
+    return ctx->verify_cb(0, ctx);
+}
+
+/*
  * Check a certificate chains extensions for consistency with the supplied
  * purpose
  */
 
 static int check_chain_extensions(X509_STORE_CTX *ctx)
 {
-    int i, ok = 0, must_be_ca, plen = 0;
+    int i, must_be_ca, plen = 0;
     X509 *x;
-    int (*cb) (int xok, X509_STORE_CTX *xctx);
     int proxy_path_length = 0;
     int purpose;
     int allow_proxy_certs;
-    cb = ctx->verify_cb;
+    int num = sk_X509_num(ctx->chain);
 
     /*-
      *  must_be_ca can have 1 of 3 values:
@@ -406,8 +457,7 @@ static int check_chain_extensions(X509_STORE_CTX *ctx)
         purpose = ctx->param->purpose;
     }
 
-    /* Check all untrusted certificates */
-    for (i = 0; i == 0 || i < ctx->num_untrusted; i++) {
+    for (i = 0; i < num; i++) {
         int ret;
         x = sk_X509_value(ctx->chain, i);
         if (!(ctx->param->flags & X509_V_FLAG_IGNORE_CRITICAL)
@@ -415,17 +465,15 @@ static int check_chain_extensions(X509_STORE_CTX *ctx)
             ctx->error = X509_V_ERR_UNHANDLED_CRITICAL_EXTENSION;
             ctx->error_depth = i;
             ctx->current_cert = x;
-            ok = cb(0, ctx);
-            if (!ok)
-                goto end;
+            if (!ctx->verify_cb(0, ctx))
+                return 0;
         }
         if (!allow_proxy_certs && (x->ex_flags & EXFLAG_PROXY)) {
             ctx->error = X509_V_ERR_PROXY_CERTIFICATES_NOT_ALLOWED;
             ctx->error_depth = i;
             ctx->current_cert = x;
-            ok = cb(0, ctx);
-            if (!ok)
-                goto end;
+            if (!ctx->verify_cb(0, ctx))
+                return 0;
         }
         ret = X509_check_ca(x);
         switch (must_be_ca) {
@@ -457,22 +505,12 @@ static int check_chain_extensions(X509_STORE_CTX *ctx)
         if (ret == 0) {
             ctx->error_depth = i;
             ctx->current_cert = x;
-            ok = cb(0, ctx);
-            if (!ok)
-                goto end;
+            if (!ctx->verify_cb(0, ctx))
+                return 0;
         }
-        if (ctx->param->purpose > 0) {
-            ret = X509_check_purpose(x, purpose, must_be_ca > 0);
-            if ((ret == 0)
-                || ((ctx->param->flags & X509_V_FLAG_X509_STRICT)
-                    && (ret != 1))) {
-                ctx->error = X509_V_ERR_INVALID_PURPOSE;
-                ctx->error_depth = i;
-                ctx->current_cert = x;
-                ok = cb(0, ctx);
-                if (!ok)
-                    goto end;
-            }
+        if (purpose > 0) {
+            if (!check_purpose(ctx, x, purpose, i, must_be_ca))
+                return 0;
         }
         /* Check pathlen if not self issued */
         if ((i > 1) && !(x->ex_flags & EXFLAG_SI)
@@ -481,9 +519,8 @@ static int check_chain_extensions(X509_STORE_CTX *ctx)
             ctx->error = X509_V_ERR_PATH_LENGTH_EXCEEDED;
             ctx->error_depth = i;
             ctx->current_cert = x;
-            ok = cb(0, ctx);
-            if (!ok)
-                goto end;
+            if (!ctx->verify_cb(0, ctx))
+                return 0;
         }
         /* Increment path length if not self issued */
         if (!(x->ex_flags & EXFLAG_SI))
@@ -498,18 +535,15 @@ static int check_chain_extensions(X509_STORE_CTX *ctx)
                 ctx->error = X509_V_ERR_PROXY_PATH_LENGTH_EXCEEDED;
                 ctx->error_depth = i;
                 ctx->current_cert = x;
-                ok = cb(0, ctx);
-                if (!ok)
-                    goto end;
+                if (!ctx->verify_cb(0, ctx))
+                    return 0;
             }
             proxy_path_length++;
             must_be_ca = 0;
         } else
             must_be_ca = 1;
     }
-    ok = 1;
- end:
-    return ok;
+    return 1;
 }
 
 static int check_name_constraints(X509_STORE_CTX *ctx)
@@ -595,7 +629,6 @@ static int check_trust(X509_STORE_CTX *ctx, int num_untrusted)
     int i, ok = 0;
     X509 *x = NULL;
     X509 *mx;
-    int (*cb) (int xok, X509_STORE_CTX *xctx) = ctx->verify_cb;
     struct dane_st *dane = (struct dane_st *)ctx->dane;
     int num = sk_X509_num(ctx->chain);
     int trust;
@@ -676,7 +709,7 @@ static int check_trust(X509_STORE_CTX *ctx, int num_untrusted)
     ctx->error_depth = i;
     ctx->current_cert = x;
     ctx->error = X509_V_ERR_CERT_REJECTED;
-    ok = cb(0, ctx);
+    ok = ctx->verify_cb(0, ctx);
     if (!ok)
         return X509_TRUST_REJECTED;
     return X509_TRUST_UNTRUSTED;
@@ -1568,9 +1601,6 @@ static int internal_verify(X509_STORE_CTX *ctx)
     int ok = 0, n;
     X509 *xs, *xi;
     EVP_PKEY *pkey = NULL;
-    int (*cb) (int xok, X509_STORE_CTX *xctx);
-
-    cb = ctx->verify_cb;
 
     n = sk_X509_num(ctx->chain) - 1;
     ctx->error_depth = n;
@@ -1597,7 +1627,7 @@ static int internal_verify(X509_STORE_CTX *ctx)
         if (n <= 0) {
             ctx->error = X509_V_ERR_UNABLE_TO_VERIFY_LEAF_SIGNATURE;
             ctx->current_cert = xi;
-            ok = cb(0, ctx);
+            ok = ctx->verify_cb(0, ctx);
             goto end;
         } else {
             n--;
@@ -1618,25 +1648,21 @@ static int internal_verify(X509_STORE_CTX *ctx)
          * explicitly asked for. It doesn't add any security and just wastes
          * time.
          */
-        if (!xs->valid
-            && (xs != xi
-                || (ctx->param->flags & X509_V_FLAG_CHECK_SS_SIGNATURE))) {
+        if (xs != xi || (ctx->param->flags & X509_V_FLAG_CHECK_SS_SIGNATURE)) {
             if ((pkey = X509_get0_pubkey(xi)) == NULL) {
                 ctx->error = X509_V_ERR_UNABLE_TO_DECODE_ISSUER_PUBLIC_KEY;
                 ctx->current_cert = xi;
-                ok = (*cb) (0, ctx);
+                ok = ctx->verify_cb(0, ctx);
                 if (!ok)
                     goto end;
             } else if (X509_verify(xs, pkey) <= 0) {
                 ctx->error = X509_V_ERR_CERT_SIGNATURE_FAILURE;
                 ctx->current_cert = xs;
-                ok = (*cb) (0, ctx);
+                ok = ctx->verify_cb(0, ctx);
                 if (!ok)
                     goto end;
             }
         }
-
-        xs->valid = 1;
 
  check_cert:
         ok = x509_check_cert_time(ctx, xs, 0);
@@ -1646,7 +1672,7 @@ static int internal_verify(X509_STORE_CTX *ctx)
         /* The last error (if any) is still in the error value */
         ctx->current_issuer = xi;
         ctx->current_cert = xs;
-        ok = (*cb) (1, ctx);
+        ok = ctx->verify_cb(1, ctx);
         if (!ok)
             goto end;
 
@@ -2028,11 +2054,20 @@ void X509_STORE_CTX_set0_crls(X509_STORE_CTX *ctx, STACK_OF(X509_CRL) *sk)
 
 int X509_STORE_CTX_set_purpose(X509_STORE_CTX *ctx, int purpose)
 {
+    /*
+     * XXX: Why isn't this function always used to set the associated trust?
+     * Should there even be a VPM->trust field at all?  Or should the trust
+     * always be inferred from the purpose by X509_STORE_CTX_init().
+     */
     return X509_STORE_CTX_purpose_inherit(ctx, 0, purpose, 0);
 }
 
 int X509_STORE_CTX_set_trust(X509_STORE_CTX *ctx, int trust)
 {
+    /*
+     * XXX: See above, this function would only be needed when the default
+     * trust for the purpose needs an override in a corner case.
+     */
     return X509_STORE_CTX_purpose_inherit(ctx, 0, 0, trust);
 }
 
@@ -2066,6 +2101,11 @@ int X509_STORE_CTX_purpose_inherit(X509_STORE_CTX *ctx, int def_purpose,
         ptmp = X509_PURPOSE_get0(idx);
         if (ptmp->trust == X509_TRUST_DEFAULT) {
             idx = X509_PURPOSE_get_by_id(def_purpose);
+            /*
+             * XXX: In the two callers above def_purpose is always 0, which is
+             * not a known value, so idx will always be -1.  How is the
+             * X509_TRUST_DEFAULT case actually supposed to be handled?
+             */
             if (idx == -1) {
                 X509err(X509_F_X509_STORE_CTX_PURPOSE_INHERIT,
                         X509_R_UNKNOWN_PURPOSE_ID);
@@ -2221,6 +2261,18 @@ int X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store, X509 *x509,
     if (ret == 0) {
         X509err(X509_F_X509_STORE_CTX_INIT, ERR_R_MALLOC_FAILURE);
         goto err;
+    }
+
+    /*
+     * XXX: For now, continue to inherit trust from VPM, but infer from the
+     * purpose if this still yields the default value.
+     */
+    if (ctx->param->trust == X509_TRUST_DEFAULT) {
+        int idx = X509_PURPOSE_get_by_id(ctx->param->purpose);
+        X509_PURPOSE *xp = X509_PURPOSE_get0(idx);
+
+        if (xp != NULL)
+            ctx->param->trust = X509_PURPOSE_get_trust(xp);
     }
 
     if (CRYPTO_new_ex_data(CRYPTO_EX_INDEX_X509_STORE_CTX, ctx,
@@ -2588,10 +2640,21 @@ static void dane_reset(struct dane_st *dane)
     dane->pdpth = -1;
 }
 
+static int check_leaf_suiteb(X509_STORE_CTX *ctx, X509 *cert)
+{
+    int err = X509_chain_check_suiteb(NULL, cert, NULL, ctx->param->flags);
+
+    if (err == X509_V_OK)
+        return 1;
+    ctx->current_cert = cert;
+    ctx->error_depth = 0;
+    ctx->error = err;
+    return ctx->verify_cb(0, ctx);
+}
+
 static int dane_verify(X509_STORE_CTX *ctx)
 {
     X509 *cert = ctx->cert;
-    int (*cb)(int xok, X509_STORE_CTX *xctx) = ctx->verify_cb;
     struct dane_st *dane = (struct dane_st *)ctx->dane;
     int matched;
     int done;
@@ -2605,9 +2668,11 @@ static int dane_verify(X509_STORE_CTX *ctx)
         X509_get_pubkey_parameters(NULL, ctx->chain);
 
     if (matched > 0) {
+        if (!check_leaf_suiteb(ctx, cert))
+            return 0;
         ctx->error_depth = 0;
         ctx->current_cert = cert;
-        return cb(1, ctx);
+        return ctx->verify_cb(1, ctx);
     }
 
     if (matched < 0) {
@@ -2619,10 +2684,12 @@ static int dane_verify(X509_STORE_CTX *ctx)
 
     if (done) {
         /* Fail early, TA-based success is not possible */
+        if (!check_leaf_suiteb(ctx, cert))
+            return 0;
         ctx->current_cert = cert;
         ctx->error_depth = 0;
         ctx->error = X509_V_ERR_CERT_UNTRUSTED;
-        return cb(0, ctx);
+        return ctx->verify_cb(0, ctx);
     }
 
     /*
@@ -2635,7 +2702,6 @@ static int dane_verify(X509_STORE_CTX *ctx)
 static int build_chain(X509_STORE_CTX *ctx)
 {
     struct dane_st *dane = (struct dane_st *)ctx->dane;
-    int (*cb) (int, X509_STORE_CTX *) = ctx->verify_cb;
     int num = sk_X509_num(ctx->chain);
     X509 *cert = sk_X509_value(ctx->chain, num - 1);
     int ss = cert_self_signed(cert);
@@ -2948,6 +3014,6 @@ static int build_chain(X509_STORE_CTX *ctx)
             ctx->error = X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT;
         if (DANETLS_ENABLED(dane))
             dane_reset(dane);
-        return cb(0, ctx);
+        return ctx->verify_cb(0, ctx);
     }
 }

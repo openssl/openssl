@@ -1,4 +1,3 @@
-/* dsa_asn1.c */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
  * 2000.
@@ -126,18 +125,12 @@ ASN1_SEQUENCE_cb(DSAparams, dsa_cb) = {
 
 IMPLEMENT_ASN1_ENCODE_FUNCTIONS_const_fname(DSA, DSAparams, DSAparams)
 
-/*
- * DSA public key is a bit trickier... its effectively a CHOICE type decided
- * by a field called write_params which can either write out just the public
- * key as an INTEGER or the parameters and public key in a SEQUENCE
- */
-
-ASN1_SEQUENCE(DSAPublicKey) = {
+ASN1_SEQUENCE_cb(DSAPublicKey, dsa_cb) = {
         ASN1_SIMPLE(DSA, pub_key, BIGNUM),
         ASN1_SIMPLE(DSA, p, BIGNUM),
         ASN1_SIMPLE(DSA, q, BIGNUM),
         ASN1_SIMPLE(DSA, g, BIGNUM)
-} static_ASN1_SEQUENCE_END_name(DSA, DSAPublicKey)
+} static_ASN1_SEQUENCE_END_cb(DSA, DSAPublicKey)
 
 IMPLEMENT_ASN1_ENCODE_FUNCTIONS_const_fname(DSA, DSAPublicKey, DSAPublicKey)
 

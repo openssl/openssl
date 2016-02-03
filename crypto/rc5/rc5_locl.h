@@ -1,4 +1,3 @@
-/* crypto/rc5/rc5_locl.h */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -171,10 +170,10 @@
 # endif
 #endif
 #ifndef ROTATE_l32
-# define ROTATE_l32(a,n)     (((a)<<(n&0x1f))|(((a)&0xffffffff)>>(32-(n&0x1f))))
+# define ROTATE_l32(a,n)     (((a)<<(n&0x1f))|(((a)&0xffffffff)>>((32-n)&0x1f)))
 #endif
 #ifndef ROTATE_r32
-# define ROTATE_r32(a,n)     (((a)<<(32-(n&0x1f)))|(((a)&0xffffffff)>>(n&0x1f)))
+# define ROTATE_r32(a,n)     (((a)<<((32-n)&0x1f))|(((a)&0xffffffff)>>(n&0x1f)))
 #endif
 
 #define RC5_32_MASK     0xffffffffL

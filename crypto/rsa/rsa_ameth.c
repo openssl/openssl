@@ -1,4 +1,3 @@
-/* crypto/rsa/rsa_ameth.c */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
  * 2006.
@@ -67,6 +66,7 @@
 # include <openssl/cms.h>
 #endif
 #include "internal/asn1_int.h"
+#include "internal/evp_int.h"
 
 #ifndef OPENSSL_NO_CMS
 static int rsa_cms_sign(CMS_SignerInfo *si);

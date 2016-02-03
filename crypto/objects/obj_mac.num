@@ -1018,3 +1018,5 @@ grasshopper_mac		1017
 chacha20_poly1305		1018
 chacha20		1019
 tlsfeature		1020
+tls1_prf		1021
+ipsec_IKE		1022

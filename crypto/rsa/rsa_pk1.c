@@ -1,4 +1,3 @@
-/* crypto/rsa/rsa_pk1.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -98,7 +97,28 @@ int RSA_padding_check_PKCS1_type_1(unsigned char *to, int tlen,
     const unsigned char *p;
 
     p = from;
-    if ((num != (flen + 1)) || (*(p++) != 01)) {
+
+    /*
+     * The format is
+     * 00 || 01 || PS || 00 || D
+     * PS - padding string, at least 8 bytes of FF
+     * D  - data.
+     */
+
+    if (num < 11)
+        return -1;
+
+    /* Accept inputs with and without the leading 0-byte. */
+    if (num == flen) {
+        if ((*p++) != 0x00) {
+            RSAerr(RSA_F_RSA_PADDING_CHECK_PKCS1_TYPE_1,
+                   RSA_R_INVALID_PADDING);
+            return -1;
+        }
+        flen--;
+    }
+
+    if ((num != (flen + 1)) || (*(p++) != 0x01)) {
         RSAerr(RSA_F_RSA_PADDING_CHECK_PKCS1_TYPE_1,
                RSA_R_BLOCK_TYPE_IS_NOT_01);
         return (-1);

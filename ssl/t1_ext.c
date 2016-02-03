@@ -1,4 +1,3 @@
-/* ssl/t1_ext.c */
 /* ====================================================================
  * Copyright (c) 2014 The OpenSSL Project.  All rights reserved.
  *

@@ -1,4 +1,3 @@
-/* File : /crypto/engine/vendor_defns/hw_zencod.h */
 /* ====================================================================
  * Written by Donnat Frederic (frederic.donnat@zencod.com) from ZENCOD
  * for "zencod" ENGINE integration in OpenSSL project.

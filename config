@@ -23,6 +23,7 @@
 SUFFIX=""
 TEST="false"
 EXE=""
+THERE=`dirname $0`
 
 # pick up any command line args to config
 for i
@@ -323,15 +324,7 @@ case "${SYSTEM}:${RELEASE}:${VERSION}:${MACHINE}" in
 	echo "${MACHINE}-whatever-mingw"; exit 0;
 	;;
     CYGWIN*)
-	case "$RELEASE" in
-	    [bB]*|1.0|1.[12].*)
-		echo "${MACHINE}-whatever-cygwin_pre1.3"
-		;;
-	    *)
-		echo "${MACHINE}-whatever-cygwin"
-		;;
-	esac
-	exit 0
+	echo "${MACHINE}-pc-cygwin"; exit 0
 	;;
 
     vxworks*)
@@ -484,7 +477,7 @@ case "$GUESSOS" in
 	;;
   mips4-sgi-irix64)
 	echo "WARNING! If you wish to build 64-bit library, then you have to"
-	echo "         invoke './Configure irix64-mips4-$CC' *manually*."
+	echo "         invoke '$THERE/Configure irix64-mips4-$CC' *manually*."
 	if [ "$TEST" = "false" -a -t 1 ]; then
 	  echo "         You have about 5 seconds to press Ctrl-C to abort."
 	  (trap "stty `stty -g`" 2 0; stty -icanon min 0 time 50; read waste) <&1
@@ -503,7 +496,7 @@ case "$GUESSOS" in
 	ISA64=`(sysctl -n hw.optional.64bitops) 2>/dev/null`
 	if [ "$ISA64" = "1" -a -z "$KERNEL_BITS" ]; then
 	    echo "WARNING! If you wish to build 64-bit library, then you have to"
-	    echo "         invoke './Configure darwin64-ppc-cc' *manually*."
+	    echo "         invoke '$THERE/Configure darwin64-ppc-cc' *manually*."
 	    if [ "$TEST" = "false" -a -t 1 ]; then
 	      echo "         You have about 5 seconds to press Ctrl-C to abort."
 	      (trap "stty `stty -g`" 2 0; stty -icanon min 0 time 50; read waste) <&1
@@ -518,7 +511,7 @@ case "$GUESSOS" in
 	ISA64=`(sysctl -n hw.optional.x86_64) 2>/dev/null`
 	if [ "$ISA64" = "1" -a -z "$KERNEL_BITS" ]; then
 	    echo "WARNING! If you wish to build 64-bit library, then you have to"
-	    echo "         invoke './Configure darwin64-x86_64-cc $options' *manually*."
+	    echo "         invoke '$THERE/Configure darwin64-x86_64-cc $options' *manually*."
 	    if [ "$TEST" = "false" -a -t 1 ]; then
 	      echo "         You have about 5 seconds to press Ctrl-C to abort."
 	      # The stty technique used elsewhere doesn't work on
@@ -556,7 +549,7 @@ case "$GUESSOS" in
   ppc64-*-linux2)
 	if [ -z "$KERNEL_BITS" ]; then
 	    echo "WARNING! If you wish to build 64-bit library, then you have to"
-	    echo "         invoke './Configure linux-ppc64' *manually*."
+	    echo "         invoke '$THERE/Configure linux-ppc64' *manually*."
 	    if [ "$TEST" = "false" -a -t 1 ]; then
 		echo "         You have about 5 seconds to press Ctrl-C to abort."
 		(trap "stty `stty -g`" 2 0; stty -icanon min 0 time 50; read waste) <&1
@@ -573,7 +566,7 @@ case "$GUESSOS" in
   ppc-*-linux2) OUT="linux-ppc" ;;
   mips64*-*-linux2)
 	echo "WARNING! If you wish to build 64-bit library, then you have to"
-	echo "         invoke './Configure linux64-mips64' *manually*."
+	echo "         invoke '$THERE/Configure linux64-mips64' *manually*."
 	if [ "$TEST" = "false" -a -t 1 ]; then
 	    echo "         You have about 5 seconds to press Ctrl-C to abort."
 	    (trap "stty `stty -g`" 2 0; stty -icanon min 0 time 50; read waste) <&1
@@ -590,7 +583,7 @@ case "$GUESSOS" in
   sparc64-*-linux2)
 	echo "WARNING! If you *know* that your GNU C supports 64-bit/V9 ABI"
 	echo "         and wish to build 64-bit library, then you have to"
-	echo "         invoke './Configure linux64-sparcv9' *manually*."
+	echo "         invoke '$THERE/Configure linux64-sparcv9' *manually*."
 	if [ "$TEST" = "false" -a -t 1 ]; then
 	  echo "          You have about 5 seconds to press Ctrl-C to abort."
 	  (trap "stty `stty -g`" 2 0; stty -icanon min 0 time 50; read waste) <&1
@@ -663,11 +656,11 @@ case "$GUESSOS" in
   *-*-linux2) OUT="linux-generic32" ;;
   sun4[uv]*-*-solaris2)
 	OUT="solaris-sparcv9-$CC"
-	ISA64=`(isalist) 2>/dev/null | grep sparcv9`
+	ISA64=`(isainfo) 2>/dev/null | grep sparcv9`
 	if [ "$ISA64" != "" -a "$KERNEL_BITS" = "" ]; then
 	    if [ "$CC" = "cc" -a $CCVER -ge 50 ]; then
 		echo "WARNING! If you wish to build 64-bit library, then you have to"
-		echo "         invoke './Configure solaris64-sparcv9-cc' *manually*."
+		echo "         invoke '$THERE/Configure solaris64-sparcv9-cc' *manually*."
 		if [ "$TEST" = "false" -a -t 1 ]; then
 		  echo "         You have about 5 seconds to press Ctrl-C to abort."
 		  (trap "stty `stty -g`" 2 0; stty -icanon min 0 time 50; read waste) <&1
@@ -679,7 +672,7 @@ case "$GUESSOS" in
 		# and therefore switch over to 64-bit. <appro>
 		OUT="solaris64-sparcv9-gcc"
 		echo "WARNING! If you wish to build 32-bit library, then you have to"
-		echo "         invoke './Configure solaris-sparcv9-gcc' *manually*."
+		echo "         invoke '$THERE/Configure solaris-sparcv9-gcc' *manually*."
 		if [ "$TEST" = "false" -a -t 1 ]; then
 		  echo "         You have about 5 seconds to press Ctrl-C to abort."
 		  (trap "stty `stty -g`" 2 0; stty -icanon min 0 time 50; read waste) <&1
@@ -687,7 +680,7 @@ case "$GUESSOS" in
 	    elif [ "$GCC_ARCH" = "-m32" ]; then
 		echo "NOTICE! If you *know* that your GNU C supports 64-bit/V9 ABI"
 		echo "        and wish to build 64-bit library, then you have to"
-		echo "        invoke './Configure solaris64-sparcv9-gcc' *manually*."
+		echo "        invoke '$THERE/Configure solaris64-sparcv9-gcc' *manually*."
 		if [ "$TEST" = "false" -a -t 1 ]; then
 		  echo "         You have about 5 seconds to press Ctrl-C to abort."
 		  (trap "stty `stty -g`" 2 0; stty -icanon min 0 time 50; read waste) <&1
@@ -702,7 +695,7 @@ case "$GUESSOS" in
   sun4d-*-solaris2)	OUT="solaris-sparcv8-$CC" ;;
   sun4*-*-solaris2)	OUT="solaris-sparcv7-$CC" ;;
   *86*-*-solaris2)
-	ISA64=`(isalist) 2>/dev/null | grep amd64`
+	ISA64=`(isainfo) 2>/dev/null | grep amd64`
 	if [ "$ISA64" != "" -a ${KERNEL_BITS:-64} -eq 64 ]; then
 	    OUT="solaris64-x86_64-$CC"
 	else
@@ -768,7 +761,7 @@ case "$GUESSOS" in
 	     OUT=${OUT:-"hpux-parisc2-${CC}"}
 	     if [ $KERNEL_BITS -eq 64 -a "$CC" = "cc" ]; then
 		echo "WARNING! If you wish to build 64-bit library then you have to"
-		echo "         invoke './Configure hpux64-parisc2-cc' *manually*."
+		echo "         invoke '$THERE/Configure hpux64-parisc2-cc' *manually*."
 		if [ "$TEST" = "false" -a -t 1 ]; then
 		  echo "         You have about 5 seconds to press Ctrl-C to abort."
 		  (trap "stty `stty -g`" 2 0; stty -icanon min 0 time 50; read waste) <&1
@@ -800,7 +793,7 @@ case "$GUESSOS" in
 	    OUT="aix-cc"
 	    if [ $KERNEL_BITS -eq 64 ]; then
 		echo "WARNING! If you wish to build 64-bit kit, then you have to"
-		echo "         invoke './Configure aix64-cc' *manually*."
+		echo "         invoke '$THERE/Configure aix64-cc' *manually*."
 		if [ "$TEST" = "false" -a -t 1 ]; then
 		    echo "         You have ~5 seconds to press Ctrl-C to abort."
 		    (trap "stty `stty -g`" 2 0; stty -icanon min 0 time 50; read waste) <&1
@@ -814,8 +807,8 @@ case "$GUESSOS" in
 	fi
 	;;
   # these are all covered by the catchall below
-  *-*-cygwin_pre1.3) OUT="Cygwin-pre1.3" ;;
-  *-*-cygwin) OUT="Cygwin" ;;
+  i[3456]86-*-cygwin) OUT="Cygwin-x86" ;;
+  *-*-cygwin) OUT="Cygwin-${MACHINE}" ;;
   x86pc-*-qnx6) OUT="QNX6-i386" ;;
   *-*-qnx6) OUT="QNX6" ;;
   x86-*-android|i?86-*-android) OUT="android-x86" ;;
@@ -867,7 +860,7 @@ esac
 
 for i in aes bf camellia cast des dh dsa ec hmac idea md2 md5 mdc2 rc2 rc4 rc5 ripemd rsa seed sha
 do
-  if [ ! -d crypto/$i ]
+  if [ ! -d $THERE/crypto/$i ]
   then
     options="$options no-$i"
   fi
@@ -906,21 +899,21 @@ fi
 # compiler for the platform ... in which case we add it on
 # the end ... otherwise we leave it off
 
-$PERL ./Configure LIST | grep "$OUT-$CC" > /dev/null
+$PERL $THERE/Configure LIST | grep "$OUT-$CC" > /dev/null
 if [ $? = "0" ]; then
   OUT="$OUT-$CC"
 fi
 
 OUT="$OUT"
 
-$PERL ./Configure LIST | grep "$OUT" > /dev/null
+$PERL $THERE/Configure LIST | grep "$OUT" > /dev/null
 if [ $? = "0" ]; then
   echo Configuring for $OUT
 
   if [ "$TEST" = "true" ]; then
-    echo $PERL ./Configure $OUT $options
+    echo $PERL $THERE/Configure $OUT $options
   else
-    $PERL ./Configure $OUT $options
+    $PERL $THERE/Configure $OUT $options
   fi
 else
   echo "This system ($OUT) is not supported. See file INSTALL for details."

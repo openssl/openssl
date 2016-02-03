@@ -1,4 +1,3 @@
-/* crypto/ecdh/ech_ossl.c */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *

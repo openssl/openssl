@@ -1,4 +1,3 @@
-/* apps/s_apps.h */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -189,7 +188,7 @@ long bio_dump_callback(BIO *bio, int cmd, const char *argp,
 void apps_ssl_info_callback(const SSL *s, int where, int ret);
 void msg_cb(int write_p, int version, int content_type, const void *buf,
             size_t len, SSL *ssl, void *arg);
-void tlsext_cb(SSL *s, int client_server, int type, unsigned char *data,
+void tlsext_cb(SSL *s, int client_server, int type, const unsigned char *data,
                int len, void *arg);
 #endif
 

@@ -1,4 +1,3 @@
-/* crypto/camellia/camellia_ofb.c */
 /* ====================================================================
  * Copyright (c) 2006 The OpenSSL Project.  All rights reserved.
  *

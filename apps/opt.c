@@ -75,12 +75,6 @@ static const OPTIONS *unknown;
 static const OPTIONS *opts;
 static char prog[40];
 
-#if !defined(__STDC_VERSION__) || __STDC_VERSION__ < 199901L || \
-    !defined(INTMAX_MAX) && !defined(UINTMAX_MAX)
-#define opt_imax opt_long
-#define opt_umax opt_ulong
-#endif
-
 /*
  * Return the simple name of the program; removing various platform gunk.
  */
@@ -188,8 +182,9 @@ char *opt_init(int ac, char **av, const OPTIONS *o)
         assert(o->name[0] != '-');
         assert(o->retval > 0);
         switch (i) {
-        case   0: case '-': case '/': case '<': case '>': case 'F': case 'M':
-        case 'L': case 'U': case 'f': case 'n': case 'p': case 's': case 'u':
+        case   0: case '-': case '/': case '<': case '>': case 'E': case 'F':
+        case 'M': case 'U': case 'f': case 'l': case 'n': case 'p': case 's':
+        case 'u':
             break;
         default:
             assert(0);
@@ -502,14 +497,25 @@ int opt_verify(int opt, X509_VERIFY_PARAM *vpm)
         X509_VERIFY_PARAM_add0_policy(vpm, otmp);
         break;
     case OPT_V_PURPOSE:
+        /* purpose name -> purpose index */
         i = X509_PURPOSE_get_by_sname(opt_arg());
         if (i < 0) {
             BIO_printf(bio_err, "%s: Invalid purpose %s\n", prog, opt_arg());
             return 0;
         }
+
+        /* purpose index -> purpose object */
         xptmp = X509_PURPOSE_get0(i);
+
+        /* purpose object -> purpose value */
         i = X509_PURPOSE_get_id(xptmp);
-        X509_VERIFY_PARAM_set_purpose(vpm, i);
+
+        if (!X509_VERIFY_PARAM_set_purpose(vpm, i)) {
+            BIO_printf(bio_err,
+                       "%s: Internal error setting purpose %s\n",
+                       prog, opt_arg());
+            return 0;
+        }
         break;
     case OPT_V_VERIFY_NAME:
         vtmp = X509_VERIFY_PARAM_lookup(opt_arg());
@@ -729,7 +735,7 @@ int opt_next(void)
                 return -1;
             }
             break;
-        case 'L':
+        case 'l':
             if (!opt_long(arg, &lval)) {
                 BIO_printf(bio_err,
                            "%s: Invalid number \"%s\" for -%s\n",
@@ -745,9 +751,11 @@ int opt_next(void)
                 return -1;
             }
             break;
-        case 'f':
+        case 'E':
         case 'F':
+        case 'f':
             if (opt_format(arg,
+                           o->valtype == 'E' ? OPT_FMT_PDE :
                            o->valtype == 'F' ? OPT_FMT_PEMDER
                            : OPT_FMT_ANY, &ival))
                 break;
@@ -818,15 +826,23 @@ static const char *valtype2param(const OPTIONS *o)
     case '>':
         return "outfile";
     case 'p':
-        return "pnum";
+        return "+int";
     case 'n':
-        return "num";
+        return "int";
+    case 'l':
+        return "long";
     case 'u':
-        return "unum";
+        return "ulong";
+    case 'E':
+        return "PEM|DER|ENGINE";
     case 'F':
-        return "der/pem";
+        return "PEM|DER";
     case 'f':
         return "format";
+    case 'M':
+        return "intmax";
+    case 'U':
+        return "uintmax";
     }
     return "parm";
 }

@@ -1,4 +1,3 @@
-/* crypto/x509/x_x509.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -90,7 +89,6 @@ static int x509_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
     switch (operation) {
 
     case ASN1_OP_NEW_POST:
-        ret->valid = 0;
         ret->name = NULL;
         ret->ex_flags = 0;
         ret->ex_pathlen = -1;

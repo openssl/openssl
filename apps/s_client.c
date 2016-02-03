@@ -218,6 +218,27 @@ static int restore_errno(void)
     return ret;
 }
 
+static void do_ssl_shutdown(SSL *ssl)
+{
+    int ret;
+
+    do {
+        /* We only do unidirectional shutdown */
+        ret = SSL_shutdown(ssl);
+        if (ret < 0) {
+            switch (SSL_get_error(ssl, ret)) {
+            case SSL_ERROR_WANT_READ:
+            case SSL_ERROR_WANT_WRITE:
+            case SSL_ERROR_WANT_ASYNC:
+                /* We just do busy waiting. Nothing clever */
+                continue;
+            }
+            ret = 0;
+        }
+    } while (ret < 0);
+}
+
+
 #ifndef OPENSSL_NO_PSK
 /* Default PSK identity and key */
 static char *psk_identity = "Client_identity";
@@ -675,9 +696,6 @@ OPTIONS s_client_options[] = {
     {"quiet", OPT_QUIET, '-', "No s_client output"},
     {"ign_eof", OPT_IGN_EOF, '-', "Ignore input eof (default when -quiet)"},
     {"no_ign_eof", OPT_NO_IGN_EOF, '-', "Don't ignore input eof"},
-    {"tls1_2", OPT_TLS1_2, '-', "Just use TLSv1.2"},
-    {"tls1_1", OPT_TLS1_1, '-', "Just use TLSv1.1"},
-    {"tls1", OPT_TLS1, '-', "Just use TLSv1"},
     {"starttls", OPT_STARTTLS, 's',
      "Use the appropriate STARTTLS command before starting TLS"},
     {"xmpphost", OPT_XMPPHOST, 's',
@@ -727,12 +745,25 @@ OPTIONS s_client_options[] = {
 #ifndef OPENSSL_NO_SSL3
     {"ssl3", OPT_SSL3, '-', "Just use SSLv3"},
 #endif
+#ifndef OPENSSL_NO_TLS1
+    {"tls1", OPT_TLS1, '-', "Just use TLSv1"},
+#endif
+#ifndef OPENSSL_NO_TLS1_1
+    {"tls1_1", OPT_TLS1_1, '-', "Just use TLSv1.1"},
+#endif
+#ifndef OPENSSL_NO_TLS1_2
+    {"tls1_2", OPT_TLS1_2, '-', "Just use TLSv1.2"},
+#endif
 #ifndef OPENSSL_NO_DTLS
     {"dtls", OPT_DTLS, '-'},
-    {"dtls1", OPT_DTLS1, '-', "Just use DTLSv1"},
-    {"dtls1_2", OPT_DTLS1_2, '-'},
     {"timeout", OPT_TIMEOUT, '-'},
     {"mtu", OPT_MTU, 'p', "Set the link layer MTU"},
+#endif
+#ifndef OPENSSL_NO_DTLS1
+    {"dtls1", OPT_DTLS1, '-', "Just use DTLSv1"},
+#endif
+#ifndef OPENSSL_NO_DTLS1_2
+    {"dtls1_2", OPT_DTLS1_2, '-'},
 #endif
 #ifndef OPENSSL_NO_SSL_TRACE
     {"trace", OPT_TRACE, '-'},
@@ -1108,41 +1139,48 @@ int s_client_main(int argc, char **argv)
 #endif
             break;
         case OPT_TLS1_2:
+#ifndef OPENSSL_NO_TLS1_2
             meth = TLSv1_2_client_method();
+#endif
             break;
         case OPT_TLS1_1:
+#ifndef OPENSSL_NO_TLS1_1
             meth = TLSv1_1_client_method();
+#endif
             break;
         case OPT_TLS1:
+#ifndef OPENSSL_NO_TLS1
             meth = TLSv1_client_method();
+#endif
             break;
-#ifndef OPENSSL_NO_DTLS
         case OPT_DTLS:
+#ifndef OPENSSL_NO_DTLS
             meth = DTLS_client_method();
             socket_type = SOCK_DGRAM;
+#endif
             break;
         case OPT_DTLS1:
+#ifndef OPENSSL_NO_DTLS1
             meth = DTLSv1_client_method();
             socket_type = SOCK_DGRAM;
+#endif
             break;
         case OPT_DTLS1_2:
+#ifndef OPENSSL_NO_DTLS1_2
             meth = DTLSv1_2_client_method();
             socket_type = SOCK_DGRAM;
-            break;
-        case OPT_TIMEOUT:
-            enable_timeouts = 1;
-            break;
-        case OPT_MTU:
-            socket_mtu = atol(opt_arg());
-            break;
-#else
-        case OPT_DTLS:
-        case OPT_DTLS1:
-        case OPT_DTLS1_2:
-        case OPT_TIMEOUT:
-        case OPT_MTU:
-            break;
 #endif
+            break;
+        case OPT_TIMEOUT:
+#ifndef OPENSSL_NO_DTLS
+            enable_timeouts = 1;
+#endif
+            break;
+        case OPT_MTU:
+#ifndef OPENSSL_NO_DTLS
+            socket_mtu = atol(opt_arg());
+#endif
+            break;
         case OPT_FALLBACKSCSV:
             fallback_scsv = 1;
             break;
@@ -1314,9 +1352,8 @@ int s_client_main(int argc, char **argv)
     }
 
     if (chain_file) {
-        chain = load_certs(chain_file, FORMAT_PEM,
-                           NULL, e, "client certificate chain");
-        if (!chain)
+        if (!load_certs(chain_file, &chain, FORMAT_PEM, NULL, e,
+                        "client certificate chain"))
             goto end;
     }
 
@@ -1986,7 +2023,7 @@ int s_client_main(int argc, char **argv)
                     reconnect--;
                     BIO_printf(bio_c_out,
                                "drop connection and then reconnect\n");
-                    SSL_shutdown(con);
+                    do_ssl_shutdown(con);
                     SSL_set_connect_state(con);
                     SHUTDOWN(SSL_get_fd(con));
                     goto re_start;
@@ -2304,7 +2341,7 @@ int s_client_main(int argc, char **argv)
  shut:
     if (in_init)
         print_stuff(bio_c_out, con, full_log);
-    SSL_shutdown(con);
+    do_ssl_shutdown(con);
     SHUTDOWN(SSL_get_fd(con));
  end:
     if (con != NULL) {

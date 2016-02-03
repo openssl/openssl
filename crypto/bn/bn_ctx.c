@@ -1,4 +1,3 @@
-/* crypto/bn/bn_ctx.c */
 /* Written by Ulf Moeller for the OpenSSL project. */
 /* ====================================================================
  * Copyright (c) 1998-2004 The OpenSSL Project.  All rights reserved.

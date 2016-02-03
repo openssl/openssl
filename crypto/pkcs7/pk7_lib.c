@@ -1,4 +1,3 @@
-/* crypto/pkcs7/pk7_lib.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -61,6 +60,7 @@
 #include <openssl/objects.h>
 #include <openssl/x509.h>
 #include "internal/asn1_int.h"
+#include "internal/evp_int.h"
 
 long PKCS7_ctrl(PKCS7 *p7, int cmd, long larg, char *parg)
 {
@@ -371,7 +371,7 @@ int PKCS7_SIGNER_INFO_set(PKCS7_SIGNER_INFO *p7i, X509 *x509, EVP_PKEY *pkey,
         goto err;
 
     /* lets keep the pkey around for a while */
-    CRYPTO_add(&pkey->references, 1, CRYPTO_LOCK_EVP_PKEY);
+    EVP_PKEY_up_ref(pkey);
     p7i->pkey = pkey;
 
     /* Set the algorithms */

@@ -1,4 +1,3 @@
-/* crypto/bn/bn_blind.c */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *

@@ -1,4 +1,3 @@
-/* crypto/bio/b_dump.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -61,7 +60,6 @@
  */
 
 #include <stdio.h>
-#include "internal/cryptlib.h"
 #include "bio_lcl.h"
 
 #define TRUNCATE

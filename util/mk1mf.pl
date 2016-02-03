@@ -9,7 +9,7 @@
 
 use Cwd;
 
-$INSTALLTOP="/usr/local/ssl";
+$INSTALLTOP="/usr/local";
 $OPENSSLDIR="/usr/local/ssl";
 $OPTIONS="";
 $ssl_version="";
@@ -50,7 +50,7 @@ my %mf_import = (
 	PLATFORM       => \$mf_platform,
 	CC             => \$mf_cc,
 	CFLAG	       => \$mf_cflag,
-	DEPFLAG	       => \$mf_depflag,
+        DEPFLAG        => \$mf_depflag,
 	CPUID_OBJ      => \$mf_cpuid_asm,
 	BN_ASM	       => \$mf_bn_asm,
 	DES_ENC	       => \$mf_des_asm,
@@ -751,9 +751,10 @@ headers: \$(HEADER)
 
 lib: \$(LIBS_DEP) \$(E_SHLIB)
 
-exe: apps testapps
-apps: \$(BIN_D)$o\$(E_EXE)$exep
+exe: apps tools testapps
+apps: \$(BIN_D)$o\$(E_EXE)$exep \$(BIN_D)${o}CA.pl
 testapps: \$(T_EXE)
+tools: \$(BIN_D)${o}c_rehash
 
 install: all
 	\$(MKDIR) \"\$(INSTALLTOP)\"
@@ -778,7 +779,7 @@ reallyclean:
 
 EOF
 
-$rules .= &do_rehash_rule("rehash.time", "certs apps");
+$rules .= &do_rehash_rule("rehash.time", "certs/demo apps tools");
 $rules .= &do_test_rule("test", "rehash.time", "run_tests.pl");
 
 my $platform_cpp_symbol = "MK1MF_PLATFORM_$platform";
@@ -807,7 +808,7 @@ if (open(IN,"crypto/buildinf.h"))
 	}
 
 open (OUT,">>crypto/buildinf.h") || die "Can't open buildinf.h";
-printf OUT <<EOF;
+printf OUT <<"EOF";
 #ifdef $platform_cpp_symbol
   /* auto-generated/updated by util/mk1mf.pl for crypto/cversion.c */
   #define CFLAGS "compiler: $cc $cflags"
@@ -998,6 +999,9 @@ if ($fips)
 
 $rules.=&do_link_rule("\$(BIN_D)$o\$(E_EXE)$exep","\$(E_OBJ)","\$(LIBS_DEP)","\$(L_LIBS) \$(EX_LIBS)", ($fips && !$shlib) ? 2 : 0);
 
+$rules.=&do_dofile_rule("\$(BIN_D)","c_rehash","tools/c_rehash.in");
+$rules.=&do_dofile_rule("\$(BIN_D)","CA.pl","apps/CA.pl.in");
+
 print $defs;
 
 if ($platform eq "linux-elf") {
@@ -1033,7 +1037,6 @@ sub var_add
 	return("") if $no_dsa  && $dir =~ /\/dsa/;
 	return("") if $no_dh   && $dir =~ /\/dh/;
 	return("") if $no_ec   && $dir =~ /\/ec/;
-	return("") if $no_gost   && $dir =~ /\/ccgost/;
 	return("") if $no_cms  && $dir =~ /\/cms/;
 	return("") if $no_jpake  && $dir =~ /\/jpake/;
 	return("") if !$fips   && $dir =~ /^fips/;
@@ -1328,6 +1331,7 @@ sub do_copy_rule
 	local($to,$files,$p)=@_;
 	local($ret,$_,$n,$pp);
 	
+
 	$files =~ s/\//$o/g if $o ne '/';
 	foreach (split(/\s+/,$files))
 		{
@@ -1338,6 +1342,18 @@ sub do_copy_rule
 		$ret.="$to${o}$n$pp: \$(SRC_D)$o$_$pp\n\t\$(PERL) \$(SRC_D)${o}util${o}copy-if-different.pl \"\$(SRC_D)$o$_$pp\" \"$to${o}$n$pp\"\n\n";
 		}
 	return($ret);
+	}
+
+sub do_dofile_rule
+	{
+	(my $to, my $file, my $tmpl) = @_;
+
+	$file =~ s|/|$o|g if $o ne '/';
+	return <<"EOF";
+$to${o}$file: $tmpl
+	\$(PERL) "-I." "-Mconfigdata" util/dofile.pl "$tmpl" > "$to${o}$file.new"
+	mv "$to${o}$file.new" "$to${o}$file"
+EOF
 	}
 
 # Options picked up from the OPTIONS line in the top level Makefile

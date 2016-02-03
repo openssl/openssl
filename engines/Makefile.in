@@ -12,16 +12,10 @@ INCLUDES= -I../include
 CFLAG=-g
 MAKEFILE=	Makefile
 AR=		ar r
-ENGDIRS= ccgost
 
-RECURSIVE_MAKE=	[ -z "$(ENGDIRS)" ] || for i in $(ENGDIRS) ; do \
-		    (cd $$i && echo "making $$target in $(DIR)/$$i..." && \
-		    $(MAKE) -e TOP=../.. DIR=$$i $$target ) || exit 1; \
-		done;
+PADLOCK_ASM_OBJ=
 
-ENGINES_ASM_OBJ=
-
-PEX_LIBS=
+LDFLAGS=
 EX_LIBS=
 
 CFLAGS= $(INCLUDES) $(CFLAG)
@@ -40,7 +34,7 @@ LIBOBJ= \
 	e_padlock.o \
 	e_capi.o \
 	e_dasync.o \
-	$(ENGINES_ASM_OBJ)
+	$(PADLOCK_ASM_OBJ)
 
 TESTLIBNAMES= ossltest
 TESTLIBSRC= e_ossltest.c
@@ -60,7 +54,7 @@ ALL=	$(GENERAL) $(SRC) $(HEADER)
 top:
 	(cd ..; $(MAKE) DIRS=$(DIR) all)
 
-all:	lib subdirs
+all:	lib
 
 lib:	$(LIBOBJ) $(TESTLIBOBJ)
 	@if [ -n "$(SHARED_LIBS)" ]; then \
@@ -82,12 +76,8 @@ e_padlock-x86.s:	asm/e_padlock-x86.pl
 e_padlock-x86_64.s:	asm/e_padlock-x86_64.pl
 	$(PERL) asm/e_padlock-x86_64.pl $(PERLASM_SCHEME) > $@
 
-subdirs:
-	@target=all; $(RECURSIVE_MAKE)
-
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
-	@target=files; $(RECURSIVE_MAKE)
 
 # XXXXX This currently only works on systems that use .so as suffix
 # for shared libraries as well as for Cygwin which uses the
@@ -118,41 +108,18 @@ install:
 			  mv -f $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/engines/$$pfx$$l$$sfx.new $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/engines/$$pfx$$l$$sfx ); \
 		done; \
 	fi
-	@target=install; $(RECURSIVE_MAKE)
-
-tags:
-	ctags $(SRC)
 
 errors:
 	set -e; for l in $(LIBNAMES); do \
 		$(PERL) ../util/mkerr.pl -conf e_$$l.ec \
 			-nostatic -staticloader -write e_$$l.c; \
 	done
-	(cd ccgost; $(MAKE) PERL=$(PERL) errors)
 
-tests:
-
-lint:
-	lint -DLINT $(INCLUDES) $(SRC)>fluff
-	@target=lint; $(RECURSIVE_MAKE)
-
-update: local_depend
-	@if [ -z "$(THIS)" ]; then $(MAKE) -f $(TOP)/Makefile reflect THIS=$@; fi
-	@[ -z "$(THIS)" ] || (set -e; target=update; $(RECURSIVE_MAKE) )
-
-depend: local_depend
-	@if [ -z "$(THIS)" ]; then $(MAKE) -f $(TOP)/Makefile reflect THIS=$@; fi
+depend:
+	@[ -z "$(THIS)" ] || $(TOP)/util/domd $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(LIBSRC) $(TESTLIBSRC)
 	@[ -z "$(THIS)" ] || (set -e; target=depend; $(RECURSIVE_MAKE) )
-local_depend:
-	@[ -z "$(THIS)" ] || $(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(LIBSRC) $(TESTLIBSRC)
-
-dclean:
-	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
-	mv -f Makefile.new $(MAKEFILE)
-	@target=dclean; $(RECURSIVE_MAKE)
 
 clean:
 	rm -f *.s *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
-	@target=clean; $(RECURSIVE_MAKE)
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.

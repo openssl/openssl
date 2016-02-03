@@ -1,4 +1,3 @@
-/* crypto/buffer/buffer.h */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -100,7 +99,7 @@ BUF_MEM *BUF_MEM_new_ex(unsigned long flags);
 void BUF_MEM_free(BUF_MEM *a);
 size_t BUF_MEM_grow(BUF_MEM *str, size_t len);
 size_t BUF_MEM_grow_clean(BUF_MEM *str, size_t len);
-void BUF_reverse(unsigned char *out, unsigned char *in, size_t siz);
+void BUF_reverse(unsigned char *out, const unsigned char *in, size_t siz);
 
 /* BEGIN ERROR CODES */
 /*

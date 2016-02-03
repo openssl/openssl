@@ -1,4 +1,3 @@
-/* crypto/ec/ecp_nistp224.c */
 /*
  * Written by Emilia Kasper (Google) for the OpenSSL project.
  */
@@ -1583,8 +1582,7 @@ int ec_GFp_nistp224_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
      */
     if (0 == EC_POINT_cmp(group, generator, group->generator, ctx)) {
         memcpy(pre->g_pre_comp, gmul, sizeof(pre->g_pre_comp));
-        ret = 1;
-        goto err;
+        goto done;
     }
     if ((!BN_to_felem(pre->g_pre_comp[0][1][0], group->generator->X)) ||
         (!BN_to_felem(pre->g_pre_comp[0][1][1], group->generator->Y)) ||
@@ -1662,6 +1660,7 @@ int ec_GFp_nistp224_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
     }
     make_points_affine(31, &(pre->g_pre_comp[0][1]), tmp_felems);
 
+ done:
     SETPRECOMP(group, nistp224, pre);
     pre = NULL;
     ret = 1;

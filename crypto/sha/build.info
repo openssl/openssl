@@ -1,0 +1,3 @@
+LIBS=../../libcrypto
+SOURCE[../../libcrypto]=\
+        sha1dgst.c sha1_one.c sha256.c sha512.c {- $target{sha1_asm_src} -}

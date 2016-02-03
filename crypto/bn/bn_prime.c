@@ -1,4 +1,3 @@
-/* crypto/bn/bn_prime.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -114,12 +113,6 @@
 #include "internal/cryptlib.h"
 #include "bn_lcl.h"
 #include <openssl/rand.h>
-
-/*
- * NB: these functions have been "upgraded", the deprecated versions (which
- * are compatibility wrappers using these functions) are in bn_depr.c. -
- * Geoff
- */
 
 /*
  * The quick sieve algorithm approach to weeding out primes is Philip

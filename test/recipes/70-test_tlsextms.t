@@ -54,6 +54,7 @@
 
 use strict;
 use OpenSSL::Test qw/:DEFAULT cmdstr top_file top_dir/;
+use OpenSSL::Test::Utils;
 use TLSProxy::Proxy;
 use File::Temp qw(tempfile);
 
@@ -63,10 +64,11 @@ setup($test_name);
 plan skip_all => "TLSProxy isn't usable on $^O"
     if $^O =~ /^VMS$/;
 
+plan skip_all => "$test_name needs the engine feature enabled"
+    if disabled("engine");
+
 plan skip_all => "$test_name can only be performed with OpenSSL configured shared"
-    unless (map { s/\R//; s/^SHARED_LIBS=\s*//; $_ }
-        grep { /^SHARED_LIBS=/ }
-        do { local @ARGV = ( top_file("Makefile") ); <> })[0] ne "";
+    if disabled("shared");
 
 $ENV{OPENSSL_ENGINES} = top_dir("engines");
 $ENV{OPENSSL_ia32cap} = '~0x200000200000000';

@@ -1,4 +1,3 @@
-/* crypto/bn/knownprimes.c */
 /* Insert boilerplate */
 
 #include <openssl/bn.h>

@@ -1,4 +1,3 @@
-/* crypto/aes/aes_ecb.c */
 /* ====================================================================
  * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
  *

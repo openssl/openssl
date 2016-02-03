@@ -863,9 +863,6 @@ OPTIONS s_server_options[] = {
      "Do not load certificates from the default certificates directory"},
     {"nocert", OPT_NOCERT, '-', "Don't use any certificates (Anon-DH)"},
     {"quiet", OPT_QUIET, '-', "No server output"},
-    {"tls1_2", OPT_TLS1_2, '-', "just talk TLSv1.2"},
-    {"tls1_1", OPT_TLS1_1, '-', "Just talk TLSv1.1"},
-    {"tls1", OPT_TLS1, '-', "Just talk TLSv1"},
     {"no_resume_ephemeral", OPT_NO_RESUME_EPHEMERAL, '-',
      "Disable caching and tickets if ephemeral (EC)DH is used"},
     {"www", OPT_WWW, '-', "Respond to a 'GET /' with a status page"},
@@ -937,15 +934,28 @@ OPTIONS s_server_options[] = {
 #ifndef OPENSSL_NO_SSL3
     {"ssl3", OPT_SSL3, '-', "Just talk SSLv3"},
 #endif
+#ifndef OPENSSL_NO_TLS1
+    {"tls1", OPT_TLS1, '-', "Just talk TLSv1"},
+#endif
+#ifndef OPENSSL_NO_TLS1_1
+    {"tls1_1", OPT_TLS1_1, '-', "Just talk TLSv1.1"},
+#endif
+#ifndef OPENSSL_NO_TLS1_2
+    {"tls1_2", OPT_TLS1_2, '-', "just talk TLSv1.2"},
+#endif
 #ifndef OPENSSL_NO_DTLS
     {"dtls", OPT_DTLS, '-'},
-    {"dtls1", OPT_DTLS1, '-', "Just talk DTLSv1"},
-    {"dtls1_2", OPT_DTLS1_2, '-', "Just talk DTLSv1.2"},
     {"timeout", OPT_TIMEOUT, '-', "Enable timeouts"},
     {"mtu", OPT_MTU, 'p', "Set link layer MTU"},
     {"chain", OPT_CHAIN, '-', "Read a certificate chain"},
     {"listen", OPT_LISTEN, '-',
      "Listen for a DTLS ClientHello with a cookie and then connect"},
+#endif
+#ifndef OPENSSL_NO_DTLS1
+    {"dtls1", OPT_DTLS1, '-', "Just talk DTLSv1"},
+#endif
+#ifndef OPENSSL_NO_DTLS1_2
+    {"dtls1_2", OPT_DTLS1_2, '-', "Just talk DTLSv1.2"},
 #endif
 #ifndef OPENSSL_NO_DH
     {"no_dhe", OPT_NO_DHE, '-', "Disable ephemeral DH"},
@@ -1039,19 +1049,6 @@ int s_server_main(int argc, char *argv[])
     prog = opt_init(argc, argv, s_server_options);
     while ((o = opt_next()) != OPT_EOF) {
         switch (o) {
-#ifdef OPENSSL_NO_PSK
-        case OPT_PSK_HINT:
-        case OPT_PSK:
-#endif
-#ifdef OPENSSL_NO_DTLS
-        case OPT_DTLS:
-        case OPT_DTLS1:
-        case OPT_DTLS1_2:
-        case OPT_TIMEOUT:
-        case OPT_MTU:
-        case OPT_CHAIN:
-        case OPT_LISTEN:
-#endif
         case OPT_EOF:
         case OPT_ERR:
  opthelp:
@@ -1299,33 +1296,33 @@ int s_server_main(int argc, char *argv[])
         case OPT_NO_RESUME_EPHEMERAL:
             no_resume_ephemeral = 1;
             break;
-#ifndef OPENSSL_NO_PSK
         case OPT_PSK_HINT:
+#ifndef OPENSSL_NO_PSK
             psk_identity_hint = opt_arg();
+#endif
             break;
         case OPT_PSK:
+#ifndef OPENSSL_NO_PSK
             for (p = psk_key = opt_arg(); *p; p++) {
                 if (isxdigit(*p))
                     continue;
                 BIO_printf(bio_err, "Not a hex number '%s'\n", *argv);
                 goto end;
             }
-            break;
 #endif
-#ifndef OPENSSL_NO_SRP
+            break;
         case OPT_SRPVFILE:
+#ifndef OPENSSL_NO_SRP
             srp_verifier_file = opt_arg();
             meth = TLSv1_server_method();
+#endif
             break;
         case OPT_SRPUSERSEED:
+#ifndef OPENSSL_NO_SRP
             srpuserseed = opt_arg();
             meth = TLSv1_server_method();
-            break;
-#else
-        case OPT_SRPVFILE:
-        case OPT_SRPUSERSEED:
-            break;
 #endif
+            break;
         case OPT_REV:
             rev = 1;
             break;
@@ -1347,40 +1344,58 @@ int s_server_main(int argc, char *argv[])
 #endif
             break;
         case OPT_TLS1_2:
+#ifndef OPENSSL_NO_TLS1_2
             meth = TLSv1_2_server_method();
+#endif
             break;
         case OPT_TLS1_1:
+#ifndef OPENSSL_NO_TLS1_1
             meth = TLSv1_1_server_method();
+#endif
             break;
         case OPT_TLS1:
+#ifndef OPENSSL_NO_TLS1
             meth = TLSv1_server_method();
+#endif
             break;
-#ifndef OPENSSL_NO_DTLS
         case OPT_DTLS:
+#ifndef OPENSSL_NO_DTLS
             meth = DTLS_server_method();
             socket_type = SOCK_DGRAM;
+#endif
             break;
         case OPT_DTLS1:
+#ifndef OPENSSL_NO_DTLS1
             meth = DTLSv1_server_method();
             socket_type = SOCK_DGRAM;
+#endif
             break;
         case OPT_DTLS1_2:
+#ifndef OPENSSL_NO_DTLS1_2
             meth = DTLSv1_2_server_method();
             socket_type = SOCK_DGRAM;
+#endif
             break;
         case OPT_TIMEOUT:
+#ifndef OPENSSL_NO_DTLS
             enable_timeouts = 1;
+#endif
             break;
         case OPT_MTU:
+#ifndef OPENSSL_NO_DTLS
             socket_mtu = atol(opt_arg());
+#endif
             break;
         case OPT_CHAIN:
+#ifndef OPENSSL_NO_DTLS
             cert_chain = 1;
+#endif
             break;
         case OPT_LISTEN:
+#ifndef OPENSSL_NO_DTLS
             dtlslisten = 1;
-            break;
 #endif
+            break;
         case OPT_ID_PREFIX:
             session_id_prefix = opt_arg();
             break;
@@ -1492,9 +1507,8 @@ int s_server_main(int argc, char *argv[])
             goto end;
         }
         if (s_chain_file) {
-            s_chain = load_certs(s_chain_file, FORMAT_PEM,
-                                 NULL, e, "server certificate chain");
-            if (!s_chain)
+            if (!load_certs(s_chain_file, &s_chain, FORMAT_PEM, NULL, e,
+                            "server certificate chain"))
                 goto end;
         }
 
@@ -1572,9 +1586,8 @@ int s_server_main(int argc, char *argv[])
             goto end;
         }
         if (s_dchain_file) {
-            s_dchain = load_certs(s_dchain_file, FORMAT_PEM,
-                                  NULL, e, "second server certificate chain");
-            if (!s_dchain)
+            if (!load_certs(s_dchain_file, &s_dchain, FORMAT_PEM, NULL, e,
+                            "second server certificate chain"))
                 goto end;
         }
 
@@ -2419,12 +2432,15 @@ static int init_ssl_connection(SSL *con)
     unsigned next_proto_neg_len;
 #endif
     unsigned char *exportedkeymat;
-#ifndef OPENSSL_NO_DTLS
-    struct sockaddr_storage client;
-#endif
 
 #ifndef OPENSSL_NO_DTLS
     if(dtlslisten) {
+        BIO_ADDR *client = NULL;
+
+        if ((client = BIO_ADDR_new()) == NULL) {
+            BIO_printf(bio_err, "ERROR - memory\n");
+            return 0;
+        }
         i = DTLSv1_listen(con, &client);
         if (i > 0) {
             BIO *wbio;
@@ -2435,11 +2451,12 @@ static int init_ssl_connection(SSL *con)
                 BIO_get_fd(wbio, &fd);
             }
 
-            if(!wbio || connect(fd, (struct sockaddr *)&client,
-                                sizeof(struct sockaddr_storage))) {
+            if(!wbio || BIO_connect(fd, client, 0) == 0) {
                 BIO_printf(bio_err, "ERROR - unable to connect\n");
+                BIO_ADDR_free(client);
                 return 0;
             }
+            BIO_ADDR_free(client);
             dtlslisten = 0;
             i = SSL_accept(con);
         }
@@ -3203,7 +3220,7 @@ static int add_session(SSL *ssl, SSL_SESSION *session)
     return 0;
 }
 
-static SSL_SESSION *get_session(SSL *ssl, unsigned char *id, int idlen,
+static SSL_SESSION *get_session(SSL *ssl, const unsigned char *id, int idlen,
                                 int *do_copy)
 {
     simple_ssl_session *sess;

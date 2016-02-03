@@ -1,5 +1,3 @@
-/* crypto/objects/obj_mac.h */
-
 /*
  * THIS FILE IS GENERATED FROM objects.txt by objects.pl via the following
  * command: perl objects.pl objects.txt obj_mac.num obj_mac.h
@@ -1558,6 +1556,11 @@
 #define LN_dvcs         "dvcs"
 #define NID_dvcs                297
 #define OBJ_dvcs                OBJ_id_kp,10L
+
+#define SN_ipsec_IKE            "ipsecIKE"
+#define LN_ipsec_IKE            "ipsec Internet Key Exchange"
+#define NID_ipsec_IKE           1022
+#define OBJ_ipsec_IKE           OBJ_id_kp,17L
 
 #define SN_id_it_caProtEncCert          "id-it-caProtEncCert"
 #define NID_id_it_caProtEncCert         298
@@ -4463,3 +4466,7 @@
 #define SN_id_scrypt            "id-scrypt"
 #define NID_id_scrypt           973
 #define OBJ_id_scrypt           1L,3L,6L,1L,4L,1L,11591L,4L,11L
+
+#define SN_tls1_prf             "TLS1-PRF"
+#define LN_tls1_prf             "tls1-prf"
+#define NID_tls1_prf            1021

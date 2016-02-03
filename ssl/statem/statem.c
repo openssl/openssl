@@ -1,4 +1,3 @@
-/* ssl/statem/statem.c */
 /*
  * Written by Matt Caswell for the OpenSSL project.
  */

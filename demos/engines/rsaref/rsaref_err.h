@@ -1,4 +1,3 @@
-/* rsaref_err.h */
 /* ====================================================================
  * Copyright (c) 1998-2001 The OpenSSL Project.  All rights reserved.
  *

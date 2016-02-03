@@ -1,4 +1,3 @@
-/* crypto/pkcs7/pkcs7err.c */
 /* ====================================================================
  * Copyright (c) 1999-2015 The OpenSSL Project.  All rights reserved.
  *

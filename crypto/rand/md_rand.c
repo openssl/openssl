@@ -1,4 +1,3 @@
-/* crypto/rand/md_rand.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -551,18 +550,6 @@ static int rand_bytes(unsigned char *buf, int num, int pseudo)
             goto err;
         if (!MD_Update(m, (unsigned char *)&(md_c[0]), sizeof(md_c)))
             goto err;
-
-#ifndef PURIFY                  /* purify complains */
-        /*
-         * The following line uses the supplied buffer as a small source of
-         * entropy: since this buffer is often uninitialised it may cause
-         * programs such as purify or valgrind to complain. So for those
-         * builds it is not used: the removal of such a small source of
-         * entropy has negligible impact on security.
-         */
-        if (!MD_Update(m, buf, j))
-            goto err;
-#endif
 
         k = (st_idx + MD_DIGEST_LENGTH / 2) - st_num;
         if (k > 0) {

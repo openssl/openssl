@@ -1,4 +1,3 @@
-/* crypto/buffer/buffer.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -192,7 +191,7 @@ size_t BUF_MEM_grow_clean(BUF_MEM *str, size_t len)
     return (len);
 }
 
-void BUF_reverse(unsigned char *out, unsigned char *in, size_t size)
+void BUF_reverse(unsigned char *out, const unsigned char *in, size_t size)
 {
     size_t i;
     if (in) {

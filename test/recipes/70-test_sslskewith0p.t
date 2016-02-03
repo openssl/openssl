@@ -63,10 +63,11 @@ setup($test_name);
 plan skip_all => "TLSProxy isn't usable on $^O"
     if $^O =~ /^VMS$/;
 
+plan skip_all => "$test_name needs the engine feature enabled"
+    if disabled("engine");
+
 plan skip_all => "$test_name can only be performed with OpenSSL configured shared"
-    unless (map { s/\R//; s/^SHARED_LIBS=\s*//; $_ }
-	    grep { /^SHARED_LIBS=/ }
-	    do { local @ARGV = ( top_file("Makefile") ); <> })[0] ne "";
+    if disabled("shared");
 
 plan skip_all => "dh is not supported by this OpenSSL build"
     if disabled("dh");

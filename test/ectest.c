@@ -1,4 +1,3 @@
-/* crypto/ec/ectest.c */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -1398,6 +1397,20 @@ static void internal_curve_test(void)
         fprintf(stdout, " failed\n\n");
         ABORT;
     }
+
+    /* Test all built-in curves and let the library choose the EC_METHOD */
+    for (n = 0; n < crv_len; n++) {
+        EC_GROUP *group = NULL;
+        int nid = curves[n].nid;
+        fprintf(stdout, "%s:\n", OBJ_nid2sn(nid));
+        fflush(stdout);
+        if ((group = EC_GROUP_new_by_curve_name(nid)) == NULL) {
+            ABORT;
+        }
+        group_order_tests(group);
+        EC_GROUP_free(group);
+    }
+
     OPENSSL_free(curves);
     return;
 }
@@ -1579,8 +1592,17 @@ static void nistp_single_test(const struct nistp_test_params *test)
     if (0 != EC_POINT_cmp(NISTP, Q, Q_CHECK, ctx))
         ABORT;
 
+    /*
+     * We have not performed precomputation so have_precompute mult should be
+     * false
+     */
+    if (EC_GROUP_have_precompute_mult(NISTP))
+        ABORT;
+
     /* now repeat all tests with precomputation */
     if (!EC_GROUP_precompute_mult(NISTP, ctx))
+        ABORT;
+    if (!EC_GROUP_have_precompute_mult(NISTP))
         ABORT;
 
     /* fixed point multiplication */

@@ -1,4 +1,3 @@
-/* crypto/ec/ec_curve.c */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */

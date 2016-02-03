@@ -9,7 +9,7 @@ use Exporter;
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS);
 $VERSION = "0.7";
 @ISA = qw(Exporter);
-@EXPORT = (@Test::More::EXPORT, qw(setup indir app test run));
+@EXPORT = (@Test::More::EXPORT, qw(setup indir app perlapp test perltest run));
 @EXPORT_OK = (@Test::More::EXPORT_OK, qw(top_dir top_file pipe with cmdstr
                                          quotify));
 
@@ -75,6 +75,9 @@ my %hooks = (
     exit_checker => sub { return shift == 0 ? 1 : 0 },
 
     );
+
+# Debug flag, to be set manually when needed
+my $debug = 0;
 
 # Declare some utility functions that are defined at the end
 sub top_file;
@@ -224,6 +227,13 @@ string PATH, I<or>, if the value is C<undef>, C</dev/null> or similar.
 
 =back
 
+=item B<perlapp ARRAYREF, OPTS>
+
+=item B<perltest ARRAYREF, OPTS>
+
+Both these functions function the same way as B<app> and B<test>, except
+that they expect the command to be a perl script.
+
 =back
 
 =cut
@@ -240,6 +250,20 @@ sub test {
     my %opts = @_;
     return sub { my $num = shift;
 		 return __build_cmd($num, \&__test_file, $cmd, %opts); }
+}
+
+sub perlapp {
+    my $cmd = shift;
+    my %opts = @_;
+    return sub { my $num = shift;
+		 return __build_cmd($num, \&__perlapps_file, $cmd, %opts); }
+}
+
+sub perltest {
+    my $cmd = shift;
+    my %opts = @_;
+    return sub { my $num = shift;
+		 return __build_cmd($num, \&__perltest_file, $cmd, %opts); }
 }
 
 =over 4
@@ -587,11 +611,25 @@ sub __test_file {
     return catfile($directories{TEST},@_,$f);
 }
 
+sub __perltest_file {
+    BAIL_OUT("Must run setup() first") if (! $test_name);
+
+    my $f = pop;
+    return ($^X, catfile($directories{TEST},@_,$f));
+}
+
 sub __apps_file {
     BAIL_OUT("Must run setup() first") if (! $test_name);
 
     my $f = pop;
     return catfile($directories{APPS},@_,$f);
+}
+
+sub __perlapps_file {
+    BAIL_OUT("Must run setup() first") if (! $test_name);
+
+    my $f = pop;
+    return ($^X, catfile($directories{APPS},@_,$f));
 }
 
 sub __results_file {
@@ -650,7 +688,7 @@ sub __cwd {
 	}
     }
 
-    if (0) {
+    if ($debug) {
 	print STDERR "DEBUG: __cwd(), directories and files:\n";
 	print STDERR "  \$directories{TEST}    = \"$directories{TEST}\"\n";
 	print STDERR "  \$directories{RESULTS} = \"$directories{RESULTS}\"\n";
@@ -667,14 +705,15 @@ sub __cwd {
 
 sub __fixup_cmd {
     my $prog = shift;
+    my $exe_shell = shift;
 
     my $prefix = __top_file("util", "shlib_wrap.sh")." ";
     my $ext = $ENV{"EXE_EXT"} || "";
 
-    if (defined($ENV{EXE_SHELL})) {
-	$prefix = "$ENV{EXE_SHELL} ";
+    if (defined($exe_shell)) {
+	$prefix = "$exe_shell ";
     } elsif ($^O eq "VMS" ) {	# VMS
-	$prefix = ($prog =~ /^[<\[]/ ? "mcr " : "mcr []");
+	$prefix = ($prog =~ /^(?:[\$a-z0-9_]+:)?[<\[]/i ? "mcr " : "mcr []");
 	$ext = ".exe";
     } elsif ($^O eq "MSWin32") { # Windows
 	$prefix = "";
@@ -682,13 +721,22 @@ sub __fixup_cmd {
     }
 
     # We test both with and without extension.  The reason
-    # is that we might, for example, be passed a Perl script
-    # ending with .pl...
-    my $file = "$prog$ext";
-    if ( -x $file ) {
-	return $prefix.$file;
-    } elsif ( -f $prog ) {
-	return $prog;
+    # is that we might be passed a complete file spec, with
+    # extension.
+    if ( ! -x $prog ) {
+	my $prog = "$prog$ext";
+	if ( ! -x $prog ) {
+	    $prog = undef;
+	}
+    }
+
+    if (defined($prog)) {
+	# Make sure to quotify the program file on platforms that may
+	# have spaces or similar in their path name.
+	# To our knowledge, VMS is the exception where quotifying should
+	# never happem.
+	($prog) = quotify($prog) unless $^O eq "VMS";
+	return $prefix.$prog;
     }
 
     print STDERR "$prog not found\n";
@@ -702,8 +750,26 @@ sub __build_cmd {
     my $path_builder = shift;
     # Make a copy to not destroy the caller's array
     my @cmdarray = ( @{$_[0]} ); shift;
-    my $cmd = __fixup_cmd($path_builder->(shift @cmdarray));
-    my @args = @cmdarray;
+
+    # We do a little dance, as $path_builder might return a list of
+    # more than one.  If so, only the first is to be considered a
+    # program to fix up, the rest is part of the arguments.  This
+    # happens for perl scripts, where $path_builder will return
+    # a list of two, $^X and the script name.
+    # Also, if $path_builder returned more than one, we don't apply
+    # the EXE_SHELL environment variable.
+    my @prog = ($path_builder->(shift @cmdarray));
+    my $first = shift @prog;
+    my $exe_shell = @prog ? undef : $ENV{EXE_SHELL};
+    my $cmd = __fixup_cmd($first, $exe_shell);
+    if (@prog) {
+	if ( ! -f $prog[0] ) {
+	    print STDERR "$prog[0] not found\n";
+	    $cmd = undef;
+	}
+    }
+    my @args = (@prog, @cmdarray);
+
     my %opts = @_;
 
     return () if !$cmd;
@@ -729,6 +795,11 @@ sub __build_cmd {
         __results_file($num ? "$test_name.$num.tmp_err" : "$test_name.tmp_err");
     my $display_cmd = "$cmd$arg_str$stdin$stdout$stderr";
     $cmd .= "$arg_str$stdin$stdout 2> $errlog";
+
+    if ($debug) {
+	print STDERR "DEBUG[__build_cmd]: \$cmd = \"$cmd\"\n";
+	print STDERR "DEBUG[__build_cmd]: \$display_cmd = \"$display_cmd\"\n";
+    }
 
     return ($cmd, $display_cmd, $errlog => $saved_stderr);
 }
