@@ -596,11 +596,11 @@ foreach (@argvcopy)
 			}
 		elsif (/^--with-zlib-lib=(.*)$/)
 			{
-			$withargs{"zlib-lib"}=$1;
+			$withargs{zlib_lib}=$1;
 			}
 		elsif (/^--with-zlib-include=(.*)$/)
 			{
-			$withargs{"zlib-include"}="-I$1";
+			$withargs{zlib_include}="-I$1";
 			}
 		elsif (/^--with-fipslibdir=(.*)$/)
 			{
@@ -937,9 +937,9 @@ if ($zlib)
 	$config{cflags} = "-DZLIB $config{cflags}";
 	if (defined($disabled{"zlib-dynamic"}))
 		{
-		if (defined($withargs{"zlib-lib"}))
+		if (defined($withargs{zlib_lib}))
 			{
-			$config{ex_libs} .= " -L" . $withargs{"zlib-lib"} . " -lz";
+			$config{ex_libs} .= " -L" . $withargs{zlib_lib} . " -lz";
 			}
 		else
 			{
