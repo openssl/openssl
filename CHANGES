@@ -4,6 +4,16 @@
 
  Changes between 1.0.2f and 1.1.0  [xx XXX xxxx]
 
+  *) Rewrite of BIO networking library. The BIO library lacked consistent
+     support of IPv6, and adding it required some more extensive
+     modifications.  This introduces the BIO_ADDR and BIO_ADDRINFO types,
+     which hold all types of addresses and chains of address information.
+     It also introduces a new API, with functions like BIO_socket,
+     BIO_connect, BIO_listen, BIO_lookup and a rewrite of BIO_accept.
+     The source/sink BIOs BIO_s_connect, BIO_s_accept and BIO_s_datagram
+     have been adapted accordingly.
+     [Richard Levitte]
+
   *) RSA_padding_check_PKCS1_type_1 now accepts inputs with and without
      the leading 0-byte.
      [Emilia Käsper]
