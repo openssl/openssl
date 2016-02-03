@@ -71,6 +71,8 @@ B<openssl> B<s_client>
 [B<-fallback_scsv>]
 [B<-async>]
 [B<-bugs>]
+[B<-comp>]
+[B<-no_comp>]
 [B<-cipher cipherlist>]
 [B<-serverpref>]
 [B<-starttls protocol>]
@@ -325,6 +327,19 @@ is also used via the B<-engine> option. For test purposes the dummy async engine
 
 there are several known bug in SSL and TLS implementations. Adding this
 option enables various workarounds.
+
+=item B<-comp>
+
+Enables support for SSL/TLS compression.
+This option was introduced in OpenSSL 1.1.0.
+TLS compression is not recommended and is off by default as of
+OpenSSL 1.1.0.
+
+=item B<-no_comp>
+
+Disables support for SSL/TLS compression.
+TLS compression is not recommended and is off by default as of
+OpenSSL 1.1.0.
 
 =item B<-brief>
 

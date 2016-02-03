@@ -77,6 +77,8 @@ B<openssl> B<s_server>
 [B<-no_tls1>]
 [B<-no_dhe>]
 [B<-bugs>]
+[B<-comp>]
+[B<-no_comp>]
 [B<-brief>]
 [B<-www>]
 [B<-WWW>]
@@ -312,6 +314,19 @@ is also used via the B<-engine> option. For test purposes the dummy async engine
 
 there are several known bug in SSL and TLS implementations. Adding this
 option enables various workarounds.
+
+=item B<-comp>
+
+Enable negotiation of TLS compression.
+This option was introduced in OpenSSL 1.1.0.
+TLS compression is not recommended and is off by default as of
+OpenSSL 1.1.0.
+
+=item B<-no_comp>
+
+Disable negotiation of TLS compression.
+TLS compression is not recommended and is off by default as of
+OpenSSL 1.1.0.
 
 =item B<-brief>
 
