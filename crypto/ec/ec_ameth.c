@@ -379,7 +379,13 @@ static void int_ec_free(EVP_PKEY *pkey)
     EC_KEY_free(pkey->pkey.ec);
 }
 
-static int do_EC_KEY_print(BIO *bp, const EC_KEY *x, int off, int ktype)
+typedef enum {
+    EC_KEY_PRINT_PRIVATE,
+    EC_KEY_PRINT_PUBLIC,
+    EC_KEY_PRINT_PARAM
+} ec_print_t;
+
+static int do_EC_KEY_print(BIO *bp, const EC_KEY *x, int off, ec_print_t ktype)
 {
     unsigned char *buffer = NULL;
     const char *ecstr;
@@ -395,7 +401,7 @@ static int do_EC_KEY_print(BIO *bp, const EC_KEY *x, int off, int ktype)
         goto err;
     }
 
-    if (ktype > 0) {
+    if (ktype != EC_KEY_PRINT_PARAM) {
         public_key = EC_KEY_get0_public_key(x);
         if (public_key != NULL) {
             pub_len = EC_POINT_point2oct(group, public_key,
@@ -409,7 +415,7 @@ static int do_EC_KEY_print(BIO *bp, const EC_KEY *x, int off, int ktype)
         }
     }
 
-    if (ktype == 2 && EC_KEY_get0_private_key(x) != NULL) {
+    if (ktype == EC_KEY_PRINT_PRIVATE && EC_KEY_get0_private_key(x) != NULL) {
         priv_len = EC_KEY_priv2oct(x, NULL, 0);
         if (priv_len == 0) {
             reason = ERR_R_EC_LIB;
@@ -426,9 +432,9 @@ static int do_EC_KEY_print(BIO *bp, const EC_KEY *x, int off, int ktype)
             goto err;
         }
     }
-    if (ktype == 2)
+    if (ktype == EC_KEY_PRINT_PRIVATE)
         ecstr = "Private-Key";
-    else if (ktype == 1)
+    else if (ktype == EC_KEY_PRINT_PUBLIC)
         ecstr = "Public-Key";
     else
         ecstr = "ECDSA-Parameters";
@@ -492,19 +498,19 @@ static int eckey_param_encode(const EVP_PKEY *pkey, unsigned char **pder)
 static int eckey_param_print(BIO *bp, const EVP_PKEY *pkey, int indent,
                              ASN1_PCTX *ctx)
 {
-    return do_EC_KEY_print(bp, pkey->pkey.ec, indent, 0);
+    return do_EC_KEY_print(bp, pkey->pkey.ec, indent, EC_KEY_PRINT_PARAM);
 }
 
 static int eckey_pub_print(BIO *bp, const EVP_PKEY *pkey, int indent,
                            ASN1_PCTX *ctx)
 {
-    return do_EC_KEY_print(bp, pkey->pkey.ec, indent, 1);
+    return do_EC_KEY_print(bp, pkey->pkey.ec, indent, EC_KEY_PRINT_PUBLIC);
 }
 
 static int eckey_priv_print(BIO *bp, const EVP_PKEY *pkey, int indent,
                             ASN1_PCTX *ctx)
 {
-    return do_EC_KEY_print(bp, pkey->pkey.ec, indent, 2);
+    return do_EC_KEY_print(bp, pkey->pkey.ec, indent, EC_KEY_PRINT_PRIVATE);
 }
 
 static int old_ec_priv_decode(EVP_PKEY *pkey,
