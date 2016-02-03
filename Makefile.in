@@ -110,8 +110,8 @@ POLY1305_ASM_OBJ= {- $target{poly1305_obj} -}
 PERLASM_SCHEME= {- $target{perlasm_scheme} -}
 
 # Zlib stuff
-ZLIB_INCLUDE={- $withargs{zlib-include} -}
-LIBZLIB={- $withargs{zlib-lib} -}
+ZLIB_INCLUDE={- $withargs{zlib_include} -}
+LIBZLIB={- $withargs{zlib_lib} -}
 
 # This is the location of fipscanister.o and friends.
 # The FIPS module build will place it $(INSTALLTOP)/lib
