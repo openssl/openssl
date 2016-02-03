@@ -314,12 +314,12 @@ my %disabled = ( # "what"         => "comment" [or special keyword "experimental
 		 "md2"            => "default",
 		 "rc5"            => "default",
 		 "sctp"           => "default",
-		 "shared"         => "default",
+		 "shared"         => "default(no-depflags)",
 		 "ssl-trace"	  => "default",
 		 "store"	  => "experimental",
 		 "unit-test"	  => "default",
-		 "zlib"           => "default",
-		 "zlib-dynamic"   => "default",
+		 "zlib"           => "default(no-depflags)",
+		 "zlib-dynamic"   => "default(no-depflags)",
 		 "crypto-mdebug"  => "default",
 	       );
 my @experimental = ();
