@@ -551,7 +551,7 @@ int EC_KEY_oct2key(EC_KEY *key, const unsigned char *buf, size_t len,
 
 size_t EC_KEY_priv2oct(const EC_KEY *eckey, unsigned char *buf, size_t len)
 {
-    size_t buf_len, bn_len;
+    size_t buf_len;
     if (eckey->group == NULL || eckey->group->meth == NULL)
         return 0;
 
@@ -563,22 +563,12 @@ size_t EC_KEY_priv2oct(const EC_KEY *eckey, unsigned char *buf, size_t len)
     else if (len < buf_len)
         return 0;
 
-    bn_len = (size_t)BN_num_bytes(eckey->priv_key);
-
     /* Octetstring may need leading zeros if BN is to short */
 
-    if (bn_len > buf_len) {
+    if (BN_bn2binpad(eckey->priv_key, buf, buf_len) == -1) {
         ECerr(EC_F_EC_KEY_PRIV2OCT, EC_R_BUFFER_TOO_SMALL);
         return 0;
     }
-
-    if (!BN_bn2bin(eckey->priv_key, buf + buf_len - bn_len)) {
-        ECerr(EC_F_EC_KEY_PRIV2OCT, ERR_R_BN_LIB);
-        return 0;
-    }
-
-    if (buf_len - bn_len > 0)
-        memset(buf, 0, buf_len - bn_len);
 
     return buf_len;
 }
