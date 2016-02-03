@@ -209,7 +209,7 @@ sub clientstart
     }
 
     # Create the Proxy socket
-    my $proxaddr = $self->server_addr;
+    my $proxaddr = $self->proxy_addr;
     $proxaddr =~ s/[\[\]]//g; # Remove [ and ]
     my $proxy_sock = $IP_factory->(
         LocalHost   => $proxaddr,
