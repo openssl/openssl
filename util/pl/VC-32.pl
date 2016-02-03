@@ -362,7 +362,7 @@ sub do_lib_rule
  		if ($fips && $target =~ /O_CRYPTO/)
 			{
 			$ret.="$target: $objs \$(PREMAIN_DSO_EXE)";
-			$ret.="\n\tSET FIPS_LINK=\$(LINK)\n";
+			$ret.="\n\tSET FIPS_LINK=\$(LINK_CMD)\n";
 			$ret.="\tSET FIPS_CC=\$(CC)\n";
 			$ret.="\tSET FIPS_CC_ARGS=/Fo\$(OBJ_D)${o}fips_premain.obj \$(SHLIB_CFLAGS) -c\n";
 			$ret.="\tSET PREMAIN_DSO_EXE=\$(PREMAIN_DSO_EXE)\n";
@@ -376,7 +376,7 @@ sub do_lib_rule
 		else
 			{
 			$ret.="$target: $objs";
-			$ret.="\n\t\$(LINK) \$(MLFLAGS) $efile$target $name @<<\n  \$(SHLIB_EX_OBJ) $objs $ex \$(EX_LIBS)\n<<\n";
+			$ret.="\n\t\$(LINK_CMD) \$(MLFLAGS) $efile$target $name @<<\n  \$(SHLIB_EX_OBJ) $objs $ex \$(EX_LIBS)\n<<\n";
 			}
 
 		$ret.="\tIF EXIST \$@.manifest mt -nologo -manifest \$@.manifest -outputresource:\$@;2\n\n";
@@ -394,13 +394,13 @@ sub do_link_rule
 	$ret.="$target: $files $dep_libs\n";
 	if ($standalone == 1)
 		{
-		$ret.="  \$(LINK) \$(LFLAGS) $efile$target @<<\n\t";
+		$ret.="  \$(LINK_CMD) \$(LFLAGS) $efile$target @<<\n\t";
 		$ret.= "\$(EX_LIBS) " if ($files =~ /O_FIPSCANISTER/ && !$fipscanisterbuild);
 		$ret.="$files $libs\n<<\n";
 		}
 	elsif ($standalone == 2)
 		{
-		$ret.="\tSET FIPS_LINK=\$(LINK)\n";
+		$ret.="\tSET FIPS_LINK=\$(LINK_CMD)\n";
 		$ret.="\tSET FIPS_CC=\$(CC)\n";
 		$ret.="\tSET FIPS_CC_ARGS=/Fo\$(OBJ_D)${o}fips_premain.obj \$(SHLIB_CFLAGS) -c\n";
 		$ret.="\tSET PREMAIN_DSO_EXE=\n";
@@ -412,7 +412,7 @@ sub do_link_rule
 		}
 	else
 		{
-		$ret.="\t\$(LINK) \$(LFLAGS) $efile$target @<<\n";
+		$ret.="\t\$(LINK_CMD) \$(LFLAGS) $efile$target @<<\n";
 		$ret.="\t\$(APP_EX_OBJ) $files $libs\n<<\n";
 		}
     	$ret.="\tIF EXIST \$@.manifest mt -nologo -manifest \$@.manifest -outputresource:\$@;1\n\n";
