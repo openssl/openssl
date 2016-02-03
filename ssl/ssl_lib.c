@@ -1982,7 +1982,7 @@ char *SSL_get_shared_ciphers(const SSL *s, char *buf, int len)
             *p = '\0';
             return buf;
         }
-        strcpy(p, c->name);
+        memcpy(p, c->name, n + 1);
         p += n;
         *(p++) = ':';
         len -= n + 1;
