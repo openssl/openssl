@@ -250,6 +250,7 @@ my @disablables = (
     "ecdh",
     "ecdsa",
     "ec_nistp_64_gcc_128",
+    "egd",
     "engine",
     "err",			# Really???
     "heartbeats",
