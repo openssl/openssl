@@ -182,6 +182,7 @@ $tmp_def="tmp";
 
 $perl="perl" unless defined $perl;
 $mkdir="-mkdir" unless defined $mkdir;
+$mv="mv" unless defined $mv;
 
 ($ssl,$crypto)=("ssl","crypto");
 $ranlib="echo ranlib";
@@ -661,6 +662,7 @@ PERLASM_SCHEME=$mf_perlasm_scheme
 CP=$cp
 CP2=$cp2
 RM=$rm
+MV=$mv
 RANLIB=$ranlib
 MKDIR=$mkdir
 MKLIB=$bin_dir$mklib
@@ -1352,7 +1354,7 @@ sub do_dofile_rule
 	return <<"EOF";
 $to${o}$file: $tmpl
 	\$(PERL) "-I." "-Mconfigdata" util/dofile.pl "$tmpl" > "$to${o}$file.new"
-	mv "$to${o}$file.new" "$to${o}$file"
+	\$(MV) "$to${o}$file.new" "$to${o}$file"
 EOF
 	}
 
