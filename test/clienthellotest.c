@@ -55,6 +55,7 @@
 
 #include <string.h>
 
+#include <openssl/opensslconf.h>
 #include <openssl/bio.h>
 #include <openssl/crypto.h>
 #include <openssl/evp.h>
@@ -117,7 +118,11 @@ int main(int argc, char *argv[])
     for (; currtest < TOTAL_NUM_TESTS; currtest++) {
         testresult = 0;
         if (currtest == TEST_SET_SESSION_TICK_DATA_TLS_1_2) {
+#ifndef OPENSSL_NO_TLS1_2
             ctx = SSL_CTX_new(TLSv1_2_method());
+#else
+            continue;
+#endif
         } else {
             ctx = SSL_CTX_new(TLS_method());
         }
