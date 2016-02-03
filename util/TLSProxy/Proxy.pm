@@ -261,6 +261,7 @@ sub clientstart
         $server_sock = $IP_factory->(
             PeerAddr => $servaddr,
             PeerPort => $self->server_port,
+            MultiHomed => 1,
             Proto => 'tcp'
         );
 
