@@ -672,18 +672,20 @@ int BIO_lookup(const char *host, const char *service,
         }
     } else {
 #endif
-        struct hostent *he;
+        const struct hostent *he;
         /* Windows doesn't seem to have in_addr_t */
 #ifdef OPENSSL_SYS_WINDOWS
-        uint32_t he_fallback_address = INADDR_ANY;
-        uint32_t *he_fallback_addresses[] = { &he_fallback_address, NULL };
+        static uint32_t he_fallback_address;
+        static const uint32_t *he_fallback_addresses[] =
+            { &he_fallback_address, NULL };
 #else
-        in_addr_t he_fallback_address = INADDR_ANY;
-        in_addr_t *he_fallback_addresses[] = { &he_fallback_address, NULL };
+        static in_addr_t he_fallback_address;
+        static const in_addr_t *he_fallback_addresses[] =
+            { &he_fallback_address, NULL };
 #endif
-        struct hostent he_fallback = { NULL, NULL, AF_INET,
-                                       sizeof(he_fallback_address),
-                                       (char **)&he_fallback_addresses };
+        static const struct hostent he_fallback =
+            { NULL, NULL, AF_INET, sizeof(he_fallback_address),
+              (char **)&he_fallback_addresses };
         struct servent *se;
         /* Apprently, on WIN64, s_proto and s_port have traded places... */
 #ifdef _WIN64
@@ -695,6 +697,7 @@ int BIO_lookup(const char *host, const char *service,
 
         CRYPTO_w_lock(CRYPTO_LOCK_GETHOSTBYNAME);
         CRYPTO_w_lock(CRYPTO_LOCK_GETSERVBYNAME);
+        he_fallback_address = INADDR_ANY;
         if (host == NULL) {
             he = &he_fallback;
             switch(lookup_type) {
