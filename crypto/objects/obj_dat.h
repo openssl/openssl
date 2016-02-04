@@ -60,12 +60,12 @@
  * [including the GNU Public Licence.]
  */
 
-#define NUM_NID 1023
-#define NUM_SN 1016
-#define NUM_LN 1016
-#define NUM_OBJ 938
+#define NUM_NID 1034
+#define NUM_SN 1027
+#define NUM_LN 1027
+#define NUM_OBJ 949
 
-static const unsigned char lvalues[6620]={
+static const unsigned char lvalues[6704]={
 0x2A,0x86,0x48,0x86,0xF7,0x0D,               /* [  0] OBJ_rsadsi */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,          /* [  6] OBJ_pkcs */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x02,0x02,     /* [ 13] OBJ_md2 */
@@ -998,6 +998,17 @@ static const unsigned char lvalues[6620]={
 0x2A,0x85,0x03,0x64,0x70,                    /* [6598] OBJ_issuerSignTool */
 0x2B,0x06,0x01,0x05,0x05,0x07,0x01,0x18,     /* [6603] OBJ_tlsfeature */
 0x2B,0x06,0x01,0x05,0x05,0x07,0x03,0x11,     /* [6611] OBJ_ipsec_IKE */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x03,0x12,     /* [6619] OBJ_capwapAC */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x03,0x13,     /* [6627] OBJ_capwapWTP */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x03,0x15,     /* [6635] OBJ_sshClient */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x03,0x16,     /* [6643] OBJ_sshServer */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x03,0x17,     /* [6651] OBJ_sendRouter */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x03,0x18,     /* [6659] OBJ_sendProxiedRouter */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x03,0x19,     /* [6667] OBJ_sendOwner */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x03,0x1A,     /* [6675] OBJ_sendProxiedOwner */
+0x2B,0x06,0x01,0x05,0x02,0x03,               /* [6683] OBJ_id_pkinit */
+0x2B,0x06,0x01,0x05,0x02,0x03,0x04,          /* [6689] OBJ_pkInitClientAuth */
+0x2B,0x06,0x01,0x05,0x02,0x03,0x05,          /* [6696] OBJ_pkInitKDC */
 };
 
 static const ASN1_OBJECT nid_objs[NUM_NID]={
@@ -2673,6 +2684,22 @@ static const ASN1_OBJECT nid_objs[NUM_NID]={
 {"TLS1-PRF","tls1-prf",NID_tls1_prf,0,NULL,0},
 {"ipsecIKE","ipsec Internet Key Exchange",NID_ipsec_IKE,8,
 	&(lvalues[6611]),0},
+{"capwapAC","Ctrl/provision WAP Access",NID_capwapAC,8,
+	&(lvalues[6619]),0},
+{"capwapWTP","Ctrl/Provision WAP Termination",NID_capwapWTP,8,
+	&(lvalues[6627]),0},
+{"secureShellClient","SSH Client",NID_sshClient,8,&(lvalues[6635]),0},
+{"secureShellServer","SSH Server",NID_sshServer,8,&(lvalues[6643]),0},
+{"sendRouter","Send Router",NID_sendRouter,8,&(lvalues[6651]),0},
+{"sendProxiedRouter","Send Proxied Router",NID_sendProxiedRouter,8,
+	&(lvalues[6659]),0},
+{"sendOwner","Send Owner",NID_sendOwner,8,&(lvalues[6667]),0},
+{"sendProxiedOwner","Send Proxied Owner",NID_sendProxiedOwner,8,
+	&(lvalues[6675]),0},
+{"id-pkinit","id-pkinit",NID_id_pkinit,6,&(lvalues[6683]),0},
+{"pkInitClientAuth","PKINIT Client Auth",NID_pkInitClientAuth,7,
+	&(lvalues[6689]),0},
+{"pkInitKDC","Signing KDC Response",NID_pkInitKDC,7,&(lvalues[6696]),0},
 };
 
 static const unsigned int sn_objs[NUM_SN]={
@@ -2951,6 +2978,8 @@ static const unsigned int sn_objs[NUM_SN]={
 483,	/* "cNAMERecord" */
 179,	/* "caIssuers" */
 785,	/* "caRepository" */
+1023,	/* "capwapAC" */
+1024,	/* "capwapWTP" */
 443,	/* "caseIgnoreIA5StringSyntax" */
 152,	/* "certBag" */
 677,	/* "certicom-arc" */
@@ -3212,6 +3241,7 @@ static const unsigned int sn_objs[NUM_SN]={
 351,	/* "id-pda-gender" */
 349,	/* "id-pda-placeOfBirth" */
 175,	/* "id-pe" */
+1031,	/* "id-pkinit" */
 261,	/* "id-pkip" */
 258,	/* "id-pkix-mod" */
 269,	/* "id-pkix1-explicit-88" */
@@ -3416,6 +3446,8 @@ static const unsigned int sn_objs[NUM_SN]={
 440,	/* "pilotObjectClass" */
 455,	/* "pilotOrganization" */
 445,	/* "pilotPerson" */
+1032,	/* "pkInitClientAuth" */
+1033,	/* "pkInitKDC" */
  2,	/* "pkcs" */
 186,	/* "pkcs1" */
 27,	/* "pkcs3" */
@@ -3504,9 +3536,15 @@ static const unsigned int sn_objs[NUM_SN]={
 732,	/* "sect409r1" */
 733,	/* "sect571k1" */
 734,	/* "sect571r1" */
+1025,	/* "secureShellClient" */
+1026,	/* "secureShellServer" */
 386,	/* "security" */
 878,	/* "seeAlso" */
 394,	/* "selected-attribute-types" */
+1029,	/* "sendOwner" */
+1030,	/* "sendProxiedOwner" */
+1028,	/* "sendProxiedRouter" */
+1027,	/* "sendRouter" */
 105,	/* "serialNumber" */
 129,	/* "serverAuth" */
 371,	/* "serviceLocator" */
@@ -3710,6 +3748,8 @@ static const unsigned int ln_objs[NUM_LN]={
 951,	/* "CT Precertificate SCTs" */
 953,	/* "CT Precertificate Signer" */
 131,	/* "Code Signing" */
+1024,	/* "Ctrl/Provision WAP Termination" */
+1023,	/* "Ctrl/provision WAP Access" */
 783,	/* "Diffie-Hellman based MAC" */
 382,	/* "Directory" */
 392,	/* "Domain" */
@@ -3801,6 +3841,7 @@ static const unsigned int ln_objs[NUM_LN]={
 161,	/* "PBES2" */
 69,	/* "PBKDF2" */
 162,	/* "PBMAC1" */
+1032,	/* "PKINIT Client Auth" */
 127,	/* "PKIX" */
 858,	/* "Permanent Identifier" */
 164,	/* "Policy Qualifier CPS" */
@@ -3813,9 +3854,16 @@ static const unsigned int ln_objs[NUM_LN]={
 167,	/* "S/MIME Capabilities" */
 1006,	/* "SNILS" */
 387,	/* "SNMPv2" */
+1025,	/* "SSH Client" */
+1026,	/* "SSH Server" */
 512,	/* "Secure Electronic Transactions" */
 386,	/* "Security" */
 394,	/* "Selected Attribute Types" */
+1029,	/* "Send Owner" */
+1030,	/* "Send Proxied Owner" */
+1028,	/* "Send Proxied Router" */
+1027,	/* "Send Router" */
+1033,	/* "Signing KDC Response" */
 1008,	/* "Signing Tool of Issuer" */
 1007,	/* "Signing Tool of Subject" */
 143,	/* "Strong Extranet ID" */
@@ -4234,6 +4282,7 @@ static const unsigned int ln_objs[NUM_LN]={
 351,	/* "id-pda-gender" */
 349,	/* "id-pda-placeOfBirth" */
 175,	/* "id-pe" */
+1031,	/* "id-pkinit" */
 261,	/* "id-pkip" */
 258,	/* "id-pkix-mod" */
 269,	/* "id-pkix1-explicit-88" */
@@ -5042,6 +5091,7 @@ static const unsigned int obj_objs[NUM_OBJ]={
 994,	/* OBJ_id_tc26_constants            1 2 643 7 1 2 */
  1,	/* OBJ_rsadsi                       1 2 840 113549 */
 185,	/* OBJ_X9cm                         1 2 840 10040 4 */
+1031,	/* OBJ_id_pkinit                    1 3 6 1 5 2 3 */
 127,	/* OBJ_id_pkix                      1 3 6 1 5 5 7 */
 505,	/* OBJ_mime_mhs_headings            1 3 6 1 7 1 1 */
 506,	/* OBJ_mime_mhs_bodies              1 3 6 1 7 1 2 */
@@ -5112,6 +5162,8 @@ static const unsigned int obj_objs[NUM_OBJ]={
 791,	/* OBJ_ecdsa_with_Recommended       1 2 840 10045 4 2 */
 792,	/* OBJ_ecdsa_with_Specified         1 2 840 10045 4 3 */
 920,	/* OBJ_dhpublicnumber               1 2 840 10046 2 1 */
+1032,	/* OBJ_pkInitClientAuth             1 3 6 1 5 2 3 4 */
+1033,	/* OBJ_pkInitKDC                    1 3 6 1 5 2 3 5 */
 258,	/* OBJ_id_pkix_mod                  1 3 6 1 5 5 7 0 */
 175,	/* OBJ_id_pe                        1 3 6 1 5 5 7 1 */
 259,	/* OBJ_id_qt                        1 3 6 1 5 5 7 2 */
@@ -5269,6 +5321,14 @@ static const unsigned int obj_objs[NUM_OBJ]={
 180,	/* OBJ_OCSP_sign                    1 3 6 1 5 5 7 3 9 */
 297,	/* OBJ_dvcs                         1 3 6 1 5 5 7 3 10 */
 1022,	/* OBJ_ipsec_IKE                    1 3 6 1 5 5 7 3 17 */
+1023,	/* OBJ_capwapAC                     1 3 6 1 5 5 7 3 18 */
+1024,	/* OBJ_capwapWTP                    1 3 6 1 5 5 7 3 19 */
+1025,	/* OBJ_sshClient                    1 3 6 1 5 5 7 3 21 */
+1026,	/* OBJ_sshServer                    1 3 6 1 5 5 7 3 22 */
+1027,	/* OBJ_sendRouter                   1 3 6 1 5 5 7 3 23 */
+1028,	/* OBJ_sendProxiedRouter            1 3 6 1 5 5 7 3 24 */
+1029,	/* OBJ_sendOwner                    1 3 6 1 5 5 7 3 25 */
+1030,	/* OBJ_sendProxiedOwner             1 3 6 1 5 5 7 3 26 */
 298,	/* OBJ_id_it_caProtEncCert          1 3 6 1 5 5 7 4 1 */
 299,	/* OBJ_id_it_signKeyPairTypes       1 3 6 1 5 5 7 4 2 */
 300,	/* OBJ_id_it_encKeyPairTypes        1 3 6 1 5 5 7 4 3 */
