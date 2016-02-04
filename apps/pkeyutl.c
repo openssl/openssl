@@ -71,7 +71,8 @@ static EVP_PKEY_CTX *init_ctx(int *pkeysize,
                               char *passinarg, int pkey_op, ENGINE *e,
                               const int impl);
 
-static int setup_peer(EVP_PKEY_CTX *ctx, int peerform, const char *file);
+static int setup_peer(EVP_PKEY_CTX *ctx, int peerform, const char *file,
+                      ENGINE *e);
 
 static int do_keyop(EVP_PKEY_CTX *ctx, int pkey_op,
                     unsigned char *out, size_t *poutlen,
@@ -92,22 +93,22 @@ OPTIONS pkeyutl_options[] = {
     {"out", OPT_OUT, '>', "Output file"},
     {"pubin", OPT_PUBIN, '-', "Input is a public key"},
     {"certin", OPT_CERTIN, '-', "Input is a cert with a public key"},
-    {"asn1parse", OPT_ASN1PARSE, '-'},
+    {"asn1parse", OPT_ASN1PARSE, '-', "asn1parse the output data"},
     {"hexdump", OPT_HEXDUMP, '-', "Hex dump output"},
     {"sign", OPT_SIGN, '-', "Sign with private key"},
     {"verify", OPT_VERIFY, '-', "Verify with public key"},
     {"verifyrecover", OPT_VERIFYRECOVER, '-',
      "Verify with public key, recover original data"},
-    {"rev", OPT_REV, '-'},
+    {"rev", OPT_REV, '-', "Reverse the input buffer"},
     {"encrypt", OPT_ENCRYPT, '-', "Encrypt with public key"},
     {"decrypt", OPT_DECRYPT, '-', "Decrypt with private key"},
     {"derive", OPT_DERIVE, '-', "Derive shared secret"},
     {"sigfile", OPT_SIGFILE, '<', "Signature file (verify operation only)"},
     {"inkey", OPT_INKEY, 's', "Input key"},
-    {"peerkey", OPT_PEERKEY, 's'},
+    {"peerkey", OPT_PEERKEY, 's', "Peer key file used in key derivation"},
     {"passin", OPT_PASSIN, 's', "Pass phrase source"},
-    {"peerform", OPT_PEERFORM, 'F'},
-    {"keyform", OPT_KEYFORM, 'f', "Private key format - default PEM"},
+    {"peerform", OPT_PEERFORM, 'E', "Peer key format - default PEM"},
+    {"keyform", OPT_KEYFORM, 'E', "Private key format - default PEM"},
     {"pkeyopt", OPT_PKEYOPT, 's', "Public key options as opt:value"},
 #ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
@@ -131,6 +132,9 @@ int pkeyutl_main(int argc, char **argv)
     int engine_impl = 0;
     int ret = 1, rv = -1;
     size_t buf_outlen;
+    const char *inkey = NULL;
+    const char *peerkey = NULL;
+    STACK_OF(OPENSSL_STRING) *pkeyopts = NULL;
 
     prog = opt_init(argc, argv, pkeyutl_options);
     while ((o = opt_next()) != OPT_EOF) {
@@ -157,27 +161,20 @@ int pkeyutl_main(int argc, char **argv)
             engine_impl = 1;
             break;
         case OPT_INKEY:
-            ctx = init_ctx(&keysize, opt_arg(), keyform, key_type,
-                           passinarg, pkey_op, e, engine_impl);
-            if (ctx == NULL) {
-                BIO_puts(bio_err, "%s: Error initializing context\n");
-                ERR_print_errors(bio_err);
-                goto opthelp;
-            }
+            inkey = opt_arg();
             break;
         case OPT_PEERKEY:
-            if (!setup_peer(ctx, peerform, opt_arg()))
-                goto opthelp;
+            peerkey = opt_arg();
             break;
         case OPT_PASSIN:
             passinarg = opt_arg();
             break;
         case OPT_PEERFORM:
-	     if (!opt_format(opt_arg(), OPT_FMT_ENGINE | OPT_FMT_PEMDER, &peerform))
+            if (!opt_format(opt_arg(), OPT_FMT_PDE, &peerform))
                 goto opthelp;
             break;
         case OPT_KEYFORM:
-	  if (!opt_format(opt_arg(), (OPT_FMT_ENGINE | OPT_FMT_PEMDER), &keyform))
+            if (!opt_format(opt_arg(), OPT_FMT_PDE, &keyform))
                 goto opthelp;
             break;
         case OPT_ENGINE:
@@ -204,9 +201,6 @@ int pkeyutl_main(int argc, char **argv)
         case OPT_VERIFYRECOVER:
             pkey_op = EVP_PKEY_OP_VERIFYRECOVER;
             break;
-        case OPT_REV:
-            rev = 1;
-            break;
         case OPT_ENCRYPT:
             pkey_op = EVP_PKEY_OP_ENCRYPT;
             break;
@@ -216,15 +210,14 @@ int pkeyutl_main(int argc, char **argv)
         case OPT_DERIVE:
             pkey_op = EVP_PKEY_OP_DERIVE;
             break;
+        case OPT_REV:
+            rev = 1;
+            break;
         case OPT_PKEYOPT:
-            if (ctx == NULL) {
-                BIO_printf(bio_err,
-                           "%s: Must have -inkey before -pkeyopt\n", prog);
-                goto opthelp;
-            }
-            if (pkey_ctrl_string(ctx, opt_arg()) <= 0) {
-                BIO_printf(bio_err, "%s: Can't set parameter:\n", prog);
-                ERR_print_errors(bio_err);
+            if ((pkeyopts == NULL &&
+                 (pkeyopts = sk_OPENSSL_STRING_new_null()) == NULL) ||
+                sk_OPENSSL_STRING_push(pkeyopts, *++argv) == 0) {
+                BIO_puts(bio_err, "out of memory\n");
                 goto end;
             }
             break;
@@ -233,8 +226,36 @@ int pkeyutl_main(int argc, char **argv)
     argc = opt_num_rest();
     argv = opt_rest();
 
-    if (ctx == NULL)
+    if (inkey == NULL ||
+        (peerkey != NULL && pkey_op != EVP_PKEY_OP_DERIVE))
         goto opthelp;
+
+    ctx = init_ctx(&keysize, inkey, keyform, key_type,
+                   passinarg, pkey_op, e, engine_impl);
+    if (ctx == NULL) {
+        BIO_printf(bio_err, "%s: Error initializing context\n", prog);
+        ERR_print_errors(bio_err);
+        goto end;
+    }
+    if (peerkey != NULL && !setup_peer(ctx, peerform, peerkey, e)) {
+        BIO_printf(bio_err, "%s: Error setting up peer key\n", prog);
+        ERR_print_errors(bio_err);
+        goto end;
+    }
+    if (pkeyopts != NULL) {
+        int num = sk_OPENSSL_STRING_num(pkeyopts);
+        int i;
+
+        for (i = 0; i < num; ++i) {
+            const char *opt = sk_OPENSSL_STRING_value(pkeyopts, i);
+
+            if (pkey_ctrl_string(ctx, opt) <= 0) {
+                BIO_printf(bio_err, "%s: Can't set parameter:\n", prog);
+                ERR_print_errors(bio_err);
+                goto end;
+            }
+        }
+    }
 
     if (sigfile && (pkey_op != EVP_PKEY_OP_VERIFY)) {
         BIO_printf(bio_err,
@@ -268,7 +289,7 @@ int pkeyutl_main(int argc, char **argv)
         }
         siglen = bio_to_mem(&sig, keysize * 10, sigbio);
         BIO_free(sigbio);
-        if (siglen <= 0) {
+        if (siglen < 0) {
             BIO_printf(bio_err, "Error reading signature data\n");
             goto end;
         }
@@ -277,7 +298,7 @@ int pkeyutl_main(int argc, char **argv)
     if (in) {
         /* Read the input data */
         buf_inlen = bio_to_mem(&buf_in, keysize * 10, in);
-        if (buf_inlen <= 0) {
+        if (buf_inlen < 0) {
             BIO_printf(bio_err, "Error reading input Data\n");
             exit(1);
         }
@@ -305,13 +326,13 @@ int pkeyutl_main(int argc, char **argv)
     }
     rv = do_keyop(ctx, pkey_op, NULL, (size_t *)&buf_outlen,
                   buf_in, (size_t)buf_inlen);
-    if (rv > 0) {
+    if (rv > 0 && buf_outlen != 0) {
         buf_out = app_malloc(buf_outlen, "buffer output");
         rv = do_keyop(ctx, pkey_op,
                       buf_out, (size_t *)&buf_outlen,
                       buf_in, (size_t)buf_inlen);
     }
-    if (rv <= 0) {
+    if (rv < 0) {
         ERR_print_errors(bio_err);
         goto end;
     }
@@ -332,6 +353,7 @@ int pkeyutl_main(int argc, char **argv)
     OPENSSL_free(buf_in);
     OPENSSL_free(buf_out);
     OPENSSL_free(sig);
+    sk_OPENSSL_STRING_free(pkeyopts);
     return ret;
 }
 
@@ -429,17 +451,16 @@ static EVP_PKEY_CTX *init_ctx(int *pkeysize,
 
 }
 
-static int setup_peer(EVP_PKEY_CTX *ctx, int peerform, const char *file)
+static int setup_peer(EVP_PKEY_CTX *ctx, int peerform, const char *file,
+                      ENGINE* e)
 {
     EVP_PKEY *peer = NULL;
+    ENGINE* engine = NULL;
     int ret;
-    if (!ctx) {
-        BIO_puts(bio_err, "-peerkey command before -inkey\n");
-        return 0;
-    }
 
-    peer = load_pubkey(file, peerform, 0, NULL, NULL, "Peer Key");
-
+    if (peerform == FORMAT_ENGINE)
+        engine = e;
+    peer = load_pubkey(file, peerform, 0, NULL, engine, "Peer Key");
     if (!peer) {
         BIO_printf(bio_err, "Error reading peer key %s\n", file);
         ERR_print_errors(bio_err);
