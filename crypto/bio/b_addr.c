@@ -214,6 +214,9 @@ unsigned short BIO_ADDR_rawport(const BIO_ADDR *ap)
 static int addr_strings(const BIO_ADDR *ap, int numeric,
                         char **hostname, char **service)
 {
+    if (BIO_sock_init() != 1)
+        return 0;
+
     if (1) {
 #ifdef AI_PASSIVE
         int ret = 0;
@@ -633,7 +636,11 @@ int BIO_lookup(const char *host, const char *service,
     }
 #endif
 
+    if (BIO_sock_init() != 1)
+        return 0;
+
     if (1) {
+        int gai_ret = 0;
 #ifdef AI_PASSIVE
         struct addrinfo hints;
 
@@ -655,7 +662,7 @@ int BIO_lookup(const char *host, const char *service,
         /* Note that |res| SHOULD be a 'struct addrinfo **' thanks to
          * macro magic in bio_lcl.h
          */
-        switch (getaddrinfo(host, service, &hints, res)) {
+        switch ((gai_ret = getaddrinfo(host, service, &hints, res))) {
 # ifdef EAI_SYSTEM
         case EAI_SYSTEM:
             SYSerr(SYS_F_GETADDRINFO, get_last_socket_error());
@@ -667,7 +674,7 @@ int BIO_lookup(const char *host, const char *service,
             break;
         default:
             BIOerr(BIO_F_BIO_LOOKUP, ERR_R_SYS_LIB);
-            ERR_add_error_data(1, gai_strerror(ret));
+            ERR_add_error_data(1, gai_strerror(gai_ret));
             break;
         }
     } else {
