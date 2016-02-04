@@ -58,7 +58,7 @@ The following return values can occur:
 
 There is no session available in B<ssl>.
 
-=item Pointer to an SSL
+=item Pointer to an SSL_SESSION
 
 The return value points to the data of an SSL session.
 

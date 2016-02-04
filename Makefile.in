@@ -1,19 +1,20 @@
 ##
 ## Makefile for OpenSSL
 ##
+## {- join("\n## ", @autowarntext) -}
 
-VERSION=
-MAJOR=
-MINOR=
-SHLIB_VERSION_NUMBER=
-SHLIB_VERSION_HISTORY=
-SHLIB_MAJOR=
-SHLIB_MINOR=
-SHLIB_EXT=
-PLATFORM=dist
-OPTIONS=
-CONFIGURE_ARGS=
-SHLIB_TARGET=
+VERSION={- $config{version} -}
+MAJOR={- $config{major} -}
+MINOR={- $config{minor} -}
+SHLIB_VERSION_NUMBER={- $config{shlib_version_number} -}
+SHLIB_VERSION_HISTORY={- $config{shlib_version_history} -}
+SHLIB_MAJOR={- $config{shlib_major} -}
+SHLIB_MINOR={- $config{shlib_minor} -}
+SHLIB_EXT={- $target{shared_extension} -}
+PLATFORM={- $config{target} -}
+OPTIONS={- $config{options} -}
+CONFIGURE_ARGS=({- join(", ",quotify_l(@{$config{perlargv}})) -})
+SHLIB_TARGET={- $target{shared_target} -}
 
 # HERE indicates where this Makefile lives.  This can be used to indicate
 # where sub-Makefiles are expected to be.  Currently has very limited usage,
@@ -23,11 +24,12 @@ HERE=.
 # INSTALL_PREFIX is for package builders so that they can configure
 # for, say, /usr/ and yet have everything installed to /tmp/somedir/usr/.
 # Normally it is left empty.
-INSTALL_PREFIX=
-INSTALLTOP=/usr/local/ssl
+INSTALL_PREFIX={- $config{install_prefix} -}
 
-# Do not edit this manually. Use Configure --openssldir=DIR to change this!
-OPENSSLDIR=/usr/local/ssl
+# Do not edit these manually. Use Configure with --prefix or --openssldir
+# to change this!  Short explanation in the top comment in Configure
+INSTALLTOP={- $config{prefix} -}
+OPENSSLDIR={- $config{openssldir} -}
 
 # NO_IDEA - Define to build without the IDEA algorithm
 # NO_RC4  - Define to build without the RC4 algorithm
@@ -56,23 +58,23 @@ OPENSSLDIR=/usr/local/ssl
 # equal 4.
 # PKCS1_CHECK - pkcs1 tests.
 
-CC= cc
-CFLAG= -O
-DEPFLAG= 
-PEX_LIBS= 
-EX_LIBS= 
-EXE_EXT= 
-ARFLAGS=
-AR=ar $(ARFLAGS) r
-RANLIB= ranlib
-NM= nm
-PERL= perl
+CROSS_COMPILE= {- $config{cross_compile_prefix} -}
+CC= $(CROSS_COMPILE){- $target{cc} -}
+CFLAG= {- $config{cflags} -}
+DEPFLAG= {- $config{depflags} -}
+LDFLAGS= {- $config{lflags} -}
+EX_LIBS= {- $config{ex_libs} -}
+EXE_EXT= {- $target{exe_extension} -}
+ARFLAGS= {- $target{arflags} -}
+AR=$(CROSS_COMPILE){- $target{ar} -} $(ARFLAGS) r
+RANLIB= {- $target{ranlib} -}
+NM= $(CROSS_COMPILE){- $target{nm} -}
+PERL= {- $config{perl} -}
 #RM= echo --
 RM= rm -f
 TAR= tar
 TARFLAGS= --no-recursion
-MAKEDEPPROG=makedepend
-LIBDIR=lib
+LIBDIR={- $config{libdir} -}
 
 # We let the C compiler driver to take care of .s files. This is done in
 # order to be excused from maintaining a separate set of architecture
@@ -84,32 +86,32 @@ ASFLAG=$(CFLAG)
 
 # For x86 assembler: Set PROCESSOR to 386 if you want to support
 # the 80386.
-PROCESSOR=
+PROCESSOR= {- $config{processor} -}
 
 # CPUID module collects small commonly used assembler snippets
-CPUID_OBJ= 
-BN_ASM= bn_asm.o
-EC_ASM=
-DES_ENC= des_enc.o fcrypt_b.o
-AES_ENC= aes_core.o aes_cbc.o
-BF_ENC= bf_enc.o
-CAST_ENC= c_enc.o
-RC4_ENC= rc4_enc.o
-RC5_ENC= rc5_enc.o
-MD5_ASM_OBJ= 
-SHA1_ASM_OBJ= 
-RMD160_ASM_OBJ= 
-WP_ASM_OBJ=
-CMLL_ENC=
-MODES_ASM_OBJ=
-ENGINES_ASM_OBJ=
-CHACHA_ENC= chacha_enc.o
-POLY1305_ASM_OBJ=
-PERLASM_SCHEME=
+CPUID_OBJ= {- $target{cpuid_obj} -}
+BN_ASM= {- $target{bn_obj} -}
+EC_ASM= {- $target{ec_obj} -}
+DES_ENC= {- $target{des_obj} -}
+AES_ENC= {- $target{aes_obj} -}
+BF_ENC= {- $target{bf_obj} -}
+CAST_ENC= {- $target{cast_obj} -}
+RC4_ENC= {- $target{rc4_obj} -}
+RC5_ENC= {- $target{rc5_obj} -}
+MD5_ASM_OBJ= {- $target{md5_obj} -}
+SHA1_ASM_OBJ= {- $target{sha1_obj} -}
+RMD160_ASM_OBJ= {- $target{rmd160_obj} -}
+WP_ASM_OBJ= {- $target{wp_obj} -}
+CMLL_ENC= {- $target{cmll_obj} -}
+MODES_ASM_OBJ= {- $target{modes_obj} -}
+PADLOCK_ASM_OBJ= {- $target{padlock_obj} -}
+CHACHA_ENC= {- $target{chacha_obj} -}
+POLY1305_ASM_OBJ= {- $target{poly1305_obj} -}
+PERLASM_SCHEME= {- $target{perlasm_scheme} -}
 
 # Zlib stuff
-ZLIB_INCLUDE=
-LIBZLIB=
+ZLIB_INCLUDE={- $withargs{zlib_include} -}
+LIBZLIB={- $withargs{zlib_lib} -}
 
 # This is the location of fipscanister.o and friends.
 # The FIPS module build will place it $(INSTALLTOP)/lib
@@ -118,34 +120,25 @@ LIBZLIB=
 # $(INSTALLTOP) for this build may be different so hard
 # code the path.
 
-FIPSLIBDIR=/usr/local/ssl/$(LIBDIR)/
+FIPSLIBDIR={- $config{fipslibdir} -}
 
 # The location of the library which contains fipscanister.o
 # normally it will be libcrypto. If not compiling in FIPS mode
 # at all this is empty making it a useful test for a FIPS compile.
 
-FIPSCANLIB=
+FIPSCANLIB={- $config{fips} ? "libcrypto" : "" -}
 
 # Shared library base address. Currently only used on Windows.
 #
 
-BASEADDR=
+BASEADDR={- $config{baseaddr} -}
 
-DIRS=   crypto ssl engines apps test tools
+DIRS=   {- join(" ", @{$config{dirs}}) -}
 SHLIBDIRS= crypto ssl
 INSTALL_SUBS= engines apps tools
 
 # dirs in crypto to build
-SDIRS=  \
-	objects \
-	md2 md4 md5 sha mdc2 hmac ripemd whrlpool poly1305 \
-	des aes rc2 rc4 rc5 idea bf cast camellia seed chacha modes \
-	bn ec rsa dsa dh dso engine \
-	buffer bio stack lhash rand err \
-	evp asn1 pem x509 x509v3 conf txt_db pkcs7 pkcs12 comp ocsp ui \
-	cms pqueue ts jpake srp store cmac ct async kdf
-# keep in mind that the above list is adjusted by ./Configure
-# according to no-xxx arguments...
+SDIRS=  {- join(" ", @{$config{sdirs}}) -}
 
 # tests to perform.  "alltests" is a special word indicating that all tests
 # should be performed.
@@ -153,21 +146,20 @@ TESTS = alltests
 
 MAKEFILE= Makefile
 
-MANDIR=$(OPENSSLDIR)/man
+MANDIR=$(INSTALLTOP)/share/man
 MAN1=1
 MAN3=3
 MANSUFFIX=
 HTMLSUFFIX=html
-HTMLDIR=$(OPENSSLDIR)/html
+HTMLDIR=$(INSTALLTOP)/share/doc/$(BASENAME)/html
 SHELL=/bin/sh
 
 TOP=    .
 LIBS=   libcrypto.a libssl.a
 SHARED_CRYPTO=libcrypto$(SHLIB_EXT)
 SHARED_SSL=libssl$(SHLIB_EXT)
-SHARED_LIBS=
-SHARED_LIBS_LINK_EXTS=
-SHARED_LDFLAGS=
+SHARED_LIBS={- '$(SHARED_CRYPTO) $(SHARED_SSL)' if (!$config{no_shared}) -}
+SHARED_LDFLAGS={- $target{shared_ldflag} -}
 
 GENERAL=        Makefile
 BASENAME=       openssl
@@ -216,14 +208,12 @@ BUILDENV=	LC_ALL=C PLATFORM='$(PLATFORM)' PROCESSOR='$(PROCESSOR)'\
 		INSTALL_PREFIX='$(INSTALL_PREFIX)'		\
 		INSTALLTOP='$(INSTALLTOP)' OPENSSLDIR='$(OPENSSLDIR)'	\
 		LIBDIR='$(LIBDIR)'				\
-		MAKEDEPEND='$$$${TOP}/util/domd $$$${TOP} -MD $(MAKEDEPPROG)' \
 		DEPFLAG='$(DEPFLAG)'                    	\
-		MAKEDEPPROG='$(MAKEDEPPROG)'			\
 		SHARED_LDFLAGS='$(SHARED_LDFLAGS)'		\
 		ZLIB_INCLUDE='$(ZLIB_INCLUDE)' LIBZLIB='$(LIBZLIB)'	\
 		EXE_EXT='$(EXE_EXT)' SHARED_LIBS='$(SHARED_LIBS)'	\
 		SHLIB_EXT='$(SHLIB_EXT)' SHLIB_TARGET='$(SHLIB_TARGET)'	\
-		PEX_LIBS='$(PEX_LIBS)' EX_LIBS='$(EX_LIBS)'	\
+		LDFLAGS='$(LDFLAGS)' EX_LIBS='$(EX_LIBS)'	\
 		CPUID_OBJ='$(CPUID_OBJ)' BN_ASM='$(BN_ASM)'	\
 		EC_ASM='$(EC_ASM)' DES_ENC='$(DES_ENC)'		\
 		AES_ENC='$(AES_ENC)' CMLL_ENC='$(CMLL_ENC)'	\
@@ -234,7 +224,7 @@ BUILDENV=	LC_ALL=C PLATFORM='$(PLATFORM)' PROCESSOR='$(PROCESSOR)'\
 		RMD160_ASM_OBJ='$(RMD160_ASM_OBJ)'		\
 		WP_ASM_OBJ='$(WP_ASM_OBJ)'			\
 		MODES_ASM_OBJ='$(MODES_ASM_OBJ)'		\
-		ENGINES_ASM_OBJ='$(ENGINES_ASM_OBJ)'		\
+		PADLOCK_ASM_OBJ='$(PADLOCK_ASM_OBJ)'		\
 		CHACHA_ENC='$(CHACHA_ENC)'			\
 		POLY1305_ASM_OBJ='$(POLY1305_ASM_OBJ)'		\
 		PERLASM_SCHEME='$(PERLASM_SCHEME)'		\
@@ -317,20 +307,6 @@ libssl$(SHLIB_EXT): libcrypto$(SHLIB_EXT) libssl.a
 		echo "There's no support for shared libraries on this platform" >&2; \
 		exit 1; \
 	fi
-
-clean-shared:
-	@set -e; for i in $(SHLIBDIRS); do \
-		if [ -n "$(SHARED_LIBS_LINK_EXTS)" ]; then \
-			tmp="$(SHARED_LIBS_LINK_EXTS)"; \
-			for j in $${tmp:-x}; do \
-				( set -x; rm -f lib$$i$$j ); \
-			done; \
-		fi; \
-		( set -x; rm -f lib$$i$(SHLIB_EXT) ); \
-		if expr "$(PLATFORM)" : "Cygwin" >/dev/null; then \
-			( set -x; rm -f cyg$$i$(SHLIB_EXT) lib$$i$(SHLIB_EXT).a ); \
-		fi; \
-	done
 
 link-shared:
 	@ set -e; for i in $(SHLIBDIRS); do \
@@ -422,7 +398,7 @@ gentests:
 	$(CLEARENV) && $(MAKE) -e $(BUILDENV) TESTS='$(TESTS)' OPENSSL_DEBUG_MEMORY=on generate );
 
 rehash: rehash.time
-rehash.time: certs build_apps
+rehash.time: certs build_apps build_tools
 	@if [ -z "$(CROSS_COMPILE)" ]; then \
 		(OPENSSL="`pwd`/util/opensslwrap.sh"; \
 		[ -x "apps/openssl.exe" ] && OPENSSL="apps/openssl.exe" || :; \
@@ -435,8 +411,6 @@ rehash.time: certs build_apps
 
 test:   tests
 
-test_ordinals:
-	TOP=$(TOP) PERL=$(PERL) $(PERL) test/run_tests.pl test_ordinals
 
 tests: rehash
 	@(cd test && echo "testing..." && \
@@ -452,12 +426,6 @@ list-tests:
 report:
 	@$(PERL) util/selftest.pl
 
-update: errors util/libeay.num util/ssleay.num TABLE test_ordinals
-	@set -e; target=update; $(RECURSIVE_BUILD_CMD)
-
-depend:
-	@set -e; target=depend; $(RECURSIVE_BUILD_CMD)
-
 tags TAGS: FORCE
 	rm -f TAGS tags
 	-ctags -R .
@@ -465,17 +433,29 @@ tags TAGS: FORCE
 
 FORCE:
 
+depend:
+	@set -e; target=depend; $(RECURSIVE_BUILD_CMD)
+
+update: generate errors ordinals depend
+
+generate:
+	(cd apps && PERL='${PERL}' $(MAKE) generate)
+	(cd crypto/bn && PERL='${PERL}' $(MAKE) generate)
+	(cd crypto/objects && PERL='${PERL}' $(MAKE) generate)
+
 errors:
 	$(PERL) util/ck_errf.pl -strict */*.c */*/*.c
 	$(PERL) util/mkerr.pl -recurse -write
 	(cd engines; $(MAKE) PERL=$(PERL) errors)
 	(cd crypto/ct; $(MAKE) PERL=$(PERL) errors)
 
+ordinals: util/libeay.num util/ssleay.num test_ordinals TABLE
 util/libeay.num::
 	$(PERL) util/mkdef.pl crypto update
-
 util/ssleay.num::
 	$(PERL) util/mkdef.pl ssl update
+test_ordinals:
+	TOP=$(TOP) PERL=$(PERL) $(PERL) test/run_tests.pl test_ordinals
 
 TABLE: Configure Configurations/*.conf
 	(echo 'Output of `Configure TABLE'"':"; \
@@ -487,15 +467,13 @@ TABLE: Configure Configurations/*.conf
 # and read directly, requiring GNU-Tar. Call "make TAR=gtar dist" if the normal
 # tar does not support the --files-from option.
 TAR_COMMAND=$(TAR) $(TARFLAGS) --files-from $(TARFILE).list \
-	                       --owner 0 --group 0 \
+			       --owner 0 --group 0 \
 			       --transform 's|^|$(NAME)/|' \
 			       -cvf -
 
 $(TARFILE).list:
-	find * \! -name STATUS \! -name TABLE \! -name '*.o' \! -name '*.a' \
-	       \! -name '*.so' \! -name '*.so.*'  \! -name 'openssl' \
-	       \! -name '*test' \! -name '.#*' \! -name '*~' \!	-type l \
-	    | sort > $(TARFILE).list
+	git diff --quiet HEAD
+	git ls-files | sort > $(TARFILE).list
 
 tar: $(TARFILE).list
 	find . -type d -print | xargs chmod 755

@@ -214,7 +214,7 @@ CERT *ssl_cert_dup(CERT *cert)
 
         if (cpk->privatekey != NULL) {
             rpk->privatekey = cpk->privatekey;
-            CRYPTO_add(&cpk->privatekey->references, 1, CRYPTO_LOCK_EVP_PKEY);
+            EVP_PKEY_up_ref(cpk->privatekey);
         }
 
         if (cpk->chain) {

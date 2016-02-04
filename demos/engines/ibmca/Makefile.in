@@ -24,8 +24,7 @@ all:
 		@echo 'gnu:      Generic GNU-based system (gcc and GNU ld)'
 		@echo ''
 
-FORCE.update:
-update:		FORCE.update
+generate:
 		perl ../../../util/mkerr.pl -conf hw_ibmca.ec \
 			-nostatic -staticloader -write hw_ibmca.c
 
@@ -90,11 +89,5 @@ $(SHLIB).aix:	$(LIB)
 		touch $(SHLIB).aix
 
 depend:
-		sed -e '/^# DO NOT DELETE.*/,$$d' < Makefile > Makefile.tmp
-		echo '# DO NOT DELETE THIS LINE -- make depend depends on it.' >> Makefile.tmp
-		gcc -M $(CFLAGS) $(SRC) >> Makefile.tmp
-		perl ../../../util/clean-depend.pl < Makefile.tmp > Makefile.new
-		rm -f Makefile.tmp Makefile
-		mv Makefile.new Makefile
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.

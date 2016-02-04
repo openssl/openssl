@@ -1,4 +1,3 @@
-/* crypto/bn/bn_lcl.h */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -112,11 +111,100 @@
 #ifndef HEADER_BN_LCL_H
 # define HEADER_BN_LCL_H
 
+# include "internal/bn_conf.h"
 # include "internal/bn_int.h"
 
 #ifdef  __cplusplus
 extern "C" {
 #endif
+
+/*
+ * These preprocessor symbols control various aspects of the bignum headers
+ * and library code. They're not defined by any "normal" configuration, as
+ * they are intended for development and testing purposes. NB: defining all
+ * three can be useful for debugging application code as well as openssl
+ * itself. BN_DEBUG - turn on various debugging alterations to the bignum
+ * code BN_DEBUG_RAND - uses random poisoning of unused words to trip up
+ * mismanagement of bignum internals. You must also define BN_DEBUG.
+ */
+/* #define BN_DEBUG */
+/* #define BN_DEBUG_RAND */
+
+# ifndef OPENSSL_SMALL_FOOTPRINT
+#  define BN_MUL_COMBA
+#  define BN_SQR_COMBA
+#  define BN_RECURSION
+# endif
+
+/*
+ * This next option uses the C libraries (2 word)/(1 word) function. If it is
+ * not defined, I use my C version (which is slower). The reason for this
+ * flag is that when the particular C compiler library routine is used, and
+ * the library is linked with a different compiler, the library is missing.
+ * This mostly happens when the library is built with gcc and then linked
+ * using normal cc.  This would be a common occurrence because gcc normally
+ * produces code that is 2 times faster than system compilers for the big
+ * number stuff. For machines with only one compiler (or shared libraries),
+ * this should be on.  Again this in only really a problem on machines using
+ * "long long's", are 32bit, and are not using my assembler code.
+ */
+# if defined(OPENSSL_SYS_MSDOS) || defined(OPENSSL_SYS_WINDOWS) || \
+    defined(OPENSSL_SYS_WIN32) || defined(linux)
+#  define BN_DIV2W
+# endif
+
+/*
+ * 64-bit processor with LP64 ABI
+ */
+# ifdef SIXTY_FOUR_BIT_LONG
+#  define BN_ULLONG       unsigned long long
+#  define BN_BITS4        32
+#  define BN_MASK2        (0xffffffffffffffffL)
+#  define BN_MASK2l       (0xffffffffL)
+#  define BN_MASK2h       (0xffffffff00000000L)
+#  define BN_MASK2h1      (0xffffffff80000000L)
+#  define BN_DEC_CONV     (10000000000000000000UL)
+#  define BN_DEC_NUM      19
+#  define BN_DEC_FMT1     "%lu"
+#  define BN_DEC_FMT2     "%019lu"
+# endif
+
+/*
+ * 64-bit processor other than LP64 ABI
+ */
+# ifdef SIXTY_FOUR_BIT
+#  undef BN_LLONG
+#  undef BN_ULLONG
+#  define BN_BITS4        32
+#  define BN_MASK2        (0xffffffffffffffffLL)
+#  define BN_MASK2l       (0xffffffffL)
+#  define BN_MASK2h       (0xffffffff00000000LL)
+#  define BN_MASK2h1      (0xffffffff80000000LL)
+#  define BN_DEC_CONV     (10000000000000000000ULL)
+#  define BN_DEC_NUM      19
+#  define BN_DEC_FMT1     "%llu"
+#  define BN_DEC_FMT2     "%019llu"
+# endif
+
+# ifdef THIRTY_TWO_BIT
+#  ifdef BN_LLONG
+#   if defined(_WIN32) && !defined(__GNUC__)
+#    define BN_ULLONG     unsigned __int64
+#   else
+#    define BN_ULLONG     unsigned long long
+#   endif
+#  endif
+#  define BN_BITS4        16
+#  define BN_MASK2        (0xffffffffL)
+#  define BN_MASK2l       (0xffff)
+#  define BN_MASK2h1      (0xffff8000L)
+#  define BN_MASK2h       (0xffff0000L)
+#  define BN_DEC_CONV     (1000000000L)
+#  define BN_DEC_NUM      9
+#  define BN_DEC_FMT1     "%u"
+#  define BN_DEC_FMT2     "%09u"
+# endif
+
 
 /*-
  * Bignum consistency macros

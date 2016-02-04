@@ -1,4 +1,3 @@
-/* crypto/bn/bntest.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -503,18 +502,25 @@ int test_div(BIO *bp, BN_CTX *ctx)
 
 static void print_word(BIO *bp, BN_ULONG w)
 {
-#ifdef SIXTY_FOUR_BIT
-    if (sizeof(w) > sizeof(unsigned long)) {
-        unsigned long h = (unsigned long)(w >> 32), l = (unsigned long)(w);
+    int i = sizeof(w) * 8;
+    char *fmt = NULL;
+    unsigned char byte;
 
-        if (h)
-            BIO_printf(bp, "%lX%08lX", h, l);
+    do {
+        i -= 8;
+        byte = (unsigned char)(w >> i);
+        if (fmt == NULL)
+            fmt = byte ? "%X" : NULL;
         else
-            BIO_printf(bp, "%lX", l);
-        return;
-    }
-#endif
-    BIO_printf(bp, BN_HEX_FMT1, w);
+            fmt = "%02X";
+
+        if (fmt != NULL)
+            BIO_printf(bp, fmt, byte);
+    } while (i);
+
+    /* If we haven't printed anything, at least print a zero! */
+    if (fmt == NULL)
+        BIO_printf(bp, "0");
 }
 
 int test_div_word(BIO *bp)

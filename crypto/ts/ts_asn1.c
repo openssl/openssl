@@ -1,4 +1,3 @@
-/* crypto/ts/ts_asn1.c */
 /*
  * Written by Nils Larsch for the OpenSSL project 2004.
  */

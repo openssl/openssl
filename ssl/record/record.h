@@ -1,4 +1,3 @@
-/* ssl/record/record.h */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -109,8 +108,6 @@
  *
  */
 
-#include <openssl/pqueue.h>
-
 /*****************************************************************************
  *                                                                           *
  * These structures should be considered PRIVATE to the record layer. No     *
@@ -186,7 +183,7 @@ typedef struct dtls1_bitmap_st {
 
 typedef struct record_pqueue_st {
     unsigned short epoch;
-    pqueue q;
+    struct pqueue_st *q;
 } record_pqueue;
 
 typedef struct dtls1_record_data_st {

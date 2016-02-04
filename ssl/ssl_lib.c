@@ -190,10 +190,11 @@ struct ssl_async_args {
     SSL *s;
     void *buf;
     int num;
-    int type;
+    enum { READFUNC, WRITEFUNC,  OTHERFUNC} type;
     union {
-        int (*func1)(SSL *, void *, int);
-        int (*func2)(SSL *, const void *, int);
+        int (*func_read)(SSL *, void *, int);
+        int (*func_write)(SSL *, const void *, int);
+        int (*func_other)(SSL *);
     } f;
 };
 
@@ -743,6 +744,11 @@ SSL *SSL_new(SSL_CTX *ctx)
     SSL_free(s);
     SSLerr(SSL_F_SSL_NEW, ERR_R_MALLOC_FAILURE);
     return (NULL);
+}
+
+void SSL_up_ref(SSL *s)
+{
+    CRYPTO_add(&s->references, 1, CRYPTO_LOCK_SSL);
 }
 
 int SSL_CTX_set_session_id_context(SSL_CTX *ctx, const unsigned char *sid_ctx,
@@ -1464,10 +1470,15 @@ static int ssl_io_intern(void *vargs)
     s = args->s;
     buf = args->buf;
     num = args->num;
-    if (args->type == 1)
-        return args->f.func1(s, buf, num);
-    else
-        return args->f.func2(s, buf, num);
+    switch (args->type) {
+    case READFUNC:
+        return args->f.func_read(s, buf, num);
+    case WRITEFUNC:
+        return args->f.func_write(s, buf, num);
+    case OTHERFUNC:
+        return args->f.func_other(s);
+    }
+    return -1;
 }
 
 int SSL_read(SSL *s, void *buf, int num)
@@ -1488,8 +1499,8 @@ int SSL_read(SSL *s, void *buf, int num)
         args.s = s;
         args.buf = buf;
         args.num = num;
-        args.type = 1;
-        args.f.func1 = s->method->ssl_read;
+        args.type = READFUNC;
+        args.f.func_read = s->method->ssl_read;
 
         return ssl_start_async_job(s, &args, ssl_io_intern);
     } else {
@@ -1513,8 +1524,8 @@ int SSL_peek(SSL *s, void *buf, int num)
         args.s = s;
         args.buf = buf;
         args.num = num;
-        args.type = 1;
-        args.f.func1 = s->method->ssl_peek;
+        args.type = READFUNC;
+        args.f.func_read = s->method->ssl_peek;
 
         return ssl_start_async_job(s, &args, ssl_io_intern);
     } else {
@@ -1541,8 +1552,8 @@ int SSL_write(SSL *s, const void *buf, int num)
         args.s = s;
         args.buf = (void *)buf;
         args.num = num;
-        args.type = 2;
-        args.f.func2 = s->method->ssl_write;
+        args.type = WRITEFUNC;
+        args.f.func_write = s->method->ssl_write;
 
         return ssl_start_async_job(s, &args, ssl_io_intern);
     } else {
@@ -1564,10 +1575,19 @@ int SSL_shutdown(SSL *s)
         return -1;
     }
 
-    if (!SSL_in_init(s))
-        return (s->method->ssl_shutdown(s));
-    else
-        return (1);
+    if((s->mode & SSL_MODE_ASYNC) && ASYNC_get_current_job() == NULL) {
+        struct ssl_async_args args;
+
+        args.s = s;
+        args.type = OTHERFUNC;
+        args.f.func_other = s->method->ssl_shutdown;
+
+        return ssl_start_async_job(s, &args, ssl_io_intern);
+    } else {
+        return s->method->ssl_shutdown(s);
+    }
+
+    return s->method->ssl_shutdown(s);
 }
 
 int SSL_renegotiate(SSL *s)
@@ -1962,7 +1982,7 @@ char *SSL_get_shared_ciphers(const SSL *s, char *buf, int len)
             *p = '\0';
             return buf;
         }
-        strcpy(p, c->name);
+        memcpy(p, c->name, n + 1);
         p += n;
         *(p++) = ':';
         len -= n + 1;
@@ -2342,6 +2362,13 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
      * deployed might change this.
      */
     ret->options |= SSL_OP_LEGACY_SERVER_CONNECT;
+    /*
+     * Disable compression by default to prevent CRIME. Applications can
+     * re-enable compression by configuring
+     * SSL_CTX_clear_options(ctx, SSL_OP_NO_COMPRESSION);
+     * or by using the SSL_CONF library.
+     */
+    ret->options |= SSL_OP_NO_COMPRESSION;
 
     return (ret);
  err:
@@ -2349,6 +2376,11 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
  err2:
     SSL_CTX_free(ret);
     return (NULL);
+}
+
+void SSL_CTX_up_ref(SSL_CTX *ctx)
+{
+    CRYPTO_add(&ctx->references, 1, CRYPTO_LOCK_SSL_CTX);
 }
 
 void SSL_CTX_free(SSL_CTX *a)
@@ -2500,9 +2532,8 @@ void ssl_set_masks(SSL *s, const SSL_CIPHER *cipher)
     mask_a = 0;
 
 #ifdef CIPHER_DEBUG
-    fprintf(stderr,
-            "dht=%d re=%d rs=%d ds=%d dhr=%d dhd=%d\n",
-            dh_tmp, rsa_enc, rsa_sign, dsa_sign, dh_rsa, dh_dsa);
+    fprintf(stderr, "dht=%d re=%d rs=%d ds=%d\n",
+            dh_tmp, rsa_enc, rsa_sign, dsa_sign);
 #endif
 
 #ifndef OPENSSL_NO_GOST

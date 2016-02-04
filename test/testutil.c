@@ -1,4 +1,3 @@
-/* test/testutil.c */
 /*-
  * Utilities for writing OpenSSL unit tests.
  *

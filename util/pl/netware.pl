@@ -126,6 +126,8 @@ else
    $cp='copy >nul:';
    # rm command
    $rm='del /f /q';
+   # mv command
+   $mv='move /y';
 }
 
 # assembler

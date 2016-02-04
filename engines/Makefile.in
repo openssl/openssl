@@ -13,9 +13,9 @@ CFLAG=-g
 MAKEFILE=	Makefile
 AR=		ar r
 
-ENGINES_ASM_OBJ=
+PADLOCK_ASM_OBJ=
 
-PEX_LIBS=
+LDFLAGS=
 EX_LIBS=
 
 CFLAGS= $(INCLUDES) $(CFLAG)
@@ -34,7 +34,7 @@ LIBOBJ= \
 	e_padlock.o \
 	e_capi.o \
 	e_dasync.o \
-	$(ENGINES_ASM_OBJ)
+	$(PADLOCK_ASM_OBJ)
 
 TESTLIBNAMES= ossltest
 TESTLIBSRC= e_ossltest.c
@@ -115,14 +115,9 @@ errors:
 			-nostatic -staticloader -write e_$$l.c; \
 	done
 
-update: local_depend
-	@if [ -z "$(THIS)" ]; then $(MAKE) -f $(TOP)/Makefile reflect THIS=$@; fi
-
-depend: local_depend
-	@if [ -z "$(THIS)" ]; then $(MAKE) -f $(TOP)/Makefile reflect THIS=$@; fi
-
-local_depend:
-	@[ -z "$(THIS)" ] || $(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(LIBSRC) $(TESTLIBSRC)
+depend:
+	@[ -z "$(THIS)" ] || $(TOP)/util/domd $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(LIBSRC) $(TESTLIBSRC)
+	@[ -z "$(THIS)" ] || (set -e; target=depend; $(RECURSIVE_MAKE) )
 
 clean:
 	rm -f *.s *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff

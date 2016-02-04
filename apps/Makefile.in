@@ -11,7 +11,7 @@ MAKEFILE=	Makefile
 PERL=		perl
 RM=		rm -f
 
-PEX_LIBS=
+LDFLAGS=
 EX_LIBS= 
 EXE_EXT= 
 
@@ -63,9 +63,11 @@ ALL=    $(GENERAL) $(EXE_SRC) $(HEADER)
 top:
 	@(cd ..; $(MAKE) DIRS=$(DIR) all)
 
-all:	exe
+all:	exe scripts
 
 exe:	$(EXE)
+
+scripts: $(SCRIPTS)
 
 openssl-vms.cnf: openssl.cnf
 	$(PERL) $(TOP)/VMS/VMSify-conf.pl < openssl.cnf > openssl-vms.cnf
@@ -106,12 +108,10 @@ uninstall:
 	done
 	$(RM) $(INSTALL_PREFIX)$(OPENSSLDIR)/openssl.cnf
 
-update: openssl-vms.cnf local_depend
+generate: openssl-vms.cnf
 
-depend: local_depend
-	@if [ -z "$(THIS)" ]; then $(MAKE) -f $(TOP)/Makefile reflect THIS=$@; fi
-local_depend:
-	@[ -z "$(THIS)" ] || $(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(EXE_SRC)
+depend:
+	$(TOP)/util/domd $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(EXE_SRC)
 
 clean:
 	rm -f *.o *.obj *.dll lib tags core .pure .nfs* *.old *.bak fluff $(EXE)
@@ -131,12 +131,17 @@ $(EXE): progs.h $(EXE_OBJ) $(DLIBCRYPTO) $(DLIBSSL)
 	LIBRARIES="$(LIBSSL) $(LIBCRYPTO)" ; \
 	$(MAKE) -f $(TOP)/Makefile.shared -e \
 		APPNAME=$(EXE) OBJECTS="$(EXE_OBJ)" \
-		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
+		LIBDEPS="$(LDFLAGS) $$LIBRARIES $(EX_LIBS)" \
 		link_app.$${shlib_target}
 
 progs.h: progs.pl Makefile
 	$(RM) progs.h
 	$(PERL) progs.pl $(COMMANDS) >progs.h
 	$(RM) openssl.o
+
+CA.pl: CA.pl.in
+	$(PERL) -I$(TOP) -Mconfigdata $(TOP)/util/dofile.pl -oapps/Makefile CA.pl.in > CA.pl.new
+	mv CA.pl.new CA.pl
+
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.

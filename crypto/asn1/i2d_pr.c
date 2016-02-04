@@ -1,4 +1,3 @@
-/* crypto/asn1/i2d_pr.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -61,6 +60,7 @@
 #include <openssl/evp.h>
 #include <openssl/x509.h>
 #include "internal/asn1_int.h"
+#include "internal/evp_int.h"
 
 int i2d_PrivateKey(EVP_PKEY *a, unsigned char **pp)
 {

@@ -1,4 +1,3 @@
-/* crypto/evp/p_open.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -82,12 +81,12 @@ int EVP_OpenInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
     if (!priv)
         return 1;
 
-    if (priv->type != EVP_PKEY_RSA) {
+    if (EVP_PKEY_id(priv) != EVP_PKEY_RSA) {
         EVPerr(EVP_F_EVP_OPENINIT, EVP_R_PUBLIC_KEY_NOT_RSA);
         goto err;
     }
 
-    size = RSA_size(priv->pkey.rsa);
+    size = EVP_PKEY_size(priv);
     key = OPENSSL_malloc(size + 2);
     if (key == NULL) {
         /* ERROR */

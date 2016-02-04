@@ -14,9 +14,14 @@ setup("test_ssl");
 my ($no_rsa, $no_dsa, $no_dh, $no_ec, $no_srp, $no_psk,
     $no_ssl3, $no_tls1, $no_tls1_1, $no_tls1_2,
     $no_dtls, $no_dtls1, $no_dtls1_2) =
-    disabled qw/rsa dsa dh ec srp psk
-                ssl3 tls1 tls1_1 tls1_2
-                dtls dtls1 dtls1_2/;
+    anydisabled qw/rsa dsa dh ec srp psk
+                   ssl3 tls1 tls1_1 tls1_2
+                   dtls dtls1 dtls1_2/;
+my $no_anytls = alldisabled(available_protocols("tls"));
+my $no_anydtls = alldisabled(available_protocols("dtls"));
+
+plan skip_all => "No SSL/TLS/DTLS protocol is support by this OpenSSL build"
+    if $no_anytls && $no_anydtls;
 
 my $digest = "-sha1";
 my @reqcmd = ("openssl", "req");
@@ -324,68 +329,114 @@ sub testssl {
 
     subtest 'standard SSL tests' => sub {
 	######################################################################
-	plan tests => 27;
+	plan tests => 29;
 
-	ok(run(test([@ssltest, "-ssl3", @extra])),
-	   'test sslv3');
-	ok(run(test([@ssltest, "-ssl3", "-server_auth", @CA, @extra])),
-	   'test sslv3 with server authentication');
-	ok(run(test([@ssltest, "-ssl3", "-client_auth", @CA, @extra])),
-	   'test sslv3 with client authentication');
-	ok(run(test([@ssltest, "-ssl3", "-server_auth", "-client_auth", @CA, @extra])),
-	   'test sslv3 with both server and client authentication');
-	ok(run(test([@ssltest, @extra])),
-	   'test sslv2/sslv3');
-	ok(run(test([@ssltest, "-server_auth", @CA, @extra])),
-	   'test sslv2/sslv3 with server authentication');
-	ok(run(test([@ssltest, "-client_auth", @CA, @extra])),
-	   'test sslv2/sslv3 with client authentication');
-	ok(run(test([@ssltest, "-server_auth", "-client_auth", @CA, @extra])),
-	   'test sslv2/sslv3 with both server and client authentication');
-	ok(run(test([@ssltest, "-bio_pair", "-ssl3", @extra])),
-	   'test sslv3 via BIO pair');
-	ok(run(test([@ssltest, "-bio_pair", "-ssl3", "-server_auth", @CA, @extra])),
-	   'test sslv3 with server authentication via BIO pair');
-	ok(run(test([@ssltest, "-bio_pair", "-ssl3", "-client_auth", @CA, @extra])),
-	   'test sslv3 with client authentication via BIO pair');
-	ok(run(test([@ssltest, "-bio_pair", "-ssl3", "-server_auth", "-client_auth", @CA, @extra])),
-	   'test sslv3 with both server and client authentication via BIO pair');
-	ok(run(test([@ssltest, "-bio_pair", @extra])),
-	   'test sslv2/sslv3 via BIO pair');
-	ok(run(test([@ssltest, "-dtls1", @extra])),
-	   'test dtlsv1');
-	ok(run(test([@ssltest, "-dtls1", "-server_auth", @CA, @extra])),
-	   'test dtlsv1 with server authentication');
-	ok(run(test([@ssltest, "-dtls1", "-client_auth", @CA, @extra])),
-	   'test dtlsv1 with client authentication');
-	ok(run(test([@ssltest, "-dtls1", "-server_auth", "-client_auth", @CA, @extra])),
-	   'test dtlsv1 with both server and client authentication');
-	ok(run(test([@ssltest, "-dtls12", @extra])),
-	   'test dtlsv1.2');
-	ok(run(test([@ssltest, "-dtls12", "-server_auth", @CA, @extra])),
-	   'test dtlsv1.2 with server authentication');
-	ok(run(test([@ssltest, "-dtls12", "-client_auth", @CA, @extra])),
-	   'test dtlsv1.2 with client authentication');
-	ok(run(test([@ssltest, "-dtls12", "-server_auth", "-client_auth", @CA, @extra])),
-	   'test dtlsv1.2 with both server and client authentication');
-	{
-	  SKIP: {
-	      skip "skipping test of sslv2/sslv3 w/o (EC)DHE test", 1 if $dsa_cert;
+      SKIP: {
+	  skip "SSLv3 is not supported by this OpenSSL build", 4
+	      if disabled("ssl3");
 
-	      ok(run(test([@ssltest, "-bio_pair", "-no_dhe", "-no_ecdhe", @extra])),
-		 'test sslv2/sslv3 w/o (EC)DHE via BIO pair');
-	    }
+	  ok(run(test([@ssltest, "-ssl3", @extra])),
+	     'test sslv3');
+	  ok(run(test([@ssltest, "-ssl3", "-server_auth", @CA, @extra])),
+	     'test sslv3 with server authentication');
+	  ok(run(test([@ssltest, "-ssl3", "-client_auth", @CA, @extra])),
+	     'test sslv3 with client authentication');
+	  ok(run(test([@ssltest, "-ssl3", "-server_auth", "-client_auth", @CA, @extra])),
+	     'test sslv3 with both server and client authentication');
 	}
-	ok(run(test([@ssltest, "-bio_pair", "-dhe1024dsa", "-v", @extra])),
-	   'test sslv2/sslv3 with 1024bit DHE via BIO pair');
-	ok(run(test([@ssltest, "-bio_pair", "-server_auth", @CA, @extra])),
-	   'test sslv2/sslv3 with server authentication');
-	ok(run(test([@ssltest, "-bio_pair", "-client_auth", @CA, @extra])),
-	   'test sslv2/sslv3 with client authentication via BIO pair');
-	ok(run(test([@ssltest, "-bio_pair", "-server_auth", "-client_auth", @CA, @extra])),
-	   'test sslv2/sslv3 with both client and server authentication via BIO pair');
-	ok(run(test([@ssltest, "-bio_pair", "-server_auth", "-client_auth", "-app_verify", @CA, @extra])),
-	   'test sslv2/sslv3 with both client and server authentication via BIO pair and app verify');
+
+      SKIP: {
+	  skip "Neither SSLv3 nor any TLS version are supported by this OpenSSL build", 4
+	      if $no_anytls;
+
+	  ok(run(test([@ssltest, @extra])),
+	     'test sslv2/sslv3');
+	  ok(run(test([@ssltest, "-server_auth", @CA, @extra])),
+	     'test sslv2/sslv3 with server authentication');
+	  ok(run(test([@ssltest, "-client_auth", @CA, @extra])),
+	     'test sslv2/sslv3 with client authentication');
+	  ok(run(test([@ssltest, "-server_auth", "-client_auth", @CA, @extra])),
+	     'test sslv2/sslv3 with both server and client authentication');
+	}
+
+      SKIP: {
+	  skip "SSLv3 is not supported by this OpenSSL build", 4
+	      if disabled("ssl3");
+
+	  ok(run(test([@ssltest, "-bio_pair", "-ssl3", @extra])),
+	     'test sslv3 via BIO pair');
+	  ok(run(test([@ssltest, "-bio_pair", "-ssl3", "-server_auth", @CA, @extra])),
+	     'test sslv3 with server authentication via BIO pair');
+	  ok(run(test([@ssltest, "-bio_pair", "-ssl3", "-client_auth", @CA, @extra])),
+	     'test sslv3 with client authentication via BIO pair');
+	  ok(run(test([@ssltest, "-bio_pair", "-ssl3", "-server_auth", "-client_auth", @CA, @extra])),
+	     'test sslv3 with both server and client authentication via BIO pair');
+	}
+
+      SKIP: {
+	  skip "Neither SSLv3 nor any TLS version are supported by this OpenSSL build", 1
+	      if $no_anytls;
+
+	  ok(run(test([@ssltest, "-bio_pair", @extra])),
+	     'test sslv2/sslv3 via BIO pair');
+	}
+
+      SKIP: {
+	  skip "DTLSv1 is not supported by this OpenSSL build", 4
+	      if disabled("dtls1");
+
+	  ok(run(test([@ssltest, "-dtls1", @extra])),
+	     'test dtlsv1');
+	  ok(run(test([@ssltest, "-dtls1", "-server_auth", @CA, @extra])),
+	   'test dtlsv1 with server authentication');
+	  ok(run(test([@ssltest, "-dtls1", "-client_auth", @CA, @extra])),
+	     'test dtlsv1 with client authentication');
+	  ok(run(test([@ssltest, "-dtls1", "-server_auth", "-client_auth", @CA, @extra])),
+	     'test dtlsv1 with both server and client authentication');
+	}
+
+      SKIP: {
+	  skip "DTLSv1.2 is not supported by this OpenSSL build", 4
+	      if disabled("dtls1_2");
+
+	  ok(run(test([@ssltest, "-dtls12", @extra])),
+	     'test dtlsv1.2');
+	  ok(run(test([@ssltest, "-dtls12", "-server_auth", @CA, @extra])),
+	     'test dtlsv1.2 with server authentication');
+	  ok(run(test([@ssltest, "-dtls12", "-client_auth", @CA, @extra])),
+	     'test dtlsv1.2 with client authentication');
+	  ok(run(test([@ssltest, "-dtls12", "-server_auth", "-client_auth", @CA, @extra])),
+	     'test dtlsv1.2 with both server and client authentication');
+	}
+
+      SKIP: {
+	  skip "Neither SSLv3 nor any TLS version are supported by this OpenSSL build", 8
+	      if $no_anytls;
+
+	SKIP: {
+	    skip "skipping test of sslv2/sslv3 w/o (EC)DHE test", 1 if $dsa_cert;
+
+	    ok(run(test([@ssltest, "-bio_pair", "-no_dhe", "-no_ecdhe", @extra])),
+	       'test sslv2/sslv3 w/o (EC)DHE via BIO pair');
+	  }
+
+	  ok(run(test([@ssltest, "-bio_pair", "-dhe1024dsa", "-v", @extra])),
+	     'test sslv2/sslv3 with 1024bit DHE via BIO pair');
+	  ok(run(test([@ssltest, "-bio_pair", "-server_auth", @CA, @extra])),
+	     'test sslv2/sslv3 with server authentication');
+	  ok(run(test([@ssltest, "-bio_pair", "-client_auth", @CA, @extra])),
+	     'test sslv2/sslv3 with client authentication via BIO pair');
+	  ok(run(test([@ssltest, "-bio_pair", "-server_auth", "-client_auth", @CA, @extra])),
+	     'test sslv2/sslv3 with both client and server authentication via BIO pair');
+	  ok(run(test([@ssltest, "-bio_pair", "-server_auth", "-client_auth", "-app_verify", @CA, @extra])),
+	     'test sslv2/sslv3 with both client and server authentication via BIO pair and app verify');
+
+	  ok(run(test([@ssltest, "-ipv4", @extra])),
+	     'test TLS via IPv4');
+	  ok(run(test([@ssltest, "-ipv6", @extra])),
+	     'test TLS via IPv6');
+
+	}
     };
 
     subtest "Testing ciphersuites" => sub {
@@ -412,6 +463,7 @@ sub testssl {
         }
 
 	my @protocols = ();
+	# FIXME: I feel unsure about the following line, is that really just TLSv1.2, or is it all of the SSLv3/TLS protocols?
         push(@protocols, "TLSv1.2") unless $no_tls1_2;
         push(@protocols, "SSLv3") unless $no_ssl3;
 	my $protocolciphersuitcount = 0;
@@ -423,6 +475,9 @@ sub testssl {
 		  map { s/\R//; } @c;  # chomp @c;
 		  $protocolciphersuitcount += scalar @c;
 		  $_ => [ @c ] } @protocols;
+
+        plan skip_all => "None of the ciphersuites to test are available in this OpenSSL build"
+            if $protocolciphersuitcount + scalar(@protocols) == 0;
 
         # The count of protocols is because in addition to the ciphersuits
         # we got above, we're running a weak DH test for each protocol
@@ -449,43 +504,43 @@ sub testssl {
 
 	plan tests => 5;
 
-	{
-	  SKIP: {
-	      skip "skipping anonymous DH tests", 1
-		  if ($no_dh);
+      SKIP: {
+	  skip "TLSv1.0 is not supported by this OpenSSL build", 5
+	      if $no_tls1;
 
-	      ok(run(test([@ssltest, "-v", "-bio_pair", "-tls1", "-cipher", "ADH", "-dhe1024dsa", "-num", "10", "-f", "-time", @extra])),
-		 'test tlsv1 with 1024bit anonymous DH, multiple handshakes');
-	    }
-	}
+	SKIP: {
+	    skip "skipping anonymous DH tests", 1
+	      if ($no_dh);
 
-	{
-	  SKIP: {
-	      skip "skipping RSA tests", 2
-		  if $no_rsa;
+	    ok(run(test([@ssltest, "-v", "-bio_pair", "-tls1", "-cipher", "ADH", "-dhe1024dsa", "-num", "10", "-f", "-time", @extra])),
+	       'test tlsv1 with 1024bit anonymous DH, multiple handshakes');
+	  }
 
-	      ok(run(test(["ssltest", "-v", "-bio_pair", "-tls1", "-s_cert", top_file("apps","server2.pem"), "-no_dhe", "-no_ecdhe", "-num", "10", "-f", "-time", @extra])),
-		 'test tlsv1 with 1024bit RSA, no (EC)DHE, multiple handshakes');
+	SKIP: {
+	    skip "skipping RSA tests", 2
+		if $no_rsa;
 
-	      skip "skipping RSA+DHE tests", 1
-		  if $no_dh;
+	    ok(run(test(["ssltest", "-v", "-bio_pair", "-tls1", "-s_cert", top_file("apps","server2.pem"), "-no_dhe", "-no_ecdhe", "-num", "10", "-f", "-time", @extra])),
+	       'test tlsv1 with 1024bit RSA, no (EC)DHE, multiple handshakes');
 
-	      ok(run(test(["ssltest", "-v", "-bio_pair", "-tls1", "-s_cert", top_file("apps","server2.pem"), "-dhe1024dsa", "-num", "10", "-f", "-time", @extra])),
-		 'test tlsv1 with 1024bit RSA, 1024bit DHE, multiple handshakes');
-	    }
-	}
-    {
-        SKIP: {
-	        skip "skipping PSK tests", 2
+	    skip "skipping RSA+DHE tests", 1
+		if $no_dh;
+
+	    ok(run(test(["ssltest", "-v", "-bio_pair", "-tls1", "-s_cert", top_file("apps","server2.pem"), "-dhe1024dsa", "-num", "10", "-f", "-time", @extra])),
+	       'test tlsv1 with 1024bit RSA, 1024bit DHE, multiple handshakes');
+	  }
+
+	SKIP: {
+	    skip "skipping PSK tests", 2
 	        if ($no_psk);
 
-	        ok(run(test([@ssltest, "-tls1", "-cipher", "PSK", "-psk", "abc123", @extra])),
-	        'test tls1 with PSK');
+	    ok(run(test([@ssltest, "-tls1", "-cipher", "PSK", "-psk", "abc123", @extra])),
+	       'test tls1 with PSK');
 
-	        ok(run(test([@ssltest, "-bio_pair", "-tls1", "-cipher", "PSK", "-psk", "abc123", @extra])),
-	        'test tls1 with PSK via BIO pair');
-        }
-    }
+	    ok(run(test([@ssltest, "-bio_pair", "-tls1", "-cipher", "PSK", "-psk", "abc123", @extra])),
+	       'test tls1 with PSK via BIO pair');
+	  }
+	}
 
     };
 
@@ -494,13 +549,18 @@ sub testssl {
 
 	plan tests => 7;
 
-	ok(run(test([@ssltest, "-bio_pair", "-tls1", "-npn_client"])));
-	ok(run(test([@ssltest, "-bio_pair", "-tls1", "-npn_server"])));
-	ok(run(test([@ssltest, "-bio_pair", "-tls1", "-npn_server_reject"])));
-	ok(run(test([@ssltest, "-bio_pair", "-tls1", "-npn_client", "-npn_server_reject"])));
-	ok(run(test([@ssltest, "-bio_pair", "-tls1", "-npn_client", "-npn_server"])));
-	ok(run(test([@ssltest, "-bio_pair", "-tls1", "-npn_client", "-npn_server", "-num", "2"])));
-	ok(run(test([@ssltest, "-bio_pair", "-tls1", "-npn_client", "-npn_server", "-num", "2", "-reuse"])));
+      SKIP: {
+	  skip "TLSv1.0 is not supported by this OpenSSL build", 7
+	      if $no_tls1;
+
+	  ok(run(test([@ssltest, "-bio_pair", "-tls1", "-npn_client"])));
+	  ok(run(test([@ssltest, "-bio_pair", "-tls1", "-npn_server"])));
+	  ok(run(test([@ssltest, "-bio_pair", "-tls1", "-npn_server_reject"])));
+	  ok(run(test([@ssltest, "-bio_pair", "-tls1", "-npn_client", "-npn_server_reject"])));
+	  ok(run(test([@ssltest, "-bio_pair", "-tls1", "-npn_client", "-npn_server"])));
+	  ok(run(test([@ssltest, "-bio_pair", "-tls1", "-npn_client", "-npn_server", "-num", "2"])));
+	  ok(run(test([@ssltest, "-bio_pair", "-tls1", "-npn_client", "-npn_server", "-num", "2", "-reuse"])));
+	}
     };
 
     subtest 'Custom Extension tests' => sub {
@@ -508,8 +568,13 @@ sub testssl {
 
 	plan tests => 1;
 
-	ok(run(test([@ssltest, "-bio_pair", "-tls1", "-custom_ext"])),
-	   'test tls1 with custom extensions');
+      SKIP: {
+	  skip "TLSv1.0 is not supported by this OpenSSL build", 1
+	      if $no_tls1;
+
+	  ok(run(test([@ssltest, "-bio_pair", "-tls1", "-custom_ext"])),
+	     'test tls1 with custom extensions');
+	}
     };
 
     subtest 'Serverinfo tests' => sub {
@@ -517,12 +582,17 @@ sub testssl {
 
 	plan tests => 5;
 
-	note('echo test tls1 with serverinfo');
-	ok(run(test([@ssltest, "-bio_pair", "-tls1", "-serverinfo_file", $serverinfo])));
-	ok(run(test([@ssltest, "-bio_pair", "-tls1", "-serverinfo_file", $serverinfo, "-serverinfo_sct"])));
-	ok(run(test([@ssltest, "-bio_pair", "-tls1", "-serverinfo_file", $serverinfo, "-serverinfo_tack"])));
-	ok(run(test([@ssltest, "-bio_pair", "-tls1", "-serverinfo_file", $serverinfo, "-serverinfo_sct", "-serverinfo_tack"])));
-	ok(run(test([@ssltest, "-bio_pair", "-tls1", "-custom_ext", "-serverinfo_file", $serverinfo, "-serverinfo_sct", "-serverinfo_tack"])));
+      SKIP: {
+	  skip "TLSv1.0 is not supported by this OpenSSL build", 5
+	      if $no_tls1;
+
+	  note('echo test tls1 with serverinfo');
+	  ok(run(test([@ssltest, "-bio_pair", "-tls1", "-serverinfo_file", $serverinfo])));
+	  ok(run(test([@ssltest, "-bio_pair", "-tls1", "-serverinfo_file", $serverinfo, "-serverinfo_sct"])));
+	  ok(run(test([@ssltest, "-bio_pair", "-tls1", "-serverinfo_file", $serverinfo, "-serverinfo_tack"])));
+	  ok(run(test([@ssltest, "-bio_pair", "-tls1", "-serverinfo_file", $serverinfo, "-serverinfo_sct", "-serverinfo_tack"])));
+	  ok(run(test([@ssltest, "-bio_pair", "-tls1", "-custom_ext", "-serverinfo_file", $serverinfo, "-serverinfo_sct", "-serverinfo_tack"])));
+	}
     };
 
     subtest 'ALPN tests' => sub {
@@ -530,32 +600,35 @@ sub testssl {
 
 	plan tests => 12;
 
-	ok(run(test([@ssltest, "-bio_pair", "-tls1", "-alpn_client", "foo", "-alpn_server", "bar"])));
-	ok(run(test([@ssltest, "-bio_pair", "-tls1", "-alpn_client", "foo", "-alpn_server", "foo", "-alpn_expected", "foo"])));
-	ok(run(test([@ssltest, "-bio_pair", "-tls1", "-alpn_client", "foo,bar", "-alpn_server", "foo", "-alpn_expected", "foo"])));
-	ok(run(test([@ssltest, "-bio_pair", "-tls1", "-alpn_client", "bar,foo", "-alpn_server", "foo", "-alpn_expected", "foo"])));
-	ok(run(test([@ssltest, "-bio_pair", "-tls1", "-alpn_client", "bar,foo", "-alpn_server", "foo,bar", "-alpn_expected", "foo"])));
-	ok(run(test([@ssltest, "-bio_pair", "-tls1", "-alpn_client", "bar,foo", "-alpn_server", "bar,foo", "-alpn_expected", "bar"])));
-	ok(run(test([@ssltest, "-bio_pair", "-tls1", "-alpn_client", "foo,bar", "-alpn_server", "bar,foo", "-alpn_expected", "bar"])));
-	ok(run(test([@ssltest, "-bio_pair", "-tls1", "-alpn_client", "baz", "-alpn_server", "bar,foo"])));
+      SKIP: {
+	  skip "TLSv1.0 is not supported by this OpenSSL build", 12
+	      if $no_tls1;
 
-	{
-	  SKIP: {
-	      skip "skipping SRP tests", 4
-		  if $no_srp;
+	  ok(run(test([@ssltest, "-bio_pair", "-tls1", "-alpn_client", "foo", "-alpn_server", "bar"])));
+	  ok(run(test([@ssltest, "-bio_pair", "-tls1", "-alpn_client", "foo", "-alpn_server", "foo", "-alpn_expected", "foo"])));
+	  ok(run(test([@ssltest, "-bio_pair", "-tls1", "-alpn_client", "foo,bar", "-alpn_server", "foo", "-alpn_expected", "foo"])));
+	  ok(run(test([@ssltest, "-bio_pair", "-tls1", "-alpn_client", "bar,foo", "-alpn_server", "foo", "-alpn_expected", "foo"])));
+	  ok(run(test([@ssltest, "-bio_pair", "-tls1", "-alpn_client", "bar,foo", "-alpn_server", "foo,bar", "-alpn_expected", "foo"])));
+	  ok(run(test([@ssltest, "-bio_pair", "-tls1", "-alpn_client", "bar,foo", "-alpn_server", "bar,foo", "-alpn_expected", "bar"])));
+	  ok(run(test([@ssltest, "-bio_pair", "-tls1", "-alpn_client", "foo,bar", "-alpn_server", "bar,foo", "-alpn_expected", "bar"])));
+	  ok(run(test([@ssltest, "-bio_pair", "-tls1", "-alpn_client", "baz", "-alpn_server", "bar,foo"])));
 
-	      ok(run(test([@ssltest, "-tls1", "-cipher", "SRP", "-srpuser", "test", "-srppass", "abc123"])),
-		 'test tls1 with SRP');
+	SKIP: {
+	    skip "skipping SRP tests", 4
+		if $no_srp;
 
-	      ok(run(test([@ssltest, "-bio_pair", "-tls1", "-cipher", "SRP", "-srpuser", "test", "-srppass", "abc123"])),
-		 'test tls1 with SRP via BIO pair');
+	    ok(run(test([@ssltest, "-tls1", "-cipher", "SRP", "-srpuser", "test", "-srppass", "abc123"])),
+	       'test tls1 with SRP');
 
-	      ok(run(test([@ssltest, "-tls1", "-cipher", "aSRP", "-srpuser", "test", "-srppass", "abc123"])),
+	    ok(run(test([@ssltest, "-bio_pair", "-tls1", "-cipher", "SRP", "-srpuser", "test", "-srppass", "abc123"])),
+	       'test tls1 with SRP via BIO pair');
+
+	    ok(run(test([@ssltest, "-tls1", "-cipher", "aSRP", "-srpuser", "test", "-srppass", "abc123"])),
 		 'test tls1 with SRP auth');
 
-	      ok(run(test([@ssltest, "-bio_pair", "-tls1", "-cipher", "aSRP", "-srpuser", "test", "-srppass", "abc123"])),
-		 'test tls1 with SRP auth via BIO pair');
-	    }
+	    ok(run(test([@ssltest, "-bio_pair", "-tls1", "-cipher", "aSRP", "-srpuser", "test", "-srppass", "abc123"])),
+	       'test tls1 with SRP auth via BIO pair');
+	  }
 	}
     };
 
@@ -564,13 +637,20 @@ sub testssl {
 
 	plan tests => 2;
 
-	{
-	  SKIP: {
-	      skip "skipping multi-buffer tests", 2
-		  if @extra || (POSIX::uname())[4] ne "x86_64";
-	      ok(run(test([@ssltest, "-cipher", "AES128-SHA",    "-bytes", "8m"])));
-	      ok(run(test([@ssltest, "-cipher", "AES128-SHA256", "-bytes", "8m"])));
-	    }
+      SKIP: {
+	  skip "Neither SSLv3 nor any TLS version are supported by this OpenSSL build", 2
+	      if $no_anytls;
+
+	  skip "skipping multi-buffer tests", 2
+	      if @extra || (POSIX::uname())[4] ne "x86_64";
+
+	  ok(run(test([@ssltest, "-cipher", "AES128-SHA",    "-bytes", "8m"])));
+
+	  # We happen to know that AES128-SHA256 is TLSv1.2 only... for now.
+	  skip "TLSv1.2 is not supported by this OpenSSL configuration", 1
+	      if $no_tls1_2;
+
+	  ok(run(test([@ssltest, "-cipher", "AES128-SHA256", "-bytes", "8m"])));
 	}
     };
 
@@ -586,6 +666,7 @@ sub testssl {
         my $n = ((@protos+2) * (@protos+3))/2 - 2;
         my $ntests = $n * $n;
 	plan tests => $ntests;
+      SKIP: {
         skip "TLS disabled", 1 if $ntests == 1;
 
         my $should;
@@ -619,7 +700,7 @@ sub testssl {
                 print STDERR "\nFailed: @args\n";
             }
             ok($ok);
-        }}}}
+        }}}}}
     };
 
     subtest 'DTLS Version min/max tests' => sub {
@@ -632,6 +713,7 @@ sub testssl {
         my $n = ((@protos+2) * (@protos+3))/2 - 2;
         my $ntests = $n * $n;
 	plan tests => $ntests;
+      SKIP: {
         skip "DTLS disabled", 1 if $ntests == 1;
 
         my $should;
@@ -665,7 +747,7 @@ sub testssl {
                 print STDERR "\nFailed: @args\n";
             }
             ok($ok);
-        }}}}
+        }}}}}
     };
 }
 
@@ -726,14 +808,19 @@ sub testsslproxy {
                                       [ [ 'BC', 'C'      ], 0 ],
                                       [ [ 'BC', 'A|B&!C' ], 1 ] ] );
 
-    foreach (@{$expected{$cert}}) {
-        my $auth = $_->[0]->[0];
-        my $cond = $_->[0]->[1];
-        my $res  = $_->[1];
-	is(run(test([@ssltest, "-server_auth", @CA,
-                     "-proxy", "-proxy_auth", $auth,
-                     "-proxy_cond", $cond])), $res,
-	   "test tlsv1, server auth, proxy auth $auth and cond $cond (expect "
-           .($res ? "success" : "failure").")");
+  SKIP: {
+      skip "Neither SSLv3 nor any TLS version are supported by this OpenSSL build", scalar(@{$expected{$cert}})
+	  if $no_anytls;
+
+      foreach (@{$expected{$cert}}) {
+	  my $auth = $_->[0]->[0];
+	  my $cond = $_->[0]->[1];
+	  my $res  = $_->[1];
+	  is(run(test([@ssltest, "-server_auth", @CA,
+		       "-proxy", "-proxy_auth", $auth,
+		       "-proxy_cond", $cond])), $res,
+	     "test tlsv1, server auth, proxy auth $auth and cond $cond (expect "
+	     .($res ? "success" : "failure").")");
+      }
     }
 }

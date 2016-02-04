@@ -1,4 +1,3 @@
-/* crypto/asn1/a_verify.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -71,6 +70,7 @@
 #include <openssl/buffer.h>
 #include <openssl/evp.h>
 #include "internal/asn1_int.h"
+#include "internal/evp_int.h"
 
 #ifndef NO_ASN1_OLD
 

@@ -1,4 +1,3 @@
-/* crypto/o_time.c */
 /*
  * Written by Richard Levitte (richard@levitte.org) for the OpenSSL project
  * 2001.

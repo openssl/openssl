@@ -1,4 +1,3 @@
-/* crypto/bn/bn.h */
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -138,126 +137,29 @@ extern "C" {
 #endif
 
 /*
- * These preprocessor symbols control various aspects of the bignum headers
- * and library code. They're not defined by any "normal" configuration, as
- * they are intended for development and testing purposes. NB: defining all
- * three can be useful for debugging application code as well as openssl
- * itself. BN_DEBUG - turn on various debugging alterations to the bignum
- * code BN_DEBUG_RAND - uses random poisoning of unused words to trip up
- * mismanagement of bignum internals. You must also define BN_DEBUG.
- */
-/* #define BN_DEBUG */
-/* #define BN_DEBUG_RAND */
-
-# ifndef OPENSSL_SMALL_FOOTPRINT
-#  define BN_MUL_COMBA
-#  define BN_SQR_COMBA
-#  define BN_RECURSION
-# endif
-
-/*
- * This next option uses the C libraries (2 word)/(1 word) function. If it is
- * not defined, I use my C version (which is slower). The reason for this
- * flag is that when the particular C compiler library routine is used, and
- * the library is linked with a different compiler, the library is missing.
- * This mostly happens when the library is built with gcc and then linked
- * using normal cc.  This would be a common occurrence because gcc normally
- * produces code that is 2 times faster than system compilers for the big
- * number stuff. For machines with only one compiler (or shared libraries),
- * this should be on.  Again this in only really a problem on machines using
- * "long long's", are 32bit, and are not using my assembler code.
- */
-# if defined(OPENSSL_SYS_MSDOS) || defined(OPENSSL_SYS_WINDOWS) || \
-    defined(OPENSSL_SYS_WIN32) || defined(linux)
-#  ifndef BN_DIV2W
-#   define BN_DIV2W
-#  endif
-# endif
-
-/*
- * assuming long is 64bit - this is the DEC Alpha unsigned long long is only
- * 64 bits :-(, don't define BN_LLONG for the DEC Alpha
+ * 64-bit processor with LP64 ABI
  */
 # ifdef SIXTY_FOUR_BIT_LONG
-#  define BN_ULLONG       unsigned long long
 #  define BN_ULONG        unsigned long
-#  define BN_LONG         long
-#  define BN_BITS         128
 #  define BN_BYTES        8
-#  define BN_BITS2        64
-#  define BN_BITS4        32
-#  define BN_MASK         (0xffffffffffffffffffffffffffffffffLL)
-#  define BN_MASK2        (0xffffffffffffffffL)
-#  define BN_MASK2l       (0xffffffffL)
-#  define BN_MASK2h       (0xffffffff00000000L)
-#  define BN_MASK2h1      (0xffffffff80000000L)
-#  define BN_TBIT         (0x8000000000000000L)
-#  define BN_DEC_CONV     (10000000000000000000UL)
-#  define BN_DEC_FMT1     "%lu"
-#  define BN_DEC_FMT2     "%019lu"
-#  define BN_DEC_NUM      19
-#  define BN_HEX_FMT1     "%lX"
-#  define BN_HEX_FMT2     "%016lX"
 # endif
 
 /*
- * This is where the long long data type is 64 bits, but long is 32. For
- * machines where there are 64bit registers, this is the mode to use. IRIX,
- * on R4000 and above should use this mode, along with the relevant assembler
- * code :-).  Do NOT define BN_LLONG.
+ * 64-bit processor other than LP64 ABI
  */
 # ifdef SIXTY_FOUR_BIT
-#  undef BN_LLONG
-#  undef BN_ULLONG
 #  define BN_ULONG        unsigned long long
-#  define BN_LONG         long long
-#  define BN_BITS         128
 #  define BN_BYTES        8
-#  define BN_BITS2        64
-#  define BN_BITS4        32
-#  define BN_MASK2        (0xffffffffffffffffLL)
-#  define BN_MASK2l       (0xffffffffL)
-#  define BN_MASK2h       (0xffffffff00000000LL)
-#  define BN_MASK2h1      (0xffffffff80000000LL)
-#  define BN_TBIT         (0x8000000000000000LL)
-#  define BN_DEC_CONV     (10000000000000000000ULL)
-#  define BN_DEC_FMT1     "%llu"
-#  define BN_DEC_FMT2     "%019llu"
-#  define BN_DEC_NUM      19
-#  define BN_HEX_FMT1     "%llX"
-#  define BN_HEX_FMT2     "%016llX"
 # endif
 
 # ifdef THIRTY_TWO_BIT
-#  ifdef BN_LLONG
-#   if defined(_WIN32) && !defined(__GNUC__)
-#    define BN_ULLONG     unsigned __int64
-#    define BN_MASK       (0xffffffffffffffffI64)
-#   else
-#    define BN_ULLONG     unsigned long long
-#    define BN_MASK       (0xffffffffffffffffLL)
-#   endif
-#  endif
 #  define BN_ULONG        unsigned int
-#  define BN_LONG         int
-#  define BN_BITS         64
 #  define BN_BYTES        4
-#  define BN_BITS2        32
-#  define BN_BITS4        16
-#  define BN_MASK2        (0xffffffffL)
-#  define BN_MASK2l       (0xffff)
-#  define BN_MASK2h1      (0xffff8000L)
-#  define BN_MASK2h       (0xffff0000L)
-#  define BN_TBIT         (0x80000000L)
-#  define BN_DEC_CONV     (1000000000L)
-#  define BN_DEC_FMT1     "%u"
-#  define BN_DEC_FMT2     "%09u"
-#  define BN_DEC_NUM      9
-#  define BN_HEX_FMT1     "%X"
-#  define BN_HEX_FMT2     "%08X"
 # endif
 
-# define BN_DEFAULT_BITS 1280
+# define BN_BITS2       (BN_BYTES * 8)
+# define BN_BITS        (BN_BITS2 * 2)
+# define BN_TBIT        ((BN_ULONG)1 << (BN_BITS2 - 1))
 
 # define BN_FLG_MALLOCED         0x01
 # define BN_FLG_STATIC_DATA      0x02
@@ -368,6 +270,9 @@ BIGNUM *BN_copy(BIGNUM *a, const BIGNUM *b);
 void BN_swap(BIGNUM *a, BIGNUM *b);
 BIGNUM *BN_bin2bn(const unsigned char *s, int len, BIGNUM *ret);
 int BN_bn2bin(const BIGNUM *a, unsigned char *to);
+int BN_bn2binpad(const BIGNUM *a, unsigned char *to, int tolen);
+BIGNUM *BN_lebin2bn(const unsigned char *s, int len, BIGNUM *ret);
+int BN_bn2lebinpad(const BIGNUM *a, unsigned char *to, int tolen);
 BIGNUM *BN_mpi2bn(const unsigned char *s, int len, BIGNUM *ret);
 int BN_bn2mpi(const BIGNUM *a, unsigned char *to);
 int BN_sub(BIGNUM *r, const BIGNUM *a, const BIGNUM *b);
@@ -442,11 +347,7 @@ int BN_mask_bits(BIGNUM *a, int n);
 # ifndef OPENSSL_NO_STDIO
 int BN_print_fp(FILE *fp, const BIGNUM *a);
 # endif
-# ifdef HEADER_BIO_H
-int BN_print(BIO *fp, const BIGNUM *a);
-# else
-int BN_print(void *fp, const BIGNUM *a);
-# endif
+int BN_print(BIO *bio, const BIGNUM *a);
 int BN_reciprocal(BIGNUM *r, const BIGNUM *m, int len, BN_CTX *ctx);
 int BN_rshift(BIGNUM *r, const BIGNUM *a, int n);
 int BN_rshift1(BIGNUM *r, const BIGNUM *a);

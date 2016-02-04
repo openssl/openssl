@@ -1,4 +1,3 @@
-/* crypto/bio/bio_lib.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -326,9 +325,9 @@ long BIO_int_ctrl(BIO *b, int cmd, long larg, int iarg)
     return (BIO_ctrl(b, cmd, larg, (char *)&i));
 }
 
-char *BIO_ptr_ctrl(BIO *b, int cmd, long larg)
+void *BIO_ptr_ctrl(BIO *b, int cmd, long larg)
 {
-    char *p = NULL;
+    void *p = NULL;
 
     if (BIO_ctrl(b, cmd, larg, (char *)&p) <= 0)
         return (NULL);

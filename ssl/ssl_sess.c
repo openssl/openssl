@@ -1,4 +1,3 @@
-/* ssl/ssl_sess.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -577,13 +576,9 @@ int ssl_get_prev_session(SSL *s, const PACKET *ext, const PACKET *session_id)
     if (try_session_cache &&
         ret == NULL && s->session_ctx->get_session_cb != NULL) {
         int copy = 1;
-        /* The user callback takes a non-const pointer, so grab a local copy. */
-        unsigned char *sid = NULL;
-        size_t sid_len;
-        if (!PACKET_memdup(session_id, &sid, &sid_len))
-            goto err;
-        ret = s->session_ctx->get_session_cb(s, sid, sid_len, &copy);
-        OPENSSL_free(sid);
+        ret = s->session_ctx->get_session_cb(s, PACKET_data(session_id),
+                                             PACKET_remaining(session_id),
+                                             &copy);
 
         if (ret != NULL) {
             s->session_ctx->stats.sess_cb_hit++;
@@ -1159,14 +1154,14 @@ void (*SSL_CTX_sess_get_remove_cb(SSL_CTX *ctx)) (SSL_CTX *ctx,
 
 void SSL_CTX_sess_set_get_cb(SSL_CTX *ctx,
                              SSL_SESSION *(*cb) (struct ssl_st *ssl,
-                                                 unsigned char *data, int len,
-                                                 int *copy))
+                                                 const unsigned char *data,
+                                                 int len, int *copy))
 {
     ctx->get_session_cb = cb;
 }
 
 SSL_SESSION *(*SSL_CTX_sess_get_get_cb(SSL_CTX *ctx)) (SSL *ssl,
-                                                       unsigned char *data,
+                                                       const unsigned char *data,
                                                        int len, int *copy) {
     return ctx->get_session_cb;
 }

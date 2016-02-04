@@ -1,4 +1,3 @@
-/* ssl/ssltest.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -733,6 +732,8 @@ static int debug = 0;
 static const char rnd_seed[] =
     "string to make the random number generator think it has entropy";
 
+int doit_localhost(SSL *s_ssl, SSL *c_ssl, int family,
+                   long bytes, clock_t *s_time, clock_t *c_time);
 int doit_biopair(SSL *s_ssl, SSL *c_ssl, long bytes, clock_t *s_time,
                  clock_t *c_time);
 int doit(SSL *s_ssl, SSL *c_ssl, long bytes);
@@ -801,6 +802,8 @@ static void sv_usage(void)
             " -c_key arg    - Client key file (default: same as -c_cert)\n");
     fprintf(stderr, " -cipher arg   - The cipher list\n");
     fprintf(stderr, " -bio_pair     - Use BIO pairs\n");
+    fprintf(stderr, " -ipv4         - Use IPv4 connection on localhost\n");
+    fprintf(stderr, " -ipv6         - Use IPv6 connection on localhost\n");
     fprintf(stderr, " -f            - Test even cases that can't work\n");
     fprintf(stderr,
             " -time         - measure processor time used by client and server\n");
@@ -1008,7 +1011,7 @@ int main(int argc, char *argv[])
 {
     char *CApath = NULL, *CAfile = NULL;
     int badop = 0;
-    int bio_pair = 0;
+    enum { BIO_MEM, BIO_PAIR, BIO_IPV4, BIO_IPV6 } bio_type = BIO_MEM;
     int force = 0;
     int dtls1 = 0, dtls12 = 0, dtls = 0, tls1 = 0, ssl3 = 0, ret = 1;
     int client_auth = 0;
@@ -1216,7 +1219,11 @@ int main(int argc, char *argv[])
                 goto bad;
             CAfile = *(++argv);
         } else if (strcmp(*argv, "-bio_pair") == 0) {
-            bio_pair = 1;
+            bio_type = BIO_PAIR;
+        } else if (strcmp(*argv, "-ipv4") == 0) {
+            bio_type = BIO_IPV4;
+        } else if (strcmp(*argv, "-ipv6") == 0) {
+            bio_type = BIO_IPV6;
         } else if (strcmp(*argv, "-f") == 0) {
             force = 1;
         } else if (strcmp(*argv, "-time") == 0) {
@@ -1412,9 +1419,9 @@ int main(int argc, char *argv[])
 #endif
 
     if (print_time) {
-        if (!bio_pair) {
+        if (bio_type != BIO_PAIR) {
             fprintf(stderr, "Using BIO pair (-bio_pair)\n");
-            bio_pair = 1;
+            bio_type = BIO_PAIR;
         }
         if (number < 50 && !force)
             fprintf(stderr,
@@ -1778,11 +1785,23 @@ int main(int argc, char *argv[])
                 goto end;
             }
         }
-        if (bio_pair)
-            ret = doit_biopair(s_ssl, c_ssl, bytes, &s_time, &c_time);
-        else
+        switch (bio_type) {
+        case BIO_MEM:
             ret = doit(s_ssl, c_ssl, bytes);
-	if (ret)  break;
+            break;
+        case BIO_PAIR:
+            ret = doit_biopair(s_ssl, c_ssl, bytes, &s_time, &c_time);
+            break;
+        case BIO_IPV4:
+            ret = doit_localhost(s_ssl, c_ssl, BIO_FAMILY_IPV4,
+                                 bytes, &s_time, &c_time);
+            break;
+        case BIO_IPV6:
+            ret = doit_localhost(s_ssl, c_ssl, BIO_FAMILY_IPV6,
+                                 bytes, &s_time, &c_time);
+            break;
+        }
+        if (ret)  break;
     }
 
     if (should_negotiate && ret == 0 &&
@@ -1850,6 +1869,287 @@ int main(int argc, char *argv[])
 #endif
     BIO_free(bio_err);
     EXIT(ret);
+}
+
+int doit_localhost(SSL *s_ssl, SSL *c_ssl, int family, long count,
+                   clock_t *s_time, clock_t *c_time)
+{
+    long cw_num = count, cr_num = count, sw_num = count, sr_num = count;
+    BIO *s_ssl_bio = NULL, *c_ssl_bio = NULL;
+    BIO *acpt = NULL, *server = NULL, *client = NULL;
+    char addr_str[40];
+    int ret = 1;
+    int err_in_client = 0;
+    int err_in_server = 0;
+
+    acpt = BIO_new_accept("0");
+    if (acpt == NULL)
+        goto err;
+    BIO_set_accept_ip_family(acpt, family);
+    BIO_set_bind_mode(acpt, BIO_SOCK_NONBLOCK | BIO_SOCK_REUSEADDR);
+    if (BIO_do_accept(acpt) <= 0)
+        goto err;
+
+    BIO_snprintf(addr_str, sizeof(addr_str), ":%s", BIO_get_accept_port(acpt));
+
+    client = BIO_new_connect(addr_str);
+    BIO_set_conn_ip_family(client, family);
+    if (!client)
+        goto err;
+
+    if (BIO_set_nbio(client, 1) <= 0)
+        goto err;
+    if (BIO_set_nbio(acpt, 1) <= 0)
+        goto err;
+
+    {
+        int st_connect = 0, st_accept = 0;
+
+        while(!st_connect || !st_accept) {
+            if (!st_connect) {
+                if (BIO_do_connect(client) <= 0) {
+                    if (!BIO_should_retry(client))
+                        goto err;
+                } else {
+                    st_connect = 1;
+                }
+            }
+            if (!st_accept) {
+                if (BIO_do_accept(acpt) <= 0) {
+                    if (!BIO_should_retry(acpt))
+                        goto err;
+                } else {
+                    st_accept = 1;
+                }
+            }
+        }
+    }
+    /* We're not interested in accepting further connects */
+    server = BIO_pop(acpt);
+    BIO_free_all(acpt);
+    acpt = NULL;
+
+    s_ssl_bio = BIO_new(BIO_f_ssl());
+    if (!s_ssl_bio)
+        goto err;
+
+    c_ssl_bio = BIO_new(BIO_f_ssl());
+    if (!c_ssl_bio)
+        goto err;
+
+    SSL_set_connect_state(c_ssl);
+    SSL_set_bio(c_ssl, client, client);
+    (void)BIO_set_ssl(c_ssl_bio, c_ssl, BIO_NOCLOSE);
+
+    SSL_set_accept_state(s_ssl);
+    SSL_set_bio(s_ssl, server, server);
+    (void)BIO_set_ssl(s_ssl_bio, s_ssl, BIO_NOCLOSE);
+
+    do {
+        /*-
+         * c_ssl_bio:          SSL filter BIO
+         *
+         * client:             I/O for SSL library
+         *
+         *
+         * server:             I/O for SSL library
+         *
+         * s_ssl_bio:          SSL filter BIO
+         */
+
+        /*
+         * We have non-blocking behaviour throughout this test program, but
+         * can be sure that there is *some* progress in each iteration; so we
+         * don't have to worry about ..._SHOULD_READ or ..._SHOULD_WRITE --
+         * we just try everything in each iteration
+         */
+
+        {
+            /* CLIENT */
+
+            char cbuf[1024 * 8];
+            int i, r;
+            clock_t c_clock = clock();
+
+            memset(cbuf, 0, sizeof(cbuf));
+
+            if (debug)
+                if (SSL_in_init(c_ssl))
+                    printf("client waiting in SSL_connect - %s\n",
+                           SSL_state_string_long(c_ssl));
+
+            if (cw_num > 0) {
+                /* Write to server. */
+
+                if (cw_num > (long)sizeof cbuf)
+                    i = sizeof cbuf;
+                else
+                    i = (int)cw_num;
+                r = BIO_write(c_ssl_bio, cbuf, i);
+                if (r < 0) {
+                    if (!BIO_should_retry(c_ssl_bio)) {
+                        fprintf(stderr, "ERROR in CLIENT\n");
+                        err_in_client = 1;
+                        goto err;
+                    }
+                    /*
+                     * BIO_should_retry(...) can just be ignored here. The
+                     * library expects us to call BIO_write with the same
+                     * arguments again, and that's what we will do in the
+                     * next iteration.
+                     */
+                } else if (r == 0) {
+                    fprintf(stderr, "SSL CLIENT STARTUP FAILED\n");
+                    goto err;
+                } else {
+                    if (debug)
+                        printf("client wrote %d\n", r);
+                    cw_num -= r;
+                }
+            }
+
+            if (cr_num > 0) {
+                /* Read from server. */
+
+                r = BIO_read(c_ssl_bio, cbuf, sizeof(cbuf));
+                if (r < 0) {
+                    if (!BIO_should_retry(c_ssl_bio)) {
+                        fprintf(stderr, "ERROR in CLIENT\n");
+                        err_in_client = 1;
+                        goto err;
+                    }
+                    /*
+                     * Again, "BIO_should_retry" can be ignored.
+                     */
+                } else if (r == 0) {
+                    fprintf(stderr, "SSL CLIENT STARTUP FAILED\n");
+                    goto err;
+                } else {
+                    if (debug)
+                        printf("client read %d\n", r);
+                    cr_num -= r;
+                }
+            }
+
+            /*
+             * c_time and s_time increments will typically be very small
+             * (depending on machine speed and clock tick intervals), but
+             * sampling over a large number of connections should result in
+             * fairly accurate figures.  We cannot guarantee a lot, however
+             * -- if each connection lasts for exactly one clock tick, it
+             * will be counted only for the client or only for the server or
+             * even not at all.
+             */
+            *c_time += (clock() - c_clock);
+        }
+
+        {
+            /* SERVER */
+
+            char sbuf[1024 * 8];
+            int i, r;
+            clock_t s_clock = clock();
+
+            memset(sbuf, 0, sizeof(sbuf));
+
+            if (debug)
+                if (SSL_in_init(s_ssl))
+                    printf("server waiting in SSL_accept - %s\n",
+                           SSL_state_string_long(s_ssl));
+
+            if (sw_num > 0) {
+                /* Write to client. */
+
+                if (sw_num > (long)sizeof sbuf)
+                    i = sizeof sbuf;
+                else
+                    i = (int)sw_num;
+                r = BIO_write(s_ssl_bio, sbuf, i);
+                if (r < 0) {
+                    if (!BIO_should_retry(s_ssl_bio)) {
+                        fprintf(stderr, "ERROR in SERVER\n");
+                        err_in_server = 1;
+                        goto err;
+                    }
+                    /* Ignore "BIO_should_retry". */
+                } else if (r == 0) {
+                    fprintf(stderr, "SSL SERVER STARTUP FAILED\n");
+                    goto err;
+                } else {
+                    if (debug)
+                        printf("server wrote %d\n", r);
+                    sw_num -= r;
+                }
+            }
+
+            if (sr_num > 0) {
+                /* Read from client. */
+
+                r = BIO_read(s_ssl_bio, sbuf, sizeof(sbuf));
+                if (r < 0) {
+                    if (!BIO_should_retry(s_ssl_bio)) {
+                        fprintf(stderr, "ERROR in SERVER\n");
+                        err_in_server = 1;
+                        goto err;
+                    }
+                    /* blah, blah */
+                } else if (r == 0) {
+                    fprintf(stderr, "SSL SERVER STARTUP FAILED\n");
+                    goto err;
+                } else {
+                    if (debug)
+                        printf("server read %d\n", r);
+                    sr_num -= r;
+                }
+            }
+
+            *s_time += (clock() - s_clock);
+        }
+    }
+    while (cw_num > 0 || cr_num > 0 || sw_num > 0 || sr_num > 0);
+
+    if (verbose)
+        print_details(c_ssl, "DONE via TCP connect: ");
+#ifndef OPENSSL_NO_NEXTPROTONEG
+    if (verify_npn(c_ssl, s_ssl) < 0) {
+        ret = 1;
+        goto end;
+    }
+#endif
+    if (verify_serverinfo() < 0) {
+        fprintf(stderr, "Server info verify error\n");
+        ret = 1;
+        goto err;
+    }
+    if (verify_alpn(c_ssl, s_ssl) < 0) {
+        ret = 1;
+        goto err;
+    }
+
+    if (custom_ext_error) {
+        fprintf(stderr, "Custom extension error\n");
+        ret = 1;
+        goto err;
+    }
+
+ end:
+    ret = 0;
+
+ err:
+    ERR_print_errors(bio_err);
+
+    BIO_free_all(acpt);
+    BIO_free(server);
+    BIO_free(client);
+    BIO_free(s_ssl_bio);
+    BIO_free(c_ssl_bio);
+
+    if (should_negotiate != NULL && strcmp(should_negotiate, "fail-client") == 0)
+        ret = (err_in_client != 0) ? 0 : 1;
+    else if (should_negotiate != NULL && strcmp(should_negotiate, "fail-server") == 0)
+        ret = (err_in_server != 0) ? 0 : 1;
+
+    return ret;
 }
 
 int doit_biopair(SSL *s_ssl, SSL *c_ssl, long count,

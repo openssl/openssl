@@ -191,9 +191,12 @@ typedef unsigned int u_int;
 #endif
 
 static int not_resumable_sess_cb(SSL *s, int is_forward_secure);
-static int sv_body(char *hostname, int s, int stype, unsigned char *context);
-static int www_body(char *hostname, int s, int stype, unsigned char *context);
-static int rev_body(char *hostname, int s, int stype, unsigned char *context);
+static int sv_body(const char *hostname, int s, int stype,
+                   unsigned char *context);
+static int www_body(const char *hostname, int s, int stype,
+                    unsigned char *context);
+static int rev_body(const char *hostname, int s, int stype,
+                    unsigned char *context);
 static void close_accept_socket(void);
 static int init_ssl_connection(SSL *s);
 static void print_stats(BIO *bp, SSL_CTX *ctx);
@@ -791,8 +794,8 @@ static char *srtp_profiles = NULL;
 #endif
 
 typedef enum OPTION_choice {
-    OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
-    OPT_ENGINE, OPT_PORT, OPT_UNIX, OPT_UNLINK, OPT_NACCEPT,
+    OPT_ERR = -1, OPT_EOF = 0, OPT_HELP, OPT_ENGINE,
+    OPT_4, OPT_6, OPT_ACCEPT, OPT_PORT, OPT_UNIX, OPT_UNLINK, OPT_NACCEPT,
     OPT_VERIFY, OPT_UPPER_V_VERIFY, OPT_CONTEXT, OPT_CERT, OPT_CRL,
     OPT_CRL_DOWNLOAD, OPT_SERVERINFO, OPT_CERTFORM, OPT_KEY, OPT_KEYFORM,
     OPT_PASS, OPT_CERT_CHAIN, OPT_DHPARAM, OPT_DCERTFORM, OPT_DCERT,
@@ -821,9 +824,13 @@ typedef enum OPTION_choice {
 OPTIONS s_server_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
     {"port", OPT_PORT, 'p'},
-    {"accept", OPT_PORT, 'p',
-     "TCP/IP port to accept on (default is " PORT_STR ")"},
+    {"accept", OPT_ACCEPT, 's',
+     "TCP/IP port or service to accept on (default is " PORT ")"},
+#ifdef AF_UNIX
     {"unix", OPT_UNIX, 's', "Unix domain socket to accept on"},
+#endif
+    {"4", OPT_4, '-', "Use IPv4 only"},
+    {"6", OPT_6, '-', "Use IPv6 only"},
     {"unlink", OPT_UNLINK, '-', "For -unix, unlink existing socket first"},
     {"context", OPT_CONTEXT, 's', "Set session ID context"},
     {"verify", OPT_VERIFY, 'n', "Turn on peer certificate verification"},
@@ -998,11 +1005,10 @@ int s_server_main(int argc, char *argv[])
 #ifndef OPENSSL_NO_PSK
     char *p;
 #endif
-    const char *unix_path = NULL;
-#ifndef NO_SYS_UN_H
+#ifdef AF_UNIX
     int unlink_unix_path = 0;
 #endif
-    int (*server_cb) (char *hostname, int s, int stype,
+    int (*server_cb) (const char *hostname, int s, int stype,
                       unsigned char *context);
     int vpmtouched = 0, build_chain = 0, no_cache = 0, ext_cache = 0;
 #ifndef OPENSSL_NO_DH
@@ -1012,9 +1018,11 @@ int s_server_main(int argc, char *argv[])
     int noCApath = 0, noCAfile = 0;
     int s_cert_format = FORMAT_PEM, s_key_format = FORMAT_PEM;
     int s_dcert_format = FORMAT_PEM, s_dkey_format = FORMAT_PEM;
-    int rev = 0, naccept = -1, sdebug = 0, socket_type = SOCK_STREAM;
+    int rev = 0, naccept = -1, sdebug = 0;
+    int socket_family = AF_UNSPEC, socket_type = SOCK_STREAM;
     int state = 0, crl_format = FORMAT_PEM, crl_download = 0;
-    unsigned short port = PORT;
+    char *host = NULL;
+    char *port = BUF_strdup(PORT);
     unsigned char *context = NULL;
     OPTION_CHOICE o;
     EVP_PKEY *s_key2 = NULL;
@@ -1059,26 +1067,71 @@ int s_server_main(int argc, char *argv[])
             ret = 0;
             goto end;
 
-        case OPT_PORT:
-            if (!extract_port(opt_arg(), &port))
-                goto end;
-            break;
-        case OPT_UNIX:
-#ifdef NO_SYS_UN_H
-            BIO_printf(bio_err, "unix domain sockets unsupported\n");
-            goto end;
-#else
-            unix_path = opt_arg();
+        case OPT_4:
+#ifdef AF_UNIX
+            if (socket_family == AF_UNIX) {
+                OPENSSL_free(host); host = NULL;
+                OPENSSL_free(port); port = NULL;
+            }
 #endif
+            socket_family = AF_INET;
+            break;
+        case OPT_6:
+            if (1) {
+#ifdef AF_INET6
+#ifdef AF_UNIX
+                if (socket_family == AF_UNIX) {
+                    OPENSSL_free(host); host = NULL;
+                    OPENSSL_free(port); port = NULL;
+                }
+#endif
+                socket_family = AF_INET6;
+            } else {
+#endif
+                BIO_printf(bio_err, "%s: IPv6 domain sockets unsupported\n", prog);
+                goto end;
+            }
+            break;
+        case OPT_PORT:
+#ifdef AF_UNIX
+            if (socket_family == AF_UNIX) {
+                socket_family = AF_UNSPEC;
+            }
+#endif
+            OPENSSL_free(port); port = NULL;
+            OPENSSL_free(host); host = NULL;
+            if (BIO_parse_hostserv(opt_arg(), NULL, &port, BIO_PARSE_PRIO_SERV) < 1) {
+                BIO_printf(bio_err,
+                           "%s: -port argument malformed or ambiguous\n",
+                           port);
+                goto end;
+            }
+            break;
+        case OPT_ACCEPT:
+#ifdef AF_UNIX
+            if (socket_family == AF_UNIX) {
+                socket_family = AF_UNSPEC;
+            }
+#endif
+            OPENSSL_free(port); port = NULL;
+            OPENSSL_free(host); host = NULL;
+            if (BIO_parse_hostserv(opt_arg(), &host, &port, BIO_PARSE_PRIO_SERV) < 1) {
+                BIO_printf(bio_err,
+                           "%s: -accept argument malformed or ambiguous\n",
+                           port);
+                goto end;
+            }
+            break;
+#ifdef AF_UNIX
+        case OPT_UNIX:
+            socket_family = AF_UNIX;
+            OPENSSL_free(host); host = BUF_strdup(opt_arg());
+            OPENSSL_free(port); port = NULL;
             break;
         case OPT_UNLINK:
-#ifdef NO_SYS_UN_H
-            BIO_printf(bio_err, "unix domain sockets unsupported\n");
-            goto end;
-#else
             unlink_unix_path = 1;
-#endif
             break;
+#endif
         case OPT_NACCEPT:
             naccept = atol(opt_arg());
             break;
@@ -1462,11 +1515,13 @@ int s_server_main(int argc, char *argv[])
     }
 #endif
 
-    if (unix_path && (socket_type != SOCK_STREAM)) {
+#ifdef AF_UNIX
+    if (socket_family == AF_UNIX && socket_type != SOCK_STREAM) {
         BIO_printf(bio_err,
                    "Can't use unix sockets and datagrams together\n");
         goto end;
     }
+#endif
 #if !defined(OPENSSL_NO_JPAKE) && !defined(OPENSSL_NO_PSK)
     if (jpake_secret) {
         if (psk_key) {
@@ -1507,9 +1562,8 @@ int s_server_main(int argc, char *argv[])
             goto end;
         }
         if (s_chain_file) {
-            s_chain = load_certs(s_chain_file, FORMAT_PEM,
-                                 NULL, e, "server certificate chain");
-            if (!s_chain)
+            if (!load_certs(s_chain_file, &s_chain, FORMAT_PEM, NULL, e,
+                            "server certificate chain"))
                 goto end;
         }
 
@@ -1587,9 +1641,8 @@ int s_server_main(int argc, char *argv[])
             goto end;
         }
         if (s_dchain_file) {
-            s_dchain = load_certs(s_dchain_file, FORMAT_PEM,
-                                  NULL, e, "second server certificate chain");
-            if (!s_dchain)
+            if (!load_certs(s_dchain_file, &s_dchain, FORMAT_PEM, NULL, e,
+                            "second server certificate chain"))
                 goto end;
         }
 
@@ -1931,16 +1984,13 @@ int s_server_main(int argc, char *argv[])
         server_cb = www_body;
     else
         server_cb = sv_body;
-#ifndef NO_SYS_UN_H
-    if (unix_path) {
-        if (unlink_unix_path)
-            unlink(unix_path);
-        do_server_unix(unix_path, &accept_socket, server_cb, context,
-                       naccept);
-    } else
+#ifdef AF_UNIX
+    if (socket_family == AF_UNIX
+        && unlink_unix_path)
+        unlink(host);
 #endif
-        do_server(port, socket_type, &accept_socket, server_cb, context,
-                  naccept);
+    do_server(&accept_socket, host, port, socket_family, socket_type,
+              server_cb, context, naccept);
     print_stats(bio_s_out, ctx);
     ret = 0;
  end:
@@ -1954,6 +2004,8 @@ int s_server_main(int argc, char *argv[])
     sk_X509_pop_free(s_dchain, X509_free);
     OPENSSL_free(pass);
     OPENSSL_free(dpass);
+    OPENSSL_free(host);
+    OPENSSL_free(port);
     X509_VERIFY_PARAM_free(vpm);
     free_sessions();
     OPENSSL_free(tlscstatp.host);
@@ -2008,7 +2060,8 @@ static void print_stats(BIO *bio, SSL_CTX *ssl_ctx)
                SSL_CTX_sess_get_cache_size(ssl_ctx));
 }
 
-static int sv_body(char *hostname, int s, int stype, unsigned char *context)
+static int sv_body(const char *hostname, int s, int stype,
+                   unsigned char *context)
 {
     char *buf = NULL;
     fd_set readfds;
@@ -2434,12 +2487,15 @@ static int init_ssl_connection(SSL *con)
     unsigned next_proto_neg_len;
 #endif
     unsigned char *exportedkeymat;
-#ifndef OPENSSL_NO_DTLS
-    struct sockaddr_storage client;
-#endif
 
 #ifndef OPENSSL_NO_DTLS
     if(dtlslisten) {
+        BIO_ADDR *client = NULL;
+
+        if ((client = BIO_ADDR_new()) == NULL) {
+            BIO_printf(bio_err, "ERROR - memory\n");
+            return 0;
+        }
         i = DTLSv1_listen(con, &client);
         if (i > 0) {
             BIO *wbio;
@@ -2450,11 +2506,12 @@ static int init_ssl_connection(SSL *con)
                 BIO_get_fd(wbio, &fd);
             }
 
-            if(!wbio || connect(fd, (struct sockaddr *)&client,
-                                sizeof(struct sockaddr_storage))) {
+            if(!wbio || BIO_connect(fd, client, 0) == 0) {
                 BIO_printf(bio_err, "ERROR - unable to connect\n");
+                BIO_ADDR_free(client);
                 return 0;
             }
+            BIO_ADDR_free(client);
             dtlslisten = 0;
             i = SSL_accept(con);
         }
@@ -2597,7 +2654,8 @@ static DH *load_dh_param(const char *dhfile)
 }
 #endif
 
-static int www_body(char *hostname, int s, int stype, unsigned char *context)
+static int www_body(const char *hostname, int s, int stype,
+                    unsigned char *context)
 {
     char *buf = NULL;
     int ret = 1;
@@ -2984,7 +3042,8 @@ static int www_body(char *hostname, int s, int stype, unsigned char *context)
     return (ret);
 }
 
-static int rev_body(char *hostname, int s, int stype, unsigned char *context)
+static int rev_body(const char *hostname, int s, int stype,
+                    unsigned char *context)
 {
     char *buf = NULL;
     int i;
@@ -3218,7 +3277,7 @@ static int add_session(SSL *ssl, SSL_SESSION *session)
     return 0;
 }
 
-static SSL_SESSION *get_session(SSL *ssl, unsigned char *id, int idlen,
+static SSL_SESSION *get_session(SSL *ssl, const unsigned char *id, int idlen,
                                 int *do_copy)
 {
     simple_ssl_session *sess;

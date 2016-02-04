@@ -1,4 +1,3 @@
-/* crypto/constant_time_locl.h */
 /*-
  * Utilities for constant-time cryptography.
  *

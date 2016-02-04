@@ -93,23 +93,11 @@ static unsigned int read_ledword(const unsigned char **in)
 
 static int read_lebn(const unsigned char **in, unsigned int nbyte, BIGNUM **r)
 {
-    const unsigned char *p;
-    unsigned char *tmpbuf, *q;
-    unsigned int i;
-    p = *in + nbyte - 1;
-    tmpbuf = OPENSSL_malloc(nbyte);
-    if (tmpbuf == NULL)
+    *r = BN_lebin2bn(*in, nbyte, NULL);
+    if (*r == NULL)
         return 0;
-    q = tmpbuf;
-    for (i = 0; i < nbyte; i++)
-        *q++ = *p--;
-    *r = BN_bin2bn(tmpbuf, nbyte, NULL);
-    OPENSSL_free(tmpbuf);
-    if (*r) {
-        *in += nbyte;
-        return 1;
-    } else
-        return 0;
+    *in += nbyte;
+    return 1;
 }
 
 /* Convert private key blob to EVP_PKEY: RSA and DSA keys supported */
@@ -417,26 +405,8 @@ static void write_ledword(unsigned char **out, unsigned int dw)
 
 static void write_lebn(unsigned char **out, const BIGNUM *bn, int len)
 {
-    int nb, i;
-    unsigned char *p = *out, *q, c;
-    nb = BN_num_bytes(bn);
-    BN_bn2bin(bn, p);
-    q = p + nb - 1;
-    /* In place byte order reversal */
-    for (i = 0; i < nb / 2; i++) {
-        c = *p;
-        *p++ = *q;
-        *q-- = c;
-    }
-    *out += nb;
-    /* Pad with zeroes if we have to */
-    if (len > 0) {
-        len -= nb;
-        if (len > 0) {
-            memset(*out, 0, len);
-            *out += len;
-        }
-    }
+    BN_bn2lebinpad(bn, *out, len);
+    *out += len;
 }
 
 static int check_bitlen_rsa(RSA *rsa, int ispub, unsigned int *magic);
@@ -450,11 +420,12 @@ static int do_i2b(unsigned char **out, EVP_PKEY *pk, int ispub)
     unsigned char *p;
     unsigned int bitlen, magic = 0, keyalg;
     int outlen, noinc = 0;
-    if (pk->type == EVP_PKEY_DSA) {
-        bitlen = check_bitlen_dsa(pk->pkey.dsa, ispub, &magic);
+    int pktype = EVP_PKEY_id(pk);
+    if (pktype == EVP_PKEY_DSA) {
+        bitlen = check_bitlen_dsa(EVP_PKEY_get0_DSA(pk), ispub, &magic);
         keyalg = MS_KEYALG_DSS_SIGN;
-    } else if (pk->type == EVP_PKEY_RSA) {
-        bitlen = check_bitlen_rsa(pk->pkey.rsa, ispub, &magic);
+    } else if (pktype == EVP_PKEY_RSA) {
+        bitlen = check_bitlen_rsa(EVP_PKEY_get0_RSA(pk), ispub, &magic);
         keyalg = MS_KEYALG_RSA_KEYX;
     } else
         return -1;
@@ -484,9 +455,9 @@ static int do_i2b(unsigned char **out, EVP_PKEY *pk, int ispub)
     write_ledword(&p, magic);
     write_ledword(&p, bitlen);
     if (keyalg == MS_KEYALG_DSS_SIGN)
-        write_dsa(&p, pk->pkey.dsa, ispub);
+        write_dsa(&p, EVP_PKEY_get0_DSA(pk), ispub);
     else
-        write_rsa(&p, pk->pkey.rsa, ispub);
+        write_rsa(&p, EVP_PKEY_get0_RSA(pk), ispub);
     if (!noinc)
         *out += outlen;
     return outlen;
@@ -797,7 +768,7 @@ static int i2b_PVK(unsigned char **out, EVP_PKEY *pk, int enclevel,
 
     write_ledword(&p, MS_PVKMAGIC);
     write_ledword(&p, 0);
-    if (pk->type == EVP_PKEY_DSA)
+    if (EVP_PKEY_id(pk) == EVP_PKEY_DSA)
         write_ledword(&p, MS_KEYTYPE_SIGN);
     else
         write_ledword(&p, MS_KEYTYPE_KEYX);

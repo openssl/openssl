@@ -1,4 +1,3 @@
-/* crypto/ts/ts_resp_utils.c */
 /*
  * Written by Zoltan Glozik (zglozik@stones.com) for the OpenSSL project
  * 2002.

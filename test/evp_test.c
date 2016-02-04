@@ -1,4 +1,3 @@
-/* evp_test.c */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -170,6 +169,8 @@ static unsigned char* unescape(const char *input, size_t input_len,
 static int test_bin(const char *value, unsigned char **buf, size_t *buflen)
 {
     long len;
+
+    *buflen = 0;
     if (!*value) {
         /*
          * Don't return NULL for zero length buffer.
@@ -292,6 +293,7 @@ static const struct evp_test_method mac_test_method;
 static const struct evp_test_method psign_test_method, pverify_test_method;
 static const struct evp_test_method pdecrypt_test_method;
 static const struct evp_test_method pverify_recover_test_method;
+static const struct evp_test_method pderive_test_method;
 static const struct evp_test_method pbe_test_method;
 static const struct evp_test_method encode_test_method;
 static const struct evp_test_method kdf_test_method;
@@ -304,6 +306,7 @@ static const struct evp_test_method *evp_test_list[] = {
     &pverify_test_method,
     &pdecrypt_test_method,
     &pverify_recover_test_method,
+    &pderive_test_method,
     &pbe_test_method,
     &encode_test_method,
     &kdf_test_method,
@@ -1225,6 +1228,22 @@ static void pkey_test_cleanup(struct evp_test *t)
     EVP_PKEY_CTX_free(kdata->ctx);
 }
 
+static int pkey_test_ctrl(EVP_PKEY_CTX *pctx, const char *value)
+{
+    int rv;
+    char *p, *tmpval;
+
+    tmpval = OPENSSL_strdup(value);
+    if (tmpval == NULL)
+        return 0;
+    p = strchr(tmpval, ':');
+    if (p != NULL)
+        *p++ = 0;
+    rv = EVP_PKEY_CTX_ctrl_str(pctx, tmpval, p);
+    OPENSSL_free(tmpval);
+    return rv > 0;
+}
+
 static int pkey_test_parse(struct evp_test *t,
                            const char *keyword, const char *value)
 {
@@ -1233,14 +1252,8 @@ static int pkey_test_parse(struct evp_test *t,
         return test_bin(value, &kdata->input, &kdata->input_len);
     if (strcmp(keyword, "Output") == 0)
         return test_bin(value, &kdata->output, &kdata->output_len);
-    if (strcmp(keyword, "Ctrl") == 0) {
-        char *p = strchr(value, ':');
-        if (p)
-            *p++ = 0;
-        if (EVP_PKEY_CTX_ctrl_str(kdata->ctx, value, p) <= 0)
-            return 0;
-        return 1;
-    }
+    if (strcmp(keyword, "Ctrl") == 0)
+        return pkey_test_ctrl(kdata->ctx, value);
     return 0;
 }
 
@@ -1336,6 +1349,69 @@ static const struct evp_test_method pverify_test_method = {
     pkey_test_cleanup,
     pkey_test_parse,
     verify_test_run
+};
+
+
+static int pderive_test_init(struct evp_test *t, const char *name)
+{
+    return pkey_test_init(t, name, 0, EVP_PKEY_derive_init, 0);
+}
+
+static int pderive_test_parse(struct evp_test *t,
+                              const char *keyword, const char *value)
+{
+    struct pkey_data *kdata = t->data;
+
+    if (strcmp(keyword, "PeerKey") == 0) {
+        EVP_PKEY *peer;
+        if (find_key(&peer, value, t->public) == 0)
+            return 0;
+        if (EVP_PKEY_derive_set_peer(kdata->ctx, peer) <= 0)
+            return 0;
+        return 1;
+    }
+    if (strcmp(keyword, "SharedSecret") == 0)
+        return test_bin(value, &kdata->output, &kdata->output_len);
+    if (strcmp(keyword, "Ctrl") == 0)
+        return pkey_test_ctrl(kdata->ctx, value);
+    return 0;
+}
+
+static int pderive_test_run(struct evp_test *t)
+{
+    struct pkey_data *kdata = t->data;
+    unsigned char *out = NULL;
+    size_t out_len;
+    const char *err = "INTERNAL_ERROR";
+
+    out_len = kdata->output_len;
+    out = OPENSSL_malloc(out_len);
+    if (!out) {
+        fprintf(stderr, "Error allocating output buffer!\n");
+        exit(1);
+    }
+    err = "DERIVE_ERROR";
+    if (EVP_PKEY_derive(kdata->ctx, out, &out_len) <= 0)
+        goto err;
+    err = "SHARED_SECRET_LENGTH_MISMATCH";
+    if (out_len != kdata->output_len)
+        goto err;
+    err = "SHARED_SECRET_MISMATCH";
+    if (check_output(t, kdata->output, out, out_len))
+        goto err;
+    err = NULL;
+ err:
+    OPENSSL_free(out);
+    t->err = err;
+    return 1;
+}
+
+static const struct evp_test_method pderive_test_method = {
+    "Derive",
+    pderive_test_init,
+    pkey_test_cleanup,
+    pderive_test_parse,
+    pderive_test_run
 };
 
 /* PBE tests */

@@ -2,7 +2,83 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 1.0.2e and 1.1.0  [xx XXX xxxx]
+ Changes between 1.0.2f and 1.1.0  [xx XXX xxxx]
+
+  *) Rewrite of BIO networking library. The BIO library lacked consistent
+     support of IPv6, and adding it required some more extensive
+     modifications.  This introduces the BIO_ADDR and BIO_ADDRINFO types,
+     which hold all types of addresses and chains of address information.
+     It also introduces a new API, with functions like BIO_socket,
+     BIO_connect, BIO_listen, BIO_lookup and a rewrite of BIO_accept.
+     The source/sink BIOs BIO_s_connect, BIO_s_accept and BIO_s_datagram
+     have been adapted accordingly.
+     [Richard Levitte]
+
+  *) RSA_padding_check_PKCS1_type_1 now accepts inputs with and without
+     the leading 0-byte.
+     [Emilia Käsper]
+
+  *) CRIME protection: disable compression by default, even if OpenSSL is
+     compiled with zlib enabled. Applications can still enable compression
+     by calling SSL_CTX_clear_options(ctx, SSL_OP_NO_COMPRESSION), or by
+     using the SSL_CONF library to configure compression.
+     [Emilia Käsper]
+
+  *) The signature of the session callback configured with
+     SSL_CTX_sess_set_get_cb was changed. The read-only input buffer
+     was explicitly marked as 'const unsigned char*' instead of
+     'unsigned char*'.
+     [Emilia Käsper]
+
+  *) Always DPURIFY. Remove the use of uninitialized memory in the
+     RNG, and other conditional uses of DPURIFY. This makes -DPURIFY a no-op.
+     [Emilia Käsper]
+
+  *) Removed many obsolete configuration items, including
+        DES_PTR, DES_RISC1, DES_RISC2, DES_INT
+        MD2_CHAR, MD2_INT, MD2_LONG
+        BF_PTR, BF_PTR2
+        IDEA_SHORT, IDEA_LONG
+        RC2_SHORT, RC2_LONG, RC4_LONG, RC4_CHUNK, RC4_INDEX
+     [Rich Salz, with advice from Andy Polyakov]
+
+  *) Many BN internals have been moved to an internal header file.
+     [Rich Salz with help from Andy Polyakov]
+
+  *) Configuration and writing out the results from it has changed.
+     Files such as Makefile include/openssl/opensslconf.h and are now
+     produced through general templates, such as Makefile.in and
+     crypto/opensslconf.h.in and some help from the perl module
+     Text::Template.
+
+     Also, the center of configuration information is no longer
+     Makefile.  Instead, Configure produces a perl module in
+     configdata.pm which holds most of the config data (in the hash
+     table %config), the target data that comes from the target
+     configuration in one of the Configurations/*.conf files (in
+     %target).
+     [Richard Levitte]
+
+  *) To clarify their intended purposes, the Configure options
+     --prefix and --openssldir change their semantics, and become more
+     straightforward and less interdependent.
+
+     --prefix shall be used exclusively to give the location INSTALLTOP
+     where programs, scripts, libraries, include files and manuals are
+     going to be installed.  The default is now /usr/local.
+
+     --openssldir shall be used exclusively to give the default
+     location OPENSSLDIR where certificates, private keys, CRLs are
+     managed.  This is also where the default openssl.cnf gets
+     installed.
+     If the directory given with this option is a relative path, the
+     values of both the --prefix value and the --openssldir value will
+     be combined to become OPENSSLDIR.
+     The default for --openssldir is INSTALLTOP/ssl.
+
+     Anyone who uses --openssldir to specify where OpenSSL is to be
+     installed MUST change to use --prefix instead.
+     [Richard Levitte]
 
   *) The GOST engine was out of date and therefore it has been removed. An up
      to date GOST engine is now being maintained in an external repository.
@@ -676,6 +752,50 @@
      is enable if DEBUG_UNUSED is set. Add to several functions in evp.h
      whose return value is often ignored. 
      [Steve Henson]
+
+ Changes between 1.0.2e and 1.0.2f [28 Jan 2016]
+  *) DH small subgroups
+
+     Historically OpenSSL only ever generated DH parameters based on "safe"
+     primes. More recently (in version 1.0.2) support was provided for
+     generating X9.42 style parameter files such as those required for RFC 5114
+     support. The primes used in such files may not be "safe". Where an
+     application is using DH configured with parameters based on primes that are
+     not "safe" then an attacker could use this fact to find a peer's private
+     DH exponent. This attack requires that the attacker complete multiple
+     handshakes in which the peer uses the same private DH exponent. For example
+     this could be used to discover a TLS server's private DH exponent if it's
+     reusing the private DH exponent or it's using a static DH ciphersuite.
+
+     OpenSSL provides the option SSL_OP_SINGLE_DH_USE for ephemeral DH (DHE) in
+     TLS. It is not on by default. If the option is not set then the server
+     reuses the same private DH exponent for the life of the server process and
+     would be vulnerable to this attack. It is believed that many popular
+     applications do set this option and would therefore not be at risk.
+
+     The fix for this issue adds an additional check where a "q" parameter is
+     available (as is the case in X9.42 based parameters). This detects the
+     only known attack, and is the only possible defense for static DH
+     ciphersuites. This could have some performance impact.
+
+     Additionally the SSL_OP_SINGLE_DH_USE option has been switched on by
+     default and cannot be disabled. This could have some performance impact.
+
+     This issue was reported to OpenSSL by Antonio Sanso (Adobe).
+     (CVE-2016-0701)
+     [Matt Caswell]
+
+  *) SSLv2 doesn't block disabled ciphers
+
+     A malicious client can negotiate SSLv2 ciphers that have been disabled on
+     the server and complete SSLv2 handshakes even if all SSLv2 ciphers have
+     been disabled, provided that the SSLv2 protocol was not also disabled via
+     SSL_OP_NO_SSLv2.
+
+     This issue was reported to OpenSSL on 26th December 2015 by Nimrod Aviram
+     and Sebastian Schinzel.
+     (CVE-2015-3197)
+     [Viktor Dukhovni]
 
  Changes between 1.0.2d and 1.0.2e [3 Dec 2015]
 

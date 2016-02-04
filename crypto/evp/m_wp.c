@@ -1,4 +1,3 @@
-/* crypto/evp/m_wp.c */
 
 #include <stdio.h>
 #include "internal/cryptlib.h"

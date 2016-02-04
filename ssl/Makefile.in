@@ -17,6 +17,7 @@ GENERAL=Makefile README ssl-lib.com install.com
 LIB=$(TOP)/libssl.a
 SHARED_LIB= libssl$(SHLIB_EXT)
 LIBSRC=	\
+	pqueue.c \
 	statem/statem_srvr.c statem/statem_clnt.c  s3_lib.c  s3_enc.c record/rec_layer_s3.c \
 	statem/statem_lib.c s3_cbc.c s3_msg.c \
 	methods.c   t1_lib.c  t1_enc.c t1_ext.c \
@@ -29,6 +30,7 @@ LIBSRC=	\
 	record/ssl3_buffer.c record/ssl3_record.c record/dtls1_bitmap.c \
 	statem/statem.c
 LIBOBJ= \
+	pqueue.o \
 	statem/statem_srvr.o  statem/statem_clnt.o  s3_lib.o  s3_enc.o record/rec_layer_s3.o \
 	statem/statem_lib.o s3_cbc.o s3_msg.o \
 	methods.o   t1_lib.o  t1_enc.o t1_ext.o \
@@ -69,13 +71,8 @@ shared: lib
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
 
-update: local_depend
-	@if [ -z "$(THIS)" ]; then $(MAKE) -f $(TOP)/Makefile reflect THIS=$@; fi
-
-depend: local_depend
-	@if [ -z "$(THIS)" ]; then $(MAKE) -f $(TOP)/Makefile reflect THIS=$@; fi
-local_depend:
-	@[ -z "$(THIS)" ] || $(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(LIBSRC)
+depend:
+	$(TOP)/util/domd $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(LIBSRC)
 
 clean:
 	rm -f $(LIBOBJ) *.obj lib tags core .pure .nfs* *.old *.bak fluff

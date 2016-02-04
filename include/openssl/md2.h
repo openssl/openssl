@@ -1,4 +1,3 @@
-/* crypto/md/md2.h */
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -59,11 +58,13 @@
 #ifndef HEADER_MD2_H
 # define HEADER_MD2_H
 
-# include <openssl/opensslconf.h>/* OPENSSL_NO_MD2, MD2_INT */
+# include <openssl/opensslconf.h>
 # ifdef OPENSSL_NO_MD2
 #  error MD2 is disabled.
 # endif
 # include <stddef.h>
+
+typedef unsigned char MD2_INT;
 
 # define MD2_DIGEST_LENGTH       16
 # define MD2_BLOCK               16

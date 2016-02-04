@@ -1,4 +1,3 @@
-/* apps/apps.h */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -139,6 +138,17 @@
 #  define openssl_fdset(a,b) FD_SET(a, b)
 # endif
 
+# if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L && \
+     defined(INTMAX_MAX) && defined(UINTMAX_MAX)
+int opt_imax(const char *value, intmax_t *result);
+int opt_umax(const char *value, uintmax_t *result);
+# else
+#  define opt_imax opt_long
+#  define opt_umax opt_ulong
+#  define intmax_t long
+#  define uintmax_t unsigned long
+# endif
+
 int app_RAND_load_file(const char *file, int dont_warn);
 int app_RAND_write_file(const char *file);
 /*
@@ -275,7 +285,7 @@ void wait_for_async(SSL *s);
 # define OPT_S_ENUM \
         OPT_S__FIRST=3000, \
         OPT_S_NOSSL3, OPT_S_NOTLS1, OPT_S_NOTLS1_1, OPT_S_NOTLS1_2, \
-        OPT_S_BUGS, OPT_S_NOCOMP, OPT_S_ECDHSINGLE, OPT_S_NOTICKET, \
+        OPT_S_BUGS, OPT_S_COMP, OPT_S_ECDHSINGLE, OPT_S_NOTICKET, \
         OPT_S_SERVERPREF, OPT_S_LEGACYRENEG, OPT_S_LEGACYCONN, \
         OPT_S_ONRESUMP, OPT_S_NOLEGACYCONN, OPT_S_STRICT, OPT_S_SIGALGS, \
         OPT_S_CLIENTSIGALGS, OPT_S_CURVES, OPT_S_NAMEDCURVE, OPT_S_CIPHER, \
@@ -288,7 +298,7 @@ void wait_for_async(SSL *s);
         {"no_tls1_1", OPT_S_NOTLS1_1, '-' }, \
         {"no_tls1_2", OPT_S_NOTLS1_2, '-' }, \
         {"bugs", OPT_S_BUGS, '-' }, \
-        {"no_comp", OPT_S_NOCOMP, '-', "Don't use SSL/TLS-level compression" }, \
+        {"comp", OPT_S_COMP, '-', "Use SSL/TLS-level compression" }, \
         {"ecdh_single", OPT_S_ECDHSINGLE, '-' }, \
         {"no_ticket", OPT_S_NOTICKET, '-' }, \
         {"serverpref", OPT_S_SERVERPREF, '-' }, \
@@ -317,7 +327,7 @@ void wait_for_async(SSL *s);
         case OPT_S_NOTLS1_1: \
         case OPT_S_NOTLS1_2: \
         case OPT_S_BUGS: \
-        case OPT_S_NOCOMP: \
+        case OPT_S_COMP: \
         case OPT_S_ECDHSINGLE: \
         case OPT_S_NOTICKET: \
         case OPT_S_SERVERPREF: \
@@ -372,6 +382,7 @@ typedef struct string_int_pair_st {
 # define OPT_FMT_TEXT            (1L <<  8)
 # define OPT_FMT_HTTP            (1L <<  9)
 # define OPT_FMT_PVK             (1L << 10)
+# define OPT_FMT_PDE     (OPT_FMT_PEMDER | OPT_FMT_ENGINE)
 # define OPT_FMT_ANY     ( \
         OPT_FMT_PEMDER | OPT_FMT_PKCS12 | OPT_FMT_SMIME | \
         OPT_FMT_ENGINE | OPT_FMT_MSBLOB | OPT_FMT_NETSCAPE | \
@@ -443,12 +454,10 @@ EVP_PKEY *load_key(const char *file, int format, int maybe_stdin,
                    const char *pass, ENGINE *e, const char *key_descrip);
 EVP_PKEY *load_pubkey(const char *file, int format, int maybe_stdin,
                       const char *pass, ENGINE *e, const char *key_descrip);
-STACK_OF(X509) *load_certs(const char *file, int format,
-                           const char *pass, ENGINE *e,
-                           const char *cert_descrip);
-STACK_OF(X509_CRL) *load_crls(const char *file, int format,
-                              const char *pass, ENGINE *e,
-                              const char *cert_descrip);
+int load_certs(const char *file, STACK_OF(X509) **certs, int format,
+               const char *pass, ENGINE *e, const char *cert_descrip);
+int load_crls(const char *file, STACK_OF(X509_CRL) **crls, int format,
+              const char *pass, ENGINE *e, const char *cert_descrip);
 X509_STORE *setup_verify(char *CAfile, char *CApath,
                          int noCAfile, int noCApath);
 int ctx_set_verify_locations(SSL_CTX *ctx, const char *CAfile,
@@ -514,7 +523,7 @@ int args_verify(char ***pargs, int *pargc,
                 int *badarg, X509_VERIFY_PARAM **pm);
 void policies_print(X509_STORE_CTX *ctx);
 int bio_to_mem(unsigned char **out, int maxlen, BIO *in);
-int pkey_ctrl_string(EVP_PKEY_CTX *ctx, char *value);
+int pkey_ctrl_string(EVP_PKEY_CTX *ctx, const char *value);
 int init_gen_str(EVP_PKEY_CTX **pctx,
                  const char *algname, ENGINE *e, int do_param);
 int do_X509_sign(X509 *x, EVP_PKEY *pkey, const EVP_MD *md,

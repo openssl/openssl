@@ -1,4 +1,3 @@
-/* crypto/crypto.h */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -313,6 +312,8 @@ int CRYPTO_mem_ctrl(int mode);
         CRYPTO_strndup(str, n, __FILE__, __LINE__)
 #  define OPENSSL_secure_malloc(num) \
         CRYPTO_secure_malloc(num, __FILE__, __LINE__)
+#  define OPENSSL_secure_zalloc(num) \
+        CRYPTO_secure_zalloc(num, __FILE__, __LINE__)
 #  define OPENSSL_secure_free(addr) \
         CRYPTO_secure_free(addr)
 #  define OPENSSL_secure_actual_size(ptr) \
@@ -338,6 +339,8 @@ int CRYPTO_mem_ctrl(int mode);
         CRYPTO_strndup(str, s, NULL, 0)
 #  define OPENSSL_secure_malloc(num) \
         CRYPTO_secure_malloc(num, NULL, 0)
+#  define OPENSSL_secure_zalloc(num) \
+        CRYPTO_secure_zalloc(num, NULL, 0)
 #  define OPENSSL_secure_free(addr) \
         CRYPTO_secure_free(addr)
 #  define OPENSSL_secure_actual_size(ptr) \
@@ -479,6 +482,7 @@ void *CRYPTO_clear_realloc(void *addr, size_t old_num, size_t num,
 int CRYPTO_secure_malloc_init(size_t sz, int minsize);
 void CRYPTO_secure_malloc_done(void);
 void *CRYPTO_secure_malloc(size_t num, const char *file, int line);
+void *CRYPTO_secure_zalloc(size_t num, const char *file, int line);
 void CRYPTO_secure_free(void *ptr);
 int CRYPTO_secure_allocated(const void *ptr);
 int CRYPTO_secure_malloc_initialized(void);
@@ -538,7 +542,9 @@ int OPENSSL_gmtime_diff(int *pday, int *psec,
  * into a defined order as the return value when a != b is undefined, other
  * than to be non-zero.
  */
-int CRYPTO_memcmp(const void *a, const void *b, size_t len);
+int CRYPTO_memcmp(const volatile void * volatile in_a,
+                  const volatile void * volatile in_b,
+                  size_t len);
 
 /* BEGIN ERROR CODES */
 /*

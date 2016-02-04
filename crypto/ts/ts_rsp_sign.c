@@ -1,4 +1,3 @@
-/* crypto/ts/ts_resp_sign.c */
 /*
  * Written by Zoltan Glozik (zglozik@stones.com) for the OpenSSL project
  * 2002.
@@ -212,7 +211,7 @@ int TS_RESP_CTX_set_signer_key(TS_RESP_CTX *ctx, EVP_PKEY *key)
 {
     EVP_PKEY_free(ctx->signer_key);
     ctx->signer_key = key;
-    CRYPTO_add(&ctx->signer_key->references, +1, CRYPTO_LOCK_EVP_PKEY);
+    EVP_PKEY_up_ref(ctx->signer_key);
 
     return 1;
 }
@@ -794,6 +793,7 @@ static ESS_CERT_ID *ess_CERT_ID_new_init(X509 *cert, int issuer_needed)
     GENERAL_NAME *name = NULL;
     unsigned char cert_sha1[SHA_DIGEST_LENGTH];
 
+    /* Call for side-effect of computing hash and caching extensions */
     X509_check_purpose(cert, -1, 0);
     if ((cid = ESS_CERT_ID_new()) == NULL)
         goto err;

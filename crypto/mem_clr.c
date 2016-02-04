@@ -1,4 +1,3 @@
-/* crypto/mem_clr.c */
 /*
  * Written by Geoff Thorpe (geoff@geoffthorpe.net) for the OpenSSL project
  * 2002.

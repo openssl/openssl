@@ -6,8 +6,10 @@
 
  Here are a few comments about building OpenSSL for Windows environments.
 
- - you need Perl.  Unless you will build on Cygwin, you will
-   need ActiveState Perl, available from http://www.activestate.com/ActivePerl.
+ - you need Perl.  Unless you will build on Cygwin, you will need
+   ActiveState Perl, available from http://www.activestate.com/ActivePerl.  
+   You also need the perl module Text::Template, available on CPAN.
+   Please read README.PERL for more information.
 
  - one of the following C compilers:
 
