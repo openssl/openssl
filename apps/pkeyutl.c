@@ -67,8 +67,9 @@
 #define KEY_CERT        3
 
 static EVP_PKEY_CTX *init_ctx(int *pkeysize,
-                              const char *keyfile, int keyform, int key_type,
-                              char *passinarg, int pkey_op, ENGINE *e);
+                              char *keyfile, int keyform, int key_type,
+                              char *passinarg, int pkey_op, ENGINE *e,
+                              const int impl);
 
 static int setup_peer(EVP_PKEY_CTX *ctx, int peerform, const char *file,
                       ENGINE *e);
@@ -79,7 +80,7 @@ static int do_keyop(EVP_PKEY_CTX *ctx, int pkey_op,
 
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
-    OPT_ENGINE, OPT_IN, OPT_OUT,
+    OPT_ENGINE, OPT_ENGINE_IMPL, OPT_IN, OPT_OUT,
     OPT_PUBIN, OPT_CERTIN, OPT_ASN1PARSE, OPT_HEXDUMP, OPT_SIGN,
     OPT_VERIFY, OPT_VERIFYRECOVER, OPT_REV, OPT_ENCRYPT, OPT_DECRYPT,
     OPT_DERIVE, OPT_SIGFILE, OPT_INKEY, OPT_PEERKEY, OPT_PASSIN,
@@ -111,6 +112,7 @@ OPTIONS pkeyutl_options[] = {
     {"pkeyopt", OPT_PKEYOPT, 's', "Public key options as opt:value"},
 #ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
+    {"engine_impl", OPT_ENGINE_IMPL, '-', "Also use engine given by -engine for crypto operations"},
 #endif
     {NULL}
 };
@@ -127,6 +129,7 @@ int pkeyutl_main(int argc, char **argv)
     int buf_inlen = 0, siglen = -1, keyform = FORMAT_PEM, peerform =
         FORMAT_PEM;
     int keysize = -1, pkey_op = EVP_PKEY_OP_SIGN, key_type = KEY_PRIVKEY;
+    int engine_impl = 0;
     int ret = 1, rv = -1;
     size_t buf_outlen;
     const char *inkey = NULL;
@@ -153,6 +156,9 @@ int pkeyutl_main(int argc, char **argv)
             break;
         case OPT_SIGFILE:
             sigfile = opt_arg();
+            break;
+        case OPT_ENGINE_IMPL:
+            engine_impl = 1;
             break;
         case OPT_INKEY:
             inkey = opt_arg();
@@ -225,7 +231,7 @@ int pkeyutl_main(int argc, char **argv)
         goto opthelp;
 
     ctx = init_ctx(&keysize, inkey, keyform, key_type,
-                   passinarg, pkey_op, e);
+                   passinarg, pkey_op, e, engine_impl);
     if (ctx == NULL) {
         BIO_printf(bio_err, "%s: Error initializing context\n", prog);
         ERR_print_errors(bio_err);
@@ -352,11 +358,13 @@ int pkeyutl_main(int argc, char **argv)
 }
 
 static EVP_PKEY_CTX *init_ctx(int *pkeysize,
-                              const char *keyfile, int keyform, int key_type,
-                              char *passinarg, int pkey_op, ENGINE *e)
+                              char *keyfile, int keyform, int key_type,
+                              char *passinarg, int pkey_op, ENGINE *e,
+                              const int engine_impl)
 {
     EVP_PKEY *pkey = NULL;
     EVP_PKEY_CTX *ctx = NULL;
+    ENGINE *impl = NULL;
     char *passin = NULL;
     int rv = -1;
     X509 *x;
@@ -394,7 +402,12 @@ static EVP_PKEY_CTX *init_ctx(int *pkeysize,
     if (!pkey)
         goto end;
 
-    ctx = EVP_PKEY_CTX_new(pkey, e);
+#ifndef OPENSSL_NO_ENGINE
+    if (engine_impl)
+        impl = e;
+#endif
+    
+    ctx = EVP_PKEY_CTX_new(pkey, impl);
 
     EVP_PKEY_free(pkey);
 
