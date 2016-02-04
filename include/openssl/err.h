@@ -262,6 +262,7 @@ typedef struct err_state_st {
 # define SYS_F_SETSOCKOPT        14
 # define SYS_F_GETSOCKOPT        15
 # define SYS_F_GETSOCKNAME       16
+# define SYS_F_GETHOSTBYNAME     17
 
 /* reasons */
 # define ERR_R_SYS_LIB   ERR_LIB_SYS/* 2 */
