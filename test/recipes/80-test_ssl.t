@@ -431,12 +431,20 @@ sub testssl {
 	  ok(run(test([@ssltest, "-bio_pair", "-server_auth", "-client_auth", "-app_verify", @CA, @extra])),
 	     'test sslv2/sslv3 with both client and server authentication via BIO pair and app verify');
 
-	  ok(run(test([@ssltest, "-ipv4", @extra])),
-	     'test TLS via IPv4');
-	  ok(run(test([@ssltest, "-ipv6", @extra])),
-	     'test TLS via IPv6');
-
-	}
+        SKIP: {
+            skip "No IPv4 available on this machine", 1
+                unless have_IPv4();
+            ok(run(test([@ssltest, "-ipv4", @extra])),
+               'test TLS via IPv4');
+          }
+          
+        SKIP: {
+            skip "No IPv6 available on this machine", 1
+                unless have_IPv6();
+            ok(run(test([@ssltest, "-ipv6", @extra])),
+               'test TLS via IPv6');
+          }
+        }
     };
 
     subtest "Testing ciphersuites" => sub {
