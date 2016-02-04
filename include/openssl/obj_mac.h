@@ -4524,3 +4524,19 @@
 #define LN_pkInitKDC            "Signing KDC Response"
 #define NID_pkInitKDC           1033
 #define OBJ_pkInitKDC           OBJ_id_pkinit,5L
+
+#define SN_Curve25519           "Curve25519"
+#define NID_Curve25519          1034
+#define OBJ_Curve25519          1L,3L,6L,1L,4L,1L,11591L,15L,1L
+
+#define SN_Curve448             "Curve448"
+#define NID_Curve448            1035
+#define OBJ_Curve448            1L,3L,6L,1L,4L,1L,11591L,15L,2L
+
+#define SN_Curve25519ph         "Curve25519ph"
+#define NID_Curve25519ph                1036
+#define OBJ_Curve25519ph                1L,3L,6L,1L,4L,1L,11591L,15L,3L
+
+#define SN_Curve448ph           "Curve448ph"
+#define NID_Curve448ph          1037
+#define OBJ_Curve448ph          1L,3L,6L,1L,4L,1L,11591L,15L,4L
