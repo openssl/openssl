@@ -69,7 +69,7 @@
 static EVP_PKEY_CTX *init_ctx(int *pkeysize,
                               char *keyfile, int keyform, int key_type,
                               char *passinarg, int pkey_op, ENGINE *e,
-			      const int impl);
+                              const int impl);
 
 static int setup_peer(EVP_PKEY_CTX *ctx, int peerform, const char *file,
                       ENGINE *e);
