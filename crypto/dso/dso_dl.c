@@ -265,7 +265,7 @@ static char *dl_merger(DSO *dso, const char *filespec1, const char *filespec2)
         spec2len = (filespec2 ? strlen(filespec2) : 0);
         len = spec2len + (filespec1 ? strlen(filespec1) : 0);
 
-        if (filespec2 && filespec2[spec2len - 1] == '/') {
+        if (spec2len && filespec2[spec2len - 1] == '/') {
             spec2len--;
             len--;
         }
