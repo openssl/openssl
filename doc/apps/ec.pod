@@ -24,6 +24,7 @@ B<openssl> B<ec>
 [B<-conv_form arg>]
 [B<-param_enc arg>]
 [B<-no_public>]
+[B<-check>]
 [B<-engine id>]
 
 =head1 DESCRIPTION
@@ -132,6 +133,10 @@ is currently not implemented in OpenSSL.
 =item B<-no_public>
 
 This option omits the public key components from the private key output.
+
+=item B<-check>
+
+this option checks the consistency of an EC private or public key.
 
 =item B<-engine id>
 

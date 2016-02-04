@@ -84,7 +84,7 @@ typedef enum OPTION_choice {
     OPT_INFORM, OPT_OUTFORM, OPT_ENGINE, OPT_IN, OPT_OUT,
     OPT_NOOUT, OPT_TEXT, OPT_PARAM_OUT, OPT_PUBIN, OPT_PUBOUT,
     OPT_PASSIN, OPT_PASSOUT, OPT_PARAM_ENC, OPT_CONV_FORM, OPT_CIPHER,
-    OPT_NO_PUBLIC
+    OPT_NO_PUBLIC, OPT_CHECK
 } OPTION_CHOICE;
 
 OPTIONS ec_options[] = {
@@ -99,6 +99,7 @@ OPTIONS ec_options[] = {
     {"pubin", OPT_PUBIN, '-'},
     {"pubout", OPT_PUBOUT, '-'},
     {"no_public", OPT_NO_PUBLIC, '-', "exclude public key from private key"},
+    {"check", OPT_CHECK, '-', "check key consistency"},
     {"passin", OPT_PASSIN, 's', "Input file pass phrase source"},
     {"passout", OPT_PASSOUT, 's', "Output file pass phrase source"},
     {"param_enc", OPT_PARAM_ENC, 's',
@@ -124,7 +125,7 @@ int ec_main(int argc, char **argv)
     int asn1_flag = OPENSSL_EC_NAMED_CURVE, new_form = 0, new_asn1_flag = 0;
     int informat = FORMAT_PEM, outformat = FORMAT_PEM, text = 0, noout = 0;
     int pubin = 0, pubout = 0, param_out = 0, i, ret = 1, private = 0;
-    int no_public = 0;
+    int no_public = 0, check = 0;
 
     prog = opt_init(argc, argv, ec_options);
     while ((o = opt_next()) != OPT_EOF) {
@@ -195,6 +196,9 @@ int ec_main(int argc, char **argv)
         case OPT_NO_PUBLIC:
             no_public = 1;
             break;
+        case OPT_CHECK:
+            check = 1;
+            break;
         }
     }
     argc = opt_num_rest();
@@ -251,6 +255,15 @@ int ec_main(int argc, char **argv)
             perror(outfile);
             ERR_print_errors(bio_err);
             goto end;
+        }
+    }
+
+    if (check) {
+        if (EC_KEY_check_key(eckey) == 1) {
+            BIO_printf(bio_err, "EC Key valid.\n");
+        } else {
+            BIO_printf(bio_err, "EC Key Invalid!\n");
+            ERR_print_errors(bio_err);
         }
     }
 
