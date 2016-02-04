@@ -7,7 +7,8 @@ use Exporter;
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS);
 $VERSION = "0.1";
 @ISA = qw(Exporter);
-@EXPORT = qw(alldisabled anydisabled disabled config available_protocols);
+@EXPORT = qw(alldisabled anydisabled disabled config available_protocols
+             have_IPv4 have_IPv6);
 
 =head1 NAME
 
@@ -23,6 +24,9 @@ OpenSSL::Test::Utils - test utility functions
   anydisabled("dh", "dsa");
 
   config("fips");
+
+  have_IPv4();
+  have_IPv6();
 
 =head1 DESCRIPTION
 
@@ -54,6 +58,11 @@ disabled.
 =item B<config STRING>
 
 Returns an item from the %config hash in \$TOP/configdata.pm.
+
+=item B<have_IPv4>
+=item B<have_IPv6>
+
+Return true if IPv4 / IPv6 is possible to use on the current system.
 
 =back
 
@@ -141,6 +150,73 @@ sub available_protocols {
 sub config {
     return $config{$_[0]};
 }
+
+# IPv4 / IPv6 checker
+my $have_IPv4 = -1;
+my $have_IPv6 = 1;
+my $IP_factory;
+sub check_IP {
+    my $listenaddress = shift;
+
+    eval {
+        require IO::Socket::IP;
+        my $s = IO::Socket::IP->new(
+            LocalAddr => $listenaddress,
+            LocalPort => 0,
+            Listen=>1,
+            );
+        $s or die "\n";
+        $s->close();
+    };
+    if ($@ eq "") {
+        return 1;
+    }
+
+    eval {
+        require IO::Socket::INET6;
+        my $s = IO::Socket::INET6->new(
+            LocalAddr => $listenaddress,
+            LocalPort => 0,
+            Listen=>1,
+            );
+        $s or die "\n";
+        $s->close();
+    };
+    if ($@ eq "") {
+        return 1;
+    }
+
+    eval {
+        require IO::Socket::INET;
+        my $s = IO::Socket::INET->new(
+            LocalAddr => $listenaddress,
+            LocalPort => 0,
+            Listen=>1,
+            );
+        $s or die "\n";
+        $s->close();
+    };
+    if ($@ eq "") {
+        return 1;
+    }
+
+    return 0;
+}
+
+sub have_IPv4 {
+    if ($have_IPv4 < 0) {
+        $have_IPv4 = check_IP("127.0.0.1");
+    }
+    return $have_IPv4;
+}
+
+sub have_IPv6 {
+    if ($have_IPv6 < 0) {
+        $have_IPv6 = check_IP("::1");
+    }
+    return $have_IPv6;
+}
+
 
 =head1 SEE ALSO
 
