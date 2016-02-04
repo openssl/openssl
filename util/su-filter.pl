@@ -47,7 +47,7 @@ while(<>) {
             do_output($out);
             $in_su = 0;
         }
-    } elsif($incomm <= 0 && /( *)(static )?(const )?(union|struct) ([^\s]+ )?\{/) {
+    } elsif($incomm <= 0 && /( *)(static )?(const )?(union|struct) ([a-zA-Z_\$][\$0-9a-zA-Z_]+ )?\{/) {
         $in_su = 1;
         $indent = $1;
         $out = $_;
