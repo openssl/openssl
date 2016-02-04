@@ -173,7 +173,7 @@ int pkeyutl_main(int argc, char **argv)
             passinarg = opt_arg();
             break;
         case OPT_PEERFORM:
-	     if (!opt_format(opt_arg(), OPT_FMT_PEMDER, &peerform))
+	     if (!opt_format(opt_arg(), OPT_FMT_ENGINE | OPT_FMT_PEMDER, &peerform))
                 goto opthelp;
             break;
         case OPT_KEYFORM:
