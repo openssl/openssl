@@ -260,23 +260,22 @@ static char *dl_merger(DSO *dso, const char *filespec1, const char *filespec2)
          * filespec1.
          */
     {
-        int spec2len, len;
+        size_t spec1len, spec2len;
 
-        spec2len = (filespec2 ? strlen(filespec2) : 0);
-        len = spec2len + (filespec1 ? strlen(filespec1) : 0);
+        spec1len = strlen(filespec1);
+        spec2len = strlen(filespec2);
 
         if (spec2len && filespec2[spec2len - 1] == '/') {
             spec2len--;
-            len--;
         }
-        merged = OPENSSL_malloc(len + 2);
+        merged = OPENSSL_malloc(spec1len + spec2len + 2);
         if (merged == NULL) {
             DSOerr(DSO_F_DL_MERGER, ERR_R_MALLOC_FAILURE);
             return (NULL);
         }
-        strcpy(merged, filespec2);
+        memcpy(merged, filespec2, spec2len);
         merged[spec2len] = '/';
-        strcpy(&merged[spec2len + 1], filespec1);
+        memcpy(&merged[spec2len + 1], filespec1, spec1len + 1);
     }
     return (merged);
 }

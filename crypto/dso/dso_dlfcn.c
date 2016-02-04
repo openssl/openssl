@@ -303,23 +303,22 @@ static char *dlfcn_merger(DSO *dso, const char *filespec1,
          * concatenation of filespec2 followed by a slash followed by
          * filespec1.
          */
-        int spec2len, len;
+        size_t spec1len, spec2len;
 
+        spec1len = strlen(filespec1);
         spec2len = strlen(filespec2);
-        len = spec2len + strlen(filespec1);
 
         if (spec2len && filespec2[spec2len - 1] == '/') {
             spec2len--;
-            len--;
         }
-        merged = OPENSSL_malloc(len + 2);
+        merged = OPENSSL_malloc(spec1len + spec2len + 2);
         if (merged == NULL) {
             DSOerr(DSO_F_DLFCN_MERGER, ERR_R_MALLOC_FAILURE);
             return (NULL);
         }
-        strcpy(merged, filespec2);
+        memcpy(merged, filespec2, spec2len);
         merged[spec2len] = '/';
-        strcpy(&merged[spec2len + 1], filespec1);
+        memcpy(&merged[spec2len + 1], filespec1, spec1len + 1);
     }
     return (merged);
 }
