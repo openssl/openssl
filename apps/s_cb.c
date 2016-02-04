@@ -596,6 +596,7 @@ static STRINT_PAIR handshakes[] = {
     {", ClientHello", 1},
     {", ServerHello", 2},
     {", HelloVerifyRequest", 3},
+    {", NewSessionTicket", 4},
     {", Certificate", 11},
     {", ServerKeyExchange", 12},
     {", CertificateRequest", 13},
@@ -603,6 +604,9 @@ static STRINT_PAIR handshakes[] = {
     {", CertificateVerify", 15},
     {", ClientKeyExchange", 16},
     {", Finished", 20},
+    {", CertificateUrl", 21},
+    {", CertificateStatus", 22},
+    {", SupplementalData", 23},
     {NULL}
 };
 
@@ -644,6 +648,9 @@ void msg_cb(int write_p, int version, int content_type, const void *buf,
             str_details1 = "???";
             if (len > 0)
                 str_details1 = lookup((int)bp[0], handshakes, "???");
+            break;
+        case 23:
+            str_content_type = "ApplicationData";
             break;
 #ifndef OPENSSL_NO_HEARTBEATS
         case 24:
