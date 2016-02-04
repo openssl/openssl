@@ -26,7 +26,7 @@ $cp='$(PERL) util/copy.pl';
 $cp2='$(PERL) util/copy.pl -stripcr';
 $mkdir='$(PERL) util/mkdir-p.pl';
 $rm='del /Q';
-$mv='move /Y";
+$mv='move /Y';
 
 $zlib_lib="zlib1.lib";
 

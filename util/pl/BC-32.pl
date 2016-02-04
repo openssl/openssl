@@ -8,7 +8,7 @@ $crypto="libeay32";
 $o='\\';
 $cp='copy';
 $rm='del';
-$mv='move /Y";
+$mv='move /Y';
 
 # C compiler stuff
 $cc='bcc32';
