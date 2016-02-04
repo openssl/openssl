@@ -953,6 +953,13 @@ int EC_KEY_oct2priv(EC_KEY *key, unsigned char *buf, size_t len);
 
 size_t EC_KEY_priv2oct(const EC_KEY *key, unsigned char *buf, size_t len);
 
+/** Encodes an EC_KEY private key to an allocated octet string
+ *  \param  key    key to encode
+ *  \param  pbuf   returns pointer to allocated buffer
+ *  \return the length of the encoded octet string or 0 if an error occurred
+ */
+
+size_t EC_KEY_priv2buf(const EC_KEY *eckey, unsigned char **pbuf);
 
 /********************************************************************/
 /*        de- and encoding functions for SEC1 ECPrivateKey          */

@@ -387,51 +387,29 @@ typedef enum {
 
 static int do_EC_KEY_print(BIO *bp, const EC_KEY *x, int off, ec_print_t ktype)
 {
-    unsigned char *buffer = NULL;
     const char *ecstr;
-    size_t priv_len = 0, pub_len = 0, buf_len = 0;
-    int ret = 0, reason = ERR_R_BIO_LIB;
-    BIGNUM *pub_key = NULL;
-    BN_CTX *ctx = NULL;
+    unsigned char *priv = NULL, *pub = NULL;
+    size_t privlen = 0, publen = 0;
+    int ret = 0;
     const EC_GROUP *group;
-    const EC_POINT *public_key = NULL;
 
     if (x == NULL || (group = EC_KEY_get0_group(x)) == NULL) {
-        reason = ERR_R_PASSED_NULL_PARAMETER;
-        goto err;
+        ECerr(EC_F_DO_EC_KEY_PRINT, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
     }
 
     if (ktype != EC_KEY_PRINT_PARAM) {
-        public_key = EC_KEY_get0_public_key(x);
-        if (public_key != NULL) {
-            pub_len = EC_POINT_point2oct(group, public_key,
-                                         EC_KEY_get_conv_form(x),
-                                         NULL, 0, NULL);
-            if (pub_len == 0) {
-                reason = ERR_R_EC_LIB;
-                goto err;
-            }
-            buf_len = pub_len;
-        }
+        publen = EC_KEY_key2buf(x, EC_KEY_get_conv_form(x), &pub, NULL);
+        if (publen == 0)
+            goto err;
     }
 
     if (ktype == EC_KEY_PRINT_PRIVATE && EC_KEY_get0_private_key(x) != NULL) {
-        priv_len = EC_KEY_priv2oct(x, NULL, 0);
-        if (priv_len == 0) {
-            reason = ERR_R_EC_LIB;
+        privlen = EC_KEY_priv2buf(x, &priv);
+        if (privlen == 0)
             goto err;
-        }
-        if (priv_len > buf_len)
-            buf_len = priv_len;
     }
 
-    if (buf_len != 0) {
-        buffer = OPENSSL_malloc(buf_len);
-        if (buffer == NULL) {
-            reason = ERR_R_MALLOC_FAILURE;
-            goto err;
-        }
-    }
     if (ktype == EC_KEY_PRINT_PRIVATE)
         ecstr = "Private-Key";
     else if (ktype == EC_KEY_PRINT_PUBLIC)
@@ -445,23 +423,17 @@ static int do_EC_KEY_print(BIO *bp, const EC_KEY *x, int off, ec_print_t ktype)
                    EC_GROUP_order_bits(group)) <= 0)
         goto err;
 
-    if (priv_len != 0) {
+    if (privlen != 0) {
         if (BIO_printf(bp, "%*spriv:\n", off, "") <= 0)
             goto err;
-        if (EC_KEY_priv2oct(x, buffer, priv_len) == 0)
-            goto err;
-        if (ASN1_buf_print(bp, buffer, priv_len, off + 4) == 0)
+        if (ASN1_buf_print(bp, priv, privlen, off + 4) == 0)
             goto err;
     }
 
-    if (pub_len != 0) {
+    if (publen != 0) {
         if (BIO_printf(bp, "%*spub:\n", off, "") <= 0)
             goto err;
-        if (EC_POINT_point2oct(group, public_key,
-                               EC_KEY_get_conv_form(x),
-                               buffer, pub_len, NULL) == 0)
-            goto err;
-        if (ASN1_buf_print(bp, buffer, pub_len, off + 4) == 0)
+        if (ASN1_buf_print(bp, pub, publen, off + 4) == 0)
             goto err;
     }
 
@@ -470,10 +442,9 @@ static int do_EC_KEY_print(BIO *bp, const EC_KEY *x, int off, ec_print_t ktype)
     ret = 1;
  err:
     if (!ret)
-        ECerr(EC_F_DO_EC_KEY_PRINT, reason);
-    BN_free(pub_key);
-    BN_CTX_free(ctx);
-    OPENSSL_clear_free(buffer, buf_len);
+        ECerr(EC_F_DO_EC_KEY_PRINT, ERR_R_EC_LIB);
+    OPENSSL_clear_free(priv, privlen);
+    OPENSSL_free(pub);
     return ret;
 }
 
