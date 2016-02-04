@@ -591,3 +591,22 @@ int EC_KEY_oct2priv(EC_KEY *eckey, unsigned char *buf, size_t len)
     }
     return 1;
 }
+
+size_t EC_KEY_priv2buf(const EC_KEY *eckey, unsigned char **pbuf)
+{
+    size_t len;
+    unsigned char *buf;
+    len = EC_KEY_priv2oct(eckey, NULL, 0);
+    if (len == 0)
+        return 0;
+    buf = OPENSSL_malloc(len);
+    if (buf == NULL)
+        return 0;
+    len = EC_KEY_priv2oct(eckey, buf, len);
+    if (len == 0) {
+        OPENSSL_free(buf);
+        return 0;
+    }
+    *pbuf = buf;
+    return len;
+}
