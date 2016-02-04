@@ -1031,3 +1031,7 @@ sendProxiedOwner		1030
 id_pkinit		1031
 pkInitClientAuth		1032
 pkInitKDC		1033
+Curve25519		1034
+Curve448		1035
+Curve25519ph		1036
+Curve448ph		1037
