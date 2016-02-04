@@ -153,7 +153,7 @@ sub config {
 
 # IPv4 / IPv6 checker
 my $have_IPv4 = -1;
-my $have_IPv6 = 1;
+my $have_IPv6 = -1;
 my $IP_factory;
 sub check_IP {
     my $listenaddress = shift;
