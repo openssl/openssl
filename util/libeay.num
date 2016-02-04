@@ -4795,3 +4795,7 @@ BIO_closesocket                         5189	1_1_0	EXIST::FUNCTION:
 BIO_sock_info                           5190	1_1_0	EXIST::FUNCTION:
 BIO_socket                              5191	1_1_0	EXIST::FUNCTION:
 BIO_listen                              5192	1_1_0	EXIST::FUNCTION:
+EC_KEY_priv2oct                         5193	1_1_0	EXIST::FUNCTION:EC
+EC_KEY_oct2priv                         5194	1_1_0	EXIST::FUNCTION:EC
+ASN1_buf_print                          5195	1_1_0	EXIST::FUNCTION:
+EC_KEY_priv2buf                         5196	1_1_0	EXIST::FUNCTION:EC
