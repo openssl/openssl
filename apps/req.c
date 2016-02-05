@@ -1451,6 +1451,7 @@ static EVP_PKEY_CTX *set_keygen_ctx(const char *gstr,
     if (EVP_PKEY_keygen_init(gctx) <= 0) {
         BIO_puts(bio_err, "Error initializing keygen context\n");
         ERR_print_errors(bio_err);
+        EVP_PKEY_CTX_free(gctx);
         return NULL;
     }
 #ifndef OPENSSL_NO_RSA
