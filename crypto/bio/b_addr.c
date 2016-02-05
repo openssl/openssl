@@ -76,12 +76,19 @@
 BIO_ADDR *BIO_ADDR_new(void)
 {
     BIO_ADDR *ret = (BIO_ADDR *)OPENSSL_zalloc(sizeof(BIO_ADDR));
+    ret->sa.sa_family = AF_UNSPEC;
     return ret;
 }
 
 void BIO_ADDR_free(BIO_ADDR *ap)
 {
     OPENSSL_free(ap);
+}
+
+void BIO_ADDR_clear(BIO_ADDR *ap)
+{
+    memset(ap, 0, sizeof(*ap));
+    ap->sa.sa_family = AF_UNSPEC;
 }
 
 /*
