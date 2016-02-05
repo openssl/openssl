@@ -467,7 +467,7 @@ B<sep_comma_plus>, B<dn_rev> and B<sname>.
 a oneline format which is more readable than RFC2253. It is equivalent to
 specifying the  B<esc_2253>, B<esc_ctrl>, B<esc_msb>, B<utf8>, B<dump_nostr>,
 B<dump_der>, B<use_quote>, B<sep_comma_plus_space>, B<space_eq> and B<sname>
-options.  This is the I<default> of no name options are given explicitely.
+options.  This is the I<default> of no name options are given explicitly.
 
 =item B<multiline>
 

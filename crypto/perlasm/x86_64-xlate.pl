@@ -302,7 +302,7 @@ my %globals;
 }
 { package register;	# pick up registers, which start with %.
     sub re {
-	my	$class = shift;	# muliple instances...
+	my	$class = shift;	# multiple instances...
 	my	$self = {};
 	local	*line = shift;
 	undef	$ret;
@@ -950,7 +950,7 @@ close STDOUT;
 # (#)	Nth argument, volatile
 #
 # In Unix terms top of stack is argument transfer area for arguments
-# which could not be accomodated in registers. Or in other words 7th
+# which could not be accommodated in registers. Or in other words 7th
 # [integer] argument resides at 8(%rsp) upon function entry point.
 # 128 bytes above %rsp constitute a "red zone" which is not touched
 # by signal handlers and can be used as temporal storage without

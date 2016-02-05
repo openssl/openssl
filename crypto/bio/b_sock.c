@@ -195,7 +195,7 @@ int BIO_sock_init(void)
         memset(&wsa_state, 0, sizeof(wsa_state));
         /*
          * Not making wsa_state available to the rest of the code is formally
-         * wrong. But the structures we use are [beleived to be] invariable
+         * wrong. But the structures we use are [believed to be] invariable
          * among Winsock DLLs, while API availability is [expected to be]
          * probed at run-time with DSO_global_lookup.
          */

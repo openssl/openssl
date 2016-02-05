@@ -125,7 +125,7 @@ int i2d_int_dhx(const int_dhx942_dh *a, unsigned char **pp);
 
 IMPLEMENT_ASN1_ENCODE_FUNCTIONS_const_fname(int_dhx942_dh, DHxparams, int_dhx)
 
-/* Application leve function: read in X9.42 DH parameters into DH structure */
+/* Application public function: read in X9.42 DH parameters into DH structure */
 
 DH *d2i_DHxparams(DH **a, const unsigned char **pp, long length)
 {

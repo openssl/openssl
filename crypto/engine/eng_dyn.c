@@ -316,7 +316,7 @@ void ENGINE_load_dynamic(void)
 static int dynamic_init(ENGINE *e)
 {
     /*
-     * We always return failure - the "dyanamic" engine itself can't be used
+     * We always return failure - the "dynamic" engine itself can't be used
      * for anything.
      */
     return 0;

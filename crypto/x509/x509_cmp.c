@@ -458,7 +458,7 @@ int X509_chain_check_suiteb(int *perror_depth, X509 *x, STACK_OF(X509) *chain,
             i--;
         /*
          * If we have LOS error and flags changed then we are signing P-384
-         * with P-256. Use more meaninggul error.
+         * with P-256. Use more meaningful error.
          */
         if (rv == X509_V_ERR_SUITE_B_LOS_NOT_ALLOWED && flags != tflags)
             rv = X509_V_ERR_SUITE_B_CANNOT_SIGN_P_384_WITH_P_256;

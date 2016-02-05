@@ -605,7 +605,7 @@ void aes_t4_decrypt(const unsigned char *in, unsigned char *out,
  * non-key-length specific routines would require conditional branches
  * either in inner loops or on subroutines' entries. Former is hardly
  * acceptable, while latter means code size increase to size occupied
- * by multiple key-length specfic subroutines, so why fight?
+ * by multiple key-length specific subroutines, so why fight?
  */
 void aes128_t4_cbc_encrypt(const unsigned char *in, unsigned char *out,
                            size_t len, const AES_KEY *key,

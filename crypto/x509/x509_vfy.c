@@ -2474,7 +2474,7 @@ static int dane_match(X509_STORE_CTX *ctx, X509 *cert, int depth)
 
     /*
      * If we've previously matched a PKIX-?? record, no need to test any
-     * furher PKIX-?? records,  it remains to just build the PKIX chain.
+     * further PKIX-?? records,  it remains to just build the PKIX chain.
      * Had the match been a DANE-?? record, we'd be done already.
      */
     if (dane->mdpth >= 0)
@@ -2505,7 +2505,7 @@ static int dane_match(X509_STORE_CTX *ctx, X509 *cert, int depth)
      *
      * As soon as we find a match at any given depth, we stop, because either
      * we've matched a DANE-?? record and the peer is authenticated, or, after
-     * exhausing all DANE-?? records, we've matched a PKIX-?? record, which is
+     * exhausting all DANE-?? records, we've matched a PKIX-?? record, which is
      * sufficient for DANE, and what remains to do is ordinary PKIX validation.
      */
     recnum = (dane->umask & mask) ? sk_danetls_record_num(dane->trecs) : 0;

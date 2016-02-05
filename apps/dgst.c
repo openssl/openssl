@@ -107,7 +107,7 @@ OPTIONS dgst_options[] = {
     {"debug", OPT_DEBUG, '-'},
     {"fips-fingerprint", OPT_FIPS_FINGERPRINT, '-'},
     {"hmac", OPT_HMAC, 's', "Create hashed MAC with key"},
-    {"mac", OPT_MAC, 's', "Create MAC (not neccessarily HMAC)"},
+    {"mac", OPT_MAC, 's', "Create MAC (not necessarily HMAC)"},
     {"sigopt", OPT_SIGOPT, 's', "Signature parameter in n:v form"},
     {"macopt", OPT_MACOPT, 's', "MAC algorithm parameters in n:v form or key"},
     {"", OPT_DIGEST, '-', "Any supported digest"},

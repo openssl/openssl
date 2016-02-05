@@ -75,7 +75,7 @@ static int parse_bag(PKCS12_SAFEBAG *bag, const char *pass, int passlen,
  * Parse and decrypt a PKCS#12 structure returning user key, user cert and
  * other (CA) certs. Note either ca should be NULL, *ca should be NULL, or it
  * should point to a valid STACK structure. pkey and cert can be passed
- * unitialised.
+ * uninitialised.
  */
 
 int PKCS12_parse(PKCS12 *p12, const char *pass, EVP_PKEY **pkey, X509 **cert,

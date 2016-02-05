@@ -831,7 +831,7 @@ static STRINT_PAIR chain_flags[] = {
     {"CA signature", CERT_PKEY_CA_SIGNATURE},
     {"EE key parameters", CERT_PKEY_EE_PARAM},
     {"CA key parameters", CERT_PKEY_CA_PARAM},
-    {"Explicity sign with EE key", CERT_PKEY_EXPLICIT_SIGN},
+    {"Explicitly sign with EE key", CERT_PKEY_EXPLICIT_SIGN},
     {"Issuer Name", CERT_PKEY_ISSUER_NAME},
     {"Certificate Type", CERT_PKEY_CERT_TYPE},
     {NULL}
