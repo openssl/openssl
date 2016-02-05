@@ -66,7 +66,7 @@
 
 int PKCS12_mac_present(PKCS12 *p12)
 {
-return p12->mac ? 1 : 0;
+    return p12->mac ? 1 : 0;
 }
 
 void PKCS12_get0_mac(ASN1_OCTET_STRING **pmac, X509_ALGOR **pmacalg,

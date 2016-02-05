@@ -542,9 +542,10 @@ int pkcs12_main(int argc, char **argv)
 
     if ((options & INFO) && PKCS12_mac_present(p12)) {
         ASN1_INTEGER *tmaciter;
+
         PKCS12_get0_mac(NULL, NULL, NULL, &tmaciter, p12);
         BIO_printf(bio_err, "MAC Iteration %ld\n",
-                   tmaciter ? ASN1_INTEGER_get(tmaciter) : 1);
+                   tmaciter  != NULL ? ASN1_INTEGER_get(tmaciter) : 1L);
     }
     if (macver) {
         /* If we enter empty password try no password first */
@@ -665,6 +666,7 @@ int dump_certs_pkeys_bag(BIO *out, PKCS12_SAFEBAG *bag, char *pass,
     case NID_pkcs8ShroudedKeyBag:
         if (options & INFO) {
             X509_SIG *tp8;
+
             BIO_printf(bio_err, "Shrouded Keybag: ");
             tp8 = PKCS12_SAFEBAG_get0_pkcs8(bag);
             alg_print(tp8->algor);
