@@ -7,6 +7,7 @@ passwd - compute password hashes
 =head1 SYNOPSIS
 
 B<openssl passwd>
+[B<-help>]
 [B<-crypt>]
 [B<-1>]
 [B<-apr1>]
@@ -30,6 +31,10 @@ algorithm B<1> and its Apache variant B<apr1> are available.
 =head1 OPTIONS
 
 =over 4
+
+=item B<-help>
+
+Print out a usage message.
 
 =item B<-crypt>
 

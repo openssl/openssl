@@ -8,6 +8,7 @@ x509 - Certificate display and signing utility
 =head1 SYNOPSIS
 
 B<openssl> B<x509>
+[B<-help>]
 [B<-inform DER|PEM|NET>]
 [B<-outform DER|PEM|NET>]
 [B<-keyform DER|PEM>]
@@ -76,6 +77,10 @@ various sections.
 =head2 INPUT, OUTPUT AND GENERAL PURPOSE OPTIONS
 
 =over 4
+
+=item B<-help>
+
+Print out a usage message.
 
 =item B<-inform DER|PEM|NET>
 

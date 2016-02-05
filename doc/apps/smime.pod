@@ -7,6 +7,7 @@ smime - S/MIME utility
 =head1 SYNOPSIS
 
 B<openssl> B<smime>
+[B<-help>]
 [B<-encrypt>]
 [B<-decrypt>]
 [B<-sign>]
@@ -77,6 +78,10 @@ There are six operation options that set the type of operation to be performed.
 The meaning of the other options varies according to the operation type.
 
 =over 4
+
+=item B<-help>
+
+Print out a usage message.
 
 =item B<-encrypt>
 

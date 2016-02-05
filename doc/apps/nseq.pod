@@ -7,6 +7,7 @@ nseq - create or examine a netscape certificate sequence
 =head1 SYNOPSIS
 
 B<openssl> B<nseq>
+[B<-help>]
 [B<-in filename>]
 [B<-out filename>]
 [B<-toseq>]
@@ -21,6 +22,10 @@ sequence.
 =head1 COMMAND OPTIONS
 
 =over 4
+
+=item B<-help>
+
+Print out a usage message.
 
 =item B<-in filename>
 

@@ -8,6 +8,7 @@ s_client - SSL/TLS client program
 =head1 SYNOPSIS
 
 B<openssl> B<s_client>
+[B<-help>]
 [B<-connect host:port>]
 [B<-proxy host:port>]
 [B<-servername name>]
@@ -99,6 +100,10 @@ in the L<SSL_CONF_cmd(3)|SSL_CONF_cmd(3)/SUPPORTED COMMAND LINE COMMANDS>
 manual page.
 
 =over 4
+
+=item B<-help>
+
+Print out a usage message.
 
 =item B<-connect host:port>
 

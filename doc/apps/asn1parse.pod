@@ -21,6 +21,7 @@ B<openssl> B<asn1parse>
 [B<-genstr string>]
 [B<-genconf file>]
 [B<-strictpem>]
+[B<-help>]
 
 =head1 DESCRIPTION
 
@@ -96,6 +97,10 @@ data in a PEM format input file will be treated as being base64 encoded and
 processed whether it has the normal PEM BEGIN and END markers or not. This
 option will ignore any data prior to the start of the BEGIN marker, or after an
 END marker in a PEM file.
+
+=item B<-help>
+
+Print out a usage message.
 
 =back
 
