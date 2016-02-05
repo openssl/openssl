@@ -56,7 +56,6 @@
  */
 
 #include <string.h>
-#include <sys/socket.h>
 #include <openssl/ssl.h>
 #include <openssl/bio.h>
 #include <openssl/err.h>
