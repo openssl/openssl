@@ -8,6 +8,7 @@ ca - sample minimal CA application
 =head1 SYNOPSIS
 
 B<openssl> B<ca>
+[B<-help>]
 [B<-verbose>]
 [B<-config filename>]
 [B<-name section>]
@@ -142,6 +143,10 @@ self-signed certificate.
 
 the key password source. For more information about the format of B<arg>
 see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
+
+=item B<-help>
+
+Print out a usage message.
 
 =item B<-verbose>
 

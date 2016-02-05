@@ -12,7 +12,7 @@ c_rehash, rehash - Create symbolic links to files named by the hash values
 B<openssl>
 B<rehash>
 B<[-old]>
-B<[-h]>
+B<[-help]>
 B<[-n]>
 B<[-v]>
 [ I<directory>...]
@@ -88,7 +88,7 @@ Use old-style hashing (MD5, as opposed to SHA-1) for generating
 links to be used for releases before 1.0.0.
 Note that current versions will not use the old style.
 
-=item B<-h>
+=item B<-help>
 
 Display a brief usage message.
 

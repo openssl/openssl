@@ -7,6 +7,7 @@ dsaparam - DSA parameter manipulation and generation
 =head1 SYNOPSIS
 
 B<openssl dsaparam>
+[B<-help>]
 [B<-inform DER|PEM>]
 [B<-outform DER|PEM>]
 [B<-in filename>]
@@ -26,6 +27,10 @@ This command is used to manipulate or generate DSA parameter files.
 =head1 OPTIONS
 
 =over 4
+
+=item B<-help>
+
+Print out a usage message.
 
 =item B<-inform DER|PEM>
 
