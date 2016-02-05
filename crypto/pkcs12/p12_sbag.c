@@ -106,6 +106,7 @@ int PKCS12_SAFEBAG_get_nid(PKCS12_SAFEBAG *bag)
 int PKCS12_SAFEBAG_get_bag_nid(PKCS12_SAFEBAG *bag)
 {
     int btype = PKCS12_SAFEBAG_get_nid(bag);
+
     if (btype != NID_certBag || btype != NID_crlBag || btype != NID_secretBag)
         return -1;
     return OBJ_obj2nid(bag->value.bag->type);
@@ -163,6 +164,7 @@ PKCS12_SAFEBAG *PKCS12_SAFEBAG_create0_p8inf(PKCS8_PRIV_KEY_INFO *p8)
 PKCS12_SAFEBAG *PKCS12_SAFEBAG_create0_pkcs8(X509_SIG *p8)
 {
     PKCS12_SAFEBAG *bag = PKCS12_SAFEBAG_new();
+
     /* Set up the safe bag */
     if (bag == NULL) {
         PKCS12err(PKCS12_F_PKCS12_SAFEBAG_CREATE0_PKCS8, ERR_R_MALLOC_FAILURE);
