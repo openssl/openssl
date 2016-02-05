@@ -85,9 +85,9 @@ an appropriate C integer type.
 
 =head1 BUGS
 
-The ambigious return values of ASN1_INTEGER_get() and ASN1_ENUMERATED_get()
+The ambiguous return values of ASN1_INTEGER_get() and ASN1_ENUMERATED_get()
 mean these functions should be avoided if possible. They are retained for
-compatibility. Normally the ambigious return values are not legitimate
+compatibility. Normally the ambiguous return values are not legitimate
 values for the fields they represent.
 
 =head1 RETURN VALUES

@@ -819,7 +819,7 @@ static int ecdh_cms_encrypt(CMS_RecipientInfo *ri)
                         V_ASN1_UNDEF, NULL);
     }
 
-    /* See if custom paraneters set */
+    /* See if custom parameters set */
     kdf_type = EVP_PKEY_CTX_get_ecdh_kdf_type(pctx);
     if (kdf_type <= 0)
         goto err;
@@ -838,7 +838,7 @@ static int ecdh_cms_encrypt(CMS_RecipientInfo *ri)
         if (EVP_PKEY_CTX_set_ecdh_kdf_type(pctx, kdf_type) <= 0)
             goto err;
     } else
-        /* Uknown KDF */
+        /* Unknown KDF */
         goto err;
     if (kdf_md == NULL) {
         /* Fixme later for better MD */

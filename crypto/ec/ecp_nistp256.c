@@ -1226,7 +1226,7 @@ static void copy_small_conditional(felem out, const smallfelem in, limb mask)
 }
 
 /*-
- * point_add calcuates (x1, y1, z1) + (x2, y2, z2)
+ * point_add calculates (x1, y1, z1) + (x2, y2, z2)
  *
  * The method is taken from:
  *   http://hyperelliptic.org/EFD/g1p/auto-shortw-jacobian-3.html#addition-add-2007-bl,

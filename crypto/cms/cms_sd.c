@@ -92,7 +92,7 @@ static CMS_SignedData *cms_signed_data_init(CMS_ContentInfo *cms)
     return cms_get0_signed(cms);
 }
 
-/* Just initialize SignedData e.g. for certs only structure */
+/* Just initialise SignedData e.g. for certs only structure */
 
 int CMS_SignedData_init(CMS_ContentInfo *cms)
 {
@@ -351,7 +351,7 @@ CMS_SignerInfo *CMS_add1_signer(CMS_ContentInfo *cms,
         goto err;
     if (!(flags & CMS_NOATTR)) {
         /*
-         * Initialialize signed attributes strutucture so other attributes
+         * Initialize signed attributes structure so other attributes
          * such as signing time etc are added later even if we add none here.
          */
         if (!si->signedAttrs) {
@@ -593,7 +593,7 @@ static int cms_SignerInfo_content_sign(CMS_ContentInfo *cms,
 
     if (!cms_DigestAlgorithm_find_ctx(mctx, chain, si->digestAlgorithm))
         goto err;
-    /* Set SignerInfo algortihm details if we used custom parametsr */
+    /* Set SignerInfo algorithm details if we used custom parameter */
     if (si->pctx && !cms_sd_asn1_ctrl(si, 0))
         goto err;
 

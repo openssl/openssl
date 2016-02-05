@@ -333,7 +333,7 @@ static SRP_gN knowngN[] = {
 # define KNOWN_GN_NUMBER sizeof(knowngN) / sizeof(SRP_gN)
 
 /*
- * Check if G and N are kwown parameters. The values have been generated
+ * Check if G and N are known parameters. The values have been generated
  * from the ietf-tls-srp draft version 8
  */
 char *SRP_check_known_gN_param(BIGNUM *g, BIGNUM *N)

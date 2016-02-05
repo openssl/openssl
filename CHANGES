@@ -2750,7 +2750,7 @@
 
   *) New option -sigopt to dgst utility. Update dgst to use
      EVP_Digest{Sign,Verify}*. These two changes make it possible to use
-     alternative signing paramaters such as X9.31 or PSS in the dgst 
+     alternative signing parameters such as X9.31 or PSS in the dgst 
      utility.
      [Steve Henson]
 
@@ -3957,7 +3957,7 @@
      unofficial, and the ID has long expired.
      [Bodo Moeller]
 
-  *) Fix RSA blinding Heisenbug (problems sometimes occured on
+  *) Fix RSA blinding Heisenbug (problems sometimes occurred on
      dual-core machines) and other potential thread-safety issues.
      [Bodo Moeller]
 
@@ -4972,7 +4972,7 @@
      unofficial, and the ID has long expired.
      [Bodo Moeller]
 
-  *) Fix RSA blinding Heisenbug (problems sometimes occured on
+  *) Fix RSA blinding Heisenbug (problems sometimes occurred on
      dual-core machines) and other potential thread-safety issues.
      [Bodo Moeller]
 
@@ -5077,7 +5077,7 @@
 
   *) Added support for proxy certificates according to RFC 3820.
      Because they may be a security thread to unaware applications,
-     they must be explicitely allowed in run-time.  See
+     they must be explicitly allowed in run-time.  See
      docs/HOWTO/proxy_certificates.txt for further information.
      [Richard Levitte]
 
@@ -7654,7 +7654,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
 
   *) Fix ssl/s3_enc.c, ssl/t1_enc.c and ssl/s3_pkt.c so that we don't
      reveal whether illegal block cipher padding was found or a MAC
-     verification error occured.  (Neither SSLerr() codes nor alerts
+     verification error occurred.  (Neither SSLerr() codes nor alerts
      are directly visible to potential attackers, but the information
      may leak via logfiles.)
 
@@ -10061,7 +10061,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
   *) Bugfix: ssl23_get_client_hello did not work properly when called in
      state SSL23_ST_SR_CLNT_HELLO_B, i.e. when the first 7 bytes of
      a SSLv2-compatible client hello for SSLv3 or TLSv1 could be read,
-     but a retry condition occured while trying to read the rest.
+     but a retry condition occurred while trying to read the rest.
      [Bodo Moeller]
 
   *) The PKCS7_ENC_CONTENT_new() function was setting the content type as
