@@ -7,6 +7,7 @@ ciphers - SSL cipher display and cipher list tool.
 =head1 SYNOPSIS
 
 B<openssl> B<ciphers>
+[B<-help>]
 [B<-s>]
 [B<-v>]
 [B<-V>]
@@ -17,7 +18,6 @@ B<openssl> B<ciphers>
 [B<-s>]
 [B<-psk>]
 [B<-stdname>]
-[B<-help>]
 [B<cipherlist>]
 
 =head1 DESCRIPTION
@@ -29,6 +29,10 @@ the appropriate cipherlist.
 =head1 COMMAND OPTIONS
 
 =over 4
+
+=item B<-help>
+
+Print out a brief usage message.
 
 =item B<-s>
 
@@ -69,10 +73,6 @@ List the ciphers which would be used if TLS v1.2 was negotiated.
 
 precede each ciphersuite by its standard name: only available is OpenSSL
 is built with tracing enabled (B<enable-ssl-trace> argument to Configure).
-
-=item B<-help>
-
-Print out a brief usage message.
 
 =item B<cipherlist>
 

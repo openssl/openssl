@@ -7,6 +7,7 @@ verify - Utility to verify certificates.
 =head1 SYNOPSIS
 
 B<openssl> B<verify>
+[B<-help>]
 [B<-CAfile file>]
 [B<-CApath directory>]
 [B<-no-CAfile>]
@@ -20,7 +21,6 @@ B<openssl> B<verify>
 [B<-engine id>]
 [B<-explicit_policy>]
 [B<-extended_crl>]
-[B<-help>]
 [B<-ignore_critical>]
 [B<-inhibit_any>]
 [B<-inhibit_map>]
@@ -57,6 +57,10 @@ The B<verify> command verifies certificate chains.
 =head1 COMMAND OPTIONS
 
 =over 4
+
+=item B<-help>
+
+Print out a usage message.
 
 =item B<-CAfile file>
 
@@ -129,10 +133,6 @@ Set policy variable require-explicit-policy (see RFC5280).
 
 Enable extended CRL features such as indirect CRLs and alternate CRL
 signing keys.
-
-=item B<-help>
-
-Print out a usage message.
 
 =item B<-ignore_critical>
 
