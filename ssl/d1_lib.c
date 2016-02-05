@@ -75,7 +75,6 @@
 static void get_current_time(struct timeval *t);
 static int dtls1_set_handshake_header(SSL *s, int type, unsigned long len);
 static int dtls1_handshake_write(SSL *s);
-int dtls1_listen(SSL *s, BIO_ADDR *client);
 static unsigned int dtls1_link_min_mtu(void);
 
 /* XDTLS:  figure out the right values */
@@ -251,9 +250,6 @@ long dtls1_ctrl(SSL *s, int cmd, long larg, void *parg)
         break;
     case DTLS_CTRL_HANDLE_TIMEOUT:
         ret = dtls1_handle_timeout(s);
-        break;
-    case DTLS_CTRL_LISTEN:
-        ret = dtls1_listen(s, parg);
         break;
     case DTLS_CTRL_SET_LINK_MTU:
         if (larg < (long)dtls1_link_min_mtu())
@@ -484,7 +480,7 @@ static void get_current_time(struct timeval *t)
 #define LISTEN_SEND_VERIFY_REQUEST  1
 
 
-int dtls1_listen(SSL *s, BIO_ADDR *client)
+int DTLSv1_listen(SSL *s, BIO_ADDR *client)
 {
     int next, n, ret = 0, clearpkt = 0;
     unsigned char cookie[DTLS1_COOKIE_LENGTH];
@@ -508,7 +504,7 @@ int dtls1_listen(SSL *s, BIO_ADDR *client)
     wbio = SSL_get_wbio(s);
 
     if(!rbio || !wbio) {
-        SSLerr(SSL_F_DTLS1_LISTEN, SSL_R_BIO_NOT_SET);
+        SSLerr(SSL_F_DTLSV1_LISTEN, SSL_R_BIO_NOT_SET);
         return -1;
     }
 
@@ -527,19 +523,19 @@ int dtls1_listen(SSL *s, BIO_ADDR *client)
      * SSL_accept)
      */
     if ((s->version & 0xff00) != (DTLS1_VERSION & 0xff00)) {
-        SSLerr(SSL_F_DTLS1_LISTEN, SSL_R_UNSUPPORTED_SSL_VERSION);
+        SSLerr(SSL_F_DTLSV1_LISTEN, SSL_R_UNSUPPORTED_SSL_VERSION);
         return -1;
     }
 
     if (s->init_buf == NULL) {
         if ((bufm = BUF_MEM_new()) == NULL) {
-            SSLerr(SSL_F_DTLS1_LISTEN, ERR_R_MALLOC_FAILURE);
+            SSLerr(SSL_F_DTLSV1_LISTEN, ERR_R_MALLOC_FAILURE);
             return -1;
         }
 
         if (!BUF_MEM_grow(bufm, SSL3_RT_MAX_PLAIN_LENGTH)) {
             BUF_MEM_free(bufm);
-            SSLerr(SSL_F_DTLS1_LISTEN, ERR_R_MALLOC_FAILURE);
+            SSLerr(SSL_F_DTLSV1_LISTEN, ERR_R_MALLOC_FAILURE);
             return -1;
         }
         s->init_buf = bufm;
@@ -572,7 +568,7 @@ int dtls1_listen(SSL *s, BIO_ADDR *client)
         clearpkt = 1;
 
         if (!PACKET_buf_init(&pkt, buf, n)) {
-            SSLerr(SSL_F_DTLS1_LISTEN, ERR_R_INTERNAL_ERROR);
+            SSLerr(SSL_F_DTLSV1_LISTEN, ERR_R_INTERNAL_ERROR);
             return -1;
         }
 
@@ -587,7 +583,7 @@ int dtls1_listen(SSL *s, BIO_ADDR *client)
 
         /* this packet contained a partial record, dump it */
         if (n < DTLS1_RT_HEADER_LENGTH) {
-            SSLerr(SSL_F_DTLS1_LISTEN, SSL_R_RECORD_TOO_SMALL);
+            SSLerr(SSL_F_DTLSV1_LISTEN, SSL_R_RECORD_TOO_SMALL);
             goto end;
         }
 
@@ -598,12 +594,12 @@ int dtls1_listen(SSL *s, BIO_ADDR *client)
         /* Get the record header */
         if (!PACKET_get_1(&pkt, &rectype)
             || !PACKET_get_1(&pkt, &versmajor)) {
-            SSLerr(SSL_F_DTLS1_LISTEN, SSL_R_LENGTH_MISMATCH);
+            SSLerr(SSL_F_DTLSV1_LISTEN, SSL_R_LENGTH_MISMATCH);
             goto end;
         }
 
         if (rectype != SSL3_RT_HANDSHAKE)  {
-            SSLerr(SSL_F_DTLS1_LISTEN, SSL_R_UNEXPECTED_MESSAGE);
+            SSLerr(SSL_F_DTLSV1_LISTEN, SSL_R_UNEXPECTED_MESSAGE);
             goto end;
         }
 
@@ -612,7 +608,7 @@ int dtls1_listen(SSL *s, BIO_ADDR *client)
          * the same.
          */
         if (versmajor != DTLS1_VERSION_MAJOR) {
-            SSLerr(SSL_F_DTLS1_LISTEN, SSL_R_BAD_PROTOCOL_VERSION_NUMBER);
+            SSLerr(SSL_F_DTLSV1_LISTEN, SSL_R_BAD_PROTOCOL_VERSION_NUMBER);
             goto end;
         }
 
@@ -621,13 +617,13 @@ int dtls1_listen(SSL *s, BIO_ADDR *client)
             || !PACKET_copy_bytes(&pkt, seq, SEQ_NUM_SIZE)
             || !PACKET_get_length_prefixed_2(&pkt, &msgpkt)
             || PACKET_remaining(&pkt) != 0) {
-            SSLerr(SSL_F_DTLS1_LISTEN, SSL_R_LENGTH_MISMATCH);
+            SSLerr(SSL_F_DTLSV1_LISTEN, SSL_R_LENGTH_MISMATCH);
             goto end;
         }
 
         /* This is an initial ClientHello so the epoch has to be 0 */
         if (seq[0] != 0 || seq[1] != 0) {
-            SSLerr(SSL_F_DTLS1_LISTEN, SSL_R_UNEXPECTED_MESSAGE);
+            SSLerr(SSL_F_DTLSV1_LISTEN, SSL_R_UNEXPECTED_MESSAGE);
             goto end;
         }
 
@@ -642,24 +638,24 @@ int dtls1_listen(SSL *s, BIO_ADDR *client)
             || !PACKET_get_net_3(&msgpkt, &fraglen)
             || !PACKET_get_sub_packet(&msgpkt, &msgpayload, msglen)
             || PACKET_remaining(&msgpkt) != 0) {
-            SSLerr(SSL_F_DTLS1_LISTEN, SSL_R_LENGTH_MISMATCH);
+            SSLerr(SSL_F_DTLSV1_LISTEN, SSL_R_LENGTH_MISMATCH);
             goto end;
         }
 
         if (msgtype != SSL3_MT_CLIENT_HELLO) {
-            SSLerr(SSL_F_DTLS1_LISTEN, SSL_R_UNEXPECTED_MESSAGE);
+            SSLerr(SSL_F_DTLSV1_LISTEN, SSL_R_UNEXPECTED_MESSAGE);
             goto end;
         }
 
         /* Message sequence number can only be 0 or 1 */
         if(msgseq > 2) {
-            SSLerr(SSL_F_DTLS1_LISTEN, SSL_R_INVALID_SEQUENCE_NUMBER);
+            SSLerr(SSL_F_DTLSV1_LISTEN, SSL_R_INVALID_SEQUENCE_NUMBER);
             goto end;
         }
 
         /* We don't support a fragmented ClientHello whilst listening */
         if (fragoff != 0 || fraglen != msglen) {
-            SSLerr(SSL_F_DTLS1_LISTEN, SSL_R_FRAGMENTED_CLIENT_HELLO);
+            SSLerr(SSL_F_DTLSV1_LISTEN, SSL_R_FRAGMENTED_CLIENT_HELLO);
             goto end;
         }
 
@@ -669,7 +665,7 @@ int dtls1_listen(SSL *s, BIO_ADDR *client)
                             s->msg_callback_arg);
 
         if (!PACKET_get_net_2(&msgpayload, &clientvers)) {
-            SSLerr(SSL_F_DTLS1_LISTEN, SSL_R_LENGTH_MISMATCH);
+            SSLerr(SSL_F_DTLSV1_LISTEN, SSL_R_LENGTH_MISMATCH);
             goto end;
         }
 
@@ -678,14 +674,14 @@ int dtls1_listen(SSL *s, BIO_ADDR *client)
          */
         if (DTLS_VERSION_LT(clientvers, (unsigned int)s->method->version) &&
             s->method->version != DTLS_ANY_VERSION) {
-            SSLerr(SSL_F_DTLS1_LISTEN, SSL_R_WRONG_VERSION_NUMBER);
+            SSLerr(SSL_F_DTLSV1_LISTEN, SSL_R_WRONG_VERSION_NUMBER);
             goto end;
         }
 
         if (!PACKET_forward(&msgpayload, SSL3_RANDOM_SIZE)
             || !PACKET_get_length_prefixed_1(&msgpayload, &session)
             || !PACKET_get_length_prefixed_1(&msgpayload, &cookiepkt)) {
-            SSLerr(SSL_F_DTLS1_LISTEN, SSL_R_LENGTH_MISMATCH);
+            SSLerr(SSL_F_DTLSV1_LISTEN, SSL_R_LENGTH_MISMATCH);
             goto end;
         }
 
@@ -700,7 +696,7 @@ int dtls1_listen(SSL *s, BIO_ADDR *client)
              * We have a cookie, so lets check it.
              */
             if (s->ctx->app_verify_cookie_cb == NULL) {
-                SSLerr(SSL_F_DTLS1_LISTEN, SSL_R_NO_VERIFY_COOKIE_CALLBACK);
+                SSLerr(SSL_F_DTLSV1_LISTEN, SSL_R_NO_VERIFY_COOKIE_CALLBACK);
                 /* This is fatal */
                 return -1;
             }
@@ -737,7 +733,7 @@ int dtls1_listen(SSL *s, BIO_ADDR *client)
             if (s->ctx->app_gen_cookie_cb == NULL ||
                 s->ctx->app_gen_cookie_cb(s, cookie, &cookielen) == 0 ||
                 cookielen > 255) {
-                SSLerr(SSL_F_DTLS1_LISTEN, SSL_R_COOKIE_GEN_CALLBACK_FAILURE);
+                SSLerr(SSL_F_DTLSV1_LISTEN, SSL_R_COOKIE_GEN_CALLBACK_FAILURE);
                 /* This is fatal */
                 return -1;
             }
@@ -808,7 +804,7 @@ int dtls1_listen(SSL *s, BIO_ADDR *client)
             if ((tmpclient = BIO_ADDR_new()) == NULL
                 || BIO_dgram_get_peer(rbio, tmpclient) <= 0
                 || BIO_dgram_set_peer(wbio, tmpclient) <= 0) {
-                SSLerr(SSL_F_DTLS1_LISTEN, ERR_R_INTERNAL_ERROR);
+                SSLerr(SSL_F_DTLSV1_LISTEN, ERR_R_INTERNAL_ERROR);
                 goto end;
             }
             BIO_ADDR_free(tmpclient);
@@ -859,7 +855,7 @@ int dtls1_listen(SSL *s, BIO_ADDR *client)
     ossl_statem_set_hello_verify_done(s);
 
     if(BIO_dgram_get_peer(rbio, client) <= 0) {
-        SSLerr(SSL_F_DTLS1_LISTEN, ERR_R_INTERNAL_ERROR);
+        SSLerr(SSL_F_DTLSV1_LISTEN, ERR_R_INTERNAL_ERROR);
         return -1;
     }
 

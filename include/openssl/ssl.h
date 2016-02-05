@@ -1184,7 +1184,6 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 # endif
 # define DTLS_CTRL_GET_TIMEOUT           73
 # define DTLS_CTRL_HANDLE_TIMEOUT        74
-# define DTLS_CTRL_LISTEN                        75
 # define SSL_CTRL_GET_RI_SUPPORT                 76
 # define SSL_CTRL_CLEAR_MODE                     78
 # define SSL_CTRL_SET_NOT_RESUMABLE_SESS_CB      79
@@ -1227,8 +1226,6 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
         SSL_ctrl(ssl,DTLS_CTRL_GET_TIMEOUT,0, (void *)arg)
 # define DTLSv1_handle_timeout(ssl) \
         SSL_ctrl(ssl,DTLS_CTRL_HANDLE_TIMEOUT,0, NULL)
-# define DTLSv1_listen(ssl, peer) \
-        SSL_ctrl(ssl,DTLS_CTRL_LISTEN,0, (void *)peer)
 # define SSL_session_reused(ssl) \
         SSL_ctrl((ssl),SSL_CTRL_GET_SESSION_REUSED,0,NULL)
 # define SSL_num_renegotiations(ssl) \
@@ -1842,6 +1839,8 @@ void SSL_trace(int write_p, int version, int content_type,
 __owur const char *SSL_CIPHER_standard_name(const SSL_CIPHER *c);
 # endif
 
+int DTLSv1_listen(SSL *s, BIO_ADDR *client);
+
 /* What the "other" parameter contains in security callback */
 /* Mask for type */
 # define SSL_SECOP_OTHER_TYPE    0xffff0000
@@ -1958,7 +1957,6 @@ void ERR_load_SSL_strings(void);
 # define SSL_F_DTLS1_GET_MESSAGE_FRAGMENT                 253
 # define SSL_F_DTLS1_HANDLE_TIMEOUT                       297
 # define SSL_F_DTLS1_HEARTBEAT                            305
-# define SSL_F_DTLS1_LISTEN                               350
 # define SSL_F_DTLS1_PREPROCESS_FRAGMENT                  288
 # define SSL_F_DTLS1_PROCESS_OUT_OF_SEQ_MESSAGE           256
 # define SSL_F_DTLS1_PROCESS_RECORD                       257
@@ -1967,6 +1965,7 @@ void ERR_load_SSL_strings(void);
 # define SSL_F_DTLS1_SEND_CERTIFICATE_REQUEST             260
 # define SSL_F_DTLS1_SEND_HELLO_VERIFY_REQUEST            264
 # define SSL_F_DTLS1_WRITE_APP_DATA_BYTES                 268
+# define SSL_F_DTLSV1_LISTEN                              350
 # define SSL_F_DTLS_CONSTRUCT_CHANGE_CIPHER_SPEC          371
 # define SSL_F_DTLS_CONSTRUCT_HELLO_VERIFY_REQUEST        385
 # define SSL_F_DTLS_GET_REASSEMBLED_MESSAGE               370

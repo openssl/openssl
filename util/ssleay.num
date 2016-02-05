@@ -435,3 +435,4 @@ SSL_set_options                         469	1_1_0	EXIST::FUNCTION:
 SSL_get_options                         470	1_1_0	EXIST::FUNCTION:
 SSL_up_ref                              471	1_1_0	EXIST::FUNCTION:
 SSL_CTX_up_ref                          472	1_1_0	EXIST::FUNCTION:
+DTLSv1_listen                           473	1_1_0	EXIST::FUNCTION:

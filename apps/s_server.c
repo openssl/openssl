@@ -2496,7 +2496,7 @@ static int init_ssl_connection(SSL *con)
             BIO_printf(bio_err, "ERROR - memory\n");
             return 0;
         }
-        i = DTLSv1_listen(con, &client);
+        i = DTLSv1_listen(con, client);
         if (i > 0) {
             BIO *wbio;
             int fd = -1;
