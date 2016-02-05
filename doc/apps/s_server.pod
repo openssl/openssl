@@ -8,6 +8,7 @@ s_server - SSL/TLS server program
 =head1 SYNOPSIS
 
 B<openssl> B<s_server>
+[B<-help>]
 [B<-accept port>]
 [B<-naccept count>]
 [B<-context id>]
@@ -109,6 +110,10 @@ L<SSL_CONF_cmd(3)|SSL_CONF_cmd(3)/SUPPORTED COMMAND LINE COMMANDS> manual
 page.
 
 =over 4
+
+=item B<-help>
+
+Print out a usage message.
 
 =item B<-accept port>
 

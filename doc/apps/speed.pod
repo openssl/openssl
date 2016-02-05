@@ -7,6 +7,7 @@ speed - test library performance
 =head1 SYNOPSIS
 
 B<openssl speed>
+[B<-help>]
 [B<-engine id>]
 [B<-elapsed>]
 [B<-evp algo>]
@@ -44,6 +45,10 @@ This command is used to test the performance of cryptographic algorithms.
 =head1 OPTIONS
 
 =over 4
+
+=item B<-help>
+
+Print out a usage message.
 
 =item B<-engine id>
 
