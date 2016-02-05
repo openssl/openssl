@@ -8,6 +8,7 @@ pkcs12 - PKCS#12 file utility
 =head1 SYNOPSIS
 
 B<openssl> B<pkcs12>
+[B<-help>]
 [B<-export>]
 [B<-chain>]
 [B<-inkey filename>]
@@ -58,6 +59,10 @@ file can be created by using the B<-export> option (see below).
 =head1 PARSING OPTIONS
 
 =over 4
+
+=item B<-help>
+
+Print out a usage message.
 
 =item B<-in filename>
 

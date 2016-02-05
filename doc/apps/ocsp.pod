@@ -7,6 +7,7 @@ ocsp - Online Certificate Status Protocol utility
 =head1 SYNOPSIS
 
 B<openssl> B<ocsp>
+[B<-help>]
 [B<-out file>]
 [B<-issuer file>]
 [B<-cert file>]
@@ -96,6 +97,10 @@ to an OCSP responder and behave like a mini OCSP server itself.
 =head1 OCSP CLIENT OPTIONS
 
 =over 4
+
+=item B<-help>
+
+Print out a usage message.
 
 =item B<-out filename>
 
