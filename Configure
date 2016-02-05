@@ -820,7 +820,8 @@ $config{openssldir} = catdir($config{prefix}, $config{openssldir})
 # Allow environment CC to override compiler...
 $target{cc} = $ENV{CC} || $target{cc};
 
-# For cflags, lflags and ex_libs, add the debug_ or release_ attributes
+# For cflags, lflags, plib_lflags and ex_libs, add the debug_ or release_
+# attributes.
 # Do it in such a way that no spurious space is appended (hence the grep).
 $config{cflags} = join(" ",
 		       grep { $_ ne "" } ($target{cflags},
@@ -828,6 +829,9 @@ $config{cflags} = join(" ",
 $config{lflags} = join(" ",
 		       grep { $_ ne "" } ($target{lflags},
 					  $target{$build_prefix."lflags"}));
+$config{plib_lflags} = join(" ",
+			    grep { $_  ne "" } ($target{plib_lflags},
+					        $target{$build_prefix."plib_lflags"}));
 $config{ex_libs} = join(" ",
 			grep { $_  ne "" } ($target{ex_libs},
 					    $target{$build_prefix."ex_libs"}));
@@ -1653,7 +1657,8 @@ EOF
 print "IsMK1MF       =", ($target{build_scheme}->[0] eq "mk1mf" ? "yes" : "no"), "\n";
 print "CC            =$target{cc}\n";
 print "CFLAG         =$config{cflags}\n";
-print "LFLAGS        =$config{lflags}\n";
+print "LFLAG         =$config{lflags}\n";
+print "PLIB_LFLAG    =$config{plib_lflags}\n";
 print "EX_LIBS       =$config{ex_libs}\n";
 print "CPUID_OBJ     =$target{cpuid_obj}\n";
 print "BN_ASM        =$target{bn_obj}\n";
@@ -2116,10 +2121,13 @@ sub print_table_entry
 	"unistd",
 	"ld",
 	"lflags",
+	"plib_lflags",
 	"ex_libs",
 	"debug_lflags",
+	"debug_plib_lflags",
 	"debug_ex_libs",
 	"release_lflags",
+	"release_plib_lflags",
 	"release_ex_libs",
 	"bn_ops",
 	"cpuid_obj",

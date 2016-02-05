@@ -18,7 +18,7 @@ RECURSIVE_MAKE=	[ -n "$(SDIRS)" ] && for i in $(SDIRS) ; do \
 		    $(MAKE) -e TOP=../.. DIR=$$i INCLUDES='$(INCLUDES)' $$target ) || exit 1; \
 		done;
 
-LDFLAGS=
+PLIB_LDFLAG=
 EX_LIBS=
 
 CFLAGS= $(INCLUDE) $(CFLAG)
