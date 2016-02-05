@@ -44,9 +44,11 @@ When a ClientHello is received that contains a cookie that has been verified,
 then DTLSv1_listen() will return with the B<ssl> parameter updated into a state
 where the handshake can be continued by a call to (for example) SSL_accept().
 Additionally the B<BIO_ADDR> pointed to by B<peer> will be filled in with
-details of the peer that sent the ClientHello. Typically user code is expected
-to "connect" the underlying socket to the peer and continue the handshake in a
-connected state.
+details of the peer that sent the ClientHello. If the underlying BIO is unable
+to obtain the B<BIO_ADDR> of the peer (for example because the BIO does not
+support this), then B<*peer> will be cleared and the family set to AF_UNSPEC.
+Typically user code is expected to "connect" the underlying socket to the peer
+and continue the handshake in a connected state.
 
 Prior to calling DTLSv1_listen() user code must ensure that cookie generation
 and verification callbacks have been set up using
