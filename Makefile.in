@@ -205,6 +205,7 @@ SHARED_LDFLAG={- $target{shared_ldflag}
                  # $prefix is not /usr.
                  . ($config{target} =~ m|^BSD-| && $prefix !~ m|^/usr/.*$|
                     ? " -Wl,-rpath,\$\$(LIBRPATH)" : "") -}
+SHARED_RCFLAG={- $target{shared_rcflag} -}
 
 GENERAL=        Makefile
 BASENAME=       openssl
@@ -255,6 +256,7 @@ BUILDENV=	LC_ALL=C PLATFORM='$(PLATFORM)' PROCESSOR='$(PROCESSOR)'\
 		LIBDIR='$(LIBDIR)'				\
 		DEPFLAG='$(DEPFLAG)'                    	\
 		SHARED_LDFLAG='$(SHARED_LDFLAG)'		\
+		SHARED_RCFLAG='$(SHARED_RCFLAG)'		\
 		ZLIB_INCLUDE='$(ZLIB_INCLUDE)' LIBZLIB='$(LIBZLIB)'	\
 		EXE_EXT='$(EXE_EXT)' SHARED_LIBS='$(SHARED_LIBS)'	\
 		SHLIB_EXT='$(SHLIB_EXT)' SHLIB_TARGET='$(SHLIB_TARGET)'	\

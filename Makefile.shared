@@ -14,6 +14,10 @@ CFLAGS=$(CFLAG)
 LDFLAGS=$(LDFLAG)
 SHARED_LDFLAGS=$(SHARED_LDFLAG)
 
+# SHARED_RCFLAGS are flags used with windres, i.e. when build for Cygwin
+# or Mingw.
+SHARED_RCFLAGS=$(SHARED_RCFLAG)
+
 NM=nm
 
 # LIBNAME contains just the name of the library, without prefix ("lib"
@@ -305,7 +309,7 @@ link_a.cygwin:
 	fi; \
 	dll_name=$$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX; \
 	$(PERL) util/mkrc.pl $$dll_name | \
-		$(CROSS_COMPILE)windres -o rc.o; \
+		$(CROSS_COMPILE)windres $(SHARED_RCFLAGS) -o rc.o; \
 	extras="$$extras rc.o"; \
 	ALLSYMSFLAGS='-Wl,--whole-archive'; \
 	NOALLSYMSFLAGS='-Wl,--no-whole-archive'; \
