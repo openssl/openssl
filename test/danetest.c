@@ -474,6 +474,7 @@ int main(int argc, char *argv[])
     p = getenv("OPENSSL_DEBUG_MEMORY");
     if (p != NULL && strcmp(p, "on") == 0)
         CRYPTO_set_mem_debug(1);
+    CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
 
     f = fopen(tlsafile, "r");
     if (f == NULL) {
