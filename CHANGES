@@ -4,6 +4,9 @@
 
  Changes between 1.0.2f and 1.1.0  [xx XXX xxxx]
 
+  *) The arguments to the DTLSv1_listen function have changed. Specifically the
+     "peer" argument is now expected to be a BIO_ADDR object.
+
   *) Rewrite of BIO networking library. The BIO library lacked consistent
      support of IPv6, and adding it required some more extensive
      modifications.  This introduces the BIO_ADDR and BIO_ADDRINFO types,
