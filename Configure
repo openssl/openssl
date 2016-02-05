@@ -2180,6 +2180,7 @@ sub print_table_entry
 	"shared_target",
 	"shared_cflag",
 	"shared_ldflag",
+	"shared_rcflag",
 	"shared_extension",
 	"obj_extension",
 	"exe_extension",
