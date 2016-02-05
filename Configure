@@ -775,7 +775,11 @@ foreach (sort (keys %disabled))
 	elsif (/^sse2$/)
 		{ $no_sse2 = 1; }
 	elsif (/^engine$/)
-		{ @{$config{dirs}} = grep !/^engine$/, @{$config{dirs}}; }
+		{
+		@{$config{dirs}} = grep !/^engines$/, @{$config{dirs}};
+		@{$config{sdirs}} = grep !/^engine$/, @{$config{sdirs}};
+		push @{$config{openssl_other_defines}}, "OPENSSL_NO_ENGINE";
+		}
 	else
 		{
 		my ($ALGO, $algo);
