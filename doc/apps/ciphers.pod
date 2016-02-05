@@ -7,6 +7,7 @@ ciphers - SSL cipher display and cipher list tool.
 =head1 SYNOPSIS
 
 B<openssl> B<ciphers>
+[B<-help>]
 [B<-s>]
 [B<-v>]
 [B<-V>]
@@ -28,6 +29,10 @@ the appropriate cipherlist.
 =head1 COMMAND OPTIONS
 
 =over 4
+
+=item B<-help>
+
+Print out a usage message.
 
 =item B<-s>
 
