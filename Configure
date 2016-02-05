@@ -269,12 +269,12 @@ my @disablables = (
     "ec_nistp_64_gcc_128",
     "egd",
     "engine",
-    "err",			# Really???
+    "err",
     "heartbeats",
     "hmac",
     "hw(-.+)?",
     "idea",
-    "locking",			# Really???
+    "locking",
     "md2",
     "md4",
     "md5",
@@ -292,6 +292,7 @@ my @disablables = (
     "rdrand",
     "rfc3779",
     "rijndael",			# Old AES name
+    "ripemd",
     "rmd160",
     "rsa",
     "scrypt",
@@ -310,6 +311,8 @@ my @disablables = (
     "stdio",
     "threads",
     "tls",
+    "ts",
+    "ui",
     "unit-test",
     "whirlpool",
     "zlib",
