@@ -95,6 +95,8 @@ LINK_APP=	\
     LDCMD="$${LDCMD:-$(CC)}"; LDFLAGS="$${LDFLAGS:-$(CFLAGS) $(LDFLAGS)}"; \
     LIBPATH=`for x in $$LIBDEPS; do echo $$x; done | sed -e 's/^ *-L//;t' -e d | uniq`; \
     LIBPATH=`echo $$LIBPATH | sed -e 's/ /:/g'`; \
+    echo LD_LIBRARY_PATH=$$LIBPATH:$$LD_LIBRARY_PATH \
+        $${LDCMD} $${LDFLAGS} -o $${APPNAME:=$(APPNAME)} $(OBJECTS) $${LIBDEPS}; \
     LD_LIBRARY_PATH=$$LIBPATH:$$LD_LIBRARY_PATH \
     $${LDCMD} $${LDFLAGS} -o $${APPNAME:=$(APPNAME)} $(OBJECTS) $${LIBDEPS} )
 
@@ -105,6 +107,10 @@ LINK_SO=	\
     SHAREDFLAGS="$${SHAREDFLAGS:-$(CFLAGS) $(SHARED_LDFLAGS)}"; \
     LIBPATH=`for x in $$LIBDEPS; do echo $$x; done | sed -e 's/^ *-L//;t' -e d | uniq`; \
     LIBPATH=`echo $$LIBPATH | sed -e 's/ /:/g'`; \
+    echo LD_LIBRARY_PATH=$$LIBPATH:$$LD_LIBRARY_PATH \
+         $${SHAREDCMD} $${SHAREDFLAGS} \
+	     -o $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX \
+	     $$ALLSYMSFLAGS $$SHOBJECTS $$NOALLSYMSFLAGS $$LIBDEPS; \
     LD_LIBRARY_PATH=$$LIBPATH:$$LD_LIBRARY_PATH \
     $${SHAREDCMD} $${SHAREDFLAGS} \
 	-o $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX \
@@ -133,9 +139,9 @@ LINK_SO_O=	SHOBJECTS="$(LIBEXTRAS)"; $(LINK_SO)
 LINK_SO_A_VIA_O=	\
   SHOBJECTS=lib$(LIBNAME).o; \
   ALL=$$ALLSYMSFLAGS; ALLSYMSFLAGS=; NOALLSYMSFLAGS=; \
-  ( $(SET_X); \
+  ( echo ld $(LDFLAGS) -r -o lib$(LIBNAME).o $$ALL lib$(LIBNAME).a $(LIBEXTRAS); \
     ld $(LDFLAGS) -r -o lib$(LIBNAME).o $$ALL lib$(LIBNAME).a $(LIBEXTRAS) ); \
-  $(LINK_SO) && rm -f lib$(LIBNAME).o
+  $(LINK_SO) && ( echo rm -f lib$(LIBNAME).o; rm -f lib$(LIBNAME).o )
 
 LINK_SO_A_UNPACKED=	\
   UNPACKDIR=link_tmp.$$$$; rm -rf $$UNPACKDIR; mkdir $$UNPACKDIR; \
