@@ -68,6 +68,10 @@ union bio_addr_st {
 #include <openssl/bio.h>
 
 #ifndef OPENSSL_NO_SOCK
+# ifdef OPENSSL_SYS_VMS
+typedef unsigned int socklen_t;
+# endif
+
 int BIO_ADDR_make(BIO_ADDR *ap, const struct sockaddr *sa);
 const struct sockaddr *BIO_ADDR_sockaddr(const BIO_ADDR *ap);
 struct sockaddr *BIO_ADDR_sockaddr_noconst(BIO_ADDR *ap);
