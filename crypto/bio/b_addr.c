@@ -56,6 +56,7 @@
 
 #include "bio_lcl.h"
 
+#ifndef OPENSSL_NO_SOCK
 #include <openssl/err.h>
 #include <openssl/buffer.h>
 #include <ctype.h>
@@ -848,3 +849,4 @@ int BIO_lookup(const char *host, const char *service,
 
     return ret;
 }
+#endif /* OPENSSL_NO_SOCK */
