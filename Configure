@@ -870,10 +870,10 @@ push @{$config{defines}},
     map { (my $x = $_) =~ s/^OPENSSL_NO_/OPENSSL_EXPERIMENTAL_/; $x }
         @{$config{openssl_experimental_defines}};
 
-if ($target =~ /^mingw/ && `$target{cc} --target-help 2>&1` !~ m/-mno-cygwin/m)
+if ($target =~ /^mingw/ && `$target{cc} --target-help 2>&1` =~ m/-mno-cygwin/m)
 	{
-	$config{cflags} =~ s/-mno-cygwin\s*//;
-	$target{shared_ldflag} =~ s/-mno-cygwin\s*//;
+	$config{cflags} .= " -mno-cygwin";
+	$target{shared_ldflag} .= " -mno-cygwin";
 	}
 
 if ($target =~ /linux.*-mips/ && !$no_asm && $user_cflags !~ /-m(ips|arch=)/) {
