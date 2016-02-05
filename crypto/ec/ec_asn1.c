@@ -1076,7 +1076,7 @@ int i2d_ECPrivateKey(EC_KEY *a, unsigned char **out)
 {
     int ret = 0, ok = 0;
     unsigned char *priv= NULL, *pub= NULL;
-    size_t privlen, publen;
+    size_t privlen = 0, publen = 0;
 
     EC_PRIVATEKEY *priv_key = NULL;
 
