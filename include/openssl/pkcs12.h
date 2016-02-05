@@ -113,6 +113,8 @@ typedef struct pkcs12_bag_st PKCS12_BAGS;
 
 /* Compatibility macros */
 
+#if OPENSSL_API_COMPAT < 0x10100000L
+
 # define M_PKCS12_x5092certbag PKCS12_x5092certbag
 # define M_PKCS12_x509crl2certbag PKCS12_x509crl2certbag
 
@@ -131,7 +133,6 @@ typedef struct pkcs12_bag_st PKCS12_BAGS;
 # define M_PKCS12_cert_bag_type PKCS12_cert_bag_type
 # define M_PKCS12_crl_bag_type PKCS12_cert_bag_type
 
-/* Compatibility macros for pre 1.1.0 function names */
 # define PKCS12_certbag2x509 PKCS12_SAFEBAG_get1_cert
 # define PKCS12_certbag2scrl PKCS12_SAFEBAG_get1_crl
 # define PKCS12_get_attr PKCS12_SAFEBAG_get0_attr
@@ -141,6 +142,8 @@ typedef struct pkcs12_bag_st PKCS12_BAGS;
 # define PKCS12_x509crl2certbag PKCS12_SAFEBAG_create_crl
 # define PKCS12_MAKE_KEYBAG PKCS12_SAFEBAG_create0_p8inf
 # define PKCS12_MAKE_SHKEYBAG PKCS12_SAFEBAG_create_pkcs8_encrypt
+
+#endif
 
 ASN1_TYPE *PKCS8_get_attr(PKCS8_PRIV_KEY_INFO *p8, int attr_nid);
 int PKCS12_mac_present(PKCS12 *p12);
