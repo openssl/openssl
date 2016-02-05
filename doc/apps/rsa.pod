@@ -8,6 +8,7 @@ rsa - RSA key processing tool
 =head1 SYNOPSIS
 
 B<openssl> B<rsa>
+[B<-help>]
 [B<-inform PEM|NET|DER>]
 [B<-outform PEM|NET|DER>]
 [B<-in filename>]
@@ -44,6 +45,10 @@ utility.
 =head1 COMMAND OPTIONS
 
 =over 4
+
+=item B<-help>
+
+Print out a usage message.
 
 =item B<-inform DER|NET|PEM>
 

@@ -7,6 +7,7 @@ rsautl - RSA utility
 =head1 SYNOPSIS
 
 B<openssl> B<rsautl>
+[B<-help>]
 [B<-in file>]
 [B<-out file>]
 [B<-inkey file>]
@@ -32,6 +33,10 @@ data using the RSA algorithm.
 
 =over 4
 
+=item B<-help>
+
+Print out a usage message.
+
 =item B<-in filename>
 
 This specifies the input filename to read data from or standard input
@@ -52,7 +57,7 @@ the key format PEM, DER or ENGINE.
 
 =item B<-pubin>
 
-the input file is an RSA public key. 
+the input file is an RSA public key.
 
 =item B<-certin>
 

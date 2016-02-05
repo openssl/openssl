@@ -7,6 +7,7 @@ pkeyutl - public key algorithm utility
 =head1 SYNOPSIS
 
 B<openssl> B<pkeyutl>
+[B<-help>]
 [B<-in file>]
 [B<-out file>]
 [B<-sigfile file>]
@@ -37,6 +38,10 @@ any supported algorithm.
 =head1 COMMAND OPTIONS
 
 =over 4
+
+=item B<-help>
+
+Print out a usage message.
 
 =item B<-in filename>
 

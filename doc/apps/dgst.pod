@@ -7,6 +7,7 @@ dgst, sha, sha1, mdc2, ripemd160, sha224, sha256, sha384, sha512, md4, md5 - mes
 =head1 SYNOPSIS
 
 B<openssl> B<dgst> 
+[B<-help>]
 [B<-sha|-sha1|-mdc2|-ripemd160|-sha224|-sha256|-sha384|-sha512|-md4|-md5>]
 [B<-c>]
 [B<-d>]
@@ -44,6 +45,10 @@ command.
 =head1 OPTIONS
 
 =over 4
+
+=item B<-help>
+
+Print out a usage message.
 
 =item B<-c>
 

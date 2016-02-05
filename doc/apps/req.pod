@@ -8,6 +8,7 @@ req - PKCS#10 certificate request and certificate generating utility.
 =head1 SYNOPSIS
 
 B<openssl> B<req>
+[B<-help>]
 [B<-inform PEM|DER>]
 [B<-outform PEM|DER>]
 [B<-in filename>]
@@ -55,6 +56,10 @@ for use as root CAs for example.
 =head1 COMMAND OPTIONS
 
 =over 4
+
+=item B<-help>
+
+Print out a usage message.
 
 =item B<-inform DER|PEM>
 
