@@ -17,8 +17,8 @@ B<openssl> B<ciphers>
 [B<-s>]
 [B<-psk>]
 [B<-stdname>]
-[B<cipherlist>]
 [B<-help>]
+[B<cipherlist>]
 
 =head1 DESCRIPTION
 
