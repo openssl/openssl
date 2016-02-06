@@ -81,7 +81,7 @@ OPTIONS asn1parse_options[] = {
     {"inform", OPT_INFORM, 'F', "input format - one of DER PEM"},
     {"in", OPT_IN, '<', "input file"},
     {"out", OPT_OUT, '>', "output file (output format is always DER)"},
-    {"i", OPT_INDENT, 0, "entries"},
+    {"i", OPT_INDENT, 0, "indents the output"},
     {"noout", OPT_NOOUT, 0, "don't produce any output"},
     {"offset", OPT_OFFSET, 'p', "offset into file"},
     {"length", OPT_LENGTH, 'p', "length of section in file"},
