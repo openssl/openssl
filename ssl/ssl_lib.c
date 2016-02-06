@@ -715,6 +715,7 @@ SSL *SSL_new(SSL_CTX *ctx)
         s->alpn_client_proto_list_len = s->ctx->alpn_client_proto_list_len;
     }
 
+    s->verified_chain = NULL;
     s->verify_result = X509_V_OK;
 
     s->default_passwd_callback = ctx->default_passwd_callback;
@@ -1051,6 +1052,8 @@ void SSL_free(SSL *s)
     OPENSSL_free(s->alpn_client_proto_list);
 
     sk_X509_NAME_pop_free(s->client_CA, X509_NAME_free);
+
+    sk_X509_pop_free(s->verified_chain, X509_free);
 
     if (s->method != NULL)
         s->method->ssl_free(s);
@@ -3820,6 +3823,11 @@ unsigned long SSL_CTX_clear_options(SSL_CTX *ctx, unsigned long op)
 unsigned long SSL_clear_options(SSL *s, unsigned long op)
 {
     return s->options &= ~op;
+}
+
+STACK_OF(X509) *SSL_get0_verified_chain(const SSL *s)
+{
+    return s->verified_chain;
 }
 
 IMPLEMENT_OBJ_BSEARCH_GLOBAL_CMP_FN(SSL_CIPHER, SSL_CIPHER, ssl_cipher_id);
