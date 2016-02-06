@@ -505,7 +505,7 @@ int BIO_parse_hostserv(const char *hostserv, char **host, char **service,
         }
     }
 
-    if (strchr(p, ':'))
+    if (p != NULL && strchr(p, ':'))
         goto spec_err;
 
     if (h != NULL && host != NULL) {
