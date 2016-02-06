@@ -12,7 +12,8 @@ PROGRAMS=\
         evp_test evp_extra_test igetest jpaketest v3nametest \
         danetest heartbeat_test p5_crpt2_test \
         constant_time_test verify_extra_test clienthellotest \
-        packettest asynctest secmemtest srptest memleaktest
+        packettest asynctest secmemtest srptest memleaktest \
+        dtlsv1listentest
 
 SOURCE[nptest]=nptest.c
 INCLUDE[nptest]={- catdir(abs2rel($builddir,$sourcedir),"../include") -} ../include
@@ -162,7 +163,7 @@ SOURCE[danetest]=danetest.c
 INCLUDE[danetest]={- catdir(abs2rel($builddir,$sourcedir),"../include") -} ../include
 DEPEND[danetest]=../libcrypto ../libssl
 
-SOURCE[heartbeat_test]=heartbeat_test.c
+SOURCE[heartbeat_test]=heartbeat_test.c testutil.c
 INCLUDE[heartbeat_test]={- catdir(abs2rel($builddir,$sourcedir),"../include") -} .. ../include
 DEPEND[heartbeat_test]=../libcrypto ../libssl
 
@@ -201,3 +202,7 @@ DEPEND[srptest]=../libcrypto
 SOURCE[memleaktest]=memleaktest.c
 INCLUDE[memleaktest]={- catdir(abs2rel($builddir,$sourcedir),"../include") -} ../include
 DEPEND[memleaktest]=../libcrypto
+
+SOURCE[dtlsv1listentest]=dtlsv1listentest.c
+INCLUDE[dtlsv1listentest]={- catdir(abs2rel($builddir,$sourcedir),"../include") -} ../include
+DEPEND[dtlsv1listentest]=../libssl
