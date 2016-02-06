@@ -65,7 +65,7 @@
 #include "e_os.h"
 
 /* Just a ClientHello without a cookie */
-const unsigned char clienthello_nocookie[] = {
+static const unsigned char clienthello_nocookie[] = {
     0x16, /* Handshake */
     0xFE, 0xFF, /* DTLSv1.0 */
     0x00, 0x00, /* Epoch */
@@ -91,7 +91,7 @@ const unsigned char clienthello_nocookie[] = {
 };
 
 /* First fragment of a ClientHello without a cookie */
-const unsigned char clienthello_nocookie_frag[] = {
+static const unsigned char clienthello_nocookie_frag[] = {
     0x16, /* Handshake */
     0xFE, 0xFF, /* DTLSv1.0 */
     0x00, 0x00, /* Epoch */
@@ -111,7 +111,7 @@ const unsigned char clienthello_nocookie_frag[] = {
 };
 
 /* First fragment of a ClientHello which is too short */
-const unsigned char clienthello_nocookie_short[] = {
+static const unsigned char clienthello_nocookie_short[] = {
     0x16, /* Handshake */
     0xFE, 0xFF, /* DTLSv1.0 */
     0x00, 0x00, /* Epoch */
@@ -130,7 +130,7 @@ const unsigned char clienthello_nocookie_short[] = {
 };
 
 /* Second fragment of a ClientHello */
-const unsigned char clienthello_2ndfrag[] = {
+static const unsigned char clienthello_2ndfrag[] = {
     0x16, /* Handshake */
     0xFE, 0xFF, /* DTLSv1.0 */
     0x00, 0x00, /* Epoch */
@@ -156,7 +156,7 @@ const unsigned char clienthello_2ndfrag[] = {
 };
 
 /* A ClientHello with a good cookie */
-const unsigned char clienthello_cookie[] = {
+static const unsigned char clienthello_cookie[] = {
     0x16, /* Handshake */
     0xFE, 0xFF, /* DTLSv1.0 */
     0x00, 0x00, /* Epoch */
@@ -184,7 +184,7 @@ const unsigned char clienthello_cookie[] = {
 };
 
 /* A fragmented ClientHello with a good cookie */
-const unsigned char clienthello_cookie_frag[] = {
+static const unsigned char clienthello_cookie_frag[] = {
     0x16, /* Handshake */
     0xFE, 0xFF, /* DTLSv1.0 */
     0x00, 0x00, /* Epoch */
@@ -207,7 +207,7 @@ const unsigned char clienthello_cookie_frag[] = {
 
 
 /* A ClientHello with a bad cookie */
-const unsigned char clienthello_badcookie[] = {
+static const unsigned char clienthello_badcookie[] = {
     0x16, /* Handshake */
     0xFE, 0xFF, /* DTLSv1.0 */
     0x00, 0x00, /* Epoch */
@@ -235,7 +235,7 @@ const unsigned char clienthello_badcookie[] = {
 };
 
 /* A fragmented ClientHello with the fragment boundary mid cookie */
-const unsigned char clienthello_cookie_short[] = {
+static const unsigned char clienthello_cookie_short[] = {
     0x16, /* Handshake */
     0xFE, 0xFF, /* DTLSv1.0 */
     0x00, 0x00, /* Epoch */
@@ -257,14 +257,14 @@ const unsigned char clienthello_cookie_short[] = {
 };
 
 /* Bad record - too short */
-const unsigned char record_short[] = {
+static const unsigned char record_short[] = {
     0x16, /* Handshake */
     0xFE, 0xFF, /* DTLSv1.0 */
     0x00, 0x00, /* Epoch */
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00 /* Record sequence number */
 };
 
-const unsigned char verify[] = {
+static const unsigned char verify[] = {
     0x16, /* Handshake */
     0xFE, 0xFF, /* DTLSv1.0 */
     0x00, 0x00, /* Epoch */
@@ -281,7 +281,7 @@ const unsigned char verify[] = {
     0x0D, 0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13 /* Cookie */
 };
 
-struct {
+static struct {
     const unsigned char *in;
     unsigned int inlen;
     /*
