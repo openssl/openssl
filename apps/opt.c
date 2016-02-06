@@ -815,6 +815,7 @@ int opt_num_rest(void)
 static const char *valtype2param(const OPTIONS *o)
 {
     switch (o->valtype) {
+    case 0:
     case '-':
         return "";
     case 's':

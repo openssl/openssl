@@ -74,10 +74,6 @@ List the ciphers which would be used if TLS v1.2 was negotiated.
 precede each ciphersuite by its standard name: only available is OpenSSL
 is built with tracing enabled (B<enable-ssl-trace> argument to Configure).
 
-=item B<-h>, B<-?>
-
-print a brief usage message.
-
 =item B<cipherlist>
 
 a cipher list to convert to a cipher preference list. If it is not included
