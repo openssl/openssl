@@ -460,6 +460,7 @@ int main(void)
     SSL_free(ssl);
     SSL_CTX_free(ctx);
     BIO_free(inbio);
+    OPENSSL_free(peer);
     /* Unitialise libssl */
 #ifndef OPENSSL_NO_ENGINE
     ENGINE_cleanup();
