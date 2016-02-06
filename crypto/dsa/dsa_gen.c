@@ -653,10 +653,14 @@ int dsa_paramgen_check_g(DSA *dsa)
     if (ctx == NULL)
         return -1;
     BN_CTX_start(ctx);
-    if (BN_cmp(dsa->g, BN_value_one()) <= 0)
-        return 0;
-    if (BN_cmp(dsa->g, dsa->p) >= 0)
-        return 0;
+    if (BN_cmp(dsa->g, BN_value_one()) <= 0) {
+        rv = 0;
+        goto err;
+    }
+    if (BN_cmp(dsa->g, dsa->p) >= 0) {
+        rv = 0;
+        goto err;
+    }
     tmp = BN_CTX_get(ctx);
     if (!tmp)
         goto err;
