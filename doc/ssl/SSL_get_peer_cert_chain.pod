@@ -33,8 +33,9 @@ X509_V_OK) the chain may be incomplete or invalid.
 
 =head1 NOTES
 
-The peer certificate chain is not necessarily available after reusing
-a session, in which case a NULL pointer is returned.
+If the session is resumed peers do not send certificates so a NULL pointer
+is returned by these functions. Applications can call SSL_session_reused()
+to determine whether a session is resumed.
 
 The reference count of each certificate in the returned STACK_OF(X509) object
 is not incremented and the returned stack may be invalidated by renegotiation.
