@@ -1807,7 +1807,7 @@ char *SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
     return (buf);
 }
 
-char *SSL_CIPHER_get_version(const SSL_CIPHER *c)
+const char *SSL_CIPHER_get_version(const SSL_CIPHER *c)
 {
     uint32_t alg_ssl;
 
