@@ -91,9 +91,10 @@ OPTIONS dgst_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
     {"c", OPT_C, '-', "Print the digest with separating colons"},
     {"r", OPT_R, '-', "Print the digest in coreutils format"},
-    {"rand", OPT_RAND, 's'},
+    {"rand", OPT_RAND, 's',
+     "Use file(s) containing random data to seed RNG or an EGD sock"},
     {"out", OPT_OUT, '>', "Output to filename rather than stdout"},
-    {"passin", OPT_PASSIN, 's'},
+    {"passin", OPT_PASSIN, 's', "Input file pass phrase source"},
     {"sign", OPT_SIGN, '<', "Sign digest using private key in file"},
     {"verify", OPT_VERIFY, '<',
      "Verify a signature using public key in file"},
@@ -104,8 +105,9 @@ OPTIONS dgst_options[] = {
     {"hex", OPT_HEX, '-', "Print as hex dump"},
     {"binary", OPT_BINARY, '-', "Print in binary form"},
     {"d", OPT_DEBUG, '-', "Print debug info"},
-    {"debug", OPT_DEBUG, '-'},
-    {"fips-fingerprint", OPT_FIPS_FINGERPRINT, '-'},
+    {"debug", OPT_DEBUG, '-', "Print debug info"},
+    {"fips-fingerprint", OPT_FIPS_FINGERPRINT, '-',
+     "Compute HMAC with the key used in OpenSSL-FIPS fingerprint"},
     {"hmac", OPT_HMAC, 's', "Create hashed MAC with key"},
     {"mac", OPT_MAC, 's', "Create MAC (not necessarily HMAC)"},
     {"sigopt", OPT_SIGOPT, 's', "Signature parameter in n:v form"},
@@ -113,7 +115,8 @@ OPTIONS dgst_options[] = {
     {"", OPT_DIGEST, '-', "Any supported digest"},
 #ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine e, possibly a hardware device"},
-    {"engine_impl", OPT_ENGINE_IMPL, '-'},
+    {"engine_impl", OPT_ENGINE_IMPL, '-',
+     "Also use engine given by -engine for digest operations"},
 #endif
     {NULL}
 };

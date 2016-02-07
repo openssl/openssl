@@ -8,7 +8,7 @@ dgst, sha, sha1, mdc2, ripemd160, sha224, sha256, sha384, sha512, md4, md5 - mes
 
 B<openssl> B<dgst> 
 [B<-help>]
-[B<-sha|-sha1|-mdc2|-ripemd160|-sha224|-sha256|-sha384|-sha512|-md4|-md5>]
+[B<-sha1|-mdc2|-ripemd160|-sha224|-sha256|-sha384|-sha512|-md4|-md5>]
 [B<-c>]
 [B<-d>]
 [B<-hex>]
@@ -23,6 +23,9 @@ B<openssl> B<dgst>
 [B<-signature filename>]
 [B<-hmac key>]
 [B<-fips-fingerprint>]
+[B<-*>]
+[B<-engine id>]
+[B<-engine_impl>]
 [B<file...>]
 
 B<openssl>
@@ -39,7 +42,7 @@ The generic name, B<dgst>, may be used with an option specifying the
 algorithm to be used.
 The default digest is I<sha256>.
 The digest name may also be used as the command name.
-To see the list of supported algorithms, use the <Ilist --digest-commands>
+To see the list of supported algorithms, use the I<list --digest-commands>
 command.
 
 =head1 OPTIONS
@@ -85,12 +88,6 @@ digitally sign the digest using the private key in "filename".
 
 Specifies the key format to sign digest with. The DER, PEM, P12,
 and ENGINE formats are supported.
-
-=item B<-engine id>
-
-Use engine B<id> for operations (including private key storage).
-This engine is not used as source for digest algorithms, unless it is
-also specified in the configuration file.
 
 =item B<-sigopt nm:v>
 
@@ -161,6 +158,18 @@ all others.
 
 compute HMAC using a specific key
 for certain OpenSSL-FIPS operations.
+
+=item B<-engine id>
+
+Use engine B<id> for operations (including private key storage).
+This engine is not used as source for digest algorithms, unless it is
+also specified in the configuration file or B<-engine_impl> is also
+specified.
+
+=item B<-engine_impl>
+
+When used with the B<-engine> option, it specifies to also use
+engine B<id> for digest operations.
 
 =item B<file...>
 
