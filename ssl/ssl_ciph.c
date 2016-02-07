@@ -768,7 +768,6 @@ static void ssl_cipher_collect_ciphers(const SSL_METHOD *ssl_method,
                                        uint32_t disabled_auth,
                                        uint32_t disabled_enc,
                                        uint32_t disabled_mac,
-                                       uint32_t disabled_ssl,
                                        CIPHER_ORDER *co_list,
                                        CIPHER_ORDER **head_p,
                                        CIPHER_ORDER **tail_p)
@@ -793,8 +792,7 @@ static void ssl_cipher_collect_ciphers(const SSL_METHOD *ssl_method,
             !(c->algorithm_mkey & disabled_mkey) &&
             !(c->algorithm_auth & disabled_auth) &&
             !(c->algorithm_enc & disabled_enc) &&
-            !(c->algorithm_mac & disabled_mac) &&
-            !(c->algorithm_ssl & disabled_ssl)) {
+            !(c->algorithm_mac & disabled_mac)) {
             co_list[co_list_num].cipher = c;
             co_list[co_list_num].next = NULL;
             co_list[co_list_num].prev = NULL;
@@ -836,7 +834,6 @@ static void ssl_cipher_collect_aliases(const SSL_CIPHER **ca_list,
                                        uint32_t disabled_auth,
                                        uint32_t disabled_enc,
                                        uint32_t disabled_mac,
-                                       uint32_t disabled_ssl,
                                        CIPHER_ORDER *head)
 {
     CIPHER_ORDER *ciph_curr;
@@ -846,7 +843,6 @@ static void ssl_cipher_collect_aliases(const SSL_CIPHER **ca_list,
     uint32_t mask_auth = ~disabled_auth;
     uint32_t mask_enc = ~disabled_enc;
     uint32_t mask_mac = ~disabled_mac;
-    uint32_t mask_ssl = ~disabled_ssl;
 
     /*
      * First, add the real ciphers as already collected
@@ -870,7 +866,6 @@ static void ssl_cipher_collect_aliases(const SSL_CIPHER **ca_list,
         uint32_t algorithm_auth = cipher_aliases[i].algorithm_auth;
         uint32_t algorithm_enc = cipher_aliases[i].algorithm_enc;
         uint32_t algorithm_mac = cipher_aliases[i].algorithm_mac;
-        uint32_t algorithm_ssl = cipher_aliases[i].algorithm_ssl;
 
         if (algorithm_mkey)
             if ((algorithm_mkey & mask_mkey) == 0)
@@ -886,10 +881,6 @@ static void ssl_cipher_collect_aliases(const SSL_CIPHER **ca_list,
 
         if (algorithm_mac)
             if ((algorithm_mac & mask_mac) == 0)
-                continue;
-
-        if (algorithm_ssl)
-            if ((algorithm_ssl & mask_ssl) == 0)
                 continue;
 
         *ca_curr = (SSL_CIPHER *)(cipher_aliases + i);
@@ -1398,8 +1389,7 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method, STACK
                                              const char *rule_str, CERT *c)
 {
     int ok, num_of_ciphers, num_of_alias_max, num_of_group_aliases;
-    uint32_t disabled_mkey, disabled_auth, disabled_enc, disabled_mac,
-        disabled_ssl;
+    uint32_t disabled_mkey, disabled_auth, disabled_enc, disabled_mac;
     STACK_OF(SSL_CIPHER) *cipherstack, *tmp_cipher_list;
     const char *rule_p;
     CIPHER_ORDER *co_list = NULL, *head = NULL, *tail = NULL, *curr;
@@ -1424,7 +1414,6 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method, STACK
     disabled_auth = disabled_auth_mask;
     disabled_enc = disabled_enc_mask;
     disabled_mac = disabled_mac_mask;
-    disabled_ssl = 0;
 
     /*
      * Now we have to collect the available ciphers from the compiled
@@ -1441,7 +1430,7 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method, STACK
 
     ssl_cipher_collect_ciphers(ssl_method, num_of_ciphers,
                                disabled_mkey, disabled_auth, disabled_enc,
-                               disabled_mac, disabled_ssl, co_list, &head,
+                               disabled_mac, co_list, &head,
                                &tail);
 
     /* Now arrange all ciphers by preference. */
@@ -1560,7 +1549,7 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method, STACK
     }
     ssl_cipher_collect_aliases(ca_list, num_of_group_aliases,
                                disabled_mkey, disabled_auth, disabled_enc,
-                               disabled_mac, disabled_ssl, head);
+                               disabled_mac, head);
 
     /*
      * If the rule_string begins with DEFAULT, apply the default rule
