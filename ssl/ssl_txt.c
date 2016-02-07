@@ -111,7 +111,7 @@ int SSL_SESSION_print(BIO *bp, const SSL_SESSION *x)
         goto err;
     if (BIO_puts(bp, "SSL-Session:\n") <= 0)
         goto err;
-    s = version_to_string(x->ssl_version);
+    s = ssl_protocol_to_string(x->ssl_version);
     if (BIO_printf(bp, "    Protocol  : %s\n", s) <= 0)
         goto err;
 

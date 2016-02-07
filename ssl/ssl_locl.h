@@ -378,11 +378,6 @@
 # define SSL_GOST89MAC12         0x00000100U
 # define SSL_GOST12_512          0x00000200U
 
-/* Bits for algorithm_ssl (protocol version) */
-# define SSL_SSLV3               0x00000002U
-# define SSL_TLSV1               0x00000004U
-# define SSL_TLSV1_2             0x00000008U
-
 /*
  * When adding new digest in the ssl_ciph.c and increment SSL_MD_NUM_IDX make
  * sure to update this constant too
@@ -517,7 +512,10 @@ struct ssl_cipher_st {
     uint32_t algorithm_auth; /* server authentication */
     uint32_t algorithm_enc;  /* symmetric encryption */
     uint32_t algorithm_mac;  /* symmetric authentication */
-    uint32_t algorithm_ssl;  /* (major) protocol version */
+    int min_tls;             /* minimum SSL/TLS protocol version */
+    int max_tls;             /* maximum SSL/TLS protocol version */
+    int min_dtls;            /* minimum DTLS protocol version */
+    int max_dtls;            /* maximum DTLS protocol version */
     uint32_t algo_strength;  /* strength and export flags */
     uint32_t algorithm2;     /* Extra flags */
     int32_t strength_bits;   /* Number of bits really used */
@@ -1347,8 +1345,13 @@ typedef struct ssl3_state_st {
          */
         uint32_t mask_k;
         uint32_t mask_a;
-        /* Client only */
-        uint32_t mask_ssl;
+        /*
+         * The following are used by the client to see if a cipher is allowed or
+         * not.  It contains the minimum and maximum version the client's using
+         * based on what it knows so far.
+         */
+        int min_ver;
+        int max_ver;
     } tmp;
 
     /* Connection binding to prevent renegotiation attacks */
@@ -1871,7 +1874,7 @@ struct openssl_ssl_test_functions {
 # endif
 };
 
-const char *version_to_string(int version);
+const char *ssl_protocol_to_string(int version);
 
 # ifndef OPENSSL_UNIT_TEST
 
