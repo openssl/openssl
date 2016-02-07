@@ -693,7 +693,7 @@ int ssl_allow_compression(SSL *s)
     return ssl_security(s, SSL_SECOP_COMPRESSION, 0, 0, NULL);
 }
 
-static int version_cmp(SSL *s, int a, int b)
+static int version_cmp(const SSL *s, int a, int b)
 {
     int dtls = SSL_IS_DTLS(s);
 
@@ -764,7 +764,7 @@ static const version_info dtls_version_table[] = {
  *
  * Returns 0 on success, or an SSL error reason on failure.
  */
-static int ssl_method_error(SSL *s, const SSL_METHOD *method)
+static int ssl_method_error(const SSL *s, const SSL_METHOD *method)
 {
     int version = method->version;
 
@@ -1006,23 +1006,26 @@ int ssl_choose_client_version(SSL *s, int version)
     return SSL_R_UNSUPPORTED_PROTOCOL;
 }
 
-/*-
- * ssl_set_client_hello_version - Work out what version we should be using for
- * the initial ClientHello if the version is initially (D)TLS_ANY_VERSION.  We
- * apply any explicit SSL_OP_NO_xxx options, the MinProtocol and MaxProtocol
- * configuration commands, any Suite B or FIPS_mode() constraints and any floor
- * imposed by the security level here, so we don't advertise the wrong protocol
- * version to only reject the outcome later.
+/*
+ * ssl_get_client_min_max_version - get minimum and maximum client version
+ * @s: The SSL connection
+ * @min_version: The minimum supported version
+ * @max_version: The maximum supported version
+ *
+ * Work out what version we should be using for the initial ClientHello if the
+ * version is initially (D)TLS_ANY_VERSION.  We apply any explicit SSL_OP_NO_xxx
+ * options, the MinProtocol and MaxProtocol configuration commands, any Suite B
+ * or FIPS_mode() constraints and any floor imposed by the security level here,
+ * so we don't advertise the wrong protocol version to only reject the outcome later.
  *
  * Computing the right floor matters.  If, e.g.,  TLS 1.0 and 1.2 are enabled,
  * TLS 1.1 is disabled, but the security level, Suite-B  and/or MinProtocol
  * only allow TLS 1.2, we want to advertise TLS1.2, *not* TLS1.
  *
- * @s: client SSL handle.
- *
- * Returns 0 on success or an SSL error reason number on failure.
+ * Returns 0 on success or an SSL error reason number on failure.  On failure
+ * min_version and max_version will also be set to 0.
  */
-int ssl_set_client_hello_version(SSL *s)
+int ssl_get_client_min_max_version(const SSL *s, int *min_version, int *max_version)
 {
     int version;
     int hole;
@@ -1040,7 +1043,7 @@ int ssl_set_client_hello_version(SSL *s)
          * versions they don't want.  If not, then easy to fix, just return
          * ssl_method_error(s, s->method)
          */
-        s->client_version = s->version;
+        *min_version = *max_version = s->version;
         return 0;
     case TLS_ANY_VERSION:
         table = tls_version_table;
@@ -1071,7 +1074,7 @@ int ssl_set_client_hello_version(SSL *s)
      * If we again hit an enabled method after the new hole, it becomes
      * selected, as we start from scratch.
      */
-    version = 0;
+    *min_version = version = 0;
     hole = 1;
     for (vent = table; vent->version != 0; ++vent) {
         /*
@@ -1087,18 +1090,40 @@ int ssl_set_client_hello_version(SSL *s)
             hole = 1;
         } else if (!hole) {
             single = NULL;
+            *min_version = method->version;
         } else {
             version = (single = method)->version;
+            *min_version = version;
             hole = 0;
         }
     }
+
+    *max_version = version;
 
     /* Fail if everything is disabled */
     if (version == 0)
         return SSL_R_NO_PROTOCOLS_AVAILABLE;
 
-    if (single != NULL)
-        s->method = single;
-    s->client_version = s->version = version;
+    return 0;
+}
+
+/*
+ * ssl_set_client_hello_version - Work out what version we should be using for
+ * the initial ClientHello.
+ *
+ * @s: client SSL handle.
+ *
+ * Returns 0 on success or an SSL error reason number on failure.
+ */
+int ssl_set_client_hello_version(SSL *s)
+{
+    int min, max, ret;
+
+    ret = ssl_get_client_min_max_version(s, &min, &max);
+
+    if (ret != 0)
+        return ret;
+
+    s->client_version = s->version = max;
     return 0;
 }
