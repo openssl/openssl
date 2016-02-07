@@ -1636,7 +1636,7 @@ typedef struct cert_st {
     custom_ext_methods cli_ext;
     custom_ext_methods srv_ext;
     /* Security callback */
-    int (*sec_cb) (SSL *s, SSL_CTX *ctx, int op, int bits, int nid,
+    int (*sec_cb) (const SSL *s, const SSL_CTX *ctx, int op, int bits, int nid,
                    void *other, void *ex);
     /* Security level */
     int sec_level;
@@ -1912,8 +1912,8 @@ __owur int ssl_add_cert_chain(SSL *s, CERT_PKEY *cpk, unsigned long *l);
 __owur int ssl_build_cert_chain(SSL *s, SSL_CTX *ctx, int flags);
 __owur int ssl_cert_set_cert_store(CERT *c, X509_STORE *store, int chain, int ref);
 
-__owur int ssl_security(SSL *s, int op, int bits, int nid, void *other);
-__owur int ssl_ctx_security(SSL_CTX *ctx, int op, int bits, int nid, void *other);
+__owur int ssl_security(const SSL *s, int op, int bits, int nid, void *other);
+__owur int ssl_ctx_security(const SSL_CTX *ctx, int op, int bits, int nid, void *other);
 
 int ssl_undefined_function(SSL *s);
 __owur int ssl_undefined_void_function(void);
