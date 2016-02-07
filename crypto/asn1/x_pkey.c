@@ -77,6 +77,8 @@ X509_PKEY *X509_PKEY_new(void)
 
     return ret;
 err:
+    X509_ALGOR_free(ret->enc_algor);
+    ASN1_OCTET_STRING_free(ret->enc_pkey);
     X509_PKEY_free(ret);
     ASN1err(ASN1_F_X509_PKEY_NEW, ERR_R_MALLOC_FAILURE);
     return NULL;
