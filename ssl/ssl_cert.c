@@ -132,7 +132,7 @@
 #include "internal/threads.h"
 #include "ssl_locl.h"
 
-static int ssl_security_default_callback(SSL *s, SSL_CTX *ctx, int op,
+static int ssl_security_default_callback(const SSL *s, const SSL_CTX *ctx, int op,
                                          int bits, int nid, void *other,
                                          void *ex);
 
@@ -1062,7 +1062,7 @@ int ssl_cert_set_cert_store(CERT *c, X509_STORE *store, int chain, int ref)
     return 1;
 }
 
-static int ssl_security_default_callback(SSL *s, SSL_CTX *ctx, int op,
+static int ssl_security_default_callback(const SSL *s, const SSL_CTX *ctx, int op,
                                          int bits, int nid, void *other,
                                          void *ex)
 {
@@ -1144,12 +1144,12 @@ static int ssl_security_default_callback(SSL *s, SSL_CTX *ctx, int op,
     return 1;
 }
 
-int ssl_security(SSL *s, int op, int bits, int nid, void *other)
+int ssl_security(const SSL *s, int op, int bits, int nid, void *other)
 {
     return s->cert->sec_cb(s, NULL, op, bits, nid, other, s->cert->sec_ex);
 }
 
-int ssl_ctx_security(SSL_CTX *ctx, int op, int bits, int nid, void *other)
+int ssl_ctx_security(const SSL_CTX *ctx, int op, int bits, int nid, void *other)
 {
     return ctx->cert->sec_cb(NULL, ctx, op, bits, nid, other,
                              ctx->cert->sec_ex);
