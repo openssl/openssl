@@ -3060,7 +3060,7 @@ SSL_METHOD *ssl_bad_method(int ver)
     return (NULL);
 }
 
-const char *version_to_string(int version)
+const char *ssl_protocol_to_string(int version)
 {
     if (version == TLS1_2_VERSION)
         return "TLSv1.2";
@@ -3082,7 +3082,7 @@ const char *version_to_string(int version)
 
 const char *SSL_get_version(const SSL *s)
 {
-    return version_to_string(s->version);
+    return ssl_protocol_to_string(s->version);
 }
 
 SSL *SSL_dup(SSL *s)

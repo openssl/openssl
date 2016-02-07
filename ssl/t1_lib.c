@@ -982,24 +982,21 @@ int tls12_check_peer_sigalg(const EVP_MD **pmd, SSL *s,
 }
 
 /*
- * Get a mask of disabled algorithms: an algorithm is disabled if it isn't
- * supported or doesn't appear in supported signature algorithms. Unlike
- * ssl_cipher_get_disabled this applies to a specific session and not global
- * settings.
+ * Set a mask of disabled algorithms: an algorithm is disabled if it isn't
+ * supported, doesn't appear in supported signature algorithms, isn't supported
+ * by the enabled protocol versions or by the security level.
+ *
+ * This function should only be used for checking which ciphers are supported
+ * by the client.
+ *
+ * Call ssl_cipher_disabled() to check that it's enabled or not.
  */
 void ssl_set_client_disabled(SSL *s)
 {
     s->s3->tmp.mask_a = 0;
     s->s3->tmp.mask_k = 0;
-    /* Don't allow TLS 1.2 only ciphers if we don't suppport them */
-    if (!SSL_CLIENT_USE_TLS1_2_CIPHERS(s))
-        s->s3->tmp.mask_ssl = SSL_TLSV1_2;
-    else
-        s->s3->tmp.mask_ssl = 0;
-    /* Disable TLS 1.0 ciphers if using SSL v3 */
-    if (s->client_version == SSL3_VERSION)
-        s->s3->tmp.mask_ssl |= SSL_TLSV1;
     ssl_set_sig_mask(&s->s3->tmp.mask_a, s, SSL_SECOP_SIGALG_MASK);
+    ssl_get_client_min_max_version(s, &s->s3->tmp.min_ver, &s->s3->tmp.max_ver);
 # ifndef OPENSSL_NO_PSK
     /* with PSK there must be client callback set */
     if (!s->psk_client_callback) {
@@ -1015,12 +1012,28 @@ void ssl_set_client_disabled(SSL *s)
 #endif
 }
 
+/*
+ * ssl_cipher_disabled - check that a cipher is disabled or not
+ * @s: SSL connection that you want to use the cipher on
+ * @c: cipher to check
+ * @op: Security check that you want to do
+ *
+ * Returns 1 when it's disabled, 0 when enabled.
+ */
 int ssl_cipher_disabled(SSL *s, const SSL_CIPHER *c, int op)
 {
-    if (c->algorithm_ssl & s->s3->tmp.mask_ssl
-        || c->algorithm_mkey & s->s3->tmp.mask_k
+    if (c->algorithm_mkey & s->s3->tmp.mask_k
         || c->algorithm_auth & s->s3->tmp.mask_a)
         return 1;
+    if (s->s3->tmp.max_ver == 0)
+        return 1;
+    if (!SSL_IS_DTLS(s) && ((c->min_tls > s->s3->tmp.max_ver)
+            || (c->max_tls < s->s3->tmp.min_ver)))
+        return 1;
+    if (SSL_IS_DTLS(s) && (DTLS_VERSION_GT(c->min_dtls, s->s3->tmp.max_ver)
+            || DTLS_VERSION_LT(c->max_dtls, s->s3->tmp.min_ver)))
+        return 1;
+
     return !ssl_security(s, op, c->strength_bits, 0, (void *)c);
 }
 
