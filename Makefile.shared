@@ -11,8 +11,8 @@ CFLAGS=$(CFLAG)
 # LDFLAGS contains flags to be used when temporary object files (when building
 # shared libraries) are created, or when an application is linked.
 # SHARED_LDFLAGS contains flags to be used when the shared library is created.
-LDFLAGS=
-SHARED_LDFLAGS=
+LDFLAGS=$(LDFLAG)
+SHARED_LDFLAGS=$(SHARED_LDFLAG)
 
 NM=nm
 
@@ -92,9 +92,11 @@ CALC_VERSIONS=	\
 LINK_APP=	\
   ( $(SET_X);   \
     LIBDEPS="$${LIBDEPS:-$(LIBDEPS)}"; \
-    LDCMD="$${LDCMD:-$(CC)}"; LDFLAGS="$${LDFLAGS:-$(CFLAGS)}"; \
+    LDCMD="$${LDCMD:-$(CC)}"; LDFLAGS="$${LDFLAGS:-$(CFLAGS) $(LDFLAGS)}"; \
     LIBPATH=`for x in $$LIBDEPS; do echo $$x; done | sed -e 's/^ *-L//;t' -e d | uniq`; \
     LIBPATH=`echo $$LIBPATH | sed -e 's/ /:/g'`; \
+    echo LD_LIBRARY_PATH=$$LIBPATH:$$LD_LIBRARY_PATH \
+        $${LDCMD} $${LDFLAGS} -o $${APPNAME:=$(APPNAME)} $(OBJECTS) $${LIBDEPS}; \
     LD_LIBRARY_PATH=$$LIBPATH:$$LD_LIBRARY_PATH \
     $${LDCMD} $${LDFLAGS} -o $${APPNAME:=$(APPNAME)} $(OBJECTS) $${LIBDEPS} )
 
@@ -105,6 +107,10 @@ LINK_SO=	\
     SHAREDFLAGS="$${SHAREDFLAGS:-$(CFLAGS) $(SHARED_LDFLAGS)}"; \
     LIBPATH=`for x in $$LIBDEPS; do echo $$x; done | sed -e 's/^ *-L//;t' -e d | uniq`; \
     LIBPATH=`echo $$LIBPATH | sed -e 's/ /:/g'`; \
+    echo LD_LIBRARY_PATH=$$LIBPATH:$$LD_LIBRARY_PATH \
+         $${SHAREDCMD} $${SHAREDFLAGS} \
+	     -o $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX \
+	     $$ALLSYMSFLAGS $$SHOBJECTS $$NOALLSYMSFLAGS $$LIBDEPS; \
     LD_LIBRARY_PATH=$$LIBPATH:$$LD_LIBRARY_PATH \
     $${SHAREDCMD} $${SHAREDFLAGS} \
 	-o $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX \
@@ -133,9 +139,9 @@ LINK_SO_O=	SHOBJECTS="$(LIBEXTRAS)"; $(LINK_SO)
 LINK_SO_A_VIA_O=	\
   SHOBJECTS=lib$(LIBNAME).o; \
   ALL=$$ALLSYMSFLAGS; ALLSYMSFLAGS=; NOALLSYMSFLAGS=; \
-  ( $(SET_X); \
+  ( echo ld $(LDFLAGS) -r -o lib$(LIBNAME).o $$ALL lib$(LIBNAME).a $(LIBEXTRAS); \
     ld $(LDFLAGS) -r -o lib$(LIBNAME).o $$ALL lib$(LIBNAME).a $(LIBEXTRAS) ); \
-  $(LINK_SO) && rm -f lib$(LIBNAME).o
+  $(LINK_SO) && ( echo rm -f lib$(LIBNAME).o; rm -f lib$(LIBNAME).o )
 
 LINK_SO_A_UNPACKED=	\
   UNPACKDIR=link_tmp.$$$$; rm -rf $$UNPACKDIR; mkdir $$UNPACKDIR; \
@@ -153,7 +159,7 @@ DO_GNU_SO=$(CALC_VERSIONS); \
 	NOALLSYMSFLAGS='-Wl,--no-whole-archive'; \
 	SHAREDFLAGS="$(CFLAGS) $(SHARED_LDFLAGS) -shared -Wl,-Bsymbolic -Wl,-soname=$$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX"
 
-DO_GNU_APP=LDFLAGS="$(CFLAGS) -Wl,-rpath,$(LIBRPATH)"
+DO_GNU_APP=LDFLAGS="$(CFLAGS) $(LDFLAGS) -Wl,-rpath,$(LIBRPATH)"
 
 #This is rather special.  It's a special target with which one can link
 #applications without bothering with any features that have anything to
@@ -203,7 +209,7 @@ link_a.bsd:
 	fi; $(LINK_SO_A)
 link_app.bsd:
 	@if $(DETECT_GNU_LD); then $(DO_GNU_APP); else \
-	LDFLAGS="$(CFLAGS) -Wl,-rpath,$(LIBPATH)"; \
+	LDFLAGS="$(CFLAGS) $(LDFLAGS) -Wl,-rpath,$(LIBPATH)"; \
 	fi; $(LINK_APP)
 
 # For Darwin AKA Mac OS/X (dyld)
@@ -357,7 +363,7 @@ link_app.alpha-osf1:
 	@if $(DETECT_GNU_LD); then \
 		$(DO_GNU_APP); \
 	else \
-		LDFLAGS="$(CFLAGS) -rpath $(LIBRPATH)"; \
+		LDFLAGS="$(CFLAGS) $(LDFLAGS) -rpath $(LIBRPATH)"; \
 	fi; \
 	$(LINK_APP)
 
@@ -398,7 +404,7 @@ link_app.solaris:
 	@ if $(DETECT_GNU_LD); then \
 		$(DO_GNU_APP); \
 	else \
-		LDFLAGS="$(CFLAGS) -R $(LIBRPATH)"; \
+		LDFLAGS="$(CFLAGS) $(LDFLAGS) -R $(LIBRPATH)"; \
 	fi; \
 	$(LINK_APP)
 
@@ -493,7 +499,7 @@ link_a.irix:
 	fi; \
 	$(LINK_SO_A)
 link_app.irix:
-	@LDFLAGS="$(CFLAGS) -Wl,-rpath,$(LIBRPATH)"; \
+	@LDFLAGS="$(CFLAGS) $(LDFLAGS) -Wl,-rpath,$(LIBRPATH)"; \
 	$(LINK_APP)
 
 # 32-bit PA-RISC HP-UX embeds the -L pathname of libs we link with, so
@@ -532,7 +538,7 @@ link_a.hpux:
 	$(LINK_SO_A) && chmod a=rx $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX
 link_app.hpux:
 	@if $(DETECT_GNU_LD); then $(DO_GNU_APP); else \
-	LDFLAGS="$(CFLAGS) -Wl,+s,+cdp,../:,+cdp,./:,+b,$(LIBRPATH)"; \
+	LDFLAGS="$(CFLAGS) $(LDFLAGS) -Wl,+s,+cdp,../:,+cdp,./:,+b,$(LIBRPATH)"; \
 	fi; \
 	$(LINK_APP)
 
@@ -557,7 +563,7 @@ link_a.aix:
 	SHAREDFLAGS='$(CFLAGS) $(SHARED_LDFLAGS) -Wl,-bexpall,-bnolibpath,-bM:SRE'; \
 	$(LINK_SO_A_VIA_O)
 link_app.aix:
-	LDFLAGS="$(CFLAGS) -Wl,-brtl,-blibpath:$(LIBRPATH):$${LIBPATH:-/usr/lib:/lib}"; \
+	LDFLAGS="$(CFLAGS) $(LDFLAGS) -Wl,-brtl,-blibpath:$(LIBRPATH):$${LIBPATH:-/usr/lib:/lib}"; \
 	$(LINK_APP)
 
 

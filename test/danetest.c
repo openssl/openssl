@@ -471,6 +471,8 @@ int main(int argc, char *argv[])
     CAfile = argv[2];
     tlsafile = argv[3];
 
+    bio_err = BIO_new_fp(stderr, BIO_NOCLOSE | BIO_FP_TEXT);
+
     p = getenv("OPENSSL_DEBUG_MEMORY");
     if (p != NULL && strcmp(p, "on") == 0)
         CRYPTO_set_mem_debug(1);
@@ -482,8 +484,6 @@ int main(int argc, char *argv[])
                 progname, tlsafile, strerror(errno));
         return 0;
     }
-
-    bio_err = BIO_new_fp(stderr, BIO_NOCLOSE | BIO_FP_TEXT);
 
     SSL_library_init();
     SSL_load_error_strings();

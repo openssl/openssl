@@ -356,8 +356,9 @@ typedef struct options_st {
     int retval;
     /*
      * value type: - no value (also the value zero), n number, p positive
-     * number, u unsigned, s string, < input file, > output file, f der/pem
-     * format, F any format identifier.  n and u include zero; p does not.
+     * number, u unsigned, l long, s string, < input file, > output file,
+     * f any format, F der/pem format , E der/pem/engine format identifier.
+     * l, n and u include zero; p does not.
      */
     int valtype;
     const char *helpstr;
