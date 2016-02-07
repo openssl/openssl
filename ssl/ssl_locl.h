@@ -1871,6 +1871,8 @@ struct openssl_ssl_test_functions {
 # endif
 };
 
+const char *version_to_string(int version);
+
 # ifndef OPENSSL_UNIT_TEST
 
 void ssl_clear_cipher_ctx(SSL *s);
