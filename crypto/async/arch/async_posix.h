@@ -78,7 +78,7 @@ typedef struct async_fibre_st {
 } async_fibre;
 
 #  define async_set_ctx(nctx)  (pthread_setspecific(posixctx , (nctx)) == 0)
-#  define async_get_ctx()      ((async_ctx *)pthread_getspecific(posixctx))
+#  define async_arch_get_ctx() ((async_ctx *)pthread_getspecific(posixctx))
 #  define async_set_pool(p)    (pthread_setspecific(posixpool , (p)) == 0)
 #  define async_get_pool()     ((async_pool *)pthread_getspecific(posixpool))
 

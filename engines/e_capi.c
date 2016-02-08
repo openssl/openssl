@@ -187,6 +187,8 @@ static int cert_select_simple(ENGINE *e, SSL *ssl, STACK_OF(X509) *certs);
 static int cert_select_dialog(ENGINE *e, SSL *ssl, STACK_OF(X509) *certs);
 # endif
 
+void engine_load_capi_internal(void);
+
 typedef PCCERT_CONTEXT(WINAPI *CERTDLG) (HCERTSTORE, HWND, LPCWSTR,
                                          LPCWSTR, DWORD, DWORD, void *);
 typedef HWND(WINAPI *GETCONSWIN) (void);
@@ -592,7 +594,7 @@ static ENGINE *engine_capi(void)
     return ret;
 }
 
-void ENGINE_load_capi(void)
+void engine_load_capi_internal(void)
 {
     /* Copied from eng_[openssl|dyn].c */
     ENGINE *toadd = engine_capi();
@@ -1874,7 +1876,8 @@ OPENSSL_EXPORT
 
 IMPLEMENT_DYNAMIC_CHECK_FN()
 # else
-void ENGINE_load_capi(void)
+void engine_load_capi_internal(void);
+void engine_load_capi_internal(void)
 {
 }
 # endif

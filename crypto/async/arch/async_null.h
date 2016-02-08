@@ -66,7 +66,7 @@ typedef struct async_fibre_st {
 
 
 # define async_set_ctx(nctx)                    0
-# define async_get_ctx()                        ((async_ctx *)NULL)
+# define async_arch_get_ctx()                   ((async_ctx *)NULL)
 # define async_fibre_swapcontext(o,n,r)         0
 # define async_fibre_makecontext(c)             0
 # define async_fibre_free(f)

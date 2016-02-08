@@ -234,7 +234,7 @@ ERR_load_PEM_strings                    242	1_1_0	EXIST::FUNCTION:
 ERR_load_PROXY_strings                  243	1_1_0	NOEXIST::FUNCTION:
 ERR_load_RSA_strings                    244	1_1_0	EXIST::FUNCTION:RSA
 ERR_load_X509_strings                   245	1_1_0	EXIST::FUNCTION:
-ERR_load_crypto_strings                 246	1_1_0	EXIST::FUNCTION:
+ERR_load_crypto_strings                 246	1_1_0	NOEXIST::FUNCTION:
 ERR_load_strings                        247	1_1_0	EXIST::FUNCTION:
 ERR_peek_error                          248	1_1_0	EXIST::FUNCTION:
 ERR_peek_error_line                     249	1_1_0	EXIST::FUNCTION:
@@ -497,8 +497,8 @@ SHA_Final                               505	1_1_0	NOEXIST::FUNCTION:
 SHA_Init                                506	1_1_0	NOEXIST::FUNCTION:
 SHA_Update                              507	1_1_0	NOEXIST::FUNCTION:
 OpenSSL_add_all_algorithms              508	1_1_0	NOEXIST::FUNCTION:
-OpenSSL_add_all_ciphers                 509	1_1_0	EXIST::FUNCTION:
-OpenSSL_add_all_digests                 510	1_1_0	EXIST::FUNCTION:
+OpenSSL_add_all_ciphers                 509	1_1_0	NOEXIST::FUNCTION:
+OpenSSL_add_all_digests                 510	1_1_0	NOEXIST::FUNCTION:
 TXT_DB_create_index                     511	1_1_0	EXIST::FUNCTION:
 TXT_DB_free                             512	1_1_0	EXIST::FUNCTION:
 TXT_DB_get_by_index                     513	1_1_0	EXIST::FUNCTION:
@@ -1965,7 +1965,7 @@ X509_REVOKED_set_serialNumber           2543	1_1_0	EXIST::FUNCTION:
 X509_print_ex                           2544	1_1_0	EXIST::FUNCTION:
 OCSP_ONEREQ_get1_ext_d2i                2545	1_1_0	EXIST::FUNCTION:
 ENGINE_register_all_RAND                2546	1_1_0	EXIST::FUNCTION:ENGINE
-ENGINE_load_dynamic                     2547	1_1_0	EXIST::FUNCTION:ENGINE
+ENGINE_load_dynamic                     2547	1_1_0	NOEXIST::FUNCTION:
 PBKDF2PARAM_it                          2548	1_1_0	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:
 PBKDF2PARAM_it                          2548	1_1_0	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:
 EXTENDED_KEY_USAGE_new                  2549	1_1_0	EXIST::FUNCTION:
@@ -2046,7 +2046,7 @@ SXNET_it                                2613	1_1_0	EXIST:EXPORT_VAR_AS_FUNCTION:
 UI_dup_input_boolean                    2614	1_1_0	EXIST::FUNCTION:
 PKCS12_add_CSPName_asc                  2615	1_1_0	EXIST::FUNCTION:
 EC_POINT_is_at_infinity                 2616	1_1_0	EXIST::FUNCTION:EC
-ENGINE_load_cryptodev                   2617	1_1_0	EXIST::FUNCTION:ENGINE
+ENGINE_load_cryptodev                   2617	1_1_0	NOEXIST::FUNCTION:
 DSO_convert_filename                    2618	1_1_0	EXIST::FUNCTION:
 POLICYQUALINFO_it                       2619	1_1_0	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:
 POLICYQUALINFO_it                       2619	1_1_0	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:
@@ -2068,7 +2068,7 @@ PKCS7_ATTR_SIGN_it                      2632	1_1_0	EXIST:EXPORT_VAR_AS_FUNCTION:
 UI_add_error_string                     2633	1_1_0	EXIST::FUNCTION:
 KRB5_CHECKSUM_free                      2634	1_1_0	NOEXIST::FUNCTION:
 OCSP_REQUEST_get_ext                    2635	1_1_0	EXIST::FUNCTION:
-ENGINE_load_ubsec                       2636	1_1_0	EXIST::FUNCTION:ENGINE,STATIC_ENGINE
+ENGINE_load_ubsec                       2636	1_1_0	NOEXIST::FUNCTION:
 ENGINE_register_all_digests             2637	1_1_0	EXIST::FUNCTION:ENGINE
 PKEY_USAGE_PERIOD_it                    2638	1_1_0	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:
 PKEY_USAGE_PERIOD_it                    2638	1_1_0	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:
@@ -2095,7 +2095,7 @@ OCSP_CERTSTATUS_free                    2653	1_1_0	EXIST::FUNCTION:
 _ossl_old_des_crypt                     2654	1_1_0	NOEXIST::FUNCTION:
 ASN1_item_i2d                           2655	1_1_0	EXIST::FUNCTION:
 EVP_DecryptFinal_ex                     2656	1_1_0	EXIST::FUNCTION:
-ENGINE_load_openssl                     2657	1_1_0	EXIST::FUNCTION:ENGINE
+ENGINE_load_openssl                     2657	1_1_0	NOEXIST::FUNCTION:
 ENGINE_get_cmd_defns                    2658	1_1_0	EXIST::FUNCTION:ENGINE
 ENGINE_set_load_privkey_function        2659	1_1_0	EXIST:!VMS:FUNCTION:ENGINE
 ENGINE_set_load_privkey_fn              2659	1_1_0	EXIST:VMS:FUNCTION:ENGINE
@@ -2533,7 +2533,7 @@ OCSP_RESPONSE_new                       3023	1_1_0	EXIST::FUNCTION:
 AES_set_encrypt_key                     3024	1_1_0	EXIST::FUNCTION:AES
 OCSP_resp_count                         3025	1_1_0	EXIST::FUNCTION:
 KRB5_CHECKSUM_new                       3026	1_1_0	NOEXIST::FUNCTION:
-ENGINE_load_cswift                      3027	1_1_0	EXIST::FUNCTION:ENGINE,STATIC_ENGINE
+ENGINE_load_cswift                      3027	1_1_0	NOEXIST::FUNCTION:
 OCSP_onereq_get0_id                     3028	1_1_0	EXIST::FUNCTION:
 ENGINE_set_default_ciphers              3029	1_1_0	EXIST::FUNCTION:ENGINE
 NOTICEREF_it                            3030	1_1_0	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:
@@ -2564,7 +2564,7 @@ ASN1_primitive_free                     3051	1_1_0	NOEXIST::FUNCTION:
 i2d_EXTENDED_KEY_USAGE                  3052	1_1_0	EXIST::FUNCTION:
 i2d_OCSP_SIGNATURE                      3053	1_1_0	EXIST::FUNCTION:
 asn1_enc_save                           3054	1_1_0	NOEXIST::FUNCTION:
-ENGINE_load_nuron                       3055	1_1_0	EXIST::FUNCTION:ENGINE,STATIC_ENGINE
+ENGINE_load_nuron                       3055	1_1_0	NOEXIST::FUNCTION:
 _ossl_old_des_pcbc_encrypt              3056	1_1_0	NOEXIST::FUNCTION:
 PKCS12_MAC_DATA_it                      3057	1_1_0	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:
 PKCS12_MAC_DATA_it                      3057	1_1_0	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:
@@ -2586,7 +2586,7 @@ asn1_get_choice_selector                3071	1_1_0	NOEXIST::FUNCTION:
 i2d_KRB5_CHECKSUM                       3072	1_1_0	NOEXIST::FUNCTION:
 ENGINE_set_table_flags                  3073	1_1_0	EXIST::FUNCTION:ENGINE
 AES_options                             3074	1_1_0	EXIST::FUNCTION:AES
-ENGINE_load_chil                        3075	1_1_0	EXIST::FUNCTION:ENGINE,STATIC_ENGINE
+ENGINE_load_chil                        3075	1_1_0	NOEXIST::FUNCTION:
 OCSP_id_cmp                             3076	1_1_0	EXIST::FUNCTION:
 OCSP_BASICRESP_new                      3077	1_1_0	EXIST::FUNCTION:
 OCSP_REQUEST_get_ext_by_NID             3078	1_1_0	EXIST::FUNCTION:
@@ -2651,7 +2651,7 @@ OCSP_CRLID_it                           3127	1_1_0	EXIST:!EXPORT_VAR_AS_FUNCTION
 OCSP_CRLID_it                           3127	1_1_0	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:
 i2d_KRB5_AUTHENTBODY                    3128	1_1_0	NOEXIST::FUNCTION:
 OCSP_REQUEST_get_ext_count              3129	1_1_0	EXIST::FUNCTION:
-ENGINE_load_atalla                      3130	1_1_0	EXIST::FUNCTION:ENGINE,STATIC_ENGINE
+ENGINE_load_atalla                      3130	1_1_0	NOEXIST::FUNCTION:
 X509_NAME_it                            3131	1_1_0	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:
 X509_NAME_it                            3131	1_1_0	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:
 USERNOTICE_it                           3132	1_1_0	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:
@@ -2745,17 +2745,17 @@ DES_read_2passwords                     3206	1_1_0	EXIST::FUNCTION:DES
 DES_read_password                       3207	1_1_0	EXIST::FUNCTION:DES
 UI_UTIL_read_pw                         3208	1_1_0	EXIST::FUNCTION:
 UI_UTIL_read_pw_string                  3209	1_1_0	EXIST::FUNCTION:
-ENGINE_load_aep                         3210	1_1_0	EXIST::FUNCTION:ENGINE,STATIC_ENGINE
-ENGINE_load_sureware                    3211	1_1_0	EXIST::FUNCTION:ENGINE,STATIC_ENGINE
-OPENSSL_add_all_algorithms_noconf       3212	1_1_0	EXIST:!VMS:FUNCTION:
-OPENSSL_add_all_algo_noconf             3212	1_1_0	EXIST:VMS:FUNCTION:
-OPENSSL_add_all_algorithms_conf         3213	1_1_0	EXIST:!VMS:FUNCTION:
-OPENSSL_add_all_algo_conf               3213	1_1_0	EXIST:VMS:FUNCTION:
+ENGINE_load_aep                         3210	1_1_0	NOEXIST::FUNCTION:
+ENGINE_load_sureware                    3211	1_1_0	NOEXIST::FUNCTION:
+OPENSSL_add_all_algo_noconf             3212	1_1_0	NOEXIST::FUNCTION:
+OPENSSL_add_all_algorithms_noconf       3212	1_1_0	NOEXIST::FUNCTION:
+OPENSSL_add_all_algo_conf               3213	1_1_0	NOEXIST::FUNCTION:
+OPENSSL_add_all_algorithms_conf         3213	1_1_0	NOEXIST::FUNCTION:
 OPENSSL_load_builtin_modules            3214	1_1_0	EXIST::FUNCTION:
 AES_ofb128_encrypt                      3215	1_1_0	EXIST::FUNCTION:AES
 AES_ctr128_encrypt                      3216	1_1_0	NOEXIST::FUNCTION:
 AES_cfb128_encrypt                      3217	1_1_0	EXIST::FUNCTION:AES
-ENGINE_load_4758cca                     3218	1_1_0	EXIST::FUNCTION:ENGINE,STATIC_ENGINE
+ENGINE_load_4758cca                     3218	1_1_0	NOEXIST::FUNCTION:
 _ossl_096_des_random_seed               3219	1_1_0	NOEXIST::FUNCTION:
 EVP_aes_256_ofb                         3220	1_1_0	EXIST::FUNCTION:AES
 EVP_aes_192_ofb                         3221	1_1_0	EXIST::FUNCTION:AES
@@ -2765,7 +2765,7 @@ EVP_aes_128_ofb                         3224	1_1_0	EXIST::FUNCTION:AES
 EVP_aes_192_cfb128                      3225	1_1_0	EXIST::FUNCTION:AES
 CONF_modules_free                       3226	1_1_0	EXIST::FUNCTION:
 NCONF_default                           3227	1_1_0	EXIST::FUNCTION:
-OPENSSL_no_config                       3228	1_1_0	EXIST::FUNCTION:
+OPENSSL_no_config                       3228	1_1_0	NOEXIST::FUNCTION:
 NCONF_WIN32                             3229	1_1_0	EXIST::FUNCTION:
 ASN1_UNIVERSALSTRING_new                3230	1_1_0	EXIST::FUNCTION:
 EVP_des_ede_ecb                         3231	1_1_0	EXIST::FUNCTION:DES
@@ -3086,7 +3086,7 @@ EC_GFp_nist_method                      3529	1_1_0	EXIST::FUNCTION:EC
 STORE_meth_set_modify_fn                3530	1_1_0	NOEXIST::FUNCTION:
 STORE_method_set_modify_function        3530	1_1_0	NOEXIST::FUNCTION:
 STORE_parse_attrs_next                  3531	1_1_0	NOEXIST::FUNCTION:
-ENGINE_load_padlock                     3532	1_1_0	EXIST::FUNCTION:ENGINE,STATIC_ENGINE
+ENGINE_load_padlock                     3532	1_1_0	NOEXIST::FUNCTION:
 EC_GROUP_set_curve_name                 3533	1_1_0	EXIST::FUNCTION:EC
 X509_CERT_PAIR_it                       3534	1_1_0	NOEXIST::FUNCTION:
 STORE_meth_get_revoke_fn                3535	1_1_0	NOEXIST::FUNCTION:
@@ -3637,7 +3637,7 @@ ENGINE_set_ld_ssl_clnt_cert_fn          4044	1_1_0	EXIST:VMS:FUNCTION:ENGINE
 ENGINE_get_ssl_client_cert_function     4045	1_1_0	EXIST:!VMS:FUNCTION:ENGINE
 ENGINE_get_ssl_client_cert_fn           4045	1_1_0	EXIST:VMS:FUNCTION:ENGINE
 ENGINE_load_ssl_client_cert             4046	1_1_0	EXIST::FUNCTION:ENGINE
-ENGINE_load_capi                        4047	1_1_0	EXIST::FUNCTION:ENGINE,STATIC_ENGINE
+ENGINE_load_capi                        4047	1_1_0	NOEXIST::FUNCTION:
 OPENSSL_isservice                       4048	1_1_0	EXIST::FUNCTION:
 FIPS_dsa_sig_decode                     4049	1_1_0	NOEXIST::FUNCTION:
 EVP_CIPHER_CTX_clear_flags              4050	1_1_0	EXIST::FUNCTION:
@@ -4244,7 +4244,7 @@ CRYPTO_nistcts128_encrypt               4636	1_1_0	EXIST::FUNCTION:
 EVP_aes_128_cbc_hmac_sha1               4637	1_1_0	EXIST::FUNCTION:AES
 CRYPTO_gcm128_tag                       4638	1_1_0	EXIST::FUNCTION:
 CRYPTO_ccm128_encrypt_ccm64             4639	1_1_0	EXIST::FUNCTION:
-ENGINE_load_rdrand                      4640	1_1_0	EXIST::FUNCTION:ENGINE
+ENGINE_load_rdrand                      4640	1_1_0	NOEXIST::FUNCTION:
 CRYPTO_ccm128_setiv                     4641	1_1_0	EXIST::FUNCTION:
 CRYPTO_nistcts128_encrypt_block         4642	1_1_0	EXIST::FUNCTION:
 CRYPTO_gcm128_aad                       4643	1_1_0	EXIST::FUNCTION:
@@ -4618,7 +4618,7 @@ X509_get0_uids                          5008	1_1_0	EXIST::FUNCTION:
 X509_aux_print                          5009	1_1_0	EXIST::FUNCTION:STDIO
 TS_RESP_CTX_set_signer_digest           5010	1_1_0	EXIST::FUNCTION:
 TS_CONF_set_signer_digest               5011	1_1_0	EXIST::FUNCTION:
-ENGINE_load_dasync                      5012	1_1_0	EXIST::FUNCTION:ENGINE,STATIC_ENGINE
+ENGINE_load_dasync                      5012	1_1_0	NOEXIST::FUNCTION:
 ASYNC_pause_job                         5013	1_1_0	EXIST::FUNCTION:
 ASYNC_start_job                         5014	1_1_0	EXIST::FUNCTION:
 ASYNC_init_thread                       5015	1_1_0	EXIST::FUNCTION:
@@ -4630,8 +4630,8 @@ ASYNC_get_wait_fd                       5020	1_1_0	EXIST::FUNCTION:
 ERR_load_ASYNC_strings                  5021	1_1_0	EXIST::FUNCTION:
 ASYNC_unblock_pause                     5022	1_1_0	EXIST::FUNCTION:
 ASYNC_block_pause                       5023	1_1_0	EXIST::FUNCTION:
-ASYNC_cleanup                           5024	1_1_0	EXIST::FUNCTION:
-ASYNC_init                              5025	1_1_0	EXIST::FUNCTION:
+ASYNC_cleanup                           5024	1_1_0	NOEXIST::FUNCTION:
+ASYNC_init                              5025	1_1_0	NOEXIST::FUNCTION:
 EVP_MD_CTX_ctrl                         5026	1_1_0	EXIST::FUNCTION:
 EVP_md5_sha1                            5027	1_1_0	EXIST::FUNCTION:MD5
 CRYPTO_free_ex_index                    5028	1_1_0	EXIST::FUNCTION:

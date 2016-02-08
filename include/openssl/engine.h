@@ -387,23 +387,22 @@ int ENGINE_remove(ENGINE *e);
 /* Retrieve an engine from the list by its unique "id" value. */
 ENGINE *ENGINE_by_id(const char *id);
 /* Add all the built-in engines. */
-void ENGINE_load_openssl(void);
-void ENGINE_load_dynamic(void);
+#define ENGINE_load_openssl() \
+    OPENSSL_INIT_crypto_library_start(OPENSSL_INIT_ENGINE_OPENSSL, NULL)
+#define ENGINE_load_dynamic() \
+    OPENSSL_INIT_crypto_library_start(OPENSSL_INIT_ENGINE_DYNAMIC, NULL)
 # ifndef OPENSSL_NO_STATIC_ENGINE
-void ENGINE_load_4758cca(void);
-void ENGINE_load_aep(void);
-void ENGINE_load_atalla(void);
-void ENGINE_load_chil(void);
-void ENGINE_load_cswift(void);
-void ENGINE_load_nuron(void);
-void ENGINE_load_sureware(void);
-void ENGINE_load_ubsec(void);
-void ENGINE_load_padlock(void);
-void ENGINE_load_capi(void);
-void ENGINE_load_dasync(void);
+# define ENGINE_load_padlock() \
+    OPENSSL_INIT_crypto_library_start(OPENSSL_INIT_ENGINE_PADLOCK, NULL)
+#define ENGINE_load_capi() \
+    OPENSSL_INIT_crypto_library_start(OPENSSL_INIT_ENGINE_CAPI, NULL)
+#define ENGINE_load_dasync() \
+    OPENSSL_INIT_crypto_library_start(OPENSSL_INIT_ENGINE_DASYNC, NULL)
 # endif
-void ENGINE_load_cryptodev(void);
-void ENGINE_load_rdrand(void);
+#define ENGINE_load_cryptodev() \
+    OPENSSL_INIT_crypto_library_start(OPENSSL_INIT_ENGINE_CRYPTODEV, NULL)
+#define ENGINE_load_rdrand() \
+    OPENSSL_INIT_crypto_library_start(OPENSSL_INIT_ENGINE_RDRAND, NULL)
 void ENGINE_load_builtin_engines(void);
 
 /*

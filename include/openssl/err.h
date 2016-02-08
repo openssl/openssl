@@ -354,7 +354,10 @@ void ERR_add_error_vdata(int num, va_list args);
 void ERR_load_strings(int lib, ERR_STRING_DATA str[]);
 void ERR_unload_strings(int lib, ERR_STRING_DATA str[]);
 void ERR_load_ERR_strings(void);
-void ERR_load_crypto_strings(void);
+
+#define ERR_load_crypto_strings() \
+    OPENSSL_INIT_crypto_library_start(OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL)
+
 void ERR_free_strings(void);
 
 void ERR_remove_thread_state(const CRYPTO_THREADID *tid);

@@ -27,9 +27,10 @@
  */
 
 #include <openssl/objects.h>
-#include <openssl/engine.h>
+#include <internal/engine.h>
 #include <openssl/evp.h>
 #include <openssl/bn.h>
+#include <openssl/crypto.h>
 
 #if (defined(__unix__) || defined(unix)) && !defined(USG) && \
         (defined(OpenBSD) || defined(__FreeBSD__))
@@ -64,7 +65,7 @@
 
 #ifndef HAVE_CRYPTODEV
 
-void ENGINE_load_cryptodev(void)
+void engine_load_cryptodev_internal(void)
 {
     /* This is a NOP on platforms without /dev/crypto */
     return;
@@ -136,7 +137,7 @@ static int cryptodev_dh_compute_key(unsigned char *key, const BIGNUM *pub_key,
 #endif
 static int cryptodev_ctrl(ENGINE *e, int cmd, long i, void *p,
                           void (*f) (void));
-void ENGINE_load_cryptodev(void);
+void engine_load_cryptodev_internal(void);
 
 static const ENGINE_CMD_DEFN cryptodev_defns[] = {
     {0, NULL, NULL, 0}
@@ -1619,7 +1620,7 @@ cryptodev_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f) (void))
     return (1);
 }
 
-void ENGINE_load_cryptodev(void)
+void engine_load_cryptodev_internal(void)
 {
     ENGINE *engine = ENGINE_new();
     int fd;

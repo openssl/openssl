@@ -58,10 +58,11 @@
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include <openssl/evp.h>
+#include <internal/evp_int.h>
 #include <openssl/pkcs12.h>
 #include <openssl/objects.h>
 
-void OpenSSL_add_all_ciphers(void)
+void openssl_add_all_ciphers_internal(void)
 {
 
 #ifndef OPENSSL_NO_DES

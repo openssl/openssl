@@ -74,8 +74,6 @@ typedef struct async_job_st ASYNC_JOB;
 #define ASYNC_PAUSE    2
 #define ASYNC_FINISH   3
 
-int ASYNC_init(int init_thread, size_t max_size, size_t init_size);
-void ASYNC_cleanup(int cleanupthread);
 int ASYNC_init_thread(size_t max_size, size_t init_size);
 void ASYNC_cleanup_thread(void);
 

@@ -72,14 +72,6 @@ int async_global_init(void)
     return 1;
 }
 
-int async_local_init(void)
-{
-    if (!async_set_ctx(NULL) || ! async_set_pool(NULL))
-        return 0;
-
-    return 1;
-}
-
 void async_local_cleanup(void)
 {
 }
