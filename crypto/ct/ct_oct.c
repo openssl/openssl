@@ -66,8 +66,8 @@
 # include <openssl/x509v3.h>
 # include "crypto/include/internal/ct_int.h"
 
-# define n2s(c,s)        ((s=(((unsigned int)(c[0]))<< 8)| \
-                             (((unsigned int)(c[1]))    )),c+=2)
+# define n2s(c,s)        ((s=(((unsigned int)((c)[0]))<< 8)| \
+                             (((unsigned int)((c)[1]))    )),c+=2)
 
 # define s2n(s,c)        ((c[0]=(unsigned char)(((s)>> 8)&0xff), \
                            c[1]=(unsigned char)(((s)    )&0xff)),c+=2)
