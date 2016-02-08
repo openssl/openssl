@@ -355,6 +355,8 @@ void X509_STORE_CTX_set_depth(X509_STORE_CTX *ctx, int depth);
 # define         X509_V_ERR_HOSTNAME_MISMATCH                    62
 # define         X509_V_ERR_EMAIL_MISMATCH                       63
 # define         X509_V_ERR_IP_ADDRESS_MISMATCH                  64
+/* DANE TLSA errors */
+# define         X509_V_ERR_DANE_NO_MATCH                        65
 
 /* The application is not happy */
 # define         X509_V_ERR_APPLICATION_VERIFICATION             50

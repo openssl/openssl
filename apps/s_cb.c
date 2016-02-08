@@ -167,7 +167,7 @@ int verify_callback(int ok, X509_STORE_CTX *ctx)
         if (verify_depth >= depth) {
             if (!verify_return_error)
                 ok = 1;
-            verify_error = X509_V_OK;
+            verify_error = err;
         } else {
             ok = 0;
             verify_error = X509_V_ERR_CERT_CHAIN_TOO_LONG;
@@ -1086,6 +1086,80 @@ static void print_raw_cipherlist(SSL *s)
     BIO_puts(bio_err, "\n");
 }
 
+/*
+ * Hex encoder for TLSA RRdata, not ':' delimited.
+ */
+static char *hexencode(const unsigned char *data, size_t len)
+{
+    static const char *hex = "0123456789abcdef";
+    char *out;
+    char *cp;
+    size_t outlen = 2 * len + 1;
+    int ilen = (int) outlen;
+
+    if (outlen < len || ilen < 0 || outlen != (size_t)ilen) {
+        BIO_printf(bio_err, "%s: %" PRIu64 "-byte buffer too large to hexencode\n",
+                   opt_getprog(), (uint64_t)len);
+        exit(1);
+    }
+    cp = out = app_malloc(ilen, "TLSA hex data buffer");
+
+    while (ilen-- > 0) {
+        *cp++ = hex[(*data >> 4) & 0x0f];
+        *cp++ = hex[*data++ & 0x0f];
+    }
+    *cp = '\0';
+    return out;
+}
+
+void print_verify_detail(SSL *s, BIO *bio)
+{
+    int mdpth;
+    EVP_PKEY *mspki;
+    long verify_err = SSL_get_verify_result(s);
+
+    if (verify_err == X509_V_OK) {
+        const char *peername = SSL_get0_peername(s);
+
+        BIO_printf(bio, "Verification: OK\n");
+        if (peername != NULL)
+            BIO_printf(bio, "Verified peername: %s\n", peername);
+    } else {
+        const char *reason = X509_verify_cert_error_string(verify_err);
+
+        BIO_printf(bio, "Verification error: %s\n", reason);
+    }
+
+    if ((mdpth = SSL_get0_dane_authority(s, NULL, &mspki)) >= 0) {
+        uint8_t usage, selector, mtype;
+        const unsigned char *data = NULL;
+        size_t dlen = 0;
+        char *hexdata;
+
+        mdpth = SSL_get0_dane_tlsa(s, &usage, &selector, &mtype, &data, &dlen);
+
+        /*
+         * The TLSA data field can be quite long when it is a certificate,
+         * public key or even a SHA2-512 digest.  Because the initial octets of
+         * ASN.1 certificates and public keys contain mostly boilerplate OIDs
+         * and lengths, we show the last 12 bytes of the data instead, as these
+         * are more likely to distinguish distinct TLSA records.
+         */
+#define TLSA_TAIL_SIZE 12
+        if (dlen > TLSA_TAIL_SIZE)
+            hexdata = hexencode(data + dlen - TLSA_TAIL_SIZE, TLSA_TAIL_SIZE);
+        else
+            hexdata = hexencode(data, dlen);
+        BIO_printf(bio, "DANE TLSA %d %d %d %s%s %s at depth %d\n",
+                   usage, selector, mtype,
+                   (dlen > TLSA_TAIL_SIZE) ? "..." : "", hexdata,
+                   (mspki != NULL) ? "signed the certificate" :
+                   mdpth ? "matched TA certificate" : "matched EE certificate",
+                   mdpth);
+        OPENSSL_free(hexdata);
+    }
+}
+
 void print_ssl_summary(SSL *s)
 {
     const SSL_CIPHER *c;
@@ -1100,12 +1174,14 @@ void print_ssl_summary(SSL *s)
     peer = SSL_get_peer_certificate(s);
     if (peer) {
         int nid;
+
         BIO_puts(bio_err, "Peer certificate: ");
         X509_NAME_print_ex(bio_err, X509_get_subject_name(peer),
                            0, XN_FLAG_ONELINE);
         BIO_puts(bio_err, "\n");
         if (SSL_get_peer_signature_nid(s, &nid))
             BIO_printf(bio_err, "Hash used: %s\n", OBJ_nid2sn(nid));
+        print_verify_detail(s, bio_err);
     } else
         BIO_puts(bio_err, "No peer certificate\n");
     X509_free(peer);

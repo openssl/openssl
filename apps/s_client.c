@@ -2461,9 +2461,6 @@ static void print_stuff(BIO *bio, SSL *s, int full)
     const SSL_CIPHER *c;
     X509_NAME *xn;
     int i;
-    int mdpth;
-    EVP_PKEY *mspki;
-    const char *peername;
 #ifndef OPENSSL_NO_COMP
     const COMP_METHOD *comp, *expansion;
 #endif
@@ -2525,18 +2522,7 @@ static void print_stuff(BIO *bio, SSL *s, int full)
                    BIO_number_read(SSL_get_rbio(s)),
                    BIO_number_written(SSL_get_wbio(s)));
     }
-    if ((mdpth = SSL_get0_dane_authority(s, NULL, &mspki)) >= 0) {
-        uint8_t usage, selector, mtype;
-        mdpth = SSL_get0_dane_tlsa(s, &usage, &selector, &mtype, NULL, NULL);
-        BIO_printf(bio, "DANE TLSA %d %d %d %s at depth %d\n",
-                   usage, selector, mtype,
-                   (mspki != NULL) ? "TA public key verified certificate" :
-                   mdpth ? "matched TA certificate" : "matched EE certificate",
-                   mdpth);
-    }
-    if (SSL_get_verify_result(s) == X509_V_OK &&
-        (peername = SSL_get0_peername(s)) != NULL)
-        BIO_printf(bio, "Verified peername: %s\n", peername);
+    print_verify_detail(s, bio);
     BIO_printf(bio, (SSL_session_reused(s) ? "---\nReused, " : "---\nNew, "));
     c = SSL_get_current_cipher(s);
     BIO_printf(bio, "%s, Cipher is %s\n",

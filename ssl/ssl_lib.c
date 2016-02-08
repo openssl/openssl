@@ -913,7 +913,7 @@ int SSL_get0_dane_authority(SSL *s, X509 **mcert, EVP_PKEY **mspki)
 {
     struct dane_st *dane = &s->dane;
 
-    if (!DANETLS_ENABLED(dane))
+    if (!DANETLS_ENABLED(dane) || s->verify_result != X509_V_OK)
         return -1;
     if (dane->mtlsa) {
         if (mcert)
@@ -929,7 +929,7 @@ int SSL_get0_dane_tlsa(SSL *s, uint8_t *usage, uint8_t *selector,
 {
     struct dane_st *dane = &s->dane;
 
-    if (!DANETLS_ENABLED(dane))
+    if (!DANETLS_ENABLED(dane) || s->verify_result != X509_V_OK)
         return -1;
     if (dane->mtlsa) {
         if (usage)

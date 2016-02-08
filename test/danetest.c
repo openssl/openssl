@@ -413,7 +413,15 @@ static int test_tlsafile(SSL_CTX *ctx, const char *basename,
         ok = verify_chain(ssl, chain);
         sk_X509_pop_free(chain, X509_free);
         err = SSL_get_verify_result(ssl);
+        /*
+         * Peek under the hood, normally TLSA match data is hidden when
+         * verification fails, we can obtain any suppressed data by setting the
+         * verification result to X509_V_OK before looking.
+         */
+        SSL_set_verify_result(ssl, X509_V_OK);
         mdpth = SSL_get0_dane_authority(ssl, NULL, NULL);
+        /* Not needed any more, but lead by example and put the error back. */
+        SSL_set_verify_result(ssl, err);
         SSL_free(ssl);
 
         if (ok < 0) {

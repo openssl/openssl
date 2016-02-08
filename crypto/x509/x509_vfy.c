@@ -2631,7 +2631,7 @@ static int check_dane_pkeys(X509_STORE_CTX *ctx)
             X509_verify(cert, t->spki) <= 0)
             continue;
 
-        /* Clear PKIX-?? matches that failed to panned out to a full chain */
+        /* Clear any PKIX-?? matches that failed to extend to a full chain */
         X509_free(dane->mcert);
         dane->mcert = NULL;
 
@@ -2711,7 +2711,7 @@ static int dane_verify(X509_STORE_CTX *ctx)
             return 0;
         ctx->current_cert = cert;
         ctx->error_depth = 0;
-        ctx->error = X509_V_ERR_CERT_UNTRUSTED;
+        ctx->error = X509_V_ERR_DANE_NO_MATCH;
         return ctx->verify_cb(0, ctx);
     }
 
@@ -3026,7 +3026,7 @@ static int build_chain(X509_STORE_CTX *ctx)
             ctx->error = X509_V_ERR_CERT_CHAIN_TOO_LONG;
         else if (DANETLS_ENABLED(dane) &&
                  (!DANETLS_HAS_PKIX(dane) || dane->pdpth >= 0))
-            ctx->error = X509_V_ERR_CERT_UNTRUSTED;
+            ctx->error = X509_V_ERR_DANE_NO_MATCH;
         else if (ss && sk_X509_num(ctx->chain) == 1)
             ctx->error = X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT;
         else if (ss)
@@ -3035,8 +3035,6 @@ static int build_chain(X509_STORE_CTX *ctx)
             ctx->error = X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY;
         else
             ctx->error = X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT;
-        if (DANETLS_ENABLED(dane))
-            dane_reset(dane);
         return ctx->verify_cb(0, ctx);
     }
 }

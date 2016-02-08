@@ -69,11 +69,11 @@
 
 const char *X509_verify_cert_error_string(long n)
 {
-    static char buf[100];
-
     switch ((int)n) {
     case X509_V_OK:
         return ("ok");
+    case X509_V_ERR_UNSPECIFIED:
+        return ("unspecified certificate verification error");
     case X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT:
         return ("unable to get issuer certificate");
     case X509_V_ERR_UNABLE_TO_GET_CRL:
@@ -202,9 +202,11 @@ const char *X509_verify_cert_error_string(long n)
         return ("Email address mismatch");
     case X509_V_ERR_IP_ADDRESS_MISMATCH:
         return ("IP address mismatch");
+    case X509_V_ERR_DANE_NO_MATCH:
+        return ("No matching DANE TLSA records");
 
     default:
-        BIO_snprintf(buf, sizeof buf, "error number %ld", n);
-        return (buf);
+        /* Printing an error number into a static buffer is not thread-safe */
+        return ("unknown certificate verification error");
     }
 }
