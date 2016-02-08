@@ -89,22 +89,22 @@ typedef enum OPTION_choice {
 
 OPTIONS pkeyutl_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
-    {"in", OPT_IN, '<', "Input file"},
-    {"out", OPT_OUT, '>', "Output file"},
+    {"in", OPT_IN, '<', "Input file - default stdin"},
+    {"out", OPT_OUT, '>', "Output file - default stdout"},
     {"pubin", OPT_PUBIN, '-', "Input is a public key"},
     {"certin", OPT_CERTIN, '-', "Input is a cert with a public key"},
     {"asn1parse", OPT_ASN1PARSE, '-', "asn1parse the output data"},
     {"hexdump", OPT_HEXDUMP, '-', "Hex dump output"},
-    {"sign", OPT_SIGN, '-', "Sign with private key"},
+    {"sign", OPT_SIGN, '-', "Sign input data with private key"},
     {"verify", OPT_VERIFY, '-', "Verify with public key"},
     {"verifyrecover", OPT_VERIFYRECOVER, '-',
      "Verify with public key, recover original data"},
-    {"rev", OPT_REV, '-', "Reverse the input buffer"},
-    {"encrypt", OPT_ENCRYPT, '-', "Encrypt with public key"},
-    {"decrypt", OPT_DECRYPT, '-', "Decrypt with private key"},
+    {"rev", OPT_REV, '-', "Reverse the order of the input buffer"},
+    {"encrypt", OPT_ENCRYPT, '-', "Encrypt input data with public key"},
+    {"decrypt", OPT_DECRYPT, '-', "Decrypt input data with private key"},
     {"derive", OPT_DERIVE, '-', "Derive shared secret"},
     {"sigfile", OPT_SIGFILE, '<', "Signature file (verify operation only)"},
-    {"inkey", OPT_INKEY, 's', "Input key"},
+    {"inkey", OPT_INKEY, 's', "Input private key file"},
     {"peerkey", OPT_PEERKEY, 's', "Peer key file used in key derivation"},
     {"passin", OPT_PASSIN, 's', "Pass phrase source"},
     {"peerform", OPT_PEERFORM, 'E', "Peer key format - default PEM"},
@@ -112,7 +112,8 @@ OPTIONS pkeyutl_options[] = {
     {"pkeyopt", OPT_PKEYOPT, 's', "Public key options as opt:value"},
 #ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
-    {"engine_impl", OPT_ENGINE_IMPL, '-', "Also use engine given by -engine for crypto operations"},
+    {"engine_impl", OPT_ENGINE_IMPL, '-',
+     "Also use engine given by -engine for crypto operations"},
 #endif
     {NULL}
 };
