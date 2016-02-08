@@ -24,7 +24,7 @@ LIBOBJ= p12_add.o p12_asn.o p12_attr.o p12_crpt.o p12_crt.o p12_decr.o \
 
 SRC= $(LIBSRC)
 
-HEADER=	
+HEADER=	p12_lcl.h
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 
