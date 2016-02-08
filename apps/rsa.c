@@ -130,7 +130,7 @@ OPTIONS rsa_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
     {"inform", OPT_INFORM, 'f', "Input format, one of DER NET PEM"},
     {"outform", OPT_OUTFORM, 'f', "Output format, one of DER NET PEM PVK"},
-    {"in", OPT_IN, '<', "Input file"},
+    {"in", OPT_IN, 's', "Input file"},
     {"out", OPT_OUT, '>', "Output file"},
     {"pubin", OPT_PUBIN, '-', "Expect a public key in input file"},
     {"pubout", OPT_PUBOUT, '-', "Output a public key"},

@@ -219,7 +219,7 @@ OPTIONS ca_options[] = {
     {"days", OPT_DAYS, 'p', "Number of days to certify the cert for"},
     {"md", OPT_MD, 's', "md to use; one of md2, md5, sha or sha1"},
     {"policy", OPT_POLICY, 's', "The CA 'policy' to support"},
-    {"keyfile", OPT_KEYFILE, '<', "Private key file"},
+    {"keyfile", OPT_KEYFILE, 's', "Private key"},
     {"keyform", OPT_KEYFORM, 'f', "Private key file format (PEM or ENGINE)"},
     {"passin", OPT_PASSIN, 's'},
     {"key", OPT_KEY, 's', "Key to decode the private key if it is encrypted"},
