@@ -2537,7 +2537,7 @@ static void print_stuff(BIO *bio, SSL *s, int full)
     if (SSL_get_verify_result(s) == X509_V_OK &&
         (peername = SSL_get0_peername(s)) != NULL)
         BIO_printf(bio, "Verified peername: %s\n", peername);
-    BIO_printf(bio, (SSL_cache_hit(s) ? "---\nReused, " : "---\nNew, "));
+    BIO_printf(bio, (SSL_session_reused(s) ? "---\nReused, " : "---\nNew, "));
     c = SSL_get_current_cipher(s);
     BIO_printf(bio, "%s, Cipher is %s\n",
                SSL_CIPHER_get_version(c), SSL_CIPHER_get_name(c));

@@ -300,7 +300,7 @@ SSL_SESSION_get0_peer                   340	1_1_0	EXIST::FUNCTION:
 TLSv1_2_client_method                   341	1_1_0	EXIST::FUNCTION:
 SSL_SESSION_set1_id_context             342	1_1_0	EXIST::FUNCTION:
 TLSv1_2_server_method                   343	1_1_0	EXIST::FUNCTION:
-SSL_cache_hit                           344	1_1_0	EXIST::FUNCTION:
+SSL_session_reused                      344	1_1_0	EXIST::FUNCTION:
 SSL_get0_kssl_ctx                       345	1_1_0	NOEXIST::FUNCTION:
 SSL_set0_kssl_ctx                       346	1_1_0	NOEXIST::FUNCTION:
 SSL_SESSION_get0_id                     347	1_1_0	NOEXIST::FUNCTION:

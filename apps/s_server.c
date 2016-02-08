@@ -2612,7 +2612,7 @@ static int init_ssl_connection(SSL *con)
                        srtp_profile->name);
     }
 #endif
-    if (SSL_cache_hit(con))
+    if (SSL_session_reused(con))
         BIO_printf(bio_s_out, "Reused session-id\n");
     BIO_printf(bio_s_out, "Secure Renegotiation IS%s supported\n",
                SSL_get_secure_renegotiation_support(con) ? "" : " NOT");
@@ -2882,7 +2882,7 @@ static int www_body(const char *hostname, int s, int stype,
 #ifndef OPENSSL_NO_EC
             ssl_print_curves(io, con, 0);
 #endif
-            BIO_printf(io, (SSL_cache_hit(con)
+            BIO_printf(io, (SSL_session_reused(con)
                             ? "---\nReused, " : "---\nNew, "));
             c = SSL_get_current_cipher(con);
             BIO_printf(io, "%s, Cipher is %s\n",
