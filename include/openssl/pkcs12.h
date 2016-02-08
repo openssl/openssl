@@ -115,20 +115,6 @@ typedef struct pkcs12_bag_st PKCS12_BAGS;
 
 #if OPENSSL_API_COMPAT < 0x10100000L
 
-# define M_PKCS12_x5092certbag PKCS12_x5092certbag
-# define M_PKCS12_x509crl2certbag PKCS12_x509crl2certbag
-
-# define M_PKCS12_certbag2x509 PKCS12_certbag2x509
-# define M_PKCS12_certbag2x509crl PKCS12_certbag2x509crl
-
-# define M_PKCS12_unpack_p7data PKCS12_unpack_p7data
-# define M_PKCS12_pack_authsafes PKCS12_pack_authsafes
-# define M_PKCS12_unpack_authsafes PKCS12_unpack_authsafes
-# define M_PKCS12_unpack_p7encdata PKCS12_unpack_p7encdata
-
-# define M_PKCS12_decrypt_skey PKCS12_decrypt_skey
-# define M_PKCS8_decrypt PKCS8_decrypt
-
 # define M_PKCS12_bag_type PKCS12_bag_type
 # define M_PKCS12_cert_bag_type PKCS12_cert_bag_type
 # define M_PKCS12_crl_bag_type PKCS12_cert_bag_type
