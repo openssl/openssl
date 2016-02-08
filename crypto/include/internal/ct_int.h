@@ -322,14 +322,14 @@ int i2o_SCT(const SCT *sct, unsigned char **out);
 
 /*
  * Convert TLS format SCT list to a stack of SCTs.
- * If "a" or "*a" is NULL, a new stack will be created that the caller is 
+ * If "a" or "*a" is NULL, a new stack will be created that the caller is
  * responsible for freeing (by calling SCT_LIST_free).
  * "**pp" and "*pp" must not be NULL.
  * Upon success, "*pp" will point to after the last bytes read, and a stack
  * will be returned.
  * Upon failure, a NULL pointer will be returned, and the position of "*p" is
  * not defined.
- */ 
+ */
 STACK_OF(SCT) *o2i_SCT_LIST(STACK_OF(SCT) **a, const unsigned char **pp,
                             size_t len);
 

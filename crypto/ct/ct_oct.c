@@ -391,24 +391,24 @@ STACK_OF(SCT) *o2i_SCT_LIST(STACK_OF(SCT) **a, const unsigned char **pp,
                             size_t len)
 {
     STACK_OF(SCT) *sk = NULL;
-    size_t listlen, sct_len;
-    SCT *sct;
+    size_t list_len, sct_len;
 
-    if (!pp || !(*pp)) {
+    if (pp == NULL || *pp == NULL) {
         CTerr(CT_F_O2I_SCT_LIST, ERR_R_PASSED_NULL_PARAMETER);
         return NULL;
-    } else if ((len < 2) || (len > MAX_SCT_LIST_SIZE)) {
+    } else if (len < 2 || len > MAX_SCT_LIST_SIZE) {
         CTerr(CT_F_O2I_SCT_LIST, CT_R_SCT_LIST_INVALID);
         return NULL;
     }
 
-    n2s((*pp), listlen);
-    if (listlen != len - 2) {
+    n2s(*pp, list_len);
+    if (list_len != len - 2) {
         CTerr(CT_F_O2I_SCT_LIST, CT_R_SCT_LIST_INVALID);
         return NULL;
     }
 
-    if (a && *a) {
+    if (a != NULL && *a != NULL) {
+        SCT *sct;
         sk = *a;
         while ((sct = sk_SCT_pop(sk)) != NULL)
             SCT_free(sct);
@@ -416,19 +416,21 @@ STACK_OF(SCT) *o2i_SCT_LIST(STACK_OF(SCT) **a, const unsigned char **pp,
         return NULL;
     }
 
-    while (listlen > 0) {
-        if (listlen < 2) {
+    while (list_len > 0) {
+        SCT *sct;
+
+        if (list_len < 2) {
             CTerr(CT_F_O2I_SCT_LIST, CT_R_SCT_LIST_INVALID);
             goto err;
         }
         n2s(*pp, sct_len);
-        listlen -= 2;
+        list_len -= 2;
 
-        if (sct_len == 0 || sct_len > listlen) {
+        if (sct_len == 0 || sct_len > list_len) {
             CTerr(CT_F_O2I_SCT_LIST, CT_R_SCT_LIST_INVALID);
             goto err;
         }
-        listlen -= sct_len;
+        list_len -= sct_len;
 
         if ((sct = o2i_SCT(NULL, pp, sct_len)) == NULL)
             goto err;
@@ -438,28 +440,28 @@ STACK_OF(SCT) *o2i_SCT_LIST(STACK_OF(SCT) **a, const unsigned char **pp,
         }
     }
 
-    if (a && !(*a))
+    if (a != NULL && *a == NULL)
         *a = sk;
     return sk;
 
  err:
-    if (!(a && *a))
+    if (a == NULL || *a == NULL)
         SCT_LIST_free(sk);
     return NULL;
 }
 
 int i2o_SCT_LIST(STACK_OF(SCT) *a, unsigned char **pp)
 {
-    int len, sct_len, i, newpp = 0;
+    int len, sct_len, i, is_pp_new = 0;
     size_t len2;
     unsigned char *p = NULL, *p2;
 
-    if (!a) {
+    if (a == NULL) {
         CTerr(CT_F_I2O_SCT_LIST, ERR_R_PASSED_NULL_PARAMETER);
         return -1;
     }
 
-    if (pp) {
+    if (pp != NULL) {
         if (*pp == NULL) {
             if ((len = i2o_SCT_LIST(a, NULL)) == -1) {
                 CTerr(CT_F_I2O_SCT_LIST, CT_R_SCT_LIST_INVALID);
@@ -469,14 +471,14 @@ int i2o_SCT_LIST(STACK_OF(SCT) *a, unsigned char **pp)
                 CTerr(CT_F_I2O_SCT_LIST, ERR_R_MALLOC_FAILURE);
                 return -1;
             }
-            newpp = 1;
+            is_pp_new = 1;
         }
-        p = (*pp) + 2;
+        p = *pp + 2;
     }
 
     len2 = 2;
     for (i = 0; i < sk_SCT_num(a); i++) {
-        if (pp) {
+        if (pp != NULL) {
             p2 = p;
             p += 2;
             if ((sct_len = i2o_SCT(sk_SCT_value(a, i), &p)) == -1)
@@ -492,16 +494,16 @@ int i2o_SCT_LIST(STACK_OF(SCT) *a, unsigned char **pp)
     if (len2 > MAX_SCT_LIST_SIZE)
         goto err;
 
-    if (pp) {
+    if (pp != NULL) {
         p = *pp;
-        s2n((len2 - 2), p);
+        s2n(len2 - 2, p);
     }
-    if (!newpp)
-        pp = pp + len2;
+    if (!is_pp_new)
+        *pp += len2;
     return len2;
 
  err:
-    if (newpp) {
+    if (is_pp_new) {
         OPENSSL_free(*pp);
         *pp = NULL;
     }
@@ -515,7 +517,7 @@ static STACK_OF(SCT) *d2i_SCT_LIST(STACK_OF(SCT) **a,
     STACK_OF(SCT) *sk = NULL;
     const unsigned char *p;
 
-    if (!pp || !(*pp)) {
+    if (pp == NULL || *pp == NULL) {
         CTerr(CT_F_D2I_SCT_LIST, ERR_R_PASSED_NULL_PARAMETER);
         return NULL;
     }
@@ -537,13 +539,13 @@ static int i2d_SCT_LIST(STACK_OF(SCT) *a, unsigned char **out)
     ASN1_OCTET_STRING oct;
     int len;
 
-    if (!a) {
+    if (a == NULL) {
         CTerr(CT_F_I2D_SCT_LIST, ERR_R_PASSED_NULL_PARAMETER);
         return -1;
     }
 
     oct.data = NULL;
-    if ((oct.length = i2o_SCT_LIST(a, &(oct.data))) == -1)
+    if ((oct.length = i2o_SCT_LIST(a, &oct.data)) == -1)
         return -1;
 
     len = i2d_ASN1_OCTET_STRING(&oct, out);
@@ -554,13 +556,11 @@ static int i2d_SCT_LIST(STACK_OF(SCT) *a, unsigned char **out)
 static int i2r_SCT_LIST(X509V3_EXT_METHOD *method, STACK_OF(SCT) *sct_list,
                         BIO *out, int indent)
 {
-    SCT *sct;
     int i;
-
-    for (i = 0; i < sk_SCT_num(sct_list);) {
-        sct = sk_SCT_value(sct_list, i);
+    for (i = 0; i < sk_SCT_num(sct_list); ++i) {
+        SCT *sct = sk_SCT_value(sct_list, i);
         SCT_print(sct, out, indent);
-        if (++i < sk_SCT_num(sct_list))
+        if (i < sk_SCT_num(sct_list) - 1)
             BIO_printf(out, "\n");
     }
 
