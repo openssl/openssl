@@ -157,8 +157,10 @@ int o2i_SCT_signature(SCT *sct, const unsigned char **in, size_t len)
          * This explicitly rejects empty signatures: they're invalid for
          * all supported algorithms.
          */
-        if (len <= 4)
+        if (len <= 4) {
+            CTerr(CT_F_O2I_SCT_SIGNATURE, CT_R_SCT_INVALID_SIGNATURE);
             goto err;
+        }
 
         /* Get hash and signature algorithm */
         sct->hash_alg = *p++;
@@ -216,8 +218,10 @@ SCT *o2i_SCT(SCT **psct, const unsigned char **in, size_t len)
          * bytes) log_id id; (8 bytes) uint64 timestamp; (2 bytes + ?)
          * CtExtensions extensions;
          */
-        if (len < 43)
+        if (len < 43) {
+            CTerr(CT_F_O2I_SCT, CT_R_SCT_INVALID);
             goto err;
+        }
         len -= 43;
         p++;
         sct->log_id = BUF_memdup(p, SCT_V1_HASHLEN);
@@ -229,8 +233,10 @@ SCT *o2i_SCT(SCT **psct, const unsigned char **in, size_t len)
         n2l8(p, sct->timestamp);
 
         n2s(p, len2);
-        if (len < len2)
+        if (len < len2) {
+            CTerr(CT_F_O2I_SCT, CT_R_SCT_INVALID);
             goto err;
+        }
         if (len2 > 0) {
             sct->ext = BUF_memdup(p, len2);
             if (sct->ext == NULL)
@@ -241,8 +247,10 @@ SCT *o2i_SCT(SCT **psct, const unsigned char **in, size_t len)
         len -= len2;
 
         sig_len = o2i_SCT_signature(sct, &p, len);
-        if (sig_len <= 0)
+        if (sig_len <= 0) {
+            CTerr(CT_F_O2I_SCT, CT_R_SCT_INVALID);
             goto err;
+        }
         len -= sig_len;
         *in = p + len;
     } else {
@@ -383,8 +391,8 @@ STACK_OF(SCT) *o2i_SCT_LIST(STACK_OF(SCT) **a, const unsigned char **pp,
                             size_t len)
 {
     STACK_OF(SCT) *sk = NULL;
-    SCT *sct;
     size_t listlen, sct_len;
+    SCT *sct;
 
     if (!pp || !(*pp)) {
         CTerr(CT_F_O2I_SCT_LIST, ERR_R_PASSED_NULL_PARAMETER);
@@ -395,8 +403,10 @@ STACK_OF(SCT) *o2i_SCT_LIST(STACK_OF(SCT) **a, const unsigned char **pp,
     }
 
     n2s((*pp), listlen);
-    if (listlen != len - 2)
+    if (listlen != len - 2) {
+        CTerr(CT_F_O2I_SCT_LIST, CT_R_SCT_LIST_INVALID);
         return NULL;
+    }
 
     if (a && *a) {
         sk = *a;
@@ -407,13 +417,17 @@ STACK_OF(SCT) *o2i_SCT_LIST(STACK_OF(SCT) **a, const unsigned char **pp,
     }
 
     while (listlen > 0) {
-        if (listlen < 2)
+        if (listlen < 2) {
+            CTerr(CT_F_O2I_SCT_LIST, CT_R_SCT_LIST_INVALID);
             goto err;
-        n2s((*pp), sct_len);
+        }
+        n2s(*pp, sct_len);
         listlen -= 2;
 
-        if ((sct_len < 1) || (sct_len > listlen))
+        if (sct_len == 0 || sct_len > listlen) {
+            CTerr(CT_F_O2I_SCT_LIST, CT_R_SCT_LIST_INVALID);
             goto err;
+        }
         listlen -= sct_len;
 
         if ((sct = o2i_SCT(NULL, pp, sct_len)) == NULL)
