@@ -211,9 +211,9 @@ $ LIB_SSL = "s3_srvr, s3_clnt, s3_lib, s3_enc,s3_pkt,s3_both,s3_cbc,"+ -
 	    "t1_meth,  t1_srvr, t1_clnt, t1_lib, t1_enc,       t1_ext,"+ -
 	    "d1_meth,  d1_srvr, d1_clnt, d1_lib,        d1_pkt,"+ -
 	    "d1_both,d1_srtp,"+ -
-	    "ssl_lib,ssl_err2,ssl_cert,ssl_sess,"+ -
+	    "ssl_lib,ssl_cert,ssl_sess,"+ -
 	    "ssl_ciph,ssl_stat,ssl_rsa,"+ -
-	    "ssl_asn1,ssl_txt,ssl_algs,ssl_conf,"+ -
+	    "ssl_asn1,ssl_txt,ssl_init,ssl_conf,"+ -
 	    "bio_ssl,ssl_err,t1_reneg,tls_srp,t1_trce,ssl_utst"
 $!
 $! Tell The User That We Are Compiling The Library.
