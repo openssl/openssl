@@ -1235,9 +1235,9 @@ ASN1_seq_pack                           1259	1_1_0	NOEXIST::FUNCTION:
 ASN1_unpack_string                      1260	1_1_0	NOEXIST::FUNCTION:
 ASN1_pack_string                        1261	1_1_0	NOEXIST::FUNCTION:
 PKCS12_pack_safebag                     1262	1_1_0	NOEXIST::FUNCTION:
-PKCS12_SAFEBAG_create0_p8inf                      1263	1_1_0	EXIST::FUNCTION:
+PKCS12_SAFEBAG_create0_p8inf            1263	1_1_0	EXIST::FUNCTION:
 PKCS8_encrypt                           1264	1_1_0	EXIST::FUNCTION:
-PKCS12_SAFEBAG_create_pkcs8_encrypt                    1265	1_1_0	EXIST::FUNCTION:
+PKCS12_SAFEBAG_create_pkcs8_encrypt     1265	1_1_0	EXIST::FUNCTION:
 PKCS12_pack_p7data                      1266	1_1_0	EXIST::FUNCTION:
 PKCS12_pack_p7encdata                   1267	1_1_0	EXIST::FUNCTION:
 PKCS12_add_localkeyid                   1268	1_1_0	EXIST::FUNCTION:
@@ -2113,7 +2113,7 @@ SXNETID_it                              2669	1_1_0	EXIST:!EXPORT_VAR_AS_FUNCTION
 SXNETID_it                              2669	1_1_0	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:
 d2i_OCSP_SINGLERESP                     2670	1_1_0	EXIST::FUNCTION:
 EDIPARTYNAME_new                        2671	1_1_0	EXIST::FUNCTION:
-PKCS12_SAFEBAG_get1_cert                     2672	1_1_0	EXIST::FUNCTION:
+PKCS12_SAFEBAG_get1_cert                2672	1_1_0	EXIST::FUNCTION:
 _ossl_old_des_ofb64_encrypt             2673	1_1_0	NOEXIST::FUNCTION:
 d2i_EXTENDED_KEY_USAGE                  2674	1_1_0	EXIST::FUNCTION:
 ERR_print_errors_cb                     2675	1_1_0	EXIST::FUNCTION:
@@ -2192,7 +2192,7 @@ UI_dup_error_string                     2736	1_1_0	EXIST::FUNCTION:
 RSAPublicKey_it                         2737	1_1_0	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:RSA
 RSAPublicKey_it                         2737	1_1_0	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:RSA
 i2d_OCSP_REQUEST                        2738	1_1_0	EXIST::FUNCTION:
-PKCS12_SAFEBAG_create_crl                  2739	1_1_0	EXIST::FUNCTION:
+PKCS12_SAFEBAG_create_crl               2739	1_1_0	EXIST::FUNCTION:
 OCSP_SERVICELOC_it                      2740	1_1_0	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:
 OCSP_SERVICELOC_it                      2740	1_1_0	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:
 ASN1_item_sign                          2741	1_1_0	EXIST::FUNCTION:
@@ -2211,7 +2211,7 @@ PKCS7_ISSUER_AND_SERIAL_it              2752	1_1_0	EXIST:!EXPORT_VAR_AS_FUNCTION
 PKCS7_ISSUER_AND_SERIAL_it              2752	1_1_0	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:
 PBE2PARAM_it                            2753	1_1_0	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:
 PBE2PARAM_it                            2753	1_1_0	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:
-PKCS12_SAFEBAG_get1_crl                  2754	1_1_0	EXIST::FUNCTION:
+PKCS12_SAFEBAG_get1_crl                 2754	1_1_0	EXIST::FUNCTION:
 PKCS7_SIGNED_it                         2755	1_1_0	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:
 PKCS7_SIGNED_it                         2755	1_1_0	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:
 ENGINE_get_cipher                       2756	1_1_0	EXIST::FUNCTION:ENGINE
@@ -2625,7 +2625,7 @@ DSO_set_name_converter                  3105	1_1_0	EXIST::FUNCTION:
 AES_set_decrypt_key                     3106	1_1_0	EXIST::FUNCTION:AES
 PKCS7_DIGEST_it                         3107	1_1_0	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:
 PKCS7_DIGEST_it                         3107	1_1_0	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:
-PKCS12_SAFEBAG_create_cert                     3108	1_1_0	EXIST::FUNCTION:
+PKCS12_SAFEBAG_create_cert              3108	1_1_0	EXIST::FUNCTION:
 EVP_DigestInit_ex                       3109	1_1_0	EXIST::FUNCTION:
 i2a_ACCESS_DESCRIPTION                  3110	1_1_0	EXIST::FUNCTION:
 OCSP_RESPONSE_it                        3111	1_1_0	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:
@@ -4800,3 +4800,15 @@ EC_KEY_oct2priv                         5194	1_1_0	EXIST::FUNCTION:EC
 ASN1_buf_print                          5195	1_1_0	EXIST::FUNCTION:
 EC_KEY_priv2buf                         5196	1_1_0	EXIST::FUNCTION:EC
 BIO_ADDR_clear                          5197	1_1_0	EXIST::FUNCTION:
+PKCS12_SAFEBAG_get0_safes               5198	1_1_0	EXIST::FUNCTION:
+PKCS12_SAFEBAG_get0_p8inf               5199	1_1_0	EXIST::FUNCTION:
+PKCS12_SAFEBAG_get_nid                  5200	1_1_0	EXIST::FUNCTION:
+PKCS12_mac_present                      5201	1_1_0	EXIST::FUNCTION:
+PKCS12_SAFEBAG_get0_attrs               5202	1_1_0	EXIST::FUNCTION:
+PKCS12_SAFEBAG_get_bag_nid              5203	1_1_0	EXIST::FUNCTION:
+PKCS12_SAFEBAG_get0_type                5204	1_1_0	EXIST::FUNCTION:
+PKCS12_SAFEBAG_create0_pkcs8            5205	1_1_0	EXIST::FUNCTION:
+PKCS8_get_attr                          5206	1_1_0	EXIST::FUNCTION:
+PKCS12_SAFEBAG_get0_attr                5207	1_1_0	EXIST::FUNCTION:
+PKCS12_get0_mac                         5208	1_1_0	EXIST::FUNCTION:
+PKCS12_SAFEBAG_get0_pkcs8               5209	1_1_0	EXIST::FUNCTION:
