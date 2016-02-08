@@ -75,7 +75,8 @@
 
 BIO_ADDR *BIO_ADDR_new(void)
 {
-    BIO_ADDR *ret = (BIO_ADDR *)OPENSSL_zalloc(sizeof(BIO_ADDR));
+    BIO_ADDR *ret = OPENSSL_zalloc(sizeof(*ret));
+
     ret->sa.sa_family = AF_UNSPEC;
     return ret;
 }
@@ -557,10 +558,10 @@ static int addrinfo_wrap(int family, int socktype,
 {
     OPENSSL_assert(bai != NULL);
 
-    *bai = (BIO_ADDRINFO *)OPENSSL_zalloc(sizeof(**bai));
-
+    *bai = OPENSSL_zalloc(sizeof(**bai));
     if (*bai == NULL)
         return 0;
+
     (*bai)->bai_family = family;
     (*bai)->bai_socktype = socktype;
     if (socktype == SOCK_STREAM)

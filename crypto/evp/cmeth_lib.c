@@ -64,7 +64,8 @@
 
 EVP_CIPHER *EVP_CIPHER_meth_new(int cipher_type, int block_size, int key_len)
 {
-    EVP_CIPHER *cipher = (EVP_CIPHER *)OPENSSL_zalloc(sizeof(EVP_CIPHER));
+    EVP_CIPHER *cipher = OPENSSL_zalloc(sizeof(EVP_CIPHER));
+
     if (cipher != NULL) {
         cipher->nid = cipher_type;
         cipher->block_size = block_size;
@@ -77,7 +78,8 @@ EVP_CIPHER *EVP_CIPHER_meth_dup(const EVP_CIPHER *cipher)
 {
     EVP_CIPHER *to = EVP_CIPHER_meth_new(cipher->nid, cipher->block_size,
                                          cipher->key_len);
-    if (cipher != NULL)
+
+    if (to != NULL)
         memcpy(to, cipher, sizeof(*to));
     return to;
 }
