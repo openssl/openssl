@@ -1443,7 +1443,10 @@ __owur int SSL_add_file_cert_subjects_to_stack(STACK_OF(X509_NAME) *stackCAs,
 int SSL_add_dir_cert_subjects_to_stack(STACK_OF(X509_NAME) *stackCAs,
                                        const char *dir);
 
-void SSL_load_error_strings(void);
+#define SSL_load_error_strings() \
+    OPENSSL_INIT_ssl_library_start(OPENSSL_INIT_LOAD_SSL_STRINGS \
+                                   | OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL)
+
 __owur const char *SSL_state_string(const SSL *s);
 __owur const char *SSL_rstate_string(const SSL *s);
 __owur const char *SSL_state_string_long(const SSL *s);
@@ -1673,7 +1676,7 @@ void SSL_set_accept_state(SSL *s);
 
 __owur long SSL_get_default_timeout(const SSL *s);
 
-int SSL_library_init(void);
+#define SSL_library_init() OPENSSL_INIT_ssl_library_start(0, NULL)
 
 __owur char *SSL_CIPHER_description(const SSL_CIPHER *, char *buf, int size);
 __owur STACK_OF(X509_NAME) *SSL_dup_CA_list(STACK_OF(X509_NAME) *sk);

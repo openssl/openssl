@@ -2270,6 +2270,8 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
         return (NULL);
     }
 
+    OPENSSL_INIT_ssl_library_start(OPENSSL_INIT_LOAD_SSL_STRINGS, NULL);
+
     if (FIPS_mode() && (meth->version < TLS1_VERSION)) {
         SSLerr(SSL_F_SSL_CTX_NEW, SSL_R_AT_LEAST_TLS_1_0_NEEDED_IN_FIPS_MODE);
         return NULL;

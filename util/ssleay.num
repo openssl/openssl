@@ -61,7 +61,7 @@ SSL_get_verify_mode                     70	1_1_0	EXIST::FUNCTION:
 SSL_get_version                         71	1_1_0	EXIST::FUNCTION:
 SSL_get_wbio                            72	1_1_0	EXIST::FUNCTION:
 SSL_load_client_CA_file                 73	1_1_0	EXIST::FUNCTION:
-SSL_load_error_strings                  74	1_1_0	EXIST::FUNCTION:
+SSL_load_error_strings                  74	1_1_0	NOEXIST::FUNCTION:
 SSL_new                                 75	1_1_0	EXIST::FUNCTION:
 SSL_peek                                76	1_1_0	EXIST::FUNCTION:
 SSL_pending                             77	1_1_0	EXIST::FUNCTION:
@@ -163,7 +163,7 @@ SSL_CTX_get_timeout                     179	1_1_0	EXIST::FUNCTION:
 SSL_CTX_get_cert_store                  180	1_1_0	EXIST::FUNCTION:
 SSL_CTX_set_cert_store                  181	1_1_0	EXIST::FUNCTION:
 SSL_want                                182	1_1_0	EXIST::FUNCTION:
-SSL_library_init                        183	1_1_0	EXIST::FUNCTION:
+SSL_library_init                        183	1_1_0	NOEXIST::FUNCTION:
 SSL_COMP_add_compression_method         184	1_1_0	EXIST::FUNCTION:
 SSL_add_file_cert_subjects_to_stack     185	1_1_0	EXIST:!VMS:FUNCTION:
 SSL_add_file_cert_subjs_to_stk          185	1_1_0	EXIST:VMS:FUNCTION:
