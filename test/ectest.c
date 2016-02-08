@@ -1665,7 +1665,6 @@ int main(int argc, char *argv[])
     if (p != NULL && strcmp(p, "on") == 0)
         CRYPTO_set_mem_debug(1);
     CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
-    ERR_load_crypto_strings();
 
     RAND_seed(rnd_seed, sizeof rnd_seed); /* or BN_generate_prime may fail */
 
@@ -1680,12 +1679,6 @@ int main(int argc, char *argv[])
     /* test the internal curves */
     internal_curve_test();
 
-# ifndef OPENSSL_NO_ENGINE
-    ENGINE_cleanup();
-# endif
-    CRYPTO_cleanup_all_ex_data();
-    ERR_free_strings();
-    ERR_remove_thread_state(NULL);
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG
     if (CRYPTO_mem_leaks_fp(stderr) <= 0)
         return 1;

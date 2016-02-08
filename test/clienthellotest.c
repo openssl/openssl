@@ -103,9 +103,6 @@ int main(int argc, char *argv[])
     int testresult = 0;
     int currtest = 0;
 
-    SSL_library_init();
-    SSL_load_error_strings();
-
     err = BIO_new_fp(stderr, BIO_NOCLOSE | BIO_FP_TEXT);
 
     CRYPTO_set_mem_debug(1);
@@ -212,10 +209,6 @@ int main(int argc, char *argv[])
         }
     }
 
-    ERR_free_strings();
-    ERR_remove_thread_state(NULL);
-    EVP_cleanup();
-    CRYPTO_cleanup_all_ex_data();
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG
     if (CRYPTO_mem_leaks(err) <= 0)
         testresult = 0;

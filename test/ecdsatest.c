@@ -522,7 +522,6 @@ int main(void)
     p = getenv("OPENSSL_DEBUG_MEMORY");
     if (p != NULL && strcmp(p, "on") == 0)
         CRYPTO_set_mem_debug(1);
-    ERR_load_crypto_strings();
 
     /* initialize the prng */
     RAND_seed(rnd_seed, sizeof(rnd_seed));
@@ -541,9 +540,7 @@ int main(void)
         BIO_printf(out, "\nECDSA test passed\n");
     if (ret)
         ERR_print_errors(out);
-    CRYPTO_cleanup_all_ex_data();
-    ERR_remove_thread_state(NULL);
-    ERR_free_strings();
+
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG
     if (CRYPTO_mem_leaks(out) <= 0)
         ret = 1;

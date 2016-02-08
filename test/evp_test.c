@@ -592,9 +592,6 @@ int main(int argc, char **argv)
 
     CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
 
-    ERR_load_crypto_strings();
-    OpenSSL_add_all_algorithms();
-
     memset(&t, 0, sizeof(t));
     t.start_line = -1;
     in = fopen(argv[1], "r");
@@ -612,10 +609,7 @@ int main(int argc, char **argv)
     free_key_list(t.public);
     free_key_list(t.private);
     fclose(in);
-    EVP_cleanup();
-    CRYPTO_cleanup_all_ex_data();
-    ERR_remove_thread_state(NULL);
-    ERR_free_strings();
+
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG
     if (CRYPTO_mem_leaks_fp(stderr) <= 0)
         return 1;
