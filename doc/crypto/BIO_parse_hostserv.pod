@@ -42,6 +42,11 @@ The service part can  be a service name or its port number.
 The returned values will depend on the given B<hostserv> string
 and B<hostserv_prio>, as follows:
 
+=for comment
+The following is ONE verbatim block.  To make sure it's rendered as
+one block and not several, the blank lines in between have one space.
+They should be left as is.
+
  host + ':' + service  => *host = "host", *service = "service"
  host + ':' + '*'      => *host = "host", *service = NULL
  host + ':'            => *host = "host", *service = NULL

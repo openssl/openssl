@@ -341,7 +341,7 @@ socklen_t BIO_ADDR_sockaddr_size(const BIO_ADDR *ap)
 
 /**********************************************************************
  *
- * Address into database
+ * Address info database
  *
  */
 
