@@ -109,7 +109,6 @@ int main(int argc, char *argv[])
     p = getenv("OPENSSL_DEBUG_MEMORY");
     if (p != NULL && strcmp(p, "on") == 0)
         CRYPTO_set_mem_debug(1);
-    ERR_load_crypto_strings();
 
     memset(block, 0, sizeof(block));
     if (((new_h1 = ENGINE_new()) == NULL) ||
@@ -244,10 +243,7 @@ int main(int argc, char *argv[])
     ENGINE_free(new_h4);
     for (loop = 0; loop < 512; loop++)
         ENGINE_free(block[loop]);
-    ENGINE_cleanup();
-    CRYPTO_cleanup_all_ex_data();
-    ERR_free_strings();
-    ERR_remove_thread_state(NULL);
+
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG
     if (CRYPTO_mem_leaks_fp(stderr) <= 0)
         to_return = 1;

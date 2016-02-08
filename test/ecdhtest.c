@@ -509,8 +509,7 @@ int main(int argc, char *argv[])
     OPENSSL_free(curves);
     BN_CTX_free(ctx);
     BIO_free(out);
-    CRYPTO_cleanup_all_ex_data();
-    ERR_remove_thread_state(NULL);
+
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG
     if (CRYPTO_mem_leaks_fp(stderr) <= 0)
         ret = 1;

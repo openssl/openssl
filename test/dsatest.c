@@ -140,7 +140,6 @@ int main(int argc, char **argv)
     CRYPTO_set_mem_debug(1);
     CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
 
-    ERR_load_crypto_strings();
     RAND_seed(rnd_seed, sizeof rnd_seed);
 
     BIO_printf(bio_err, "test generation of DSA parameters\n");
@@ -211,9 +210,7 @@ int main(int argc, char **argv)
         ERR_print_errors(bio_err);
     DSA_free(dsa);
     BN_GENCB_free(cb);
-    CRYPTO_cleanup_all_ex_data();
-    ERR_remove_thread_state(NULL);
-    ERR_free_strings();
+
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG
     if (CRYPTO_mem_leaks(bio_err) <= 0)
         ret = 0;

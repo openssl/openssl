@@ -493,8 +493,6 @@ int main(int argc, char *argv[])
         return 0;
     }
 
-    SSL_library_init();
-    SSL_load_error_strings();
 
     ctx = SSL_CTX_new(TLS_client_method());
     if (SSL_CTX_dane_enable(ctx) <= 0) {
@@ -526,14 +524,6 @@ end:
     (void) fclose(f);
     SSL_CTX_free(ctx);
 
-#ifndef OPENSSL_NO_ENGINE
-    ENGINE_cleanup();
-#endif
-    CONF_modules_unload(1);
-    CRYPTO_cleanup_all_ex_data();
-    ERR_free_strings();
-    ERR_remove_thread_state(NULL);
-    EVP_cleanup();
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG
     if (CRYPTO_mem_leaks(bio_err) <= 0)
         ret = 1;
