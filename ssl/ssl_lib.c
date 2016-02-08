@@ -1578,19 +1578,22 @@ int SSL_shutdown(SSL *s)
         return -1;
     }
 
-    if((s->mode & SSL_MODE_ASYNC) && ASYNC_get_current_job() == NULL) {
-        struct ssl_async_args args;
+    if (!SSL_in_init(s)) {
+        if((s->mode & SSL_MODE_ASYNC) && ASYNC_get_current_job() == NULL) {
+            struct ssl_async_args args;
 
-        args.s = s;
-        args.type = OTHERFUNC;
-        args.f.func_other = s->method->ssl_shutdown;
+            args.s = s;
+            args.type = OTHERFUNC;
+            args.f.func_other = s->method->ssl_shutdown;
 
-        return ssl_start_async_job(s, &args, ssl_io_intern);
+            return ssl_start_async_job(s, &args, ssl_io_intern);
+        } else {
+            return s->method->ssl_shutdown(s);
+        }
     } else {
-        return s->method->ssl_shutdown(s);
+        SSLerr(SSL_F_SSL_SHUTDOWN, SSL_R_SHUTDOWN_WHILE_IN_INIT);
+        return -1;
     }
-
-    return s->method->ssl_shutdown(s);
 }
 
 int SSL_renegotiate(SSL *s)
