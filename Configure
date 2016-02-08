@@ -11,7 +11,7 @@ require 5.000;
 use strict;
 use File::Basename;
 use File::Spec::Functions qw/:DEFAULT abs2rel rel2abs/;
-use File::Path qw/make_path/;
+use File::Path qw/mkpath/;
 use Cwd qw/:DEFAULT realpath/;
 
 # see INSTALL for instructions.
@@ -1172,7 +1172,7 @@ if ($target{build_scheme}->[0] eq "unified") {
         my $dir = shift;
 
         # Required, because realpath only works properly with existing dirs
-        make_path($dir);
+        mkpath($dir);
 
         my $res = realpath($dir);
         return $res;
@@ -1216,7 +1216,7 @@ if ($target{build_scheme}->[0] eq "unified") {
         my $sourced = catdir($srcdir, $_->[0]);
         my $buildd = catdir($blddir, $_->[0]);
 
-        make_path($buildd);
+        mkpath($buildd);
 
         my $f = $_->[1];
         # The basic things we're trying to build
@@ -1688,11 +1688,11 @@ print "THIRTY_TWO_BIT mode\n" if $config{b32};
 print "BN_LLONG mode\n" if $config{bn_ll};
 print "RC4 uses $config{rc4_int}\n" if $config{rc4_int} != $def_int;
 
-make_path(catdir($blddir, "include/openssl"));
+mkpath(catdir($blddir, "include/openssl"));
 run_dofile(catfile($blddir, "include/openssl/opensslconf.h"),
            catfile($srcdir, "include/openssl/opensslconf.h.in"));
 
-make_path(catdir($blddir, "crypto/include/internal"));
+mkpath(catdir($blddir, "crypto/include/internal"));
 foreach my $alg ( 'bn' ) {
     run_dofile(catfile($blddir, "crypto/include/internal/${alg}_conf.h"),
                catfile($srcdir, "crypto/include/internal/${alg}_conf.h.in"));
