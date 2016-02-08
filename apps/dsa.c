@@ -82,7 +82,7 @@ OPTIONS dsa_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
     {"inform", OPT_INFORM, 'F', "Input format, DER PEM PVK"},
     {"outform", OPT_OUTFORM, 'F', "Output format, DER PEM PVK"},
-    {"in", OPT_IN, '<', "Input file"},
+    {"in", OPT_IN, 's', "Input key"},
     {"out", OPT_OUT, '>', "Output file"},
     {"noout", OPT_NOOUT, '-', "Don't print key out"},
     {"text", OPT_TEXT, '-', "Print the key in text"},
@@ -130,8 +130,7 @@ int dsa_main(int argc, char **argv)
             ret = 0;
             goto end;
         case OPT_INFORM:
-            if (!opt_format
-                (opt_arg(), OPT_FMT_PEMDER | OPT_FMT_PVK, &informat))
+            if (!opt_format(opt_arg(), OPT_FMT_ANY, &informat))
                 goto opthelp;
             break;
         case OPT_IN:
