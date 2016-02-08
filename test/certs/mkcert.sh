@@ -36,7 +36,7 @@ key() {
         args=(-algorithm "$alg")
         case $alg in
         rsa) args=("${args[@]}" -pkeyopt rsa_keygen_bits:$bits );;
-        ecdsa) args=("${args[@]}" -pkeyopt "ec_paramgen_curve:$bits")
+        ec)  args=("${args[@]}" -pkeyopt "ec_paramgen_curve:$bits")
                args=("${args[@]}" -pkeyopt ec_param_enc:named_curve);;
         *) printf "Unsupported key algorithm: %s\n" "$alg" >&2; return 1;;
         esac
