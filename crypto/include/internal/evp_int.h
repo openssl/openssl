@@ -415,3 +415,7 @@ struct evp_pkey_st {
     int save_parameters;
     STACK_OF(X509_ATTRIBUTE) *attributes; /* [ 0 ] */
 } /* EVP_PKEY */ ;
+
+
+void openssl_add_all_ciphers_internal(void);
+void openssl_add_all_digests_internal(void);

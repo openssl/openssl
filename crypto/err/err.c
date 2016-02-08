@@ -111,7 +111,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
-#include "internal/cryptlib.h"
+#include <internal/cryptlib_int.h>
 #include <openssl/lhash.h>
 #include <openssl/crypto.h>
 #include <openssl/buffer.h>
@@ -894,6 +894,10 @@ ERR_STATE *ERR_get_state(void)
          * the first one that we just replaced.
          */
         ERR_STATE_free(tmpp);
+        OPENSSL_INIT_crypto_library_start(OPENSSL_INIT_LOAD_CRYPTO_STRINGS,
+                                          NULL);
+        /* Ignore failures from this */
+        ossl_init_thread_start(OPENSSL_INIT_THREAD_ERR_STATE);
     }
     return ret;
 }

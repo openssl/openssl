@@ -64,7 +64,7 @@
 #include <stdio.h>
 #include <openssl/crypto.h>
 #include "internal/cryptlib.h"
-#include <openssl/engine.h>
+#include <internal/engine.h>
 #include <openssl/dso.h>
 #include <openssl/pem.h>
 #include <openssl/evp.h>
@@ -196,7 +196,7 @@ static ENGINE *engine_openssl(void)
     return ret;
 }
 
-void ENGINE_load_openssl(void)
+void engine_load_openssl_internal(void)
 {
     ENGINE *toadd = engine_openssl();
     if (!toadd)

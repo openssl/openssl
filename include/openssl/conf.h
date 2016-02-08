@@ -138,7 +138,8 @@ int CONF_dump_fp(LHASH_OF(CONF_VALUE) *conf, FILE *out);
 int CONF_dump_bio(LHASH_OF(CONF_VALUE) *conf, BIO *out);
 
 void OPENSSL_config(const char *config_name);
-void OPENSSL_no_config(void);
+#define OPENSSL_no_config() \
+    OPENSSL_INIT_crypto_library_start(OPENSSL_INIT_NO_LOAD_CONFIG, NULL)
 
 /*
  * New conf code.  The semantics are different from the functions above. If

@@ -113,7 +113,7 @@
  * SUN MICROSYSTEMS, INC., and contributed to the OpenSSL project.
  */
 
-#include "internal/cryptlib.h"
+#include "internal/cryptlib_int.h"
 #include <openssl/safestack.h>
 
 #if     defined(__i386)   || defined(__i386__)   || defined(_M_IX86) || \
@@ -234,6 +234,8 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     case DLL_THREAD_ATTACH:
         break;
     case DLL_THREAD_DETACH:
+        ossl_init_thread_stop(
+            (struct thread_local_inits_st *)ossl_init_get_thread_local(0));
         break;
     case DLL_PROCESS_DETACH:
         break;

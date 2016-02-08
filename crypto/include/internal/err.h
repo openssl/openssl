@@ -1,8 +1,8 @@
 /*
- * Written by Matt Caswell (matt@openssl.org) for the OpenSSL project.
+ * Written by Matt Caswell for the OpenSSL project.
  */
 /* ====================================================================
- * Copyright (c) 2015 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 2016 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -19,12 +19,12 @@
  * 3. All advertising materials mentioning features or use of this
  *    software must display the following acknowledgment:
  *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit. (http://www.OpenSSL.org/)"
+ *    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
  *
  * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
  *    endorse or promote products derived from this software without
  *    prior written permission. For written permission, please contact
- *    licensing@OpenSSL.org.
+ *    openssl-core@openssl.org.
  *
  * 5. Products derived from this software may not be called "OpenSSL"
  *    nor may "OpenSSL" appear in their names without prior written
@@ -33,7 +33,7 @@
  * 6. Redistributions of any form whatsoever must retain the following
  *    acknowledgment:
  *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit (http://www.OpenSSL.org/)"
+ *    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
  *
  * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
  * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -48,45 +48,11 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  * ====================================================================
+ *
+ * This product includes cryptographic software written by Eric Young
+ * (eay@cryptsoft.com).  This product includes software written by Tim
+ * Hudson (tjh@cryptsoft.com).
+ *
  */
 
-/* This must be the first #include file */
-#include "../async_locl.h"
-
-#ifdef ASYNC_NULL
-
-int async_pipe(OSSL_ASYNC_FD *pipefds)
-{
-    return -1;
-}
-
-int async_close_fd(OSSL_ASYNC_FD fd)
-{
-    return 0;
-}
-
-int async_write1(OSSL_ASYNC_FD fd, const void *buf)
-{
-    return -1;
-}
-
-int async_read1(OSSL_ASYNC_FD fd, void *buf)
-{
-    return -1;
-}
-
-int async_global_init(void)
-{
-    return 0;
-}
-
-void async_local_cleanup(void)
-{
-}
-
-void async_global_cleanup(void)
-{
-}
-
-#endif
-
+void err_load_crypto_strings_intern(void);

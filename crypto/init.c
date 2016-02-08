@@ -69,19 +69,12 @@
 #include <internal/cryptlib_int.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
-#if 0
 #include <internal/evp_int.h>
 #include <internal/conf.h>
 #include <internal/async.h>
 #include <internal/engine.h>
-#endif
-#include <openssl/conf.h>
-#include <openssl/async.h>
-#include <openssl/engine.h>
 #include <openssl/comp.h>
-#if 0
 #include <internal/err.h>
-#endif
 #include <stdlib.h>
 
 /* Implement "once" functionality */
@@ -292,9 +285,7 @@ static void ossl_init_load_crypto_strings(void)
     fprintf(stderr, "OPENSSL_INIT: ossl_init_load_crypto_strings: "
                     "err_load_crypto_strings_intern()\n");
 # endif
-#if 0
     err_load_crypto_strings_intern();
-#endif
 #endif
     load_crypto_strings_inited = 1;
 }
@@ -311,9 +302,7 @@ static void ossl_init_add_all_ciphers(void)
     fprintf(stderr, "OPENSSL_INIT: ossl_init_add_all_ciphers: "
                     "openssl_add_all_ciphers_internal()\n");
 # endif
-#if 0
     openssl_add_all_ciphers_internal();
-#endif
 # ifndef OPENSSL_NO_ENGINE
 #  if defined(__OpenBSD__) || defined(__FreeBSD__) || defined(HAVE_CRYPTODEV)
     ENGINE_setup_bsd_cryptodev();
@@ -334,9 +323,7 @@ static void ossl_init_add_all_digests(void)
     fprintf(stderr, "OPENSSL_INIT: ossl_init_add_all_digests: "
                     "openssl_add_all_digests_internal()\n");
 # endif
-#if 0
     openssl_add_all_digests_internal();
-#endif
 # ifndef OPENSSL_NO_ENGINE
 #  if defined(__OpenBSD__) || defined(__FreeBSD__) || defined(HAVE_CRYPTODEV)
     ENGINE_setup_bsd_cryptodev();
@@ -361,9 +348,7 @@ static void ossl_init_config(void)
             "OPENSSL_INIT: ossl_init_config: openssl_config_internal(%s)\n",
             config_filename==NULL?"NULL":config_filename);
 #endif
-#if 0
     openssl_config_internal(config_filename);
-#endif
     config_inited = 1;
 }
 static void ossl_init_no_config(void)
@@ -372,9 +357,7 @@ static void ossl_init_no_config(void)
     fprintf(stderr,
             "OPENSSL_INIT: ossl_init_config: openssl_no_config_internal()\n");
 #endif
-#if 0
     openssl_no_config_internal();
-#endif
     config_inited = 1;
 }
 
@@ -385,9 +368,7 @@ static void ossl_init_async(void)
 #ifdef OPENSSL_INIT_DEBUG
     fprintf(stderr, "OPENSSL_INIT: ossl_init_async: async_init()\n");
 #endif
-#if 0
     async_init();
-#endif
     async_inited = 1;
 }
 
@@ -400,9 +381,7 @@ static void ossl_init_engine_openssl(void)
     fprintf(stderr, "OPENSSL_INIT: ossl_init_engine_openssl: "
                     "engine_load_openssl_internal()\n");
 # endif
-#if 0
     engine_load_openssl_internal();
-#endif
     engine_inited = 1;
 }
 # if !defined(OPENSSL_NO_HW) && \
@@ -414,9 +393,7 @@ static void ossl_init_engine_cryptodev(void)
     fprintf(stderr, "OPENSSL_INIT: ossl_init_engine_cryptodev: "
                     "engine_load_cryptodev_internal()\n");
 #  endif
-#if 0
     engine_load_cryptodev_internal();
-#endif
     engine_inited = 1;
 }
 # endif
@@ -429,9 +406,7 @@ static void ossl_init_engine_rdrand(void)
     fprintf(stderr, "OPENSSL_INIT: ossl_init_engine_rdrand: "
                     "engine_load_rdrand_internal()\n");
 #  endif
-#if 0
     engine_load_rdrand_internal();
-#endif
     engine_inited = 1;
 }
 # endif
@@ -442,9 +417,7 @@ static void ossl_init_engine_dynamic(void)
     fprintf(stderr, "OPENSSL_INIT: ossl_init_engine_dynamic: "
                     "engine_load_dynamic_internal()\n");
 # endif
-#if 0
     engine_load_dynamic_internal();
-#endif
     engine_inited = 1;
 }
 # ifndef OPENSSL_NO_STATIC_ENGINE
@@ -456,9 +429,7 @@ static void ossl_init_engine_padlock(void)
     fprintf(stderr, "OPENSSL_INIT: ossl_init_engine_padlock: "
                     "engine_load_padlock_internal()\n");
 #   endif
-#if 0
     engine_load_padlock_internal();
-#endif
     engine_inited = 1;
 }
 #  endif
@@ -470,9 +441,7 @@ static void ossl_init_engine_capi(void)
     fprintf(stderr, "OPENSSL_INIT: ossl_init_engine_capi: "
                     "engine_load_capi_internal()\n");
 #   endif
-#if 0
     engine_load_capi_internal();
-#endif
     engine_inited = 1;
 }
 #  endif
@@ -483,9 +452,7 @@ static void ossl_init_engine_dasync(void)
     fprintf(stderr, "OPENSSL_INIT: ossl_init_engine_dasync: "
                     "engine_load_dasync_internal()\n");
 # endif
-#if 0
     engine_load_dasync_internal();
-#endif
     engine_inited = 1;
 }
 # endif

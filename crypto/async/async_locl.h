@@ -59,7 +59,7 @@
 # pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #endif
 
-#include <openssl/async.h>
+#include <internal/async.h>
 #include <openssl/crypto.h>
 
 typedef struct async_ctx_st async_ctx;
@@ -95,7 +95,6 @@ struct async_pool_st {
 };
 
 int async_global_init(void);
-int async_local_init(void);
 void async_local_cleanup(void);
 void async_global_cleanup(void);
 void async_start_func(void);

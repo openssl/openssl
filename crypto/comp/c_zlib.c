@@ -58,6 +58,7 @@
 #include <openssl/objects.h>
 #include <openssl/comp.h>
 #include <openssl/err.h>
+#include <internal/cryptlib_int.h>
 #include "comp_lcl.h"
 
 COMP_METHOD *COMP_zlib(void);
@@ -290,6 +291,7 @@ COMP_METHOD *COMP_zlib(void)
                 zlib_loaded++;
             if (zlib_loaded)
                 meth = &zlib_stateful_method;
+            OPENSSL_INIT_crypto_library_start(OPENSSL_INIT_ZLIB, NULL);
         }
     }
 #endif

@@ -1,9 +1,5 @@
-/*
- * Written by Stephen Henson (steve@openssl.org) for the OpenSSL project
- * 2001.
- */
 /* ====================================================================
- * Copyright (c) 2001 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 2016 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -56,17 +52,12 @@
  *
  */
 
-#include "internal/cryptlib.h"
-#include <openssl/evp.h>
-#include <openssl/conf.h>
+#include <openssl/engine.h>
 
-/*
- * Load all algorithms and configure OpenSSL. This function is called
- * automatically when OPENSSL_LOAD_CONF is set.
- */
-
-void OPENSSL_add_all_algorithms_conf(void)
-{
-    OPENSSL_add_all_algorithms_noconf();
-    OPENSSL_config(NULL);
-}
+void engine_load_openssl_internal(void);
+void engine_load_cryptodev_internal(void);
+void engine_load_rdrand_internal(void);
+void engine_load_dynamic_internal(void);
+void engine_load_padlock_internal(void);
+void engine_load_capi_internal(void);
+void engine_load_dasync_internal(void);
