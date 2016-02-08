@@ -253,13 +253,14 @@ my @disablables = (
     "ec_nistp_64_gcc_128",
     "egd",
     "engine",
-    "err",			# Really???
+    "err",
+    "filenames",
     "heartbeats",
     "hmac",
     "hw(-.+)?",
     "idea",
     "jpake",
-    "locking",			# Really???
+    "locking",
     "md2",
     "md4",
     "md5",
@@ -270,6 +271,7 @@ my @disablables = (
     "ocsp",
     "poly1305",
     "posix-io",
+    "pqueue",
     "psk",
     "rc2",
     "rc4",
@@ -277,6 +279,7 @@ my @disablables = (
     "rdrand",
     "rfc3779",
     "rijndael",			# Old AES name
+    "ripemd",
     "rmd160",
     "rsa",
     "scrypt",
@@ -296,6 +299,8 @@ my @disablables = (
     "store",
     "threads",
     "tls",
+    "ts",
+    "ui",
     "unit-test",
     "whirlpool",
     "zlib",
@@ -736,13 +741,17 @@ foreach (sort (keys %disabled))
 	elsif (/^sse2$/)
 		{ $no_sse2 = 1; }
 	elsif (/^engine$/)
-		{ @{$config{dirs}} = grep !/^engine$/, @{$config{dirs}}; }
+		{
+		@{$config{dirs}} = grep !/^engines$/, @{$config{dirs}};
+		@{$config{sdirs}} = grep !/^engine$/, @{$config{sdirs}};
+		push @{$config{openssl_other_defines}}, "OPENSSL_NO_ENGINE";
+		}
 	else
 		{
 		my ($ALGO, $algo);
 		($ALGO = $algo = $_) =~ tr/[\-a-z]/[_A-Z]/;
 
-		if (/^asm$/ || /^err$/ || /^hw$/ || /^hw-/ || /^async$/)
+		if (/^asm$/ || /^err$/ || /^hw$/ || /^hw-/)
 			{
 			push @{$config{openssl_other_defines}}, "OPENSSL_NO_$ALGO";
 			print " OPENSSL_NO_$ALGO";

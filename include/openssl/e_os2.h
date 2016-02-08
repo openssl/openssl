@@ -295,6 +295,7 @@ typedef INT32 int32_t;
 typedef UINT32 uint32_t;
 typedef INT64 int64_t;
 typedef UINT64 uint64_t;
+#define PRIu64 "%Lu"
 # elif defined(_MSC_VER) && _MSC_VER<=1500
 /*
  * minimally required typdefs for systems not supporting inttypes.h or

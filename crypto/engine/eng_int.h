@@ -87,7 +87,7 @@ extern "C" {
                 (unsigned int)(e), (isfunct ? "funct" : "struct"), \
                 ((isfunct) ? ((e)->funct_ref - (diff)) : ((e)->struct_ref - (diff))), \
                 ((isfunct) ? (e)->funct_ref : (e)->struct_ref), \
-                (__FILE__), (__LINE__))
+                (OPENSSL_FILE), (OPENSSL_LINE))
 
 # else
 
@@ -135,7 +135,7 @@ ENGINE *engine_table_select(ENGINE_TABLE **table, int nid);
 # else
 ENGINE *engine_table_select_tmp(ENGINE_TABLE **table, int nid, const char *f,
                                 int l);
-#  define engine_table_select(t,n) engine_table_select_tmp(t,n,__FILE__,__LINE__)
+#  define engine_table_select(t,n) engine_table_select_tmp(t,n,OPENSSL_FILE,OPENSSL_LINE)
 # endif
 typedef void (engine_table_doall_cb) (int nid, STACK_OF(ENGINE) *sk,
                                       ENGINE *def, void *arg);
