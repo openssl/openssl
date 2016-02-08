@@ -204,5 +204,5 @@ INCLUDE[memleaktest]={- catdir(abs2rel($builddir,$sourcedir),"../include") -} ..
 DEPEND[memleaktest]=../libcrypto
 
 SOURCE[dtlsv1listentest]=dtlsv1listentest.c
-INCLUDE[dtlsv1listentest]={- catdir(abs2rel($builddir,$sourcedir),"../include") -} ../include
+INCLUDE[dtlsv1listentest]={- catdir(abs2rel($builddir,$sourcedir),"../include") -} .. ../include
 DEPEND[dtlsv1listentest]=../libssl
