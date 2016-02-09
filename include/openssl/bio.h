@@ -323,6 +323,7 @@ struct bio_st {
     struct bio_st *next_bio;    /* used by filter BIOs */
     struct bio_st *prev_bio;    /* used by filter BIOs */
     int references;
+    CRYPTO_MUTEX lock;
     uint64_t num_read;
     uint64_t num_write;
     CRYPTO_EX_DATA ex_data;

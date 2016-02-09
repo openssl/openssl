@@ -85,6 +85,7 @@ struct ec_pre_comp_st {
                                  * objects followed by a NULL */
     size_t num;                 /* numblocks * 2^(w-1) */
     int references;
+    CRYPTO_MUTEX lock;
 };
 
 static EC_PRE_COMP *ec_pre_comp_new(const EC_GROUP *group)
@@ -103,20 +104,20 @@ static EC_PRE_COMP *ec_pre_comp_new(const EC_GROUP *group)
     ret->blocksize = 8;         /* default */
     ret->w = 4;                 /* default */
     ret->references = 1;
+    CRYPTO_MUTEX_init(&ret->lock);
     return ret;
 }
 
 EC_PRE_COMP *EC_ec_pre_comp_dup(EC_PRE_COMP *pre)
 {
     if (pre != NULL)
-        CRYPTO_add(&pre->references, 1, CRYPTO_LOCK_EC_PRE_COMP);
+        CRYPTO_atomic_add(&pre->references, 1, &pre->lock);
     return pre;
 }
 
 void EC_ec_pre_comp_free(EC_PRE_COMP *pre)
 {
-    if (pre == NULL
-        || CRYPTO_add(&pre->references, -1, CRYPTO_LOCK_EC_PRE_COMP) > 0)
+    if (pre == NULL || CRYPTO_atomic_add(&pre->references, -1, &pre->lock) > 0)
         return;
 
     if (pre->points != NULL) {

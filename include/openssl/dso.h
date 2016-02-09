@@ -193,6 +193,7 @@ struct dso_st {
      */
     STACK_OF(void) *meth_data;
     int references;
+    CRYPTO_MUTEX lock;
     int flags;
     /*
      * For use by applications etc ... use this for your bits'n'pieces, don't

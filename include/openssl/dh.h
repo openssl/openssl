@@ -153,6 +153,7 @@ struct dh_st {
     int seedlen;
     BIGNUM *counter;
     int references;
+    CRYPTO_MUTEX lock;
     CRYPTO_EX_DATA ex_data;
     const DH_METHOD *meth;
     ENGINE *engine;

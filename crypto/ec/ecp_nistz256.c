@@ -76,6 +76,7 @@ struct nistz256_pre_comp_st {
     PRECOMP256_ROW *precomp;
     void *precomp_storage;
     int references;
+    CRYPTO_MUTEX lock;
 };
 
 /* Functions implemented in assembly */
@@ -1398,25 +1399,24 @@ static NISTZ256_PRE_COMP *ecp_nistz256_pre_comp_new(const EC_GROUP *group)
     ret->precomp = NULL;
     ret->precomp_storage = NULL;
     ret->references = 1;
+    CRYPTO_MUTEX_init(&ret->lock);
     return ret;
 }
 
 NISTZ256_PRE_COMP *EC_nistz256_pre_comp_dup(NISTZ256_PRE_COMP *p)
 {
     if (p != NULL)
-        CRYPTO_add(&p->references, 1, CRYPTO_LOCK_EC_PRE_COMP);
+        CRYPTO_atomic_add(&p->references, 1, &p->lock);
     return p;
 }
 
 void EC_nistz256_pre_comp_free(NISTZ256_PRE_COMP *pre)
 {
-    if (pre == NULL
-            || CRYPTO_add(&pre->references, -1, CRYPTO_LOCK_EC_PRE_COMP) > 0)
+    if (pre == NULL || CRYPTO_atomic_add(&pre->references, -1, &pre->lock) > 0)
         return;
     OPENSSL_free(pre->precomp_storage);
     OPENSSL_free(pre);
 }
-
 
 static int ecp_nistz256_window_have_precompute_mult(const EC_GROUP *group)
 {

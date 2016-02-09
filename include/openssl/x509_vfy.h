@@ -179,6 +179,7 @@ struct x509_store_st {
     int (*cleanup) (X509_STORE_CTX *ctx);
     CRYPTO_EX_DATA ex_data;
     int references;
+    CRYPTO_MUTEX lock;
 } /* X509_STORE */ ;
 
 int X509_STORE_set_depth(X509_STORE *store, int depth);

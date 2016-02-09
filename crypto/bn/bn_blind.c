@@ -123,7 +123,8 @@ struct bn_blinding_st {
     unsigned long thread_id;    /* added in OpenSSL 0.9.6j and 0.9.7b; used
                                  * only by crypto/rsa/rsa_eay.c, rsa_lib.c */
 #endif
-    CRYPTO_THREADID tid;
+    CRYPTO_THREAD_ID tid;
+    CRYPTO_MUTEX lock;
     int counter;
     unsigned long flags;
     BN_MONT_CTX *m_ctx;
@@ -156,13 +157,15 @@ BN_BLINDING *BN_BLINDING_new(const BIGNUM *A, const BIGNUM *Ai, BIGNUM *mod)
     if (BN_get_flags(mod, BN_FLG_CONSTTIME) != 0)
         BN_set_flags(ret->mod, BN_FLG_CONSTTIME);
 
+    CRYPTO_MUTEX_init(&ret->lock);
+
     /*
      * Set the counter to the special value -1 to indicate that this is
      * never-used fresh blinding that does not need updating before first
      * use.
      */
     ret->counter = -1;
-    CRYPTO_THREADID_current(&ret->tid);
+    ret->tid = CRYPTO_THREAD_get_current_id();
     return (ret);
  err:
     BN_BLINDING_free(ret);
@@ -283,14 +286,24 @@ void BN_BLINDING_set_thread_id(BN_BLINDING *b, unsigned long n)
 }
 #endif
 
-CRYPTO_THREADID *BN_BLINDING_thread_id(BN_BLINDING *b)
+CRYPTO_THREAD_ID BN_BLINDING_thread_id(BN_BLINDING *b)
 {
-    return &b->tid;
+    return b->tid;
 }
 
 unsigned long BN_BLINDING_get_flags(const BN_BLINDING *b)
 {
     return b->flags;
+}
+
+int BN_BLINDING_lock_write(BN_BLINDING *b)
+{
+    return CRYPTO_MUTEX_lock_write(&b->lock);
+}
+
+int BN_BLINDING_unlock(BN_BLINDING *b)
+{
+    return CRYPTO_MUTEX_unlock(&b->lock);
 }
 
 void BN_BLINDING_set_flags(BN_BLINDING *b, unsigned long flags)

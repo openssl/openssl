@@ -139,6 +139,7 @@ struct ui_st {
 # define UI_FLAG_REDOABLE        0x0001
 # define UI_FLAG_PRINT_ERRORS    0x0100
     int flags;
+    CRYPTO_MUTEX lock;
 };
 
 #endif

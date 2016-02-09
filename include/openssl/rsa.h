@@ -146,6 +146,7 @@ struct rsa_st {
     /* be careful using this if the RSA structure is shared */
     CRYPTO_EX_DATA ex_data;
     int references;
+    CRYPTO_MUTEX lock;
     int flags;
     /* Used to cache montgomery values */
     BN_MONT_CTX *_method_mod_n;

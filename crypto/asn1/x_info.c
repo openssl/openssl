@@ -71,6 +71,7 @@ X509_INFO *X509_INFO_new(void)
         return (NULL);
     }
     ret->references = 1;
+    CRYPTO_MUTEX_init(&ret->lock);
     return (ret);
 }
 
@@ -81,7 +82,7 @@ void X509_INFO_free(X509_INFO *x)
     if (x == NULL)
         return;
 
-    i = CRYPTO_add(&x->references, -1, CRYPTO_LOCK_X509_INFO);
+    i = CRYPTO_atomic_add(&x->references, -1, &x->lock);
 #ifdef REF_PRINT
     REF_PRINT("X509_INFO", x);
 #endif

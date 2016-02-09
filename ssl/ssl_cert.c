@@ -138,17 +138,25 @@ static int ssl_security_default_callback(SSL *s, SSL_CTX *ctx, int op,
                                          int bits, int nid, void *other,
                                          void *ex);
 
+static CRYPTO_MUTEX ssl_x509_store_ctx_lock;
+static CRYPTO_ONCE ssl_x509_store_ctx_once;
+
+static void ssl_x509_store_ctx_init(void)
+{
+    CRYPTO_MUTEX_init(&ssl_x509_store_ctx_lock);
+}
+
 int SSL_get_ex_data_X509_STORE_CTX_idx(void)
 {
     static volatile int ssl_x509_store_ctx_idx = -1;
-    int got_write_lock = 0;
 
-    CRYPTO_r_lock(CRYPTO_LOCK_SSL_CTX);
+    CRYPTO_ONCE_run(&ssl_x509_store_ctx_once, ssl_x509_store_ctx_init);
+
+    CRYPTO_MUTEX_lock_read(&ssl_x509_store_ctx_lock);
 
     if (ssl_x509_store_ctx_idx < 0) {
-        CRYPTO_r_unlock(CRYPTO_LOCK_SSL_CTX);
-        CRYPTO_w_lock(CRYPTO_LOCK_SSL_CTX);
-        got_write_lock = 1;
+        CRYPTO_MUTEX_unlock(&ssl_x509_store_ctx_lock);
+        CRYPTO_MUTEX_lock_write(&ssl_x509_store_ctx_lock);
 
         if (ssl_x509_store_ctx_idx < 0) {
             ssl_x509_store_ctx_idx =
@@ -157,10 +165,7 @@ int SSL_get_ex_data_X509_STORE_CTX_idx(void)
         }
     }
 
-    if (got_write_lock)
-        CRYPTO_w_unlock(CRYPTO_LOCK_SSL_CTX);
-    else
-        CRYPTO_r_unlock(CRYPTO_LOCK_SSL_CTX);
+    CRYPTO_MUTEX_unlock(&ssl_x509_store_ctx_lock);
 
     return ssl_x509_store_ctx_idx;
 }
@@ -176,6 +181,7 @@ CERT *ssl_cert_new(void)
 
     ret->key = &(ret->pkeys[SSL_PKEY_RSA_ENC]);
     ret->references = 1;
+    CRYPTO_MUTEX_init(&ret->lock);
     ret->sec_cb = ssl_security_default_callback;
     ret->sec_level = OPENSSL_TLS_SECURITY_LEVEL;
     ret->sec_ex = NULL;
@@ -193,6 +199,8 @@ CERT *ssl_cert_dup(CERT *cert)
     }
 
     ret->references = 1;
+    CRYPTO_MUTEX_init(&ret->lock);
+
     ret->key = &ret->pkeys[cert->key - cert->pkeys];
 
 #ifndef OPENSSL_NO_DH
@@ -276,13 +284,14 @@ CERT *ssl_cert_dup(CERT *cert)
     ret->cert_cb_arg = cert->cert_cb_arg;
 
     if (cert->verify_store) {
-        CRYPTO_add(&cert->verify_store->references, 1,
-                   CRYPTO_LOCK_X509_STORE);
+        CRYPTO_atomic_add(&cert->verify_store->references, 1,
+                         &cert->verify_store->lock);
         ret->verify_store = cert->verify_store;
     }
 
     if (cert->chain_store) {
-        CRYPTO_add(&cert->chain_store->references, 1, CRYPTO_LOCK_X509_STORE);
+        CRYPTO_atomic_add(&cert->chain_store->references, 1,
+                         &cert->chain_store->lock);
         ret->chain_store = cert->chain_store;
     }
 
@@ -337,7 +346,7 @@ void ssl_cert_free(CERT *c)
     if (c == NULL)
         return;
 
-    i = CRYPTO_add(&c->references, -1, CRYPTO_LOCK_SSL_CERT);
+    i = CRYPTO_atomic_add(&c->references, -1, &c->lock);
 #ifdef REF_PRINT
     REF_PRINT("CERT", c);
 #endif
@@ -1057,7 +1066,7 @@ int ssl_cert_set_cert_store(CERT *c, X509_STORE *store, int chain, int ref)
     X509_STORE_free(*pstore);
     *pstore = store;
     if (ref && store)
-        CRYPTO_add(&store->references, 1, CRYPTO_LOCK_X509_STORE);
+        CRYPTO_atomic_add(&store->references, 1, &store->lock);
     return 1;
 }
 

@@ -207,8 +207,8 @@ extern "C" {
         static const ASN1_AUX tname##_aux = {NULL, ASN1_AFLG_BROKEN, 0, 0, 0, 0}; \
         ASN1_SEQUENCE(tname)
 
-# define ASN1_SEQUENCE_ref(tname, cb, lck) \
-        static const ASN1_AUX tname##_aux = {NULL, ASN1_AFLG_REFCOUNT, offsetof(tname, references), lck, cb, 0}; \
+# define ASN1_SEQUENCE_ref(tname, cb) \
+        static const ASN1_AUX tname##_aux = {NULL, ASN1_AFLG_REFCOUNT, offsetof(tname, references), offsetof(tname, lock), cb, 0}; \
         ASN1_SEQUENCE(tname)
 
 # define ASN1_SEQUENCE_enc(tname, enc, cb) \
@@ -774,7 +774,7 @@ typedef struct ASN1_AUX_st {
     void *app_data;
     int flags;
     int ref_offset;             /* Offset of reference value */
-    int ref_lock;               /* Lock type to use */
+    int ref_lock_offset;        /* Offset of lock value */
     ASN1_aux_cb *asn1_cb;
     int enc_offset;             /* Offset of ASN1_ENCODING structure */
 } ASN1_AUX;

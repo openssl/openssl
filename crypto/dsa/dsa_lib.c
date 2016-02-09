@@ -142,6 +142,7 @@ DSA *DSA_new_method(ENGINE *engine)
 #endif
 
     ret->references = 1;
+    CRYPTO_MUTEX_init(&ret->lock);
     ret->flags = ret->meth->flags & ~DSA_FLAG_NON_FIPS_ALLOW;
     CRYPTO_new_ex_data(CRYPTO_EX_INDEX_DSA, ret, &ret->ex_data);
     if ((ret->meth->init != NULL) && !ret->meth->init(ret)) {
@@ -164,7 +165,7 @@ void DSA_free(DSA *r)
     if (r == NULL)
         return;
 
-    i = CRYPTO_add(&r->references, -1, CRYPTO_LOCK_DSA);
+    i = CRYPTO_atomic_add(&r->references, -1, &r->lock);
 #ifdef REF_PRINT
     REF_PRINT("DSA", r);
 #endif
@@ -198,7 +199,7 @@ void DSA_free(DSA *r)
 
 int DSA_up_ref(DSA *r)
 {
-    int i = CRYPTO_add(&r->references, 1, CRYPTO_LOCK_DSA);
+    int i = CRYPTO_atomic_add(&r->references, 1, &r->lock);
 #ifdef REF_PRINT
     REF_PRINT("DSA", r);
 #endif

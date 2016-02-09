@@ -120,6 +120,7 @@ DSO *DSO_new_method(DSO_METHOD *meth)
     else
         ret->meth = meth;
     ret->references = 1;
+    CRYPTO_MUTEX_init(&ret->lock);
     if ((ret->meth->init != NULL) && !ret->meth->init(ret)) {
         sk_void_free(ret->meth_data);
         OPENSSL_free(ret);
@@ -135,7 +136,7 @@ int DSO_free(DSO *dso)
     if (dso == NULL)
         return (1);
 
-    i = CRYPTO_add(&dso->references, -1, CRYPTO_LOCK_DSO);
+    i = CRYPTO_atomic_add(&dso->references, -1, &dso->lock);
 #ifdef REF_PRINT
     REF_PRINT("DSO", dso);
 #endif
@@ -177,7 +178,7 @@ int DSO_up_ref(DSO *dso)
         return (0);
     }
 
-    CRYPTO_add(&dso->references, 1, CRYPTO_LOCK_DSO);
+    CRYPTO_atomic_add(&dso->references, 1, &dso->lock);
     return (1);
 }
 

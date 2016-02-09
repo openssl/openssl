@@ -156,16 +156,12 @@ SSL_SESSION *SSL_get1_session(SSL *ssl)
 /* variant of SSL_get_session: caller really gets something */
 {
     SSL_SESSION *sess;
-    /*
-     * Need to lock this all up rather than just use CRYPTO_add so that
-     * somebody doesn't free ssl->session between when we check it's non-null
-     * and when we up the reference count.
-     */
-    CRYPTO_w_lock(CRYPTO_LOCK_SSL_SESSION);
+
     sess = ssl->session;
+    CRYPTO_MUTEX_lock_write(&sess->lock);
     if (sess)
         sess->references++;
-    CRYPTO_w_unlock(CRYPTO_LOCK_SSL_SESSION);
+    CRYPTO_MUTEX_unlock(&sess->lock);
     return (sess);
 }
 
@@ -191,6 +187,7 @@ SSL_SESSION *SSL_SESSION_new(void)
 
     ss->verify_result = 1;      /* avoid 0 (= X509_V_OK) just in case */
     ss->references = 1;
+    CRYPTO_MUTEX_init(&ss->lock);
     ss->timeout = 60 * 5 + 4;   /* 5 minute timeout by default */
     ss->time = (unsigned long)time(NULL);
     CRYPTO_new_ex_data(CRYPTO_EX_INDEX_SSL_SESSION, ss, &ss->ex_data);
@@ -236,6 +233,7 @@ SSL_SESSION *ssl_session_dup(SSL_SESSION *src, int ticket)
     dest->next = NULL;
 
     dest->references = 1;
+    CRYPTO_MUTEX_init(&dest->lock);
 
     if (src->peer != NULL)
         X509_up_ref(src->peer);
@@ -437,12 +435,13 @@ int ssl_get_new_session(SSL *s, int session)
         }
 
         /* Choose which callback will set the session ID */
-        CRYPTO_r_lock(CRYPTO_LOCK_SSL_CTX);
+        CRYPTO_MUTEX_lock_read(&s->session_ctx->lock);
         if (s->generate_session_id)
             cb = s->generate_session_id;
         else if (s->session_ctx->generate_session_id)
             cb = s->session_ctx->generate_session_id;
-        CRYPTO_r_unlock(CRYPTO_LOCK_SSL_CTX);
+        CRYPTO_MUTEX_unlock(&s->session_ctx->lock);
+
         /* Choose a session ID */
         tmp = ss->session_id_length;
         if (!cb(s, ss->session_id, &tmp)) {
@@ -562,13 +561,15 @@ int ssl_get_prev_session(SSL *s, const PACKET *ext, const PACKET *session_id)
             goto err;
         }
         data.session_id_length = local_len;
-        CRYPTO_r_lock(CRYPTO_LOCK_SSL_CTX);
+
+        CRYPTO_MUTEX_lock_read(&s->session_ctx->lock);
         ret = lh_SSL_SESSION_retrieve(s->session_ctx->sessions, &data);
         if (ret != NULL) {
             /* don't allow other threads to steal it: */
-            CRYPTO_add(&ret->references, 1, CRYPTO_LOCK_SSL_SESSION);
+            CRYPTO_atomic_add(&ret->references, 1, &ret->lock);
         }
-        CRYPTO_r_unlock(CRYPTO_LOCK_SSL_CTX);
+        CRYPTO_MUTEX_unlock(&s->session_ctx->lock);
+
         if (ret == NULL)
             s->session_ctx->stats.sess_miss++;
     }
@@ -591,7 +592,7 @@ int ssl_get_prev_session(SSL *s, const PACKET *ext, const PACKET *session_id)
              * thread-safe).
              */
             if (copy)
-                CRYPTO_add(&ret->references, 1, CRYPTO_LOCK_SSL_SESSION);
+                CRYPTO_atomic_add(&ret->references, 1, &ret->lock);
 
             /*
              * Add the externally cached session to the internal cache as
@@ -714,12 +715,12 @@ int SSL_CTX_add_session(SSL_CTX *ctx, SSL_SESSION *c)
      * it has two ways of access: each session is in a doubly linked list and
      * an lhash
      */
-    CRYPTO_add(&c->references, 1, CRYPTO_LOCK_SSL_SESSION);
+    CRYPTO_atomic_add(&c->references, 1, &c->lock);
     /*
      * if session c is in already in cache, we take back the increment later
      */
 
-    CRYPTO_w_lock(CRYPTO_LOCK_SSL_CTX);
+    CRYPTO_MUTEX_lock_write(&ctx->lock);
     s = lh_SSL_SESSION_insert(ctx->sessions, c);
 
     /*
@@ -769,7 +770,7 @@ int SSL_CTX_add_session(SSL_CTX *ctx, SSL_SESSION *c)
             }
         }
     }
-    CRYPTO_w_unlock(CRYPTO_LOCK_SSL_CTX);
+    CRYPTO_MUTEX_unlock(&ctx->lock);
     return (ret);
 }
 
@@ -785,7 +786,8 @@ static int remove_session_lock(SSL_CTX *ctx, SSL_SESSION *c, int lck)
 
     if ((c != NULL) && (c->session_id_length != 0)) {
         if (lck)
-            CRYPTO_w_lock(CRYPTO_LOCK_SSL_CTX);
+            CRYPTO_MUTEX_lock_write(&ctx->lock);
+
         if ((r = lh_SSL_SESSION_retrieve(ctx->sessions, c)) == c) {
             ret = 1;
             r = lh_SSL_SESSION_delete(ctx->sessions, c);
@@ -793,7 +795,7 @@ static int remove_session_lock(SSL_CTX *ctx, SSL_SESSION *c, int lck)
         }
 
         if (lck)
-            CRYPTO_w_unlock(CRYPTO_LOCK_SSL_CTX);
+            CRYPTO_MUTEX_unlock(&ctx->lock);
 
         if (ret) {
             r->not_resumable = 1;
@@ -813,7 +815,7 @@ void SSL_SESSION_free(SSL_SESSION *ss)
     if (ss == NULL)
         return;
 
-    i = CRYPTO_add(&ss->references, -1, CRYPTO_LOCK_SSL_SESSION);
+    i = CRYPTO_atomic_add(&ss->references, -1, &ss->lock);
 #ifdef REF_PRINT
     REF_PRINT("SSL_SESSION", ss);
 #endif
@@ -871,7 +873,7 @@ int SSL_set_session(SSL *s, SSL_SESSION *session)
         }
 
         /* CRYPTO_w_lock(CRYPTO_LOCK_SSL); */
-        CRYPTO_add(&session->references, 1, CRYPTO_LOCK_SSL_SESSION);
+        CRYPTO_atomic_add(&session->references, 1, &session->lock);
         SSL_SESSION_free(s->session);
         s->session = session;
         s->verify_result = s->session->verify_result;
@@ -1063,12 +1065,13 @@ void SSL_CTX_flush_sessions(SSL_CTX *s, long t)
     if (tp.cache == NULL)
         return;
     tp.time = t;
-    CRYPTO_w_lock(CRYPTO_LOCK_SSL_CTX);
+
+    CRYPTO_MUTEX_lock_write(&s->lock);
     i = CHECKED_LHASH_OF(SSL_SESSION, tp.cache)->down_load;
     CHECKED_LHASH_OF(SSL_SESSION, tp.cache)->down_load = 0;
     lh_SSL_SESSION_doall_TIMEOUT_PARAM(tp.cache, timeout_cb, &tp);
     CHECKED_LHASH_OF(SSL_SESSION, tp.cache)->down_load = i;
-    CRYPTO_w_unlock(CRYPTO_LOCK_SSL_CTX);
+    CRYPTO_MUTEX_unlock(&s->lock);
 }
 
 int ssl_clear_bad_session(SSL *s)

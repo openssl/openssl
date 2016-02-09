@@ -132,6 +132,13 @@ typedef struct ex_callbacks_st {
 } EX_CALLBACKS;
 
 static EX_CALLBACKS ex_data[CRYPTO_EX_INDEX__COUNT];
+static CRYPTO_MUTEX ex_data_lock;
+static CRYPTO_ONCE  ex_data_init;
+
+static void ex_data_do_init(void)
+{
+    CRYPTO_MUTEX_init(&ex_data_lock);
+}
 
 /*
  * Return the EX_CALLBACKS from the |ex_data| array that corresponds to
@@ -141,13 +148,15 @@ static EX_CALLBACKS *get_and_lock(int class_index)
 {
     EX_CALLBACKS *ip;
 
+    CRYPTO_ONCE_run(&ex_data_init, ex_data_do_init);
+
     if (class_index < 0 || class_index >= CRYPTO_EX_INDEX__COUNT) {
         CRYPTOerr(CRYPTO_F_GET_AND_LOCK, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 
     ip = &ex_data[class_index];
-    CRYPTO_w_lock(CRYPTO_LOCK_EX_DATA);
+    CRYPTO_MUTEX_lock_write(&ex_data_lock);
     if (ip->meth == NULL) {
         ip->meth = sk_EX_CALLBACK_new_null();
         /* We push an initial value on the stack because the SSL
@@ -155,7 +164,7 @@ static EX_CALLBACKS *get_and_lock(int class_index)
         if (ip->meth == NULL
             || !sk_EX_CALLBACK_push(ip->meth, NULL)) {
             CRYPTOerr(CRYPTO_F_GET_AND_LOCK, ERR_R_MALLOC_FAILURE);
-            CRYPTO_w_unlock(CRYPTO_LOCK_EX_DATA);
+            CRYPTO_MUTEX_unlock(&ex_data_lock);
             return NULL;
         }
     }
@@ -225,7 +234,7 @@ int CRYPTO_free_ex_index(int class_index, int idx)
     a->free_func = dummy_free;
     toret = 1;
 err:
-    CRYPTO_w_unlock(CRYPTO_LOCK_EX_DATA);
+    CRYPTO_MUTEX_unlock(&ex_data_lock);
     return toret;
 }
 
@@ -262,7 +271,7 @@ int CRYPTO_get_ex_new_index(int class_index, long argl, void *argp,
     (void)sk_EX_CALLBACK_set(ip->meth, toret, a);
 
  err:
-    CRYPTO_w_unlock(CRYPTO_LOCK_EX_DATA);
+    CRYPTO_MUTEX_unlock(&ex_data_lock);
     return toret;
 }
 
@@ -296,7 +305,7 @@ int CRYPTO_new_ex_data(int class_index, void *obj, CRYPTO_EX_DATA *ad)
             for (i = 0; i < mx; i++)
                 storage[i] = sk_EX_CALLBACK_value(ip->meth, i);
     }
-    CRYPTO_w_unlock(CRYPTO_LOCK_EX_DATA);
+    CRYPTO_MUTEX_unlock(&ex_data_lock);
 
     if (mx > 0 && storage == NULL) {
         CRYPTOerr(CRYPTO_F_CRYPTO_NEW_EX_DATA, ERR_R_MALLOC_FAILURE);
@@ -346,7 +355,7 @@ int CRYPTO_dup_ex_data(int class_index, CRYPTO_EX_DATA *to,
             for (i = 0; i < mx; i++)
                 storage[i] = sk_EX_CALLBACK_value(ip->meth, i);
     }
-    CRYPTO_w_unlock(CRYPTO_LOCK_EX_DATA);
+    CRYPTO_MUTEX_unlock(&ex_data_lock);
 
     if (mx > 0 && storage == NULL) {
         CRYPTOerr(CRYPTO_F_CRYPTO_DUP_EX_DATA, ERR_R_MALLOC_FAILURE);
@@ -391,7 +400,7 @@ void CRYPTO_free_ex_data(int class_index, void *obj, CRYPTO_EX_DATA *ad)
             for (i = 0; i < mx; i++)
                 storage[i] = sk_EX_CALLBACK_value(ip->meth, i);
     }
-    CRYPTO_w_unlock(CRYPTO_LOCK_EX_DATA);
+    CRYPTO_MUTEX_unlock(&ex_data_lock);
 
     if (mx > 0 && storage == NULL) {
         CRYPTOerr(CRYPTO_F_CRYPTO_FREE_EX_DATA, ERR_R_MALLOC_FAILURE);

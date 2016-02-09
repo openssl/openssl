@@ -93,6 +93,7 @@ int BIO_set(BIO *bio, BIO_METHOD *method)
     bio->references = 1;
     bio->num_read = 0L;
     bio->num_write = 0L;
+    CRYPTO_MUTEX_init(&bio->lock);
     CRYPTO_new_ex_data(CRYPTO_EX_INDEX_BIO, bio, &bio->ex_data);
     if (method->create != NULL)
         if (!method->create(bio)) {
@@ -109,7 +110,7 @@ int BIO_free(BIO *a)
     if (a == NULL)
         return (0);
 
-    i = CRYPTO_add(&a->references, -1, CRYPTO_LOCK_BIO);
+    i = CRYPTO_atomic_add(&a->references, -1, &a->lock);
 #ifdef REF_PRINT
     REF_PRINT("BIO", a);
 #endif

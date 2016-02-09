@@ -104,6 +104,7 @@ struct X509_req_st {
     X509_ALGOR sig_alg;         /* signature algorithm */
     ASN1_BIT_STRING *signature; /* signature */
     int references;
+    CRYPTO_MUTEX lock;
 };
 
 struct X509_crl_info_st {
@@ -122,6 +123,7 @@ struct X509_crl_st {
     X509_ALGOR sig_alg;         /* CRL signature algorithm */
     ASN1_BIT_STRING signature; /* CRL signature */
     int references;
+    CRYPTO_MUTEX lock;
     int flags;
     /*
      * Cached copies of decoded extension values, since extensions
@@ -192,6 +194,7 @@ struct x509_st {
     X509_ALGOR sig_alg;
     ASN1_BIT_STRING signature;
     int references;
+    CRYPTO_MUTEX lock;
     char *name;
     CRYPTO_EX_DATA ex_data;
     /* These contain copies of various extension values */

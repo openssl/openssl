@@ -684,7 +684,7 @@ static int hwcrhk_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f) (void))
             CRYPTO_w_lock(CRYPTO_LOCK_ENGINE);
             BIO_free(logstream);
             logstream = NULL;
-            if (CRYPTO_add(&bio->references, 1, CRYPTO_LOCK_BIO) > 1)
+            if (CRYPTO_atomic_add(&bio->references, 1, &bio->lock) > 1)
                 logstream = bio;
             else
                 HWCRHKerr(HWCRHK_F_HWCRHK_CTRL, HWCRHK_R_BIO_WAS_FREED);
@@ -862,13 +862,14 @@ static EVP_PKEY *hwcrhk_load_pubkey(ENGINE *eng, const char *key_id,
                 RSA *rsa = NULL;
 
                 CRYPTO_w_lock(CRYPTO_LOCK_EVP_PKEY);
+                CRYPTO_MUTEX_lock_write(&res->lock);
                 rsa = res->pkey.rsa;
                 res->pkey.rsa = RSA_new();
                 res->pkey.rsa->n = rsa->n;
                 res->pkey.rsa->e = rsa->e;
                 rsa->n = NULL;
                 rsa->e = NULL;
-                CRYPTO_w_unlock(CRYPTO_LOCK_EVP_PKEY);
+                CRYPTO_MUTEX_unlock(&res->lock);
                 RSA_free(rsa);
             }
             break;

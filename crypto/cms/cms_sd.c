@@ -283,7 +283,7 @@ CMS_SignerInfo *CMS_add1_signer(CMS_ContentInfo *cms,
     /* Call for side-effect of computing hash and caching extensions */
     X509_check_purpose(signer, -1, -1);
 
-    CRYPTO_add(&pk->references, 1, CRYPTO_LOCK_EVP_PKEY);
+    CRYPTO_atomic_add(&pk->references, 1, &pk->lock);
     X509_up_ref(signer);
 
     si->pkey = pk;

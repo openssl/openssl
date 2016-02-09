@@ -139,8 +139,8 @@ static int generate_key(DH *dh)
         pub_key = dh->pub_key;
 
     if (dh->flags & DH_FLAG_CACHE_MONT_P) {
-        mont = BN_MONT_CTX_set_locked(&dh->method_mont_p,
-                                      CRYPTO_LOCK_DH, dh->p, ctx);
+        mont = BN_MONT_CTX_set_locked(&dh->method_mont_p, &dh->lock,
+                                      dh->p, ctx);
         if (!mont)
             goto err;
     }
@@ -221,8 +221,8 @@ static int compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh)
     }
 
     if (dh->flags & DH_FLAG_CACHE_MONT_P) {
-        mont = BN_MONT_CTX_set_locked(&dh->method_mont_p,
-                                      CRYPTO_LOCK_DH, dh->p, ctx);
+        mont = BN_MONT_CTX_set_locked(&dh->method_mont_p, &dh->lock,
+                                      dh->p, ctx);
         if ((dh->flags & DH_FLAG_NO_EXP_CONSTTIME) == 0) {
             /* XXX */
             BN_set_flags(dh->priv_key, BN_FLG_CONSTTIME);

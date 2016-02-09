@@ -283,6 +283,7 @@ struct ec_key_st {
     unsigned int enc_flag;
     point_conversion_form_t conv_form;
     int references;
+    CRYPTO_MUTEX lock;
     int flags;
     CRYPTO_EX_DATA ex_data;
 } /* EC_KEY */ ;
