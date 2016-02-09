@@ -59,10 +59,14 @@ use TLSProxy::Proxy;
 my $test_name = "test_networking";
 setup($test_name);
 
+plan skip_all => "TLSProxy isn't usable on $^O"
+    if $^O =~ /^VMS$/;
+
+plan skip_all => "$test_name needs the engine feature enabled"
+    if disabled("engine");
+
 plan skip_all => "$test_name can only be performed with OpenSSL configured shared"
-    unless (map { s/\R//; s/^SHARED_LIBS=\s*//; $_ }
-	    grep { /^SHARED_LIBS=/ }
-	    do { local @ARGV = ( bldtop_file("Makefile") ); <> })[0] ne "";
+    if disabled("shared");
 
 $ENV{OPENSSL_ENGINES} = bldtop_dir("engines");
 $ENV{OPENSSL_ia32cap} = '~0x200000200000000';
