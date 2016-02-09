@@ -164,7 +164,7 @@ to retrieve a page and copy the result to standard output.
  BIO *cbio, *out;
  int len;
  char tmpbuf[1024];
- ERR_load_crypto_strings();
+
  cbio = BIO_new_connect("localhost:http");
  out = BIO_new_fp(stdout, BIO_NOCLOSE);
  if(BIO_do_connect(cbio) <= 0) {

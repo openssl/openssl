@@ -60,4 +60,9 @@ L<conf(5)>,
 L<CONF_modules_load_file(3)>,
 L<CONF_modules_free(3)>
 
+=head1 HISTORY
+
+The OPENSSL_no_config() and OPENSSL_config() functions were
+deprecated in OpenSSL 1.1.0 by OPENSSL_init_crypto().
+
 =cut

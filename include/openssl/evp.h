@@ -870,29 +870,31 @@ const EVP_CIPHER *EVP_seed_cfb128(void);
 const EVP_CIPHER *EVP_seed_ofb(void);
 # endif
 
-#  define OPENSSL_add_all_algorithms_conf() \
-    OPENSSL_INIT_crypto_library_start(OPENSSL_INIT_ADD_ALL_CIPHERS \
-                                      | OPENSSL_INIT_ADD_ALL_DIGESTS \
-                                      | OPENSSL_INIT_LOAD_CONFIG, NULL)
-#  define OPENSSL_add_all_algorithms_noconf() \
-    OPENSSL_INIT_crypto_library_start(OPENSSL_INIT_ADD_ALL_CIPHERS \
-                                      | OPENSSL_INIT_ADD_ALL_DIGESTS, NULL)
+# if OPENSSL_API_COMPAT < 0x10100000L
+#   define OPENSSL_add_all_algorithms_conf() \
+    OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_CIPHERS \
+                        | OPENSSL_INIT_ADD_ALL_DIGESTS \
+                        | OPENSSL_INIT_LOAD_CONFIG, NULL)
+#   define OPENSSL_add_all_algorithms_noconf() \
+    OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_CIPHERS \
+                        | OPENSSL_INIT_ADD_ALL_DIGESTS, NULL)
 
-# ifdef OPENSSL_LOAD_CONF
-#  define OpenSSL_add_all_algorithms() \
-    OPENSSL_INIT_crypto_library_start(OPENSSL_INIT_ADD_ALL_CIPHERS \
-                                      | OPENSSL_INIT_ADD_ALL_DIGESTS \
-                                      | OPENSSL_INIT_LOAD_CONFIG, NULL)
-# else
-#  define OpenSSL_add_all_algorithms() \
-    OPENSSL_INIT_crypto_library_start(OPENSSL_INIT_ADD_ALL_CIPHERS \
-                                      | OPENSSL_INIT_ADD_ALL_DIGESTS, NULL)
+#  ifdef OPENSSL_LOAD_CONF
+#   define OpenSSL_add_all_algorithms() \
+    OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_CIPHERS \
+                        | OPENSSL_INIT_ADD_ALL_DIGESTS \
+                        | OPENSSL_INIT_LOAD_CONFIG, NULL)
+#  else
+#   define OpenSSL_add_all_algorithms() \
+    OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_CIPHERS \
+                        | OPENSSL_INIT_ADD_ALL_DIGESTS, NULL)
+#  endif
+
+#   define OpenSSL_add_all_ciphers() \
+    OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_CIPHERS, NULL)
+#   define OpenSSL_add_all_digests() \
+    OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_DIGESTS, NULL)
 # endif
-
-#  define OpenSSL_add_all_ciphers() \
-    OPENSSL_INIT_crypto_library_start(OPENSSL_INIT_ADD_ALL_CIPHERS, NULL)
-#  define OpenSSL_add_all_digests() \
-    OPENSSL_INIT_crypto_library_start(OPENSSL_INIT_ADD_ALL_DIGESTS, NULL)
 
 int EVP_add_cipher(const EVP_CIPHER *cipher);
 int EVP_add_digest(const EVP_MD *digest);

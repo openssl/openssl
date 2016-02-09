@@ -83,7 +83,7 @@ void OPENSSL_config(const char *config_name)
     settings[0].value.type_string = config_name;
     settings[1].name = OPENSSL_INIT_SET_END;
     settings[1].value.type_int = 0;
-    OPENSSL_INIT_crypto_library_start(OPENSSL_INIT_LOAD_CONFIG, settings);
+    OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CONFIG, settings);
 }
 
 void openssl_config_internal(const char *config_name)

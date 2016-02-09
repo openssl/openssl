@@ -355,8 +355,10 @@ void ERR_load_strings(int lib, ERR_STRING_DATA str[]);
 void ERR_unload_strings(int lib, ERR_STRING_DATA str[]);
 void ERR_load_ERR_strings(void);
 
-#define ERR_load_crypto_strings() \
-    OPENSSL_INIT_crypto_library_start(OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL)
+#if OPENSSL_API_COMPAT < 0x10100000L
+# define ERR_load_crypto_strings() \
+    OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL)
+#endif
 
 void ERR_free_strings(void);
 

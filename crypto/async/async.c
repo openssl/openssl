@@ -97,7 +97,7 @@ err:
 
 static async_ctx *async_get_ctx(void)
 {
-    OPENSSL_INIT_crypto_library_start(OPENSSL_INIT_ASYNC, NULL);
+    OPENSSL_init_crypto(OPENSSL_INIT_ASYNC, NULL);
     return async_arch_get_ctx();
 }
 
@@ -361,7 +361,7 @@ int ASYNC_init_thread(size_t max_size, size_t init_size)
         return 0;
     }
 
-    OPENSSL_INIT_crypto_library_start(OPENSSL_INIT_ASYNC, NULL);
+    OPENSSL_init_crypto(OPENSSL_INIT_ASYNC, NULL);
     if (!ossl_init_thread_start(OPENSSL_INIT_THREAD_ASYNC)) {
         ASYNCerr(ASYNC_F_ASYNC_INIT_THREAD, ERR_R_MALLOC_FAILURE);
         return 0;

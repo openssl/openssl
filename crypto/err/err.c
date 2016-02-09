@@ -894,8 +894,7 @@ ERR_STATE *ERR_get_state(void)
          * the first one that we just replaced.
          */
         ERR_STATE_free(tmpp);
-        OPENSSL_INIT_crypto_library_start(OPENSSL_INIT_LOAD_CRYPTO_STRINGS,
-                                          NULL);
+        OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL);
         /* Ignore failures from this */
         ossl_init_thread_start(OPENSSL_INIT_THREAD_ERR_STATE);
     }

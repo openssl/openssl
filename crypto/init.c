@@ -268,7 +268,7 @@ static void ossl_init_base(void)
     fprintf(stderr, "OPENSSL_INIT: ossl_init_base: Setting up stop handlers\n");
 #endif
     ossl_init_setup_thread_stop();
-    atexit(OPENSSL_INIT_library_stop);
+    atexit(OPENSSL_cleanup);
     OPENSSL_cpuid_setup();
     base_inited = 1;
 }
@@ -499,7 +499,7 @@ static void ossl_init_thread_stop(struct thread_local_inits_st *locals)
     ossl_init_thread_stop_cleanup();
 }
 
-void OPENSSL_INIT_thread_stop(void)
+void OPENSSL_thread_stop(void)
 {
     ossl_init_thread_stop(
         (struct thread_local_inits_st *)ossl_init_get_thread_local(0));
@@ -531,7 +531,7 @@ int ossl_init_thread_start(uint64_t opts)
     return 1;
 }
 
-void OPENSSL_INIT_library_stop(void)
+void OPENSSL_cleanup(void)
 {
     OPENSSL_INIT_STOP *currhandler, *lasthandler;
 
@@ -565,7 +565,7 @@ void OPENSSL_INIT_library_stop(void)
 
     if (zlib_inited) {
 #ifdef OPENSSL_INIT_DEBUG
-        fprintf(stderr, "OPENSSL_INIT: OPENSSL_INIT_library_stop: "
+        fprintf(stderr, "OPENSSL_INIT: OPENSSL_cleanup: "
                         "COMP_zlib_cleanup()\n");
 #endif
         COMP_zlib_cleanup();
@@ -574,7 +574,7 @@ void OPENSSL_INIT_library_stop(void)
 #ifndef OPENSSL_NO_ENGINE
     if (engine_inited) {
 # ifdef OPENSSL_INIT_DEBUG
-        fprintf(stderr, "OPENSSL_INIT: OPENSSL_INIT_library_stop: "
+        fprintf(stderr, "OPENSSL_INIT: OPENSSL_cleanup: "
                         "ENGINE_cleanup()\n");
 # endif
         ENGINE_cleanup();
@@ -583,7 +583,7 @@ void OPENSSL_INIT_library_stop(void)
 
     if (load_crypto_strings_inited) {
 #ifdef OPENSSL_INIT_DEBUG
-        fprintf(stderr, "OPENSSL_INIT: OPENSSL_INIT_library_stop: "
+        fprintf(stderr, "OPENSSL_INIT: OPENSSL_cleanup: "
                         "ERR_free_strings()\n");
 #endif
         ERR_free_strings();
@@ -626,8 +626,7 @@ static const OPENSSL_INIT_SETTINGS *ossl_init_get_setting(
  * called prior to any threads making calls to any OpenSSL functions,
  * i.e. passing a non-null settings value is assumed to be single-threaded.
  */
-void OPENSSL_INIT_crypto_library_start(uint64_t opts,
-                                    const OPENSSL_INIT_SETTINGS *settings)
+void OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
 {
     /* XXX TODO WARNING To be updated to return a value not assert. */
     assert(!stopped);
@@ -719,7 +718,7 @@ void OPENSSL_INIT_crypto_library_start(uint64_t opts,
     }
 }
 
-int OPENSSL_INIT_register_stop_handler(void (*handler)(void))
+int OPENSSL_atexit(void (*handler)(void))
 {
     OPENSSL_INIT_STOP *newhand;
 

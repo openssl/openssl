@@ -140,10 +140,6 @@ unencrypted example in L<BIO_s_connect(3)>.
  SSL_CTX *ctx;
  SSL *ssl;
 
- ERR_load_crypto_strings();
- ERR_load_SSL_strings();
- OpenSSL_add_all_algorithms();
-
  /* We would seed the PRNG here if the platform didn't
   * do it automatically
   */
@@ -206,10 +202,6 @@ a client and also echoes the request to standard output.
  char tmpbuf[1024];
  SSL_CTX *ctx;
  SSL *ssl;
-
- ERR_load_crypto_strings();
- ERR_load_SSL_strings();
- OpenSSL_add_all_algorithms();
 
  /* Might seed PRNG here */
 

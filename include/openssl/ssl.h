@@ -1443,9 +1443,11 @@ __owur int SSL_add_file_cert_subjects_to_stack(STACK_OF(X509_NAME) *stackCAs,
 int SSL_add_dir_cert_subjects_to_stack(STACK_OF(X509_NAME) *stackCAs,
                                        const char *dir);
 
-#define SSL_load_error_strings() \
-    OPENSSL_INIT_ssl_library_start(OPENSSL_INIT_LOAD_SSL_STRINGS \
-                                   | OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL)
+#if OPENSSL_API_COMPAT < 0x10100000L
+# define SSL_load_error_strings() \
+    OPENSSL_init_ssl(OPENSSL_INIT_LOAD_SSL_STRINGS \
+                     | OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL)
+#endif
 
 __owur const char *SSL_state_string(const SSL *s);
 __owur const char *SSL_rstate_string(const SSL *s);
@@ -1676,7 +1678,9 @@ void SSL_set_accept_state(SSL *s);
 
 __owur long SSL_get_default_timeout(const SSL *s);
 
-#define SSL_library_init() OPENSSL_INIT_ssl_library_start(0, NULL)
+#if OPENSSL_API_COMPAT < 0x10100000L
+# define SSL_library_init() OPENSSL_init_ssl(0, NULL)
+#endif
 
 __owur char *SSL_CIPHER_description(const SSL_CIPHER *, char *buf, int size);
 __owur STACK_OF(X509_NAME) *SSL_dup_CA_list(STACK_OF(X509_NAME) *sk);
@@ -1936,8 +1940,7 @@ __owur void *SSL_CTX_get0_security_ex_data(const SSL_CTX *ctx);
 #define OPENSSL_INIT_SSL_DEFAULT \
         (OPENSSL_INIT_LOAD_SSL_STRINGS | OPENSSL_INIT_LOAD_CRYPTO_STRINGS)
 
-void OPENSSL_INIT_ssl_library_start(uint64_t opts,
-                                 const OPENSSL_INIT_SETTINGS *settings);
+void OPENSSL_init_ssl(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings);
 
 # ifndef OPENSSL_NO_UNIT_TEST
 __owur const struct openssl_ssl_test_functions *SSL_test_functions(void);
