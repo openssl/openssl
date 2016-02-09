@@ -1927,6 +1927,15 @@ int (*SSL_CTX_get_security_callback(const SSL_CTX *ctx)) (SSL *s,
 void SSL_CTX_set0_security_ex_data(SSL_CTX *ctx, void *ex);
 __owur void *SSL_CTX_get0_security_ex_data(const SSL_CTX *ctx);
 
+#define OPENSSL_INIT_NO_LOAD_SSL_STRINGS    0x0100000000
+#define OPENSSL_INIT_LOAD_SSL_STRINGS       0x0200000000
+
+#define OPENSSL_INIT_SSL_DEFAULT \
+        (OPENSSL_INIT_LOAD_SSL_STRINGS | OPENSSL_INIT_LOAD_CRYPTO_STRINGS)
+
+void OPENSSL_INIT_ssl_library_start(uint64_t opts,
+                                 const OPENSSL_INIT_SETTINGS *settings);
+
 # ifndef OPENSSL_NO_UNIT_TEST
 __owur const struct openssl_ssl_test_functions *SSL_test_functions(void);
 # endif

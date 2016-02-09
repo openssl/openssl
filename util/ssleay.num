@@ -437,3 +437,4 @@ SSL_up_ref                              471	1_1_0	EXIST::FUNCTION:
 SSL_CTX_up_ref                          472	1_1_0	EXIST::FUNCTION:
 DTLSv1_listen                           473	1_1_0	EXIST::FUNCTION:
 SSL_get0_verified_chain                 474	1_1_0	EXIST::FUNCTION:
+OPENSSL_INIT_ssl_library_start          475	1_1_0	EXIST::FUNCTION:
