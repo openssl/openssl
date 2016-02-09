@@ -190,19 +190,3 @@
  your application code small "shim" snippet, which provides glue between
  OpenSSL BIO layer and your compiler run-time. See the OPENSSL_Applink
  manual page for further details.
-
- Support for older Windows platforms
- -----------------------------------
-
- By default OpenSSL will use functions and capabilities of the Windows platform
- only available in Windows Vista, Windows Server 2008 or later. It is possible
- to enable support for older platforms by defining _WIN32_WINNT at Configure
- time.
-
-  > perl Configure VC-WIN32 --prefix=c:\some\openssl\dir -D_WIN32_WINNT=0x0501
-
- The value 0x0501 above corresponds to Windows XP which is the oldest supported
- platform. The value 0x0600 corresponds to Windows Vista and Windows Server
- 2008. Refer to the Windows documentation for other possible values. Note that
- by forcing support for an older OpenSSL version this may mean less optimal
- approaches are used instead.

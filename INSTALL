@@ -340,7 +340,7 @@
  you can still use "no-threads" to suppress an annoying warning message
  from the Configure script.)
 
- OpenSSL provides in built support for two threading models: pthreads (found on
+ OpenSSL provides built-in support for two threading models: pthreads (found on
  most UNIX/Linux systems), and Windows threads. No other threading models are
  supported. If your platform does not provide pthreads or Windows threads then
  you should Configure with the "no-threads" option.

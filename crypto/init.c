@@ -55,17 +55,6 @@
  *
  */
 
-#include <openssl/e_os2.h>
-
-#if defined(OPENSSL_SYS_WINDOWS) && !defined(_WIN32_WINNT)
-/*
- * We default to requiring Windows Vista, Windows Server 2008 or later. We can
- * support lower versions if _WIN32_WINNT is explicity defined to something
- * less
- */
-# define _WIN32_WINNT 0x0600
-#endif
-
 #include <internal/cryptlib_int.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>

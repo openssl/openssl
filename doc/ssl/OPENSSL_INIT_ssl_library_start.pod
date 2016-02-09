@@ -28,10 +28,12 @@ needed, for example when some non-default initialisation is required. The
 function OPENSSL_INIT_ssl_library_start() can be used for this purpose. Calling
 this function will explicitly initialise BOTH libcrypto and libssl. To
 explicitly initialise ONLY libcrypto see the
-L<OPENSSL_INIT_crypto_library_start(3)> function. In order to perform
-non-default initialisation it MUST be called prior to any other calls of this
-function. As numerous internal OpenSSL functions also call this, this usually
-means you should call it prior to ANY other OpenSSL function calls.
+L<OPENSSL_INIT_crypto_library_start(3)> function.
+
+Numerous internal OpenSSL functions call OPENSSL_INIT_ssl_library_start().
+Therefore, in order to perform non-default initialisation,
+OPENSSL_INIT_ssl_library_start() MUST be called by application code prior to
+any other OpenSSL function calls.
 
 The B<opts> parameter specifies which aspects of libssl and libcrypto should be
 initialised. Valid options for libcrypto are described on the
@@ -73,6 +75,6 @@ L<OPENSSL_INIT_crypto_library_start(3)>
 
 =head1 HISTORY
 
-The OPENSSL_INIT_ssl_library_start function was first added in OpenSSL 1.1.0.
+The OPENSSL_INIT_ssl_library_start function was added in OpenSSL 1.1.0.
 
 =cut
