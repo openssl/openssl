@@ -639,6 +639,9 @@ int CRYPTO_mem_leaks(BIO *b)
     if (mh == NULL && amih == NULL)
         return 1;
 
+    /* Ensure all resources are released */
+    OPENSSL_INIT_library_stop();
+
     CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_DISABLE);
 
     ml.bio = b;
