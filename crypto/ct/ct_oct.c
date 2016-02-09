@@ -269,8 +269,7 @@ SCT *o2i_SCT(SCT **psct, const unsigned char **in, size_t len)
     }
 
     return sct;
-
- err:
+err:
     SCT_free(sct);
     return NULL;
 }
@@ -279,6 +278,7 @@ int i2o_SCT_signature(const SCT *sct, unsigned char **out)
 {
     size_t len;
     unsigned char *p = NULL;
+
     if (sct == NULL) {
         CTerr(CT_F_I2O_SCT_SIGNATURE, ERR_R_PASSED_NULL_PARAMETER);
         goto err;
@@ -286,7 +286,6 @@ int i2o_SCT_signature(const SCT *sct, unsigned char **out)
         CTerr(CT_F_I2O_SCT_SIGNATURE, CT_R_SCT_INVALID_SIGNATURE);
         goto err;
     }
-
 
     if (sct->version == 0) {
         /*
@@ -329,6 +328,7 @@ int i2o_SCT(const SCT *sct, unsigned char **out)
 {
     size_t len;
     unsigned char *p = NULL;
+
     if (sct == NULL) {
         CTerr(CT_F_I2O_SCT, ERR_R_PASSED_NULL_PARAMETER);
         goto err;
