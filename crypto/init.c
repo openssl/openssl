@@ -168,7 +168,7 @@ static void ossl_init_once_run(OPENSSL_INIT_ONCE *once, void (*init)(void))
 }
 # endif
 
-DWORD threadstopkey = TLS_OUT_OF_INDEXES;
+static DWORD threadstopkey = TLS_OUT_OF_INDEXES;
 
 static int ossl_init_setup_thread_stop(void)
 {
@@ -208,7 +208,7 @@ static struct thread_local_inits_st *ossl_init_get_thread_local(int alloc)
 #else /* pthreads */
 # include <pthread.h>
 
-pthread_key_t threadstopkey;
+static pthread_key_t threadstopkey;
 
 typedef pthread_once_t OPENSSL_INIT_ONCE;
 # define OPENSSL_INIT_ONCE_STATIC_INIT          PTHREAD_ONCE_INIT
