@@ -217,7 +217,8 @@ void wait_for_async(SSL *s);
         { "inhibit_map", OPT_V_INHIBIT_MAP, '-', "Set the \"inhibit policy mapping\"" }, \
         { "x509_strict", OPT_V_X509_STRICT, '-', \
             "Strictly apply X509 rules in verification"}, \
-        { "extended_crl", OPT_V_EXTENDED_CRL, '-' }, \
+        { "extended_crl", OPT_V_EXTENDED_CRL, '-', \
+       	    "Enable extended CRL features such as indirect CRLs, alternate CRL signing keys"}, \
         { "use_deltas", OPT_V_USE_DELTAS, '-', \
             "Enable indirect CRLs and CRLs signed by different keys"}, \
         { "policy_print", OPT_V_POLICY_PRINT, '-', "Notify callback that policy is OK"}, \
@@ -229,7 +230,9 @@ void wait_for_async(SSL *s);
         { "suiteB_128", OPT_V_SUITEB_128, '-', \
             "Suite B 128 bit mode allowing 192 bit algorithms"}, \
         { "suiteB_192", OPT_V_SUITEB_192, '-', "Suite B 192 bit only mode" }, \
-        { "partial_chain", OPT_V_PARTIAL_CHAIN, '-' }, \
+        { "partial_chain", OPT_V_PARTIAL_CHAIN, '-', \
+       	    "verification succeeds even if a complete chain cannot be built, "}, \
+        {OPT_MORE_STR, 0, 0, "provided a chain to a trusted certificate can be constructed"}, \
         { "no_alt_chains", OPT_V_NO_ALT_CHAINS, '-', "Only use the first cert chain found" }, \
         { "no_check_time", OPT_V_NO_CHECK_TIME, '-', "Do not check validity against current time" }
 
@@ -324,7 +327,8 @@ void wait_for_async(SSL *s);
             "Allow initial connection to servers that don't support RI"}, \
         {"no_resumption_on_reneg", OPT_S_ONRESUMP, '-', \
             "Disallow session resumption on renegotiation"}, \
-        {"no_legacy_server_connect", OPT_S_NOLEGACYCONN, '-' }, \
+        {"no_legacy_server_connect", OPT_S_NOLEGACYCONN, '-', \
+            "Disallow initial connection to servers that don't support RI"}, \
         {"strict", OPT_S_STRICT, '-', \
             "Enforce strict certificate checks as per TLS standard"}, \
         {"sigalgs", OPT_S_SIGALGS, 's', \
@@ -336,7 +340,7 @@ void wait_for_async(SSL *s);
             "Elliptic curves to advertise (colon-separated list)" }, \
         {"named_curve", OPT_S_NAMEDCURVE, 's', \
             "Elliptic curve used for ECDHE (server-side only)" }, \
-        {"cipher", OPT_S_CIPHER, 's', }, \
+        {"cipher", OPT_S_CIPHER, 's', "Specify cipher list to be used"}, \
         {"dhparam", OPT_S_DHPARAM, '<', \
             "DH parameter file to use, in cert file if not specified"}, \
         {"debug_broken_protocol", OPT_S_DEBUGBROKE, '-', \

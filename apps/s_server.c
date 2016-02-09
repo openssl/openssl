@@ -936,8 +936,10 @@ OPTIONS s_server_options[] = {
      "Print output from SSL/TLS security framework"},
     {"security_debug_verbose", OPT_SECURITY_DEBUG_VERBOSE, '-',
      "Print more output from SSL/TLS security framework"},
-    {"brief", OPT_BRIEF, '-'},
-    {"rev", OPT_REV, '-'},
+    {"brief", OPT_BRIEF, '-', \
+     "Restrict output to brief summary of connection parameters"},
+    {"rev", OPT_REV, '-',
+     "act as a simple test server which just sends back with the received text reversed"},
     {"async", OPT_ASYNC, '-', "Operate in asynchronous mode"},
     {"ssl_config", OPT_SSL_CONFIG, 's', \
      "Configure SSL_CTX using the configuration 'val'"},
