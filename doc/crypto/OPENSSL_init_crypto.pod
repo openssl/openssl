@@ -2,19 +2,18 @@
 
 =head1 NAME
 
-OPENSSL_INIT_crypto_library_start, OPENSSL_INIT_library_stop,
-OPENSSL_INIT_register_stop_handler, OPENSSL_INIT_thread_stop - OpenSSL
+OPENSSL_init_crypto, OPENSSL_cleanup,
+OPENSSL_atexit, OPENSSL_thread_stop - OpenSSL
 initialisation and deinitialisation functions
 
 =head1 SYNOPSIS
 
  #include <openssl/crypto.h>
 
- void OPENSSL_INIT_library_stop(void);
- void OPENSSL_INIT_crypto_library_start(uint64_t opts,
-                                        const OPENSSL_INIT_SETTINGS *settings);
- int OPENSSL_INIT_register_stop_handler(void (*handler)(void));
- void OPENSSL_INIT_thread_stop(void);
+ void OPENSSL_cleanup(void);
+ void OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings);
+ int OPENSSL_atexit(void (*handler)(void));
+ void OPENSSL_thread_stop(void);
 
 =head1 DESCRIPTION
 
@@ -30,13 +29,13 @@ automatically deinitialise as required.
 
 However, there way be situations when explicit initialisation is desirable or
 needed, for example when some non-default initialisation is required. The
-function OPENSSL_INIT_crypto_library_start() can be used for this purpose for
-libcrypto (see also L<OPENSSL_INIT_ssl_library_start(3)> for the libssl
+function OPENSSL_init_crypto() can be used for this purpose for
+libcrypto (see also L<OPENSSL_init_ssl(3)> for the libssl
 equivalent).
 
-Numerous internal OpenSSL functions call OPENSSL_INIT_crypto_library_start().
+Numerous internal OpenSSL functions call OPENSSL_init_crypto().
 Therefore, in order to perform non-default initialisation,
-OPENSSL_INIT_crypto_library_start() MUST be called by application code prior to
+OPENSSL_init_crypto() MUST be called by application code prior to
 any other OpenSSL function calls.
 
 The B<opts> parameter specifies which aspects of libcrypto should be
@@ -46,49 +45,45 @@ initialised. Valid options are:
 
 =item OPENSSL_INIT_NO_LOAD_CRYPTO_STRINGS
 
-Suppress automatic loading of the libcrypto error strings. With this option the
-library will not automatically call ERR_load_crypto_strings(). This option is
+Suppress automatic loading of the libcrypto error strings. This option is
 not a default option. Once selected subsequent calls to
-OPENSSL_INIT_crypto_library_start() with the option
-B<OPENSSL_INIT_LOAD_CRYPTO_STRINGS> will be ignored. Applications may call
-ERR_load_crypto_strings() directly if they wish even if this option has been
-selected. If they do so then they must also explicitly call ERR_free_strings()
-on application close down.
+OPENSSL_init_crypto() with the option
+B<OPENSSL_INIT_LOAD_CRYPTO_STRINGS> will be ignored.
 
 =item OPENSSL_INIT_LOAD_CRYPTO_STRINGS
 
 Automatic loading of the libcrypto error strings. With this option the
-library will automatically call ERR_load_crypto_strings(). This option is a
-default option. Once selected subsequent calls to
-OPENSSL_INIT_crypto_library_start() with the option
+library will automatically load the libcrypto error strings.
+This option is a default option. Once selected subsequent calls to
+OPENSSL_init_crypto() with the option
 B<OPENSSL_INIT_NO_LOAD_CRYPTO_STRINGS> will be ignored.
 
 =item OPENSSL_INIT_ADD_ALL_CIPHERS
 
 With this option the library will automatically load and make available all
 libcrypto ciphers. This option is a default option. Once selected subsequent
-calls to OPENSSL_INIT_crypto_library_start() with the option
+calls to OPENSSL_init_crypto() with the option
 B<OPENSSL_INIT_NO_ADD_ALL_CIPHERS> will be ignored.
 
 =item OPENSSL_INIT_ADD_ALL_DIGESTS
 
 With this option the library will automatically load and make available all
 libcrypto digests. This option is a default option. Once selected subsequent
-calls to OPENSSL_INIT_crypto_library_start() with the option
+calls to OPENSSL_init_crypto() with the option
 B<OPENSSL_INIT_NO_ADD_ALL_CIPHERS> will be ignored.
 
 =item OPENSSL_INIT_NO_ADD_ALL_CIPHERS
 
 With this option the library will suppress automatic loading of libcrypto
 ciphers. This option is not a default option. Once selected subsequent
-calls to OPENSSL_INIT_crypto_library_start() with the option
+calls to OPENSSL_init_crypto() with the option
 B<OPENSSL_INIT_ADD_ALL_CIPHERS> will be ignored.
 
 =item OPENSSL_INIT_NO_ADD_ALL_DIGESTS
 
 With this option the library will suppress automatic loading of libcrypto
 digests. This option is not a default option. Once selected subsequent
-calls to OPENSSL_INIT_crypto_library_start() with the option
+calls to OPENSSL_init_crypto() with the option
 B<OPENSSL_INIT_ADD_ALL_DIGESTS> will be ignored.
 
 =item OPENSSL_INIT_LOAD_CONFIG
@@ -168,30 +163,30 @@ configuration file is assumed. For example
      { OPENSSL_INIT_SET_CONF_FILENAME, .value.type_string = "myconf.cnf" },
      { OPENSSL_INIT_SET_END, .value.type_int = 0 }
  };
- OPENSSL_INIT_crypto_library_start(OPENSSL_INIT_LOAD_CONFIG, settings);
+ OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CONFIG, settings);
 
 The B<settings> parameter must be an array of OPENSSL_INIT_SETTINGS values
 terminated with an OPENSSL_INIT_SET_END entry.
 
-The OPENSSL_INIT_library_stop() function deinitialises OpenSSL (both libcrypto
+The OPENSSL_cleanup() function deinitialises OpenSSL (both libcrypto
 and libssl). All resources allocated by OpenSSL are freed. Typically there
 should be no need to call this function directly as it is initiated
 automatically on application exit. This is done via the standard C library
 L<atexit(3)> function. In the event that the application will close in a manner
 that will not call the registered atexit() handlers then the application should
-call OPENSSL_INIT_library_stop() directly. Developers of libraries using OpenSSL
+call OPENSSL_cleanup() directly. Developers of libraries using OpenSSL
 are discouraged from calling this function and should instead, typically, rely
 on auto-deinitialisation. This is to avoid error conditions where both an
 application and a library it depends on both use OpenSSL, and the library
 deinitialises it before the application has finished using it.
 
-The OPENSSL_INIT_register_stop_handler() function enables the registration of a
-function to be called during OPENSSL_INIT_library_stop(). Stop handlers are
+The OPENSSL_atexit() function enables the registration of a
+function to be called during OPENSSL_cleanup(). Stop handlers are
 called after deinitialisation of resources local to a thread, but before other
 process wide resources are freed. In the event that multiple stop handlers are
 registered, no guarantees are made about the order of execution.
 
-The OPENSSL_INIT_thread_stop() function deallocates resources associated
+The OPENSSL_thread_stop() function deallocates resources associated
 with the current thread. Typically this function will be called automatically by
 the library when the thread exits. This should only be called directly if
 resources should be freed at an earlier time, or under the circumstances
@@ -205,23 +200,22 @@ platforms this is done in response to a DLL_THREAD_DETACH message being sent to
 the libeay32.dll entry point. Some windows functions may cause threads to exit
 without sending this message (for example ExitProcess()). If the application
 uses such functions, then the application must free up OpenSSL resources
-directly via a call to OPENSSL_INIT_thread_stop(). Similarly this message will
+directly via a call to OPENSSL_thread_stop(). Similarly this message will
 also not be sent if OpenSSL is linked statically, and therefore applications
-using static linking should also call OPENSSL_INIT_thread_stop().
+using static linking should also call OPENSSL_thread_stop().
 
 =head1 RETURN VALUES
 
-The function OPENSSL_INIT_register_stop_handler() returns 1 on success or 0 on
+The function OPENSSL_atexit() returns 1 on success or 0 on
 error.
 
 =head1 SEE ALSO
 
-L<OPENSSL_INIT_ssl_library_start(3)>
+L<OPENSSL_init_ssl(3)>
 
 =head1 HISTORY
 
-The OPENSSL_INIT_library_stop, OPENSSL_INIT_crypto_library_start,
-OPENSSL_INIT_register_stop_handler and OPENSSL_INIT_thread_stop functions were
-added in OpenSSL 1.1.0.
+The OPENSSL_init_crypto(), OPENSSL_cleanup(), OPENSSL_atexit(),
+and OPENSSL_thread_stop() functions were added in OpenSSL 1.1.0.
 
 =cut

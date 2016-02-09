@@ -45,12 +45,6 @@ return an error.
 B<CONF_MFLAGS_DEFAULT_SECTION> if set and B<appname> is not NULL will use the
 default section pointed to by B<openssl_conf> if B<appname> does not exist.
 
-Applications should call these functions after loading builtin modules using
-OPENSSL_load_builtin_modules(), any ENGINEs for example using
-ENGINE_load_builtin_engines(), any algorithms for example
-OPENSSL_add_all_algorithms() and (if the application uses libssl)
-SSL_library_init().
-
 By using CONF_modules_load_file() with appropriate flags an application can
 customise application configuration to best suit its needs. In some cases the
 use of a configuration file is optional and its absence is not an error: in

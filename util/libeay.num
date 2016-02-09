@@ -4725,7 +4725,7 @@ PKCS8_get_attr                          5206	1_1_0	EXIST::FUNCTION:
 PKCS12_SAFEBAG_get0_attr                5207	1_1_0	EXIST::FUNCTION:
 PKCS12_get0_mac                         5208	1_1_0	EXIST::FUNCTION:
 PKCS12_SAFEBAG_get0_pkcs8               5209	1_1_0	EXIST::FUNCTION:
-OPENSSL_INIT_library_stop               5210	1_1_0	EXIST::FUNCTION:
-OPENSSL_INIT_register_stop_handler      5211	1_1_0	EXIST::FUNCTION:
-OPENSSL_INIT_crypto_library_start       5212	1_1_0	EXIST::FUNCTION:
-OPENSSL_INIT_thread_stop                5213	1_1_0	EXIST::FUNCTION:
+OPENSSL_cleanup                         5210	1_1_0	EXIST::FUNCTION:
+OPENSSL_atexit                          5211	1_1_0	EXIST::FUNCTION:
+OPENSSL_init_crypto                     5212	1_1_0	EXIST::FUNCTION:
+OPENSSL_thread_stop                     5213	1_1_0	EXIST::FUNCTION:

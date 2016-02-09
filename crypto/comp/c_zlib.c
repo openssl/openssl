@@ -291,7 +291,7 @@ COMP_METHOD *COMP_zlib(void)
                 zlib_loaded++;
             if (zlib_loaded)
                 meth = &zlib_stateful_method;
-            OPENSSL_INIT_crypto_library_start(OPENSSL_INIT_ZLIB, NULL);
+            OPENSSL_init_crypto(OPENSSL_INIT_ZLIB, NULL);
         }
     }
 #endif

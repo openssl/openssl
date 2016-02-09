@@ -172,8 +172,8 @@ static int apps_startup()
 #endif
 
     /* Set non-default library initialisation settings */
-    OPENSSL_INIT_crypto_library_start(OPENSSL_INIT_ENGINE_ALL_BUILTIN
-                                      | OPENSSL_INIT_LOAD_CONFIG, NULL);
+    OPENSSL_init_crypto(OPENSSL_INIT_ENGINE_ALL_BUILTIN
+                        | OPENSSL_INIT_LOAD_CONFIG, NULL);
 
     setup_ui_method();
 

@@ -234,7 +234,7 @@ static void ossl_init_ssl_base(void)
      * We ignore an error return here. Not much we can do - but not that bad
      * either. We can still safely continue.
      */
-    OPENSSL_INIT_register_stop_handler(ssl_library_stop);
+    OPENSSL_atexit(ssl_library_stop);
     ssl_base_inited = 1;
 }
 
@@ -299,14 +299,13 @@ static void ssl_library_stop(void)
  * called prior to any threads making calls to any OpenSSL functions,
  * i.e. passing a non-null settings value is assumed to be single-threaded.
  */
-void OPENSSL_INIT_ssl_library_start(uint64_t opts,
-                                 const OPENSSL_INIT_SETTINGS *settings)
+void OPENSSL_init_ssl(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
 {
     /* XXX TODO WARNING To be updated to return a value not assert. */
     assert(!stopped);
 
-    OPENSSL_INIT_crypto_library_start(opts | OPENSSL_INIT_ADD_ALL_CIPHERS
-                                   | OPENSSL_INIT_ADD_ALL_DIGESTS, settings);
+    OPENSSL_init_crypto(opts | OPENSSL_INIT_ADD_ALL_CIPHERS
+                             | OPENSSL_INIT_ADD_ALL_DIGESTS, settings);
 
     ossl_init_once_run(&ssl_base, ossl_init_ssl_base);
 
