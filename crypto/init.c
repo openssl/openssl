@@ -679,13 +679,17 @@ void OPENSSL_INIT_crypto_library_start(uint64_t opts,
     }
 
     if (opts & OPENSSL_INIT_LOAD_CONFIG) {
+        CRYPTO_w_lock(CRYPTO_LOCK_INIT);
         if (settings != NULL) {
             const OPENSSL_INIT_SETTINGS *curr;
             curr = ossl_init_get_setting(settings,
                                          OPENSSL_INIT_SET_CONF_FILENAME);
-            config_filename = curr == NULL ? NULL : curr->value.type_string;
+            config_filename = (curr == NULL) ? NULL : curr->value.type_string;
+        } else {
+            config_filename = NULL;
         }
         ossl_init_once_run(&config, ossl_init_config);
+        CRYPTO_w_unlock(CRYPTO_LOCK_INIT);
     }
 
     if (opts & OPENSSL_INIT_ASYNC) {
