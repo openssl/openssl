@@ -202,7 +202,7 @@ void wait_for_async(SSL *s);
         { "verify_hostname", OPT_V_VERIFY_HOSTNAME, 's', \
             "check peer certificate matches \"host\"" }, \
         { "verify_email", OPT_V_VERIFY_EMAIL, 's', \
-            "check peer certificate matches \"host\"" }, \
+            "check peer certificate matches \"email\"" }, \
         { "verify_ip", OPT_V_VERIFY_IP, 's', \
             "check peer certificate matches \"ipaddr\"" }, \
         { "ignore_critical", OPT_V_IGNORE_CRITICAL, '-', \
