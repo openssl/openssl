@@ -207,8 +207,7 @@ void wait_for_async(SSL *s);
             "check peer certificate matches \"ipaddr\"" }, \
         { "ignore_critical", OPT_V_IGNORE_CRITICAL, '-', \
             "Disable critical extension checking"}, \
-        { "issuer_checks", OPT_V_ISSUER_CHECKS, '-', \
-            "Enable debugging of certificate issuer checks"}, \
+        { "issuer_checks", OPT_V_ISSUER_CHECKS, '-', "(deprecated)"}, \
         { "crl_check", OPT_V_CRL_CHECK, '-', "Check that peer cert has not been revoked" }, \
         { "crl_check_all", OPT_V_CRL_CHECK_ALL, '-', "Also check all certs in the chain" }, \
         { "policy_check", OPT_V_POLICY_CHECK, '-', "Enable certificate policy checking"}, \
