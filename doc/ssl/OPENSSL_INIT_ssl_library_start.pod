@@ -1,0 +1,78 @@
+=pod
+
+=head1 NAME
+
+OPENSSL_INIT_ssl_library_start - OpenSSL (libssl and libcrypto) initialisation
+
+=head1 SYNOPSIS
+
+ #include <openssl/ssl.h>
+
+ void OPENSSL_INIT_ssl_library_start(uint64_t opts,
+                                     const OPENSSL_INIT_SETTINGS *settings);
+
+=head1 DESCRIPTION
+
+During normal operation OpenSSL (libssl and libcrypto) will allocate various
+resources at start up that must, subsequently, be freed on close down of the
+library. Additionally some resources are allocated on a per thread basis (if the
+application is multi-threaded), and these resources must be freed prior to the
+thread closing.
+
+As of version 1.1.0 OpenSSL will automatically allocate all resources that it
+needs so no explicit initialisation is required. Similarly it will also
+automatically deinitialise as required.
+
+However, there way be situations when explicit initialisation is desirable or
+needed, for example when some non-default initialisation is required. The
+function OPENSSL_INIT_ssl_library_start() can be used for this purpose. Calling
+this function will explicitly initialise BOTH libcrypto and libssl. To
+explicitly initialise ONLY libcrypto see the
+L<OPENSSL_INIT_crypto_library_start(3)> function. In order to perform
+non-default initialisation it MUST be called prior to any other calls of this
+function. As numerous internal OpenSSL functions also call this, this usually
+means you should call it prior to ANY other OpenSSL function calls.
+
+The B<opts> parameter specifies which aspects of libssl and libcrypto should be
+initialised. Valid options for libcrypto are described on the
+L<OPENSSL_INIT_crypto_library_start(3)> page. In addition to any libcrypto
+specific option the following libssl options can also be used:
+
+=over 4
+
+=item OPENSSL_INIT_NO_LOAD_SSL_STRINGS
+
+Suppress automatic loading of the libssl error strings. With this option the
+library will not automatically call ERR_load_SSL_strings(). This option is
+not a default option. Once selected subsequent calls to
+OPENSSL_INIT_ssl_library_start() with the option
+B<OPENSSL_INIT_LOAD_SSL_STRINGS> will be ignored. Applications may call
+ERR_load_SSL_strings() directly if they wish even if this option has been
+selected. If they do so then they must also explicitly call ERR_free_strings()
+on application close down.
+
+=item OPENSSL_INIT_LOAD_SSL_STRINGS
+
+Automatic loading of the libssl error strings. With this option the
+library will automatically call ERR_load_SSL_strings(). This option is a
+default option. Once selected subsequent calls to
+OPENSSL_INIT_ssl_library_start() with the option
+B<OPENSSL_INIT_LOAD_SSL_STRINGS> will be ignored.
+
+=back
+
+The B<settings> parameter specifies optional settings values to an option.
+Currently no such settings are available for libssl specific options. However
+these settings will also be passed internally to a call to
+L<OPENSSL_INIT_crypto_library_start(3)>, so this parameter can also be used to
+provide libcrypto settings values.
+
+=head1 SEE ALSO
+
+L<OPENSSL_INIT_crypto_library_start(3)>
+
+=head1 HISTORY
+
+The OPENSSL_INIT_ssl_library_start function was first added in OpenSSL 1.1.0.
+
+=cut
