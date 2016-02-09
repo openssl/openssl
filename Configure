@@ -12,7 +12,6 @@ use strict;
 use File::Basename;
 use File::Spec::Functions qw/:DEFAULT abs2rel rel2abs/;
 use File::Path qw/mkpath/;
-use Cwd qw/:DEFAULT realpath/;
 
 # see INSTALL for instructions.
 
@@ -142,8 +141,8 @@ sub resolve_config;
 # Information collection #############################################
 
 # Unified build supports separate build dir
-my $srcdir = catdir(realpath(dirname($0))); # catdir ensures local syntax
-my $blddir = catdir(realpath("."));       # catdir ensures local syntax
+my $srcdir = catdir(absolutedir(dirname($0))); # catdir ensures local syntax
+my $blddir = catdir(absolutedir("."));         # catdir ensures local syntax
 my $dofile = abs2rel(catfile($srcdir, "util/dofile.pl"));
 
 $config{sourcedir} = abs2rel($srcdir);
@@ -1180,22 +1179,14 @@ if ($builder eq "unified") {
     use lib catdir(dirname(__FILE__),"util");
     use with_fallback qw(Text::Template);
 
-    # Helpers to produce clean paths with no /../ in the middle and so on.
-    sub int_absolutedir {
-        my $dir = shift;
-
-        # Required, because realpath only works properly with existing dirs
-        mkpath($dir);
-
-        my $res = realpath($dir);
-        return $res;
-    }
-
     sub cleandir {
         my $dir = shift;
         my $base = shift || ".";
 
-        my $res = abs2rel(int_absolutedir($dir), rel2abs($base));
+        # Make sure the directories we're building in exists
+        mkpath($dir);
+
+        my $res = abs2rel(absolutedir($dir), rel2abs($base));
         #print STDERR "DEBUG[cleandir]: $dir , $base => $res\n";
         return $res;
     }
@@ -1206,7 +1197,10 @@ if ($builder eq "unified") {
         my $d = dirname($file);
         my $f = basename($file);
 
-        my $res = abs2rel(catfile(int_absolutedir($d), $f), rel2abs($base));
+        # Make sure the directories we're building in exists
+        mkpath($d);
+
+        my $res = abs2rel(catfile(absolutedir($d), $f), rel2abs($base));
         #print STDERR "DEBUG[cleanfile]: $d , $f => $res\n";
         return $res;
     }
@@ -2208,6 +2202,29 @@ sub print_table_entry
 }
 
 # Utility routines ###################################################
+
+# Makes a directory absolute and cleans out /../ in paths like foo/../bar
+# On some platforms, this uses rel2abs(), while on others, realpath() is used.
+# realpath() requires that at least all path components except the last is an
+# existing directory.  On VMS, the last component of the directory spec must
+# exist.
+sub absolutedir {
+    my $dir = shift;
+
+    # realpath() is quite buggy on VMS.  It uses LIB$FID_TO_NAME, which
+    # will return the volume name for the device, no matter what.  Also,
+    # it will return an incorrect directory spec if the argument is a
+    # directory that doesn't exist.
+    if ($^O eq "VMS") {
+        return rel2abs($dir);
+    }
+
+    # We use realpath() on Unix, since no other will properly clean out
+    # a directory spec.
+    use Cwd qw/realpath/;
+
+    return realpath($dir);
+}
 
 sub which
 	{
