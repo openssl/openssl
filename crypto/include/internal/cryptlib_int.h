@@ -65,7 +65,6 @@ struct thread_local_inits_st {
 };
 void *ossl_init_get_thread_local(int alloc);
 int ossl_init_thread_start(uint64_t opts);
-void ossl_init_thread_stop(struct thread_local_inits_st *locals);
 /*
  * OPENSSL_INIT flags. The primary list of these is in crypto.h. Flags below
  * are those ommitted from crypto.h because they are "reserverd for internal

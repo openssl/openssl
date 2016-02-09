@@ -77,6 +77,8 @@
 #include <internal/err.h>
 #include <stdlib.h>
 
+static void ossl_init_thread_stop(struct thread_local_inits_st *locals);
+
 /* Implement "once" functionality */
 #if !defined(OPENSSL_THREADS)
 typedef int OPENSSL_INIT_ONCE;
@@ -466,7 +468,7 @@ static void ossl_init_zlib(void)
     zlib_inited = 1;
 }
 
-void ossl_init_thread_stop(struct thread_local_inits_st *locals)
+static void ossl_init_thread_stop(struct thread_local_inits_st *locals)
 {
     /* Can't do much about this */
     if (locals == NULL)
@@ -490,6 +492,12 @@ void ossl_init_thread_stop(struct thread_local_inits_st *locals)
 
     OPENSSL_free(locals);
     ossl_init_thread_stop_cleanup();
+}
+
+void OPENSSL_INIT_thread_stop(void)
+{
+    ossl_init_thread_stop(
+        (struct thread_local_inits_st *)ossl_init_get_thread_local(0));
 }
 
 int ossl_init_thread_start(uint64_t opts)

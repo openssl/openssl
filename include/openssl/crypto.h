@@ -601,6 +601,7 @@ void OPENSSL_INIT_library_stop(void);
 void OPENSSL_INIT_crypto_library_start(uint64_t opts,
                                        const OPENSSL_INIT_SETTINGS *settings);
 int OPENSSL_INIT_register_stop_handler(void (*handler)(void));
+void OPENSSL_INIT_thread_stop(void);
 
 /* BEGIN ERROR CODES */
 /*

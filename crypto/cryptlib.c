@@ -234,8 +234,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     case DLL_THREAD_ATTACH:
         break;
     case DLL_THREAD_DETACH:
-        ossl_init_thread_stop(
-            (struct thread_local_inits_st *)ossl_init_get_thread_local(0));
+        OPENSSL_INIT_thread_stop();
         break;
     case DLL_PROCESS_DETACH:
         break;
