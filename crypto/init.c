@@ -282,7 +282,11 @@ static void ossl_init_no_load_crypto_strings(void)
 
 static void ossl_init_load_crypto_strings(void)
 {
-#ifndef OPENSSL_NO_ERR
+    /*
+     * OPENSSL_NO_AUTOERRINIT is provided here to prevent at compile time
+     * pulling in all the error strings during static linking
+     */
+#if !defined(OPENSSL_NO_ERR) && !defined(OPENSSL_NO_AUTOERRINIT)
 # ifdef OPENSSL_INIT_DEBUG
     fprintf(stderr, "OPENSSL_INIT: ossl_init_load_crypto_strings: "
                     "err_load_crypto_strings_intern()\n");
