@@ -3,6 +3,12 @@
  _______________
 
  Changes between 1.0.2f and 1.1.0  [xx XXX xxxx]
+  *) Added support for auto-initialisation and de-initialisation of the library.
+     OpenSSL no longer requires explicit init or deinit routines to be called,
+     except in certain circumstances. See the
+     OPENSSL_INIT_crypto_library_start() and OPENSSL_INIT_ssl_library_start()
+     man pages for further information.
+     [Matt Caswell]
 
   *) The arguments to the DTLSv1_listen function have changed. Specifically the
      "peer" argument is now expected to be a BIO_ADDR object.
