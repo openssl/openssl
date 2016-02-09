@@ -95,11 +95,19 @@ static void ossl_init_thread_stop_cleanup(void)
 }
 
 static struct thread_local_inits_st *local = NULL;
-void *ossl_init_get_thread_local(int alloc)
+static struct thread_local_inits_st *ossl_init_get_thread_local(int alloc)
 {
+    static struct thread_local_inits_st *tmp;
+
+    tmp = local;
+
     if (local == NULL && alloc)
-        local = OPENSSL_zalloc(sizeof(*local));
-    return local;
+        tmp = local = OPENSSL_zalloc(sizeof(*local));
+
+    if (!alloc)
+        local = NULL;
+
+    return tmp;
 }
 
 #elif defined(OPENSSL_SYS_WINDOWS)
@@ -182,13 +190,16 @@ static void ossl_init_thread_stop_cleanup(void)
     }
 }
 
-void *ossl_init_get_thread_local(int alloc)
+static struct thread_local_inits_st *ossl_init_get_thread_local(int alloc)
 {
     struct thread_local_inits_st *local = TlsGetValue(threadstopkey);
 
     if (local == NULL && alloc) {
         local = OPENSSL_zalloc(sizeof *local);
         TlsSetValue(threadstopkey, local);
+    }
+    if (!alloc) {
+        TlsSetValue(threadstopkey, NULL);
     }
 
     return local;
@@ -227,13 +238,16 @@ static void ossl_init_thread_stop_cleanup(void)
 {
 }
 
-void *ossl_init_get_thread_local(int alloc)
+static struct thread_local_inits_st *ossl_init_get_thread_local(int alloc)
 {
     struct thread_local_inits_st *local = pthread_getspecific(threadstopkey);
 
     if (local == NULL && alloc) {
         local = OPENSSL_zalloc(sizeof *local);
         pthread_setspecific(threadstopkey, local);
+    }
+    if (!alloc) {
+        pthread_setspecific(threadstopkey, NULL);
     }
 
     return local;
