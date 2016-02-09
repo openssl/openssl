@@ -253,11 +253,17 @@ static OPENSSL_INIT_ONCE ssl_strings = OPENSSL_INIT_ONCE_STATIC_INIT;
 static int ssl_strings_inited = 0;
 static void ossl_init_load_ssl_strings(void)
 {
-#ifdef OPENSSL_INIT_DEBUG
+    /*
+     * OPENSSL_NO_AUTOERRINIT is provided here to prevent at compile time
+     * pulling in all the error strings during static linking
+     */
+#if !defined(OPENSSL_NO_ERR) && !defined(OPENSSL_NO_AUTOERRINIT)
+# ifdef OPENSSL_INIT_DEBUG
         fprintf(stderr, "OPENSSL_INIT: ossl_init_load_ssl_strings: "
                         "ERR_load_SSL_strings()\n");
-#endif
+# endif
     ERR_load_SSL_strings();
+#endif
     ssl_strings_inited = 1;
 }
 

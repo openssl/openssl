@@ -228,6 +228,7 @@ my @disablables = (
     "asm",
     "async",
     "autoalginit",
+    "autoerrinit",
     "bf",
     "camellia",
     "capieng",
@@ -743,7 +744,7 @@ foreach (sort (keys %disabled))
 		($ALGO = $algo = $_) =~ tr/[\-a-z]/[_A-Z]/;
 
 		if (/^asm$/ || /^err$/ || /^hw$/ || /^hw-/ || /^async$/
-				|| /^autoalginit/)
+				|| /^autoalginit/ || /^autoerrinit/)
 			{
 			push @{$config{openssl_other_defines}}, "OPENSSL_NO_$ALGO";
 			print " OPENSSL_NO_$ALGO";
