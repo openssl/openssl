@@ -61,7 +61,9 @@
 #include <internal/evp_int.h>
 #include <internal/conf.h>
 #include <internal/async.h>
+#ifndef OPENSSL_NO_ENGINE
 #include <internal/engine.h>
+#endif
 #include <openssl/comp.h>
 #include <internal/err.h>
 #include <stdlib.h>
