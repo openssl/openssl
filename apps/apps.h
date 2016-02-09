@@ -194,46 +194,49 @@ void wait_for_async(SSL *s);
 # define OPT_V_OPTIONS \
         { "policy", OPT_V_POLICY, 's', "adds policy to the acceptable policy set"}, \
         { "purpose", OPT_V_PURPOSE, 's', \
-            "Set the acceptable purpose of the certificate chain"}, \
-        { "verify_name", OPT_V_VERIFY_NAME, 's', "verify name"}, \
+            "certificate chain purpose"}, \
+        { "verify_name", OPT_V_VERIFY_NAME, 's', "verification policy name"}, \
         { "verify_depth", OPT_V_VERIFY_DEPTH, 'p', \
-            "Limit the maximum depth of the certificate chain"}, \
-        { "attime", OPT_V_ATTIME, 'M', "Set the verification time" }, \
+            "chain depth limit"}, \
+        { "attime", OPT_V_ATTIME, 'M', "verification epoch time" }, \
         { "verify_hostname", OPT_V_VERIFY_HOSTNAME, 's', \
-            "check peer certificate matches \"host\"" }, \
+            "expected peer hostname" }, \
         { "verify_email", OPT_V_VERIFY_EMAIL, 's', \
-            "check peer certificate matches \"email\"" }, \
+            "expected peer email" }, \
         { "verify_ip", OPT_V_VERIFY_IP, 's', \
-            "check peer certificate matches \"ipaddr\"" }, \
+            "expected peer IP address" }, \
         { "ignore_critical", OPT_V_IGNORE_CRITICAL, '-', \
-            "Disable critical extension checking"}, \
+            "permit unhandled critical extensions"}, \
         { "issuer_checks", OPT_V_ISSUER_CHECKS, '-', "(deprecated)"}, \
-        { "crl_check", OPT_V_CRL_CHECK, '-', "Check that peer cert has not been revoked" }, \
-        { "crl_check_all", OPT_V_CRL_CHECK_ALL, '-', "Also check all certs in the chain" }, \
-        { "policy_check", OPT_V_POLICY_CHECK, '-', "Enable certificate policy checking"}, \
-        { "explicit_policy", OPT_V_EXPLICIT_POLICY, '-', "Set the \"require explicit policy\""}, \
-        { "inhibit_any", OPT_V_INHIBIT_ANY, '-', "Set the \"inhibit any policy\"\""}, \
-        { "inhibit_map", OPT_V_INHIBIT_MAP, '-', "Set the \"inhibit policy mapping\"" }, \
+        { "crl_check", OPT_V_CRL_CHECK, '-', "check leaf certificate revocation" }, \
+        { "crl_check_all", OPT_V_CRL_CHECK_ALL, '-', "check full chain revocation" }, \
+        { "policy_check", OPT_V_POLICY_CHECK, '-', "perform rfc5280 policy checks"}, \
+        { "explicit_policy", OPT_V_EXPLICIT_POLICY, '-', \
+            "set policy variable require-explicit-policy"}, \
+        { "inhibit_any", OPT_V_INHIBIT_ANY, '-', \
+            "set policy variable inihibit-any-policy"}, \
+        { "inhibit_map", OPT_V_INHIBIT_MAP, '-', \
+            "set policy variable inihibit-policy-mapping"}, \
         { "x509_strict", OPT_V_X509_STRICT, '-', \
-            "Strictly apply X509 rules in verification"}, \
+            "disable certificate compatibility work-arounds"}, \
         { "extended_crl", OPT_V_EXTENDED_CRL, '-', \
-       	    "Enable extended CRL features such as indirect CRLs, alternate CRL signing keys"}, \
+            "enable extended CRL features"}, \
         { "use_deltas", OPT_V_USE_DELTAS, '-', \
-            "Enable indirect CRLs and CRLs signed by different keys"}, \
-        { "policy_print", OPT_V_POLICY_PRINT, '-', "Notify callback that policy is OK"}, \
+            "use delta CRLs"}, \
+        { "policy_print", OPT_V_POLICY_PRINT, '-', \
+            "print policy processing diagnostics"}, \
         { "check_ss_sig", OPT_V_CHECK_SS_SIG, '-', \
-            "Enable checking of the root CA self signed certificate signature"}, \
+            "check root CA self-signatures"}, \
         { "trusted_first", OPT_V_TRUSTED_FIRST, '-', \
-            "Use locally-trusted CA's first in building chain (enabled by default)" }, \
-        { "suiteB_128_only", OPT_V_SUITEB_128_ONLY, '-', "Suite B 128 bit only mode"}, \
+            "search trust store first (default)" }, \
+        { "suiteB_128_only", OPT_V_SUITEB_128_ONLY, '-', "Suite B 128-bit-only mode"}, \
         { "suiteB_128", OPT_V_SUITEB_128, '-', \
-            "Suite B 128 bit mode allowing 192 bit algorithms"}, \
-        { "suiteB_192", OPT_V_SUITEB_192, '-', "Suite B 192 bit only mode" }, \
+            "Suite B 128-bit mode allowing 192-bit algorithms"}, \
+        { "suiteB_192", OPT_V_SUITEB_192, '-', "Suite B 192-bit-only mode" }, \
         { "partial_chain", OPT_V_PARTIAL_CHAIN, '-', \
-       	    "verification succeeds even if a complete chain cannot be built, "}, \
-        {OPT_MORE_STR, 0, 0, "provided a chain to a trusted certificate can be constructed"}, \
-        { "no_alt_chains", OPT_V_NO_ALT_CHAINS, '-', "Only use the first cert chain found" }, \
-        { "no_check_time", OPT_V_NO_CHECK_TIME, '-', "Do not check validity against current time" }
+            "accept chains anchored by intermediate trust-store CAs"}, \
+        { "no_alt_chains", OPT_V_NO_ALT_CHAINS, '-', "(deprecated)" }, \
+        { "no_check_time", OPT_V_NO_CHECK_TIME, '-', "ignore certificate validity time" }
 
 # define OPT_V_CASES \
         OPT_V__FIRST: case OPT_V__LAST: break; \
