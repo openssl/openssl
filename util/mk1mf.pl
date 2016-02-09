@@ -142,7 +142,8 @@ and [options] can be one of
 	no-engine				- No engine
 	no-egd					- No EGD
 	no-hw					- No hw
-	no-async                                - No Async (use NULL)
+	no-async				- No Async (use NULL)
+	no-autoalginit				- Don't auto load algorithms in libcrypto
 	nasm 					- Use NASM for x86 asm
 	nw-nasm					- Use NASM x86 asm for NetWare
 	nw-mwasm				- Use Metrowerks x86 asm for NetWare
@@ -298,6 +299,7 @@ $cflags.=" -DOPENSSL_NO_GOST" if $no_gost;
 $cflags.=" -DOPENSSL_NO_ENGINE"   if $no_engine;
 $cflags.=" -DOPENSSL_NO_HW"   if $no_hw;
 $cflags.=" -DOPENSSL_NO_ASYNC" if $no_async;
+$cflags.=" -DOPENSSL_NO_AUTOALGINIT" if $no_autoalginit;
 $cflags.=" -DOPENSSL_FIPS"    if $fips;
 $cflags.=" -DOPENSSL_NO_JPAKE"    if $no_jpake;
 $cflags.=" -DOPENSSL_NO_EC2M"    if $no_ec2m;
@@ -1414,6 +1416,7 @@ sub read_options
 		"no-egd" => 0,
 		"no-hw" => \$no_hw,
 		"no-async" => \$no_async,
+		"no-autoalginit" => \$no_autoalginit,
 		"just-ssl" =>
 			[\$no_rc2, \$no_idea, \$no_des, \$no_bf, \$no_cast,
 			  \$no_md2, \$no_mdc2, \$no_dsa, \$no_dh,

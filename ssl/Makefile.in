@@ -25,7 +25,7 @@ LIBSRC=	\
 	statem/statem_dtls.c d1_srtp.c \
 	ssl_lib.c ssl_err2.c ssl_cert.c ssl_sess.c \
 	ssl_ciph.c ssl_stat.c ssl_rsa.c \
-	ssl_asn1.c ssl_txt.c ssl_algs.c ssl_conf.c  ssl_mcnf.c \
+	ssl_asn1.c ssl_txt.c ssl_algs.c ssl_init.c ssl_conf.c  ssl_mcnf.c \
 	bio_ssl.c ssl_err.c t1_reneg.c tls_srp.c t1_trce.c ssl_utst.c \
 	record/ssl3_buffer.c record/ssl3_record.c record/dtls1_bitmap.c \
 	statem/statem.c
@@ -38,7 +38,7 @@ LIBOBJ= \
 	statem/statem_dtls.o d1_srtp.o\
 	ssl_lib.o ssl_err2.o ssl_cert.o ssl_sess.o \
 	ssl_ciph.o ssl_stat.o ssl_rsa.o \
-	ssl_asn1.o ssl_txt.o ssl_algs.o ssl_conf.o ssl_mcnf.o \
+	ssl_asn1.o ssl_txt.o ssl_algs.o ssl_init.o ssl_conf.o ssl_mcnf.o \
 	bio_ssl.o ssl_err.o t1_reneg.o tls_srp.o t1_trce.o ssl_utst.o \
 	record/ssl3_buffer.o record/ssl3_record.o record/dtls1_bitmap.o \
 	statem/statem.o
