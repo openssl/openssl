@@ -54,6 +54,7 @@
 
 use strict;
 use OpenSSL::Test qw/:DEFAULT cmdstr srctop_file bldtop_file bldtop_dir/;
+use OpenSSL::Test::Utils;
 use TLSProxy::Proxy;
 
 my $test_name = "test_networking";
