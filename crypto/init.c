@@ -604,7 +604,6 @@ void OPENSSL_INIT_library_stop(void)
     CONF_modules_free();
     RAND_cleanup();
     base_inited = 0;
-    OPENSSL_INIT_ONCE_DYNAMIC_INIT(&base);
 }
 
 static const OPENSSL_INIT_SETTINGS *ossl_init_get_setting(
