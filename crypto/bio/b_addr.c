@@ -379,8 +379,24 @@ int BIO_ADDRINFO_socktype(const BIO_ADDRINFO *bai)
 
 int BIO_ADDRINFO_protocol(const BIO_ADDRINFO *bai)
 {
-    if (bai != NULL)
-        return bai->bai_protocol;
+    if (bai != NULL) {
+        if (bai->bai_protocol != 0)
+            return bai->bai_protocol;
+
+#ifdef AF_UNIX
+        if (bai->bai_family == AF_UNIX)
+            return 0;
+#endif
+
+        switch (bai->bai_socktype) {
+        case SOCK_STREAM:
+            return IPPROTO_TCP;
+        case SOCK_DGRAM:
+            return IPPROTO_UDP;
+        default:
+            break;
+        }
+    }
     return 0;
 }
 
