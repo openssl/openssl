@@ -638,8 +638,7 @@ int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
              * sets an error etc
              */
             stoperrset = 1;
-            CRYPTOerr(CRYPTO_F_OPENSSL_INIT_CRYPTO_LIBRARY_START,
-                      ERR_R_INIT_FAIL);
+            CRYPTOerr(CRYPTO_F_OPENSSL_INIT_CRYPTO, ERR_R_INIT_FAIL);
         }
         return 0;
     }
