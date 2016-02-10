@@ -289,9 +289,13 @@ COMP_METHOD *COMP_zlib(void)
                 && p_inflateInit_ && p_deflateEnd
                 && p_deflate && p_deflateInit_ && p_zError)
                 zlib_loaded++;
+
+            if (!OPENSSL_init_crypto(OPENSSL_INIT_ZLIB, NULL)) {
+                COMP_zlib_cleanup();
+                return meth;
+            }
             if (zlib_loaded)
                 meth = &zlib_stateful_method;
-            OPENSSL_init_crypto(OPENSSL_INIT_ZLIB, NULL);
         }
     }
 #endif

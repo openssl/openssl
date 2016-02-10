@@ -110,7 +110,8 @@ const EVP_CIPHER *EVP_get_cipherbyname(const char *name)
 {
     const EVP_CIPHER *cp;
 
-    OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_CIPHERS, NULL);
+    if (!OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_CIPHERS, NULL))
+        return NULL;
 
     cp = (const EVP_CIPHER *)OBJ_NAME_get(name, OBJ_NAME_TYPE_CIPHER_METH);
     return (cp);
@@ -120,7 +121,8 @@ const EVP_MD *EVP_get_digestbyname(const char *name)
 {
     const EVP_MD *cp;
 
-    OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_DIGESTS, NULL);
+    if (!OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_DIGESTS, NULL))
+        return NULL;
 
     cp = (const EVP_MD *)OBJ_NAME_get(name, OBJ_NAME_TYPE_MD_METH);
     return (cp);
@@ -166,6 +168,7 @@ void EVP_CIPHER_do_all(void (*fn) (const EVP_CIPHER *ciph,
 {
     struct doall_cipher dc;
 
+    /* Ignore errors */
     OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_CIPHERS, NULL);
 
     dc.fn = fn;
@@ -179,6 +182,7 @@ void EVP_CIPHER_do_all_sorted(void (*fn) (const EVP_CIPHER *ciph,
 {
     struct doall_cipher dc;
 
+    /* Ignore errors */
     OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_CIPHERS, NULL);
 
     dc.fn = fn;
@@ -207,6 +211,7 @@ void EVP_MD_do_all(void (*fn) (const EVP_MD *md,
 {
     struct doall_md dc;
 
+    /* Ignore errors */
     OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_DIGESTS, NULL);
 
     dc.fn = fn;

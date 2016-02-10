@@ -598,7 +598,7 @@ typedef struct ossl_init_stop_st OPENSSL_INIT_STOP;
 
 /* Library initialisation functions */
 void OPENSSL_cleanup(void);
-void OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings);
+int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings);
 int OPENSSL_atexit(void (*handler)(void));
 void OPENSSL_thread_stop(void);
 

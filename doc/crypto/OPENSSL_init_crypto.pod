@@ -11,7 +11,7 @@ initialisation and deinitialisation functions
  #include <openssl/crypto.h>
 
  void OPENSSL_cleanup(void);
- void OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings);
+ int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings);
  int OPENSSL_atexit(void (*handler)(void));
  void OPENSSL_thread_stop(void);
 
@@ -206,8 +206,8 @@ using static linking should also call OPENSSL_thread_stop().
 
 =head1 RETURN VALUES
 
-The function OPENSSL_atexit() returns 1 on success or 0 on
-error.
+The functions OPENSSL_init_crypto and  OPENSSL_atexit() returns 1 on success or
+0 on error.
 
 =head1 SEE ALSO
 

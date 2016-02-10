@@ -8,7 +8,7 @@ OPENSSL_init_ssl - OpenSSL (libssl and libcrypto) initialisation
 
  #include <openssl/ssl.h>
 
- void OPENSSL_init_ssl(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings);
+ int OPENSSL_init_ssl(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings);
 
 =head1 DESCRIPTION
 
@@ -62,6 +62,10 @@ Currently no such settings are available for libssl specific options. However
 these settings will also be passed internally to a call to
 L<OPENSSL_init_crypto(3)>, so this parameter can also be used to
 provide libcrypto settings values.
+
+=head1 RETURN VALUES
+
+The function OPENSSL_init_ssl() returns 1 on success or 0 on error.
 
 =head1 SEE ALSO
 
