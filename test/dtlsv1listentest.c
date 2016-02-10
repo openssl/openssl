@@ -379,10 +379,6 @@ int main(void)
     int ret, success = 0;
     size_t i;
 
-    /* Initialise libssl */
-    SSL_load_error_strings();
-    SSL_library_init();
-
     ctx = SSL_CTX_new(DTLS_server_method());
     if (ctx == NULL || peer == NULL)
         goto err;
@@ -461,15 +457,6 @@ int main(void)
     SSL_CTX_free(ctx);
     BIO_free(inbio);
     OPENSSL_free(peer);
-    /* Unitialise libssl */
-#ifndef OPENSSL_NO_ENGINE
-    ENGINE_cleanup();
-#endif
-    CONF_modules_unload(1);
-    CRYPTO_cleanup_all_ex_data();
-    EVP_cleanup();
-    ERR_remove_thread_state(NULL);
-    ERR_free_strings();
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG
     CRYPTO_mem_leaks_fp(stderr);
 #endif
