@@ -346,11 +346,11 @@ if ($xmm) {
 	&xor	("eax","eax");
 	&xor	("edx","edx");
 &set_label("tail_loop");
-	&movb	("al",&DWP(0,$c_,$b_));
-	&movb	("dl",&DWP(0,"esp",$c_));
+	&movb	("al",&BP(0,$c_,$b_));
+	&movb	("dl",&BP(0,"esp",$c_));
 	&lea	($c_,&DWP(1,$c_));
 	&xor	("al","dl");
-	&mov	(&DWP(-1,$c,$c_),"al");
+	&mov	(&BP(-1,$c,$c_),"al");
 	&dec	($b);
 	&jnz	(&label("tail_loop"));
 
@@ -456,7 +456,7 @@ my ($ap,$bp,$cp,$dp)=map(($_&~3)+(($_-1)&3),($ai,$bi,$ci,$di));	# previous
 	&sub		($len,64*4);			# bias len
 	&lea		("ebp",&DWP(256+128,"esp"));	# size optimization
 
-	&movdqu		("xmm7",&DWP(0,"edx"));		# key
+	&movdqu		("xmm7",&QWP(0,"edx"));		# key
 	&pshufd		("xmm0","xmm3",0x00);
 	&pshufd		("xmm1","xmm3",0x55);
 	&pshufd		("xmm2","xmm3",0xaa);
@@ -471,12 +471,12 @@ my ($ap,$bp,$cp,$dp)=map(($_&~3)+(($_-1)&3),($ai,$bi,$ci,$di));	# previous
 	&movdqa		(&QWP(16*13-128,"ebp"),"xmm1");
 	&movdqa		(&QWP(16*14-128,"ebp"),"xmm2");
 	&movdqa		(&QWP(16*15-128,"ebp"),"xmm3");
-	 &movdqu	("xmm3",&DWP(16,"edx"));	# key
+	 &movdqu	("xmm3",&QWP(16,"edx"));	# key
 	&movdqa		(&QWP(16*4-128,"ebp"),"xmm4");
 	&movdqa		(&QWP(16*5-128,"ebp"),"xmm5");
 	&movdqa		(&QWP(16*6-128,"ebp"),"xmm6");
 	&movdqa		(&QWP(16*7-128,"ebp"),"xmm7");
-	 &movdqa	("xmm7",&DWP(16*2,"eax"));	# sigma
+	 &movdqa	("xmm7",&QWP(16*2,"eax"));	# sigma
 	 &lea		("ebx",&DWP(128,"esp"));	# size optimization
 
 	&pshufd		("xmm0","xmm3",0x00);
@@ -630,7 +630,7 @@ my ($ap,$bp,$cp,$dp)=map(($_&~3)+(($_-1)&3),($ai,$bi,$ci,$di));	# previous
 	&pand		("xmm3",&QWP(16*7,"eax"));
 	&por		("xmm3","xmm2");		# counter value
 {
-my ($a,$b,$c,$d,$t,$t1,$rot16,$rot24)=map("%xmm$_",(0..7));
+my ($a,$b,$c,$d,$t,$t1,$rot16,$rot24)=map("xmm$_",(0..7));
 
 sub SSSE3ROUND {	# critical path is 20 "SIMD ticks" per round
 	&paddd		($a,$b);
@@ -852,7 +852,7 @@ my ($ap,$bp,$cp,$dp)=map(($_&~3)+(($_-1)&3),($ai,$bi,$ci,$di));	# previous
 	&sub		($len,64*4);			# bias len
 	&lea		("ebp",&DWP(256+128,"esp"));	# size optimization
 
-	&vmovdqu	("xmm7",&DWP(0,"edx"));		# key
+	&vmovdqu	("xmm7",&QWP(0,"edx"));		# key
 	&vpshufd	("xmm0","xmm3",0x00);
 	&vpshufd	("xmm1","xmm3",0x55);
 	&vpshufd	("xmm2","xmm3",0xaa);
@@ -867,12 +867,12 @@ my ($ap,$bp,$cp,$dp)=map(($_&~3)+(($_-1)&3),($ai,$bi,$ci,$di));	# previous
 	&vmovdqa	(&QWP(16*13-128,"ebp"),"xmm1");
 	&vmovdqa	(&QWP(16*14-128,"ebp"),"xmm2");
 	&vmovdqa	(&QWP(16*15-128,"ebp"),"xmm3");
-	 &vmovdqu	("xmm3",&DWP(16,"edx"));	# key
+	 &vmovdqu	("xmm3",&QWP(16,"edx"));	# key
 	&vmovdqa	(&QWP(16*4-128,"ebp"),"xmm4");
 	&vmovdqa	(&QWP(16*5-128,"ebp"),"xmm5");
 	&vmovdqa	(&QWP(16*6-128,"ebp"),"xmm6");
 	&vmovdqa	(&QWP(16*7-128,"ebp"),"xmm7");
-	 &vmovdqa	("xmm7",&DWP(16*2,"eax"));	# sigma
+	 &vmovdqa	("xmm7",&QWP(16*2,"eax"));	# sigma
 	 &lea		("ebx",&DWP(128,"esp"));	# size optimization
 
 	&vpshufd	("xmm0","xmm3",0x00);
@@ -1015,7 +1015,7 @@ my ($ap,$bp,$cp,$dp)=map(($_&~3)+(($_-1)&3),($ai,$bi,$ci,$di));	# previous
 	&vpand		("xmm3","xmm3",&QWP(16*7,"eax"));
 	&vpor		("xmm3","xmm3","xmm2");		# counter value
 {
-my ($a,$b,$c,$d,$t,$t1,$rot16,$rot24)=map("%xmm$_",(0..7));
+my ($a,$b,$c,$d,$t,$t1,$rot16,$rot24)=map("xmm$_",(0..7));
 
 sub XOPROUND {
 	&vpaddd		($a,$a,$b);
