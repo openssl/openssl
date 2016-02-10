@@ -537,6 +537,10 @@ void OPENSSL_INIT_library_stop(void)
 {
     OPENSSL_INIT_STOP *currhandler, *lasthandler;
 
+    /* If we've not been inited then no need to deinit */
+    if (!base_inited)
+        return;
+
     /*
      * Thread stop may not get automatically called by the thread library for
      * the very last thread in some situations, so call it directly.
@@ -613,24 +617,22 @@ void OPENSSL_INIT_library_stop(void)
         OPENSSL_INIT_ONCE_DYNAMIC_INIT(&load_crypto_strings);
     }
 
-    if (base_inited) {
 #ifdef OPENSSL_INIT_DEBUG
-        fprintf(stderr, "OPENSSL_INIT: OPENSSL_INIT_library_stop: "
-                        "CRYPTO_cleanup_all_ex_data()\n");
-        fprintf(stderr, "OPENSSL_INIT: OPENSSL_INIT_library_stop: "
-                        "EVP_cleanup()\n");
-        fprintf(stderr, "OPENSSL_INIT: OPENSSL_INIT_library_stop: "
-                        "CONF_modules_free()\n");
-        fprintf(stderr, "OPENSSL_INIT: OPENSSL_INIT_library_stop: "
-                        "RAND_cleanup()\n");
+    fprintf(stderr, "OPENSSL_INIT: OPENSSL_INIT_library_stop: "
+                    "CRYPTO_cleanup_all_ex_data()\n");
+    fprintf(stderr, "OPENSSL_INIT: OPENSSL_INIT_library_stop: "
+                    "EVP_cleanup()\n");
+    fprintf(stderr, "OPENSSL_INIT: OPENSSL_INIT_library_stop: "
+                    "CONF_modules_free()\n");
+    fprintf(stderr, "OPENSSL_INIT: OPENSSL_INIT_library_stop: "
+                    "RAND_cleanup()\n");
 #endif
-        CRYPTO_cleanup_all_ex_data();
-        EVP_cleanup();
-        CONF_modules_free();
-        RAND_cleanup();
-        base_inited = 0;
-        OPENSSL_INIT_ONCE_DYNAMIC_INIT(&base);
-    }
+    CRYPTO_cleanup_all_ex_data();
+    EVP_cleanup();
+    CONF_modules_free();
+    RAND_cleanup();
+    base_inited = 0;
+    OPENSSL_INIT_ONCE_DYNAMIC_INIT(&base);
 }
 
 static const OPENSSL_INIT_SETTINGS *ossl_init_get_setting(
