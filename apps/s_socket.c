@@ -179,7 +179,7 @@ int init_client(int *sock, const char *host, const char *port,
                        && (type == 0 || type == BIO_ADDRINFO_socktype(res)));
 
         *sock = BIO_socket(BIO_ADDRINFO_family(ai), BIO_ADDRINFO_socktype(ai),
-                           BIO_ADDRINFO_protocol(ai), 0);
+                           protocol, 0);
         if (*sock == INVALID_SOCKET) {
             /* Maybe the kernel doesn't support the socket family, even if
              * BIO_lookup() added it in the returned result...
@@ -257,7 +257,7 @@ int do_server(int *accept_sock, const char *host, const char *port,
                    && (type == 0 || type == BIO_ADDRINFO_socktype(res)));
 
     asock = BIO_socket(BIO_ADDRINFO_family(res), BIO_ADDRINFO_socktype(res),
-                       BIO_ADDRINFO_protocol(res), 0);
+                       protocol, 0);
     if (asock == INVALID_SOCKET
         || !BIO_listen(asock, BIO_ADDRINFO_address(res), BIO_SOCK_REUSEADDR)) {
         BIO_ADDRINFO_free(res);
