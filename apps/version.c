@@ -133,7 +133,7 @@
 
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
-    OPT_B, OPT_D, OPT_F, OPT_O, OPT_P, OPT_V, OPT_A
+    OPT_B, OPT_D, OPT_E, OPT_F, OPT_O, OPT_P, OPT_V, OPT_A
 } OPTION_CHOICE;
 
 OPTIONS version_options[] = {
@@ -141,7 +141,7 @@ OPTIONS version_options[] = {
     {"a", OPT_A, '-', "Show all data"},
     {"b", OPT_B, '-', "Show build date"},
     {"d", OPT_D, '-', "Show configuration directory"},
-    {"e", OPT_D, '-', "Show engines directory"},
+    {"e", OPT_E, '-', "Show engines directory"},
     {"f", OPT_F, '-', "Show compiler flags used"},
     {"o", OPT_O, '-', "Show some internal datatype options"},
     {"p", OPT_P, '-', "Show target build platform"},
