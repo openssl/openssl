@@ -114,6 +114,11 @@ int errstr_main(int argc, char **argv)
         if (!opt_ulong(*argv, &l))
             ret++;
         else {
+            /* We're not really an SSL application so this won't auto-init, but
+             * we're still interested in SSL error strings
+             */
+            OPENSSL_init_ssl(OPENSSL_INIT_LOAD_SSL_STRINGS
+                             | OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL);
             ERR_error_string_n(l, buf, sizeof buf);
             BIO_printf(bio_out, "%s\n", buf);
         }

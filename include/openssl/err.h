@@ -309,7 +309,7 @@ typedef struct err_state_st {
 # define ERR_R_PASSED_NULL_PARAMETER             (3|ERR_R_FATAL)
 # define ERR_R_INTERNAL_ERROR                    (4|ERR_R_FATAL)
 # define ERR_R_DISABLED                          (5|ERR_R_FATAL)
-# define ERR_R_NOT_INITED                        (6|ERR_R_FATAL)
+# define ERR_R_INIT_FAIL                         (6|ERR_R_FATAL)
 
 /*
  * 99 is the maximum possible ERR_R_... code, higher values are reserved for
