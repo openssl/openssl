@@ -167,11 +167,6 @@ int init_client(int *sock, const char *host, const char *port,
 
     ret = 0;
     for (ai = res; ai != NULL; ai = BIO_ADDRINFO_next(ai)) {
-        int protocol = (type == SOCK_STREAM ? IPPROTO_TCP : IPPROTO_UDP);
-# ifdef AF_UNIX
-        if (BIO_ADDRINFO_family(ai) == AF_UNIX)
-            protocol = 0;
-# endif
         /* Admitedly, these checks are quite paranoid, we should
            not get anything in the BIO_ADDRINFO chain that we haven't
            asked for */
@@ -179,7 +174,7 @@ int init_client(int *sock, const char *host, const char *port,
                        && (type == 0 || type == BIO_ADDRINFO_socktype(res)));
 
         *sock = BIO_socket(BIO_ADDRINFO_family(ai), BIO_ADDRINFO_socktype(ai),
-                           protocol, 0);
+                           BIO_ADDRINFO_protocol(res), 0);
         if (*sock == INVALID_SOCKET) {
             /* Maybe the kernel doesn't support the socket family, even if
              * BIO_lookup() added it in the returned result...
@@ -236,7 +231,6 @@ int do_server(int *accept_sock, const char *host, const char *port,
     int i;
     BIO_ADDRINFO *res = NULL;
     int ret = 0;
-    int protocol = (type == SOCK_STREAM ? IPPROTO_TCP : IPPROTO_UDP);
 
     if (!BIO_sock_init())
         return 0;
@@ -246,10 +240,6 @@ int do_server(int *accept_sock, const char *host, const char *port,
         return 0;
     }
 
-# ifdef AF_UNIX
-    if (BIO_ADDRINFO_family(res) == AF_UNIX)
-        protocol = 0;
-# endif
     /* Admitedly, these checks are quite paranoid, we should
        not get anything in the BIO_ADDRINFO chain that we haven't
        asked for */
@@ -257,7 +247,7 @@ int do_server(int *accept_sock, const char *host, const char *port,
                    && (type == 0 || type == BIO_ADDRINFO_socktype(res)));
 
     asock = BIO_socket(BIO_ADDRINFO_family(res), BIO_ADDRINFO_socktype(res),
-                       protocol, 0);
+                       BIO_ADDRINFO_protocol(res), 0);
     if (asock == INVALID_SOCKET
         || !BIO_listen(asock, BIO_ADDRINFO_address(res), BIO_SOCK_REUSEADDR)) {
         BIO_ADDRINFO_free(res);
