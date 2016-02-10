@@ -8,6 +8,8 @@ BEGINRAW[Makefile(unix)]
 	$(PERL) {- $sourcedir -}/asm/chacha-x86.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) > $@
 {- $builddir -}/chacha-x86_64.s:	{- $sourcedir -}/asm/chacha-x86_64.pl
 	$(PERL) {- $sourcedir -}/asm/chacha-x86_64.pl $(PERLASM_SCHEME) > $@
+{- $builddir -}/chacha-ppc.s:	{- $sourcedir -}/asm/chacha-ppc.pl
+	$(PERL) {- $sourcedir -}/asm/chacha-ppc.pl $(PERLASM_SCHEME) $@
 
 {- $builddir -}/chacha-%.S:	{- $sourcedir -}/asm/chacha-%.pl
 	$(PERL) $< $(PERLASM_SCHEME) $@
