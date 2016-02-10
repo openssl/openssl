@@ -1,4 +1,4 @@
-{- use File::Spec::Functions qw/:DEFAULT abs2rel/; -}
+{- use File::Spec::Functions qw/:DEFAULT rel2abs/; -}
 IF[{- $config{no_shared} -}]
  LIBS=../libcrypto
  SOURCE[../libcrypto]=\
@@ -9,14 +9,14 @@ ELSE
  ENGINES=libpadlock libcapi libdasync libossltest
  SOURCE[libpadlock]=e_padlock.c {- $target{padlock_asm_src} -}
  DEPEND[libpadlock]=../libcrypto
- INCLUDE[libpadlock]={- catdir(abs2rel($builddir,$sourcedir),"../include") -} ../include
+ INCLUDE[libpadlock]={- rel2abs(catdir($builddir,"../include")) -} ../include
  SOURCE[libcapi]=e_capi.c
  DEPEND[libcapi]=../libcrypto
- INCLUDE[libcapi]={- catdir(abs2rel($builddir,$sourcedir),"../include") -} ../include
+ INCLUDE[libcapi]={- rel2abs(catdir($builddir,"../include")) -} ../include
  SOURCE[libdasync]=e_dasync.c
  DEPEND[libdasync]=../libcrypto
- INCLUDE[libdasync]={- catdir(abs2rel($builddir,$sourcedir),"../include") -} ../include
+ INCLUDE[libdasync]={- rel2abs(catdir($builddir,"../include")) -} ../include
  SOURCE[libossltest]=e_ossltest.c
  DEPEND[libossltest]=../libcrypto
- INCLUDE[libossltest]={- catdir(abs2rel($builddir,$sourcedir),"../include") -} ../include
+ INCLUDE[libossltest]={- rel2abs(catdir($builddir,"../include")) -} ../include
 ENDIF
