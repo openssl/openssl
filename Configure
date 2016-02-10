@@ -15,7 +15,7 @@ use File::Path qw/mkpath/;
 
 # see INSTALL for instructions.
 
-my $usage="Usage: Configure [no-<cipher> ...] [enable-<cipher> ...] [experimental-<cipher> ...] [-Dxxx] [-lxxx] [-Lxxx] [-fxxx] [-Kxxx] [no-hw-xxx|no-hw] [[no-]threads] [[no-]shared] [[no-]zlib|zlib-dynamic] [no-asm] [no-dso] [no-egd] [sctp] [386] [--prefix=DIR] [--openssldir=OPENSSLDIR] [--with-xxx[=vvv]] [--config=FILE] os/compiler[:flags]\n";
+my $usage="Usage: Configure [no-<cipher> ...] [enable-<cipher> ...] [-Dxxx] [-lxxx] [-Lxxx] [-fxxx] [-Kxxx] [no-hw-xxx|no-hw] [[no-]threads] [[no-]shared] [[no-]zlib|zlib-dynamic] [no-asm] [no-dso] [no-egd] [sctp] [386] [--prefix=DIR] [--openssldir=OPENSSLDIR] [--with-xxx[=vvv]] [--config=FILE] os/compiler[:flags]\n";
 
 # Options:
 #
@@ -327,7 +327,7 @@ foreach my $proto ((@tls, @dtls))
 
 # All of the following is disabled by default (RC5 was enabled before 0.9.8):
 
-my %disabled = ( # "what"         => "comment" [or special keyword "experimental"]
+my %disabled = ( # "what"         => "comment"
 		 "ec_nistp_64_gcc_128" => "default",
 		 "egd"            => "default",
 		 "md2"            => "default",
@@ -340,7 +340,6 @@ my %disabled = ( # "what"         => "comment" [or special keyword "experimental
 		 "crypto-mdebug"  => "default",
 		 "heartbeats"     => "default",
 	       );
-my @experimental = ();
 
 # Note: => pair form used for aesthetics, not to truly make a hash table
 my @disable_cascades = (
@@ -410,12 +409,8 @@ my @default_depdefines =
     sort keys %disabled;
 
 # Explicit "no-..." options will be collected in %disabled along with the defaults.
-# To remove something from %disabled, use "enable-foo" (unless it's experimental).
+# To remove something from %disabled, use "enable-foo".
 # For symmetry, "disable-foo" is a synonym for "no-foo".
-
-# For features called "experimental" here, a more explicit "experimental-foo" is needed to enable.
-# We will collect such requests in @experimental.
-# To avoid accidental use of experimental features, applications will have to use -DOPENSSL_EXPERIMENTAL_FOO.
 
 my @generated_headers = (
     "include/openssl/opensslconf.h",
@@ -435,7 +430,6 @@ my $user_cflags="";
 my @user_defines=();
 my $unified = 0;
 $config{depdefines}=[];
-$config{openssl_experimental_defines}=[];
 $config{openssl_api_defines}=[];
 $config{openssl_algorithm_defines}=[];
 $config{openssl_thread_defines}=[];
@@ -518,7 +512,7 @@ foreach (@argvcopy)
 	s /^zlib$/enable-zlib/;
 	s /^zlib-dynamic$/enable-zlib-dynamic/;
 
-        if (/^(no|disable|enable|experimental)-(.+)$/)
+        if (/^(no|disable|enable)-(.+)$/)
 		{
 		my $word = $2;
 		if (!grep { $word =~ /^${_}$/ } @disablables)
@@ -529,52 +523,43 @@ foreach (@argvcopy)
 		}
 	if (/^no-(.+)$/ || /^disable-(.+)$/)
 		{
-		if (!($disabled{$1} eq "experimental"))
-			{
-			foreach my $proto ((@tls, @dtls))
-				{
-				if ($1 eq "$proto-method")
-					{
-					$disabled{"$proto"} = "option($proto-method)";
-					last;
-					}
-				}
-			if ($1 eq "dtls")
-				{
-                                foreach my $proto (@dtls)
-					{
-					$disabled{$proto} = "option(dtls)";
-					}
-				}
-			elsif ($1 eq "ssl")
-				{
-				# Last one of its kind
-				$disabled{"ssl3"} = "option(ssl)";
-				}
-			elsif ($1 eq "tls")
-				{
-                                # XXX: Tests will fail if all SSL/TLS
-                                # protocols are disabled.
-                                foreach my $proto (@tls)
-					{
-					$disabled{$proto} = "option(tls)";
-					}
-				}
-			else
-				{
-				$disabled{$1} = "option";
-				}
-			}
+                foreach my $proto ((@tls, @dtls))
+                        {
+                        if ($1 eq "$proto-method")
+                                {
+                                $disabled{"$proto"} = "option($proto-method)";
+                                last;
+                                }
+                        }
+                if ($1 eq "dtls")
+                        {
+                        foreach my $proto (@dtls)
+                                {
+                                $disabled{$proto} = "option(dtls)";
+                                }
+                        }
+                elsif ($1 eq "ssl")
+                        {
+                        # Last one of its kind
+                        $disabled{"ssl3"} = "option(ssl)";
+                        }
+                elsif ($1 eq "tls")
+                        {
+                        # XXX: Tests will fail if all SSL/TLS
+                        # protocols are disabled.
+                        foreach my $proto (@tls)
+                                {
+                                $disabled{$proto} = "option(tls)";
+                                }
+                        }
+                else
+                        {
+                        $disabled{$1} = "option";
+                        }
 		}
-	elsif (/^enable-(.+)$/ || /^experimental-(.+)$/)
+	elsif (/^enable-(.+)$/)
 		{
 		my $algo = $1;
-		if ($disabled{$algo} eq "experimental")
-			{
-			die "You are requesting an experimental feature; please say 'experimental-$algo' if you are sure\n"
-				unless (/^experimental-/);
-			push @experimental, $algo;
-			}
 		delete $disabled{$algo};
 
 		$threads = 1 if ($algo eq "threads");
@@ -815,15 +800,6 @@ foreach (sort (keys %disabled))
 	print "\n";
 	}
 
-foreach (sort @experimental)
-	{
-	my $ALGO;
-	($ALGO = $_) =~ tr/[a-z]/[A-Z]/;
-
-	# opensslconf.h will set OPENSSL_NO_... unless OPENSSL_EXPERIMENTAL_... is defined
-	push @{$config{openssl_experimental_defines}}, "OPENSSL_NO_$ALGO";
-	}
-
 print "Configuring for $target\n";
 
 # Support for legacy targets having a name starting with 'debug-'
@@ -895,10 +871,6 @@ if ($target{build_file} eq "Makefile"
 
 my ($builder, $builder_platform, @builder_opts) =
     @{$target{build_scheme}};
-
-push @{$config{defines}},
-    map { (my $x = $_) =~ s/^OPENSSL_NO_/OPENSSL_EXPERIMENTAL_/; $x }
-        @{$config{openssl_experimental_defines}};
 
 if ($target =~ /^mingw/ && `$target{cc} --target-help 2>&1` =~ m/-mno-cygwin/m)
 	{
