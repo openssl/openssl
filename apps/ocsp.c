@@ -521,7 +521,7 @@ int ocsp_main(int argc, char **argv)
             goto end;
     }
 
-    if (rsignfile && !rdb) {
+    if (rsignfile) {
         if (!rkeyfile)
             rkeyfile = rsignfile;
         rsigner = load_cert(rsignfile, FORMAT_PEM,
