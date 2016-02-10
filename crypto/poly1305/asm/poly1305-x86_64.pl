@@ -129,7 +129,7 @@ $code.=<<___;
 .extern	OPENSSL_ia32cap_P
 
 .globl	poly1305_init
-.type	poly1305_init,\@function,2
+.type	poly1305_init,\@function,3
 .align	32
 poly1305_init:
 	xor	%rax,%rax
@@ -176,6 +176,7 @@ $code.=<<___;
 .type	poly1305_blocks,\@function,4
 .align	32
 poly1305_blocks:
+.Lblocks:
 	sub	\$16,$len		# too short?
 	jc	.Lno_data
 
@@ -235,6 +236,7 @@ $code.=<<___;
 .type	poly1305_emit,\@function,3
 .align	32
 poly1305_emit:
+.Lemit:
 	mov	0($ctx),%r8	# load hash value
 	mov	8($ctx),%r9
 	mov	16($ctx),%r10
@@ -453,7 +455,7 @@ poly1305_blocks_avx:
 	cmp	\$128,$len
 	jae	.Lblocks_avx
 	test	%r8d,%r8d
-	jz	poly1305_blocks
+	jz	.Lblocks
 
 .Lblocks_avx:
 	and	\$-16,$len
@@ -1275,7 +1277,7 @@ $code.=<<___;
 .align	32
 poly1305_emit_avx:
 	cmpl	\$0,20($ctx)	# is_base2_26?
-	je	poly1305_emit
+	je	.Lemit
 
 	mov	0($ctx),%eax	# load hash value base 2^26
 	mov	4($ctx),%ecx
@@ -1339,7 +1341,7 @@ poly1305_blocks_avx2:
 	cmp	\$128,$len
 	jae	.Lblocks_avx2
 	test	%r8d,%r8d
-	jz	poly1305_blocks
+	jz	.Lblocks
 
 .Lblocks_avx2:
 	and	\$-16,$len
