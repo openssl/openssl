@@ -57,11 +57,8 @@ B<OPENSSL_INIT_LOAD_SSL_STRINGS> will be ignored.
 
 =back
 
-The B<settings> parameter specifies optional settings values to an option.
-Currently no such settings are available for libssl specific options. However
-these settings will also be passed internally to a call to
-L<OPENSSL_init_crypto(3)>, so this parameter can also be used to
-provide libcrypto settings values.
+OPENSSL_init_ssl() takes a B<settings> parameter which can be used to
+set parameter values.  See L<OPENSSL_init_crypto(3)> for details.
 
 =head1 RETURN VALUES
 

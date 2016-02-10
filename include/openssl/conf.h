@@ -139,6 +139,7 @@ int CONF_dump_bio(LHASH_OF(CONF_VALUE) *conf, BIO *out);
 
 #if OPENSSL_API_COMPAT < 0x10100000L
 void OPENSSL_config(const char *config_name);
+
 # define OPENSSL_no_config() \
     OPENSSL_init_crypto(OPENSSL_INIT_NO_LOAD_CONFIG, NULL)
 #endif

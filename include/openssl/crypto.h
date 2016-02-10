@@ -575,33 +575,17 @@ int CRYPTO_memcmp(const volatile void * volatile in_a,
     OPENSSL_INIT_ENGINE_PADLOCK)
 
 
-
-/* Optional settings for initialisation */
-# define OPENSSL_INIT_SET_END                0
-# define OPENSSL_INIT_SET_CONF_FILENAME      1
-
-typedef struct ossl_init_settings_st {
-    int name;
-    union {
-        int type_int;
-        long type_long;
-        int32_t type_int32_t;
-        uint32_t type_uint32_t;
-        int64_t type_int64_t;
-        uint64_t type_uint64_t;
-        size_t type_size_t;
-        const char *type_string;
-        void *type_void_ptr;
-    } value;
-} OPENSSL_INIT_SETTINGS;
-
-typedef struct ossl_init_stop_st OPENSSL_INIT_STOP;
-
 /* Library initialisation functions */
 void OPENSSL_cleanup(void);
 int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings);
 int OPENSSL_atexit(void (*handler)(void));
 void OPENSSL_thread_stop(void);
+
+/* Low-level control of initialization */
+OPENSSL_INIT_SETTINGS *OPENSSL_INIT_new(void);
+void OPENSSL_INIT_set_config_filename(OPENSSL_INIT_SETTINGS *settings,
+                                      const char *config_file);
+void OPENSSL_INIT_free(OPENSSL_INIT_SETTINGS *settings);
 
 /* BEGIN ERROR CODES */
 /*

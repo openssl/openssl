@@ -294,6 +294,7 @@ static void ssl_library_stop(void)
     }
 }
 
+
 /*
  * If this function is called with a non NULL settings value then it must be
  * called prior to any threads making calls to any OpenSSL functions,

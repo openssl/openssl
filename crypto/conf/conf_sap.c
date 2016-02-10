@@ -77,13 +77,11 @@ static int openssl_configured = 0;
 
 void OPENSSL_config(const char *config_name)
 {
-    OPENSSL_INIT_SETTINGS settings[2];
+    OPENSSL_INIT_SETTINGS settings;
 
-    settings[0].name = OPENSSL_INIT_SET_CONF_FILENAME;
-    settings[0].value.type_string = config_name;
-    settings[1].name = OPENSSL_INIT_SET_END;
-    settings[1].value.type_int = 0;
-    OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CONFIG, settings);
+    memset(&settings, 0, sizeof(settings));
+    settings.config_name = strdup(config_name);
+    OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CONFIG, &settings);
 }
 
 void openssl_config_internal(const char *config_name)
