@@ -142,7 +142,7 @@ PROCESSOR= {- $config{processor} -}
 
 # The main targets ###################################################
 
-all: Makefile libcrypto.pc libssl.pc openssl.pc $(ENGINES) $(PROGRAMS) $(SCRIPTS) $(TESTPROGS)
+all: Makefile libcrypto.pc libssl.pc openssl.pc $(ENGINES) $(PROGRAMS) $(SCRIPTS) $(TESTPROGS) link-utils
 
 test tests: $(TESTPROGS) rehash
 	( cd test; \
