@@ -24,9 +24,8 @@
 
   *) Added support for auto-initialisation and de-initialisation of the library.
      OpenSSL no longer requires explicit init or deinit routines to be called,
-     except in certain circumstances. See the
-     OPENSSL_INIT_crypto_library_start() and OPENSSL_INIT_ssl_library_start()
-     man pages for further information.
+     except in certain circumstances. See the OPENSSL_init_crypto() and
+     OPENSSL_init_ssl() man pages for further information.
      [Matt Caswell]
 
   *) The arguments to the DTLSv1_listen function have changed. Specifically the
