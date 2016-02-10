@@ -301,8 +301,20 @@ static void ssl_library_stop(void)
  */
 int OPENSSL_init_ssl(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
 {
-    if (stopped)
+    static int stoperrset = 0;
+
+    if (stopped) {
+        if (!stoperrset) {
+            /*
+             * We only ever set this once to avoid getting into an infinite
+             * loop where the error system keeps trying to init and fails so
+             * sets an error etc
+             */
+            stoperrset = 1;
+            SSLerr(SSL_F_OPENSSL_INIT_SSL_LIBRARY_START, ERR_R_INIT_FAIL);
+        }
         return 0;
+    }
 
     if (!OPENSSL_init_crypto(opts | OPENSSL_INIT_ADD_ALL_CIPHERS
                              | OPENSSL_INIT_ADD_ALL_DIGESTS, settings))

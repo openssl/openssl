@@ -1986,6 +1986,7 @@ void ERR_load_SSL_strings(void);
 # define SSL_F_DTLS_CONSTRUCT_HELLO_VERIFY_REQUEST        385
 # define SSL_F_DTLS_GET_REASSEMBLED_MESSAGE               370
 # define SSL_F_DTLS_PROCESS_HELLO_VERIFY                  386
+# define SSL_F_OPENSSL_INIT_SSL_LIBRARY_START             342
 # define SSL_F_READ_STATE_MACHINE                         352
 # define SSL_F_SSL3_ADD_CERT_TO_BUF                       296
 # define SSL_F_SSL3_CALLBACK_CTRL                         233

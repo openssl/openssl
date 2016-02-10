@@ -628,8 +628,21 @@ static const OPENSSL_INIT_SETTINGS *ossl_init_get_setting(
  */
 int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
 {
-    if (stopped)
+    static int stoperrset = 0;
+
+    if (stopped) {
+        if (!stoperrset) {
+            /*
+             * We only ever set this once to avoid getting into an infinite
+             * loop where the error system keeps trying to init and fails so
+             * sets an error etc
+             */
+            stoperrset = 1;
+            CRYPTOerr(CRYPTO_F_OPENSSL_INIT_CRYPTO_LIBRARY_START,
+                      ERR_R_INIT_FAIL);
+        }
         return 0;
+    }
 
     ossl_init_once_run(&base, ossl_init_base);
 

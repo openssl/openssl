@@ -363,11 +363,9 @@ int ASYNC_init_thread(size_t max_size, size_t init_size)
     }
 
     if (!OPENSSL_init_crypto(OPENSSL_INIT_ASYNC, NULL)) {
-        ASYNCerr(ASYNC_F_ASYNC_INIT_THREAD, ERR_R_NOT_INITED);
         return 0;
     }
     if (!ossl_init_thread_start(OPENSSL_INIT_THREAD_ASYNC)) {
-        ASYNCerr(ASYNC_F_ASYNC_INIT_THREAD, ERR_R_NOT_INITED);
         return 0;
     }
 

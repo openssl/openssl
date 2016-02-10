@@ -627,6 +627,7 @@ void ERR_load_CRYPTO_strings(void);
 # define CRYPTO_F_INT_DUP_EX_DATA                         106
 # define CRYPTO_F_INT_FREE_EX_DATA                        107
 # define CRYPTO_F_INT_NEW_EX_DATA                         108
+# define CRYPTO_F_OPENSSL_INIT_CRYPTO_LIBRARY_START       116
 # define CRYPTO_F_OPENSSL_MEMDUP                          114
 
 /* Reason codes. */
