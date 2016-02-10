@@ -108,7 +108,6 @@ extern "C" {
 # define ENGINE_METHOD_RAND              (unsigned int)0x0008
 # define ENGINE_METHOD_CIPHERS           (unsigned int)0x0040
 # define ENGINE_METHOD_DIGESTS           (unsigned int)0x0080
-# define ENGINE_METHOD_STORE             (unsigned int)0x0100
 # define ENGINE_METHOD_PKEY_METHS        (unsigned int)0x0200
 # define ENGINE_METHOD_PKEY_ASN1_METHS   (unsigned int)0x0400
 # define ENGINE_METHOD_EC                (unsigned int)0x0800
@@ -441,10 +440,6 @@ int ENGINE_register_RAND(ENGINE *e);
 void ENGINE_unregister_RAND(ENGINE *e);
 void ENGINE_register_all_RAND(void);
 
-int ENGINE_register_STORE(ENGINE *e);
-void ENGINE_unregister_STORE(ENGINE *e);
-void ENGINE_register_all_STORE(void);
-
 int ENGINE_register_ciphers(ENGINE *e);
 void ENGINE_unregister_ciphers(ENGINE *e);
 void ENGINE_register_all_ciphers(void);
@@ -542,7 +537,6 @@ int ENGINE_set_DSA(ENGINE *e, const DSA_METHOD *dsa_meth);
 int ENGINE_set_EC(ENGINE *e, const EC_KEY_METHOD *ecdsa_meth);
 int ENGINE_set_DH(ENGINE *e, const DH_METHOD *dh_meth);
 int ENGINE_set_RAND(ENGINE *e, const RAND_METHOD *rand_meth);
-int ENGINE_set_STORE(ENGINE *e, const STORE_METHOD *store_meth);
 int ENGINE_set_destroy_function(ENGINE *e, ENGINE_GEN_INT_FUNC_PTR destroy_f);
 int ENGINE_set_init_function(ENGINE *e, ENGINE_GEN_INT_FUNC_PTR init_f);
 int ENGINE_set_finish_function(ENGINE *e, ENGINE_GEN_INT_FUNC_PTR finish_f);
@@ -586,7 +580,6 @@ const DSA_METHOD *ENGINE_get_DSA(const ENGINE *e);
 const EC_KEY_METHOD *ENGINE_get_EC(const ENGINE *e);
 const DH_METHOD *ENGINE_get_DH(const ENGINE *e);
 const RAND_METHOD *ENGINE_get_RAND(const ENGINE *e);
-const STORE_METHOD *ENGINE_get_STORE(const ENGINE *e);
 ENGINE_GEN_INT_FUNC_PTR ENGINE_get_destroy_function(const ENGINE *e);
 ENGINE_GEN_INT_FUNC_PTR ENGINE_get_init_function(const ENGINE *e);
 ENGINE_GEN_INT_FUNC_PTR ENGINE_get_finish_function(const ENGINE *e);

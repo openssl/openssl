@@ -2872,7 +2872,7 @@ BIO_new_dgram                           3330	1_1_0	EXIST::FUNCTION:
 BN_get0_nist_prime_384                  3331	1_1_0	EXIST::FUNCTION:
 ERR_set_mark                            3332	1_1_0	EXIST::FUNCTION:
 X509_STORE_CTX_set0_crls                3333	1_1_0	EXIST::FUNCTION:
-ENGINE_set_STORE                        3334	1_1_0	EXIST::FUNCTION:ENGINE
+ENGINE_set_STORE                        3334	1_1_0	NOEXIST::FUNCTION:
 ENGINE_register_ECDSA                   3335	1_1_0	NOEXIST::FUNCTION:
 STORE_meth_set_list_start_fn            3336	1_1_0	NOEXIST::FUNCTION:
 STORE_method_set_list_start_function    3336	1_1_0	NOEXIST::FUNCTION:
@@ -2928,7 +2928,7 @@ STORE_ATTR_INFO_set_dn                  3380	1_1_0	NOEXIST::FUNCTION:
 X509_policy_tree_get0_policies          3381	1_1_0	EXIST::FUNCTION:
 EC_GROUP_new_curve_GF2m                 3382	1_1_0	EXIST::FUNCTION:EC,EC2M
 STORE_destroy_method                    3383	1_1_0	NOEXIST::FUNCTION:
-ENGINE_unregister_STORE                 3384	1_1_0	EXIST::FUNCTION:ENGINE
+ENGINE_unregister_STORE                 3384	1_1_0	NOEXIST::FUNCTION:
 EVP_PKEY_get1_EC_KEY                    3385	1_1_0	EXIST::FUNCTION:EC
 STORE_ATTR_INFO_get0_number             3386	1_1_0	NOEXIST::FUNCTION:
 ENGINE_get_default_ECDH                 3387	1_1_0	NOEXIST::FUNCTION:
@@ -3125,7 +3125,7 @@ d2i_ECPrivateKey                        3563	1_1_0	EXIST::FUNCTION:EC
 ASN1_item_ndef_i2d                      3564	1_1_0	EXIST::FUNCTION:
 STORE_delete_private_key                3565	1_1_0	NOEXIST::FUNCTION:
 ERR_pop_to_mark                         3566	1_1_0	EXIST::FUNCTION:
-ENGINE_register_all_STORE               3567	1_1_0	EXIST::FUNCTION:ENGINE
+ENGINE_register_all_STORE               3567	1_1_0	NOEXIST::FUNCTION:
 X509_policy_level_get0_node             3568	1_1_0	EXIST::FUNCTION:
 i2d_PKCS7_NDEF                          3569	1_1_0	EXIST::FUNCTION:
 EC_GROUP_get_degree                     3570	1_1_0	EXIST::FUNCTION:EC
@@ -3236,7 +3236,7 @@ SHA256_Transform                        3664	1_1_0	EXIST::FUNCTION:
 EC_KEY_set_enc_flags                    3665	1_1_0	EXIST::FUNCTION:EC
 ECDSA_verify                            3666	1_1_0	EXIST::FUNCTION:EC
 EC_POINT_point2hex                      3667	1_1_0	EXIST::FUNCTION:EC
-ENGINE_get_STORE                        3668	1_1_0	EXIST::FUNCTION:ENGINE
+ENGINE_get_STORE                        3668	1_1_0	NOEXIST::FUNCTION:
 SHA512                                  3669	1_1_0	EXIST:!VMSVAX:FUNCTION:
 STORE_get_certificate                   3670	1_1_0	NOEXIST::FUNCTION:
 ECDSA_do_sign_ex                        3671	1_1_0	EXIST::FUNCTION:EC
@@ -3254,7 +3254,7 @@ STORE_get_ex_data                       3681	1_1_0	NOEXIST::FUNCTION:
 EC_KEY_set_public_key                   3682	1_1_0	EXIST::FUNCTION:EC
 PEM_read_ECPKParameters                 3683	1_1_0	EXIST::FUNCTION:EC
 X509_CERT_PAIR_new                      3684	1_1_0	NOEXIST::FUNCTION:
-ENGINE_register_STORE                   3685	1_1_0	EXIST::FUNCTION:ENGINE
+ENGINE_register_STORE                   3685	1_1_0	NOEXIST::FUNCTION:
 RSA_generate_key_ex                     3686	1_1_0	EXIST::FUNCTION:RSA
 DSA_generate_parameters_ex              3687	1_1_0	EXIST::FUNCTION:DSA
 ECParameters_print_fp                   3688	1_1_0	EXIST::FUNCTION:EC,STDIO
