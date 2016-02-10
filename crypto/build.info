@@ -17,7 +17,7 @@ ENDRAW[descrip.mms]
 
 BEGINRAW[Makefile]
 crypto/buildinf.h : Makefile
-	$(PERL) $(SRCDIR)/util/mkbuildinf.pl "$(CC) $(CFLAGS)" "$(PLATFORM)" > crypto/buildinf.h
+	$(PERL) $(SRCDIR)/util/mkbuildinf.pl "$(CC) $(CFLAGS_Q)" "$(PLATFORM)" > crypto/buildinf.h
 
 ##### APPLINK, UPLINK and CPUID assembler implementations
 
