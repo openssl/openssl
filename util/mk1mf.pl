@@ -11,6 +11,7 @@ use Cwd;
 
 $INSTALLTOP="/usr/local";
 $OPENSSLDIR="/usr/local/ssl";
+$ENGINESDIR="/usr/local/lib/engines";
 $OPTIONS="";
 $ssl_version="";
 $banner="\t\@echo Building OpenSSL";
@@ -47,6 +48,7 @@ my %mf_import = (
 	OPTIONS        => \$OPTIONS,
 	INSTALLTOP     => \$INSTALLTOP,
 	OPENSSLDIR     => \$OPENSSLDIR,
+	ENGINESDIR     => \$ENGINESDIR,
 	PLATFORM       => \$mf_platform,
 	CC             => \$mf_cc,
 	CFLAG	       => \$mf_cflag,
@@ -636,6 +638,7 @@ $defs .= $preamble if defined $preamble;
 $defs.= <<"EOF";
 INSTALLTOP=$INSTALLTOP
 OPENSSLDIR=$OPENSSLDIR
+ENGINESDIR=$ENGINESDIR
 
 # Set your compiler options
 PLATFORM=$platform
@@ -770,6 +773,7 @@ install: all
 	\$(MKDIR) \"\$(INSTALLTOP)${o}include\"
 	\$(MKDIR) \"\$(INSTALLTOP)${o}include${o}openssl\"
 	\$(MKDIR) \"\$(INSTALLTOP)${o}lib\"
+	\$(MKDIR) \"\$(INSTALLTOP)${o}lib${o}engines\"
 $extra_install
 
 clean:

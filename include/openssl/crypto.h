@@ -362,6 +362,7 @@ const char *OpenSSL_version(int type);
 # define OPENSSL_BUILT_ON         2
 # define OPENSSL_PLATFORM         3
 # define OPENSSL_DIR              4
+# define OPENSSL_ENGINES_DIR      5
 
 int OPENSSL_issetugid(void);
 

@@ -15,6 +15,7 @@ B<openssl version>
 [B<-f>]
 [B<-p>]
 [B<-d>]
+[B<-e>]
 
 =head1 DESCRIPTION
 
@@ -55,6 +56,10 @@ platform setting.
 =item B<-d>
 
 OPENSSLDIR setting.
+
+=item B<-e>
+
+ENGINESDIR setting.
 
 =back
 
