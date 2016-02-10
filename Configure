@@ -1183,27 +1183,34 @@ if ($builder eq "unified") {
     use with_fallback qw(Text::Template);
 
     sub cleandir {
+        my $base = shift;
         my $dir = shift;
-        my $base = shift || ".";
+        my $relativeto = shift || ".";
+
+        $dir = catdir($base,$dir) unless isabsolute($dir);
 
         # Make sure the directories we're building in exists
         mkpath($dir);
 
-        my $res = abs2rel(absolutedir($dir), rel2abs($base));
+        my $res = abs2rel(absolutedir($dir), rel2abs($relativeto));
         #print STDERR "DEBUG[cleandir]: $dir , $base => $res\n";
         return $res;
     }
 
     sub cleanfile {
+        my $base = shift;
         my $file = shift;
-        my $base = shift || ".";
+        my $relativeto = shift || ".";
+
+        $file = catfile($base,$file) unless isabsolute($file);
+
         my $d = dirname($file);
         my $f = basename($file);
 
         # Make sure the directories we're building in exists
         mkpath($d);
 
-        my $res = abs2rel(catfile(absolutedir($d), $f), rel2abs($base));
+        my $res = abs2rel(catfile(absolutedir($d), $f), rel2abs($relativeto));
         #print STDERR "DEBUG[cleanfile]: $d , $f => $res\n";
         return $res;
     }
@@ -1345,8 +1352,8 @@ if ($builder eq "unified") {
             die "$_ renamed to more than one thing: "
                 ,join(" ", @{$renames{$_}}),"\n"
                 if scalar @{$renames{$_}} > 1;
-            my $dest = cleanfile(catfile($buildd, $_), $blddir);
-            my $to = cleanfile(catfile($buildd, $renames{$_}->[0]), $blddir);
+            my $dest = cleanfile($buildd, $_, $blddir);
+            my $to = cleanfile($buildd, $renames{$_}->[0], $blddir);
             die "$dest renamed to more than one thing: "
                 ,$unified_info{rename}->{$dest}, $to
                 unless !defined($unified_info{rename}->{$dest})
@@ -1355,7 +1362,7 @@ if ($builder eq "unified") {
         }
 
         foreach (@programs) {
-            my $program = cleanfile(catfile($buildd, $_), $blddir);
+            my $program = cleanfile($buildd, $_, $blddir);
             if ($unified_info{rename}->{$program}) {
                 $program = $unified_info{rename}->{$program};
             }
@@ -1363,7 +1370,7 @@ if ($builder eq "unified") {
         }
 
         foreach (@libraries) {
-            my $library = cleanfile(catfile($buildd, $_), $blddir);
+            my $library = cleanfile($buildd, $_, $blddir);
             if ($unified_info{rename}->{$library}) {
                 $library = $unified_info{rename}->{$library};
             }
@@ -1375,7 +1382,7 @@ ENGINES can only be used if configured with 'shared'.
 This is usually a fault in a build.info file.
 EOF
         foreach (@engines) {
-            my $library = cleanfile(catfile($buildd, $_), $blddir);
+            my $library = cleanfile($buildd, $_, $blddir);
             if ($unified_info{rename}->{$library}) {
                 $library = $unified_info{rename}->{$library};
             }
@@ -1383,7 +1390,7 @@ EOF
         }
 
         foreach (@scripts) {
-            my $script = cleanfile(catfile($buildd, $_), $blddir);
+            my $script = cleanfile($buildd, $_, $blddir);
             if ($unified_info{rename}->{$script}) {
                 $script = $unified_info{rename}->{$script};
             }
@@ -1391,7 +1398,7 @@ EOF
         }
 
         foreach (@extra) {
-            my $extra = cleanfile(catfile($buildd, $_), $blddir);
+            my $extra = cleanfile($buildd, $_, $blddir);
             $unified_info{extra}->{$extra} = 1;
         }
 
@@ -1400,15 +1407,14 @@ EOF
         if (!$config{no_shared}) {
             # Check sharednames.
             foreach (keys %sharednames) {
-                my $dest = cleanfile(catfile($buildd, $_), $blddir);
+                my $dest = cleanfile($buildd, $_, $blddir);
                 if ($unified_info{rename}->{$dest}) {
                     $dest = $unified_info{rename}->{$dest};
                 }
                 die "shared_name for $dest with multiple values: "
                     ,join(" ", @{$sharednames{$_}}),"\n"
                     if scalar @{$sharednames{$_}} > 1;
-                my $to = cleanfile(catfile($buildd, $sharednames{$_}->[0]),
-                                   $blddir);
+                my $to = cleanfile($buildd, $sharednames{$_}->[0], $blddir);
                 die "shared_name found for a library $dest that isn't defined\n"
                     unless $unified_info{libraries}->{$dest};
                 die "shared_name for $dest with multiple values: "
@@ -1429,7 +1435,7 @@ EOF
 
         foreach (keys %ordinals) {
             my $dest = $_;
-            my $ddest = cleanfile(catfile($buildd, $_), $blddir);
+            my $ddest = cleanfile($buildd, $_, $blddir);
             if ($unified_info{rename}->{$ddest}) {
                 $ddest = $unified_info{rename}->{$ddest};
             }
@@ -1437,9 +1443,9 @@ EOF
                 my %known_ordinals =
                     (
                      crypto =>
-                     cleanfile(catfile($sourced, "util", "libeay.num"), $blddir),
+                     cleanfile($sourced, catfile("util", "libeay.num"), $blddir),
                      ssl =>
-                     cleanfile(catfile($sourced, "util", "ssleay.num"), $blddir)
+                     cleanfile($sourced, catfile("util", "ssleay.num"), $blddir)
                     );
                 my $o = $known_ordinals{$_};
                 die "Ordinals for $ddest defined more than once\n"
@@ -1450,22 +1456,22 @@ EOF
 
         foreach (keys %sources) {
             my $dest = $_;
-            my $ddest = cleanfile(catfile($buildd, $_), $blddir);
+            my $ddest = cleanfile($buildd, $_, $blddir);
             if ($unified_info{rename}->{$ddest}) {
                 $ddest = $unified_info{rename}->{$ddest};
             }
             foreach (@{$sources{$dest}}) {
-                my $s = cleanfile(catfile($sourced, $_), $blddir);
+                my $s = cleanfile($sourced, $_, $blddir);
 
                 # If it isn't in the source tree, we assume it's generated
                 # in the build tree
                 if (! -f $s) {
-                    $s = cleanfile(catfile($buildd, $_), $blddir);
+                    $s = cleanfile($buildd, $_, $blddir);
                 }
                 # We recognise C and asm files
                 if ($s =~ /\.[csS]\b$/) {
                     (my $o = $_) =~ s/\.[csS]\b$/.o/;
-                    $o = cleanfile(catfile($buildd, $o), $blddir);
+                    $o = cleanfile($buildd, $o, $blddir);
                     $unified_info{sources}->{$ddest}->{$o} = 1;
                     $unified_info{sources}->{$o}->{$s} = 1;
                 } else {
@@ -1476,17 +1482,17 @@ EOF
 
         foreach (keys %depends) {
             my $dest = $_;
-            my $ddest = cleanfile(catfile($buildd, $_), $blddir);
+            my $ddest = cleanfile($buildd, $_, $blddir);
             if ($unified_info{rename}->{$ddest}) {
                 $ddest = $unified_info{rename}->{$ddest};
             }
             foreach (@{$depends{$dest}}) {
-                my $d = cleanfile(catfile($sourced, $_), $blddir);
+                my $d = cleanfile($sourced, $_, $blddir);
 
                 # If it isn't found in the source, let's assume it's generated
                 # and that the Makefile template has the lines
                 if (! -f $d) {
-                    $d = cleanfile(catfile($buildd, $_), $blddir);
+                    $d = cleanfile($buildd, $_, $blddir);
                 }
                 # Take note if the file to depend on is being renamed
                 if ($unified_info{rename}->{$d}) {
@@ -1505,12 +1511,12 @@ EOF
 
         foreach (keys %includes) {
             my $dest = $_;
-            my $ddest = cleanfile(catfile($buildd, $_), $blddir);
+            my $ddest = cleanfile($buildd, $_, $blddir);
             if ($unified_info{rename}->{$ddest}) {
                 $ddest = $unified_info{rename}->{$ddest};
             }
             foreach (@{$includes{$dest}}) {
-                my $i = cleandir(catdir($sourced, $_), $blddir);
+                my $i = cleandir($sourced, $_, $blddir);
                 push @{$unified_info{includes}->{$ddest}}, $i
                     unless grep { $_ eq $i } @{$unified_info{includes}->{$ddest}};
             }
@@ -2205,6 +2211,23 @@ sub print_table_entry
 }
 
 # Utility routines ###################################################
+
+# On VMS, if the given file is a logical name, File::Spec::Functions
+# will consider it an absolute path.  There are cases when we want a
+# purely syntactic check without checking the environment.
+sub isabsolute {
+    my $file = shift;
+
+    # On non-platforms, we just use file_name_is_absolute().
+    return file_name_is_absolute($file) unless $^O eq "VMS";
+
+    # If the file spec includes a device or a directpry spec,
+    # file_name_is_absolute() is perfectly safe.
+    return file_name_is_absolute($file) if $file =~ m|[:\[]|;
+
+    # Here, we know the given file spec isn't absolute
+    return 0;
+}
 
 # Makes a directory absolute and cleans out /../ in paths like foo/../bar
 # On some platforms, this uses rel2abs(), while on others, realpath() is used.
