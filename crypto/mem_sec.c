@@ -13,10 +13,11 @@
 #include <openssl/crypto.h>
 #include <e_os.h>
 
+#include <string.h>
+
 #if defined(OPENSSL_SYS_LINUX) || defined(OPENSSL_SYS_UNIX)
 # define IMPLEMENTED
 # include <stdlib.h>
-# include <string.h>
 # include <assert.h>
 # include <unistd.h>
 # include <sys/types.h>
