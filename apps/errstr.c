@@ -111,7 +111,7 @@ int errstr_main(int argc, char **argv)
 
     ret = 0;
     for (argv = opt_rest(); *argv; argv++) {
-        if (!opt_ulong(*argv, &l))
+        if (sscanf(*argv, "%lx", &l) == 0)
             ret++;
         else {
             /* We're not really an SSL application so this won't auto-init, but
