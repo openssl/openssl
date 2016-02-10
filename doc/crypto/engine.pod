@@ -75,9 +75,6 @@ engine - ENGINE cryptographic module support
  int ENGINE_register_RAND(ENGINE *e);
  void ENGINE_unregister_RAND(ENGINE *e);
  void ENGINE_register_all_RAND(void);
- int ENGINE_register_STORE(ENGINE *e);
- void ENGINE_unregister_STORE(ENGINE *e);
- void ENGINE_register_all_STORE(void);
  int ENGINE_register_ciphers(ENGINE *e);
  void ENGINE_unregister_ciphers(ENGINE *e);
  void ENGINE_register_all_ciphers(void);
@@ -106,7 +103,6 @@ engine - ENGINE cryptographic module support
  int ENGINE_set_ECDSA(ENGINE *e, const ECDSA_METHOD *dh_meth);
  int ENGINE_set_DH(ENGINE *e, const DH_METHOD *dh_meth);
  int ENGINE_set_RAND(ENGINE *e, const RAND_METHOD *rand_meth);
- int ENGINE_set_STORE(ENGINE *e, const STORE_METHOD *rand_meth);
  int ENGINE_set_destroy_function(ENGINE *e, ENGINE_GEN_INT_FUNC_PTR destroy_f);
  int ENGINE_set_init_function(ENGINE *e, ENGINE_GEN_INT_FUNC_PTR init_f);
  int ENGINE_set_finish_function(ENGINE *e, ENGINE_GEN_INT_FUNC_PTR finish_f);
@@ -126,7 +122,6 @@ engine - ENGINE cryptographic module support
  const ECDSA_METHOD *ENGINE_get_ECDSA(const ENGINE *e);
  const DH_METHOD *ENGINE_get_DH(const ENGINE *e);
  const RAND_METHOD *ENGINE_get_RAND(const ENGINE *e);
- const STORE_METHOD *ENGINE_get_STORE(const ENGINE *e);
  ENGINE_GEN_INT_FUNC_PTR ENGINE_get_destroy_function(const ENGINE *e);
  ENGINE_GEN_INT_FUNC_PTR ENGINE_get_init_function(const ENGINE *e);
  ENGINE_GEN_INT_FUNC_PTR ENGINE_get_finish_function(const ENGINE *e);
@@ -160,7 +155,7 @@ implementation includes the following abstractions;
 
  RSA_METHOD - for providing alternative RSA implementations
  DSA_METHOD, DH_METHOD, RAND_METHOD, ECDH_METHOD, ECDSA_METHOD,
-       STORE_METHOD - similarly for other OpenSSL APIs
+       - similarly for other OpenSSL APIs
  EVP_CIPHER - potentially multiple cipher algorithms (indexed by 'nid')
  EVP_DIGEST - potentially multiple hash algorithms (indexed by 'nid')
  key-loading - loading public and/or private EVP_PKEY keys

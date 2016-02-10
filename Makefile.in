@@ -411,7 +411,7 @@ rehash.time: certs build_apps build_tools
 		touch rehash.time; \
 	else :; fi
 
-test:   tests
+test:   files tests
 
 
 tests: rehash
@@ -490,7 +490,7 @@ tar-snap: $(TARFILE).list
 	rm -f $(TARFILE).list
 	ls -l $(TARFILE)
 
-dist:   
+dist:
 	$(PERL) Configure dist
 	@$(MAKE) SDIRS='$(SDIRS)' clean
 	@$(MAKE) TAR='$(TAR)' TARFLAGS='$(TARFLAGS)' $(DISTTARVARS) tar
