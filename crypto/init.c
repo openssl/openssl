@@ -253,6 +253,7 @@ static struct thread_local_inits_st *ossl_init_get_thread_local(int alloc)
 
 #endif
 
+typedef struct ossl_init_stop_st OPENSSL_INIT_STOP;
 struct ossl_init_stop_st {
     void (*handler)(void);
     OPENSSL_INIT_STOP *next;
@@ -606,21 +607,6 @@ void OPENSSL_cleanup(void)
     base_inited = 0;
 }
 
-static const OPENSSL_INIT_SETTINGS *ossl_init_get_setting(
-        const OPENSSL_INIT_SETTINGS *settings, int name)
-{
-    if (settings == NULL)
-        return NULL;
-
-    while (settings->name != OPENSSL_INIT_SET_END) {
-        if (settings->name == name)
-            return settings;
-        settings++;
-    }
-
-    return NULL;
-}
-
 /*
  * If this function is called with a non NULL settings value then it must be
  * called prior to any threads making calls to any OpenSSL functions,
@@ -670,14 +656,7 @@ int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
 
     if (opts & OPENSSL_INIT_LOAD_CONFIG) {
         CRYPTO_w_lock(CRYPTO_LOCK_INIT);
-        if (settings != NULL) {
-            const OPENSSL_INIT_SETTINGS *curr;
-            curr = ossl_init_get_setting(settings,
-                                         OPENSSL_INIT_SET_CONF_FILENAME);
-            config_filename = (curr == NULL) ? NULL : curr->value.type_string;
-        } else {
-            config_filename = NULL;
-        }
+        config_filename = (settings == NULL) ? NULL : settings->config_name;
         ossl_init_once_run(&config, ossl_init_config);
         CRYPTO_w_unlock(CRYPTO_LOCK_INIT);
     }
