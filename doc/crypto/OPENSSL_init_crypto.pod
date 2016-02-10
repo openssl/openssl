@@ -146,14 +146,14 @@ engines. This not a default option.
 =back
 
 Multiple options may be combined together in a single call to
-OPENSSL_INIT_start_library(). For example:
+OPENSSL_init_crypto(). For example:
 
- OPENSSL_INIT_start_library(OPENSSL_INIT_NO_ADD_ALL_CIPHERS
-                            | OPENSSL_INIT_NO_ADD_ALL_DIGESTS, NULL);
+ OPENSSL_init_crypto(OPENSSL_INIT_NO_ADD_ALL_CIPHERS
+                     | OPENSSL_INIT_NO_ADD_ALL_DIGESTS, NULL);
 
 
-The B<settings> parameter to OPENSSL_INIT_start_library() may be used to
-provide optional settings values to an option. Currently the only option this
+The B<settings> parameter to OPENSSL_init_crypto() may be used to provide
+optional settings values to an option. Currently the only option this
 applies to is OPENSSL_INIT_LOAD_CONFIG. This provides the optional
 OPENSSL_INIT_SET_CONF_FILENAME parameter to provide a filename to load
 configuration from. If no filename is provided then the system default
@@ -179,6 +179,13 @@ are discouraged from calling this function and should instead, typically, rely
 on auto-deinitialisation. This is to avoid error conditions where both an
 application and a library it depends on both use OpenSSL, and the library
 deinitialises it before the application has finished using it.
+
+Once OPENSSL_cleanup() has been called the library cannot be reinitialised.
+Attempts to call OPENSSL_init_crypto() will fail and an ERR_R_INIT_FAIL error
+will be added to the error stack. Note that because initialisation has failed
+OpenSSL error strings will not be available, only an error code. This code can
+be put through the openssl errstr command line application to produce a human
+readable error (see L<errstr(1)>).
 
 The OPENSSL_atexit() function enables the registration of a
 function to be called during OPENSSL_cleanup(). Stop handlers are
