@@ -99,7 +99,7 @@ static void ossl_init_thread_stop_cleanup(void)
 static struct thread_local_inits_st *local = NULL;
 static struct thread_local_inits_st *ossl_init_get_thread_local(int alloc)
 {
-    static struct thread_local_inits_st *tmp;
+    struct thread_local_inits_st *tmp;
 
     tmp = local;
 
