@@ -77,7 +77,7 @@ SCT *SCT_new(void)
 
 void SCT_free(SCT *sct)
 {
-    if (sct) {
+    if (sct != NULL) {
         OPENSSL_free(sct->log_id);
         OPENSSL_free(sct->ext);
         OPENSSL_free(sct->sig);

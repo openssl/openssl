@@ -69,6 +69,7 @@
 static void sct_sigalg_print(BIO *out, const SCT *sct)
 {
     int nid = SCT_get_signature_nid(sct);
+
     if (nid <= 0)
         BIO_printf(out, "%02X%02X", sct->hash_alg, sct->sig_alg);
     else
@@ -77,9 +78,9 @@ static void sct_sigalg_print(BIO *out, const SCT *sct)
 
 static void timestamp_print(BIO *out, uint64_t timestamp)
 {
-    ASN1_GENERALIZEDTIME *gen;
+    ASN1_GENERALIZEDTIME *gen = ASN1_GENERALIZEDTIME_new();
     char genstr[20];
-    gen = ASN1_GENERALIZEDTIME_new();
+
     ASN1_GENERALIZEDTIME_adj(gen, (time_t)0,
                              (int)(timestamp / 86400000),
                              (timestamp % 86400000) / 1000);
@@ -99,30 +100,30 @@ void SCT_print(SCT *sct, BIO *out, int indent)
     BIO_printf(out, "%*sSigned Certificate Timestamp:", indent, "");
     BIO_printf(out, "\n%*sVersion   : ", indent + 4, "");
 
-    if (sct->version == 0) {    /* SCT v1 */
-        BIO_printf(out, "v1 (0x0)");
-
-        BIO_printf(out, "\n%*sLog ID    : ", indent + 4, "");
-        BIO_hex_string(out, indent + 16, 16, sct->log_id, sct->log_id_len);
-
-        BIO_printf(out, "\n%*sTimestamp : ", indent + 4, "");
-        timestamp_print(out, sct->timestamp);
-
-        BIO_printf(out, "\n%*sExtensions: ", indent + 4, "");
-        if (sct->ext_len == 0)
-            BIO_printf(out, "none");
-        else
-            BIO_hex_string(out, indent + 16, 16, sct->ext, sct->ext_len);
-
-        BIO_printf(out, "\n%*sSignature : ", indent + 4, "");
-        sct_sigalg_print(out, sct);
-        BIO_printf(out, "\n%*s            ", indent + 4, "");
-        BIO_hex_string(out, indent + 16, 16, sct->sig, sct->sig_len);
-    } else {                    /* Unknown version */
-
+    if (sct->version != SCT_V1) {
         BIO_printf(out, "unknown\n%*s", indent + 16, "");
         BIO_hex_string(out, indent + 16, 16, sct->sct, sct->sct_len);
+        return;
     }
+
+    BIO_printf(out, "v1 (0x0)");
+
+    BIO_printf(out, "\n%*sLog ID    : ", indent + 4, "");
+    BIO_hex_string(out, indent + 16, 16, sct->log_id, sct->log_id_len);
+
+    BIO_printf(out, "\n%*sTimestamp : ", indent + 4, "");
+    timestamp_print(out, sct->timestamp);
+
+    BIO_printf(out, "\n%*sExtensions: ", indent + 4, "");
+    if (sct->ext_len == 0)
+        BIO_printf(out, "none");
+    else
+        BIO_hex_string(out, indent + 16, 16, sct->ext, sct->ext_len);
+
+    BIO_printf(out, "\n%*sSignature : ", indent + 4, "");
+    sct_sigalg_print(out, sct);
+    BIO_printf(out, "\n%*s            ", indent + 4, "");
+    BIO_hex_string(out, indent + 16, 16, sct->sig, sct->sig_len);
 }
 
 #endif
