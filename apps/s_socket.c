@@ -176,8 +176,7 @@ int init_client(int *sock, const char *host, const char *port,
            not get anything in the BIO_ADDRINFO chain that we haven't
            asked for */
         OPENSSL_assert((family == AF_UNSPEC || family == BIO_ADDRINFO_family(res))
-                       && (type == 0 || type == BIO_ADDRINFO_socktype(res))
-                       && (protocol == BIO_ADDRINFO_protocol(res)));
+                       && (type == 0 || type == BIO_ADDRINFO_socktype(res)));
 
         *sock = BIO_socket(BIO_ADDRINFO_family(ai), BIO_ADDRINFO_socktype(ai),
                            BIO_ADDRINFO_protocol(ai), 0);
@@ -255,8 +254,7 @@ int do_server(int *accept_sock, const char *host, const char *port,
        not get anything in the BIO_ADDRINFO chain that we haven't
        asked for */
     OPENSSL_assert((family == AF_UNSPEC || family == BIO_ADDRINFO_family(res))
-                   && (type == 0 || type == BIO_ADDRINFO_socktype(res))
-                   && (protocol == BIO_ADDRINFO_protocol(res)));
+                   && (type == 0 || type == BIO_ADDRINFO_socktype(res)));
 
     asock = BIO_socket(BIO_ADDRINFO_family(res), BIO_ADDRINFO_socktype(res),
                        BIO_ADDRINFO_protocol(res), 0);
