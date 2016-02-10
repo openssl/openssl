@@ -17,7 +17,7 @@ END_OUTPUT
 my $ctr = 0;
 foreach my $c (split //, $cflags) {
     $c =~ s|([\\'])|\\$1|;
-    # Max 18 characters per line
+    # Max 16 characters per line
     if  (($ctr++ % 16) == 0) {
         if ($ctr != 1) {
             print "\n";
