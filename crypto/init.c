@@ -65,6 +65,9 @@
 #include <openssl/comp.h>
 #include <internal/err.h>
 #include <stdlib.h>
+#include <assert.h>
+
+static int stopped = 0;
 
 static void ossl_init_thread_stop(struct thread_local_inits_st *locals);
 
@@ -72,7 +75,6 @@ static void ossl_init_thread_stop(struct thread_local_inits_st *locals);
 #if !defined(OPENSSL_THREADS)
 typedef int OPENSSL_INIT_ONCE;
 # define OPENSSL_INIT_ONCE_STATIC_INIT          0
-# define OPENSSL_INIT_ONCE_DYNAMIC_INIT(once)   (*(once) = 0)
 
 static void ossl_init_once_run(OPENSSL_INIT_ONCE *once, void (*init)(void))
 {
@@ -122,7 +124,6 @@ static struct thread_local_inits_st *ossl_init_get_thread_local(int alloc)
  */
 typedef LONG OPENSSL_INIT_ONCE;
 #  define OPENSSL_INIT_ONCE_STATIC_INIT          0
-#  define OPENSSL_INIT_ONCE_DYNAMIC_INIT(once)   (*(once) = 0)
 
 #  define ONCE_UNINITED     0
 #  define ONCE_ININIT       1
@@ -150,8 +151,6 @@ static void ossl_init_once_run(OPENSSL_INIT_ONCE *once, void (*init)(void))
 
 typedef INIT_ONCE OPENSSL_INIT_ONCE;
 #  define OPENSSL_INIT_ONCE_STATIC_INIT          INIT_ONCE_STATIC_INIT
-#  define OPENSSL_INIT_ONCE_DYNAMIC_INIT(once) \
-                InitOnceInitialize((PINIT_ONCE)(once))
 
 static BOOL CALLBACK once_cb(PINIT_ONCE once, PVOID initfp, PVOID *unused)
 {
@@ -212,7 +211,6 @@ static pthread_key_t threadstopkey;
 
 typedef pthread_once_t OPENSSL_INIT_ONCE;
 # define OPENSSL_INIT_ONCE_STATIC_INIT          PTHREAD_ONCE_INIT
-# define OPENSSL_INIT_ONCE_DYNAMIC_INIT(once)   (*(once) = PTHREAD_ONCE_INIT)
 
 static void ossl_init_once_run(OPENSSL_INIT_ONCE *once, void (*init)(void))
 {
@@ -541,6 +539,11 @@ void OPENSSL_INIT_library_stop(void)
     if (!base_inited)
         return;
 
+    /* Might be explicitly called and also by atexit */
+    if (stopped)
+        return;
+    stopped = 1;
+
     /*
      * Thread stop may not get automatically called by the thread library for
      * the very last thread in some situations, so call it directly.
@@ -566,8 +569,6 @@ void OPENSSL_INIT_library_stop(void)
                         "COMP_zlib_cleanup()\n");
 #endif
         COMP_zlib_cleanup();
-        zlib_inited = 0;
-        OPENSSL_INIT_ONCE_DYNAMIC_INIT(&zlib);
     }
 
 #ifndef OPENSSL_NO_ENGINE
@@ -577,35 +578,8 @@ void OPENSSL_INIT_library_stop(void)
                         "ENGINE_cleanup()\n");
 # endif
         ENGINE_cleanup();
-        engine_inited = 0;
-        OPENSSL_INIT_ONCE_DYNAMIC_INIT(&engine_openssl);
-# if !defined(OPENSSL_NO_HW) && \
-    (defined(__OpenBSD__) || defined(__FreeBSD__) || defined(HAVE_CRYPTODEV))
-        OPENSSL_INIT_ONCE_DYNAMIC_INIT(&engine_cryptodev);
-# endif
-# ifndef OPENSSL_NO_RDRAND
-        OPENSSL_INIT_ONCE_DYNAMIC_INIT(&engine_rdrand);
-# endif
-        OPENSSL_INIT_ONCE_DYNAMIC_INIT(&engine_dynamic);
-# ifndef OPENSSL_NO_STATIC_ENGINE
-#  if !defined(OPENSSL_NO_HW) && !defined(OPENSSL_NO_HW_PADLOCK)
-        OPENSSL_INIT_ONCE_DYNAMIC_INIT(&engine_padlock);
-#  endif
-#  if defined(OPENSSL_SYS_WIN32) && !defined(OPENSSL_NO_CAPIENG)
-        OPENSSL_INIT_ONCE_DYNAMIC_INIT(&engine_capi);
-#  endif
-        OPENSSL_INIT_ONCE_DYNAMIC_INIT(&engine_dasync);
-# endif
     }
 #endif
-
-    async_inited = 0;
-    OPENSSL_INIT_ONCE_DYNAMIC_INIT(&async);
-
-    config_inited = 0;
-    OPENSSL_INIT_ONCE_DYNAMIC_INIT(&config);
-    OPENSSL_INIT_ONCE_DYNAMIC_INIT(&add_all_ciphers);
-    OPENSSL_INIT_ONCE_DYNAMIC_INIT(&add_all_digests);
 
     if (load_crypto_strings_inited) {
 #ifdef OPENSSL_INIT_DEBUG
@@ -613,8 +587,6 @@ void OPENSSL_INIT_library_stop(void)
                         "ERR_free_strings()\n");
 #endif
         ERR_free_strings();
-        load_crypto_strings_inited = 0;
-        OPENSSL_INIT_ONCE_DYNAMIC_INIT(&load_crypto_strings);
     }
 
 #ifdef OPENSSL_INIT_DEBUG
@@ -658,6 +630,9 @@ static const OPENSSL_INIT_SETTINGS *ossl_init_get_setting(
 void OPENSSL_INIT_crypto_library_start(uint64_t opts,
                                     const OPENSSL_INIT_SETTINGS *settings)
 {
+    /* XXX TODO WARNING To be updated to return a value not assert. */
+    assert(!stopped);
+
     ossl_init_once_run(&base, ossl_init_base);
 
     if (opts & OPENSSL_INIT_NO_LOAD_CRYPTO_STRINGS)

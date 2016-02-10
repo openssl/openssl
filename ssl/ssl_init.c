@@ -59,13 +59,15 @@
 
 #include <openssl/crypto.h>
 #include <openssl/evp.h>
+#include <assert.h>
 #include "ssl_locl.h"
+
+static int stopped;
 
 /* Implement "once" functionality */
 #if !defined(OPENSSL_THREADS)
 typedef int OPENSSL_INIT_ONCE;
 # define OPENSSL_INIT_ONCE_STATIC_INIT          0
-# define OPENSSL_INIT_ONCE_DYNAMIC_INIT(once)   (*(once) = 0)
 
 static void ossl_init_once_run(OPENSSL_INIT_ONCE *once, void (*init)(void))
 {
@@ -85,7 +87,6 @@ static void ossl_init_once_run(OPENSSL_INIT_ONCE *once, void (*init)(void))
  */
 typedef LONG OPENSSL_INIT_ONCE;
 #  define OPENSSL_INIT_ONCE_STATIC_INIT          0
-#  define OPENSSL_INIT_ONCE_DYNAMIC_INIT(once)   (*(once) = 0)
 
 #  define ONCE_UNINITED     0
 #  define ONCE_ININIT       1
@@ -113,8 +114,6 @@ static void ossl_init_once_run(OPENSSL_INIT_ONCE *once, void (*init)(void))
 
 typedef INIT_ONCE OPENSSL_INIT_ONCE;
 #  define OPENSSL_INIT_ONCE_STATIC_INIT          INIT_ONCE_STATIC_INIT
-#  define OPENSSL_INIT_ONCE_DYNAMIC_INIT(once) \
-                InitOnceInitialize((PINIT_ONCE)(once))
 
 static BOOL CALLBACK once_cb(PINIT_ONCE once, PVOID initfp, PVOID *unused)
 {
@@ -135,7 +134,6 @@ static void ossl_init_once_run(OPENSSL_INIT_ONCE *once, void (*init)(void))
 
 typedef pthread_once_t OPENSSL_INIT_ONCE;
 # define OPENSSL_INIT_ONCE_STATIC_INIT          PTHREAD_ONCE_INIT
-# define OPENSSL_INIT_ONCE_DYNAMIC_INIT(once)   (*(once) = PTHREAD_ONCE_INIT)
 
 static void ossl_init_once_run(OPENSSL_INIT_ONCE *once, void (*init)(void))
 {
@@ -266,6 +264,11 @@ static void ossl_init_no_load_ssl_strings(void)
 
 static void ssl_library_stop(void)
 {
+    /* Might be explicitly called and also by atexit */
+    if (stopped)
+        return;
+    stopped = 1;
+
     if (ssl_base_inited) {
 #ifndef OPENSSL_NO_COMP
 #ifdef OPENSSL_INIT_DEBUG
@@ -273,8 +276,6 @@ static void ssl_library_stop(void)
                         "SSL_COMP_free_compression_methods()\n");
 #endif
         SSL_COMP_free_compression_methods();
-        ssl_base_inited = 0;
-        OPENSSL_INIT_ONCE_DYNAMIC_INIT(&ssl_base);
 #endif
     }
 
@@ -290,8 +291,6 @@ static void ssl_library_stop(void)
          * between the two libraries whether they have both been inited.
          */
         ERR_free_strings();
-        ssl_strings_inited = 0;
-        OPENSSL_INIT_ONCE_DYNAMIC_INIT(&ssl_strings);
     }
 }
 
@@ -303,6 +302,9 @@ static void ssl_library_stop(void)
 void OPENSSL_INIT_ssl_library_start(uint64_t opts,
                                  const OPENSSL_INIT_SETTINGS *settings)
 {
+    /* XXX TODO WARNING To be updated to return a value not assert. */
+    assert(!stopped);
+
     OPENSSL_INIT_crypto_library_start(opts | OPENSSL_INIT_ADD_ALL_CIPHERS
                                    | OPENSSL_INIT_ADD_ALL_DIGESTS, settings);
 
