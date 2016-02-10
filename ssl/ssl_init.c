@@ -299,13 +299,14 @@ static void ssl_library_stop(void)
  * called prior to any threads making calls to any OpenSSL functions,
  * i.e. passing a non-null settings value is assumed to be single-threaded.
  */
-void OPENSSL_init_ssl(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
+int OPENSSL_init_ssl(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
 {
-    /* XXX TODO WARNING To be updated to return a value not assert. */
-    assert(!stopped);
+    if (stopped)
+        return 0;
 
-    OPENSSL_init_crypto(opts | OPENSSL_INIT_ADD_ALL_CIPHERS
-                             | OPENSSL_INIT_ADD_ALL_DIGESTS, settings);
+    if (!OPENSSL_init_crypto(opts | OPENSSL_INIT_ADD_ALL_CIPHERS
+                             | OPENSSL_INIT_ADD_ALL_DIGESTS, settings))
+        return 0;
 
     ossl_init_once_run(&ssl_base, ossl_init_ssl_base);
 
@@ -314,5 +315,7 @@ void OPENSSL_init_ssl(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
 
     if (opts & OPENSSL_INIT_LOAD_SSL_STRINGS)
         ossl_init_once_run(&ssl_strings, ossl_init_load_ssl_strings);
+
+    return 1;
 }
 

@@ -626,10 +626,10 @@ static const OPENSSL_INIT_SETTINGS *ossl_init_get_setting(
  * called prior to any threads making calls to any OpenSSL functions,
  * i.e. passing a non-null settings value is assumed to be single-threaded.
  */
-void OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
+int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
 {
-    /* XXX TODO WARNING To be updated to return a value not assert. */
-    assert(!stopped);
+    if (stopped)
+        return 0;
 
     ossl_init_once_run(&base, ossl_init_base);
 
@@ -716,6 +716,8 @@ void OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
     if (opts & OPENSSL_INIT_ZLIB) {
         ossl_init_once_run(&zlib, ossl_init_zlib);
     }
+
+    return 1;
 }
 
 int OPENSSL_atexit(void (*handler)(void))
