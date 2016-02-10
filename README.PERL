@@ -43,8 +43,8 @@
  You will need to install Perl separately.  One way to do so is to
  download the source from http://perl.org/, unpacking it, reading
  README.vms and follow instructions.  Another way is to download a
- .PCSI file from http://sourceforge.net/projects/vmsperlkit/files/
- and install it using the POLYCENTER install tool.
+ .PCSI file from http://www.vmsperl.com/ and install it using the
+ POLYCENTER install tool.
 
  Notes on Perl modules we use
  ----------------------------
