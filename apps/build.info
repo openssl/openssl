@@ -1,4 +1,4 @@
-{- use File::Spec::Functions qw/catdir abs2rel/; -}
+{- use File::Spec::Functions qw/catdir rel2abs/; -}
 PROGRAMS=openssl
 SOURCE[openssl]=\
         openssl.c \
@@ -10,7 +10,7 @@ SOURCE[openssl]=\
         srp.c ts.c verify.c version.c x509.c rehash.c \
         apps.c opt.c s_cb.c s_socket.c \
         app_rand.c
-INCLUDE[openssl]={- catdir(abs2rel($builddir,$sourcedir),"../include") -} .. ../include
+INCLUDE[openssl]={- rel2abs(catdir($builddir,"../include")) -} .. ../include
 DEPEND[openssl]=../libssl
 
 SCRIPTS=CA.pl
