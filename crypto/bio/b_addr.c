@@ -58,6 +58,7 @@
 
 #include <openssl/err.h>
 #include <openssl/buffer.h>
+#include <ctype.h>
 
 /*
  * Throughout this file and bio_lcl.h, the existence of the macro
@@ -250,6 +251,16 @@ static int addr_strings(const BIO_ADDR *ap, int numeric,
             }
             return 0;
         }
+
+        /* VMS getnameinfo() seems to have a bug, where serv gets filled
+         * with gibberish.  We can at least check for digits when flags
+         * has NI_NUMERICSERV enabled
+         */
+        if ((flags & NI_NUMERICSERV) != 0 && !isdigit(serv[0])) {
+            BIO_snprintf(serv, sizeof(serv), "%d",
+                         ntohs(BIO_ADDR_rawport(ap)));
+        }
+
         if (hostname)
             *hostname = OPENSSL_strdup(host);
         if (service)
