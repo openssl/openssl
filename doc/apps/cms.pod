@@ -512,7 +512,7 @@ The B<-resign> option uses an existing message digest when adding a new
 signer. This means that attributes must be present in at least one existing
 signer using the same message digest or this operation will fail.
 
-The B<-stream> and B<-indef> options enable experimental streaming I/O support.
+The B<-stream> and B<-indef> options enable streaming I/O support.
 As a result the encoding is BER using indefinite length constructed encoding
 and no longer DER. Streaming is supported for the B<-encrypt> operation and the
 B<-sign> operation if the content is not detached.
