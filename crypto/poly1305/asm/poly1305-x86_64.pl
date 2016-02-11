@@ -129,6 +129,8 @@ $code.=<<___;
 .extern	OPENSSL_ia32cap_P
 
 .globl	poly1305_init
+.globl	poly1305_blocks
+.globl	poly1305_emit
 .type	poly1305_init,\@function,3
 .align	32
 poly1305_init:
@@ -172,7 +174,6 @@ $code.=<<___;
 	ret
 .size	poly1305_init,.-poly1305_init
 
-.globl	poly1305_blocks
 .type	poly1305_blocks,\@function,4
 .align	32
 poly1305_blocks:
@@ -232,7 +233,6 @@ $code.=<<___;
 	ret
 .size	poly1305_blocks,.-poly1305_blocks
 
-.globl	poly1305_emit
 .type	poly1305_emit,\@function,3
 .align	32
 poly1305_emit:
