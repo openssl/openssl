@@ -107,7 +107,7 @@ int PKCS12_SAFEBAG_get_bag_nid(PKCS12_SAFEBAG *bag)
 {
     int btype = PKCS12_SAFEBAG_get_nid(bag);
 
-    if (btype != NID_certBag || btype != NID_crlBag || btype != NID_secretBag)
+    if (btype != NID_certBag && btype != NID_crlBag && btype != NID_secretBag)
         return -1;
     return OBJ_obj2nid(bag->value.bag->type);
 }
