@@ -474,7 +474,9 @@ uninstall_html_docs:
 
 # Developer targets (note: these are only available on Unix) #########
 
-update: errors ordinals tags test_ordinals
+update: generate errors ordinals
+
+generate: generate_apps generate_crypto_bn generate_crypto_objects
 
 # Test coverage is a good idea for the future
 #coverage: $(PROGRAMS) $(TESTPROGRAMS)
@@ -486,6 +488,14 @@ update: errors ordinals tags test_ordinals
 
 lint:
 	lint -DLINT $(INCLUDES) $(SRCS)
+
+generate_apps: $(SRCDIR)/apps/openssl-vms.cnf
+
+generate_crypto_bn: $(SRCDIR)/crypto/bn/bn_prime.h
+
+generate_crypto_objects: $(SRCDIR)/crypto/objects/obj_dat.h \
+                         $(SRCDIR)/include/openssl/obj_mac.h \
+                         $(SRCDIR)/crypto/objects/obj_xref.h
 
 errors:
 	( cd $(SRCDIR); $(PERL) util/ck_errf.pl -strict */*.c */*/*.c )
@@ -568,6 +578,38 @@ copy-certs: FORCE
 	@if [ "$(SRCDIR)" != "$(BLDDIR)" ]; then \
 	    cp -R "$(SRCDIR)/certs" "$(BLDDIR)/"; \
 	fi
+
+$(SRCDIR)/apps/openssl-vms.cnf: $(SRCDIR)/apps/openssl.cnf
+	$(PERL) $(SRCDIR)/VMS/VMSify-conf.pl \
+                < $(SRCDIR)/apps/openssl.cnf > $(SRCDIR)/apps/openssl-vms.cnf
+
+$(SRCDIR)/crypto/bn/bn_prime.h: $(SRCDIR)/crypto/bn/bn_prime.pl
+	$(PERL) $(SRCDIR)/crypto/bn/bn_prime.pl > $(SRCDIR)/crypto/bn/bn_prime.h
+
+$(SRCDIR)/crypto/objects/obj_dat.h: $(SRCDIR)/crypto/objects/obj_dat.pl \
+                                    $(SRCDIR)/include/openssl/obj_mac.h
+	$(PERL) $(SRCDIR)/crypto/objects/obj_dat.pl \
+                $(SRCDIR)/include/openssl/obj_mac.h \
+                $(SRCDIR)/crypto/objects/obj_dat.h
+
+# objects.pl both reads and writes obj_mac.num
+$(SRCDIR)/include/openssl/obj_mac.h: $(SRCDIR)/crypto/objects/objects.pl \
+                                     $(SRCDIR)/crypto/objects/objects.txt \
+                                     $(SRCDIR)/crypto/objects/obj_mac.num
+	$(PERL) $(SRCDIR)/crypto/objects/objects.pl \
+                $(SRCDIR)/crypto/objects/objects.txt \
+                $(SRCDIR)/crypto/objects/obj_mac.num \
+                $(SRCDIR)/include/openssl/obj_mac.h
+	@sleep 1; touch $(SRCDIR)/include/openssl/obj_mac.h; sleep 1
+
+$(SRCDIR)/crypto/objects/obj_xref.h: $(SRCDIR)/crypto/objects/objxref.pl \
+                                     $(SRCDIR)/crypto/objects/obj_xref.txt \
+                                     $(SRCDIR)/crypto/objects/obj_mac.num
+	$(PERL) $(SRCDIR)/crypto/objects/objxref.pl \
+                $(SRCDIR)/crypto/objects/obj_mac.num \
+                $(SRCDIR)/crypto/objects/obj_xref.txt \
+                > $(SRCDIR)/crypto/objects/obj_xref.h
+	@sleep 1; touch $(SRCDIR)/crypto/objects/obj_xref.h; sleep 1
 
 FORCE :
 
