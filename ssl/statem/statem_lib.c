@@ -599,43 +599,32 @@ int tls_get_message_body(SSL *s, unsigned long *len)
     return 1;
 }
 
-int ssl_cert_type(X509 *x, EVP_PKEY *pkey)
+int ssl_cert_type(X509 *x, EVP_PKEY *pk)
 {
-    EVP_PKEY *pk;
-    int ret = -1, i;
+    if (pk == NULL &&
+        (pk = X509_get0_pubkey(x)) == NULL)
+        return -1;
 
-    if (pkey == NULL)
-        pk = X509_get_pubkey(x);
-    else
-        pk = pkey;
-    if (pk == NULL)
-        goto err;
-
-    i = EVP_PKEY_id(pk);
-    if (i == EVP_PKEY_RSA) {
-        ret = SSL_PKEY_RSA_ENC;
-    } else if (i == EVP_PKEY_DSA) {
-        ret = SSL_PKEY_DSA_SIGN;
-    }
+    switch (EVP_PKEY_id(pk)) {
+    default:
+        return -1;
+    case EVP_PKEY_RSA:
+        return SSL_PKEY_RSA_ENC;
+    case EVP_PKEY_DSA:
+        return SSL_PKEY_DSA_SIGN;
 #ifndef OPENSSL_NO_EC
-    else if (i == EVP_PKEY_EC) {
-        ret = SSL_PKEY_ECC;
-    }
+    case EVP_PKEY_EC:
+        return SSL_PKEY_ECC;
 #endif
 #ifndef OPENSSL_NO_GOST
-    else if (i == NID_id_GostR3410_2001) {
-        ret = SSL_PKEY_GOST01;
-    } else if (i == NID_id_GostR3410_2012_256) {
-        ret = SSL_PKEY_GOST12_256;
-    } else if (i == NID_id_GostR3410_2012_512) {
-        ret = SSL_PKEY_GOST12_512;
+    case NID_id_GostR3410_2001:
+        return SSL_PKEY_GOST01;
+    case NID_id_GostR3410_2012_256:
+        return SSL_PKEY_GOST12_256;
+    case NID_id_GostR3410_2012_512:
+        return SSL_PKEY_GOST12_512;
     }
 #endif
-
- err:
-    if (!pkey)
-        EVP_PKEY_free(pk);
-    return (ret);
 }
 
 int ssl_verify_alarm_type(long type)
