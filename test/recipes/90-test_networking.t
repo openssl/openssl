@@ -53,24 +53,29 @@
 # Hudson (tjh@cryptsoft.com).
 
 use strict;
-use OpenSSL::Test qw/:DEFAULT cmdstr top_file top_dir/;
+use OpenSSL::Test qw/:DEFAULT cmdstr srctop_file bldtop_file bldtop_dir/;
+use OpenSSL::Test::Utils;
 use TLSProxy::Proxy;
 
 my $test_name = "test_networking";
 setup($test_name);
 
-plan skip_all => "$test_name can only be performed with OpenSSL configured shared"
-    unless (map { s/\R//; s/^SHARED_LIBS=\s*//; $_ }
-	    grep { /^SHARED_LIBS=/ }
-	    do { local @ARGV = ( top_file("Makefile") ); <> })[0] ne "";
+plan skip_all => "TLSProxy isn't usable on $^O"
+    if $^O =~ /^VMS$/;
 
-$ENV{OPENSSL_ENGINES} = top_dir("engines");
+plan skip_all => "$test_name needs the engine feature enabled"
+    if disabled("engine");
+
+plan skip_all => "$test_name can only be performed with OpenSSL configured shared"
+    if disabled("shared");
+
+$ENV{OPENSSL_ENGINES} = bldtop_dir("engines");
 $ENV{OPENSSL_ia32cap} = '~0x200000200000000';
 
 my $proxy = TLSProxy::Proxy->new(
     undef,
     cmdstr(app(["openssl"])),
-    top_file("apps", "server.pem")
+    srctop_file("apps", "server.pem")
 );
 
 plan tests => 2;

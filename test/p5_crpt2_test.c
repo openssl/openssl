@@ -183,11 +183,7 @@ int main(int argc, char **argv)
     CRYPTO_set_mem_debug(1);
     CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
 
-    OpenSSL_add_all_digests();
-# ifndef OPENSSL_NO_ENGINE
-    ENGINE_load_builtin_engines();
-    ENGINE_register_all_digests();
-# endif
+    OPENSSL_init_crypto(OPENSSL_INIT_ENGINE_ALL_BUILTIN, NULL);
 
     printf("PKCS5_PBKDF2_HMAC() tests ");
     for (i = 0; test->pass != NULL; i++, test++) {
@@ -198,15 +194,9 @@ int main(int argc, char **argv)
     }
     printf(" done\n");
 
-# ifndef OPENSSL_NO_ENGINE
-    ENGINE_cleanup();
-# endif
-    EVP_cleanup();
-    CRYPTO_cleanup_all_ex_data();
-    ERR_remove_thread_state(NULL);
-    ERR_free_strings();
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG
-    CRYPTO_mem_leaks_fp(stderr);
+    if (CRYPTO_mem_leaks_fp(stderr) <= 0)
+        return 1;
 # endif
     return 0;
 }

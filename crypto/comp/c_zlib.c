@@ -58,6 +58,7 @@
 #include <openssl/objects.h>
 #include <openssl/comp.h>
 #include <openssl/err.h>
+#include <internal/cryptlib_int.h>
 #include "comp_lcl.h"
 
 COMP_METHOD *COMP_zlib(void);
@@ -86,7 +87,7 @@ static int zlib_stateful_expand_block(COMP_CTX *ctx, unsigned char *out,
                                       unsigned int olen, unsigned char *in,
                                       unsigned int ilen);
 
-/* memory allocations functions for zlib intialization */
+/* memory allocations functions for zlib initialisation */
 static void *zlib_zalloc(void *opaque, unsigned int no, unsigned int size)
 {
     void *p;
@@ -288,6 +289,11 @@ COMP_METHOD *COMP_zlib(void)
                 && p_inflateInit_ && p_deflateEnd
                 && p_deflate && p_deflateInit_ && p_zError)
                 zlib_loaded++;
+
+            if (!OPENSSL_init_crypto(OPENSSL_INIT_ZLIB, NULL)) {
+                COMP_zlib_cleanup();
+                return meth;
+            }
             if (zlib_loaded)
                 meth = &zlib_stateful_method;
         }

@@ -548,3 +548,65 @@ int EC_KEY_oct2key(EC_KEY *key, const unsigned char *buf, size_t len,
         return 0;
     return EC_POINT_oct2point(key->group, key->pub_key, buf, len, ctx);
 }
+
+size_t EC_KEY_priv2oct(const EC_KEY *eckey, unsigned char *buf, size_t len)
+{
+    size_t buf_len;
+    if (eckey->group == NULL || eckey->group->meth == NULL)
+        return 0;
+
+    buf_len = (EC_GROUP_get_degree(eckey->group) + 7) / 8;
+    if (eckey->priv_key == NULL)
+        return 0;
+    if (buf == NULL)
+        return buf_len;
+    else if (len < buf_len)
+        return 0;
+
+    /* Octetstring may need leading zeros if BN is to short */
+
+    if (BN_bn2binpad(eckey->priv_key, buf, buf_len) == -1) {
+        ECerr(EC_F_EC_KEY_PRIV2OCT, EC_R_BUFFER_TOO_SMALL);
+        return 0;
+    }
+
+    return buf_len;
+}
+
+int EC_KEY_oct2priv(EC_KEY *eckey, unsigned char *buf, size_t len)
+{
+    if (eckey->group == NULL || eckey->group->meth == NULL)
+        return 0;
+
+    if (eckey->priv_key == NULL)
+        eckey->priv_key = BN_secure_new();
+    if (eckey->priv_key == NULL) {
+        ECerr(EC_F_EC_KEY_OCT2PRIV, ERR_R_MALLOC_FAILURE);
+        return 0;
+    }
+    eckey->priv_key = BN_bin2bn(buf, len, eckey->priv_key);
+    if (eckey->priv_key == NULL) {
+        ECerr(EC_F_EC_KEY_OCT2PRIV, ERR_R_BN_LIB);
+        return 0;
+    }
+    return 1;
+}
+
+size_t EC_KEY_priv2buf(const EC_KEY *eckey, unsigned char **pbuf)
+{
+    size_t len;
+    unsigned char *buf;
+    len = EC_KEY_priv2oct(eckey, NULL, 0);
+    if (len == 0)
+        return 0;
+    buf = OPENSSL_malloc(len);
+    if (buf == NULL)
+        return 0;
+    len = EC_KEY_priv2oct(eckey, buf, len);
+    if (len == 0) {
+        OPENSSL_free(buf);
+        return 0;
+    }
+    *pbuf = buf;
+    return len;
+}

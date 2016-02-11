@@ -383,7 +383,7 @@ $code.=<<___;
 	jnz	.Loop_grande
 
 .Ldone:
-	mov	`$REG_SZ*17`(%rsp),%rax		# orignal %rsp
+	mov	`$REG_SZ*17`(%rsp),%rax		# original %rsp
 ___
 $code.=<<___ if ($win64);
 	movaps	-0xb8(%rax),%xmm6
@@ -443,7 +443,7 @@ $code.=<<___;
 	lea	K256_shaext+0x80(%rip),$Tbl
 
 .Loop_grande_shaext:
-	mov	$num,`$REG_SZ*17+8`(%rsp)	# orignal $num
+	mov	$num,`$REG_SZ*17+8`(%rsp)	# original $num
 	xor	$num,$num
 ___
 for($i=0;$i<2;$i++) {
@@ -1062,7 +1062,7 @@ $code.=<<___;
 	jnz	.Loop_grande_avx
 
 .Ldone_avx:
-	mov	`$REG_SZ*17`(%rsp),%rax		# orignal %rsp
+	mov	`$REG_SZ*17`(%rsp),%rax		# original %rsp
 	vzeroupper
 ___
 $code.=<<___ if ($win64);
@@ -1238,7 +1238,7 @@ $code.=<<___;
 	#jnz	.Loop_grande_avx2
 
 .Ldone_avx2:
-	mov	`$REG_SZ*17`(%rsp),%rax		# orignal %rsp
+	mov	`$REG_SZ*17`(%rsp),%rax		# original %rsp
 	vzeroupper
 ___
 $code.=<<___ if ($win64);

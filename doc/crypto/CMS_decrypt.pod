@@ -22,9 +22,6 @@ is detached. It will normally be set to NULL.
 
 =head1 NOTES
 
-OpenSSL_add_all_algorithms() (or equivalent) should be called before using this
-function or errors about unknown algorithms will occur.
-
 Although the recipients certificate is not needed to decrypt the data it is
 needed to locate the appropriate (of possible several) recipients in the CMS
 structure.

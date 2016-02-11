@@ -155,7 +155,7 @@ int engine_table_register(ENGINE_TABLE **table, ENGINE_CLEANUP_CB *cleanup,
             fnd->funct = NULL;
             (void)lh_ENGINE_PILE_insert(&(*table)->piles, fnd);
         }
-        /* A registration shouldn't add duplciate entries */
+        /* A registration shouldn't add duplicate entries */
         (void)sk_ENGINE_delete_ptr(fnd->sk, e);
         /*
          * if 'setdefault', this ENGINE goes to the head of the list

@@ -72,6 +72,12 @@ EOF
 -}
 
 /*
+ * Sometimes OPENSSSL_NO_xxx ends up with an empty file and some compilers
+ * don't like that.  This will hopefully silence them.
+ */
+#define NON_EMPTY_TRANSLATION_UNIT static void *dummy = &dummy;
+
+/*
  * Applications should use -DOPENSSL_API_COMPAT=<version> to suppress the
  * declarations of functions deprecated in or before <version>. Otherwise, they
  * still won't see them if the library has been built to disable deprecated
@@ -116,13 +122,6 @@ EOF
 
 /* Generate 80386 code? */
 {- $config{processor} eq "386" ? "#define" : "#undef" -} I386_ONLY
-
-#if !defined(VMS) && !defined(__VMS) /* VMS uses logical names instead */
-# if defined(HEADER_CRYPTLIB_H) && !defined(OPENSSLDIR)
-#  define ENGINESDIR {- quotify1($config{enginesdir}) -}
-#  define OPENSSLDIR {- quotify1($config{openssldir}) -}
-# endif
-#endif
 
 #undef OPENSSL_UNISTD
 #define OPENSSL_UNISTD {- $target{unistd} -}

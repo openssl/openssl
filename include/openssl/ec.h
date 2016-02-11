@@ -934,6 +934,33 @@ size_t EC_KEY_key2buf(const EC_KEY *key, point_conversion_form_t form,
 int EC_KEY_oct2key(EC_KEY *key, const unsigned char *buf, size_t len,
                    BN_CTX *ctx);
 
+/** Decodes an EC_KEY private key from an octet string
+ *  \param  key    key to decode
+ *  \param  buf    memory buffer with the encoded private key
+ *  \param  len    length of the encoded key
+ *  \return 1 on success and 0 if an error occurred
+ */
+
+int EC_KEY_oct2priv(EC_KEY *key, unsigned char *buf, size_t len);
+
+/** Encodes a EC_KEY private key to an octet string
+ *  \param  key    key to encode
+ *  \param  buf    memory buffer for the result. If NULL the function returns
+ *                 required buffer size.
+ *  \param  len    length of the memory buffer
+ *  \return the length of the encoded octet string or 0 if an error occurred
+ */
+
+size_t EC_KEY_priv2oct(const EC_KEY *key, unsigned char *buf, size_t len);
+
+/** Encodes an EC_KEY private key to an allocated octet string
+ *  \param  key    key to encode
+ *  \param  pbuf   returns pointer to allocated buffer
+ *  \return the length of the encoded octet string or 0 if an error occurred
+ */
+
+size_t EC_KEY_priv2buf(const EC_KEY *eckey, unsigned char **pbuf);
+
 /********************************************************************/
 /*        de- and encoding functions for SEC1 ECPrivateKey          */
 /********************************************************************/
@@ -1479,8 +1506,10 @@ void ERR_load_EC_strings(void);
 # define EC_F_EC_KEY_GENERATE_KEY                         179
 # define EC_F_EC_KEY_NEW                                  182
 # define EC_F_EC_KEY_NEW_METHOD                           245
+# define EC_F_EC_KEY_OCT2PRIV                             255
 # define EC_F_EC_KEY_PRINT                                180
 # define EC_F_EC_KEY_PRINT_FP                             181
+# define EC_F_EC_KEY_PRIV2OCT                             256
 # define EC_F_EC_KEY_SET_PUBLIC_KEY_AFFINE_COORDINATES    229
 # define EC_F_EC_POINTS_MAKE_AFFINE                       136
 # define EC_F_EC_POINT_ADD                                112

@@ -36,6 +36,13 @@ lib:	$(LIBOBJ)
 	$(RANLIB) $(LIB) || echo Never mind.
 	@touch lib
 
+chacha-x86.s:		asm/chacha-x86.pl
+	$(PERL) asm/chacha-x86.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) > $@
+chacha-x86_64.s:	asm/chacha-x86_64.pl
+	$(PERL) asm/chacha-x86_64.pl $(PERLASM_SCHEME) > $@
+
+chacha-%.S:	asm/chacha-%.pl;	$(PERL) $< $(PERLASM_SCHEME) $@
+
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
 

@@ -257,7 +257,7 @@ static int dh_bn_mod_exp(const DH *dh, BIGNUM *r,
 {
     /*
      * If a is only one word long and constant time is false, use the faster
-     * exponenentiation function.
+     * exponentiation function.
      */
     if (bn_get_top(a) == 1 && ((dh->flags & DH_FLAG_NO_EXP_CONSTTIME) != 0)) {
         BN_ULONG A = bn_get_words(a)[0];

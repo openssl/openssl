@@ -214,7 +214,6 @@ static FUNCTION functions[] = {
 #ifndef OPENSSL_NO_MD_GHOST94
     { FT_md, "md_ghost94", dgst_main},
 #endif
-    { FT_md, "sha", dgst_main},
     { FT_md, "sha1", dgst_main},
     { FT_md, "sha224", dgst_main},
     { FT_md, "sha256", dgst_main},

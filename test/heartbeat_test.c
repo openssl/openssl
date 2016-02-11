@@ -440,9 +440,6 @@ int main(int argc, char *argv[])
 {
     int result = 0;
 
-    SSL_library_init();
-    SSL_load_error_strings();
-
     ADD_TEST(test_dtls1_not_bleeding);
     ADD_TEST(test_dtls1_not_bleeding_empty_payload);
     ADD_TEST(test_dtls1_heartbleed);

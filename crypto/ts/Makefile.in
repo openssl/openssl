@@ -11,7 +11,7 @@ OPENSSLDIR=     /usr/local/ssl
 INSTALLTOP=/usr/local/ssl
 AR=		ar r
 
-LDFLAGS=
+PLIB_LDFLAG=
 EX_LIBS=
 
 CFLAGS= $(INCLUDES) $(CFLAG)

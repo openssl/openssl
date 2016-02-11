@@ -51,6 +51,19 @@
   --openssldir=DIR Directory for OpenSSL files. If no prefix is specified,
                 the library files and binaries are also installed there.
 
+  no-autoalginit Don't automatically load all supported ciphers and digests.
+                Typically OpenSSL will make available all of its supported
+                ciphers and digests. For a statically linked application this
+                may be undesirable if small executable size is an objective.
+                This only affects libcrypto. Ciphers and digests will have to be
+                loaded manually using EVP_add_cipher() and EVP_add_digest() if
+                this option is used.
+
+  no-autoerrinit Don't automatically load all libcrypto/libssl error strings.
+                Typically OpenSSL will automatically load human readable error
+                strings. For a statically linked application this may be
+                undesirable if small executable size is an objective.
+
   no-threads    Don't try to build with support for multi-threaded
                 applications.
 
@@ -327,6 +340,10 @@
  you can still use "no-threads" to suppress an annoying warning message
  from the Configure script.)
 
+ OpenSSL provides built-in support for two threading models: pthreads (found on
+ most UNIX/Linux systems), and Windows threads. No other threading models are
+ supported. If your platform does not provide pthreads or Windows threads then
+ you should Configure with the "no-threads" option.
 
  Note on shared libraries
  ------------------------

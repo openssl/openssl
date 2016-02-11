@@ -111,7 +111,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
-#include "internal/cryptlib.h"
+#include <internal/cryptlib_int.h>
 #include <openssl/lhash.h>
 #include <openssl/crypto.h>
 #include <openssl/buffer.h>
@@ -178,6 +178,7 @@ static ERR_STRING_DATA ERR_str_functs[] = {
     {ERR_PACK(0, SYS_F_SETSOCKOPT, 0), "setsockopt"},
     {ERR_PACK(0, SYS_F_GETSOCKOPT, 0), "getsockopt"},
     {ERR_PACK(0, SYS_F_GETSOCKNAME, 0), "getsockname"},
+    {ERR_PACK(0, SYS_F_GETHOSTBYNAME, 0), "gethostbyname"},
     {0, NULL},
 };
 
@@ -222,6 +223,7 @@ static ERR_STRING_DATA ERR_str_reasons[] = {
     {ERR_R_PASSED_NULL_PARAMETER, "passed a null parameter"},
     {ERR_R_INTERNAL_ERROR, "internal error"},
     {ERR_R_DISABLED, "called a function that was disabled at compile-time"},
+    {ERR_R_INIT_FAIL, "init fail"},
 
     {0, NULL},
 };
@@ -893,6 +895,10 @@ ERR_STATE *ERR_get_state(void)
          * the first one that we just replaced.
          */
         ERR_STATE_free(tmpp);
+
+        /* Ignore failures from these */
+        OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL);
+        ossl_init_thread_start(OPENSSL_INIT_THREAD_ERR_STATE);
     }
     return ret;
 }

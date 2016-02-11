@@ -64,29 +64,30 @@ void ENGINE_load_builtin_engines(void)
     /* Some ENGINEs need this */
     OPENSSL_cpuid_setup();
 #if !defined(OPENSSL_NO_HW) && (defined(__OpenBSD__) || defined(__FreeBSD__) || defined(HAVE_CRYPTODEV))
+# ifdef ENGINE_load_cryptodev
     ENGINE_load_cryptodev();
+# endif
 #endif
 #ifndef OPENSSL_NO_RDRAND
+# ifdef ENGINE_load_rdrand
     ENGINE_load_rdrand();
+# endif
 #endif
+# ifdef ENGINE_load_dynamic
     ENGINE_load_dynamic();
+# endif
 #ifndef OPENSSL_NO_STATIC_ENGINE
 # ifndef OPENSSL_NO_HW
-/*-
- * These engines have been disabled as they do not currently build
-#ifndef OPENSSL_NO_HW_NCIPHER
-        ENGINE_load_chil();
-#endif
-#ifndef OPENSSL_NO_HW_UBSEC
-        ENGINE_load_ubsec();
-#endif
-*/
 #  ifndef OPENSSL_NO_HW_PADLOCK
+#   ifdef ENGINE_load_padlock
     ENGINE_load_padlock();
+#   endif
 #  endif
 # endif
 # if defined(OPENSSL_SYS_WIN32) && !defined(OPENSSL_NO_CAPIENG)
+#  ifdef ENGINE_load_capi
     ENGINE_load_capi();
+#  endif
 # endif
 #endif
     ENGINE_register_all_complete();

@@ -715,6 +715,7 @@ SSL *SSL_new(SSL_CTX *ctx)
         s->alpn_client_proto_list_len = s->ctx->alpn_client_proto_list_len;
     }
 
+    s->verified_chain = NULL;
     s->verify_result = X509_V_OK;
 
     s->default_passwd_callback = ctx->default_passwd_callback;
@@ -912,7 +913,7 @@ int SSL_get0_dane_authority(SSL *s, X509 **mcert, EVP_PKEY **mspki)
 {
     struct dane_st *dane = &s->dane;
 
-    if (!DANETLS_ENABLED(dane))
+    if (!DANETLS_ENABLED(dane) || s->verify_result != X509_V_OK)
         return -1;
     if (dane->mtlsa) {
         if (mcert)
@@ -928,7 +929,7 @@ int SSL_get0_dane_tlsa(SSL *s, uint8_t *usage, uint8_t *selector,
 {
     struct dane_st *dane = &s->dane;
 
-    if (!DANETLS_ENABLED(dane))
+    if (!DANETLS_ENABLED(dane) || s->verify_result != X509_V_OK)
         return -1;
     if (dane->mtlsa) {
         if (usage)
@@ -1051,6 +1052,8 @@ void SSL_free(SSL *s)
     OPENSSL_free(s->alpn_client_proto_list);
 
     sk_X509_NAME_pop_free(s->client_CA, X509_NAME_free);
+
+    sk_X509_pop_free(s->verified_chain, X509_free);
 
     if (s->method != NULL)
         s->method->ssl_free(s);
@@ -1575,19 +1578,22 @@ int SSL_shutdown(SSL *s)
         return -1;
     }
 
-    if((s->mode & SSL_MODE_ASYNC) && ASYNC_get_current_job() == NULL) {
-        struct ssl_async_args args;
+    if (!SSL_in_init(s)) {
+        if((s->mode & SSL_MODE_ASYNC) && ASYNC_get_current_job() == NULL) {
+            struct ssl_async_args args;
 
-        args.s = s;
-        args.type = OTHERFUNC;
-        args.f.func_other = s->method->ssl_shutdown;
+            args.s = s;
+            args.type = OTHERFUNC;
+            args.f.func_other = s->method->ssl_shutdown;
 
-        return ssl_start_async_job(s, &args, ssl_io_intern);
+            return ssl_start_async_job(s, &args, ssl_io_intern);
+        } else {
+            return s->method->ssl_shutdown(s);
+        }
     } else {
-        return s->method->ssl_shutdown(s);
+        SSLerr(SSL_F_SSL_SHUTDOWN, SSL_R_SHUTDOWN_WHILE_IN_INIT);
+        return -1;
     }
-
-    return s->method->ssl_shutdown(s);
 }
 
 int SSL_renegotiate(SSL *s)
@@ -2263,6 +2269,9 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
         SSLerr(SSL_F_SSL_CTX_NEW, SSL_R_NULL_SSL_METHOD_PASSED);
         return (NULL);
     }
+
+    if (!OPENSSL_init_ssl(OPENSSL_INIT_LOAD_SSL_STRINGS, NULL))
+        return NULL;
 
     if (FIPS_mode() && (meth->version < TLS1_VERSION)) {
         SSLerr(SSL_F_SSL_CTX_NEW, SSL_R_AT_LEAST_TLS_1_0_NEEDED_IN_FIPS_MODE);
@@ -3700,7 +3709,7 @@ int ssl_handshake_hash(SSL *s, unsigned char *out, int outlen)
     return ret;
 }
 
-int SSL_cache_hit(SSL *s)
+int SSL_session_reused(SSL *s)
 {
     return s->hit;
 }
@@ -3820,6 +3829,11 @@ unsigned long SSL_CTX_clear_options(SSL_CTX *ctx, unsigned long op)
 unsigned long SSL_clear_options(SSL *s, unsigned long op)
 {
     return s->options &= ~op;
+}
+
+STACK_OF(X509) *SSL_get0_verified_chain(const SSL *s)
+{
+    return s->verified_chain;
 }
 
 IMPLEMENT_OBJ_BSEARCH_GLOBAL_CMP_FN(SSL_CIPHER, SSL_CIPHER, ssl_cipher_id);

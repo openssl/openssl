@@ -55,7 +55,7 @@ otherwise.
 
 OCSP_CERTID_free() does not return a value.
 
-OCSP_id_get0_info() returns 1 for sucess and 0 for failure.
+OCSP_id_get0_info() returns 1 for success and 0 for failure.
 
 =head1 NOTES
 

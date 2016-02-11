@@ -26,7 +26,9 @@
  */
 
 #include <openssl/opensslconf.h>
-#ifndef OPENSSL_NO_EC_NISTP_64_GCC_128
+#ifdef OPENSSL_NO_EC_NISTP_64_GCC_128
+NON_EMPTY_TRANSLATION_UNIT
+#else
 
 # include <stdint.h>
 # include <string.h>
@@ -1226,7 +1228,7 @@ static void copy_small_conditional(felem out, const smallfelem in, limb mask)
 }
 
 /*-
- * point_add calcuates (x1, y1, z1) + (x2, y2, z2)
+ * point_add calculates (x1, y1, z1) + (x2, y2, z2)
  *
  * The method is taken from:
  *   http://hyperelliptic.org/EFD/g1p/auto-shortw-jacobian-3.html#addition-add-2007-bl,
@@ -2311,6 +2313,4 @@ int ec_GFp_nistp256_have_precompute_mult(const EC_GROUP *group)
 {
     return HAVEPRECOMP(group, nistp256);
 }
-#else
-static void *dummy = &dummy;
 #endif

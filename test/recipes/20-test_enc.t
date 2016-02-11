@@ -7,14 +7,14 @@ use File::Spec::Functions qw/catfile/;
 use File::Copy;
 use File::Compare qw/compare_text/;
 use File::Basename;
-use OpenSSL::Test qw/:DEFAULT top_file/;
+use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_enc");
 
 # We do it this way, because setup() may have moved us around,
 # so the directory portion of $0 might not be correct any more.
 # However, the name hasn't changed.
-my $testsrc = top_file("test","recipes",basename($0));
+my $testsrc = srctop_file("test","recipes",basename($0));
 
 my $test = catfile(".", "p");
 

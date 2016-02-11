@@ -11,8 +11,8 @@ CFLAGS=$(CFLAG)
 # LDFLAGS contains flags to be used when temporary object files (when building
 # shared libraries) are created, or when an application is linked.
 # SHARED_LDFLAGS contains flags to be used when the shared library is created.
-LDFLAGS=
-SHARED_LDFLAGS=
+LDFLAGS=$(LDFLAG)
+SHARED_LDFLAGS=$(SHARED_LDFLAG)
 
 NM=nm
 
@@ -30,6 +30,12 @@ LIBNAME=
 # For example, to build foo, you need to do the following:
 #APPNAME=foo
 APPNAME=
+
+# DSTDIR is the directory where the built file should end up in.
+DSTDIR=.
+
+# SRCDIR is the top directory of the source tree.
+SRCDIR=.
 
 # OBJECTS contains all the object files to link together into the application.
 # This must contain at least one object file.
@@ -92,9 +98,11 @@ CALC_VERSIONS=	\
 LINK_APP=	\
   ( $(SET_X);   \
     LIBDEPS="$${LIBDEPS:-$(LIBDEPS)}"; \
-    LDCMD="$${LDCMD:-$(CC)}"; LDFLAGS="$${LDFLAGS:-$(CFLAGS)}"; \
+    LDCMD="$${LDCMD:-$(CC)}"; LDFLAGS="$${LDFLAGS:-$(CFLAGS) $(LDFLAGS)}"; \
     LIBPATH=`for x in $$LIBDEPS; do echo $$x; done | sed -e 's/^ *-L//;t' -e d | uniq`; \
     LIBPATH=`echo $$LIBPATH | sed -e 's/ /:/g'`; \
+    echo LD_LIBRARY_PATH=$$LIBPATH:$$LD_LIBRARY_PATH \
+        $${LDCMD} $${LDFLAGS} -o $${APPNAME:=$(APPNAME)} $(OBJECTS) $${LIBDEPS}; \
     LD_LIBRARY_PATH=$$LIBPATH:$$LD_LIBRARY_PATH \
     $${LDCMD} $${LDFLAGS} -o $${APPNAME:=$(APPNAME)} $(OBJECTS) $${LIBDEPS} )
 
@@ -105,9 +113,13 @@ LINK_SO=	\
     SHAREDFLAGS="$${SHAREDFLAGS:-$(CFLAGS) $(SHARED_LDFLAGS)}"; \
     LIBPATH=`for x in $$LIBDEPS; do echo $$x; done | sed -e 's/^ *-L//;t' -e d | uniq`; \
     LIBPATH=`echo $$LIBPATH | sed -e 's/ /:/g'`; \
+    echo LD_LIBRARY_PATH=$$LIBPATH:$$LD_LIBRARY_PATH \
+         $${SHAREDCMD} $${SHAREDFLAGS} \
+	     -o $(DSTDIR)/$$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX \
+	     $$ALLSYMSFLAGS $$SHOBJECTS $$NOALLSYMSFLAGS $$LIBDEPS; \
     LD_LIBRARY_PATH=$$LIBPATH:$$LD_LIBRARY_PATH \
     $${SHAREDCMD} $${SHAREDFLAGS} \
-	-o $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX \
+	-o $(DSTDIR)/$$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX \
 	$$ALLSYMSFLAGS $$SHOBJECTS $$NOALLSYMSFLAGS $$LIBDEPS \
   ) && $(SYMLINK_SO)
 
@@ -116,30 +128,30 @@ SYMLINK_SO=	\
 		prev=$$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX; \
 		if [ -n "$$SHLIB_COMPAT" ]; then \
 			for x in $$SHLIB_COMPAT; do \
-				( $(SET_X); rm -f $$SHLIB$$x$$SHLIB_SUFFIX; \
-				  ln -s $$prev $$SHLIB$$x$$SHLIB_SUFFIX ); \
+				( $(SET_X); rm -f $(DSTDIR)/$$SHLIB$$x$$SHLIB_SUFFIX; \
+				  ln -s $$prev $(DSTDIR)/$$SHLIB$$x$$SHLIB_SUFFIX ); \
 				prev=$$SHLIB$$x$$SHLIB_SUFFIX; \
 			done; \
 		fi; \
 		if [ -n "$$SHLIB_SOVER" ]; then \
-			( $(SET_X); rm -f $$SHLIB$$SHLIB_SUFFIX; \
-			  ln -s $$prev $$SHLIB$$SHLIB_SUFFIX ); \
+			( $(SET_X); rm -f $(DSTDIR)/$$SHLIB$$SHLIB_SUFFIX; \
+			  ln -s $$prev $(DSTDIR)/$$SHLIB$$SHLIB_SUFFIX ); \
 		fi; \
 	fi
 
-LINK_SO_A=	SHOBJECTS="lib$(LIBNAME).a $(LIBEXTRAS)"; $(LINK_SO)
+LINK_SO_A=	SHOBJECTS="$(DSTDIR)/lib$(LIBNAME).a $(LIBEXTRAS)"; $(LINK_SO)
 LINK_SO_O=	SHOBJECTS="$(LIBEXTRAS)"; $(LINK_SO)
 
 LINK_SO_A_VIA_O=	\
-  SHOBJECTS=lib$(LIBNAME).o; \
+  SHOBJECTS=$(DSTDIR)/lib$(LIBNAME).o; \
   ALL=$$ALLSYMSFLAGS; ALLSYMSFLAGS=; NOALLSYMSFLAGS=; \
-  ( $(SET_X); \
-    ld $(LDFLAGS) -r -o lib$(LIBNAME).o $$ALL lib$(LIBNAME).a $(LIBEXTRAS) ); \
-  $(LINK_SO) && rm -f lib$(LIBNAME).o
+  ( echo ld $(LDFLAGS) -r -o $$SHOBJECTS.o $$ALL lib$(LIBNAME).a $(LIBEXTRAS); \
+    ld $(LDFLAGS) -r -o $$SHOBJECTS.o $$ALL $(DSTDIR)/lib$(LIBNAME).a $(LIBEXTRAS) ); \
+  $(LINK_SO) && ( echo rm -f $$SHOBJECTS; rm -f $$SHOBJECTS )
 
 LINK_SO_A_UNPACKED=	\
   UNPACKDIR=link_tmp.$$$$; rm -rf $$UNPACKDIR; mkdir $$UNPACKDIR; \
-  (cd $$UNPACKDIR; ar x ../lib$(LIBNAME).a) && \
+  (cd $$UNPACKDIR; ar x ../$(DSTDIR)/lib$(LIBNAME).a) && \
   ([ -z "$(LIBEXTRAS)" ] || cp $(LIBEXTRAS) $$UNPACKDIR) && \
   SHOBJECTS=$$UNPACKDIR/*.o; \
   $(LINK_SO) && rm -rf $$UNPACKDIR
@@ -153,7 +165,7 @@ DO_GNU_SO=$(CALC_VERSIONS); \
 	NOALLSYMSFLAGS='-Wl,--no-whole-archive'; \
 	SHAREDFLAGS="$(CFLAGS) $(SHARED_LDFLAGS) -shared -Wl,-Bsymbolic -Wl,-soname=$$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX"
 
-DO_GNU_APP=LDFLAGS="$(CFLAGS) -Wl,-rpath,$(LIBRPATH)"
+DO_GNU_APP=LDFLAGS="$(CFLAGS) $(LDFLAGS) -Wl,-rpath,$(LIBRPATH)"
 
 #This is rather special.  It's a special target with which one can link
 #applications without bothering with any features that have anything to
@@ -171,8 +183,8 @@ link_app.gnu:
 	@ $(DO_GNU_APP); $(LINK_APP)
 
 link_a.linux-shared:
-	@if [ $(LIBNAME) != "crypto" -a $(LIBNAME) != "ssl" ]; then echo libname is $(LIBNAME); sleep 2; $(DO_GNU_SO); else \
-	$(PERL) util/mkdef.pl $(LIBNAME) linux >$(LIBNAME).map; \
+	@if [ $(LIBNAME) != "crypto" -a $(LIBNAME) != "ssl" ]; then $(DO_GNU_SO); else \
+	$(PERL) $(SRCDIR)/util/mkdef.pl $(LIBNAME) linux >$(LIBNAME).map; \
 	$(CALC_VERSIONS); \
 	SHLIB=lib$(LIBNAME).so; \
 	SHLIB_SUFFIX=; \
@@ -203,7 +215,7 @@ link_a.bsd:
 	fi; $(LINK_SO_A)
 link_app.bsd:
 	@if $(DETECT_GNU_LD); then $(DO_GNU_APP); else \
-	LDFLAGS="$(CFLAGS) -Wl,-rpath,$(LIBPATH)"; \
+	LDFLAGS="$(CFLAGS) $(LDFLAGS) -Wl,-rpath,$(LIBPATH)"; \
 	fi; $(LINK_APP)
 
 # For Darwin AKA Mac OS/X (dyld)
@@ -288,7 +300,7 @@ link_a.cygwin:
 		esac; \
 		SHLIB_SOVER=32; \
 		extras="$(LIBNAME).def"; \
-		$(PERL) util/mkdef.pl 32 $$SHLIB > $$extras; \
+		$(PERL) $(SRCDIR)/util/mkdef.pl 32 $$SHLIB > $$extras; \
 		base=; [ $(LIBNAME) = "crypto" ] && base=-Wl,--image-base,0x63000000; \
 	fi; \
 	dll_name=$$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX; \
@@ -298,15 +310,11 @@ link_a.cygwin:
 	ALLSYMSFLAGS='-Wl,--whole-archive'; \
 	NOALLSYMSFLAGS='-Wl,--no-whole-archive'; \
 	SHAREDFLAGS="$(CFLAGS) $(SHARED_LDFLAGS) -shared $$base -Wl,-Bsymbolic -Wl,--out-implib,lib$(LIBNAME).dll.a $$extras"; \
-	[ -f apps/$$dll_name ] && rm apps/$$dll_name; \
-	[ -f test/$$dll_name ] && rm test/$$dll_name; \
 	$(LINK_SO_A) || exit 1; \
-	rm $$extras; \
-	cp -p $$dll_name apps/; \
-	cp -p $$dll_name test/
+	rm $$extras
 link_app.cygwin:
 	@if expr "$(CFLAGS)" : '.*OPENSSL_USE_APPLINK' > /dev/null; then \
-		LIBDEPS="$(TOP)/crypto/applink.o $${LIBDEPS:-$(LIBDEPS)}"; \
+		LIBDEPS="$(SRCDIR)/crypto/applink.o $${LIBDEPS:-$(LIBDEPS)}"; \
 		export LIBDEPS; \
 	fi; \
 	$(LINK_APP)
@@ -357,7 +365,7 @@ link_app.alpha-osf1:
 	@if $(DETECT_GNU_LD); then \
 		$(DO_GNU_APP); \
 	else \
-		LDFLAGS="$(CFLAGS) -rpath $(LIBRPATH)"; \
+		LDFLAGS="$(CFLAGS) $(LDFLAGS) -rpath $(LIBRPATH)"; \
 	fi; \
 	$(LINK_APP)
 
@@ -384,7 +392,12 @@ link_a.solaris:
 		($(CC) -v 2>&1 | grep gcc) > /dev/null && MINUSZ='-Wl,-z,'; \
 		SHLIB=lib$(LIBNAME).so; \
 		SHLIB_SUFFIX=;\
-		ALLSYMSFLAGS="$${MINUSZ}allextract"; \
+		if [ $(LIBNAME) != "crypto" -a $(LIBNAME) != "ssl" ]; then \
+			ALLSYMSFLAGS="$${MINUSZ}allextract"; \
+		else \
+			$(PERL) $(SRCDIR)/util/mkdef.pl $(LIBNAME) linux >$(LIBNAME).map; \
+			ALLSYMSFLAGS="$${MINUSZ}allextract,-M,$(LIBNAME).map"; \
+		fi; \
 		NOALLSYMSFLAGS="$${MINUSZ}defaultextract"; \
 		SHAREDFLAGS="$(CFLAGS) $(SHARED_LDFLAGS) -h $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX -Wl,-Bsymbolic"; \
 	fi; \
@@ -393,7 +406,7 @@ link_app.solaris:
 	@ if $(DETECT_GNU_LD); then \
 		$(DO_GNU_APP); \
 	else \
-		LDFLAGS="$(CFLAGS) -R $(LIBRPATH)"; \
+		LDFLAGS="$(CFLAGS) $(LDFLAGS) -R $(LIBRPATH)"; \
 	fi; \
 	$(LINK_APP)
 
@@ -488,7 +501,7 @@ link_a.irix:
 	fi; \
 	$(LINK_SO_A)
 link_app.irix:
-	@LDFLAGS="$(CFLAGS) -Wl,-rpath,$(LIBRPATH)"; \
+	@LDFLAGS="$(CFLAGS) $(LDFLAGS) -Wl,-rpath,$(LIBRPATH)"; \
 	$(LINK_APP)
 
 # 32-bit PA-RISC HP-UX embeds the -L pathname of libs we link with, so
@@ -527,7 +540,7 @@ link_a.hpux:
 	$(LINK_SO_A) && chmod a=rx $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX
 link_app.hpux:
 	@if $(DETECT_GNU_LD); then $(DO_GNU_APP); else \
-	LDFLAGS="$(CFLAGS) -Wl,+s,+cdp,../:,+cdp,./:,+b,$(LIBRPATH)"; \
+	LDFLAGS="$(CFLAGS) $(LDFLAGS) -Wl,+s,+cdp,../:,+cdp,./:,+b,$(LIBRPATH)"; \
 	fi; \
 	$(LINK_APP)
 
@@ -552,7 +565,7 @@ link_a.aix:
 	SHAREDFLAGS='$(CFLAGS) $(SHARED_LDFLAGS) -Wl,-bexpall,-bnolibpath,-bM:SRE'; \
 	$(LINK_SO_A_VIA_O)
 link_app.aix:
-	LDFLAGS="$(CFLAGS) -Wl,-brtl,-blibpath:$(LIBRPATH):$${LIBPATH:-/usr/lib:/lib}"; \
+	LDFLAGS="$(CFLAGS) $(LDFLAGS) -Wl,-brtl,-blibpath:$(LIBRPATH):$${LIBPATH:-/usr/lib:/lib}"; \
 	$(LINK_APP)
 
 

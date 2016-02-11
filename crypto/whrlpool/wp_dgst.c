@@ -48,7 +48,7 @@
  *
  * Unlike authors' reference implementation, block processing
  * routine whirlpool_block is designed to operate on multi-block
- * input. This is done for perfomance.
+ * input. This is done for performance.
  */
 
 #include "wp_locl.h"

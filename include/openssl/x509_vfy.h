@@ -55,16 +55,15 @@
  * [including the GNU Public Licence.]
  */
 
-#ifndef HEADER_X509_H
-# include <openssl/x509.h>
-/*
- * openssl/x509.h ends up #include-ing this file at about the only
- * appropriate moment.
- */
-#endif
-
 #ifndef HEADER_X509_VFY_H
 # define HEADER_X509_VFY_H
+
+/*
+ * Protect against recursion, x509.h and x509_vfy.h each include the other.
+ */
+# ifndef HEADER_X509_H
+#  include <openssl/x509.h>
+# endif
 
 # include <openssl/opensslconf.h>
 # include <openssl/lhash.h>
@@ -285,7 +284,6 @@ void X509_STORE_CTX_set_depth(X509_STORE_CTX *ctx, int depth);
 
 # define         X509_V_OK                                       0
 # define         X509_V_ERR_UNSPECIFIED                          1
-
 # define         X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT            2
 # define         X509_V_ERR_UNABLE_TO_GET_CRL                    3
 # define         X509_V_ERR_UNABLE_TO_DECRYPT_CERT_SIGNATURE     4
@@ -318,7 +316,6 @@ void X509_STORE_CTX_set_depth(X509_STORE_CTX *ctx, int depth);
 # define         X509_V_ERR_AKID_SKID_MISMATCH                   30
 # define         X509_V_ERR_AKID_ISSUER_SERIAL_MISMATCH          31
 # define         X509_V_ERR_KEYUSAGE_NO_CERTSIGN                 32
-
 # define         X509_V_ERR_UNABLE_TO_GET_CRL_ISSUER             33
 # define         X509_V_ERR_UNHANDLED_CRITICAL_EXTENSION         34
 # define         X509_V_ERR_KEYUSAGE_NO_CRL_SIGN                 35
@@ -327,18 +324,17 @@ void X509_STORE_CTX_set_depth(X509_STORE_CTX *ctx, int depth);
 # define         X509_V_ERR_PROXY_PATH_LENGTH_EXCEEDED           38
 # define         X509_V_ERR_KEYUSAGE_NO_DIGITAL_SIGNATURE        39
 # define         X509_V_ERR_PROXY_CERTIFICATES_NOT_ALLOWED       40
-
 # define         X509_V_ERR_INVALID_EXTENSION                    41
 # define         X509_V_ERR_INVALID_POLICY_EXTENSION             42
 # define         X509_V_ERR_NO_EXPLICIT_POLICY                   43
 # define         X509_V_ERR_DIFFERENT_CRL_SCOPE                  44
 # define         X509_V_ERR_UNSUPPORTED_EXTENSION_FEATURE        45
-
 # define         X509_V_ERR_UNNESTED_RESOURCE                    46
-
 # define         X509_V_ERR_PERMITTED_VIOLATION                  47
 # define         X509_V_ERR_EXCLUDED_VIOLATION                   48
 # define         X509_V_ERR_SUBTREE_MINMAX                       49
+/* The application is not happy */
+# define         X509_V_ERR_APPLICATION_VERIFICATION             50
 # define         X509_V_ERR_UNSUPPORTED_CONSTRAINT_TYPE          51
 # define         X509_V_ERR_UNSUPPORTED_CONSTRAINT_SYNTAX        52
 # define         X509_V_ERR_UNSUPPORTED_NAME_SYNTAX              53
@@ -356,14 +352,15 @@ void X509_STORE_CTX_set_depth(X509_STORE_CTX *ctx, int depth);
 # define         X509_V_ERR_HOSTNAME_MISMATCH                    62
 # define         X509_V_ERR_EMAIL_MISMATCH                       63
 # define         X509_V_ERR_IP_ADDRESS_MISMATCH                  64
+/* DANE TLSA errors */
+# define         X509_V_ERR_DANE_NO_MATCH                        65
 
-/* The application is not happy */
-# define         X509_V_ERR_APPLICATION_VERIFICATION             50
 
 /* Certificate verify flags */
 
-/* Send issuer+subject checks to verify_cb */
-# define X509_V_FLAG_CB_ISSUER_CHECK             0x1
+# if OPENSSL_API_COMPAT < 0x10100000L
+#  define X509_V_FLAG_CB_ISSUER_CHECK             0x0   /* Deprecated */
+# endif
 /* Use check time instead of current time */
 # define X509_V_FLAG_USE_CHECK_TIME              0x2
 /* Lookup CRLs */
@@ -582,6 +579,19 @@ int X509_VERIFY_PARAM_get_count(void);
 const X509_VERIFY_PARAM *X509_VERIFY_PARAM_get0(int id);
 const X509_VERIFY_PARAM *X509_VERIFY_PARAM_lookup(const char *name);
 void X509_VERIFY_PARAM_table_cleanup(void);
+
+/* Non positive return values are errors */
+#define X509_PCY_TREE_FAILURE  -2 /* Failure to satisfy explicit policy */
+#define X509_PCY_TREE_INVALID  -1 /* Inconsistent or invalid extensions */
+#define X509_PCY_TREE_INTERNAL  0 /* Internal error, most likely malloc */
+
+/*
+ * Positive return values form a bit mask, all but the first are internal to
+ * the library and don't appear in results from X509_policy_check().
+ */
+#define X509_PCY_TREE_VALID     1 /* The policy tree is valid */
+#define X509_PCY_TREE_EMPTY     2 /* The policy tree is empty */
+#define X509_PCY_TREE_EXPLICIT  4 /* Explicit policy required */
 
 int X509_policy_check(X509_POLICY_TREE **ptree, int *pexplicit_policy,
                       STACK_OF(X509) *certs,

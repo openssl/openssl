@@ -64,7 +64,6 @@
 NETDB_DEFINE_CONTEXT
 #endif
 #ifndef OPENSSL_NO_SOCK
-# include <openssl/dso.h>
 # define SOCKET_PROTOCOL IPPROTO_TCP
 # ifdef SO_MAXCONN
 #  define MAX_LISTEN  SO_MAXCONN
@@ -75,17 +74,6 @@ NETDB_DEFINE_CONTEXT
 # endif
 # if defined(OPENSSL_SYS_WINDOWS) || (defined(OPENSSL_SYS_NETWARE) && !defined(NETWARE_BSDSOCK))
 static int wsa_init_done = 0;
-# endif
-
-/*
- * WSAAPI specifier is required to make indirect calls to run-time
- * linked WinSock 2 functions used in this module, to be specific
- * [get|free]addrinfo and getnameinfo. This is because WinSock uses
- * uses non-C calling convention, __stdcall vs. __cdecl, on x86
- * Windows. On non-WinSock platforms WSAAPI needs to be void.
- */
-# ifndef WSAAPI
-#  define WSAAPI
 # endif
 
 # if OPENSSL_API_COMPAT < 0x10100000L
@@ -195,7 +183,7 @@ int BIO_sock_init(void)
         memset(&wsa_state, 0, sizeof(wsa_state));
         /*
          * Not making wsa_state available to the rest of the code is formally
-         * wrong. But the structures we use are [beleived to be] invariable
+         * wrong. But the structures we use are [believed to be] invariable
          * among Winsock DLLs, while API availability is [expected to be]
          * probed at run-time with DSO_global_lookup.
          */

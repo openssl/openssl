@@ -7,6 +7,7 @@ dsa - DSA key processing
 =head1 SYNOPSIS
 
 B<openssl> B<dsa>
+[B<-help>]
 [B<-inform PEM|DER>]
 [B<-outform PEM|DER>]
 [B<-in filename>]
@@ -39,6 +40,10 @@ applications should use the more secure PKCS#8 format using the B<pkcs8>
 =head1 COMMAND OPTIONS
 
 =over 4
+
+=item B<-help>
+
+Print out a usage message.
 
 =item B<-inform DER|PEM>
 

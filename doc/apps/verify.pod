@@ -7,6 +7,7 @@ verify - Utility to verify certificates.
 =head1 SYNOPSIS
 
 B<openssl> B<verify>
+[B<-help>]
 [B<-CAfile file>]
 [B<-CApath directory>]
 [B<-no-CAfile>]
@@ -20,11 +21,9 @@ B<openssl> B<verify>
 [B<-engine id>]
 [B<-explicit_policy>]
 [B<-extended_crl>]
-[B<-help>]
 [B<-ignore_critical>]
 [B<-inhibit_any>]
 [B<-inhibit_map>]
-[B<-issuer_checks>]
 [B<-partial_chain>]
 [B<-policy arg>]
 [B<-policy_check>]
@@ -49,7 +48,6 @@ B<openssl> B<verify>
 [B<->]
 [certificates]
 
-
 =head1 DESCRIPTION
 
 The B<verify> command verifies certificate chains.
@@ -57,6 +55,10 @@ The B<verify> command verifies certificate chains.
 =head1 COMMAND OPTIONS
 
 =over 4
+
+=item B<-help>
+
+Print out a usage message.
 
 =item B<-CAfile file>
 
@@ -130,10 +132,6 @@ Set policy variable require-explicit-policy (see RFC5280).
 Enable extended CRL features such as indirect CRLs and alternate CRL
 signing keys.
 
-=item B<-help>
-
-Print out a usage message.
-
 =item B<-ignore_critical>
 
 Normally if an unhandled critical extension is present which is not
@@ -147,14 +145,6 @@ Set policy variable inhibit-any-policy (see RFC5280).
 =item B<-inhibit_map>
 
 Set policy variable inhibit-policy-mapping (see RFC5280).
-
-=item B<-issuer_checks>
-
-Print out diagnostics relating to searches for the issuer certificate of the
-current certificate. This shows why each candidate issuer certificate was
-rejected. The presence of rejection messages does not itself imply that
-anything is wrong; during the normal verification process, several
-rejections may take place.
 
 =item B<-partial_chain>
 
@@ -386,6 +376,10 @@ as "unused".
 
 the operation was successful.
 
+=item B<1 X509_V_ERR_UNSPECIFIED: unspecified certificate verification error>
+
+unspecified error, should not happen.
+
 =item B<2 X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT: unable to get issuer certificate>
 
 the issuer certificate of a looked up certificate could not be found. This
@@ -505,30 +499,157 @@ the root CA is marked to reject the specified purpose.
 
 =item B<29 X509_V_ERR_SUBJECT_ISSUER_MISMATCH: subject issuer mismatch>
 
-the current candidate issuer certificate was rejected because its subject name
-did not match the issuer name of the current certificate. Only displayed when
-the B<-issuer_checks> option is set.
+Not used as of OpenSSL 1.1.0 as a result of the deprecation of the
+B<-issuer_checks> option.
 
 =item B<30 X509_V_ERR_AKID_SKID_MISMATCH: authority and subject key identifier mismatch>
 
-the current candidate issuer certificate was rejected because its subject key
-identifier was present and did not match the authority key identifier current
-certificate. Only displayed when the B<-issuer_checks> option is set.
+Not used as of OpenSSL 1.1.0 as a result of the deprecation of the
+B<-issuer_checks> option.
 
 =item B<31 X509_V_ERR_AKID_ISSUER_SERIAL_MISMATCH: authority and issuer serial number mismatch>
 
-the current candidate issuer certificate was rejected because its issuer name
-and serial number was present and did not match the authority key identifier
-of the current certificate. Only displayed when the B<-issuer_checks> option is set.
+Not used as of OpenSSL 1.1.0 as a result of the deprecation of the
+B<-issuer_checks> option.
 
-=item B<32 X509_V_ERR_KEYUSAGE_NO_CERTSIGN:key usage does not include certificate signing>
+=item B<32 X509_V_ERR_KEYUSAGE_NO_CERTSIGN: key usage does not include certificate signing>
 
-the current candidate issuer certificate was rejected because its keyUsage extension
-does not permit certificate signing.
+Not used as of OpenSSL 1.1.0 as a result of the deprecation of the
+B<-issuer_checks> option.
+
+=item B<33 X509_V_ERR_UNABLE_TO_GET_CRL_ISSUER: unable to get CRL issuer certificate>
+
+TBA
+
+=item B<34 X509_V_ERR_UNHANDLED_CRITICAL_EXTENSION: unhandled critical extension>
+
+TBA
+
+=item B<35 X509_V_ERR_KEYUSAGE_NO_CRL_SIGN: key usage does not include CRL signing>
+
+TBA
+
+=item B<36 X509_V_ERR_UNHANDLED_CRITICAL_CRL_EXTENSION: unhandled critical CRL extension>
+
+TBA
+
+=item B<37 X509_V_ERR_INVALID_NON_CA: invalid non-CA certificate has CA markings>
+
+TBA
+
+=item B<38 X509_V_ERR_PROXY_PATH_LENGTH_EXCEEDED: proxy path length constraint exceeded>
+
+TBA
+
+=item B<39 X509_V_ERR_KEYUSAGE_NO_DIGITAL_SIGNATURE: key usage does not include digital signature>
+
+TBA
+
+=item B<40 X509_V_ERR_PROXY_CERTIFICATES_NOT_ALLOWED: proxy certificates not allowed, please set the appropriate flag>
+
+TBA
+
+=item B<41 X509_V_ERR_INVALID_EXTENSION: invalid or inconsistent certificate extension>
+
+TBA
+
+=item B<42 X509_V_ERR_INVALID_POLICY_EXTENSION: invalid or inconsistent certificate policy extension>
+
+TBA
+
+=item B<43 X509_V_ERR_NO_EXPLICIT_POLICY: no explicit policy>
+
+TBA
+
+=item B<44 X509_V_ERR_DIFFERENT_CRL_SCOPE: Different CRL scope>
+
+TBA
+
+=item B<45 X509_V_ERR_UNSUPPORTED_EXTENSION_FEATURE: Unsupported extension feature>
+
+TBA
+
+=item B<46 X509_V_ERR_UNNESTED_RESOURCE: RFC 3779 resource not subset of parent's resources>
+
+TBA
+
+=item B<47 X509_V_ERR_PERMITTED_VIOLATION: permitted subtree violation>
+
+TBA
+
+=item B<48 X509_V_ERR_EXCLUDED_VIOLATION: excluded subtree violation>
+
+TBA
+
+=item B<49 X509_V_ERR_SUBTREE_MINMAX: name constraints minimum and maximum not supported>
+
+TBA
 
 =item B<50 X509_V_ERR_APPLICATION_VERIFICATION: application verification failure>
 
 an application specific error. Unused.
+
+=item B<51 X509_V_ERR_UNSUPPORTED_CONSTRAINT_TYPE: unsupported name constraint type>
+
+TBA
+
+=item B<52 X509_V_ERR_UNSUPPORTED_CONSTRAINT_SYNTAX: unsupported or invalid name constraint syntax>
+
+TBA
+
+=item B<53 X509_V_ERR_UNSUPPORTED_NAME_SYNTAX: unsupported or invalid name syntax>
+
+TBA
+
+=item B<54 X509_V_ERR_CRL_PATH_VALIDATION_ERROR: CRL path validation error>
+
+TBA
+
+=item B<55 X509_V_ERR_PATH_LOOP: Path Loop>
+
+TBA
+
+=item B<56 X509_V_ERR_SUITE_B_INVALID_VERSION: Suite B: certificate version invalid>
+
+TBA
+
+=item B<57 X509_V_ERR_SUITE_B_INVALID_ALGORITHM: Suite B: invalid public key algorithm>
+
+TBA
+
+=item B<58 X509_V_ERR_SUITE_B_INVALID_CURVE: Suite B: invalid ECC curve>
+
+TBA
+
+=item B<59 X509_V_ERR_SUITE_B_INVALID_SIGNATURE_ALGORITHM: Suite B: invalid signature algorithm>
+
+TBA
+
+=item B<60 X509_V_ERR_SUITE_B_LOS_NOT_ALLOWED: Suite B: curve not allowed for this LOS>
+
+TBA
+
+=item B<61 X509_V_ERR_SUITE_B_CANNOT_SIGN_P_384_WITH_P_256: Suite B: cannot sign P-384 with P-256>
+
+TBA
+
+=item B<62 X509_V_ERR_HOSTNAME_MISMATCH: Hostname mismatch>
+
+TBA
+
+=item B<63 X509_V_ERR_EMAIL_MISMATCH: Email address mismatch>
+
+TBA
+
+=item B<64 X509_V_ERR_IP_ADDRESS_MISMATCH: IP address mismatch>
+
+TBA
+
+=item B<65 X509_V_ERR_DANE_NO_MATCH: No matching DANE TLSA records>
+
+DANE TLSA authentication is enabled, but no TLSA records matched the
+certificate chain.
+This error is only possible in L<s_client(1)>.
 
 =back
 
@@ -553,6 +674,10 @@ L<x509(1)>
 
 =head1 HISTORY
 
-The -show_chain option was first added to OpenSSL 1.1.0.
+The B<-show_chain> option was first added to OpenSSL 1.1.0.
+
+The B<-issuer_checks> option is deprecated as of OpenSSL 1.1.0 and
+is silently ignored.
 
 =cut
+

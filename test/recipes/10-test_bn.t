@@ -5,13 +5,13 @@ use warnings;
 
 use Math::BigInt;
 
-use OpenSSL::Test qw/:DEFAULT top_file/;
+use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_bn");
 
 plan tests => 3;
 
-require_ok(top_file("test","recipes","bc.pl"));
+require_ok(srctop_file("test","recipes","bc.pl"));
 
 my $testresults = "tmp.bntest";
 my $init = ok(run(test(["bntest"], stdout => $testresults)), 'initialize');

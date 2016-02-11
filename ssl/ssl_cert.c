@@ -541,6 +541,15 @@ int ssl_verify_cert_chain(SSL *s, STACK_OF(X509) *sk)
     }
 
     s->verify_result = ctx.error;
+    sk_X509_pop_free(s->verified_chain, X509_free);
+    s->verified_chain = NULL;
+    if (X509_STORE_CTX_get_chain(&ctx) != NULL) {
+        s->verified_chain = X509_STORE_CTX_get1_chain(&ctx);
+        if (s->verified_chain == NULL) {
+            SSLerr(SSL_F_SSL_VERIFY_CERT_CHAIN, ERR_R_MALLOC_FAILURE);
+            i = 0;
+        }
+    }
 
     /* Move peername from the store context params to the SSL handle's */
     X509_VERIFY_PARAM_move_peername(s->param, param);

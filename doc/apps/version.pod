@@ -7,6 +7,7 @@ version - print OpenSSL version information
 =head1 SYNOPSIS
 
 B<openssl version>
+[B<-help>]
 [B<-a>]
 [B<-v>]
 [B<-b>]
@@ -14,6 +15,7 @@ B<openssl version>
 [B<-f>]
 [B<-p>]
 [B<-d>]
+[B<-e>]
 
 =head1 DESCRIPTION
 
@@ -22,6 +24,10 @@ This command is used to print out version information about OpenSSL.
 =head1 OPTIONS
 
 =over 4
+
+=item B<-help>
+
+Print out a usage message.
 
 =item B<-a>
 
@@ -50,6 +56,10 @@ platform setting.
 =item B<-d>
 
 OPENSSLDIR setting.
+
+=item B<-e>
+
+ENGINESDIR setting.
 
 =back
 

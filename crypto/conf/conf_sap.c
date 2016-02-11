@@ -59,7 +59,7 @@
 #include <stdio.h>
 #include <openssl/crypto.h>
 #include "internal/cryptlib.h"
-#include <openssl/conf.h>
+#include <internal/conf.h>
 #include <openssl/dso.h>
 #include <openssl/x509.h>
 #include <openssl/asn1.h>
@@ -76,6 +76,17 @@
 static int openssl_configured = 0;
 
 void OPENSSL_config(const char *config_name)
+{
+    OPENSSL_INIT_SETTINGS settings[2];
+
+    settings[0].name = OPENSSL_INIT_SET_CONF_FILENAME;
+    settings[0].value.type_string = config_name;
+    settings[1].name = OPENSSL_INIT_SET_END;
+    settings[1].value.type_int = 0;
+    OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CONFIG, settings);
+}
+
+void openssl_config_internal(const char *config_name)
 {
     if (openssl_configured)
         return;
@@ -94,7 +105,7 @@ void OPENSSL_config(const char *config_name)
     openssl_configured = 1;
 }
 
-void OPENSSL_no_config()
+void openssl_no_config_internal(void)
 {
     openssl_configured = 1;
 }

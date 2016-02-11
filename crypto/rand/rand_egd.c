@@ -53,9 +53,14 @@
  *
  */
 
-#include <openssl/crypto.h>
-#include <openssl/e_os2.h>
-#include <openssl/rand.h>
+#include <openssl/opensslconf.h>
+#ifdef OPENSSL_NO_EGD
+NON_EMPTY_TRANSLATION_UNIT
+#else
+
+# include <openssl/crypto.h>
+# include <openssl/e_os2.h>
+# include <openssl/rand.h>
 
 /*-
  * Query the EGD <URL: http://www.lothar.com/tech/crypto/>.
@@ -93,8 +98,6 @@
  *   the PRNG.
  *   RAND_egd() is a wrapper for RAND_egd_bytes() with numbytes=255.
  */
-
-#ifndef OPENSSL_NO_EGD
 
 # if defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_VMS) || defined(OPENSSL_SYS_MSDOS) || defined(OPENSSL_SYS_VXWORKS) || defined(OPENSSL_SYS_NETWARE) || defined(OPENSSL_SYS_VOS) || defined(OPENSSL_SYS_UEFI)
 int RAND_query_egd_bytes(const char *path, unsigned char *buf, int bytes)
@@ -288,8 +291,4 @@ int RAND_egd(const char *path)
 
 # endif
 
-#else /* OPENSSL_NO_EGD */
-# if PEDANTIC
-static void *dummy = &dummy;
-# endif
 #endif

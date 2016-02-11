@@ -173,9 +173,6 @@ typedef struct pkcs8_priv_key_info_st PKCS8_PRIV_KEY_INFO;
 typedef struct v3_ext_ctx X509V3_CTX;
 typedef struct conf_st CONF;
 
-typedef struct store_st STORE;
-typedef struct store_method_st STORE_METHOD;
-
 typedef struct ui_st UI;
 typedef struct ui_method_st UI_METHOD;
 

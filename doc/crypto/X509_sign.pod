@@ -52,8 +52,8 @@ signature and signing will always update the encoding.
 =head1 RETURN VALUES
 
 X509_sign(), X509_sign_ctx(), X509_REQ_sign(), X509_REQ_sign_ctx(),
-X509_CRL_sign() and X509_CRL_sign_ctx() return 1 for success and 0
-for failure.
+X509_CRL_sign() and X509_CRL_sign_ctx() return the size of the signature
+in bytes for success and zero for failure.
 
 X509_verify(), X509_REQ_verify() and X509_CRL_verify() return 1 if the
 signature is valid and 0 if the signature check fails. If the signature

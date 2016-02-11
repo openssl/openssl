@@ -823,15 +823,18 @@ typedef enum OPTION_choice {
 
 OPTIONS s_server_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
-    {"port", OPT_PORT, 'p'},
+    {"port", OPT_PORT, 'p',
+     "TCP/IP port to listen on for connections (default is " PORT ")"},
     {"accept", OPT_ACCEPT, 's',
-     "TCP/IP port or service to accept on (default is " PORT ")"},
+     "TCP/IP optional host and port to accept on (default is " PORT ")"},
 #ifdef AF_UNIX
     {"unix", OPT_UNIX, 's', "Unix domain socket to accept on"},
 #endif
     {"4", OPT_4, '-', "Use IPv4 only"},
     {"6", OPT_6, '-', "Use IPv6 only"},
+#ifdef AF_UNIX
     {"unlink", OPT_UNLINK, '-', "For -unix, unlink existing socket first"},
+#endif
     {"context", OPT_CONTEXT, 's', "Set session ID context"},
     {"verify", OPT_VERIFY, 'n', "Turn on peer certificate verification"},
     {"Verify", OPT_UPPER_V_VERIFY, 'n',
@@ -860,7 +863,8 @@ OPTIONS s_server_options[] = {
     {"crlf", OPT_CRLF, '-', "Convert LF from terminal into CRLF"},
     {"debug", OPT_DEBUG, '-', "Print more output"},
     {"msg", OPT_MSG, '-', "Show protocol messages"},
-    {"msgfile", OPT_MSGFILE, '>'},
+    {"msgfile", OPT_MSGFILE, '>',
+     "File to send output of -msg or -trace, instead of stdout"},
     {"state", OPT_STATE, '-', "Print the SSL states"},
     {"CAfile", OPT_CAFILE, '<', "PEM format file of CA's"},
     {"CApath", OPT_CAPATH, '/', "PEM format directory of CA's"},
@@ -893,33 +897,52 @@ OPTIONS s_server_options[] = {
      "Export keying material using label"},
     {"keymatexportlen", OPT_KEYMATEXPORTLEN, 'p',
      "Export len bytes of keying material (default 20)"},
-    {"CRL", OPT_CRL, '<'},
-    {"crl_download", OPT_CRL_DOWNLOAD, '-'},
-    {"cert_chain", OPT_CERT_CHAIN, '<'},
-    {"dcert_chain", OPT_DCERT_CHAIN, '<'},
-    {"chainCApath", OPT_CHAINCAPATH, '/'},
-    {"verifyCApath", OPT_VERIFYCAPATH, '/'},
-    {"no_cache", OPT_NO_CACHE, '-'},
-    {"ext_cache", OPT_EXT_CACHE, '-'},
-    {"CRLform", OPT_CRLFORM, 'F'},
-    {"verify_return_error", OPT_VERIFY_RET_ERROR, '-'},
-    {"verify_quiet", OPT_VERIFY_QUIET, '-'},
-    {"build_chain", OPT_BUILD_CHAIN, '-'},
-    {"chainCAfile", OPT_CHAINCAFILE, '<'},
-    {"verifyCAfile", OPT_VERIFYCAFILE, '<'},
-    {"ign_eof", OPT_IGN_EOF, '-'},
-    {"no_ign_eof", OPT_NO_IGN_EOF, '-'},
-    {"status", OPT_STATUS, '-'},
-    {"status_verbose", OPT_STATUS_VERBOSE, '-'},
-    {"status_timeout", OPT_STATUS_TIMEOUT, 'n'},
-    {"status_url", OPT_STATUS_URL, 's'},
-    {"trace", OPT_TRACE, '-'},
-    {"security_debug", OPT_SECURITY_DEBUG, '-'},
-    {"security_debug_verbose", OPT_SECURITY_DEBUG_VERBOSE, '-'},
-    {"brief", OPT_BRIEF, '-'},
-    {"rev", OPT_REV, '-'},
+    {"CRL", OPT_CRL, '<', "CRL file to use"},
+    {"crl_download", OPT_CRL_DOWNLOAD, '-',
+     "Download CRL from distribution points"},
+    {"cert_chain", OPT_CERT_CHAIN, '<',
+     "certificate chain file in PEM format"},
+    {"dcert_chain", OPT_DCERT_CHAIN, '<',
+     "second certificate chain file in PEM format"},
+    {"chainCApath", OPT_CHAINCAPATH, '/',
+     "use dir as certificate store path to build CA certificate chain"},
+    {"verifyCApath", OPT_VERIFYCAPATH, '/',
+     "use dir as certificate store path to verify CA certificate"},
+    {"no_cache", OPT_NO_CACHE, '-', "Disable session cache"},
+    {"ext_cache", OPT_EXT_CACHE, '-',
+     "Disable internal cache, setup and use external cache"},
+    {"CRLform", OPT_CRLFORM, 'F', "CRL format (PEM or DER) PEM is default" },
+    {"verify_return_error", OPT_VERIFY_RET_ERROR, '-',
+     "Close connection on verification error"},
+    {"verify_quiet", OPT_VERIFY_QUIET, '-',
+     "No verify output except verify errors"},
+    {"build_chain", OPT_BUILD_CHAIN, '-', "Build certificate chain"},
+    {"chainCAfile", OPT_CHAINCAFILE, '<',
+     "CA file for certificate chain (PEM format)"},
+    {"verifyCAfile", OPT_VERIFYCAFILE, '<',
+     "CA file for certificate verification (PEM format)"},
+    {"ign_eof", OPT_IGN_EOF, '-', "ignore input eof (default when -quiet)"},
+    {"no_ign_eof", OPT_NO_IGN_EOF, '-', "Do not ignore input eof"},
+    {"status", OPT_STATUS, '-', "Request certificate status from server"},
+    {"status_verbose", OPT_STATUS_VERBOSE, '-',
+     "Print more output in certificate status callback"},
+    {"status_timeout", OPT_STATUS_TIMEOUT, 'n',
+     "Status request responder timeout"},
+    {"status_url", OPT_STATUS_URL, 's', "Status request fallback URL"},
+#ifndef OPENSSL_NO_SSL_TRACE
+    {"trace", OPT_TRACE, '-', "trace protocol messages"},
+#endif
+    {"security_debug", OPT_SECURITY_DEBUG, '-',
+     "Print output from SSL/TLS security framework"},
+    {"security_debug_verbose", OPT_SECURITY_DEBUG_VERBOSE, '-',
+     "Print more output from SSL/TLS security framework"},
+    {"brief", OPT_BRIEF, '-', \
+     "Restrict output to brief summary of connection parameters"},
+    {"rev", OPT_REV, '-',
+     "act as a simple test server which just sends back with the received text reversed"},
     {"async", OPT_ASYNC, '-', "Operate in asynchronous mode"},
-    {"ssl_config", OPT_SSL_CONFIG, 's'},
+    {"ssl_config", OPT_SSL_CONFIG, 's', \
+     "Configure SSL_CTX using the configuration 'val'"},
     OPT_S_OPTIONS,
     OPT_V_OPTIONS,
     OPT_X_OPTIONS,
@@ -951,7 +974,7 @@ OPTIONS s_server_options[] = {
     {"tls1_2", OPT_TLS1_2, '-', "just talk TLSv1.2"},
 #endif
 #ifndef OPENSSL_NO_DTLS
-    {"dtls", OPT_DTLS, '-'},
+    {"dtls", OPT_DTLS, '-', "Use any DTLS version"},
     {"timeout", OPT_TIMEOUT, '-', "Enable timeouts"},
     {"mtu", OPT_MTU, 'p', "Set link layer MTU"},
     {"chain", OPT_CHAIN, '-', "Read a certificate chain"},
@@ -978,7 +1001,7 @@ OPTIONS s_server_options[] = {
      "Set the advertised protocols for the ALPN extension (comma-separated list)"},
 #endif
 #ifndef OPENSSL_NO_ENGINE
-    {"engine", OPT_ENGINE, 's'},
+    {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
 #endif
     {NULL}
 };
@@ -1680,12 +1703,12 @@ int s_server_main(int argc, char *argv[])
     }
 
     ctx = SSL_CTX_new(meth);
-    if (sdebug)
-        ssl_ctx_security_debug(ctx, sdebug);
     if (ctx == NULL) {
         ERR_print_errors(bio_err);
         goto end;
     }
+    if (sdebug)
+        ssl_ctx_security_debug(ctx, sdebug);
     if (ssl_config) {
         if (SSL_CTX_config(ctx, ssl_config) == 0) {
             BIO_printf(bio_err, "Error using configuration \"%s\"\n",
@@ -1721,7 +1744,6 @@ int s_server_main(int argc, char *argv[])
 
     if (async) {
         SSL_CTX_set_mode(ctx, SSL_MODE_ASYNC);
-        ASYNC_init(1, 0, 0);
     }
 
 #ifndef OPENSSL_NO_SRTP
@@ -2026,9 +2048,6 @@ int s_server_main(int argc, char *argv[])
     bio_s_out = NULL;
     BIO_free(bio_s_msg);
     bio_s_msg = NULL;
-    if (async) {
-        ASYNC_cleanup(1);
-    }
     return (ret);
 }
 
@@ -2496,7 +2515,7 @@ static int init_ssl_connection(SSL *con)
             BIO_printf(bio_err, "ERROR - memory\n");
             return 0;
         }
-        i = DTLSv1_listen(con, &client);
+        i = DTLSv1_listen(con, client);
         if (i > 0) {
             BIO *wbio;
             int fd = -1;
@@ -2612,7 +2631,7 @@ static int init_ssl_connection(SSL *con)
                        srtp_profile->name);
     }
 #endif
-    if (SSL_cache_hit(con))
+    if (SSL_session_reused(con))
         BIO_printf(bio_s_out, "Reused session-id\n");
     BIO_printf(bio_s_out, "Secure Renegotiation IS%s supported\n",
                SSL_get_secure_renegotiation_support(con) ? "" : " NOT");
@@ -2882,7 +2901,7 @@ static int www_body(const char *hostname, int s, int stype,
 #ifndef OPENSSL_NO_EC
             ssl_print_curves(io, con, 0);
 #endif
-            BIO_printf(io, (SSL_cache_hit(con)
+            BIO_printf(io, (SSL_session_reused(con)
                             ? "---\nReused, " : "---\nNew, "));
             c = SSL_get_current_cipher(con);
             BIO_printf(io, "%s, Cipher is %s\n",

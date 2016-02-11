@@ -99,7 +99,6 @@ char *argv[];
     METH_control(tmp2, METH_CONTROL_DUMP, stdout);
     EXIT(0);
  err:
-    ERR_load_crypto_strings();
     ERR_print_errors_fp(stderr);
     EXIT(1);
     return (0);

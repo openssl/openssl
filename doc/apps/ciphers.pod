@@ -7,6 +7,7 @@ ciphers - SSL cipher display and cipher list tool.
 =head1 SYNOPSIS
 
 B<openssl> B<ciphers>
+[B<-help>]
 [B<-s>]
 [B<-v>]
 [B<-V>]
@@ -28,6 +29,10 @@ the appropriate cipherlist.
 =head1 COMMAND OPTIONS
 
 =over 4
+
+=item B<-help>
+
+Print out a usage message.
 
 =item B<-s>
 
@@ -68,10 +73,6 @@ List the ciphers which would be used if TLS v1.2 was negotiated.
 
 precede each ciphersuite by its standard name: only available is OpenSSL
 is built with tracing enabled (B<enable-ssl-trace> argument to Configure).
-
-=item B<-h>, B<-?>
-
-print a brief usage message.
 
 =item B<cipherlist>
 
@@ -278,6 +279,10 @@ while B<AESCCM8> only references 8 octet ICV.
 
 cipher suites using 128 bit CAMELLIA, 256 bit CAMELLIA or either 128 or 256 bit
 CAMELLIA.
+
+=item B<CHACHA20>
+
+cipher suites using ChaCha20.
 
 =item B<3DES>
 
@@ -655,6 +660,16 @@ Note: these ciphers can also be used in SSL v3.
  PSK_WITH_AES_256_CCM_8                    PSK-AES256-CCM8
  DHE_PSK_WITH_AES_128_CCM_8                DHE-PSK-AES128-CCM8
  DHE_PSK_WITH_AES_256_CCM_8                DHE-PSK-AES256-CCM8
+
+=head2 ChaCha20-Poly1305 cipher suites from draft-ietf-tls-chacha20-poly1305-04, extending TLS v1.2
+
+ TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256      ECDHE-RSA-CHACHA20-POLY1305
+ TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256    ECDHE-ECDSA-CHACHA20-POLY1305
+ TLS_DHE_RSA_WITH_CHACHA20_POLY1305_SHA256        DHE-RSA-CHACHA20-POLY1305
+ TLS_PSK_WITH_CHACHA20_POLY1305_SHA256            PSK-CHACHA20-POLY1305
+ TLS_ECDHE_PSK_WITH_CHACHA20_POLY1305_SHA256      ECDHE-PSK-CHACHA20-POLY1305
+ TLS_DHE_PSK_WITH_CHACHA20_POLY1305_SHA256        DHE-PSK-CHACHA20-POLY1305
+ TLS_RSA_PSK_WITH_CHACHA20_POLY1305_SHA256        RSA-PSK-CHACHA20-POLY1305
 
 =head1 NOTES
 

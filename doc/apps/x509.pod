@@ -8,6 +8,7 @@ x509 - Certificate display and signing utility
 =head1 SYNOPSIS
 
 B<openssl> B<x509>
+[B<-help>]
 [B<-inform DER|PEM|NET>]
 [B<-outform DER|PEM|NET>]
 [B<-keyform DER|PEM>]
@@ -76,6 +77,10 @@ various sections.
 =head2 INPUT, OUTPUT AND GENERAL PURPOSE OPTIONS
 
 =over 4
+
+=item B<-help>
+
+Print out a usage message.
 
 =item B<-inform DER|PEM|NET>
 
@@ -327,7 +332,8 @@ subject name (i.e.  makes it self signed) changes the public key to the
 supplied value and changes the start and end dates. The start date is
 set to the current time and the end date is set to a value determined
 by the B<-days> option. Any certificate extensions are retained unless
-the B<-clrext> option is supplied.
+the B<-clrext> option is supplied; this includes, for example, any existing
+key identifier extensions.
 
 If the input is a certificate request then a self signed certificate
 is created using the supplied private key using the subject name in
@@ -461,7 +467,7 @@ B<sep_comma_plus>, B<dn_rev> and B<sname>.
 a oneline format which is more readable than RFC2253. It is equivalent to
 specifying the  B<esc_2253>, B<esc_ctrl>, B<esc_msb>, B<utf8>, B<dump_nostr>,
 B<dump_der>, B<use_quote>, B<sep_comma_plus_space>, B<space_eq> and B<sname>
-options.  This is the I<default> of no name options are given explicitely.
+options.  This is the I<default> of no name options are given explicitly.
 
 =item B<multiline>
 
