@@ -647,8 +647,6 @@ static unsigned long xname_hash(const X509_NAME *a)
     return X509_NAME_hash((X509_NAME *)a);
 }
 
-DEFINE_LHASH_OF(X509_NAME);
-
 /**
  * Load CA certs from a file into a ::STACK. Note that it is somewhat misnamed;
  * it doesn't really have anything to do with clients (except that a common use
