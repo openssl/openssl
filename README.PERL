@@ -23,8 +23,9 @@
  - on Linux distributions based on RPMs, you will need to install
    'perl-core' rather than just 'perl'.
 
- It is highly recommended that you have at least Perl version 5.10
- installed.
+ You MUST have at least Perl version 5.10.0 installed.  This minimum
+ requirement is due to our use of regexp backslash sequence \R among
+ other features that didn't exist in core Perl before that version.
 
  Notes on Perl on Windows
  ------------------------
