@@ -395,6 +395,15 @@ my @default_depdefines =
 # We will collect such requests in @experimental.
 # To avoid accidental use of experimental features, applications will have to use -DOPENSSL_EXPERIMENTAL_FOO.
 
+my @generated_headers = (
+    "include/openssl/opensslconf.h",
+    "crypto/include/internal/bn_conf.h"
+    );
+
+my @generated_by_make_headers = (
+    "crypto/buildinf.h"
+    );
+
 
 my $no_sse2=0;
 
@@ -1481,9 +1490,15 @@ EOF
             foreach (@{$depends{$dest}}) {
                 my $d = cleanfile($sourced, $_, $blddir);
 
-                # If it isn't found in the source, let's assume it's generated
-                # and that the Makefile template has the lines
-                if (! -f $d) {
+                # If we know it's generated, or assume it is because we can't
+                # find it in the source tree, we set file we depend on to be
+                # in the build tree rather than the source tree, and assume
+                # and that there are lines to build it in a BEGINRAW..ENDRAW
+                # section or in the Makefile template.
+                if (! -f $d
+                    || !(grep { $d eq $_ }
+                         map { cleanfile($srcdir, $_, $blddir) }
+                         (@generated_headers, @generated_by_make_headers))) {
                     $d = cleanfile($buildd, $_, $blddir);
                 }
                 # Take note if the file to depend on is being renamed
@@ -1697,14 +1712,10 @@ print "THIRTY_TWO_BIT mode\n" if $config{b32};
 print "BN_LLONG mode\n" if $config{bn_ll};
 print "RC4 uses $config{rc4_int}\n" if $config{rc4_int} != $def_int;
 
-mkpath(catdir($blddir, "include/openssl"));
-run_dofile(catfile($blddir, "include/openssl/opensslconf.h"),
-           catfile($srcdir, "include/openssl/opensslconf.h.in"));
-
-mkpath(catdir($blddir, "crypto/include/internal"));
-foreach my $alg ( 'bn' ) {
-    run_dofile(catfile($blddir, "crypto/include/internal/${alg}_conf.h"),
-               catfile($srcdir, "crypto/include/internal/${alg}_conf.h.in"));
+for (@generated_headers) {
+    mkpath(catdir($blddir, dirname($_)));
+    run_dofile(catfile($blddir, $_),
+               catfile($srcdir, $_.".in"));
 }
 
 ###
