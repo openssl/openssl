@@ -13,7 +13,7 @@ open(IN, $mac_file) || die "Can't open $mac_file, $!\n";
 
 while (<IN>)
 	{
-	chomp;
+	s|\R$||;                # Better chomp
 	my ($name, $num) = /^(\S+)\s+(\S+)$/;
 	$oid_tbl{$name} = $num;
 	}
@@ -25,7 +25,7 @@ my $ln = 1;
 
 while (<IN>)
 	{
-	chomp;
+	s|\R$||;                # Better chomp
 	s/#.*$//;
 	next if (/^\S*$/);
 	my ($xr, $p1, $p2) = /^(\S+)\s+(\S+)\s+(\S+)/;
@@ -112,6 +112,6 @@ sub check_oid
 	my ($chk) = @_;
 	if (!exists $oid_tbl{$chk})
 		{
-		die "Can't find \"$chk\", $!\n";
+		die "Can't find \"$chk\"\n";
 		}
 	}
