@@ -20,7 +20,7 @@ INCLUDE[nptest]={- rel2abs(catdir($builddir,"../include")) -} ../include
 DEPEND[nptest]=../libcrypto
 
 SOURCE[bntest]=bntest.c
-INCLUDE[bntest]={- rel2abs(catdir($builddir,"../include")) -} .. ../crypto/include ../include
+INCLUDE[bntest]={- rel2abs(catdir($builddir,"../crypto/include")) -} {- rel2abs(catdir($builddir,"../include")) -} .. ../crypto/include ../include
 DEPEND[bntest]=../libcrypto
 
 SOURCE[ectest]=ectest.c
