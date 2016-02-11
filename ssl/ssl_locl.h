@@ -685,7 +685,8 @@ struct ssl_comp_st {
 };
 
 DEFINE_LHASH_OF(SSL_SESSION);
-
+/* Needed in ssl_cert.c */
+DEFINE_LHASH_OF(X509_NAME);
 
 struct ssl_ctx_st {
     const SSL_METHOD *method;
