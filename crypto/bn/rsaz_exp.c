@@ -40,6 +40,7 @@
 * (2) University of Haifa, Israel                                            *
 *****************************************************************************/
 
+#include <openssl/opensslconf.h>
 #include "rsaz_exp.h"
 
 #ifndef RSAZ_ENABLED
