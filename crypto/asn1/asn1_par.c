@@ -219,13 +219,13 @@ static int asn1_parse2(BIO *bp, const unsigned char **pp, long length,
                         goto end;
                     i2a_ASN1_OBJECT(bp, o);
                 } else {
-                    if (BIO_write(bp, ":BAD OBJECT", 11) <= 0)
+                    if (BIO_puts(bp, ":BAD OBJECT") <= 0)
                         goto end;
                     dump_cont = 1;
                 }
             } else if (tag == V_ASN1_BOOLEAN) {
                 if (len != 1) {
-                    if (BIO_puts(bp, "BAD BOOLEAN") <= 0)
+                    if (BIO_puts(bp, ":BAD BOOLEAN") <= 0)
                         goto end;
                     dump_cont = 1;
                 }
@@ -309,7 +309,7 @@ static int asn1_parse2(BIO *bp, const unsigned char **pp, long length,
                             goto end;
                     }
                 } else {
-                    if (BIO_write(bp, "BAD INTEGER", 11) <= 0)
+                    if (BIO_puts(bp, ":BAD INTEGER") <= 0)
                         goto end;
                     dump_cont = 1;
                 }
@@ -335,7 +335,7 @@ static int asn1_parse2(BIO *bp, const unsigned char **pp, long length,
                             goto end;
                     }
                 } else {
-                    if (BIO_write(bp, "BAD ENUMERATED", 14) <= 0)
+                    if (BIO_puts(bp, ":BAD ENUMERATED") <= 0)
                         goto end;
                     dump_cont = 1;
                 }
