@@ -310,12 +310,9 @@ static const SSL_CIPHER cipher_aliases[] = {
     {0, SSL_TXT_DH, 0, SSL_kDHE, 0, 0, 0, 0, 0, 0, 0,
      0},
 
-    {0, SSL_TXT_kECDHr, 0, SSL_kECDHr, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_kECDHe, 0, SSL_kECDHe, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_kECDH, 0, SSL_kECDHr | SSL_kECDHe, 0, 0, 0, 0, 0, 0, 0, 0},
     {0, SSL_TXT_kEECDH, 0, SSL_kECDHE, 0, 0, 0, 0, 0, 0, 0, 0},
     {0, SSL_TXT_kECDHE, 0, SSL_kECDHE, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_ECDH, 0, SSL_kECDHr | SSL_kECDHe | SSL_kECDHE, 0, 0, 0, 0, 0,
+    {0, SSL_TXT_ECDH, 0, SSL_kECDHE, 0, 0, 0, 0, 0,
      0, 0, 0},
 
     {0, SSL_TXT_kPSK, 0, SSL_kPSK, 0, 0, 0, 0, 0, 0, 0, 0},
@@ -330,7 +327,6 @@ static const SSL_CIPHER cipher_aliases[] = {
     {0, SSL_TXT_aDSS, 0, 0, SSL_aDSS, 0, 0, 0, 0, 0, 0, 0},
     {0, SSL_TXT_DSS, 0, 0, SSL_aDSS, 0, 0, 0, 0, 0, 0, 0},
     {0, SSL_TXT_aNULL, 0, 0, SSL_aNULL, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_aECDH, 0, 0, SSL_aECDH, 0, 0, 0, 0, 0, 0, 0},
     {0, SSL_TXT_aECDSA, 0, 0, SSL_aECDSA, 0, 0, 0, 0, 0, 0, 0},
     {0, SSL_TXT_ECDSA, 0, 0, SSL_aECDSA, 0, 0, 0, 0, 0, 0, 0},
     {0, SSL_TXT_aPSK, 0, 0, SSL_aPSK, 0, 0, 0, 0, 0, 0, 0},
@@ -503,8 +499,8 @@ void ssl_load_ciphers(void)
     disabled_mkey_mask |= SSL_kDHE | SSL_kDHEPSK;
 #endif
 #ifdef OPENSSL_NO_EC
-    disabled_mkey_mask |= SSL_kECDHe | SSL_kECDHr | SSL_kECDHEPSK;
-    disabled_auth_mask |= SSL_aECDSA | SSL_aECDH;
+    disabled_mkey_mask |= SSL_kECDHEPSK;
+    disabled_auth_mask |= SSL_aECDSA;
 #endif
 #ifdef OPENSSL_NO_PSK
     disabled_mkey_mask |= SSL_PSK;
@@ -1459,9 +1455,6 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method, STACK
     ssl_cipher_apply_rule(0, 0, SSL_aNULL, 0, 0, 0, 0, CIPHER_ORD, -1, &head,
                           &tail);
 
-    /* Move ciphers without forward secrecy to the end */
-    ssl_cipher_apply_rule(0, 0, SSL_aECDH, 0, 0, 0, 0, CIPHER_ORD, -1, &head,
-                          &tail);
     /*
      * ssl_cipher_apply_rule(0, 0, SSL_aDH, 0, 0, 0, 0, CIPHER_ORD, -1,
      * &head, &tail);
@@ -1606,12 +1599,6 @@ char *SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
     case SSL_kDHE:
         kx = "DH";
         break;
-    case SSL_kECDHr:
-        kx = "ECDH/RSA";
-        break;
-    case SSL_kECDHe:
-        kx = "ECDH/ECDSA";
-        break;
     case SSL_kECDHE:
         kx = "ECDH";
         break;
@@ -1643,9 +1630,6 @@ char *SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
         break;
     case SSL_aDSS:
         au = "DSS";
-        break;
-    case SSL_aECDH:
-        au = "ECDH";
         break;
     case SSL_aNULL:
         au = "None";
@@ -1939,22 +1923,11 @@ const char *SSL_COMP_get_name(const COMP_METHOD *comp)
 /* For a cipher return the index corresponding to the certificate type */
 int ssl_cipher_get_cert_index(const SSL_CIPHER *c)
 {
-    uint32_t alg_k, alg_a;
+    uint32_t alg_a;
 
-    alg_k = c->algorithm_mkey;
     alg_a = c->algorithm_auth;
 
-    if (alg_k & (SSL_kECDHr | SSL_kECDHe)) {
-        /*
-         * we don't need to look at SSL_kECDHE since no certificate is needed
-         * for anon ECDH and for authenticated ECDHE, the check for the auth
-         * algorithm will set i correctly NOTE: For ECDH-RSA, we need an ECC
-         * not an RSA cert but for ECDHE-RSA we need an RSA cert. Placing the
-         * checks for SSL_kECDH before RSA checks ensures the correct cert is
-         * chosen.
-         */
-        return SSL_PKEY_ECC;
-    } else if (alg_a & SSL_aECDSA)
+    if (alg_a & SSL_aECDSA)
         return SSL_PKEY_ECC;
     else if (alg_a & SSL_aDSS)
         return SSL_PKEY_DSA_SIGN;

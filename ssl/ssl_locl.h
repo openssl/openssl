@@ -297,24 +297,20 @@
 # define SSL_kDHE                0x00000002U
 /* synonym */
 # define SSL_kEDH                SSL_kDHE
-/* ECDH cert, RSA CA cert */
-# define SSL_kECDHr              0x00000004U
-/* ECDH cert, ECDSA CA cert */
-# define SSL_kECDHe              0x00000008U
 /* ephemeral ECDH */
-# define SSL_kECDHE              0x00000010U
+# define SSL_kECDHE              0x00000004U
 /* synonym */
 # define SSL_kEECDH              SSL_kECDHE
 /* PSK */
-# define SSL_kPSK                0x00000020U
+# define SSL_kPSK                0x00000008U
 /* GOST key exchange */
-# define SSL_kGOST               0x00000040U
+# define SSL_kGOST               0x00000010U
 /* SRP */
-# define SSL_kSRP                0x00000080U
+# define SSL_kSRP                0x00000020U
 
-# define SSL_kRSAPSK             0x00000100U
-# define SSL_kECDHEPSK           0x00000200U
-# define SSL_kDHEPSK             0x00000400U
+# define SSL_kRSAPSK             0x00000040U
+# define SSL_kECDHEPSK           0x00000080U
+# define SSL_kDHEPSK             0x00000100U
 
 /* all PSK */
 
@@ -327,18 +323,16 @@
 # define SSL_aDSS                0x00000002U
 /* no auth (i.e. use ADH or AECDH) */
 # define SSL_aNULL               0x00000004U
-/* Fixed ECDH auth (kECDHe or kECDHr) */
-# define SSL_aECDH               0x00000008U
 /* ECDSA auth*/
-# define SSL_aECDSA              0x00000010U
+# define SSL_aECDSA              0x00000008U
 /* PSK auth */
-# define SSL_aPSK                0x00000020U
+# define SSL_aPSK                0x00000010U
 /* GOST R 34.10-2001 signature auth */
-# define SSL_aGOST01             0x00000040U
+# define SSL_aGOST01             0x00000020U
 /* SRP auth */
-# define SSL_aSRP                0x00000080U
+# define SSL_aSRP                0x00000040U
 /* GOST R 34.10-2012 signature auth */
-# define SSL_aGOST12             0x00000100U
+# define SSL_aGOST12             0x00000080U
 
 /* Bits for algorithm_enc (symmetric encryption) */
 # define SSL_DES                 0x00000001U

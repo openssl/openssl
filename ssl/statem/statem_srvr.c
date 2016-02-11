@@ -2365,20 +2365,8 @@ MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
 #endif
 
 #ifndef OPENSSL_NO_EC
-    if (alg_k & (SSL_kECDHE | SSL_kECDHr | SSL_kECDHe | SSL_kECDHEPSK)) {
-        EVP_PKEY *skey = NULL;
-
-        /* Let's get server private key and group information */
-        if (alg_k & (SSL_kECDHr | SSL_kECDHe)) {
-            /* use the certificate */
-            skey = s->cert->pkeys[SSL_PKEY_ECC].privatekey;
-        } else {
-            /*
-             * use the ephermeral values we saved when generating the
-             * ServerKeyExchange msg.
-             */
-            skey = s->s3->tmp.pkey;
-        }
+    if (alg_k & (SSL_kECDHE | SSL_kECDHEPSK)) {
+        EVP_PKEY *skey = s->s3->tmp.pkey;
 
         if (PACKET_remaining(pkt) == 0L) {
             /* We don't support ECDH client auth */

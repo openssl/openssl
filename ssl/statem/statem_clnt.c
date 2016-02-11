@@ -2264,19 +2264,14 @@ psk_err:
 #endif
 
 #ifndef OPENSSL_NO_EC
-    else if (alg_k & (SSL_kECDHE | SSL_kECDHr | SSL_kECDHe | SSL_kECDHEPSK)) {
+    else if (alg_k & (SSL_kECDHE | SSL_kECDHEPSK)) {
 
-        if (s->s3->peer_tmp != NULL) {
-            skey = s->s3->peer_tmp;
-        } else {
-            /* Get the Server Public Key from Cert */
-            skey = X509_get0_pubkey(s->session->peer);
-            if ((skey == NULL) || EVP_PKEY_get0_EC_KEY(skey) == NULL) {
-                SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE,
+        skey = s->s3->peer_tmp;
+        if ((skey == NULL) || EVP_PKEY_get0_EC_KEY(skey) == NULL) {
+            SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE,
                        ERR_R_INTERNAL_ERROR);
-                goto err;
+            goto err;
             }
-        }
 
         ckey = ssl_generate_pkey(skey, NID_undef);
 
@@ -2776,9 +2771,6 @@ int ssl3_check_cert_and_algorithm(SSL *s)
     } else if (alg_a & SSL_aECDSA) {
         SSLerr(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM,
                SSL_R_MISSING_ECDSA_SIGNING_CERT);
-        goto f_err;
-    } else if (alg_k & (SSL_kECDHr | SSL_kECDHe)) {
-        SSLerr(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM, SSL_R_MISSING_ECDH_CERT);
         goto f_err;
     }
 #endif

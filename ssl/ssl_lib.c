@@ -2504,7 +2504,6 @@ void ssl_set_masks(SSL *s, const SSL_CIPHER *cipher)
     unsigned long mask_k, mask_a;
 #ifndef OPENSSL_NO_EC
     int have_ecc_cert, ecdsa_ok;
-    int ecdh_ok;
     X509 *x = NULL;
     int pk_nid = 0, md_nid = 0;
 #endif
@@ -2575,23 +2574,10 @@ void ssl_set_masks(SSL *s, const SSL_CIPHER *cipher)
         cpk = &c->pkeys[SSL_PKEY_ECC];
         x = cpk->x509;
         ex_kusage = X509_get_key_usage(x);
-        ecdh_ok = ex_kusage & X509v3_KU_KEY_AGREEMENT;
         ecdsa_ok = ex_kusage & X509v3_KU_DIGITAL_SIGNATURE;
         if (!(pvalid[SSL_PKEY_ECC] & CERT_PKEY_SIGN))
             ecdsa_ok = 0;
         OBJ_find_sigid_algs(X509_get_signature_nid(x), &md_nid, &pk_nid);
-        if (ecdh_ok) {
-
-            if (pk_nid == NID_rsaEncryption || pk_nid == NID_rsa) {
-                mask_k |= SSL_kECDHr;
-                mask_a |= SSL_aECDH;
-            }
-
-            if (pk_nid == NID_X9_62_id_ecPublicKey) {
-                mask_k |= SSL_kECDHe;
-                mask_a |= SSL_aECDH;
-            }
-        }
         if (ecdsa_ok) {
             mask_a |= SSL_aECDSA;
         }
@@ -2621,50 +2607,14 @@ void ssl_set_masks(SSL *s, const SSL_CIPHER *cipher)
 
 int ssl_check_srvr_ecc_cert_and_alg(X509 *x, SSL *s)
 {
-    unsigned long alg_k, alg_a;
-    int md_nid = 0, pk_nid = 0;
-    const SSL_CIPHER *cs = s->s3->tmp.new_cipher;
-    uint32_t ex_kusage = X509_get_key_usage(x);
-
-    alg_k = cs->algorithm_mkey;
-    alg_a = cs->algorithm_auth;
-
-    OBJ_find_sigid_algs(X509_get_signature_nid(x), &md_nid, &pk_nid);
-
-    if (alg_k & SSL_kECDHe || alg_k & SSL_kECDHr) {
-        /* key usage, if present, must allow key agreement */
-        if (!(ex_kusage & X509v3_KU_KEY_AGREEMENT)) {
-            SSLerr(SSL_F_SSL_CHECK_SRVR_ECC_CERT_AND_ALG,
-                   SSL_R_ECC_CERT_NOT_FOR_KEY_AGREEMENT);
-            return 0;
-        }
-        if ((alg_k & SSL_kECDHe) && TLS1_get_version(s) < TLS1_2_VERSION) {
-            /* signature alg must be ECDSA */
-            if (pk_nid != NID_X9_62_id_ecPublicKey) {
-                SSLerr(SSL_F_SSL_CHECK_SRVR_ECC_CERT_AND_ALG,
-                       SSL_R_ECC_CERT_SHOULD_HAVE_SHA1_SIGNATURE);
-                return 0;
-            }
-        }
-        if ((alg_k & SSL_kECDHr) && TLS1_get_version(s) < TLS1_2_VERSION) {
-            /* signature alg must be RSA */
-
-            if (pk_nid != NID_rsaEncryption && pk_nid != NID_rsa) {
-                SSLerr(SSL_F_SSL_CHECK_SRVR_ECC_CERT_AND_ALG,
-                       SSL_R_ECC_CERT_SHOULD_HAVE_RSA_SIGNATURE);
-                return 0;
-            }
-        }
-    }
-    if (alg_a & SSL_aECDSA) {
+    if (s->s3->tmp.new_cipher->algorithm_auth & SSL_aECDSA) {
         /* key usage, if present, must allow signing */
-        if (!(ex_kusage & X509v3_KU_DIGITAL_SIGNATURE)) {
+        if (!(X509_get_key_usage(x) & X509v3_KU_DIGITAL_SIGNATURE)) {
             SSLerr(SSL_F_SSL_CHECK_SRVR_ECC_CERT_AND_ALG,
                    SSL_R_ECC_CERT_NOT_FOR_SIGNING);
             return 0;
         }
     }
-
     return 1;                   /* all checks are ok */
 }
 
