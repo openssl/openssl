@@ -381,7 +381,8 @@ OPENSSL_INIT_SETTINGS *OPENSSL_INIT_new(void)
 {
     OPENSSL_INIT_SETTINGS *ret = malloc(sizeof(*ret));
 
-    memset(ret, 0, sizeof(*ret));
+    if (ret != NULL)
+        memset(ret, 0, sizeof(*ret));
     return ret;
 }
 
