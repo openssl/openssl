@@ -308,7 +308,7 @@ link_a.cygwin:
 		base=; [ $(LIBNAME) = "crypto" ] && base=-Wl,--image-base,0x63000000; \
 	fi; \
 	dll_name=$$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX; \
-	$(PERL) util/mkrc.pl $$dll_name | \
+	$(PERL) $(SRCDIR)/util/mkrc.pl $$dll_name | \
 		$(CROSS_COMPILE)windres $(SHARED_RCFLAGS) -o rc.o; \
 	extras="$$extras rc.o"; \
 	ALLSYMSFLAGS='-Wl,--whole-archive'; \
