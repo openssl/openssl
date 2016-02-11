@@ -459,7 +459,7 @@ sub do_defs
 			if($parens > 0) {
 				#Inside a DEPRECATEDIN
 				$stored_multiline .= $_;
-				chomp $stored_multiline;
+				$stored_multiline =~ s|\R$||; # Better chomp
 				print STDERR "DEBUG: Continuing multiline DEPRECATEDIN: $stored_multiline\n" if $debug;
 				$parens = count_parens($stored_multiline);
 				if ($parens == 0) {
@@ -480,9 +480,7 @@ sub do_defs
 			}
 
 			if (/\\$/) {
-				chomp; # remove eol
-				chop; # remove ending backslash
-				$line = $_;
+				$line = $`; # keep what was before the backslash
 				next;
 			}
 
@@ -499,7 +497,7 @@ sub do_defs
 				$cpp++ if /^#\s*if/;
 				$cpp-- if /^#\s*endif/;
 				next;
-	    		}
+			}
 			$cpp = 1 if /^#.*ifdef.*cplusplus/;
 
 			s/{[^{}]*}//gs;                      # ignore {} blocks
@@ -867,7 +865,7 @@ sub do_defs
 							\@current_algorithms);
 					} else {
 						$stored_multiline = $_;
-						chomp $stored_multiline;
+						$stored_multiline =~ s|\R$||;
 						print STDERR "DEBUG: Found multiline DEPRECATEDIN starting with: $stored_multiline\n" if $debug;
 						next;
 					}
@@ -1365,7 +1363,7 @@ sub load_numbers
 
 	open(IN,"<$name") || die "unable to open $name:$!\n";
 	while (<IN>) {
-		chop;
+		s|\R$||;        # Better chomp
 		s/#.*$//;
 		next if /^\s*$/;
 		@a=split;

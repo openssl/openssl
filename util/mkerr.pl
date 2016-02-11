@@ -556,7 +556,7 @@ EOF
 	if (open(IN,"<$cfile")) {
 		my $line = "";
 		while (<IN>) {
-			chomp;
+			s|\R$||; # Better chomp
 			$_ = $line . $_;
 			$line = "";
 			if (/{ERR_(FUNC|REASON)\(/) {

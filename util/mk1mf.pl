@@ -553,7 +553,7 @@ if ($fips)
 			{
 			open (IN, "util/fipslib_path.txt") || fipslib_error();
 			$fipslibdir = <IN>;
-			chomp $fipslibdir;
+			$fipslibdir =~ s|\R$||;
 			close IN;
 			}
 		fips_check_files($fipslibdir,
@@ -1159,7 +1159,7 @@ sub do_defs
 		elsif ($var eq "SSLOBJ")
 			{ $ret.="\$(OBJ_D)\\\$(SSL).res "; }
 		}
-	chomp($ret);
+	chomp($ret);            # Does this actually do something? /RL
 	$ret.="\n\n";
 	return($ret);
 	}

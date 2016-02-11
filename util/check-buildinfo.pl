@@ -7,7 +7,7 @@ my $reldir = "";
 my $searchterm = "";
 my $goal = "";
 while (<$minfo>) {
-    chomp;
+    s|\R$||;
 
     if (/^RELATIVE_DIRECTORY=(.*)$/) {
         $reldir=$1;

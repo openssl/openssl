@@ -5,7 +5,7 @@
 while (<>)
 	{
 	next unless /^node/;
-	chop;
+	s|\R$||;                # Better chomp
 	@a=split;
 	$num{$a[3]}++;
 	}

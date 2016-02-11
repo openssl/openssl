@@ -28,7 +28,7 @@ my %translations = ();
 open DEMANGLER_DATA, $ARGV[0]
     or die "Couldn't open $ARGV[0]: $!\n";
 while(<DEMANGLER_DATA>) {
-    chomp;
+    s|\R$||;
     (my $translated, my $original) = split /\$/;
     $translations{$original} = $translated.'$';
 }
