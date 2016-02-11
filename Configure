@@ -91,9 +91,6 @@ my $gcc_devteam_warn = "-Wall -pedantic -DPEDANTIC -Wno-long-long -Wsign-compare
 # -Wextended-offsetof
 my $clang_devteam_warn = "-Wno-unused-parameter -Wno-missing-field-initializers -Wno-language-extension-token -Wno-extended-offsetof -Wconditional-uninitialized -Qunused-arguments -Wincompatible-pointer-types-discards-qualifiers -Wmissing-variable-declarations";
 
-# Warn that "make depend" should be run?
-my $warn_make_depend = 0;
-
 # These are used in addition to $gcc_devteam_warn unless this is a mingw build.
 # This adds backtrace information to the memory leak info.
 my $memleak_devteam_backtrace = "-rdynamic -DCRYPTO_MDEBUG_BACKTRACE";
@@ -416,7 +413,6 @@ $config{openssl_other_defines}=[];
 my $libs="";
 my $target="";
 $config{options}="";
-my $make_depend=0;
 my %withargs=();
 my $build_prefix = "release_";
 
@@ -1751,42 +1747,12 @@ my %builders = (
         run_dofile(catfile($blddir, $target{build_file}),
                    $config{build_file_template},
                    catfile($srcdir, "Configurations", "common.tmpl"));
-
-        my $make_command = "$make PERL=\'$config{perl}\'";
-        my $make_targets = "";
-        my $need_make_depend =
-            join(" ", @{$config{depdefines}}) ne join(" ", @default_depdefines);
-        $make_targets .= " depend"
-            if $need_make_depend && $make_depend;
-
-        (system $make_command.$make_targets) == 0
-            or die "make $make_targets failed"
-            if $make_targets ne "";
-
-        if ($need_make_depend && !$make_depend) {
-            $warn_make_depend++;
-        }
     },
     unixmake => sub {
         build_Makefile();
 
         run_dofile("util/domd", "util/domd.in");
         chmod 0755, "util/domd";
-
-        my $make_command = "$make PERL=\'$config{perl}\'";
-        my $make_targets = "";
-        my $need_make_depend =
-            join(" ", @{$config{depdefines}}) ne join(" ", @default_depdefines);
-        $make_targets .= " depend"
-            if $need_make_depend && $make_depend;
-
-        (system $make_command.$make_targets) == 0
-            or die "make $make_targets failed"
-            if $make_targets ne "";
-
-        if ($need_make_depend && !$make_depend) {
-            $warn_make_depend++;
-        }
     },
     mk1mf => sub {
         my $platform = shift;
@@ -1877,14 +1843,6 @@ You gave the option 'shared', which is not supported on this platform, so
 we will pretend you gave the option 'no-shared'.  If you know how to implement
 shared libraries, please let us know (but please first make sure you have
 tried with a current version of OpenSSL).
-EOF
-
-print <<"EOF" if ($warn_make_depend);
-
-*** Because of configuration changes, you MUST do the following before
-*** building:
-
-	make depend
 EOF
 
 ###### TO BE REMOVED BEFORE FINAL RELEASE
