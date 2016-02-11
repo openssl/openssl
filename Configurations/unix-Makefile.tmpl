@@ -630,6 +630,26 @@ Makefile: {- $config{build_file_template} -} $(SRCDIR)/Configure $(SRCDIR)/confi
 {-
   use File::Basename;
   use File::Spec::Functions qw/:DEFAULT abs2rel rel2abs/;
+
+  # Helper function to figure out dependencies on libraries
+  # It takes a list of library names and outputs a list of dependencies
+  sub compute_lib_depends {
+      if ($config{no_shared}) {
+          return map { $_."\$(LIB_EXT)" } @_;
+      }
+
+      # Depending on shared libraries:
+      # On Windows POSIX layers, we depend on {libname}.dll.a
+      # On Unix platforms, we depend on {shlibname}.so
+      return map { if (windowsdll()) {
+                       "$_\$(SHLIB_EXT_SIMPLE).a"
+		   } else {
+		       my $libname =
+		           $unified_info{sharednames}->{$_} || $_;
+		       "$libname\$(SHLIB_EXT_SIMPLE)"
+		   } } @_;
+  }
+
   sub src2dep {
       my %args = @_;
       my $dep = $args{obj}.'$(DEP_EXT)';
@@ -674,28 +694,35 @@ EOF
       my $libd = dirname($lib);
       my $libn = basename($lib);
       (my $libname = $libn) =~ s/^lib//;
-      my $shlibdeps = join("", map { my $d = dirname($_);
-                                     my $f = basename($_);
-                                     (my $l = $f) =~ s/^lib//;
-                                     " -L$d -l$l" } @{$args{deps}});
-      my $deps = join(" ",map { $_."\$(SHLIB_EXT_SIMPLE)" } @{$args{deps}});
+      my $linklibs = join("", map { my $d = dirname($_);
+                                    my $f = basename($_);
+                                    (my $l = $f) =~ s/^lib//;
+                                    " -L$d -l$l" } @{$args{deps}});
+      my $deps = join(" ",compute_lib_depends(@{$args{deps}}));
       my $shlib_target = $target{shared_target};
       my $ordinalsfile = defined($args{ordinals}) ? $args{ordinals}->[1] : "";
-      my $targets =
-         "$shlib".shlib_ext() .
-         (shlib_ext() ne shlib_ext_simple()
-          ? " $shlib".shlib_ext_simple() : "");
+      my $shlibtarget = windowsdll() ?
+	  "$lib\$(SHLIB_EXT_SIMPLE).a" : "$shlib\$(SHLIB_EXT_SIMPLE)";
       return <<"EOF"
-$targets : $lib\$(LIB_EXT) $deps $ordinalsfile
+# With a build on a Windows POSIX layer (Cygwin or Mingw), we know for a fact
+# that two files get produced, {shlibname}.dll and {libname}.dll.a.
+# With all other Unix platforms, we often build a shared library with the
+# SO version built into the file name and a symlink without the SO version
+# It's not necessary to have both as targets.  The choice falls on the
+# simplest, {libname}\$(SHLIB_EXT_SIMPLE).a for Windows POSIX layers and
+# {libname}\$(SHLIB_EXT_SIMPLE) for the Unix platforms.
+$shlibtarget : $lib\$(LIB_EXT) $deps $ordinalsfile
 	\$(MAKE) -f \$(SRCDIR)/Makefile.shared -e \\
+		PLATFORM=\$(PLATFORM) \\
 		PERL=\$(PERL) SRCDIR="\$(SRCDIR)" DSTDIR="$libd" \\
-                INSTALLTOP="\$(INSTALLTOP)" LIBDIR="\$(LIBDIR)" \\
-                LIBDEPS="\$(PLIB_LDFLAGS) $shlibdeps \$(EX_LIBS)" \\
-                LIBNAME=$libname LIBVERSION=\$(SHLIB_MAJOR).\$(SHLIB_MINOR) \\
-                LIBCOMPATVERSIONS=";\$(SHLIB_VERSION_HISTORY)" \\
-                CC="\$(CC)" CFLAGS="\$(CFLAGS)" LDFLAGS="\$(LDFLAGS)" \\
-                SHARED_LDFLAGS="\$(SHARED_LDFLAGS)" SHLIB_EXT=\$(SHLIB_EXT) \\
-                link_a.$shlib_target
+		INSTALLTOP="\$(INSTALLTOP)" LIBDIR="\$(LIBDIR)" \\
+		LIBDEPS="\$(PLIB_LDFLAGS) $linklibs \$(EX_LIBS)" \\
+		LIBNAME=$libname LIBVERSION=\$(SHLIB_MAJOR).\$(SHLIB_MINOR) \\
+		LIBCOMPATVERSIONS=";\$(SHLIB_VERSION_HISTORY)" \\
+		CC="\$(CC)" CFLAGS="\$(CFLAGS)" LDFLAGS="\$(LDFLAGS)" \\
+		CROSS_COMPILE="\$(CROSS_COMPILE)" \\
+		SHARED_LDFLAGS="\$(SHARED_LDFLAGS)" SHLIB_EXT=\$(SHLIB_EXT) \\
+		link_a.$shlib_target
 EOF
 	  . (windowsdll() ? <<"EOF" : "");
 	rm -f apps/$shlib\$(SHLIB_EXT)
@@ -714,20 +741,21 @@ EOF
                                      my $f = basename($_);
                                      (my $l = $f) =~ s/^lib//;
                                      " -L$d -l$l" } @{$args{deps}});
-      my $deps = join(" ",map { $_."\$(SHLIB_EXT_SIMPLE)" } @{$args{deps}});
+      my $deps = join(" ",compute_lib_depends(@{$args{deps}}));
       my $shlib_target = $target{shared_target};
       my $objs = join(" ", map { $_."\$(OBJ_EXT)" } @{$args{objs}});
       return <<"EOF";
 $lib\$(SHLIB_EXT_SIMPLE): $objs $deps
 	\$(MAKE) -f \$(SRCDIR)/Makefile.shared -e \\
-                PERL=\$(PERL) SRCDIR="\$(SRCDIR)" DSTDIR="$libd" \\
-                LIBDEPS="\$(PLIB_LDFLAGS) $shlibdeps \$(EX_LIBS)" \\
-                LIBNAME=$libname LDFLAGS="\$(LDFLAGS)" \\
-                CC="\$(CC)" CFLAGS="\$(CFLAGS)" \\
-                SHARED_LDFLAGS="\$(SHARED_LDFLAGS)" \\
+		PLATFORM=\$(PLATFORM) \\
+		PERL=\$(PERL) SRCDIR="\$(SRCDIR)" DSTDIR="$libd" \\
+		LIBDEPS="\$(PLIB_LDFLAGS) $shlibdeps \$(EX_LIBS)" \\
+		LIBNAME=$libname LDFLAGS="\$(LDFLAGS)" \\
+		CC="\$(CC)" CFLAGS="\$(CFLAGS)" \\
+		SHARED_LDFLAGS="\$(SHARED_LDFLAGS)" \\
 		SHLIB_EXT=\$(SHLIB_EXT_SIMPLE) \\
 		LIBEXTRAS="$objs" \\
-                link_o.$shlib_target
+		link_o.$shlib_target
 EOF
   }
   sub obj2lib {
@@ -746,25 +774,22 @@ EOF
       my $bind = dirname($bin);
       my $binn = basename($bin);
       my $objs = join(" ", map { $_."\$(OBJ_EXT)" } @{$args{objs}});
-      my $deps = join(" ",
-                      (map { $_."\$(OBJ_EXT)" } @{$args{objs}}),
-                      (map { $_.($config{no_shared} ? "\$(LIB_EXT)" : "\$(SHLIB_EXT)" ) }
-                       @{$args{deps}}));
-      my $libdeps = join("", map { my $d = dirname($_);
-                                   my $f = basename($_);
-                                   $d = "." if $d eq $f;
-                                   (my $l = $f) =~ s/^lib//;
-                                   " -L$d -l$l" } @{$args{deps}});
+      my $deps = join(" ",compute_lib_depends(@{$args{deps}}));
+      my $linklibs = join("", map { my $d = dirname($_);
+                                    my $f = basename($_);
+                                    $d = "." if $d eq $f;
+                                    (my $l = $f) =~ s/^lib//;
+                                    " -L$d -l$l" } @{$args{deps}});
       my $shlib_target = $config{no_shared} ? "" : $target{shared_target};
       return <<"EOF";
-$bin\$(EXE_EXT) : $deps
+$bin\$(EXE_EXT) : $objs $deps
 	\$(RM) $bin\$(EXE_EXT)
 	\$(MAKE) -f \$(SRCDIR)/Makefile.shared -e \\
-                PERL=\$(PERL) SRCDIR=\$(SRCDIR) \\
+		PERL=\$(PERL) SRCDIR=\$(SRCDIR) \\
 		APPNAME=$bin OBJECTS="$objs" \\
-		LIBDEPS="\$(PLIB_LDFLAGS) \$(LDFLAGS) $libdeps \$(EX_LIBS)" \\
-                CC="\$(CC)" CFLAGS="\$(CFLAGS)" LDFLAGS="\$(LDFLAGS)" \\
-                LIBRPATH="\$(INSTALLTOP)/\$(LIBDIR)" \\
+		LIBDEPS="\$(PLIB_LDFLAGS) \$(LDFLAGS) $linklibs \$(EX_LIBS)" \\
+		CC="\$(CC)" CFLAGS="\$(CFLAGS)" LDFLAGS="\$(LDFLAGS)" \\
+		LIBRPATH="\$(INSTALLTOP)/\$(LIBDIR)" \\
 		link_app.$shlib_target
 EOF
   }
