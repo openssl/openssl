@@ -4122,6 +4122,9 @@ static int ssl_security_cert_sig(SSL *s, SSL_CTX *ctx, X509 *x, int op)
 {
     /* Lookup signature algorithm digest */
     int secbits = -1, md_nid = NID_undef, sig_nid;
+    /* Don't check signature if self signed */
+    if ((X509_get_extension_flags(x) & EXFLAG_SS) != 0)
+        return 1;
     sig_nid = X509_get_signature_nid(x);
     if (sig_nid && OBJ_find_sigid_algs(sig_nid, &md_nid, NULL)) {
         const EVP_MD *md;
