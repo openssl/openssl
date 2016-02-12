@@ -1408,6 +1408,7 @@ __owur const char *SSL_get_cipher_list(const SSL *s, int n);
 __owur char *SSL_get_shared_ciphers(const SSL *s, char *buf, int len);
 __owur int SSL_get_read_ahead(const SSL *s);
 __owur int SSL_pending(const SSL *s);
+__owur int SSL_has_pending(const SSL *s);
 # ifndef OPENSSL_NO_SOCK
 __owur int SSL_set_fd(SSL *s, int fd);
 __owur int SSL_set_rfd(SSL *s, int fd);

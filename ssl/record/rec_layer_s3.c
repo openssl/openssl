@@ -186,12 +186,12 @@ void RECORD_LAYER_release(RECORD_LAYER *rl)
     SSL3_RECORD_release(rl->rrec, SSL_MAX_PIPELINES);
 }
 
-int RECORD_LAYER_read_pending(RECORD_LAYER *rl)
+int RECORD_LAYER_read_pending(const RECORD_LAYER *rl)
 {
     return SSL3_BUFFER_get_left(&rl->rbuf) != 0;
 }
 
-int RECORD_LAYER_write_pending(RECORD_LAYER *rl)
+int RECORD_LAYER_write_pending(const RECORD_LAYER *rl)
 {
     return (rl->numwpipes > 0)
             && SSL3_BUFFER_get_left(&rl->wbuf[rl->numwpipes-1]) != 0;
