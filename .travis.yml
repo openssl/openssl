@@ -104,7 +104,7 @@ script:
     - if [ -n "$CROSS_COMPILE" ]; then
           export EXE_SHELL="wine" WINEPREFIX=`pwd`;
       fi
-    - make test
+    - HARNESS_VERBOSE=yes make test
     - cd ..
 
 notifications:
