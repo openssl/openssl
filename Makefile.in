@@ -101,6 +101,7 @@ RC5_ENC= {- $target{rc5_obj} -}
 MD5_ASM_OBJ= {- $target{md5_obj} -}
 SHA1_ASM_OBJ= {- $target{sha1_obj} -}
 RMD160_ASM_OBJ= {- $target{rmd160_obj} -}
+BLAKE2_OBJ= {- $target{blake2_obj} -}
 WP_ASM_OBJ= {- $target{wp_obj} -}
 CMLL_ENC= {- $target{cmll_obj} -}
 MODES_ASM_OBJ= {- $target{modes_obj} -}
@@ -222,6 +223,7 @@ BUILDENV=	LC_ALL=C PLATFORM='$(PLATFORM)' PROCESSOR='$(PROCESSOR)'\
 		SHA1_ASM_OBJ='$(SHA1_ASM_OBJ)'			\
 		MD5_ASM_OBJ='$(MD5_ASM_OBJ)'			\
 		RMD160_ASM_OBJ='$(RMD160_ASM_OBJ)'		\
+                BLAKE2_OBJ='$(BLAKE2_OBJ)'                      \
 		WP_ASM_OBJ='$(WP_ASM_OBJ)'			\
 		MODES_ASM_OBJ='$(MODES_ASM_OBJ)'		\
 		PADLOCK_ASM_OBJ='$(PADLOCK_ASM_OBJ)'		\
