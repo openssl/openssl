@@ -317,7 +317,11 @@ typedef unsigned __int64 uint64_t;
  * isn't available or did not define it, just go with hard-coded.
  */
 # ifndef PRIu64
-#  define PRIu64 "lu"
+#  ifdef SIXTY_FOUR_BIT_LONG
+#   define PRIu64 "lu"
+#  else
+#   define PRIu64 "llu"
+#  endif
 # endif
 
 /* ossl_inline: portable inline definition usable in public headers */
