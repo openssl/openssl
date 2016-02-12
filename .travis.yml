@@ -52,6 +52,8 @@ matrix:
         - os: osx
           compiler: clang-3.6
         - os: osx
+          compiler: gcc
+        - os: osx
           compiler: gcc-5
         - os: osx
           compiler: i686-w64-mingw32-gcc
