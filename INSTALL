@@ -252,10 +252,9 @@
      locations, but have the package installed somewhere else so that
      it can easily be packaged, can use
 
-       $ make INSTALL_PREFIX=/tmp/package-root install
+       $ make DESTDIR=/tmp/package-root install
 
-     (or specify "--install_prefix=/tmp/package-root" as a configure
-     option).  The specified prefix will be prepended to all
+     The specified destination directory will be prepended to all
      installation target filenames.
 
 

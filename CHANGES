@@ -4,6 +4,12 @@
 
  Changes between 1.0.2f and 1.1.0  [xx XXX xxxx]
 
+  *) The INSTALL_PREFIX Makefile variable has been renamed to
+     DESTDIR.  That makes for less confusion on what this variable
+     is for.  Also, the configuration option --install_prefix is
+     removed.
+     [Richard Levitte]
+
   *) Heartbeat for TLS has been removed and is disabled by default
      for DTLS; configure with enable-heartbeats.  Code that uses the
      old #define's might need to be updated.

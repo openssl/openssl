@@ -80,33 +80,33 @@ install:
 	@set -e; for i in $(EXE); \
 	do  \
 	(echo installing $$i; \
-	 cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$i.new; \
-	 chmod 755 $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$i.new; \
-	 mv -f $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$i.new $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$i ); \
+	 cp $$i $(DESTDIR)$(INSTALLTOP)/bin/$$i.new; \
+	 chmod 755 $(DESTDIR)$(INSTALLTOP)/bin/$$i.new; \
+	 mv -f $(DESTDIR)$(INSTALLTOP)/bin/$$i.new $(DESTDIR)$(INSTALLTOP)/bin/$$i ); \
 	 done;
 	@set -e; for i in $(SCRIPTS); \
 	do  \
 	(echo installing $$i; \
-	 cp $$i $(INSTALL_PREFIX)$(OPENSSLDIR)/misc/$$i.new; \
-	 chmod 755 $(INSTALL_PREFIX)$(OPENSSLDIR)/misc/$$i.new; \
-	 mv -f $(INSTALL_PREFIX)$(OPENSSLDIR)/misc/$$i.new $(INSTALL_PREFIX)$(OPENSSLDIR)/misc/$$i ); \
+	 cp $$i $(DESTDIR)$(OPENSSLDIR)/misc/$$i.new; \
+	 chmod 755 $(DESTDIR)$(OPENSSLDIR)/misc/$$i.new; \
+	 mv -f $(DESTDIR)$(OPENSSLDIR)/misc/$$i.new $(DESTDIR)$(OPENSSLDIR)/misc/$$i ); \
 	 done
-	@cp openssl.cnf $(INSTALL_PREFIX)$(OPENSSLDIR)/openssl.cnf.new; \
-	chmod 644 $(INSTALL_PREFIX)$(OPENSSLDIR)/openssl.cnf.new; \
-	mv -f  $(INSTALL_PREFIX)$(OPENSSLDIR)/openssl.cnf.new $(INSTALL_PREFIX)$(OPENSSLDIR)/openssl.cnf
+	@cp openssl.cnf $(DESTDIR)$(OPENSSLDIR)/openssl.cnf.new; \
+	chmod 644 $(DESTDIR)$(OPENSSLDIR)/openssl.cnf.new; \
+	mv -f  $(DESTDIR)$(OPENSSLDIR)/openssl.cnf.new $(DESTDIR)$(OPENSSLDIR)/openssl.cnf
 
 uninstall:
 	@set -e; for i in $(EXE); \
 	do  \
-		echo $(RM) $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$i; \
-		$(RM) $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$i; \
+		echo $(RM) $(DESTDIR)$(INSTALLTOP)/bin/$$i; \
+		$(RM) $(DESTDIR)$(INSTALLTOP)/bin/$$i; \
 	done;
 	@set -e; for i in $(SCRIPTS); \
 	do  \
-		echo $(RM) $(INSTALL_PREFIX)$(OPENSSLDIR)/misc/$$i; \
-		$(RM) $(INSTALL_PREFIX)$(OPENSSLDIR)/misc/$$i; \
+		echo $(RM) $(DESTDIR)$(OPENSSLDIR)/misc/$$i; \
+		$(RM) $(DESTDIR)$(OPENSSLDIR)/misc/$$i; \
 	done
-	$(RM) $(INSTALL_PREFIX)$(OPENSSLDIR)/openssl.cnf
+	$(RM) $(DESTDIR)$(OPENSSLDIR)/openssl.cnf
 
 generate: openssl-vms.cnf progs.h
 
