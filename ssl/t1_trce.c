@@ -920,14 +920,6 @@ static int ssl_get_keyex(const char **pname, SSL *ssl)
         *pname = "ECDHE";
         return SSL_kECDHE;
     }
-    if (alg_k & SSL_kECDHr) {
-        *pname = "ECDH RSA";
-        return SSL_kECDHr;
-    }
-    if (alg_k & SSL_kECDHe) {
-        *pname = "ECDH ECDSA";
-        return SSL_kECDHe;
-    }
     if (alg_k & SSL_kPSK) {
         *pname = "PSK";
         return SSL_kPSK;
@@ -990,13 +982,6 @@ static int ssl_print_client_keyex(BIO *bio, int indent, SSL *ssl,
             return 0;
         break;
 
-    case SSL_kECDHr:
-    case SSL_kECDHe:
-        if (msglen == 0) {
-            BIO_indent(bio, indent + 2, 80);
-            BIO_puts(bio, "implicit\n");
-            break;
-        }
     case SSL_kECDHE:
     case SSL_kECDHEPSK:
         if (!ssl_print_hexbuf(bio, indent + 2, "ecdh_Yc", 1, &msg, &msglen))
@@ -1022,13 +1007,6 @@ static int ssl_print_server_keyex(BIO *bio, int indent, SSL *ssl,
             return 0;
     }
     switch (id) {
-        /* Should never happen */
-    case SSL_kECDHr:
-    case SSL_kECDHe:
-        BIO_indent(bio, indent + 2, 80);
-        BIO_printf(bio, "Unexpected Message\n");
-        break;
-
     case SSL_kRSA:
 
         if (!ssl_print_hexbuf(bio, indent + 2, "rsa_modulus", 2,
