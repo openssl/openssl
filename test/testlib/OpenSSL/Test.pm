@@ -93,7 +93,6 @@ sub __env;
 sub __cwd;
 sub __apps_file;
 sub __results_file;
-sub __test_log;
 sub __fixup_cmd;
 sub __build_cmd;
 
@@ -136,9 +135,6 @@ sub setup {
 	unless -f srctop_file("Configure");
 
     __cwd($directories{RESULTS});
-
-    # Loop in case we're on a platform with more than one file generation
-    1 while unlink(__test_log());
 }
 
 =over 4
@@ -309,7 +305,7 @@ the function C<with> further down.
 =cut
 
 sub run {
-    my ($cmd, $display_cmd, %errlogs) = shift->(0);
+    my ($cmd, $display_cmd) = shift->(0);
     my %opts = @_;
 
     return () if !$cmd;
@@ -335,15 +331,6 @@ sub run {
     # there are Test::More versions that get picky if we leave it
     # non-zero.
     $? = 0;
-
-    open ERR, ">>", __test_log();
-    { local $| = 1; print ERR "$display_cmd => $e\n"; }
-    foreach (keys %errlogs) {
-	copy($_,\*ERR);
-	copy($_,$errlogs{$_}) if defined($errlogs{$_});
-	unlink($_);
-    }
-    close ERR;
 
     if ($opts{capture}) {
 	return @r;
@@ -541,7 +528,7 @@ command as a string.
 =cut
 
 sub cmdstr {
-    my ($cmd, $display_cmd, %errlogs) = shift->(0);
+    my ($cmd, $display_cmd) = shift->(0);
 
     return $display_cmd;
 }
@@ -615,11 +602,6 @@ is located.  Defaults to C<$TOP/apps> (adapted to the operating system).
 
 If defined, its value should be the directory where the test applications
 are located.  Defaults to C<$TOP/test> (adapted to the operating system).
-
-=item B<RESULT_D>
-
-If defined, its value should be the directory where the log files are
-located.  Defaults to C<$TEST_D>.
 
 =item B<STOPTEST>
 
@@ -701,10 +683,6 @@ sub __results_file {
     return catfile($directories{RESULTS},@_,$f);
 }
 
-sub __test_log {
-    return __results_file("$test_name.log");
-}
-
 sub __cwd {
     my $dir = catdir(shift);
     my %opts = @_;
@@ -757,7 +735,6 @@ sub __cwd {
 	print STDERR "  \$directories{APPS}    = \"$directories{APPS}\"\n";
 	print STDERR "  \$directories{SRCTOP}  = \"$directories{SRCTOP}\"\n";
 	print STDERR "  \$directories{BLDTOP}  = \"$directories{BLDTOP}\"\n";
-	print STDERR "  \$test_log             = \"",__test_log(),"\"\n";
 	print STDERR "\n";
 	print STDERR "  current directory is \"",curdir(),"\"\n";
 	print STDERR "  the way back is \"$reverse\"\n";
@@ -852,19 +829,19 @@ sub __build_cmd {
     $stdout= " > ".$fileornull->($opts{stdout}) if exists($opts{stdout});
     $stderr=" 2> ".$fileornull->($opts{stderr}) if exists($opts{stderr});
 
-    $saved_stderr = $opts{stderr}		if defined($opts{stderr});
-
-    my $errlog =
-        __results_file($num ? "$test_name.$num.tmp_err" : "$test_name.tmp_err");
     my $display_cmd = "$cmd$arg_str$stdin$stdout$stderr";
-    $cmd .= "$arg_str$stdin$stdout 2> $errlog";
+
+    $stderr=" 2> ".$null
+        unless $stderr || !$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE};
+
+    $cmd .= "$arg_str$stdin$stdout$stderr";
 
     if ($debug) {
 	print STDERR "DEBUG[__build_cmd]: \$cmd = \"$cmd\"\n";
 	print STDERR "DEBUG[__build_cmd]: \$display_cmd = \"$display_cmd\"\n";
     }
 
-    return ($cmd, $display_cmd, $errlog => $saved_stderr);
+    return ($cmd, $display_cmd);
 }
 
 =head1 SEE ALSO
