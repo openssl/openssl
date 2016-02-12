@@ -8,7 +8,7 @@
 #set -x
 
 CONFIG_OPTIONS="--prefix=/usr shared zlib no-idea no-rc5"
-INSTALL_PREFIX=/tmp/install/INSTALL
+DESTDIR=/tmp/install/INSTALL
 
 VERSION=
 SHLIB_VERSION_NUMBER=
@@ -16,8 +16,8 @@ SUBVERSION=$1
 
 function cleanup()
 {
-  rm -rf ${INSTALL_PREFIX}/etc
-  rm -rf ${INSTALL_PREFIX}/usr
+  rm -rf ${DESTDIR}/etc
+  rm -rf ${DESTDIR}/usr
 }
 
 function get_openssl_version()
@@ -40,14 +40,14 @@ function get_openssl_version()
 
 function base_install()
 {
-  mkdir -p ${INSTALL_PREFIX}
+  mkdir -p ${DESTDIR}
   cleanup
-  make install INSTALL_PREFIX="${INSTALL_PREFIX}"
+  make install DESTDIR="${DESTDIR}"
 }
 
 function doc_install()
 {
-  DOC_DIR=${INSTALL_PREFIX}/usr/share/doc/openssl
+  DOC_DIR=${DESTDIR}/usr/share/doc/openssl
 
   mkdir -p ${DOC_DIR}
   cp CHANGES CHANGES.SSLeay INSTALL LICENSE NEWS README ${DOC_DIR}
@@ -57,7 +57,7 @@ function doc_install()
 
 function certs_install()
 {
-  CERTS_DIR=${INSTALL_PREFIX}/usr/ssl/certs
+  CERTS_DIR=${DESTDIR}/usr/ssl/certs
 
   mkdir -p ${CERTS_DIR}
   cp -rp certs/* ${CERTS_DIR}
@@ -65,7 +65,7 @@ function certs_install()
 
 function create_cygwin_readme()
 {
-  README_DIR=${INSTALL_PREFIX}/usr/share/doc/Cygwin
+  README_DIR=${DESTDIR}/usr/share/doc/Cygwin
   README_FILE=${README_DIR}/openssl-${VERSION}.README
 
   mkdir -p ${README_DIR}
@@ -81,7 +81,7 @@ function create_cygwin_readme()
 
 function create_profile_files()
 {
-  PROFILE_DIR=${INSTALL_PREFIX}/etc/profile.d
+  PROFILE_DIR=${DESTDIR}/etc/profile.d
 
   mkdir -p $PROFILE_DIR
   cat > ${PROFILE_DIR}/openssl.sh <<- "EOF"
@@ -126,7 +126,7 @@ create_cygwin_readme
 
 create_profile_files
 
-cd ${INSTALL_PREFIX}
+cd ${DESTDIR}
 chmod u+w usr/lib/engines/*.so
 strip usr/bin/*.exe usr/bin/*.dll usr/lib/engines/*.so
 chmod u-w usr/lib/engines/*.so

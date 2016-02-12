@@ -21,10 +21,10 @@ SHLIB_TARGET={- $target{shared_target} -}
 # and should probably not be bothered with at all.
 HERE=.
 
-# INSTALL_PREFIX is for package builders so that they can configure
+# DESTDIR is for package builders so that they can configure
 # for, say, /usr/ and yet have everything installed to /tmp/somedir/usr/.
 # Normally it is left empty.
-INSTALL_PREFIX={- $config{install_prefix} -}
+DESTDIR=
 
 # Do not edit these manually. Use Configure with --prefix or --openssldir
 # to change this!  Short explanation in the top comment in Configure
@@ -215,14 +215,14 @@ HEADER=         e_os.h
 
 # Directories created on install if they don't exist.
 INSTALLDIRS=	\
-		$(INSTALL_PREFIX)$(INSTALLTOP)/bin \
-		$(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR) \
-		$(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/engines \
-		$(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/pkgconfig \
-		$(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl \
-		$(INSTALL_PREFIX)$(OPENSSLDIR)/misc \
-		$(INSTALL_PREFIX)$(OPENSSLDIR)/certs \
-		$(INSTALL_PREFIX)$(OPENSSLDIR)/private
+		$(DESTDIR)$(INSTALLTOP)/bin \
+		$(DESTDIR)$(INSTALLTOP)/$(LIBDIR) \
+		$(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/engines \
+		$(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig \
+		$(DESTDIR)$(INSTALLTOP)/include/openssl \
+		$(DESTDIR)$(OPENSSLDIR)/misc \
+		$(DESTDIR)$(OPENSSLDIR)/certs \
+		$(DESTDIR)$(OPENSSLDIR)/private
 
 all: Makefile build_all
 
@@ -251,7 +251,7 @@ BUILDENV=	LC_ALL=C PLATFORM='$(PLATFORM)' PROCESSOR='$(PROCESSOR)'\
 		CROSS_COMPILE='$(CROSS_COMPILE)'	\
 		PERL='$(PERL)'	\
 		SDIRS='$(SDIRS)' LIBRPATH='$(INSTALLTOP)/$(LIBDIR)'	\
-		INSTALL_PREFIX='$(INSTALL_PREFIX)'		\
+		DESTDIR='$(DESTDIR)'		\
 		INSTALLTOP='$(INSTALLTOP)' OPENSSLDIR='$(OPENSSLDIR)'	\
 		LIBDIR='$(LIBDIR)'				\
 		DEPFLAG='$(DEPFLAG)'                    	\
@@ -565,18 +565,18 @@ uninstall: uninstall_sw uninstall_docs
 install_sw:
 	@$(PERL) $(TOP)/util/mkdir-p.pl $(INSTALLDIRS)
 	@set -e; for i in include/openssl/*.h; do \
-	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/$$i; \
-	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/$$i ); \
+	(cp $$i $(DESTDIR)$(INSTALLTOP)/$$i; \
+	chmod 644 $(DESTDIR)$(INSTALLTOP)/$$i ); \
 	done;
 	@set -e; target=install; for dir in $(INSTALL_SUBS); do $(BUILD_CMD); done
 	@set -e; liblist="$(LIBS)"; for i in $$liblist ;\
 	do \
 		if [ -f "$$i" ]; then \
 		(       echo installing $$i; \
-			cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/$$i.new; \
-			$(RANLIB) $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/$$i.new; \
-			chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/$$i.new; \
-			mv -f $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/$$i.new $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/$$i ); \
+			cp $$i $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$i.new; \
+			$(RANLIB) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$i.new; \
+			chmod 644 $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$i.new; \
+			mv -f $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$i.new $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$i ); \
 		fi; \
 	done;
 	@set -e; if [ -n "$(SHARED_LIBS)" ]; then \
@@ -587,16 +587,16 @@ install_sw:
 			(       echo installing $$i; \
 				if expr "$(PLATFORM)" : "Cygwin" >/dev/null; then \
 					c=`echo $$i | sed 's/^lib\(.*\)\.dll\.a/cyg\1-$(SHLIB_VERSION_NUMBER).dll/'`; \
-					cp $$c $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$c.new; \
-					chmod 755 $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$c.new; \
-					mv -f $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$c.new $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$c; \
-					cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/$$i.new; \
-					chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/$$i.new; \
-					mv -f $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/$$i.new $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/$$i; \
+					cp $$c $(DESTDIR)$(INSTALLTOP)/bin/$$c.new; \
+					chmod 755 $(DESTDIR)$(INSTALLTOP)/bin/$$c.new; \
+					mv -f $(DESTDIR)$(INSTALLTOP)/bin/$$c.new $(DESTDIR)$(INSTALLTOP)/bin/$$c; \
+					cp $$i $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$i.new; \
+					chmod 644 $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$i.new; \
+					mv -f $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$i.new $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$i; \
 				else \
-					cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/$$i.new; \
-					chmod 555 $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/$$i.new; \
-					mv -f $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/$$i.new $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/$$i; \
+					cp $$i $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$i.new; \
+					chmod 555 $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$i.new; \
+					mv -f $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$i.new $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$i; \
 				fi ); \
 				if expr $(PLATFORM) : 'mingw' > /dev/null; then \
 				(	case $$i in \
@@ -604,34 +604,34 @@ install_sw:
 						*ssl*)    i=ssleay32.dll;; \
 					esac; \
 					echo installing $$i; \
-					cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$i.new; \
-					chmod 755 $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$i.new; \
-					mv -f $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$i.new $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$i ); \
+					cp $$i $(DESTDIR)$(INSTALLTOP)/bin/$$i.new; \
+					chmod 755 $(DESTDIR)$(INSTALLTOP)/bin/$$i.new; \
+					mv -f $(DESTDIR)$(INSTALLTOP)/bin/$$i.new $(DESTDIR)$(INSTALLTOP)/bin/$$i ); \
 				fi; \
 			fi; \
 		done; \
 		(	here="`pwd`"; \
-			cd $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR); \
+			cd $(DESTDIR)$(INSTALLTOP)/$(LIBDIR); \
 			$(MAKE) -f $$here/Makefile HERE="$$here" link-shared ); \
 		if [ "$(INSTALLTOP)" != "/usr" ]; then \
 			echo 'OpenSSL shared libraries have been installed in:'; \
 			echo '  $(INSTALLTOP)'; \
 		fi; \
 	fi
-	cp libcrypto.pc $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/pkgconfig
-	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/pkgconfig/libcrypto.pc
-	cp libssl.pc $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/pkgconfig
-	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/pkgconfig/libssl.pc
-	cp openssl.pc $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/pkgconfig
-	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/pkgconfig/openssl.pc
+	cp libcrypto.pc $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig
+	chmod 644 $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig/libcrypto.pc
+	cp libssl.pc $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig
+	chmod 644 $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig/libssl.pc
+	cp openssl.pc $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig
+	chmod 644 $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig/openssl.pc
 
 uninstall_sw:
-	cd include/openssl && files=* && cd $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl && $(RM) $$files
+	cd include/openssl && files=* && cd $(DESTDIR)$(INSTALLTOP)/include/openssl && $(RM) $$files
 	@for i in $(LIBS) ;\
 	do \
 		test -f "$$i" && \
-		echo $(RM) $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/$$i && \
-		$(RM) $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/$$i; \
+		echo $(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$i && \
+		$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$i; \
 	done;
 	@if [ -n "$(SHARED_LIBS)" ]; then \
 		tmp="$(SHARED_LIBS)"; \
@@ -640,28 +640,28 @@ uninstall_sw:
 			if [ -f "$$i" -o -f "$$i.a" ]; then \
 				if expr "$(PLATFORM)" : "Cygwin" >/dev/null; then \
 					c=`echo $$i | sed 's/^lib\(.*\)\.dll\.a/cyg\1-$(SHLIB_VERSION_NUMBER).dll/'`; \
-					echo $(RM) $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$c; \
-					$(RM) $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$c; \
-					echo $(RM) $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/$$i; \
-					$(RM) $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/$$i; \
+					echo $(RM) $(DESTDIR)$(INSTALLTOP)/bin/$$c; \
+					$(RM) $(DESTDIR)$(INSTALLTOP)/bin/$$c; \
+					echo $(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$i; \
+					$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$i; \
 				else \
-					echo $(RM) $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/$$i; \
-					$(RM) $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/$$i; \
+					echo $(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$i; \
+					$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$i; \
 				fi; \
 				if expr $(PLATFORM) : 'mingw' > /dev/null; then \
 					case $$i in \
 						*crypto*) i=libeay32.dll;; \
 						*ssl*)    i=ssleay32.dll;; \
 					esac; \
-					echo $(RM) $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$i; \
-					$(RM) $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$i; \
+					echo $(RM) $(DESTDIR)$(INSTALLTOP)/bin/$$i; \
+					$(RM) $(DESTDIR)$(INSTALLTOP)/bin/$$i; \
 				fi; \
 			fi; \
 		done; \
 	fi
-	$(RM) $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/pkgconfig/libcrypto.pc
-	$(RM) $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/pkgconfig/libssl.pc
-	$(RM) $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/pkgconfig/openssl.pc
+	$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig/libcrypto.pc
+	$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig/libssl.pc
+	$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig/openssl.pc
 	@target=uninstall; $(RECURSIVE_BUILD_CMD)
 
 install_html_docs:
@@ -671,7 +671,7 @@ install_html_docs:
 		filecase=-i; \
 	esac; \
 	for subdir in apps crypto ssl; do \
-		$(PERL) $(TOP)/util/mkdir-p $(INSTALL_PREFIX)$(HTMLDIR)/$$subdir; \
+		$(PERL) $(TOP)/util/mkdir-p $(DESTDIR)$(HTMLDIR)/$$subdir; \
 		for i in doc/$$subdir/*.pod; do \
 			fn=`basename $$i .pod`; \
 			echo "installing html/$$fn.$(HTMLSUFFIX)"; \
@@ -679,10 +679,10 @@ install_html_docs:
 			| sed -r 's/L<([^)]*)(\([0-9]\))?\|([^)]*)(\([0-9]\))?>/L<\1|\3>/g' \
 			| pod2html --podroot=doc --htmlroot=.. --podpath=$$subdir:apps:crypto:ssl \
 			| sed -r 's/<!DOCTYPE.*//g' \
-			> $(INSTALL_PREFIX)$(HTMLDIR)/$$subdir/$$fn.$(HTMLSUFFIX); \
+			> $(DESTDIR)$(HTMLDIR)/$$subdir/$$fn.$(HTMLSUFFIX); \
 			$(PERL) util/extract-names.pl < $$i | \
 				grep -v $$filecase "^$$fn\$$" | \
-				(cd $(INSTALL_PREFIX)$(HTMLDIR)/$$subdir; \
+				(cd $(DESTDIR)$(HTMLDIR)/$$subdir; \
 				 while read n; do \
 					PLATFORM=$(PLATFORM) $$here/util/point.sh $$fn.$(HTMLSUFFIX) "$$n".$(HTMLSUFFIX); \
 				 done); \
@@ -698,21 +698,21 @@ uninstall_html_docs:
 	for subdir in apps crypto ssl; do \
 		for i in doc/$$subdir/*.pod; do \
 			fn=`basename $$i .pod`; \
-			$(RM) $(INSTALL_PREFIX)$(HTMLDIR)/$$subdir/$$fn.$(HTMLSUFFIX); \
+			$(RM) $(DESTDIR)$(HTMLDIR)/$$subdir/$$fn.$(HTMLSUFFIX); \
 			$(PERL) util/extract-names.pl < $$i | \
 				grep -v $$filecase "^$$fn\$$" | \
 				while read n; do \
-					$(RM) $(INSTALL_PREFIX)$(HTMLDIR)/$$subdir/"$$n".$(HTMLSUFFIX); \
+					$(RM) $(DESTDIR)$(HTMLDIR)/$$subdir/"$$n".$(HTMLSUFFIX); \
 				done; \
 		done; \
 	done
 
 install_docs:
 	@$(PERL) $(TOP)/util/mkdir-p.pl \
-		$(INSTALL_PREFIX)$(MANDIR)/man1 \
-		$(INSTALL_PREFIX)$(MANDIR)/man3 \
-		$(INSTALL_PREFIX)$(MANDIR)/man5 \
-		$(INSTALL_PREFIX)$(MANDIR)/man7
+		$(DESTDIR)$(MANDIR)/man1 \
+		$(DESTDIR)$(MANDIR)/man3 \
+		$(DESTDIR)$(MANDIR)/man5 \
+		$(DESTDIR)$(MANDIR)/man7
 	here="`pwd`"; \
 	filecase=; \
 	case "$(PLATFORM)" in DJGPP|Cygwin*|mingw*|darwin*-*-cc) \
@@ -726,11 +726,11 @@ install_docs:
 		pod2man \
 			--section=$$sec --center=OpenSSL \
 			--release=$(VERSION) `basename $$i`) \
-			>  $(INSTALL_PREFIX)$(MANDIR)/man$$sec/$$fn.$${sec}$(MANSUFFIX); \
+			>  $(DESTDIR)$(MANDIR)/man$$sec/$$fn.$${sec}$(MANSUFFIX); \
 		$(PERL) util/extract-names.pl < $$i | \
 			(grep -v $$filecase "^$$fn\$$"; true) | \
 			(grep -v "[	]"; true) | \
-			(cd $(INSTALL_PREFIX)$(MANDIR)/man$$sec/; \
+			(cd $(DESTDIR)$(MANDIR)/man$$sec/; \
 			 while read n; do \
 				PLATFORM=$(PLATFORM) $$here/util/point.sh $$fn.$${sec}$(MANSUFFIX) "$$n".$${sec}$(MANSUFFIX); \
 			 done); \
@@ -743,11 +743,11 @@ install_docs:
 		pod2man \
 			--section=$$sec --center=OpenSSL \
 			--release=$(VERSION) `basename $$i`) \
-			>  $(INSTALL_PREFIX)$(MANDIR)/man$$sec/$$fn.$${sec}$(MANSUFFIX); \
+			>  $(DESTDIR)$(MANDIR)/man$$sec/$$fn.$${sec}$(MANSUFFIX); \
 		$(PERL) util/extract-names.pl < $$i | \
 			(grep -v $$filecase "^$$fn\$$"; true) | \
 			(grep -v "[	]"; true) | \
-			(cd $(INSTALL_PREFIX)$(MANDIR)/man$$sec/; \
+			(cd $(DESTDIR)$(MANDIR)/man$$sec/; \
 			 while read n; do \
 				PLATFORM=$(PLATFORM) $$here/util/point.sh $$fn.$${sec}$(MANSUFFIX) "$$n".$${sec}$(MANSUFFIX); \
 			 done); \
@@ -762,27 +762,27 @@ uninstall_docs:
 	for i in doc/apps/*.pod; do \
 		fn=`basename $$i .pod`; \
 		sec=`$(PERL) util/extract-section.pl 1 < $$i`; \
-		echo $(RM) $(INSTALL_PREFIX)$(MANDIR)/man$$sec/$$fn.$${sec}$(MANSUFFIX); \
-		$(RM) $(INSTALL_PREFIX)$(MANDIR)/man$$sec/$$fn.$${sec}$(MANSUFFIX); \
+		echo $(RM) $(DESTDIR)$(MANDIR)/man$$sec/$$fn.$${sec}$(MANSUFFIX); \
+		$(RM) $(DESTDIR)$(MANDIR)/man$$sec/$$fn.$${sec}$(MANSUFFIX); \
 		$(PERL) util/extract-names.pl < $$i | \
 			(grep -v $$filecase "^$$fn\$$"; true) | \
 			(grep -v "[	]"; true) | \
 			while read n; do \
-				echo $(RM) $(INSTALL_PREFIX)$(MANDIR)/man$$sec/"$$n".$${sec}$(MANSUFFIX); \
-				$(RM) $(INSTALL_PREFIX)$(MANDIR)/man$$sec/"$$n".$${sec}$(MANSUFFIX); \
+				echo $(RM) $(DESTDIR)$(MANDIR)/man$$sec/"$$n".$${sec}$(MANSUFFIX); \
+				$(RM) $(DESTDIR)$(MANDIR)/man$$sec/"$$n".$${sec}$(MANSUFFIX); \
 			done; \
 	done; \
 	for i in doc/crypto/*.pod doc/ssl/*.pod; do \
 		fn=`basename $$i .pod`; \
 		sec=`$(PERL) util/extract-section.pl 3 < $$i`; \
-		echo $(RM) $(INSTALL_PREFIX)$(MANDIR)/man$$sec/$$fn.$${sec}$(MANSUFFIX); \
-		$(RM) $(INSTALL_PREFIX)$(MANDIR)/man$$sec/$$fn.$${sec}$(MANSUFFIX); \
+		echo $(RM) $(DESTDIR)$(MANDIR)/man$$sec/$$fn.$${sec}$(MANSUFFIX); \
+		$(RM) $(DESTDIR)$(MANDIR)/man$$sec/$$fn.$${sec}$(MANSUFFIX); \
 		$(PERL) util/extract-names.pl < $$i | \
 			(grep -v $$filecase "^$$fn\$$"; true) | \
 			(grep -v "[	]"; true) | \
 			while read n; do \
-				echo $(RM) $(INSTALL_PREFIX)$(MANDIR)/man$$sec/"$$n".$${sec}$(MANSUFFIX); \
-				$(RM) $(INSTALL_PREFIX)$(MANDIR)/man$$sec/"$$n".$${sec}$(MANSUFFIX); \
+				echo $(RM) $(DESTDIR)$(MANDIR)/man$$sec/"$$n".$${sec}$(MANSUFFIX); \
+				$(RM) $(DESTDIR)$(MANDIR)/man$$sec/"$$n".$${sec}$(MANSUFFIX); \
 			done; \
 	done
 

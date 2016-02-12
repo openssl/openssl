@@ -106,15 +106,13 @@ PROGRAMS={- join(", ", map { "-\n\t".$_.".EXE" } grep { !m|^\[\.test\]| } @{$uni
 TESTPROGS={- join(", ", map { "-\n\t".$_.".EXE" } grep { m|^\[\.test\]| } @{$unified_info{programs}}) -}
 SCRIPTS={- join(", ", map { "-\n\t".$_ } @{$unified_info{scripts}}) -}
 
-# INSTALL_PREFIX is for package builders so that they can configure for, say,
+# DESTDIR is for package builders so that they can configure for, say,
 # SYS$COMMON:[OPENSSL] and yet have everything installed in STAGING:[USER].
 # In that case, configure with --prefix=SYS$COMMON:[OPENSSL] and then run
-# MMS with /MACROS=(INSTALL_PREFIX=STAGING:[USER]).  The result will end
-# up in STAGING:[USER.OPENSSL].
-# Note that INSTALL_PREFIX can also be given at configuration time, with
-# --install_prefix.
+# MMS with /MACROS=(DESTDIR=STAGING:[USER]).  The result will end up in
+# STAGING:[USER.OPENSSL].
 # Normally it is left empty.
-INSTALL_PREFIX={- $config{install_prefix} -}
+DESTDIR=
 
 # Do not edit this manually. Use Configure --prefix=DIR to change this!
 INSTALLTOP={- catdir($config{prefix}) || "SYS\$COMMON:[OPENSSL-\$(MAJOR).\$(MINOR)]" -}
@@ -160,7 +158,7 @@ NODEBUG=@
         $(NODEBUG) internal_inc3 = F$PARSE("{- catdir($config{sourcedir},"[.crypto.include.internal]") -}","A.;",,,"SYNTAX_ONLY") - "A.;"
         $(NODEBUG) DEFINE openssl 'openssl_inc1','openssl_inc2'
         $(NODEBUG) DEFINE internal 'internal_inc1','internal_inc2','internal_inc3'
-        $(NODEBUG) staging_dir = "$(INSTALL_PREFIX)"
+        $(NODEBUG) staging_dir = "$(DESTDIR)"
         $(NODEBUG) IF staging_dir .NES. "" THEN -
                 staging_dir = F$PARSE("A.;",staging_dir,"[]",,"SYNTAX_ONLY") - "A.;"
         $(NODEBUG) !
@@ -179,7 +177,7 @@ NODEBUG=@
         $(NODEBUG) !
         $(NODEBUG) datatop = F$PARSE("$(OPENSSLDIR)","[000000]A.;",,,"SYNTAX_ONLY") -
                 - "]A.;" + ".]"
-        $(NODEBUG) IF "$(INSTALL_PREFIX)" .EQS. "" THEN -
+        $(NODEBUG) IF "$(DESTDIR)" .EQS. "" THEN -
                 DEFINE ossl_dataroot 'datatop'
         $(NODEBUG) !
         $(NODEBUG) ! Figure out the architecture
@@ -193,7 +191,7 @@ NODEBUG=@
 
 .LAST :
         $(NODEBUG) {- join("\n\t\$(NODEBUG) ", map { "DEASSIGN ".uc($_) } map { $unified_info{sharednames}->{$_} || () } @{$unified_info{libraries}}) || "!" -}
-        $(NODEBUG) IF "$(INSTALL_PREFIX)" .EQS. "" THEN DEASSIGN ossl_dataroot
+        $(NODEBUG) IF "$(DESTDIR)" .EQS. "" THEN DEASSIGN ossl_dataroot
         $(NODEBUG) DEASSIGN ossl_installroot
         $(NODEBUG) DEASSIGN internal
         $(NODEBUG) DEASSIGN openssl
@@ -266,7 +264,7 @@ install_sw : all install_dev install_engines install_runtime install_config
         @ WRITE SYS$OUTPUT ""
         @ WRITE SYS$OUTPUT "Installation complete"
         @ WRITE SYS$OUTPUT ""
-        @ IF "$(INSTALL_PREFIX)" .NES. "" THEN EXIT 1
+        @ IF "$(DESTDIR)" .NES. "" THEN EXIT 1
         @ WRITE SYS$OUTPUT "Run @$(INSTALLTOP)openssl_startup to set up logical names"
         @ WRITE SYS$OUTPUT "then run @$(INSTALLTOP)openssl_setup to define commands"
         @ WRITE SYS$OUTPUT ""
@@ -316,10 +314,10 @@ install_engines : check_INSTALLTOP
 
 install_config : [.VMS]openssl_startup.com [.VMS]openssl_shutdown.com -
                  check_INSTALLTOP
-        IF "$(INSTALL_PREFIX)" .EQS. "" THEN -
+        IF "$(DESTDIR)" .EQS. "" THEN -
                 IF F$SEARCH("OSSL_DATAROOT:[000000]CERTS.DIR;1") .EQS. "" THEN -
                 CREATE/DIR/PROT=(S:RWED,O:RWE,G:RE,W:RE) OSSL_DATAROOT:[CERTS]
-        IF "$(INSTALL_PREFIX)" .EQS. "" THEN -
+        IF "$(DESTDIR)" .EQS. "" THEN -
                 IF F$SEARCH("OSSL_DATAROOT:[000000]PRIVATE.DIR;1") .EQS. "" THEN -
                 CREATE/DIR/PROT=(S:RWED,O:RWE,G:,W:) OSSL_DATAROOT:[PRIVATE]
         CREATE/DIR ossl_installroot:[SYS$STARTUP]
@@ -388,7 +386,7 @@ copy-certs :
 
 debug_logicals :
         SH LOGICAL/PROC openssl,internal,ossl_installroot
-        IF "$(INSTALL_PREFIX)" .EQS. "" THEN -
+        IF "$(DESTDIR)" .EQS. "" THEN -
                 SH LOGICAL/PROC ossl_dataroot
 
 # Building targets ###################################################

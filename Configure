@@ -32,10 +32,6 @@ my $usage="Usage: Configure [no-<cipher> ...] [enable-<cipher> ...] [experimenta
 #               This becomes the value of OPENSSLDIR in Makefile and in C.
 #               (Default: PREFIX/ssl)
 #
-# --install_prefix  Additional prefix for package builders (empty by
-#               default).  This needn't be set in advance, you can
-#               just as well use "make INSTALL_PREFIX=/whatever install".
-#
 # --cross-compile-prefix Add specified prefix to binutils components.
 #
 # --api         One of 0.9.8, 1.0.0 or 1.1.0.  Do not compile support for
@@ -184,7 +180,6 @@ $config{prefix}="";
 $config{openssldir}="";
 $config{processor}="";
 $config{libdir}="";
-$config{install_prefix}= "$ENV{'INSTALL_PREFIX'}";
 $config{cross_compile_prefix}="";
 $config{fipslibdir}="/usr/local/ssl/fips-2.0/lib/";
 my $nofipscanistercheck=0;
@@ -603,10 +598,6 @@ foreach (@argvcopy)
 		elsif (/^--openssldir=(.*)$/)
 			{
 			$config{openssldir}=$1;
-			}
-		elsif (/^--install.prefix=(.*)$/)
-			{
-			$config{install_prefix}=$1;
 			}
 		elsif (/^--with-zlib-lib=(.*)$/)
 			{
