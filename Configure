@@ -456,7 +456,7 @@ if (grep /^reconf(igure)?$/, @argvcopy) {
         # centered information gathering the reading configdata.pm
         #
         while (<IN>) {
-            chomp;
+            s|\R$||;
             if (/^CONFIGURE_ARGS=\s*(.*)\s*/) {
                 # Older form, we split the string and hope for the best
                 @argvcopy = split /\s+/, $_;
@@ -1333,7 +1333,7 @@ if ($builder eq "unified") {
                 my $lineiterator = shift;
                 my $target_kind = $1;
                 while (defined $lineiterator->()) {
-                    chomp;
+                    s|\R$||;
                     if (/^\s*ENDRAW\[((?:\\.|[^\\\]])+)\]\s*$/) {
                         die "ENDRAW doesn't match BEGINRAW"
                             if $1 ne $target_kind;
@@ -2292,7 +2292,7 @@ sub collect_from_file {
         my $saved_line = "";
         $_ = "";
         while (<$fh>) {
-            chomp;
+            s|\R$||;
             if (defined $line_concat) {
                 $_ = $line_concat->($saved_line, $_);
                 $saved_line = "";
@@ -2323,7 +2323,7 @@ sub collect_from_array {
         my $saved_line = "";
         $_ = "";
         while (defined($_ = shift @array)) {
-            chomp;
+            s|\R$||;
             if (defined $line_concat) {
                 $_ = $line_concat->($saved_line, $_);
                 $saved_line = "";
@@ -2348,7 +2348,7 @@ sub collect_information {
     my %collectors = @_;
 
     while(defined($_ = $lineiterator->())) {
-        chomp;
+        s|\R$||;
         my $found = 0;
         foreach my $re (keys %collectors) {
             if ($re ne "OTHERWISE" && /$re/) {
