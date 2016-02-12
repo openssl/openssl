@@ -121,6 +121,61 @@ typedef struct ctlog_store_st CTLOG_STORE;
 /* Context for evaluating whether a CT policy has been met for a connection */
 typedef struct ct_policy_eval_ctx_st CT_POLICY_EVAL_CTX;
 
+/******************************************
+ * CT policy evaluation context functions *
+ ******************************************/
+
+/* Creates a new, empty policy evaluation context */
+CT_POLICY_EVAL_CTX *CT_POLICY_EVAL_CTX_new(void);
+
+/* Deletes a policy evaluation context */
+void CT_POLICY_EVAL_CTX_free(CT_POLICY_EVAL_CTX *ctx);
+
+/* Gets the peer certificate that the SCTs are for */
+X509* CT_POLICY_EVAL_CTX_get0_cert(CT_POLICY_EVAL_CTX *ctx);
+
+/* Sets the certificate associated with the received SCTs */
+int CT_POLICY_EVAL_CTX_set0_cert(CT_POLICY_EVAL_CTX *ctx, X509 *cert);
+
+/* Gets the issuer of the aforementioned certificate */
+X509* CT_POLICY_EVAL_CTX_get0_issuer(CT_POLICY_EVAL_CTX *ctx);
+
+/* Sets the issuer of the certificate associated with the received SCTs */
+int CT_POLICY_EVAL_CTX_set0_issuer(CT_POLICY_EVAL_CTX *ctx, X509 *issuer);
+
+/* Gets the CT logs that are trusted sources of SCTs */
+CTLOG_STORE *CT_POLICY_EVAL_CTX_get0_log_store(CT_POLICY_EVAL_CTX *ctx);
+
+/* Sets the log store that is in use */
+int CT_POLICY_EVAL_CTX_set0_log_store(CT_POLICY_EVAL_CTX *ctx,
+                                      CTLOG_STORE *log_store);
+
+/* Gets the SCTs that have validated successfully */
+STACK_OF(SCT) *CT_POLICY_EVAL_CTX_get0_good_scts(CT_POLICY_EVAL_CTX *ctx);
+
+/* Sets the SCTs that have been verified successfully */
+int CT_POLICY_EVAL_CTX_set0_good_scts(CT_POLICY_EVAL_CTX *ctx,
+                                      STACK_OF(SCT) *scts);
+
+/* Gets the SCTs that failed validation */
+STACK_OF(SCT) *CT_POLICY_EVAL_CTX_get0_bad_scts(CT_POLICY_EVAL_CTX *ctx);
+
+/* Sets the SCTs that have failed verification */
+int CT_POLICY_EVAL_CTX_set0_bad_scts(CT_POLICY_EVAL_CTX *ctx,
+                                     STACK_OF(SCT) *scts);
+
+/*
+ * A callback for verifying that the received SCTs are sufficient.
+ * Expected to return 1 if they are sufficient, otherwise 0.
+ * May return a negative integer if an error occurs.
+ * The connection should be aborted if the SCTs are deemed insufficient.
+ */
+typedef int(*ct_validation_cb)(CT_POLICY_EVAL_CTX *ctx, void *arg);
+/* Returns 0 if there are invalid SCTs */
+int CT_verify_no_bad_scts(CT_POLICY_EVAL_CTX *ctx, void *arg);
+/* Returns 0 if there are invalid SCTS or fewer than one valid SCT */
+int CT_verify_at_least_one_good_sct(CT_POLICY_EVAL_CTX *ctx, void *arg);
+
 /*****************
  * SCT functions *
  *****************/
@@ -277,6 +332,24 @@ sct_source_t SCT_get_source(const SCT *sct);
  * Returns 1 on success, 0 otherwise.
  */
 int SCT_set_source(SCT *sct, sct_source_t source);
+
+/*
+ * Validates the given SCT with the provided context.
+ * Sets the "validation_status" field of the SCT.
+ * Returns 1 if the SCT is valid and the signature verifies.
+ * Returns 0 if the SCT is invalid.
+ * Returns -1 if an error occurs.
+ */
+int SCT_validate(SCT *sct, const CT_POLICY_EVAL_CTX *ctx);
+
+/*
+ * Validates the given list of SCTs with the provided context.
+ * Populates the "good_scts" and "bad_scts" of the evaluation context.
+ * Returns 1 if there are no invalid SCTs and all signatures verify.
+ * Returns 0 if at least one SCT is invalid.
+ * Returns a negative integer if an error occurs.
+ */
+int SCT_LIST_validate(const STACK_OF(SCT) *scts, CT_POLICY_EVAL_CTX *ctx);
 
 /*
  * Sets the source of all of the SCTs to the same value.

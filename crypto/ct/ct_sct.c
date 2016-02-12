@@ -328,3 +328,113 @@ int SCT_LIST_set_source(const STACK_OF(SCT) *scts, sct_source_t source)
     }
     return ret;
 }
+
+/*
+ * Given an SCT, a cert, and the public key of the issuer, attempt to validate it.
+ * Return 1 if valid, 0 otherwise.
+ */
+int SCT_validate(SCT *sct, const CT_POLICY_EVAL_CTX *ctx)
+{
+    int is_sct_valid = 0;
+    SCT_CTX *sctx = NULL;
+    X509_PUBKEY *pub = NULL, *log_pkey = NULL;
+
+    if (sct == NULL || ctx == NULL) {
+        CTerr(CT_F_SCT_VALIDATE, ERR_R_PASSED_NULL_PARAMETER);
+        goto err;
+    }
+
+    switch (sct->version) {
+    case SCT_VERSION_V1:
+        if (sct->log == NULL)
+            sct->log = CTLOG_STORE_get0_log_by_id(ctx->log_store,
+                                                  sct->log_id,
+                                                  CT_V1_HASHLEN);
+        break;
+    default:
+        sct->validation_status = SCT_VALIDATION_STATUS_UNKNOWN_VERSION;
+        goto end;
+    }
+
+    if (sct->log == NULL) {
+        sct->validation_status = SCT_VALIDATION_STATUS_UNKNOWN_LOG;
+        goto end;
+    }
+
+    sctx = SCT_CTX_new();
+    if (!sctx)
+        goto err;
+
+    if (X509_PUBKEY_set(&log_pkey, CTLOG_get0_public_key(sct->log)) != 1)
+        goto err;
+    if (SCT_CTX_set1_pubkey(sctx, log_pkey) != 1)
+        goto err;
+
+    if (SCT_get_log_entry_type(sct) == CT_LOG_ENTRY_TYPE_PRECERT) {
+        EVP_PKEY *issuer_pkey;
+        if (ctx->issuer == NULL) {
+            sct->validation_status = SCT_VALIDATION_STATUS_UNVERIFIED;
+            goto end;
+        }
+        issuer_pkey = X509_get_pubkey(ctx->issuer);
+
+        if (X509_PUBKEY_set(&pub, issuer_pkey) != 1)
+            goto err;
+        if (SCT_CTX_set1_issuer_pubkey(sctx, pub) != 1)
+            goto err;
+    }
+
+    if (SCT_CTX_set1_cert(sctx, ctx->cert, NULL) != 1)
+        goto err;
+
+    sct->validation_status = SCT_verify(sctx, sct) == 1 ?
+            SCT_VALIDATION_STATUS_VALID : SCT_VALIDATION_STATUS_INVALID;
+
+end:
+    is_sct_valid = 1;
+err:
+    X509_PUBKEY_free(pub);
+    X509_PUBKEY_free(log_pkey);
+    SCT_CTX_free(sctx);
+
+    return is_sct_valid;
+}
+
+/*
+ * Called after ServerHelloDone. If 1 is not returned, connection is aborted.
+ */
+int SCT_LIST_validate(const STACK_OF(SCT) *scts, CT_POLICY_EVAL_CTX *ctx)
+{
+    int ret = -1;
+    int count_scts = scts != NULL ? sk_SCT_num(scts) : 0;
+    int i;
+    if (ctx == NULL) {
+        CTerr(CT_F_SCT_LIST_VALIDATE, ERR_R_PASSED_NULL_PARAMETER);
+        goto end;
+    }
+
+    for (i = 0; i < count_scts; i++) {
+        SCT *sct = sk_SCT_value(scts, i);
+        if (sct == NULL)
+            continue;
+
+        ret = SCT_validate(sct, ctx);
+        if (ret != 1)
+            goto end;
+
+        switch (sct->validation_status) {
+        case SCT_VALIDATION_STATUS_VALID:
+            sk_SCT_push(ctx->good_scts, sct);
+            break;
+        case SCT_VALIDATION_STATUS_INVALID:
+            sk_SCT_push(ctx->bad_scts, sct);
+            break;
+        default:
+            break;
+        }
+    }
+
+    ret = sk_SCT_num(ctx->bad_scts) == 0;
+end:
+    return ret;
+}

@@ -99,6 +99,41 @@ typedef enum sct_signature_type_t {
     SIGNATURE_TYPE_TREE_HASH
 } SCT_SIGNATURE_TYPE;
 
+int CT_verify_no_bad_scts(CT_POLICY_EVAL_CTX *ctx, void *arg)
+{
+    if (ctx == NULL) {
+        CTerr(CT_F_CT_VERIFY_NO_BAD_SCTS, ERR_R_PASSED_NULL_PARAMETER);
+        return -1;
+    }
+
+    if (sk_SCT_num(ctx->bad_scts) > 0) {
+        return 0;
+    }
+
+    return 1;
+}
+
+int CT_verify_at_least_one_good_sct(CT_POLICY_EVAL_CTX *ctx, void *arg)
+{
+    int ret = -1;
+    if (ctx == NULL) {
+        CTerr(CT_F_CT_VERIFY_AT_LEAST_ONE_GOOD_SCT, ERR_R_PASSED_NULL_PARAMETER);
+        goto end;
+    }
+
+    ret = CT_verify_no_bad_scts(ctx, arg);
+    if (ret != 1)
+        goto end;
+
+    if (sk_SCT_num(ctx->good_scts) < 1) {
+        CTerr(CT_F_CT_VERIFY_AT_LEAST_ONE_GOOD_SCT, CT_R_NOT_ENOUGH_SCTS);
+        ret = 0;
+    }
+
+end:
+    return ret;
+}
+
 /*
  * Update encoding for SCT signature verification/generation to supplied
  * EVP_MD_CTX.

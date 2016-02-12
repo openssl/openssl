@@ -117,6 +117,15 @@ struct sct_ctx_st {
     size_t prederlen;
 };
 
+/* Context when evaluating whether a Certificate Transparency policy is met */
+struct ct_policy_eval_ctx_st {
+    X509 *cert;
+    X509 *issuer;
+    CTLOG_STORE *log_store;
+    STACK_OF(SCT) *good_scts;
+    STACK_OF(SCT) *bad_scts;
+};
+
 /*
  * Creates a new context for verifying an SCT.
  */
