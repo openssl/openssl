@@ -262,17 +262,21 @@ extern "C" {
 # ifdef _WIN32
 #  ifdef _WIN64
 #   define ossl_ssize_t __int64
+#   define OSSL_SSIZE_MAX _I64_MAX
 #  else
 #   define ossl_ssize_t int
+#   define OSSL_SSIZE_MAX INT_MAX
 #  endif
 # endif
 
 # if defined(__ultrix) && !defined(ssize_t)
 #  define ossl_ssize_t int
+#  define OSSL_SSIZE_MAX INT_MAX
 # endif
 
 # ifndef ossl_ssize_t
 #  define ossl_ssize_t ssize_t
+#  define OSSL_SSIZE_MAX SSIZE_MAX
 # endif
 
 # ifdef DEBUG_UNUSED
