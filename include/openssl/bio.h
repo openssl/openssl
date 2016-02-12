@@ -221,6 +221,9 @@ extern "C" {
  */
 # define BIO_FLAGS_MEM_RDONLY    0x200
 
+typedef union bio_addr_st BIO_ADDR;
+typedef struct bio_addrinfo_st BIO_ADDRINFO;
+
 void BIO_set_flags(BIO *b, int flags);
 int BIO_test_flags(const BIO *b, int flags);
 void BIO_clear_flags(BIO *b, int flags);
@@ -379,15 +382,6 @@ struct bio_dgram_sctp_prinfo {
 };
 # endif
 
-/* connect BIO stuff */
-# define BIO_CONN_S_BEFORE               1
-# define BIO_CONN_S_GET_IP               2
-# define BIO_CONN_S_GET_PORT             3
-# define BIO_CONN_S_CREATE_SOCKET        4
-# define BIO_CONN_S_CONNECT              5
-# define BIO_CONN_S_OK                   6
-# define BIO_CONN_S_BLOCKED_CONNECT      7
-# define BIO_CONN_S_NBIO                 8
 /*
  * #define BIO_CONN_get_param_hostname BIO_ctrl
  */
@@ -452,31 +446,47 @@ struct bio_dgram_sctp_prinfo {
 # define BIO_C_SET_EX_ARG                        153
 # define BIO_C_GET_EX_ARG                        154
 
+# define BIO_C_SET_CONNECT_MODE                  155
+
 # define BIO_set_app_data(s,arg)         BIO_set_ex_data(s,0,arg)
 # define BIO_get_app_data(s)             BIO_get_ex_data(s,0)
 
-/* BIO_s_connect() and BIO_s_socks4a_connect() */
-# define BIO_set_conn_hostname(b,name) BIO_ctrl(b,BIO_C_SET_CONNECT,0,(char *)name)
-# define BIO_set_conn_port(b,port) BIO_ctrl(b,BIO_C_SET_CONNECT,1,(char *)port)
-# define BIO_set_conn_ip(b,ip)     BIO_ctrl(b,BIO_C_SET_CONNECT,2,(char *)ip)
-# define BIO_set_conn_int_port(b,port) BIO_ctrl(b,BIO_C_SET_CONNECT,3,(char *)port)
-# define BIO_get_conn_hostname(b)  BIO_ptr_ctrl(b,BIO_C_GET_CONNECT,0)
-# define BIO_get_conn_port(b)      BIO_ptr_ctrl(b,BIO_C_GET_CONNECT,1)
-# define BIO_get_conn_ip(b)               BIO_ptr_ctrl(b,BIO_C_GET_CONNECT,2)
-# define BIO_get_conn_int_port(b) BIO_ctrl(b,BIO_C_GET_CONNECT,3,NULL)
+/* IP families we support, for BIO_s_connect() and BIO_s_accept() */
+/* Note: the underlying operating system may not support some of them */
+# define BIO_FAMILY_IPV4                         4
+# define BIO_FAMILY_IPV6                         6
+# define BIO_FAMILY_IPANY                        256
 
-# define BIO_set_nbio(b,n)       BIO_ctrl(b,BIO_C_SET_NBIO,(n),NULL)
+/* BIO_s_connect() */
+# define BIO_set_conn_hostname(b,name) BIO_ctrl(b,BIO_C_SET_CONNECT,0,(char *)name)
+# define BIO_set_conn_port(b,port)     BIO_ctrl(b,BIO_C_SET_CONNECT,1,(char *)port)
+# define BIO_set_conn_address(b,addr)  BIO_ctrl(b,BIO_C_SET_CONNECT,2,(char *)addr)
+# define BIO_set_conn_ip_family(b,f)   BIO_int_ctrl(b,BIO_C_SET_CONNECT,3,f)
+# define BIO_get_conn_hostname(b)      ((const char *)BIO_ptr_ctrl(b,BIO_C_GET_CONNECT,0,NULL))
+# define BIO_get_conn_port(b)          ((const char *)BIO_ptr_ctrl(b,BIO_C_GET_CONNECT,1,NULL))
+# define BIO_get_conn_address(b)       ((const BIO_ADDR *)BIO_ptr_ctrl(b,BIO_C_GET_CONNECT,2,NULL))
+# define BIO_get_conn_ip_family(b)     BIO_ctrl(b,BIO_C_GET_CONNECT,3,NULL)
+# define BIO_set_conn_mode(b,n)        BIO_ctrl(b,BIO_C_SET_CONNECT_MODE,(n),NULL)
+
+# define BIO_set_nbio(b,n)             BIO_ctrl(b,BIO_C_SET_NBIO,(n),NULL)
 
 /* BIO_s_accept() */
-# define BIO_set_accept_port(b,name) BIO_ctrl(b,BIO_C_SET_ACCEPT,0,(char *)name)
-# define BIO_get_accept_port(b)  BIO_ptr_ctrl(b,BIO_C_GET_ACCEPT,0)
+# define BIO_set_accept_name(b,name)   BIO_ctrl(b,BIO_C_SET_ACCEPT,0,(char *)name)
+# define BIO_set_accept_port(b,port)   BIO_ctrl(b,BIO_C_SET_ACCEPT,1,(char *)port)
+# define BIO_get_accept_name(b)        ((const char *)BIO_ptr_ctrl(b,BIO_C_GET_ACCEPT,0))
+# define BIO_get_accept_port(b)        ((const char *)BIO_ptr_ctrl(b,BIO_C_GET_ACCEPT,1))
+# define BIO_get_peer_name(b)          ((const char *)BIO_ptr_ctrl(b,BIO_C_GET_ACCEPT,2))
+# define BIO_get_peer_port(b)          ((const char *)BIO_ptr_ctrl(b,BIO_C_GET_ACCEPT,3))
 /* #define BIO_set_nbio(b,n)    BIO_ctrl(b,BIO_C_SET_NBIO,(n),NULL) */
-# define BIO_set_nbio_accept(b,n) BIO_ctrl(b,BIO_C_SET_ACCEPT,1,(n)?(void *)"a":NULL)
-# define BIO_set_accept_bios(b,bio) BIO_ctrl(b,BIO_C_SET_ACCEPT,2,(char *)bio)
+# define BIO_set_nbio_accept(b,n)      BIO_ctrl(b,BIO_C_SET_ACCEPT,2,(n)?(void *)"a":NULL)
+# define BIO_set_accept_bios(b,bio)    BIO_ctrl(b,BIO_C_SET_ACCEPT,3,(char *)bio)
+# define BIO_set_accept_ip_family(b,f) BIO_int_ctrl(b,BIO_C_SET_ACCEPT,4,f)
+# define BIO_get_accept_ip_family(b)   BIO_ctrl(b,BIO_C_GET_ACCEPT,4,NULL)
 
+/* Aliases kept for backward compatibility */
 # define BIO_BIND_NORMAL                 0
-# define BIO_BIND_REUSEADDR_IF_UNUSED    1
-# define BIO_BIND_REUSEADDR              2
+# define BIO_BIND_REUSEADDR              BIO_SOCK_REUSEADDR
+# define BIO_BIND_REUSEADDR_IF_UNUSED    BIO_SOCK_REUSEADDR
 # define BIO_set_bind_mode(b,mode) BIO_ctrl(b,BIO_C_SET_BIND_MODE,mode,NULL)
 # define BIO_get_bind_mode(b)    BIO_ctrl(b,BIO_C_GET_BIND_MODE,0,NULL)
 
@@ -634,7 +644,7 @@ long BIO_ctrl(BIO *bp, int cmd, long larg, void *parg);
 long BIO_callback_ctrl(BIO *b, int cmd,
                        void (*fp) (struct bio_st *, int, const char *, int,
                                    long, long));
-char *BIO_ptr_ctrl(BIO *bp, int cmd, long larg);
+void *BIO_ptr_ctrl(BIO *bp, int cmd, long larg);
 long BIO_int_ctrl(BIO *bp, int cmd, long larg, int iarg);
 BIO *BIO_push(BIO *b, BIO *append);
 BIO *BIO_pop(BIO *b);
@@ -699,26 +709,69 @@ int BIO_dump_indent_fp(FILE *fp, const char *s, int len, int indent);
 int BIO_hex_string(BIO *out, int indent, int width, unsigned char *data,
                    int datalen);
 
-struct hostent *BIO_gethostbyname(const char *name);
-/*-
- * We might want a thread-safe interface too:
- * struct hostent *BIO_gethostbyname_r(const char *name,
- *     struct hostent *result, void *buffer, size_t buflen);
- * or something similar (caller allocates a struct hostent,
- * pointed to by "result", and additional buffer space for the various
- * substructures; if the buffer does not suffice, NULL is returned
- * and an appropriate error code is set).
- */
+BIO_ADDR *BIO_ADDR_new(void);
+int BIO_ADDR_rawmake(BIO_ADDR *ap, int family,
+                     const void *where, size_t wherelen, unsigned short port);
+void BIO_ADDR_free(BIO_ADDR *);
+void BIO_ADDR_clear(BIO_ADDR *ap);
+int BIO_ADDR_family(const BIO_ADDR *ap);
+int BIO_ADDR_rawaddress(const BIO_ADDR *ap, void *p, size_t *l);
+unsigned short BIO_ADDR_rawport(const BIO_ADDR *ap);
+char *BIO_ADDR_hostname_string(const BIO_ADDR *ap, int numeric);
+char *BIO_ADDR_service_string(const BIO_ADDR *ap, int numeric);
+char *BIO_ADDR_path_string(const BIO_ADDR *ap);
+
+const BIO_ADDRINFO *BIO_ADDRINFO_next(const BIO_ADDRINFO *bai);
+int BIO_ADDRINFO_family(const BIO_ADDRINFO *bai);
+int BIO_ADDRINFO_socktype(const BIO_ADDRINFO *bai);
+int BIO_ADDRINFO_protocol(const BIO_ADDRINFO *bai);
+const BIO_ADDR *BIO_ADDRINFO_address(const BIO_ADDRINFO *bai);
+void BIO_ADDRINFO_free(BIO_ADDRINFO *bai);
+
+enum BIO_hostserv_priorities {
+    BIO_PARSE_PRIO_HOST, BIO_PARSE_PRIO_SERV
+};
+int BIO_parse_hostserv(const char *hostserv, char **host, char **service,
+                       enum BIO_hostserv_priorities hostserv_prio);
+enum BIO_lookup_type {
+    BIO_LOOKUP_CLIENT, BIO_LOOKUP_SERVER
+};
+int BIO_lookup(const char *host, const char *service,
+               enum BIO_lookup_type lookup_type,
+               int family, int socktype, BIO_ADDRINFO **res);
 int BIO_sock_error(int sock);
 int BIO_socket_ioctl(int fd, long type, void *arg);
 int BIO_socket_nbio(int fd, int mode);
-int BIO_get_port(const char *str, unsigned short *port_ptr);
-int BIO_get_host_ip(const char *str, unsigned char *ip);
-int BIO_get_accept_socket(char *host_port, int mode);
-int BIO_accept(int sock, char **ip_port);
 int BIO_sock_init(void);
 void BIO_sock_cleanup(void);
 int BIO_set_tcp_ndelay(int sock, int turn_on);
+
+DEPRECATEDIN_1_1_0(struct hostent *BIO_gethostbyname(const char *name))
+DEPRECATEDIN_1_1_0(int BIO_get_port(const char *str, unsigned short *port_ptr))
+DEPRECATEDIN_1_1_0(int BIO_get_host_ip(const char *str, unsigned char *ip))
+DEPRECATEDIN_1_1_0(int BIO_get_accept_socket(char *host_port, int mode))
+DEPRECATEDIN_1_1_0(int BIO_accept(int sock, char **ip_port))
+
+union BIO_sock_info_u {
+    BIO_ADDR *addr;
+};
+enum BIO_sock_info_type {
+    BIO_SOCK_INFO_ADDRESS
+};
+int BIO_sock_info(int sock,
+                  enum BIO_sock_info_type type, union BIO_sock_info_u *info);
+
+# define BIO_SOCK_REUSEADDR    0x01
+# define BIO_SOCK_V6_ONLY      0x02
+# define BIO_SOCK_KEEPALIVE    0x04
+# define BIO_SOCK_NONBLOCK     0x08
+# define BIO_SOCK_NODELAY      0x10
+
+int BIO_socket(int domain, int socktype, int protocol, int options);
+int BIO_connect(int sock, const BIO_ADDR *addr, int options);
+int BIO_listen(int sock, const BIO_ADDR *addr, int options);
+int BIO_accept_ex(int accept_sock, BIO_ADDR *addr, int options);
+int BIO_closesocket(int sock);
 
 BIO *BIO_new_socket(int sock, int close_flag);
 BIO *BIO_new_dgram(int fd, int close_flag);
@@ -778,15 +831,20 @@ void ERR_load_BIO_strings(void);
 
 /* Function codes. */
 # define BIO_F_ACPT_STATE                                 100
+# define BIO_F_ADDR_STRINGS                               134
 # define BIO_F_BIO_ACCEPT                                 101
+# define BIO_F_BIO_ACCEPT_EX                              137
 # define BIO_F_BIO_BER_GET_HEADER                         102
 # define BIO_F_BIO_CALLBACK_CTRL                          131
+# define BIO_F_BIO_CONNECT                                138
 # define BIO_F_BIO_CTRL                                   103
 # define BIO_F_BIO_GETHOSTBYNAME                          120
 # define BIO_F_BIO_GETS                                   104
 # define BIO_F_BIO_GET_ACCEPT_SOCKET                      105
 # define BIO_F_BIO_GET_HOST_IP                            106
 # define BIO_F_BIO_GET_PORT                               107
+# define BIO_F_BIO_LISTEN                                 139
+# define BIO_F_BIO_LOOKUP                                 135
 # define BIO_F_BIO_MAKE_PAIR                              121
 # define BIO_F_BIO_NEW                                    108
 # define BIO_F_BIO_NEW_FILE                               109
@@ -795,8 +853,12 @@ void ERR_load_BIO_strings(void);
 # define BIO_F_BIO_NREAD0                                 124
 # define BIO_F_BIO_NWRITE                                 125
 # define BIO_F_BIO_NWRITE0                                122
+# define BIO_F_BIO_PARSE_HOSTSERV                         136
 # define BIO_F_BIO_PUTS                                   110
 # define BIO_F_BIO_READ                                   111
+# define BIO_F_BIO_SOCKET                                 140
+# define BIO_F_BIO_SOCKET_NBIO                            142
+# define BIO_F_BIO_SOCK_INFO                              141
 # define BIO_F_BIO_SOCK_INIT                              112
 # define BIO_F_BIO_WRITE                                  113
 # define BIO_F_BUFFER_CTRL                                114
@@ -814,6 +876,8 @@ void ERR_load_BIO_strings(void);
 
 /* Reason codes. */
 # define BIO_R_ACCEPT_ERROR                               100
+# define BIO_R_ADDRINFO_ADDR_IS_NOT_AF_INET               141
+# define BIO_R_AMBIGUOUS_HOST_OR_SERVICE                  129
 # define BIO_R_BAD_FOPEN_MODE                             101
 # define BIO_R_BAD_HOSTNAME_LOOKUP                        102
 # define BIO_R_BROKEN_PIPE                                124
@@ -823,23 +887,39 @@ void ERR_load_BIO_strings(void);
 # define BIO_R_ERROR_SETTING_NBIO_ON_ACCEPTED_SOCKET      105
 # define BIO_R_ERROR_SETTING_NBIO_ON_ACCEPT_SOCKET        106
 # define BIO_R_GETHOSTBYNAME_ADDR_IS_NOT_AF_INET          107
+# define BIO_R_GETSOCKNAME_ERROR                          132
+# define BIO_R_GETSOCKNAME_TRUNCATED_ADDRESS              133
+# define BIO_R_GETTING_SOCKTYPE                           134
 # define BIO_R_INVALID_ARGUMENT                           125
 # define BIO_R_INVALID_IP_ADDRESS                         108
+# define BIO_R_INVALID_SOCKET                             135
 # define BIO_R_IN_USE                                     123
 # define BIO_R_KEEPALIVE                                  109
+# define BIO_R_LISTEN_V6_ONLY                             136
+# define BIO_R_LOOKUP_RETURNED_NOTHING                    142
+# define BIO_R_MALFORMED_HOST_OR_SERVICE                  130
 # define BIO_R_NBIO_CONNECT_ERROR                         110
+# define BIO_R_NO_ACCEPT_ADDR_OR_SERVICE_SPECIFIED        143
 # define BIO_R_NO_ACCEPT_PORT_SPECIFIED                   111
+# define BIO_R_NO_HOSTNAME_OR_SERVICE_SPECIFIED           144
 # define BIO_R_NO_HOSTNAME_SPECIFIED                      112
 # define BIO_R_NO_PORT_DEFINED                            113
-# define BIO_R_NO_PORT_SPECIFIED                          114
+# define BIO_R_NO_SERVICE_SPECIFIED                       114
 # define BIO_R_NO_SUCH_FILE                               128
 # define BIO_R_NULL_PARAMETER                             115
 # define BIO_R_TAG_MISMATCH                               116
 # define BIO_R_UNABLE_TO_BIND_SOCKET                      117
 # define BIO_R_UNABLE_TO_CREATE_SOCKET                    118
+# define BIO_R_UNABLE_TO_KEEPALIVE                        137
 # define BIO_R_UNABLE_TO_LISTEN_SOCKET                    119
+# define BIO_R_UNABLE_TO_NODELAY                          138
+# define BIO_R_UNABLE_TO_REUSEADDR                        139
+# define BIO_R_UNAVAILABLE_IP_FAMILY                      145
 # define BIO_R_UNINITIALIZED                              120
+# define BIO_R_UNKNOWN_INFO_TYPE                          140
+# define BIO_R_UNSUPPORTED_IP_FAMILY                      146
 # define BIO_R_UNSUPPORTED_METHOD                         121
+# define BIO_R_UNSUPPORTED_PROTOCOL_FAMILY                131
 # define BIO_R_WRITE_TO_READ_ONLY_BIO                     126
 # define BIO_R_WSASTARTUP                                 122
 

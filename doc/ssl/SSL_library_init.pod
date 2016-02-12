@@ -28,14 +28,6 @@ SSL_library_init() is not reentrant.
 SSL_library_init() adds ciphers and digests used directly and indirectly by
 SSL/TLS.
 
-=head1 EXAMPLES
-
-A typical TLS/SSL application will start with the library initialization,
-and provide readable error messages.
-
- SSL_load_error_strings();                /* readable error messages */
- SSL_library_init();                      /* initialize library */
-
 =head1 RETURN VALUES
 
 SSL_library_init() always returns "1", so it is safe to discard the return
@@ -43,7 +35,12 @@ value.
 
 =head1 SEE ALSO
 
-L<ssl(3)>, L<SSL_load_error_strings(3)>,
+L<ssl(3)>,
 L<RAND_add(3)>
+
+=head1 HISTORY
+
+The SSL_library_init() and OpenSSL_add_ssl_algorithms() functions were
+deprecated in OpenSSL 1.1.0 by OPENSSL_init_ssl().
 
 =cut

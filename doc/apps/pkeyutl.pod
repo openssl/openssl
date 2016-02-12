@@ -7,14 +7,15 @@ pkeyutl - public key algorithm utility
 =head1 SYNOPSIS
 
 B<openssl> B<pkeyutl>
+[B<-help>]
 [B<-in file>]
 [B<-out file>]
 [B<-sigfile file>]
 [B<-inkey file>]
-[B<-keyform PEM|DER>]
+[B<-keyform PEM|DER|ENGINE>]
 [B<-passin arg>]
 [B<-peerkey file>]
-[B<-peerform PEM|DER>]
+[B<-peerform PEM|DER|ENGINE>]
 [B<-pubin>]
 [B<-certin>]
 [B<-rev>]
@@ -28,6 +29,7 @@ B<openssl> B<pkeyutl>
 [B<-hexdump>]
 [B<-asn1parse>]
 [B<-engine id>]
+[B<-engine_impl>]
 
 =head1 DESCRIPTION
 
@@ -37,6 +39,10 @@ any supported algorithm.
 =head1 COMMAND OPTIONS
 
 =over 4
+
+=item B<-help>
+
+Print out a usage message.
 
 =item B<-in filename>
 
@@ -48,13 +54,17 @@ if this option is not specified.
 specifies the output filename to write to or standard output by
 default.
 
+=item B<-sigfile file>
+
+Signature file, required for B<verify> operations only
+
 =item B<-inkey file>
 
 the input key file, by default it should be a private key.
 
-=item B<-keyform PEM|DER>
+=item B<-keyform PEM|DER|ENGINE>
 
-the key format PEM, DER or ENGINE.
+the key format PEM, DER or ENGINE. Default is PEM.
 
 =item B<-passin arg>
 
@@ -66,17 +76,9 @@ see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
 
 the peer key file, used by key derivation (agreement) operations.
 
-=item B<-peerform PEM|DER>
+=item B<-peerform PEM|DER|ENGINE>
 
-the peer key format PEM, DER or ENGINE.
-
-=item B<-engine id>
-
-specifying an engine (by its unique B<id> string) will cause B<pkeyutl>
-to attempt to obtain a functional reference to the specified engine,
-thus initialising it if needed. The engine will then be set as the default
-for all available algorithms.
-
+the peer key format PEM, DER or ENGINE. Default is PEM.
 
 =item B<-pubin>
 
@@ -117,6 +119,10 @@ decrypt the input data using a private key.
 
 derive a shared secret using the peer key.
 
+=item B<-pkeyopt opt:value>
+
+Public key options specified as opt:value. See NOTES below for more details.
+
 =item B<-hexdump>
 
 hex dump the output data.
@@ -125,6 +131,19 @@ hex dump the output data.
 
 asn1parse the output data, this is useful when combined with the
 B<-verifyrecover> option when an ASN1 structure is signed.
+
+=item B<-engine id>
+
+specifying an engine (by its unique B<id> string) will cause B<pkeyutl>
+to attempt to obtain a functional reference to the specified engine,
+thus initialising it if needed. The engine will then be set as the default
+for all available algorithms.
+
+=item B<-engine_impl>
+
+When used with the B<-engine> option, it specifies to also use
+engine B<id> for crypto operations.
+
 
 =back
 

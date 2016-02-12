@@ -173,8 +173,6 @@ typedef unsigned int u_int;
 # undef FIONBIO
 #endif
 
-#define SSL_HOST_NAME   "localhost"
-
 #undef BUFSIZZ
 #define BUFSIZZ 1024*8
 #define S_CLIENT_IRC_READ_TIMEOUT 8
@@ -634,7 +632,8 @@ static int tlsa_import_rrset(SSL *con, STACK_OF(OPENSSL_STRING) *rrset)
 
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
-    OPT_HOST, OPT_PORT, OPT_CONNECT, OPT_UNIX, OPT_XMPPHOST, OPT_VERIFY,
+    OPT_4, OPT_6, OPT_HOST, OPT_PORT, OPT_CONNECT, OPT_UNIX,
+    OPT_XMPPHOST, OPT_VERIFY,
     OPT_CERT, OPT_CRL, OPT_CRL_DOWNLOAD, OPT_SESS_OUT, OPT_SESS_IN,
     OPT_CERTFORM, OPT_CRLFORM, OPT_VERIFY_RET_ERROR, OPT_VERIFY_QUIET,
     OPT_BRIEF, OPT_PREXIT, OPT_CRLF, OPT_QUIET, OPT_NBIO,
@@ -664,10 +663,14 @@ OPTIONS s_client_options[] = {
     {"host", OPT_HOST, 's', "Use -connect instead"},
     {"port", OPT_PORT, 'p', "Use -connect instead"},
     {"connect", OPT_CONNECT, 's',
-     "TCP/IP where to connect (default is " SSL_HOST_NAME ":" PORT_STR ")"},
+     "TCP/IP where to connect (default is :" PORT ")"},
     {"proxy", OPT_PROXY, 's',
      "Connect to via specified proxy to the real server"},
+#ifdef AF_UNIX
     {"unix", OPT_UNIX, 's', "Connect over unix domain sockets"},
+#endif
+    {"4", OPT_4, '-', "Use IPv4 only"},
+    {"6", OPT_6, '-', "Use IPv6 only"},
     {"verify", OPT_VERIFY, 'p', "Turn on peer certificate verification"},
     {"cert", OPT_CERT, '<', "Certificate file to use, PEM format assumed"},
     {"certform", OPT_CERTFORM, 'F',
@@ -845,12 +848,12 @@ int s_client_main(int argc, char **argv)
     char *CApath = NULL, *CAfile = NULL, *cbuf = NULL, *sbuf = NULL;
     char *mbuf = NULL, *proxystr = NULL, *connectstr = NULL;
     char *cert_file = NULL, *key_file = NULL, *chain_file = NULL;
-    char *chCApath = NULL, *chCAfile = NULL, *host = SSL_HOST_NAME;
+    char *chCApath = NULL, *chCAfile = NULL, *host = NULL;
+    char *port = BUF_strdup(PORT);
     char *inrand = NULL;
     char *passarg = NULL, *pass = NULL, *vfyCApath = NULL, *vfyCAfile = NULL;
     char *sess_in = NULL, *sess_out = NULL, *crl_file = NULL, *p;
     char *jpake_secret = NULL, *xmpphost = NULL;
-    const char *unix_path = NULL;
     const char *ehlo = "mail.example.com";
     struct sockaddr peer;
     struct timeval timeout, *timeoutp;
@@ -862,12 +865,12 @@ int s_client_main(int argc, char **argv)
     int enable_timeouts = 0, sdebug = 0, peerlen = sizeof peer;
     int reconnect = 0, verify = SSL_VERIFY_NONE, vpmtouched = 0;
     int ret = 1, in_init = 1, i, nbio_test = 0, s = -1, k, width, state = 0;
-    int sbuf_len, sbuf_off, socket_type = SOCK_STREAM, cmdletters = 1;
+    int sbuf_len, sbuf_off, cmdletters = 1;
+    int socket_family = AF_UNSPEC, socket_type = SOCK_STREAM;
     int starttls_proto = PROTO_OFF, crl_format = FORMAT_PEM, crl_download = 0;
     int write_tty, read_tty, write_ssl, read_ssl, tty_on, ssl_pending;
     int fallback_scsv = 0;
     long socket_mtu = 0, randamt = 0;
-    unsigned short port = PORT;
     OPTION_CHOICE o;
 #ifndef OPENSSL_NO_ENGINE
     ENGINE *ssl_client_engine = NULL;
@@ -926,22 +929,72 @@ int s_client_main(int argc, char **argv)
             opt_help(s_client_options);
             ret = 0;
             goto end;
+        case OPT_4:
+#ifdef AF_UNIX
+            if (socket_family == AF_UNIX) {
+                OPENSSL_free(host); host = NULL;
+                OPENSSL_free(port); port = NULL;
+            }
+#endif
+            socket_family = AF_INET;
+            break;
+        case OPT_6:
+            if (1) {
+#ifdef AF_INET6
+#ifdef AF_UNIX
+                if (socket_family == AF_UNIX) {
+                    OPENSSL_free(host); host = NULL;
+                    OPENSSL_free(port); port = NULL;
+                }
+#endif
+                socket_family = AF_INET6;
+            } else {
+#endif
+                BIO_printf(bio_err, "%s: IPv6 domain sockets unsupported\n", prog);
+                goto end;
+            }
+            break;
         case OPT_HOST:
-            host = opt_arg();
+#ifdef AF_UNIX
+            if (socket_family == AF_UNIX) {
+                OPENSSL_free(host); host = NULL;
+                OPENSSL_free(port); port = NULL;
+                socket_family = AF_UNSPEC;
+            }
+#endif
+            OPENSSL_free(host); host = BUF_strdup(opt_arg());
             break;
         case OPT_PORT:
-            port = atoi(opt_arg());
+#ifdef AF_UNIX
+            if (socket_family == AF_UNIX) {
+                OPENSSL_free(host); host = NULL;
+                OPENSSL_free(port); port = NULL;
+                socket_family = AF_UNSPEC;
+            }
+#endif
+            OPENSSL_free(port); port = BUF_strdup(opt_arg());
             break;
         case OPT_CONNECT:
+#ifdef AF_UNIX
+            if (socket_family == AF_UNIX) {
+                socket_family = AF_UNSPEC;
+            }
+#endif
+            OPENSSL_free(host); host = NULL;
+            OPENSSL_free(port); port = NULL;
             connectstr = opt_arg();
             break;
         case OPT_PROXY:
             proxystr = opt_arg();
             starttls_proto = PROTO_CONNECT;
             break;
+#ifdef AF_UNIX
         case OPT_UNIX:
-            unix_path = opt_arg();
+            socket_family = AF_UNIX;
+            OPENSSL_free(host); host = BUF_strdup(opt_arg());
+            OPENSSL_free(port); port = NULL;
             break;
+#endif
         case OPT_XMPPHOST:
             xmpphost = opt_arg();
             break;
@@ -1286,18 +1339,41 @@ int s_client_main(int argc, char **argv)
     argv = opt_rest();
 
     if (proxystr) {
+        int res;
+        char *tmp_host = host, *tmp_port = port;
         if (connectstr == NULL) {
             BIO_printf(bio_err, "%s: -proxy requires use of -connect\n", prog);
             goto opthelp;
         }
-        if (!extract_host_port(proxystr, &host, NULL, &port))
+        res = BIO_parse_hostserv(proxystr, &host, &port, BIO_PARSE_PRIO_HOST);
+        if (tmp_host != host)
+            OPENSSL_free(tmp_host);
+        if (tmp_port != port)
+            OPENSSL_free(tmp_port);
+        if (!res) {
+            BIO_printf(bio_err, "%s: -proxy argument malformed or ambiguous\n",
+                       prog);
             goto end;
+        }
+    } else {
+        int res = 1;
+        char *tmp_host = host, *tmp_port = port;
+        if (connectstr != NULL)
+            res = BIO_parse_hostserv(connectstr, &host, &port,
+                                     BIO_PARSE_PRIO_HOST);
+        if (tmp_host != host)
+            OPENSSL_free(tmp_host);
+        if (tmp_port != port)
+            OPENSSL_free(tmp_port);
+        if (!res) {
+            BIO_printf(bio_err,
+                       "%s: -connect argument malformed or ambiguous\n",
+                       prog);
+            goto end;
+        }
     }
-    else if (connectstr != NULL
-            && !extract_host_port(connectstr, &host, NULL, &port))
-        goto end;
 
-    if (unix_path && (socket_type != SOCK_STREAM)) {
+    if (socket_family == AF_UNIX && socket_type != SOCK_STREAM) {
         BIO_printf(bio_err,
                    "Can't use unix sockets and datagrams together\n");
         goto end;
@@ -1428,7 +1504,6 @@ int s_client_main(int argc, char **argv)
 
     if (async) {
         SSL_CTX_set_mode(ctx, SSL_MODE_ASYNC);
-        ASYNC_init(1, 0, 0);
     }
 
     if (!config_ctx(cctx, ssl_args, ctx, jpake_secret == NULL))
@@ -1610,12 +1685,7 @@ int s_client_main(int argc, char **argv)
     }
 
  re_start:
-#ifdef NO_SYS_UN_H
-    if (init_client(&s, host, port, socket_type) == 0)
-#else
-    if ((!unix_path && (init_client(&s, host, port, socket_type) == 0)) ||
-        (unix_path && (init_client_unix(&s, unix_path) == 0)))
-#endif
+    if (init_client(&s, host, port, socket_family, socket_type) == 0)
     {
         BIO_printf(bio_err, "connect:errno=%d\n", get_last_socket_error());
         SHUTDOWN(s);
@@ -2349,9 +2419,6 @@ int s_client_main(int argc, char **argv)
             print_stuff(bio_c_out, con, 1);
         SSL_free(con);
     }
-    if (async) {
-        ASYNC_cleanup(1);
-    }
 #if !defined(OPENSSL_NO_NEXTPROTONEG)
     OPENSSL_free(next_proto.data);
 #endif
@@ -2364,6 +2431,8 @@ int s_client_main(int argc, char **argv)
 #ifndef OPENSSL_NO_SRP
     OPENSSL_free(srp_arg.srppassin);
 #endif
+    OPENSSL_free(host);
+    OPENSSL_free(port);
     X509_VERIFY_PARAM_free(vpm);
     ssl_excert_free(exc);
     sk_OPENSSL_STRING_free(ssl_args);
@@ -2388,9 +2457,6 @@ static void print_stuff(BIO *bio, SSL *s, int full)
     const SSL_CIPHER *c;
     X509_NAME *xn;
     int i;
-    int mdpth;
-    EVP_PKEY *mspki;
-    const char *peername;
 #ifndef OPENSSL_NO_COMP
     const COMP_METHOD *comp, *expansion;
 #endif
@@ -2452,19 +2518,8 @@ static void print_stuff(BIO *bio, SSL *s, int full)
                    BIO_number_read(SSL_get_rbio(s)),
                    BIO_number_written(SSL_get_wbio(s)));
     }
-    if ((mdpth = SSL_get0_dane_authority(s, NULL, &mspki)) >= 0) {
-        uint8_t usage, selector, mtype;
-        mdpth = SSL_get0_dane_tlsa(s, &usage, &selector, &mtype, NULL, NULL);
-        BIO_printf(bio, "DANE TLSA %d %d %d %s at depth %d\n",
-                   usage, selector, mtype,
-                   (mspki != NULL) ? "TA public key verified certificate" :
-                   mdpth ? "matched TA certificate" : "matched EE certificate",
-                   mdpth);
-    }
-    if (SSL_get_verify_result(s) == X509_V_OK &&
-        (peername = SSL_get0_peername(s)) != NULL)
-        BIO_printf(bio, "Verified peername: %s\n", peername);
-    BIO_printf(bio, (SSL_cache_hit(s) ? "---\nReused, " : "---\nNew, "));
+    print_verify_detail(s, bio);
+    BIO_printf(bio, (SSL_session_reused(s) ? "---\nReused, " : "---\nNew, "));
     c = SSL_get_current_cipher(s);
     BIO_printf(bio, "%s, Cipher is %s\n",
                SSL_CIPHER_get_version(c), SSL_CIPHER_get_name(c));

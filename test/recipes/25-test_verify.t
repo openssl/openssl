@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 use File::Spec::Functions qw/canonpath/;
-use OpenSSL::Test qw/:DEFAULT top_file/;
+use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_verify");
 
@@ -13,9 +13,9 @@ sub verify {
     my @args = qw(openssl verify -purpose);
     my @path = qw(test certs);
     push(@args, "$purpose", @opts);
-    for (@$trusted) { push(@args, "-trusted", top_file(@path, "$_.pem")) }
-    for (@$untrusted) { push(@args, "-untrusted", top_file(@path, "$_.pem")) }
-    push(@args, top_file(@path, "$cert.pem"));
+    for (@$trusted) { push(@args, "-trusted", srctop_file(@path, "$_.pem")) }
+    for (@$untrusted) { push(@args, "-untrusted", srctop_file(@path, "$_.pem")) }
+    push(@args, srctop_file(@path, "$cert.pem"));
     run(app([@args]));
 }
 

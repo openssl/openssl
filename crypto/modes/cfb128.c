@@ -190,7 +190,7 @@ static void cfbr_encrypt_block(const unsigned char *in, unsigned char *out,
                                block128_f block)
 {
     int n, rem, num;
-    unsigned char ovec[16 * 2 + 1]; /* +1 because we dererefence (but don't
+    unsigned char ovec[16 * 2 + 1]; /* +1 because we dereference (but don't
                                      * use) one byte off the end */
 
     if (nbits <= 0 || nbits > 128)

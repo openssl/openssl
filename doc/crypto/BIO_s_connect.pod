@@ -17,12 +17,10 @@ BIO_set_nbio, BIO_do_connect - connect BIO
 
  long BIO_set_conn_hostname(BIO *b, char *name);
  long BIO_set_conn_port(BIO *b, char *port);
- long BIO_set_conn_ip(BIO *b, char *ip);
- long BIO_set_conn_int_port(BIO *b, char *port);
- char *BIO_get_conn_hostname(BIO *b);
- char *BIO_get_conn_port(BIO *b);
- char *BIO_get_conn_ip(BIO *b);
- long BIO_get_conn_int_port(BIO *b);
+ long BIO_set_conn_address(BIO *b, BIO_ADDR *addr);
+ const char *BIO_get_conn_hostname(BIO *b);
+ const char *BIO_get_conn_port(BIO *b);
+ const BIO_ADDR *BIO_get_conn_address(BIO *b);
 
  long BIO_set_nbio(BIO *b, long n);
 
@@ -57,9 +55,9 @@ it also returns the socket . If B<c> is not NULL it should be of
 type (int *).
 
 BIO_set_conn_hostname() uses the string B<name> to set the hostname.
-The hostname can be an IP address. The hostname can also include the
-port in the form hostname:port . It is also acceptable to use the
-form "hostname/any/other/path" or "hostname:port/any/other/path".
+The hostname can be an IP address; if the address is a IPv6 one, it
+must be enclosed with brackets. The hostname can also include the
+port in the form hostname:port.
 
 BIO_set_conn_port() sets the port to B<port>. B<port> can be the
 numerical form or a string such as "http". A string will be looked
@@ -67,21 +65,18 @@ up first using getservbyname() on the host platform but if that
 fails a standard table of port names will be used. This internal
 list is http, telnet, socks, https, ssl, ftp, and gopher.
 
-BIO_set_conn_ip() sets the IP address to B<ip> using binary form,
-that is four bytes specifying the IP address in big-endian form.
-
-BIO_set_conn_int_port() sets the port using B<port>. B<port> should
-be of type (int *).
+BIO_set_conn_address() sets the address and port information using
+a BIO_ADDR(3ssl).
 
 BIO_get_conn_hostname() returns the hostname of the connect BIO or
 NULL if the BIO is initialized but no hostname is set.
 This return value is an internal pointer which should not be modified.
 
 BIO_get_conn_port() returns the port as a string.
+This return value is an internal pointer which should not be modified.
 
-BIO_get_conn_ip() returns the IP address in binary form.
-
-BIO_get_conn_int_port() returns the port as an int.
+BIO_get_conn_address() returns the address information as a BIO_ADDR.
+This return value is an internal pointer which should not be modified.
 
 BIO_set_nbio() sets the non blocking I/O flag to B<n>. If B<n> is
 zero then blocking I/O is set. If B<n> is 1 then non blocking I/O
@@ -169,7 +164,7 @@ to retrieve a page and copy the result to standard output.
  BIO *cbio, *out;
  int len;
  char tmpbuf[1024];
- ERR_load_crypto_strings();
+
  cbio = BIO_new_connect("localhost:http");
  out = BIO_new_fp(stdout, BIO_NOCLOSE);
  if(BIO_do_connect(cbio) <= 0) {
@@ -189,4 +184,4 @@ to retrieve a page and copy the result to standard output.
 
 =head1 SEE ALSO
 
-TBA
+L<BIO_ADDR(3)>

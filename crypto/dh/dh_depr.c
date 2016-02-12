@@ -54,15 +54,16 @@
 
 /* This file contains deprecated functions as wrappers to the new ones */
 
-#include <stdio.h>
-#include "internal/cryptlib.h"
-#include <openssl/bn.h>
-#include <openssl/dh.h>
 #include <openssl/opensslconf.h>
+#if OPENSSL_API_COMPAT >= 0x00908000L
+NON_EMPTY_TRANSLATION_UNIT
+#else
 
-static void *dummy = &dummy;
+# include <stdio.h>
+# include "internal/cryptlib.h"
+# include <openssl/bn.h>
+# include <openssl/dh.h>
 
-#if OPENSSL_API_COMPAT < 0x00908000L
 DH *DH_generate_parameters(int prime_len, int generator,
                            void (*callback) (int, int, void *), void *cb_arg)
 {

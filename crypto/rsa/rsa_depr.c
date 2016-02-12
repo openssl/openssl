@@ -57,18 +57,17 @@
  * "new" versions).
  */
 
-#include <stdio.h>
-#include <time.h>
-#include "internal/cryptlib.h"
 #include <openssl/opensslconf.h>
-#include <openssl/bn.h>
-#include <openssl/rsa.h>
-
 #if OPENSSL_API_COMPAT >= 0x00908000L
-
-static void *dummy = &dummy;
+NON_EMPTY_TRANSLATION_UNIT
 
 #else
+
+# include <stdio.h>
+# include <time.h>
+# include "internal/cryptlib.h"
+# include <openssl/bn.h>
+# include <openssl/rsa.h>
 
 RSA *RSA_generate_key(int bits, unsigned long e_value,
                       void (*callback) (int, int, void *), void *cb_arg)

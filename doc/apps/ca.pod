@@ -8,6 +8,7 @@ ca - sample minimal CA application
 =head1 SYNOPSIS
 
 B<openssl> B<ca>
+[B<-help>]
 [B<-verbose>]
 [B<-config filename>]
 [B<-name section>]
@@ -49,6 +50,7 @@ B<openssl> B<ca>
 [B<-engine id>]
 [B<-subj arg>]
 [B<-utf8>]
+[B<-create_serial>]
 [B<-multivalue-rdn>]
 
 =head1 DESCRIPTION
@@ -63,6 +65,14 @@ The options descriptions will be divided into each purpose.
 =head1 CA OPTIONS
 
 =over 4
+
+=item B<-help>
+
+Print out a usage message.
+
+=item B<-verbose>
+
+this prints extra details about the operations being performed.
 
 =item B<-config filename>
 
@@ -142,10 +152,6 @@ self-signed certificate.
 
 the key password source. For more information about the format of B<arg>
 see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
-
-=item B<-verbose>
-
-this prints extra details about the operations being performed.
 
 =item B<-notext>
 
@@ -243,6 +249,12 @@ this option causes field values to be interpreted as UTF8 strings, by
 default they are interpreted as ASCII. This means that the field
 values, whether prompted from a terminal or obtained from a
 configuration file, must be valid UTF8 strings.
+
+=item B<-create_serial>
+
+if reading serial from the text file as specified in the configuration
+fails, specifying this option creates a new random serial to be used as next
+serial number.
 
 =item B<-multivalue-rdn>
 

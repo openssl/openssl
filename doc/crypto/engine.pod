@@ -21,14 +21,6 @@ engine - ENGINE cryptographic module support
  int ENGINE_init(ENGINE *e);
  int ENGINE_finish(ENGINE *e);
 
- void ENGINE_load_openssl(void);
- void ENGINE_load_dynamic(void);
- #ifndef OPENSSL_NO_STATIC_ENGINE
- void ENGINE_load_chil(void);
- void ENGINE_load_gmp(void);
- void ENGINE_load_ubsec(void);
- #endif
- void ENGINE_load_cryptodev(void);
  void ENGINE_load_builtin_engines(void);
 
  void ENGINE_cleanup(void);
@@ -75,9 +67,6 @@ engine - ENGINE cryptographic module support
  int ENGINE_register_RAND(ENGINE *e);
  void ENGINE_unregister_RAND(ENGINE *e);
  void ENGINE_register_all_RAND(void);
- int ENGINE_register_STORE(ENGINE *e);
- void ENGINE_unregister_STORE(ENGINE *e);
- void ENGINE_register_all_STORE(void);
  int ENGINE_register_ciphers(ENGINE *e);
  void ENGINE_unregister_ciphers(ENGINE *e);
  void ENGINE_register_all_ciphers(void);
@@ -106,7 +95,6 @@ engine - ENGINE cryptographic module support
  int ENGINE_set_ECDSA(ENGINE *e, const ECDSA_METHOD *dh_meth);
  int ENGINE_set_DH(ENGINE *e, const DH_METHOD *dh_meth);
  int ENGINE_set_RAND(ENGINE *e, const RAND_METHOD *rand_meth);
- int ENGINE_set_STORE(ENGINE *e, const STORE_METHOD *rand_meth);
  int ENGINE_set_destroy_function(ENGINE *e, ENGINE_GEN_INT_FUNC_PTR destroy_f);
  int ENGINE_set_init_function(ENGINE *e, ENGINE_GEN_INT_FUNC_PTR init_f);
  int ENGINE_set_finish_function(ENGINE *e, ENGINE_GEN_INT_FUNC_PTR finish_f);
@@ -126,7 +114,6 @@ engine - ENGINE cryptographic module support
  const ECDSA_METHOD *ENGINE_get_ECDSA(const ENGINE *e);
  const DH_METHOD *ENGINE_get_DH(const ENGINE *e);
  const RAND_METHOD *ENGINE_get_RAND(const ENGINE *e);
- const STORE_METHOD *ENGINE_get_STORE(const ENGINE *e);
  ENGINE_GEN_INT_FUNC_PTR ENGINE_get_destroy_function(const ENGINE *e);
  ENGINE_GEN_INT_FUNC_PTR ENGINE_get_init_function(const ENGINE *e);
  ENGINE_GEN_INT_FUNC_PTR ENGINE_get_finish_function(const ENGINE *e);
@@ -160,7 +147,7 @@ implementation includes the following abstractions;
 
  RSA_METHOD - for providing alternative RSA implementations
  DSA_METHOD, DH_METHOD, RAND_METHOD, ECDH_METHOD, ECDSA_METHOD,
-       STORE_METHOD - similarly for other OpenSSL APIs
+       - similarly for other OpenSSL APIs
  EVP_CIPHER - potentially multiple cipher algorithms (indexed by 'nid')
  EVP_DIGEST - potentially multiple hash algorithms (indexed by 'nid')
  key-loading - loading public and/or private EVP_PKEY keys
@@ -306,17 +293,7 @@ it uses static linking against openssl, then the resulting application
 binary will not contain any alternative ENGINE code at all. So the first
 consideration is whether any/all available ENGINE implementations should be
 made visible to OpenSSL - this is controlled by calling the various "load"
-functions, eg.
-
- /* Make the "dynamic" ENGINE available */
- void ENGINE_load_dynamic(void);
- /* Make the CryptoSwift hardware acceleration support available */
- void ENGINE_load_cswift(void);
- /* Make support for nCipher's "CHIL" hardware available */
- void ENGINE_load_chil(void);
- ...
- /* Make ALL ENGINE implementations bundled with OpenSSL available */
- void ENGINE_load_builtin_engines(void);
+functions.
 
 Having called any of these functions, ENGINE objects would have been
 dynamically allocated and populated with these implementations and linked
@@ -572,6 +549,11 @@ extension).
 
 =head1 SEE ALSO
 
-L<rsa(3)>, L<dsa(3)>, L<dh(3)>, L<rand(3)>
+L<OPENSSL_init_crypto(3)>, L<rsa(3)>, L<dsa(3)>, L<dh(3)>, L<rand(3)>
+
+=head1 HISTORY
+
+ENGINE_load_openssl(), ENGINE_load_dynamic(), and ENGINE_load_cryptodev()
+were deprecated in OpenSSL 1.1.0 by OPENSSL_init_crypto().
 
 =cut

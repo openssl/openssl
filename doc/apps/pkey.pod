@@ -8,6 +8,7 @@ pkey - public or private key processing tool
 =head1 SYNOPSIS
 
 B<openssl> B<pkey>
+[B<-help>]
 [B<-inform PEM|DER>]
 [B<-outform PEM|DER>]
 [B<-in filename>]
@@ -30,6 +31,10 @@ between various forms and their components printed out.
 =head1 COMMAND OPTIONS
 
 =over 4
+
+=item B<-help>
+
+Print out a usage message.
 
 =item B<-inform DER|PEM>
 

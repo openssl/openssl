@@ -257,6 +257,12 @@ typedef struct err_state_st {
 # define SYS_F_WSASTARTUP        9/* Winsock stuff */
 # define SYS_F_OPENDIR           10
 # define SYS_F_FREAD             11
+# define SYS_F_GETADDRINFO       12
+# define SYS_F_GETNAMEINFO       13
+# define SYS_F_SETSOCKOPT        14
+# define SYS_F_GETSOCKOPT        15
+# define SYS_F_GETSOCKNAME       16
+# define SYS_F_GETHOSTBYNAME     17
 
 /* reasons */
 # define ERR_R_SYS_LIB   ERR_LIB_SYS/* 2 */
@@ -303,6 +309,8 @@ typedef struct err_state_st {
 # define ERR_R_PASSED_NULL_PARAMETER             (3|ERR_R_FATAL)
 # define ERR_R_INTERNAL_ERROR                    (4|ERR_R_FATAL)
 # define ERR_R_DISABLED                          (5|ERR_R_FATAL)
+# define ERR_R_INIT_FAIL                         (6|ERR_R_FATAL)
+# define ERR_R_PASSED_INVALID_ARGUMENT           (7) 
 
 /*
  * 99 is the maximum possible ERR_R_... code, higher values are reserved for
@@ -348,7 +356,12 @@ void ERR_add_error_vdata(int num, va_list args);
 void ERR_load_strings(int lib, ERR_STRING_DATA str[]);
 void ERR_unload_strings(int lib, ERR_STRING_DATA str[]);
 void ERR_load_ERR_strings(void);
-void ERR_load_crypto_strings(void);
+
+#if OPENSSL_API_COMPAT < 0x10100000L
+# define ERR_load_crypto_strings() \
+    OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL)
+#endif
+
 void ERR_free_strings(void);
 
 void ERR_remove_thread_state(const CRYPTO_THREADID *tid);

@@ -1072,14 +1072,6 @@ void ssl_set_client_disabled(SSL *s)
     if (s->client_version == SSL3_VERSION)
         s->s3->tmp.mask_ssl |= SSL_TLSV1;
     ssl_set_sig_mask(&s->s3->tmp.mask_a, s, SSL_SECOP_SIGALG_MASK);
-    /*
-     * Disable static DH if we don't include any appropriate signature
-     * algorithms.
-     */
-    if (s->s3->tmp.mask_a & SSL_aRSA)
-        s->s3->tmp.mask_k |= SSL_kECDHr;
-    if (s->s3->tmp.mask_a & SSL_aECDSA)
-        s->s3->tmp.mask_k |= SSL_kECDHe;
 # ifndef OPENSSL_NO_PSK
     /* with PSK there must be client callback set */
     if (!s->psk_client_callback) {
@@ -1130,8 +1122,8 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *buf,
 
             alg_k = c->algorithm_mkey;
             alg_a = c->algorithm_auth;
-            if ((alg_k & (SSL_kECDHE | SSL_kECDHr | SSL_kECDHe | SSL_kECDHEPSK)
-                 || (alg_a & SSL_aECDSA))) {
+            if ((alg_k & (SSL_kECDHE | SSL_kECDHEPSK))
+                 || (alg_a & SSL_aECDSA)) {
                 using_ecc = 1;
                 break;
             }
@@ -1389,20 +1381,22 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *buf,
             i2d_X509_EXTENSIONS(s->tlsext_ocsp_exts, &ret);
     }
 #ifndef OPENSSL_NO_HEARTBEATS
-    /* Add Heartbeat extension */
-    if ((limit - ret - 4 - 1) < 0)
-        return NULL;
-    s2n(TLSEXT_TYPE_heartbeat, ret);
-    s2n(1, ret);
-    /*-
-     * Set mode:
-     * 1: peer may send requests
-     * 2: peer not allowed to send requests
-     */
-    if (s->tlsext_heartbeat & SSL_TLSEXT_HB_DONT_RECV_REQUESTS)
-        *(ret++) = SSL_TLSEXT_HB_DONT_SEND_REQUESTS;
-    else
-        *(ret++) = SSL_TLSEXT_HB_ENABLED;
+    if (SSL_IS_DTLS(s)) {
+        /* Add Heartbeat extension */
+        if ((limit - ret - 4 - 1) < 0)
+            return NULL;
+        s2n(TLSEXT_TYPE_heartbeat, ret);
+        s2n(1, ret);
+        /*-
+         * Set mode:
+         * 1: peer may send requests
+         * 2: peer not allowed to send requests
+         */
+        if (s->tlsext_heartbeat & SSL_DTLSEXT_HB_DONT_RECV_REQUESTS)
+            *(ret++) = SSL_DTLSEXT_HB_DONT_SEND_REQUESTS;
+        else
+            *(ret++) = SSL_DTLSEXT_HB_ENABLED;
+    }
 #endif
 
 #ifndef OPENSSL_NO_NEXTPROTONEG
@@ -1505,8 +1499,7 @@ unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *buf,
 #ifndef OPENSSL_NO_EC
     unsigned long alg_k = s->s3->tmp.new_cipher->algorithm_mkey;
     unsigned long alg_a = s->s3->tmp.new_cipher->algorithm_auth;
-    int using_ecc = (alg_k & (SSL_kECDHE | SSL_kECDHr | SSL_kECDHe))
-        || (alg_a & SSL_aECDSA);
+    int using_ecc = (alg_k & SSL_kECDHE) || (alg_a & SSL_aECDSA);
     using_ecc = using_ecc && (s->session->tlsext_ecpointformatlist != NULL);
 #endif
 
@@ -1637,7 +1630,7 @@ unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *buf,
     }
 #ifndef OPENSSL_NO_HEARTBEATS
     /* Add Heartbeat extension if we've received one */
-    if (s->tlsext_heartbeat & SSL_TLSEXT_HB_ENABLED) {
+    if (SSL_IS_DTLS(s) && (s->tlsext_heartbeat & SSL_DTLSEXT_HB_ENABLED)) {
         if ((limit - ret - 4 - 1) < 0)
             return NULL;
         s2n(TLSEXT_TYPE_heartbeat, ret);
@@ -1647,10 +1640,10 @@ unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *buf,
          * 1: peer may send requests
          * 2: peer not allowed to send requests
          */
-        if (s->tlsext_heartbeat & SSL_TLSEXT_HB_DONT_RECV_REQUESTS)
-            *(ret++) = SSL_TLSEXT_HB_DONT_SEND_REQUESTS;
+        if (s->tlsext_heartbeat & SSL_DTLSEXT_HB_DONT_RECV_REQUESTS)
+            *(ret++) = SSL_DTLSEXT_HB_DONT_SEND_REQUESTS;
         else
-            *(ret++) = SSL_TLSEXT_HB_ENABLED;
+            *(ret++) = SSL_DTLSEXT_HB_ENABLED;
 
     }
 #endif
@@ -1878,8 +1871,8 @@ static int ssl_scan_clienthello_tlsext(SSL *s, PACKET *pkt, int *al)
     OPENSSL_free(s->s3->alpn_selected);
     s->s3->alpn_selected = NULL;
 #ifndef OPENSSL_NO_HEARTBEATS
-    s->tlsext_heartbeat &= ~(SSL_TLSEXT_HB_ENABLED |
-                             SSL_TLSEXT_HB_DONT_SEND_REQUESTS);
+    s->tlsext_heartbeat &= ~(SSL_DTLSEXT_HB_ENABLED |
+                             SSL_DTLSEXT_HB_DONT_SEND_REQUESTS);
 #endif
 
 #ifndef OPENSSL_NO_EC
@@ -2197,7 +2190,7 @@ static int ssl_scan_clienthello_tlsext(SSL *s, PACKET *pkt, int *al)
                 s->tlsext_status_type = -1;
         }
 #ifndef OPENSSL_NO_HEARTBEATS
-        else if (type == TLSEXT_TYPE_heartbeat) {
+        else if (SSL_IS_DTLS(s) && type == TLSEXT_TYPE_heartbeat) {
             unsigned int hbtype;
 
             if (!PACKET_get_1(&subpkt, &hbtype)
@@ -2207,11 +2200,11 @@ static int ssl_scan_clienthello_tlsext(SSL *s, PACKET *pkt, int *al)
             }
             switch (hbtype) {
             case 0x01:         /* Client allows us to send HB requests */
-                s->tlsext_heartbeat |= SSL_TLSEXT_HB_ENABLED;
+                s->tlsext_heartbeat |= SSL_DTLSEXT_HB_ENABLED;
                 break;
             case 0x02:         /* Client doesn't accept HB requests */
-                s->tlsext_heartbeat |= SSL_TLSEXT_HB_ENABLED;
-                s->tlsext_heartbeat |= SSL_TLSEXT_HB_DONT_SEND_REQUESTS;
+                s->tlsext_heartbeat |= SSL_DTLSEXT_HB_ENABLED;
+                s->tlsext_heartbeat |= SSL_DTLSEXT_HB_DONT_SEND_REQUESTS;
                 break;
             default:
                 *al = SSL_AD_ILLEGAL_PARAMETER;
@@ -2356,8 +2349,8 @@ static int ssl_scan_serverhello_tlsext(SSL *s, PACKET *pkt, int *al)
     OPENSSL_free(s->s3->alpn_selected);
     s->s3->alpn_selected = NULL;
 #ifndef OPENSSL_NO_HEARTBEATS
-    s->tlsext_heartbeat &= ~(SSL_TLSEXT_HB_ENABLED |
-                             SSL_TLSEXT_HB_DONT_SEND_REQUESTS);
+    s->tlsext_heartbeat &= ~(SSL_DTLSEXT_HB_ENABLED |
+                             SSL_DTLSEXT_HB_DONT_SEND_REQUESTS);
 #endif
 
 #ifdef TLSEXT_TYPE_encrypt_then_mac
@@ -2519,7 +2512,7 @@ static int ssl_scan_serverhello_tlsext(SSL *s, PACKET *pkt, int *al)
             s->s3->alpn_selected_len = len;
         }
 #ifndef OPENSSL_NO_HEARTBEATS
-        else if (type == TLSEXT_TYPE_heartbeat) {
+        else if (SSL_IS_DTLS(s) && type == TLSEXT_TYPE_heartbeat) {
             unsigned int hbtype;
             if (!PACKET_get_1(&spkt, &hbtype)) {
                 *al = SSL_AD_DECODE_ERROR;
@@ -2527,11 +2520,11 @@ static int ssl_scan_serverhello_tlsext(SSL *s, PACKET *pkt, int *al)
             }
             switch (hbtype) {
             case 0x01:         /* Server allows us to send HB requests */
-                s->tlsext_heartbeat |= SSL_TLSEXT_HB_ENABLED;
+                s->tlsext_heartbeat |= SSL_DTLSEXT_HB_ENABLED;
                 break;
             case 0x02:         /* Server doesn't accept HB requests */
-                s->tlsext_heartbeat |= SSL_TLSEXT_HB_ENABLED;
-                s->tlsext_heartbeat |= SSL_TLSEXT_HB_DONT_SEND_REQUESTS;
+                s->tlsext_heartbeat |= SSL_DTLSEXT_HB_ENABLED;
+                s->tlsext_heartbeat |= SSL_DTLSEXT_HB_DONT_SEND_REQUESTS;
                 break;
             default:
                 *al = SSL_AD_ILLEGAL_PARAMETER;
@@ -2813,8 +2806,7 @@ int ssl_check_serverhello_tlsext(SSL *s)
         && (s->tlsext_ecpointformatlist_length > 0)
         && (s->session->tlsext_ecpointformatlist != NULL)
         && (s->session->tlsext_ecpointformatlist_length > 0)
-        && ((alg_k & (SSL_kECDHE | SSL_kECDHr | SSL_kECDHe))
-            || (alg_a & SSL_aECDSA))) {
+        && ((alg_k & SSL_kECDHE) || (alg_a & SSL_aECDSA))) {
         /* we are using an ECC cipher */
         size_t i;
         unsigned char *list;
@@ -3627,160 +3619,6 @@ int SSL_get_shared_sigalgs(SSL *s, int idx,
     return s->cert->shared_sigalgslen;
 }
 
-#ifndef OPENSSL_NO_HEARTBEATS
-int tls1_process_heartbeat(SSL *s, unsigned char *p, unsigned int length)
-{
-    unsigned char *pl;
-    unsigned short hbtype;
-    unsigned int payload;
-    unsigned int padding = 16;  /* Use minimum padding */
-
-    if (s->msg_callback)
-        s->msg_callback(0, s->version, TLS1_RT_HEARTBEAT,
-                        p, length,
-                        s, s->msg_callback_arg);
-
-    /* Read type and payload length first */
-    if (1 + 2 + 16 > length)
-        return 0;               /* silently discard */
-    hbtype = *p++;
-    n2s(p, payload);
-    if (1 + 2 + payload + 16 > length)
-        return 0;               /* silently discard per RFC 6520 sec. 4 */
-    pl = p;
-
-    if (hbtype == TLS1_HB_REQUEST) {
-        unsigned char *buffer, *bp;
-        int r;
-
-        /*
-         * Allocate memory for the response, size is 1 bytes message type,
-         * plus 2 bytes payload length, plus payload, plus padding
-         */
-        buffer = OPENSSL_malloc(1 + 2 + payload + padding);
-        if (buffer == NULL) {
-            SSLerr(SSL_F_TLS1_PROCESS_HEARTBEAT, ERR_R_MALLOC_FAILURE);
-            return -1;
-        }
-        bp = buffer;
-
-        /* Enter response type, length and copy payload */
-        *bp++ = TLS1_HB_RESPONSE;
-        s2n(payload, bp);
-        memcpy(bp, pl, payload);
-        bp += payload;
-        /* Random padding */
-        if (RAND_bytes(bp, padding) <= 0) {
-            OPENSSL_free(buffer);
-            return -1;
-        }
-
-        r = ssl3_write_bytes(s, TLS1_RT_HEARTBEAT, buffer,
-                             3 + payload + padding);
-
-        if (r >= 0 && s->msg_callback)
-            s->msg_callback(1, s->version, TLS1_RT_HEARTBEAT,
-                            buffer, 3 + payload + padding,
-                            s, s->msg_callback_arg);
-
-        OPENSSL_free(buffer);
-
-        if (r < 0)
-            return r;
-    } else if (hbtype == TLS1_HB_RESPONSE) {
-        unsigned int seq;
-
-        /*
-         * We only send sequence numbers (2 bytes unsigned int), and 16
-         * random bytes, so we just try to read the sequence number
-         */
-        n2s(pl, seq);
-
-        if (payload == 18 && seq == s->tlsext_hb_seq) {
-            s->tlsext_hb_seq++;
-            s->tlsext_hb_pending = 0;
-        }
-    }
-
-    return 0;
-}
-
-int tls1_heartbeat(SSL *s)
-{
-    unsigned char *buf, *p;
-    int ret = -1;
-    unsigned int payload = 18;  /* Sequence number + random bytes */
-    unsigned int padding = 16;  /* Use minimum padding */
-
-    /* Only send if peer supports and accepts HB requests... */
-    if (!(s->tlsext_heartbeat & SSL_TLSEXT_HB_ENABLED) ||
-        s->tlsext_heartbeat & SSL_TLSEXT_HB_DONT_SEND_REQUESTS) {
-        SSLerr(SSL_F_TLS1_HEARTBEAT, SSL_R_TLS_HEARTBEAT_PEER_DOESNT_ACCEPT);
-        return -1;
-    }
-
-    /* ...and there is none in flight yet... */
-    if (s->tlsext_hb_pending) {
-        SSLerr(SSL_F_TLS1_HEARTBEAT, SSL_R_TLS_HEARTBEAT_PENDING);
-        return -1;
-    }
-
-    /* ...and no handshake in progress. */
-    if (SSL_in_init(s) || ossl_statem_get_in_handshake(s)) {
-        SSLerr(SSL_F_TLS1_HEARTBEAT, SSL_R_UNEXPECTED_MESSAGE);
-        return -1;
-    }
-
-    /*-
-     * Create HeartBeat message, we just use a sequence number
-     * as payload to distuingish different messages and add
-     * some random stuff.
-     *  - Message Type, 1 byte
-     *  - Payload Length, 2 bytes (unsigned int)
-     *  - Payload, the sequence number (2 bytes uint)
-     *  - Payload, random bytes (16 bytes uint)
-     *  - Padding
-     */
-    buf = OPENSSL_malloc(1 + 2 + payload + padding);
-    if (buf == NULL) {
-        SSLerr(SSL_F_TLS1_HEARTBEAT, ERR_R_MALLOC_FAILURE);
-        return -1;
-    }
-    p = buf;
-    /* Message Type */
-    *p++ = TLS1_HB_REQUEST;
-    /* Payload length (18 bytes here) */
-    s2n(payload, p);
-    /* Sequence number */
-    s2n(s->tlsext_hb_seq, p);
-    /* 16 random bytes */
-    if (RAND_bytes(p, 16) <= 0) {
-        SSLerr(SSL_F_TLS1_HEARTBEAT, ERR_R_INTERNAL_ERROR);
-        goto err;
-    }
-    p += 16;
-    /* Random padding */
-    if (RAND_bytes(p, padding) <= 0) {
-        SSLerr(SSL_F_TLS1_HEARTBEAT, ERR_R_INTERNAL_ERROR);
-        goto err;
-    }
-
-    ret = ssl3_write_bytes(s, TLS1_RT_HEARTBEAT, buf, 3 + payload + padding);
-    if (ret >= 0) {
-        if (s->msg_callback)
-            s->msg_callback(1, s->version, TLS1_RT_HEARTBEAT,
-                            buf, 3 + payload + padding,
-                            s, s->msg_callback_arg);
-
-        s->tlsext_hb_pending = 1;
-    }
-
- err:
-    OPENSSL_free(buf);
-    return ret;
-}
-#endif
-
 #define MAX_SIGALGLEN   (TLSEXT_hash_num * TLSEXT_signature_num * 2)
 
 typedef struct {
@@ -4274,6 +4112,9 @@ static int ssl_security_cert_sig(SSL *s, SSL_CTX *ctx, X509 *x, int op)
 {
     /* Lookup signature algorithm digest */
     int secbits = -1, md_nid = NID_undef, sig_nid;
+    /* Don't check signature if self signed */
+    if ((X509_get_extension_flags(x) & EXFLAG_SS) != 0)
+        return 1;
     sig_nid = X509_get_signature_nid(x);
     if (sig_nid && OBJ_find_sigid_algs(sig_nid, &md_nid, NULL)) {
         const EVP_MD *md;

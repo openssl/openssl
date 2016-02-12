@@ -89,8 +89,8 @@
 #define STRING_MASK     "string_mask"
 #define UTF8_IN         "utf8"
 
-#define DEFAULT_KEY_LENGTH      512
-#define MIN_KEY_LENGTH          384
+#define DEFAULT_KEY_LENGTH      2048
+#define MIN_KEY_LENGTH          512
 
 static int make_REQ(X509_REQ *req, EVP_PKEY *pkey, char *dn, int mutlirdn,
                     int attribs, unsigned long chtype);
@@ -136,8 +136,8 @@ OPTIONS req_options[] = {
     {"outform", OPT_OUTFORM, 'F', "Output format - DER or PEM"},
     {"in", OPT_IN, '<', "Input file"},
     {"out", OPT_OUT, '>', "Output file"},
-    {"key", OPT_KEY, '<', "Use the private key contained in file"},
-    {"keyform", OPT_KEYFORM, 'F', "Key file format"},
+    {"key", OPT_KEY, 's', "Private key to use"},
+    {"keyform", OPT_KEYFORM, 'f', "Key file format"},
     {"pubkey", OPT_PUBKEY, '-', "Output public key"},
     {"new", OPT_NEW, '-', "New request"},
     {"config", OPT_CONFIG, '<', "Request template file"},
@@ -235,7 +235,7 @@ int req_main(int argc, char **argv)
                 goto opthelp;
             break;
         case OPT_ENGINE:
-            (void)setup_engine(opt_arg(), 0);
+            e = setup_engine(opt_arg(), 0);
             break;
         case OPT_KEYGEN_ENGINE:
 #ifndef OPENSSL_NO_ENGINE
@@ -259,7 +259,7 @@ int req_main(int argc, char **argv)
             template = opt_arg();
             break;
         case OPT_KEYFORM:
-            if (!opt_format(opt_arg(), OPT_FMT_PEMDER, &keyform))
+            if (!opt_format(opt_arg(), OPT_FMT_ANY, &keyform))
                 goto opthelp;
             break;
         case OPT_IN:
@@ -1451,6 +1451,7 @@ static EVP_PKEY_CTX *set_keygen_ctx(const char *gstr,
     if (EVP_PKEY_keygen_init(gctx) <= 0) {
         BIO_puts(bio_err, "Error initializing keygen context\n");
         ERR_print_errors(bio_err);
+        EVP_PKEY_CTX_free(gctx);
         return NULL;
     }
 #ifndef OPENSSL_NO_RSA

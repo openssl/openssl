@@ -8,6 +8,7 @@ s_time - SSL/TLS performance timing program
 =head1 SYNOPSIS
 
 B<openssl> B<s_time>
+[B<-help>]
 [B<-connect host:port>]
 [B<-www page>]
 [B<-cert filename>]
@@ -36,6 +37,10 @@ transferred (if any), and calculates the average time spent for one connection.
 =head1 OPTIONS
 
 =over 4
+
+=item B<-help>
+
+Print out a usage message.
 
 =item B<-connect host:port>
 

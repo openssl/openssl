@@ -156,7 +156,7 @@ int CMAC_Init(CMAC_CTX *ctx, const void *key, size_t keylen,
         ctx->nlast_block = 0;
         return 1;
     }
-    /* Initialiase context */
+    /* Initialise context */
     if (cipher && !EVP_EncryptInit_ex(ctx->cctx, cipher, impl, NULL, NULL))
         return 0;
     /* Non-NULL key means initialisation complete */
@@ -257,9 +257,9 @@ int CMAC_resume(CMAC_CTX *ctx)
     if (ctx->nlast_block == -1)
         return 0;
     /*
-     * The buffer "tbl" containes the last fully encrypted block which is the
+     * The buffer "tbl" contains the last fully encrypted block which is the
      * last IV (or all zeroes if no last encrypted block). The last block has
-     * not been modified since CMAC_final(). So reinitliasing using the last
+     * not been modified since CMAC_final(). So reinitialising using the last
      * decrypted block will allow CMAC to continue after calling
      * CMAC_Final().
      */

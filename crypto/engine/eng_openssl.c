@@ -64,7 +64,7 @@
 #include <stdio.h>
 #include <openssl/crypto.h>
 #include "internal/cryptlib.h"
-#include <openssl/engine.h>
+#include <internal/engine.h>
 #include <openssl/dso.h>
 #include <openssl/pem.h>
 #include <openssl/evp.h>
@@ -196,7 +196,7 @@ static ENGINE *engine_openssl(void)
     return ret;
 }
 
-void ENGINE_load_openssl(void)
+void engine_load_openssl_internal(void)
 {
     ENGINE *toadd = engine_openssl();
     if (!toadd)
@@ -683,8 +683,10 @@ static int ossl_pkey_meths(ENGINE *e, EVP_PKEY_METHOD **pmeth,
 int openssl_destroy(ENGINE *e)
 {
     test_sha_md_destroy();
+#ifdef TEST_ENG_OPENSSL_RC4
     test_r4_cipher_destroy();
     test_r4_40_cipher_destroy();
+#endif
     return 1;
 }
 

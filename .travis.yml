@@ -29,6 +29,10 @@ env:
     - CONFIG_OPTS="shared"
     - CONFIG_OPTS="no-asm"
     - CONFIG_OPTS="--debug --strict-warnings enable-crypto-mdebug enable-rc5 enable-md2"
+    - CONFIG_OPTS="--unified"
+    - CONFIG_OPTS="--unified shared"
+    - CONFIG_OPTS="--unified no-asm"
+    - CONFIG_OPTS="--unified --debug --strict-warnings enable-crypto-mdebug enable-rc5 enable-md2"
 
 matrix:
     include:
@@ -48,6 +52,8 @@ matrix:
         - os: osx
           compiler: clang-3.6
         - os: osx
+          compiler: gcc
+        - os: osx
           compiler: gcc-5
         - os: osx
           compiler: i686-w64-mingw32-gcc
@@ -61,11 +67,23 @@ matrix:
           env: CONFIG_OPTS="no-asm"
         - compiler: x86_64-w64-mingw32-gcc
           env: CONFIG_OPTS="no-asm"
+        - compiler: i686-w64-mingw32-gcc
+          env: CONFIG_OPTS="--unified shared"
+        - compiler: x86_64-w64-mingw32-gcc
+          env: CONFIG_OPTS="--unified shared"
+        - compiler: i686-w64-mingw32-gcc
+          env: CONFIG_OPTS="--unified no-asm"
+        - compiler: x86_64-w64-mingw32-gcc
+          env: CONFIG_OPTS="--unified no-asm"
     allow_failures:
         - compiler: i686-w64-mingw32-gcc
           env: CONFIG_OPTS="--debug --strict-warnings enable-crypto-mdebug enable-rc5 enable-md2"
         - compiler: x86_64-w64-mingw32-gcc
           env: CONFIG_OPTS="--debug --strict-warnings enable-crypto-mdebug enable-rc5 enable-md2"
+        - compiler: i686-w64-mingw32-gcc
+          env: CONFIG_OPTS="--unified --debug --strict-warnings enable-crypto-mdebug enable-rc5 enable-md2"
+        - compiler: x86_64-w64-mingw32-gcc
+          env: CONFIG_OPTS="--unified --debug --strict-warnings enable-crypto-mdebug enable-rc5 enable-md2"
 
 before_script:
     - sh .travis-create-release.sh $TRAVIS_OS_NAME
@@ -88,7 +106,7 @@ script:
     - if [ -n "$CROSS_COMPILE" ]; then
           export EXE_SHELL="wine" WINEPREFIX=`pwd`;
       fi
-    - make test
+    - HARNESS_VERBOSE=yes make test
     - cd ..
 
 notifications:

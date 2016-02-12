@@ -48,8 +48,8 @@ install:
 	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
 	@headerlist="$(EXHEADER)"; for i in $$headerlist ; \
 	do  \
-	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
-	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
+	(cp $$i $(DESTDIR)$(INSTALLTOP)/include/openssl/$$i; \
+	chmod 644 $(DESTDIR)$(INSTALLTOP)/include/openssl/$$i ); \
 	done;
 
 depend:

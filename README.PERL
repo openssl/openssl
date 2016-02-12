@@ -23,8 +23,9 @@
  - on Linux distributions based on RPMs, you will need to install
    'perl-core' rather than just 'perl'.
 
- It is highly recommended that you have at least Perl version 5.10
- installed.
+ You MUST have at least Perl version 5.10.0 installed.  This minimum
+ requirement is due to our use of regexp backslash sequence \R among
+ other features that didn't exist in core Perl before that version.
 
  Notes on Perl on Windows
  ------------------------
@@ -36,6 +37,15 @@
  Otherwise, you will need to install Perl separately.  The Perl
  package that we know of is ActiveState Perl, available from
  http://www.activestate.com/ActivePerl.
+
+ Notes on Perl on VMS
+ --------------------
+
+ You will need to install Perl separately.  One way to do so is to
+ download the source from http://perl.org/, unpacking it, reading
+ README.vms and follow instructions.  Another way is to download a
+ .PCSI file from http://www.vmsperl.com/ and install it using the
+ POLYCENTER install tool.
 
  Notes on Perl modules we use
  ----------------------------
@@ -97,3 +107,12 @@
     seen the tests succeed!):
 
         $ cpan -f -i Text::Template
+
+    Note: on VMS, you must quote any argument that contains upper case
+    characters, so the lines above would be:
+
+        $ cpan -i "Text::Template"
+
+    and:
+
+        $ cpan -f -i "Text::Template"

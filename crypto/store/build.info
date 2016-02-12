@@ -1,2 +1,0 @@
-LIBS=../../libcrypto
-SOURCE[../../libcrypto]=str_err.c str_lib.c str_meth.c str_mem.c

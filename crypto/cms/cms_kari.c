@@ -422,7 +422,7 @@ int cms_RecipientInfo_kari_encrypt(CMS_ContentInfo *cms,
     if (!cms_wrap_init(kari, ec->cipher))
         return 0;
     /*
-     * If no orignator key set up initialise for ephemeral key the public key
+     * If no originator key set up initialise for ephemeral key the public key
      * ASN1 structure will set the actual public key value.
      */
     if (kari->originator->type == -1) {

@@ -2,7 +2,7 @@
 
 $/ = "";			# Eat a paragraph at once.
 while(<STDIN>) {
-    chop;
+    s|\R$||;
     s/\n/ /gm;
     if (/^=head1 /) {
 	$name = 0;

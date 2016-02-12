@@ -65,8 +65,7 @@
 # define HEADER_ENGINE_INT_H
 
 # include "internal/cryptlib.h"
-/* Take public definitions from engine.h */
-# include <openssl/engine.h>
+# include <internal/engine.h>
 
 #ifdef  __cplusplus
 extern "C" {
@@ -87,7 +86,7 @@ extern "C" {
                 (unsigned int)(e), (isfunct ? "funct" : "struct"), \
                 ((isfunct) ? ((e)->funct_ref - (diff)) : ((e)->struct_ref - (diff))), \
                 ((isfunct) ? (e)->funct_ref : (e)->struct_ref), \
-                (__FILE__), (__LINE__));
+                (__FILE__), (__LINE__))
 
 # else
 
@@ -180,7 +179,6 @@ struct engine_st {
     const DH_METHOD *dh_meth;
     const EC_KEY_METHOD *ec_meth;
     const RAND_METHOD *rand_meth;
-    const STORE_METHOD *store_meth;
     /* Cipher handling is via this callback */
     ENGINE_CIPHERS_PTR ciphers;
     /* Digest handling is via this callback */

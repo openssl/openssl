@@ -454,6 +454,15 @@ void Poly1305_Init(POLY1305 *ctx, const unsigned char key[32])
 
 }
 
+#ifdef POLY1305_ASM
+/*
+ * This "eclipses" poly1305_blocks and poly1305_emit, but it's
+ * conscious choice imposed by -Wshadow compiler warnings.
+ */
+# define poly1305_blocks (*poly1305_blocks_p)
+# define poly1305_emit   (*poly1305_emit_p)
+#endif
+
 void Poly1305_Update(POLY1305 *ctx, const unsigned char *inp, size_t len)
 {
 #ifdef POLY1305_ASM
@@ -463,7 +472,7 @@ void Poly1305_Update(POLY1305 *ctx, const unsigned char *inp, size_t len)
      * property is fluently used in assembly modules to optimize
      * padbit handling on loop boundary.
      */
-    poly1305_blocks_f poly1305_blocks = ctx->func.blocks;
+    poly1305_blocks_f poly1305_blocks_p = ctx->func.blocks;
 #endif
     size_t rem, num;
 
@@ -499,8 +508,8 @@ void Poly1305_Update(POLY1305 *ctx, const unsigned char *inp, size_t len)
 void Poly1305_Final(POLY1305 *ctx, unsigned char mac[16])
 {
 #ifdef POLY1305_ASM
-    poly1305_blocks_f poly1305_blocks = ctx->func.blocks;
-    poly1305_emit_f poly1305_emit = ctx->func.emit;
+    poly1305_blocks_f poly1305_blocks_p = ctx->func.blocks;
+    poly1305_emit_f poly1305_emit_p = ctx->func.emit;
 #endif
     size_t num;
 

@@ -8,6 +8,7 @@ ts - Time Stamping Authority tool (client/server)
 
 B<openssl> B<ts>
 B<-query>
+[B<-help>]
 [B<-rand> file:file...]
 [B<-config> configfile]
 [B<-data> file_to_hash]
@@ -98,6 +99,10 @@ The B<-query> switch can be used for creating and printing a time stamp
 request with the following options:
 
 =over 4
+
+=item B<-help>
+
+Print out a usage message.
 
 =item B<-rand> file:file...
 

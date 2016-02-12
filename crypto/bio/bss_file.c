@@ -84,7 +84,6 @@
 
 # include <stdio.h>
 # include <errno.h>
-# include "internal/cryptlib.h"
 # include "bio_lcl.h"
 # include <openssl/err.h>
 
@@ -197,8 +196,8 @@ BIO *BIO_new_fp(FILE *stream, int close_flag)
     if ((ret = BIO_new(BIO_s_file())) == NULL)
         return (NULL);
 
-    BIO_set_flags(ret, BIO_FLAGS_UPLINK); /* redundant, left for
-                                           * documentation puposes */
+    /* redundant flag, left for documentation purposes */
+    BIO_set_flags(ret, BIO_FLAGS_UPLINK);
     BIO_set_fp(ret, stream, close_flag);
     return (ret);
 }

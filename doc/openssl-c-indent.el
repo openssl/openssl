@@ -28,7 +28,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Note, it could be easy to inherit from the "gnu" style...  however,
 ;; one never knows if that style will change somewhere in the future,
-;; so I've chosen to copy the "gnu" style values explicitely instead
+;; so I've chosen to copy the "gnu" style values explicitly instead
 ;; and mark them with a comment.                // RLevitte 2015-08-31
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

@@ -55,11 +55,12 @@
  * [including the GNU Public Licence.]
  */
 
-#include <stdio.h>
 #include "internal/cryptlib.h"
+#ifdef OPENSSL_NO_RSA
+NON_EMPTY_TRANSLATION_UNIT
+#else
 
-#ifndef OPENSSL_NO_RSA
-
+# include <stdio.h>
 # include <openssl/evp.h>
 # include <openssl/objects.h>
 # include <openssl/x509.h>
@@ -117,10 +118,4 @@ int EVP_OpenFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
         i = EVP_DecryptInit_ex(ctx, NULL, NULL, NULL, NULL);
     return (i);
 }
-#else                           /* !OPENSSL_NO_RSA */
-
-# ifdef PEDANTIC
-static void *dummy = &dummy;
-# endif
-
 #endif

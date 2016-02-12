@@ -33,9 +33,12 @@ extern int ecparam_main(int argc, char *argv[]);
 extern int enc_main(int argc, char *argv[]);
 extern int engine_main(int argc, char *argv[]);
 extern int errstr_main(int argc, char *argv[]);
+extern int exit_main(int argc, char *argv[]);
 extern int gendsa_main(int argc, char *argv[]);
 extern int genpkey_main(int argc, char *argv[]);
 extern int genrsa_main(int argc, char *argv[]);
+extern int help_main(int argc, char *argv[]);
+extern int list_main(int argc, char *argv[]);
 extern int nseq_main(int argc, char *argv[]);
 extern int ocsp_main(int argc, char *argv[]);
 extern int passwd_main(int argc, char *argv[]);
@@ -47,6 +50,7 @@ extern int pkeyparam_main(int argc, char *argv[]);
 extern int pkeyutl_main(int argc, char *argv[]);
 extern int prime_main(int argc, char *argv[]);
 extern int rand_main(int argc, char *argv[]);
+extern int rehash_main(int argc, char *argv[]);
 extern int req_main(int argc, char *argv[]);
 extern int rsa_main(int argc, char *argv[]);
 extern int rsautl_main(int argc, char *argv[]);
@@ -62,10 +66,6 @@ extern int ts_main(int argc, char *argv[]);
 extern int verify_main(int argc, char *argv[]);
 extern int version_main(int argc, char *argv[]);
 extern int x509_main(int argc, char *argv[]);
-extern int rehash_main(int argc, char *argv[]);
-extern int list_main(int argc, char *argv[]);
-extern int help_main(int argc, char *argv[]);
-extern int exit_main(int argc, char *argv[]);
 
 extern OPTIONS asn1parse_options[];
 extern OPTIONS ca_options[];
@@ -82,9 +82,12 @@ extern OPTIONS ecparam_options[];
 extern OPTIONS enc_options[];
 extern OPTIONS engine_options[];
 extern OPTIONS errstr_options[];
+extern OPTIONS exit_options[];
 extern OPTIONS gendsa_options[];
 extern OPTIONS genpkey_options[];
 extern OPTIONS genrsa_options[];
+extern OPTIONS help_options[];
+extern OPTIONS list_options[];
 extern OPTIONS nseq_options[];
 extern OPTIONS ocsp_options[];
 extern OPTIONS passwd_options[];
@@ -96,6 +99,7 @@ extern OPTIONS pkeyparam_options[];
 extern OPTIONS pkeyutl_options[];
 extern OPTIONS prime_options[];
 extern OPTIONS rand_options[];
+extern OPTIONS rehash_options[];
 extern OPTIONS req_options[];
 extern OPTIONS rsa_options[];
 extern OPTIONS rsautl_options[];
@@ -111,10 +115,6 @@ extern OPTIONS ts_options[];
 extern OPTIONS verify_options[];
 extern OPTIONS version_options[];
 extern OPTIONS x509_options[];
-extern OPTIONS rehash_options[];
-extern OPTIONS list_options[];
-extern OPTIONS help_options[];
-extern OPTIONS exit_options[];
 
 #ifdef INCLUDE_FUNCTION_TABLE
 static FUNCTION functions[] = {
@@ -149,6 +149,7 @@ static FUNCTION functions[] = {
     { FT_general, "engine", engine_main, engine_options },
 #endif
     { FT_general, "errstr", errstr_main, errstr_options },
+    { FT_general, "exit", exit_main, exit_options },
 #ifndef OPENSSL_NO_DSA
     { FT_general, "gendsa", gendsa_main, gendsa_options },
 #endif
@@ -156,6 +157,8 @@ static FUNCTION functions[] = {
 #ifndef OPENSSL_NO_RSA
     { FT_general, "genrsa", genrsa_main, genrsa_options },
 #endif
+    { FT_general, "help", help_main, help_options },
+    { FT_general, "list", list_main, list_options },
     { FT_general, "nseq", nseq_main, nseq_options },
 #ifndef OPENSSL_NO_OCSP
     { FT_general, "ocsp", ocsp_main, ocsp_options },
@@ -171,6 +174,7 @@ static FUNCTION functions[] = {
     { FT_general, "pkeyutl", pkeyutl_main, pkeyutl_options },
     { FT_general, "prime", prime_main, prime_options },
     { FT_general, "rand", rand_main, rand_options },
+    { FT_general, "rehash", rehash_main, rehash_options },
     { FT_general, "req", req_main, req_options },
 #ifndef OPENSSL_NO_RSA
     { FT_general, "rsa", rsa_main, rsa_options },
@@ -198,10 +202,6 @@ static FUNCTION functions[] = {
     { FT_general, "verify", verify_main, verify_options },
     { FT_general, "version", version_main, version_options },
     { FT_general, "x509", x509_main, x509_options },
-    { FT_general, "rehash", rehash_main, rehash_options },
-    { FT_general, "list", list_main, list_options },
-    { FT_general, "help", help_main, help_options },
-    { FT_general, "exit", exit_main, exit_options },
 #ifndef OPENSSL_NO_MD2
     { FT_md, "md2", dgst_main},
 #endif
@@ -214,7 +214,6 @@ static FUNCTION functions[] = {
 #ifndef OPENSSL_NO_MD_GHOST94
     { FT_md, "md_ghost94", dgst_main},
 #endif
-    { FT_md, "sha", dgst_main},
     { FT_md, "sha1", dgst_main},
     { FT_md, "sha224", dgst_main},
     { FT_md, "sha256", dgst_main},

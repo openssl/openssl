@@ -58,6 +58,7 @@
 
 #include "eng_int.h"
 #include <openssl/dso.h>
+#include <openssl/crypto.h>
 
 /*
  * Shared libraries implementing ENGINEs for use by the "dynamic" ENGINE
@@ -294,7 +295,7 @@ static ENGINE *engine_dynamic(void)
     return ret;
 }
 
-void ENGINE_load_dynamic(void)
+void engine_load_dynamic_internal(void)
 {
     ENGINE *toadd = engine_dynamic();
     if (!toadd)
@@ -316,7 +317,7 @@ void ENGINE_load_dynamic(void)
 static int dynamic_init(ENGINE *e)
 {
     /*
-     * We always return failure - the "dyanamic" engine itself can't be used
+     * We always return failure - the "dynamic" engine itself can't be used
      * for anything.
      */
     return 0;

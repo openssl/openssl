@@ -352,7 +352,8 @@ unsigned long EVP_MD_flags(const EVP_MD *md)
 
 EVP_MD *EVP_MD_meth_new(int md_type, int pkey_type)
 {
-    EVP_MD *md = (EVP_MD *)OPENSSL_zalloc(sizeof(EVP_MD));
+    EVP_MD *md = OPENSSL_zalloc(sizeof(*md));
+
     if (md != NULL) {
         md->type = md_type;
         md->pkey_type = pkey_type;
@@ -362,7 +363,8 @@ EVP_MD *EVP_MD_meth_new(int md_type, int pkey_type)
 EVP_MD *EVP_MD_meth_dup(const EVP_MD *md)
 {
     EVP_MD *to = EVP_MD_meth_new(md->type, md->pkey_type);
-    if (md != NULL)
+
+    if (to != NULL)
         memcpy(to, md, sizeof(*to));
     return to;
 }

@@ -345,7 +345,7 @@ int main(int argc, char *argv[])
                                  * notices the failure, see test_bn in
                                  * test/Makefile.ssl */
     (void)BIO_flush(out);
-    ERR_load_crypto_strings();
+
     ERR_print_errors_fp(stderr);
     EXIT(1);
 }

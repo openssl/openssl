@@ -82,6 +82,9 @@ the matched DANE trust-anchor after successful connection completion.
 The return value is negative if DANE verification failed (or was not enabled),
 0 if an EE TLSA record directly matched the leaf certificate, or a positive
 number indicating the depth at which a TA record matched an issuer certificate.
+The complete verified chain can be retrieved via L<SSL_get0_verified_chain(3)>.
+The return value is an index into this verified chain, rather than the list of
+certificates sent by the peer as returned by L<SSL_get_peer_cert_chain(3)>.
 
 If the B<mcert> argument is not B<NULL> and a TLSA record matched a chain
 certificate, a pointer to the matching certificate is returned via B<mcert>.
@@ -203,9 +206,27 @@ the lifetime of the SSL connection.
     SSL_set_verify(ssl, SSL_VERIFY_NONE, cb);
   }
 
+  /*
+   * Load any saved session for resumption, making sure that the previous
+   * session applied the same security and authentication requirements that
+   * would be expected of a fresh connection.
+   */
+
   /* Perform SSL_connect() handshake and handle errors here */
 
-  if (SSL_get_verify_result(ssl) == X509_V_OK) {
+  if (SSL_session_resumed(ssl)) {
+      if (SSL_get_verify_result(ssl) == X509_V_OK) {
+        /*
+         * Resumed session was originally verified, this connection is
+         * authenticated.
+         */
+      } else {
+        /*
+         * Resumed session was not originally verified, this connection is not
+         * authenticated.
+         */
+      }
+  } else if (SSL_get_verify_result(ssl) == X509_V_OK) {
     const char *peername = SSL_get0_peername(ssl);
     EVP_PKEY *mspki = NULL;
 
@@ -260,12 +281,15 @@ L<SSL_set_hostflags(3)>,
 L<SSL_set_tlsext_host_name(3)>,
 L<SSL_set_verify(3)>,
 L<SSL_CTX_set_cert_verify_callback(3)>,
-L<X509_verify_cert(3)>,
+L<SSL_get0_verified_chain(3)>,
+L<SSL_get_peer_cert_chain(3)>,
+L<SSL_get_verify_result(3)>,
 L<SSL_connect(3)>,
 L<SSL_get0_peername(3)>,
-L<EVP_get_digestbyname(3)>,
+L<X509_verify_cert(3)>,
 L<X509_up_ref(3)>,
 L<X509_free(3)>,
+L<EVP_get_digestbyname(3)>,
 L<EVP_PKEY_up_ref(3)>,
 L<EVP_PKEY_free(3)>
 

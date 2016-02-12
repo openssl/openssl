@@ -60,20 +60,6 @@
  * See ssl/ssltest.c for some hints on how this can be used.
  */
 
-/* BIO_DEBUG implies BIO_PAIR_DEBUG */
-#ifdef BIO_DEBUG
-# ifndef BIO_PAIR_DEBUG
-#  define BIO_PAIR_DEBUG
-# endif
-#endif
-
-/* disable assert() unless BIO_PAIR_DEBUG has been defined */
-#ifndef BIO_PAIR_DEBUG
-# ifndef NDEBUG
-#  define NDEBUG
-# endif
-#endif
-
 #include <assert.h>
 #include <limits.h>
 #include <stdlib.h>

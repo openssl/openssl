@@ -511,7 +511,7 @@ static void init_read_state_machine(SSL *s)
  * READ_STATE_POST_PROCESS is an optional step that may occur if some post
  * processing activity performed on the message may block.
  *
- * Any of the above states could result in an NBIO event occuring in which case
+ * Any of the above states could result in an NBIO event occurring in which case
  * control returns to the calling application. When this function is recalled we
  * will resume in the same state where we left off.
  */
@@ -702,7 +702,7 @@ static void init_write_state_machine(SSL *s)
  * WRITE_STATE_TRANSITION transitions the state of the handshake state machine
 
  * WRITE_STATE_PRE_WORK performs any work necessary to prepare the later
- * sending of the message. This could result in an NBIO event occuring in
+ * sending of the message. This could result in an NBIO event occurring in
  * which case control returns to the calling application. When this function
  * is recalled we will resume in the same state where we left off.
  *

@@ -422,10 +422,6 @@ int main(void)
     CRYPTO_set_mem_debug(1);
     CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
 
-    ERR_load_crypto_strings();
-    /* Load up the software EVP_CIPHER and EVP_MD definitions */
-    OpenSSL_add_all_ciphers();
-    OpenSSL_add_all_digests();
 
     if (!test_EVP_DigestSignInit()) {
         fprintf(stderr, "EVP_DigestSignInit failed\n");
@@ -462,12 +458,9 @@ int main(void)
     }
 #endif
 
-    EVP_cleanup();
-    CRYPTO_cleanup_all_ex_data();
-    ERR_remove_thread_state(NULL);
-    ERR_free_strings();
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG
-    CRYPTO_mem_leaks_fp(stderr);
+    if (CRYPTO_mem_leaks_fp(stderr) <= 0)
+        return 1;
 #endif
 
     printf("PASS\n");

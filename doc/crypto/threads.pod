@@ -84,9 +84,10 @@ threadid_func(CRYPTO_THREADID *id) is needed to record the currently-executing
 thread's identifier into B<id>. The implementation of this callback should not
 fill in B<id> directly, but should use CRYPTO_THREADID_set_numeric() if thread
 IDs are numeric, or CRYPTO_THREADID_set_pointer() if they are pointer-based.
+The B<id> must be unique for the duration of the execution of the program.
 If the application does not register such a callback using
 CRYPTO_THREADID_set_callback(), then a default implementation is used - on
-Windows and BeOS this uses the system's default thread identifying APIs, and on
+Windows this uses the system's default thread identifying APIs, and on
 all other platforms it uses the address of B<errno>. The latter is satisfactory
 for thread-safety if and only if the platform has a thread-local error number
 facility.

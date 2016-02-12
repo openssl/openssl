@@ -1,5 +1,23 @@
-#!/usr/local/bin/perl
-# Generate progs.h file from list of "programs" passed on the command line.
+#!/usr/bin/perl
+# Generate progs.h file by looking for command mains in list of C files
+# passed on the command line.
+
+use strict;
+use warnings;
+
+my %commands = ();
+my $cmdre = qr/^\s*int\s+([a-z_][a-z0-9_]*)_main\(\s*int\s+argc\s*,/;
+
+foreach my $filename (@ARGV) {
+	open F, $filename or die "Coudn't open $_: $!\n";
+	foreach (grep /$cmdre/, <F>) {
+		my @foo = /$cmdre/;
+		$commands{$1} = 1;
+	}
+	close F;
+}
+
+@ARGV = sort keys %commands;
 
 print <<'EOF';
 /*
@@ -24,13 +42,6 @@ DEFINE_LHASH_OF(FUNCTION);
 
 EOF
 
-grep(s/\.o//, @ARGV);
-grep(s/^asn1pars$/asn1parse/, @ARGV);
-grep(s/^crl2p7$/crl2pkcs7/, @ARGV);
-push @ARGV, 'list';
-push @ARGV, 'help';
-push @ARGV, 'exit';
-
 foreach (@ARGV) {
 	printf "extern int %s_main(int argc, char *argv[]);\n", $_;
 }
@@ -43,7 +54,7 @@ foreach (@ARGV) {
 print "\n#ifdef INCLUDE_FUNCTION_TABLE\n";
 print "static FUNCTION functions[] = {\n";
 foreach (@ARGV) {
-	$str="    { FT_general, \"$_\", ${_}_main, ${_}_options },\n";
+	my $str="    { FT_general, \"$_\", ${_}_main, ${_}_options },\n";
 	if (/^s_/ || /^ciphers$/) {
 		print "#if !defined(OPENSSL_NO_SOCK)\n${str}#endif\n";
 	} elsif (/^engine$/) {
@@ -72,7 +83,7 @@ foreach (@ARGV) {
 foreach (
 	"md2", "md4", "md5",
 	"md_ghost94",
-	"sha", "sha1", "sha224", "sha256", "sha384", "sha512",
+	"sha1", "sha224", "sha256", "sha384", "sha512",
 	"mdc2", "rmd160"
 ) {
         printf "#ifndef OPENSSL_NO_".uc($_)."\n" if ! /sha/;
@@ -101,7 +112,7 @@ foreach (
 	"cast5-cbc","cast5-ecb", "cast5-cfb","cast5-ofb",
 	"cast-cbc", "rc5-cbc",   "rc5-ecb",  "rc5-cfb",  "rc5-ofb"
 ) {
-	$str="    { FT_cipher, \"$_\", enc_main, enc_options },\n";
+	my $str="    { FT_cipher, \"$_\", enc_main, enc_options },\n";
 	if (/des/) {
 		printf "#ifndef OPENSSL_NO_DES\n${str}#endif\n";
 	} elsif (/aes/) {

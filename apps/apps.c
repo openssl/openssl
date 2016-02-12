@@ -763,20 +763,22 @@ EVP_PKEY *load_key(const char *file, int format, int maybe_stdin,
         BIO_printf(bio_err, "no keyfile specified\n");
         goto end;
     }
-#ifndef OPENSSL_NO_ENGINE
     if (format == FORMAT_ENGINE) {
-        if (!e)
+        if (e == NULL)
             BIO_printf(bio_err, "no engine specified\n");
         else {
+#ifndef OPENSSL_NO_ENGINE
             pkey = ENGINE_load_private_key(e, file, ui_method, &cb_data);
-            if (!pkey) {
+            if (pkey == NULL) {
                 BIO_printf(bio_err, "cannot load %s from engine\n", key_descrip);
                 ERR_print_errors(bio_err);
             }
+#else
+            BIO_printf(bio_err, "engines not supported\n");
+#endif
         }
         goto end;
     }
-#endif
     if (file == NULL && maybe_stdin) {
         unbuffer(stdin);
         key = dup_bio_in(format);
@@ -831,15 +833,22 @@ EVP_PKEY *load_pubkey(const char *file, int format, int maybe_stdin,
         BIO_printf(bio_err, "no keyfile specified\n");
         goto end;
     }
-#ifndef OPENSSL_NO_ENGINE
     if (format == FORMAT_ENGINE) {
-        if (!e)
+        if (e == NULL)
             BIO_printf(bio_err, "no engine specified\n");
-        else
+        else {
+#ifndef OPENSSL_NO_ENGINE
             pkey = ENGINE_load_public_key(e, file, ui_method, &cb_data);
+            if (pkey == NULL) {
+                BIO_printf(bio_err, "cannot load %s from engine\n", key_descrip);
+                ERR_print_errors(bio_err);
+            }
+#else
+            BIO_printf(bio_err, "engines not supported\n");
+#endif
+        }
         goto end;
     }
-#endif
     if (file == NULL && maybe_stdin) {
         unbuffer(stdin);
         key = dup_bio_in(format);
@@ -850,8 +859,8 @@ EVP_PKEY *load_pubkey(const char *file, int format, int maybe_stdin,
     if (format == FORMAT_ASN1) {
         pkey = d2i_PUBKEY_bio(key, NULL);
     }
-#ifndef OPENSSL_NO_RSA
     else if (format == FORMAT_ASN1RSA) {
+#ifndef OPENSSL_NO_RSA
         RSA *rsa;
         rsa = d2i_RSAPublicKey_bio(key, NULL);
         if (rsa) {
@@ -860,8 +869,12 @@ EVP_PKEY *load_pubkey(const char *file, int format, int maybe_stdin,
                 EVP_PKEY_set1_RSA(pkey, rsa);
             RSA_free(rsa);
         } else
+#else
+        BIO_printf(bio_err, "RSA keys not supported\n");
+#endif
             pkey = NULL;
     } else if (format == FORMAT_PEMRSA) {
+#ifndef OPENSSL_NO_RSA
         RSA *rsa;
         rsa = PEM_read_bio_RSAPublicKey(key, NULL,
                                         (pem_password_cb *)password_callback,
@@ -872,9 +885,11 @@ EVP_PKEY *load_pubkey(const char *file, int format, int maybe_stdin,
                 EVP_PKEY_set1_RSA(pkey, rsa);
             RSA_free(rsa);
         } else
+#else
+        BIO_printf(bio_err, "RSA keys not supported\n");
+#endif
             pkey = NULL;
     }
-#endif
     else if (format == FORMAT_PEM) {
         pkey = PEM_read_bio_PUBKEY(key, NULL,
                                    (pem_password_cb *)password_callback,
@@ -1907,7 +1922,11 @@ int bio_to_mem(unsigned char **out, int maxlen, BIO *in)
         else
             len = 1024;
         len = BIO_read(in, tbuf, len);
-        if (len <= 0)
+        if (len < 0) {
+            BIO_free(mem);
+            return -1;
+        }
+        if (len == 0)
             break;
         if (BIO_write(mem, tbuf, len) != len) {
             BIO_free(mem);
@@ -1924,7 +1943,7 @@ int bio_to_mem(unsigned char **out, int maxlen, BIO *in)
     return ret;
 }
 
-int pkey_ctrl_string(EVP_PKEY_CTX *ctx, char *value)
+int pkey_ctrl_string(EVP_PKEY_CTX *ctx, const char *value)
 {
     int rv;
     char *stmp, *vtmp = NULL;

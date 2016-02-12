@@ -11,7 +11,7 @@ MAKEFILE=	Makefile
 PERL=		perl
 RM=		rm -f
 
-LDFLAGS=
+PLIB_LDFLAG=
 EX_LIBS= 
 EXE_EXT= 
 
@@ -50,7 +50,7 @@ SRC	= \
 	genpkey.c genrsa.c nseq.c ocsp.c passwd.c pkcs12.c pkcs7.c pkcs8.c \
 	pkey.c pkeyparam.c pkeyutl.c prime.c rand.c req.c rsa.c rsautl.c \
 	s_client.c s_server.c s_time.c sess_id.c smime.c speed.c spkac.c \
-	srp.c ts.c verify.c version.c x509.c
+	srp.c ts.c verify.c version.c x509.c rehash.c
 
 EXE_OBJ	= openssl.o $(OBJ) $(EXTRA_OBJ) $(RAND_OBJ)
 EXE_SRC = openssl.c $(SRC) $(EXTRA_SRC) $(RAND_SRC)
@@ -80,35 +80,35 @@ install:
 	@set -e; for i in $(EXE); \
 	do  \
 	(echo installing $$i; \
-	 cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$i.new; \
-	 chmod 755 $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$i.new; \
-	 mv -f $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$i.new $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$i ); \
+	 cp $$i $(DESTDIR)$(INSTALLTOP)/bin/$$i.new; \
+	 chmod 755 $(DESTDIR)$(INSTALLTOP)/bin/$$i.new; \
+	 mv -f $(DESTDIR)$(INSTALLTOP)/bin/$$i.new $(DESTDIR)$(INSTALLTOP)/bin/$$i ); \
 	 done;
 	@set -e; for i in $(SCRIPTS); \
 	do  \
 	(echo installing $$i; \
-	 cp $$i $(INSTALL_PREFIX)$(OPENSSLDIR)/misc/$$i.new; \
-	 chmod 755 $(INSTALL_PREFIX)$(OPENSSLDIR)/misc/$$i.new; \
-	 mv -f $(INSTALL_PREFIX)$(OPENSSLDIR)/misc/$$i.new $(INSTALL_PREFIX)$(OPENSSLDIR)/misc/$$i ); \
+	 cp $$i $(DESTDIR)$(OPENSSLDIR)/misc/$$i.new; \
+	 chmod 755 $(DESTDIR)$(OPENSSLDIR)/misc/$$i.new; \
+	 mv -f $(DESTDIR)$(OPENSSLDIR)/misc/$$i.new $(DESTDIR)$(OPENSSLDIR)/misc/$$i ); \
 	 done
-	@cp openssl.cnf $(INSTALL_PREFIX)$(OPENSSLDIR)/openssl.cnf.new; \
-	chmod 644 $(INSTALL_PREFIX)$(OPENSSLDIR)/openssl.cnf.new; \
-	mv -f  $(INSTALL_PREFIX)$(OPENSSLDIR)/openssl.cnf.new $(INSTALL_PREFIX)$(OPENSSLDIR)/openssl.cnf
+	@cp openssl.cnf $(DESTDIR)$(OPENSSLDIR)/openssl.cnf.new; \
+	chmod 644 $(DESTDIR)$(OPENSSLDIR)/openssl.cnf.new; \
+	mv -f  $(DESTDIR)$(OPENSSLDIR)/openssl.cnf.new $(DESTDIR)$(OPENSSLDIR)/openssl.cnf
 
 uninstall:
 	@set -e; for i in $(EXE); \
 	do  \
-		echo $(RM) $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$i; \
-		$(RM) $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$i; \
+		echo $(RM) $(DESTDIR)$(INSTALLTOP)/bin/$$i; \
+		$(RM) $(DESTDIR)$(INSTALLTOP)/bin/$$i; \
 	done;
 	@set -e; for i in $(SCRIPTS); \
 	do  \
-		echo $(RM) $(INSTALL_PREFIX)$(OPENSSLDIR)/misc/$$i; \
-		$(RM) $(INSTALL_PREFIX)$(OPENSSLDIR)/misc/$$i; \
+		echo $(RM) $(DESTDIR)$(OPENSSLDIR)/misc/$$i; \
+		$(RM) $(DESTDIR)$(OPENSSLDIR)/misc/$$i; \
 	done
-	$(RM) $(INSTALL_PREFIX)$(OPENSSLDIR)/openssl.cnf
+	$(RM) $(DESTDIR)$(OPENSSLDIR)/openssl.cnf
 
-generate: openssl-vms.cnf
+generate: openssl-vms.cnf progs.h
 
 depend:
 	$(TOP)/util/domd $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(EXE_SRC)
@@ -123,7 +123,7 @@ $(DLIBSSL):
 $(DLIBCRYPTO):
 	(cd ..; $(MAKE) build_libcrypto)
 
-$(EXE): progs.h $(EXE_OBJ) $(DLIBCRYPTO) $(DLIBSSL)
+$(EXE): $(EXE_OBJ) $(DLIBCRYPTO) $(DLIBSSL)
 	$(RM) $(EXE)
 	shlib_target=; if [ -n "$(SHARED_LIBS)" ]; then \
 		shlib_target="$(SHLIB_TARGET)"; \
@@ -131,13 +131,13 @@ $(EXE): progs.h $(EXE_OBJ) $(DLIBCRYPTO) $(DLIBSSL)
 	LIBRARIES="$(LIBSSL) $(LIBCRYPTO)" ; \
 	$(MAKE) -f $(TOP)/Makefile.shared -e \
 		APPNAME=$(EXE) OBJECTS="$(EXE_OBJ)" \
-		LIBDEPS="$(LDFLAGS) $$LIBRARIES $(EX_LIBS)" \
+		LDFLAG="$(LDFLAG)" \
+		LIBDEPS="$(PLIB_LDFLAG) $$LIBRARIES $(EX_LIBS)" \
 		link_app.$${shlib_target}
 
-progs.h: progs.pl Makefile
+progs.h: progs.pl Makefile.in
 	$(RM) progs.h
-	$(PERL) progs.pl $(COMMANDS) >progs.h
-	$(RM) openssl.o
+	$(PERL) progs.pl $(EXE_SRC) > progs.h
 
 CA.pl: CA.pl.in
 	$(PERL) -I$(TOP) -Mconfigdata $(TOP)/util/dofile.pl -oapps/Makefile CA.pl.in > CA.pl.new

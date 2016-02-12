@@ -69,7 +69,10 @@
  */
 
 #include <openssl/opensslconf.h>
-#ifndef OPENSSL_NO_EC
+#ifdef OPENSSL_NO_EC
+NON_EMPTY_TRANSLATION_UNIT
+#else
+
 # include <stdio.h>
 # include <stdlib.h>
 # include <time.h>
@@ -501,11 +504,5 @@ int ecparam_main(int argc, char **argv)
     EC_GROUP_free(group);
     return (ret);
 }
-
-#else                           /* !OPENSSL_NO_EC */
-
-# if PEDANTIC
-static void *dummy = &dummy;
-# endif
 
 #endif

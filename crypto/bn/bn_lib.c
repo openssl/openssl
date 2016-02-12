@@ -330,7 +330,7 @@ static BN_ULONG *bn_expand_internal(const BIGNUM *b, int words)
              * The fact that the loop is unrolled
              * 4-wise is a tribute to Intel. It's
              * the one that doesn't have enough
-             * registers to accomodate more data.
+             * registers to accommodate more data.
              * I'd unroll it 8-wise otherwise:-)
              *
              *              <appro@fy.chalmers.se>
@@ -575,18 +575,104 @@ BIGNUM *BN_bin2bn(const unsigned char *s, int len, BIGNUM *ret)
 }
 
 /* ignore negative */
-int BN_bn2bin(const BIGNUM *a, unsigned char *to)
+static int bn2binpad(const BIGNUM *a, unsigned char *to, int tolen)
 {
-    int n, i;
+    int i;
     BN_ULONG l;
 
     bn_check_top(a);
-    n = i = BN_num_bytes(a);
+    i = BN_num_bytes(a);
+    if (tolen == -1)
+        tolen = i;
+    else if (tolen < i)
+        return -1;
+    /* Add leading zeroes if necessary */
+    if (tolen > i) {
+        memset(to, 0, tolen - i);
+        to += tolen - i;
+    }
     while (i--) {
         l = a->d[i / BN_BYTES];
         *(to++) = (unsigned char)(l >> (8 * (i % BN_BYTES))) & 0xff;
     }
-    return (n);
+    return tolen;
+}
+
+int BN_bn2binpad(const BIGNUM *a, unsigned char *to, int tolen)
+{
+    if (tolen < 0)
+        return -1;
+    return bn2binpad(a, to, tolen);
+}
+
+int BN_bn2bin(const BIGNUM *a, unsigned char *to)
+{
+    return bn2binpad(a, to, -1);
+}
+
+BIGNUM *BN_lebin2bn(const unsigned char *s, int len, BIGNUM *ret)
+{
+    unsigned int i, m;
+    unsigned int n;
+    BN_ULONG l;
+    BIGNUM *bn = NULL;
+
+    if (ret == NULL)
+        ret = bn = BN_new();
+    if (ret == NULL)
+        return (NULL);
+    bn_check_top(ret);
+    s += len - 1;
+    /* Skip trailing zeroes. */
+    for ( ; len > 0 && *s == 0; s--, len--)
+        continue;
+    n = len;
+    if (n == 0) {
+        ret->top = 0;
+        return ret;
+    }
+    i = ((n - 1) / BN_BYTES) + 1;
+    m = ((n - 1) % (BN_BYTES));
+    if (bn_wexpand(ret, (int)i) == NULL) {
+        BN_free(bn);
+        return NULL;
+    }
+    ret->top = i;
+    ret->neg = 0;
+    l = 0;
+    while (n--) {
+        l = (l << 8L) | *(s--);
+        if (m-- == 0) {
+            ret->d[--i] = l;
+            l = 0;
+            m = BN_BYTES - 1;
+        }
+    }
+    /*
+     * need to call this due to clear byte at top if avoiding having the top
+     * bit set (-ve number)
+     */
+    bn_correct_top(ret);
+    return ret;
+}
+
+int BN_bn2lebinpad(const BIGNUM *a, unsigned char *to, int tolen)
+{
+    int i;
+    BN_ULONG l;
+    bn_check_top(a);
+    i = BN_num_bytes(a);
+    if (tolen < i)
+        return -1;
+    /* Add trailing zeroes if necessary */
+    if (tolen > i)
+        memset(to + i, 0, tolen - i);
+    to += i - 1;
+    while (i--) {
+        l = a->d[i / BN_BYTES];
+        *(to--) = (unsigned char)(l >> (8 * (i % BN_BYTES))) & 0xff;
+    }
+    return tolen;
 }
 
 int BN_ucmp(const BIGNUM *a, const BIGNUM *b)

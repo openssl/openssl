@@ -55,19 +55,22 @@
  * Hudson (tjh@cryptsoft.com).
  *
  */
-#include <openssl/opensslconf.h>
 
-#ifndef OPENSSL_NO_SRP
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <openssl/conf.h>
-#include <openssl/bio.h>
-#include <openssl/err.h>
-#include <openssl/txt_db.h>
-#include <openssl/buffer.h>
-#include <openssl/srp.h>
-#include "apps.h"
+#include <openssl/opensslconf.h>
+#ifdef OPENSSL_NO_SRP
+NON_EMPTY_TRANSLATION_UNIT
+#else
+
+# include <stdio.h>
+# include <stdlib.h>
+# include <string.h>
+# include <openssl/conf.h>
+# include <openssl/bio.h>
+# include <openssl/err.h>
+# include <openssl/txt_db.h>
+# include <openssl/buffer.h>
+# include <openssl/srp.h>
+# include "apps.h"
 
 # define BASE_SECTION    "srp"
 # define CONFIG_FILE "openssl.cnf"
@@ -653,11 +656,4 @@ int srp_main(int argc, char **argv)
     OBJ_cleanup();
     return (ret);
 }
-
-#else
-
-# if PEDANTIC
-static void *dummy = &dummy;
-# endif
-
 #endif

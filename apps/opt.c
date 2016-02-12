@@ -182,8 +182,9 @@ char *opt_init(int ac, char **av, const OPTIONS *o)
         assert(o->name[0] != '-');
         assert(o->retval > 0);
         switch (i) {
-        case   0: case '-': case '/': case '<': case '>': case 'F': case 'M':
-        case 'L': case 'U': case 'f': case 'n': case 'p': case 's': case 'u':
+        case   0: case '-': case '/': case '<': case '>': case 'E': case 'F':
+        case 'M': case 'U': case 'f': case 'l': case 'n': case 'p': case 's':
+        case 'u':
             break;
         default:
             assert(0);
@@ -556,7 +557,7 @@ int opt_verify(int opt, X509_VERIFY_PARAM *vpm)
         X509_VERIFY_PARAM_set_flags(vpm, X509_V_FLAG_IGNORE_CRITICAL);
         break;
     case OPT_V_ISSUER_CHECKS:
-        X509_VERIFY_PARAM_set_flags(vpm, X509_V_FLAG_CB_ISSUER_CHECK);
+        /* NOP, deprecated */
         break;
     case OPT_V_CRL_CHECK:
         X509_VERIFY_PARAM_set_flags(vpm, X509_V_FLAG_CRL_CHECK);
@@ -734,7 +735,7 @@ int opt_next(void)
                 return -1;
             }
             break;
-        case 'L':
+        case 'l':
             if (!opt_long(arg, &lval)) {
                 BIO_printf(bio_err,
                            "%s: Invalid number \"%s\" for -%s\n",
@@ -750,9 +751,11 @@ int opt_next(void)
                 return -1;
             }
             break;
-        case 'f':
+        case 'E':
         case 'F':
+        case 'f':
             if (opt_format(arg,
+                           o->valtype == 'E' ? OPT_FMT_PDE :
                            o->valtype == 'F' ? OPT_FMT_PEMDER
                            : OPT_FMT_ANY, &ival))
                 break;
@@ -812,6 +815,7 @@ int opt_num_rest(void)
 static const char *valtype2param(const OPTIONS *o)
 {
     switch (o->valtype) {
+    case 0:
     case '-':
         return "";
     case 's':
@@ -823,15 +827,23 @@ static const char *valtype2param(const OPTIONS *o)
     case '>':
         return "outfile";
     case 'p':
-        return "pnum";
+        return "+int";
     case 'n':
-        return "num";
+        return "int";
+    case 'l':
+        return "long";
     case 'u':
-        return "unum";
+        return "ulong";
+    case 'E':
+        return "PEM|DER|ENGINE";
     case 'F':
-        return "der/pem";
+        return "PEM|DER";
     case 'f':
         return "format";
+    case 'M':
+        return "intmax";
+    case 'U':
+        return "uintmax";
     }
     return "parm";
 }

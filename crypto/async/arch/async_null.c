@@ -80,11 +80,6 @@ int async_global_init(void)
     return 0;
 }
 
-int async_local_init(void)
-{
-    return 0;
-}
-
 void async_local_cleanup(void)
 {
 }

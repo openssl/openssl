@@ -767,7 +767,7 @@ _armv4_AES_set_enc2dec_key:
 	ldr	$rounds,[r0,#240]
 	mov	$i1,r0			@ input
 	add	$i2,r0,$rounds,lsl#4
-	mov	$key,r1			@ ouput
+	mov	$key,r1			@ output
 	add	$tbl,r1,$rounds,lsl#4
 	str	$rounds,[r1,#240]
 

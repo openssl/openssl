@@ -141,9 +141,9 @@ static int engine_list_add(ENGINE *e)
      * Having the engine in the list assumes a structural reference.
      */
     e->struct_ref++;
-    engine_ref_debug(e, 0, 1)
-        /* However it came to be, e is the last item in the list. */
-        engine_list_tail = e;
+    engine_ref_debug(e, 0, 1);
+    /* However it came to be, e is the last item in the list. */
+    engine_list_tail = e;
     e->next = NULL;
     return 1;
 }
@@ -188,7 +188,7 @@ ENGINE *ENGINE_get_first(void)
     ret = engine_list_head;
     if (ret) {
         ret->struct_ref++;
-        engine_ref_debug(ret, 0, 1)
+        engine_ref_debug(ret, 0, 1);
     }
     CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
     return ret;
@@ -202,7 +202,7 @@ ENGINE *ENGINE_get_last(void)
     ret = engine_list_tail;
     if (ret) {
         ret->struct_ref++;
-        engine_ref_debug(ret, 0, 1)
+        engine_ref_debug(ret, 0, 1);
     }
     CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
     return ret;
@@ -219,9 +219,9 @@ ENGINE *ENGINE_get_next(ENGINE *e)
     CRYPTO_w_lock(CRYPTO_LOCK_ENGINE);
     ret = e->next;
     if (ret) {
-        /* Return a valid structural refernce to the next ENGINE */
+        /* Return a valid structural reference to the next ENGINE */
         ret->struct_ref++;
-        engine_ref_debug(ret, 0, 1)
+        engine_ref_debug(ret, 0, 1);
     }
     CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
     /* Release the structural reference to the previous ENGINE */
@@ -241,7 +241,7 @@ ENGINE *ENGINE_get_prev(ENGINE *e)
     if (ret) {
         /* Return a valid structural reference to the next ENGINE */
         ret->struct_ref++;
-        engine_ref_debug(ret, 0, 1)
+        engine_ref_debug(ret, 0, 1);
     }
     CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
     /* Release the structural reference to the previous ENGINE */
@@ -304,7 +304,6 @@ static void engine_cpy(ENGINE *dest, const ENGINE *src)
     dest->ec_meth = src->ec_meth;
 #endif
     dest->rand_meth = src->rand_meth;
-    dest->store_meth = src->store_meth;
     dest->ciphers = src->ciphers;
     dest->digests = src->digests;
     dest->pkey_meths = src->pkey_meths;
@@ -346,23 +345,18 @@ ENGINE *ENGINE_by_id(const char *id)
             }
         } else {
             iterator->struct_ref++;
-            engine_ref_debug(iterator, 0, 1)
+            engine_ref_debug(iterator, 0, 1);
         }
     }
     CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
     if (iterator != NULL)
         return iterator;
     /*
-     * Prevent infinite recusrion if we're looking for the dynamic engine.
+     * Prevent infinite recursion if we're looking for the dynamic engine.
      */
     if (strcmp(id, "dynamic")) {
-# ifdef OPENSSL_SYS_VMS
-        if ((load_dir = getenv("OPENSSL_ENGINES")) == 0)
-            load_dir = "SSLROOT:[ENGINES]";
-# else
         if ((load_dir = getenv("OPENSSL_ENGINES")) == 0)
             load_dir = ENGINESDIR;
-# endif
         iterator = ENGINE_by_id("dynamic");
         if (!iterator || !ENGINE_ctrl_cmd_string(iterator, "ID", id, 0) ||
             !ENGINE_ctrl_cmd_string(iterator, "DIR_LOAD", "2", 0) ||

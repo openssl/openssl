@@ -10,10 +10,11 @@ CFLAG=		-g
 MAKEDEPEND=	$(TOP)/util/domd $(TOP) -MD $(MAKEDEPPROG)
 PERL=		perl
 
-LDFLAGS=
+PLIB_LDFLAG=
 EX_LIBS= #-lnsl -lsocket
 
 CFLAGS= $(INCLUDES) $(CFLAG)
+LDFLAGS= $(CFLAGS) $(LDFLAG)
 
 GENERAL=Makefile maketests.com \
 	tests.com testenc.com tx509.com trsa.com tcrl.com tsid.com treq.com \
@@ -80,6 +81,7 @@ SSLEXTENSIONTEST=	sslextensiontest
 SSLSESSIONTICKTEST= 	sslsessionticktest
 SSLSKEWITH0PTEST=	sslskewith0ptest
 ASYNCTEST=	asynctest
+DTLSV1LISTENTEST = dtlsv1listentest
 
 TESTS=		alltests
 
@@ -100,7 +102,8 @@ EXE=	$(NPTEST)$(EXE_EXT) $(MEMLEAKTEST)$(EXE_EXT) \
 	$(SRPTEST)$(EXE_EXT) $(V3NAMETEST)$(EXE_EXT) \
 	$(HEARTBEATTEST)$(EXE_EXT) $(P5_CRPT2_TEST)$(EXE_EXT) \
 	$(CONSTTIMETEST)$(EXE_EXT) $(VERIFYEXTRATEST)$(EXE_EXT) \
-	$(CLIENTHELLOTEST)$(EXE_EXT) $(PACKETTEST)$(EXE_EXT) $(ASYNCTEST)$(EXE_EXT)
+	$(CLIENTHELLOTEST)$(EXE_EXT) $(PACKETTEST)$(EXE_EXT) $(ASYNCTEST)$(EXE_EXT) \
+	$(DTLSV1LISTENTEST)$(EXE_EXT)
 
 # $(METHTEST)$(EXE_EXT)
 
@@ -117,7 +120,7 @@ OBJ=	$(NPTEST).o $(MEMLEAKTEST).o \
 	$(EVPTEST).o $(EVPEXTRATEST).o $(IGETEST).o $(JPAKETEST).o $(V3NAMETEST).o \
 	$(HEARTBEATTEST).o $(P5_CRPT2_TEST).o \
 	$(CONSTTIMETEST).o $(VERIFYEXTRATEST).o $(CLIENTHELLOTEST).o \
-	$(PACKETTEST).o $(ASYNCTEST).o testutil.o
+	$(PACKETTEST).o $(ASYNCTEST).o $(DTLSV1LISTENTEST).o testutil.o
 
 SRC=	$(NPTEST).c $(MEMLEAKTEST).c \
 	$(BNTEST).c $(ECTEST).c \
@@ -131,7 +134,7 @@ SRC=	$(NPTEST).c $(MEMLEAKTEST).c \
 	$(EVPTEST).c $(EVPEXTRATEST).c $(IGETEST).c $(JPAKETEST).c $(V3NAMETEST).c \
 	$(HEARTBEATTEST).c $(P5_CRPT2_TEST).c \
 	$(CONSTTIMETEST).c $(VERIFYEXTRATEST).c $(CLIENTHELLOTEST).c \
-	$(PACKETTEST).c $(ASYNCTEST).c testutil.c
+	$(PACKETTEST).c $(ASYNCTEST).c $(DTLSV1LISTENTEST).c testutil.c
 
 HEADER=	testutil.h
 
@@ -180,14 +183,16 @@ BUILD_CMD=shlib_target=; if [ -n "$(SHARED_LIBS)" ]; then \
 	LIBRARIES="$(LIBSSL) $(LIBCRYPTO)"; \
 	$(MAKE) -f $(TOP)/Makefile.shared -e \
 		APPNAME=$$target$(EXE_EXT) OBJECTS="$$target.o $$testutil" \
-		LIBDEPS="$(LDFLAGS) $$LIBRARIES $(EX_LIBS)" \
+		LDFLAG="$(LDFLAG)" \
+		LIBDEPS="$(PLIB_LDFLAG) $$LIBRARIES $(EX_LIBS)" \
 		link_app.$${shlib_target}
 
 BUILD_CMD_STATIC=shlib_target=; \
 	LIBRARIES="$(DLIBSSL) $(DLIBCRYPTO)"; \
 	$(MAKE) -f $(TOP)/Makefile.shared -e \
 		APPNAME=$$target$(EXE_EXT) OBJECTS="$$target.o $$testutil" \
-		LIBDEPS="$(LDFLAGS) $$LIBRARIES $(EX_LIBS)" \
+		LDFLAG="$(LDFLAG)" \
+		LIBDEPS="$(PLIB_LDFLAG) $$LIBRARIES $(EX_LIBS)" \
 		link_app.$${shlib_target}
 
 $(RSATEST)$(EXE_EXT): $(RSATEST).o $(DLIBCRYPTO)
@@ -242,7 +247,8 @@ FIPS_BUILD_CMD=shlib_target=; if [ -n "$(SHARED_LIBS)" ]; then \
 	fi; \
 	$(MAKE) -f $(TOP)/Makefile.shared -e \
 		CC="$${CC}" APPNAME=$$target$(EXE_EXT) OBJECTS="$$target.o" \
-		LIBDEPS="$(LDFLAGS) $$LIBRARIES $(EX_LIBS)" \
+		LDFLAG="$(LDFLAG)" \
+		LIBDEPS="$(PLIB_LDFLAG) $$LIBRARIES $(EX_LIBS)" \
 		link_app.$${shlib_target}
 
 FIPS_CRYPTO_BUILD_CMD=shlib_target=; if [ -n "$(SHARED_LIBS)" ]; then \
@@ -255,7 +261,8 @@ FIPS_CRYPTO_BUILD_CMD=shlib_target=; if [ -n "$(SHARED_LIBS)" ]; then \
 	[ "$(FIPSCANLIB)" = "libfips" ] && LIBRARIES="$$LIBRARIES -lfips"; \
 	$(MAKE) -f $(TOP)/Makefile.shared -e \
 		CC="$${CC}" APPNAME=$$target$(EXE_EXT) OBJECTS="$$target.o" \
-		LIBDEPS="$(LDFLAGS) $$LIBRARIES $(EX_LIBS)" \
+		LDFLAG="$(LDFLAG)" \
+		LIBDEPS="$(PLIB_LDFLAG) $$LIBRARIES $(EX_LIBS)" \
 		link_app.$${shlib_target}
 
 $(RMDTEST)$(EXE_EXT): $(RMDTEST).o $(DLIBCRYPTO)
@@ -363,15 +370,8 @@ $(PACKETTEST)$(EXE_EXT): $(PACKETTEST).o
 $(ASYNCTEST)$(EXE_EXT): $(ASYNCTEST).o
 	@target=$(ASYNCTEST) $(BUILD_CMD)
 
-#$(AESTEST).o: $(AESTEST).c
-#	$(CC) -c $(CFLAGS) -DINTERMEDIATE_VALUE_KAT -DTRACE_KAT_MCT $(AESTEST).c
-
-#$(AESTEST)$(EXE_EXT): $(AESTEST).o $(DLIBCRYPTO)
-#	if [ "$(SHLIB_TARGET)" = "hpux-shared" -o "$(SHLIB_TARGET)" = "darwin-shared" ] ; then \
-#	  $(CC) -o $(AESTEST)$(EXE_EXT) $(CFLAGS) $(AESTEST).o $(LDFLAGS) $(DLIBCRYPTO) $(EX_LIBS) ; \
-#	else \
-#	  $(CC) -o $(AESTEST)$(EXE_EXT) $(CFLAGS) $(AESTEST).o $(LDFLAGS) $(LIBCRYPTO) $(EX_LIBS) ; \
-#	fi
+$(DTLSV1LISTENTEST)$(EXE_EXT): $(DTLSV1LISTENTEST).o
+	@target=$(DTLSV1LISTENTEST) $(BUILD_CMD)
 
 dummytest$(EXE_EXT): dummytest.o $(DLIBCRYPTO)
 	@target=dummytest; $(BUILD_CMD)
