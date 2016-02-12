@@ -2254,7 +2254,7 @@ static int sv_body(const char *hostname, int s, int stype,
         int read_from_sslcon;
 
         read_from_terminal = 0;
-        read_from_sslcon = SSL_pending(con)
+        read_from_sslcon = SSL_has_pending(con)
                            || (async && SSL_waiting_for_async(con));
 
         if (!read_from_sslcon) {
@@ -2490,7 +2490,7 @@ static int sv_body(const char *hostname, int s, int stype,
                     ascii2ebcdic(buf, buf, i);
 #endif
                     raw_write_stdout(buf, (unsigned int)i);
-                    if (SSL_pending(con))
+                    if (SSL_has_pending(con))
                         goto again;
                     break;
                 case SSL_ERROR_WANT_ASYNC:
