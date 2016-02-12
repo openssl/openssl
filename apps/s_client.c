@@ -2183,7 +2183,7 @@ int s_client_main(int argc, char **argv)
             }
         }
 
-        ssl_pending = read_ssl && SSL_pending(con);
+        ssl_pending = read_ssl && SSL_has_pending(con);
 
         if (!ssl_pending) {
 #if !defined(OPENSSL_SYS_WINDOWS) && !defined(OPENSSL_SYS_MSDOS) && !defined(OPENSSL_SYS_NETWARE)
