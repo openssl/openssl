@@ -44,6 +44,7 @@
 /crypto/buildinf.h
 /openssl/include/opensslconf.h
 /crypto/include/internal/*_conf.h
+util/domd
 
 # Auto generated assembly language source files
 *.s

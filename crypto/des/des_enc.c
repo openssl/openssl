@@ -1,4 +1,3 @@
-/* crypto/des/des_enc.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -63,12 +62,6 @@
 void DES_encrypt1(DES_LONG *data, DES_key_schedule *ks, int enc)
 {
     register DES_LONG l, r, t, u;
-#ifdef DES_PTR
-    register const unsigned char *des_SP = (const unsigned char *)DES_SPtrans;
-#endif
-#ifndef DES_UNROLL
-    register int i;
-#endif
     register DES_LONG *s;
 
     r = data[0];
@@ -93,7 +86,6 @@ void DES_encrypt1(DES_LONG *data, DES_key_schedule *ks, int enc)
      * loop
      */
     if (enc) {
-#ifdef DES_UNROLL
         D_ENCRYPT(l, r, 0);     /* 1 */
         D_ENCRYPT(r, l, 2);     /* 2 */
         D_ENCRYPT(l, r, 4);     /* 3 */
@@ -110,14 +102,7 @@ void DES_encrypt1(DES_LONG *data, DES_key_schedule *ks, int enc)
         D_ENCRYPT(r, l, 26);    /* 14 */
         D_ENCRYPT(l, r, 28);    /* 15 */
         D_ENCRYPT(r, l, 30);    /* 16 */
-#else
-        for (i = 0; i < 32; i += 4) {
-            D_ENCRYPT(l, r, i + 0); /* 1 */
-            D_ENCRYPT(r, l, i + 2); /* 2 */
-        }
-#endif
     } else {
-#ifdef DES_UNROLL
         D_ENCRYPT(l, r, 30);    /* 16 */
         D_ENCRYPT(r, l, 28);    /* 15 */
         D_ENCRYPT(l, r, 26);    /* 14 */
@@ -134,12 +119,6 @@ void DES_encrypt1(DES_LONG *data, DES_key_schedule *ks, int enc)
         D_ENCRYPT(r, l, 4);     /* 3 */
         D_ENCRYPT(l, r, 2);     /* 2 */
         D_ENCRYPT(r, l, 0);     /* 1 */
-#else
-        for (i = 30; i > 0; i -= 4) {
-            D_ENCRYPT(l, r, i - 0); /* 16 */
-            D_ENCRYPT(r, l, i - 2); /* 15 */
-        }
-#endif
     }
 
     /* rotate and clear the top bits on machines with 8byte longs */
@@ -155,12 +134,6 @@ void DES_encrypt1(DES_LONG *data, DES_key_schedule *ks, int enc)
 void DES_encrypt2(DES_LONG *data, DES_key_schedule *ks, int enc)
 {
     register DES_LONG l, r, t, u;
-#ifdef DES_PTR
-    register const unsigned char *des_SP = (const unsigned char *)DES_SPtrans;
-#endif
-#ifndef DES_UNROLL
-    register int i;
-#endif
     register DES_LONG *s;
 
     r = data[0];
@@ -183,7 +156,6 @@ void DES_encrypt2(DES_LONG *data, DES_key_schedule *ks, int enc)
      * loop
      */
     if (enc) {
-#ifdef DES_UNROLL
         D_ENCRYPT(l, r, 0);     /* 1 */
         D_ENCRYPT(r, l, 2);     /* 2 */
         D_ENCRYPT(l, r, 4);     /* 3 */
@@ -200,14 +172,7 @@ void DES_encrypt2(DES_LONG *data, DES_key_schedule *ks, int enc)
         D_ENCRYPT(r, l, 26);    /* 14 */
         D_ENCRYPT(l, r, 28);    /* 15 */
         D_ENCRYPT(r, l, 30);    /* 16 */
-#else
-        for (i = 0; i < 32; i += 4) {
-            D_ENCRYPT(l, r, i + 0); /* 1 */
-            D_ENCRYPT(r, l, i + 2); /* 2 */
-        }
-#endif
     } else {
-#ifdef DES_UNROLL
         D_ENCRYPT(l, r, 30);    /* 16 */
         D_ENCRYPT(r, l, 28);    /* 15 */
         D_ENCRYPT(l, r, 26);    /* 14 */
@@ -224,12 +189,6 @@ void DES_encrypt2(DES_LONG *data, DES_key_schedule *ks, int enc)
         D_ENCRYPT(r, l, 4);     /* 3 */
         D_ENCRYPT(l, r, 2);     /* 2 */
         D_ENCRYPT(r, l, 0);     /* 1 */
-#else
-        for (i = 30; i > 0; i -= 4) {
-            D_ENCRYPT(l, r, i - 0); /* 16 */
-            D_ENCRYPT(r, l, i - 2); /* 15 */
-        }
-#endif
     }
     /* rotate and clear the top bits on machines with 8byte longs */
     data[0] = ROTATE(l, 3) & 0xffffffffL;

@@ -1,4 +1,3 @@
-/* crypto/ec/ec_key.c */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -242,11 +241,10 @@ int ossl_ec_key_gen(EC_KEY *eckey)
 {
     int ok = 0;
     BN_CTX *ctx = NULL;
-    BIGNUM *priv_key = NULL, *order = NULL;
+    BIGNUM *priv_key = NULL;
+    const BIGNUM *order = NULL;
     EC_POINT *pub_key = NULL;
 
-    if ((order = BN_new()) == NULL)
-        goto err;
     if ((ctx = BN_CTX_new()) == NULL)
         goto err;
 
@@ -257,7 +255,8 @@ int ossl_ec_key_gen(EC_KEY *eckey)
     } else
         priv_key = eckey->priv_key;
 
-    if (!EC_GROUP_get_order(eckey->group, order, ctx))
+    order = EC_GROUP_get0_order(eckey->group);
+    if (order == NULL)
         goto err;
 
     do
@@ -281,7 +280,6 @@ int ossl_ec_key_gen(EC_KEY *eckey)
     ok = 1;
 
  err:
-    BN_free(order);
     if (eckey->pub_key == NULL)
         EC_POINT_free(pub_key);
     if (eckey->priv_key != priv_key)

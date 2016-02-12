@@ -1,4 +1,3 @@
-/* crypto/ui/ui_util.c */
 /* ====================================================================
  * Copyright (c) 2001-2002 The OpenSSL Project.  All rights reserved.
  *

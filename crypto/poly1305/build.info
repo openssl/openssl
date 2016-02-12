@@ -1,0 +1,3 @@
+LIBS=../../libcrypto
+SOURCE[../../libcrypto]=\
+        poly1305.c {- $target{poly1305_asm_src} -}

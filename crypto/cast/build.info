@@ -1,0 +1,3 @@
+LIBS=../../libcrypto
+SOURCE[../../libcrypto]=\
+        c_skey.c c_ecb.c {- $target{cast_asm_src} -} c_cfb64.c c_ofb64.c

@@ -1,4 +1,3 @@
-/* crypto/ts/ts_resp_sign.c */
 /*
  * Written by Zoltan Glozik (zglozik@stones.com) for the OpenSSL project
  * 2002.
@@ -794,6 +793,7 @@ static ESS_CERT_ID *ess_CERT_ID_new_init(X509 *cert, int issuer_needed)
     GENERAL_NAME *name = NULL;
     unsigned char cert_sha1[SHA_DIGEST_LENGTH];
 
+    /* Call for side-effect of computing hash and caching extensions */
     X509_check_purpose(cert, -1, 0);
     if ((cid = ESS_CERT_ID_new()) == NULL)
         goto err;

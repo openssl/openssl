@@ -1,6 +1,3 @@
-/* NOCW */
-/* demos/bio/saccept.c */
-
 /*-
  * A minimal program to serve an SSL connection.
  * It uses blocking.

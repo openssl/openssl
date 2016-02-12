@@ -1,4 +1,3 @@
-/* crypto/ec/ecdsa_ossl.c */
 /*
  * Written by Nils Larsch for the OpenSSL project
  */
@@ -85,7 +84,8 @@ static int ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in,
                             const unsigned char *dgst, int dlen)
 {
     BN_CTX *ctx = NULL;
-    BIGNUM *k = NULL, *r = NULL, *order = NULL, *X = NULL;
+    BIGNUM *k = NULL, *r = NULL, *X = NULL;
+    const BIGNUM *order;
     EC_POINT *tmp_point = NULL;
     const EC_GROUP *group;
     int ret = 0;
@@ -105,9 +105,8 @@ static int ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in,
 
     k = BN_new();               /* this value is later returned in *kinvp */
     r = BN_new();               /* this value is later returned in *rp */
-    order = BN_new();
     X = BN_new();
-    if (k == NULL || r == NULL || order == NULL || X == NULL) {
+    if (k == NULL || r == NULL || X == NULL) {
         ECerr(EC_F_ECDSA_SIGN_SETUP, ERR_R_MALLOC_FAILURE);
         goto err;
     }
@@ -115,7 +114,8 @@ static int ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in,
         ECerr(EC_F_ECDSA_SIGN_SETUP, ERR_R_EC_LIB);
         goto err;
     }
-    if (!EC_GROUP_get_order(group, order, ctx)) {
+    order = EC_GROUP_get0_order(group);
+    if (order == NULL) {
         ECerr(EC_F_ECDSA_SIGN_SETUP, ERR_R_EC_LIB);
         goto err;
     }
@@ -223,7 +223,6 @@ static int ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in,
     }
     if (ctx != ctx_in)
         BN_CTX_free(ctx);
-    BN_free(order);
     EC_POINT_free(tmp_point);
     BN_clear_free(X);
     return (ret);
@@ -240,8 +239,8 @@ ECDSA_SIG *ossl_ecdsa_sign_sig(const unsigned char *dgst, int dgst_len,
                                EC_KEY *eckey)
 {
     int ok = 0, i;
-    BIGNUM *kinv = NULL, *s, *m = NULL, *tmp = NULL, *order = NULL;
-    const BIGNUM *ckinv;
+    BIGNUM *kinv = NULL, *s, *m = NULL, *tmp = NULL;
+    const BIGNUM *order, *ckinv;
     BN_CTX *ctx = NULL;
     const EC_GROUP *group;
     ECDSA_SIG *ret;
@@ -262,13 +261,14 @@ ECDSA_SIG *ossl_ecdsa_sign_sig(const unsigned char *dgst, int dgst_len,
     }
     s = ret->s;
 
-    if ((ctx = BN_CTX_new()) == NULL || (order = BN_new()) == NULL ||
+    if ((ctx = BN_CTX_new()) == NULL ||
         (tmp = BN_new()) == NULL || (m = BN_new()) == NULL) {
         ECerr(EC_F_OSSL_ECDSA_SIGN_SIG, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
-    if (!EC_GROUP_get_order(group, order, ctx)) {
+    order = EC_GROUP_get0_order(group);
+    if (order == NULL) {
         ECerr(EC_F_OSSL_ECDSA_SIGN_SIG, ERR_R_EC_LIB);
         goto err;
     }
@@ -338,7 +338,6 @@ ECDSA_SIG *ossl_ecdsa_sign_sig(const unsigned char *dgst, int dgst_len,
     BN_CTX_free(ctx);
     BN_clear_free(m);
     BN_clear_free(tmp);
-    BN_free(order);
     BN_clear_free(kinv);
     return ret;
 }
@@ -379,7 +378,8 @@ int ossl_ecdsa_verify_sig(const unsigned char *dgst, int dgst_len,
 {
     int ret = -1, i;
     BN_CTX *ctx;
-    BIGNUM *order, *u1, *u2, *m, *X;
+    const BIGNUM *order;
+    BIGNUM *u1, *u2, *m, *X;
     EC_POINT *point = NULL;
     const EC_GROUP *group;
     const EC_POINT *pub_key;
@@ -397,7 +397,6 @@ int ossl_ecdsa_verify_sig(const unsigned char *dgst, int dgst_len,
         return -1;
     }
     BN_CTX_start(ctx);
-    order = BN_CTX_get(ctx);
     u1 = BN_CTX_get(ctx);
     u2 = BN_CTX_get(ctx);
     m = BN_CTX_get(ctx);
@@ -407,7 +406,8 @@ int ossl_ecdsa_verify_sig(const unsigned char *dgst, int dgst_len,
         goto err;
     }
 
-    if (!EC_GROUP_get_order(group, order, ctx)) {
+    order = EC_GROUP_get0_order(group);
+    if (order == NULL) {
         ECerr(EC_F_OSSL_ECDSA_VERIFY_SIG, ERR_R_EC_LIB);
         goto err;
     }

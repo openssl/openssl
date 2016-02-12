@@ -1,4 +1,3 @@
-/* crypto/ec/ec_asn1.c */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -537,15 +536,10 @@ static ECPARAMETERS *ec_asn1_group2parameters(const EC_GROUP *group,
 {
     size_t len = 0;
     ECPARAMETERS *ret = NULL;
-    BIGNUM *tmp = NULL;
+    const BIGNUM *tmp;
     unsigned char *buffer = NULL;
     const EC_POINT *point = NULL;
     point_conversion_form_t form;
-
-    if ((tmp = BN_new()) == NULL) {
-        ECerr(EC_F_EC_ASN1_GROUP2PARAMETERS, ERR_R_MALLOC_FAILURE);
-        goto err;
-    }
 
     if (param == NULL) {
         if ((ret = ECPARAMETERS_new()) == NULL) {
@@ -593,7 +587,8 @@ static ECPARAMETERS *ec_asn1_group2parameters(const EC_GROUP *group,
     }
 
     /* set the order */
-    if (!EC_GROUP_get_order(group, tmp, NULL)) {
+    tmp = EC_GROUP_get0_order(group);
+    if (tmp == NULL) {
         ECerr(EC_F_EC_ASN1_GROUP2PARAMETERS, ERR_R_EC_LIB);
         goto err;
     }
@@ -604,7 +599,8 @@ static ECPARAMETERS *ec_asn1_group2parameters(const EC_GROUP *group,
     }
 
     /* set the cofactor (optional) */
-    if (EC_GROUP_get_cofactor(group, tmp, NULL)) {
+    tmp = EC_GROUP_get0_cofactor(group);
+    if (tmp != NULL) {
         ret->cofactor = BN_to_ASN1_INTEGER(tmp, ret->cofactor);
         if (ret->cofactor == NULL) {
             ECerr(EC_F_EC_ASN1_GROUP2PARAMETERS, ERR_R_ASN1_LIB);
@@ -617,7 +613,6 @@ static ECPARAMETERS *ec_asn1_group2parameters(const EC_GROUP *group,
  err:
     if (!param)
         ECPARAMETERS_free(ret);
-    BN_free(tmp);
     OPENSSL_free(buffer);
     return NULL;
 }
@@ -1316,7 +1311,6 @@ int ECDSA_size(const EC_KEY *r)
 {
     int ret, i;
     ASN1_INTEGER bs;
-    BIGNUM *order = NULL;
     unsigned char buf[4];
     const EC_GROUP *group;
 
@@ -1326,13 +1320,9 @@ int ECDSA_size(const EC_KEY *r)
     if (group == NULL)
         return 0;
 
-    if ((order = BN_new()) == NULL)
+    i = EC_GROUP_order_bits(group);
+    if (i == 0)
         return 0;
-    if (!EC_GROUP_get_order(group, order, NULL)) {
-        BN_clear_free(order);
-        return 0;
-    }
-    i = BN_num_bits(order);
     bs.length = (i + 7) / 8;
     bs.data = buf;
     bs.type = V_ASN1_INTEGER;
@@ -1342,6 +1332,5 @@ int ECDSA_size(const EC_KEY *r)
     i = i2d_ASN1_INTEGER(&bs, NULL);
     i += i;                     /* r and s */
     ret = ASN1_object_size(1, i, V_ASN1_SEQUENCE);
-    BN_clear_free(order);
     return (ret);
 }

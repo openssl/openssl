@@ -119,6 +119,7 @@ typedef struct asn1_sctx_st ASN1_SCTX;
 # ifdef BIGNUM
 #  undef BIGNUM
 # endif
+typedef struct bio_st BIO;
 typedef struct bignum_st BIGNUM;
 typedef struct bignum_ctx BN_CTX;
 typedef struct bn_blinding_st BN_BLINDING;

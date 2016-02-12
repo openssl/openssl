@@ -1,4 +1,3 @@
-/* ssl/record/rec_layer_d1.c */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.

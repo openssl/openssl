@@ -1,4 +1,3 @@
-/* conf_lib.c */
 /*
  * Written by Richard Levitte (richard@levitte.org) for the OpenSSL project
  * 2000.

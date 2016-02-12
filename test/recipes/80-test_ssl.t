@@ -470,6 +470,9 @@ sub testssl {
 		  $protocolciphersuitcount += scalar @c;
 		  $_ => [ @c ] } @protocols;
 
+        plan skip_all => "None of the ciphersuites to test are available in this OpenSSL build"
+            if $protocolciphersuitcount + scalar(@protocols) == 0;
+
         # The count of protocols is because in addition to the ciphersuits
         # we got above, we're running a weak DH test for each protocol
 	plan tests => $protocolciphersuitcount + scalar(@protocols);
@@ -560,7 +563,7 @@ sub testssl {
 	plan tests => 1;
 
       SKIP: {
-	  skip "TLSv1.0 is not supported by this OpenSSL build", 7
+	  skip "TLSv1.0 is not supported by this OpenSSL build", 1
 	      if $no_tls1;
 
 	  ok(run(test([@ssltest, "-bio_pair", "-tls1", "-custom_ext"])),

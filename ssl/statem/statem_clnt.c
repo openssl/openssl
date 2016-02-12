@@ -1,4 +1,3 @@
-/* ssl/statem/statem_clnt.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1024,7 +1023,7 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL *s, PACKET *pkt)
     const SSL_CIPHER *c;
     PACKET session_id;
     size_t session_id_len;
-    unsigned char *cipherchars;
+    const unsigned char *cipherchars;
     int i, al = SSL_AD_INTERNAL_ERROR;
     unsigned int compression;
     unsigned int sversion;
@@ -1285,7 +1284,7 @@ MSG_PROCESS_RETURN tls_process_server_certificate(SSL *s, PACKET *pkt)
     int al, i, ret = MSG_PROCESS_ERROR, exp_idx;
     unsigned long cert_list_len, cert_len;
     X509 *x = NULL;
-    unsigned char *certstart, *certbytes;
+    const unsigned char *certstart, *certbytes;
     STACK_OF(X509) *sk = NULL;
     EVP_PKEY *pkey = NULL;
 
@@ -1576,7 +1575,7 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
 #ifndef OPENSSL_NO_EC
     else if (alg_k & (SSL_kECDHE | SSL_kECDHEPSK)) {
         PACKET encoded_pt;
-        unsigned char *ecparams;
+        const unsigned char *ecparams;
         int curve_nid;
 
         /*
@@ -1668,7 +1667,7 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
         }
 
         if (SSL_USE_SIGALGS(s)) {
-            unsigned char *sigalgs;
+            const unsigned char *sigalgs;
             int rv;
             if (!PACKET_get_bytes(pkt, &sigalgs, 2)) {
                 SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, SSL_R_LENGTH_TOO_SHORT);
@@ -1762,8 +1761,8 @@ MSG_PROCESS_RETURN tls_process_certificate_request(SSL *s, PACKET *pkt)
     int ret = MSG_PROCESS_ERROR;
     unsigned int list_len, ctype_num, i, name_len;
     X509_NAME *xn = NULL;
-    unsigned char *data;
-    unsigned char *namestart, *namebytes;
+    const unsigned char *data;
+    const unsigned char *namestart, *namebytes;
     STACK_OF(X509_NAME) *ca_sk = NULL;
 
     if ((ca_sk = sk_X509_NAME_new(ca_dn_cmp)) == NULL) {

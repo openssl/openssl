@@ -1,4 +1,3 @@
-/* ssl/t1_reneg.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -146,7 +145,7 @@ int ssl_add_clienthello_renegotiate_ext(SSL *s, unsigned char *p, int *len,
 int ssl_parse_clienthello_renegotiate_ext(SSL *s, PACKET *pkt, int *al)
 {
     unsigned int ilen;
-    unsigned char *d;
+    const unsigned char *d;
 
     /* Parse the length byte */
     if (!PACKET_get_1(pkt, &ilen)
@@ -225,7 +224,7 @@ int ssl_parse_serverhello_renegotiate_ext(SSL *s, PACKET *pkt, int *al)
     unsigned int expected_len = s->s3->previous_client_finished_len
         + s->s3->previous_server_finished_len;
     unsigned int ilen;
-    unsigned char *data;
+    const unsigned char *data;
 
     /* Check for logic errors */
     OPENSSL_assert(!expected_len || s->s3->previous_client_finished_len);

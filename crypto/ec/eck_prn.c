@@ -1,4 +1,3 @@
-/* crypto/ec/eck_prn.c */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -148,8 +147,8 @@ int ECPKParameters_print(BIO *bp, const EC_GROUP *x, int off)
     int ret = 0, reason = ERR_R_BIO_LIB;
     BN_CTX *ctx = NULL;
     const EC_POINT *point = NULL;
-    BIGNUM *p = NULL, *a = NULL, *b = NULL, *gen = NULL,
-        *order = NULL, *cofactor = NULL;
+    BIGNUM *p = NULL, *a = NULL, *b = NULL, *gen = NULL;
+    const BIGNUM *order = NULL, *cofactor = NULL;
     const unsigned char *seed;
     size_t seed_len = 0;
 
@@ -200,8 +199,7 @@ int ECPKParameters_print(BIO *bp, const EC_GROUP *x, int off)
             is_char_two = 1;
 
         if ((p = BN_new()) == NULL || (a = BN_new()) == NULL ||
-            (b = BN_new()) == NULL || (order = BN_new()) == NULL ||
-            (cofactor = BN_new()) == NULL) {
+            (b = BN_new()) == NULL) {
             reason = ERR_R_MALLOC_FAILURE;
             goto err;
         }
@@ -224,8 +222,9 @@ int ECPKParameters_print(BIO *bp, const EC_GROUP *x, int off)
             reason = ERR_R_EC_LIB;
             goto err;
         }
-        if (!EC_GROUP_get_order(x, order, NULL) ||
-            !EC_GROUP_get_cofactor(x, cofactor, NULL)) {
+        order = EC_GROUP_get0_order(x);
+        cofactor = EC_GROUP_get0_cofactor(x);
+        if (order == NULL) {
             reason = ERR_R_EC_LIB;
             goto err;
         }
@@ -322,8 +321,6 @@ int ECPKParameters_print(BIO *bp, const EC_GROUP *x, int off)
     BN_free(a);
     BN_free(b);
     BN_free(gen);
-    BN_free(order);
-    BN_free(cofactor);
     BN_CTX_free(ctx);
     OPENSSL_free(buffer);
     return (ret);

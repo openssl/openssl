@@ -722,14 +722,14 @@ static STRINT_PAIR tlsext_types[] = {
 };
 
 void tlsext_cb(SSL *s, int client_server, int type,
-               unsigned char *data, int len, void *arg)
+               const unsigned char *data, int len, void *arg)
 {
     BIO *bio = arg;
     const char *extname = lookup(type, tlsext_types, "unknown");
 
     BIO_printf(bio, "TLS %s extension \"%s\" (id=%d), len=%d\n",
                client_server ? "server" : "client", extname, type, len);
-    BIO_dump(bio, (char *)data, len);
+    BIO_dump(bio, (const char *)data, len);
     (void)BIO_flush(bio);
 }
 

@@ -1,4 +1,3 @@
-/* apps/apps.h */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -137,6 +136,17 @@
 #  define openssl_fdset(a,b) FD_SET((unsigned int)a, b)
 # else
 #  define openssl_fdset(a,b) FD_SET(a, b)
+# endif
+
+# if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L && \
+     defined(INTMAX_MAX) && defined(UINTMAX_MAX)
+int opt_imax(const char *value, intmax_t *result);
+int opt_umax(const char *value, uintmax_t *result);
+# else
+#  define opt_imax opt_long
+#  define opt_umax opt_ulong
+#  define intmax_t long
+#  define uintmax_t unsigned long
 # endif
 
 int app_RAND_load_file(const char *file, int dont_warn);

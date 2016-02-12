@@ -1,4 +1,3 @@
-/* crypto/bn/bn_nist.c */
 /*
  * Written by Nils Larsch for the OpenSSL project
  */

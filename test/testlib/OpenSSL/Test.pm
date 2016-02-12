@@ -705,14 +705,15 @@ sub __cwd {
 
 sub __fixup_cmd {
     my $prog = shift;
+    my $exe_shell = shift;
 
     my $prefix = __top_file("util", "shlib_wrap.sh")." ";
     my $ext = $ENV{"EXE_EXT"} || "";
 
-    if (defined($ENV{EXE_SHELL})) {
-	$prefix = "$ENV{EXE_SHELL} ";
+    if (defined($exe_shell)) {
+	$prefix = "$exe_shell ";
     } elsif ($^O eq "VMS" ) {	# VMS
-	$prefix = ($prog =~ /^[<\[]/ ? "mcr " : "mcr []");
+	$prefix = ($prog =~ /^(?:[\$a-z0-9_]+:)?[<\[]/i ? "mcr " : "mcr []");
 	$ext = ".exe";
     } elsif ($^O eq "MSWin32") { # Windows
 	$prefix = "";
@@ -754,9 +755,13 @@ sub __build_cmd {
     # more than one.  If so, only the first is to be considered a
     # program to fix up, the rest is part of the arguments.  This
     # happens for perl scripts, where $path_builder will return
-    # a list of two, $^X and the script name
+    # a list of two, $^X and the script name.
+    # Also, if $path_builder returned more than one, we don't apply
+    # the EXE_SHELL environment variable.
     my @prog = ($path_builder->(shift @cmdarray));
-    my $cmd = __fixup_cmd(shift @prog);
+    my $first = shift @prog;
+    my $exe_shell = @prog ? undef : $ENV{EXE_SHELL};
+    my $cmd = __fixup_cmd($first, $exe_shell);
     if (@prog) {
 	if ( ! -f $prog[0] ) {
 	    print STDERR "$prog[0] not found\n";

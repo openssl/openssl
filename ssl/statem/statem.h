@@ -1,4 +1,3 @@
-/* ssl/statem/statem.h */
 /* ====================================================================
  * Copyright (c) 1998-2015 The OpenSSL Project.  All rights reserved.
  *

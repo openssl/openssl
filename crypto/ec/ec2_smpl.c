@@ -1,4 +1,3 @@
-/* crypto/ec/ec2_smpl.c */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *

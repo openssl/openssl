@@ -62,8 +62,8 @@ CROSS_COMPILE= {- $config{cross_compile_prefix} -}
 CC= $(CROSS_COMPILE){- $target{cc} -}
 CFLAG= {- $config{cflags} -}
 DEPFLAG= {- $config{depflags} -}
-PEX_LIBS= {- $config{prelflags} -}
-EX_LIBS= {- $config{lflags} -}
+LDFLAGS= {- $config{lflags} -}
+EX_LIBS= {- $config{ex_libs} -}
 EXE_EXT= {- $target{exe_extension} -}
 ARFLAGS= {- $target{arflags} -}
 AR=$(CROSS_COMPILE){- $target{ar} -} $(ARFLAGS) r
@@ -74,7 +74,6 @@ PERL= {- $config{perl} -}
 RM= rm -f
 TAR= tar
 TARFLAGS= --no-recursion
-MAKEDEPPROG=$(CROSS_COMPILE){- $config{makedepprog} -}
 LIBDIR={- $config{libdir} -}
 
 # We let the C compiler driver to take care of .s files. This is done in
@@ -160,7 +159,6 @@ LIBS=   libcrypto.a libssl.a
 SHARED_CRYPTO=libcrypto$(SHLIB_EXT)
 SHARED_SSL=libssl$(SHLIB_EXT)
 SHARED_LIBS={- '$(SHARED_CRYPTO) $(SHARED_SSL)' if (!$config{no_shared}) -}
-SHARED_LIBS_LINK_EXTS={- $config{shared_link_extensions} -}
 SHARED_LDFLAGS={- $target{shared_ldflag} -}
 
 GENERAL=        Makefile
@@ -210,14 +208,12 @@ BUILDENV=	LC_ALL=C PLATFORM='$(PLATFORM)' PROCESSOR='$(PROCESSOR)'\
 		INSTALL_PREFIX='$(INSTALL_PREFIX)'		\
 		INSTALLTOP='$(INSTALLTOP)' OPENSSLDIR='$(OPENSSLDIR)'	\
 		LIBDIR='$(LIBDIR)'				\
-		MAKEDEPEND='$$$${TOP}/util/domd $$$${TOP} -MD $(MAKEDEPPROG)' \
 		DEPFLAG='$(DEPFLAG)'                    	\
-		MAKEDEPPROG='$(MAKEDEPPROG)'			\
 		SHARED_LDFLAGS='$(SHARED_LDFLAGS)'		\
 		ZLIB_INCLUDE='$(ZLIB_INCLUDE)' LIBZLIB='$(LIBZLIB)'	\
 		EXE_EXT='$(EXE_EXT)' SHARED_LIBS='$(SHARED_LIBS)'	\
 		SHLIB_EXT='$(SHLIB_EXT)' SHLIB_TARGET='$(SHLIB_TARGET)'	\
-		PEX_LIBS='$(PEX_LIBS)' EX_LIBS='$(EX_LIBS)'	\
+		LDFLAGS='$(LDFLAGS)' EX_LIBS='$(EX_LIBS)'	\
 		CPUID_OBJ='$(CPUID_OBJ)' BN_ASM='$(BN_ASM)'	\
 		EC_ASM='$(EC_ASM)' DES_ENC='$(DES_ENC)'		\
 		AES_ENC='$(AES_ENC)' CMLL_ENC='$(CMLL_ENC)'	\
@@ -311,20 +307,6 @@ libssl$(SHLIB_EXT): libcrypto$(SHLIB_EXT) libssl.a
 		echo "There's no support for shared libraries on this platform" >&2; \
 		exit 1; \
 	fi
-
-clean-shared:
-	@set -e; for i in $(SHLIBDIRS); do \
-		if [ -n "$(SHARED_LIBS_LINK_EXTS)" ]; then \
-			tmp="$(SHARED_LIBS_LINK_EXTS)"; \
-			for j in $${tmp:-x}; do \
-				( set -x; rm -f lib$$i$$j ); \
-			done; \
-		fi; \
-		( set -x; rm -f lib$$i$(SHLIB_EXT) ); \
-		if expr "$(PLATFORM)" : "Cygwin" >/dev/null; then \
-			( set -x; rm -f cyg$$i$(SHLIB_EXT) lib$$i$(SHLIB_EXT).a ); \
-		fi; \
-	done
 
 link-shared:
 	@ set -e; for i in $(SHLIBDIRS); do \
@@ -457,9 +439,9 @@ depend:
 update: generate errors ordinals depend
 
 generate:
-	(cd apps && $(MAKE) generate)
-	(cd crypto/bn && $(MAKE) generate)
-	(cd crypto/objects && $(MAKE) generate)
+	(cd apps && PERL='${PERL}' $(MAKE) generate)
+	(cd crypto/bn && PERL='${PERL}' $(MAKE) generate)
+	(cd crypto/objects && PERL='${PERL}' $(MAKE) generate)
 
 errors:
 	$(PERL) util/ck_errf.pl -strict */*.c */*/*.c

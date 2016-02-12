@@ -4764,5 +4764,10 @@ TS_STATUS_INFO_get0_status              5158	1_1_0	EXIST::FUNCTION:
 OCSP_resp_get0_produced_at              5159	1_1_0	EXIST::FUNCTION:
 TS_STATUS_INFO_get0_failure_info        5160	1_1_0	EXIST::FUNCTION:
 TS_STATUS_INFO_get0_text                5161	1_1_0	EXIST::FUNCTION:
-EVP_blake2b                             5162	1_1_0	EXIST::FUNCTION:BLAKE2
-EVP_blake2s                             5163	1_1_0	EXIST::FUNCTION:BLAKE2
+CRYPTO_secure_zalloc                    5162	1_1_0	EXIST::FUNCTION:
+X509_NAME_get0_der                      5163	1_1_0	EXIST::FUNCTION:
+EC_GROUP_order_bits                     5164	1_1_0	EXIST::FUNCTION:EC
+EC_GROUP_get0_order                     5165	1_1_0	EXIST::FUNCTION:EC
+EC_GROUP_get0_cofactor                  5166	1_1_0	EXIST::FUNCTION:EC
+EVP_blake2s                             5167	1_1_0	EXIST::FUNCTION:BLAKE2
+EVP_blake2b                             5168	1_1_0	EXIST::FUNCTION:BLAKE2

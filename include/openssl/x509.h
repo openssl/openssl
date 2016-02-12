@@ -1,4 +1,3 @@
-/* crypto/x509/x509.h */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -184,7 +183,7 @@ DEFINE_STACK_OF(X509_TRUST)
 
 /* standard trust ids */
 
-# define X509_TRUST_DEFAULT      -1/* Only valid in purpose settings */
+# define X509_TRUST_DEFAULT      0 /* Only valid in purpose settings */
 
 # define X509_TRUST_COMPAT       1
 # define X509_TRUST_SSL_CLIENT   2
@@ -200,8 +199,14 @@ DEFINE_STACK_OF(X509_TRUST)
 # define X509_TRUST_MAX          8
 
 /* trust_flags values */
-# define X509_TRUST_DYNAMIC      1
-# define X509_TRUST_DYNAMIC_NAME 2
+# define X509_TRUST_DYNAMIC      (1U << 0)
+# define X509_TRUST_DYNAMIC_NAME (1U << 1)
+/* No compat trust if self-signed, preempts "DO_SS" */
+# define X509_TRUST_NO_SS_COMPAT (1U << 2)
+/* Compat trust if no explicit accepted trust EKUs */
+# define X509_TRUST_DO_SS_COMPAT (1U << 3)
+/* Accept "anyEKU" as a wildcard trust OID */
+# define X509_TRUST_OK_ANY_EKU   (1U << 4)
 
 /* check_trust return codes */
 
@@ -872,6 +877,9 @@ int X509_NAME_ENTRY_set_data(X509_NAME_ENTRY *ne, int type,
 ASN1_OBJECT *X509_NAME_ENTRY_get_object(X509_NAME_ENTRY *ne);
 ASN1_STRING *X509_NAME_ENTRY_get_data(X509_NAME_ENTRY *ne);
 int X509_NAME_ENTRY_set(const X509_NAME_ENTRY *ne);
+
+int X509_NAME_get0_der(const unsigned char **pder, size_t *pderlen,
+                       X509_NAME *nm);
 
 int X509v3_get_ext_count(const STACK_OF(X509_EXTENSION) *x);
 int X509v3_get_ext_by_NID(const STACK_OF(X509_EXTENSION) *x,

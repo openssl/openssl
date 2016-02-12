@@ -1,4 +1,3 @@
-/* include/openssl/async.h */
 /*
  * Written by Matt Caswell (matt@openssl.org) for the OpenSSL project.
  */

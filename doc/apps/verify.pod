@@ -198,14 +198,16 @@ When constructing the certificate chain, use the trusted certificates specified
 via B<-CAfile>, B<-CApath> or B<-trusted> before any certificates specified via
 B<-untrusted>.
 This can be useful in environments with Bridge or Cross-Certified CAs.
+As of OpenSSL 1.1.0 this option is on by default and cannot be disabled.
 
 =item B<-no_alt_chains>
 
-When building a certificate chain, if the first certificate chain found is not
-trusted, then OpenSSL will continue to check to see if an alternative chain can
-be found that is trusted. With this option that behaviour is suppressed so that
-only the first chain found is ever used. Using this option will force the
-behaviour to match that of OpenSSL versions prior to 1.1.0.
+By default, unless B<-trusted_first> is specified, when building a certificate
+chain, if the first certificate chain found is not trusted, then OpenSSL will
+attempt to replace untrusted issuer certificates with certificates from the
+trust store to see if an alternative chain can be found that is trusted.
+As of OpenSSL 1.1.0, with B<-trusted_first> always on, this option has no
+effect.
 
 =item B<-untrusted file>
 
@@ -264,13 +266,17 @@ the subject certificate.
 
 Use default verification policies like trust model and required certificate
 policies identified by B<name>.
+The trust model determines which auxiliary trust or reject OIDs are applicable
+to verifying the given certificate chain.
+See the B<-addtrust> and B<-addreject> options of the L<x509(1)> command-line
+utility.
 Supported policy names include: B<default>, B<pkcs7>, B<smime_sign>,
 B<ssl_client>, B<ssl_server>.
-This checks not only the purpose of the leaf certificate, but also the
-trust settings of the trusted CAs.
-When in doubt, use this option rather than B<-purpose>.
-The B<-verify_name> option more closely matches how certificates are checked in
-e.g. SSL and S/MIME.
+These mimics the combinations of purpose and trust settings used in SSL, CMS
+and S/MIME.
+As of OpenSSL 1.1.0, the trust model is inferred from the purpose when not
+specified, so the B<-verify_name> options are functionally equivalent to the
+corresponding B<-purpose> settings.
 
 =item B<-x509_strict>
 

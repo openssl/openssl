@@ -1,4 +1,3 @@
-/* crypto/x509/x509_err.c */
 /* ====================================================================
  * Copyright (c) 1999-2015 The OpenSSL Project.  All rights reserved.
  *

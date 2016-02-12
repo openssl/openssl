@@ -257,6 +257,20 @@ BN_MONT_CTX *EC_GROUP_get_mont_data(const EC_GROUP *group);
  */
 int EC_GROUP_get_order(const EC_GROUP *group, BIGNUM *order, BN_CTX *ctx);
 
+/** Gets the order of an EC_GROUP
+ *  \param  group  EC_GROUP object
+ *  \return the group order
+ */
+
+const BIGNUM *EC_GROUP_get0_order(const EC_GROUP *group);
+
+/** Gets the number of bits of ther order of an EC_GROUP
+ *  \param  group  EC_GROUP object
+ *  \return number of bits of group order.
+ */
+
+int EC_GROUP_order_bits(const EC_GROUP *group);
+
 /** Gets the cofactor of a EC_GROUP
  *  \param  group     EC_GROUP object
  *  \param  cofactor  BIGNUM to which the cofactor is copied
@@ -265,6 +279,13 @@ int EC_GROUP_get_order(const EC_GROUP *group, BIGNUM *order, BN_CTX *ctx);
  */
 int EC_GROUP_get_cofactor(const EC_GROUP *group, BIGNUM *cofactor,
                           BN_CTX *ctx);
+
+/** Gets the cofactor of an EC_GROUP
+ *  \param  group  EC_GROUP object
+ *  \return the group cofactor
+ */
+
+const BIGNUM *EC_GROUP_get0_cofactor(const EC_GROUP *group);
 
 /** Sets the name of a EC_GROUP object
  *  \param  group  EC_GROUP object

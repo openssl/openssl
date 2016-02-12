@@ -1,4 +1,3 @@
-/* crypto/ui/ui_openssl.c */
 /*
  * Written by Richard Levitte (richard@levitte.org) and others for the
  * OpenSSL project 2001.

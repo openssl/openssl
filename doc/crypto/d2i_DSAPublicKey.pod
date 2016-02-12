@@ -62,11 +62,9 @@ offers no private key security.
 The B<DSA_PUBKEY> functions should be used in preference to the B<DSAPublicKey>
 functions when encoding public keys because they use a standard format.
 
-The B<DSAPublicKey> functions use an non standard format the actual data encoded
-depends on the value of the B<write_params> field of the B<a> key parameter.
-If B<write_params> is zero then only the B<pub_key> field is encoded as an
-B<INTEGER>. If B<write_params> is 1 then a B<SEQUENCE> consisting of the
-B<p>, B<q>, B<g> and B<pub_key> respectively fields are encoded.
+The B<DSAPublicKey> functions use a non standard format which is a
+B<SEQUENCE> consisting of the B<p>, B<q>, B<g> and B<pub_key> fields
+respectively.
 
 The B<DSAPrivateKey> functions also use a non standard structure consisting
 consisting of a SEQUENCE containing the B<p>, B<q>, B<g> and B<pub_key> and

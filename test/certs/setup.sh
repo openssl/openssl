@@ -1,8 +1,8 @@
 #! /bin/sh
 
 # Primary root: root-cert
-# root certs variants: CA:false, key2, DN2
-# trust variants: +serverAuth -serverAuth +clientAuth
+# root cert variants: CA:false, key2, DN2
+# trust variants: +serverAuth -serverAuth +clientAuth -clientAuth +anyEKU -anyEKU
 #
 ./mkcert.sh genroot "Root CA" root-key root-cert
 ./mkcert.sh genss "Root CA" root-key root-nonca
@@ -15,10 +15,62 @@ openssl x509 -in root-cert.pem -trustout \
     -addreject serverAuth -out root-serverAuth.pem
 openssl x509 -in root-cert.pem -trustout \
     -addtrust clientAuth -out root+clientAuth.pem
+openssl x509 -in root-cert.pem -trustout \
+    -addreject clientAuth -out root-clientAuth.pem
+openssl x509 -in root-cert.pem -trustout \
+    -addreject anyExtendedKeyUsage -out root-anyEKU.pem
+openssl x509 -in root-cert.pem -trustout \
+    -addtrust anyExtendedKeyUsage -out root+anyEKU.pem
+openssl x509 -in root-cert2.pem -trustout \
+    -addtrust serverAuth -out root2+serverAuth.pem
+openssl x509 -in root-cert2.pem -trustout \
+    -addreject serverAuth -out root2-serverAuth.pem
+openssl x509 -in root-cert2.pem -trustout \
+    -addtrust clientAuth -out root2+clientAuth.pem
+openssl x509 -in root-nonca.pem -trustout \
+    -addtrust serverAuth -out nroot+serverAuth.pem
+openssl x509 -in root-nonca.pem -trustout \
+    -addtrust anyExtendedKeyUsage -out nroot+anyEKU.pem
+
+# primary client-EKU root: croot-cert
+# trust variants: +serverAuth -serverAuth +clientAuth +anyEKU -anyEKU
+#
+./mkcert.sh genroot "Root CA" root-key croot-cert clientAuth
+#
+openssl x509 -in croot-cert.pem -trustout \
+    -addtrust serverAuth -out croot+serverAuth.pem
+openssl x509 -in croot-cert.pem -trustout \
+    -addreject serverAuth -out croot-serverAuth.pem
+openssl x509 -in croot-cert.pem -trustout \
+    -addtrust clientAuth -out croot+clientAuth.pem
+openssl x509 -in croot-cert.pem -trustout \
+    -addreject clientAuth -out croot-clientAuth.pem
+openssl x509 -in croot-cert.pem -trustout \
+    -addreject anyExtendedKeyUsage -out croot-anyEKU.pem
+openssl x509 -in croot-cert.pem -trustout \
+    -addtrust anyExtendedKeyUsage -out croot+anyEKU.pem
+
+# primary server-EKU root: sroot-cert
+# trust variants: +serverAuth -serverAuth +clientAuth +anyEKU -anyEKU
+#
+./mkcert.sh genroot "Root CA" root-key sroot-cert serverAuth
+#
+openssl x509 -in sroot-cert.pem -trustout \
+    -addtrust serverAuth -out sroot+serverAuth.pem
+openssl x509 -in sroot-cert.pem -trustout \
+    -addreject serverAuth -out sroot-serverAuth.pem
+openssl x509 -in sroot-cert.pem -trustout \
+    -addtrust clientAuth -out sroot+clientAuth.pem
+openssl x509 -in sroot-cert.pem -trustout \
+    -addreject clientAuth -out sroot-clientAuth.pem
+openssl x509 -in sroot-cert.pem -trustout \
+    -addreject anyExtendedKeyUsage -out sroot-anyEKU.pem
+openssl x509 -in sroot-cert.pem -trustout \
+    -addtrust anyExtendedKeyUsage -out sroot+anyEKU.pem
 
 # Primary intermediate ca: ca-cert
 # ca variants: CA:false, key2, DN2, issuer2, expired
-# trust variants: +serverAuth, -serverAuth, +clientAuth
+# trust variants: +serverAuth, -serverAuth, +clientAuth, -clientAuth, -anyEKU, +anyEKU
 #
 ./mkcert.sh genca "CA" ca-key ca-cert root-key root-cert
 ./mkcert.sh genee "CA" ca-key ca-nonca root-key root-cert
@@ -33,6 +85,52 @@ openssl x509 -in ca-cert.pem -trustout \
     -addreject serverAuth -out ca-serverAuth.pem
 openssl x509 -in ca-cert.pem -trustout \
     -addtrust clientAuth -out ca+clientAuth.pem
+openssl x509 -in ca-cert.pem -trustout \
+    -addreject clientAuth -out ca-clientAuth.pem
+openssl x509 -in ca-cert.pem -trustout \
+    -addreject anyExtendedKeyUsage -out ca-anyEKU.pem
+openssl x509 -in ca-cert.pem -trustout \
+    -addtrust anyExtendedKeyUsage -out ca+anyEKU.pem
+openssl x509 -in ca-nonca.pem -trustout \
+    -addtrust serverAuth -out nca+serverAuth.pem
+openssl x509 -in ca-nonca.pem -trustout \
+    -addtrust serverAuth -out nca+anyEKU.pem
+
+# client intermediate ca: cca-cert
+# trust variants: +serverAuth, -serverAuth, +clientAuth, -clientAuth
+#
+./mkcert.sh genca "CA" ca-key cca-cert root-key root-cert clientAuth
+#
+openssl x509 -in cca-cert.pem -trustout \
+    -addtrust serverAuth -out cca+serverAuth.pem
+openssl x509 -in cca-cert.pem -trustout \
+    -addreject serverAuth -out cca-serverAuth.pem
+openssl x509 -in cca-cert.pem -trustout \
+    -addtrust clientAuth -out cca+clientAuth.pem
+openssl x509 -in cca-cert.pem -trustout \
+    -addtrust clientAuth -out cca-clientAuth.pem
+openssl x509 -in cca-cert.pem -trustout \
+    -addreject anyExtendedKeyUsage -out cca-anyEKU.pem
+openssl x509 -in cca-cert.pem -trustout \
+    -addtrust anyExtendedKeyUsage -out cca+anyEKU.pem
+
+# server intermediate ca: sca-cert
+# trust variants: +serverAuth, -serverAuth, +clientAuth, -clientAuth, -anyEKU, +anyEKU
+#
+./mkcert.sh genca "CA" ca-key sca-cert root-key root-cert serverAuth
+#
+openssl x509 -in sca-cert.pem -trustout \
+    -addtrust serverAuth -out sca+serverAuth.pem
+openssl x509 -in sca-cert.pem -trustout \
+    -addreject serverAuth -out sca-serverAuth.pem
+openssl x509 -in sca-cert.pem -trustout \
+    -addtrust clientAuth -out sca+clientAuth.pem
+openssl x509 -in sca-cert.pem -trustout \
+    -addreject clientAuth -out sca-clientAuth.pem
+openssl x509 -in sca-cert.pem -trustout \
+    -addreject anyExtendedKeyUsage -out sca-anyEKU.pem
+openssl x509 -in sca-cert.pem -trustout \
+    -addtrust anyExtendedKeyUsage -out sca+anyEKU.pem
 
 # Primary leaf cert: ee-cert
 # ee variants: expired, issuer-key2, issuer-name2

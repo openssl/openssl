@@ -10,7 +10,7 @@ CFLAG=-g
 MAKEFILE=	Makefile
 AR=		ar r
 
-PEX_LIBS=
+LDFLAGS=
 EX_LIBS=
 
 CFLAGS= $(INCLUDES) $(CFLAG)
@@ -45,8 +45,7 @@ files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
 
 depend:
-	@[ -n "$(MAKEDEPEND)" ] # should be set by upper Makefile...
-	$(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(LIBSRC)
+	$(TOP)/util/domd $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(LIBSRC)
 
 clean:
 	rm -f *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff enc dec sign verify

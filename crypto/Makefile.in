@@ -9,8 +9,6 @@ INCLUDE=	-I. -I$(TOP) -I../include -Iinclude $(ZLIB_INCLUDE)
 # INCLUDES targets sudbirs!
 INCLUDES=	-I.. -I../.. -I../modes -I../include -I../../include $(ZLIB_INCLUDE)
 CFLAG=		-g
-MAKEDEPPROG=	makedepend
-MAKEDEPEND=	$(TOP)/util/domd $(TOP) -MD $(MAKEDEPPROG)
 MAKEFILE=       Makefile
 RM=             rm -f
 AR=		ar r
@@ -20,9 +18,9 @@ RECURSIVE_MAKE=	[ -n "$(SDIRS)" ] && for i in $(SDIRS) ; do \
 		    $(MAKE) -e TOP=../.. DIR=$$i INCLUDES='$(INCLUDES)' $$target ) || exit 1; \
 		done;
 
-PEX_LIBS=
+LDFLAGS=
 EX_LIBS=
- 
+
 CFLAGS= $(INCLUDE) $(CFLAG)
 ASFLAGS= $(INCLUDE) $(ASFLAG)
 AFLAGS=$(ASFLAGS)
@@ -109,7 +107,7 @@ libs:
 
 depend:
 	@[ -z "$(THIS)" -o -f buildinf.h ] || touch buildinf.h # fake buildinf.h if it does not exist
-	@[ -z "$(THIS)" ] || $(MAKEDEPEND) -- $(CFLAG) $(INCLUDE) $(DEPFLAG) -- $(PROGS) $(LIBSRC)
+	@[ -z "$(THIS)" ] || $(TOP)/util/domd $(CFLAG) $(INCLUDE) $(DEPFLAG) -- $(PROGS) $(LIBSRC)
 	@[ -z "$(THIS)" -o -s buildinf.h ] || rm buildinf.h
 	@[ -z "$(THIS)" ] || (set -e; target=depend; $(RECURSIVE_MAKE) )
 	@if [ -z "$(THIS)" ]; then $(MAKE) -f $(TOP)/Makefile reflect THIS=$@; fi

@@ -1,4 +1,3 @@
-/* crypto/bio/bio.h */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -221,8 +220,6 @@ extern "C" {
  * data in any way.
  */
 # define BIO_FLAGS_MEM_RDONLY    0x200
-
-typedef struct bio_st BIO;
 
 void BIO_set_flags(BIO *b, int flags);
 int BIO_test_flags(const BIO *b, int flags);
@@ -466,7 +463,7 @@ struct bio_dgram_sctp_prinfo {
 # define BIO_get_conn_hostname(b)  BIO_ptr_ctrl(b,BIO_C_GET_CONNECT,0)
 # define BIO_get_conn_port(b)      BIO_ptr_ctrl(b,BIO_C_GET_CONNECT,1)
 # define BIO_get_conn_ip(b)               BIO_ptr_ctrl(b,BIO_C_GET_CONNECT,2)
-# define BIO_get_conn_int_port(b) BIO_ctrl(b,BIO_C_GET_CONNECT,3,0,NULL)
+# define BIO_get_conn_int_port(b) BIO_ctrl(b,BIO_C_GET_CONNECT,3,NULL)
 
 # define BIO_set_nbio(b,n)       BIO_ctrl(b,BIO_C_SET_NBIO,(n),NULL)
 
@@ -658,7 +655,7 @@ long BIO_debug_callback(BIO *bio, int cmd, const char *argp, int argi,
 
 BIO_METHOD *BIO_s_mem(void);
 BIO_METHOD *BIO_s_secmem(void);
-BIO *BIO_new_mem_buf(void *buf, int len);
+BIO *BIO_new_mem_buf(const void *buf, int len);
 BIO_METHOD *BIO_s_socket(void);
 BIO_METHOD *BIO_s_connect(void);
 BIO_METHOD *BIO_s_accept(void);

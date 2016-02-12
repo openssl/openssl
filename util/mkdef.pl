@@ -1028,7 +1028,8 @@ sub reduce_platforms
 	return $ret;
 }
 
-sub info_string {
+sub info_string
+{
 	(my $symbol, my $exist, my $platforms, my $kind, my $algorithms) = @_;
 
 	my %a = defined($algorithms) ?
@@ -1046,13 +1047,13 @@ sub info_string {
 	return $ret;
 }
 
-sub maybe_add_info {
+sub maybe_add_info
+{
 	(my $name, *nums, my @symbols) = @_;
 	my $sym;
 	my $new_info = 0;
 	my %syms=();
 
-	print STDERR "Updating $name info\n";
 	foreach $sym (@symbols) {
 		(my $s, my $i) = split /\\/, $sym;
 		if (defined($nums{$s})) {
@@ -1076,12 +1077,11 @@ sub maybe_add_info {
 		}
 	}
 	if ($new_info) {
-		print STDERR "$new_info old symbols got an info update\n";
+		print STDERR "$name: $new_info old symbols have updated info\n";
 		if (!$do_rewrite) {
 			print STDERR "You should do a rewrite to fix this.\n";
 		}
 	} else {
-		print STDERR "No old symbols needed info update\n";
 	}
 }
 
@@ -1171,7 +1171,8 @@ sub print_test_file
 	}
 }
 
-sub get_version {
+sub get_version
+{
    return $config{version};
 }
 
@@ -1431,8 +1432,6 @@ sub rewrite_numbers
 	(*OUT,$name,*nums,@symbols)=@_;
 	my $thing;
 
-	print STDERR "Rewriting $name\n";
-
 	my @r = grep(/^\w+(\{[0-9]+\})?\\.*?:.*?:\w+\(\w+\)/,@symbols);
 	my $r; my %r; my %rsyms;
 	foreach $r (@r) {
@@ -1481,8 +1480,6 @@ sub update_numbers
 
 	($basevers, $vers) = get_openssl_version();
 
-	print STDERR "Updating $name numbers\n";
-
 	my @r = grep(/^\w+(\{[0-9]+\})?\\.*?:.*?:\w+\(\w+\)/,@symbols);
 	my $r; my %r; my %rsyms;
 	foreach $r (@r) {
@@ -1512,9 +1509,9 @@ sub update_numbers
 		}
 	}
 	if($new_syms) {
-		print STDERR "$new_syms New symbols added\n";
+		print STDERR "$name: Added $new_syms new symbols\n";
 	} else {
-		print STDERR "No New symbols Added\n";
+		print STDERR "$name: No new symbols added\n";
 	}
 }
 

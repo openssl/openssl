@@ -1,6 +1,3 @@
-/* NOCW */
-/* demos/bio/server-cmod.c */
-
 /*
  * A minimal TLS server it ses SSL_CTX_config and a configuration file to
  * set most server parameters.

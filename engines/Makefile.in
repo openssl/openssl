@@ -15,7 +15,7 @@ AR=		ar r
 
 PADLOCK_ASM_OBJ=
 
-PEX_LIBS=
+LDFLAGS=
 EX_LIBS=
 
 CFLAGS= $(INCLUDES) $(CFLAG)
@@ -116,7 +116,7 @@ errors:
 	done
 
 depend:
-	@[ -z "$(THIS)" ] || $(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(LIBSRC) $(TESTLIBSRC)
+	@[ -z "$(THIS)" ] || $(TOP)/util/domd $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(LIBSRC) $(TESTLIBSRC)
 	@[ -z "$(THIS)" ] || (set -e; target=depend; $(RECURSIVE_MAKE) )
 
 clean:

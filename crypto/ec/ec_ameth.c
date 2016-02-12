@@ -252,40 +252,6 @@ static int eckey_priv_decode(EVP_PKEY *pkey, PKCS8_PRIV_KEY_INFO *p8)
         goto ecerr;
     }
 
-    /* calculate public key (if necessary) */
-    if (EC_KEY_get0_public_key(eckey) == NULL) {
-        const BIGNUM *priv_key;
-        const EC_GROUP *group;
-        EC_POINT *pub_key;
-        /*
-         * the public key was not included in the SEC1 private key =>
-         * calculate the public key
-         */
-        group = EC_KEY_get0_group(eckey);
-        pub_key = EC_POINT_new(group);
-        if (pub_key == NULL) {
-            ECerr(EC_F_ECKEY_PRIV_DECODE, ERR_R_EC_LIB);
-            goto ecliberr;
-        }
-        if (!EC_POINT_copy(pub_key, EC_GROUP_get0_generator(group))) {
-            EC_POINT_free(pub_key);
-            ECerr(EC_F_ECKEY_PRIV_DECODE, ERR_R_EC_LIB);
-            goto ecliberr;
-        }
-        priv_key = EC_KEY_get0_private_key(eckey);
-        if (!EC_POINT_mul(group, pub_key, priv_key, NULL, NULL, NULL)) {
-            EC_POINT_free(pub_key);
-            ECerr(EC_F_ECKEY_PRIV_DECODE, ERR_R_EC_LIB);
-            goto ecliberr;
-        }
-        if (EC_KEY_set_public_key(eckey, pub_key) == 0) {
-            EC_POINT_free(pub_key);
-            ECerr(EC_F_ECKEY_PRIV_DECODE, ERR_R_EC_LIB);
-            goto ecliberr;
-        }
-        EC_POINT_free(pub_key);
-    }
-
     EVP_PKEY_assign_EC_KEY(pkey, eckey);
     return 1;
 
@@ -356,23 +322,7 @@ static int int_ec_size(const EVP_PKEY *pkey)
 
 static int ec_bits(const EVP_PKEY *pkey)
 {
-    BIGNUM *order = BN_new();
-    const EC_GROUP *group;
-    int ret;
-
-    if (order == NULL) {
-        ERR_clear_error();
-        return 0;
-    }
-    group = EC_KEY_get0_group(pkey->pkey.ec);
-    if (!EC_GROUP_get_order(group, order, NULL)) {
-        ERR_clear_error();
-        return 0;
-    }
-
-    ret = BN_num_bits(order);
-    BN_free(order);
-    return ret;
+    return EC_GROUP_order_bits(EC_KEY_get0_group(pkey->pkey.ec));
 }
 
 static int ec_security_bits(const EVP_PKEY *pkey)
@@ -435,7 +385,7 @@ static int do_EC_KEY_print(BIO *bp, const EC_KEY *x, int off, int ktype)
     const char *ecstr;
     size_t buf_len = 0, i;
     int ret = 0, reason = ERR_R_BIO_LIB;
-    BIGNUM *pub_key = NULL, *order = NULL;
+    BIGNUM *pub_key = NULL;
     BN_CTX *ctx = NULL;
     const EC_GROUP *group;
     const EC_POINT *public_key;
@@ -488,11 +438,8 @@ static int do_EC_KEY_print(BIO *bp, const EC_KEY *x, int off, int ktype)
 
     if (!BIO_indent(bp, off, 128))
         goto err;
-    if ((order = BN_new()) == NULL)
-        goto err;
-    if (!EC_GROUP_get_order(group, order, NULL))
-        goto err;
-    if (BIO_printf(bp, "%s: (%d bit)\n", ecstr, BN_num_bits(order)) <= 0)
+    if (BIO_printf(bp, "%s: (%d bit)\n", ecstr,
+                   EC_GROUP_order_bits(group)) <= 0)
         goto err;
 
     if ((priv_key != NULL) && !ASN1_bn_print(bp, "priv:", priv_key,
@@ -508,7 +455,6 @@ static int do_EC_KEY_print(BIO *bp, const EC_KEY *x, int off, int ktype)
     if (!ret)
         ECerr(EC_F_DO_EC_KEY_PRINT, reason);
     BN_free(pub_key);
-    BN_free(order);
     BN_CTX_free(ctx);
     OPENSSL_free(buffer);
     return (ret);

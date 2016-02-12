@@ -1,4 +1,3 @@
-/* crypto/des/des.h */
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -59,14 +58,13 @@
 #ifndef HEADER_NEW_DES_H
 # define HEADER_NEW_DES_H
 
-# include <openssl/e_os2.h>     /* OPENSSL_EXTERN, OPENSSL_NO_DES, DES_LONG
-                                 * (via openssl/opensslconf.h */
+# include <openssl/e_os2.h>
 
 # ifdef OPENSSL_NO_DES
 #  error DES is disabled.
 # endif
 
-# define DES_LONG OSSL_DES_LONG
+typedef unsigned int DES_LONG;
 
 # ifdef OPENSSL_BUILD_SHLIBCRYPTO
 #  undef OPENSSL_EXTERN
