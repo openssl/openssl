@@ -194,9 +194,6 @@
 
        $ HARNESS_VERBOSE=yes make test
 
-     Also, you will find logs for all commands the tests have executed
-     in logs, test/test_*.log, one for each individual test.
-
      If you want to run just one or a few specific tests, you can use
      the make variable TESTS to specify them, like this:
 
@@ -209,6 +206,9 @@
      You can find the list of available tests like this:
 
        $ make list-tests
+
+     Have a look at the manual for the perl module Test::Harness to
+     see what other HARNESS_* variables there are.
 
      If you find a problem with OpenSSL itself, try removing any
      compiler optimization flags from the CFLAG line in Makefile and
