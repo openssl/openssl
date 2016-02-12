@@ -165,6 +165,9 @@ typedef unsigned int u_int;
 #ifndef OPENSSL_NO_SRP
 # include <openssl/srp.h>
 #endif
+#ifndef OPENSSL_NO_CT
+# include <openssl/ct.h>
+#endif
 #include "s_apps.h"
 #include "timeouts.h"
 
@@ -647,7 +650,7 @@ typedef enum OPTION_choice {
     OPT_DTLS1_2, OPT_TIMEOUT, OPT_MTU, OPT_KEYFORM, OPT_PASS,
     OPT_CERT_CHAIN, OPT_CAPATH, OPT_NOCAPATH, OPT_CHAINCAPATH, OPT_VERIFYCAPATH,
     OPT_KEY, OPT_RECONNECT, OPT_BUILD_CHAIN, OPT_CAFILE, OPT_NOCAFILE,
-    OPT_CHAINCAFILE, OPT_VERIFYCAFILE, OPT_NEXTPROTONEG, OPT_ALPN,
+    OPT_CTLOG_FILE, OPT_CHAINCAFILE, OPT_VERIFYCAFILE, OPT_NEXTPROTONEG, OPT_ALPN,
     OPT_SERVERINFO, OPT_STARTTLS, OPT_SERVERNAME, OPT_JPAKE,
     OPT_USE_SRTP, OPT_KEYMATEXPORT, OPT_KEYMATEXPORTLEN, OPT_SMTPHOST,
     OPT_ASYNC,
@@ -655,7 +658,7 @@ typedef enum OPTION_choice {
     OPT_X_ENUM,
     OPT_S_ENUM,
     OPT_FALLBACKSCSV, OPT_NOCMDS, OPT_PROXY, OPT_DANE_TLSA_DOMAIN,
-    OPT_DANE_TLSA_RRDATA
+    OPT_DANE_TLSA_RRDATA, OPT_NOCT, OPT_REQUESTCT, OPT_REQUIRECT
 } OPTION_CHOICE;
 
 OPTIONS s_client_options[] = {
@@ -801,6 +804,12 @@ OPTIONS s_client_options[] = {
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
     {"ssl_client_engine", OPT_SSL_CLIENT_ENGINE, 's'},
 #endif
+#ifndef OPENSSL_NO_CT
+    {"noct", OPT_NOCT, '-', "Do not request or parse SCTs from server"},
+    {"requestct", OPT_REQUESTCT, '-', "(Default) Request SCTs (enables OCSP)"},
+    {"requirect", OPT_REQUIRECT, '-', "Require at least 1 SCT (enables OCSP)"},
+    {"ctlogfile", OPT_CTLOG_FILE, '<', "CT log list CONF file"},
+#endif
     {NULL}
 };
 
@@ -893,6 +902,10 @@ int s_client_main(int argc, char **argv)
     char *srppass = NULL;
     int srp_lateuser = 0;
     SRP_ARG srp_arg = { NULL, NULL, 0, 0, 0, 1024 };
+#endif
+#ifndef OPENSSL_NO_CT
+    char *ctlog_file = NULL;
+    ct_validation_cb ct_validation = NULL;
 #endif
 
     prog = opt_progname(argv[0]);
@@ -1274,6 +1287,20 @@ int s_client_main(int argc, char **argv)
         case OPT_NOCAFILE:
             noCAfile = 1;
             break;
+#ifndef OPENSSL_NO_CT
+        case OPT_NOCT:
+            ct_validation = NULL;
+            break;
+        case OPT_REQUESTCT:
+            ct_validation = CT_verify_no_bad_scts;
+            break;
+        case OPT_REQUIRECT:
+            ct_validation = CT_verify_at_least_one_good_sct;
+            break;
+        case OPT_CTLOG_FILE:
+            ctlog_file = opt_arg();
+            break;
+#endif
         case OPT_CHAINCAFILE:
             chCAfile = opt_arg();
             break;
@@ -1583,11 +1610,23 @@ int s_client_main(int argc, char **argv)
     if (state)
         SSL_CTX_set_info_callback(ctx, apps_ssl_info_callback);
 
+    if (!SSL_CTX_set_ct_validation_callback(ctx, ct_validation, NULL)) {
+        ERR_print_errors(bio_err);
+        goto end;
+    }
+
     SSL_CTX_set_verify(ctx, verify, verify_callback);
 
     if (!ctx_set_verify_locations(ctx, CAfile, CApath, noCAfile, noCApath)) {
         ERR_print_errors(bio_err);
         goto end;
+    }
+
+    if (ctlog_file != NULL) {
+        if (SSL_CTX_set_ct_verify_location(ctx, ctlog_file) != 1) {
+            ERR_print_errors(bio_err);
+            goto end;
+        }
     }
 
     ssl_ctx_add_crls(ctx, crls, crl_download);
@@ -2454,6 +2493,7 @@ static void print_stuff(BIO *bio, SSL *s, int full)
     char buf[BUFSIZ];
     STACK_OF(X509) *sk;
     STACK_OF(X509_NAME) *sk2;
+    const STACK_OF(SCT) *scts;
     const SSL_CIPHER *c;
     X509_NAME *xn;
     int i;
@@ -2512,6 +2552,18 @@ static void print_stuff(BIO *bio, SSL *s, int full)
 
         ssl_print_sigalgs(bio, s);
         ssl_print_tmp_key(bio, s);
+
+#ifndef OPENSSL_NO_CT
+        scts = SSL_get0_peer_scts(s);
+        BIO_printf(bio, "---\nSCTs present (%i)\n---\n",
+                   scts ? sk_SCT_num(scts) : 0);
+        SCT_LIST_print(scts, bio, 0, "\n---\n");
+        BIO_printf(bio, "\n");
+        if (SSL_get_ct_validation_callback(s) == NULL) {
+          BIO_printf(bio, "---\nWarning: CT validation is disabled, so not all "
+                     "SCTs may be displayed. Re-run with \"-requestct\".\n");
+        }
+#endif
 
         BIO_printf(bio,
                    "---\nSSL handshake has read %"PRIu64" bytes and written %"PRIu64" bytes\n",
