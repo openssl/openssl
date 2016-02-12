@@ -708,11 +708,12 @@ Makefile: {- $config{build_file_template} -} $(SRCDIR)/Configure $(SRCDIR)/confi
       my $dep = $args{obj}.'$(DEP_EXT)';
       my $obj = $args{obj}.'$(OBJ_EXT)';
       my $srcs = join(" ", @{$args{srcs}});
+      my $deps = join(" ", @{$args{srcs}}, @{$args{deps}});
       my $incs = join(" ", map { " -I".$_ } @{$args{incs}});
       my $makedepprog = $config{makedepprog};
       if ($makedepprog eq "makedepend") {
           return <<"EOF";
-$dep : $srcs
+$dep : $deps
 	rm -f \$\@.tmp; touch \$\@.tmp
 	\$(MAKEDEPEND) -f\$\@.tmp -o"|$obj"\
 	    -- -DOPENSSL_DOING_MAKEDEPEND \$(DEPFLAGS)$incs \
@@ -722,7 +723,7 @@ $dep : $srcs
 EOF
       }
       return <<"EOF";
-$dep : $srcs Makefile
+$dep : $deps Makefile
 	\$(CC) -DOPENSSL_DOING_MAKEDEPEND \$(DEPFLAGS)$incs -MM -MF \$\@ -MQ $obj $srcs
 EOF
   }

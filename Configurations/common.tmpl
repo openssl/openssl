@@ -45,6 +45,7 @@
                                    @{$unified_info{includes}->{$obj}} ]);
          $OUT .= src2dep(obj => $obj_no_o,
                          srcs => $unified_info{sources}->{$obj},
+                         deps => [ reducedepends(resolvedepends($obj)) ],
                          incs => [ @{$unified_info{includes}->{$bin}},
                                    @{$unified_info{includes}->{$obj}} ]);
      }
