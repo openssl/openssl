@@ -623,8 +623,8 @@ int ssl_cert_type(X509 *x, EVP_PKEY *pk)
         return SSL_PKEY_GOST12_256;
     case NID_id_GostR3410_2012_512:
         return SSL_PKEY_GOST12_512;
-    }
 #endif
+    }
 }
 
 int ssl_verify_alarm_type(long type)
