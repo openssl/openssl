@@ -60,79 +60,48 @@
 # error "CT is disabled"
 #endif
 
-#include <openssl/asn1.h>
 #include <openssl/bio.h>
+#include <openssl/ct.h>
+#include <openssl/obj_mac.h>
+#include <openssl/x509v3.h>
 
-#include "ct_locl.h"
-
-static void SCT_signature_algorithms_print(const SCT *sct, BIO *out)
+static char *i2s_poison(const X509V3_EXT_METHOD *method, void *val)
 {
-    int nid = SCT_get_signature_nid(sct);
-
-    if (nid <= 0)
-        BIO_printf(out, "%02X%02X", sct->hash_alg, sct->sig_alg);
-    else
-        BIO_printf(out, "%s", OBJ_nid2ln(nid));
+    return OPENSSL_strdup("NULL");
 }
 
-static void timestamp_print(uint64_t timestamp, BIO *out)
+static int i2r_SCT_LIST(X509V3_EXT_METHOD *method, STACK_OF(SCT) *sct_list,
+                 BIO *out, int indent)
 {
-    ASN1_GENERALIZEDTIME *gen = ASN1_GENERALIZEDTIME_new();
-    char genstr[20];
-
-    ASN1_GENERALIZEDTIME_adj(gen, (time_t)0,
-                             (int)(timestamp / 86400000),
-                             (timestamp % 86400000) / 1000);
-    /*
-     * Note GeneralizedTime from ASN1_GENERALIZETIME_adj is always 15
-     * characters long with a final Z. Update it with fractional seconds.
-     */
-    BIO_snprintf(genstr, sizeof(genstr), "%.14s.%03dZ",
-                 ASN1_STRING_data(gen), (unsigned int)(timestamp % 1000));
-    ASN1_GENERALIZEDTIME_set_string(gen, genstr);
-    ASN1_GENERALIZEDTIME_print(out, gen);
-    ASN1_GENERALIZEDTIME_free(gen);
+    SCT_LIST_print(sct_list, out, indent, "\n");
+    return 1;
 }
 
-void SCT_print(const SCT *sct, BIO *out, int indent)
-{
-    BIO_printf(out, "%*sSigned Certificate Timestamp:", indent, "");
-    BIO_printf(out, "\n%*sVersion   : ", indent + 4, "");
+/* Handlers for X509v3/OCSP Certificate Transparency extensions */
+const X509V3_EXT_METHOD v3_ct_scts[] = {
+    /* X509v3 extension in certificates that contains SCTs */
+    { NID_ct_precert_scts, 0, NULL,
+    NULL, (X509V3_EXT_FREE)SCT_LIST_free,
+    (X509V3_EXT_D2I)d2i_SCT_LIST, (X509V3_EXT_I2D)i2d_SCT_LIST,
+    NULL, NULL,
+    NULL, NULL,
+    (X509V3_EXT_I2R)i2r_SCT_LIST, NULL,
+    NULL },
 
-    if (sct->version != SCT_VERSION_V1) {
-        BIO_printf(out, "unknown\n%*s", indent + 16, "");
-        BIO_hex_string(out, indent + 16, 16, sct->sct, sct->sct_len);
-        return;
-    }
+    /* X509v3 extension to mark a certificate as a pre-certificate */
+    { NID_ct_precert_poison, 0, ASN1_ITEM_ref(ASN1_NULL),
+    NULL, NULL, NULL, NULL,
+    i2s_poison, NULL,
+    NULL, NULL,
+    NULL, NULL,
+    NULL },
 
-    BIO_printf(out, "v1 (0x0)");
-
-    BIO_printf(out, "\n%*sLog ID    : ", indent + 4, "");
-    BIO_hex_string(out, indent + 16, 16, sct->log_id, sct->log_id_len);
-
-    BIO_printf(out, "\n%*sTimestamp : ", indent + 4, "");
-    timestamp_print(sct->timestamp, out);
-
-    BIO_printf(out, "\n%*sExtensions: ", indent + 4, "");
-    if (sct->ext_len == 0)
-        BIO_printf(out, "none");
-    else
-        BIO_hex_string(out, indent + 16, 16, sct->ext, sct->ext_len);
-
-    BIO_printf(out, "\n%*sSignature : ", indent + 4, "");
-    SCT_signature_algorithms_print(sct, out);
-    BIO_printf(out, "\n%*s            ", indent + 4, "");
-    BIO_hex_string(out, indent + 16, 16, sct->sig, sct->sig_len);
-}
-
-void SCT_LIST_print(const STACK_OF(SCT) *sct_list, BIO *out, int indent,
-                    const char *separator)
-{
-    int i;
-    for (i = 0; i < sk_SCT_num(sct_list); ++i) {
-        SCT *sct = sk_SCT_value(sct_list, i);
-        SCT_print(sct, out, indent);
-        if (i < sk_SCT_num(sct_list) - 1)
-            BIO_printf(out, "%s", separator);
-    }
-}
+    /* OCSP extension that contains SCTs */
+    { NID_ct_cert_scts, 0, NULL,
+    0, (X509V3_EXT_FREE)SCT_LIST_free,
+    (X509V3_EXT_D2I)d2i_SCT_LIST, (X509V3_EXT_I2D)i2d_SCT_LIST,
+    NULL, NULL,
+    NULL, NULL,
+    (X509V3_EXT_I2R)i2r_SCT_LIST, NULL,
+    NULL },
+};

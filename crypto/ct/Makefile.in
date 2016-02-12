@@ -15,8 +15,8 @@ CFLAGS= $(INCLUDES) $(CFLAG)
 GENERAL=Makefile
 
 LIB=$(TOP)/libcrypto.a
-LIBSRC= ct_lib.c ct_err.c ct_oct.c ct_prn.c
-LIBOBJ= ct_lib.o ct_err.o ct_oct.o ct_prn.o
+LIBSRC= ct_err.c ct_oct.c ct_prn.c ct_sct.c ct_x509v3.c
+LIBOBJ= ct_err.o ct_oct.o ct_prn.o ct_sct.o ct_x509v3.o
 
 SRC= $(LIBSRC)
 
@@ -27,8 +27,6 @@ ALL=    $(GENERAL) $(SRC) $(HEADER)
 top:
 	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR) sub_all)
 
-test:
-
 all:	lib
 
 lib:	$(LIBOBJ)
@@ -38,9 +36,6 @@ lib:	$(LIBOBJ)
 
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
-
-errors:
-	$(PERL) $(TOP)/util/mkerr.pl -conf ct.ec -hprefix internal/ -write *.c
 
 depend:
 	$(TOP)/util/domd $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(LIBSRC)

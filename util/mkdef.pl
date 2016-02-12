@@ -90,8 +90,8 @@ my @known_algorithms = ( "RC2", "RC4", "RC5", "IDEA", "DES", "BF",
                          "STATIC_ENGINE", "ENGINE", "HW", "GMP",
 			 # Entropy Gathering
 			 "EGD",
-                         # X.509v3 Signed Certificate Timestamps
-                         "SCT",
+			 # Certificate Transparency
+			 "CT",
 			 # RFC3779
 			 "RFC3779",
 			 # TLS
@@ -298,6 +298,7 @@ $crypto.=" include/openssl/jpake.h";
 $crypto.=" include/openssl/srp.h";
 $crypto.=" include/openssl/modes.h";
 $crypto.=" include/openssl/async.h";
+$crypto.=" include/openssl/ct.h";
 
 my $symhacks="include/openssl/symhacks.h";
 

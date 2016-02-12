@@ -1,9 +1,8 @@
 /*
- * Written by Dr Stephen N Henson (steve@openssl.org)
- * and Adam Eijdenberg (eijdenberg@google.com) for the OpenSSL project 2015.
+ * Written by Rob Percival (robpercival@google.com) for the OpenSSL project.
  */
 /* ====================================================================
- * Copyright (c) 2015 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 2016 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -49,27 +48,64 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  * ====================================================================
- *
  */
-#ifndef HEADER_CT_INT_H
-# define HEADER_CT_INT_H
 
-# ifdef __cplusplus
-extern "C" {
-# endif
+#ifdef OPENSSL_NO_CT
+# error CT is disabled.
+#endif
 
-# ifdef OPENSSL_NO_CT
-#  error CT is disabled.
-# endif
+#include <stddef.h>
 
-# include <openssl/ct.h>
-# include <openssl/x509v3.h>
+#include <openssl/ct.h>
+#include <openssl/evp.h>
+#include <openssl/x509.h>
+#include <openssl/safestack.h>
 
-/* Handlers for Certificate Transparency X509v3/OCSP extensions */
-extern const X509V3_EXT_METHOD v3_ct_scts[];
+/*
+ * From RFC6962: opaque SerializedSCT<1..2^16-1>; struct { SerializedSCT
+ * sct_list <1..2^16-1>; } SignedCertificateTimestampList;
+ */
+# define MAX_SCT_SIZE            65535
+# define MAX_SCT_LIST_SIZE       MAX_SCT_SIZE
 
-# ifdef  __cplusplus
-}
-# endif
+/* Signed Certificate Timestamp */
+struct sct_st {
+    sct_version_t version;
+    /* If version is not SCT_VERSION_V1, this contains the encoded SCT */
+    unsigned char *sct;
+    size_t sct_len;
+    /* If version is SCT_VERSION_V1, fields below contain components of the SCT */
+    unsigned char *log_id;
+    size_t log_id_len;
+    /*
+    * Note, we cannot distinguish between an unset timestamp, and one
+    * that is set to 0.  However since CT didn't exist in 1970, no real
+    * SCT should ever be set as such.
+    */
+    uint64_t timestamp;
+    unsigned char *ext;
+    size_t ext_len;
+    unsigned char hash_alg;
+    unsigned char sig_alg;
+    unsigned char *sig;
+    size_t sig_len;
+    /* Log entry type */
+    ct_log_entry_type_t entry_type;
+};
 
-#endif /* HEADER_CT_INT_H */
+/*
+ * Does this SCT have the minimum fields populated to be valid?
+ * Returns 1 if so, 0 otherwise.
+ * This does not verify the SCT signature.
+ */
+int SCT_is_valid(const SCT *sct);
+
+/*
+ * Is the signature of this SCT valid?
+ * Returns 1 if so, 0 otherwise.
+ * This checks that the signature and hash algorithms are supported and that the
+ * signature field is set.
+ */
+int SCT_signature_is_valid(const SCT *sct);
+
+

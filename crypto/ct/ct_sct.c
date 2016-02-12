@@ -1,6 +1,6 @@
 /*
- * Written by Rob Stradling (rob@comodo.com) and Stephen Henson
- * (steve@openssl.org) for the OpenSSL project 2014.
+ * Written by Rob Stradling (rob@comodo.com), Stephen Henson (steve@openssl.org)
+ * and Adam Eijdenberg (adam.eijdenberg@gmail.com) for the OpenSSL project 2016.
  */
 /* ====================================================================
  * Copyright (c) 2014 The OpenSSL Project.  All rights reserved.
@@ -56,12 +56,17 @@
  *
  */
 
-#ifndef OPENSSL_NO_CT
+#ifdef OPENSSL_NO_CT
+# error "CT disabled"
+#endif
 
-# include <limits.h>
-# include "internal/cryptlib.h"
-# include "../../ssl/ssl_locl.h"
-# include "internal/ct_int.h"
+#include <openssl/ct.h>
+#include <openssl/err.h>
+#include <openssl/evp.h>
+#include <openssl/tls1.h>
+#include <openssl/x509.h>
+
+#include "ct_locl.h"
 
 SCT *SCT_new(void)
 {
@@ -70,8 +75,8 @@ SCT *SCT_new(void)
         CTerr(CT_F_SCT_NEW, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
-    sct->entry_type = UNSET_ENTRY;
-    sct->version = UNSET_VERSION;
+    sct->entry_type = CT_LOG_ENTRY_TYPE_NOT_SET;
+    sct->version = SCT_VERSION_NOT_SET;
     return sct;
 }
 
@@ -88,7 +93,7 @@ void SCT_free(SCT *sct)
 
 int SCT_set_version(SCT *sct, sct_version_t version)
 {
-    if (version != SCT_V1) {
+    if (version != SCT_VERSION_V1) {
         CTerr(CT_F_SCT_SET_VERSION, CT_R_UNSUPPORTED_VERSION);
         return 0;
     }
@@ -96,9 +101,9 @@ int SCT_set_version(SCT *sct, sct_version_t version)
     return 1;
 }
 
-int SCT_set_log_entry_type(SCT *sct, log_entry_type_t entry_type)
+int SCT_set_log_entry_type(SCT *sct, ct_log_entry_type_t entry_type)
 {
-    if (entry_type != X509_ENTRY && entry_type != PRECERT_ENTRY) {
+    if (entry_type != CT_LOG_ENTRY_TYPE_X509 && entry_type != CT_LOG_ENTRY_TYPE_PRECERT) {
         CTerr(CT_F_SCT_SET_LOG_ENTRY_TYPE, CT_R_UNSUPPORTED_ENTRY_TYPE);
         return 0;
     }
@@ -108,8 +113,7 @@ int SCT_set_log_entry_type(SCT *sct, log_entry_type_t entry_type)
 
 int SCT_set0_log_id(SCT *sct, unsigned char *log_id, size_t log_id_len)
 {
-    /* Currently only SHA-256 allowed so length must be SCT_V1_HASHLEN */
-    if (log_id_len != SCT_V1_HASHLEN) {
+    if (sct->version == SCT_VERSION_V1 && log_id_len != CT_V1_HASHLEN) {
         CTerr(CT_F_SCT_SET0_LOG_ID, CT_R_INVALID_LOG_ID_LENGTH);
         return 0;
     }
@@ -121,8 +125,7 @@ int SCT_set0_log_id(SCT *sct, unsigned char *log_id, size_t log_id_len)
 
 int SCT_set1_log_id(SCT *sct, const unsigned char *log_id, size_t log_id_len)
 {
-    /* Currently only SHA-256 allowed so length must be SCT_V1_HASHLEN */
-    if (log_id_len != SCT_V1_HASHLEN) {
+    if (sct->version == SCT_VERSION_V1 && log_id_len != CT_V1_HASHLEN) {
         CTerr(CT_F_SCT_SET1_LOG_ID, CT_R_INVALID_LOG_ID_LENGTH);
         return 0;
     }
@@ -217,7 +220,7 @@ sct_version_t SCT_get_version(const SCT *sct)
     return sct->version;
 }
 
-log_entry_type_t SCT_get_log_entry_type(const SCT *sct)
+ct_log_entry_type_t SCT_get_log_entry_type(const SCT *sct)
 {
     return sct->entry_type;
 }
@@ -235,7 +238,7 @@ uint64_t SCT_get_timestamp(const SCT *sct)
 
 int SCT_get_signature_nid(const SCT *sct)
 {
-    if (sct->version == SCT_V1) {
+    if (sct->version == SCT_VERSION_V1) {
         if (sct->hash_alg == TLSEXT_hash_sha256) {
             switch (sct->sig_alg) {
             case TLSEXT_signature_ecdsa:
@@ -265,13 +268,27 @@ size_t SCT_get0_signature(const SCT *sct, unsigned char **sig)
 int SCT_is_valid(const SCT *sct)
 {
     switch (sct->version) {
-    case UNSET_VERSION:
+    case SCT_VERSION_NOT_SET:
         return 0;
-    case SCT_V1:
+    case SCT_VERSION_V1:
         return sct->log_id != NULL && SCT_signature_is_valid(sct);
     default:
         return sct->sct != NULL; /* Just need cached encoding */
     }
 }
 
-#endif
+int SCT_signature_is_valid(const SCT *sct)
+{
+    if (sct == NULL) {
+        CTerr(CT_F_SCT_SIGNATURE_IS_VALID, ERR_R_PASSED_NULL_PARAMETER);
+        return -1;
+    }
+
+    if (SCT_get_signature_nid(sct) == NID_undef ||
+        sct->sig_len == 0 || sct->sig == NULL) {
+        return 0;
+    }
+
+    return 1;
+}
+

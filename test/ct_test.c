@@ -58,12 +58,12 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "crypto/include/internal/ct_int.h"
-#include "openssl/err.h"
-#include "openssl/safestack.h"
-#include "openssl/ssl.h"
-#include "openssl/x509.h"
-#include "openssl/x509v3.h"
+#include <openssl/ct.h>
+#include <openssl/err.h>
+#include <openssl/ssl.h>
+#include <openssl/x509.h>
+#include <openssl/x509v3.h>
+
 #include "testutil.h"
 
 #if !defined(OPENSSL_NO_CT) && !defined(OPENSSL_NO_UNIT_TEST)

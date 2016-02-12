@@ -55,87 +55,44 @@
  * Hudson (tjh@cryptsoft.com).
  *
  */
- 
-#ifndef OPENSSL_NO_CT
 
-# include <limits.h>
-# include "internal/cryptlib.h"
-# include <openssl/asn1.h>
-# include <openssl/evp.h>
-# include <openssl/x509.h>
-# include <openssl/x509v3.h>
-# include "crypto/include/internal/ct_int.h"
+#ifdef OPENSSL_NO_CT
+# error "CT is disabled"
+#endif
 
-# define n2s(c,s)        ((s=(((unsigned int)((c)[0]))<< 8)| \
-                             (((unsigned int)((c)[1]))    )),c+=2)
+#include <limits.h>
+#include <string.h>
 
-# define s2n(s,c)        ((c[0]=(unsigned char)(((s)>> 8)&0xff), \
-                           c[1]=(unsigned char)(((s)    )&0xff)),c+=2)
+#include <openssl/asn1.h>
+#include <openssl/buffer.h>
+#include <openssl/ct.h>
+#include <openssl/err.h>
 
-# define n2l8(c,l)       (l =((uint64_t)(*((c)++)))<<56, \
-                          l|=((uint64_t)(*((c)++)))<<48, \
-                          l|=((uint64_t)(*((c)++)))<<40, \
-                          l|=((uint64_t)(*((c)++)))<<32, \
-                          l|=((uint64_t)(*((c)++)))<<24, \
-                          l|=((uint64_t)(*((c)++)))<<16, \
-                          l|=((uint64_t)(*((c)++)))<< 8, \
-                          l|=((uint64_t)(*((c)++))))
+#include "ct_locl.h"
 
-# define l2n8(l,c)       (*((c)++)=(unsigned char)(((l)>>56)&0xff), \
-                          *((c)++)=(unsigned char)(((l)>>48)&0xff), \
-                          *((c)++)=(unsigned char)(((l)>>40)&0xff), \
-                          *((c)++)=(unsigned char)(((l)>>32)&0xff), \
-                          *((c)++)=(unsigned char)(((l)>>24)&0xff), \
-                          *((c)++)=(unsigned char)(((l)>>16)&0xff), \
-                          *((c)++)=(unsigned char)(((l)>> 8)&0xff), \
-                          *((c)++)=(unsigned char)(((l)    )&0xff))
+#define n2s(c,s)        ((s=(((unsigned int)((c)[0]))<< 8)| \
+                            (((unsigned int)((c)[1]))    )),c+=2)
 
-static STACK_OF(SCT) *d2i_SCT_LIST(STACK_OF(SCT) **a,
-                                   const unsigned char **pp, int len);
-static int i2d_SCT_LIST(STACK_OF(SCT) *a, unsigned char **pp);
-static int i2r_SCT_LIST(X509V3_EXT_METHOD *method, STACK_OF(SCT) *sct_list,
-                        BIO *out, int indent);
+#define s2n(s,c)        ((c[0]=(unsigned char)(((s)>> 8)&0xff), \
+                          c[1]=(unsigned char)(((s)    )&0xff)),c+=2)
 
-static char *i2s_poison(const X509V3_EXT_METHOD *method, void *val)
-{
-    return OPENSSL_strdup("NULL");
-}
+#define n2l8(c,l)       (l =((uint64_t)(*((c)++)))<<56, \
+                         l|=((uint64_t)(*((c)++)))<<48, \
+                         l|=((uint64_t)(*((c)++)))<<40, \
+                         l|=((uint64_t)(*((c)++)))<<32, \
+                         l|=((uint64_t)(*((c)++)))<<24, \
+                         l|=((uint64_t)(*((c)++)))<<16, \
+                         l|=((uint64_t)(*((c)++)))<< 8, \
+                         l|=((uint64_t)(*((c)++))))
 
-const X509V3_EXT_METHOD v3_ct_scts[] = {
-    { NID_ct_precert_scts, 0, NULL,
-    0, (X509V3_EXT_FREE)SCT_LIST_free,
-    (X509V3_EXT_D2I)d2i_SCT_LIST, (X509V3_EXT_I2D)i2d_SCT_LIST,
-    0, 0, 0, 0,
-    (X509V3_EXT_I2R)i2r_SCT_LIST, 0,
-    NULL },
-
-    { NID_ct_precert_poison, 0, ASN1_ITEM_ref(ASN1_NULL),
-    0, 0, 0, 0, i2s_poison, 0,
-    0, 0, 0, 0, NULL },
-
-    { NID_ct_cert_scts, 0, NULL,
-    0, (X509V3_EXT_FREE)SCT_LIST_free,
-    (X509V3_EXT_D2I)d2i_SCT_LIST, (X509V3_EXT_I2D)i2d_SCT_LIST,
-    0, 0, 0, 0,
-    (X509V3_EXT_I2R)i2r_SCT_LIST, 0,
-    NULL },
-};
-
-int SCT_signature_is_valid(const SCT *sct)
-{
-    if (sct == NULL) {
-        CTerr(CT_F_SCT_SIGNATURE_IS_VALID, ERR_R_PASSED_NULL_PARAMETER);
-        return -1;
-    }
-
-    if (SCT_get_signature_nid(sct) == NID_undef ||
-        sct->sig_len == 0 || sct->sig == NULL) {
-        return 0;
-    }
-
-    return 1;
-}
-
+#define l2n8(l,c)       (*((c)++)=(unsigned char)(((l)>>56)&0xff), \
+                         *((c)++)=(unsigned char)(((l)>>48)&0xff), \
+                         *((c)++)=(unsigned char)(((l)>>40)&0xff), \
+                         *((c)++)=(unsigned char)(((l)>>32)&0xff), \
+                         *((c)++)=(unsigned char)(((l)>>24)&0xff), \
+                         *((c)++)=(unsigned char)(((l)>>16)&0xff), \
+                         *((c)++)=(unsigned char)(((l)>> 8)&0xff), \
+                         *((c)++)=(unsigned char)(((l)    )&0xff))
 
 int o2i_SCT_signature(SCT *sct, const unsigned char **in, size_t len)
 {
@@ -149,7 +106,7 @@ int o2i_SCT_signature(SCT *sct, const unsigned char **in, size_t len)
         goto end;
     }
 
-    if (sct->version != SCT_V1) {
+    if (sct->version != SCT_VERSION_V1) {
         CTerr(CT_F_O2I_SCT_SIGNATURE, CT_R_UNSUPPORTED_VERSION);
         goto end;
     }
@@ -210,7 +167,7 @@ SCT *o2i_SCT(SCT **psct, const unsigned char **in, size_t len)
     p = *in;
 
     sct->version = *p;
-    if (sct->version == 0) {    /* SCT v1 */
+    if (sct->version == SCT_VERSION_V1) {
         int sig_len;
         size_t len2;
         /*
@@ -224,11 +181,11 @@ SCT *o2i_SCT(SCT **psct, const unsigned char **in, size_t len)
         }
         len -= 43;
         p++;
-        sct->log_id = BUF_memdup(p, SCT_V1_HASHLEN);
+        sct->log_id = BUF_memdup(p, CT_V1_HASHLEN);
         if (sct->log_id == NULL)
             goto err;
-        sct->log_id_len = SCT_V1_HASHLEN;
-        p += SCT_V1_HASHLEN;
+        sct->log_id_len = CT_V1_HASHLEN;
+        p += CT_V1_HASHLEN;
 
         n2l8(p, sct->timestamp);
 
@@ -286,7 +243,7 @@ int i2o_SCT_signature(const SCT *sct, unsigned char **out)
         goto err;
     }
 
-    if (sct->version != SCT_V1) {
+    if (sct->version != SCT_VERSION_V1) {
         CTerr(CT_F_I2O_SCT_SIGNATURE, CT_R_UNSUPPORTED_VERSION);
         goto err;
     }
@@ -364,8 +321,8 @@ int i2o_SCT(const SCT *sct, unsigned char **out)
 
     if (sct->version == 0) {
         *p++ = sct->version;
-        memcpy(p, sct->log_id, SCT_V1_HASHLEN);
-        p += SCT_V1_HASHLEN;
+        memcpy(p, sct->log_id, CT_V1_HASHLEN);
+        p += CT_V1_HASHLEN;
         l2n8(sct->timestamp, p);
         s2n(sct->ext_len, p);
         if (sct->ext_len > 0) {
@@ -513,8 +470,8 @@ int i2o_SCT_LIST(STACK_OF(SCT) *a, unsigned char **pp)
     return -1;
 }
 
-static STACK_OF(SCT) *d2i_SCT_LIST(STACK_OF(SCT) **a,
-                                   const unsigned char **pp, int len)
+STACK_OF(SCT) *d2i_SCT_LIST(STACK_OF(SCT) **a, const unsigned char **pp,
+                            size_t len)
 {
     ASN1_OCTET_STRING *oct = NULL;
     STACK_OF(SCT) *sk = NULL;
@@ -522,22 +479,23 @@ static STACK_OF(SCT) *d2i_SCT_LIST(STACK_OF(SCT) **a,
 
     if (pp == NULL || *pp == NULL) {
         CTerr(CT_F_D2I_SCT_LIST, ERR_R_PASSED_NULL_PARAMETER);
-        return NULL;
+        goto end;
     }
 
     p = *pp;
     if (d2i_ASN1_OCTET_STRING(&oct, &p, len) == NULL)
-        return NULL;
+        goto end;
 
     p = oct->data;
     if ((sk = o2i_SCT_LIST(a, &p, oct->length)) != NULL)
         *pp += len;
 
+end:
     ASN1_OCTET_STRING_free(oct);
     return sk;
 }
 
-static int i2d_SCT_LIST(STACK_OF(SCT) *a, unsigned char **out)
+int i2d_SCT_LIST(STACK_OF(SCT) *a, unsigned char **out)
 {
     ASN1_OCTET_STRING oct;
     int len;
@@ -555,19 +513,3 @@ static int i2d_SCT_LIST(STACK_OF(SCT) *a, unsigned char **out)
     OPENSSL_free(oct.data);
     return len;
 }
-
-static int i2r_SCT_LIST(X509V3_EXT_METHOD *method, STACK_OF(SCT) *sct_list,
-                        BIO *out, int indent)
-{
-    int i;
-    for (i = 0; i < sk_SCT_num(sct_list); ++i) {
-        SCT *sct = sk_SCT_value(sct_list, i);
-        SCT_print(sct, out, indent);
-        if (i < sk_SCT_num(sct_list) - 1)
-            BIO_printf(out, "\n");
-    }
-
-    return 1;
-}
-
-#endif
