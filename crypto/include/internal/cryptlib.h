@@ -94,15 +94,18 @@ DEFINE_LHASH_OF(MEM);
 #  define X509_CERT_DIR           OPENSSLDIR "/certs"
 #  define X509_CERT_FILE          OPENSSLDIR "/cert.pem"
 #  define X509_PRIVATE_DIR        OPENSSLDIR "/private"
+#  define CTLOG_FILE              OPENSSLDIR "/log_list.conf"
 # else
 #  define X509_CERT_AREA          "SSLROOT:[000000]"
 #  define X509_CERT_DIR           "SSLCERTS:"
 #  define X509_CERT_FILE          "SSLCERTS:cert.pem"
 #  define X509_PRIVATE_DIR        "SSLPRIVATE:"
+#  define CTLOG_FILE              "SSLCERTS:log_list.conf"
 # endif
 
 # define X509_CERT_DIR_EVP        "SSL_CERT_DIR"
 # define X509_CERT_FILE_EVP       "SSL_CERT_FILE"
+# define CTLOG_FILE_EVP           "CTLOG_FILE"
 
 /* size of string representations */
 # define DECIMAL_SIZE(type)      ((sizeof(type)*8+2)/3+1)

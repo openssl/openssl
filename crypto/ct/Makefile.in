@@ -15,8 +15,10 @@ CFLAGS= $(INCLUDES) $(CFLAG)
 GENERAL=Makefile
 
 LIB=$(TOP)/libcrypto.a
-LIBSRC= ct_err.c ct_oct.c ct_prn.c ct_sct.c ct_x509v3.c
-LIBOBJ= ct_err.o ct_oct.o ct_prn.o ct_sct.o ct_x509v3.o
+LIBSRC= ct_b64.c ct_err.c ct_log.c ct_oct.c ct_prn.c ct_sct.c ct_sct_ctx.c \
+        ct_vfy.c ct_x509v3.c
+LIBOBJ= ct_b64.o ct_err.o ct_log.o ct_oct.o ct_prn.o ct_sct.o ct_sct_ctx.o \
+        ct_vfy.o ct_x509v3.o
 
 SRC= $(LIBSRC)
 

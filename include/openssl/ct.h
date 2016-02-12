@@ -82,6 +82,22 @@ typedef enum {
     SCT_VERSION_V1 = 0
 } sct_version_t;
 
+typedef enum {
+    SCT_SOURCE_UNKNOWN,
+    SCT_SOURCE_TLS_EXTENSION,
+    SCT_SOURCE_X509V3_EXTENSION,
+    SCT_SOURCE_OCSP_STAPLED_RESPONSE
+} sct_source_t;
+
+typedef enum {
+    SCT_VALIDATION_STATUS_NOT_SET,
+    SCT_VALIDATION_STATUS_UNKNOWN_LOG,
+    SCT_VALIDATION_STATUS_VALID,
+    SCT_VALIDATION_STATUS_INVALID,
+    SCT_VALIDATION_STATUS_UNVERIFIED,
+    SCT_VALIDATION_STATUS_UNKNOWN_VERSION
+} sct_validation_status_t;
+
 /*******************
  * Data structures *
  *******************/
@@ -89,6 +105,21 @@ typedef enum {
 /* Signed Certificate Timestamp (SCT) */
 typedef struct sct_st SCT;
 DEFINE_STACK_OF(SCT)
+
+/* SCT context */
+typedef struct sct_ctx_st SCT_CTX;
+
+/* CT log information */
+typedef struct ctlog_st CTLOG;
+
+/*
+ * A store for multiple CTLOG instances.
+ * It takes ownership of any CTLOG instances added to it.
+ */
+typedef struct ctlog_store_st CTLOG_STORE;
+
+/* Context for evaluating whether a CT policy has been met for a connection */
+typedef struct ct_policy_eval_ctx_st CT_POLICY_EVAL_CTX;
 
 /*****************
  * SCT functions *
@@ -99,6 +130,17 @@ DEFINE_STACK_OF(SCT)
  * The caller is responsible for calling SCT_free when finished with the SCT.
  */
 SCT *SCT_new(void);
+
+/*
+ * Creates a new SCT from some base64-encoded strings.
+ * The caller is responsible for calling SCT_free when finished with the SCT.
+ */
+SCT *SCT_new_from_base64(unsigned char version,
+                         const char *logid_base64,
+                         ct_log_entry_type_t entry_type,
+                         uint64_t timestamp,
+                         const char *extensions_base64,
+                         const char *signature_base64);
 
 /*
  * Frees the SCT and the underlying data structures.
@@ -139,6 +181,13 @@ int SCT_set_log_entry_type(SCT *sct, ct_log_entry_type_t entry_type);
  * Returns the length of the log ID.
  */
 size_t SCT_get0_log_id(const SCT *sct, unsigned char **log_id);
+
+/*
+ * Gets the name of the log that an SCT came from.
+ * Ownership of the log name remains with the SCT.
+ * Returns the log name, or NULL if it is not known.
+ */
+const char *SCT_get0_log_name(const SCT *sct);
 
 /*
  * Set the log ID of an SCT to point directly to the *log_id specified.
@@ -219,6 +268,23 @@ void SCT_set0_signature(SCT *sct, unsigned char *sig, size_t sig_len);
 int SCT_set1_signature(SCT *sct, const unsigned char *sig, size_t sig_len);
 
 /*
+ * The origin of this SCT, e.g. TLS extension, OCSP response, etc.
+ */
+sct_source_t SCT_get_source(const SCT *sct);
+
+/*
+ * Set the origin of this SCT, e.g. TLS extension, OCSP response, etc.
+ * Returns 1 on success, 0 otherwise.
+ */
+int SCT_set_source(SCT *sct, sct_source_t source);
+
+/*
+ * Sets the source of all of the SCTs to the same value.
+ * Returns 1 on success.
+ */
+int SCT_LIST_set_source(const STACK_OF(SCT) *scts, sct_source_t source);
+
+/*
  * Pretty-prints an |sct| to |out|.
  * It will be indented by the number of spaces specified by |indent|.
  */
@@ -231,6 +297,21 @@ void SCT_print(const SCT *sct, BIO *out, int indent);
  */
 void SCT_LIST_print(const STACK_OF(SCT) *sct_list, BIO *out, int indent,
                     const char *separator);
+
+/*
+ * Verifies an SCT with the given context.
+ * Returns 1 if the SCT verifies successfully, 0 if it cannot be verified and a
+ * negative integer if an error occurs.
+ */
+int SCT_verify(const SCT_CTX *sctx, const SCT *sct);
+
+/*
+ * Verifies an SCT against the provided data.
+ * Returns 1 if the SCT verifies successfully, 0 if it cannot be verified and a
+ * negative integer if an error occurs.
+ */
+int SCT_verify_v1(SCT *sct, X509 *cert, X509 *preissuer,
+                  X509_PUBKEY *log_pubkey, X509 *issuer_cert);
 
 /*********************************
  * SCT parsing and serialisation *
@@ -332,6 +413,77 @@ int i2o_SCT_signature(const SCT *sct, unsigned char **out);
 * Returns the number of bytes parsed, or a negative integer if an error occurs.
 */
 int o2i_SCT_signature(SCT *sct, const unsigned char **in, size_t len);
+
+/********************
+ * CT log functions *
+ ********************/
+
+/*
+ * Creates a new CT log instance with the given |public_key| and |name|.
+ * Should be deleted by the caller using CTLOG_free when no longer needed.
+ */
+CTLOG *CTLOG_new(EVP_PKEY *public_key, const char *name);
+
+/*
+ * Creates a new, blank CT log instance.
+ * Should be deleted by the caller using CTLOG_free when no longer needed.
+ */
+CTLOG *CTLOG_new_null(void);
+
+/*
+ * Creates a new CT log instance with the given base64 public_key and |name|.
+ * Should be deleted by the caller using CTLOG_free when no longer needed.
+ */
+CTLOG *CTLOG_new_from_base64(const char *pkey_base64, const char *name);
+
+/*
+ * Deletes a CT log instance and its fields.
+ */
+void CTLOG_free(CTLOG *log);
+
+/* Gets the name of the CT log */
+const char *CTLOG_get0_name(CTLOG *log);
+/* Gets the ID of the CT log */
+void CTLOG_get0_log_id(CTLOG *log, uint8_t **log_id, size_t *log_id_len);
+/* Gets the public key of the CT log */
+EVP_PKEY *CTLOG_get0_public_key(CTLOG *log);
+
+/**************************
+ * CT log store functions *
+ **************************/
+
+/*
+ * Creates a new CT log store.
+ * Should be deleted by the caller using CTLOG_STORE_free when no longer needed.
+ */
+CTLOG_STORE *CTLOG_STORE_new(void);
+
+/*
+ * Deletes a CT log store and all of the CT log instances held within.
+ */
+void CTLOG_STORE_free(CTLOG_STORE *store);
+
+/*
+ * Finds a CT log in the store based on its log ID.
+ * Returns the CT log, or NULL if no match is found.
+ */
+CTLOG *CTLOG_STORE_get0_log_by_id(const CTLOG_STORE *store,
+                                  const uint8_t *log_id,
+                                  size_t log_id_len);
+
+/*
+ * Loads a CT log list into a |store| from a |file|.
+ * Returns 1 if loading is successful, or a non-positive integer otherwise.
+ */
+int CTLOG_STORE_load_file(CTLOG_STORE *store, const char *file);
+
+/*
+ * Loads the default CT log list into a |store|.
+ * See internal/cryptlib.h for the environment variable and file path that are
+ * consulted to find the default file.
+ * Returns 1 if loading is successful, or a non-positive integer otherwise.
+ */
+int CTLOG_STORE_load_default_file(CTLOG_STORE *store);
 
 /* BEGIN ERROR CODES */
 /*
