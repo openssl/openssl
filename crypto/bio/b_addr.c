@@ -229,7 +229,7 @@ static int addr_strings(const BIO_ADDR *ap, int numeric,
     if (1) {
 #ifdef AI_PASSIVE
         int ret = 0;
-        char host[NI_MAXHOST], serv[NI_MAXSERV];
+        char host[NI_MAXHOST] = "", serv[NI_MAXSERV] = "";
         int flags = 0;
 
         if (numeric)
@@ -252,11 +252,13 @@ static int addr_strings(const BIO_ADDR *ap, int numeric,
             return 0;
         }
 
-        /* VMS getnameinfo() seems to have a bug, where serv gets filled
-         * with gibberish.  We can at least check for digits when flags
-         * has NI_NUMERICSERV enabled
+        /* VMS getnameinfo() has a bug, it doesn't fill in serv, which
+         * leaves it with whatever garbage that happens to be there.
+         * However, we initialise serv with the empty string (serv[0]
+         * is therefore NUL), so it gets real easy to detect when things
+         * didn't go the way one might expect.
          */
-        if ((flags & NI_NUMERICSERV) != 0 && !isdigit(serv[0])) {
+        if (serv[0] == '\0') {
             BIO_snprintf(serv, sizeof(serv), "%d",
                          ntohs(BIO_ADDR_rawport(ap)));
         }
