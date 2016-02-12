@@ -84,7 +84,8 @@ my $ticketseen = 0;
 my $proxy = TLSProxy::Proxy->new(
     undef,
     cmdstr(app(["openssl"])),
-    srctop_file("apps", "server.pem")
+    srctop_file("apps", "server.pem"),
+    (!$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE})
 );
 
 plan tests => 8;

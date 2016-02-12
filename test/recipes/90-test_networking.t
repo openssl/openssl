@@ -75,7 +75,8 @@ $ENV{OPENSSL_ia32cap} = '~0x200000200000000';
 my $proxy = TLSProxy::Proxy->new(
     undef,
     cmdstr(app(["openssl"])),
-    srctop_file("apps", "server.pem")
+    srctop_file("apps", "server.pem"),
+    (!$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE})
 );
 
 plan tests => 2;
