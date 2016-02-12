@@ -408,6 +408,7 @@ descrip.mms : {- sourcefile("Configurations", "descrip.mms.tmpl") -} $(SRCDIR)Co
   sub src2dep {
       my %args = @_;
       my $dep = $args{obj};
+      my $deps = join(", -\n\t\t", @{$args{srcs}}, @{$args{deps}});
 
       # Because VMS C isn't very good at combining a /INCLUDE path with
       # #includes having a relative directory (like '#include "../foo.h"),
@@ -432,7 +433,7 @@ descrip.mms : {- sourcefile("Configurations", "descrip.mms.tmpl") -} $(SRCDIR)Co
       my $after = $unified_info{after}->{$dep.".OBJ"} || "\@ !";
 
       return <<"EOF";
-$dep.MMS : $srcs
+$dep.MMS : $deps
         ${before}
         SET DEFAULT $forward
         \$(CC) \$(CFLAGS)${incs} /MMS=(TARGET=.OBJ)/OBJECT=${depd}${depn}.MMS $srcs

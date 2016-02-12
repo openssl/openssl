@@ -488,6 +488,7 @@ They are all expected to return a string with the lines they produce.
 
                         src2dep(obj => "PATH/TO/objectfile",
                                 srcs => [ "PATH/TO/sourcefile", ... ],
+                                deps => [ "dep1", ... ],
                                 incs => [ "INCL/PATH", ... ]);
 
                   'obj' has the dependent object file as well as
@@ -496,7 +497,8 @@ They are all expected to return a string with the lines they produce.
                   'srcs' has the list of source files to build the
                   object file, with the first item being the source
                   file that directly corresponds to the object file.
-                  'incs' is a list of include file directories.
+                  'deps' is a list of explicit dependencies.  'incs'
+                  is a list of include file directories.
 
     src2obj     - function that produces build file lines to build an
                   object file from source files and associated data.
@@ -513,8 +515,8 @@ They are all expected to return a string with the lines they produce.
                   'srcs' has the list of source files to build the
                   object file, with the first item being the source
                   file that directly corresponds to the object file.
-                  'deps' is a list of dependencies.  'incs' is a list
-                  of include file directories.
+                  'deps' is a list of explicit dependencies.  'incs'
+                  is a list of include file directories.
 
     obj2lib     - function that produces build file lines to build a
                   static library file ("libfoo.a" in Unix terms) from
