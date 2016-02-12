@@ -87,7 +87,7 @@ my $proxy = TLSProxy::Proxy->new(
     \&extms_filter,
     cmdstr(app(["openssl"])),
     srctop_file("apps", "server.pem"),
-    1
+    (!$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE})
 );
 
 plan tests => 9;
