@@ -520,7 +520,7 @@ int CRYPTO_mem_leaks(struct bio_st *bio);
 # endif
 
 /* die if we have to */
-void OpenSSLDie(const char *file, int line, const char *assertion);
+ossl_noreturn void OpenSSLDie(const char *file, int line, const char *assertion);
 # define OPENSSL_assert(e)       (void)((e) ? 0 : (OpenSSLDie(__FILE__, __LINE__, #e),1))
 
 unsigned int *OPENSSL_ia32cap_loc(void);
