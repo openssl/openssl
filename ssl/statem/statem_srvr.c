@@ -2360,6 +2360,8 @@ MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
 
         EVP_PKEY_free(ckey);
         ckey = NULL;
+        EVP_PKEY_free(s->s3->tmp.pkey);
+        s->s3->tmp.pkey = NULL;
 
     } else
 #endif
@@ -2412,6 +2414,8 @@ MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
 
         EVP_PKEY_free(ckey);
         ckey = NULL;
+        EVP_PKEY_free(s->s3->tmp.pkey);
+        s->s3->tmp.pkey = NULL;
 
         return MSG_PROCESS_CONTINUE_PROCESSING;
     } else
