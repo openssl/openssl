@@ -4,15 +4,15 @@ SOURCE[../../libcrypto]=\
 
 BEGINRAW[Makefile]
 {- $builddir -}/md5-586.s:	{- $sourcedir -}/asm/md5-586.pl {- $sourcetop -}/crypto/perlasm/x86asm.pl
-	$(PERL) {- $sourcedir -}/asm/md5-586.pl $(PERLASM_SCHEME) $(CFLAGS) > $@
+	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/md5-586.pl $(PERLASM_SCHEME) $(CFLAGS) > $@
 
 {- $builddir -}/md5-x86_64.s:	{- $sourcedir -}/asm/md5-x86_64.pl
-	$(PERL) {- $sourcedir -}/asm/md5-x86_64.pl $(PERLASM_SCHEME) > $@
+	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/md5-x86_64.pl $(PERLASM_SCHEME) > $@
 
 {- $builddir -}/md5-ia64.s: {- $sourcedir -}/asm/md5-ia64.S
 	$(CC) $(CFLAGS) -E {- $sourcedir -}/asm/md5-ia64.S | \
 	$(PERL) -ne 's/;\s+/;\n/g; print;' > $@
 
 {- $builddir -}/md5-sparcv9.S:	{- $sourcedir -}/asm/md5-sparcv9.pl
-	$(PERL) {- $sourcedir -}/asm/md5-sparcv9.pl $@ $(CFLAGS)
+	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/md5-sparcv9.pl $@ $(CFLAGS)
 ENDRAW[Makefile]

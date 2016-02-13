@@ -5,9 +5,9 @@ SOURCE[../../libcrypto]=\
 
 BEGINRAW[Makefile]
 {- $builddir -}/cmll-x86.s:	{- $sourcedir -}/asm/cmll-x86.pl {- $sourcetop -}/crypto/perlasm/x86asm.pl
-	$(PERL) {- $sourcedir -}/asm/cmll-x86.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) > $@
+	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/cmll-x86.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) > $@
 {- $builddir -}/cmll-x86_64.s:  {- $sourcedir -}/asm/cmll-x86_64.pl
-	$(PERL) {- $sourcedir -}/asm/cmll-x86_64.pl $(PERLASM_SCHEME) > $@
+	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/cmll-x86_64.pl $(PERLASM_SCHEME) > $@
 {- $builddir -}/cmllt4-sparcv9.s: {- $sourcedir -}/asm/cmllt4-sparcv9.pl {- $sourcetop -}/crypto/perlasm/sparcv9_modes.pl
-	$(PERL) {- $sourcedir -}/asm/cmllt4-sparcv9.pl $(CFLAGS) > $@
+	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/cmllt4-sparcv9.pl $(CFLAGS) > $@
 ENDRAW[Makefile]
