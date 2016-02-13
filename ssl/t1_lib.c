@@ -224,6 +224,12 @@ typedef struct {
 # define TLS_CURVE_CHAR2         0x1
 # define TLS_CURVE_PRIME         0x0
 
+/*
+ * Table of curve information.
+ * NB: do not delete entries or reorder this array. It is used as a lookup
+ * table: the index of each entry is one less than the TLS curve id.
+ */
+
 static const tls_curve_info nid_list[] = {
     {NID_sect163k1, 80, TLS_CURVE_CHAR2}, /* sect163k1 (1) */
     {NID_sect163r1, 80, TLS_CURVE_CHAR2}, /* sect163r1 (2) */
