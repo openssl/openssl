@@ -224,7 +224,7 @@ INSTALLDIRS=	\
 		$(DESTDIR)$(OPENSSLDIR)/certs \
 		$(DESTDIR)$(OPENSSLDIR)/private
 
-all: Makefile build_all
+all: Makefile build_all_but_tests
 
 # as we stick to -e, CLEARENV ensures that local variables in lower
 # Makefiles remain local and variable. $${VAR+VAR} is tribute to Korn
@@ -311,7 +311,8 @@ reflect:
 
 sub_all: build_all
 
-build_all: build_libs build_apps build_tests build_tools
+build_all_but_tests: build_libs build_apps build_tools
+build_all: build_all_but_tests build_tests
 
 build_libs: build_libcrypto build_libssl openssl.pc
 
@@ -477,7 +478,7 @@ rehash.time: certs build_apps build_tools
 test:   files tests
 
 
-tests: rehash
+tests:  build_tests rehash
 	@(cd test && echo "testing..." && \
 	$(CLEARENV) && $(MAKE) -e $(BUILDENV) TOP=.. TESTS='$(TESTS)' OPENSSL_DEBUG_MEMORY=on OPENSSL_CONF=../apps/openssl.cnf tests );
 	@if [ -z "$(CROSS_COMPILE)" ]; then \

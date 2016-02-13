@@ -143,9 +143,15 @@ PROCESSOR= {- $config{processor} -}
 
 # The main targets ###################################################
 
-all: Makefile libcrypto.pc libssl.pc openssl.pc $(ENGINES) $(PROGRAMS) $(SCRIPTS) $(TESTPROGS) link-utils
+all: build_libs build_engines build_apps link-utils
 
-test tests: $(TESTPROGS) rehash
+# The pkg-config files depend on the libraries as well as Makefile
+build_libs: libcrypto.pc libssl.pc openssl.pc
+build_engines: $(ENGINES)
+build_apps: $(PROGRAMS) $(SCRIPTS)
+build_tests: $(TESTPROGS)
+
+test tests: build_tests rehash
 	( cd test; \
 	  SRCTOP=../$(SRCDIR) \
 	  BLDTOP=../$(BLDDIR) \
