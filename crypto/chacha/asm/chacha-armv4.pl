@@ -200,6 +200,12 @@ ChaCha20_ctr32:
 #else
 	adr	r14,.LChaCha20_ctr32
 #endif
+	cmp	r2,#0			@ len==0?
+#ifdef	__thumb2__
+	itt	eq
+#endif
+	addeq	sp,sp,#4*3
+	beq	.Lno_data
 #if __ARM_MAX_ARCH__>=7
 	cmp	r2,#192			@ test len
 	bls	.Lshort
@@ -605,6 +611,7 @@ $code.=<<___;
 
 .Ldone:
 	add	sp,sp,#4*(32+3)
+.Lno_data:
 	ldmia	sp!,{r4-r11,pc}
 .size	ChaCha20_ctr32,.-ChaCha20_ctr32
 ___
