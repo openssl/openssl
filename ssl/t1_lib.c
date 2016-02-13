@@ -2987,7 +2987,7 @@ static int tls_decrypt_ticket(SSL *s, const unsigned char *etick,
     SSL_SESSION *sess;
     unsigned char *sdec;
     const unsigned char *p;
-    int slen, mlen, renew_ticket = 0;
+    int slen, mlen, renew_ticket = 0, ret = -1;
     unsigned char tick_hmac[EVP_MAX_MD_SIZE];
     HMAC_CTX *hctx = NULL;
     EVP_CIPHER_CTX *ctx;
@@ -3000,20 +3000,28 @@ static int tls_decrypt_ticket(SSL *s, const unsigned char *etick,
     if (hctx == NULL)
         return -2;
     ctx = EVP_CIPHER_CTX_new();
+    if (ctx == NULL) {
+        ret = -2;
+        goto err;
+    }
     if (tctx->tlsext_ticket_key_cb) {
         unsigned char *nctick = (unsigned char *)etick;
         int rv = tctx->tlsext_ticket_key_cb(s, nctick, nctick + 16,
                                             ctx, hctx, 0);
         if (rv < 0)
-            return -1;
-        if (rv == 0)
-            return 2;
+            goto err;
+        if (rv == 0) {
+            ret = 2;
+            goto err;
+        }
         if (rv == 2)
             renew_ticket = 1;
     } else {
         /* Check key name matches */
-        if (memcmp(etick, tctx->tlsext_tick_key_name, 16))
-            return 2;
+        if (memcmp(etick, tctx->tlsext_tick_key_name, 16)) {
+            ret = 2;
+            goto err;
+        }
         if (HMAC_Init_ex(hctx, tctx->tlsext_tick_hmac_key, 16,
                          EVP_sha256(), NULL) <= 0
                 || EVP_DecryptInit_ex(ctx, EVP_aes_128_cbc(), NULL,
@@ -3087,7 +3095,7 @@ static int tls_decrypt_ticket(SSL *s, const unsigned char *etick,
 err:
     EVP_CIPHER_CTX_free(ctx);
     HMAC_CTX_free(hctx);
-    return -1;
+    return ret;
 }
 
 /* Tables to translate from NIDs to TLS v1.2 ids */
