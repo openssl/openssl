@@ -82,8 +82,8 @@ LIBDIR={- #
 ENGINESDIR={- use File::Spec::Functions;
               catdir($prefix,$libdir,"engines") -}
 
-MANDIR=$(OPENSSLDIR)/man
-HTMLDIR=$(OPENSSLDIR)/html
+MANDIR=$(INSTALLTOP)/share/man
+HTMLDIR=$(INSTALLTOP)/share/doc/$(BASENAME)/html
 
 MANSUFFIX=ssl
 HTMLSUFFIX=html
@@ -157,7 +157,7 @@ list-tests:
 libclean:
 	-rm -f `find $(BLDDIR) -name '*$(LIB_EXT)' -o -name '*$(SHLIB_EXT)'`
 
-install: install_sw install_docs
+install: install_sw install_ssldirs install_docs
 
 uninstall: uninstall_docs uninstall_sw
 
@@ -195,6 +195,10 @@ uninstall_sw: uninstall_dev uninstall_engines uninstall_runtime
 install_docs: install_man_docs install_html_docs
 
 uninstall_docs: uninstall_man_docs uninstall_html_docs
+
+install_ssldirs:
+	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(DESTDIR)$(OPENSSLDIR)/certs
+	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(DESTDIR)$(OPENSSLDIR)/private
 
 install_dev:
 	@[ -n "$(INSTALLTOP)" ] || (echo INSTALLTOP should not be empty; exit 1)
