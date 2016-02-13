@@ -1691,7 +1691,6 @@ typedef struct ssl3_comp_st {
 # endif
 
 extern SSL3_ENC_METHOD ssl3_undef_enc_method;
-OPENSSL_EXTERN const SSL_CIPHER ssl3_ciphers[];
 
 SSL_METHOD *ssl_bad_method(int ver);
 
