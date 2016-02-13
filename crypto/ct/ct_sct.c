@@ -71,6 +71,7 @@
 SCT *SCT_new(void)
 {
     SCT *sct = OPENSSL_zalloc(sizeof(SCT));
+
     if (sct == NULL) {
         CTerr(CT_F_SCT_NEW, ERR_R_MALLOC_FAILURE);
         return NULL;
@@ -321,6 +322,7 @@ int SCT_set_source(SCT *sct, sct_source_t source)
 int SCT_LIST_set_source(const STACK_OF(SCT) *scts, sct_source_t source)
 {
     int i, ret = 1;
+
     for (i = 0; i < sk_SCT_num(scts); ++i) {
         ret = SCT_set_source(sk_SCT_value(scts, i), source);
         if (ret != 1)
@@ -408,6 +410,7 @@ int SCT_LIST_validate(const STACK_OF(SCT) *scts, CT_POLICY_EVAL_CTX *ctx)
     int ret = -1;
     int count_scts = scts != NULL ? sk_SCT_num(scts) : 0;
     int i;
+
     if (ctx == NULL) {
         CTerr(CT_F_SCT_LIST_VALIDATE, ERR_R_PASSED_NULL_PARAMETER);
         goto end;

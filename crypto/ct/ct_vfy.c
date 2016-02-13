@@ -116,6 +116,7 @@ int CT_verify_no_bad_scts(CT_POLICY_EVAL_CTX *ctx, void *arg)
 int CT_verify_at_least_one_good_sct(CT_POLICY_EVAL_CTX *ctx, void *arg)
 {
     int ret = -1;
+
     if (ctx == NULL) {
         CTerr(CT_F_CT_VERIFY_AT_LEAST_ONE_GOOD_SCT, ERR_R_PASSED_NULL_PARAMETER);
         goto end;
@@ -207,6 +208,7 @@ int SCT_verify(const SCT_CTX *sctx, const SCT *sct)
 {
     EVP_MD_CTX *ctx = NULL;
     int ret = -1;
+
     if (!SCT_is_valid(sct) || sctx->pkey == NULL ||
         sct->entry_type == CT_LOG_ENTRY_TYPE_NOT_SET ||
         (sct->entry_type == CT_LOG_ENTRY_TYPE_PRECERT && sctx->ihash == NULL)) {

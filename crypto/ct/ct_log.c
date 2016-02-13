@@ -92,6 +92,7 @@ static void CTLOG_STORE_LOAD_CTX_free(CTLOG_STORE_LOAD_CTX* ctx);
 static CTLOG_STORE_LOAD_CTX *CTLOG_STORE_LOAD_CTX_new()
 {
     CTLOG_STORE_LOAD_CTX *ctx = OPENSSL_zalloc(sizeof(CTLOG_STORE_LOAD_CTX));
+
     if (ctx == NULL) {
         CTerr(CT_F_CTLOG_STORE_LOAD_CTX_NEW, ERR_R_MALLOC_FAILURE);
         goto err;
@@ -106,9 +107,6 @@ err:
 
 static void CTLOG_STORE_LOAD_CTX_free(CTLOG_STORE_LOAD_CTX* ctx)
 {
-    if (ctx == NULL)
-        return;
-
     OPENSSL_free(ctx);
 }
 
@@ -119,6 +117,7 @@ static int CT_v1_log_id_from_pkey(EVP_PKEY *pkey,
     int ret = 0;
     unsigned char *pkey_der = NULL;
     int pkey_der_len = i2d_PUBKEY(pkey, &pkey_der);
+
     if (pkey_der_len <= 0) {
         CTerr(CT_F_CT_V1_LOG_ID_FROM_PKEY, CT_R_LOG_KEY_INVALID);
         goto err;
@@ -133,6 +132,7 @@ err:
 CTLOG_STORE *CTLOG_STORE_new(void)
 {
     CTLOG_STORE *ret = OPENSSL_malloc(sizeof(CTLOG_STORE));
+
     if (ret == NULL)
         goto err;
     ret->logs = sk_CTLOG_new_null();
@@ -157,6 +157,7 @@ static CTLOG *CTLOG_new_from_conf(const CONF *conf, const char *section)
     CTLOG *ret = NULL;
     char *description;
     char *pkey_base64;
+
     if (conf == NULL || section == NULL) {
         CTerr(CT_F_CTLOG_NEW_FROM_CONF, ERR_R_PASSED_NULL_PARAMETER);
         goto end;
@@ -189,6 +190,7 @@ end:
 int CTLOG_STORE_load_default_file(CTLOG_STORE *store)
 {
     char *fpath = (char *)getenv(CTLOG_FILE_EVP);
+
     if (fpath == NULL)
       fpath = CTLOG_FILE;
     return CTLOG_STORE_load_file(store, fpath);
@@ -198,9 +200,9 @@ static int CTLOG_STORE_load_log(const char *log_name, int log_name_len, void *ar
 {
     CTLOG_STORE_LOAD_CTX *load_ctx = arg;
     CTLOG *ct_log;
-
     /* log_name may not be null-terminated, so fix that before using it */
     char *tmp = OPENSSL_strndup(log_name, log_name_len);
+
     ct_log = CTLOG_new_from_conf(load_ctx->conf, tmp);
     OPENSSL_free(tmp);
     if (ct_log == NULL)
@@ -215,6 +217,7 @@ int CTLOG_STORE_load_file(CTLOG_STORE *store, const char *file)
     int ret = -1;
     char *enabled_logs;
     CTLOG_STORE_LOAD_CTX* load_ctx = CTLOG_STORE_LOAD_CTX_new();
+
     load_ctx->log_store = store;
     load_ctx->conf = NCONF_new(NULL);
     if (load_ctx->conf == NULL)
@@ -243,6 +246,7 @@ end:
 CTLOG *CTLOG_new(EVP_PKEY *public_key, const char *name)
 {
     CTLOG *ret = NULL;
+
     if (public_key == NULL || name == NULL) {
         CTerr(CT_F_CTLOG_NEW, ERR_R_PASSED_NULL_PARAMETER);
         goto err;
@@ -265,6 +269,7 @@ err:
 CTLOG *CTLOG_new_null(void)
 {
     CTLOG *ret = OPENSSL_zalloc(sizeof(CTLOG));
+
     if (ret == NULL)
         CTerr(CT_F_CTLOG_NEW_NULL, ERR_R_MALLOC_FAILURE);
     return ret;
@@ -309,6 +314,7 @@ CTLOG *CTLOG_STORE_get0_log_by_id(const CTLOG_STORE *store,
                                   size_t log_id_len)
 {
     int i;
+
     if (store == NULL) {
         CTerr(CT_F_CTLOG_STORE_GET0_LOG_BY_ID, ERR_R_PASSED_NULL_PARAMETER);
         goto end;

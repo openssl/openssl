@@ -72,6 +72,7 @@
 SCT_CTX *SCT_CTX_new(void)
 {
     SCT_CTX *sctx = OPENSSL_zalloc(sizeof(SCT_CTX));
+
     if (sctx == NULL)
         CTerr(CT_F_SCT_CTX_NEW, ERR_R_MALLOC_FAILURE);
     return sctx;
@@ -93,6 +94,7 @@ void SCT_CTX_free(SCT_CTX *sctx)
 static int sct_get_ext(X509 *cert, int nid)
 {
     int rv = X509_get_ext_by_NID(cert, nid, -1);
+
     if (rv >= 0 && X509_get_ext_by_NID(cert, nid, rv) >= 0)
         return -2;
     return rv;
@@ -141,6 +143,7 @@ int SCT_CTX_set1_cert(SCT_CTX *sctx, X509 *cert, X509 *presigner)
     X509 *pretmp = NULL;
     int certderlen = 0, prederlen = 0;
     int idx = -1, idxp = -1;
+
     idxp = sct_get_ext(cert, NID_ct_precert_poison);
     /* Duplicate poison */
     if (idxp == -2)
@@ -209,6 +212,7 @@ static int CT_public_key_hash(X509_PUBKEY *pkey, unsigned char **hash,
     unsigned char *md = NULL, *der = NULL;
     int der_len;
     unsigned int md_len;
+
     if (pkey == NULL)
         goto err;
     /* Reuse buffer if possible */
@@ -253,6 +257,7 @@ int SCT_CTX_set1_issuer_pubkey(SCT_CTX *sctx, X509_PUBKEY *pubkey)
 int SCT_CTX_set1_pubkey(SCT_CTX *sctx, X509_PUBKEY *pubkey)
 {
     EVP_PKEY *pkey = X509_PUBKEY_get(pubkey);
+
     if (pkey == NULL)
         return 0;
 
