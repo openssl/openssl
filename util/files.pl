@@ -25,8 +25,8 @@ while (<>)
 				{
 				$b=$`; # Keep what is before the backslash
 				$o.=$b." ";
-				$b=<>;
-				$b =~ s|\R$||; # Better chomp
+				$b = "" unless defined($b = <>);
+				$b =~ s{\R$}{};
 				}
 			else
 				{
@@ -43,7 +43,7 @@ while (<>)
 		}
 	}
 
-$pwd=`pwd`; $pwd =~ s|\R$||;
+($pwd=`pwd`) =~ s{\R$}{};
 
 if ($sym{'TOP'} eq ".")
 	{
