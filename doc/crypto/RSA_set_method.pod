@@ -24,7 +24,7 @@ RSA_new_method - select RSA method
 
  int RSA_flags(const RSA *rsa);
 
- RSA *RSA_new_method(RSA_METHOD *method);
+ RSA *RSA_new_method(ENGINE *engine);
 
 =head1 DESCRIPTION
 
