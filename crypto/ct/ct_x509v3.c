@@ -64,6 +64,7 @@
 #include <openssl/ct.h>
 #include <openssl/obj_mac.h>
 #include <openssl/x509v3.h>
+#include <internal/ct_int.h>
 
 static char *i2s_poison(const X509V3_EXT_METHOD *method, void *val)
 {

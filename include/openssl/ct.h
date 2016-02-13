@@ -111,6 +111,7 @@ typedef struct sct_ctx_st SCT_CTX;
 
 /* CT log information */
 typedef struct ctlog_st CTLOG;
+DEFINE_STACK_OF(CTLOG)
 
 /*
  * A store for multiple CTLOG instances.

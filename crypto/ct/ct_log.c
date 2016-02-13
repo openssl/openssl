@@ -67,8 +67,6 @@ struct ctlog_st {
     EVP_PKEY *public_key;
 };
 
-DEFINE_STACK_OF(CTLOG)
-
 struct ctlog_store_st {
     STACK_OF(CTLOG) *logs;
 };
