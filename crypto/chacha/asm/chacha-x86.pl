@@ -219,7 +219,7 @@ if ($xmm) {
 	&dec	($b);
 	&jnz	(&label("loop"));
 
-	&mov	($b,&wparam(3));		# load len
+	&mov	($b,&wparam(2));		# load len
 
 	&add	($a,0x61707865);		# accumulate key material
 	&add	($b_,&DWP(64+4*4,"esp"));
