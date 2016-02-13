@@ -92,7 +92,10 @@ UI *UI_new_method(const UI_METHOD *method)
     else
         ret->meth = method;
 
-    CRYPTO_new_ex_data(CRYPTO_EX_INDEX_UI, ret, &ret->ex_data);
+    if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_UI, ret, &ret->ex_data)) {
+        OPENSSL_free(ret);
+        return NULL;
+    }
     return ret;
 }
 

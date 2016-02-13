@@ -198,8 +198,11 @@ SSL_SESSION *SSL_SESSION_new(void)
         return NULL;
     }
 
-    CRYPTO_new_ex_data(CRYPTO_EX_INDEX_SSL_SESSION, ss, &ss->ex_data);
-
+    if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_SSL_SESSION, ss, &ss->ex_data)) {
+        CRYPTO_THREAD_lock_free(ss->lock);
+        OPENSSL_free(ss);
+        return NULL;
+    }
     return ss;
 }
 

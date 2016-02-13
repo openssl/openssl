@@ -751,7 +751,8 @@ SSL *SSL_new(SSL_CTX *ctx)
     if (!SSL_clear(s))
         goto err;
 
-    CRYPTO_new_ex_data(CRYPTO_EX_INDEX_SSL, s, &s->ex_data);
+    if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_SSL, s, &s->ex_data))
+        goto err;
 
 #ifndef OPENSSL_NO_PSK
     s->psk_client_callback = ctx->psk_client_callback;
@@ -2441,7 +2442,8 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
     if ((ret->client_CA = sk_X509_NAME_new_null()) == NULL)
         goto err;
 
-    CRYPTO_new_ex_data(CRYPTO_EX_INDEX_SSL_CTX, ret, &ret->ex_data);
+    if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_SSL_CTX, ret, &ret->ex_data))
+        goto err;
 
     /* No compression for DTLS */
     if (!(meth->ssl3_enc->enc_flags & SSL_ENC_FLAG_DTLS))
