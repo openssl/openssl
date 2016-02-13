@@ -200,9 +200,14 @@ NODEBUG=@
 
 # The main targets ###################################################
 
-all : descrip.mms, $(LIBS), $(ENGINES), $(PROGRAMS), $(SCRIPTS), $(TESTPROGS)
+all : descrip.mms, build_libs, build_engines, build_apps
 
-test tests : $(TESTPROGS), rehash
+build_libs : $(LIBS)
+build_engines : $(ENGINES)
+build_apps : $(PROGRAMS), $(SCRIPTS)
+build_tests : $(TESTPROGS)
+
+test tests : build_tests, rehash
         SET DEFAULT [.test]{- move("test") -}
         DEFINE SRCTOP {- sourcedir() -}
         DEFINE BLDTOP {- builddir() -}
