@@ -406,7 +406,14 @@ PROCESS_PODS=\
 		names=`cat $$p | $(EXTRACT_NAMES)`; \
 		( cd $$top/man$$SEC; \
 		  for n in $$names; do \
-		      if [ "$$n" != "$$fn" ]; then \
+		      comp_n="$$n"; \
+		      comp_fn="$$fn"; \
+		      case "$(PLATFORM)" in DJGPP|Cygwin*|mingw*|darwin*-*-cc) \
+			  comp_n=`echo "$$n" | tr [A-Z] [a-z]`; \
+			  comp_fn=`echo "$$fn" | tr [A-Z] [a-z]`; \
+			  ;; \
+		      esac; \
+		      if [ "$$comp_n" != "$$comp_fn" ]; then \
 			  echo "link $$top/man$$SEC/$$n$$suf -> $$top/man$$SEC/$$fn$$suf"; \
 			  PLATFORM=$(PLATFORM) $$point $$fn$$suf $$n$$suf; \
 		      fi; \
@@ -429,7 +436,14 @@ UNINSTALL_DOCS=\
 	        $(RM) $$top/man$$SEC/$$fn$$suf; \
 		names=`cat $$p | $(EXTRACT_NAMES)`; \
 		for n in $$names; do \
-		    if [ "$$n" != "$$fn" ]; then \
+		    comp_n="$$n"; \
+		    comp_fn="$$fn"; \
+		    case "$(PLATFORM)" in DJGPP|Cygwin*|mingw*|darwin*-*-cc) \
+			comp_n=`echo "$$n" | tr [A-Z] [a-z]`; \
+			comp_fn=`echo "$$fn" | tr [A-Z] [a-z]`; \
+			;; \
+		    esac; \
+		    if [ "$$comp_n" != "$$comp_fn" ]; then \
 			echo "$(RM) $$top/man$$SEC/$$n$$suf"; \
 			$(RM) $$top/man$$SEC/$$n$$suf; \
 		    fi; \
