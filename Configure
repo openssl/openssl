@@ -878,11 +878,6 @@ my $no_shared_warn=0;
 my $no_user_cflags=0;
 my $no_user_defines=0;
 
-if ($user_cflags ne "") { $config{cflags}="$config{cflags}$user_cflags"; }
-else                    { $no_user_cflags=1;  }
-if (@user_defines) { $config{defines}=[ @{$config{defines}}, @user_defines ]; }
-else               { $no_user_defines=1;    }
-
 # The DSO code currently always implements all functions so that no
 # applications will have to worry about that from a compilation point
 # of view. However, the "method"s may return zero unless that platform
@@ -1132,33 +1127,38 @@ if (defined($config{api})) {
 if ($strict_warnings)
 	{
 	my $wopt;
-	my $addflags = '';
 	die "ERROR --strict-warnings requires gcc or clang"
             unless $ecc eq 'gcc' || $ecc eq 'clang';
 	foreach $wopt (split /\s+/, $gcc_devteam_warn)
 		{
-		$addflags .= " $wopt" unless ($config{cflags} =~ /(^|\s)$wopt(\s|$)/)
+		$config{cflags} .= " $wopt" unless ($config{cflags} =~ /(^|\s)$wopt(\s|$)/)
 		}
 	if ($ecc eq "clang")
 		{
 		foreach $wopt (split /\s+/, $clang_devteam_warn)
 			{
-			$addflags .= " $wopt" unless ($config{cflags} =~ /(^|\s)$wopt(\s|$)/)
+			$config{cflags} .= " $wopt" unless ($config{cflags} =~ /(^|\s)$wopt(\s|$)/)
 			}
 		}
 	if ($target !~ /^mingw/)
 		{
 		foreach $wopt (split /\s+/, $memleak_devteam_backtrace)
 			{
-			$addflags .= " $wopt" unless ($config{cflags} =~ /(^|\s)$wopt(\s|$)/)
+			$config{cflags} .= " $wopt" unless ($config{cflags} =~ /(^|\s)$wopt(\s|$)/)
 			}
 		if ($target =~ /^BSD-/)
 			{
 			$config{ex_libs} .= " -lexecinfo";
 			}
 		}
-	$config{cflags} = "$addflags $config{cflags}" if $addflags ne '';
 	}
+
+if ($user_cflags ne "") { $config{cflags}="$config{cflags}$user_cflags"; }
+else                    { $no_user_cflags=1;  }
+if (@user_defines) { $config{defines}=[ @{$config{defines}}, @user_defines ]; }
+else               { $no_user_defines=1;    }
+
+# ALL MODIFICATIONS TO %config and %target MUST BE DONE FROM HERE ON
 
 # If we use the unified build, collect information from build.info files
 my %unified_info = ();
