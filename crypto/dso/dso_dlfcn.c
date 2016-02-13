@@ -91,9 +91,6 @@ DSO_METHOD *DSO_METHOD_dlfcn(void)
 #  endif
 # endif
 
-/* Part of the hack in "dlfcn_load" ... */
-# define DSO_MAX_TRANSLATED_SIZE 256
-
 static int dlfcn_load(DSO *dso);
 static int dlfcn_unload(DSO *dso);
 static void *dlfcn_bind_var(DSO *dso, const char *symname);

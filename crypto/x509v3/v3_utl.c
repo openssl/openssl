@@ -791,7 +791,6 @@ static int wildcard_match(const unsigned char *prefix, size_t prefix_len,
 }
 
 #define LABEL_START     (1 << 0)
-#define LABEL_END       (1 << 1)
 #define LABEL_HYPHEN    (1 << 2)
 #define LABEL_IDNA      (1 << 3)
 

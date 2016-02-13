@@ -66,7 +66,6 @@
 # define PUTU32(p,v)     *(u32 *)(p) = BSWAP4(v)
 #endif
 
-#define PACK(s)         ((size_t)(s)<<(sizeof(size_t)*8-16))
 #define REDUCE1BIT(V)   do { \
         if (sizeof(size_t)==8) { \
                 u64 T = U64(0xe100000000000000) & (0-(V.lo&1)); \
@@ -115,6 +114,8 @@
  * Value of 1 is not appropriate for performance reasons.
  */
 #if     TABLE_BITS==8
+
+#define PACK(s)         ((size_t)(s)<<(sizeof(size_t)*8-16))
 
 static void gcm_init_8bit(u128 Htable[256], u64 H[2])
 {

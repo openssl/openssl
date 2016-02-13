@@ -72,9 +72,6 @@
         (b)^=(t),\
         (a)^=((t)<<(n)))
 
-#undef HPERM_OP
-#define HPERM_OP(a,t,n,m) ((t)=((((a)<<(16-(n)))^(a))&(m)),\
-        (a)=(a)^(t)^(t>>(16-(n))))\
 
 void fcrypt_body(DES_LONG *out, DES_key_schedule *ks, DES_LONG Eswap0,
                  DES_LONG Eswap1)

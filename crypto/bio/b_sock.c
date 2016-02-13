@@ -64,14 +64,6 @@
 NETDB_DEFINE_CONTEXT
 #endif
 #ifndef OPENSSL_NO_SOCK
-# define SOCKET_PROTOCOL IPPROTO_TCP
-# ifdef SO_MAXCONN
-#  define MAX_LISTEN  SO_MAXCONN
-# elif defined(SOMAXCONN)
-#  define MAX_LISTEN  SOMAXCONN
-# else
-#  define MAX_LISTEN  32
-# endif
 # if defined(OPENSSL_SYS_WINDOWS) || (defined(OPENSSL_SYS_NETWARE) && !defined(NETWARE_BSDSOCK))
 static int wsa_init_done = 0;
 # endif

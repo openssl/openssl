@@ -66,7 +66,6 @@
 #ifndef OPENSSL_NO_ERR
 
 # define ERR_FUNC(func) ERR_PACK(ERR_LIB_BUF,func,0)
-# define ERR_REASON(reason) ERR_PACK(ERR_LIB_BUF,0,reason)
 
 static ERR_STRING_DATA BUF_str_functs[] = {
     {ERR_FUNC(BUF_F_BUF_MEM_GROW), "BUF_MEM_grow"},

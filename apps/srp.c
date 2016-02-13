@@ -73,9 +73,6 @@ NON_EMPTY_TRANSLATION_UNIT
 # include "apps.h"
 
 # define BASE_SECTION    "srp"
-# define CONFIG_FILE "openssl.cnf"
-
-# define ENV_RANDFILE            "RANDFILE"
 
 # define ENV_DATABASE            "srpvfile"
 # define ENV_DEFAULT_SRP         "default_srp"

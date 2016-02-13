@@ -70,7 +70,6 @@
 
 #undef SECONDS
 #define SECONDS                 3
-#define PRIME_SECONDS   10
 #define RSA_SECONDS             10
 #define DSA_SECONDS             10
 #define ECDSA_SECONDS   10
@@ -197,7 +196,6 @@ static int do_multi(int multi);
 
 #define ALGOR_NUM       30
 #define SIZE_NUM        5
-#define PRIME_NUM       3
 #define RSA_NUM         7
 #define DSA_NUM         3
 
@@ -1218,14 +1216,12 @@ int speed_main(int argc, char **argv)
 #  endif
 
 #  define COND(d) (count < (d))
-#  define COUNT(d) (d)
 # else
 /* not worth fixing */
 #  error "You cannot disable DES on systems without SIGALRM."
 # endif                        /* OPENSSL_NO_DES */
 #else
 # define COND(c) (run && count<0x7fffffff)
-# define COUNT(d) (count)
 # ifndef _WIN32
     signal(SIGALRM, sig_done);
 # endif

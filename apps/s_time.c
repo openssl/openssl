@@ -77,9 +77,6 @@
 # include OPENSSL_UNISTD
 #endif
 
-#undef ioctl
-#define ioctl ioctlsocket
-
 #define SSL_CONNECT_NAME        "localhost:4433"
 
 /* no default cert. */
@@ -87,15 +84,7 @@
  * #define TEST_CERT "client.pem"
  */
 
-#undef BUFSIZZ
-#define BUFSIZZ 1024*10
-
 #define MYBUFSIZ 1024*8
-
-#undef min
-#undef max
-#define min(a,b) (((a) < (b)) ? (a) : (b))
-#define max(a,b) (((a) > (b)) ? (a) : (b))
 
 #undef SECONDS
 #define SECONDS 30

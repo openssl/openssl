@@ -101,14 +101,8 @@ typedef struct {
         {str, (int)(sizeof(str) - 1), SSL_TFLAG_BOTH, flag}
 #define SSL_FLAG_TBL_SRV(str, flag) \
         {str, (int)(sizeof(str) - 1), SSL_TFLAG_SERVER, flag}
-#define SSL_FLAG_TBL_CLI(str, flag) \
-        {str, (int)(sizeof(str) - 1), SSL_TFLAG_CLIENT, flag}
 #define SSL_FLAG_TBL_INV(str, flag) \
         {str, (int)(sizeof(str) - 1), SSL_TFLAG_INV|SSL_TFLAG_BOTH, flag}
-#define SSL_FLAG_TBL_SRV_INV(str, flag) \
-        {str, (int)(sizeof(str) - 1), SSL_TFLAG_INV|SSL_TFLAG_SERVER, flag}
-#define SSL_FLAG_TBL_CERT(str, flag) \
-        {str, (int)(sizeof(str) - 1), SSL_TFLAG_CERT|SSL_TFLAG_BOTH, flag}
 
 #define SSL_FLAG_VFY_CLI(str, flag) \
         {str, (int)(sizeof(str) - 1), SSL_TFLAG_VFY | SSL_TFLAG_CLIENT, flag}

@@ -163,7 +163,6 @@ ASN1_STRING *ASN1_STRING_set_by_NID(ASN1_STRING **out,
 #define ub_state_name                   128
 #define ub_organization_name            64
 #define ub_organization_unit_name       64
-#define ub_title                        64
 #define ub_email_address                128
 #define ub_serial_number                64
 
