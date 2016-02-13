@@ -133,7 +133,16 @@ Various bug workarounds are set, same as setting B<SSL_OP_ALL>.
 
 =item B<-comp>
 
-Enables support for SSL/TLS compression, same as clearing B<SSL_OP_NO_COMPRESSION>.
+Enables support for SSL/TLS compression, same as clearing
+B<SSL_OP_NO_COMPRESSION>.
+This command was introduced in OpenSSL 1.1.0.
+As of OpenSSL 1.1.0, compression is off by default.
+
+=item B<-no_comp>
+
+Disables support for SSL/TLS compression, same as setting
+B<SSL_OP_NO_COMPRESSION>.
+As of OpenSSL 1.1.0, compression is off by default.
 
 =item B<-no_ticket>
 

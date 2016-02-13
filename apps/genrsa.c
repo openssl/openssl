@@ -56,8 +56,10 @@
  */
 
 #include <openssl/opensslconf.h>
+#ifdef OPENSSL_NO_RSA
+NON_EMPTY_TRANSLATION_UNIT
+#else
 
-#ifndef OPENSSL_NO_RSA
 # include <stdio.h>
 # include <string.h>
 # include <sys/types.h>
@@ -232,10 +234,4 @@ static int genrsa_cb(int p, int n, BN_GENCB *cb)
     (void)BIO_flush(BN_GENCB_get_arg(cb));
     return 1;
 }
-#else                           /* !OPENSSL_NO_RSA */
-
-# if PEDANTIC
-static void *dummy = &dummy;
-# endif
-
 #endif

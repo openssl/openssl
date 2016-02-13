@@ -190,9 +190,6 @@ int main(int argc, char **argv)
     CRYPTO_set_mem_debug(1);
     CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
 
-    ERR_load_crypto_strings();
-    OpenSSL_add_all_digests();
-
     if (argc != 4) {
         fprintf(stderr, "usage: verify_extra_test roots.pem untrusted.pem bad.pem\n");
         return 1;
@@ -203,12 +200,9 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    EVP_cleanup();
-    CRYPTO_cleanup_all_ex_data();
-    ERR_remove_thread_state(NULL);
-    ERR_free_strings();
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG
-    CRYPTO_mem_leaks_fp(stderr);
+    if (CRYPTO_mem_leaks_fp(stderr) <= 0)
+        return 1;
 #endif
 
     printf("PASS\n");

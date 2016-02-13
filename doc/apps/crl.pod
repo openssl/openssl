@@ -7,6 +7,7 @@ crl - CRL utility
 =head1 SYNOPSIS
 
 B<openssl> B<crl>
+[B<-help>]
 [B<-inform PEM|DER>]
 [B<-outform PEM|DER>]
 [B<-text>]
@@ -28,6 +29,10 @@ The B<crl> command processes CRL files in DER or PEM format.
 =head1 COMMAND OPTIONS
 
 =over 4
+
+=item B<-help>
+
+Print out a usage message.
 
 =item B<-inform DER|PEM>
 

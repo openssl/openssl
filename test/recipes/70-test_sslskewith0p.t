@@ -53,7 +53,7 @@
 # Hudson (tjh@cryptsoft.com).
 
 use strict;
-use OpenSSL::Test qw/:DEFAULT cmdstr top_file top_dir/;
+use OpenSSL::Test qw/:DEFAULT cmdstr srctop_file bldtop_dir/;
 use OpenSSL::Test::Utils;
 use TLSProxy::Proxy;
 
@@ -72,12 +72,13 @@ plan skip_all => "$test_name can only be performed with OpenSSL configured share
 plan skip_all => "dh is not supported by this OpenSSL build"
     if disabled("dh");
 
-$ENV{OPENSSL_ENGINES} = top_dir("engines");
+$ENV{OPENSSL_ENGINES} = bldtop_dir("engines");
 $ENV{OPENSSL_ia32cap} = '~0x200000200000000';
 my $proxy = TLSProxy::Proxy->new(
     \&ske_0_p_filter,
     cmdstr(app(["openssl"])),
-    top_file("apps", "server.pem")
+    srctop_file("apps", "server.pem"),
+    (!$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE})
 );
 
 plan tests => 1;

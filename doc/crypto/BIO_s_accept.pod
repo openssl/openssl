@@ -160,7 +160,7 @@ This example accepts two connections on port 4444, sends messages
 down each and finally closes both down.
 
  BIO *abio, *cbio, *cbio2;
- ERR_load_crypto_strings();
+
  abio = BIO_new_accept("4444");
 
  /* First call to BIO_accept() sets up accept BIO */

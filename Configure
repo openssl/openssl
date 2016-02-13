@@ -11,8 +11,7 @@ require 5.000;
 use strict;
 use File::Basename;
 use File::Spec::Functions qw/:DEFAULT abs2rel rel2abs/;
-use File::Path qw/make_path/;
-use Cwd qw/:DEFAULT realpath/;
+use File::Path qw/mkpath/;
 
 # see INSTALL for instructions.
 
@@ -32,10 +31,6 @@ my $usage="Usage: Configure [no-<cipher> ...] [enable-<cipher> ...] [experimenta
 #               given with --prefix.
 #               This becomes the value of OPENSSLDIR in Makefile and in C.
 #               (Default: PREFIX/ssl)
-#
-# --install_prefix  Additional prefix for package builders (empty by
-#               default).  This needn't be set in advance, you can
-#               just as well use "make INSTALL_PREFIX=/whatever install".
 #
 # --cross-compile-prefix Add specified prefix to binutils components.
 #
@@ -81,19 +76,38 @@ my $usage="Usage: Configure [no-<cipher> ...] [enable-<cipher> ...] [experimenta
 # Minimum warning options... any contributions to OpenSSL should at least get
 # past these.
 
-my $gcc_devteam_warn = "-Wall -pedantic -DPEDANTIC -Wno-long-long -Wsign-compare -Wmissing-prototypes -Wshadow -Wformat -Wtype-limits -Werror -DREF_CHECK -DDEBUG_UNUSED";
+my $gcc_devteam_warn = "-DPEDANTIC -DREF_DEBUG -DDEBUG_UNUSED"
+        . " -pedantic"
+        . " -Wall"
+        . " -Wno-long-long"
+        . " -Wsign-compare"
+        . " -Wmissing-prototypes"
+        . " -Wshadow"
+        . " -Wformat"
+        . " -Wtype-limits"
+        . " -Werror"
+        ;
 
 # These are used in addition to $gcc_devteam_warn when the compiler is clang.
 # TODO(openssl-team): fix problems and investigate if (at least) the
 # following warnings can also be enabled:
-# -Wswitch-enum, -Wunused-macros, -Wmissing-field-initializers,
-# -Wcast-align,
-# -Wunreachable-code -Wunused-parameter -Wlanguage-extension-token
-# -Wextended-offsetof
-my $clang_devteam_warn = "-Wno-unused-parameter -Wno-missing-field-initializers -Wno-language-extension-token -Wno-extended-offsetof -Wconditional-uninitialized -Qunused-arguments -Wincompatible-pointer-types-discards-qualifiers -Wmissing-variable-declarations";
-
-# Warn that "make depend" should be run?
-my $warn_make_depend = 0;
+#       -Wswitch-enum
+#       -Wunused-macros
+#       -Wcast-align
+#       -Wunreachable-code
+#       -Wlanguage-extension-token
+#       -Wextended-offsetof
+my $clang_devteam_warn = ""
+        . " -Qunused-arguments"
+        . " -Wextra"
+        . " -Wno-unused-parameter"
+        . " -Wno-missing-field-initializers"
+        . " -Wno-language-extension-token"
+        . " -Wno-extended-offsetof"
+        . " -Wconditional-uninitialized"
+        . " -Wincompatible-pointer-types-discards-qualifiers"
+        . " -Wmissing-variable-declarations"
+        ;
 
 # These are used in addition to $gcc_devteam_warn unless this is a mingw build.
 # This adds backtrace information to the memory leak info.
@@ -142,8 +156,8 @@ sub resolve_config;
 # Information collection #############################################
 
 # Unified build supports separate build dir
-my $srcdir = catdir(realpath(dirname($0))); # catdir ensures local syntax
-my $blddir = catdir(realpath("."));       # catdir ensures local syntax
+my $srcdir = catdir(absolutedir(dirname($0))); # catdir ensures local syntax
+my $blddir = catdir(absolutedir("."));         # catdir ensures local syntax
 my $dofile = abs2rel(catfile($srcdir, "util/dofile.pl"));
 
 $config{sourcedir} = abs2rel($srcdir);
@@ -188,7 +202,6 @@ $config{prefix}="";
 $config{openssldir}="";
 $config{processor}="";
 $config{libdir}="";
-$config{install_prefix}= "$ENV{'INSTALL_PREFIX'}";
 $config{cross_compile_prefix}="";
 $config{fipslibdir}="/usr/local/ssl/fips-2.0/lib/";
 my $nofipscanistercheck=0;
@@ -213,7 +226,7 @@ $config{sdirs} = [
     "bn", "ec", "rsa", "dsa", "dh", "dso", "engine",
     "buffer", "bio", "stack", "lhash", "rand", "err",
     "evp", "asn1", "pem", "x509", "x509v3", "conf", "txt_db", "pkcs7", "pkcs12", "comp", "ocsp", "ui",
-    "cms", "ts", "jpake", "srp", "store", "cmac", "ct", "async", "kdf"
+    "cms", "ts", "jpake", "srp", "cmac", "ct", "async", "kdf"
     ];
 
 # Known TLS and DTLS protocols
@@ -227,6 +240,9 @@ my @dtls = qw(dtls1 dtls1_2);
 my @disablables = (
     "aes",
     "asm",
+    "async",
+    "autoalginit",
+    "autoerrinit",
     "bf",
     "camellia",
     "capieng",
@@ -250,6 +266,7 @@ my @disablables = (
     "ecdh",
     "ecdsa",
     "ec_nistp_64_gcc_128",
+    "egd",
     "engine",
     "err",			# Really???
     "heartbeats",
@@ -291,7 +308,6 @@ my @disablables = (
     "ssl-trace",
     "static-engine",
     "stdio",
-    "store",
     "threads",
     "tls",
     "unit-test",
@@ -316,11 +332,10 @@ my %disabled = ( # "what"         => "comment" [or special keyword "experimental
 		 "sctp"           => "default",
 		 "shared"         => "default",
 		 "ssl-trace"	  => "default",
-		 "store"	  => "experimental",
 		 "unit-test"	  => "default",
 		 "zlib"           => "default",
-		 "zlib-dynamic"   => "default",
 		 "crypto-mdebug"  => "default",
+		 "heartbeats"     => "default",
 	       );
 my @experimental = ();
 
@@ -382,13 +397,13 @@ while ((my $first, my $second) = (shift @list, shift @list)) {
     unshift @list, $second;
 }
 
-# Construct the string of what $config{depflags} should look like with the defaults
-# from %disabled above.  (we need this to see if we should advise the user
-# to run "make depend"):
-my $default_depflags = join(" ",
-    map { my $x = $_; $x =~ tr{[a-z]-}{[A-Z]_}; "-DOPENSSL_NO_$x"; }
-    grep { $disabled{$_} !~ /\(no-depflags\)$/ }
-    sort keys %disabled);
+# Construct the string of what $config{depdefines} should look like with
+# the defaults from %disabled above.  (we need this to see if we should
+# advise the user to run "make depend"):
+my @default_depdefines =
+    map { my $x = $_; $x =~ tr{[a-z]-}{[A-Z]_}; "OPENSSL_NO_$x"; }
+    grep { $disabled{$_} !~ /\(no-depdefines\)$/ }
+    sort keys %disabled;
 
 # Explicit "no-..." options will be collected in %disabled along with the defaults.
 # To remove something from %disabled, use "enable-foo" (unless it's experimental).
@@ -398,13 +413,24 @@ my $default_depflags = join(" ",
 # We will collect such requests in @experimental.
 # To avoid accidental use of experimental features, applications will have to use -DOPENSSL_EXPERIMENTAL_FOO.
 
+my @generated_headers = (
+    "include/openssl/opensslconf.h",
+    "crypto/include/internal/bn_conf.h"
+    );
+
+my @generated_by_make_headers = (
+    "crypto/buildinf.h"
+    );
+
 
 my $no_sse2=0;
 
 &usage if ($#ARGV < 0);
 
-my $flags="";
-$config{depflags}="";
+my $user_cflags="";
+my @user_defines=();
+my $unified = 0;
+$config{depdefines}=[];
 $config{openssl_experimental_defines}=[];
 $config{openssl_api_defines}=[];
 $config{openssl_algorithm_defines}=[];
@@ -414,7 +440,6 @@ $config{openssl_other_defines}=[];
 my $libs="";
 my $target="";
 $config{options}="";
-my $make_depend=0;
 my %withargs=();
 my $build_prefix = "release_";
 
@@ -448,7 +473,7 @@ if (grep /^reconf(igure)?$/, @argvcopy) {
         # centered information gathering the reading configdata.pm
         #
         while (<IN>) {
-            chomp;
+            s|\R$||;
             if (/^CONFIGURE_ARGS=\s*(.*)\s*/) {
                 # Older form, we split the string and hope for the best
                 @argvcopy = split /\s+/, $_;
@@ -574,9 +599,15 @@ foreach (@argvcopy)
 		}
 	elsif (/^[-+]/)
 		{
-		if (/^--prefix=(.*)$/)
+		if (/^--unified$/)
+			{
+			$unified=1;
+			}
+		elsif (/^--prefix=(.*)$/)
 			{
 			$config{prefix}=$1;
+			die "Directory given with --prefix MUST be absolute\n"
+				unless file_name_is_absolute($config{prefix});
 			}
 		elsif (/^--api=(.*)$/)
 			{
@@ -589,10 +620,6 @@ foreach (@argvcopy)
 		elsif (/^--openssldir=(.*)$/)
 			{
 			$config{openssldir}=$1;
-			}
-		elsif (/^--install.prefix=(.*)$/)
-			{
-			$config{install_prefix}=$1;
 			}
 		elsif (/^--with-zlib-lib=(.*)$/)
 			{
@@ -622,10 +649,14 @@ foreach (@argvcopy)
 			{
 			$libs.=$_." ";
 			}
+		elsif (/^-D(.*)$/)
+			{
+			push @user_defines, $1;
+			}
 		else	# common if (/^[-+]/), just pass down...
 			{
 			$_ =~ s/%([0-9a-f]{1,2})/chr(hex($1))/gei;
-			$flags.=$_." ";
+			$user_cflags.=" ".$_;
 			}
 		}
 	elsif ($_ =~ /^([^:]+):(.+)$/)
@@ -740,12 +771,13 @@ foreach (sort (keys %disabled))
 		my ($ALGO, $algo);
 		($ALGO = $algo = $_) =~ tr/[\-a-z]/[_A-Z]/;
 
-		if (/^asm$/ || /^err$/ || /^hw$/ || /^hw-/)
+		if (/^asm$/ || /^err$/ || /^hw$/ || /^hw-/ || /^async$/
+				|| /^autoalginit/ || /^autoerrinit/)
 			{
 			push @{$config{openssl_other_defines}}, "OPENSSL_NO_$ALGO";
 			print " OPENSSL_NO_$ALGO";
 
-			if (/^err$/)	{ $flags .= "-DOPENSSL_NO_ERR "; }
+			if (/^err$/)	{ push @user_defines, "OPENSSL_NO_ERR"; }
 			elsif (/^asm$/)	{ $no_asm = 1; }
 			}
 		else
@@ -753,7 +785,7 @@ foreach (sort (keys %disabled))
 			($ALGO,$algo) = ("RMD160","rmd160") if ($algo eq "ripemd");
 
 			push @{$config{openssl_algorithm_defines}}, "OPENSSL_NO_$ALGO";
-			$config{depflags} .= " -DOPENSSL_NO_$ALGO";
+			push @{$config{depdefines}}, "OPENSSL_NO_$ALGO";
 			print " OPENSSL_NO_$ALGO";
 
 			# fix-up crypto/directory name(s)
@@ -768,8 +800,6 @@ foreach (sort (keys %disabled))
 	print "\n";
 	}
 
-my $exp_cflags = "";
-
 foreach (sort @experimental)
 	{
 	my $ALGO;
@@ -777,7 +807,6 @@ foreach (sort @experimental)
 
 	# opensslconf.h will set OPENSSL_NO_... unless OPENSSL_EXPERIMENTAL_... is defined
 	push @{$config{openssl_experimental_defines}}, "OPENSSL_NO_$ALGO";
-	$exp_cflags .= " -DOPENSSL_EXPERIMENTAL_$ALGO";
 	}
 
 print "Configuring for $target\n";
@@ -810,22 +839,23 @@ my $make	= $ENV{'MAKE'} || "make";
 $config{cross_compile_prefix} = $ENV{'CROSS_COMPILE'}
     if $config{cross_compile_prefix} eq "";
 
-$config{prefix} = "/usr/local" if !$config{prefix};
-$config{openssldir} = "ssl" if !$config{openssldir};
-$config{openssldir} = catdir($config{prefix}, $config{openssldir})
-    unless file_name_is_absolute($config{openssldir});
-
 # Allow environment CC to override compiler...
 $target{cc} = $ENV{CC} || $target{cc};
 
-# For cflags, lflags and ex_libs, add the debug_ or release_ attributes
+# For cflags, lflags, plib_lflags, ex_libs and defines, add the debug_
+# or release_ attributes.
 # Do it in such a way that no spurious space is appended (hence the grep).
+$config{defines} = [ @{$target{defines}},
+                     @{$target{$build_prefix."defines"}} ];
 $config{cflags} = join(" ",
 		       grep { $_ ne "" } ($target{cflags},
 					  $target{$build_prefix."cflags"}));
 $config{lflags} = join(" ",
 		       grep { $_ ne "" } ($target{lflags},
 					  $target{$build_prefix."lflags"}));
+$config{plib_lflags} = join(" ",
+			    grep { $_  ne "" } ($target{plib_lflags},
+					        $target{$build_prefix."plib_lflags"}));
 $config{ex_libs} = join(" ",
 			grep { $_  ne "" } ($target{ex_libs},
 					    $target{$build_prefix."ex_libs"}));
@@ -838,24 +868,29 @@ $target{nm} = "nm";
 $target{build_scheme} = [ $target{build_scheme} ]
     if ref($target{build_scheme}) ne "ARRAY";
 
-# if $config{prefix}/lib$target{multilib} is not an existing directory, then
-# assume that it's not searched by linker automatically, in
-# which case adding $target{multilib} suffix causes more grief than
-# we're ready to tolerate, so don't...
-$target{multilib}="" if !-d "$config{prefix}/lib$target{multilib}";
+###### TO BE REMOVED BEFORE FINAL RELEASE
+######
+###### If the user has chosen --unified, we give it to them.
+if ($target{build_file} eq "Makefile"
+    && $target{build_scheme}->[0] eq "unixmake"
+    && $unified) {
+    $target{build_scheme} = [ "unified", "unix" ];
+}
 
-$config{libdir}="lib$target{multilib}" if $config{libdir} eq "";
-$config{enginesdir}=$config{prefix} . "/" . $config{libdir}  . "/engines";
+my ($builder, $builder_platform, @builder_opts) =
+    @{$target{build_scheme}};
 
-$config{cflags} .= "$exp_cflags";
+push @{$config{defines}},
+    map { (my $x = $_) =~ s/^OPENSSL_NO_/OPENSSL_EXPERIMENTAL_/; $x }
+        @{$config{openssl_experimental_defines}};
 
-if ($target =~ /^mingw/ && `$target{cc} --target-help 2>&1` !~ m/-mno-cygwin/m)
+if ($target =~ /^mingw/ && `$target{cc} --target-help 2>&1` =~ m/-mno-cygwin/m)
 	{
-	$config{cflags} =~ s/-mno-cygwin\s*//;
-	$target{shared_ldflag} =~ s/-mno-cygwin\s*//;
+	$config{cflags} .= " -mno-cygwin";
+	$target{shared_ldflag} .= " -mno-cygwin";
 	}
 
-if ($target =~ /linux.*-mips/ && !$no_asm && $flags !~ /-m(ips|arch=)/) {
+if ($target =~ /linux.*-mips/ && !$no_asm && $user_cflags !~ /-m(ips|arch=)/) {
 	# minimally required architecture flags for assembly modules
 	$config{cflags}="-mips2 $config{cflags}" if ($target =~ /mips32/);
 	$config{cflags}="-mips3 $config{cflags}" if ($target =~ /mips64/);
@@ -863,9 +898,7 @@ if ($target =~ /linux.*-mips/ && !$no_asm && $flags !~ /-m(ips|arch=)/) {
 
 my $no_shared_warn=0;
 my $no_user_cflags=0;
-
-if ($flags ne "")	{ $config{cflags}="$flags$config{cflags}"; }
-else			{ $no_user_cflags=1;       }
+my $no_user_defines=0;
 
 # The DSO code currently always implements all functions so that no
 # applications will have to worry about that from a compilation point
@@ -873,23 +906,23 @@ else			{ $no_user_cflags=1;       }
 # has support compiled in for them. Currently each method is enabled
 # by a define "DSO_<name>" ... we translate the "dso_scheme" config
 # string entry into using the following logic;
-my $dso_cflags;
 if (!$no_dso && $target{dso_scheme} ne "")
 	{
 	$target{dso_scheme} =~ tr/[a-z]/[A-Z]/;
 	if ($target{dso_scheme} eq "DLFCN")
 		{
-		$dso_cflags = "-DDSO_DLFCN -DHAVE_DLFCN_H";
+		$config{defines} = [ "DSO_DLFCN", "HAVE_DLFCN_H",
+				     @{$config{defines}} ]
 		}
 	elsif ($target{dso_scheme} eq "DLFCN_NO_H")
 		{
-		$dso_cflags = "-DDSO_DLFCN";
+		$config{defines} = [ "DSO_DLFCN", @{$config{defines}} ]
 		}
 	else
 		{
-		$dso_cflags = "-DDSO_$target{dso_scheme}";
+		$config{defines} = [ "DSO_$target{dso_scheme}",
+				     @{$config{defines}} ]
 		}
-	$config{cflags} = "$dso_cflags $config{cflags}";
 	}
 
 my $thread_cflags = "";
@@ -904,37 +937,38 @@ if ($target{thread_cflag} eq "(unknown)" && $threads)
 	# If the user asked for "threads", [s]he is also expected to
 	# provide any system-dependent compiler options that are
 	# necessary.
-	if ($no_user_cflags)
+	if ($no_user_cflags && $no_user_defines)
 		{
 		print "You asked for multi-threading support, but didn't\n";
 		print "provide any system-specific compiler options\n";
 		exit(1);
 		}
-	$thread_cflags="-DOPENSSL_THREADS" ;
 	push @thread_defines, "OPENSSL_THREADS";
 	}
 else
 	{
-	$thread_cflags="-DOPENSSL_THREADS $target{thread_cflag}";
-	push @thread_defines, "OPENSSL_THREADS";
+	$thread_cflags=" $target{thread_cflag}";
+	push @thread_defines, @{$target{thread_defines}}, "OPENSSL_THREADS";
 	}
 
 $config{ex_libs}="$libs$config{ex_libs}" if ($libs ne "");
 
 if ($no_asm)
 	{
-	$config{cflags}=~s/-D[BL]_ENDIAN//		if ($config{fips});
+	@{$config{defines}} = grep !/^[BL]_ENDIAN$/, @{$config{defines}}
+	    if ($config{fips});
 	}
 
 if ($threads)
 	{
 	$config{cflags} = "$thread_cflags $config{cflags}" if $thread_cflags;
+	push @{$config{defines}}, @thread_defines;
 	push @{$config{openssl_thread_defines}}, @thread_defines;
 	}
 
 if ($zlib)
 	{
-	$config{cflags} = "-DZLIB $config{cflags}";
+	push @{$config{defines}}, "ZLIB";
 	if (defined($disabled{"zlib-dynamic"}))
 		{
 		if (defined($withargs{zlib_lib}))
@@ -948,7 +982,7 @@ if ($zlib)
 		}
 	else
 		{
-		$config{cflags} = "-DZLIB_SHARED $config{cflags}";
+		push @{$config{defines}}, "ZLIB_SHARED";
 		}
 	}
 
@@ -966,11 +1000,12 @@ if (!$config{no_shared})
 	{
 	if ($target{shared_cflag} ne "")
 		{
-		$config{cflags} = "$target{shared_cflag} -DOPENSSL_PIC $config{cflags}";
+		push @{$config{defines}}, "OPENSSL_PIC";
+		$config{cflags} = "$target{shared_cflag} $config{cflags}";
 		}
 	}
 
-if ($target{build_scheme}->[0] ne "mk1mf")
+if ($builder ne "mk1mf")
 	{
 	# add {no-}static-engine to options to allow mkdef.pl to work without extra arguments
 	if ($config{no_shared})
@@ -988,22 +1023,8 @@ if ($target{build_scheme}->[0] ne "mk1mf")
 #
 # Platform fix-ups
 #
-# Unlike other OSes (like Solaris, Linux, Tru64, IRIX) BSD run-time
-# linkers (tested OpenBSD, NetBSD and FreeBSD) "demand" RPATH set on
-# .so objects. Apparently application RPATH is not global and does
-# not apply to .so linked with other .so. Problem manifests itself
-# when libssl.so fails to load libcrypto.so. One can argue that we
-# should engrave this into Makefile.shared rules or into BSD-* config
-# lines above. Meanwhile let's try to be cautious and pass -rpath to
-# linker only when --prefix is not /usr.
-if ($target =~ /^BSD-/)
-	{
-	$target{shared_ldflag}.=" -Wl,-rpath,\$\$(LIBRPATH)" if ($config{prefix} !~ m|^/usr[/]*$|);
-	}
-
 if ($target{sys_id} ne "")
 	{
-	#$config{cflags}="-DOPENSSL_SYS_$target{sys_id} $config{cflags}";
 	push @{$config{openssl_sys_defines}}, "OPENSSL_SYS_$target{sys_id}";
 	}
 
@@ -1014,44 +1035,44 @@ if ($target{ranlib} eq "")
 
 if (!$no_asm) {
     $target{cpuid_asm_src}=$table{BASE}->{cpuid_asm_src} if ($config{processor} eq "386");
-    $target{cpuid_asm_src}.=" uplink.c uplink-x86.s" if ($config{cflags} =~ /-DOPENSSL_USE_APPLINK/);
+    $target{cpuid_asm_src}.=" uplink.c uplink-x86.s" if (grep { $_ eq "OPENSSL_USE_APPLINK"} @{$config{defines}});
 
     $target{bn_asm_src} =~ s/\w+-gf2m.c// if (defined($disabled{ec2m}));
 
     # bn-586 is the only one implementing bn_*_part_words
-    $config{cflags}.=" -DOPENSSL_BN_ASM_PART_WORDS" if ($target{bn_asm_src} =~ /bn-586/);
-    $config{cflags}.=" -DOPENSSL_IA32_SSE2" if (!$no_sse2 && $target{bn_asm_src} =~ /86/);
+    push @{$config{defines}}, "OPENSSL_BN_ASM_PART_WORDS" if ($target{bn_asm_src} =~ /bn-586/);
+    push @{$config{defines}}, "OPENSSL_IA32_SSE2" if (!$no_sse2 && $target{bn_asm_src} =~ /86/);
 
-    $config{cflags}.=" -DOPENSSL_BN_ASM_MONT" if ($target{bn_asm_src} =~ /-mont/);
-    $config{cflags}.=" -DOPENSSL_BN_ASM_MONT5" if ($target{bn_asm_src} =~ /-mont5/);
-    $config{cflags}.=" -DOPENSSL_BN_ASM_GF2m" if ($target{bn_asm_src} =~ /-gf2m/);
+    push @{$config{defines}}, "OPENSSL_BN_ASM_MONT" if ($target{bn_asm_src} =~ /-mont/);
+    push @{$config{defines}}, "OPENSSL_BN_ASM_MONT5" if ($target{bn_asm_src} =~ /-mont5/);
+    push @{$config{defines}}, "OPENSSL_BN_ASM_GF2m" if ($target{bn_asm_src} =~ /-gf2m/);
 
     if ($config{fips}) {
 	push @{$config{openssl_other_defines}}, "OPENSSL_FIPS";
     }
 
     if ($target{sha1_asm_src}) {
-	$config{cflags}.=" -DSHA1_ASM"   if ($target{sha1_asm_src} =~ /sx86/ || $target{sha1_asm_src} =~ /sha1/);
-	$config{cflags}.=" -DSHA256_ASM" if ($target{sha1_asm_src} =~ /sha256/);
-	$config{cflags}.=" -DSHA512_ASM" if ($target{sha1_asm_src} =~ /sha512/);
+	push @{$config{defines}}, "SHA1_ASM"   if ($target{sha1_asm_src} =~ /sx86/ || $target{sha1_asm_src} =~ /sha1/);
+	push @{$config{defines}}, "SHA256_ASM" if ($target{sha1_asm_src} =~ /sha256/);
+	push @{$config{defines}}, "SHA512_ASM" if ($target{sha1_asm_src} =~ /sha512/);
     }
     if ($target{md5_asm_src}) {
-	$config{cflags}.=" -DMD5_ASM";
+	push @{$config{defines}}, "MD5_ASM";
     }
     $target{cast_asm_src}=$table{BASE}->{cast_asm_src} if (!$config{no_shared}); # CAST assembler is not PIC
     if ($target{rmd160_asm_src}) {
-	$config{cflags}.=" -DRMD160_ASM";
+	push @{$config{defines}}, "RMD160_ASM";
     }
     if ($target{aes_asm_src}) {
-	$config{cflags}.=" -DAES_ASM" if ($target{aes_asm_src} =~ m/\baes-/);;
+	push @{$config{defines}}, "AES_ASM" if ($target{aes_asm_src} =~ m/\baes-/);;
 	# aes-ctr.fake is not a real file, only indication that assembler
 	# module implements AES_ctr32_encrypt...
-	$config{cflags}.=" -DAES_CTR_ASM" if ($target{aes_asm_src} =~ s/\s*aes-ctr\.fake//);
+	push @{$config{defines}}, "AES_CTR_ASM" if ($target{aes_asm_src} =~ s/\s*aes-ctr\.fake//);
 	# aes-xts.fake indicates presence of AES_xts_[en|de]crypt...
-	$config{cflags}.=" -DAES_XTS_ASM" if ($target{aes_asm_src} =~ s/\s*aes-xts\.fake//);
+	push @{$config{defines}}, "AES_XTS_ASM" if ($target{aes_asm_src} =~ s/\s*aes-xts\.fake//);
 	$target{aes_asm_src} =~ s/\s*(vpaes|aesni)-x86\.s//g if ($no_sse2);
-	$config{cflags}.=" -DVPAES_ASM" if ($target{aes_asm_src} =~ m/vpaes/);
-	$config{cflags}.=" -DBSAES_ASM" if ($target{aes_asm_src} =~ m/bsaes/);
+	push @{$config{defines}}, "VPAES_ASM" if ($target{aes_asm_src} =~ m/vpaes/);
+	push @{$config{defines}}, "BSAES_ASM" if ($target{aes_asm_src} =~ m/bsaes/);
     }
     if ($target{wp_asm_src} =~ /mmx/) {
         if ($config{processor} eq "386") {
@@ -1061,13 +1082,13 @@ if (!$no_asm) {
 	}
     }
     if ($target{modes_asm_src} =~ /ghash-/) {
-	$config{cflags}.=" -DGHASH_ASM";
+	push @{$config{defines}}, "GHASH_ASM";
     }
     if ($target{ec_asm_src} =~ /ecp_nistz256/) {
-	$config{cflags}.=" -DECP_NISTZ256_ASM";
+	push @{$config{defines}}, "ECP_NISTZ256_ASM";
     }
     if ($target{poly1305_asm_src} ne "") {
-	$config{cflags}.=" -DPOLY1305_ASM";
+	push @{$config{defines}}, "POLY1305_ASM";
     }
 }
 
@@ -1120,9 +1141,9 @@ $config{cflags} =~ s/([\\\"])/\\\1/g;
 
 if (defined($config{api})) {
     $config{openssl_api_defines} = [ "OPENSSL_MIN_API=".$apitable->{$config{api}} ];
-    my $apiflag = sprintf("-DOPENSSL_API_COMPAT=%s", $apitable->{$config{api}});
-    $default_depflags .= " $apiflag";
-    $config{cflags} .= " $apiflag";
+    my $apiflag = sprintf("OPENSSL_API_COMPAT=%s", $apitable->{$config{api}});
+    push @default_depdefines, $apiflag;
+    push @{$config{defines}}, $apiflag;
 }
 
 if ($strict_warnings)
@@ -1154,40 +1175,59 @@ if ($strict_warnings)
 		}
 	}
 
+if ($user_cflags ne "") { $config{cflags}="$config{cflags}$user_cflags"; }
+else                    { $no_user_cflags=1;  }
+if (@user_defines) { $config{defines}=[ @{$config{defines}}, @user_defines ]; }
+else               { $no_user_defines=1;    }
+
+# ALL MODIFICATIONS TO %config and %target MUST BE DONE FROM HERE ON
+
 # If we use the unified build, collect information from build.info files
 my %unified_info = ();
 
-if ($target{build_scheme}->[0] eq "unified") {
+if ($builder eq "unified") {
+    # Store the name of the template file we will build the build file from
+    # in %config.  This may be useful for the build file itself.
+    my $build_file_template =
+        catfile($srcdir, "Configurations",
+                $builder_platform."-".$target{build_file}.".tmpl");
+    $build_file_template =
+        catfile($srcdir, "Configurations", $target{build_file}.".tmpl")
+        if (! -f $build_file_template);
+    $config{build_file_template} = $build_file_template;
+
     use lib catdir(dirname(__FILE__),"util");
     use with_fallback qw(Text::Template);
 
-    # Helpers to produce clean paths with no /../ in the middle and so on.
-    sub int_absolutedir {
-        my $dir = shift;
-
-        # Required, because realpath only works properly with existing dirs
-        make_path($dir);
-
-        my $res = realpath($dir);
-        return $res;
-    }
-
     sub cleandir {
+        my $base = shift;
         my $dir = shift;
-        my $base = shift || ".";
+        my $relativeto = shift || ".";
 
-        my $res = abs2rel(int_absolutedir($dir), rel2abs($base));
+        $dir = catdir($base,$dir) unless isabsolute($dir);
+
+        # Make sure the directories we're building in exists
+        mkpath($dir);
+
+        my $res = abs2rel(absolutedir($dir), rel2abs($relativeto));
         #print STDERR "DEBUG[cleandir]: $dir , $base => $res\n";
         return $res;
     }
 
     sub cleanfile {
+        my $base = shift;
         my $file = shift;
-        my $base = shift || ".";
+        my $relativeto = shift || ".";
+
+        $file = catfile($base,$file) unless isabsolute($file);
+
         my $d = dirname($file);
         my $f = basename($file);
 
-        my $res = abs2rel(catfile(int_absolutedir($d), $f), rel2abs($base));
+        # Make sure the directories we're building in exists
+        mkpath($d);
+
+        my $res = abs2rel(catfile(absolutedir($d), $f), rel2abs($relativeto));
         #print STDERR "DEBUG[cleanfile]: $d , $f => $res\n";
         return $res;
     }
@@ -1210,7 +1250,7 @@ if ($target{build_scheme}->[0] eq "unified") {
         my $sourced = catdir($srcdir, $_->[0]);
         my $buildd = catdir($blddir, $_->[0]);
 
-        make_path($buildd);
+        mkpath($buildd);
 
         my $f = $_->[1];
         # The basic things we're trying to build
@@ -1308,7 +1348,7 @@ if ($target{build_scheme}->[0] eq "unified") {
                 my $lineiterator = shift;
                 my $target_kind = $1;
                 while (defined $lineiterator->()) {
-                    chomp;
+                    s|\R$||;
                     if (/^\s*ENDRAW\[((?:\\.|[^\\\]])+)\]\s*$/) {
                         die "ENDRAW doesn't match BEGINRAW"
                             if $1 ne $target_kind;
@@ -1317,7 +1357,7 @@ if ($target{build_scheme}->[0] eq "unified") {
                     next if @skip && $skip[$#skip] <= 0;
                     push @rawlines,  $_
                         if ($target_kind eq $target{build_file}
-                            || $target_kind eq $target{build_file}."(".$target{build_scheme}->[1].")");
+                            || $target_kind eq $target{build_file}."(".$builder_platform.")");
                 }
             },
             qr/^(?:#.*|\s*)$/ => sub { },
@@ -1329,8 +1369,8 @@ if ($target{build_scheme}->[0] eq "unified") {
             die "$_ renamed to more than one thing: "
                 ,join(" ", @{$renames{$_}}),"\n"
                 if scalar @{$renames{$_}} > 1;
-            my $dest = cleanfile(catfile($buildd, $_), $blddir);
-            my $to = cleanfile(catfile($buildd, $renames{$_}->[0]), $blddir);
+            my $dest = cleanfile($buildd, $_, $blddir);
+            my $to = cleanfile($buildd, $renames{$_}->[0], $blddir);
             die "$dest renamed to more than one thing: "
                 ,$unified_info{rename}->{$dest}, $to
                 unless !defined($unified_info{rename}->{$dest})
@@ -1339,7 +1379,7 @@ if ($target{build_scheme}->[0] eq "unified") {
         }
 
         foreach (@programs) {
-            my $program = cleanfile(catfile($buildd, $_), $blddir);
+            my $program = cleanfile($buildd, $_, $blddir);
             if ($unified_info{rename}->{$program}) {
                 $program = $unified_info{rename}->{$program};
             }
@@ -1347,7 +1387,7 @@ if ($target{build_scheme}->[0] eq "unified") {
         }
 
         foreach (@libraries) {
-            my $library = cleanfile(catfile($buildd, $_), $blddir);
+            my $library = cleanfile($buildd, $_, $blddir);
             if ($unified_info{rename}->{$library}) {
                 $library = $unified_info{rename}->{$library};
             }
@@ -1359,7 +1399,7 @@ ENGINES can only be used if configured with 'shared'.
 This is usually a fault in a build.info file.
 EOF
         foreach (@engines) {
-            my $library = cleanfile(catfile($buildd, $_), $blddir);
+            my $library = cleanfile($buildd, $_, $blddir);
             if ($unified_info{rename}->{$library}) {
                 $library = $unified_info{rename}->{$library};
             }
@@ -1367,7 +1407,7 @@ EOF
         }
 
         foreach (@scripts) {
-            my $script = cleanfile(catfile($buildd, $_), $blddir);
+            my $script = cleanfile($buildd, $_, $blddir);
             if ($unified_info{rename}->{$script}) {
                 $script = $unified_info{rename}->{$script};
             }
@@ -1375,7 +1415,7 @@ EOF
         }
 
         foreach (@extra) {
-            my $extra = cleanfile(catfile($buildd, $_), $blddir);
+            my $extra = cleanfile($buildd, $_, $blddir);
             $unified_info{extra}->{$extra} = 1;
         }
 
@@ -1384,15 +1424,14 @@ EOF
         if (!$config{no_shared}) {
             # Check sharednames.
             foreach (keys %sharednames) {
-                my $dest = cleanfile(catfile($buildd, $_), $blddir);
+                my $dest = cleanfile($buildd, $_, $blddir);
                 if ($unified_info{rename}->{$dest}) {
                     $dest = $unified_info{rename}->{$dest};
                 }
                 die "shared_name for $dest with multiple values: "
                     ,join(" ", @{$sharednames{$_}}),"\n"
                     if scalar @{$sharednames{$_}} > 1;
-                my $to = cleanfile(catfile($buildd, $sharednames{$_}->[0]),
-                                   $blddir);
+                my $to = cleanfile($buildd, $sharednames{$_}->[0], $blddir);
                 die "shared_name found for a library $dest that isn't defined\n"
                     unless $unified_info{libraries}->{$dest};
                 die "shared_name for $dest with multiple values: "
@@ -1413,7 +1452,7 @@ EOF
 
         foreach (keys %ordinals) {
             my $dest = $_;
-            my $ddest = cleanfile(catfile($buildd, $_), $blddir);
+            my $ddest = cleanfile($buildd, $_, $blddir);
             if ($unified_info{rename}->{$ddest}) {
                 $ddest = $unified_info{rename}->{$ddest};
             }
@@ -1421,9 +1460,9 @@ EOF
                 my %known_ordinals =
                     (
                      crypto =>
-                     cleanfile(catfile($sourced, "util", "libeay.num"), $blddir),
+                     cleanfile($sourced, catfile("util", "libeay.num"), $blddir),
                      ssl =>
-                     cleanfile(catfile($sourced, "util", "ssleay.num"), $blddir)
+                     cleanfile($sourced, catfile("util", "ssleay.num"), $blddir)
                     );
                 my $o = $known_ordinals{$_};
                 die "Ordinals for $ddest defined more than once\n"
@@ -1434,22 +1473,22 @@ EOF
 
         foreach (keys %sources) {
             my $dest = $_;
-            my $ddest = cleanfile(catfile($buildd, $_), $blddir);
+            my $ddest = cleanfile($buildd, $_, $blddir);
             if ($unified_info{rename}->{$ddest}) {
                 $ddest = $unified_info{rename}->{$ddest};
             }
             foreach (@{$sources{$dest}}) {
-                my $s = cleanfile(catfile($sourced, $_), $blddir);
+                my $s = cleanfile($sourced, $_, $blddir);
 
                 # If it isn't in the source tree, we assume it's generated
                 # in the build tree
                 if (! -f $s) {
-                    $s = cleanfile(catfile($buildd, $_), $blddir);
+                    $s = cleanfile($buildd, $_, $blddir);
                 }
                 # We recognise C and asm files
                 if ($s =~ /\.[csS]\b$/) {
                     (my $o = $_) =~ s/\.[csS]\b$/.o/;
-                    $o = cleanfile(catfile($buildd, $o), $blddir);
+                    $o = cleanfile($buildd, $o, $blddir);
                     $unified_info{sources}->{$ddest}->{$o} = 1;
                     $unified_info{sources}->{$o}->{$s} = 1;
                 } else {
@@ -1460,17 +1499,23 @@ EOF
 
         foreach (keys %depends) {
             my $dest = $_;
-            my $ddest = cleanfile(catfile($buildd, $_), $blddir);
+            my $ddest = cleanfile($buildd, $_, $blddir);
             if ($unified_info{rename}->{$ddest}) {
                 $ddest = $unified_info{rename}->{$ddest};
             }
             foreach (@{$depends{$dest}}) {
-                my $d = cleanfile(catfile($sourced, $_), $blddir);
+                my $d = cleanfile($sourced, $_, $blddir);
 
-                # If it isn't found in the source, let's assume it's generated
-                # and that the Makefile template has the lines
-                if (! -f $d) {
-                    $d = cleanfile(catfile($buildd, $_), $blddir);
+                # If we know it's generated, or assume it is because we can't
+                # find it in the source tree, we set file we depend on to be
+                # in the build tree rather than the source tree, and assume
+                # and that there are lines to build it in a BEGINRAW..ENDRAW
+                # section or in the Makefile template.
+                if (! -f $d
+                    || !(grep { $d eq $_ }
+                         map { cleanfile($srcdir, $_, $blddir) }
+                         (@generated_headers, @generated_by_make_headers))) {
+                    $d = cleanfile($buildd, $_, $blddir);
                 }
                 # Take note if the file to depend on is being renamed
                 if ($unified_info{rename}->{$d}) {
@@ -1489,12 +1534,12 @@ EOF
 
         foreach (keys %includes) {
             my $dest = $_;
-            my $ddest = cleanfile(catfile($buildd, $_), $blddir);
+            my $ddest = cleanfile($buildd, $_, $blddir);
             if ($unified_info{rename}->{$ddest}) {
                 $ddest = $unified_info{rename}->{$ddest};
             }
             foreach (@{$includes{$dest}}) {
-                my $i = cleandir(catdir($sourced, $_), $blddir);
+                my $i = cleandir($sourced, $_, $blddir);
                 push @{$unified_info{includes}->{$ddest}}, $i
                     unless grep { $_ eq $i } @{$unified_info{includes}->{$ddest}};
             }
@@ -1595,7 +1640,7 @@ print OUT <<"EOF";
 );
 
 EOF
-if ($target{build_scheme}->[0] eq "unified") {
+if ($builder eq "unified") {
     my $recurse;
     $recurse = sub {
         my $indent = shift;
@@ -1640,7 +1685,7 @@ EOF
 print OUT "1;\n";
 close(OUT);
 
-die <<"EOF" if $target{build_scheme}->[0] ne "unified" && $srcdir ne $blddir;
+die <<"EOF" if $builder ne "unified" && $srcdir ne $blddir;
 
 ***** Trying building anywhere else than in the source tree will not
 ***** work for target $config{target}.  To make it possible, it needs
@@ -1648,10 +1693,12 @@ die <<"EOF" if $target{build_scheme}->[0] ne "unified" && $srcdir ne $blddir;
 
 EOF
 
-print "IsMK1MF       =", ($target{build_scheme}->[0] eq "mk1mf" ? "yes" : "no"), "\n";
+print "IsMK1MF       =", ($builder eq "mk1mf" ? "yes" : "no"), "\n";
 print "CC            =$target{cc}\n";
 print "CFLAG         =$config{cflags}\n";
-print "LFLAGS        =$config{lflags}\n";
+print "DEFINES       =",join(" ", @{$config{defines}}),"\n";
+print "LFLAG         =$config{lflags}\n";
+print "PLIB_LFLAG    =$config{plib_lflags}\n";
 print "EX_LIBS       =$config{ex_libs}\n";
 print "CPUID_OBJ     =$target{cpuid_obj}\n";
 print "BN_ASM        =$target{bn_obj}\n";
@@ -1681,14 +1728,10 @@ print "THIRTY_TWO_BIT mode\n" if $config{b32};
 print "BN_LLONG mode\n" if $config{bn_ll};
 print "RC4 uses $config{rc4_int}\n" if $config{rc4_int} != $def_int;
 
-make_path(catdir($blddir, "include/openssl"));
-run_dofile(catfile($blddir, "include/openssl/opensslconf.h"),
-           catfile($srcdir, "include/openssl/opensslconf.h.in"));
-
-make_path(catdir($blddir, "crypto/include/internal"));
-foreach my $alg ( 'bn' ) {
-    run_dofile(catfile($blddir, "crypto/include/internal/${alg}_conf.h"),
-               catfile($srcdir, "crypto/include/internal/${alg}_conf.h.in"));
+for (@generated_headers) {
+    mkpath(catdir($blddir, dirname($_)));
+    run_dofile(catfile($blddir, $_),
+               catfile($srcdir, $_.".in"));
 }
 
 ###
@@ -1728,41 +1771,23 @@ sub build_Makefile {
 
 my %builders = (
     unified => sub {
-        die "unified build currently does nothing";
+        run_dofile(catfile($blddir, $target{build_file}),
+                   $config{build_file_template},
+                   catfile($srcdir, "Configurations", "common.tmpl"));
     },
     unixmake => sub {
         build_Makefile();
 
         run_dofile("util/domd", "util/domd.in");
         chmod 0755, "util/domd";
-
-	my $make_command = "$make PERL=\'$config{perl}\'";
-	my $make_targets = "";
-	$make_targets .= " depend" if $config{depflags} ne $default_depflags && $make_depend;
-	(system $make_command.$make_targets) == 0 or die "make $make_targets failed"
-	    if $make_targets ne "";
-	if ($config{depflags} ne $default_depflags && !$make_depend) {
-            $warn_make_depend++;
-        }
     },
     mk1mf => sub {
+        my $platform = shift;
         # The only reason we do this is to have something to build MINFO from
         build_Makefile();
 
-	open (OUT,">crypto/buildinf.h") || die "Can't open buildinf.h";
-	printf OUT <<"EOF";
-#ifndef MK1MF_BUILD
-  /* auto-generated by Configure for crypto/cversion.c:
-   * for Unix builds, crypto/Makefile.ssl generates functional definitions;
-   * Windows builds (and other mk1mf builds) compile cversion.c with
-   * -DMK1MF_BUILD and use definitions added to this file by util/mk1mf.pl. */
-  #error "Windows builds (PLATFORM=$target) use mk1mf.pl-created Makefiles"
-#endif
-EOF
-	close(OUT);
-
 	# create the ms/version32.rc file if needed
-	if (! grep /^netware/, @{$target{build_scheme}}) {
+	if ($platform ne "netware") {
 	    my ($v1, $v2, $v3, $v4);
 	    if ($config{version_num} =~ /^0x([0-9a-f]{1})([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{1})L$/i) {
 		$v1=hex $1;
@@ -1825,8 +1850,7 @@ EOF
     },
     );
 
-my ($builder, @builder_opts) = @{$target{build_scheme}};
-$builders{$builder}->(@builder_opts);
+$builders{$builder}->($builder_platform, @builder_opts);
 
 print <<"EOF";
 
@@ -1848,13 +1872,38 @@ shared libraries, please let us know (but please first make sure you have
 tried with a current version of OpenSSL).
 EOF
 
-print <<"EOF" if ($warn_make_depend);
+###### TO BE REMOVED BEFORE FINAL RELEASE
+######
+###### If the user hasn't chosen --unified, try to nudge them.
+if ($target{build_file} eq "Makefile"
+    && $target{build_scheme}->[0] eq "unixmake"
+    && !$unified) {
 
-*** Because of configuration changes, you MUST do the following before
-*** building:
+    my $plausible_builddir =
+        abs2rel(rel2abs("../_openssl-build_$target"),rel2abs("."));
+    my $plausible_to_sourcedir =
+        abs2rel(rel2abs("."),rel2abs("../_openssl-build_$target"));
+    print <<"EOF";
 
-	make depend
+----------------------------------------------------------------------
+Please consider configuring with the flag --unified .
+It's to test out a new "unified" building system.
+
+One cool feature is that you can have your build directory elsewhere,
+for example:
+
+    make clean          # Clean the current configuration away
+    mkdir $plausible_builddir
+    cd $plausible_builddir
+    $plausible_to_sourcedir/config --unified
+    make
+    make test
+
+Please report any problem you have.
+----------------------------------------------------------------------
+
 EOF
+}
 
 exit(0);
 
@@ -1882,10 +1931,10 @@ sub asm {
 sub _add {
     my $separator = shift;
 
-    # If there's any ARRAY in the collection of values, we will return
-    # an ARRAY of combined values, otherwise a string of joined values
-    # with $separator as the separator.
-    my $found_array = 0;
+    # If there's any ARRAY in the collection of values OR the separator
+    # is undef, we will return an ARRAY of combined values, otherwise a
+    # string of joined values with $separator as the separator.
+    my $found_array = !defined($separator);
 
     my @values =
 	map {
@@ -2108,16 +2157,22 @@ sub print_table_entry
 	"sys_id",
 	"cc",
 	"cflags",
+	"defines",
 	"debug_cflags",
+	"debug_defines",
 	"release_cflags",
+	"release_defines",
 	"thread_cflag",
 	"unistd",
 	"ld",
 	"lflags",
+	"plib_lflags",
 	"ex_libs",
 	"debug_lflags",
+	"debug_plib_lflags",
 	"debug_ex_libs",
 	"release_lflags",
+	"release_plib_lflags",
 	"release_ex_libs",
 	"bn_ops",
 	"cpuid_obj",
@@ -2141,6 +2196,7 @@ sub print_table_entry
 	"shared_target",
 	"shared_cflag",
 	"shared_ldflag",
+	"shared_rcflag",
 	"shared_extension",
 	"obj_extension",
 	"exe_extension",
@@ -2169,6 +2225,46 @@ sub print_table_entry
 }
 
 # Utility routines ###################################################
+
+# On VMS, if the given file is a logical name, File::Spec::Functions
+# will consider it an absolute path.  There are cases when we want a
+# purely syntactic check without checking the environment.
+sub isabsolute {
+    my $file = shift;
+
+    # On non-platforms, we just use file_name_is_absolute().
+    return file_name_is_absolute($file) unless $^O eq "VMS";
+
+    # If the file spec includes a device or a directpry spec,
+    # file_name_is_absolute() is perfectly safe.
+    return file_name_is_absolute($file) if $file =~ m|[:\[]|;
+
+    # Here, we know the given file spec isn't absolute
+    return 0;
+}
+
+# Makes a directory absolute and cleans out /../ in paths like foo/../bar
+# On some platforms, this uses rel2abs(), while on others, realpath() is used.
+# realpath() requires that at least all path components except the last is an
+# existing directory.  On VMS, the last component of the directory spec must
+# exist.
+sub absolutedir {
+    my $dir = shift;
+
+    # realpath() is quite buggy on VMS.  It uses LIB$FID_TO_NAME, which
+    # will return the volume name for the device, no matter what.  Also,
+    # it will return an incorrect directory spec if the argument is a
+    # directory that doesn't exist.
+    if ($^O eq "VMS") {
+        return rel2abs($dir);
+    }
+
+    # We use realpath() on Unix, since no other will properly clean out
+    # a directory spec.
+    use Cwd qw/realpath/;
+
+    return realpath($dir);
+}
 
 sub which
 	{
@@ -2211,7 +2307,7 @@ sub collect_from_file {
         my $saved_line = "";
         $_ = "";
         while (<$fh>) {
-            chomp;
+            s|\R$||;
             if (defined $line_concat) {
                 $_ = $line_concat->($saved_line, $_);
                 $saved_line = "";
@@ -2242,7 +2338,7 @@ sub collect_from_array {
         my $saved_line = "";
         $_ = "";
         while (defined($_ = shift @array)) {
-            chomp;
+            s|\R$||;
             if (defined $line_concat) {
                 $_ = $line_concat->($saved_line, $_);
                 $saved_line = "";
@@ -2267,7 +2363,7 @@ sub collect_information {
     my %collectors = @_;
 
     while(defined($_ = $lineiterator->())) {
-        chomp;
+        s|\R$||;
         my $found = 0;
         foreach my $re (keys %collectors) {
             if ($re ne "OTHERWISE" && /$re/) {

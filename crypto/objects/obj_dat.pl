@@ -257,7 +257,7 @@ foreach (@out)
 				}
 			$out=$t;
 			}
-		chop $out;
+		chop $out;      # Get rid of the last comma
 		print OUT "$out";
 		}
 	else

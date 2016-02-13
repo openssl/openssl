@@ -23,27 +23,27 @@ install:
 	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
 	@for i in $(APPS) ; \
 	do  \
-	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$i.new; \
-	chmod 755 $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$i.new; \
-	mv -f $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$i.new $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$i ); \
+	(cp $$i $(DESTDIR)$(INSTALLTOP)/bin/$$i.new; \
+	chmod 755 $(DESTDIR)$(INSTALLTOP)/bin/$$i.new; \
+	mv -f $(DESTDIR)$(INSTALLTOP)/bin/$$i.new $(DESTDIR)$(INSTALLTOP)/bin/$$i ); \
 	done;
 	@for i in $(MISC_APPS) ; \
 	do  \
-	(cp $$i $(INSTALL_PREFIX)$(OPENSSLDIR)/misc/$$i.new; \
-	chmod 755 $(INSTALL_PREFIX)$(OPENSSLDIR)/misc/$$i.new; \
-	mv -f $(INSTALL_PREFIX)$(OPENSSLDIR)/misc/$$i.new $(INSTALL_PREFIX)$(OPENSSLDIR)/misc/$$i ); \
+	(cp $$i $(DESTDIR)$(OPENSSLDIR)/misc/$$i.new; \
+	chmod 755 $(DESTDIR)$(OPENSSLDIR)/misc/$$i.new; \
+	mv -f $(DESTDIR)$(OPENSSLDIR)/misc/$$i.new $(DESTDIR)$(OPENSSLDIR)/misc/$$i ); \
 	done;
 
 uninstall:
 	@for i in $(APPS) ; \
 	do  \
-		echo $(RM) $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$i; \
-		$(RM) $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$i; \
+		echo $(RM) $(DESTDIR)$(INSTALLTOP)/bin/$$i; \
+		$(RM) $(DESTDIR)$(INSTALLTOP)/bin/$$i; \
 	done;
 	@for i in $(MISC_APPS) ; \
 	do  \
-		echo $(RM) $(INSTALL_PREFIX)$(OPENSSLDIR)/misc/$$i; \
-		$(RM) $(INSTALL_PREFIX)$(OPENSSLDIR)/misc/$$i; \
+		echo $(RM) $(DESTDIR)$(OPENSSLDIR)/misc/$$i; \
+		$(RM) $(DESTDIR)$(OPENSSLDIR)/misc/$$i; \
 	done;
 
 files:

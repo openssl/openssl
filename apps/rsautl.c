@@ -57,7 +57,9 @@
  */
 
 #include <openssl/opensslconf.h>
-#ifndef OPENSSL_NO_RSA
+#ifdef OPENSSL_NO_RSA
+NON_EMPTY_TRANSLATION_UNIT
+#else
 
 # include "apps.h"
 # include <string.h>
@@ -86,7 +88,7 @@ OPTIONS rsautl_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
     {"in", OPT_IN, '<', "Input file"},
     {"out", OPT_OUT, '>', "Output file"},
-    {"inkey", OPT_INKEY, '<', "Input key"},
+    {"inkey", OPT_INKEY, 's', "Input key"},
     {"keyform", OPT_KEYFORM, 'E', "Private key format - default PEM"},
     {"pubin", OPT_PUBIN, '-', "Input is an RSA public"},
     {"certin", OPT_CERTIN, '-', "Input is a cert carrying an RSA public key"},
@@ -319,11 +321,4 @@ int rsautl_main(int argc, char **argv)
     OPENSSL_free(passin);
     return ret;
 }
-
-#else                           /* !OPENSSL_NO_RSA */
-
-# if PEDANTIC
-static void *dummy = &dummy;
-# endif
-
 #endif

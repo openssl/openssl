@@ -6,7 +6,7 @@ use warnings;
 use File::Compare qw/compare_text/;
 use File::Copy;
 use lib 'testlib';
-use OpenSSL::Test qw/:DEFAULT top_file/;
+use OpenSSL::Test qw/:DEFAULT/;
 
 my %conversionforms = (
     # Default conversion forms.  Other series may be added with

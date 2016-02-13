@@ -556,7 +556,7 @@ EOF
 	if (open(IN,"<$cfile")) {
 		my $line = "";
 		while (<IN>) {
-			chomp;
+			s|\R$||; # Better chomp
 			$_ = $line . $_;
 			$line = "";
 			if (/{ERR_(FUNC|REASON)\(/) {
@@ -602,7 +602,6 @@ EOF
 	open (OUT,">$cfile") || die "Can't open $cfile for writing";
 
 	print OUT <<"EOF";
-/* $cfile */
 /* ====================================================================
  * Copyright (c) 1999-$year The OpenSSL Project.  All rights reserved.
  *

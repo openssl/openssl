@@ -425,17 +425,10 @@ void EVP_PKEY_free(EVP_PKEY *x)
         return;
 
     i = CRYPTO_add(&x->references, -1, CRYPTO_LOCK_EVP_PKEY);
-#ifdef REF_PRINT
-    REF_PRINT("EVP_PKEY", x);
-#endif
+    REF_PRINT_COUNT("EVP_PKEY", x);
     if (i > 0)
         return;
-#ifdef REF_CHECK
-    if (i < 0) {
-        fprintf(stderr, "EVP_PKEY_free, bad reference count\n");
-        abort();
-    }
-#endif
+    REF_ASSERT_ISNT(i < 0);
     EVP_PKEY_free_it(x);
     sk_X509_ATTRIBUTE_pop_free(x->attributes, X509_ATTRIBUTE_free);
     OPENSSL_free(x);

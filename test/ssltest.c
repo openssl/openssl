@@ -1410,7 +1410,6 @@ int main(int argc, char *argv[])
 #ifdef OPENSSL_FIPS
     if (fips_mode) {
         if (!FIPS_mode_set(1)) {
-            ERR_load_crypto_strings();
             ERR_print_errors(bio_err);
             EXIT(1);
         } else
@@ -1429,9 +1428,6 @@ int main(int argc, char *argv[])
     }
 
 /*      if (cipher == NULL) cipher=getenv("SSL_CIPHER"); */
-
-    SSL_library_init();
-    SSL_load_error_strings();
 
 #ifndef OPENSSL_NO_COMP
     if (comp == COMP_ZLIB)
@@ -1856,16 +1852,9 @@ int main(int argc, char *argv[])
 
     BIO_free(bio_stdout);
 
-#ifndef OPENSSL_NO_ENGINE
-    ENGINE_cleanup();
-#endif
-    CONF_modules_unload(1);
-    CRYPTO_cleanup_all_ex_data();
-    ERR_free_strings();
-    ERR_remove_thread_state(NULL);
-    EVP_cleanup();
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG
-    CRYPTO_mem_leaks(bio_err);
+    if (CRYPTO_mem_leaks(bio_err) <= 0)
+        ret = 1;
 #endif
     BIO_free(bio_err);
     EXIT(ret);
@@ -1890,7 +1879,7 @@ int doit_localhost(SSL *s_ssl, SSL *c_ssl, int family, long count,
     if (BIO_do_accept(acpt) <= 0)
         goto err;
 
-    snprintf(addr_str, sizeof(addr_str), ":%s", BIO_get_accept_port(acpt));
+    BIO_snprintf(addr_str, sizeof(addr_str), ":%s", BIO_get_accept_port(acpt));
 
     client = BIO_new_connect(addr_str);
     BIO_set_conn_ip_family(client, family);

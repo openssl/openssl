@@ -108,8 +108,11 @@
  *
  */
 
-#include <openssl/opensslconf.h> /* for OPENSSL_NO_DH */
-#ifndef OPENSSL_NO_DH
+#include <openssl/opensslconf.h>
+#ifdef OPENSSL_NO_DH
+NON_EMPTY_TRANSLATION_UNIT
+#else
+
 # include <stdio.h>
 # include <stdlib.h>
 # include <time.h>
@@ -443,11 +446,4 @@ static int dh_cb(int p, int n, BN_GENCB *cb)
     (void)BIO_flush(BN_GENCB_get_arg(cb));
     return 1;
 }
-
-#else                           /* !OPENSSL_NO_DH */
-
-# if PEDANTIC
-static void *dummy = &dummy;
-# endif
-
 #endif

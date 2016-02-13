@@ -69,7 +69,7 @@
  * Here follows specialised variants of bn_add_words() and bn_sub_words().
  * They have the property performing operations on arrays of different sizes.
  * The sizes of those arrays is expressed through cl, which is the common
- * length ( basicall, min(len(a),len(b)) ), and dl, which is the delta
+ * length ( basically, min(len(a),len(b)) ), and dl, which is the delta
  * between the two lengths, calculated as len(a)-len(b). All lengths are the
  * number of BN_ULONGs...  For the operations that require a result array as
  * parameter, it must have the length cl+abs(dl). These functions should

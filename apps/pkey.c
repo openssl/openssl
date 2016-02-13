@@ -75,7 +75,7 @@ OPTIONS pkey_options[] = {
     {"outform", OPT_OUTFORM, 'F', "Output format (DER or PEM)"},
     {"passin", OPT_PASSIN, 's', "Input file pass phrase source"},
     {"passout", OPT_PASSOUT, 's', "Output file pass phrase source"},
-    {"in", OPT_IN, '<', "Input file"},
+    {"in", OPT_IN, 's', "Input key"},
     {"out", OPT_OUT, '>', "Output file"},
     {"pubin", OPT_PUBIN, '-',
      "Read public key from input (default is private key)"},
@@ -116,7 +116,7 @@ int pkey_main(int argc, char **argv)
             ret = 0;
             goto end;
         case OPT_INFORM:
-            if (!opt_format(opt_arg(), OPT_FMT_PEMDER, &informat))
+            if (!opt_format(opt_arg(), OPT_FMT_ANY, &informat))
                 goto opthelp;
             break;
         case OPT_OUTFORM:

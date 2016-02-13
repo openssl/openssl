@@ -297,24 +297,20 @@
 # define SSL_kDHE                0x00000002U
 /* synonym */
 # define SSL_kEDH                SSL_kDHE
-/* ECDH cert, RSA CA cert */
-# define SSL_kECDHr              0x00000004U
-/* ECDH cert, ECDSA CA cert */
-# define SSL_kECDHe              0x00000008U
 /* ephemeral ECDH */
-# define SSL_kECDHE              0x00000010U
+# define SSL_kECDHE              0x00000004U
 /* synonym */
 # define SSL_kEECDH              SSL_kECDHE
 /* PSK */
-# define SSL_kPSK                0x00000020U
+# define SSL_kPSK                0x00000008U
 /* GOST key exchange */
-# define SSL_kGOST               0x00000040U
+# define SSL_kGOST               0x00000010U
 /* SRP */
-# define SSL_kSRP                0x00000080U
+# define SSL_kSRP                0x00000020U
 
-# define SSL_kRSAPSK             0x00000100U
-# define SSL_kECDHEPSK           0x00000200U
-# define SSL_kDHEPSK             0x00000400U
+# define SSL_kRSAPSK             0x00000040U
+# define SSL_kECDHEPSK           0x00000080U
+# define SSL_kDHEPSK             0x00000100U
 
 /* all PSK */
 
@@ -327,18 +323,16 @@
 # define SSL_aDSS                0x00000002U
 /* no auth (i.e. use ADH or AECDH) */
 # define SSL_aNULL               0x00000004U
-/* Fixed ECDH auth (kECDHe or kECDHr) */
-# define SSL_aECDH               0x00000008U
 /* ECDSA auth*/
-# define SSL_aECDSA              0x00000010U
+# define SSL_aECDSA              0x00000008U
 /* PSK auth */
-# define SSL_aPSK                0x00000020U
+# define SSL_aPSK                0x00000010U
 /* GOST R 34.10-2001 signature auth */
-# define SSL_aGOST01             0x00000040U
+# define SSL_aGOST01             0x00000020U
 /* SRP auth */
-# define SSL_aSRP                0x00000080U
+# define SSL_aSRP                0x00000040U
 /* GOST R 34.10-2012 signature auth */
-# define SSL_aGOST12             0x00000100U
+# define SSL_aGOST12             0x00000080U
 
 /* Bits for algorithm_enc (symmetric encryption) */
 # define SSL_DES                 0x00000001U
@@ -364,6 +358,7 @@
 
 # define SSL_AES                 (SSL_AES128|SSL_AES256|SSL_AES128GCM|SSL_AES256GCM|SSL_AES128CCM|SSL_AES256CCM|SSL_AES128CCM8|SSL_AES256CCM8)
 # define SSL_CAMELLIA            (SSL_CAMELLIA128|SSL_CAMELLIA256)
+# define SSL_CHACHA20            (SSL_CHACHA20POLY1305)
 
 /* Bits for algorithm_mac (symmetric authentication) */
 
@@ -614,7 +609,7 @@ struct ssl_session_st {
     /* This is the cert and type for the other end. */
     X509 *peer;
     int peer_type;
-    /* Certificate chain of peer */
+    /* Certificate chain peer sent */
     STACK_OF(X509) *peer_chain;
     /*
      * when app_verify_callback accepts a session where the peer's
@@ -684,7 +679,8 @@ struct ssl_comp_st {
 };
 
 DEFINE_LHASH_OF(SSL_SESSION);
-
+/* Needed in ssl_cert.c */
+DEFINE_LHASH_OF(X509_NAME);
 
 struct ssl_ctx_st {
     const SSL_METHOD *method;
@@ -1058,8 +1054,10 @@ struct ssl_st {
                                          unsigned int max_psk_len);
 #  endif
     SSL_CTX *ctx;
-    /* extra application data */
+    /* Verified chain of peer */
+    STACK_OF(X509) *verified_chain;
     long verify_result;
+    /* extra application data */
     CRYPTO_EX_DATA ex_data;
     /* for server side, keep the list of CA_dn we can use */
     STACK_OF(X509_NAME) *client_CA;
@@ -1693,7 +1691,6 @@ typedef struct ssl3_comp_st {
 # endif
 
 extern SSL3_ENC_METHOD ssl3_undef_enc_method;
-OPENSSL_EXTERN const SSL_CIPHER ssl3_ciphers[];
 
 SSL_METHOD *ssl_bad_method(int ver);
 
@@ -1829,8 +1826,6 @@ const SSL_METHOD *func_name(void)  \
 struct openssl_ssl_test_functions {
     int (*p_ssl_init_wbio_buffer) (SSL *s, int push);
     int (*p_ssl3_setup_buffers) (SSL *s);
-    int (*p_tls1_process_heartbeat) (SSL *s,
-        unsigned char *p, unsigned int length);
     int (*p_dtls1_process_heartbeat) (SSL *s,
         unsigned char *p, unsigned int length);
 };
@@ -2050,9 +2045,7 @@ __owur int ssl_prepare_clienthello_tlsext(SSL *s);
 __owur int ssl_prepare_serverhello_tlsext(SSL *s);
 
 #  ifndef OPENSSL_NO_HEARTBEATS
-__owur int tls1_heartbeat(SSL *s);
 __owur int dtls1_heartbeat(SSL *s);
-__owur int tls1_process_heartbeat(SSL *s, unsigned char *p, unsigned int length);
 __owur int dtls1_process_heartbeat(SSL *s, unsigned char *p, unsigned int length);
 #  endif
 
@@ -2148,7 +2141,6 @@ void custom_exts_free(custom_ext_methods *exts);
 
 #  define ssl_init_wbio_buffer SSL_test_functions()->p_ssl_init_wbio_buffer
 #  define ssl3_setup_buffers SSL_test_functions()->p_ssl3_setup_buffers
-#  define tls1_process_heartbeat SSL_test_functions()->p_tls1_process_heartbeat
 #  define dtls1_process_heartbeat SSL_test_functions()->p_dtls1_process_heartbeat
 
 # endif

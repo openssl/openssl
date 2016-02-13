@@ -7,6 +7,7 @@ ocsp - Online Certificate Status Protocol utility
 =head1 SYNOPSIS
 
 B<openssl> B<ocsp>
+[B<-help>]
 [B<-out file>]
 [B<-issuer file>]
 [B<-cert file>]
@@ -41,7 +42,6 @@ B<openssl> B<ocsp>
 [B<-ignore_critical>]
 [B<-inhibit_any>]
 [B<-inhibit_map>]
-[B<-issuer_checks>]
 [B<-partial_chain>]
 [B<-policy arg>]
 [B<-policy_check>]
@@ -97,6 +97,10 @@ to an OCSP responder and behave like a mini OCSP server itself.
 
 =over 4
 
+=item B<-help>
+
+Print out a usage message.
+
 =item B<-out filename>
 
 specify output filename, default is standard output.
@@ -135,7 +139,7 @@ Additional certificates to include in the signed request.
 =item B<-nonce>, B<-no_nonce>
 
 Add an OCSP nonce extension to a request or disable OCSP nonce addition.
-Normally if an OCSP request is input using the B<respin> option no
+Normally if an OCSP request is input using the B<reqin> option no
 nonce is added: using the B<nonce> option will force addition of a nonce.
 If an OCSP request is being created (using B<cert> and B<serial> options)
 a nonce is automatically added specifying B<no_nonce> overrides this.
@@ -162,7 +166,8 @@ specify the responder URL. Both HTTP and HTTPS (SSL/TLS) URLs can be specified.
 
 if the B<host> option is present then the OCSP request is sent to the host
 B<hostname> on port B<port>. B<path> specifies the HTTP path name to use
-or "/" by default.
+or "/" by default.  This is equivalent to specifying B<-url> with scheme
+http:// and the given hostname, port, and pathname.
 
 =item B<-header name=value>
 
@@ -188,12 +193,12 @@ Do not load the trusted CA certificates from the default file location
 Do not load the trusted CA certificates from the default directory location
 
 =item B<-attime>, B<-check_ss_sig>, B<-crl_check>, B<-crl_check_all>,
-B<explicit_policy>, B<-extended_crl>, B<-ignore_critical>, B<-inhibit_any>,
-B<-inhibit_map>, B<-issuer_checks>, B<-partial_chain>, B<-policy>,
+B<-explicit_policy>, B<-extended_crl>, B<-ignore_critical>, B<-inhibit_any>,
+B<-inhibit_map>, B<-no_alt_chains>, B<-partial_chain>, B<-policy>,
 B<-policy_check>, B<-policy_print>, B<-purpose>, B<-suiteB_128>,
-B<-suiteB_128_only>, B<-suiteB_192>, B<-trusted_first>, B<-no_alt_chains>,
-B<-use_deltas>, B<-verify_depth>, B<-verify_email>, B<-verify_hostname>,
-B<-verify_ip>, B<-verify_name>, B<-x509_strict>
+B<-suiteB_128_only>, B<-suiteB_192>, B<-trusted_first>, B<-use_deltas>,
+B<-verify_depth>, B<-verify_email>, B<-verify_hostname>, B<-verify_ip>,
+B<-verify_name>, B<-x509_strict>
 
 Set different certificate verification options.
 See L<B<verify>|verify(1)> manual page for details.
@@ -292,7 +297,7 @@ information.
 If the B<index> option is specified the B<ocsp> utility is in responder mode, otherwise
 it is in client mode. The request(s) the responder processes can be either specified on
 the command line (using B<issuer> and B<serial> options), supplied in a file (using the
-B<respin> option) or via external OCSP clients (if B<port> or B<url> is specified).
+B<reqin> option) or via external OCSP clients (if B<port> or B<url> is specified).
 
 If the B<index> option is present then the B<CA> and B<rsigner> options must also be
 present.
@@ -397,7 +402,7 @@ format of revocation is also inefficient for large quantities of revocation
 data.
 
 It is possible to run the B<ocsp> application in responder mode via a CGI
-script using the B<respin> and B<respout> options.
+script using the B<reqin> and B<respout> options.
 
 =head1 EXAMPLES
 
@@ -406,14 +411,14 @@ Create an OCSP request and write it to a file:
  openssl ocsp -issuer issuer.pem -cert c1.pem -cert c2.pem -reqout req.der
 
 Send a query to an OCSP responder with URL http://ocsp.myhost.com/ save the 
-response to a file and print it out in text form
+response to a file, print it out in text form, and verify the response:
 
  openssl ocsp -issuer issuer.pem -cert c1.pem -cert c2.pem \
      -url http://ocsp.myhost.com/ -resp_text -respout resp.der
 
 Read in an OCSP response and print out text form:
 
- openssl ocsp -respin resp.der -text
+ openssl ocsp -respin resp.der -text -noverify
 
 OCSP server on port 8888 using a standard B<ca> configuration, and a separate
 responder certificate. All requests and responses are printed to a file.
@@ -426,13 +431,13 @@ As above but exit after processing one request:
  openssl ocsp -index demoCA/index.txt -port 8888 -rsigner rcert.pem -CA demoCA/cacert.pem
      -nrequest 1
 
-Query status information using internally generated request:
+Query status information using an internally generated request:
 
  openssl ocsp -index demoCA/index.txt -rsigner rcert.pem -CA demoCA/cacert.pem
      -issuer demoCA/cacert.pem -serial 1
 
-Query status information using request read from a file, write response to a
-second file.
+Query status information using request read from a file, and write the response
+to a second file.
 
  openssl ocsp -index demoCA/index.txt -rsigner rcert.pem -CA demoCA/cacert.pem
      -reqin req.der -respout resp.der

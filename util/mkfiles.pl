@@ -95,7 +95,7 @@ my $s="";
 
 while (<IN>)
 	{
-	chop;
+	s|\R$||;
 	s/#.*//;
 	if (/^([^\s=]+)\s*=\s*(.*)$/)
 		{
@@ -105,10 +105,10 @@ while (<IN>)
 			{
 			if ($b =~ /\\$/)
 				{
-				chop($b);
+				$b=$`;
 				$o.=$b." ";
-				$b=<IN>;
-				chop($b);
+				$b = "" unless defined($b = <IN>);
+				$b =~ s{\R$}{};
 				}
 			else
 				{

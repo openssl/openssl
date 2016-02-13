@@ -57,9 +57,8 @@
  */
 
 #include <openssl/opensslconf.h>
-
 #if OPENSSL_API_COMPAT >= 0x00908000L
-static void *dummy = &dummy;
+NON_EMPTY_TRANSLATION_UNIT
 #else
 
 # include <openssl/evp.h>

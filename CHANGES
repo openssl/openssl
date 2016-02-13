@@ -4,6 +4,57 @@
 
  Changes between 1.0.2f and 1.1.0  [xx XXX xxxx]
 
+  *) The INSTALL_PREFIX Makefile variable has been renamed to
+     DESTDIR.  That makes for less confusion on what this variable
+     is for.  Also, the configuration option --install_prefix is
+     removed.
+     [Richard Levitte]
+
+  *) Heartbeat for TLS has been removed and is disabled by default
+     for DTLS; configure with enable-heartbeats.  Code that uses the
+     old #define's might need to be updated.
+     [Emilia Käsper, Rich Salz]
+
+  *) Rename REF_CHECK to REF_DEBUG.
+     [Rich Salz]
+
+  *) New "unified" build system
+
+     The "unified" build system is aimed to be a common system for all
+     platforms we support.  With it comes new support for VMS.
+
+     This system builds supports building in a differnt directory tree
+     than the source tree.  It produces one Makefile (for unix family
+     or lookalikes), or one descrip.mms (for VMS).
+
+     The source of information to make the Makefile / descrip.mms is
+     small files called 'build.info', holding the necessary
+     information for each directory with source to compile, and a
+     template in Configurations, like unix-Makefile.tmpl or
+     descrip.mms.tmpl.
+
+     We rely heavily on the perl module Text::Template.
+     [Richard Levitte]
+
+  *) Added support for auto-initialisation and de-initialisation of the library.
+     OpenSSL no longer requires explicit init or deinit routines to be called,
+     except in certain circumstances. See the OPENSSL_init_crypto() and
+     OPENSSL_init_ssl() man pages for further information.
+     [Matt Caswell]
+
+  *) The arguments to the DTLSv1_listen function have changed. Specifically the
+     "peer" argument is now expected to be a BIO_ADDR object.
+
+  *) Rewrite of BIO networking library. The BIO library lacked consistent
+     support of IPv6, and adding it required some more extensive
+     modifications.  This introduces the BIO_ADDR and BIO_ADDRINFO types,
+     which hold all types of addresses and chains of address information.
+     It also introduces a new API, with functions like BIO_socket,
+     BIO_connect, BIO_listen, BIO_lookup and a rewrite of BIO_accept.
+     The source/sink BIOs BIO_s_connect, BIO_s_accept and BIO_s_datagram
+     have been adapted accordingly.
+     [Richard Levitte]
+
   *) RSA_padding_check_PKCS1_type_1 now accepts inputs with and without
      the leading 0-byte.
      [Emilia Käsper]
@@ -2737,7 +2788,7 @@
 
   *) New option -sigopt to dgst utility. Update dgst to use
      EVP_Digest{Sign,Verify}*. These two changes make it possible to use
-     alternative signing paramaters such as X9.31 or PSS in the dgst 
+     alternative signing parameters such as X9.31 or PSS in the dgst 
      utility.
      [Steve Henson]
 
@@ -3944,7 +3995,7 @@
      unofficial, and the ID has long expired.
      [Bodo Moeller]
 
-  *) Fix RSA blinding Heisenbug (problems sometimes occured on
+  *) Fix RSA blinding Heisenbug (problems sometimes occurred on
      dual-core machines) and other potential thread-safety issues.
      [Bodo Moeller]
 
@@ -4959,7 +5010,7 @@
      unofficial, and the ID has long expired.
      [Bodo Moeller]
 
-  *) Fix RSA blinding Heisenbug (problems sometimes occured on
+  *) Fix RSA blinding Heisenbug (problems sometimes occurred on
      dual-core machines) and other potential thread-safety issues.
      [Bodo Moeller]
 
@@ -5064,7 +5115,7 @@
 
   *) Added support for proxy certificates according to RFC 3820.
      Because they may be a security thread to unaware applications,
-     they must be explicitely allowed in run-time.  See
+     they must be explicitly allowed in run-time.  See
      docs/HOWTO/proxy_certificates.txt for further information.
      [Richard Levitte]
 
@@ -7641,7 +7692,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
 
   *) Fix ssl/s3_enc.c, ssl/t1_enc.c and ssl/s3_pkt.c so that we don't
      reveal whether illegal block cipher padding was found or a MAC
-     verification error occured.  (Neither SSLerr() codes nor alerts
+     verification error occurred.  (Neither SSLerr() codes nor alerts
      are directly visible to potential attackers, but the information
      may leak via logfiles.)
 
@@ -10048,7 +10099,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
   *) Bugfix: ssl23_get_client_hello did not work properly when called in
      state SSL23_ST_SR_CLNT_HELLO_B, i.e. when the first 7 bytes of
      a SSLv2-compatible client hello for SSLv3 or TLSv1 could be read,
-     but a retry condition occured while trying to read the rest.
+     but a retry condition occurred while trying to read the rest.
      [Bodo Moeller]
 
   *) The PKCS7_ENC_CONTENT_new() function was setting the content type as

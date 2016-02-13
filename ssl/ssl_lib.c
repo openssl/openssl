@@ -142,7 +142,7 @@
  * OTHERWISE.
  */
 
-#ifdef REF_CHECK
+#ifdef REF_DEBUG
 # include <assert.h>
 #endif
 #include <stdio.h>
@@ -715,6 +715,7 @@ SSL *SSL_new(SSL_CTX *ctx)
         s->alpn_client_proto_list_len = s->ctx->alpn_client_proto_list_len;
     }
 
+    s->verified_chain = NULL;
     s->verify_result = X509_V_OK;
 
     s->default_passwd_callback = ctx->default_passwd_callback;
@@ -912,7 +913,7 @@ int SSL_get0_dane_authority(SSL *s, X509 **mcert, EVP_PKEY **mspki)
 {
     struct dane_st *dane = &s->dane;
 
-    if (!DANETLS_ENABLED(dane))
+    if (!DANETLS_ENABLED(dane) || s->verify_result != X509_V_OK)
         return -1;
     if (dane->mtlsa) {
         if (mcert)
@@ -928,7 +929,7 @@ int SSL_get0_dane_tlsa(SSL *s, uint8_t *usage, uint8_t *selector,
 {
     struct dane_st *dane = &s->dane;
 
-    if (!DANETLS_ENABLED(dane))
+    if (!DANETLS_ENABLED(dane) || s->verify_result != X509_V_OK)
         return -1;
     if (dane->mtlsa) {
         if (usage)
@@ -994,17 +995,10 @@ void SSL_free(SSL *s)
         return;
 
     i = CRYPTO_add(&s->references, -1, CRYPTO_LOCK_SSL);
-#ifdef REF_PRINT
-    REF_PRINT("SSL", s);
-#endif
+    REF_PRINT_COUNT("SSL", s);
     if (i > 0)
         return;
-#ifdef REF_CHECK
-    if (i < 0) {
-        fprintf(stderr, "SSL_free, bad reference count\n");
-        abort();                /* ok */
-    }
-#endif
+    REF_ASSERT_ISNT(i < 0);
 
     X509_VERIFY_PARAM_free(s->param);
     dane_final(&s->dane);
@@ -1051,6 +1045,8 @@ void SSL_free(SSL *s)
     OPENSSL_free(s->alpn_client_proto_list);
 
     sk_X509_NAME_pop_free(s->client_CA, X509_NAME_free);
+
+    sk_X509_pop_free(s->verified_chain, X509_free);
 
     if (s->method != NULL)
         s->method->ssl_free(s);
@@ -1575,19 +1571,22 @@ int SSL_shutdown(SSL *s)
         return -1;
     }
 
-    if((s->mode & SSL_MODE_ASYNC) && ASYNC_get_current_job() == NULL) {
-        struct ssl_async_args args;
+    if (!SSL_in_init(s)) {
+        if((s->mode & SSL_MODE_ASYNC) && ASYNC_get_current_job() == NULL) {
+            struct ssl_async_args args;
 
-        args.s = s;
-        args.type = OTHERFUNC;
-        args.f.func_other = s->method->ssl_shutdown;
+            args.s = s;
+            args.type = OTHERFUNC;
+            args.f.func_other = s->method->ssl_shutdown;
 
-        return ssl_start_async_job(s, &args, ssl_io_intern);
+            return ssl_start_async_job(s, &args, ssl_io_intern);
+        } else {
+            return s->method->ssl_shutdown(s);
+        }
     } else {
-        return s->method->ssl_shutdown(s);
+        SSLerr(SSL_F_SSL_SHUTDOWN, SSL_R_SHUTDOWN_WHILE_IN_INIT);
+        return -1;
     }
-
-    return s->method->ssl_shutdown(s);
 }
 
 int SSL_renegotiate(SSL *s)
@@ -1982,7 +1981,7 @@ char *SSL_get_shared_ciphers(const SSL *s, char *buf, int len)
             *p = '\0';
             return buf;
         }
-        strcpy(p, c->name);
+        memcpy(p, c->name, n + 1);
         p += n;
         *(p++) = ':';
         len -= n + 1;
@@ -2264,6 +2263,9 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
         return (NULL);
     }
 
+    if (!OPENSSL_init_ssl(OPENSSL_INIT_LOAD_SSL_STRINGS, NULL))
+        return NULL;
+
     if (FIPS_mode() && (meth->version < TLS1_VERSION)) {
         SSLerr(SSL_F_SSL_CTX_NEW, SSL_R_AT_LEAST_TLS_1_0_NEEDED_IN_FIPS_MODE);
         return NULL;
@@ -2391,17 +2393,10 @@ void SSL_CTX_free(SSL_CTX *a)
         return;
 
     i = CRYPTO_add(&a->references, -1, CRYPTO_LOCK_SSL_CTX);
-#ifdef REF_PRINT
-    REF_PRINT("SSL_CTX", a);
-#endif
+    REF_PRINT_COUNT("SSL_CTX", a);
     if (i > 0)
         return;
-#ifdef REF_CHECK
-    if (i < 0) {
-        fprintf(stderr, "SSL_CTX_free, bad reference count\n");
-        abort();                /* ok */
-    }
-#endif
+    REF_ASSERT_ISNT(i < 0);
 
     X509_VERIFY_PARAM_free(a->param);
     dane_ctx_final(&a->dane);
@@ -2509,7 +2504,6 @@ void ssl_set_masks(SSL *s, const SSL_CIPHER *cipher)
     unsigned long mask_k, mask_a;
 #ifndef OPENSSL_NO_EC
     int have_ecc_cert, ecdsa_ok;
-    int ecdh_ok;
     X509 *x = NULL;
     int pk_nid = 0, md_nid = 0;
 #endif
@@ -2580,23 +2574,10 @@ void ssl_set_masks(SSL *s, const SSL_CIPHER *cipher)
         cpk = &c->pkeys[SSL_PKEY_ECC];
         x = cpk->x509;
         ex_kusage = X509_get_key_usage(x);
-        ecdh_ok = ex_kusage & X509v3_KU_KEY_AGREEMENT;
         ecdsa_ok = ex_kusage & X509v3_KU_DIGITAL_SIGNATURE;
         if (!(pvalid[SSL_PKEY_ECC] & CERT_PKEY_SIGN))
             ecdsa_ok = 0;
         OBJ_find_sigid_algs(X509_get_signature_nid(x), &md_nid, &pk_nid);
-        if (ecdh_ok) {
-
-            if (pk_nid == NID_rsaEncryption || pk_nid == NID_rsa) {
-                mask_k |= SSL_kECDHr;
-                mask_a |= SSL_aECDH;
-            }
-
-            if (pk_nid == NID_X9_62_id_ecPublicKey) {
-                mask_k |= SSL_kECDHe;
-                mask_a |= SSL_aECDH;
-            }
-        }
         if (ecdsa_ok) {
             mask_a |= SSL_aECDSA;
         }
@@ -2626,50 +2607,14 @@ void ssl_set_masks(SSL *s, const SSL_CIPHER *cipher)
 
 int ssl_check_srvr_ecc_cert_and_alg(X509 *x, SSL *s)
 {
-    unsigned long alg_k, alg_a;
-    int md_nid = 0, pk_nid = 0;
-    const SSL_CIPHER *cs = s->s3->tmp.new_cipher;
-    uint32_t ex_kusage = X509_get_key_usage(x);
-
-    alg_k = cs->algorithm_mkey;
-    alg_a = cs->algorithm_auth;
-
-    OBJ_find_sigid_algs(X509_get_signature_nid(x), &md_nid, &pk_nid);
-
-    if (alg_k & SSL_kECDHe || alg_k & SSL_kECDHr) {
-        /* key usage, if present, must allow key agreement */
-        if (!(ex_kusage & X509v3_KU_KEY_AGREEMENT)) {
-            SSLerr(SSL_F_SSL_CHECK_SRVR_ECC_CERT_AND_ALG,
-                   SSL_R_ECC_CERT_NOT_FOR_KEY_AGREEMENT);
-            return 0;
-        }
-        if ((alg_k & SSL_kECDHe) && TLS1_get_version(s) < TLS1_2_VERSION) {
-            /* signature alg must be ECDSA */
-            if (pk_nid != NID_X9_62_id_ecPublicKey) {
-                SSLerr(SSL_F_SSL_CHECK_SRVR_ECC_CERT_AND_ALG,
-                       SSL_R_ECC_CERT_SHOULD_HAVE_SHA1_SIGNATURE);
-                return 0;
-            }
-        }
-        if ((alg_k & SSL_kECDHr) && TLS1_get_version(s) < TLS1_2_VERSION) {
-            /* signature alg must be RSA */
-
-            if (pk_nid != NID_rsaEncryption && pk_nid != NID_rsa) {
-                SSLerr(SSL_F_SSL_CHECK_SRVR_ECC_CERT_AND_ALG,
-                       SSL_R_ECC_CERT_SHOULD_HAVE_RSA_SIGNATURE);
-                return 0;
-            }
-        }
-    }
-    if (alg_a & SSL_aECDSA) {
+    if (s->s3->tmp.new_cipher->algorithm_auth & SSL_aECDSA) {
         /* key usage, if present, must allow signing */
-        if (!(ex_kusage & X509v3_KU_DIGITAL_SIGNATURE)) {
+        if (!(X509_get_key_usage(x) & X509v3_KU_DIGITAL_SIGNATURE)) {
             SSLerr(SSL_F_SSL_CHECK_SRVR_ECC_CERT_AND_ALG,
                    SSL_R_ECC_CERT_NOT_FOR_SIGNING);
             return 0;
         }
     }
-
     return 1;                   /* all checks are ok */
 }
 
@@ -3265,8 +3210,11 @@ void ssl_free_wbio_buffer(SSL *s)
     if (s->bbio == s->wbio) {
         /* remove buffering */
         s->wbio = BIO_pop(s->wbio);
-#ifdef REF_CHECK                /* not the usual REF_CHECK, but this avoids
-                                 * adding one more preprocessor symbol */
+#ifdef REF_DEBUG
+        /*
+         * not the usual REF_DEBUG, but this avoids
+         * adding one more preprocessor symbol
+         */
         assert(s->wbio != NULL);
 #endif
     }
@@ -3700,7 +3648,7 @@ int ssl_handshake_hash(SSL *s, unsigned char *out, int outlen)
     return ret;
 }
 
-int SSL_cache_hit(SSL *s)
+int SSL_session_reused(SSL *s)
 {
     return s->hit;
 }
@@ -3820,6 +3768,11 @@ unsigned long SSL_CTX_clear_options(SSL_CTX *ctx, unsigned long op)
 unsigned long SSL_clear_options(SSL *s, unsigned long op)
 {
     return s->options &= ~op;
+}
+
+STACK_OF(X509) *SSL_get0_verified_chain(const SSL *s)
+{
+    return s->verified_chain;
 }
 
 IMPLEMENT_OBJ_BSEARCH_GLOBAL_CMP_FN(SSL_CIPHER, SSL_CIPHER, ssl_cipher_id);

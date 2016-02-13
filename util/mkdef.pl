@@ -40,11 +40,12 @@
 
 use lib ".";
 use configdata;
+use File::Spec::Functions;
 
 my $debug=0;
 
-my $crypto_num= "util/libeay.num";
-my $ssl_num=    "util/ssleay.num";
+my $crypto_num= catfile($config{sourcedir},"util","libeay.num");
+my $ssl_num=    catfile($config{sourcedir},"util","ssleay.num");
 my $libname;
 
 my $do_update = 0;
@@ -384,8 +385,9 @@ sub do_defs
 
 	foreach $file (split(/\s+/,$symhacksfile." ".$files))
 		{
-		print STDERR "DEBUG: starting on $file:\n" if $debug;
-		open(IN,"<$file") || die "unable to open $file:$!\n";
+		my $fn = catfile($config{sourcedir},$file);
+		print STDERR "DEBUG: starting on $fn:\n" if $debug;
+		open(IN,"<$fn") || die "unable to open $fn:$!\n";
 		my $line = "", my $def= "";
 		my %tag = (
 			(map { $_ => 0 } @known_platforms),
@@ -457,7 +459,7 @@ sub do_defs
 			if($parens > 0) {
 				#Inside a DEPRECATEDIN
 				$stored_multiline .= $_;
-				chomp $stored_multiline;
+				$stored_multiline =~ s|\R$||; # Better chomp
 				print STDERR "DEBUG: Continuing multiline DEPRECATEDIN: $stored_multiline\n" if $debug;
 				$parens = count_parens($stored_multiline);
 				if ($parens == 0) {
@@ -478,9 +480,7 @@ sub do_defs
 			}
 
 			if (/\\$/) {
-				chomp; # remove eol
-				chop; # remove ending backslash
-				$line = $_;
+				$line = $`; # keep what was before the backslash
 				next;
 			}
 
@@ -497,7 +497,7 @@ sub do_defs
 				$cpp++ if /^#\s*if/;
 				$cpp-- if /^#\s*endif/;
 				next;
-	    		}
+			}
 			$cpp = 1 if /^#.*ifdef.*cplusplus/;
 
 			s/{[^{}]*}//gs;                      # ignore {} blocks
@@ -865,7 +865,7 @@ sub do_defs
 							\@current_algorithms);
 					} else {
 						$stored_multiline = $_;
-						chomp $stored_multiline;
+						$stored_multiline =~ s|\R$||;
 						print STDERR "DEBUG: Found multiline DEPRECATEDIN starting with: $stored_multiline\n" if $debug;
 						next;
 					}
@@ -1223,12 +1223,8 @@ EOF
                 }
         elsif ($VMS)
                 {
-                my $libref = $name eq "ssl" ? "LIBCRYPTO.EXE /SHARE" : "";
                 print OUT <<"EOF";
-IDENTIFICATION="V$version"
 CASE_SENSITIVE=YES
-LIB$libname.OLB /LIBRARY
-$libref
 SYMBOL_VECTOR=(-
 EOF
                 $symvtextcount = 16; # length of "SYMBOL_VECTOR=(-"
@@ -1295,34 +1291,35 @@ EOF
 						print OUT "        $s2;\n";
                                         } elsif ($VMS) {
                                             while(++$prevnum < $n) {
-                                                my $symline="SPARE, SPARE -";
-                                                if ($symvtextcount + length($symline) + 1 > 1024) {
+                                                my $symline=" ,SPARE -\n  ,SPARE -\n";
+                                                if ($symvtextcount + length($symline) - 2 > 1024) {
                                                     print OUT ")\nSYMBOL_VECTOR=(-\n";
                                                     $symvtextcount = 16; # length of "SYMBOL_VECTOR=(-"
                                                 }
-                                                if ($symvtextcount > 16) {
-                                                    $symline = ",".$symline;
+                                                if ($symvtextcount == 16) {
+                                                    # Take away first comma
+                                                    $symline =~ s/,//;
                                                 }
-                                                print OUT "    $symline\n";
-                                                $symvtextcount += length($symline);
+                                                print OUT $symline;
+                                                $symvtextcount += length($symline) - 2;
                                             }
                                             (my $s_uc = $s) =~ tr/a-z/A-Z/;
                                             my $symtype=
                                                 $v ? "DATA" : "PROCEDURE";
                                             my $symline=
                                                 ($s_uc ne $s
-                                                 ? "$s_uc/$s=$symtype, $s=$symtype"
-                                                 : "$s=$symtype, SPARE")
-                                                ." -";
-                                            if ($symvtextcount + length($symline) + 1 > 1024) {
+                                                 ? " ,$s_uc/$s=$symtype -\n  ,$s=$symtype -\n"
+                                                 : " ,$s=$symtype -\n  ,SPARE -\n");
+                                            if ($symvtextcount + length($symline) - 2 > 1024) {
                                                 print OUT ")\nSYMBOL_VECTOR=(-\n";
                                                 $symvtextcount = 16; # length of "SYMBOL_VECTOR=(-"
                                             }
-                                            if ($symvtextcount > 16) {
-                                                $symline = ",".$symline;
+                                            if ($symvtextcount == 16) {
+                                                # Take away first comma
+                                                $symline =~ s/,//;
                                             }
-                                            print OUT "    $symline\n";
-                                            $symvtextcount += length($symline);
+                                            print OUT $symline;
+                                            $symvtextcount += length($symline) - 2;
 					} elsif($v && !$OS2) {
 						printf OUT "    %s%-39s @%-8d DATA\n",
 								($W32)?"":"_",$s2,$n;
@@ -1366,7 +1363,7 @@ sub load_numbers
 
 	open(IN,"<$name") || die "unable to open $name:$!\n";
 	while (<IN>) {
-		chop;
+		s|\R$||;        # Better chomp
 		s/#.*$//;
 		next if /^\s*$/;
 		@a=split;
@@ -1552,7 +1549,8 @@ sub count_parens
 #version
 sub get_openssl_version()
 {
-	open (IN, "include/openssl/opensslv.h") || die "Can't open opensslv.h";
+	my $fn = catfile($config{sourcedir},"include","openssl","opensslv.h");
+	open (IN, "$fn") || die "Can't open opensslv.h";
 
 	while(<IN>) {
 		if (/OPENSSL_VERSION_TEXT\s+"OpenSSL (\d\.\d\.)(\d[a-z]*)(-| )/) {

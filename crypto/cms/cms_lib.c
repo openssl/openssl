@@ -153,7 +153,7 @@ int CMS_dataFinal(CMS_ContentInfo *cms, BIO *cmsbio)
     ASN1_OCTET_STRING **pos = CMS_get0_content(cms);
     if (!pos)
         return 0;
-    /* If ebmedded content find memory BIO and set content */
+    /* If embedded content find memory BIO and set content */
     if (*pos && ((*pos)->flags & ASN1_STRING_FLAG_CONT)) {
         BIO *mbio;
         unsigned char *cont;

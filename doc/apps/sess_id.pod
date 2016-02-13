@@ -8,6 +8,7 @@ sess_id - SSL/TLS session handling utility
 =head1 SYNOPSIS
 
 B<openssl> B<sess_id>
+[B<-help>]
 [B<-inform PEM|DER>]
 [B<-outform PEM|DER|NSS>]
 [B<-in filename>]
@@ -25,6 +26,10 @@ needs some knowledge of the SSL protocol to use properly, most users will
 not need to use it.
 
 =over 4
+
+=item B<-help>
+
+Print out a usage message.
 
 =item B<-inform DER|PEM>
 

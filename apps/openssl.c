@@ -170,44 +170,20 @@ static int apps_startup()
 #ifdef SIGPIPE
     signal(SIGPIPE, SIG_IGN);
 #endif
-    ERR_load_crypto_strings();
-    ERR_load_SSL_strings();
 
-    OPENSSL_load_builtin_modules();
-    SSL_add_ssl_module();
-#ifndef OPENSSL_NO_ENGINE
-    ENGINE_load_builtin_engines();
-#endif
-    if (!app_load_modules(NULL)) {
-        ERR_print_errors(bio_err);
-        BIO_printf(bio_err, "Error loading default configuration\n");
+    /* Set non-default library initialisation settings */
+    if (!OPENSSL_init_crypto(OPENSSL_INIT_ENGINE_ALL_BUILTIN
+                             | OPENSSL_INIT_LOAD_CONFIG, NULL))
         return 0;
-    }
 
-    OpenSSL_add_all_algorithms();
-    OpenSSL_add_ssl_algorithms();
     setup_ui_method();
-    /*SSL_library_init();*/
+
     return 1;
 }
 
 static void apps_shutdown()
 {
-#ifndef OPENSSL_NO_ENGINE
-    ENGINE_cleanup();
-#endif
     destroy_ui_method();
-    CONF_modules_unload(1);
-#ifndef OPENSSL_NO_COMP
-    COMP_zlib_cleanup();
-    SSL_COMP_free_compression_methods();
-#endif
-    OBJ_cleanup();
-    EVP_cleanup();
-    CRYPTO_cleanup_all_ex_data();
-    ERR_remove_thread_state(NULL);
-    RAND_cleanup();
-    ERR_free_strings();
 }
 
 static char *make_config_name()
@@ -317,7 +293,6 @@ int main(int argc, char *argv[])
     if (getenv("OPENSSL_FIPS")) {
 #ifdef OPENSSL_FIPS
         if (!FIPS_mode_set(1)) {
-            ERR_load_crypto_strings();
             ERR_print_errors(bio_err);
             return 1;
         }
@@ -429,7 +404,8 @@ int main(int argc, char *argv[])
     BIO_free_all(bio_out);
     apps_shutdown();
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG
-    CRYPTO_mem_leaks(bio_err);
+    if (CRYPTO_mem_leaks(bio_err) <= 0)
+        ret = 1;
 #endif
     BIO_free(bio_err);
     EXIT(ret);
@@ -771,6 +747,9 @@ static void list_disabled(void)
 #endif
 #ifdef OPENSSL_NO_GOST
     BIO_puts(bio_out, "GOST\n");
+#endif
+#ifdef OPENSSL_NO_HEARTBEATS
+    BIO_puts(bio_out, "HEARTBEATS\n");
 #endif
 #ifdef OPENSSL_NO_HMAC
     BIO_puts(bio_out, "HMAC\n");

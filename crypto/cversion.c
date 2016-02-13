@@ -102,5 +102,12 @@ const char *OpenSSL_version(int t)
         return "OPENSSLDIR: N/A";
 #endif
     }
+    if (t == OPENSSL_ENGINES_DIR) {
+#ifdef ENGINESDIR
+        return "ENGINESDIR: \"" ENGINESDIR "\"";
+#else
+        return "ENGINESDIR: N/A";
+#endif
+    }
     return ("not available");
 }

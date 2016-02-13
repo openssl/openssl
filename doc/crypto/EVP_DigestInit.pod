@@ -143,8 +143,7 @@ returns is of zero length.
 
 EVP_get_digestbyname(), EVP_get_digestbynid() and EVP_get_digestbyobj()
 return an B<EVP_MD> structure when passed a digest name, a digest NID or
-an ASN1_OBJECT structure respectively. The digest table must be initialized
-using, for example, OpenSSL_add_all_digests() for these functions to work.
+an ASN1_OBJECT structure respectively.
 
 =head1 RETURN VALUES
 
@@ -209,8 +208,6 @@ digest name passed on the command line.
  char mess2[] = "Hello World\n";
  unsigned char md_value[EVP_MAX_MD_SIZE];
  int md_len, i;
-
- OpenSSL_add_all_digests();
 
  if(!argv[1]) {
  	printf("Usage: mdtest digestname\n");

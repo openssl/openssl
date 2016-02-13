@@ -58,6 +58,7 @@
 
 #include <openssl/err.h>
 #include <openssl/buffer.h>
+#include <ctype.h>
 
 /*
  * Throughout this file and bio_lcl.h, the existence of the macro
@@ -75,13 +76,21 @@
 
 BIO_ADDR *BIO_ADDR_new(void)
 {
-    BIO_ADDR *ret = (BIO_ADDR *)OPENSSL_zalloc(sizeof(BIO_ADDR));
+    BIO_ADDR *ret = OPENSSL_zalloc(sizeof(*ret));
+
+    ret->sa.sa_family = AF_UNSPEC;
     return ret;
 }
 
 void BIO_ADDR_free(BIO_ADDR *ap)
 {
     OPENSSL_free(ap);
+}
+
+void BIO_ADDR_clear(BIO_ADDR *ap)
+{
+    memset(ap, 0, sizeof(*ap));
+    ap->sa.sa_family = AF_UNSPEC;
 }
 
 /*
@@ -214,10 +223,13 @@ unsigned short BIO_ADDR_rawport(const BIO_ADDR *ap)
 static int addr_strings(const BIO_ADDR *ap, int numeric,
                         char **hostname, char **service)
 {
+    if (BIO_sock_init() != 1)
+        return 0;
+
     if (1) {
 #ifdef AI_PASSIVE
         int ret = 0;
-        char host[NI_MAXHOST], serv[NI_MAXSERV];
+        char host[NI_MAXHOST] = "", serv[NI_MAXSERV] = "";
         int flags = 0;
 
         if (numeric)
@@ -239,6 +251,18 @@ static int addr_strings(const BIO_ADDR *ap, int numeric,
             }
             return 0;
         }
+
+        /* VMS getnameinfo() has a bug, it doesn't fill in serv, which
+         * leaves it with whatever garbage that happens to be there.
+         * However, we initialise serv with the empty string (serv[0]
+         * is therefore NUL), so it gets real easy to detect when things
+         * didn't go the way one might expect.
+         */
+        if (serv[0] == '\0') {
+            BIO_snprintf(serv, sizeof(serv), "%d",
+                         ntohs(BIO_ADDR_rawport(ap)));
+        }
+
         if (hostname)
             *hostname = OPENSSL_strdup(host);
         if (service)
@@ -330,7 +354,7 @@ socklen_t BIO_ADDR_sockaddr_size(const BIO_ADDR *ap)
 
 /**********************************************************************
  *
- * Address into database
+ * Address info database
  *
  */
 
@@ -357,8 +381,24 @@ int BIO_ADDRINFO_socktype(const BIO_ADDRINFO *bai)
 
 int BIO_ADDRINFO_protocol(const BIO_ADDRINFO *bai)
 {
-    if (bai != NULL)
-        return bai->bai_protocol;
+    if (bai != NULL) {
+        if (bai->bai_protocol != 0)
+            return bai->bai_protocol;
+
+#ifdef AF_UNIX
+        if (bai->bai_family == AF_UNIX)
+            return 0;
+#endif
+
+        switch (bai->bai_socktype) {
+        case SOCK_STREAM:
+            return IPPROTO_TCP;
+        case SOCK_DGRAM:
+            return IPPROTO_UDP;
+        default:
+            break;
+        }
+    }
     return 0;
 }
 
@@ -495,7 +535,7 @@ int BIO_parse_hostserv(const char *hostserv, char **host, char **service,
         }
     }
 
-    if (strchr(p, ':'))
+    if (p != NULL && strchr(p, ':'))
         goto spec_err;
 
     if (h != NULL && host != NULL) {
@@ -547,10 +587,10 @@ static int addrinfo_wrap(int family, int socktype,
 {
     OPENSSL_assert(bai != NULL);
 
-    *bai = (BIO_ADDRINFO *)OPENSSL_zalloc(sizeof(**bai));
-
+    *bai = OPENSSL_zalloc(sizeof(**bai));
     if (*bai == NULL)
         return 0;
+
     (*bai)->bai_family = family;
     (*bai)->bai_socktype = socktype;
     if (socktype == SOCK_STREAM)
@@ -633,7 +673,11 @@ int BIO_lookup(const char *host, const char *service,
     }
 #endif
 
+    if (BIO_sock_init() != 1)
+        return 0;
+
     if (1) {
+        int gai_ret = 0;
 #ifdef AI_PASSIVE
         struct addrinfo hints;
 
@@ -655,7 +699,7 @@ int BIO_lookup(const char *host, const char *service,
         /* Note that |res| SHOULD be a 'struct addrinfo **' thanks to
          * macro magic in bio_lcl.h
          */
-        switch (getaddrinfo(host, service, &hints, res)) {
+        switch ((gai_ret = getaddrinfo(host, service, &hints, res))) {
 # ifdef EAI_SYSTEM
         case EAI_SYSTEM:
             SYSerr(SYS_F_GETADDRINFO, get_last_socket_error());
@@ -667,23 +711,25 @@ int BIO_lookup(const char *host, const char *service,
             break;
         default:
             BIOerr(BIO_F_BIO_LOOKUP, ERR_R_SYS_LIB);
-            ERR_add_error_data(1, gai_strerror(ret));
+            ERR_add_error_data(1, gai_strerror(gai_ret));
             break;
         }
     } else {
 #endif
-        struct hostent *he;
+        const struct hostent *he;
         /* Windows doesn't seem to have in_addr_t */
 #ifdef OPENSSL_SYS_WINDOWS
-        uint32_t he_fallback_address = INADDR_ANY;
-        uint32_t *he_fallback_addresses[] = { &he_fallback_address, NULL };
+        static uint32_t he_fallback_address;
+        static const uint32_t *he_fallback_addresses[] =
+            { &he_fallback_address, NULL };
 #else
-        in_addr_t he_fallback_address = INADDR_ANY;
-        in_addr_t *he_fallback_addresses[] = { &he_fallback_address, NULL };
+        static in_addr_t he_fallback_address;
+        static const in_addr_t *he_fallback_addresses[] =
+            { &he_fallback_address, NULL };
 #endif
-        struct hostent he_fallback = { NULL, NULL, AF_INET,
-                                       sizeof(he_fallback_address),
-                                       (char **)&he_fallback_addresses };
+        static const struct hostent he_fallback =
+            { NULL, NULL, AF_INET, sizeof(he_fallback_address),
+              (char **)&he_fallback_addresses };
         struct servent *se;
         /* Apprently, on WIN64, s_proto and s_port have traded places... */
 #ifdef _WIN64
@@ -695,6 +741,7 @@ int BIO_lookup(const char *host, const char *service,
 
         CRYPTO_w_lock(CRYPTO_LOCK_GETHOSTBYNAME);
         CRYPTO_w_lock(CRYPTO_LOCK_GETSERVBYNAME);
+        he_fallback_address = INADDR_ANY;
         if (host == NULL) {
             he = &he_fallback;
             switch(lookup_type) {
@@ -712,8 +759,12 @@ int BIO_lookup(const char *host, const char *service,
             he = gethostbyname(host);
 
             if (he == NULL) {
+#ifndef OPENSSL_SYS_WINDOWS
                 BIOerr(BIO_F_BIO_LOOKUP, ERR_R_SYS_LIB);
                 ERR_add_error_data(1, hstrerror(h_errno));
+#else
+                SYSerr(SYS_F_GETHOSTBYNAME, WSAGetLastError());
+#endif
                 ret = 0;
                 goto err;
             }
@@ -744,8 +795,12 @@ int BIO_lookup(const char *host, const char *service,
                 se = getservbyname(service, proto);
 
                 if (se == NULL) {
+#ifndef OPENSSL_SYS_WINDOWS
                     BIOerr(BIO_F_BIO_LOOKUP, ERR_R_SYS_LIB);
                     ERR_add_error_data(1, hstrerror(h_errno));
+#else
+                    SYSerr(SYS_F_GETSERVBYNAME, WSAGetLastError());
+#endif
                     goto err;
                 }
             } else {

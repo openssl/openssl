@@ -97,6 +97,7 @@ static ERR_STRING_DATA BIO_str_functs[] = {
     {ERR_FUNC(BIO_F_BIO_PUTS), "BIO_puts"},
     {ERR_FUNC(BIO_F_BIO_READ), "BIO_read"},
     {ERR_FUNC(BIO_F_BIO_SOCKET), "BIO_socket"},
+    {ERR_FUNC(BIO_F_BIO_SOCKET_NBIO), "BIO_socket_nbio"},
     {ERR_FUNC(BIO_F_BIO_SOCK_INFO), "BIO_sock_info"},
     {ERR_FUNC(BIO_F_BIO_SOCK_INIT), "BIO_sock_init"},
     {ERR_FUNC(BIO_F_BIO_WRITE), "BIO_write"},

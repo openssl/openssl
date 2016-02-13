@@ -194,8 +194,6 @@ int main(int argc, char *argv[])
                                            * don't even check its return
                                            * value (which we should) */
 
-    ERR_load_BN_strings();
-
     ctx = BN_CTX_new();
     if (ctx == NULL)
         EXIT(1);
@@ -298,9 +296,10 @@ int main(int argc, char *argv[])
     BN_free(b);
     BN_free(m);
     BN_CTX_free(ctx);
-    ERR_remove_thread_state(NULL);
+
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG
-    CRYPTO_mem_leaks(out);
+    if (CRYPTO_mem_leaks(out) <= 0)
+        goto err;
 #endif
     BIO_free(out);
     printf("\n");
@@ -312,7 +311,6 @@ int main(int argc, char *argv[])
 
     EXIT(0);
  err:
-    ERR_load_crypto_strings();
     ERR_print_errors(out);
 #ifdef OPENSSL_SYS_NETWARE
     printf("ERROR\n");

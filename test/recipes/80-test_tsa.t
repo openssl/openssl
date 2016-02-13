@@ -6,7 +6,7 @@ use warnings;
 use POSIX;
 use File::Spec::Functions qw/splitdir curdir catfile/;
 use File::Compare;
-use OpenSSL::Test qw/:DEFAULT cmdstr top_file/;
+use OpenSSL::Test qw/:DEFAULT cmdstr srctop_file/;
 
 setup("test_tsa");
 
@@ -72,12 +72,12 @@ plan tests => 20;
 note "setting up TSA test directory";
 indir "tsa" => sub
 {
-    $ENV{OPENSSL_CONF} = top_file("test", "CAtsa.cnf");
+    $ENV{OPENSSL_CONF} = srctop_file("test", "CAtsa.cnf");
     # Because that's what ../apps/CA.pl really looks at
     $ENV{OPENSSL_CONFIG} = "-config ".$ENV{OPENSSL_CONF};
     $ENV{OPENSSL} = cmdstr(app(["openssl"]));
-    $testtsa = top_file("test", "recipes", "80-test_tsa.t");
-    $CAtsa = top_file("test", "CAtsa.cnf");
+    $testtsa = srctop_file("test", "recipes", "80-test_tsa.t");
+    $CAtsa = srctop_file("test", "CAtsa.cnf");
 
  SKIP: {
      $ENV{TSDNSECT} = "ts_ca_dn";

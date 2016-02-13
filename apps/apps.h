@@ -192,34 +192,51 @@ void wait_for_async(SSL *s);
         OPT_V__LAST
 
 # define OPT_V_OPTIONS \
-        { "policy", OPT_V_POLICY, 's' }, \
-        { "purpose", OPT_V_PURPOSE, 's' }, \
-        { "verify_name", OPT_V_VERIFY_NAME, 's' }, \
-        { "verify_depth", OPT_V_VERIFY_DEPTH, 'p' }, \
-        { "attime", OPT_V_ATTIME, 'M' }, \
-        { "verify_hostname", OPT_V_VERIFY_HOSTNAME, 's' }, \
-        { "verify_email", OPT_V_VERIFY_EMAIL, 's' }, \
-        { "verify_ip", OPT_V_VERIFY_IP, 's' }, \
-        { "ignore_critical", OPT_V_IGNORE_CRITICAL, '-' }, \
-        { "issuer_checks", OPT_V_ISSUER_CHECKS, '-' }, \
-        { "crl_check", OPT_V_CRL_CHECK, '-', "Check that peer cert has not been revoked" }, \
-        { "crl_check_all", OPT_V_CRL_CHECK_ALL, '-', "Also check all certs in the chain" }, \
-        { "policy_check", OPT_V_POLICY_CHECK, '-' }, \
-        { "explicit_policy", OPT_V_EXPLICIT_POLICY, '-' }, \
-        { "inhibit_any", OPT_V_INHIBIT_ANY, '-' }, \
-        { "inhibit_map", OPT_V_INHIBIT_MAP, '-' }, \
-        { "x509_strict", OPT_V_X509_STRICT, '-' }, \
-        { "extended_crl", OPT_V_EXTENDED_CRL, '-' }, \
-        { "use_deltas", OPT_V_USE_DELTAS, '-' }, \
-        { "policy_print", OPT_V_POLICY_PRINT, '-' }, \
-        { "check_ss_sig", OPT_V_CHECK_SS_SIG, '-' }, \
-        { "trusted_first", OPT_V_TRUSTED_FIRST, '-', "Use locally-trusted CA's first in building chain" }, \
-        { "suiteB_128_only", OPT_V_SUITEB_128_ONLY, '-' }, \
-        { "suiteB_128", OPT_V_SUITEB_128, '-' }, \
-        { "suiteB_192", OPT_V_SUITEB_192, '-' }, \
-        { "partial_chain", OPT_V_PARTIAL_CHAIN, '-' }, \
-        { "no_alt_chains", OPT_V_NO_ALT_CHAINS, '-', "Only use the first cert chain found" }, \
-        { "no_check_time", OPT_V_NO_CHECK_TIME, '-', "Do not check validity against current time" }
+        { "policy", OPT_V_POLICY, 's', "adds policy to the acceptable policy set"}, \
+        { "purpose", OPT_V_PURPOSE, 's', \
+            "certificate chain purpose"}, \
+        { "verify_name", OPT_V_VERIFY_NAME, 's', "verification policy name"}, \
+        { "verify_depth", OPT_V_VERIFY_DEPTH, 'p', \
+            "chain depth limit"}, \
+        { "attime", OPT_V_ATTIME, 'M', "verification epoch time" }, \
+        { "verify_hostname", OPT_V_VERIFY_HOSTNAME, 's', \
+            "expected peer hostname" }, \
+        { "verify_email", OPT_V_VERIFY_EMAIL, 's', \
+            "expected peer email" }, \
+        { "verify_ip", OPT_V_VERIFY_IP, 's', \
+            "expected peer IP address" }, \
+        { "ignore_critical", OPT_V_IGNORE_CRITICAL, '-', \
+            "permit unhandled critical extensions"}, \
+        { "issuer_checks", OPT_V_ISSUER_CHECKS, '-', "(deprecated)"}, \
+        { "crl_check", OPT_V_CRL_CHECK, '-', "check leaf certificate revocation" }, \
+        { "crl_check_all", OPT_V_CRL_CHECK_ALL, '-', "check full chain revocation" }, \
+        { "policy_check", OPT_V_POLICY_CHECK, '-', "perform rfc5280 policy checks"}, \
+        { "explicit_policy", OPT_V_EXPLICIT_POLICY, '-', \
+            "set policy variable require-explicit-policy"}, \
+        { "inhibit_any", OPT_V_INHIBIT_ANY, '-', \
+            "set policy variable inihibit-any-policy"}, \
+        { "inhibit_map", OPT_V_INHIBIT_MAP, '-', \
+            "set policy variable inihibit-policy-mapping"}, \
+        { "x509_strict", OPT_V_X509_STRICT, '-', \
+            "disable certificate compatibility work-arounds"}, \
+        { "extended_crl", OPT_V_EXTENDED_CRL, '-', \
+            "enable extended CRL features"}, \
+        { "use_deltas", OPT_V_USE_DELTAS, '-', \
+            "use delta CRLs"}, \
+        { "policy_print", OPT_V_POLICY_PRINT, '-', \
+            "print policy processing diagnostics"}, \
+        { "check_ss_sig", OPT_V_CHECK_SS_SIG, '-', \
+            "check root CA self-signatures"}, \
+        { "trusted_first", OPT_V_TRUSTED_FIRST, '-', \
+            "search trust store first (default)" }, \
+        { "suiteB_128_only", OPT_V_SUITEB_128_ONLY, '-', "Suite B 128-bit-only mode"}, \
+        { "suiteB_128", OPT_V_SUITEB_128, '-', \
+            "Suite B 128-bit mode allowing 192-bit algorithms"}, \
+        { "suiteB_192", OPT_V_SUITEB_192, '-', "Suite B 192-bit-only mode" }, \
+        { "partial_chain", OPT_V_PARTIAL_CHAIN, '-', \
+            "accept chains anchored by intermediate trust-store CAs"}, \
+        { "no_alt_chains", OPT_V_NO_ALT_CHAINS, '-', "(deprecated)" }, \
+        { "no_check_time", OPT_V_NO_CHECK_TIME, '-', "ignore certificate validity time" }
 
 # define OPT_V_CASES \
         OPT_V__FIRST: case OPT_V__LAST: break; \
@@ -262,12 +279,15 @@ void wait_for_async(SSL *s);
         OPT_X__LAST
 
 # define OPT_X_OPTIONS \
-        { "xkey", OPT_X_KEY, '<' }, \
-        { "xcert", OPT_X_CERT, '<' }, \
-        { "xchain", OPT_X_CHAIN, '<' }, \
-        { "xchain_build", OPT_X_CHAIN_BUILD, '-' }, \
-        { "xcertform", OPT_X_CERTFORM, 'F' }, \
-        { "xkeyform", OPT_X_KEYFORM, 'F' }
+        { "xkey", OPT_X_KEY, '<', "key for Extended certificates"}, \
+        { "xcert", OPT_X_CERT, '<', "cert for Extended certificates"}, \
+        { "xchain", OPT_X_CHAIN, '<', "chain for Extended certificates"}, \
+        { "xchain_build", OPT_X_CHAIN_BUILD, '-', \
+            "build certificate chain for the extended certificates"}, \
+        { "xcertform", OPT_X_CERTFORM, 'F', \
+            "format of Extended certificate (PEM or DER) PEM default " }, \
+        { "xkeyform", OPT_X_KEYFORM, 'F', \
+            "format of Exnteded certificate's key (PEM or DER) PEM default"}
 
 # define OPT_X_CASES \
         OPT_X__FIRST: case OPT_X__LAST: break; \
@@ -285,28 +305,34 @@ void wait_for_async(SSL *s);
 # define OPT_S_ENUM \
         OPT_S__FIRST=3000, \
         OPT_S_NOSSL3, OPT_S_NOTLS1, OPT_S_NOTLS1_1, OPT_S_NOTLS1_2, \
-        OPT_S_BUGS, OPT_S_COMP, OPT_S_ECDHSINGLE, OPT_S_NOTICKET, \
+        OPT_S_BUGS, OPT_S_NO_COMP, OPT_S_NOTICKET, \
         OPT_S_SERVERPREF, OPT_S_LEGACYRENEG, OPT_S_LEGACYCONN, \
         OPT_S_ONRESUMP, OPT_S_NOLEGACYCONN, OPT_S_STRICT, OPT_S_SIGALGS, \
         OPT_S_CLIENTSIGALGS, OPT_S_CURVES, OPT_S_NAMEDCURVE, OPT_S_CIPHER, \
-        OPT_S_DHPARAM, OPT_S_DEBUGBROKE, \
+        OPT_S_DHPARAM, OPT_S_DEBUGBROKE, OPT_S_COMP, \
         OPT_S__LAST
 
 # define OPT_S_OPTIONS \
-        {"no_ssl3", OPT_S_NOSSL3, '-' }, \
-        {"no_tls1", OPT_S_NOTLS1, '-' }, \
-        {"no_tls1_1", OPT_S_NOTLS1_1, '-' }, \
-        {"no_tls1_2", OPT_S_NOTLS1_2, '-' }, \
-        {"bugs", OPT_S_BUGS, '-' }, \
+        {"no_ssl3", OPT_S_NOSSL3, '-',"Just disable SSLv3" }, \
+        {"no_tls1", OPT_S_NOTLS1, '-', "Just disable TLSv1"}, \
+        {"no_tls1_1", OPT_S_NOTLS1_1, '-', "Just disable TLSv1.1" }, \
+        {"no_tls1_2", OPT_S_NOTLS1_2, '-', "Just disable TLSv1.2"}, \
+        {"bugs", OPT_S_BUGS, '-', "Turn on SSL bug compatibility"}, \
+        {"no_comp", OPT_S_NO_COMP, '-', "Disable SSL/TLS compression (default)" }, \
         {"comp", OPT_S_COMP, '-', "Use SSL/TLS-level compression" }, \
-        {"ecdh_single", OPT_S_ECDHSINGLE, '-' }, \
-        {"no_ticket", OPT_S_NOTICKET, '-' }, \
-        {"serverpref", OPT_S_SERVERPREF, '-' }, \
-        {"legacy_renegotiation", OPT_S_LEGACYRENEG, '-' }, \
-        {"legacy_server_connect", OPT_S_LEGACYCONN, '-' }, \
-        {"no_resumption_on_reneg", OPT_S_ONRESUMP, '-' }, \
-        {"no_legacy_server_connect", OPT_S_NOLEGACYCONN, '-' }, \
-        {"strict", OPT_S_STRICT, '-' }, \
+        {"no_ticket", OPT_S_NOTICKET, '-', \
+            "Disable use of TLS session tickets"}, \
+        {"serverpref", OPT_S_SERVERPREF, '-', "Use server's cipher preferences"}, \
+        {"legacy_renegotiation", OPT_S_LEGACYRENEG, '-', \
+            "Enable use of legacy renegotiation (dangerous)"}, \
+        {"legacy_server_connect", OPT_S_LEGACYCONN, '-', \
+            "Allow initial connection to servers that don't support RI"}, \
+        {"no_resumption_on_reneg", OPT_S_ONRESUMP, '-', \
+            "Disallow session resumption on renegotiation"}, \
+        {"no_legacy_server_connect", OPT_S_NOLEGACYCONN, '-', \
+            "Disallow initial connection to servers that don't support RI"}, \
+        {"strict", OPT_S_STRICT, '-', \
+            "Enforce strict certificate checks as per TLS standard"}, \
         {"sigalgs", OPT_S_SIGALGS, 's', \
             "Signature algorithms to support (colon-separated list)" }, \
         {"client_sigalgs", OPT_S_CLIENTSIGALGS, 's', \
@@ -316,9 +342,11 @@ void wait_for_async(SSL *s);
             "Elliptic curves to advertise (colon-separated list)" }, \
         {"named_curve", OPT_S_NAMEDCURVE, 's', \
             "Elliptic curve used for ECDHE (server-side only)" }, \
-        {"cipher", OPT_S_CIPHER, 's', }, \
-        {"dhparam", OPT_S_DHPARAM, '<' }, \
-        {"debug_broken_protocol", OPT_S_DEBUGBROKE, '-' }
+        {"cipher", OPT_S_CIPHER, 's', "Specify cipher list to be used"}, \
+        {"dhparam", OPT_S_DHPARAM, '<', \
+            "DH parameter file to use, in cert file if not specified"}, \
+        {"debug_broken_protocol", OPT_S_DEBUGBROKE, '-', \
+            "Perform all sorts of protocol violations for testing purposes"}
 
 # define OPT_S_CASES \
         OPT_S__FIRST: case OPT_S__LAST: break; \
@@ -327,8 +355,8 @@ void wait_for_async(SSL *s);
         case OPT_S_NOTLS1_1: \
         case OPT_S_NOTLS1_2: \
         case OPT_S_BUGS: \
+        case OPT_S_NO_COMP: \
         case OPT_S_COMP: \
-        case OPT_S_ECDHSINGLE: \
         case OPT_S_NOTICKET: \
         case OPT_S_SERVERPREF: \
         case OPT_S_LEGACYRENEG: \
@@ -354,8 +382,9 @@ typedef struct options_st {
     int retval;
     /*
      * value type: - no value (also the value zero), n number, p positive
-     * number, u unsigned, s string, < input file, > output file, f der/pem
-     * format, F any format identifier.  n and u include zero; p does not.
+     * number, u unsigned, l long, s string, < input file, > output file,
+     * f any format, F der/pem format , E der/pem/engine format identifier.
+     * l, n and u include zero; p does not.
      */
     int valtype;
     const char *helpstr;

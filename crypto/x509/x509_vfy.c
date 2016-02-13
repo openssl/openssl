@@ -318,16 +318,7 @@ static int check_issued(X509_STORE_CTX *ctx, X509 *x, X509 *issuer)
         }
     }
 
-    if (ret == X509_V_OK)
-        return 1;
-    /* If we haven't asked for issuer errors don't set ctx */
-    if (!(ctx->param->flags & X509_V_FLAG_CB_ISSUER_CHECK))
-        return 0;
-
-    ctx->error = ret;
-    ctx->current_cert = x;
-    ctx->current_issuer = issuer;
-    return ctx->verify_cb(0, ctx);
+    return (ret == X509_V_OK);
 }
 
 /* Alternative lookup method: look from a STACK stored in other_ctx */
@@ -1501,16 +1492,35 @@ static int cert_crl(X509_STORE_CTX *ctx, X509_CRL *crl, X509 *x)
 static int check_policy(X509_STORE_CTX *ctx)
 {
     int ret;
+
     if (ctx->parent)
         return 1;
+    /*
+     * With DANE, the trust anchor might be a bare public key, not a
+     * certificate!  In that case our chain does not have the trust anchor
+     * certificate as a top-most element.  This comports well with RFC5280
+     * chain verification, since there too, the trust anchor is not part of the
+     * chain to be verified.  In particular, X509_policy_check() does not look
+     * at the TA cert, but assumes that it is present as the top-most chain
+     * element.  We therefore temporarily push a NULL cert onto the chain if it
+     * was verified via a bare public key, and pop it off right after the
+     * X509_policy_check() call.
+     */
+    if (ctx->bare_ta_signed && !sk_X509_push(ctx->chain, NULL)) {
+        X509err(X509_F_CHECK_POLICY, ERR_R_MALLOC_FAILURE);
+        return 0;
+    }
     ret = X509_policy_check(&ctx->tree, &ctx->explicit_policy, ctx->chain,
                             ctx->param->policies, ctx->param->flags);
-    if (ret == 0) {
+    if (ctx->bare_ta_signed)
+        sk_X509_pop(ctx->chain);
+
+    if (ret == X509_PCY_TREE_INTERNAL) {
         X509err(X509_F_CHECK_POLICY, ERR_R_MALLOC_FAILURE);
         return 0;
     }
     /* Invalid or inconsistent extensions */
-    if (ret == -1) {
+    if (ret == X509_PCY_TREE_INVALID) {
         /*
          * Locate certificates with bad extensions and notify callback.
          */
@@ -1527,10 +1537,14 @@ static int check_policy(X509_STORE_CTX *ctx)
         }
         return 1;
     }
-    if (ret == -2) {
+    if (ret == X509_PCY_TREE_FAILURE) {
         ctx->current_cert = NULL;
         ctx->error = X509_V_ERR_NO_EXPLICIT_POLICY;
         return ctx->verify_cb(0, ctx);
+    }
+    if (ret != X509_PCY_TREE_VALID) {
+        X509err(X509_F_CHECK_POLICY, ERR_R_INTERNAL_ERROR);
+        return 0;
     }
 
     if (ctx->param->flags & X509_V_FLAG_NOTIFY_POLICY) {
@@ -2451,7 +2465,7 @@ static int dane_match(X509_STORE_CTX *ctx, X509 *cert, int depth)
 
     /*
      * If we've previously matched a PKIX-?? record, no need to test any
-     * furher PKIX-?? records,  it remains to just build the PKIX chain.
+     * further PKIX-?? records,  it remains to just build the PKIX chain.
      * Had the match been a DANE-?? record, we'd be done already.
      */
     if (dane->mdpth >= 0)
@@ -2482,7 +2496,7 @@ static int dane_match(X509_STORE_CTX *ctx, X509 *cert, int depth)
      *
      * As soon as we find a match at any given depth, we stop, because either
      * we've matched a DANE-?? record and the peer is authenticated, or, after
-     * exhausing all DANE-?? records, we've matched a PKIX-?? record, which is
+     * exhausting all DANE-?? records, we've matched a PKIX-?? record, which is
      * sufficient for DANE, and what remains to do is ordinary PKIX validation.
      */
     recnum = (dane->umask & mask) ? sk_danetls_record_num(dane->trecs) : 0;
@@ -2608,7 +2622,7 @@ static int check_dane_pkeys(X509_STORE_CTX *ctx)
             X509_verify(cert, t->spki) <= 0)
             continue;
 
-        /* Clear PKIX-?? matches that failed to panned out to a full chain */
+        /* Clear any PKIX-?? matches that failed to extend to a full chain */
         X509_free(dane->mcert);
         dane->mcert = NULL;
 
@@ -2688,7 +2702,7 @@ static int dane_verify(X509_STORE_CTX *ctx)
             return 0;
         ctx->current_cert = cert;
         ctx->error_depth = 0;
-        ctx->error = X509_V_ERR_CERT_UNTRUSTED;
+        ctx->error = X509_V_ERR_DANE_NO_MATCH;
         return ctx->verify_cb(0, ctx);
     }
 
@@ -3003,7 +3017,7 @@ static int build_chain(X509_STORE_CTX *ctx)
             ctx->error = X509_V_ERR_CERT_CHAIN_TOO_LONG;
         else if (DANETLS_ENABLED(dane) &&
                  (!DANETLS_HAS_PKIX(dane) || dane->pdpth >= 0))
-            ctx->error = X509_V_ERR_CERT_UNTRUSTED;
+            ctx->error = X509_V_ERR_DANE_NO_MATCH;
         else if (ss && sk_X509_num(ctx->chain) == 1)
             ctx->error = X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT;
         else if (ss)
@@ -3012,8 +3026,6 @@ static int build_chain(X509_STORE_CTX *ctx)
             ctx->error = X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY;
         else
             ctx->error = X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT;
-        if (DANETLS_ENABLED(dane))
-            dane_reset(dane);
         return ctx->verify_cb(0, ctx);
     }
 }

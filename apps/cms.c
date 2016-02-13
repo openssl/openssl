@@ -206,7 +206,7 @@ OPTIONS cms_options[] = {
     {"recip", OPT_RECIP, '<', "Recipient cert file for decryption"},
     {"certsout", OPT_CERTSOUT, '>', "Certificate output file"},
     {"md", OPT_MD, 's'},
-    {"inkey", OPT_INKEY, '<',
+    {"inkey", OPT_INKEY, 's',
      "Input private key (if not signer or recipient)"},
     {"keyform", OPT_KEYFORM, 'f', "Input private key format (PEM or ENGINE)"},
     {"keyopt", OPT_KEYOPT, 's', "Set public key parameters as n:v pairs"},

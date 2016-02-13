@@ -639,6 +639,9 @@ int CRYPTO_mem_leaks(BIO *b)
     if (mh == NULL && amih == NULL)
         return 1;
 
+    /* Ensure all resources are released */
+    OPENSSL_cleanup();
+
     CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_DISABLE);
 
     ml.bio = b;
@@ -694,8 +697,8 @@ int CRYPTO_mem_leaks_fp(FILE *fp)
     BIO *b;
     int ret;
 
-    if (mh == NULL)
-        return 0;
+    if (mh == NULL && amih == NULL)
+        return 1;
     /*
      * Need to turn off memory checking when allocated BIOs ... especially as
      * we're creating them at a time when we're trying to check we've not

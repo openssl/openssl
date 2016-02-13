@@ -713,6 +713,7 @@ BIO_ADDR *BIO_ADDR_new(void);
 int BIO_ADDR_rawmake(BIO_ADDR *ap, int family,
                      const void *where, size_t wherelen, unsigned short port);
 void BIO_ADDR_free(BIO_ADDR *);
+void BIO_ADDR_clear(BIO_ADDR *ap);
 int BIO_ADDR_family(const BIO_ADDR *ap);
 int BIO_ADDR_rawaddress(const BIO_ADDR *ap, void *p, size_t *l);
 unsigned short BIO_ADDR_rawport(const BIO_ADDR *ap);
@@ -856,6 +857,7 @@ void ERR_load_BIO_strings(void);
 # define BIO_F_BIO_PUTS                                   110
 # define BIO_F_BIO_READ                                   111
 # define BIO_F_BIO_SOCKET                                 140
+# define BIO_F_BIO_SOCKET_NBIO                            142
 # define BIO_F_BIO_SOCK_INFO                              141
 # define BIO_F_BIO_SOCK_INIT                              112
 # define BIO_F_BIO_WRITE                                  113

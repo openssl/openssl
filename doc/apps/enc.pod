@@ -7,6 +7,7 @@ enc - symmetric cipher routines
 =head1 SYNOPSIS
 
 B<openssl enc -ciphername>
+[B<-help>]
 [B<-in filename>]
 [B<-out filename>]
 [B<-pass arg>]
@@ -41,6 +42,10 @@ either by itself or in addition to the encryption or decryption.
 =head1 OPTIONS
 
 =over 4
+
+=item B<-help>
+
+Print out a usage message.
 
 =item B<-in filename>
 

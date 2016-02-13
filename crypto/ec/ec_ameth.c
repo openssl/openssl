@@ -379,59 +379,40 @@ static void int_ec_free(EVP_PKEY *pkey)
     EC_KEY_free(pkey->pkey.ec);
 }
 
-static int do_EC_KEY_print(BIO *bp, const EC_KEY *x, int off, int ktype)
+typedef enum {
+    EC_KEY_PRINT_PRIVATE,
+    EC_KEY_PRINT_PUBLIC,
+    EC_KEY_PRINT_PARAM
+} ec_print_t;
+
+static int do_EC_KEY_print(BIO *bp, const EC_KEY *x, int off, ec_print_t ktype)
 {
-    unsigned char *buffer = NULL;
     const char *ecstr;
-    size_t buf_len = 0, i;
-    int ret = 0, reason = ERR_R_BIO_LIB;
-    BIGNUM *pub_key = NULL;
-    BN_CTX *ctx = NULL;
+    unsigned char *priv = NULL, *pub = NULL;
+    size_t privlen = 0, publen = 0;
+    int ret = 0;
     const EC_GROUP *group;
-    const EC_POINT *public_key;
-    const BIGNUM *priv_key;
 
     if (x == NULL || (group = EC_KEY_get0_group(x)) == NULL) {
-        reason = ERR_R_PASSED_NULL_PARAMETER;
-        goto err;
+        ECerr(EC_F_DO_EC_KEY_PRINT, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
     }
 
-    ctx = BN_CTX_new();
-    if (ctx == NULL) {
-        reason = ERR_R_MALLOC_FAILURE;
-        goto err;
-    }
-
-    if (ktype > 0) {
-        public_key = EC_KEY_get0_public_key(x);
-        if (public_key != NULL) {
-            if ((pub_key = EC_POINT_point2bn(group, public_key,
-                                             EC_KEY_get_conv_form(x), NULL,
-                                             ctx)) == NULL) {
-                reason = ERR_R_EC_LIB;
-                goto err;
-            }
-            buf_len = (size_t)BN_num_bytes(pub_key);
-        }
-    }
-
-    if (ktype == 2) {
-        priv_key = EC_KEY_get0_private_key(x);
-        if (priv_key && (i = (size_t)BN_num_bytes(priv_key)) > buf_len)
-            buf_len = i;
-    } else
-        priv_key = NULL;
-
-    if (ktype > 0) {
-        buf_len += 10;
-        if ((buffer = OPENSSL_malloc(buf_len)) == NULL) {
-            reason = ERR_R_MALLOC_FAILURE;
+    if (ktype != EC_KEY_PRINT_PARAM) {
+        publen = EC_KEY_key2buf(x, EC_KEY_get_conv_form(x), &pub, NULL);
+        if (publen == 0)
             goto err;
-        }
     }
-    if (ktype == 2)
+
+    if (ktype == EC_KEY_PRINT_PRIVATE && EC_KEY_get0_private_key(x) != NULL) {
+        privlen = EC_KEY_priv2buf(x, &priv);
+        if (privlen == 0)
+            goto err;
+    }
+
+    if (ktype == EC_KEY_PRINT_PRIVATE)
         ecstr = "Private-Key";
-    else if (ktype == 1)
+    else if (ktype == EC_KEY_PRINT_PUBLIC)
         ecstr = "Public-Key";
     else
         ecstr = "ECDSA-Parameters";
@@ -442,22 +423,29 @@ static int do_EC_KEY_print(BIO *bp, const EC_KEY *x, int off, int ktype)
                    EC_GROUP_order_bits(group)) <= 0)
         goto err;
 
-    if ((priv_key != NULL) && !ASN1_bn_print(bp, "priv:", priv_key,
-                                             buffer, off))
-        goto err;
-    if ((pub_key != NULL) && !ASN1_bn_print(bp, "pub: ", pub_key,
-                                            buffer, off))
-        goto err;
+    if (privlen != 0) {
+        if (BIO_printf(bp, "%*spriv:\n", off, "") <= 0)
+            goto err;
+        if (ASN1_buf_print(bp, priv, privlen, off + 4) == 0)
+            goto err;
+    }
+
+    if (publen != 0) {
+        if (BIO_printf(bp, "%*spub:\n", off, "") <= 0)
+            goto err;
+        if (ASN1_buf_print(bp, pub, publen, off + 4) == 0)
+            goto err;
+    }
+
     if (!ECPKParameters_print(bp, group, off))
         goto err;
     ret = 1;
  err:
     if (!ret)
-        ECerr(EC_F_DO_EC_KEY_PRINT, reason);
-    BN_free(pub_key);
-    BN_CTX_free(ctx);
-    OPENSSL_free(buffer);
-    return (ret);
+        ECerr(EC_F_DO_EC_KEY_PRINT, ERR_R_EC_LIB);
+    OPENSSL_clear_free(priv, privlen);
+    OPENSSL_free(pub);
+    return ret;
 }
 
 static int eckey_param_decode(EVP_PKEY *pkey,
@@ -481,19 +469,19 @@ static int eckey_param_encode(const EVP_PKEY *pkey, unsigned char **pder)
 static int eckey_param_print(BIO *bp, const EVP_PKEY *pkey, int indent,
                              ASN1_PCTX *ctx)
 {
-    return do_EC_KEY_print(bp, pkey->pkey.ec, indent, 0);
+    return do_EC_KEY_print(bp, pkey->pkey.ec, indent, EC_KEY_PRINT_PARAM);
 }
 
 static int eckey_pub_print(BIO *bp, const EVP_PKEY *pkey, int indent,
                            ASN1_PCTX *ctx)
 {
-    return do_EC_KEY_print(bp, pkey->pkey.ec, indent, 1);
+    return do_EC_KEY_print(bp, pkey->pkey.ec, indent, EC_KEY_PRINT_PUBLIC);
 }
 
 static int eckey_priv_print(BIO *bp, const EVP_PKEY *pkey, int indent,
                             ASN1_PCTX *ctx)
 {
-    return do_EC_KEY_print(bp, pkey->pkey.ec, indent, 2);
+    return do_EC_KEY_print(bp, pkey->pkey.ec, indent, EC_KEY_PRINT_PRIVATE);
 }
 
 static int old_ec_priv_decode(EVP_PKEY *pkey,
@@ -831,7 +819,7 @@ static int ecdh_cms_encrypt(CMS_RecipientInfo *ri)
                         V_ASN1_UNDEF, NULL);
     }
 
-    /* See if custom paraneters set */
+    /* See if custom parameters set */
     kdf_type = EVP_PKEY_CTX_get_ecdh_kdf_type(pctx);
     if (kdf_type <= 0)
         goto err;
@@ -850,7 +838,7 @@ static int ecdh_cms_encrypt(CMS_RecipientInfo *ri)
         if (EVP_PKEY_CTX_set_ecdh_kdf_type(pctx, kdf_type) <= 0)
             goto err;
     } else
-        /* Uknown KDF */
+        /* Unknown KDF */
         goto err;
     if (kdf_md == NULL) {
         /* Fixme later for better MD */

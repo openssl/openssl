@@ -6,7 +6,7 @@ use warnings;
 use File::Spec::Functions;
 use File::Copy;
 use File::Basename;
-use OpenSSL::Test qw/:DEFAULT top_file/;
+use OpenSSL::Test qw/:DEFAULT bldtop_file/;
 
 setup("test_rehash");
 
@@ -51,7 +51,7 @@ indir "rehash.$$" => sub {
 
 sub prepare {
     my @sourcefiles =
-        sort map { glob(top_file('certs', 'demo', "*.$_")) } ('pem',
+        sort map { glob(bldtop_file('certs', 'demo', "*.$_")) } ('pem',
                                                               'crt',
                                                               'cer',
                                                               'crl');

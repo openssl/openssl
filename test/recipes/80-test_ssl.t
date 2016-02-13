@@ -6,7 +6,7 @@ use warnings;
 use POSIX;
 use File::Spec;
 use File::Copy;
-use OpenSSL::Test qw/:DEFAULT with top_file cmdstr/;
+use OpenSSL::Test qw/:DEFAULT with bldtop_file srctop_file cmdstr/;
 use OpenSSL::Test::Utils;
 
 setup("test_ssl");
@@ -27,16 +27,16 @@ my $digest = "-sha1";
 my @reqcmd = ("openssl", "req");
 my @x509cmd = ("openssl", "x509", $digest);
 my @verifycmd = ("openssl", "verify");
-my $dummycnf = top_file("apps", "openssl.cnf");
+my $dummycnf = srctop_file("apps", "openssl.cnf");
 
 my $CAkey = "keyCA.ss";
 my $CAcert="certCA.ss";
 my $CAserial="certCA.srl";
 my $CAreq="reqCA.ss";
-my $CAconf=top_file("test","CAss.cnf");
+my $CAconf=srctop_file("test","CAss.cnf");
 my $CAreq2="req2CA.ss";	# temp
 
-my $Uconf=top_file("test","Uss.cnf");
+my $Uconf=srctop_file("test","Uss.cnf");
 my $Ukey="keyU.ss";
 my $Ureq="reqU.ss";
 my $Ucert="certU.ss";
@@ -49,13 +49,13 @@ my $Ekey="keyE.ss";
 my $Ereq="reqE.ss";
 my $Ecert="certE.ss";
 
-my $P1conf=top_file("test","P1ss.cnf");
+my $P1conf=srctop_file("test","P1ss.cnf");
 my $P1key="keyP1.ss";
 my $P1req="reqP1.ss";
 my $P1cert="certP1.ss";
 my $P1intermediate="tmp_intP1.ss";
 
-my $P2conf=top_file("test","P2ss.cnf");
+my $P2conf=srctop_file("test","P2ss.cnf");
 my $P2key="keyP2.ss";
 my $P2req="reqP2.ss";
 my $P2cert="certP2.ss";
@@ -105,7 +105,7 @@ sub testss {
     close RND;
 
     my @req_dsa = ("-newkey",
-                   "dsa:".File::Spec->catfile("..", "apps", "dsa1024.pem"));;
+                   "dsa:".srctop_file("apps", "dsa1024.pem"));
     my @req_new;
     if ($no_rsa) {
 	@req_new = @req_dsa;
@@ -306,17 +306,17 @@ sub testss {
 }
 
 sub testssl {
-    my $key = shift || top_file("apps","server.pem");
-    my $cert = shift || top_file("apps","server.pem");
+    my $key = shift || bldtop_file("apps","server.pem");
+    my $cert = shift || bldtop_file("apps","server.pem");
     my $CAtmp = shift;
-    my @CA = $CAtmp ? ("-CAfile", $CAtmp) : ("-CApath", top_dir("certs"));
+    my @CA = $CAtmp ? ("-CAfile", $CAtmp) : ("-CApath", bldtop_dir("certs"));
     my @extra = @_;
 
     my @ssltest = ("ssltest",
 		   "-s_key", $key, "-s_cert", $cert,
 		   "-c_key", $key, "-c_cert", $cert);
 
-    my $serverinfo = top_file("test","serverinfo.pem");
+    my $serverinfo = srctop_file("test","serverinfo.pem");
 
     my $dsa_cert = 0;
     if (grep /DSA Public Key/, run(app(["openssl", "x509", "-in", $cert,
@@ -431,12 +431,20 @@ sub testssl {
 	  ok(run(test([@ssltest, "-bio_pair", "-server_auth", "-client_auth", "-app_verify", @CA, @extra])),
 	     'test sslv2/sslv3 with both client and server authentication via BIO pair and app verify');
 
-	  ok(run(test([@ssltest, "-ipv4", @extra])),
-	     'test TLS via IPv4');
-	  ok(run(test([@ssltest, "-ipv6", @extra])),
-	     'test TLS via IPv6');
-
-	}
+        SKIP: {
+            skip "No IPv4 available on this machine", 1
+                unless have_IPv4();
+            ok(run(test([@ssltest, "-ipv4", @extra])),
+               'test TLS via IPv4');
+          }
+          
+        SKIP: {
+            skip "No IPv6 available on this machine", 1
+                unless have_IPv6();
+            ok(run(test([@ssltest, "-ipv6", @extra])),
+               'test TLS via IPv6');
+          }
+        }
     };
 
     subtest "Testing ciphersuites" => sub {
@@ -520,13 +528,13 @@ sub testssl {
 	    skip "skipping RSA tests", 2
 		if $no_rsa;
 
-	    ok(run(test(["ssltest", "-v", "-bio_pair", "-tls1", "-s_cert", top_file("apps","server2.pem"), "-no_dhe", "-no_ecdhe", "-num", "10", "-f", "-time", @extra])),
+	    ok(run(test(["ssltest", "-v", "-bio_pair", "-tls1", "-s_cert", srctop_file("apps","server2.pem"), "-no_dhe", "-no_ecdhe", "-num", "10", "-f", "-time", @extra])),
 	       'test tlsv1 with 1024bit RSA, no (EC)DHE, multiple handshakes');
 
 	    skip "skipping RSA+DHE tests", 1
 		if $no_dh;
 
-	    ok(run(test(["ssltest", "-v", "-bio_pair", "-tls1", "-s_cert", top_file("apps","server2.pem"), "-dhe1024dsa", "-num", "10", "-f", "-time", @extra])),
+	    ok(run(test(["ssltest", "-v", "-bio_pair", "-tls1", "-s_cert", srctop_file("apps","server2.pem"), "-dhe1024dsa", "-num", "10", "-f", "-time", @extra])),
 	       'test tlsv1 with 1024bit RSA, 1024bit DHE, multiple handshakes');
 	  }
 
@@ -752,10 +760,10 @@ sub testssl {
 }
 
 sub testsslproxy {
-    my $key = shift || top_file("apps","server.pem");
-    my $cert = shift || top_file("apps","server.pem");
+    my $key = shift || srctop_file("apps","server.pem");
+    my $cert = shift || srctop_file("apps","server.pem");
     my $CAtmp = shift;
-    my @CA = $CAtmp ? ("-CAfile", $CAtmp) : ("-CApath", top_dir("certs"));
+    my @CA = $CAtmp ? ("-CAfile", $CAtmp) : ("-CApath", bldtop_dir("certs"));
     my @extra = @_;
 
     my @ssltest = ("ssltest",

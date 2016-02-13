@@ -601,7 +601,7 @@ unsigned long SSL_set_options(SSL *s, unsigned long op);
 
 # ifndef OPENSSL_NO_HEARTBEATS
 #  define SSL_heartbeat(ssl) \
-        SSL_ctrl((ssl),SSL_CTRL_TLS_EXT_SEND_HEARTBEAT,0,NULL)
+        SSL_ctrl((ssl),SSL_CTRL_DTLS_EXT_SEND_HEARTBEAT,0,NULL)
 # endif
 
 # define SSL_CTX_set_cert_flags(ctx,op) \
@@ -1115,7 +1115,6 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 # define SSL_CTRL_SET_TMP_DH                     3
 # define SSL_CTRL_SET_TMP_ECDH                   4
 # define SSL_CTRL_SET_TMP_DH_CB                  6
-# define SSL_CTRL_GET_SESSION_REUSED             8
 # define SSL_CTRL_GET_CLIENT_CERT_REQUEST        9
 # define SSL_CTRL_GET_NUM_RENEGOTIATIONS         10
 # define SSL_CTRL_CLEAR_NUM_RENEGOTIATIONS       11
@@ -1178,13 +1177,12 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 # define SSL_CTRL_SET_TLS_EXT_SRP_STRENGTH               80
 # define SSL_CTRL_SET_TLS_EXT_SRP_PASSWORD               81
 # ifndef OPENSSL_NO_HEARTBEATS
-#  define SSL_CTRL_TLS_EXT_SEND_HEARTBEAT                         85
-#  define SSL_CTRL_GET_TLS_EXT_HEARTBEAT_PENDING          86
-#  define SSL_CTRL_SET_TLS_EXT_HEARTBEAT_NO_REQUESTS      87
+#  define SSL_CTRL_DTLS_EXT_SEND_HEARTBEAT               85
+#  define SSL_CTRL_GET_DTLS_EXT_HEARTBEAT_PENDING        86
+#  define SSL_CTRL_SET_DTLS_EXT_HEARTBEAT_NO_REQUESTS    87
 # endif
 # define DTLS_CTRL_GET_TIMEOUT           73
 # define DTLS_CTRL_HANDLE_TIMEOUT        74
-# define DTLS_CTRL_LISTEN                        75
 # define SSL_CTRL_GET_RI_SUPPORT                 76
 # define SSL_CTRL_CLEAR_MODE                     78
 # define SSL_CTRL_SET_NOT_RESUMABLE_SESS_CB      79
@@ -1227,10 +1225,6 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
         SSL_ctrl(ssl,DTLS_CTRL_GET_TIMEOUT,0, (void *)arg)
 # define DTLSv1_handle_timeout(ssl) \
         SSL_ctrl(ssl,DTLS_CTRL_HANDLE_TIMEOUT,0, NULL)
-# define DTLSv1_listen(ssl, peer) \
-        SSL_ctrl(ssl,DTLS_CTRL_LISTEN,0, (void *)peer)
-# define SSL_session_reused(ssl) \
-        SSL_ctrl((ssl),SSL_CTRL_GET_SESSION_REUSED,0,NULL)
 # define SSL_num_renegotiations(ssl) \
         SSL_ctrl((ssl),SSL_CTRL_GET_NUM_RENEGOTIATIONS,0,NULL)
 # define SSL_clear_num_renegotiations(ssl) \
@@ -1449,7 +1443,12 @@ __owur int SSL_add_file_cert_subjects_to_stack(STACK_OF(X509_NAME) *stackCAs,
 int SSL_add_dir_cert_subjects_to_stack(STACK_OF(X509_NAME) *stackCAs,
                                        const char *dir);
 
-void SSL_load_error_strings(void);
+#if OPENSSL_API_COMPAT < 0x10100000L
+# define SSL_load_error_strings() \
+    OPENSSL_init_ssl(OPENSSL_INIT_LOAD_SSL_STRINGS \
+                     | OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL)
+#endif
+
 __owur const char *SSL_state_string(const SSL *s);
 __owur const char *SSL_rstate_string(const SSL *s);
 __owur const char *SSL_state_string_long(const SSL *s);
@@ -1679,7 +1678,9 @@ void SSL_set_accept_state(SSL *s);
 
 __owur long SSL_get_default_timeout(const SSL *s);
 
-int SSL_library_init(void);
+#if OPENSSL_API_COMPAT < 0x10100000L
+# define SSL_library_init() OPENSSL_init_ssl(0, NULL)
+#endif
 
 __owur char *SSL_CIPHER_description(const SSL_CIPHER *, char *buf, int size);
 __owur STACK_OF(X509_NAME) *SSL_dup_CA_list(STACK_OF(X509_NAME) *sk);
@@ -1719,6 +1720,7 @@ __owur OSSL_HANDSHAKE_STATE SSL_get_state(const SSL *ssl);
 
 void SSL_set_verify_result(SSL *ssl, long v);
 __owur long SSL_get_verify_result(const SSL *ssl);
+__owur STACK_OF(X509) *SSL_get0_verified_chain(const SSL *s);
 
 __owur size_t SSL_get_client_random(const SSL *ssl, unsigned char *out,
                                     size_t outlen);
@@ -1814,8 +1816,11 @@ void SSL_set_not_resumable_session_callback(SSL *ssl,
                                             int (*cb) (SSL *ssl,
                                                        int
                                                        is_forward_secure));
+# if OPENSSL_API_COMPAT < 0x10100000L
+#  define SSL_cache_hit(s) SSL_session_reused(s)
+# endif
 
-__owur int SSL_cache_hit(SSL *s);
+__owur int SSL_session_reused(SSL *s);
 __owur int SSL_is_server(SSL *s);
 
 __owur __owur SSL_CONF_CTX *SSL_CONF_CTX_new(void);
@@ -1841,6 +1846,8 @@ void SSL_trace(int write_p, int version, int content_type,
                const void *buf, size_t len, SSL *ssl, void *arg);
 __owur const char *SSL_CIPHER_standard_name(const SSL_CIPHER *c);
 # endif
+
+int DTLSv1_listen(SSL *s, BIO_ADDR *client);
 
 /* What the "other" parameter contains in security callback */
 /* Mask for type */
@@ -1927,6 +1934,15 @@ int (*SSL_CTX_get_security_callback(const SSL_CTX *ctx)) (SSL *s,
 void SSL_CTX_set0_security_ex_data(SSL_CTX *ctx, void *ex);
 __owur void *SSL_CTX_get0_security_ex_data(const SSL_CTX *ctx);
 
+/* OPENSSL_INIT flag 0x010000 reserved for internal use */
+#define OPENSSL_INIT_NO_LOAD_SSL_STRINGS    0x00100000L
+#define OPENSSL_INIT_LOAD_SSL_STRINGS       0x00200000L
+
+#define OPENSSL_INIT_SSL_DEFAULT \
+        (OPENSSL_INIT_LOAD_SSL_STRINGS | OPENSSL_INIT_LOAD_CRYPTO_STRINGS)
+
+int OPENSSL_init_ssl(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings);
+
 # ifndef OPENSSL_NO_UNIT_TEST
 __owur const struct openssl_ssl_test_functions *SSL_test_functions(void);
 # endif
@@ -1958,7 +1974,6 @@ void ERR_load_SSL_strings(void);
 # define SSL_F_DTLS1_GET_MESSAGE_FRAGMENT                 253
 # define SSL_F_DTLS1_HANDLE_TIMEOUT                       297
 # define SSL_F_DTLS1_HEARTBEAT                            305
-# define SSL_F_DTLS1_LISTEN                               350
 # define SSL_F_DTLS1_PREPROCESS_FRAGMENT                  288
 # define SSL_F_DTLS1_PROCESS_OUT_OF_SEQ_MESSAGE           256
 # define SSL_F_DTLS1_PROCESS_RECORD                       257
@@ -1967,10 +1982,12 @@ void ERR_load_SSL_strings(void);
 # define SSL_F_DTLS1_SEND_CERTIFICATE_REQUEST             260
 # define SSL_F_DTLS1_SEND_HELLO_VERIFY_REQUEST            264
 # define SSL_F_DTLS1_WRITE_APP_DATA_BYTES                 268
+# define SSL_F_DTLSV1_LISTEN                              350
 # define SSL_F_DTLS_CONSTRUCT_CHANGE_CIPHER_SPEC          371
 # define SSL_F_DTLS_CONSTRUCT_HELLO_VERIFY_REQUEST        385
 # define SSL_F_DTLS_GET_REASSEMBLED_MESSAGE               370
 # define SSL_F_DTLS_PROCESS_HELLO_VERIFY                  386
+# define SSL_F_OPENSSL_INIT_SSL                           342
 # define SSL_F_READ_STATE_MACHINE                         352
 # define SSL_F_SSL3_ADD_CERT_TO_BUF                       296
 # define SSL_F_SSL3_CALLBACK_CTRL                         233
@@ -1993,7 +2010,6 @@ void ERR_load_SSL_strings(void);
 # define SSL_F_SSL3_SETUP_KEY_BLOCK                       157
 # define SSL_F_SSL3_SETUP_READ_BUFFER                     156
 # define SSL_F_SSL3_SETUP_WRITE_BUFFER                    291
-# define SSL_F_SSL3_SHUTDOWN                              396
 # define SSL_F_SSL3_WRITE_BYTES                           158
 # define SSL_F_SSL3_WRITE_PENDING                         159
 # define SSL_F_SSL_ACCEPT                                 390
@@ -2110,11 +2126,9 @@ void ERR_load_SSL_strings(void);
 # define SSL_F_TLS1_CHECK_SERVERHELLO_TLSEXT              274
 # define SSL_F_TLS1_EXPORT_KEYING_MATERIAL                314
 # define SSL_F_TLS1_GET_CURVELIST                         338
-# define SSL_F_TLS1_HEARTBEAT                             315
 # define SSL_F_TLS1_PREPARE_CLIENTHELLO_TLSEXT            275
 # define SSL_F_TLS1_PREPARE_SERVERHELLO_TLSEXT            276
 # define SSL_F_TLS1_PRF                                   284
-# define SSL_F_TLS1_PROCESS_HEARTBEAT                     341
 # define SSL_F_TLS1_SETUP_KEY_BLOCK                       211
 # define SSL_F_TLS1_SET_SERVER_SIGALGS                    335
 # define SSL_F_TLS_CLIENT_KEY_EXCHANGE_POST_WORK          354

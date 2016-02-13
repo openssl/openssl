@@ -323,7 +323,7 @@ static int rand_add(const void *buf, int num, double add)
             /*
              * Parallel threads may interfere with this, but always each byte
              * of the new state is the XOR of some previous value of its and
-             * local_md (itermediate values may be lost). Alway using locking
+             * local_md (intermediate values may be lost). Alway using locking
              * could hurt performance more than necessary given that
              * conflicts occur only when the total seeding is longer than the
              * random state.
@@ -686,7 +686,8 @@ static int rand_status(void)
 
 #if (defined(__i386)   || defined(__i386__)   || defined(_M_IX86) || \
      defined(__x86_64) || defined(__x86_64__) || \
-     defined(_M_AMD64) || defined (_M_X64)) && defined(OPENSSL_CPUID_OBJ)
+     defined(_M_AMD64) || defined (_M_X64)) && defined(OPENSSL_CPUID_OBJ) \
+     && !defined(OPENSSL_NO_RDRAND)
 
 # define RDRAND_CALLS    4
 

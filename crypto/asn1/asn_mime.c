@@ -364,7 +364,7 @@ static int asn1_output_data(BIO *out, BIO *data, ASN1_VALUE *val, int flags,
     int rv = 1;
 
     /*
-     * If data is not deteched or resigning then the output BIO is already
+     * If data is not detached or resigning then the output BIO is already
      * set up to finalise when it is written through.
      */
     if (!(flags & SMIME_DETACHED) || (flags & PKCS7_REUSE_DIGEST)) {

@@ -27,9 +27,10 @@
  */
 
 #include <openssl/objects.h>
-#include <openssl/engine.h>
+#include <internal/engine.h>
 #include <openssl/evp.h>
 #include <openssl/bn.h>
+#include <openssl/crypto.h>
 
 #if (defined(__unix__) || defined(unix)) && !defined(USG) && \
         (defined(OpenBSD) || defined(__FreeBSD__))
@@ -64,7 +65,7 @@
 
 #ifndef HAVE_CRYPTODEV
 
-void ENGINE_load_cryptodev(void)
+void engine_load_cryptodev_internal(void)
 {
     /* This is a NOP on platforms without /dev/crypto */
     return;
@@ -136,7 +137,7 @@ static int cryptodev_dh_compute_key(unsigned char *key, const BIGNUM *pub_key,
 #endif
 static int cryptodev_ctrl(ENGINE *e, int cmd, long i, void *p,
                           void (*f) (void));
-void ENGINE_load_cryptodev(void);
+void engine_load_cryptodev_internal(void);
 
 static const ENGINE_CMD_DEFN cryptodev_defns[] = {
     {0, NULL, NULL, 0}
@@ -364,12 +365,12 @@ static int get_cryptodev_digests(const int **cnids)
  * Find the useable ciphers|digests from dev/crypto - this is the first
  * thing called by the engine init crud which determines what it
  * can use for ciphers from this engine. We want to return
- * only what we can do, anythine else is handled by software.
+ * only what we can do, anything else is handled by software.
  *
  * If we can't initialize the device to do anything useful for
  * any reason, we want to return a NULL array, and 0 length,
  * which forces everything to be done is software. By putting
- * the initalization of the device in here, we ensure we can
+ * the initialization of the device in here, we ensure we can
  * use this engine as the default, and if for whatever reason
  * /dev/crypto won't do what we want it will just be done in
  * software
@@ -400,7 +401,7 @@ static int cryptodev_usable_digests(const int **nids)
      * suck moose gonads - would be nice to be able to decide something
      * as reasonable default without having hackery that's card dependent.
      * of course, the default should probably be just do everything,
-     * with perhaps a sysctl to turn algoritms off (or have them off
+     * with perhaps a sysctl to turn algorithms off (or have them off
      * by default) on cards that generally suck like the hifn.
      */
     *nids = NULL;
@@ -447,7 +448,7 @@ cryptodev_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 
     if (ioctl(state->d_fd, CIOCCRYPT, &cryp) == -1) {
         /*
-         * XXX need better errror handling this can fail for a number of
+         * XXX need better error handling this can fail for a number of
          * different reasons.
          */
         return (0);
@@ -503,7 +504,7 @@ cryptodev_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 }
 
 /*
- * free anything we allocated earlier when initting a
+ * free anything we allocated earlier when initing a
  * session, and close the session.
  */
 static int cryptodev_cleanup(EVP_CIPHER_CTX *ctx)
@@ -516,7 +517,7 @@ static int cryptodev_cleanup(EVP_CIPHER_CTX *ctx)
         return (0);
 
     /*
-     * XXX if this ioctl fails, someting's wrong. the invoker may have called
+     * XXX if this ioctl fails, something's wrong. the invoker may have called
      * us with a bogus ctx, or we could have a device that for whatever
      * reason just doesn't want to play ball - it's not clear what's right
      * here - should this be an error? should it just increase a counter,
@@ -1619,7 +1620,7 @@ cryptodev_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f) (void))
     return (1);
 }
 
-void ENGINE_load_cryptodev(void)
+void engine_load_cryptodev_internal(void)
 {
     ENGINE *engine = ENGINE_new();
     int fd;

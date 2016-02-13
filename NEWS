@@ -32,6 +32,8 @@
       o Change of Configure to use --prefix as the main installation
         directory location rather than --openssldir.  The latter becomes
         the directory for certs, private key and openssl.cnf exclusively.
+      o Reworked BIO networking library, with full support for IPv6.
+      o New "unified" build system
 
   Major changes between OpenSSL 1.0.2e and OpenSSL 1.0.2f [28 Jan 2016]
 

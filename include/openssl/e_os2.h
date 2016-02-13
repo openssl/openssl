@@ -206,8 +206,8 @@ extern "C" {
 /*-
  * Definitions of OPENSSL_GLOBAL and OPENSSL_EXTERN, to define and declare
  * certain global symbols that, with some compilers under VMS, have to be
- * defined and declared explicitely with globaldef and globalref.
- * Definitions of OPENSSL_EXPORT and OPENSSL_EXTERN, to define and declare
+ * defined and declared explicitly with globaldef and globalref.
+ * Definitions of OPENSSL_EXPORT and OPENSSL_IMPORT, to define and declare
  * DLL exports and imports for compilers under Win32.  These are a little
  * more complicated to use.  Basically, for any library that exports some
  * global variables, the following code must be present in the header file
@@ -262,17 +262,21 @@ extern "C" {
 # ifdef _WIN32
 #  ifdef _WIN64
 #   define ossl_ssize_t __int64
+#   define OSSL_SSIZE_MAX _I64_MAX
 #  else
 #   define ossl_ssize_t int
+#   define OSSL_SSIZE_MAX INT_MAX
 #  endif
 # endif
 
 # if defined(__ultrix) && !defined(ssize_t)
 #  define ossl_ssize_t int
+#  define OSSL_SSIZE_MAX INT_MAX
 # endif
 
 # ifndef ossl_ssize_t
 #  define ossl_ssize_t ssize_t
+#  define OSSL_SSIZE_MAX SSIZE_MAX
 # endif
 
 # ifdef DEBUG_UNUSED
@@ -317,7 +321,11 @@ typedef unsigned __int64 uint64_t;
  * isn't available or did not define it, just go with hard-coded.
  */
 # ifndef PRIu64
-#  define PRIu64 "lu"
+#  ifdef SIXTY_FOUR_BIT_LONG
+#   define PRIu64 "lu"
+#  else
+#   define PRIu64 "llu"
+#  endif
 # endif
 
 /* ossl_inline: portable inline definition usable in public headers */

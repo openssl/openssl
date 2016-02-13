@@ -324,11 +324,9 @@ int main(int argc, char *argv[])
         RSA_free(key);
     }
 
-    CRYPTO_cleanup_all_ex_data();
-    ERR_remove_thread_state(NULL);
-
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG
-    CRYPTO_mem_leaks_fp(stderr);
+    if (CRYPTO_mem_leaks_fp(stderr) <= 0)
+        err = 1;
 #endif
 
 # ifdef OPENSSL_SYS_NETWARE

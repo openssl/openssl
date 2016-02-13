@@ -1071,6 +1071,7 @@ int speed_main(int argc, char **argv)
         c[D_SHA256][i] = c[D_SHA256][0] * 4 * l0 / l1;
         c[D_SHA512][i] = c[D_SHA512][0] * 4 * l0 / l1;
         c[D_WHIRLPOOL][i] = c[D_WHIRLPOOL][0] * 4 * l0 / l1;
+        c[D_GHASH][i] = c[D_GHASH][0] * 4 * l0 / l1;
 
         l0 = (long)lengths[i - 1];
 

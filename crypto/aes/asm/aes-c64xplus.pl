@@ -566,7 +566,7 @@ __set_encrypt_key:
 	NOP
 
 	BNOP	RA,5
-||	MVK	-2,RET				; unknown bit lenght
+||	MVK	-2,RET				; unknown bit length
 ||	MVK	0,B0				; redundant
 ;;====================================================================
 ;;====================================================================

@@ -274,6 +274,21 @@ int ssl3_get_record(SSL *s)
             }
 
             if ((version >> 8) != SSL3_VERSION_MAJOR) {
+                if (s->first_packet) {
+                    /* Go back to start of packet, look at the five bytes
+                     * that we have. */
+                    p = RECORD_LAYER_get_packet(&s->rlayer);
+                    if (strncmp((char *)p, "GET ", 4) == 0 ||
+                        strncmp((char *)p, "POST ", 5) == 0 ||
+                        strncmp((char *)p, "HEAD ", 5) == 0 ||
+                        strncmp((char *)p, "PUT ", 4) == 0) {
+                        SSLerr(SSL_F_SSL3_GET_RECORD, SSL_R_HTTP_REQUEST);
+                        goto err;
+                    } else if (strncmp((char *)p, "CONNE", 5) == 0) {
+                        SSLerr(SSL_F_SSL3_GET_RECORD, SSL_R_HTTPS_PROXY_REQUEST);
+                        goto err;
+                    }
+                }
                 SSLerr(SSL_F_SSL3_GET_RECORD, SSL_R_WRONG_VERSION_NUMBER);
                 goto err;
             }
