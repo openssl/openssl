@@ -112,6 +112,7 @@ SHARED_LDFLAGS={- $target{shared_ldflag}
                   # $prefix is not /usr.
                   . ($config{target} =~ m|^BSD-| && $prefix !~ m|^/usr/.*$|
                      ? " -Wl,-rpath,\$\$(LIBRPATH)" : "") -}
+SHARED_RCFLAGS={- $target{shared_rcflag} -}
 
 PERL={- $config{perl} -}
 
@@ -790,6 +791,7 @@ $shlibtarget : $lib\$(LIB_EXT) $deps $ordinalsfile
 		CC="\$(CC)" CFLAGS="\$(CFLAGS)" LDFLAGS="\$(LDFLAGS)" \\
 		CROSS_COMPILE="\$(CROSS_COMPILE)" \\
 		SHARED_LDFLAGS="\$(SHARED_LDFLAGS)" SHLIB_EXT=\$(SHLIB_EXT) \\
+		SHARED_RCFLAGS="\$(SHARED_RCFLAGS)" \\
 		link_a.$shlib_target
 EOF
 	  . (windowsdll() ? <<"EOF" : "");
@@ -855,7 +857,7 @@ $bin\$(EXE_EXT) : $objs $deps
 	\$(MAKE) -f \$(SRCDIR)/Makefile.shared -e \\
 		PERL=\$(PERL) SRCDIR=\$(SRCDIR) \\
 		APPNAME=$bin OBJECTS="$objs" \\
-		LIBDEPS="\$(PLIB_LDFLAGS) \$(LDFLAGS) $linklibs \$(EX_LIBS)" \\
+		LIBDEPS="\$(PLIB_LDFLAGS) $linklibs \$(EX_LIBS)" \\
 		CC="\$(CC)" CFLAGS="\$(CFLAGS)" LDFLAGS="\$(LDFLAGS)" \\
 		LIBRPATH="\$(INSTALLTOP)/\$(LIBDIR)" \\
 		link_app.$shlib_target
