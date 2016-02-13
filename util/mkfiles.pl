@@ -107,8 +107,8 @@ while (<IN>)
 				{
 				$b=$`;
 				$o.=$b." ";
-				$b=<IN>;
-				$b =~ s|\R$||;
+				$b = "" unless defined($b = <IN>);
+				$b =~ s{\R$}{};
 				}
 			else
 				{

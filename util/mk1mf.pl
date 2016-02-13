@@ -553,8 +553,10 @@ if ($fips)
 			{
 			open (IN, "util/fipslib_path.txt") || fipslib_error();
 			$fipslibdir = <IN>;
-			$fipslibdir =~ s|\R$||;
 			close IN;
+			$fipslibdir = "" unless defined($fipslibdir);
+			$fipslibdir =~ s{\R$}{};
+			fipslib_error() if ($fipslibdir eq "");
 			}
 		fips_check_files($fipslibdir,
 				"fipscanister.lib", "fipscanister.lib.sha1",
