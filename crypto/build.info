@@ -28,25 +28,25 @@ crypto/buildinf.h : Makefile
 	$(CC) $(CFLAGS) -c -o $@ $(TOP)/ms/uplink.c
 
 {- $builddir -}/uplink-x86.s:	$(SRCDIR)/ms/uplink-x86.pl
-	$(PERL) $(TOP)/ms/uplink-x86.pl $(PERLASM_SCHEME) > $@
+	CC="$(CC)" $(PERL) $(TOP)/ms/uplink-x86.pl $(PERLASM_SCHEME) > $@
 
 {- $builddir -}/x86cpuid.s:	{- $sourcedir -}/x86cpuid.pl {- $sourcedir -}/perlasm/x86asm.pl
-	$(PERL) {- $sourcedir -}/x86cpuid.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) > $@
+	CC="$(CC)" $(PERL) {- $sourcedir -}/x86cpuid.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) > $@
 
 {- $builddir -}/x86_64cpuid.s:	{- $sourcedir -}/x86_64cpuid.pl
-	$(PERL) {- $sourcedir -}/x86_64cpuid.pl $(PERLASM_SCHEME) > $@
+	CC="$(CC)" $(PERL) {- $sourcedir -}/x86_64cpuid.pl $(PERLASM_SCHEME) > $@
 {- $builddir -}/ia64cpuid.s:	{- $sourcedir -}/ia64cpuid.S
 	$(CC) $(CFLAGS) -E {- $sourcedir -}/ia64cpuid.S > $@
 {- $builddir -}/ppccpuid.s:	{- $sourcedir -}/ppccpuid.pl
-	$(PERL) {- $sourcedir -}/ppccpuid.pl $(PERLASM_SCHEME) $@
+	CC="$(CC)" $(PERL) {- $sourcedir -}/ppccpuid.pl $(PERLASM_SCHEME) $@
 {- $builddir -}/pariscid.s:	{- $sourcedir -}/pariscid.pl
-	$(PERL) {- $sourcedir -}/pariscid.pl $(PERLASM_SCHEME) $@
+	CC="$(CC)" $(PERL) {- $sourcedir -}/pariscid.pl $(PERLASM_SCHEME) $@
 {- $builddir -}/alphacpuid.s:	{- $sourcedir -}/alphacpuid.pl
 	(preproc=$$$$.$@.S; trap "rm $$preproc" INT; \
-	$(PERL) {- $sourcedir -}/alphacpuid.pl > $$preproc && \
+	CC="$(CC)" $(PERL) {- $sourcedir -}/alphacpuid.pl > $$preproc && \
 	$(CC) -E -P $$preproc > $@ && rm $$preproc)
 {- $builddir -}/arm64cpuid.S:	{- $sourcedir -}/arm64cpuid.pl
-	$(PERL) {- $sourcedir -}/arm64cpuid.pl $(PERLASM_SCHEME) > $@
+	CC="$(CC)" $(PERL) {- $sourcedir -}/arm64cpuid.pl $(PERLASM_SCHEME) > $@
 {- $builddir -}/armv4cpuid.S:	{- $sourcedir -}/armv4cpuid.pl
-	$(PERL) {- $sourcedir -}/armv4cpuid.pl $(PERLASM_SCHEME) > $@
+	CC="$(CC)" $(PERL) {- $sourcedir -}/armv4cpuid.pl $(PERLASM_SCHEME) > $@
 ENDRAW[Makefile]

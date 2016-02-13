@@ -14,10 +14,10 @@ BEGINRAW[Makefile]
 {- $builddir -}/des_enc-sparc.S:	{- $sourcedir -}/asm/des_enc.m4
 	m4 -B 8192 {- $sourcedir -}/asm/des_enc.m4 > $@
 {- $builddir -}/dest4-sparcv9.s:	{- $sourcedir -}/asm/dest4-sparcv9.pl
-	$(PERL) {- $sourcedir -}/asm/dest4-sparcv9.pl $(CFLAGS) > $@
+	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/dest4-sparcv9.pl $(CFLAGS) > $@
 
 {- $builddir -}/des-586.s:	{- $sourcedir -}/asm/des-586.pl {- $sourcetop -}/crypto/perlasm/x86asm.pl {- $sourcetop -}/crypto/perlasm/cbc.pl
-	$(PERL) {- $sourcedir -}/asm/des-586.pl $(PERLASM_SCHEME) $(CFLAGS) > $@
+	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/des-586.pl $(PERLASM_SCHEME) $(CFLAGS) > $@
 {- $builddir -}/crypt586.s:	{- $sourcedir -}/asm/crypt586.pl {- $sourcetop -}/crypto/perlasm/x86asm.pl {- $sourcetop -}/crypto/perlasm/cbc.pl
-	$(PERL) {- $sourcedir -}/asm/crypt586.pl $(PERLASM_SCHEME) $(CFLAGS) > $@
+	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/crypt586.pl $(PERLASM_SCHEME) $(CFLAGS) > $@
 ENDRAW[Makefile]

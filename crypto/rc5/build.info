@@ -6,5 +6,5 @@ BEGINRAW[Makefile]
 ##### RC5 assembler implementations
 
 {- $builddir -}/rc5-586.s: {- $sourcedir -}/asm/rc5-586.pl {- $sourcetop -}/crypto/perlasm/x86asm.pl {- $sourcetop -}/crypto/perlasm/cbc.pl
-	$(PERL) {- $sourcedir -}/asm/rc5-586.pl $(PERLASM_SCHEME) $(CFLAGS) > $@
+	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/rc5-586.pl $(PERLASM_SCHEME) $(CFLAGS) > $@
 ENDRAW[Makefile]
