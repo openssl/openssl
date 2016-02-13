@@ -2473,7 +2473,7 @@ ASN1_item_ex_free                       2391	1_1_0	EXIST::FUNCTION:
 X509_SIG_new                            2392	1_1_0	EXIST::FUNCTION:
 BN_sqr                                  2393	1_1_0	EXIST::FUNCTION:
 TS_TST_INFO_set_time                    2394	1_1_0	EXIST::FUNCTION:
-OpenSSLDie                              2395	1_1_0	EXIST::FUNCTION:
+OPENSSL_die                             2395	1_1_0	EXIST::FUNCTION:
 X509_LOOKUP_by_alias                    2396	1_1_0	EXIST::FUNCTION:
 EC_KEY_set_conv_form                    2397	1_1_0	EXIST::FUNCTION:EC
 CRYPTO_lock                             2398	1_1_0	EXIST::FUNCTION:

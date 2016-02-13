@@ -82,7 +82,7 @@ extern "C" {
 
 # if defined(REF_DEBUG)
 #  define REF_ASSERT_ISNT(test) \
-    (void)((test) ? (OpenSSLDie(__FILE__, __LINE__, "refcount error"), 1) : 0)
+    (void)((test) ? (OPENSSL_die("refcount error", __FILE__, __LINE__), 1) : 0)
 # else
 #  define REF_ASSERT_ISNT(i)
 # endif
@@ -94,6 +94,7 @@ extern "C" {
 # endif
 
 # define osslargused(x)      (void)x
+# define OPENSSL_CONF        "openssl.cnf"
 
 # ifndef DEVRANDOM
 /*
@@ -337,9 +338,6 @@ extern FILE *_imp___iob;
 #  ifndef R_OK
 #   define R_OK        4
 #  endif
-#  define OPENSSL_CONF  "openssl.cnf"
-#  define NUL_DEV       "nul"
-#  define RFILE         ".rnd"
 #  ifdef OPENSSL_SYS_WINCE
 #   define DEFAULT_HOME  ""
 #  else
@@ -369,10 +367,7 @@ extern FILE *_imp___iob;
 #   else
 #    include <unixlib.h>
 #   endif
-#   define OPENSSL_CONF        "openssl.cnf"
-#   define RFILE               ".rnd"
 #   define LIST_SEPARATOR_CHAR ','
-#   define NUL_DEV             "NLA0:"
   /* We don't have any well-defined random devices on VMS, yet... */
 #   undef DEVRANDOM
   /*-
@@ -422,8 +417,6 @@ extern int kbhit(void);
 #   define _kbhit kbhit
 #   define _O_TEXT O_TEXT
 #   define _O_BINARY O_BINARY
-#   define OPENSSL_CONF   "openssl.cnf"
-#   define RFILE    ".rnd"
 #   define LIST_SEPARATOR_CHAR ';'
 #   define EXIT(n)  { if (n) printf("ERROR: %d\n", (int)n); exit(n); }
 
@@ -442,14 +435,9 @@ extern int kbhit(void);
 #    include <fcntl.h>
 #   endif
 
-#   define OPENSSL_CONF        "openssl.cnf"
-#   define RFILE               ".rnd"
 #   define LIST_SEPARATOR_CHAR ':'
-#   define NUL_DEV             "/dev/null"
 #   define EXIT(n)             exit(n)
 #  endif
-
-#  define OpenSSL_getpid()       getpid()
 
 # endif
 
@@ -464,8 +452,6 @@ extern int kbhit(void);
       /* windows world */
 
 #   ifdef OPENSSL_NO_SOCK
-#    define OpenSSL_Write(a,b,c)       (-1)
-#    define OpenSSL_Read(a,b,c)        (-1)
 #   elif !defined(__DJGPP__)
 #    if defined(_WIN32_WCE) && _WIN32_WCE<410
 #     define getservbyname _masked_declaration_getservbyname
@@ -491,11 +477,7 @@ struct servent *PASCAL getservbyname(const char *, const char *);
 #     define socket(d,t,p)   ((int)socket(d,t,p))
 #     define accept(s,f,l)   ((int)accept(s,f,l))
 #    endif
-#    define OpenSSL_Write(a,b,c)       send((a),(b),(c),0)
-#    define OpenSSL_Read(a,b,c)        recv((a),(b),(c),0)
 #   else
-#    define OpenSSL_Write(a,b,c)       write_s(a,b,c,0)
-#    define OpenSSL_Read(a,b,c)        read_s(a,b,c)
 #   endif
 
 #  elif defined(OPENSSL_SYS_NETWARE)
@@ -517,8 +499,6 @@ struct servent *PASCAL getservbyname(const char *, const char *);
 #   else
 #    include <novsock2.h>
 #   endif
-#   define OpenSSL_Write(a,b,c)   send((a),(b),(c),0)
-#   define OpenSSL_Read(a,b,c) recv((a),(b),(c),0)
 
 #  else
 
@@ -578,8 +558,6 @@ struct servent *PASCAL getservbyname(const char *, const char *);
 #    endif
 #   endif
 
-#   define OpenSSL_Read(a,b,c)     read((a),(b),(c))
-#   define OpenSSL_Write(a,b,c)    write((a),(b),(c))
 #   ifndef INVALID_SOCKET
 #    define INVALID_SOCKET      (-1)
 #   endif                       /* INVALID_SOCKET */

@@ -103,7 +103,7 @@ static FILE *(*const vms_fopen)(const char *, const char *, ...) =
 # define VMS_OPEN_ATTRS "shr=get,put,upd,del","ctx=bin,stm","rfm=stm","rat=none","mrs=0"
 #endif
 
-/* #define RFILE ".rnd" - defined in ../../e_os.h */
+#define RFILE ".rnd"
 
 /*
  * Note that these functions are intended for seed files only. Entropy
