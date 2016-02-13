@@ -219,6 +219,8 @@ $code.=<<___;
 .type	ChaCha20_ctr32,\@function,5
 .align	64
 ChaCha20_ctr32:
+	cmp	\$0,$len
+	je	.Lno_data
 	mov	OPENSSL_ia32cap_P+4(%rip),%r10
 	test	\$`1<<(41-32)`,%r10d
 	jnz	.LChaCha20_ssse3
@@ -375,6 +377,7 @@ $code.=<<___;
 	pop	%r12
 	pop	%rbp
 	pop	%rbx
+.Lno_data:
 	ret
 .size	ChaCha20_ctr32,.-ChaCha20_ctr32
 ___
