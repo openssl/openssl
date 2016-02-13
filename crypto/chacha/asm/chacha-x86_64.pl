@@ -344,8 +344,8 @@ $code.=<<___;
 .align	16
 .Ltail:
 	mov	@x[0],4*0(%rsp)
-	xor	%rbx,%rbx
 	mov	@x[1],4*1(%rsp)
+	xor	%rbx,%rbx
 	mov	@x[2],4*2(%rsp)
 	mov	@x[3],4*3(%rsp)
 	mov	@x[4],4*4(%rsp)
@@ -521,11 +521,11 @@ $code.=<<___;
 
 .Loop_tail_ssse3:
 	movzb	($inp,%rbx),%eax
-	movzb	(%rsp,%rbx),%edx
+	movzb	(%rsp,%rbx),%ecx
 	lea	1(%rbx),%rbx
-	xor	%edx,%eax
+	xor	%ecx,%eax
 	mov	%al,-1($out,%rbx)
-	inc	%rbp
+	dec	$len
 	jnz	.Loop_tail_ssse3
 
 .Ldone_ssse3:
