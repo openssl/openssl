@@ -290,7 +290,7 @@ install_dev : check_INSTALLTOP
                 map { "COPY/PROT=W:RE $_.EXE ossl_installroot:['arch'.LIB]" }
                 map { $unified_info{sharednames}->{$_} || () } 
                 @{$unified_info{libraries}}) -}
-        @ {- output_on() -} !
+        @ {- output_on() if $config{no_shared}; "" -} !
 
 install_runtime : check_INSTALLTOP
         @ WRITE SYS$OUTPUT "*** Installing runtime files"
@@ -310,7 +310,7 @@ install_engines : check_INSTALLTOP
         @ WRITE SYS$OUTPUT "*** Installing engines"
         CREATE/DIR ossl_installroot:['arch'.ENGINES]
         COPY/PROT=W:RE [.ENGINES]*.EXE ossl_installroot:['arch'.ENGINES]
-        @ {- output_on() -} !
+        @ {- output_on() if $config{no_shared}; "" -} !
 
 install_config : [.VMS]openssl_startup.com [.VMS]openssl_shutdown.com -
                  check_INSTALLTOP

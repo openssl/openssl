@@ -235,9 +235,9 @@ install_dev:
 		chmod 644 $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn.a.new; \
 		mv -f $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn.a.new \
 		      $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn.a; \
-		: {- output_on() -}; \
+		: {- output_on() unless windowsdll(); "" -}; \
 	done
-	@ : {- output_on() -}
+	@ : {- output_on() if $config{no_shared}; "" -}
 	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig
 	@echo "install libcrypto.pc -> $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig/libcrypto.pc"
 	@cp libcrypto.pc $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig
@@ -274,7 +274,7 @@ uninstall_dev:
 		: {- output_off() unless windowsdll(); "" -}; \
 		echo "$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn.a"; \
 		$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn.a; \
-		: {- output_on() -}; \
+		: {- output_on() unless windowsdll(); "" -}; \
 	done
 	@echo "$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig/libcrypto.pc"
 	@$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig/libcrypto.pc
@@ -318,7 +318,7 @@ install_runtime:
 		mv -f $(DESTDIR)$(INSTALLTOP)/bin/$$fn.new \
 		      $(DESTDIR)$(INSTALLTOP)/bin/$$fn; \
 	done
-	: {- output_on() -};
+	: {- output_on() unless windowsdll(); "" -};
 	@set -e; for x in $(PROGRAMS); do \
 		fn=`basename $$x`; \
 		echo "install $$x -> $(DESTDIR)$(INSTALLTOP)/bin/$$fn"; \
@@ -374,7 +374,7 @@ uninstall_runtime:
 		echo "$(RM) $(DESTDIR)$(INSTALLTOP)/bin/$$fn"; \
 		$(RM) $(DESTDIR)$(INSTALLTOP)/bin/$$fn; \
 	done
-	: {- output_on() -};
+	: {- output_on() unless windowsdll(); "" -};
 	$(RM) $(DESTDIR)$(OPENSSLDIR)/openssl.cnf
 
 # A method to extract all names from a .pod file
