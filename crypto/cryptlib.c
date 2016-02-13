@@ -449,11 +449,10 @@ int OPENSSL_isservice(void)
 }
 #endif
 
-void OpenSSLDie(const char *file, int line, const char *assertion)
+void OPENSSL_die(const char *message, const char *file, int line)
 {
-    OPENSSL_showfatal
-        ("%s(%d): OpenSSL internal error, assertion failed: %s\n", file, line,
-         assertion);
+    OPENSSL_showfatal("%s:%d: OpenSSL internal error: %s\n",
+                      file, line, message);
 #if !defined(_WIN32) || defined(__CYGWIN__)
     abort();
 #else

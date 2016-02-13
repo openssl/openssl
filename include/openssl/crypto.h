@@ -482,8 +482,12 @@ int CRYPTO_mem_leaks(struct bio_st *bio);
 # endif
 
 /* die if we have to */
-void OpenSSLDie(const char *file, int line, const char *assertion);
-# define OPENSSL_assert(e)       (void)((e) ? 0 : (OpenSSLDie(OPENSSL_FILE, OPENSSL_LINE, #e),1))
+# if OPENSSL_API_COMPAT < 0x10100000L
+#  define OpenSSLDie(f,l,a) OPENSSL_die((a),(f),(l))
+# endif
+void OPENSSL_die(const char *assertion, const char *file, int line);
+# define OPENSSL_assert(e) \
+    (void)((e) ? 0 : (OPENSSL_die("assertion failed: " #e, OPENSSL_FILE, OPENSSL_LINE), 1))
 
 unsigned int *OPENSSL_ia32cap_loc(void);
 # define OPENSSL_ia32cap ((OPENSSL_ia32cap_loc())[0])
