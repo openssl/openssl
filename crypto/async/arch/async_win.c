@@ -109,8 +109,6 @@ void async_global_cleanup(void)
 
 int async_fibre_init_dispatcher(async_fibre *fibre)
 {
-    LPVOID dispatcher;
-
     fibre->fibre = ConvertThreadToFiber(NULL);
     if (fibre->fibre == NULL) {
         fibre->converted = 0;
