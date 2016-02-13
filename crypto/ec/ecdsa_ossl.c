@@ -63,11 +63,13 @@
 #include <openssl/ec.h>
 #include "ec_lcl.h"
 
-int ossl_ecdsa_sign(int type, const unsigned char *dgst, int dlen,
+int ossl_ecdsa_sign(int _1, const unsigned char *dgst, int dlen,
                     unsigned char *sig, unsigned int *siglen,
                     const BIGNUM *kinv, const BIGNUM *r, EC_KEY *eckey)
 {
     ECDSA_SIG *s;
+
+    osslunused1();
     RAND_seed(dgst, dlen);
     s = ECDSA_do_sign_ex(dgst, dlen, kinv, r, eckey);
     if (s == NULL) {
@@ -348,7 +350,7 @@ ECDSA_SIG *ossl_ecdsa_sign_sig(const unsigned char *dgst, int dgst_len,
  *      0: incorrect signature
  *     -1: error
  */
-int ossl_ecdsa_verify(int type, const unsigned char *dgst, int dgst_len,
+int ossl_ecdsa_verify(int _1, const unsigned char *dgst, int dgst_len,
                       const unsigned char *sigbuf, int sig_len, EC_KEY *eckey)
 {
     ECDSA_SIG *s;
@@ -357,6 +359,7 @@ int ossl_ecdsa_verify(int type, const unsigned char *dgst, int dgst_len,
     int derlen = -1;
     int ret = -1;
 
+    osslunused1();
     s = ECDSA_SIG_new();
     if (s == NULL)
         return (ret);

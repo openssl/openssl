@@ -146,7 +146,7 @@ static void SCT_LIST_free(STACK_OF(SCT) *a)
     sk_SCT_pop_free(a, SCT_free);
 }
 
-static STACK_OF(SCT) *d2i_SCT_LIST(STACK_OF(SCT) **a,
+static STACK_OF(SCT) *d2i_SCT_LIST(STACK_OF(SCT) **_1,
                                    const unsigned char **pp, long length)
 {
     ASN1_OCTET_STRING *oct = NULL;
@@ -156,6 +156,7 @@ static STACK_OF(SCT) *d2i_SCT_LIST(STACK_OF(SCT) **a,
     unsigned short listlen, sctlen = 0, fieldlen;
     const unsigned char *q = *pp;
 
+    osslunused1();
     if (d2i_ASN1_OCTET_STRING(&oct, &q, length) == NULL)
         return NULL;
     if (oct->length < 2)
@@ -253,12 +254,13 @@ static STACK_OF(SCT) *d2i_SCT_LIST(STACK_OF(SCT) **a,
     goto done;
 }
 
-static int i2r_SCT_LIST(X509V3_EXT_METHOD *method, STACK_OF(SCT) *sct_list,
+static int i2r_SCT_LIST(X509V3_EXT_METHOD *_1, STACK_OF(SCT) *sct_list,
                         BIO *out, int indent)
 {
     SCT *sct;
     int i;
 
+    osslunused1();
     for (i = 0; i < sk_SCT_num(sct_list);) {
         sct = sk_SCT_value(sct_list, i);
 

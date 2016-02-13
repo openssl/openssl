@@ -363,7 +363,7 @@ int ecparam_main(int argc, char **argv)
             goto end;
         if (!EC_GROUP_get_order(group, ec_order, NULL))
             goto end;
-        if (!EC_GROUP_get_cofactor(group, ec_cofactor, NULL))
+        if (!EC_GROUP_get_cofactor(group, ec_cofactor,  NULL))
             goto end;
 
         if (!ec_p || !ec_a || !ec_b || !ec_gen || !ec_order || !ec_cofactor)

@@ -86,11 +86,12 @@ X509_LOOKUP_METHOD *X509_LOOKUP_file(void)
 }
 
 static int by_file_ctrl(X509_LOOKUP *ctx, int cmd, const char *argp,
-                        long argl, char **ret)
+                        long argl, char **_1)
 {
     int ok = 0;
     char *file;
 
+    osslunused1();
     switch (cmd) {
     case X509_L_FILE_LOAD:
         if (argl == X509_FILETYPE_DEFAULT) {

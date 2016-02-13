@@ -77,8 +77,9 @@ IMPLEMENT_BLOCK_CIPHER(bf, ks, BF, EVP_BF_KEY, NID_bf, 8, 16, 8, 64,
                        EVP_CIPHER_set_asn1_iv, EVP_CIPHER_get_asn1_iv, NULL)
 
 static int bf_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
-                       const unsigned char *iv, int enc)
+                        const unsigned char *_1, int _2)
 {
+    osslunused2();
     BF_set_key(&data(ctx)->ks, EVP_CIPHER_CTX_key_length(ctx), key);
     return 1;
 }

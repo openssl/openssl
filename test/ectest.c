@@ -127,7 +127,7 @@ static void group_order_tests(EC_GROUP *group)
     order = BN_new();
     fprintf(stdout, "verify group order ...");
     fflush(stdout);
-    if (!EC_GROUP_get_order(group, order, ctx))
+    if (!EC_GROUP_get_order(group, order, NULL))
         ABORT;
     if (!EC_POINT_mul(group, Q, order, NULL, NULL, ctx))
         ABORT;
@@ -782,7 +782,7 @@ static void prime_field_tests(void)
         points[2] = Q;
         points[3] = Q;
 
-        if (!EC_GROUP_get_order(group, z, ctx))
+        if (!EC_GROUP_get_order(group, z, NULL))
             ABORT;
         if (!BN_add(y, z, BN_value_one()))
             ABORT;
@@ -1657,7 +1657,7 @@ static void nistp_tests()
 static const char rnd_seed[] =
     "string to make the random number generator think it has entropy";
 
-int main(int argc, char *argv[])
+int main()
 {
     char *p;
 

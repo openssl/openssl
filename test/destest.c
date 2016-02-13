@@ -58,6 +58,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "../e_os.h"
 #include <openssl/e_os2.h>
 #if defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_WINDOWS)
 # ifndef OPENSSL_SYS_MSDOS
@@ -352,7 +353,8 @@ static char *pt(unsigned char *p);
 static int cfb_test(int bits, unsigned char *cfb_cipher);
 static int cfb64_test(unsigned char *cfb_cipher);
 static int ede_cfb64_test(unsigned char *cfb_cipher);
-int main(int argc, char *argv[])
+
+int main()
 {
     int j, err = 0;
     unsigned int i;

@@ -54,6 +54,7 @@
 
 #include <openssl/crypto.h>
 #include <stdio.h>
+#include "../e_os.h"
 
 #define SECS_PER_DAY (24 * 60 * 60)
 
@@ -102,7 +103,7 @@ static int check_time(long offset)
     return 1;
 }
 
-int main(int argc, char **argv)
+int main()
 {
     long offset;
     int fails;

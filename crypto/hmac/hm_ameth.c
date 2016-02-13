@@ -68,8 +68,9 @@
  * length and to free up an HMAC key.
  */
 
-static int hmac_size(const EVP_PKEY *pkey)
+static int hmac_size(const EVP_PKEY *_1)
 {
+    osslunused1();
     return EVP_MAX_MD_SIZE;
 }
 
@@ -83,8 +84,9 @@ static void hmac_key_free(EVP_PKEY *pkey)
     }
 }
 
-static int hmac_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
+static int hmac_pkey_ctrl(EVP_PKEY *_1, int op, long _2, void *arg2)
 {
+    osslunused2();
     switch (op) {
     case ASN1_PKEY_CTRL_DEFAULT_MD_NID:
         *(int *)arg2 = NID_sha256;

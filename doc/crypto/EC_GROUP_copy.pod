@@ -1,4 +1,4 @@
-=pod
+pod
 
 =head1 NAME
 

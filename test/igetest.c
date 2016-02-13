@@ -269,7 +269,7 @@ static int run_test_vectors(void)
     return errs;
 }
 
-int main(int argc, char **argv)
+int main()
 {
     unsigned char rkey[16];
     unsigned char rkey2[16];

@@ -1062,10 +1062,12 @@ int ssl_cert_set_cert_store(CERT *c, X509_STORE *store, int chain, int ref)
 
 static int ssl_security_default_callback(SSL *s, SSL_CTX *ctx, int op,
                                          int bits, int nid, void *other,
-                                         void *ex)
+                                         void *_1)
 {
     int level, minbits;
     static const int minbits_table[5] = { 80, 112, 128, 192, 256 };
+
+    osslunused1();
     if (ctx)
         level = SSL_CTX_get_security_level(ctx);
     else

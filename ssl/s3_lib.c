@@ -3100,8 +3100,9 @@ void ssl3_clear(SSL *s)
 }
 
 #ifndef OPENSSL_NO_SRP
-static char *srp_password_from_info_cb(SSL *s, void *arg)
+static char *srp_password_from_info_cb(SSL *s, void *_1)
 {
+    osslunused1();
     return OPENSSL_strdup(s->srp_ctx.info);
 }
 #endif

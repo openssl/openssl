@@ -55,6 +55,7 @@
 #include <openssl/rand.h>
 #include <openssl/err.h>
 #include <openssl/crypto.h>
+#include <e_os.h>
 
 #if (defined(__i386)   || defined(__i386__)   || defined(_M_IX86) || \
      defined(__x86_64) || defined(__x86_64__) || \
@@ -98,8 +99,9 @@ static RAND_METHOD rdrand_meth = {
     random_status,
 };
 
-static int rdrand_init(ENGINE *e)
+static int rdrand_init(ENGINE *_1)
 {
+    osslunused1();
     return 1;
 }
 

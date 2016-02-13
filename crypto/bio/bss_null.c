@@ -100,20 +100,23 @@ static int null_free(BIO *a)
     return (1);
 }
 
-static int null_read(BIO *b, char *out, int outl)
+static int null_read(BIO *_1, char *_2, int _3)
 {
+    osslunused3();
     return (0);
 }
 
-static int null_write(BIO *b, const char *in, int inl)
+static int null_write(BIO *_1, const char *_2, int inl)
 {
+    osslunused2();
     return (inl);
 }
 
-static long null_ctrl(BIO *b, int cmd, long num, void *ptr)
+static long null_ctrl(BIO *_1, int cmd, long _2, void *_3)
 {
     long ret = 1;
 
+    osslunused3();
     switch (cmd) {
     case BIO_CTRL_RESET:
     case BIO_CTRL_EOF:
@@ -135,13 +138,15 @@ static long null_ctrl(BIO *b, int cmd, long num, void *ptr)
     return (ret);
 }
 
-static int null_gets(BIO *bp, char *buf, int size)
+static int null_gets(BIO *_1, char *_2, int _3)
 {
+    osslunused3();
     return (0);
 }
 
-static int null_puts(BIO *bp, const char *str)
+static int null_puts(BIO *_1, const char *str)
 {
+    osslunused1();
     if (str == NULL)
         return (0);
     return (strlen(str));

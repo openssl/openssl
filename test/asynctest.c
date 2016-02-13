@@ -79,15 +79,17 @@
 static int ctr = 0;
 static ASYNC_JOB *currjob = NULL;
 
-static int only_pause(void *args)
+static int only_pause(void *_1)
 {
+    osslunused1();
     ASYNC_pause_job();
 
     return 1;
 }
 
-static int add_two(void *args)
+static int add_two(void *_1)
 {
+    osslunused1();
     ctr++;
     ASYNC_pause_job();
     ctr++;
@@ -95,16 +97,18 @@ static int add_two(void *args)
     return 2;
 }
 
-static int save_current(void *args)
+static int save_current(void *_1)
 {
+    osslunused1();
     currjob = ASYNC_get_current_job();
     ASYNC_pause_job();
 
     return 1;
 }
 
-static int wake(void *args)
+static int wake(void *_1)
 {
+    osslunused1();
     ASYNC_pause_job();
     ASYNC_wake(ASYNC_get_current_job());
     ASYNC_pause_job();
@@ -113,8 +117,9 @@ static int wake(void *args)
     return 1;
 }
 
-static int blockpause(void *args)
+static int blockpause(void *_1)
 {
+    osslunused1();
     ASYNC_block_pause();
     ASYNC_pause_job();
     ASYNC_unblock_pause();
@@ -275,9 +280,8 @@ static int test_ASYNC_block_pause()
 
 #endif
 
-int main(int argc, char **argv)
+int main()
 {
-
 #ifdef ASYNC_NULL
     fprintf(stderr, "NULL implementation - skipping async tests\n");
 #else

@@ -1112,11 +1112,12 @@ int test_mod_exp_mont_consttime(BIO *bp, BN_CTX *ctx)
  * Test constant-time modular exponentiation with 1024-bit inputs, which on
  * x86_64 cause a different code branch to be taken.
  */
-int test_mod_exp_mont5(BIO *bp, BN_CTX *ctx)
+int test_mod_exp_mont5(BIO *_1, BN_CTX *ctx)
 {
     BIGNUM *a, *p, *m, *d, *e;
     BN_MONT_CTX *mont;
 
+    osslunused1();
     a = BN_new();
     p = BN_new();
     m = BN_new();
@@ -1226,11 +1227,12 @@ int test_exp(BIO *bp, BN_CTX *ctx)
 }
 
 #ifndef OPENSSL_NO_EC2M
-int test_gf2m_add(BIO *bp)
+int test_gf2m_add(BIO *_1)
 {
     BIGNUM *a, *b, *c;
     int i, ret = 0;
 
+    osslunused1();
     a = BN_new();
     b = BN_new();
     c = BN_new();
@@ -1262,13 +1264,14 @@ int test_gf2m_add(BIO *bp)
     return ret;
 }
 
-int test_gf2m_mod(BIO *bp)
+int test_gf2m_mod(BIO *_1)
 {
     BIGNUM *a, *b[2], *c, *d, *e;
     int i, j, ret = 0;
     int p0[] = { 163, 7, 6, 3, 0, -1 };
     int p1[] = { 193, 15, 0, -1 };
 
+    osslunused1();
     a = BN_new();
     b[0] = BN_new();
     b[1] = BN_new();
@@ -1303,13 +1306,14 @@ int test_gf2m_mod(BIO *bp)
     return ret;
 }
 
-int test_gf2m_mod_mul(BIO *bp, BN_CTX *ctx)
+int test_gf2m_mod_mul(BIO *_1, BN_CTX *ctx)
 {
     BIGNUM *a, *b[2], *c, *d, *e, *f, *g, *h;
     int i, j, ret = 0;
     int p0[] = { 163, 7, 6, 3, 0, -1 };
     int p1[] = { 193, 15, 0, -1 };
 
+    osslunused1();
     a = BN_new();
     b[0] = BN_new();
     b[1] = BN_new();
@@ -1356,13 +1360,14 @@ int test_gf2m_mod_mul(BIO *bp, BN_CTX *ctx)
     return ret;
 }
 
-int test_gf2m_mod_sqr(BIO *bp, BN_CTX *ctx)
+int test_gf2m_mod_sqr(BIO *_1, BN_CTX *ctx)
 {
     BIGNUM *a, *b[2], *c, *d;
     int i, j, ret = 0;
     int p0[] = { 163, 7, 6, 3, 0, -1 };
     int p1[] = { 193, 15, 0, -1 };
 
+    osslunused1();
     a = BN_new();
     b[0] = BN_new();
     b[1] = BN_new();
@@ -1396,13 +1401,14 @@ int test_gf2m_mod_sqr(BIO *bp, BN_CTX *ctx)
     return ret;
 }
 
-int test_gf2m_mod_inv(BIO *bp, BN_CTX *ctx)
+int test_gf2m_mod_inv(BIO *_1, BN_CTX *ctx)
 {
     BIGNUM *a, *b[2], *c, *d;
     int i, j, ret = 0;
     int p0[] = { 163, 7, 6, 3, 0, -1 };
     int p1[] = { 193, 15, 0, -1 };
 
+    osslunused1();
     a = BN_new();
     b[0] = BN_new();
     b[1] = BN_new();
@@ -1434,13 +1440,14 @@ int test_gf2m_mod_inv(BIO *bp, BN_CTX *ctx)
     return ret;
 }
 
-int test_gf2m_mod_div(BIO *bp, BN_CTX *ctx)
+int test_gf2m_mod_div(BIO *_1, BN_CTX *ctx)
 {
     BIGNUM *a, *b[2], *c, *d, *e, *f;
     int i, j, ret = 0;
     int p0[] = { 163, 7, 6, 3, 0, -1 };
     int p1[] = { 193, 15, 0, -1 };
 
+    osslunused1();
     a = BN_new();
     b[0] = BN_new();
     b[1] = BN_new();
@@ -1478,13 +1485,14 @@ int test_gf2m_mod_div(BIO *bp, BN_CTX *ctx)
     return ret;
 }
 
-int test_gf2m_mod_exp(BIO *bp, BN_CTX *ctx)
+int test_gf2m_mod_exp(BIO *_1, BN_CTX *ctx)
 {
     BIGNUM *a, *b[2], *c, *d, *e, *f;
     int i, j, ret = 0;
     int p0[] = { 163, 7, 6, 3, 0, -1 };
     int p1[] = { 193, 15, 0, -1 };
 
+    osslunused1();
     a = BN_new();
     b[0] = BN_new();
     b[1] = BN_new();
@@ -1527,13 +1535,14 @@ int test_gf2m_mod_exp(BIO *bp, BN_CTX *ctx)
     return ret;
 }
 
-int test_gf2m_mod_sqrt(BIO *bp, BN_CTX *ctx)
+int test_gf2m_mod_sqrt(BIO *_1, BN_CTX *ctx)
 {
     BIGNUM *a, *b[2], *c, *d, *e, *f;
     int i, j, ret = 0;
     int p0[] = { 163, 7, 6, 3, 0, -1 };
     int p1[] = { 193, 15, 0, -1 };
 
+    osslunused1();
     a = BN_new();
     b[0] = BN_new();
     b[1] = BN_new();
@@ -1571,13 +1580,14 @@ int test_gf2m_mod_sqrt(BIO *bp, BN_CTX *ctx)
     return ret;
 }
 
-int test_gf2m_mod_solve_quad(BIO *bp, BN_CTX *ctx)
+int test_gf2m_mod_solve_quad(BIO *_1, BN_CTX *ctx)
 {
     BIGNUM *a, *b[2], *c, *d, *e;
     int i, j, s = 0, t, ret = 0;
     int p0[] = { 163, 7, 6, 3, 0, -1 };
     int p1[] = { 193, 15, 0, -1 };
 
+    osslunused1();
     a = BN_new();
     b[0] = BN_new();
     b[1] = BN_new();
@@ -1629,10 +1639,11 @@ int test_gf2m_mod_solve_quad(BIO *bp, BN_CTX *ctx)
     return ret;
 }
 #endif
-static int genprime_cb(int p, int n, BN_GENCB *arg)
+static int genprime_cb(int p, int _1, BN_GENCB *_2)
 {
     char c = '*';
 
+    osslunused2();
     if (p == 0)
         c = '.';
     if (p == 1)
@@ -1646,7 +1657,7 @@ static int genprime_cb(int p, int n, BN_GENCB *arg)
     return 1;
 }
 
-int test_kron(BIO *bp, BN_CTX *ctx)
+int test_kron(BIO *_1, BN_CTX *ctx)
 {
     BN_GENCB cb;
     BIGNUM *a, *b, *r, *t;
@@ -1654,6 +1665,7 @@ int test_kron(BIO *bp, BN_CTX *ctx)
     int legendre, kronecker;
     int ret = 0;
 
+    osslunused1();
     a = BN_new();
     b = BN_new();
     r = BN_new();
@@ -1743,13 +1755,14 @@ int test_kron(BIO *bp, BN_CTX *ctx)
     return ret;
 }
 
-int test_sqrt(BIO *bp, BN_CTX *ctx)
+int test_sqrt(BIO *_1, BN_CTX *ctx)
 {
     BN_GENCB cb;
     BIGNUM *a, *p, *r;
     int i, j;
     int ret = 0;
 
+    osslunused1();
     a = BN_new();
     p = BN_new();
     r = BN_new();
@@ -1833,12 +1846,13 @@ int test_sqrt(BIO *bp, BN_CTX *ctx)
     return ret;
 }
 
-int test_small_prime(BIO *bp, BN_CTX *ctx)
+int test_small_prime(BIO *bp, BN_CTX *_1)
 {
     static const int bits = 10;
     int ret = 0;
     BIGNUM *r;
 
+    osslunused1();
     r = BN_new();
     if (!BN_generate_prime_ex(r, bits, 0, NULL, NULL, NULL))
         goto err;

@@ -52,6 +52,7 @@
  *
  */
 
+#include "e_os.h"
 
 /*-
  * MessageImprint ::= SEQUENCE  {

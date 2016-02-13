@@ -8,9 +8,10 @@
 
 #include <openssl/whrlpool.h>
 #include <openssl/crypto.h>
+#include "../e_os.h"
 
 #if defined(OPENSSL_NO_WHIRLPOOL)
-int main(int argc, char *argv[])
+int main()
 {
     printf("No Whirlpool support\n");
     return (0);
@@ -117,7 +118,7 @@ static const unsigned char iso_test_9[WHIRLPOOL_DIGEST_LENGTH] = {
     0x69, 0x53, 0xB2, 0x26, 0xE4, 0xED, 0x8B, 0x01
 };
 
-int main(int argc, char *argv[])
+int main()
 {
     unsigned char md[WHIRLPOOL_DIGEST_LENGTH];
     int i;

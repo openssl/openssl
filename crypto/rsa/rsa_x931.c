@@ -100,7 +100,7 @@ int RSA_padding_add_X931(unsigned char *to, int tlen,
     return (1);
 }
 
-int RSA_padding_check_X931(unsigned char *to, int tlen,
+int RSA_padding_check_X931(unsigned char *to,
                            const unsigned char *from, int flen, int num)
 {
     int i = 0, j;

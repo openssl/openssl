@@ -268,11 +268,12 @@ BLOCK_CIPHER_defs(des_ede, DES_EDE_KEY, NID_des_ede, 8, 16, 8, 64,
                      des_ede3_init_key, NULL, NULL, NULL, des3_ctrl)
 
 static int des_ede_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
-                            const unsigned char *iv, int enc)
+                            const unsigned char *_1, int _2)
 {
     DES_cblock *deskey = (DES_cblock *)key;
     DES_EDE_KEY *dat = data(ctx);
 
+    osslunused2();
     dat->stream.cbc = NULL;
 # if defined(SPARC_DES_CAPABLE)
     if (SPARC_DES_CAPABLE) {
@@ -295,11 +296,12 @@ static int des_ede_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 }
 
 static int des_ede3_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
-                             const unsigned char *iv, int enc)
+                             const unsigned char *_1, int _2)
 {
     DES_cblock *deskey = (DES_cblock *)key;
     DES_EDE_KEY *dat = data(ctx);
 
+    osslunused2();
     dat->stream.cbc = NULL;
 # if defined(SPARC_DES_CAPABLE)
     if (SPARC_DES_CAPABLE) {
@@ -321,11 +323,11 @@ static int des_ede3_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
     return 1;
 }
 
-static int des3_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
+static int des3_ctrl(EVP_CIPHER_CTX *ctx, int type, int _1, void *ptr)
 {
-
     DES_cblock *deskey = ptr;
 
+    osslunused1();
     switch (type) {
     case EVP_CTRL_RAND_KEY:
         if (RAND_bytes(ptr, EVP_CIPHER_CTX_key_length(ctx)) <= 0)

@@ -295,10 +295,11 @@ static int traverse_string(const unsigned char *p, int len, int inform,
 
 /* Just count number of characters */
 
-static int in_utf8(unsigned long value, void *arg)
+static int in_utf8(unsigned long _1, void *arg)
 {
-    int *nchar;
-    nchar = arg;
+    int *nchar = arg;
+
+    osslunused1();
     (*nchar)++;
     return 1;
 }

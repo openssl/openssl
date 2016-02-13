@@ -52,6 +52,7 @@
  *
  */
 
+#include <e_os.h>
 #include <openssl/asn1.h>
 #include <openssl/asn1t.h>
 #include <openssl/bio.h>
@@ -146,12 +147,13 @@ BIO *BIO_new_NDEF(BIO *out, ASN1_VALUE *val, const ASN1_ITEM *it)
     return NULL;
 }
 
-static int ndef_prefix(BIO *b, unsigned char **pbuf, int *plen, void *parg)
+static int ndef_prefix(BIO *_1, unsigned char **pbuf, int *plen, void *parg)
 {
     NDEF_SUPPORT *ndef_aux;
     unsigned char *p;
     int derlen;
 
+    osslunused1();
     if (!parg)
         return 0;
 
@@ -174,11 +176,12 @@ static int ndef_prefix(BIO *b, unsigned char **pbuf, int *plen, void *parg)
     return 1;
 }
 
-static int ndef_prefix_free(BIO *b, unsigned char **pbuf, int *plen,
+static int ndef_prefix_free(BIO *_1, unsigned char **pbuf, int *plen,
                             void *parg)
 {
     NDEF_SUPPORT *ndef_aux;
 
+    osslunused1();
     if (!parg)
         return 0;
 
@@ -203,7 +206,7 @@ static int ndef_suffix_free(BIO *b, unsigned char **pbuf, int *plen,
     return 1;
 }
 
-static int ndef_suffix(BIO *b, unsigned char **pbuf, int *plen, void *parg)
+static int ndef_suffix(BIO *_1, unsigned char **pbuf, int *plen, void *parg)
 {
     NDEF_SUPPORT *ndef_aux;
     unsigned char *p;
@@ -211,6 +214,7 @@ static int ndef_suffix(BIO *b, unsigned char **pbuf, int *plen, void *parg)
     const ASN1_AUX *aux;
     ASN1_STREAM_ARG sarg;
 
+    osslunused1();
     if (!parg)
         return 0;
 

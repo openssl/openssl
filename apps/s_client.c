@@ -244,7 +244,7 @@ static char *psk_identity = "Client_identity";
  * char *psk_key=NULL; by default PSK is not used
  */
 
-static unsigned int psk_client_cb(SSL *ssl, const char *hint, char *identity,
+static unsigned int psk_client_cb(SSL *_1, const char *hint, char *identity,
                                   unsigned int max_identity_len,
                                   unsigned char *psk,
                                   unsigned int max_psk_len)
@@ -253,6 +253,7 @@ static unsigned int psk_client_cb(SSL *ssl, const char *hint, char *identity,
     int ret;
     BIGNUM *bn = NULL;
 
+    osslunused1();
     if (c_debug)
         BIO_printf(bio_c_out, "psk_client_cb\n");
     if (!hint) {
@@ -310,10 +311,12 @@ typedef struct tlsextctx_st {
     int ack;
 } tlsextctx;
 
-static int ssl_servername_cb(SSL *s, int *ad, void *arg)
+static int ssl_servername_cb(SSL *s, int *_1, void *arg)
 {
     tlsextctx *p = (tlsextctx *) arg;
     const char *hn = SSL_get_servername(s, TLSEXT_NAMETYPE_host_name);
+
+    osslunused1();
     if (SSL_get_servername_type(s) != -1)
         p->ack = !SSL_session_reused(s) && hn != NULL;
     else
@@ -412,13 +415,14 @@ static int ssl_srp_verify_param_cb(SSL *s, void *arg)
 
 # define PWD_STRLEN 1024
 
-static char *ssl_give_srp_client_pwd_cb(SSL *s, void *arg)
+static char *ssl_give_srp_client_pwd_cb(SSL *_1, void *arg)
 {
     SRP_ARG *srp_arg = (SRP_ARG *)arg;
     char *pass = app_malloc(PWD_STRLEN + 1, "SRP password buffer");
     PW_CB_DATA cb_tmp;
     int l;
 
+    osslunused1();
     cb_tmp.password = (char *)srp_arg->srppassin;
     cb_tmp.prompt_info = "SRP user";
     if ((l = password_callback(pass, PWD_STRLEN, 0, &cb_tmp)) < 0) {
@@ -445,12 +449,13 @@ typedef struct tlsextnextprotoctx_st {
 
 static tlsextnextprotoctx next_proto;
 
-static int next_proto_cb(SSL *s, unsigned char **out, unsigned char *outlen,
+static int next_proto_cb(SSL *_1, unsigned char **out, unsigned char *outlen,
                          const unsigned char *in, unsigned int inlen,
                          void *arg)
 {
     tlsextnextprotoctx *ctx = arg;
 
+    osslunused1();
     if (!c_quiet) {
         /* We can assume that |in| is syntactically valid. */
         unsigned i;
@@ -470,13 +475,14 @@ static int next_proto_cb(SSL *s, unsigned char **out, unsigned char *outlen,
 }
 #endif                         /* ndef OPENSSL_NO_NEXTPROTONEG */
 
-static int serverinfo_cli_parse_cb(SSL *s, unsigned int ext_type,
+static int serverinfo_cli_parse_cb(SSL *_1, unsigned int ext_type,
                                    const unsigned char *in, size_t inlen,
-                                   int *al, void *arg)
+                                   int *_2, void *_3)
 {
     char pem_name[100];
     unsigned char ext_buf[4 + 65536];
 
+    osslunused3();
     /* Reconstruct the type/len fields prior to extension data */
     ext_buf[0] = ext_type >> 8;
     ext_buf[1] = ext_type & 0xFF;
@@ -1419,8 +1425,7 @@ int s_client_main(int argc, char **argv)
     }
 
     if (cert_file) {
-        cert = load_cert(cert_file, cert_format,
-                         NULL, e, "client certificate file");
+        cert = load_cert(cert_file, cert_format, "client certificate file");
         if (cert == NULL) {
             ERR_print_errors(bio_err);
             goto end;
@@ -1428,7 +1433,7 @@ int s_client_main(int argc, char **argv)
     }
 
     if (chain_file) {
-        if (!load_certs(chain_file, &chain, FORMAT_PEM, NULL, e,
+        if (!load_certs(chain_file, &chain, FORMAT_PEM, NULL,
                         "client certificate chain"))
             goto end;
     }

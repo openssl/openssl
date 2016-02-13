@@ -672,7 +672,8 @@ static int def_is_number(const CONF *conf, char c)
     return IS_NUMBER(conf, c);
 }
 
-static int def_to_int(const CONF *conf, char c)
+static int def_to_int(const CONF *_1, char c)
 {
+    osslunused1();
     return c - '0';
 }

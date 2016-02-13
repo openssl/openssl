@@ -218,10 +218,11 @@ int genrsa_main(int argc, char **argv)
     return (ret);
 }
 
-static int genrsa_cb(int p, int n, BN_GENCB *cb)
+static int genrsa_cb(int p, int _1, BN_GENCB *cb)
 {
     char c = '*';
 
+    osslunused1();
     if (p == 0)
         c = '.';
     if (p == 1)

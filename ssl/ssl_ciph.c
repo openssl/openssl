@@ -879,7 +879,7 @@ static void ssl_cipher_collect_aliases(const SSL_CIPHER **ca_list,
     *ca_curr = NULL;            /* end of list */
 }
 
-static void ssl_cipher_apply_rule(uint32_t cipher_id, uint32_t alg_mkey,
+static void ssl_cipher_apply_rule(uint32_t alg_mkey,
                                   uint32_t alg_auth, uint32_t alg_enc,
                                   uint32_t alg_mac, uint32_t alg_ssl,
                                   uint32_t algo_strength, int rule,
@@ -1054,7 +1054,7 @@ static int ssl_cipher_strength_sort(CIPHER_ORDER **head_p,
      */
     for (i = max_strength_bits; i >= 0; i--)
         if (number_uses[i] > 0)
-            ssl_cipher_apply_rule(0, 0, 0, 0, 0, 0, 0, CIPHER_ORD, i, head_p,
+            ssl_cipher_apply_rule(0, 0, 0, 0, 0, 0, CIPHER_ORD, i, head_p,
                                   tail_p);
 
     OPENSSL_free(number_uses);
@@ -1302,8 +1302,7 @@ static int ssl_cipher_process_rulestr(const char *rule_str,
             while ((*l != '\0') && !ITEM_SEP(*l))
                 l++;
         } else if (found) {
-            ssl_cipher_apply_rule(cipher_id,
-                                  alg_mkey, alg_auth, alg_enc, alg_mac,
+            ssl_cipher_apply_rule(alg_mkey, alg_auth, alg_enc, alg_mac,
                                   alg_ssl, algo_strength, rule, -1, head_p,
                                   tail_p);
         } else {
@@ -1431,41 +1430,40 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method, STACK
      * Everything else being equal, prefer ephemeral ECDH over other key
      * exchange mechanisms
      */
-    ssl_cipher_apply_rule(0, SSL_kECDHE, 0, 0, 0, 0, 0, CIPHER_ADD, -1, &head,
+    ssl_cipher_apply_rule(SSL_kECDHE, 0, 0, 0, 0, 0, CIPHER_ADD, -1, &head,
                           &tail);
-    ssl_cipher_apply_rule(0, SSL_kECDHE, 0, 0, 0, 0, 0, CIPHER_DEL, -1, &head,
+    ssl_cipher_apply_rule(SSL_kECDHE, 0, 0, 0, 0, 0, CIPHER_DEL, -1, &head,
                           &tail);
 
     /* AES is our preferred symmetric cipher */
-    ssl_cipher_apply_rule(0, 0, 0, SSL_AES, 0, 0, 0, CIPHER_ADD, -1, &head,
+    ssl_cipher_apply_rule(0, 0, SSL_AES, 0, 0, 0, CIPHER_ADD, -1, &head,
                           &tail);
 
     /* Temporarily enable everything else for sorting */
-    ssl_cipher_apply_rule(0, 0, 0, 0, 0, 0, 0, CIPHER_ADD, -1, &head, &tail);
+    ssl_cipher_apply_rule(0, 0, 0, 0, 0, 0, CIPHER_ADD, -1, &head, &tail);
 
     /* Low priority for MD5 */
-    ssl_cipher_apply_rule(0, 0, 0, 0, SSL_MD5, 0, 0, CIPHER_ORD, -1, &head,
-                          &tail);
+    ssl_cipher_apply_rule(0, 0, 0, SSL_MD5, 0, 0, CIPHER_ORD, -1, &head, &tail);
 
     /*
      * Move anonymous ciphers to the end.  Usually, these will remain
      * disabled. (For applications that allow them, they aren't too bad, but
      * we prefer authenticated ciphers.)
      */
-    ssl_cipher_apply_rule(0, 0, SSL_aNULL, 0, 0, 0, 0, CIPHER_ORD, -1, &head,
+    ssl_cipher_apply_rule(0, SSL_aNULL, 0, 0, 0, 0, CIPHER_ORD, -1, &head,
                           &tail);
 
     /*
-     * ssl_cipher_apply_rule(0, 0, SSL_aDH, 0, 0, 0, 0, CIPHER_ORD, -1,
+     * ssl_cipher_apply_rule(0, SSL_aDH, 0, 0, 0, 0, CIPHER_ORD, -1,
      * &head, &tail);
      */
-    ssl_cipher_apply_rule(0, SSL_kRSA, 0, 0, 0, 0, 0, CIPHER_ORD, -1, &head,
+    ssl_cipher_apply_rule(SSL_kRSA, 0, 0, 0, 0, 0, CIPHER_ORD, -1, &head,
                           &tail);
-    ssl_cipher_apply_rule(0, SSL_kPSK, 0, 0, 0, 0, 0, CIPHER_ORD, -1, &head,
+    ssl_cipher_apply_rule(SSL_kPSK, 0, 0, 0, 0, 0, CIPHER_ORD, -1, &head,
                           &tail);
 
-    /* RC4 is sort-of broken -- move the the end */
-    ssl_cipher_apply_rule(0, 0, 0, SSL_RC4, 0, 0, 0, CIPHER_ORD, -1, &head,
+    /* RC4 is basically broken -- move the the end */
+    ssl_cipher_apply_rule(0, 0, SSL_RC4, 0, 0, 0, CIPHER_ORD, -1, &head,
                           &tail);
 
     /*
@@ -1478,7 +1476,7 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method, STACK
     }
 
     /* Now disable everything (maintaining the ordering!) */
-    ssl_cipher_apply_rule(0, 0, 0, 0, 0, 0, 0, CIPHER_DEL, -1, &head, &tail);
+    ssl_cipher_apply_rule(0, 0, 0, 0, 0, 0, CIPHER_DEL, -1, &head, &tail);
 
     /*
      * We also need cipher aliases for selecting based on the rule_str.

@@ -271,8 +271,7 @@ CMS_ContentInfo *CMS_EncryptedData_encrypt(BIO *in, const EVP_CIPHER *cipher,
 static int cms_signerinfo_verify_cert(CMS_SignerInfo *si,
                                       X509_STORE *store,
                                       STACK_OF(X509) *certs,
-                                      STACK_OF(X509_CRL) *crls,
-                                      unsigned int flags)
+                                      STACK_OF(X509_CRL) *crls)
 {
     X509_STORE_CTX ctx;
     X509 *signer;
@@ -353,8 +352,7 @@ int CMS_verify(CMS_ContentInfo *cms, STACK_OF(X509) *certs,
             crls = CMS_get1_crls(cms);
         for (i = 0; i < sk_CMS_SignerInfo_num(sinfos); i++) {
             si = sk_CMS_SignerInfo_value(sinfos, i);
-            if (!cms_signerinfo_verify_cert(si, store,
-                                            cms_certs, crls, flags))
+            if (!cms_signerinfo_verify_cert(si, store, cms_certs, crls))
                 goto err;
         }
     }
@@ -851,6 +849,7 @@ int CMS_uncompress(CMS_ContentInfo *cms, BIO *dcont, BIO *out,
 CMS_ContentInfo *CMS_compress(BIO *in, int comp_nid, unsigned int flags)
 {
     CMS_ContentInfo *cms;
+
     if (comp_nid <= 0)
         comp_nid = NID_zlib_compression;
     cms = cms_CompressedData_create(comp_nid);
@@ -869,15 +868,16 @@ CMS_ContentInfo *CMS_compress(BIO *in, int comp_nid, unsigned int flags)
 
 #else
 
-int CMS_uncompress(CMS_ContentInfo *cms, BIO *dcont, BIO *out,
-                   unsigned int flags)
+int CMS_uncompress(CMS_ContentInfo *_1, BIO *_2, BIO *_3, unsigned int _4)
 {
+    osslunused4();
     CMSerr(CMS_F_CMS_UNCOMPRESS, CMS_R_UNSUPPORTED_COMPRESSION_ALGORITHM);
     return 0;
 }
 
-CMS_ContentInfo *CMS_compress(BIO *in, int comp_nid, unsigned int flags)
+CMS_ContentInfo *CMS_compress(BIO *_1, int _2, unsigned int _3)
 {
+    osslunused3();
     CMSerr(CMS_F_CMS_COMPRESS, CMS_R_UNSUPPORTED_COMPRESSION_ALGORITHM);
     return NULL;
 }

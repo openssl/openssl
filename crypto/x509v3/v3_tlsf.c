@@ -104,7 +104,7 @@ static TLS_FEATURE_NAME tls_feature_tbl[] = {
  * used by the CONF library to represent a multi-valued extension.  ext_list is
  * returned.
  */
-static STACK_OF(CONF_VALUE) *i2v_TLS_FEATURE(const X509V3_EXT_METHOD *method,
+static STACK_OF(CONF_VALUE) *i2v_TLS_FEATURE(const X509V3_EXT_METHOD *_1,
                                              TLS_FEATURE *tls_feature,
                                              STACK_OF(CONF_VALUE) *ext_list)
 {
@@ -112,6 +112,8 @@ static STACK_OF(CONF_VALUE) *i2v_TLS_FEATURE(const X509V3_EXT_METHOD *method,
     size_t j;
     ASN1_INTEGER *ai;
     long tlsextid;
+
+    osslunused1();
     for (i = 0; i < sk_ASN1_INTEGER_num(tls_feature); i++) {
         ai = sk_ASN1_INTEGER_value(tls_feature, i);
         tlsextid = ASN1_INTEGER_get(ai);
@@ -131,8 +133,8 @@ static STACK_OF(CONF_VALUE) *i2v_TLS_FEATURE(const X509V3_EXT_METHOD *method,
  * structure, which is returned if the conversion is successful.  In case of
  * error, NULL is returned.
  */
-static TLS_FEATURE *v2i_TLS_FEATURE(const X509V3_EXT_METHOD *method,
-                                    X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *nval)
+static TLS_FEATURE *v2i_TLS_FEATURE(const X509V3_EXT_METHOD *_1,
+                                    X509V3_CTX *_2, STACK_OF(CONF_VALUE) *nval)
 {
     TLS_FEATURE *tlsf;
     char *extval, *endptr;
@@ -142,6 +144,7 @@ static TLS_FEATURE *v2i_TLS_FEATURE(const X509V3_EXT_METHOD *method,
     size_t j;
     long tlsextid;
 
+    osslunused2();
     if ((tlsf = sk_ASN1_INTEGER_new_null()) == NULL) {
         X509V3err(X509V3_F_V2I_TLS_FEATURE, ERR_R_MALLOC_FAILURE);
         return NULL;

@@ -56,8 +56,9 @@
 #include <string.h>
 #include <openssl/bio.h>
 #include <openssl/crypto.h>
+#include "../e_os.h"
 
-int main(int argc, char **argv)
+int main(int argc, char *argv[])
 {
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG
     char *p;
@@ -75,7 +76,7 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    if (argv[1] && strcmp(argv[1], "freeit") == 0) {
+    if (argc > 1 && strcmp(argv[1], "freeit") == 0) {
         OPENSSL_free(lost);
         lost = NULL;
     }

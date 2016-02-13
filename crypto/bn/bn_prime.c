@@ -399,7 +399,7 @@ int BN_is_prime_fasttest_ex(const BIGNUM *a, int checks, BN_CTX *ctx_passed,
     return (ret);
 }
 
-int bn_probable_prime_dh_retry(BIGNUM *rnd, int bits, BN_CTX *ctx)
+int bn_probable_prime_dh_retry(BIGNUM *rnd, int bits)
 {
     int i;
     int ret = 0;

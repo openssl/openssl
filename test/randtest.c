@@ -64,16 +64,13 @@
 /* some FIPS 140-1 random number test */
 /* some simple tests */
 
-int main(int argc, char **argv)
+int main()
 {
     unsigned char buf[2500];
     int i, j, k, s, sign, nsign, err = 0;
     unsigned long n1;
     unsigned long n2[16];
     unsigned long runs[2][34];
-    /*
-     * double d;
-     */
     long d;
 
     i = RAND_bytes(buf, 2500);

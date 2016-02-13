@@ -597,7 +597,7 @@ static int rsa_ossl_private_decrypt(int flen, const unsigned char *from,
         r = RSA_padding_check_SSLv23(to, num, buf, j, num);
         break;
     case RSA_NO_PADDING:
-        r = RSA_padding_check_none(to, num, buf, j, num);
+        r = RSA_padding_check_none(to, num, buf, j, 0);
         break;
     default:
         RSAerr(RSA_F_RSA_OSSL_PRIVATE_DECRYPT, RSA_R_UNKNOWN_PADDING_TYPE);
@@ -693,10 +693,10 @@ static int rsa_ossl_public_decrypt(int flen, const unsigned char *from,
         r = RSA_padding_check_PKCS1_type_1(to, num, buf, i, num);
         break;
     case RSA_X931_PADDING:
-        r = RSA_padding_check_X931(to, num, buf, i, num);
+        r = RSA_padding_check_X931(to, buf, i, num);
         break;
     case RSA_NO_PADDING:
-        r = RSA_padding_check_none(to, num, buf, i, num);
+        r = RSA_padding_check_none(to, num, buf, i, 0);
         break;
     default:
         RSAerr(RSA_F_RSA_OSSL_PUBLIC_DECRYPT, RSA_R_UNKNOWN_PADDING_TYPE);

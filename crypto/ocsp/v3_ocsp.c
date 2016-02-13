@@ -156,10 +156,12 @@ const X509V3_EXT_METHOD v3_ocsp_serviceloc = {
     NULL
 };
 
-static int i2r_ocsp_crlid(const X509V3_EXT_METHOD *method, void *in, BIO *bp,
+static int i2r_ocsp_crlid(const X509V3_EXT_METHOD *_1, void *in, BIO *bp,
                           int ind)
 {
     OCSP_CRLID *a = in;
+
+    osslunused1();
     if (a->crlUrl) {
         if (BIO_printf(bp, "%*scrlUrl: ", ind, "") <= 0)
             goto err;
@@ -189,9 +191,10 @@ static int i2r_ocsp_crlid(const X509V3_EXT_METHOD *method, void *in, BIO *bp,
     return 0;
 }
 
-static int i2r_ocsp_acutoff(const X509V3_EXT_METHOD *method, void *cutoff,
+static int i2r_ocsp_acutoff(const X509V3_EXT_METHOD *_1, void *cutoff,
                             BIO *bp, int ind)
 {
+    osslunused1();
     if (BIO_printf(bp, "%*s", ind, "") <= 0)
         return 0;
     if (!ASN1_GENERALIZEDTIME_print(bp, cutoff))
@@ -199,9 +202,10 @@ static int i2r_ocsp_acutoff(const X509V3_EXT_METHOD *method, void *cutoff,
     return 1;
 }
 
-static int i2r_object(const X509V3_EXT_METHOD *method, void *oid, BIO *bp,
+static int i2r_object(const X509V3_EXT_METHOD *_1, void *oid, BIO *bp,
                       int ind)
 {
+    osslunused1();
     if (BIO_printf(bp, "%*s", ind, "") <= 0)
         return 0;
     if (i2a_ASN1_OBJECT(bp, oid) <= 0)
@@ -261,37 +265,41 @@ static void ocsp_nonce_free(void *a)
     ASN1_OCTET_STRING_free(a);
 }
 
-static int i2r_ocsp_nonce(const X509V3_EXT_METHOD *method, void *nonce,
+static int i2r_ocsp_nonce(const X509V3_EXT_METHOD *_1, void *nonce,
                           BIO *out, int indent)
 {
+    osslunused1();
     if (BIO_printf(out, "%*s", indent, "") <= 0)
         return 0;
-    if (i2a_ASN1_STRING(out, nonce, V_ASN1_OCTET_STRING) <= 0)
+    if (i2a_ASN1_STRING(out, nonce, 0) <= 0)
         return 0;
     return 1;
 }
 
 /* Nocheck is just a single NULL. Don't print anything and always set it */
 
-static int i2r_ocsp_nocheck(const X509V3_EXT_METHOD *method, void *nocheck,
-                            BIO *out, int indent)
+static int i2r_ocsp_nocheck(const X509V3_EXT_METHOD *_1, void *_2,
+                            BIO *_3, int _4)
 {
+    osslunused4();
     return 1;
 }
 
-static void *s2i_ocsp_nocheck(const X509V3_EXT_METHOD *method,
-                              X509V3_CTX *ctx, const char *str)
+static void *s2i_ocsp_nocheck(const X509V3_EXT_METHOD *_1,
+                              X509V3_CTX *_2, const char *_3)
 {
+    osslunused3();
     return ASN1_NULL_new();
 }
 
-static int i2r_ocsp_serviceloc(const X509V3_EXT_METHOD *method, void *in,
+static int i2r_ocsp_serviceloc(const X509V3_EXT_METHOD *_1, void *in,
                                BIO *bp, int ind)
 {
     int i;
     OCSP_SERVICELOC *a = in;
     ACCESS_DESCRIPTION *ad;
 
+    osslunused1();
     if (BIO_printf(bp, "%*sIssuer: ", ind, "") <= 0)
         goto err;
     if (X509_NAME_print_ex(bp, a->issuer, 0, XN_FLAG_ONELINE) <= 0)

@@ -70,6 +70,7 @@
 
 #include <stdlib.h>
 
+#include <e_os.h>
 #include <openssl/obj_mac.h>
 #include <openssl/ec.h>
 #include <openssl/bn.h>

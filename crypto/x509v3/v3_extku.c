@@ -99,14 +99,16 @@ ASN1_ITEM_TEMPLATE_END(EXTENDED_KEY_USAGE)
 
 IMPLEMENT_ASN1_FUNCTIONS(EXTENDED_KEY_USAGE)
 
-static STACK_OF(CONF_VALUE) *i2v_EXTENDED_KEY_USAGE(const X509V3_EXT_METHOD
-                                                    *method, void *a, STACK_OF(CONF_VALUE)
+static STACK_OF(CONF_VALUE) *i2v_EXTENDED_KEY_USAGE(const X509V3_EXT_METHOD *_1,
+                                                    void *a, STACK_OF(CONF_VALUE)
                                                     *ext_list)
 {
     EXTENDED_KEY_USAGE *eku = a;
     int i;
     ASN1_OBJECT *obj;
     char obj_tmp[80];
+
+    osslunused1();
     for (i = 0; i < sk_ASN1_OBJECT_num(eku); i++) {
         obj = sk_ASN1_OBJECT_value(eku, i);
         i2t_ASN1_OBJECT(obj_tmp, 80, obj);
@@ -115,8 +117,8 @@ static STACK_OF(CONF_VALUE) *i2v_EXTENDED_KEY_USAGE(const X509V3_EXT_METHOD
     return ext_list;
 }
 
-static void *v2i_EXTENDED_KEY_USAGE(const X509V3_EXT_METHOD *method,
-                                    X509V3_CTX *ctx,
+static void *v2i_EXTENDED_KEY_USAGE(const X509V3_EXT_METHOD *_1,
+                                    X509V3_CTX *_2,
                                     STACK_OF(CONF_VALUE) *nval)
 {
     EXTENDED_KEY_USAGE *extku;
@@ -125,6 +127,7 @@ static void *v2i_EXTENDED_KEY_USAGE(const X509V3_EXT_METHOD *method,
     CONF_VALUE *val;
     int i;
 
+    osslunused2();
     if ((extku = sk_ASN1_OBJECT_new_null()) == NULL) {
         X509V3err(X509V3_F_V2I_EXTENDED_KEY_USAGE, ERR_R_MALLOC_FAILURE);
         return NULL;

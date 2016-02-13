@@ -58,13 +58,15 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <e_os.h>
 #include <openssl/asn1t.h>
 #include <openssl/x509.h>
 #include <openssl/objects.h>
 
-static int nsseq_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
-                    void *exarg)
+static int nsseq_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *_1,
+                    void *_2)
 {
+    osslunused2();
     if (operation == ASN1_OP_NEW_POST) {
         NETSCAPE_CERT_SEQUENCE *nsseq;
         nsseq = (NETSCAPE_CERT_SEQUENCE *)*pval;

@@ -9,6 +9,7 @@
 #include <openssl/sha.h>
 #include <openssl/evp.h>
 #include <openssl/crypto.h>
+#include "../e_os.h"
 
 static const unsigned char app_c1[SHA512_DIGEST_LENGTH] = {
     0xdd, 0xaf, 0x35, 0xa1, 0x93, 0x61, 0x7a, 0xba,
@@ -70,7 +71,7 @@ static const unsigned char app_d3[SHA384_DIGEST_LENGTH] = {
     0xae, 0x97, 0xdd, 0xd8, 0x7f, 0x3d, 0x89, 0x85
 };
 
-int main(int argc, char **argv)
+int main()
 {
     unsigned char md[SHA512_DIGEST_LENGTH];
     int i;

@@ -57,6 +57,7 @@
 
 
 #include "../ssl/packet_locl.h"
+#include "../e_os.h"
 
 #define BUF_LEN 255
 
@@ -457,7 +458,7 @@ static int test_PACKET_get_length_prefixed_3()
     return 1;
 }
 
-int main(int argc, char **argv)
+int main()
 {
     unsigned char buf[BUF_LEN];
     unsigned int i;

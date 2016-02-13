@@ -49,6 +49,7 @@
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include "../e_os.h"
 
 static const unsigned int CONSTTIME_TRUE = (unsigned)(~0);
 static const unsigned int CONSTTIME_FALSE = 0;
@@ -223,12 +224,13 @@ static int signed_test_values[] = { 0, 1, -1, 1024, -1024, 12345, -12345,
     INT_MIN + 1
 };
 
-int main(int argc, char *argv[])
+int main()
 {
     unsigned int a, b, i, j;
     int c, d;
     unsigned char e, f;
     int num_failed = 0, num_all = 0;
+
     fprintf(stdout, "Testing constant time operations...\n");
 
     for (i = 0; i < OSSL_NELEM(test_values); ++i) {

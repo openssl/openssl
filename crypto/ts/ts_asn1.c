@@ -204,10 +204,11 @@ static int ts_resp_set_tst_info(TS_RESP *a)
     return 1;
 }
 
-static int ts_resp_cb(int op, ASN1_VALUE **pval, const ASN1_ITEM *it,
-                      void *exarg)
+static int ts_resp_cb(int op, ASN1_VALUE **pval, const ASN1_ITEM *_1, void *_2)
 {
     TS_RESP *ts_resp = (TS_RESP *)*pval;
+
+    osslunused2();
     if (op == ASN1_OP_NEW_POST) {
         ts_resp->tst_info = NULL;
     } else if (op == ASN1_OP_FREE_POST) {

@@ -369,10 +369,11 @@ unsigned long ssl3_output_cert_chain(SSL *s, CERT_PKEY *cpk)
     return l + SSL_HM_HEADER_LENGTH(s);
 }
 
-WORK_STATE tls_finish_handshake(SSL *s, WORK_STATE wst)
+WORK_STATE tls_finish_handshake(SSL *s, WORK_STATE _1)
 {
     void (*cb) (const SSL *ssl, int type, int val) = NULL;
 
+    osslunused1();
 #ifndef OPENSSL_NO_SCTP
     if (SSL_IS_DTLS(s) && BIO_dgram_is_sctp(SSL_get_wbio(s))) {
         WORK_STATE ret;

@@ -588,10 +588,11 @@ WORK_STATE ossl_statem_server_pre_work(SSL *s, WORK_STATE wst)
  * Perform any work that needs to be done after sending a message from the
  * server to the client.
  */
-WORK_STATE ossl_statem_server_post_work(SSL *s, WORK_STATE wst)
+WORK_STATE ossl_statem_server_post_work(SSL *s, WORK_STATE _1)
 {
     OSSL_STATEM *st = &s->statem;
 
+    osslunused1();
     s->init_num = 0;
 
     switch(st->hand_state) {
@@ -948,7 +949,7 @@ int dtls_construct_hello_verify_request(SSL *s)
     len = dtls_raw_hello_verify_request(&buf[DTLS1_HM_HEADER_LENGTH],
                                          s->d1->cookie, s->d1->cookie_len);
 
-    dtls1_set_message_header(s, buf, DTLS1_MT_HELLO_VERIFY_REQUEST, len, 0,
+    dtls1_set_message_header(s, DTLS1_MT_HELLO_VERIFY_REQUEST, len, 0,
                              len);
     len += DTLS1_HM_HEADER_LENGTH;
 
@@ -2571,8 +2572,9 @@ MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
     return MSG_PROCESS_ERROR;
 }
 
-WORK_STATE tls_post_process_client_key_exchange(SSL *s, WORK_STATE wst)
+WORK_STATE tls_post_process_client_key_exchange(SSL *s, WORK_STATE _1)
 {
+    osslunused1();
 #ifndef OPENSSL_NO_SCTP
     if (wst == WORK_MORE_A) {
         if (SSL_IS_DTLS(s)) {

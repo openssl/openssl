@@ -62,9 +62,11 @@
 #include <openssl/x509.h>
 
 /* Minor tweak to operation: zero private key data */
-static int pkey_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
-                   void *exarg)
+static int pkey_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *_1,
+                   void *_2)
 {
+    osslunused2();
+
     /* Since the structure must still be valid use ASN1_OP_FREE_PRE */
     if (operation == ASN1_OP_FREE_PRE) {
         PKCS8_PRIV_KEY_INFO *key = (PKCS8_PRIV_KEY_INFO *)*pval;

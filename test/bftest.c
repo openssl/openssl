@@ -279,10 +279,12 @@ static unsigned char key_out[KEY_TEST_NUM][8] = {
 
 static int test(void);
 static int print_test_data(void);
+
 int main(int argc, char *argv[])
 {
     int ret;
 
+    osslargused(argv);
     if (argc > 1)
         ret = print_test_data();
     else

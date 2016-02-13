@@ -241,11 +241,13 @@ static int i2r_IPAddressOrRanges(BIO *out,
 /*
  * i2r handler for an IPAddrBlocks extension.
  */
-static int i2r_IPAddrBlocks(const X509V3_EXT_METHOD *method,
+static int i2r_IPAddrBlocks(const X509V3_EXT_METHOD *_1,
                             void *ext, BIO *out, int indent)
 {
     const IPAddrBlocks *addr = ext;
     int i;
+
+    osslunused1();
     for (i = 0; i < sk_IPAddressFamily_num(addr); i++) {
         IPAddressFamily *f = sk_IPAddressFamily_value(addr, i);
         const unsigned int afi = v3_addr_get_afi(f);
@@ -929,8 +931,8 @@ int v3_addr_canonize(IPAddrBlocks *addr)
 /*
  * v2i handler for the IPAddrBlocks extension.
  */
-static void *v2i_IPAddrBlocks(const struct v3_ext_method *method,
-                              struct v3_ext_ctx *ctx,
+static void *v2i_IPAddrBlocks(const struct v3_ext_method *_1,
+                              struct v3_ext_ctx *_2,
                               STACK_OF(CONF_VALUE) *values)
 {
     static const char v4addr_chars[] = "0123456789.";
@@ -939,6 +941,7 @@ static void *v2i_IPAddrBlocks(const struct v3_ext_method *method,
     char *s = NULL, *t;
     int i;
 
+    osslunused2();
     if ((addr = sk_IPAddressFamily_new(IPAddressFamily_cmp)) == NULL) {
         X509V3err(X509V3_F_V2I_IPADDRBLOCKS, ERR_R_MALLOC_FAILURE);
         return NULL;

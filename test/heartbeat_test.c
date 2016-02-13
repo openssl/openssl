@@ -46,6 +46,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "../e_os.h"
 
 #if !defined(OPENSSL_NO_HEARTBEATS) && !defined(OPENSSL_NO_UNIT_TEST)
 
@@ -345,7 +346,7 @@ static int test_dtls1_heartbleed_excessive_plaintext_length()
 # undef EXECUTE_HEARTBEAT_TEST
 # undef SETUP_HEARTBEAT_TEST_FIXTURE
 
-int main(int argc, char *argv[])
+int main()
 {
     int result = 0;
 
@@ -362,7 +363,7 @@ int main(int argc, char *argv[])
 
 #else                           /* OPENSSL_NO_HEARTBEATS */
 
-int main(int argc, char *argv[])
+int main()
 {
     return EXIT_SUCCESS;
 }

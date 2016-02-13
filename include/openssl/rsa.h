@@ -403,7 +403,8 @@ int RSA_sign_ASN1_OCTET_STRING(int type,
                                const unsigned char *m, unsigned int m_length,
                                unsigned char *sigret, unsigned int *siglen,
                                RSA *rsa);
-int RSA_verify_ASN1_OCTET_STRING(int type, const unsigned char *m,
+int RSA_verify_ASN1_OCTET_STRING(int type,
+                                 const unsigned char *m,
                                  unsigned int m_length, unsigned char *sigbuf,
                                  unsigned int siglen, RSA *rsa);
 
@@ -448,7 +449,7 @@ int RSA_padding_check_none(unsigned char *to, int tlen,
                            const unsigned char *f, int fl, int rsa_len);
 int RSA_padding_add_X931(unsigned char *to, int tlen, const unsigned char *f,
                          int fl);
-int RSA_padding_check_X931(unsigned char *to, int tlen,
+int RSA_padding_check_X931(unsigned char *to,
                            const unsigned char *f, int fl, int rsa_len);
 int RSA_X931_hash_id(int nid);
 

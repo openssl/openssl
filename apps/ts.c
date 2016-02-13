@@ -992,7 +992,8 @@ static X509_STORE *create_cert_store(char *CApath, char *CAfile)
     return NULL;
 }
 
-static int verify_cb(int ok, X509_STORE_CTX *ctx)
+static int verify_cb(int ok, X509_STORE_CTX *_1)
 {
+    osslunused1();
     return ok;
 }

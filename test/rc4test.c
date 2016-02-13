@@ -112,7 +112,7 @@ static unsigned char output[7][30] = {
     {0},
 };
 
-int main(int argc, char *argv[])
+int main(int _1, char *_2[])
 {
     int i, err = 0;
     int j;
@@ -125,6 +125,7 @@ int main(int argc, char *argv[])
 
     OPENSSL_cpuid_setup();
 # endif
+    osslunused2();
 
     for (i = 0; i < 6; i++) {
         RC4_set_key(&key, keys[i][0], &(keys[i][1]));

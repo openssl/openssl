@@ -190,20 +190,22 @@ void CRYPTO_cleanup_all_ex_data(void)
  * Unregister a new index by replacing the callbacks with no-ops.
  * Any in-use instances are leaked.
  */
-static void dummy_new(void *parent, void *ptr, CRYPTO_EX_DATA *ad, int idx,
-                     long argl, void *argp)
+static void dummy_new(void *_1, void *_2, CRYPTO_EX_DATA *_3, int _4,
+                     long _5, void *_6)
 {
+    osslunused6();
 }
 
-static void dummy_free(void *parent, void *ptr, CRYPTO_EX_DATA *ad, int idx,
-                       long argl, void *argp)
+static void dummy_free(void *_1, void *_2, CRYPTO_EX_DATA *_3, int _4,
+                       long _5, void *_6)
 {
+    osslunused6();
 }
 
-static int dummy_dup(CRYPTO_EX_DATA *to, CRYPTO_EX_DATA *from,
-                     void *from_d, int idx,
-                     long argl, void *argp)
+static int dummy_dup(CRYPTO_EX_DATA *_1, CRYPTO_EX_DATA *_2,
+                     void *_3, int _4, long _5, void *_6)
 {
+    osslunused6();
     return 0;
 }
 

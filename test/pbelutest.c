@@ -55,18 +55,20 @@
 #include <openssl/evp.h>
 #include <stdio.h>
 #include <string.h>
+#include "../e_os.h"
 
 /*
  * Password based encryption (PBE) table ordering test.
  * Attempt to look up all supported algorithms.
  */
 
-int main(int argc, char **argv)
+int main()
 {
     size_t i;
     int rv = 0;
     int pbe_type, pbe_nid;
     int last_type = -1, last_nid = -1;
+
     for (i = 0; EVP_PBE_get(&pbe_type, &pbe_nid, i) != 0; i++) {
         if (EVP_PBE_find(pbe_type, pbe_nid, NULL, NULL, 0) == 0) {
             rv = 1;

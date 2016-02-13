@@ -575,9 +575,10 @@ int tls1_final_finish_mac(SSL *s, const char *str, int slen,
     return TLS1_FINISH_MAC_LENGTH;
 }
 
-int tls1_generate_master_secret(SSL *s, unsigned char *out, unsigned char *p,
+int tls1_generate_master_secret(SSL *s, unsigned char *_1, unsigned char *p,
                                 int len)
 {
+    osslunused1();
     if (s->session->flags & SSL_SESS_FLAG_EXTMS) {
         unsigned char hash[EVP_MAX_MD_SIZE * 2];
         int hashlen;

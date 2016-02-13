@@ -60,11 +60,13 @@
 #include <openssl/buffer.h>
 #include <openssl/asn1.h>
 
-int i2a_ASN1_STRING(BIO *bp, ASN1_STRING *a, int type)
+int i2a_ASN1_STRING(BIO *bp, ASN1_STRING *a, int _1)
 {
     int i, n = 0;
     static const char *h = "0123456789ABCDEF";
     char buf[2];
+
+    osslunused1();
 
     if (a == NULL)
         return (0);

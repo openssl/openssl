@@ -64,6 +64,7 @@ NON_EMPTY_TRANSLATION_UNIT
 # include <openssl/camellia.h>
 # include "internal/evp_int.h"
 # include "modes_lcl.h"
+# include "evp_locl.h"
 
 static int camellia_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
                              const unsigned char *iv, int enc);
@@ -255,11 +256,12 @@ const EVP_CIPHER *EVP_camellia_##keylen##_##mode(void) \
 
 /* The subkey for Camellia is generated. */
 static int camellia_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
-                             const unsigned char *iv, int enc)
+                             const unsigned char *_1, int enc)
 {
     int ret, mode;
     EVP_CAMELLIA_KEY *dat = EVP_C_DATA(EVP_CAMELLIA_KEY,ctx);
 
+    osslunused1();
     ret = Camellia_set_key(key, EVP_CIPHER_CTX_key_length(ctx) * 8, &dat->ks);
     if (ret < 0) {
         EVPerr(EVP_F_CAMELLIA_INIT_KEY, EVP_R_CAMELLIA_KEY_SETUP_FAILED);

@@ -578,8 +578,9 @@ int help_main(int argc, char **argv)
     return 0;
 }
 
-int exit_main(int argc, char **argv)
+int exit_main(int _1, char **_2)
 {
+    osslunused2();
     return EXIT_THE_PROGRAM;
 }
 

@@ -105,13 +105,15 @@ STACK_OF(CONF_VALUE) *i2v_ASN1_BIT_STRING(X509V3_EXT_METHOD *method,
 }
 
 ASN1_BIT_STRING *v2i_ASN1_BIT_STRING(X509V3_EXT_METHOD *method,
-                                     X509V3_CTX *ctx,
+                                     X509V3_CTX *_1,
                                      STACK_OF(CONF_VALUE) *nval)
 {
     CONF_VALUE *val;
     ASN1_BIT_STRING *bs;
     int i;
     BIT_STRING_BITNAME *bnam;
+
+    osslunused1();
     if ((bs = ASN1_BIT_STRING_new()) == NULL) {
         X509V3err(X509V3_F_V2I_ASN1_BIT_STRING, ERR_R_MALLOC_FAILURE);
         return NULL;

@@ -103,14 +103,15 @@ ASN1_SEQUENCE(SXNET) = {
 
 IMPLEMENT_ASN1_FUNCTIONS(SXNET)
 
-static int sxnet_i2r(X509V3_EXT_METHOD *method, SXNET *sx, BIO *out,
+static int sxnet_i2r(X509V3_EXT_METHOD *_1, SXNET *sx, BIO *out,
                      int indent)
 {
-    long v;
+    long v = ASN1_INTEGER_get(sx->version);
     char *tmp;
     SXNETID *id;
     int i;
-    v = ASN1_INTEGER_get(sx->version);
+
+    osslunused1();
     BIO_printf(out, "%*sVersion: %ld (0x%lX)", indent, "", v + 1, v);
     for (i = 0; i < sk_SXNETID_num(sx->ids); i++) {
         id = sk_SXNETID_value(sx->ids, i);
@@ -130,12 +131,14 @@ static int sxnet_i2r(X509V3_EXT_METHOD *method, SXNET *sx, BIO *out,
  * they should really be separate values for each user.
  */
 
-static SXNET *sxnet_v2i(X509V3_EXT_METHOD *method, X509V3_CTX *ctx,
+static SXNET *sxnet_v2i(X509V3_EXT_METHOD *_1, X509V3_CTX *_2,
                         STACK_OF(CONF_VALUE) *nval)
 {
     CONF_VALUE *cnf;
     SXNET *sx = NULL;
     int i;
+
+    osslunused2();
     for (i = 0; i < sk_CONF_VALUE_num(nval); i++) {
         cnf = sk_CONF_VALUE_value(nval, i);
         if (!SXNET_add_id_asc(&sx, cnf->name, cnf->value, -1))

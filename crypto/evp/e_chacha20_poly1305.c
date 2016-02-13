@@ -73,11 +73,12 @@ typedef struct {
 
 static int chacha_init_key(EVP_CIPHER_CTX *ctx,
                            const unsigned char user_key[CHACHA_KEY_SIZE],
-                           const unsigned char iv[CHACHA_CTR_SIZE], int enc)
+                           const unsigned char iv[CHACHA_CTR_SIZE], int _1)
 {
     EVP_CHACHA_KEY *key = data(ctx);
     unsigned int i;
 
+    osslunused1();
     if (user_key)
         for (i = 0; i < CHACHA_KEY_SIZE; i+=4) {
             key->key.d[i/4] = CHACHA_U8TOU32(user_key+i);

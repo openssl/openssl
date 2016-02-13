@@ -852,8 +852,9 @@ void ERR_remove_thread_state(const CRYPTO_THREADID *id)
 }
 
 #if OPENSSL_API_COMPAT < 0x10000000L
-void ERR_remove_state(unsigned long pid)
+void ERR_remove_state(unsigned long _1)
 {
+    osslunused1();
     ERR_remove_thread_state(NULL);
 }
 #endif

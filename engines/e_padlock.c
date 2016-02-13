@@ -76,6 +76,7 @@
 #include <openssl/rand.h>
 #include <openssl/err.h>
 #include <openssl/modes.h>
+#include <e_os.h>
 
 #ifndef OPENSSL_NO_HW
 # ifndef OPENSSL_NO_HW_PADLOCK
@@ -206,8 +207,9 @@ static ENGINE *ENGINE_padlock(void)
 #   endif
 
 /* Check availability of the engine */
-static int padlock_init(ENGINE *e)
+static int padlock_init(ENGINE *_1)
 {
+    osslunused1();
     return (padlock_use_rng || padlock_use_ace);
 }
 
@@ -593,9 +595,10 @@ DECLARE_AES_EVP(256, ofb, OFB)
 DECLARE_AES_EVP(256, ctr, CTR)
 
 static int
-padlock_ciphers(ENGINE *e, const EVP_CIPHER **cipher, const int **nids,
+padlock_ciphers(ENGINE *_1, const EVP_CIPHER **cipher, const int **nids,
                 int nid)
 {
+    osslunused1();
     /* No specific cipher => return a list of supported nids ... */
     if (!cipher) {
         *nids = padlock_cipher_nids;
@@ -664,12 +667,13 @@ padlock_ciphers(ENGINE *e, const EVP_CIPHER **cipher, const int **nids,
 /* Prepare the encryption key for PadLock usage */
 static int
 padlock_aes_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
-                     const unsigned char *iv, int enc)
+                     const unsigned char *_1, int enc)
 {
     struct padlock_cipher_data *cdata;
     int key_len = EVP_CIPHER_CTX_key_length(ctx) * 8;
     unsigned long mode = EVP_CIPHER_CTX_mode(ctx);
 
+    osslunused1();
     if (key == NULL)
         return 0;               /* ERROR */
 

@@ -495,11 +495,11 @@ int ssl_print_tmp_key(BIO *out, SSL *s)
 }
 
 long bio_dump_callback(BIO *bio, int cmd, const char *argp,
-                       int argi, long argl, long ret)
+                       int argi, long _1, long ret)
 {
-    BIO *out;
+    BIO *out = (BIO *)BIO_get_callback_arg(bio);
 
-    out = (BIO *)BIO_get_callback_arg(bio);
+    osslunused1();
     if (out == NULL)
         return (ret);
 
@@ -611,7 +611,7 @@ static STRINT_PAIR handshakes[] = {
 };
 
 void msg_cb(int write_p, int version, int content_type, const void *buf,
-            size_t len, SSL *ssl, void *arg)
+            size_t len, SSL *_1, void *arg)
 {
     BIO *bio = arg;
     const char *str_write_p = write_p ? ">>>" : "<<<";
@@ -619,6 +619,7 @@ void msg_cb(int write_p, int version, int content_type, const void *buf,
     const char *str_content_type = "", *str_details1 = "", *str_details2 = "";
     const unsigned char* bp = buf;
 
+    osslunused1();
     if (version == SSL3_VERSION ||
         version == TLS1_VERSION ||
         version == TLS1_1_VERSION ||
@@ -728,12 +729,13 @@ static STRINT_PAIR tlsext_types[] = {
     {NULL}
 };
 
-void tlsext_cb(SSL *s, int client_server, int type,
+void tlsext_cb(SSL *_1, int client_server, int type,
                const unsigned char *data, int len, void *arg)
 {
     BIO *bio = arg;
     const char *extname = lookup(type, tlsext_types, "unknown");
 
+    osslunused1();
     BIO_printf(bio, "TLS %s extension \"%s\" (id=%d), len=%d\n",
                client_server ? "server" : "client", extname, type, len);
     BIO_dump(bio, (const char *)data, len);
@@ -972,7 +974,7 @@ int load_excert(SSL_EXCERT **pexc)
             return 0;
         }
         exc->cert = load_cert(exc->certfile, exc->certform,
-                              NULL, NULL, "Server Certificate");
+                              "Server Certificate");
         if (!exc->cert)
             return 0;
         if (exc->keyfile) {
@@ -986,7 +988,7 @@ int load_excert(SSL_EXCERT **pexc)
             return 0;
         if (exc->chainfile) {
             if (!load_certs(exc->chainfile, &exc->chain, FORMAT_PEM, NULL,
-                            NULL, "Server Chain"))
+                            "Server Chain"))
                 return 0;
         }
     }
@@ -1198,10 +1200,11 @@ void print_ssl_summary(SSL *s)
 }
 
 int config_ctx(SSL_CONF_CTX *cctx, STACK_OF(OPENSSL_STRING) *str,
-               SSL_CTX *ctx, int no_jpake)
+               SSL_CTX *ctx, int _1)
 {
     int i;
 
+    osslunused1();
     SSL_CONF_CTX_set_ssl_ctx(cctx, ctx);
     for (i = 0; i < sk_OPENSSL_STRING_num(str); i += 2) {
         const char *flag = sk_OPENSSL_STRING_value(str, i);

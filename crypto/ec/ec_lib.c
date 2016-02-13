@@ -352,8 +352,9 @@ BN_MONT_CTX *EC_GROUP_get_mont_data(const EC_GROUP *group)
     return group->mont_data;
 }
 
-int EC_GROUP_get_order(const EC_GROUP *group, BIGNUM *order, BN_CTX *ctx)
+int EC_GROUP_get_order(const EC_GROUP *group, BIGNUM *order, BN_CTX *_1)
 {
+    osslunused1();
     if (group->order == NULL)
         return 0;
     if (!BN_copy(order, group->order))
@@ -374,10 +375,9 @@ int EC_GROUP_order_bits(const EC_GROUP *group)
     return 0;
 }
 
-int EC_GROUP_get_cofactor(const EC_GROUP *group, BIGNUM *cofactor,
-                          BN_CTX *ctx)
+int EC_GROUP_get_cofactor(const EC_GROUP *group, BIGNUM *cofactor, BN_CTX *_1)
 {
-
+    osslunused1();
     if (group->cofactor == NULL)
         return 0;
     if (!BN_copy(cofactor, group->cofactor))

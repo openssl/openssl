@@ -279,36 +279,31 @@ int ECPKParameters_print(BIO *bp, const EC_GROUP *x, int off)
                 goto err;
 
             /* print the polynomial */
-            if ((p != NULL) && !ASN1_bn_print(bp, "Polynomial:", p, buffer,
-                                              off))
+            if ((p != NULL) && !ASN1_bn_print(bp, "Polynomial:", p, NULL, off))
                 goto err;
         } else {
-            if ((p != NULL) && !ASN1_bn_print(bp, "Prime:", p, buffer, off))
+            if ((p != NULL) && !ASN1_bn_print(bp, "Prime:", p, NULL, off))
                 goto err;
         }
-        if ((a != NULL) && !ASN1_bn_print(bp, "A:   ", a, buffer, off))
+        if ((a != NULL) && !ASN1_bn_print(bp, "A:   ", a, NULL, off))
             goto err;
-        if ((b != NULL) && !ASN1_bn_print(bp, "B:   ", b, buffer, off))
+        if ((b != NULL) && !ASN1_bn_print(bp, "B:   ", b, NULL, off))
             goto err;
         if (form == POINT_CONVERSION_COMPRESSED) {
-            if ((gen != NULL) && !ASN1_bn_print(bp, gen_compressed, gen,
-                                                buffer, off))
+            if ((gen != NULL) && !ASN1_bn_print(bp, gen_compressed, gen, NULL, off))
                 goto err;
         } else if (form == POINT_CONVERSION_UNCOMPRESSED) {
-            if ((gen != NULL) && !ASN1_bn_print(bp, gen_uncompressed, gen,
-                                                buffer, off))
+            if ((gen != NULL) && !ASN1_bn_print(bp, gen_uncompressed, gen, NULL, off))
                 goto err;
         } else {                /* form == POINT_CONVERSION_HYBRID */
 
-            if ((gen != NULL) && !ASN1_bn_print(bp, gen_hybrid, gen,
-                                                buffer, off))
+            if ((gen != NULL) && !ASN1_bn_print(bp, gen_hybrid, gen, NULL, off))
                 goto err;
         }
-        if ((order != NULL) && !ASN1_bn_print(bp, "Order: ", order,
-                                              buffer, off))
+        if ((order != NULL) && !ASN1_bn_print(bp, "Order: ", order, NULL, off))
             goto err;
         if ((cofactor != NULL) && !ASN1_bn_print(bp, "Cofactor: ", cofactor,
-                                                 buffer, off))
+                                                 NULL, off))
             goto err;
         if (seed && !print_bin(bp, "Seed:", seed, seed_len, off))
             goto err;

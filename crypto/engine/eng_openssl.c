@@ -247,11 +247,12 @@ typedef struct {
 } TEST_RC4_KEY;
 # define test(ctx) ((TEST_RC4_KEY *)EVP_CIPHER_CTX_cipher_data(ctx))
 static int test_rc4_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
-                             const unsigned char *iv, int enc)
+                             const unsigned char *_1, int _2)
 {
 # ifdef TEST_ENG_OPENSSL_RC4_P_INIT
     fprintf(stderr, "(TEST_ENG_OPENSSL_RC4) test_init_key() called\n");
 # endif
+    osslunused2();
     memcpy(&test(ctx)->key[0], key, EVP_CIPHER_CTX_key_length(ctx));
     RC4_set_key(&test(ctx)->ks, EVP_CIPHER_CTX_key_length(ctx),
                 test(ctx)->key);
@@ -336,9 +337,10 @@ static int test_cipher_nids(const int **nids)
     return pos;
 }
 
-static int openssl_ciphers(ENGINE *e, const EVP_CIPHER **cipher,
+static int openssl_ciphers(ENGINE *_1, const EVP_CIPHER **cipher,
                            const int **nids, int nid)
 {
+    osslunused1();
     if (!cipher) {
         /* We are returning a list of supported nids */
         return test_cipher_nids(nids);
@@ -432,9 +434,10 @@ static int test_digest_nids(const int **nids)
     return pos;
 }
 
-static int openssl_digests(ENGINE *e, const EVP_MD **digest,
+static int openssl_digests(ENGINE *_1, const EVP_MD **digest,
                            const int **nids, int nid)
 {
+    osslunused1();
     if (!digest) {
         /* We are returning a list of supported nids */
         return test_digest_nids(nids);
@@ -455,12 +458,13 @@ static int openssl_digests(ENGINE *e, const EVP_MD **digest,
 #endif
 
 #ifdef TEST_ENG_OPENSSL_PKEY
-static EVP_PKEY *openssl_load_privkey(ENGINE *eng, const char *key_id,
-                                      UI_METHOD *ui_method,
-                                      void *callback_data)
+static EVP_PKEY *openssl_load_privkey(ENGINE *_1, const char *key_id,
+                                      UI_METHOD *_2, void *_3)
 {
     BIO *in;
     EVP_PKEY *key;
+
+    osslunused3();
     fprintf(stderr, "(TEST_ENG_OPENSSL_PKEY)Loading Private key %s\n",
             key_id);
     in = BIO_new_file(key_id, "r");
@@ -680,8 +684,9 @@ static int ossl_pkey_meths(ENGINE *e, EVP_PKEY_METHOD **pmeth,
 
 #endif
 
-int openssl_destroy(ENGINE *e)
+int openssl_destroy(ENGINE *_1)
 {
+    osslunused1();
     test_sha_md_destroy();
 #ifdef TEST_ENG_OPENSSL_RC4
     test_r4_cipher_destroy();

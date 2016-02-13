@@ -81,7 +81,8 @@ static char *ret[] = {
 static char *bigret = "34aa973cd4c4daa4f61eeb2bdbad27316534016f";
 
 static char *pt(unsigned char *md);
-int main(int argc, char *argv[])
+
+int main()
 {
     int i, err = 0;
     char **P, **R;

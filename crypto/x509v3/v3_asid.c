@@ -153,10 +153,12 @@ static int i2r_ASIdentifierChoice(BIO *out,
 /*
  * i2r method for an ASIdentifier extension.
  */
-static int i2r_ASIdentifiers(const X509V3_EXT_METHOD *method,
+static int i2r_ASIdentifiers(const X509V3_EXT_METHOD *_1,
                              void *ext, BIO *out, int indent)
 {
     ASIdentifiers *asid = ext;
+
+    osslunused1();
     return (i2r_ASIdentifierChoice(out, asid->asnum, indent,
                                    "Autonomous System Numbers") &&
             i2r_ASIdentifierChoice(out, asid->rdi, indent,
@@ -541,14 +543,15 @@ int v3_asid_canonize(ASIdentifiers *asid)
 /*
  * v2i method for an ASIdentifier extension.
  */
-static void *v2i_ASIdentifiers(const struct v3_ext_method *method,
-                               struct v3_ext_ctx *ctx,
+static void *v2i_ASIdentifiers(const struct v3_ext_method *_1,
+                               struct v3_ext_ctx *_2,
                                STACK_OF(CONF_VALUE) *values)
 {
     ASN1_INTEGER *min = NULL, *max = NULL;
     ASIdentifiers *asid = NULL;
     int i;
 
+    osslunused2();
     if ((asid = ASIdentifiers_new()) == NULL) {
         X509V3err(X509V3_F_V2I_ASIDENTIFIERS, ERR_R_MALLOC_FAILURE);
         return NULL;

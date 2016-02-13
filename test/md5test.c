@@ -93,7 +93,8 @@ static char *ret[] = {
 };
 
 static char *pt(unsigned char *md);
-int main(int argc, char *argv[])
+
+int main()
 {
     int i, err = 0;
     char **P, **R;

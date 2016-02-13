@@ -1,10 +1,11 @@
 #include <openssl/opensslconf.h>
+#include "../e_os.h"
 
 #ifdef OPENSSL_NO_JPAKE
 
 # include <stdio.h>
 
-int main(int argc, char *argv[])
+int main()
 {
     printf("No J-PAKE support\n");
     return (0);
@@ -104,7 +105,7 @@ static int run_jpake(JPAKE_CTX *alice, JPAKE_CTX *bob)
     return 0;
 }
 
-int main(int argc, char **argv)
+int main()
 {
     JPAKE_CTX *alice;
     JPAKE_CTX *bob;

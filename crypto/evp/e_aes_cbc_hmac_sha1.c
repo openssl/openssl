@@ -59,6 +59,7 @@
 # include <openssl/aes.h>
 # include <openssl/sha.h>
 # include <openssl/rand.h>
+# include "evp_locl.h"
 # include "modes_lcl.h"
 # include "internal/evp_int.h"
 
@@ -120,11 +121,12 @@ void aesni256_cbc_sha1_dec(const void *inp, void *out, size_t blocks,
 
 static int aesni_cbc_hmac_sha1_init_key(EVP_CIPHER_CTX *ctx,
                                         const unsigned char *inkey,
-                                        const unsigned char *iv, int enc)
+                                        const unsigned char *_1, int enc)
 {
     EVP_AES_HMAC_SHA1 *key = data(ctx);
     int ret;
 
+    osslunused1();
     if (enc)
         ret = aesni_set_encrypt_key(inkey,
                                     EVP_CIPHER_CTX_key_length(ctx) * 8,

@@ -169,12 +169,14 @@ static int i2r_NAME_CONSTRAINTS(const X509V3_EXT_METHOD *method, void *a,
     return 1;
 }
 
-static int do_i2r_name_constraints(const X509V3_EXT_METHOD *method,
+static int do_i2r_name_constraints(const X509V3_EXT_METHOD *_1,
                                    STACK_OF(GENERAL_SUBTREE) *trees,
                                    BIO *bp, int ind, char *name)
 {
     GENERAL_SUBTREE *tree;
     int i;
+
+    osslunused1();
     if (sk_GENERAL_SUBTREE_num(trees) > 0)
         BIO_printf(bp, "%*s%s:\n", ind, "", name);
     for (i = 0; i < sk_GENERAL_SUBTREE_num(trees); i++) {

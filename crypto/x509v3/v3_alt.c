@@ -110,13 +110,15 @@ STACK_OF(CONF_VALUE) *i2v_GENERAL_NAMES(X509V3_EXT_METHOD *method,
     return ret;
 }
 
-STACK_OF(CONF_VALUE) *i2v_GENERAL_NAME(X509V3_EXT_METHOD *method,
+STACK_OF(CONF_VALUE) *i2v_GENERAL_NAME(X509V3_EXT_METHOD *_1,
                                        GENERAL_NAME *gen,
                                        STACK_OF(CONF_VALUE) *ret)
 {
     unsigned char *p;
     char oline[256], htmp[5];
     int i;
+
+    osslunused1();
     switch (gen->type) {
     case GEN_OTHERNAME:
         X509V3_add_value("othername", "<unsupported>", &ret);
@@ -430,13 +432,14 @@ GENERAL_NAME *v2i_GENERAL_NAME(const X509V3_EXT_METHOD *method,
 }
 
 GENERAL_NAME *a2i_GENERAL_NAME(GENERAL_NAME *out,
-                               const X509V3_EXT_METHOD *method,
+                               const X509V3_EXT_METHOD *_1,
                                X509V3_CTX *ctx, int gen_type, char *value,
                                int is_nc)
 {
     char is_string = 0;
     GENERAL_NAME *gen = NULL;
 
+    osslunused1();
     if (!value) {
         X509V3err(X509V3_F_A2I_GENERAL_NAME, X509V3_R_MISSING_VALUE);
         return NULL;

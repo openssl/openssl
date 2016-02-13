@@ -247,11 +247,12 @@ BLOCK_CIPHER_defs(des, EVP_DES_KEY, NID_des, 8, 8, 8, 64,
                      EVP_CIPHER_set_asn1_iv, EVP_CIPHER_get_asn1_iv, des_ctrl)
 
 static int des_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
-                        const unsigned char *iv, int enc)
+                        const unsigned char *_1, int _2)
 {
     DES_cblock *deskey = (DES_cblock *)key;
     EVP_DES_KEY *dat = (EVP_DES_KEY *) EVP_CIPHER_CTX_cipher_data(ctx);
 
+    osslunused2();
     dat->stream.cbc = NULL;
 # if defined(SPARC_DES_CAPABLE)
     if (SPARC_DES_CAPABLE) {
@@ -268,9 +269,10 @@ static int des_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
     return 1;
 }
 
-static int des_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
+static int des_ctrl(EVP_CIPHER_CTX *_1, int type, int _2, void *ptr)
 {
 
+    osslunused2();
     switch (type) {
     case EVP_CTRL_RAND_KEY:
         if (RAND_bytes(ptr, 8) <= 0)

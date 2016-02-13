@@ -145,8 +145,9 @@ static int check_crl_chain(X509_STORE_CTX *ctx,
 
 static int internal_verify(X509_STORE_CTX *ctx);
 
-static int null_callback(int ok, X509_STORE_CTX *e)
+static int null_callback(int ok, X509_STORE_CTX *_1)
 {
+    osslunused1();
     return ok;
 }
 
@@ -1173,11 +1174,13 @@ static int check_crl_path(X509_STORE_CTX *ctx, X509 *x)
  * RFC5280 version
  */
 
-static int check_crl_chain(X509_STORE_CTX *ctx,
+static int check_crl_chain(X509_STORE_CTX *_1,
                            STACK_OF(X509) *cert_path,
                            STACK_OF(X509) *crl_path)
 {
     X509 *cert_ta, *crl_ta;
+
+    osslunused1();
     cert_ta = sk_X509_value(cert_path, sk_X509_num(cert_path) - 1);
     crl_ta = sk_X509_value(crl_path, sk_X509_num(crl_path) - 1);
     if (!X509_cmp(cert_ta, crl_ta))
@@ -1890,11 +1893,13 @@ int X509_get_pubkey_parameters(EVP_PKEY *pkey, STACK_OF(X509) *chain)
 /* Make a delta CRL as the diff between two full CRLs */
 
 X509_CRL *X509_CRL_diff(X509_CRL *base, X509_CRL *newer,
-                        EVP_PKEY *skey, const EVP_MD *md, unsigned int flags)
+                        EVP_PKEY *skey, const EVP_MD *md, unsigned int _1)
 {
     X509_CRL *crl = NULL;
     int i;
     STACK_OF(X509_REVOKED) *revs = NULL;
+
+    osslunused1();
     /* CRLs can't be delta already */
     if (base->base_crl_number || newer->base_crl_number) {
         X509err(X509_F_X509_CRL_DIFF, X509_R_CRL_ALREADY_DELTA);
@@ -2351,9 +2356,9 @@ void X509_STORE_CTX_set_flags(X509_STORE_CTX *ctx, unsigned long flags)
     X509_VERIFY_PARAM_set_flags(ctx->param, flags);
 }
 
-void X509_STORE_CTX_set_time(X509_STORE_CTX *ctx, unsigned long flags,
-                             time_t t)
+void X509_STORE_CTX_set_time(X509_STORE_CTX *ctx, time_t t, unsigned long _1)
 {
+    osslunused1();
     X509_VERIFY_PARAM_set_time(ctx->param, t);
 }
 

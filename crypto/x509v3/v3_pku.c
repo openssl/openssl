@@ -85,10 +85,11 @@ ASN1_SEQUENCE(PKEY_USAGE_PERIOD) = {
 
 IMPLEMENT_ASN1_FUNCTIONS(PKEY_USAGE_PERIOD)
 
-static int i2r_PKEY_USAGE_PERIOD(X509V3_EXT_METHOD *method,
+static int i2r_PKEY_USAGE_PERIOD(X509V3_EXT_METHOD *_1,
                                  PKEY_USAGE_PERIOD *usage, BIO *out,
                                  int indent)
 {
+    osslunused1();
     BIO_printf(out, "%*s", indent, "");
     if (usage->notBefore) {
         BIO_write(out, "Not Before: ", 12);

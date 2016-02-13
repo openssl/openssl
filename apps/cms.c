@@ -550,7 +550,7 @@ int cms_main(int argc, char **argv)
             if (operation == SMIME_ENCRYPT) {
                 if (encerts == NULL && (encerts = sk_X509_new_null()) == NULL)
                     goto end;
-                cert = load_cert(opt_arg(), FORMAT_PEM, NULL, e,
+                cert = load_cert(opt_arg(), FORMAT_PEM,
                                  "recipient certificate file");
                 if (cert == NULL)
                     goto end;
@@ -725,7 +725,7 @@ int cms_main(int argc, char **argv)
             if ((encerts = sk_X509_new_null()) == NULL)
                 goto end;
         while (*argv) {
-            if ((cert = load_cert(*argv, FORMAT_PEM, NULL, e,
+            if ((cert = load_cert(*argv, FORMAT_PEM,
                                   "recipient certificate file")) == NULL)
                 goto end;
             sk_X509_push(encerts, cert);
@@ -735,7 +735,7 @@ int cms_main(int argc, char **argv)
     }
 
     if (certfile) {
-        if (!load_certs(certfile, &other, FORMAT_PEM, NULL, e,
+        if (!load_certs(certfile, &other, FORMAT_PEM, NULL,
                         "certificate file")) {
             ERR_print_errors(bio_err);
             goto end;
@@ -743,7 +743,7 @@ int cms_main(int argc, char **argv)
     }
 
     if (recipfile && (operation == SMIME_DECRYPT)) {
-        if ((recip = load_cert(recipfile, FORMAT_PEM, NULL, e,
+        if ((recip = load_cert(recipfile, FORMAT_PEM,
                                "recipient certificate file")) == NULL) {
             ERR_print_errors(bio_err);
             goto end;
@@ -751,7 +751,7 @@ int cms_main(int argc, char **argv)
     }
 
     if (operation == SMIME_SIGN_RECEIPT) {
-        if ((signer = load_cert(signerfile, FORMAT_PEM, NULL, e,
+        if ((signer = load_cert(signerfile, FORMAT_PEM,
                                 "receipt signer certificate file")) == NULL) {
             ERR_print_errors(bio_err);
             goto end;
@@ -968,8 +968,7 @@ int cms_main(int argc, char **argv)
             signerfile = sk_OPENSSL_STRING_value(sksigners, i);
             keyfile = sk_OPENSSL_STRING_value(skkeys, i);
 
-            signer = load_cert(signerfile, FORMAT_PEM, NULL,
-                               e, "signer certificate");
+            signer = load_cert(signerfile, FORMAT_PEM, "signer certificate");
             if (!signer)
                 goto end;
             key = load_key(keyfile, keyform, 0, passin, e, "signing key file");
