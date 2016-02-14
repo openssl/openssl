@@ -151,7 +151,7 @@ build_engines: $(ENGINES)
 build_apps: $(PROGRAMS) $(SCRIPTS)
 build_tests: $(TESTPROGS)
 
-test tests: build_tests rehash
+test tests: build_tests build_apps build_engines build_libs rehash
 	( cd test; \
 	  SRCTOP=../$(SRCDIR) \
 	  BLDTOP=../$(BLDDIR) \
