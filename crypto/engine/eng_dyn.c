@@ -154,6 +154,7 @@ static void dynamic_data_ctx_free_func(void *parent, void *ptr,
 static int dynamic_set_data_ctx(ENGINE *e, dynamic_data_ctx **ctx)
 {
     dynamic_data_ctx *c = OPENSSL_zalloc(sizeof(*c));
+    int ret = 1;
 
     if (c == NULL) {
         ENGINEerr(ENGINE_F_DYNAMIC_SET_DATA_CTX, ERR_R_MALLOC_FAILURE);
@@ -173,9 +174,11 @@ static int dynamic_set_data_ctx(ENGINE *e, dynamic_data_ctx **ctx)
                                                        dynamic_ex_data_idx))
         == NULL) {
         /* Good, we're the first */
-        ENGINE_set_ex_data(e, dynamic_ex_data_idx, c);
-        *ctx = c;
-        c = NULL;
+        ret = ENGINE_set_ex_data(e, dynamic_ex_data_idx, c);
+        if (ret) {
+            *ctx = c;
+            c = NULL;
+        }
     }
     CRYPTO_THREAD_unlock(global_engine_lock);
     /*
@@ -185,7 +188,7 @@ static int dynamic_set_data_ctx(ENGINE *e, dynamic_data_ctx **ctx)
     if (c)
         sk_OPENSSL_STRING_free(c->dirs);
     OPENSSL_free(c);
-    return 1;
+    return ret;
 }
 
 /*

@@ -74,7 +74,7 @@ static void print_errors(void)
 
 static int verify_chain(SSL *ssl, STACK_OF(X509) *chain)
 {
-    int ret;
+    int ret = -1;
     X509_STORE_CTX *store_ctx;
     SSL_CTX *ssl_ctx = SSL_get_SSL_CTX(ssl);
     X509_STORE *store = SSL_CTX_get_cert_store(ssl_ctx);
@@ -85,8 +85,9 @@ static int verify_chain(SSL *ssl, STACK_OF(X509) *chain)
         return -1;
 
     if (!X509_STORE_CTX_init(store_ctx, store, cert, chain))
-        return 0;
-    X509_STORE_CTX_set_ex_data(store_ctx, store_ctx_idx, ssl);
+        goto end;
+    if (!X509_STORE_CTX_set_ex_data(store_ctx, store_ctx_idx, ssl))
+        goto end;
 
     X509_STORE_CTX_set_default(store_ctx,
             SSL_is_server(ssl) ? "ssl_client" : "ssl_server");
@@ -101,6 +102,7 @@ static int verify_chain(SSL *ssl, STACK_OF(X509) *chain)
 
     SSL_set_verify_result(ssl, X509_STORE_CTX_get_error(store_ctx));
     X509_STORE_CTX_cleanup(store_ctx);
+end:
     X509_STORE_CTX_free(store_ctx);
 
     return (ret);
