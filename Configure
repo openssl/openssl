@@ -94,11 +94,11 @@ my $gcc_devteam_warn = "-DPEDANTIC -DREF_DEBUG -DDEBUG_UNUSED -DBIO_DEBUG"
 # TODO(openssl-team): fix problems and investigate if (at least) the
 # following warnings can also be enabled:
 #       -Wswitch-enum
-#       -Wunused-macros
 #       -Wcast-align
 #       -Wunreachable-code
-#       -Wlanguage-extension-token
-#       -Wextended-offsetof
+#       -Wlanguage-extension-token -- no, we use asm()
+#       -Wunused-macros -- no, too tricky for BN and _XOPEN_SOURCE etc
+#       -Wextended-offsetof -- no, needed in CMS ASN1 code
 my $clang_devteam_warn = ""
         . " -Qunused-arguments"
         . " -Wextra"

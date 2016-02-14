@@ -674,8 +674,7 @@ int load_cert_crl_http(const char *url, X509 **pcert, X509_CRL **pcrl)
     return rv;
 }
 
-X509 *load_cert(const char *file, int format,
-                const char *pass, ENGINE *e, const char *cert_descrip)
+X509 *load_cert(const char *file, int format, const char *cert_descrip)
 {
     X509 *x = NULL;
     BIO *cert;
@@ -904,7 +903,7 @@ EVP_PKEY *load_pubkey(const char *file, int format, int maybe_stdin,
 }
 
 static int load_certs_crls(const char *file, int format,
-                           const char *pass, ENGINE *e, const char *desc,
+                           const char *pass, const char *desc,
                            STACK_OF(X509) **pcerts,
                            STACK_OF(X509_CRL) **pcrls)
 {
@@ -1002,18 +1001,18 @@ void* app_malloc(int sz, const char *what)
  * Initialize or extend, if *certs != NULL,  a certificate stack.
  */
 int load_certs(const char *file, STACK_OF(X509) **certs, int format,
-               const char *pass, ENGINE *e, const char *desc)
+               const char *pass, const char *desc)
 {
-    return load_certs_crls(file, format, pass, e, desc, certs, NULL);
+    return load_certs_crls(file, format, pass, desc, certs, NULL);
 }
 
 /*
  * Initialize or extend, if *crls != NULL,  a certificate stack.
  */
 int load_crls(const char *file, STACK_OF(X509_CRL) **crls, int format,
-              const char *pass, ENGINE *e, const char *desc)
+              const char *pass, const char *desc)
 {
-    return load_certs_crls(file, format, pass, e, desc, NULL, crls);
+    return load_certs_crls(file, format, pass, desc, NULL, crls);
 }
 
 #define X509V3_EXT_UNKNOWN_MASK         (0xfL << 16)
@@ -1300,7 +1299,7 @@ X509_STORE *setup_verify(char *CAfile, char *CApath, int noCAfile, int noCApath)
 
 #ifndef OPENSSL_NO_ENGINE
 /* Try to load an engine in a shareable library */
-static ENGINE *try_load_engine(const char *engine, int debug)
+static ENGINE *try_load_engine(const char *engine)
 {
     ENGINE *e = ENGINE_by_id("dynamic");
     if (e) {
@@ -1324,7 +1323,7 @@ ENGINE *setup_engine(const char *engine, int debug)
             return NULL;
         }
         if ((e = ENGINE_by_id(engine)) == NULL
-            && (e = try_load_engine(engine, debug)) == NULL) {
+            && (e = try_load_engine(engine)) == NULL) {
             BIO_printf(bio_err, "invalid engine \"%s\"\n", engine);
             ERR_print_errors(bio_err);
             return NULL;
