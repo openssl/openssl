@@ -757,9 +757,6 @@ static void list_disabled(void)
 #ifdef OPENSSL_NO_IDEA
     BIO_puts(bio_out, "IDEA\n");
 #endif
-#ifdef OPENSSL_NO_JPAKE
-    BIO_puts(bio_out, "JPAKE\n");
-#endif
 #ifdef OPENSSL_NO_MD2
     BIO_puts(bio_out, "MD2\n");
 #endif

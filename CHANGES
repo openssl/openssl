@@ -4,6 +4,9 @@
 
  Changes between 1.0.2f and 1.1.0  [xx XXX xxxx]
 
+  *) Removed JPAKE code.  It was experimental and has no wide use.
+     [Rich Salz]
+
   *) The INSTALL_PREFIX Makefile variable has been renamed to
      DESTDIR.  That makes for less confusion on what this variable
      is for.  Also, the configuration option --install_prefix is
