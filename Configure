@@ -109,9 +109,9 @@ my $clang_devteam_warn = ""
         . " -Wmissing-variable-declarations"
         ;
 
-# These are used in addition to $gcc_devteam_warn unless this is a mingw build.
-# This adds backtrace information to the memory leak info.
-my $memleak_devteam_backtrace = "-rdynamic -DCRYPTO_MDEBUG_BACKTRACE";
+# This adds backtrace information to the memory leak info.  Is only used
+# when crypto-mdebug-backtrace is enabled.
+my $memleak_devteam_backtrace = "-rdynamic";
 
 my $strict_warnings = 0;
 
@@ -252,6 +252,7 @@ my @disablables = (
     "cms",
     "comp",
     "crypto-mdebug",
+    "crypto-mdebug-backtrace",
     "ct",
     "deprecated",
     "des",
@@ -377,6 +378,8 @@ my @disable_cascades = (
 
     # SRP and HEARTBEATS require TLSEXT
     "tlsext"		=> [ "srp", "heartbeats" ],
+
+    "crypto-mdebug"     => [ "crypto-mdebug-backtrace" ],
     );
 
 # Avoid protocol support holes.  Also disable all versions below N, if version
@@ -1162,16 +1165,17 @@ if ($strict_warnings)
 			$config{cflags} .= " $wopt" unless ($config{cflags} =~ /(^|\s)$wopt(\s|$)/)
 			}
 		}
-	if ($target !~ /^mingw/)
+	}
+
+unless ($disabled{"crypto-mdebug-backtrace"})
+	{
+	foreach my $wopt (split /\s+/, $memleak_devteam_backtrace)
 		{
-		foreach $wopt (split /\s+/, $memleak_devteam_backtrace)
-			{
-			$config{cflags} .= " $wopt" unless ($config{cflags} =~ /(^|\s)$wopt(\s|$)/)
-			}
-		if ($target =~ /^BSD-/)
-			{
-			$config{ex_libs} .= " -lexecinfo";
-			}
+		$config{cflags} .= " $wopt" unless ($config{cflags} =~ /(^|\s)$wopt(\s|$)/)
+		}
+	if ($target =~ /^BSD-/)
+		{
+		$config{ex_libs} .= " -lexecinfo";
 		}
 	}
 
