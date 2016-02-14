@@ -57,6 +57,7 @@
 
 #include <internal/cryptlib_int.h>
 #include <openssl/err.h>
+#include <openssl/rand.h>
 #include <openssl/evp.h>
 #include <internal/evp_int.h>
 #include <internal/conf.h>
