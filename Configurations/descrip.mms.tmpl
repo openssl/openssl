@@ -629,7 +629,8 @@ EOF
                            rel2abs($config{builddir}));
       return <<"EOF";
 $script : $sources
-        \$(PERL) "-I\$(BUILDDIR)" "-Mconfigdata" $dofile $sources > $script
+        \$(PERL) "-I\$(BUILDDIR)" "-Mconfigdata" $dofile -
+	    "-o{- $config{build_file} -}" $sources > $script
         SET FILE/PROT=(S:RWED,O:RWED,G:RE,W:RE) $script
         PURGE $script
 EOF
