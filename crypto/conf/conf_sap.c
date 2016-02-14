@@ -75,6 +75,7 @@
 
 static int openssl_configured = 0;
 
+#if OPENSSL_API_COMPAT < 0x10100000L
 void OPENSSL_config(const char *config_name)
 {
     OPENSSL_INIT_SETTINGS settings;
@@ -83,6 +84,7 @@ void OPENSSL_config(const char *config_name)
     settings.config_name = strdup(config_name);
     OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CONFIG, &settings);
 }
+#endif
 
 void openssl_config_internal(const char *config_name)
 {
