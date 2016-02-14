@@ -4201,8 +4201,8 @@ ASN1_item_sign_ctx                      4671	1_1_0	EXIST::FUNCTION:
 EC_GFp_nistp521_method                  4672	1_1_0	EXIST:!WIN32:FUNCTION:EC,EC_NISTP_64_GCC_128
 EC_GFp_nistp256_method                  4673	1_1_0	EXIST:!WIN32:FUNCTION:EC,EC_NISTP_64_GCC_128
 OPENSSL_stderr                          4674	1_1_0	NOEXIST::FUNCTION:
-OPENSSL_cpuid_setup                     4675	1_1_0	EXIST::FUNCTION:
-OPENSSL_showfatal                       4676	1_1_0	EXIST::FUNCTION:
+OPENSSL_cpuid_setup                     4675	1_1_0	NOEXIST::FUNCTION:
+OPENSSL_showfatal                       4676	1_1_0	NOEXIST::FUNCTION:
 BIO_new_dgram_sctp                      4677	1_1_0	EXIST::FUNCTION:SCTP
 BIO_dgram_sctp_msg_waiting              4678	1_1_0	EXIST::FUNCTION:SCTP
 BIO_dgram_sctp_wait_for_dry             4679	1_1_0	EXIST::FUNCTION:SCTP
@@ -4602,11 +4602,11 @@ EC_KEY_METHOD_get_verify                5079	1_1_0	EXIST::FUNCTION:EC
 ENGINE_unregister_EC                    5080	1_1_0	EXIST::FUNCTION:ENGINE
 EC_KEY_METHOD_get_sign                  5081	1_1_0	EXIST::FUNCTION:EC
 EC_KEY_METHOD_get_compute_key           5082	1_1_0	EXIST::FUNCTION:EC
-Poly1305_Init                           5083	1_1_0	EXIST::FUNCTION:POLY1305
-ChaCha20_ctr32                          5084	1_1_0	EXIST::FUNCTION:CHACHA
-Poly1305_ctx_size                       5085	1_1_0	EXIST::FUNCTION:POLY1305
-Poly1305_Update                         5086	1_1_0	EXIST::FUNCTION:POLY1305
-Poly1305_Final                          5087	1_1_0	EXIST::FUNCTION:POLY1305
+Poly1305_Init                           5083	1_1_0	NOEXIST::FUNCTION:
+ChaCha20_ctr32                          5084	1_1_0	NOEXIST::FUNCTION:
+Poly1305_ctx_size                       5085	1_1_0	NOEXIST::FUNCTION:
+Poly1305_Update                         5086	1_1_0	NOEXIST::FUNCTION:
+Poly1305_Final                          5087	1_1_0	NOEXIST::FUNCTION:
 EVP_chacha20_poly1305                   5088	1_1_0	EXIST::FUNCTION:CHACHA,POLY1305
 EVP_chacha20                            5089	1_1_0	EXIST::FUNCTION:CHACHA
 TLS_FEATURE_free                        5093	1_1_0	EXIST::FUNCTION:
