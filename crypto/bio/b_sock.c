@@ -432,7 +432,7 @@ int BIO_sock_info(int sock,
                 BIOerr(BIO_F_BIO_SOCK_INFO, BIO_R_GETSOCKNAME_ERROR);
                 return 0;
             }
-            if (addr_len > sizeof(*info->addr)) {
+            if ((size_t)addr_len > sizeof(*info->addr)) {
                 BIOerr(BIO_F_BIO_SOCK_INFO, BIO_R_GETSOCKNAME_TRUNCATED_ADDRESS);
                 return 0;
             }
