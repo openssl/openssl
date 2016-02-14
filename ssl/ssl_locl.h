@@ -1165,7 +1165,7 @@ struct ssl_st {
      * basis, depending on the chosen cipher.
      */
     int (*not_resumable_session_cb) (SSL *ssl, int is_forward_secure);
-    
+
     RECORD_LAYER rlayer;
 
     /* Default password callback. */
@@ -1826,8 +1826,10 @@ const SSL_METHOD *func_name(void)  \
 struct openssl_ssl_test_functions {
     int (*p_ssl_init_wbio_buffer) (SSL *s, int push);
     int (*p_ssl3_setup_buffers) (SSL *s);
+# ifndef OPENSSL_NO_HEARTBEATS
     int (*p_dtls1_process_heartbeat) (SSL *s,
         unsigned char *p, unsigned int length);
+# endif
 };
 
 # ifndef OPENSSL_UNIT_TEST
