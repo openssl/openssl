@@ -61,6 +61,7 @@
 #include <openssl/evp.h>
 #include <openssl/ssl.h>
 #include <openssl/err.h>
+#include "../e_os.h"
 
 
 #define CLIENT_VERSION_LEN      2
@@ -86,7 +87,7 @@
  */
 #define TEST_SET_SESSION_TICK_DATA_VER_NEG      1
 
-int main(int argc, char *argv[])
+int main()
 {
     SSL_CTX *ctx;
     SSL *con;

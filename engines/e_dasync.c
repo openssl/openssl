@@ -60,6 +60,7 @@
 #include <openssl/async.h>
 #include <openssl/bn.h>
 #include <openssl/crypto.h>
+#include <e_os.h>
 
 #define DASYNC_LIB_NAME "DASYNC"
 #include "e_dasync_err.c"
@@ -221,29 +222,34 @@ void engine_load_dasync_internal(void)
     ERR_clear_error();
 }
 
-static int dasync_init(ENGINE *e)
+static int dasync_init(ENGINE *_1)
 {
+    osslunused1();
     return 1;
 }
 
 
-static int dasync_finish(ENGINE *e)
+static int dasync_finish(ENGINE *_1)
 {
+    osslunused1();
     return 1;
 }
 
 
-static int dasync_destroy(ENGINE *e)
+static int dasync_destroy(ENGINE *_1)
 {
+    osslunused1();
     destroy_digests();
     ERR_unload_DASYNC_strings();
     return 1;
 }
 
-static int dasync_digests(ENGINE *e, const EVP_MD **digest,
+static int dasync_digests(ENGINE *_1, const EVP_MD **digest,
                           const int **nids, int nid)
 {
     int ok = 1;
+
+    osslunused1();
     if (!digest) {
         /* We are returning a list of supported nids */
         return dasync_digest_nids(nids);

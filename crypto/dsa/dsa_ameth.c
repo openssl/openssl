@@ -466,15 +466,15 @@ static int do_dsa_print(BIO *bp, const DSA *x, int off, int ptype)
             goto err;
     }
 
-    if (!ASN1_bn_print(bp, "priv:", priv_key, m, off))
+    if (!ASN1_bn_print(bp, "priv:", priv_key, NULL, off))
         goto err;
-    if (!ASN1_bn_print(bp, "pub: ", pub_key, m, off))
+    if (!ASN1_bn_print(bp, "pub: ", pub_key, NULL, off))
         goto err;
-    if (!ASN1_bn_print(bp, "P:   ", x->p, m, off))
+    if (!ASN1_bn_print(bp, "P:   ", x->p, NULL, off))
         goto err;
-    if (!ASN1_bn_print(bp, "Q:   ", x->q, m, off))
+    if (!ASN1_bn_print(bp, "Q:   ", x->q, NULL, off))
         goto err;
-    if (!ASN1_bn_print(bp, "G:   ", x->g, m, off))
+    if (!ASN1_bn_print(bp, "G:   ", x->g, NULL, off))
         goto err;
     ret = 1;
  err:
@@ -501,20 +501,23 @@ static int dsa_param_encode(const EVP_PKEY *pkey, unsigned char **pder)
 }
 
 static int dsa_param_print(BIO *bp, const EVP_PKEY *pkey, int indent,
-                           ASN1_PCTX *ctx)
+                           ASN1_PCTX *_1)
 {
+    osslunused1();
     return do_dsa_print(bp, pkey->pkey.dsa, indent, 0);
 }
 
 static int dsa_pub_print(BIO *bp, const EVP_PKEY *pkey, int indent,
-                         ASN1_PCTX *ctx)
+                         ASN1_PCTX *_1)
 {
+    osslunused1();
     return do_dsa_print(bp, pkey->pkey.dsa, indent, 1);
 }
 
 static int dsa_priv_print(BIO *bp, const EVP_PKEY *pkey, int indent,
-                          ASN1_PCTX *ctx)
+                          ASN1_PCTX *_1)
 {
+    osslunused1();
     return do_dsa_print(bp, pkey->pkey.dsa, indent, 2);
 }
 
@@ -536,11 +539,13 @@ static int old_dsa_priv_encode(const EVP_PKEY *pkey, unsigned char **pder)
     return i2d_DSAPrivateKey(pkey->pkey.dsa, pder);
 }
 
-static int dsa_sig_print(BIO *bp, const X509_ALGOR *sigalg,
-                         const ASN1_STRING *sig, int indent, ASN1_PCTX *pctx)
+static int dsa_sig_print(BIO *bp, const X509_ALGOR *_1,
+                         const ASN1_STRING *sig, int indent, ASN1_PCTX *_2)
 {
     DSA_SIG *dsa_sig;
     const unsigned char *p;
+
+    osslunused2();
     if (!sig) {
         if (BIO_puts(bp, "\n") <= 0)
             return 0;
@@ -564,9 +569,9 @@ static int dsa_sig_print(BIO *bp, const X509_ALGOR *sigalg,
         if (BIO_write(bp, "\n", 1) != 1)
             goto err;
 
-        if (!ASN1_bn_print(bp, "r:   ", dsa_sig->r, m, indent))
+        if (!ASN1_bn_print(bp, "r:   ", dsa_sig->r, NULL, indent))
             goto err;
-        if (!ASN1_bn_print(bp, "s:   ", dsa_sig->s, m, indent))
+        if (!ASN1_bn_print(bp, "s:   ", dsa_sig->s, NULL, indent))
             goto err;
         rv = 1;
  err:

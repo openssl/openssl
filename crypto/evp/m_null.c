@@ -61,19 +61,23 @@
 #include <openssl/objects.h>
 #include <openssl/x509.h>
 #include "internal/evp_int.h"
+#include "evp_locl.h"
 
-static int init(EVP_MD_CTX *ctx)
+static int init(EVP_MD_CTX *_1)
 {
+    osslunused1();
     return 1;
 }
 
-static int update(EVP_MD_CTX *ctx, const void *data, size_t count)
+static int update(EVP_MD_CTX *_1, const void *_2, size_t _3)
 {
+    osslunused3();
     return 1;
 }
 
-static int final(EVP_MD_CTX *ctx, unsigned char *md)
+static int final(EVP_MD_CTX *_1, unsigned char *_2)
 {
+    osslunused2();
     return 1;
 }
 

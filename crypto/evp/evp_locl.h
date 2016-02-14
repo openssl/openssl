@@ -56,6 +56,7 @@
  *
  */
 
+#include <e_os.h>
 /* EVP_MD_CTX related stuff */
 
 struct evp_md_ctx_st {

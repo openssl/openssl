@@ -342,11 +342,12 @@ static void *v2i_crld(const X509V3_EXT_METHOD *method,
     return NULL;
 }
 
-static int dpn_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
-                  void *exarg)
+static int dpn_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *_1,
+                  void *_2)
 {
     DIST_POINT_NAME *dpn = (DIST_POINT_NAME *)*pval;
 
+    osslunused2();
     switch (operation) {
     case ASN1_OP_NEW_POST:
         dpn->dpname = NULL;
@@ -409,13 +410,15 @@ const X509V3_EXT_METHOD v3_idp = {
     NULL
 };
 
-static void *v2i_idp(const X509V3_EXT_METHOD *method, X509V3_CTX *ctx,
+static void *v2i_idp(const X509V3_EXT_METHOD *_1, X509V3_CTX *ctx,
                      STACK_OF(CONF_VALUE) *nval)
 {
     ISSUING_DIST_POINT *idp = NULL;
     CONF_VALUE *cnf;
     char *name, *val;
     int i, ret;
+
+    osslunused1();
     idp = ISSUING_DIST_POINT_new();
     if (idp == NULL)
         goto merr;
@@ -484,10 +487,12 @@ static int print_distpoint(BIO *out, DIST_POINT_NAME *dpn, int indent)
     return 1;
 }
 
-static int i2r_idp(const X509V3_EXT_METHOD *method, void *pidp, BIO *out,
+static int i2r_idp(const X509V3_EXT_METHOD *_1, void *pidp, BIO *out,
                    int indent)
 {
     ISSUING_DIST_POINT *idp = pidp;
+
+    osslunused1();
     if (idp->distpoint)
         print_distpoint(out, idp->distpoint, indent);
     if (idp->onlyuser > 0)
@@ -508,12 +513,14 @@ static int i2r_idp(const X509V3_EXT_METHOD *method, void *pidp, BIO *out,
     return 1;
 }
 
-static int i2r_crldp(const X509V3_EXT_METHOD *method, void *pcrldp, BIO *out,
+static int i2r_crldp(const X509V3_EXT_METHOD *_1, void *pcrldp, BIO *out,
                      int indent)
 {
     STACK_OF(DIST_POINT) *crld = pcrldp;
     DIST_POINT *point;
     int i;
+
+    osslunused1();
     for (i = 0; i < sk_DIST_POINT_num(crld); i++) {
         BIO_puts(out, "\n");
         point = sk_DIST_POINT_value(crld, i);

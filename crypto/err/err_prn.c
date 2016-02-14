@@ -85,10 +85,11 @@ void ERR_print_errors_cb(int (*cb) (const char *str, size_t len, void *u),
 }
 
 #ifndef OPENSSL_NO_STDIO
-static int print_fp(const char *str, size_t len, void *fp)
+static int print_fp(const char *str, size_t _1, void *fp)
 {
     BIO bio;
 
+    osslunused1();
     BIO_set(&bio, BIO_s_file());
     BIO_set_fp(&bio, fp, BIO_NOCLOSE);
 

@@ -191,12 +191,9 @@ typedef unsigned int u_int;
 #endif
 
 static int not_resumable_sess_cb(SSL *s, int is_forward_secure);
-static int sv_body(const char *hostname, int s, int stype,
-                   unsigned char *context);
-static int www_body(const char *hostname, int s, int stype,
-                    unsigned char *context);
-static int rev_body(const char *hostname, int s, int stype,
-                    unsigned char *context);
+static int sv_body(int s, int stype, unsigned char *context);
+static int www_body(int s, int stype, unsigned char *context);
+static int rev_body(int s, int stype, unsigned char *context);
 static void close_accept_socket(void);
 static int init_ssl_connection(SSL *s);
 static void print_stats(BIO *bp, SSL_CTX *ctx);
@@ -274,7 +271,7 @@ static const char *s_serverinfo_file = NULL;
 static char *psk_identity = "Client_identity";
 char *psk_key = NULL;           /* by default PSK is not used */
 
-static unsigned int psk_server_cb(SSL *ssl, const char *identity,
+static unsigned int psk_server_cb(SSL *_1, const char *identity,
                                   unsigned char *psk,
                                   unsigned int max_psk_len)
 {
@@ -282,6 +279,7 @@ static unsigned int psk_server_cb(SSL *ssl, const char *identity,
     int ret;
     BIGNUM *bn = NULL;
 
+    osslunused1();
     if (s_debug)
         BIO_printf(bio_s_out, "psk_server_cb\n");
     if (!identity) {
@@ -573,10 +571,12 @@ typedef struct tlsextctx_st {
     int extension_error;
 } tlsextctx;
 
-static int ssl_servername_cb(SSL *s, int *ad, void *arg)
+static int ssl_servername_cb(SSL *s, int *_1, void *arg)
 {
     tlsextctx *p = (tlsextctx *) arg;
     const char *servername = SSL_get_servername(s, TLSEXT_NAMETYPE_host_name);
+
+    osslunused1();
     if (servername && p->biodebug)
         BIO_printf(p->biodebug, "Hostname in TLS extension: \"%s\"\n",
                    servername);
@@ -728,11 +728,12 @@ typedef struct tlsextnextprotoctx_st {
     unsigned int len;
 } tlsextnextprotoctx;
 
-static int next_proto_cb(SSL *s, const unsigned char **data,
+static int next_proto_cb(SSL *_1, const unsigned char **data,
                          unsigned int *len, void *arg)
 {
     tlsextnextprotoctx *next_proto = arg;
 
+    osslunused1();
     *data = next_proto->data;
     *len = next_proto->len;
 
@@ -746,11 +747,12 @@ typedef struct tlsextalpnctx_st {
     unsigned short len;
 } tlsextalpnctx;
 
-static int alpn_cb(SSL *s, const unsigned char **out, unsigned char *outlen,
+static int alpn_cb(SSL *_1, const unsigned char **out, unsigned char *outlen,
                    const unsigned char *in, unsigned int inlen, void *arg)
 {
     tlsextalpnctx *alpn_ctx = arg;
 
+    osslunused1();
     if (!s_quiet) {
         /* We can assume that |in| is syntactically valid. */
         unsigned i;
@@ -779,8 +781,9 @@ static int alpn_cb(SSL *s, const unsigned char **out, unsigned char *outlen,
     return SSL_TLSEXT_ERR_OK;
 }
 
-static int not_resumable_sess_cb(SSL *s, int is_forward_secure)
+static int not_resumable_sess_cb(SSL *_1, int is_forward_secure)
 {
+    osslunused1();
     /* disable resumption for sessions with forward secure ciphers */
     return is_forward_secure;
 }
@@ -1031,8 +1034,7 @@ int s_server_main(int argc, char *argv[])
 #ifdef AF_UNIX
     int unlink_unix_path = 0;
 #endif
-    int (*server_cb) (const char *hostname, int s, int stype,
-                      unsigned char *context);
+    do_server_cb server_cb;
     int vpmtouched = 0, build_chain = 0, no_cache = 0, ext_cache = 0;
 #ifndef OPENSSL_NO_DH
     int no_dhe = 0;
@@ -1578,14 +1580,14 @@ int s_server_main(int argc, char *argv[])
         }
 
         s_cert = load_cert(s_cert_file, s_cert_format,
-                           NULL, e, "server certificate file");
+                           "server certificate file");
 
         if (!s_cert) {
             ERR_print_errors(bio_err);
             goto end;
         }
         if (s_chain_file) {
-            if (!load_certs(s_chain_file, &s_chain, FORMAT_PEM, NULL, e,
+            if (!load_certs(s_chain_file, &s_chain, FORMAT_PEM, NULL,
                             "server certificate chain"))
                 goto end;
         }
@@ -1599,7 +1601,7 @@ int s_server_main(int argc, char *argv[])
             }
 
             s_cert2 = load_cert(s_cert_file2, s_cert_format,
-                                NULL, e, "second server certificate file");
+                                "second server certificate file");
 
             if (!s_cert2) {
                 ERR_print_errors(bio_err);
@@ -1657,14 +1659,14 @@ int s_server_main(int argc, char *argv[])
         }
 
         s_dcert = load_cert(s_dcert_file, s_dcert_format,
-                            NULL, e, "second server certificate file");
+                            "second server certificate file");
 
         if (!s_dcert) {
             ERR_print_errors(bio_err);
             goto end;
         }
         if (s_dchain_file) {
-            if (!load_certs(s_dchain_file, &s_dchain, FORMAT_PEM, NULL, e,
+            if (!load_certs(s_dchain_file, &s_dchain, FORMAT_PEM, NULL,
                             "second server certificate chain"))
                 goto end;
         }
@@ -2079,8 +2081,7 @@ static void print_stats(BIO *bio, SSL_CTX *ssl_ctx)
                SSL_CTX_sess_get_cache_size(ssl_ctx));
 }
 
-static int sv_body(const char *hostname, int s, int stype,
-                   unsigned char *context)
+static int sv_body(int s, int stype, unsigned char *context)
 {
     char *buf = NULL;
     fd_set readfds;
@@ -2673,8 +2674,7 @@ static DH *load_dh_param(const char *dhfile)
 }
 #endif
 
-static int www_body(const char *hostname, int s, int stype,
-                    unsigned char *context)
+static int www_body(int s, int _1, unsigned char *context)
 {
     char *buf = NULL;
     int ret = 1;
@@ -2688,6 +2688,7 @@ static int www_body(const char *hostname, int s, int stype,
     int width;
     fd_set readfds;
 
+    osslunused1();
     /* Set width for a select call if needed */
     width = s + 1;
 
@@ -3061,8 +3062,7 @@ static int www_body(const char *hostname, int s, int stype,
     return (ret);
 }
 
-static int rev_body(const char *hostname, int s, int stype,
-                    unsigned char *context)
+static int rev_body(int s, int _1, unsigned char *context)
 {
     char *buf = NULL;
     int i;
@@ -3070,6 +3070,7 @@ static int rev_body(const char *hostname, int s, int stype,
     SSL *con;
     BIO *io, *ssl_bio, *sbio;
 
+    osslunused1();
     buf = app_malloc(bufsize, "server rev buffer");
     io = BIO_new(BIO_f_buffer());
     ssl_bio = BIO_new(BIO_f_ssl());
@@ -3257,11 +3258,12 @@ typedef struct simple_ssl_session_st {
 
 static simple_ssl_session *first = NULL;
 
-static int add_session(SSL *ssl, SSL_SESSION *session)
+static int add_session(SSL *_1, SSL_SESSION *session)
 {
     simple_ssl_session *sess = app_malloc(sizeof(*sess), "get session");
     unsigned char *p;
 
+    osslunused1();
     SSL_SESSION_get_id(session, &sess->idlen);
     sess->derlen = i2d_SSL_SESSION(session, NULL);
     if (sess->derlen < 0) {
@@ -3296,10 +3298,12 @@ static int add_session(SSL *ssl, SSL_SESSION *session)
     return 0;
 }
 
-static SSL_SESSION *get_session(SSL *ssl, const unsigned char *id, int idlen,
+static SSL_SESSION *get_session(SSL *_1, const unsigned char *id, int idlen,
                                 int *do_copy)
 {
     simple_ssl_session *sess;
+
+    osslunused1();
     *do_copy = 0;
     for (sess = first; sess; sess = sess->next) {
         if (idlen == (int)sess->idlen && !memcmp(sess->id, id, idlen)) {
@@ -3312,12 +3316,13 @@ static SSL_SESSION *get_session(SSL *ssl, const unsigned char *id, int idlen,
     return NULL;
 }
 
-static void del_session(SSL_CTX *sctx, SSL_SESSION *session)
+static void del_session(SSL_CTX *_1, SSL_SESSION *session)
 {
     simple_ssl_session *sess, *prev = NULL;
-    const unsigned char *id;
     unsigned int idlen;
-    id = SSL_SESSION_get_id(session, &idlen);
+    const unsigned char *id = SSL_SESSION_get_id(session, &idlen);
+
+    osslunused1();
     for (sess = first; sess; sess = sess->next) {
         if (idlen == sess->idlen && !memcmp(sess->id, id, idlen)) {
             if (prev)

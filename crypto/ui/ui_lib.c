@@ -125,7 +125,7 @@ static int allocate_string_stack(UI *ui)
     return 0;
 }
 
-static UI_STRING *general_allocate_prompt(UI *ui, const char *prompt,
+static UI_STRING *general_allocate_prompt(const char *prompt,
                                           int prompt_freeable,
                                           enum UI_string_types type,
                                           int input_flags, char *result_buf)
@@ -154,7 +154,7 @@ static int general_allocate_string(UI *ui, const char *prompt,
                                    const char *test_buf)
 {
     int ret = -1;
-    UI_STRING *s = general_allocate_prompt(ui, prompt, prompt_freeable,
+    UI_STRING *s = general_allocate_prompt(prompt, prompt_freeable,
                                            type, input_flags, result_buf);
 
     if (s) {
@@ -197,7 +197,7 @@ static int general_allocate_boolean(UI *ui,
             }
         }
 
-        s = general_allocate_prompt(ui, prompt, prompt_freeable,
+        s = general_allocate_prompt(prompt, prompt_freeable,
                                     type, input_flags, result_buf);
 
         if (s) {
@@ -440,10 +440,11 @@ const char *UI_get0_result(UI *ui, int i)
     return UI_get0_result_string(sk_UI_STRING_value(ui->strings, i));
 }
 
-static int print_error(const char *str, size_t len, UI *ui)
+static int print_error(const char *str, size_t _1, UI *ui)
 {
     UI_STRING uis;
 
+    osslunused1();
     memset(&uis, 0, sizeof(uis));
     uis.type = UIT_ERROR;
     uis.out_string = str;
@@ -510,8 +511,9 @@ int UI_process(UI *ui)
     return ok;
 }
 
-int UI_ctrl(UI *ui, int cmd, long i, void *p, void (*f) (void))
+int UI_ctrl(UI *ui, int cmd, long i, void *_1, void (*_2) (void))
 {
+    osslunused2();
     if (ui == NULL) {
         UIerr(UI_F_UI_CTRL, ERR_R_PASSED_NULL_PARAMETER);
         return -1;

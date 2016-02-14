@@ -141,11 +141,12 @@ int X509V3_add_value_bool_nf(char *name, int asn1_bool,
     return 1;
 }
 
-char *i2s_ASN1_ENUMERATED(X509V3_EXT_METHOD *method, ASN1_ENUMERATED *a)
+char *i2s_ASN1_ENUMERATED(X509V3_EXT_METHOD *_1, ASN1_ENUMERATED *a)
 {
     BIGNUM *bntmp = NULL;
     char *strtmp = NULL;
 
+    osslunused1();
     if (!a)
         return NULL;
     if ((bntmp = ASN1_ENUMERATED_to_BN(a, NULL)) == NULL
@@ -155,11 +156,12 @@ char *i2s_ASN1_ENUMERATED(X509V3_EXT_METHOD *method, ASN1_ENUMERATED *a)
     return strtmp;
 }
 
-char *i2s_ASN1_INTEGER(X509V3_EXT_METHOD *method, ASN1_INTEGER *a)
+char *i2s_ASN1_INTEGER(X509V3_EXT_METHOD *_1, ASN1_INTEGER *a)
 {
     BIGNUM *bntmp = NULL;
     char *strtmp = NULL;
 
+    osslunused1();
     if (!a)
         return NULL;
     if ((bntmp = ASN1_INTEGER_to_BN(a, NULL)) == NULL
@@ -169,12 +171,14 @@ char *i2s_ASN1_INTEGER(X509V3_EXT_METHOD *method, ASN1_INTEGER *a)
     return strtmp;
 }
 
-ASN1_INTEGER *s2i_ASN1_INTEGER(X509V3_EXT_METHOD *method, char *value)
+ASN1_INTEGER *s2i_ASN1_INTEGER(X509V3_EXT_METHOD *_1, char *value)
 {
     BIGNUM *bn = NULL;
     ASN1_INTEGER *aint;
     int isneg, ishex;
     int ret;
+
+    osslunused1();
     if (value == NULL) {
         X509V3err(X509V3_F_S2I_ASN1_INTEGER, X509V3_R_INVALID_NULL_VALUE);
         return NULL;
@@ -636,8 +640,7 @@ typedef int (*equal_fn) (const unsigned char *pattern, size_t pattern_len,
 
 /* Skip pattern prefix to match "wildcard" subject */
 static void skip_prefix(const unsigned char **p, size_t *plen,
-                        const unsigned char *subject, size_t subject_len,
-                        unsigned int flags)
+                        size_t subject_len, unsigned int flags)
 {
     const unsigned char *pattern = *p;
     size_t pattern_len = *plen;
@@ -671,7 +674,7 @@ static int equal_nocase(const unsigned char *pattern, size_t pattern_len,
                         const unsigned char *subject, size_t subject_len,
                         unsigned int flags)
 {
-    skip_prefix(&pattern, &pattern_len, subject, subject_len, flags);
+    skip_prefix(&pattern, &pattern_len, subject_len, flags);
     if (pattern_len != subject_len)
         return 0;
     while (pattern_len) {
@@ -700,7 +703,7 @@ static int equal_case(const unsigned char *pattern, size_t pattern_len,
                       const unsigned char *subject, size_t subject_len,
                       unsigned int flags)
 {
-    skip_prefix(&pattern, &pattern_len, subject, subject_len, flags);
+    skip_prefix(&pattern, &pattern_len, subject_len, flags);
     if (pattern_len != subject_len)
         return 0;
     return !memcmp(pattern, subject, pattern_len);
@@ -712,9 +715,11 @@ static int equal_case(const unsigned char *pattern, size_t pattern_len,
  */
 static int equal_email(const unsigned char *a, size_t a_len,
                        const unsigned char *b, size_t b_len,
-                       unsigned int unused_flags)
+                       unsigned int _1)
 {
     size_t i = a_len;
+
+    osslunused1();
     if (a_len != b_len)
         return 0;
     /*

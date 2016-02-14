@@ -266,11 +266,12 @@ static DSO_FUNC_TYPE dlfcn_bind_func(DSO *dso, const char *symname)
     return u.sym;
 }
 
-static char *dlfcn_merger(DSO *dso, const char *filespec1,
+static char *dlfcn_merger(DSO *_1, const char *filespec1,
                           const char *filespec2)
 {
     char *merged;
 
+    osslunused1();
     if (!filespec1 && !filespec2) {
         DSOerr(DSO_F_DLFCN_MERGER, ERR_R_PASSED_NULL_PARAMETER);
         return (NULL);

@@ -2613,14 +2613,15 @@ static int ssl_scan_serverhello_tlsext(SSL *s, PACKET *pkt, int *al)
     return 1;
 }
 
-int ssl_prepare_clienthello_tlsext(SSL *s)
+int ssl_prepare_clienthello_tlsext(SSL *_1)
 {
-
+    osslunused1();
     return 1;
 }
 
-int ssl_prepare_serverhello_tlsext(SSL *s)
+int ssl_prepare_serverhello_tlsext(SSL *_1)
 {
+    osslunused1();
     return 1;
 }
 

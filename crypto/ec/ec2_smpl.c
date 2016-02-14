@@ -202,9 +202,11 @@ int ec_GF2m_simple_group_copy(EC_GROUP *dest, const EC_GROUP *src)
 /* Set the curve parameters of an EC_GROUP structure. */
 int ec_GF2m_simple_group_set_curve(EC_GROUP *group,
                                    const BIGNUM *p, const BIGNUM *a,
-                                   const BIGNUM *b, BN_CTX *ctx)
+                                   const BIGNUM *b, BN_CTX *_1)
 {
     int ret = 0, i;
+
+    osslunused1();
 
     /* group->field */
     if (!BN_copy(group->field, p))
@@ -241,10 +243,11 @@ int ec_GF2m_simple_group_set_curve(EC_GROUP *group,
  * then there values will not be set but the method will return with success.
  */
 int ec_GF2m_simple_group_get_curve(const EC_GROUP *group, BIGNUM *p,
-                                   BIGNUM *a, BIGNUM *b, BN_CTX *ctx)
+                                   BIGNUM *a, BIGNUM *b, BN_CTX *_1)
 {
     int ret = 0;
 
+    osslunused1();
     if (p != NULL) {
         if (!BN_copy(p, group->field))
             return 0;
@@ -372,9 +375,9 @@ int ec_GF2m_simple_point_copy(EC_POINT *dest, const EC_POINT *src)
  * Set an EC_POINT to the point at infinity. A point at infinity is
  * represented by having Z=0.
  */
-int ec_GF2m_simple_point_set_to_infinity(const EC_GROUP *group,
-                                         EC_POINT *point)
+int ec_GF2m_simple_point_set_to_infinity(const EC_GROUP *_1, EC_POINT *point)
 {
+    osslunused1();
     point->Z_is_one = 0;
     BN_zero(point->Z);
     return 1;
@@ -384,12 +387,14 @@ int ec_GF2m_simple_point_set_to_infinity(const EC_GROUP *group,
  * Set the coordinates of an EC_POINT using affine coordinates. Note that
  * the simple implementation only uses affine coordinates.
  */
-int ec_GF2m_simple_point_set_affine_coordinates(const EC_GROUP *group,
+int ec_GF2m_simple_point_set_affine_coordinates(const EC_GROUP *_1,
                                                 EC_POINT *point,
                                                 const BIGNUM *x,
-                                                const BIGNUM *y, BN_CTX *ctx)
+                                                const BIGNUM *y, BN_CTX *_2)
 {
     int ret = 0;
+
+    osslunused2();
     if (x == NULL || y == NULL) {
         ECerr(EC_F_EC_GF2M_SIMPLE_POINT_SET_AFFINE_COORDINATES,
               ERR_R_PASSED_NULL_PARAMETER);
@@ -419,10 +424,11 @@ int ec_GF2m_simple_point_set_affine_coordinates(const EC_GROUP *group,
 int ec_GF2m_simple_point_get_affine_coordinates(const EC_GROUP *group,
                                                 const EC_POINT *point,
                                                 BIGNUM *x, BIGNUM *y,
-                                                BN_CTX *ctx)
+                                                BN_CTX *_1)
 {
     int ret = 0;
 
+    osslunused1();
     if (EC_POINT_is_at_infinity(group, point)) {
         ECerr(EC_F_EC_GF2M_SIMPLE_POINT_GET_AFFINE_COORDINATES,
               EC_R_POINT_AT_INFINITY);
@@ -587,9 +593,9 @@ int ec_GF2m_simple_invert(const EC_GROUP *group, EC_POINT *point, BN_CTX *ctx)
 }
 
 /* Indicates whether the given point is the point at infinity. */
-int ec_GF2m_simple_is_at_infinity(const EC_GROUP *group,
-                                  const EC_POINT *point)
+int ec_GF2m_simple_is_at_infinity(const EC_GROUP *_1, const EC_POINT *point)
 {
+    osslunused1();
     return BN_is_zero(point->Z);
 }
 

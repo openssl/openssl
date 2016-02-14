@@ -324,8 +324,7 @@ static int dh_param_encode(const EVP_PKEY *pkey, unsigned char **pder)
     return i2d_dhp(pkey, pkey->pkey.dh, pder);
 }
 
-static int do_dh_print(BIO *bp, const DH *x, int indent,
-                       ASN1_PCTX *ctx, int ptype)
+static int do_dh_print(BIO *bp, const DH *x, int indent, int ptype)
 {
     unsigned char *m = NULL;
     int reason = ERR_R_BUF_LIB;
@@ -377,18 +376,18 @@ static int do_dh_print(BIO *bp, const DH *x, int indent,
         goto err;
     indent += 4;
 
-    if (!ASN1_bn_print(bp, "private-key:", priv_key, m, indent))
+    if (!ASN1_bn_print(bp, "private-key:", priv_key, NULL, indent))
         goto err;
-    if (!ASN1_bn_print(bp, "public-key:", pub_key, m, indent))
+    if (!ASN1_bn_print(bp, "public-key:", pub_key, NULL, indent))
         goto err;
 
-    if (!ASN1_bn_print(bp, "prime:", x->p, m, indent))
+    if (!ASN1_bn_print(bp, "prime:", x->p, NULL, indent))
         goto err;
-    if (!ASN1_bn_print(bp, "generator:", x->g, m, indent))
+    if (!ASN1_bn_print(bp, "generator:", x->g, NULL, indent))
         goto err;
-    if (x->q && !ASN1_bn_print(bp, "subgroup order:", x->q, m, indent))
+    if (x->q && !ASN1_bn_print(bp, "subgroup order:", x->q, NULL, indent))
         goto err;
-    if (x->j && !ASN1_bn_print(bp, "subgroup factor:", x->j, m, indent))
+    if (x->j && !ASN1_bn_print(bp, "subgroup factor:", x->j, NULL, indent))
         goto err;
     if (x->seed) {
         int i;
@@ -407,7 +406,7 @@ static int do_dh_print(BIO *bp, const DH *x, int indent,
         if (BIO_write(bp, "\n", 1) <= 0)
             return (0);
     }
-    if (x->counter && !ASN1_bn_print(bp, "counter:", x->counter, m, indent))
+    if (x->counter && !ASN1_bn_print(bp, "counter:", x->counter, NULL, indent))
         goto err;
     if (x->length != 0) {
         BIO_indent(bp, indent, 128);
@@ -535,26 +534,29 @@ static int dh_pub_cmp(const EVP_PKEY *a, const EVP_PKEY *b)
 }
 
 static int dh_param_print(BIO *bp, const EVP_PKEY *pkey, int indent,
-                          ASN1_PCTX *ctx)
+                          ASN1_PCTX *_1)
 {
-    return do_dh_print(bp, pkey->pkey.dh, indent, ctx, 0);
+    osslunused1();
+    return do_dh_print(bp, pkey->pkey.dh, indent, 0);
 }
 
 static int dh_public_print(BIO *bp, const EVP_PKEY *pkey, int indent,
-                           ASN1_PCTX *ctx)
+                           ASN1_PCTX *_1)
 {
-    return do_dh_print(bp, pkey->pkey.dh, indent, ctx, 1);
+    osslunused1();
+    return do_dh_print(bp, pkey->pkey.dh, indent, 1);
 }
 
 static int dh_private_print(BIO *bp, const EVP_PKEY *pkey, int indent,
-                            ASN1_PCTX *ctx)
+                            ASN1_PCTX *_1)
 {
-    return do_dh_print(bp, pkey->pkey.dh, indent, ctx, 2);
+    osslunused1();
+    return do_dh_print(bp, pkey->pkey.dh, indent, 2);
 }
 
 int DHparams_print(BIO *bp, const DH *x)
 {
-    return do_dh_print(bp, x, 4, NULL, 0);
+    return do_dh_print(bp, x, 4, 0);
 }
 
 #ifndef OPENSSL_NO_CMS
@@ -562,11 +564,11 @@ static int dh_cms_decrypt(CMS_RecipientInfo *ri);
 static int dh_cms_encrypt(CMS_RecipientInfo *ri);
 #endif
 
-static int dh_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
+static int dh_pkey_ctrl(EVP_PKEY *_1, int op, long arg1, void *arg2)
 {
+    osslunused1();
     switch (op) {
 #ifndef OPENSSL_NO_CMS
-
     case ASN1_PKEY_CTRL_CMS_ENVELOPE:
         if (arg1 == 1)
             return dh_cms_decrypt(arg2);

@@ -196,15 +196,15 @@ main()
  */
 
 int PKCS5_v2_PBE_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
-                          ASN1_TYPE *param, const EVP_CIPHER *c,
-                          const EVP_MD *md, int en_de)
+                          ASN1_TYPE *param, const EVP_CIPHER *_1,
+                          const EVP_MD *_2, int en_de)
 {
     PBE2PARAM *pbe2 = NULL;
     const EVP_CIPHER *cipher;
     EVP_PBE_KEYGEN *kdf;
-
     int rv = 0;
 
+    osslunused2();
     pbe2 = ASN1_TYPE_unpack_sequence(ASN1_ITEM_rptr(PBE2PARAM), param);
     if (pbe2 == NULL) {
         EVPerr(EVP_F_PKCS5_V2_PBE_KEYIVGEN, EVP_R_DECODE_ERROR);
@@ -245,7 +245,7 @@ int PKCS5_v2_PBE_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
 
 int PKCS5_v2_PBKDF2_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass,
                              int passlen, ASN1_TYPE *param,
-                             const EVP_CIPHER *c, const EVP_MD *md, int en_de)
+                             const EVP_CIPHER *_1, const EVP_MD *_2, int en_de)
 {
     unsigned char *salt, key[EVP_MAX_KEY_LENGTH];
     int saltlen, iter;
@@ -255,6 +255,7 @@ int PKCS5_v2_PBKDF2_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass,
     PBKDF2PARAM *kdf = NULL;
     const EVP_MD *prfmd;
 
+    osslunused2();
     if (EVP_CIPHER_CTX_cipher(ctx) == NULL) {
         EVPerr(EVP_F_PKCS5_V2_PBKDF2_KEYIVGEN, EVP_R_NO_CIPHER_SET);
         goto err;

@@ -329,8 +329,9 @@ UI_METHOD *UI_OpenSSL(void)
  * The following function makes sure that info and error strings are printed
  * before any prompt.
  */
-static int write_string(UI *ui, UI_STRING *uis)
+static int write_string(UI *_1, UI_STRING *uis)
 {
+    osslunused1();
     switch (UI_get_string_type(uis)) {
     case UIT_ERROR:
     case UIT_INFO:
@@ -460,8 +461,9 @@ static int read_string_inner(UI *ui, UI_STRING *uis, int echo, int strip_nl)
 }
 
 /* Internal functions to open, handle and close a channel to the console.  */
-static int open_console(UI *ui)
+static int open_console(UI *_1)
 {
+    osslunused1();
     CRYPTO_w_lock(CRYPTO_LOCK_UI);
     is_a_tty = 1;
 
@@ -512,8 +514,9 @@ static int open_console(UI *ui)
     return 1;
 }
 
-static int noecho_console(UI *ui)
+static int noecho_console(UI *_1)
 {
+    osslunused1();
 #ifdef TTY_FLAGS
     memcpy(&(tty_new), &(tty_orig), sizeof(tty_orig));
     tty_new.TTY_FLAGS &= ~ECHO;
@@ -536,8 +539,9 @@ static int noecho_console(UI *ui)
     return 1;
 }
 
-static int echo_console(UI *ui)
+static int echo_console(UI *_1)
 {
+    osslunused1();
 #if defined(TTY_set) && !defined(OPENSSL_SYS_VMS)
     memcpy(&(tty_new), &(tty_orig), sizeof(tty_orig));
     tty_new.TTY_FLAGS |= ECHO;
@@ -560,8 +564,9 @@ static int echo_console(UI *ui)
     return 1;
 }
 
-static int close_console(UI *ui)
+static int close_console(UI *_1)
 {
+    osslunused1();
     if (tty_in != stdin)
         fclose(tty_in);
     if (tty_out != stderr)

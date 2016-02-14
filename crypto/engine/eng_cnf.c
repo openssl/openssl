@@ -224,9 +224,11 @@ static int int_engine_module_init(CONF_IMODULE *md, const CONF *cnf)
     return 1;
 }
 
-static void int_engine_module_finish(CONF_IMODULE *md)
+static void int_engine_module_finish(CONF_IMODULE *_1)
 {
     ENGINE *e;
+
+    osslunused1();
     while ((e = sk_ENGINE_pop(initialized_engines)))
         ENGINE_finish(e);
     sk_ENGINE_free(initialized_engines);

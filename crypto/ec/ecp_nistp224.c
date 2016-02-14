@@ -1277,11 +1277,12 @@ int ec_GFp_nistp224_group_set_curve(EC_GROUP *group, const BIGNUM *p,
 int ec_GFp_nistp224_point_get_affine_coordinates(const EC_GROUP *group,
                                                  const EC_POINT *point,
                                                  BIGNUM *x, BIGNUM *y,
-                                                 BN_CTX *ctx)
+                                                 BN_CTX *_1)
 {
     felem z1, z2, x_in, y_in, x_out, y_out;
     widefelem tmp;
 
+    osslunused1();
     if (EC_POINT_is_at_infinity(group, point)) {
         ECerr(EC_F_EC_GFP_NISTP224_POINT_GET_AFFINE_COORDINATES,
               EC_R_POINT_AT_INFINITY);

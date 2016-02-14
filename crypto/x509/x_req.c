@@ -80,11 +80,12 @@
  *
  */
 
-static int rinf_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
-                   void *exarg)
+static int rinf_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *_1,
+                   void *_2)
 {
     X509_REQ_INFO *rinf = (X509_REQ_INFO *)*pval;
 
+    osslunused2();
     if (operation == ASN1_OP_NEW_POST) {
         rinf->attributes = sk_X509_ATTRIBUTE_new_null();
         if (!rinf->attributes)

@@ -62,8 +62,8 @@
 #include <openssl/bio.h>
 #include <openssl/err.h>
 
-long BIO_debug_callback(BIO *bio, int cmd, const char *argp,
-                        int argi, long argl, long ret)
+long BIO_debug_callback(BIO *bio, int cmd, const char *_1,
+                        int argi, long _2, long ret)
 {
     BIO *b;
     char buf[256];
@@ -72,6 +72,7 @@ long BIO_debug_callback(BIO *bio, int cmd, const char *argp,
     int len;
     size_t p_maxlen;
 
+    osslunused2();
     if (BIO_CB_RETURN & cmd)
         r = ret;
 

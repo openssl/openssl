@@ -1,7 +1,8 @@
 
 #include <openssl/crypto.h>
+#include "../e_os.h"
 
-int main(int argc, char **argv)
+int main()
 {
 #if defined(OPENSSL_SYS_LINUX) || defined(OPENSSL_SYS_UNIX)
     char *p = NULL, *q = NULL;

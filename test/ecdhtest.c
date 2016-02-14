@@ -462,7 +462,7 @@ static int ecdh_kat(BIO *out, const ecdh_kat_t *kat)
     return rv;
 }
 
-int main(int argc, char *argv[])
+int main()
 {
     BN_CTX *ctx = NULL;
     int nid, ret = 1;

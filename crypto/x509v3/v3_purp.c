@@ -598,9 +598,10 @@ static int check_ssl_ca(const X509 *x)
         return 0;
 }
 
-static int check_purpose_ssl_client(const X509_PURPOSE *xp, const X509 *x,
+static int check_purpose_ssl_client(const X509_PURPOSE *_1, const X509 *x,
                                     int ca)
 {
+    osslunused1();
     if (xku_reject(x, XKU_SSL_CLIENT))
         return 0;
     if (ca)
@@ -622,9 +623,10 @@ static int check_purpose_ssl_client(const X509_PURPOSE *xp, const X509 *x,
 #define KU_TLS \
         KU_DIGITAL_SIGNATURE|KU_KEY_ENCIPHERMENT|KU_KEY_AGREEMENT
 
-static int check_purpose_ssl_server(const X509_PURPOSE *xp, const X509 *x,
+static int check_purpose_ssl_server(const X509_PURPOSE *_1, const X509 *x,
                                     int ca)
 {
+    osslunused1();
     if (xku_reject(x, XKU_SSL_SERVER | XKU_SGC))
         return 0;
     if (ca)
@@ -679,11 +681,12 @@ static int purpose_smime(const X509 *x, int ca)
     return 1;
 }
 
-static int check_purpose_smime_sign(const X509_PURPOSE *xp, const X509 *x,
+static int check_purpose_smime_sign(const X509_PURPOSE *_1, const X509 *x,
                                     int ca)
 {
-    int ret;
-    ret = purpose_smime(x, ca);
+    int ret = purpose_smime(x, ca);
+
+    osslunused1();
     if (!ret || ca)
         return ret;
     if (ku_reject(x, KU_DIGITAL_SIGNATURE | KU_NON_REPUDIATION))
@@ -691,11 +694,12 @@ static int check_purpose_smime_sign(const X509_PURPOSE *xp, const X509 *x,
     return ret;
 }
 
-static int check_purpose_smime_encrypt(const X509_PURPOSE *xp, const X509 *x,
+static int check_purpose_smime_encrypt(const X509_PURPOSE *_1, const X509 *x,
                                        int ca)
 {
-    int ret;
-    ret = purpose_smime(x, ca);
+    int ret = purpose_smime(x, ca);
+
+    osslunused1();
     if (!ret || ca)
         return ret;
     if (ku_reject(x, KU_KEY_ENCIPHERMENT))
@@ -703,9 +707,10 @@ static int check_purpose_smime_encrypt(const X509_PURPOSE *xp, const X509 *x,
     return ret;
 }
 
-static int check_purpose_crl_sign(const X509_PURPOSE *xp, const X509 *x,
+static int check_purpose_crl_sign(const X509_PURPOSE *_1, const X509 *x,
                                   int ca)
 {
+    osslunused1();
     if (ca) {
         int ca_ret;
         if ((ca_ret = check_ca(x)) != 2)
@@ -723,8 +728,9 @@ static int check_purpose_crl_sign(const X509_PURPOSE *xp, const X509 *x,
  * is valid. Additional checks must be made on the chain.
  */
 
-static int ocsp_helper(const X509_PURPOSE *xp, const X509 *x, int ca)
+static int ocsp_helper(const X509_PURPOSE *_1, const X509 *x, int ca)
 {
+    osslunused1();
     /*
      * Must be a valid CA.  Should we really support the "I don't know" value
      * (2)?
@@ -735,11 +741,12 @@ static int ocsp_helper(const X509_PURPOSE *xp, const X509 *x, int ca)
     return 1;
 }
 
-static int check_purpose_timestamp_sign(const X509_PURPOSE *xp, const X509 *x,
+static int check_purpose_timestamp_sign(const X509_PURPOSE *_1, const X509 *x,
                                         int ca)
 {
     int i_ext;
 
+    osslunused1();
     /* If ca is true we must return if this is a valid CA certificate. */
     if (ca)
         return check_ca(x);
@@ -770,8 +777,9 @@ static int check_purpose_timestamp_sign(const X509_PURPOSE *xp, const X509 *x,
     return 1;
 }
 
-static int no_check(const X509_PURPOSE *xp, const X509 *x, int ca)
+static int no_check(const X509_PURPOSE *_1, const X509 *_2, int _3)
 {
+    osslunused3();
     return 1;
 }
 

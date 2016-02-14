@@ -116,12 +116,13 @@ X509_LOOKUP_METHOD *X509_LOOKUP_hash_dir(void)
 }
 
 static int dir_ctrl(X509_LOOKUP *ctx, int cmd, const char *argp, long argl,
-                    char **retp)
+                    char **_1)
 {
     int ret = 0;
     BY_DIR *ld;
     char *dir = NULL;
 
+    osslunused1();
     ld = (BY_DIR *)ctx->method_data;
 
     switch (cmd) {

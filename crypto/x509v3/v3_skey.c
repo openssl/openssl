@@ -73,17 +73,19 @@ const X509V3_EXT_METHOD v3_skey_id = {
     NULL
 };
 
-char *i2s_ASN1_OCTET_STRING(X509V3_EXT_METHOD *method, ASN1_OCTET_STRING *oct)
+char *i2s_ASN1_OCTET_STRING(X509V3_EXT_METHOD *_1, ASN1_OCTET_STRING *oct)
 {
+    osslunused1();
     return hex_to_string(oct->data, oct->length);
 }
 
-ASN1_OCTET_STRING *s2i_ASN1_OCTET_STRING(X509V3_EXT_METHOD *method,
-                                         X509V3_CTX *ctx, char *str)
+ASN1_OCTET_STRING *s2i_ASN1_OCTET_STRING(X509V3_EXT_METHOD *_1,
+                                         X509V3_CTX *_2, char *str)
 {
     ASN1_OCTET_STRING *oct;
     long length;
 
+    osslunused2();
     if ((oct = ASN1_OCTET_STRING_new()) == NULL) {
         X509V3err(X509V3_F_S2I_ASN1_OCTET_STRING, ERR_R_MALLOC_FAILURE);
         return NULL;

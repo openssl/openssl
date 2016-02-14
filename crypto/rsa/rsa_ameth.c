@@ -235,22 +235,22 @@ static int do_rsa_print(BIO *bp, const RSA *x, int off, int priv)
         str = "Modulus:";
         s = "Exponent:";
     }
-    if (!ASN1_bn_print(bp, str, x->n, m, off))
+    if (!ASN1_bn_print(bp, str, x->n, NULL, off))
         goto err;
-    if (!ASN1_bn_print(bp, s, x->e, m, off))
+    if (!ASN1_bn_print(bp, s, x->e, NULL, off))
         goto err;
     if (priv) {
-        if (!ASN1_bn_print(bp, "privateExponent:", x->d, m, off))
+        if (!ASN1_bn_print(bp, "privateExponent:", x->d, NULL, off))
             goto err;
-        if (!ASN1_bn_print(bp, "prime1:", x->p, m, off))
+        if (!ASN1_bn_print(bp, "prime1:", x->p, NULL, off))
             goto err;
-        if (!ASN1_bn_print(bp, "prime2:", x->q, m, off))
+        if (!ASN1_bn_print(bp, "prime2:", x->q, NULL, off))
             goto err;
-        if (!ASN1_bn_print(bp, "exponent1:", x->dmp1, m, off))
+        if (!ASN1_bn_print(bp, "exponent1:", x->dmp1, NULL, off))
             goto err;
-        if (!ASN1_bn_print(bp, "exponent2:", x->dmq1, m, off))
+        if (!ASN1_bn_print(bp, "exponent2:", x->dmq1, NULL, off))
             goto err;
-        if (!ASN1_bn_print(bp, "coefficient:", x->iqmp, m, off))
+        if (!ASN1_bn_print(bp, "coefficient:", x->iqmp, NULL, off))
             goto err;
     }
     ret = 1;
@@ -260,14 +260,16 @@ static int do_rsa_print(BIO *bp, const RSA *x, int off, int priv)
 }
 
 static int rsa_pub_print(BIO *bp, const EVP_PKEY *pkey, int indent,
-                         ASN1_PCTX *ctx)
+                         ASN1_PCTX *_1)
 {
+    osslunused1();
     return do_rsa_print(bp, pkey->pkey.rsa, indent, 0);
 }
 
 static int rsa_priv_print(BIO *bp, const EVP_PKEY *pkey, int indent,
-                          ASN1_PCTX *ctx)
+                          ASN1_PCTX *_1)
 {
+    osslunused1();
     return do_rsa_print(bp, pkey->pkey.rsa, indent, 1);
 }
 
@@ -374,8 +376,9 @@ static int rsa_pss_param_print(BIO *bp, RSA_PSS_PARAMS *pss,
 }
 
 static int rsa_sig_print(BIO *bp, const X509_ALGOR *sigalg,
-                         const ASN1_STRING *sig, int indent, ASN1_PCTX *pctx)
+                         const ASN1_STRING *sig, int indent, ASN1_PCTX *_1)
 {
+    osslunused1();
     if (OBJ_obj2nid(sigalg->algorithm) == NID_rsassaPss) {
         int rv;
         RSA_PSS_PARAMS *pss;
@@ -393,9 +396,11 @@ static int rsa_sig_print(BIO *bp, const X509_ALGOR *sigalg,
     return 1;
 }
 
-static int rsa_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
+static int rsa_pkey_ctrl(EVP_PKEY *_1, int op, long arg1, void *arg2)
 {
     X509_ALGOR *alg = NULL;
+
+    osslunused1();
     switch (op) {
 
     case ASN1_PKEY_CTRL_PKCS7_SIGN:
@@ -681,10 +686,11 @@ static int rsa_cms_verify(CMS_SignerInfo *si)
  * is encountered requiring special handling. We currently only handle PSS.
  */
 
-static int rsa_item_verify(EVP_MD_CTX *ctx, const ASN1_ITEM *it, void *asn,
-                           X509_ALGOR *sigalg, ASN1_BIT_STRING *sig,
+static int rsa_item_verify(EVP_MD_CTX *ctx, const ASN1_ITEM *_1, void *_2,
+                           X509_ALGOR *sigalg, ASN1_BIT_STRING *_3,
                            EVP_PKEY *pkey)
 {
+    osslunused3();
     /* Sanity check: make sure it is PSS */
     if (OBJ_obj2nid(sigalg->algorithm) != NID_rsassaPss) {
         RSAerr(RSA_F_RSA_ITEM_VERIFY, RSA_R_UNSUPPORTED_SIGNATURE_TYPE);
@@ -704,6 +710,7 @@ static int rsa_cms_sign(CMS_SignerInfo *si)
     X509_ALGOR *alg;
     EVP_PKEY_CTX *pkctx = CMS_SignerInfo_get0_pkey_ctx(si);
     ASN1_STRING *os = NULL;
+
     CMS_SignerInfo_get0_algs(si, NULL, NULL, NULL, &alg);
     if (pkctx) {
         if (EVP_PKEY_CTX_get_rsa_padding(pkctx, &pad_mode) <= 0)
@@ -724,12 +731,14 @@ static int rsa_cms_sign(CMS_SignerInfo *si)
 }
 #endif
 
-static int rsa_item_sign(EVP_MD_CTX *ctx, const ASN1_ITEM *it, void *asn,
+static int rsa_item_sign(EVP_MD_CTX *ctx, const ASN1_ITEM *_1, void *_2,
                          X509_ALGOR *alg1, X509_ALGOR *alg2,
-                         ASN1_BIT_STRING *sig)
+                         ASN1_BIT_STRING *_3)
 {
     int pad_mode;
     EVP_PKEY_CTX *pkctx = EVP_MD_CTX_pkey_ctx(ctx);
+
+    osslunused3();
     if (EVP_PKEY_CTX_get_rsa_padding(pkctx, &pad_mode) <= 0)
         return 0;
     if (pad_mode == RSA_PKCS1_PADDING)

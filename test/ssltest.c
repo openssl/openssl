@@ -249,9 +249,11 @@ typedef struct srp_client_arg_st {
 
 # define PWD_STRLEN 1024
 
-static char *ssl_give_srp_client_pwd_cb(SSL *s, void *arg)
+static char *ssl_give_srp_client_pwd_cb(SSL *_1, void *arg)
 {
     SRP_CLIENT_ARG *srp_client_arg = (SRP_CLIENT_ARG *)arg;
+
+    osslunused1();
     return OPENSSL_strdup((char *)srp_client_arg->srppassin);
 }
 
@@ -288,10 +290,11 @@ static int npn_client = 0;
 static int npn_server = 0;
 static int npn_server_reject = 0;
 
-static int cb_client_npn(SSL *s, unsigned char **out, unsigned char *outlen,
-                         const unsigned char *in, unsigned int inlen,
-                         void *arg)
+static int cb_client_npn(SSL *_1, unsigned char **out, unsigned char *outlen,
+                         const unsigned char *_2, unsigned int _3,
+                         void *_4)
 {
+    osslunused4();
     /*
      * This callback only returns the protocol string, rather than a length
      * prefixed set. We assume that NEXT_PROTO_STRING is a one element list
@@ -302,17 +305,19 @@ static int cb_client_npn(SSL *s, unsigned char **out, unsigned char *outlen,
     return SSL_TLSEXT_ERR_OK;
 }
 
-static int cb_server_npn(SSL *s, const unsigned char **data,
-                         unsigned int *len, void *arg)
+static int cb_server_npn(SSL *_1, const unsigned char **data,
+                         unsigned int *len, void *_2)
 {
+    osslunused2();
     *data = (const unsigned char *)NEXT_PROTO_STRING;
     *len = sizeof(NEXT_PROTO_STRING) - 1;
     return SSL_TLSEXT_ERR_OK;
 }
 
-static int cb_server_rejects_npn(SSL *s, const unsigned char **data,
-                                 unsigned int *len, void *arg)
+static int cb_server_rejects_npn(SSL *_1, const unsigned char **_2,
+                                 unsigned int *_3, void *_4)
 {
+    osslunused4();
     return SSL_TLSEXT_ERR_NOACK;
 }
 
@@ -412,14 +417,14 @@ static unsigned char *next_protos_parse(unsigned short *outlen,
     return out;
 }
 
-static int cb_server_alpn(SSL *s, const unsigned char **out,
+static int cb_server_alpn(SSL *_1, const unsigned char **out,
                           unsigned char *outlen, const unsigned char *in,
-                          unsigned int inlen, void *arg)
+                          unsigned int inlen, void *_2)
 {
-    unsigned char *protos;
     unsigned short protos_len;
+    unsigned char *protos = next_protos_parse(&protos_len, alpn_server);
 
-    protos = next_protos_parse(&protos_len, alpn_server);
+    osslunused2();
     if (protos == NULL) {
         fprintf(stderr, "failed to parser ALPN server protocol string: %s\n",
                 alpn_server);
@@ -525,10 +530,11 @@ static int custom_ext = 0;
 /* This set based on extension callbacks */
 static int custom_ext_error = 0;
 
-static int serverinfo_cli_parse_cb(SSL *s, unsigned int ext_type,
-                                   const unsigned char *in, size_t inlen,
-                                   int *al, void *arg)
+static int serverinfo_cli_parse_cb(SSL *_1, unsigned int ext_type,
+                                   const unsigned char *_2, size_t _3,
+                                   int *_4, void *_5)
 {
+    osslunused5();
     if (ext_type == SCT_EXT_TYPE)
         serverinfo_sct_seen++;
     else if (ext_type == TACK_EXT_TYPE)
@@ -557,26 +563,29 @@ static int verify_serverinfo()
  * 3 - ClientHello with "abc", "defg" response
  */
 
-static int custom_ext_0_cli_add_cb(SSL *s, unsigned int ext_type,
-                                   const unsigned char **out,
-                                   size_t *outlen, int *al, void *arg)
+static int custom_ext_0_cli_add_cb(SSL *_1, unsigned int ext_type,
+                                   const unsigned char **_2,
+                                   size_t *_3, int *_4, void *_5)
 {
+    osslunused5();
     if (ext_type != CUSTOM_EXT_TYPE_0)
         custom_ext_error = 1;
     return 0;                   /* Don't send an extension */
 }
 
-static int custom_ext_0_cli_parse_cb(SSL *s, unsigned int ext_type,
-                                     const unsigned char *in,
-                                     size_t inlen, int *al, void *arg)
+static int custom_ext_0_cli_parse_cb(SSL *_1, unsigned int _2,
+                                     const unsigned char *_3,
+                                     size_t _4, int *_5, void *_6)
 {
+    osslunused6();
     return 1;
 }
 
-static int custom_ext_1_cli_add_cb(SSL *s, unsigned int ext_type,
+static int custom_ext_1_cli_add_cb(SSL *_1, unsigned int ext_type,
                                    const unsigned char **out,
-                                   size_t *outlen, int *al, void *arg)
+                                   size_t *outlen, int *_2, void *_3)
 {
+    osslunused3();
     if (ext_type != CUSTOM_EXT_TYPE_1)
         custom_ext_error = 1;
     *out = (const unsigned char *)custom_ext_cli_string;
@@ -584,17 +593,19 @@ static int custom_ext_1_cli_add_cb(SSL *s, unsigned int ext_type,
     return 1;                   /* Send "abc" */
 }
 
-static int custom_ext_1_cli_parse_cb(SSL *s, unsigned int ext_type,
-                                     const unsigned char *in,
-                                     size_t inlen, int *al, void *arg)
+static int custom_ext_1_cli_parse_cb(SSL *_1, unsigned int _2,
+                                     const unsigned char *_3,
+                                     size_t _4, int *_5, void *_6)
 {
+    osslunused6();
     return 1;
 }
 
-static int custom_ext_2_cli_add_cb(SSL *s, unsigned int ext_type,
+static int custom_ext_2_cli_add_cb(SSL *_1, unsigned int ext_type,
                                    const unsigned char **out,
-                                   size_t *outlen, int *al, void *arg)
+                                   size_t *outlen, int *_2, void *_3)
 {
+    osslunused3();
     if (ext_type != CUSTOM_EXT_TYPE_2)
         custom_ext_error = 1;
     *out = (const unsigned char *)custom_ext_cli_string;
@@ -602,10 +613,11 @@ static int custom_ext_2_cli_add_cb(SSL *s, unsigned int ext_type,
     return 1;                   /* Send "abc" */
 }
 
-static int custom_ext_2_cli_parse_cb(SSL *s, unsigned int ext_type,
-                                     const unsigned char *in,
-                                     size_t inlen, int *al, void *arg)
+static int custom_ext_2_cli_parse_cb(SSL *_1, unsigned int ext_type,
+                                     const unsigned char *_2,
+                                     size_t inlen, int *_3, void *_4)
 {
+    osslunused4();
     if (ext_type != CUSTOM_EXT_TYPE_2)
         custom_ext_error = 1;
     if (inlen != 0)
@@ -613,10 +625,11 @@ static int custom_ext_2_cli_parse_cb(SSL *s, unsigned int ext_type,
     return 1;
 }
 
-static int custom_ext_3_cli_add_cb(SSL *s, unsigned int ext_type,
+static int custom_ext_3_cli_add_cb(SSL *_1, unsigned int ext_type,
                                    const unsigned char **out,
-                                   size_t *outlen, int *al, void *arg)
+                                   size_t *outlen, int *_2, void *_3)
 {
+    osslunused3();
     if (ext_type != CUSTOM_EXT_TYPE_3)
         custom_ext_error = 1;
     *out = (const unsigned char *)custom_ext_cli_string;
@@ -624,10 +637,11 @@ static int custom_ext_3_cli_add_cb(SSL *s, unsigned int ext_type,
     return 1;                   /* Send "abc" */
 }
 
-static int custom_ext_3_cli_parse_cb(SSL *s, unsigned int ext_type,
+static int custom_ext_3_cli_parse_cb(SSL *_1, unsigned int ext_type,
                                      const unsigned char *in,
-                                     size_t inlen, int *al, void *arg)
+                                     size_t inlen, int *_2, void *_3)
 {
+    osslunused3();
     if (ext_type != CUSTOM_EXT_TYPE_3)
         custom_ext_error = 1;
     if (inlen != strlen(custom_ext_srv_string))
@@ -641,28 +655,31 @@ static int custom_ext_3_cli_parse_cb(SSL *s, unsigned int ext_type,
  * custom_ext_0_cli_add_cb returns 0 - the server won't receive a callback
  * for this extension
  */
-static int custom_ext_0_srv_parse_cb(SSL *s, unsigned int ext_type,
-                                     const unsigned char *in,
-                                     size_t inlen, int *al, void *arg)
+static int custom_ext_0_srv_parse_cb(SSL *_1, unsigned int _2,
+                                     const unsigned char *_3,
+                                     size_t _4, int *_5, void *_6)
 {
+    osslunused6();
     custom_ext_error = 1;
     return 1;
 }
 
 /* 'add' callbacks are only called if the 'parse' callback is called */
-static int custom_ext_0_srv_add_cb(SSL *s, unsigned int ext_type,
-                                   const unsigned char **out,
-                                   size_t *outlen, int *al, void *arg)
+static int custom_ext_0_srv_add_cb(SSL *_1, unsigned int _2,
+                                   const unsigned char **_3,
+                                   size_t *_4, int *_5, void *_6)
 {
+    osslunused6();
     /* Error: should not have been called */
     custom_ext_error = 1;
     return 0;                   /* Don't send an extension */
 }
 
-static int custom_ext_1_srv_parse_cb(SSL *s, unsigned int ext_type,
+static int custom_ext_1_srv_parse_cb(SSL *_1, unsigned int ext_type,
                                      const unsigned char *in,
-                                     size_t inlen, int *al, void *arg)
+                                     size_t inlen, int *_2, void *_3)
 {
+    osslunused3();
     if (ext_type != CUSTOM_EXT_TYPE_1)
         custom_ext_error = 1;
     /* Check for "abc" */
@@ -673,17 +690,19 @@ static int custom_ext_1_srv_parse_cb(SSL *s, unsigned int ext_type,
     return 1;
 }
 
-static int custom_ext_1_srv_add_cb(SSL *s, unsigned int ext_type,
-                                   const unsigned char **out,
-                                   size_t *outlen, int *al, void *arg)
+static int custom_ext_1_srv_add_cb(SSL *_1, unsigned int _2,
+                                   const unsigned char **_3,
+                                   size_t *_4, int *_5, void *_6)
 {
+    osslunused6();
     return 0;                   /* Don't send an extension */
 }
 
-static int custom_ext_2_srv_parse_cb(SSL *s, unsigned int ext_type,
+static int custom_ext_2_srv_parse_cb(SSL *_1, unsigned int ext_type,
                                      const unsigned char *in,
-                                     size_t inlen, int *al, void *arg)
+                                     size_t inlen, int *_2, void *_3)
 {
+    osslunused3();
     if (ext_type != CUSTOM_EXT_TYPE_2)
         custom_ext_error = 1;
     /* Check for "abc" */
@@ -694,19 +713,21 @@ static int custom_ext_2_srv_parse_cb(SSL *s, unsigned int ext_type,
     return 1;
 }
 
-static int custom_ext_2_srv_add_cb(SSL *s, unsigned int ext_type,
+static int custom_ext_2_srv_add_cb(SSL *_1, unsigned int _2,
                                    const unsigned char **out,
-                                   size_t *outlen, int *al, void *arg)
+                                   size_t *outlen, int *_3, void *_4)
 {
+    osslunused4();
     *out = NULL;
     *outlen = 0;
     return 1;                   /* Send empty extension */
 }
 
-static int custom_ext_3_srv_parse_cb(SSL *s, unsigned int ext_type,
+static int custom_ext_3_srv_parse_cb(SSL *_1, unsigned int ext_type,
                                      const unsigned char *in,
-                                     size_t inlen, int *al, void *arg)
+                                     size_t inlen, int *_2, void *_3)
 {
+    osslunused3();
     if (ext_type != CUSTOM_EXT_TYPE_3)
         custom_ext_error = 1;
     /* Check for "abc" */
@@ -717,10 +738,11 @@ static int custom_ext_3_srv_parse_cb(SSL *s, unsigned int ext_type,
     return 1;
 }
 
-static int custom_ext_3_srv_add_cb(SSL *s, unsigned int ext_type,
+static int custom_ext_3_srv_add_cb(SSL *_1, unsigned int _2,
                                    const unsigned char **out,
-                                   size_t *outlen, int *al, void *arg)
+                                   size_t *outlen, int *_3, void *_4)
 {
+    osslunused4();
     *out = (const unsigned char *)custom_ext_srv_string;
     *outlen = strlen(custom_ext_srv_string);
     return 1;                   /* Send "defg" */
@@ -3436,7 +3458,7 @@ static int psk_key2bn(const char *pskkey, unsigned char *psk,
     return ret;
 }
 
-static unsigned int psk_client_callback(SSL *ssl, const char *hint,
+static unsigned int psk_client_callback(SSL *_1, const char *_2,
                                         char *identity,
                                         unsigned int max_identity_len,
                                         unsigned char *psk,
@@ -3445,6 +3467,7 @@ static unsigned int psk_client_callback(SSL *ssl, const char *hint,
     int ret;
     unsigned int psk_len = 0;
 
+    osslunused2();
     ret = BIO_snprintf(identity, max_identity_len, "Client_identity");
     if (ret < 0)
         goto out_err;
@@ -3459,12 +3482,13 @@ static unsigned int psk_client_callback(SSL *ssl, const char *hint,
     return psk_len;
 }
 
-static unsigned int psk_server_callback(SSL *ssl, const char *identity,
+static unsigned int psk_server_callback(SSL *_1, const char *identity,
                                         unsigned char *psk,
                                         unsigned int max_psk_len)
 {
     unsigned int psk_len = 0;
 
+    osslunused1();
     if (strcmp(identity, "Client_identity") != 0) {
         BIO_printf(bio_err, "server: PSK error: client identity not found\n");
         return 0;

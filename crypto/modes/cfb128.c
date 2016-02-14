@@ -222,12 +222,13 @@ static void cfbr_encrypt_block(const unsigned char *in, unsigned char *out,
 /* N.B. This expects the input to be packed, MS bit first */
 void CRYPTO_cfb128_1_encrypt(const unsigned char *in, unsigned char *out,
                              size_t bits, const void *key,
-                             unsigned char ivec[16], int *num,
+                             unsigned char ivec[16], int *_1,
                              int enc, block128_f block)
 {
     size_t n;
     unsigned char c[1], d[1];
 
+    osslunused1();
     assert(in && out && key && ivec && num);
     assert(*num == 0);
 
@@ -241,11 +242,12 @@ void CRYPTO_cfb128_1_encrypt(const unsigned char *in, unsigned char *out,
 
 void CRYPTO_cfb128_8_encrypt(const unsigned char *in, unsigned char *out,
                              size_t length, const void *key,
-                             unsigned char ivec[16], int *num,
+                             unsigned char ivec[16], int *_1,
                              int enc, block128_f block)
 {
     size_t n;
 
+    osslunused1();
     assert(in && out && key && ivec && num);
     assert(*num == 0);
 

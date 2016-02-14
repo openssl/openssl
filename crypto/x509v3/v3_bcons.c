@@ -90,24 +90,26 @@ ASN1_SEQUENCE(BASIC_CONSTRAINTS) = {
 
 IMPLEMENT_ASN1_FUNCTIONS(BASIC_CONSTRAINTS)
 
-static STACK_OF(CONF_VALUE) *i2v_BASIC_CONSTRAINTS(X509V3_EXT_METHOD *method,
+static STACK_OF(CONF_VALUE) *i2v_BASIC_CONSTRAINTS(X509V3_EXT_METHOD *_1,
                                                    BASIC_CONSTRAINTS *bcons,
                                                    STACK_OF(CONF_VALUE)
                                                    *extlist)
 {
+    osslunused1();
     X509V3_add_value_bool("CA", bcons->ca, &extlist);
     X509V3_add_value_int("pathlen", bcons->pathlen, &extlist);
     return extlist;
 }
 
-static BASIC_CONSTRAINTS *v2i_BASIC_CONSTRAINTS(X509V3_EXT_METHOD *method,
-                                                X509V3_CTX *ctx,
+static BASIC_CONSTRAINTS *v2i_BASIC_CONSTRAINTS(X509V3_EXT_METHOD *_1,
+                                                X509V3_CTX *_2,
                                                 STACK_OF(CONF_VALUE) *values)
 {
     BASIC_CONSTRAINTS *bcons = NULL;
     CONF_VALUE *val;
     int i;
 
+    osslunused2();
     if ((bcons = BASIC_CONSTRAINTS_new()) == NULL) {
         X509V3err(X509V3_F_V2I_BASIC_CONSTRAINTS, ERR_R_MALLOC_FAILURE);
         return NULL;

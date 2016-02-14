@@ -1076,9 +1076,9 @@ int dtls1_retransmit_buffered_messages(SSL *s)
     for (item = pqueue_next(&iter); item != NULL; item = pqueue_next(&iter)) {
         frag = (hm_fragment *)item->data;
         if (dtls1_retransmit_message(s, (unsigned short)
-                                     dtls1_get_queue_priority
-                                     (frag->msg_header.seq,
-                                      frag->msg_header.is_ccs), 0,
+                                     dtls1_get_queue_priority(
+                                         frag->msg_header.seq,
+                                         frag->msg_header.is_ccs),
                                      &found) <= 0 && found) {
             fprintf(stderr, "dtls1_retransmit_message() failed\n");
             return -1;
@@ -1152,8 +1152,7 @@ int dtls1_buffer_message(SSL *s, int is_ccs)
 }
 
 int
-dtls1_retransmit_message(SSL *s, unsigned short seq, unsigned long frag_off,
-                         int *found)
+dtls1_retransmit_message(SSL *s, unsigned short seq, int *found)
 {
     int ret;
     /* XDTLS: for now assuming that read/writes are blocking */
@@ -1242,10 +1241,10 @@ void dtls1_clear_record_buffer(SSL *s)
     }
 }
 
-void dtls1_set_message_header(SSL *s, unsigned char *p,
-                                        unsigned char mt, unsigned long len,
-                                        unsigned long frag_off,
-                                        unsigned long frag_len)
+void dtls1_set_message_header(SSL *s,
+        unsigned char mt, unsigned long len,
+        unsigned long frag_off,
+        unsigned long frag_len)
 {
     if (frag_off == 0) {
         s->d1->handshake_write_seq = s->d1->next_handshake_write_seq;

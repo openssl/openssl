@@ -57,6 +57,7 @@
 # include <assert.h>
 # include <openssl/aes.h>
 # include "internal/evp_int.h"
+# include "evp_locl.h"
 # include "modes_lcl.h"
 # include <openssl/rand.h>
 
@@ -289,11 +290,12 @@ void gcm_ghash_avx(u64 Xi[2], const u128 Htable[16], const u8 *in,
 #  endif
 
 static int aesni_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
-                          const unsigned char *iv, int enc)
+                          const unsigned char *_1, int enc)
 {
     int ret, mode;
     EVP_AES_KEY *dat = EVP_C_DATA(EVP_AES_KEY,ctx);
 
+    osslunused1();
     mode = EVP_CIPHER_CTX_mode(ctx);
     if ((mode == EVP_CIPH_ECB_MODE || mode == EVP_CIPH_CBC_MODE)
         && !enc) {
@@ -367,9 +369,11 @@ static int aesni_ctr_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                             const unsigned char *in, size_t len);
 
 static int aesni_gcm_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
-                              const unsigned char *iv, int enc)
+                              const unsigned char *iv, int _1)
 {
     EVP_AES_GCM_CTX *gctx = EVP_C_DATA(EVP_AES_GCM_CTX,ctx);
+
+    osslunused1();
     if (!iv && !key)
         return 1;
     if (key) {
@@ -1054,11 +1058,12 @@ void HWAES_ctr32_encrypt_blocks(const unsigned char *in, unsigned char *out,
         BLOCK_CIPHER_generic(nid,keylen,1,16,ctr,ctr,CTR,flags)
 
 static int aes_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
-                        const unsigned char *iv, int enc)
+                        const unsigned char *_1, int enc)
 {
     int ret, mode;
     EVP_AES_KEY *dat = EVP_C_DATA(EVP_AES_KEY,ctx);
 
+    osslunused1();
     mode = EVP_CIPHER_CTX_mode(ctx);
     if ((mode == EVP_CIPH_ECB_MODE || mode == EVP_CIPH_CBC_MODE)
         && !enc)
@@ -1447,9 +1452,11 @@ static int aes_gcm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
 }
 
 static int aes_gcm_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
-                            const unsigned char *iv, int enc)
+                            const unsigned char *iv, int _1)
 {
     EVP_AES_GCM_CTX *gctx = EVP_C_DATA(EVP_AES_GCM_CTX,ctx);
+
+    osslunused1();
     if (!iv && !key)
         return 1;
     if (key) {
@@ -1790,9 +1797,11 @@ BLOCK_CIPHER_custom(NID_aes, 128, 1, 12, gcm, GCM,
     BLOCK_CIPHER_custom(NID_aes, 256, 1, 12, gcm, GCM,
                     EVP_CIPH_FLAG_AEAD_CIPHER | CUSTOM_FLAGS)
 
-static int aes_xts_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
+static int aes_xts_ctrl(EVP_CIPHER_CTX *c, int type, int _1, void *ptr)
 {
     EVP_AES_XTS_CTX *xctx = EVP_C_DATA(EVP_AES_XTS_CTX,c);
+
+    osslunused1();
     if (type == EVP_CTRL_COPY) {
         EVP_CIPHER_CTX *out = ptr;
         EVP_AES_XTS_CTX *xctx_out = EVP_C_DATA(EVP_AES_XTS_CTX,out);
@@ -2029,9 +2038,11 @@ static int aes_ccm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
 }
 
 static int aes_ccm_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
-                            const unsigned char *iv, int enc)
+                            const unsigned char *iv, int _1)
 {
     EVP_AES_CCM_CTX *cctx = EVP_C_DATA(EVP_AES_CCM_CTX,ctx);
+
+    osslunused1();
     if (!iv && !key)
         return 1;
     if (key)
@@ -2209,9 +2220,11 @@ typedef struct {
 } EVP_AES_WRAP_CTX;
 
 static int aes_wrap_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
-                             const unsigned char *iv, int enc)
+                             const unsigned char *iv, int _1)
 {
     EVP_AES_WRAP_CTX *wctx = EVP_C_DATA(EVP_AES_WRAP_CTX,ctx);
+
+    osslunused1();
     if (!iv && !key)
         return 1;
     if (key) {
@@ -2458,9 +2471,11 @@ void HWAES_ocb_decrypt(const unsigned char *in, unsigned char *out,
 #  endif
 
 static int aes_ocb_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
-                            const unsigned char *iv, int enc)
+                            const unsigned char *iv, int _1)
 {
     EVP_AES_OCB_CTX *octx = EVP_C_DATA(EVP_AES_OCB_CTX,ctx);
+
+    osslunused1();
     if (!iv && !key)
         return 1;
     if (key) {

@@ -62,8 +62,9 @@
  * length and to free up a CMAC key.
  */
 
-static int cmac_size(const EVP_PKEY *pkey)
+static int cmac_size(const EVP_PKEY *_1)
 {
+    osslunused1();
     return EVP_MAX_BLOCK_LENGTH;
 }
 

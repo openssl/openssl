@@ -92,15 +92,17 @@ ASN1_ITEM_TEMPLATE_END(POLICY_MAPPINGS)
 
 IMPLEMENT_ASN1_ALLOC_FUNCTIONS(POLICY_MAPPING)
 
-static STACK_OF(CONF_VALUE) *i2v_POLICY_MAPPINGS(const X509V3_EXT_METHOD
-                                                 *method, void *a, STACK_OF(CONF_VALUE)
-                                                 *ext_list)
+static STACK_OF(CONF_VALUE) *i2v_POLICY_MAPPINGS(const X509V3_EXT_METHOD *_1,
+                                                 void *a,
+                                                 STACK_OF(CONF_VALUE) *ext_list)
 {
     POLICY_MAPPINGS *pmaps = a;
     POLICY_MAPPING *pmap;
     int i;
     char obj_tmp1[80];
     char obj_tmp2[80];
+
+    osslunused1();
     for (i = 0; i < sk_POLICY_MAPPING_num(pmaps); i++) {
         pmap = sk_POLICY_MAPPING_value(pmaps, i);
         i2t_ASN1_OBJECT(obj_tmp1, 80, pmap->issuerDomainPolicy);
@@ -110,8 +112,8 @@ static STACK_OF(CONF_VALUE) *i2v_POLICY_MAPPINGS(const X509V3_EXT_METHOD
     return ext_list;
 }
 
-static void *v2i_POLICY_MAPPINGS(const X509V3_EXT_METHOD *method,
-                                 X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *nval)
+static void *v2i_POLICY_MAPPINGS(const X509V3_EXT_METHOD *_1,
+                                 X509V3_CTX *_2, STACK_OF(CONF_VALUE) *nval)
 {
     POLICY_MAPPINGS *pmaps;
     POLICY_MAPPING *pmap;
@@ -119,6 +121,7 @@ static void *v2i_POLICY_MAPPINGS(const X509V3_EXT_METHOD *method,
     CONF_VALUE *val;
     int i;
 
+    osslunused2();
     if ((pmaps = sk_POLICY_MAPPING_new_null()) == NULL) {
         X509V3err(X509V3_F_V2I_POLICY_MAPPINGS, ERR_R_MALLOC_FAILURE);
         return NULL;

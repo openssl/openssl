@@ -339,10 +339,11 @@ static struct {
 
 #define COOKIE_LEN  20
 
-static int cookie_gen(SSL *ssl, unsigned char *cookie, unsigned int *cookie_len)
+static int cookie_gen(SSL *_1, unsigned char *cookie, unsigned int *cookie_len)
 {
     unsigned int i;
 
+    osslunused1();
     for (i = 0; i < COOKIE_LEN; i++, cookie++) {
         *cookie = i;
     }
@@ -351,11 +352,12 @@ static int cookie_gen(SSL *ssl, unsigned char *cookie, unsigned int *cookie_len)
     return 1;
 }
 
-static int cookie_verify(SSL *ssl, const unsigned char *cookie,
+static int cookie_verify(SSL *_1, const unsigned char *cookie,
                          unsigned int cookie_len)
 {
     unsigned int i;
 
+    osslunused1();
     if (cookie_len != COOKIE_LEN)
         return 0;
 

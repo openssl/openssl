@@ -107,8 +107,9 @@ ASN1_ITEM_start(CBIGNUM)
         ASN1_ITYPE_PRIMITIVE, V_ASN1_INTEGER, NULL, 0, &cbignum_pf, BN_SENSITIVE, "CBIGNUM"
 ASN1_ITEM_end(CBIGNUM)
 
-static int bn_new(ASN1_VALUE **pval, const ASN1_ITEM *it)
+static int bn_new(ASN1_VALUE **pval, const ASN1_ITEM *_1)
 {
+    osslunused1();
     *pval = (ASN1_VALUE *)BN_new();
     if (*pval != NULL)
         return 1;
@@ -116,8 +117,9 @@ static int bn_new(ASN1_VALUE **pval, const ASN1_ITEM *it)
         return 0;
 }
 
-static int bn_secure_new(ASN1_VALUE **pval, const ASN1_ITEM *it)
+static int bn_secure_new(ASN1_VALUE **pval, const ASN1_ITEM *_1)
 {
+    osslunused1();
     *pval = (ASN1_VALUE *)BN_secure_new();
     if (*pval != NULL)
         return 1;
@@ -136,11 +138,13 @@ static void bn_free(ASN1_VALUE **pval, const ASN1_ITEM *it)
     *pval = NULL;
 }
 
-static int bn_i2c(ASN1_VALUE **pval, unsigned char *cont, int *putype,
-                  const ASN1_ITEM *it)
+static int bn_i2c(ASN1_VALUE **pval, unsigned char *cont, int *_1,
+                  const ASN1_ITEM *_2)
 {
     BIGNUM *bn;
     int pad;
+
+    osslunused2();
     if (!*pval)
         return -1;
     bn = (BIGNUM *)*pval;
@@ -158,10 +162,11 @@ static int bn_i2c(ASN1_VALUE **pval, unsigned char *cont, int *putype,
 }
 
 static int bn_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
-                  int utype, char *free_cont, const ASN1_ITEM *it)
+                  int _1, char *_2, const ASN1_ITEM *it)
 {
     BIGNUM *bn;
 
+    osslunused2();
     if (*pval == NULL && !bn_new(pval, it))
         return 0;
     bn = (BIGNUM *)*pval;

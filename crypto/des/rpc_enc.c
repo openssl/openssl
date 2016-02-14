@@ -57,13 +57,16 @@
 
 #include "rpc_des.h"
 #include "des_locl.h"
+#include "e_os.h"
 
 int _des_crypt(char *buf, int len, struct desparams *desp);
-int _des_crypt(char *buf, int len, struct desparams *desp)
+
+int _des_crypt(char *_1, int len, struct desparams *desp)
 {
     DES_key_schedule ks;
     int enc;
 
+    osslunused1();
     DES_set_key_unchecked(&desp->des_key, &ks);
     enc = (desp->des_dir == ENCRYPT) ? DES_ENCRYPT : DES_DECRYPT;
 

@@ -631,7 +631,7 @@ int ssl3_enc(SSL *s, int send)
         if (EVP_MD_CTX_md(s->read_hash) != NULL)
             mac_size = EVP_MD_CTX_size(s->read_hash);
         if ((bs != 1) && !send)
-            return ssl3_cbc_remove_padding(s, rec, bs, mac_size);
+            return ssl3_cbc_remove_padding(rec, bs, mac_size);
     }
     return (1);
 }
@@ -1020,8 +1020,7 @@ int tls1_mac(SSL *ssl, unsigned char *md, int send)
  *   1: if the padding was valid
  *  -1: otherwise.
  */
-int ssl3_cbc_remove_padding(const SSL *s,
-                            SSL3_RECORD *rec,
+int ssl3_cbc_remove_padding(SSL3_RECORD *rec,
                             unsigned block_size, unsigned mac_size)
 {
     unsigned padding_length, good;

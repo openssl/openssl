@@ -531,10 +531,11 @@ WORK_STATE ossl_statem_client_pre_work(SSL *s, WORK_STATE wst)
  * Perform any work that needs to be done after sending a message from the
  * client to the server.
  */
-WORK_STATE ossl_statem_client_post_work(SSL *s, WORK_STATE wst)
+WORK_STATE ossl_statem_client_post_work(SSL *s, WORK_STATE _1)
 {
     OSSL_STATEM *st = &s->statem;
 
+    osslunused1();
     s->init_num = 0;
 
     switch(st->hand_state) {
@@ -770,10 +771,11 @@ MSG_PROCESS_RETURN ossl_statem_client_process_message(SSL *s, PACKET *pkt)
  * Perform any further processing required following the receipt of a message
  * from the server
  */
-WORK_STATE ossl_statem_client_post_process_message(SSL *s, WORK_STATE wst)
+WORK_STATE ossl_statem_client_post_process_message(SSL *s, WORK_STATE _1)
 {
     OSSL_STATEM *st = &s->statem;
 
+    osslunused1();
     switch(st->hand_state) {
 #ifndef OPENSSL_NO_SCTP
     case TLS_ST_CR_SRVR_DONE:

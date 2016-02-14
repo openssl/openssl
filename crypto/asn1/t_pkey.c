@@ -91,13 +91,14 @@ int ASN1_buf_print(BIO *bp, unsigned char *buf, size_t buflen, int indent)
 }
 
 int ASN1_bn_print(BIO *bp, const char *number, const BIGNUM *num,
-                  unsigned char *ign, int indent)
+                  unsigned char *_1, int indent)
 {
     int n, rv = 0;
     const char *neg;
     unsigned char *buf = NULL, *tmp = NULL;
     int buflen;
 
+    osslunused1();
     if (num == NULL)
         return 1;
     neg = BN_is_negative(num) ? "-" : "";

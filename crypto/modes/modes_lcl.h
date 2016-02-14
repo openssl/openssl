@@ -5,6 +5,7 @@
  * ====================================================================
  */
 
+#include <e_os.h>
 #include <openssl/modes.h>
 
 #if (defined(_WIN32) || defined(_WIN64)) && !defined(__MINGW32__)

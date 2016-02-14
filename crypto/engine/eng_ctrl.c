@@ -103,11 +103,11 @@ static int int_ctrl_cmd_by_num(const ENGINE_CMD_DEFN *defn, unsigned int num)
     return -1;
 }
 
-static int int_ctrl_helper(ENGINE *e, int cmd, long i, void *p,
-                           void (*f) (void))
+static int int_ctrl_helper(ENGINE *e, int cmd, long i, void *p)
 {
     int idx;
     char *s = (char *)p;
+
     /* Take care of the easy one first (eg. it requires no searches) */
     if (cmd == ENGINE_CTRL_GET_FIRST_CMD_TYPE) {
         if ((e->cmd_defns == NULL) || int_ctrl_cmd_is_null(e->cmd_defns))
@@ -206,7 +206,7 @@ int ENGINE_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f) (void))
     case ENGINE_CTRL_GET_DESC_FROM_CMD:
     case ENGINE_CTRL_GET_CMD_FLAGS:
         if (ctrl_exists && !(e->flags & ENGINE_FLAGS_MANUAL_CMD_CTRL))
-            return int_ctrl_helper(e, cmd, i, p, f);
+            return int_ctrl_helper(e, cmd, i, p);
         if (!ctrl_exists) {
             ENGINEerr(ENGINE_F_ENGINE_CTRL, ENGINE_R_NO_CONTROL_FUNCTION);
             /*

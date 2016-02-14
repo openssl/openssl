@@ -792,11 +792,11 @@ static int serverinfo_find_extension(const unsigned char *serverinfo,
     /* Unreachable */
 }
 
-static int serverinfo_srv_parse_cb(SSL *s, unsigned int ext_type,
-                                   const unsigned char *in,
-                                   size_t inlen, int *al, void *arg)
+static int serverinfo_srv_parse_cb(SSL *_1, unsigned int _2,
+                                   const unsigned char *_3,
+                                   size_t inlen, int *al, void *_4)
 {
-
+    osslunused4();
     if (inlen != 0) {
         *al = SSL_AD_DECODE_ERROR;
         return 0;
@@ -807,11 +807,12 @@ static int serverinfo_srv_parse_cb(SSL *s, unsigned int ext_type,
 
 static int serverinfo_srv_add_cb(SSL *s, unsigned int ext_type,
                                  const unsigned char **out, size_t *outlen,
-                                 int *al, void *arg)
+                                 int *al, void *_1)
 {
     const unsigned char *serverinfo = NULL;
     size_t serverinfo_length = 0;
 
+    osslunused1();
     /* Is there serverinfo data for the chosen server cert? */
     if ((ssl_get_server_cert_serverinfo(s, &serverinfo,
                                         &serverinfo_length)) != 0) {

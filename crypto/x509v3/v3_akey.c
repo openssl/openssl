@@ -83,12 +83,14 @@ const X509V3_EXT_METHOD v3_akey_id = {
     NULL
 };
 
-static STACK_OF(CONF_VALUE) *i2v_AUTHORITY_KEYID(X509V3_EXT_METHOD *method,
+static STACK_OF(CONF_VALUE) *i2v_AUTHORITY_KEYID(X509V3_EXT_METHOD *_1,
                                                  AUTHORITY_KEYID *akeyid,
                                                  STACK_OF(CONF_VALUE)
                                                  *extlist)
 {
     char *tmp;
+
+    osslunused1();
     if (akeyid->keyid) {
         tmp = hex_to_string(akeyid->keyid->data, akeyid->keyid->length);
         X509V3_add_value("keyid", tmp, &extlist);
@@ -113,7 +115,7 @@ static STACK_OF(CONF_VALUE) *i2v_AUTHORITY_KEYID(X509V3_EXT_METHOD *method,
  * this is always included.
  */
 
-static AUTHORITY_KEYID *v2i_AUTHORITY_KEYID(X509V3_EXT_METHOD *method,
+static AUTHORITY_KEYID *v2i_AUTHORITY_KEYID(X509V3_EXT_METHOD *_1,
                                             X509V3_CTX *ctx,
                                             STACK_OF(CONF_VALUE) *values)
 {
@@ -129,6 +131,7 @@ static AUTHORITY_KEYID *v2i_AUTHORITY_KEYID(X509V3_EXT_METHOD *method,
     X509 *cert;
     AUTHORITY_KEYID *akeyid;
 
+    osslunused1();
     for (i = 0; i < sk_CONF_VALUE_num(values); i++) {
         cnf = sk_CONF_VALUE_value(values, i);
         if (strcmp(cnf->name, "keyid") == 0) {

@@ -62,11 +62,12 @@
 #include "internal/asn1_int.h"
 #include "internal/evp_int.h"
 
-long PKCS7_ctrl(PKCS7 *p7, int cmd, long larg, char *parg)
+long PKCS7_ctrl(PKCS7 *p7, int cmd, long larg, char *_1)
 {
     int nid;
     long ret;
 
+    osslunused1();
     nid = OBJ_obj2nid(p7->type);
 
     switch (cmd) {

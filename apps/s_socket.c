@@ -221,10 +221,8 @@ int init_client(int *sock, const char *host, const char *port,
  * 0 on failure, something other on success.
  */
 int do_server(int *accept_sock, const char *host, const char *port,
-              int family, int type,
-              int (*cb) (const char *hostname, int s, int stype,
-                         unsigned char *context), unsigned char *context,
-              int naccept)
+              int family, int type, do_server_cb cb,
+              unsigned char *context, int naccept)
 {
     int asock = 0;
     int sock;
@@ -297,7 +295,7 @@ int do_server(int *accept_sock, const char *host, const char *port,
 #endif
                 name = BIO_ADDR_hostname_string(accepted_addr, 0);
         }
-        i = (*cb) (name, sock, type, context);
+        i = (*cb)(sock, type, context);
         OPENSSL_free(name);
         BIO_ADDR_free(accepted_addr);
         if (type == SOCK_STREAM)

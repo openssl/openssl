@@ -1,4 +1,5 @@
 #include <openssl/opensslconf.h>
+#include "../e_os.h"
 #ifdef OPENSSL_NO_SRP
 
 # include <stdio.h>
@@ -121,7 +122,7 @@ static int run_srp(const char *username, const char *client_pass,
     return ret;
 }
 
-int main(int argc, char **argv)
+int main()
 {
     BIO *bio_err;
     bio_err = BIO_new_fp(stderr, BIO_NOCLOSE | BIO_FP_TEXT);

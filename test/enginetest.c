@@ -59,9 +59,10 @@
 #include <stdio.h>
 #include <string.h>
 #include <openssl/e_os2.h>
+#include "../e_os.h"
 
 #ifdef OPENSSL_NO_ENGINE
-int main(int argc, char *argv[])
+int main()
 {
     printf("No ENGINE support\n");
     return (0);
@@ -93,7 +94,7 @@ static void display_engine_list(void)
     ENGINE_free(h);
 }
 
-int main(int argc, char *argv[])
+int main()
 {
     ENGINE *block[512];
     char buf[256];

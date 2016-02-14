@@ -51,6 +51,7 @@
  * ====================================================================
  */
 
+#include <e_os.h>
 #include <openssl/asn1t.h>
 #include <openssl/pem.h>
 #include <openssl/x509v3.h>
@@ -87,9 +88,10 @@ ASN1_NDEF_SEQUENCE(CMS_EncapsulatedContentInfo) = {
 } static_ASN1_NDEF_SEQUENCE_END(CMS_EncapsulatedContentInfo)
 
 /* Minor tweak to operation: free up signer key, cert */
-static int cms_si_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
-                     void *exarg)
+static int cms_si_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *_1,
+                     void *_2)
 {
+    osslunused2();
     if (operation == ASN1_OP_FREE_POST) {
         CMS_SignerInfo *si = (CMS_SignerInfo *)*pval;
         EVP_PKEY_free(si->pkey);
@@ -162,10 +164,12 @@ ASN1_CHOICE(CMS_KeyAgreeRecipientIdentifier) = {
   ASN1_IMP(CMS_KeyAgreeRecipientIdentifier, d.rKeyId, CMS_RecipientKeyIdentifier, 0)
 } static_ASN1_CHOICE_END(CMS_KeyAgreeRecipientIdentifier)
 
-static int cms_rek_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
-                      void *exarg)
+static int cms_rek_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *_1,
+                      void *_2)
 {
     CMS_RecipientEncryptedKey *rek = (CMS_RecipientEncryptedKey *)*pval;
+
+    osslunused2();
     if (operation == ASN1_OP_FREE_POST) {
         EVP_PKEY_free(rek->pkey);
     }
@@ -188,10 +192,12 @@ ASN1_CHOICE(CMS_OriginatorIdentifierOrKey) = {
   ASN1_IMP(CMS_OriginatorIdentifierOrKey, d.originatorKey, CMS_OriginatorPublicKey, 1)
 } static_ASN1_CHOICE_END(CMS_OriginatorIdentifierOrKey)
 
-static int cms_kari_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
-                       void *exarg)
+static int cms_kari_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *_1,
+                       void *_2)
 {
     CMS_KeyAgreeRecipientInfo *kari = (CMS_KeyAgreeRecipientInfo *)*pval;
+
+    osslunused2();
     if (operation == ASN1_OP_NEW_POST) {
         kari->ctx = EVP_CIPHER_CTX_new();
         if (kari->ctx == NULL)
@@ -239,9 +245,10 @@ ASN1_SEQUENCE(CMS_OtherRecipientInfo) = {
 } static_ASN1_SEQUENCE_END(CMS_OtherRecipientInfo)
 
 /* Free up RecipientInfo additional data */
-static int cms_ri_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
-                     void *exarg)
+static int cms_ri_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *_1,
+                     void *_2)
 {
+    osslunused2();
     if (operation == ASN1_OP_FREE_PRE) {
         CMS_RecipientInfo *ri = (CMS_RecipientInfo *)*pval;
         if (ri->type == CMS_RECIPINFO_TRANS) {
@@ -322,11 +329,13 @@ ASN1_ADB(CMS_ContentInfo) = {
 } ASN1_ADB_END(CMS_ContentInfo, 0, contentType, 0, &cms_default_tt, NULL);
 
 /* CMS streaming support */
-static int cms_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
+static int cms_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *_1,
                   void *exarg)
 {
     ASN1_STREAM_ARG *sarg = exarg;
     CMS_ContentInfo *cms = NULL;
+
+    osslunused1();
     if (pval)
         cms = (CMS_ContentInfo *)*pval;
     else

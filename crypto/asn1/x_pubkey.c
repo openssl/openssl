@@ -69,9 +69,10 @@
 #endif
 
 /* Minor tweak to operation: free up EVP_PKEY */
-static int pubkey_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
-                     void *exarg)
+static int pubkey_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *_1,
+                     void *_2)
 {
+    osslunused2();
     if (operation == ASN1_OP_FREE_POST) {
         X509_PUBKEY *pubkey = (X509_PUBKEY *)*pval;
         EVP_PKEY_free(pubkey->pkey);

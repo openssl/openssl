@@ -64,9 +64,10 @@
 #include <openssl/rand.h>
 
 /* Override the default new methods */
-static int sig_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
-                  void *exarg)
+static int sig_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *_1,
+                  void *_2)
 {
+    osslunused2();
     if (operation == ASN1_OP_NEW_PRE) {
         DSA_SIG *sig;
         sig = OPENSSL_malloc(sizeof(*sig));
@@ -90,9 +91,10 @@ ASN1_SEQUENCE_cb(DSA_SIG, sig_cb) = {
 IMPLEMENT_ASN1_FUNCTIONS_const(DSA_SIG)
 
 /* Override the default free and new methods */
-static int dsa_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
-                  void *exarg)
+static int dsa_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *_1,
+                  void *_2)
 {
+    osslunused2();
     if (operation == ASN1_OP_NEW_PRE) {
         *pval = (ASN1_VALUE *)DSA_new();
         if (*pval != NULL)
@@ -139,10 +141,12 @@ DSA *DSAparams_dup(DSA *dsa)
     return ASN1_item_dup(ASN1_ITEM_rptr(DSAparams), dsa);
 }
 
-int DSA_sign(int type, const unsigned char *dgst, int dlen,
+int DSA_sign(int _1, const unsigned char *dgst, int dlen,
              unsigned char *sig, unsigned int *siglen, DSA *dsa)
 {
     DSA_SIG *s;
+
+    osslunused1();
     RAND_seed(dgst, dlen);
     s = DSA_do_sign(dgst, dlen, dsa);
     if (s == NULL) {
@@ -161,7 +165,7 @@ int DSA_sign(int type, const unsigned char *dgst, int dlen,
  *      0: incorrect signature
  *     -1: error
  */
-int DSA_verify(int type, const unsigned char *dgst, int dgst_len,
+int DSA_verify(int _1, const unsigned char *dgst, int dgst_len,
                const unsigned char *sigbuf, int siglen, DSA *dsa)
 {
     DSA_SIG *s;
@@ -170,6 +174,7 @@ int DSA_verify(int type, const unsigned char *dgst, int dgst_len,
     int derlen = -1;
     int ret = -1;
 
+    osslunused1();
     s = DSA_SIG_new();
     if (s == NULL)
         return (ret);

@@ -351,10 +351,11 @@ ASN1_OBJECT *X509_ATTRIBUTE_get0_object(X509_ATTRIBUTE *attr)
 }
 
 void *X509_ATTRIBUTE_get0_data(X509_ATTRIBUTE *attr, int idx,
-                               int atrtype, void *data)
+                               int atrtype, void *_1)
 {
-    ASN1_TYPE *ttmp;
-    ttmp = X509_ATTRIBUTE_get0_type(attr, idx);
+    ASN1_TYPE *ttmp = X509_ATTRIBUTE_get0_type(attr, idx);
+
+    osslunused1();
     if (!ttmp)
         return NULL;
     if (atrtype != ASN1_TYPE_get(ttmp)) {

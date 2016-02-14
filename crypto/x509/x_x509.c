@@ -81,11 +81,12 @@ IMPLEMENT_ASN1_FUNCTIONS(X509_CINF)
 
 extern void policy_cache_free(X509_POLICY_CACHE *cache);
 
-static int x509_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
-                   void *exarg)
+static int x509_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *_1,
+                   void *_2)
 {
     X509 *ret = (X509 *)*pval;
 
+    osslunused2();
     switch (operation) {
 
     case ASN1_OP_NEW_POST:

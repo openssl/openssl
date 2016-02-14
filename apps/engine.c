@@ -94,8 +94,9 @@ OPTIONS engine_options[] = {
     {NULL}
 };
 
-static void identity(char *ptr)
+static void identity(char *_1)
 {
+    osslunused1();
 }
 
 static int append_buf(char **buf, int *size, const char *s)
@@ -269,10 +270,11 @@ static int util_verbose(ENGINE *e, int verbose, BIO *out, const char *indent)
 }
 
 static void util_do_cmds(ENGINE *e, STACK_OF(OPENSSL_STRING) *cmds,
-                         BIO *out, const char *indent)
+                         BIO *out, const char *_1)
 {
     int loop, res, num = sk_OPENSSL_STRING_num(cmds);
 
+    osslunused1();
     if (num < 0) {
         BIO_printf(out, "[Error]: internal stack error\n");
         return;

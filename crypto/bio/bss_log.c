@@ -428,8 +428,9 @@ static void xcloselog(BIO *bp)
 
 # else                          /* Unix/Watt32 */
 
-static void xopenlog(BIO *bp, char *name, int level)
+static void xopenlog(BIO *_1, char *name, int level)
 {
+    osslunused1();
 #  ifdef WATT32                 /* djgpp/DOS */
     openlog(name, LOG_PID | LOG_CONS | LOG_NDELAY, level);
 #  else
@@ -437,13 +438,15 @@ static void xopenlog(BIO *bp, char *name, int level)
 #  endif
 }
 
-static void xsyslog(BIO *bp, int priority, const char *string)
+static void xsyslog(BIO *_1, int priority, const char *string)
 {
+    osslunused1();
     syslog(priority, "%s", string);
 }
 
-static void xcloselog(BIO *bp)
+static void xcloselog(BIO *_1)
 {
+    osslunused1();
     closelog();
 }
 

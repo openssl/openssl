@@ -89,11 +89,12 @@ ASN1_SEQUENCE(POLICY_CONSTRAINTS) = {
 
 IMPLEMENT_ASN1_ALLOC_FUNCTIONS(POLICY_CONSTRAINTS)
 
-static STACK_OF(CONF_VALUE) *i2v_POLICY_CONSTRAINTS(const X509V3_EXT_METHOD
-                                                    *method, void *a, STACK_OF(CONF_VALUE)
-                                                    *extlist)
+static STACK_OF(CONF_VALUE) *i2v_POLICY_CONSTRAINTS(
+        const X509V3_EXT_METHOD *_1, void *a, STACK_OF(CONF_VALUE) *extlist)
 {
     POLICY_CONSTRAINTS *pcons = a;
+
+    osslunused1();
     X509V3_add_value_int("Require Explicit Policy",
                          pcons->requireExplicitPolicy, &extlist);
     X509V3_add_value_int("Inhibit Policy Mapping",
@@ -101,14 +102,15 @@ static STACK_OF(CONF_VALUE) *i2v_POLICY_CONSTRAINTS(const X509V3_EXT_METHOD
     return extlist;
 }
 
-static void *v2i_POLICY_CONSTRAINTS(const X509V3_EXT_METHOD *method,
-                                    X509V3_CTX *ctx,
+static void *v2i_POLICY_CONSTRAINTS(const X509V3_EXT_METHOD *_1,
+                                    X509V3_CTX *_2,
                                     STACK_OF(CONF_VALUE) *values)
 {
     POLICY_CONSTRAINTS *pcons = NULL;
     CONF_VALUE *val;
     int i;
 
+    osslunused2();
     if ((pcons = POLICY_CONSTRAINTS_new()) == NULL) {
         X509V3err(X509V3_F_V2I_POLICY_CONSTRAINTS, ERR_R_MALLOC_FAILURE);
         return NULL;

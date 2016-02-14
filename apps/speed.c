@@ -245,8 +245,10 @@ static int rnd_fake = 0;
 # endif
 
 static SIGRETTYPE sig_done(int sig);
-static SIGRETTYPE sig_done(int sig)
+
+static SIGRETTYPE sig_done(int _1)
 {
+    osslunused1();
     signal(SIGALRM, sig_done);
     run = 0;
 }
@@ -1781,7 +1783,7 @@ int speed_main(int argc, char **argv)
 
         /* DSA_generate_key(dsa_key[j]); */
         /* DSA_sign_setup(dsa_key[j],NULL); */
-        st = DSA_sign(EVP_PKEY_DSA, buf, 20, buf2, &kk, dsa_key[j]);
+        st = DSA_sign(0, buf, 20, buf2, &kk, dsa_key[j]);
         if (st == 0) {
             BIO_printf(bio_err,
                        "DSA sign failure.  No DSA sign will be done.\n");
@@ -1792,7 +1794,7 @@ int speed_main(int argc, char **argv)
                                dsa_c[j][0], dsa_bits[j], DSA_SECONDS);
             Time_F(START);
             for (count = 0, run = 1; COND(dsa_c[j][0]); count++) {
-                st = DSA_sign(EVP_PKEY_DSA, buf, 20, buf2, &kk, dsa_key[j]);
+                st = DSA_sign(0, buf, 20, buf2, &kk, dsa_key[j]);
                 if (st == 0) {
                     BIO_printf(bio_err, "DSA sign failure\n");
                     ERR_print_errors(bio_err);
@@ -1809,7 +1811,7 @@ int speed_main(int argc, char **argv)
             rsa_count = count;
         }
 
-        st = DSA_verify(EVP_PKEY_DSA, buf, 20, buf2, kk, dsa_key[j]);
+        st = DSA_verify(0, buf, 20, buf2, kk, dsa_key[j]);
         if (st <= 0) {
             BIO_printf(bio_err,
                        "DSA verify failure.  No DSA verify will be done.\n");
@@ -1820,7 +1822,7 @@ int speed_main(int argc, char **argv)
                                dsa_c[j][1], dsa_bits[j], DSA_SECONDS);
             Time_F(START);
             for (count = 0, run = 1; COND(dsa_c[j][1]); count++) {
-                st = DSA_verify(EVP_PKEY_DSA, buf, 20, buf2, kk, dsa_key[j]);
+                st = DSA_verify(0, buf, 20, buf2, kk, dsa_key[j]);
                 if (st <= 0) {
                     BIO_printf(bio_err, "DSA verify failure\n");
                     ERR_print_errors(bio_err);
@@ -2196,6 +2198,7 @@ int speed_main(int argc, char **argv)
 static void print_message(const char *s, long num, int length)
 {
 #ifdef SIGALRM
+    osslargused(num);
     BIO_printf(bio_err,
                mr ? "+DT:%s:%d:%d\n"
                : "Doing %s for %ds on %d size blocks: ", s, SECONDS, length);
@@ -2213,6 +2216,7 @@ static void pkey_print_message(const char *str, const char *str2, long num,
                                int bits, int tm)
 {
 #ifdef SIGALRM
+    osslargused(num);
     BIO_printf(bio_err,
                mr ? "+DTP:%d:%s:%s:%d\n"
                : "Doing %d bit %s %s's for %ds: ", bits, str, str2, tm);

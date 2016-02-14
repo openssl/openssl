@@ -128,10 +128,11 @@ IMPLEMENT_ASN1_FUNCTIONS(X509_NAME)
 
 IMPLEMENT_ASN1_DUP_FUNCTION(X509_NAME)
 
-static int x509_name_ex_new(ASN1_VALUE **val, const ASN1_ITEM *it)
+static int x509_name_ex_new(ASN1_VALUE **val, const ASN1_ITEM *_1)
 {
     X509_NAME *ret = OPENSSL_zalloc(sizeof(*ret));
 
+    osslunused1();
     if (ret == NULL)
         goto memerr;
     if ((ret->entries = sk_X509_NAME_ENTRY_new_null()) == NULL)
@@ -151,10 +152,11 @@ static int x509_name_ex_new(ASN1_VALUE **val, const ASN1_ITEM *it)
     return 0;
 }
 
-static void x509_name_ex_free(ASN1_VALUE **pval, const ASN1_ITEM *it)
+static void x509_name_ex_free(ASN1_VALUE **pval, const ASN1_ITEM *_1)
 {
     X509_NAME *a;
 
+    osslunused1();
     if (!pval || !*pval)
         return;
     a = (X509_NAME *)*pval;
@@ -168,7 +170,7 @@ static void x509_name_ex_free(ASN1_VALUE **pval, const ASN1_ITEM *it)
 
 static int x509_name_ex_d2i(ASN1_VALUE **val,
                             const unsigned char **in, long len,
-                            const ASN1_ITEM *it, int tag, int aclass,
+                            const ASN1_ITEM *_1, int tag, int aclass,
                             char opt, ASN1_TLC *ctx)
 {
     const unsigned char *p = *in, *q;
@@ -187,6 +189,8 @@ static int x509_name_ex_d2i(ASN1_VALUE **val,
     int i, j, ret;
     STACK_OF(X509_NAME_ENTRY) *entries;
     X509_NAME_ENTRY *entry;
+
+    osslunused1();
     q = p;
 
     /* Get internal representation of Name */
@@ -232,10 +236,12 @@ static int x509_name_ex_d2i(ASN1_VALUE **val,
 }
 
 static int x509_name_ex_i2d(ASN1_VALUE **val, unsigned char **out,
-                            const ASN1_ITEM *it, int tag, int aclass)
+                            const ASN1_ITEM *_1, int _2, int _3)
 {
     int ret;
     X509_NAME *a = (X509_NAME *)*val;
+
+    osslunused3();
     if (a->modified) {
         ret = x509_name_encode(a);
         if (ret < 0)
@@ -311,8 +317,9 @@ static int x509_name_encode(X509_NAME *a)
 
 static int x509_name_ex_print(BIO *out, ASN1_VALUE **pval,
                               int indent,
-                              const char *fname, const ASN1_PCTX *pctx)
+                              const char *_1, const ASN1_PCTX *pctx)
 {
+    osslunused1();
     if (X509_NAME_print_ex(out, (X509_NAME *)*pval,
                            indent, pctx->nm_flags) <= 0)
         return 0;

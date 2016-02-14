@@ -2493,7 +2493,7 @@ void SSL_set_cert_cb(SSL *s, int (*cb) (SSL *ssl, void *arg), void *arg)
     ssl_cert_set_cert_cb(s->cert, cb, arg);
 }
 
-void ssl_set_masks(SSL *s, const SSL_CIPHER *cipher)
+void ssl_set_masks(SSL *s, const SSL_CIPHER *_1)
 {
 #if !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_GOST)
     CERT_PKEY *cpk;
@@ -2507,6 +2507,8 @@ void ssl_set_masks(SSL *s, const SSL_CIPHER *cipher)
     X509 *x = NULL;
     int pk_nid = 0, md_nid = 0;
 #endif
+
+    osslunused1();
     if (c == NULL)
         return;
 
@@ -2929,8 +2931,9 @@ void SSL_set_connect_state(SSL *s)
     clear_ciphers(s);
 }
 
-int ssl_undefined_function(SSL *s)
+int ssl_undefined_function(SSL *_1)
 {
+    osslunused1();
     SSLerr(SSL_F_SSL_UNDEFINED_FUNCTION, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
     return (0);
 }
@@ -2942,13 +2945,15 @@ int ssl_undefined_void_function(void)
     return (0);
 }
 
-int ssl_undefined_const_function(const SSL *s)
+int ssl_undefined_const_function(const SSL *_1)
 {
+    osslunused1();
     return (0);
 }
 
-SSL_METHOD *ssl_bad_method(int ver)
+SSL_METHOD *ssl_bad_method(int _1)
 {
+    osslunused1();
     SSLerr(SSL_F_SSL_BAD_METHOD, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
     return (NULL);
 }
@@ -3425,8 +3430,9 @@ void *SSL_CTX_get_ex_data(const SSL_CTX *s, int idx)
     return (CRYPTO_get_ex_data(&s->ex_data, idx));
 }
 
-int ssl_ok(SSL *s)
+int ssl_ok(SSL *_1)
 {
+    osslunused1();
     return (1);
 }
 

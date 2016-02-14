@@ -124,7 +124,7 @@ static const char rnd_seed[] =
 
 static BIO *bio_err = NULL;
 
-int main(int argc, char **argv)
+int main()
 {
     BN_GENCB *cb;
     DSA *dsa = NULL;
@@ -224,11 +224,12 @@ int main(int argc, char **argv)
     EXIT(!ret);
 }
 
-static int dsa_cb(int p, int n, BN_GENCB *arg)
+static int dsa_cb(int p, int _1, BN_GENCB *arg)
 {
-    char c = '*';
     static int ok = 0, num = 0;
+    char c = '*';
 
+    osslunused1();
     if (p == 0) {
         c = '.';
         num++;

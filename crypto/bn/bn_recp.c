@@ -89,8 +89,9 @@ void BN_RECP_CTX_free(BN_RECP_CTX *recp)
         OPENSSL_free(recp);
 }
 
-int BN_RECP_CTX_set(BN_RECP_CTX *recp, const BIGNUM *d, BN_CTX *ctx)
+int BN_RECP_CTX_set(BN_RECP_CTX *recp, const BIGNUM *d, BN_CTX *_1)
 {
+    osslunused1();
     if (!BN_copy(&(recp->N), d))
         return 0;
     BN_zero(&(recp->Nr));

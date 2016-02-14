@@ -82,9 +82,11 @@ struct ssl_conf_cmd {
 static struct ssl_conf_name *ssl_names;
 static size_t ssl_names_count;
 
-static void ssl_module_free(CONF_IMODULE *md)
+static void ssl_module_free(CONF_IMODULE *_1)
 {
     size_t i, j;
+
+    osslunused1();
     if (ssl_names == NULL)
         return;
     for (i = 0; i < ssl_names_count; i++) {

@@ -62,7 +62,7 @@
 #include <openssl/objects.h>
 #include <openssl/x509.h>
 
-int RSA_sign_ASN1_OCTET_STRING(int type,
+int RSA_sign_ASN1_OCTET_STRING(int _1,
                                const unsigned char *m, unsigned int m_len,
                                unsigned char *sigret, unsigned int *siglen,
                                RSA *rsa)
@@ -71,6 +71,7 @@ int RSA_sign_ASN1_OCTET_STRING(int type,
     int i, j, ret = 1;
     unsigned char *p, *s;
 
+    osslunused1();
     sig.type = V_ASN1_OCTET_STRING;
     sig.length = m_len;
     sig.data = (unsigned char *)m;
@@ -99,7 +100,7 @@ int RSA_sign_ASN1_OCTET_STRING(int type,
     return (ret);
 }
 
-int RSA_verify_ASN1_OCTET_STRING(int dtype,
+int RSA_verify_ASN1_OCTET_STRING(int _1,
                                  const unsigned char *m,
                                  unsigned int m_len, unsigned char *sigbuf,
                                  unsigned int siglen, RSA *rsa)
@@ -109,6 +110,7 @@ int RSA_verify_ASN1_OCTET_STRING(int dtype,
     const unsigned char *p;
     ASN1_OCTET_STRING *sig = NULL;
 
+    osslunused1();
     if (siglen != (unsigned int)RSA_size(rsa)) {
         RSAerr(RSA_F_RSA_VERIFY_ASN1_OCTET_STRING,
                RSA_R_WRONG_SIGNATURE_LENGTH);

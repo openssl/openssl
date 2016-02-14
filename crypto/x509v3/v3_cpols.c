@@ -132,7 +132,7 @@ ASN1_SEQUENCE(NOTICEREF) = {
 
 IMPLEMENT_ASN1_FUNCTIONS(NOTICEREF)
 
-static STACK_OF(POLICYINFO) *r2i_certpol(X509V3_EXT_METHOD *method,
+static STACK_OF(POLICYINFO) *r2i_certpol(X509V3_EXT_METHOD *_1,
                                          X509V3_CTX *ctx, char *value)
 {
     STACK_OF(POLICYINFO) *pols = NULL;
@@ -142,6 +142,8 @@ static STACK_OF(POLICYINFO) *r2i_certpol(X509V3_EXT_METHOD *method,
     STACK_OF(CONF_VALUE) *vals;
     CONF_VALUE *cnf;
     int i, ia5org;
+
+    osslunused1();
     pols = sk_POLICYINFO_new_null();
     if (pols == NULL) {
         X509V3err(X509V3_F_R2I_CERTPOL, ERR_R_MALLOC_FAILURE);
@@ -290,7 +292,7 @@ static POLICYINFO *policy_section(X509V3_CTX *ctx,
 
 }
 
-static POLICYQUALINFO *notice_section(X509V3_CTX *ctx,
+static POLICYQUALINFO *notice_section(X509V3_CTX *_1,
                                       STACK_OF(CONF_VALUE) *unot, int ia5org)
 {
     int i, ret;
@@ -298,6 +300,7 @@ static POLICYQUALINFO *notice_section(X509V3_CTX *ctx,
     USERNOTICE *not;
     POLICYQUALINFO *qual;
 
+    osslunused1();
     if ((qual = POLICYQUALINFO_new()) == NULL)
         goto merr;
     if ((qual->pqualid = OBJ_nid2obj(NID_id_qt_unotice)) == NULL) {
@@ -399,11 +402,13 @@ static int nref_nos(STACK_OF(ASN1_INTEGER) *nnums, STACK_OF(CONF_VALUE) *nos)
     return 0;
 }
 
-static int i2r_certpol(X509V3_EXT_METHOD *method, STACK_OF(POLICYINFO) *pol,
+static int i2r_certpol(X509V3_EXT_METHOD *_1, STACK_OF(POLICYINFO) *pol,
                        BIO *out, int indent)
 {
     int i;
     POLICYINFO *pinfo;
+
+    osslunused1();
     /* First print out the policy OIDs */
     for (i = 0; i < sk_POLICYINFO_num(pol); i++) {
         pinfo = sk_POLICYINFO_value(pol, i);

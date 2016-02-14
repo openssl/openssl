@@ -1337,7 +1337,7 @@ err:
 
 __owur static int ecp_nistz256_get_affine(const EC_GROUP *group,
                                           const EC_POINT *point,
-                                          BIGNUM *x, BIGNUM *y, BN_CTX *ctx)
+                                          BIGNUM *x, BIGNUM *y, BN_CTX *_1)
 {
     BN_ULONG z_inv2[P256_LIMBS];
     BN_ULONG z_inv3[P256_LIMBS];
@@ -1346,6 +1346,7 @@ __owur static int ecp_nistz256_get_affine(const EC_GROUP *group,
     BN_ULONG point_x[P256_LIMBS], point_y[P256_LIMBS], point_z[P256_LIMBS];
     BN_ULONG x_ret[P256_LIMBS], y_ret[P256_LIMBS];
 
+    osslunused1();
     if (EC_POINT_is_at_infinity(group, point)) {
         ECerr(EC_F_ECP_NISTZ256_GET_AFFINE, EC_R_POINT_AT_INFINITY);
         return 0;
