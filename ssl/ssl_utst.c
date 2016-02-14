@@ -60,6 +60,7 @@ static const struct openssl_ssl_test_functions ssl_test_functions = {
     ssl_init_wbio_buffer,
     ssl3_setup_buffers,
 # ifndef OPENSSL_NO_HEARTBEATS
+#  undef dtls1_process_heartbeat
     dtls1_process_heartbeat
 # endif
 };
