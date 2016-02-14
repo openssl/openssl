@@ -648,7 +648,7 @@ typedef enum OPTION_choice {
     OPT_CERT_CHAIN, OPT_CAPATH, OPT_NOCAPATH, OPT_CHAINCAPATH, OPT_VERIFYCAPATH,
     OPT_KEY, OPT_RECONNECT, OPT_BUILD_CHAIN, OPT_CAFILE, OPT_NOCAFILE,
     OPT_CHAINCAFILE, OPT_VERIFYCAFILE, OPT_NEXTPROTONEG, OPT_ALPN,
-    OPT_SERVERINFO, OPT_STARTTLS, OPT_SERVERNAME, OPT_JPAKE,
+    OPT_SERVERINFO, OPT_STARTTLS, OPT_SERVERNAME,
     OPT_USE_SRTP, OPT_KEYMATEXPORT, OPT_KEYMATEXPORTLEN, OPT_SMTPHOST,
     OPT_ASYNC,
     OPT_V_ENUM,
@@ -780,9 +780,6 @@ OPTIONS s_client_options[] = {
 #ifndef OPENSSL_NO_PSK
     {"psk_identity", OPT_PSK_IDENTITY, 's', "PSK identity"},
     {"psk", OPT_PSK, 's', "PSK in hex (without 0x)"},
-# ifndef OPENSSL_NO_JPAKE
-    {"jpake", OPT_JPAKE, 's', "JPAKE secret to use"},
-# endif
 #endif
 #ifndef OPENSSL_NO_SRP
     {"srpuser", OPT_SRPUSER, 's', "SRP authentification for 'user'"},
@@ -853,7 +850,7 @@ int s_client_main(int argc, char **argv)
     char *inrand = NULL;
     char *passarg = NULL, *pass = NULL, *vfyCApath = NULL, *vfyCAfile = NULL;
     char *sess_in = NULL, *sess_out = NULL, *crl_file = NULL, *p;
-    char *jpake_secret = NULL, *xmpphost = NULL;
+    char *xmpphost = NULL;
     const char *ehlo = "mail.example.com";
     struct sockaddr peer;
     struct timeval timeout, *timeoutp;
@@ -1316,11 +1313,6 @@ int s_client_main(int argc, char **argv)
         case OPT_SERVERNAME:
             servername = opt_arg();
             break;
-        case OPT_JPAKE:
-#ifndef OPENSSL_NO_JPAKE
-            jpake_secret = opt_arg();
-#endif
-            break;
         case OPT_USE_SRTP:
             srtp_profiles = opt_arg();
             break;
@@ -1378,15 +1370,6 @@ int s_client_main(int argc, char **argv)
                    "Can't use unix sockets and datagrams together\n");
         goto end;
     }
-#if !defined(OPENSSL_NO_JPAKE) && !defined(OPENSSL_NO_PSK)
-    if (jpake_secret) {
-        if (psk_key) {
-            BIO_printf(bio_err, "Can't use JPAKE and PSK together\n");
-            goto end;
-        }
-        psk_identity = "JPAKE";
-    }
-#endif
 
 #if !defined(OPENSSL_NO_NEXTPROTONEG)
     next_proto.status = -1;
@@ -1506,7 +1489,7 @@ int s_client_main(int argc, char **argv)
         SSL_CTX_set_mode(ctx, SSL_MODE_ASYNC);
     }
 
-    if (!config_ctx(cctx, ssl_args, ctx, jpake_secret == NULL))
+    if (!config_ctx(cctx, ssl_args, ctx))
         goto end;
 
     if (!ssl_load_stores(ctx, vfyCApath, vfyCAfile, chCApath, chCAfile,
@@ -1528,10 +1511,10 @@ int s_client_main(int argc, char **argv)
 #endif
 
 #ifndef OPENSSL_NO_PSK
-    if (psk_key != NULL || jpake_secret) {
+    if (psk_key != NULL) {
         if (c_debug)
             BIO_printf(bio_c_out,
-                       "PSK key given or JPAKE in use, setting client callback\n");
+                       "PSK key given, setting client callback\n");
         SSL_CTX_set_psk_client_callback(ctx, psk_client_cb);
     }
 #endif
@@ -1774,10 +1757,6 @@ int s_client_main(int argc, char **argv)
         SSL_CTX_set_tlsext_status_cb(ctx, ocsp_resp_cb);
         SSL_CTX_set_tlsext_status_arg(ctx, bio_c_out);
     }
-#ifndef OPENSSL_NO_JPAKE
-    if (jpake_secret)
-        jpake_client_auth(bio_c_out, sbio, jpake_secret);
-#endif
 
     SSL_set_bio(con, sbio, sbio);
     SSL_set_connect_state(con);

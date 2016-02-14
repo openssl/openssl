@@ -1198,7 +1198,7 @@ void print_ssl_summary(SSL *s)
 }
 
 int config_ctx(SSL_CONF_CTX *cctx, STACK_OF(OPENSSL_STRING) *str,
-               SSL_CTX *ctx, int no_jpake)
+               SSL_CTX *ctx)
 {
     int i;
 
@@ -1206,12 +1206,6 @@ int config_ctx(SSL_CONF_CTX *cctx, STACK_OF(OPENSSL_STRING) *str,
     for (i = 0; i < sk_OPENSSL_STRING_num(str); i += 2) {
         const char *flag = sk_OPENSSL_STRING_value(str, i);
         const char *arg = sk_OPENSSL_STRING_value(str, i + 1);
-#ifndef OPENSSL_NO_JPAKE
-        if (!no_jpake && (strcmp(flag, "-cipher") == 0)) {
-            BIO_puts(bio_err, "JPAKE sets cipher to PSK\n");
-            return 0;
-        }
-#endif
         if (SSL_CONF_cmd(cctx, flag, arg) <= 0) {
             if (arg)
                 BIO_printf(bio_err, "Error with command: \"%s %s\"\n",
@@ -1222,15 +1216,6 @@ int config_ctx(SSL_CONF_CTX *cctx, STACK_OF(OPENSSL_STRING) *str,
             return 0;
         }
     }
-#ifndef OPENSSL_NO_JPAKE
-    if (!no_jpake) {
-        if (SSL_CONF_cmd(cctx, "-cipher", "PSK") <= 0) {
-            BIO_puts(bio_err, "Error setting cipher to PSK\n");
-            ERR_print_errors(bio_err);
-            return 0;
-        }
-    }
-#endif
     if (!SSL_CONF_CTX_finish(cctx)) {
         BIO_puts(bio_err, "Error finishing context\n");
         ERR_print_errors(bio_err);

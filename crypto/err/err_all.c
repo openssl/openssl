@@ -98,9 +98,6 @@
 #ifndef OPENSSL_NO_CMS
 # include <openssl/cms.h>
 #endif
-#ifndef OPENSSL_NO_JPAKE
-# include <openssl/jpake.h>
-#endif
 #include <internal/ct_int.h>
 #include <openssl/async.h>
 
@@ -153,9 +150,6 @@ void err_load_crypto_strings_intern(void)
 # endif
 # ifndef OPENSSL_NO_CMS
     ERR_load_CMS_strings();
-# endif
-# ifndef OPENSSL_NO_JPAKE
-    ERR_load_JPAKE_strings();
 # endif
 # ifndef OPENSSL_NO_CT
     ERR_load_CT_strings();

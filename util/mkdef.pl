@@ -102,8 +102,6 @@ my @known_algorithms = ( "RC2", "RC4", "RC5", "IDEA", "DES", "BF",
 			 "CAPIENG",
 			 # SSL v3 method
 			 "SSL3_METHOD",
-			 # JPAKE
-			 "JPAKE",
 			 # NEXTPROTONEG
 			 "NEXTPROTONEG",
 			 # Deprecated functions
@@ -293,7 +291,6 @@ $crypto.=" include/openssl/ocsp.h";
 $crypto.=" include/openssl/ui.h";
 #$crypto.=" include/openssl/store.h";
 $crypto.=" include/openssl/cms.h";
-$crypto.=" include/openssl/jpake.h";
 $crypto.=" include/openssl/srp.h";
 $crypto.=" include/openssl/modes.h";
 $crypto.=" include/openssl/async.h";

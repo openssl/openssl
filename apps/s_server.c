@@ -785,7 +785,6 @@ static int not_resumable_sess_cb(SSL *s, int is_forward_secure)
     return is_forward_secure;
 }
 
-static char *jpake_secret = NULL;
 #ifndef OPENSSL_NO_SRP
 static srpsrvparm srp_callback_parm;
 #endif
@@ -814,7 +813,7 @@ typedef enum OPTION_choice {
     OPT_TLS1_2, OPT_TLS1_1, OPT_TLS1, OPT_DTLS, OPT_DTLS1,
     OPT_DTLS1_2, OPT_TIMEOUT, OPT_MTU, OPT_CHAIN, OPT_LISTEN,
     OPT_ID_PREFIX, OPT_RAND, OPT_SERVERNAME, OPT_SERVERNAME_FATAL,
-    OPT_CERT2, OPT_KEY2, OPT_NEXTPROTONEG, OPT_ALPN, OPT_JPAKE,
+    OPT_CERT2, OPT_KEY2, OPT_NEXTPROTONEG, OPT_ALPN,
     OPT_SRTP_PROFILES, OPT_KEYMATEXPORT, OPT_KEYMATEXPORTLEN,
     OPT_S_ENUM,
     OPT_V_ENUM,
@@ -952,9 +951,6 @@ OPTIONS s_server_options[] = {
 #ifndef OPENSSL_NO_PSK
     {"psk_hint", OPT_PSK_HINT, 's', "PSK identity hint to use"},
     {"psk", OPT_PSK, 's', "PSK in hex (without 0x)"},
-# ifndef OPENSSL_NO_JPAKE
-    {"jpake", OPT_JPAKE, 's', "JPAKE secret to use"},
-# endif
 #endif
 #ifndef OPENSSL_NO_SRP
     {"srpvfile", OPT_SRPVFILE, '<', "The verifier file for SRP"},
@@ -1501,14 +1497,6 @@ int s_server_main(int argc, char *argv[])
         case OPT_ALPN:
             alpn_in = opt_arg();
             break;
-#if !defined(OPENSSL_NO_JPAKE) && !defined(OPENSSL_NO_PSK)
-        case OPT_JPAKE:
-            jpake_secret = opt_arg();
-            break;
-#else
-        case OPT_JPAKE:
-            goto opthelp;
-#endif
         case OPT_SRTP_PROFILES:
             srtp_profiles = opt_arg();
             break;
@@ -1543,15 +1531,6 @@ int s_server_main(int argc, char *argv[])
         BIO_printf(bio_err,
                    "Can't use unix sockets and datagrams together\n");
         goto end;
-    }
-#endif
-#if !defined(OPENSSL_NO_JPAKE) && !defined(OPENSSL_NO_PSK)
-    if (jpake_secret) {
-        if (psk_key) {
-            BIO_printf(bio_err, "Can't use JPAKE and PSK together\n");
-            goto end;
-        }
-        psk_identity = "JPAKE";
     }
 #endif
 
@@ -1768,7 +1747,7 @@ int s_server_main(int argc, char *argv[])
     }
 
     ssl_ctx_add_crls(ctx, crls, 0);
-    if (!config_ctx(cctx, ssl_args, ctx, jpake_secret == NULL))
+    if (!config_ctx(cctx, ssl_args, ctx))
         goto end;
 
     if (!ssl_load_stores(ctx, vfyCApath, vfyCAfile, chCApath, chCAfile,
@@ -1831,7 +1810,7 @@ int s_server_main(int argc, char *argv[])
         }
 
         ssl_ctx_add_crls(ctx2, crls, 0);
-        if (!config_ctx(cctx, ssl_args, ctx2, jpake_secret == NULL))
+        if (!config_ctx(cctx, ssl_args, ctx2))
             goto end;
     }
 #ifndef OPENSSL_NO_NEXTPROTONEG
@@ -1917,15 +1896,11 @@ int s_server_main(int argc, char *argv[])
                                                        not_resumable_sess_cb);
     }
 #ifndef OPENSSL_NO_PSK
-# ifdef OPENSSL_NO_JPAKE
     if (psk_key != NULL)
-# else
-    if (psk_key != NULL || jpake_secret)
-# endif
     {
         if (s_debug)
             BIO_printf(bio_s_out,
-                       "PSK key given or JPAKE in use, setting server callback\n");
+                       "PSK key given, setting server callback\n");
         SSL_CTX_set_psk_server_callback(ctx, psk_server_cb);
     }
 
@@ -2175,10 +2150,6 @@ static int sv_body(const char *hostname, int s, int stype,
         test = BIO_new(BIO_f_nbio_test());
         sbio = BIO_push(test, sbio);
     }
-#ifndef OPENSSL_NO_JPAKE
-    if (jpake_secret)
-        jpake_server_auth(bio_s_out, sbio, jpake_secret);
-#endif
 
     SSL_set_bio(con, sbio, sbio);
     SSL_set_accept_state(con);

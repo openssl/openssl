@@ -306,7 +306,6 @@ $cflags.=" -DOPENSSL_NO_ASYNC" if $no_async;
 $cflags.=" -DOPENSSL_NO_AUTOALGINIT" if $no_autoalginit;
 $cflags.=" -DOPENSSL_NO_AUTOERRINIT" if $no_autoerrinit;
 $cflags.=" -DOPENSSL_FIPS"    if $fips;
-$cflags.=" -DOPENSSL_NO_JPAKE"    if $no_jpake;
 $cflags.=" -DOPENSSL_NO_EC2M"    if $no_ec2m;
 $cflags.= " -DZLIB" if $zlib_opt;
 $cflags.= " -DZLIB_SHARED" if $zlib_opt == 2;
@@ -1037,7 +1036,6 @@ sub var_add
 	return("") if $no_dh   && $dir =~ /\/dh/;
 	return("") if $no_ec   && $dir =~ /\/ec/;
 	return("") if $no_cms  && $dir =~ /\/cms/;
-	return("") if $no_jpake  && $dir =~ /\/jpake/;
 	return("") if !$fips   && $dir =~ /^fips/;
 	if ($no_des && $dir =~ /\/des/)
 		{
@@ -1397,7 +1395,6 @@ sub read_options
 		"no-ssl3-method" => 0,
 		"no-srp" => \$no_srp,
 		"no-cms" => \$no_cms,
-		"no-jpake" => \$no_jpake,
 		"no-ec2m" => \$no_ec2m,
 		"no-ec_nistp_64_gcc_128" => 0,
 		"no-err" => \$no_err,
