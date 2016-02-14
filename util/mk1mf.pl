@@ -310,6 +310,7 @@ $cflags.=" -DOPENSSL_NO_JPAKE"    if $no_jpake;
 $cflags.=" -DOPENSSL_NO_EC2M"    if $no_ec2m;
 $cflags.= " -DZLIB" if $zlib_opt;
 $cflags.= " -DZLIB_SHARED" if $zlib_opt == 2;
+$cflags.=" -DOPENSSL_PIC" if $shlib;
 
 if ($no_static_engine)
 	{
@@ -1405,6 +1406,7 @@ sub read_options
 		"no-gost" => \$no_gost,
 		"no-engine" => \$no_engine,
 		"no-egd" => 0,
+		"no-heartbeats" => 0,
 		"no-hw" => \$no_hw,
 		"no-async" => \$no_async,
 		"no-autoalginit" => \$no_autoalginit,
@@ -1436,6 +1438,7 @@ sub read_options
 		"no-deprecated" => 0,
 		"no-ocb" => 0,
 		"no-crypto-mdebug" => 0,
+		"no-crypto-mdebug-backtrace" => 0,
 		"fips" => \$fips,
 		"fipscanisterbuild" => [\$fips, \$fipscanisterbuild],
 		"fipscanisteronly" => [\$fips, \$fipscanisterbuild, \$fipscanisteronly],
