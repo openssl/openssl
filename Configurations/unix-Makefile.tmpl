@@ -151,7 +151,7 @@ build_engines: $(ENGINES)
 build_apps: $(PROGRAMS) $(SCRIPTS)
 build_tests: $(TESTPROGS)
 
-test tests: build_tests build_apps build_engines build_libs rehash
+test tests: build_tests build_apps build_engines rehash
 	( cd test; \
 	  SRCTOP=../$(SRCDIR) \
 	  BLDTOP=../$(BLDDIR) \
@@ -575,7 +575,7 @@ dist:
 
 # Helper targets #####################################################
 
-rehash: link-utils copy-certs
+rehash: link-utils copy-certs build_apps
 	@if [ -z "$(CROSS_COMPILE)" ]; then \
 		(OPENSSL="$(BLDDIR)/util/shlib_wrap.sh apps/openssl"; \
 		[ -x "$(BLDDIR)/openssl.exe" ] && OPENSSL="$(BLDDIR)/openssl.exe" || :; \
