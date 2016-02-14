@@ -234,10 +234,9 @@ my $ssl="include/openssl/ssl.h";
 $ssl.=" include/openssl/tls1.h";
 $ssl.=" include/openssl/srtp.h";
 
+# We use headers found in include/openssl and include/internal only.
+# The latter is needed so libssl.so/.dll/.exe can link properly.
 my $crypto ="include/openssl/crypto.h";
-$crypto.=" crypto/include/internal/cryptlib.h";
-$crypto.=" crypto/include/internal/chacha.h"; # unless $no_chacha;
-$crypto.=" crypto/include/internal/poly1305.h"; # unless $no_poly1305;
 $crypto.=" include/internal/o_dir.h";
 $crypto.=" include/internal/o_str.h";
 $crypto.=" include/openssl/des.h" ; # unless $no_des;
