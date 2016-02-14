@@ -1395,8 +1395,6 @@ static NISTZ256_PRE_COMP *ecp_nistz256_pre_comp_new(const EC_GROUP *group)
 
     ret->group = group;
     ret->w = 6;                 /* default */
-    ret->precomp = NULL;
-    ret->precomp_storage = NULL;
     ret->references = 1;
     return ret;
 }
