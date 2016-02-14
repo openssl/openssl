@@ -630,7 +630,7 @@ EOF
       return <<"EOF";
 $script : $sources
         \$(PERL) "-I\$(BUILDDIR)" "-Mconfigdata" $dofile -
-	    "-o{- $config{build_file} -}" $sources > $script
+	    "-o$target{build_file}" $sources > $script
         SET FILE/PROT=(S:RWED,O:RWED,G:RE,W:RE) $script
         PURGE $script
 EOF
