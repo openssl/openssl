@@ -882,7 +882,8 @@ EOF
                            rel2abs($config{builddir}));
       return <<"EOF";
 $script : $sources
-	\$(PERL) "-I\$(BLDDIR)" -Mconfigdata "$dofile" $sources > "$script"
+	\$(PERL) "-I\$(BLDDIR)" -Mconfigdata "$dofile" \\
+	    "-o{- $config{build_file} -}" $sources > "$script"
 	chmod a+x $script
 EOF
   }
