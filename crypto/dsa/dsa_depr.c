@@ -62,7 +62,6 @@
  * also Appendix 2.2 of FIPS PUB 186-1 (i.e. use SHA as defined in FIPS PUB
  * 180-1)
  */
-#define xxxHASH    EVP_sha1()
 
 #include <openssl/opensslconf.h>
 #if OPENSSL_API_COMPAT >= 0x00908000L

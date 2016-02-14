@@ -92,11 +92,11 @@ my $gcc_devteam_warn = "-DPEDANTIC -DREF_DEBUG -DDEBUG_UNUSED"
 # TODO(openssl-team): fix problems and investigate if (at least) the
 # following warnings can also be enabled:
 #       -Wswitch-enum
-#       -Wunused-macros
 #       -Wcast-align
 #       -Wunreachable-code
 #       -Wlanguage-extension-token
 #       -Wextended-offsetof
+# WIP UNTIL modes/gcm fixed:        . " -Wunused-macros"
 my $clang_devteam_warn = ""
         . " -Qunused-arguments"
         . " -Wextra"

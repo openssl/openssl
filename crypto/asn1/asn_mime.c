@@ -656,7 +656,6 @@ static int multi_split(BIO *bio, char *bound, STACK_OF(BIO) **ret)
 
 /* This is the big one: parse MIME header lines up to message body */
 
-#define MIME_INVALID    0
 #define MIME_START      1
 #define MIME_TYPE       2
 #define MIME_NAME       3

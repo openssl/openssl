@@ -104,8 +104,6 @@ static const char *ts_status_text[] = {
     "revocationNotification"
 };
 
-#define TS_STATUS_TEXT_SIZE     OSSL_NELEM(ts_status_text)
-
 static struct {
     int code;
     const char *text;

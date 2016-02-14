@@ -81,9 +81,6 @@ static unsigned char conv_ascii2bin(unsigned char a);
  * 2 bytes => xxx=
  * 3 bytes => xxxx
  */
-#define BIN_PER_LINE    (64/4*3)
-#define CHUNKS_PER_LINE (64/4)
-#define CHAR_PER_LINE   (64+1)
 
 static const unsigned char data_bin2ascii[65] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ\
 abcdefghijklmnopqrstuvwxyz0123456789+/";
@@ -96,8 +93,6 @@ abcdefghijklmnopqrstuvwxyz0123456789+/";
  * 0xFF is error
  */
 
-#define B64_EOLN                0xF0
-#define B64_CR                  0xF1
 #define B64_EOF                 0xF2
 #define B64_WS                  0xE0
 #define B64_ERROR               0xFF

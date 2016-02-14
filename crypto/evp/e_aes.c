@@ -283,9 +283,11 @@ void gcm_ghash_avx(u64 Xi[2], const u128 Htable[16], const u8 *in,
                    size_t len);
 #   define AES_GCM_ASM(gctx)       (gctx->ctr==aesni_ctr32_encrypt_blocks && \
                                  gctx->gcm.ghash==gcm_ghash_avx)
-#   define AES_GCM_ASM2(gctx)      (gctx->gcm.block==(block128_f)aesni_encrypt && \
+#   if 0
+#    define AES_GCM_ASM2(gctx)      (gctx->gcm.block==(block128_f)aesni_encrypt && \
                                  gctx->gcm.ghash==gcm_ghash_avx)
-#   undef AES_GCM_ASM2          /* minor size optimization */
+#    undef AES_GCM_ASM2          /* minor size optimization */
+#   endif
 #  endif
 
 static int aesni_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,

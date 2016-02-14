@@ -80,9 +80,6 @@ typedef struct {
 
 # define MAXBITCHUNK     ((size_t)1<<(sizeof(size_t)*8-4))
 
-/* Attribute operation for Camellia */
-# define data(ctx)       EVP_C_DATA(EVP_CAMELLIA_KEY,ctx)
-
 # if defined(AES_ASM) && (defined(__sparc) || defined(__sparc__))
 /* ---------^^^ this is not a typo, just a way to detect that
  * assembler support was in general requested... */
