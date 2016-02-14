@@ -509,9 +509,9 @@ static ossl_ssize_t hexdecode(const char **inptr, void *result)
     for (byte = 0; *in; ++in) {
         char c;
 
-        if (isspace(*in))
+        if (isspace(_UC(*in)))
             continue;
-        c = tolower(*in);
+        c = tolower(_UC(*in));
         if ('0' <= c && c <= '9') {
             byte |= c - '0';
         } else if ('a' <= c && c <= 'f') {
@@ -553,11 +553,11 @@ static ossl_ssize_t checked_uint8(const char **inptr, void *out)
     e = restore_errno();
 
     if (((v == LONG_MIN || v == LONG_MAX) && e == ERANGE) ||
-        endp == in || !isspace(*endp) ||
+        endp == in || !isspace(_UC(*endp)) ||
         v != (*result = (uint8_t) v)) {
         return -1;
     }
-    for (in = endp; isspace(*in); ++in)
+    for (in = endp; isspace(_UC(*in)); ++in)
         continue;
 
     *inptr = in;
@@ -1141,7 +1141,7 @@ int s_client_main(int argc, char **argv)
             break;
         case OPT_PSK:
             for (p = psk_key = opt_arg(); *p; p++) {
-                if (isxdigit(*p))
+                if (isxdigit(_UC(*p)))
                     continue;
                 BIO_printf(bio_err, "Not a hex number '%s'\n", psk_key);
                 goto end;

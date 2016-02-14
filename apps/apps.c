@@ -183,7 +183,7 @@ int chopup_args(ARGS *arg, char *buf)
 
     for (p = buf;;) {
         /* Skip whitespace. */
-        while (*p && isspace(*p))
+        while (*p && isspace(_UC(*p)))
             p++;
         if (!*p)
             break;
@@ -207,7 +207,7 @@ int chopup_args(ARGS *arg, char *buf)
                 p++;
             *p++ = '\0';
         } else {
-            while (*p && !isspace(*p))
+            while (*p && !isspace(_UC(*p)))
                 p++;
             if (*p)
                 *p++ = '\0';

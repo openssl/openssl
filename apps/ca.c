@@ -731,7 +731,7 @@ end_of_options:
             goto end;
         }
         for ( ; *p; p++) {
-            if (!isxdigit(*p)) {
+            if (!isxdigit(_UC(*p))) {
                 BIO_printf(bio_err,
                            "entry %d: bad char 0%o '%c' in serial number\n",
                            i + 1, *p, *p);

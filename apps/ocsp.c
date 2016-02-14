@@ -1065,7 +1065,7 @@ static int urldecode(char *p)
     for (; *p; p++) {
         if (*p != '%')
             *out++ = *p;
-        else if (isxdigit(p[1]) && isxdigit(p[2])) {
+        else if (isxdigit(_UC(p[1])) && isxdigit(_UC(p[2]))) {
             *out++ = (app_hex(p[1]) << 4) | app_hex(p[2]);
             p += 2;
         }
