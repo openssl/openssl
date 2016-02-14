@@ -207,7 +207,7 @@ build_engines : $(ENGINES)
 build_apps : $(PROGRAMS), $(SCRIPTS)
 build_tests : $(TESTPROGS)
 
-test tests : build_tests, rehash
+test tests : build_apps, build_engines, build_tests, rehash
         SET DEFAULT [.test]{- move("test") -}
         DEFINE SRCTOP {- sourcedir() -}
         DEFINE BLDTOP {- builddir() -}
@@ -293,7 +293,7 @@ install_dev : check_INSTALLTOP
         @ {- output_off() if $config{no_shared}; "" -} !
         {- join("\n        ",
                 map { "COPY/PROT=W:RE $_.EXE ossl_installroot:['arch'.LIB]" }
-                map { $unified_info{sharednames}->{$_} || () } 
+                map { $unified_info{sharednames}->{$_} || () }
                 @{$unified_info{libraries}}) -}
         @ {- output_on() if $config{no_shared}; "" -} !
 
