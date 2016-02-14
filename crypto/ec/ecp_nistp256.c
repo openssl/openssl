@@ -1816,13 +1816,13 @@ const EC_METHOD *EC_GFp_nistp256_method(void)
 
 static NISTP256_PRE_COMP *nistp256_pre_comp_new()
 {
-    NISTP256_PRE_COMP *ret = NULL;
-    ret = OPENSSL_malloc(sizeof(*ret));
+    NISTP256_PRE_COMP *ret = OPENSSL_zalloc(sizeof(*ret));
+
     if (ret == NULL) {
         ECerr(EC_F_NISTP256_PRE_COMP_NEW, ERR_R_MALLOC_FAILURE);
         return ret;
     }
-    memset(ret->g_pre_comp, 0, sizeof(ret->g_pre_comp));
+
     ret->references = 1;
     return ret;
 }
