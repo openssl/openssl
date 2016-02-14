@@ -149,6 +149,13 @@ int opt_umax(const char *value, uintmax_t *result);
 #  define uintmax_t unsigned long
 # endif
 
+/*
+ * quick macro when you need to pass an unsigned char instead of a char.
+ * this is true for some implementations of the is*() functions, for
+ * example.
+ */
+#define _UC(c) ((unsigned char)(c))
+
 int app_RAND_load_file(const char *file, int dont_warn);
 int app_RAND_write_file(const char *file);
 /*

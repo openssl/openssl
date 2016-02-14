@@ -1380,7 +1380,7 @@ int s_server_main(int argc, char *argv[])
         case OPT_PSK:
 #ifndef OPENSSL_NO_PSK
             for (p = psk_key = opt_arg(); *p; p++) {
-                if (isxdigit(*p))
+                if (isxdigit(_UC(*p)))
                     continue;
                 BIO_printf(bio_err, "Not a hex number '%s'\n", *argv);
                 goto end;
