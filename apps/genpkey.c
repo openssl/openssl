@@ -170,7 +170,9 @@ int genpkey_main(int argc, char **argv)
         }
     }
     argc = opt_num_rest();
-    argv = opt_rest();
+    if (argc != 0)
+        goto opthelp;
+
     private = do_param ? 0 : 1;
 
     if (ctx == NULL)
