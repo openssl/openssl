@@ -1432,8 +1432,7 @@ int s_client_main(int argc, char **argv)
     }
 
     if (cert_file) {
-        cert = load_cert(cert_file, cert_format,
-                         NULL, e, "client certificate file");
+        cert = load_cert(cert_file, cert_format, "client certificate file");
         if (cert == NULL) {
             ERR_print_errors(bio_err);
             goto end;
@@ -1441,7 +1440,7 @@ int s_client_main(int argc, char **argv)
     }
 
     if (chain_file) {
-        if (!load_certs(chain_file, &chain, FORMAT_PEM, NULL, e,
+        if (!load_certs(chain_file, &chain, FORMAT_PEM, NULL,
                         "client certificate chain"))
             goto end;
     }

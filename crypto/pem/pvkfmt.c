@@ -120,9 +120,9 @@ static int read_lebn(const unsigned char **in, unsigned int nbyte, BIGNUM **r)
 /* Salt length for PVK files */
 # define PVK_SALTLEN             0x10
 
-static EVP_PKEY *b2i_rsa(const unsigned char **in, unsigned int length,
+static EVP_PKEY *b2i_rsa(const unsigned char **in,
                          unsigned int bitlen, int ispub);
-static EVP_PKEY *b2i_dss(const unsigned char **in, unsigned int length,
+static EVP_PKEY *b2i_dss(const unsigned char **in,
                          unsigned int bitlen, int ispub);
 
 static int do_blob_header(const unsigned char **in, unsigned int length,
@@ -235,9 +235,9 @@ static EVP_PKEY *do_b2i(const unsigned char **in, unsigned int length,
         return NULL;
     }
     if (isdss)
-        return b2i_dss(&p, length, bitlen, ispub);
+        return b2i_dss(&p, bitlen, ispub);
     else
-        return b2i_rsa(&p, length, bitlen, ispub);
+        return b2i_rsa(&p, bitlen, ispub);
 }
 
 static EVP_PKEY *do_b2i_bio(BIO *in, int ispub)
@@ -268,16 +268,16 @@ static EVP_PKEY *do_b2i_bio(BIO *in, int ispub)
     }
 
     if (isdss)
-        ret = b2i_dss(&p, length, bitlen, ispub);
+        ret = b2i_dss(&p, bitlen, ispub);
     else
-        ret = b2i_rsa(&p, length, bitlen, ispub);
+        ret = b2i_rsa(&p, bitlen, ispub);
 
  err:
     OPENSSL_free(buf);
     return ret;
 }
 
-static EVP_PKEY *b2i_dss(const unsigned char **in, unsigned int length,
+static EVP_PKEY *b2i_dss(const unsigned char **in,
                          unsigned int bitlen, int ispub)
 {
     const unsigned char *p = *in;
@@ -327,7 +327,7 @@ static EVP_PKEY *b2i_dss(const unsigned char **in, unsigned int length,
     return NULL;
 }
 
-static EVP_PKEY *b2i_rsa(const unsigned char **in, unsigned int length,
+static EVP_PKEY *b2i_rsa(const unsigned char **in,
                          unsigned int bitlen, int ispub)
 {
     const unsigned char *p = *in;
