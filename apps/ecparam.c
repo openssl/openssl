@@ -220,7 +220,9 @@ int ecparam_main(int argc, char **argv)
         }
     }
     argc = opt_num_rest();
-    argv = opt_rest();
+    if (argc != 0)
+        goto opthelp;
+
     private = genkey ? 1 : 0;
 
     in = bio_open_default(infile, 'r', informat);

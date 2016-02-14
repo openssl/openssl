@@ -225,7 +225,8 @@ int pkeyutl_main(int argc, char **argv)
         }
     }
     argc = opt_num_rest();
-    argv = opt_rest();
+    if (argc != 0)
+        goto opthelp;
 
     if (inkey == NULL ||
         (peerkey != NULL && pkey_op != EVP_PKEY_OP_DERIVE))

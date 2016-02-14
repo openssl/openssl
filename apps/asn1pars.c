@@ -184,7 +184,8 @@ int asn1parse_main(int argc, char **argv)
         }
     }
     argc = opt_num_rest();
-    argv = opt_rest();
+    if (argc != 0)
+        goto opthelp;
 
     if (oidfile != NULL) {
         in = bio_open_default(oidfile, 'r', FORMAT_TEXT);

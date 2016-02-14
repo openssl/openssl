@@ -491,7 +491,8 @@ int ocsp_main(int argc, char **argv)
         }
     }
     argc = opt_num_rest();
-    argv = opt_rest();
+    if (argc != 0)
+        goto opthelp;
 
     /* Have we anything to do? */
     if (!req && !reqin && !respin && !(port && ridx_filename))

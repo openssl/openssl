@@ -237,7 +237,8 @@ int s_time_main(int argc, char **argv)
         }
     }
     argc = opt_num_rest();
-    argv = opt_rest();
+    if (argc != 0)
+        goto opthelp;
 
     if (cipher == NULL)
         cipher = getenv("SSL_CIPHER");

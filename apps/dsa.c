@@ -194,7 +194,9 @@ int dsa_main(int argc, char **argv)
         }
     }
     argc = opt_num_rest();
-    argv = opt_rest();
+    if (argc != 0)
+        goto opthelp;
+
     private = pubin || pubout ? 0 : 1;
     if (text && !pubin)
         private = 1;

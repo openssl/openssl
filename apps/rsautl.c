@@ -205,7 +205,8 @@ int rsautl_main(int argc, char **argv)
         }
     }
     argc = opt_num_rest();
-    argv = opt_rest();
+    if (argc != 0)
+        goto opthelp;
 
     if (need_priv && (key_type != KEY_PRIVKEY)) {
         BIO_printf(bio_err, "A private key is needed for this operation\n");
