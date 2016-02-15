@@ -219,7 +219,17 @@ list-tests:
 	@TOP=$(SRCDIR) PERL=$(PERL) $(PERL) $(SRCDIR)/test/run_tests.pl list
 
 libclean:
-	-rm -f `find $(BLDDIR) -name '*$(LIB_EXT)' -o -name '*$(SHLIB_EXT)'`
+	@set -e; for s in $(SHLIB_INFO); do \
+		s1=`echo "$$s" | cut -f1 -d";"`; \
+		s2=`echo "$$s" | cut -f2 -d";"`; \
+		echo $(RM) $$s1; \
+		$(RM) $$s1; \
+		if [ "$$s1" != "$$s2" ]; then \
+			echo $(RM) $$s2; \
+			$(RM) $$s2; \
+		fi; \
+	done
+	$(RM) $(LIBS)
 
 install: install_sw install_ssldirs install_docs
 
@@ -252,7 +262,7 @@ Makefile: FORCE
 
 install_sw: all install_dev install_engines install_runtime
 
-uninstall_sw: uninstall_dev uninstall_engines uninstall_runtime
+uninstall_sw: uninstall_runtime uninstall_engines uninstall_dev
 
 install_docs: install_man_docs install_html_docs
 
@@ -401,7 +411,7 @@ install_runtime:
 	@echo "*** Installing runtime files"
 	: {- output_off() unless windowsdll(); "" -};
 	@set -e; for s in $(SHLIBS); do \
-		fn=`basename $$i`; \
+		fn=`basename $$s`; \
 		echo "install $$s -> $(DESTDIR)$(INSTALLTOP)/bin/$$fn"; \
 		cp $$s $(DESTDIR)$(INSTALLTOP)/bin/$$fn.new; \
 		chmod 644 $(DESTDIR)$(INSTALLTOP)/bin/$$fn.new; \
@@ -460,7 +470,7 @@ uninstall_runtime:
 	done
 	: {- output_off() unless windowsdll(); "" -};
 	@set -e; for s in $(SHLIBS); do \
-		fn=`basename $$i`; \
+		fn=`basename $$s`; \
 		echo "$(RM) $(DESTDIR)$(INSTALLTOP)/bin/$$fn"; \
 		$(RM) $(DESTDIR)$(INSTALLTOP)/bin/$$fn; \
 	done

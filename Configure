@@ -810,7 +810,8 @@ my %target = ( %{$table{$base_target}}, resolve_config($target) );
 &usage if (!%target || $target{template});
 
 $target{exe_extension}="";
-$target{exe_extension}=".exe" if ($config{target} eq "Cygwin" || $config{target} eq "DJGPP" || $config{target} =~ /^mingw/);
+$target{exe_extension}=".exe" if ($config{target} eq "DJGPP"
+                                  || $config{target} =~ /^(?:Cygwin|mingw)/);
 $target{exe_extension}=".nlm" if ($config{target} =~ /netware/);
 $target{exe_extension}=".pm"  if ($config{target} =~ /vos/);
 
