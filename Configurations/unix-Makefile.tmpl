@@ -85,7 +85,10 @@ ENGINESDIR={- use File::Spec::Functions;
 MANDIR=$(INSTALLTOP)/share/man
 HTMLDIR=$(INSTALLTOP)/share/doc/$(BASENAME)/html
 
-MANSUFFIX=ssl
+# MANSUFFIX is for the benefit of anyone who may want to have a suffix
+# appended after the manpage file section number.  "ssl" is popular,
+# resulting in files such as config.5ssl rather than config.5.
+MANSUFFIX=
 HTMLSUFFIX=html
 
 
