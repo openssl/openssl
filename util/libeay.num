@@ -2691,7 +2691,7 @@ ENGINE_set_default_string               3184	1_1_0	EXIST::FUNCTION:ENGINE
 CONF_module_get_usr_data                3185	1_1_0	EXIST::FUNCTION:
 ASN1_add_oid_module                     3186	1_1_0	EXIST::FUNCTION:
 CONF_modules_finish                     3187	1_1_0	EXIST::FUNCTION:
-OPENSSL_config                          3188	1_1_0	EXIST::FUNCTION:
+OPENSSL_config                          3188	1_1_0	EXIST::FUNCTION:DEPRECATEDIN_1_1_0
 CONF_modules_unload                     3189	1_1_0	EXIST::FUNCTION:
 CONF_imodule_get_value                  3190	1_1_0	EXIST::FUNCTION:
 CONF_module_set_usr_data                3191	1_1_0	EXIST::FUNCTION:
