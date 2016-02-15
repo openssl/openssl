@@ -838,7 +838,7 @@ $target : $lib\$(LIB_EXT) $deps $ordinalsfile
 		CROSS_COMPILE="\$(CROSS_COMPILE)" \\
 		SHARED_LDFLAGS="\$(SHARED_LDFLAGS)" SHLIB_EXT=\$(SHLIB_EXT) \\
 		SHARED_RCFLAGS="\$(SHARED_RCFLAGS)" \\
-		link_a.$shlib_target
+		link_shlib.$shlib_target
 EOF
 	  . (windowsdll() ? <<"EOF" : "");
 	rm -f apps/$shlib\$(SHLIB_EXT)
@@ -872,7 +872,7 @@ $target: $objs $deps
 		SHARED_LDFLAGS="\$(SHARED_LDFLAGS)" \\
 		SHLIB_EXT=\$(DSO_EXT) \\
 		LIBEXTRAS="$objs" \\
-		link_o.$shlib_target
+		link_dso.$shlib_target
 EOF
   }
   sub obj2lib {

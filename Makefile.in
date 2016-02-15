@@ -378,7 +378,7 @@ do_$(SHLIB_TARGET):
 			LIBNAME=$$i LIBVERSION=$(SHLIB_MAJOR).$(SHLIB_MINOR) \
 			LIBCOMPATVERSIONS=";$(SHLIB_VERSION_HISTORY)" \
 			LIBDEPS="$$libs $(EX_LIBS)" \
-			link_a.$(SHLIB_TARGET); \
+			link_shlib.$(SHLIB_TARGET); \
 		libs="-l$$i $$libs"; \
 		case "$(PLATFORM)" in \
 		Cygwin*) \
