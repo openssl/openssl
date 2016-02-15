@@ -1716,6 +1716,7 @@ long SSL_ctrl(SSL *s, int cmd, long larg, void *parg)
         s->max_pipelines = larg;
         if (larg > 1)
             RECORD_LAYER_set_read_ahead(&s->rlayer, 1);
+        return 1;
     case SSL_CTRL_GET_RI_SUPPORT:
         if (s->s3)
             return s->s3->send_connection_binding;
@@ -1867,6 +1868,7 @@ long SSL_CTX_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
         if (larg < 1 || larg > SSL_MAX_PIPELINES)
             return 0;
         ctx->max_pipelines = larg;
+        return 1;
     case SSL_CTRL_CERT_FLAGS:
         return (ctx->cert->cert_flags |= larg);
     case SSL_CTRL_CLEAR_CERT_FLAGS:
