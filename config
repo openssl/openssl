@@ -166,6 +166,10 @@ case "${SYSTEM}:${RELEASE}:${VERSION}:${MACHINE}" in
 	echo "mips4-sgi-irix64"; exit 0
 	;;
 
+    Linux:*:cross:i686)
+	echo "${MACHINE}-cross-linux"; exit 0
+	;;
+
     Linux:[2-9].*:cross:x86_64)
 	echo "${MACHINE}-cross-linux"; exit 0
 	;;
@@ -697,6 +701,7 @@ case "$GUESSOS" in
         fi ;;
   *-*-linux1) OUT="linux-aout" ;;
   *-*-linux2) OUT="linux-generic32" ;;
+  i686-cross-linux) OUT="linux-i686-cross" ;;
   *-cross-linux) OUT="linux-x86_64-cross" ;;
   sun4[uv]*-*-solaris2)
 	OUT="solaris-sparcv9-$CC"
