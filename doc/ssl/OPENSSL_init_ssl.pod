@@ -22,7 +22,7 @@ As of version 1.1.0 OpenSSL will automatically allocate all resources that it
 needs so no explicit initialisation is required. Similarly it will also
 automatically deinitialise as required.
 
-However, there way be situations when explicit initialisation is desirable or
+However, there may be situations when explicit initialisation is desirable or
 needed, for example when some non-default initialisation is required. The
 function OPENSSL_init_ssl() can be used for this purpose. Calling
 this function will explicitly initialise BOTH libcrypto and libssl. To
