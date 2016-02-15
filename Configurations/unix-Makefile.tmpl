@@ -172,6 +172,7 @@ AR=$(CROSS_COMPILE){- $target{ar} || "ar" -} $(ARFLAGS) r
 RANLIB= {- $target{ranlib} -}
 NM= $(CROSS_COMPILE){- $target{nm} || "nm" -}
 RM= rm -f
+RMDIR= rmdir
 TAR= {- $target{tar} || "tar" -}
 TARFLAGS= {- $target{tarflags} -}
 MAKEDEPEND=$(CROSS_COMPILE){- $config{makedepprog} -}
@@ -327,6 +328,8 @@ uninstall_dev:
 		echo "$(RM) $(DESTDIR)$(INSTALLTOP)/include/openssl/$$fn"; \
 		$(RM) $(DESTDIR)$(INSTALLTOP)/include/openssl/$$fn; \
 	done
+	-$(RMDIR) $(DESTDIR)$(INSTALLTOP)/include/openssl
+	-$(RMDIR) $(DESTDIR)$(INSTALLTOP)/include
 	@set -e; for l in $(LIBS); do \
 		fn=`basename $$l`; \
 		echo "$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn"; \
@@ -357,6 +360,10 @@ uninstall_dev:
 	@$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig/libssl.pc
 	@echo "$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig/openssl.pc"
 	@$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig/openssl.pc
+	@echo $(RMDIR) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig
+	-@$(RMDIR) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig
+	@echo $(RMDIR) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)
+	-@$(RMDIR) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)
 
 install_engines:
 	@[ -n "$(INSTALLTOP)" ] || (echo INSTALLTOP should not be empty; exit 1)
@@ -384,6 +391,8 @@ uninstall_engines:
 		echo "$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/engines/$$fn"; \
 		$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/engines/$$fn; \
 	done
+	@echo "$(RMDIR) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/engines"
+	-@$(RMDIR) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/engines
 
 install_runtime:
 	@[ -n "$(INSTALLTOP)" ] || (echo INSTALLTOP should not be empty; exit 1)
@@ -457,6 +466,10 @@ uninstall_runtime:
 	done
 	: {- output_on() unless windowsdll(); "" -};
 	$(RM) $(DESTDIR)$(OPENSSLDIR)/openssl.cnf
+	@echo "$(RMDIR) $(DESTDIR)$(INSTALLTOP)/bin"
+	-@$(RMDIR) $(DESTDIR)$(INSTALLTOP)/bin
+	@echo "$(RMDIR) $(DESTDIR)$(OPENSSLDIR)/misc"
+	-@$(RMDIR) $(DESTDIR)$(OPENSSLDIR)/misc
 
 # A method to extract all names from a .pod file
 # The first sed extracts everything between "=head1 NAME" and the next =head1
