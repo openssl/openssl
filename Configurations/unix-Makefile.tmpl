@@ -848,7 +848,7 @@ EOF
 	cp -p $shlib\$(SHLIB_EXT) test/
 EOF
   }
-  sub obj2dynlib {
+  sub obj2dso {
       my %args = @_;
       my $lib = $args{lib};
       my $libd = dirname($lib);
