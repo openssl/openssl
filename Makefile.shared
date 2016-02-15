@@ -187,15 +187,10 @@ link_app.gnu:
 	@ $(DO_GNU_APP); $(LINK_APP)
 
 link_shlib.linux-shared:
-	@if [ $(LIBNAME) != "crypto" -a $(LIBNAME) != "ssl" ]; then $(DO_GNU_SO); else \
-	$(PERL) $(SRCDIR)/util/mkdef.pl $(LIBNAME) linux >$(LIBNAME).map; \
-	$(CALC_VERSIONS); \
-	SHLIB=lib$(LIBNAME).so; \
-	SHLIB_SUFFIX=; \
+	@$(PERL) $(SRCDIR)/util/mkdef.pl $(LIBNAME) linux >$(LIBNAME).map; \
+	$(DO_GNU_SO); \
 	ALLSYMSFLAGS='-Wl,--whole-archive,--version-script=$(LIBNAME).map'; \
-	NOALLSYMSFLAGS='-Wl,--no-whole-archive'; \
-	SHAREDFLAGS="$(CFLAGS) $(SHARED_LDFLAGS) -shared -Wl,-Bsymbolic -Wl,-soname=$$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX"; \
-	fi; $(LINK_SO_SHLIB)
+	$(LINK_SO_SHLIB)
 
 link_dso.bsd:
 	@if $(DETECT_GNU_LD); then $(DO_GNU_SO_NOCALC); else \
@@ -369,12 +364,8 @@ link_shlib.solaris:
 		$(CALC_VERSIONS); \
 		SHLIB=lib$(LIBNAME).so; \
 		SHLIB_SUFFIX=;\
-		if [ $(LIBNAME) != "crypto" -a $(LIBNAME) != "ssl" ]; then \
-			ALLSYMSFLAGS="-Wl,-z,allextract"; \
-		else \
-			$(PERL) $(SRCDIR)/util/mkdef.pl $(LIBNAME) linux >$(LIBNAME).map; \
-			ALLSYMSFLAGS="-Wl,-z,allextract,-M,$(LIBNAME).map"; \
-		fi; \
+		$(PERL) $(SRCDIR)/util/mkdef.pl $(LIBNAME) linux >$(LIBNAME).map; \
+		ALLSYMSFLAGS="-Wl,-z,allextract,-M,$(LIBNAME).map"; \
 		NOALLSYMSFLAGS="-Wl,-z,defaultextract"; \
 		SHAREDFLAGS="$(CFLAGS) $(SHARED_LDFLAGS) -h $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX -Wl,-Bsymbolic"; \
 	fi; \
