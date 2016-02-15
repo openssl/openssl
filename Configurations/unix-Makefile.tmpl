@@ -4,6 +4,50 @@
 ## {- join("\n## ", @autowarntext) -}
 {-
      sub windowsdll { $config{target} =~ /^(?:Cygwin|mingw)/ }
+
+     # shlib and shlib_simple both take a static library name and figure
+     # out what the shlib name should be.
+     #
+     # When OpenSSL is configured "no-shared", these functions will just
+     # return empty lists, making them suitable to join().
+     #
+     # With Windows DLL producers, shlib($libname) will return the shared
+     # library name (which usually is different from the static library
+     # name) with the default shared extension appended to it, while
+     # shlib_simple($libname) will return the static library name with
+     # the shared extension followed by ".a" appended to it.  The former
+     # result is used as the runtime shared library while the latter is
+     # used as the DLL import library.
+     #
+     # On all Unix systems, shlib($libname) will return the library name
+     # with the default shared extension, while shlib_simple($libname)
+     # will return the name from shlib($libname) with any SO version number
+     # removed.  On some systems, they may therefore return the exact same
+     # string.
+     sub shlib {
+         return () if $config{no_shared};
+         my $lib = shift;
+         return $unified_info{sharednames}->{$lib} . '$(SHLIB_EXT)';
+     }
+     sub shlib_simple {
+         return () if $config{no_shared};
+
+         my $lib = shift;
+         if (windowsdll()) {
+             return $lib . '$(SHLIB_EXT_IMPORT)';
+         }
+         return $lib . '$(SHLIB_EXT_SIMPLE)';
+     }
+
+     # dso is a complement to shlib / shlib_simple that returns the
+     # given libname with the simple shared extension (possible SO version
+     # removed).  This differs from shlib_simple() by being unconditional.
+     sub dso {
+         return () if $config{no_shared};
+         my $engine = shift;
+
+         return $engine . '$(DSO_EXT)';
+     }
 -}
 PLATFORM={- $config{target} -}
 OPTIONS={- $config{options} -}
@@ -30,8 +74,8 @@ OBJ_EXT={- $target{obj_extension} || ".o" -}
 DEP_EXT={- $target{dep_extension} || ".d" -}
 
 LIBS={- join(" ", map { $_."\$(LIB_EXT)" } @{$unified_info{libraries}}) -}
-SHLIBS={- join(" ", map { $_."\$(SHLIB_EXT)" } map { $unified_info{sharednames}->{$_} || () } @{$unified_info{libraries}}) -}
-ENGINES={- join(" ", map { $_."\$(DSO_EXT)" } @{$unified_info{engines}}) -}
+SHLIBS={- join(" ", map { shlib($_) } @{$unified_info{libraries}}) -}
+ENGINES={- join(" ", map { dso($_) } @{$unified_info{engines}}) -}
 PROGRAMS={- join(" ", map { $_."\$(EXE_EXT)" } grep { !m|^test/| } @{$unified_info{programs}}) -}
 TESTPROGS={- join(" ", map { $_."\$(EXE_EXT)" } grep { m|^test/| } @{$unified_info{programs}}) -}
 SCRIPTS={- join(" ", @{$unified_info{scripts}}) -}
@@ -736,13 +780,7 @@ configdata.pm: {- $config{build_file_template} -} $(SRCDIR)/Configure $(SRCDIR)/
       # Depending on shared libraries:
       # On Windows POSIX layers, we depend on {libname}.dll.a
       # On Unix platforms, we depend on {shlibname}.so
-      return map { if (windowsdll()) {
-                       "$_\$(SHLIB_EXT_IMPORT)"
-		   } else {
-		       my $libname =
-		           $unified_info{sharednames}->{$_} || $_;
-		       "$libname\$(SHLIB_EXT_SIMPLE)"
-		   } } @_;
+      return map { shlib_simple($_) } @_;
   }
 
   sub src2obj {
@@ -788,8 +826,7 @@ EOF
       my $deps = join(" ",compute_lib_depends(@{$args{deps}}));
       my $shlib_target = $target{shared_target};
       my $ordinalsfile = defined($args{ordinals}) ? $args{ordinals}->[1] : "";
-      my $shlibtarget = windowsdll() ?
-	  "$lib\$(SHLIB_EXT_IMPORT)" : "$shlib\$(SHLIB_EXT_SIMPLE)";
+      my $target = shlib_simple($lib);
       return <<"EOF"
 # With a build on a Windows POSIX layer (Cygwin or Mingw), we know for a fact
 # that two files get produced, {shlibname}.dll and {libname}.dll.a.
@@ -798,7 +835,7 @@ EOF
 # It's not necessary to have both as targets.  The choice falls on the
 # simplest, {libname}\$(SHLIB_EXT_IMPORT) for Windows POSIX layers and
 # {libname}\$(SHLIB_EXT_SIMPLE) for the Unix platforms.
-$shlibtarget: $lib\$(LIB_EXT) $deps $ordinalsfile
+$target : $lib\$(LIB_EXT) $deps $ordinalsfile
 	\$(MAKE) -f \$(SRCDIR)/Makefile.shared -e \\
 		PLATFORM=\$(PLATFORM) \\
 		PERL=\$(PERL) SRCDIR="\$(SRCDIR)" DSTDIR="$libd" \\
@@ -832,8 +869,9 @@ EOF
       my $deps = join(" ",compute_lib_depends(@{$args{deps}}));
       my $shlib_target = $target{shared_target};
       my $objs = join(" ", map { $_."\$(OBJ_EXT)" } @{$args{objs}});
+      my $target = dso($lib);
       return <<"EOF";
-$lib\$(DSO_EXT): $objs $deps
+$target: $objs $deps
 	\$(MAKE) -f \$(SRCDIR)/Makefile.shared -e \\
 		PLATFORM=\$(PLATFORM) \\
 		PERL=\$(PERL) SRCDIR="\$(SRCDIR)" DSTDIR="$libd" \\
