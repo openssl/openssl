@@ -93,7 +93,7 @@ ENGINESDIR={- use File::Spec::Functions;
 
 CROSS_COMPILE= {- $config{cross_compile_prefix} -}
 CC= $(CROSS_COMPILE){- $target{cc} -}
-CFLAG={- our $cflags2 = join(" ",(map { "-D".$_} @{$config{defines}}),"-DOPENSSLDIR=\"\\\"\$(OPENSSLDIR)\\\"\"","-DENGINESDIR=\"\\\"\$(ENGINESDIR)\\\"\"") -} {- $config{cflags} -}
+CFLAG={- our $cflags2 = join(" ",(map { "-D".$_} @{$config{defines}},"OPENSSLDIR=\"\\\"\$(OPENSSLDIR)\\\"\"","ENGINESDIR=\"\\\"\$(ENGINESDIR)\\\"\"")) -} {- $config{cflags} -}
 CFLAG_Q={- $cflags2 =~ s|([\\"])|\\$1|g; $cflags2 -} {- $config{cflags} -}
 LDFLAG= {- $config{lflags} -}
 PLIB_LDFLAG= {- $config{plib_lflags} -}
