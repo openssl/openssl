@@ -4,10 +4,6 @@
 ## {- join("\n## ", @autowarntext) -}
 {-
      sub windowsdll { $config{target} =~ /^(?:Cygwin|mingw)/ }
-     sub shlib_ext { $target{shared_extension} || ".so" }
-     sub shlib_ext_simple { (my $x = $target{shared_extension})
-                                =~ s/\.\$\(SHLIB_MAJOR\)\.\$\(SHLIB_MINOR\)//;
-                            $x }
 -}
 PLATFORM={- $config{target} -}
 OPTIONS={- $config{options} -}
@@ -26,14 +22,16 @@ SHLIB_TARGET={- $target{shared_target} -}
 
 EXE_EXT={- $target{exe_extension} || "" -}
 LIB_EXT={- $target{lib_extension} || ".a" -}
-SHLIB_EXT={- shlib_ext() -}
-SHLIB_EXT_SIMPLE={- shlib_ext_simple() -}
+SHLIB_EXT={- $target{shared_extension} || ".so" -}
+SHLIB_EXT_SIMPLE={- $target{shared_extension_simple} || ".so" -}
+SHLIB_EXT_IMPORT={- $target{shared_import_extension} || "" -}
+DSO_EXT={- $target{dso_extension} || ".so" -}
 OBJ_EXT={- $target{obj_extension} || ".o" -}
 DEP_EXT={- $target{dep_extension} || ".d" -}
 
 LIBS={- join(" ", map { $_."\$(LIB_EXT)" } @{$unified_info{libraries}}) -}
 SHLIBS={- join(" ", map { $_."\$(SHLIB_EXT)" } map { $unified_info{sharednames}->{$_} || () } @{$unified_info{libraries}}) -}
-ENGINES={- join(" ", map { $_."\$(SHLIB_EXT_SIMPLE)" } @{$unified_info{engines}}) -}
+ENGINES={- join(" ", map { $_."\$(DSO_EXT)" } @{$unified_info{engines}}) -}
 PROGRAMS={- join(" ", map { $_."\$(EXE_EXT)" } grep { !m|^test/| } @{$unified_info{programs}}) -}
 TESTPROGS={- join(" ", map { $_."\$(EXE_EXT)" } grep { m|^test/| } @{$unified_info{programs}}) -}
 SCRIPTS={- join(" ", @{$unified_info{scripts}}) -}
@@ -730,7 +728,7 @@ configdata.pm: {- $config{build_file_template} -} $(SRCDIR)/Configure $(SRCDIR)/
       # On Windows POSIX layers, we depend on {libname}.dll.a
       # On Unix platforms, we depend on {shlibname}.so
       return map { if (windowsdll()) {
-                       "$_\$(SHLIB_EXT_SIMPLE).a"
+                       "$_\$(SHLIB_EXT_IMPORT)"
 		   } else {
 		       my $libname =
 		           $unified_info{sharednames}->{$_} || $_;
@@ -782,14 +780,14 @@ EOF
       my $shlib_target = $target{shared_target};
       my $ordinalsfile = defined($args{ordinals}) ? $args{ordinals}->[1] : "";
       my $shlibtarget = windowsdll() ?
-	  "$lib\$(SHLIB_EXT_SIMPLE).a" : "$shlib\$(SHLIB_EXT_SIMPLE)";
+	  "$lib\$(SHLIB_EXT_IMPORT)" : "$shlib\$(SHLIB_EXT_SIMPLE)";
       return <<"EOF"
 # With a build on a Windows POSIX layer (Cygwin or Mingw), we know for a fact
 # that two files get produced, {shlibname}.dll and {libname}.dll.a.
 # With all other Unix platforms, we often build a shared library with the
 # SO version built into the file name and a symlink without the SO version
 # It's not necessary to have both as targets.  The choice falls on the
-# simplest, {libname}\$(SHLIB_EXT_SIMPLE).a for Windows POSIX layers and
+# simplest, {libname}\$(SHLIB_EXT_IMPORT) for Windows POSIX layers and
 # {libname}\$(SHLIB_EXT_SIMPLE) for the Unix platforms.
 $shlibtarget: $lib\$(LIB_EXT) $deps $ordinalsfile
 	\$(MAKE) -f \$(SRCDIR)/Makefile.shared -e \\
@@ -826,7 +824,7 @@ EOF
       my $shlib_target = $target{shared_target};
       my $objs = join(" ", map { $_."\$(OBJ_EXT)" } @{$args{objs}});
       return <<"EOF";
-$lib\$(SHLIB_EXT_SIMPLE): $objs $deps
+$lib\$(DSO_EXT): $objs $deps
 	\$(MAKE) -f \$(SRCDIR)/Makefile.shared -e \\
 		PLATFORM=\$(PLATFORM) \\
 		PERL=\$(PERL) SRCDIR="\$(SRCDIR)" DSTDIR="$libd" \\
@@ -834,7 +832,7 @@ $lib\$(SHLIB_EXT_SIMPLE): $objs $deps
 		LIBNAME=$libname LDFLAGS="\$(LDFLAGS)" \\
 		CC="\$(CC)" CFLAGS="\$(CFLAGS)" \\
 		SHARED_LDFLAGS="\$(SHARED_LDFLAGS)" \\
-		SHLIB_EXT=\$(SHLIB_EXT_SIMPLE) \\
+		SHLIB_EXT=\$(DSO_EXT) \\
 		LIBEXTRAS="$objs" \\
 		link_o.$shlib_target
 EOF

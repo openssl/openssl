@@ -406,7 +406,8 @@ while ((my $first, my $second) = (shift @list, shift @list)) {
 
 my @generated_headers = (
     "include/openssl/opensslconf.h",
-    "crypto/include/internal/bn_conf.h"
+    "crypto/include/internal/bn_conf.h",
+    "crypto/include/internal/dso_conf.h"
     );
 
 my @generated_by_make_headers = (
@@ -812,6 +813,13 @@ $target{exe_extension}="";
 $target{exe_extension}=".exe" if ($config{target} eq "Cygwin" || $config{target} eq "DJGPP" || $config{target} =~ /^mingw/);
 $target{exe_extension}=".nlm" if ($config{target} =~ /netware/);
 $target{exe_extension}=".pm"  if ($config{target} =~ /vos/);
+
+($target{shared_extension_simple}=$target{shared_extension})
+    =~ s|\.\$\(SHLIB_MAJOR\)\.\$\(SHLIB_MINOR\)||;
+$target{dso_extension}=$target{shared_extension_simple};
+($target{shared_import_extension}=$target{shared_extension_simple}.".a")
+    if ($config{target} =~ /^(?:Cygwin|mingw)/);
+
 
 $default_ranlib	= which("ranlib") || "true";
 $config{perl}	= $ENV{'PERL'} || which("perl5") || which("perl") || "perl";
@@ -2167,6 +2175,9 @@ sub print_table_entry
 	"shared_ldflag",
 	"shared_rcflag",
 	"shared_extension",
+	"shared_extension_simple",
+	"shared_import_extension",
+	"dso_extension",
 	"obj_extension",
 	"exe_extension",
 	"ranlib",

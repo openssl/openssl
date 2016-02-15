@@ -59,6 +59,7 @@
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include <openssl/dso.h>
+#include "internal/dso_conf.h"
 
 #ifndef DSO_DL
 DSO_METHOD *DSO_METHOD_dl(void)
@@ -288,11 +289,6 @@ static char *dl_merger(DSO *dso, const char *filespec1, const char *filespec2)
  * elegant way to share one copy of the code would be more difficult and
  * would not leave the implementations independent.
  */
-# if defined(__hpux)
-static const char extension[] = ".sl";
-# else
-static const char extension[] = ".so";
-# endif
 static char *dl_name_converter(DSO *dso, const char *filename)
 {
     char *translated;
@@ -303,7 +299,7 @@ static char *dl_name_converter(DSO *dso, const char *filename)
     transform = (strstr(filename, "/") == NULL);
     {
         /* We will convert this to "%s.s?" or "lib%s.s?" */
-        rsize += strlen(extension); /* The length of ".s?" */
+        rsize += strlen(DSO_EXTENSION); /* The length of ".s?" */
         if ((DSO_flags(dso) & DSO_FLAG_NAME_TRANSLATION_EXT_ONLY) == 0)
             rsize += 3;         /* The length of "lib" */
     }
@@ -314,9 +310,9 @@ static char *dl_name_converter(DSO *dso, const char *filename)
     }
     if (transform) {
         if ((DSO_flags(dso) & DSO_FLAG_NAME_TRANSLATION_EXT_ONLY) == 0)
-            sprintf(translated, "lib%s%s", filename, extension);
+            sprintf(translated, "lib%s%s", filename, DSO_EXTENSION);
         else
-            sprintf(translated, "%s%s", filename, extension);
+            sprintf(translated, "%s%s", filename, DSO_EXTENSION);
     } else
         sprintf(translated, "%s", filename);
     return (translated);
