@@ -68,6 +68,7 @@
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include <openssl/dso.h>
+#include "internal/dso_conf.h"
 
 #ifndef DSO_DLFCN
 DSO_METHOD *DSO_METHOD_dlfcn(void)
@@ -324,14 +325,6 @@ static char *dlfcn_merger(DSO *dso, const char *filespec1,
     return (merged);
 }
 
-# ifdef OPENSSL_SYS_MACOSX
-#  define DSO_ext ".dylib"
-#  define DSO_extlen 6
-# else
-#  define DSO_ext ".so"
-#  define DSO_extlen 3
-# endif
-
 static char *dlfcn_name_converter(DSO *dso, const char *filename)
 {
     char *translated;
@@ -342,7 +335,7 @@ static char *dlfcn_name_converter(DSO *dso, const char *filename)
     transform = (strstr(filename, "/") == NULL);
     if (transform) {
         /* We will convert this to "%s.so" or "lib%s.so" etc */
-        rsize += DSO_extlen;    /* The length of ".so" */
+        rsize += strlen(DSO_EXTENSION);    /* The length of ".so" */
         if ((DSO_flags(dso) & DSO_FLAG_NAME_TRANSLATION_EXT_ONLY) == 0)
             rsize += 3;         /* The length of "lib" */
     }
@@ -353,9 +346,9 @@ static char *dlfcn_name_converter(DSO *dso, const char *filename)
     }
     if (transform) {
         if ((DSO_flags(dso) & DSO_FLAG_NAME_TRANSLATION_EXT_ONLY) == 0)
-            sprintf(translated, "lib%s" DSO_ext, filename);
+            sprintf(translated, "lib%s" DSO_EXTENSION, filename);
         else
-            sprintf(translated, "%s" DSO_ext, filename);
+            sprintf(translated, "%s" DSO_EXTENSION, filename);
     } else
         sprintf(translated, "%s", filename);
     return (translated);
