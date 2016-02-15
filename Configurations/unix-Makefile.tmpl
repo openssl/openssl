@@ -88,6 +88,8 @@ MISC_SCRIPTS=$(SRCDIR)/tools/c_hash $(SRCDIR)/tools/c_info \
 	     $(SRCDIR)/tools/c_issuer $(SRCDIR)/tools/c_name \
 	     $(BLDDIR)/apps/CA.pl $(SRCDIR)/apps/tsget
 
+SHLIB_INFO={- join(" ", map { "\"".shlib($_).";".shlib_simple($_)."\"" } @{$unified_info{libraries}}) -}
+
 # DESTDIR is for package builders so that they can configure for, say,
 # /usr/ and yet have everything installed to /tmp/somedir/usr/.
 # Normally it is left empty.
@@ -280,25 +282,22 @@ install_dev:
 		      $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn; \
 	done
 	@ : {- output_off() if $config{no_shared}; "" -}
-	@set -e; for s in $(SHLIBS); do \
-		fn=`basename $$s`; \
-		echo "install $$s -> $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn"; \
-		cp $$s $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn.new; \
-		chmod 644 $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn.new; \
-		mv -f $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn.new \
-		      $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn; \
-		if [ "$(SHLIB_EXT)" != "$(SHLIB_EXT_SIMPLE)" ]; then \
-			echo "link $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn2 -> $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn"; \
-			fn2=`basename $$fn $(SHLIB_EXT)`$(SHLIB_EXT_SIMPLE); \
-			ln -sf $$fn $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn2; \
+	@set -e; for s in $(SHLIB_INFO); do \
+		s1=`echo "$$s" | cut -f1 -d";"`; \
+		s2=`echo "$$s" | cut -f2 -d";"`; \
+		fn1=`basename $$s1`; \
+		fn2=`basename $$s2`; \
+		echo "install $$s1 -> $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn1"; \
+		cp $$s1 $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn1.new; \
+		chmod 644 $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn1.new; \
+		mv -f $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn1.new \
+		      $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn1; \
+		: {- output_off() if windowsdll(); "" -}; \
+		if [ "$$fn1" != "$$fn2" ]; then \
+			echo "link $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn2 -> $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn1"; \
+			ln -sf $$fn1 $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn2; \
 		fi; \
-		: {- output_off() unless windowsdll(); "" -}; \
-		echo "install $$s.a -> $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn.a"; \
-		cp $$s.a $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn.a.new; \
-		chmod 644 $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn.a.new; \
-		mv -f $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn.a.new \
-		      $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn.a; \
-		: {- output_on() unless windowsdll(); "" -}; \
+		: {- output_on() if windowsdll(); "" -}; \
 	done
 	@ : {- output_on() if $config{no_shared}; "" -}
 	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig
@@ -325,20 +324,22 @@ uninstall_dev:
 		echo "$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn"; \
 		$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn; \
 	done
-	@set -e; for s in $(SHLIBS); do \
-		fn=`basename $$s`; \
-		if [ "$(SHLIB_EXT)" != "$(SHLIB_EXT_SIMPLE)" ]; then \
-			fn2=`basename $$fn $(SHLIB_EXT)`$(SHLIB_EXT_SIMPLE); \
+	@ : {- output_off() if $config{no_shared}; "" -}
+	@set -e; for s in $(SHLIB_INFO); do \
+		s1=`echo "$$s" | cut -f1 -d";"`; \
+		s2=`echo "$$s" | cut -f2 -d";"`; \
+		fn1=`basename $$s1`; \
+		fn2=`basename $$s2`; \
+		echo "$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn1"; \
+		$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn1; \
+		: {- output_off() if windowsdll(); "" -}; \
+		if [ "$$fn1" != "$$fn2" ]; then \
 			echo "$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn2"; \
 			$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn2; \
 		fi; \
-		echo "$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn"; \
-		$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn; \
-		: {- output_off() unless windowsdll(); "" -}; \
-		echo "$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn.a"; \
-		$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn.a; \
-		: {- output_on() unless windowsdll(); "" -}; \
+		: {- output_on() if windowsdll(); "" -}; \
 	done
+	@ : {- output_on() if $config{no_shared}; "" -}
 	@echo "$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig/libcrypto.pc"
 	@$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig/libcrypto.pc
 	@echo "$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig/libssl.pc"
