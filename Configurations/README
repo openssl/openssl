@@ -542,16 +542,15 @@ They are all expected to return a string with the lines they produce.
                   corresponding static library as input to make the
                   shared library, or the list of object files.
 
-    obj2dynlib  - function that produces build file lines to build a
-                  dynamically loadable library file ("libfoo.so" on
-                  Unix) from object files.
+    obj2dso     - function that produces build file lines to build a
+                  dynamic shared object file from object files.
 
                   called like this:
 
-                        obj2dynlib(lib => "PATH/TO/libfile",
-                                   objs => [ "PATH/TO/objectfile", ... ],
-                                   deps => [ "PATH/TO/otherlibfile",
-                                   ... ]);
+                        obj2dso(lib => "PATH/TO/libfile",
+                                objs => [ "PATH/TO/objectfile", ... ],
+                                deps => [ "PATH/TO/otherlibfile",
+                                ... ]);
 
                   This is almost the same as libobj2shlib, but the
                   intent is to build a shareable library that can be
