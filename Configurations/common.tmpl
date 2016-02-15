@@ -70,14 +70,14 @@
  }
 
  # doengine is responsible for building engines.  It will call
- # obj2dynlib, and also makes sure all object files for the library
+ # obj2dso, and also makes sure all object files for the library
  # are built.
  sub doengine {
      my $lib = shift;
-     $OUT .= obj2dynlib(lib => $lib,
-                        objs => [ map { (my $x = $_) =~ s|\.o$||; $x }
-                                  @{$unified_info{sources}->{$lib}} ],
-                        deps => [ resolvedepends($lib) ]);
+     $OUT .= obj2dso(lib => $lib,
+                     objs => [ map { (my $x = $_) =~ s|\.o$||; $x }
+                               @{$unified_info{sources}->{$lib}} ],
+                     deps => [ resolvedepends($lib) ]);
      map { doobj($_, $lib, intent => "lib") } @{$unified_info{sources}->{$lib}};
  }
 
