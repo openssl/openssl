@@ -144,7 +144,8 @@ typedef enum OPTION_choice {
 OPTIONS ocsp_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
     {"out", OPT_OUTFILE, '>', "Output filename"},
-    {"timeout", OPT_TIMEOUT, 'p'},
+    {"timeout", OPT_TIMEOUT, 'p',
+     "Connection timeout (in seconds) to the OCSP responder"},
     {"url", OPT_URL, 's', "Responder URL"},
     {"host", OPT_HOST, 's', "host:prot top to connect to"},
     {"port", OPT_PORT, 'p', "Port to run responder on"},

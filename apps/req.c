@@ -143,12 +143,13 @@ OPTIONS req_options[] = {
     {"config", OPT_CONFIG, '<', "Request template file"},
     {"keyout", OPT_KEYOUT, '>', "File to send the key to"},
     {"passin", OPT_PASSIN, 's', "Private key password source"},
-    {"passout", OPT_PASSOUT, 's'},
+    {"passout", OPT_PASSOUT, 's',
+     "Output file pass phrase source"},
     {"rand", OPT_RAND, 's',
      "Load the file(s) into the random number generator"},
     {"newkey", OPT_NEWKEY, 's', "Specify as type:bits"},
-    {"pkeyopt", OPT_PKEYOPT, 's'},
-    {"sigopt", OPT_SIGOPT, 's'},
+    {"pkeyopt", OPT_PKEYOPT, 's', "Public key options as opt:value"},
+    {"sigopt", OPT_SIGOPT, 's', "Signature parameter in n:v form"},
     {"batch", OPT_BATCH, '-',
      "Do not ask anything during request generation"},
     {"newhdr", OPT_NEWHDR, '-', "Output \"NEW\" in the header lines"},
@@ -156,7 +157,7 @@ OPTIONS req_options[] = {
     {"verify", OPT_VERIFY, '-', "Verify signature on REQ"},
     {"nodes", OPT_NODES, '-', "Don't encrypt the output key"},
     {"noout", OPT_NOOUT, '-', "Do not output REQ"},
-    {"verbose", OPT_VERBOSE, '-'},
+    {"verbose", OPT_VERBOSE, '-', "Verbose output"},
     {"utf8", OPT_UTF8, '-', "Input characters are UTF8 (default ASCII)"},
     {"nameopt", OPT_NAMEOPT, 's', "Various certificate name options"},
     {"reqopt", OPT_REQOPT, 's', "Various request text options"},
@@ -177,7 +178,8 @@ OPTIONS req_options[] = {
     {"", OPT_MD, '-', "Any supported digest"},
 #ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
-    {"keygen_engine", OPT_KEYGEN_ENGINE, 's'},
+    {"keygen_engine", OPT_KEYGEN_ENGINE, 's',
+     "Specify engine to be used for key generation operations"},
 #endif
     {NULL}
 };
