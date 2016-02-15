@@ -6,19 +6,19 @@ IF[{- $config{no_shared} -}]
         e_capi.c \
         e_dasync.c
 ELSE
- ENGINES=libpadlock libcapi libdasync libossltest
- SOURCE[libpadlock]=e_padlock.c {- $target{padlock_asm_src} -}
- DEPEND[libpadlock]=../libcrypto
- INCLUDE[libpadlock]={- rel2abs(catdir($builddir,"../include")) -} ../include
- SOURCE[libcapi]=e_capi.c
- DEPEND[libcapi]=../libcrypto
- INCLUDE[libcapi]={- rel2abs(catdir($builddir,"../include")) -} ../include
- SOURCE[libdasync]=e_dasync.c
- DEPEND[libdasync]=../libcrypto
- INCLUDE[libdasync]={- rel2abs(catdir($builddir,"../include")) -} ../include
- SOURCE[libossltest]=e_ossltest.c
- DEPEND[libossltest]=../libcrypto
- INCLUDE[libossltest]={- rel2abs(catdir($builddir,"../include")) -} ../include
+ ENGINES=padlock capi dasync ossltest
+ SOURCE[padlock]=e_padlock.c {- $target{padlock_asm_src} -}
+ DEPEND[padlock]=../libcrypto
+ INCLUDE[padlock]={- rel2abs(catdir($builddir,"../include")) -} ../include
+ SOURCE[capi]=e_capi.c
+ DEPEND[capi]=../libcrypto
+ INCLUDE[capi]={- rel2abs(catdir($builddir,"../include")) -} ../include
+ SOURCE[dasync]=e_dasync.c
+ DEPEND[dasync]=../libcrypto
+ INCLUDE[dasync]={- rel2abs(catdir($builddir,"../include")) -} ../include
+ SOURCE[ossltest]=e_ossltest.c
+ DEPEND[ossltest]=../libcrypto
+ INCLUDE[ossltest]={- rel2abs(catdir($builddir,"../include")) -} ../include
 ENDIF
 
 BEGINRAW[Makefile]

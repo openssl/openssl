@@ -79,33 +79,24 @@ e_padlock-x86_64.s:	asm/e_padlock-x86_64.pl
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
 
-# XXXXX This currently only works on systems that use .so as suffix
-# for shared libraries as well as for Cygwin which uses the
-# dlfcn_name_converter and therefore stores the engines with .so suffix, too.
-# XXXXX This was extended to HP-UX dl targets, which use .sl suffix.
-# XXXXX This was extended to mingw targets, which use eay32.dll suffix without lib as prefix.
 install:
 	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
 	@if [ -n "$(SHARED_LIBS)" ]; then \
 		set -e; \
 		$(PERL) $(TOP)/util/mkdir-p.pl $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/engines; \
 		for l in $(LIBNAMES); do \
-			( echo installing $$l; \
-			  pfx=lib; \
-			  if expr "$(PLATFORM)" : "Cygwin" >/dev/null; then \
-				sfx=".so"; \
-				cp cyg$$l.dll $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/engines/$$pfx$$l$$sfx.new; \
-			  else \
-				case "$(CFLAGS)" in \
-				*DSO_DLFCN*)	sfx=`expr "$(SHLIB_EXT)" : '.*\(\.[a-z][a-z]*\)' \| ".so"`;;	\
-				*DSO_DL*)	sfx=".sl";;	\
-				*DSO_WIN32*)	sfx="eay32.dll"; pfx=;;	\
-				*)		sfx=".bad";;	\
-				esac; \
-				cp $$pfx$$l$$sfx $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/engines/$$pfx$$l$$sfx.new; \
-			  fi; \
-			  chmod 555 $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/engines/$$pfx$$l$$sfx.new; \
-			  mv -f $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/engines/$$pfx$$l$$sfx.new $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/engines/$$pfx$$l$$sfx ); \
+			cp $${l}$(DSO_EXT) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/engines/$${l}$(DSO_EXT).new; \
+			chmod 555 $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/engines/$${l}$(DSO_EXT).new; \
+			mv -f $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/engines/$${l}$(DSO_EXT).new $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/engines/$${l}$(DSO_EXT); \
+		done; \
+	fi
+
+uninstall:
+	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
+	@if [ -n "$(SHARED_LIBS)" ]; then \
+		set -e; \
+		for l in $(LIBNAMES); do \
+			$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/engines/$${l}$(DSO_EXT); \
 		done; \
 	fi
 

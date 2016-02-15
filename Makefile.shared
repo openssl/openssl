@@ -163,7 +163,7 @@ LINK_SO_SHLIB_UNPACKED=	\
 DETECT_GNU_LD=($(CC) -Wl,-V /dev/null 2>&1 | grep '^GNU ld' )>/dev/null
 
 DO_GNU_SO_NOCALC=\
-	SHLIB=lib$(LIBNAME).so; \
+	SHLIB=$(LIBNAME).so; \
 	SHLIB_SUFFIX=; \
 	ALLSYMSFLAGS='-Wl,--whole-archive'; \
 	NOALLSYMSFLAGS='-Wl,--no-whole-archive'; \
@@ -194,7 +194,7 @@ link_shlib.linux-shared:
 
 link_dso.bsd:
 	@if $(DETECT_GNU_LD); then $(DO_GNU_SO_NOCALC); else \
-	SHLIB=lib$(LIBNAME).so; \
+	SHLIB=$(LIBNAME).so; \
 	SHLIB_SUFFIX=; \
 	LIBDEPS=" "; \
 	ALLSYMSFLAGS="-Wl,-Bforcearchive"; \
@@ -234,7 +234,7 @@ link_app.bsd:
 # Alternative to this heuristic approach is to develop specific
 # MacOS X dso module relying on whichever "native" dyld interface.
 link_dso.darwin:
-	@ SHLIB=lib$(LIBNAME); \
+	@ SHLIB=$(LIBNAME); \
 	SHLIB_SUFFIX=.dylib; \
 	ALLSYMSFLAGS='-all_load'; \
 	NOALLSYMSFLAGS=''; \
@@ -259,20 +259,12 @@ link_app.darwin:	# is there run-path on darwin?
 	$(LINK_APP)
 
 link_dso.cygwin:
-	INHIBIT_SYMLINKS=yes; \
-	SHLIB=cyg$(LIBNAME); \
-	base=-Wl,--enable-auto-image-base; \
-	deffile=; \
-	if expr $(PLATFORM) : 'mingw' > /dev/null; then \
-		SHLIB=$(LIBNAME)eay32; base=; \
-		if test -f $(LIBNAME)eay32.def; then \
-			deffile=$(LIBNAME)eay32.def; \
-		fi; \
-	fi; \
+	@SHLIB=$(LIBNAME); \
 	SHLIB_SUFFIX=.dll; \
 	ALLSYMSFLAGS='-Wl,--whole-archive'; \
 	NOALLSYMSFLAGS='-Wl,--no-whole-archive'; \
-	SHAREDFLAGS="$(CFLAGS) $(SHARED_LDFLAGS) -shared $$base $$deffile -Wl,-Bsymbolic"; \
+	base=-Wl,--enable-auto-image-base; \
+	SHAREDFLAGS="$(CFLAGS) $(SHARED_LDFLAGS) -shared $$base -Wl,-Bsymbolic"; \
 	$(LINK_SO_DSO)
 #for mingw target if def-file is in use dll-name should match library-name
 link_shlib.cygwin:
@@ -309,7 +301,7 @@ link_dso.alpha-osf1:
 	@ if $(DETECT_GNU_LD); then \
 		$(DO_GNU_SO_NOCALC); \
 	else \
-		SHLIB=lib$(LIBNAME).so; \
+		SHLIB=$(LIBNAME).so; \
 		SHLIB_SUFFIX=; \
 		ALLSYMSFLAGS='-all'; \
 		NOALLSYMSFLAGS='-none'; \
@@ -384,7 +376,7 @@ link_dso.svr3:
 		$(DO_GNU_SO_NOCALC); \
 	else \
 		$(CALC_VERSIONS); \
-		SHLIB=lib$(LIBNAME).so; \
+		SHLIB=$(LIBNAME).so; \
 		SHLIB_SUFFIX=; \
 		ALLSYMSFLAGS=''; \
 		NOALLSYMSFLAGS=''; \
@@ -414,7 +406,7 @@ link_dso.svr5:
 	else \
 		SHARE_FLAG='-G'; \
 		($(CC) -v 2>&1 | grep gcc) > /dev/null && SHARE_FLAG='-shared'; \
-		SHLIB=lib$(LIBNAME).so; \
+		SHLIB=$(LIBNAME).so; \
 		SHLIB_SUFFIX=; \
 		ALLSYMSFLAGS=''; \
 		NOALLSYMSFLAGS=''; \
@@ -443,7 +435,7 @@ link_dso.irix:
 	@ if $(DETECT_GNU_LD); then \
 		$(DO_GNU_SO_NOCALC); \
 	else \
-		SHLIB=lib$(LIBNAME).so; \
+		SHLIB=$(LIBNAME).so; \
 		SHLIB_SUFFIX=; \
 		MINUSWL=""; \
 		($(CC) -v 2>&1 | grep gcc) > /dev/null && MINUSWL="-Wl,"; \
@@ -480,7 +472,7 @@ link_app.irix:
 #
 link_dso.hpux:
 	@if $(DETECT_GNU_LD); then $(DO_GNU_SO_NOCALC); else \
-	SHLIB=lib$(LIBNAME).sl; \
+	SHLIB=$(LIBNAME).sl; \
 	expr "$(CFLAGS)" : '.*DSO_DLFCN' > /dev/null && SHLIB=lib$(LIBNAME).so; \
 	SHLIB_SUFFIX=; \
 	ALLSYMSFLAGS='-Wl,-Fl'; \
@@ -512,7 +504,7 @@ link_app.hpux:
 link_dso.aix:
 	@OBJECT_MODE=`expr "x$(SHARED_LDFLAGS)" : 'x\-[a-z]*\(64\)'` || :; \
 	OBJECT_MODE=$${OBJECT_MODE:-32}; export OBJECT_MODE; \
-	SHLIB=lib$(LIBNAME).so; \
+	SHLIB=$(LIBNAME).so; \
 	SHLIB_SUFFIX=; \
 	ALLSYMSFLAGS=''; \
 	NOALLSYMSFLAGS=''; \
