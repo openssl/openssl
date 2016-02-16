@@ -646,7 +646,7 @@ int ssl3_do_compress(SSL *ssl, SSL3_RECORD *wr)
 }
 
 /*-
- * ssl3_enc encrypts/decrypts the record in |s->wrec| / |s->rrec|, respectively.
+ * ssl3_enc encrypts/decrypts |numpipes| records in |inrecs|
  *
  * Returns:
  *   0: (in non-constant time) if the record is publically invalid (i.e. too
@@ -719,7 +719,7 @@ int ssl3_enc(SSL *s, SSL3_RECORD *inrecs, unsigned int numpipes, int send)
 }
 
 /*-
- * tls1_enc encrypts/decrypts the record in |s->wrec| / |s->rrec|, respectively.
+ * tls1_enc encrypts/decrypts |numpipes| in |recs|.
  *
  * Returns:
  *   0: (in non-constant time) if the record is publically invalid (i.e. too
