@@ -265,8 +265,6 @@ typedef struct record_layer_st {
     SSL3_BUFFER wbuf[SSL_MAX_PIPELINES];
     /* each decoded record goes in here */
     SSL3_RECORD rrec[SSL_MAX_PIPELINES];
-    /* goes out from here */
-    SSL3_RECORD wrec;
 
     /* used internally to point at a raw packet */
     unsigned char *packet;

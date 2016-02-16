@@ -136,7 +136,6 @@ void RECORD_LAYER_init(RECORD_LAYER *rl, SSL *s)
 {
     rl->s = s;
     SSL3_RECORD_clear(rl->rrec, SSL_MAX_PIPELINES);
-    SSL3_RECORD_clear(&rl->wrec, 1);
 }
 
 void RECORD_LAYER_clear(RECORD_LAYER *rl)
@@ -167,7 +166,6 @@ void RECORD_LAYER_clear(RECORD_LAYER *rl)
         SSL3_BUFFER_clear(&rl->wbuf[pipes]);
     rl->numwpipes = 0;
     SSL3_RECORD_clear(rl->rrec, SSL_MAX_PIPELINES);
-    SSL3_RECORD_clear(&rl->wrec, 1);
 
     RECORD_LAYER_reset_read_sequence(rl);
     RECORD_LAYER_reset_write_sequence(rl);
@@ -182,7 +180,6 @@ void RECORD_LAYER_release(RECORD_LAYER *rl)
         ssl3_release_read_buffer(rl->s);
     if (rl->numwpipes > 0)
         ssl3_release_write_buffer(rl->s);
-    /* TODO: Check why there is no release of wrec here?? */
     SSL3_RECORD_release(rl->rrec, SSL_MAX_PIPELINES);
 }
 
