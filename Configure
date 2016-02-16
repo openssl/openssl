@@ -1051,7 +1051,7 @@ if (!$no_asm) {
     $target{cpuid_asm_src}=$table{BASE}->{cpuid_asm_src} if ($config{processor} eq "386");
     $target{cpuid_asm_src}.=" uplink.c uplink-x86.s"
         if (grep { $_ eq "OPENSSL_USE_APPLINK"} @{$config{defines}}
-            || grep /(^|\s)-DOPENSSL_USE_APPLINK(\s|$)/, ${$config{cflags}});
+            || $config{cflags} =~ /(?:^|\s)-DOPENSSL_USE_APPLINK(?:\s|$)/);
 
     $target{bn_asm_src} =~ s/\w+-gf2m.c// if (defined($disabled{ec2m}));
 
@@ -1171,13 +1171,13 @@ if ($strict_warnings)
             unless $ecc eq 'gcc' || $ecc eq 'clang';
 	foreach $wopt (split /\s+/, $gcc_devteam_warn)
 		{
-		$config{cflags} .= " $wopt" unless ($config{cflags} =~ /(^|\s)$wopt(\s|$)/)
+		$config{cflags} .= " $wopt" unless ($config{cflags} =~ /(?:^|\s)$wopt(?:\s|$)/)
 		}
 	if ($ecc eq "clang")
 		{
 		foreach $wopt (split /\s+/, $clang_devteam_warn)
 			{
-			$config{cflags} .= " $wopt" unless ($config{cflags} =~ /(^|\s)$wopt(\s|$)/)
+			$config{cflags} .= " $wopt" unless ($config{cflags} =~ /(?:^|\s)$wopt(?:\s|$)/)
 			}
 		}
 	}
@@ -1186,7 +1186,7 @@ unless ($disabled{"crypto-mdebug-backtrace"})
 	{
 	foreach my $wopt (split /\s+/, $memleak_devteam_backtrace)
 		{
-		$config{cflags} .= " $wopt" unless ($config{cflags} =~ /(^|\s)$wopt(\s|$)/)
+		$config{cflags} .= " $wopt" unless ($config{cflags} =~ /(?:^|\s)$wopt(?:\s|$)/)
 		}
 	if ($target =~ /^BSD-/)
 		{
