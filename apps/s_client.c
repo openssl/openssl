@@ -745,7 +745,7 @@ OPTIONS s_client_options[] = {
     {"async", OPT_ASYNC, '-', "Support asynchronous operation"},
     {"ssl_config", OPT_SSL_CONFIG, 's'},
     {"split_send_frag", OPT_SPLIT_SEND_FRAG, 'n',
-     "Size used to split data for encrypt/decrypt pipelines"},
+     "Size used to split data for encrypt pipelines"},
     {"max_pipelines", OPT_MAX_PIPELINES, 'n',
      "Maximum number of encrypt/decrypt pipelines to be used"},
     {"read_buf", OPT_READ_BUF, 'n',
