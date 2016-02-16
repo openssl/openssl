@@ -380,12 +380,10 @@ link_o.solaris:
 		$(DO_GNU_SO); \
 	else \
 		$(CALC_VERSIONS); \
-		MINUSZ='-z '; \
-		($(CC) -v 2>&1 | grep gcc) > /dev/null && MINUSZ='-Wl,-z,'; \
 		SHLIB=lib$(LIBNAME).so; \
 		SHLIB_SUFFIX=; \
-		ALLSYMSFLAGS="$${MINUSZ}allextract"; \
-		NOALLSYMSFLAGS="$${MINUSZ}defaultextract"; \
+		ALLSYMSFLAGS="-Wl,-z,allextract"; \
+		NOALLSYMSFLAGS="-Wl,-z,defaultextract"; \
 		SHAREDFLAGS="$(CFLAGS) $(SHARED_LDFLAGS) -h $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX -Wl,-Bsymbolic"; \
 	fi; \
 	$(LINK_SO_O)
@@ -394,17 +392,15 @@ link_a.solaris:
 		$(DO_GNU_SO); \
 	else \
 		$(CALC_VERSIONS); \
-		MINUSZ='-z '; \
-		($(CC) -v 2>&1 | grep gcc) > /dev/null && MINUSZ='-Wl,-z,'; \
 		SHLIB=lib$(LIBNAME).so; \
 		SHLIB_SUFFIX=;\
 		if [ $(LIBNAME) != "crypto" -a $(LIBNAME) != "ssl" ]; then \
-			ALLSYMSFLAGS="$${MINUSZ}allextract"; \
+			ALLSYMSFLAGS="-Wl,-z,allextract"; \
 		else \
 			$(PERL) $(SRCDIR)/util/mkdef.pl $(LIBNAME) linux >$(LIBNAME).map; \
-			ALLSYMSFLAGS="$${MINUSZ}allextract,-M,$(LIBNAME).map"; \
+			ALLSYMSFLAGS="-Wl,-z,allextract,-M,$(LIBNAME).map"; \
 		fi; \
-		NOALLSYMSFLAGS="$${MINUSZ}defaultextract"; \
+		NOALLSYMSFLAGS="-Wl,-z,defaultextract"; \
 		SHAREDFLAGS="$(CFLAGS) $(SHARED_LDFLAGS) -h $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX -Wl,-Bsymbolic"; \
 	fi; \
 	$(LINK_SO_A)
