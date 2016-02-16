@@ -1102,18 +1102,20 @@ if (!$no_asm) {
     }
 }
 
-# Is the compiler gcc or clang?  $ecc is used below to see if error-checking
-# can be turned on.
 my $ecc = $target{cc};
-my $ccpcc = "$config{cross_compile_prefix}$target{cc}";
-$config{makedepprog} = 'makedepend';
-open(PIPE, "$ccpcc --version 2>&1 | head -2 |");
-while ( <PIPE> ) {
-    $config{makedepprog} = $ccpcc if /clang|gcc/;
-    $ecc = "clang" if /clang/;
-    $ecc = "gcc" if /gcc/;
+if ($^O ne "VMS") {
+    # Is the compiler gcc or clang?  $ecc is used below to see if
+    # error-checking can be turned on.
+    my $ccpcc = "$config{cross_compile_prefix}$target{cc}";
+    $config{makedepprog} = 'makedepend';
+    open(PIPE, "$ccpcc --version 2>&1 | head -2 |");
+    while ( <PIPE> ) {
+        $config{makedepprog} = $ccpcc if /clang|gcc/;
+        $ecc = "clang" if /clang/;
+        $ecc = "gcc" if /gcc/;
+    }
+    close(PIPE);
 }
-close(PIPE);
 
 $config{depflags} =~ s/^\s*//;
 
