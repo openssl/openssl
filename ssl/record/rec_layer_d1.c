@@ -1035,7 +1035,7 @@ int do_dtls1_write(SSL *s, int type, const unsigned char *buf,
     int i, mac_size, clear = 0;
     int prefix_len = 0;
     int eivlen;
-    SSL3_RECORD *wr;
+    SSL3_RECORD wr;
     SSL3_BUFFER *wb;
     SSL_SESSION *sess;
 
@@ -1061,7 +1061,6 @@ int do_dtls1_write(SSL *s, int type, const unsigned char *buf,
     if (len == 0 && !create_empty_fragment)
         return 0;
 
-    wr = &s->rlayer.wrec;
     sess = s->session;
 
     if ((sess == NULL) ||
@@ -1081,7 +1080,7 @@ int do_dtls1_write(SSL *s, int type, const unsigned char *buf,
     /* write the header */
 
     *(p++) = type & 0xff;
-    SSL3_RECORD_set_type(wr, type);
+    SSL3_RECORD_set_type(&wr, type);
     /*
      * Special case: for hello verify request, client version 1.0 and we
      * haven't decided which version to use yet send back using version 1.0
@@ -1118,47 +1117,47 @@ int do_dtls1_write(SSL *s, int type, const unsigned char *buf,
         eivlen = 0;
 
     /* lets setup the record stuff. */
-    SSL3_RECORD_set_data(wr, p + eivlen); /* make room for IV in case of CBC */
-    SSL3_RECORD_set_length(wr, (int)len);
-    SSL3_RECORD_set_input(wr, (unsigned char *)buf);
+    SSL3_RECORD_set_data(&wr, p + eivlen); /* make room for IV in case of CBC */
+    SSL3_RECORD_set_length(&wr, (int)len);
+    SSL3_RECORD_set_input(&wr, (unsigned char *)buf);
 
     /*
-     * we now 'read' from wr->input, wr->length bytes into wr->data
+     * we now 'read' from wr.input, wr.length bytes into wr.data
      */
 
     /* first we compress */
     if (s->compress != NULL) {
-        if (!ssl3_do_compress(s, wr)) {
+        if (!ssl3_do_compress(s, &wr)) {
             SSLerr(SSL_F_DO_DTLS1_WRITE, SSL_R_COMPRESSION_FAILURE);
             goto err;
         }
     } else {
-        memcpy(SSL3_RECORD_get_data(wr), SSL3_RECORD_get_input(wr),
-               SSL3_RECORD_get_length(wr));
-        SSL3_RECORD_reset_input(wr);
+        memcpy(SSL3_RECORD_get_data(&wr), SSL3_RECORD_get_input(&wr),
+               SSL3_RECORD_get_length(&wr));
+        SSL3_RECORD_reset_input(&wr);
     }
 
     /*
-     * we should still have the output to wr->data and the input from
-     * wr->input.  Length should be wr->length. wr->data still points in the
+     * we should still have the output to wr.data and the input from
+     * wr.input.  Length should be wr.length. wr.data still points in the
      * wb->buf
      */
 
     if (mac_size != 0) {
-        if (s->method->ssl3_enc->mac(s, wr,
-                &(p[SSL3_RECORD_get_length(wr) + eivlen]), 1) < 0)
+        if (s->method->ssl3_enc->mac(s, &wr,
+                &(p[SSL3_RECORD_get_length(&wr) + eivlen]), 1) < 0)
             goto err;
-        SSL3_RECORD_add_length(wr, mac_size);
+        SSL3_RECORD_add_length(&wr, mac_size);
     }
 
     /* this is true regardless of mac size */
-    SSL3_RECORD_set_data(wr, p);
-    SSL3_RECORD_reset_input(wr);
+    SSL3_RECORD_set_data(&wr, p);
+    SSL3_RECORD_reset_input(&wr);
 
     if (eivlen)
-        SSL3_RECORD_add_length(wr, eivlen);
+        SSL3_RECORD_add_length(&wr, eivlen);
 
-    if (s->method->ssl3_enc->enc(s, wr, 1, 1) < 1)
+    if (s->method->ssl3_enc->enc(s, &wr, 1, 1) < 1)
         goto err;
 
     /* record length after mac and block padding */
@@ -1178,18 +1177,18 @@ int do_dtls1_write(SSL *s, int type, const unsigned char *buf,
 
     memcpy(pseq, &(s->rlayer.write_sequence[2]), 6);
     pseq += 6;
-    s2n(SSL3_RECORD_get_length(wr), pseq);
+    s2n(SSL3_RECORD_get_length(&wr), pseq);
 
     if (s->msg_callback)
         s->msg_callback(1, 0, SSL3_RT_HEADER, pseq - DTLS1_RT_HEADER_LENGTH,
                         DTLS1_RT_HEADER_LENGTH, s, s->msg_callback_arg);
 
     /*
-     * we should now have wr->data pointing to the encrypted data, which is
+     * we should now have wr.data pointing to the encrypted data, which is
      * wr->length long
      */
-    SSL3_RECORD_set_type(wr, type); /* not needed but helps for debugging */
-    SSL3_RECORD_add_length(wr, DTLS1_RT_HEADER_LENGTH);
+    SSL3_RECORD_set_type(&wr, type); /* not needed but helps for debugging */
+    SSL3_RECORD_add_length(&wr, DTLS1_RT_HEADER_LENGTH);
 
     ssl3_record_sequence_update(&(s->rlayer.write_sequence[0]));
 
@@ -1198,11 +1197,11 @@ int do_dtls1_write(SSL *s, int type, const unsigned char *buf,
          * we are in a recursive call; just return the length, don't write
          * out anything here
          */
-        return wr->length;
+        return wr.length;
     }
 
     /* now let's set up wb */
-    SSL3_BUFFER_set_left(wb, prefix_len + SSL3_RECORD_get_length(wr));
+    SSL3_BUFFER_set_left(wb, prefix_len + SSL3_RECORD_get_length(&wr));
     SSL3_BUFFER_set_offset(wb, 0);
 
     /*
