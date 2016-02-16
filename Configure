@@ -501,6 +501,13 @@ $config{perlargv} = [ @argvcopy ];
 my %unsupported_options = ();
 foreach (@argvcopy)
 	{
+	# VMS is a case insensitive environment, and depending on settings
+	# out of our control, we may receive options uppercased.  Let's
+	# downcase at least the part before any equal sign.
+	if ($^O eq "VMS")
+		{
+		s/^([^=]*)/lc($1)/e;
+		}
 	s /^-no-/no-/; # some people just can't read the instructions
 
 	# rewrite some options in "enable-..." form

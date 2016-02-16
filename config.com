@@ -17,24 +17,24 @@ $	P_index = 0
 $	LOOP1:
 $	    P_index = P_index + 1
 $	    IF P_index .GT. 8 THEN GOTO ENDLOOP1
-$	    P1 = F$EDIT(P1,"TRIM")
-$	    IF P1 .EQS. "HELP" THEN GOTO USAGE
-$	    IF P1 .EQS. "32"
+$	    P = F$EDIT(P1,"TRIM,LOWERCASE")
+$	    IF P .EQS. "help" THEN GOTO USAGE
+$	    IF P .EQS. "32"
 $	    THEN
 $		pointer_size = "-P32"
-$		P1 = ""
+$		P = ""
 $	    ENDIF
-$	    IF P1 .EQS. "64"
+$	    IF P .EQS. "64"
 $	    THEN
 $		pointer_size = "-P64"
-$		P1 = ""
+$		P = ""
 $	    ENDIF
-$	    IF P1 .EQS. "DEBUG"
+$	    IF P .EQS. "debug"
 $	    THEN
 $		debug = "--debug"
-$		P1 = ""
+$		P = ""
 $	    ENDIF
-$	    IF P1 .NES. "" THEN -
+$	    IF P .NES. "" THEN -
 	       collected_args = collected_args + " " + P1
 $	    P1 = P2
 $	    P2 = P3
