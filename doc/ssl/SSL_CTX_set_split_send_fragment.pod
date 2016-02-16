@@ -93,7 +93,8 @@ read as much data into the read buffer as the network can provide and will fit
 into the buffer. Without this set data is read into the read buffer one record
 at a time. The more data that can be read, the more opportunity there is for
 parallelising the processing at the cost of increased memory overhead per
-connection.
+connection. Setting B<read_ahead> can impact the behaviour of the SSL_pending()
+function (see L<SSL_pending(3)>).
 
 The SSL_CTX_set_default_read_buffer_len() and SSL_set_default_read_buffer_len()
 functions control the size of the read buffer that will be used. The B<len>
@@ -121,6 +122,6 @@ functions were added in OpenSSL 1.1.0.
 
 =head1 SEE ALSO
 
-L<SSL_CTX_set_read_ahead(3)>
+L<SSL_CTX_set_read_ahead(3)>, L<SSL_pending(3)>
 
 =cut
