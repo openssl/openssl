@@ -596,7 +596,7 @@ static int rand_bytes(unsigned char *buf, int num, int pseudo)
     else {
         RANDerr(RAND_F_RAND_BYTES, RAND_R_PRNG_NOT_SEEDED);
         ERR_add_error_data(1, "You need to read the OpenSSL FAQ, "
-                           "http://www.openssl.org/support/faq.html");
+                           "https://www.openssl.org/docs/faq.html");
         return (0);
     }
  err:
