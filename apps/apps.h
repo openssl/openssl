@@ -138,17 +138,6 @@
 #  define openssl_fdset(a,b) FD_SET(a, b)
 # endif
 
-# if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L && \
-     defined(INTMAX_MAX) && defined(UINTMAX_MAX)
-int opt_imax(const char *value, intmax_t *result);
-int opt_umax(const char *value, uintmax_t *result);
-# else
-#  define opt_imax opt_long
-#  define opt_umax opt_ulong
-#  define intmax_t long
-#  define uintmax_t unsigned long
-# endif
-
 /*
  * quick macro when you need to pass an unsigned char instead of a char.
  * this is true for some implementations of the is*() functions, for
@@ -427,7 +416,7 @@ typedef struct string_int_pair_st {
 char *opt_progname(const char *argv0);
 char *opt_getprog(void);
 char *opt_init(int ac, char **av, const OPTIONS * o);
-int opt_next();
+int opt_next(void);
 int opt_format(const char *s, unsigned long flags, int *result);
 int opt_int(const char *arg, int *result);
 int opt_ulong(const char *arg, unsigned long *result);
@@ -436,6 +425,11 @@ int opt_long(const char *arg, long *result);
     defined(INTMAX_MAX) && defined(UINTMAX_MAX)
 int opt_imax(const char *arg, intmax_t *result);
 int opt_umax(const char *arg, uintmax_t *result);
+#else
+# define opt_imax opt_long
+# define opt_umax opt_ulong
+# define intmax_t long
+# define uintmax_t unsigned long
 #endif
 int opt_pair(const char *arg, const OPT_PAIR * pairs, int *result);
 int opt_cipher(const char *name, const EVP_CIPHER **cipherp);
@@ -449,7 +443,6 @@ int opt_num_rest(void);
 int opt_verify(int i, X509_VERIFY_PARAM *vpm);
 void opt_help(const OPTIONS * list);
 int opt_format_error(const char *s, unsigned long flags);
-int opt_next(void);
 
 typedef struct args_st {
     int size;
