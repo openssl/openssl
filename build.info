@@ -2,7 +2,7 @@
 LIBS=libcrypto libssl
 ORDINALS[libcrypto]=crypto
 ORDINALS[libssl]=ssl
-INCLUDE[libcrypto]={- rel2abs(catdir($builddir,"include")) -} . crypto/include include
+INCLUDE[libcrypto]={- rel2abs(catdir($builddir,"include")) -} . crypto crypto/include include
 INCLUDE[libssl]={- rel2abs(catdir($builddir,"include")) -} . include
 DEPEND[libssl]=libcrypto
 
