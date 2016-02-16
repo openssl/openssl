@@ -1,9 +1,9 @@
 /*
- * Written by Dr Stephen N Henson (steve@openssl.org)
- * and Adam Eijdenberg (eijdenberg@google.com) for the OpenSSL project 2015.
+ * Written by Rob Stradling (rob@comodo.com) and Stephen Henson
+ * (steve@openssl.org) for the OpenSSL project 2014.
  */
 /* ====================================================================
- * Copyright (c) 2015 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 2014 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -50,26 +50,59 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  * ====================================================================
  *
+ * This product includes cryptographic software written by Eric Young
+ * (eay@cryptsoft.com).  This product includes software written by Tim
+ * Hudson (tjh@cryptsoft.com).
+ *
  */
-#ifndef HEADER_CT_INT_H
-# define HEADER_CT_INT_H
 
-# ifdef __cplusplus
-extern "C" {
-# endif
+#ifdef OPENSSL_NO_CT
+# error "CT is disabled"
+#endif
 
-# ifdef OPENSSL_NO_CT
-#  error CT is disabled.
-# endif
+#include <openssl/bio.h>
+#include <openssl/ct.h>
+#include <openssl/obj_mac.h>
+#include <openssl/x509v3.h>
+#include <internal/ct_int.h>
 
-# include <openssl/ct.h>
-# include <openssl/x509v3.h>
-
-/* Handlers for Certificate Transparency X509v3/OCSP extensions */
-extern const X509V3_EXT_METHOD v3_ct_scts[];
-
-# ifdef  __cplusplus
+static char *i2s_poison(const X509V3_EXT_METHOD *method, void *val)
+{
+    return OPENSSL_strdup("NULL");
 }
-# endif
 
-#endif /* HEADER_CT_INT_H */
+static int i2r_SCT_LIST(X509V3_EXT_METHOD *method, STACK_OF(SCT) *sct_list,
+                 BIO *out, int indent)
+{
+    SCT_LIST_print(sct_list, out, indent, "\n");
+    return 1;
+}
+
+/* Handlers for X509v3/OCSP Certificate Transparency extensions */
+const X509V3_EXT_METHOD v3_ct_scts[] = {
+    /* X509v3 extension in certificates that contains SCTs */
+    { NID_ct_precert_scts, 0, NULL,
+    NULL, (X509V3_EXT_FREE)SCT_LIST_free,
+    (X509V3_EXT_D2I)d2i_SCT_LIST, (X509V3_EXT_I2D)i2d_SCT_LIST,
+    NULL, NULL,
+    NULL, NULL,
+    (X509V3_EXT_I2R)i2r_SCT_LIST, NULL,
+    NULL },
+
+    /* X509v3 extension to mark a certificate as a pre-certificate */
+    { NID_ct_precert_poison, 0, ASN1_ITEM_ref(ASN1_NULL),
+    NULL, NULL, NULL, NULL,
+    i2s_poison, NULL,
+    NULL, NULL,
+    NULL, NULL,
+    NULL },
+
+    /* OCSP extension that contains SCTs */
+    { NID_ct_cert_scts, 0, NULL,
+    0, (X509V3_EXT_FREE)SCT_LIST_free,
+    (X509V3_EXT_D2I)d2i_SCT_LIST, (X509V3_EXT_I2D)i2d_SCT_LIST,
+    NULL, NULL,
+    NULL, NULL,
+    (X509V3_EXT_I2R)i2r_SCT_LIST, NULL,
+    NULL },
+};

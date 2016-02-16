@@ -33,6 +33,16 @@ fi
 serverinfo="./serverinfo.pem"
 
 #############################################################################
+# Certificate Transparency client tests
+
+echo test Certificiate Transparency
+$ssltest -bio_pair -tls1 || exit 1
+$ssltest -bio_pair -tls1 -noct || exit 1
+$ssltest -bio_pair -tls1 -requestct || exit 1
+$ssltest -bio_pair -tls1 -requirect && exit 1
+
+
+#############################################################################
 
 echo test sslv3
 $ssltest -ssl3 $extra || exit 1

@@ -119,6 +119,9 @@
 # include <openssl/bn.h>
 #endif
 #include "ssl_locl.h"
+#ifndef OPENSSL_NO_CT
+# include <openssl/ct.h>
+#endif
 
 static int tls_decrypt_ticket(SSL *s, const unsigned char *tick, int ticklen,
                               const unsigned char *sess_id, int sesslen,
@@ -1452,6 +1455,12 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *buf,
     s2n(TLSEXT_TYPE_encrypt_then_mac, ret);
     s2n(0, ret);
 #endif
+#ifndef OPENSSL_NO_CT
+    if (s->ct_validation_callback != NULL) {
+        s2n(TLSEXT_TYPE_signed_certificate_timestamp, ret);
+        s2n(0, ret);
+    }
+#endif
     s2n(TLSEXT_TYPE_extended_master_secret, ret);
     s2n(0, ret);
 
@@ -2445,6 +2454,30 @@ static int ssl_scan_serverhello_tlsext(SSL *s, PACKET *pkt, int *al)
             /* Set flag to expect CertificateStatus message */
             s->tlsext_status_expected = 1;
         }
+#ifndef OPENSSL_NO_CT
+        /*
+         * Only take it if we asked for it - i.e if the policy is CT_POLICY_NONE
+         * then a custom extension MAY be processing it, so we need to let
+         * control continue to flow to that.
+         */
+        else if (type == TLSEXT_TYPE_signed_certificate_timestamp &&
+                 s->ct_validation_callback != NULL) {
+            /* Simply copy it off for later processing */
+            if (s->tlsext_scts != NULL) {
+                OPENSSL_free(s->tlsext_scts);
+                s->tlsext_scts = NULL;
+            }
+            s->tlsext_scts_len = size;
+            if (size > 0) {
+                s->tlsext_scts = OPENSSL_malloc(size);
+                if (s->tlsext_scts == NULL) {
+                    *al = TLS1_AD_INTERNAL_ERROR;
+                    return 0;
+                }
+                memcpy(s->tlsext_scts, data, size);
+            }
+        }
+#endif
 #ifndef OPENSSL_NO_NEXTPROTONEG
         else if (type == TLSEXT_TYPE_next_proto_neg &&
                  s->s3->tmp.finish_md_len == 0) {

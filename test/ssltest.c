@@ -187,6 +187,9 @@
 # include <openssl/srp.h>
 #endif
 #include <openssl/bn.h>
+#ifndef OPENSSL_NO_CT
+# include <openssl/ct.h>
+#endif
 
 #include "../ssl/ssl_locl.h"
 
@@ -493,8 +496,6 @@ static int verify_alpn(SSL *client, SSL *server)
     return -1;
 }
 
-#define SCT_EXT_TYPE 18
-
 /*
  * WARNING : below extension types are *NOT* IETF assigned, and could
  * conflict if these types are reassigned and handled specially by OpenSSL
@@ -529,7 +530,7 @@ static int serverinfo_cli_parse_cb(SSL *s, unsigned int ext_type,
                                    const unsigned char *in, size_t inlen,
                                    int *al, void *arg)
 {
-    if (ext_type == SCT_EXT_TYPE)
+    if (ext_type == TLSEXT_TYPE_signed_certificate_timestamp)
         serverinfo_sct_seen++;
     else if (ext_type == TACK_EXT_TYPE)
         serverinfo_tack_seen++;
@@ -838,6 +839,9 @@ static void sv_usage(void)
     fprintf(stderr, " -client_min_proto <string> - Minimum version the client should support\n");
     fprintf(stderr, " -client_max_proto <string> - Maximum version the client should support\n");
     fprintf(stderr, " -should_negotiate <string> - The version that should be negotiated, fail-client or fail-server\n");
+    fprintf(stderr, " -noct         - no certificate transparency\n");
+    fprintf(stderr, " -requestct    - request certificate transparency\n");
+    fprintf(stderr, " -requirect    - require certificate transparency\n");
 }
 
 static void print_key_details(BIO *out, EVP_PKEY *key)
@@ -1057,6 +1061,14 @@ int main(int argc, char *argv[])
 #endif
     int no_protocol;
 
+#ifndef OPENSSL_NO_CT
+    /*
+     * Disable CT validation by default, because it will interfere with
+     * anything using custom extension handlers to deal with SCT extensions.
+     */
+    ct_validation_cb ct_validation = NULL;
+#endif
+
     SSL_CONF_CTX *s_cctx = NULL, *c_cctx = NULL;
     STACK_OF(OPENSSL_STRING) *conf_args = NULL;
     char *arg = NULL, *argn = NULL;
@@ -1229,6 +1241,17 @@ int main(int argc, char *argv[])
         } else if (strcmp(*argv, "-time") == 0) {
             print_time = 1;
         }
+#ifndef OPENSSL_NO_CT
+        else if (strcmp(*argv, "-noct") == 0) {
+            ct_validation = NULL;
+        }
+        else if (strcmp(*argv, "-requestct") == 0) {
+            ct_validation = CT_verify_no_bad_scts;
+        }
+        else if (strcmp(*argv, "-requirect") == 0) {
+            ct_validation = CT_verify_at_least_one_good_sct;
+        }
+#endif
 #ifndef OPENSSL_NO_COMP
         else if (strcmp(*argv, "-zlib") == 0) {
             comp = COMP_ZLIB;
@@ -1512,6 +1535,11 @@ int main(int argc, char *argv[])
         }
     }
 
+    if (!SSL_CTX_set_ct_validation_callback(c_ctx, ct_validation, NULL)) {
+        ERR_print_errors(bio_err);
+        goto end;
+    }
+
     /* Process SSL_CONF arguments */
     SSL_CONF_CTX_set_ssl_ctx(c_cctx, c_ctx);
     SSL_CONF_CTX_set_ssl_ctx(s_cctx, s_ctx);
@@ -1682,9 +1710,10 @@ int main(int argc, char *argv[])
 #endif
 
     if (serverinfo_sct) {
-        if (!SSL_CTX_add_client_custom_ext(c_ctx, SCT_EXT_TYPE,
-                                      NULL, NULL, NULL,
-                                      serverinfo_cli_parse_cb, NULL)) {
+        if (!SSL_CTX_add_client_custom_ext(c_ctx,
+                TLSEXT_TYPE_signed_certificate_timestamp,
+                NULL, NULL, NULL,
+                serverinfo_cli_parse_cb, NULL)) {
             BIO_printf(bio_err, "Error adding SCT extension\n");
             goto end;
         }

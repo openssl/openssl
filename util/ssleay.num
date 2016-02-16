@@ -417,3 +417,11 @@ SSL_CTX_up_ref                          472	1_1_0	EXIST::FUNCTION:
 DTLSv1_listen                           473	1_1_0	EXIST::FUNCTION:
 SSL_get0_verified_chain                 474	1_1_0	EXIST::FUNCTION:
 OPENSSL_init_ssl                        475	1_1_0	EXIST::FUNCTION:
+SSL_set_ct_validation_callback          476	1_1_0	EXIST::FUNCTION:CT
+SSL_CTX_set_ct_verify_location          477	1_1_0	EXIST::FUNCTION:CT
+SSL_get_ct_validation_callback          478	1_1_0	EXIST::FUNCTION:CT
+SSL_get0_peer_scts                      479	1_1_0	EXIST::FUNCTION:CT
+SSL_CTX_set_ct_validation_callback      480	1_1_0	EXIST::FUNCTION:CT
+SSL_CTX_has_client_custom_ext           481	1_1_0	EXIST::FUNCTION:
+SSL_CTX_get_ct_validation_callback      482	1_1_0	EXIST::FUNCTION:CT
+SSL_CTX_set_ct_verify_location_to_default 483	1_1_0	EXIST::FUNCTION:CT
