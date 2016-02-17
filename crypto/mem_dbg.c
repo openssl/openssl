@@ -474,7 +474,8 @@ void CRYPTO_mem_debug_malloc(void *addr, size_t num, int before_p,
     return;
 }
 
-void CRYPTO_mem_debug_free(void *addr, int before_p)
+void CRYPTO_mem_debug_free(void *addr, int before_p,
+        const char *file, int line)
 {
     MEM m, *mp;
 

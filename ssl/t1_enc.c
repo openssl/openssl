@@ -728,8 +728,8 @@ int tls1_export_keying_material(SSL *s, unsigned char *out, size_t olen,
     SSLerr(SSL_F_TLS1_EXPORT_KEYING_MATERIAL, ERR_R_MALLOC_FAILURE);
     rv = 0;
  ret:
-    CRYPTO_clear_free(val, vallen);
-    CRYPTO_clear_free(buff, olen);
+    OPENSSL_clear_free(val, vallen);
+    OPENSSL_clear_free(buff, olen);
     return (rv);
 }
 

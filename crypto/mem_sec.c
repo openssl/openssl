@@ -120,7 +120,7 @@ void *CRYPTO_secure_zalloc(size_t num, const char *file, int line)
     return ret;
 }
 
-void CRYPTO_secure_free(void *ptr)
+void CRYPTO_secure_free(void *ptr, const char *file, int line)
 {
 #ifdef IMPLEMENTED
     size_t actual_size;
@@ -128,7 +128,7 @@ void CRYPTO_secure_free(void *ptr)
     if (ptr == NULL)
         return;
     if (!secure_mem_initialized) {
-        CRYPTO_free(ptr);
+        CRYPTO_free(ptr, file, line);
         return;
     }
     LOCK();
