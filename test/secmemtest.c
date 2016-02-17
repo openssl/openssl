@@ -20,8 +20,8 @@ int main(int argc, char **argv)
         perror("failed 1");
         return 1;
     }
-    CRYPTO_secure_free(p);
-    CRYPTO_free(q);
+    OPENSSL_secure_free(p);
+    OPENSSL_free(q);
     CRYPTO_secure_malloc_done();
 #else
     /* Should fail. */
