@@ -25,7 +25,7 @@ CYRPTO_secure_malloc_used - secure heap storage
  void *CRYPTO_secure_zalloc(int num, const char *file, int line);
 
  void OPENSSL_secure_free(void* ptr);
- void CRYPTO_secure_free(void *ptr);
+ void CRYPTO_secure_free(void *ptr, const char *, int);
 
  size_t OPENSSL_secure_actual_size(const void *ptr);
  int OPENSSL_secure_allocated(const void *ptr);
@@ -74,7 +74,8 @@ OPENSSL_secure_malloc().
 If CRYPTO_secure_malloc_init() is not called, this is equivalent to
 calling OPENSSL_free().
 It exists for consistency with OPENSSL_secure_malloc() , and
-is a macro that expands to CRYPTO_secure_free().
+is a macro that expands to CRYPTO_secure_free() and adds the C<__FILE__>
+and C<__LINE__> parameters..
 
 OPENSSL_secure_allocated() tells whether or not a pointer is within
 the secure heap.
