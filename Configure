@@ -885,9 +885,10 @@ $target{build_scheme} = [ $target{build_scheme} ]
 ###### TO BE REMOVED BEFORE FINAL RELEASE
 ######
 ###### If the user has chosen --unified, we give it to them.
+###### The same happens if we detect that they try to build out-of-source.
 if ($target{build_file} eq "Makefile"
     && $target{build_scheme}->[0] eq "unixmake"
-    && $unified) {
+    && ($unified || $srcdir ne $blddir)) {
     $target{build_scheme} = [ "unified", "unix" ];
 }
 
@@ -1704,13 +1705,6 @@ EOF
 print OUT "1;\n";
 close(OUT);
 
-die <<"EOF" if $builder ne "unified" && $srcdir ne $blddir;
-
-***** Trying building anywhere else than in the source tree will not
-***** work for target $config{target}.  To make it possible, it needs
-***** to use the "unified" build scheme.
-
-EOF
 
 print "IsMK1MF       =", ($builder eq "mk1mf" ? "yes" : "no"), "\n";
 print "CC            =$target{cc}\n";
