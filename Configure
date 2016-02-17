@@ -1175,6 +1175,19 @@ else               { $no_user_defines=1;    }
 
 # ALL MODIFICATIONS TO %config and %target MUST BE DONE FROM HERE ON
 
+$config{afalg}="";
+if ($target =~ m/^linux/) {
+    my $minver = 4*10000 + 1*100 + 0;
+    if ($config{cross_compile_prefix} eq "") {
+        my $verstr = `uname -r`;
+        my ($ma, $mi1, $mi2) = split("\\.", $verstr);
+        ($mi2) = $mi2 =~ /(\d+)/;
+        my $ver = $ma*10000 + $mi1*100 + $mi2;
+        $config{afalg}="afalg" if ($ver >= $minver);
+    }
+}
+push @{$config{engdirs}}, $config{afalg};
+
 # If we use the unified build, collect information from build.info files
 my %unified_info = ();
 

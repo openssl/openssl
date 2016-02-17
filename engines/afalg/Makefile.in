@@ -1,0 +1,89 @@
+#
+# OpenSSL/engines/afalg/Makefile
+#
+
+DIR=	afalg
+TOP=	../..
+CC=	cc
+INCLUDES= -I../../include
+CFLAG=-g
+MAKEFILE=	Makefile
+AR=		ar r
+
+CFLAGS= $(INCLUDES) $(CFLAG)
+LIB=$(TOP)/libcrypto.a
+
+LIBNAME=afalg
+LIBSRC=	e_afalg.c
+LIBOBJ=	e_afalg.o e_afalg_err.o
+
+SRC= $(LIBSRC)
+
+top:
+	(cd $(TOP); $(MAKE) DIRS=engines sub_all)
+
+all: errors lib
+
+errors:
+	$(PERL) $(TOP)/util/mkerr.pl -conf e_afalg.ec -nostatic -write $(SRC)
+
+lib: $(LIBOBJ)
+	@if [ -n "$(SHARED_LIBS)" ]; then \
+		$(MAKE) -f $(TOP)/Makefile.shared -e \
+			LIBNAME=$(LIBNAME) \
+			LIBEXTRAS='$(LIBOBJ)' \
+			LIBDEPS='-L$(TOP) -lcrypto' \
+			link_o.$(SHLIB_TARGET); \
+	else \
+		$(AR) $(LIB) $(LIBOBJ); \
+	fi
+	@touch lib
+
+install:
+	[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
+	if [ -n "$(SHARED_LIBS)" ]; then \
+		set -e; \
+		echo installing $(LIBNAME); \
+		pfx=lib; \
+		if expr "$(PLATFORM)" : "Cygwin" >/dev/null; then \
+			sfx=".so"; \
+			cp cyg$(LIBNAME).dll $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/engines/$${pfx}$(LIBNAME)$$sfx.new; \
+		else \
+			case "$(CFLAGS)" in \
+			*DSO_DLFCN*) sfx=`expr "$(SHLIB_EXT)" : '.*\(\.[a-z][a-z]*\)' \| ".so"`;; \
+			*DSO_DL*) sfx=".sl";; \
+			*DSO_WIN32*) sfx="eay32.dll"; pfx=;; \
+			*) sfx=".bad";; \
+			esac; \
+			cp $${pfx}$(LIBNAME)$$sfx $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/engines/$${pfx}$(LIBNAME)$$sfx.new; \
+		fi; \
+		chmod 555 $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/engines/$${pfx}$(LIBNAME)$$sfx.new; \
+		mv -f $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/engines/$${pfx}$(LIBNAME)$$sfx.new $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/engines/$${pfx}$(LIBNAME)$$sfx; \
+	fi
+
+depend: 
+	@[ -z "$(THIS)" ] || $(TOP)/util/domd $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(LIBSRC) $(TESTLIBSRC)
+
+files:
+	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
+
+clean:
+	rm -f *.s *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff *.so *.dll *.dylib
+
+# DO NOT DELETE THIS LINE -- make depend depends on it.
+e_afalg.o: e_afalg.c ../../include/openssl/engine.h \
+ ../../include/openssl/opensslconf.h ../../include/openssl/bn.h \
+ ../../include/openssl/e_os2.h ../../include/openssl/ossl_typ.h \
+ ../../include/openssl/crypto.h ../../include/openssl/stack.h \
+ ../../include/openssl/safestack.h ../../include/openssl/opensslv.h \
+ ../../include/openssl/symhacks.h ../../include/openssl/rsa.h \
+ ../../include/openssl/asn1.h ../../include/openssl/bio.h \
+ ../../include/openssl/dsa.h ../../include/openssl/dh.h \
+ ../../include/openssl/ec.h ../../include/openssl/rand.h \
+ ../../include/openssl/ui.h ../../include/openssl/err.h \
+ ../../include/openssl/lhash.h ../../include/openssl/x509.h \
+ ../../include/openssl/buffer.h ../../include/openssl/evp.h \
+ ../../include/openssl/objects.h ../../include/openssl/obj_mac.h \
+ ../../include/openssl/sha.h ../../include/openssl/x509_vfy.h \
+ ../../include/openssl/pkcs7.h ../../include/openssl/async.h e_afalg.h \
+ e_afalg_err.h

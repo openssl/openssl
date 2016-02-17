@@ -10,6 +10,11 @@ CFLAG=-g
 MAKEFILE=	Makefile
 AR=		ar r
 
+RECURSIVE_MAKE=	[ -z "$(ENGDIRS)" ] || for i in $(ENGDIRS) ; do \
+		    (cd $$i && echo "making $$target in $(DIR)/$$i..." && \
+		    $(MAKE) -e TOP=../.. DIR=$$i $$target ) || exit 1; \
+		done;
+
 PADLOCK_ASM_OBJ=
 
 PLIB_LDFLAG=
@@ -49,7 +54,7 @@ ALL=	$(GENERAL) $(SRC) $(HEADER)
 top:
 	(cd ..; $(MAKE) DIRS=$(DIR) all)
 
-all:	lib
+all:	lib subdirs
 
 lib:	$(LIBOBJ) $(TESTLIBOBJ)
 	@if [ "$(DYNAMIC_ENGINES)" = 1 ]; then \
@@ -71,8 +76,12 @@ e_padlock-x86.s:	asm/e_padlock-x86.pl
 e_padlock-x86_64.s:	asm/e_padlock-x86_64.pl
 	$(PERL) asm/e_padlock-x86_64.pl $(PERLASM_SCHEME) > $@
 
+subdirs:
+	@target=all; $(RECURSIVE_MAKE)
+
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
+	@target=files; $(RECURSIVE_MAKE)
 
 install:
 	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
@@ -94,6 +103,7 @@ uninstall:
 			$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/engines/$${l}$(DSO_EXT); \
 		done; \
 	fi
+	@target=install; $(RECURSIVE_MAKE)
 
 errors:
 	set -e; for l in $(LIBNAMES); do \
@@ -107,5 +117,6 @@ depend:
 
 clean:
 	rm -f *.s *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
+	@target=clean; $(RECURSIVE_MAKE)
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.

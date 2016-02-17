@@ -1,0 +1,8 @@
+{- use File::Spec::Functions qw/:DEFAULT rel2abs/; -}
+
+IF[{- $config{afalg} eq "afalg" -}] 
+ ENGINES=libafalg
+ SOURCE[libafalg]=e_afalg.c e_afalg_err.c
+ DEPEND[libafalg]=../../libcrypto
+ INCLUDE[libafalg]= {- rel2abs(catdir($builddir,"../include")) -} ../../include
+ENDIF
