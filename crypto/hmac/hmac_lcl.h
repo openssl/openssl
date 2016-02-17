@@ -73,4 +73,8 @@ struct hmac_ctx_st {
     unsigned char key[HMAC_MAX_MD_CBLOCK];
 };
 
+#ifdef __cplusplus
+} /* extern "C" */
+#endif
+
 #endif
