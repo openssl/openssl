@@ -552,7 +552,18 @@ int EC_KEY_oct2key(EC_KEY *key, const unsigned char *buf, size_t len,
         key->pub_key = EC_POINT_new(key->group);
     if (key->pub_key == NULL)
         return 0;
-    return EC_POINT_oct2point(key->group, key->pub_key, buf, len, ctx);
+    if (EC_POINT_oct2point(key->group, key->pub_key, buf, len, ctx) == 0)
+        return 0;
+    /*
+     * Save the point conversion form.
+     * For non-custom curves the first octet of the buffer (excluding
+     * the last significant bit) contains the point conversion form.
+     * EC_POINT_oct2point() has already performed sanity checking of
+     * the buffer so we know it is valid.
+     */
+    if ((key->group->meth->flags & EC_FLAGS_CUSTOM_CURVE) == 0)
+        key->conv_form = (point_conversion_form_t)(buf[0] & ~0x01);
+    return 1;
 }
 
 size_t EC_KEY_priv2oct(const EC_KEY *eckey, unsigned char *buf, size_t len)
