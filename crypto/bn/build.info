@@ -71,9 +71,9 @@ BEGINRAW[Makefile]
 # GNU assembler fails to compile PA-RISC2 modules, insist on calling
 # vendor assembler...
 {- $builddir -}/pa-risc2W.o: {- $sourcedir -}/asm/pa-risc2W.s
-	CC="$(CC)" $(PERL) $(TOP)/util/fipsas.pl $(TOP) $< /usr/ccs/bin/as -o pa-risc2W.o {- $sourcedir -}/asm/pa-risc2W.s
+	CC="$(CC)" $(PERL) $(SRCDIR)/util/fipsas.pl $(SRCDIR) $< /usr/ccs/bin/as -o pa-risc2W.o {- $sourcedir -}/asm/pa-risc2W.s
 {- $builddir -}/pa-risc2.o: {- $sourcedir -}/asm/pa-risc2.s
-	CC="$(CC)" $(PERL) $(TOP)/util/fipsas.pl $(TOP) $< /usr/ccs/bin/as -o pa-risc2.o {- $sourcedir -}/asm/pa-risc2.s
+	CC="$(CC)" $(PERL) $(SRCDIR)/util/fipsas.pl $(SRCDIR) $< /usr/ccs/bin/as -o pa-risc2.o {- $sourcedir -}/asm/pa-risc2.s
 
 {- $builddir -}/parisc-mont.s:	{- $sourcedir -}/asm/parisc-mont.pl
 	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/parisc-mont.pl $(PERLASM_SCHEME) $@
