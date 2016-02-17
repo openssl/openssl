@@ -2505,7 +2505,6 @@ void ssl_set_masks(SSL *s, const SSL_CIPHER *cipher)
 #ifndef OPENSSL_NO_EC
     int have_ecc_cert, ecdsa_ok;
     X509 *x = NULL;
-    int pk_nid = 0, md_nid = 0;
 #endif
     if (c == NULL)
         return;
@@ -2577,10 +2576,8 @@ void ssl_set_masks(SSL *s, const SSL_CIPHER *cipher)
         ecdsa_ok = ex_kusage & X509v3_KU_DIGITAL_SIGNATURE;
         if (!(pvalid[SSL_PKEY_ECC] & CERT_PKEY_SIGN))
             ecdsa_ok = 0;
-        OBJ_find_sigid_algs(X509_get_signature_nid(x), &md_nid, &pk_nid);
-        if (ecdsa_ok) {
+        if (ecdsa_ok)
             mask_a |= SSL_aECDSA;
-        }
     }
 #endif
 
