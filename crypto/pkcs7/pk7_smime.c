@@ -275,12 +275,6 @@ int PKCS7_verify(PKCS7 *p7, STACK_OF(X509) *certs, X509_STORE *store,
         return 0;
     }
 
-    /* Check for data and content: two sets of data */
-    if (!PKCS7_get_detached(p7) && indata) {
-        PKCS7err(PKCS7_F_PKCS7_VERIFY, PKCS7_R_CONTENT_AND_DATA_PRESENT);
-        return 0;
-    }
-
     sinfos = PKCS7_get_signer_info(p7);
 
     if (!sinfos || !sk_PKCS7_SIGNER_INFO_num(sinfos)) {
