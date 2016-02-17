@@ -167,8 +167,8 @@ SSL3_ENC_METHOD ssl3_undef_enc_method = {
      * evil casts, but these functions are only called if there's a library
      * bug
      */
-    (int (*)(SSL *, int))ssl_undefined_function,
-    (int (*)(SSL *, unsigned char *, int))ssl_undefined_function,
+    (int (*)(SSL *, SSL3_RECORD *, unsigned int, int))ssl_undefined_function,
+    (int (*)(SSL *, SSL3_RECORD *, unsigned char *, int))ssl_undefined_function,
     ssl_undefined_function,
     (int (*)(SSL *, unsigned char *, unsigned char *, int))
         ssl_undefined_function,
@@ -667,6 +667,12 @@ SSL *SSL_new(SSL_CTX *ctx)
     X509_VERIFY_PARAM_inherit(s->param, ctx->param);
     s->quiet_shutdown = ctx->quiet_shutdown;
     s->max_send_fragment = ctx->max_send_fragment;
+    s->split_send_fragment = ctx->split_send_fragment;
+    s->max_pipelines = ctx->max_pipelines;
+    if (s->max_pipelines > 1)
+        RECORD_LAYER_set_read_ahead(&s->rlayer, 1);
+    if (ctx->default_read_buf_len > 0)
+        SSL_set_default_read_buffer_len(s, ctx->default_read_buf_len);
 
     CRYPTO_add(&ctx->references, 1, CRYPTO_LOCK_SSL_CTX);
     s->ctx = ctx;
@@ -1289,6 +1295,22 @@ int SSL_pending(const SSL *s)
     return (s->method->ssl_pending(s));
 }
 
+int SSL_has_pending(const SSL *s)
+{
+    /*
+     * Similar to SSL_pending() but returns a 1 to indicate that we have
+     * unprocessed data available or 0 otherwise (as opposed to the number of
+     * bytes available). Unlike SSL_pending() this will take into account
+     * read_ahead data. A 1 return simply indicates that we have unprocessed
+     * data. That data may not result in any application data, or we may fail
+     * to parse the records for some reason.
+     */
+    if (SSL_pending(s))
+        return 1;
+
+    return RECORD_LAYER_read_pending(&s->rlayer);
+}
+
 X509 *SSL_get_peer_certificate(const SSL *s)
 {
     X509 *r;
@@ -1648,7 +1670,20 @@ long SSL_ctrl(SSL *s, int cmd, long larg, void *parg)
         if (larg < 512 || larg > SSL3_RT_MAX_PLAIN_LENGTH)
             return 0;
         s->max_send_fragment = larg;
+        if (s->max_send_fragment < s->split_send_fragment)
+            s->split_send_fragment = s->max_send_fragment;
         return 1;
+    case SSL_CTRL_SET_SPLIT_SEND_FRAGMENT:
+        if (larg > s->max_send_fragment || larg == 0)
+            return 0;
+        s->split_send_fragment = larg;
+        return 1;
+    case SSL_CTRL_SET_MAX_PIPELINES:
+        if (larg < 1 || larg > SSL_MAX_PIPELINES)
+            return 0;
+        s->max_pipelines = larg;
+        if (larg > 1)
+            RECORD_LAYER_set_read_ahead(&s->rlayer, 1);
     case SSL_CTRL_GET_RI_SUPPORT:
         if (s->s3)
             return s->s3->send_connection_binding;
@@ -1788,7 +1823,18 @@ long SSL_CTX_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
         if (larg < 512 || larg > SSL3_RT_MAX_PLAIN_LENGTH)
             return 0;
         ctx->max_send_fragment = larg;
+        if (ctx->max_send_fragment < ctx->split_send_fragment)
+            ctx->split_send_fragment = ctx->split_send_fragment;
         return 1;
+    case SSL_CTRL_SET_SPLIT_SEND_FRAGMENT:
+        if (larg > ctx->max_send_fragment || larg == 0)
+            return 0;
+        ctx->split_send_fragment = larg;
+        return 1;
+    case SSL_CTRL_SET_MAX_PIPELINES:
+        if (larg < 1 || larg > SSL_MAX_PIPELINES)
+            return 0;
+        ctx->max_pipelines = larg;
     case SSL_CTRL_CERT_FLAGS:
         return (ctx->cert->cert_flags |= larg);
     case SSL_CTRL_CLEAR_CERT_FLAGS:
@@ -2330,6 +2376,7 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
         ret->comp_methods = SSL_COMP_get_compression_methods();
 
     ret->max_send_fragment = SSL3_RT_MAX_PLAIN_LENGTH;
+    ret->split_send_fragment = SSL3_RT_MAX_PLAIN_LENGTH;
 
     /* Setup RFC4507 ticket keys */
     if ((RAND_bytes(ret->tlsext_tick_key_name, 16) <= 0)

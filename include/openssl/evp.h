@@ -243,6 +243,7 @@ int EVP_CIPHER_meth_set_ctrl(EVP_CIPHER *cipher,
                              int (*ctrl) (EVP_CIPHER_CTX *, int type,
                                           int arg, void *ptr));
 
+int EVP_CIPHER_meth_get_impl_ctx_size(const EVP_CIPHER *cipher);
 int (*EVP_CIPHER_meth_get_init(const EVP_CIPHER *cipher))(EVP_CIPHER_CTX *ctx,
                                                           const unsigned char *key,
                                                           const unsigned char *iv,
@@ -306,6 +307,8 @@ int (*EVP_CIPHER_meth_get_ctrl(const EVP_CIPHER *cipher))(EVP_CIPHER_CTX *,
 # define         EVP_CIPH_FLAG_CUSTOM_CIPHER     0x100000
 # define         EVP_CIPH_FLAG_AEAD_CIPHER       0x200000
 # define         EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK 0x400000
+/* Cipher can handle pipeline operations */
+# define         EVP_CIPH_FLAG_PIPELINE          0X800000
 
 /*
  * Cipher context flag to indicate we can handle wrap mode: if allowed in
@@ -371,6 +374,13 @@ int (*EVP_CIPHER_meth_get_ctrl(const EVP_CIPHER *cipher))(EVP_CIPHER_CTX *,
 # define         EVP_CTRL_KEY_MESH                       0x20
 /* EVP_CTRL_BLOCK_PADDING_MODE takes the padding mode */
 # define         EVP_CTRL_BLOCK_PADDING_MODE             0x21
+
+/* Set the output buffers to use for a pipelined operation */
+# define         EVP_CTRL_SET_PIPELINE_OUTPUT_BUFS       0x22
+/* Set the input buffers to use for a pipelined operation */
+# define         EVP_CTRL_SET_PIPELINE_INPUT_BUFS        0x23
+/* Set the input buffer lengths to use for a pipelined operation */
+# define         EVP_CTRL_SET_PIPELINE_INPUT_LENS        0x24
 
 /* Padding modes */
 #define EVP_PADDING_PKCS7       1
@@ -486,6 +496,7 @@ int EVP_CIPHER_CTX_copy(EVP_CIPHER_CTX *out, const EVP_CIPHER_CTX *in);
 void *EVP_CIPHER_CTX_get_app_data(const EVP_CIPHER_CTX *ctx);
 void EVP_CIPHER_CTX_set_app_data(EVP_CIPHER_CTX *ctx, void *data);
 void *EVP_CIPHER_CTX_cipher_data(const EVP_CIPHER_CTX *ctx);
+void *EVP_CIPHER_CTX_set_cipher_data(EVP_CIPHER_CTX *ctx, void *cipher_data);
 # define EVP_CIPHER_CTX_type(c)         EVP_CIPHER_type(EVP_CIPHER_CTX_cipher(c))
 # if OPENSSL_API_COMPAT < 0x10100000L
 #  define EVP_CIPHER_CTX_flags(c)       EVP_CIPHER_flags(EVP_CIPHER_CTX_cipher(c))

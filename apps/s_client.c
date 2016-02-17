@@ -184,6 +184,8 @@ extern int verify_quiet;
 
 static char *prog;
 static int async = 0;
+static unsigned int split_send_fragment = 0;
+static unsigned int max_pipelines = 0;
 static int c_nbio = 0;
 static int c_tlsextdebug = 0;
 static int c_status_req = 0;
@@ -650,7 +652,7 @@ typedef enum OPTION_choice {
     OPT_CHAINCAFILE, OPT_VERIFYCAFILE, OPT_NEXTPROTONEG, OPT_ALPN,
     OPT_SERVERINFO, OPT_STARTTLS, OPT_SERVERNAME,
     OPT_USE_SRTP, OPT_KEYMATEXPORT, OPT_KEYMATEXPORTLEN, OPT_SMTPHOST,
-    OPT_ASYNC,
+    OPT_ASYNC, OPT_SPLIT_SEND_FRAG, OPT_MAX_PIPELINES, OPT_READ_BUF,
     OPT_V_ENUM,
     OPT_X_ENUM,
     OPT_S_ENUM,
@@ -742,6 +744,12 @@ OPTIONS s_client_options[] = {
      "Enable ALPN extension, considering named protocols supported (comma-separated list)"},
     {"async", OPT_ASYNC, '-', "Support asynchronous operation"},
     {"ssl_config", OPT_SSL_CONFIG, 's'},
+    {"split_send_frag", OPT_SPLIT_SEND_FRAG, 'n',
+     "Size used to split data for encrypt/decrypt pipelines"},
+    {"max_pipelines", OPT_MAX_PIPELINES, 'n',
+     "Maximum number of encrypt/decrypt pipelines to be used"},
+    {"read_buf", OPT_READ_BUF, 'n',
+     "Default read buffer size to be used for connections"},
     OPT_S_OPTIONS,
     OPT_V_OPTIONS,
     OPT_X_OPTIONS,
@@ -866,6 +874,7 @@ int s_client_main(int argc, char **argv)
     int socket_family = AF_UNSPEC, socket_type = SOCK_STREAM;
     int starttls_proto = PROTO_OFF, crl_format = FORMAT_PEM, crl_download = 0;
     int write_tty, read_tty, write_ssl, read_ssl, tty_on, ssl_pending;
+    int read_buf_len = 0;
     int fallback_scsv = 0;
     long socket_mtu = 0, randamt = 0;
     OPTION_CHOICE o;
@@ -1325,6 +1334,19 @@ int s_client_main(int argc, char **argv)
         case OPT_ASYNC:
             async = 1;
             break;
+        case OPT_SPLIT_SEND_FRAG:
+            split_send_fragment = atoi(opt_arg());
+            if (split_send_fragment == 0) {
+                /* Not allowed - set to a deliberately bad value */
+                split_send_fragment = -1;
+            }
+            break;
+        case OPT_MAX_PIPELINES:
+            max_pipelines = atoi(opt_arg());
+            break;
+        case OPT_READ_BUF:
+            read_buf_len = atoi(opt_arg());
+            break;
         }
     }
     argc = opt_num_rest();
@@ -1368,6 +1390,16 @@ int s_client_main(int argc, char **argv)
     if (socket_family == AF_UNIX && socket_type != SOCK_STREAM) {
         BIO_printf(bio_err,
                    "Can't use unix sockets and datagrams together\n");
+        goto end;
+    }
+
+    if (split_send_fragment > SSL3_RT_MAX_PLAIN_LENGTH) {
+        BIO_printf(bio_err, "Bad split send fragment size\n");
+        goto end;
+    }
+
+    if (max_pipelines > SSL_MAX_PIPELINES) {
+        BIO_printf(bio_err, "Bad max pipelines value\n");
         goto end;
     }
 
@@ -1487,6 +1519,16 @@ int s_client_main(int argc, char **argv)
 
     if (async) {
         SSL_CTX_set_mode(ctx, SSL_MODE_ASYNC);
+    }
+    if (split_send_fragment > 0) {
+        SSL_CTX_set_split_send_fragment(ctx, split_send_fragment);
+    }
+    if (max_pipelines > 0) {
+        SSL_CTX_set_max_pipelines(ctx, max_pipelines);
+    }
+
+    if (read_buf_len > 0) {
+        SSL_CTX_set_default_read_buffer_len(ctx, read_buf_len);
     }
 
     if (!config_ctx(cctx, ssl_args, ctx))
@@ -2080,7 +2122,7 @@ int s_client_main(int argc, char **argv)
             }
         }
 
-        ssl_pending = read_ssl && SSL_pending(con);
+        ssl_pending = read_ssl && SSL_has_pending(con);
 
         if (!ssl_pending) {
 #if !defined(OPENSSL_SYS_WINDOWS) && !defined(OPENSSL_SYS_MSDOS) && !defined(OPENSSL_SYS_NETWARE)

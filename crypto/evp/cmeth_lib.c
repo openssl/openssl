@@ -158,6 +158,10 @@ int EVP_CIPHER_meth_set_ctrl(EVP_CIPHER *cipher,
     return 1;
 }
 
+int EVP_CIPHER_meth_get_impl_ctx_size(const EVP_CIPHER *cipher)
+{
+    return cipher->ctx_size;
+}
 
 int (*EVP_CIPHER_meth_get_init(const EVP_CIPHER *cipher))(EVP_CIPHER_CTX *ctx,
                                                           const unsigned char *key,

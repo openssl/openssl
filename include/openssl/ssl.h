@@ -177,6 +177,9 @@ extern "C" {
 # define SSL_MAX_KEY_ARG_LENGTH                  8
 # define SSL_MAX_MASTER_KEY_LENGTH               48
 
+/* The maximum number of encrypt/decrypt pipelines we can support */
+# define SSL_MAX_PIPELINES  32
+
 /* text strings for the ciphers */
 
 /* These are used to specify which ciphers to use and not to use */
@@ -1218,6 +1221,8 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 # define SSL_CTRL_GET_EXTMS_SUPPORT              122
 # define SSL_CTRL_SET_MIN_PROTO_VERSION          123
 # define SSL_CTRL_SET_MAX_PROTO_VERSION          124
+# define SSL_CTRL_SET_SPLIT_SEND_FRAGMENT        125
+# define SSL_CTRL_SET_MAX_PIPELINES              126
 # define SSL_CERT_SET_FIRST                      1
 # define SSL_CERT_SET_NEXT                       2
 # define SSL_CERT_SET_SERVER                     3
@@ -1388,6 +1393,7 @@ __owur const char *SSL_get_cipher_list(const SSL *s, int n);
 __owur char *SSL_get_shared_ciphers(const SSL *s, char *buf, int len);
 __owur int SSL_get_read_ahead(const SSL *s);
 __owur int SSL_pending(const SSL *s);
+__owur int SSL_has_pending(const SSL *s);
 # ifndef OPENSSL_NO_SOCK
 __owur int SSL_set_fd(SSL *s, int fd);
 __owur int SSL_set_rfd(SSL *s, int fd);
@@ -1772,6 +1778,17 @@ __owur int SSL_get_ex_data_X509_STORE_CTX_idx(void);
         SSL_CTX_ctrl(ctx,SSL_CTRL_SET_MAX_SEND_FRAGMENT,m,NULL)
 # define SSL_set_max_send_fragment(ssl,m) \
         SSL_ctrl(ssl,SSL_CTRL_SET_MAX_SEND_FRAGMENT,m,NULL)
+# define SSL_CTX_set_split_send_fragment(ctx,m) \
+        SSL_CTX_ctrl(ctx,SSL_CTRL_SET_SPLIT_SEND_FRAGMENT,m,NULL)
+# define SSL_set_split_send_fragment(ssl,m) \
+        SSL_ctrl(ssl,SSL_CTRL_SET_SPLIT_SEND_FRAGMENT,m,NULL)
+# define SSL_CTX_set_max_pipelines(ctx,m) \
+        SSL_CTX_ctrl(ctx,SSL_CTRL_SET_MAX_PIPELINES,m,NULL)
+# define SSL_set_max_pipelines(ssl,m) \
+        SSL_ctrl(ssl,SSL_CTRL_SET_MAX_PIPELINES,m,NULL)
+
+void SSL_CTX_set_default_read_buffer_len(SSL_CTX *ctx, size_t len);
+void SSL_set_default_read_buffer_len(SSL *s, size_t len);
 
      /* NB: the keylength is only applicable when is_export is true */
 # ifndef OPENSSL_NO_DH
@@ -2124,6 +2141,7 @@ void ERR_load_SSL_strings(void);
 # define SSL_F_TLS12_CHECK_PEER_SIGALG                    333
 # define SSL_F_TLS1_CHANGE_CIPHER_STATE                   209
 # define SSL_F_TLS1_CHECK_SERVERHELLO_TLSEXT              274
+# define SSL_F_TLS1_ENC                                   343
 # define SSL_F_TLS1_EXPORT_KEYING_MATERIAL                314
 # define SSL_F_TLS1_GET_CURVELIST                         338
 # define SSL_F_TLS1_PREPARE_CLIENTHELLO_TLSEXT            275
@@ -2342,6 +2360,7 @@ void ERR_load_SSL_strings(void);
 # define SSL_R_PEER_DID_NOT_RETURN_A_CERTIFICATE          199
 # define SSL_R_PEM_NAME_BAD_PREFIX                        391
 # define SSL_R_PEM_NAME_TOO_SHORT                         392
+# define SSL_R_PIPELINE_FAILURE                           206
 # define SSL_R_PRE_MAC_LENGTH_TOO_LONG                    205
 # define SSL_R_PROTOCOL_IS_SHUTDOWN                       207
 # define SSL_R_PSK_IDENTITY_NOT_FOUND                     223
