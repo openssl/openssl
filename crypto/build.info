@@ -22,13 +22,13 @@ crypto/buildinf.h : Makefile
 ##### APPLINK, UPLINK and CPUID assembler implementations
 
 {- $builddir -}/applink.o:	$(SRCDIR)/ms/applink.c
-	$(CC) $(CFLAGS) -c -o $@ $(TOP)/ms/applink.c
+	$(CC) $(CFLAGS) -c -o $@ $(SRCDIR)/ms/applink.c
 
 {- $builddir -}/uplink.o:	$(SRCDIR)/ms/uplink.c {- $builddir -}/applink.o
-	$(CC) $(CFLAGS) -c -o $@ $(TOP)/ms/uplink.c
+	$(CC) $(CFLAGS) -c -o $@ $(SRCDIR)/ms/uplink.c
 
 {- $builddir -}/uplink-x86.s:	$(SRCDIR)/ms/uplink-x86.pl
-	CC="$(CC)" $(PERL) $(TOP)/ms/uplink-x86.pl $(PERLASM_SCHEME) > $@
+	CC="$(CC)" $(PERL) $(SRCDIR)/ms/uplink-x86.pl $(PERLASM_SCHEME) > $@
 
 {- $builddir -}/x86cpuid.s:	{- $sourcedir -}/x86cpuid.pl {- $sourcedir -}/perlasm/x86asm.pl
 	CC="$(CC)" $(PERL) {- $sourcedir -}/x86cpuid.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) > $@
