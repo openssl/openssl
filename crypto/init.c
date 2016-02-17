@@ -270,7 +270,9 @@ static void ossl_init_base(void)
     fprintf(stderr, "OPENSSL_INIT: ossl_init_base: Setting up stop handlers\n");
 #endif
     ossl_init_setup_thread_stop();
+#ifndef OPENSSL_SYS_UEFI
     atexit(OPENSSL_cleanup);
+#endif
     OPENSSL_cpuid_setup();
     base_inited = 1;
 }
