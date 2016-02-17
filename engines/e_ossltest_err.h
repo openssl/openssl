@@ -67,7 +67,7 @@ extern "C" {
 static void ERR_load_OSSLTEST_strings(void);
 static void ERR_unload_OSSLTEST_strings(void);
 static void ERR_OSSLTEST_error(int function, int reason, char *file, int line);
-# define OSSLTESTerr(f,r) ERR_OSSLTEST_error((f),(r),__FILE__,__LINE__)
+# define OSSLTESTerr(f,r) ERR_OSSLTEST_error((f),(r),OPENSSL_FILE,OPENSSL_LINE)
 
 /* Error codes for the OSSLTEST functions. */
 
