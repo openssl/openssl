@@ -3788,6 +3788,7 @@ const SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
     }
 
     tls1_set_cert_validity(s);
+    ssl_set_masks(s);
 
     for (i = 0; i < sk_SSL_CIPHER_num(prio); i++) {
         c = sk_SSL_CIPHER_value(prio, i);
@@ -3799,7 +3800,6 @@ const SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
         if ((c->algorithm_ssl & SSL_TLSV1) && s->version == SSL3_VERSION)
             continue;
 
-        ssl_set_masks(s, c);
         mask_k = s->s3->tmp.mask_k;
         mask_a = s->s3->tmp.mask_a;
 #ifndef OPENSSL_NO_SRP

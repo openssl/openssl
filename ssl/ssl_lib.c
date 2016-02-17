@@ -2493,7 +2493,7 @@ void SSL_set_cert_cb(SSL *s, int (*cb) (SSL *ssl, void *arg), void *arg)
     ssl_cert_set_cert_cb(s->cert, cb, arg);
 }
 
-void ssl_set_masks(SSL *s, const SSL_CIPHER *cipher)
+void ssl_set_masks(SSL *s)
 {
 #if !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_GOST)
     CERT_PKEY *cpk;
@@ -2646,7 +2646,7 @@ CERT_PKEY *ssl_get_server_send_pkey(SSL *s)
     c = s->cert;
     if (!s->s3 || !s->s3->tmp.new_cipher)
         return NULL;
-    ssl_set_masks(s, s->s3->tmp.new_cipher);
+    ssl_set_masks(s);
 
     i = ssl_get_server_cert_index(s);
 
