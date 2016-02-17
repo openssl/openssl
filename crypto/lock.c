@@ -255,7 +255,7 @@ int CRYPTO_get_new_dynlockid(void)
         return (0);
     }
     pointer->references = 1;
-    pointer->data = dynlock_create_callback(__FILE__, __LINE__);
+    pointer->data = dynlock_create_callback(OPENSSL_FILE, OPENSSL_LINE);
     if (pointer->data == NULL) {
         OPENSSL_free(pointer);
         CRYPTOerr(CRYPTO_F_CRYPTO_GET_NEW_DYNLOCKID, ERR_R_MALLOC_FAILURE);
@@ -281,7 +281,7 @@ int CRYPTO_get_new_dynlockid(void)
     CRYPTO_w_unlock(CRYPTO_LOCK_DYNLOCK);
 
     if (i == -1) {
-        dynlock_destroy_callback(pointer->data, __FILE__, __LINE__);
+        dynlock_destroy_callback(pointer->data, OPENSSL_FILE, OPENSSL_LINE);
         OPENSSL_free(pointer);
     } else
         i += 1;                 /* to avoid 0 */
@@ -319,7 +319,7 @@ void CRYPTO_destroy_dynlockid(int i)
     CRYPTO_w_unlock(CRYPTO_LOCK_DYNLOCK);
 
     if (pointer) {
-        dynlock_destroy_callback(pointer->data, __FILE__, __LINE__);
+        dynlock_destroy_callback(pointer->data, OPENSSL_FILE, OPENSSL_LINE);
         OPENSSL_free(pointer);
     }
 }
