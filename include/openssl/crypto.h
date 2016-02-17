@@ -216,15 +216,15 @@ extern "C" {
 # ifndef OPENSSL_NO_LOCKING
 #  ifndef CRYPTO_w_lock
 #   define CRYPTO_w_lock(type)     \
-        CRYPTO_lock(CRYPTO_LOCK|CRYPTO_WRITE,type,__FILE__,__LINE__)
+        CRYPTO_lock(CRYPTO_LOCK|CRYPTO_WRITE,type,OPENSSL_FILE,OPENSSL_LINE)
 #   define CRYPTO_w_unlock(type)   \
-        CRYPTO_lock(CRYPTO_UNLOCK|CRYPTO_WRITE,type,__FILE__,__LINE__)
+        CRYPTO_lock(CRYPTO_UNLOCK|CRYPTO_WRITE,type,OPENSSL_FILE,OPENSSL_LINE)
 #   define CRYPTO_r_lock(type)     \
-        CRYPTO_lock(CRYPTO_LOCK|CRYPTO_READ,type,__FILE__,__LINE__)
+        CRYPTO_lock(CRYPTO_LOCK|CRYPTO_READ,type,OPENSSL_FILE,OPENSSL_LINE)
 #   define CRYPTO_r_unlock(type)   \
-        CRYPTO_lock(CRYPTO_UNLOCK|CRYPTO_READ,type,__FILE__,__LINE__)
+        CRYPTO_lock(CRYPTO_UNLOCK|CRYPTO_READ,type,OPENSSL_FILE,OPENSSL_LINE)
 #   define CRYPTO_add(addr,amount,type)    \
-        CRYPTO_add_lock(addr,amount,type,__FILE__,__LINE__)
+        CRYPTO_add_lock(addr,amount,type,OPENSSL_FILE,OPENSSL_LINE)
 #  endif
 # else
 #  define CRYPTO_w_lock(a)
@@ -465,7 +465,7 @@ void OPENSSL_cleanse(void *ptr, size_t len);
 
 # ifndef OPENSSL_NO_CRYPTO_MDEBUG
 #  define OPENSSL_mem_debug_push(info) \
-        CRYPTO_mem_debug_push(info, __FILE__, __LINE__)
+        CRYPTO_mem_debug_push(info, OPENSSL_FILE, OPENSSL_LINE)
 #  define OPENSSL_mem_debug_pop() \
         CRYPTO_mem_debug_pop()
 int CRYPTO_mem_debug_push(const char *info, const char *file, int line);
@@ -492,7 +492,7 @@ int CRYPTO_mem_leaks(struct bio_st *bio);
 
 /* die if we have to */
 void OpenSSLDie(const char *file, int line, const char *assertion);
-# define OPENSSL_assert(e)       (void)((e) ? 0 : (OpenSSLDie(__FILE__, __LINE__, #e),1))
+# define OPENSSL_assert(e)       (void)((e) ? 0 : (OpenSSLDie(OPENSSL_FILE, OPENSSL_LINE, #e),1))
 
 unsigned int *OPENSSL_ia32cap_loc(void);
 # define OPENSSL_ia32cap ((OPENSSL_ia32cap_loc())[0])
