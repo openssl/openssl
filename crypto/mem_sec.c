@@ -138,7 +138,7 @@ void CRYPTO_secure_free(void *ptr, const char *file, int line)
     sh_free(ptr);
     UNLOCK();
 #else
-    CRYPTO_free(ptr);
+    CRYPTO_free(ptr, file, line);
 #endif /* IMPLEMENTED */
 }
 
