@@ -178,9 +178,11 @@ sub start
 
     $pid = fork();
     if ($pid == 0) {
-        open(STDOUT, ">", File::Spec->devnull())
-            or die "Failed to redirect stdout: $!";
-        open(STDERR, ">&STDOUT");
+        if (!$self->debug) {
+            open(STDOUT, ">", File::Spec->devnull())
+                or die "Failed to redirect stdout: $!";
+            open(STDERR, ">&STDOUT");
+        }
         my $execcmd = $self->execute
             ." s_server -no_comp -rev -engine ossltest -accept "
             .($self->server_port)
@@ -227,9 +229,11 @@ sub clientstart
     if ($self->execute) {
         my $pid = fork();
         if ($pid == 0) {
-            open(STDOUT, ">", File::Spec->devnull())
-                or die "Failed to redirect stdout: $!";
-            open(STDERR, ">&STDOUT");
+            if (!$self->debug) {
+                open(STDOUT, ">", File::Spec->devnull())
+                    or die "Failed to redirect stdout: $!";
+                open(STDERR, ">&STDOUT");
+            }
             my $execcmd = "echo test | ".$self->execute
                  ." s_client -engine ossltest -connect "
                  .($self->proxy_addr).":".($self->proxy_port);
