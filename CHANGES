@@ -4,6 +4,23 @@
 
  Changes between 1.0.2f and 1.0.2g [xx XXX xxxx]
 
+  * Disable SSLv2 default build, default negotiation and weak ciphers.  SSLv2
+    is by default disabled at build-time.  Builds that are not configured with
+    "enable-ssl2" will not support SSLv2.  Even if "enable-ssl2" is used,
+    users who want to negotiate SSLv2 via the version-flexible SSLv23_method()
+    will need to explicitly call either of:
+
+        SSL_CTX_clear_options(ctx, SSL_OP_NO_SSLv2);
+    or
+        SSL_clear_options(ssl, SSL_OP_NO_SSLv2);
+
+    as appropriate.  Even if either of those is used, or the application
+    explicitly uses the version-specific SSLv2_method() or its client and
+    server variants, SSLv2 ciphers vulnerable to exhaustive search key
+    recovery have been removed.  Specifically, the SSLv2 40-bit EXPORT
+    ciphers, and SSLv2 56-bit DES are no longer available.
+    [Viktor Dukhovni]
+    
   *) Disable SRP fake user seed to address a server memory leak.
 
      Add a new method SRP_VBASE_get1_by_user that handles the seed properly.
