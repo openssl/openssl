@@ -15,6 +15,8 @@ PLIB_LDFLAG=
 EX_LIBS= 
 EXE_EXT= 
 
+APPS_OBJ=
+
 SHLIB_TARGET=
 
 CFLAGS= $(INCLUDES) $(CFLAG)
@@ -52,7 +54,7 @@ SRC	= \
 	s_client.c s_server.c s_time.c sess_id.c smime.c speed.c spkac.c \
 	srp.c ts.c verify.c version.c x509.c rehash.c
 
-EXE_OBJ	= openssl.o $(OBJ) $(EXTRA_OBJ) $(RAND_OBJ)
+EXE_OBJ	= openssl.o $(OBJ) $(EXTRA_OBJ) $(RAND_OBJ) $(APPS_OBJ)
 EXE_SRC = openssl.c $(SRC) $(EXTRA_SRC) $(RAND_SRC)
 
 HEADER=	apps.h progs.h s_apps.h \
