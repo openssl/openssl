@@ -120,6 +120,7 @@ ASFLAG=$(CFLAG)
 PROCESSOR= {- $config{processor} -}
 
 # CPUID module collects small commonly used assembler snippets
+APPS_OBJ={- $target{apps_obj} -}
 CPUID_OBJ= {- $target{cpuid_obj} -}
 BN_ASM= {- $target{bn_obj} -}
 EC_ASM= {- $target{ec_obj} -}
@@ -260,6 +261,7 @@ BUILDENV=	LC_ALL=C PLATFORM='$(PLATFORM)' PROCESSOR='$(PROCESSOR)'\
 		SHLIB_EXT='$(SHLIB_EXT)' SHLIB_TARGET='$(SHLIB_TARGET)'	\
 		LDFLAG='$(LDFLAG)'				\
 		PLIB_LDFLAG='$(PLIB_LDFLAG)' EX_LIBS='$(EX_LIBS)'	\
+		APPS_OBJ='$(APPS_OBJ)'				\
 		CPUID_OBJ='$(CPUID_OBJ)' BN_ASM='$(BN_ASM)'	\
 		EC_ASM='$(EC_ASM)' DES_ENC='$(DES_ENC)'		\
 		AES_ENC='$(AES_ENC)' CMLL_ENC='$(CMLL_ENC)'	\

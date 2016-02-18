@@ -1013,10 +1013,6 @@ if ($target{ranlib} eq "")
 
 if (!$no_asm) {
     $target{cpuid_asm_src}=$table{BASE}->{cpuid_asm_src} if ($config{processor} eq "386");
-    $target{cpuid_asm_src}.=" uplink.c uplink-x86.s"
-        if (grep { $_ eq "OPENSSL_USE_APPLINK"} @{$config{defines}}
-            or $config{cflags} =~ /(?:^|\s)-DOPENSSL_USE_APPLINK(?:\s|$)/);
-
     $target{bn_asm_src} =~ s/\w+-gf2m.c// if (defined($disabled{ec2m}));
 
     # bn-586 is the only one implementing bn_*_part_words
@@ -1542,9 +1538,9 @@ EOF
 
 # For the schemes that need it, we provide the old *_obj configs
 # from the *_asm_obj ones
-foreach (grep /_asm_src$/, keys %target) {
+foreach (grep /_(asm|aux)_src$/, keys %target) {
     my $src = $_;
-    (my $obj = $_) =~ s/_asm_src$/_obj/;
+    (my $obj = $_) =~ s/_(asm|aux)_src$/_obj/;
     ($target{$obj} = $target{$src}) =~ s/\.[csS]\b/.o/g;
 }
 

@@ -319,10 +319,6 @@ link_a.cygwin:
 	$(LINK_SO_A) || exit 1; \
 	rm $$extras
 link_app.cygwin:
-	@if expr "$(CFLAGS)" : '.*OPENSSL_USE_APPLINK' > /dev/null; then \
-		LIBDEPS="$(SRCDIR)/crypto/applink.o $${LIBDEPS:-$(LIBDEPS)}"; \
-		export LIBDEPS; \
-	fi; \
 	$(LINK_APP)
 
 link_o.alpha-osf1:
