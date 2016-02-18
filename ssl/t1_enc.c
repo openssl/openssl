@@ -525,7 +525,7 @@ int tls1_setup_key_block(SSL *s)
     {
         int z;
         for (z = 0; z < num; z++)
-            printf("%02X%c", p1[z], ((z + 1) % 16) ? ' ' : '\n');
+            printf("%02X%c", p[z], ((z + 1) % 16) ? ' ' : '\n');
     }
 #endif
 

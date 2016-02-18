@@ -892,7 +892,7 @@ static void ssl_cipher_apply_rule(uint32_t cipher_id, uint32_t alg_mkey,
 
 #ifdef CIPHER_DEBUG
     fprintf(stderr,
-            "Applying rule %d with %08lx/%08lx/%08lx/%08lx/%08lx %08lx (%d)\n",
+            "Applying rule %d with %08x/%08x/%08x/%08x/%08x %08x (%d)\n",
             rule, alg_mkey, alg_auth, alg_enc, alg_mac, alg_ssl,
             algo_strength, strength_bits);
 #endif
@@ -936,7 +936,7 @@ static void ssl_cipher_apply_rule(uint32_t cipher_id, uint32_t alg_mkey,
         } else {
 #ifdef CIPHER_DEBUG
             fprintf(stderr,
-                    "\nName: %s:\nAlgo = %08lx/%08lx/%08lx/%08lx/%08lx Algo_strength = %08lx\n",
+                    "\nName: %s:\nAlgo = %08x/%08x/%08x/%08x/%08x Algo_strength = %08x\n",
                     cp->name, cp->algorithm_mkey, cp->algorithm_auth,
                     cp->algorithm_enc, cp->algorithm_mac, cp->algorithm_ssl,
                     cp->algo_strength);
