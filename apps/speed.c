@@ -200,6 +200,16 @@
 #define BUFSIZE (1024*16+1)
 #define MAX_MISALIGNMENT 63
 
+#define ALGOR_NUM       30
+#define SIZE_NUM        6
+#define PRIME_NUM       3
+#define RSA_NUM         7
+#define DSA_NUM         3
+
+#define EC_NUM          17
+#define MAX_ECDH_SIZE   256
+#define MISALIGN        64
+
 static volatile int run = 0;
 
 static int mr = 0;
@@ -211,11 +221,23 @@ typedef struct loopargs_st {
     unsigned char *buf2;
     unsigned char *buf_malloc;
     unsigned char *buf2_malloc;
+    unsigned int *siglen;
+#ifndef OPENSSL_NO_RSA
+    RSA *rsa_key[RSA_NUM];
+#endif
+#ifndef OPENSSL_NO_DSA
+    DSA *dsa_key[DSA_NUM];
+#endif
+#ifndef OPENSSL_NO_EC
+    EC_KEY *ecdsa[EC_NUM];
+    EC_KEY *ecdh_a[EC_NUM];
+    EC_KEY *ecdh_b[EC_NUM];
+    unsigned char *secret_a;
+    unsigned char *secret_b;
+#endif
     EVP_CIPHER_CTX *ctx;
     HMAC_CTX *hctx;
     GCM128_CONTEXT *gcm_ctx;
-    unsigned char ecdsasig[256];
-    unsigned int siglen;
 } loopargs_t;
 
 #ifndef OPENSSL_NO_MD2
@@ -282,16 +304,6 @@ static void print_result(int alg, int run_no, int count, double time_used);
 #ifndef NO_FORK
 static int do_multi(int multi);
 #endif
-
-#define ALGOR_NUM       30
-#define SIZE_NUM        6
-#define PRIME_NUM       3
-#define RSA_NUM         7
-#define DSA_NUM         3
-
-#define EC_NUM          17
-#define MAX_ECDH_SIZE   256
-#define MISALIGN        64
 
 static const char *names[ALGOR_NUM] = {
     "md2", "mdc2", "md4", "md5", "hmac(md5)", "sha1", "rmd160", "rc4",
@@ -963,8 +975,6 @@ static int EVP_Digest_loop(void *args)
 }
 
 #ifndef OPENSSL_NO_RSA
-static unsigned rsa_num;
-static RSA *rsa_key[RSA_NUM];
 static long rsa_c[RSA_NUM][2];
 
 static int RSA_sign_loop(void *args)
@@ -972,9 +982,11 @@ static int RSA_sign_loop(void *args)
     loopargs_t *tempargs = (loopargs_t *)args;
     unsigned char *buf = tempargs->buf;
     unsigned char *buf2 = tempargs->buf2;
+    unsigned int *rsa_num = tempargs->siglen;
+    RSA **rsa_key = tempargs->rsa_key;
     int ret, count;
     for (count = 0; COND(rsa_c[testnum][0]); count++) {
-        ret = RSA_sign(NID_md5_sha1, buf, 36, buf2, &rsa_num, rsa_key[testnum]);
+        ret = RSA_sign(NID_md5_sha1, buf, 36, buf2, rsa_num, rsa_key[testnum]);
         if (ret == 0) {
             BIO_printf(bio_err, "RSA sign failure\n");
             ERR_print_errors(bio_err);
@@ -990,6 +1002,8 @@ static int RSA_verify_loop(void *args)
     loopargs_t *tempargs = (loopargs_t *)args;
     unsigned char *buf = tempargs->buf;
     unsigned char *buf2 = tempargs->buf2;
+    unsigned int rsa_num = *(tempargs->siglen);
+    RSA **rsa_key = tempargs->rsa_key;
     int ret, count;
     for (count = 0; COND(rsa_c[testnum][1]); count++) {
         ret = RSA_verify(NID_md5_sha1, buf, 36, buf2, rsa_num, rsa_key[testnum]);
@@ -1005,21 +1019,21 @@ static int RSA_verify_loop(void *args)
 #endif
 
 #ifndef OPENSSL_NO_DSA
-static DSA *dsa_key[DSA_NUM];
 static long dsa_c[DSA_NUM][2];
 static int DSA_sign_loop(void *args)
 {
     loopargs_t *tempargs = (loopargs_t *)args;
     unsigned char *buf = tempargs->buf;
     unsigned char *buf2 = tempargs->buf2;
-    unsigned int *siglen = &(tempargs->siglen);
+    DSA **dsa_key = tempargs->dsa_key;
+    unsigned int *siglen = tempargs->siglen;
     int ret, count;
     for (count = 0; COND(dsa_c[testnum][0]); count++) {
         ret = DSA_sign(0, buf, 20, buf2, siglen, dsa_key[testnum]);
         if (ret == 0) {
             BIO_printf(bio_err, "DSA sign failure\n");
             ERR_print_errors(bio_err);
-            count = 1;
+            count = -1;
             break;
         }
     }
@@ -1031,14 +1045,15 @@ static int DSA_verify_loop(void *args)
     loopargs_t *tempargs = (loopargs_t *)args;
     unsigned char *buf = tempargs->buf;
     unsigned char *buf2 = tempargs->buf2;
-    unsigned int siglen = tempargs->siglen;
+    DSA **dsa_key = tempargs->dsa_key;
+    unsigned int siglen = *(tempargs->siglen);
     int ret, count;
     for (count = 0; COND(dsa_c[testnum][1]); count++) {
         ret = DSA_verify(0, buf, 20, buf2, siglen, dsa_key[testnum]);
         if (ret <= 0) {
             BIO_printf(bio_err, "DSA verify failure\n");
             ERR_print_errors(bio_err);
-            count = 1;
+            count = -1;
             break;
         }
     }
@@ -1047,14 +1062,14 @@ static int DSA_verify_loop(void *args)
 #endif
 
 #ifndef OPENSSL_NO_EC
-static EC_KEY *ecdsa[EC_NUM];
 static long ecdsa_c[EC_NUM][2];
 static int ECDSA_sign_loop(void *args)
 {
     loopargs_t *tempargs = (loopargs_t *)args;
     unsigned char *buf = tempargs->buf;
-    unsigned char *ecdsasig = tempargs->ecdsasig;
-    unsigned int *ecdsasiglen = &(tempargs->siglen);
+    EC_KEY **ecdsa = tempargs->ecdsa;
+    unsigned char *ecdsasig = tempargs->buf2;
+    unsigned int *ecdsasiglen = tempargs->siglen;
     int ret, count;
     for (count = 0; COND(ecdsa_c[testnum][0]); count++) {
         ret = ECDSA_sign(0, buf, 20,
@@ -1062,7 +1077,7 @@ static int ECDSA_sign_loop(void *args)
         if (ret == 0) {
             BIO_printf(bio_err, "ECDSA sign failure\n");
             ERR_print_errors(bio_err);
-            count = 1;
+            count = -1;
             break;
         }
     }
@@ -1073,8 +1088,9 @@ static int ECDSA_verify_loop(void *args)
 {
     loopargs_t *tempargs = (loopargs_t *)args;
     unsigned char *buf = tempargs->buf;
-    unsigned char *ecdsasig = tempargs->ecdsasig;
-    unsigned int ecdsasiglen = tempargs->siglen;
+    EC_KEY **ecdsa = tempargs->ecdsa;
+    unsigned char *ecdsasig = tempargs->buf2;
+    unsigned int ecdsasiglen = *(tempargs->siglen);
     int ret, count;
     for (count = 0; COND(ecdsa_c[testnum][1]); count++) {
         ret = ECDSA_verify(0, buf, 20, ecdsasig, ecdsasiglen,
@@ -1082,21 +1098,23 @@ static int ECDSA_verify_loop(void *args)
         if (ret != 1) {
             BIO_printf(bio_err, "ECDSA verify failure\n");
             ERR_print_errors(bio_err);
-            count = 1;
+            count = -1;
             break;
         }
     }
     return count;
 }
 
-static unsigned char secret_a[MAX_ECDH_SIZE], secret_b[MAX_ECDH_SIZE];
-static EC_KEY *ecdh_a[EC_NUM], *ecdh_b[EC_NUM];
 static int outlen;
 static void *(*kdf) (const void *in, size_t inlen, void *out,
         size_t *xoutlen);
 
 static int ECDH_compute_key_loop(void *args)
 {
+    loopargs_t *tempargs = (loopargs_t *)args;
+    EC_KEY **ecdh_a = tempargs->ecdh_a;
+    EC_KEY **ecdh_b = tempargs->ecdh_b;
+    unsigned char *secret_a = tempargs->secret_a;
     int count;
     for (count = 0; COND(ecdh_c[testnum][0]); count++) {
         ECDH_compute_key(secret_a, outlen,
@@ -1118,7 +1136,7 @@ static int run_benchmark(int async_jobs, int (*loop_function)(void *), loopargs_
 
     run = 1;
 
-    if (0 == async_jobs) {
+    if (async_jobs == 0) {
         return loop_function((void *)loopargs);
     }
 
@@ -1243,7 +1261,7 @@ int speed_main(int argc, char **argv)
     int async_jobs = 0;
     /* What follows are the buffers and key material. */
 #if !defined(OPENSSL_NO_RSA) || !defined(OPENSSL_NO_DSA)
-    long rsa_count;
+    long rsa_count = 1;
 #endif
 #ifndef OPENSSL_NO_RC5
     RC5_32_KEY rc5_ks;
@@ -1364,27 +1382,13 @@ int speed_main(int argc, char **argv)
 #ifndef OPENSSL_NO_EC
     int ecdsa_doit[EC_NUM];
     int secret_size_a, secret_size_b;
-    int ecdh_checks = 0;
+    int ecdh_checks = 1;
     int secret_idx = 0;
     long ecdh_c[EC_NUM][2];
     int ecdh_doit[EC_NUM];
 #endif
 
     memset(results, 0, sizeof(results));
-#ifndef OPENSSL_NO_DSA
-    memset(dsa_key, 0, sizeof(dsa_key));
-#endif
-#ifndef OPENSSL_NO_EC
-    for (i = 0; i < EC_NUM; i++)
-        ecdsa[i] = NULL;
-    for (i = 0; i < EC_NUM; i++)
-        ecdh_a[i] = ecdh_b[i] = NULL;
-#endif
-#ifndef OPENSSL_NO_RSA
-    memset(rsa_key, 0, sizeof(rsa_key));
-    for (i = 0; i < RSA_NUM; i++)
-        rsa_key[i] = NULL;
-#endif
 
     memset(c, 0, sizeof(c));
     memset(DES_iv, 0, sizeof(DES_iv));
@@ -1569,12 +1573,29 @@ int speed_main(int argc, char **argv)
     loopargs = app_malloc(loopargs_len * sizeof(loopargs_t), "array of loopargs");
     memset(loopargs, 0, loopargs_len * sizeof(loopargs_t));
 
-    for (i = 0; i < loopargs_len; ++i) {
+    for (i = 0; i < loopargs_len; i++) {
         loopargs[i].buf_malloc = app_malloc((int)BUFSIZE + MAX_MISALIGNMENT + 1, "input buffer");
         loopargs[i].buf2_malloc = app_malloc((int)BUFSIZE + MAX_MISALIGNMENT + 1, "input buffer");
         /* Align the start of buffers on a 64 byte boundary */
         loopargs[i].buf = loopargs[i].buf_malloc + misalign;
         loopargs[i].buf2 = loopargs[i].buf2_malloc + misalign;
+        loopargs[i].siglen = app_malloc(sizeof(unsigned int), "signature length");
+#ifndef OPENSSL_NO_DSA
+        memset(loopargs[i].dsa_key, 0, sizeof(loopargs[i].dsa_key));
+#endif
+#ifndef OPENSSL_NO_RSA
+        memset(loopargs[i].rsa_key, 0, sizeof(loopargs[i].rsa_key));
+        for (k = 0; k < RSA_NUM; k++)
+            loopargs[i].rsa_key[k] = NULL;
+#endif
+#ifndef OPENSSL_NO_EC
+        for (k = 0; k < EC_NUM; k++)
+            loopargs[i].ecdsa[k] = NULL;
+        for (k = 0; k < EC_NUM; k++)
+            loopargs[i].ecdh_a[k] = loopargs[i].ecdh_b[k] = NULL;
+        loopargs[i].secret_a = app_malloc(MAX_ECDH_SIZE, "ECDH secret a");
+        loopargs[i].secret_b = app_malloc(MAX_ECDH_SIZE, "ECDH secret b");
+#endif
     }
 
 #ifndef NO_FORK
@@ -1611,25 +1632,27 @@ int speed_main(int argc, char **argv)
                    "instead of user CPU time.\n");
 
 #ifndef OPENSSL_NO_RSA
-    for (i = 0; i < RSA_NUM; i++) {
-        const unsigned char *p;
+    for (i = 0; i < loopargs_len; i++) {
+        for (k = 0; k < RSA_NUM; k++) {
+            const unsigned char *p;
 
-        p = rsa_data[i];
-        rsa_key[i] = d2i_RSAPrivateKey(NULL, &p, rsa_data_length[i]);
-        if (rsa_key[i] == NULL) {
-            BIO_printf(bio_err, "internal error loading RSA key number %d\n",
-                       i);
-            goto end;
+            p = rsa_data[k];
+            loopargs[i].rsa_key[k] = d2i_RSAPrivateKey(NULL, &p, rsa_data_length[k]);
+            if (loopargs[i].rsa_key[k] == NULL) {
+                BIO_printf(bio_err, "internal error loading RSA key number %d\n",
+                        k);
+                goto end;
+            }
         }
     }
 #endif
-
 #ifndef OPENSSL_NO_DSA
-    dsa_key[0] = get_dsa512();
-    dsa_key[1] = get_dsa1024();
-    dsa_key[2] = get_dsa2048();
+    for (i = 0; i < loopargs_len; i++) {
+        loopargs[i].dsa_key[0] = get_dsa512();
+        loopargs[i].dsa_key[1] = get_dsa1024();
+        loopargs[i].dsa_key[2] = get_dsa2048();
+    }
 #endif
-
 #ifndef OPENSSL_NO_DES
     DES_set_key_unchecked(&key, &sch);
     DES_set_key_unchecked(&key2, &sch2);
@@ -1934,7 +1957,7 @@ int speed_main(int argc, char **argv)
 
 #ifndef OPENSSL_NO_MD5
     if (doit[D_HMAC]) {
-        for (i = 0; i < loopargs_len; ++i) {
+        for (i = 0; i < loopargs_len; i++) {
             loopargs[i].hctx = HMAC_CTX_new();
             if (loopargs[i].hctx == NULL) {
                 BIO_printf(bio_err, "HMAC malloc failure, exiting...");
@@ -1951,7 +1974,7 @@ int speed_main(int argc, char **argv)
             d = Time_F(STOP);
             print_result(D_HMAC, testnum, count, d);
         }
-        for (i = 0; i < loopargs_len; ++i) {
+        for (i = 0; i < loopargs_len; i++) {
             HMAC_CTX_free(loopargs[i].hctx);
         }
     }
@@ -2102,7 +2125,7 @@ int speed_main(int argc, char **argv)
         }
     }
     if (doit[D_GHASH]) {
-        for (i = 0; i < loopargs_len; ++i) {
+        for (i = 0; i < loopargs_len; i++) {
             loopargs[i].gcm_ctx = CRYPTO_gcm128_new(&aes_ks1, (block128_f) AES_encrypt);
             CRYPTO_gcm128_setiv(loopargs[i].gcm_ctx, (unsigned char *)"0123456789ab", 12);
         }
@@ -2114,7 +2137,7 @@ int speed_main(int argc, char **argv)
             d = Time_F(STOP);
             print_result(D_GHASH, testnum, count, d);
         }
-        for (i = 0; i < loopargs_len; ++i)
+        for (i = 0; i < loopargs_len; i++)
             CRYPTO_gcm128_release(loopargs[i].gcm_ctx);
     }
 #endif
@@ -2335,7 +2358,7 @@ int speed_main(int argc, char **argv)
         }
     }
 
-    for (i = 0; i < loopargs_len; ++i)
+    for (i = 0; i < loopargs_len; i++)
         RAND_bytes(loopargs[i].buf, 36);
 
 #ifndef OPENSSL_NO_RSA
@@ -2343,8 +2366,9 @@ int speed_main(int argc, char **argv)
         int st = 0;
         if (!rsa_doit[testnum])
             continue;
-        for (i = 0; i < loopargs_len; ++i) {
-            st = RSA_sign(NID_md5_sha1, loopargs[i].buf, 36, loopargs[i].buf2, &rsa_num, rsa_key[testnum]);
+        for (i = 0; i < loopargs_len; i++) {
+            st = RSA_sign(NID_md5_sha1, loopargs[i].buf, 36, loopargs[i].buf2,
+                          loopargs[i].siglen, loopargs[i].rsa_key[testnum]);
             if (st == 0)
                 break;
         }
@@ -2368,8 +2392,9 @@ int speed_main(int argc, char **argv)
             rsa_count = count;
         }
 
-        for (i = 0; i < loopargs_len; ++i) {
-            st = RSA_verify(NID_md5_sha1, loopargs[i].buf, 36, loopargs[i].buf2, rsa_num, rsa_key[testnum]);
+        for (i = 0; i < loopargs_len; i++) {
+            st = RSA_verify(NID_md5_sha1, loopargs[i].buf, 36, loopargs[i].buf2,
+                            *(loopargs[i].siglen), loopargs[i].rsa_key[testnum]);
             if (st <= 0)
                 break;
         }
@@ -2399,7 +2424,7 @@ int speed_main(int argc, char **argv)
     }
 #endif
 
-    for (i = 0; i < loopargs_len; ++i)
+    for (i = 0; i < loopargs_len; i++)
         RAND_bytes(loopargs[i].buf, 36);
 
 #ifndef OPENSSL_NO_DSA
@@ -2414,8 +2439,9 @@ int speed_main(int argc, char **argv)
 
         /* DSA_generate_key(dsa_key[testnum]); */
         /* DSA_sign_setup(dsa_key[testnum],NULL); */
-        for (i = 0; i < loopargs_len; ++i) {
-            st = DSA_sign(0, loopargs[i].buf, 20, loopargs[i].buf2, &(loopargs[i].siglen), dsa_key[testnum]);
+        for (i = 0; i < loopargs_len; i++) {
+            st = DSA_sign(0, loopargs[i].buf, 20, loopargs[i].buf2,
+                          loopargs[i].siglen, loopargs[i].dsa_key[testnum]);
             if (st == 0)
                 break;
         }
@@ -2438,8 +2464,9 @@ int speed_main(int argc, char **argv)
             rsa_count = count;
         }
 
-        for (i = 0; i < loopargs_len; ++i) {
-            st = DSA_verify(0, loopargs[i].buf, 20, loopargs[i].buf2, loopargs[i].siglen, dsa_key[testnum]);
+        for (i = 0; i < loopargs_len; i++) {
+            st = DSA_verify(0, loopargs[i].buf, 20, loopargs[i].buf2,
+                            *(loopargs[i].siglen), loopargs[i].dsa_key[testnum]);
             if (st <= 0)
                 break;
         }
@@ -2477,21 +2504,28 @@ int speed_main(int argc, char **argv)
         rnd_fake = 1;
     }
     for (testnum = 0; testnum < EC_NUM; testnum++) {
-        int st = 0;
+        int st = 1;
 
         if (!ecdsa_doit[testnum])
             continue;           /* Ignore Curve */
-        ecdsa[testnum] = EC_KEY_new_by_curve_name(test_curves[testnum]);
-        if (ecdsa[testnum] == NULL) {
+        for (i = 0; i < loopargs_len; i++) {
+            loopargs[i].ecdsa[testnum] = EC_KEY_new_by_curve_name(test_curves[testnum]);
+            if (loopargs[i].ecdsa[testnum] == NULL) {
+                st = 0;
+                break;
+            }
+        }
+        if (st == 0) {
             BIO_printf(bio_err, "ECDSA failure.\n");
             ERR_print_errors(bio_err);
             rsa_count = 1;
         } else {
-            EC_KEY_precompute_mult(ecdsa[testnum], NULL);
-            /* Perform ECDSA signature test */
-            EC_KEY_generate_key(ecdsa[testnum]);
-            for (i = 0; i < loopargs_len; ++i) {
-                st = ECDSA_sign(0, loopargs[i].buf, 20, loopargs[i].ecdsasig, &(loopargs[i].siglen), ecdsa[testnum]);
+            for (i = 0; i < loopargs_len; i++) {
+                EC_KEY_precompute_mult(loopargs[i].ecdsa[testnum], NULL);
+                /* Perform ECDSA signature test */
+                EC_KEY_generate_key(loopargs[i].ecdsa[testnum]);
+                st = ECDSA_sign(0, loopargs[i].buf, 20, loopargs[i].buf2,
+                                loopargs[i].siglen, loopargs[i].ecdsa[testnum]);
                 if (st == 0)
                     break;
             }
@@ -2517,8 +2551,9 @@ int speed_main(int argc, char **argv)
             }
 
             /* Perform ECDSA verification test */
-            for (i = 0; i < loopargs_len; ++i) {
-                st = ECDSA_verify(0, loopargs[i].buf, 20, loopargs[i].ecdsasig, loopargs[i].siglen, ecdsa[testnum]);
+            for (i = 0; i < loopargs_len; i++) {
+                st = ECDSA_verify(0, loopargs[i].buf, 20, loopargs[i].buf2,
+                                  *(loopargs[i].siglen), loopargs[i].ecdsa[testnum]);
                 if (st != 1)
                     break;
             }
@@ -2560,72 +2595,84 @@ int speed_main(int argc, char **argv)
     for (testnum = 0; testnum < EC_NUM; testnum++) {
         if (!ecdh_doit[testnum])
             continue;
-        ecdh_a[testnum] = EC_KEY_new_by_curve_name(test_curves[testnum]);
-        ecdh_b[testnum] = EC_KEY_new_by_curve_name(test_curves[testnum]);
-        if ((ecdh_a[testnum] == NULL) || (ecdh_b[testnum] == NULL)) {
+        for (i = 0; i < loopargs_len; i++) {
+            loopargs[i].ecdh_a[testnum] = EC_KEY_new_by_curve_name(test_curves[testnum]);
+            loopargs[i].ecdh_b[testnum] = EC_KEY_new_by_curve_name(test_curves[testnum]);
+            if (loopargs[i].ecdh_a[testnum] == NULL ||
+                loopargs[i].ecdh_b[testnum] == NULL) {
+                ecdh_checks = 0;
+                break;
+            }
+        }
+        if (ecdh_checks == 0) {
             BIO_printf(bio_err, "ECDH failure.\n");
             ERR_print_errors(bio_err);
             rsa_count = 1;
         } else {
-            /* generate two ECDH key pairs */
-            if (!EC_KEY_generate_key(ecdh_a[testnum]) ||
-                !EC_KEY_generate_key(ecdh_b[testnum])) {
-                BIO_printf(bio_err, "ECDH key generation failure.\n");
-                ERR_print_errors(bio_err);
-                rsa_count = 1;
-            } else {
-                /*
-                 * If field size is not more than 24 octets, then use SHA-1
-                 * hash of result; otherwise, use result (see section 4.8 of
-                 * draft-ietf-tls-ecc-03.txt).
-                 */
-                int field_size;
-                field_size =
-                    EC_GROUP_get_degree(EC_KEY_get0_group(ecdh_a[testnum]));
-                if (field_size <= 24 * 8) {
-                    outlen = KDF1_SHA1_len;
-                    kdf = KDF1_SHA1;
-                } else {
-                    outlen = (field_size + 7) / 8;
-                    kdf = NULL;
-                }
-                secret_size_a =
-                    ECDH_compute_key(secret_a, outlen,
-                                     EC_KEY_get0_public_key(ecdh_b[testnum]),
-                                     ecdh_a[testnum], kdf);
-                secret_size_b =
-                    ECDH_compute_key(secret_b, outlen,
-                                     EC_KEY_get0_public_key(ecdh_a[testnum]),
-                                     ecdh_b[testnum], kdf);
-                if (secret_size_a != secret_size_b)
-                    ecdh_checks = 0;
-                else
-                    ecdh_checks = 1;
-
-                for (secret_idx = 0; (secret_idx < secret_size_a)
-                     && (ecdh_checks == 1); secret_idx++) {
-                    if (secret_a[secret_idx] != secret_b[secret_idx])
-                        ecdh_checks = 0;
-                }
-
-                if (ecdh_checks == 0) {
-                    BIO_printf(bio_err, "ECDH computations don't match.\n");
+            for (i = 0; i < loopargs_len; i++) {
+                /* generate two ECDH key pairs */
+                if (!EC_KEY_generate_key(loopargs[i].ecdh_a[testnum]) ||
+                        !EC_KEY_generate_key(loopargs[i].ecdh_b[testnum])) {
+                    BIO_printf(bio_err, "ECDH key generation failure.\n");
                     ERR_print_errors(bio_err);
+                    ecdh_checks = 0;
                     rsa_count = 1;
-                }
+                } else {
+                    /*
+                     * If field size is not more than 24 octets, then use SHA-1
+                     * hash of result; otherwise, use result (see section 4.8 of
+                     * draft-ietf-tls-ecc-03.txt).
+                     */
+                    int field_size;
+                    field_size =
+                        EC_GROUP_get_degree(EC_KEY_get0_group(loopargs[i].ecdh_a[testnum]));
+                    if (field_size <= 24 * 8) {
+                        outlen = KDF1_SHA1_len;
+                        kdf = KDF1_SHA1;
+                    } else {
+                        outlen = (field_size + 7) / 8;
+                        kdf = NULL;
+                    }
+                    secret_size_a =
+                        ECDH_compute_key(loopargs[i].secret_a, outlen,
+                                EC_KEY_get0_public_key(loopargs[i].ecdh_b[testnum]),
+                                loopargs[i].ecdh_a[testnum], kdf);
+                    secret_size_b =
+                        ECDH_compute_key(loopargs[i].secret_b, outlen,
+                                EC_KEY_get0_public_key(loopargs[i].ecdh_a[testnum]),
+                                loopargs[i].ecdh_b[testnum], kdf);
+                    if (secret_size_a != secret_size_b)
+                        ecdh_checks = 0;
+                    else
+                        ecdh_checks = 1;
 
-                pkey_print_message("", "ecdh",
-                                   ecdh_c[testnum][0],
-                                   test_curves_bits[testnum], ECDH_SECONDS);
-                Time_F(START);
-                count = run_benchmark(async_jobs, ECDH_compute_key_loop, loopargs);
-                d = Time_F(STOP);
-                BIO_printf(bio_err,
-                           mr ? "+R7:%ld:%d:%.2f\n" :
-                           "%ld %d-bit ECDH ops in %.2fs\n", count,
-                           test_curves_bits[testnum], d);
-                ecdh_results[testnum][0] = d / (double)count;
-                rsa_count = count;
+                    for (secret_idx = 0; (secret_idx < secret_size_a)
+                            && (ecdh_checks == 1); secret_idx++) {
+                        if (loopargs[i].secret_a[secret_idx] != loopargs[i].secret_b[secret_idx])
+                            ecdh_checks = 0;
+                    }
+
+                    if (ecdh_checks == 0) {
+                        BIO_printf(bio_err, "ECDH computations don't match.\n");
+                        ERR_print_errors(bio_err);
+                        rsa_count = 1;
+                        break;
+                    }
+                }
+                if (ecdh_checks != 0) {
+                    pkey_print_message("", "ecdh",
+                            ecdh_c[testnum][0],
+                            test_curves_bits[testnum], ECDH_SECONDS);
+                    Time_F(START);
+                    count = run_benchmark(async_jobs, ECDH_compute_key_loop, loopargs);
+                    d = Time_F(STOP);
+                    BIO_printf(bio_err,
+                            mr ? "+R7:%ld:%d:%.2f\n" :
+                            "%ld %d-bit ECDH ops in %.2fs\n", count,
+                            test_curves_bits[testnum], d);
+                    ecdh_results[testnum][0] = d / (double)count;
+                    rsa_count = count;
+                }
             }
         }
 
@@ -2780,28 +2827,40 @@ int speed_main(int argc, char **argv)
 
  end:
     ERR_print_errors(bio_err);
-    for (i = 0; i < loopargs_len; ++i) {
+    for (i = 0; i < loopargs_len; i++) {
         if (loopargs[i].buf_malloc != NULL)
             OPENSSL_free(loopargs[i].buf_malloc);
         if (loopargs[i].buf2_malloc != NULL)
             OPENSSL_free(loopargs[i].buf2_malloc);
+        if (loopargs[i].siglen != NULL)
+            OPENSSL_free(loopargs[i].siglen);
     }
     if (loopargs != NULL)
         OPENSSL_free(loopargs);
 #ifndef OPENSSL_NO_RSA
-    for (i = 0; i < RSA_NUM; i++)
-        RSA_free(rsa_key[i]);
+    for (i = 0; i < loopargs_len; i++) {
+        for (k = 0; k < RSA_NUM; k++)
+            RSA_free(loopargs[i].rsa_key[k]);
+    }
 #endif
 #ifndef OPENSSL_NO_DSA
-    for (i = 0; i < DSA_NUM; i++)
-        DSA_free(dsa_key[i]);
+    for (i = 0; i < loopargs_len; i++) {
+        for (k = 0; k < DSA_NUM; k++)
+            DSA_free(loopargs[i].dsa_key[k]);
+    }
 #endif
 
 #ifndef OPENSSL_NO_EC
-    for (i = 0; i < EC_NUM; i++) {
-        EC_KEY_free(ecdsa[i]);
-        EC_KEY_free(ecdh_a[i]);
-        EC_KEY_free(ecdh_b[i]);
+    for (i = 0; i < loopargs_len; i++) {
+        for (k = 0; k < EC_NUM; k++) {
+            EC_KEY_free(loopargs[i].ecdsa[k]);
+            EC_KEY_free(loopargs[i].ecdh_a[k]);
+            EC_KEY_free(loopargs[i].ecdh_b[k]);
+        }
+	if (loopargs[i].secret_a)
+		OPENSSL_free(loopargs[i].secret_a);
+	if (loopargs[i].secret_b)
+		OPENSSL_free(loopargs[i].secret_b);
     }
 #endif
     if (async_jobs > 0)
