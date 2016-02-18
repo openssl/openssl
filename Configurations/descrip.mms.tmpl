@@ -105,6 +105,10 @@ ENGINES={- join(", ", map { "-\n\t".$_.".EXE" } @{$unified_info{engines}}) -}
 PROGRAMS={- join(", ", map { "-\n\t".$_.".EXE" } grep { !m|^\[\.test\]| } @{$unified_info{programs}}) -}
 TESTPROGS={- join(", ", map { "-\n\t".$_.".EXE" } grep { m|^\[\.test\]| } @{$unified_info{programs}}) -}
 SCRIPTS={- join(", ", map { "-\n\t".$_ } @{$unified_info{scripts}}) -}
+DEPS={- our @deps = map { (my $x = $_) =~ s|\.o$|\$(DEP_EXT)|; $x; }
+                    grep { $unified_info{sources}->{$_}->[0] =~ /\.c$/ }
+                    keys %{$unified_info{sources}};
+        join(", ", map { "-\n\t".$_ } @deps); -}
 
 # DESTDIR is for package builders so that they can configure for, say,
 # SYS$COMMON:[OPENSSL] and yet have everything installed in STAGING:[USER].
@@ -200,14 +204,22 @@ NODEBUG=@
 
 # The main targets ###################################################
 
-all : descrip.mms, build_libs, build_engines, build_apps
+all : config.timestamp, -
+      build_libs_nodep, build_engines_nodep, build_apps_nodep, -
+      depend
 
-build_libs : $(LIBS)
-build_engines : $(ENGINES)
-build_apps : $(PROGRAMS), $(SCRIPTS)
-build_tests : $(TESTPROGS)
+build_libs : config.timestamp, build_libs_nodep, depend
+build_libs_nodep : $(LIBS)
+build_engines : config.timestamp, build_engines_nodep, depend
+build_engines_nodep : $(ENGINES)
+build_apps : config.timestamp, build_apps_nodep, depend
+build_apps_nodep : $(PROGRAMS), $(SCRIPTS)
+build_tests : config.timestamp, build_tests_nodep, depend
+build_tests_nodep : $(TESTPROGS)
 
-test tests : build_apps, build_engines, build_tests, rehash
+test tests : config.timestamp, -
+             build_apps_nodep, build_engines_nodep, build_tests_nodep, -
+             depend, rehash
         SET DEFAULT [.test]{- move("test") -}
         DEFINE SRCTOP {- sourcedir() -}
         DEFINE BLDTOP {- builddir() -}
@@ -242,24 +254,18 @@ clean : libclean
         - DELETE [.test]*.LOG;*
         - DELETE []*.MAP;*
 
-DCLEAN_CMD=$(PERL) -pe "if (/^# DO NOT DELETE.*/) { exit(0); }"
-dclean :
-        $(DCLEAN_CMD) < descrip.mms > descrip.mms.new
-        RENAME descrip.mms.new descrip.mms
-        PURGE descrip.mms
-
-{- our @deps = map { (my $x = $_) =~ s|\.o$|\$(DEP_EXT)|; $x; }
-               grep { $unified_info{sources}->{$_}->[0] =~ /\.c$/ }
-               keys %{$unified_info{sources}};
-   ""; -}
-depend : {- join(",-\n\t", @deps); -}
-        $(DCLEAN_CMD) < descrip.mms > descrip.mms.new
-        OPEN/APPEND DESCRIP descrip.mms.new
-        WRITE DESCRIP "# DO NOT DELETE THIS LINE -- make depend depends on it."
-        {- join("\n\t", map { "TYPE $_ /OUTPUT=DESCRIP:" } @deps); -}
-        CLOSE DESCRIP
-        RENAME descrip.mms.new descrip.mms
-        PURGE descrip.mms
+depend : descrip.mms
+descrip.mms : FORCE
+        @ $(PERL) -pe "if (/^# DO NOT DELETE.*/) { exit(0); }" -
+                < descrip.mms > descrip.mms-new
+        @ OPEN/APPEND DESCRIP descrip.mms-new
+        @ WRITE DESCRIP "# DO NOT DELETE THIS LINE -- make depend depends on it."
+        @ {- join("\n\t", map { "IF F\$SEARCH(\"$_\") .NES. \"\" THEN TYPE $_ /OUTPUT=DESCRIP:" } @deps); -}
+        @ CLOSE DESCRIP
+        @ DIFF/OUTPUT=NLA0: descrip.mms,descrip.mms-new
+        @ IF $SEVERITY .EQ. 3 THEN RENAME descrip.mms-new descrip.mms
+        @ IF F$SEARCH("descrip.mms-new") .NES. "" THEN DELETE descrip.mms-new;*
+        -@ SPAWN/OUTPUT=NLA0: PURGE/NOLOG descrip.mms
 
 # Install helper targets #############################################
 
@@ -345,7 +351,7 @@ install_config : [.VMS]openssl_startup.com [.VMS]openssl_shutdown.com -
                 {- sourcefile("VMS", "openssl_shutdown.com.in") -} -
                 > [.VMS]openssl_shutdown.com
 
-vmsconfig.pm : descrip.mms
+vmsconfig.pm : config.timestamp
         OPEN/WRITE/SHARE=READ CONFIG []vmsconfig.pm
         WRITE CONFIG "package vmsconfig;"
         WRITE CONFIG "use strict; use warnings;"
@@ -377,7 +383,7 @@ check_INSTALLTOP :
 
 # Helper targets #####################################################
 
-rehash : [.apps]openssl.exe, copy-certs
+rehash : copy-certs, build_apps_nodep
         !MCR [.apps]openssl.exe rehash {- builddir("certs", "demo") -}
         $(PERL) [.tools]c_rehash. [.certs.demo]
 
@@ -396,8 +402,8 @@ debug_logicals :
 
 # Building targets ###################################################
 
-descrip.mms : {- sourcefile("Configurations", "descrip.mms.tmpl") -} $(SRCDIR)Configure ! $(SRCDIR)config.com
-        @ WRITE SYS$OUTPUT "descrip.mms is older than $?."
+config.timestamp : {- sourcefile("Configurations", "descrip.mms.tmpl") -} $(SRCDIR)Configure ! $(SRCDIR)config.com
+        @ WRITE SYS$OUTPUT "Detected changed: $?"
         @ WRITE SYS$OUTPUT "Reconfiguring..."
         perl $(SRCDIR)Configure reconf
         @ WRITE SYS$OUTPUT "*************************************************"
@@ -405,6 +411,11 @@ descrip.mms : {- sourcefile("Configurations", "descrip.mms.tmpl") -} $(SRCDIR)Co
         @ WRITE SYS$OUTPUT "***   Please run the same mms command again   ***"
         @ WRITE SYS$OUTPUT "***                                           ***"
         @ WRITE SYS$OUTPUT "*************************************************"
+        @ IF F$SEARCH("config.timestamp",1) .NES. "" THEN -
+                OPEN/APPEND TIMESTAMP "config.timestamp"
+        @ IF F$SEARCH("config.timestamp",2) .EQS. "" THEN -
+                OPEN/WRITE TIMESTAMP "config.timestamp"
+        @ close TIMESTAMP
         @ exit %10000000
 
 {-
