@@ -692,7 +692,8 @@ OPTIONS s_client_options[] = {
     {"showcerts", OPT_SHOWCERTS, '-', "Show all certificates in the chain"},
     {"debug", OPT_DEBUG, '-', "Extra output"},
     {"msg", OPT_MSG, '-', "Show protocol messages"},
-    {"msgfile", OPT_MSGFILE, '>'},
+    {"msgfile", OPT_MSGFILE, '>',
+     "File to send output of -msg or -trace, instead of stdout"},
     {"nbio_test", OPT_NBIO_TEST, '-', "More ssl protocol testing"},
     {"state", OPT_STATE, '-', "Print the ssl states"},
     {"crlf", OPT_CRLF, '-', "Convert LF from terminal into CRLF"},
@@ -715,21 +716,31 @@ OPTIONS s_client_options[] = {
      "Export len bytes of keying material (default 20)"},
     {"fallback_scsv", OPT_FALLBACKSCSV, '-', "Send the fallback SCSV"},
     {"name", OPT_SMTPHOST, 's', "Hostname to use for \"-starttls smtp\""},
-    {"CRL", OPT_CRL, '<'},
-    {"crl_download", OPT_CRL_DOWNLOAD, '-'},
-    {"CRLform", OPT_CRLFORM, 'F'},
-    {"verify_return_error", OPT_VERIFY_RET_ERROR, '-'},
-    {"verify_quiet", OPT_VERIFY_QUIET, '-'},
-    {"brief", OPT_BRIEF, '-'},
-    {"prexit", OPT_PREXIT, '-'},
-    {"security_debug", OPT_SECURITY_DEBUG, '-'},
-    {"security_debug_verbose", OPT_SECURITY_DEBUG_VERBOSE, '-'},
-    {"cert_chain", OPT_CERT_CHAIN, '<'},
-    {"chainCApath", OPT_CHAINCAPATH, '/'},
-    {"verifyCApath", OPT_VERIFYCAPATH, '/'},
-    {"build_chain", OPT_BUILD_CHAIN, '-'},
-    {"chainCAfile", OPT_CHAINCAFILE, '<'},
-    {"verifyCAfile", OPT_VERIFYCAFILE, '<'},
+    {"CRL", OPT_CRL, '<', "CRL file to use"},
+    {"crl_download", OPT_CRL_DOWNLOAD, '-', "Download CRL from distribution points"},
+    {"CRLform", OPT_CRLFORM, 'F', "CRL format (PEM or DER) PEM is default"},
+    {"verify_return_error", OPT_VERIFY_RET_ERROR, '-',
+     "Close connection on verification error"},
+    {"verify_quiet", OPT_VERIFY_QUIET, '-', "Restrict verify output to errors"},
+    {"brief", OPT_BRIEF, '-',
+     "Restrict output to brief summary of connection parameters"},
+    {"prexit", OPT_PREXIT, '-',
+     "Print session information when the program exits"},
+    {"security_debug", OPT_SECURITY_DEBUG, '-',
+     "Enable security debug messages"},
+    {"security_debug_verbose", OPT_SECURITY_DEBUG_VERBOSE, '-',
+     "Output more security debug output"},
+    {"cert_chain", OPT_CERT_CHAIN, '<',
+     "Certificate chain file (in PEM format)"},
+    {"chainCApath", OPT_CHAINCAPATH, '/',
+     "Use dir as certificate store path to build CA certificate chain"},
+    {"verifyCApath", OPT_VERIFYCAPATH, '/',
+     "Use dir as certificate store path to verify CA certificate"},
+    {"build_chain", OPT_BUILD_CHAIN, '-', "Build certificate chain"},
+    {"chainCAfile", OPT_CHAINCAFILE, '<',
+     "CA file for certificate chain (PEM format)"},
+    {"verifyCAfile", OPT_VERIFYCAFILE, '<',
+     "CA file for certificate verification (PEM format)"},
     {"nocommands", OPT_NOCMDS, '-', "Do not use interactive command letters"},
     {"servername", OPT_SERVERNAME, 's',
      "Set TLS extension servername in ClientHello"},
@@ -741,7 +752,7 @@ OPTIONS s_client_options[] = {
     {"alpn", OPT_ALPN, 's',
      "Enable ALPN extension, considering named protocols supported (comma-separated list)"},
     {"async", OPT_ASYNC, '-', "Support asynchronous operation"},
-    {"ssl_config", OPT_SSL_CONFIG, 's'},
+    {"ssl_config", OPT_SSL_CONFIG, 's', "Use specified configuration file"},
     OPT_S_OPTIONS,
     OPT_V_OPTIONS,
     OPT_X_OPTIONS,
@@ -758,18 +769,19 @@ OPTIONS s_client_options[] = {
     {"tls1_2", OPT_TLS1_2, '-', "Just use TLSv1.2"},
 #endif
 #ifndef OPENSSL_NO_DTLS
-    {"dtls", OPT_DTLS, '-'},
-    {"timeout", OPT_TIMEOUT, '-'},
+    {"dtls", OPT_DTLS, '-', "Use any version of DTLS"},
+    {"timeout", OPT_TIMEOUT, '-',
+     "Enable send/receive timeout on DTLS connections"},
     {"mtu", OPT_MTU, 'p', "Set the link layer MTU"},
 #endif
 #ifndef OPENSSL_NO_DTLS1
     {"dtls1", OPT_DTLS1, '-', "Just use DTLSv1"},
 #endif
 #ifndef OPENSSL_NO_DTLS1_2
-    {"dtls1_2", OPT_DTLS1_2, '-'},
+    {"dtls1_2", OPT_DTLS1_2, '-', "Just use DTLSv1.2"},
 #endif
 #ifndef OPENSSL_NO_SSL_TRACE
-    {"trace", OPT_TRACE, '-'},
+    {"trace", OPT_TRACE, '-', "Show trace output of protocol messages"},
 #endif
 #ifdef WATT32
     {"wdebug", OPT_WDEBUG, '-', "WATT-32 tcp debugging"},
@@ -796,7 +808,8 @@ OPTIONS s_client_options[] = {
 #endif
 #ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
-    {"ssl_client_engine", OPT_SSL_CLIENT_ENGINE, 's'},
+    {"ssl_client_engine", OPT_SSL_CLIENT_ENGINE, 's',
+     "Specify engine to be used for client certificate operations"},
 #endif
     {NULL}
 };
