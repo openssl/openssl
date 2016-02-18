@@ -400,14 +400,6 @@ while ((my $first, my $second) = (shift @list, shift @list)) {
     unshift @list, $second;
 }
 
-# Construct the string of what $config{depdefines} should look like with
-# the defaults from %disabled above.  (we need this to see if we should
-# advise the user to run "make depend"):
-my @default_depdefines =
-    map { my $x = $_; $x =~ tr{[a-z]-}{[A-Z]_}; "OPENSSL_NO_$x"; }
-    grep { $disabled{$_} !~ /\(no-depdefines\)$/ }
-    sort keys %disabled;
-
 # Explicit "no-..." options will be collected in %disabled along with the defaults.
 # To remove something from %disabled, use "enable-foo".
 # For symmetry, "disable-foo" is a synonym for "no-foo".
@@ -429,7 +421,6 @@ my $no_sse2=0;
 my $user_cflags="";
 my @user_defines=();
 my $unified = 0;
-$config{depdefines}=[];
 $config{openssl_api_defines}=[];
 $config{openssl_algorithm_defines}=[];
 $config{openssl_thread_defines}=[];
@@ -785,7 +776,6 @@ foreach (sort (keys %disabled))
 			($ALGO,$algo) = ("RMD160","rmd160") if ($algo eq "ripemd");
 
 			push @{$config{openssl_algorithm_defines}}, "OPENSSL_NO_$ALGO";
-			push @{$config{depdefines}}, "OPENSSL_NO_$ALGO";
 			print " OPENSSL_NO_$ALGO";
 
 			# fix-up crypto/directory name(s)
@@ -1097,8 +1087,6 @@ if ($^O ne "VMS") {
     close(PIPE);
 }
 
-$config{depflags} =~ s/^\s*//;
-
 
 # Deal with bn_ops ###################################################
 
@@ -1134,7 +1122,6 @@ $config{cflags} =~ s/([\\\"])/\\\1/g;
 if (defined($config{api})) {
     $config{openssl_api_defines} = [ "OPENSSL_MIN_API=".$apitable->{$config{api}} ];
     my $apiflag = sprintf("OPENSSL_API_COMPAT=%s", $apitable->{$config{api}});
-    push @default_depdefines, $apiflag;
     push @{$config{defines}}, $apiflag;
 }
 

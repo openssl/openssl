@@ -97,7 +97,6 @@ CROSS_COMPILE= {- $config{cross_compile_prefix} -}
 CC= $(CROSS_COMPILE){- $target{cc} -}
 CFLAGS={- our $cflags2 = join(" ",(map { "-D".$_} @{$config{defines}}),"-DOPENSSLDIR=\"\\\"\$(OPENSSLDIR)\\\"\"","-DENGINESDIR=\"\\\"\$(ENGINESDIR)\\\"\"") -} {- $config{cflags} -}
 CFLAGS_Q={- $cflags2 =~ s|([\\"])|\\$1|g; $cflags2 -} {- $config{cflags} -}
-DEPFLAGS= {- join(" ",map { "-D".$_} @{$config{depdefines}}) -}
 LDFLAGS= {- $config{lflags} -}
 PLIB_LDFLAGS= {- $config{plib_lflags} -}
 EX_LIBS= {- $config{ex_libs} -}
@@ -743,9 +742,7 @@ Makefile: {- $config{build_file_template} -} $(SRCDIR)/Configure $(SRCDIR)/confi
           return <<"EOF";
 $obj\$(DEP_EXT): $deps
 	rm -f \$\@.tmp; touch \$\@.tmp
-	\$(MAKEDEPEND) -f\$\@.tmp -o"|$obj" \\
-	    -- -DOPENSSL_DOING_MAKEDEPEND \$(DEPFLAGS)$incs \\
-	    -- $srcs \\
+	\$(MAKEDEPEND) -f\$\@.tmp -o"|$obj" -- \$(CFLAGS)$incs -- $srcs \\
 	    2>/dev/null
 	sed -e 's/^.*|//' -e 's/ \\/\\(\\\\.\\|[^ ]\\)*//g' -e '/: *\$\$/d' -e '/^\\(#.*\\| *\\)\$\$/d' \$\@.tmp > \$\@
 	rm \$\@.tmp
@@ -755,7 +752,7 @@ EOF
       }
       return <<"EOF";
 $obj\$(DEP_EXT): $deps
-	\$(CC) -DOPENSSL_DOING_MAKEDEPEND \$(DEPFLAGS)$incs -MM -MF \$\@ -MQ $obj $srcs
+	\$(CC) \$(CFLAGS)$incs -MM -MF \$\@ -MQ $obj $srcs
 $obj\$(OBJ_EXT): $obj\$(DEP_EXT)
 	\$(CC) \$(CFLAGS)$incs -c -o \$\@ $srcs
 EOF

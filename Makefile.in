@@ -92,7 +92,6 @@ CROSS_COMPILE= {- $config{cross_compile_prefix} -}
 CC= $(CROSS_COMPILE){- $target{cc} -}
 CFLAG={- our $cflags2 = join(" ",(map { "-D".$_} @{$config{defines}}),"-DOPENSSLDIR=\"\\\"\$(OPENSSLDIR)\\\"\"","-DENGINESDIR=\"\\\"\$(ENGINESDIR)\\\"\"") -} {- $config{cflags} -}
 CFLAG_Q={- $cflags2 =~ s|([\\"])|\\$1|g; $cflags2 -} {- $config{cflags} -}
-DEPFLAG= {- join(" ",map { "-D".$_} @{$config{depdefines}}) -}
 LDFLAG= {- $config{lflags} -}
 PLIB_LDFLAG= {- $config{plib_lflags} -}
 EX_LIBS= {- $config{ex_libs} -}
@@ -254,7 +253,6 @@ BUILDENV=	LC_ALL=C PLATFORM='$(PLATFORM)' PROCESSOR='$(PROCESSOR)'\
 		DESTDIR='$(DESTDIR)'		\
 		INSTALLTOP='$(INSTALLTOP)' OPENSSLDIR='$(OPENSSLDIR)'	\
 		LIBDIR='$(LIBDIR)'				\
-		DEPFLAG='$(DEPFLAG)'                    	\
 		SHARED_LDFLAG='$(SHARED_LDFLAG)'		\
 		SHARED_RCFLAG='$(SHARED_RCFLAG)'		\
 		ZLIB_INCLUDE='$(ZLIB_INCLUDE)' LIBZLIB='$(LIBZLIB)'	\
