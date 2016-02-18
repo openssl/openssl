@@ -42,14 +42,6 @@ extern "C" {
 	$OUT .= "# endif\n";
       }
     }
-    if ($OUT) {
-        $OUT = <<"EOF";
-#ifndef OPENSSL_DOING_MAKEDEPEND
-
-$OUT
-#endif /* OPENSSL_DOING_MAKEDEPEND */
-EOF
-    }
     "";
 -}
 

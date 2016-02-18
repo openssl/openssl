@@ -66,7 +66,7 @@ files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
 
 depend:
-	$(TOP)/util/domd $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(LIBSRC)
+	$(TOP)/util/domd $(CFLAG) $(INCLUDES) -- $(PROGS) $(LIBSRC)
 
 clean:
 	rm -f *.s *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff

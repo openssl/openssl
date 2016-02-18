@@ -165,7 +165,7 @@ apps:
 	@(cd ..; $(MAKE) DIRS=apps all)
 
 depend:
-	$(TOP)/util/domd $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(SRC)
+	$(TOP)/util/domd $(CFLAG) $(INCLUDES) -- $(PROGS) $(SRC)
 
 clean:
 	rm -f .rnd tmp.bntest tmp.bctest *.o *.obj *.dll lib tags core .pure .nfs* *.old *.bak fluff $(EXE) *.ss *.srl log *.log dummytest
