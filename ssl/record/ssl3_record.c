@@ -394,7 +394,7 @@ int ssl3_get_record(SSL *s)
         SSLerr(SSL_F_SSL3_GET_RECORD, SSL_R_BLOCK_CIPHER_PAD_IS_WRONG);
         goto f_err;
     }
-#ifdef TLS_DEBUG
+#ifdef SSL_DEBUG
     printf("dec %d\n", rr->length);
     {
         unsigned int z;
@@ -973,7 +973,7 @@ int tls1_mac(SSL *ssl, unsigned char *md, int send)
 
     EVP_MD_CTX_free(hmac);
 
-#ifdef TLS_DEBUG
+#ifdef SSL_DEBUG
     fprintf(stderr, "seq=");
     {
         int z;
@@ -997,7 +997,7 @@ int tls1_mac(SSL *ssl, unsigned char *md, int send)
                 break;
         }
     }
-#ifdef TLS_DEBUG
+#ifdef SSL_DEBUG
     {
         unsigned int z;
         for (z = 0; z < md_size; z++)
@@ -1267,7 +1267,7 @@ int dtls1_process_record(SSL *s)
         RECORD_LAYER_reset_packet_length(&s->rlayer);
         goto err;
     }
-#ifdef TLS_DEBUG
+#ifdef SSL_DEBUG
     printf("dec %d\n", rr->length);
     {
         unsigned int z;

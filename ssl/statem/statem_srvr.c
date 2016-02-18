@@ -3222,9 +3222,6 @@ STACK_OF(SSL_CIPHER) *ssl_bytes_to_cipher_list(SSL *s,
                 goto err;
             }
             s->s3->send_connection_binding = 1;
-#ifdef OPENSSL_RI_DEBUG
-            fprintf(stderr, "SCSV received by server\n");
-#endif
             continue;
         }
 

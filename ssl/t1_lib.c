@@ -788,11 +788,6 @@ static int tls1_check_cert_param(SSL *s, X509 *x, int set_ee_md)
  */
 int tls1_check_ec_tmp_key(SSL *s, unsigned long cid)
 {
-#  ifdef OPENSSL_SSL_DEBUG_BROKEN_PROTOCOL
-    /* Allow any curve: not just those peer supports */
-    if (s->cert->cert_flags & SSL_CERT_FLAG_BROKEN_PROTOCOL)
-        return 1;
-#  endif
     /*
      * If Suite B, AES128 MUST use P-256 and AES256 MUST use P-384, no other
      * curves permitted.
@@ -3451,30 +3446,6 @@ int tls1_process_sigalgs(SSL *s)
     if (!tls1_set_shared_sigalgs(s))
         return 0;
 
-#ifdef OPENSSL_SSL_DEBUG_BROKEN_PROTOCOL
-    if (s->cert->cert_flags & SSL_CERT_FLAG_BROKEN_PROTOCOL) {
-        /*
-         * Use first set signature preference to force message digest,
-         * ignoring any peer preferences.
-         */
-        const unsigned char *sigs = NULL;
-        if (s->server)
-            sigs = c->conf_sigalgs;
-        else
-            sigs = c->client_sigalgs;
-        if (sigs) {
-            idx = tls12_get_pkey_idx(sigs[1]);
-            md = tls12_get_hash(sigs[0]);
-            pmd[idx] = md;
-            pvalid[idx] = CERT_PKEY_EXPLICIT_SIGN;
-            if (idx == SSL_PKEY_RSA_SIGN) {
-                pvalid[SSL_PKEY_RSA_ENC] = CERT_PKEY_EXPLICIT_SIGN;
-                pmd[SSL_PKEY_RSA_ENC] = md;
-            }
-        }
-    }
-#endif
-
     for (i = 0, sigptr = c->shared_sigalgs;
          i < c->shared_sigalgslen; i++, sigptr++) {
         idx = tls12_get_pkey_idx(sigptr->rsign);
@@ -3748,15 +3719,6 @@ int tls1_check_chain(SSL *s, X509 *x, EVP_PKEY *pk, STACK_OF(X509) *chain,
         /* If no cert or key, forget it */
         if (!x || !pk)
             goto end;
-#ifdef OPENSSL_SSL_DEBUG_BROKEN_PROTOCOL
-        /* Allow any certificate to pass test */
-        if (s->cert->cert_flags & SSL_CERT_FLAG_BROKEN_PROTOCOL) {
-            rv = CERT_PKEY_STRICT_FLAGS | CERT_PKEY_EXPLICIT_SIGN |
-                CERT_PKEY_VALID | CERT_PKEY_SIGN;
-            *pvalid = rv;
-            return rv;
-        }
-#endif
     } else {
         if (!x || !pk)
             return 0;

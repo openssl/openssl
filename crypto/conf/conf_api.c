@@ -57,12 +57,6 @@
 
 /* Part of the code in here was originally in conf.c, which is now removed */
 
-#ifndef CONF_DEBUG
-# undef NDEBUG                  /* avoid conflicting definitions */
-# define NDEBUG
-#endif
-
-#include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 #include <openssl/conf.h>

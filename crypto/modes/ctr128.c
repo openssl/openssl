@@ -52,13 +52,6 @@
 #include "modes_lcl.h"
 #include <string.h>
 
-#ifndef MODES_DEBUG
-# ifndef NDEBUG
-#  define NDEBUG
-# endif
-#endif
-#include <assert.h>
-
 /*
  * NOTE: the IV/counter CTR mode is big-endian.  The code itself is
  * endian-neutral.
@@ -124,9 +117,6 @@ void CRYPTO_ctr128_encrypt(const unsigned char *in, unsigned char *out,
 {
     unsigned int n;
     size_t l = 0;
-
-    assert(in && out && key && ecount_buf && num);
-    assert(*num < 16);
 
     n = *num;
 
@@ -202,9 +192,6 @@ void CRYPTO_ctr128_encrypt_ctr32(const unsigned char *in, unsigned char *out,
                                  unsigned int *num, ctr128_f func)
 {
     unsigned int n, ctr32;
-
-    assert(in && out && key && ecount_buf && num);
-    assert(*num < 16);
 
     n = *num;
 

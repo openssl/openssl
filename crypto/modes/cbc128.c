@@ -52,13 +52,6 @@
 #include "modes_lcl.h"
 #include <string.h>
 
-#ifndef MODES_DEBUG
-# ifndef NDEBUG
-#  define NDEBUG
-# endif
-#endif
-#include <assert.h>
-
 #if !defined(STRICT_ALIGNMENT) && !defined(PEDANTIC)
 # define STRICT_ALIGNMENT 0
 #endif
@@ -69,8 +62,6 @@ void CRYPTO_cbc128_encrypt(const unsigned char *in, unsigned char *out,
 {
     size_t n;
     const unsigned char *iv = ivec;
-
-    assert(in && out && key && ivec);
 
 #if !defined(OPENSSL_SMALL_FOOTPRINT)
     if (STRICT_ALIGNMENT &&
@@ -122,8 +113,6 @@ void CRYPTO_cbc128_decrypt(const unsigned char *in, unsigned char *out,
         size_t t[16 / sizeof(size_t)];
         unsigned char c[16];
     } tmp;
-
-    assert(in && out && key && ivec);
 
 #if !defined(OPENSSL_SMALL_FOOTPRINT)
     if (in != out) {

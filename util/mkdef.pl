@@ -174,7 +174,6 @@ foreach (@ARGV, split(/ /, $config{options}))
 	$do_ctest=1 if $_ eq "ctest";
 	$do_ctestall=1 if $_ eq "ctestall";
 	$do_checkexist=1 if $_ eq "exist";
-	#$safe_stack_def=1 if $_ eq "-DDEBUG_SAFESTACK";
 	if (/^--api=(\d+)\.(\d+)\.(\d+)$/) {
 		my $apiv = sprintf "%x%02x%02x", $1, $2, $3;
 		foreach (keys %disabled_algorithms) {

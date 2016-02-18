@@ -941,10 +941,6 @@ static void ssl_cipher_apply_rule(uint32_t cipher_id, uint32_t alg_mkey,
                     cp->algorithm_enc, cp->algorithm_mac, cp->algorithm_ssl,
                     cp->algo_strength);
 #endif
-#ifdef OPENSSL_SSL_DEBUG_BROKEN_PROTOCOL
-            if (cipher_id && cipher_id != cp->id)
-                continue;
-#endif
             if (alg_mkey && !(alg_mkey & cp->algorithm_mkey))
                 continue;
             if (alg_auth && !(alg_auth & cp->algorithm_auth))
