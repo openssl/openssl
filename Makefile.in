@@ -661,7 +661,7 @@ uninstall_sw:
 	$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig/libcrypto.pc
 	$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig/libssl.pc
 	$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig/openssl.pc
-	@target=uninstall; $(RECURSIVE_BUILD_CMD)
+	@target=uninstall; for dir in $(INSTALL_SUBS); do $(BUILD_CMD); done
 
 install_html_docs:
 	here="`pwd`"; \
