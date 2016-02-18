@@ -37,6 +37,10 @@ ENGINES={- join(" ", map { $_."\$(SHLIB_EXT_SIMPLE)" } @{$unified_info{engines}}
 PROGRAMS={- join(" ", map { $_."\$(EXE_EXT)" } grep { !m|^test/| } @{$unified_info{programs}}) -}
 TESTPROGS={- join(" ", map { $_."\$(EXE_EXT)" } grep { m|^test/| } @{$unified_info{programs}}) -}
 SCRIPTS={- join(" ", @{$unified_info{scripts}}) -}
+DEPS={- join(" ", map { (my $x = $_) =~ s|\.o$|\$(DEP_EXT)|; $x; }
+                  grep { $unified_info{sources}->{$_}->[0] =~ /\.c$/ }
+                  keys %{$unified_info{sources}}); -}
+
 BIN_SCRIPTS=$(BLDDIR)/tools/c_rehash
 MISC_SCRIPTS=$(SRCDIR)/tools/c_hash $(SRCDIR)/tools/c_info \
 	     $(SRCDIR)/tools/c_issuer $(SRCDIR)/tools/c_name \
@@ -146,15 +150,19 @@ PROCESSOR= {- $config{processor} -}
 
 # The main targets ###################################################
 
-all: build_libs build_engines build_apps link-utils
+all: config.timestamp build_libs_nodep build_engines_nodep build_apps_nodep \
+     depend link-utils
 
-# The pkg-config files depend on the libraries as well as Makefile
-build_libs: libcrypto.pc libssl.pc openssl.pc
-build_engines: $(ENGINES)
-build_apps: $(PROGRAMS) $(SCRIPTS)
-build_tests: $(TESTPROGS)
+build_libs: config.timestamp build_libs_nodep depend
+build_libs_nodep: libcrypto.pc libssl.pc openssl.pc
+build_engines: config.timestamp build_engines_nodep depend
+build_engines_nodep: $(ENGINES)
+build_apps: config.timestamp build_apps_nodep depend
+build_apps_nodep: $(PROGRAMS) $(SCRIPTS)
+build_tests: config.timestamp build_tests_nodep depend
+build_tests_nodep: $(TESTPROGS)
 
-test tests: build_tests build_apps build_engines rehash
+test tests: build_tests_nodep build_apps_nodep build_engines_nodep depend rehash
 	( cd test; \
 	  SRCTOP=../$(SRCDIR) \
 	  BLDTOP=../$(BLDDIR) \
@@ -181,20 +189,18 @@ clean: libclean
 	-rm -f `find $(BLDDIR) -type l`
 	rm -f $(TARFILE)
 
-DCLEAN_CMD=sed -e '/^. DO NOT DELETE.*/,$$d'
-dclean:
-	$(DCLEAN_CMD) < Makefile >Makefile.new
-	mv -f Makefile.new Makefile
-
-DEPS={- join(" ", map { (my $x = $_) =~ s|\.o$|\$(DEP_EXT)|; $x; }
-                  grep { $unified_info{sources}->{$_}->[0] =~ /\.c$/ }
-                  keys %{$unified_info{sources}}); -}
-depend: $(DEPS)
-	( $(DCLEAN_CMD) < Makefile; \
+# This exists solely for those who still type 'make depend'
+depend: Makefile
+Makefile: FORCE
+	@( sed -e '/^# DO NOT DELETE THIS LINE.*/,$$d' < Makefile; \
 	  echo '# DO NOT DELETE THIS LINE -- make depend depends on it.'; \
 	  echo; \
-	  cat `find . -name '*$(DEP_EXT)'` ) > Makefile.new
-	mv -f Makefile.new Makefile
+	  for d in $(DEPS); do \
+	    if [ -f $$d ]; then cat $$d; fi; \
+	  done ) > Makefile.new
+	@if ! cmp Makefile.new Makefile >/dev/null 2>&1; then \
+		mv -f Makefile.new Makefile; \
+	fi
 
 # Install helper targets #############################################
 
@@ -579,7 +585,7 @@ dist:
 
 # Helper targets #####################################################
 
-rehash: link-utils copy-certs build_apps
+rehash: link-utils copy-certs build_apps_nodep
 	@if [ -z "$(CROSS_COMPILE)" ]; then \
 		(OPENSSL="$(BLDDIR)/util/shlib_wrap.sh apps/openssl"; \
 		[ -x "$(BLDDIR)/openssl.exe" ] && OPENSSL="$(BLDDIR)/openssl.exe" || :; \
@@ -592,12 +598,12 @@ rehash: link-utils copy-certs build_apps
 
 link-utils: $(BLDDIR)/util/opensslwrap.sh $(BLDDIR)/util/shlib_wrap.sh
 
-$(BLDDIR)/util/opensslwrap.sh: Makefile
+$(BLDDIR)/util/opensslwrap.sh: config.timestamp
 	@if [ "$(SRCDIR)" != "$(BLDDIR)" ]; then \
 	    mkdir -p "$(BLDDIR)/util"; \
 	    ln -sf "../$(SRCDIR)/util/opensslwrap.sh" "$(BLDDIR)/util"; \
 	fi
-$(BLDDIR)/util/shlib_wrap.sh: Makefile
+$(BLDDIR)/util/shlib_wrap.sh: config.timestamp
 	@if [ "$(SRCDIR)" != "$(BLDDIR)" ]; then \
 	    mkdir -p "$(BLDDIR)/util"; \
 	    ln -sf "../$(SRCDIR)/util/shlib_wrap.sh" "$(BLDDIR)/util"; \
@@ -651,11 +657,11 @@ $(SRCDIR)/crypto/objects/obj_xref.h: $(SRCDIR)/crypto/objects/objxref.pl \
                 > $(SRCDIR)/crypto/objects/obj_xref.h
 	@sleep 1; touch $(SRCDIR)/crypto/objects/obj_xref.h; sleep 1
 
-FORCE :
+FORCE:
 
 # Building targets ###################################################
 
-libcrypto.pc libssl.pc openssl.pc: Makefile $(LIBS)
+libcrypto.pc libssl.pc openssl.pc: config.timestamp $(LIBS)
 libcrypto.pc:
 	@ ( echo 'prefix=$(INSTALLTOP)'; \
 	    echo 'exec_prefix=$${prefix}'; \
@@ -698,8 +704,8 @@ openssl.pc:
 # wasn't passed down automatically.  It's quite safe to use it like we do
 # below; if it doesn't exist, the result will be empty and 'make' will pick
 # up $(MAKEFLAGS) which is passed down as an environment variable.
-Makefile: {- $config{build_file_template} -} $(SRCDIR)/Configure $(SRCDIR)/config
-	@echo "Makefile is older than {- $config{build_file_template} -}, $(SRCDIR)/Configure or $(SRCDIR)/config."
+config.timestamp: {- $config{build_file_template} -} $(SRCDIR)/Configure $(SRCDIR)/config
+	@echo "Detected that {- $config{build_file_template} -}, $(SRCDIR)/Configure or $(SRCDIR)/config may have changed."
 	@echo "Reconfiguring..."
 	$(SRCDIR)/Configure reconf
 	@echo "**************************************************"
@@ -707,6 +713,7 @@ Makefile: {- $config{build_file_template} -} $(SRCDIR)/Configure $(SRCDIR)/confi
 	@echo "***   Please run the same make command again   ***"
 	@echo "***                                            ***"
 	@echo "**************************************************"
+	@touch config.timestamp
 	@false
 
 {-
