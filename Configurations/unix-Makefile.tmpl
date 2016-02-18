@@ -732,17 +732,16 @@ Makefile: {- $config{build_file_template} -} $(SRCDIR)/Configure $(SRCDIR)/confi
 		   } } @_;
   }
 
-  sub src2dep {
+  sub src2obj {
       my %args = @_;
-      my $dep = $args{obj}.'$(DEP_EXT)';
-      my $obj = $args{obj}.'$(OBJ_EXT)';
+      my $obj = $args{obj};
       my $srcs = join(" ", @{$args{srcs}});
       my $deps = join(" ", @{$args{srcs}}, @{$args{deps}});
       my $incs = join(" ", map { " -I".$_ } @{$args{incs}});
       my $makedepprog = $config{makedepprog};
       if ($makedepprog eq "makedepend") {
           return <<"EOF";
-$dep : $deps
+$obj\$(DEP_EXT): $deps
 	rm -f \$\@.tmp; touch \$\@.tmp
 	\$(MAKEDEPEND) -f\$\@.tmp -o"|$obj" \\
 	    -- -DOPENSSL_DOING_MAKEDEPEND \$(DEPFLAGS)$incs \\
@@ -750,21 +749,14 @@ $dep : $deps
 	    2>/dev/null
 	sed -e 's/^.*|//' -e 's/ \\/\\(\\\\.\\|[^ ]\\)*//g' -e '/: *\$\$/d' -e '/^\\(#.*\\| *\\)\$\$/d' \$\@.tmp > \$\@
 	rm \$\@.tmp
+$obj\$(OBJ_EXT): $obj\$(DEP_EXT)
+	\$(CC) \$(CFLAGS)$incs -c -o \$\@ $srcs
 EOF
       }
       return <<"EOF";
-$dep : $deps Makefile
+$obj\$(DEP_EXT): $deps
 	\$(CC) -DOPENSSL_DOING_MAKEDEPEND \$(DEPFLAGS)$incs -MM -MF \$\@ -MQ $obj $srcs
-EOF
-  }
-  sub src2obj {
-      my %args = @_;
-      my $obj = $args{obj}.'$(OBJ_EXT)';
-      my $srcs = join(" ", @{$args{srcs}});
-      my $deps = join(" ", @{$args{srcs}}, @{$args{deps}});
-      my $incs = join(" ", map { " -I".$_ } @{$args{incs}});
-      return <<"EOF";
-$obj : $deps
+$obj\$(OBJ_EXT): $obj\$(DEP_EXT)
 	\$(CC) \$(CFLAGS)$incs -c -o \$\@ $srcs
 EOF
   }
@@ -795,7 +787,7 @@ EOF
 # It's not necessary to have both as targets.  The choice falls on the
 # simplest, {libname}\$(SHLIB_EXT_SIMPLE).a for Windows POSIX layers and
 # {libname}\$(SHLIB_EXT_SIMPLE) for the Unix platforms.
-$shlibtarget : $lib\$(LIB_EXT) $deps $ordinalsfile
+$shlibtarget: $lib\$(LIB_EXT) $deps $ordinalsfile
 	\$(MAKE) -f \$(SRCDIR)/Makefile.shared -e \\
 		PLATFORM=\$(PLATFORM) \\
 		PERL=\$(PERL) SRCDIR="\$(SRCDIR)" DSTDIR="$libd" \\
@@ -848,7 +840,7 @@ EOF
       my $lib = $args{lib};
       my $objs = join(" ", map { $_."\$(OBJ_EXT)" } @{$args{objs}});
       return <<"EOF";
-$lib\$(LIB_EXT) : $objs
+$lib\$(LIB_EXT): $objs
 	\$(AR) \$\@ $objs
 	\$(RANLIB) \$\@ || echo Never mind.
 EOF
@@ -867,7 +859,7 @@ EOF
                                     " -L$d -l$l" } @{$args{deps}});
       my $shlib_target = $config{no_shared} ? "" : $target{shared_target};
       return <<"EOF";
-$bin\$(EXE_EXT) : $objs $deps
+$bin\$(EXE_EXT): $objs $deps
 	\$(RM) $bin\$(EXE_EXT)
 	\$(MAKE) -f \$(SRCDIR)/Makefile.shared -e \\
 		PERL=\$(PERL) SRCDIR=\$(SRCDIR) \\
@@ -886,7 +878,7 @@ EOF
                                            "util", "dofile.pl")),
                            rel2abs($config{builddir}));
       return <<"EOF";
-$script : $sources
+$script: $sources
 	\$(PERL) "-I\$(BLDDIR)" -Mconfigdata "$dofile" \\
 	    "-o$target{build_file}" $sources > "$script"
 	chmod a+x $script

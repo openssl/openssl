@@ -384,24 +384,6 @@ build static libraries from object files, to build shared libraries
 from static libraries, to programs from object files and libraries,
 etc.
 
-    src2dep     - function that produces build file lines to get the
-                  dependencies for an object file into a dependency
-                  file.
-
-                  It's called like this:
-
-                        src2dep(obj => "PATH/TO/objectfile",
-                                srcs => [ "PATH/TO/sourcefile", ... ],
-                                incs => [ "INCL/PATH", ... ]);
-
-                  'obj' has the dependent object file as well as
-                  object file the dependencies are for; it's *without*
-                  extension, src2dep() is expected to add that.
-                  'srcs' has the list of source files to build the
-                  object file, with the first item being the source
-                  file that directly corresponds to the object file.
-                  'incs' is a list of include file directories.
-
     src2obj     - function that produces build file lines to build an
                   object file from source files and associated data.
 
