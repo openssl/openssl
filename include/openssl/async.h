@@ -50,16 +50,10 @@
  * ====================================================================
  */
 
+#include <stdlib.h>
+
 #ifndef HEADER_ASYNC_H
 # define HEADER_ASYNC_H
-
-#include <openssl/opensslconf.h>
-
-#ifdef OPENSSL_NO_ASYNC
-#define ASYNC_block_pause() do { ; } while(0)
-#define ASYNC_unblock_pause() do { ; } while(0)
-#else
-#include <stdlib.h>
 
 #if defined(_WIN32)
 #include <windows.h>
@@ -122,5 +116,4 @@ void ERR_load_ASYNC_strings(void);
 #ifdef  __cplusplus
 }
 #endif
-#endif /* OPENSSL_NO_ASYNC */
 #endif
