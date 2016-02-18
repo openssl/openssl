@@ -163,7 +163,7 @@ static int des_ede_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     }
 # endif                         /* KSSL_DEBUG */
     if (dat->stream.cbc) {
-        (*dat->stream.cbc) (in, out, inl, &dat->ks, ctx->iv);
+        (*dat->stream.cbc) (in, out, inl, dat->ks.ks, ctx->iv);
         return 1;
     }
 
