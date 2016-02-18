@@ -290,16 +290,6 @@ int EVP_PBE_scrypt(const char *pass, size_t passlen,
                           keylen, key) == 0)
         goto err;
     rv = 1;
-#ifdef SCRYPT_DEBUG
-    fprintf(stderr, "scrypt parameters:\n");
-    fprintf(stderr, "N=%lu, p=%lu, r=%lu\n", N, p, r);
-    fprintf(stderr, "Salt:\n");
-    BIO_dump_fp(stderr, (char *)salt, saltlen);
-    fprintf(stderr, "Password:\n");
-    BIO_dump_fp(stderr, (char *)pass, passlen);
-    fprintf(stderr, "Key:\n");
-    BIO_dump_fp(stderr, (char *)key, keylen);
-#endif
  err:
     OPENSSL_clear_free(B, allocsize);
     return rv;

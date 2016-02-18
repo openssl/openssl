@@ -76,7 +76,7 @@ my $usage="Usage: Configure [no-<cipher> ...] [enable-<cipher> ...] [-Dxxx] [-lx
 # Minimum warning options... any contributions to OpenSSL should at least get
 # past these.
 
-my $gcc_devteam_warn = "-DPEDANTIC -DREF_DEBUG -DDEBUG_UNUSED"
+my $gcc_devteam_warn = "-DPEDANTIC -DREF_DEBUG -DDEBUG_UNUSED -DBIO_DEBUG"
         . " -pedantic"
         . " -Wall"
         . " -Wno-long-long"

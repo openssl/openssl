@@ -364,7 +364,7 @@ int tls1_change_cipher_state(SSL *s, int which)
         }
         EVP_PKEY_free(mac_key);
     }
-#ifdef TLS_DEBUG
+#ifdef SSL_DEBUG
     printf("which = %04X\nmac key=", which);
     {
         int z;
@@ -426,7 +426,7 @@ int tls1_change_cipher_state(SSL *s, int which)
     }
 #endif
 
-#ifdef TLS_DEBUG
+#ifdef SSL_DEBUG
     printf("which = %04X\nkey=", which);
     {
         int z;
@@ -495,7 +495,7 @@ int tls1_setup_key_block(SSL *s)
     s->s3->tmp.key_block_length = num;
     s->s3->tmp.key_block = p;
 
-#ifdef TLS_DEBUG
+#ifdef SSL_DEBUG
     printf("client random\n");
     {
         int z;
@@ -520,7 +520,7 @@ int tls1_setup_key_block(SSL *s)
 #endif
     if (!tls1_generate_key_block(s, p, num))
         goto err;
-#ifdef TLS_DEBUG
+#ifdef SSL_DEBUG
     printf("\nkey block\n");
     {
         int z;

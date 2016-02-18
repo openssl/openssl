@@ -1627,23 +1627,6 @@ static const SSL_CIPHER ssl3_ciphers[] = {
      },
 #endif
 
-#ifdef OPENSSL_SSL_DEBUG_BROKEN_PROTOCOL
-    /* Cipher FF */
-    {
-     1,
-     "SCSV",
-     SSL3_CK_SCSV,
-     0,
-     0,
-     0,
-     0,
-     0,
-     0,
-     0,
-     0,
-     0},
-#endif
-
 #ifndef OPENSSL_NO_EC
 
     /* Cipher C006 */
@@ -3743,10 +3726,6 @@ const SSL_CIPHER *ssl3_get_cipher_by_char(const unsigned char *p)
     id = 0x03000000 | ((uint32_t)p[0] << 8L) | (uint32_t)p[1];
     c.id = id;
     cp = OBJ_bsearch_ssl_cipher_id(&c, ssl3_ciphers, SSL3_NUM_CIPHERS);
-#ifdef DEBUG_PRINT_UNKNOWN_CIPHERSUITES
-    if (cp == NULL)
-        fprintf(stderr, "Unknown cipher ID %x\n", (p[0] << 8) | p[1]);
-#endif
     return cp;
 }
 

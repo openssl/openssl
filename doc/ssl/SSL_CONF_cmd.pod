@@ -174,13 +174,6 @@ Set by default.
 enables strict mode protocol handling. Equivalent to setting
 B<SSL_CERT_FLAG_TLS_STRICT>.
 
-=item B<-debug_broken_protocol>
-
-disables various checks and permits several kinds of broken protocol behaviour
-for testing purposes: it should B<NEVER> be used in anything other than a test
-environment. Only supported if OpenSSL is configured with
-B<-DOPENSSL_SSL_DEBUG_BROKEN_PROTOCOL>.
-
 =back
 
 =head1 SUPPORTED CONFIGURATION FILE COMMANDS

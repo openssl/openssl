@@ -51,13 +51,6 @@
 #include "modes_lcl.h"
 #include <string.h>
 
-#ifndef MODES_DEBUG
-# ifndef NDEBUG
-#  define NDEBUG
-# endif
-#endif
-#include <assert.h>
-
 int CRYPTO_xts128_encrypt(const XTS128_CONTEXT *ctx,
                           const unsigned char iv[16],
                           const unsigned char *inp, unsigned char *out,

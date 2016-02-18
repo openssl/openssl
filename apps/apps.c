@@ -1462,9 +1462,6 @@ int save_serial(char *serialfile, char *suffix, BIGNUM *serial,
         j = BIO_snprintf(buf[0], sizeof buf[0], "%s-%s", serialfile, suffix);
 #endif
     }
-#ifdef RL_DEBUG
-    BIO_printf(bio_err, "DEBUG: writing \"%s\"\n", buf[0]);
-#endif
     out = BIO_new_file(buf[0], "w");
     if (out == NULL) {
         ERR_print_errors(bio_err);
@@ -1503,17 +1500,10 @@ int rotate_serial(char *serialfile, char *new_suffix, char *old_suffix)
     }
 #ifndef OPENSSL_SYS_VMS
     j = BIO_snprintf(buf[0], sizeof buf[0], "%s.%s", serialfile, new_suffix);
-#else
-    j = BIO_snprintf(buf[0], sizeof buf[0], "%s-%s", serialfile, new_suffix);
-#endif
-#ifndef OPENSSL_SYS_VMS
     j = BIO_snprintf(buf[1], sizeof buf[1], "%s.%s", serialfile, old_suffix);
 #else
+    j = BIO_snprintf(buf[0], sizeof buf[0], "%s-%s", serialfile, new_suffix);
     j = BIO_snprintf(buf[1], sizeof buf[1], "%s-%s", serialfile, old_suffix);
-#endif
-#ifdef RL_DEBUG
-    BIO_printf(bio_err, "DEBUG: renaming \"%s\" to \"%s\"\n",
-               serialfile, buf[1]);
 #endif
     if (rename(serialfile, buf[1]) < 0 && errno != ENOENT
 #ifdef ENOTDIR
@@ -1525,10 +1515,6 @@ int rotate_serial(char *serialfile, char *new_suffix, char *old_suffix)
         perror("reason");
         goto err;
     }
-#ifdef RL_DEBUG
-    BIO_printf(bio_err, "DEBUG: renaming \"%s\" to \"%s\"\n",
-               buf[0], serialfile);
-#endif
     if (rename(buf[0], serialfile) < 0) {
         BIO_printf(bio_err,
                    "unable to rename %s to %s\n", buf[0], serialfile);
@@ -1604,10 +1590,6 @@ CA_DB *load_index(char *dbfile, DB_ATTR *db_attr)
     if (dbattr_conf) {
         char *p = NCONF_get_string(dbattr_conf, NULL, "unique_subject");
         if (p) {
-#ifdef RL_DEBUG
-            BIO_printf(bio_err,
-                       "DEBUG[load_index]: unique_subject = \"%s\"\n", p);
-#endif
             retdb->attributes.unique_subject = parse_yesno(p, 1);
         }
     }
@@ -1654,21 +1636,12 @@ int save_index(const char *dbfile, const char *suffix, CA_DB *db)
     }
 #ifndef OPENSSL_SYS_VMS
     j = BIO_snprintf(buf[2], sizeof buf[2], "%s.attr", dbfile);
-#else
-    j = BIO_snprintf(buf[2], sizeof buf[2], "%s-attr", dbfile);
-#endif
-#ifndef OPENSSL_SYS_VMS
     j = BIO_snprintf(buf[1], sizeof buf[1], "%s.attr.%s", dbfile, suffix);
-#else
-    j = BIO_snprintf(buf[1], sizeof buf[1], "%s-attr-%s", dbfile, suffix);
-#endif
-#ifndef OPENSSL_SYS_VMS
     j = BIO_snprintf(buf[0], sizeof buf[0], "%s.%s", dbfile, suffix);
 #else
+    j = BIO_snprintf(buf[2], sizeof buf[2], "%s-attr", dbfile);
+    j = BIO_snprintf(buf[1], sizeof buf[1], "%s-attr-%s", dbfile, suffix);
     j = BIO_snprintf(buf[0], sizeof buf[0], "%s-%s", dbfile, suffix);
-#endif
-#ifdef RL_DEBUG
-    BIO_printf(bio_err, "DEBUG: writing \"%s\"\n", buf[0]);
 #endif
     out = BIO_new_file(buf[0], "w");
     if (out == NULL) {
@@ -1682,9 +1655,6 @@ int save_index(const char *dbfile, const char *suffix, CA_DB *db)
         goto err;
 
     out = BIO_new_file(buf[1], "w");
-#ifdef RL_DEBUG
-    BIO_printf(bio_err, "DEBUG: writing \"%s\"\n", buf[1]);
-#endif
     if (out == NULL) {
         perror(buf[2]);
         BIO_printf(bio_err, "unable to open '%s'\n", buf[2]);
@@ -1715,31 +1685,16 @@ int rotate_index(const char *dbfile, const char *new_suffix,
     }
 #ifndef OPENSSL_SYS_VMS
     j = BIO_snprintf(buf[4], sizeof buf[4], "%s.attr", dbfile);
-#else
-    j = BIO_snprintf(buf[4], sizeof buf[4], "%s-attr", dbfile);
-#endif
-#ifndef OPENSSL_SYS_VMS
+    j = BIO_snprintf(buf[3], sizeof buf[3], "%s.attr.%s", dbfile, old_suffix);
     j = BIO_snprintf(buf[2], sizeof buf[2], "%s.attr.%s", dbfile, new_suffix);
-#else
-    j = BIO_snprintf(buf[2], sizeof buf[2], "%s-attr-%s", dbfile, new_suffix);
-#endif
-#ifndef OPENSSL_SYS_VMS
+    j = BIO_snprintf(buf[1], sizeof buf[1], "%s.%s", dbfile, old_suffix);
     j = BIO_snprintf(buf[0], sizeof buf[0], "%s.%s", dbfile, new_suffix);
 #else
-    j = BIO_snprintf(buf[0], sizeof buf[0], "%s-%s", dbfile, new_suffix);
-#endif
-#ifndef OPENSSL_SYS_VMS
-    j = BIO_snprintf(buf[1], sizeof buf[1], "%s.%s", dbfile, old_suffix);
-#else
-    j = BIO_snprintf(buf[1], sizeof buf[1], "%s-%s", dbfile, old_suffix);
-#endif
-#ifndef OPENSSL_SYS_VMS
-    j = BIO_snprintf(buf[3], sizeof buf[3], "%s.attr.%s", dbfile, old_suffix);
-#else
+    j = BIO_snprintf(buf[4], sizeof buf[4], "%s-attr", dbfile);
     j = BIO_snprintf(buf[3], sizeof buf[3], "%s-attr-%s", dbfile, old_suffix);
-#endif
-#ifdef RL_DEBUG
-    BIO_printf(bio_err, "DEBUG: renaming \"%s\" to \"%s\"\n", dbfile, buf[1]);
+    j = BIO_snprintf(buf[2], sizeof buf[2], "%s-attr-%s", dbfile, new_suffix);
+    j = BIO_snprintf(buf[1], sizeof buf[1], "%s-%s", dbfile, old_suffix);
+    j = BIO_snprintf(buf[0], sizeof buf[0], "%s-%s", dbfile, new_suffix);
 #endif
     if (rename(dbfile, buf[1]) < 0 && errno != ENOENT
 #ifdef ENOTDIR
@@ -1750,18 +1705,12 @@ int rotate_index(const char *dbfile, const char *new_suffix,
         perror("reason");
         goto err;
     }
-#ifdef RL_DEBUG
-    BIO_printf(bio_err, "DEBUG: renaming \"%s\" to \"%s\"\n", buf[0], dbfile);
-#endif
     if (rename(buf[0], dbfile) < 0) {
         BIO_printf(bio_err, "unable to rename %s to %s\n", buf[0], dbfile);
         perror("reason");
         rename(buf[1], dbfile);
         goto err;
     }
-#ifdef RL_DEBUG
-    BIO_printf(bio_err, "DEBUG: renaming \"%s\" to \"%s\"\n", buf[4], buf[3]);
-#endif
     if (rename(buf[4], buf[3]) < 0 && errno != ENOENT
 #ifdef ENOTDIR
         && errno != ENOTDIR
@@ -1773,9 +1722,6 @@ int rotate_index(const char *dbfile, const char *new_suffix,
         rename(buf[1], dbfile);
         goto err;
     }
-#ifdef RL_DEBUG
-    BIO_printf(bio_err, "DEBUG: renaming \"%s\" to \"%s\"\n", buf[2], buf[4]);
-#endif
     if (rename(buf[2], buf[4]) < 0) {
         BIO_printf(bio_err, "unable to rename %s to %s\n", buf[2], buf[4]);
         perror("reason");
