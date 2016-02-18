@@ -731,7 +731,7 @@ OPTIONS s_client_options[] = {
     {"security_debug_verbose", OPT_SECURITY_DEBUG_VERBOSE, '-',
      "Output more security debug output"},
     {"cert_chain", OPT_CERT_CHAIN, '<',
-     "Certificate chain file in PEM format"},
+     "Certificate chain file (in PEM format)"},
     {"chainCApath", OPT_CHAINCAPATH, '/',
      "Use dir as certificate store path to build CA certificate chain"},
     {"verifyCApath", OPT_VERIFYCAPATH, '/',
@@ -752,7 +752,7 @@ OPTIONS s_client_options[] = {
     {"alpn", OPT_ALPN, 's',
      "Enable ALPN extension, considering named protocols supported (comma-separated list)"},
     {"async", OPT_ASYNC, '-', "Support asynchronous operation"},
-    {"ssl_config", OPT_SSL_CONFIG, 's', "Use configuration file"},
+    {"ssl_config", OPT_SSL_CONFIG, 's', "Use specified configuration file"},
     OPT_S_OPTIONS,
     OPT_V_OPTIONS,
     OPT_X_OPTIONS,
@@ -769,7 +769,7 @@ OPTIONS s_client_options[] = {
     {"tls1_2", OPT_TLS1_2, '-', "Just use TLSv1.2"},
 #endif
 #ifndef OPENSSL_NO_DTLS
-    {"dtls", OPT_DTLS, '-', "Use any DTLS"},
+    {"dtls", OPT_DTLS, '-', "Use any version of DTLS"},
     {"timeout", OPT_TIMEOUT, '-',
      "Enable send/receive timeout on DTLS connections"},
     {"mtu", OPT_MTU, 'p', "Set the link layer MTU"},
