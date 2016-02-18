@@ -927,7 +927,7 @@ $bin\$(EXE_EXT): $objs $deps
 	\$(RM) $bin\$(EXE_EXT)
 	\$(MAKE) -f \$(SRCDIR)/Makefile.shared -e \\
 		PERL=\$(PERL) SRCDIR=\$(SRCDIR) \\
-		APPNAME=$bin OBJECTS="$objs" \\
+		APPNAME=$bin\$(EXE_EXT) OBJECTS="$objs" \\
 		LIBDEPS="\$(PLIB_LDFLAGS) $linklibs \$(EX_LIBS)" \\
 		CC="\$(CC)" CFLAGS="\$(CFLAGS)" LDFLAGS="\$(LDFLAGS)" \\
 		LIBRPATH="\$(INSTALLTOP)/\$(LIBDIR)" \\
