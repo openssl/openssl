@@ -1409,7 +1409,7 @@ int SSL_get_async_wait_fd(SSL *s)
 
 int SSL_accept(SSL *s)
 {
-    if (s->handshake_func == 0) {
+    if (s->handshake_func == NULL) {
         /* Not properly initialized yet */
         SSL_set_accept_state(s);
     }
@@ -1419,7 +1419,7 @@ int SSL_accept(SSL *s)
 
 int SSL_connect(SSL *s)
 {
-    if (s->handshake_func == 0) {
+    if (s->handshake_func == NULL) {
         /* Not properly initialized yet */
         SSL_set_connect_state(s);
     }
@@ -1479,7 +1479,7 @@ static int ssl_io_intern(void *vargs)
 
 int SSL_read(SSL *s, void *buf, int num)
 {
-    if (s->handshake_func == 0) {
+    if (s->handshake_func == NULL) {
         SSLerr(SSL_F_SSL_READ, SSL_R_UNINITIALIZED);
         return -1;
     }
@@ -1506,7 +1506,7 @@ int SSL_read(SSL *s, void *buf, int num)
 
 int SSL_peek(SSL *s, void *buf, int num)
 {
-    if (s->handshake_func == 0) {
+    if (s->handshake_func == NULL) {
         SSLerr(SSL_F_SSL_PEEK, SSL_R_UNINITIALIZED);
         return -1;
     }
@@ -1531,7 +1531,7 @@ int SSL_peek(SSL *s, void *buf, int num)
 
 int SSL_write(SSL *s, const void *buf, int num)
 {
-    if (s->handshake_func == 0) {
+    if (s->handshake_func == NULL) {
         SSLerr(SSL_F_SSL_WRITE, SSL_R_UNINITIALIZED);
         return -1;
     }
@@ -1566,7 +1566,7 @@ int SSL_shutdown(SSL *s)
      * (see ssl3_shutdown).
      */
 
-    if (s->handshake_func == 0) {
+    if (s->handshake_func == NULL) {
         SSLerr(SSL_F_SSL_SHUTDOWN, SSL_R_UNINITIALIZED);
         return -1;
     }
