@@ -126,6 +126,7 @@ NM= $(CROSS_COMPILE){- $target{nm} || "nm" -}
 RM= rm -f
 TAR= {- $target{tar} || "tar" -}
 TARFLAGS= {- $target{tarflags} -}
+MAKEDEPEND=$(CROSS_COMPILE){- $config{makedepprog} -}
 
 BASENAME=       openssl
 NAME=           $(BASENAME)-$(VERSION)
@@ -180,7 +181,7 @@ clean: libclean
 	-rm -f `find $(BLDDIR) -type l`
 	rm -f $(TARFILE)
 
-DCLEAN_CMD=sed -e '/^DO NOT DELETE.*/,$$d'
+DCLEAN_CMD=sed -e '/^. DO NOT DELETE.*/,$$d'
 dclean:
 	$(DCLEAN_CMD) < Makefile >Makefile.new
 	mv -f Makefile.new Makefile
@@ -743,10 +744,11 @@ Makefile: {- $config{build_file_template} -} $(SRCDIR)/Configure $(SRCDIR)/confi
           return <<"EOF";
 $dep : $deps
 	rm -f \$\@.tmp; touch \$\@.tmp
-	\$(MAKEDEPEND) -f\$\@.tmp -o"|$obj"\
-	    -- -DOPENSSL_DOING_MAKEDEPEND \$(DEPFLAGS)$incs \
-	    -- $srcs
-	sed -e 's/^.*|//' -e 's/ \\/\\(\\\\.\\|[^ ]\\)*//g' -e '/: *\$/d' -e '/^\\(#.*\\| *\\)\$/d' \$\@.tmp > \$\@
+	\$(MAKEDEPEND) -f\$\@.tmp -o"|$obj" \\
+	    -- -DOPENSSL_DOING_MAKEDEPEND \$(DEPFLAGS)$incs \\
+	    -- $srcs \\
+	    2>/dev/null
+	sed -e 's/^.*|//' -e 's/ \\/\\(\\\\.\\|[^ ]\\)*//g' -e '/: *\$\$/d' -e '/^\\(#.*\\| *\\)\$\$/d' \$\@.tmp > \$\@
 	rm \$\@.tmp
 EOF
       }
