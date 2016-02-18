@@ -158,6 +158,7 @@ test tests: build_tests build_apps build_engines rehash
 	( cd test; \
 	  SRCTOP=../$(SRCDIR) \
 	  BLDTOP=../$(BLDDIR) \
+	  EXE_EXT=$(EXE_EXT) \
 	    $(PERL) ../$(SRCDIR)/test/run_tests.pl $(TESTS) )
 
 list-tests:
