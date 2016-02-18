@@ -480,26 +480,6 @@ The build-file template is expected to define at least the following
 perl functions in a perl code fragment enclosed with "{-" and "-}".
 They are all expected to return a string with the lines they produce.
 
-    src2dep     - function that produces build file lines to get the
-                  dependencies for an object file into a dependency
-                  file.
-
-                  It's called like this:
-
-                        src2dep(obj => "PATH/TO/objectfile",
-                                srcs => [ "PATH/TO/sourcefile", ... ],
-                                deps => [ "dep1", ... ],
-                                incs => [ "INCL/PATH", ... ]);
-
-                  'obj' has the dependent object file as well as
-                  object file the dependencies are for; it's *without*
-                  extension, src2dep() is expected to add that.
-                  'srcs' has the list of source files to build the
-                  object file, with the first item being the source
-                  file that directly corresponds to the object file.
-                  'deps' is a list of explicit dependencies.  'incs'
-                  is a list of include file directories.
-
     src2obj     - function that produces build file lines to build an
                   object file from source files and associated data.
 
