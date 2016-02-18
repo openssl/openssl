@@ -183,7 +183,7 @@ static int dsa_pub_encode(X509_PUBKEY *pk, const EVP_PKEY *pkey)
 
 static int dsa_priv_decode(EVP_PKEY *pkey, PKCS8_PRIV_KEY_INFO *p8)
 {
-    const unsigned char *p, *q, *pm;
+    const unsigned char *p, *pm;
     int pklen, pmlen;
     int ptype;
     void *pval;
@@ -200,17 +200,9 @@ static int dsa_priv_decode(EVP_PKEY *pkey, PKCS8_PRIV_KEY_INFO *p8)
         return 0;
     X509_ALGOR_get0(NULL, &ptype, &pval, palg);
 
-    q = p;
-
     if ((privkey = d2i_ASN1_INTEGER(NULL, &p, pklen)) == NULL)
         goto decerr;
-    if (privkey->type == V_ASN1_NEG_INTEGER) {
-        p8->broken = PKCS8_NEG_PRIVKEY;
-        ASN1_STRING_clear_free(privkey);
-        if ((privkey = d2i_ASN1_UINTEGER(NULL, &q, pklen)) == NULL)
-            goto decerr;
-    }
-    if (ptype != V_ASN1_SEQUENCE)
+    if (privkey->type == V_ASN1_NEG_INTEGER || ptype != V_ASN1_SEQUENCE)
         goto decerr;
 
     pstr = pval;
