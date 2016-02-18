@@ -7,7 +7,7 @@
 
   Major changes between OpenSSL 1.0.1r and OpenSSL 1.0.1s [under development]
 
-      o
+      o Disable SSLv2 default build, default negotiation and weak ciphers.
 
   Major changes between OpenSSL 1.0.1q and OpenSSL 1.0.1r [28 Jan 2016]
 
