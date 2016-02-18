@@ -506,7 +506,6 @@ static void ossl_init_thread_stop(struct thread_local_inits_st *locals)
     }
 
     OPENSSL_free(locals);
-    ossl_init_thread_stop_cleanup();
 }
 
 void OPENSSL_thread_stop(void)
@@ -598,6 +597,8 @@ void OPENSSL_cleanup(void)
 #endif
         ERR_free_strings();
     }
+
+    ossl_init_thread_stop_cleanup();
 
 #ifdef OPENSSL_INIT_DEBUG
     fprintf(stderr, "OPENSSL_INIT: OPENSSL_INIT_library_stop: "
