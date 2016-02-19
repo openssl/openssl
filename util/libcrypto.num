@@ -4288,3 +4288,4 @@ TS_CONF_set_ess_cert_id_digest          4230	1_1_1	EXIST::FUNCTION:TS
 ESS_SIGNING_CERT_V2_free                4231	1_1_1	EXIST::FUNCTION:TS
 ESS_SIGNING_CERT_V2_dup                 4232	1_1_1	EXIST::FUNCTION:TS
 ESS_CERT_ID_V2_new                      4233	1_1_1	EXIST::FUNCTION:TS
+PEM_read_bio_ex                         4234	1_1_1	EXIST::FUNCTION:
