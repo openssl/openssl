@@ -11,12 +11,12 @@ EXTRA=  ../ms/uplink-x86.pl ../ms/uplink.c ../ms/applink.c \
 DEPEND[cversion.o]=buildinf.h
 
 BEGINRAW[descrip.mms]
-[.crypto]buildinf.h : descrip.mms
+[.crypto]buildinf.h : configdata.pm
 	$(PERL) {- catfile(catdir($sourcedir, "[-]"), "util", "mkbuildinf.pl") -} "$(CC) $(CFLAGS)" "$(PLATFORM)" > [.crypto]buildinf.h
 ENDRAW[descrip.mms]
 
 BEGINRAW[Makefile]
-crypto/buildinf.h : Makefile
+crypto/buildinf.h : configdata.pm
 	$(PERL) $(SRCDIR)/util/mkbuildinf.pl "$(CC) $(CFLAGS_Q)" "$(PLATFORM)" > crypto/buildinf.h
 
 ##### APPLINK, UPLINK and CPUID assembler implementations
