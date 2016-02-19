@@ -316,7 +316,7 @@ install_dev:
 		chmod 644 $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn2.new; \
 		mv -f $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn2.new \
 		      $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn2; \
-		: {- output_off() unless windowsdll(); "" -}; \
+		: {- output_on() unless windowsdll(); "" -}; \
 	done
 	@ : {- output_on() if $config{no_shared}; "" -}
 	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig
@@ -361,7 +361,7 @@ uninstall_dev:
 		: {- output_on() if windowsdll(); "" -}{- output_off() unless windowsdll(); "" -}; \
 		echo "$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn2"; \
 		$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn2; \
-		: {- output_off() unless windowsdll(); "" -}; \
+		: {- output_on() unless windowsdll(); "" -}; \
 	done
 	@ : {- output_on() if $config{no_shared}; "" -}
 	@echo "$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig/libcrypto.pc"
