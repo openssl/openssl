@@ -983,14 +983,6 @@ if ($target{shared_target} eq "")
 	$no_shared_warn = 1 if !$config{no_shared} && !$config{fips};
 	$config{no_shared} = 1;
 	}
-if (!$config{no_shared})
-	{
-	if ($target{shared_cflag} ne "")
-		{
-		push @{$config{defines}}, "OPENSSL_PIC";
-		$config{cflags} = "$target{shared_cflag} $config{cflags}";
-		}
-	}
 
 if ($builder ne "mk1mf")
 	{

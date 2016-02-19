@@ -11,7 +11,7 @@ MAKEFILE=	Makefile
 AR=		ar r
 PERL=		perl
 
-CFLAGS= $(INCLUDES) $(CFLAG)
+CFLAGS= $(INCLUDES) $(CFLAG) $(SHARED_CFLAG)
 
 GENERAL=Makefile README
 

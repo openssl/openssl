@@ -53,6 +53,7 @@ my %mf_import = (
 	CC             => \$mf_cc,
 	CFLAG	       => \$mf_cflag,
 	CFLAG_Q	       => \$mf_cflag_q,
+	SHARED_CFLAG   => \$mf_shared_cflag,
         DEPFLAG        => \$mf_depflag,
 	CPUID_OBJ      => \$mf_cpuid_asm,
 	BN_ASM	       => \$mf_bn_asm,
@@ -309,7 +310,7 @@ $cflags.=" -DOPENSSL_FIPS"    if $fips;
 $cflags.=" -DOPENSSL_NO_EC2M"    if $no_ec2m;
 $cflags.= " -DZLIB" if $zlib_opt;
 $cflags.= " -DZLIB_SHARED" if $zlib_opt == 2;
-$cflags.=" -DOPENSSL_PIC" if $shlib;
+$cflags.=" -DOPENSSL_PIC";
 
 if ($no_static_engine)
 	{
@@ -328,7 +329,7 @@ else
 	{ $cflags="$c_flags$cflags" if ($c_flags ne ""); }
 
 if ($orig_platform eq 'copy') {
-    $cflags = $mf_cflag;
+    $cflags = "$mf_cflag $mf_shared_cflag";
     $cc = $mf_cc;
 }
 

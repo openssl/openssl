@@ -8,7 +8,7 @@ OPENSSLDIR=     /usr/local/ssl
 INSTALLTOP=/usr/local/ssl
 AR=		ar r
 
-CFLAGS= $(INCLUDES) $(CFLAG)
+CFLAGS= $(INCLUDES) $(CFLAG) $(SHARED_CFLAG)
 
 GENERAL=Makefile
 

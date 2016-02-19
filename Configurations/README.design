@@ -392,15 +392,18 @@ etc.
                         src2obj(obj => "PATH/TO/objectfile",
                                 srcs => [ "PATH/TO/sourcefile", ... ],
                                 deps => [ "dep1", ... ],
-                                incs => [ "INCL/PATH", ... ]);
+                                incs => [ "INCL/PATH", ... ]
+                                intent => one of "lib", "dso", "bin" );
 
                   'obj' has the intended object file *without*
                   extension, src2obj() is expected to add that.
                   'srcs' has the list of source files to build the
                   object file, with the first item being the source
                   file that directly corresponds to the object file.
-                  'deps' is a list of dependencies.  'incs' is a list
-                  of include file directories.
+                  'deps' is a list of explicit dependencies.  'incs'
+                  is a list of include file directories.  Finally,
+                  'intent' indicates what this object file is going
+                  to be used for.
 
     obj2lib     - function that produces build file lines to build a
                   static library file ("libfoo.a" in Unix terms) from
