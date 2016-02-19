@@ -273,6 +273,8 @@ static ERR_STRING_DATA SSL_str_functs[] = {
     {ERR_FUNC(SSL_F_STATE_MACHINE), "state_machine"},
     {ERR_FUNC(SSL_F_TLS12_CHECK_PEER_SIGALG), "tls12_check_peer_sigalg"},
     {ERR_FUNC(SSL_F_TLS1_CHANGE_CIPHER_STATE), "tls1_change_cipher_state"},
+    {ERR_FUNC(SSL_F_TLS1_CHECK_DUPLICATE_EXTENSIONS),
+     "tls1_check_duplicate_extensions"},
     {ERR_FUNC(SSL_F_TLS1_CHECK_SERVERHELLO_TLSEXT),
      "TLS1_CHECK_SERVERHELLO_TLSEXT"},
     {ERR_FUNC(SSL_F_TLS1_EXPORT_KEYING_MATERIAL),

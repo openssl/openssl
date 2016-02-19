@@ -215,11 +215,11 @@ sub extms_filter
 
     foreach my $message (@{$proxy->message_list}) {
         if ($crmextms && $message->mt == TLSProxy::Message::MT_CLIENT_HELLO) {
-            $message->delete_extension(TLSProxy::ClientHello::EXT_EXTENDED_MASTER_SECRET);
+            $message->delete_extension(TLSProxy::Message::EXT_EXTENDED_MASTER_SECRET);
             $message->repack();
         }
         if ($srmextms && $message->mt == TLSProxy::Message::MT_SERVER_HELLO) {
-            $message->delete_extension(TLSProxy::ClientHello::EXT_EXTENDED_MASTER_SECRET);
+            $message->delete_extension(TLSProxy::Message::EXT_EXTENDED_MASTER_SECRET);
             $message->repack();
         }
     }
@@ -237,7 +237,7 @@ sub checkmessages($$$$$)
         #Get the extensions data
         my %extensions = %{$message->extension_data};
         if (defined
-            $extensions{TLSProxy::ClientHello::EXT_EXTENDED_MASTER_SECRET}) {
+            $extensions{TLSProxy::Message::EXT_EXTENDED_MASTER_SECRET}) {
             if ($message->mt == TLSProxy::Message::MT_CLIENT_HELLO) {
                 $cextms = 1;
             } else {
