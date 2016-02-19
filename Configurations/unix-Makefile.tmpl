@@ -87,7 +87,8 @@ ENGINESDIR={- use File::Spec::Functions;
               catdir($prefix,$libdir,"engines") -}
 
 MANDIR=$(INSTALLTOP)/share/man
-HTMLDIR=$(INSTALLTOP)/share/doc/$(BASENAME)/html
+DOCDIR=$(INSTALLTOP)/share/doc/$(BASENAME)
+HTMLDIR=$(DOCDIR)/html
 
 # MANSUFFIX is for the benefit of anyone who may want to have a suffix
 # appended after the manpage file section number.  "ssl" is popular,
@@ -211,6 +212,7 @@ uninstall_sw: uninstall_dev uninstall_engines uninstall_runtime
 install_docs: install_man_docs install_html_docs
 
 uninstall_docs: uninstall_man_docs uninstall_html_docs
+	$(RM) -r -v $(DESTDIR)$(DOCDIR)
 
 install_ssldirs:
 	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(DESTDIR)$(OPENSSLDIR)/certs
@@ -469,6 +471,7 @@ UNINSTALL_DOCS=\
 			$(RM) $$top/man$$SEC/$$n$$suf; \
 		    fi; \
 		done; \
+		( $(RMDIR) $$top/man$$SEC 2>/dev/null || exit 0 ); \
 	    done; \
 	done
 
