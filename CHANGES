@@ -4,6 +4,11 @@
 
  Changes between 1.0.2f and 1.0.2g [xx XXX xxxx]
 
+  * Disable weak ciphers in SSLv3 and up in default builds of OpenSSL.
+    Builds that are not configured with "enable-weak-ssl-ciphers" will not
+    provide any "EXPORT" or "LOW" strength ciphers.
+    [Viktor Dukhovni]
+
   * Disable SSLv2 default build, default negotiation and weak ciphers.  SSLv2
     is by default disabled at build-time.  Builds that are not configured with
     "enable-ssl2" will not support SSLv2.  Even if "enable-ssl2" is used,

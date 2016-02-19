@@ -7,6 +7,7 @@
 
   Major changes between OpenSSL 1.0.2f and OpenSSL 1.0.2g [under development]
 
+      o Disable weak ciphers in SSLv3 and up in default builds of OpenSSL.
       o Disable SSLv2 default build, default negotiation and weak ciphers.
 
   Major changes between OpenSSL 1.0.2e and OpenSSL 1.0.2f [28 Jan 2016]
