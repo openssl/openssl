@@ -37,12 +37,14 @@
      my $obj = shift;
      (my $obj_no_o = $obj) =~ s|\.o$||;
      my $bin = shift;
+     my %opts = @_;
      if (@{$unified_info{sources}->{$obj}}) {
          $OUT .= src2obj(obj => $obj_no_o,
                          srcs => $unified_info{sources}->{$obj},
                          deps => [ reducedepends(resolvedepends($obj)) ],
                          incs => [ @{$unified_info{includes}->{$bin}},
-                                   @{$unified_info{includes}->{$obj}} ]);
+                                   @{$unified_info{includes}->{$obj}} ],
+                         %opts);
      }
  }
 
@@ -78,7 +80,7 @@
                      objs => [ map { (my $x = $_) =~ s|\.o$||; $x }
                                @{$unified_info{sources}->{$lib}} ],
                      deps => [ resolvedepends($lib) ]);
-     map { doobj($_, $lib, intent => "lib") } @{$unified_info{sources}->{$lib}};
+     map { doobj($_, $lib, intent => "dso") } @{$unified_info{sources}->{$lib}};
  }
 
  # dobin is responsible for building programs.  It will call obj2bin,

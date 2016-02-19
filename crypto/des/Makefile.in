@@ -13,7 +13,7 @@ AR=		ar r
 RANLIB=		ranlib
 DES_ENC=	des_enc.o fcrypt_b.o
 
-CFLAGS= $(INCLUDES) $(CFLAG)
+CFLAGS= $(INCLUDES) $(CFLAG) $(SHARED_CFLAG)
 ASFLAGS= $(INCLUDES) $(ASFLAG)
 AFLAGS= $(ASFLAGS)
 

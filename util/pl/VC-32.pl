@@ -49,7 +49,7 @@ if ($FLAVOR =~ /WIN64/)
     # per 0.9.8 release remaining warnings were explicitly examined and
     # considered safe to ignore.
     # 
-    $base_cflags= " $mf_cflag";
+    $base_cflags= " $mf_cflag" . ($mf_shared_cflag ? " $mf_shared_cflag" : "");
     my $f = ($shlib and !$fipscanisterbuild)?' /MD':' /MT';
     $opt_cflags=$f.' /Ox';
     $dbg_cflags=$f.'d /Od -DDEBUG -D_DEBUG';
@@ -138,7 +138,7 @@ elsif ($FLAVOR =~ /CE/)
     }
 else	# Win32
     {
-    $base_cflags= " $mf_cflag";
+    $base_cflags= " $mf_cflag" . ($mf_shared_cflag ? " $mf_shared_cflag" : "");
     my $f = ($shlib and !$fipscanisterbuild)?' /MD':' /MT';
     $opt_cflags=$f.' /Ox /O2 /Ob2';
     $dbg_cflags=$f.'d /Od -DDEBUG -D_DEBUG';

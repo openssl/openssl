@@ -43,7 +43,6 @@
      # given libname with the simple shared extension (possible SO version
      # removed).  This differs from shlib_simple() by being unconditional.
      sub dso {
-         return () if $config{no_shared};
          my $engine = shift;
 
          return $engine . '$(DSO_EXT)';
@@ -149,6 +148,7 @@ CFLAGS_Q={- $cflags2 =~ s|([\\"])|\\$1|g; $cflags2 -} {- $config{cflags} -}
 LDFLAGS= {- $config{lflags} -}
 PLIB_LDFLAGS= {- $config{plib_lflags} -}
 EX_LIBS= {- $config{ex_libs} -}
+SHARED_CFLAGS={- $target{shared_cflag} || "" -}
 SHARED_LDFLAGS={- $target{shared_ldflag}
                   # Unlike other OSes (like Solaris, Linux, Tru64,
                   # IRIX) BSD run-time linkers (tested OpenBSD, NetBSD
@@ -164,6 +164,8 @@ SHARED_LDFLAGS={- $target{shared_ldflag}
                   . ($config{target} =~ m|^BSD-| && $prefix !~ m|^/usr/.*$|
                      ? " -Wl,-rpath,\$\$(LIBRPATH)" : "") -}
 SHARED_RCFLAGS={- $target{shared_rcflag} -}
+DSO_CFLAGS={- $target{shared_cflag} || "" -}
+BIN_CFLAGS={- "" -}
 
 PERL={- $config{perl} -}
 
@@ -823,25 +825,28 @@ configdata.pm: {- $config{build_file_template} -} $(SRCDIR)/Configure $(SRCDIR)/
       my $obj = $args{obj};
       my $srcs = join(" ", @{$args{srcs}});
       my $deps = join(" ", @{$args{srcs}}, @{$args{deps}});
-      my $incs = join(" ", map { " -I".$_ } @{$args{incs}});
+      my $incs = join("", map { " -I".$_ } @{$args{incs}});
+      my $ecflags = { lib => '$(SHARED_CFLAGS)',
+                      dso => '$(DSO_CFLAGS)',
+                      bin => '$(BIN_CFLAGS)' } -> {$args{intent}};
       my $makedepprog = $config{makedepprog};
       if ($makedepprog eq "makedepend") {
           return <<"EOF";
 $obj\$(DEP_EXT): $deps
 	rm -f \$\@.tmp; touch \$\@.tmp
-	\$(MAKEDEPEND) -f\$\@.tmp -o"|$obj" -- \$(CFLAGS)$incs -- $srcs \\
+	\$(MAKEDEPEND) -f\$\@.tmp -o"|$obj" -- \$(CFLAGS) $ecflags$incs -- $srcs \\
 	    2>/dev/null
 	sed -e 's/^.*|//' -e 's/ \\/\\(\\\\.\\|[^ ]\\)*//g' -e '/: *\$\$/d' -e '/^\\(#.*\\| *\\)\$\$/d' \$\@.tmp > \$\@
 	rm \$\@.tmp
 $obj\$(OBJ_EXT): $obj\$(DEP_EXT)
-	\$(CC) \$(CFLAGS)$incs -c -o \$\@ $srcs
+	\$(CC) \$(CFLAGS) $ecflags$incs -c -o \$\@ $srcs
 EOF
       }
       return <<"EOF";
 $obj\$(DEP_EXT): $deps
-	\$(CC) \$(CFLAGS)$incs -MM -MF \$\@ -MQ $obj $srcs
+	\$(CC) \$(CFLAGS) $ecflags$incs -MM -MF \$\@ -MQ $obj $srcs
 $obj\$(OBJ_EXT): $obj\$(DEP_EXT)
-	\$(CC) \$(CFLAGS)$incs -c -o \$\@ $srcs
+	\$(CC) \$(CFLAGS) $ecflags$incs -c -o \$\@ $srcs
 EOF
   }
   # On Unix, we build shlibs from static libs, so we're ignoring the
