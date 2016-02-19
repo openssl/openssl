@@ -668,8 +668,8 @@ uninstall_sw:
 						arch=-x64; \
 					fi; \
 					m=`echo $$i | sed -e 's/\.dll$$/-$(SHLIB_MAJOR)_$(SHLIB_MINOR)'"$$arch"'.dll/'`; \
-					echo $(RM) $(DESTDIR)$(INSTALLTOP)/bin/$$m.new; \
-					$(RM) $(DESTDIR)$(INSTALLTOP)/bin/$$m.new; \
+					echo $(RM) $(DESTDIR)$(INSTALLTOP)/bin/$$m; \
+					$(RM) $(DESTDIR)$(INSTALLTOP)/bin/$$m; \
 					echo $(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$i.a; \
 					$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$i.a; \
 					;; \
