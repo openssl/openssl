@@ -91,6 +91,15 @@ install:
 		done; \
 	fi
 
+uninstall:
+	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
+	@if [ -n "$(SHARED_LIBS)" ]; then \
+		set -e; \
+		for l in $(LIBNAMES); do \
+			$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/engines/$${l}$(DSO_EXT); \
+		done; \
+	fi
+
 errors:
 	set -e; for l in $(LIBNAMES); do \
 		$(PERL) ../util/mkerr.pl -conf e_$$l.ec \
