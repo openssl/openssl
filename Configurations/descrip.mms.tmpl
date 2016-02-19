@@ -260,10 +260,10 @@ descrip.mms : FORCE
                 < descrip.mms > descrip.mms-new
         @ OPEN/APPEND DESCRIP descrip.mms-new
         @ WRITE DESCRIP "# DO NOT DELETE THIS LINE -- make depend depends on it."
-        @ {- join("\n\t", map { "IF F\$SEARCH(\"$_\") .NES. \"\" THEN TYPE $_ /OUTPUT=DESCRIP:" } @deps); -}
+        {- join("\n\t", map { "\@ IF F\$SEARCH(\"$_\") .NES. \"\" THEN TYPE $_ /OUTPUT=DESCRIP:" } @deps); -}
         @ CLOSE DESCRIP
-        @ DIFF/OUTPUT=NLA0: descrip.mms,descrip.mms-new
-        @ IF $SEVERITY .EQ. 3 THEN RENAME descrip.mms-new descrip.mms
+        @ PIPE ( $(PERL) -e "use File::Compare qw/compare_text/; my $x = compare_text(""descrip.mms"",""descrip.mms-new""); exit(0x10000000 + ($x == 0));" || -
+                 RENAME descrip.mms-new descrip.mms )
         @ IF F$SEARCH("descrip.mms-new") .NES. "" THEN DELETE descrip.mms-new;*
         -@ SPAWN/OUTPUT=NLA0: PURGE/NOLOG descrip.mms
 
