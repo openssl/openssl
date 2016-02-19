@@ -289,7 +289,7 @@ link_a.cygwin:
 		SHLIB_SOVER=32; \
 		extras="$(LIBNAME).def"; \
 		$(PERL) util/mkdef.pl 32 $$SHLIB > $$extras; \
-		base=; [ $(LIBNAME) = "crypto" ] && base=-Wl,--image-base,0x63000000; \
+		base=; [ $(LIBNAME) = "crypto" -a -n "$(FIPSCANLIB)" ] && base=-Wl,--image-base,0x63000000; \
 	fi; \
 	dll_name=$$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX; \
 	$(PERL) util/mkrc.pl $$dll_name | \
