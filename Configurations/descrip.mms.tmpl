@@ -317,11 +317,13 @@ install_runtime : check_INSTALLTOP
                 ossl_installroot:[000000]openssl.cnf
 
 install_engines : check_INSTALLTOP
-        @ {- output_off() if $config{no_shared}; "" -} !
+        @ {- output_off() unless scalar @{$unified_info{engines}}; "" -} !
         @ WRITE SYS$OUTPUT "*** Installing engines"
         CREATE/DIR ossl_installroot:[ENGINES.'arch']
-        COPY/PROT=W:RE [.ENGINES]*.EXE ossl_installroot:[ENGINES.'arch']
-        @ {- output_on() if $config{no_shared}; "" -} !
+        {- join("\n        ",
+                map { "COPY/PROT=W:RE $_.EXE ossl_installroot:[ENGINES.'arch']" }
+                grep(!m|ossltest$|i, @{$unified_info{engines}})) -}
+        @ {- output_on() unless scalar @{$unified_info{engines}}; "" -} !
 
 install_config : [.VMS]openssl_startup.com [.VMS]openssl_shutdown.com -
                  check_INSTALLTOP
