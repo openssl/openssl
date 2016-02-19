@@ -210,6 +210,7 @@ SHARED_LDFLAG={- $target{shared_ldflag}
                  . ($config{target} =~ m|^BSD-| && $prefix !~ m|^/usr/.*$|
                     ? " -Wl,-rpath,\$\$(LIBRPATH)" : "") -}
 SHARED_RCFLAG={- $target{shared_rcflag} -}
+DYNAMIC_ENGINES={- $config{dynamic_engines} -}
 
 GENERAL=        Makefile
 BASENAME=       openssl
@@ -254,7 +255,7 @@ BUILDENV=	LC_ALL=C PLATFORM='$(PLATFORM)' PROCESSOR='$(PROCESSOR)'\
 		AS='$(CC)' ASFLAG='$(CFLAG) -c'			\
 		AR='$(AR)' NM='$(NM)' RANLIB='$(RANLIB)'	\
 		CROSS_COMPILE='$(CROSS_COMPILE)'		\
-		PERL='$(PERL)'	\
+		PERL='$(PERL)' DYNAMIC_ENGINES='$(DYNAMIC_ENGINES)'	\
 		SDIRS='$(SDIRS)' LIBRPATH='$(INSTALLTOP)/$(LIBDIR)'	\
 		DESTDIR='$(DESTDIR)'		\
 		INSTALLTOP='$(INSTALLTOP)' OPENSSLDIR='$(OPENSSLDIR)'	\

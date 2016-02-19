@@ -176,8 +176,6 @@ foreach (grep(!/^$/, split(/ /, $OPTIONS)))
 	print STDERR "unknown option - $_\n" if !&read_options;
 	}
 
-$no_static_engine = 0 if (!$shlib);
-
 $no_mdc2=1 if ($no_des);
 
 $no_ssl3=1 if ($no_md5);
@@ -1463,11 +1461,11 @@ sub read_options
 		{
 		$zlib_opt = 2;
 		}
-	elsif (/^no-static-engine/)
+	elsif (/^no-static-engine/ or /^enable-dynamic-engine/)
 		{
 		$no_static_engine = 1;
 		}
-	elsif (/^enable-static-engine/)
+	elsif (/^no-dynamic-engine/ or /^enable-static-engine/)
 		{
 		$no_static_engine = 0;
 		}
