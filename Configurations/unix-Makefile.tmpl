@@ -256,6 +256,8 @@ Makefile: FORCE
 	  done ) > Makefile.new
 	@if ! cmp Makefile.new Makefile >/dev/null 2>&1; then \
 		mv -f Makefile.new Makefile; \
+	else \
+		rm -f Makefile.new; \
 	fi
 
 # Install helper targets #############################################
