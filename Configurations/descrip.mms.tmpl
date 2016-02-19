@@ -241,6 +241,15 @@ libclean :
         - DELETE []CXX$DEMANGLER_DB.;*
 
 install : install_sw install_docs
+        @ WRITE SYS$OUTPUT ""
+        @ WRITE SYS$OUTPUT "######################################################################"
+        @ WRITE SYS$OUTPUT ""
+        @ WRITE SYS$OUTPUT "Installation complete"
+        @ WRITE SYS$OUTPUT ""
+        @ IF "$(DESTDIR)" .NES. "" THEN EXIT 1
+        @ WRITE SYS$OUTPUT "Run @$(INSTALLTOP)openssl_startup to set up logical names"
+        @ WRITE SYS$OUTPUT "then run @$(INSTALLTOP)openssl_setup to define commands"
+        @ WRITE SYS$OUTPUT ""
 
 uninstall : uninstall_docs uninstall_sw
 
@@ -270,15 +279,6 @@ descrip.mms : FORCE
 # Install helper targets #############################################
 
 install_sw : all install_dev install_engines install_runtime install_config
-        @ WRITE SYS$OUTPUT ""
-        @ WRITE SYS$OUTPUT "######################################################################"
-        @ WRITE SYS$OUTPUT ""
-        @ WRITE SYS$OUTPUT "Installation complete"
-        @ WRITE SYS$OUTPUT ""
-        @ IF "$(DESTDIR)" .NES. "" THEN EXIT 1
-        @ WRITE SYS$OUTPUT "Run @$(INSTALLTOP)openssl_startup to set up logical names"
-        @ WRITE SYS$OUTPUT "then run @$(INSTALLTOP)openssl_setup to define commands"
-        @ WRITE SYS$OUTPUT ""
 
 uninstall_sw : uninstall_dev uninstall_engines uninstall_runtime uninstall_config
 
@@ -292,13 +292,13 @@ install_dev : check_INSTALLTOP
         CREATE/DIR ossl_installroot:[include.openssl]
         COPY/PROT=W:R openssl:*.h ossl_installroot:[include.openssl]
         @ ! Install libraries
-        CREATE/DIR ossl_installroot:['arch'.LIB]
+        CREATE/DIR ossl_installroot:[LIB.'arch']
         {- join("\n        ",
-                map { "COPY/PROT=W:R $_.OLB ossl_installroot:['arch'.LIB]" }
+                map { "COPY/PROT=W:R $_.OLB ossl_installroot:[LIB.'arch']" }
                 @{$unified_info{libraries}}) -}
         @ {- output_off() if $config{no_shared}; "" -} !
         {- join("\n        ",
-                map { "COPY/PROT=W:RE $_.EXE ossl_installroot:['arch'.LIB]" }
+                map { "COPY/PROT=W:RE $_.EXE ossl_installroot:[LIB.'arch']" }
                 map { $unified_info{sharednames}->{$_} || () }
                 @{$unified_info{libraries}}) -}
         @ {- output_on() if $config{no_shared}; "" -} !
@@ -306,8 +306,8 @@ install_dev : check_INSTALLTOP
 install_runtime : check_INSTALLTOP
         @ WRITE SYS$OUTPUT "*** Installing runtime files"
         @ ! Install the main program
-        CREATE/DIR ossl_installroot:['arch'.EXE]
-        COPY/PROT=W:RE [.APPS]openssl.EXE ossl_installroot:['arch'.EXE]
+        CREATE/DIR ossl_installroot:[EXE.'arch']
+        COPY/PROT=W:RE [.APPS]openssl.EXE ossl_installroot:[EXE.'arch']
         @ ! Install scripts
         CREATE/DIR ossl_installroot:[EXE]
         COPY/PROT=W:RE [.APPS]CA.pl ossl_installroot:[EXE]
@@ -319,8 +319,8 @@ install_runtime : check_INSTALLTOP
 install_engines : check_INSTALLTOP
         @ {- output_off() if $config{no_shared}; "" -} !
         @ WRITE SYS$OUTPUT "*** Installing engines"
-        CREATE/DIR ossl_installroot:['arch'.ENGINES]
-        COPY/PROT=W:RE [.ENGINES]*.EXE ossl_installroot:['arch'.ENGINES]
+        CREATE/DIR ossl_installroot:[ENGINES.'arch']
+        COPY/PROT=W:RE [.ENGINES]*.EXE ossl_installroot:[ENGINES.'arch']
         @ {- output_on() if $config{no_shared}; "" -} !
 
 install_config : [.VMS]openssl_startup.com [.VMS]openssl_shutdown.com -
