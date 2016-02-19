@@ -261,7 +261,7 @@ my @disablables = (
     "dsa",
     "dso",
     "dtls",
-    "dynamic[-_]engine",
+    "dynamic-engine",
     "ec",
     "ec2m",
     "ecdh",
@@ -335,6 +335,7 @@ my %disabled = ( # "what"         => "comment"
 		 "sctp"           => "default",
 		 "shared"         => "default",
 		 "ssl-trace"	  => "default",
+		 "static-engine"  => "default",
 		 "unit-test"	  => "default",
 		 "zlib"           => "default",
 		 "crypto-mdebug"  => "default",
@@ -380,6 +381,9 @@ my @disable_cascades = (
     "tlsext"		=> [ "srp", "heartbeats" ],
 
     "crypto-mdebug"     => [ "crypto-mdebug-backtrace" ],
+
+    # Without DSO, we can't load dynamic engines, so don't build them dynamic
+    "dso"               => [ "dynamic-engine" ],
     );
 
 # Avoid protocol support holes.  Also disable all versions below N, if version
@@ -544,6 +548,14 @@ foreach (@argvcopy)
                                 $disabled{$proto} = "option(tls)";
                                 }
                         }
+                elsif ($1 eq "static-engine")
+                        {
+                        $disabled{"static-engine"} = "option";
+                        }
+                elsif ($1 eq "dynamic-engine")
+                        {
+                        delete $disabled{"static-engine"};
+                        }
                 else
                         {
                         $disabled{$1} = "option";
@@ -551,6 +563,14 @@ foreach (@argvcopy)
 		}
 	elsif (/^enable-(.+)$/)
 		{
+                if ($1 eq "static-engine")
+                        {
+                        delete $disabled{"static-engine"};
+                        }
+                elsif ($1 eq "dynamic-engine")
+                        {
+                        $disabled{"static-engine"} = "option";
+                        }
 		my $algo = $1;
 		delete $disabled{$algo};
 
@@ -984,20 +1004,13 @@ if ($target{shared_target} eq "")
 	$config{no_shared} = 1;
 	}
 
-if ($builder ne "mk1mf")
-	{
-	# add {no-}static-engine to options to allow mkdef.pl to work without extra arguments
-	if ($config{no_shared})
-		{
-		push @{$config{openssl_other_defines}}, "OPENSSL_NO_DYNAMIC_ENGINE";
-		$config{options}.=" static-engine";
-		}
-	else
-		{
-		push @{$config{openssl_other_defines}}, "OPENSSL_NO_STATIC_ENGINE";
-		$config{options}.=" no-static-engine";
-		}
-	}
+if ($disabled{"static-engine"}) {
+        push @{$config{defines}}, "OPENSSL_NO_STATIC_ENGINE";
+        $config{dynamic_engines} = 1;
+} else {
+        push @{$config{defines}}, "OPENSSL_NO_DYNAMIC_ENGINE";
+        $config{dynamic_engines} = 0;
+}
 
 #
 # Platform fix-ups
@@ -1371,8 +1384,8 @@ if ($builder eq "unified") {
             $unified_info{libraries}->{$library} = 1;
         }
 
-        die <<"EOF" if $config{no_shared} && scalar @engines;
-ENGINES can only be used if configured with 'shared'.
+        die <<"EOF" if scalar @engines and !$config{dynamic_engines};
+ENGINES can only be used if configured with 'static-enginex'.
 This is usually a fault in a build.info file.
 EOF
         foreach (@engines) {
