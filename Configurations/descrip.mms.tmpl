@@ -489,7 +489,7 @@ EOF
       my $write_opt =
           join("\n\t", map { my $x = $_ =~ /\[/ ? $_ : "[]".$_;
                              $x =~ s|(\.EXE)|$1/SHARE|;
-                             $x =~ s|(\.LIB)|$1/LIB|;
+                             $x =~ s|(\.OLB)|$1/LIB|;
                              "WRITE OPT_FILE \"$x\"" } @deps)
           || "\@ !";
       return <<"EOF";
@@ -537,7 +537,7 @@ EOF
           "\"\n\t".
           join("\n\t", map { my $x = $_ =~ /\[/ ? $_ : "[]".$_;
                              $x =~ s|(\.EXE)|$1/SHARE|;
-                             $x =~ s|(\.LIB)|$1/LIB|;
+                             $x =~ s|(\.OLB)|$1/LIB|;
                              "WRITE OPT_FILE \"$x\"" } @deps)
           || "\@ !";
       return <<"EOF";
