@@ -156,7 +156,7 @@ ASFLAG={- $target{asflags} -}
 NODEBUG=@
 .FIRST :
         $(NODEBUG) openssl_inc1 = F$PARSE("[.include.openssl]","A.;",,,"syntax_only") - "A.;"
-        $(NODEBUG) openssl_inc2 = F$PARSE("{- catdir($config{sourcedir},"[.include.openssl]") -}","a.;",,,"SYNTAX_ONLY") - "A.;"
+        $(NODEBUG) openssl_inc2 = F$PARSE("{- catdir($config{sourcedir},"[.include.openssl]") -}","A.;",,,"SYNTAX_ONLY") - "A.;"
         $(NODEBUG) internal_inc1 = F$PARSE("[.crypto.include.internal]","A.;",,,"SYNTAX_ONLY") - "A.;"
         $(NODEBUG) internal_inc2 = F$PARSE("{- catdir($config{sourcedir},"[.include.internal]") -}","A.;",,,"SYNTAX_ONLY") - "A.;"
         $(NODEBUG) internal_inc3 = F$PARSE("{- catdir($config{sourcedir},"[.crypto.include.internal]") -}","A.;",,,"SYNTAX_ONLY") - "A.;"
