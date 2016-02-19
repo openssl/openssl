@@ -204,20 +204,20 @@ NODEBUG=@
 
 # The main targets ###################################################
 
-all : config.timestamp, -
+all : configdata.pm, -
       build_libs_nodep, build_engines_nodep, build_apps_nodep, -
       depend
 
-build_libs : config.timestamp, build_libs_nodep, depend
+build_libs : configdata.pm, build_libs_nodep, depend
 build_libs_nodep : $(LIBS)
-build_engines : config.timestamp, build_engines_nodep, depend
+build_engines : configdata.pm, build_engines_nodep, depend
 build_engines_nodep : $(ENGINES)
-build_apps : config.timestamp, build_apps_nodep, depend
+build_apps : configdata.pm, build_apps_nodep, depend
 build_apps_nodep : $(PROGRAMS), $(SCRIPTS)
-build_tests : config.timestamp, build_tests_nodep, depend
+build_tests : configdata.pm, build_tests_nodep, depend
 build_tests_nodep : $(TESTPROGS)
 
-test tests : config.timestamp, -
+test tests : configdata.pm, -
              build_apps_nodep, build_engines_nodep, build_tests_nodep, -
              depend, rehash
         SET DEFAULT [.test]{- move("test") -}
@@ -351,7 +351,7 @@ install_config : [.VMS]openssl_startup.com [.VMS]openssl_shutdown.com -
                 {- sourcefile("VMS", "openssl_shutdown.com.in") -} -
                 > [.VMS]openssl_shutdown.com
 
-vmsconfig.pm : config.timestamp
+vmsconfig.pm : configdata.pm
         OPEN/WRITE/SHARE=READ CONFIG []vmsconfig.pm
         WRITE CONFIG "package vmsconfig;"
         WRITE CONFIG "use strict; use warnings;"
@@ -402,7 +402,7 @@ debug_logicals :
 
 # Building targets ###################################################
 
-config.timestamp : {- sourcefile("Configurations", "descrip.mms.tmpl") -} $(SRCDIR)Configure ! $(SRCDIR)config.com
+configdata.pm : {- sourcefile("Configurations", "descrip.mms.tmpl") -} $(SRCDIR)Configure ! $(SRCDIR)config.com
         @ WRITE SYS$OUTPUT "Detected changed: $?"
         @ WRITE SYS$OUTPUT "Reconfiguring..."
         perl $(SRCDIR)Configure reconf
@@ -411,12 +411,7 @@ config.timestamp : {- sourcefile("Configurations", "descrip.mms.tmpl") -} $(SRCD
         @ WRITE SYS$OUTPUT "***   Please run the same mms command again   ***"
         @ WRITE SYS$OUTPUT "***                                           ***"
         @ WRITE SYS$OUTPUT "*************************************************"
-        @ IF F$SEARCH("config.timestamp",1) .NES. "" THEN -
-                OPEN/APPEND TIMESTAMP "config.timestamp"
-        @ IF F$SEARCH("config.timestamp",2) .EQS. "" THEN -
-                OPEN/WRITE TIMESTAMP "config.timestamp"
-        @ close TIMESTAMP
-        @ exit %10000000
+        @ PIPE ( EXIT %X10000000 )
 
 {-
   use File::Basename;

@@ -150,16 +150,16 @@ PROCESSOR= {- $config{processor} -}
 
 # The main targets ###################################################
 
-all: config.timestamp build_libs_nodep build_engines_nodep build_apps_nodep \
+all: configdata.pm build_libs_nodep build_engines_nodep build_apps_nodep \
      depend link-utils
 
-build_libs: config.timestamp build_libs_nodep depend
+build_libs: configdata.pm build_libs_nodep depend
 build_libs_nodep: libcrypto.pc libssl.pc openssl.pc
-build_engines: config.timestamp build_engines_nodep depend
+build_engines: configdata.pm build_engines_nodep depend
 build_engines_nodep: $(ENGINES)
-build_apps: config.timestamp build_apps_nodep depend
+build_apps: configdata.pm build_apps_nodep depend
 build_apps_nodep: $(PROGRAMS) $(SCRIPTS)
-build_tests: config.timestamp build_tests_nodep depend
+build_tests: configdata.pm build_tests_nodep depend
 build_tests_nodep: $(TESTPROGS)
 
 test tests: build_tests_nodep build_apps_nodep build_engines_nodep depend rehash
@@ -598,12 +598,12 @@ rehash: link-utils copy-certs build_apps_nodep
 
 link-utils: $(BLDDIR)/util/opensslwrap.sh $(BLDDIR)/util/shlib_wrap.sh
 
-$(BLDDIR)/util/opensslwrap.sh: config.timestamp
+$(BLDDIR)/util/opensslwrap.sh: configdata.pm
 	@if [ "$(SRCDIR)" != "$(BLDDIR)" ]; then \
 	    mkdir -p "$(BLDDIR)/util"; \
 	    ln -sf "../$(SRCDIR)/util/opensslwrap.sh" "$(BLDDIR)/util"; \
 	fi
-$(BLDDIR)/util/shlib_wrap.sh: config.timestamp
+$(BLDDIR)/util/shlib_wrap.sh: configdata.pm
 	@if [ "$(SRCDIR)" != "$(BLDDIR)" ]; then \
 	    mkdir -p "$(BLDDIR)/util"; \
 	    ln -sf "../$(SRCDIR)/util/shlib_wrap.sh" "$(BLDDIR)/util"; \
@@ -661,7 +661,7 @@ FORCE:
 
 # Building targets ###################################################
 
-libcrypto.pc libssl.pc openssl.pc: config.timestamp $(LIBS)
+libcrypto.pc libssl.pc openssl.pc: configdata.pm $(LIBS)
 libcrypto.pc:
 	@ ( echo 'prefix=$(INSTALLTOP)'; \
 	    echo 'exec_prefix=$${prefix}'; \
@@ -704,8 +704,8 @@ openssl.pc:
 # wasn't passed down automatically.  It's quite safe to use it like we do
 # below; if it doesn't exist, the result will be empty and 'make' will pick
 # up $(MAKEFLAGS) which is passed down as an environment variable.
-config.timestamp: {- $config{build_file_template} -} $(SRCDIR)/Configure $(SRCDIR)/config
-	@echo "Detected that {- $config{build_file_template} -}, $(SRCDIR)/Configure or $(SRCDIR)/config may have changed."
+configdata.pm: {- $config{build_file_template} -} $(SRCDIR)/Configure $(SRCDIR)/config
+	@echo "Detected changed: $?"
 	@echo "Reconfiguring..."
 	$(SRCDIR)/Configure reconf
 	@echo "**************************************************"
@@ -713,7 +713,6 @@ config.timestamp: {- $config{build_file_template} -} $(SRCDIR)/Configure $(SRCDI
 	@echo "***   Please run the same make command again   ***"
 	@echo "***                                            ***"
 	@echo "**************************************************"
-	@touch config.timestamp
 	@false
 
 {-
