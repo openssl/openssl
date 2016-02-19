@@ -312,7 +312,10 @@ install_engines:
 	@echo "*** Installing engines"
 	@set -e; for e in $(ENGINES); do \
 		fn=`basename $$e`; \
-		echo "install $$e -> $(DESTDIR)$(INSTALLTOP)/bin/$$fn"; \
+		if [ "$$fn" = '{- dso("ossltest") -}' ]; then \
+			continue; \
+		fi; \
+		echo "install $$e -> $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/engines/$$fn"; \
 		cp $$e $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/engines/$$fn.new; \
 		chmod 755 $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/engines/$$fn.new; \
 		mv -f $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/engines/$$fn.new \
@@ -323,7 +326,10 @@ uninstall_engines:
 	@echo "*** Uninstalling engines"
 	@set -e; for e in $(ENGINES); do \
 		fn=`basename $$e`; \
-		echo "$(RM) $(DESTDIR)$(INSTALLTOP)/bin/$$fn"; \
+		if [ "$$fn" = '{- dso("ossltest") -}' ]; then \
+			continue; \
+		fi; \
+		echo "$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/engines/$$fn"; \
 		$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/engines/$$fn; \
 	done
 
