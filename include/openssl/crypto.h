@@ -293,29 +293,29 @@ DEFINE_STACK_OF(void)
 int CRYPTO_mem_ctrl(int mode);
 
 # define OPENSSL_malloc(num) \
-        CRYPTO_malloc(num, __FILE__, __LINE__)
+        CRYPTO_malloc(num, OPENSSL_FILE, OPENSSL_LINE)
 # define OPENSSL_zalloc(num) \
-        CRYPTO_zalloc(num, __FILE__, __LINE__)
+        CRYPTO_zalloc(num, OPENSSL_FILE, OPENSSL_LINE)
 # define OPENSSL_realloc(addr, num) \
-        CRYPTO_realloc(addr, num, __FILE__, __LINE__)
+        CRYPTO_realloc(addr, num, OPENSSL_FILE, OPENSSL_LINE)
 # define OPENSSL_clear_realloc(addr, old_num, num) \
-        CRYPTO_clear_realloc(addr, old_num, num, __FILE__, __LINE__)
+        CRYPTO_clear_realloc(addr, old_num, num, OPENSSL_FILE, OPENSSL_LINE)
 # define OPENSSL_clear_free(addr, num) \
-        CRYPTO_clear_free(addr, num, __FILE__, __LINE__)
+        CRYPTO_clear_free(addr, num, OPENSSL_FILE, OPENSSL_LINE)
 # define OPENSSL_free(addr) \
-        CRYPTO_free(addr, __FILE__, __LINE__)
+        CRYPTO_free(addr, OPENSSL_FILE, OPENSSL_LINE)
 # define OPENSSL_memdup(str, s) \
-        CRYPTO_memdup((str), s, __FILE__, __LINE__)
+        CRYPTO_memdup((str), s, OPENSSL_FILE, OPENSSL_LINE)
 # define OPENSSL_strdup(str) \
-        CRYPTO_strdup(str, __FILE__, __LINE__)
+        CRYPTO_strdup(str, OPENSSL_FILE, OPENSSL_LINE)
 # define OPENSSL_strndup(str, n) \
-        CRYPTO_strndup(str, n, __FILE__, __LINE__)
+        CRYPTO_strndup(str, n, OPENSSL_FILE, OPENSSL_LINE)
 # define OPENSSL_secure_malloc(num) \
-        CRYPTO_secure_malloc(num, __FILE__, __LINE__)
+        CRYPTO_secure_malloc(num, OPENSSL_FILE, OPENSSL_LINE)
 # define OPENSSL_secure_zalloc(num) \
-        CRYPTO_secure_zalloc(num, __FILE__, __LINE__)
+        CRYPTO_secure_zalloc(num, OPENSSL_FILE, OPENSSL_LINE)
 # define OPENSSL_secure_free(addr) \
-        CRYPTO_secure_free(addr, __FILE__, __LINE__)
+        CRYPTO_secure_free(addr, OPENSSL_FILE, OPENSSL_LINE)
 # define OPENSSL_secure_actual_size(ptr) \
         CRYPTO_secure_actual_size(ptr)
 
