@@ -681,18 +681,13 @@ int BIO_lookup(const char *host, const char *service,
         int gai_ret = 0;
 #ifdef AI_PASSIVE
         struct addrinfo hints;
+        memset(&hints, 0, sizeof hints);
 
-        hints.ai_flags = 0;
 # ifdef AI_ADDRCONFIG
         hints.ai_flags = AI_ADDRCONFIG;
 # endif
         hints.ai_family = family;
         hints.ai_socktype = socktype;
-        hints.ai_protocol = 0;
-        hints.ai_addrlen = 0;
-        hints.ai_addr = NULL;
-        hints.ai_canonname = NULL;
-        hints.ai_next = NULL;
 
         if (lookup_type == BIO_LOOKUP_SERVER)
             hints.ai_flags |= AI_PASSIVE;
