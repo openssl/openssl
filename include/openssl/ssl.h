@@ -2123,6 +2123,7 @@ void ERR_load_SSL_strings(void);
 # define SSL_F_STATE_MACHINE                              353
 # define SSL_F_TLS12_CHECK_PEER_SIGALG                    333
 # define SSL_F_TLS1_CHANGE_CIPHER_STATE                   209
+# define SSL_F_TLS1_CHECK_DUPLICATE_EXTENSIONS            341
 # define SSL_F_TLS1_CHECK_SERVERHELLO_TLSEXT              274
 # define SSL_F_TLS1_EXPORT_KEYING_MATERIAL                314
 # define SSL_F_TLS1_GET_CURVELIST                         338

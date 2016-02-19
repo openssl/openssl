@@ -99,7 +99,7 @@ sub certstatus_filter
         if ($message->mt == TLSProxy::Message::MT_SERVER_HELLO) {
             #Add the status_request to the ServerHello even though we are not
             #going to send a CertificateStatus message
-            $message->set_extension(TLSProxy::ClientHello::EXT_STATUS_REQUEST,
+            $message->set_extension(TLSProxy::Message::EXT_STATUS_REQUEST,
                                     "");
 
             $message->repack();
