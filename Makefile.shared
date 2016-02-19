@@ -295,7 +295,7 @@ link_shlib.mingw:
 	SHLIB_SOVER=-$$sover$$arch; \
 	SHLIB_SUFFIX=.dll; \
 	dll_name=$$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX; \
-	base=; [ $(LIBNAME) = "crypto" ] && base=-Wl,--image-base,0x63000000; \
+	base=; [ $(LIBNAME) = "crypto" -a -n "$(FIPSCANLIB)" ] && base=-Wl,--image-base,0x63000000; \
 	$(PERL) $(SRCDIR)/util/mkdef.pl 32 $(LIBNAME) \
 		| sed -e 's|^\(LIBRARY  *\)$(LIBNAME)32|\1'"$$dll_name"'|' \
 		> $(LIBNAME).def; \
