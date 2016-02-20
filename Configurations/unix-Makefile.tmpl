@@ -3,6 +3,15 @@
 ##
 ## {- join("\n## ", @autowarntext) -}
 {-
+     our $objext = $target{obj_extension} || ".o";
+     our $depext = $target{dep_extension} || ".d";
+     our $exeext = $target{exe_extension} || "";
+     our $libext = $target{lib_extension} || ".a";
+     our $shlibext = $target{shared_extension} || ".so";
+     our $shlibextsimple = $target{shared_extension_simple} || ".so";
+     our $shlibextimport = $target{shared_import_extension} || "";
+     our $dsoext = $target{dso_extension} || ".so";
+
      sub windowsdll { $config{target} =~ /^(?:Cygwin|mingw)/ }
 
      # shlib and shlib_simple both take a static library name and figure
@@ -27,16 +36,16 @@
      sub shlib {
          return () if $config{no_shared};
          my $lib = shift;
-         return $unified_info{sharednames}->{$lib} . '$(SHLIB_EXT)';
+         return $unified_info{sharednames}->{$lib} . $shlibext;
      }
      sub shlib_simple {
          return () if $config{no_shared};
 
          my $lib = shift;
          if (windowsdll()) {
-             return $lib . '$(SHLIB_EXT_IMPORT)';
+             return $lib . $shlibextimport;
          }
-         return $lib . '$(SHLIB_EXT_SIMPLE)';
+         return $lib .  $shlibextsimple;
      }
 
      # dso is a complement to shlib / shlib_simple that returns the
@@ -45,8 +54,9 @@
      sub dso {
          my $engine = shift;
 
-         return $engine . '$(DSO_EXT)';
+         return $engine . $dsoext;
      }
+     '';
 -}
 PLATFORM={- $config{target} -}
 OPTIONS={- $config{options} -}
@@ -63,22 +73,13 @@ SHLIB_MAJOR={- $config{shlib_major} -}
 SHLIB_MINOR={- $config{shlib_minor} -}
 SHLIB_TARGET={- $target{shared_target} -}
 
-EXE_EXT={- $target{exe_extension} || "" -}
-LIB_EXT={- $target{lib_extension} || ".a" -}
-SHLIB_EXT={- $target{shared_extension} || ".so" -}
-SHLIB_EXT_SIMPLE={- $target{shared_extension_simple} || ".so" -}
-SHLIB_EXT_IMPORT={- $target{shared_import_extension} || "" -}
-DSO_EXT={- $target{dso_extension} || ".so" -}
-OBJ_EXT={- $target{obj_extension} || ".o" -}
-DEP_EXT={- $target{dep_extension} || ".d" -}
-
-LIBS={- join(" ", map { $_."\$(LIB_EXT)" } @{$unified_info{libraries}}) -}
+LIBS={- join(" ", map { $_.$libext } @{$unified_info{libraries}}) -}
 SHLIBS={- join(" ", map { shlib($_) } @{$unified_info{libraries}}) -}
 ENGINES={- join(" ", map { dso($_) } @{$unified_info{engines}}) -}
-PROGRAMS={- join(" ", map { $_."\$(EXE_EXT)" } grep { !m|^test/| } @{$unified_info{programs}}) -}
-TESTPROGS={- join(" ", map { $_."\$(EXE_EXT)" } grep { m|^test/| } @{$unified_info{programs}}) -}
+PROGRAMS={- join(" ", map { $_.$exeext } grep { !m|^test/| } @{$unified_info{programs}}) -}
+TESTPROGS={- join(" ", map { $_.$exeext } grep { m|^test/| } @{$unified_info{programs}}) -}
 SCRIPTS={- join(" ", @{$unified_info{scripts}}) -}
-DEPS={- join(" ", map { (my $x = $_) =~ s|\.o$|\$(DEP_EXT)|; $x; }
+DEPS={- join(" ", map { (my $x = $_) =~ s|\.o$|$depext|; $x; }
                   grep { $unified_info{sources}->{$_}->[0] =~ /\.c$/ }
                   keys %{$unified_info{sources}}); -}
 
@@ -214,7 +215,7 @@ test tests: build_tests_nodep build_apps_nodep build_engines_nodep depend rehash
 	( cd test; \
 	  SRCTOP=../$(SRCDIR) \
 	  BLDTOP=../$(BLDDIR) \
-	  EXE_EXT=$(EXE_EXT) \
+	  EXE_EXT={- $exeext -} \
 	    $(PERL) ../$(SRCDIR)/test/run_tests.pl $(TESTS) )
 
 list-tests:
@@ -239,8 +240,8 @@ uninstall: uninstall_docs uninstall_sw
 
 clean: libclean
 	rm -f $(PROGRAMS) $(TESTPROGS)
-	rm -f `find $(BLDDIR) -name '*$(DEP_EXT)'`
-	rm -f `find $(BLDDIR) -name '*$(OBJ_EXT)'`
+	rm -f `find $(BLDDIR) -name '*{- $depext -}'`
+	rm -f `find $(BLDDIR) -name '*{- $objext -}'`
 	rm -f $(BLDDIR)/core $(BLDDIR)/rehash.time
 	rm -f $(BLDDIR)/tags $(BLDDIR)/TAGS
 	rm -f $(BLDDIR)/openssl.pc $(BLDDIR)/libcrypto.pc $(BLDDIR)/libssl.pc
@@ -811,7 +812,7 @@ configdata.pm: {- $config{build_file_template} -} $(SRCDIR)/Configure $(SRCDIR)/
   # It takes a list of library names and outputs a list of dependencies
   sub compute_lib_depends {
       if ($config{no_shared}) {
-          return map { $_."\$(LIB_EXT)" } @_;
+          return map { $_.$libext } @_;
       }
 
       # Depending on shared libraries:
@@ -832,21 +833,21 @@ configdata.pm: {- $config{build_file_template} -} $(SRCDIR)/Configure $(SRCDIR)/
       my $makedepprog = $config{makedepprog};
       if ($makedepprog eq "makedepend") {
           return <<"EOF";
-$obj\$(DEP_EXT): $deps
+$obj$depext: $deps
 	rm -f \$\@.tmp; touch \$\@.tmp
 	\$(MAKEDEPEND) -f\$\@.tmp -o"|$obj" -- \$(CFLAGS) $ecflags$incs -- $srcs \\
 	    2>/dev/null
 	sed -e 's/^.*|//' -e 's/ \\/\\(\\\\.\\|[^ ]\\)*//g' -e '/: *\$\$/d' -e '/^\\(#.*\\| *\\)\$\$/d' \$\@.tmp > \$\@
 	rm \$\@.tmp
-$obj\$(OBJ_EXT): $obj\$(DEP_EXT)
+$obj$objext: $obj$depext
 	\$(CC) \$(CFLAGS) $ecflags$incs -c -o \$\@ $srcs
 EOF
       }
       return <<"EOF";
-$obj\$(DEP_EXT): $deps
-	\$(CC) \$(CFLAGS) $ecflags$incs -MM -MF \$\@ -MQ $obj\$(OBJ_EXT) $srcs
+$obj$depext: $deps
+	\$(CC) \$(CFLAGS) $ecflags$incs -MM -MF \$\@ -MQ $obj$objext $srcs
 	touch \$\@
-$obj\$(OBJ_EXT): $obj\$(DEP_EXT)
+$obj$objext: $obj$depext
 	\$(CC) \$(CFLAGS) $ecflags$incs -c -o \$\@ $srcs
 EOF
   }
@@ -874,9 +875,9 @@ EOF
 # With all other Unix platforms, we often build a shared library with the
 # SO version built into the file name and a symlink without the SO version
 # It's not necessary to have both as targets.  The choice falls on the
-# simplest, {libname}\$(SHLIB_EXT_IMPORT) for Windows POSIX layers and
-# {libname}\$(SHLIB_EXT_SIMPLE) for the Unix platforms.
-$target : $lib\$(LIB_EXT) $deps $ordinalsfile
+# simplest, {libname}$shlibextimport for Windows POSIX layers and
+# {libname}$shlibextsimple for the Unix platforms.
+$target: $lib$libext $deps $ordinalsfile
 	\$(MAKE) -f \$(SRCDIR)/Makefile.shared -e \\
 		PLATFORM=\$(PLATFORM) \\
 		PERL=\$(PERL) SRCDIR="\$(SRCDIR)" DSTDIR="$libd" \\
@@ -886,15 +887,15 @@ $target : $lib\$(LIB_EXT) $deps $ordinalsfile
 		LIBCOMPATVERSIONS=";\$(SHLIB_VERSION_HISTORY)" \\
 		CC="\$(CC)" CFLAGS="\$(CFLAGS)" LDFLAGS="\$(LDFLAGS)" \\
 		CROSS_COMPILE="\$(CROSS_COMPILE)" \\
-		SHARED_LDFLAGS="\$(SHARED_LDFLAGS)" SHLIB_EXT=\$(SHLIB_EXT) \\
+		SHARED_LDFLAGS="\$(SHARED_LDFLAGS)" SHLIB_EXT=$shlibext \\
 		SHARED_RCFLAGS="\$(SHARED_RCFLAGS)" \\
 		link_shlib.$shlib_target
 EOF
 	  . (windowsdll() ? <<"EOF" : "");
-	rm -f apps/$shlib\$(SHLIB_EXT)
-	rm -f test/$shlib\$(SHLIB_EXT)
-	cp -p $shlib\$(SHLIB_EXT) apps/
-	cp -p $shlib\$(SHLIB_EXT) test/
+	rm -f apps/$shlib$shlibext
+	rm -f test/$shlib$shlibext
+	cp -p $shlib$shlibext apps/
+	cp -p $shlib$shlibext test/
 EOF
   }
   sub obj2dso {
@@ -909,7 +910,7 @@ EOF
                                      " -L$d -l$l" } @{$args{deps}});
       my $deps = join(" ",compute_lib_depends(@{$args{deps}}));
       my $shlib_target = $target{shared_target};
-      my $objs = join(" ", map { $_."\$(OBJ_EXT)" } @{$args{objs}});
+      my $objs = join(" ", map { $_.$objext } @{$args{objs}});
       my $target = dso($lib);
       return <<"EOF";
 $target: $objs $deps
@@ -920,7 +921,7 @@ $target: $objs $deps
 		LIBNAME=$libname LDFLAGS="\$(LDFLAGS)" \\
 		CC="\$(CC)" CFLAGS="\$(CFLAGS)" \\
 		SHARED_LDFLAGS="\$(SHARED_LDFLAGS)" \\
-		SHLIB_EXT=\$(DSO_EXT) \\
+		SHLIB_EXT=$dsoext \\
 		LIBEXTRAS="$objs" \\
 		link_dso.$shlib_target
 EOF
@@ -928,9 +929,9 @@ EOF
   sub obj2lib {
       my %args = @_;
       my $lib = $args{lib};
-      my $objs = join(" ", map { $_."\$(OBJ_EXT)" } @{$args{objs}});
+      my $objs = join(" ", map { $_.$objext } @{$args{objs}});
       return <<"EOF";
-$lib\$(LIB_EXT): $objs
+$lib$libext: $objs
 	\$(AR) \$\@ $objs
 	\$(RANLIB) \$\@ || echo Never mind.
 EOF
@@ -940,7 +941,7 @@ EOF
       my $bin = $args{bin};
       my $bind = dirname($bin);
       my $binn = basename($bin);
-      my $objs = join(" ", map { $_."\$(OBJ_EXT)" } @{$args{objs}});
+      my $objs = join(" ", map { $_.$objext } @{$args{objs}});
       my $deps = join(" ",compute_lib_depends(@{$args{deps}}));
       my $linklibs = join("", map { my $d = dirname($_);
                                     my $f = basename($_);
@@ -949,11 +950,11 @@ EOF
                                     " -L$d -l$l" } @{$args{deps}});
       my $shlib_target = $config{no_shared} ? "" : $target{shared_target};
       return <<"EOF";
-$bin\$(EXE_EXT): $objs $deps
-	\$(RM) $bin\$(EXE_EXT)
+$bin$exeext: $objs $deps
+	\$(RM) $bin$exeext
 	\$(MAKE) -f \$(SRCDIR)/Makefile.shared -e \\
 		PERL=\$(PERL) SRCDIR=\$(SRCDIR) \\
-		APPNAME=$bin\$(EXE_EXT) OBJECTS="$objs" \\
+		APPNAME=$bin$exeext OBJECTS="$objs" \\
 		LIBDEPS="\$(PLIB_LDFLAGS) $linklibs \$(EX_LIBS)" \\
 		CC="\$(CC)" CFLAGS="\$(CFLAGS)" LDFLAGS="\$(LDFLAGS)" \\
 		LIBRPATH="\$(INSTALLTOP)/\$(LIBDIR)" \\
