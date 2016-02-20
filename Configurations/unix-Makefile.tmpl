@@ -249,8 +249,7 @@ clean: libclean
 	rm -f $(TARFILE)
 
 # This exists solely for those who still type 'make depend'
-depend: Makefile
-Makefile: FORCE
+depend:
 	@( sed -e '/^# DO NOT DELETE THIS LINE.*/,$$d' < Makefile; \
 	  echo '# DO NOT DELETE THIS LINE -- make depend depends on it.'; \
 	  echo; \
