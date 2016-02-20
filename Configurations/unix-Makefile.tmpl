@@ -844,7 +844,8 @@ EOF
       }
       return <<"EOF";
 $obj\$(DEP_EXT): $deps
-	\$(CC) \$(CFLAGS) $ecflags$incs -MM -MF \$\@ -MQ $obj $srcs
+	\$(CC) \$(CFLAGS) $ecflags$incs -MM -MF \$\@ -MQ $obj\$(OBJ_EXT) $srcs
+	touch \$\@
 $obj\$(OBJ_EXT): $obj\$(DEP_EXT)
 	\$(CC) \$(CFLAGS) $ecflags$incs -c -o \$\@ $srcs
 EOF
