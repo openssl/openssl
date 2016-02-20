@@ -4715,7 +4715,7 @@ int ED25519_verify(const uint8_t *message, size_t message_len,
 #endif  /* Ed25519 */
 
 
-#if defined(BORINGSSL_X25519_X86_64)
+#if defined(OPENSSL_X25519_X86_64)
 
 static void x25519_scalar_mult(uint8_t out[32], const uint8_t scalar[32],
                                const uint8_t point[32]) {
@@ -4856,7 +4856,7 @@ static void x25519_scalar_mult_generic(uint8_t out[32],
 
 static void x25519_scalar_mult(uint8_t out[32], const uint8_t scalar[32],
                                const uint8_t point[32]) {
-#if defined(BORINGSSL_X25519_NEON)
+#if defined(OPENSSL_X25519_NEON)
   if (CRYPTO_is_NEON_capable()) {
     x25519_NEON(out, scalar, point);
     return;
@@ -4866,7 +4866,7 @@ static void x25519_scalar_mult(uint8_t out[32], const uint8_t scalar[32],
   x25519_scalar_mult_generic(out, scalar, point);
 }
 
-#endif  /* BORINGSSL_X25519_X86_64 */
+#endif  /* OPENSSL_X25519_X86_64 */
 
 #if 0
 void X25519_keypair(uint8_t out_public_value[32], uint8_t out_private_key[32]) {
@@ -4886,9 +4886,9 @@ int X25519(uint8_t out_shared_key[32], const uint8_t private_key[32],
 
 #if 0
 
-#if defined(BORINGSSL_X25519_X86_64)
+#if defined(OPENSSL_X25519_X86_64)
 
-/* When |BORINGSSL_X25519_X86_64| is set, base point multiplication is done with
+/* When |OPENSSL_X25519_X86_64| is set, base point multiplication is done with
  * the Montgomery ladder because it's faster. Otherwise it's done using the
  * Ed25519 tables. */
 
@@ -4906,7 +4906,7 @@ void X25519_public_from_private(uint8_t out_public_value[32],
   ge_p3 A;
   fe zplusy, zminusy, zminusy_inv;
 
-#if defined(BORINGSSL_X25519_NEON)
+#if defined(OPENSSL_X25519_NEON)
   if (CRYPTO_is_NEON_capable()) {
     static const uint8_t kMongomeryBasePoint[32] = {9};
     x25519_NEON(out_public_value, private_key, kMongomeryBasePoint);
@@ -4930,6 +4930,6 @@ void X25519_public_from_private(uint8_t out_public_value[32],
   fe_tobytes(out_public_value, zplusy);
 }
 
-#endif  /* BORINGSSL_X25519_X86_64 */
+#endif  /* OPENSSL_X25519_X86_64 */
 
 #endif
