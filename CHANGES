@@ -4,6 +4,28 @@
 
  Changes between 1.0.2f and 1.1.0  [xx XXX xxxx]
 
+  *) Configuration change; it's now possible to build dynamic engines
+     without having to build shared libraries and vice versa.  The
+     only requirement for building dynamic engines is the presence of
+     the DSO module, so configuring "disable-dso" will automatically
+     disable dynamic engines.  Dynamic engines are enabled by default,
+     and can be disabled with "enable-static-engine".
+     This only applies to the engines in engines/, those in
+     crypto/engine/ will always be built into libcrypto (i.e. "static").
+
+     The macros OPENSSL_NO_STATIC_ENGINE and OPENSSL_NO_DYNAMIC_ENGINE
+     are also taken away from openssl/opensslconf.h, as they are
+     irrelevant.
+     [Richard Levitte]
+
+  *) Configuration change; if there is a known flag to compile
+     position independent code, it will always be applied on the
+     libcrypto and libssl object files, and never on the application
+     object files.  This means other libraries that use routines from
+     libcrypto / libssl can be made into shared libraries regardless
+     of how OpenSSL was configured.
+     [Richard Levitte]
+
   *) Removed JPAKE code.  It was experimental and has no wide use.
      [Rich Salz]
 
