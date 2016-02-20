@@ -448,11 +448,10 @@ extern int kbhit(void);
 # endif
 
 # ifdef USE_SOCKETS
-#  if defined(WINDOWS) || defined(MSDOS)
+#  ifdef OPENSSL_NO_SOCK
+#  elif defined(WINDOWS) || defined(MSDOS)
       /* windows world */
-
-#   ifdef OPENSSL_NO_SOCK
-#   elif !defined(__DJGPP__)
+#   if !defined(__DJGPP__)
 #    if defined(_WIN32_WCE) && _WIN32_WCE<410
 #     define getservbyname _masked_declaration_getservbyname
 #    endif
