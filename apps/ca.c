@@ -482,13 +482,12 @@ end_of_options:
     argv = opt_rest();
 
     BIO_printf(bio_err, "Using configuration from %s\n", configfile);
-    /* We already loaded the default config file */
-    if (configfile != default_config_file) {
-        if ((conf = app_load_config(configfile)) == NULL)
-            goto end;
-        if (!app_load_modules(conf))
-            goto end;
-    }
+
+    if ((conf = app_load_config(configfile)) == NULL)
+        goto end;
+    
+    if (!app_load_modules(conf))
+        goto end;
 
     /* Lets get the config section we are using */
     if (section == NULL) {
