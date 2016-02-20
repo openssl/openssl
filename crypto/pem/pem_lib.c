@@ -537,6 +537,7 @@ int PEM_get_EVP_CIPHER_INFO(char *header, EVP_CIPHER_INFO *cipher)
     *header = '\0';
     cipher->cipher = enc = EVP_get_cipherbyname(dekinfostart);
     *header = c;
+    header++;
 
     if (enc == NULL) {
         PEMerr(PEM_F_PEM_GET_EVP_CIPHER_INFO, PEM_R_UNSUPPORTED_ENCRYPTION);
