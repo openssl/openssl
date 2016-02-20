@@ -52,16 +52,8 @@
  *
  * The field functions are shared by Ed25519 and X25519 where possible. */
 
-#include <openssl/curve25519.h>
-
 #include <string.h>
-
-#include <openssl/cpu.h>
-#include <openssl/mem.h>
-#include <openssl/rand.h>
-#include <openssl/sha.h>
-
-#include "internal.h"
+#include "ec_lcl.h"
 
 
 /* fe means field element. Here the field is \Z/(2^255-19). An element t,
@@ -740,6 +732,8 @@ static void fe_invert(fe out, const fe z) {
   fe_mul(out, t1, t0);
 }
 
+#if 0 /* Ed25519 code: not used yet */
+
 /* h = -f
  *
  * Preconditions:
@@ -759,8 +753,8 @@ static void fe_neg(fe h, const fe f) {
  *
  * Preconditions: b in {0,1}. */
 static void fe_cmov(fe f, const fe g, unsigned b) {
+  size_t i;
   b = 0-b;
-  unsigned i;
   for (i = 0; i < 10; i++) {
     int32_t x = f[i] ^ g[i];
     x &= b;
@@ -775,9 +769,9 @@ static void fe_cmov(fe f, const fe g, unsigned b) {
  *    |f| bounded by 1.1*2^26,1.1*2^25,1.1*2^26,1.1*2^25,etc. */
 static int fe_isnonzero(const fe f) {
   uint8_t s[32];
-  fe_tobytes(s, f);
-
   static const uint8_t zero[32] = {0};
+
+  fe_tobytes(s, f);
   return CRYPTO_memcmp(s, zero, sizeof(zero)) != 0;
 }
 
@@ -4718,6 +4712,8 @@ int ED25519_verify(const uint8_t *message, size_t message_len,
   return CRYPTO_memcmp(rcheck, rcopy, sizeof(rcheck)) == 0;
 }
 
+#endif  /* Ed25519 */
+
 
 #if defined(BORINGSSL_X25519_X86_64)
 
@@ -4733,8 +4729,8 @@ static void x25519_scalar_mult(uint8_t out[32], const uint8_t scalar[32],
  *
  * Preconditions: b in {0,1}. */
 static void fe_cswap(fe f, fe g, unsigned int b) {
+  size_t i;
   b = 0-b;
-  unsigned i;
   for (i = 0; i < 10; i++) {
     int32_t x = f[i] ^ g[i];
     x &= b;
@@ -4811,8 +4807,10 @@ static void x25519_scalar_mult_generic(uint8_t out[32],
                                        const uint8_t scalar[32],
                                        const uint8_t point[32]) {
   fe x1, x2, z2, x3, z3, tmp0, tmp1;
-
   uint8_t e[32];
+  unsigned swap = 0;
+  int pos;
+
   memcpy(e, scalar, 32);
   e[0] &= 248;
   e[31] &= 127;
@@ -4823,8 +4821,6 @@ static void x25519_scalar_mult_generic(uint8_t out[32],
   fe_copy(x3, x1);
   fe_1(z3);
 
-  unsigned swap = 0;
-  int pos;
   for (pos = 254; pos >= 0; --pos) {
     unsigned b = 1 & (e[pos / 8] >> (pos & 7));
     swap ^= b;
@@ -4872,11 +4868,13 @@ static void x25519_scalar_mult(uint8_t out[32], const uint8_t scalar[32],
 
 #endif  /* BORINGSSL_X25519_X86_64 */
 
-
+#if 0
 void X25519_keypair(uint8_t out_public_value[32], uint8_t out_private_key[32]) {
   RAND_bytes(out_private_key, 32);
   X25519_public_from_private(out_public_value, out_private_key);
 }
+
+#endif
 
 int X25519(uint8_t out_shared_key[32], const uint8_t private_key[32],
            const uint8_t peer_public_value[32]) {
@@ -4885,6 +4883,8 @@ int X25519(uint8_t out_shared_key[32], const uint8_t private_key[32],
   /* The all-zero output results when the input is a point of small order. */
   return CRYPTO_memcmp(kZeros, out_shared_key, 32) != 0;
 }
+
+#if 0
 
 #if defined(BORINGSSL_X25519_X86_64)
 
@@ -4902,6 +4902,10 @@ void X25519_public_from_private(uint8_t out_public_value[32],
 
 void X25519_public_from_private(uint8_t out_public_value[32],
                                 const uint8_t private_key[32]) {
+  uint8_t e[32];
+  ge_p3 A;
+  fe zplusy, zminusy, zminusy_inv;
+
 #if defined(BORINGSSL_X25519_NEON)
   if (CRYPTO_is_NEON_capable()) {
     static const uint8_t kMongomeryBasePoint[32] = {9};
@@ -4910,18 +4914,15 @@ void X25519_public_from_private(uint8_t out_public_value[32],
   }
 #endif
 
-  uint8_t e[32];
   memcpy(e, private_key, 32);
   e[0] &= 248;
   e[31] &= 127;
   e[31] |= 64;
 
-  ge_p3 A;
   ge_scalarmult_base(&A, e);
 
   /* We only need the u-coordinate of the curve25519 point. The map is
    * u=(y+1)/(1-y). Since y=Y/Z, this gives u=(Z+Y)/(Z-Y). */
-  fe zplusy, zminusy, zminusy_inv;
   fe_add(zplusy, A.Z, A.Y);
   fe_sub(zminusy, A.Z, A.Y);
   fe_invert(zminusy_inv, zminusy);
@@ -4930,3 +4931,5 @@ void X25519_public_from_private(uint8_t out_public_value[32],
 }
 
 #endif  /* BORINGSSL_X25519_X86_64 */
+
+#endif
