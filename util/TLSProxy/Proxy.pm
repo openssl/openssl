@@ -269,7 +269,9 @@ sub clientstart
         );
 
         $retry--;
-        if (!$server_sock) {
+        if ($@ || !defined($server_sock)) {
+            $server_sock->close() if defined($server_sock);
+            undef $server_sock;
             if ($retry) {
                 #Sleep for a short while
                 select(undef, undef, undef, 0.1);
