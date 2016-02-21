@@ -257,11 +257,11 @@ $code.=<<___;
 	 st	@x[1],4*9(@t[0])
 	 x	@x[3],4*11(%r14)
 	 st	@x[2],4*10(@t[0])
-	la	%r14,64(%r14)
 	 st	@x[3],4*11(@t[0])
 
 	cl${g}r	%r14,@t[1]			# done yet?
-	jle	.Loop_outer
+	la	%r14,64(%r14)
+	jl	.Loop_outer
 
 .Ldone:
 	xgr	%r0,%r0
@@ -291,7 +291,7 @@ $code.=<<___;
 	lrvr	@x[1],@x[1]
 	lrvr	@x[2],@x[2]
 	lrvr	@x[3],@x[3]
-	stm	@x[0],@x[3],$stdframe+4*8+4*8($sp)
+	stm	@x[0],@x[3],$stdframe+4*8($sp)
 
 .Loop_tail:
 	llgc	@x[4],0(@x[6],%r14)

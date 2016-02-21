@@ -1544,13 +1544,13 @@ $code.=<<___;
 	je		.Ldone4xop
 
 	lea		0x40($inp),$inp		# inp+=64*3
-	vmovdqa		$xa2,0x00(%rsp)
+	vmovdqa		$xa3,0x00(%rsp)
 	xor		%r10,%r10
-	vmovdqa		$xb2,0x10(%rsp)
+	vmovdqa		$xb3,0x10(%rsp)
 	lea		0x40($out),$out		# out+=64*3
-	vmovdqa		$xc2,0x20(%rsp)
+	vmovdqa		$xc3,0x20(%rsp)
 	sub		\$192,$len		# len-=64*3
-	vmovdqa		$xd2,0x30(%rsp)
+	vmovdqa		$xd3,0x30(%rsp)
 
 .Loop_tail4xop:
 	movzb		($inp,%r10),%eax
