@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 use POSIX;
-use File::Path 2.00 qw/remove_tree/;
+use File::Path 2.00 qw/rmtree/;
 use OpenSSL::Test qw/:DEFAULT cmdstr srctop_file/;
 
 setup("test_ca");
@@ -13,7 +13,7 @@ $ENV{OPENSSL} = cmdstr(app(["openssl"]));
 my $std_openssl_cnf =
     srctop_file("apps", $^O eq "VMS" ? "openssl-vms.cnf" : "openssl.cnf");
 
-remove_tree("demoCA", { safe => 0 });
+rmtree("demoCA", { safe => 0 });
 
 plan tests => 4;
  SKIP: {
@@ -37,7 +37,7 @@ plan tests => 4;
 }
 
 
-remove_tree("demoCA", { safe => 0 });
+rmtree("demoCA", { safe => 0 });
 unlink "newcert.pem", "newreq.pem";
 
 
