@@ -133,7 +133,7 @@ $(EXE): $(EXE_OBJ) $(DLIBCRYPTO) $(DLIBSSL)
 	LIBRARIES="$(LIBSSL) $(LIBCRYPTO)" ; \
 	$(MAKE) -f $(TOP)/Makefile.shared -e \
 		APPNAME=$(EXE) OBJECTS="$(EXE_OBJ)" \
-		LDFLAG="$(LDFLAG)" \
+		CFLAG="$(CFLAGS)" LDFLAG="$(LDFLAG)" \
 		LIBDEPS="$(PLIB_LDFLAG) $$LIBRARIES $(EX_LIBS)" \
 		link_app.$${shlib_target}
 
