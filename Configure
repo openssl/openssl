@@ -1042,6 +1042,10 @@ if ($disabled{pic})
 	$target{shared_cflag} = $target{shared_ldflag} =
 		$target{shared_rcflag} = "";
 	}
+else
+	{
+	push @{$config{defines}}, "OPENSSL_PIC";
+	}
 
 if ($target{sys_id} ne "")
 	{
