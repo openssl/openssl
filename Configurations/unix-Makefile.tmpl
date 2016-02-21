@@ -249,17 +249,39 @@ clean: libclean
 	rm -f $(TARFILE)
 
 # This exists solely for those who still type 'make depend'
+#
+# We check if any depfile is newer than Makefile and decide to
+# concatenate only if that is true, or if 'test' (a.k.a [ )
+# doesn't have the option to figure it out (-nt).
+#
+# To check if test has the file age comparison operator, we
+# simply try, and rely test to exit with 0 if the comparison
+# was true, 1 if false, and most importantly, 2 if it doesn't
+# recognise the operator.
 depend:
-	@( sed -e '/^# DO NOT DELETE THIS LINE.*/,$$d' < Makefile; \
-	  echo '# DO NOT DELETE THIS LINE -- make depend depends on it.'; \
-	  echo; \
+	@catdepends=false; \
+	if [ Makefile -nt Makefile ] 2>/dev/null || [ $$? = 1 ]; then \
 	  for d in $(DEPS); do \
-	    if [ -f $$d ]; then cat $$d; fi; \
-	  done ) > Makefile.new
-	@if ! cmp Makefile.new Makefile >/dev/null 2>&1; then \
-		mv -f Makefile.new Makefile; \
+	    if [ $$d -nt Makefile ]; then \
+	      catdepends=true; \
+	      break; \
+	    fi; \
+	  done; \
 	else \
-		rm -f Makefile.new; \
+	  catdepends=true; \
+	fi; \
+	if [ $$catdepends = true ]; then \
+	  ( sed -e '/^# DO NOT DELETE THIS LINE.*/,$$d' < Makefile; \
+	    echo '# DO NOT DELETE THIS LINE -- make depend depends on it.'; \
+	    echo; \
+	    for d in $(DEPS); do \
+	      if [ -f $$d ]; then cat $$d; fi; \
+	    done ) > Makefile.new; \
+	  if ! cmp Makefile.new Makefile >/dev/null 2>&1; then \
+	    mv -f Makefile.new Makefile; \
+	  else \
+	    rm -f Makefile.new; \
+	  fi; \
 	fi
 
 # Install helper targets #############################################
