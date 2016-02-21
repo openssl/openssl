@@ -1,4 +1,3 @@
-/* crypto/x509/x_name.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -63,9 +62,7 @@
 #include <openssl/x509.h>
 #include "internal/x509_int.h"
 #include "internal/asn1_int.h"
-
-typedef STACK_OF(X509_NAME_ENTRY) STACK_OF_X509_NAME_ENTRY;
-DECLARE_STACK_OF(STACK_OF_X509_NAME_ENTRY)
+#include "x509_lcl.h"
 
 static int x509_name_ex_d2i(ASN1_VALUE **val,
                             const unsigned char **in, long len,
@@ -327,7 +324,7 @@ static int x509_name_ex_print(BIO *out, ASN1_VALUE **pval,
  * it all strings are converted to UTF8, leading, trailing and multiple
  * spaces collapsed, converted to lower case and the leading SEQUENCE header
  * removed. In future we could also normalize the UTF8 too. By doing this
- * comparison of Name structures can be rapidly perfomed by just using
+ * comparison of Name structures can be rapidly performed by just using
  * memcmp() of the canonical encoding. By omitting the leading SEQUENCE name
  * constraints of type dirName can also be checked with a simple memcmp().
  */
@@ -569,4 +566,17 @@ int X509_NAME_print(BIO *bp, X509_NAME *name, int obase)
     X509err(X509_F_X509_NAME_PRINT, ERR_R_BUF_LIB);
     OPENSSL_free(b);
     return 0;
+}
+
+int X509_NAME_get0_der(const unsigned char **pder, size_t *pderlen,
+                       X509_NAME *nm)
+{
+    /* Make sure encoding is valid */
+    if (i2d_X509_NAME(nm, NULL) <= 0)
+        return 0;
+    if (pder != NULL)
+        *pder = (unsigned char *)nm->bytes->data;
+    if (pderlen != NULL)
+        *pderlen = nm->bytes->length;
+    return 1;
 }

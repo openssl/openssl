@@ -1,15 +1,11 @@
-/* crypto/ebcdic.c */
-
-#ifndef CHARSET_EBCDIC
 
 # include <openssl/e_os2.h>
-# if defined(PEDANTIC) || defined(__DECC) || defined(OPENSSL_SYS_MACOSX) || defined(__clang__)
-static void *dummy = &dummy;
-# endif
-
-#else                           /* CHARSET_EBCDIC */
+#ifndef CHARSET_EBCDIC
+NON_EMPTY_TRANSLATION_UNIT
+#else
 
 # include "ebcdic.h"
+
 /*-
  *      Initial Port for  Apache-1.3     by <Martin.Kraemer@Mch.SNI.De>
  *      Adapted for       OpenSSL-0.9.4  by <Martin.Kraemer@Mch.SNI.De>
@@ -173,7 +169,7 @@ const unsigned char os_toebcdic[256] = {
  * systems. It is a modified version of the BS2000 table.
  *
  * Bijective EBCDIC (character set IBM-1047) to US-ASCII table: This table is
- * bijective - there are no ambigous or duplicate characters.
+ * bijective - there are no ambiguous or duplicate characters.
  */
 const unsigned char os_toascii[256] = {
     0x00, 0x01, 0x02, 0x03, 0x85, 0x09, 0x86, 0x7f, /* 00-0f: */

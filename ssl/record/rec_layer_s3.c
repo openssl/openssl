@@ -1,4 +1,3 @@
-/* ssl/record/rec_layer_s3.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -206,15 +205,6 @@ int RECORD_LAYER_set_data(RECORD_LAYER *rl, const unsigned char *buf, int len)
     SSL3_BUFFER_set_data(&rl->rbuf, buf, len);
 
     return 1;
-}
-
-void RECORD_LAYER_dup(RECORD_LAYER *dst, RECORD_LAYER *src)
-{
-    /*
-     * Currently only called from SSL_dup...which only seems to expect the
-     * rstate to be duplicated and nothing else from the RECORD_LAYER???
-     */
-    dst->rstate = src->rstate;
 }
 
 void RECORD_LAYER_reset_read_sequence(RECORD_LAYER *rl)
@@ -507,7 +497,7 @@ int ssl3_write_bytes(SSL *s, int type, const void *buf_, int len)
         u_len >= 4 * (max_send_fragment = s->max_send_fragment) &&
         s->compress == NULL && s->msg_callback == NULL &&
         !SSL_USE_ETM(s) && SSL_USE_EXPLICIT_IV(s) &&
-        EVP_CIPHER_flags(s->enc_write_ctx->cipher) &
+        EVP_CIPHER_flags(EVP_CIPHER_CTX_cipher(s->enc_write_ctx)) &
         EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK) {
         unsigned char aad[13];
         EVP_CTRL_TLS1_1_MULTIBLOCK_PARAM mb_param;
@@ -1186,22 +1176,6 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
             dest = s->rlayer.alert_fragment;
             dest_len = &s->rlayer.alert_fragment_len;
         }
-#ifndef OPENSSL_NO_HEARTBEATS
-        else if (SSL3_RECORD_get_type(rr)== TLS1_RT_HEARTBEAT) {
-            /* We can ignore 0 return values */
-            if (tls1_process_heartbeat(s, SSL3_RECORD_get_data(rr),
-                    SSL3_RECORD_get_length(rr)) < 0) {
-                return -1;
-            }
-
-            /* Exit and notify application to read again */
-            SSL3_RECORD_set_length(rr, 0);
-            s->rwstate = SSL_READING;
-            BIO_clear_retry_flags(SSL_get_rbio(s));
-            BIO_set_retry_read(SSL_get_rbio(s));
-            return (-1);
-        }
-#endif
 
         if (dest_maxlen > 0) {
             n = dest_maxlen - *dest_len; /* available space in 'dest' */

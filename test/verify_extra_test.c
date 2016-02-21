@@ -187,12 +187,8 @@ static int test_alt_chains_cert_forgery(const char *roots_f,
 
 int main(int argc, char **argv)
 {
-    CRYPTO_malloc_debug_init();
-    CRYPTO_set_mem_debug_options(V_CRYPTO_MDEBUG_ALL);
+    CRYPTO_set_mem_debug(1);
     CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
-
-    ERR_load_crypto_strings();
-    OpenSSL_add_all_digests();
 
     if (argc != 4) {
         fprintf(stderr, "usage: verify_extra_test roots.pem untrusted.pem bad.pem\n");
@@ -204,11 +200,10 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    EVP_cleanup();
-    CRYPTO_cleanup_all_ex_data();
-    ERR_remove_thread_state(NULL);
-    ERR_free_strings();
-    CRYPTO_mem_leaks_fp(stderr);
+#ifndef OPENSSL_NO_CRYPTO_MDEBUG
+    if (CRYPTO_mem_leaks_fp(stderr) <= 0)
+        return 1;
+#endif
 
     printf("PASS\n");
     return 0;

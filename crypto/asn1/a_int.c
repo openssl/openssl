@@ -1,4 +1,3 @@
-/* crypto/asn1/a_int.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -187,7 +186,7 @@ static size_t i2c_ibuf(const unsigned char *b, size_t blen, int neg,
 
 /*
  * convert content octets into a big endian buffer. Returns the length
- * of buffer or 0 on error: for malformed INTEGER. If output bufer is
+ * of buffer or 0 on error: for malformed INTEGER. If output buffer is
  * NULL just return length.
  */
 

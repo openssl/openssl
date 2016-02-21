@@ -79,6 +79,45 @@ void sha512_block_data_order(void *ctx, const void *inp, size_t len)
         sha512_block_ppc(ctx, inp, len);
 }
 
+void ChaCha20_ctr32_int(unsigned char *out, const unsigned char *inp,
+                        size_t len, const unsigned int key[8],
+                        const unsigned int counter[4]);
+void ChaCha20_ctr32_vmx(unsigned char *out, const unsigned char *inp,
+                        size_t len, const unsigned int key[8],
+                        const unsigned int counter[4]);
+void ChaCha20_ctr32(unsigned char *out, const unsigned char *inp,
+                    size_t len, const unsigned int key[8],
+                    const unsigned int counter[4])
+{
+    OPENSSL_ppccap_P & PPC_ALTIVEC
+        ? ChaCha20_ctr32_vmx(out, inp, len, key, counter)
+        : ChaCha20_ctr32_int(out, inp, len, key, counter);
+}
+
+void poly1305_init_int(void *ctx, const unsigned char key[16]);
+void poly1305_blocks(void *ctx, const unsigned char *inp, size_t len,
+                         unsigned int padbit);
+void poly1305_emit(void *ctx, unsigned char mac[16],
+                       const unsigned int nonce[4]);
+void poly1305_init_fpu(void *ctx, const unsigned char key[16]);
+void poly1305_blocks_fpu(void *ctx, const unsigned char *inp, size_t len,
+                         unsigned int padbit);
+void poly1305_emit_fpu(void *ctx, unsigned char mac[16],
+                       const unsigned int nonce[4]);
+int poly1305_init(void *ctx, const unsigned char key[16], void *func[2])
+{
+    if (sizeof(size_t) == 4 && (OPENSSL_ppccap_P & PPC_FPU)) {
+        poly1305_init_fpu(ctx,key);
+        func[0] = poly1305_blocks_fpu;
+        func[1] = poly1305_emit_fpu;
+    } else {
+        poly1305_init_int(ctx,key);
+        func[0] = poly1305_blocks;
+        func[1] = poly1305_emit;
+    }
+    return 1;
+}
+
 static sigjmp_buf ill_jmp;
 static void ill_handler(int sig)
 {

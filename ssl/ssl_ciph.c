@@ -1,4 +1,3 @@
-/* ssl/ssl_ciph.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -311,12 +310,9 @@ static const SSL_CIPHER cipher_aliases[] = {
     {0, SSL_TXT_DH, 0, SSL_kDHE, 0, 0, 0, 0, 0, 0, 0,
      0},
 
-    {0, SSL_TXT_kECDHr, 0, SSL_kECDHr, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_kECDHe, 0, SSL_kECDHe, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_kECDH, 0, SSL_kECDHr | SSL_kECDHe, 0, 0, 0, 0, 0, 0, 0, 0},
     {0, SSL_TXT_kEECDH, 0, SSL_kECDHE, 0, 0, 0, 0, 0, 0, 0, 0},
     {0, SSL_TXT_kECDHE, 0, SSL_kECDHE, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_ECDH, 0, SSL_kECDHr | SSL_kECDHe | SSL_kECDHE, 0, 0, 0, 0, 0,
+    {0, SSL_TXT_ECDH, 0, SSL_kECDHE, 0, 0, 0, 0, 0,
      0, 0, 0},
 
     {0, SSL_TXT_kPSK, 0, SSL_kPSK, 0, 0, 0, 0, 0, 0, 0, 0},
@@ -331,7 +327,6 @@ static const SSL_CIPHER cipher_aliases[] = {
     {0, SSL_TXT_aDSS, 0, 0, SSL_aDSS, 0, 0, 0, 0, 0, 0, 0},
     {0, SSL_TXT_DSS, 0, 0, SSL_aDSS, 0, 0, 0, 0, 0, 0, 0},
     {0, SSL_TXT_aNULL, 0, 0, SSL_aNULL, 0, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_aECDH, 0, 0, SSL_aECDH, 0, 0, 0, 0, 0, 0, 0},
     {0, SSL_TXT_aECDSA, 0, 0, SSL_aECDSA, 0, 0, 0, 0, 0, 0, 0},
     {0, SSL_TXT_ECDSA, 0, 0, SSL_aECDSA, 0, 0, 0, 0, 0, 0, 0},
     {0, SSL_TXT_aPSK, 0, 0, SSL_aPSK, 0, 0, 0, 0, 0, 0, 0},
@@ -376,8 +371,8 @@ static const SSL_CIPHER cipher_aliases[] = {
      0, 0},
     {0, SSL_TXT_CAMELLIA128, 0, 0, 0, SSL_CAMELLIA128, 0, 0, 0, 0, 0, 0},
     {0, SSL_TXT_CAMELLIA256, 0, 0, 0, SSL_CAMELLIA256, 0, 0, 0, 0, 0, 0},
-    {0, SSL_TXT_CAMELLIA, 0, 0, 0, SSL_CAMELLIA128 | SSL_CAMELLIA256, 0, 0, 0,
-     0, 0, 0},
+    {0, SSL_TXT_CAMELLIA, 0, 0, 0, SSL_CAMELLIA, 0, 0, 0, 0, 0, 0},
+    {0, SSL_TXT_CHACHA20, 0, 0, 0, SSL_CHACHA20, 0, 0, 0, 0, 0, 0 },
 
     /* MAC aliases */
     {0, SSL_TXT_MD5, 0, 0, 0, 0, SSL_MD5, 0, 0, 0, 0, 0},
@@ -504,8 +499,8 @@ void ssl_load_ciphers(void)
     disabled_mkey_mask |= SSL_kDHE | SSL_kDHEPSK;
 #endif
 #ifdef OPENSSL_NO_EC
-    disabled_mkey_mask |= SSL_kECDHe | SSL_kECDHr | SSL_kECDHEPSK;
-    disabled_auth_mask |= SSL_aECDSA | SSL_aECDH;
+    disabled_mkey_mask |= SSL_kECDHEPSK;
+    disabled_auth_mask |= SSL_aECDSA;
 #endif
 #ifdef OPENSSL_NO_PSK
     disabled_mkey_mask |= SSL_PSK;
@@ -567,7 +562,7 @@ static void load_builtin_compressions(void)
             SSL_COMP *comp = NULL;
             COMP_METHOD *method = COMP_zlib();
 
-            MemCheck_off();
+            CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_DISABLE);
             ssl_comp_methods = sk_SSL_COMP_new(sk_comp_cmp);
             if (COMP_get_type(method) != NID_undef
                 && ssl_comp_methods != NULL) {
@@ -580,7 +575,7 @@ static void load_builtin_compressions(void)
                     sk_SSL_COMP_sort(ssl_comp_methods);
                 }
             }
-            MemCheck_on();
+            CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ENABLE);
         }
     }
 
@@ -897,7 +892,7 @@ static void ssl_cipher_apply_rule(uint32_t cipher_id, uint32_t alg_mkey,
 
 #ifdef CIPHER_DEBUG
     fprintf(stderr,
-            "Applying rule %d with %08lx/%08lx/%08lx/%08lx/%08lx %08lx (%d)\n",
+            "Applying rule %d with %08x/%08x/%08x/%08x/%08x %08x (%d)\n",
             rule, alg_mkey, alg_auth, alg_enc, alg_mac, alg_ssl,
             algo_strength, strength_bits);
 #endif
@@ -941,14 +936,10 @@ static void ssl_cipher_apply_rule(uint32_t cipher_id, uint32_t alg_mkey,
         } else {
 #ifdef CIPHER_DEBUG
             fprintf(stderr,
-                    "\nName: %s:\nAlgo = %08lx/%08lx/%08lx/%08lx/%08lx Algo_strength = %08lx\n",
+                    "\nName: %s:\nAlgo = %08x/%08x/%08x/%08x/%08x Algo_strength = %08x\n",
                     cp->name, cp->algorithm_mkey, cp->algorithm_auth,
                     cp->algorithm_enc, cp->algorithm_mac, cp->algorithm_ssl,
                     cp->algo_strength);
-#endif
-#ifdef OPENSSL_SSL_DEBUG_BROKEN_PROTOCOL
-            if (cipher_id && cipher_id != cp->id)
-                continue;
 #endif
             if (alg_mkey && !(alg_mkey & cp->algorithm_mkey))
                 continue;
@@ -1349,12 +1340,8 @@ static int check_suiteb_cipher_list(const SSL_METHOD *meth, CERT *c,
     /* Check version: if TLS 1.2 ciphers allowed we can use Suite B */
 
     if (!(meth->ssl3_enc->enc_flags & SSL_ENC_FLAG_TLS1_2_CIPHERS)) {
-        if (meth->ssl3_enc->enc_flags & SSL_ENC_FLAG_DTLS)
-            SSLerr(SSL_F_CHECK_SUITEB_CIPHER_LIST,
-                   SSL_R_ONLY_DTLS_1_2_ALLOWED_IN_SUITEB_MODE);
-        else
-            SSLerr(SSL_F_CHECK_SUITEB_CIPHER_LIST,
-                   SSL_R_ONLY_TLS_1_2_ALLOWED_IN_SUITEB_MODE);
+        SSLerr(SSL_F_CHECK_SUITEB_CIPHER_LIST,
+               SSL_R_AT_LEAST_TLS_1_2_NEEDED_IN_SUITEB_MODE);
         return 0;
     }
 # ifndef OPENSSL_NO_EC
@@ -1464,9 +1451,6 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method, STACK
     ssl_cipher_apply_rule(0, 0, SSL_aNULL, 0, 0, 0, 0, CIPHER_ORD, -1, &head,
                           &tail);
 
-    /* Move ciphers without forward secrecy to the end */
-    ssl_cipher_apply_rule(0, 0, SSL_aECDH, 0, 0, 0, 0, CIPHER_ORD, -1, &head,
-                          &tail);
     /*
      * ssl_cipher_apply_rule(0, 0, SSL_aDH, 0, 0, 0, 0, CIPHER_ORD, -1,
      * &head, &tail);
@@ -1585,24 +1569,24 @@ char *SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
 {
     const char *ver;
     const char *kx, *au, *enc, *mac;
-    uint32_t alg_mkey, alg_auth, alg_enc, alg_mac, alg_ssl;
+    uint32_t alg_mkey, alg_auth, alg_enc, alg_mac;
     static const char *format =
         "%-23s %s Kx=%-8s Au=%-4s Enc=%-9s Mac=%-4s\n";
+
+    if (buf == NULL) {
+        len = 128;
+        buf = OPENSSL_malloc(len);
+        if (buf == NULL)
+            return NULL;
+    } else if (len < 128)
+        return NULL;
 
     alg_mkey = cipher->algorithm_mkey;
     alg_auth = cipher->algorithm_auth;
     alg_enc = cipher->algorithm_enc;
     alg_mac = cipher->algorithm_mac;
-    alg_ssl = cipher->algorithm_ssl;
 
-    if (alg_ssl & SSL_SSLV3)
-        ver = "SSLv3";
-    else if (alg_ssl & SSL_TLSV1)
-        ver = "TLSv1.0";
-    else if (alg_ssl & SSL_TLSV1_2)
-        ver = "TLSv1.2";
-    else
-        ver = "unknown";
+    ver = SSL_CIPHER_get_version(cipher);
 
     switch (alg_mkey) {
     case SSL_kRSA:
@@ -1610,12 +1594,6 @@ char *SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
         break;
     case SSL_kDHE:
         kx = "DH";
-        break;
-    case SSL_kECDHr:
-        kx = "ECDH/RSA";
-        break;
-    case SSL_kECDHe:
-        kx = "ECDH/ECDSA";
         break;
     case SSL_kECDHE:
         kx = "ECDH";
@@ -1648,9 +1626,6 @@ char *SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
         break;
     case SSL_aDSS:
         au = "DSS";
-        break;
-    case SSL_aECDH:
-        au = "ECDH";
         break;
     case SSL_aNULL:
         au = "None";
@@ -1772,14 +1747,6 @@ char *SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
         break;
     }
 
-    if (buf == NULL) {
-        len = 128;
-        buf = OPENSSL_malloc(len);
-        if (buf == NULL)
-            return ("OPENSSL_malloc Error");
-    } else if (len < 128)
-        return ("Buffer too small");
-
     BIO_snprintf(buf, len, format, cipher->name, ver, kx, au, enc, mac);
 
     return (buf);
@@ -1787,15 +1754,19 @@ char *SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
 
 char *SSL_CIPHER_get_version(const SSL_CIPHER *c)
 {
-    int i;
+    uint32_t alg_ssl;
 
     if (c == NULL)
-        return ("(NONE)");
-    i = (int)(c->id >> 24L);
-    if (i == 3)
-        return ("TLSv1/SSLv3");
-    else
-        return ("unknown");
+        return "(NONE)";
+    alg_ssl = c->algorithm_ssl;
+
+    if (alg_ssl & SSL_SSLV3)
+        return "SSLv3";
+    if (alg_ssl & SSL_TLSV1)
+        return "TLSv1.0";
+    if (alg_ssl & SSL_TLSV1_2)
+        return "TLSv1.2";
+    return "unknown";
 }
 
 /* return the actual cipher being used */
@@ -1906,10 +1877,10 @@ int SSL_COMP_add_compression_method(int id, COMP_METHOD *cm)
         return 0;
     }
 
-    MemCheck_off();
+    CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_DISABLE);
     comp = OPENSSL_malloc(sizeof(*comp));
     if (comp == NULL) {
-        MemCheck_on();
+        CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ENABLE);
         SSLerr(SSL_F_SSL_COMP_ADD_COMPRESSION_METHOD, ERR_R_MALLOC_FAILURE);
         return (1);
     }
@@ -1919,20 +1890,20 @@ int SSL_COMP_add_compression_method(int id, COMP_METHOD *cm)
     load_builtin_compressions();
     if (ssl_comp_methods && sk_SSL_COMP_find(ssl_comp_methods, comp) >= 0) {
         OPENSSL_free(comp);
-        MemCheck_on();
+        CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ENABLE);
         SSLerr(SSL_F_SSL_COMP_ADD_COMPRESSION_METHOD,
                SSL_R_DUPLICATE_COMPRESSION_ID);
         return (1);
-    } else if ((ssl_comp_methods == NULL)
+    }
+    if ((ssl_comp_methods == NULL)
                || !sk_SSL_COMP_push(ssl_comp_methods, comp)) {
         OPENSSL_free(comp);
-        MemCheck_on();
+        CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ENABLE);
         SSLerr(SSL_F_SSL_COMP_ADD_COMPRESSION_METHOD, ERR_R_MALLOC_FAILURE);
         return (1);
-    } else {
-        MemCheck_on();
-        return (0);
     }
+    CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ENABLE);
+    return (0);
 }
 #endif
 
@@ -1948,22 +1919,11 @@ const char *SSL_COMP_get_name(const COMP_METHOD *comp)
 /* For a cipher return the index corresponding to the certificate type */
 int ssl_cipher_get_cert_index(const SSL_CIPHER *c)
 {
-    uint32_t alg_k, alg_a;
+    uint32_t alg_a;
 
-    alg_k = c->algorithm_mkey;
     alg_a = c->algorithm_auth;
 
-    if (alg_k & (SSL_kECDHr | SSL_kECDHe)) {
-        /*
-         * we don't need to look at SSL_kECDHE since no certificate is needed
-         * for anon ECDH and for authenticated ECDHE, the check for the auth
-         * algorithm will set i correctly NOTE: For ECDH-RSA, we need an ECC
-         * not an RSA cert but for ECDHE-RSA we need an RSA cert. Placing the
-         * checks for SSL_kECDH before RSA checks ensures the correct cert is
-         * chosen.
-         */
-        return SSL_PKEY_ECC;
-    } else if (alg_a & SSL_aECDSA)
+    if (alg_a & SSL_aECDSA)
         return SSL_PKEY_ECC;
     else if (alg_a & SSL_aDSS)
         return SSL_PKEY_DSA_SIGN;

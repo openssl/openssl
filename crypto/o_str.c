@@ -1,4 +1,3 @@
-/* crypto/o_str.c */
 /*
  * Written by Richard Levitte (richard@levitte.org) for the OpenSSL project
  * 2003.
@@ -121,12 +120,14 @@ int OPENSSL_memcmp(const void *v1, const void *v2, size_t n)
 char *CRYPTO_strdup(const char *str, const char* file, int line)
 {
     char *ret;
+    size_t size;
 
     if (str == NULL)
         return NULL;
-    ret = CRYPTO_malloc(strlen(str) + 1, file, line);
+    size = strlen(str) + 1;
+    ret = CRYPTO_malloc(size, file, line);
     if (ret != NULL)
-        strcpy(ret, str);
+        memcpy(ret, str, size);
     return ret;
 }
 

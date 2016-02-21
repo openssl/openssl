@@ -1,4 +1,3 @@
-/* crypto/ecdsa/ecdsatest.c */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -516,21 +515,13 @@ int main(void)
 {
     int ret = 1;
     BIO *out;
+    char *p;
 
     out = BIO_new_fp(stdout, BIO_NOCLOSE | BIO_FP_TEXT);
 
-    /* enable memory leak checking unless explicitly disabled */
-    if (!((getenv("OPENSSL_DEBUG_MEMORY") != NULL) &&
-          (0 == strcmp(getenv("OPENSSL_DEBUG_MEMORY"), "off")))) {
-        CRYPTO_malloc_debug_init();
-        CRYPTO_set_mem_debug_options(V_CRYPTO_MDEBUG_ALL);
-    } else {
-        /* OPENSSL_DEBUG_MEMORY=off */
-        CRYPTO_set_mem_debug_functions(0, 0, 0, 0, 0);
-    }
-    CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
-
-    ERR_load_crypto_strings();
+    p = getenv("OPENSSL_DEBUG_MEMORY");
+    if (p != NULL && strcmp(p, "on") == 0)
+        CRYPTO_set_mem_debug(1);
 
     /* initialize the prng */
     RAND_seed(rnd_seed, sizeof(rnd_seed));
@@ -549,10 +540,11 @@ int main(void)
         BIO_printf(out, "\nECDSA test passed\n");
     if (ret)
         ERR_print_errors(out);
-    CRYPTO_cleanup_all_ex_data();
-    ERR_remove_thread_state(NULL);
-    ERR_free_strings();
-    CRYPTO_mem_leaks(out);
+
+#ifndef OPENSSL_NO_CRYPTO_MDEBUG
+    if (CRYPTO_mem_leaks(out) <= 0)
+        ret = 1;
+#endif
     BIO_free(out);
     return ret;
 }

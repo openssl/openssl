@@ -1,4 +1,3 @@
-/* crypto/rsa/rsa_lib.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -184,17 +183,10 @@ void RSA_free(RSA *r)
         return;
 
     i = CRYPTO_add(&r->references, -1, CRYPTO_LOCK_RSA);
-#ifdef REF_PRINT
-    REF_PRINT("RSA", r);
-#endif
+    REF_PRINT_COUNT("RSA", r);
     if (i > 0)
         return;
-#ifdef REF_CHECK
-    if (i < 0) {
-        fprintf(stderr, "RSA_free, bad reference count\n");
-        abort();
-    }
-#endif
+    REF_ASSERT_ISNT(i < 0);
 
     if (r->meth->finish)
         r->meth->finish(r);
@@ -222,15 +214,9 @@ void RSA_free(RSA *r)
 int RSA_up_ref(RSA *r)
 {
     int i = CRYPTO_add(&r->references, 1, CRYPTO_LOCK_RSA);
-#ifdef REF_PRINT
-    REF_PRINT("RSA", r);
-#endif
-#ifdef REF_CHECK
-    if (i < 2) {
-        fprintf(stderr, "RSA_up_ref, bad reference count\n");
-        abort();
-    }
-#endif
+
+    REF_PRINT_COUNT("RSA", r);
+    REF_ASSERT_ISNT(i < 2);
     return ((i > 1) ? 1 : 0);
 }
 

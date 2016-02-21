@@ -1,4 +1,3 @@
-/* asn_mime.c */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -73,20 +72,16 @@
  * from parameter values. Quotes are stripped off
  */
 
-typedef struct {
+struct mime_param_st {
     char *param_name;           /* Param name e.g. "micalg" */
     char *param_value;          /* Param value e.g. "sha1" */
-} MIME_PARAM;
+};
 
-DECLARE_STACK_OF(MIME_PARAM)
-
-typedef struct {
+struct mime_header_st {
     char *name;                 /* Name of line e.g. "content-type" */
     char *value;                /* Value of line e.g. "text/plain" */
     STACK_OF(MIME_PARAM) *params; /* Zero or more parameters */
-} MIME_HEADER;
-
-DECLARE_STACK_OF(MIME_HEADER)
+};
 
 static int asn1_output_data(BIO *out, BIO *data, ASN1_VALUE *val, int flags,
                             const ASN1_ITEM *it);
@@ -369,7 +364,7 @@ static int asn1_output_data(BIO *out, BIO *data, ASN1_VALUE *val, int flags,
     int rv = 1;
 
     /*
-     * If data is not deteched or resigning then the output BIO is already
+     * If data is not detached or resigning then the output BIO is already
      * set up to finalise when it is written through.
      */
     if (!(flags & SMIME_DETACHED) || (flags & PKCS7_REUSE_DIGEST)) {

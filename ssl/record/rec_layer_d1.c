@@ -1,4 +1,3 @@
-/* ssl/record/rec_layer_d1.c */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -119,7 +118,6 @@
 #include "../ssl_locl.h"
 #include <openssl/evp.h>
 #include <openssl/buffer.h>
-#include <openssl/pqueue.h>
 #include <openssl/rand.h>
 #include "record_locl.h"
 
@@ -165,9 +163,9 @@ void DTLS_RECORD_LAYER_clear(RECORD_LAYER *rl)
     DTLS_RECORD_LAYER *d;
     pitem *item = NULL;
     DTLS1_RECORD_DATA *rdata;
-    pqueue unprocessed_rcds;
-    pqueue processed_rcds;
-    pqueue buffered_app_data;
+    pqueue *unprocessed_rcds;
+    pqueue *processed_rcds;
+    pqueue *buffered_app_data;
 
     d = rl->d;
     
@@ -630,7 +628,7 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
             dest_len = &s->rlayer.d->alert_fragment_len;
         }
 #ifndef OPENSSL_NO_HEARTBEATS
-        else if (SSL3_RECORD_get_type(rr) == TLS1_RT_HEARTBEAT) {
+        else if (SSL3_RECORD_get_type(rr) == DTLS1_RT_HEARTBEAT) {
             /* We allow a 0 return */
             if (dtls1_process_heartbeat(s, SSL3_RECORD_get_data(rr),
                     SSL3_RECORD_get_length(rr)) < 0) {

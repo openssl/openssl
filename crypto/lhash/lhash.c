@@ -1,4 +1,3 @@
-/* crypto/lhash/lhash.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -421,4 +420,19 @@ unsigned long lh_strhash(const char *c)
 unsigned long lh_num_items(const _LHASH *lh)
 {
     return lh ? lh->num_items : 0;
+}
+
+unsigned long lh_get_down_load(const _LHASH *lh)
+{
+    return lh->down_load;
+}
+
+void lh_set_down_load(_LHASH *lh, unsigned long down_load)
+{
+    lh->down_load = down_load;
+}
+
+int lh_error(_LHASH *lh)
+{
+    return lh->error;
 }

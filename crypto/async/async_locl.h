@@ -1,4 +1,3 @@
-/* crypto/async/async_locl.h */
 /*
  * Written by Matt Caswell (matt@openssl.org) for the OpenSSL project.
  */
@@ -60,7 +59,7 @@
 # pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #endif
 
-#include <openssl/async.h>
+#include <internal/async.h>
 #include <openssl/crypto.h>
 
 typedef struct async_ctx_st async_ctx;
@@ -87,7 +86,7 @@ struct async_job_st {
     OSSL_ASYNC_FD wake_fd;
 };
 
-DECLARE_STACK_OF(ASYNC_JOB)
+DEFINE_STACK_OF(ASYNC_JOB)
 
 struct async_pool_st {
     STACK_OF(ASYNC_JOB) *jobs;
@@ -96,7 +95,6 @@ struct async_pool_st {
 };
 
 int async_global_init(void);
-int async_local_init(void);
 void async_local_cleanup(void);
 void async_global_cleanup(void);
 void async_start_func(void);

@@ -1,4 +1,3 @@
-/* crypto/evp/e_old.c */
 /*
  * Written by Richard Levitte (richard@levitte.org) for the OpenSSL project
  * 2004.
@@ -57,8 +56,9 @@
  *
  */
 
-#ifdef OPENSSL_NO_DEPRECATED
-static void *dummy = &dummy;
+#include <openssl/opensslconf.h>
+#if OPENSSL_API_COMPAT >= 0x00908000L
+NON_EMPTY_TRANSLATION_UNIT
 #else
 
 # include <openssl/evp.h>

@@ -1,4 +1,3 @@
-/* crypto/err/err.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -112,15 +111,14 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
-#include "internal/cryptlib.h"
+#include <internal/cryptlib_int.h>
 #include <openssl/lhash.h>
 #include <openssl/crypto.h>
 #include <openssl/buffer.h>
 #include <openssl/bio.h>
 #include <openssl/err.h>
-
-DECLARE_LHASH_OF(ERR_STRING_DATA);
-DECLARE_LHASH_OF(ERR_STATE);
+#include <openssl/opensslconf.h>
+#include "err_lcl.h"
 
 static void err_load_strings(int lib, ERR_STRING_DATA *str);
 
@@ -175,6 +173,12 @@ static ERR_STRING_DATA ERR_str_functs[] = {
 # endif
     {ERR_PACK(0, SYS_F_OPENDIR, 0), "opendir"},
     {ERR_PACK(0, SYS_F_FREAD, 0), "fread"},
+    {ERR_PACK(0, SYS_F_GETADDRINFO, 0), "getaddrinfo"},
+    {ERR_PACK(0, SYS_F_GETNAMEINFO, 0), "getnameinfo"},
+    {ERR_PACK(0, SYS_F_SETSOCKOPT, 0), "setsockopt"},
+    {ERR_PACK(0, SYS_F_GETSOCKOPT, 0), "getsockopt"},
+    {ERR_PACK(0, SYS_F_GETSOCKNAME, 0), "getsockname"},
+    {ERR_PACK(0, SYS_F_GETHOSTBYNAME, 0), "gethostbyname"},
     {0, NULL},
 };
 
@@ -219,6 +223,7 @@ static ERR_STRING_DATA ERR_str_reasons[] = {
     {ERR_R_PASSED_NULL_PARAMETER, "passed a null parameter"},
     {ERR_R_INTERNAL_ERROR, "internal error"},
     {ERR_R_DISABLED, "called a function that was disabled at compile-time"},
+    {ERR_R_INIT_FAIL, "init fail"},
 
     {0, NULL},
 };
@@ -236,15 +241,14 @@ static void int_thread_del_item(const ERR_STATE *);
 /*
  * The internal state
  */
+
+/* This is a struct so that REF_PRINT_COUNT works. */
+static struct refcount {
+    int references;
+} refcount = { 0 };
 static LHASH_OF(ERR_STRING_DATA) *int_error_hash = NULL;
 static LHASH_OF(ERR_STATE) *int_thread_hash = NULL;
-static int int_thread_hash_references = 0;
 static int int_err_library_number = ERR_LIB_USER;
-
-/*
- * These are the callbacks provided to "lh_new()" when creating the LHASH
- * tables internal to the "err_defaults" implementation.
- */
 
 static unsigned long get_error_values(int inc, int top, const char **file,
                                       int *line, const char **data,
@@ -259,15 +263,11 @@ static unsigned long err_string_data_hash(const ERR_STRING_DATA *a)
     return (ret ^ ret % 19 * 13);
 }
 
-static IMPLEMENT_LHASH_HASH_FN(err_string_data, ERR_STRING_DATA)
-
 static int err_string_data_cmp(const ERR_STRING_DATA *a,
                                const ERR_STRING_DATA *b)
 {
     return (int)(a->error - b->error);
 }
-
-static IMPLEMENT_LHASH_COMP_FN(err_string_data, ERR_STRING_DATA)
 
 static LHASH_OF(ERR_STRING_DATA) *get_hash(int create, int lockit)
 {
@@ -276,7 +276,8 @@ static LHASH_OF(ERR_STRING_DATA) *get_hash(int create, int lockit)
     if (lockit)
         CRYPTO_w_lock(CRYPTO_LOCK_ERR);
     if (!int_error_hash && create) {
-        int_error_hash = lh_ERR_STRING_DATA_new();
+        int_error_hash = lh_ERR_STRING_DATA_new(err_string_data_hash,
+                                                err_string_data_cmp);
     }
     if (int_error_hash != NULL)
         ret = int_error_hash;
@@ -305,14 +306,10 @@ static unsigned long err_state_hash(const ERR_STATE *a)
     return CRYPTO_THREADID_hash(&a->tid) * 13;
 }
 
-static IMPLEMENT_LHASH_HASH_FN(err_state, ERR_STATE)
-
 static int err_state_cmp(const ERR_STATE *a, const ERR_STATE *b)
 {
     return CRYPTO_THREADID_cmp(&a->tid, &b->tid);
 }
-
-static IMPLEMENT_LHASH_COMP_FN(err_state, ERR_STATE)
 
 static LHASH_OF(ERR_STATE) *int_thread_get(int create, int lockit)
 {
@@ -321,10 +318,10 @@ static LHASH_OF(ERR_STATE) *int_thread_get(int create, int lockit)
     if (lockit)
         CRYPTO_w_lock(CRYPTO_LOCK_ERR);
     if (!int_thread_hash && create) {
-        int_thread_hash = lh_ERR_STATE_new();
+        int_thread_hash = lh_ERR_STATE_new(err_state_hash, err_state_cmp);
     }
     if (int_thread_hash != NULL) {
-        int_thread_hash_references++;
+        refcount.references++;
         ret = int_thread_hash;
     }
     if (lockit)
@@ -339,19 +336,12 @@ static void int_thread_release(LHASH_OF(ERR_STATE) **hash)
     if (hash == NULL || *hash == NULL)
         return;
 
-    i = CRYPTO_add(&int_thread_hash_references, -1, CRYPTO_LOCK_ERR);
+    i = CRYPTO_add(&refcount.references, -1, CRYPTO_LOCK_ERR);
 
-#ifdef REF_PRINT
-    fprintf(stderr, "%4d:%s\n", int_thread_hash_references, "ERR");
-#endif
+    REF_PRINT_COUNT(&refcount, "ERR");
     if (i > 0)
         return;
-#ifdef REF_CHECK
-    if (i < 0) {
-        fprintf(stderr, "int_thread_release, bad reference count\n");
-        abort();                /* ok */
-    }
-#endif
+    REF_ASSERT_ISNT(i < 0);
     *hash = NULL;
 }
 
@@ -396,10 +386,10 @@ static void int_thread_del_item(const ERR_STATE *d)
         p = lh_ERR_STATE_delete(hash, d);
         /* If there are no other references, and we just removed the
          * last item, delete the int_thread_hash */
-        if (int_thread_hash_references == 1
+        if (refcount.references == 1
             && int_thread_hash
             && lh_ERR_STATE_num_items(int_thread_hash) == 0) {
-            int_thread_hash_references = 0;
+            refcount.references = 0;
             lh_ERR_STATE_free(int_thread_hash);
             int_thread_hash = NULL;
             hash = NULL;
@@ -861,7 +851,7 @@ void ERR_remove_thread_state(const CRYPTO_THREADID *id)
     int_thread_del_item(&tmp);
 }
 
-#ifndef OPENSSL_NO_DEPRECATED
+#if OPENSSL_API_COMPAT < 0x10000000L
 void ERR_remove_state(unsigned long pid)
 {
     ERR_remove_thread_state(NULL);
@@ -902,6 +892,10 @@ ERR_STATE *ERR_get_state(void)
          * the first one that we just replaced.
          */
         ERR_STATE_free(tmpp);
+
+        /* Ignore failures from these */
+        OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL);
+        ossl_init_thread_start(OPENSSL_INIT_THREAD_ERR_STATE);
     }
     return ret;
 }

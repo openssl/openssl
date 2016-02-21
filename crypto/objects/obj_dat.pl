@@ -168,8 +168,6 @@ foreach (sort obj_cmp @a)
 	}
 
 print OUT <<'EOF';
-/* crypto/objects/obj_dat.h */
-
 /* THIS FILE IS GENERATED FROM objects.h by obj_dat.pl via the
  * following command:
  * perl obj_dat.pl obj_mac.h obj_dat.h
@@ -259,7 +257,7 @@ foreach (@out)
 				}
 			$out=$t;
 			}
-		chop $out;
+		chop $out;      # Get rid of the last comma
 		print OUT "$out";
 		}
 	else

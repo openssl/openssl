@@ -1,4 +1,3 @@
-/* crypto/pem/pem_pkey.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -72,6 +71,7 @@
 # include <openssl/dh.h>
 #endif
 #include "internal/asn1_int.h"
+#include "internal/evp_int.h"
 
 int pem_check_suffix(const char *pem_str, const char *suffix);
 

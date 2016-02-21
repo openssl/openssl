@@ -1,4 +1,3 @@
-/* crypto/idea/i_ecb.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -62,10 +61,7 @@
 
 const char *idea_options(void)
 {
-    if (sizeof(short) != sizeof(IDEA_INT))
-        return ("idea(int)");
-    else
-        return ("idea(short)");
+    return ("idea(int)");
 }
 
 void idea_ecb_encrypt(const unsigned char *in, unsigned char *out,

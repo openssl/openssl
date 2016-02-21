@@ -54,7 +54,7 @@ sub loadfile
 		$header=0 if /^[dr]sa/;
 		if (/^type/) { $header=0; next; }
 		next if $header;
-		chop;
+		s|\R$||;
 		@a=split;
 		if ($a[0] =~ /^[dr]sa$/)
 			{

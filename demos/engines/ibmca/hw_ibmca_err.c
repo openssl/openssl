@@ -1,4 +1,3 @@
-/* hw_ibmca_err.c */
 /* ====================================================================
  * Copyright (c) 1999-2002 The OpenSSL Project.  All rights reserved.
  *

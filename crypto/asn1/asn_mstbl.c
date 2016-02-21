@@ -1,4 +1,3 @@
-/* asn_mstbl.c */
 /*
  * Written by Stephen Henson (steve@openssl.org) for the OpenSSL project
  * 2012.
@@ -60,7 +59,7 @@
 #include <openssl/conf.h>
 #include <openssl/x509v3.h>
 
-/* Multi string module: add table enstries from a given section */
+/* Multi string module: add table entries from a given section */
 
 static int do_tcreate(char *value, char *name);
 

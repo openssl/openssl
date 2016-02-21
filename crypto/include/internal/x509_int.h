@@ -1,4 +1,3 @@
-/* x509_int.h */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
  * 2015.
@@ -192,7 +191,6 @@ struct x509_st {
     X509_CINF cert_info;
     X509_ALGOR sig_alg;
     ASN1_BIT_STRING signature;
-    int valid;
     int references;
     char *name;
     CRYPTO_EX_DATA ex_data;

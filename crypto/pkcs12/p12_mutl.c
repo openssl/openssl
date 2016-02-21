@@ -1,4 +1,3 @@
-/* p12_mutl.c */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
  * 1999.
@@ -63,6 +62,37 @@
 # include <openssl/hmac.h>
 # include <openssl/rand.h>
 # include <openssl/pkcs12.h>
+# include "p12_lcl.h"
+
+int PKCS12_mac_present(PKCS12 *p12)
+{
+    return p12->mac ? 1 : 0;
+}
+
+void PKCS12_get0_mac(ASN1_OCTET_STRING **pmac, X509_ALGOR **pmacalg,
+                     ASN1_OCTET_STRING **psalt, ASN1_INTEGER **piter,
+                     PKCS12 *p12)
+{
+    if (p12->mac) {
+        if (pmac)
+            *pmac = p12->mac->dinfo->digest;
+        if (pmacalg)
+            *pmacalg = p12->mac->dinfo->algor;
+        if (psalt)
+            *psalt = p12->mac->salt;
+        if (piter)
+            *piter = p12->mac->iter;
+    } else {
+        if (pmac)
+            *pmac = NULL;
+        if (pmacalg)
+            *pmacalg = NULL;
+        if (psalt)
+            *psalt = NULL;
+        if (piter)
+            *piter = NULL;
+    }
+}
 
 # define TK26_MAC_KEY_LEN 32
 

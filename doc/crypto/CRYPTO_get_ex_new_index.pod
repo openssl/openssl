@@ -45,8 +45,7 @@ The specific structures are:
     X509_STORE_CTX
     DH
     DSA
-    ECDH
-    ECDSA
+    EC_KEY
     RSA
     ENGINE
     UI

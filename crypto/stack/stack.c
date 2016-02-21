@@ -1,4 +1,3 @@
-/* crypto/stack/stack.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -337,7 +336,7 @@ void *sk_set(_STACK *st, int i, void *value)
 
 void sk_sort(_STACK *st)
 {
-    if (st && !st->sorted) {
+    if (st && !st->sorted && st->comp != NULL) {
         int (*comp_func) (const void *, const void *);
 
         /*

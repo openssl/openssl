@@ -1,4 +1,3 @@
-/* crypto/modes/wrap128.c */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project. Mode with padding contributed by Petr Spacek

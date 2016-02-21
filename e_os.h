@@ -1,4 +1,3 @@
-/* e_os.h */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -72,15 +71,26 @@ extern "C" {
 #endif
 
 /* Used to checking reference counts, most while doing perl5 stuff :-) */
+# if defined(OPENSSL_NO_STDIO)
+#  if defined(REF_DEBUG)
+#   error "REF_DEBUG requires stdio"
+#  endif
+#  if defined(REF_PRINT)
+#   error "REF_PRINT requires stdio"
+#  endif
+# endif
+
+# if defined(REF_DEBUG)
+#  define REF_ASSERT_ISNT(test) \
+    (void)((test) ? (OpenSSLDie(__FILE__, __LINE__, "refcount error"), 1) : 0)
+# else
+#  define REF_ASSERT_ISNT(i)
+# endif
 # ifdef REF_PRINT
-#  undef REF_PRINT
-#  define REF_PRINT(a,b)  fprintf(stderr,"%08X:%4d:%s\n",(int)b,b->references,a)
-# endif
-# if defined(OPENSSL_NO_STDIO) && defined(REF_CHECK)
-#  error "Cannot have REF_CHECK with no-stdio"
-# endif
-# if defined(OPENSSL_NO_STDIO) && defined(REF_PRINT)
-#  error "Cannot have REF_PRINT with no-stdio"
+#  define REF_PRINT_COUNT(a, b) \
+        fprintf(stderr, "%p:%4d:%s\n", b, b->references, a)
+# else
+#  define REF_PRINT_COUNT(a, b)
 # endif
 
 # ifndef DEVRANDOM
@@ -90,7 +100,7 @@ extern "C" {
  */
 #  define DEVRANDOM "/dev/urandom","/dev/random","/dev/srandom"
 # endif
-# ifndef DEVRANDOM_EGD
+# if !defined(OPENSSL_NO_EGD) && !defined(DEVRANDOM_EGD)
 /*
  * set this to a comma-separated list of 'egd' sockets to try out. These
  * sockets will be tried in the order listed in case accessing the device
@@ -376,16 +386,19 @@ extern FILE *_imp___iob;
 
      So, what we do here is to change 0 to 1 to get the default success status,
      and everything else is shifted up to fit into the status number field, and
-     the status is tagged as an error, which I believe is what is wanted here.
+     the status is tagged as an error, which is what is wanted here.
+
+     Finally, we add the VMS C facility code 0x35a000, because there are some
+     programs, such as Perl, that will reinterpret the code back to something
+     POSIXly.  'man perlvms' explains it further.
+
+     NOTE: the perlvms manual wants to turn all codes 2 to 255 into success
+     codes (status type = 1).  I couldn't disagree more.  Fortunately, the
+     status type doesn't seem to bother Perl.
      -- Richard Levitte
   */
-#   define EXIT(n)             do { int __VMS_EXIT = n; \
-                                     if (__VMS_EXIT == 0) \
-                                       __VMS_EXIT = 1; \
-                                     else \
-                                       __VMS_EXIT = (n << 3) | 2; \
-                                     __VMS_EXIT |= 0x10000000; \
-                                     exit(__VMS_EXIT); } while(0)
+#   define EXIT(n)  exit((n) ? (((n) << 3) | 2 | 0x10000000 | 0x35a000) : 1)
+
 #   define NO_SYS_PARAM_H
 #   define NO_SYS_UN_H
 
@@ -495,6 +508,7 @@ struct servent *PASCAL getservbyname(const char *, const char *);
           * configured for BSD
           */
 #   if defined(NETWARE_BSDSOCK)
+#    include <netdb.h>
 #    include <sys/socket.h>
 #    include <netinet/in.h>
 #    include <sys/time.h>
@@ -543,6 +557,7 @@ struct servent *PASCAL getservbyname(const char *, const char *);
 #    endif
 #    include <netinet/in.h>
 #    include <arpa/inet.h>
+#    include <netinet/tcp.h>
 #   endif
 
 #   ifdef OPENSSL_SYS_AIX

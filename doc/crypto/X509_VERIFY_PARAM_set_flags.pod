@@ -127,7 +127,7 @@ IPv6.  The condensed "::" notation is supported for IPv6 addresses.
 X509_VERIFY_PARAM_set_flags(), X509_VERIFY_PARAM_clear_flags(),
 X509_VERIFY_PARAM_set_purpose(), X509_VERIFY_PARAM_set_trust(),
 X509_VERIFY_PARAM_add0_policy() X509_VERIFY_PARAM_set1_policies(),
-X509_VERIFY_PARAM_set1_host(), X509_VERIFY_PARAM_set_hostflags(),
+X509_VERIFY_PARAM_set1_host(), X509_VERIFY_PARAM_add1_host(),
 X509_VERIFY_PARAM_set1_email(), X509_VERIFY_PARAM_set1_ip() and
 X509_VERIFY_PARAM_set1_ip_asc() return 1 for success and 0 for
 failure.
@@ -191,17 +191,20 @@ check the signature anyway. A side effect of not checking the root CA
 signature is that disabled or unsupported message digests on the root CA
 are not treated as fatal errors.
 
-The B<X509_V_FLAG_CB_ISSUER_CHECK> flag enables debugging of certificate
-issuer checks. It is B<not> needed unless you are logging certificate
-verification. If this flag is set then additional status codes will be sent
-to the verification callback and it B<must> be prepared to handle such cases
-without assuming they are hard errors.
+If B<X509_V_FLAG_TRUSTED_FIRST> is set, when constructing the certificate chain,
+L<X509_verify_cert(3)> will search the trust store for issuer certificates before
+searching the provided untrusted certificates.
+As of OpenSSL 1.1.0 this option is on by default and cannot be disabled.
 
 The B<X509_V_FLAG_NO_ALT_CHAINS> flag suppresses checking for alternative
-chains. By default, when building a certificate chain, if the first certificate
-chain found is not trusted, then OpenSSL will continue to check to see if an
-alternative chain can be found that is trusted. With this flag set the behaviour
-will match that of OpenSSL versions prior to 1.1.0.
+chains.
+By default, unless B<X509_V_FLAG_TRUSTED_FIRST> is set, when building a
+certificate chain, if the first certificate chain found is not trusted, then
+OpenSSL will attempt to replace untrusted certificates supplied by the peer
+with certificates from the trust store to see if an alternative chain can be
+found that is trusted.
+As of OpenSSL 1.1.0, with B<X509_V_FLAG_TRUSTED_FIRST> always set, this option
+has no effect.
 
 The B<X509_V_FLAG_NO_CHECK_TIME> flag suppresses checking the validity period
 of certificates and CRLs against the current time. If X509_VERIFY_PARAM_set_time()
@@ -244,5 +247,7 @@ L<X509_check_ip(3)>
 =head1 HISTORY
 
 The B<X509_V_FLAG_NO_ALT_CHAINS> flag was added in OpenSSL 1.1.0
+The legacy B<X509_V_FLAG_CB_ISSUER_CHECK> flag is deprecated as of
+OpenSSL 1.1.0, and has no effect.
 
 =cut

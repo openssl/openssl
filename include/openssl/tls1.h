@@ -1,4 +1,3 @@
-/* ssl/tls1.h */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -392,14 +391,32 @@ SSL_CTX_ctrl(ssl,SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB_ARG,0, (void *)arg)
 SSL_CTX_callback_ctrl(ssl,SSL_CTRL_SET_TLSEXT_TICKET_KEY_CB,(void (*)(void))cb)
 
 # ifndef OPENSSL_NO_HEARTBEATS
-#  define SSL_TLSEXT_HB_ENABLED                           0x01
-#  define SSL_TLSEXT_HB_DONT_SEND_REQUESTS        0x02
-#  define SSL_TLSEXT_HB_DONT_RECV_REQUESTS        0x04
+#  define SSL_DTLSEXT_HB_ENABLED                   0x01
+#  define SSL_DTLSEXT_HB_DONT_SEND_REQUESTS        0x02
+#  define SSL_DTLSEXT_HB_DONT_RECV_REQUESTS        0x04
+#  define SSL_get_dtlsext_heartbeat_pending(ssl) \
+        SSL_ctrl((ssl),SSL_CTRL_GET_DTLS_EXT_HEARTBEAT_PENDING,0,NULL)
+#  define SSL_set_dtlsext_heartbeat_no_requests(ssl, arg) \
+        SSL_ctrl((ssl),SSL_CTRL_SET_DTLS_EXT_HEARTBEAT_NO_REQUESTS,arg,NULL)
 
-#  define SSL_get_tlsext_heartbeat_pending(ssl) \
-        SSL_ctrl((ssl),SSL_CTRL_GET_TLS_EXT_HEARTBEAT_PENDING,0,NULL)
-#  define SSL_set_tlsext_heartbeat_no_requests(ssl, arg) \
-        SSL_ctrl((ssl),SSL_CTRL_SET_TLS_EXT_HEARTBEAT_NO_REQUESTS,arg,NULL)
+#  if OPENSSL_API_COMPAT < 0x10100000L
+#   define SSL_CTRL_TLS_EXT_SEND_HEARTBEAT \
+        SSL_CTRL_DTLS_EXT_SEND_HEARTBEAT
+#   define SSL_CTRL_GET_TLS_EXT_HEARTBEAT_PENDING \
+        SSL_CTRL_GET_DTLS_EXT_HEARTBEAT_PENDING
+#   define SSL_CTRL_SET_TLS_EXT_HEARTBEAT_NO_REQUESTS \
+        SSL_CTRL_SET_DTLS_EXT_HEARTBEAT_NO_REQUESTS
+#   define SSL_TLSEXT_HB_ENABLED \
+        SSL_DTLSEXT_HB_ENABLED
+#   define SSL_TLSEXT_HB_DONT_SEND_REQUESTS \
+        SSL_DTLSEXT_HB_DONT_SEND_REQUESTS
+#   define SSL_TLSEXT_HB_DONT_RECV_REQUESTS \
+        SSL_DTLSEXT_HB_DONT_RECV_REQUESTS
+#   define SSL_get_tlsext_heartbeat_pending(ssl) \
+        SSL_get_dtlsext_heartbeat_pending(ssl)
+#   define SSL_set_tlsext_heartbeat_no_requests(ssl, arg) \
+        SSL_set_dtlsext_heartbeat_no_requests(ssl, arg)
+#  endif
 # endif
 
 /* PSK ciphersuites from 4279 */

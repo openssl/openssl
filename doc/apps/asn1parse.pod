@@ -7,6 +7,7 @@ asn1parse - ASN.1 parsing tool
 =head1 SYNOPSIS
 
 B<openssl> B<asn1parse>
+[B<-help>]
 [B<-inform PEM|DER>]
 [B<-in filename>]
 [B<-out filename>]
@@ -30,6 +31,10 @@ structures. It can also be used to extract data from ASN.1 formatted data.
 =head1 OPTIONS
 
 =over 4
+
+=item B<-help>
+
+Print out a usage message.
 
 =item B<-inform> B<DER|PEM>
 

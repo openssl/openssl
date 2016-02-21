@@ -1,4 +1,3 @@
-/* openssl/engine.h */
 /*
  * Written by Geoff Thorpe (geoff@geoffthorpe.net) for the OpenSSL project
  * 2000.
@@ -71,7 +70,7 @@
 #  error ENGINE is disabled.
 # endif
 
-# ifdef OPENSSL_USE_DEPRECATED
+# if OPENSSL_API_COMPAT < 0x10100000L
 #  include <openssl/bn.h>
 #  ifndef OPENSSL_NO_RSA
 #   include <openssl/rsa.h>
@@ -109,7 +108,6 @@ extern "C" {
 # define ENGINE_METHOD_RAND              (unsigned int)0x0008
 # define ENGINE_METHOD_CIPHERS           (unsigned int)0x0040
 # define ENGINE_METHOD_DIGESTS           (unsigned int)0x0080
-# define ENGINE_METHOD_STORE             (unsigned int)0x0100
 # define ENGINE_METHOD_PKEY_METHS        (unsigned int)0x0200
 # define ENGINE_METHOD_PKEY_ASN1_METHS   (unsigned int)0x0400
 # define ENGINE_METHOD_EC                (unsigned int)0x0800
@@ -387,27 +385,25 @@ int ENGINE_add(ENGINE *e);
 int ENGINE_remove(ENGINE *e);
 /* Retrieve an engine from the list by its unique "id" value. */
 ENGINE *ENGINE_by_id(const char *id);
-/* Add all the built-in engines. */
-void ENGINE_load_openssl(void);
-void ENGINE_load_dynamic(void);
+
+#if OPENSSL_API_COMPAT < 0x10100000L
+# define ENGINE_load_openssl() \
+    OPENSSL_init_crypto(OPENSSL_INIT_ENGINE_OPENSSL, NULL)
+# define ENGINE_load_dynamic() \
+    OPENSSL_init_crypto(OPENSSL_INIT_ENGINE_DYNAMIC, NULL)
 # ifndef OPENSSL_NO_STATIC_ENGINE
-void ENGINE_load_4758cca(void);
-void ENGINE_load_aep(void);
-void ENGINE_load_atalla(void);
-void ENGINE_load_chil(void);
-void ENGINE_load_cswift(void);
-void ENGINE_load_nuron(void);
-void ENGINE_load_sureware(void);
-void ENGINE_load_ubsec(void);
-void ENGINE_load_padlock(void);
-void ENGINE_load_capi(void);
-#  ifndef OPENSSL_NO_GOST
-void ENGINE_load_gost(void);
-#  endif
-void ENGINE_load_dasync(void);
+#  define ENGINE_load_padlock() \
+    OPENSSL_init_crypto(OPENSSL_INIT_ENGINE_PADLOCK, NULL)
+#  define ENGINE_load_capi() \
+    OPENSSL_init_crypto(OPENSSL_INIT_ENGINE_CAPI, NULL)
+#  define ENGINE_load_dasync() \
+    OPENSSL_init_crypto(OPENSSL_INIT_ENGINE_DASYNC, NULL)
 # endif
-void ENGINE_load_cryptodev(void);
-void ENGINE_load_rdrand(void);
+# define ENGINE_load_cryptodev() \
+    OPENSSL_init_crypto(OPENSSL_INIT_ENGINE_CRYPTODEV, NULL)
+# define ENGINE_load_rdrand() \
+    OPENSSL_init_crypto(OPENSSL_INIT_ENGINE_RDRAND, NULL)
+#endif
 void ENGINE_load_builtin_engines(void);
 
 /*
@@ -445,10 +441,6 @@ void ENGINE_register_all_DH(void);
 int ENGINE_register_RAND(ENGINE *e);
 void ENGINE_unregister_RAND(ENGINE *e);
 void ENGINE_register_all_RAND(void);
-
-int ENGINE_register_STORE(ENGINE *e);
-void ENGINE_unregister_STORE(ENGINE *e);
-void ENGINE_register_all_STORE(void);
 
 int ENGINE_register_ciphers(ENGINE *e);
 void ENGINE_unregister_ciphers(ENGINE *e);
@@ -547,7 +539,6 @@ int ENGINE_set_DSA(ENGINE *e, const DSA_METHOD *dsa_meth);
 int ENGINE_set_EC(ENGINE *e, const EC_KEY_METHOD *ecdsa_meth);
 int ENGINE_set_DH(ENGINE *e, const DH_METHOD *dh_meth);
 int ENGINE_set_RAND(ENGINE *e, const RAND_METHOD *rand_meth);
-int ENGINE_set_STORE(ENGINE *e, const STORE_METHOD *store_meth);
 int ENGINE_set_destroy_function(ENGINE *e, ENGINE_GEN_INT_FUNC_PTR destroy_f);
 int ENGINE_set_init_function(ENGINE *e, ENGINE_GEN_INT_FUNC_PTR init_f);
 int ENGINE_set_finish_function(ENGINE *e, ENGINE_GEN_INT_FUNC_PTR finish_f);
@@ -591,7 +582,6 @@ const DSA_METHOD *ENGINE_get_DSA(const ENGINE *e);
 const EC_KEY_METHOD *ENGINE_get_EC(const ENGINE *e);
 const DH_METHOD *ENGINE_get_DH(const ENGINE *e);
 const RAND_METHOD *ENGINE_get_RAND(const ENGINE *e);
-const STORE_METHOD *ENGINE_get_STORE(const ENGINE *e);
 ENGINE_GEN_INT_FUNC_PTR ENGINE_get_destroy_function(const ENGINE *e);
 ENGINE_GEN_INT_FUNC_PTR ENGINE_get_init_function(const ENGINE *e);
 ENGINE_GEN_INT_FUNC_PTR ENGINE_get_finish_function(const ENGINE *e);
@@ -715,12 +705,12 @@ void ENGINE_add_conf_module(void);
 /**************************/
 
 /* Binary/behaviour compatibility levels */
-# define OSSL_DYNAMIC_VERSION            (unsigned long)0x00020000
+# define OSSL_DYNAMIC_VERSION            (unsigned long)0x00030000
 /*
  * Binary versions older than this are too old for us (whether we're a loader
  * or a loadee)
  */
-# define OSSL_DYNAMIC_OLDEST             (unsigned long)0x00020000
+# define OSSL_DYNAMIC_OLDEST             (unsigned long)0x00030000
 
 /*
  * When compiling an ENGINE entirely as an external shared library, loadable
@@ -733,14 +723,6 @@ void ENGINE_add_conf_module(void);
  * same static data as the calling application (or library), and thus whether
  * these callbacks need to be set or not.
  */
-typedef void *(*dyn_MEM_malloc_cb) (size_t);
-typedef void *(*dyn_MEM_realloc_cb) (void *, size_t);
-typedef void (*dyn_MEM_free_cb) (void *);
-typedef struct st_dynamic_MEM_fns {
-    dyn_MEM_malloc_cb malloc_cb;
-    dyn_MEM_realloc_cb realloc_cb;
-    dyn_MEM_free_cb free_cb;
-} dynamic_MEM_fns;
 /*
  * FIXME: Perhaps the memory and locking code (crypto.h) should declare and
  * use these types so we (and any other dependant code) can simplify a bit??
@@ -763,7 +745,6 @@ typedef struct st_dynamic_LOCK_fns {
 /* The top-level structure */
 typedef struct st_dynamic_fns {
     void *static_state;
-    dynamic_MEM_fns mem_fns;
     dynamic_LOCK_fns lock_fns;
 } dynamic_fns;
 
@@ -812,9 +793,6 @@ typedef int (*dynamic_bind_engine) (ENGINE *e, const char *id,
         OPENSSL_EXPORT \
         int bind_engine(ENGINE *e, const char *id, const dynamic_fns *fns) { \
                 if(ENGINE_get_static_state() == fns->static_state) goto skip_cbs; \
-                if(!CRYPTO_set_mem_functions(fns->mem_fns.malloc_cb, \
-                        fns->mem_fns.realloc_cb, fns->mem_fns.free_cb)) \
-                        return 0; \
                 CRYPTO_set_locking_callback(fns->lock_fns.lock_locking_cb); \
                 CRYPTO_set_add_lock_callback(fns->lock_fns.lock_add_lock_cb); \
                 CRYPTO_set_dynlock_create_callback(fns->lock_fns.dynlock_create_cb); \

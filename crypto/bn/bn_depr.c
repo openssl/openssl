@@ -1,4 +1,3 @@
-/* crypto/bn/bn_depr.c */
 /* ====================================================================
  * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
  *
@@ -58,15 +57,17 @@
  * slurp this code if applications are using them directly.
  */
 
-#include <stdio.h>
-#include <time.h>
-#include "internal/cryptlib.h"
-#include "bn_lcl.h"
-#include <openssl/rand.h>
+#include <openssl/opensslconf.h>
+#if OPENSSL_API_COMPAT >= 0x00908000L
+NON_EMPTY_TRANSLATION_UNIT
+#else
 
-static void *dummy = &dummy;
+# include <stdio.h>
+# include <time.h>
+# include "internal/cryptlib.h"
+# include "bn_lcl.h"
+# include <openssl/rand.h>
 
-#ifndef OPENSSL_NO_DEPRECATED
 BIGNUM *BN_generate_prime(BIGNUM *ret, int bits, int safe,
                           const BIGNUM *add, const BIGNUM *rem,
                           void (*callback) (int, int, void *), void *cb_arg)

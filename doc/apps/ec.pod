@@ -7,6 +7,7 @@ ec - EC key processing
 =head1 SYNOPSIS
 
 B<openssl> B<ec>
+[B<-help>]
 [B<-inform PEM|DER>]
 [B<-outform PEM|DER>]
 [B<-in filename>]
@@ -23,6 +24,8 @@ B<openssl> B<ec>
 [B<-pubout>]
 [B<-conv_form arg>]
 [B<-param_enc arg>]
+[B<-no_public>]
+[B<-check>]
 [B<-engine id>]
 
 =head1 DESCRIPTION
@@ -36,6 +39,10 @@ PKCS#8 private key format use the B<pkcs8> command.
 =head1 COMMAND OPTIONS
 
 =over 4
+
+=item B<-help>
+
+Print out a usage message.
 
 =item B<-inform DER|PEM>
 
@@ -127,6 +134,14 @@ explicitly given (see RFC 3279 for the definition of the
 EC parameters structures). The default value is B<named_curve>.
 B<Note> the B<implicitlyCA> alternative ,as specified in RFC 3279,
 is currently not implemented in OpenSSL.
+
+=item B<-no_public>
+
+This option omits the public key components from the private key output.
+
+=item B<-check>
+
+this option checks the consistency of an EC private or public key.
 
 =item B<-engine id>
 

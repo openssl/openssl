@@ -1,4 +1,3 @@
-/* crypto/rand/rand.h */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -95,9 +94,7 @@ int RAND_set_rand_engine(ENGINE *engine);
 RAND_METHOD *RAND_OpenSSL(void);
 void RAND_cleanup(void);
 int RAND_bytes(unsigned char *buf, int num);
-#ifdef OPENSSL_USE_DEPRECATED
-DECLARE_DEPRECATED(int RAND_pseudo_bytes(unsigned char *buf, int num));
-#endif
+DEPRECATEDIN_1_1_0(int RAND_pseudo_bytes(unsigned char *buf, int num))
 void RAND_seed(const void *buf, int num);
 #if defined(__ANDROID__) && defined(__NDK_FPABI__)
 __NDK_FPABI__	/* __attribute__((pcs("aapcs"))) on ARM */
@@ -107,9 +104,11 @@ int RAND_load_file(const char *file, long max_bytes);
 int RAND_write_file(const char *file);
 const char *RAND_file_name(char *file, size_t num);
 int RAND_status(void);
+# ifndef OPENSSL_NO_EGD
 int RAND_query_egd_bytes(const char *path, unsigned char *buf, int bytes);
 int RAND_egd(const char *path);
 int RAND_egd_bytes(const char *path, int bytes);
+# endif
 int RAND_poll(void);
 
 # if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_WIN32)
@@ -117,10 +116,6 @@ int RAND_poll(void);
 void RAND_screen(void);
 int RAND_event(UINT, WPARAM, LPARAM);
 
-# endif
-
-# ifdef OPENSSL_FIPS
-int RAND_init_fips(void);
 # endif
 
 /* BEGIN ERROR CODES */

@@ -1,4 +1,3 @@
-/* ssl_utst.c */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -60,8 +59,10 @@
 static const struct openssl_ssl_test_functions ssl_test_functions = {
     ssl_init_wbio_buffer,
     ssl3_setup_buffers,
-    tls1_process_heartbeat,
+# ifndef OPENSSL_NO_HEARTBEATS
+#  undef dtls1_process_heartbeat
     dtls1_process_heartbeat
+# endif
 };
 
 const struct openssl_ssl_test_functions *SSL_test_functions(void)

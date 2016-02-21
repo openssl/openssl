@@ -6,14 +6,14 @@ dgst, sha, sha1, mdc2, ripemd160, sha224, sha256, sha384, sha512, md4, md5 - mes
 
 =head1 SYNOPSIS
 
-B<openssl> B<dgst> 
-[B<-sha|-sha1|-mdc2|-ripemd160|-sha224|-sha256|-sha384|-sha512|-md4|-md5>]
+B<openssl> B<dgst>
+[B<-help>]
+[B<-I<digest>>]
 [B<-c>]
 [B<-d>]
 [B<-hex>]
 [B<-binary>]
 [B<-r>]
-[B<-non-fips-allow>]
 [B<-out filename>]
 [B<-sign filename>]
 [B<-keyform arg>]
@@ -22,8 +22,9 @@ B<openssl> B<dgst>
 [B<-prverify filename>]
 [B<-signature filename>]
 [B<-hmac key>]
-[B<-non-fips-allow>]
 [B<-fips-fingerprint>]
+[B<-engine id>]
+[B<-engine_impl>]
 [B<file...>]
 
 B<openssl>
@@ -39,13 +40,22 @@ signatures using message digests.
 The generic name, B<dgst>, may be used with an option specifying the
 algorithm to be used.
 The default digest is I<sha256>.
-The digest name may also be used as the command name.
-To see the list of supported algorithms, use the <Ilist --digest-commands>
+A supported I<digest> name may also be used as the command name.
+To see the list of supported algorithms, use the I<list --digest-commands>
 command.
 
 =head1 OPTIONS
 
 =over 4
+
+=item B<-help>
+
+Print out a usage message.
+
+=item B<-I<digest>>
+
+Specifies name of a supported digest to be used. To see the list of
+supported digests, use the command I<list --digest-commands>.
 
 =item B<-c>
 
@@ -70,11 +80,6 @@ output the digest or signature in binary form.
 
 output the digest in the "coreutils" format used by programs like B<sha1sum>.
 
-=item B<-non-fips-allow>
-
-Allow use of non FIPS digest when in FIPS mode.  This has no effect when not in
-FIPS mode.
-
 =item B<-out filename>
 
 filename to output to, or standard output by default.
@@ -87,12 +92,6 @@ digitally sign the digest using the private key in "filename".
 
 Specifies the key format to sign digest with. The DER, PEM, P12,
 and ENGINE formats are supported.
-
-=item B<-engine id>
-
-Use engine B<id> for operations (including private key storage).
-This engine is not used as source for digest algorithms, unless it is
-also specified in the configuration file.
 
 =item B<-sigopt nm:v>
 
@@ -159,14 +158,22 @@ Multiple files can be specified separated by a OS-dependent character.
 The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
 all others. 
 
-=item B<-non-fips-allow>
-
-enable use of non-FIPS algorithms such as MD5 even in FIPS mode.
-
 =item B<-fips-fingerprint>
 
 compute HMAC using a specific key
 for certain OpenSSL-FIPS operations.
+
+=item B<-engine id>
+
+Use engine B<id> for operations (including private key storage).
+This engine is not used as source for digest algorithms, unless it is
+also specified in the configuration file or B<-engine_impl> is also
+specified.
+
+=item B<-engine_impl>
+
+When used with the B<-engine> option, it specifies to also use
+engine B<id> for digest operations.
 
 =item B<file...>
 
@@ -219,5 +226,6 @@ prior to verification.
 =head1 HISTORY
 
 The default digest was changed from MD5 to SHA256 in Openssl 1.1.
+The FIPS-related options were removed in OpenSSL 1.1
 
 =cut

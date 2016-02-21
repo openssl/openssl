@@ -1,4 +1,3 @@
-/* p12_add.c */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
  * 1999.
@@ -60,6 +59,7 @@
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include <openssl/pkcs12.h>
+#include "p12_lcl.h"
 
 /* Pack an object into an OCTET STRING and turn into a safebag */
 
@@ -89,55 +89,6 @@ PKCS12_SAFEBAG *PKCS12_item_pack_safebag(void *obj, const ASN1_ITEM *it,
  err:
     PKCS12_BAGS_free(bag);
     return NULL;
-}
-
-/* Turn PKCS8 object into a keybag */
-
-PKCS12_SAFEBAG *PKCS12_MAKE_KEYBAG(PKCS8_PRIV_KEY_INFO *p8)
-{
-    PKCS12_SAFEBAG *bag;
-
-    if ((bag = PKCS12_SAFEBAG_new()) == NULL) {
-        PKCS12err(PKCS12_F_PKCS12_MAKE_KEYBAG, ERR_R_MALLOC_FAILURE);
-        return NULL;
-    }
-    bag->type = OBJ_nid2obj(NID_keyBag);
-    bag->value.keybag = p8;
-    return bag;
-}
-
-/* Turn PKCS8 object into a shrouded keybag */
-
-PKCS12_SAFEBAG *PKCS12_MAKE_SHKEYBAG(int pbe_nid, const char *pass,
-                                     int passlen, unsigned char *salt,
-                                     int saltlen, int iter,
-                                     PKCS8_PRIV_KEY_INFO *p8)
-{
-    PKCS12_SAFEBAG *bag;
-    const EVP_CIPHER *pbe_ciph;
-
-    /* Set up the safe bag */
-    if ((bag = PKCS12_SAFEBAG_new()) == NULL) {
-        PKCS12err(PKCS12_F_PKCS12_MAKE_SHKEYBAG, ERR_R_MALLOC_FAILURE);
-        return NULL;
-    }
-
-    bag->type = OBJ_nid2obj(NID_pkcs8ShroudedKeyBag);
-
-    pbe_ciph = EVP_get_cipherbynid(pbe_nid);
-
-    if (pbe_ciph)
-        pbe_nid = -1;
-
-    if (!(bag->value.shkeybag =
-          PKCS8_encrypt(pbe_nid, pbe_ciph, pass, passlen, salt, saltlen, iter,
-                        p8))) {
-        PKCS12err(PKCS12_F_PKCS12_MAKE_SHKEYBAG, ERR_R_MALLOC_FAILURE);
-        PKCS12_SAFEBAG_free(bag);
-        return NULL;
-    }
-
-    return bag;
 }
 
 /* Turn a stack of SAFEBAGS into a PKCS#7 data Contentinfo */

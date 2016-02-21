@@ -1,4 +1,3 @@
-/* crypto/ec/ec2_smpl.c */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -742,6 +741,7 @@ int ec_GF2m_simple_make_affine(const EC_GROUP *group, EC_POINT *point,
         goto err;
     if (!BN_one(point->Z))
         goto err;
+    point->Z_is_one = 1;
 
     ret = 1;
 

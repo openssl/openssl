@@ -1,4 +1,3 @@
-/* crypto/engine/hw_ibmca.c */
 /*
  * Written by Geoff Thorpe (geoff@geoffthorpe.net) for the OpenSSL project
  * 2000.

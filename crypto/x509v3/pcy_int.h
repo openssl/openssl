@@ -1,4 +1,3 @@
-/* pcy_int.h */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
  * 2004.
@@ -59,7 +58,7 @@
 
 typedef struct X509_POLICY_DATA_st X509_POLICY_DATA;
 
-DECLARE_STACK_OF(X509_POLICY_DATA)
+DEFINE_STACK_OF(X509_POLICY_DATA)
 
 /* Internal structures */
 
@@ -207,7 +206,7 @@ X509_POLICY_NODE *tree_find_sk(STACK_OF(X509_POLICY_NODE) *sk,
                                const ASN1_OBJECT *id);
 
 X509_POLICY_NODE *level_add_node(X509_POLICY_LEVEL *level,
-                                 const X509_POLICY_DATA *data,
+                                 X509_POLICY_DATA *data,
                                  X509_POLICY_NODE *parent,
                                  X509_POLICY_TREE *tree);
 void policy_node_free(X509_POLICY_NODE *node);

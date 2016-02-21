@@ -140,10 +140,6 @@ unencrypted example in L<BIO_s_connect(3)>.
  SSL_CTX *ctx;
  SSL *ssl;
 
- ERR_load_crypto_strings();
- ERR_load_SSL_strings();
- OpenSSL_add_all_algorithms();
-
  /* We would seed the PRNG here if the platform didn't
   * do it automatically
   */
@@ -169,7 +165,8 @@ unencrypted example in L<BIO_s_connect(3)>.
 
  /* We might want to do other things with ssl here */
 
- BIO_set_conn_hostname(sbio, "localhost:https");
+ /* An empty host part means the loopback address */
+ BIO_set_conn_hostname(sbio, ":https");
 
  out = BIO_new_fp(stdout, BIO_NOCLOSE);
  if(BIO_do_connect(sbio) <= 0) {
@@ -205,10 +202,6 @@ a client and also echoes the request to standard output.
  char tmpbuf[1024];
  SSL_CTX *ctx;
  SSL *ssl;
-
- ERR_load_crypto_strings();
- ERR_load_SSL_strings();
- OpenSSL_add_all_algorithms();
 
  /* Might seed PRNG here */
 

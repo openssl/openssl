@@ -1,4 +1,3 @@
-/* p12_crt.c */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -60,6 +59,7 @@
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include <openssl/pkcs12.h>
+#include "p12_lcl.h"
 
 static int pkcs12_add_bag(STACK_OF(PKCS12_SAFEBAG) **pbags,
                           PKCS12_SAFEBAG *bag);
@@ -189,7 +189,7 @@ PKCS12_SAFEBAG *PKCS12_add_cert(STACK_OF(PKCS12_SAFEBAG) **pbags, X509 *cert)
     int keyidlen = -1;
 
     /* Add user certificate */
-    if ((bag = PKCS12_x5092certbag(cert)) == NULL)
+    if ((bag = PKCS12_SAFEBAG_create_cert(cert)) == NULL)
         goto err;
 
     /*
@@ -231,10 +231,11 @@ PKCS12_SAFEBAG *PKCS12_add_key(STACK_OF(PKCS12_SAFEBAG) **pbags,
     if (key_usage && !PKCS8_add_keyusage(p8, key_usage))
         goto err;
     if (nid_key != -1) {
-        bag = PKCS12_MAKE_SHKEYBAG(nid_key, pass, -1, NULL, 0, iter, p8);
+        bag = PKCS12_SAFEBAG_create_pkcs8_encrypt(nid_key, pass, -1, NULL, 0,
+                                                  iter, p8);
         PKCS8_PRIV_KEY_INFO_free(p8);
     } else
-        bag = PKCS12_MAKE_KEYBAG(p8);
+        bag = PKCS12_SAFEBAG_create0_p8inf(p8);
 
     if (!bag)
         goto err;

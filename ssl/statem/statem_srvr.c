@@ -1,4 +1,3 @@
-/* ssl/statem/statem_srvr.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -965,12 +964,12 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
     int i, al = SSL_AD_INTERNAL_ERROR;
     unsigned int j, complen = 0;
     unsigned long id;
-    SSL_CIPHER *c;
+    const SSL_CIPHER *c;
 #ifndef OPENSSL_NO_COMP
     SSL_COMP *comp = NULL;
 #endif
     STACK_OF(SSL_CIPHER) *ciphers = NULL;
-    int protverr = 1;
+    int protverr;
     /* |cookie| will only be initialized for DTLS. */
     PACKET session_id, cipher_suites, compression, extensions, cookie;
     int is_v2_record;
@@ -1037,63 +1036,21 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
         }
     }
 
-    /* Do SSL/TLS version negotiation if applicable */
+    /*
+     * Do SSL/TLS version negotiation if applicable. For DTLS we just check
+     * versions are potentially compatible. Version negotiation comes later.
+     */
     if (!SSL_IS_DTLS(s)) {
-        if (s->version != TLS_ANY_VERSION) {
-            if (s->client_version >= s->version) {
-                protverr = 0;
-            }
-        } else if (s->client_version >= SSL3_VERSION) {
-            switch(s->client_version) {
-            default:
-            case TLS1_2_VERSION:
-                if(!(s->options & SSL_OP_NO_TLSv1_2)) {
-                    s->version = TLS1_2_VERSION;
-                    s->method = TLSv1_2_server_method();
-                    protverr = 0;
-                    break;
-                }
-                /* Deliberately fall through */
-            case TLS1_1_VERSION:
-                if(!(s->options & SSL_OP_NO_TLSv1_1)) {
-                    s->version = TLS1_1_VERSION;
-                    s->method = TLSv1_1_server_method();
-                    protverr = 0;
-                    break;
-                }
-                /* Deliberately fall through */
-            case TLS1_VERSION:
-                if(!(s->options & SSL_OP_NO_TLSv1)) {
-                    s->version = TLS1_VERSION;
-                    s->method = TLSv1_server_method();
-                    protverr = 0;
-                    break;
-                }
-                /* Deliberately fall through */
-            case SSL3_VERSION:
-#ifndef OPENSSL_NO_SSL3
-                if(!(s->options & SSL_OP_NO_SSLv3)) {
-                    s->version = SSL3_VERSION;
-                    s->method = SSLv3_server_method();
-                    protverr = 0;
-                    break;
-                }
-#else
-                break;
-#endif
-            }
-        }
-    } else if (s->client_version <= s->version
-                || s->method->version == DTLS_ANY_VERSION) {
-        /*
-         * For DTLS we just check versions are potentially compatible. Version
-         * negotiation comes later.
-         */
+        protverr = ssl_choose_server_version(s);
+    } else if (s->method->version != DTLS_ANY_VERSION &&
+               DTLS_VERSION_LT(s->client_version, s->version)) {
+        protverr = SSL_R_VERSION_TOO_LOW;
+    } else {
         protverr = 0;
     }
 
     if (protverr) {
-        SSLerr(SSL_F_TLS_PROCESS_CLIENT_HELLO, SSL_R_UNKNOWN_PROTOCOL);
+        SSLerr(SSL_F_TLS_PROCESS_CLIENT_HELLO, protverr);
         if ((!s->enc_write_ctx && !s->write_hash)) {
             /*
              * similar to ssl3_get_record, send alert using remote version
@@ -1121,6 +1078,12 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
             SSLerr(SSL_F_TLS_PROCESS_CLIENT_HELLO,
                    SSL_R_RECORD_LENGTH_MISMATCH);
             al = SSL_AD_DECODE_ERROR;
+            goto f_err;
+        }
+
+        if (session_id_len > SSL_MAX_SSL_SESSION_ID_LENGTH) {
+            al = SSL_AD_DECODE_ERROR;
+            SSLerr(SSL_F_TLS_PROCESS_CLIENT_HELLO, SSL_R_LENGTH_MISMATCH);
             goto f_err;
         }
 
@@ -1153,6 +1116,12 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
         /* Regular ClientHello. */
         if (!PACKET_copy_bytes(pkt, s->s3->client_random, SSL3_RANDOM_SIZE)
             || !PACKET_get_length_prefixed_1(pkt, &session_id)) {
+            al = SSL_AD_DECODE_ERROR;
+            SSLerr(SSL_F_TLS_PROCESS_CLIENT_HELLO, SSL_R_LENGTH_MISMATCH);
+            goto f_err;
+        }
+
+        if (PACKET_remaining(&session_id) > SSL_MAX_SSL_SESSION_ID_LENGTH) {
             al = SSL_AD_DECODE_ERROR;
             SSLerr(SSL_F_TLS_PROCESS_CLIENT_HELLO, SSL_R_LENGTH_MISMATCH);
             goto f_err;
@@ -1253,24 +1222,9 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
             s->d1->cookie_verified = 1;
         }
         if (s->method->version == DTLS_ANY_VERSION) {
-            /* Select version to use */
-            if (s->client_version <= DTLS1_2_VERSION &&
-                !(s->options & SSL_OP_NO_DTLSv1_2)) {
-                s->version = DTLS1_2_VERSION;
-                s->method = DTLSv1_2_server_method();
-            } else if (tls1_suiteb(s)) {
-                SSLerr(SSL_F_TLS_PROCESS_CLIENT_HELLO,
-                       SSL_R_ONLY_DTLS_1_2_ALLOWED_IN_SUITEB_MODE);
-                s->version = s->client_version;
-                al = SSL_AD_PROTOCOL_VERSION;
-                goto f_err;
-            } else if (s->client_version <= DTLS1_VERSION &&
-                       !(s->options & SSL_OP_NO_DTLSv1)) {
-                s->version = DTLS1_VERSION;
-                s->method = DTLSv1_server_method();
-            } else {
-                SSLerr(SSL_F_TLS_PROCESS_CLIENT_HELLO,
-                       SSL_R_WRONG_VERSION_NUMBER);
+            protverr = ssl_choose_server_version(s);
+            if (protverr != 0) {
+                SSLerr(SSL_F_TLS_PROCESS_CLIENT_HELLO, protverr);
                 s->version = s->client_version;
                 al = SSL_AD_PROTOCOL_VERSION;
                 goto f_err;
@@ -1352,7 +1306,7 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
     }
 
     if (!s->hit && s->version >= TLS1_VERSION && s->tls_session_secret_cb) {
-        SSL_CIPHER *pref_cipher = NULL;
+        const SSL_CIPHER *pref_cipher = NULL;
 
         s->session->master_key_length = sizeof(s->session->master_key);
         if (s->tls_session_secret_cb(s, s->session->master_key,
@@ -1503,7 +1457,7 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
 WORK_STATE tls_post_process_client_hello(SSL *s, WORK_STATE wst)
 {
     int al = SSL_AD_HANDSHAKE_FAILURE;
-    SSL_CIPHER *cipher;
+    const SSL_CIPHER *cipher;
 
     if (wst == WORK_MORE_A) {
         if (!s->hit) {
@@ -2125,13 +2079,13 @@ MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
     unsigned long alg_k;
 #ifndef OPENSSL_NO_RSA
     RSA *rsa = NULL;
-    EVP_PKEY *pkey = NULL;
 #endif
 #if !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH)
     EVP_PKEY *ckey = NULL;
 #endif
     PACKET enc_premaster;
-    unsigned char *data, *rsa_decrypt = NULL;
+    const unsigned char *data;
+    unsigned char *rsa_decrypt = NULL;
 
     alg_k = s->s3->tmp.new_cipher->algorithm_mkey;
 
@@ -2218,15 +2172,13 @@ MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
         size_t j;
 
         /* FIX THIS UP EAY EAY EAY EAY */
-        pkey = s->cert->pkeys[SSL_PKEY_RSA_ENC].privatekey;
-        if ((pkey == NULL) ||
-            (pkey->type != EVP_PKEY_RSA) || (pkey->pkey.rsa == NULL)) {
+        rsa = EVP_PKEY_get0_RSA(s->cert->pkeys[SSL_PKEY_RSA_ENC].privatekey);
+        if (rsa == NULL) {
             al = SSL_AD_HANDSHAKE_FAILURE;
             SSLerr(SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE,
                    SSL_R_MISSING_RSA_CERTIFICATE);
             goto f_err;
         }
-        rsa = pkey->pkey.rsa;
 
         /* SSLv3 and pre-standard DTLS omit the length bytes. */
         if (s->version == SSL3_VERSION || s->version == DTLS1_BAD_VER) {
@@ -2408,25 +2360,15 @@ MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
 
         EVP_PKEY_free(ckey);
         ckey = NULL;
+        EVP_PKEY_free(s->s3->tmp.pkey);
+        s->s3->tmp.pkey = NULL;
 
     } else
 #endif
 
 #ifndef OPENSSL_NO_EC
-    if (alg_k & (SSL_kECDHE | SSL_kECDHr | SSL_kECDHe | SSL_kECDHEPSK)) {
-        EVP_PKEY *skey = NULL;
-
-        /* Let's get server private key and group information */
-        if (alg_k & (SSL_kECDHr | SSL_kECDHe)) {
-            /* use the certificate */
-            skey = s->cert->pkeys[SSL_PKEY_ECC].privatekey;
-        } else {
-            /*
-             * use the ephermeral values we saved when generating the
-             * ServerKeyExchange msg.
-             */
-            skey = s->s3->tmp.pkey;
-        }
+    if (alg_k & (SSL_kECDHE | SSL_kECDHEPSK)) {
+        EVP_PKEY *skey = s->s3->tmp.pkey;
 
         if (PACKET_remaining(pkt) == 0L) {
             /* We don't support ECDH client auth */
@@ -2472,6 +2414,8 @@ MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
 
         EVP_PKEY_free(ckey);
         ckey = NULL;
+        EVP_PKEY_free(s->s3->tmp.pkey);
+        s->s3->tmp.pkey = NULL;
 
         return MSG_PROCESS_CONTINUE_PROCESSING;
     } else
@@ -2512,7 +2456,8 @@ MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
     if (alg_k & SSL_kGOST) {
         EVP_PKEY_CTX *pkey_ctx;
         EVP_PKEY *client_pub_pkey = NULL, *pk = NULL;
-        unsigned char premaster_secret[32], *start;
+        unsigned char premaster_secret[32];
+        const unsigned char *start;
         size_t outlen = 32, inlen;
         unsigned long alg_a;
         int Ttag, Tclass;
@@ -2553,7 +2498,7 @@ MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
          * EVP_PKEY_derive_set_peer, because it is completely valid to use a
          * client certificate for authorization only.
          */
-        client_pub_pkey = X509_get_pubkey(s->session->peer);
+        client_pub_pkey = X509_get0_pubkey(s->session->peer);
         if (client_pub_pkey) {
             if (EVP_PKEY_derive_set_peer(pkey_ctx, client_pub_pkey) <= 0)
                 ERR_clear_error();
@@ -2595,11 +2540,9 @@ MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
             (pkey_ctx, -1, -1, EVP_PKEY_CTRL_PEER_KEY, 2, NULL) > 0)
             s->statem.no_cert_verify = 1;
 
-        EVP_PKEY_free(client_pub_pkey);
         EVP_PKEY_CTX_free(pkey_ctx);
         return MSG_PROCESS_CONTINUE_PROCESSING;
  gerr:
-        EVP_PKEY_free(client_pub_pkey);
         EVP_PKEY_CTX_free(pkey_ctx);
         goto f_err;
     } else
@@ -2707,7 +2650,8 @@ WORK_STATE tls_post_process_client_key_exchange(SSL *s, WORK_STATE wst)
 MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
 {
     EVP_PKEY *pkey = NULL;
-    unsigned char *sig, *data;
+    const unsigned char *sig, *data;
+    unsigned char *gost_data = NULL;
     int al, ret = MSG_PROCESS_ERROR;
     int type = 0, j;
     unsigned int len;
@@ -2725,7 +2669,7 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
     }
 
     peer = s->session->peer;
-    pkey = X509_get_pubkey(peer);
+    pkey = X509_get0_pubkey(peer);
     type = X509_certificate_type(peer, pkey);
 
     if (!(type & EVP_PKT_SIGN)) {
@@ -2741,7 +2685,8 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
      * length field (CryptoPro implementations at least till CSP 4.0)
      */
 #ifndef OPENSSL_NO_GOST
-    if (PACKET_remaining(pkt) == 64 && pkey->type == NID_id_GostR3410_2001) {
+    if (PACKET_remaining(pkt) == 64
+        && EVP_PKEY_id(pkey) == NID_id_GostR3410_2001) {
         len = 64;
     } else
 #endif
@@ -2811,10 +2756,19 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
     }
 
 #ifndef OPENSSL_NO_GOST
-    if (pkey->type == NID_id_GostR3410_2001
-            || pkey->type == NID_id_GostR3410_2012_256
-            || pkey->type == NID_id_GostR3410_2012_512) {
-        BUF_reverse(data, NULL, len);
+    {
+        int pktype = EVP_PKEY_id(pkey);
+        if (pktype == NID_id_GostR3410_2001
+            || pktype == NID_id_GostR3410_2012_256
+            || pktype == NID_id_GostR3410_2012_512) {
+            if ((gost_data = OPENSSL_malloc(len)) == NULL) {
+                SSLerr(SSL_F_TLS_PROCESS_CERT_VERIFY, ERR_R_MALLOC_FAILURE);
+                al = SSL_AD_INTERNAL_ERROR;
+                goto f_err;
+            }
+            BUF_reverse(gost_data, data, len);
+            data = gost_data;
+        }
     }
 #endif
 
@@ -2842,7 +2796,7 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
     BIO_free(s->s3->handshake_buffer);
     s->s3->handshake_buffer = NULL;
     EVP_MD_CTX_free(mctx);
-    EVP_PKEY_free(pkey);
+    OPENSSL_free(gost_data);
     return ret;
 }
 
@@ -2851,8 +2805,7 @@ MSG_PROCESS_RETURN tls_process_client_certificate(SSL *s, PACKET *pkt)
     int i, al = SSL_AD_INTERNAL_ERROR, ret = MSG_PROCESS_ERROR;
     X509 *x = NULL;
     unsigned long l, llen;
-    const unsigned char *certstart;
-    unsigned char *certbytes;
+    const unsigned char *certstart, *certbytes;
     STACK_OF(X509) *sk = NULL;
     PACKET spkt;
 
@@ -2931,14 +2884,13 @@ MSG_PROCESS_RETURN tls_process_client_certificate(SSL *s, PACKET *pkt)
             al = SSL_AD_HANDSHAKE_FAILURE;
             goto f_err;
         }
-        pkey = X509_get_pubkey(sk_X509_value(sk, 0));
+        pkey = X509_get0_pubkey(sk_X509_value(sk, 0));
         if (pkey == NULL) {
             al = SSL3_AD_HANDSHAKE_FAILURE;
             SSLerr(SSL_F_TLS_PROCESS_CLIENT_CERTIFICATE,
                    SSL_R_UNKNOWN_CERTIFICATE_TYPE);
             goto f_err;
         }
-        EVP_PKEY_free(pkey);
     }
 
     X509_free(s->session->peer);
@@ -2987,7 +2939,7 @@ int tls_construct_server_certificate(SSL *s)
 int tls_construct_new_session_ticket(SSL *s)
 {
     unsigned char *senc = NULL;
-    EVP_CIPHER_CTX ctx;
+    EVP_CIPHER_CTX *ctx;
     HMAC_CTX *hctx = NULL;
     unsigned char *p, *macstart;
     const unsigned char *const_p;
@@ -3014,7 +2966,7 @@ int tls_construct_new_session_ticket(SSL *s)
         return 0;
     }
 
-    EVP_CIPHER_CTX_init(&ctx);
+    ctx = EVP_CIPHER_CTX_new();
     hctx = HMAC_CTX_new();
 
     p = senc;
@@ -3061,7 +3013,7 @@ int tls_construct_new_session_ticket(SSL *s)
      * all the work otherwise use generated values from parent ctx.
      */
     if (tctx->tlsext_ticket_key_cb) {
-        if (tctx->tlsext_ticket_key_cb(s, key_name, iv, &ctx, hctx, 1) < 0)
+        if (tctx->tlsext_ticket_key_cb(s, key_name, iv, ctx, hctx, 1) < 0)
             goto err;
     } else {
         if (RAND_bytes(iv, 16) <= 0)
@@ -3089,13 +3041,13 @@ int tls_construct_new_session_ticket(SSL *s)
     memcpy(p, key_name, 16);
     p += 16;
     /* output IV */
-    memcpy(p, iv, EVP_CIPHER_CTX_iv_length(&ctx));
-    p += EVP_CIPHER_CTX_iv_length(&ctx);
+    memcpy(p, iv, EVP_CIPHER_CTX_iv_length(ctx));
+    p += EVP_CIPHER_CTX_iv_length(ctx);
     /* Encrypt session data */
-    if (!EVP_EncryptUpdate(&ctx, p, &len, senc, slen))
+    if (!EVP_EncryptUpdate(ctx, p, &len, senc, slen))
         goto err;
     p += len;
-    if (!EVP_EncryptFinal(&ctx, p, &len))
+    if (!EVP_EncryptFinal(ctx, p, &len))
         goto err;
     p += len;
 
@@ -3104,8 +3056,10 @@ int tls_construct_new_session_ticket(SSL *s)
     if (!HMAC_Final(hctx, p, &hlen))
         goto err;
 
-    EVP_CIPHER_CTX_cleanup(&ctx);
+    EVP_CIPHER_CTX_free(ctx);
     HMAC_CTX_free(hctx);
+    ctx = NULL;
+    hctx = NULL;
 
     p += hlen;
     /* Now write out lengths: p points to end of data written */
@@ -3121,7 +3075,7 @@ int tls_construct_new_session_ticket(SSL *s)
     return 1;
  err:
     OPENSSL_free(senc);
-    EVP_CIPHER_CTX_cleanup(&ctx);
+    EVP_CIPHER_CTX_free(ctx);
     HMAC_CTX_free(hctx);
     ossl_statem_set_error(s);
     return 0;
@@ -3268,9 +3222,6 @@ STACK_OF(SSL_CIPHER) *ssl_bytes_to_cipher_list(SSL *s,
                 goto err;
             }
             s->s3->send_connection_binding = 1;
-#ifdef OPENSSL_RI_DEBUG
-            fprintf(stderr, "SCSV received by server\n");
-#endif
             continue;
         }
 
@@ -3282,7 +3233,7 @@ STACK_OF(SSL_CIPHER) *ssl_bytes_to_cipher_list(SSL *s,
              * version. Fail if the current version is an unexpected
              * downgrade.
              */
-            if (!SSL_ctrl(s, SSL_CTRL_CHECK_PROTO_VERSION, 0, NULL)) {
+            if (!ssl_check_version_downgrade(s)) {
                 SSLerr(SSL_F_SSL_BYTES_TO_CIPHER_LIST,
                        SSL_R_INAPPROPRIATE_FALLBACK);
                 *al = SSL_AD_INAPPROPRIATE_FALLBACK;

@@ -1,4 +1,3 @@
-/* crypto/dsa/dsa_gen.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -376,7 +375,7 @@ int dsa_builtin_paramgen2(DSA *ret, size_t L, size_t N,
     }
 
     mdsize = EVP_MD_size(evpmd);
-    /* If unverificable g generation only don't need seed */
+    /* If unverifiable g generation only don't need seed */
     if (!ret->p || !ret->q || idx >= 0) {
         if (seed_len == 0)
             seed_len = mdsize;
@@ -642,40 +641,4 @@ int dsa_builtin_paramgen2(DSA *ret, size_t L, size_t N,
     BN_MONT_CTX_free(mont);
     EVP_MD_CTX_free(mctx);
     return ok;
-}
-
-int dsa_paramgen_check_g(DSA *dsa)
-{
-    BN_CTX *ctx;
-    BIGNUM *tmp;
-    BN_MONT_CTX *mont = NULL;
-    int rv = -1;
-    ctx = BN_CTX_new();
-    if (ctx == NULL)
-        return -1;
-    BN_CTX_start(ctx);
-    if (BN_cmp(dsa->g, BN_value_one()) <= 0)
-        return 0;
-    if (BN_cmp(dsa->g, dsa->p) >= 0)
-        return 0;
-    tmp = BN_CTX_get(ctx);
-    if (!tmp)
-        goto err;
-    if ((mont = BN_MONT_CTX_new()) == NULL)
-        goto err;
-    if (!BN_MONT_CTX_set(mont, dsa->p, ctx))
-        goto err;
-    /* Work out g^q mod p */
-    if (!BN_mod_exp_mont(tmp, dsa->g, dsa->q, dsa->p, ctx, mont))
-        goto err;
-    if (!BN_cmp(tmp, BN_value_one()))
-        rv = 1;
-    else
-        rv = 0;
- err:
-    BN_CTX_end(ctx);
-    BN_MONT_CTX_free(mont);
-    BN_CTX_free(ctx);
-    return rv;
-
 }

@@ -1,4 +1,3 @@
-/* tasn_utl.c */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
  * 2000.
@@ -119,12 +118,9 @@ int asn1_do_lock(ASN1_VALUE **pval, int op, const ASN1_ITEM *it)
     }
     ret = CRYPTO_add(lck, op, aux->ref_lock);
 #ifdef REF_PRINT
-    fprintf(stderr, "%s: Reference Count: %d\n", it->sname, *lck);
+    fprintf(stderr, "%p:%4d:%s\n", it, *lck, it->sname);
 #endif
-#ifdef REF_CHECK
-    if (ret < 0)
-        fprintf(stderr, "%s, bad reference count\n", it->sname);
-#endif
+    REF_ASSERT_ISNT(ret < 0);
     return ret;
 }
 

@@ -1,4 +1,3 @@
-/* test/methtest.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -100,7 +99,6 @@ char *argv[];
     METH_control(tmp2, METH_CONTROL_DUMP, stdout);
     EXIT(0);
  err:
-    ERR_load_crypto_strings();
     ERR_print_errors_fp(stderr);
     EXIT(1);
     return (0);

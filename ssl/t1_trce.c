@@ -1,4 +1,3 @@
-/* ssl/t1_trce.c */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -117,7 +116,7 @@ static ssl_trace_tbl ssl_content_tbl[] = {
     {SSL3_RT_ALERT, "Alert"},
     {SSL3_RT_HANDSHAKE, "Handshake"},
     {SSL3_RT_APPLICATION_DATA, "ApplicationData"},
-    {TLS1_RT_HEARTBEAT, "HeartBeat"}
+    {DTLS1_RT_HEARTBEAT, "HeartBeat"}
 };
 
 /* Handshake types */
@@ -921,14 +920,6 @@ static int ssl_get_keyex(const char **pname, SSL *ssl)
         *pname = "ECDHE";
         return SSL_kECDHE;
     }
-    if (alg_k & SSL_kECDHr) {
-        *pname = "ECDH RSA";
-        return SSL_kECDHr;
-    }
-    if (alg_k & SSL_kECDHe) {
-        *pname = "ECDH ECDSA";
-        return SSL_kECDHe;
-    }
     if (alg_k & SSL_kPSK) {
         *pname = "PSK";
         return SSL_kPSK;
@@ -991,13 +982,6 @@ static int ssl_print_client_keyex(BIO *bio, int indent, SSL *ssl,
             return 0;
         break;
 
-    case SSL_kECDHr:
-    case SSL_kECDHe:
-        if (msglen == 0) {
-            BIO_indent(bio, indent + 2, 80);
-            BIO_puts(bio, "implicit\n");
-            break;
-        }
     case SSL_kECDHE:
     case SSL_kECDHEPSK:
         if (!ssl_print_hexbuf(bio, indent + 2, "ecdh_Yc", 1, &msg, &msglen))
@@ -1023,13 +1007,6 @@ static int ssl_print_server_keyex(BIO *bio, int indent, SSL *ssl,
             return 0;
     }
     switch (id) {
-        /* Should never happen */
-    case SSL_kECDHr:
-    case SSL_kECDHe:
-        BIO_indent(bio, indent + 2, 80);
-        BIO_printf(bio, "Unexpected Message\n");
-        break;
-
     case SSL_kRSA:
 
         if (!ssl_print_hexbuf(bio, indent + 2, "rsa_modulus", 2,
@@ -1401,7 +1378,7 @@ void SSL_trace(int write_p, int version, int content_type,
                        SSL_alert_type_string_long(msg[0] << 8),
                        msg[0], SSL_alert_desc_string_long(msg[1]), msg[1]);
         }
-    case TLS1_RT_HEARTBEAT:
+    case DTLS1_RT_HEARTBEAT:
         ssl_print_heartbeat(bio, 4, msg, msglen);
         break;
 

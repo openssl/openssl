@@ -1,4 +1,3 @@
-/* crypto/o_time.c */
 /*
  * Written by Richard Levitte (richard@levitte.org) for the OpenSSL project
  * 2001.
@@ -162,7 +161,7 @@ struct tm *OPENSSL_gmtime(const time_t *timer, struct tm *result)
             /*-
              * The VMS epoch is the astronomical Smithsonian date,
                if I remember correctly, which is November 17, 1858.
-               Furthermore, time is measure in thenths of microseconds
+               Furthermore, time is measure in tenths of microseconds
                and stored in quadwords (64 bit integers).  unix_epoch
                below is January 1st 1970 expressed as a VMS time.  The
                following code was used to get this number:
@@ -254,7 +253,7 @@ int OPENSSL_gmtime_adj(struct tm *tm, int off_day, long offset_sec)
     int time_sec, time_year, time_month, time_day;
     long time_jd;
 
-    /* Convert time and offset into julian day and seconds */
+    /* Convert time and offset into Julian day and seconds */
     if (!julian_adj(tm, off_day, offset_sec, &time_jd, &time_sec))
         return 0;
 

@@ -1,4 +1,3 @@
-/* crypto/dh/dh.h */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -60,6 +59,7 @@
 # define HEADER_DH_H
 
 # include <openssl/e_os2.h>
+# include <openssl/opensslconf.h>
 
 # ifdef OPENSSL_NO_DH
 #  error DH is disabled.
@@ -67,7 +67,7 @@
 
 # include <openssl/bio.h>
 # include <openssl/ossl_typ.h>
-# ifdef OPENSSL_USE_DEPRECATED
+# if OPENSSL_API_COMPAT < 0x10100000L
 #  include <openssl/bn.h>
 # endif
 
@@ -174,6 +174,7 @@ struct dh_st {
 /* DH_check_pub_key error codes */
 # define DH_CHECK_PUBKEY_TOO_SMALL       0x01
 # define DH_CHECK_PUBKEY_TOO_LARGE       0x02
+# define DH_CHECK_PUBKEY_INVALID         0x04
 
 /*
  * primes p where (p-1)/2 is prime too are called "safe"; we define this for
@@ -209,12 +210,10 @@ int DH_set_ex_data(DH *d, int idx, void *arg);
 void *DH_get_ex_data(DH *d, int idx);
 
 /* Deprecated version */
-# ifdef OPENSSL_USE_DEPRECATED
-DECLARE_DEPRECATED(DH *DH_generate_parameters(int prime_len, int generator,
+DEPRECATEDIN_0_9_8(DH *DH_generate_parameters(int prime_len, int generator,
                                               void (*callback) (int, int,
                                                                 void *),
-                                              void *cb_arg));
-# endif                         /* defined(OPENSSL_USE_DEPRECATED) */
+                                              void *cb_arg))
 
 /* New version */
 int DH_generate_parameters_ex(DH *dh, int prime_len, int generator,

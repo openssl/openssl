@@ -1,4 +1,3 @@
-/* crypto/bn/exptest.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -67,7 +66,7 @@
 #include <openssl/rand.h>
 #include <openssl/err.h>
 
-#define NUM_BITS        (BN_BITS*2)
+#define NUM_BITS        (BN_BITS2 * 4)
 
 static const char rnd_seed[] =
     "string to make the random number generator think it has entropy";
@@ -195,8 +194,6 @@ int main(int argc, char *argv[])
                                            * don't even check its return
                                            * value (which we should) */
 
-    ERR_load_BN_strings();
-
     ctx = BN_CTX_new();
     if (ctx == NULL)
         EXIT(1);
@@ -299,9 +296,10 @@ int main(int argc, char *argv[])
     BN_free(b);
     BN_free(m);
     BN_CTX_free(ctx);
-    ERR_remove_thread_state(NULL);
-#ifdef CRYPTO_MDEBUG
-    CRYPTO_mem_leaks(out);
+
+#ifndef OPENSSL_NO_CRYPTO_MDEBUG
+    if (CRYPTO_mem_leaks(out) <= 0)
+        goto err;
 #endif
     BIO_free(out);
     printf("\n");
@@ -313,7 +311,6 @@ int main(int argc, char *argv[])
 
     EXIT(0);
  err:
-    ERR_load_crypto_strings();
     ERR_print_errors(out);
 #ifdef OPENSSL_SYS_NETWARE
     printf("ERROR\n");

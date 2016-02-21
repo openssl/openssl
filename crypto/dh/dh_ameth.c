@@ -63,6 +63,7 @@
 #include <openssl/dh.h>
 #include <openssl/bn.h>
 #include "internal/asn1_int.h"
+#include "internal/evp_int.h"
 #ifndef OPENSSL_NO_CMS
 # include <openssl/cms.h>
 #endif
@@ -194,7 +195,7 @@ static int dh_pub_encode(X509_PUBKEY *pk, const EVP_PKEY *pkey)
 /*
  * PKCS#8 DH is defined in PKCS#11 of all places. It is similar to DH in that
  * the AlgorithmIdentifier contains the parameters, the private key is
- * explcitly included and the pubkey must be recalculated.
+ * explicitly included and the pubkey must be recalculated.
  */
 
 static int dh_priv_decode(EVP_PKEY *pkey, PKCS8_PRIV_KEY_INFO *p8)
@@ -860,7 +861,7 @@ static int dh_cms_encrypt(CMS_RecipientInfo *ri)
                         V_ASN1_UNDEF, NULL);
     }
 
-    /* See if custom paraneters set */
+    /* See if custom parameters set */
     kdf_type = EVP_PKEY_CTX_get_dh_kdf_type(pctx);
     if (kdf_type <= 0)
         goto err;

@@ -1,4 +1,3 @@
-/* crypto/rsa/rsa_ameth.c */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
  * 2006.
@@ -67,6 +66,7 @@
 # include <openssl/cms.h>
 #endif
 #include "internal/asn1_int.h"
+#include "internal/evp_int.h"
 
 #ifndef OPENSSL_NO_CMS
 static int rsa_cms_sign(CMS_SignerInfo *si);
@@ -569,7 +569,7 @@ static ASN1_STRING *rsa_ctx_to_pss(EVP_PKEY_CTX *pkctx)
 
 /*
  * From PSS AlgorithmIdentifier set public key parameters. If pkey isn't NULL
- * then the EVP_MD_CTX is setup and initalised. If it is NULL parameters are
+ * then the EVP_MD_CTX is setup and initialised. If it is NULL parameters are
  * passed to pkctx instead.
  */
 

@@ -22,183 +22,126 @@ PEM_write_X509_AUX, PEM_read_bio_X509_REQ, PEM_read_X509_REQ,
 PEM_write_bio_X509_REQ, PEM_write_X509_REQ, PEM_write_bio_X509_REQ_NEW,
 PEM_write_X509_REQ_NEW, PEM_read_bio_X509_CRL, PEM_read_X509_CRL,
 PEM_write_bio_X509_CRL, PEM_write_X509_CRL, PEM_read_bio_PKCS7, PEM_read_PKCS7,
-PEM_write_bio_PKCS7, PEM_write_PKCS7, PEM_read_bio_NETSCAPE_CERT_SEQUENCE,
-PEM_read_NETSCAPE_CERT_SEQUENCE, PEM_write_bio_NETSCAPE_CERT_SEQUENCE,
-PEM_write_NETSCAPE_CERT_SEQUENCE - PEM routines
+PEM_write_bio_PKCS7, PEM_write_PKCS7 - PEM routines
 
 =head1 SYNOPSIS
 
  #include <openssl/pem.h>
 
  EVP_PKEY *PEM_read_bio_PrivateKey(BIO *bp, EVP_PKEY **x,
-					pem_password_cb *cb, void *u);
-
+                                   pem_password_cb *cb, void *u);
  EVP_PKEY *PEM_read_PrivateKey(FILE *fp, EVP_PKEY **x,
-					pem_password_cb *cb, void *u);
-
+                               pem_password_cb *cb, void *u);
  int PEM_write_bio_PrivateKey(BIO *bp, EVP_PKEY *x, const EVP_CIPHER *enc,
-					unsigned char *kstr, int klen,
-					pem_password_cb *cb, void *u);
-
+                              unsigned char *kstr, int klen,
+                              pem_password_cb *cb, void *u);
  int PEM_write_PrivateKey(FILE *fp, EVP_PKEY *x, const EVP_CIPHER *enc,
-					unsigned char *kstr, int klen,
-					pem_password_cb *cb, void *u);
+                          unsigned char *kstr, int klen,
+                          pem_password_cb *cb, void *u);
 
  int PEM_write_bio_PKCS8PrivateKey(BIO *bp, EVP_PKEY *x, const EVP_CIPHER *enc,
-					char *kstr, int klen,
-					pem_password_cb *cb, void *u);
-
+                                   char *kstr, int klen,
+                                   pem_password_cb *cb, void *u);
  int PEM_write_PKCS8PrivateKey(FILE *fp, EVP_PKEY *x, const EVP_CIPHER *enc,
-					char *kstr, int klen,
-					pem_password_cb *cb, void *u);
-
+                               char *kstr, int klen,
+                               pem_password_cb *cb, void *u);
  int PEM_write_bio_PKCS8PrivateKey_nid(BIO *bp, EVP_PKEY *x, int nid,
-					char *kstr, int klen,
-					pem_password_cb *cb, void *u);
-
+                                       char *kstr, int klen,
+                                       pem_password_cb *cb, void *u);
  int PEM_write_PKCS8PrivateKey_nid(FILE *fp, EVP_PKEY *x, int nid,
-					char *kstr, int klen,
-					pem_password_cb *cb, void *u);
+                                   char *kstr, int klen,
+                                   pem_password_cb *cb, void *u);
 
  EVP_PKEY *PEM_read_bio_PUBKEY(BIO *bp, EVP_PKEY **x,
-					pem_password_cb *cb, void *u);
-
+                               pem_password_cb *cb, void *u);
  EVP_PKEY *PEM_read_PUBKEY(FILE *fp, EVP_PKEY **x,
-					pem_password_cb *cb, void *u);
-
+                           pem_password_cb *cb, void *u);
  int PEM_write_bio_PUBKEY(BIO *bp, EVP_PKEY *x);
  int PEM_write_PUBKEY(FILE *fp, EVP_PKEY *x);
 
  RSA *PEM_read_bio_RSAPrivateKey(BIO *bp, RSA **x,
-					pem_password_cb *cb, void *u);
-
+                                 pem_password_cb *cb, void *u);
  RSA *PEM_read_RSAPrivateKey(FILE *fp, RSA **x,
-					pem_password_cb *cb, void *u);
-
+                             pem_password_cb *cb, void *u);
  int PEM_write_bio_RSAPrivateKey(BIO *bp, RSA *x, const EVP_CIPHER *enc,
-					unsigned char *kstr, int klen,
-					pem_password_cb *cb, void *u);
-
+                                 unsigned char *kstr, int klen,
+                                 pem_password_cb *cb, void *u);
  int PEM_write_RSAPrivateKey(FILE *fp, RSA *x, const EVP_CIPHER *enc,
-					unsigned char *kstr, int klen,
-					pem_password_cb *cb, void *u);
+                             unsigned char *kstr, int klen,
+                             pem_password_cb *cb, void *u);
 
  RSA *PEM_read_bio_RSAPublicKey(BIO *bp, RSA **x,
-					pem_password_cb *cb, void *u);
-
+                                pem_password_cb *cb, void *u);
  RSA *PEM_read_RSAPublicKey(FILE *fp, RSA **x,
-					pem_password_cb *cb, void *u);
-
+                            pem_password_cb *cb, void *u);
  int PEM_write_bio_RSAPublicKey(BIO *bp, RSA *x);
-
  int PEM_write_RSAPublicKey(FILE *fp, RSA *x);
 
  RSA *PEM_read_bio_RSA_PUBKEY(BIO *bp, RSA **x,
-					pem_password_cb *cb, void *u);
-
+                              pem_password_cb *cb, void *u);
  RSA *PEM_read_RSA_PUBKEY(FILE *fp, RSA **x,
-					pem_password_cb *cb, void *u);
-
+                          pem_password_cb *cb, void *u);
  int PEM_write_bio_RSA_PUBKEY(BIO *bp, RSA *x);
-
  int PEM_write_RSA_PUBKEY(FILE *fp, RSA *x);
 
  DSA *PEM_read_bio_DSAPrivateKey(BIO *bp, DSA **x,
-					pem_password_cb *cb, void *u);
-
+                                 pem_password_cb *cb, void *u);
  DSA *PEM_read_DSAPrivateKey(FILE *fp, DSA **x,
-					pem_password_cb *cb, void *u);
-
+                             pem_password_cb *cb, void *u);
  int PEM_write_bio_DSAPrivateKey(BIO *bp, DSA *x, const EVP_CIPHER *enc,
-					unsigned char *kstr, int klen,
-					pem_password_cb *cb, void *u);
-
+                                 unsigned char *kstr, int klen,
+                                 pem_password_cb *cb, void *u);
  int PEM_write_DSAPrivateKey(FILE *fp, DSA *x, const EVP_CIPHER *enc,
-					unsigned char *kstr, int klen,
-					pem_password_cb *cb, void *u);
+                             unsigned char *kstr, int klen,
+                             pem_password_cb *cb, void *u);
 
  DSA *PEM_read_bio_DSA_PUBKEY(BIO *bp, DSA **x,
-					pem_password_cb *cb, void *u);
-
+                              pem_password_cb *cb, void *u);
  DSA *PEM_read_DSA_PUBKEY(FILE *fp, DSA **x,
-					pem_password_cb *cb, void *u);
-
+                          pem_password_cb *cb, void *u);
  int PEM_write_bio_DSA_PUBKEY(BIO *bp, DSA *x);
-
  int PEM_write_DSA_PUBKEY(FILE *fp, DSA *x);
 
  DSA *PEM_read_bio_DSAparams(BIO *bp, DSA **x, pem_password_cb *cb, void *u);
-
  DSA *PEM_read_DSAparams(FILE *fp, DSA **x, pem_password_cb *cb, void *u);
-
  int PEM_write_bio_DSAparams(BIO *bp, DSA *x);
-
  int PEM_write_DSAparams(FILE *fp, DSA *x);
 
  DH *PEM_read_bio_DHparams(BIO *bp, DH **x, pem_password_cb *cb, void *u);
-
  DH *PEM_read_DHparams(FILE *fp, DH **x, pem_password_cb *cb, void *u);
-
  int PEM_write_bio_DHparams(BIO *bp, DH *x);
-
  int PEM_write_DHparams(FILE *fp, DH *x);
 
  X509 *PEM_read_bio_X509(BIO *bp, X509 **x, pem_password_cb *cb, void *u);
-
  X509 *PEM_read_X509(FILE *fp, X509 **x, pem_password_cb *cb, void *u);
-
  int PEM_write_bio_X509(BIO *bp, X509 *x);
-
  int PEM_write_X509(FILE *fp, X509 *x);
 
  X509 *PEM_read_bio_X509_AUX(BIO *bp, X509 **x, pem_password_cb *cb, void *u);
-
  X509 *PEM_read_X509_AUX(FILE *fp, X509 **x, pem_password_cb *cb, void *u);
-
  int PEM_write_bio_X509_AUX(BIO *bp, X509 *x);
-
  int PEM_write_X509_AUX(FILE *fp, X509 *x);
 
  X509_REQ *PEM_read_bio_X509_REQ(BIO *bp, X509_REQ **x,
-					pem_password_cb *cb, void *u);
-
+                                 pem_password_cb *cb, void *u);
  X509_REQ *PEM_read_X509_REQ(FILE *fp, X509_REQ **x,
-					pem_password_cb *cb, void *u);
-
+                             pem_password_cb *cb, void *u);
  int PEM_write_bio_X509_REQ(BIO *bp, X509_REQ *x);
-
  int PEM_write_X509_REQ(FILE *fp, X509_REQ *x);
-
  int PEM_write_bio_X509_REQ_NEW(BIO *bp, X509_REQ *x);
-
  int PEM_write_X509_REQ_NEW(FILE *fp, X509_REQ *x);
 
  X509_CRL *PEM_read_bio_X509_CRL(BIO *bp, X509_CRL **x,
-					pem_password_cb *cb, void *u);
+                                 pem_password_cb *cb, void *u);
  X509_CRL *PEM_read_X509_CRL(FILE *fp, X509_CRL **x,
-					pem_password_cb *cb, void *u);
+                             pem_password_cb *cb, void *u);
  int PEM_write_bio_X509_CRL(BIO *bp, X509_CRL *x);
  int PEM_write_X509_CRL(FILE *fp, X509_CRL *x);
 
  PKCS7 *PEM_read_bio_PKCS7(BIO *bp, PKCS7 **x, pem_password_cb *cb, void *u);
-
  PKCS7 *PEM_read_PKCS7(FILE *fp, PKCS7 **x, pem_password_cb *cb, void *u);
-
  int PEM_write_bio_PKCS7(BIO *bp, PKCS7 *x);
-
  int PEM_write_PKCS7(FILE *fp, PKCS7 *x);
-
- NETSCAPE_CERT_SEQUENCE *PEM_read_bio_NETSCAPE_CERT_SEQUENCE(BIO *bp,
-						NETSCAPE_CERT_SEQUENCE **x,
-						pem_password_cb *cb, void *u);
-
- NETSCAPE_CERT_SEQUENCE *PEM_read_NETSCAPE_CERT_SEQUENCE(FILE *fp,
-						NETSCAPE_CERT_SEQUENCE **x,
-						pem_password_cb *cb, void *u);
-
- int PEM_write_bio_NETSCAPE_CERT_SEQUENCE(BIO *bp, NETSCAPE_CERT_SEQUENCE *x);
-
- int PEM_write_NETSCAPE_CERT_SEQUENCE(FILE *fp, NETSCAPE_CERT_SEQUENCE *x);
 
 =head1 DESCRIPTION
 
@@ -288,9 +231,6 @@ structure.
 The B<PKCS7> functions process a PKCS#7 ContentInfo using a PKCS7
 structure.
 
-The B<NETSCAPE_CERT_SEQUENCE> functions process a Netscape Certificate
-Sequence using a NETSCAPE_CERT_SEQUENCE structure.
-
 =head1 PEM FUNCTION ARGUMENTS
 
 The PEM functions have many common arguments.
@@ -354,84 +294,65 @@ Read a certificate in PEM format from a BIO:
 
  X509 *x;
  x = PEM_read_bio_X509(bp, NULL, 0, NULL);
- if (x == NULL)
-	{
-	/* Error */
-	}
+ if (x == NULL) {
+     /* Error */
+ }
 
 Alternative method:
 
  X509 *x = NULL;
- if (!PEM_read_bio_X509(bp, &x, 0, NULL))
-	{
-	/* Error */
-	}
+ if (!PEM_read_bio_X509(bp, &x, 0, NULL)) {
+     /* Error */
+ }
 
 Write a certificate to a BIO:
 
- if (!PEM_write_bio_X509(bp, x))
-	{
-	/* Error */
-	}
-
-Write an unencrypted private key to a FILE pointer:
-
- if (!PEM_write_PrivateKey(fp, key, NULL, NULL, 0, 0, NULL))
-	{
-	/* Error */
-	}
+ if (!PEM_write_bio_X509(bp, x)) {
+     /* Error */
+ }
 
 Write a private key (using traditional format) to a BIO using
 triple DES encryption, the pass phrase is prompted for:
 
- if (!PEM_write_bio_PrivateKey(bp, key, EVP_des_ede3_cbc(), NULL, 0, 0, NULL))
-	{
-	/* Error */
-	}
+ if (!PEM_write_bio_PrivateKey(bp, key, EVP_des_ede3_cbc(), NULL, 0, 0, NULL)) {
+     /* Error */
+ }
 
 Write a private key (using PKCS#8 format) to a BIO using triple
 DES encryption, using the pass phrase "hello":
 
- if (!PEM_write_bio_PKCS8PrivateKey(bp, key, EVP_des_ede3_cbc(), NULL, 0, 0, "hello"))
-	{
-	/* Error */
-	}
-
-Read a private key from a BIO using the pass phrase "hello":
-
- key = PEM_read_bio_PrivateKey(bp, NULL, 0, "hello");
- if (key == NULL)
-	{
-	/* Error */
-	}
+ if (!PEM_write_bio_PKCS8PrivateKey(bp, key, EVP_des_ede3_cbc(), NULL, 0, 0, "hello")) {
+     /* Error */
+ }
 
 Read a private key from a BIO using a pass phrase callback:
 
  key = PEM_read_bio_PrivateKey(bp, NULL, pass_cb, "My Private Key");
- if (key == NULL)
-	{
-	/* Error */
-	}
+ if (key == NULL) {
+     /* Error */
+ }
 
 Skeleton pass phrase callback:
 
- int pass_cb(char *buf, int size, int rwflag, void *u);
-	{
-	int len;
-	char *tmp;
-	/* We'd probably do something else if 'rwflag' is 1 */
-	printf("Enter pass phrase for \"%s\"\n", u);
+ int pass_cb(char *buf, int size, int rwflag, void *u)
+ {
+     int len;
+     char *tmp;
 
-	/* get pass phrase, length 'len' into 'tmp' */
-	tmp = "hello";
-	len = strlen(tmp);
+     /* We'd probably do something else if 'rwflag' is 1 */
+     printf("Enter pass phrase for \"%s\"\n", (char *)u); 
 
-	if (len <= 0) return 0;
-	/* if too long, truncate */
-	if (len > size) len = size;
-	memcpy(buf, tmp, len);
-	return len;
-	}
+     /* get pass phrase, length 'len' into 'tmp' */
+     tmp = "hello";
+     len = strlen(tmp);
+     if (len <= 0)
+         return 0;
+
+     if (len > size)
+         len = size;
+     memcpy(buf, tmp, len);
+     return len;
+ }
 
 =head1 NOTES
 
@@ -456,7 +377,7 @@ which is an uninitialised pointer.
 
 =head1 PEM ENCRYPTION FORMAT
 
-This old B<PrivateKey> routines use a non standard technique for encryption.
+These old B<PrivateKey> routines use a non standard technique for encryption.
 
 The private key (or other data) takes the following form: 
 
@@ -467,15 +388,43 @@ The private key (or other data) takes the following form:
  ...base64 encoded data...
  -----END RSA PRIVATE KEY-----
 
-The line beginning DEK-Info contains two comma separated pieces of information:
-the encryption algorithm name as used by EVP_get_cipherbyname() and an 8
-byte B<salt> encoded as a set of hexadecimal digits.
+The line beginning with I<Proc-Type> contains the version and the
+protection on the encapsulated data. The line beginning I<DEK-Info>
+contains two comma separated values: the encryption algorithm name as
+used by EVP_get_cipherbyname() and an initialization vector used by the
+cipher encoded as a set of hexadecimal digits. After those two lines is
+the base64-encoded encrypted data.
 
-After this is the base64 encoded encrypted data.
+The encryption key is derived using EVP_BytesToKey(). The cipher's
+initialization vector is passed to EVP_BytesToKey() as the B<salt>
+parameter. Internally, B<PKCS5_SALT_LEN> bytes of the salt are used
+(regardless of the size of the initialization vector). The user's
+password is passed to to EVP_BytesToKey() using the B<data> and B<datal>
+parameters. Finally, the library uses an iteration count of 1 for
+EVP_BytesToKey().
 
-The encryption key is determined using EVP_BytesToKey(), using B<salt> and an
-iteration count of 1. The IV used is the value of B<salt> and *not* the IV
-returned by EVP_BytesToKey().
+he B<key> derived by EVP_BytesToKey() along with the original initialization
+vector is then used to decrypt the encrypted data. The B<iv> produced by
+EVP_BytesToKey() is not utilized or needed, and NULL should be passed to
+the function.
+
+The pseudo code to derive the key would look similar to:
+
+ EVP_CIPHER* cipher = EVP_des_ede3_cbc();
+ EVP_MD* md = EVP_md5();
+
+ unsigned int nkey = EVP_CIPHER_key_length(cipher);
+ unsigned int niv = EVP_CIPHER_iv_length(cipher);
+ unsigned char key[nkey];
+ unsigned char iv[niv];
+
+ memcpy(iv, HexToBin("3F17F5316E2BAC89"), niv);
+ rc = EVP_BytesToKey(cipher, md, iv /*salt*/, pword, plen, 1, key, NULL /*iv*/);
+ if (rc != nkey) {
+     /* Error */
+ }
+
+ /* On success, use key and iv to initialize the cipher */
 
 =head1 BUGS
 
@@ -498,6 +447,12 @@ if an error occurred.
 
 The write routines return 1 for success or 0 for failure.
 
+=head1 HISTORY
+
+The old Netscape certificate sequences were no longer documented
+in OpenSSL 1.1; applications should use the PKCS7 standard instead
+as they will be formally deprecated in a future releases.
+
 =head1 SEE ALSO
 
-L<EVP_get_cipherbyname(3)|EVP_EncryptInit(3)>, L<EVP_BytesToKey(3)|EVP_BytesToKey(3)>
+L<EVP_EncryptInit(3)>, L<EVP_BytesToKey(3)>

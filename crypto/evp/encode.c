@@ -1,4 +1,3 @@
-/* crypto/evp/encode.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -143,7 +142,7 @@ static unsigned char conv_ascii2bin(unsigned char a)
 
 EVP_ENCODE_CTX *EVP_ENCODE_CTX_new(void)
 {
-    return (EVP_ENCODE_CTX *)OPENSSL_zalloc(sizeof(EVP_ENCODE_CTX));
+    return OPENSSL_zalloc(sizeof(EVP_ENCODE_CTX));
 }
 
 void EVP_ENCODE_CTX_free(EVP_ENCODE_CTX *ctx)

@@ -1,4 +1,3 @@
-/* crypto/engine/eng_lib.c */
 /*
  * Written by Geoff Thorpe (geoff@geoffthorpe.net) for the OpenSSL project
  * 2000.
@@ -72,8 +71,8 @@ ENGINE *ENGINE_new(void)
         return NULL;
     }
     ret->struct_ref = 1;
-    engine_ref_debug(ret, 0, 1)
-        CRYPTO_new_ex_data(CRYPTO_EX_INDEX_ENGINE, ret, &ret->ex_data);
+    engine_ref_debug(ret, 0, 1);
+    CRYPTO_new_ex_data(CRYPTO_EX_INDEX_ENGINE, ret, &ret->ex_data);
     return ret;
 }
 
@@ -90,7 +89,6 @@ void engine_set_all_null(ENGINE *e)
     e->dsa_meth = NULL;
     e->dh_meth = NULL;
     e->rand_meth = NULL;
-    e->store_meth = NULL;
     e->ciphers = NULL;
     e->digests = NULL;
     e->destroy = NULL;
@@ -116,12 +114,7 @@ int engine_free_util(ENGINE *e, int locked)
     engine_ref_debug(e, 0, -1)
     if (i > 0)
         return 1;
-#ifdef REF_CHECK
-    if (i < 0) {
-        fprintf(stderr, "ENGINE_free, bad structural reference count\n");
-        abort();
-    }
-#endif
+    REF_ASSERT_ISNT(i < 0);
     /* Free up any dynamically allocated public key methods */
     engine_pkey_meths_free(e);
     engine_pkey_asn1_meths_free(e);

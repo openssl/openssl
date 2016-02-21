@@ -149,7 +149,7 @@ $code.=<<___;
 ___
 
 {
-# This function recieves a pointer to an array of four affine points
+# This function receives a pointer to an array of four affine points
 # (X, Y, <1>) and rearanges the data for AVX2 execution, while
 # converting it to 2^29 radix redundant form
 
@@ -301,7 +301,7 @@ ___
 }
 {
 ################################################################################
-# This function recieves a pointer to an array of four AVX2 formatted points
+# This function receives a pointer to an array of four AVX2 formatted points
 # (X, Y, Z) convert the data to normal representation, and rearanges the data
 
 my ($D0,$D1,$D2,$D3, $D4,$D5,$D6,$D7, $D8)=map("%ymm$_",(0..8));

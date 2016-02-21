@@ -7,6 +7,7 @@ dhparam - DH parameter manipulation and generation
 =head1 SYNOPSIS
 
 B<openssl dhparam>
+[B<-help>]
 [B<-inform DER|PEM>]
 [B<-outform DER|PEM>]
 [B<-in> I<filename>]
@@ -29,6 +30,10 @@ This command is used to manipulate DH parameter files.
 =head1 OPTIONS
 
 =over 4
+
+=item B<-help>
+
+Print out a usage message.
 
 =item B<-inform DER|PEM>
 
@@ -103,7 +108,7 @@ this option prints out the DH parameters in human readable form.
 =item B<-C>
 
 this option converts the parameters into C code. The parameters can then
-be loaded by calling the B<get_dh>I<numbits>B<()> function.
+be loaded by calling the get_dhNNNN() function.
 
 =item B<-engine id>
 

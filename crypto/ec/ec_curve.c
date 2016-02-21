@@ -1,4 +1,3 @@
-/* crypto/ec/ec_curve.c */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -2982,7 +2981,7 @@ static const ec_list_element curve_list[] = {
      "NIST/SECG/WTLS curve over a 233 bit binary field"},
 #endif
     {NID_wap_wsg_idm_ecid_wtls12, &_EC_WTLS_12.h, 0,
-     "WTLS curvs over a 224 bit prime field"},
+     "WTLS curve over a 224 bit prime field"},
 #ifndef OPENSSL_NO_EC2M
     /* IPSec curves */
     {NID_ipsec3, &_EC_IPSEC_155_ID3.h, 0,

@@ -7,6 +7,7 @@ genpkey - generate a private key
 =head1 SYNOPSIS
 
 B<openssl> B<genpkey>
+[B<-help>]
 [B<-out filename>]
 [B<-outform PEM|DER>]
 [B<-pass arg>]
@@ -26,10 +27,14 @@ The B<genpkey> command generates a private key.
 
 =over 4
 
+=item B<-help>
+
+Print out a usage message.
+
 =item B<-out filename>
 
-the output filename. If this argument is not specified then standard output is
-used.
+Output the key to the specified file. If this argument is not specified then
+standard output is used.
 
 =item B<-outform DER|PEM>
 

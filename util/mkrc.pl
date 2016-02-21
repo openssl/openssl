@@ -1,6 +1,13 @@
 #!/bin/env perl
 #
-open FD,"include/openssl/opensslv.h";
+
+use lib ".";
+use configdata;
+use File::Spec::Functions;
+
+my $versionfile = catfile($config{sourcedir},"include/openssl/opensslv.h");
+
+open FD, $versionfile or die "Couldn't open include/openssl/opensslv.h: $!\n";
 while(<FD>) {
     if (/OPENSSL_VERSION_NUMBER\s+(0x[0-9a-f]+)/i) {
 	$ver = hex($1);

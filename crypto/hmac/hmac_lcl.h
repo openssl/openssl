@@ -1,4 +1,3 @@
-/* crypto/hmac/hmac.h */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -73,5 +72,9 @@ struct hmac_ctx_st {
     unsigned int key_length;
     unsigned char key[HMAC_MAX_MD_CBLOCK];
 };
+
+#ifdef __cplusplus
+} /* extern "C" */
+#endif
 
 #endif

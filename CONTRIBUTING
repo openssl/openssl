@@ -22,6 +22,10 @@ current Git or the last snapshot. They should follow our coding style
 warnings using the --strict-warnings flag.  OpenSSL compiles on many varied
 platforms: try to ensure you only use portable features.
 
+When at all possible, patches should include tests. These can either be
+added to an existing test, or completely new.  Please see test/README for
+information on the test framework.
+
 Our preferred format for patch files is "git format-patch" output. For example
 to provide a patch file containing the last commit in your local git repository
 use the following command:

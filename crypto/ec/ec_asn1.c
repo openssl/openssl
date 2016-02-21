@@ -1,4 +1,3 @@
-/* crypto/ec/ec_asn1.c */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -537,15 +536,10 @@ static ECPARAMETERS *ec_asn1_group2parameters(const EC_GROUP *group,
 {
     size_t len = 0;
     ECPARAMETERS *ret = NULL;
-    BIGNUM *tmp = NULL;
+    const BIGNUM *tmp;
     unsigned char *buffer = NULL;
     const EC_POINT *point = NULL;
     point_conversion_form_t form;
-
-    if ((tmp = BN_new()) == NULL) {
-        ECerr(EC_F_EC_ASN1_GROUP2PARAMETERS, ERR_R_MALLOC_FAILURE);
-        goto err;
-    }
 
     if (param == NULL) {
         if ((ret = ECPARAMETERS_new()) == NULL) {
@@ -593,7 +587,8 @@ static ECPARAMETERS *ec_asn1_group2parameters(const EC_GROUP *group,
     }
 
     /* set the order */
-    if (!EC_GROUP_get_order(group, tmp, NULL)) {
+    tmp = EC_GROUP_get0_order(group);
+    if (tmp == NULL) {
         ECerr(EC_F_EC_ASN1_GROUP2PARAMETERS, ERR_R_EC_LIB);
         goto err;
     }
@@ -604,7 +599,8 @@ static ECPARAMETERS *ec_asn1_group2parameters(const EC_GROUP *group,
     }
 
     /* set the cofactor (optional) */
-    if (EC_GROUP_get_cofactor(group, tmp, NULL)) {
+    tmp = EC_GROUP_get0_cofactor(group);
+    if (tmp != NULL) {
         ret->cofactor = BN_to_ASN1_INTEGER(tmp, ret->cofactor);
         if (ret->cofactor == NULL) {
             ECerr(EC_F_EC_ASN1_GROUP2PARAMETERS, ERR_R_ASN1_LIB);
@@ -617,7 +613,6 @@ static ECPARAMETERS *ec_asn1_group2parameters(const EC_GROUP *group,
  err:
     if (!param)
         ECPARAMETERS_free(ret);
-    BN_free(tmp);
     OPENSSL_free(buffer);
     return NULL;
 }
@@ -650,7 +645,7 @@ ECPKPARAMETERS *ec_asn1_group2pkparameters(const EC_GROUP *group,
             if ((ret->value.named_curve = OBJ_nid2obj(tmp)) == NULL)
                 ok = 0;
         } else
-            /* we don't kmow the nid => ERROR */
+            /* we don't know the nid => ERROR */
             ok = 0;
     } else {
         /* use the ECPARAMETERS structure */
@@ -1018,19 +1013,10 @@ EC_KEY *d2i_ECPrivateKey(EC_KEY **a, const unsigned char **in, long len)
     ret->version = priv_key->version;
 
     if (priv_key->privateKey) {
-        if (ret->priv_key == NULL)
-            ret->priv_key = BN_secure_new();
-        if (ret->priv_key == NULL) {
-            ECerr(EC_F_D2I_ECPRIVATEKEY, ERR_R_MALLOC_FAILURE);
+        ASN1_OCTET_STRING *pkey = priv_key->privateKey;
+        if (EC_KEY_oct2priv(ret, ASN1_STRING_data(pkey),
+                            ASN1_STRING_length(pkey)) == 0)
             goto err;
-        }
-        ret->priv_key = BN_bin2bn(ASN1_STRING_data(priv_key->privateKey),
-                                  ASN1_STRING_length(priv_key->privateKey),
-                                  ret->priv_key);
-        if (ret->priv_key == NULL) {
-            ECerr(EC_F_D2I_ECPRIVATEKEY, ERR_R_BN_LIB);
-            goto err;
-        }
     } else {
         ECerr(EC_F_D2I_ECPRIVATEKEY, EC_R_MISSING_PRIVATE_KEY);
         goto err;
@@ -1089,11 +1075,12 @@ EC_KEY *d2i_ECPrivateKey(EC_KEY **a, const unsigned char **in, long len)
 int i2d_ECPrivateKey(EC_KEY *a, unsigned char **out)
 {
     int ret = 0, ok = 0;
-    unsigned char *buffer = NULL;
-    size_t buf_len = 0, tmp_len, bn_len;
+    unsigned char *priv= NULL, *pub= NULL;
+    size_t privlen = 0, publen = 0;
+
     EC_PRIVATEKEY *priv_key = NULL;
 
-    if (a == NULL || a->group == NULL || a->priv_key == NULL ||
+    if (a == NULL || a->group == NULL ||
         (!(a->enc_flag & EC_PKEY_NO_PUBKEY) && a->pub_key == NULL)) {
         ECerr(EC_F_I2D_ECPRIVATEKEY, ERR_R_PASSED_NULL_PARAMETER);
         goto err;
@@ -1106,36 +1093,15 @@ int i2d_ECPrivateKey(EC_KEY *a, unsigned char **out)
 
     priv_key->version = a->version;
 
-    bn_len = (size_t)BN_num_bytes(a->priv_key);
+    privlen = EC_KEY_priv2buf(a, &priv);
 
-    /* Octetstring may need leading zeros if BN is to short */
-
-    buf_len = (EC_GROUP_get_degree(a->group) + 7) / 8;
-
-    if (bn_len > buf_len) {
-        ECerr(EC_F_I2D_ECPRIVATEKEY, EC_R_BUFFER_TOO_SMALL);
+    if (privlen == 0) {
+        ECerr(EC_F_I2D_ECPRIVATEKEY, ERR_R_EC_LIB);
         goto err;
     }
 
-    buffer = OPENSSL_malloc(buf_len);
-    if (buffer == NULL) {
-        ECerr(EC_F_I2D_ECPRIVATEKEY, ERR_R_MALLOC_FAILURE);
-        goto err;
-    }
-
-    if (!BN_bn2bin(a->priv_key, buffer + buf_len - bn_len)) {
-        ECerr(EC_F_I2D_ECPRIVATEKEY, ERR_R_BN_LIB);
-        goto err;
-    }
-
-    if (buf_len - bn_len > 0) {
-        memset(buffer, 0, buf_len - bn_len);
-    }
-
-    if (!ASN1_OCTET_STRING_set(priv_key->privateKey, buffer, buf_len)) {
-        ECerr(EC_F_I2D_ECPRIVATEKEY, ERR_R_ASN1_LIB);
-        goto err;
-    }
+    ASN1_STRING_set0(priv_key->privateKey, priv, privlen);
+    priv = NULL;
 
     if (!(a->enc_flag & EC_PKEY_NO_PARAMETERS)) {
         if ((priv_key->parameters =
@@ -1153,31 +1119,17 @@ int i2d_ECPrivateKey(EC_KEY *a, unsigned char **out)
             goto err;
         }
 
-        tmp_len = EC_POINT_point2oct(a->group, a->pub_key,
-                                     a->conv_form, NULL, 0, NULL);
+        publen = EC_KEY_key2buf(a, a->conv_form, &pub, NULL);
 
-        if (tmp_len > buf_len) {
-            unsigned char *tmp_buffer = OPENSSL_realloc(buffer, tmp_len);
-            if (!tmp_buffer) {
-                ECerr(EC_F_I2D_ECPRIVATEKEY, ERR_R_MALLOC_FAILURE);
-                goto err;
-            }
-            buffer = tmp_buffer;
-            buf_len = tmp_len;
-        }
-
-        if (!EC_POINT_point2oct(a->group, a->pub_key,
-                                a->conv_form, buffer, buf_len, NULL)) {
+        if (publen == 0) {
             ECerr(EC_F_I2D_ECPRIVATEKEY, ERR_R_EC_LIB);
             goto err;
         }
 
         priv_key->publicKey->flags &= ~(ASN1_STRING_FLAG_BITS_LEFT | 0x07);
         priv_key->publicKey->flags |= ASN1_STRING_FLAG_BITS_LEFT;
-        if (!ASN1_BIT_STRING_set(priv_key->publicKey, buffer, buf_len)) {
-            ECerr(EC_F_I2D_ECPRIVATEKEY, ERR_R_ASN1_LIB);
-            goto err;
-        }
+        ASN1_STRING_set0(priv_key->publicKey, pub, publen);
+        pub = NULL;
     }
 
     if ((ret = i2d_EC_PRIVATEKEY(priv_key, out)) == 0) {
@@ -1186,7 +1138,8 @@ int i2d_ECPrivateKey(EC_KEY *a, unsigned char **out)
     }
     ok = 1;
  err:
-    OPENSSL_free(buffer);
+    OPENSSL_clear_free(priv, privlen);
+    OPENSSL_free(pub);
     EC_PRIVATEKEY_free(priv_key);
     return (ok ? ret : 0);
 }
@@ -1236,7 +1189,7 @@ EC_KEY *o2i_ECPublicKey(EC_KEY **a, const unsigned char **in, long len)
 
     if (a == NULL || (*a) == NULL || (*a)->group == NULL) {
         /*
-         * sorry, but a EC_GROUP-structur is necessary to set the public key
+         * sorry, but a EC_GROUP-structure is necessary to set the public key
          */
         ECerr(EC_F_O2I_ECPUBLICKEY, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
@@ -1316,7 +1269,6 @@ int ECDSA_size(const EC_KEY *r)
 {
     int ret, i;
     ASN1_INTEGER bs;
-    BIGNUM *order = NULL;
     unsigned char buf[4];
     const EC_GROUP *group;
 
@@ -1326,13 +1278,9 @@ int ECDSA_size(const EC_KEY *r)
     if (group == NULL)
         return 0;
 
-    if ((order = BN_new()) == NULL)
+    i = EC_GROUP_order_bits(group);
+    if (i == 0)
         return 0;
-    if (!EC_GROUP_get_order(group, order, NULL)) {
-        BN_clear_free(order);
-        return 0;
-    }
-    i = BN_num_bits(order);
     bs.length = (i + 7) / 8;
     bs.data = buf;
     bs.type = V_ASN1_INTEGER;
@@ -1342,6 +1290,5 @@ int ECDSA_size(const EC_KEY *r)
     i = i2d_ASN1_INTEGER(&bs, NULL);
     i += i;                     /* r and s */
     ret = ASN1_object_size(1, i, V_ASN1_SEQUENCE);
-    BN_clear_free(order);
     return (ret);
 }

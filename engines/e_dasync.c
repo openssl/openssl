@@ -1,4 +1,3 @@
-/* engines/e_dasync.c */
 /*
  * Written by Matt Caswell (matt@openssl.org) for the OpenSSL project.
  */
@@ -60,6 +59,7 @@
 #include <openssl/evp.h>
 #include <openssl/async.h>
 #include <openssl/bn.h>
+#include <openssl/crypto.h>
 
 #define DASYNC_LIB_NAME "DASYNC"
 #include "e_dasync_err.c"
@@ -73,7 +73,7 @@ static const char *engine_dasync_name = "Dummy Async engine support";
 static int dasync_destroy(ENGINE *e);
 static int dasync_init(ENGINE *e);
 static int dasync_finish(ENGINE *e);
-void ENGINE_load_dasync(void);
+void engine_load_dasync_internal(void);
 
 
 /* Set up digests. Just SHA1 for now */
@@ -211,7 +211,7 @@ static ENGINE *engine_dasync(void)
     return ret;
 }
 
-void ENGINE_load_dasync(void)
+void engine_load_dasync_internal(void)
 {
     ENGINE *toadd = engine_dasync();
     if (!toadd)

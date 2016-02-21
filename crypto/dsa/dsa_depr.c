@@ -1,4 +1,3 @@
-/* crypto/dsa/dsa_depr.c */
 /* ====================================================================
  * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
  *
@@ -65,18 +64,20 @@
  */
 #define xxxHASH    EVP_sha1()
 
-static void *dummy = &dummy;
+#include <openssl/opensslconf.h>
+#if OPENSSL_API_COMPAT >= 0x00908000L
+NON_EMPTY_TRANSLATION_UNIT
+#else
 
-#include <stdio.h>
-#include <time.h>
-#include "internal/cryptlib.h"
-#include <openssl/evp.h>
-#include <openssl/bn.h>
-#include <openssl/dsa.h>
-#include <openssl/rand.h>
-#include <openssl/sha.h>
+# include <stdio.h>
+# include <time.h>
+# include "internal/cryptlib.h"
+# include <openssl/evp.h>
+# include <openssl/bn.h>
+# include <openssl/dsa.h>
+# include <openssl/rand.h>
+# include <openssl/sha.h>
 
-#ifndef OPENSSL_NO_DEPRECATED
 DSA *DSA_generate_parameters(int bits,
                              unsigned char *seed_in, int seed_len,
                              int *counter_ret, unsigned long *h_ret,

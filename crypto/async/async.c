@@ -1,4 +1,3 @@
-/* crypto/async/async.c */
 /*
  * Written by Matt Caswell (matt@openssl.org) for the OpenSSL project.
  */
@@ -63,6 +62,7 @@
 #include "async_locl.h"
 
 #include <openssl/err.h>
+#include <internal/cryptlib_int.h>
 #include <string.h>
 
 #define ASYNC_JOB_RUNNING   0
@@ -93,6 +93,13 @@ err:
     OPENSSL_free(nctx);
 
     return NULL;
+}
+
+static async_ctx *async_get_ctx(void)
+{
+    if (!OPENSSL_init_crypto(OPENSSL_INIT_ASYNC, NULL))
+        return NULL;
+    return async_arch_get_ctx();
 }
 
 static int async_ctx_free(void)
@@ -192,16 +199,17 @@ static void async_release_job(ASYNC_JOB *job) {
 void async_start_func(void)
 {
     ASYNC_JOB *job;
+    async_ctx *ctx = async_get_ctx();
 
     while (1) {
         /* Run the job */
-        job = async_get_ctx()->currjob;
+        job = ctx->currjob;
         job->ret = job->func(job->funcargs);
 
         /* Stop the job */
         job->status = ASYNC_JOB_STOPPING;
         if (!async_fibre_swapcontext(&job->fibrectx,
-                                     &async_get_ctx()->dispatcher, 1)) {
+                                     &ctx->dispatcher, 1)) {
             /*
              * Should not happen. Getting here will close the thread...can't do
              * much about it
@@ -214,36 +222,39 @@ void async_start_func(void)
 int ASYNC_start_job(ASYNC_JOB **job, int *ret, int (*func)(void *),
                          void *args, size_t size)
 {
-    if (async_get_ctx() == NULL && async_ctx_new() == NULL) {
+    async_ctx *ctx = async_get_ctx();
+    if (ctx == NULL)
+        ctx = async_ctx_new();
+    if (ctx == NULL) {
         return ASYNC_ERR;
     }
 
     if (*job) {
-        async_get_ctx()->currjob = *job;
+        ctx->currjob = *job;
     }
 
     for (;;) {
-        if (async_get_ctx()->currjob != NULL) {
-            if (async_get_ctx()->currjob->status == ASYNC_JOB_STOPPING) {
-                *ret = async_get_ctx()->currjob->ret;
-                async_release_job(async_get_ctx()->currjob);
-                async_get_ctx()->currjob = NULL;
+        if (ctx->currjob != NULL) {
+            if (ctx->currjob->status == ASYNC_JOB_STOPPING) {
+                *ret = ctx->currjob->ret;
+                async_release_job(ctx->currjob);
+                ctx->currjob = NULL;
                 *job = NULL;
                 return ASYNC_FINISH;
             }
 
-            if (async_get_ctx()->currjob->status == ASYNC_JOB_PAUSING) {
-                *job = async_get_ctx()->currjob;
-                async_get_ctx()->currjob->status = ASYNC_JOB_PAUSED;
-                async_get_ctx()->currjob = NULL;
+            if (ctx->currjob->status == ASYNC_JOB_PAUSING) {
+                *job = ctx->currjob;
+                ctx->currjob->status = ASYNC_JOB_PAUSED;
+                ctx->currjob = NULL;
                 return ASYNC_PAUSE;
             }
 
-            if (async_get_ctx()->currjob->status == ASYNC_JOB_PAUSED) {
-                async_get_ctx()->currjob = *job;
+            if (ctx->currjob->status == ASYNC_JOB_PAUSED) {
+                ctx->currjob = *job;
                 /* Resume previous job */
-                if (!async_fibre_swapcontext(&async_get_ctx()->dispatcher,
-                        &async_get_ctx()->currjob->fibrectx, 1)) {
+                if (!async_fibre_swapcontext(&ctx->dispatcher,
+                        &ctx->currjob->fibrectx, 1)) {
                     ASYNCerr(ASYNC_F_ASYNC_START_JOB,
                              ASYNC_R_FAILED_TO_SWAP_CONTEXT);
                     goto err;
@@ -253,41 +264,41 @@ int ASYNC_start_job(ASYNC_JOB **job, int *ret, int (*func)(void *),
 
             /* Should not happen */
             ASYNCerr(ASYNC_F_ASYNC_START_JOB, ERR_R_INTERNAL_ERROR);
-            async_release_job(async_get_ctx()->currjob);
-            async_get_ctx()->currjob = NULL;
+            async_release_job(ctx->currjob);
+            ctx->currjob = NULL;
             *job = NULL;
             return ASYNC_ERR;
         }
 
         /* Start a new job */
-        if ((async_get_ctx()->currjob = async_get_pool_job()) == NULL) {
+        if ((ctx->currjob = async_get_pool_job()) == NULL) {
             return ASYNC_NO_JOBS;
         }
 
         if (args != NULL) {
-            async_get_ctx()->currjob->funcargs = OPENSSL_malloc(size);
-            if (async_get_ctx()->currjob->funcargs == NULL) {
+            ctx->currjob->funcargs = OPENSSL_malloc(size);
+            if (ctx->currjob->funcargs == NULL) {
                 ASYNCerr(ASYNC_F_ASYNC_START_JOB, ERR_R_MALLOC_FAILURE);
-                async_release_job(async_get_ctx()->currjob);
-                async_get_ctx()->currjob = NULL;
+                async_release_job(ctx->currjob);
+                ctx->currjob = NULL;
                 return ASYNC_ERR;
             }
-            memcpy(async_get_ctx()->currjob->funcargs, args, size);
+            memcpy(ctx->currjob->funcargs, args, size);
         } else {
-            async_get_ctx()->currjob->funcargs = NULL;
+            ctx->currjob->funcargs = NULL;
         }
 
-        async_get_ctx()->currjob->func = func;
-        if (!async_fibre_swapcontext(&async_get_ctx()->dispatcher,
-                &async_get_ctx()->currjob->fibrectx, 1)) {
+        ctx->currjob->func = func;
+        if (!async_fibre_swapcontext(&ctx->dispatcher,
+                &ctx->currjob->fibrectx, 1)) {
             ASYNCerr(ASYNC_F_ASYNC_START_JOB, ASYNC_R_FAILED_TO_SWAP_CONTEXT);
             goto err;
         }
     }
 
 err:
-    async_release_job(async_get_ctx()->currjob);
-    async_get_ctx()->currjob = NULL;
+    async_release_job(ctx->currjob);
+    ctx->currjob = NULL;
     *job = NULL;
     return ASYNC_ERR;
 }
@@ -296,10 +307,11 @@ err:
 int ASYNC_pause_job(void)
 {
     ASYNC_JOB *job;
+    async_ctx *ctx = async_get_ctx();
 
-    if (async_get_ctx() == NULL
-            || async_get_ctx()->currjob == NULL
-            || async_get_ctx()->blocked) {
+    if (ctx == NULL
+            || ctx->currjob == NULL
+            || ctx->blocked) {
         /*
          * Could be we've deliberately not been started within a job so this is
          * counted as success.
@@ -307,11 +319,11 @@ int ASYNC_pause_job(void)
         return 1;
     }
 
-    job = async_get_ctx()->currjob;
+    job = ctx->currjob;
     job->status = ASYNC_JOB_PAUSING;
 
     if (!async_fibre_swapcontext(&job->fibrectx,
-                                 &async_get_ctx()->dispatcher, 1)) {
+                                 &ctx->dispatcher, 1)) {
         ASYNCerr(ASYNC_F_ASYNC_PAUSE_JOB, ASYNC_R_FAILED_TO_SWAP_CONTEXT);
         return 0;
     }
@@ -332,13 +344,10 @@ static void async_empty_pool(async_pool *pool)
     } while (job);
 }
 
-int ASYNC_init(int init_thread, size_t max_size, size_t init_size)
+int async_init(void)
 {
     if (!async_global_init())
         return 0;
-
-    if (init_thread)
-        return ASYNC_init_thread(max_size, init_size);
 
     return 1;
 }
@@ -353,10 +362,13 @@ int ASYNC_init_thread(size_t max_size, size_t init_size)
         return 0;
     }
 
-    if (!async_local_init()) {
-        ASYNCerr(ASYNC_F_ASYNC_INIT_THREAD, ASYNC_R_INIT_FAILED);
+    if (!OPENSSL_init_crypto(OPENSSL_INIT_ASYNC, NULL)) {
         return 0;
     }
+    if (!ossl_init_thread_start(OPENSSL_INIT_THREAD_ASYNC)) {
+        return 0;
+    }
+
     pool = OPENSSL_zalloc(sizeof *pool);
     if (pool == NULL) {
         ASYNCerr(ASYNC_F_ASYNC_INIT_THREAD, ERR_R_MALLOC_FAILURE);
@@ -418,16 +430,6 @@ void ASYNC_cleanup_thread(void)
     async_free_pool_internal(async_get_pool());
 }
 
-void ASYNC_cleanup(int cleanupthread)
-{
-    /*
-     * We don't actually have any global cleanup at the moment so just cleanup
-     * the thread
-     */
-    if (cleanupthread)
-        ASYNC_cleanup_thread();
-}
-
 ASYNC_JOB *ASYNC_get_current_job(void)
 {
     async_ctx *ctx;
@@ -465,25 +467,25 @@ void ASYNC_clear_wake(ASYNC_JOB *job)
 
 void ASYNC_block_pause(void)
 {
-    if (async_get_ctx() == NULL
-            || async_get_ctx()->currjob == NULL) {
+    async_ctx *ctx = async_get_ctx();
+    if (ctx == NULL || ctx->currjob == NULL) {
         /*
          * We're not in a job anyway so ignore this
          */
         return;
     }
-    async_get_ctx()->blocked++;
+    ctx->blocked++;
 }
 
 void ASYNC_unblock_pause(void)
 {
-    if (async_get_ctx() == NULL
-            || async_get_ctx()->currjob == NULL) {
+    async_ctx *ctx = async_get_ctx();
+    if (ctx == NULL || ctx->currjob == NULL) {
         /*
          * We're not in a job anyway so ignore this
          */
         return;
     }
-    if(async_get_ctx()->blocked > 0)
-        async_get_ctx()->blocked--;
+    if(ctx->blocked > 0)
+        ctx->blocked--;
 }

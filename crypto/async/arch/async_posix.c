@@ -1,4 +1,3 @@
-/* crypto/async/arch/async_posix.c */
 /*
  * Written by Matt Caswell (matt@openssl.org) for the OpenSSL project.
  */
@@ -68,14 +67,6 @@ int async_global_init(void)
 {
     if (pthread_key_create(&posixctx, NULL) != 0
             || pthread_key_create(&posixpool, NULL) != 0)
-        return 0;
-
-    return 1;
-}
-
-int async_local_init(void)
-{
-    if (!async_set_ctx(NULL) || ! async_set_pool(NULL))
         return 0;
 
     return 1;

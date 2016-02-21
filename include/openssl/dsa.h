@@ -1,4 +1,3 @@
-/* crypto/dsa/dsa.h */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -73,8 +72,9 @@
 # include <openssl/bio.h>
 # include <openssl/crypto.h>
 # include <openssl/ossl_typ.h>
+# include <openssl/opensslconf.h>
 
-# ifdef OPENSSL_USE_DEPRECATED
+# if OPENSSL_API_COMPAT < 0x10100000L
 #  include <openssl/bn.h>
 #  ifndef OPENSSL_NO_DH
 #   include <openssl/dh.h>
@@ -222,16 +222,14 @@ DSA *d2i_DSAPrivateKey(DSA **a, const unsigned char **pp, long length);
 DSA *d2i_DSAparams(DSA **a, const unsigned char **pp, long length);
 
 /* Deprecated version */
-# ifdef OPENSSL_USE_DEPRECATED
-DECLARE_DEPRECATED(DSA *DSA_generate_parameters(int bits,
+DEPRECATEDIN_0_9_8(DSA *DSA_generate_parameters(int bits,
                                                 unsigned char *seed,
                                                 int seed_len,
                                                 int *counter_ret,
                                                 unsigned long *h_ret, void
                                                  (*callback) (int, int,
                                                               void *),
-                                                void *cb_arg));
-# endif                         /* defined(OPENSSL_USE_DEPRECATED) */
+                                                void *cb_arg))
 
 /* New version */
 int DSA_generate_parameters_ex(DSA *dsa, int bits,

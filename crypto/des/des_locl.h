@@ -1,4 +1,3 @@
-/* crypto/des/des_locl.h */
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -204,171 +203,23 @@
 # endif
 
 /*
- * The changes to this macro may help or hinder, depending on the compiler
- * and the architecture.  gcc2 always seems to do well :-). Inspired by Dana
- * How <how@isl.stanford.edu> DO NOT use the alternative version on machines
- * with 8 byte longs. It does not seem to work on the Alpha, even when
- * DES_LONG is 4 bytes, probably an issue of accessing non-word aligned
- * objects :-(
- */
-# ifdef DES_PTR
-
-/*
  * It recently occurred to me that 0^0^0^0^0^0^0 == 0, so there is no reason
  * to not xor all the sub items together.  This potentially saves a register
  * since things can be xored directly into L
  */
 
-#  if defined(DES_RISC1) || defined(DES_RISC2)
-#   ifdef DES_RISC1
-#    define D_ENCRYPT(LL,R,S) { \
-        unsigned int u1,u2,u3; \
-        LOAD_DATA(R,S,u,t,E0,E1,u1); \
-        u2=(int)u>>8L; \
-        u1=(int)u&0xfc; \
-        u2&=0xfc; \
-        t=ROTATE(t,4); \
-        u>>=16L; \
-        LL^= *(const DES_LONG *)(des_SP      +u1); \
-        LL^= *(const DES_LONG *)(des_SP+0x200+u2); \
-        u3=(int)(u>>8L); \
-        u1=(int)u&0xfc; \
-        u3&=0xfc; \
-        LL^= *(const DES_LONG *)(des_SP+0x400+u1); \
-        LL^= *(const DES_LONG *)(des_SP+0x600+u3); \
-        u2=(int)t>>8L; \
-        u1=(int)t&0xfc; \
-        u2&=0xfc; \
-        t>>=16L; \
-        LL^= *(const DES_LONG *)(des_SP+0x100+u1); \
-        LL^= *(const DES_LONG *)(des_SP+0x300+u2); \
-        u3=(int)t>>8L; \
-        u1=(int)t&0xfc; \
-        u3&=0xfc; \
-        LL^= *(const DES_LONG *)(des_SP+0x500+u1); \
-        LL^= *(const DES_LONG *)(des_SP+0x700+u3); }
-#   endif
-#   ifdef DES_RISC2
-#    define D_ENCRYPT(LL,R,S) { \
-        unsigned int u1,u2,s1,s2; \
-        LOAD_DATA(R,S,u,t,E0,E1,u1); \
-        u2=(int)u>>8L; \
-        u1=(int)u&0xfc; \
-        u2&=0xfc; \
-        t=ROTATE(t,4); \
-        LL^= *(const DES_LONG *)(des_SP      +u1); \
-        LL^= *(const DES_LONG *)(des_SP+0x200+u2); \
-        s1=(int)(u>>16L); \
-        s2=(int)(u>>24L); \
-        s1&=0xfc; \
-        s2&=0xfc; \
-        LL^= *(const DES_LONG *)(des_SP+0x400+s1); \
-        LL^= *(const DES_LONG *)(des_SP+0x600+s2); \
-        u2=(int)t>>8L; \
-        u1=(int)t&0xfc; \
-        u2&=0xfc; \
-        LL^= *(const DES_LONG *)(des_SP+0x100+u1); \
-        LL^= *(const DES_LONG *)(des_SP+0x300+u2); \
-        s1=(int)(t>>16L); \
-        s2=(int)(t>>24L); \
-        s1&=0xfc; \
-        s2&=0xfc; \
-        LL^= *(const DES_LONG *)(des_SP+0x500+s1); \
-        LL^= *(const DES_LONG *)(des_SP+0x700+s2); }
-#   endif
-#  else
-#   define D_ENCRYPT(LL,R,S) { \
+# define D_ENCRYPT(LL,R,S) { \
         LOAD_DATA_tmp(R,S,u,t,E0,E1); \
         t=ROTATE(t,4); \
         LL^= \
-        *(const DES_LONG *)(des_SP      +((u     )&0xfc))^ \
-        *(const DES_LONG *)(des_SP+0x200+((u>> 8L)&0xfc))^ \
-        *(const DES_LONG *)(des_SP+0x400+((u>>16L)&0xfc))^ \
-        *(const DES_LONG *)(des_SP+0x600+((u>>24L)&0xfc))^ \
-        *(const DES_LONG *)(des_SP+0x100+((t     )&0xfc))^ \
-        *(const DES_LONG *)(des_SP+0x300+((t>> 8L)&0xfc))^ \
-        *(const DES_LONG *)(des_SP+0x500+((t>>16L)&0xfc))^ \
-        *(const DES_LONG *)(des_SP+0x700+((t>>24L)&0xfc)); }
-#  endif
-
-# else                          /* original version */
-
-#  if defined(DES_RISC1) || defined(DES_RISC2)
-#   ifdef DES_RISC1
-#    define D_ENCRYPT(LL,R,S) {\
-        unsigned int u1,u2,u3; \
-        LOAD_DATA(R,S,u,t,E0,E1,u1); \
-        u>>=2L; \
-        t=ROTATE(t,6); \
-        u2=(int)u>>8L; \
-        u1=(int)u&0x3f; \
-        u2&=0x3f; \
-        u>>=16L; \
-        LL^=DES_SPtrans[0][u1]; \
-        LL^=DES_SPtrans[2][u2]; \
-        u3=(int)u>>8L; \
-        u1=(int)u&0x3f; \
-        u3&=0x3f; \
-        LL^=DES_SPtrans[4][u1]; \
-        LL^=DES_SPtrans[6][u3]; \
-        u2=(int)t>>8L; \
-        u1=(int)t&0x3f; \
-        u2&=0x3f; \
-        t>>=16L; \
-        LL^=DES_SPtrans[1][u1]; \
-        LL^=DES_SPtrans[3][u2]; \
-        u3=(int)t>>8L; \
-        u1=(int)t&0x3f; \
-        u3&=0x3f; \
-        LL^=DES_SPtrans[5][u1]; \
-        LL^=DES_SPtrans[7][u3]; }
-#   endif
-#   ifdef DES_RISC2
-#    define D_ENCRYPT(LL,R,S) {\
-        unsigned int u1,u2,s1,s2; \
-        LOAD_DATA(R,S,u,t,E0,E1,u1); \
-        u>>=2L; \
-        t=ROTATE(t,6); \
-        u2=(int)u>>8L; \
-        u1=(int)u&0x3f; \
-        u2&=0x3f; \
-        LL^=DES_SPtrans[0][u1]; \
-        LL^=DES_SPtrans[2][u2]; \
-        s1=(int)u>>16L; \
-        s2=(int)u>>24L; \
-        s1&=0x3f; \
-        s2&=0x3f; \
-        LL^=DES_SPtrans[4][s1]; \
-        LL^=DES_SPtrans[6][s2]; \
-        u2=(int)t>>8L; \
-        u1=(int)t&0x3f; \
-        u2&=0x3f; \
-        LL^=DES_SPtrans[1][u1]; \
-        LL^=DES_SPtrans[3][u2]; \
-        s1=(int)t>>16; \
-        s2=(int)t>>24L; \
-        s1&=0x3f; \
-        s2&=0x3f; \
-        LL^=DES_SPtrans[5][s1]; \
-        LL^=DES_SPtrans[7][s2]; }
-#   endif
-
-#  else
-
-#   define D_ENCRYPT(LL,R,S) {\
-        LOAD_DATA_tmp(R,S,u,t,E0,E1); \
-        t=ROTATE(t,4); \
-        LL^=\
-                DES_SPtrans[0][(u>> 2L)&0x3f]^ \
-                DES_SPtrans[2][(u>>10L)&0x3f]^ \
-                DES_SPtrans[4][(u>>18L)&0x3f]^ \
-                DES_SPtrans[6][(u>>26L)&0x3f]^ \
-                DES_SPtrans[1][(t>> 2L)&0x3f]^ \
-                DES_SPtrans[3][(t>>10L)&0x3f]^ \
-                DES_SPtrans[5][(t>>18L)&0x3f]^ \
-                DES_SPtrans[7][(t>>26L)&0x3f]; }
-#  endif
-# endif
+            DES_SPtrans[0][(u>> 2L)&0x3f]^ \
+            DES_SPtrans[2][(u>>10L)&0x3f]^ \
+            DES_SPtrans[4][(u>>18L)&0x3f]^ \
+            DES_SPtrans[6][(u>>26L)&0x3f]^ \
+            DES_SPtrans[1][(t>> 2L)&0x3f]^ \
+            DES_SPtrans[3][(t>>10L)&0x3f]^ \
+            DES_SPtrans[5][(t>>18L)&0x3f]^ \
+            DES_SPtrans[7][(t>>26L)&0x3f]; }
 
         /*-
          * IP and FP
@@ -437,7 +288,4 @@ extern const DES_LONG DES_SPtrans[8][64];
 void fcrypt_body(DES_LONG *out, DES_key_schedule *ks,
                  DES_LONG Eswap0, DES_LONG Eswap1);
 
-# ifdef OPENSSL_SMALL_FOOTPRINT
-#  undef DES_UNROLL
-# endif
 #endif

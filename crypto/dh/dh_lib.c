@@ -1,4 +1,3 @@
-/* crypto/dh/dh_lib.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -158,17 +157,10 @@ void DH_free(DH *r)
     if (r == NULL)
         return;
     i = CRYPTO_add(&r->references, -1, CRYPTO_LOCK_DH);
-#ifdef REF_PRINT
-    REF_PRINT("DH", r);
-#endif
+    REF_PRINT_COUNT("DH", r);
     if (i > 0)
         return;
-#ifdef REF_CHECK
-    if (i < 0) {
-        fprintf(stderr, "DH_free, bad reference count\n");
-        abort();
-    }
-#endif
+    REF_ASSERT_ISNT(i < 0);
 
     if (r->meth->finish)
         r->meth->finish(r);
@@ -193,15 +185,9 @@ void DH_free(DH *r)
 int DH_up_ref(DH *r)
 {
     int i = CRYPTO_add(&r->references, 1, CRYPTO_LOCK_DH);
-#ifdef REF_PRINT
-    REF_PRINT("DH", r);
-#endif
-#ifdef REF_CHECK
-    if (i < 2) {
-        fprintf(stderr, "DH_up, bad reference count\n");
-        abort();
-    }
-#endif
+
+    REF_PRINT_COUNT("DH", r);
+    REF_ASSERT_ISNT(i < 2);
     return ((i > 1) ? 1 : 0);
 }
 

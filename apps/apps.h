@@ -1,4 +1,3 @@
-/* apps/apps.h */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -116,6 +115,7 @@
 # include <assert.h>
 
 # include <openssl/e_os2.h>
+# include <openssl/ossl_typ.h>
 # include <openssl/bio.h>
 # include <openssl/x509.h>
 # include <openssl/lhash.h>
@@ -137,6 +137,13 @@
 # else
 #  define openssl_fdset(a,b) FD_SET(a, b)
 # endif
+
+/*
+ * quick macro when you need to pass an unsigned char instead of a char.
+ * this is true for some implementations of the is*() functions, for
+ * example.
+ */
+#define _UC(c) ((unsigned char)(c))
 
 int app_RAND_load_file(const char *file, int dont_warn);
 int app_RAND_write_file(const char *file);
@@ -181,34 +188,51 @@ void wait_for_async(SSL *s);
         OPT_V__LAST
 
 # define OPT_V_OPTIONS \
-        { "policy", OPT_V_POLICY, 's' }, \
-        { "purpose", OPT_V_PURPOSE, 's' }, \
-        { "verify_name", OPT_V_VERIFY_NAME, 's' }, \
-        { "verify_depth", OPT_V_VERIFY_DEPTH, 'p' }, \
-        { "attime", OPT_V_ATTIME, 'p' }, \
-        { "verify_hostname", OPT_V_VERIFY_HOSTNAME, 's' }, \
-        { "verify_email", OPT_V_VERIFY_EMAIL, 's' }, \
-        { "verify_ip", OPT_V_VERIFY_IP, 's' }, \
-        { "ignore_critical", OPT_V_IGNORE_CRITICAL, '-' }, \
-        { "issuer_checks", OPT_V_ISSUER_CHECKS, '-' }, \
-        { "crl_check", OPT_V_CRL_CHECK, '-', "Check that peer cert has not been revoked" }, \
-        { "crl_check_all", OPT_V_CRL_CHECK_ALL, '-', "Also check all certs in the chain" }, \
-        { "policy_check", OPT_V_POLICY_CHECK, '-' }, \
-        { "explicit_policy", OPT_V_EXPLICIT_POLICY, '-' }, \
-        { "inhibit_any", OPT_V_INHIBIT_ANY, '-' }, \
-        { "inhibit_map", OPT_V_INHIBIT_MAP, '-' }, \
-        { "x509_strict", OPT_V_X509_STRICT, '-' }, \
-        { "extended_crl", OPT_V_EXTENDED_CRL, '-' }, \
-        { "use_deltas", OPT_V_USE_DELTAS, '-' }, \
-        { "policy_print", OPT_V_POLICY_PRINT, '-' }, \
-        { "check_ss_sig", OPT_V_CHECK_SS_SIG, '-' }, \
-        { "trusted_first", OPT_V_TRUSTED_FIRST, '-', "Use locally-trusted CA's first in building chain" }, \
-        { "suiteB_128_only", OPT_V_SUITEB_128_ONLY, '-' }, \
-        { "suiteB_128", OPT_V_SUITEB_128, '-' }, \
-        { "suiteB_192", OPT_V_SUITEB_192, '-' }, \
-        { "partial_chain", OPT_V_PARTIAL_CHAIN, '-' }, \
-        { "no_alt_chains", OPT_V_NO_ALT_CHAINS, '-', "Only use the first cert chain found" }, \
-        { "no_check_time", OPT_V_NO_CHECK_TIME, '-', "Do not check validity against current time" }
+        { "policy", OPT_V_POLICY, 's', "adds policy to the acceptable policy set"}, \
+        { "purpose", OPT_V_PURPOSE, 's', \
+            "certificate chain purpose"}, \
+        { "verify_name", OPT_V_VERIFY_NAME, 's', "verification policy name"}, \
+        { "verify_depth", OPT_V_VERIFY_DEPTH, 'p', \
+            "chain depth limit"}, \
+        { "attime", OPT_V_ATTIME, 'M', "verification epoch time" }, \
+        { "verify_hostname", OPT_V_VERIFY_HOSTNAME, 's', \
+            "expected peer hostname" }, \
+        { "verify_email", OPT_V_VERIFY_EMAIL, 's', \
+            "expected peer email" }, \
+        { "verify_ip", OPT_V_VERIFY_IP, 's', \
+            "expected peer IP address" }, \
+        { "ignore_critical", OPT_V_IGNORE_CRITICAL, '-', \
+            "permit unhandled critical extensions"}, \
+        { "issuer_checks", OPT_V_ISSUER_CHECKS, '-', "(deprecated)"}, \
+        { "crl_check", OPT_V_CRL_CHECK, '-', "check leaf certificate revocation" }, \
+        { "crl_check_all", OPT_V_CRL_CHECK_ALL, '-', "check full chain revocation" }, \
+        { "policy_check", OPT_V_POLICY_CHECK, '-', "perform rfc5280 policy checks"}, \
+        { "explicit_policy", OPT_V_EXPLICIT_POLICY, '-', \
+            "set policy variable require-explicit-policy"}, \
+        { "inhibit_any", OPT_V_INHIBIT_ANY, '-', \
+            "set policy variable inihibit-any-policy"}, \
+        { "inhibit_map", OPT_V_INHIBIT_MAP, '-', \
+            "set policy variable inihibit-policy-mapping"}, \
+        { "x509_strict", OPT_V_X509_STRICT, '-', \
+            "disable certificate compatibility work-arounds"}, \
+        { "extended_crl", OPT_V_EXTENDED_CRL, '-', \
+            "enable extended CRL features"}, \
+        { "use_deltas", OPT_V_USE_DELTAS, '-', \
+            "use delta CRLs"}, \
+        { "policy_print", OPT_V_POLICY_PRINT, '-', \
+            "print policy processing diagnostics"}, \
+        { "check_ss_sig", OPT_V_CHECK_SS_SIG, '-', \
+            "check root CA self-signatures"}, \
+        { "trusted_first", OPT_V_TRUSTED_FIRST, '-', \
+            "search trust store first (default)" }, \
+        { "suiteB_128_only", OPT_V_SUITEB_128_ONLY, '-', "Suite B 128-bit-only mode"}, \
+        { "suiteB_128", OPT_V_SUITEB_128, '-', \
+            "Suite B 128-bit mode allowing 192-bit algorithms"}, \
+        { "suiteB_192", OPT_V_SUITEB_192, '-', "Suite B 192-bit-only mode" }, \
+        { "partial_chain", OPT_V_PARTIAL_CHAIN, '-', \
+            "accept chains anchored by intermediate trust-store CAs"}, \
+        { "no_alt_chains", OPT_V_NO_ALT_CHAINS, '-', "(deprecated)" }, \
+        { "no_check_time", OPT_V_NO_CHECK_TIME, '-', "ignore certificate validity time" }
 
 # define OPT_V_CASES \
         OPT_V__FIRST: case OPT_V__LAST: break; \
@@ -251,12 +275,15 @@ void wait_for_async(SSL *s);
         OPT_X__LAST
 
 # define OPT_X_OPTIONS \
-        { "xkey", OPT_X_KEY, '<' }, \
-        { "xcert", OPT_X_CERT, '<' }, \
-        { "xchain", OPT_X_CHAIN, '<' }, \
-        { "xchain_build", OPT_X_CHAIN_BUILD, '-' }, \
-        { "xcertform", OPT_X_CERTFORM, 'F' }, \
-        { "xkeyform", OPT_X_KEYFORM, 'F' }
+        { "xkey", OPT_X_KEY, '<', "key for Extended certificates"}, \
+        { "xcert", OPT_X_CERT, '<', "cert for Extended certificates"}, \
+        { "xchain", OPT_X_CHAIN, '<', "chain for Extended certificates"}, \
+        { "xchain_build", OPT_X_CHAIN_BUILD, '-', \
+            "build certificate chain for the extended certificates"}, \
+        { "xcertform", OPT_X_CERTFORM, 'F', \
+            "format of Extended certificate (PEM or DER) PEM default " }, \
+        { "xkeyform", OPT_X_KEYFORM, 'F', \
+            "format of Exnteded certificate's key (PEM or DER) PEM default"}
 
 # define OPT_X_CASES \
         OPT_X__FIRST: case OPT_X__LAST: break; \
@@ -274,28 +301,34 @@ void wait_for_async(SSL *s);
 # define OPT_S_ENUM \
         OPT_S__FIRST=3000, \
         OPT_S_NOSSL3, OPT_S_NOTLS1, OPT_S_NOTLS1_1, OPT_S_NOTLS1_2, \
-        OPT_S_BUGS, OPT_S_NOCOMP, OPT_S_ECDHSINGLE, OPT_S_NOTICKET, \
+        OPT_S_BUGS, OPT_S_NO_COMP, OPT_S_NOTICKET, \
         OPT_S_SERVERPREF, OPT_S_LEGACYRENEG, OPT_S_LEGACYCONN, \
         OPT_S_ONRESUMP, OPT_S_NOLEGACYCONN, OPT_S_STRICT, OPT_S_SIGALGS, \
         OPT_S_CLIENTSIGALGS, OPT_S_CURVES, OPT_S_NAMEDCURVE, OPT_S_CIPHER, \
-        OPT_S_DHPARAM, OPT_S_DEBUGBROKE, \
+        OPT_S_DHPARAM, OPT_S_DEBUGBROKE, OPT_S_COMP, \
         OPT_S__LAST
 
 # define OPT_S_OPTIONS \
-        {"no_ssl3", OPT_S_NOSSL3, '-' }, \
-        {"no_tls1", OPT_S_NOTLS1, '-' }, \
-        {"no_tls1_1", OPT_S_NOTLS1_1, '-' }, \
-        {"no_tls1_2", OPT_S_NOTLS1_2, '-' }, \
-        {"bugs", OPT_S_BUGS, '-' }, \
-        {"no_comp", OPT_S_NOCOMP, '-', "Don't use SSL/TLS-level compression" }, \
-        {"ecdh_single", OPT_S_ECDHSINGLE, '-' }, \
-        {"no_ticket", OPT_S_NOTICKET, '-' }, \
-        {"serverpref", OPT_S_SERVERPREF, '-' }, \
-        {"legacy_renegotiation", OPT_S_LEGACYRENEG, '-' }, \
-        {"legacy_server_connect", OPT_S_LEGACYCONN, '-' }, \
-        {"no_resumption_on_reneg", OPT_S_ONRESUMP, '-' }, \
-        {"no_legacy_server_connect", OPT_S_NOLEGACYCONN, '-' }, \
-        {"strict", OPT_S_STRICT, '-' }, \
+        {"no_ssl3", OPT_S_NOSSL3, '-',"Just disable SSLv3" }, \
+        {"no_tls1", OPT_S_NOTLS1, '-', "Just disable TLSv1"}, \
+        {"no_tls1_1", OPT_S_NOTLS1_1, '-', "Just disable TLSv1.1" }, \
+        {"no_tls1_2", OPT_S_NOTLS1_2, '-', "Just disable TLSv1.2"}, \
+        {"bugs", OPT_S_BUGS, '-', "Turn on SSL bug compatibility"}, \
+        {"no_comp", OPT_S_NO_COMP, '-', "Disable SSL/TLS compression (default)" }, \
+        {"comp", OPT_S_COMP, '-', "Use SSL/TLS-level compression" }, \
+        {"no_ticket", OPT_S_NOTICKET, '-', \
+            "Disable use of TLS session tickets"}, \
+        {"serverpref", OPT_S_SERVERPREF, '-', "Use server's cipher preferences"}, \
+        {"legacy_renegotiation", OPT_S_LEGACYRENEG, '-', \
+            "Enable use of legacy renegotiation (dangerous)"}, \
+        {"legacy_server_connect", OPT_S_LEGACYCONN, '-', \
+            "Allow initial connection to servers that don't support RI"}, \
+        {"no_resumption_on_reneg", OPT_S_ONRESUMP, '-', \
+            "Disallow session resumption on renegotiation"}, \
+        {"no_legacy_server_connect", OPT_S_NOLEGACYCONN, '-', \
+            "Disallow initial connection to servers that don't support RI"}, \
+        {"strict", OPT_S_STRICT, '-', \
+            "Enforce strict certificate checks as per TLS standard"}, \
         {"sigalgs", OPT_S_SIGALGS, 's', \
             "Signature algorithms to support (colon-separated list)" }, \
         {"client_sigalgs", OPT_S_CLIENTSIGALGS, 's', \
@@ -305,9 +338,11 @@ void wait_for_async(SSL *s);
             "Elliptic curves to advertise (colon-separated list)" }, \
         {"named_curve", OPT_S_NAMEDCURVE, 's', \
             "Elliptic curve used for ECDHE (server-side only)" }, \
-        {"cipher", OPT_S_CIPHER, 's', }, \
-        {"dhparam", OPT_S_DHPARAM, '<' }, \
-        {"debug_broken_protocol", OPT_S_DEBUGBROKE, '-' }
+        {"cipher", OPT_S_CIPHER, 's', "Specify cipher list to be used"}, \
+        {"dhparam", OPT_S_DHPARAM, '<', \
+            "DH parameter file to use, in cert file if not specified"}, \
+        {"debug_broken_protocol", OPT_S_DEBUGBROKE, '-', \
+            "Perform all sorts of protocol violations for testing purposes"}
 
 # define OPT_S_CASES \
         OPT_S__FIRST: case OPT_S__LAST: break; \
@@ -316,8 +351,8 @@ void wait_for_async(SSL *s);
         case OPT_S_NOTLS1_1: \
         case OPT_S_NOTLS1_2: \
         case OPT_S_BUGS: \
-        case OPT_S_NOCOMP: \
-        case OPT_S_ECDHSINGLE: \
+        case OPT_S_NO_COMP: \
+        case OPT_S_COMP: \
         case OPT_S_NOTICKET: \
         case OPT_S_SERVERPREF: \
         case OPT_S_LEGACYRENEG: \
@@ -343,8 +378,9 @@ typedef struct options_st {
     int retval;
     /*
      * value type: - no value (also the value zero), n number, p positive
-     * number, u unsigned, s string, < input file, > output file, f der/pem
-     * format, F any format identifier.  n and u include zero; p does not.
+     * number, u unsigned, l long, s string, < input file, > output file,
+     * f any format, F der/pem format , E der/pem/engine format identifier.
+     * l, n and u include zero; p does not.
      */
     int valtype;
     const char *helpstr;
@@ -371,6 +407,7 @@ typedef struct string_int_pair_st {
 # define OPT_FMT_TEXT            (1L <<  8)
 # define OPT_FMT_HTTP            (1L <<  9)
 # define OPT_FMT_PVK             (1L << 10)
+# define OPT_FMT_PDE     (OPT_FMT_PEMDER | OPT_FMT_ENGINE)
 # define OPT_FMT_ANY     ( \
         OPT_FMT_PEMDER | OPT_FMT_PKCS12 | OPT_FMT_SMIME | \
         OPT_FMT_ENGINE | OPT_FMT_MSBLOB | OPT_FMT_NETSCAPE | \
@@ -379,11 +416,21 @@ typedef struct string_int_pair_st {
 char *opt_progname(const char *argv0);
 char *opt_getprog(void);
 char *opt_init(int ac, char **av, const OPTIONS * o);
-int opt_next();
+int opt_next(void);
 int opt_format(const char *s, unsigned long flags, int *result);
 int opt_int(const char *arg, int *result);
 int opt_ulong(const char *arg, unsigned long *result);
 int opt_long(const char *arg, long *result);
+#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L && \
+    defined(INTMAX_MAX) && defined(UINTMAX_MAX)
+int opt_imax(const char *arg, intmax_t *result);
+int opt_umax(const char *arg, uintmax_t *result);
+#else
+# define opt_imax opt_long
+# define opt_umax opt_ulong
+# define intmax_t long
+# define uintmax_t unsigned long
+#endif
 int opt_pair(const char *arg, const OPT_PAIR * pairs, int *result);
 int opt_cipher(const char *name, const EVP_CIPHER **cipherp);
 int opt_md(const char *name, const EVP_MD **mdp);
@@ -396,7 +443,6 @@ int opt_num_rest(void);
 int opt_verify(int i, X509_VERIFY_PARAM *vpm);
 void opt_help(const OPTIONS * list);
 int opt_format_error(const char *s, unsigned long flags);
-int opt_next(void);
 
 typedef struct args_st {
     int size;
@@ -437,12 +483,10 @@ EVP_PKEY *load_key(const char *file, int format, int maybe_stdin,
                    const char *pass, ENGINE *e, const char *key_descrip);
 EVP_PKEY *load_pubkey(const char *file, int format, int maybe_stdin,
                       const char *pass, ENGINE *e, const char *key_descrip);
-STACK_OF(X509) *load_certs(const char *file, int format,
-                           const char *pass, ENGINE *e,
-                           const char *cert_descrip);
-STACK_OF(X509_CRL) *load_crls(const char *file, int format,
-                              const char *pass, ENGINE *e,
-                              const char *cert_descrip);
+int load_certs(const char *file, STACK_OF(X509) **certs, int format,
+               const char *pass, ENGINE *e, const char *cert_descrip);
+int load_crls(const char *file, STACK_OF(X509_CRL) **crls, int format,
+              const char *pass, ENGINE *e, const char *cert_descrip);
 X509_STORE *setup_verify(char *CAfile, char *CApath,
                          int noCAfile, int noCApath);
 int ctx_set_verify_locations(SSL_CTX *ctx, const char *CAfile,
@@ -508,7 +552,7 @@ int args_verify(char ***pargs, int *pargc,
                 int *badarg, X509_VERIFY_PARAM **pm);
 void policies_print(X509_STORE_CTX *ctx);
 int bio_to_mem(unsigned char **out, int maxlen, BIO *in);
-int pkey_ctrl_string(EVP_PKEY_CTX *ctx, char *value);
+int pkey_ctrl_string(EVP_PKEY_CTX *ctx, const char *value);
 int init_gen_str(EVP_PKEY_CTX **pctx,
                  const char *algname, ENGINE *e, int do_param);
 int do_X509_sign(X509 *x, EVP_PKEY *pkey, const EVP_MD *md,
@@ -519,10 +563,6 @@ int do_X509_CRL_sign(X509_CRL *x, EVP_PKEY *pkey, const EVP_MD *md,
                      STACK_OF(OPENSSL_STRING) *sigopts);
 # ifndef OPENSSL_NO_PSK
 extern char *psk_key;
-# endif
-# ifndef OPENSSL_NO_JPAKE
-void jpake_client_auth(BIO *out, BIO *conn, const char *secret);
-void jpake_server_auth(BIO *out, BIO *conn, const char *secret);
 # endif
 
 unsigned char *next_protos_parse(unsigned short *outlen, const char *in);

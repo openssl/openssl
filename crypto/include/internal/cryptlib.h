@@ -1,4 +1,3 @@
-/* crypto/cryptlib.h */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -78,6 +77,17 @@
 #ifdef  __cplusplus
 extern "C" {
 #endif
+
+typedef struct ex_callback_st EX_CALLBACK;
+
+DEFINE_STACK_OF(EX_CALLBACK)
+
+DEFINE_STACK_OF(CRYPTO_dynlock)
+
+typedef struct app_mem_info_st APP_INFO;
+DEFINE_LHASH_OF(APP_INFO);
+typedef struct mem_st MEM;
+DEFINE_LHASH_OF(MEM);
 
 # ifndef OPENSSL_SYS_VMS
 #  define X509_CERT_AREA          OPENSSLDIR

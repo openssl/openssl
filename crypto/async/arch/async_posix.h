@@ -1,4 +1,3 @@
-/* crypto/async/arch/async_posix.h */
 /*
  * Written by Matt Caswell (matt@openssl.org) for the OpenSSL project.
  */
@@ -54,7 +53,7 @@
 #define OPENSSL_ASYNC_ARCH_ASYNC_POSIX_H
 #include <openssl/e_os2.h>
 
-#if defined(OPENSSL_SYS_UNIX) && defined(OPENSSL_THREADS)
+#if (defined(OPENSSL_SYS_UNIX) || defined(OPENSSL_SYS_CYGWIN)) && defined(OPENSSL_THREADS) && !defined(OPENSSL_NO_ASYNC)
 
 # include <unistd.h>
 
@@ -79,7 +78,7 @@ typedef struct async_fibre_st {
 } async_fibre;
 
 #  define async_set_ctx(nctx)  (pthread_setspecific(posixctx , (nctx)) == 0)
-#  define async_get_ctx()      ((async_ctx *)pthread_getspecific(posixctx))
+#  define async_arch_get_ctx() ((async_ctx *)pthread_getspecific(posixctx))
 #  define async_set_pool(p)    (pthread_setspecific(posixpool , (p)) == 0)
 #  define async_get_pool()     ((async_pool *)pthread_getspecific(posixpool))
 

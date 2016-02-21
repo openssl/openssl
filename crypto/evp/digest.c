@@ -1,4 +1,3 @@
-/* crypto/evp/digest.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -175,7 +174,7 @@ int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
      * Whether it's nice or not, "Inits" can be used on "Final"'d contexts so
      * this context may already have an ENGINE! Try to avoid releasing the
      * previous handle, re-querying for an ENGINE, and having a
-     * reinitialisation, when it may all be unecessary.
+     * reinitialisation, when it may all be unnecessary.
      */
     if (ctx->engine && ctx->digest && (!type ||
                                        (type
@@ -230,7 +229,7 @@ int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
         ctx->digest = type;
         if (!(ctx->flags & EVP_MD_CTX_FLAG_NO_INIT) && type->ctx_size) {
             ctx->update = type->update;
-            ctx->md_data = OPENSSL_malloc(type->ctx_size);
+            ctx->md_data = OPENSSL_zalloc(type->ctx_size);
             if (ctx->md_data == NULL) {
                 EVPerr(EVP_F_EVP_DIGESTINIT_EX, ERR_R_MALLOC_FAILURE);
                 return 0;
@@ -311,6 +310,13 @@ int EVP_MD_CTX_copy_ex(EVP_MD_CTX *out, const EVP_MD_CTX *in)
         tmp_buf = NULL;
     EVP_MD_CTX_reset(out);
     memcpy(out, in, sizeof(*out));
+
+    /* Null these variables, since they are getting fixed up
+     * properly below.  Anything else may cause a memleak and/or
+     * double free if any of the memory allocations below fail
+     */
+    out->md_data = NULL;
+    out->pctx = NULL;
 
     if (in->md_data && out->digest->ctx_size) {
         if (tmp_buf)

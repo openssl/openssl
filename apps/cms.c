@@ -206,7 +206,7 @@ OPTIONS cms_options[] = {
     {"recip", OPT_RECIP, '<', "Recipient cert file for decryption"},
     {"certsout", OPT_CERTSOUT, '>', "Certificate output file"},
     {"md", OPT_MD, 's'},
-    {"inkey", OPT_INKEY, '<',
+    {"inkey", OPT_INKEY, 's',
      "Input private key (if not signer or recipient)"},
     {"keyform", OPT_KEYFORM, 'f', "Input private key format (PEM or ENGINE)"},
     {"keyopt", OPT_KEYOPT, 's', "Set public key parameters as n:v pairs"},
@@ -735,8 +735,8 @@ int cms_main(int argc, char **argv)
     }
 
     if (certfile) {
-        if ((other = load_certs(certfile, FORMAT_PEM, NULL, e,
-                                "certificate file")) == NULL) {
+        if (!load_certs(certfile, &other, FORMAT_PEM, NULL, e,
+                        "certificate file")) {
             ERR_print_errors(bio_err);
             goto end;
         }

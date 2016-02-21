@@ -191,7 +191,8 @@ int pkcs7_main(int argc, char **argv)
         }
     }
     argc = opt_num_rest();
-    argv = opt_rest();
+    if (argc != 0)
+        goto opthelp;
 
     in = bio_open_default(infile, 'r', informat);
     if (in == NULL)

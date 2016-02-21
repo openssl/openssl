@@ -1,4 +1,3 @@
-/* conf_lib.c */
 /*
  * Written by Richard Levitte (richard@levitte.org) for the OpenSSL project
  * 2000.
@@ -58,6 +57,8 @@
  */
 
 #include <stdio.h>
+#include <string.h>
+#include <internal/conf.h>
 #include <openssl/crypto.h>
 #include <openssl/err.h>
 #include <openssl/conf.h>
@@ -370,4 +371,31 @@ int NCONF_dump_bio(const CONF *conf, BIO *out)
     }
 
     return conf->meth->dump(conf, out);
+}
+
+/*
+ * These routines call the C malloc/free, to avoid intermixing with
+ * OpenSSL function pointers before the library is initialized.
+ */
+OPENSSL_INIT_SETTINGS *OPENSSL_INIT_new(void)
+{
+    OPENSSL_INIT_SETTINGS *ret = malloc(sizeof(*ret));
+
+    if (ret != NULL)
+        memset(ret, 0, sizeof(*ret));
+    return ret;
+}
+
+
+void OPENSSL_INIT_set_config_filename(OPENSSL_INIT_SETTINGS *settings,
+                                      const char *config_file)
+{
+    free(settings->config_name);
+    settings->config_name = config_file == NULL ? NULL : strdup(config_file);
+}
+
+void OPENSSL_INIT_free(OPENSSL_INIT_SETTINGS *settings)
+{
+    free(settings->config_name);
+    free(settings);
 }

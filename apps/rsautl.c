@@ -57,7 +57,9 @@
  */
 
 #include <openssl/opensslconf.h>
-#ifndef OPENSSL_NO_RSA
+#ifdef OPENSSL_NO_RSA
+NON_EMPTY_TRANSLATION_UNIT
+#else
 
 # include "apps.h"
 # include <string.h>
@@ -86,8 +88,8 @@ OPTIONS rsautl_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
     {"in", OPT_IN, '<', "Input file"},
     {"out", OPT_OUT, '>', "Output file"},
-    {"inkey", OPT_INKEY, '<', "Input key"},
-    {"keyform", OPT_KEYFORM, 'F', "Private key format - default PEM"},
+    {"inkey", OPT_INKEY, 's', "Input key"},
+    {"keyform", OPT_KEYFORM, 'E', "Private key format - default PEM"},
     {"pubin", OPT_PUBIN, '-', "Input is an RSA public"},
     {"certin", OPT_CERTIN, '-', "Input is a cert carrying an RSA public key"},
     {"ssl", OPT_SSL, '-', "Use SSL v2 padding"},
@@ -96,10 +98,11 @@ OPTIONS rsautl_options[] = {
     {"oaep", OPT_OAEP, '-', "Use PKCS#1 OAEP"},
     {"sign", OPT_SIGN, '-', "Sign with private key"},
     {"verify", OPT_VERIFY, '-', "Verify with public key"},
-    {"asn1parse", OPT_ASN1PARSE, '-'},
+    {"asn1parse", OPT_ASN1PARSE, '-',
+     "Run output through asn1parse; useful with -verify"},
     {"hexdump", OPT_HEXDUMP, '-', "Hex dump output"},
     {"x931", OPT_X931, '-', "Use ANSI X9.31 padding"},
-    {"rev", OPT_REV, '-'},
+    {"rev", OPT_REV, '-', "Reverse the order of the input buffer"},
     {"encrypt", OPT_ENCRYPT, '-', "Encrypt with public key"},
     {"decrypt", OPT_DECRYPT, '-', "Decrypt with private key"},
     {"passin", OPT_PASSIN, 's', "Pass phrase source"},
@@ -137,7 +140,7 @@ int rsautl_main(int argc, char **argv)
             ret = 0;
             goto end;
         case OPT_KEYFORM:
-            if (!opt_format(opt_arg(), OPT_FMT_PEMDER, &keyformat))
+            if (!opt_format(opt_arg(), OPT_FMT_PDE, &keyformat))
                 goto opthelp;
             break;
         case OPT_IN:
@@ -202,7 +205,8 @@ int rsautl_main(int argc, char **argv)
         }
     }
     argc = opt_num_rest();
-    argv = opt_rest();
+    if (argc != 0)
+        goto opthelp;
 
     if (need_priv && (key_type != KEY_PRIVKEY)) {
         BIO_printf(bio_err, "A private key is needed for this operation\n");
@@ -262,7 +266,7 @@ int rsautl_main(int argc, char **argv)
 
     /* Read the input data */
     rsa_inlen = BIO_read(in, rsa_in, keysize * 2);
-    if (rsa_inlen <= 0) {
+    if (rsa_inlen < 0) {
         BIO_printf(bio_err, "Error reading input Data\n");
         goto end;
     }
@@ -294,10 +298,9 @@ int rsautl_main(int argc, char **argv)
         rsa_outlen =
             RSA_private_decrypt(rsa_inlen, rsa_in, rsa_out, rsa, pad);
         break;
-
     }
 
-    if (rsa_outlen <= 0) {
+    if (rsa_outlen < 0) {
         BIO_printf(bio_err, "RSA operation error\n");
         ERR_print_errors(bio_err);
         goto end;
@@ -320,11 +323,4 @@ int rsautl_main(int argc, char **argv)
     OPENSSL_free(passin);
     return ret;
 }
-
-#else                           /* !OPENSSL_NO_RSA */
-
-# if PEDANTIC
-static void *dummy = &dummy;
-# endif
-
 #endif

@@ -1,4 +1,3 @@
-/* crypto/async/arch/async_null.c */
 /*
  * Written by Matt Caswell (matt@openssl.org) for the OpenSSL project.
  */
@@ -77,11 +76,6 @@ int async_read1(OSSL_ASYNC_FD fd, void *buf)
 }
 
 int async_global_init(void)
-{
-    return 0;
-}
-
-int async_local_init(void)
 {
     return 0;
 }

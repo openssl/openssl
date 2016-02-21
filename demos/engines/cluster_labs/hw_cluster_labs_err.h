@@ -67,7 +67,7 @@ extern "C" {
 static void ERR_load_CL_strings(void);
 static void ERR_unload_CL_strings(void);
 static void ERR_CL_error(int function, int reason, char *file, int line);
-# define CLerr(f,r) ERR_CL_error((f),(r),__FILE__,__LINE__)
+# define CLerr(f,r) ERR_CL_error((f),(r),OPENSSL_FILE,OPENSSL_LINE)
 
 /* Error codes for the CL functions. */
 

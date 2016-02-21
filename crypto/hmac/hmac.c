@@ -1,4 +1,3 @@
-/* crypto/hmac/hmac.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -61,6 +60,7 @@
 #include <string.h>
 #include "internal/cryptlib.h"
 #include <openssl/hmac.h>
+#include <openssl/opensslconf.h>
 #include "hmac_lcl.h"
 
 int HMAC_Init_ex(HMAC_CTX *ctx, const void *key, int len,
@@ -127,7 +127,7 @@ int HMAC_Init_ex(HMAC_CTX *ctx, const void *key, int len,
     return 0;
 }
 
-#ifndef OPENSSL_NO_DEPRECATED
+#if OPENSSL_API_COMPAT < 0x10100000L
 int HMAC_Init(HMAC_CTX *ctx, const void *key, int len, const EVP_MD *md)
 {
     if (key && md)
@@ -171,12 +171,14 @@ size_t HMAC_size(HMAC_CTX *ctx)
 
 HMAC_CTX *HMAC_CTX_new(void)
 {
-    HMAC_CTX *ctx = (HMAC_CTX *)OPENSSL_zalloc(sizeof(HMAC_CTX));
-    if (ctx)
+    HMAC_CTX *ctx = OPENSSL_zalloc(sizeof(HMAC_CTX));
+
+    if (ctx != NULL) {
         if (!HMAC_CTX_reset(ctx)) {
             HMAC_CTX_free(ctx);
-            ctx = NULL;
+            return NULL;
         }
+    }
     return ctx;
 }
 
@@ -248,11 +250,18 @@ unsigned char *HMAC(const EVP_MD *evp_md, const void *key, int key_len,
 {
     HMAC_CTX *c = NULL;
     static unsigned char m[EVP_MAX_MD_SIZE];
+    static const unsigned char dummy_key[1] = {'\0'};
 
     if (md == NULL)
         md = m;
     if ((c = HMAC_CTX_new()) == NULL)
         goto err;
+
+    /* For HMAC_Init_ex, NULL key signals reuse. */
+    if (key == NULL && key_len == 0) {
+        key = dummy_key;
+    }
+
     if (!HMAC_Init_ex(c, key, key_len, evp_md, NULL))
         goto err;
     if (!HMAC_Update(c, d, n))

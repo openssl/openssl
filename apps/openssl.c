@@ -153,7 +153,6 @@
  * required type of "FUNCTION*"). This removes the necessity for
  * macro-generated wrapper functions.
  */
-DECLARE_LHASH_OF(FUNCTION);
 static LHASH_OF(FUNCTION) *prog_init(void);
 static int do_cmd(LHASH_OF(FUNCTION) *prog, int argc, char *argv[]);
 static void list_pkey(void);
@@ -171,45 +170,20 @@ static int apps_startup()
 #ifdef SIGPIPE
     signal(SIGPIPE, SIG_IGN);
 #endif
-    CRYPTO_malloc_init();
-    ERR_load_crypto_strings();
-    ERR_load_SSL_strings();
 
-    OPENSSL_load_builtin_modules();
-    SSL_add_ssl_module();
-#ifndef OPENSSL_NO_ENGINE
-    ENGINE_load_builtin_engines();
-#endif
-    if (!app_load_modules(NULL)) {
-        ERR_print_errors(bio_err);
-        BIO_printf(bio_err, "Error loading default configuration\n");
+    /* Set non-default library initialisation settings */
+    if (!OPENSSL_init_crypto(OPENSSL_INIT_ENGINE_ALL_BUILTIN
+                             | OPENSSL_INIT_LOAD_CONFIG, NULL))
         return 0;
-    }
 
-    OpenSSL_add_all_algorithms();
-    OpenSSL_add_ssl_algorithms();
     setup_ui_method();
-    /*SSL_library_init();*/
+
     return 1;
 }
 
 static void apps_shutdown()
 {
-#ifndef OPENSSL_NO_ENGINE
-    ENGINE_cleanup();
-#endif
     destroy_ui_method();
-    CONF_modules_unload(1);
-#ifndef OPENSSL_NO_COMP
-    COMP_zlib_cleanup();
-    SSL_COMP_free_compression_methods();
-#endif
-    OBJ_cleanup();
-    EVP_cleanup();
-    CRYPTO_cleanup_all_ex_data();
-    ERR_remove_thread_state(NULL);
-    RAND_cleanup();
-    ERR_free_strings();
 }
 
 static char *make_config_name()
@@ -311,22 +285,14 @@ int main(int argc, char *argv[])
 #endif
 
     p = getenv("OPENSSL_DEBUG_MEMORY");
-    if (p == NULL)
-        /* if not set, use compiled-in default */
-        ;
-    else if (strcmp(p, "off") != 0) {
-        CRYPTO_malloc_debug_init();
-        CRYPTO_set_mem_debug_options(V_CRYPTO_MDEBUG_ALL);
-    } else {
-        CRYPTO_set_mem_debug_functions(0, 0, 0, 0, 0);
-    }
+    if (p != NULL && strcmp(p, "on") == 0)
+        CRYPTO_set_mem_debug(1);
     CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
     CRYPTO_set_locking_callback(lock_dbg_cb);
 
     if (getenv("OPENSSL_FIPS")) {
 #ifdef OPENSSL_FIPS
         if (!FIPS_mode_set(1)) {
-            ERR_load_crypto_strings();
             ERR_print_errors(bio_err);
             return 1;
         }
@@ -437,9 +403,12 @@ int main(int argc, char *argv[])
     BIO_free(bio_in);
     BIO_free_all(bio_out);
     apps_shutdown();
-    CRYPTO_mem_leaks(bio_err);
+#ifndef OPENSSL_NO_CRYPTO_MDEBUG
+    if (CRYPTO_mem_leaks(bio_err) <= 0)
+        ret = 1;
+#endif
     BIO_free(bio_err);
-    return (ret);
+    EXIT(ret);
 }
 
 OPTIONS exit_options[] = {
@@ -707,14 +676,10 @@ static int function_cmp(const FUNCTION * a, const FUNCTION * b)
     return strncmp(a->name, b->name, 8);
 }
 
-static IMPLEMENT_LHASH_COMP_FN(function, FUNCTION)
-
 static unsigned long function_hash(const FUNCTION * a)
 {
     return lh_strhash(a->name);
 }
-
-static IMPLEMENT_LHASH_HASH_FN(function, FUNCTION)
 
 static int SortFnByName(const void *_f1, const void *_f2)
 {
@@ -765,6 +730,12 @@ static void list_disabled(void)
 #if defined(OPENSSL_NO_DTLS)
     BIO_puts(bio_out, "DTLS\n");
 #endif
+#if defined(OPENSSL_NO_DTLS1)
+    BIO_puts(bio_out, "DTLS1\n");
+#endif
+#if defined(OPENSSL_NO_DTLS1_2)
+    BIO_puts(bio_out, "DTLS1_2\n");
+#endif
 #ifdef OPENSSL_NO_EC
     BIO_puts(bio_out, "EC\n");
 #endif
@@ -777,14 +748,14 @@ static void list_disabled(void)
 #ifdef OPENSSL_NO_GOST
     BIO_puts(bio_out, "GOST\n");
 #endif
+#ifdef OPENSSL_NO_HEARTBEATS
+    BIO_puts(bio_out, "HEARTBEATS\n");
+#endif
 #ifdef OPENSSL_NO_HMAC
     BIO_puts(bio_out, "HMAC\n");
 #endif
 #ifdef OPENSSL_NO_IDEA
     BIO_puts(bio_out, "IDEA\n");
-#endif
-#ifdef OPENSSL_NO_JPAKE
-    BIO_puts(bio_out, "JPAKE\n");
 #endif
 #ifdef OPENSSL_NO_MD2
     BIO_puts(bio_out, "MD2\n");
@@ -846,8 +817,23 @@ static void list_disabled(void)
 #ifdef OPENSSL_NO_SRTP
     BIO_puts(bio_out, "SRTP\n");
 #endif
+#ifdef OPENSSL_NO_SSL
+    BIO_puts(bio_out, "SSL\n");
+#endif
 #ifdef OPENSSL_NO_SSL3
     BIO_puts(bio_out, "SSL3\n");
+#endif
+#if defined(OPENSSL_NO_TLS)
+    BIO_puts(bio_out, "TLS\n");
+#endif
+#ifdef OPENSSL_NO_TLS1
+    BIO_puts(bio_out, "TLS1\n");
+#endif
+#ifdef OPENSSL_NO_TLS1_1
+    BIO_puts(bio_out, "TLS1_1\n");
+#endif
+#ifdef OPENSSL_NO_TLS1_2
+    BIO_puts(bio_out, "TLS1_2\n");
 #endif
 #ifdef OPENSSL_NO_WHIRLPOOL
     BIO_puts(bio_out, "WHIRLPOOL\n");
@@ -867,7 +853,7 @@ static LHASH_OF(FUNCTION) *prog_init(void)
     for (i = 0, f = functions; f->name != NULL; ++f, ++i) ;
     qsort(functions, i, sizeof(*functions), SortFnByName);
 
-    if ((ret = lh_FUNCTION_new()) == NULL)
+    if ((ret = lh_FUNCTION_new(function_hash, function_cmp)) == NULL)
         return (NULL);
 
     for (f = functions; f->name != NULL; f++)

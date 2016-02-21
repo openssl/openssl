@@ -1289,6 +1289,9 @@ $code.=<<___;
 	stp	$acc0,$acc1,[$rp_real,#$i]
 	stp	$acc2,$acc3,[$rp_real,#$i+16]
 ___
+$code.=<<___	if ($i == 0);
+	adr	$bp_real,.Lone_mont-64
+___
 }
 $code.=<<___;
 	ldp	$acc0,$acc1,[$ap_real,#$i]	// in1

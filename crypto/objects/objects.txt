@@ -497,6 +497,18 @@ id-kp 8			: timeStamping		: Time Stamping
 !Cname OCSP-sign
 id-kp 9			: OCSPSigning		: OCSP Signing
 id-kp 10		: DVCS			: dvcs
+!Cname ipsec-IKE
+id-kp 17                : ipsecIKE              : ipsec Internet Key Exchange
+id-kp 18                : capwapAC              : Ctrl/provision WAP Access
+id-kp 19                : capwapWTP             : Ctrl/Provision WAP Termination
+!Cname sshClient
+id-kp 21                : secureShellClient     : SSH Client
+!Cname sshServer
+id-kp 22                : secureShellServer     : SSH Server
+id-kp 23                : sendRouter            : Send Router
+id-kp 24                : sendProxiedRouter     : Send Proxied Router
+id-kp 25                : sendOwner             : Send Owner
+id-kp 26                : sendProxiedOwner      : Send Proxied Owner
 
 # CMP information types
 id-it 1			: id-it-caProtEncCert
@@ -1428,3 +1440,18 @@ secg-scheme 14 3 : dhSinglePass-cofactorDH-sha512kdf-scheme
 
 # SCRYPT algorithm
 1 3 6 1 4 1 11591 4 11		: id-scrypt
+
+# NID for TLS1 PRF
+                            : TLS1-PRF          : tls1-prf
+
+# RFC 4556
+1 3 6 1 5 2 3 : id-pkinit
+id-pkinit 4                     : pkInitClientAuth      : PKINIT Client Auth
+id-pkinit 5                     : pkInitKDC             : Signing KDC Response
+
+# New curves from draft-josefsson-pkix-newcurves
+
+1 3 6 1 4 1 11591 15 1      : Curve25519
+1 3 6 1 4 1 11591 15 2      : Curve448
+1 3 6 1 4 1 11591 15 3      : Curve25519ph
+1 3 6 1 4 1 11591 15 4      : Curve448ph

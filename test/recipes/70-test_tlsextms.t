@@ -53,19 +53,21 @@
 # Hudson (tjh@cryptsoft.com).
 
 use strict;
-use OpenSSL::Test qw/:DEFAULT cmdstr top_file top_dir/;
+use OpenSSL::Test qw/:DEFAULT cmdstr srctop_file bldtop_dir/;
+use OpenSSL::Test::Utils;
 use TLSProxy::Proxy;
 use File::Temp qw(tempfile);
 
 my $test_name = "test_tlsextms";
 setup($test_name);
 
-plan skip_all => "$test_name can only be performed with OpenSSL configured shared"
-    unless (map { s/\R//; s/^SHARED_LIBS=\s*//; $_ }
-        grep { /^SHARED_LIBS=/ }
-        do { local @ARGV = ( top_file("Makefile") ); <> })[0] ne "";
+plan skip_all => "TLSProxy isn't usable on $^O"
+    if $^O =~ /^VMS$/;
 
-$ENV{OPENSSL_ENGINES} = top_dir("engines");
+plan skip_all => "$test_name needs the dynamic engine feature enabled"
+    if disabled("engine") || disabled("dynamic_engines");
+
+$ENV{OPENSSL_ENGINES} = bldtop_dir("engines");
 $ENV{OPENSSL_ia32cap} = '~0x200000200000000';
 
 sub checkmessages($$$$$);
@@ -81,8 +83,8 @@ my $fullhand = 0;
 my $proxy = TLSProxy::Proxy->new(
     \&extms_filter,
     cmdstr(app(["openssl"])),
-    top_file("apps", "server.pem"),
-    1
+    srctop_file("apps", "server.pem"),
+    (!$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE})
 );
 
 plan tests => 9;
@@ -210,11 +212,11 @@ sub extms_filter
 
     foreach my $message (@{$proxy->message_list}) {
         if ($crmextms && $message->mt == TLSProxy::Message::MT_CLIENT_HELLO) {
-            $message->delete_extension(TLSProxy::ClientHello::EXT_EXTENDED_MASTER_SECRET);
+            $message->delete_extension(TLSProxy::Message::EXT_EXTENDED_MASTER_SECRET);
             $message->repack();
         }
         if ($srmextms && $message->mt == TLSProxy::Message::MT_SERVER_HELLO) {
-            $message->delete_extension(TLSProxy::ClientHello::EXT_EXTENDED_MASTER_SECRET);
+            $message->delete_extension(TLSProxy::Message::EXT_EXTENDED_MASTER_SECRET);
             $message->repack();
         }
     }
@@ -232,7 +234,7 @@ sub checkmessages($$$$$)
         #Get the extensions data
         my %extensions = %{$message->extension_data};
         if (defined
-            $extensions{TLSProxy::ClientHello::EXT_EXTENDED_MASTER_SECRET}) {
+            $extensions{TLSProxy::Message::EXT_EXTENDED_MASTER_SECRET}) {
             if ($message->mt == TLSProxy::Message::MT_CLIENT_HELLO) {
                 $cextms = 1;
             } else {

@@ -490,7 +490,7 @@ $code.=<<___;
 ___
 $code.=<<___ if ($win64);
 	movaps	-0xd8(%rax),%xmm6
-	movaps	-0xd8(%rax),%xmm7
+	movaps	-0xc8(%rax),%xmm7
 	movaps	-0xb8(%rax),%xmm8
 	movaps	-0xa8(%rax),%xmm9
 	movaps	-0x98(%rax),%xmm10

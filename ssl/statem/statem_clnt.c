@@ -1,4 +1,3 @@
-/* ssl/statem/statem_clnt.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -166,7 +165,6 @@
 
 static ossl_inline int cert_req_allowed(SSL *s);
 static int key_exchange_expected(SSL *s);
-static int ssl_set_version(SSL *s);
 static int ca_dn_cmp(const X509_NAME *const *a, const X509_NAME *const *b);
 static int ssl_cipher_list_to_bytes(SSL *s, STACK_OF(SSL_CIPHER) *sk,
                                     unsigned char *p);
@@ -303,12 +301,13 @@ int ossl_statem_client_read_transition(SSL *s, int mt)
         break;
 
     case TLS_ST_CR_CERT:
-        if (s->tlsext_status_expected) {
-            if (mt == SSL3_MT_CERTIFICATE_STATUS) {
-                st->hand_state = TLS_ST_CR_CERT_STATUS;
-                return 1;
-            }
-            return 0;
+        /*
+         * The CertificateStatus message is optional even if
+         * |tlsext_status_expected| is set
+         */
+        if (s->tlsext_status_expected && mt == SSL3_MT_CERTIFICATE_STATUS) {
+            st->hand_state = TLS_ST_CR_CERT_STATUS;
+            return 1;
         }
         /* Fall through */
 
@@ -695,7 +694,11 @@ unsigned long ossl_statem_client_max_message_size(SSL *s)
             return SERVER_KEY_EXCH_MAX_LENGTH;
 
         case TLS_ST_CR_CERT_REQ:
-            return SSL3_RT_MAX_PLAIN_LENGTH;
+            /* Set to s->max_cert_list for compatibility with previous releases.
+             * In practice these messages can get quite long if servers are
+             * configured to provide a long list of acceptable CAs
+             */
+            return s->max_cert_list;
 
         case TLS_ST_CR_SRVR_DONE:
             return SERVER_HELLO_DONE_MAX_LENGTH;
@@ -795,110 +798,12 @@ WORK_STATE ossl_statem_client_post_process_message(SSL *s, WORK_STATE wst)
     return WORK_ERROR;
 }
 
-/*
- * Work out what version we should be using for the initial ClientHello if
- * the version is currently set to (D)TLS_ANY_VERSION.
- * Returns 1 on success
- * Returns 0 on error
- */
-static int ssl_set_version(SSL *s)
-{
-    unsigned long mask, options = s->options;
-
-    if (s->method->version == TLS_ANY_VERSION) {
-        /*
-         * SSL_OP_NO_X disables all protocols above X *if* there are
-         * some protocols below X enabled. This is required in order
-         * to maintain "version capability" vector contiguous. So
-         * that if application wants to disable TLS1.0 in favour of
-         * TLS1>=1, it would be insufficient to pass SSL_NO_TLSv1, the
-         * answer is SSL_OP_NO_TLSv1|SSL_OP_NO_SSLv3.
-         */
-        mask = SSL_OP_NO_TLSv1_1 | SSL_OP_NO_TLSv1
-#if !defined(OPENSSL_NO_SSL3)
-            | SSL_OP_NO_SSLv3
-#endif
-            ;
-#if !defined(OPENSSL_NO_TLS1_2_CLIENT)
-        if (options & SSL_OP_NO_TLSv1_2) {
-            if ((options & mask) != mask) {
-                s->version = TLS1_1_VERSION;
-            } else {
-                SSLerr(SSL_F_SSL_SET_VERSION, SSL_R_NO_PROTOCOLS_AVAILABLE);
-                return 0;
-            }
-        } else {
-            s->version = TLS1_2_VERSION;
-        }
-#else
-        if ((options & mask) == mask) {
-            SSLerr(SSL_F_SSL_SET_VERSION, SSL_R_NO_PROTOCOLS_AVAILABLE);
-            return 0;
-        }
-        s->version = TLS1_1_VERSION;
-#endif
-
-        mask &= ~SSL_OP_NO_TLSv1_1;
-        if ((options & SSL_OP_NO_TLSv1_1) && (options & mask) != mask)
-            s->version = TLS1_VERSION;
-        mask &= ~SSL_OP_NO_TLSv1;
-#if !defined(OPENSSL_NO_SSL3)
-        if ((options & SSL_OP_NO_TLSv1) && (options & mask) != mask)
-            s->version = SSL3_VERSION;
-#endif
-
-        if (s->version != TLS1_2_VERSION && tls1_suiteb(s)) {
-            SSLerr(SSL_F_SSL_SET_VERSION,
-                   SSL_R_ONLY_TLS_1_2_ALLOWED_IN_SUITEB_MODE);
-            return 0;
-        }
-
-        if (s->version == SSL3_VERSION && FIPS_mode()) {
-            SSLerr(SSL_F_SSL_SET_VERSION, SSL_R_ONLY_TLS_ALLOWED_IN_FIPS_MODE);
-            return 0;
-        }
-
-    } else if (s->method->version == DTLS_ANY_VERSION) {
-        /* Determine which DTLS version to use */
-        /* If DTLS 1.2 disabled correct the version number */
-        if (options & SSL_OP_NO_DTLSv1_2) {
-            if (tls1_suiteb(s)) {
-                SSLerr(SSL_F_SSL_SET_VERSION,
-                       SSL_R_ONLY_DTLS_1_2_ALLOWED_IN_SUITEB_MODE);
-                return 0;
-            }
-            /*
-             * Disabling all versions is silly: return an error.
-             */
-            if (options & SSL_OP_NO_DTLSv1) {
-                SSLerr(SSL_F_SSL_SET_VERSION, SSL_R_WRONG_SSL_VERSION);
-                return 0;
-            }
-            /*
-             * Update method so we don't use any DTLS 1.2 features.
-             */
-            s->method = DTLSv1_client_method();
-            s->version = DTLS1_VERSION;
-        } else {
-            /*
-             * We only support one version: update method
-             */
-            if (options & SSL_OP_NO_DTLSv1)
-                s->method = DTLSv1_2_client_method();
-            s->version = DTLS1_2_VERSION;
-        }
-    }
-
-    s->client_version = s->version;
-
-    return 1;
-}
-
 int tls_construct_client_hello(SSL *s)
 {
     unsigned char *buf;
     unsigned char *p, *d;
     int i;
+    int protverr;
     unsigned long l;
     int al = 0;
 #ifndef OPENSSL_NO_COMP
@@ -910,8 +815,11 @@ int tls_construct_client_hello(SSL *s)
     buf = (unsigned char *)s->init_buf->data;
 
     /* Work out what SSL/TLS/DTLS version to use */
-    if (ssl_set_version(s) == 0)
+    protverr = ssl_set_client_hello_version(s);
+    if (protverr != 0) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_HELLO, protverr);
         goto err;
+    }
 
     if ((sess == NULL) || (sess->ssl_version != s->version) ||
         /*
@@ -1115,100 +1023,26 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL *s, PACKET *pkt)
     const SSL_CIPHER *c;
     PACKET session_id;
     size_t session_id_len;
-    unsigned char *cipherchars;
+    const unsigned char *cipherchars;
     int i, al = SSL_AD_INTERNAL_ERROR;
     unsigned int compression;
+    unsigned int sversion;
+    int protverr;
 #ifndef OPENSSL_NO_COMP
     SSL_COMP *comp;
 #endif
 
-    if (s->method->version == TLS_ANY_VERSION) {
-        unsigned int sversion;
+    if (!PACKET_get_net_2(pkt, &sversion)) {
+        al = SSL_AD_DECODE_ERROR;
+        SSLerr(SSL_F_TLS_PROCESS_SERVER_HELLO, SSL_R_LENGTH_MISMATCH);
+        goto f_err;
+    }
 
-        if (!PACKET_get_net_2(pkt, &sversion)) {
-            al = SSL_AD_DECODE_ERROR;
-            SSLerr(SSL_F_TLS_PROCESS_SERVER_HELLO, SSL_R_LENGTH_MISMATCH);
-            goto f_err;
-        }
-
-#if TLS_MAX_VERSION != TLS1_2_VERSION
-#error Code needs updating for new TLS version
-#endif
-#ifndef OPENSSL_NO_SSL3
-        if ((sversion == SSL3_VERSION) && !(s->options & SSL_OP_NO_SSLv3)) {
-            if (FIPS_mode()) {
-                SSLerr(SSL_F_TLS_PROCESS_SERVER_HELLO,
-                       SSL_R_ONLY_TLS_ALLOWED_IN_FIPS_MODE);
-                al = SSL_AD_PROTOCOL_VERSION;
-                goto f_err;
-            }
-            s->method = SSLv3_client_method();
-        } else
-#endif
-        if ((sversion == TLS1_VERSION) && !(s->options & SSL_OP_NO_TLSv1)) {
-            s->method = TLSv1_client_method();
-        } else if ((sversion == TLS1_1_VERSION) &&
-                   !(s->options & SSL_OP_NO_TLSv1_1)) {
-            s->method = TLSv1_1_client_method();
-        } else if ((sversion == TLS1_2_VERSION) &&
-                   !(s->options & SSL_OP_NO_TLSv1_2)) {
-            s->method = TLSv1_2_client_method();
-        } else {
-            SSLerr(SSL_F_TLS_PROCESS_SERVER_HELLO, SSL_R_UNSUPPORTED_PROTOCOL);
-            al = SSL_AD_PROTOCOL_VERSION;
-            goto f_err;
-        }
-        s->session->ssl_version = s->version = s->method->version;
-
-        if (!ssl_security(s, SSL_SECOP_VERSION, 0, s->version, NULL)) {
-            SSLerr(SSL_F_TLS_PROCESS_SERVER_HELLO, SSL_R_VERSION_TOO_LOW);
-            al = SSL_AD_PROTOCOL_VERSION;
-            goto f_err;
-        }
-    } else if (s->method->version == DTLS_ANY_VERSION) {
-        /* Work out correct protocol version to use */
-        unsigned int hversion;
-        int options;
-
-        if (!PACKET_get_net_2(pkt, &hversion)) {
-            al = SSL_AD_DECODE_ERROR;
-            SSLerr(SSL_F_TLS_PROCESS_SERVER_HELLO, SSL_R_LENGTH_MISMATCH);
-            goto f_err;
-        }
-
-        options = s->options;
-        if (hversion == DTLS1_2_VERSION && !(options & SSL_OP_NO_DTLSv1_2))
-            s->method = DTLSv1_2_client_method();
-        else if (tls1_suiteb(s)) {
-            SSLerr(SSL_F_TLS_PROCESS_SERVER_HELLO,
-                   SSL_R_ONLY_DTLS_1_2_ALLOWED_IN_SUITEB_MODE);
-            s->version = hversion;
-            al = SSL_AD_PROTOCOL_VERSION;
-            goto f_err;
-        } else if (hversion == DTLS1_VERSION && !(options & SSL_OP_NO_DTLSv1))
-            s->method = DTLSv1_client_method();
-        else {
-            SSLerr(SSL_F_TLS_PROCESS_SERVER_HELLO, SSL_R_WRONG_SSL_VERSION);
-            s->version = hversion;
-            al = SSL_AD_PROTOCOL_VERSION;
-            goto f_err;
-        }
-        s->session->ssl_version = s->version = s->method->version;
-    } else {
-        unsigned char *vers;
-
-        if (!PACKET_get_bytes(pkt, &vers, 2)) {
-            al = SSL_AD_DECODE_ERROR;
-            SSLerr(SSL_F_TLS_PROCESS_SERVER_HELLO, SSL_R_LENGTH_MISMATCH);
-            goto f_err;
-        }
-        if ((vers[0] != (s->version >> 8))
-                || (vers[1] != (s->version & 0xff))) {
-            SSLerr(SSL_F_TLS_PROCESS_SERVER_HELLO, SSL_R_WRONG_SSL_VERSION);
-            s->version = (s->version & 0xff00) | vers[1];
-            al = SSL_AD_PROTOCOL_VERSION;
-            goto f_err;
-        }
+    protverr = ssl_choose_client_version(s, sversion);
+    if (protverr != 0) {
+        al = SSL_AD_PROTOCOL_VERSION;
+        SSLerr(SSL_F_TLS_PROCESS_SERVER_HELLO, protverr);
+        goto f_err;
     }
 
     /* load the server hello data */
@@ -1255,7 +1089,7 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL *s, PACKET *pkt)
      */
     if (s->version >= TLS1_VERSION && s->tls_session_secret_cb &&
         s->session->tlsext_tick) {
-        SSL_CIPHER *pref_cipher = NULL;
+        const SSL_CIPHER *pref_cipher = NULL;
         s->session->master_key_length = sizeof(s->session->master_key);
         if (s->tls_session_secret_cb(s, s->session->master_key,
                                      &s->session->master_key_length,
@@ -1450,7 +1284,7 @@ MSG_PROCESS_RETURN tls_process_server_certificate(SSL *s, PACKET *pkt)
     int al, i, ret = MSG_PROCESS_ERROR, exp_idx;
     unsigned long cert_list_len, cert_len;
     X509 *x = NULL;
-    unsigned char *certstart, *certbytes;
+    const unsigned char *certstart, *certbytes;
     STACK_OF(X509) *sk = NULL;
     EVP_PKEY *pkey = NULL;
 
@@ -1519,7 +1353,7 @@ MSG_PROCESS_RETURN tls_process_server_certificate(SSL *s, PACKET *pkt)
      * VRS 19990621: possible memory leak; sk=null ==> !sk_pop_free() @end
      */
 
-    pkey = X509_get_pubkey(x);
+    pkey = X509_get0_pubkey(x);
 
     if (pkey == NULL || EVP_PKEY_missing_parameters(pkey)) {
         x = NULL;
@@ -1565,7 +1399,6 @@ MSG_PROCESS_RETURN tls_process_server_certificate(SSL *s, PACKET *pkt)
  err:
     ossl_statem_set_error(s);
  done:
-    EVP_PKEY_free(pkey);
     X509_free(x);
     sk_X509_pop_free(sk, X509_free);
     return ret;
@@ -1681,7 +1514,7 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
 
 /* We must check if there is a certificate */
         if (alg_a & (SSL_aRSA|SSL_aDSS))
-            pkey = X509_get_pubkey(s->session->peer);
+            pkey = X509_get0_pubkey(s->session->peer);
     }
 #endif                          /* !OPENSSL_NO_SRP */
 #ifndef OPENSSL_NO_DH
@@ -1734,7 +1567,7 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
             goto f_err;
         }
         if (alg_a & (SSL_aRSA|SSL_aDSS))
-            pkey = X509_get_pubkey(s->session->peer);
+            pkey = X509_get0_pubkey(s->session->peer);
         /* else anonymous DH, so no certificate or pkey. */
     }
 #endif                          /* !OPENSSL_NO_DH */
@@ -1742,7 +1575,7 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
 #ifndef OPENSSL_NO_EC
     else if (alg_k & (SSL_kECDHE | SSL_kECDHEPSK)) {
         PACKET encoded_pt;
-        unsigned char *ecparams;
+        const unsigned char *ecparams;
         int curve_nid;
 
         /*
@@ -1804,11 +1637,11 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
         if (0) ;
 # ifndef OPENSSL_NO_RSA
         else if (alg_a & SSL_aRSA)
-            pkey = X509_get_pubkey(s->session->peer);
+            pkey = X509_get0_pubkey(s->session->peer);
 # endif
 # ifndef OPENSSL_NO_EC
         else if (alg_a & SSL_aECDSA)
-            pkey = X509_get_pubkey(s->session->peer);
+            pkey = X509_get0_pubkey(s->session->peer);
 # endif
         /* else anonymous ECDH, so no certificate or pkey. */
     } else if (alg_k) {
@@ -1834,7 +1667,7 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
         }
 
         if (SSL_USE_SIGALGS(s)) {
-            unsigned char *sigalgs;
+            const unsigned char *sigalgs;
             int rv;
             if (!PACKET_get_bytes(pkt, &sigalgs, 2)) {
                 SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, SSL_R_LENGTH_TOO_SHORT);
@@ -1849,7 +1682,7 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
 #ifdef SSL_DEBUG
             fprintf(stderr, "USING TLSv1.2 HASH %s\n", EVP_MD_name(md));
 #endif
-        } else if (pkey->type == EVP_PKEY_RSA) {
+        } else if (EVP_PKEY_id(pkey) == EVP_PKEY_RSA) {
             md = EVP_md5_sha1();
         } else {
             md = EVP_sha1();
@@ -1907,13 +1740,11 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
             goto f_err;
         }
     }
-    EVP_PKEY_free(pkey);
     EVP_MD_CTX_free(md_ctx);
     return MSG_PROCESS_CONTINUE_READING;
  f_err:
     ssl3_send_alert(s, SSL3_AL_FATAL, al);
  err:
-    EVP_PKEY_free(pkey);
 #ifndef OPENSSL_NO_RSA
     RSA_free(rsa);
 #endif
@@ -1930,8 +1761,8 @@ MSG_PROCESS_RETURN tls_process_certificate_request(SSL *s, PACKET *pkt)
     int ret = MSG_PROCESS_ERROR;
     unsigned int list_len, ctype_num, i, name_len;
     X509_NAME *xn = NULL;
-    unsigned char *data;
-    unsigned char *namestart, *namebytes;
+    const unsigned char *data;
+    const unsigned char *namestart, *namebytes;
     STACK_OF(X509_NAME) *ca_sk = NULL;
 
     if ((ca_sk = sk_X509_NAME_new(ca_dn_cmp)) == NULL) {
@@ -2155,7 +1986,6 @@ MSG_PROCESS_RETURN tls_process_cert_status(SSL *s, PACKET *pkt)
         SSLerr(SSL_F_TLS_PROCESS_CERT_STATUS, SSL_R_LENGTH_MISMATCH);
         goto f_err;
     }
-    OPENSSL_free(s->tlsext_ocsp_resp);
     s->tlsext_ocsp_resp = OPENSSL_malloc(resplen);
     if (s->tlsext_ocsp_resp == NULL) {
         al = SSL_AD_INTERNAL_ERROR;
@@ -2168,20 +1998,6 @@ MSG_PROCESS_RETURN tls_process_cert_status(SSL *s, PACKET *pkt)
         goto f_err;
     }
     s->tlsext_ocsp_resplen = resplen;
-    if (s->ctx->tlsext_status_cb) {
-        int ret;
-        ret = s->ctx->tlsext_status_cb(s, s->ctx->tlsext_status_arg);
-        if (ret == 0) {
-            al = SSL_AD_BAD_CERTIFICATE_STATUS_RESPONSE;
-            SSLerr(SSL_F_TLS_PROCESS_CERT_STATUS, SSL_R_INVALID_STATUS_RESPONSE);
-            goto f_err;
-        }
-        if (ret < 0) {
-            al = SSL_AD_INTERNAL_ERROR;
-            SSLerr(SSL_F_TLS_PROCESS_CERT_STATUS, ERR_R_MALLOC_FAILURE);
-            goto f_err;
-        }
-    }
     return MSG_PROCESS_CONTINUE_READING;
  f_err:
     ssl3_send_alert(s, SSL3_AL_FATAL, al);
@@ -2220,6 +2036,28 @@ MSG_PROCESS_RETURN tls_process_server_done(SSL *s, PACKET *pkt)
         return MSG_PROCESS_ERROR;
     }
 
+    /*
+     * Call the ocsp status callback if needed. The |tlsext_ocsp_resp| and
+     * |tlsext_ocsp_resplen| values will be set if we actually received a status
+     * message, or NULL and -1 otherwise
+     */
+    if (s->tlsext_status_type != -1 && s->ctx->tlsext_status_cb != NULL) {
+        int ret;
+        ret = s->ctx->tlsext_status_cb(s, s->ctx->tlsext_status_arg);
+        if (ret == 0) {
+            ssl3_send_alert(s, SSL3_AL_FATAL,
+                            SSL_AD_BAD_CERTIFICATE_STATUS_RESPONSE);
+            SSLerr(SSL_F_TLS_PROCESS_SERVER_DONE,
+                   SSL_R_INVALID_STATUS_RESPONSE);
+            return MSG_PROCESS_ERROR;
+        }
+        if (ret < 0) {
+            ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_INTERNAL_ERROR);
+            SSLerr(SSL_F_TLS_PROCESS_SERVER_DONE, ERR_R_MALLOC_FAILURE);
+            return MSG_PROCESS_ERROR;
+        }
+    }
+
 #ifndef OPENSSL_NO_SCTP
     /* Only applies to renegotiation */
     if (SSL_IS_DTLS(s) && BIO_dgram_is_sctp(SSL_get_wbio(s))
@@ -2241,6 +2079,7 @@ int tls_construct_client_key_exchange(SSL *s)
 #ifndef OPENSSL_NO_RSA
     unsigned char *q;
     EVP_PKEY *pkey = NULL;
+    EVP_PKEY_CTX *pctx = NULL;
 #endif
 #if !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH)
     EVP_PKEY *ckey = NULL, *skey = NULL;
@@ -2335,7 +2174,7 @@ psk_err:
     }
 #ifndef OPENSSL_NO_RSA
     else if (alg_k & (SSL_kRSA | SSL_kRSAPSK)) {
-        RSA *rsa;
+        size_t enclen;
         pmslen = SSL_MAX_MASTER_KEY_LENGTH;
         pms = OPENSSL_malloc(pmslen);
         if (pms == NULL)
@@ -2350,16 +2189,12 @@ psk_err:
             goto err;
         }
 
-        pkey = X509_get_pubkey(s->session->peer);
-        if ((pkey == NULL) || (pkey->type != EVP_PKEY_RSA)
-            || (pkey->pkey.rsa == NULL)) {
+        pkey = X509_get0_pubkey(s->session->peer);
+        if (EVP_PKEY_get0_RSA(pkey) == NULL) {
             SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE,
                    ERR_R_INTERNAL_ERROR);
-            EVP_PKEY_free(pkey);
             goto err;
         }
-        rsa = pkey->pkey.rsa;
-        EVP_PKEY_free(pkey);
 
         pms[0] = s->client_version >> 8;
         pms[1] = s->client_version & 0xff;
@@ -2370,18 +2205,27 @@ psk_err:
         /* Fix buf for TLS and beyond */
         if (s->version > SSL3_VERSION)
             p += 2;
-        n = RSA_public_encrypt(pmslen, pms, p, rsa, RSA_PKCS1_PADDING);
+        pctx = EVP_PKEY_CTX_new(pkey, NULL);
+        if (pctx == NULL || EVP_PKEY_encrypt_init(pctx) <= 0
+            || EVP_PKEY_encrypt(pctx, NULL, &enclen, pms, pmslen) <= 0) {
+            SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE,
+                   ERR_R_EVP_LIB);
+            goto err;
+        }
+        if (EVP_PKEY_encrypt(pctx, p, &enclen, pms, pmslen) <= 0) {
+            SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE,
+                   SSL_R_BAD_RSA_ENCRYPT);
+            goto err;
+        }
+        n = enclen;
+        EVP_PKEY_CTX_free(pctx);
+        pctx = NULL;
 # ifdef PKCS1_CHECK
         if (s->options & SSL_OP_PKCS1_CHECK_1)
             p[1]++;
         if (s->options & SSL_OP_PKCS1_CHECK_2)
             tmp_buf[0] = 0x70;
 # endif
-        if (n <= 0) {
-            SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE,
-                   SSL_R_BAD_RSA_ENCRYPT);
-            goto err;
-        }
 
         /* Fix buf for TLS and beyond */
         if (s->version > SSL3_VERSION) {
@@ -2420,21 +2264,14 @@ psk_err:
 #endif
 
 #ifndef OPENSSL_NO_EC
-    else if (alg_k & (SSL_kECDHE | SSL_kECDHr | SSL_kECDHe | SSL_kECDHEPSK)) {
+    else if (alg_k & (SSL_kECDHE | SSL_kECDHEPSK)) {
 
-        if (s->s3->peer_tmp != NULL) {
-            skey = s->s3->peer_tmp;
-        } else {
-            /* Get the Server Public Key from Cert */
-            skey = X509_get0_pubkey(s->session->peer);
-            if ((skey == NULL)
-                || (skey->type != EVP_PKEY_EC)
-                || (skey->pkey.ec == NULL)) {
-                SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE,
+        skey = s->s3->peer_tmp;
+        if ((skey == NULL) || EVP_PKEY_get0_EC_KEY(skey) == NULL) {
+            SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE,
                        ERR_R_INTERNAL_ERROR);
-                goto err;
+            goto err;
             }
-        }
 
         ckey = ssl_generate_pkey(skey, NID_undef);
 
@@ -2479,7 +2316,6 @@ psk_err:
         unsigned int md_len;
         unsigned char shared_ukm[32], tmp[256];
         EVP_MD_CTX *ukm_hash;
-        EVP_PKEY *pub_key;
         int dgst_nid = NID_id_GostR3411_94;
         if ((s->s3->tmp.new_cipher->algorithm_auth & SSL_aGOST12) != 0)
             dgst_nid = NID_id_GostR3411_2012_256;
@@ -2500,8 +2336,7 @@ psk_err:
             goto err;
         }
 
-        pkey_ctx = EVP_PKEY_CTX_new(pub_key =
-                                    X509_get_pubkey(peer_cert), NULL);
+        pkey_ctx = EVP_PKEY_CTX_new(X509_get0_pubkey(peer_cert), NULL);
         if (pkey_ctx == NULL) {
             SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE,
                    ERR_R_MALLOC_FAILURE);
@@ -2589,7 +2424,6 @@ psk_err:
             s->s3->flags |= TLS1_FLAGS_SKIP_CERT_VERIFY;
         }
         EVP_PKEY_CTX_free(pkey_ctx);
-        EVP_PKEY_free(pub_key);
 
     }
 #endif
@@ -2643,6 +2477,9 @@ psk_err:
  err:
     OPENSSL_clear_free(pms, pmslen);
     s->s3->tmp.pms = NULL;
+#ifndef OPENSSL_NO_RSA
+    EVP_PKEY_CTX_free(pctx);
+#endif
 #ifndef OPENSSL_NO_EC
     OPENSSL_free(encodedPoint);
 #endif
@@ -2763,10 +2600,12 @@ int tls_construct_client_verify(SSL *s)
         goto err;
     }
 #ifndef OPENSSL_NO_GOST
-    if (pkey->type == NID_id_GostR3410_2001
-            || pkey->type == NID_id_GostR3410_2012_256
-            || pkey->type == NID_id_GostR3410_2012_512) {
-        BUF_reverse(p + 2, NULL, u);
+    {
+        int pktype = EVP_PKEY_id(pkey);
+        if (pktype == NID_id_GostR3410_2001
+            || pktype == NID_id_GostR3410_2012_256
+            || pktype == NID_id_GostR3410_2012_512)
+            BUF_reverse(p + 2, NULL, u);
     }
 #endif
 
@@ -2933,14 +2772,10 @@ int ssl3_check_cert_and_algorithm(SSL *s)
         SSLerr(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM,
                SSL_R_MISSING_ECDSA_SIGNING_CERT);
         goto f_err;
-    } else if (alg_k & (SSL_kECDHr | SSL_kECDHe)) {
-        SSLerr(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM, SSL_R_MISSING_ECDH_CERT);
-        goto f_err;
     }
 #endif
-    pkey = X509_get_pubkey(s->session->peer);
+    pkey = X509_get0_pubkey(s->session->peer);
     i = X509_certificate_type(s->session->peer, pkey);
-    EVP_PKEY_free(pkey);
 
     /* Check that we have a certificate if we require one */
     if ((alg_a & SSL_aRSA) && !has_bits(i, EVP_PK_RSA | EVP_PKT_SIGN)) {
@@ -3020,7 +2855,7 @@ int ssl_cipher_list_to_bytes(SSL *s, STACK_OF(SSL_CIPHER) *sk,
                              unsigned char *p)
 {
     int i, j = 0;
-    SSL_CIPHER *c;
+    const SSL_CIPHER *c;
     unsigned char *q;
     int empty_reneg_info_scsv = !s->renegotiate;
     /* Set disabled masks for this session */
@@ -3035,14 +2870,6 @@ int ssl_cipher_list_to_bytes(SSL *s, STACK_OF(SSL_CIPHER) *sk,
         /* Skip disabled ciphers */
         if (ssl_cipher_disabled(s, c, SSL_SECOP_CIPHER_SUPPORTED))
             continue;
-#ifdef OPENSSL_SSL_DEBUG_BROKEN_PROTOCOL
-        if (c->id == SSL3_CK_SCSV) {
-            if (!empty_reneg_info_scsv)
-                continue;
-            else
-                empty_reneg_info_scsv = 0;
-        }
-#endif
         j = s->method->put_cipher_by_char(c, p);
         p += j;
     }
@@ -3057,10 +2884,6 @@ int ssl_cipher_list_to_bytes(SSL *s, STACK_OF(SSL_CIPHER) *sk,
             };
             j = s->method->put_cipher_by_char(&scsv, p);
             p += j;
-#ifdef OPENSSL_RI_DEBUG
-            fprintf(stderr,
-                    "TLS_EMPTY_RENEGOTIATION_INFO_SCSV sent by client\n");
-#endif
         }
         if (s->mode & SSL_MODE_SEND_FALLBACK_SCSV) {
             static SSL_CIPHER scsv = {

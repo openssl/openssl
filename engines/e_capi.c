@@ -1,4 +1,3 @@
-/* engines/e_capi.c */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -134,6 +133,10 @@
 #  define CALG_SHA_512            (ALG_CLASS_HASH | ALG_TYPE_ANY | ALG_SID_SHA_512)
 # endif
 
+# ifndef PROV_RSA_AES
+#  define PROV_RSA_AES 24
+# endif
+
 # include <openssl/engine.h>
 # include <openssl/pem.h>
 # include <openssl/x509v3.h>
@@ -187,6 +190,8 @@ static int cert_select_simple(ENGINE *e, SSL *ssl, STACK_OF(X509) *certs);
 # ifdef OPENSSL_CAPIENG_DIALOG
 static int cert_select_dialog(ENGINE *e, SSL *ssl, STACK_OF(X509) *certs);
 # endif
+
+void engine_load_capi_internal(void);
 
 typedef PCCERT_CONTEXT(WINAPI *CERTDLG) (HCERTSTORE, HWND, LPCWSTR,
                                          LPCWSTR, DWORD, DWORD, void *);
@@ -457,11 +462,14 @@ static DSA_METHOD capi_dsa_method = {
     0                           /* dsa_keygen */
 };
 
+static int use_aes_csp = 0;
+
 static int capi_init(ENGINE *e)
 {
     CAPI_CTX *ctx;
     const RSA_METHOD *ossl_rsa_meth;
     const DSA_METHOD *ossl_dsa_meth;
+    HCRYPTPROV hprov;
 
     if (capi_idx < 0) {
         capi_idx = ENGINE_get_ex_new_index(0, NULL, NULL, NULL, 0);
@@ -507,6 +515,14 @@ static int capi_init(ENGINE *e)
             ctx->client_cert_select = cert_select_dialog;
     }
 # endif
+
+    /* See if we support AES CSP */
+
+    if (CryptAcquireContext(&hprov, NULL, NULL, PROV_RSA_AES,
+                            CRYPT_VERIFYCONTEXT)) {
+        use_aes_csp = 1;
+        CryptReleaseContext(hprov, 0);
+    }
 
     return 1;
 
@@ -593,7 +609,7 @@ static ENGINE *engine_capi(void)
     return ret;
 }
 
-void ENGINE_load_capi(void)
+void engine_load_capi_internal(void)
 {
     /* Copied from eng_[openssl|dyn].c */
     ENGINE *toadd = engine_capi();
@@ -1453,10 +1469,15 @@ static CAPI_KEY *capi_get_key(CAPI_CTX * ctx, const TCHAR *contname,
 
     if (key == NULL)
         return NULL;
-    if (sizeof(TCHAR) == sizeof(char))
+    /* If PROV_RSA_AES supported use it instead */
+    if (ptype == PROV_RSA_FULL && use_aes_csp) {
+        provname = NULL;
+        ptype = PROV_RSA_AES;
+        CAPI_trace(ctx, "capi_get_key, contname=%s, RSA_AES_CSP\n", contname);
+    } else if (sizeof(TCHAR) == sizeof(char)) {
         CAPI_trace(ctx, "capi_get_key, contname=%s, provname=%s, type=%d\n",
                    contname, provname, ptype);
-    else if (ctx && ctx->debug_level >= CAPI_DBG_TRACE && ctx->debug_file) {
+    } else if (ctx && ctx->debug_level >= CAPI_DBG_TRACE && ctx->debug_file) {
         /* above 'if' is optimization to minimize malloc-ations */
         char *_contname = wide_to_asc((WCHAR *)contname);
         char *_provname = wide_to_asc((WCHAR *)provname);
@@ -1875,7 +1896,8 @@ OPENSSL_EXPORT
 
 IMPLEMENT_DYNAMIC_CHECK_FN()
 # else
-void ENGINE_load_capi(void)
+void engine_load_capi_internal(void);
+void engine_load_capi_internal(void)
 {
 }
 # endif

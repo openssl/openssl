@@ -1,4 +1,3 @@
-/* crypto/asn1/d2i_pu.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -72,6 +71,8 @@
 # include <openssl/ec.h>
 #endif
 
+#include "internal/evp_int.h"
+
 EVP_PKEY *d2i_PublicKey(int type, EVP_PKEY **a, const unsigned char **pp,
                         long length)
 {
@@ -93,10 +94,7 @@ EVP_PKEY *d2i_PublicKey(int type, EVP_PKEY **a, const unsigned char **pp,
     switch (EVP_PKEY_id(ret)) {
 #ifndef OPENSSL_NO_RSA
     case EVP_PKEY_RSA:
-        /* TMP UGLY CAST */
-        if ((ret->pkey.rsa = d2i_RSAPublicKey(NULL,
-                                              (const unsigned char **)pp,
-                                              length)) == NULL) {
+        if ((ret->pkey.rsa = d2i_RSAPublicKey(NULL, pp, length)) == NULL) {
             ASN1err(ASN1_F_D2I_PUBLICKEY, ERR_R_ASN1_LIB);
             goto err;
         }
@@ -105,8 +103,7 @@ EVP_PKEY *d2i_PublicKey(int type, EVP_PKEY **a, const unsigned char **pp,
 #ifndef OPENSSL_NO_DSA
     case EVP_PKEY_DSA:
         /* TMP UGLY CAST */
-        if (!d2i_DSAPublicKey(&(ret->pkey.dsa),
-                              (const unsigned char **)pp, length)) {
+        if (!d2i_DSAPublicKey(&ret->pkey.dsa, pp, length)) {
             ASN1err(ASN1_F_D2I_PUBLICKEY, ERR_R_ASN1_LIB);
             goto err;
         }
@@ -114,8 +111,7 @@ EVP_PKEY *d2i_PublicKey(int type, EVP_PKEY **a, const unsigned char **pp,
 #endif
 #ifndef OPENSSL_NO_EC
     case EVP_PKEY_EC:
-        if (!o2i_ECPublicKey(&(ret->pkey.ec),
-                             (const unsigned char **)pp, length)) {
+        if (!o2i_ECPublicKey(&ret->pkey.ec, pp, length)) {
             ASN1err(ASN1_F_D2I_PUBLICKEY, ERR_R_ASN1_LIB);
             goto err;
         }

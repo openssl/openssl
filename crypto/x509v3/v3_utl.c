@@ -1,4 +1,3 @@
-/* v3_utl.c */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -840,7 +839,8 @@ static const unsigned char *valid_star(const unsigned char *p, size_t len,
             state = LABEL_START;
             ++dots;
         } else if (p[i] == '-') {
-            if ((state & LABEL_HYPHEN) != 0)
+            /* no domain/subdomain starts with '-' */
+            if ((state & LABEL_START) != 0)
                 return NULL;
             state |= LABEL_HYPHEN;
         } else

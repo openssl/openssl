@@ -1,4 +1,3 @@
-/* crypto/rc4/rc4test.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -120,12 +119,6 @@ int main(int argc, char *argv[])
     unsigned char *p;
     RC4_KEY key;
     unsigned char obuf[512];
-
-# if !defined(OPENSSL_PIC)
-    void OPENSSL_cpuid_setup(void);
-
-    OPENSSL_cpuid_setup();
-# endif
 
     for (i = 0; i < 6; i++) {
         RC4_set_key(&key, keys[i][0], &(keys[i][1]));

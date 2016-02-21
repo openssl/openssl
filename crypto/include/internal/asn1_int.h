@@ -1,4 +1,3 @@
-/* asn1_int.h */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
  * 2015.
@@ -103,6 +102,8 @@ struct evp_pkey_asn1_method_st {
                       X509_ALGOR *alg1, X509_ALGOR *alg2,
                       ASN1_BIT_STRING *sig);
 } /* EVP_PKEY_ASN1_METHOD */ ;
+
+DEFINE_STACK_OF_CONST(EVP_PKEY_ASN1_METHOD)
 
 extern const EVP_PKEY_ASN1_METHOD cmac_asn1_meth;
 extern const EVP_PKEY_ASN1_METHOD dh_asn1_meth;

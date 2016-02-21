@@ -1,4 +1,3 @@
-/* crypto/evp/m_md5_sha1.c */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.

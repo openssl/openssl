@@ -1,4 +1,3 @@
-/* crypto/dsa/dsa_lib.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -166,17 +165,10 @@ void DSA_free(DSA *r)
         return;
 
     i = CRYPTO_add(&r->references, -1, CRYPTO_LOCK_DSA);
-#ifdef REF_PRINT
-    REF_PRINT("DSA", r);
-#endif
+    REF_PRINT_COUNT("DSA", r);
     if (i > 0)
         return;
-#ifdef REF_CHECK
-    if (i < 0) {
-        fprintf(stderr, "DSA_free, bad reference count\n");
-        abort();
-    }
-#endif
+    REF_ASSERT_ISNT(i < 0);
 
     if (r->meth->finish)
         r->meth->finish(r);
@@ -200,15 +192,9 @@ void DSA_free(DSA *r)
 int DSA_up_ref(DSA *r)
 {
     int i = CRYPTO_add(&r->references, 1, CRYPTO_LOCK_DSA);
-#ifdef REF_PRINT
-    REF_PRINT("DSA", r);
-#endif
-#ifdef REF_CHECK
-    if (i < 2) {
-        fprintf(stderr, "DSA_up_ref, bad reference count\n");
-        abort();
-    }
-#endif
+
+    REF_PRINT_COUNT("DSA", r);
+    REF_ASSERT_ISNT(i < 2);
     return ((i > 1) ? 1 : 0);
 }
 
@@ -246,7 +232,9 @@ void *DSA_get_ex_data(DSA *d, int idx)
 
 int DSA_security_bits(const DSA *d)
 {
-    return BN_security_bits(BN_num_bits(d->p), BN_num_bits(d->q));
+    if (d->p && d->q)
+        return BN_security_bits(BN_num_bits(d->p), BN_num_bits(d->q));
+    return -1;
 }
 
 #ifndef OPENSSL_NO_DH

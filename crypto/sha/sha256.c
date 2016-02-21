@@ -1,4 +1,3 @@
-/* crypto/sha/sha256.c */
 /* ====================================================================
  * Copyright (c) 2004 The OpenSSL Project.  All rights reserved
  * according to the OpenSSL license [found in ../../LICENSE].
@@ -92,7 +91,7 @@ int SHA224_Final(unsigned char *md, SHA256_CTX *c)
  * default: case below covers for it. It's not clear however if it's
  * permitted to truncate to amount of bytes not divisible by 4. I bet not,
  * but if it is, then default: case shall be extended. For reference.
- * Idea behind separate cases for pre-defined lenghts is to let the
+ * Idea behind separate cases for pre-defined lengths is to let the
  * compiler decide if it's appropriate to unroll small loops.
  */
 #define HASH_MAKE_STRING(c,s)   do {    \

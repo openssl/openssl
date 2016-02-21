@@ -1,4 +1,3 @@
-/* crypto/evp/evp_lib.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -221,6 +220,11 @@ int EVP_CIPHER_CTX_block_size(const EVP_CIPHER_CTX *ctx)
     return ctx->cipher->block_size;
 }
 
+int EVP_CIPHER_impl_ctx_size(const EVP_CIPHER *e)
+{
+    return e->ctx_size;
+}
+
 int EVP_Cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                const unsigned char *in, unsigned int inl)
 {
@@ -232,14 +236,14 @@ const EVP_CIPHER *EVP_CIPHER_CTX_cipher(const EVP_CIPHER_CTX *ctx)
     return ctx->cipher;
 }
 
+int EVP_CIPHER_CTX_encrypting(const EVP_CIPHER_CTX *ctx)
+{
+    return ctx->encrypt;
+}
+
 unsigned long EVP_CIPHER_flags(const EVP_CIPHER *cipher)
 {
     return cipher->flags;
-}
-
-unsigned long EVP_CIPHER_CTX_flags(const EVP_CIPHER_CTX *ctx)
-{
-    return ctx->cipher->flags;
 }
 
 void *EVP_CIPHER_CTX_get_app_data(const EVP_CIPHER_CTX *ctx)
@@ -252,6 +256,11 @@ void EVP_CIPHER_CTX_set_app_data(EVP_CIPHER_CTX *ctx, void *data)
     ctx->app_data = data;
 }
 
+void *EVP_CIPHER_CTX_cipher_data(const EVP_CIPHER_CTX *ctx)
+{
+    return ctx->cipher_data;
+}
+
 int EVP_CIPHER_iv_length(const EVP_CIPHER *cipher)
 {
     return cipher->iv_len;
@@ -260,6 +269,36 @@ int EVP_CIPHER_iv_length(const EVP_CIPHER *cipher)
 int EVP_CIPHER_CTX_iv_length(const EVP_CIPHER_CTX *ctx)
 {
     return ctx->cipher->iv_len;
+}
+
+const unsigned char *EVP_CIPHER_CTX_original_iv(const EVP_CIPHER_CTX *ctx)
+{
+    return ctx->oiv;
+}
+
+const unsigned char *EVP_CIPHER_CTX_iv(const EVP_CIPHER_CTX *ctx)
+{
+    return ctx->iv;
+}
+
+unsigned char *EVP_CIPHER_CTX_iv_noconst(EVP_CIPHER_CTX *ctx)
+{
+    return ctx->iv;
+}
+
+unsigned char *EVP_CIPHER_CTX_buf_noconst(EVP_CIPHER_CTX *ctx)
+{
+    return ctx->buf;
+}
+
+int EVP_CIPHER_CTX_num(const EVP_CIPHER_CTX *ctx)
+{
+    return ctx->num;
+}
+
+void EVP_CIPHER_CTX_set_num(EVP_CIPHER_CTX *ctx, int num)
+{
+    ctx->num = num;
 }
 
 int EVP_CIPHER_key_length(const EVP_CIPHER *cipher)
@@ -313,7 +352,8 @@ unsigned long EVP_MD_flags(const EVP_MD *md)
 
 EVP_MD *EVP_MD_meth_new(int md_type, int pkey_type)
 {
-    EVP_MD *md = (EVP_MD *)OPENSSL_zalloc(sizeof(EVP_MD));
+    EVP_MD *md = OPENSSL_zalloc(sizeof(*md));
+
     if (md != NULL) {
         md->type = md_type;
         md->pkey_type = pkey_type;
@@ -323,7 +363,8 @@ EVP_MD *EVP_MD_meth_new(int md_type, int pkey_type)
 EVP_MD *EVP_MD_meth_dup(const EVP_MD *md)
 {
     EVP_MD *to = EVP_MD_meth_new(md->type, md->pkey_type);
-    if (md != NULL)
+
+    if (to != NULL)
         memcpy(to, md, sizeof(*to));
     return to;
 }
