@@ -35,7 +35,9 @@ use File::Spec::Functions;
 use lib catdir(dirname(__FILE__));
 use with_fallback qw(Text::Template);
 
-use parent qw/Text::Template/;
+#use parent qw/Text::Template/;
+use vars qw/@ISA/;
+push @ISA, qw/Text::Template/;
 
 # Override constructor
 sub new {
