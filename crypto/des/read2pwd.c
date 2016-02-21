@@ -113,6 +113,8 @@
 #include <openssl/ui.h>
 #include <openssl/crypto.h>
 
+#ifndef OPENSSL_NO_UI
+
 #ifndef BUFSIZ
 #define BUFSIZ 256
 #endif
@@ -141,3 +143,4 @@ int DES_read_2passwords(DES_cblock *key1, DES_cblock *key2,
     OPENSSL_cleanse(buff, BUFSIZ);
     return (ok);
 }
+#endif
