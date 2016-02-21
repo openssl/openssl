@@ -417,6 +417,7 @@
  */
 # define TLS1_STREAM_MAC 0x10000
 
+# define SSL_STRONG_MASK         0x0000001FU
 # define SSL_DEFAULT_MASK        0X00000020U
 
 # define SSL_STRONG_NONE         0x00000001U
