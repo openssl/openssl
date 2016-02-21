@@ -169,7 +169,7 @@ sub do_link_rule
 	$file =~ s/\//$o/g if $o ne '/';
 	$n=&bname($target);
 	$ret.="$target: $files $dep_libs\n";
-	$ret.="\t\$(LINK) ${efile}$target \$(LFLAGS) $files $libs\n\n";
+	$ret.="\t\$(LINK_CMD) ${efile}$target \$(LFLAGS) $files $libs\n\n";
 	return($ret);
 	}
 
@@ -193,7 +193,7 @@ $target: $deps
 	(OPENSSL="`pwd`/util/opensslwrap.sh"; \\
 	OPENSSL_DEBUG_MEMORY=on; \\
 	export OPENSSL OPENSSL_DEBUG_MEMORY; \\
-	\$(PERL) tools/c_rehash certs/demo; \\
+	\$(PERL) \$(BIN_D)${o}c_rehash certs/demo; \\
 	touch $target)
 EOF
     return $ret
@@ -203,7 +203,7 @@ sub do_test_rule {
     my $ret = <<"EOF";
 $target: $deps force.$target
 	TOP=. BIN_D=\$(BIN_D) TEST_D=\$(TEST_D) \\
-	    PERL=\$(PERL) \$(PERL) test/$test_cmd
+	    PERL=\$(PERL) \$(PERL) test/$test_cmd \$(TESTS)
 force.$target:
 
 EOF

@@ -1,11 +1,10 @@
-/* ocsp_cl.c */
 /*
  * Written by Tom Titchener <Tom_Titchener@groove.net> for the OpenSSL
  * project.
  */
 
 /*
- * History: This file was transfered to Richard Levitte from CertCo by Kathy
+ * History: This file was transferred to Richard Levitte from CertCo by Kathy
  * Weinhold in mid-spring 2000 to be included in OpenSSL or released as a
  * patch kit.
  */
@@ -143,7 +142,7 @@ int OCSP_request_add1_cert(OCSP_REQUEST *req, X509 *cert)
 }
 
 /*
- * Sign an OCSP request set the requestorName to the subjec name of an
+ * Sign an OCSP request set the requestorName to the subject name of an
  * optional signers certificate and include one or more optional certificates
  * in the request. Behaves like PKCS7_sign().
  */
@@ -223,7 +222,7 @@ ASN1_OCTET_STRING *OCSP_resp_get0_signature(OCSP_BASICRESP *bs)
 }
 
 /*
- * Return number of OCSP_SINGLERESP reponses present in a basic response.
+ * Return number of OCSP_SINGLERESP responses present in a basic response.
  */
 
 int OCSP_resp_count(OCSP_BASICRESP *bs)
@@ -240,6 +239,13 @@ OCSP_SINGLERESP *OCSP_resp_get0(OCSP_BASICRESP *bs, int idx)
     if (!bs)
         return NULL;
     return sk_OCSP_SINGLERESP_value(bs->tbsResponseData.responses, idx);
+}
+
+ASN1_GENERALIZEDTIME *OCSP_resp_get0_produced_at(OCSP_BASICRESP* bs)
+{
+    if (!bs)
+        return NULL;
+    return bs->tbsResponseData.producedAt;
 }
 
 /* Look single response matching a given certificate ID */
@@ -385,4 +391,9 @@ int OCSP_check_validity(ASN1_GENERALIZEDTIME *thisupd,
     }
 
     return ret;
+}
+
+OCSP_CERTID *OCSP_SINGLERESP_get0_id(OCSP_SINGLERESP *single)
+{
+    return single->certId;
 }

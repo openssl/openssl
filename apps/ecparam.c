@@ -69,7 +69,10 @@
  */
 
 #include <openssl/opensslconf.h>
-#ifndef OPENSSL_NO_EC
+#ifdef OPENSSL_NO_EC
+NON_EMPTY_TRANSLATION_UNIT
+#else
+
 # include <stdio.h>
 # include <stdlib.h>
 # include <time.h>
@@ -217,7 +220,9 @@ int ecparam_main(int argc, char **argv)
         }
     }
     argc = opt_num_rest();
-    argv = opt_rest();
+    if (argc != 0)
+        goto opthelp;
+
     private = genkey ? 1 : 0;
 
     in = bio_open_default(infile, 'r', informat);
@@ -462,11 +467,17 @@ int ecparam_main(int argc, char **argv)
 
         assert(need_rand);
 
-        if (EC_KEY_set_group(eckey, group) == 0)
+        if (EC_KEY_set_group(eckey, group) == 0) {
+            BIO_printf(bio_err, "unable to set group when generating key\n");
+            EC_KEY_free(eckey);
+            ERR_print_errors(bio_err);
             goto end;
+        }
 
         if (!EC_KEY_generate_key(eckey)) {
+            BIO_printf(bio_err, "unable to generate key\n");
             EC_KEY_free(eckey);
+            ERR_print_errors(bio_err);
             goto end;
         }
         assert(private);
@@ -495,11 +506,5 @@ int ecparam_main(int argc, char **argv)
     EC_GROUP_free(group);
     return (ret);
 }
-
-#else                           /* !OPENSSL_NO_EC */
-
-# if PEDANTIC
-static void *dummy = &dummy;
-# endif
 
 #endif

@@ -1,4 +1,3 @@
-/* evp_pkey.c */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
  * 1999.
@@ -63,6 +62,7 @@
 #include <openssl/x509.h>
 #include <openssl/rand.h>
 #include "internal/asn1_int.h"
+#include "internal/evp_int.h"
 
 /* Extract a private key from a PKCS8 structure */
 

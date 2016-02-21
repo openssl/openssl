@@ -1,4 +1,3 @@
-/* crypto/srp/srp.h */
 /*
  * Written by Christophe Renou (christophe.renou@edelweb.fr) with the
  * precious help of Peter Sylvester (peter.sylvester@edelweb.fr) for the
@@ -83,7 +82,7 @@ typedef struct SRP_gN_cache_st {
 } SRP_gN_cache;
 
 
-DECLARE_STACK_OF(SRP_gN_cache)
+DEFINE_STACK_OF(SRP_gN_cache)
 
 typedef struct SRP_user_pwd_st {
     char *id;
@@ -94,7 +93,7 @@ typedef struct SRP_user_pwd_st {
     char *info;
 } SRP_user_pwd;
 
-DECLARE_STACK_OF(SRP_user_pwd)
+DEFINE_STACK_OF(SRP_user_pwd)
 
 typedef struct SRP_VBASE_st {
     STACK_OF(SRP_user_pwd) *users_pwd;
@@ -114,7 +113,7 @@ typedef struct SRP_gN_st {
     BIGNUM *N;
 } SRP_gN;
 
-DECLARE_STACK_OF(SRP_gN)
+DEFINE_STACK_OF(SRP_gN)
 
 SRP_VBASE *SRP_VBASE_new(char *seed_key);
 void SRP_VBASE_free(SRP_VBASE *vb);

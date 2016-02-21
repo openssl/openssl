@@ -1,8 +1,8 @@
-#!/usr/bin/perl
+#!{- $config{perl} -}
 #
 # Wrapper around the ca to make it easier to use
-# Edit CA.pl.in not CA.pl!
-
+#
+# {- join("\n# ", @autowarntext) -}
 
 use strict;
 use warnings;
@@ -120,9 +120,9 @@ if ($WHAT eq '-newcert' ) {
     close OUT;
     # ask user for existing CA certificate
     print "CA certificate filename (or enter to create)\n";
-    $FILE = <STDIN>;
-    chop $FILE if $FILE;
-    if ($FILE) {
+    $FILE = "" unless defined($FILE = <STDIN>);
+    $FILE =~ s{\R$}{};
+    if ($FILE ne "") {
         copy_pemfile($FILE,"${CATOP}/private/$CAKEY", "PRIVATE");
         copy_pemfile($FILE,"${CATOP}/$CACERT", "CERTIFICATE");
     } else {
@@ -164,7 +164,7 @@ if ($WHAT eq '-newcert' ) {
     my @files = @ARGV ? @ARGV : ( $NEWCERT );
     my $file;
     foreach $file (@files) {
-        my $status = run("$VERIFY -CAfile ${CATOP}/$CACERT $file");
+        my $status = run("$VERIFY \"-CAfile\" ${CATOP}/$CACERT $file");
         $RET = $status if $status != 0;
     }
 } elsif ($WHAT eq '-crl' ) {

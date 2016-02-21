@@ -12,8 +12,10 @@ RSA_generate_key_ex, RSA_generate_key - generate RSA key pair
 
 Deprecated:
 
+ #if OPENSSL_API_COMPAT < 0x00908000L
  RSA *RSA_generate_key(int num, unsigned long e,
     void (*callback)(int,int,void *), void *cb_arg);
+ #endif
 
 =head1 DESCRIPTION
 

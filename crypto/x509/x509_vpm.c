@@ -1,4 +1,3 @@
-/* x509_vpm.c */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
  * 2004.
@@ -92,11 +91,11 @@ static int int_x509_param_set_hosts(X509_VERIFY_PARAM *vpm, int mode,
      * Refuse names with embedded NUL bytes, except perhaps as final byte.
      * XXX: Do we need to push an error onto the error stack?
      */
-    if (namelen == 0)
+    if (namelen == 0 || name == NULL)
         namelen = name ? strlen(name) : 0;
     else if (name && memchr(name, '\0', namelen > 1 ? namelen - 1 : namelen))
         return 0;
-    if (name && name[namelen - 1] == '\0')
+    if (namelen > 0 && name[namelen - 1] == '\0')
         --namelen;
 
     if (mode == SET_HOST) {
@@ -134,7 +133,7 @@ static void x509_verify_param_zero(X509_VERIFY_PARAM *param)
         return;
     param->name = NULL;
     param->purpose = 0;
-    param->trust = 0;
+    param->trust = X509_TRUST_DEFAULT;
     /*
      * param->inh_flags = X509_VP_FLAG_DEFAULT;
      */
@@ -244,7 +243,7 @@ int X509_VERIFY_PARAM_inherit(X509_VERIFY_PARAM *dest,
         to_overwrite = 0;
 
     x509_verify_param_copy(purpose, 0);
-    x509_verify_param_copy(trust, 0);
+    x509_verify_param_copy(trust, X509_TRUST_DEFAULT);
     x509_verify_param_copy(depth, -1);
 
     /* If overwrite or check time not set, copy across */
@@ -444,6 +443,24 @@ char *X509_VERIFY_PARAM_get0_peername(X509_VERIFY_PARAM *param)
     return param->peername;
 }
 
+/*
+ * Move peername from one param structure to another, freeing any name present
+ * at the target.  If the source is a NULL parameter structure, free and zero
+ * the target peername.
+ */
+void X509_VERIFY_PARAM_move_peername(X509_VERIFY_PARAM *to,
+                                     X509_VERIFY_PARAM *from)
+{
+    char *peername = (from != NULL) ? from->peername : NULL;
+
+    if (to->peername != peername) {
+        OPENSSL_free(to->peername);
+        to->peername = peername;
+    }
+    if (from)
+        from->peername = NULL;
+}
+
 int X509_VERIFY_PARAM_set1_email(X509_VERIFY_PARAM *param,
                                  const char *email, size_t emaillen)
 {
@@ -494,7 +511,7 @@ static const X509_VERIFY_PARAM default_table[] = {
      "default",                 /* X509 default parameters */
      0,                         /* Check time */
      0,                         /* internal flags */
-     0,                         /* flags */
+     X509_V_FLAG_TRUSTED_FIRST, /* flags */
      0,                         /* purpose */
      0,                         /* trust */
      100,                       /* depth */

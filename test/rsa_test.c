@@ -222,8 +222,7 @@ int main(int argc, char *argv[])
     int num;
     int n;
 
-    CRYPTO_malloc_debug_init();
-    CRYPTO_dbg_set_options(V_CRYPTO_MDEBUG_ALL);
+    CRYPTO_set_mem_debug(1);
     CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
 
     RAND_seed(rnd_seed, sizeof rnd_seed); /* or OAEP may fail */
@@ -325,10 +324,10 @@ int main(int argc, char *argv[])
         RSA_free(key);
     }
 
-    CRYPTO_cleanup_all_ex_data();
-    ERR_remove_thread_state(NULL);
-
-    CRYPTO_mem_leaks_fp(stderr);
+#ifndef OPENSSL_NO_CRYPTO_MDEBUG
+    if (CRYPTO_mem_leaks_fp(stderr) <= 0)
+        err = 1;
+#endif
 
 # ifdef OPENSSL_SYS_NETWARE
     if (err)

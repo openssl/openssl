@@ -1,4 +1,3 @@
-/* v3_purp.c */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
  * 2001.
@@ -133,6 +132,7 @@ int X509_check_purpose(X509 *x, int id, int ca)
         x509v3_cache_extensions(x);
         CRYPTO_w_unlock(CRYPTO_LOCK_X509);
     }
+    /* Return if side-effect only call */
     if (id == -1)
         return 1;
     idx = X509_PURPOSE_get_by_id(id);
@@ -851,12 +851,14 @@ int X509_check_akid(X509 *issuer, AUTHORITY_KEYID *akid)
 
 uint32_t X509_get_extension_flags(X509 *x)
 {
+    /* Call for side-effect of computing hash and caching extensions */
     X509_check_purpose(x, -1, -1);
     return x->ex_flags;
 }
 
 uint32_t X509_get_key_usage(X509 *x)
 {
+    /* Call for side-effect of computing hash and caching extensions */
     X509_check_purpose(x, -1, -1);
     if (x->ex_flags & EXFLAG_KUSAGE)
         return x->ex_kusage;
@@ -865,6 +867,7 @@ uint32_t X509_get_key_usage(X509 *x)
 
 uint32_t X509_get_extended_key_usage(X509 *x)
 {
+    /* Call for side-effect of computing hash and caching extensions */
     X509_check_purpose(x, -1, -1);
     if (x->ex_flags & EXFLAG_XKUSAGE)
         return x->ex_xkusage;
@@ -873,6 +876,7 @@ uint32_t X509_get_extended_key_usage(X509 *x)
 
 const ASN1_OCTET_STRING *X509_get0_subject_key_id(X509 *x)
 {
+    /* Call for side-effect of computing hash and caching extensions */
     X509_check_purpose(x, -1, -1);
     return x->skid;
 }

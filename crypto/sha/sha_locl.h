@@ -1,4 +1,3 @@
-/* crypto/sha/sha_locl.h */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -164,7 +163,7 @@ int HASH_INIT(SHA_CTX *c)
 # ifndef MD32_XARRAY
   /*
    * Originally X was an array. As it's automatic it's natural
-   * to expect RISC compiler to accomodate at least part of it in
+   * to expect RISC compiler to accommodate at least part of it in
    * the register bank, isn't it? Unfortunately not all compilers
    * "find" this expectation reasonable:-( On order to make such
    * compilers generate better code I replace X[] with a bunch of

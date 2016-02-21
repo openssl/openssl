@@ -1,4 +1,3 @@
-/* dso.h */
 /*
  * Written by Geoff Thorpe (geoff@geoffthorpe.net) for the OpenSSL project
  * 2000.
@@ -339,7 +338,7 @@ DSO_METHOD *DSO_METHOD_vms(void);
  * 'addr' into 'sz' large caller-provided 'path' and returns the number of
  * characters [including trailing zero] written to it. If 'sz' is 0 or
  * negative, 'path' is ignored and required amount of charachers [including
- * trailing zero] to accomodate pathname is returned. If 'addr' is NULL, then
+ * trailing zero] to accommodate pathname is returned. If 'addr' is NULL, then
  * pathname of cryptolib itself is returned. Negative or zero return value
  * denotes error.
  */

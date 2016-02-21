@@ -8,6 +8,7 @@ s_time - SSL/TLS performance timing program
 =head1 SYNOPSIS
 
 B<openssl> B<s_time>
+[B<-help>]
 [B<-connect host:port>]
 [B<-www page>]
 [B<-cert filename>]
@@ -27,7 +28,7 @@ B<openssl> B<s_time>
 
 =head1 DESCRIPTION
 
-The B<s_client> command implements a generic SSL/TLS client which connects to a
+The B<s_time> command implements a generic SSL/TLS client which connects to a
 remote host using SSL/TLS. It can request a page from the server and includes
 the time to transfer the payload data in its timing measurements. It measures
 the number of connections within a given timeframe, the amount of data
@@ -36,6 +37,10 @@ transferred (if any), and calculates the average time spent for one connection.
 =head1 OPTIONS
 
 =over 4
+
+=item B<-help>
+
+Print out a usage message.
 
 =item B<-connect host:port>
 
@@ -135,7 +140,7 @@ and the link speed determine how many connections B<s_time> can establish.
 
 =head1 NOTES
 
-B<s_client> can be used to measure the performance of an SSL connection.
+B<s_time> can be used to measure the performance of an SSL connection.
 To connect to an SSL HTTP server and get the default page the command
 
  openssl s_time -connect servername:443 -www / -CApath yourdir -CAfile yourfile.pem -cipher commoncipher [-ssl3]

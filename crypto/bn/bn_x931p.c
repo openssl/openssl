@@ -1,4 +1,3 @@
-/* bn_x931p.c */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
  * 2005.
@@ -79,7 +78,7 @@ static int bn_x931_derive_pi(BIGNUM *pi, const BIGNUM *Xpi, BN_CTX *ctx,
     for (;;) {
         i++;
         BN_GENCB_call(cb, 0, i);
-        /* NB 27 MR is specificed in X9.31 */
+        /* NB 27 MR is specified in X9.31 */
         if (BN_is_prime_fasttest_ex(pi, 27, ctx, 1, cb))
             break;
         if (!BN_add_word(pi, 2))

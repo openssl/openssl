@@ -13,10 +13,11 @@
 #include <openssl/crypto.h>
 #include <e_os.h>
 
+#include <string.h>
+
 #if defined(OPENSSL_SYS_LINUX) || defined(OPENSSL_SYS_UNIX)
 # define IMPLEMENTED
 # include <stdlib.h>
-# include <string.h>
 # include <assert.h>
 # include <unistd.h>
 # include <sys/types.h>
@@ -110,7 +111,16 @@ void *CRYPTO_secure_malloc(size_t num, const char *file, int line)
 #endif /* IMPLEMENTED */
 }
 
-void CRYPTO_secure_free(void *ptr)
+void *CRYPTO_secure_zalloc(size_t num, const char *file, int line)
+{
+    void *ret = CRYPTO_secure_malloc(num, file, line);
+
+    if (ret != NULL)
+        memset(ret, 0, num);
+    return ret;
+}
+
+void CRYPTO_secure_free(void *ptr, const char *file, int line)
 {
 #ifdef IMPLEMENTED
     size_t actual_size;
@@ -118,7 +128,7 @@ void CRYPTO_secure_free(void *ptr)
     if (ptr == NULL)
         return;
     if (!secure_mem_initialized) {
-        CRYPTO_free(ptr);
+        CRYPTO_free(ptr, file, line);
         return;
     }
     LOCK();
@@ -128,7 +138,7 @@ void CRYPTO_secure_free(void *ptr)
     sh_free(ptr);
     UNLOCK();
 #else
-    CRYPTO_free(ptr);
+    CRYPTO_free(ptr, file, line);
 #endif /* IMPLEMENTED */
 }
 
@@ -148,6 +158,28 @@ int CRYPTO_secure_allocated(const void *ptr)
 #endif /* IMPLEMENTED */
 }
 
+size_t CRYPTO_secure_used()
+{
+#ifdef IMPLEMENTED
+    return secure_mem_used;
+#else
+    return 0;
+#endif /* IMPLEMENTED */
+}
+
+size_t CRYPTO_secure_actual_size(void *ptr)
+{
+#ifdef IMPLEMENTED
+    size_t actual_size;
+
+    LOCK();
+    actual_size = sh_actual_size(ptr);
+    UNLOCK();
+    return actual_size;
+#else
+    return 0;
+#endif
+}
 /* END OF PAGE ...
 
    ... START OF PAGE */

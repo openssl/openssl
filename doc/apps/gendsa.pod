@@ -7,6 +7,7 @@ gendsa - generate a DSA private key from a set of parameters
 =head1 SYNOPSIS
 
 B<openssl> B<gendsa>
+[B<-help>]
 [B<-out filename>]
 [B<-aes128>]
 [B<-aes192>]
@@ -29,6 +30,15 @@ The B<gendsa> command generates a DSA private key from a DSA parameter file
 =head1 OPTIONS
 
 =over 4
+
+=item B<-help>
+
+Print out a usage message.
+
+=item B<-out filename>
+
+Output the key to the specified file. If this argument is not specified then
+standard output is used.
 
 =item B<-aes128|-aes192|-aes256|-camellia128|-camellia192|-camellia256|-des|-des3|-idea>
 

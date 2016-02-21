@@ -1,6 +1,6 @@
 /* crypto/ec/ec_err.c */
 /* ====================================================================
- * Copyright (c) 1999-2015 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2016 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -78,6 +78,12 @@ static ERR_STRING_DATA EC_str_functs[] = {
     {ERR_FUNC(EC_F_DO_EC_KEY_PRINT), "do_EC_KEY_print"},
     {ERR_FUNC(EC_F_ECDH_CMS_DECRYPT), "ecdh_cms_decrypt"},
     {ERR_FUNC(EC_F_ECDH_CMS_SET_SHARED_INFO), "ecdh_cms_set_shared_info"},
+    {ERR_FUNC(EC_F_ECDH_COMPUTE_KEY), "ECDH_compute_key"},
+    {ERR_FUNC(EC_F_ECDSA_DO_SIGN_EX), "ECDSA_do_sign_ex"},
+    {ERR_FUNC(EC_F_ECDSA_DO_VERIFY), "ECDSA_do_verify"},
+    {ERR_FUNC(EC_F_ECDSA_SIGN_EX), "ECDSA_sign_ex"},
+    {ERR_FUNC(EC_F_ECDSA_SIGN_SETUP), "ECDSA_sign_setup"},
+    {ERR_FUNC(EC_F_ECDSA_VERIFY), "ECDSA_verify"},
     {ERR_FUNC(EC_F_ECKEY_PARAM2TYPE), "eckey_param2type"},
     {ERR_FUNC(EC_F_ECKEY_PARAM_DECODE), "eckey_param_decode"},
     {ERR_FUNC(EC_F_ECKEY_PRIV_DECODE), "eckey_priv_decode"},
@@ -201,8 +207,10 @@ static ERR_STRING_DATA EC_str_functs[] = {
     {ERR_FUNC(EC_F_EC_KEY_GENERATE_KEY), "EC_KEY_generate_key"},
     {ERR_FUNC(EC_F_EC_KEY_NEW), "EC_KEY_new"},
     {ERR_FUNC(EC_F_EC_KEY_NEW_METHOD), "EC_KEY_new_method"},
+    {ERR_FUNC(EC_F_EC_KEY_OCT2PRIV), "EC_KEY_oct2priv"},
     {ERR_FUNC(EC_F_EC_KEY_PRINT), "EC_KEY_print"},
     {ERR_FUNC(EC_F_EC_KEY_PRINT_FP), "EC_KEY_print_fp"},
+    {ERR_FUNC(EC_F_EC_KEY_PRIV2OCT), "EC_KEY_priv2oct"},
     {ERR_FUNC(EC_F_EC_KEY_SET_PUBLIC_KEY_AFFINE_COORDINATES),
      "EC_KEY_set_public_key_affine_coordinates"},
     {ERR_FUNC(EC_F_EC_POINTS_MAKE_AFFINE), "EC_POINTs_make_affine"},
@@ -248,6 +256,9 @@ static ERR_STRING_DATA EC_str_functs[] = {
     {ERR_FUNC(EC_F_NISTP521_PRE_COMP_NEW), "nistp521_pre_comp_new"},
     {ERR_FUNC(EC_F_O2I_ECPUBLICKEY), "o2i_ECPublicKey"},
     {ERR_FUNC(EC_F_OLD_EC_PRIV_DECODE), "old_ec_priv_decode"},
+    {ERR_FUNC(EC_F_OSSL_ECDH_COMPUTE_KEY), "ossl_ecdh_compute_key"},
+    {ERR_FUNC(EC_F_OSSL_ECDSA_SIGN_SIG), "ossl_ecdsa_sign_sig"},
+    {ERR_FUNC(EC_F_OSSL_ECDSA_VERIFY_SIG), "ossl_ecdsa_verify_sig"},
     {ERR_FUNC(EC_F_PKEY_EC_CTRL), "pkey_ec_ctrl"},
     {ERR_FUNC(EC_F_PKEY_EC_CTRL_STR), "pkey_ec_ctrl_str"},
     {ERR_FUNC(EC_F_PKEY_EC_DERIVE), "pkey_ec_derive"},

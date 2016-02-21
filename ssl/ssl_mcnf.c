@@ -1,4 +1,3 @@
-/* ssl_mcnf.c */
 /*
  * Written by Stephen Henson (steve@openssl.org) for the OpenSSL project
  * 2015.
@@ -83,7 +82,7 @@ struct ssl_conf_cmd {
 static struct ssl_conf_name *ssl_names;
 static size_t ssl_names_count;
 
-static void ssl_module_free()
+static void ssl_module_free(CONF_IMODULE *md)
 {
     size_t i, j;
     if (ssl_names == NULL)
@@ -161,7 +160,7 @@ static int ssl_module_init(CONF_IMODULE *md, const CONF *cnf)
     rv = 1;
     err:
     if (rv == 0)
-        ssl_module_free();
+        ssl_module_free(md);
     return rv;
 }
 

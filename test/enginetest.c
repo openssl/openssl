@@ -1,4 +1,3 @@
-/* crypto/engine/enginetest.c */
 /*
  * Written by Geoff Thorpe (geoff@geoffthorpe.net) for the OpenSSL project
  * 2000.
@@ -98,7 +97,7 @@ int main(int argc, char *argv[])
 {
     ENGINE *block[512];
     char buf[256];
-    const char *id, *name;
+    const char *id, *name, *p;
     ENGINE *ptr;
     int loop;
     int to_return = 1;
@@ -107,17 +106,9 @@ int main(int argc, char *argv[])
     ENGINE *new_h3 = NULL;
     ENGINE *new_h4 = NULL;
 
-    /* enable memory leak checking unless explicitly disabled */
-    if (!((getenv("OPENSSL_DEBUG_MEMORY") != NULL)
-          && (0 == strcmp(getenv("OPENSSL_DEBUG_MEMORY"), "off")))) {
-        CRYPTO_malloc_debug_init();
-        CRYPTO_set_mem_debug_options(V_CRYPTO_MDEBUG_ALL);
-    } else {
-        /* OPENSSL_DEBUG_MEMORY=off */
-        CRYPTO_set_mem_debug_functions(0, 0, 0, 0, 0);
-    }
-    CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
-    ERR_load_crypto_strings();
+    p = getenv("OPENSSL_DEBUG_MEMORY");
+    if (p != NULL && strcmp(p, "on") == 0)
+        CRYPTO_set_mem_debug(1);
 
     memset(block, 0, sizeof(block));
     if (((new_h1 = ENGINE_new()) == NULL) ||
@@ -252,11 +243,11 @@ int main(int argc, char *argv[])
     ENGINE_free(new_h4);
     for (loop = 0; loop < 512; loop++)
         ENGINE_free(block[loop]);
-    ENGINE_cleanup();
-    CRYPTO_cleanup_all_ex_data();
-    ERR_free_strings();
-    ERR_remove_thread_state(NULL);
-    CRYPTO_mem_leaks_fp(stderr);
+
+#ifndef OPENSSL_NO_CRYPTO_MDEBUG
+    if (CRYPTO_mem_leaks_fp(stderr) <= 0)
+        to_return = 1;
+#endif
     return to_return;
 }
 #endif

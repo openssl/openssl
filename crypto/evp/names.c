@@ -1,4 +1,3 @@
-/* crypto/evp/names.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -111,6 +110,9 @@ const EVP_CIPHER *EVP_get_cipherbyname(const char *name)
 {
     const EVP_CIPHER *cp;
 
+    if (!OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_CIPHERS, NULL))
+        return NULL;
+
     cp = (const EVP_CIPHER *)OBJ_NAME_get(name, OBJ_NAME_TYPE_CIPHER_METH);
     return (cp);
 }
@@ -118,6 +120,9 @@ const EVP_CIPHER *EVP_get_cipherbyname(const char *name)
 const EVP_MD *EVP_get_digestbyname(const char *name)
 {
     const EVP_MD *cp;
+
+    if (!OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_DIGESTS, NULL))
+        return NULL;
 
     cp = (const EVP_MD *)OBJ_NAME_get(name, OBJ_NAME_TYPE_MD_METH);
     return (cp);
@@ -162,6 +167,10 @@ void EVP_CIPHER_do_all(void (*fn) (const EVP_CIPHER *ciph,
                        void *arg)
 {
     struct doall_cipher dc;
+
+    /* Ignore errors */
+    OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_CIPHERS, NULL);
+
     dc.fn = fn;
     dc.arg = arg;
     OBJ_NAME_do_all(OBJ_NAME_TYPE_CIPHER_METH, do_all_cipher_fn, &dc);
@@ -172,6 +181,10 @@ void EVP_CIPHER_do_all_sorted(void (*fn) (const EVP_CIPHER *ciph,
                                           void *x), void *arg)
 {
     struct doall_cipher dc;
+
+    /* Ignore errors */
+    OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_CIPHERS, NULL);
+
     dc.fn = fn;
     dc.arg = arg;
     OBJ_NAME_do_all_sorted(OBJ_NAME_TYPE_CIPHER_METH, do_all_cipher_fn, &dc);
@@ -197,6 +210,10 @@ void EVP_MD_do_all(void (*fn) (const EVP_MD *md,
                    void *arg)
 {
     struct doall_md dc;
+
+    /* Ignore errors */
+    OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_DIGESTS, NULL);
+
     dc.fn = fn;
     dc.arg = arg;
     OBJ_NAME_do_all(OBJ_NAME_TYPE_MD_METH, do_all_md_fn, &dc);
@@ -207,6 +224,9 @@ void EVP_MD_do_all_sorted(void (*fn) (const EVP_MD *md,
                                       void *x), void *arg)
 {
     struct doall_md dc;
+
+    OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_DIGESTS, NULL);
+
     dc.fn = fn;
     dc.arg = arg;
     OBJ_NAME_do_all_sorted(OBJ_NAME_TYPE_MD_METH, do_all_md_fn, &dc);

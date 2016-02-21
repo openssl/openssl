@@ -1,6 +1,3 @@
-/* NOCW */
-/* demos/bio/saccept-conf.c */
-
 /*
  * A minimal program to serve an SSL connection. It uses blocking. It uses
  * the SSL_CONF API with a configuration file. cc -I../../include saccept.c

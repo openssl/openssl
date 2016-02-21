@@ -1,4 +1,3 @@
-/* crypto/bn/bn_gcd.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -291,11 +290,11 @@ BIGNUM *int_bn_mod_inverse(BIGNUM *in,
      *      sign*Y*a  ==  A   (mod |n|).
      */
 
-    if (BN_is_odd(n) && (BN_num_bits(n) <= (BN_BITS <= 32 ? 450 : 2048))) {
+    if (BN_is_odd(n) && (BN_num_bits(n) <= 2048)) {
         /*
          * Binary inversion algorithm; requires odd modulus. This is faster
          * than the general algorithm if the modulus is sufficiently small
-         * (about 400 .. 500 bits on 32-bit sytems, but much more on 64-bit
+         * (about 400 .. 500 bits on 32-bit systems, but much more on 64-bit
          * systems)
          */
         int shift;

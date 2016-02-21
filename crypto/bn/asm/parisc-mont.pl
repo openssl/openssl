@@ -126,7 +126,7 @@ $fp="%r3";
 $hi1="%r2";
 $hi0="%r1";
 
-$xfer=$n0;	# accomodates [-16..15] offset in fld[dw]s
+$xfer=$n0;	# accommodates [-16..15] offset in fld[dw]s
 
 $fm0="%fr4";	$fti=$fm0;
 $fbi="%fr5L";

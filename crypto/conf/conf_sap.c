@@ -1,4 +1,3 @@
-/* conf_sap.c */
 /*
  * Written by Stephen Henson (steve@openssl.org) for the OpenSSL project
  * 2001.
@@ -60,7 +59,7 @@
 #include <stdio.h>
 #include <openssl/crypto.h>
 #include "internal/cryptlib.h"
-#include <openssl/conf.h>
+#include <internal/conf.h>
 #include <openssl/dso.h>
 #include <openssl/x509.h>
 #include <openssl/asn1.h>
@@ -76,7 +75,19 @@
 
 static int openssl_configured = 0;
 
+#if OPENSSL_API_COMPAT < 0x10100000L
 void OPENSSL_config(const char *config_name)
+{
+    OPENSSL_INIT_SETTINGS settings;
+
+    memset(&settings, 0, sizeof(settings));
+    if (config_name != NULL)
+        settings.config_name = strdup(config_name);
+    OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CONFIG, &settings);
+}
+#endif
+
+void openssl_config_internal(const char *config_name)
 {
     if (openssl_configured)
         return;
@@ -95,7 +106,7 @@ void OPENSSL_config(const char *config_name)
     openssl_configured = 1;
 }
 
-void OPENSSL_no_config()
+void openssl_no_config_internal(void)
 {
     openssl_configured = 1;
 }

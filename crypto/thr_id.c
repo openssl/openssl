@@ -1,4 +1,3 @@
-/* crypto/cryptlib.c */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -115,8 +114,9 @@
  */
 
 #include "internal/cryptlib.h"
+#include <openssl/opensslconf.h>
 
-#ifndef OPENSSL_NO_DEPRECATED
+#if OPENSSL_API_COMPAT < 0x10000000L
 static unsigned long (*id_callback) (void) = 0;
 #endif
 static void (*threadid_callback) (CRYPTO_THREADID *) = 0;
@@ -189,7 +189,7 @@ void CRYPTO_THREADID_current(CRYPTO_THREADID *id)
         threadid_callback(id);
         return;
     }
-#ifndef OPENSSL_NO_DEPRECATED
+#if OPENSSL_API_COMPAT < 0x10000000L
     /* If the deprecated callback was set, fall back to that */
     if (id_callback) {
         CRYPTO_THREADID_set_numeric(id, id_callback());
@@ -220,7 +220,7 @@ unsigned long CRYPTO_THREADID_hash(const CRYPTO_THREADID *id)
     return id->val;
 }
 
-#ifndef OPENSSL_NO_DEPRECATED
+#if OPENSSL_API_COMPAT < 0x10000000L
 unsigned long (*CRYPTO_get_id_callback(void)) (void) {
     return (id_callback);
 }

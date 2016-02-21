@@ -144,7 +144,8 @@ typedef enum OPTION_choice {
 OPTIONS ocsp_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
     {"out", OPT_OUTFILE, '>', "Output filename"},
-    {"timeout", OPT_TIMEOUT, 'p'},
+    {"timeout", OPT_TIMEOUT, 'p',
+     "Connection timeout (in seconds) to the OCSP responder"},
     {"url", OPT_URL, 's', "Responder URL"},
     {"host", OPT_HOST, 's', "host:prot top to connect to"},
     {"port", OPT_PORT, 'p', "Port to run responder on"},
@@ -490,7 +491,8 @@ int ocsp_main(int argc, char **argv)
         }
     }
     argc = opt_num_rest();
-    argv = opt_rest();
+    if (argc != 0)
+        goto opthelp;
 
     /* Have we anything to do? */
     if (!req && !reqin && !respin && !(port && ridx_filename))
@@ -521,7 +523,7 @@ int ocsp_main(int argc, char **argv)
             goto end;
     }
 
-    if (rsignfile && !rdb) {
+    if (rsignfile) {
         if (!rkeyfile)
             rkeyfile = rsignfile;
         rsigner = load_cert(rsignfile, FORMAT_PEM,
@@ -533,9 +535,8 @@ int ocsp_main(int argc, char **argv)
         rca_cert = load_cert(rca_filename, FORMAT_PEM,
                              NULL, NULL, "CA certificate");
         if (rcertfile) {
-            rother = load_certs(rcertfile, FORMAT_PEM,
-                                NULL, NULL, "responder other certificates");
-            if (!rother)
+            if (!load_certs(rcertfile, &rother, FORMAT_PEM, NULL, NULL,
+                            "responder other certificates"))
                 goto end;
         }
         rkey = load_key(rkeyfile, FORMAT_PEM, 0, NULL, NULL,
@@ -578,9 +579,8 @@ int ocsp_main(int argc, char **argv)
             goto end;
         }
         if (sign_certfile) {
-            sign_other = load_certs(sign_certfile, FORMAT_PEM,
-                                    NULL, NULL, "signer certificates");
-            if (!sign_other)
+            if (!load_certs(sign_certfile, &sign_other, FORMAT_PEM, NULL, NULL,
+                            "signer certificates"))
                 goto end;
         }
         key = load_key(keyfile, FORMAT_PEM, 0, NULL, NULL,
@@ -702,9 +702,8 @@ int ocsp_main(int argc, char **argv)
     if (vpmtouched)
         X509_STORE_set1_param(store, vpm);
     if (verify_certfile) {
-        verify_other = load_certs(verify_certfile, FORMAT_PEM,
-                                  NULL, NULL, "validator certificate");
-        if (!verify_other)
+        if (!load_certs(verify_certfile, &verify_other, FORMAT_PEM, NULL, NULL,
+                        "validator certificate"))
             goto end;
     }
 
@@ -914,7 +913,7 @@ static void make_ocsp_response(OCSP_RESPONSE **resp, OCSP_REQUEST *req,
     bs = OCSP_BASICRESP_new();
     thisupd = X509_gmtime_adj(NULL, 0);
     if (ndays != -1)
-        nextupd = X509_gmtime_adj(NULL, nmin * 60 + ndays * 3600 * 24);
+        nextupd = X509_time_adj_ex(NULL, ndays, nmin * 60, NULL);
 
     /* Examine each certificate id in the request */
     for (i = 0; i < id_count; i++) {
@@ -1068,7 +1067,7 @@ static int urldecode(char *p)
     for (; *p; p++) {
         if (*p != '%')
             *out++ = *p;
-        else if (isxdigit(p[1]) && isxdigit(p[2])) {
+        else if (isxdigit(_UC(p[1])) && isxdigit(_UC(p[2]))) {
             *out++ = (app_hex(p[1]) << 4) | app_hex(p[2]);
             p += 2;
         }

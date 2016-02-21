@@ -1,4 +1,3 @@
-/* asn1t.h */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
  * 2006.
@@ -86,6 +85,11 @@ struct asn1_sctx_st {
     /* Context specific application data */
     void *app_data;
 } /* ASN1_SCTX */ ;
+
+typedef struct mime_param_st MIME_PARAM;
+DEFINE_STACK_OF(MIME_PARAM)
+typedef struct mime_header_st MIME_HEADER;
+DEFINE_STACK_OF(MIME_HEADER)
 
 /* Month values for printing out times */
 extern const char *_asn1_mon[12];

@@ -60,7 +60,7 @@
 
 # include <limits.h>
 # include "internal/cryptlib.h"
-# include "../ssl/ssl_locl.h"
+# include "../../ssl/ssl_locl.h"
 # include "internal/ct_int.h"
 
 SCT *SCT_new(void)

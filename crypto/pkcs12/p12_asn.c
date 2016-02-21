@@ -1,4 +1,3 @@
-/* p12_asn.c */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
  * 1999.
@@ -61,6 +60,7 @@
 #include "internal/cryptlib.h"
 #include <openssl/asn1t.h>
 #include <openssl/pkcs12.h>
+#include "p12_lcl.h"
 
 /* PKCS#12 ASN1 module */
 

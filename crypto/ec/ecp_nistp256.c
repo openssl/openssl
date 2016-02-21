@@ -1,4 +1,3 @@
-/* crypto/ec/ecp_nistp256.c */
 /*
  * Written by Adam Langley (Google) for the OpenSSL project
  */
@@ -27,7 +26,9 @@
  */
 
 #include <openssl/opensslconf.h>
-#ifndef OPENSSL_NO_EC_NISTP_64_GCC_128
+#ifdef OPENSSL_NO_EC_NISTP_64_GCC_128
+NON_EMPTY_TRANSLATION_UNIT
+#else
 
 # include <stdint.h>
 # include <string.h>
@@ -1227,7 +1228,7 @@ static void copy_small_conditional(felem out, const smallfelem in, limb mask)
 }
 
 /*-
- * point_add calcuates (x1, y1, z1) + (x2, y2, z2)
+ * point_add calculates (x1, y1, z1) + (x2, y2, z2)
  *
  * The method is taken from:
  *   http://hyperelliptic.org/EFD/g1p/auto-shortw-jacobian-3.html#addition-add-2007-bl,
@@ -1756,10 +1757,10 @@ static void batch_mul(felem x_out, felem y_out, felem z_out,
 }
 
 /* Precomputation for the group generator. */
-typedef struct {
+struct nistp256_pre_comp_st {
     smallfelem g_pre_comp[2][16][3];
     int references;
-} NISTP256_PRE_COMP;
+};
 
 const EC_METHOD *EC_GFp_nistp256_method(void)
 {
@@ -1826,44 +1827,19 @@ static NISTP256_PRE_COMP *nistp256_pre_comp_new()
     return ret;
 }
 
-static void *nistp256_pre_comp_dup(void *src_)
+NISTP256_PRE_COMP *EC_nistp256_pre_comp_dup(NISTP256_PRE_COMP *p)
 {
-    NISTP256_PRE_COMP *src = src_;
-
-    /* no need to actually copy, these objects never change! */
-    CRYPTO_add(&src->references, 1, CRYPTO_LOCK_EC_PRE_COMP);
-
-    return src_;
+    if (p != NULL)
+        CRYPTO_add(&p->references, 1, CRYPTO_LOCK_EC_PRE_COMP);
+    return p;
 }
 
-static void nistp256_pre_comp_free(void *pre_)
+void EC_nistp256_pre_comp_free(NISTP256_PRE_COMP *pre)
 {
-    int i;
-    NISTP256_PRE_COMP *pre = pre_;
-
-    if (!pre)
+    if (pre == NULL
+            || CRYPTO_add(&pre->references, -1, CRYPTO_LOCK_EC_PRE_COMP) > 0)
         return;
-
-    i = CRYPTO_add(&pre->references, -1, CRYPTO_LOCK_EC_PRE_COMP);
-    if (i > 0)
-        return;
-
     OPENSSL_free(pre);
-}
-
-static void nistp256_pre_comp_clear_free(void *pre_)
-{
-    int i;
-    NISTP256_PRE_COMP *pre = pre_;
-
-    if (!pre)
-        return;
-
-    i = CRYPTO_add(&pre->references, -1, CRYPTO_LOCK_EC_PRE_COMP);
-    if (i > 0)
-        return;
-
-    OPENSSL_clear_free(pre, sizeof(*pre));
 }
 
 /******************************************************************************/
@@ -2031,10 +2007,7 @@ int ec_GFp_nistp256_points_mul(const EC_GROUP *group, EC_POINT *r,
         goto err;
 
     if (scalar != NULL) {
-        pre = EC_EX_DATA_get_data(group->extra_data,
-                                  nistp256_pre_comp_dup,
-                                  nistp256_pre_comp_free,
-                                  nistp256_pre_comp_clear_free);
+        pre = group->pre_comp.nistp256;
         if (pre)
             /* we have precomputation, try to use it */
             g_pre_comp = (const smallfelem(*)[16][3])pre->g_pre_comp;
@@ -2212,9 +2185,7 @@ int ec_GFp_nistp256_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
     felem x_tmp, y_tmp, z_tmp;
 
     /* throw away old precomputation */
-    EC_EX_DATA_free_data(&group->extra_data, nistp256_pre_comp_dup,
-                         nistp256_pre_comp_free,
-                         nistp256_pre_comp_clear_free);
+    EC_pre_comp_free(group);
     if (ctx == NULL)
         if ((ctx = new_ctx = BN_CTX_new()) == NULL)
             return 0;
@@ -2238,8 +2209,7 @@ int ec_GFp_nistp256_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
      */
     if (0 == EC_POINT_cmp(group, generator, group->generator, ctx)) {
         memcpy(pre->g_pre_comp, gmul, sizeof(pre->g_pre_comp));
-        ret = 1;
-        goto err;
+        goto done;
     }
     if ((!BN_to_felem(x_tmp, group->generator->X)) ||
         (!BN_to_felem(y_tmp, group->generator->Y)) ||
@@ -2326,30 +2296,21 @@ int ec_GFp_nistp256_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
     }
     make_points_affine(31, &(pre->g_pre_comp[0][1]), tmp_smallfelems);
 
-    if (!EC_EX_DATA_set_data(&group->extra_data, pre, nistp256_pre_comp_dup,
-                             nistp256_pre_comp_free,
-                             nistp256_pre_comp_clear_free))
-        goto err;
-    ret = 1;
+ done:
+    SETPRECOMP(group, nistp256, pre);
     pre = NULL;
+    ret = 1;
+
  err:
     BN_CTX_end(ctx);
     EC_POINT_free(generator);
     BN_CTX_free(new_ctx);
-    nistp256_pre_comp_free(pre);
+    EC_nistp256_pre_comp_free(pre);
     return ret;
 }
 
 int ec_GFp_nistp256_have_precompute_mult(const EC_GROUP *group)
 {
-    if (EC_EX_DATA_get_data(group->extra_data, nistp256_pre_comp_dup,
-                            nistp256_pre_comp_free,
-                            nistp256_pre_comp_clear_free)
-        != NULL)
-        return 1;
-    else
-        return 0;
+    return HAVEPRECOMP(group, nistp256);
 }
-#else
-static void *dummy = &dummy;
 #endif

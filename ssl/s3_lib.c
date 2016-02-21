@@ -1,4 +1,3 @@
-/* ssl/s3_lib.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -160,7 +159,7 @@
 #define SSL3_NUM_CIPHERS        OSSL_NELEM(ssl3_ciphers)
 
 /* list of available SSLv3 ciphers (sorted by id) */
-OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
+static const SSL_CIPHER ssl3_ciphers[] = {
 
 /* The RSA ciphers */
 /* Cipher 01 */
@@ -1628,103 +1627,7 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      },
 #endif
 
-#ifdef OPENSSL_SSL_DEBUG_BROKEN_PROTOCOL
-    /* Cipher FF */
-    {
-     1,
-     "SCSV",
-     SSL3_CK_SCSV,
-     0,
-     0,
-     0,
-     0,
-     0,
-     0,
-     0,
-     0,
-     0},
-#endif
-
 #ifndef OPENSSL_NO_EC
-    /* Cipher C001 */
-    {
-     1,
-     TLS1_TXT_ECDH_ECDSA_WITH_NULL_SHA,
-     TLS1_CK_ECDH_ECDSA_WITH_NULL_SHA,
-     SSL_kECDHe,
-     SSL_aECDH,
-     SSL_eNULL,
-     SSL_SHA1,
-     SSL_SSLV3,
-     SSL_NOT_DEFAULT | SSL_STRONG_NONE | SSL_FIPS,
-     SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
-     0,
-     0,
-     },
-
-    /* Cipher C002 */
-    {
-     1,
-     TLS1_TXT_ECDH_ECDSA_WITH_RC4_128_SHA,
-     TLS1_CK_ECDH_ECDSA_WITH_RC4_128_SHA,
-     SSL_kECDHe,
-     SSL_aECDH,
-     SSL_RC4,
-     SSL_SHA1,
-     SSL_SSLV3,
-     SSL_NOT_DEFAULT | SSL_MEDIUM,
-     SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
-     128,
-     128,
-     },
-
-    /* Cipher C003 */
-    {
-     1,
-     TLS1_TXT_ECDH_ECDSA_WITH_DES_192_CBC3_SHA,
-     TLS1_CK_ECDH_ECDSA_WITH_DES_192_CBC3_SHA,
-     SSL_kECDHe,
-     SSL_aECDH,
-     SSL_3DES,
-     SSL_SHA1,
-     SSL_SSLV3,
-     SSL_HIGH | SSL_FIPS,
-     SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
-     112,
-     168,
-     },
-
-    /* Cipher C004 */
-    {
-     1,
-     TLS1_TXT_ECDH_ECDSA_WITH_AES_128_CBC_SHA,
-     TLS1_CK_ECDH_ECDSA_WITH_AES_128_CBC_SHA,
-     SSL_kECDHe,
-     SSL_aECDH,
-     SSL_AES128,
-     SSL_SHA1,
-     SSL_SSLV3,
-     SSL_HIGH | SSL_FIPS,
-     SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
-     128,
-     128,
-     },
-
-    /* Cipher C005 */
-    {
-     1,
-     TLS1_TXT_ECDH_ECDSA_WITH_AES_256_CBC_SHA,
-     TLS1_CK_ECDH_ECDSA_WITH_AES_256_CBC_SHA,
-     SSL_kECDHe,
-     SSL_aECDH,
-     SSL_AES256,
-     SSL_SHA1,
-     SSL_SSLV3,
-     SSL_HIGH | SSL_FIPS,
-     SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
-     256,
-     256,
-     },
 
     /* Cipher C006 */
     {
@@ -1797,86 +1700,6 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      TLS1_CK_ECDHE_ECDSA_WITH_AES_256_CBC_SHA,
      SSL_kECDHE,
      SSL_aECDSA,
-     SSL_AES256,
-     SSL_SHA1,
-     SSL_SSLV3,
-     SSL_HIGH | SSL_FIPS,
-     SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
-     256,
-     256,
-     },
-
-    /* Cipher C00B */
-    {
-     1,
-     TLS1_TXT_ECDH_RSA_WITH_NULL_SHA,
-     TLS1_CK_ECDH_RSA_WITH_NULL_SHA,
-     SSL_kECDHr,
-     SSL_aECDH,
-     SSL_eNULL,
-     SSL_SHA1,
-     SSL_SSLV3,
-     SSL_NOT_DEFAULT | SSL_STRONG_NONE | SSL_FIPS,
-     SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
-     0,
-     0,
-     },
-
-    /* Cipher C00C */
-    {
-     1,
-     TLS1_TXT_ECDH_RSA_WITH_RC4_128_SHA,
-     TLS1_CK_ECDH_RSA_WITH_RC4_128_SHA,
-     SSL_kECDHr,
-     SSL_aECDH,
-     SSL_RC4,
-     SSL_SHA1,
-     SSL_SSLV3,
-     SSL_NOT_DEFAULT | SSL_MEDIUM,
-     SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
-     128,
-     128,
-     },
-
-    /* Cipher C00D */
-    {
-     1,
-     TLS1_TXT_ECDH_RSA_WITH_DES_192_CBC3_SHA,
-     TLS1_CK_ECDH_RSA_WITH_DES_192_CBC3_SHA,
-     SSL_kECDHr,
-     SSL_aECDH,
-     SSL_3DES,
-     SSL_SHA1,
-     SSL_SSLV3,
-     SSL_HIGH | SSL_FIPS,
-     SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
-     112,
-     168,
-     },
-
-    /* Cipher C00E */
-    {
-     1,
-     TLS1_TXT_ECDH_RSA_WITH_AES_128_CBC_SHA,
-     TLS1_CK_ECDH_RSA_WITH_AES_128_CBC_SHA,
-     SSL_kECDHr,
-     SSL_aECDH,
-     SSL_AES128,
-     SSL_SHA1,
-     SSL_SSLV3,
-     SSL_HIGH | SSL_FIPS,
-     SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
-     128,
-     128,
-     },
-
-    /* Cipher C00F */
-    {
-     1,
-     TLS1_TXT_ECDH_RSA_WITH_AES_256_CBC_SHA,
-     TLS1_CK_ECDH_RSA_WITH_AES_256_CBC_SHA,
-     SSL_kECDHr,
-     SSL_aECDH,
      SSL_AES256,
      SSL_SHA1,
      SSL_SSLV3,
@@ -2228,37 +2051,6 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      256,
      },
 
-    /* Cipher C025 */
-    {
-     1,
-     TLS1_TXT_ECDH_ECDSA_WITH_AES_128_SHA256,
-     TLS1_CK_ECDH_ECDSA_WITH_AES_128_SHA256,
-     SSL_kECDHe,
-     SSL_aECDH,
-     SSL_AES128,
-     SSL_SHA256,
-     SSL_TLSV1_2,
-     SSL_HIGH | SSL_FIPS,
-     SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256,
-     128,
-     128,
-     },
-
-    /* Cipher C026 */
-    {
-     1,
-     TLS1_TXT_ECDH_ECDSA_WITH_AES_256_SHA384,
-     TLS1_CK_ECDH_ECDSA_WITH_AES_256_SHA384,
-     SSL_kECDHe,
-     SSL_aECDH,
-     SSL_AES256,
-     SSL_SHA384,
-     SSL_TLSV1_2,
-     SSL_HIGH | SSL_FIPS,
-     SSL_HANDSHAKE_MAC_SHA384 | TLS1_PRF_SHA384,
-     256,
-     256,
-     },
 
     /* Cipher C027 */
     {
@@ -2283,38 +2075,6 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      TLS1_CK_ECDHE_RSA_WITH_AES_256_SHA384,
      SSL_kECDHE,
      SSL_aRSA,
-     SSL_AES256,
-     SSL_SHA384,
-     SSL_TLSV1_2,
-     SSL_HIGH | SSL_FIPS,
-     SSL_HANDSHAKE_MAC_SHA384 | TLS1_PRF_SHA384,
-     256,
-     256,
-     },
-
-    /* Cipher C029 */
-    {
-     1,
-     TLS1_TXT_ECDH_RSA_WITH_AES_128_SHA256,
-     TLS1_CK_ECDH_RSA_WITH_AES_128_SHA256,
-     SSL_kECDHr,
-     SSL_aECDH,
-     SSL_AES128,
-     SSL_SHA256,
-     SSL_TLSV1_2,
-     SSL_HIGH | SSL_FIPS,
-     SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256,
-     128,
-     128,
-     },
-
-    /* Cipher C02A */
-    {
-     1,
-     TLS1_TXT_ECDH_RSA_WITH_AES_256_SHA384,
-     TLS1_CK_ECDH_RSA_WITH_AES_256_SHA384,
-     SSL_kECDHr,
-     SSL_aECDH,
      SSL_AES256,
      SSL_SHA384,
      SSL_TLSV1_2,
@@ -2358,38 +2118,6 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      256,
      },
 
-    /* Cipher C02D */
-    {
-     1,
-     TLS1_TXT_ECDH_ECDSA_WITH_AES_128_GCM_SHA256,
-     TLS1_CK_ECDH_ECDSA_WITH_AES_128_GCM_SHA256,
-     SSL_kECDHe,
-     SSL_aECDH,
-     SSL_AES128GCM,
-     SSL_AEAD,
-     SSL_TLSV1_2,
-     SSL_HIGH | SSL_FIPS,
-     SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256,
-     128,
-     128,
-     },
-
-    /* Cipher C02E */
-    {
-     1,
-     TLS1_TXT_ECDH_ECDSA_WITH_AES_256_GCM_SHA384,
-     TLS1_CK_ECDH_ECDSA_WITH_AES_256_GCM_SHA384,
-     SSL_kECDHe,
-     SSL_aECDH,
-     SSL_AES256GCM,
-     SSL_AEAD,
-     SSL_TLSV1_2,
-     SSL_HIGH | SSL_FIPS,
-     SSL_HANDSHAKE_MAC_SHA384 | TLS1_PRF_SHA384,
-     256,
-     256,
-     },
-
     /* Cipher C02F */
     {
      1,
@@ -2413,38 +2141,6 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      TLS1_CK_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
      SSL_kECDHE,
      SSL_aRSA,
-     SSL_AES256GCM,
-     SSL_AEAD,
-     SSL_TLSV1_2,
-     SSL_HIGH | SSL_FIPS,
-     SSL_HANDSHAKE_MAC_SHA384 | TLS1_PRF_SHA384,
-     256,
-     256,
-     },
-
-    /* Cipher C031 */
-    {
-     1,
-     TLS1_TXT_ECDH_RSA_WITH_AES_128_GCM_SHA256,
-     TLS1_CK_ECDH_RSA_WITH_AES_128_GCM_SHA256,
-     SSL_kECDHr,
-     SSL_aECDH,
-     SSL_AES128GCM,
-     SSL_AEAD,
-     SSL_TLSV1_2,
-     SSL_HIGH | SSL_FIPS,
-     SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256,
-     128,
-     128,
-     },
-
-    /* Cipher C032 */
-    {
-     1,
-     TLS1_TXT_ECDH_RSA_WITH_AES_256_GCM_SHA384,
-     TLS1_CK_ECDH_RSA_WITH_AES_256_GCM_SHA384,
-     SSL_kECDHr,
-     SSL_aECDH,
      SSL_AES256GCM,
      SSL_AEAD,
      SSL_TLSV1_2,
@@ -2628,34 +2324,6 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      256,
      256},
 
-    {                           /* Cipher C074 */
-     1,
-     TLS1_TXT_ECDH_ECDSA_WITH_CAMELLIA_128_CBC_SHA256,
-     TLS1_CK_ECDH_ECDSA_WITH_CAMELLIA_128_CBC_SHA256,
-     SSL_kECDHe,
-     SSL_aECDH,
-     SSL_CAMELLIA128,
-     SSL_SHA256,
-     SSL_TLSV1_2,
-     SSL_HIGH,
-     SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256,
-     128,
-     128},
-
-    {                           /* Cipher C075 */
-     1,
-     TLS1_TXT_ECDH_ECDSA_WITH_CAMELLIA_256_CBC_SHA384,
-     TLS1_CK_ECDH_ECDSA_WITH_CAMELLIA_256_CBC_SHA384,
-     SSL_kECDHe,
-     SSL_aECDH,
-     SSL_CAMELLIA256,
-     SSL_SHA384,
-     SSL_TLSV1_2,
-     SSL_HIGH,
-     SSL_HANDSHAKE_MAC_SHA384 | TLS1_PRF_SHA384,
-     256,
-     256},
-
     {                           /* Cipher C076 */
      1,
      TLS1_TXT_ECDHE_RSA_WITH_CAMELLIA_128_CBC_SHA256,
@@ -2684,33 +2352,6 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      256,
      256},
 
-    {                           /* Cipher C078 */
-     1,
-     TLS1_TXT_ECDH_RSA_WITH_CAMELLIA_128_CBC_SHA256,
-     TLS1_CK_ECDH_RSA_WITH_CAMELLIA_128_CBC_SHA256,
-     SSL_kECDHr,
-     SSL_aECDH,
-     SSL_CAMELLIA128,
-     SSL_SHA256,
-     SSL_TLSV1_2,
-     SSL_HIGH,
-     SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256,
-     128,
-     128},
-
-    {                           /* Cipher C079 */
-     1,
-     TLS1_TXT_ECDH_RSA_WITH_CAMELLIA_256_CBC_SHA384,
-     TLS1_CK_ECDH_RSA_WITH_CAMELLIA_256_CBC_SHA384,
-     SSL_kECDHr,
-     SSL_aECDH,
-     SSL_CAMELLIA256,
-     SSL_SHA384,
-     SSL_TLSV1_2,
-     SSL_HIGH,
-     SSL_HANDSHAKE_MAC_SHA384 | TLS1_PRF_SHA384,
-     256,
-     256},
 # endif                         /* OPENSSL_NO_CAMELLIA */
 #endif                          /* OPENSSL_NO_EC */
 
@@ -3284,7 +2925,7 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      SSL_GOST12_256,
      SSL_TLSV1,
      SSL_STRONG_NONE,
-     SSL_HANDSHAKE_MAC_GOST12_256 | TLS1_PRF_GOST12_256,
+     SSL_HANDSHAKE_MAC_GOST12_256 | TLS1_PRF_GOST12_256 | TLS1_STREAM_MAC,
      0,
      0},
 #endif
@@ -3357,7 +2998,7 @@ int ssl3_new(SSL *s)
     if ((s3 = OPENSSL_zalloc(sizeof(*s3))) == NULL)
         goto err;
     s->s3 = s3;
-    
+
 #ifndef OPENSSL_NO_SRP
     if (!SSL_SRP_CTX_init(s))
           goto err;
@@ -3456,9 +3097,6 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
     int ret = 0;
 
     switch (cmd) {
-    case SSL_CTRL_GET_SESSION_REUSED:
-        ret = s->hit;
-        break;
     case SSL_CTRL_GET_CLIENT_CERT_REQUEST:
         break;
     case SSL_CTRL_GET_NUM_RENEGOTIATIONS:
@@ -3534,13 +3172,16 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 #endif                          /* !OPENSSL_NO_EC */
     case SSL_CTRL_SET_TLSEXT_HOSTNAME:
         if (larg == TLSEXT_NAMETYPE_host_name) {
+            size_t len;
+
             OPENSSL_free(s->tlsext_hostname);
             s->tlsext_hostname = NULL;
 
             ret = 1;
             if (parg == NULL)
                 break;
-            if (strlen((char *)parg) > TLSEXT_MAXLEN_host_name) {
+            len = strlen((char *)parg);
+            if (len == 0 || len > TLSEXT_MAXLEN_host_name) {
                 SSLerr(SSL_F_SSL3_CTRL, SSL_R_SSL3_EXT_INVALID_SERVERNAME);
                 return 0;
             }
@@ -3595,23 +3236,24 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
         break;
 
 #ifndef OPENSSL_NO_HEARTBEATS
-    case SSL_CTRL_TLS_EXT_SEND_HEARTBEAT:
+    case SSL_CTRL_DTLS_EXT_SEND_HEARTBEAT:
         if (SSL_IS_DTLS(s))
             ret = dtls1_heartbeat(s);
-        else
-            ret = tls1_heartbeat(s);
         break;
 
-    case SSL_CTRL_GET_TLS_EXT_HEARTBEAT_PENDING:
-        ret = s->tlsext_hb_pending;
+    case SSL_CTRL_GET_DTLS_EXT_HEARTBEAT_PENDING:
+        if (SSL_IS_DTLS(s))
+            ret = s->tlsext_hb_pending;
         break;
 
-    case SSL_CTRL_SET_TLS_EXT_HEARTBEAT_NO_REQUESTS:
-        if (larg)
-            s->tlsext_heartbeat |= SSL_TLSEXT_HB_DONT_RECV_REQUESTS;
-        else
-            s->tlsext_heartbeat &= ~SSL_TLSEXT_HB_DONT_RECV_REQUESTS;
-        ret = 1;
+    case SSL_CTRL_SET_DTLS_EXT_HEARTBEAT_NO_REQUESTS:
+        if (SSL_IS_DTLS(s)) {
+            if (larg)
+                s->tlsext_heartbeat |= SSL_DTLSEXT_HB_DONT_RECV_REQUESTS;
+            else
+                s->tlsext_heartbeat &= ~SSL_DTLSEXT_HB_DONT_RECV_REQUESTS;
+            ret = 1;
+        }
         break;
 #endif
 
@@ -3777,33 +3419,6 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
         }
 #endif
 
-    case SSL_CTRL_CHECK_PROTO_VERSION:
-        /*
-         * For library-internal use; checks that the current protocol is the
-         * highest enabled version (according to s->ctx->method, as version
-         * negotiation may have changed s->method).
-         */
-        if (s->version == s->ctx->method->version)
-            return 1;
-        /*
-         * Apparently we're using a version-flexible SSL_METHOD (not at its
-         * highest protocol version).
-         */
-        if (s->ctx->method->version == TLS_method()->version) {
-#if TLS_MAX_VERSION != TLS1_2_VERSION
-# error Code needs update for TLS_method() support beyond TLS1_2_VERSION.
-#endif
-            if (!(s->options & SSL_OP_NO_TLSv1_2))
-                return s->version == TLS1_2_VERSION;
-            if (!(s->options & SSL_OP_NO_TLSv1_1))
-                return s->version == TLS1_1_VERSION;
-            if (!(s->options & SSL_OP_NO_TLSv1))
-                return s->version == TLS1_VERSION;
-            if (!(s->options & SSL_OP_NO_SSLv3))
-                return s->version == SSL3_VERSION;
-        }
-        return 0;               /* Unexpected state; fail closed. */
-
     default:
         break;
     }
@@ -3824,7 +3439,7 @@ long ssl3_callback_ctrl(SSL *s, int cmd, void (*fp) (void))
 #endif
     case SSL_CTRL_SET_TLSEXT_DEBUG_CB:
         s->tlsext_debug_cb = (void (*)(SSL *, int, int,
-                                       unsigned char *, int, void *))fp;
+                                       const unsigned char *, int, void *))fp;
         break;
 
     case SSL_CTRL_SET_NOT_RESUMABLE_SESS_CB:
@@ -4111,10 +3726,6 @@ const SSL_CIPHER *ssl3_get_cipher_by_char(const unsigned char *p)
     id = 0x03000000 | ((uint32_t)p[0] << 8L) | (uint32_t)p[1];
     c.id = id;
     cp = OBJ_bsearch_ssl_cipher_id(&c, ssl3_ciphers, SSL3_NUM_CIPHERS);
-#ifdef DEBUG_PRINT_UNKNOWN_CIPHERSUITES
-    if (cp == NULL)
-        fprintf(stderr, "Unknown cipher ID %x\n", (p[0] << 8) | p[1]);
-#endif
     return cp;
 }
 
@@ -4132,10 +3743,10 @@ int ssl3_put_cipher_by_char(const SSL_CIPHER *c, unsigned char *p)
     return (2);
 }
 
-SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
+const SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
                                STACK_OF(SSL_CIPHER) *srvr)
 {
-    SSL_CIPHER *c, *ret = NULL;
+    const SSL_CIPHER *c, *ret = NULL;
     STACK_OF(SSL_CIPHER) *prio, *allow;
     int i, ii, ok;
     unsigned long alg_k, alg_a, mask_k, mask_a;
@@ -4228,7 +3839,7 @@ SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
         if (ii >= 0) {
             /* Check security callback permits this cipher */
             if (!ssl_security(s, SSL_SECOP_CIPHER_SHARED,
-                              c->strength_bits, 0, c))
+                              c->strength_bits, 0, (void *)c))
                 continue;
 #if !defined(OPENSSL_NO_EC)
             if ((alg_k & SSL_kECDHE) && (alg_a & SSL_aECDSA)
@@ -4279,8 +3890,8 @@ int ssl3_get_req_cert_type(SSL *s, unsigned char *p)
 # ifndef OPENSSL_NO_DSA
         p[ret++] = SSL3_CT_DSS_EPHEMERAL_DH;
 # endif
-    }
 #endif                          /* !OPENSSL_NO_DH */
+    }
 #ifndef OPENSSL_NO_RSA
     if (!(alg_a & SSL_aRSA))
         p[ret++] = SSL3_CT_RSA_SIGN;
@@ -4631,6 +4242,7 @@ int ssl_derive(SSL *s, EVP_PKEY *privkey, EVP_PKEY *pubkey)
     return rv;
 }
 
+#ifndef OPENSSL_NO_DH
 EVP_PKEY *ssl_dh_to_pkey(DH *dh)
 {
     EVP_PKEY *ret;
@@ -4643,3 +4255,4 @@ EVP_PKEY *ssl_dh_to_pkey(DH *dh)
     }
     return ret;
 }
+#endif

@@ -53,19 +53,21 @@
 # Hudson (tjh@cryptsoft.com).
 
 use strict;
-use OpenSSL::Test qw/:DEFAULT cmdstr top_file top_dir/;
+use OpenSSL::Test qw/:DEFAULT cmdstr srctop_file bldtop_dir/;
+use OpenSSL::Test::Utils;
 use TLSProxy::Proxy;
 use File::Temp qw(tempfile);
 
 my $test_name = "test_sslsessiontick";
 setup($test_name);
 
-plan skip_all => "$test_name can only be performed with OpenSSL configured shared"
-    unless (map { s/\R//; s/^SHARED_LIBS=\s*//; $_ }
-	    grep { /^SHARED_LIBS=/ }
-	    do { local @ARGV = ( top_file("Makefile") ); <> })[0] ne "";
+plan skip_all => "TLSProxy isn't usable on $^O"
+    if $^O =~ /^VMS$/;
 
-$ENV{OPENSSL_ENGINES} = top_dir("engines");
+plan skip_all => "$test_name needs the dynamic engine feature enabled"
+    if disabled("engine") || disabled("dynamic_engines");
+
+$ENV{OPENSSL_ENGINES} = bldtop_dir("engines");
 $ENV{OPENSSL_ia32cap} = '~0x200000200000000';
 
 sub checkmessages($$$$$$);
@@ -79,7 +81,8 @@ my $ticketseen = 0;
 my $proxy = TLSProxy::Proxy->new(
     undef,
     cmdstr(app(["openssl"])),
-    top_file("apps", "server.pem")
+    srctop_file("apps", "server.pem"),
+    (!$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE})
 );
 
 plan tests => 8;
@@ -192,7 +195,7 @@ sub inject_empty_ticket_filter {
     foreach my $message (@{$proxy->message_list}) {
         push @new_message_list, $message;
         if ($message->mt == TLSProxy::Message::MT_SERVER_HELLO) {
-            $message->set_extension(TLSProxy::ClientHello::EXT_SESSION_TICKET, "");
+            $message->set_extension(TLSProxy::Message::EXT_SESSION_TICKET, "");
             $message->repack();
             # Tack NewSessionTicket onto the ServerHello record.
             # This only works if the ServerHello is exactly one record.
@@ -220,7 +223,7 @@ sub checkmessages($$$$$$)
 		#Get the extensions data
 		my %extensions = %{$message->extension_data};
 		if (defined
-                    $extensions{TLSProxy::ClientHello::EXT_SESSION_TICKET}) {
+                    $extensions{TLSProxy::Message::EXT_SESSION_TICKET}) {
 		    if ($message->mt == TLSProxy::Message::MT_CLIENT_HELLO) {
 			$chellotickext = 1;
 		    } else {

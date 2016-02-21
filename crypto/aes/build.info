@@ -1,0 +1,63 @@
+LIBS=../../libcrypto
+SOURCE[../../libcrypto]=\
+        aes_misc.c aes_ecb.c aes_cfb.c aes_ofb.c \
+        aes_ige.c aes_wrap.c {- $target{aes_asm_src} -}
+
+BEGINRAW[Makefile]
+##### AES assembler implementations
+
+{- $builddir -}/aes-ia64.s: {- $sourcedir -}/asm/aes-ia64.S
+	$(CC) $(CFLAGS) -E asm/aes-ia64.S > $@
+
+{- $builddir -}/aes-586.s:	{- $sourcedir -}/asm/aes-586.pl {- $sourcetop -}/crypto/perlasm/x86asm.pl
+	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/aes-586.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) > $@
+{- $builddir -}/vpaes-x86.s:	{- $sourcedir -}/asm/vpaes-x86.pl {- $sourcetop -}/crypto/perlasm/x86asm.pl
+	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/vpaes-x86.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) > $@
+{- $builddir -}/aesni-x86.s:	{- $sourcedir -}/asm/aesni-x86.pl {- $sourcetop -}/crypto/perlasm/x86asm.pl
+	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/aesni-x86.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) > $@
+
+{- $builddir -}/aes-x86_64.s: {- $sourcedir -}/asm/aes-x86_64.pl
+	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/aes-x86_64.pl $(PERLASM_SCHEME) > $@
+{- $builddir -}/vpaes-x86_64.s:	{- $sourcedir -}/asm/vpaes-x86_64.pl
+	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/vpaes-x86_64.pl $(PERLASM_SCHEME) > $@
+{- $builddir -}/bsaes-x86_64.s:	{- $sourcedir -}/asm/bsaes-x86_64.pl
+	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/bsaes-x86_64.pl $(PERLASM_SCHEME) > $@
+{- $builddir -}/aesni-x86_64.s: {- $sourcedir -}/asm/aesni-x86_64.pl
+	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/aesni-x86_64.pl $(PERLASM_SCHEME) > $@
+{- $builddir -}/aesni-sha1-x86_64.s:	{- $sourcedir -}/asm/aesni-sha1-x86_64.pl
+	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/aesni-sha1-x86_64.pl $(PERLASM_SCHEME) > $@
+{- $builddir -}/aesni-sha256-x86_64.s:	{- $sourcedir -}/asm/aesni-sha256-x86_64.pl
+	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/aesni-sha256-x86_64.pl $(PERLASM_SCHEME) > $@
+{- $builddir -}/aesni-mb-x86_64.s:	{- $sourcedir -}/asm/aesni-mb-x86_64.pl
+	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/aesni-mb-x86_64.pl $(PERLASM_SCHEME) > $@
+
+{- $builddir -}/aes-sparcv9.s: {- $sourcedir -}/asm/aes-sparcv9.pl
+	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/aes-sparcv9.pl $(CFLAGS) > $@
+{- $builddir -}/aest4-sparcv9.s: {- $sourcedir -}/asm/aest4-sparcv9.pl {- $sourcetop -}/crypto/perlasm/sparcv9_modes.pl
+	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/aest4-sparcv9.pl $(CFLAGS) > $@
+
+{- $builddir -}/aes-ppc.s:	{- $sourcedir -}/asm/aes-ppc.pl
+	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/aes-ppc.pl $(PERLASM_SCHEME) $@
+{- $builddir -}/vpaes-ppc.s:	{- $sourcedir -}/asm/vpaes-ppc.pl
+	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/vpaes-ppc.pl $(PERLASM_SCHEME) $@
+{- $builddir -}/aesp8-ppc.s:	{- $sourcedir -}/asm/aesp8-ppc.pl
+	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/aesp8-ppc.pl $(PERLASM_SCHEME) $@
+
+{- $builddir -}/aes-parisc.s:	{- $sourcedir -}/asm/aes-parisc.pl
+	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/aes-parisc.pl $(PERLASM_SCHEME) $@
+
+{- $builddir -}/aes-mips.S:	{- $sourcedir -}/asm/aes-mips.pl
+	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/aes-mips.pl $(PERLASM_SCHEME) $@
+
+{- $builddir -}/aesv8-armx.S:	{- $sourcedir -}/asm/aesv8-armx.pl
+	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/aesv8-armx.pl $(PERLASM_SCHEME) $@
+{- $builddir -}/vpaes-armv8.S:	{- $sourcedir -}/asm/vpaes-armv8.pl
+	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/vpaes-armv8.pl $(PERLASM_SCHEME) $@
+
+# GNU make "catch all"
+{- $builddir -}/aes-%.S:	{- $sourcedir -}/asm/aes-%.pl
+	CC="$(CC)" $(PERL) $< $(PERLASM_SCHEME) $@
+{- $builddir -}/bsaes-%.S:	{- $sourcedir -}/asm/bsaes-%.pl
+	CC="$(CC)" $(PERL) $< $(PERLASM_SCHEME) $@
+
+ENDRAW[Makefile]

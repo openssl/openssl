@@ -1,4 +1,3 @@
-/* crypto/objects/obj_xref.c */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
  * 2006.
@@ -60,8 +59,6 @@
 #include <openssl/objects.h>
 #include "obj_xref.h"
 #include "e_os.h"
-
-DECLARE_STACK_OF(nid_triple)
 
 static STACK_OF(nid_triple) *sig_app, *sigx_app;
 

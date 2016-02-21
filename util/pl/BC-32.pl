@@ -8,6 +8,7 @@ $crypto="libeay32";
 $o='\\';
 $cp='copy';
 $rm='del';
+$mv='move /Y';
 
 # C compiler stuff
 $cc='bcc32';
@@ -100,7 +101,8 @@ sub do_rehash_rule {
 $target: $deps
 	set OPENSSL=\$(BIN_D)${o}openssl.exe
 	set OPENSSL_DEBUG_MEMORY=on
-	\$(PERL) tools/c_rehash certs/demo
+	\$(PERL) \$(BIN_D)${o}c_rehash certs/demo
+	echo off > $target
 EOF
     return $ret
 }
@@ -112,7 +114,7 @@ $target: $deps force.$target
 	set BIN_D=\$(BIN_D)
 	set TEST_D=\$(TEST_D)
 	set PERL=\$(PERL)
-	\$(PERL) test\\$test_cmd
+	\$(PERL) test\\$test_cmd \$(TESTS)
 force.$target:
 EOF
 }
@@ -141,7 +143,7 @@ ___
 		{
 		local($ex)=($target =~ /O_SSL/)?' $(L_CRYPTO)':'';
 		$ex.=' ws2_32.lib gdi32.lib';
-		$ret.="\t\$(LINK) \$(MLFLAGS) $efile$target /def:ms/${Name}.def @<<\n  \$(SHLIB_EX_OBJ) $objs $ex\n<<\n";
+		$ret.="\t\$(LINK_CMD) \$(MLFLAGS) $efile$target /def:ms/${Name}.def @<<\n  \$(SHLIB_EX_OBJ) $objs $ex\n<<\n";
 		}
 	$ret.="\n";
 	return($ret);
@@ -155,7 +157,7 @@ sub do_link_rule
 	$file =~ s/\//$o/g if $o ne '/';
 	$n=&bname($target);
 	$ret.="$target: $files $dep_libs\n";
-	$ret.="\t\$(LINK) \$(LFLAGS) $files \$(APP_EX_OBJ), $target,, $libs\n\n";
+	$ret.="\t\$(LINK_CMD) \$(LFLAGS) $files \$(APP_EX_OBJ), $target,, $libs\n\n";
 	return($ret);
 	}
 

@@ -1,4 +1,3 @@
-/* scrypt.c */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
  * 2015.
@@ -214,6 +213,7 @@ int EVP_PBE_scrypt(const char *pass, size_t passlen,
     unsigned char *B;
     uint32_t *X, *V, *T;
     uint64_t i, Blen, Vlen;
+    size_t allocsize;
 
     /* Sanity check parameters */
     /* initial check, r,p must be non zero, N >= 2 and a power of 2 */
@@ -229,7 +229,7 @@ int EVP_PBE_scrypt(const char *pass, size_t passlen,
      */
 
     if (16 * r <= LOG2_UINT64_MAX) {
-        if (N >= (1UL << (16 * r)))
+        if (N >= (((uint64_t)1) << (16 * r)))
             return 0;
     }
 
@@ -243,7 +243,8 @@ int EVP_PBE_scrypt(const char *pass, size_t passlen,
     Blen = p * 128 * r;
 
     /*
-     * Check 32 * r * (N + 2) * sizeof(uint32_t) fits in uint64_t.
+     * Check 32 * r * (N + 2) * sizeof(uint32_t) fits in
+     * uint64_t and also size_t (their sizes are unrelated).
      * This is combined size V, X and T (section 4)
      */
     i = UINT64_MAX / (32 * sizeof(uint32_t));
@@ -254,11 +255,16 @@ int EVP_PBE_scrypt(const char *pass, size_t passlen,
     /* check total allocated size fits in uint64_t */
     if (Blen > UINT64_MAX - Vlen)
         return 0;
+    /* check total allocated size fits in size_t */
+    if (Blen > SIZE_MAX - Vlen)
+        return 0;
+
+    allocsize = (size_t)(Blen + Vlen);
 
     if (maxmem == 0)
         maxmem = SCRYPT_MAX_MEM;
 
-    if (Blen + Vlen > maxmem) {
+    if (allocsize > maxmem) {
         EVPerr(EVP_F_EVP_PBE_SCRYPT, EVP_R_MEMORY_LIMIT_EXCEEDED);
         return 0;
     }
@@ -267,7 +273,7 @@ int EVP_PBE_scrypt(const char *pass, size_t passlen,
     if (key == NULL)
         return 1;
 
-    B = OPENSSL_malloc(Blen + Vlen);
+    B = OPENSSL_malloc(allocsize);
     if (B == NULL)
         return 0;
     X = (uint32_t *)(B + Blen);
@@ -284,18 +290,8 @@ int EVP_PBE_scrypt(const char *pass, size_t passlen,
                           keylen, key) == 0)
         goto err;
     rv = 1;
-#ifdef SCRYPT_DEBUG
-    fprintf(stderr, "scrypt parameters:\n");
-    fprintf(stderr, "N=%lu, p=%lu, r=%lu\n", N, p, r);
-    fprintf(stderr, "Salt:\n");
-    BIO_dump_fp(stderr, (char *)salt, saltlen);
-    fprintf(stderr, "Password:\n");
-    BIO_dump_fp(stderr, (char *)pass, passlen);
-    fprintf(stderr, "Key:\n");
-    BIO_dump_fp(stderr, (char *)key, keylen);
-#endif
  err:
-    OPENSSL_clear_free(B, Blen + Vlen);
+    OPENSSL_clear_free(B, allocsize);
     return rv;
 }
 #endif

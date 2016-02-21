@@ -1,4 +1,3 @@
-/* p12_utl.c */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
  * 1999.
@@ -129,35 +128,3 @@ PKCS12 *d2i_PKCS12_fp(FILE *fp, PKCS12 **p12)
     return ASN1_item_d2i_fp(ASN1_ITEM_rptr(PKCS12), fp, p12);
 }
 #endif
-
-PKCS12_SAFEBAG *PKCS12_x5092certbag(X509 *x509)
-{
-    return PKCS12_item_pack_safebag(x509, ASN1_ITEM_rptr(X509),
-                                    NID_x509Certificate, NID_certBag);
-}
-
-PKCS12_SAFEBAG *PKCS12_x509crl2certbag(X509_CRL *crl)
-{
-    return PKCS12_item_pack_safebag(crl, ASN1_ITEM_rptr(X509_CRL),
-                                    NID_x509Crl, NID_crlBag);
-}
-
-X509 *PKCS12_certbag2x509(PKCS12_SAFEBAG *bag)
-{
-    if (M_PKCS12_bag_type(bag) != NID_certBag)
-        return NULL;
-    if (M_PKCS12_cert_bag_type(bag) != NID_x509Certificate)
-        return NULL;
-    return ASN1_item_unpack(bag->value.bag->value.octet,
-                            ASN1_ITEM_rptr(X509));
-}
-
-X509_CRL *PKCS12_certbag2x509crl(PKCS12_SAFEBAG *bag)
-{
-    if (M_PKCS12_bag_type(bag) != NID_crlBag)
-        return NULL;
-    if (M_PKCS12_cert_bag_type(bag) != NID_x509Crl)
-        return NULL;
-    return ASN1_item_unpack(bag->value.bag->value.octet,
-                            ASN1_ITEM_rptr(X509_CRL));
-}

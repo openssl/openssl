@@ -1,4 +1,3 @@
-/* crypto/cversion.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -101,6 +100,13 @@ const char *OpenSSL_version(int t)
         return "OPENSSLDIR: \"" OPENSSLDIR "\"";
 #else
         return "OPENSSLDIR: N/A";
+#endif
+    }
+    if (t == OPENSSL_ENGINES_DIR) {
+#ifdef ENGINESDIR
+        return "ENGINESDIR: \"" ENGINESDIR "\"";
+#else
+        return "ENGINESDIR: N/A";
 #endif
     }
     return ("not available");

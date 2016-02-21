@@ -1,4 +1,3 @@
-/* crypto/rc4/rc4_skey.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -62,17 +61,10 @@
 
 const char *RC4_options(void)
 {
-#ifdef RC4_INDEX
     if (sizeof(RC4_INT) == 1)
-        return ("rc4(idx,char)");
+        return ("rc4(char)");
     else
-        return ("rc4(idx,int)");
-#else
-    if (sizeof(RC4_INT) == 1)
-        return ("rc4(ptr,char)");
-    else
-        return ("rc4(ptr,int)");
-#endif
+        return ("rc4(int)");
 }
 
 /*-

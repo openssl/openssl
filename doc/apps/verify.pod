@@ -7,6 +7,7 @@ verify - Utility to verify certificates.
 =head1 SYNOPSIS
 
 B<openssl> B<verify>
+[B<-help>]
 [B<-CAfile file>]
 [B<-CApath directory>]
 [B<-no-CAfile>]
@@ -17,13 +18,12 @@ B<openssl> B<verify>
 [B<-crl_download>]
 [B<-crl_check>]
 [B<-crl_check_all>]
+[B<-engine id>]
 [B<-explicit_policy>]
 [B<-extended_crl>]
-[B<-help>]
 [B<-ignore_critical>]
 [B<-inhibit_any>]
 [B<-inhibit_map>]
-[B<-issuer_checks>]
 [B<-partial_chain>]
 [B<-policy arg>]
 [B<-policy_check>]
@@ -48,7 +48,6 @@ B<openssl> B<verify>
 [B<->]
 [certificates]
 
-
 =head1 DESCRIPTION
 
 The B<verify> command verifies certificate chains.
@@ -57,10 +56,14 @@ The B<verify> command verifies certificate chains.
 
 =over 4
 
+=item B<-help>
+
+Print out a usage message.
+
 =item B<-CAfile file>
 
-A file of trusted certificates. The file should contain multiple certificates
-in PEM format concatenated together.
+A B<file> of trusted certificates.
+The file should contain one or more certificates in PEM format.
 
 =item B<-CApath directory>
 
@@ -91,7 +94,11 @@ because it doesn't add any security.
 
 =item B<-CRLfile file>
 
-File containing one or more CRL's (in PEM format) to load.
+The B<file> should contain one or more CRLs in PEM format.
+This option can be specified more than once to include CRLs from multiple
+B<files>.
+If you want to enable an B<engine> via the B<-engine> option, that option has
+to be specified before this one.
 
 =item B<-crl_download>
 
@@ -107,6 +114,15 @@ If a valid CRL cannot be found an error occurs.
 Checks the validity of B<all> certificates in the chain by attempting
 to look up valid CRLs.
 
+=item B<-engine id>
+
+Specifying an engine B<id> will cause L<verify(1)> to attempt to load the
+specified engine.
+The engine will then be set as the default for all its supported algorithms.
+If you want to load certificates or CRLs that require engine support via any of
+the B<-trusted>, B<-untrusted> or B<-CRLfile> options, the B<-engine> option
+must be specified before those options.
+
 =item B<-explicit_policy>
 
 Set policy variable require-explicit-policy (see RFC5280).
@@ -115,10 +131,6 @@ Set policy variable require-explicit-policy (see RFC5280).
 
 Enable extended CRL features such as indirect CRLs and alternate CRL
 signing keys.
-
-=item B<-help>
-
-Print out a usage message.
 
 =item B<-ignore_critical>
 
@@ -134,17 +146,11 @@ Set policy variable inhibit-any-policy (see RFC5280).
 
 Set policy variable inhibit-policy-mapping (see RFC5280).
 
-=item B<-issuer_checks>
-
-Print out diagnostics relating to searches for the issuer certificate of the
-current certificate. This shows why each candidate issuer certificate was
-rejected. The presence of rejection messages does not itself imply that
-anything is wrong; during the normal verification process, several
-rejections may take place.
-
 =item B<-partial_chain>
 
-Allow partial certificate chain if at least one certificate is in trusted store.
+Allow verification to succeed even if a I<complete> chain cannot be built to a
+self-signed trust-anchor, provided it is possible to construct a chain to a
+trusted certificate that might not be self-signed.
 
 =item B<-policy arg>
 
@@ -178,31 +184,46 @@ P-256 and P-384.
 
 =item B<-trusted_first>
 
-Use certificates in CA file or CA directory before certificates in untrusted
-file when building the trust chain to verify certificates.
-This is mainly useful in environments with Bridge CA or Cross-Certified CAs.
+When constructing the certificate chain, use the trusted certificates specified
+via B<-CAfile>, B<-CApath> or B<-trusted> before any certificates specified via
+B<-untrusted>.
+This can be useful in environments with Bridge or Cross-Certified CAs.
+As of OpenSSL 1.1.0 this option is on by default and cannot be disabled.
 
 =item B<-no_alt_chains>
 
-When building a certificate chain, if the first certificate chain found is not
-trusted, then OpenSSL will continue to check to see if an alternative chain can
-be found that is trusted. With this option that behaviour is suppressed so that
-only the first chain found is ever used. Using this option will force the
-behaviour to match that of OpenSSL versions prior to 1.1.0. 
+By default, unless B<-trusted_first> is specified, when building a certificate
+chain, if the first certificate chain found is not trusted, then OpenSSL will
+attempt to replace untrusted issuer certificates with certificates from the
+trust store to see if an alternative chain can be found that is trusted.
+As of OpenSSL 1.1.0, with B<-trusted_first> always on, this option has no
+effect.
 
 =item B<-untrusted file>
 
-A file of untrusted certificates. The file should contain one or more
-certificates in PEM format.
+A B<file> of additional untrusted certificates (intermediate issuer CAs) used
+to constuct a certificate chain from the subject certificate to a trust-anchor.
+The B<file> should contain one or more certificates in PEM format.
+This option can be specified more than once to include untrusted certiificates
+from multiple B<files>.
+If you want to enable an B<engine> via the B<-engine> option, that option has
+to be specified before this one.
 
 =item B<-trusted file>
 
-A file of trusted certificates. The file contain one or more
-certificates in PEM format.
-With this option, no additional (e.g., default) certificate lists
-are consulted. That is, the only trusted issuers are those listed
-in B<file>.
-This option cannot be used with the B<-CAfile> or B<-CApath> options.
+A B<file> of trusted certificates, which must be self-signed, unless the
+B<-partial_chain> option is specified.
+The B<file> contain one or more certificates in PEM format.
+With this option, no additional (e.g., default) certificate lists are
+consulted.
+That is, the only trust-anchors are those listed in B<file>.
+This option can be specified more than once to include trusted certificates
+from multiple B<files>.
+This option implies the B<-no-CAfile> and B<-no-CApath> options.
+This option cannot be used in combination with either of the B<-CAfile> or
+B<-CApath> options.
+If you want to enable an B<engine> via the B<-engine> option, that option has
+to be specified before this one.
 
 =item B<-use_deltas>
 
@@ -233,9 +254,19 @@ the subject certificate.
 
 =item B<-verify_name name>
 
-Use default verification options like trust model and required certificate
+Use default verification policies like trust model and required certificate
 policies identified by B<name>.
-Supported usages include: default, pkcs7, smime_sign, ssl_client, ssl_server.
+The trust model determines which auxiliary trust or reject OIDs are applicable
+to verifying the given certificate chain.
+See the B<-addtrust> and B<-addreject> options of the L<x509(1)> command-line
+utility.
+Supported policy names include: B<default>, B<pkcs7>, B<smime_sign>,
+B<ssl_client>, B<ssl_server>.
+These mimics the combinations of purpose and trust settings used in SSL, CMS
+and S/MIME.
+As of OpenSSL 1.1.0, the trust model is inferred from the purpose when not
+specified, so the B<-verify_name> options are functionally equivalent to the
+corresponding B<-purpose> settings.
 
 =item B<-x509_strict>
 
@@ -277,20 +308,21 @@ determined.
 The verify operation consists of a number of separate steps.
 
 Firstly a certificate chain is built up starting from the supplied certificate
-and ending in the root CA. It is an error if the whole chain cannot be built
-up. The chain is built up by looking up the issuers certificate of the current
-certificate. If a certificate is found which is its own issuer it is assumed 
-to be the root CA.
+and ending in the root CA.
+It is an error if the whole chain cannot be built up.
+The chain is built up by looking up the issuers certificate of the current
+certificate.
+If a certificate is found which is its own issuer it is assumed to be the root
+CA.
 
-The process of 'looking up the issuers certificate' itself involves a number
-of steps.
-Ater all certificates
-whose subject name matches the issuer name of the current certificate are 
-subject to further tests. The relevant authority key identifier components
-of the current certificate (if present) must match the subject key identifier
-(if present) and issuer and serial number of the candidate issuer, in addition
-the keyUsage extension of the candidate issuer (if present) must permit
-certificate signing.
+The process of 'looking up the issuers certificate' itself involves a number of
+steps.
+Ater all certificates whose subject name matches the issuer name of the current
+certificate are subject to further tests.
+The relevant authority key identifier components of the current certificate (if
+present) must match the subject key identifier (if present) and issuer and
+serial number of the candidate issuer, in addition the keyUsage extension of
+the candidate issuer (if present) must permit certificate signing.
 
 The lookup first looks in the list of untrusted certificates and if no match
 is found the remaining lookups are from the trusted certificates. The root CA
@@ -305,10 +337,10 @@ compatible with the supplied purpose and all other certificates must also be val
 CA certificates. The precise extensions required are described in more detail in
 the B<CERTIFICATE EXTENSIONS> section of the B<x509> utility.
 
-The third operation is to check the trust settings on the root CA. The root
-CA should be trusted for the supplied purpose. For compatibility with previous
-versions of OpenSSL, a certificate with no trust settings is considered
-to be valid for all purposes. 
+The third operation is to check the trust settings on the root CA. The root CA
+should be trusted for the supplied purpose.
+For compatibility with previous versions of OpenSSL, a certificate with no
+trust settings is considered to be valid for all purposes.
 
 The final operation is to check the validity of the certificate chain. The validity
 period is checked against the current system time and the notBefore and notAfter
@@ -333,7 +365,7 @@ problem was detected starting with zero for the certificate being verified itsel
 then 1 for the CA that signed the certificate and so on. Finally a text version
 of the error number is presented.
 
-An exhaustive list of the error codes and messages is shown below, this also
+An partial list of the error codes and messages is shown below, this also
 includes the name of the error code as defined in the header file x509_vfy.h
 Some of the error codes are defined but never returned: these are described
 as "unused".
@@ -343,6 +375,10 @@ as "unused".
 =item B<0 X509_V_OK: ok>
 
 the operation was successful.
+
+=item B<1 X509_V_ERR_UNSPECIFIED: unspecified certificate verification error>
+
+unspecified error, should not happen.
 
 =item B<2 X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT: unable to get issuer certificate>
 
@@ -463,30 +499,157 @@ the root CA is marked to reject the specified purpose.
 
 =item B<29 X509_V_ERR_SUBJECT_ISSUER_MISMATCH: subject issuer mismatch>
 
-the current candidate issuer certificate was rejected because its subject name
-did not match the issuer name of the current certificate. Only displayed when
-the B<-issuer_checks> option is set.
+Not used as of OpenSSL 1.1.0 as a result of the deprecation of the
+B<-issuer_checks> option.
 
 =item B<30 X509_V_ERR_AKID_SKID_MISMATCH: authority and subject key identifier mismatch>
 
-the current candidate issuer certificate was rejected because its subject key
-identifier was present and did not match the authority key identifier current
-certificate. Only displayed when the B<-issuer_checks> option is set.
+Not used as of OpenSSL 1.1.0 as a result of the deprecation of the
+B<-issuer_checks> option.
 
 =item B<31 X509_V_ERR_AKID_ISSUER_SERIAL_MISMATCH: authority and issuer serial number mismatch>
 
-the current candidate issuer certificate was rejected because its issuer name
-and serial number was present and did not match the authority key identifier
-of the current certificate. Only displayed when the B<-issuer_checks> option is set.
+Not used as of OpenSSL 1.1.0 as a result of the deprecation of the
+B<-issuer_checks> option.
 
-=item B<32 X509_V_ERR_KEYUSAGE_NO_CERTSIGN:key usage does not include certificate signing>
+=item B<32 X509_V_ERR_KEYUSAGE_NO_CERTSIGN: key usage does not include certificate signing>
 
-the current candidate issuer certificate was rejected because its keyUsage extension
-does not permit certificate signing.
+Not used as of OpenSSL 1.1.0 as a result of the deprecation of the
+B<-issuer_checks> option.
+
+=item B<33 X509_V_ERR_UNABLE_TO_GET_CRL_ISSUER: unable to get CRL issuer certificate>
+
+TBA
+
+=item B<34 X509_V_ERR_UNHANDLED_CRITICAL_EXTENSION: unhandled critical extension>
+
+TBA
+
+=item B<35 X509_V_ERR_KEYUSAGE_NO_CRL_SIGN: key usage does not include CRL signing>
+
+TBA
+
+=item B<36 X509_V_ERR_UNHANDLED_CRITICAL_CRL_EXTENSION: unhandled critical CRL extension>
+
+TBA
+
+=item B<37 X509_V_ERR_INVALID_NON_CA: invalid non-CA certificate has CA markings>
+
+TBA
+
+=item B<38 X509_V_ERR_PROXY_PATH_LENGTH_EXCEEDED: proxy path length constraint exceeded>
+
+TBA
+
+=item B<39 X509_V_ERR_KEYUSAGE_NO_DIGITAL_SIGNATURE: key usage does not include digital signature>
+
+TBA
+
+=item B<40 X509_V_ERR_PROXY_CERTIFICATES_NOT_ALLOWED: proxy certificates not allowed, please set the appropriate flag>
+
+TBA
+
+=item B<41 X509_V_ERR_INVALID_EXTENSION: invalid or inconsistent certificate extension>
+
+TBA
+
+=item B<42 X509_V_ERR_INVALID_POLICY_EXTENSION: invalid or inconsistent certificate policy extension>
+
+TBA
+
+=item B<43 X509_V_ERR_NO_EXPLICIT_POLICY: no explicit policy>
+
+TBA
+
+=item B<44 X509_V_ERR_DIFFERENT_CRL_SCOPE: Different CRL scope>
+
+TBA
+
+=item B<45 X509_V_ERR_UNSUPPORTED_EXTENSION_FEATURE: Unsupported extension feature>
+
+TBA
+
+=item B<46 X509_V_ERR_UNNESTED_RESOURCE: RFC 3779 resource not subset of parent's resources>
+
+TBA
+
+=item B<47 X509_V_ERR_PERMITTED_VIOLATION: permitted subtree violation>
+
+TBA
+
+=item B<48 X509_V_ERR_EXCLUDED_VIOLATION: excluded subtree violation>
+
+TBA
+
+=item B<49 X509_V_ERR_SUBTREE_MINMAX: name constraints minimum and maximum not supported>
+
+TBA
 
 =item B<50 X509_V_ERR_APPLICATION_VERIFICATION: application verification failure>
 
 an application specific error. Unused.
+
+=item B<51 X509_V_ERR_UNSUPPORTED_CONSTRAINT_TYPE: unsupported name constraint type>
+
+TBA
+
+=item B<52 X509_V_ERR_UNSUPPORTED_CONSTRAINT_SYNTAX: unsupported or invalid name constraint syntax>
+
+TBA
+
+=item B<53 X509_V_ERR_UNSUPPORTED_NAME_SYNTAX: unsupported or invalid name syntax>
+
+TBA
+
+=item B<54 X509_V_ERR_CRL_PATH_VALIDATION_ERROR: CRL path validation error>
+
+TBA
+
+=item B<55 X509_V_ERR_PATH_LOOP: Path Loop>
+
+TBA
+
+=item B<56 X509_V_ERR_SUITE_B_INVALID_VERSION: Suite B: certificate version invalid>
+
+TBA
+
+=item B<57 X509_V_ERR_SUITE_B_INVALID_ALGORITHM: Suite B: invalid public key algorithm>
+
+TBA
+
+=item B<58 X509_V_ERR_SUITE_B_INVALID_CURVE: Suite B: invalid ECC curve>
+
+TBA
+
+=item B<59 X509_V_ERR_SUITE_B_INVALID_SIGNATURE_ALGORITHM: Suite B: invalid signature algorithm>
+
+TBA
+
+=item B<60 X509_V_ERR_SUITE_B_LOS_NOT_ALLOWED: Suite B: curve not allowed for this LOS>
+
+TBA
+
+=item B<61 X509_V_ERR_SUITE_B_CANNOT_SIGN_P_384_WITH_P_256: Suite B: cannot sign P-384 with P-256>
+
+TBA
+
+=item B<62 X509_V_ERR_HOSTNAME_MISMATCH: Hostname mismatch>
+
+TBA
+
+=item B<63 X509_V_ERR_EMAIL_MISMATCH: Email address mismatch>
+
+TBA
+
+=item B<64 X509_V_ERR_IP_ADDRESS_MISMATCH: IP address mismatch>
+
+TBA
+
+=item B<65 X509_V_ERR_DANE_NO_MATCH: No matching DANE TLSA records>
+
+DANE TLSA authentication is enabled, but no TLSA records matched the
+certificate chain.
+This error is only possible in L<s_client(1)>.
 
 =back
 
@@ -511,6 +674,10 @@ L<x509(1)>
 
 =head1 HISTORY
 
-The -show_chain option was first added to OpenSSL 1.1.0.
+The B<-show_chain> option was first added to OpenSSL 1.1.0.
+
+The B<-issuer_checks> option is deprecated as of OpenSSL 1.1.0 and
+is silently ignored.
 
 =cut
+

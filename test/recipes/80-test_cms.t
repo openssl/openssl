@@ -6,13 +6,13 @@ use warnings;
 use POSIX;
 use File::Spec::Functions qw/catfile/;
 use File::Compare qw/compare_text/;
-use OpenSSL::Test qw/:DEFAULT top_dir top_file/;
+use OpenSSL::Test qw/:DEFAULT srctop_dir srctop_file/;
 use OpenSSL::Test::Utils;
 
 setup("test_cms");
 
-my $smdir    = top_dir("test", "smime-certs");
-my $smcont   = top_file("test", "smcont.txt");
+my $smdir    = srctop_dir("test", "smime-certs");
+my $smcont   = srctop_file("test", "smcont.txt");
 my ($no_dh, $no_ec, $no_ec2m, $no_zlib) = disabled qw/dh ec ec2m zlib/;
 
 plan tests => 4;

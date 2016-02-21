@@ -22,10 +22,6 @@ functions.
 	BN_CTX *ctx);
  int BN_BLINDING_invert_ex(BIGNUM *n, const BIGNUM *r, BN_BLINDING *b,
 	BN_CTX *ctx);
- #ifndef OPENSSL_NO_DEPRECATED
- unsigned long BN_BLINDING_get_thread_id(const BN_BLINDING *);
- void BN_BLINDING_set_thread_id(BN_BLINDING *, unsigned long);
- #endif
  CRYPTO_THREADID *BN_BLINDING_thread_id(BN_BLINDING *);
  unsigned long BN_BLINDING_get_flags(const BN_BLINDING *);
  void BN_BLINDING_set_flags(BN_BLINDING *, unsigned long);
@@ -34,6 +30,13 @@ functions.
 	int (*bn_mod_exp)(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 			  const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx),
 	BN_MONT_CTX *m_ctx);
+
+Deprecated:
+
+ #if OPENSSL_API_COMPAT < 0x10000000L
+ unsigned long BN_BLINDING_get_thread_id(const BN_BLINDING *);
+ void BN_BLINDING_set_thread_id(BN_BLINDING *, unsigned long);
+ #endif
 
 =head1 DESCRIPTION
 

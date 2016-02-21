@@ -80,7 +80,7 @@ my $nasm=0;
 
 if    ($flavour eq "mingw64")	{ $gas=1; $elf=0; $win64=1;
 				  $prefix=`echo __USER_LABEL_PREFIX__ | $ENV{CC} -E -P -`;
-				  chomp($prefix);
+				  $prefix =~ s|\R$||; # Better chomp
 				}
 elsif ($flavour eq "macosx")	{ $gas=1; $elf=0; $prefix="_"; $decor="L\$"; }
 elsif ($flavour eq "masm")	{ $gas=0; $elf=0; $masm=$masmref; $win64=1; $decor="\$L\$"; }
@@ -198,8 +198,11 @@ my %globals;
 	if ($gas) {
 	    # Solaris /usr/ccs/bin/as can't handle multiplications
 	    # in $self->{value}
-	    $self->{value} =~ s/(?<![\w\$\.])(0x?[0-9a-f]+)/oct($1)/egi;
-	    $self->{value} =~ s/([0-9]+\s*[\*\/\%]\s*[0-9]+)/eval($1)/eg;
+	    my $value = $self->{value};
+	    $value =~ s/(?<![\w\$\.])(0x?[0-9a-f]+)/oct($1)/egi;
+	    if ($value =~ s/([0-9]+\s*[\*\/\%]\s*[0-9]+)/eval($1)/eg) {
+		$self->{value} = $value;
+	    }
 	    sprintf "\$%s",$self->{value};
 	} else {
 	    $self->{value} =~ s/(0b[0-1]+)/oct($1)/eig;
@@ -302,7 +305,7 @@ my %globals;
 }
 { package register;	# pick up registers, which start with %.
     sub re {
-	my	$class = shift;	# muliple instances...
+	my	$class = shift;	# multiple instances...
 	my	$self = {};
 	local	*line = shift;
 	undef	$ret;
@@ -847,9 +850,9 @@ ___
 OPTION	DOTNAME
 ___
 }
-while($line=<>) {
+while(defined($line=<>)) {
 
-    chomp($line);
+    $line =~ s|\R$||;           # Better chomp
 
     $line =~ s|[#!].*$||;	# get rid of asm-style comments...
     $line =~ s|/\*.*\*/||;	# ... and C-style comments...
@@ -950,7 +953,7 @@ close STDOUT;
 # (#)	Nth argument, volatile
 #
 # In Unix terms top of stack is argument transfer area for arguments
-# which could not be accomodated in registers. Or in other words 7th
+# which could not be accommodated in registers. Or in other words 7th
 # [integer] argument resides at 8(%rsp) upon function entry point.
 # 128 bytes above %rsp constitute a "red zone" which is not touched
 # by signal handlers and can be used as temporal storage without

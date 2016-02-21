@@ -89,8 +89,8 @@
 #define STRING_MASK     "string_mask"
 #define UTF8_IN         "utf8"
 
-#define DEFAULT_KEY_LENGTH      512
-#define MIN_KEY_LENGTH          384
+#define DEFAULT_KEY_LENGTH      2048
+#define MIN_KEY_LENGTH          512
 
 static int make_REQ(X509_REQ *req, EVP_PKEY *pkey, char *dn, int mutlirdn,
                     int attribs, unsigned long chtype);
@@ -136,19 +136,19 @@ OPTIONS req_options[] = {
     {"outform", OPT_OUTFORM, 'F', "Output format - DER or PEM"},
     {"in", OPT_IN, '<', "Input file"},
     {"out", OPT_OUT, '>', "Output file"},
-    {"key", OPT_KEY, '<', "Use the private key contained in file"},
-    {"keyform", OPT_KEYFORM, 'F', "Key file format"},
+    {"key", OPT_KEY, 's', "Private key to use"},
+    {"keyform", OPT_KEYFORM, 'f', "Key file format"},
     {"pubkey", OPT_PUBKEY, '-', "Output public key"},
     {"new", OPT_NEW, '-', "New request"},
     {"config", OPT_CONFIG, '<', "Request template file"},
     {"keyout", OPT_KEYOUT, '>', "File to send the key to"},
     {"passin", OPT_PASSIN, 's', "Private key password source"},
-    {"passout", OPT_PASSOUT, 's'},
+    {"passout", OPT_PASSOUT, 's', "Output file pass phrase source"},
     {"rand", OPT_RAND, 's',
      "Load the file(s) into the random number generator"},
     {"newkey", OPT_NEWKEY, 's', "Specify as type:bits"},
-    {"pkeyopt", OPT_PKEYOPT, 's'},
-    {"sigopt", OPT_SIGOPT, 's'},
+    {"pkeyopt", OPT_PKEYOPT, 's', "Public key options as opt:value"},
+    {"sigopt", OPT_SIGOPT, 's', "Signature parameter in n:v form"},
     {"batch", OPT_BATCH, '-',
      "Do not ask anything during request generation"},
     {"newhdr", OPT_NEWHDR, '-', "Output \"NEW\" in the header lines"},
@@ -156,7 +156,7 @@ OPTIONS req_options[] = {
     {"verify", OPT_VERIFY, '-', "Verify signature on REQ"},
     {"nodes", OPT_NODES, '-', "Don't encrypt the output key"},
     {"noout", OPT_NOOUT, '-', "Do not output REQ"},
-    {"verbose", OPT_VERBOSE, '-'},
+    {"verbose", OPT_VERBOSE, '-', "Verbose output"},
     {"utf8", OPT_UTF8, '-', "Input characters are UTF8 (default ASCII)"},
     {"nameopt", OPT_NAMEOPT, 's', "Various certificate name options"},
     {"reqopt", OPT_REQOPT, 's', "Various request text options"},
@@ -177,7 +177,8 @@ OPTIONS req_options[] = {
     {"", OPT_MD, '-', "Any supported digest"},
 #ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
-    {"keygen_engine", OPT_KEYGEN_ENGINE, 's'},
+    {"keygen_engine", OPT_KEYGEN_ENGINE, 's',
+     "Specify engine to be used for key generation operations"},
 #endif
     {NULL}
 };
@@ -235,7 +236,7 @@ int req_main(int argc, char **argv)
                 goto opthelp;
             break;
         case OPT_ENGINE:
-            (void)setup_engine(opt_arg(), 0);
+            e = setup_engine(opt_arg(), 0);
             break;
         case OPT_KEYGEN_ENGINE:
 #ifndef OPENSSL_NO_ENGINE
@@ -259,7 +260,7 @@ int req_main(int argc, char **argv)
             template = opt_arg();
             break;
         case OPT_KEYFORM:
-            if (!opt_format(opt_arg(), OPT_FMT_PEMDER, &keyform))
+            if (!opt_format(opt_arg(), OPT_FMT_ANY, &keyform))
                 goto opthelp;
             break;
         case OPT_IN:
@@ -366,7 +367,8 @@ int req_main(int argc, char **argv)
         }
     }
     argc = opt_num_rest();
-    argv = opt_rest();
+    if (argc != 0)
+        goto opthelp;
 
     if (!nmflag_set)
         nmflag = XN_FLAG_ONELINE;
@@ -811,7 +813,7 @@ int req_main(int argc, char **argv)
         fprintf(stdout, "Modulus=");
 #ifndef OPENSSL_NO_RSA
         if (EVP_PKEY_base_id(tpubkey) == EVP_PKEY_RSA)
-            BN_print(out, tpubkey->pkey.rsa->n);
+            BN_print(out, EVP_PKEY_get0_RSA(tpubkey)->n);
         else
 #endif
             fprintf(stdout, "Wrong Algorithm type");
@@ -1451,6 +1453,7 @@ static EVP_PKEY_CTX *set_keygen_ctx(const char *gstr,
     if (EVP_PKEY_keygen_init(gctx) <= 0) {
         BIO_puts(bio_err, "Error initializing keygen context\n");
         ERR_print_errors(bio_err);
+        EVP_PKEY_CTX_free(gctx);
         return NULL;
     }
 #ifndef OPENSSL_NO_RSA

@@ -1,4 +1,3 @@
-/* crypto/rand/rand_unix.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -244,7 +243,7 @@ int RAND_poll(void)
 {
     unsigned long l;
     pid_t curr_pid = getpid();
-#  if defined(DEVRANDOM) || defined(DEVRANDOM_EGD)
+#  if defined(DEVRANDOM) || (!defined(OPENSS_NO_EGD) && defined(DEVRANDOM_EGD))
     unsigned char tmpbuf[ENTROPY_NEEDED];
     int n = 0;
 #  endif
@@ -254,7 +253,7 @@ int RAND_poll(void)
     int fd;
     unsigned int i;
 #  endif
-#  ifdef DEVRANDOM_EGD
+#  if !defined(OPENSSL_NO_EGD) && defined(DEVRANDOM_EGD)
     static const char *egdsockets[] = { DEVRANDOM_EGD, NULL };
     const char **egdsocket = NULL;
 #  endif
@@ -371,7 +370,7 @@ int RAND_poll(void)
     }
 #  endif                        /* defined(DEVRANDOM) */
 
-#  ifdef DEVRANDOM_EGD
+#  if !defined(OPENSSL_NO_EGD) && defined(DEVRANDOM_EGD)
     /*
      * Use an EGD socket to read entropy from an EGD or PRNGD entropy
      * collecting daemon.
@@ -388,7 +387,7 @@ int RAND_poll(void)
     }
 #  endif                        /* defined(DEVRANDOM_EGD) */
 
-#  if defined(DEVRANDOM) || defined(DEVRANDOM_EGD)
+#  if defined(DEVRANDOM) || (!defined(OPENSSL_NO_EGD) && defined(DEVRANDOM_EGD))
     if (n > 0) {
         RAND_add(tmpbuf, sizeof tmpbuf, (double)n);
         OPENSSL_cleanse(tmpbuf, n);
@@ -404,7 +403,7 @@ int RAND_poll(void)
     l = time(NULL);
     RAND_add(&l, sizeof(l), 0.0);
 
-#  if defined(DEVRANDOM) || defined(DEVRANDOM_EGD)
+#  if defined(DEVRANDOM) || (!defined(OPENSSL_NO_EGD) && defined(DEVRANDOM_EGD))
     return 1;
 #  else
     return 0;

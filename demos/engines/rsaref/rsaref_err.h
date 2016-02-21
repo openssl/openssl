@@ -1,4 +1,3 @@
-/* rsaref_err.h */
 /* ====================================================================
  * Copyright (c) 1998-2001 The OpenSSL Project.  All rights reserved.
  *
@@ -68,7 +67,7 @@ extern "C" {
 static void ERR_load_RSAREF_strings(void);
 static void ERR_unload_RSAREF_strings(void);
 static void ERR_RSAREF_error(int function, int reason, char *file, int line);
-# define RSAREFerr(f,r) ERR_RSAREF_error((f),(r),__FILE__,__LINE__)
+# define RSAREFerr(f,r) ERR_RSAREF_error((f),(r),OPENSSL_FILE,OPENSSL_LINE)
 /* Error codes for the RSAREF functions. */
 
 /* Function codes. */

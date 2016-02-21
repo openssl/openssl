@@ -54,13 +54,6 @@
 
 #include "eng_int.h"
 
-/*
- * If this symbol is defined then ENGINE_get_digest_engine(), the function
- * that is used by EVP to hook in digest code and cache defaults (etc), will
- * display brief debugging summaries to stderr with the 'nid'.
- */
-/* #define ENGINE_DIGEST_DEBUG */
-
 static ENGINE_TABLE *digest_table = NULL;
 
 void ENGINE_unregister_digests(ENGINE *e)

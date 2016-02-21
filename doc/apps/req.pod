@@ -8,6 +8,7 @@ req - PKCS#10 certificate request and certificate generating utility.
 =head1 SYNOPSIS
 
 B<openssl> B<req>
+[B<-help>]
 [B<-inform PEM|DER>]
 [B<-outform PEM|DER>]
 [B<-in filename>]
@@ -55,6 +56,10 @@ for use as root CAs for example.
 =head1 COMMAND OPTIONS
 
 =over 4
+
+=item B<-help>
+
+Print out a usage message.
 
 =item B<-inform DER|PEM>
 
@@ -319,9 +324,12 @@ configuration file values.
 
 =item B<default_bits>
 
-This specifies the default key size in bits. If not specified then
-512 is used. It is used if the B<-new> option is used. It can be
-overridden by using the B<-newkey> option.
+Specifies the default key size in bits.
+
+This option is used in conjunction with the B<-new> option to generate
+a new key. It can be overridden by specifying an explicit key size in
+the B<-newkey> option. The smallest accepted key size is 512 bits. If
+no key size is specified then 2048 bits is used.
 
 =item B<default_keyfile>
 

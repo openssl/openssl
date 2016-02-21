@@ -1,4 +1,3 @@
-/* crypto/rand/rand_win.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -123,7 +122,7 @@
 
 /*
  * Limit the time spent walking through the heap, processes, threads and
- * modules to a maximum of 1000 miliseconds each, unless CryptoGenRandom
+ * modules to a maximum of 1000 milliseconds each, unless CryptoGenRandom
  * failed
  */
 # define MAXDELAY 1000

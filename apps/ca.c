@@ -209,7 +209,8 @@ OPTIONS ca_options[] = {
     {"name", OPT_NAME, 's', "The particular CA definition to use"},
     {"subj", OPT_SUBJ, 's', "Use arg instead of request's subject"},
     {"utf8", OPT_UTF8, '-', "Input characters are UTF8 (default ASCII)"},
-    {"create_serial", OPT_CREATE_SERIAL, '-'},
+    {"create_serial", OPT_CREATE_SERIAL, '-',
+    "If reading serial fails, create a new random serial"},
     {"multivalue-rdn", OPT_MULTIVALUE_RDN, '-',
      "Enable support for multivalued RDNs"},
     {"startdate", OPT_STARTDATE, 's', "Cert notBefore, YYMMDDHHMMSSZ"},
@@ -218,7 +219,7 @@ OPTIONS ca_options[] = {
     {"days", OPT_DAYS, 'p', "Number of days to certify the cert for"},
     {"md", OPT_MD, 's', "md to use; one of md2, md5, sha or sha1"},
     {"policy", OPT_POLICY, 's', "The CA 'policy' to support"},
-    {"keyfile", OPT_KEYFILE, '<', "Private key file"},
+    {"keyfile", OPT_KEYFILE, 's', "Private key"},
     {"keyform", OPT_KEYFORM, 'f', "Private key file format (PEM or ENGINE)"},
     {"passin", OPT_PASSIN, 's'},
     {"key", OPT_KEY, 's', "Key to decode the private key if it is encrypted"},
@@ -253,10 +254,13 @@ OPTIONS ca_options[] = {
     {"updatedb", OPT_UPDATEDB, '-', "Updates db for expired cert"},
     {"crlexts", OPT_CRLEXTS, 's',
      "CRL extension section (override value in config file)"},
-    {"crl_reason", OPT_CRL_REASON, 's'},
-    {"crl_hold", OPT_CRL_HOLD, 's'},
-    {"crl_compromise", OPT_CRL_COMPROMISE, 's'},
-    {"crl_CA_compromise", OPT_CRL_CA_COMPROMISE, 's'},
+    {"crl_reason", OPT_CRL_REASON, 's', "revocation reason"},
+    {"crl_hold", OPT_CRL_HOLD, 's',
+     "the hold instruction, an OID. Sets revocation reason to certificateHold"},
+    {"crl_compromise", OPT_CRL_COMPROMISE, 's',
+     "sets compromise time to val and the revocation reason to keyCompromise"},
+    {"crl_CA_compromise", OPT_CRL_CA_COMPROMISE, 's',
+     "sets compromise time to val and the revocation reason to CACompromise"},
 #ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
 #endif
@@ -727,7 +731,7 @@ end_of_options:
             goto end;
         }
         for ( ; *p; p++) {
-            if (!isxdigit(*p)) {
+            if (!isxdigit(_UC(*p))) {
                 BIO_printf(bio_err,
                            "entry %d: bad char 0%o '%c' in serial number\n",
                            i + 1, *p, *p);

@@ -1,4 +1,3 @@
-/* crypto/bio/bio_lib.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -111,17 +110,10 @@ int BIO_free(BIO *a)
         return (0);
 
     i = CRYPTO_add(&a->references, -1, CRYPTO_LOCK_BIO);
-#ifdef REF_PRINT
-    REF_PRINT("BIO", a);
-#endif
+    REF_PRINT_COUNT("BIO", a);
     if (i > 0)
         return (1);
-#ifdef REF_CHECK
-    if (i < 0) {
-        fprintf(stderr, "BIO_free, bad reference count\n");
-        abort();
-    }
-#endif
+    REF_ASSERT_ISNT(i < 0);
     if ((a->callback != NULL) &&
         ((i = (int)a->callback(a, BIO_CB_FREE, NULL, 0, 0L, 1L)) <= 0))
         return (i);
@@ -326,9 +318,9 @@ long BIO_int_ctrl(BIO *b, int cmd, long larg, int iarg)
     return (BIO_ctrl(b, cmd, larg, (char *)&i));
 }
 
-char *BIO_ptr_ctrl(BIO *b, int cmd, long larg)
+void *BIO_ptr_ctrl(BIO *b, int cmd, long larg)
 {
-    char *p = NULL;
+    void *p = NULL;
 
     if (BIO_ctrl(b, cmd, larg, (char *)&p) <= 0)
         return (NULL);

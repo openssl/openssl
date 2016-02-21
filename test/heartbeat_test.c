@@ -1,4 +1,3 @@
-/* test/heartbeat_test.c */
 /*-
  * Unit test for TLS heartbeats.
  *
@@ -143,24 +142,6 @@ static HEARTBEAT_TEST_FIXTURE set_up_dtls(const char *const test_case_name)
 static int dummy_handshake(SSL *s)
 {
     return 1;
-}
-
-static HEARTBEAT_TEST_FIXTURE set_up_tls(const char *const test_case_name)
-{
-    HEARTBEAT_TEST_FIXTURE fixture = set_up(test_case_name,
-                                            TLSv1_server_method());
-    fixture.process_heartbeat = tls1_process_heartbeat;
-    fixture.s->handshake_func = dummy_handshake;
-
-    /*
-     * As per do_ssl3_write(), skipping the following from the beginning of
-     * the returned heartbeat message: type-1 byte; version-2 bytes; length-2
-     * bytes And then skipping the 1-byte type encoded by process_heartbeat
-     * for a total of 6 bytes, at which point we can grab the length and the
-     * payload we seek.
-     */
-    fixture.return_payload_offset = 6;
-    return fixture;
 }
 
 static void tear_down(HEARTBEAT_TEST_FIXTURE fixture)
@@ -361,79 +342,6 @@ static int test_dtls1_heartbleed_excessive_plaintext_length()
     EXECUTE_HEARTBEAT_TEST();
 }
 
-static int test_tls1_not_bleeding()
-{
-    SETUP_HEARTBEAT_TEST_FIXTURE(tls);
-    /* Three-byte pad at the beginning for type and payload length */
-    unsigned char payload_buf[MAX_PRINTABLE_CHARACTERS + 4] =
-        "   Not bleeding, sixteen spaces of padding" "                ";
-    const int payload_buf_len = honest_payload_size(payload_buf);
-
-    fixture.payload = &payload_buf[0];
-    fixture.sent_payload_len = payload_buf_len;
-    fixture.expected_return_value = 0;
-    fixture.expected_payload_len = payload_buf_len;
-    fixture.expected_return_payload =
-        "Not bleeding, sixteen spaces of padding";
-    EXECUTE_HEARTBEAT_TEST();
-}
-
-static int test_tls1_not_bleeding_empty_payload()
-{
-    int payload_buf_len;
-
-    SETUP_HEARTBEAT_TEST_FIXTURE(tls);
-    /*
-     * Three-byte pad at the beginning for type and payload length, plus a
-     * NUL at the end
-     */
-    unsigned char payload_buf[4 + MAX_PRINTABLE_CHARACTERS];
-    memset(payload_buf, ' ', MIN_PADDING_SIZE + 3);
-    payload_buf[MIN_PADDING_SIZE + 3] = '\0';
-    payload_buf_len = honest_payload_size(payload_buf);
-
-    fixture.payload = &payload_buf[0];
-    fixture.sent_payload_len = payload_buf_len;
-    fixture.expected_return_value = 0;
-    fixture.expected_payload_len = payload_buf_len;
-    fixture.expected_return_payload = "";
-    EXECUTE_HEARTBEAT_TEST();
-}
-
-static int test_tls1_heartbleed()
-{
-    SETUP_HEARTBEAT_TEST_FIXTURE(tls);
-    /* Three-byte pad at the beginning for type and payload length */
-    unsigned char payload_buf[MAX_PRINTABLE_CHARACTERS + 4] =
-        "   HEARTBLEED                ";
-
-    fixture.payload = &payload_buf[0];
-    fixture.sent_payload_len = MAX_PRINTABLE_CHARACTERS;
-    fixture.expected_return_value = 0;
-    fixture.expected_payload_len = 0;
-    fixture.expected_return_payload = "";
-    EXECUTE_HEARTBEAT_TEST();
-}
-
-static int test_tls1_heartbleed_empty_payload()
-{
-    SETUP_HEARTBEAT_TEST_FIXTURE(tls);
-    /*
-     * Excluding the NUL at the end, one byte short of type + payload length
-     * + minimum padding
-     */
-    unsigned char payload_buf[MAX_PRINTABLE_CHARACTERS + 4];
-    memset(payload_buf, ' ', MIN_PADDING_SIZE + 2);
-    payload_buf[MIN_PADDING_SIZE + 2] = '\0';
-
-    fixture.payload = &payload_buf[0];
-    fixture.sent_payload_len = MAX_PRINTABLE_CHARACTERS;
-    fixture.expected_return_value = 0;
-    fixture.expected_payload_len = 0;
-    fixture.expected_return_payload = "";
-    EXECUTE_HEARTBEAT_TEST();
-}
-
 # undef EXECUTE_HEARTBEAT_TEST
 # undef SETUP_HEARTBEAT_TEST_FIXTURE
 
@@ -441,18 +349,11 @@ int main(int argc, char *argv[])
 {
     int result = 0;
 
-    SSL_library_init();
-    SSL_load_error_strings();
-
     ADD_TEST(test_dtls1_not_bleeding);
     ADD_TEST(test_dtls1_not_bleeding_empty_payload);
     ADD_TEST(test_dtls1_heartbleed);
     ADD_TEST(test_dtls1_heartbleed_empty_payload);
     ADD_TEST(test_dtls1_heartbleed_excessive_plaintext_length);
-    ADD_TEST(test_tls1_not_bleeding);
-    ADD_TEST(test_tls1_not_bleeding_empty_payload);
-    ADD_TEST(test_tls1_heartbleed);
-    ADD_TEST(test_tls1_heartbleed_empty_payload);
 
     result = run_tests(argv[0]);
     ERR_print_errors_fp(stderr);

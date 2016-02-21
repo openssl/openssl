@@ -1,4 +1,3 @@
-/* p12_init.c */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
  * 1999.
@@ -60,6 +59,7 @@
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include <openssl/pkcs12.h>
+#include "p12_lcl.h"
 
 /* Initialise a PKCS12 structure to take data */
 

@@ -1,4 +1,3 @@
-/* dso_vms.c */
 /*
  * Written by Richard Levitte (richard@levitte.org) for the OpenSSL project
  * 2000.
@@ -76,7 +75,7 @@ DSO_METHOD *DSO_METHOD_vms(void)
 # include <stsdef.h>
 # include <descrip.h>
 # include <starlet.h>
-# include "vms_rms.h"
+# include "../vms_rms.h"
 
 /* Some compiler options may mask the declaration of "_malloc32". */
 # if __INITIAL_POINTER_SIZE && defined _ANSI_C_SOURCE

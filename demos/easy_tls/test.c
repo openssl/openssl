@@ -1,4 +1,3 @@
-/* test.c */
 /* $Id: test.c,v 1.1 2001/09/17 19:06:59 bodo Exp $ */
 
 #define L_PORT 9999

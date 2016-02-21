@@ -1,4 +1,3 @@
-/* crypto/x509/x509name.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -110,7 +109,7 @@ int X509_NAME_get_index_by_NID(X509_NAME *name, int nid, int lastpos)
     return (X509_NAME_get_index_by_OBJ(name, obj, lastpos));
 }
 
-/* NOTE: you should be passsing -1, not 0 as lastpos */
+/* NOTE: you should be passing -1, not 0 as lastpos */
 int X509_NAME_get_index_by_OBJ(X509_NAME *name, ASN1_OBJECT *obj, int lastpos)
 {
     int n;

@@ -94,7 +94,7 @@ Options:
                   void ERR_load_<LIB>_strings(void);
                   void ERR_unload_<LIB>_strings(void);
                   void ERR_<LIB>_error(int f, int r, char *fn, int ln);
-                  #define <LIB>err(f,r) ERR_<LIB>_error(f,r,__FILE__,__LINE__)
+                  #define <LIB>err(f,r) ERR_<LIB>_error(f,r,OPENSSL_FILE,OPENSSL_LINE)
                 while the code facilitates the use of these in an environment
                 where the error support routines are dynamically loaded at 
                 runtime.
@@ -384,7 +384,6 @@ foreach $lib (keys %csrc)
 	my $hfile = $hinc{$lib};
 	my $cfile = $csrc{$lib};
 	if(!$fnew{$lib} && !$rnew{$lib}) {
-		print STDERR "$lib:\t\tNo new error codes\n";
 		next unless $rebuild;
 	} else {
 		print STDERR "$lib:\t\t$fnew{$lib} New Functions,";
@@ -494,7 +493,7 @@ EOF
 ${staticloader}void ERR_load_${lib}_strings(void);
 ${staticloader}void ERR_unload_${lib}_strings(void);
 ${staticloader}void ERR_${lib}_error(int function, int reason, char *file, int line);
-# define ${lib}err(f,r) ERR_${lib}_error((f),(r),__FILE__,__LINE__)
+# define ${lib}err(f,r) ERR_${lib}_error((f),(r),OPENSSL_FILE,OPENSSL_LINE)
 
 EOF
 	}
@@ -557,7 +556,7 @@ EOF
 	if (open(IN,"<$cfile")) {
 		my $line = "";
 		while (<IN>) {
-			chomp;
+			s|\R$||; # Better chomp
 			$_ = $line . $_;
 			$line = "";
 			if (/{ERR_(FUNC|REASON)\(/) {
@@ -603,7 +602,6 @@ EOF
 	open (OUT,">$cfile") || die "Can't open $cfile for writing";
 
 	print OUT <<"EOF";
-/* $cfile */
 /* ====================================================================
  * Copyright (c) 1999-$year The OpenSSL Project.  All rights reserved.
  *

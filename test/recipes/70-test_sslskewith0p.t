@@ -53,27 +53,29 @@
 # Hudson (tjh@cryptsoft.com).
 
 use strict;
-use OpenSSL::Test qw/:DEFAULT cmdstr top_file top_dir/;
+use OpenSSL::Test qw/:DEFAULT cmdstr srctop_file bldtop_dir/;
 use OpenSSL::Test::Utils;
 use TLSProxy::Proxy;
 
 my $test_name = "test_sslskewith0p";
 setup($test_name);
 
-plan skip_all => "$test_name can only be performed with OpenSSL configured shared"
-    unless (map { s/\R//; s/^SHARED_LIBS=\s*//; $_ }
-	    grep { /^SHARED_LIBS=/ }
-	    do { local @ARGV = ( top_file("Makefile") ); <> })[0] ne "";
+plan skip_all => "TLSProxy isn't usable on $^O"
+    if $^O =~ /^VMS$/;
+
+plan skip_all => "$test_name needs the dynamic engine feature enabled"
+    if disabled("engine") || disabled("dynamic_engines");
 
 plan skip_all => "dh is not supported by this OpenSSL build"
     if disabled("dh");
 
-$ENV{OPENSSL_ENGINES} = top_dir("engines");
+$ENV{OPENSSL_ENGINES} = bldtop_dir("engines");
 $ENV{OPENSSL_ia32cap} = '~0x200000200000000';
 my $proxy = TLSProxy::Proxy->new(
     \&ske_0_p_filter,
     cmdstr(app(["openssl"])),
-    top_file("apps", "server.pem")
+    srctop_file("apps", "server.pem"),
+    (!$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE})
 );
 
 plan tests => 1;

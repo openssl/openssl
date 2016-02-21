@@ -6,7 +6,7 @@ use warnings;
 use File::Compare qw/compare_text/;
 use File::Copy;
 use lib 'testlib';
-use OpenSSL::Test qw/:DEFAULT top_file/;
+use OpenSSL::Test qw/:DEFAULT/;
 
 my %conversionforms = (
     # Default conversion forms.  Other series may be added with
@@ -53,8 +53,9 @@ sub tconversion {
 	  ok(run(app([@cmd,
 		      "-in", "$testtype-fff.p",
 		      "-inform", "p",
-		      "-outform", $to],
-		     stdout => "$testtype-f.$to")), "p -> $to");
+		      "-out", "$testtype-f.$to",
+		      "-outform", $to])),
+	     "p -> $to");
       }
 
       foreach my $to (@conversionforms) {
@@ -62,8 +63,9 @@ sub tconversion {
 	      ok(run(app([@cmd,
 			  "-in", "$testtype-f.$from",
 			  "-inform", $from,
-			  "-outform", $to],
-			 stdout => "$testtype-ff.$from$to")), "$from -> $to");
+			  "-out", "$testtype-ff.$from$to",
+			  "-outform", $to])),
+		 "$from -> $to");
 	  }
       }
 

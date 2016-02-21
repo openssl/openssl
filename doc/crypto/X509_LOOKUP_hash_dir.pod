@@ -24,7 +24,7 @@ lookup methods
 B<X509_LOOKUP_hash_dir> and B<X509_LOOKUP_file> are two certificate
 lookup methods to use with B<X509_STORE>, provided by OpenSSL library.
 
-Users of the library typically do not need to create instanses of these
+Users of the library typically do not need to create instances of these
 methods manually, they would be created automatically by
 L<X509_STORE_load_locations(3)> or
 L<SSL_CTX_load_verify_locations(3)>
@@ -61,47 +61,55 @@ caching policy.
 
 =head2  FILE METHOD
 
-B<X509_LOOKUP_file> method loads entire set of certificates and CRLs
-into memory immediately when file name is passed to it. 
+The B<X509_LOOKUP_file> method loads all the certificates or CRLs
+present in a file into memory at the time the file is added as a
+lookup source.
 
 File format is ASCII text which contains concatenated PEM certificates
 and CRLs.
 
-This method should be used by applications which work with limited set
-of CAs.
-
+This method should be used by applications which work with a small
+set of CAs.
 
 =head2 HASHED DIR METHOD
 
-B<X509_LOOKUP_hash_dir> is more sophisticated method, which loads
-certificates and CRLs on demand, but caches them in the memory once they
-are loaded. However, since OpenSSL 1.0.0beta1 it checks for newer CRLs
-upon each lookup, so if newer CRL would appear in the directory, it
-would be loaded.
+B<X509_LOOKUP_hash_dir> is a more advanced method, which loads
+certificates and CRLs on demand, and caches them in memory once
+they are loaded. As of OpenSSL 1.0.0, it also checks for newer CRLs
+upon each lookup, so that newer CRLs are as soon as they appear in
+the directory.
 
-Directory should contain each certificate and CRL in the separate file
-in the PEM format, with file name derived from certificate subject (or CRL
-issuer) hash, as returned by L<X509_NAME_hash(3)>
-function of with option B<-hash> of L<x509(1)> or
-L<crl(1)> command.
+The directory should contain one certificate or CRL per file in PEM format,
+with a file name of the form I<hash>.I<N> for a certificate, or
+I<hash>.B<r>I<N> for a CRL.
+The I<hash> is the value returned by the L<X509_NAME_hash(3)> function applied
+to the subject name for certificates or issuer name for CRLs.
+The hash can also be obtained via the B<-hash> option of the L<x509(1)> or
+L<crl(1)> commands.
 
-This hash value is appended by suffix .I<N> for certificates and
-B<.r>I<N> for CRLs where I<N> is sequentual
-number among certificates with same hash value, so it is possible to
-have in the store several certificates with same subject or several CRLs
-with same issuer (and, for example, different validity period).
+The .I<N> or .B<r>I<N> suffix is a sequence number that starts at zero, and is
+incremented consecutively for each certificate or CRL with the same I<hash>
+value.
+Gaps in the sequence numbers are not supported, it is assumed that there are no
+more objects with the same hash beyond the first missing number in the
+sequence.
 
-When checking for new CRLs once one CRL for given hash value is loaded, 
-hash_dir lookup method checks only for certificates with sequentual
-number greater than one of already cached CRL.
+Sequence numbers make it possible for the directory to contain multiple
+certificates with same subject name hash value.
+For example, it is possible to have in the store several certificates with same
+subject or several CRLs with same issuer (and, for example, different validity
+period).
 
-Note that hash algorithm used for subject hashing is changed in OpenSSL
-1.0, so all certificate stores have to be rehashed upon transitopn from
+When checking for new CRLs once one CRL for given hash value is
+loaded, hash_dir lookup method checks only for certificates with
+sequence number greater than that of the already cached CRL.
+
+Note that the hash algorithm used for subject name hashing changed in OpenSSL
+1.0.0, and all certificate stores have to be rehashed when moving from OpenSSL
 0.9.8 to 1.0.0.
 
-OpenSSL includes utility L<c_rehash(1)> which creates
-symlinks with correct hashed names for all files with .pem suffix in the
-given directory.
+OpenSSL includes a L<c_rehash(1)> utility which creates symlinks with correct
+hashed names for all files with .pem suffix in a given directory.
 
 =head1 SEE ALSO
 

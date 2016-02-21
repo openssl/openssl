@@ -12,7 +12,9 @@ RAND_bytes, RAND_pseudo_bytes - generate random data
 
 Deprecated:
 
+ #if OPENSSL_API_COMPAT < 0x10100000L
  int RAND_pseudo_bytes(unsigned char *buf, int num);
+ #endif
 
 =head1 DESCRIPTION
 

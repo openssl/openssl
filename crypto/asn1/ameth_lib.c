@@ -64,6 +64,7 @@
 # include <openssl/engine.h>
 #endif
 #include "internal/asn1_int.h"
+#include "internal/evp_int.h"
 
 /* Keep this sorted in type order !! */
 static const EVP_PKEY_ASN1_METHOD *standard_methods[] = {
@@ -92,7 +93,6 @@ static const EVP_PKEY_ASN1_METHOD *standard_methods[] = {
 };
 
 typedef int sk_cmp_fn_type(const char *const *a, const char *const *b);
-DECLARE_STACK_OF(EVP_PKEY_ASN1_METHOD)
 static STACK_OF(EVP_PKEY_ASN1_METHOD) *app_methods = NULL;
 
 #ifdef TEST

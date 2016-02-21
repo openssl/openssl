@@ -1,4 +1,3 @@
-/* crypto/asn1/n_pkey.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -56,9 +55,13 @@
  * [including the GNU Public Licence.]
  */
 
-#include <stdio.h>
-#include "internal/cryptlib.h"
-#ifndef OPENSSL_NO_RSA
+#include "openssl/opensslconf.h"
+#ifdef OPENSSL_NO_RSA
+NON_EMPTY_TRANSLATION_UNIT
+#else
+
+# include "internal/cryptlib.h"
+# include <stdio.h>
 # include <openssl/rsa.h>
 # include <openssl/objects.h>
 # include <openssl/asn1t.h>
@@ -103,11 +106,5 @@ DECLARE_ASN1_ENCODE_FUNCTIONS_const(NETSCAPE_PKEY,NETSCAPE_PKEY)
 IMPLEMENT_ASN1_FUNCTIONS_const(NETSCAPE_PKEY)
 
 # endif                         /* OPENSSL_NO_RC4 */
-
-#else                           /* !OPENSSL_NO_RSA */
-
-# if PEDANTIC
-static void *dummy = &dummy;
-# endif
 
 #endif

@@ -1,4 +1,3 @@
-/* crypto/engine/eng_all.c */
 /*
  * Written by Richard Levitte <richard@levitte.org> for the OpenSSL project
  * 2000.
@@ -64,36 +63,8 @@ void ENGINE_load_builtin_engines(void)
 {
     /* Some ENGINEs need this */
     OPENSSL_cpuid_setup();
-#if !defined(OPENSSL_NO_HW) && (defined(__OpenBSD__) || defined(__FreeBSD__) || defined(HAVE_CRYPTODEV))
-    ENGINE_load_cryptodev();
-#endif
-#ifndef OPENSSL_NO_RDRAND
-    ENGINE_load_rdrand();
-#endif
-    ENGINE_load_dynamic();
-#ifndef OPENSSL_NO_STATIC_ENGINE
-# ifndef OPENSSL_NO_HW
-/*-
- * These engines have been disabled as they do not currently build
-#ifndef OPENSSL_NO_HW_NCIPHER
-        ENGINE_load_chil();
-#endif
-#ifndef OPENSSL_NO_HW_UBSEC
-        ENGINE_load_ubsec();
-#endif
-*/
-#  ifndef OPENSSL_NO_HW_PADLOCK
-    ENGINE_load_padlock();
-#  endif
-# endif
-# ifndef OPENSSL_NO_GOST
-    ENGINE_load_gost();
-# endif
-# if defined(OPENSSL_SYS_WIN32) && !defined(OPENSSL_NO_CAPIENG)
-    ENGINE_load_capi();
-# endif
-#endif
-    ENGINE_register_all_complete();
+
+    OPENSSL_init_crypto(OPENSSL_INIT_ENGINE_ALL_BUILTIN, NULL);
 }
 
 #if defined(__OpenBSD__) || defined(__FreeBSD__) || defined(HAVE_CRYPTODEV)
@@ -101,7 +72,7 @@ void ENGINE_setup_bsd_cryptodev(void)
 {
     static int bsd_cryptodev_default_loaded = 0;
     if (!bsd_cryptodev_default_loaded) {
-        ENGINE_load_cryptodev();
+        OPENSSL_init_crypto(OPENSSL_INIT_ENGINE_CRYPTODEV, NULL);
         ENGINE_register_all_complete();
     }
     bsd_cryptodev_default_loaded = 1;

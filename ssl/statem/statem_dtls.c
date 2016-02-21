@@ -1,4 +1,3 @@
-/* ssl/statem/statem_dtls.c */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -235,7 +234,7 @@ int dtls1_do_write(SSL *s, int type)
 
     if (s->write_hash) {
         if (s->enc_write_ctx
-            && (EVP_CIPHER_CTX_flags(s->enc_write_ctx) &
+            && (EVP_CIPHER_flags(EVP_CIPHER_CTX_cipher(s->enc_write_ctx)) &
                 EVP_CIPH_FLAG_AEAD_CIPHER) != 0)
             mac_size = 0;
         else
@@ -245,7 +244,7 @@ int dtls1_do_write(SSL *s, int type)
 
     if (s->enc_write_ctx &&
         (EVP_CIPHER_CTX_mode(s->enc_write_ctx) == EVP_CIPH_CBC_MODE))
-        blocksize = 2 * EVP_CIPHER_block_size(s->enc_write_ctx->cipher);
+        blocksize = 2 * EVP_CIPHER_CTX_block_size(s->enc_write_ctx);
     else
         blocksize = 0;
 
@@ -1023,7 +1022,7 @@ WORK_STATE dtls_wait_for_dry(SSL *s)
 int dtls1_read_failed(SSL *s, int code)
 {
     if (code > 0) {
-        fprintf(stderr, "invalid state reached %s:%d", __FILE__, __LINE__);
+        fprintf(stderr, "dtls1_read_failed(); invalid state reached\n");
         return 1;
     }
 
@@ -1066,7 +1065,7 @@ int dtls1_get_queue_priority(unsigned short seq, int is_ccs)
 
 int dtls1_retransmit_buffered_messages(SSL *s)
 {
-    pqueue sent = s->d1->sent_messages;
+    pqueue *sent = s->d1->sent_messages;
     piterator iter;
     pitem *item;
     hm_fragment *frag;

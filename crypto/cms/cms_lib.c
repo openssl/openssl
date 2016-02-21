@@ -1,4 +1,3 @@
-/* crypto/cms/cms_lib.c */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -63,9 +62,6 @@
 
 IMPLEMENT_ASN1_FUNCTIONS(CMS_ContentInfo)
 IMPLEMENT_ASN1_PRINT_FUNCTION(CMS_ContentInfo)
-
-DECLARE_STACK_OF(CMS_CertificateChoices)
-DECLARE_STACK_OF(CMS_RevocationInfoChoice)
 
 const ASN1_OBJECT *CMS_get0_type(CMS_ContentInfo *cms)
 {
@@ -157,7 +153,7 @@ int CMS_dataFinal(CMS_ContentInfo *cms, BIO *cmsbio)
     ASN1_OCTET_STRING **pos = CMS_get0_content(cms);
     if (!pos)
         return 0;
-    /* If ebmedded content find memory BIO and set content */
+    /* If embedded content find memory BIO and set content */
     if (*pos && ((*pos)->flags & ASN1_STRING_FLAG_CONT)) {
         BIO *mbio;
         unsigned char *cont;

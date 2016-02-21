@@ -1,4 +1,3 @@
-/* crypto/hmac/hmactest.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -63,6 +62,7 @@
 #include "../e_os.h"
 
 # include <openssl/hmac.h>
+# include <openssl/sha.h>
 # ifndef OPENSSL_NO_MD5
 #  include <openssl/md5.h>
 # endif
@@ -193,6 +193,15 @@ int main(int argc, char *argv[])
     }
     printf("test 4 ok\n");
 test5:
+    /* Test 5 has empty key; test that single-shot accepts a NULL key. */
+    p = pt(HMAC(EVP_sha1(), NULL, 0, test[4].data, test[4].data_len,
+                NULL, NULL), SHA_DIGEST_LENGTH);
+    if (strcmp(p, (char *)test[4].digest) != 0) {
+        printf("Error calculating HMAC on %d entry'\n", i);
+        printf("got %s instead of %s\n", p, test[4].digest);
+        err++;
+    }
+
     HMAC_CTX_reset(ctx);
     if (HMAC_Init_ex(ctx, test[4].key, test[4].key_len, NULL, NULL)) {
         printf("Should fail to initialise HMAC with empty MD (test 5)\n");
@@ -236,7 +245,7 @@ test5:
         err++;
         goto test6;
     }
-    if (!HMAC_Init_ex(ctx, test[4].key, test[4].key_len, EVP_sha256(), NULL)) {
+    if (!HMAC_Init_ex(ctx, test[5].key, test[5].key_len, EVP_sha256(), NULL)) {
         printf("Failed to reinitialise HMAC (test 5)\n");
         err++;
         goto test6;

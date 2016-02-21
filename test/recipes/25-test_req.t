@@ -4,15 +4,15 @@ use strict;
 use warnings;
 
 use File::Spec;
-use OpenSSL::Test qw/:DEFAULT top_file/;
+use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_req");
 
 plan tests => 3;
 
-require_ok(top_file('test','recipes','tconversion.pl'));
+require_ok(srctop_file('test','recipes','tconversion.pl'));
 
-my @openssl_args = ("req", "-config", "../apps/openssl.cnf");
+my @openssl_args = ("req", "-config", srctop_file("apps", "openssl.cnf"));
 
 run_conversion('req conversions',
 	       "testreq.pem");

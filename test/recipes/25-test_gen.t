@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 use File::Spec;
-use OpenSSL::Test qw/:DEFAULT top_file/;
+use OpenSSL::Test qw/:DEFAULT srctop_file/;
 use OpenSSL::Test::Utils;
 
 setup("test_gen");
@@ -13,7 +13,7 @@ plan tests => 1;
 
 my $T = "testcert";
 my $KEY = 512;
-my $CA = top_file("certs", "testca.pem");
+my $CA = srctop_file("certs", "testca.pem");
 
 unlink "$T.1", "$T.2", "$T.key";
 open RND, ">>", ".rnd";
@@ -23,7 +23,7 @@ close RND;
 subtest "generating certificate requests" => sub {
     my @req_new;
     if (disabled("rsa")) {
-	@req_new = ("-newkey", "dsa:".top_file("apps", "dsa512.pem"));
+	@req_new = ("-newkey", "dsa:".srctop_file("apps", "dsa512.pem"));
     } else {
 	@req_new = ("-new");
 	note("There should be a 2 sequences of .'s and some +'s.");
@@ -34,11 +34,11 @@ subtest "generating certificate requests" => sub {
 
     plan tests => 2;
 
-    ok(run(app(["openssl", "req", "-config", top_file("test", "test.cnf"),
+    ok(run(app(["openssl", "req", "-config", srctop_file("test", "test.cnf"),
 		@req_new, "-out", "testreq.pem"])),
        "Generating request");
 
-    ok(run(app(["openssl", "req", "-config", top_file("test", "test.cnf"),
+    ok(run(app(["openssl", "req", "-config", srctop_file("test", "test.cnf"),
 		"-verify", "-in", "testreq.pem", "-noout"])),
        "Verifying signature on request");
 };

@@ -13,9 +13,6 @@ The OpenSSL B<ssl> library implements the Secure Sockets Layer (SSL v2/v3) and
 Transport Layer Security (TLS v1) protocols. It provides a rich API which is
 documented here.
 
-At first the library must be initialized; see
-L<SSL_library_init(3)>.
-
 Then an B<SSL_CTX> object is created as a framework to establish
 TLS/SSL enabled connections (see L<SSL_CTX_new(3)>).
 Various options regarding certificates, algorithms etc. can be set
@@ -234,6 +231,8 @@ protocol context defined in the B<SSL_CTX> structure.
 
 =item SSL_CTX *B<SSL_CTX_new>(const SSL_METHOD *meth);
 
+=item void SSL_CTX_up_ref(SSL_CTX *ctx);
+
 =item int B<SSL_CTX_remove_session>(SSL_CTX *ctx, SSL_SESSION *c);
 
 =item int B<SSL_CTX_sess_accept>(SSL_CTX *ctx);
@@ -315,7 +314,11 @@ Use the file path to locate trusted CA certficates.
 
 =item void B<SSL_CTX_set_msg_callback_arg>(SSL_CTX *ctx, void *arg);
 
-=item void B<SSL_CTX_set_options>(SSL_CTX *ctx, unsigned long op);
+=item unsigned long B<SSL_CTX_clear_options>(SSL_CTX *ctx, unsigned long op);
+
+=item unsigned long B<SSL_CTX_get_options>(SSL_CTX *ctx);
+
+=item unsigned long B<SSL_CTX_set_options>(SSL_CTX *ctx, unsigned long op);
 
 =item void B<SSL_CTX_set_quiet_shutdown>(SSL_CTX *ctx, int mode);
 
@@ -447,6 +450,25 @@ success or 0 on failure.
 
 =item SSL *B<SSL_dup>(SSL *ssl);
 
+SSL_dup() allows applications to configure an SSL handle for use
+in multiple SSL connections, and then duplicate it prior to initiating
+each connection with the duplicated handle.
+Use of SSL_dup() avoids the need to repeat the configuration of the
+handles for each connection.
+This is used internally by L<BIO_s_accept(3)> to construct
+per-connection SSL handles after L<accept(2)>.
+
+For SSL_dup() to work, the connection MUST be in its initial state
+and MUST NOT have not yet have started the SSL handshake.
+For connections that are not in their initial state SSL_dup() just
+increments an internal reference count and returns the I<same>
+handle.
+It may be possible to use L<SSL_clear(3)> to recycle an SSL handle
+that is not in its initial state for re-use, but this is best
+avoided.
+Instead, save and restore the session, if desired, and construct a
+fresh handle for each connection.
+
 =item STACK *B<SSL_dup_CA_list>(STACK *sk);
 
 =item void B<SSL_free>(SSL *ssl);
@@ -535,9 +557,9 @@ success or 0 on failure.
 
 =item STACK *B<SSL_load_client_CA_file>(char *file);
 
-=item void B<SSL_load_error_strings>(void);
-
 =item SSL *B<SSL_new>(SSL_CTX *ctx);
+
+=item void SSL_up_ref(SSL *s);
 
 =item long B<SSL_num_renegotiations>(SSL *ssl);
 
@@ -577,7 +599,11 @@ success or 0 on failure.
 
 =item void B<SSL_set_msg_callback_arg>(SSL *ctx, void *arg);
 
-=item void B<SSL_set_options>(SSL *ssl, unsigned long op);
+=item unsigned long B<SSL_clear_options>(SSL *ssl, unsigned long op);
+
+=item unsigned long B<SSL_get_options>(SSL *ssl);
+
+=item unsigned long B<SSL_set_options>(SSL *ssl, unsigned long op);
 
 =item void B<SSL_set_quiet_shutdown>(SSL *ssl, int mode);
 
@@ -660,6 +686,7 @@ Returns the current handshake state.
 =head1 SEE ALSO
 
 L<openssl(1)>, L<crypto(3)>,
+L<CRYPTO_get_ex_new_index(3)>,
 L<SSL_accept(3)>, L<SSL_clear(3)>,
 L<SSL_connect(3)>,
 L<SSL_CIPHER_get_name(3)>,
@@ -668,7 +695,6 @@ L<SSL_CTX_add_extra_chain_cert(3)>,
 L<SSL_CTX_add_session(3)>,
 L<SSL_CTX_ctrl(3)>,
 L<SSL_CTX_flush_sessions(3)>,
-L<SSL_CTX_get_ex_new_index(3)>,
 L<SSL_CTX_get_verify_mode(3)>,
 L<SSL_CTX_load_verify_locations(3)>
 L<SSL_CTX_new(3)>,
@@ -705,14 +731,12 @@ L<SSL_get_client_CA_list(3)>,
 L<SSL_get_default_timeout(3)>,
 L<SSL_get_error(3)>,
 L<SSL_get_ex_data_X509_STORE_CTX_idx(3)>,
-L<SSL_get_ex_new_index(3)>,
 L<SSL_get_fd(3)>,
 L<SSL_get_peer_cert_chain(3)>,
 L<SSL_get_rbio(3)>,
 L<SSL_get_session(3)>,
 L<SSL_get_verify_result(3)>,
 L<SSL_get_version(3)>,
-L<SSL_library_init(3)>,
 L<SSL_load_client_CA_file(3)>,
 L<SSL_new(3)>,
 L<SSL_pending(3)>,
@@ -729,7 +753,6 @@ L<SSL_state_string(3)>,
 L<SSL_want(3)>,
 L<SSL_write(3)>,
 L<SSL_SESSION_free(3)>,
-L<SSL_SESSION_get_ex_new_index(3)>,
 L<SSL_SESSION_get_time(3)>,
 L<d2i_SSL_SESSION(3)>,
 L<SSL_CTX_set_psk_client_callback(3)>,

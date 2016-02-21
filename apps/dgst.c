@@ -80,7 +80,7 @@ typedef enum OPTION_choice {
     OPT_C, OPT_R, OPT_RAND, OPT_OUT, OPT_SIGN, OPT_PASSIN, OPT_VERIFY,
     OPT_PRVERIFY, OPT_SIGNATURE, OPT_KEYFORM, OPT_ENGINE, OPT_ENGINE_IMPL,
     OPT_HEX, OPT_BINARY, OPT_DEBUG, OPT_FIPS_FINGERPRINT,
-    OPT_NON_FIPS_ALLOW, OPT_HMAC, OPT_MAC, OPT_SIGOPT, OPT_MACOPT,
+    OPT_HMAC, OPT_MAC, OPT_SIGOPT, OPT_MACOPT,
     OPT_DIGEST
 } OPTION_CHOICE;
 
@@ -91,30 +91,32 @@ OPTIONS dgst_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
     {"c", OPT_C, '-', "Print the digest with separating colons"},
     {"r", OPT_R, '-', "Print the digest in coreutils format"},
-    {"rand", OPT_RAND, 's'},
+    {"rand", OPT_RAND, 's',
+     "Use file(s) containing random data to seed RNG or an EGD sock"},
     {"out", OPT_OUT, '>', "Output to filename rather than stdout"},
-    {"passin", OPT_PASSIN, 's'},
-    {"sign", OPT_SIGN, '<', "Sign digest using private key in file"},
-    {"verify", OPT_VERIFY, '<',
-     "Verify a signature using public key in file"},
-    {"prverify", OPT_PRVERIFY, '<',
-     "Verify a signature using private key in file"},
+    {"passin", OPT_PASSIN, 's', "Input file pass phrase source"},
+    {"sign", OPT_SIGN, 's', "Sign digest using private key"},
+    {"verify", OPT_VERIFY, 's',
+     "Verify a signature using public key"},
+    {"prverify", OPT_PRVERIFY, 's',
+     "Verify a signature using private key"},
     {"signature", OPT_SIGNATURE, '<', "File with signature to verify"},
     {"keyform", OPT_KEYFORM, 'f', "Key file format (PEM or ENGINE)"},
     {"hex", OPT_HEX, '-', "Print as hex dump"},
     {"binary", OPT_BINARY, '-', "Print in binary form"},
     {"d", OPT_DEBUG, '-', "Print debug info"},
-    {"debug", OPT_DEBUG, '-'},
-    {"fips-fingerprint", OPT_FIPS_FINGERPRINT, '-'},
-    {"non-fips-allow", OPT_NON_FIPS_ALLOW, '-'},
+    {"debug", OPT_DEBUG, '-', "Print debug info"},
+    {"fips-fingerprint", OPT_FIPS_FINGERPRINT, '-',
+     "Compute HMAC with the key used in OpenSSL-FIPS fingerprint"},
     {"hmac", OPT_HMAC, 's', "Create hashed MAC with key"},
-    {"mac", OPT_MAC, 's', "Create MAC (not neccessarily HMAC)"},
+    {"mac", OPT_MAC, 's', "Create MAC (not necessarily HMAC)"},
     {"sigopt", OPT_SIGOPT, 's', "Signature parameter in n:v form"},
     {"macopt", OPT_MACOPT, 's', "MAC algorithm parameters in n:v form or key"},
     {"", OPT_DIGEST, '-', "Any supported digest"},
 #ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine e, possibly a hardware device"},
-    {"engine_impl", OPT_ENGINE_IMPL, '-'},
+    {"engine_impl", OPT_ENGINE_IMPL, '-',
+     "Also use engine given by -engine for digest operations"},
 #endif
     {NULL}
 };
@@ -133,8 +135,7 @@ int dgst_main(int argc, char **argv)
     const char *sigfile = NULL, *randfile = NULL;
     OPTION_CHOICE o;
     int separator = 0, debug = 0, keyform = FORMAT_PEM, siglen = 0;
-    int i, ret = 1, out_bin = -1, want_pub = 0, do_verify =
-        0, non_fips_allow = 0;
+    int i, ret = 1, out_bin = -1, want_pub = 0, do_verify = 0;
     unsigned char *buf = NULL, *sigbuf = NULL;
     int engine_impl = 0;
 
@@ -204,9 +205,6 @@ int dgst_main(int argc, char **argv)
             break;
         case OPT_FIPS_FINGERPRINT:
             hmac_key = "etaonrishdlcupfm";
-            break;
-        case OPT_NON_FIPS_ALLOW:
-            non_fips_allow = 1;
             break;
         case OPT_HMAC:
             hmac_key = opt_arg();
@@ -321,12 +319,6 @@ int dgst_main(int argc, char **argv)
         EVP_PKEY_CTX_free(mac_ctx);
         if (r == 0)
             goto end;
-    }
-
-    if (non_fips_allow) {
-        EVP_MD_CTX *md_ctx;
-        BIO_get_md_ctx(bmd, &md_ctx);
-        EVP_MD_CTX_set_flags(md_ctx, EVP_MD_CTX_FLAG_NON_FIPS_ALLOW);
     }
 
     if (hmac_key) {

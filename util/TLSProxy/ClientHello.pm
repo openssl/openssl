@@ -57,12 +57,6 @@ package TLSProxy::ClientHello;
 
 use parent 'TLSProxy::Message';
 
-use constant {
-    EXT_ENCRYPT_THEN_MAC => 22,
-    EXT_EXTENDED_MASTER_SECRET => 23,
-    EXT_SESSION_TICKET => 35
-};
-
 sub new
 {
     my $class = shift;
@@ -89,7 +83,7 @@ sub new
     $self->{comp_meth_len} = 0;
     $self->{comp_meths} = [];
     $self->{extensions_len} = 0;
-    $self->{extensions_data} = "";
+    $self->{extension_data} = "";
 
     return $self;
 }
@@ -160,7 +154,7 @@ sub process_extensions
     #Clear any state from a previous run
     TLSProxy::Record->etm(0);
 
-    if (exists $extensions{&EXT_ENCRYPT_THEN_MAC}) {
+    if (exists $extensions{TLSProxy::Message::EXT_ENCRYPT_THEN_MAC}) {
         TLSProxy::Record->etm(1);
     }
 }
@@ -186,6 +180,11 @@ sub set_message_contents
         $extensions .= pack("n", $key);
         $extensions .= pack("n", length($extdata));
         $extensions .= $extdata;
+        if ($key == TLSProxy::Message::EXT_DUPLICATE_EXTENSION) {
+          $extensions .= pack("n", $key);
+          $extensions .= pack("n", length($extdata));
+          $extensions .= $extdata;
+        }
     }
 
     $data .= pack('n', length($extensions));
@@ -274,6 +273,11 @@ sub extension_data
       $self->{extension_data} = shift;
     }
     return $self->{extension_data};
+}
+sub set_extension
+{
+    my ($self, $ext_type, $ext_data) = @_;
+    $self->{extension_data}{$ext_type} = $ext_data;
 }
 sub delete_extension
 {

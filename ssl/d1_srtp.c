@@ -1,4 +1,3 @@
-/* ssl/t1_lib.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -128,6 +127,14 @@ static SRTP_PROTECTION_PROFILE srtp_known_profiles[] = {
     {
      "SRTP_AES128_CM_SHA1_32",
      SRTP_AES128_CM_SHA1_32,
+     },
+    {
+     "SRTP_AEAD_AES_128_GCM",
+     SRTP_AEAD_AES_128_GCM
+     },
+    {
+     "SRTP_AEAD_AES_256_GCM",
+     SRTP_AEAD_AES_256_GCM
      },
     {0}
 };

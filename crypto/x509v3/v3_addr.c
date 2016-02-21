@@ -360,7 +360,7 @@ static int IPAddressOrRange_cmp(const IPAddressOrRange *a,
 
 /*
  * IPv4-specific closure over IPAddressOrRange_cmp, since sk_sort()
- * comparision routines are only allowed two arguments.
+ * comparison routines are only allowed two arguments.
  */
 static int v4IPAddressOrRange_cmp(const IPAddressOrRange *const *a,
                                   const IPAddressOrRange *const *b)
@@ -370,7 +370,7 @@ static int v4IPAddressOrRange_cmp(const IPAddressOrRange *const *a,
 
 /*
  * IPv6-specific closure over IPAddressOrRange_cmp, since sk_sort()
- * comparision routines are only allowed two arguments.
+ * comparison routines are only allowed two arguments.
  */
 static int v6IPAddressOrRange_cmp(const IPAddressOrRange *const *a,
                                   const IPAddressOrRange *const *b)
@@ -704,7 +704,7 @@ int v3_addr_get_range(IPAddressOrRange *aor,
 }
 
 /*
- * Sort comparision function for a sequence of IPAddressFamily.
+ * Sort comparison function for a sequence of IPAddressFamily.
  *
  * The last paragraph of RFC 3779 2.2.3.3 is slightly ambiguous about
  * the ordering: I can read it as meaning that IPv6 without a SAFI

@@ -1,4 +1,3 @@
-/* pmeth_lib.c */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
  * 2006.
@@ -63,12 +62,12 @@
 #ifndef OPENSSL_NO_ENGINE
 # include <openssl/engine.h>
 #endif
+#include <openssl/evp.h>
 #include "internal/asn1_int.h"
 #include "internal/evp_int.h"
 
 typedef int sk_cmp_fn_type(const char *const *a, const char *const *b);
 
-DECLARE_STACK_OF(EVP_PKEY_METHOD)
 static STACK_OF(EVP_PKEY_METHOD) *app_pkey_methods = NULL;
 
 static const EVP_PKEY_METHOD *standard_methods[] = {
@@ -87,8 +86,9 @@ static const EVP_PKEY_METHOD *standard_methods[] = {
     &hmac_pkey_meth,
     &cmac_pkey_meth,
 #ifndef OPENSSL_NO_DH
-    &dhx_pkey_meth
+    &dhx_pkey_meth,
 #endif
+    &tls1_prf_pkey_meth
 };
 
 DECLARE_OBJ_BSEARCH_CMP_FN(const EVP_PKEY_METHOD *, const EVP_PKEY_METHOD *,
@@ -144,7 +144,7 @@ static EVP_PKEY_CTX *int_ctx_new(EVP_PKEY *pkey, ENGINE *e, int id)
         e = ENGINE_get_pkey_meth_engine(id);
 
     /*
-     * If an ENGINE handled this method look it up. Othewise use internal
+     * If an ENGINE handled this method look it up. Otherwise use internal
      * tables.
      */
 

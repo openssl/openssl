@@ -1,4 +1,3 @@
-/* ssl/ssl_sess.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -529,12 +528,8 @@ int ssl_get_prev_session(SSL *s, const PACKET *ext, const PACKET *session_id)
     int fatal = 0;
     int try_session_cache = 1;
     int r;
-    size_t len = PACKET_remaining(session_id);
 
-    if (len > SSL_MAX_SSL_SESSION_ID_LENGTH)
-        goto err;
-
-    if (len == 0)
+    if (PACKET_remaining(session_id) == 0)
         try_session_cache = 0;
 
     /* sets s->tlsext_ticket_expected and extended master secret flag */
@@ -581,13 +576,9 @@ int ssl_get_prev_session(SSL *s, const PACKET *ext, const PACKET *session_id)
     if (try_session_cache &&
         ret == NULL && s->session_ctx->get_session_cb != NULL) {
         int copy = 1;
-        /* The user callback takes a non-const pointer, so grab a local copy. */
-        unsigned char *sid = NULL;
-        size_t sid_len;
-        if (!PACKET_memdup(session_id, &sid, &sid_len))
-            goto err;
-        ret = s->session_ctx->get_session_cb(s, sid, sid_len, &copy);
-        OPENSSL_free(sid);
+        ret = s->session_ctx->get_session_cb(s, PACKET_data(session_id),
+                                             PACKET_remaining(session_id),
+                                             &copy);
 
         if (ret != NULL) {
             s->session_ctx->stats.sess_cb_hit++;
@@ -823,17 +814,10 @@ void SSL_SESSION_free(SSL_SESSION *ss)
         return;
 
     i = CRYPTO_add(&ss->references, -1, CRYPTO_LOCK_SSL_SESSION);
-#ifdef REF_PRINT
-    REF_PRINT("SSL_SESSION", ss);
-#endif
+    REF_PRINT_COUNT("SSL_SESSION", ss);
     if (i > 0)
         return;
-#ifdef REF_CHECK
-    if (i < 0) {
-        fprintf(stderr, "SSL_SESSION_free, bad reference count\n");
-        abort();                /* ok */
-    }
-#endif
+    REF_ASSERT_ISNT(i < 0);
 
     CRYPTO_free_ex_data(CRYPTO_EX_INDEX_SSL_SESSION, ss, &ss->ex_data);
 
@@ -989,7 +973,7 @@ int SSL_set_session_secret_cb(SSL *s,
                                                             int *secret_len,
                                                             STACK_OF(SSL_CIPHER)
                                                             *peer_ciphers,
-                                                            SSL_CIPHER
+                                                            const SSL_CIPHER
                                                             **cipher,
                                                             void *arg),
                               void *arg)
@@ -1044,7 +1028,7 @@ typedef struct timeout_param_st {
     LHASH_OF(SSL_SESSION) *cache;
 } TIMEOUT_PARAM;
 
-static void timeout_doall_arg(SSL_SESSION *s, TIMEOUT_PARAM *p)
+static void timeout_cb(SSL_SESSION *s, TIMEOUT_PARAM *p)
 {
     if ((p->time == 0) || (p->time > (s->time + s->timeout))) { /* timeout */
         /*
@@ -1060,7 +1044,7 @@ static void timeout_doall_arg(SSL_SESSION *s, TIMEOUT_PARAM *p)
     }
 }
 
-static IMPLEMENT_LHASH_DOALL_ARG_FN(timeout, SSL_SESSION, TIMEOUT_PARAM)
+IMPLEMENT_LHASH_DOALL_ARG(SSL_SESSION, TIMEOUT_PARAM);
 
 void SSL_CTX_flush_sessions(SSL_CTX *s, long t)
 {
@@ -1075,8 +1059,7 @@ void SSL_CTX_flush_sessions(SSL_CTX *s, long t)
     CRYPTO_w_lock(CRYPTO_LOCK_SSL_CTX);
     i = CHECKED_LHASH_OF(SSL_SESSION, tp.cache)->down_load;
     CHECKED_LHASH_OF(SSL_SESSION, tp.cache)->down_load = 0;
-    lh_SSL_SESSION_doall_arg(tp.cache, LHASH_DOALL_ARG_FN(timeout),
-                             TIMEOUT_PARAM, &tp);
+    lh_SSL_SESSION_doall_TIMEOUT_PARAM(tp.cache, timeout_cb, &tp);
     CHECKED_LHASH_OF(SSL_SESSION, tp.cache)->down_load = i;
     CRYPTO_w_unlock(CRYPTO_LOCK_SSL_CTX);
 }
@@ -1164,14 +1147,14 @@ void (*SSL_CTX_sess_get_remove_cb(SSL_CTX *ctx)) (SSL_CTX *ctx,
 
 void SSL_CTX_sess_set_get_cb(SSL_CTX *ctx,
                              SSL_SESSION *(*cb) (struct ssl_st *ssl,
-                                                 unsigned char *data, int len,
-                                                 int *copy))
+                                                 const unsigned char *data,
+                                                 int len, int *copy))
 {
     ctx->get_session_cb = cb;
 }
 
 SSL_SESSION *(*SSL_CTX_sess_get_get_cb(SSL_CTX *ctx)) (SSL *ssl,
-                                                       unsigned char *data,
+                                                       const unsigned char *data,
                                                        int len, int *copy) {
     return ctx->get_session_cb;
 }

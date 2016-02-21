@@ -1,4 +1,3 @@
-/* dso_dlfcn.c */
 /*
  * Written by Geoff Thorpe (geoff@geoffthorpe.net) for the OpenSSL project
  * 2000.
@@ -69,6 +68,7 @@
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include <openssl/dso.h>
+#include "internal/dso_conf.h"
 
 #ifndef DSO_DLFCN
 DSO_METHOD *DSO_METHOD_dlfcn(void)
@@ -281,23 +281,21 @@ static char *dlfcn_merger(DSO *dso, const char *filespec1,
      * if the second file specification is missing.
      */
     if (!filespec2 || (filespec1 != NULL && filespec1[0] == '/')) {
-        merged = OPENSSL_malloc(strlen(filespec1) + 1);
+        merged = OPENSSL_strdup(filespec1);
         if (merged == NULL) {
             DSOerr(DSO_F_DLFCN_MERGER, ERR_R_MALLOC_FAILURE);
             return (NULL);
         }
-        strcpy(merged, filespec1);
     }
     /*
      * If the first file specification is missing, the second one rules.
      */
     else if (!filespec1) {
-        merged = OPENSSL_malloc(strlen(filespec2) + 1);
+        merged = OPENSSL_strdup(filespec2);
         if (merged == NULL) {
             DSOerr(DSO_F_DLFCN_MERGER, ERR_R_MALLOC_FAILURE);
             return (NULL);
         }
-        strcpy(merged, filespec2);
     } else {
         /*
          * This part isn't as trivial as it looks.  It assumes that the
@@ -327,14 +325,6 @@ static char *dlfcn_merger(DSO *dso, const char *filespec1,
     return (merged);
 }
 
-# ifdef OPENSSL_SYS_MACOSX
-#  define DSO_ext ".dylib"
-#  define DSO_extlen 6
-# else
-#  define DSO_ext ".so"
-#  define DSO_extlen 3
-# endif
-
 static char *dlfcn_name_converter(DSO *dso, const char *filename)
 {
     char *translated;
@@ -345,7 +335,7 @@ static char *dlfcn_name_converter(DSO *dso, const char *filename)
     transform = (strstr(filename, "/") == NULL);
     if (transform) {
         /* We will convert this to "%s.so" or "lib%s.so" etc */
-        rsize += DSO_extlen;    /* The length of ".so" */
+        rsize += strlen(DSO_EXTENSION);    /* The length of ".so" */
         if ((DSO_flags(dso) & DSO_FLAG_NAME_TRANSLATION_EXT_ONLY) == 0)
             rsize += 3;         /* The length of "lib" */
     }
@@ -356,9 +346,9 @@ static char *dlfcn_name_converter(DSO *dso, const char *filename)
     }
     if (transform) {
         if ((DSO_flags(dso) & DSO_FLAG_NAME_TRANSLATION_EXT_ONLY) == 0)
-            sprintf(translated, "lib%s" DSO_ext, filename);
+            sprintf(translated, "lib%s" DSO_EXTENSION, filename);
         else
-            sprintf(translated, "%s" DSO_ext, filename);
+            sprintf(translated, "%s" DSO_EXTENSION, filename);
     } else
         sprintf(translated, "%s", filename);
     return (translated);

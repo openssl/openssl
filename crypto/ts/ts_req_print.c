@@ -1,4 +1,3 @@
-/* crypto/ts/ts_req_print.c */
 /*
  * Written by Zoltan Glozik (zglozik@stones.com) for the OpenSSL project
  * 2002.

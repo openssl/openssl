@@ -1,4 +1,3 @@
-/* include/openssl/async.h */
 /*
  * Written by Matt Caswell (matt@openssl.org) for the OpenSSL project.
  */
@@ -54,9 +53,15 @@
 #ifndef HEADER_ASYNC_H
 # define HEADER_ASYNC_H
 
+#include <openssl/opensslconf.h>
+
+#ifdef OPENSSL_NO_ASYNC
+#define ASYNC_block_pause() do { ; } while(0)
+#define ASYNC_unblock_pause() do { ; } while(0)
+#else
 #include <stdlib.h>
 
-#if defined(_WIN32) || defined(__CYGWIN__)
+#if defined(_WIN32)
 #include <windows.h>
 #define OSSL_ASYNC_FD   HANDLE
 #else
@@ -75,8 +80,6 @@ typedef struct async_job_st ASYNC_JOB;
 #define ASYNC_PAUSE    2
 #define ASYNC_FINISH   3
 
-int ASYNC_init(int init_thread, size_t max_size, size_t init_size);
-void ASYNC_cleanup(int cleanupthread);
 int ASYNC_init_thread(size_t max_size, size_t init_size);
 void ASYNC_cleanup_thread(void);
 
@@ -119,4 +122,5 @@ void ERR_load_ASYNC_strings(void);
 #ifdef  __cplusplus
 }
 #endif
+#endif /* OPENSSL_NO_ASYNC */
 #endif

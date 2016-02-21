@@ -1,4 +1,3 @@
-/* crypto/engine/eng_dyn.c */
 /*
  * Written by Geoff Thorpe (geoff@geoffthorpe.net) for the OpenSSL project
  * 2001.
@@ -59,6 +58,7 @@
 
 #include "eng_int.h"
 #include <openssl/dso.h>
+#include <openssl/crypto.h>
 
 /*
  * Shared libraries implementing ENGINEs for use by the "dynamic" ENGINE
@@ -231,6 +231,8 @@ static int dynamic_set_data_ctx(ENGINE *e, dynamic_data_ctx **ctx)
      * If we lost the race to set the context, c is non-NULL and *ctx is the
      * context of the thread that won.
      */
+    if (c)
+        sk_OPENSSL_STRING_free(c->dirs);
     OPENSSL_free(c);
     return 1;
 }
@@ -293,7 +295,7 @@ static ENGINE *engine_dynamic(void)
     return ret;
 }
 
-void ENGINE_load_dynamic(void)
+void engine_load_dynamic_internal(void)
 {
     ENGINE *toadd = engine_dynamic();
     if (!toadd)
@@ -315,7 +317,7 @@ void ENGINE_load_dynamic(void)
 static int dynamic_init(ENGINE *e)
 {
     /*
-     * We always return failure - the "dyanamic" engine itself can't be used
+     * We always return failure - the "dynamic" engine itself can't be used
      * for anything.
      */
     return 0;
@@ -445,6 +447,8 @@ static int dynamic_load(ENGINE *e, dynamic_data_ctx *ctx)
     if (!ctx->DYNAMIC_LIBNAME) {
         if (!ctx->engine_id)
             return 0;
+        DSO_ctrl(ctx->dynamic_dso, DSO_CTRL_SET_FLAGS,
+                 DSO_FLAG_NAME_TRANSLATION_EXT_ONLY, NULL);
         ctx->DYNAMIC_LIBNAME =
             DSO_convert_filename(ctx->dynamic_dso, ctx->engine_id);
     }
@@ -506,8 +510,6 @@ static int dynamic_load(ENGINE *e, dynamic_data_ctx *ctx)
      * would also increase opaqueness.
      */
     fns.static_state = ENGINE_get_static_state();
-    CRYPTO_get_mem_functions(&fns.mem_fns.malloc_cb,
-                             &fns.mem_fns.realloc_cb, &fns.mem_fns.free_cb);
     fns.lock_fns.lock_locking_cb = CRYPTO_get_locking_callback();
     fns.lock_fns.lock_add_lock_cb = CRYPTO_get_add_lock_callback();
     fns.lock_fns.dynlock_create_cb = CRYPTO_get_dynlock_create_callback();

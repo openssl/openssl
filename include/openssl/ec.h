@@ -85,7 +85,7 @@
 
 # include <openssl/asn1.h>
 # include <openssl/symhacks.h>
-# ifdef OPENSSL_USE_DEPRECATED
+# if OPENSSL_API_COMPAT < 0x10100000L
 #  include <openssl/bn.h>
 # endif
 
@@ -257,6 +257,20 @@ BN_MONT_CTX *EC_GROUP_get_mont_data(const EC_GROUP *group);
  */
 int EC_GROUP_get_order(const EC_GROUP *group, BIGNUM *order, BN_CTX *ctx);
 
+/** Gets the order of an EC_GROUP
+ *  \param  group  EC_GROUP object
+ *  \return the group order
+ */
+
+const BIGNUM *EC_GROUP_get0_order(const EC_GROUP *group);
+
+/** Gets the number of bits of ther order of an EC_GROUP
+ *  \param  group  EC_GROUP object
+ *  \return number of bits of group order.
+ */
+
+int EC_GROUP_order_bits(const EC_GROUP *group);
+
 /** Gets the cofactor of a EC_GROUP
  *  \param  group     EC_GROUP object
  *  \param  cofactor  BIGNUM to which the cofactor is copied
@@ -265,6 +279,13 @@ int EC_GROUP_get_order(const EC_GROUP *group, BIGNUM *order, BN_CTX *ctx);
  */
 int EC_GROUP_get_cofactor(const EC_GROUP *group, BIGNUM *cofactor,
                           BN_CTX *ctx);
+
+/** Gets the cofactor of an EC_GROUP
+ *  \param  group  EC_GROUP object
+ *  \return the group cofactor
+ */
+
+const BIGNUM *EC_GROUP_get0_cofactor(const EC_GROUP *group);
 
 /** Sets the name of a EC_GROUP object
  *  \param  group  EC_GROUP object
@@ -791,13 +812,13 @@ void EC_KEY_free(EC_KEY *key);
  *  \param  src  src EC_KEY object
  *  \return dst or NULL if an error occurred.
  */
-EC_KEY *EC_KEY_copy(EC_KEY *dst, const EC_KEY *src);
+EC_KEY *EC_KEY_copy(EC_KEY *dst, EC_KEY *src);
 
 /** Creates a new EC_KEY object and copies the content from src to it.
  *  \param  src  the source EC_KEY object
  *  \return newly created EC_KEY object or NULL if an error occurred.
  */
-EC_KEY *EC_KEY_dup(const EC_KEY *src);
+EC_KEY *EC_KEY_dup(EC_KEY *src);
 
 /** Increases the internal reference count of a EC_KEY object.
  *  \param  key  EC_KEY object
@@ -851,23 +872,12 @@ unsigned EC_KEY_get_enc_flags(const EC_KEY *key);
 void EC_KEY_set_enc_flags(EC_KEY *eckey, unsigned int flags);
 point_conversion_form_t EC_KEY_get_conv_form(const EC_KEY *key);
 void EC_KEY_set_conv_form(EC_KEY *eckey, point_conversion_form_t cform);
-/* functions to set/get method specific data  */
-void *EC_KEY_get_key_method_data(EC_KEY *key,
-                                 void *(*dup_func) (void *),
-                                 void (*free_func) (void *),
-                                 void (*clear_free_func) (void *));
-/** Sets the key method data of an EC_KEY object, if none has yet been set.
- *  \param  key              EC_KEY object
- *  \param  data             opaque data to install.
- *  \param  dup_func         a function that duplicates |data|.
- *  \param  free_func        a function that frees |data|.
- *  \param  clear_free_func  a function that wipes and frees |data|.
- *  \return the previously set data pointer, or NULL if |data| was inserted.
- */
-void *EC_KEY_insert_key_method_data(EC_KEY *key, void *data,
-                                    void *(*dup_func) (void *),
-                                    void (*free_func) (void *),
-                                    void (*clear_free_func) (void *));
+
+#define EC_KEY_get_ex_new_index(l, p, newf, dupf, freef) \
+    CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_EC_KEY, l, p, newf, dupf, freef)
+int EC_KEY_set_ex_data(EC_KEY *key, int idx, void *arg);
+void *EC_KEY_get_ex_data(const EC_KEY *key, int idx);
+
 /* wrapper functions for the underlying EC_GROUP object */
 void EC_KEY_set_asn1_flag(EC_KEY *eckey, int asn1_flag);
 
@@ -923,6 +933,33 @@ size_t EC_KEY_key2buf(const EC_KEY *key, point_conversion_form_t form,
 
 int EC_KEY_oct2key(EC_KEY *key, const unsigned char *buf, size_t len,
                    BN_CTX *ctx);
+
+/** Decodes an EC_KEY private key from an octet string
+ *  \param  key    key to decode
+ *  \param  buf    memory buffer with the encoded private key
+ *  \param  len    length of the encoded key
+ *  \return 1 on success and 0 if an error occurred
+ */
+
+int EC_KEY_oct2priv(EC_KEY *key, unsigned char *buf, size_t len);
+
+/** Encodes a EC_KEY private key to an octet string
+ *  \param  key    key to encode
+ *  \param  buf    memory buffer for the result. If NULL the function returns
+ *                 required buffer size.
+ *  \param  len    length of the memory buffer
+ *  \return the length of the encoded octet string or 0 if an error occurred
+ */
+
+size_t EC_KEY_priv2oct(const EC_KEY *key, unsigned char *buf, size_t len);
+
+/** Encodes an EC_KEY private key to an allocated octet string
+ *  \param  key    key to encode
+ *  \param  pbuf   returns pointer to allocated buffer
+ *  \return the length of the encoded octet string or 0 if an error occurred
+ */
+
+size_t EC_KEY_priv2buf(const EC_KEY *eckey, unsigned char **pbuf);
 
 /********************************************************************/
 /*        de- and encoding functions for SEC1 ECPrivateKey          */
@@ -1023,6 +1060,8 @@ int EC_KEY_print_fp(FILE *fp, const EC_KEY *key, int off);
 const EC_KEY_METHOD *EC_KEY_OpenSSL(void);
 const EC_KEY_METHOD *EC_KEY_get_default_method(void);
 void EC_KEY_set_default_method(const EC_KEY_METHOD *meth);
+const EC_KEY_METHOD *EC_KEY_get_method(const EC_KEY *key);
+int EC_KEY_set_method(EC_KEY *key, const EC_KEY_METHOD *meth);
 EC_KEY *EC_KEY_new_method(ENGINE *engine);
 
 int ECDH_KDF_X9_62(unsigned char *out, size_t outlen,
@@ -1467,8 +1506,10 @@ void ERR_load_EC_strings(void);
 # define EC_F_EC_KEY_GENERATE_KEY                         179
 # define EC_F_EC_KEY_NEW                                  182
 # define EC_F_EC_KEY_NEW_METHOD                           245
+# define EC_F_EC_KEY_OCT2PRIV                             255
 # define EC_F_EC_KEY_PRINT                                180
 # define EC_F_EC_KEY_PRINT_FP                             181
+# define EC_F_EC_KEY_PRIV2OCT                             256
 # define EC_F_EC_KEY_SET_PUBLIC_KEY_AFFINE_COORDINATES    229
 # define EC_F_EC_POINTS_MAKE_AFFINE                       136
 # define EC_F_EC_POINT_ADD                                112

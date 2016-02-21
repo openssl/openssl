@@ -1,4 +1,3 @@
-/* crypto/x509/x509_vfy.h */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -56,16 +55,15 @@
  * [including the GNU Public Licence.]
  */
 
-#ifndef HEADER_X509_H
-# include <openssl/x509.h>
-/*
- * openssl/x509.h ends up #include-ing this file at about the only
- * appropriate moment.
- */
-#endif
-
 #ifndef HEADER_X509_VFY_H
 # define HEADER_X509_VFY_H
+
+/*
+ * Protect against recursion, x509.h and x509_vfy.h each include the other.
+ */
+# ifndef HEADER_X509_H
+#  include <openssl/x509.h>
+# endif
 
 # include <openssl/opensslconf.h>
 # include <openssl/lhash.h>
@@ -120,8 +118,8 @@ typedef struct x509_object_st {
 
 typedef struct x509_lookup_st X509_LOOKUP;
 
-DECLARE_STACK_OF(X509_LOOKUP)
-DECLARE_STACK_OF(X509_OBJECT)
+DEFINE_STACK_OF(X509_LOOKUP)
+DEFINE_STACK_OF(X509_OBJECT)
 
 /* This is a static that defines the function interface */
 typedef struct x509_lookup_method_st {
@@ -145,7 +143,7 @@ typedef struct x509_lookup_method_st {
 
 typedef struct X509_VERIFY_PARAM_st X509_VERIFY_PARAM;
 
-DECLARE_STACK_OF(X509_VERIFY_PARAM)
+DEFINE_STACK_OF(X509_VERIFY_PARAM)
 
 /*
  * This is used to hold everything.  It is used for all certificate
@@ -240,8 +238,8 @@ struct x509_store_ctx_st {      /* X509_STORE_CTX */
     /* The following is built up */
     /* if 0, rebuild chain */
     int valid;
-    /* index of last untrusted cert */
-    int last_untrusted;
+    /* number of untrusted certs */
+    int num_untrusted;
     /* chain of X509s - built up and trusted */
     STACK_OF(X509) *chain;
     /* Valid policy tree */
@@ -263,6 +261,9 @@ struct x509_store_ctx_st {      /* X509_STORE_CTX */
     /* For CRL path validation: parent context */
     X509_STORE_CTX *parent;
     CRYPTO_EX_DATA ex_data;
+    struct dane_st *dane;
+    /* signed via bare TA public key, rather than CA certificate */
+    int bare_ta_signed;
 } /* X509_STORE_CTX */ ;
 
 void X509_STORE_CTX_set_depth(X509_STORE_CTX *ctx, int depth);
@@ -282,8 +283,7 @@ void X509_STORE_CTX_set_depth(X509_STORE_CTX *ctx, int depth);
                 X509_LOOKUP_ctrl((x),X509_L_ADD_DIR,(name),(long)(type),NULL)
 
 # define         X509_V_OK                                       0
-/* illegal error (for uninitialized values, to avoid X509_V_OK): 1 */
-
+# define         X509_V_ERR_UNSPECIFIED                          1
 # define         X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT            2
 # define         X509_V_ERR_UNABLE_TO_GET_CRL                    3
 # define         X509_V_ERR_UNABLE_TO_DECRYPT_CERT_SIGNATURE     4
@@ -316,7 +316,6 @@ void X509_STORE_CTX_set_depth(X509_STORE_CTX *ctx, int depth);
 # define         X509_V_ERR_AKID_SKID_MISMATCH                   30
 # define         X509_V_ERR_AKID_ISSUER_SERIAL_MISMATCH          31
 # define         X509_V_ERR_KEYUSAGE_NO_CERTSIGN                 32
-
 # define         X509_V_ERR_UNABLE_TO_GET_CRL_ISSUER             33
 # define         X509_V_ERR_UNHANDLED_CRITICAL_EXTENSION         34
 # define         X509_V_ERR_KEYUSAGE_NO_CRL_SIGN                 35
@@ -325,18 +324,17 @@ void X509_STORE_CTX_set_depth(X509_STORE_CTX *ctx, int depth);
 # define         X509_V_ERR_PROXY_PATH_LENGTH_EXCEEDED           38
 # define         X509_V_ERR_KEYUSAGE_NO_DIGITAL_SIGNATURE        39
 # define         X509_V_ERR_PROXY_CERTIFICATES_NOT_ALLOWED       40
-
 # define         X509_V_ERR_INVALID_EXTENSION                    41
 # define         X509_V_ERR_INVALID_POLICY_EXTENSION             42
 # define         X509_V_ERR_NO_EXPLICIT_POLICY                   43
 # define         X509_V_ERR_DIFFERENT_CRL_SCOPE                  44
 # define         X509_V_ERR_UNSUPPORTED_EXTENSION_FEATURE        45
-
 # define         X509_V_ERR_UNNESTED_RESOURCE                    46
-
 # define         X509_V_ERR_PERMITTED_VIOLATION                  47
 # define         X509_V_ERR_EXCLUDED_VIOLATION                   48
 # define         X509_V_ERR_SUBTREE_MINMAX                       49
+/* The application is not happy */
+# define         X509_V_ERR_APPLICATION_VERIFICATION             50
 # define         X509_V_ERR_UNSUPPORTED_CONSTRAINT_TYPE          51
 # define         X509_V_ERR_UNSUPPORTED_CONSTRAINT_SYNTAX        52
 # define         X509_V_ERR_UNSUPPORTED_NAME_SYNTAX              53
@@ -354,14 +352,15 @@ void X509_STORE_CTX_set_depth(X509_STORE_CTX *ctx, int depth);
 # define         X509_V_ERR_HOSTNAME_MISMATCH                    62
 # define         X509_V_ERR_EMAIL_MISMATCH                       63
 # define         X509_V_ERR_IP_ADDRESS_MISMATCH                  64
+/* DANE TLSA errors */
+# define         X509_V_ERR_DANE_NO_MATCH                        65
 
-/* The application is not happy */
-# define         X509_V_ERR_APPLICATION_VERIFICATION             50
 
 /* Certificate verify flags */
 
-/* Send issuer+subject checks to verify_cb */
-# define X509_V_FLAG_CB_ISSUER_CHECK             0x1
+# if OPENSSL_API_COMPAT < 0x10100000L
+#  define X509_V_FLAG_CB_ISSUER_CHECK             0x0   /* Deprecated */
+# endif
 /* Use check time instead of current time */
 # define X509_V_FLAG_USE_CHECK_TIME              0x2
 /* Lookup CRLs */
@@ -528,6 +527,12 @@ X509_VERIFY_PARAM *X509_STORE_CTX_get0_param(X509_STORE_CTX *ctx);
 void X509_STORE_CTX_set0_param(X509_STORE_CTX *ctx, X509_VERIFY_PARAM *param);
 int X509_STORE_CTX_set_default(X509_STORE_CTX *ctx, const char *name);
 
+/*
+ * Bridge opacity barrier between libcrypt and libssl, also needed to support
+ * offline testing in test/danetest.c
+ */
+void X509_STORE_CTX_set0_dane(X509_STORE_CTX *ctx, struct dane_st *dane);
+
 /* X509_VERIFY_PARAM functions */
 
 X509_VERIFY_PARAM *X509_VERIFY_PARAM_new(void);
@@ -558,6 +563,7 @@ int X509_VERIFY_PARAM_add1_host(X509_VERIFY_PARAM *param,
 void X509_VERIFY_PARAM_set_hostflags(X509_VERIFY_PARAM *param,
                                      unsigned int flags);
 char *X509_VERIFY_PARAM_get0_peername(X509_VERIFY_PARAM *);
+void X509_VERIFY_PARAM_move_peername(X509_VERIFY_PARAM *, X509_VERIFY_PARAM *);
 int X509_VERIFY_PARAM_set1_email(X509_VERIFY_PARAM *param,
                                  const char *email, size_t emaillen);
 int X509_VERIFY_PARAM_set1_ip(X509_VERIFY_PARAM *param,
@@ -573,6 +579,19 @@ int X509_VERIFY_PARAM_get_count(void);
 const X509_VERIFY_PARAM *X509_VERIFY_PARAM_get0(int id);
 const X509_VERIFY_PARAM *X509_VERIFY_PARAM_lookup(const char *name);
 void X509_VERIFY_PARAM_table_cleanup(void);
+
+/* Non positive return values are errors */
+#define X509_PCY_TREE_FAILURE  -2 /* Failure to satisfy explicit policy */
+#define X509_PCY_TREE_INVALID  -1 /* Inconsistent or invalid extensions */
+#define X509_PCY_TREE_INTERNAL  0 /* Internal error, most likely malloc */
+
+/*
+ * Positive return values form a bit mask, all but the first are internal to
+ * the library and don't appear in results from X509_policy_check().
+ */
+#define X509_PCY_TREE_VALID     1 /* The policy tree is valid */
+#define X509_PCY_TREE_EMPTY     2 /* The policy tree is empty */
+#define X509_PCY_TREE_EXPLICIT  4 /* Explicit policy required */
 
 int X509_policy_check(X509_POLICY_TREE **ptree, int *pexplicit_policy,
                       STACK_OF(X509) *certs,

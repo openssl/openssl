@@ -1,4 +1,3 @@
-/* ssl/statem/statem.c */
 /*
  * Written by Matt Caswell for the OpenSSL project.
  */
@@ -261,7 +260,8 @@ static void (*get_callback(SSL *s))(const SSL *, int, int)
  *   1: Success
  * <=0: NBIO or error
  */
-static int state_machine(SSL *s, int server) {
+static int state_machine(SSL *s, int server)
+{
     BUF_MEM *buf = NULL;
     unsigned long Time = (unsigned long)time(NULL);
     void (*cb) (const SSL *ssl, int type, int val) = NULL;
@@ -336,19 +336,15 @@ static int state_machine(SSL *s, int server) {
                 goto end;
             }
         } else {
-            if ((s->version >> 8) != SSL3_VERSION_MAJOR
-                    && s->version != TLS_ANY_VERSION) {
+            if ((s->version >> 8) != SSL3_VERSION_MAJOR) {
                 SSLerr(SSL_F_STATE_MACHINE, ERR_R_INTERNAL_ERROR);
                 goto end;
             }
         }
 
-        if (!SSL_IS_DTLS(s)) {
-            if (s->version != TLS_ANY_VERSION &&
-                    !ssl_security(s, SSL_SECOP_VERSION, 0, s->version, NULL)) {
-                SSLerr(SSL_F_STATE_MACHINE, SSL_R_VERSION_TOO_LOW);
-                goto end;
-            }
+        if (!ssl_security(s, SSL_SECOP_VERSION, 0, s->version, NULL)) {
+            SSLerr(SSL_F_STATE_MACHINE, SSL_R_VERSION_TOO_LOW);
+            goto end;
         }
 
         if (s->init_buf == NULL) {
@@ -515,7 +511,7 @@ static void init_read_state_machine(SSL *s)
  * READ_STATE_POST_PROCESS is an optional step that may occur if some post
  * processing activity performed on the message may block.
  *
- * Any of the above states could result in an NBIO event occuring in which case
+ * Any of the above states could result in an NBIO event occurring in which case
  * control returns to the calling application. When this function is recalled we
  * will resume in the same state where we left off.
  */
@@ -706,7 +702,7 @@ static void init_write_state_machine(SSL *s)
  * WRITE_STATE_TRANSITION transitions the state of the handshake state machine
 
  * WRITE_STATE_PRE_WORK performs any work necessary to prepare the later
- * sending of the message. This could result in an NBIO event occuring in
+ * sending of the message. This could result in an NBIO event occurring in
  * which case control returns to the calling application. When this function
  * is recalled we will resume in the same state where we left off.
  *

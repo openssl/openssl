@@ -1,4 +1,3 @@
-/* crypto/bn/bn_ctx.c */
 /* Written by Ulf Moeller for the OpenSSL project. */
 /* ====================================================================
  * Copyright (c) 1998-2004 The OpenSSL Project.  All rights reserved.
@@ -53,14 +52,6 @@
  * Hudson (tjh@cryptsoft.com).
  *
  */
-
-#if !defined(BN_CTX_DEBUG) && !defined(BN_DEBUG)
-# ifndef NDEBUG
-#  define NDEBUG
-# endif
-#endif
-
-#include <assert.h>
 
 #include "internal/cryptlib.h"
 #include "bn_lcl.h"

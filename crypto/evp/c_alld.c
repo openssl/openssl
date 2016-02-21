@@ -1,4 +1,3 @@
-/* crypto/evp/c_alld.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -59,10 +58,11 @@
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include <openssl/evp.h>
+#include <internal/evp_int.h>
 #include <openssl/pkcs12.h>
 #include <openssl/objects.h>
 
-void OpenSSL_add_all_digests(void)
+void openssl_add_all_digests_internal(void)
 {
 #ifndef OPENSSL_NO_MD4
     EVP_add_digest(EVP_md4());

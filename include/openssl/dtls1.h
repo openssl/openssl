@@ -1,4 +1,3 @@
-/* ssl/dtls1.h */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -66,6 +65,7 @@ extern "C" {
 
 # define DTLS1_VERSION                   0xFEFF
 # define DTLS1_2_VERSION                 0xFEFD
+# define DTLS_MIN_VERSION                DTLS1_VERSION
 # define DTLS_MAX_VERSION                DTLS1_2_VERSION
 # define DTLS1_VERSION_MAJOR             0xFE
 

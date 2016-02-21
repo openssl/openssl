@@ -1,4 +1,3 @@
-/* crypto/ct/ct_locl.h */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
  * 2015.
@@ -114,7 +113,7 @@ typedef struct {
     log_entry_type_t entry_type;
 } SCT;
 
-DECLARE_STACK_OF(SCT)
+DEFINE_STACK_OF(SCT)
 
 /*
  * Allocate new SCT.

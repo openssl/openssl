@@ -1,4 +1,3 @@
-/* ssl/ssl_locl.h */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -169,6 +168,7 @@
 #include "record/record.h"
 #include "statem/statem.h"
 #include "packet_locl.h"
+#include "internal/dane.h"
 
 # ifdef OPENSSL_BUILD_SHLIBSSL
 #  undef OPENSSL_EXTERN
@@ -229,13 +229,6 @@
                          *((c)++)=(unsigned char)(((l)>> 8)&0xff), \
                          *((c)++)=(unsigned char)(((l)    )&0xff))
 
-# define n2l6(c,l)       (l =((BN_ULLONG)(*((c)++)))<<40, \
-                         l|=((BN_ULLONG)(*((c)++)))<<32, \
-                         l|=((BN_ULLONG)(*((c)++)))<<24, \
-                         l|=((BN_ULLONG)(*((c)++)))<<16, \
-                         l|=((BN_ULLONG)(*((c)++)))<< 8, \
-                         l|=((BN_ULLONG)(*((c)++))))
-
 /* NOTE - c is not incremented as per l2c */
 # define l2cn(l1,l2,c,n) { \
                         c+=n; \
@@ -263,6 +256,11 @@
 # define l2n3(l,c)       ((c[0]=(unsigned char)(((l)>>16)&0xff), \
                           c[1]=(unsigned char)(((l)>> 8)&0xff), \
                           c[2]=(unsigned char)(((l)    )&0xff)),c+=3)
+
+#define DTLS_VERSION_GT(v1, v2) ((v1) < (v2))
+#define DTLS_VERSION_GE(v1, v2) ((v1) <= (v2))
+#define DTLS_VERSION_LT(v1, v2) ((v1) > (v2))
+#define DTLS_VERSION_LE(v1, v2) ((v1) >= (v2))
 
 /* LOCAL STUFF */
 
@@ -299,24 +297,20 @@
 # define SSL_kDHE                0x00000002U
 /* synonym */
 # define SSL_kEDH                SSL_kDHE
-/* ECDH cert, RSA CA cert */
-# define SSL_kECDHr              0x00000004U
-/* ECDH cert, ECDSA CA cert */
-# define SSL_kECDHe              0x00000008U
 /* ephemeral ECDH */
-# define SSL_kECDHE              0x00000010U
+# define SSL_kECDHE              0x00000004U
 /* synonym */
 # define SSL_kEECDH              SSL_kECDHE
 /* PSK */
-# define SSL_kPSK                0x00000020U
+# define SSL_kPSK                0x00000008U
 /* GOST key exchange */
-# define SSL_kGOST               0x00000040U
+# define SSL_kGOST               0x00000010U
 /* SRP */
-# define SSL_kSRP                0x00000080U
+# define SSL_kSRP                0x00000020U
 
-# define SSL_kRSAPSK             0x00000100U
-# define SSL_kECDHEPSK           0x00000200U
-# define SSL_kDHEPSK             0x00000400U
+# define SSL_kRSAPSK             0x00000040U
+# define SSL_kECDHEPSK           0x00000080U
+# define SSL_kDHEPSK             0x00000100U
 
 /* all PSK */
 
@@ -329,18 +323,16 @@
 # define SSL_aDSS                0x00000002U
 /* no auth (i.e. use ADH or AECDH) */
 # define SSL_aNULL               0x00000004U
-/* Fixed ECDH auth (kECDHe or kECDHr) */
-# define SSL_aECDH               0x00000008U
 /* ECDSA auth*/
-# define SSL_aECDSA              0x00000010U
+# define SSL_aECDSA              0x00000008U
 /* PSK auth */
-# define SSL_aPSK                0x00000020U
+# define SSL_aPSK                0x00000010U
 /* GOST R 34.10-2001 signature auth */
-# define SSL_aGOST01             0x00000040U
+# define SSL_aGOST01             0x00000020U
 /* SRP auth */
-# define SSL_aSRP                0x00000080U
+# define SSL_aSRP                0x00000040U
 /* GOST R 34.10-2012 signature auth */
-# define SSL_aGOST12             0x00000100U
+# define SSL_aGOST12             0x00000080U
 
 /* Bits for algorithm_enc (symmetric encryption) */
 # define SSL_DES                 0x00000001U
@@ -366,6 +358,7 @@
 
 # define SSL_AES                 (SSL_AES128|SSL_AES256|SSL_AES128GCM|SSL_AES256GCM|SSL_AES128CCM|SSL_AES256CCM|SSL_AES128CCM8|SSL_AES256CCM8)
 # define SSL_CAMELLIA            (SSL_CAMELLIA128|SSL_CAMELLIA256)
+# define SSL_CHACHA20            (SSL_CHACHA20POLY1305)
 
 /* Bits for algorithm_mac (symmetric authentication) */
 
@@ -466,8 +459,8 @@
  * flags because it may not be set to correct version yet.
  */
 # define SSL_CLIENT_USE_TLS1_2_CIPHERS(s)        \
-                ((SSL_IS_DTLS(s) && s->client_version <= DTLS1_2_VERSION) || \
-                (!SSL_IS_DTLS(s) && s->client_version >= TLS1_2_VERSION))
+    ((!SSL_IS_DTLS(s) && s->client_version >= TLS1_2_VERSION) || \
+     (SSL_IS_DTLS(s) && DTLS_VERSION_GE(s->client_version, DTLS1_2_VERSION)))
 
 # ifdef TLSEXT_TYPE_encrypt_then_mac
 #  define SSL_USE_ETM(s) (s->s3->flags & TLS1_FLAGS_ENCRYPT_THEN_MAC)
@@ -530,6 +523,8 @@ struct ssl_cipher_st {
 /* Used to hold SSL/TLS functions */
 struct ssl_method_st {
     int version;
+    unsigned flags;
+    unsigned long mask;
     int (*ssl_new) (SSL *s);
     void (*ssl_clear) (SSL *s);
     void (*ssl_free) (SSL *s);
@@ -614,7 +609,7 @@ struct ssl_session_st {
     /* This is the cert and type for the other end. */
     X509 *peer;
     int peer_type;
-    /* Certificate chain of peer */
+    /* Certificate chain peer sent */
     STACK_OF(X509) *peer_chain;
     /*
      * when app_verify_callback accepts a session where the peer's
@@ -677,17 +672,15 @@ typedef struct srp_ctx_st {
 
 # endif
 
-typedef struct ssl_comp_st SSL_COMP;
-
 struct ssl_comp_st {
     int id;
     const char *name;
     COMP_METHOD *method;
 };
 
-DECLARE_STACK_OF(SSL_COMP)
-DECLARE_LHASH_OF(SSL_SESSION);
-
+DEFINE_LHASH_OF(SSL_SESSION);
+/* Needed in ssl_cert.c */
+DEFINE_LHASH_OF(X509_NAME);
 
 struct ssl_ctx_st {
     const SSL_METHOD *method;
@@ -727,7 +720,8 @@ struct ssl_ctx_st {
     int (*new_session_cb) (struct ssl_st *ssl, SSL_SESSION *sess);
     void (*remove_session_cb) (struct ssl_ctx_st *ctx, SSL_SESSION *sess);
     SSL_SESSION *(*get_session_cb) (struct ssl_st *ssl,
-                                    unsigned char *data, int len, int *copy);
+                                    const unsigned char *data, int len,
+                                    int *copy);
     struct {
         int sess_connect;       /* SSL new conn - started */
         int sess_connect_renegotiate; /* SSL reneg - requested */
@@ -796,6 +790,8 @@ struct ssl_ctx_st {
 
     uint32_t options;
     uint32_t mode;
+    int min_proto_version;
+    int max_proto_version;
     long max_cert_list;
 
     struct cert_st /* CERT */ *cert;
@@ -867,7 +863,6 @@ struct ssl_ctx_st {
 
 #  ifndef OPENSSL_NO_NEXTPROTONEG
     /* Next protocol negotiation information */
-    /* (for experimental NPN extension). */
 
     /*
      * For a server, this contains a callback function by which the set of
@@ -915,6 +910,9 @@ struct ssl_ctx_st {
      */
     unsigned char *alpn_client_proto_list;
     unsigned alpn_client_proto_list_len;
+
+    /* Shared DANE context */
+    struct dane_ctx_st dane;
 
     /* SRTP profiles we are willing to do from RFC 5764 */
     STACK_OF(SRTP_PROTECTION_PROFILE) *srtp_profiles;
@@ -998,6 +996,10 @@ struct ssl_st {
     void *msg_callback_arg;
     int hit;                    /* reusing a previous session */
     X509_VERIFY_PARAM *param;
+
+    /* Per connection DANE state */
+    struct dane_st dane;
+
     /* crypto */
     STACK_OF(SSL_CIPHER) *cipher_list;
     STACK_OF(SSL_CIPHER) *cipher_list_by_id;
@@ -1051,13 +1053,10 @@ struct ssl_st {
                                          unsigned int max_psk_len);
 #  endif
     SSL_CTX *ctx;
-    /*
-     * set this flag to 1 and a sleep(1) is put into all SSL_read() and
-     * SSL_write() calls, good for nbio debuging :-)
-     */
-    int debug;
-    /* extra application data */
+    /* Verified chain of peer */
+    STACK_OF(X509) *verified_chain;
     long verify_result;
+    /* extra application data */
     CRYPTO_EX_DATA ex_data;
     /* for server side, keep the list of CA_dn we can use */
     STACK_OF(X509_NAME) *client_CA;
@@ -1066,6 +1065,8 @@ struct ssl_st {
     uint32_t options;
     /* API behaviour */
     uint32_t mode;
+    int min_proto_version;
+    int max_proto_version;
     long max_cert_list;
     int first_packet;
     /* what was passed, used for SSLv3/TLS rollback check */
@@ -1074,7 +1075,7 @@ struct ssl_st {
 
     /* TLS extension debug callback */
     void (*tlsext_debug_cb) (SSL *s, int client_server, int type,
-                             unsigned char *data, int len, void *arg);
+                             const unsigned char *data, int len, void *arg);
     void *tlsext_debug_arg;
     char *tlsext_hostname;
     /*-
@@ -1163,7 +1164,7 @@ struct ssl_st {
      * basis, depending on the chosen cipher.
      */
     int (*not_resumable_session_cb) (SSL *ssl, int is_forward_secure);
-    
+
     RECORD_LAYER rlayer;
 
     /* Default password callback. */
@@ -1379,6 +1380,30 @@ typedef struct hm_fragment_st {
     unsigned char *reassembly;
 } hm_fragment;
 
+typedef struct pqueue_st pqueue;
+typedef struct pitem_st pitem;
+
+struct pitem_st {
+    unsigned char priority[8];  /* 64-bit value in big-endian encoding */
+    void *data;
+    pitem *next;
+};
+
+typedef struct pitem_st *piterator;
+
+pitem *pitem_new(unsigned char *prio64be, void *data);
+void pitem_free(pitem *item);
+pqueue* pqueue_new(void);
+void pqueue_free(pqueue *pq);
+pitem *pqueue_insert(pqueue *pq, pitem *item);
+pitem *pqueue_peek(pqueue *pq);
+pitem *pqueue_pop(pqueue *pq);
+pitem *pqueue_find(pqueue *pq, unsigned char *prio64be);
+pitem *pqueue_iterator(pqueue *pq);
+pitem *pqueue_next(piterator *iter);
+void pqueue_print(pqueue *pq);
+int pqueue_size(pqueue *pq);
+
 typedef struct dtls1_state_st {
     unsigned char cookie[DTLS1_COOKIE_LENGTH];
     unsigned int cookie_len;
@@ -1390,9 +1415,9 @@ typedef struct dtls1_state_st {
     unsigned short handshake_read_seq;
 
     /* Buffered handshake messages */
-    pqueue buffered_messages;
+    pqueue *buffered_messages;
     /* Buffered (sent) handshake records */
-    pqueue sent_messages;
+    pqueue *sent_messages;
 
     unsigned int link_mtu;      /* max on-the-wire DTLS packet size */
     unsigned int mtu;           /* max DTLS packet size */
@@ -1568,35 +1593,6 @@ struct tls_sigalgs_st {
     unsigned char rhash;
 };
 
-/*
- * #define MAC_DEBUG
- */
-
-/*
- * #define ERR_DEBUG
- */
-/*
- * #define ABORT_DEBUG
- */
-/*
- * #define PKT_DEBUG 1
- */
-/*
- * #define DES_DEBUG
- */
-/*
- * #define DES_OFB_DEBUG
- */
-/*
- * #define SSL_DEBUG
- */
-/*
- * #define RSA_DEBUG
- */
-/*
- * #define IDEA_DEBUG
- */
-
 # define FP_ICC  (int (*)(const void *,const void *))
 
 /*
@@ -1665,7 +1661,6 @@ typedef struct ssl3_comp_st {
 # endif
 
 extern SSL3_ENC_METHOD ssl3_undef_enc_method;
-OPENSSL_EXTERN const SSL_CIPHER ssl3_ciphers[];
 
 SSL_METHOD *ssl_bad_method(int ver);
 
@@ -1676,12 +1671,20 @@ extern const SSL3_ENC_METHOD SSLv3_enc_data;
 extern const SSL3_ENC_METHOD DTLSv1_enc_data;
 extern const SSL3_ENC_METHOD DTLSv1_2_enc_data;
 
-# define IMPLEMENT_tls_meth_func(version, func_name, s_accept, s_connect, \
-                                s_get_meth, enc_data) \
+/*
+ * Flags for SSL methods
+ */
+#define SSL_METHOD_NO_FIPS      (1U<<0)
+#define SSL_METHOD_NO_SUITEB    (1U<<1)
+
+# define IMPLEMENT_tls_meth_func(version, flags, mask, func_name, s_accept, \
+                                 s_connect, s_get_meth, enc_data) \
 const SSL_METHOD *func_name(void)  \
         { \
         static const SSL_METHOD func_name##_data= { \
                 version, \
+                flags, \
+                mask, \
                 tls1_new, \
                 tls1_clear, \
                 tls1_free, \
@@ -1718,6 +1721,8 @@ const SSL_METHOD *func_name(void)  \
         { \
         static const SSL_METHOD func_name##_data= { \
                 SSL3_VERSION, \
+                SSL_METHOD_NO_FIPS | SSL_METHOD_NO_SUITEB, \
+                SSL_OP_NO_SSLv3, \
                 ssl3_new, \
                 ssl3_clear, \
                 ssl3_free, \
@@ -1749,12 +1754,14 @@ const SSL_METHOD *func_name(void)  \
         return &func_name##_data; \
         }
 
-# define IMPLEMENT_dtls1_meth_func(version, func_name, s_accept, s_connect, \
-                                        s_get_meth, enc_data) \
+# define IMPLEMENT_dtls1_meth_func(version, flags, mask, func_name, s_accept, \
+                                        s_connect, s_get_meth, enc_data) \
 const SSL_METHOD *func_name(void)  \
         { \
         static const SSL_METHOD func_name##_data= { \
                 version, \
+                flags, \
+                mask, \
                 dtls1_new, \
                 dtls1_clear, \
                 dtls1_free, \
@@ -1789,10 +1796,10 @@ const SSL_METHOD *func_name(void)  \
 struct openssl_ssl_test_functions {
     int (*p_ssl_init_wbio_buffer) (SSL *s, int push);
     int (*p_ssl3_setup_buffers) (SSL *s);
-    int (*p_tls1_process_heartbeat) (SSL *s,
-        unsigned char *p, unsigned int length);
+# ifndef OPENSSL_NO_HEARTBEATS
     int (*p_dtls1_process_heartbeat) (SSL *s,
         unsigned char *p, unsigned int length);
+# endif
 };
 
 # ifndef OPENSSL_UNIT_TEST
@@ -1879,8 +1886,9 @@ __owur int ssl3_final_finish_mac(SSL *s, const char *sender, int slen,
 void ssl3_finish_mac(SSL *s, const unsigned char *buf, int len);
 void ssl3_free_digest_list(SSL *s);
 __owur unsigned long ssl3_output_cert_chain(SSL *s, CERT_PKEY *cpk);
-__owur SSL_CIPHER *ssl3_choose_cipher(SSL *ssl, STACK_OF(SSL_CIPHER) *clnt,
-                               STACK_OF(SSL_CIPHER) *srvr);
+__owur const SSL_CIPHER *ssl3_choose_cipher(SSL *ssl,
+                                            STACK_OF(SSL_CIPHER) *clnt,
+                                            STACK_OF(SSL_CIPHER) *srvr);
 __owur int ssl3_digest_cached_records(SSL *s, int keep);
 __owur int ssl3_new(SSL *s);
 void ssl3_free(SSL *s);
@@ -1901,6 +1909,12 @@ __owur int ssl3_set_handshake_header(SSL *s, int htype, unsigned long len);
 __owur int ssl3_handshake_write(SSL *s);
 
 __owur int ssl_allow_compression(SSL *s);
+
+__owur int ssl_set_client_hello_version(SSL *s);
+__owur int ssl_check_version_downgrade(SSL *s);
+__owur int ssl_set_version_bound(int method_version, int version, int *bound);
+__owur int ssl_choose_server_version(SSL *s);
+__owur int ssl_choose_client_version(SSL *s, int version);
 
 __owur long tls1_default_timeout(void);
 __owur int dtls1_do_write(SSL *s, int type);
@@ -2003,9 +2017,7 @@ __owur int ssl_prepare_clienthello_tlsext(SSL *s);
 __owur int ssl_prepare_serverhello_tlsext(SSL *s);
 
 #  ifndef OPENSSL_NO_HEARTBEATS
-__owur int tls1_heartbeat(SSL *s);
 __owur int dtls1_heartbeat(SSL *s);
-__owur int tls1_process_heartbeat(SSL *s, unsigned char *p, unsigned int length);
 __owur int dtls1_process_heartbeat(SSL *s, unsigned char *p, unsigned int length);
 #  endif
 
@@ -2101,7 +2113,6 @@ void custom_exts_free(custom_ext_methods *exts);
 
 #  define ssl_init_wbio_buffer SSL_test_functions()->p_ssl_init_wbio_buffer
 #  define ssl3_setup_buffers SSL_test_functions()->p_ssl3_setup_buffers
-#  define tls1_process_heartbeat SSL_test_functions()->p_tls1_process_heartbeat
 #  define dtls1_process_heartbeat SSL_test_functions()->p_dtls1_process_heartbeat
 
 # endif

@@ -2,9 +2,11 @@
 
 # $1 is expected to be $TRAVIS_OS_NAME
 
+./Configure dist
 if [ "$1" == osx ]; then
-    make -f Makefile.org \
-	 DISTTARVARS="NAME=_srcdist TAR_COMMAND='\$\$(TAR) \$\$(TARFLAGS) -s \"|^|\$\$(NAME)/|\" -T \$\$(TARFILE).list -cvf -' TARFLAGS='-n' TARFILE=_srcdist.tar" SHELL='sh -vx' dist
+    make NAME='_srcdist' TARFLAGS='-n' TARFILE='_srcdist.tar' \
+	 TAR_COMMAND='$(TAR) $(TARFLAGS) -s "|^|$(NAME)/|" -T $(TARFILE).list -cvf -' \
+	 SHELL='sh -vx' tar
 else
-    make -f Makefile.org DISTTARVARS='TARFILE=_srcdist.tar NAME=_srcdist' SHELL='sh -v' dist
+    make TARFILE='_srcdist.tar' NAME='_srcdist' SHELL='sh -v' dist
 fi

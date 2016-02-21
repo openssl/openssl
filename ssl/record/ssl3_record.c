@@ -1,4 +1,3 @@
-/* ssl/record/ssl3_record.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -275,6 +274,21 @@ int ssl3_get_record(SSL *s)
             }
 
             if ((version >> 8) != SSL3_VERSION_MAJOR) {
+                if (s->first_packet) {
+                    /* Go back to start of packet, look at the five bytes
+                     * that we have. */
+                    p = RECORD_LAYER_get_packet(&s->rlayer);
+                    if (strncmp((char *)p, "GET ", 4) == 0 ||
+                        strncmp((char *)p, "POST ", 5) == 0 ||
+                        strncmp((char *)p, "HEAD ", 5) == 0 ||
+                        strncmp((char *)p, "PUT ", 4) == 0) {
+                        SSLerr(SSL_F_SSL3_GET_RECORD, SSL_R_HTTP_REQUEST);
+                        goto err;
+                    } else if (strncmp((char *)p, "CONNE", 5) == 0) {
+                        SSLerr(SSL_F_SSL3_GET_RECORD, SSL_R_HTTPS_PROXY_REQUEST);
+                        goto err;
+                    }
+                }
                 SSLerr(SSL_F_SSL3_GET_RECORD, SSL_R_WRONG_VERSION_NUMBER);
                 goto err;
             }
@@ -380,7 +394,7 @@ int ssl3_get_record(SSL *s)
         SSLerr(SSL_F_SSL3_GET_RECORD, SSL_R_BLOCK_CIPHER_PAD_IS_WRONG);
         goto f_err;
     }
-#ifdef TLS_DEBUG
+#ifdef SSL_DEBUG
     printf("dec %d\n", rr->length);
     {
         unsigned int z;
@@ -587,7 +601,7 @@ int ssl3_enc(SSL *s, int send)
         rec->input = rec->data;
     } else {
         l = rec->length;
-        bs = EVP_CIPHER_block_size(ds->cipher);
+        bs = EVP_CIPHER_CTX_block_size(ds);
 
         /* COMPRESS */
 
@@ -664,9 +678,7 @@ int tls1_enc(SSL *s, int send)
                      * we can't write into the input stream: Can this ever
                      * happen?? (steve)
                      */
-                    fprintf(stderr,
-                            "%s:%d: rec->data != rec->input\n",
-                            __FILE__, __LINE__);
+                    fprintf(stderr, "tls1_enc(): rec->data != rec->input\n");
                 else if (RAND_bytes(rec->input, ivlen) <= 0)
                     return -1;
             }
@@ -690,9 +702,9 @@ int tls1_enc(SSL *s, int send)
         ret = 1;
     } else {
         l = rec->length;
-        bs = EVP_CIPHER_block_size(ds->cipher);
+        bs = EVP_CIPHER_CTX_block_size(ds);
 
-        if (EVP_CIPHER_flags(ds->cipher) & EVP_CIPH_FLAG_AEAD_CIPHER) {
+        if (EVP_CIPHER_flags(EVP_CIPHER_CTX_cipher(ds)) & EVP_CIPH_FLAG_AEAD_CIPHER) {
             unsigned char buf[EVP_AEAD_TLS1_AAD_LEN], *seq;
 
             seq = send ? RECORD_LAYER_get_write_sequence(&s->rlayer)
@@ -746,7 +758,7 @@ int tls1_enc(SSL *s, int send)
         }
 
         i = EVP_Cipher(ds, rec->data, rec->input, l);
-        if ((EVP_CIPHER_flags(ds->cipher) & EVP_CIPH_FLAG_CUSTOM_CIPHER)
+        if ((EVP_CIPHER_flags(EVP_CIPHER_CTX_cipher(ds)) & EVP_CIPH_FLAG_CUSTOM_CIPHER)
             ? (i < 0)
             : (i == 0))
             return -1;          /* AEAD can fail to verify MAC */
@@ -961,7 +973,7 @@ int tls1_mac(SSL *ssl, unsigned char *md, int send)
 
     EVP_MD_CTX_free(hmac);
 
-#ifdef TLS_DEBUG
+#ifdef SSL_DEBUG
     fprintf(stderr, "seq=");
     {
         int z;
@@ -985,7 +997,7 @@ int tls1_mac(SSL *ssl, unsigned char *md, int send)
                 break;
         }
     }
-#ifdef TLS_DEBUG
+#ifdef SSL_DEBUG
     {
         unsigned int z;
         for (z = 0; z < md_size; z++)
@@ -1064,7 +1076,7 @@ int tls1_cbc_remove_padding(const SSL *s,
 
     padding_length = rec->data[rec->length - 1];
 
-    if (EVP_CIPHER_flags(s->enc_read_ctx->cipher) & EVP_CIPH_FLAG_AEAD_CIPHER) {
+    if (EVP_CIPHER_flags(EVP_CIPHER_CTX_cipher(s->enc_read_ctx)) & EVP_CIPH_FLAG_AEAD_CIPHER) {
         /* padding is already verified */
         rec->length -= padding_length + 1;
         return 1;
@@ -1255,7 +1267,7 @@ int dtls1_process_record(SSL *s)
         RECORD_LAYER_reset_packet_length(&s->rlayer);
         goto err;
     }
-#ifdef TLS_DEBUG
+#ifdef SSL_DEBUG
     printf("dec %d\n", rr->length);
     {
         unsigned int z;

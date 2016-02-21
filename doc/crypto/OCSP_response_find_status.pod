@@ -20,6 +20,8 @@ OCSP_resp_find_status, OCSP_resp_count, OCSP_resp_get0, OCSP_resp_find, OCSP_sin
                              ASN1_GENERALIZEDTIME **thisupd,
                              ASN1_GENERALIZEDTIME **nextupd);
 
+ ASN1_GENERALIZEDTIME *OCSP_resp_get0_produced_at(OCSP_BASICRESP* single);
+
  int OCSP_check_validity(ASN1_GENERALIZEDTIME *thisupd,
                          ASN1_GENERALIZEDTIME *nextupd,
                          long sec, long maxsec);
@@ -50,6 +52,9 @@ matching entry after B<last> or starting from the beginning if B<last> is -1.
 
 OCSP_single_get0_status() extracts the fields of B<single> in B<*reason>,
 B<*revtime>, B<*thisupd> and B<*nextupd>.
+
+OCSP_resp_get0_produced_at() extracts the B<producedAt> field from the
+single response B<bs>.
 
 OCSP_check_validity() checks the validity of B<thisupd> and B<nextupd> values
 which will be typically obtained from OCSP_resp_find_status() or

@@ -1,4 +1,3 @@
-/* crypto/ui/ui.h */
 /*
  * Written by Richard Levitte (richard@levitte.org) for the OpenSSL project
  * 2001.
@@ -60,11 +59,12 @@
 #ifndef HEADER_UI_H
 # define HEADER_UI_H
 
-# ifdef OPENSSL_USE_DEPRECATED
+# if OPENSSL_API_COMPAT < 0x10100000L
 #  include <openssl/crypto.h>
 # endif
 # include <openssl/safestack.h>
 # include <openssl/ossl_typ.h>
+# include <openssl/opensslconf.h>
 
 #ifdef  __cplusplus
 extern "C" {
@@ -128,7 +128,7 @@ void UI_free(UI *ui);
    added, so the result is *not* a string.
 
    On success, the all return an index of the added information.  That index
-   is usefull when retrieving results with UI_get0_result(). */
+   is useful when retrieving results with UI_get0_result(). */
 int UI_add_input_string(UI *ui, const char *prompt, int flags,
                         char *result_buf, int minsize, int maxsize);
 int UI_dup_input_string(UI *ui, const char *prompt, int flags,
@@ -303,7 +303,7 @@ UI_METHOD *UI_OpenSSL(void);
  * about a string or a prompt, including test data for a verification prompt.
  */
 typedef struct ui_string_st UI_STRING;
-DECLARE_STACK_OF(UI_STRING)
+DEFINE_STACK_OF(UI_STRING)
 
 /*
  * The different types of strings that are currently supported. This is only
