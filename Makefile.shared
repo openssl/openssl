@@ -236,7 +236,7 @@ link_app.bsd:
 link_dso.darwin:
 	@ SHLIB=$(LIBNAME); \
 	SHLIB_SUFFIX=.dylib; \
-	ALLSYMSFLAGS='-all_load'; \
+	ALLSYMSFLAGS=''; \
 	NOALLSYMSFLAGS=''; \
 	SHAREDFLAGS="$(CFLAGS) `echo $(SHARED_LDFLAGS) | sed s/dynamiclib/bundle/`"; \
 	$(LINK_SO_DSO)

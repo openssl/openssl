@@ -62,6 +62,7 @@ lib:	$(LIBOBJ) $(TESTLIBOBJ)
 		for l in $(LIBNAMES) $(TESTLIBNAMES); do \
 			$(MAKE) -f ../Makefile.shared -e \
 				LIBNAME=$$l LIBEXTRAS="e_$$l*.o" \
+				CFLAG="$(CFLAGS)" LDFLAG="$(LDFLAG)" \
 				LIBDEPS='$(PLIB_LDFLAG) -L.. -lcrypto $(EX_LIBS)' \
 				link_dso.$(SHLIB_TARGET); \
 		done; \

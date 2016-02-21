@@ -1015,6 +1015,14 @@ if ($disabled{"static-engine"}) {
 #
 # Platform fix-ups
 #
+
+# If there are shared cflags, we may need the assembler generators to
+# generate slightly different code.  We tell them with the macro OPENSSL_PIC.
+if ($target{shared_cflag} ne "")
+	{
+	push @{$config{defines}}, "OPENSSL_PIC";
+	}
+
 if ($target{sys_id} ne "")
 	{
 	push @{$config{openssl_sys_defines}}, "OPENSSL_SYS_$target{sys_id}";
