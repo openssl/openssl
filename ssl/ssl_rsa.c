@@ -368,6 +368,7 @@ static int ssl_set_cert(CERT *c, X509 *x)
 {
     EVP_PKEY *pkey;
     int i;
+    CERT_PKEY *key;
 
     pkey = X509_get_pubkey(x);
     if (pkey == NULL) {
@@ -418,7 +419,29 @@ static int ssl_set_cert(CERT *c, X509 *x)
     X509_free(c->pkeys[i].x509);
     X509_up_ref(x);
     c->pkeys[i].x509 = x;
+
+    key = c->key;
     c->key = &(c->pkeys[i]);
+
+    if (key->serverinfo) {
+        /* Copy any serverinfo which may have been configured for the previous
+         * CERT_PKEY via SSL_CTX_use_serverinfo().  This is necessary, since
+         * serverinfo is NOT set per certificate, but is SSL_CTX-wide. */
+
+        if (c->key == NULL) {
+            SSLerr(SSL_F_SSL_SET_CERT, ERR_R_INTERNAL_ERROR);
+            return (0);
+        }
+
+        c->key->serverinfo = OPENSSL_realloc(c->key->serverinfo,
+                                             key->serverinfo_length);
+        if (c->key->serverinfo == NULL) {
+            SSLerr(SSL_F_SSL_SET_CERT, ERR_R_MALLOC_FAILURE);
+            return (0);
+        }
+        memcpy(c->key->serverinfo, key->serverinfo, key->serverinfo_length);
+        c->key->serverinfo_length = key->serverinfo_length;
+    }
 
     return (1);
 }
@@ -832,7 +855,7 @@ static int serverinfo_srv_add_cb(SSL *s, unsigned int ext_type,
             return 0;           /* No extension found, don't send extension */
         return 1;               /* Send extension */
     }
-    return -1;                  /* No serverinfo data found, don't send
+    return 0;                   /* No serverinfo data found, don't send
                                  * extension */
 }
 
