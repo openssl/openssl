@@ -1599,7 +1599,7 @@ use warnings;
 use Exporter;
 #use vars qw(\@ISA \@EXPORT);
 our \@ISA = qw(Exporter);
-our \@EXPORT = qw(\%config \%target %withargs %unified_info);
+our \@EXPORT = qw(\%config \%target %disabled %withargs %unified_info);
 
 EOF
 print OUT "our %config = (\n";

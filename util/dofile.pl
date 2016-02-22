@@ -183,6 +183,7 @@ sub output_off {
 $template->fill_in(OUTPUT => \*STDOUT,
                    HASH => { config => \%config,
                              target => \%target,
+                             disabled => \%disabled,
                              withargs => \%withargs,
                              unified_info => \%unified_info,
                              autowarntext => \@autowarntext,
