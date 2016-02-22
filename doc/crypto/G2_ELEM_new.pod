@@ -1,0 +1,82 @@
+=pod
+
+=head1 NAME
+
+G2_ELEM_new, G2_ELEM_free, G2_ELEM_clear_free, G2_ELEM_copy, G2_ELEM_dup, G2_ELEM_set_to_infinity, G2_ELEM_set_Jprojective_coordinates, G2_ELEM_get_Jprojective_coordinates, G2_ELEM_set_affine_coordinates, G2_ELEM_get_affine_coordinates, G2_ELEM_point2oct, G2_ELEM_oct2point - Functions for creating, destroying and manipulating B<G2_ELEM> objects.
+
+=head1 SYNOPSIS
+
+ #include <openssl/bp.h>
+ #include <openssl/bn.h>
+
+ G2_ELEM *G2_ELEM_new(const BP_GROUP *group);
+ void G2_ELEM_free(G2_ELEM *point);
+ void G2_ELEM_clear_free(G2_ELEM *point);
+ int G2_ELEM_copy(G2_ELEM *point, const G2_ELEM *b);
+ G2_ELEM *G2_ELEM_dup(const G2_ELEM *point, const BP_GROUP *group);
+
+ int G2_ELEM_set_to_infinity(const BP_GROUP *group, G2_ELEM *point);
+ int G2_ELEM_set_affine_coordinates(const BP_GROUP *group, G2_ELEM *point,
+	const BIGNUM *x[2], const BIGNUM *y[2], BN_CTX *ctx);
+ int G2_ELEM_get_affine_coordinates(const BP_GROUP *group,
+	const G2_ELEM *point, BIGNUM *x[2], BIGNUM *y[2], BN_CTX *ctx);
+ int G2_ELEM_set_Jprojective_coordinates(const BP_GROUP *group,
+	G2_ELEM *point, const BIGNUM *x[2], const BIGNUM *y[2], const BIGNUM *z[2], BN_CTX *ctx);
+ int G2_ELEM_get_Jprojective_coordinates(const BP_GROUP *group,
+	const G2_ELEM *point, BIGNUM *x[2], BIGNUM *y[2], BIGNUM *z[2], BN_CTX *ctx);
+ size_t G2_ELEM_point2oct(const BP_GROUP *group, const G2_ELEM *point,
+	point_conversion_form_t form, unsigned char *buf, size_t len, BN_CTX *ctx);
+ int G2_ELEM_oct2point(const BP_GROUP *group, G2_ELEM *point,
+	const unsigned char *buf, size_t len, BN_CTX *ctx);
+
+=head1 DESCRIPTION
+
+A G2_ELEM represents a point on G2, the curve defined over the quadratic extension. A new point is constructed by calling the
+function G2_ELEM_new and providing the B<group> object that the point relates to.
+
+G2_ELEM_free frees the memory associated with the G2_ELEM.
+if B<point> is NULL nothing is done.
+
+G2_ELEM_clear_free destroys any sensitive data held within the G2_ELEM and then frees its memory.
+if B<point> is NULL nothing is done.
+
+G2_ELEM_copy copies the point B<src> into B<dst>. Both B<src> and B<dst>.
+
+G2_ELEM_dup creates a new G2_ELEM object and copies the content from B<src> to the newly created
+G2_ELEM object.
+
+A valid point on a curve is the special point at infinity. A point is set to be at infinity by calling G2_ELEM_set_to_infinity.
+
+The affine coordinates for a point describe a point in terms of its x and y position. The function
+G2_ELEM_set_affine_coordinates sets the B<x> and B<y> coordinates for the point
+B<p> defined over the group G1 given in B<group>.
+
+As well as the affine coordinates, a point can alternatively be described in terms of its Jacobian
+projective coordinates. Jacobian projective coordinates are expressed as three values x, y and z. Working in
+this coordinate system provides more efficient point multiplication operations.
+A mapping exists between Jacobian projective coordinates and affine coordinates. A Jacobian projective co-ordinate (x, y, z)
+can be written as an affine co-ordinate as (x/(z^2), y/(z^3)). Conversion to Jacobian projective to affine coordinates is simple. The co-ordinate (x, y) is
+mapped to (x, y, 1). To set or get the projective coordinates use G2_ELEM_set_Jprojective_coordinates and
+G2_ELEM_get_Jprojective_coordinates respectively.
+
+In addition G2_ELEMs can be converted to octet strings in a buffer along with an associated buffer length.
+The functions G2_ELEM_point2oct and G2_ELEM_oct2point convert from and to G2_ELEMs for the octet string format, respectively.
+
+The function G2_ELEM_point2oct must be supplied with a buffer long enough to store the octet string. The return value provides the number of
+octets stored. Calling the function with a NULL buffer will not perform the conversion but will still return the required buffer length.
+
+=head1 RETURN VALUES
+
+G2_ELEM_new and G2_ELEM_dup return the newly allocated G2_ELEM or NULL on error.
+
+The following functions return 1 on success or 0 on error: G2_ELEM_copy, G2_ELEM_set_to_infinity, G2_ELEM_set_Jprojective_coordinates,
+G2_ELEM_get_Jprojective_coordinates, G2_ELEM_set_affine_coordinates, G2_ELEM_get_affine_coordinates and G2_ELEM_oct2point.
+
+G2_ELEM_point2oct returns the length of the required buffer, or 0 on error.
+
+=head1 SEE ALSO
+
+L<crypto(3)>, L<bp(3)>, L<BP_GROUP_new(3)>, L<BP_GROUP_copy(3)>,
+L<G2_ELEM_add(3)>,
+
+=cut

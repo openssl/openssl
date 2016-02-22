@@ -1,0 +1,64 @@
+=pod
+
+=head1 NAME
+
+GT_ELEM_new, GT_ELEM_free, GT_ELEM_clear_free, GT_ELEM_copy, GT_ELEM_dup, GT_ELEM_zero, GT_ELEM_is_zero, GT_ELEM_set_to_unity, GT_ELEM_is_unity, GT_ELEM_elem2oct, GT_ELEM_oct2elem - Functions for creating, destroying and manipulating B<GT_ELEM> objects.
+
+=head1 SYNOPSIS
+
+ #include <openssl/bp.h>
+ #include <openssl/bn.h>
+
+ GT_ELEM *GT_ELEM_new(const BP_GROUP *group);
+ void GT_ELEM_free(GT_ELEM *a);
+ void GT_clear_free(GT_ELEM *a);
+ int GT_ELEM_copy(GT_ELEM *a, const GT_ELEM *b);
+ GT_ELEM *GT_ELEM_dup(const GT_ELEM *a, const BP_GROUP *group);
+
+ int GT_ELEM_zero(GT_ELEM *a);
+ int GT_ELEM_set_to_unity(const BP_GROUP *group, GT_ELEM *a);
+ size_t GT_ELEM_elem2oct(const BP_GROUP *group, const GT_ELEM *point, unsigned char *buf,
+	size_t len, BN_CTX *ctx);
+ int GT_ELEM_oct2elem(const BP_GROUP *group, GT_ELEM *point, const unsigned char *buf,
+	size_t len, BN_CTX *ctx);
+
+=head1 DESCRIPTION
+
+A GT_ELEM represents a finite field extension element. A new field element is constructed by calling the
+function GT_ELEM_new and providing the B<group> object that the element relates to.
+
+GT_ELEM_free frees the memory associated with the GT_ELEM.
+if B<point> is NULL nothing is done.
+
+GT_ELEM_clear_free destroys any sensitive data held within the GT_ELEM and then frees its memory.
+if B<point> is NULL nothing is done.
+
+GT_ELEM_copy copies the element B<src> into B<dst>. Both B<src> and B<dst>.
+
+GT_ELEM_dup creates a new GT_ELEM object and copies the content from B<src> to the newly created
+GT_ELEM object.
+
+A valid field element belongs to the set of q-th roots of unity in the finite field Fp^k.
+A field element can be set to the additive identity 0 by calling GT_ELEM_zero and to the
+multiplicative identity 1 by calling GT_ELEM_set_to_unity.
+
+GT_ELEMs can be converted to octet strings in a buffer along with an associated buffer length.
+The functions GT_ELEM_elem2oct and GT_ELEM_oct2elem convert from and to GT_ELEMs for the octet string format.
+
+The function GT_ELEM_elem2oct must be supplied with a buffer long enough to store the octet string. The return value provides the number of
+octets stored. Calling the function with a NULL buffer will not perform the conversion but will still return the required buffer length.
+
+=head1 RETURN VALUES
+
+GT_ELEM_new and GT_ELEM_dup return the newly allocated GT_ELEM or NULL on error.
+
+The following functions return 1 on success or 0 on error: GT_ELEM_copy, GT_ELEM_zero, GT_ELEM_set_unity, and GT_ELEM_oct2elem.
+
+GT_ELEM_elem2oct returns the length of the required buffer, or 0 on error.
+
+=head1 SEE ALSO
+
+L<crypto(3)>, L<bp(3)>, L<BP_GROUP_new(3)>, L<BP_GROUP_copy(3)>,
+L<GT_ELEM_add(3)>,
+
+=cut

@@ -1,0 +1,54 @@
+=pod
+
+=head1 NAME
+
+GT_ELEM_add, GT_ELEM_sub, GT_ELEM_sqr, GT_ELEM_mul, GT_ELEM_inv, GT_ELEM_cmp, GT_ELEM_exp - Functions for performing mathematical operations and tests on B<GT_ELEM> objects.
+
+=head1 SYNOPSIS
+
+ #include <openssl/bp.h>
+ #include <openssl/bn.h>
+
+ int GT_ELEM_add(const BP_GROUP *group, GT_ELEM *r, const GT_ELEM *a, const GT_ELEM *b, BN_CTX *ctx);
+ int GT_ELEM_sub(const BP_GROUP *group, GT_ELEM *r, const GT_ELEM *a, const GT_ELEM *b, BN_CTX *ctx);
+ int GT_ELEM_sqr(const BP_GROUP *group, GT_ELEM *r, const GT_ELEM *a, BN_CTX *ctx);
+ int GT_ELEM_mul(const BP_GROUP *group, GT_ELEM *r, GT_ELEM *a, GT_ELEM *b, BN_CTX *ctx);
+ int GT_ELEM_inv(const BP_GROUP *group, GT_ELEM *r, GT_ELEM *a, BN_CTX *ctx);
+ int GT_ELEM_exp(const BP_GROUP *group, GT_ELEM *r, const GT_ELEM *a, const BIGNUM *b, BN_CTX *ctx);
+
+ int GT_ELEM_is_zero(GT_ELEM *a);
+ int GT_ELEM_is_unity(const BP_GROUP *group, const GT_ELEM *a);
+ int GT_ELEM_cmp(const GT_ELEM *a, const GT_ELEM *b);
+
+=head1 DESCRIPTION
+
+GT_ELEM adds the two elements B<a> and B<b> and places the result in B<r>. Similarly GT_ELEM_sub subtracts B<b> from B<a> and places the
+result in B<r>. In both cases it is valid for B<r> to be one of B<a> or B<b>.
+
+GT_ELEM_sqr computes the squaring of element B<a> and places the result in B<r>.
+GT_ELEM_mul multiplies elements B<a> and B<b> and stores the result in B<r>.
+
+GT_ELEM_inv calculates the inverse of the field element B<a>. The result is placed back in B<r>.
+
+GT_ELEM_exp computes the exponentiation of field element B<a> to power B<b> and stores the result in B<r>.
+
+GT_ELEM_is_zero tests whether the field element is 0 and GT_ELEM_is_unity tests where it is 1.
+
+GT_ELEM_cmp compares the two supplied elements and tests whether or not they are equal.
+
+=head1 RETURN VALUES
+
+The following functions return 1 on success or 0 on error: GT_ELEM_add, GT_ELEM_dbl, GT_ELEM<sqr, GT_ELEM_mul, GT_ELEM_inv, GT_ELEM_exp.
+
+GT_ELEM_is_zero returns 1 if the field element is the additive identity 0, or 0 otherwise.
+
+GT_ELEM_is_unity returns 1 if the field element is the multiplicative identity 1, or 0 otherwise.
+
+GT_ELEM_cmp returns 1 if the points are not equal, 0 if they are, or -1 on error.
+
+=head1 SEE ALSO
+
+L<crypto(3)>, L<bp(3)>, L<BP_GROUP_new(3)>, L<BP_GROUP_copy(3)>,
+L<GT_ELEM_new(3)>,
+
+=cut

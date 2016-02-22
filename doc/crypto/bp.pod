@@ -1,0 +1,187 @@
+=pod
+
+=head1 NAME
+
+bp - Bilinear Pairing functions
+
+=head1 SYNOPSIS
+
+ #include <openssl/bp.h>
+ #include <openssl/ec.h>
+ #include <openssl/bn.h>
+
+ BP_GROUP *BP_GROUP_new(void);
+ void BP_GROUP_free(BP_GROUP *group);
+ void BP_GROUP_clear_free(BP_GROUP *group);
+ int BP_GROUP_copy(BP_GROUP *dest, const BP_GROUP *src);
+ BP_GROUP *BP_GROUP_dup(const BP_GROUP *a);
+ BP_GROUP *BP_GROUP_new_curve(const BIGNUM *p, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx);
+ BP_GROUP *BP_GROUP_new_by_curve_name(int nid);
+
+ int BP_GROUP_set_curve(BP_GROUP *group, const BIGNUM *p, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx);
+ int BP_GROUP_get_curve(const BP_GROUP *group, BIGNUM *p, BIGNUM *a, BIGNUM *b, BN_CTX *ctx);
+ const EC_GROUP *BP_GROUP_get_group_G1(BP_GROUP *group);
+ int BP_GROUP_get_order(const BP_GROUP *group, BIGNUM *order, BN_CTX *ctx);
+ int BP_GROUP_set_param(BP_GROUP *group, BIGNUM *param;
+ int BP_GROUP_get_param(const BP_GROUP *group, BIGNUM *param);
+ int BP_GROUP_set_generator_G1(const BP_GROUP *group, G1_ELEM *g, BIGNUM *n);
+ int BP_GROUP_get_generator_G1(const BP_GROUP *group, G1_ELEM *g);
+ int BP_GROUP_precompute_mult_G1(BP_GROUP *group, BN_CTX *ctx);
+ int BP_GROUP_have_precompute_mult_G1(const BP_GROUP *group);
+ int BP_GROUP_get_generator_G2(const BP_GROUP *group, G2_ELEM *g);
+ int BP_GROUP_set_generator_G2(const BP_GROUP *group, G2_ELEM *g);
+ int BP_GROUP_precompute_mult_G2(BP_GROUP *group, BN_CTX *ctx);
+ int BP_GROUP_have_precompute_mult_G2(const BP_GROUP *group);
+
+ G1_ELEM *G1_ELEM_new(const BP_GROUP *group);
+ void G1_ELEM_free(G1_ELEM *a);
+ void G1_ELEM_clear_free(G1_ELEM *a);
+ int G1_ELEM_copy(G1_ELEM *a, const G1_ELEM *b);
+ G1_ELEM *G1_ELEM_dup(const G1_ELEM *a, const BP_GROUP *group);
+
+ int G1_ELEM_set_to_infinity(const BP_GROUP *group, G1_ELEM *point);
+ int G1_ELEM_set_affine_coordinates(const BP_GROUP *group, G1_ELEM *point,
+	const BIGNUM *x, const BIGNUM *y, BN_CTX *ctx);
+ int G1_ELEM_get_affine_coordinates(const BP_GROUP *group,
+	const G1_ELEM *point, BIGNUM *x, BIGNUM *y, BN_CTX *ctx);
+ int G1_ELEM_set_Jprojective_coordinates(const BP_GROUP *group,
+	G1_ELEM *point, const BIGNUM *x, const BIGNUM *y, const BIGNUM *z, BN_CTX *ctx);
+ int G1_ELEM_get_Jprojective_coordinates(const BP_GROUP *group,
+	const G1_ELEM *point, BIGNUM *x, BIGNUM *y, BIGNUM *z, BN_CTX *ctx);
+ int G1_ELEM_set_compressed_coordinates(const BP_GROUP *group, G1_ELEM *point,
+	const BIGNUM *x, int y_bit, BN_CTX *ctx);
+ size_t G1_ELEM_point2oct(const BP_GROUP *group, const G1_ELEM *point,
+	point_conversion_form_t form, unsigned char *buf, size_t len, BN_CTX *ctx);
+ int G1_ELEM_oct2point(const BP_GROUP *group, const G1_ELEM *point,
+	const unsigned char *buf, size_t len, BN_CTX *ctx);
+
+ int G1_ELEM_add(const BP_GROUP *group, G1_ELEM *r, const G1_ELEM *point,
+	const G1_ELEM *b, BN_CTX *ctx);
+ int G1_ELEM_dbl(const BP_GROUP *group, G1_ELEM *r, const G1_ELEM *point, BN_CTX *ctx);
+ int G1_ELEM_invert(const BP_GROUP *group, G1_ELEM *point, BN_CTX *ctx);
+ int G1_ELEM_is_at_infinity(const BP_GROUP *group, const G1_ELEM *point);
+ int G1_ELEM_is_on_curve(const BP_GROUP *group, const G1_ELEM *point, BN_CTX *ctx);
+ int G1_ELEM_cmp(const BP_GROUP *group, const G1_ELEM *point,
+	const G1_ELEM *b, BN_CTX *ctx);
+ int G1_ELEM_make_affine(const BP_GROUP *group, G1_ELEM *point, BN_CTX *ctx);
+ int G1_ELEMs_make_affine(const BP_GROUP *group, size_t num,
+	G1_ELEM *points[], BN_CTX *ctx);
+ int G1_ELEM_mul(const BP_GROUP *group, G1_ELEM *r, const BIGNUM *g_scalar,
+	const G1_ELEM *point, const BIGNUM *p_scalar, BN_CTX *ctx);
+ int G1_ELEMs_mul(const BP_GROUP *group, G1_ELEM *r, const BIGNUM *scalar,
+	size_t num, const G1_ELEM *points[], const BIGNUM *scalars[], BN_CTX *ctx);
+
+ G2_ELEM *G2_ELEM_new(const BP_GROUP *group);
+ void G2_ELEM_free(G2_ELEM *point);
+ void G2_ELEM_clear_free(G2_ELEM *point);
+ int G2_ELEM_copy(G2_ELEM *point, const G2_ELEM *b);
+ G2_ELEM *G2_ELEM_dup(const G2_ELEM *point, const BP_GROUP *group);
+
+ int G2_ELEM_set_to_infinity(const BP_GROUP *group, G2_ELEM *point);
+ int G2_ELEM_set_affine_coordinates(const BP_GROUP *group, G2_ELEM *point,
+	const BIGNUM *x[2], const BIGNUM *y[2], BN_CTX *ctx);
+ int G2_ELEM_get_affine_coordinates(const BP_GROUP *group,
+	const G2_ELEM *point, BIGNUM *x[2], BIGNUM *y[2], BN_CTX *ctx);
+ int G2_ELEM_set_Jprojective_coordinates(const BP_GROUP *group,
+	G2_ELEM *point, const BIGNUM *x[2], const BIGNUM *y[2], const BIGNUM *z[2], BN_CTX *ctx);
+ int G2_ELEM_get_Jprojective_coordinates(const BP_GROUP *group,
+	const G2_ELEM *point, BIGNUM *x[2], BIGNUM *y[2], BIGNUM *z[2], BN_CTX *ctx);
+ size_t G2_ELEM_point2oct(const BP_GROUP *group, const G2_ELEM *point,
+	point_conversion_form_t form, unsigned char *buf, size_t len, BN_CTX *ctx);
+ int G2_ELEM_oct2point(const BP_GROUP *group, G2_ELEM *point,
+	const unsigned char *buf, size_t len, BN_CTX *ctx);
+
+ int G2_ELEM_add(const BP_GROUP *group, G2_ELEM *r, const G2_ELEM *a,
+	const G2_ELEM *b, BN_CTX *ctx);
+ int G2_ELEM_dbl(const BP_GROUP *group, G2_ELEM *r, const G2_ELEM *a, BN_CTX *ctx);
+ int G2_ELEM_invert(const BP_GROUP *group, G2_ELEM *point, BN_CTX *ctx);
+ int G2_ELEM_is_at_infinity(const BP_GROUP *group, const G2_ELEM *point);
+ int G2_ELEM_is_on_curve(const BP_GROUP *group, const G2_ELEM *point, BN_CTX *ctx);
+ int G2_ELEM_cmp(const BP_GROUP *group, const G2_ELEM *point, const G2_ELEM *b, BN_CTX *ctx);
+ int G2_ELEM_make_affine(const BP_GROUP *group, G2_ELEM *point, BN_CTX *ctx);
+ int G2_ELEMs_make_affine(const BP_GROUP *group, size_t num, G2_ELEM *points[], BN_CTX *ctx);
+ int G2_ELEM_mul(const BP_GROUP *group, G2_ELEM *r, const BIGNUM *g_scalar,
+	const G2_ELEM *point, const BIGNUM *p_scalar, BN_CTX *ctx);
+ int G2_ELEMs_mul(const BP_GROUP *group, G2_ELEM *r, const BIGNUM *scalar,
+	size_t num, const G2_ELEM *points[], const BIGNUM *scalars[], BN_CTX *ctx);
+
+ GT_ELEM *GT_ELEM_new(const BP_GROUP *group);
+ void GT_ELEM_free(GT_ELEM *a);
+ void GT_clear_free(GT_ELEM *a);
+ int GT_ELEM_copy(GT_ELEM *a, const GT_ELEM *b);
+ GT_ELEM *GT_ELEM_dup(const GT_ELEM *a, const BP_GROUP *group);
+
+ int GT_zero(GT_ELEM *a);
+ int GT_is_zero(GT_ELEM *a);
+ int GT_ELEM_set_to_unity(const BP_GROUP *group, GT_ELEM *a);
+ int GT_ELEM_is_unity(const BP_GROUP *group, const GT_ELEM *a);
+ size_t GT_ELEM_elem2oct(const BP_GROUP *group, const GT_ELEM *point, unsigned char *buf,
+	size_t len, BN_CTX *ctx);
+ int GT_ELEM_oct2elem(const BP_GROUP *group, GT_ELEM *point, const unsigned char *buf,
+	size_t len, BN_CTX *ctx);
+
+ int GT_ELEM_add(const BP_GROUP *group, GT_ELEM *r, const GT_ELEM *a, const GT_ELEM *b, BN_CTX *ctx);
+ int GT_ELEM_sub(const BP_GROUP *group, GT_ELEM *r, const GT_ELEM *a, const GT_ELEM *b, BN_CTX *ctx);
+ int GT_ELEM_sqr(const BP_GROUP *group, GT_ELEM *r, const GT_ELEM *a, BN_CTX *ctx);
+ int GT_ELEM_mul(const BP_GROUP *group, GT_ELEM *r, GT_ELEM *a, GT_ELEM *b, BN_CTX *ctx);
+ int GT_ELEM_inv(const BP_GROUP *group, GT_ELEM *r, GT_ELEM *a, BN_CTX *ctx);
+ int GT_ELEM_cmp(const GT_ELEM *a, const GT_ELEM *b);
+ int GT_ELEM_exp(const BP_GROUP *group, GT_ELEM *r, const GT_ELEM *a, const BIGNUM *b, BN_CTX *ctx);
+
+ int GT_ELEM_pairing(const BP_GROUP *group, GT_ELEM *r, const G1_ELEM *p, const G2_ELEM *q, BN_CTX *ctx);
+ int GT_ELEMs_pairing(const BP_GROUP *group, GT_ELEM *r, size_t num, const G1_ELEM *p[], const G2_ELEM *q[], BN_CTX *ctx);
+
+=head1 DESCRIPTION
+
+This library implements a set of functions designed to perform operations over bilinear groups G1, G2, GT of order q
+defined over pairing-friendly prime elliptic curves. These groups are equipped with a bilinear map (pairing) of the form
+e : G1 x G2 -> GT.  The implementation is tailored to computing the optimal ate pairing over Barreto-Naehrig (BN) curves
+with embedding degree k = 12. This familu of curves is ideal for implementation at the 128-bit security level and has form:
+
+E(Fp) : y^2 = x^3 + b.
+
+These curves support a divisive (D-type) sextic twist, for some choice xi of quadratic/cubic non-residue in a quadratic
+extension of the base field:
+
+E'(Fp^2): y^2 = x^3 + b/xi.
+
+BN curves are a rather dense family of elliptic curves parameterized by an integer u, such that p and q are prime:
+
+p = 36u^4 + 36u^3 + 24u^2 + 6u + 1,
+q = 36u^4 + 36u^3 + 18u^2 + 6u + 1
+
+For BN-curves, G1 is a q-order cyclic subgroup of E and G2 is a subgroup of E'(Fp^2) isomorphic to a q-order subgroup
+of E(Fp^k). The group GT is the set of q-th roots of unity in the finite field Fp^k. Hence, G1 elements are points
+on the elliptic curve defined over the base field, G2 elements are points on the curve defined over Fp^2, and GT
+elements are polynomials with coefficients in Fp and degree smaller than k. For this reason, groups G1 and G2 are
+commonly written additively, while group GT is usually written multiplicatively.
+
+A B<BP_GROUP> structure is used to represent the definition of an elliptic curve. Elements from G1 are represented by
+a B<G1_ELEM> structure storing a point on E. Elements from G2 are represented by a B<G2_ELEM> structure storing a
+point on the twist E'.
+
+For simplicity and efficiency in the extension field arithmetic, this implementation only accepts primes congruent
+to 3 mod 4 and to 1 mod 6, parameterized by negative integers. The efficient towering scheme used is:
+
+Fp^2 = Fp[i]/(i^2 - beta), beta a non-square in Fp
+Fp^4 = Fp^2[s]/(s^2 - xi), with xi a non-square in Fp^2
+Fp^6 = Fp^2[v]/(v^3 - xi), with xi a non-cube in Fp^2
+Fp^12 = Fp^4[t]/(t^3 - s) or Fp^6[w]/(w^2 - v) or Fp^6[w]/(w^6 - xi) with xi a non-square and non-cube in Fp^2.
+
+The creation and destruction of B<BP_GROUP> objects is described in L<BP_GROUP_new(3)>. Functions for
+manipulating B<BP_GROUP> objects are described in L<BP_GROUP_copy(3)>.
+
+Functions for creating, destroying and manipulating B<G1_ELEM> objects are explained in L<G1_ELEM_new(3)>,
+whilst functions for performing mathematical operations and tests on B<G1_ELEM> are covered in L<G1_ELEM_add(3)>.
+Analogues for G2 are available for L<G2_ELEM_new(3)> and L<G1_ELEM_add(3)>, respectively.
+Finally, functions for manipulating and performing arithmetic in GT elements can be found in L<GT_ELEM_new(3)> and
+L<GT_ELEM_add(3)>, respectively.
+
+=head1 SEE ALSO
+
+L<crypto(3)>, L<BP_GROUP_new(3)>, L<BP_GROUP_copy(3)>,
+L<G1_ELEM_new(3)>, L<G1_ELEM_add(3)>,
+L<G2_ELEM_new(3)>, L<G2_ELEM_add(3)>,
+L<GT_ELEM_new(3)>, L<GT_ELEM_add(3)>
+
+=cut

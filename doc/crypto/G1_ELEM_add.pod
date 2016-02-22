@@ -1,0 +1,61 @@
+=pod
+
+=head1 NAME
+
+G1_ELEM_add, G1_ELEM_dbl, G1_ELEM_invert, G1_ELEM_is_at_infinity, G1_ELEM_is_on_curve, G1_ELEM_cmp, G1_ELEM_make_affine, G1_ELEMs_make_affine, G1_ELEMs_mul, G1_ELEM_mul - Functions for performing mathematical operations and tests on B<G1_ELEM> objects.
+
+=head1 SYNOPSIS
+
+ #include <openssl/bp.h>
+ #include <openssl/bn.h>
+
+ int G1_ELEM_add(const EC_GROUP *group, G1_ELEM *r, const G1_ELEM *a, const G1_ELEM *b, BN_CTX *ctx);
+ int G1_ELEM_dbl(const EC_GROUP *group, G1_ELEM *r, const G1_ELEM *a, BN_CTX *ctx);
+ int G1_ELEM_invert(const EC_GROUP *group, G1_ELEM *point, BN_CTX *ctx);
+ int G1_ELEM_is_at_infinity(const EC_GROUP *group, const G1_ELEM *point);
+ int G1_ELEM_is_on_curve(const EC_GROUP *group, const G1_ELEM *point, BN_CTX *ctx);
+ int G1_ELEM_cmp(const EC_GROUP *group, const G1_ELEM *point, const G1_ELEM *b, BN_CTX *ctx);
+ int G1_ELEM_make_affine(const EC_GROUP *group, G1_ELEM *point, BN_CTX *ctx);
+ int G1_ELEMs_make_affine(const EC_GROUP *group, size_t num, G1_ELEM *points[], BN_CTX *ctx);
+ int G1_ELEM_mul(const EC_GROUP *group, G1_ELEM *r, const BIGNUM *n, const G1_ELEM *q, const BIGNUM *m, BN_CTX *ctx);
+ int G1_ELEMs_mul(const EC_GROUP *group, G1_ELEM *r, const BIGNUM *n, size_t num, const G1_ELEM *p[], const BIGNUM *m[], BN_CTX *ctx);
+
+=head1 DESCRIPTION
+
+G1_ELEM_add adds the two points B<a> and B<b> and places the result in B<r>. Similarly G1_ELEM_dbl doubles the point B<a> and places the
+result in B<r>. In both cases it is valid for B<r> to be one of B<a> or B<b>.
+
+G1_ELEM_invert calculates the inverse of the supplied point B<a>. The result is placed back in B<a>.
+
+The function G1_ELEM_is_at_infinity tests whether the supplied point is at infinity or not.
+
+G1_ELEM_is_on_curve tests whether the supplied point is on the curve or not.
+
+G1_ELEM_cmp compares the two supplied points and tests whether or not they are equal.
+
+The functions G1_ELEM_make_affine and G1_ELEMs_make_affine force the internal representation of the G1_ELEM(s) into the affine
+co-ordinate system. In the case of G1_ELEMs_make_affine the value B<num> provides the number of points in the array B<points> to be
+forced.
+
+G1_ELEM_mul calculates the value generator * B<n> + B<q> * B<m> and stores the result in B<r>. The value B<n> may be NULL in which case the result is just B<q> * B<m>.
+
+G1_ELEMs_mul calculates the value generator * B<n> + B<q[0]> * B<m[0]> + ... + B<q[num-1]> * B<m[num-1]>. As for G1_ELEM_mul the value
+B<n> may be NULL.
+
+=head1 RETURN VALUES
+
+The following functions return 1 on success or 0 on error: G1_ELEM_add, G1_ELEM_dbl, G1_ELEM_invert, G1_ELEM_make_affine,
+G1_ELEMs_make_affine, G1_ELEMs_make_affine, G1_ELEM_mul, G1_ELEMs_mul and EC_GROUP_precompute_mult.
+
+G1_ELEM_is_at_infinity returns 1 if the point is at infinity, or 0 otherwise.
+
+G1_ELEM_is_on_curve returns 1 if the point is on the curve, 0 if not, or -1 on error.
+
+G1_ELEM_cmp returns 1 if the points are not equal, 0 if they are, or -1 on error.
+
+=head1 SEE ALSO
+
+L<crypto(3)>, L<bp(3)>, L<BP_GROUP_new(3)>, L<BP_GROUP_copy(3)>,
+L<G1_ELEM_new(3)>,
+
+=cut

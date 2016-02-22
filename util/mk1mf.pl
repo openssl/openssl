@@ -143,6 +143,7 @@ and [options] can be one of
 	no-asm 					- No x86 asm
 	no-srp					- No SRP
 	no-ec					- No EC
+	no-bp					- No pairings
 	no-engine				- No engine
 	no-egd					- No EGD
 	no-hw					- No hw
@@ -298,6 +299,7 @@ $cflags.=" -DOPENSSL_NO_SRP" if $no_srp;
 $cflags.=" -DOPENSSL_NO_CMS" if $no_cms;
 $cflags.=" -DOPENSSL_NO_ERR"  if $no_err;
 $cflags.=" -DOPENSSL_NO_EC"   if $no_ec;
+$cflags.=" -DOPENSSL_NO_BP"   if $no_bp;
 $cflags.=" -DOPENSSL_NO_GOST" if $no_gost;
 $cflags.=" -DOPENSSL_NO_ENGINE"   if $no_engine;
 $cflags.=" -DOPENSSL_NO_HW"   if $no_hw;
@@ -1399,6 +1401,7 @@ sub read_options
 		"no-err" => \$no_err,
 		"no-sock" => \$no_sock,
 		"no-ec" => \$no_ec,
+		"no-bp" => \$no_bp,
 		"no-gost" => \$no_gost,
 		"no-engine" => \$no_engine,
 		"no-egd" => 0,

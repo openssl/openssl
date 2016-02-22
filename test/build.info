@@ -1,6 +1,6 @@
 {- use File::Spec::Functions qw/catdir rel2abs/; -}
 PROGRAMS=\
-        nptest bntest \
+        nptest bntest bptest \
         ectest ecdsatest ecdhtest gmdifftest pbelutest ideatest \
         md2test md4test md5test \
         hmactest wp_test \
@@ -22,6 +22,10 @@ DEPEND[nptest]=../libcrypto
 SOURCE[bntest]=bntest.c
 INCLUDE[bntest]={- rel2abs(catdir($builddir,"../crypto/include")) -} {- rel2abs(catdir($builddir,"../include")) -} .. ../crypto/include ../include
 DEPEND[bntest]=../libcrypto
+
+SOURCE[bptest]=bptest.c
+INCLUDE[bptest]={- rel2abs(catdir($builddir,"../include")) -} ../include
+DEPEND[bptest]=../libcrypto
 
 SOURCE[ectest]=ectest.c
 INCLUDE[ectest]={- rel2abs(catdir($builddir,"../include")) -} ../include

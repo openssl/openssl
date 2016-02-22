@@ -1,0 +1,71 @@
+=pod
+
+=head1 NAME
+
+BP_GROUP_copy, BP_GROUP_dup, BP_GROUP_set_param, BP_GROUP_get_param, BP_GROUP_get_order, BP_GROUP_get_group_G1, BP_GROUP_set_generator_G1, BP_GROUP_get_generator_G1, BP_GROUP_precompute_mult_G1, BP_GROUP_have_precompute_mult_G1, BP_GROUP_get_generator_G2, BP_GROUP_set_generator_G2, BP_GROUP_precompute_mult_G2, BP_GROUP_have_precompute_mult_G2 - Functions for manipulating B<BP_GROUP> objects.
+
+=head1 SYNOPSIS
+
+ #include <openssl/bp.h>
+ #include <openssl/bn.h>
+
+ int BP_GROUP_copy(BP_GROUP *dest, const BP_GROUP *src);
+ BP_GROUP *BP_GROUP_dup(const BP_GROUP *a);
+
+ int BP_GROUP_set_param(BP_GROUP *group, BIGNUM *param);
+ int BP_GROUP_get_param(const BP_GROUP *group, BIGNUM *param);
+ const EC_GROUP *BP_GROUP_get_group_G1(BP_GROUP *group);
+ int BP_GROUP_set_generator_G1(const BP_GROUP *group, G1_ELEM *g, BIGNUM *n);
+ int BP_GROUP_get_generator_G1(const BP_GROUP *group, G1_ELEM *g);
+ int BP_GROUP_precompute_mult_G1(BP_GROUP *group, BN_CTX *ctx);
+ int BP_GROUP_have_precompute_mult_G1(const BP_GROUP *group);
+ int BP_GROUP_get_generator_G2(const BP_GROUP *group, G2_ELEM *g);
+ int BP_GROUP_set_generator_G2(const BP_GROUP *group, G2_ELEM *g);
+ int BP_GROUP_precompute_mult_G2(BP_GROUP *group, BN_CTX *ctx);
+ int BP_GROUP_have_precompute_mult_G2(const BP_GROUP *group);
+
+=head1 DESCRIPTION
+
+BP_GROUP_copy copies the bilinear groups B<src> into B<dst>.
+
+BP_GROUP_dup creates a new BP_GROUP object and copies the content from B<src> to the newly created
+BP_GROUP object.
+
+BP_GROUP_set_param sets the parameterizing integer B<param> associated to the pairing-friendly curve.
+This integer is necessary for defining the pairing computation parameter.
+
+The function BP_GROUP_get_group_G1 returns the EC_GROUP structure storing the elliptic curve.
+
+BP_GROUP_set_generator_G1 sets parameters that must be agreed by all participants using the groups. These
+parameters include the B<generator>, and the B<order> and assume the cofactor to be 1. The B<generator> is a
+point on the curve chosen for cryptographic operations. Integers used for point multiplications will be between 0 and
+n-1 where n is the B<order>. BP_GROUP_get_generator_G1 copies the generator for group G1 to the given argument.
+
+BP_GROUP_set_generator_G2 sets the generator for the subgroup in the sextic twist, having the same order as
+the G1 generator. The B<generator> is a point in the quadratic twist with order B<order> and integers for scalar
+multiplications must satisfy the same restrictions as in G1. BP_GROUP_get_generator_G2 copies the generator for
+group G2 to the given argument.
+
+The function BP_GROUP_precompute_mult_G1 precomputes multiples of the G1 generator and BP_GROUP_have_precompute_mult_G1
+check if this precomputation has been done. Respective analogues for group G2 are BP_GROUP_precompute_mult_G2 and
+BP_GROUP_have_precompute_mult_G2.
+
+The function BP_GROUP_get_order and BP_GROUP_get_param populate the provided B<order> and B<param> parameters
+with the respective order and parameter for the B<group>.
+
+=head1 RETURN VALUES
+
+The following functions return 1 on success or 0 on error: BP_GROUP_copy, BP_GROUP_set_param, BP_GROUP_get_param, BP_GROUP_get_order,
+BP_GROUP_set_generator_G1, BP_GROUP_get_generator_G1, BP_GROUP_precompute_mult_G1, BP_GROUP_have_precompute_mult_G1,
+BP_GROUP_get_generator_G2, BP_GROUP_set_generator_G2, BP_GROUP_precompute_mult_G2, BP_GROUP_have_precompute_mult_G2.
+
+BP_GROUP_dup returns a pointer to the duplicated curve, or NULL on error.
+
+=head1 SEE ALSO
+
+L<crypto(3)>, L<bp(3)>, L<BP_GROUP_new(3)>, L<EC_GROUP_new(3)>,
+L<G1_ELEM_new(3)>, L<G1_ELEM_add(3)>,
+L<G2_ELEM_new(3)>, L<G2_ELEM_add(3)>,
+L<GT_ELEM_new(3)>, L<GT_ELEM_add(3)>
+
+=cut

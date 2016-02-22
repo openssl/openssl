@@ -1,0 +1,55 @@
+=pod
+
+=head1 NAME
+
+BP_GROUP_new, BP_GROUP_free, BP_GROUP_clear_free, BP_GROUP_new_curve, BP_GROUP_new_by_curve_name, BP_GROUP_set_curve, BP_GROUP_get_curve, - Functions for creating and destroying B<BP_GROUP> objects.
+
+=head1 SYNOPSIS
+
+ #include <openssl/bp.h>
+ #include <openssl/bn.h>
+
+ BP_GROUP *BP_GROUP_new(void);
+ void BP_GROUP_free(BP_GROUP *group);
+ void BP_GROUP_clear_free(BP_GROUP *group);
+
+ BP_GROUP *BP_GROUP_dup(const BP_GROUP *a);
+ BP_GROUP *BP_GROUP_new_curve(const BIGNUM *p, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx);
+ BP_GROUP *BP_GROUP_new_by_curve_name(int nid);
+
+ int BP_GROUP_set_curve(BP_GROUP *group, const BIGNUM *p, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx);
+ int BP_GROUP_get_curve(const BP_GROUP *group, BIGNUM *p, BIGNUM *a, BIGNUM *b, BN_CTX *ctx);
+
+=head1 DESCRIPTION
+
+A new set of bilinear groups can be constructed by calling BP_GROUP_new. Is is then necessary to call BP_GROUP_set_curve
+to create a B<group> containing elliptic curves defined from the coefficients B<a> and B<b> defined over a prime field
+of characteritic B<p>. BP_GROUP_get_curve returns the configured parameters B<p>, B<a> and B<b> in B<group>.
+
+The functions BP_GROUP_new_curve and BP_GROUP_new_by_curve_name are shortcuts for calling BP_GROUP_new and the appropriate
+BP_GROUP_set_curve function.  In the latter, a curve identifier B<nid> must be provided. Whilst the library is flexible
+to some extent in supporting generic curves, the current implementation restricts the choice of BN curves to p = 3 mod 4,
+1 mod 6, supporting divisive (D-type) twists parameterized by a negative integer. There is native support for curve
+Fp254BNb specified in L<an IEFT draft|https://tools.ietf.org/html/draft-kasamatsu-bncurves> containing parameters through
+the identifier B<NID_fp254bnb>.
+
+BP_GROUP_free frees the memory associated with the BP_GROUP.
+If B<group> is NULL nothing is done.
+
+BP_GROUP_clear_free destroys any sensitive data held within the BP_GROUP and then frees its memory.
+If B<group> is NULL nothing is done.
+
+=head1 RETURN VALUES
+
+All BP_GROUP_new* functions return a pointer to the newly constructed bilinear group, or NULL on error.
+
+EB_GROUP_set_curve, BP_GROUP_get_curve return 1 on success or 0 on error.
+
+=head1 SEE ALSO
+
+L<crypto(3)>, L<bp(3)>, L<BP_GROUP_copy(3)>,
+L<G1_ELEM_new(3)>, L<G1_ELEM_add(3)>,
+L<G2_ELEM_new(3)>, L<G2_ELEM_add(3)>,
+L<GT_ELEM_new(3)>, L<GT_ELEM_add(3)>
+
+=cut
