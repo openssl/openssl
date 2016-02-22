@@ -365,7 +365,6 @@ static int ssl_set_cert(CERT *c, X509 *x)
 {
     EVP_PKEY *pkey;
     int i;
-    CERT_PKEY *key;
 
     pkey = X509_get0_pubkey(x);
     if (pkey == NULL) {
@@ -413,29 +412,7 @@ static int ssl_set_cert(CERT *c, X509 *x)
     X509_free(c->pkeys[i].x509);
     X509_up_ref(x);
     c->pkeys[i].x509 = x;
-
-    key = c->key;
     c->key = &(c->pkeys[i]);
-
-    if (key->serverinfo) {
-        /* Copy any serverinfo which may have been configured for the previous
-         * CERT_PKEY via SSL_CTX_use_serverinfo().  This is necessary, since
-         * serverinfo is NOT set per certificate, but is SSL_CTX-wide. */
-
-        if (c->key == NULL) {
-            SSLerr(SSL_F_SSL_SET_CERT, ERR_R_INTERNAL_ERROR);
-            return (0);
-        }
-
-        c->key->serverinfo = OPENSSL_realloc(c->key->serverinfo,
-                                             key->serverinfo_length);
-        if (c->key->serverinfo == NULL) {
-            SSLerr(SSL_F_SSL_SET_CERT, ERR_R_MALLOC_FAILURE);
-            return (0);
-        }
-        memcpy(c->key->serverinfo, key->serverinfo, key->serverinfo_length);
-        c->key->serverinfo_length = key->serverinfo_length;
-    }
 
     return (1);
 }
@@ -878,12 +855,27 @@ static int serverinfo_process_buffer(const unsigned char *serverinfo,
 
         /* Register callbacks for extensions */
         ext_type = (serverinfo[0] << 8) + serverinfo[1];
-        if (ctx && !SSL_CTX_add_server_custom_ext(ctx, ext_type,
-                                                  serverinfo_srv_add_cb,
-                                                  NULL, NULL,
-                                                  serverinfo_srv_parse_cb,
-                                                  NULL))
-            return 0;
+        if (ctx) {
+            int have_ext_cbs = 0;
+            size_t i;
+            custom_ext_methods *exts = &ctx->cert->srv_ext;
+            custom_ext_method *meth = exts->meths;
+
+            /* check for existing callbacks for this extension */
+            for (i = 0; i < exts->meths_count; i++, meth++) {
+                if (ext_type == meth->ext_type) {
+                    have_ext_cbs = 1;
+                    break;
+                }
+            }
+
+            if (!have_ext_cbs && !SSL_CTX_add_server_custom_ext(ctx, ext_type,
+                                                                serverinfo_srv_add_cb,
+                                                                NULL, NULL,
+                                                                serverinfo_srv_parse_cb,
+                                                                NULL))
+                return 0;
+        }
 
         serverinfo += 2;
         serverinfo_length -= 2;
