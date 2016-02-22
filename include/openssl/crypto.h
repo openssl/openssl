@@ -565,8 +565,10 @@ void OPENSSL_thread_stop(void);
 
 /* Low-level control of initialization */
 OPENSSL_INIT_SETTINGS *OPENSSL_INIT_new(void);
+#ifndef OPENSSL_NO_STDIO
 void OPENSSL_INIT_set_config_filename(OPENSSL_INIT_SETTINGS *settings,
                                       const char *config_file);
+#endif
 void OPENSSL_INIT_free(OPENSSL_INIT_SETTINGS *settings);
 
 /* BEGIN ERROR CODES */
