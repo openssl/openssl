@@ -30,6 +30,11 @@ must consist of a 2-byte Extension Type, a 2-byte length, and then length
 bytes of extension_data.  Each PEM extension name must begin with the phrase
 "BEGIN SERVERINFO FOR ".
 
+If more than one certificate (RSA/DSA) is installed using
+SSL_CTX_use_certificate(), the serverinfo extension will be loaded into the
+last certificate installed.  If e.g. the last item was a RSA certificate, the
+loaded serverinfo extension data will be loaded for that certificate.
+
 =head1 NOTES
 
 =head1 RETURN VALUES
