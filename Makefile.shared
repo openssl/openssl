@@ -489,7 +489,7 @@ link_app.irix:
 link_dso.hpux:
 	@if $(DETECT_GNU_LD); then $(DO_GNU_DSO); else \
 	SHLIB=$(LIBNAME).sl; \
-	expr "$(CFLAGS)" : '.*DSO_DLFCN' > /dev/null && SHLIB=lib$(LIBNAME).so; \
+	expr "$(CFLAGS)" : '.*DSO_DLFCN' > /dev/null && SHLIB=$(LIBNAME).so; \
 	SHLIB_SUFFIX=; \
 	ALLSYMSFLAGS=''; \
 	NOALLSYMSFLAGS=''; \
