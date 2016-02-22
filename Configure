@@ -334,20 +334,20 @@ my @deprecated_disablables = (
 
 # All of the following is disabled by default (RC5 was enabled before 0.9.8):
 
-my %disabled = ( # "what"         => "comment"
-		 "ec_nistp_64_gcc_128" => "default",
-		 "egd"            => "default",
-		 "md2"            => "default",
-		 "rc5"            => "default",
-		 "sctp"           => "default",
-		 "shared"         => "default",
-		 "ssl-trace"	  => "default",
-		 "static-engine"  => "default",
-		 "unit-test"	  => "default",
-		 "zlib"           => "default",
-		 "crypto-mdebug"  => "default",
-		 "heartbeats"     => "default",
-	       );
+our %disabled = ( # "what"         => "comment"
+		  "ec_nistp_64_gcc_128" => "default",
+		  "egd"            => "default",
+		  "md2"            => "default",
+		  "rc5"            => "default",
+		  "sctp"           => "default",
+		  "shared"         => "default",
+		  "ssl-trace"      => "default",
+		  "static-engine"  => "default",
+		  "unit-test"      => "default",
+		  "zlib"           => "default",
+		  "crypto-mdebug"  => "default",
+		  "heartbeats"     => "default",
+		);
 
 # Note: => pair form used for aesthetics, not to truly make a hash table
 my @disable_cascades = (
@@ -1301,6 +1301,7 @@ if ($builder eq "unified") {
             split /^/m,
             $template->fill_in(HASH => { config => \%config,
                                          target => \%target,
+                                         disabled => \%disabled,
                                          builddir => abs2rel($buildd, $blddir),
                                          sourcedir => abs2rel($sourced, $blddir),
                                          buildtop => abs2rel($blddir, $blddir),
