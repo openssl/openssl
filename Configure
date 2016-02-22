@@ -46,6 +46,8 @@ my $usage="Usage: Configure [no-<cipher> ...] [enable-<cipher> ...] [-Dxxx] [-lx
 #               multithreaded applications (default is "threads" if we
 #               know how to do it)
 # [no-]shared	[don't] try to create shared libraries when supported.
+# [no-]pic      [don't] try to build position independent code when supported.
+#               If disabled, it also disables shared and dynamic-engines.
 # no-asm        do not use assembler
 # no-dso        do not compile in any native shared-library methods. This
 #               will ensure that all methods just return NULL.
@@ -284,6 +286,7 @@ my @disablables = (
     "nextprotoneg",
     "ocb",
     "ocsp",
+    "pic",
     "poly1305",
     "posix-io",
     "psk",
@@ -384,6 +387,9 @@ my @disable_cascades = (
 
     # Without DSO, we can't load dynamic engines, so don't build them dynamic
     "dso"               => [ "dynamic-engine" ],
+
+    # Without position independent code, there can be no shared libraries or DSOs
+    "pic"               => [ "shared", "dynamic-engine" ],
     );
 
 # Avoid protocol support holes.  Also disable all versions below N, if version
@@ -764,6 +770,8 @@ foreach (sort (keys %disabled))
 		{ $no_threads = 1; }
 	elsif (/^shared$/)
 		{ $config{no_shared} = 1; }
+	elsif (/^pic$/)
+		{ }
 	elsif (/^zlib$/)
 		{ $zlib = 0; }
 	elsif (/^dynamic-engine$/)
@@ -1000,8 +1008,12 @@ if (defined($disabled{"deprecated"})) {
 
 if ($target{shared_target} eq "")
 	{
-	$no_shared_warn = 1 if !$config{no_shared} && !$config{fips};
+	$no_shared_warn = 1
+	    if ((!$config{no_shared} || !$disabled{"dynamic-engine"})
+		&& !$config{fips});
 	$config{no_shared} = 1;
+	$disabled{pic} = $disabled{shared} = $disabled{"dynamic-engine"} =
+	    "no-shared-target";
 	}
 
 if ($disabled{"dynamic-engine"}) {
@@ -1015,6 +1027,14 @@ if ($disabled{"dynamic-engine"}) {
 #
 # Platform fix-ups
 #
+
+# This saves the build files from having to check
+if ($disabled{pic})
+	{
+	$target{shared_cflag} = $target{shared_ldflag} =
+		$target{shared_rcflag} = "";
+	}
+
 if ($target{sys_id} ne "")
 	{
 	push @{$config{openssl_sys_defines}}, "OPENSSL_SYS_$target{sys_id}";
@@ -1049,7 +1069,7 @@ if (!$no_asm) {
     if ($target{md5_asm_src}) {
 	push @{$config{defines}}, "MD5_ASM";
     }
-    $target{cast_asm_src}=$table{BASE}->{cast_asm_src} if (!$config{no_shared}); # CAST assembler is not PIC
+    $target{cast_asm_src}=$table{BASE}->{cast_asm_src} unless $disabled{pic}; # CAST assembler is not PIC
     if ($target{rmd160_asm_src}) {
 	push @{$config{defines}}, "RMD160_ASM";
     }
@@ -1849,10 +1869,11 @@ EOF
 
 print <<"EOF" if ($no_shared_warn);
 
-You gave the option 'shared', which is not supported on this platform, so
-we will pretend you gave the option 'no-shared'.  If you know how to implement
-shared libraries, please let us know (but please first make sure you have
-tried with a current version of OpenSSL).
+The options 'shared', 'pic' and 'dynamic-engine' aren't supported on this
+platform, so we will pretend you gave the option 'no-pic', which also disables
+'shared' and 'dynamic-engine'.  If you know how to implement shared libraries
+or position independent code, please let us know (but please first make sure
+you have tried with a current version of OpenSSL).
 EOF
 
 ###### TO BE REMOVED BEFORE FINAL RELEASE
