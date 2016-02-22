@@ -162,13 +162,13 @@ LINK_SO_SHLIB_UNPACKED=	\
 
 DETECT_GNU_LD=($(CC) -Wl,-V /dev/null 2>&1 | grep '^GNU ld' )>/dev/null
 
-DO_GNU_SO_NOCALC=\
-	SHLIB=$(LIBNAME).so; \
+DO_GNU_SO_COMMON=\
 	SHLIB_SUFFIX=; \
 	ALLSYMSFLAGS='-Wl,--whole-archive'; \
 	NOALLSYMSFLAGS='-Wl,--no-whole-archive'; \
 	SHAREDFLAGS="$(CFLAGS) $(SHARED_LDFLAGS) -shared -Wl,-Bsymbolic -Wl,-soname=$$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX"
-DO_GNU_SO=$(CALC_VERSIONS); $(DO_GNU_SO_NOCALC); SHLIB=lib$$SHLIB
+DO_GNU_SO_NOCALC=SHLIB=$(LIBNAME).so; $(DO_GNU_SO_COMMON)
+DO_GNU_SO=SHLIB=lib$$SHLIB; $(CALC_VERSIONS); $(DO_GNU_SO_COMMON)
 DO_GNU_APP=LDFLAGS="$(CFLAGS) $(LDFLAGS) -Wl,-rpath,$(LIBRPATH)"
 
 #This is rather special.  It's a special target with which one can link
