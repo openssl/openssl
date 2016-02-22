@@ -414,7 +414,7 @@ static int ssl_set_cert(CERT *c, X509 *x)
     c->pkeys[i].x509 = x;
     c->key = &(c->pkeys[i]);
 
-    return (1);
+    return 1;
 }
 
 #ifndef OPENSSL_NO_STDIO
