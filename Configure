@@ -209,7 +209,6 @@ $config{fipslibdir}="/usr/local/ssl/fips-2.0/lib/";
 my $nofipscanistercheck=0;
 $config{baseaddr}="0xFB00000";
 my $threads=0;
-my $no_rfc3779=0;
 my $no_asm=0;
 my $no_dso=0;
 my $default_ranlib;
