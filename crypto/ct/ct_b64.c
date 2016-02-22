@@ -103,7 +103,6 @@ static int CT_base64_decode(const char *in, unsigned char **out)
 
     outlen = EVP_DecodeBlock(outbuf, (unsigned char *)in, inlen);
     if (outlen < 0) {
-        OPENSSL_free(outbuf);
         CTerr(CT_F_CT_BASE64_DECODE, CT_R_BASE64_DECODE_ERROR);
         goto err;
     }
@@ -170,6 +169,8 @@ SCT *SCT_new_from_base64(unsigned char version, const char *logid_base64,
     }
     if (o2i_SCT_signature(sct, (const unsigned char **)&dec, declen) <= 0)
         goto err;
+    OPENSSL_free(dec);
+    dec = NULL;
 
     SCT_set_timestamp(sct, timestamp);
 
@@ -186,7 +187,8 @@ SCT *SCT_new_from_base64(unsigned char version, const char *logid_base64,
 
 CTLOG *CTLOG_new_from_base64(const char *pkey_base64, const char *name)
 {
-    unsigned char *pkey_der;
+    unsigned char *pkey_der = NULL;
+    const unsigned char *p;
     int pkey_der_len;
     EVP_PKEY *pkey = NULL;
     CTLOG *log = NULL;
@@ -197,7 +199,9 @@ CTLOG *CTLOG_new_from_base64(const char *pkey_base64, const char *name)
         return NULL;
     }
 
-    pkey = d2i_PUBKEY(NULL, (const unsigned char **)&pkey_der, pkey_der_len);
+    p = pkey_der;
+    pkey = d2i_PUBKEY(NULL, &p, pkey_der_len);
+    OPENSSL_free(pkey_der);
     if (pkey == NULL) {
         CTerr(CT_F_CTLOG_NEW_FROM_BASE64, CT_R_LOG_CONF_INVALID_KEY);
         return NULL;
