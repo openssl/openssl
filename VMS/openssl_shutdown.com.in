@@ -39,7 +39,7 @@ $	DEAS OSSL$LIB'v'
 $	DEAS OSSL$SHARE'v'
 $	DEAS OSSL$ENGINES'v'
 $	DEAS OSSL$EXE'v'
-$       {- output_off() if $config{no_shared} -}
+$       {- output_off() if $disabled{shared} -}
 $       {- join("\n\$       ", map { "DEAS $_'v'" } map { $unified_info{sharednames}->{$_} || () } @{$unified_info{libraries}}) -}
 $       {- output_on() -}
 $	IF P2 .NES. "NOALIASES"
@@ -51,7 +51,7 @@ $	    DEAS OSSL$SHARE
 $	    DEAS OSSL$ENGINES
 $	    DEAS OSSL$EXE
 $	    DEAS OPENSSL
-$           {- output_off() if $config{no_shared} -}
+$           {- output_off() if $disabled{shared} -}
 $           {- join("\n\$           ", map { "DEAS $_" } map { $unified_info{sharednames}->{$_} || () } @{$unified_info{libraries}}) -}
 $           {- output_on() -}
 $	ENDIF

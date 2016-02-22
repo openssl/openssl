@@ -54,7 +54,7 @@
  # built.
  sub dolib {
      my $lib = shift;
-     if (!$config{no_shared}) {
+     unless ($disabled{shared}) {
          my %ordinals =
              $unified_info{ordinals}->{$lib}
              ? (ordinals => $unified_info{ordinals}->{$lib}) : ();

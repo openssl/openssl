@@ -34,12 +34,12 @@
      # removed.  On some systems, they may therefore return the exact same
      # string.
      sub shlib {
-         return () if $config{no_shared};
+         return () if $disabled{shared};
          my $lib = shift;
          return $unified_info{sharednames}->{$lib} . $shlibext;
      }
      sub shlib_simple {
-         return () if $config{no_shared};
+         return () if $disabled{shared};
 
          my $lib = shift;
          if (windowsdll()) {
@@ -320,7 +320,7 @@ install_dev:
 		mv -f $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn.new \
 		      $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn; \
 	done
-	@ : {- output_off() if $config{no_shared}; "" -}
+	@ : {- output_off() if $disabled{shared}; "" -}
 	@set -e; for s in $(SHLIB_INFO); do \
 		s1=`echo "$$s" | cut -f1 -d";"`; \
 		s2=`echo "$$s" | cut -f2 -d";"`; \
@@ -344,7 +344,7 @@ install_dev:
 		      $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn2; \
 		: {- output_on() unless windowsdll(); "" -}; \
 	done
-	@ : {- output_on() if $config{no_shared}; "" -}
+	@ : {- output_on() if $disabled{shared}; "" -}
 	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig
 	@echo "install libcrypto.pc -> $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig/libcrypto.pc"
 	@cp libcrypto.pc $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig
@@ -371,7 +371,7 @@ uninstall_dev:
 		echo "$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn"; \
 		$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn; \
 	done
-	@ : {- output_off() if $config{no_shared}; "" -}
+	@ : {- output_off() if $disabled{shared}; "" -}
 	@set -e; for s in $(SHLIB_INFO); do \
 		s1=`echo "$$s" | cut -f1 -d";"`; \
 		s2=`echo "$$s" | cut -f2 -d";"`; \
@@ -389,7 +389,7 @@ uninstall_dev:
 		$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn2; \
 		: {- output_on() unless windowsdll(); "" -}; \
 	done
-	@ : {- output_on() if $config{no_shared}; "" -}
+	@ : {- output_on() if $disabled{shared}; "" -}
 	@echo "$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig/libcrypto.pc"
 	@$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig/libcrypto.pc
 	@echo "$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig/libssl.pc"
@@ -832,7 +832,7 @@ configdata.pm: {- $config{build_file_template} -} $(SRCDIR)/Configure $(SRCDIR)/
   # Helper function to figure out dependencies on libraries
   # It takes a list of library names and outputs a list of dependencies
   sub compute_lib_depends {
-      if ($config{no_shared}) {
+      if ($disabled{shared}) {
           return map { $_.$libext } @_;
       }
 
@@ -969,7 +969,7 @@ EOF
                                     $d = "." if $d eq $f;
                                     (my $l = $f) =~ s/^lib//;
                                     " -L$d -l$l" } @{$args{deps}});
-      my $shlib_target = $config{no_shared} ? "" : $target{shared_target};
+      my $shlib_target = $disabled{shared} ? "" : $target{shared_target};
       return <<"EOF";
 $bin$exeext: $objs $deps
 	\$(RM) $bin$exeext

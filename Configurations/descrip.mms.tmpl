@@ -296,12 +296,12 @@ install_dev : check_INSTALLTOP
         {- join("\n        ",
                 map { "COPY/PROT=W:R $_.OLB ossl_installroot:[LIB.'arch']" }
                 @{$unified_info{libraries}}) -}
-        @ {- output_off() if $config{no_shared}; "" -} !
+        @ {- output_off() if $disabled{shared}; "" -} !
         {- join("\n        ",
                 map { "COPY/PROT=W:RE $_.EXE ossl_installroot:[LIB.'arch']" }
                 map { $unified_info{sharednames}->{$_} || () }
                 @{$unified_info{libraries}}) -}
-        @ {- output_on() if $config{no_shared}; "" -} !
+        @ {- output_on() if $disabled{shared}; "" -} !
 
 install_runtime : check_INSTALLTOP
         @ WRITE SYS$OUTPUT "*** Installing runtime files"
@@ -363,7 +363,7 @@ vmsconfig.pm : configdata.pm
         WRITE CONFIG "our %config = ("
         WRITE CONFIG "  target => '{- $config{target} -}',"
         WRITE CONFIG "  version => '$(MAJOR).$(MINOR)',"
-        WRITE CONFIG "  no_shared => '","{- $config{no_shared} -}","',"
+        WRITE CONFIG "  no_shared => '","{- $disabled{shared} -}","',"
         WRITE CONFIG "  INSTALLTOP => '$(INSTALLTOP)',"
         WRITE CONFIG "  OPENSSLDIR => '$(OPENSSLDIR)',"
         WRITE CONFIG "  pointersize => '","{- $target{pointersize} -}","',"
@@ -470,10 +470,10 @@ EOF
       my $libn = basename($lib);
       (my $mkdef_key = $libn) =~ s/^${osslprefix_q}lib//i;
       my @deps = map {
-          $config{no_shared} ? $_.".OLB"
+          $disabled{shared} ? $_.".OLB"
               : $unified_info{sharednames}->{$_}.".EXE"; } @{$args{deps}};
       my $deps = join(", -\n\t\t", @deps);
-      my $shlib_target = $config{no_shared} ? "" : $target{shared_target};
+      my $shlib_target = $disabled{shared} ? "" : $target{shared_target};
       my $ordinalsfile = defined($args{ordinals}) ? $args{ordinals}->[1] : "";
       my $engine_opt = abs2rel(rel2abs(catfile($config{sourcedir},
                                                "VMS", "engine.opt")),
@@ -522,10 +522,10 @@ EOF
       (my $libn_nolib = $libn) =~ s/^lib//;
       my @objs = map { "$_.OBJ" } @{$args{objs}};
       my @deps = map {
-          $config{no_shared} ? $_.".OLB"
+          $disabled{shared} ? $_.".OLB"
               : $unified_info{sharednames}->{$_}.".EXE"; } @{$args{deps}};
       my $deps = join(", -\n\t\t", @objs, @deps);
-      my $shlib_target = $config{no_shared} ? "" : $target{shared_target};
+      my $shlib_target = $disabled{shared} ? "" : $target{shared_target};
       my $engine_opt = abs2rel(rel2abs(catfile($config{sourcedir},
                                                "VMS", "engine.opt")),
                                rel2abs($config{builddir}));
@@ -572,7 +572,7 @@ EOF
       my $binn = basename($bin);
       my @objs = map { "$_.OBJ" } @{$args{objs}};
       my @deps = map {
-          $config{no_shared} ? $_.".OLB"
+          $disabled{shared} ? $_.".OLB"
               : $unified_info{sharednames}->{$_}.".EXE"; } @{$args{deps}};
       my $deps = join(", -\n\t\t", @objs, @deps);
       # The "[]" hack is because in .OPT files, each line inherits the
