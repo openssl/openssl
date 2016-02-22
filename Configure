@@ -209,7 +209,6 @@ $config{fipslibdir}="/usr/local/ssl/fips-2.0/lib/";
 my $nofipscanistercheck=0;
 $config{baseaddr}="0xFB00000";
 my $threads=0;
-my $zlib=1;      # but "no-zlib" is default
 my $no_rfc3779=0;
 my $no_asm=0;
 my $no_dso=0;
@@ -786,7 +785,7 @@ foreach (sort (keys %disabled))
 	elsif (/^pic$/)
 		{ }
 	elsif (/^zlib$/)
-		{ $zlib = 0; }
+		{ }
 	elsif (/^dynamic-engine$/)
 		{ }
 	elsif (/^zlib-dynamic$/)
@@ -994,7 +993,7 @@ if ($threads)
 	push @{$config{openssl_thread_defines}}, @thread_defines;
 	}
 
-if ($zlib)
+unless ($disabled{zlib})
 	{
 	push @{$config{defines}}, "ZLIB";
 	if (defined($disabled{"zlib-dynamic"}))
