@@ -210,7 +210,6 @@ my $nofipscanistercheck=0;
 $config{baseaddr}="0xFB00000";
 my $no_threads=0;
 my $threads=0;
-$config{no_shared}=0; # but "no-shared" is default
 my $zlib=1;      # but "no-zlib" is default
 my $no_rfc3779=0;
 my $no_asm=0;
@@ -784,7 +783,7 @@ foreach (sort (keys %disabled))
 	elsif (/^threads$/)
 		{ $no_threads = 1; }
 	elsif (/^shared$/)
-		{ $config{no_shared} = 1; }
+		{ }
 	elsif (/^pic$/)
 		{ }
 	elsif (/^zlib$/)
@@ -1024,9 +1023,9 @@ if (defined($disabled{"deprecated"})) {
 if ($target{shared_target} eq "")
 	{
 	$no_shared_warn = 1
-	    if ((!$config{no_shared} || !$disabled{"dynamic-engine"})
+	    if ((!$disabled{shared} || !$disabled{"dynamic-engine"})
 		&& !$config{fips});
-	$config{no_shared} = 1;
+	$disabled{shared} = "no-shared-target";
 	$disabled{pic} = $disabled{shared} = $disabled{"dynamic-engine"} =
 	    "no-shared-target";
 	}
@@ -1447,7 +1446,7 @@ EOF
 
         push @{$unified_info{rawlines}}, @rawlines;
 
-        if (!$config{no_shared}) {
+        unless ($disabled{shared}) {
             # Check sharednames.
             foreach (keys %sharednames) {
                 my $dest = cleanfile($buildd, $_, $blddir);
