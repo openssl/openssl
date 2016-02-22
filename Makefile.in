@@ -193,7 +193,7 @@ TOP=    .
 LIBS=   libcrypto.a libssl.a
 SHARED_CRYPTO=libcrypto$(SHLIB_EXT)
 SHARED_SSL=libssl$(SHLIB_EXT)
-SHARED_LIBS={- '$(SHARED_CRYPTO) $(SHARED_SSL)' unless $disabled{shared} -}
+SHARED_LIBS={- $disabled{shared} ? '' : '$(SHARED_CRYPTO) $(SHARED_SSL)'  -}
 SHARED_CFLAG={- $target{shared_cflag} -}
 SHARED_LDFLAG={- $target{shared_ldflag}
                  # Unlike other OSes (like Solaris, Linux, Tru64,
