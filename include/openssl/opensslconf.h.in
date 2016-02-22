@@ -21,16 +21,6 @@ extern "C" {
 	$OUT .= "#endif\n";
       }
     }
-    if (@{$config{openssl_experimental_defines}}) {
-      foreach (@{$config{openssl_experimental_defines}}) {
-	(my $ex = $_) =~ s/_NO_/_EXPERIMENTAL_/;
-	$OUT .= "# ifndef $ex\n";
-	$OUT .= "#  ifndef $_\n";
-	$OUT .= "#   define $_\n";
-	$OUT .= "#  endif\n";
-	$OUT .= "# endif\n";
-      }
-    }
     foreach (@{$config{openssl_api_defines}}) {
         (my $macro, my $value) = $_ =~ /^(.*?)=(.*?)$/;
         $OUT .= "# define OPENSSL_MIN_API $value\n";
