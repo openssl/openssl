@@ -209,7 +209,6 @@ $config{fipslibdir}="/usr/local/ssl/fips-2.0/lib/";
 my $nofipscanistercheck=0;
 $config{baseaddr}="0xFB00000";
 my $threads=0;
-my $no_asm=0;
 my $no_dso=0;
 my $default_ranlib;
 $config{fips}=0;
@@ -809,7 +808,6 @@ foreach (sort (keys %disabled))
 			print " OPENSSL_NO_$ALGO";
 
 			if (/^err$/)	{ push @user_defines, "OPENSSL_NO_ERR"; }
-			elsif (/^asm$/)	{ $no_asm = 1; }
 			}
 		else
 			{
@@ -916,7 +914,7 @@ if ($target =~ /^mingw/ && `$target{cc} --target-help 2>&1` =~ m/-mno-cygwin/m)
 	$target{shared_ldflag} .= " -mno-cygwin";
 	}
 
-if ($target =~ /linux.*-mips/ && !$no_asm && $user_cflags !~ /-m(ips|arch=)/) {
+if ($target =~ /linux.*-mips/ && !$disabled{asm} && $user_cflags !~ /-m(ips|arch=)/) {
 	# minimally required architecture flags for assembly modules
 	$config{cflags}="-mips2 $config{cflags}" if ($target =~ /mips32/);
 	$config{cflags}="-mips3 $config{cflags}" if ($target =~ /mips64/);
@@ -979,7 +977,7 @@ else
 
 $config{ex_libs}="$libs$config{ex_libs}" if ($libs ne "");
 
-if ($no_asm)
+if ($disabled{asm})
 	{
 	@{$config{defines}} = grep !/^[BL]_ENDIAN$/, @{$config{defines}}
 	    if ($config{fips});
@@ -1056,7 +1054,7 @@ if ($target{ranlib} eq "")
 	$target{ranlib} = $default_ranlib;
 	}
 
-if (!$no_asm) {
+unless ($disabled{asm}) {
     $target{cpuid_asm_src}=$table{BASE}->{cpuid_asm_src} if ($config{processor} eq "386");
     $target{bn_asm_src} =~ s/\w+-gf2m.c// if (defined($disabled{ec2m}));
 
@@ -1931,14 +1929,14 @@ exit(0);
 # Configuration file reading #########################################
 
 # Helper function to implement conditional inheritance depending on the
-# value of $no_asm.  Used in inherit_from values as follows:
+# value of $disabled{asm}.  Used in inherit_from values as follows:
 #
 #      inherit_from => [ "template", asm("asm_tmpl") ]
 #
 sub asm {
     my @x = @_;
     sub {
-	$no_asm ? () : @x;
+	$disabled{asm} ? () : @x;
     }
 }
 
