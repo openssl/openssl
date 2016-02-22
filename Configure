@@ -328,6 +328,10 @@ foreach my $proto ((@tls, @dtls))
 	push(@disablables, "$proto-method");
 	}
 
+my @deprecated_disablables = (
+    "ssl2",
+    );
+
 # All of the following is disabled by default (RC5 was enabled before 0.9.8):
 
 my %disabled = ( # "what"         => "comment"
@@ -496,6 +500,7 @@ if (grep /^reconf(igure)?$/, @argvcopy) {
 $config{perlargv} = [ @argvcopy ];
 
 my %unsupported_options = ();
+my %deprecated_options = ();
 foreach (@argvcopy)
 	{
 	# VMS is a case insensitive environment, and depending on settings
@@ -517,7 +522,12 @@ foreach (@argvcopy)
         if (/^(no|disable|enable)-(.+)$/)
 		{
 		my $word = $2;
-		if (!grep { $word =~ /^${_}$/ } @disablables)
+		if (grep { $word =~ /^${_}$/ } @deprecated_disablables)
+			{
+			$deprecated_options{$_} = 1;
+			next;
+			}
+		elsif (!grep { $word =~ /^${_}$/ } @disablables)
 			{
 			$unsupported_options{$_} = 1;
 			next;
@@ -700,6 +710,11 @@ foreach (@argvcopy)
 		die "***** Unsupported api compatibility level: $config{api}\n",
         }
 
+	if (keys %deprecated_options)
+		{
+		warn "***** Deprecated options: ",
+			join(", ", keys %deprecated_options), "\n";
+		}
 	if (keys %unsupported_options)
 		{
 		die "***** Unsupported options: ",
