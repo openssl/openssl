@@ -173,6 +173,12 @@ typedef unsigned int u_int;
 # undef FIONBIO
 #endif
 
+#if defined(__has_feature)
+# if __has_feature(memory_sanitizer)
+#  include <sanitizer/msan_interface.h>
+# endif
+#endif
+
 #undef BUFSIZZ
 #define BUFSIZZ 1024*8
 #define S_CLIENT_IRC_READ_TIMEOUT 8
@@ -903,6 +909,16 @@ int s_client_main(int argc, char **argv)
     char *srppass = NULL;
     int srp_lateuser = 0;
     SRP_ARG srp_arg = { NULL, NULL, 0, 0, 0, 1024 };
+#endif
+
+    FD_ZERO(&readfds);
+    FD_ZERO(&writefds);
+/* Known false-positive of MemorySanitizer. */
+#if defined(__has_feature)
+# if __has_feature(memory_sanitizer)
+    __msan_unpoison(&readfds, sizeof(readfds));
+    __msan_unpoison(&writefds, sizeof(writefds));
+# endif
 #endif
 
     prog = opt_progname(argv[0]);
