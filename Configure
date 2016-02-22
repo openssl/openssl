@@ -550,11 +550,11 @@ foreach (@argvcopy)
                         }
                 elsif ($1 eq "static-engine")
                         {
-                        $disabled{"static-engine"} = "option";
+                        delete $disabled{"dynamic-engine"};
                         }
                 elsif ($1 eq "dynamic-engine")
                         {
-                        delete $disabled{"static-engine"};
+                        $disabled{"dynamic-engine"} = "option";
                         }
                 else
                         {
@@ -565,11 +565,11 @@ foreach (@argvcopy)
 		{
                 if ($1 eq "static-engine")
                         {
-                        delete $disabled{"static-engine"};
+                        $disabled{"dynamic-engine"} = "option";
                         }
                 elsif ($1 eq "dynamic-engine")
                         {
-                        $disabled{"static-engine"} = "option";
+                        delete $disabled{"dynamic-engine"};
                         }
 		my $algo = $1;
 		delete $disabled{$algo};
@@ -766,7 +766,7 @@ foreach (sort (keys %disabled))
 		{ $config{no_shared} = 1; }
 	elsif (/^zlib$/)
 		{ $zlib = 0; }
-	elsif (/^static-engine$/)
+	elsif (/^dynamic-engine$/)
 		{ }
 	elsif (/^zlib-dynamic$/)
 		{ }
@@ -1004,12 +1004,12 @@ if ($target{shared_target} eq "")
 	$config{no_shared} = 1;
 	}
 
-if ($disabled{"static-engine"}) {
-        push @{$config{defines}}, "OPENSSL_NO_STATIC_ENGINE";
-        $config{dynamic_engines} = 1;
-} else {
+if ($disabled{"dynamic-engine"}) {
         push @{$config{defines}}, "OPENSSL_NO_DYNAMIC_ENGINE";
         $config{dynamic_engines} = 0;
+} else {
+        push @{$config{defines}}, "OPENSSL_NO_STATIC_ENGINE";
+        $config{dynamic_engines} = 1;
 }
 
 #
@@ -1385,7 +1385,7 @@ if ($builder eq "unified") {
         }
 
         die <<"EOF" if scalar @engines and !$config{dynamic_engines};
-ENGINES can only be used if configured with 'static-enginex'.
+ENGINES can only be used if configured with 'dynamic-engine'.
 This is usually a fault in a build.info file.
 EOF
         foreach (@engines) {
