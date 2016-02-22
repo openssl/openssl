@@ -9,7 +9,7 @@
      only requirement for building dynamic engines is the presence of
      the DSO module, so configuring "disable-dso" will automatically
      disable dynamic engines.  Dynamic engines are enabled by default,
-     and can be disabled with "enable-static-engine".
+     and can be disabled with "disable-dynamic-engine".
      This only applies to the engines in engines/, those in
      crypto/engine/ will always be built into libcrypto (i.e. "static").
 

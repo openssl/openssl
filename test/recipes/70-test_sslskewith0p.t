@@ -64,7 +64,7 @@ plan skip_all => "TLSProxy isn't usable on $^O"
     if $^O =~ /^VMS$/;
 
 plan skip_all => "$test_name needs the dynamic engine feature enabled"
-    if disabled("engine") || disabled("dynamic_engines");
+    if disabled("engine") || disabled("dynamic-engine");
 
 plan skip_all => "dh is not supported by this OpenSSL build"
     if disabled("dh");
