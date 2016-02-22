@@ -87,7 +87,7 @@ open STDOUT,">$output";
 if (!defined($big_endian))
 {    $big_endian=(unpack('L',pack('N',1))==1);   }
 
-while (($output=shift) && ($output!~/^\w[\w\-]*\.\w+$/)) {}
+while (($output=shift) && ($output!~/\w[\w\-]*\.\w+$/)) {}
 open STDOUT,">$output";
 
 my ($MSB,$LSB)=(0,3);	# automatically converted to little-endian
