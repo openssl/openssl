@@ -163,12 +163,18 @@ LINK_SO_SHLIB_UNPACKED=	\
 DETECT_GNU_LD=($(CC) -Wl,-V /dev/null 2>&1 | grep '^GNU ld' )>/dev/null
 
 DO_GNU_SO_COMMON=\
+	SHAREDFLAGS="$(CFLAGS) $(SHARED_LDFLAGS) -shared -Wl,-Bsymbolic -Wl,-soname=$$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX"
+DO_GNU_DSO=\
+	SHLIB=$(LIBNAME).so; \
+	SHLIB_SOVER=; \
 	SHLIB_SUFFIX=; \
+	$(DO_GNU_SO_COMMON)
+DO_GNU_SO=\
+	$(CALC_VERSIONS); \
+	SHLIB=lib$$SHLIB; \
 	ALLSYMSFLAGS='-Wl,--whole-archive'; \
 	NOALLSYMSFLAGS='-Wl,--no-whole-archive'; \
-	SHAREDFLAGS="$(CFLAGS) $(SHARED_LDFLAGS) -shared -Wl,-Bsymbolic -Wl,-soname=$$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX"
-DO_GNU_SO_NOCALC=SHLIB=$(LIBNAME).so; $(DO_GNU_SO_COMMON)
-DO_GNU_SO=SHLIB=lib$$SHLIB; $(CALC_VERSIONS); $(DO_GNU_SO_COMMON)
+	$(DO_GNU_SO_COMMON)
 DO_GNU_APP=LDFLAGS="$(CFLAGS) $(LDFLAGS) -Wl,-rpath,$(LIBRPATH)"
 
 #This is rather special.  It's a special target with which one can link
@@ -180,7 +186,7 @@ link_app.:
 	$(LINK_APP)
 
 link_dso.gnu:
-	@ $(DO_GNU_SO_NOCALC); $(LINK_SO_DSO)
+	@ $(DO_GNU_DSO); $(LINK_SO_DSO)
 link_shlib.gnu:
 	@ $(DO_GNU_SO); $(LINK_SO_SHLIB)
 link_app.gnu:
@@ -193,11 +199,11 @@ link_shlib.linux-shared:
 	$(LINK_SO_SHLIB)
 
 link_dso.bsd:
-	@if $(DETECT_GNU_LD); then $(DO_GNU_SO_NOCALC); else \
+	@if $(DETECT_GNU_LD); then $(DO_GNU_DSO); else \
 	SHLIB=$(LIBNAME).so; \
 	SHLIB_SUFFIX=; \
 	LIBDEPS=" "; \
-	ALLSYMSFLAGS="-Wl,-Bforcearchive"; \
+	ALLSYMSFLAGS=; \
 	NOALLSYMSFLAGS=; \
 	SHAREDFLAGS="$(CFLAGS) $(SHARED_LDFLAGS) -shared -nostdlib"; \
 	fi; $(LINK_SO_DSO)
@@ -236,7 +242,7 @@ link_app.bsd:
 link_dso.darwin:
 	@ SHLIB=$(LIBNAME); \
 	SHLIB_SUFFIX=.dylib; \
-	ALLSYMSFLAGS='-all_load'; \
+	ALLSYMSFLAGS=''; \
 	NOALLSYMSFLAGS=''; \
 	SHAREDFLAGS="$(CFLAGS) `echo $(SHARED_LDFLAGS) | sed s/dynamiclib/bundle/`"; \
 	$(LINK_SO_DSO)
@@ -261,8 +267,8 @@ link_app.darwin:	# is there run-path on darwin?
 link_dso.cygwin:
 	@SHLIB=$(LIBNAME); \
 	SHLIB_SUFFIX=.dll; \
-	ALLSYMSFLAGS='-Wl,--whole-archive'; \
-	NOALLSYMSFLAGS='-Wl,--no-whole-archive'; \
+	ALLSYMSFLAGS=''; \
+	NOALLSYMSFLAGS=''; \
 	base=-Wl,--enable-auto-image-base; \
 	SHAREDFLAGS="$(CFLAGS) $(SHARED_LDFLAGS) -shared $$base -Wl,-Bsymbolic"; \
 	$(LINK_SO_DSO)
@@ -311,12 +317,12 @@ link_shlib.mingw:
 
 link_dso.alpha-osf1:
 	@ if $(DETECT_GNU_LD); then \
-		$(DO_GNU_SO_NOCALC); \
+		$(DO_GNU_DSO); \
 	else \
 		SHLIB=$(LIBNAME).so; \
 		SHLIB_SUFFIX=; \
-		ALLSYMSFLAGS='-all'; \
-		NOALLSYMSFLAGS='-none'; \
+		ALLSYMSFLAGS=''; \
+		NOALLSYMSFLAGS=''; \
 		SHAREDFLAGS="$(CFLAGS) $(SHARED_LDFLAGS) -shared -Wl,-B,symbolic"; \
 	fi; \
 	$(LINK_SO_DSO)
@@ -351,13 +357,13 @@ link_app.alpha-osf1:
 
 link_dso.solaris:
 	@ if $(DETECT_GNU_LD); then \
-		$(DO_GNU_SO_NOCALC); \
+		$(DO_GNU_DSO); \
 	else \
 		$(CALC_VERSIONS); \
 		SHLIB=lib$(LIBNAME).so; \
 		SHLIB_SUFFIX=; \
-		ALLSYMSFLAGS="-Wl,-z,allextract"; \
-		NOALLSYMSFLAGS="-Wl,-z,defaultextract"; \
+		ALLSYMSFLAGS=""; \
+		NOALLSYMSFLAGS=""; \
 		SHAREDFLAGS="$(CFLAGS) $(SHARED_LDFLAGS) -h $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX -Wl,-Bsymbolic"; \
 	fi; \
 	$(LINK_SO_DSO)
@@ -385,7 +391,7 @@ link_app.solaris:
 # OpenServer 5 native compilers used
 link_dso.svr3:
 	@ if $(DETECT_GNU_LD); then \
-		$(DO_GNU_SO_NOCALC); \
+		$(DO_GNU_DSO); \
 	else \
 		$(CALC_VERSIONS); \
 		SHLIB=$(LIBNAME).so; \
@@ -414,7 +420,7 @@ link_app.svr3:
 # UnixWare 7 and OpenUNIX 8 native compilers used
 link_dso.svr5:
 	@ if $(DETECT_GNU_LD); then \
-		$(DO_GNU_SO_NOCALC); \
+		$(DO_GNU_DSO); \
 	else \
 		SHARE_FLAG='-G'; \
 		($(CC) -v 2>&1 | grep gcc) > /dev/null && SHARE_FLAG='-shared'; \
@@ -445,14 +451,12 @@ link_app.svr5:
 
 link_dso.irix:
 	@ if $(DETECT_GNU_LD); then \
-		$(DO_GNU_SO_NOCALC); \
+		$(DO_GNU_DSO); \
 	else \
 		SHLIB=$(LIBNAME).so; \
 		SHLIB_SUFFIX=; \
-		MINUSWL=""; \
-		($(CC) -v 2>&1 | grep gcc) > /dev/null && MINUSWL="-Wl,"; \
-		ALLSYMSFLAGS="$${MINUSWL}-all"; \
-		NOALLSYMSFLAGS="$${MINUSWL}-none"; \
+		ALLSYMSFLAGS=""; \
+		NOALLSYMSFLAGS=""; \
 		SHAREDFLAGS="$(CFLAGS) $(SHARED_LDFLAGS) -shared -Wl,-soname,$$SHLIB$$SHLIB_SUFFIX,-B,symbolic"; \
 	fi; \
 	$(LINK_SO_DSO)
@@ -483,11 +487,11 @@ link_app.irix:
 # ELFs by the way].
 #
 link_dso.hpux:
-	@if $(DETECT_GNU_LD); then $(DO_GNU_SO_NOCALC); else \
+	@if $(DETECT_GNU_LD); then $(DO_GNU_DSO); else \
 	SHLIB=$(LIBNAME).sl; \
 	expr "$(CFLAGS)" : '.*DSO_DLFCN' > /dev/null && SHLIB=lib$(LIBNAME).so; \
 	SHLIB_SUFFIX=; \
-	ALLSYMSFLAGS='-Wl,-Fl'; \
+	ALLSYMSFLAGS=''; \
 	NOALLSYMSFLAGS=''; \
 	expr $(PLATFORM) : 'hpux64' > /dev/null && ALLSYMSFLAGS='-Wl,+forceload'; \
 	SHAREDFLAGS="$(CFLAGS) $(SHARED_LDFLAGS) -Wl,-B,symbolic,+vnocompatwarnings,-z,+s,+h,$$SHLIB$$SHLIB_SUFFIX,+cdp,../:,+cdp,./:"; \
