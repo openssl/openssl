@@ -208,7 +208,6 @@ $config{cross_compile_prefix}="";
 $config{fipslibdir}="/usr/local/ssl/fips-2.0/lib/";
 my $nofipscanistercheck=0;
 $config{baseaddr}="0xFB00000";
-my $no_threads=0;
 my $threads=0;
 my $zlib=1;      # but "no-zlib" is default
 my $no_rfc3779=0;
@@ -781,7 +780,7 @@ foreach (sort (keys %disabled))
 	if (/^dso$/)
 		{ $no_dso = 1; }
 	elsif (/^threads$/)
-		{ $no_threads = 1; }
+		{ }
 	elsif (/^shared$/)
 		{ }
 	elsif (/^pic$/)
@@ -956,7 +955,7 @@ if (!$no_dso && $target{dso_scheme} ne "")
 
 my $thread_cflags = "";
 my @thread_defines;
-if ($target{thread_cflag} ne "(unknown)" && !$no_threads)
+if ($target{thread_cflag} ne "(unknown)" && !$disabled{threads})
 	{
 	# If we know how to do it, support threads by default.
 	$threads = 1;
@@ -1875,7 +1874,7 @@ print <<"EOF";
 Configured for $target.
 EOF
 
-print <<"EOF" if (!$no_threads && !$threads);
+print <<"EOF" if (!$disabled{threads} && !$threads);
 
 The library could not be configured for supporting multi-threaded
 applications as the compiler options required on this system are not known.
