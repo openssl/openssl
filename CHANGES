@@ -12,10 +12,10 @@
      Building dynamic engines is enabled by default; to disable, use
      the configuration option "disable-dynamic-engine".
 
-     The only requirements for building dynamic engines is the
+     The only requirements for building dynamic engines are the
      presence of the DSO module and building with position independent
      code, so they will also automatically be disabled if configuring
-     with "disable-dso" or "disable pic".
+     with "disable-dso" or "disable-pic".
 
      The macros OPENSSL_NO_STATIC_ENGINE and OPENSSL_NO_DYNAMIC_ENGINE
      are also taken away from openssl/opensslconf.h, as they are

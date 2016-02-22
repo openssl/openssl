@@ -47,7 +47,7 @@ my $usage="Usage: Configure [no-<cipher> ...] [enable-<cipher> ...] [-Dxxx] [-lx
 #               know how to do it)
 # [no-]shared	[don't] try to create shared libraries when supported.
 # [no-]pic      [don't] try to build position independent code when supported.
-#               If disabled, it also disables shared and dynamic-engines.
+#               If disabled, it also disables shared and dynamic-engine.
 # no-asm        do not use assembler
 # no-dso        do not compile in any native shared-library methods. This
 #               will ensure that all methods just return NULL.
