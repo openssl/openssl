@@ -1004,7 +1004,7 @@ poly1305_blocks_neon:
 	vmlal.u32	$D2,$H4#hi,$S3
 
 	vmlal.u32	$D3,$H4#hi,$S4
-	 vmov.u64	$MASK,#-1		@ can be redundant
+	 vorn		$MASK,$MASK,$MASK	@ all-ones, can be redundant
 	vmlal.u32	$D0,$H1#hi,$S4
 	 vshr.u64	$MASK,$MASK,#38
 	vmlal.u32	$D4,$H0#hi,$R4
@@ -1048,7 +1048,7 @@ poly1305_blocks_neon:
 	vmlal.u32	$D2,$H4#lo,$S3
 
 	vmlal.u32	$D3,$H4#lo,$S4
-	 vmov.u64	$MASK,#-1
+	 vorn		$MASK,$MASK,$MASK	@ all-ones
 	vmlal.u32	$D0,$H1#lo,$S4
 	 vshr.u64	$MASK,$MASK,#38
 	vmlal.u32	$D4,$H0#lo,$R4
