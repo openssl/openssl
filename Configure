@@ -209,7 +209,6 @@ $config{fipslibdir}="/usr/local/ssl/fips-2.0/lib/";
 my $nofipscanistercheck=0;
 $config{baseaddr}="0xFB00000";
 my $threads=0;
-my $no_dso=0;
 my $default_ranlib;
 $config{fips}=0;
 
@@ -775,7 +774,7 @@ foreach (sort (keys %disabled))
 	printf "    no-%-12s %-10s", $_, "[$disabled{$_}]";
 
 	if (/^dso$/)
-		{ $no_dso = 1; }
+		{ }
 	elsif (/^threads$/)
 		{ }
 	elsif (/^shared$/)
@@ -930,7 +929,7 @@ my $no_user_defines=0;
 # has support compiled in for them. Currently each method is enabled
 # by a define "DSO_<name>" ... we translate the "dso_scheme" config
 # string entry into using the following logic;
-if (!$no_dso && $target{dso_scheme} ne "")
+if (!$disabled{dso} && $target{dso_scheme} ne "")
 	{
 	$target{dso_scheme} =~ tr/[a-z]/[A-Z]/;
 	if ($target{dso_scheme} eq "DLFCN")
