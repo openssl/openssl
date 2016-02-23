@@ -108,7 +108,7 @@ poly1305_init:
 	and	r5,r5,r3
 
 #if	__ARM_MAX_ARCH__>=7
-	tst	r12,#1			@ check for NEON
+	tst	r12,#ARMV7_NEON		@ check for NEON
 # ifdef	__APPLE__
 	adr	r9,poly1305_blocks_neon
 	adr	r11,poly1305_blocks
