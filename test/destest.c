@@ -718,6 +718,31 @@ int main(int argc, char *argv[])
         printf("fast crypt error, %s should be yA1Rp/1hZXIJk\n", str);
         err = 1;
     }
+    str = crypt("testing", "y€");
+    if (str != 0) {
+        printf("salt error, returned value should be 0\n");
+        err = 1;
+    }
+    str = crypt("testing", "‰A");
+    if (str != 0) {
+        printf("salt error, returned value should be 0\n");
+        err = 1;
+    }
+    str = crypt("testing", "\0A");
+    if (str != 0) {
+        printf("salt error, returned value should be 0\n");
+        err = 1;
+    }
+    str = crypt("testing", "A\0");
+    if (str != 0) {
+        printf("salt error, returned value should be 0\n");
+        err = 1;
+    }
+    str = crypt("testing", "A");
+    if (str != 0) {
+        printf("salt error, returned value should be 0\n");
+        err = 1;
+    }
 # ifdef OPENSSL_SYS_NETWARE
     if (err)
         printf("ERROR: %d\n", err);
