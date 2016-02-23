@@ -338,7 +338,7 @@ int test_builtin(BIO *out)
         unsigned char dirt, offset;
 
         nid = curves[n].nid;
-        if (nid == NID_ipsec4)
+        if (nid == NID_ipsec4 || nid == NID_X25519)
             continue;
         /* create new ecdsa key (== EC_KEY) */
         if ((eckey = EC_KEY_new()) == NULL)
