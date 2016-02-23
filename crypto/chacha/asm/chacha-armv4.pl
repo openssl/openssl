@@ -214,7 +214,7 @@ ChaCha20_ctr32:
 # ifdef	__APPLE__
 	ldr	r4,[r4]
 # endif
-	tst	r4,#1
+	tst	r4,#ARMV7_NEON
 	bne	.LChaCha20_neon
 .Lshort:
 #endif
