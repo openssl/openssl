@@ -86,6 +86,9 @@
 /* Use custom formats for EC_GROUP, EC_POINT and EC_KEY */
 #define EC_FLAGS_CUSTOM_CURVE   0x2
 
+/* Curve does not support signing operations */
+#define EC_FLAGS_NO_SIGN        0x4
+
 /*
  * Structure details are not part of the exported interface, so all this may
  * change in future versions.

@@ -326,7 +326,7 @@ static int x25519_compute_key(void *out, size_t outlen,
 const EC_METHOD *ec_x25519_meth(void)
 {
     static const EC_METHOD ret = {
-        EC_FLAGS_CUSTOM_CURVE,
+        EC_FLAGS_CUSTOM_CURVE | EC_FLAGS_NO_SIGN,
         NID_undef,
         x25519_group_init,      /* group_init */
         0,                      /* group_finish */

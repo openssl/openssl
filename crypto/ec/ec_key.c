@@ -631,3 +631,11 @@ size_t EC_KEY_priv2buf(const EC_KEY *eckey, unsigned char **pbuf)
     *pbuf = buf;
     return len;
 }
+
+int EC_KEY_can_sign(const EC_KEY *eckey)
+{
+    if (eckey->group == NULL || eckey->group->meth == NULL
+        || (eckey->group->meth->flags & EC_FLAGS_NO_SIGN))
+        return 0;
+    return 1;
+}
