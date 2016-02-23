@@ -901,6 +901,12 @@ int EC_KEY_generate_key(EC_KEY *key);
  */
 int EC_KEY_check_key(const EC_KEY *key);
 
+/** Indicates if an EC_KEY can be used for signing.
+ *  \param  key  the EC_KEY object
+ *  \return 1 if can can sign and 0 otherwise.
+ */
+int EC_KEY_can_sign(const EC_KEY *eckey);
+
 /** Sets a public key from affine coordindates performing
  *  necessary NIST PKV tests.
  *  \param  key  the EC_KEY object
