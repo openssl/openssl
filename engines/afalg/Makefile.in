@@ -61,7 +61,7 @@ install:
 		mv -f $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/engines/$${pfx}$(LIBNAME)$$sfx.new $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/engines/$${pfx}$(LIBNAME)$$sfx; \
 	fi
 
-depend: 
+depend:
 	@[ -z "$(THIS)" ] || $(TOP)/util/domd $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(LIBSRC) $(TESTLIBSRC)
 
 files:

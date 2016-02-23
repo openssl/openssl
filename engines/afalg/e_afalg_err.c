@@ -72,9 +72,11 @@ static ERR_STRING_DATA AFALG_str_functs[] = {
     {ERR_FUNC(AFALG_F_AFALG_CHK_PLATFORM), "afalg_chk_platform"},
     {ERR_FUNC(AFALG_F_AFALG_CREATE_BIND_SK), "afalg_create_bind_sk"},
     {ERR_FUNC(AFALG_F_AFALG_CREATE_BIND_SOCKET), "afalg_create_bind_sk"},
+    {ERR_FUNC(AFALG_F_AFALG_CREATE_SK), "afalg_create_sk"},
     {ERR_FUNC(AFALG_F_AFALG_INIT_AIO), "afalg_init_aio"},
     {ERR_FUNC(AFALG_F_AFALG_SETUP_ASYNC_EVENT_NOTIFICATION),
      "afalg_setup_async_event_notification"},
+    {ERR_FUNC(AFALG_F_AFALG_SET_KEY), "afalg_set_key"},
     {ERR_FUNC(AFALG_F_AFALG_SOCKET), "afalg_socket"},
     {ERR_FUNC(AFALG_F_AFALG_START_CIPHER_SK), "afalg_start_cipher_sk"},
     {ERR_FUNC(AFALG_F_BIND_AFALG), "bind_afalg"},
@@ -83,6 +85,8 @@ static ERR_STRING_DATA AFALG_str_functs[] = {
 
 static ERR_STRING_DATA AFALG_str_reasons[] = {
     {ERR_REASON(AFALG_R_EVENTFD_FAILED), "eventfd failed"},
+    {ERR_REASON(AFALG_R_FAILED_TO_GET_PLATFORM_INFO),
+     "failed to get platform info"},
     {ERR_REASON(AFALG_R_INIT_FAILED), "init failed"},
     {ERR_REASON(AFALG_R_IO_SETUP_FAILED), "io setup failed"},
     {ERR_REASON(AFALG_R_KERNEL_DOES_NOT_SUPPORT_AFALG),
@@ -90,6 +94,7 @@ static ERR_STRING_DATA AFALG_str_reasons[] = {
     {ERR_REASON(AFALG_R_KERNEL_DOES_NOT_SUPPORT_ASYNC_AFALG),
      "kernel does not support async afalg"},
     {ERR_REASON(AFALG_R_MEM_ALLOC_FAILED), "mem alloc failed"},
+    {ERR_REASON(AFALG_R_SOCKET_ACCEPT_FAILED), "socket accept failed"},
     {ERR_REASON(AFALG_R_SOCKET_BIND_FAILED), "socket bind failed"},
     {ERR_REASON(AFALG_R_SOCKET_CREATE_FAILED), "socket create failed"},
     {ERR_REASON(AFALG_R_SOCKET_OPERATION_FAILED), "socket operation failed"},

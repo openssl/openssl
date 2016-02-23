@@ -470,6 +470,18 @@ static void ossl_init_engine_dasync(void)
     engine_load_dasync_internal();
     engine_inited = 1;
 }
+#  if !defined(OPENSSL_NO_AFALGENG)
+static OPENSSL_INIT_ONCE engine_afalg = OPENSSL_INIT_ONCE_STATIC_INIT;
+static void ossl_init_engine_afalg(void)
+{
+#   ifdef OPENSSL_INIT_DEBUG
+    fprintf(stderr, "OPENSSL_INIT: ossl_init_engine_afalg: "
+                    "engine_load_afalg_internal()\n");
+#   endif
+    engine_load_afalg_internal();
+    engine_inited = 1;
+}
+#  endif
 # endif
 #endif
 
@@ -718,9 +730,15 @@ int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
     if (opts & OPENSSL_INIT_ENGINE_DASYNC) {
         ossl_init_once_run(&engine_dasync, ossl_init_engine_dasync);
     }
+#  if !defined(OPENSSL_NO_AFALGENG)
+    if (opts & OPENSSL_INIT_ENGINE_AFALG) {
+        ossl_init_once_run(&engine_afalg, ossl_init_engine_afalg);
+    }
+#  endif
 # endif
     if (opts & (OPENSSL_INIT_ENGINE_ALL_BUILTIN
-                | OPENSSL_INIT_ENGINE_DASYNC | OPENSSL_INIT_ENGINE_OPENSSL)) {
+                | OPENSSL_INIT_ENGINE_DASYNC | OPENSSL_INIT_ENGINE_OPENSSL
+                | OPENSSL_INIT_ENGINE_AFALG)) {
         ENGINE_register_all_complete();
     }
 #endif

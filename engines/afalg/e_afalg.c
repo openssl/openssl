@@ -99,11 +99,19 @@
 # define ALG_OP_TYPE     unsigned int
 # define ALG_OP_LEN      (sizeof(ALG_OP_TYPE))
 
+#define ALG_MAX_SALG_NAME       64
+#define ALG_MAX_SALG_TYPE       14
+
+# ifdef OPENSSL_NO_DYNAMIC_ENGINE
+void engine_load_afalg_internal(void);
+# endif
+
 /* Local Linkage Functions */
 static int afalg_init_aio(afalg_aio *aio);
 static int afalg_fin_cipher_aio(afalg_aio *ptr, int sfd,
                                 unsigned char *buf, size_t len);
-static int afalg_create_bind_sk(void);
+static int afalg_create_sk(afalg_ctx *actx, const char *ciphertype,
+                                const char *ciphername);
 static int afalg_destroy(ENGINE *e);
 static int afalg_init(ENGINE *e);
 static int afalg_finish(ENGINE *e);
@@ -165,6 +173,7 @@ static int afalg_setup_async_event_notification(afalg_aio *aio)
     ASYNC_JOB *job;
     ASYNC_WAIT_CTX *waitctx;
     void *custom = NULL;
+    int ret;
 
     if ((job = ASYNC_get_current_job()) != NULL) {
         /* Async mode */
@@ -174,45 +183,45 @@ static int afalg_setup_async_event_notification(afalg_aio *aio)
             return 0;
         }
         /* Get waitfd from ASYNC_WAIT_CTX if it is alreday set */
-        if (0 == ASYNC_WAIT_CTX_get_fd(waitctx, engine_afalg_id,
-                                       &aio->efd_async, &custom)) {
-            /* waitfd is not set in ASYNC_WAIT_CTX so we set it */
-            /* efd_async will be signaled when AIO operation completes */
-            aio->efd_async = eventfd(0);
-            if (aio->efd_async == -1) {
+        ret = ASYNC_WAIT_CTX_get_fd(waitctx, engine_afalg_id,
+                                    &aio->efd, &custom);
+        if (ret == 0) {
+            /*
+             * waitfd is not set in ASYNC_WAIT_CTX, create a new one
+             * and set it. efd will be signaled when AIO operation completes
+             */
+            aio->efd = eventfd(0);
+            if (aio->efd == -1) {
                 ALG_PERR("%s: Failed to get eventfd : ", __func__);
                 AFALGerr(AFALG_F_AFALG_SETUP_ASYNC_EVENT_NOTIFICATION,
                          AFALG_R_EVENTFD_FAILED);
                 return 0;
             }
-            if (0 ==
-                ASYNC_WAIT_CTX_set_wait_fd(waitctx, engine_afalg_id,
-                                           aio->efd_async, custom,
-                                           afalg_waitfd_cleanup)) {
+            ret = ASYNC_WAIT_CTX_set_wait_fd(waitctx, engine_afalg_id,
+                                             aio->efd, custom,
+                                             afalg_waitfd_cleanup);
+            if (ret == 0) {
                 ALG_WARN("%s: Failed to set wait fd", __func__);
-                close(aio->efd_async);
+                close(aio->efd);
                 return 0;
             }
             /* make fd non-blocking in async mode */
-            if (fcntl(aio->efd_async, F_SETFL, O_NONBLOCK) != 0) {
+            if (fcntl(aio->efd, F_SETFL, O_NONBLOCK) != 0) {
                 ALG_WARN("%s: Failed to set event fd as NONBLOCKING",
                          __func__);
             }
         }
-        /* efd_async is the active fd to be used */
-        aio->efd = aio->efd_async;
+        aio->mode = MODE_ASYNC;
     } else {
         /* Sync mode */
-        /* efd_sync will be signaled when AIO operation completes */
-        aio->efd_sync = eventfd(0);
-        if (aio->efd_sync == -1) {
+        aio->efd = eventfd(0);
+        if (aio->efd == -1) {
             ALG_PERR("%s: Failed to get eventfd : ", __func__);
             AFALGerr(AFALG_F_AFALG_SETUP_ASYNC_EVENT_NOTIFICATION,
                      AFALG_R_EVENTFD_FAILED);
             return 0;
         }
-        /* efd_async is the active fd to be used */
-        aio->efd = aio->efd_sync;
+        aio->mode = MODE_SYNC;
     }
     return 1;
 }
@@ -231,9 +240,8 @@ int afalg_init_aio(afalg_aio *aio)
     }
 
     memset(aio->cbt, 0, sizeof(aio->cbt));
-    aio->efd_sync = -1;
-    aio->efd_async = -1;
     aio->efd = -1;
+    aio->mode = MODE_UNINIT;
 
     return 1;
 }
@@ -253,7 +261,7 @@ int afalg_fin_cipher_aio(afalg_aio *aio, int sfd, unsigned char *buf,
     timeout.tv_nsec = 0;
 
     /* if efd has not been initialised yet do it here */
-    if (aio->efd == -1) {
+    if (aio->mode == MODE_UNINIT) {
         r = afalg_setup_async_event_notification(aio);
         if (r == 0)
             return 0;
@@ -276,7 +284,7 @@ int afalg_fin_cipher_aio(afalg_aio *aio, int sfd, unsigned char *buf,
      */
     r = io_read(aio->aio_ctx, 1, &cb);
     if (r < 0) {
-        ALG_PERR("%s: io_read failed : ", __func__);
+        ALG_PWARN("%s: io_read failed : ", __func__);
         return 0;
     }
 
@@ -298,7 +306,8 @@ int afalg_fin_cipher_aio(afalg_aio *aio, int sfd, unsigned char *buf,
         if (eval > 0) {
 
             /* Get results of AIO read */
-            r = io_getevents(aio->aio_ctx, 1, 1, events, &timeout);
+            r = io_getevents(aio->aio_ctx, 1, MAX_INFLIGHTS,
+                             events, &timeout);
             if (r > 0) {
                 /*
                  * events.res indicates the actual status of the operation.
@@ -342,41 +351,6 @@ int afalg_fin_cipher_aio(afalg_aio *aio, int sfd, unsigned char *buf,
     return 1;
 }
 
-static int afalg_create_bind_sk(void)
-{
-    struct sockaddr_alg sa = {
-        .salg_family = AF_ALG,
-        .salg_type = "skcipher",
-        .salg_name = "cbc(aes)"
-    };
-
-    int sfd;
-    int r = -1;
-
-    /* Create AFALG socket for crypto processing */
-    sfd = socket(AF_ALG, SOCK_SEQPACKET, 0);
-    if (sfd == -1) {
-        ALG_PERR("%s: Failed to open socket : ", __func__);
-        AFALGerr(AFALG_F_AFALG_CREATE_BIND_SK, AFALG_R_SOCKET_CREATE_FAILED);
-        goto err;
-    }
-
-    /* Set cipher algorithm for aes-cbc */
-    r = bind(sfd, (struct sockaddr *)&sa, sizeof(sa));
-    if (r < 0) {
-        ALG_PERR("%s: Failed to bind socket : ", __func__);
-        AFALGerr(AFALG_F_AFALG_CREATE_BIND_SK, AFALG_R_SOCKET_BIND_FAILED);
-        goto err;
-    }
-
-    return sfd;
-
- err:
-    if (sfd >= 0)
-        close(sfd);
-    return r;
-}
-
 static inline void afalg_set_op_sk(struct cmsghdr *cmsg,
                                    const unsigned int op)
 {
@@ -399,38 +373,57 @@ static void afalg_set_iv_sk(struct cmsghdr *cmsg, const unsigned char *iv,
     memcpy(aiv->iv, iv, len);
 }
 
-static void afalg_socket(afalg_ctx *actx, const unsigned char *key,
-                         const int klen)
+static inline int afalg_set_key(afalg_ctx *actx, const unsigned char *key,
+                                const int klen)
 {
     int ret;
-
-    actx->bfd = actx->sfd = -1;
-
-    actx->bfd = afalg_create_bind_sk();
-    if (actx->bfd < 0) {
-        return;
-    }
-
-    /*
-     * Send cipher key to the kernel in preparation for future crypto
-     * requests
-     */
     ret = setsockopt(actx->bfd, SOL_ALG, ALG_SET_KEY, key, klen);
     if (ret < 0) {
         ALG_PERR("%s: Failed to set socket option : ", __func__);
-        AFALGerr(AFALG_F_AFALG_SOCKET, AFALG_R_SOCKET_SET_KEY_FAILED);
+        AFALGerr(AFALG_F_AFALG_SET_KEY, AFALG_R_SOCKET_SET_KEY_FAILED);
+        return 0;
+    }
+
+    return 1;
+}
+
+static int afalg_create_sk(afalg_ctx *actx, const char *ciphertype,
+                                const char *ciphername)
+{
+    struct sockaddr_alg sa;
+
+    actx->bfd = actx->sfd = -1;
+    int r = -1;
+
+    memset(&sa, 0, sizeof(sa));
+    sa.salg_family = AF_ALG;
+    strncpy((char *) sa.salg_type, ciphertype, ALG_MAX_SALG_TYPE);
+    sa.salg_type[ALG_MAX_SALG_TYPE-1] = '\0';
+    strncpy((char *) sa.salg_name, ciphername, ALG_MAX_SALG_NAME);
+    sa.salg_name[ALG_MAX_SALG_NAME-1] = '\0';
+
+    actx->bfd = socket(AF_ALG, SOCK_SEQPACKET, 0);
+    if (actx->bfd == -1) {
+        ALG_PERR("%s: Failed to open socket : ", __func__);
+        AFALGerr(AFALG_F_AFALG_CREATE_SK, AFALG_R_SOCKET_CREATE_FAILED);
         goto err;
     }
 
-    /* Get fd to perform future aes-cbc operations with given key */
+    r = bind(actx->bfd, (struct sockaddr *)&sa, sizeof(sa));
+    if (r < 0) {
+        ALG_PERR("%s: Failed to bind socket : ", __func__);
+        AFALGerr(AFALG_F_AFALG_CREATE_SK, AFALG_R_SOCKET_BIND_FAILED);
+        goto err;
+    }
+
     actx->sfd = accept(actx->bfd, NULL, 0);
     if (actx->sfd < 0) {
         ALG_PERR("%s: Socket Accept Failed : ", __func__);
-        AFALGerr(AFALG_F_AFALG_SOCKET, AFALG_R_SOCKET_BIND_FAILED);
+        AFALGerr(AFALG_F_AFALG_CREATE_SK, AFALG_R_SOCKET_ACCEPT_FAILED);
         goto err;
     }
 
-    return;
+    return 1;
 
  err:
     if (actx->bfd >= 0)
@@ -438,7 +431,7 @@ static void afalg_socket(afalg_ctx *actx, const unsigned char *key,
     if (actx->sfd >= 0)
         close(actx->sfd);
     actx->bfd = actx->sfd = -1;
-    return;
+    return 0;
 }
 
 static int afalg_start_cipher_sk(afalg_ctx *actx, const unsigned char *in,
@@ -522,7 +515,7 @@ static int afalg_start_cipher_sk(afalg_ctx *actx, const unsigned char *in,
     }
 
     if (sbytes != (ssize_t) inl) {
-        ALG_ERR("Cipher operation send bytes %zd != inlen %zd\n", sbytes,
+        ALG_WARN("Cipher operation send bytes %zd != inlen %zd\n", sbytes,
                 inl);
         return 0;
     }
@@ -535,7 +528,9 @@ static int afalg_cipher_init(EVP_CIPHER_CTX *ctx, const unsigned char *key,
                              const unsigned char *iv, int enc)
 {
     int ciphertype;
+    int ret;
     afalg_ctx *actx;
+    char ciphername[ALG_MAX_SALG_NAME];
 
     if (ctx == NULL || key == NULL) {
         ALG_WARN("%s: Null Parameter\n", __func__);
@@ -556,30 +551,34 @@ static int afalg_cipher_init(EVP_CIPHER_CTX *ctx, const unsigned char *key,
     ciphertype = EVP_CIPHER_CTX_nid(ctx);
     switch (ciphertype) {
     case NID_aes_128_cbc:
+        strncpy(ciphername, "cbc(aes)", ALG_MAX_SALG_NAME);
         break;
     default:
         ALG_WARN("%s: Unsupported Cipher type %d\n", __func__, ciphertype);
         return 0;
     }
+    ciphername[ALG_MAX_SALG_NAME-1]='\0';
 
     if (ALG_AES_IV_LEN != EVP_CIPHER_CTX_iv_length(ctx)) {
-        ALG_ERR("%s: Unsupported IV length :%d\n", __func__,
+        ALG_WARN("%s: Unsupported IV length :%d\n", __func__,
                 EVP_CIPHER_CTX_iv_length(ctx));
         return 0;
     }
 
     /* Setup AFALG socket for crypto processing */
-    afalg_socket(actx, key, EVP_CIPHER_CTX_key_length(ctx));
-    if (actx->sfd < 0) {
+    ret = afalg_create_sk(actx, "skcipher", ciphername);
+    if (ret < 1)
         return 0;
-    }
+
+
+    ret = afalg_set_key(actx, key, EVP_CIPHER_CTX_key_length(ctx));
+    if (ret < 1)
+        goto err;
 
     /* Setup AIO ctx to allow async AFALG crypto processing */
-    if (afalg_init_aio(&actx->aio) == 0) {
-        close(actx->sfd);
-        close(actx->bfd);
-        return 0;
-    }
+    if (afalg_init_aio(&actx->aio) == 0)
+        goto err;
+
 # ifdef ALG_ZERO_COPY
     pipe(actx->zc_pipe);
 # endif
@@ -587,6 +586,11 @@ static int afalg_cipher_init(EVP_CIPHER_CTX *ctx, const unsigned char *key,
     actx->init_done = MAGIC_INIT_NUM;
 
     return 1;
+
+err:
+    close(actx->sfd);
+    close(actx->bfd);
+    return 0;
 }
 
 static int afalg_do_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
@@ -626,10 +630,8 @@ static int afalg_do_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 
     /* Perform async crypto operation in kernel space */
     ret = afalg_fin_cipher_aio(&actx->aio, actx->sfd, out, inl);
-    if (ret < 1) {
-        ALG_WARN("%s: Socket cipher operation failed\n", __func__);
+    if (ret < 1)
         return 0;
-    }
 
     if (EVP_CIPHER_CTX_encrypting(ctx)) {
         memcpy(EVP_CIPHER_CTX_iv_noconst(ctx), out + (inl - ALG_AES_IV_LEN),
@@ -663,9 +665,9 @@ static int afalg_cipher_cleanup(EVP_CIPHER_CTX *ctx)
     close(actx->zc_pipe[0]);
     close(actx->zc_pipe[1]);
 # endif
-    /* close sync mode efd, async mode is closed in afalg_waitfd_cleanup() */
-    if (actx->aio.efd_sync >= 0)
-        close(actx->aio.efd_sync);
+    /* close efd in sync mode, async mode is closed in afalg_waitfd_cleanup() */
+    if (actx->aio.mode == MODE_SYNC)
+        close(actx->aio.efd);
     io_destroy(actx->aio.aio_ctx);
 
     return 1;
@@ -732,6 +734,16 @@ static int bind_afalg(ENGINE *e)
         return 0;
     }
 
+    /*
+     * Create _hidden_aes_128_cbc by calling afalg_aes_128_cbc
+     * now, as bind_aflag can only be called by one thread at a
+     * time.
+     */
+    if (afalg_aes_128_cbc() == NULL) {
+        AFALGerr(AFALG_F_BIND_AFALG, AFALG_R_INIT_FAILED);
+        return 0;
+    }
+
     if (!ENGINE_set_ciphers(e, afalg_ciphers)) {
         AFALGerr(AFALG_F_BIND_AFALG, AFALG_R_INIT_FAILED);
         return 0;
@@ -757,6 +769,7 @@ static int bind_helper(ENGINE *e, const char *id)
 IMPLEMENT_DYNAMIC_CHECK_FN()
     IMPLEMENT_DYNAMIC_BIND_FN(bind_helper)
 # endif
+
 static int afalg_chk_platform(void)
 {
     int ret;
@@ -767,7 +780,8 @@ static int afalg_chk_platform(void)
 
     ret = uname(&ut);
     if (ret != 0) {
-        ALG_ERR("%s: Failed to get system information\n", __func__);
+        AFALGerr(AFALG_F_AFALG_CHK_PLATFORM,
+                 AFALG_R_FAILED_TO_GET_PLATFORM_INFO);
         return 0;
     }
 
@@ -779,9 +793,9 @@ static int afalg_chk_platform(void)
 
     if (KERNEL_VERSION(kver[0], kver[1], kver[2])
         < KERNEL_VERSION(K_MAJ, K_MIN1, K_MIN2)) {
-        ALG_WARN("ASYNC AFALG not supported this kernel(%d.%d.%d)\n",
+        ALG_ERR("ASYNC AFALG not supported this kernel(%d.%d.%d)\n",
                  kver[0], kver[1], kver[2]);
-        ALG_WARN("ASYNC AFALG requires kernel version %d.%d.%d or later\n",
+        ALG_ERR("ASYNC AFALG requires kernel version %d.%d.%d or later\n",
                  K_MAJ, K_MIN1, K_MIN2);
         AFALGerr(AFALG_F_AFALG_CHK_PLATFORM,
                  AFALG_R_KERNEL_DOES_NOT_SUPPORT_ASYNC_AFALG);
@@ -804,7 +818,7 @@ static ENGINE *engine_afalg(void)
     return ret;
 }
 
-static void ENGINE_load_afalg(void)
+void engine_load_afalg_internal(void)
 {
     ENGINE *toadd;
 
