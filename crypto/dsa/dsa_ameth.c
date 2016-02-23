@@ -372,22 +372,10 @@ static void int_dsa_free(EVP_PKEY *pkey)
     DSA_free(pkey->pkey.dsa);
 }
 
-static void update_buflen(const BIGNUM *b, size_t *pbuflen)
-{
-    size_t i;
-    if (!b)
-        return;
-    if (*pbuflen < (i = (size_t)BN_num_bytes(b)))
-        *pbuflen = i;
-}
-
 static int do_dsa_print(BIO *bp, const DSA *x, int off, int ptype)
 {
-    unsigned char *m = NULL;
     int ret = 0;
-    size_t buf_len = 0;
     const char *ktype = NULL;
-
     const BIGNUM *priv_key, *pub_key;
 
     if (ptype == 2)
@@ -407,18 +395,6 @@ static int do_dsa_print(BIO *bp, const DSA *x, int off, int ptype)
     else
         ktype = "DSA-Parameters";
 
-    update_buflen(x->p, &buf_len);
-    update_buflen(x->q, &buf_len);
-    update_buflen(x->g, &buf_len);
-    update_buflen(priv_key, &buf_len);
-    update_buflen(pub_key, &buf_len);
-
-    m = OPENSSL_malloc(buf_len + 10);
-    if (m == NULL) {
-        DSAerr(DSA_F_DO_DSA_PRINT, ERR_R_MALLOC_FAILURE);
-        goto err;
-    }
-
     if (priv_key) {
         if (!BIO_indent(bp, off, 128))
             goto err;
@@ -427,19 +403,18 @@ static int do_dsa_print(BIO *bp, const DSA *x, int off, int ptype)
             goto err;
     }
 
-    if (!ASN1_bn_print(bp, "priv:", priv_key, m, off))
+    if (!ASN1_bn_print(bp, "priv:", priv_key, NULL, off))
         goto err;
-    if (!ASN1_bn_print(bp, "pub: ", pub_key, m, off))
+    if (!ASN1_bn_print(bp, "pub: ", pub_key, NULL, off))
         goto err;
-    if (!ASN1_bn_print(bp, "P:   ", x->p, m, off))
+    if (!ASN1_bn_print(bp, "P:   ", x->p, NULL, off))
         goto err;
-    if (!ASN1_bn_print(bp, "Q:   ", x->q, m, off))
+    if (!ASN1_bn_print(bp, "Q:   ", x->q, NULL, off))
         goto err;
-    if (!ASN1_bn_print(bp, "G:   ", x->g, m, off))
+    if (!ASN1_bn_print(bp, "G:   ", x->g, NULL, off))
         goto err;
     ret = 1;
  err:
-    OPENSSL_free(m);
     return (ret);
 }
 
@@ -502,6 +477,7 @@ static int dsa_sig_print(BIO *bp, const X509_ALGOR *sigalg,
 {
     DSA_SIG *dsa_sig;
     const unsigned char *p;
+
     if (!sig) {
         if (BIO_puts(bp, "\n") <= 0)
             return 0;
@@ -512,26 +488,16 @@ static int dsa_sig_print(BIO *bp, const X509_ALGOR *sigalg,
     dsa_sig = d2i_DSA_SIG(NULL, &p, sig->length);
     if (dsa_sig) {
         int rv = 0;
-        size_t buf_len = 0;
-        unsigned char *m = NULL;
-        update_buflen(dsa_sig->r, &buf_len);
-        update_buflen(dsa_sig->s, &buf_len);
-        m = OPENSSL_malloc(buf_len + 10);
-        if (m == NULL) {
-            DSAerr(DSA_F_DSA_SIG_PRINT, ERR_R_MALLOC_FAILURE);
-            goto err;
-        }
 
         if (BIO_write(bp, "\n", 1) != 1)
             goto err;
 
-        if (!ASN1_bn_print(bp, "r:   ", dsa_sig->r, m, indent))
+        if (!ASN1_bn_print(bp, "r:   ", dsa_sig->r, NULL, indent))
             goto err;
-        if (!ASN1_bn_print(bp, "s:   ", dsa_sig->s, m, indent))
+        if (!ASN1_bn_print(bp, "s:   ", dsa_sig->s, NULL, indent))
             goto err;
         rv = 1;
  err:
-        OPENSSL_free(m);
         DSA_SIG_free(dsa_sig);
         return rv;
     }

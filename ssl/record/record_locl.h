@@ -198,8 +198,7 @@ __owur int ssl3_do_compress(SSL *ssl);
 __owur int ssl3_do_uncompress(SSL *ssl);
 void ssl3_cbc_copy_mac(unsigned char *out,
                        const SSL3_RECORD *rec, unsigned md_size);
-__owur int ssl3_cbc_remove_padding(const SSL *s,
-                            SSL3_RECORD *rec,
+__owur int ssl3_cbc_remove_padding(SSL3_RECORD *rec,
                             unsigned block_size, unsigned mac_size);
 __owur int tls1_cbc_remove_padding(const SSL *s,
                             SSL3_RECORD *rec,

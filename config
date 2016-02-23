@@ -812,7 +812,9 @@ case "$GUESSOS" in
   x86pc-*-qnx6) OUT="QNX6-i386" ;;
   *-*-qnx6) OUT="QNX6" ;;
   x86-*-android|i?86-*-android) OUT="android-x86" ;;
-  armv[7-9]*-*-android) OUT="android-armv7" ;;
+  armv[7-9]*-*-android)
+      OUT="android-armeabi"; options="$options -march=armv7-a" ;;
+  arm*-*-android) OUT="android-armeabi" ;;
   *) OUT=`echo $GUESSOS | awk -F- '{print $3}'`;;
 esac
 

@@ -46,6 +46,8 @@ my $usage="Usage: Configure [no-<cipher> ...] [enable-<cipher> ...] [-Dxxx] [-lx
 #               multithreaded applications (default is "threads" if we
 #               know how to do it)
 # [no-]shared	[don't] try to create shared libraries when supported.
+# [no-]pic      [don't] try to build position independent code when supported.
+#               If disabled, it also disables shared and dynamic-engine.
 # no-asm        do not use assembler
 # no-dso        do not compile in any native shared-library methods. This
 #               will ensure that all methods just return NULL.
@@ -92,11 +94,11 @@ my $gcc_devteam_warn = "-DPEDANTIC -DREF_DEBUG -DDEBUG_UNUSED -DBIO_DEBUG"
 # TODO(openssl-team): fix problems and investigate if (at least) the
 # following warnings can also be enabled:
 #       -Wswitch-enum
-#       -Wunused-macros
 #       -Wcast-align
 #       -Wunreachable-code
-#       -Wlanguage-extension-token
-#       -Wextended-offsetof
+#       -Wlanguage-extension-token -- no, we use asm()
+#       -Wunused-macros -- no, too tricky for BN and _XOPEN_SOURCE etc
+#       -Wextended-offsetof -- no, needed in CMS ASN1 code
 my $clang_devteam_warn = ""
         . " -Qunused-arguments"
         . " -Wextra"
@@ -206,13 +208,7 @@ $config{cross_compile_prefix}="";
 $config{fipslibdir}="/usr/local/ssl/fips-2.0/lib/";
 my $nofipscanistercheck=0;
 $config{baseaddr}="0xFB00000";
-my $no_threads=0;
 my $threads=0;
-$config{no_shared}=0; # but "no-shared" is default
-my $zlib=1;      # but "no-zlib" is default
-my $no_rfc3779=0;
-my $no_asm=0;
-my $no_dso=0;
 my $default_ranlib;
 $config{fips}=0;
 
@@ -284,6 +280,7 @@ my @disablables = (
     "nextprotoneg",
     "ocb",
     "ocsp",
+    "pic",
     "poly1305",
     "posix-io",
     "psk",
@@ -325,22 +322,26 @@ foreach my $proto ((@tls, @dtls))
 	push(@disablables, "$proto-method");
 	}
 
+my @deprecated_disablables = (
+    "ssl2",
+    );
+
 # All of the following is disabled by default (RC5 was enabled before 0.9.8):
 
-my %disabled = ( # "what"         => "comment"
-		 "ec_nistp_64_gcc_128" => "default",
-		 "egd"            => "default",
-		 "md2"            => "default",
-		 "rc5"            => "default",
-		 "sctp"           => "default",
-		 "shared"         => "default",
-		 "ssl-trace"	  => "default",
-		 "static-engine"  => "default",
-		 "unit-test"	  => "default",
-		 "zlib"           => "default",
-		 "crypto-mdebug"  => "default",
-		 "heartbeats"     => "default",
-	       );
+our %disabled = ( # "what"         => "comment"
+		  "ec_nistp_64_gcc_128" => "default",
+		  "egd"            => "default",
+		  "md2"            => "default",
+		  "rc5"            => "default",
+		  "sctp"           => "default",
+		  "shared"         => "default",
+		  "ssl-trace"      => "default",
+		  "static-engine"  => "default",
+		  "unit-test"      => "default",
+		  "zlib"           => "default",
+		  "crypto-mdebug"  => "default",
+		  "heartbeats"     => "default",
+		);
 
 # Note: => pair form used for aesthetics, not to truly make a hash table
 my @disable_cascades = (
@@ -384,6 +385,9 @@ my @disable_cascades = (
 
     # Without DSO, we can't load dynamic engines, so don't build them dynamic
     "dso"               => [ "dynamic-engine" ],
+
+    # Without position independent code, there can be no shared libraries or DSOs
+    "pic"               => [ "shared", "dynamic-engine" ],
     );
 
 # Avoid protocol support holes.  Also disable all versions below N, if version
@@ -490,6 +494,7 @@ if (grep /^reconf(igure)?$/, @argvcopy) {
 $config{perlargv} = [ @argvcopy ];
 
 my %unsupported_options = ();
+my %deprecated_options = ();
 foreach (@argvcopy)
 	{
 	# VMS is a case insensitive environment, and depending on settings
@@ -511,7 +516,12 @@ foreach (@argvcopy)
         if (/^(no|disable|enable)-(.+)$/)
 		{
 		my $word = $2;
-		if (!grep { $word =~ /^${_}$/ } @disablables)
+		if (grep { $word =~ /^${_}$/ } @deprecated_disablables)
+			{
+			$deprecated_options{$_} = 1;
+			next;
+			}
+		elsif (!grep { $word =~ /^${_}$/ } @disablables)
 			{
 			$unsupported_options{$_} = 1;
 			next;
@@ -550,11 +560,11 @@ foreach (@argvcopy)
                         }
                 elsif ($1 eq "static-engine")
                         {
-                        $disabled{"static-engine"} = "option";
+                        delete $disabled{"dynamic-engine"};
                         }
                 elsif ($1 eq "dynamic-engine")
                         {
-                        delete $disabled{"static-engine"};
+                        $disabled{"dynamic-engine"} = "option";
                         }
                 else
                         {
@@ -565,11 +575,11 @@ foreach (@argvcopy)
 		{
                 if ($1 eq "static-engine")
                         {
-                        delete $disabled{"static-engine"};
+                        $disabled{"dynamic-engine"} = "option";
                         }
                 elsif ($1 eq "dynamic-engine")
                         {
-                        $disabled{"static-engine"} = "option";
+                        delete $disabled{"dynamic-engine"};
                         }
 		my $algo = $1;
 		delete $disabled{$algo};
@@ -694,6 +704,11 @@ foreach (@argvcopy)
 		die "***** Unsupported api compatibility level: $config{api}\n",
         }
 
+	if (keys %deprecated_options)
+		{
+		warn "***** Deprecated options: ",
+			join(", ", keys %deprecated_options), "\n";
+		}
 	if (keys %unsupported_options)
 		{
 		die "***** Unsupported options: ",
@@ -759,14 +774,16 @@ foreach (sort (keys %disabled))
 	printf "    no-%-12s %-10s", $_, "[$disabled{$_}]";
 
 	if (/^dso$/)
-		{ $no_dso = 1; }
+		{ }
 	elsif (/^threads$/)
-		{ $no_threads = 1; }
+		{ }
 	elsif (/^shared$/)
-		{ $config{no_shared} = 1; }
+		{ }
+	elsif (/^pic$/)
+		{ }
 	elsif (/^zlib$/)
-		{ $zlib = 0; }
-	elsif (/^static-engine$/)
+		{ }
+	elsif (/^dynamic-engine$/)
 		{ }
 	elsif (/^zlib-dynamic$/)
 		{ }
@@ -783,14 +800,13 @@ foreach (sort (keys %disabled))
 		my ($ALGO, $algo);
 		($ALGO = $algo = $_) =~ tr/[\-a-z]/[_A-Z]/;
 
-		if (/^asm$/ || /^err$/ || /^hw$/ || /^hw-/
+		if (/^asm$/ || /^err$/ || /^hw$/ || /^hw-/ || /^async$/
 				|| /^autoalginit/ || /^autoerrinit/)
 			{
 			push @{$config{openssl_other_defines}}, "OPENSSL_NO_$ALGO";
 			print " OPENSSL_NO_$ALGO";
 
 			if (/^err$/)	{ push @user_defines, "OPENSSL_NO_ERR"; }
-			elsif (/^asm$/)	{ $no_asm = 1; }
 			}
 		else
 			{
@@ -897,7 +913,7 @@ if ($target =~ /^mingw/ && `$target{cc} --target-help 2>&1` =~ m/-mno-cygwin/m)
 	$target{shared_ldflag} .= " -mno-cygwin";
 	}
 
-if ($target =~ /linux.*-mips/ && !$no_asm && $user_cflags !~ /-m(ips|arch=)/) {
+if ($target =~ /linux.*-mips/ && !$disabled{asm} && $user_cflags !~ /-m(ips|arch=)/) {
 	# minimally required architecture flags for assembly modules
 	$config{cflags}="-mips2 $config{cflags}" if ($target =~ /mips32/);
 	$config{cflags}="-mips3 $config{cflags}" if ($target =~ /mips64/);
@@ -913,7 +929,7 @@ my $no_user_defines=0;
 # has support compiled in for them. Currently each method is enabled
 # by a define "DSO_<name>" ... we translate the "dso_scheme" config
 # string entry into using the following logic;
-if (!$no_dso && $target{dso_scheme} ne "")
+if (!$disabled{dso} && $target{dso_scheme} ne "")
 	{
 	$target{dso_scheme} =~ tr/[a-z]/[A-Z]/;
 	if ($target{dso_scheme} eq "DLFCN")
@@ -934,7 +950,7 @@ if (!$no_dso && $target{dso_scheme} ne "")
 
 my $thread_cflags = "";
 my @thread_defines;
-if ($target{thread_cflag} ne "(unknown)" && !$no_threads)
+if ($target{thread_cflag} ne "(unknown)" && !$disabled{threads})
 	{
 	# If we know how to do it, support threads by default.
 	$threads = 1;
@@ -960,7 +976,7 @@ else
 
 $config{ex_libs}="$libs$config{ex_libs}" if ($libs ne "");
 
-if ($no_asm)
+if ($disabled{asm})
 	{
 	@{$config{defines}} = grep !/^[BL]_ENDIAN$/, @{$config{defines}}
 	    if ($config{fips});
@@ -973,7 +989,7 @@ if ($threads)
 	push @{$config{openssl_thread_defines}}, @thread_defines;
 	}
 
-if ($zlib)
+unless ($disabled{zlib})
 	{
 	push @{$config{defines}}, "ZLIB";
 	if (defined($disabled{"zlib-dynamic"}))
@@ -1000,21 +1016,37 @@ if (defined($disabled{"deprecated"})) {
 
 if ($target{shared_target} eq "")
 	{
-	$no_shared_warn = 1 if !$config{no_shared} && !$config{fips};
-	$config{no_shared} = 1;
+	$no_shared_warn = 1
+	    if ((!$disabled{shared} || !$disabled{"dynamic-engine"})
+		&& !$config{fips});
+	$disabled{shared} = "no-shared-target";
+	$disabled{pic} = $disabled{shared} = $disabled{"dynamic-engine"} =
+	    "no-shared-target";
 	}
 
-if ($disabled{"static-engine"}) {
-        push @{$config{defines}}, "OPENSSL_NO_STATIC_ENGINE";
-        $config{dynamic_engines} = 1;
-} else {
+if ($disabled{"dynamic-engine"}) {
         push @{$config{defines}}, "OPENSSL_NO_DYNAMIC_ENGINE";
         $config{dynamic_engines} = 0;
+} else {
+        push @{$config{defines}}, "OPENSSL_NO_STATIC_ENGINE";
+        $config{dynamic_engines} = 1;
 }
 
 #
 # Platform fix-ups
 #
+
+# This saves the build files from having to check
+if ($disabled{pic})
+	{
+	$target{shared_cflag} = $target{shared_ldflag} =
+		$target{shared_rcflag} = "";
+	}
+else
+	{
+	push @{$config{defines}}, "OPENSSL_PIC";
+	}
+
 if ($target{sys_id} ne "")
 	{
 	push @{$config{openssl_sys_defines}}, "OPENSSL_SYS_$target{sys_id}";
@@ -1025,7 +1057,7 @@ if ($target{ranlib} eq "")
 	$target{ranlib} = $default_ranlib;
 	}
 
-if (!$no_asm) {
+unless ($disabled{asm}) {
     $target{cpuid_asm_src}=$table{BASE}->{cpuid_asm_src} if ($config{processor} eq "386");
     $target{bn_asm_src} =~ s/\w+-gf2m.c// if (defined($disabled{ec2m}));
 
@@ -1049,7 +1081,7 @@ if (!$no_asm) {
     if ($target{md5_asm_src}) {
 	push @{$config{defines}}, "MD5_ASM";
     }
-    $target{cast_asm_src}=$table{BASE}->{cast_asm_src} if (!$config{no_shared}); # CAST assembler is not PIC
+    $target{cast_asm_src}=$table{BASE}->{cast_asm_src} unless $disabled{pic}; # CAST assembler is not PIC
     if ($target{rmd160_asm_src}) {
 	push @{$config{defines}}, "RMD160_ASM";
     }
@@ -1266,6 +1298,7 @@ if ($builder eq "unified") {
             split /^/m,
             $template->fill_in(HASH => { config => \%config,
                                          target => \%target,
+                                         disabled => \%disabled,
                                          builddir => abs2rel($buildd, $blddir),
                                          sourcedir => abs2rel($sourced, $blddir),
                                          buildtop => abs2rel($blddir, $blddir),
@@ -1385,7 +1418,7 @@ if ($builder eq "unified") {
         }
 
         die <<"EOF" if scalar @engines and !$config{dynamic_engines};
-ENGINES can only be used if configured with 'static-enginex'.
+ENGINES can only be used if configured with 'dynamic-engine'.
 This is usually a fault in a build.info file.
 EOF
         foreach (@engines) {
@@ -1411,7 +1444,7 @@ EOF
 
         push @{$unified_info{rawlines}}, @rawlines;
 
-        if (!$config{no_shared}) {
+        unless ($disabled{shared}) {
             # Check sharednames.
             foreach (keys %sharednames) {
                 my $dest = cleanfile($buildd, $_, $blddir);
@@ -1570,7 +1603,7 @@ use warnings;
 use Exporter;
 #use vars qw(\@ISA \@EXPORT);
 our \@ISA = qw(Exporter);
-our \@EXPORT = qw(\%config \%target %withargs %unified_info);
+our \@EXPORT = qw(\%config \%target %disabled %withargs %unified_info);
 
 EOF
 print OUT "our %config = (\n";
@@ -1840,7 +1873,7 @@ print <<"EOF";
 Configured for $target.
 EOF
 
-print <<"EOF" if (!$no_threads && !$threads);
+print <<"EOF" if (!$disabled{threads} && !$threads);
 
 The library could not be configured for supporting multi-threaded
 applications as the compiler options required on this system are not known.
@@ -1849,10 +1882,11 @@ EOF
 
 print <<"EOF" if ($no_shared_warn);
 
-You gave the option 'shared', which is not supported on this platform, so
-we will pretend you gave the option 'no-shared'.  If you know how to implement
-shared libraries, please let us know (but please first make sure you have
-tried with a current version of OpenSSL).
+The options 'shared', 'pic' and 'dynamic-engine' aren't supported on this
+platform, so we will pretend you gave the option 'no-pic', which also disables
+'shared' and 'dynamic-engine'.  If you know how to implement shared libraries
+or position independent code, please let us know (but please first make sure
+you have tried with a current version of OpenSSL).
 EOF
 
 ###### TO BE REMOVED BEFORE FINAL RELEASE
@@ -1898,14 +1932,14 @@ exit(0);
 # Configuration file reading #########################################
 
 # Helper function to implement conditional inheritance depending on the
-# value of $no_asm.  Used in inherit_from values as follows:
+# value of $disabled{asm}.  Used in inherit_from values as follows:
 #
 #      inherit_from => [ "template", asm("asm_tmpl") ]
 #
 sub asm {
     my @x = @_;
     sub {
-	$no_asm ? () : @x;
+	$disabled{asm} ? () : @x;
     }
 }
 

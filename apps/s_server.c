@@ -191,12 +191,9 @@ typedef unsigned int u_int;
 #endif
 
 static int not_resumable_sess_cb(SSL *s, int is_forward_secure);
-static int sv_body(const char *hostname, int s, int stype,
-                   unsigned char *context);
-static int www_body(const char *hostname, int s, int stype,
-                    unsigned char *context);
-static int rev_body(const char *hostname, int s, int stype,
-                    unsigned char *context);
+static int sv_body(int s, int stype, unsigned char *context);
+static int www_body(int s, int stype, unsigned char *context);
+static int rev_body(int s, int stype, unsigned char *context);
 static void close_accept_socket(void);
 static int init_ssl_connection(SSL *s);
 static void print_stats(BIO *bp, SSL_CTX *ctx);
@@ -1027,8 +1024,7 @@ int s_server_main(int argc, char *argv[])
 #ifdef AF_UNIX
     int unlink_unix_path = 0;
 #endif
-    int (*server_cb) (const char *hostname, int s, int stype,
-                      unsigned char *context);
+    do_server_cb server_cb;
     int vpmtouched = 0, build_chain = 0, no_cache = 0, ext_cache = 0;
 #ifndef OPENSSL_NO_DH
     int no_dhe = 0;
@@ -1557,14 +1553,14 @@ int s_server_main(int argc, char *argv[])
         }
 
         s_cert = load_cert(s_cert_file, s_cert_format,
-                           NULL, e, "server certificate file");
+                           "server certificate file");
 
         if (!s_cert) {
             ERR_print_errors(bio_err);
             goto end;
         }
         if (s_chain_file) {
-            if (!load_certs(s_chain_file, &s_chain, FORMAT_PEM, NULL, e,
+            if (!load_certs(s_chain_file, &s_chain, FORMAT_PEM, NULL,
                             "server certificate chain"))
                 goto end;
         }
@@ -1578,7 +1574,7 @@ int s_server_main(int argc, char *argv[])
             }
 
             s_cert2 = load_cert(s_cert_file2, s_cert_format,
-                                NULL, e, "second server certificate file");
+                                "second server certificate file");
 
             if (!s_cert2) {
                 ERR_print_errors(bio_err);
@@ -1636,14 +1632,14 @@ int s_server_main(int argc, char *argv[])
         }
 
         s_dcert = load_cert(s_dcert_file, s_dcert_format,
-                            NULL, e, "second server certificate file");
+                            "second server certificate file");
 
         if (!s_dcert) {
             ERR_print_errors(bio_err);
             goto end;
         }
         if (s_dchain_file) {
-            if (!load_certs(s_dchain_file, &s_dchain, FORMAT_PEM, NULL, e,
+            if (!load_certs(s_dchain_file, &s_dchain, FORMAT_PEM, NULL,
                             "second server certificate chain"))
                 goto end;
         }
@@ -2054,8 +2050,7 @@ static void print_stats(BIO *bio, SSL_CTX *ssl_ctx)
                SSL_CTX_sess_get_cache_size(ssl_ctx));
 }
 
-static int sv_body(const char *hostname, int s, int stype,
-                   unsigned char *context)
+static int sv_body(int s, int stype, unsigned char *context)
 {
     char *buf = NULL;
     fd_set readfds;
@@ -2644,8 +2639,7 @@ static DH *load_dh_param(const char *dhfile)
 }
 #endif
 
-static int www_body(const char *hostname, int s, int stype,
-                    unsigned char *context)
+static int www_body(int s, int stype, unsigned char *context)
 {
     char *buf = NULL;
     int ret = 1;
@@ -3032,8 +3026,7 @@ static int www_body(const char *hostname, int s, int stype,
     return (ret);
 }
 
-static int rev_body(const char *hostname, int s, int stype,
-                    unsigned char *context)
+static int rev_body(int s, int stype, unsigned char *context)
 {
     char *buf = NULL;
     int i;

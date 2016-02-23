@@ -1919,7 +1919,7 @@ __owur int ssl_choose_client_version(SSL *s, int version);
 __owur long tls1_default_timeout(void);
 __owur int dtls1_do_write(SSL *s, int type);
 void dtls1_set_message_header(SSL *s,
-                              unsigned char *p, unsigned char mt,
+                              unsigned char mt,
                               unsigned long len,
                               unsigned long frag_off,
                               unsigned long frag_len);
@@ -1928,8 +1928,7 @@ __owur int dtls1_write_app_data_bytes(SSL *s, int type, const void *buf, int len
 
 __owur int dtls1_read_failed(SSL *s, int code);
 __owur int dtls1_buffer_message(SSL *s, int ccs);
-__owur int dtls1_retransmit_message(SSL *s, unsigned short seq,
-                             unsigned long frag_off, int *found);
+__owur int dtls1_retransmit_message(SSL *s, unsigned short seq, int *found);
 __owur int dtls1_get_queue_priority(unsigned short seq, int is_ccs);
 int dtls1_retransmit_buffered_messages(SSL *s);
 void dtls1_clear_record_buffer(SSL *s);

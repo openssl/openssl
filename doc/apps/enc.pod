@@ -60,15 +60,6 @@ the output filename, standard output by default.
 the password source. For more information about the format of B<arg>
 see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
 
-=item B<-salt>
-
-use a salt in the key derivation routines. This is the default.
-
-=item B<-nosalt>
-
-don't use a salt in the key derivation routines. This option B<SHOULD NOT> be
-used except for test purposes or compatibility with ancient versions of OpenSSL.
-
 =item B<-e>
 
 encrypt the input data: this is the default.
@@ -109,7 +100,9 @@ The default algorithm is sha-256.
 
 =item B<-nosalt>
 
-do not use a salt 
+don't use a salt in the key derivation routines. This option B<SHOULD NOT> be
+used except for test purposes or compatibility with ancient versions of
+OpenSSL.
 
 =item B<-salt>
 

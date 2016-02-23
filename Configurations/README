@@ -430,7 +430,7 @@ example, the above would have "something" used, since 1 is true.
 Together with the use of Text::Template, this can be used as
 conditions based on something in the passed variables, for example:
 
-    IF[{- $config{no_shared} -}]
+    IF[{- $disabled{shared} -}]
       LIBS=libcrypto
       SOURCE[libcrypto]=...
     ELSE

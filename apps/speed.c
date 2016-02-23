@@ -1781,7 +1781,7 @@ int speed_main(int argc, char **argv)
 
         /* DSA_generate_key(dsa_key[j]); */
         /* DSA_sign_setup(dsa_key[j],NULL); */
-        st = DSA_sign(EVP_PKEY_DSA, buf, 20, buf2, &kk, dsa_key[j]);
+        st = DSA_sign(0, buf, 20, buf2, &kk, dsa_key[j]);
         if (st == 0) {
             BIO_printf(bio_err,
                        "DSA sign failure.  No DSA sign will be done.\n");
@@ -1792,7 +1792,7 @@ int speed_main(int argc, char **argv)
                                dsa_c[j][0], dsa_bits[j], DSA_SECONDS);
             Time_F(START);
             for (count = 0, run = 1; COND(dsa_c[j][0]); count++) {
-                st = DSA_sign(EVP_PKEY_DSA, buf, 20, buf2, &kk, dsa_key[j]);
+                st = DSA_sign(0, buf, 20, buf2, &kk, dsa_key[j]);
                 if (st == 0) {
                     BIO_printf(bio_err, "DSA sign failure\n");
                     ERR_print_errors(bio_err);
@@ -1809,7 +1809,7 @@ int speed_main(int argc, char **argv)
             rsa_count = count;
         }
 
-        st = DSA_verify(EVP_PKEY_DSA, buf, 20, buf2, kk, dsa_key[j]);
+        st = DSA_verify(0, buf, 20, buf2, kk, dsa_key[j]);
         if (st <= 0) {
             BIO_printf(bio_err,
                        "DSA verify failure.  No DSA verify will be done.\n");
@@ -1820,7 +1820,7 @@ int speed_main(int argc, char **argv)
                                dsa_c[j][1], dsa_bits[j], DSA_SECONDS);
             Time_F(START);
             for (count = 0, run = 1; COND(dsa_c[j][1]); count++) {
-                st = DSA_verify(EVP_PKEY_DSA, buf, 20, buf2, kk, dsa_key[j]);
+                st = DSA_verify(0, buf, 20, buf2, kk, dsa_key[j]);
                 if (st <= 0) {
                     BIO_printf(bio_err, "DSA verify failure\n");
                     ERR_print_errors(bio_err);

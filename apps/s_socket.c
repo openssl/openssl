@@ -221,10 +221,8 @@ int init_client(int *sock, const char *host, const char *port,
  * 0 on failure, something other on success.
  */
 int do_server(int *accept_sock, const char *host, const char *port,
-              int family, int type,
-              int (*cb) (const char *hostname, int s, int stype,
-                         unsigned char *context), unsigned char *context,
-              int naccept)
+              int family, int type, do_server_cb cb,
+              unsigned char *context, int naccept)
 {
     int asock = 0;
     int sock;
@@ -258,50 +256,26 @@ int do_server(int *accept_sock, const char *host, const char *port,
     }
 
     BIO_ADDRINFO_free(res);
+    res = NULL;
 
-    if (accept_sock != NULL) {
+    if (accept_sock != NULL)
         *accept_sock = asock;
-    }
     for (;;) {
-        BIO_ADDR *accepted_addr = NULL;
-        char *name = NULL;
         if (type == SOCK_STREAM) {
-            if ((accepted_addr = BIO_ADDR_new()) == NULL) {
-                BIO_closesocket(asock);
-                return 0;
-            }
-         redoit:
-            sock = BIO_accept_ex(asock, accepted_addr, 0);
+            do {
+                sock = BIO_accept_ex(asock, NULL, 0);
+            } while (sock < 0 && BIO_sock_should_retry(ret));
             if (sock < 0) {
-                if (BIO_sock_should_retry(ret)) {
-                    goto redoit;
-                } else {
-                    ERR_print_errors(bio_err);
-                    BIO_ADDR_free(accepted_addr);
-                    SHUTDOWN(asock);
-                    break;
-                }
+                ERR_print_errors(bio_err);
+                SHUTDOWN(asock);
+                break;
             }
+            i = (*cb)(sock, type, context);
+            SHUTDOWN2(sock);
         } else {
-            sock = asock;
+            i = (*cb)(asock, type, context);
         }
 
-        /* accepted_addr is NULL if we're dealing with SOCK_DGRAM
-         * this means that for SOCK_DGRAM, name will be NULL
-         */
-        if (accepted_addr != NULL) {
-#ifdef AF_UNIX
-            if (family == AF_UNIX)
-                name = BIO_ADDR_path_string(accepted_addr);
-            else
-#endif
-                name = BIO_ADDR_hostname_string(accepted_addr, 0);
-        }
-        i = (*cb) (name, sock, type, context);
-        OPENSSL_free(name);
-        BIO_ADDR_free(accepted_addr);
-        if (type == SOCK_STREAM)
-            SHUTDOWN2(sock);
         if (naccept != -1)
             naccept--;
         if (i < 0 || naccept == 0) {

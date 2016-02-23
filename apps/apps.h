@@ -475,8 +475,7 @@ int set_ext_copy(int *copy_type, const char *arg);
 int copy_extensions(X509 *x, X509_REQ *req, int copy_type);
 int app_passwd(char *arg1, char *arg2, char **pass1, char **pass2);
 int add_oid_section(CONF *conf);
-X509 *load_cert(const char *file, int format,
-                const char *pass, ENGINE *e, const char *cert_descrip);
+X509 *load_cert(const char *file, int format, const char *cert_descrip);
 X509_CRL *load_crl(const char *infile, int format);
 int load_cert_crl_http(const char *url, X509 **pcert, X509_CRL **pcrl);
 EVP_PKEY *load_key(const char *file, int format, int maybe_stdin,
@@ -484,9 +483,9 @@ EVP_PKEY *load_key(const char *file, int format, int maybe_stdin,
 EVP_PKEY *load_pubkey(const char *file, int format, int maybe_stdin,
                       const char *pass, ENGINE *e, const char *key_descrip);
 int load_certs(const char *file, STACK_OF(X509) **certs, int format,
-               const char *pass, ENGINE *e, const char *cert_descrip);
+               const char *pass, const char *cert_descrip);
 int load_crls(const char *file, STACK_OF(X509_CRL) **crls, int format,
-              const char *pass, ENGINE *e, const char *cert_descrip);
+              const char *pass, const char *cert_descrip);
 X509_STORE *setup_verify(char *CAfile, char *CApath,
                          int noCAfile, int noCApath);
 int ctx_set_verify_locations(SSL_CTX *ctx, const char *CAfile,

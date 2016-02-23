@@ -173,6 +173,12 @@ typedef unsigned int u_int;
 # undef FIONBIO
 #endif
 
+#if defined(__has_feature)
+# if __has_feature(memory_sanitizer)
+#  include <sanitizer/msan_interface.h>
+# endif
+#endif
+
 #undef BUFSIZZ
 #define BUFSIZZ 1024*8
 #define S_CLIENT_IRC_READ_TIMEOUT 8
@@ -905,6 +911,16 @@ int s_client_main(int argc, char **argv)
     SRP_ARG srp_arg = { NULL, NULL, 0, 0, 0, 1024 };
 #endif
 
+    FD_ZERO(&readfds);
+    FD_ZERO(&writefds);
+/* Known false-positive of MemorySanitizer. */
+#if defined(__has_feature)
+# if __has_feature(memory_sanitizer)
+    __msan_unpoison(&readfds, sizeof(readfds));
+    __msan_unpoison(&writefds, sizeof(writefds));
+# endif
+#endif
+
     prog = opt_progname(argv[0]);
     c_quiet = 0;
     c_ign_eof = 0;
@@ -1416,8 +1432,7 @@ int s_client_main(int argc, char **argv)
     }
 
     if (cert_file) {
-        cert = load_cert(cert_file, cert_format,
-                         NULL, e, "client certificate file");
+        cert = load_cert(cert_file, cert_format, "client certificate file");
         if (cert == NULL) {
             ERR_print_errors(bio_err);
             goto end;
@@ -1425,7 +1440,7 @@ int s_client_main(int argc, char **argv)
     }
 
     if (chain_file) {
-        if (!load_certs(chain_file, &chain, FORMAT_PEM, NULL, e,
+        if (!load_certs(chain_file, &chain, FORMAT_PEM, NULL,
                         "client certificate chain"))
             goto end;
     }

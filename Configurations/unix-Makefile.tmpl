@@ -34,12 +34,12 @@
      # removed.  On some systems, they may therefore return the exact same
      # string.
      sub shlib {
-         return () if $config{no_shared};
+         return () if $disabled{shared};
          my $lib = shift;
          return $unified_info{sharednames}->{$lib} . $shlibext;
      }
      sub shlib_simple {
-         return () if $config{no_shared};
+         return () if $disabled{shared};
 
          my $lib = shift;
          if (windowsdll()) {
@@ -249,17 +249,39 @@ clean: libclean
 	rm -f $(TARFILE)
 
 # This exists solely for those who still type 'make depend'
+#
+# We check if any depfile is newer than Makefile and decide to
+# concatenate only if that is true, or if 'test' (a.k.a [ )
+# doesn't have the option to figure it out (-nt).
+#
+# To check if test has the file age comparison operator, we
+# simply try, and rely test to exit with 0 if the comparison
+# was true, 1 if false, and most importantly, 2 if it doesn't
+# recognise the operator.
 depend:
-	@( sed -e '/^# DO NOT DELETE THIS LINE.*/,$$d' < Makefile; \
-	  echo '# DO NOT DELETE THIS LINE -- make depend depends on it.'; \
-	  echo; \
+	@catdepends=false; \
+	if [ Makefile -nt Makefile ] 2>/dev/null || [ $$? = 1 ]; then \
 	  for d in $(DEPS); do \
-	    if [ -f $$d ]; then cat $$d; fi; \
-	  done ) > Makefile.new
-	@if ! cmp Makefile.new Makefile >/dev/null 2>&1; then \
-		mv -f Makefile.new Makefile; \
+	    if [ $$d -nt Makefile ]; then \
+	      catdepends=true; \
+	      break; \
+	    fi; \
+	  done; \
 	else \
-		rm -f Makefile.new; \
+	  catdepends=true; \
+	fi; \
+	if [ $$catdepends = true ]; then \
+	  ( sed -e '/^# DO NOT DELETE THIS LINE.*/,$$d' < Makefile; \
+	    echo '# DO NOT DELETE THIS LINE -- make depend depends on it.'; \
+	    echo; \
+	    for d in $(DEPS); do \
+	      if [ -f $$d ]; then cat $$d; fi; \
+	    done ) > Makefile.new; \
+	  if ! cmp Makefile.new Makefile >/dev/null 2>&1; then \
+	    mv -f Makefile.new Makefile; \
+	  else \
+	    rm -f Makefile.new; \
+	  fi; \
 	fi
 
 # Install helper targets #############################################
@@ -298,7 +320,7 @@ install_dev:
 		mv -f $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn.new \
 		      $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn; \
 	done
-	@ : {- output_off() if $config{no_shared}; "" -}
+	@ : {- output_off() if $disabled{shared}; "" -}
 	@set -e; for s in $(SHLIB_INFO); do \
 		s1=`echo "$$s" | cut -f1 -d";"`; \
 		s2=`echo "$$s" | cut -f2 -d";"`; \
@@ -322,7 +344,7 @@ install_dev:
 		      $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn2; \
 		: {- output_on() unless windowsdll(); "" -}; \
 	done
-	@ : {- output_on() if $config{no_shared}; "" -}
+	@ : {- output_on() if $disabled{shared}; "" -}
 	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig
 	@echo "install libcrypto.pc -> $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig/libcrypto.pc"
 	@cp libcrypto.pc $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig
@@ -349,7 +371,7 @@ uninstall_dev:
 		echo "$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn"; \
 		$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn; \
 	done
-	@ : {- output_off() if $config{no_shared}; "" -}
+	@ : {- output_off() if $disabled{shared}; "" -}
 	@set -e; for s in $(SHLIB_INFO); do \
 		s1=`echo "$$s" | cut -f1 -d";"`; \
 		s2=`echo "$$s" | cut -f2 -d";"`; \
@@ -367,7 +389,7 @@ uninstall_dev:
 		$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn2; \
 		: {- output_on() unless windowsdll(); "" -}; \
 	done
-	@ : {- output_on() if $config{no_shared}; "" -}
+	@ : {- output_on() if $disabled{shared}; "" -}
 	@echo "$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig/libcrypto.pc"
 	@$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig/libcrypto.pc
 	@echo "$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig/libssl.pc"
@@ -810,7 +832,7 @@ configdata.pm: {- $config{build_file_template} -} $(SRCDIR)/Configure $(SRCDIR)/
   # Helper function to figure out dependencies on libraries
   # It takes a list of library names and outputs a list of dependencies
   sub compute_lib_depends {
-      if ($config{no_shared}) {
+      if ($disabled{shared}) {
           return map { $_.$libext } @_;
       }
 
@@ -947,7 +969,7 @@ EOF
                                     $d = "." if $d eq $f;
                                     (my $l = $f) =~ s/^lib//;
                                     " -L$d -l$l" } @{$args{deps}});
-      my $shlib_target = $config{no_shared} ? "" : $target{shared_target};
+      my $shlib_target = $disabled{shared} ? "" : $target{shared_target};
       return <<"EOF";
 $bin$exeext: $objs $deps
 	\$(RM) $bin$exeext

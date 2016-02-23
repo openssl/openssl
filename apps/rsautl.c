@@ -231,7 +231,7 @@ int rsautl_main(int argc, char **argv)
         break;
 
     case KEY_CERT:
-        x = load_cert(keyfile, keyformat, NULL, e, "Certificate");
+        x = load_cert(keyfile, keyformat, "Certificate");
         if (x) {
             pkey = X509_get_pubkey(x);
             X509_free(x);

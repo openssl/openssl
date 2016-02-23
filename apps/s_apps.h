@@ -149,11 +149,11 @@ typedef fd_mask fd_set;
 #define PORT            "4433"
 #define PROTOCOL        "tcp"
 
+typedef int (*do_server_cb)(int s, int stype, unsigned char *context);
 int do_server(int *accept_sock, const char *host, const char *port,
               int family, int type,
-              int (*cb) (const char *hostname, int s, int stype,
-                         unsigned char *context), unsigned char *context,
-              int naccept);
+              do_server_cb cb,
+              unsigned char *context, int naccept);
 #ifdef HEADER_X509_H
 int verify_callback(int ok, X509_STORE_CTX *ctx);
 #endif

@@ -186,9 +186,8 @@ int EVP_PKEY_cmp(const EVP_PKEY *a, const EVP_PKEY *b)
 
 EVP_PKEY *EVP_PKEY_new(void)
 {
-    EVP_PKEY *ret;
+    EVP_PKEY *ret = OPENSSL_zalloc(sizeof(*ret));
 
-    ret = OPENSSL_malloc(sizeof(*ret));
     if (ret == NULL) {
         EVPerr(EVP_F_EVP_PKEY_NEW, ERR_R_MALLOC_FAILURE);
         return (NULL);
@@ -196,10 +195,6 @@ EVP_PKEY *EVP_PKEY_new(void)
     ret->type = EVP_PKEY_NONE;
     ret->save_type = EVP_PKEY_NONE;
     ret->references = 1;
-    ret->ameth = NULL;
-    ret->engine = NULL;
-    ret->pkey.ptr = NULL;
-    ret->attributes = NULL;
     ret->save_parameters = 1;
     return (ret);
 }
