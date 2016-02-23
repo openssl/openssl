@@ -245,7 +245,12 @@ int ASN1_item_sign_ctx(const ASN1_ITEM *it,
 
     if (!type || !pkey) {
         ASN1err(ASN1_F_ASN1_ITEM_SIGN_CTX, ASN1_R_CONTEXT_NOT_INITIALISED);
-        return 0;
+        goto err;
+    }
+
+    if (!pkey->ameth) {
+        ASN1err(ASN1_F_ASN1_ITEM_SIGN_CTX, ASN1_R_DIGEST_AND_KEY_TYPE_NOT_SUPPORTED);
+        goto err;
     }
 
     if (pkey->ameth->item_sign) {
@@ -267,13 +272,12 @@ int ASN1_item_sign_ctx(const ASN1_ITEM *it,
         rv = 2;
 
     if (rv == 2) {
-        if (!pkey->ameth ||
-            !OBJ_find_sigid_by_algs(&signid,
+        if (!OBJ_find_sigid_by_algs(&signid,
                                     EVP_MD_nid(type),
                                     pkey->ameth->pkey_id)) {
             ASN1err(ASN1_F_ASN1_ITEM_SIGN_CTX,
                     ASN1_R_DIGEST_AND_KEY_TYPE_NOT_SUPPORTED);
-            return 0;
+            goto err;
         }
 
         if (pkey->ameth->pkey_flags & ASN1_PKEY_SIGPARAM_NULL)
