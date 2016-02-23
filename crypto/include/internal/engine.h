@@ -61,3 +61,4 @@ void engine_load_dynamic_internal(void);
 void engine_load_padlock_internal(void);
 void engine_load_capi_internal(void);
 void engine_load_dasync_internal(void);
+void engine_load_afalg_internal(void);

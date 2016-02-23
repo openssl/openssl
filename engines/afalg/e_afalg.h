@@ -71,6 +71,11 @@
                     fprintf(stderr, "ALG_PERR: " x, __VA_ARGS__); \
                     perror(NULL); \
                 } while(0)
+# define ALG_PWARN(x, ...) \
+                do { \
+                    fprintf(stderr, "ALG_PERR: " x, __VA_ARGS__); \
+                    perror(NULL); \
+                } while(0)
 
 # ifndef AES_BLOCK_SIZE
 #  define AES_BLOCK_SIZE   16
@@ -80,11 +85,15 @@
 
 # define MAX_INFLIGHTS 1
 
+typedef enum {
+    MODE_UNINIT = 0,
+    MODE_SYNC,
+    MODE_ASYNC
+} op_mode;
+
 struct afalg_aio_st {
-    int efd_sync;               /* event fd when sync mode is used */
-    int efd_async;              /* event fd when async mode is used */
-    int efd;                    /* event fd that is currently in use equal 
-                                   to either efd_sync or efd_async */
+    int efd;
+    op_mode mode;
     aio_context_t aio_ctx;
     struct io_event events[MAX_INFLIGHTS];
     struct iocb cbt[MAX_INFLIGHTS];
