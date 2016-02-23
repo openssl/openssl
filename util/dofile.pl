@@ -35,7 +35,9 @@ use File::Spec::Functions;
 use lib catdir(dirname(__FILE__));
 use with_fallback qw(Text::Template);
 
-use parent qw/Text::Template/;
+#use parent qw/Text::Template/;
+use vars qw/@ISA/;
+push @ISA, qw/Text::Template/;
 
 # Override constructor
 sub new {
@@ -181,6 +183,7 @@ sub output_off {
 $template->fill_in(OUTPUT => \*STDOUT,
                    HASH => { config => \%config,
                              target => \%target,
+                             disabled => \%disabled,
                              withargs => \%withargs,
                              unified_info => \%unified_info,
                              autowarntext => \@autowarntext,

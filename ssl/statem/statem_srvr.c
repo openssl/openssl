@@ -948,7 +948,7 @@ int dtls_construct_hello_verify_request(SSL *s)
     len = dtls_raw_hello_verify_request(&buf[DTLS1_HM_HEADER_LENGTH],
                                          s->d1->cookie, s->d1->cookie_len);
 
-    dtls1_set_message_header(s, buf, DTLS1_MT_HELLO_VERIFY_REQUEST, len, 0,
+    dtls1_set_message_header(s, DTLS1_MT_HELLO_VERIFY_REQUEST, len, 0,
                              len);
     len += DTLS1_HM_HEADER_LENGTH;
 

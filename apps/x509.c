@@ -612,12 +612,12 @@ int x509_main(int argc, char **argv)
             EVP_PKEY_free(pkey);
         }
     } else
-        x = load_cert(infile, informat, NULL, e, "Certificate");
+        x = load_cert(infile, informat, "Certificate");
 
     if (x == NULL)
         goto end;
     if (CA_flag) {
-        xca = load_cert(CAfile, CAformat, NULL, e, "CA Certificate");
+        xca = load_cert(CAfile, CAformat, "CA Certificate");
         if (xca == NULL)
             goto end;
     }

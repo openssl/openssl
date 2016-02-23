@@ -70,7 +70,7 @@ BN_RECP_CTX *BN_RECP_CTX_new(void)
 {
     BN_RECP_CTX *ret;
 
-    if ((ret = OPENSSL_malloc(sizeof(*ret))) == NULL)
+    if ((ret = OPENSSL_zalloc(sizeof(*ret))) == NULL)
         return (NULL);
 
     BN_RECP_CTX_init(ret);

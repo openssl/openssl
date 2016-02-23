@@ -271,8 +271,7 @@ CMS_ContentInfo *CMS_EncryptedData_encrypt(BIO *in, const EVP_CIPHER *cipher,
 static int cms_signerinfo_verify_cert(CMS_SignerInfo *si,
                                       X509_STORE *store,
                                       STACK_OF(X509) *certs,
-                                      STACK_OF(X509_CRL) *crls,
-                                      unsigned int flags)
+                                      STACK_OF(X509_CRL) *crls)
 {
     X509_STORE_CTX ctx;
     X509 *signer;
@@ -353,8 +352,7 @@ int CMS_verify(CMS_ContentInfo *cms, STACK_OF(X509) *certs,
             crls = CMS_get1_crls(cms);
         for (i = 0; i < sk_CMS_SignerInfo_num(sinfos); i++) {
             si = sk_CMS_SignerInfo_value(sinfos, i);
-            if (!cms_signerinfo_verify_cert(si, store,
-                                            cms_certs, crls, flags))
+            if (!cms_signerinfo_verify_cert(si, store, cms_certs, crls))
                 goto err;
         }
     }

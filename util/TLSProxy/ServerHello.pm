@@ -55,7 +55,8 @@ use strict;
 
 package TLSProxy::ServerHello;
 
-use parent 'TLSProxy::Message';
+use vars '@ISA';
+push @ISA, 'TLSProxy::Message';
 
 sub new
 {

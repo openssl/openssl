@@ -648,14 +648,9 @@ int tls1_export_keying_material(SSL *s, unsigned char *out, size_t olen,
                                 const unsigned char *context,
                                 size_t contextlen, int use_context)
 {
-    unsigned char *buff;
     unsigned char *val = NULL;
     size_t vallen = 0, currentvalpos;
     int rv;
-
-    buff = OPENSSL_malloc(olen);
-    if (buff == NULL)
-        goto err2;
 
     /*
      * construct PRF arguments we construct the PRF argument ourself rather
@@ -729,7 +724,6 @@ int tls1_export_keying_material(SSL *s, unsigned char *out, size_t olen,
     rv = 0;
  ret:
     OPENSSL_clear_free(val, vallen);
-    OPENSSL_clear_free(buff, olen);
     return (rv);
 }
 

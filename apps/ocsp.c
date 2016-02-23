@@ -115,8 +115,7 @@ static void make_ocsp_response(OCSP_RESPONSE **resp, OCSP_REQUEST *req,
 
 static char **lookup_serial(CA_DB *db, ASN1_INTEGER *ser);
 static BIO *init_responder(const char *port);
-static int do_responder(OCSP_REQUEST **preq, BIO **pcbio, BIO *acbio,
-                        const char *port);
+static int do_responder(OCSP_REQUEST **preq, BIO **pcbio, BIO *acbio);
 static int send_ocsp_response(BIO *cbio, OCSP_RESPONSE *resp);
 static OCSP_RESPONSE *query_responder(BIO *cbio, const char *host,
                                       const char *path,
@@ -406,8 +405,7 @@ int ocsp_main(int argc, char **argv)
             path = opt_arg();
             break;
         case OPT_ISSUER:
-            issuer = load_cert(opt_arg(), FORMAT_PEM,
-                               NULL, NULL, "issuer certificate");
+            issuer = load_cert(opt_arg(), FORMAT_PEM, "issuer certificate");
             if (issuer == NULL)
                 goto end;
             if (issuers == NULL) {
@@ -418,8 +416,7 @@ int ocsp_main(int argc, char **argv)
             break;
         case OPT_CERT:
             X509_free(cert);
-            cert = load_cert(opt_arg(), FORMAT_PEM,
-                             NULL, NULL, "certificate");
+            cert = load_cert(opt_arg(), FORMAT_PEM, "certificate");
             if (cert == NULL)
                 goto end;
             if (cert_id_md == NULL)
@@ -526,16 +523,14 @@ int ocsp_main(int argc, char **argv)
     if (rsignfile) {
         if (!rkeyfile)
             rkeyfile = rsignfile;
-        rsigner = load_cert(rsignfile, FORMAT_PEM,
-                            NULL, NULL, "responder certificate");
+        rsigner = load_cert(rsignfile, FORMAT_PEM, "responder certificate");
         if (!rsigner) {
             BIO_printf(bio_err, "Error loading responder certificate\n");
             goto end;
         }
-        rca_cert = load_cert(rca_filename, FORMAT_PEM,
-                             NULL, NULL, "CA certificate");
+        rca_cert = load_cert(rca_filename, FORMAT_PEM, "CA certificate");
         if (rcertfile) {
-            if (!load_certs(rcertfile, &rother, FORMAT_PEM, NULL, NULL,
+            if (!load_certs(rcertfile, &rother, FORMAT_PEM, NULL,
                             "responder other certificates"))
                 goto end;
         }
@@ -550,7 +545,7 @@ int ocsp_main(int argc, char **argv)
  redo_accept:
 
     if (acbio) {
-        if (!do_responder(&req, &cbio, acbio, port))
+        if (!do_responder(&req, &cbio, acbio))
             goto end;
         if (!req) {
             resp =
@@ -572,14 +567,13 @@ int ocsp_main(int argc, char **argv)
     if (signfile) {
         if (!keyfile)
             keyfile = signfile;
-        signer = load_cert(signfile, FORMAT_PEM,
-                           NULL, NULL, "signer certificate");
+        signer = load_cert(signfile, FORMAT_PEM, "signer certificate");
         if (!signer) {
             BIO_printf(bio_err, "Error loading signer certificate\n");
             goto end;
         }
         if (sign_certfile) {
-            if (!load_certs(sign_certfile, &sign_other, FORMAT_PEM, NULL, NULL,
+            if (!load_certs(sign_certfile, &sign_other, FORMAT_PEM, NULL,
                             "signer certificates"))
                 goto end;
         }
@@ -702,7 +696,7 @@ int ocsp_main(int argc, char **argv)
     if (vpmtouched)
         X509_STORE_set1_param(store, vpm);
     if (verify_certfile) {
-        if (!load_certs(verify_certfile, &verify_other, FORMAT_PEM, NULL, NULL,
+        if (!load_certs(verify_certfile, &verify_other, FORMAT_PEM, NULL,
                         "validator certificate"))
             goto end;
     }
@@ -1078,8 +1072,7 @@ static int urldecode(char *p)
     return (int)(out - save);
 }
 
-static int do_responder(OCSP_REQUEST **preq, BIO **pcbio, BIO *acbio,
-                        const char *port)
+static int do_responder(OCSP_REQUEST **preq, BIO **pcbio, BIO *acbio)
 {
     int len;
     OCSP_REQUEST *req = NULL;

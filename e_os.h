@@ -93,6 +93,8 @@ extern "C" {
 #  define REF_PRINT_COUNT(a, b)
 # endif
 
+# define osslargused(x)      (void)x
+
 # ifndef DEVRANDOM
 /*
  * set this to a comma-separated list of 'random' device files to try out. My

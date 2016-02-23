@@ -62,19 +62,17 @@
 #include <string.h>
 
 static int ocsp_find_signer(X509 **psigner, OCSP_BASICRESP *bs,
-                            STACK_OF(X509) *certs, X509_STORE *st,
-                            unsigned long flags);
+                            STACK_OF(X509) *certs, unsigned long flags);
 static X509 *ocsp_find_signer_sk(STACK_OF(X509) *certs, OCSP_RESPID *id);
-static int ocsp_check_issuer(OCSP_BASICRESP *bs, STACK_OF(X509) *chain,
-                             unsigned long flags);
+static int ocsp_check_issuer(OCSP_BASICRESP *bs, STACK_OF(X509) *chain);
 static int ocsp_check_ids(STACK_OF(OCSP_SINGLERESP) *sresp,
                           OCSP_CERTID **ret);
 static int ocsp_match_issuerid(X509 *cert, OCSP_CERTID *cid,
                                STACK_OF(OCSP_SINGLERESP) *sresp);
-static int ocsp_check_delegated(X509 *x, int flags);
+static int ocsp_check_delegated(X509 *x);
 static int ocsp_req_find_signer(X509 **psigner, OCSP_REQUEST *req,
                                 X509_NAME *nm, STACK_OF(X509) *certs,
-                                X509_STORE *st, unsigned long flags);
+                                unsigned long flags);
 
 /* Verify a basic response message */
 
@@ -85,8 +83,8 @@ int OCSP_basic_verify(OCSP_BASICRESP *bs, STACK_OF(X509) *certs,
     STACK_OF(X509) *chain = NULL;
     STACK_OF(X509) *untrusted = NULL;
     X509_STORE_CTX ctx;
-    int i, ret = 0;
-    ret = ocsp_find_signer(&signer, bs, certs, st, flags);
+    int i, ret = ocsp_find_signer(&signer, bs, certs, flags);
+
     if (!ret) {
         OCSPerr(OCSP_F_OCSP_BASIC_VERIFY,
                 OCSP_R_SIGNER_CERTIFICATE_NOT_FOUND);
@@ -146,7 +144,7 @@ int OCSP_basic_verify(OCSP_BASICRESP *bs, STACK_OF(X509) *certs,
          * At this point we have a valid certificate chain need to verify it
          * against the OCSP issuer criteria.
          */
-        ret = ocsp_check_issuer(bs, chain, flags);
+        ret = ocsp_check_issuer(bs, chain);
 
         /* If fatal error or valid match then finish */
         if (ret != 0)
@@ -175,8 +173,7 @@ int OCSP_basic_verify(OCSP_BASICRESP *bs, STACK_OF(X509) *certs,
 }
 
 static int ocsp_find_signer(X509 **psigner, OCSP_BASICRESP *bs,
-                            STACK_OF(X509) *certs, X509_STORE *st,
-                            unsigned long flags)
+                            STACK_OF(X509) *certs, unsigned long flags)
 {
     X509 *signer;
     OCSP_RESPID *rid = &bs->tbsResponseData.responderId;
@@ -221,8 +218,7 @@ static X509 *ocsp_find_signer_sk(STACK_OF(X509) *certs, OCSP_RESPID *id)
     return NULL;
 }
 
-static int ocsp_check_issuer(OCSP_BASICRESP *bs, STACK_OF(X509) *chain,
-                             unsigned long flags)
+static int ocsp_check_issuer(OCSP_BASICRESP *bs, STACK_OF(X509) *chain)
 {
     STACK_OF(OCSP_SINGLERESP) *sresp;
     X509 *signer, *sca;
@@ -251,7 +247,7 @@ static int ocsp_check_issuer(OCSP_BASICRESP *bs, STACK_OF(X509) *chain,
             return i;
         if (i) {
             /* We have a match, if extensions OK then success */
-            if (ocsp_check_delegated(signer, flags))
+            if (ocsp_check_delegated(signer))
                 return 1;
             return 0;
         }
@@ -350,7 +346,7 @@ static int ocsp_match_issuerid(X509 *cert, OCSP_CERTID *cid,
 
 }
 
-static int ocsp_check_delegated(X509 *x, int flags)
+static int ocsp_check_delegated(X509 *x)
 {
     if ((X509_get_extension_flags(x) & EXFLAG_XKUSAGE)
         && (X509_get_extended_key_usage(x) & XKU_OCSP_SIGN))
@@ -384,7 +380,7 @@ int OCSP_request_verify(OCSP_REQUEST *req, STACK_OF(X509) *certs,
         return 0;
     }
     nm = gen->d.directoryName;
-    ret = ocsp_req_find_signer(&signer, req, nm, certs, store, flags);
+    ret = ocsp_req_find_signer(&signer, req, nm, certs, flags);
     if (ret <= 0) {
         OCSPerr(OCSP_F_OCSP_REQUEST_VERIFY,
                 OCSP_R_SIGNER_CERTIFICATE_NOT_FOUND);
@@ -431,7 +427,7 @@ int OCSP_request_verify(OCSP_REQUEST *req, STACK_OF(X509) *certs,
 
 static int ocsp_req_find_signer(X509 **psigner, OCSP_REQUEST *req,
                                 X509_NAME *nm, STACK_OF(X509) *certs,
-                                X509_STORE *st, unsigned long flags)
+                                unsigned long flags)
 {
     X509 *signer;
     if (!(flags & OCSP_NOINTERN)) {
