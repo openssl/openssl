@@ -70,9 +70,12 @@ char *DES_crypt(const char *buf, const char *salt)
     char e_buf[32 + 1];         /* replace 32 by 8 ? */
     char *ret;
 
+    if (sizeof(salt) < 2) return NULL;
+    if (salt[0] == '\0' || salt[1] == '\0') return NULL;
+
     /* Copy at most 2 chars of salt */
-    if ((e_salt[0] = salt[0]) != '\0')
-        e_salt[1] = salt[1];
+    e_salt[0] = salt[0];
+    e_salt[1] = salt[1];
 
     /* Copy at most 32 chars of password */
     strncpy(e_buf, buf, sizeof(e_buf));
