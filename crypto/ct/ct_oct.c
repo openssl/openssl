@@ -98,7 +98,7 @@ int o2i_SCT_signature(SCT *sct, const unsigned char **in, size_t len)
 {
     size_t siglen;
     size_t len_remaining = len;
-    const unsigned char *p = *in;
+    const unsigned char *p;
 
     if (sct->version != SCT_VERSION_V1) {
         CTerr(CT_F_O2I_SCT_SIGNATURE, CT_R_UNSUPPORTED_VERSION);
@@ -116,6 +116,7 @@ int o2i_SCT_signature(SCT *sct, const unsigned char **in, size_t len)
         return -1;
     }
 
+    p = *in;
     /* Get hash and signature algorithm */
     sct->hash_alg = *p++;
     sct->sig_alg = *p++;
