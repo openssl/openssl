@@ -360,7 +360,7 @@ link_dso.solaris:
 		$(DO_GNU_DSO); \
 	else \
 		$(CALC_VERSIONS); \
-		SHLIB=lib$(LIBNAME).so; \
+		SHLIB=$(LIBNAME).so; \
 		SHLIB_SUFFIX=; \
 		ALLSYMSFLAGS=""; \
 		NOALLSYMSFLAGS=""; \
