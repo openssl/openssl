@@ -4,6 +4,21 @@
 
  Changes between 1.0.2f and 1.1.0  [xx XXX xxxx]
 
+  *) Deprecate SRP_VBASE_get_by_user.
+     SRP_VBASE_get_by_user had inconsistent memory management behaviour.
+     In order to fix an unavoidable memory leak (CVE-2016-0798),
+     SRP_VBASE_get_by_user was changed to ignore the "fake user" SRP
+     seed, even if the seed is configured.
+
+     Users should use SRP_VBASE_get1_by_user instead. Note that in
+     SRP_VBASE_get1_by_user, caller must free the returned value. Note
+     also that even though configuring the SRP seed attempts to hide
+     invalid usernames by continuing the handshake with fake
+     credentials, this behaviour is not constant time and no strong
+     guarantees are made that the handshake is indistinguishable from
+     that of a valid user.
+     [Emilia Käsper]
+
   *) Configuration change; it's now possible to build dynamic engines
      without having to build shared libraries and vice versa.  This
      only applies to the engines in engines/, those in crypto/engine/

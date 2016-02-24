@@ -85,13 +85,18 @@ typedef struct SRP_gN_cache_st {
 DEFINE_STACK_OF(SRP_gN_cache)
 
 typedef struct SRP_user_pwd_st {
+    /* Owned by us. */
     char *id;
     BIGNUM *s;
     BIGNUM *v;
+    /* Not owned by us. */
     const BIGNUM *g;
     const BIGNUM *N;
+    /* Owned by us. */
     char *info;
 } SRP_user_pwd;
+
+void SRP_user_pwd_free(SRP_user_pwd *user_pwd);
 
 DEFINE_STACK_OF(SRP_user_pwd)
 
@@ -118,7 +123,12 @@ DEFINE_STACK_OF(SRP_gN)
 SRP_VBASE *SRP_VBASE_new(char *seed_key);
 void SRP_VBASE_free(SRP_VBASE *vb);
 int SRP_VBASE_init(SRP_VBASE *vb, char *verifier_file);
-SRP_user_pwd *SRP_VBASE_get_by_user(SRP_VBASE *vb, char *username);
+
+/* This method ignores the configured seed and fails for an unknown user. */
+DEPRECATEDIN_1_1_0(SRP_user_pwd *SRP_VBASE_get_by_user(SRP_VBASE *vb, char *username))
+/* NOTE: unlike in SRP_VBASE_get_by_user, caller owns the returned pointer.*/
+SRP_user_pwd *SRP_VBASE_get1_by_user(SRP_VBASE *vb, char *username);
+
 char *SRP_create_verifier(const char *user, const char *pass, char **salt,
                           char **verifier, const char *N, const char *g);
 int SRP_create_verifier_BN(const char *user, const char *pass, BIGNUM **salt,

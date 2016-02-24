@@ -4073,7 +4073,7 @@ OPENSSL_memcmp                          4565	1_1_0	EXIST::FUNCTION:
 OPENSSL_strncasecmp                     4566	1_1_0	EXIST::FUNCTION:
 OPENSSL_gmtime                          4567	1_1_0	EXIST::FUNCTION:
 OPENSSL_gmtime_adj                      4568	1_1_0	EXIST::FUNCTION:
-SRP_VBASE_get_by_user                   4569	1_1_0	EXIST::FUNCTION:SRP
+SRP_VBASE_get_by_user                   4569	1_1_0	EXIST::FUNCTION:DEPRECATEDIN_1_1_0,SRP
 SRP_Calc_server_key                     4570	1_1_0	EXIST::FUNCTION:SRP
 SRP_create_verifier                     4571	1_1_0	EXIST::FUNCTION:SRP
 SRP_create_verifier_BN                  4572	1_1_0	EXIST::FUNCTION:SRP
@@ -4711,3 +4711,5 @@ OPENSSL_thread_stop                     5213	1_1_0	EXIST::FUNCTION:
 OPENSSL_INIT_new                        5215	1_1_0	EXIST::FUNCTION:
 OPENSSL_INIT_free                       5216	1_1_0	EXIST::FUNCTION:
 OPENSSL_INIT_set_config_filename        5217	1_1_0	EXIST::FUNCTION:
+SRP_user_pwd_free                       5218	1_1_0	EXIST::FUNCTION:SRP
+SRP_VBASE_get1_by_user                  5219	1_1_0	EXIST::FUNCTION:SRP
