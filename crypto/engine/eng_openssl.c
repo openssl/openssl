@@ -453,6 +453,8 @@ static int ossl_hmac_init(EVP_PKEY_CTX *ctx)
     return 1;
 }
 
+static void ossl_hmac_cleanup(EVP_PKEY_CTX *ctx);
+
 static int ossl_hmac_copy(EVP_PKEY_CTX *dst, EVP_PKEY_CTX *src)
 {
     OSSL_HMAC_PKEY_CTX *sctx, *dctx;
@@ -482,7 +484,7 @@ static void ossl_hmac_cleanup(EVP_PKEY_CTX *ctx)
         HMAC_CTX_free(hctx->ctx);
         OPENSSL_clear_free(hctx->ktmp.data, hctx->ktmp.length);
         OPENSSL_free(hctx);
-        EVP_PKEY_CTX_set_data(dst, NULL);
+        EVP_PKEY_CTX_set_data(ctx, NULL);
     }
 }
 
