@@ -178,19 +178,19 @@ static int ok_new(BIO *bi)
 
     ctx = OPENSSL_zalloc(sizeof(*ctx));
     if (ctx == NULL)
-        return (0);
+        return 0;
 
     ctx->cont = 1;
     ctx->sigio = 1;
     ctx->md = EVP_MD_CTX_new();
     if (ctx->md == NULL) {
         OPENSSL_free (ctx);
-        return (0);
+        return 0;
     }
     bi->init = 0;
     bi->ptr = (char *)ctx;
     bi->flags = 0;
-    return (1);
+    return 1;
 }
 
 static int ok_free(BIO *a)
