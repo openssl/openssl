@@ -115,7 +115,7 @@ int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
 #endif
     if (ctx->digest != type) {
         if (ctx->digest && ctx->digest->ctx_size) {
-            OPENSSL_free(ctx->md_data);
+            OPENSSL_clear_free(ctx->md_data, ctx->digest->ctx_size);
             ctx->md_data = NULL;
         }
         ctx->digest = type;
