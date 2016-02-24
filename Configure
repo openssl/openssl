@@ -1970,12 +1970,20 @@ sub _add {
     }
 }
 sub add_before {
-    my $separator = shift;
+    my $separator = " ";
+    if (ref($_[$#_]) eq "HASH") {
+        my $opts = pop;
+        $separator = $opts->{separator};
+    }
     my @x = @_;
     sub { _add($separator, @x, @_) };
 }
 sub add {
-    my $separator = shift;
+    my $separator = " ";
+    if (ref($_[$#_]) eq "HASH") {
+        my $opts = pop;
+        $separator = $opts->{separator};
+    }
     my @x = @_;
     sub { _add($separator, @_, @x) };
 }
