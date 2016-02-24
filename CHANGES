@@ -4,6 +4,25 @@
 
  Changes between 1.0.2f and 1.0.2g [xx XXX xxxx]
 
+  *) Disable SRP fake user seed to address a server memory leak.
+
+     Add a new method SRP_VBASE_get1_by_user that handles the seed properly.
+
+     SRP_VBASE_get_by_user had inconsistent memory management behaviour.
+     In order to fix an unavoidable memory leak, SRP_VBASE_get_by_user
+     was changed to ignore the "fake user" SRP seed, even if the seed
+     is configured.
+
+     Users should use SRP_VBASE_get1_by_user instead. Note that in
+     SRP_VBASE_get1_by_user, caller must free the returned value. Note
+     also that even though configuring the SRP seed attempts to hide
+     invalid usernames by continuing the handshake with fake
+     credentials, this behaviour is not constant time and no strong
+     guarantees are made that the handshake is indistinguishable from
+     that of a valid user.
+     (CVE-2016-0798)
+     [Emilia Käsper]
+
   *) Change the req app to generate a 2048-bit RSA/DSA key by default,
      if no keysize is specified with default_bits. This fixes an
      omission in an earlier change that changed all RSA/DSA key generation
