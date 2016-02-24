@@ -2238,14 +2238,24 @@ sub print_table_entry
     if ($type eq "TABLE") {
 	print "\n";
 	print "*** $target\n";
-	printf "\$%-12s = %s\n", $_, $target{$_} foreach (@sequence);
+        foreach (@sequence) {
+            if (ref($target{$_}) eq "ARRAY") {
+                printf "\$%-12s = %s\n", $_, join(" ", @{$target{$_}});
+            } else {
+                printf "\$%-12s = %s\n", $_, $target{$_};
+            }
+        }
     } elsif ($type eq "HASH") {
 	my $largest =
 	    length((sort { length($a) <=> length($b) } @sequence)[-1]);
 	print "    '$target' => {\n";
 	foreach (@sequence) {
 	    if ($target{$_}) {
-		print "      '",$_,"'"," " x ($largest - length($_))," => '",$target{$_},"',\n";
+                if (ref($target{$_}) eq "ARRAY") {
+                    print "      '",$_,"'"," " x ($largest - length($_))," => [ ",join(", ", map { "'$_'" } @{$target{$_}})," ],\n";
+                } else {
+                    print "      '",$_,"'"," " x ($largest - length($_))," => '",$target{$_},"',\n";
+                }
 	    }
 	}
 	print "    },\n";
