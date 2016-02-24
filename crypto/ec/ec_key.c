@@ -583,8 +583,8 @@ size_t EC_KEY_priv2buf(const EC_KEY *eckey, unsigned char **pbuf)
     size_t len;
     unsigned char *buf;
     len = EC_KEY_priv2oct(eckey, NULL, 0);
-    if (len == 0)
-        return 0;
+    if (len == 0 || pbuf == NULL)
+        return len;
     buf = OPENSSL_malloc(len);
     if (buf == NULL)
         return 0;
