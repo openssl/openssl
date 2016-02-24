@@ -183,6 +183,10 @@ static int ok_new(BIO *bi)
     ctx->cont = 1;
     ctx->sigio = 1;
     ctx->md = EVP_MD_CTX_new();
+    if (ctx->md == NULL) {
+        OPENSSL_free (ctx);
+        return (0);
+    }
     bi->init = 0;
     bi->ptr = (char *)ctx;
     bi->flags = 0;
