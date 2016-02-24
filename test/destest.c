@@ -719,27 +719,27 @@ int main(int argc, char *argv[])
         err = 1;
     }
     str = crypt("testing", "y€");
-    if (str != 0) {
+    if (str != NULL) {
         printf("salt error only usascii are accepted, returned value should be 0\n");
         err = 1;
     }
     str = crypt("testing", "‰A");
-    if (str != 0) {
+    if (str != NULL) {
         printf("salt error only usascii are accepted, returned value should be 0\n");
         err = 1;
     }
     str = crypt("testing", "\0A");
-    if (str != 0) {
+    if (str != NULL) {
         printf("salt error cannot contain null terminator, returned value should be 0\n");
         err = 1;
     }
     str = crypt("testing", "A\0");
-    if (str != 0) {
+    if (str != NULL) {
         printf("salt error cannot contain null terminator, returned value should be 0\n");
         err = 1;
     }
     str = crypt("testing", "A");
-    if (str != 0) {
+    if (str != NULL) {
         printf("salt error size have to be at least 2, returned value should be 0\n");
         err = 1;
     }

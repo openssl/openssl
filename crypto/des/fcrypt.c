@@ -70,7 +70,6 @@ char *DES_crypt(const char *buf, const char *salt)
     char e_buf[32 + 1];         /* replace 32 by 8 ? */
     char *ret;
 
-    if (sizeof(salt) < 2) return NULL;
     if (salt[0] == '\0' || salt[1] == '\0') return NULL;
 
     /* Copy at most 2 chars of salt */
@@ -110,7 +109,6 @@ char *DES_fcrypt(const char *buf, const char *salt, char *ret)
     unsigned char *b = bb;
     unsigned char c, u;
 
-    if (sizeof(salt) < 2) return NULL;
     if (salt[0] == '\0' || salt[1] == '\0') return NULL;
 
     /*
