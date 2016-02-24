@@ -1074,7 +1074,7 @@ static void print_raw_cipherlist(SSL *s)
             BIO_puts(bio_err, ":");
         if (c)
             BIO_puts(bio_err, SSL_CIPHER_get_name(c));
-        else if (!memcmp(rlist, scsv_id - num + 3, num))
+        else if (num <= 3 && !memcmp(rlist, scsv_id + (3 - num), num))
             BIO_puts(bio_err, "SCSV");
         else {
             size_t j;
