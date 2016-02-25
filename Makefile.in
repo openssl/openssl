@@ -521,7 +521,6 @@ errors:
 	$(PERL) util/ck_errf.pl -strict */*.c */*/*.c
 	$(PERL) util/mkerr.pl -recurse -write
 	(cd engines; $(MAKE) PERL=$(PERL) errors)
-	(cd crypto/ct; $(MAKE) PERL=$(PERL) errors)
 
 ordinals: util/libeay.num util/ssleay.num test_ordinals TABLE
 util/libeay.num::
