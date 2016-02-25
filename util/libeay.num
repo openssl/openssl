@@ -4713,3 +4713,16 @@ OPENSSL_INIT_free                       5216	1_1_0	EXIST::FUNCTION:
 OPENSSL_INIT_set_config_filename        5217	1_1_0	EXIST::FUNCTION:
 SRP_user_pwd_free                       5218	1_1_0	EXIST::FUNCTION:SRP
 SRP_VBASE_get1_by_user                  5219	1_1_0	EXIST::FUNCTION:SRP
+CRYPTO_THREAD_lock_new                  5220	1_1_0	EXIST::FUNCTION:
+CRYPTO_THREAD_lock_free                 5221	1_1_0	EXIST::FUNCTION:
+CRYPTO_THREAD_read_lock                 5222	1_1_0	EXIST::FUNCTION:
+CRYPTO_THREAD_write_lock                5223	1_1_0	EXIST::FUNCTION:
+CRYPTO_THREAD_unlock                    5224	1_1_0	EXIST::FUNCTION:
+CRYPTO_atomic_add                       5225	1_1_0	EXIST::FUNCTION:
+CRYPTO_THREAD_init_local                5226	1_1_0	EXIST::FUNCTION:
+CRYPTO_THREAD_cleanup_local             5227	1_1_0	EXIST::FUNCTION:
+CRYPTO_THREAD_set_local                 5228	1_1_0	EXIST::FUNCTION:
+CRYPTO_THREAD_get_local                 5229	1_1_0	EXIST::FUNCTION:
+CRYPTO_THREAD_get_current_id            5230	1_1_0	EXIST::FUNCTION:
+CRYPTO_THREAD_compare_id                5231	1_1_0	EXIST::FUNCTION:
+CRYPTO_THREAD_run_once                  5232	1_1_0	EXIST::FUNCTION:
