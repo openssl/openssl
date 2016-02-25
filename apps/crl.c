@@ -76,6 +76,7 @@ typedef enum OPTION_choice {
 
 OPTIONS crl_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
+    {"help", OPT_HELP, '-', "Display this summary"}, // ���� �ƱԸ�Ʈ
     {"inform", OPT_INFORM, 'F', "Input format; default PEM"},
     {"in", OPT_IN, '<', "Input file - default stdin"},
     {"outform", OPT_OUTFORM, 'F', "Output format - default PEM"},
