@@ -1569,6 +1569,7 @@ void ERR_load_EC_strings(void);
 # define EC_R_BIGNUM_OUT_OF_RANGE                         144
 # define EC_R_BUFFER_TOO_SMALL                            100
 # define EC_R_COORDINATES_OUT_OF_RANGE                    146
+# define EC_R_CURVE_DOES_NOT_SUPPORT_SIGNING              159
 # define EC_R_D2I_ECPKPARAMETERS_FAILURE                  117
 # define EC_R_DECODE_ERROR                                142
 # define EC_R_DISCRIMINANT_IS_ZERO                        118

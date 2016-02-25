@@ -222,9 +222,11 @@ typedef struct {
     unsigned int flags;         /* Flags: currently just field type */
 } tls_curve_info;
 
-# define TLS_CURVE_TYPE          0x1
-# define TLS_CURVE_CHAR2         0x1
+/* Mask for curve type */
+# define TLS_CURVE_TYPE          0x3
 # define TLS_CURVE_PRIME         0x0
+# define TLS_CURVE_CHAR2         0x1
+# define TLS_CURVE_CUSTOM        0x2
 
 /*
  * Table of curve information.
@@ -261,6 +263,8 @@ static const tls_curve_info nid_list[] = {
     {NID_brainpoolP256r1, 128, TLS_CURVE_PRIME}, /* brainpoolP256r1 (26) */
     {NID_brainpoolP384r1, 192, TLS_CURVE_PRIME}, /* brainpoolP384r1 (27) */
     {NID_brainpoolP512r1, 256, TLS_CURVE_PRIME}, /* brainpool512r1 (28) */
+    /* X25519 (29) */
+    {NID_X25519, 128, TLS_CURVE_CUSTOM},
 };
 
 static const unsigned char ecformats_default[] = {
@@ -271,6 +275,7 @@ static const unsigned char ecformats_default[] = {
 
 /* The default curves */
 static const unsigned char eccurves_default[] = {
+    0, 29,                      /* X25519 (29) */
     /* Prefer P-256 which has the fastest and most secure implementations. */
     0, 23,                      /* secp256r1 (23) */
     /* Other >= 256-bit prime curves. */
@@ -290,6 +295,7 @@ static const unsigned char eccurves_default[] = {
 };
 
 static const unsigned char eccurves_all[] = {
+    0, 29,                      /* X25519 (29) */
     /* Prefer P-256 which has the fastest and most secure implementations. */
     0, 23,                      /* secp256r1 (23) */
     /* Other >= 256-bit prime curves. */
