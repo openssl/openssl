@@ -91,7 +91,47 @@ struct sct_st {
     size_t sig_len;
     /* Log entry type */
     ct_log_entry_type_t entry_type;
+    /* Where this SCT was found, e.g. certificate, OCSP response, etc. */
+    sct_source_t source;
+    /* The CT log that produced this SCT. */
+    CTLOG *log;
 };
+
+/* Miscellaneous data that is useful when verifying an SCT  */
+struct sct_ctx_st {
+    /* Public key */
+    EVP_PKEY *pkey;
+    /* Hash of public key */
+    unsigned char *pkeyhash;
+    size_t pkeyhashlen;
+    /* For pre-certificate: issuer public key hash */
+    unsigned char *ihash;
+    size_t ihashlen;
+    /* certificate encoding */
+    unsigned char *certder;
+    size_t certderlen;
+    /* pre-certificate encoding */
+    unsigned char *preder;
+    size_t prederlen;
+};
+
+/*
+ * Creates a new context for verifying an SCT.
+ */
+SCT_CTX *SCT_CTX_new(void);
+/*
+ * Deletes an SCT verification context.
+ */
+void SCT_CTX_free(SCT_CTX *sctx);
+
+/* Sets the certificate that the SCT is related to */
+int SCT_CTX_set1_cert(SCT_CTX *sctx, X509 *cert, X509 *presigner);
+/* Sets the issuer of the certificate that the SCT is related to */
+int SCT_CTX_set1_issuer(SCT_CTX *sctx, const X509 *issuer);
+/* Sets the public key of the issuer of the certificate that the SCT relates to */
+int SCT_CTX_set1_issuer_pubkey(SCT_CTX *sctx, X509_PUBKEY *pubkey);
+/* Sets the public key of the CT log that the SCT is from */
+int SCT_CTX_set1_pubkey(SCT_CTX *sctx, X509_PUBKEY *pubkey);
 
 /*
  * Does this SCT have the minimum fields populated to be usuable?

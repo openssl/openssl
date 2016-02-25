@@ -69,6 +69,15 @@
 # define ERR_REASON(reason) ERR_PACK(ERR_LIB_CT,0,reason)
 
 static ERR_STRING_DATA CT_str_functs[] = {
+    {ERR_FUNC(CT_F_CTLOG_NEW), "CTLOG_new"},
+    {ERR_FUNC(CT_F_CTLOG_NEW_FROM_BASE64), "CTLOG_new_from_base64"},
+    {ERR_FUNC(CT_F_CTLOG_NEW_FROM_CONF), "CTLOG_new_from_conf"},
+    {ERR_FUNC(CT_F_CTLOG_NEW_NULL), "CTLOG_new_null"},
+    {ERR_FUNC(CT_F_CTLOG_STORE_GET0_LOG_BY_ID), "CTLOG_STORE_get0_log_by_id"},
+    {ERR_FUNC(CT_F_CTLOG_STORE_LOAD_CTX_NEW), "CTLOG_STORE_LOAD_CTX_new"},
+    {ERR_FUNC(CT_F_CTLOG_STORE_LOAD_FILE), "CTLOG_STORE_load_file"},
+    {ERR_FUNC(CT_F_CT_BASE64_DECODE), "CT_base64_decode"},
+    {ERR_FUNC(CT_F_CT_V1_LOG_ID_FROM_PKEY), "CT_v1_log_id_from_pkey"},
     {ERR_FUNC(CT_F_D2I_SCT_LIST), "d2i_SCT_LIST"},
     {ERR_FUNC(CT_F_I2D_SCT_LIST), "i2d_SCT_LIST"},
     {ERR_FUNC(CT_F_I2O_SCT), "i2o_SCT"},
@@ -77,7 +86,9 @@ static ERR_STRING_DATA CT_str_functs[] = {
     {ERR_FUNC(CT_F_O2I_SCT), "o2i_SCT"},
     {ERR_FUNC(CT_F_O2I_SCT_LIST), "o2i_SCT_LIST"},
     {ERR_FUNC(CT_F_O2I_SCT_SIGNATURE), "o2i_SCT_signature"},
+    {ERR_FUNC(CT_F_SCT_CTX_NEW), "SCT_CTX_new"},
     {ERR_FUNC(CT_F_SCT_NEW), "SCT_new"},
+    {ERR_FUNC(CT_F_SCT_NEW_FROM_BASE64), "SCT_new_from_base64"},
     {ERR_FUNC(CT_F_SCT_SET0_LOG_ID), "SCT_set0_log_id"},
     {ERR_FUNC(CT_F_SCT_SET1_EXTENSIONS), "SCT_set1_extensions"},
     {ERR_FUNC(CT_F_SCT_SET1_LOG_ID), "SCT_set1_log_id"},
@@ -86,15 +97,26 @@ static ERR_STRING_DATA CT_str_functs[] = {
     {ERR_FUNC(CT_F_SCT_SET_SIGNATURE_NID), "SCT_set_signature_nid"},
     {ERR_FUNC(CT_F_SCT_SET_VERSION), "SCT_set_version"},
     {ERR_FUNC(CT_F_SCT_SIGNATURE_IS_VALID), "SCT_signature_is_valid"},
+    {ERR_FUNC(CT_F_SCT_VERIFY), "SCT_verify"},
+    {ERR_FUNC(CT_F_SCT_VERIFY_V1), "SCT_verify_v1"},
     {0, NULL}
 };
 
 static ERR_STRING_DATA CT_str_reasons[] = {
+    {ERR_REASON(CT_R_BASE64_DECODE_ERROR), "base64 decode error"},
     {ERR_REASON(CT_R_INVALID_LOG_ID_LENGTH), "invalid log id length"},
+    {ERR_REASON(CT_R_LOG_CONF_INVALID), "log conf invalid"},
+    {ERR_REASON(CT_R_LOG_CONF_INVALID_KEY), "log conf invalid key"},
+    {ERR_REASON(CT_R_LOG_CONF_MISSING_DESCRIPTION),
+     "log conf missing description"},
+    {ERR_REASON(CT_R_LOG_CONF_MISSING_KEY), "log conf missing key"},
+    {ERR_REASON(CT_R_LOG_KEY_INVALID), "log key invalid"},
     {ERR_REASON(CT_R_SCT_INVALID), "sct invalid"},
     {ERR_REASON(CT_R_SCT_INVALID_SIGNATURE), "sct invalid signature"},
     {ERR_REASON(CT_R_SCT_LIST_INVALID), "sct list invalid"},
+    {ERR_REASON(CT_R_SCT_LOG_ID_MISMATCH), "sct log id mismatch"},
     {ERR_REASON(CT_R_SCT_NOT_SET), "sct not set"},
+    {ERR_REASON(CT_R_SCT_UNSUPPORTED_VERSION), "sct unsupported version"},
     {ERR_REASON(CT_R_UNRECOGNIZED_SIGNATURE_NID),
      "unrecognized signature nid"},
     {ERR_REASON(CT_R_UNSUPPORTED_ENTRY_TYPE), "unsupported entry type"},

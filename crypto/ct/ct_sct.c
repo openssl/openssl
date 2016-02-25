@@ -239,6 +239,11 @@ size_t SCT_get0_log_id(const SCT *sct, unsigned char **log_id)
     return sct->log_id_len;
 }
 
+const char *SCT_get0_log_name(const SCT *sct)
+{
+    return CTLOG_get0_name(sct->log);
+}
+
 uint64_t SCT_get_timestamp(const SCT *sct)
 {
     return sct->timestamp;
@@ -291,3 +296,64 @@ int SCT_signature_is_complete(const SCT *sct)
         sct->sig != NULL && sct->sig_len > 0;
 }
 
+sct_source_t SCT_get_source(const SCT *sct)
+{
+    return sct->source;
+}
+
+int SCT_set_source(SCT *sct, sct_source_t source)
+{
+    sct->source = source;
+    switch (source) {
+    case SCT_SOURCE_TLS_EXTENSION:
+    case SCT_SOURCE_OCSP_STAPLED_RESPONSE:
+        return SCT_set_log_entry_type(sct, CT_LOG_ENTRY_TYPE_X509);
+    case SCT_SOURCE_X509V3_EXTENSION:
+        return SCT_set_log_entry_type(sct, CT_LOG_ENTRY_TYPE_PRECERT);
+    default: /* if we aren't sure, leave the log entry type alone */
+        return 1;
+    }
+}
+
+int SCT_LIST_set_source(const STACK_OF(SCT) *scts, sct_source_t source)
+{
+    int i, ret = 1;
+
+    for (i = 0; i < sk_SCT_num(scts); ++i) {
+        ret = SCT_set_source(sk_SCT_value(scts, i), source);
+        if (ret != 1)
+            break;
+    }
+
+    return ret;
+}
+
+CTLOG *SCT_get0_log(const SCT *sct)
+{
+    return sct->log;
+}
+
+int SCT_set0_log(SCT *sct, const CTLOG_STORE *ct_logs)
+{
+    sct->log =
+            CTLOG_STORE_get0_log_by_id(ct_logs, sct->log_id, sct->log_id_len);
+
+    return sct->log != NULL;
+}
+
+int SCT_LIST_set0_logs(STACK_OF(SCT) *sct_list, const CTLOG_STORE *ct_logs)
+{
+    int sct_logs_found = 0;
+    int i;
+
+    for (i = 0; i < sk_SCT_num(sct_list); ++i) {
+        SCT *sct = sk_SCT_value(sct_list, i);
+
+        if (sct->log == NULL)
+            SCT_set0_log(sct, ct_logs);
+        if (sct->log != NULL)
+            ++sct_logs_found;
+    }
+
+    return sct_logs_found;
+}
