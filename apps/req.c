@@ -1376,8 +1376,7 @@ static EVP_PKEY_CTX *set_keygen_ctx(const char *gstr,
 
         EVP_PKEY_asn1_get0_info(NULL, pkey_type, NULL, NULL, NULL, ameth);
 #ifndef OPENSSL_NO_ENGINE
-        if (tmpeng)
-            ENGINE_finish(tmpeng);
+        ENGINE_finish(tmpeng);
 #endif
         if (*pkey_type == EVP_PKEY_RSA) {
             if (p) {
@@ -1434,8 +1433,7 @@ static EVP_PKEY_CTX *set_keygen_ctx(const char *gstr,
         EVP_PKEY_asn1_get0_info(NULL, NULL, NULL, NULL, &anam, ameth);
         *palgnam = OPENSSL_strdup(anam);
 #ifndef OPENSSL_NO_ENGINE
-        if (tmpeng)
-            ENGINE_finish(tmpeng);
+        ENGINE_finish(tmpeng);
 #endif
     }
 
