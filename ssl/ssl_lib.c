@@ -2433,8 +2433,7 @@ void SSL_CTX_free(SSL_CTX *a)
     SSL_CTX_SRP_CTX_free(a);
 #endif
 #ifndef OPENSSL_NO_ENGINE
-    if (a->client_cert_engine)
-        ENGINE_finish(a->client_cert_engine);
+    ENGINE_finish(a->client_cert_engine);
 #endif
 
 #ifndef OPENSSL_NO_EC
