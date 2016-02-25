@@ -2651,7 +2651,9 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
 {
     EVP_PKEY *pkey = NULL;
     const unsigned char *sig, *data;
+#ifndef OPENSSL_NO_GOST
     unsigned char *gost_data = NULL;
+#endif
     int al, ret = MSG_PROCESS_ERROR;
     int type = 0, j;
     unsigned int len;
@@ -2796,7 +2798,9 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
     BIO_free(s->s3->handshake_buffer);
     s->s3->handshake_buffer = NULL;
     EVP_MD_CTX_free(mctx);
+#ifndef OPENSSL_NO_GOST
     OPENSSL_free(gost_data);
+#endif
     return ret;
 }
 
