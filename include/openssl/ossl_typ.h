@@ -201,6 +201,9 @@ typedef struct ocsp_response_st OCSP_RESPONSE;
 typedef struct ocsp_responder_id_st OCSP_RESPID;
 
 typedef struct sct_st SCT;
+typedef struct sct_ctx_st SCT_CTX;
+typedef struct ctlog_st CTLOG;
+typedef struct ctlog_store_st CTLOG_STORE;
 
 #if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L && \
     defined(INTMAX_MAX) && defined(UINTMAX_MAX)
