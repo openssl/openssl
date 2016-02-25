@@ -98,7 +98,9 @@
 #ifndef OPENSSL_NO_CMS
 # include <openssl/cms.h>
 #endif
-#include <internal/ct_int.h>
+#ifndef OPENSSL_NO_CT
+# include <openssl/ct.h>
+#endif
 #include <openssl/async.h>
 
 void err_load_crypto_strings_intern(void)
