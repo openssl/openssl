@@ -59,6 +59,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <ctype.h>
 #include "internal/cryptlib.h"
 #include <openssl/stack.h>
 #include <openssl/lhash.h>
@@ -201,6 +202,72 @@ static int def_load(CONF *conf, const char *name, long *line)
     return ret;
 }
 
+enum modes {
+    MODE_NORMAL_FILE = 0,
+    MODE_INCLUDED_FILE = 1
+};
+
+struct rl_int_st {
+    FILE * fp;
+    unsigned mode;
+};
+
+static
+int read_line(struct rl_int_st *rl, BIO *in, char *buf, int buf_size)
+{
+    char * p;
+    int len;
+
+ restart:
+    if (rl->mode == MODE_NORMAL_FILE) {
+	BIO_gets(in, buf, buf_size-1);
+	buf[buf_size-1]='\0';
+	p = buf;
+
+	while (isspace(*p))
+	    p++;
+
+	if (strncmp(p, ".include", 8) == 0) {
+	    rl->mode = MODE_INCLUDED_FILE;
+	    p += 8;
+	    while (isspace(*p))
+		p++;
+
+	     len = strlen(p);
+	     if (len > 1 && p[len-1] == '\n') {
+		p[len-1] = 0;
+		len--;
+	     }
+
+	     if (len > 1 && p[len-1] == '\r') {
+		p[len-1] = 0;
+		len--;
+	     }
+
+	     rl->fp = fopen(p, "r");
+	     if (rl->fp == NULL) {
+		fprintf(stderr, "cannot open: '%s'\n", p);
+		return -1;
+	     }
+	} else {
+	    return 0;
+	}
+    }
+
+    if (rl->mode == MODE_INCLUDED_FILE) {
+	if (fgets(buf, buf_size-1, rl->fp) == NULL) { /* EOF */
+	    fclose(rl->fp);
+	    rl->fp = NULL;
+	    rl->mode = MODE_NORMAL_FILE;
+	    goto restart;
+	}
+	buf[buf_size-1]='\0';
+	return 0;
+    }
+
+    return -1;
+}
+
 static int def_load_bio(CONF *conf, BIO *in, long *line)
 {
 /* The macro BUFSIZE conflicts with a system macro in VxWorks */
@@ -216,6 +283,9 @@ static int def_load_bio(CONF *conf, BIO *in, long *line)
     char *section = NULL, *buf;
     char *start, *psection, *pname;
     void *h = (void *)(conf->data);
+    struct rl_int_st rl;
+
+    memset(&rl, 0, sizeof(rl));
 
     if ((buff = BUF_MEM_new()) == NULL) {
         CONFerr(CONF_F_DEF_LOAD_BIO, ERR_R_BUF_LIB);
@@ -248,8 +318,8 @@ static int def_load_bio(CONF *conf, BIO *in, long *line)
         }
         p = &(buff->data[bufnum]);
         *p = '\0';
-        BIO_gets(in, p, CONFBUFSIZE - 1);
-        p[CONFBUFSIZE - 1] = '\0';
+	if (read_line(&rl, in, p, CONFBUFSIZE-1) == -1)
+ 	    goto err;
         ii = i = strlen(p);
         if (i == 0 && !again)
             break;
@@ -389,8 +459,10 @@ static int def_load_bio(CONF *conf, BIO *in, long *line)
     }
     BUF_MEM_free(buff);
     OPENSSL_free(section);
+    if (rl.fp != NULL) fclose(rl.fp);
     return (1);
  err:
+    if (rl.fp != NULL) fclose(rl.fp);
     BUF_MEM_free(buff);
     OPENSSL_free(section);
     if (line != NULL)

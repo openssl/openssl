@@ -3,6 +3,10 @@
 # This is mostly being used for generation of certificate requests.
 #
 
+# Note that you can include other files from the main configuration
+# file using the .include directive. There can be no recursive includes.
+#.include /path/to/other/file
+
 # This definition stops the following lines choking if HOME isn't
 # defined.
 HOME			= .
