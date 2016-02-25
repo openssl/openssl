@@ -58,6 +58,7 @@
 #ifndef HEADER_CT_H
 # define HEADER_CT_H
 
+# include <openssl/ossl_typ.h>
 # include <openssl/safestack.h>
 # include <openssl/x509.h>
 
@@ -82,12 +83,6 @@ typedef enum {
     SCT_VERSION_V1 = 0
 } sct_version_t;
 
-/*******************
- * Data structures *
- *******************/
-
-/* Signed Certificate Timestamp (SCT) */
-typedef struct sct_st SCT;
 DEFINE_STACK_OF(SCT)
 
 /*****************
