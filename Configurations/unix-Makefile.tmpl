@@ -650,8 +650,6 @@ errors:
 	      $(PERL) ../util/mkerr.pl -conf $$e \
 		      -nostatic -staticloader -write *.c; \
 	  done )
-	( cd $(SRCDIR)/crypto/ct; \
-	  $(PERL) ../../util/mkerr.pl -conf ct.ec -hprefix internal/ -write *.c )
 
 ordinals:
 	( b=`pwd`; cd $(SRCDIR); $(PERL) -I$$b util/mkdef.pl crypto update )
