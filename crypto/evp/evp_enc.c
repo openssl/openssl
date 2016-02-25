@@ -79,12 +79,7 @@ int EVP_CIPHER_CTX_reset(EVP_CIPHER_CTX *c)
     }
     OPENSSL_free(c->cipher_data);
 #ifndef OPENSSL_NO_ENGINE
-    if (c->engine)
-        /*
-         * The EVP_CIPHER we used belongs to an ENGINE, release the
-         * functional reference we held for this reason.
-         */
-        ENGINE_finish(c->engine);
+    ENGINE_finish(c->engine);
 #endif
     memset(c, 0, sizeof(*c));
     return 1;
