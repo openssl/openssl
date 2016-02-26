@@ -57,7 +57,7 @@
  */
 /*
  * ====================================================================
- * Copyright 2015 MIRACL UK Ltd., All Rights Reserved. Portions of the
+ * Copyright 2016 MIRACL UK Ltd., All Rights Reserved. Portions of the
  * attached software ("Contribution") are developed by MIRACL UK LTD., and
  * are contributed to the OpenSSL project. The Contribution is licensed
  * pursuant to the OpenSSL open source license provided above.
