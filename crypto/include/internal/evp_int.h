@@ -416,6 +416,7 @@ struct evp_pkey_st {
     } pkey;
     int save_parameters;
     STACK_OF(X509_ATTRIBUTE) *attributes; /* [ 0 ] */
+    CRYPTO_RWLOCK *lock;
 } /* EVP_PKEY */ ;
 
 

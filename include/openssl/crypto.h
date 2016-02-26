@@ -170,7 +170,6 @@ extern "C" {
 # define CRYPTO_LOCK_X509_PKEY           5
 # define CRYPTO_LOCK_X509_CRL            6
 # define CRYPTO_LOCK_X509_REQ            7
-# define CRYPTO_LOCK_EVP_PKEY            10
 # define CRYPTO_LOCK_X509_STORE          11
 # define CRYPTO_LOCK_SSL_CTX             12
 # define CRYPTO_LOCK_SSL_CERT            13
