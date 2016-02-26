@@ -216,7 +216,7 @@ In each table entry, the following keys are significant:
     'inherit_from' that indicate what other configurations to inherit
     data from.  These are resolved recursively.
 
-    Inheritance works as a set of default values that can be overriden
+    Inheritance works as a set of default values that can be overridden
     by corresponding key values in the inheriting configuration.
 
     Note 1: any configuration table can be used as a template.
@@ -530,7 +530,7 @@ They are all expected to return a string with the lines they produce.
 
                   'lib' has the intended library file name *without*
                   extension, libobj2shlib is expected to add that.
-                  'shlib' has the correcponding shared library name
+                  'shlib' has the corresponding shared library name
                   *without* extension.  'deps' has the list of other
                   libraries (also *without* extension) this library
                   needs to be linked with.  'objs' has the list of
@@ -596,7 +596,7 @@ the build file actions run with the build tree top as current working
 directory.
 
 Make sure to end the section with these functions with a string that
-you thing is apropriate for the resulting build file.  If nothing
+you thing is appropriate for the resulting build file.  If nothing
 else, end it like this:
 
       "";       # Make sure no lingering values end up in the Makefile
