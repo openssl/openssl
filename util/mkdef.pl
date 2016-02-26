@@ -494,7 +494,10 @@ sub do_defs
 				$cpp-- if /^#\s*endif/;
 				next;
 			}
-			$cpp = 1 if /^#.*ifdef.*cplusplus/;
+			if (/^#.*ifdef.*cplusplus/) {
+				$cpp = 1;
+				next;
+			}
 
 			s/{[^{}]*}//gs;                      # ignore {} blocks
 			print STDERR "DEBUG: \$def=\"$def\"\n" if $debug && $def ne "";
@@ -581,6 +584,7 @@ sub do_defs
 				pop(@tag);
 			} elsif (/^\#\s*else/) {
 				my $tag_i = $#tag;
+				die "$file unmatched else\n" if $tag_i < 0;
 				while($tag[$tag_i] ne "-") {
 					my $t=$tag[$tag_i];
 					$tag{$t}= -$tag{$t};
@@ -599,6 +603,9 @@ sub do_defs
 				push(@tag,"TRUE");
 				$tag{"TRUE"}=-1;
 				print STDERR "DEBUG: $file: found 0\n" if $debug;
+			} elsif (/^\#\s*if\s+/) {
+				#Some other unrecognized "if" style
+				push(@tag,"-");
 			} elsif (/^\#\s*define\s+(\w+)\s+(\w+)/
 				 && $symhacking && $tag{'TRUE'} != -1) {
 				# This is for aliasing.  When we find an alias,
@@ -875,6 +882,7 @@ sub do_defs
 			}
 		}
 		close(IN);
+		die "$file: Unmatched tags\n" if $#tag >= 0;
 
 		my $algs;
 		my $plays;
