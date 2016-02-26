@@ -323,7 +323,7 @@
      [Rich Salz]
 
   *) Removed obsolete engines: 4758cca, aep, atalla, cswift, nuron, gmp,
-     and sureware.
+     sureware and ubsec.
      [Matt Caswell, Rich Salz]
 
   *) New ASN.1 embed macro.
