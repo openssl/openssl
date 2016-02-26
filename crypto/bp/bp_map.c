@@ -74,16 +74,12 @@ static int GT_miller_double(const BP_GROUP *group, FP12 *l, FP2 *x3,
     FP2 *t4 = NULL, *t5 = NULL, *t6 = NULL, *u0 = NULL, *u1 = NULL;
     int ret = 0;
 
-    if (((t0 = FP2_new()) == NULL) ||
-        ((t1 = FP2_new()) == NULL) ||
-        ((t2 = FP2_new()) == NULL) ||
-        ((t3 = FP2_new()) == NULL) ||
-        ((t4 = FP2_new()) == NULL) ||
-        ((t5 = FP2_new()) == NULL) ||
-        ((t6 = FP2_new()) == NULL) ||
-        ((u0 = FP2_new()) == NULL) || ((u1 = FP2_new()) == NULL)) {
+    if ((t0 = FP2_new()) == NULL || (t1 = FP2_new()) == NULL
+        || (t2 = FP2_new()) == NULL || (t3 = FP2_new()) == NULL
+        || (t4 = FP2_new()) == NULL || (t5 = FP2_new()) == NULL
+        || (t6 = FP2_new()) == NULL || (u0 = FP2_new()) == NULL
+        || (u1 = FP2_new()) == NULL)
         goto err;
-    }
 
     /*
      * C = z1^2.
@@ -124,16 +120,14 @@ static int GT_miller_double(const BP_GROUP *group, FP12 *l, FP2 *x3,
     if (!FP2_mul(group, t4, x1, y1, ctx))
         goto err;
 
-    if (BN_is_bit_set(t4->f[0], 0)) {
-        if (!BN_add(t4->f[0], t4->f[0], group->field))
-            goto err;
-    }
+    if (BN_is_bit_set(t4->f[0], 0)
+        && !BN_add(t4->f[0], t4->f[0], group->field))
+        goto err;
     if (!BN_rshift1(t4->f[0], t4->f[0]))
         goto err;
-    if (BN_is_bit_set(t4->f[1], 0)) {
-        if (!BN_add(t4->f[1], t4->f[1], group->field))
-            goto err;
-    }
+    if (BN_is_bit_set(t4->f[1], 0)
+        && !BN_add(t4->f[1], t4->f[1], group->field))
+        goto err;
     if (!BN_rshift1(t4->f[1], t4->f[1]))
         goto err;
 
@@ -157,16 +151,14 @@ static int GT_miller_double(const BP_GROUP *group, FP12 *l, FP2 *x3,
      */
     if (!FP2_add(group, t3, t1, t3))
         goto err;
-    if (BN_is_bit_set(t3->f[0], 0)) {
-        if (!BN_add(t3->f[0], t3->f[0], group->field))
-            goto err;
-    }
+    if (BN_is_bit_set(t3->f[0], 0)
+        && !BN_add(t3->f[0], t3->f[0], group->field))
+        goto err;
     if (!BN_rshift1(t3->f[0], t3->f[0]))
         goto err;
-    if (BN_is_bit_set(t3->f[1], 0)) {
-        if (!BN_add(t3->f[1], t3->f[1], group->field))
-            goto err;
-    }
+    if (BN_is_bit_set(t3->f[1], 0)
+        && !BN_add(t3->f[1], t3->f[1], group->field))
+        goto err;
     if (!BN_rshift1(t3->f[1], t3->f[1]))
         goto err;
 
@@ -212,27 +204,24 @@ static int GT_miller_double(const BP_GROUP *group, FP12 *l, FP2 *x3,
      * l10 = (3 * xp) * t0.
      */
     if (!BN_mod_mul_montgomery
-        (l->f[1]->f[0]->f[0], xp, t0->f[0], group->mont, ctx)) {
+        (l->f[1]->f[0]->f[0], xp, t0->f[0], group->mont, ctx))
         goto err;
-    }
     if (!BN_mod_mul_montgomery
-        (l->f[1]->f[0]->f[1], xp, t0->f[1], group->mont, ctx)) {
+        (l->f[1]->f[0]->f[1], xp, t0->f[1], group->mont, ctx))
         goto err;
-    }
 
     /*
      * l01 = F * (-yp).
      */
     if (!BN_mod_mul_montgomery
-        (l->f[0]->f[0]->f[0], t3->f[0], yp, group->mont, ctx)) {
+        (l->f[0]->f[0]->f[0], t3->f[0], yp, group->mont, ctx))
         goto err;
-    }
     if (!BN_mod_mul_montgomery
-        (l->f[0]->f[0]->f[1], t3->f[1], yp, group->mont, ctx)) {
+        (l->f[0]->f[0]->f[1], t3->f[1], yp, group->mont, ctx))
         goto err;
-    }
 
     ret = 1;
+
  err:
     FP2_free(t0);
     FP2_free(t1);
@@ -254,15 +243,11 @@ static int GT_miller_add(const BP_GROUP *group, FP12 *l, FP2 *x3, FP2 *y3,
     FP2 *t4 = NULL, *u0 = NULL, *u1 = NULL, *u2 = NULL;
     int ret = 0;
 
-    if (((t0 = FP2_new()) == NULL) ||
-        ((t1 = FP2_new()) == NULL) ||
-        ((t2 = FP2_new()) == NULL) ||
-        ((t3 = FP2_new()) == NULL) ||
-        ((t4 = FP2_new()) == NULL) ||
-        ((u0 = FP2_new()) == NULL) ||
-        ((u1 = FP2_new()) == NULL) || ((u2 = FP2_new()) == NULL)) {
+    if ((t0 = FP2_new()) == NULL || (t1 = FP2_new()) == NULL
+        || (t2 = FP2_new()) == NULL || (t3 = FP2_new()) == NULL
+        || (t4 = FP2_new()) == NULL || (u0 = FP2_new()) == NULL
+        || (u1 = FP2_new()) == NULL || (u2 = FP2_new()) == NULL)
         goto err;
-    }
 
     if (!FP2_mul(group, t1, z3, x1, ctx))
         goto err;
@@ -304,13 +289,11 @@ static int GT_miller_add(const BP_GROUP *group, FP12 *l, FP2 *x3, FP2 *y3,
         goto err;
 
     if (!BN_mod_mul_montgomery
-        (l->f[1]->f[0]->f[0], t2->f[0], xp, group->mont, ctx)) {
+        (l->f[1]->f[0]->f[0], t2->f[0], xp, group->mont, ctx))
         goto err;
-    }
     if (!BN_mod_mul_montgomery
-        (l->f[1]->f[0]->f[1], t2->f[1], xp, group->mont, ctx)) {
+        (l->f[1]->f[0]->f[1], t2->f[1], xp, group->mont, ctx))
         goto err;
-    }
 
     if (!FP2_neg(group, l->f[1]->f[0], l->f[1]->f[0]))
         goto err;
@@ -323,15 +306,14 @@ static int GT_miller_add(const BP_GROUP *group, FP12 *l, FP2 *x3, FP2 *y3,
         goto err;
 
     if (!BN_mod_mul_montgomery
-        (l->f[0]->f[0]->f[0], t1->f[0], yp, group->mont, ctx)) {
+        (l->f[0]->f[0]->f[0], t1->f[0], yp, group->mont, ctx))
         goto err;
-    }
     if (!BN_mod_mul_montgomery
-        (l->f[0]->f[0]->f[1], t1->f[1], yp, group->mont, ctx)) {
+        (l->f[0]->f[0]->f[1], t1->f[1], yp, group->mont, ctx))
         goto err;
-    }
 
     ret = 1;
+
  err:
     FP2_free(t1);
     FP2_free(t2);
@@ -350,10 +332,9 @@ static int GT_miller_final(const BP_GROUP *group, FP12 *r, FP2 *x3,
     FP12 *l = NULL;
     int ret = 0;
 
-    if (((x2 = FP2_new()) == NULL) ||
-        ((y2 = FP2_new()) == NULL) || ((l = FP12_new()) == NULL)) {
+    if ((x2 = FP2_new()) == NULL || (y2 = FP2_new()) == NULL
+        || (l = FP12_new()) == NULL)
         goto err;
-    }
 
     if (!FP12_zero(l))
         goto err;
@@ -387,6 +368,7 @@ static int GT_miller_final(const BP_GROUP *group, FP12 *r, FP2 *x3,
         goto err;
 
     ret = 1;
+
  err:
     FP2_free(x2);
     FP2_free(y2);
@@ -400,12 +382,10 @@ static int GT_final_exp(const BP_GROUP *group, FP12 *r, const FP12 *a,
     FP12 *t0 = NULL, *t1 = NULL, *t2 = NULL, *t3 = NULL, *t4 = NULL;
     int ret = 0;
 
-    if (((t0 = FP12_new()) == NULL) ||
-        ((t1 = FP12_new()) == NULL) ||
-        ((t2 = FP12_new()) == NULL) ||
-        ((t3 = FP12_new()) == NULL) || ((t4 = FP12_new()) == NULL)) {
+    if ((t0 = FP12_new()) == NULL || (t1 = FP12_new()) == NULL
+        || (t2 = FP12_new()) == NULL || (t3 = FP12_new()) == NULL
+        || (t4 = FP12_new()) == NULL)
         goto err;
-    }
 
     /*
      * First, compute m = f^(p^6 - 1)(p^2 + 1).
@@ -418,10 +398,8 @@ static int GT_final_exp(const BP_GROUP *group, FP12 *r, const FP12 *a,
      */
     if (!FP12_exp_pck(group, t0, r, group->param, ctx))
         goto err;
-    if (!BN_is_negative(group->param)) {
-        if (!FP12_conj(group, t0, t0))
-            goto err;
-    }
+    if (!BN_is_negative(group->param) && !FP12_conj(group, t0, t0))
+        goto err;
     if (!FP12_sqr_cyc(group, t4, t0, ctx))
         goto err;
     if (!FP12_mul(group, t1, t0, t4, ctx))
@@ -437,10 +415,8 @@ static int GT_final_exp(const BP_GROUP *group, FP12 *r, const FP12 *a,
 
     if (!FP12_exp_pck(group, t0, t1, group->param, ctx))
         goto err;
-    if (!BN_is_negative(group->param)) {
-        if (!FP12_conj(group, t0, t0))
-            goto err;
-    }
+    if (!BN_is_negative(group->param) && !FP12_conj(group, t0, t0))
+        goto err;
     if (!FP12_conj(group, t1, r))
         goto err;
     if (!FP12_frb(group, t2, t0, ctx))
@@ -462,10 +438,8 @@ static int GT_final_exp(const BP_GROUP *group, FP12 *r, const FP12 *a,
 
     if (!FP12_exp_pck(group, t0, t4, group->param, ctx))
         goto err;
-    if (!BN_is_negative(group->param)) {
-        if (!FP12_conj(group, t0, t0))
-            goto err;
-    }
+    if (!BN_is_negative(group->param) && !FP12_conj(group, t0, t0))
+        goto err;
     if (!FP12_sqr_cyc(group, t0, t0, ctx))
         goto err;
     if (!FP12_conj(group, t0, t0))
@@ -497,6 +471,7 @@ static int GT_final_exp(const BP_GROUP *group, FP12 *r, const FP12 *a,
         goto err;
 
     ret = 1;
+
  err:
     FP12_free(t0);
     FP12_free(t1);
@@ -517,31 +492,27 @@ int GT_ELEMs_pairing(const BP_GROUP *group, GT_ELEM *r, size_t num,
     G2_ELEM *_q[num];
     FP12 *l = NULL;
 
-    if (ctx == NULL)
-        if ((ctx = new_ctx = BN_CTX_new()) == NULL)
-            return 0;
+    if (ctx == NULL && (ctx = new_ctx = BN_CTX_new()) == NULL)
+        return 0;
 
     BN_CTX_start(ctx);
     for (i = 0; i < num; i++) {
-        if (((xp[i] = BN_CTX_get(ctx)) == NULL) ||
-            ((yp[i] = BN_CTX_get(ctx)) == NULL) ||
-            ((s[i] = BN_CTX_get(ctx)) == NULL) ||
-            ((t[i] = BN_CTX_get(ctx)) == NULL) ||
-            ((miller = BN_CTX_get(ctx)) == NULL)) {
+        if ((xp[i] = BN_CTX_get(ctx)) == NULL
+            || (yp[i] = BN_CTX_get(ctx)) == NULL
+            || (s[i] = BN_CTX_get(ctx)) == NULL
+            || (t[i] = BN_CTX_get(ctx)) == NULL
+            || (miller = BN_CTX_get(ctx)) == NULL)
             goto err;
-        }
-        if (((x[i] = FP2_new()) == NULL) ||
-            ((y[i] = FP2_new()) == NULL) ||
-            ((xq[i] = FP2_new()) == NULL) ||
-            ((yq[i] = FP2_new()) == NULL) || ((zq[i] = FP2_new()) == NULL)) {
+        if ((x[i] = FP2_new()) == NULL || (y[i] = FP2_new()) == NULL
+            || (xq[i] = FP2_new()) == NULL || (yq[i] = FP2_new()) == NULL
+            || (zq[i] = FP2_new()) == NULL)
             goto err;
-        }
         if ((_q[i] = G2_ELEM_new(group)) == NULL)
             goto err;
     }
 
     m = 0;
-    for (i = 0; i < num; i++) {
+    for (i = 0; i < num; i++)
         if (!G1_ELEM_is_at_infinity(group, p[i]) &&
             !G2_ELEM_is_at_infinity(group, q[i])) {
             /*
@@ -579,7 +550,6 @@ int GT_ELEMs_pairing(const BP_GROUP *group, GT_ELEM *r, size_t num,
                 goto err;
             m++;
         }
-    }
 
     if (m == 0)
         return GT_ELEM_set_to_unity(group, r);
@@ -611,15 +581,13 @@ int GT_ELEMs_pairing(const BP_GROUP *group, GT_ELEM *r, size_t num,
      */
     for (i = BN_num_bits(miller) - 1; i > 0;) {
         i--;
-        if (!FP12_sqr(group, r->f, r->f, ctx)) {
+        if (!FP12_sqr(group, r->f, r->f, ctx))
             goto err;
-        }
         for (j = 0; j < m; j++) {
             if (!GT_miller_double
                 (group, l, xq[j], yq[j], zq[j], xq[j], yq[j], zq[j], s[j],
-                 t[j], ctx)) {
+                 t[j], ctx))
                 goto err;
-            }
             if (!FP12_mul_sparse(group, r->f, r->f, l, ctx))
                 goto err;
         }
@@ -627,37 +595,31 @@ int GT_ELEMs_pairing(const BP_GROUP *group, GT_ELEM *r, size_t num,
             for (j = 0; j < m; j++) {
                 if (!GT_miller_add
                     (group, l, xq[j], yq[j], zq[j], x[j], y[j], xp[j], yp[j],
-                     ctx)) {
+                     ctx))
                     goto err;
-                }
                 if (!FP12_mul_sparse(group, r->f, r->f, l, ctx))
                     goto err;
             }
         }
     }
 
-    if (BN_is_negative(group->param)) {
-        if (!FP12_conj(group, r->f, r->f))
-            goto err;
-    }
+    if (BN_is_negative(group->param) && !FP12_conj(group, r->f, r->f))
+        goto err;
 
     for (i = 0; i < m; i++) {
-        if (BN_is_negative(group->param)) {
-            if (!FP2_neg(group, yq[i], yq[i])) {
-                goto err;
-            }
-        }
+        if (BN_is_negative(group->param) && !FP2_neg(group, yq[i], yq[i]))
+            goto err;
         if (!GT_miller_final
             (group, r->f, xq[i], yq[i], zq[i], x[i], y[i], xp[i], yp[i],
              ctx)) {
             goto err;
         }
     }
-    if (!GT_final_exp(group, r->f, r->f, ctx)) {
+    if (!GT_final_exp(group, r->f, r->f, ctx))
         goto err;
-    }
 
     ret = 1;
+
  err:
     BN_CTX_end(ctx);
     BN_CTX_free(new_ctx);

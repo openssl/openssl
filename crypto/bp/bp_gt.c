@@ -71,9 +71,8 @@ GT_ELEM *GT_ELEM_new(const BP_GROUP *group)
 {
     GT_ELEM *ret;
 
-    if ((ret = OPENSSL_malloc(sizeof(*ret))) == NULL) {
-        return (NULL);
-    }
+    if ((ret = OPENSSL_malloc(sizeof(*ret))) == NULL)
+        return NULL;
 
     ret->f = FP12_new();
     if (ret->f == NULL) {
@@ -85,21 +84,19 @@ GT_ELEM *GT_ELEM_new(const BP_GROUP *group)
 
 void GT_ELEM_free(GT_ELEM *a)
 {
-    if (a == NULL) {
+    if (a == NULL)
         return;
-    } else {
+    else
         FP12_free(a->f);
-    }
     OPENSSL_free(a);
 }
 
 void GT_clear_free(GT_ELEM *a)
 {
-    if (a == NULL) {
+    if (a == NULL)
         return;
-    } else {
+    else
         FP12_clear_free(a->f);
-    }
     OPENSSL_free(a);
 }
 
@@ -113,9 +110,8 @@ GT_ELEM *GT_ELEM_dup(const GT_ELEM *a, const BP_GROUP *group)
     GT_ELEM *t;
     int r;
 
-    if (a == NULL) {
+    if (a == NULL)
         return NULL;
-    }
     t = GT_ELEM_new(group);
     if (t == NULL)
         return NULL;
@@ -178,9 +174,8 @@ size_t GT_ELEM_elem2oct(const BP_GROUP *group, const GT_ELEM *a,
      * if 'buf' is NULL, just return required length
      */
     if (buf != NULL) {
-        if (len < ret) {
+        if (len < ret)
             goto err;
-        }
 
         if (ctx == NULL)
             if ((ctx = new_ctx = BN_CTX_new()) == NULL)
@@ -196,29 +191,25 @@ size_t GT_ELEM_elem2oct(const BP_GROUP *group, const GT_ELEM *a,
             for (j = 0; j < 3; j++) {
                 for (k = 0; k < 2; k++) {
                     if (!BN_from_montgomery(f, a->f->f[i]->f[j]->f[k],
-                                            group->mont, ctx)) {
+                                            group->mont, ctx))
                         goto err;
-                    }
                     skip = field_len - BN_num_bytes(f);
-                    if (skip > field_len) {
+                    if (skip > field_len)
                         goto err;
-                    }
                     while (skip > 0) {
                         buf[l++] = 0;
                         skip--;
                     }
                     skip = BN_bn2bin(f, buf + l);
                     l += skip;
-                    if (l != (i * 6 + j * 2 + k + 1) * field_len) {
+                    if (l != (i * 6 + j * 2 + k + 1) * field_len)
                         goto err;
-                    }
                 }
             }
         }
 
-        if (l != ret) {
+        if (l != ret)
             goto err;
-        }
     }
 
     if (used_ctx)
@@ -241,16 +232,14 @@ int GT_ELEM_oct2elem(const BP_GROUP *group, GT_ELEM *a,
     size_t field_len, enc_len;
     int i, j, k, ret = 0;
 
-    if (len == 0) {
+    if (len == 0)
         return 0;
-    }
 
     field_len = BN_num_bytes(group->field);
     enc_len = 12 * field_len;
 
-    if (len != enc_len) {
+    if (len != enc_len)
         return 0;
-    }
 
     if (ctx == NULL)
         if ((ctx = new_ctx = BN_CTX_new()) == NULL)
@@ -265,19 +254,18 @@ int GT_ELEM_oct2elem(const BP_GROUP *group, GT_ELEM *a,
             for (k = 0; k < 2; k++) {
                 if (!BN_bin2bn(buf, field_len, f))
                     goto err;
-                if (BN_ucmp(f, group->field) >= 0) {
+                if (BN_ucmp(f, group->field) >= 0)
                     goto err;
-                }
                 if (!BN_to_montgomery(a->f->f[i]->f[j]->f[k], f,
-                                      group->mont, ctx)) {
+                                      group->mont, ctx))
                     goto err;
-                }
                 buf += field_len;
             }
         }
     }
 
     ret = 1;
+
  err:
     BN_CTX_end(ctx);
     BN_CTX_free(new_ctx);

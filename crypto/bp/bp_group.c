@@ -152,13 +152,11 @@ BP_GROUP *BP_GROUP_new(void)
     BP_GROUP *ret;
 
     ret = OPENSSL_zalloc(sizeof(*ret));
-    if (ret == NULL) {
+    if (ret == NULL)
         return NULL;
-    }
 
-    if (!BP_GROUP_init(ret)) {
+    if (!BP_GROUP_init(ret))
         return NULL;
-    }
 
     return ret;
 }
@@ -185,11 +183,9 @@ BP_GROUP *BP_GROUP_new_by_curve_name(int nid)
     BIGNUM *p = NULL, *a = NULL, *b = NULL;
     BP_GROUP *ret = NULL;
 
-    if (((p = BN_new()) == NULL) ||
-        ((a = BN_new()) == NULL) ||
-        ((b = BN_new()) == NULL) || ((ret = BP_GROUP_new()) == NULL)) {
+    if ((p = BN_new()) == NULL || (a = BN_new()) == NULL
+        || (b = BN_new()) == NULL || (ret = BP_GROUP_new()) == NULL)
         goto err;
-    }
 
     switch (nid) {
     case NID_fp254bnb:
@@ -222,9 +218,8 @@ void BP_GROUP_free(BP_GROUP *group)
         BN_MONT_CTX_free(group->mont);
         EC_GROUP_free(group->ec);
         G2_ELEM_free(group->gen2);
-        if (group->g2_pre_comp != NULL) {
+        if (group->g2_pre_comp != NULL)
             g2_pre_comp_free(group->g2_pre_comp);
-        }
     }
 }
 
@@ -313,7 +308,7 @@ BP_GROUP *BP_GROUP_dup(const BP_GROUP *a)
         return NULL;
 
     if ((t = BP_GROUP_new()) == NULL)
-        return (NULL);
+        return NULL;
     if (!BP_GROUP_copy(t, a))
         goto err;
 
@@ -336,28 +331,25 @@ int BP_GROUP_set_curve(BP_GROUP *group, const BIGNUM *p, const BIGNUM *a,
     BIGNUM *curve_p, *curve_a, *curve_b, *curve_x, *curve_y, *order;
     BIGNUM *x[2], *y[2], *m, *d, *r;
 
-    if (ctx == NULL)
-        if ((ctx = new_ctx = BN_CTX_new()) == NULL)
-            return 0;
+    if (ctx == NULL && (ctx = new_ctx = BN_CTX_new()) == NULL)
+        return 0;
 
     /*
      * Allocate space for parameters and check if input is right.
      */
     BN_CTX_start(ctx);
-    if (((curve_p = BN_CTX_get(ctx)) == NULL) ||
-        ((curve_a = BN_CTX_get(ctx)) == NULL) ||
-        ((curve_b = BN_CTX_get(ctx)) == NULL) ||
-        ((curve_x = BN_CTX_get(ctx)) == NULL) ||
-        ((curve_y = BN_CTX_get(ctx)) == NULL) ||
-        ((order = BN_CTX_get(ctx)) == NULL) ||
-        ((x[0] = BN_CTX_get(ctx)) == NULL) ||
-        ((x[1] = BN_CTX_get(ctx)) == NULL) ||
-        ((y[0] = BN_CTX_get(ctx)) == NULL) ||
-        ((y[1] = BN_CTX_get(ctx)) == NULL) ||
-        ((d = BN_CTX_get(ctx)) == NULL) ||
-        ((r = BN_CTX_get(ctx)) == NULL) || ((m = BN_CTX_get(ctx)) == NULL)) {
+    if ((curve_p = BN_CTX_get(ctx)) == NULL
+        || (curve_a = BN_CTX_get(ctx)) == NULL
+        || (curve_b = BN_CTX_get(ctx)) == NULL
+        || (curve_x = BN_CTX_get(ctx)) == NULL
+        || (curve_y = BN_CTX_get(ctx)) == NULL
+        || (order = BN_CTX_get(ctx)) == NULL
+        || (x[0] = BN_CTX_get(ctx)) == NULL
+        || (x[1] = BN_CTX_get(ctx)) == NULL
+        || (y[0] = BN_CTX_get(ctx)) == NULL
+        || (y[1] = BN_CTX_get(ctx)) == NULL || (d = BN_CTX_get(ctx)) == NULL
+        || (r = BN_CTX_get(ctx)) == NULL || (m = BN_CTX_get(ctx)) == NULL)
         goto err;
-    }
 
     found = 0;
 
@@ -439,6 +431,7 @@ int BP_GROUP_set_curve(BP_GROUP *group, const BIGNUM *p, const BIGNUM *a,
         goto err;
 
     ret = 1;
+
  err:
     BN_CTX_end(ctx);
     BN_CTX_free(new_ctx);
@@ -454,12 +447,12 @@ int BP_GROUP_get_curve(const BP_GROUP *group, BIGNUM *p, BIGNUM *a,
 
 int BP_GROUP_set_param(BP_GROUP *group, BIGNUM *param)
 {
-    return (BN_copy(group->param, param) != NULL);
+    return BN_copy(group->param, param) != NULL;
 }
 
 int BP_GROUP_get_param(const BP_GROUP *group, BIGNUM *param)
 {
-    return (BN_copy(group->param, param) != NULL);
+    return BN_copy(group->param, param) != NULL;
 }
 
 int BP_GROUP_set_generator_G1(const BP_GROUP *group, G1_ELEM *g, BIGNUM *n)

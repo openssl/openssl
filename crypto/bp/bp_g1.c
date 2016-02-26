@@ -71,9 +71,8 @@ G1_ELEM *G1_ELEM_new(const BP_GROUP *group)
 {
     G1_ELEM *ret = NULL;
 
-    if ((ret = OPENSSL_malloc(sizeof(*ret))) == NULL) {
+    if ((ret = OPENSSL_malloc(sizeof(*ret))) == NULL)
         return (NULL);
-    }
 
     ret->p = EC_POINT_new(group->ec);
     if (ret->p == NULL) {
@@ -113,9 +112,8 @@ G1_ELEM *G1_ELEM_dup(const G1_ELEM *a, const BP_GROUP *group)
     G1_ELEM *t = NULL;
     int r;
 
-    if (a == NULL) {
+    if (a == NULL)
         return NULL;
-    }
     t = G1_ELEM_new(group);
     if (t == NULL)
         return NULL;
@@ -231,9 +229,8 @@ int G1_ELEMs_make_affine(const BP_GROUP *group, size_t num,
     size_t i;
     EC_POINT *p[num];
 
-    for (i = 0; i < num; i++) {
+    for (i = 0; i < num; i++)
         p[i] = points[i]->p;
-    }
     return EC_POINTs_make_affine(group->ec, num, p, ctx);
 }
 
@@ -257,8 +254,7 @@ int G1_ELEMs_mul(const BP_GROUP *group, G1_ELEM *r, const BIGNUM *scalar,
     size_t i;
     const EC_POINT *p[num];
 
-    for (i = 0; i < num; i++) {
+    for (i = 0; i < num; i++)
         p[i] = points[i]->p;
-    }
     return EC_POINTs_mul(group->ec, r->p, scalar, num, p, scalars, ctx);
 }

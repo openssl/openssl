@@ -69,9 +69,8 @@ FP6 *FP6_new()
 {
     FP6 *ret = NULL;
 
-    if ((ret = OPENSSL_zalloc(sizeof(*ret))) == NULL) {
+    if ((ret = OPENSSL_zalloc(sizeof(*ret))) == NULL)
         return (NULL);
-    }
 
     ret->f[0] = FP2_new();
     ret->f[1] = FP2_new();
@@ -212,13 +211,10 @@ int FP6_mul(const BP_GROUP *group, FP6 *r, const FP6 *a, const FP6 *b,
     FP2 *v0, *v1 = NULL, *v2 = NULL, *t0 = NULL, *t1 = NULL, *t2 = NULL;
     int ret = 0;
 
-    if (((v0 = FP2_new()) == NULL) ||
-        ((v1 = FP2_new()) == NULL) ||
-        ((v2 = FP2_new()) == NULL) ||
-        ((t0 = FP2_new()) == NULL) ||
-        ((t1 = FP2_new()) == NULL) || ((t2 = FP2_new()) == NULL)) {
+    if ((v0 = FP2_new()) == NULL || (v1 = FP2_new()) == NULL
+        || (v2 = FP2_new()) == NULL || (t0 = FP2_new()) == NULL
+        || (t1 = FP2_new()) == NULL || (t2 = FP2_new()) == NULL)
         goto err;
-    }
 
     /*
      * v0 = a_0b_0
@@ -313,13 +309,10 @@ int FP6_mul_sparse(const BP_GROUP *group, FP6 *r, const FP6 *a,
     FP2 *v0, *v1 = NULL, *v2 = NULL, *t0 = NULL, *t1 = NULL, *t2 = NULL;
     int ret = 0;
 
-    if (((v0 = FP2_new()) == NULL) ||
-        ((v1 = FP2_new()) == NULL) ||
-        ((v2 = FP2_new()) == NULL) ||
-        ((t0 = FP2_new()) == NULL) ||
-        ((t1 = FP2_new()) == NULL) || ((t2 = FP2_new()) == NULL)) {
+    if ((v0 = FP2_new()) == NULL || (v1 = FP2_new()) == NULL
+        || (v2 = FP2_new()) == NULL || (t0 = FP2_new()) == NULL
+        || (t1 = FP2_new()) == NULL || (t2 = FP2_new()) == NULL)
         goto err;
-    }
 
     /*
      * v0 = a_0b_0
@@ -395,14 +388,12 @@ int FP6_mul_art(const BP_GROUP *group, FP6 *r, const FP6 *a, BN_CTX *ctx)
     FP2 *t0;
     int ret = 0;
 
-    if ((t0 = FP2_new()) == NULL) {
+    if ((t0 = FP2_new()) == NULL)
         goto err;
-    }
 
     FP2_copy(t0, a->f[0]);
-    if (!FP2_mul_nor(group, r->f[0], a->f[2], ctx)) {
+    if (!FP2_mul_nor(group, r->f[0], a->f[2], ctx))
         goto err;
-    }
     FP2_copy(r->f[2], a->f[1]);
     FP2_copy(r->f[1], t0);
 
@@ -418,12 +409,10 @@ int FP6_sqr(const BP_GROUP *group, FP6 *r, const FP6 *a, BN_CTX *ctx)
     FP2 *t0, *t1 = NULL, *t2 = NULL, *t3 = NULL, *t4 = NULL;
     int ret = 0;
 
-    if (((t0 = FP2_new()) == NULL) ||
-        ((t1 = FP2_new()) == NULL) ||
-        ((t2 = FP2_new()) == NULL) ||
-        ((t3 = FP2_new()) == NULL) || ((t4 = FP2_new()) == NULL)) {
+    if ((t0 = FP2_new()) == NULL || (t1 = FP2_new()) == NULL
+        || (t2 = FP2_new()) == NULL || (t3 = FP2_new()) == NULL
+        || (t4 = FP2_new()) == NULL)
         goto err;
-    }
 
     /*
      * t0 = a_0^2
@@ -518,6 +507,7 @@ int FP6_sqr(const BP_GROUP *group, FP6 *r, const FP6 *a, BN_CTX *ctx)
         goto err;
 
     ret = 1;
+
  err:
     FP2_free(t0);
     FP2_free(t1);
@@ -532,11 +522,9 @@ int FP6_inv(const BP_GROUP *group, FP6 *r, const FP6 *a, BN_CTX *ctx)
     FP2 *v0, *v1 = NULL, *v2 = NULL, *t0 = NULL;
     int ret = 0;
 
-    if (((v0 = FP2_new()) == NULL) ||
-        ((v1 = FP2_new()) == NULL) ||
-        ((v2 = FP2_new()) == NULL) || ((t0 = FP2_new()) == NULL)) {
+    if ((v0 = FP2_new()) == NULL || (v1 = FP2_new()) == NULL
+        || (v2 = FP2_new()) == NULL || (t0 = FP2_new()) == NULL)
         goto err;
-    }
 
     /*
      * v0 = a_0^2 - E * a_1 * a_2.
@@ -600,6 +588,7 @@ int FP6_inv(const BP_GROUP *group, FP6 *r, const FP6 *a, BN_CTX *ctx)
         goto err;
 
     ret = 1;
+
  err:
     FP2_free(v0);
     FP2_free(v1);

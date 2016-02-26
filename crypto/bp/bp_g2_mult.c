@@ -100,9 +100,8 @@ static G2_PRE_COMP *g2_pre_comp_new(const BP_GROUP *group)
         return NULL;
 
     ret = OPENSSL_zalloc(sizeof(*ret));
-    if (ret == NULL) {
+    if (ret == NULL)
         return ret;
-    }
     ret->group = group;
     ret->blocksize = 8;         /* default */
     ret->w = 4;                 /* default */
@@ -197,13 +196,11 @@ int G2_ELEMs_mul(const BP_GROUP *group, G2_ELEM *r, const BIGNUM *scalar,
                                  * precomputation is not available */
     int ret = 0;
 
-    if ((scalar == NULL) && (num == 0)) {
+    if (scalar == NULL && num == 0)
         return G2_ELEM_set_to_infinity(group, r);
-    }
 
-    if (ctx == NULL)
-        if ((ctx = new_ctx = BN_CTX_new()) == NULL)
-            return 0;
+    if (ctx == NULL && (ctx = new_ctx = BN_CTX_new()) == NULL)
+        return 0;
 
     if (scalar != NULL) {
         generator = group->gen2;
@@ -216,8 +213,7 @@ int G2_ELEMs_mul(const BP_GROUP *group, G2_ELEM *r, const BIGNUM *scalar,
 
         pre_comp = group->g2_pre_comp;
         if (pre_comp && pre_comp->numblocks
-            && (G2_ELEM_cmp(group, generator, pre_comp->points[0], ctx) ==
-                0)) {
+            && G2_ELEM_cmp(group, generator, pre_comp->points[0], ctx) == 0) {
             blocksize = pre_comp->blocksize;
 
             /*
@@ -600,10 +596,9 @@ int g2_wNAF_precompute_mult(BP_GROUP *group, BN_CTX *ctx)
      */
     blocksize = 8;
     w = 4;
-    if (G2_window_bits_for_scalar_size(bits) > w) {
+    if (G2_window_bits_for_scalar_size(bits) > w)
         /* let's not make the window too small ... */
         w = G2_window_bits_for_scalar_size(bits);
-    }
 
     numblocks = (bits + blocksize - 1) / blocksize; /* max. number of blocks
                                                      * to use for wNAF
@@ -668,10 +663,9 @@ int g2_wNAF_precompute_mult(BP_GROUP *group, BN_CTX *ctx)
 
             if (!G2_ELEM_dbl(group, base, tmp_point, ctx))
                 goto err;
-            for (k = 2; k < blocksize; k++) {
+            for (k = 2; k < blocksize; k++)
                 if (!G2_ELEM_dbl(group, base, base, ctx))
                     goto err;
-            }
         }
     }
 

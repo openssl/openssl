@@ -69,9 +69,8 @@ FP2 *FP2_new()
 {
     FP2 *ret = NULL;
 
-    if ((ret = OPENSSL_zalloc(sizeof(*ret))) == NULL) {
-        return (NULL);
-    }
+    if ((ret = OPENSSL_zalloc(sizeof(*ret))) == NULL)
+        return NULL;
 
     ret->f[0] = BN_new();
     ret->f[1] = BN_new();
@@ -114,12 +113,10 @@ void FP2_clear_free(FP2 *a)
 
 int FP2_rand(const BP_GROUP *group, FP2 *a)
 {
-    if (!BN_rand_range(a->f[0], group->field)) {
+    if (!BN_rand_range(a->f[0], group->field))
         return 0;
-    }
-    if (!BN_rand_range(a->f[1], group->field)) {
+    if (!BN_rand_range(a->f[1], group->field))
         return 0;
-    }
     return 1;
 }
 
@@ -277,13 +274,10 @@ int FP2_mul(const BP_GROUP *group, FP2 *r, const FP2 *a, const FP2 *b,
             return 0;
 
     BN_CTX_start(ctx);
-    if (((t0 = BN_CTX_get(ctx)) == NULL) ||
-        ((t1 = BN_CTX_get(ctx)) == NULL) ||
-        ((t2 = BN_CTX_get(ctx)) == NULL) ||
-        ((t3 = BN_CTX_get(ctx)) == NULL) ||
-        ((t4 = BN_CTX_get(ctx)) == NULL)) {
+    if ((t0 = BN_CTX_get(ctx)) == NULL || (t1 = BN_CTX_get(ctx)) == NULL
+        || (t2 = BN_CTX_get(ctx)) == NULL || (t3 = BN_CTX_get(ctx)) == NULL
+        || (t4 = BN_CTX_get(ctx)) == NULL)
         goto err;
-    }
 
     /*
      * Karatsuba algorithm.
@@ -330,6 +324,7 @@ int FP2_mul(const BP_GROUP *group, FP2 *r, const FP2 *a, const FP2 *b,
         goto err;
 
     ret = 1;
+
  err:
     BN_CTX_end(ctx);
     BN_CTX_free(new_ctx);
@@ -347,9 +342,8 @@ int FP2_mul_nor(const BP_GROUP *group, FP2 *r, const FP2 *a, BN_CTX *ctx)
             return 0;
 
     BN_CTX_start(ctx);
-    if ((t = BN_CTX_get(ctx)) == NULL) {
+    if ((t = BN_CTX_get(ctx)) == NULL)
         goto err;
-    }
 
     /*
      * Multiply by non-quadratic/cubic residue.
@@ -380,9 +374,8 @@ int FP2_mul_art(const BP_GROUP *group, FP2 *r, const FP2 *a, BN_CTX *ctx)
             return 0;
 
     BN_CTX_start(ctx);
-    if ((t = BN_CTX_get(ctx)) == NULL) {
+    if ((t = BN_CTX_get(ctx)) == NULL)
         goto err;
-    }
 
     /*
      * Multiply by adjoined root.
@@ -411,11 +404,9 @@ int FP2_sqr(const BP_GROUP *group, FP2 *r, const FP2 *a, BN_CTX *ctx)
             return 0;
 
     BN_CTX_start(ctx);
-    if (((t0 = BN_CTX_get(ctx)) == NULL) ||
-        ((t1 = BN_CTX_get(ctx)) == NULL) ||
-        ((t2 = BN_CTX_get(ctx)) == NULL)) {
+    if ((t0 = BN_CTX_get(ctx)) == NULL || (t1 = BN_CTX_get(ctx)) == NULL
+        || (t2 = BN_CTX_get(ctx)) == NULL)
         goto err;
-    }
 
     /*
      * t0 = (a_0 + a_1).
@@ -465,9 +456,8 @@ int FP2_inv(const BP_GROUP *group, FP2 *r, const FP2 *a, BN_CTX *ctx)
             return 0;
 
     BN_CTX_start(ctx);
-    if (((t0 = BN_CTX_get(ctx)) == NULL) || ((t1 = BN_CTX_get(ctx)) == NULL)) {
+    if ((t0 = BN_CTX_get(ctx)) == NULL || (t1 = BN_CTX_get(ctx)) == NULL)
         goto err;
-    }
 
     /*
      * t0 = a_0^2, t1 = a_1^2.
@@ -532,7 +522,7 @@ int FP2_inv_sim(const BP_GROUP *group, FP2 *r[], FP2 *a[], int num,
     if ((u = FP2_new()) == NULL)
         goto err;
     for (i = 0; i < num; i++) {
-        if (((t[i] = FP2_new()) == NULL))
+        if ((t[i] = FP2_new()) == NULL)
             goto err;
     }
 
@@ -574,6 +564,7 @@ int FP2_inv_sim(const BP_GROUP *group, FP2 *r[], FP2 *a[], int num,
         goto err;
 
     ret = 1;
+
  err:
     FP2_free(u);
     for (i = 0; i < num; i++) {
@@ -588,9 +579,8 @@ int FP2_exp(const BP_GROUP *group, FP2 *r, const FP2 *a, const BIGNUM *b,
     int i, ret = 0;
     FP2 *t = NULL;
 
-    if (((t = FP2_new()) == NULL)) {
+    if ((t = FP2_new()) == NULL)
         goto err;
-    }
 
     if (!FP2_copy(t, a))
         goto err;
@@ -608,6 +598,7 @@ int FP2_exp(const BP_GROUP *group, FP2 *r, const FP2 *a, const BIGNUM *b,
         goto err;
 
     ret = 1;
+
  err:
     FP2_free(t);
     return ret;
