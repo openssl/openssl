@@ -582,7 +582,8 @@ int FP2_inv_sim(const BP_GROUP *group, FP2 *r[], FP2 *a[], int num,
     return ret;
 }
 
-int FP2_exp(const BP_GROUP *group, FP2 *r, const FP2 *a, const BIGNUM *b, BN_CTX *ctx)
+int FP2_exp(const BP_GROUP *group, FP2 *r, const FP2 *a, const BIGNUM *b,
+            BN_CTX *ctx)
 {
     int i, ret = 0;
     FP2 *t = NULL;

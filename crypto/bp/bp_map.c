@@ -65,10 +65,10 @@
 
 #include "bp_lcl.h"
 
-static int GT_miller_double(const BP_GROUP *group, FP12 *l, FP2 *x3, FP2 *y3,
-                            FP2 *z3, const FP2 *x1, const FP2 *y1,
-                            const FP2 *z1, const BIGNUM *xp, const BIGNUM *yp,
-                            BN_CTX *ctx)
+static int GT_miller_double(const BP_GROUP *group, FP12 *l, FP2 *x3,
+                            FP2 *y3, FP2 *z3, const FP2 *x1,
+                            const FP2 *y1, const FP2 *z1, const BIGNUM *xp,
+                            const BIGNUM *yp, BN_CTX *ctx)
 {
     FP2 *t0 = NULL, *t1 = NULL, *t2 = NULL, *t3 = NULL;
     FP2 *t4 = NULL, *t5 = NULL, *t6 = NULL, *u0 = NULL, *u1 = NULL;
@@ -342,8 +342,8 @@ static int GT_miller_add(const BP_GROUP *group, FP12 *l, FP2 *x3, FP2 *y3,
     return ret;
 }
 
-static int GT_miller_final(const BP_GROUP *group, FP12 *r, FP2 *x3, FP2 *y3,
-                           FP2 *z3, const FP2 *x1, const FP2 *y1,
+static int GT_miller_final(const BP_GROUP *group, FP12 *r, FP2 *x3,
+                           FP2 *y3, FP2 *z3, const FP2 *x1, const FP2 *y1,
                            const BIGNUM *xp, const BIGNUM *yp, BN_CTX *ctx)
 {
     FP2 *x2 = NULL, *y2 = NULL;
@@ -403,8 +403,7 @@ static int GT_final_exp(const BP_GROUP *group, FP12 *r, const FP12 *a,
     if (((t0 = FP12_new()) == NULL) ||
         ((t1 = FP12_new()) == NULL) ||
         ((t2 = FP12_new()) == NULL) ||
-        ((t3 = FP12_new()) == NULL) ||
-        ((t4 = FP12_new()) == NULL)) {
+        ((t3 = FP12_new()) == NULL) || ((t4 = FP12_new()) == NULL)) {
         goto err;
     }
 
@@ -548,7 +547,8 @@ int GT_ELEMs_pairing(const BP_GROUP *group, GT_ELEM *r, size_t num,
             /*
              * Copy only the valid pairs and remember amount.
              */
-            if (!G1_ELEM_get_affine_coordinates(group, p[i], xp[m], yp[m], ctx))
+            if (!G1_ELEM_get_affine_coordinates
+                (group, p[i], xp[m], yp[m], ctx))
                 goto err;
             if (!BN_to_montgomery(xp[m], xp[m], group->mont, ctx))
                 goto err;

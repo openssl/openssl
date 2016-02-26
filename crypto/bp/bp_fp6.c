@@ -216,9 +216,8 @@ int FP6_mul(const BP_GROUP *group, FP6 *r, const FP6 *a, const FP6 *b,
         ((v1 = FP2_new()) == NULL) ||
         ((v2 = FP2_new()) == NULL) ||
         ((t0 = FP2_new()) == NULL) ||
-        ((t1 = FP2_new()) == NULL) ||
-        ((t2 = FP2_new()) == NULL)) {
-            goto err;
+        ((t1 = FP2_new()) == NULL) || ((t2 = FP2_new()) == NULL)) {
+        goto err;
     }
 
     /*
@@ -308,8 +307,8 @@ int FP6_mul(const BP_GROUP *group, FP6 *r, const FP6 *a, const FP6 *b,
     return ret;
 }
 
-int FP6_mul_sparse(const BP_GROUP *group, FP6 *r, const FP6 *a, const FP6 *b,
-                BN_CTX *ctx)
+int FP6_mul_sparse(const BP_GROUP *group, FP6 *r, const FP6 *a,
+                   const FP6 *b, BN_CTX *ctx)
 {
     FP2 *v0, *v1 = NULL, *v2 = NULL, *t0 = NULL, *t1 = NULL, *t2 = NULL;
     int ret = 0;
@@ -318,9 +317,8 @@ int FP6_mul_sparse(const BP_GROUP *group, FP6 *r, const FP6 *a, const FP6 *b,
         ((v1 = FP2_new()) == NULL) ||
         ((v2 = FP2_new()) == NULL) ||
         ((t0 = FP2_new()) == NULL) ||
-        ((t1 = FP2_new()) == NULL) ||
-        ((t2 = FP2_new()) == NULL)) {
-            goto err;
+        ((t1 = FP2_new()) == NULL) || ((t2 = FP2_new()) == NULL)) {
+        goto err;
     }
 
     /*
@@ -397,7 +395,7 @@ int FP6_mul_art(const BP_GROUP *group, FP6 *r, const FP6 *a, BN_CTX *ctx)
     FP2 *t0;
     int ret = 0;
 
-    if ((t0 = FP2_new())  == NULL) {
+    if ((t0 = FP2_new()) == NULL) {
         goto err;
     }
 
@@ -423,9 +421,8 @@ int FP6_sqr(const BP_GROUP *group, FP6 *r, const FP6 *a, BN_CTX *ctx)
     if (((t0 = FP2_new()) == NULL) ||
         ((t1 = FP2_new()) == NULL) ||
         ((t2 = FP2_new()) == NULL) ||
-        ((t3 = FP2_new()) == NULL) ||
-        ((t4 = FP2_new()) == NULL)) {
-            goto err;
+        ((t3 = FP2_new()) == NULL) || ((t4 = FP2_new()) == NULL)) {
+        goto err;
     }
 
     /*
@@ -537,9 +534,8 @@ int FP6_inv(const BP_GROUP *group, FP6 *r, const FP6 *a, BN_CTX *ctx)
 
     if (((v0 = FP2_new()) == NULL) ||
         ((v1 = FP2_new()) == NULL) ||
-        ((v2 = FP2_new()) == NULL) ||
-        ((t0 = FP2_new()) == NULL)) {
-            goto err;
+        ((v2 = FP2_new()) == NULL) || ((t0 = FP2_new()) == NULL)) {
+        goto err;
     }
 
     /*

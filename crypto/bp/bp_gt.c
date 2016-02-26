@@ -140,7 +140,7 @@ int GT_ELEM_is_zero(GT_ELEM *a)
 int GT_ELEM_set_to_unity(const BP_GROUP *group, GT_ELEM *a)
 {
     if (!FP12_zero(a->f))
-		return 0;
+        return 0;
     return BN_copy(a->f->f[0]->f[0]->f[0], group->one) != NULL;
 }
 
@@ -160,7 +160,8 @@ int GT_ELEM_is_unity(const BP_GROUP *group, const GT_ELEM *a)
 }
 
 size_t GT_ELEM_elem2oct(const BP_GROUP *group, const GT_ELEM *a,
-                         unsigned char *buf, size_t len, BN_CTX *ctx) {
+                        unsigned char *buf, size_t len, BN_CTX *ctx)
+{
     size_t ret;
     BN_CTX *new_ctx = NULL;
     int used_ctx = 0;
@@ -181,39 +182,39 @@ size_t GT_ELEM_elem2oct(const BP_GROUP *group, const GT_ELEM *a,
             goto err;
         }
 
-	    if (ctx == NULL)
-	        if ((ctx = new_ctx = BN_CTX_new()) == NULL)
-	            return 0;
+        if (ctx == NULL)
+            if ((ctx = new_ctx = BN_CTX_new()) == NULL)
+                return 0;
 
         BN_CTX_start(ctx);
         used_ctx = 1;
         if ((f = BN_CTX_get(ctx)) == NULL)
-			goto err;
+            goto err;
 
         l = 0;
         for (i = 0; i < 2; i++) {
-			for (j = 0; j < 3; j++) {
-				for (k = 0; k < 2; k++) {
-					if (!BN_from_montgomery(f, a->f->f[i]->f[j]->f[k],
-						group->mont, ctx)) {
-						goto err;
-					}
-			        skip = field_len - BN_num_bytes(f);
-			        if (skip > field_len) {
-			            goto err;
-			        }
-			        while (skip > 0) {
-			            buf[l++] = 0;
-			            skip--;
-			        }
-			        skip = BN_bn2bin(f, buf + l);
-			        l += skip;
-			        if (l != (i * 6 + j * 2 + k + 1) * field_len) {
-			            goto err;
-					}
-				}
-			}
-		}
+            for (j = 0; j < 3; j++) {
+                for (k = 0; k < 2; k++) {
+                    if (!BN_from_montgomery(f, a->f->f[i]->f[j]->f[k],
+                                            group->mont, ctx)) {
+                        goto err;
+                    }
+                    skip = field_len - BN_num_bytes(f);
+                    if (skip > field_len) {
+                        goto err;
+                    }
+                    while (skip > 0) {
+                        buf[l++] = 0;
+                        skip--;
+                    }
+                    skip = BN_bn2bin(f, buf + l);
+                    l += skip;
+                    if (l != (i * 6 + j * 2 + k + 1) * field_len) {
+                        goto err;
+                    }
+                }
+            }
+        }
 
         if (l != ret) {
             goto err;
@@ -233,7 +234,8 @@ size_t GT_ELEM_elem2oct(const BP_GROUP *group, const GT_ELEM *a,
 }
 
 int GT_ELEM_oct2elem(const BP_GROUP *group, GT_ELEM *a,
-                      const unsigned char *buf, size_t len, BN_CTX *ctx) {
+                     const unsigned char *buf, size_t len, BN_CTX *ctx)
+{
     BN_CTX *new_ctx = NULL;
     BIGNUM *f;
     size_t field_len, enc_len;
@@ -254,26 +256,26 @@ int GT_ELEM_oct2elem(const BP_GROUP *group, GT_ELEM *a,
         if ((ctx = new_ctx = BN_CTX_new()) == NULL)
             return 0;
 
-	BN_CTX_start(ctx);
+    BN_CTX_start(ctx);
     if ((f = BN_CTX_get(ctx)) == NULL)
-		goto err;
+        goto err;
 
-	for (i = 0; i < 2; i++) {
-		for (j = 0; j < 3; j++) {
-			for (k = 0; k < 2; k++) {
-				if (!BN_bin2bn(buf, field_len, f))
-					goto err;
-			    if (BN_ucmp(f, group->field) >= 0) {
-			        goto err;
-				}
-				if (!BN_to_montgomery(a->f->f[i]->f[j]->f[k], f,
-					group->mont, ctx)) {
-					goto err;
-				}
-				buf += field_len;
-			}
-		}
-	}
+    for (i = 0; i < 2; i++) {
+        for (j = 0; j < 3; j++) {
+            for (k = 0; k < 2; k++) {
+                if (!BN_bin2bn(buf, field_len, f))
+                    goto err;
+                if (BN_ucmp(f, group->field) >= 0) {
+                    goto err;
+                }
+                if (!BN_to_montgomery(a->f->f[i]->f[j]->f[k], f,
+                                      group->mont, ctx)) {
+                    goto err;
+                }
+                buf += field_len;
+            }
+        }
+    }
 
     ret = 1;
  err:

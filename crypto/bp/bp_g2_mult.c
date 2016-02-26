@@ -85,7 +85,7 @@ struct g2_pre_comp_st {
     size_t numblocks;           /* max. number of blocks for which we have
                                  * precomputation */
     size_t w;                   /* window size */
-    G2_ELEM **points;          /* array with pre-calculated multiples of
+    G2_ELEM **points;           /* array with pre-calculated multiples of
                                  * generator: 'num' pointers to G2_ELEM
                                  * objects followed by a NULL */
     size_t num;                 /* numblocks * 2^(w-1) */
@@ -148,8 +148,7 @@ void g2_pre_comp_free(G2_PRE_COMP *pre)
                   1))
 
 int G2_ELEM_mul(const BP_GROUP *group, G2_ELEM *r, const BIGNUM *g_scalar,
-                const G2_ELEM *point, const BIGNUM *p_scalar,
-                BN_CTX *ctx)
+                const G2_ELEM *point, const BIGNUM *p_scalar, BN_CTX *ctx)
 {
     const G2_ELEM *points[1];
     const BIGNUM *scalars[1];
@@ -157,8 +156,8 @@ int G2_ELEM_mul(const BP_GROUP *group, G2_ELEM *r, const BIGNUM *g_scalar,
     points[0] = point;
     scalars[0] = p_scalar;
     return G2_ELEMs_mul(group, r, g_scalar,
-                     (point != NULL
-                      && p_scalar != NULL), points, scalars, ctx);
+                        (point != NULL
+                         && p_scalar != NULL), points, scalars, ctx);
 
 }
 
@@ -170,8 +169,8 @@ int G2_ELEM_mul(const BP_GROUP *group, G2_ELEM *r, const BIGNUM *g_scalar,
  * in the addition if scalar != NULL
  */
 int G2_ELEMs_mul(const BP_GROUP *group, G2_ELEM *r, const BIGNUM *scalar,
-                size_t num, const G2_ELEM *points[], const BIGNUM *scalars[],
-                BN_CTX *ctx)
+                 size_t num, const G2_ELEM *points[],
+                 const BIGNUM *scalars[], BN_CTX *ctx)
 {
     BN_CTX *new_ctx = NULL;
     const G2_ELEM *generator = NULL;
@@ -188,9 +187,9 @@ int G2_ELEMs_mul(const BP_GROUP *group, G2_ELEM *r, const BIGNUM *scalar,
     size_t *wNAF_len = NULL;
     size_t max_len = 0;
     size_t num_val;
-    G2_ELEM **val = NULL;      /* precomputation */
+    G2_ELEM **val = NULL;       /* precomputation */
     G2_ELEM **v;
-    G2_ELEM ***val_sub = NULL; /* pointers to sub-arrays of 'val' or
+    G2_ELEM ***val_sub = NULL;  /* pointers to sub-arrays of 'val' or
                                  * 'pre_comp->points' */
     const G2_PRE_COMP *pre_comp = NULL;
     int num_scalar = 0;         /* flag: will be set to 1 if 'scalar' must be
@@ -583,10 +582,10 @@ int g2_wNAF_precompute_mult(BP_GROUP *group, BN_CTX *ctx)
     }
 
     BN_CTX_start(ctx);
-	if ((order = BN_CTX_get(ctx)) == NULL)
-		goto err;
-	if (!BP_GROUP_get_order(group, order, ctx))
-		goto err;
+    if ((order = BN_CTX_get(ctx)) == NULL)
+        goto err;
+    if (!BP_GROUP_get_order(group, order, ctx))
+        goto err;
     if (BN_is_zero(order)) {
         ECerr(EC_F_EC_WNAF_PRECOMPUTE_MULT, EC_R_UNKNOWN_ORDER);
         goto err;

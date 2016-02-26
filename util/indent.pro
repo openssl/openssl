@@ -26,7 +26,7 @@
 -nprs
 -npsl
 -nsc
--ppi1 
+-ppi1
 -saf
 -sai
 -saw
@@ -727,3 +727,11 @@
 -T ASYNC_FIBRE
 -T ASYNC_CTX
 -T ASYNC_JOB
+-T BP_GROUP
+-T FP12
+-T FP2
+-T FP6
+-T G1_ELEM
+-T G2_ELEM
+-T G2_PRE_COMP
+-T GT_ELEM

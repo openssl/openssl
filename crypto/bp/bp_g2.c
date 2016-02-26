@@ -427,18 +427,18 @@ size_t G2_ELEM_point2oct(const BP_GROUP *group, const G2_ELEM *point,
             goto err;
         }
 
-	    if (ctx == NULL)
-	        if ((ctx = new_ctx = BN_CTX_new()) == NULL)
-	            return 0;
+        if (ctx == NULL)
+            if ((ctx = new_ctx = BN_CTX_new()) == NULL)
+                return 0;
 
         used_ctx = 1;
-		BN_CTX_start(ctx);
-		if (((x[0] = BN_CTX_get(ctx)) == NULL) ||
-		    ((x[1] = BN_CTX_get(ctx)) == NULL) ||
-		    ((y[0] = BN_CTX_get(ctx)) == NULL) ||
-		    ((y[1] = BN_CTX_get(ctx)) == NULL)) {
-		    goto err;
-		}
+        BN_CTX_start(ctx);
+        if (((x[0] = BN_CTX_get(ctx)) == NULL) ||
+            ((x[1] = BN_CTX_get(ctx)) == NULL) ||
+            ((y[0] = BN_CTX_get(ctx)) == NULL) ||
+            ((y[1] = BN_CTX_get(ctx)) == NULL)) {
+            goto err;
+        }
 
         if (!G2_ELEM_get_affine_coordinates(group, point, x, y, ctx))
             goto err;
@@ -540,13 +540,13 @@ int G2_ELEM_oct2point(const BP_GROUP *group, G2_ELEM *point,
         if ((ctx = new_ctx = BN_CTX_new()) == NULL)
             return 0;
 
-	BN_CTX_start(ctx);
-	if (((x[0] = BN_CTX_get(ctx)) == NULL) ||
-	    ((x[1] = BN_CTX_get(ctx)) == NULL) ||
-	    ((y[0] = BN_CTX_get(ctx)) == NULL) ||
-	    ((y[1] = BN_CTX_get(ctx)) == NULL)) {
-	    goto err;
-	}
+    BN_CTX_start(ctx);
+    if (((x[0] = BN_CTX_get(ctx)) == NULL) ||
+        ((x[1] = BN_CTX_get(ctx)) == NULL) ||
+        ((y[0] = BN_CTX_get(ctx)) == NULL) ||
+        ((y[1] = BN_CTX_get(ctx)) == NULL)) {
+        goto err;
+    }
 
     if (!BN_bin2bn(buf, field_len, x[0]))
         goto err;
@@ -1221,8 +1221,7 @@ int G2_ELEMs_make_affine(const BP_GROUP *group, size_t num,
         if ((ctx = new_ctx = BN_CTX_new()) == NULL)
             return 0;
 
-    if (((z2 = FP2_new()) == NULL) ||
-        ((z3 = FP2_new()) == NULL)) {
+    if (((z2 = FP2_new()) == NULL) || ((z3 = FP2_new()) == NULL)) {
         goto err;
     }
 

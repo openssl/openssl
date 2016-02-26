@@ -132,9 +132,10 @@ int G1_ELEM_set_to_infinity(const BP_GROUP *group, G1_ELEM *point)
     return EC_POINT_set_to_infinity(group->ec, point->p);
 }
 
-int G1_ELEM_set_Jprojective_coordinates(const BP_GROUP *group, G1_ELEM *point,
-                                        const BIGNUM *x, const BIGNUM *y,
-                                        const BIGNUM *z, BN_CTX *ctx)
+int G1_ELEM_set_Jprojective_coordinates(const BP_GROUP *group,
+                                        G1_ELEM *point, const BIGNUM *x,
+                                        const BIGNUM *y, const BIGNUM *z,
+                                        BN_CTX *ctx)
 {
     return EC_POINT_set_Jprojective_coordinates_GFp(group->ec, point->p, x, y,
                                                     z, ctx);
@@ -157,16 +158,16 @@ int G1_ELEM_set_affine_coordinates(const BP_GROUP *group, G1_ELEM *point,
 }
 
 int G1_ELEM_get_affine_coordinates(const BP_GROUP *group,
-                                   const G1_ELEM *point, BIGNUM *x, BIGNUM *y,
-                                   BN_CTX *ctx)
+                                   const G1_ELEM *point, BIGNUM *x,
+                                   BIGNUM *y, BN_CTX *ctx)
 {
     return EC_POINT_get_affine_coordinates_GFp(group->ec, point->p, x, y,
                                                ctx);
 }
 
-int G1_ELEM_set_compressed_coordinates(const BP_GROUP *group, G1_ELEM *point,
-                                       const BIGNUM *x, int y_bit,
-                                       BN_CTX *ctx)
+int G1_ELEM_set_compressed_coordinates(const BP_GROUP *group,
+                                       G1_ELEM *point, const BIGNUM *x,
+                                       int y_bit, BN_CTX *ctx)
 {
     return EC_POINT_set_compressed_coordinates_GFp(group->ec, point->p, x,
                                                    y_bit, ctx);
@@ -213,8 +214,8 @@ int G1_ELEM_is_on_curve(const BP_GROUP *group, const G1_ELEM *point,
     return EC_POINT_is_on_curve(group->ec, point->p, ctx);
 }
 
-int G1_ELEM_cmp(const BP_GROUP *group, const G1_ELEM *point, const G1_ELEM *b,
-                BN_CTX *ctx)
+int G1_ELEM_cmp(const BP_GROUP *group, const G1_ELEM *point,
+                const G1_ELEM *b, BN_CTX *ctx)
 {
     return EC_POINT_cmp(group->ec, point->p, b->p, ctx);
 }
@@ -245,8 +246,8 @@ int G1_ELEM_mul(const BP_GROUP *group, G1_ELEM *r, const BIGNUM *g_scalar,
     points[0] = point;
     scalars[0] = p_scalar;
     return G1_ELEMs_mul(group, r, g_scalar,
-                     (point != NULL
-                      && p_scalar != NULL), points, scalars, ctx);
+                        (point != NULL
+                         && p_scalar != NULL), points, scalars, ctx);
 }
 
 int G1_ELEMs_mul(const BP_GROUP *group, G1_ELEM *r, const BIGNUM *scalar,

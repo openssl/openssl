@@ -308,9 +308,9 @@ int FP12_back(const BP_GROUP *group, FP12 *r[], const FP12 *a[], int num,
               BN_CTX *ctx);
 int FP12_frb(const BP_GROUP *group, FP12 *r, const FP12 *a, BN_CTX *ctx);
 int FP12_exp_cyc(const BP_GROUP *group, FP12 *r, const FP12 *a,
-				 const BIGNUM *b, BN_CTX *ctx);
+                 const BIGNUM *b, BN_CTX *ctx);
 int FP12_exp_pck(const BP_GROUP *group, FP12 *r, const FP12 *a,
-				 const BIGNUM *b, BN_CTX *ctx);
+                 const BIGNUM *b, BN_CTX *ctx);
 
 /********************************************************************/
 /*              Functions for precomputation in G2                  */
