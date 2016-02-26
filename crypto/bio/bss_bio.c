@@ -121,15 +121,12 @@ static int bio_new(BIO *bio)
 {
     struct bio_bio_st *b;
 
-    b = OPENSSL_malloc(sizeof(*b));
+    b = OPENSSL_zalloc(sizeof(*b));
     if (b == NULL)
         return 0;
 
-    b->peer = NULL;
     /* enough for one TLS record (just a default) */
     b->size = 17 * 1024;
-    b->buf = NULL;
-
     bio->ptr = b;
     return 1;
 }
