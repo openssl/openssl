@@ -2081,7 +2081,7 @@ sub resolve_config {
     #   value.
     # - Otherwise, this target's value is assumed to be a string that
     #   will simply override the inherited list of values.
-    my $default_combiner = add(" ");
+    my $default_combiner = add();
 
     my %all_keys =
 	map { $_ => 1 } (keys %combined_inheritance,
