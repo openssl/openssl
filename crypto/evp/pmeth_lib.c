@@ -162,8 +162,7 @@ static EVP_PKEY_CTX *int_ctx_new(EVP_PKEY *pkey, ENGINE *e, int id)
     ret = OPENSSL_zalloc(sizeof(*ret));
     if (ret == NULL) {
 #ifndef OPENSSL_NO_ENGINE
-        if (e)
-            ENGINE_finish(e);
+        ENGINE_finish(e);
 #endif
         EVPerr(EVP_F_INT_CTX_NEW, ERR_R_MALLOC_FAILURE);
         return NULL;
@@ -329,12 +328,7 @@ void EVP_PKEY_CTX_free(EVP_PKEY_CTX *ctx)
     EVP_PKEY_free(ctx->pkey);
     EVP_PKEY_free(ctx->peerkey);
 #ifndef OPENSSL_NO_ENGINE
-    if (ctx->engine)
-        /*
-         * The EVP_PKEY_CTX we used belongs to an ENGINE, release the
-         * functional reference we held for this reason.
-         */
-        ENGINE_finish(ctx->engine);
+    ENGINE_finish(ctx->engine);
 #endif
     OPENSSL_free(ctx);
 }

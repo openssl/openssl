@@ -64,10 +64,15 @@ B<openssl> B<s_client>
 [B<-quiet>]
 [B<-ssl3>]
 [B<-tls1>]
+[B<-tls1_1>]
+[B<-tls1_2>]
 [B<-no_ssl3>]
 [B<-no_tls1>]
 [B<-no_tls1_1>]
 [B<-no_tls1_2>]
+[B<-dtls>]
+[B<-dtls1>]
+[B<-dtls1_2>]
 [B<-fallback_scsv>]
 [B<-async>]
 [B<-bugs>]
@@ -305,15 +310,20 @@ Use the PSK key B<key> when using a PSK cipher suite. The key is
 given as a hexadecimal number without leading 0x, for example -psk
 1a2b3c4d.
 
-=item B<-ssl3>, B<-tls1>, B<-no_ssl3>, B<-no_tls1>, B<-no_tls1_1>, B<-no_tls1_2>
+=item B<-ssl3>, B<-tls1>, B<-tls1_1>, B<-tls1_2>, B<-no_ssl3>, B<-no_tls1>, B<-no_tls1_1>, B<-no_tls1_2>
 
-these options disable the use of certain SSL or TLS protocols. By default
-the initial handshake uses a method which should be compatible with all
-servers and permit them to use SSL v3 or TLS as appropriate.
+These options require or disable the use of the specified SSL or TLS protocols.
+By default B<s_client> will negotiate the highest mutually supported protocol
+version.
+When a specific TLS version is required, only that version will be offered to
+and accepted from the server.
 
-Unfortunately there are still ancient and broken servers in use which
-cannot handle this technique and will fail to connect. Some servers only
-work if TLS is turned off.
+=item B<-dtls>, B<-dtls1>, B<-dtls1_2>
+
+These options make B<s_client> use DTLS protocols instead of TLS.
+With B<-dtls>, B<s_client> will negotiate any supported DTLS protcol version,
+whilst B<-dtls1> and B<-dtls1_2> will only support DTLS1.0 and DTLS1.2
+respectively.
 
 =item B<-fallback_scsv>
 
@@ -479,10 +489,10 @@ option: any verify errors are then returned aborting the handshake.
 
 =head1 BUGS
 
-Because this program has a lot of options and also because some of
-the techniques used are rather old, the C source of s_client is rather
-hard to read and not a model of how things should be done. A typical
-SSL client program would be much simpler.
+Because this program has a lot of options and also because some of the
+techniques used are rather old, the C source of B<s_client> is rather hard to
+read and not a model of how things should be done.
+A typical SSL client program would be much simpler.
 
 The B<-prexit> option is a bit of a hack. We should really report
 information whenever a session is renegotiated.

@@ -2044,6 +2044,7 @@ void ERR_load_SSL_strings(void);
 # define SSL_F_SSL_CTX_CHECK_PRIVATE_KEY                  168
 # define SSL_F_SSL_CTX_MAKE_PROFILES                      309
 # define SSL_F_SSL_CTX_NEW                                169
+# define SSL_F_SSL_CTX_SET_ALPN_PROTOS                    343
 # define SSL_F_SSL_CTX_SET_CIPHER_LIST                    269
 # define SSL_F_SSL_CTX_SET_CLIENT_CERT_ENGINE             290
 # define SSL_F_SSL_CTX_SET_PURPOSE                        226
@@ -2091,6 +2092,7 @@ void ERR_load_SSL_strings(void);
 # define SSL_F_SSL_SESSION_NEW                            189
 # define SSL_F_SSL_SESSION_PRINT_FP                       190
 # define SSL_F_SSL_SESSION_SET1_ID_CONTEXT                312
+# define SSL_F_SSL_SET_ALPN_PROTOS                        344
 # define SSL_F_SSL_SET_CERT                               191
 # define SSL_F_SSL_SET_CIPHER_LIST                        271
 # define SSL_F_SSL_SET_FD                                 192

@@ -627,7 +627,8 @@ static int load_pkcs12(BIO *in, const char *desc,
     return ret;
 }
 
-int load_cert_crl_http(const char *url, X509 **pcert, X509_CRL **pcrl)
+#ifndef OPENSSL_NO_OCSP
+static int load_cert_crl_http(const char *url, X509 **pcert, X509_CRL **pcrl)
 {
     char *host = NULL, *port = NULL, *path = NULL;
     BIO *bio = NULL;
@@ -673,6 +674,7 @@ int load_cert_crl_http(const char *url, X509 **pcert, X509_CRL **pcrl)
     }
     return rv;
 }
+#endif
 
 X509 *load_cert(const char *file, int format, const char *cert_descrip)
 {
@@ -680,7 +682,9 @@ X509 *load_cert(const char *file, int format, const char *cert_descrip)
     BIO *cert;
 
     if (format == FORMAT_HTTP) {
+#ifndef OPENSSL_NO_OCSP
         load_cert_crl_http(file, &x, NULL);
+#endif
         return x;
     }
 
@@ -719,7 +723,9 @@ X509_CRL *load_crl(const char *infile, int format)
     BIO *in = NULL;
 
     if (format == FORMAT_HTTP) {
+#ifndef OPENSSL_NO_OCSP
         load_cert_crl_http(infile, NULL, &x);
+#endif
         return x;
     }
 

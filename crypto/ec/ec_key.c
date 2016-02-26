@@ -108,8 +108,7 @@ void EC_KEY_free(EC_KEY *r)
         r->meth->finish(r);
 
 #ifndef OPENSSL_NO_ENGINE
-    if (r->engine != NULL)
-        ENGINE_finish(r->engine);
+    ENGINE_finish(r->engine);
 #endif
 
     CRYPTO_free_ex_data(CRYPTO_EX_INDEX_EC_KEY, r, &r->ex_data);
@@ -130,7 +129,7 @@ EC_KEY *EC_KEY_copy(EC_KEY *dest, EC_KEY *src)
         if (dest->meth->finish != NULL)
             dest->meth->finish(dest);
 #ifndef OPENSSL_NO_ENGINE
-        if (dest->engine != NULL && ENGINE_finish(dest->engine) == 0)
+        if (ENGINE_finish(dest->engine) == 0)
             return 0;
         dest->engine = NULL;
 #endif
@@ -584,8 +583,8 @@ size_t EC_KEY_priv2buf(const EC_KEY *eckey, unsigned char **pbuf)
     size_t len;
     unsigned char *buf;
     len = EC_KEY_priv2oct(eckey, NULL, 0);
-    if (len == 0)
-        return 0;
+    if (len == 0 || pbuf == NULL)
+        return len;
     buf = OPENSSL_malloc(len);
     if (buf == NULL)
         return 0;

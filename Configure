@@ -1970,12 +1970,20 @@ sub _add {
     }
 }
 sub add_before {
-    my $separator = shift;
+    my $separator = " ";
+    if (ref($_[$#_]) eq "HASH") {
+        my $opts = pop;
+        $separator = $opts->{separator};
+    }
     my @x = @_;
     sub { _add($separator, @x, @_) };
 }
 sub add {
-    my $separator = shift;
+    my $separator = " ";
+    if (ref($_[$#_]) eq "HASH") {
+        my $opts = pop;
+        $separator = $opts->{separator};
+    }
     my @x = @_;
     sub { _add($separator, @_, @x) };
 }
@@ -2073,7 +2081,7 @@ sub resolve_config {
     #   value.
     # - Otherwise, this target's value is assumed to be a string that
     #   will simply override the inherited list of values.
-    my $default_combiner = add(" ");
+    my $default_combiner = add();
 
     my %all_keys =
 	map { $_ => 1 } (keys %combined_inheritance,
@@ -2230,14 +2238,24 @@ sub print_table_entry
     if ($type eq "TABLE") {
 	print "\n";
 	print "*** $target\n";
-	printf "\$%-12s = %s\n", $_, $target{$_} foreach (@sequence);
+        foreach (@sequence) {
+            if (ref($target{$_}) eq "ARRAY") {
+                printf "\$%-12s = %s\n", $_, join(" ", @{$target{$_}});
+            } else {
+                printf "\$%-12s = %s\n", $_, $target{$_};
+            }
+        }
     } elsif ($type eq "HASH") {
 	my $largest =
 	    length((sort { length($a) <=> length($b) } @sequence)[-1]);
 	print "    '$target' => {\n";
 	foreach (@sequence) {
 	    if ($target{$_}) {
-		print "      '",$_,"'"," " x ($largest - length($_))," => '",$target{$_},"',\n";
+                if (ref($target{$_}) eq "ARRAY") {
+                    print "      '",$_,"'"," " x ($largest - length($_))," => [ ",join(", ", map { "'$_'" } @{$target{$_}})," ],\n";
+                } else {
+                    print "      '",$_,"'"," " x ($largest - length($_))," => '",$target{$_},"',\n";
+                }
 	    }
 	}
 	print "    },\n";

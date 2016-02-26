@@ -171,7 +171,7 @@ DO_GNU_DSO=\
 	$(DO_GNU_SO_COMMON)
 DO_GNU_SO=\
 	$(CALC_VERSIONS); \
-	SHLIB=lib$$SHLIB; \
+	SHLIB=lib$(LIBNAME).so; \
 	ALLSYMSFLAGS='-Wl,--whole-archive'; \
 	NOALLSYMSFLAGS='-Wl,--no-whole-archive'; \
 	$(DO_GNU_SO_COMMON)
@@ -360,7 +360,7 @@ link_dso.solaris:
 		$(DO_GNU_DSO); \
 	else \
 		$(CALC_VERSIONS); \
-		SHLIB=lib$(LIBNAME).so; \
+		SHLIB=$(LIBNAME).so; \
 		SHLIB_SUFFIX=; \
 		ALLSYMSFLAGS=""; \
 		NOALLSYMSFLAGS=""; \

@@ -99,10 +99,8 @@ int DSA_set_method(DSA *dsa, const DSA_METHOD *meth)
     if (mtmp->finish)
         mtmp->finish(dsa);
 #ifndef OPENSSL_NO_ENGINE
-    if (dsa->engine) {
-        ENGINE_finish(dsa->engine);
-        dsa->engine = NULL;
-    }
+    ENGINE_finish(dsa->engine);
+    dsa->engine = NULL;
 #endif
     dsa->meth = meth;
     if (meth->init)
@@ -132,7 +130,7 @@ DSA *DSA_new_method(ENGINE *engine)
         ret->engine = ENGINE_get_default_DSA();
     if (ret->engine) {
         ret->meth = ENGINE_get_DSA(ret->engine);
-        if (!ret->meth) {
+        if (ret->meth == NULL) {
             DSAerr(DSA_F_DSA_NEW_METHOD, ERR_R_ENGINE_LIB);
             ENGINE_finish(ret->engine);
             OPENSSL_free(ret);

@@ -60,7 +60,9 @@
 #include <openssl/bio.h>
 #include <openssl/err.h>
 #include <openssl/conf.h>
-#include <openssl/engine.h>
+#ifndef OPENSSL_NO_ENGINE
+ #include <openssl/engine.h>
+#endif
 #include "e_os.h"
 
 /* Just a ClientHello without a cookie */

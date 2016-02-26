@@ -477,7 +477,6 @@ int app_passwd(char *arg1, char *arg2, char **pass1, char **pass2);
 int add_oid_section(CONF *conf);
 X509 *load_cert(const char *file, int format, const char *cert_descrip);
 X509_CRL *load_crl(const char *infile, int format);
-int load_cert_crl_http(const char *url, X509 **pcert, X509_CRL **pcrl);
 EVP_PKEY *load_key(const char *file, int format, int maybe_stdin,
                    const char *pass, ENGINE *e, const char *key_descrip);
 EVP_PKEY *load_pubkey(const char *file, int format, int maybe_stdin,
