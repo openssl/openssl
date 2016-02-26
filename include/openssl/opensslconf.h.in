@@ -23,19 +23,15 @@ extern "C" {
     }
     foreach (@{$config{openssl_api_defines}}) {
         (my $macro, my $value) = $_ =~ /^(.*?)=(.*?)$/;
-        $OUT .= "# define OPENSSL_MIN_API $value\n";
+        $OUT .= "#define OPENSSL_MIN_API $value\n";
     }
     if (@{$config{openssl_algorithm_defines}}) {
       foreach (@{$config{openssl_algorithm_defines}}) {
-	$OUT .= "# ifndef $_\n";
-	$OUT .= "#  define $_\n";
-	$OUT .= "# endif\n";
+	$OUT .= "#ifndef $_\n";
+	$OUT .= "# define $_\n";
+	$OUT .= "#endif\n";
       }
     }
-    "";
--}
-
-{-
     if (@{$config{openssl_thread_defines}}) {
       foreach (@{$config{openssl_thread_defines}}) {
 	$OUT .= "#ifndef $_\n";
@@ -74,13 +70,13 @@ extern "C" {
 #endif
 
 #ifndef OPENSSL_FILE
-#ifdef OPENSSL_NO_FILENAMES
-#define OPENSSL_FILE ""
-#define OPENSSL_LINE 0
-#else
-#define OPENSSL_FILE __FILE__
-#define OPENSSL_LINE __LINE__
-#endif
+# ifdef OPENSSL_NO_FILENAMES
+#  define OPENSSL_FILE ""
+#  define OPENSSL_LINE 0
+# else
+#  define OPENSSL_FILE __FILE__
+#  define OPENSSL_LINE __LINE__
+# endif
 #endif
 
 #ifndef OPENSSL_MIN_API

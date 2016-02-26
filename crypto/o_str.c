@@ -133,17 +133,13 @@ char *CRYPTO_strdup(const char *str, const char* file, int line)
 
 char *CRYPTO_strndup(const char *str, size_t s, const char* file, int line)
 {
-    const char *cp;
     size_t maxlen;
     char *ret;
 
     if (str == NULL)
         return NULL;
 
-    /* Get length. */
-    for (cp = str, maxlen = s; maxlen-- != 0 && *cp != '\0'; ++cp)
-        continue;
-    maxlen = cp - str;
+    maxlen = OPENSSL_strnlen(str, s);
 
     ret = CRYPTO_malloc(maxlen + 1, file, line);
     if (ret) {

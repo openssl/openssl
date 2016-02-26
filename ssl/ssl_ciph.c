@@ -439,8 +439,7 @@ static int get_optional_pkey_id(const char *pkey_name)
                                     ameth) <= 0)
             pkey_id = 0;
     }
-    if (tmpeng)
-        ENGINE_finish(tmpeng);
+    ENGINE_finish(tmpeng);
     return pkey_id;
 }
 
