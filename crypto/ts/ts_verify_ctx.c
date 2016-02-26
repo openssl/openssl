@@ -91,6 +91,11 @@ int TS_VERIFY_CTX_add_flags(TS_VERIFY_CTX *ctx, int f)
     return ctx->flags;
 }
 
+X509_VERIFY_PARAM *TS_VERIFY_CTX_get_store_param(TS_VERIFY_CTX *ctx) 
+{
+    return ctx->store->param;
+}
+
 int TS_VERIFY_CTX_set_flags(TS_VERIFY_CTX *ctx, int f)
 {
     ctx->flags = f;

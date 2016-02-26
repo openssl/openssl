@@ -41,6 +41,7 @@ B<-reply>
 
 B<openssl> B<ts>
 B<-verify>
+[B<-attime> timestamp]
 [B<-data> file_to_hash]
 [B<-digest> digest_bytes]
 [B<-queryfile> request.tsq]
@@ -290,6 +291,12 @@ stamp token is valid and matches a particular time stamp request or
 data file. The B<-verify> command does not use the configuration file.
 
 =over 4
+
+=item B<-attime timestamp>
+
+Perform validation checks using time specified by B<timestamp> and not
+current system time. B<timestamp> is the number of seconds since
+01.01.1970 (UNIX time).
 
 =item B<-data> file_to_hash
 
