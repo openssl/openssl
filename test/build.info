@@ -203,7 +203,7 @@ SOURCE[dtlsv1listentest]=dtlsv1listentest.c
 INCLUDE[dtlsv1listentest]={- rel2abs(catdir($builddir,"../include")) -} .. ../include
 DEPEND[dtlsv1listentest]=../libssl
 
-SOURCE[ct_test]=ct_test.c
+SOURCE[ct_test]=ct_test.c testutil.c
 INCLUDE[ct_test]={- rel2abs(catdir($builddir,"../include")) -} ../crypto/include ../include
 DEPEND[ct_test]=../libcrypto
 
