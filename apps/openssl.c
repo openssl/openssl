@@ -756,14 +756,8 @@ static void list_disabled(void)
 #ifdef OPENSSL_NO_SRTP
     BIO_puts(bio_out, "SRTP\n");
 #endif
-#ifdef OPENSSL_NO_SSL
-    BIO_puts(bio_out, "SSL\n");
-#endif
 #ifdef OPENSSL_NO_SSL3
     BIO_puts(bio_out, "SSL3\n");
-#endif
-#if defined(OPENSSL_NO_TLS)
-    BIO_puts(bio_out, "TLS\n");
 #endif
 #ifdef OPENSSL_NO_TLS1
     BIO_puts(bio_out, "TLS1\n");
