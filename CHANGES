@@ -71,7 +71,7 @@
      The "unified" build system is aimed to be a common system for all
      platforms we support.  With it comes new support for VMS.
 
-     This system builds supports building in a differnt directory tree
+     This system builds supports building in a different directory tree
      than the source tree.  It produces one Makefile (for unix family
      or lookalikes), or one descrip.mms (for VMS).
 
