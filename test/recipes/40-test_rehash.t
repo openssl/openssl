@@ -39,7 +39,7 @@ indir "rehash.$$" => sub {
     chmod 0500, curdir();
   SKIP: {
       if (!ok(!open(FOO, ">unwritable.txt"),
-              "Testing that we aren't running as a priviledged user, such as root")) {
+              "Testing that we aren't running as a privileged user, such as root")) {
           close FOO;
           skip "It's pointless to run the next test as root", 1;
       }

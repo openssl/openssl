@@ -338,11 +338,11 @@ directory path and one default file path. Both are set via this call.
 
 =item int B<SSL_CTX_set_default_verify_dir>(SSL_CTX *ctx)
 
-Use the default directory path to locate trusted CA certficates.
+Use the default directory path to locate trusted CA certificates.
 
 =item int B<SSL_CTX_set_default_verify_file>(SSL_CTX *ctx)
 
-Use the file path to locate trusted CA certficates.
+Use the file path to locate trusted CA certificates.
 
 =item int B<SSL_CTX_set_ex_data>(SSL_CTX *s, int idx, char *arg);
 
