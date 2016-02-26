@@ -139,7 +139,7 @@ char *CRYPTO_strndup(const char *str, size_t s, const char* file, int line)
     if (str == NULL)
         return NULL;
 
-    maxlen = OPENSSL_strnlen(str, s)
+    maxlen = OPENSSL_strnlen(str, s);
 
     ret = CRYPTO_malloc(maxlen + 1, file, line);
     if (ret) {
