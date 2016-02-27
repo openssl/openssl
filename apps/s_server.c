@@ -987,9 +987,9 @@ OPTIONS s_server_options[] = {
 #ifndef OPENSSL_NO_SRTP
     {"use_srtp", OPT_SRTP_PROFILES, 's',
      "Offer SRTP key management with a colon-separated profile list"},
+#endif
     {"alpn", OPT_ALPN, 's',
      "Set the advertised protocols for the ALPN extension (comma-separated list)"},
-#endif
 #ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
 #endif
@@ -1490,9 +1490,11 @@ int s_server_main(int argc, char *argv[])
         case OPT_ALPN:
             alpn_in = opt_arg();
             break;
+#ifndef OPENSSL_NO_SRTP
         case OPT_SRTP_PROFILES:
             srtp_profiles = opt_arg();
             break;
+#endif
         case OPT_KEYMATEXPORT:
             keymatexportlabel = opt_arg();
             break;
