@@ -1490,11 +1490,11 @@ int s_server_main(int argc, char *argv[])
         case OPT_ALPN:
             alpn_in = opt_arg();
             break;
-#ifndef OPENSSL_NO_SRTP
         case OPT_SRTP_PROFILES:
+#ifndef OPENSSL_NO_SRTP
             srtp_profiles = opt_arg();
-            break;
 #endif
+            break;
         case OPT_KEYMATEXPORT:
             keymatexportlabel = opt_arg();
             break;
