@@ -141,7 +141,7 @@ $proxy->clientflags("-sess_in ".$session);
 $proxy->clientstart();
 checkmessages(5, "Session resumption extended master secret test", 1, 1, 0);
 
-#Test 6: Session resumption extended master secret test orginial session
+#Test 6: Session resumption extended master secret test original session
 # omits extension. Server must not resume session.
 #Expected result: ClientHello extension seen; ServerHello extension seen
 #                 Full handshake
@@ -172,7 +172,7 @@ $proxy->clear();
 $proxy->clientflags("-sess_in ".$session);
 setrmextms(1, 0);
 $proxy->clientstart();
-ok(TLSProxy::Message->fail(), "Client inconsistent session resupmption");
+ok(TLSProxy::Message->fail(), "Client inconsistent session resumption");
 
 #Test 8: Session resumption extended master secret test resumed session
 # omits server extension. Client must abort connection.
