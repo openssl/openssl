@@ -211,7 +211,7 @@ build_apps_nodep: $(PROGRAMS) $(SCRIPTS)
 build_tests: configdata.pm build_tests_nodep depend
 build_tests_nodep: $(TESTPROGS)
 
-test tests: build_tests_nodep build_apps_nodep build_engines_nodep depend rehash
+test tests: build_tests_nodep build_apps_nodep build_engines_nodep depend
 	( cd test; \
 	  SRCTOP=../$(SRCDIR) \
 	  BLDTOP=../$(BLDDIR) \
@@ -242,7 +242,7 @@ clean: libclean
 	rm -f $(PROGRAMS) $(TESTPROGS)
 	rm -f `find $(BLDDIR) -name '*{- $depext -}'`
 	rm -f `find $(BLDDIR) -name '*{- $objext -}'`
-	rm -f $(BLDDIR)/core $(BLDDIR)/rehash.time
+	rm -f $(BLDDIR)/core
 	rm -f $(BLDDIR)/tags $(BLDDIR)/TAGS
 	rm -f $(BLDDIR)/openssl.pc $(BLDDIR)/libcrypto.pc $(BLDDIR)/libssl.pc
 	-rm -f `find $(BLDDIR) -type l`
@@ -693,17 +693,6 @@ dist:
 
 # Helper targets #####################################################
 
-rehash: link-utils copy-certs build_apps_nodep
-	@if [ -z "$(CROSS_COMPILE)" ]; then \
-		(OPENSSL="$(BLDDIR)/util/shlib_wrap.sh apps/openssl"; \
-		[ -x "$(BLDDIR)/openssl.exe" ] && OPENSSL="$(BLDDIR)/openssl.exe" || :; \
-		OPENSSL_DEBUG_MEMORY=on; OPENSSL_CONF=/dev/null ; \
-		export OPENSSL OPENSSL_DEBUG_MEMORY OPENSSL_CONF; \
-		$$OPENSSL rehash certs/demo \
-		|| $(PERL) tools/c_rehash certs/demo) && \
-		touch rehash.time; \
-	else :; fi
-
 link-utils: $(BLDDIR)/util/opensslwrap.sh $(BLDDIR)/util/shlib_wrap.sh
 
 $(BLDDIR)/util/opensslwrap.sh: configdata.pm
@@ -715,11 +704,6 @@ $(BLDDIR)/util/shlib_wrap.sh: configdata.pm
 	@if [ "$(SRCDIR)" != "$(BLDDIR)" ]; then \
 	    mkdir -p "$(BLDDIR)/util"; \
 	    ln -sf "../$(SRCDIR)/util/shlib_wrap.sh" "$(BLDDIR)/util"; \
-	fi
-
-copy-certs: FORCE
-	@if [ "$(SRCDIR)" != "$(BLDDIR)" ]; then \
-	    cp -R "$(SRCDIR)/certs" "$(BLDDIR)/"; \
 	fi
 
 $(SRCDIR)/apps/openssl-vms.cnf: $(SRCDIR)/apps/openssl.cnf

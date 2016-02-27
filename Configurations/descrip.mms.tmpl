@@ -217,7 +217,7 @@ build_tests_nodep : $(TESTPROGS)
 
 test tests : configdata.pm, -
              build_apps_nodep, build_engines_nodep, build_tests_nodep, -
-             depend, rehash
+             depend
         SET DEFAULT [.test]{- move("test") -}
         DEFINE SRCTOP {- sourcedir() -}
         DEFINE BLDTOP {- builddir() -}
@@ -383,16 +383,6 @@ check_INSTALLTOP :
                 EXIT %x10000002
 
 # Helper targets #####################################################
-
-rehash : copy-certs, build_apps_nodep
-        !MCR [.apps]openssl.exe rehash {- builddir("certs", "demo") -}
-        $(PERL) [.tools]c_rehash. [.certs.demo]
-
-copy-certs :
-        @ IF F$SEARCH("{- buildfile("certs.dir") -}") .EQS. "" THEN -
-             CREATE/DIR {- builddir("certs") -}
-        -@ IF "{- sourcedir("certs") -}" .NES. "{- builddir("certs") -}" THEN -
-             COPY {- tree(sourcedir("certs")) -}*.* {- tree(builddir("certs")) -}
 
 # Developer targets ##################################################
 
