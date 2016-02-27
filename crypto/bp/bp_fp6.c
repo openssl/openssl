@@ -128,11 +128,8 @@ int FP6_cmp(const FP6 *a, const FP6 *b)
 
 int FP6_copy(FP6 *a, const FP6 *b)
 {
-    if (!FP2_copy(a->f[0], b->f[0]))
-        return 0;
-    if (!FP2_copy(a->f[1], b->f[1]))
-        return 0;
-    if (!FP2_copy(a->f[2], b->f[2]))
+    if (!FP2_copy(a->f[0], b->f[0]) || !FP2_copy(a->f[1], b->f[1]) ||
+        !FP2_copy(a->f[2], b->f[2]))
         return 0;
     return 1;
 }
