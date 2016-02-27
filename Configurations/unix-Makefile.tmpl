@@ -847,11 +847,12 @@ $obj$objext: $obj$depext
 EOF
       }
       return <<"EOF";
-$obj$depext: $deps
-	\$(CC) \$(CFLAGS) $ecflags$incs -MM -MF \$\@ -MQ $obj$objext $srcs
-	touch \$\@
-$obj$objext: $obj$depext
-	\$(CC) \$(CFLAGS) $ecflags$incs -c -o \$\@ $srcs
+$obj$objext: $deps
+	\$(CC) \$(CFLAGS) $ecflags$incs -MMD -MF $obj$depext.tmp -MT \$\@ -c -o \$\@ $srcs
+	\@touch $obj$depext.tmp
+	\@if ! cmp $obj$depext.tmp $obj$depext > /dev/null 2> /dev/null; then \\
+		mv $obj$depext.tmp $obj$depext; \\
+	fi
 EOF
   }
   # On Unix, we build shlibs from static libs, so we're ignoring the

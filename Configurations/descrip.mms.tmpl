@@ -435,19 +435,15 @@ configdata.pm : {- sourcefile("Configurations", "descrip.mms.tmpl") -} $(SRCDIR)
       my $after = $unified_info{after}->{$obj.".OBJ"} || "\@ !";
 
       return <<"EOF";
-$obj.MMS : $deps
+$obj.OBJ : $deps
         ${before}
         SET DEFAULT $forward
-        \$(CC) \$(CFLAGS)${incs} /MMS=(FILE=${objd}${objn}.MMS,TARGET=$obj.OBJ) /NOOBJECT $srcs
+        \$(CC) \$(CFLAGS)${incs} /MMS=(FILE=${objd}${objn}.tmp-MMS,TARGET=$obj.OBJ) /OBJECT=${objd}${objn}.OBJ /REPOSITORY=$backward $srcs
         SET DEFAULT $backward
         ${after}
-        - PURGE $obj.MMS
-$obj.OBJ : $obj.MMS
-        ${before}
-        SET DEFAULT $forward
-        \$(CC) \$(CFLAGS)${incs} /OBJECT=${objd}${objn}.OBJ /REPOSITORY=$backward $srcs
-        SET DEFAULT $backward
-        ${after}
+        \@ PIPE ( \$(PERL) -e "use File::Compare qw/compare_text/; my \$x = compare_text(""$obj.MMS"",""$obj.tmp-MMS""); exit(0x10000000 + (\$x == 0));" || -
+                 RENAME $obj.tmp-MMS $obj.mms )
+        \@ IF F\$SEARCH("$obj.tmp-MMS") .NES. "" THEN DELETE $obj.tmp-MMS;*
         - PURGE $obj.OBJ
 EOF
   }
