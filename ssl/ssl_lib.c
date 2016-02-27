@@ -2335,7 +2335,7 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
 
     ret->max_send_fragment = SSL3_RT_MAX_PLAIN_LENGTH;
 
-    /* Setup RFC5507 ticket keys */
+    /* Setup RFC5077 ticket keys */
     if ((RAND_bytes(ret->tlsext_tick_key_name, 16) <= 0)
         || (RAND_bytes(ret->tlsext_tick_hmac_key, 32) <= 0)
         || (RAND_bytes(ret->tlsext_tick_aes_key, 32) <= 0))
