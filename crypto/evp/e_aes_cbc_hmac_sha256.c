@@ -94,7 +94,7 @@ typedef struct {
         defined(_M_AMD64)       || defined(_M_X64)      || \
         defined(__INTEL__)      )
 
-extern unsigned int OPENSSL_ia32cap_P[3];
+extern unsigned int OPENSSL_ia32cap_P[];
 #  define AESNI_CAPABLE   (1<<(57-32))
 
 int aesni_set_encrypt_key(const unsigned char *userKey, int bits,
@@ -498,7 +498,18 @@ static int aesni_cbc_hmac_sha256_cipher(EVP_CIPHER_CTX *ctx,
             iv = AES_BLOCK_SIZE;
 
 #  if defined(STITCHED_CALL)
+        /*
+         * Assembly stitch handles AVX-capable processors, but its
+         * performance is not optimal on AMD Jaguar, ~40% worse, for
+         * unknown reasons. Incidentally processor in question supports
+         * AVX, but not AMD-specific XOP extension, which can be used
+         * to identify it and avoid stitch invocation. So that after we
+         * establish that current CPU supports AVX, we even see if it's
+         * either even XOP-capable Bulldozer-based or GenuineIntel one.
+         */
         if (OPENSSL_ia32cap_P[1] & (1 << (60 - 32)) && /* AVX? */
+            ((OPENSSL_ia32cap_P[1] & (1 << (43 - 32))) /* XOP? */
+             | (OPENSSL_ia32cap_P[0] & (1<<30))) &&    /* "Intel CPU"? */
             plen > (sha_off + iv) &&
             (blocks = (plen - (sha_off + iv)) / SHA256_CBLOCK)) {
             SHA256_Update(&key->md, in + iv, sha_off);
@@ -815,8 +826,6 @@ static int aesni_cbc_hmac_sha256_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg,
 
             if (arg != EVP_AEAD_TLS1_AAD_LEN)
                 return -1;
-
-            len = p[arg - 2] << 8 | p[arg - 1];
 
             if (ctx->encrypt) {
                 key->payload_length = len;

@@ -893,6 +893,7 @@ void ERR_load_BN_strings(void);
 # define BN_F_BN_GF2M_MOD_SOLVE_QUAD_ARR                  135
 # define BN_F_BN_GF2M_MOD_SQR                             136
 # define BN_F_BN_GF2M_MOD_SQRT                            137
+# define BN_F_BN_LSHIFT                                   145
 # define BN_F_BN_MOD_EXP2_MONT                            118
 # define BN_F_BN_MOD_EXP_MONT                             109
 # define BN_F_BN_MOD_EXP_MONT_CONSTTIME                   124
@@ -908,12 +909,14 @@ void ERR_load_BN_strings(void);
 # define BN_F_BN_NEW                                      113
 # define BN_F_BN_RAND                                     114
 # define BN_F_BN_RAND_RANGE                               122
+# define BN_F_BN_RSHIFT                                   146
 # define BN_F_BN_USUB                                     115
 
 /* Reason codes. */
 # define BN_R_ARG2_LT_ARG3                                100
 # define BN_R_BAD_RECIPROCAL                              101
 # define BN_R_BIGNUM_TOO_LONG                             114
+# define BN_R_BITS_TOO_SMALL                              118
 # define BN_R_CALLED_WITH_EVEN_MODULUS                    102
 # define BN_R_DIV_BY_ZERO                                 103
 # define BN_R_ENCODING_ERROR                              104
@@ -921,6 +924,7 @@ void ERR_load_BN_strings(void);
 # define BN_R_INPUT_NOT_REDUCED                           110
 # define BN_R_INVALID_LENGTH                              106
 # define BN_R_INVALID_RANGE                               115
+# define BN_R_INVALID_SHIFT                               119
 # define BN_R_NOT_A_SQUARE                                111
 # define BN_R_NOT_INITIALIZED                             107
 # define BN_R_NO_INVERSE                                  108

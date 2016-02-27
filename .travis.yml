@@ -1,0 +1,60 @@
+language: c
+
+addons:
+    apt_packages:
+        - binutils-mingw-w64
+        - gcc-mingw-w64
+
+os:
+    - linux
+    - osx
+
+compiler:
+    - clang
+    - gcc
+    - i686-w64-mingw32-gcc
+    - x86_64-w64-mingw32-gcc
+
+env:
+    - CONFIG_OPTS=""
+    - CONFIG_OPTS="shared"
+    - CONFIG_OPTS="-d --strict-warnings"
+
+matrix:
+    exclude:
+        - os: osx
+          compiler: i686-w64-mingw32-gcc
+        - os: osx
+          compiler: x86_64-w64-mingw32-gcc
+        - compiler: i686-w64-mingw32-gcc
+          env: CONFIG_OPTS="-d --strict-warnings"
+        - compiler: x86_64-w64-mingw32-gcc
+          env: CONFIG_OPTS="-d --strict-warnings"
+
+before_script:
+    - sh .travis-create-release.sh $TRAVIS_OS_NAME
+    - tar -xvzf _srcdist.tar.gz
+    - cd _srcdist
+    - if [ "$CC" == i686-w64-mingw32-gcc ]; then
+          export CROSS_COMPILE=${CC%%gcc}; unset CC;
+          ./Configure mingw $CONFIG_OPTS;
+      elif [ "$CC" == x86_64-w64-mingw32-gcc ]; then
+          export CROSS_COMPILE=${CC%%gcc}; unset CC;
+          ./Configure mingw64 $CONFIG_OPTS;
+      else
+          if [ "$CC" == gcc ]; then
+              export CONFIG_OPTS="$CONFIG_OPTS -Wno-error=shadow";
+          fi;
+          ./config $CONFIG_OPTS;
+      fi
+    - cd ..
+
+script:
+    - cd _srcdist
+    - make
+    - if [ -z "$CROSS_COMPILE" ]; then make test; fi
+    - cd ..
+
+notifications:
+    email:
+        - openssl-commits@openssl.org

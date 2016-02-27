@@ -308,7 +308,7 @@ static void sc_usage(void)
                " -connect host:port - who to connect to (default is %s:%s)\n",
                SSL_HOST_NAME, PORT_STR);
     BIO_printf(bio_err,
-               " -verify_host host - check peer certificate matches \"host\"\n");
+               " -verify_hostname host - check peer certificate matches \"host\"\n");
     BIO_printf(bio_err,
                " -verify_email email - check peer certificate matches \"email\"\n");
     BIO_printf(bio_err,
@@ -391,8 +391,6 @@ static void sc_usage(void)
     BIO_printf(bio_err,
                " -bugs         - Switch on all SSL implementation bug workarounds\n");
     BIO_printf(bio_err,
-               " -serverpref   - Use server's cipher preferences (only SSLv2)\n");
-    BIO_printf(bio_err,
                " -cipher       - preferred cipher to use, use the 'openssl ciphers'\n");
     BIO_printf(bio_err,
                "                 command to see what is available\n");
@@ -424,6 +422,14 @@ static void sc_usage(void)
                " -no_ticket        - disable use of RFC4507bis session tickets\n");
     BIO_printf(bio_err,
                " -serverinfo types - send empty ClientHello extensions (comma-separated numbers)\n");
+    BIO_printf(bio_err,
+               " -curves arg       - Elliptic curves to advertise (colon-separated list)\n");
+    BIO_printf(bio_err,
+               " -sigalgs arg      - Signature algorithms to support (colon-separated list)\n");
+    BIO_printf(bio_err,
+               " -client_sigalgs arg - Signature algorithms to support for client\n");
+    BIO_printf(bio_err,
+               "                       certificate authentication (colon-separated list)\n");
 #endif
 #ifndef OPENSSL_NO_NEXTPROTONEG
     BIO_printf(bio_err,
@@ -2065,6 +2071,9 @@ int MAIN(int argc, char **argv)
         sk_X509_pop_free(chain, X509_free);
     if (pass)
         OPENSSL_free(pass);
+#ifndef OPENSSL_NO_SRP
+    OPENSSL_free(srp_arg.srppassin);
+#endif
     if (vpm)
         X509_VERIFY_PARAM_free(vpm);
     ssl_excert_free(exc);

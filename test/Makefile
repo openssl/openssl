@@ -68,6 +68,8 @@ V3NAMETEST=	v3nametest
 ASN1TEST=	asn1test
 HEARTBEATTEST=  heartbeat_test
 CONSTTIMETEST=  constant_time_test
+VERIFYEXTRATEST=	verify_extra_test
+CLIENTHELLOTEST=	clienthellotest
 
 TESTS=		alltests
 
@@ -80,7 +82,8 @@ EXE=	$(BNTEST)$(EXE_EXT) $(ECTEST)$(EXE_EXT)  $(ECDSATEST)$(EXE_EXT) $(ECDHTEST)
 	$(BFTEST)$(EXE_EXT) $(CASTTEST)$(EXE_EXT) $(SSLTEST)$(EXE_EXT) $(EXPTEST)$(EXE_EXT) $(DSATEST)$(EXE_EXT) $(RSATEST)$(EXE_EXT) \
 	$(EVPTEST)$(EXE_EXT) $(EVPEXTRATEST)$(EXE_EXT) $(IGETEST)$(EXE_EXT) $(JPAKETEST)$(EXE_EXT) $(SRPTEST)$(EXE_EXT) \
 	$(ASN1TEST)$(EXE_EXT) $(V3NAMETEST)$(EXE_EXT) $(HEARTBEATTEST)$(EXE_EXT) \
-	$(CONSTTIMETEST)$(EXE_EXT)
+	$(CONSTTIMETEST)$(EXE_EXT) $(VERIFYEXTRATEST)$(EXE_EXT) \
+	$(CLIENTHELLOTEST)$(EXE_EXT)
 
 # $(METHTEST)$(EXE_EXT)
 
@@ -93,7 +96,8 @@ OBJ=	$(BNTEST).o $(ECTEST).o  $(ECDSATEST).o $(ECDHTEST).o $(IDEATEST).o \
 	$(RANDTEST).o $(DHTEST).o $(ENGINETEST).o $(CASTTEST).o \
 	$(BFTEST).o  $(SSLTEST).o  $(DSATEST).o  $(EXPTEST).o $(RSATEST).o \
 	$(EVPTEST).o $(EVPEXTRATEST).o $(IGETEST).o $(JPAKETEST).o $(ASN1TEST).o $(V3NAMETEST).o \
-	$(HEARTBEATTEST).o $(CONSTTIMETEST).o
+	$(HEARTBEATTEST).o $(CONSTTIMETEST).o $(VERIFYEXTRATEST).o \
+	$(CLIENTHELLOTEST).o
 
 SRC=	$(BNTEST).c $(ECTEST).c  $(ECDSATEST).c $(ECDHTEST).c $(IDEATEST).c \
 	$(MD2TEST).c  $(MD4TEST).c $(MD5TEST).c \
@@ -103,7 +107,8 @@ SRC=	$(BNTEST).c $(ECTEST).c  $(ECDSATEST).c $(ECDHTEST).c $(IDEATEST).c \
 	$(RANDTEST).c $(DHTEST).c $(ENGINETEST).c $(CASTTEST).c \
 	$(BFTEST).c  $(SSLTEST).c $(DSATEST).c   $(EXPTEST).c $(RSATEST).c \
 	$(EVPTEST).c $(EVPEXTRATEST).c $(IGETEST).c $(JPAKETEST).c $(SRPTEST).c $(ASN1TEST).c \
-	$(V3NAMETEST).c $(HEARTBEATTEST).c $(CONSTTIMETEST).c
+	$(V3NAMETEST).c $(HEARTBEATTEST).c $(CONSTTIMETEST).c $(VERIFYEXTRATEST).c \
+	$(CLIENTHELLOTEST).c
 
 EXHEADER= 
 HEADER=	testutil.h $(EXHEADER)
@@ -147,7 +152,7 @@ alltests: \
 	test_gen test_req test_pkcs7 test_verify test_dh test_dsa \
 	test_ss test_ca test_engine test_evp test_evp_extra test_ssl test_tsa test_ige \
 	test_jpake test_srp test_cms test_ocsp test_v3name test_heartbeat \
-	test_constant_time
+	test_constant_time test_verify_extra test_clienthello
 
 test_evp: $(EVPTEST)$(EXE_EXT) evptests.txt
 	../util/shlib_wrap.sh ./$(EVPTEST) evptests.txt
@@ -240,7 +245,7 @@ test_bn: $(BNTEST)$(EXE_EXT) $(EXPTEST)$(EXE_EXT) bctest
 	@../util/shlib_wrap.sh ./$(BNTEST) >tmp.bntest
 	@echo quit >>tmp.bntest
 	@echo "running bc"
-	@<tmp.bntest sh -c "`sh ./bctest ignore`" | $(PERL) -e '$$i=0; while (<STDIN>) {if (/^test (.*)/) {print STDERR "\nverify $$1";} elsif (!/^0$$/) {die "\nFailed! bc: $$_";} else {print STDERR "."; $$i++;}} print STDERR "\n$$i tests passed\n"'
+	@<tmp.bntest sh -c "`sh ./bctest ignore`" | $(PERL) -e '$$i=0; while (<STDIN>) {if (/^test (.*)/) {print STDERR "\nverify $$1";} elsif (!/^0\r?$$/) {die "\nFailed! bc: $$_";} else {print STDERR "."; $$i++;}} print STDERR "\n$$i tests passed\n"'
 	@echo 'test a^b%c implementations'
 	../util/shlib_wrap.sh ./$(EXPTEST)
 
@@ -348,15 +353,24 @@ test_constant_time: $(CONSTTIMETEST)$(EXE_EXT)
 	@echo "Test constant time utilites"
 	../util/shlib_wrap.sh ./$(CONSTTIMETEST)
 
+test_verify_extra: $(VERIFYEXTRATEST)$(EXE_EXT)
+	@echo $(START) $@
+	../util/shlib_wrap.sh ./$(VERIFYEXTRATEST)
+
+test_clienthello: $(CLIENTHELLOTEST)$(EXE_EXT)
+	@echo $(START) $@
+	../util/shlib_wrap.sh ./$(CLIENTHELLOTEST)
+
 lint:
 	lint -DLINT $(INCLUDES) $(SRC)>fluff
 
-depend:
-	@if [ -z "$(THIS)" ]; then \
-	    $(MAKE) -f $(TOP)/Makefile reflect THIS=$@; \
-	else \
-	    $(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(SRC); \
-	fi
+update: local_depend
+	@if [ -z "$(THIS)" ]; then $(MAKE) -f $(TOP)/Makefile reflect THIS=$@; fi
+
+depend: local_depend
+	@if [ -z "$(THIS)" ]; then $(MAKE) -f $(TOP)/Makefile reflect THIS=$@; fi
+local_depend:
+	@[ -z "$(THIS)" ] || $(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(SRC)
 
 dclean:
 	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
@@ -368,10 +382,10 @@ clean:
 	rm -f .rnd tmp.bntest tmp.bctest *.o *.obj *.dll lib tags core .pure .nfs* *.old *.bak fluff $(EXE) *.ss *.srl log dummytest
 
 $(DLIBSSL):
-	(cd ..; $(MAKE) DIRS=ssl all)
+	(cd ..; $(MAKE) build_libssl)
 
 $(DLIBCRYPTO):
-	(cd ..; $(MAKE) DIRS=crypto all)
+	(cd ..; $(MAKE) build_libcrypto)
 
 BUILD_CMD=shlib_target=; if [ -n "$(SHARED_LIBS)" ]; then \
 		shlib_target="$(SHLIB_TARGET)"; \
@@ -518,6 +532,12 @@ $(HEARTBEATTEST)$(EXE_EXT): $(HEARTBEATTEST).o $(DLIBCRYPTO)
 $(CONSTTIMETEST)$(EXE_EXT): $(CONSTTIMETEST).o
 	@target=$(CONSTTIMETEST) $(BUILD_CMD)
 
+$(VERIFYEXTRATEST)$(EXE_EXT): $(VERIFYEXTRATEST).o
+	@target=$(VERIFYEXTRATEST) $(BUILD_CMD)
+
+$(CLIENTHELLOTEST)$(EXE_EXT): $(CLIENTHELLOTEST).o
+	@target=$(CLIENTHELLOTEST) $(BUILD_CMD)
+
 #$(AESTEST).o: $(AESTEST).c
 #	$(CC) -c $(CFLAGS) -DINTERMEDIATE_VALUE_KAT -DTRACE_KAT_MCT $(AESTEST).c
 
@@ -563,6 +583,26 @@ bntest.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
 bntest.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h bntest.c
 casttest.o: ../e_os.h ../include/openssl/cast.h ../include/openssl/e_os2.h
 casttest.o: ../include/openssl/opensslconf.h casttest.c
+clienthellotest.o: ../include/openssl/asn1.h ../include/openssl/bio.h
+clienthellotest.o: ../include/openssl/buffer.h ../include/openssl/comp.h
+clienthellotest.o: ../include/openssl/crypto.h ../include/openssl/dtls1.h
+clienthellotest.o: ../include/openssl/e_os2.h ../include/openssl/ec.h
+clienthellotest.o: ../include/openssl/ecdh.h ../include/openssl/ecdsa.h
+clienthellotest.o: ../include/openssl/err.h ../include/openssl/evp.h
+clienthellotest.o: ../include/openssl/hmac.h ../include/openssl/kssl.h
+clienthellotest.o: ../include/openssl/lhash.h ../include/openssl/obj_mac.h
+clienthellotest.o: ../include/openssl/objects.h
+clienthellotest.o: ../include/openssl/opensslconf.h
+clienthellotest.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
+clienthellotest.o: ../include/openssl/pem.h ../include/openssl/pem2.h
+clienthellotest.o: ../include/openssl/pkcs7.h ../include/openssl/pqueue.h
+clienthellotest.o: ../include/openssl/safestack.h ../include/openssl/sha.h
+clienthellotest.o: ../include/openssl/srtp.h ../include/openssl/ssl.h
+clienthellotest.o: ../include/openssl/ssl2.h ../include/openssl/ssl23.h
+clienthellotest.o: ../include/openssl/ssl3.h ../include/openssl/stack.h
+clienthellotest.o: ../include/openssl/symhacks.h ../include/openssl/tls1.h
+clienthellotest.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h
+clienthellotest.o: clienthellotest.c
 constant_time_test.o: ../crypto/constant_time_locl.h ../e_os.h
 constant_time_test.o: ../include/openssl/e_os2.h
 constant_time_test.o: ../include/openssl/opensslconf.h constant_time_test.c
@@ -821,6 +861,21 @@ v3nametest.o: ../include/openssl/sha.h ../include/openssl/stack.h
 v3nametest.o: ../include/openssl/symhacks.h ../include/openssl/x509.h
 v3nametest.o: ../include/openssl/x509_vfy.h ../include/openssl/x509v3.h
 v3nametest.o: v3nametest.c
+verify_extra_test.o: ../include/openssl/asn1.h ../include/openssl/bio.h
+verify_extra_test.o: ../include/openssl/buffer.h ../include/openssl/crypto.h
+verify_extra_test.o: ../include/openssl/e_os2.h ../include/openssl/ec.h
+verify_extra_test.o: ../include/openssl/ecdh.h ../include/openssl/ecdsa.h
+verify_extra_test.o: ../include/openssl/err.h ../include/openssl/evp.h
+verify_extra_test.o: ../include/openssl/lhash.h ../include/openssl/obj_mac.h
+verify_extra_test.o: ../include/openssl/objects.h
+verify_extra_test.o: ../include/openssl/opensslconf.h
+verify_extra_test.o: ../include/openssl/opensslv.h
+verify_extra_test.o: ../include/openssl/ossl_typ.h ../include/openssl/pem.h
+verify_extra_test.o: ../include/openssl/pem2.h ../include/openssl/pkcs7.h
+verify_extra_test.o: ../include/openssl/safestack.h ../include/openssl/sha.h
+verify_extra_test.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
+verify_extra_test.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h
+verify_extra_test.o: verify_extra_test.c
 wp_test.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
 wp_test.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
 wp_test.o: ../include/openssl/ossl_typ.h ../include/openssl/safestack.h
