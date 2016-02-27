@@ -124,7 +124,7 @@ my $strict_warnings = 0;
 # which has to be accompanied by explicit -D_THREAD_SAFE and
 # sometimes -D_REENTRANT. FreeBSD 5.x expands it as -lc_r, which
 # seems to be sufficient?
-my $BSDthreads="-pthread -D_THREAD_SAFE -D_REENTRANT";
+our $BSDthreads="-pthread -D_THREAD_SAFE -D_REENTRANT";
 
 #
 # API compability name to version number mapping.
@@ -208,7 +208,7 @@ $config{cross_compile_prefix}="";
 $config{fipslibdir}="/usr/local/ssl/fips-2.0/lib/";
 my $nofipscanistercheck=0;
 $config{baseaddr}="0xFB00000";
-my $threads=0;
+my $auto_threads=1;    # enable threads automatically? true by default
 my $default_ranlib;
 $config{fips}=0;
 
@@ -569,6 +569,8 @@ foreach (@argvcopy)
                         {
                         $disabled{$1} = "option";
                         }
+		# No longer an automatic choice
+		$auto_threads = 0 if ($1 eq "threads");
 		}
 	elsif (/^enable-(.+)$/)
 		{
@@ -583,7 +585,8 @@ foreach (@argvcopy)
 		my $algo = $1;
 		delete $disabled{$algo};
 
-		$threads = 1 if ($algo eq "threads");
+		# No longer an automatic choice
+		$auto_threads = 0 if ($1 eq "threads");
 		}
 	elsif (/^--strict-warnings$/)
 		{
@@ -928,32 +931,6 @@ if (!$disabled{dso} && $target{dso_scheme} ne "")
 		}
 	}
 
-my $thread_cflags = "";
-my @thread_defines;
-if ($target{thread_cflag} ne "(unknown)" && !$disabled{threads})
-	{
-	# If we know how to do it, support threads by default.
-	$threads = 1;
-	}
-if ($target{thread_cflag} eq "(unknown)" && $threads)
-	{
-	# If the user asked for "threads", [s]he is also expected to
-	# provide any system-dependent compiler options that are
-	# necessary.
-	if ($no_user_cflags && $no_user_defines)
-		{
-		print "You asked for multi-threading support, but didn't\n";
-		print "provide any system-specific compiler options\n";
-		exit(1);
-		}
-	push @thread_defines, "OPENSSL_THREADS";
-	}
-else
-	{
-	$thread_cflags=" $target{thread_cflag}";
-	push @thread_defines, @{$target{thread_defines}}, "OPENSSL_THREADS";
-	}
-
 $config{ex_libs}="$libs$config{ex_libs}" if ($libs ne "");
 
 if ($disabled{asm})
@@ -962,12 +939,37 @@ if ($disabled{asm})
 	    if ($config{fips});
 	}
 
-if ($threads)
-	{
-	$config{cflags} = "$thread_cflags $config{cflags}" if $thread_cflags;
-	push @{$config{defines}}, @thread_defines;
-	push @{$config{openssl_thread_defines}}, @thread_defines;
-	}
+# If threads aren't disabled, check how possible they are
+unless ($disabled{threads}) {
+    if ($auto_threads) {
+        # Enabled by default, disable it forcibly if unavailable
+        if ($target{thread_scheme} eq "(unknown)") {
+            $disabled{threads} = "unavailable";
+        }
+    } else {
+        # The user chose to enable threads explicitely, let's see
+        # if there's a chance that's possible
+        if ($target{thread_scheme} eq "(unknown)") {
+            # If the user asked for "threads" and we don't have internal
+            # knowledge how to do it, [s]he is expected to provide any
+            # system-dependent compiler options that are necessary.  We
+            # can't truly check that the given options are correct, but
+            # we expect the user to know what [s]He is doing.
+            if ($no_user_cflags && $no_user_defines) {
+                die "You asked for multi-threading support, but didn't\n"
+                    ,"provide any system-specific compiler options\n";
+            }
+        }
+    }
+}
+
+# If threads still aren't disabled, add a C macro to ensure the source
+# code knows about it.  Any other flag is taken care of by the configs.
+unless($disabled{threads}) {
+    foreach (("defines", "openssl_thread_defines")) {
+        push @{$config{$_}}, "OPENSSL_THREADS";
+    }
+}
 
 # With "deprecated" disable all deprecated features.
 if (defined($disabled{"deprecated"})) {
@@ -1833,7 +1835,7 @@ print <<"EOF";
 Configured for $target.
 EOF
 
-print <<"EOF" if (!$disabled{threads} && !$threads);
+print <<"EOF" if ($disabled{threads} eq "unavailable");
 
 The library could not be configured for supporting multi-threaded
 applications as the compiler options required on this system are not known.
@@ -1903,6 +1905,7 @@ sub asm {
     }
 }
 
+our $add_called = 0;
 # Helper function to implement adding values to already existing configuration
 # values.  It handles elements that are ARRAYs, CODEs and scalars
 sub _add {
@@ -1930,6 +1933,8 @@ sub _add {
 		();
 	    }
     } (@_);
+
+    $add_called = 1;
 
     if ($found_array) {
 	[ @values ];
@@ -1999,6 +2004,8 @@ sub resolve_config {
     my $target = shift;
     my @breadcrumbs = @_;
 
+    my $extra_checks = defined($ENV{CONFIGURE_EXTRA_CHECKS});
+
     if (grep { $_ eq $target } @breadcrumbs) {
 	die "inherit_from loop!  target backtrace:\n  "
 	    ,$target,"\n  ",join("\n  ", @breadcrumbs),"\n";
@@ -2061,6 +2068,8 @@ sub resolve_config {
 	my $target    = shift;
 	my $entry     = shift;
 
+        $add_called = 0;
+
         while(ref($object) eq "CODE") {
             $object = $object->(@$inherited);
         }
@@ -2068,6 +2077,7 @@ sub resolve_config {
             return ();
         }
         elsif (ref($object) eq "ARRAY") {
+            local $add_called;  # To make sure recursive calls don't affect it
             return [ map { process_values($_, $inherited, $target, $entry) }
                      @$object ];
         } elsif (ref($object) eq "") {
@@ -2079,6 +2089,7 @@ sub resolve_config {
     }
 
     foreach (sort keys %all_keys) {
+        my $previous = $combined_inheritance{$_};
 
 	# Current target doesn't have a value for the current key?
 	# Assign it the default combiner, the rest of this loop body
@@ -2092,6 +2103,10 @@ sub resolve_config {
 					       $target, $_);
         unless(defined($table{$target}->{$_})) {
             delete $table{$target}->{$_};
+        }
+        if ($extra_checks &&
+            $previous && !($add_called ||  $previous ~~ $table{$target}->{$_})) {
+            warn "$_ got replaced in $target\n";
         }
     }
 
@@ -2167,7 +2182,6 @@ sub print_table_entry
 	"cc",
 	"cflags",
 	"defines",
-	"thread_cflag",
 	"unistd",
 	"ld",
 	"lflags",
@@ -2190,6 +2204,7 @@ sub print_table_entry
 	"cmll_obj",
 	"modes_obj",
 	"padlock_obj",
+	"thread_scheme",
 	"perlasm_scheme",
 	"dso_scheme",
 	"shared_target",
