@@ -138,6 +138,7 @@ my $apitable = {
 
 our %table = ();
 our %config = ();
+our %withargs = ();
 
 # Forward declarations ###############################################
 
@@ -437,7 +438,6 @@ $config{openssl_other_defines}=[];
 my $libs="";
 my $target="";
 $config{options}="";
-my %withargs=();
 my $build_prefix = "release_";
 
 my @argvcopy=@ARGV;
@@ -978,26 +978,6 @@ if ($threads)
 	$config{cflags} = "$thread_cflags $config{cflags}" if $thread_cflags;
 	push @{$config{defines}}, @thread_defines;
 	push @{$config{openssl_thread_defines}}, @thread_defines;
-	}
-
-unless ($disabled{zlib})
-	{
-	push @{$config{defines}}, "ZLIB";
-	if (defined($disabled{"zlib-dynamic"}))
-		{
-		if (defined($withargs{zlib_lib}))
-			{
-			$config{ex_libs} .= " -L" . $withargs{zlib_lib} . " -lz";
-			}
-		else
-			{
-			$config{ex_libs} .= " -lz";
-			}
-		}
-	else
-		{
-		push @{$config{defines}}, "ZLIB_SHARED";
-		}
 	}
 
 # With "deprecated" disable all deprecated features.
