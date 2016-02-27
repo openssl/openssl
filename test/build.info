@@ -204,7 +204,7 @@ INCLUDE[dtlsv1listentest]={- rel2abs(catdir($builddir,"../include")) -} .. ../in
 DEPEND[dtlsv1listentest]=../libssl
 
 SOURCE[ct_test]=ct_test.c testutil.c
-INCLUDE[ct_test]={- rel2abs(catdir($builddir,"../include")) -} ../crypto/include ../include
+INCLUDE[ct_test]={- rel2abs(catdir($builddir,"../include")) -} ../crypto/include ../include ..
 DEPEND[ct_test]=../libcrypto
 
 SOURCE[threadstest]=threadstest.c
