@@ -841,9 +841,12 @@ if ($d) {
 }
 $config{target} = $target;
 delete $table{$base_target}->{template}; # or the next test will fail.
-my %target = ( %{$table{$base_target}}, resolve_config($target) );
+my %target = resolve_config($target);
 
 &usage if (!%target || $target{template});
+
+# Set up defaults
+my %target = ( %{$table{$base_target}}, %target );
 
 $target{exe_extension}="";
 $target{exe_extension}=".exe" if ($config{target} eq "DJGPP"
