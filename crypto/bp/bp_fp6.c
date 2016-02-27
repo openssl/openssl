@@ -120,7 +120,7 @@ int FP6_zero(FP6 *a)
 
 int FP6_cmp(const FP6 *a, const FP6 *b)
 {
-    if ((FP2_cmp(a->f[0], b->f[0]) == 0) && (FP2_cmp(a->f[1], b->f[1]) != 0)
+    if ((FP2_cmp(a->f[0], b->f[0]) == 0) && (FP2_cmp(a->f[1], b->f[1]) == 0)
         && (FP2_cmp(a->f[2], b->f[2]) == 0))
         return 0;
     return 1;
