@@ -136,7 +136,6 @@ my $apitable = {
     "0.9.8" => "0x00908000L",
 };
 
-my $base_target = "BASE";   # The template that all other inherit from
 our %table = ();
 our %config = ();
 
@@ -835,13 +834,11 @@ if ($d) {
     }
 }
 $config{target} = $target;
-delete $table{$base_target}->{template}; # or the next test will fail.
 my %target = resolve_config($target);
 
 &usage if (!%target || $target{template});
 
-# Set up defaults
-my %target = ( %{$table{$base_target}}, %target );
+%target = ( %{$table{DEFAULTS}}, %target );
 
 $target{exe_extension}="";
 $target{exe_extension}=".exe" if ($config{target} eq "DJGPP"
@@ -1047,7 +1044,7 @@ if ($target{sys_id} ne "")
 	}
 
 unless ($disabled{asm}) {
-    $target{cpuid_asm_src}=$table{BASE}->{cpuid_asm_src} if ($config{processor} eq "386");
+    $target{cpuid_asm_src}=$table{DEFAULTS}->{cpuid_asm_src} if ($config{processor} eq "386");
     $target{bn_asm_src} =~ s/\w+-gf2m.c// if (defined($disabled{ec2m}));
 
     # bn-586 is the only one implementing bn_*_part_words
@@ -1070,7 +1067,7 @@ unless ($disabled{asm}) {
     if ($target{md5_asm_src}) {
 	push @{$config{defines}}, "MD5_ASM";
     }
-    $target{cast_asm_src}=$table{BASE}->{cast_asm_src} unless $disabled{pic}; # CAST assembler is not PIC
+    $target{cast_asm_src}=$table{DEFAULTS}->{cast_asm_src} unless $disabled{pic}; # CAST assembler is not PIC
     if ($target{rmd160_asm_src}) {
 	push @{$config{defines}}, "RMD160_ASM";
     }
@@ -1087,7 +1084,7 @@ unless ($disabled{asm}) {
     }
     if ($target{wp_asm_src} =~ /mmx/) {
         if ($config{processor} eq "386") {
-	    $target{wp_asm_src}=$table{BASE}->{wp_asm_src};
+	    $target{wp_asm_src}=$table{DEFAULTS}->{wp_asm_src};
 	} elsif (!$disabled{"whirlpool"}) {
 	    $config{cflags}.=" -DWHIRLPOOL_ASM";
 	}
