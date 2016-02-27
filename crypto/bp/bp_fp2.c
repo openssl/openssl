@@ -115,7 +115,7 @@ int FP2_zero(FP2 *a)
 
 int FP2_cmp(const FP2 *a, const FP2 *b)
 {
-    if ((BN_cmp(a->f[0], b->f[0]) == 0) && (BN_cmp(a->f[1], b->f[1]) != 0))
+    if ((BN_cmp(a->f[0], b->f[0]) == 0) && (BN_cmp(a->f[1], b->f[1]) == 0))
         return 0;
     return 1;
 }
