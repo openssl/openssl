@@ -58,9 +58,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "internal/ct_int.h"
+#include <openssl/ct.h>
 #include <openssl/err.h>
-#include <openssl/safestack.h>
 #include <openssl/ssl.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>

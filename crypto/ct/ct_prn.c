@@ -56,17 +56,16 @@
  *
  */
 
-#ifndef OPENSSL_NO_CT
+#ifdef OPENSSL_NO_CT
+# error "CT is disabled"
+#endif
 
-# include <limits.h>
-# include "internal/cryptlib.h"
-# include <openssl/asn1.h>
-# include <openssl/evp.h>
-# include <openssl/x509.h>
-# include <openssl/x509v3.h>
-# include "crypto/include/internal/ct_int.h"
+#include <openssl/asn1.h>
+#include <openssl/bio.h>
 
-static void sct_sigalg_print(BIO *out, const SCT *sct)
+#include "ct_locl.h"
+
+static void SCT_signature_algorithms_print(const SCT *sct, BIO *out)
 {
     int nid = SCT_get_signature_nid(sct);
 
@@ -76,7 +75,7 @@ static void sct_sigalg_print(BIO *out, const SCT *sct)
         BIO_printf(out, "%s", OBJ_nid2ln(nid));
 }
 
-static void timestamp_print(BIO *out, uint64_t timestamp)
+static void timestamp_print(uint64_t timestamp, BIO *out)
 {
     ASN1_GENERALIZEDTIME *gen = ASN1_GENERALIZEDTIME_new();
     char genstr[20];
@@ -95,12 +94,12 @@ static void timestamp_print(BIO *out, uint64_t timestamp)
     ASN1_GENERALIZEDTIME_free(gen);
 }
 
-void SCT_print(SCT *sct, BIO *out, int indent)
+void SCT_print(const SCT *sct, BIO *out, int indent)
 {
     BIO_printf(out, "%*sSigned Certificate Timestamp:", indent, "");
     BIO_printf(out, "\n%*sVersion   : ", indent + 4, "");
 
-    if (sct->version != SCT_V1) {
+    if (sct->version != SCT_VERSION_V1) {
         BIO_printf(out, "unknown\n%*s", indent + 16, "");
         BIO_hex_string(out, indent + 16, 16, sct->sct, sct->sct_len);
         return;
@@ -112,7 +111,7 @@ void SCT_print(SCT *sct, BIO *out, int indent)
     BIO_hex_string(out, indent + 16, 16, sct->log_id, sct->log_id_len);
 
     BIO_printf(out, "\n%*sTimestamp : ", indent + 4, "");
-    timestamp_print(out, sct->timestamp);
+    timestamp_print(sct->timestamp, out);
 
     BIO_printf(out, "\n%*sExtensions: ", indent + 4, "");
     if (sct->ext_len == 0)
@@ -121,9 +120,20 @@ void SCT_print(SCT *sct, BIO *out, int indent)
         BIO_hex_string(out, indent + 16, 16, sct->ext, sct->ext_len);
 
     BIO_printf(out, "\n%*sSignature : ", indent + 4, "");
-    sct_sigalg_print(out, sct);
+    SCT_signature_algorithms_print(sct, out);
     BIO_printf(out, "\n%*s            ", indent + 4, "");
     BIO_hex_string(out, indent + 16, 16, sct->sig, sct->sig_len);
 }
 
-#endif
+void SCT_LIST_print(const STACK_OF(SCT) *sct_list, BIO *out, int indent,
+                    const char *separator)
+{
+    int i;
+
+    for (i = 0; i < sk_SCT_num(sct_list); ++i) {
+        SCT *sct = sk_SCT_value(sct_list, i);
+        SCT_print(sct, out, indent);
+        if (i < sk_SCT_num(sct_list) - 1)
+            BIO_printf(out, "%s", separator);
+    }
+}

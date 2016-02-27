@@ -1,6 +1,6 @@
 /*
- * Written by Rob Stradling (rob@comodo.com) and Stephen Henson
- * (steve@openssl.org) for the OpenSSL project 2014.
+ * Written by Rob Stradling (rob@comodo.com), Stephen Henson (steve@openssl.org)
+ * and Adam Eijdenberg (adam.eijdenberg@gmail.com) for the OpenSSL project 2016.
  */
 /* ====================================================================
  * Copyright (c) 2014 The OpenSSL Project.  All rights reserved.
@@ -56,39 +56,47 @@
  *
  */
 
-#ifndef OPENSSL_NO_CT
+#ifdef OPENSSL_NO_CT
+# error "CT disabled"
+#endif
 
-# include <limits.h>
-# include "internal/cryptlib.h"
-# include "../../ssl/ssl_locl.h"
-# include "internal/ct_int.h"
+#include <openssl/ct.h>
+#include <openssl/err.h>
+#include <openssl/evp.h>
+#include <openssl/tls1.h>
+#include <openssl/x509.h>
+
+#include "ct_locl.h"
 
 SCT *SCT_new(void)
 {
     SCT *sct = OPENSSL_zalloc(sizeof(SCT));
+
     if (sct == NULL) {
         CTerr(CT_F_SCT_NEW, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
-    sct->entry_type = UNSET_ENTRY;
-    sct->version = UNSET_VERSION;
+
+    sct->entry_type = CT_LOG_ENTRY_TYPE_NOT_SET;
+    sct->version = SCT_VERSION_NOT_SET;
     return sct;
 }
 
 void SCT_free(SCT *sct)
 {
-    if (sct != NULL) {
-        OPENSSL_free(sct->log_id);
-        OPENSSL_free(sct->ext);
-        OPENSSL_free(sct->sig);
-        OPENSSL_free(sct->sct);
-        OPENSSL_free(sct);
-    }
+    if (sct == NULL)
+        return;
+
+    OPENSSL_free(sct->log_id);
+    OPENSSL_free(sct->ext);
+    OPENSSL_free(sct->sig);
+    OPENSSL_free(sct->sct);
+    OPENSSL_free(sct);
 }
 
 int SCT_set_version(SCT *sct, sct_version_t version)
 {
-    if (version != SCT_V1) {
+    if (version != SCT_VERSION_V1) {
         CTerr(CT_F_SCT_SET_VERSION, CT_R_UNSUPPORTED_VERSION);
         return 0;
     }
@@ -96,23 +104,26 @@ int SCT_set_version(SCT *sct, sct_version_t version)
     return 1;
 }
 
-int SCT_set_log_entry_type(SCT *sct, log_entry_type_t entry_type)
+int SCT_set_log_entry_type(SCT *sct, ct_log_entry_type_t entry_type)
 {
-    if (entry_type != X509_ENTRY && entry_type != PRECERT_ENTRY) {
+    switch (entry_type) {
+    case CT_LOG_ENTRY_TYPE_X509:
+    case CT_LOG_ENTRY_TYPE_PRECERT:
+        sct->entry_type = entry_type;
+        return 1;
+    default:
         CTerr(CT_F_SCT_SET_LOG_ENTRY_TYPE, CT_R_UNSUPPORTED_ENTRY_TYPE);
         return 0;
     }
-    sct->entry_type = entry_type;
-    return 1;
 }
 
 int SCT_set0_log_id(SCT *sct, unsigned char *log_id, size_t log_id_len)
 {
-    /* Currently only SHA-256 allowed so length must be SCT_V1_HASHLEN */
-    if (log_id_len != SCT_V1_HASHLEN) {
+    if (sct->version == SCT_VERSION_V1 && log_id_len != CT_V1_HASHLEN) {
         CTerr(CT_F_SCT_SET0_LOG_ID, CT_R_INVALID_LOG_ID_LENGTH);
         return 0;
     }
+
     OPENSSL_free(sct->log_id);
     sct->log_id = log_id;
     sct->log_id_len = log_id_len;
@@ -121,25 +132,23 @@ int SCT_set0_log_id(SCT *sct, unsigned char *log_id, size_t log_id_len)
 
 int SCT_set1_log_id(SCT *sct, const unsigned char *log_id, size_t log_id_len)
 {
-    /* Currently only SHA-256 allowed so length must be SCT_V1_HASHLEN */
-    if (log_id_len != SCT_V1_HASHLEN) {
+    if (sct->version == SCT_VERSION_V1 && log_id_len != CT_V1_HASHLEN) {
         CTerr(CT_F_SCT_SET1_LOG_ID, CT_R_INVALID_LOG_ID_LENGTH);
         return 0;
     }
 
     OPENSSL_free(sct->log_id);
-    if (log_id == NULL || log_id_len == 0) {
-        sct->log_id = NULL;
-    } else {
-        sct->log_id = OPENSSL_memdup(log_id, log_id_len);
+    sct->log_id = NULL;
+    sct->log_id_len = 0;
 
+    if (log_id != NULL && log_id_len > 0) {
+        sct->log_id = OPENSSL_memdup(log_id, log_id_len);
         if (sct->log_id == NULL) {
             CTerr(CT_F_SCT_SET1_LOG_ID, ERR_R_MALLOC_FAILURE);
             return 0;
         }
+        sct->log_id_len = log_id_len;
     }
-
-    sct->log_id_len = log_id_len;
     return 1;
 }
 
@@ -200,16 +209,17 @@ void SCT_set0_signature(SCT *sct, unsigned char *sig, size_t sig_len)
 int SCT_set1_signature(SCT *sct, const unsigned char *sig, size_t sig_len)
 {
     OPENSSL_free(sct->sig);
-    if (sig == NULL || sig_len == 0) {
-        sct->sig = NULL;
-    } else {
+    sct->sig = NULL;
+    sct->sig_len = 0;
+
+    if (sig != NULL && sig_len > 0) {
         sct->sig = OPENSSL_memdup(sig, sig_len);
         if (sct->sig == NULL) {
             CTerr(CT_F_SCT_SET1_SIGNATURE, ERR_R_MALLOC_FAILURE);
             return 0;
         }
+        sct->sig_len = sig_len;
     }
-    sct->sig_len = sig_len;
     return 1;
 }
 
@@ -218,7 +228,7 @@ sct_version_t SCT_get_version(const SCT *sct)
     return sct->version;
 }
 
-log_entry_type_t SCT_get_log_entry_type(const SCT *sct)
+ct_log_entry_type_t SCT_get_log_entry_type(const SCT *sct)
 {
     return sct->entry_type;
 }
@@ -236,7 +246,7 @@ uint64_t SCT_get_timestamp(const SCT *sct)
 
 int SCT_get_signature_nid(const SCT *sct)
 {
-    if (sct->version == SCT_V1) {
+    if (sct->version == SCT_VERSION_V1) {
         if (sct->hash_alg == TLSEXT_hash_sha256) {
             switch (sct->sig_alg) {
             case TLSEXT_signature_ecdsa:
@@ -263,16 +273,21 @@ size_t SCT_get0_signature(const SCT *sct, unsigned char **sig)
     return sct->sig_len;
 }
 
-int SCT_is_valid(const SCT *sct)
+int SCT_is_complete(const SCT *sct)
 {
     switch (sct->version) {
-    case UNSET_VERSION:
+    case SCT_VERSION_NOT_SET:
         return 0;
-    case SCT_V1:
-        return sct->log_id != NULL && SCT_signature_is_valid(sct);
+    case SCT_VERSION_V1:
+        return sct->log_id != NULL && SCT_signature_is_complete(sct);
     default:
         return sct->sct != NULL; /* Just need cached encoding */
     }
 }
 
-#endif
+int SCT_signature_is_complete(const SCT *sct)
+{
+    return SCT_get_signature_nid(sct) != NID_undef &&
+        sct->sig != NULL && sct->sig_len > 0;
+}
+

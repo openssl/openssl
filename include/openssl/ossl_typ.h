@@ -200,6 +200,8 @@ typedef struct ocsp_req_ctx_st OCSP_REQ_CTX;
 typedef struct ocsp_response_st OCSP_RESPONSE;
 typedef struct ocsp_responder_id_st OCSP_RESPID;
 
+typedef struct sct_st SCT;
+
 #if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L && \
     defined(INTMAX_MAX) && defined(UINTMAX_MAX)
 typedef intmax_t ossl_intmax_t;
