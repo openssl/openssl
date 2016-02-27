@@ -1949,18 +1949,26 @@ sub _add {
 
     my @values =
 	map {
-	    if (ref($_) eq "ARRAY") {
-		$found_array = 1;
-		@$_;
+	    my $res = $_;
+	    while (ref($res) eq "CODE") {
+		$res = $res->();
+	    }
+	    if (defined($res)) {
+		if (ref($res) eq "ARRAY") {
+		    $found_array = 1;
+		    @$res;
+		} else {
+		    $res;
+		}
 	    } else {
-		$_;
+		();
 	    }
     } (@_);
 
     if ($found_array) {
 	[ @values ];
     } else {
-	join($separator, @values);
+	join($separator, grep { defined($_) && $_ ne "" } @values);
     }
 }
 sub add_before {
@@ -2080,6 +2088,30 @@ sub resolve_config {
     my %all_keys =
 	map { $_ => 1 } (keys %combined_inheritance,
 			 keys %{$table{$target}});
+
+    sub process_values {
+	my $object    = shift;
+	my $inherited = shift;  # Always a [ list ]
+	my $target    = shift;
+	my $entry     = shift;
+
+        while(ref($object) eq "CODE") {
+            $object = $object->(@$inherited);
+        }
+        if (!defined($object)) {
+            return ();
+        }
+        elsif (ref($object) eq "ARRAY") {
+            return [ map { process_values($_, $inherited, $target, $entry) }
+                     @$object ];
+        } elsif (ref($object) eq "") {
+            return $object;
+        } else {
+            die "cannot handle reference type ",ref($object)
+                ," found in target ",$target," -> ",$entry,"\n";
+        }
+    }
+
     foreach (sort keys %all_keys) {
 
 	# Current target doesn't have a value for the current key?
@@ -2089,20 +2121,12 @@ sub resolve_config {
 	    $table{$target}->{$_} = $default_combiner;
 	}
 
-	my $valuetype = ref($table{$target}->{$_});
-	if ($valuetype eq "CODE") {
-	    # CODE reference, execute it with the inherited values as
-	    # arguments.
-	    $table{$target}->{$_} =
-		$table{$target}->{$_}->(@{$combined_inheritance{$_}});
-	} elsif ($valuetype eq "ARRAY" || $valuetype eq "") {
-	    # ARRAY or Scalar, just leave it as is.
-	} else {
-	    # Some other type of reference that we don't handle.
-	    # Better to abort at this point.
-	    die "cannot handle reference type $valuetype,"
-		," found in target $target -> $_\n";
-	}
+	$table{$target}->{$_} = process_values($table{$target}->{$_},
+					       $combined_inheritance{$_},
+					       $target, $_);
+        unless(defined($table{$target}->{$_})) {
+            delete $table{$target}->{$_};
+        }
     }
 
     # Finally done, return the result.
