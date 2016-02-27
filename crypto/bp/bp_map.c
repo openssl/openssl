@@ -489,7 +489,7 @@ int GT_ELEMs_pairing(const BP_GROUP *group, GT_ELEM *r, size_t num,
     int ret = 0;
     BIGNUM *xp[num], *yp[num], *s[num], *t[num], *miller = NULL;
     FP2 *x[num], *y[num], *xq[num], *yq[num], *zq[num];
-    G2_ELEM *_q[num];
+    G2_ELEM *qs[num];
     FP12 *l = NULL;
 
     if (ctx == NULL && (ctx = new_ctx = BN_CTX_new()) == NULL)
@@ -497,17 +497,21 @@ int GT_ELEMs_pairing(const BP_GROUP *group, GT_ELEM *r, size_t num,
 
     BN_CTX_start(ctx);
     for (i = 0; i < num; i++) {
+        xp[i] = yp[i] = s[i] = t[i] = NULL;
         if ((xp[i] = BN_CTX_get(ctx)) == NULL
             || (yp[i] = BN_CTX_get(ctx)) == NULL
             || (s[i] = BN_CTX_get(ctx)) == NULL
             || (t[i] = BN_CTX_get(ctx)) == NULL
-            || (miller = BN_CTX_get(ctx)) == NULL)
+            || (miller = BN_CTX_get(ctx)) == NULL) {
             goto err;
+        }
+        x[i] = y[i] = xq[i] = yq[i] = zq[i] = NULL;
         if ((x[i] = FP2_new()) == NULL || (y[i] = FP2_new()) == NULL
             || (xq[i] = FP2_new()) == NULL || (yq[i] = FP2_new()) == NULL
-            || (zq[i] = FP2_new()) == NULL)
+            || (zq[i] = FP2_new()) == NULL) {
             goto err;
-        if ((_q[i] = G2_ELEM_new(group)) == NULL)
+        }
+        if ((qs[i] = G2_ELEM_new(group)) == NULL)
             goto err;
     }
 
@@ -534,19 +538,19 @@ int GT_ELEMs_pairing(const BP_GROUP *group, GT_ELEM *r, size_t num,
             /*
              * Copy directly grom G2 to save conversion operations.
              */
-            if (!G2_ELEM_copy(_q[m], q[i]))
+            if (!G2_ELEM_copy(qs[m], q[i]))
                 goto err;
-            if (!G2_ELEM_make_affine(group, _q[m], ctx))
+            if (!G2_ELEM_make_affine(group, qs[m], ctx))
                 goto err;
-            if (!FP2_copy(x[m], _q[m]->X))
+            if (!FP2_copy(x[m], qs[m]->X))
                 goto err;
-            if (!FP2_copy(y[m], _q[m]->Y))
+            if (!FP2_copy(y[m], qs[m]->Y))
                 goto err;
-            if (!FP2_copy(xq[m], _q[m]->X))
+            if (!FP2_copy(xq[m], qs[m]->X))
                 goto err;
-            if (!FP2_copy(yq[m], _q[m]->Y))
+            if (!FP2_copy(yq[m], qs[m]->Y))
                 goto err;
-            if (!FP2_copy(zq[m], _q[m]->Z))
+            if (!FP2_copy(zq[m], qs[m]->Z))
                 goto err;
             m++;
         }
@@ -629,7 +633,7 @@ int GT_ELEMs_pairing(const BP_GROUP *group, GT_ELEM *r, size_t num,
         FP2_free(xq[i]);
         FP2_free(yq[i]);
         FP2_free(zq[i]);
-        G2_ELEM_free(_q[i]);
+        G2_ELEM_free(qs[i]);
     }
     FP12_free(l);
     return ret;
@@ -638,11 +642,11 @@ int GT_ELEMs_pairing(const BP_GROUP *group, GT_ELEM *r, size_t num,
 int GT_ELEM_pairing(const BP_GROUP *group, GT_ELEM *r, const G1_ELEM *p,
                     const G2_ELEM *q, BN_CTX *ctx)
 {
-    const G1_ELEM *_p[1];
-    const G2_ELEM *_q[1];
+    const G1_ELEM *ps[1];
+    const G2_ELEM *qs[1];
 
-    _p[0] = p;
-    _q[0] = q;
+    ps[0] = p;
+    qs[0] = q;
 
-    return GT_ELEMs_pairing(group, r, 1, _p, _q, ctx);
+    return GT_ELEMs_pairing(group, r, 1, ps, qs, ctx);
 }

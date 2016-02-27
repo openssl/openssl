@@ -173,9 +173,8 @@ size_t GT_ELEM_elem2oct(const BP_GROUP *group, const GT_ELEM *a,
         if (len < ret)
             goto err;
 
-        if (ctx == NULL)
-            if ((ctx = new_ctx = BN_CTX_new()) == NULL)
-                return 0;
+        if (ctx == NULL && (ctx = new_ctx = BN_CTX_new()) == NULL)
+            return 0;
 
         BN_CTX_start(ctx);
         used_ctx = 1;
@@ -237,9 +236,8 @@ int GT_ELEM_oct2elem(const BP_GROUP *group, GT_ELEM *a,
     if (len != enc_len)
         return 0;
 
-    if (ctx == NULL)
-        if ((ctx = new_ctx = BN_CTX_new()) == NULL)
-            return 0;
+    if (ctx == NULL && (ctx = new_ctx = BN_CTX_new()) == NULL)
+        return 0;
 
     BN_CTX_start(ctx);
     if ((f = BN_CTX_get(ctx)) == NULL)

@@ -96,7 +96,7 @@ static G2_PRE_COMP *g2_pre_comp_new(const BP_GROUP *group)
 {
     G2_PRE_COMP *ret = NULL;
 
-    if (!group)
+    if (group == NULL)
         return NULL;
 
     ret = OPENSSL_zalloc(sizeof(*ret));
@@ -505,7 +505,6 @@ int G2_ELEMs_mul(const BP_GROUP *group, G2_ELEM *r, const BIGNUM *scalar,
     }
 
     ret = 1;
-
  err:
     BN_CTX_free(new_ctx);
     G2_ELEM_free(tmp);
@@ -681,8 +680,8 @@ int g2_wNAF_precompute_mult(BP_GROUP *group, BN_CTX *ctx)
     group->g2_pre_comp = pre_comp;
     pre_comp->num = num;
     pre_comp = NULL;
-    ret = 1;
 
+    ret = 1;
  err:
     if (ctx != NULL)
         BN_CTX_end(ctx);

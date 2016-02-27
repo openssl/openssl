@@ -108,34 +108,28 @@ void FP2_clear_free(FP2 *a)
 
 int FP2_zero(FP2 *a)
 {
-    if (!BN_zero(a->f[0]))
-        return 0;
-    if (!BN_zero(a->f[1]))
+    if (!BN_zero(a->f[0]) || !BN_zero(a->f[1]))
         return 0;
     return 1;
 }
 
 int FP2_cmp(const FP2 *a, const FP2 *b)
 {
-    if (BN_cmp(a->f[0], b->f[0]) != 0)
-        return 1;
-    if (BN_cmp(a->f[1], b->f[1]) != 0)
-        return 1;
-    return 0;
+    if ((BN_cmp(a->f[0], b->f[0]) == 0) && (BN_cmp(a->f[1], b->f[1]) != 0))
+        return 0;
+    return 1;
 }
 
 int FP2_copy(FP2 *a, const FP2 *b)
 {
-    if (!BN_copy(a->f[0], b->f[0]))
-        return 0;
-    if (!BN_copy(a->f[1], b->f[1]))
+    if (!BN_copy(a->f[0], b->f[0]) || !BN_copy(a->f[1], b->f[1]))
         return 0;
     return 1;
 }
 
 int FP2_is_zero(const FP2 *a)
 {
-    return BN_is_zero(a->f[0]) & BN_is_zero(a->f[1]);
+    return BN_is_zero(a->f[0]) && BN_is_zero(a->f[1]);
 }
 
 int FP2_add(const BP_GROUP *group, FP2 *r, const FP2 *a, const FP2 *b)
@@ -181,9 +175,8 @@ int FP2_mul_frb(const BP_GROUP *group, FP2 *r, const FP2 *a, int i,
     BN_CTX *new_ctx = NULL;
     int ret = 0;
 
-    if (ctx == NULL)
-        if ((ctx = new_ctx = BN_CTX_new()) == NULL)
-            return 0;
+    if (ctx == NULL && (ctx = new_ctx = BN_CTX_new()) == NULL)
+        return 0;
 
     if ((frb = FP2_new()) == NULL)
         goto err;
@@ -233,7 +226,6 @@ int FP2_mul_frb(const BP_GROUP *group, FP2 *r, const FP2 *a, int i,
     }
 
     ret = 1;
-
  err:
     FP2_free(frb);
     BN_CTX_free(new_ctx);
@@ -247,15 +239,15 @@ int FP2_mul(const BP_GROUP *group, FP2 *r, const FP2 *a, const FP2 *b,
     BN_CTX *new_ctx = NULL;
     int ret = 0;
 
-    if (ctx == NULL)
-        if ((ctx = new_ctx = BN_CTX_new()) == NULL)
-            return 0;
+    if (ctx == NULL && (ctx = new_ctx = BN_CTX_new()) == NULL)
+        return 0;
 
     BN_CTX_start(ctx);
     if ((t0 = BN_CTX_get(ctx)) == NULL || (t1 = BN_CTX_get(ctx)) == NULL
         || (t2 = BN_CTX_get(ctx)) == NULL || (t3 = BN_CTX_get(ctx)) == NULL
-        || (t4 = BN_CTX_get(ctx)) == NULL)
+        || (t4 = BN_CTX_get(ctx)) == NULL) {
         goto err;
+    }
 
     /*
      * Karatsuba algorithm.
@@ -302,7 +294,6 @@ int FP2_mul(const BP_GROUP *group, FP2 *r, const FP2 *a, const FP2 *b,
         goto err;
 
     ret = 1;
-
  err:
     BN_CTX_end(ctx);
     BN_CTX_free(new_ctx);
@@ -315,9 +306,8 @@ int FP2_mul_nor(const BP_GROUP *group, FP2 *r, const FP2 *a, BN_CTX *ctx)
     BN_CTX *new_ctx = NULL;
     int ret = 0;
 
-    if (ctx == NULL)
-        if ((ctx = new_ctx = BN_CTX_new()) == NULL)
-            return 0;
+    if (ctx == NULL && (ctx = new_ctx = BN_CTX_new()) == NULL)
+        return 0;
 
     BN_CTX_start(ctx);
     if ((t = BN_CTX_get(ctx)) == NULL)
@@ -334,7 +324,6 @@ int FP2_mul_nor(const BP_GROUP *group, FP2 *r, const FP2 *a, BN_CTX *ctx)
         goto err;
 
     ret = 1;
-
  err:
     BN_CTX_end(ctx);
     BN_CTX_free(new_ctx);
@@ -347,9 +336,8 @@ int FP2_mul_art(const BP_GROUP *group, FP2 *r, const FP2 *a, BN_CTX *ctx)
     BN_CTX *new_ctx = NULL;
     int ret = 0;
 
-    if (ctx == NULL)
-        if ((ctx = new_ctx = BN_CTX_new()) == NULL)
-            return 0;
+    if (ctx == NULL && (ctx = new_ctx = BN_CTX_new()) == NULL)
+        return 0;
 
     BN_CTX_start(ctx);
     if ((t = BN_CTX_get(ctx)) == NULL)
@@ -364,7 +352,6 @@ int FP2_mul_art(const BP_GROUP *group, FP2 *r, const FP2 *a, BN_CTX *ctx)
     BN_copy(r->f[1], t);
 
     ret = 1;
-
  err:
     BN_CTX_end(ctx);
     BN_CTX_free(new_ctx);
@@ -383,8 +370,9 @@ int FP2_sqr(const BP_GROUP *group, FP2 *r, const FP2 *a, BN_CTX *ctx)
 
     BN_CTX_start(ctx);
     if ((t0 = BN_CTX_get(ctx)) == NULL || (t1 = BN_CTX_get(ctx)) == NULL
-        || (t2 = BN_CTX_get(ctx)) == NULL)
+        || (t2 = BN_CTX_get(ctx)) == NULL) {
         goto err;
+    }
 
     /*
      * t0 = (a_0 + a_1).
@@ -416,7 +404,6 @@ int FP2_sqr(const BP_GROUP *group, FP2 *r, const FP2 *a, BN_CTX *ctx)
         goto err;
 
     ret = 1;
-
  err:
     BN_CTX_end(ctx);
     BN_CTX_free(new_ctx);
@@ -429,9 +416,8 @@ int FP2_inv(const BP_GROUP *group, FP2 *r, const FP2 *a, BN_CTX *ctx)
     BN_CTX *new_ctx = NULL;
     int ret = 0;
 
-    if (ctx == NULL)
-        if ((ctx = new_ctx = BN_CTX_new()) == NULL)
-            return 0;
+    if (ctx == NULL && (ctx = new_ctx = BN_CTX_new()) == NULL)
+        return 0;
 
     BN_CTX_start(ctx);
     if ((t0 = BN_CTX_get(ctx)) == NULL || (t1 = BN_CTX_get(ctx)) == NULL)
@@ -473,7 +459,6 @@ int FP2_inv(const BP_GROUP *group, FP2 *r, const FP2 *a, BN_CTX *ctx)
         goto err;
 
     ret = 1;
-
  err:
     BN_CTX_end(ctx);
     BN_CTX_free(new_ctx);
@@ -491,15 +476,17 @@ int FP2_conj(const BP_GROUP *group, FP2 *r, const FP2 *a)
 int FP2_inv_sim(const BP_GROUP *group, FP2 *r[], FP2 *a[], int num,
                 BN_CTX *ctx)
 {
-    FP2 *t[num], *u = NULL;
+    FP2 *t[num + 1];
     int i, ret = 0;
 
     if (num == 0)
         return 1;
 
-    if ((u = FP2_new()) == NULL)
-        goto err;
-    for (i = 0; i < num; i++) {
+    /*
+     * Allocate one element more to use as auxiliary variable.
+     */
+    for (i = 0; i <= num; i++) {
+        t[i] = NULL;
         if ((t[i] = FP2_new()) == NULL)
             goto err;
     }
@@ -526,26 +513,24 @@ int FP2_inv_sim(const BP_GROUP *group, FP2 *r[], FP2 *a[], int num,
     /*
      * Invert the multiplication.
      */
-    if (!FP2_inv(group, u, r[num - 1], ctx))
+    if (!FP2_inv(group, t[num], r[num - 1], ctx))
         goto err;
 
     /*
      * Recover individual elements.
      */
     for (i = num - 1; i > 0; i--) {
-        if (!FP2_mul(group, r[i], r[i - 1], u, ctx))
+        if (!FP2_mul(group, r[i], r[i - 1], t[num], ctx))
             goto err;
-        if (!FP2_mul(group, u, u, t[i], ctx))
+        if (!FP2_mul(group, t[num], t[num], t[i], ctx))
             goto err;
     }
-    if (!FP2_copy(r[0], u))
+    if (!FP2_copy(r[0], t[num]))
         goto err;
 
     ret = 1;
-
  err:
-    FP2_free(u);
-    for (i = 0; i < num; i++) {
+    for (i = 0; i <= num; i++) {
         FP2_free(t[i]);
     }
     return ret;
@@ -576,7 +561,6 @@ int FP2_exp(const BP_GROUP *group, FP2 *r, const FP2 *a, const BIGNUM *b,
         goto err;
 
     ret = 1;
-
  err:
     FP2_free(t);
     return ret;

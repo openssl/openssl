@@ -184,8 +184,9 @@ BP_GROUP *BP_GROUP_new_by_curve_name(int nid)
     BP_GROUP *ret = NULL;
 
     if ((p = BN_new()) == NULL || (a = BN_new()) == NULL
-        || (b = BN_new()) == NULL || (ret = BP_GROUP_new()) == NULL)
+        || (b = BN_new()) == NULL || (ret = BP_GROUP_new()) == NULL) {
         goto err;
+    }
 
     switch (nid) {
     case NID_fp254bnb:
@@ -232,9 +233,8 @@ void BP_GROUP_clear_free(BP_GROUP *group)
     BN_MONT_CTX_free(group->mont);
     EC_GROUP_free(group->ec);
     G2_ELEM_clear_free(group->gen2);
-    if (group->g2_pre_comp != NULL) {
+    if (group->g2_pre_comp != NULL)
         g2_pre_comp_free(group->g2_pre_comp);
-    }
 }
 
 int BP_GROUP_copy(BP_GROUP *dest, const BP_GROUP *src)
@@ -348,8 +348,9 @@ int BP_GROUP_set_curve(BP_GROUP *group, const BIGNUM *p, const BIGNUM *a,
         || (x[1] = BN_CTX_get(ctx)) == NULL
         || (y[0] = BN_CTX_get(ctx)) == NULL
         || (y[1] = BN_CTX_get(ctx)) == NULL || (d = BN_CTX_get(ctx)) == NULL
-        || (r = BN_CTX_get(ctx)) == NULL || (m = BN_CTX_get(ctx)) == NULL)
+        || (r = BN_CTX_get(ctx)) == NULL || (m = BN_CTX_get(ctx)) == NULL) {
         goto err;
+    }
 
     found = 0;
 
@@ -431,7 +432,6 @@ int BP_GROUP_set_curve(BP_GROUP *group, const BIGNUM *p, const BIGNUM *a,
         goto err;
 
     ret = 1;
-
  err:
     BN_CTX_end(ctx);
     BN_CTX_free(new_ctx);

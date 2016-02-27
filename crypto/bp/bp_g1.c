@@ -108,6 +108,7 @@ G1_ELEM *G1_ELEM_dup(const G1_ELEM *a, const BP_GROUP *group)
 
     if (a == NULL)
         return NULL;
+
     t = G1_ELEM_new(group);
     if (t == NULL)
         return NULL;

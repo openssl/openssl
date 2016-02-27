@@ -113,24 +113,17 @@ void FP6_clear_free(FP6 *a)
 
 int FP6_zero(FP6 *a)
 {
-    if (!FP2_zero(a->f[0]))
-        return 0;
-    if (!FP2_zero(a->f[1]))
-        return 0;
-    if (!FP2_zero(a->f[2]))
+    if (!FP2_zero(a->f[0]) || !FP2_zero(a->f[1]) || !FP2_zero(a->f[2]))
         return 0;
     return 1;
 }
 
 int FP6_cmp(const FP6 *a, const FP6 *b)
 {
-    if (FP2_cmp(a->f[0], b->f[0]) != 0)
-        return 1;
-    if (FP2_cmp(a->f[1], b->f[1]) != 0)
-        return 1;
-    if (FP2_cmp(a->f[2], b->f[2]) != 0)
-        return 1;
-    return 0;
+    if ((FP2_cmp(a->f[0], b->f[0]) == 0) && (FP2_cmp(a->f[1], b->f[1]) != 0)
+        && (FP2_cmp(a->f[2], b->f[2]) == 0))
+        return 0;
+    return 1;
 }
 
 int FP6_copy(FP6 *a, const FP6 *b)
@@ -191,8 +184,9 @@ int FP6_mul(const BP_GROUP *group, FP6 *r, const FP6 *a, const FP6 *b,
 
     if ((v0 = FP2_new()) == NULL || (v1 = FP2_new()) == NULL
         || (v2 = FP2_new()) == NULL || (t0 = FP2_new()) == NULL
-        || (t1 = FP2_new()) == NULL || (t2 = FP2_new()) == NULL)
+        || (t1 = FP2_new()) == NULL || (t2 = FP2_new()) == NULL) {
         goto err;
+    }
 
     /*
      * v0 = a_0b_0
@@ -270,7 +264,6 @@ int FP6_mul(const BP_GROUP *group, FP6 *r, const FP6 *a, const FP6 *b,
     FP2_copy(r->f[0], t2);
 
     ret = 1;
-
  err:
     FP2_free(t2);
     FP2_free(t1);
@@ -289,8 +282,9 @@ int FP6_mul_sparse(const BP_GROUP *group, FP6 *r, const FP6 *a,
 
     if ((v0 = FP2_new()) == NULL || (v1 = FP2_new()) == NULL
         || (v2 = FP2_new()) == NULL || (t0 = FP2_new()) == NULL
-        || (t1 = FP2_new()) == NULL || (t2 = FP2_new()) == NULL)
+        || (t1 = FP2_new()) == NULL || (t2 = FP2_new()) == NULL) {
         goto err;
+    }
 
     /*
      * v0 = a_0b_0
@@ -350,7 +344,6 @@ int FP6_mul_sparse(const BP_GROUP *group, FP6 *r, const FP6 *a,
     FP2_copy(r->f[0], t2);
 
     ret = 1;
-
  err:
     FP2_free(t2);
     FP2_free(t1);
@@ -376,7 +369,6 @@ int FP6_mul_art(const BP_GROUP *group, FP6 *r, const FP6 *a, BN_CTX *ctx)
     FP2_copy(r->f[1], t0);
 
     ret = 1;
-
  err:
     FP2_free(t0);
     return ret;
@@ -389,8 +381,9 @@ int FP6_sqr(const BP_GROUP *group, FP6 *r, const FP6 *a, BN_CTX *ctx)
 
     if ((t0 = FP2_new()) == NULL || (t1 = FP2_new()) == NULL
         || (t2 = FP2_new()) == NULL || (t3 = FP2_new()) == NULL
-        || (t4 = FP2_new()) == NULL)
+        || (t4 = FP2_new()) == NULL) {
         goto err;
+    }
 
     /*
      * t0 = a_0^2
@@ -485,7 +478,6 @@ int FP6_sqr(const BP_GROUP *group, FP6 *r, const FP6 *a, BN_CTX *ctx)
         goto err;
 
     ret = 1;
-
  err:
     FP2_free(t0);
     FP2_free(t1);
@@ -501,8 +493,9 @@ int FP6_inv(const BP_GROUP *group, FP6 *r, const FP6 *a, BN_CTX *ctx)
     int ret = 0;
 
     if ((v0 = FP2_new()) == NULL || (v1 = FP2_new()) == NULL
-        || (v2 = FP2_new()) == NULL || (t0 = FP2_new()) == NULL)
+        || (v2 = FP2_new()) == NULL || (t0 = FP2_new()) == NULL) {
         goto err;
+    }
 
     /*
      * v0 = a_0^2 - E * a_1 * a_2.
@@ -566,7 +559,6 @@ int FP6_inv(const BP_GROUP *group, FP6 *r, const FP6 *a, BN_CTX *ctx)
         goto err;
 
     ret = 1;
-
  err:
     FP2_free(v0);
     FP2_free(v1);
