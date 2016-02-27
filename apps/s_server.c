@@ -185,11 +185,6 @@ typedef unsigned int u_int;
 #include "s_apps.h"
 #include "timeouts.h"
 
-#if (defined(OPENSSL_SYS_VMS) && __VMS_VER < 70000000)
-/* FIONBIO used as a switch to enable ioctl, and that isn't in VMS < 7.0 */
-# undef FIONBIO
-#endif
-
 static int not_resumable_sess_cb(SSL *s, int is_forward_secure);
 static int sv_body(int s, int stype, unsigned char *context);
 static int www_body(int s, int stype, unsigned char *context);
@@ -226,9 +221,7 @@ static const char *s_cert_file = TEST_CERT, *s_key_file =
 
 static const char *s_cert_file2 = TEST_CERT2, *s_key_file2 = NULL;
 static char *s_dcert_file = NULL, *s_dkey_file = NULL, *s_dchain_file = NULL;
-#ifdef FIONBIO
 static int s_nbio = 0;
-#endif
 static int s_nbio_test = 0;
 static int s_crlf = 0;
 static SSL_CTX *ctx = NULL;
@@ -948,9 +941,7 @@ OPTIONS s_server_options[] = {
     OPT_S_OPTIONS,
     OPT_V_OPTIONS,
     OPT_X_OPTIONS,
-#ifdef FIONBIO
     {"nbio", OPT_NBIO, '-', "Use non-blocking IO"},
-#endif
 #ifndef OPENSSL_NO_PSK
     {"psk_hint", OPT_PSK_HINT, 's', "PSK identity hint to use"},
     {"psk", OPT_PSK, 's', "PSK in hex (without 0x)"},
@@ -2072,16 +2063,12 @@ static int sv_body(int s, int stype, unsigned char *context)
 #endif
 
     buf = app_malloc(bufsize, "server buffer");
-#ifdef FIONBIO
     if (s_nbio) {
-        unsigned long sl = 1;
-
-        if (!s_quiet)
-            BIO_printf(bio_err, "turning on non blocking io\n");
-        if (BIO_socket_ioctl(s, FIONBIO, &sl) < 0)
+        if (!BIO_socket_nbio(s, 1))
             ERR_print_errors(bio_err);
+        else if (!s_quiet)
+            BIO_printf(bio_err, "Turned on non blocking io\n");
     }
-#endif
 
     if (con == NULL) {
         con = SSL_new(ctx);
@@ -2670,16 +2657,12 @@ static int www_body(int s, int stype, unsigned char *context)
     if ((io == NULL) || (ssl_bio == NULL))
         goto err;
 
-#ifdef FIONBIO
     if (s_nbio) {
-        unsigned long sl = 1;
-
-        if (!s_quiet)
-            BIO_printf(bio_err, "turning on non blocking io\n");
-        if (BIO_socket_ioctl(s, FIONBIO, &sl) < 0)
+        if (!BIO_socket_nbio(s, 1))
             ERR_print_errors(bio_err);
+        else if (!s_quiet)
+            BIO_printf(bio_err, "Turned on non blocking io\n");
     }
-#endif
 
     /* lets make the output buffer a reasonable size */
     if (!BIO_set_write_buffer_size(io, bufsize))
