@@ -1580,19 +1580,7 @@ int speed_main(int argc, char **argv)
         loopargs[i].buf = loopargs[i].buf_malloc + misalign;
         loopargs[i].buf2 = loopargs[i].buf2_malloc + misalign;
         loopargs[i].siglen = app_malloc(sizeof(unsigned int), "signature length");
-#ifndef OPENSSL_NO_DSA
-        memset(loopargs[i].dsa_key, 0, sizeof(loopargs[i].dsa_key));
-#endif
-#ifndef OPENSSL_NO_RSA
-        memset(loopargs[i].rsa_key, 0, sizeof(loopargs[i].rsa_key));
-        for (k = 0; k < RSA_NUM; k++)
-            loopargs[i].rsa_key[k] = NULL;
-#endif
 #ifndef OPENSSL_NO_EC
-        for (k = 0; k < EC_NUM; k++)
-            loopargs[i].ecdsa[k] = NULL;
-        for (k = 0; k < EC_NUM; k++)
-            loopargs[i].ecdh_a[k] = loopargs[i].ecdh_b[k] = NULL;
         loopargs[i].secret_a = app_malloc(MAX_ECDH_SIZE, "ECDH secret a");
         loopargs[i].secret_b = app_malloc(MAX_ECDH_SIZE, "ECDH secret b");
 #endif
@@ -2828,15 +2816,11 @@ int speed_main(int argc, char **argv)
  end:
     ERR_print_errors(bio_err);
     for (i = 0; i < loopargs_len; i++) {
-        if (loopargs[i].buf_malloc != NULL)
-            OPENSSL_free(loopargs[i].buf_malloc);
-        if (loopargs[i].buf2_malloc != NULL)
-            OPENSSL_free(loopargs[i].buf2_malloc);
-        if (loopargs[i].siglen != NULL)
-            OPENSSL_free(loopargs[i].siglen);
+        OPENSSL_free(loopargs[i].buf_malloc);
+        OPENSSL_free(loopargs[i].buf2_malloc);
+        OPENSSL_free(loopargs[i].siglen);
     }
-    if (loopargs != NULL)
-        OPENSSL_free(loopargs);
+    OPENSSL_free(loopargs);
 #ifndef OPENSSL_NO_RSA
     for (i = 0; i < loopargs_len; i++) {
         for (k = 0; k < RSA_NUM; k++)
@@ -2857,10 +2841,8 @@ int speed_main(int argc, char **argv)
             EC_KEY_free(loopargs[i].ecdh_a[k]);
             EC_KEY_free(loopargs[i].ecdh_b[k]);
         }
-	if (loopargs[i].secret_a)
-		OPENSSL_free(loopargs[i].secret_a);
-	if (loopargs[i].secret_b)
-		OPENSSL_free(loopargs[i].secret_b);
+        OPENSSL_free(loopargs[i].secret_a);
+        OPENSSL_free(loopargs[i].secret_b);
     }
 #endif
     if (async_jobs > 0)
