@@ -465,16 +465,17 @@ int FP2_inv(const BP_GROUP *group, FP2 *r, const FP2 *a, BN_CTX *ctx)
     return ret;
 }
 
-int FP2_conj(const BP_GROUP *group, FP2 *r, const FP2 *a)
+int FP2_conjugate(const BP_GROUP *group, FP2 *r, const FP2 *a)
 {
-    BN_copy(r->f[0], a->f[0]);
+    if (!BN_copy(r->f[0], a->f[0]))
+        return 0;
     if (!BN_sub(r->f[1], group->field, a->f[1]))
         return 0;
     return 1;
 }
 
-int FP2_inv_sim(const BP_GROUP *group, FP2 *r[], FP2 *a[], int num,
-                BN_CTX *ctx)
+int FP2_inv_simultaneous(const BP_GROUP *group, FP2 *r[], FP2 *a[], int num,
+                         BN_CTX *ctx)
 {
     FP2 *t[num + 1];
     int i, ret = 0;

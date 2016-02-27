@@ -233,9 +233,9 @@ int FP2_mul_art(const BP_GROUP *group, FP2 *r, const FP2 *a, BN_CTX *ctx);
 int FP2_mul_nor(const BP_GROUP *group, FP2 *r, const FP2 *a, BN_CTX *ctx);
 int FP2_sqr(const BP_GROUP *group, FP2 *r, const FP2 *a, BN_CTX *ctx);
 int FP2_inv(const BP_GROUP *group, FP2 *r, const FP2 *a, BN_CTX *ctx);
-int FP2_conj(const BP_GROUP *group, FP2 *r, const FP2 *a);
-int FP2_inv_sim(const BP_GROUP *group, FP2 *r[], FP2 *a[], int num,
-                BN_CTX *ctx);
+int FP2_conjugate(const BP_GROUP *group, FP2 *r, const FP2 *a);
+int FP2_inv_simultaneous(const BP_GROUP *group, FP2 *r[], FP2 *a[], int num,
+                         BN_CTX *ctx);
 int FP2_exp(const BP_GROUP *group, FP2 *r, const FP2 *a, const BIGNUM *b,
             BN_CTX *ctx);
 
@@ -294,18 +294,22 @@ int FP12_mul(const BP_GROUP *group, FP12 *r, const FP12 *a,
 int FP12_mul_sparse(const BP_GROUP *group, FP12 *r, const FP12 *a,
                     const FP12 *b, BN_CTX *ctx);
 int FP12_sqr(const BP_GROUP *group, FP12 *r, const FP12 *a, BN_CTX *ctx);
-int FP12_sqr_cyc(const BP_GROUP *group, FP12 *r, const FP12 *a, BN_CTX *ctx);
-int FP12_sqr_pck(const BP_GROUP *group, FP12 *r, const FP12 *a, BN_CTX *ctx);
+int FP12_sqr_cyclotomic(const BP_GROUP *group, FP12 *r, const FP12 *a,
+                        BN_CTX *ctx);
+int FP12_sqr_compressed(const BP_GROUP *group, FP12 *r, const FP12 *a,
+                        BN_CTX *ctx);
 int FP12_inv(const BP_GROUP *group, FP12 *r, const FP12 *a, BN_CTX *ctx);
-int FP12_conj(const BP_GROUP *group, FP12 *r, const FP12 *a);
-int FP12_cyc(const BP_GROUP *group, FP12 *r, const FP12 *a, BN_CTX *ctx);
-int FP12_back(const BP_GROUP *group, FP12 *r[], const FP12 *a[], int num,
-              BN_CTX *ctx);
-int FP12_frb(const BP_GROUP *group, FP12 *r, const FP12 *a, BN_CTX *ctx);
-int FP12_exp_cyc(const BP_GROUP *group, FP12 *r, const FP12 *a,
-                 const BIGNUM *b, BN_CTX *ctx);
-int FP12_exp_pck(const BP_GROUP *group, FP12 *r, const FP12 *a,
-                 const BIGNUM *b, BN_CTX *ctx);
+int FP12_conjugate(const BP_GROUP *group, FP12 *r, const FP12 *a);
+int FP12_to_cyclotomic(const BP_GROUP *group, FP12 *r, const FP12 *a,
+                       BN_CTX *ctx);
+int FP12_decompress(const BP_GROUP *group, FP12 *r[], const FP12 *a[],
+                    int num, BN_CTX *ctx);
+int FP12_frobenius(const BP_GROUP *group, FP12 *r, const FP12 *a,
+                   BN_CTX *ctx);
+int FP12_exp_cyclotomic(const BP_GROUP *group, FP12 *r, const FP12 *a,
+                        const BIGNUM *b, BN_CTX *ctx);
+int FP12_exp_compressed(const BP_GROUP *group, FP12 *r, const FP12 *a,
+                        const BIGNUM *b, BN_CTX *ctx);
 
 /********************************************************************/
 /*              Functions for precomputation in G2                  */

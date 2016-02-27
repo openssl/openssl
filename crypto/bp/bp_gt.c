@@ -303,5 +303,5 @@ int GT_ELEM_cmp(const GT_ELEM *a, const GT_ELEM *b)
 int GT_ELEM_exp(const BP_GROUP *group, GT_ELEM *r, const GT_ELEM *a,
                 const BIGNUM *b, BN_CTX *ctx)
 {
-    return FP12_exp_cyc(group, r->f, a->f, b, ctx);
+    return FP12_exp_cyclotomic(group, r->f, a->f, b, ctx);
 }

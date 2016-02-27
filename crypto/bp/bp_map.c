@@ -338,9 +338,9 @@ static int GT_miller_final(const BP_GROUP *group, FP12 *r, FP2 *x3,
 
     if (!FP12_zero(l))
         goto err;
-    if (!FP2_conj(group, x2, x1))
+    if (!FP2_conjugate(group, x2, x1))
         goto err;
-    if (!FP2_conj(group, y2, y1))
+    if (!FP2_conjugate(group, y2, y1))
         goto err;
     if (!FP2_mul_frb(group, x2, x2, 2, ctx))
         goto err;
@@ -351,9 +351,9 @@ static int GT_miller_final(const BP_GROUP *group, FP12 *r, FP2 *x3,
     if (!FP12_mul_sparse(group, r, r, l, ctx))
         goto err;
 
-    if (!FP2_conj(group, x2, x2))
+    if (!FP2_conjugate(group, x2, x2))
         goto err;
-    if (!FP2_conj(group, y2, y2))
+    if (!FP2_conjugate(group, y2, y2))
         goto err;
     if (!FP2_mul_frb(group, x2, x2, 2, ctx))
         goto err;
@@ -384,80 +384,81 @@ static int GT_final_exp(const BP_GROUP *group, FP12 *r, const FP12 *a,
 
     if ((t0 = FP12_new()) == NULL || (t1 = FP12_new()) == NULL
         || (t2 = FP12_new()) == NULL || (t3 = FP12_new()) == NULL
-        || (t4 = FP12_new()) == NULL)
+        || (t4 = FP12_new()) == NULL) {
         goto err;
+    }
 
     /*
      * First, compute m = f^(p^6 - 1)(p^2 + 1).
      */
-    if (!FP12_cyc(group, r, a, ctx))
+    if (!FP12_to_cyclotomic(group, r, a, ctx))
         goto err;
     /*
      * Now compute m^((p^4 - p^2 + 1) / r) using Duquesne-Ghamman approach
      * from https://eprint.iacr.org/2015/192.pdf
      */
-    if (!FP12_exp_pck(group, t0, r, group->param, ctx))
+    if (!FP12_exp_compressed(group, t0, r, group->param, ctx))
         goto err;
-    if (!BN_is_negative(group->param) && !FP12_conj(group, t0, t0))
+    if (!BN_is_negative(group->param) && !FP12_conjugate(group, t0, t0))
         goto err;
-    if (!FP12_sqr_cyc(group, t4, t0, ctx))
+    if (!FP12_sqr_cyclotomic(group, t4, t0, ctx))
         goto err;
     if (!FP12_mul(group, t1, t0, t4, ctx))
         goto err;
-    if (!FP12_frb(group, t3, t4, ctx))
+    if (!FP12_frobenius(group, t3, t4, ctx))
         goto err;
     if (!FP12_mul(group, t3, t3, t4, ctx))
         goto err;
-    if (!FP12_sqr_cyc(group, t3, t3, ctx))
+    if (!FP12_sqr_cyclotomic(group, t3, t3, ctx))
         goto err;
     if (!FP12_mul(group, t3, t3, t4, ctx))
         goto err;
 
-    if (!FP12_exp_pck(group, t0, t1, group->param, ctx))
+    if (!FP12_exp_compressed(group, t0, t1, group->param, ctx))
         goto err;
-    if (!BN_is_negative(group->param) && !FP12_conj(group, t0, t0))
+    if (!BN_is_negative(group->param) && !FP12_conjugate(group, t0, t0))
         goto err;
-    if (!FP12_conj(group, t1, r))
+    if (!FP12_conjugate(group, t1, r))
         goto err;
-    if (!FP12_frb(group, t2, t0, ctx))
+    if (!FP12_frobenius(group, t2, t0, ctx))
         goto err;
-    if (!FP12_frb(group, t2, t2, ctx))
+    if (!FP12_frobenius(group, t2, t2, ctx))
         goto err;
     if (!FP12_mul(group, t2, t2, t1, ctx))
         goto err;
-    if (!FP12_conj(group, t0, t0))
+    if (!FP12_conjugate(group, t0, t0))
         goto err;
-    if (!FP12_frb(group, t4, t0, ctx))
+    if (!FP12_frobenius(group, t4, t0, ctx))
         goto err;
     if (!FP12_mul(group, t4, t0, t4, ctx))
         goto err;
-    if (!FP12_sqr_cyc(group, t0, t0, ctx))
+    if (!FP12_sqr_cyclotomic(group, t0, t0, ctx))
         goto err;
     if (!FP12_mul(group, t2, t2, t0, ctx))
         goto err;
 
-    if (!FP12_exp_pck(group, t0, t4, group->param, ctx))
+    if (!FP12_exp_compressed(group, t0, t4, group->param, ctx))
         goto err;
-    if (!BN_is_negative(group->param) && !FP12_conj(group, t0, t0))
+    if (!BN_is_negative(group->param) && !FP12_conjugate(group, t0, t0))
         goto err;
-    if (!FP12_sqr_cyc(group, t0, t0, ctx))
+    if (!FP12_sqr_cyclotomic(group, t0, t0, ctx))
         goto err;
-    if (!FP12_conj(group, t0, t0))
+    if (!FP12_conjugate(group, t0, t0))
         goto err;
     if (!FP12_mul(group, t4, t0, t4, ctx))
         goto err;
-    if (!FP12_frb(group, t1, r, ctx))
+    if (!FP12_frobenius(group, t1, r, ctx))
         goto err;
-    if (!FP12_frb(group, r, t1, ctx))
+    if (!FP12_frobenius(group, r, t1, ctx))
         goto err;
     if (!FP12_mul(group, t1, t1, r, ctx))
         goto err;
-    if (!FP12_frb(group, r, r, ctx))
+    if (!FP12_frobenius(group, r, r, ctx))
         goto err;
     if (!FP12_mul(group, t1, t1, r, ctx))
         goto err;
 
-    if (!FP12_sqr_cyc(group, r, t4, ctx))
+    if (!FP12_sqr_cyclotomic(group, r, t4, ctx))
         goto err;
     if (!FP12_mul(group, r, t3, r, ctx))
         goto err;
@@ -465,13 +466,12 @@ static int GT_final_exp(const BP_GROUP *group, FP12 *r, const FP12 *a,
         goto err;
     if (!FP12_mul(group, r, r, t2, ctx))
         goto err;
-    if (!FP12_sqr_cyc(group, r, r, ctx))
+    if (!FP12_sqr_cyclotomic(group, r, r, ctx))
         goto err;
     if (!FP12_mul(group, r, r, t4, ctx))
         goto err;
 
     ret = 1;
-
  err:
     FP12_free(t0);
     FP12_free(t1);
@@ -581,7 +581,7 @@ int GT_ELEMs_pairing(const BP_GROUP *group, GT_ELEM *r, size_t num,
         goto err;
 
     /*
-     * Compute Miller loops simultaneously.
+     * Compute Miller loops simultaneously using square-and-multiply.
      */
     for (i = BN_num_bits(miller) - 1; i > 0;) {
         i--;
@@ -607,7 +607,7 @@ int GT_ELEMs_pairing(const BP_GROUP *group, GT_ELEM *r, size_t num,
         }
     }
 
-    if (BN_is_negative(group->param) && !FP12_conj(group, r->f, r->f))
+    if (BN_is_negative(group->param) && !FP12_conjugate(group, r->f, r->f))
         goto err;
 
     for (i = 0; i < m; i++) {

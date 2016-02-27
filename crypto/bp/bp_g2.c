@@ -1140,7 +1140,7 @@ int G2_ELEMs_make_affine(const BP_GROUP *group, size_t num,
             goto err;
     }
 
-    if (!FP2_inv_sim(group, zs, zs, m, ctx))
+    if (!FP2_inv_simultaneous(group, zs, zs, m, ctx))
         goto err;
 
     m = 0;
