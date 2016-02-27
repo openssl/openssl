@@ -630,7 +630,7 @@ int X509_STORE_CTX_get1_issuer(X509 **issuer, X509_STORE_CTX *ctx, X509 *x)
     }
     /* If certificate matches all OK */
     if (ctx->check_issued(ctx, x, obj.data.x509)) {
-        if (x509_check_cert_time(ctx, obj.data.x509, 1)) {
+        if (x509_check_cert_time(ctx, obj.data.x509, -1)) {
             *issuer = obj.data.x509;
             return 1;
         }
@@ -661,7 +661,7 @@ int X509_STORE_CTX_get1_issuer(X509 **issuer, X509_STORE_CTX *ctx, X509 *x)
                  * match if no certificate time is OK.
                  */
 
-                if (x509_check_cert_time(ctx, *issuer, 1))
+                if (x509_check_cert_time(ctx, *issuer, -1))
                     break;
             }
         }
