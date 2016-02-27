@@ -346,7 +346,8 @@ int FP2_mul_art(const BP_GROUP *group, FP2 *r, const FP2 *a, BN_CTX *ctx)
     /*
      * Multiply by adjoined root.
      */
-    BN_copy(t, a->f[0]);
+    if (!BN_copy(t, a->f[0]))
+        goto err;
     if (!BN_sub(r->f[0], group->field, a->f[1]))
         goto err;
     BN_copy(r->f[1], t);
@@ -364,9 +365,8 @@ int FP2_sqr(const BP_GROUP *group, FP2 *r, const FP2 *a, BN_CTX *ctx)
     BN_CTX *new_ctx = NULL;
     int ret = 0;
 
-    if (ctx == NULL)
-        if ((ctx = new_ctx = BN_CTX_new()) == NULL)
-            return 0;
+    if (ctx == NULL && (ctx = new_ctx = BN_CTX_new()) == NULL)
+        return 0;
 
     BN_CTX_start(ctx);
     if ((t0 = BN_CTX_get(ctx)) == NULL || (t1 = BN_CTX_get(ctx)) == NULL
