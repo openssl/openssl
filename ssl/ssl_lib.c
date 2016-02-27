@@ -2461,10 +2461,10 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
     ret->max_send_fragment = SSL3_RT_MAX_PLAIN_LENGTH;
     ret->split_send_fragment = SSL3_RT_MAX_PLAIN_LENGTH;
 
-    /* Setup RFC4507 ticket keys */
-    if ((RAND_bytes(ret->tlsext_tick_key_name, 16) <= 0)
-        || (RAND_bytes(ret->tlsext_tick_hmac_key, 16) <= 0)
-        || (RAND_bytes(ret->tlsext_tick_aes_key, 16) <= 0))
+    /* Setup RFC5077 ticket keys */
+    if ((RAND_bytes(ret->tlsext_tick_key_name, sizeof(ret->tlsext_tick_key_name)) <= 0)
+        || (RAND_bytes(ret->tlsext_tick_hmac_key, sizeof(ret->tlsext_tick_hmac_key)) <= 0)
+        || (RAND_bytes(ret->tlsext_tick_aes_key, sizeof(ret->tlsext_tick_aes_key)) <= 0))
         ret->options |= SSL_OP_NO_TICKET;
 
 #ifndef OPENSSL_NO_SRP
