@@ -871,12 +871,6 @@ $config{defines} = [ @{$target{defines}},
 $config{cflags} = join(" ",
 		       grep { $_ ne "" } ($target{cflags},
 					  $target{$build_prefix."cflags"}));
-$config{lflags} = join(" ",
-		       grep { $_ ne "" } ($target{lflags},
-					  $target{$build_prefix."lflags"}));
-$config{plib_lflags} = join(" ",
-			    grep { $_  ne "" } ($target{plib_lflags},
-					        $target{$build_prefix."plib_lflags"}));
 $config{ex_libs} = join(" ",
 			grep { $_  ne "" } ($target{ex_libs},
 					    $target{$build_prefix."ex_libs"}));
@@ -1682,8 +1676,8 @@ print "IsMK1MF       =", ($builder eq "mk1mf" ? "yes" : "no"), "\n";
 print "CC            =$target{cc}\n";
 print "CFLAG         =$config{cflags}\n";
 print "DEFINES       =",join(" ", @{$config{defines}}),"\n";
-print "LFLAG         =$config{lflags}\n";
-print "PLIB_LFLAG    =$config{plib_lflags}\n";
+print "LFLAG         =$target{lflags}\n";
+print "PLIB_LFLAG    =$target{plib_lflags}\n";
 print "EX_LIBS       =$config{ex_libs}\n";
 print "APPS_OBJ      =$target{apps_obj}\n";
 print "CPUID_OBJ     =$target{cpuid_obj}\n";
