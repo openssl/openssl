@@ -91,25 +91,21 @@ G2_ELEM *G2_ELEM_new(const BP_GROUP *group)
 
 void G2_ELEM_free(G2_ELEM *a)
 {
-    if (a == NULL) {
+    if (a == NULL)
         return;
-    } else {
-        FP2_free(a->X);
-        FP2_free(a->Y);
-        FP2_free(a->Z);
-    }
+    FP2_free(a->X);
+    FP2_free(a->Y);
+    FP2_free(a->Z);
     OPENSSL_free(a);
 }
 
 void G2_ELEM_clear_free(G2_ELEM *a)
 {
-    if (a == NULL) {
+    if (a == NULL)
         return;
-    } else {
-        FP2_clear_free(a->X);
-        FP2_clear_free(a->Y);
-        FP2_clear_free(a->Z);
-    }
+    FP2_clear_free(a->X);
+    FP2_clear_free(a->Y);
+    FP2_clear_free(a->Z);
     OPENSSL_free(a);
 }
 
@@ -131,15 +127,13 @@ int G2_ELEM_copy(G2_ELEM *a, const G2_ELEM *b)
 G2_ELEM *G2_ELEM_dup(const G2_ELEM *a, const BP_GROUP *group)
 {
     G2_ELEM *t = NULL;
-    int r;
 
     if (a == NULL)
         return NULL;
     t = G2_ELEM_new(group);
     if (t == NULL)
         return NULL;
-    r = G2_ELEM_copy(t, a);
-    if (!r) {
+    if (!G2_ELEM_copy(t, a)) {
         G2_ELEM_free(t);
         return NULL;
     }

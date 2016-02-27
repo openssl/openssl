@@ -70,7 +70,7 @@ FP6 *FP6_new()
     FP6 *ret = NULL;
 
     if ((ret = OPENSSL_zalloc(sizeof(*ret))) == NULL)
-        return (NULL);
+        return NULL;
 
     ret->f[0] = FP2_new();
     ret->f[1] = FP2_new();
@@ -93,44 +93,22 @@ void FP6_clear(FP6 *a)
 
 void FP6_free(FP6 *a)
 {
-    if (a == NULL) {
+    if (a == NULL)
         return;
-    } else {
-        FP2_free(a->f[0]);
-        FP2_free(a->f[1]);
-        FP2_free(a->f[2]);
-    }
+    FP2_free(a->f[0]);
+    FP2_free(a->f[1]);
+    FP2_free(a->f[2]);
     OPENSSL_free(a);
 }
 
 void FP6_clear_free(FP6 *a)
 {
-    if (a == NULL) {
+    if (a == NULL)
         return;
-    } else {
-        FP2_clear_free(a->f[0]);
-        FP2_clear_free(a->f[1]);
-        FP2_clear_free(a->f[2]);
-    }
+    FP2_clear_free(a->f[0]);
+    FP2_clear_free(a->f[1]);
+    FP2_clear_free(a->f[2]);
     OPENSSL_free(a);
-}
-
-int FP6_rand(const BP_GROUP *group, FP6 *a)
-{
-    if (!FP2_rand(group, a->f[0]))
-        return 0;
-    if (!FP2_rand(group, a->f[1]))
-        return 0;
-    if (!FP2_rand(group, a->f[2]))
-        return 0;
-    return 1;
-}
-
-void FP6_print(const FP6 *a)
-{
-    FP2_print(a->f[0]);
-    FP2_print(a->f[1]);
-    FP2_print(a->f[2]);
 }
 
 int FP6_zero(FP6 *a)

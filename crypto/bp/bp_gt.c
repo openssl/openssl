@@ -86,8 +86,7 @@ void GT_ELEM_free(GT_ELEM *a)
 {
     if (a == NULL)
         return;
-    else
-        FP12_free(a->f);
+    FP12_free(a->f);
     OPENSSL_free(a);
 }
 
@@ -95,8 +94,7 @@ void GT_clear_free(GT_ELEM *a)
 {
     if (a == NULL)
         return;
-    else
-        FP12_clear_free(a->f);
+    FP12_clear_free(a->f);
     OPENSSL_free(a);
 }
 
@@ -108,15 +106,13 @@ int GT_ELEM_copy(GT_ELEM *a, const GT_ELEM *b)
 GT_ELEM *GT_ELEM_dup(const GT_ELEM *a, const BP_GROUP *group)
 {
     GT_ELEM *t;
-    int r;
 
     if (a == NULL)
         return NULL;
     t = GT_ELEM_new(group);
     if (t == NULL)
         return NULL;
-    r = GT_ELEM_copy(t, a);
-    if (!r) {
+    if (!GT_ELEM_copy(t, a)) {
         GT_ELEM_free(t);
         return NULL;
     }

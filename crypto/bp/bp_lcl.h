@@ -217,8 +217,6 @@ void FP2_clear_free(FP2 *a);
 /*               Functions for arithmetic in Fp^2                   */
 /********************************************************************/
 
-int FP2_rand(const BP_GROUP *group, FP2 *a);
-void FP2_print(const FP2 *a);
 int FP2_zero(FP2 *a);
 int FP2_cmp(const FP2 *a, const FP2 *b);
 int FP2_copy(FP2 *a, const FP2 *b);
@@ -255,8 +253,6 @@ void FP6_clear_free(FP6 *a);
 /*               Functions for arithmetic in Fp^6                   */
 /********************************************************************/
 
-int FP6_rand(const BP_GROUP *group, FP6 *a);
-void FP6_print(const FP6 *a);
 int FP6_zero(FP6 *a);
 int FP6_cmp(const FP6 *a, const FP6 *b);
 int FP6_copy(FP6 *a, const FP6 *b);
@@ -285,8 +281,7 @@ void FP12_clear_free(FP12 *a);
 /********************************************************************/
 /*               Functions for arithmetic in Fp^12                   */
 /********************************************************************/
-int FP12_rand(const BP_GROUP *group, FP12 *a);
-void FP12_print(const FP12 *a);
+
 int FP12_zero(FP12 *a);
 int FP12_cmp(const FP12 *a, const FP12 *b);
 int FP12_copy(FP12 *a, const FP12 *b);

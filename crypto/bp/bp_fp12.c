@@ -90,39 +90,20 @@ void FP12_clear(FP12 *a)
 
 void FP12_free(FP12 *a)
 {
-    if (a == NULL) {
+    if (a == NULL)
         return;
-    } else {
-        FP6_free(a->f[0]);
-        FP6_free(a->f[1]);
-    }
+    FP6_free(a->f[0]);
+    FP6_free(a->f[1]);
     OPENSSL_free(a);
 }
 
 void FP12_clear_free(FP12 *a)
 {
-    if (a == NULL) {
+    if (a == NULL)
         return;
-    } else {
-        FP6_clear_free(a->f[0]);
-        FP6_clear_free(a->f[1]);
-    }
+    FP6_clear_free(a->f[0]);
+    FP6_clear_free(a->f[1]);
     OPENSSL_free(a);
-}
-
-int FP12_rand(const BP_GROUP *group, FP12 *a)
-{
-    if (!FP6_rand(group, a->f[0]))
-        return 0;
-    if (!FP6_rand(group, a->f[1]))
-        return 0;
-    return 1;
-}
-
-void FP12_print(const FP12 *a)
-{
-    FP6_print(a->f[0]);
-    FP6_print(a->f[1]);
 }
 
 int FP12_zero(FP12 *a)

@@ -72,11 +72,10 @@ G1_ELEM *G1_ELEM_new(const BP_GROUP *group)
     G1_ELEM *ret = NULL;
 
     if ((ret = OPENSSL_malloc(sizeof(*ret))) == NULL)
-        return (NULL);
+        return NULL;
 
     ret->p = EC_POINT_new(group->ec);
     if (ret->p == NULL) {
-        EC_POINT_free(ret->p);
         return NULL;
     }
     return (ret);
@@ -84,21 +83,17 @@ G1_ELEM *G1_ELEM_new(const BP_GROUP *group)
 
 void G1_ELEM_free(G1_ELEM *a)
 {
-    if (a == NULL) {
+    if (a == NULL)
         return;
-    } else {
-        EC_POINT_free(a->p);
-    }
+    EC_POINT_free(a->p);
     OPENSSL_free(a);
 }
 
 void G1_ELEM_clear_free(G1_ELEM *a)
 {
-    if (a == NULL) {
+    if (a == NULL)
         return;
-    } else {
-        EC_POINT_clear_free(a->p);
-    }
+    EC_POINT_clear_free(a->p);
     OPENSSL_free(a);
 }
 
@@ -110,15 +105,13 @@ int G1_ELEM_copy(G1_ELEM *a, const G1_ELEM *b)
 G1_ELEM *G1_ELEM_dup(const G1_ELEM *a, const BP_GROUP *group)
 {
     G1_ELEM *t = NULL;
-    int r;
 
     if (a == NULL)
         return NULL;
     t = G1_ELEM_new(group);
     if (t == NULL)
         return NULL;
-    r = G1_ELEM_copy(t, a);
-    if (!r) {
+    if (!G1_ELEM_copy(t, a)) {
         G1_ELEM_free(t);
         return NULL;
     }

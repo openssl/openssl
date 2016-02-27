@@ -74,7 +74,6 @@ FP2 *FP2_new()
 
     ret->f[0] = BN_new();
     ret->f[1] = BN_new();
-
     if (ret->f[0] == NULL || ret->f[1] == NULL) {
         BN_free(ret->f[0]);
         BN_free(ret->f[1]);
@@ -91,41 +90,20 @@ void FP2_clear(FP2 *a)
 
 void FP2_free(FP2 *a)
 {
-    if (a == NULL) {
+    if (a == NULL)
         return;
-    } else {
-        BN_free(a->f[0]);
-        BN_free(a->f[1]);
-    }
+    BN_free(a->f[0]);
+    BN_free(a->f[1]);
     OPENSSL_free(a);
 }
 
 void FP2_clear_free(FP2 *a)
 {
-    if (a == NULL) {
+    if (a == NULL)
         return;
-    } else {
-        BN_clear_free(a->f[0]);
-        BN_clear_free(a->f[1]);
-    }
+    BN_clear_free(a->f[0]);
+    BN_clear_free(a->f[1]);
     OPENSSL_free(a);
-}
-
-int FP2_rand(const BP_GROUP *group, FP2 *a)
-{
-    if (!BN_rand_range(a->f[0], group->field))
-        return 0;
-    if (!BN_rand_range(a->f[1], group->field))
-        return 0;
-    return 1;
-}
-
-void FP2_print(const FP2 *a)
-{
-    BN_print_fp(stdout, a->f[0]);
-    printf("\n");
-    BN_print_fp(stdout, a->f[1]);
-    printf("\n");
 }
 
 int FP2_zero(FP2 *a)
