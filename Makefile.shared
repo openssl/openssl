@@ -562,7 +562,8 @@ symlink.cygwin symlink.alpha-osf1 symlink.tru64 symlink.tru64-rpath:
 
 # Compatibility targets
 link_dso.bsd-gcc-shared link_dso.linux-shared link_dso.gnu-shared: link_dso.gnu
-link_shlib.bsd-gcc-shared link_shlib.gnu-shared: link_shlib.gnu
+link_shlib.bsd-gcc-shared: link_shlib.linux-shared
+link_shlib.gnu-shared: link_shlib.gnu
 link_app.bsd-gcc-shared link_app.linux-shared link_app.gnu-shared: link_app.gnu
 symlink.bsd-gcc-shared symlink.bsd-shared symlink.linux-shared symlink.gnu-shared: symlink.gnu
 link_dso.bsd-shared: link_dso.bsd
