@@ -3096,7 +3096,7 @@ static int tls_decrypt_ticket(SSL *s, const unsigned char *etick,
     } else {
         /* Check key name matches */
         if (memcmp(etick, tctx->tlsext_tick_key_name,
-                   sizeof(tctx->tlsext_tick_key_name))) {
+                   sizeof(tctx->tlsext_tick_key_name)) != 0) {
             ret = 2;
             goto err;
         }
