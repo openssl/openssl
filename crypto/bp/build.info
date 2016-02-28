@@ -1,3 +1,4 @@
 LIBS=../../libcrypto
 SOURCE[../../libcrypto]=\
-	bp_fp2.c bp_fp6.c bp_fp12.c bp_g1.c bp_g2.c bp_g2_mult.c bp_gt.c bp_map.c bp_group.c
+	bp_fp2.c bp_fp6.c bp_fp12.c bp_g1.c bp_g2.c bp_gt.c \
+	bp_g2_mult.c bp_map.c bp_group.c bp_err.c

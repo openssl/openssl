@@ -15,9 +15,9 @@ CFLAGS= $(INCLUDES) $(CFLAG) $(SHARED_CFLAG)
 GENERAL=Makefile
 
 LIB=$(TOP)/libcrypto.a
-LIBSRC= bp_group.c bp_fp2.c bp_fp6.c bp_fp12.c bp_g1.c bp_g2.c bp_g2_mult.c bp_gt.c bp_map.c
+LIBSRC= bp_group.c bp_fp2.c bp_fp6.c bp_fp12.c bp_g1.c bp_g2.c bp_g2_mult.c bp_gt.c bp_map.c bp_err.c
 
-LIBOBJ= bp_group.o bp_fp2.o bp_fp6.o bp_fp12.o bp_g1.o bp_g2.o bp_g2_mult.o bp_gt.o bp_map.o
+LIBOBJ= bp_group.o bp_fp2.o bp_fp6.o bp_fp12.o bp_g1.o bp_g2.o bp_g2_mult.o bp_gt.o bp_map.o bp_err.o
 
 SRC= $(LIBSRC)
 
