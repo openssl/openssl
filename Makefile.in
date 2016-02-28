@@ -278,7 +278,7 @@ BUILDENV=	LC_ALL=C PLATFORM='$(PLATFORM)' PROCESSOR='$(PROCESSOR)'\
 		SHA1_ASM_OBJ='$(SHA1_ASM_OBJ)'			\
 		MD5_ASM_OBJ='$(MD5_ASM_OBJ)'			\
 		RMD160_ASM_OBJ='$(RMD160_ASM_OBJ)'		\
-                BLAKE2_OBJ='$(BLAKE2_OBJ)'                      \
+		BLAKE2_OBJ='$(BLAKE2_OBJ)'                      \
 		WP_ASM_OBJ='$(WP_ASM_OBJ)'			\
 		MODES_ASM_OBJ='$(MODES_ASM_OBJ)'		\
 		PADLOCK_ASM_OBJ='$(PADLOCK_ASM_OBJ)'		\

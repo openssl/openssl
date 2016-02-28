@@ -12,7 +12,7 @@
  *
  * More information about the BLAKE2 hash function can be found at
  * https://blake2.net.
- * 
+ *
  */
 
 /* crypto/blake2/blake2_impl.h */
@@ -22,7 +22,7 @@
 
 static inline uint32_t load32(const void *src)
 {
-#if defined(NATIVE_LITTLE_ENDIAN)
+#if defined(L_ENDIAN)
     uint32_t w;
     memcpy(&w, src, sizeof w);
     return w;
@@ -38,7 +38,7 @@ static inline uint32_t load32(const void *src)
 
 static inline uint64_t load64(const void *src)
 {
-#if defined(NATIVE_LITTLE_ENDIAN)
+#if defined(L_ENDIAN)
     uint64_t w;
     memcpy(&w, src, sizeof w);
     return w;
@@ -58,7 +58,7 @@ static inline uint64_t load64(const void *src)
 
 static inline void store32(void *dst, uint32_t w)
 {
-#if defined(NATIVE_LITTLE_ENDIAN)
+#if defined(L_ENDIAN)
     memcpy(dst, &w, sizeof w);
 #else
     uint8_t *p = (uint8_t *)dst;
@@ -74,7 +74,7 @@ static inline void store32(void *dst, uint32_t w)
 
 static inline void store64(void *dst, uint64_t w)
 {
-#if defined(NATIVE_LITTLE_ENDIAN)
+#if defined(L_ENDIAN)
     memcpy(dst, &w, sizeof w);
 #else
     uint8_t *p = (uint8_t *)dst;

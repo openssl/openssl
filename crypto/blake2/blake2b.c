@@ -12,7 +12,7 @@
  *
  * More information about the BLAKE2 hash function can be found at
  * https://blake2.net.
- * 
+ *
  */
 
 /* crypto/blake2/blake2b.c */
@@ -97,7 +97,6 @@ static int blake2b_init_param(BLAKE2B_CTX *S, const BLAKE2B_PARAM *P)
 
 int BLAKE2b_Init(BLAKE2B_CTX *c) {
     BLAKE2B_PARAM P[1];
-
     P->digest_length = BLAKE2B_DIGEST_LENGTH;
     P->key_length    = 0;
     P->fanout        = 1;
