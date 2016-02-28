@@ -715,9 +715,9 @@ static int asn1_d2i_ex_primitive(ASN1_VALUE **pval,
 {
     int ret = 0, utype;
     long plen;
-    char cst, inf, free_cont = 1;
+    char cst, inf, free_cont = 0;
     const unsigned char *p;
-    BUF_MEM buf = { 0, NULL, 0, 0 };
+    BUF_MEM buf = { 0, NULL, 0 };
     const unsigned char *cont = NULL;
     long len;
     if (!pval) {
@@ -801,6 +801,9 @@ static int asn1_d2i_ex_primitive(ASN1_VALUE **pval,
             ASN1err(ASN1_F_ASN1_D2I_EX_PRIMITIVE, ASN1_R_TYPE_NOT_PRIMITIVE);
             return 0;
         }
+
+        /* Free any returned 'buf' content */
+        free_cont = 1;
         /*
          * Should really check the internal tags are correct but some things
          * may get this wrong. The relevant specs say that constructed string
