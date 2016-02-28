@@ -1,7 +1,3 @@
-/*
- * Written by Diego F. Aranha (d@miracl.com) and contributed to the
- * the OpenSSL project.
- */
 /* ====================================================================
  * Copyright (c) 2016 The OpenSSL Project.  All rights reserved.
  *
@@ -61,6 +57,7 @@
  * attached software ("Contribution") are developed by MIRACL UK LTD., and
  * are contributed to the OpenSSL project. The Contribution is licensed
  * pursuant to the OpenSSL open source license provided above.
+ * Authored by Diego F. Aranha (d@miracl.com).
  */
 
 /*
