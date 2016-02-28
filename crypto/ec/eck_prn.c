@@ -142,8 +142,6 @@ static int print_bin(BIO *fp, const char *str, const unsigned char *num,
 
 int ECPKParameters_print(BIO *bp, const EC_GROUP *x, int off)
 {
-    unsigned char *buffer = NULL;
-    size_t buf_len = 0, i;
     int ret = 0, reason = ERR_R_BIO_LIB;
     BN_CTX *ctx = NULL;
     const EC_POINT *point = NULL;
@@ -236,26 +234,8 @@ int ECPKParameters_print(BIO *bp, const EC_GROUP *x, int off)
             goto err;
         }
 
-        buf_len = (size_t)BN_num_bytes(p);
-        if (buf_len < (i = (size_t)BN_num_bytes(a)))
-            buf_len = i;
-        if (buf_len < (i = (size_t)BN_num_bytes(b)))
-            buf_len = i;
-        if (buf_len < (i = (size_t)BN_num_bytes(gen)))
-            buf_len = i;
-        if (buf_len < (i = (size_t)BN_num_bytes(order)))
-            buf_len = i;
-        if (buf_len < (i = (size_t)BN_num_bytes(cofactor)))
-            buf_len = i;
-
         if ((seed = EC_GROUP_get0_seed(x)) != NULL)
             seed_len = EC_GROUP_get_seed_len(x);
-
-        buf_len += 10;
-        if ((buffer = OPENSSL_malloc(buf_len)) == NULL) {
-            reason = ERR_R_MALLOC_FAILURE;
-            goto err;
-        }
 
         if (!BIO_indent(bp, off, 128))
             goto err;
@@ -279,36 +259,36 @@ int ECPKParameters_print(BIO *bp, const EC_GROUP *x, int off)
                 goto err;
 
             /* print the polynomial */
-            if ((p != NULL) && !ASN1_bn_print(bp, "Polynomial:", p, buffer,
+            if ((p != NULL) && !ASN1_bn_print(bp, "Polynomial:", p, NULL,
                                               off))
                 goto err;
         } else {
-            if ((p != NULL) && !ASN1_bn_print(bp, "Prime:", p, buffer, off))
+            if ((p != NULL) && !ASN1_bn_print(bp, "Prime:", p, NULL, off))
                 goto err;
         }
-        if ((a != NULL) && !ASN1_bn_print(bp, "A:   ", a, buffer, off))
+        if ((a != NULL) && !ASN1_bn_print(bp, "A:   ", a, NULL, off))
             goto err;
-        if ((b != NULL) && !ASN1_bn_print(bp, "B:   ", b, buffer, off))
+        if ((b != NULL) && !ASN1_bn_print(bp, "B:   ", b, NULL, off))
             goto err;
         if (form == POINT_CONVERSION_COMPRESSED) {
             if ((gen != NULL) && !ASN1_bn_print(bp, gen_compressed, gen,
-                                                buffer, off))
+                                                NULL, off))
                 goto err;
         } else if (form == POINT_CONVERSION_UNCOMPRESSED) {
             if ((gen != NULL) && !ASN1_bn_print(bp, gen_uncompressed, gen,
-                                                buffer, off))
+                                                NULL, off))
                 goto err;
         } else {                /* form == POINT_CONVERSION_HYBRID */
 
             if ((gen != NULL) && !ASN1_bn_print(bp, gen_hybrid, gen,
-                                                buffer, off))
+                                                NULL, off))
                 goto err;
         }
         if ((order != NULL) && !ASN1_bn_print(bp, "Order: ", order,
-                                              buffer, off))
+                                              NULL, off))
             goto err;
         if ((cofactor != NULL) && !ASN1_bn_print(bp, "Cofactor: ", cofactor,
-                                                 buffer, off))
+                                                 NULL, off))
             goto err;
         if (seed && !print_bin(bp, "Seed:", seed, seed_len, off))
             goto err;
@@ -322,7 +302,6 @@ int ECPKParameters_print(BIO *bp, const EC_GROUP *x, int off)
     BN_free(b);
     BN_free(gen);
     BN_CTX_free(ctx);
-    OPENSSL_free(buffer);
     return (ret);
 }
 

@@ -636,7 +636,7 @@ typedef int (*equal_fn) (const unsigned char *pattern, size_t pattern_len,
 
 /* Skip pattern prefix to match "wildcard" subject */
 static void skip_prefix(const unsigned char **p, size_t *plen,
-                        const unsigned char *subject, size_t subject_len,
+                        size_t subject_len,
                         unsigned int flags)
 {
     const unsigned char *pattern = *p;
@@ -671,7 +671,7 @@ static int equal_nocase(const unsigned char *pattern, size_t pattern_len,
                         const unsigned char *subject, size_t subject_len,
                         unsigned int flags)
 {
-    skip_prefix(&pattern, &pattern_len, subject, subject_len, flags);
+    skip_prefix(&pattern, &pattern_len, subject_len, flags);
     if (pattern_len != subject_len)
         return 0;
     while (pattern_len) {
@@ -700,7 +700,7 @@ static int equal_case(const unsigned char *pattern, size_t pattern_len,
                       const unsigned char *subject, size_t subject_len,
                       unsigned int flags)
 {
-    skip_prefix(&pattern, &pattern_len, subject, subject_len, flags);
+    skip_prefix(&pattern, &pattern_len, subject_len, flags);
     if (pattern_len != subject_len)
         return 0;
     return !memcmp(pattern, subject, pattern_len);
@@ -1303,7 +1303,7 @@ int X509V3_NAME_from_section(X509_NAME *nm, STACK_OF(CONF_VALUE) *dn_sk,
                              unsigned long chtype)
 {
     CONF_VALUE *v;
-    int i, mval;
+    int i, mval, spec_char, plus_char;
     char *p, *type;
     if (!nm)
         return 0;
@@ -1314,25 +1314,26 @@ int X509V3_NAME_from_section(X509_NAME *nm, STACK_OF(CONF_VALUE) *dn_sk,
         /*
          * Skip past any leading X. X: X, etc to allow for multiple instances
          */
-        for (p = type; *p; p++)
+        for (p = type; *p; p++) {
 #ifndef CHARSET_EBCDIC
-            if ((*p == ':') || (*p == ',') || (*p == '.'))
+            spec_char = ((*p == ':') || (*p == ',') || (*p == '.'));
 #else
-            if ((*p == os_toascii[':']) || (*p == os_toascii[','])
-                || (*p == os_toascii['.']))
+            spec_char = ((*p == os_toascii[':']) || (*p == os_toascii[','])
+                    || (*p == os_toascii['.']));
 #endif
-            {
+            if (spec_char) {
                 p++;
                 if (*p)
                     type = p;
                 break;
             }
+        }
 #ifndef CHARSET_EBCDIC
-        if (*type == '+')
+        plus_char = (*type == '+');
 #else
-        if (*type == os_toascii['+'])
+        plus_char = (*type == os_toascii['+']);
 #endif
-        {
+        if (plus_char) {
             mval = -1;
             type++;
         } else

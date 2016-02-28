@@ -274,6 +274,21 @@ int ssl3_get_record(SSL *s)
             }
 
             if ((version >> 8) != SSL3_VERSION_MAJOR) {
+                if (s->first_packet) {
+                    /* Go back to start of packet, look at the five bytes
+                     * that we have. */
+                    p = RECORD_LAYER_get_packet(&s->rlayer);
+                    if (strncmp((char *)p, "GET ", 4) == 0 ||
+                        strncmp((char *)p, "POST ", 5) == 0 ||
+                        strncmp((char *)p, "HEAD ", 5) == 0 ||
+                        strncmp((char *)p, "PUT ", 4) == 0) {
+                        SSLerr(SSL_F_SSL3_GET_RECORD, SSL_R_HTTP_REQUEST);
+                        goto err;
+                    } else if (strncmp((char *)p, "CONNE", 5) == 0) {
+                        SSLerr(SSL_F_SSL3_GET_RECORD, SSL_R_HTTPS_PROXY_REQUEST);
+                        goto err;
+                    }
+                }
                 SSLerr(SSL_F_SSL3_GET_RECORD, SSL_R_WRONG_VERSION_NUMBER);
                 goto err;
             }
@@ -379,7 +394,7 @@ int ssl3_get_record(SSL *s)
         SSLerr(SSL_F_SSL3_GET_RECORD, SSL_R_BLOCK_CIPHER_PAD_IS_WRONG);
         goto f_err;
     }
-#ifdef TLS_DEBUG
+#ifdef SSL_DEBUG
     printf("dec %d\n", rr->length);
     {
         unsigned int z;
@@ -616,7 +631,7 @@ int ssl3_enc(SSL *s, int send)
         if (EVP_MD_CTX_md(s->read_hash) != NULL)
             mac_size = EVP_MD_CTX_size(s->read_hash);
         if ((bs != 1) && !send)
-            return ssl3_cbc_remove_padding(s, rec, bs, mac_size);
+            return ssl3_cbc_remove_padding(rec, bs, mac_size);
     }
     return (1);
 }
@@ -663,9 +678,7 @@ int tls1_enc(SSL *s, int send)
                      * we can't write into the input stream: Can this ever
                      * happen?? (steve)
                      */
-                    fprintf(stderr,
-                            "%s:%d: rec->data != rec->input\n",
-                            __FILE__, __LINE__);
+                    fprintf(stderr, "tls1_enc(): rec->data != rec->input\n");
                 else if (RAND_bytes(rec->input, ivlen) <= 0)
                     return -1;
             }
@@ -960,7 +973,7 @@ int tls1_mac(SSL *ssl, unsigned char *md, int send)
 
     EVP_MD_CTX_free(hmac);
 
-#ifdef TLS_DEBUG
+#ifdef SSL_DEBUG
     fprintf(stderr, "seq=");
     {
         int z;
@@ -984,7 +997,7 @@ int tls1_mac(SSL *ssl, unsigned char *md, int send)
                 break;
         }
     }
-#ifdef TLS_DEBUG
+#ifdef SSL_DEBUG
     {
         unsigned int z;
         for (z = 0; z < md_size; z++)
@@ -1005,8 +1018,7 @@ int tls1_mac(SSL *ssl, unsigned char *md, int send)
  *   1: if the padding was valid
  *  -1: otherwise.
  */
-int ssl3_cbc_remove_padding(const SSL *s,
-                            SSL3_RECORD *rec,
+int ssl3_cbc_remove_padding(SSL3_RECORD *rec,
                             unsigned block_size, unsigned mac_size)
 {
     unsigned padding_length, good;
@@ -1254,7 +1266,7 @@ int dtls1_process_record(SSL *s)
         RECORD_LAYER_reset_packet_length(&s->rlayer);
         goto err;
     }
-#ifdef TLS_DEBUG
+#ifdef SSL_DEBUG
     printf("dec %d\n", rr->length);
     {
         unsigned int z;

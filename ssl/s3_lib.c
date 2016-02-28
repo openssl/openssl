@@ -159,7 +159,7 @@
 #define SSL3_NUM_CIPHERS        OSSL_NELEM(ssl3_ciphers)
 
 /* list of available SSLv3 ciphers (sorted by id) */
-OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
+static const SSL_CIPHER ssl3_ciphers[] = {
 
 /* The RSA ciphers */
 /* Cipher 01 */
@@ -1625,23 +1625,6 @@ OPENSSL_GLOBAL const SSL_CIPHER ssl3_ciphers[] = {
      256,
      256,
      },
-#endif
-
-#ifdef OPENSSL_SSL_DEBUG_BROKEN_PROTOCOL
-    /* Cipher FF */
-    {
-     1,
-     "SCSV",
-     SSL3_CK_SCSV,
-     0,
-     0,
-     0,
-     0,
-     0,
-     0,
-     0,
-     0,
-     0},
 #endif
 
 #ifndef OPENSSL_NO_EC
@@ -3743,10 +3726,6 @@ const SSL_CIPHER *ssl3_get_cipher_by_char(const unsigned char *p)
     id = 0x03000000 | ((uint32_t)p[0] << 8L) | (uint32_t)p[1];
     c.id = id;
     cp = OBJ_bsearch_ssl_cipher_id(&c, ssl3_ciphers, SSL3_NUM_CIPHERS);
-#ifdef DEBUG_PRINT_UNKNOWN_CIPHERSUITES
-    if (cp == NULL)
-        fprintf(stderr, "Unknown cipher ID %x\n", (p[0] << 8) | p[1]);
-#endif
     return cp;
 }
 
@@ -3809,6 +3788,7 @@ const SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
     }
 
     tls1_set_cert_validity(s);
+    ssl_set_masks(s);
 
     for (i = 0; i < sk_SSL_CIPHER_num(prio); i++) {
         c = sk_SSL_CIPHER_value(prio, i);
@@ -3820,7 +3800,6 @@ const SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
         if ((c->algorithm_ssl & SSL_TLSV1) && s->version == SSL3_VERSION)
             continue;
 
-        ssl_set_masks(s, c);
         mask_k = s->s3->tmp.mask_k;
         mask_a = s->s3->tmp.mask_a;
 #ifndef OPENSSL_NO_SRP

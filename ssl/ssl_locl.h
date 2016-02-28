@@ -863,7 +863,6 @@ struct ssl_ctx_st {
 
 #  ifndef OPENSSL_NO_NEXTPROTONEG
     /* Next protocol negotiation information */
-    /* (for experimental NPN extension). */
 
     /*
      * For a server, this contains a callback function by which the set of
@@ -1165,7 +1164,7 @@ struct ssl_st {
      * basis, depending on the chosen cipher.
      */
     int (*not_resumable_session_cb) (SSL *ssl, int is_forward_secure);
-    
+
     RECORD_LAYER rlayer;
 
     /* Default password callback. */
@@ -1594,35 +1593,6 @@ struct tls_sigalgs_st {
     unsigned char rhash;
 };
 
-/*
- * #define MAC_DEBUG
- */
-
-/*
- * #define ERR_DEBUG
- */
-/*
- * #define ABORT_DEBUG
- */
-/*
- * #define PKT_DEBUG 1
- */
-/*
- * #define DES_DEBUG
- */
-/*
- * #define DES_OFB_DEBUG
- */
-/*
- * #define SSL_DEBUG
- */
-/*
- * #define RSA_DEBUG
- */
-/*
- * #define IDEA_DEBUG
- */
-
 # define FP_ICC  (int (*)(const void *,const void *))
 
 /*
@@ -1691,7 +1661,6 @@ typedef struct ssl3_comp_st {
 # endif
 
 extern SSL3_ENC_METHOD ssl3_undef_enc_method;
-OPENSSL_EXTERN const SSL_CIPHER ssl3_ciphers[];
 
 SSL_METHOD *ssl_bad_method(int ver);
 
@@ -1827,8 +1796,10 @@ const SSL_METHOD *func_name(void)  \
 struct openssl_ssl_test_functions {
     int (*p_ssl_init_wbio_buffer) (SSL *s, int push);
     int (*p_ssl3_setup_buffers) (SSL *s);
+# ifndef OPENSSL_NO_HEARTBEATS
     int (*p_dtls1_process_heartbeat) (SSL *s,
         unsigned char *p, unsigned int length);
+# endif
 };
 
 # ifndef OPENSSL_UNIT_TEST
@@ -1883,7 +1854,7 @@ __owur int ssl_get_server_cert_serverinfo(SSL *s, const unsigned char **serverin
                                    size_t *serverinfo_length);
 __owur EVP_PKEY *ssl_get_sign_pkey(SSL *s, const SSL_CIPHER *c, const EVP_MD **pmd);
 __owur int ssl_cert_type(X509 *x, EVP_PKEY *pkey);
-void ssl_set_masks(SSL *s, const SSL_CIPHER *cipher);
+void ssl_set_masks(SSL *s);
 __owur STACK_OF(SSL_CIPHER) *ssl_get_ciphers_by_id(SSL *s);
 __owur int ssl_verify_alarm_type(long type);
 void ssl_load_ciphers(void);
@@ -1948,7 +1919,7 @@ __owur int ssl_choose_client_version(SSL *s, int version);
 __owur long tls1_default_timeout(void);
 __owur int dtls1_do_write(SSL *s, int type);
 void dtls1_set_message_header(SSL *s,
-                              unsigned char *p, unsigned char mt,
+                              unsigned char mt,
                               unsigned long len,
                               unsigned long frag_off,
                               unsigned long frag_len);
@@ -1957,8 +1928,7 @@ __owur int dtls1_write_app_data_bytes(SSL *s, int type, const void *buf, int len
 
 __owur int dtls1_read_failed(SSL *s, int code);
 __owur int dtls1_buffer_message(SSL *s, int ccs);
-__owur int dtls1_retransmit_message(SSL *s, unsigned short seq,
-                             unsigned long frag_off, int *found);
+__owur int dtls1_retransmit_message(SSL *s, unsigned short seq, int *found);
 __owur int dtls1_get_queue_priority(unsigned short seq, int is_ccs);
 int dtls1_retransmit_buffered_messages(SSL *s);
 void dtls1_clear_record_buffer(SSL *s);

@@ -111,7 +111,17 @@
 #ifndef HEADER_BN_LCL_H
 # define HEADER_BN_LCL_H
 
-# include "internal/bn_conf.h"
+/*
+ * The EDK2 build doesn't use bn_conf.h; it sets THIRTY_TWO_BIT or
+ * SIXTY_FOUR_BIT in its own environment since it doesn't re-run our
+ * Configure script and needs to support both 32-bit and 64-bit.
+ */
+# include <openssl/opensslconf.h>
+
+# if !defined(OPENSSL_SYS_UEFI)
+#  include "internal/bn_conf.h"
+# endif
+
 # include "internal/bn_int.h"
 
 #ifdef  __cplusplus

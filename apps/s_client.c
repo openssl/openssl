@@ -168,9 +168,10 @@ typedef unsigned int u_int;
 #include "s_apps.h"
 #include "timeouts.h"
 
-#if (defined(OPENSSL_SYS_VMS) && __VMS_VER < 70000000)
-/* FIONBIO used as a switch to enable ioctl, and that isn't in VMS < 7.0 */
-# undef FIONBIO
+#if defined(__has_feature)
+# if __has_feature(memory_sanitizer)
+#  include <sanitizer/msan_interface.h>
+# endif
 #endif
 
 #undef BUFSIZZ
@@ -509,9 +510,9 @@ static ossl_ssize_t hexdecode(const char **inptr, void *result)
     for (byte = 0; *in; ++in) {
         char c;
 
-        if (isspace(*in))
+        if (isspace(_UC(*in)))
             continue;
-        c = tolower(*in);
+        c = tolower(_UC(*in));
         if ('0' <= c && c <= '9') {
             byte |= c - '0';
         } else if ('a' <= c && c <= 'f') {
@@ -553,11 +554,11 @@ static ossl_ssize_t checked_uint8(const char **inptr, void *out)
     e = restore_errno();
 
     if (((v == LONG_MIN || v == LONG_MAX) && e == ERANGE) ||
-        endp == in || !isspace(*endp) ||
+        endp == in || !isspace(_UC(*endp)) ||
         v != (*result = (uint8_t) v)) {
         return -1;
     }
-    for (in = endp; isspace(*in); ++in)
+    for (in = endp; isspace(_UC(*in)); ++in)
         continue;
 
     *inptr = in;
@@ -648,7 +649,7 @@ typedef enum OPTION_choice {
     OPT_CERT_CHAIN, OPT_CAPATH, OPT_NOCAPATH, OPT_CHAINCAPATH, OPT_VERIFYCAPATH,
     OPT_KEY, OPT_RECONNECT, OPT_BUILD_CHAIN, OPT_CAFILE, OPT_NOCAFILE,
     OPT_CHAINCAFILE, OPT_VERIFYCAFILE, OPT_NEXTPROTONEG, OPT_ALPN,
-    OPT_SERVERINFO, OPT_STARTTLS, OPT_SERVERNAME, OPT_JPAKE,
+    OPT_SERVERINFO, OPT_STARTTLS, OPT_SERVERNAME,
     OPT_USE_SRTP, OPT_KEYMATEXPORT, OPT_KEYMATEXPORTLEN, OPT_SMTPHOST,
     OPT_ASYNC,
     OPT_V_ENUM,
@@ -692,7 +693,8 @@ OPTIONS s_client_options[] = {
     {"showcerts", OPT_SHOWCERTS, '-', "Show all certificates in the chain"},
     {"debug", OPT_DEBUG, '-', "Extra output"},
     {"msg", OPT_MSG, '-', "Show protocol messages"},
-    {"msgfile", OPT_MSGFILE, '>'},
+    {"msgfile", OPT_MSGFILE, '>',
+     "File to send output of -msg or -trace, instead of stdout"},
     {"nbio_test", OPT_NBIO_TEST, '-', "More ssl protocol testing"},
     {"state", OPT_STATE, '-', "Print the ssl states"},
     {"crlf", OPT_CRLF, '-', "Convert LF from terminal into CRLF"},
@@ -715,21 +717,31 @@ OPTIONS s_client_options[] = {
      "Export len bytes of keying material (default 20)"},
     {"fallback_scsv", OPT_FALLBACKSCSV, '-', "Send the fallback SCSV"},
     {"name", OPT_SMTPHOST, 's', "Hostname to use for \"-starttls smtp\""},
-    {"CRL", OPT_CRL, '<'},
-    {"crl_download", OPT_CRL_DOWNLOAD, '-'},
-    {"CRLform", OPT_CRLFORM, 'F'},
-    {"verify_return_error", OPT_VERIFY_RET_ERROR, '-'},
-    {"verify_quiet", OPT_VERIFY_QUIET, '-'},
-    {"brief", OPT_BRIEF, '-'},
-    {"prexit", OPT_PREXIT, '-'},
-    {"security_debug", OPT_SECURITY_DEBUG, '-'},
-    {"security_debug_verbose", OPT_SECURITY_DEBUG_VERBOSE, '-'},
-    {"cert_chain", OPT_CERT_CHAIN, '<'},
-    {"chainCApath", OPT_CHAINCAPATH, '/'},
-    {"verifyCApath", OPT_VERIFYCAPATH, '/'},
-    {"build_chain", OPT_BUILD_CHAIN, '-'},
-    {"chainCAfile", OPT_CHAINCAFILE, '<'},
-    {"verifyCAfile", OPT_VERIFYCAFILE, '<'},
+    {"CRL", OPT_CRL, '<', "CRL file to use"},
+    {"crl_download", OPT_CRL_DOWNLOAD, '-', "Download CRL from distribution points"},
+    {"CRLform", OPT_CRLFORM, 'F', "CRL format (PEM or DER) PEM is default"},
+    {"verify_return_error", OPT_VERIFY_RET_ERROR, '-',
+     "Close connection on verification error"},
+    {"verify_quiet", OPT_VERIFY_QUIET, '-', "Restrict verify output to errors"},
+    {"brief", OPT_BRIEF, '-',
+     "Restrict output to brief summary of connection parameters"},
+    {"prexit", OPT_PREXIT, '-',
+     "Print session information when the program exits"},
+    {"security_debug", OPT_SECURITY_DEBUG, '-',
+     "Enable security debug messages"},
+    {"security_debug_verbose", OPT_SECURITY_DEBUG_VERBOSE, '-',
+     "Output more security debug output"},
+    {"cert_chain", OPT_CERT_CHAIN, '<',
+     "Certificate chain file (in PEM format)"},
+    {"chainCApath", OPT_CHAINCAPATH, '/',
+     "Use dir as certificate store path to build CA certificate chain"},
+    {"verifyCApath", OPT_VERIFYCAPATH, '/',
+     "Use dir as certificate store path to verify CA certificate"},
+    {"build_chain", OPT_BUILD_CHAIN, '-', "Build certificate chain"},
+    {"chainCAfile", OPT_CHAINCAFILE, '<',
+     "CA file for certificate chain (PEM format)"},
+    {"verifyCAfile", OPT_VERIFYCAFILE, '<',
+     "CA file for certificate verification (PEM format)"},
     {"nocommands", OPT_NOCMDS, '-', "Do not use interactive command letters"},
     {"servername", OPT_SERVERNAME, 's',
      "Set TLS extension servername in ClientHello"},
@@ -741,7 +753,7 @@ OPTIONS s_client_options[] = {
     {"alpn", OPT_ALPN, 's',
      "Enable ALPN extension, considering named protocols supported (comma-separated list)"},
     {"async", OPT_ASYNC, '-', "Support asynchronous operation"},
-    {"ssl_config", OPT_SSL_CONFIG, 's'},
+    {"ssl_config", OPT_SSL_CONFIG, 's', "Use specified configuration file"},
     OPT_S_OPTIONS,
     OPT_V_OPTIONS,
     OPT_X_OPTIONS,
@@ -758,31 +770,27 @@ OPTIONS s_client_options[] = {
     {"tls1_2", OPT_TLS1_2, '-', "Just use TLSv1.2"},
 #endif
 #ifndef OPENSSL_NO_DTLS
-    {"dtls", OPT_DTLS, '-'},
-    {"timeout", OPT_TIMEOUT, '-'},
+    {"dtls", OPT_DTLS, '-', "Use any version of DTLS"},
+    {"timeout", OPT_TIMEOUT, '-',
+     "Enable send/receive timeout on DTLS connections"},
     {"mtu", OPT_MTU, 'p', "Set the link layer MTU"},
 #endif
 #ifndef OPENSSL_NO_DTLS1
     {"dtls1", OPT_DTLS1, '-', "Just use DTLSv1"},
 #endif
 #ifndef OPENSSL_NO_DTLS1_2
-    {"dtls1_2", OPT_DTLS1_2, '-'},
+    {"dtls1_2", OPT_DTLS1_2, '-', "Just use DTLSv1.2"},
 #endif
 #ifndef OPENSSL_NO_SSL_TRACE
-    {"trace", OPT_TRACE, '-'},
+    {"trace", OPT_TRACE, '-', "Show trace output of protocol messages"},
 #endif
 #ifdef WATT32
     {"wdebug", OPT_WDEBUG, '-', "WATT-32 tcp debugging"},
 #endif
-#ifdef FIONBIO
     {"nbio", OPT_NBIO, '-', "Use non-blocking IO"},
-#endif
 #ifndef OPENSSL_NO_PSK
     {"psk_identity", OPT_PSK_IDENTITY, 's', "PSK identity"},
     {"psk", OPT_PSK, 's', "PSK in hex (without 0x)"},
-# ifndef OPENSSL_NO_JPAKE
-    {"jpake", OPT_JPAKE, 's', "JPAKE secret to use"},
-# endif
 #endif
 #ifndef OPENSSL_NO_SRP
     {"srpuser", OPT_SRPUSER, 's', "SRP authentification for 'user'"},
@@ -799,7 +807,8 @@ OPTIONS s_client_options[] = {
 #endif
 #ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
-    {"ssl_client_engine", OPT_SSL_CLIENT_ENGINE, 's'},
+    {"ssl_client_engine", OPT_SSL_CLIENT_ENGINE, 's',
+     "Specify engine to be used for client certificate operations"},
 #endif
     {NULL}
 };
@@ -853,7 +862,7 @@ int s_client_main(int argc, char **argv)
     char *inrand = NULL;
     char *passarg = NULL, *pass = NULL, *vfyCApath = NULL, *vfyCAfile = NULL;
     char *sess_in = NULL, *sess_out = NULL, *crl_file = NULL, *p;
-    char *jpake_secret = NULL, *xmpphost = NULL;
+    char *xmpphost = NULL;
     const char *ehlo = "mail.example.com";
     struct sockaddr peer;
     struct timeval timeout, *timeoutp;
@@ -893,6 +902,16 @@ int s_client_main(int argc, char **argv)
     char *srppass = NULL;
     int srp_lateuser = 0;
     SRP_ARG srp_arg = { NULL, NULL, 0, 0, 0, 1024 };
+#endif
+
+    FD_ZERO(&readfds);
+    FD_ZERO(&writefds);
+/* Known false-positive of MemorySanitizer. */
+#if defined(__has_feature)
+# if __has_feature(memory_sanitizer)
+    __msan_unpoison(&readfds, sizeof(readfds));
+    __msan_unpoison(&writefds, sizeof(writefds));
+# endif
 #endif
 
     prog = opt_progname(argv[0]);
@@ -1141,7 +1160,7 @@ int s_client_main(int argc, char **argv)
             break;
         case OPT_PSK:
             for (p = psk_key = opt_arg(); *p; p++) {
-                if (isxdigit(*p))
+                if (isxdigit(_UC(*p)))
                     continue;
                 BIO_printf(bio_err, "Not a hex number '%s'\n", psk_key);
                 goto end;
@@ -1316,11 +1335,6 @@ int s_client_main(int argc, char **argv)
         case OPT_SERVERNAME:
             servername = opt_arg();
             break;
-        case OPT_JPAKE:
-#ifndef OPENSSL_NO_JPAKE
-            jpake_secret = opt_arg();
-#endif
-            break;
         case OPT_USE_SRTP:
             srtp_profiles = opt_arg();
             break;
@@ -1336,7 +1350,8 @@ int s_client_main(int argc, char **argv)
         }
     }
     argc = opt_num_rest();
-    argv = opt_rest();
+    if (argc != 0)
+        goto opthelp;
 
     if (proxystr) {
         int res;
@@ -1378,15 +1393,6 @@ int s_client_main(int argc, char **argv)
                    "Can't use unix sockets and datagrams together\n");
         goto end;
     }
-#if !defined(OPENSSL_NO_JPAKE) && !defined(OPENSSL_NO_PSK)
-    if (jpake_secret) {
-        if (psk_key) {
-            BIO_printf(bio_err, "Can't use JPAKE and PSK together\n");
-            goto end;
-        }
-        psk_identity = "JPAKE";
-    }
-#endif
 
 #if !defined(OPENSSL_NO_NEXTPROTONEG)
     next_proto.status = -1;
@@ -1419,8 +1425,7 @@ int s_client_main(int argc, char **argv)
     }
 
     if (cert_file) {
-        cert = load_cert(cert_file, cert_format,
-                         NULL, e, "client certificate file");
+        cert = load_cert(cert_file, cert_format, "client certificate file");
         if (cert == NULL) {
             ERR_print_errors(bio_err);
             goto end;
@@ -1428,7 +1433,7 @@ int s_client_main(int argc, char **argv)
     }
 
     if (chain_file) {
-        if (!load_certs(chain_file, &chain, FORMAT_PEM, NULL, e,
+        if (!load_certs(chain_file, &chain, FORMAT_PEM, NULL,
                         "client certificate chain"))
             goto end;
     }
@@ -1506,7 +1511,7 @@ int s_client_main(int argc, char **argv)
         SSL_CTX_set_mode(ctx, SSL_MODE_ASYNC);
     }
 
-    if (!config_ctx(cctx, ssl_args, ctx, jpake_secret == NULL))
+    if (!config_ctx(cctx, ssl_args, ctx))
         goto end;
 
     if (!ssl_load_stores(ctx, vfyCApath, vfyCAfile, chCApath, chCAfile,
@@ -1528,10 +1533,10 @@ int s_client_main(int argc, char **argv)
 #endif
 
 #ifndef OPENSSL_NO_PSK
-    if (psk_key != NULL || jpake_secret) {
+    if (psk_key != NULL) {
         if (c_debug)
             BIO_printf(bio_c_out,
-                       "PSK key given or JPAKE in use, setting client callback\n");
+                       "PSK key given, setting client callback\n");
         SSL_CTX_set_psk_client_callback(ctx, psk_client_cb);
     }
 #endif
@@ -1693,16 +1698,13 @@ int s_client_main(int argc, char **argv)
     }
     BIO_printf(bio_c_out, "CONNECTED(%08X)\n", s);
 
-#ifdef FIONBIO
     if (c_nbio) {
-        unsigned long l = 1;
-        BIO_printf(bio_c_out, "turning on non blocking io\n");
-        if (BIO_socket_ioctl(s, FIONBIO, &l) < 0) {
+        if (!BIO_socket_nbio(s, 1)) {
             ERR_print_errors(bio_err);
             goto end;
         }
+        BIO_printf(bio_c_out, "Turned on non blocking io\n");
     }
-#endif
     if (socket_type == SOCK_DGRAM) {
 
         sbio = BIO_new_dgram(s, BIO_NOCLOSE);
@@ -1774,10 +1776,6 @@ int s_client_main(int argc, char **argv)
         SSL_CTX_set_tlsext_status_cb(ctx, ocsp_resp_cb);
         SSL_CTX_set_tlsext_status_arg(ctx, bio_c_out);
     }
-#ifndef OPENSSL_NO_JPAKE
-    if (jpake_secret)
-        jpake_client_auth(bio_c_out, sbio, jpake_secret);
-#endif
 
     SSL_set_bio(con, sbio, sbio);
     SSL_set_connect_state(con);

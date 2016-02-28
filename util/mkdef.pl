@@ -90,8 +90,8 @@ my @known_algorithms = ( "RC2", "RC4", "RC5", "IDEA", "DES", "BF",
                          "STATIC_ENGINE", "ENGINE", "HW", "GMP",
 			 # Entropy Gathering
 			 "EGD",
-                         # X.509v3 Signed Certificate Timestamps
-                         "SCT",
+			 # Certificate Transparency
+			 "CT",
 			 # RFC3779
 			 "RFC3779",
 			 # TLS
@@ -102,8 +102,6 @@ my @known_algorithms = ( "RC2", "RC4", "RC5", "IDEA", "DES", "BF",
 			 "CAPIENG",
 			 # SSL v3 method
 			 "SSL3_METHOD",
-			 # JPAKE
-			 "JPAKE",
 			 # NEXTPROTONEG
 			 "NEXTPROTONEG",
 			 # Deprecated functions
@@ -176,7 +174,6 @@ foreach (@ARGV, split(/ /, $config{options}))
 	$do_ctest=1 if $_ eq "ctest";
 	$do_ctestall=1 if $_ eq "ctestall";
 	$do_checkexist=1 if $_ eq "exist";
-	#$safe_stack_def=1 if $_ eq "-DDEBUG_SAFESTACK";
 	if (/^--api=(\d+)\.(\d+)\.(\d+)$/) {
 		my $apiv = sprintf "%x%02x%02x", $1, $2, $3;
 		foreach (keys %disabled_algorithms) {
@@ -234,12 +231,12 @@ my $ssl="include/openssl/ssl.h";
 $ssl.=" include/openssl/tls1.h";
 $ssl.=" include/openssl/srtp.h";
 
+# We use headers found in include/openssl and include/internal only.
+# The latter is needed so libssl.so/.dll/.exe can link properly.
 my $crypto ="include/openssl/crypto.h";
-$crypto.=" crypto/include/internal/cryptlib.h";
-$crypto.=" crypto/include/internal/chacha.h"; # unless $no_chacha;
-$crypto.=" crypto/include/internal/poly1305.h"; # unless $no_poly1305;
 $crypto.=" include/internal/o_dir.h";
 $crypto.=" include/internal/o_str.h";
+$crypto.=" include/internal/threads.h";
 $crypto.=" include/openssl/des.h" ; # unless $no_des;
 $crypto.=" include/openssl/idea.h" ; # unless $no_idea;
 $crypto.=" include/openssl/rc4.h" ; # unless $no_rc4;
@@ -294,10 +291,10 @@ $crypto.=" include/openssl/ocsp.h";
 $crypto.=" include/openssl/ui.h";
 #$crypto.=" include/openssl/store.h";
 $crypto.=" include/openssl/cms.h";
-$crypto.=" include/openssl/jpake.h";
 $crypto.=" include/openssl/srp.h";
 $crypto.=" include/openssl/modes.h";
 $crypto.=" include/openssl/async.h";
+$crypto.=" include/openssl/ct.h";
 
 my $symhacks="include/openssl/symhacks.h";
 
@@ -498,7 +495,10 @@ sub do_defs
 				$cpp-- if /^#\s*endif/;
 				next;
 			}
-			$cpp = 1 if /^#.*ifdef.*cplusplus/;
+			if (/^#.*ifdef.*cplusplus/) {
+				$cpp = 1;
+				next;
+			}
 
 			s/{[^{}]*}//gs;                      # ignore {} blocks
 			print STDERR "DEBUG: \$def=\"$def\"\n" if $debug && $def ne "";
@@ -585,6 +585,7 @@ sub do_defs
 				pop(@tag);
 			} elsif (/^\#\s*else/) {
 				my $tag_i = $#tag;
+				die "$file unmatched else\n" if $tag_i < 0;
 				while($tag[$tag_i] ne "-") {
 					my $t=$tag[$tag_i];
 					$tag{$t}= -$tag{$t};
@@ -603,6 +604,9 @@ sub do_defs
 				push(@tag,"TRUE");
 				$tag{"TRUE"}=-1;
 				print STDERR "DEBUG: $file: found 0\n" if $debug;
+			} elsif (/^\#\s*if\s+/) {
+				#Some other unrecognized "if" style
+				push(@tag,"-");
 			} elsif (/^\#\s*define\s+(\w+)\s+(\w+)/
 				 && $symhacking && $tag{'TRUE'} != -1) {
 				# This is for aliasing.  When we find an alias,
@@ -879,6 +883,7 @@ sub do_defs
 			}
 		}
 		close(IN);
+		die "$file: Unmatched tags\n" if $#tag >= 0;
 
 		my $algs;
 		my $plays;

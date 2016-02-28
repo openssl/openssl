@@ -850,7 +850,7 @@ ___
 OPTION	DOTNAME
 ___
 }
-while($line=<>) {
+while(defined($line=<>)) {
 
     $line =~ s|\R$||;           # Better chomp
 

@@ -65,6 +65,8 @@
 
 #include "../e_os.h"
 
+#define _UC(c) ((unsigned char)(c))
+
 static const char *progname;
 
 /*
@@ -229,7 +231,7 @@ static char *read_to_eol(FILE *f)
     }
 
     /* Trim trailing whitespace */
-    while (n > 0 && isspace(buf[n-1]))
+    while (n > 0 && isspace(_UC(buf[n-1])))
         buf[--n] = '\0';
 
     return buf;
@@ -252,9 +254,9 @@ static ossl_ssize_t hexdecode(const char *in, void *result)
     for (byte = 0; *in; ++in) {
         char c;
 
-        if (isspace(*in))
+        if (isspace(_UC(*in)))
             continue;
-        c = tolower(*in);
+        c = tolower(_UC(*in));
         if ('0' <= c && c <= '9') {
             byte |= c - '0';
         } else if ('a' <= c && c <= 'f') {
@@ -291,11 +293,11 @@ static ossl_ssize_t checked_uint8(const char *in, void *out)
     e = restore_errno();
 
     if (((v == LONG_MIN || v == LONG_MAX) && e == ERANGE) ||
-        endp == cp || !isspace(*endp) ||
+        endp == cp || !isspace(_UC(*endp)) ||
         v != (*(uint8_t *)result = (uint8_t) v)) {
         return -1;
     }
-    for (cp = endp; isspace(*cp); ++cp)
+    for (cp = endp; isspace(_UC(*cp)); ++cp)
         continue;
     return cp - in;
 }
@@ -351,7 +353,7 @@ static int tlsa_import_rr(SSL *ssl, const char *rrdata)
 static int allws(const char *cp)
 {
     while (*cp)
-        if (!isspace(*cp++))
+        if (!isspace(_UC(*cp++)))
             return 0;
     return 1;
 }

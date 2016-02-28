@@ -109,6 +109,7 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <openssl/objects.h>
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
@@ -124,7 +125,7 @@ static int tls_decrypt_ticket(SSL *s, const unsigned char *tick, int ticklen,
                               const unsigned char *sess_id, int sesslen,
                               SSL_SESSION **psess);
 static int ssl_check_clienthello_tlsext_early(SSL *s);
-int ssl_check_serverhello_tlsext(SSL *s);
+static int ssl_check_serverhello_tlsext(SSL *s);
 
 SSL3_ENC_METHOD const TLSv1_enc_data = {
     tls1_enc,
@@ -221,8 +222,15 @@ typedef struct {
     unsigned int flags;         /* Flags: currently just field type */
 } tls_curve_info;
 
+# define TLS_CURVE_TYPE          0x1
 # define TLS_CURVE_CHAR2         0x1
 # define TLS_CURVE_PRIME         0x0
+
+/*
+ * Table of curve information.
+ * NB: do not delete entries or reorder this array. It is used as a lookup
+ * table: the index of each entry is one less than the TLS curve id.
+ */
 
 static const tls_curve_info nid_list[] = {
     {NID_sect163k1, 80, TLS_CURVE_CHAR2}, /* sect163k1 (1) */
@@ -335,67 +343,12 @@ int tls1_ec_curve_id2nid(int curve_id)
 
 int tls1_ec_nid2curve_id(int nid)
 {
-    /* ECC curves from RFC 4492 and RFC 7027 */
-    switch (nid) {
-    case NID_sect163k1:        /* sect163k1 (1) */
-        return 1;
-    case NID_sect163r1:        /* sect163r1 (2) */
-        return 2;
-    case NID_sect163r2:        /* sect163r2 (3) */
-        return 3;
-    case NID_sect193r1:        /* sect193r1 (4) */
-        return 4;
-    case NID_sect193r2:        /* sect193r2 (5) */
-        return 5;
-    case NID_sect233k1:        /* sect233k1 (6) */
-        return 6;
-    case NID_sect233r1:        /* sect233r1 (7) */
-        return 7;
-    case NID_sect239k1:        /* sect239k1 (8) */
-        return 8;
-    case NID_sect283k1:        /* sect283k1 (9) */
-        return 9;
-    case NID_sect283r1:        /* sect283r1 (10) */
-        return 10;
-    case NID_sect409k1:        /* sect409k1 (11) */
-        return 11;
-    case NID_sect409r1:        /* sect409r1 (12) */
-        return 12;
-    case NID_sect571k1:        /* sect571k1 (13) */
-        return 13;
-    case NID_sect571r1:        /* sect571r1 (14) */
-        return 14;
-    case NID_secp160k1:        /* secp160k1 (15) */
-        return 15;
-    case NID_secp160r1:        /* secp160r1 (16) */
-        return 16;
-    case NID_secp160r2:        /* secp160r2 (17) */
-        return 17;
-    case NID_secp192k1:        /* secp192k1 (18) */
-        return 18;
-    case NID_X9_62_prime192v1: /* secp192r1 (19) */
-        return 19;
-    case NID_secp224k1:        /* secp224k1 (20) */
-        return 20;
-    case NID_secp224r1:        /* secp224r1 (21) */
-        return 21;
-    case NID_secp256k1:        /* secp256k1 (22) */
-        return 22;
-    case NID_X9_62_prime256v1: /* secp256r1 (23) */
-        return 23;
-    case NID_secp384r1:        /* secp384r1 (24) */
-        return 24;
-    case NID_secp521r1:        /* secp521r1 (25) */
-        return 25;
-    case NID_brainpoolP256r1:  /* brainpoolP256r1 (26) */
-        return 26;
-    case NID_brainpoolP384r1:  /* brainpoolP384r1 (27) */
-        return 27;
-    case NID_brainpoolP512r1:  /* brainpool512r1 (28) */
-        return 28;
-    default:
-        return 0;
+    size_t i;
+    for (i = 0; i < OSSL_NELEM(nid_list); i++) {
+        if (nid_list[i].nid == nid)
+            return i + 1;
     }
+    return 0;
 }
 
 /*
@@ -666,46 +619,33 @@ int tls1_set_curves_list(unsigned char **pext, size_t *pextlen,
 static int tls1_set_ec_id(unsigned char *curve_id, unsigned char *comp_id,
                           EC_KEY *ec)
 {
-    int is_prime, id;
+    int id;
     const EC_GROUP *grp;
-    const EC_METHOD *meth;
     if (!ec)
         return 0;
     /* Determine if it is a prime field */
     grp = EC_KEY_get0_group(ec);
     if (!grp)
         return 0;
-    meth = EC_GROUP_method_of(grp);
-    if (!meth)
-        return 0;
-    if (EC_METHOD_get_field_type(meth) == NID_X9_62_prime_field)
-        is_prime = 1;
-    else
-        is_prime = 0;
     /* Determine curve ID */
     id = EC_GROUP_get_curve_name(grp);
     id = tls1_ec_nid2curve_id(id);
-    /* If we have an ID set it, otherwise set arbitrary explicit curve */
-    if (id) {
-        curve_id[0] = 0;
-        curve_id[1] = (unsigned char)id;
-    } else {
-        curve_id[0] = 0xff;
-        if (is_prime)
-            curve_id[1] = 0x01;
-        else
-            curve_id[1] = 0x02;
-    }
+    /* If no id return error: we don't support arbitrary explicit curves */
+    if (id == 0)
+        return 0;
+    curve_id[0] = 0;
+    curve_id[1] = (unsigned char)id;
     if (comp_id) {
         if (EC_KEY_get0_public_key(ec) == NULL)
             return 0;
-        if (EC_KEY_get_conv_form(ec) == POINT_CONVERSION_COMPRESSED) {
-            if (is_prime)
+        if (EC_KEY_get_conv_form(ec) == POINT_CONVERSION_UNCOMPRESSED) {
+            *comp_id = TLSEXT_ECPOINTFORMAT_uncompressed;
+        } else {
+            if ((nid_list[id - 1].flags & TLS_CURVE_TYPE) == TLS_CURVE_PRIME)
                 *comp_id = TLSEXT_ECPOINTFORMAT_ansiX962_compressed_prime;
             else
                 *comp_id = TLSEXT_ECPOINTFORMAT_ansiX962_compressed_char2;
-        } else
-            *comp_id = TLSEXT_ECPOINTFORMAT_uncompressed;
+        }
     }
     return 1;
 }
@@ -849,11 +789,6 @@ static int tls1_check_cert_param(SSL *s, X509 *x, int set_ee_md)
  */
 int tls1_check_ec_tmp_key(SSL *s, unsigned long cid)
 {
-#  ifdef OPENSSL_SSL_DEBUG_BROKEN_PROTOCOL
-    /* Allow any curve: not just those peer supports */
-    if (s->cert->cert_flags & SSL_CERT_FLAG_BROKEN_PROTOCOL)
-        return 1;
-#  endif
     /*
      * If Suite B, AES128 MUST use P-256 and AES256 MUST use P-384, no other
      * curves permitted.
@@ -1101,6 +1036,79 @@ static int tls_use_ticket(SSL *s)
     if (s->options & SSL_OP_NO_TICKET)
         return 0;
     return ssl_security(s, SSL_SECOP_TICKET, 0, 0, NULL);
+}
+
+static int compare_uint(const void *p1, const void *p2) {
+    unsigned int u1 = *((const unsigned int *)p1);
+    unsigned int u2 = *((const unsigned int *)p2);
+    if (u1 < u2)
+        return -1;
+    else if (u1 > u2)
+        return 1;
+    else
+        return 0;
+}
+
+/*
+ * Per http://tools.ietf.org/html/rfc5246#section-7.4.1.4, there may not be
+ * more than one extension of the same type in a ClientHello or ServerHello.
+ * This function does an initial scan over the extensions block to filter those
+ * out. It returns 1 if all extensions are unique, and 0 if the extensions
+ * contain duplicates, could not be successfully parsed, or an internal error
+ * occurred.
+ */
+static int tls1_check_duplicate_extensions(const PACKET *packet) {
+    PACKET extensions = *packet;
+    size_t num_extensions = 0, i = 0;
+    unsigned int *extension_types = NULL;
+    int ret = 0;
+
+    /* First pass: count the extensions. */
+    while (PACKET_remaining(&extensions) > 0) {
+        unsigned int type;
+        PACKET extension;
+        if (!PACKET_get_net_2(&extensions, &type) ||
+            !PACKET_get_length_prefixed_2(&extensions, &extension)) {
+            goto done;
+        }
+        num_extensions++;
+    }
+
+    if (num_extensions <= 1)
+        return 1;
+
+    extension_types = OPENSSL_malloc(sizeof(unsigned int) * num_extensions);
+    if (extension_types == NULL) {
+        SSLerr(SSL_F_TLS1_CHECK_DUPLICATE_EXTENSIONS, ERR_R_MALLOC_FAILURE);
+        goto done;
+    }
+
+    /* Second pass: gather the extension types. */
+    extensions = *packet;
+    for (i = 0; i < num_extensions; i++) {
+        PACKET extension;
+        if (!PACKET_get_net_2(&extensions, &extension_types[i]) ||
+            !PACKET_get_length_prefixed_2(&extensions, &extension)) {
+            /* This should not happen. */
+            SSLerr(SSL_F_TLS1_CHECK_DUPLICATE_EXTENSIONS, ERR_R_INTERNAL_ERROR);
+            goto done;
+        }
+    }
+
+    if (PACKET_remaining(&extensions) != 0) {
+        SSLerr(SSL_F_TLS1_CHECK_DUPLICATE_EXTENSIONS, ERR_R_INTERNAL_ERROR);
+        goto done;
+    }
+    /* Sort the extensions and make sure there are no duplicates. */
+    qsort(extension_types, num_extensions, sizeof(unsigned int), compare_uint);
+    for (i = 1; i < num_extensions; i++) {
+        if (extension_types[i - 1] == extension_types[i])
+            goto done;
+    }
+    ret = 1;
+ done:
+    OPENSSL_free(extension_types);
+    return ret;
 }
 
 unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *buf,
@@ -1903,6 +1911,9 @@ static int ssl_scan_clienthello_tlsext(SSL *s, PACKET *pkt, int *al)
     if (PACKET_remaining(pkt) != len)
         goto err;
 
+    if (!tls1_check_duplicate_extensions(pkt))
+        goto err;
+
     while (PACKET_get_net_2(pkt, &type) && PACKET_get_net_2(pkt, &size)) {
         PACKET subpkt;
 
@@ -2363,6 +2374,11 @@ static int ssl_scan_serverhello_tlsext(SSL *s, PACKET *pkt, int *al)
         goto ri_check;
 
     if (PACKET_remaining(pkt) != length) {
+        *al = SSL_AD_DECODE_ERROR;
+        return 0;
+    }
+
+    if (!tls1_check_duplicate_extensions(pkt)) {
         *al = SSL_AD_DECODE_ERROR;
         return 0;
     }
@@ -3048,7 +3064,7 @@ static int tls_decrypt_ticket(SSL *s, const unsigned char *etick,
     SSL_SESSION *sess;
     unsigned char *sdec;
     const unsigned char *p;
-    int slen, mlen, renew_ticket = 0;
+    int slen, mlen, renew_ticket = 0, ret = -1;
     unsigned char tick_hmac[EVP_MAX_MD_SIZE];
     HMAC_CTX *hctx = NULL;
     EVP_CIPHER_CTX *ctx;
@@ -3061,20 +3077,28 @@ static int tls_decrypt_ticket(SSL *s, const unsigned char *etick,
     if (hctx == NULL)
         return -2;
     ctx = EVP_CIPHER_CTX_new();
+    if (ctx == NULL) {
+        ret = -2;
+        goto err;
+    }
     if (tctx->tlsext_ticket_key_cb) {
         unsigned char *nctick = (unsigned char *)etick;
         int rv = tctx->tlsext_ticket_key_cb(s, nctick, nctick + 16,
                                             ctx, hctx, 0);
         if (rv < 0)
-            return -1;
-        if (rv == 0)
-            return 2;
+            goto err;
+        if (rv == 0) {
+            ret = 2;
+            goto err;
+        }
         if (rv == 2)
             renew_ticket = 1;
     } else {
         /* Check key name matches */
-        if (memcmp(etick, tctx->tlsext_tick_key_name, 16))
-            return 2;
+        if (memcmp(etick, tctx->tlsext_tick_key_name, 16)) {
+            ret = 2;
+            goto err;
+        }
         if (HMAC_Init_ex(hctx, tctx->tlsext_tick_hmac_key, 16,
                          EVP_sha256(), NULL) <= 0
                 || EVP_DecryptInit_ex(ctx, EVP_aes_128_cbc(), NULL,
@@ -3148,7 +3172,7 @@ static int tls_decrypt_ticket(SSL *s, const unsigned char *etick,
 err:
     EVP_CIPHER_CTX_free(ctx);
     HMAC_CTX_free(hctx);
-    return -1;
+    return ret;
 }
 
 /* Tables to translate from NIDs to TLS v1.2 ids */
@@ -3504,30 +3528,6 @@ int tls1_process_sigalgs(SSL *s)
     if (!tls1_set_shared_sigalgs(s))
         return 0;
 
-#ifdef OPENSSL_SSL_DEBUG_BROKEN_PROTOCOL
-    if (s->cert->cert_flags & SSL_CERT_FLAG_BROKEN_PROTOCOL) {
-        /*
-         * Use first set signature preference to force message digest,
-         * ignoring any peer preferences.
-         */
-        const unsigned char *sigs = NULL;
-        if (s->server)
-            sigs = c->conf_sigalgs;
-        else
-            sigs = c->client_sigalgs;
-        if (sigs) {
-            idx = tls12_get_pkey_idx(sigs[1]);
-            md = tls12_get_hash(sigs[0]);
-            pmd[idx] = md;
-            pvalid[idx] = CERT_PKEY_EXPLICIT_SIGN;
-            if (idx == SSL_PKEY_RSA_SIGN) {
-                pvalid[SSL_PKEY_RSA_ENC] = CERT_PKEY_EXPLICIT_SIGN;
-                pmd[SSL_PKEY_RSA_ENC] = md;
-            }
-        }
-    }
-#endif
-
     for (i = 0, sigptr = c->shared_sigalgs;
          i < c->shared_sigalgslen; i++, sigptr++) {
         idx = tls12_get_pkey_idx(sigptr->rsign);
@@ -3801,15 +3801,6 @@ int tls1_check_chain(SSL *s, X509 *x, EVP_PKEY *pk, STACK_OF(X509) *chain,
         /* If no cert or key, forget it */
         if (!x || !pk)
             goto end;
-#ifdef OPENSSL_SSL_DEBUG_BROKEN_PROTOCOL
-        /* Allow any certificate to pass test */
-        if (s->cert->cert_flags & SSL_CERT_FLAG_BROKEN_PROTOCOL) {
-            rv = CERT_PKEY_STRICT_FLAGS | CERT_PKEY_EXPLICIT_SIGN |
-                CERT_PKEY_VALID | CERT_PKEY_SIGN;
-            *pvalid = rv;
-            return rv;
-        }
-#endif
     } else {
         if (!x || !pk)
             return 0;

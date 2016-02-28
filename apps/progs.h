@@ -225,10 +225,6 @@ static FUNCTION functions[] = {
 #ifndef OPENSSL_NO_RMD160
     { FT_md, "rmd160", dgst_main},
 #endif
-#ifndef OPENSSL_NO_BLAKE2
-    { FT_md, "blake2b", dgst_main},
-    { FT_md, "blake2s", dgst_main},
-#endif
 #ifndef OPENSSL_NO_AES
     { FT_cipher, "aes-128-cbc", enc_main, enc_options },
 #endif

@@ -219,6 +219,8 @@ $code.=<<___;
 .type	ChaCha20_ctr32,\@function,5
 .align	64
 ChaCha20_ctr32:
+	cmp	\$0,$len
+	je	.Lno_data
 	mov	OPENSSL_ia32cap_P+4(%rip),%r10
 	test	\$`1<<(41-32)`,%r10d
 	jnz	.LChaCha20_ssse3
@@ -344,8 +346,8 @@ $code.=<<___;
 .align	16
 .Ltail:
 	mov	@x[0],4*0(%rsp)
-	xor	%rbx,%rbx
 	mov	@x[1],4*1(%rsp)
+	xor	%rbx,%rbx
 	mov	@x[2],4*2(%rsp)
 	mov	@x[3],4*3(%rsp)
 	mov	@x[4],4*4(%rsp)
@@ -375,6 +377,7 @@ $code.=<<___;
 	pop	%r12
 	pop	%rbp
 	pop	%rbx
+.Lno_data:
 	ret
 .size	ChaCha20_ctr32,.-ChaCha20_ctr32
 ___
@@ -521,11 +524,11 @@ $code.=<<___;
 
 .Loop_tail_ssse3:
 	movzb	($inp,%rbx),%eax
-	movzb	(%rsp,%rbx),%edx
+	movzb	(%rsp,%rbx),%ecx
 	lea	1(%rbx),%rbx
-	xor	%edx,%eax
+	xor	%ecx,%eax
 	mov	%al,-1($out,%rbx)
-	inc	%rbp
+	dec	$len
 	jnz	.Loop_tail_ssse3
 
 .Ldone_ssse3:
@@ -1541,13 +1544,13 @@ $code.=<<___;
 	je		.Ldone4xop
 
 	lea		0x40($inp),$inp		# inp+=64*3
-	vmovdqa		$xa2,0x00(%rsp)
+	vmovdqa		$xa3,0x00(%rsp)
 	xor		%r10,%r10
-	vmovdqa		$xb2,0x10(%rsp)
+	vmovdqa		$xb3,0x10(%rsp)
 	lea		0x40($out),$out		# out+=64*3
-	vmovdqa		$xc2,0x20(%rsp)
+	vmovdqa		$xc3,0x20(%rsp)
 	sub		\$192,$len		# len-=64*3
-	vmovdqa		$xd2,0x30(%rsp)
+	vmovdqa		$xd3,0x30(%rsp)
 
 .Loop_tail4xop:
 	movzb		($inp,%r10),%eax

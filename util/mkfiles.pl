@@ -48,7 +48,6 @@ my @dirs = (
 "crypto/x509v3",
 "crypto/cms",
 "crypto/conf",
-"crypto/jpake",
 "crypto/txt_db",
 "crypto/pkcs7",
 "crypto/pkcs12",
@@ -108,8 +107,8 @@ while (<IN>)
 				{
 				$b=$`;
 				$o.=$b." ";
-				$b=<IN>;
-				$b =~ s|\R$||;
+				$b = "" unless defined($b = <IN>);
+				$b =~ s{\R$}{};
 				}
 			else
 				{

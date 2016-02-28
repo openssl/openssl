@@ -89,10 +89,6 @@ static int x509_certify(X509_STORE *ctx, char *CAfile, const EVP_MD *digest,
                         char *section, ASN1_INTEGER *sno, int reqfile);
 static int purpose_print(BIO *bio, X509 *cert, X509_PURPOSE *pt);
 
-#ifdef OPENSSL_SSL_DEBUG_BROKEN_PROTOCOL
-static int force_version = 2;
-#endif
-
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
     OPT_INFORM, OPT_OUTFORM, OPT_KEYFORM, OPT_REQ, OPT_CAFORM,
@@ -108,7 +104,6 @@ typedef enum OPTION_choice {
     OPT_CLRREJECT, OPT_ALIAS, OPT_CACREATESERIAL, OPT_CLREXT, OPT_OCSPID,
     OPT_SUBJECT_HASH_OLD,
     OPT_ISSUER_HASH_OLD,
-    OPT_FORCE_VERSION,
     OPT_BADSIG, OPT_MD, OPT_ENGINE, OPT_NOCERT
 } OPTION_CHOICE;
 
@@ -188,9 +183,6 @@ OPTIONS x509_options[] = {
      "Print old-style (MD5) issuer hash value"},
     {"issuer_hash_old", OPT_ISSUER_HASH_OLD, '-',
      "Print old-style (MD5) subject hash value"},
-#endif
-#ifdef OPENSSL_SSL_DEBUG_BROKEN_PROTOCOL
-    {"force_version", OPT_FORCE_VERSION, 'p'},
 #endif
 #ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
@@ -287,11 +279,6 @@ int x509_main(int argc, char **argv)
                 sigopts = sk_OPENSSL_STRING_new_null();
             if (!sigopts || !sk_OPENSSL_STRING_push(sigopts, opt_arg()))
                 goto opthelp;
-            break;
-        case OPT_FORCE_VERSION:
-#ifdef OPENSSL_SSL_DEBUG_BROKEN_PROTOCOL
-            force_version = atoi(opt_arg()) - 1;
-#endif
             break;
         case OPT_DAYS:
             days = atoi(opt_arg());
@@ -625,12 +612,12 @@ int x509_main(int argc, char **argv)
             EVP_PKEY_free(pkey);
         }
     } else
-        x = load_cert(infile, informat, NULL, e, "Certificate");
+        x = load_cert(infile, informat, "Certificate");
 
     if (x == NULL)
         goto end;
     if (CA_flag) {
-        xca = load_cert(CAfile, CAformat, NULL, e, "CA Certificate");
+        xca = load_cert(CAfile, CAformat, "CA Certificate");
         if (xca == NULL)
             goto end;
     }
@@ -1046,11 +1033,7 @@ static int x509_certify(X509_STORE *ctx, char *CAfile, const EVP_MD *digest,
 
     if (conf) {
         X509V3_CTX ctx2;
-#ifdef OPENSSL_SSL_DEBUG_BROKEN_PROTOCOL
-        X509_set_version(x, force_version);
-#else
         X509_set_version(x, 2); /* version 3 certificate */
-#endif
         X509V3_set_ctx(&ctx2, xca, x, NULL, NULL, 0);
         X509V3_set_nconf(&ctx2, conf);
         if (!X509V3_EXT_add_nconf(conf, &ctx2, section, x))
@@ -1123,11 +1106,7 @@ static int sign(X509 *x, EVP_PKEY *pkey, int days, int clrext,
     }
     if (conf) {
         X509V3_CTX ctx;
-#ifdef OPENSSL_SSL_DEBUG_BROKEN_PROTOCOL
-        X509_set_version(x, force_version);
-#else
         X509_set_version(x, 2); /* version 3 certificate */
-#endif
         X509V3_set_ctx(&ctx, x, x, NULL, NULL, 0);
         X509V3_set_nconf(&ctx, conf);
         if (!X509V3_EXT_add_nconf(conf, &ctx, section, x))

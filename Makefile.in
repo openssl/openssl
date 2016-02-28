@@ -10,7 +10,10 @@ SHLIB_VERSION_NUMBER={- $config{shlib_version_number} -}
 SHLIB_VERSION_HISTORY={- $config{shlib_version_history} -}
 SHLIB_MAJOR={- $config{shlib_major} -}
 SHLIB_MINOR={- $config{shlib_minor} -}
-SHLIB_EXT={- $target{shared_extension} -}
+SHLIB_EXT={- $target{shared_extension} || ".so" -}
+SHLIB_EXT_SIMPLE={- $target{shared_extension_simple} || ".so" -}
+SHLIB_EXT_IMPORT={- $target{shared_import_extension} || "" -}
+DSO_EXT={- $target{dso_extension} || ".so" -}
 PLATFORM={- $config{target} -}
 OPTIONS={- $config{options} -}
 CONFIGURE_ARGS=({- join(", ",quotify_l(@{$config{perlargv}})) -})
@@ -90,9 +93,8 @@ ENGINESDIR={- use File::Spec::Functions;
 
 CROSS_COMPILE= {- $config{cross_compile_prefix} -}
 CC= $(CROSS_COMPILE){- $target{cc} -}
-CFLAG={- our $cflags2 = join(" ",(map { "-D".$_} @{$config{defines}}),"-DOPENSSLDIR=\"\\\"\$(OPENSSLDIR)\\\"\"","-DENGINESDIR=\"\\\"\$(ENGINESDIR)\\\"\"") -} {- $config{cflags} -}
+CFLAG={- our $cflags2 = join(" ",(map { "-D".$_} @{$config{defines}},"OPENSSLDIR=\"\\\"\$(OPENSSLDIR)\\\"\"","ENGINESDIR=\"\\\"\$(ENGINESDIR)\\\"\"")) -} {- $config{cflags} -}
 CFLAG_Q={- $cflags2 =~ s|([\\"])|\\$1|g; $cflags2 -} {- $config{cflags} -}
-DEPFLAG= {- join(" ",map { "-D".$_} @{$config{depdefines}}) -}
 LDFLAG= {- $config{lflags} -}
 PLIB_LDFLAG= {- $config{plib_lflags} -}
 EX_LIBS= {- $config{ex_libs} -}
@@ -121,6 +123,7 @@ ASFLAG=$(CFLAG)
 PROCESSOR= {- $config{processor} -}
 
 # CPUID module collects small commonly used assembler snippets
+APPS_OBJ={- $target{apps_obj} -}
 CPUID_OBJ= {- $target{cpuid_obj} -}
 BN_ASM= {- $target{bn_obj} -}
 EC_ASM= {- $target{ec_obj} -}
@@ -191,7 +194,8 @@ TOP=    .
 LIBS=   libcrypto.a libssl.a
 SHARED_CRYPTO=libcrypto$(SHLIB_EXT)
 SHARED_SSL=libssl$(SHLIB_EXT)
-SHARED_LIBS={- '$(SHARED_CRYPTO) $(SHARED_SSL)' if (!$config{no_shared}) -}
+SHARED_LIBS={- $disabled{shared} ? '' : '$(SHARED_CRYPTO) $(SHARED_SSL)'  -}
+SHARED_CFLAG={- $target{shared_cflag} -}
 SHARED_LDFLAG={- $target{shared_ldflag}
                  # Unlike other OSes (like Solaris, Linux, Tru64,
                  # IRIX) BSD run-time linkers (tested OpenBSD, NetBSD
@@ -207,6 +211,7 @@ SHARED_LDFLAG={- $target{shared_ldflag}
                  . ($config{target} =~ m|^BSD-| && $prefix !~ m|^/usr/.*$|
                     ? " -Wl,-rpath,\$\$(LIBRPATH)" : "") -}
 SHARED_RCFLAG={- $target{shared_rcflag} -}
+DYNAMIC_ENGINES={- $config{dynamic_engines} -}
 
 GENERAL=        Makefile
 BASENAME=       openssl
@@ -225,7 +230,7 @@ INSTALLDIRS=	\
 		$(DESTDIR)$(OPENSSLDIR)/certs \
 		$(DESTDIR)$(OPENSSLDIR)/private
 
-all: Makefile build_all
+all: Makefile build_all_but_tests
 
 # as we stick to -e, CLEARENV ensures that local variables in lower
 # Makefiles remain local and variable. $${VAR+VAR} is tribute to Korn
@@ -247,22 +252,24 @@ CLEARENV=	TOP= && unset TOP $${LIB+LIB} $${LIBS+LIBS}	\
 # same language for uniform treatment.
 BUILDENV=	LC_ALL=C PLATFORM='$(PLATFORM)' PROCESSOR='$(PROCESSOR)'\
 		CC='$(CC)' CFLAG='$(CFLAG)' CFLAG_Q='$(CFLAG_Q)'	\
+		SHARED_CFLAG='$(SHARED_CFLAG)'				\
 		AS='$(CC)' ASFLAG='$(CFLAG) -c'			\
 		AR='$(AR)' NM='$(NM)' RANLIB='$(RANLIB)'	\
-		CROSS_COMPILE='$(CROSS_COMPILE)'	\
-		PERL='$(PERL)'	\
+		CROSS_COMPILE='$(CROSS_COMPILE)'		\
+		PERL='$(PERL)' DYNAMIC_ENGINES='$(DYNAMIC_ENGINES)'	\
 		SDIRS='$(SDIRS)' LIBRPATH='$(INSTALLTOP)/$(LIBDIR)'	\
 		DESTDIR='$(DESTDIR)'		\
 		INSTALLTOP='$(INSTALLTOP)' OPENSSLDIR='$(OPENSSLDIR)'	\
 		LIBDIR='$(LIBDIR)'				\
-		DEPFLAG='$(DEPFLAG)'                    	\
 		SHARED_LDFLAG='$(SHARED_LDFLAG)'		\
 		SHARED_RCFLAG='$(SHARED_RCFLAG)'		\
 		ZLIB_INCLUDE='$(ZLIB_INCLUDE)' LIBZLIB='$(LIBZLIB)'	\
 		EXE_EXT='$(EXE_EXT)' SHARED_LIBS='$(SHARED_LIBS)'	\
-		SHLIB_EXT='$(SHLIB_EXT)' SHLIB_TARGET='$(SHLIB_TARGET)'	\
+		SHLIB_EXT='$(SHLIB_EXT)' DSO_EXT='$(DSO_EXT)'	\
+		SHLIB_TARGET='$(SHLIB_TARGET)'	\
 		LDFLAG='$(LDFLAG)'				\
 		PLIB_LDFLAG='$(PLIB_LDFLAG)' EX_LIBS='$(EX_LIBS)'	\
+		APPS_OBJ='$(APPS_OBJ)'				\
 		CPUID_OBJ='$(CPUID_OBJ)' BN_ASM='$(BN_ASM)'	\
 		EC_ASM='$(EC_ASM)' DES_ENC='$(DES_ENC)'		\
 		AES_ENC='$(AES_ENC)' CMLL_ENC='$(CMLL_ENC)'	\
@@ -313,7 +320,8 @@ reflect:
 
 sub_all: build_all
 
-build_all: build_libs build_apps build_tests build_tools
+build_all_but_tests: build_libs build_apps build_tools
+build_all: build_all_but_tests build_tests
 
 build_libs: build_libcrypto build_libssl openssl.pc
 
@@ -375,7 +383,7 @@ do_$(SHLIB_TARGET):
 			LIBNAME=$$i LIBVERSION=$(SHLIB_MAJOR).$(SHLIB_MINOR) \
 			LIBCOMPATVERSIONS=";$(SHLIB_VERSION_HISTORY)" \
 			LIBDEPS="$$libs $(EX_LIBS)" \
-			link_a.$(SHLIB_TARGET); \
+			link_shlib.$(SHLIB_TARGET); \
 		libs="-l$$i $$libs"; \
 		case "$(PLATFORM)" in \
 		Cygwin*) \
@@ -385,14 +393,15 @@ do_$(SHLIB_TARGET):
 			cp cyg$$i-$(SHLIB_MAJOR).$(SHLIB_MINOR).dll test/; \
 			;; \
 		mingw*) \
-			case $$i in \
-				crypto) i=libeay32;; \
-				ssl) i=ssleay32;; \
-			esac; \
-			rm -f apps/$$i.dll; \
-			rm -f test/$$i.dll; \
-			cp $$i.dll apps/; \
-			cp $$i.dll test/; \
+			arch=; \
+		        if expr $(PLATFORM) : mingw64 > /dev/null; then \
+				arch=-x64; \
+			fi; \
+			rm -f apps/lib$$i-$(SHLIB_MAJOR)_$(SHLIB_MINOR)$$arch.dll; \
+			rm -f test/lib$$i-$(SHLIB_MAJOR)_$(SHLIB_MINOR)$$arch.dll; \
+			cp lib$$i-$(SHLIB_MAJOR)_$(SHLIB_MINOR)$$arch.dll apps/; \
+			cp lib$$i-$(SHLIB_MAJOR)_$(SHLIB_MINOR)$$arch.dll test/; \
+			;; \
 		esac; \
 	done
 
@@ -444,7 +453,7 @@ libclean:
 	rm -f *.map *.so *.so.* *.dylib *.dll engines/*.so engines/*.dll engines/*.dylib *.a engines/*.a */lib */*/lib
 
 clean:	libclean
-	rm -f */*/*.o */*.o *.o core a.out fluff rehash.time testlog make.log cctest cctest.c
+	rm -f */*/*.o */*.o *.o core a.out fluff testlog make.log cctest cctest.c
 	rm -rf *.bak certs/.0
 	@set -e; target=clean; $(RECURSIVE_BUILD_CMD)
 	rm -f $(LIBS) tags TAGS
@@ -464,22 +473,9 @@ gentests:
 	@(cd test && echo "generating dummy tests (if needed)..." && \
 	$(CLEARENV) && $(MAKE) -e $(BUILDENV) TESTS='$(TESTS)' OPENSSL_DEBUG_MEMORY=on generate );
 
-rehash: rehash.time
-rehash.time: certs build_apps build_tools
-	@if [ -z "$(CROSS_COMPILE)" ]; then \
-		(OPENSSL="`pwd`/util/opensslwrap.sh"; \
-		[ -x "apps/openssl.exe" ] && OPENSSL="apps/openssl.exe" || :; \
-		OPENSSL_DEBUG_MEMORY=on; OPENSSL_CONF=/dev/null ; \
-		export OPENSSL OPENSSL_DEBUG_MEMORY OPENSSL_CONF; \
-		$$OPENSSL rehash certs/demo \
-		|| $(PERL) tools/c_rehash certs/demo) && \
-		touch rehash.time; \
-	else :; fi
-
 test:   files tests
 
-
-tests: rehash
+tests:  build_tests 
 	@(cd test && echo "testing..." && \
 	$(CLEARENV) && $(MAKE) -e $(BUILDENV) TOP=.. TESTS='$(TESTS)' OPENSSL_DEBUG_MEMORY=on OPENSSL_CONF=../apps/openssl.cnf tests );
 	@if [ -z "$(CROSS_COMPILE)" ]; then \
@@ -514,7 +510,6 @@ errors:
 	$(PERL) util/ck_errf.pl -strict */*.c */*/*.c
 	$(PERL) util/mkerr.pl -recurse -write
 	(cd engines; $(MAKE) PERL=$(PERL) errors)
-	(cd crypto/ct; $(MAKE) PERL=$(PERL) errors)
 
 ordinals: util/libeay.num util/ssleay.num test_ordinals TABLE
 util/libeay.num::
@@ -586,30 +581,40 @@ install_sw:
 		for i in $${tmp:-x}; \
 		do \
 			if [ -f "$$i" -o -f "$$i.a" ]; then \
-			(       echo installing $$i; \
-				if expr "$(PLATFORM)" : "Cygwin" >/dev/null; then \
-					c=`echo $$i | sed 's/^lib\(.*\)\.dll\.a/cyg\1-$(SHLIB_VERSION_NUMBER).dll/'`; \
+				case "$(PLATFORM)" in \
+				Cygwin*) \
+					c=`echo $$i | sed 's/^lib\(.*\)\.dll/cyg\1-$(SHLIB_VERSION_NUMBER).dll/'`; \
+					echo installing $$c; \
 					cp $$c $(DESTDIR)$(INSTALLTOP)/bin/$$c.new; \
 					chmod 755 $(DESTDIR)$(INSTALLTOP)/bin/$$c.new; \
 					mv -f $(DESTDIR)$(INSTALLTOP)/bin/$$c.new $(DESTDIR)$(INSTALLTOP)/bin/$$c; \
-					cp $$i $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$i.new; \
-					chmod 644 $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$i.new; \
-					mv -f $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$i.new $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$i; \
-				else \
+					echo installing $$i.a; \
+					cp $$i.a $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$i.a.new; \
+					chmod 644 $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$i.a.new; \
+					mv -f $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$i.a.new $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$i.a; \
+					;; \
+				mingw*) \
+					arch=; \
+				        if expr $(PLATFORM) : mingw64 > /dev/null; then \
+						arch=-x64; \
+					fi; \
+					m=`echo $$i | sed -e 's/\.dll$$/-$(SHLIB_MAJOR)_$(SHLIB_MINOR)'"$$arch"'.dll/'`; \
+					echo installing $$m; \
+					cp $$m $(DESTDIR)$(INSTALLTOP)/bin/$$m.new; \
+					chmod 755 $(DESTDIR)$(INSTALLTOP)/bin/$$m.new; \
+					mv -f $(DESTDIR)$(INSTALLTOP)/bin/$$m.new $(DESTDIR)$(INSTALLTOP)/bin/$$m; \
+					echo installing $$i.a; \
+					cp $$i.a $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$i.a.new; \
+					chmod 555 $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$i.a.new; \
+					mv -f $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$i.a.new $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$i.a; \
+					;; \
+			        *) \
+					echo installing $$i; \
 					cp $$i $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$i.new; \
 					chmod 555 $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$i.new; \
 					mv -f $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$i.new $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$i; \
-				fi ); \
-				if expr $(PLATFORM) : 'mingw' > /dev/null; then \
-				(	case $$i in \
-						*crypto*) i=libeay32.dll;; \
-						*ssl*)    i=ssleay32.dll;; \
-					esac; \
-					echo installing $$i; \
-					cp $$i $(DESTDIR)$(INSTALLTOP)/bin/$$i.new; \
-					chmod 755 $(DESTDIR)$(INSTALLTOP)/bin/$$i.new; \
-					mv -f $(DESTDIR)$(INSTALLTOP)/bin/$$i.new $(DESTDIR)$(INSTALLTOP)/bin/$$i ); \
-				fi; \
+					;; \
+				esac; \
 			fi; \
 		done; \
 		(	here="`pwd`"; \
@@ -640,31 +645,37 @@ uninstall_sw:
 		for i in $${tmp:-x}; \
 		do \
 			if [ -f "$$i" -o -f "$$i.a" ]; then \
-				if expr "$(PLATFORM)" : "Cygwin" >/dev/null; then \
-					c=`echo $$i | sed 's/^lib\(.*\)\.dll\.a/cyg\1-$(SHLIB_VERSION_NUMBER).dll/'`; \
+				case "$(PLATFORM)" in \
+				Cygwin*) \
+					c=`echo $$i | sed 's/^lib\(.*\)\.dll/cyg\1-$(SHLIB_VERSION_NUMBER).dll/'`; \
 					echo $(RM) $(DESTDIR)$(INSTALLTOP)/bin/$$c; \
 					$(RM) $(DESTDIR)$(INSTALLTOP)/bin/$$c; \
+					echo $(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$i.a; \
+					$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$i.a; \
+					;; \
+				mingw*) \
+					arch=; \
+				        if expr $(PLATFORM) : mingw64 > /dev/null; then \
+						arch=-x64; \
+					fi; \
+					m=`echo $$i | sed -e 's/\.dll$$/-$(SHLIB_MAJOR)_$(SHLIB_MINOR)'"$$arch"'.dll/'`; \
+					echo $(RM) $(DESTDIR)$(INSTALLTOP)/bin/$$m; \
+					$(RM) $(DESTDIR)$(INSTALLTOP)/bin/$$m; \
+					echo $(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$i.a; \
+					$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$i.a; \
+					;; \
+				*) \
 					echo $(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$i; \
 					$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$i; \
-				else \
-					echo $(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$i; \
-					$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$i; \
-				fi; \
-				if expr $(PLATFORM) : 'mingw' > /dev/null; then \
-					case $$i in \
-						*crypto*) i=libeay32.dll;; \
-						*ssl*)    i=ssleay32.dll;; \
-					esac; \
-					echo $(RM) $(DESTDIR)$(INSTALLTOP)/bin/$$i; \
-					$(RM) $(DESTDIR)$(INSTALLTOP)/bin/$$i; \
-				fi; \
+					;; \
+				esac; \
 			fi; \
 		done; \
 	fi
 	$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig/libcrypto.pc
 	$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig/libssl.pc
 	$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig/openssl.pc
-	@target=uninstall; $(RECURSIVE_BUILD_CMD)
+	@target=uninstall; for dir in $(INSTALL_SUBS); do $(BUILD_CMD); done
 
 install_html_docs:
 	here="`pwd`"; \

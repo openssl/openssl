@@ -143,12 +143,12 @@ OPTIONS req_options[] = {
     {"config", OPT_CONFIG, '<', "Request template file"},
     {"keyout", OPT_KEYOUT, '>', "File to send the key to"},
     {"passin", OPT_PASSIN, 's', "Private key password source"},
-    {"passout", OPT_PASSOUT, 's'},
+    {"passout", OPT_PASSOUT, 's', "Output file pass phrase source"},
     {"rand", OPT_RAND, 's',
      "Load the file(s) into the random number generator"},
     {"newkey", OPT_NEWKEY, 's', "Specify as type:bits"},
-    {"pkeyopt", OPT_PKEYOPT, 's'},
-    {"sigopt", OPT_SIGOPT, 's'},
+    {"pkeyopt", OPT_PKEYOPT, 's', "Public key options as opt:value"},
+    {"sigopt", OPT_SIGOPT, 's', "Signature parameter in n:v form"},
     {"batch", OPT_BATCH, '-',
      "Do not ask anything during request generation"},
     {"newhdr", OPT_NEWHDR, '-', "Output \"NEW\" in the header lines"},
@@ -156,7 +156,7 @@ OPTIONS req_options[] = {
     {"verify", OPT_VERIFY, '-', "Verify signature on REQ"},
     {"nodes", OPT_NODES, '-', "Don't encrypt the output key"},
     {"noout", OPT_NOOUT, '-', "Do not output REQ"},
-    {"verbose", OPT_VERBOSE, '-'},
+    {"verbose", OPT_VERBOSE, '-', "Verbose output"},
     {"utf8", OPT_UTF8, '-', "Input characters are UTF8 (default ASCII)"},
     {"nameopt", OPT_NAMEOPT, 's', "Various certificate name options"},
     {"reqopt", OPT_REQOPT, 's', "Various request text options"},
@@ -177,7 +177,8 @@ OPTIONS req_options[] = {
     {"", OPT_MD, '-', "Any supported digest"},
 #ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
-    {"keygen_engine", OPT_KEYGEN_ENGINE, 's'},
+    {"keygen_engine", OPT_KEYGEN_ENGINE, 's',
+     "Specify engine to be used for key generation operations"},
 #endif
     {NULL}
 };
@@ -366,7 +367,8 @@ int req_main(int argc, char **argv)
         }
     }
     argc = opt_num_rest();
-    argv = opt_rest();
+    if (argc != 0)
+        goto opthelp;
 
     if (!nmflag_set)
         nmflag = XN_FLAG_ONELINE;
@@ -1118,7 +1120,7 @@ static int auto_info(X509_REQ *req, STACK_OF(CONF_VALUE) *dn_sk,
                      STACK_OF(CONF_VALUE) *attr_sk, int attribs,
                      unsigned long chtype)
 {
-    int i;
+    int i, spec_char, plus_char;
     char *p, *q;
     char *type;
     CONF_VALUE *v;
@@ -1134,24 +1136,26 @@ static int auto_info(X509_REQ *req, STACK_OF(CONF_VALUE) *dn_sk,
         /*
          * Skip past any leading X. X: X, etc to allow for multiple instances
          */
-        for (p = v->name; *p; p++)
+        for (p = v->name; *p; p++) {
 #ifndef CHARSET_EBCDIC
-            if ((*p == ':') || (*p == ',') || (*p == '.')) {
+            spec_char = ((*p == ':') || (*p == ',') || (*p == '.'));
 #else
-            if ((*p == os_toascii[':']) || (*p == os_toascii[','])
-                || (*p == os_toascii['.'])) {
+            spec_char = ((*p == os_toascii[':']) || (*p == os_toascii[','])
+                    || (*p == os_toascii['.']));
 #endif
+            if (spec_char) {
                 p++;
                 if (*p)
                     type = p;
                 break;
             }
+        }
 #ifndef CHARSET_EBCDIC
-        if (*p == '+')
+        plus_char = (*p == '+');
 #else
-        if (*p == os_toascii['+'])
+        plus_char = (*p == os_toascii['+']);
 #endif
-        {
+        if (plus_char) {
             p++;
             mval = -1;
         } else
@@ -1372,8 +1376,7 @@ static EVP_PKEY_CTX *set_keygen_ctx(const char *gstr,
 
         EVP_PKEY_asn1_get0_info(NULL, pkey_type, NULL, NULL, NULL, ameth);
 #ifndef OPENSSL_NO_ENGINE
-        if (tmpeng)
-            ENGINE_finish(tmpeng);
+        ENGINE_finish(tmpeng);
 #endif
         if (*pkey_type == EVP_PKEY_RSA) {
             if (p) {
@@ -1430,8 +1433,7 @@ static EVP_PKEY_CTX *set_keygen_ctx(const char *gstr,
         EVP_PKEY_asn1_get0_info(NULL, NULL, NULL, NULL, &anam, ameth);
         *palgnam = OPENSSL_strdup(anam);
 #ifndef OPENSSL_NO_ENGINE
-        if (tmpeng)
-            ENGINE_finish(tmpeng);
+        ENGINE_finish(tmpeng);
 #endif
     }
 

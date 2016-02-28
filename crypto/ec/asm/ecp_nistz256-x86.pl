@@ -1197,6 +1197,7 @@ for ($i=0;$i<7;$i++) {
 ########################################################################
 # void ecp_nistz256_point_double(P256_POINT *out,const P256_POINT *inp);
 #
+&static_label("point_double_shortcut");
 &function_begin("ecp_nistz256_point_double");
 {   my ($S,$M,$Zsqr,$in_x,$tmp0)=map(32*$_,(0..4));
 
@@ -1212,6 +1213,7 @@ for ($i=0;$i<7;$i++) {
 	&picmeup("edx","OPENSSL_ia32cap_P","eax",&label("pic"));
 	&mov	("ebp",&DWP(0,"edx"));		}
 
+&set_label("point_double_shortcut");
 	&mov	("eax",&DWP(0,"esi"));		# copy in_x
 	&mov	("ebx",&DWP(4,"esi"));
 	&mov	("ecx",&DWP(8,"esi"));
@@ -1491,13 +1493,19 @@ for ($i=0;$i<7;$i++) {
 	&mov	("ebx",&DWP(32*18+8,"esp"));
 	&jz	(&label("add_proceed"));	# (in1infty || in2infty)?
 	&test	("ebx","ebx");
-	&jz	(&label("add_proceed"));	# is_equal(S1,S2)?
+	&jz	(&label("add_double"));		# is_equal(S1,S2)?
 
 	&mov	("edi",&wparam(0));
 	&xor	("eax","eax");
 	&mov	("ecx",96/4);
 	&data_byte(0xfc,0xf3,0xab);		# cld; stosd
 	&jmp	(&label("add_done"));
+
+&set_label("add_double",16);
+	&mov	("esi",&wparam(1));
+	&mov	("ebp",&DWP(32*18+12,"esp"));	# OPENSSL_ia32cap_P copy
+	&add	("esp",4*((8*18+5)-(8*5+1)));	# difference in frame sizes
+	&jmp	(&label("point_double_shortcut"));
 
 &set_label("add_proceed",16);
 	&mov	("eax",&DWP(32*18+12,"esp"));	# OPENSSL_ia32cap_P copy

@@ -1409,7 +1409,7 @@ int SSL_get_async_wait_fd(SSL *s)
 
 int SSL_accept(SSL *s)
 {
-    if (s->handshake_func == 0) {
+    if (s->handshake_func == NULL) {
         /* Not properly initialized yet */
         SSL_set_accept_state(s);
     }
@@ -1419,7 +1419,7 @@ int SSL_accept(SSL *s)
 
 int SSL_connect(SSL *s)
 {
-    if (s->handshake_func == 0) {
+    if (s->handshake_func == NULL) {
         /* Not properly initialized yet */
         SSL_set_connect_state(s);
     }
@@ -1479,7 +1479,7 @@ static int ssl_io_intern(void *vargs)
 
 int SSL_read(SSL *s, void *buf, int num)
 {
-    if (s->handshake_func == 0) {
+    if (s->handshake_func == NULL) {
         SSLerr(SSL_F_SSL_READ, SSL_R_UNINITIALIZED);
         return -1;
     }
@@ -1506,7 +1506,7 @@ int SSL_read(SSL *s, void *buf, int num)
 
 int SSL_peek(SSL *s, void *buf, int num)
 {
-    if (s->handshake_func == 0) {
+    if (s->handshake_func == NULL) {
         SSLerr(SSL_F_SSL_PEEK, SSL_R_UNINITIALIZED);
         return -1;
     }
@@ -1531,7 +1531,7 @@ int SSL_peek(SSL *s, void *buf, int num)
 
 int SSL_write(SSL *s, const void *buf, int num)
 {
-    if (s->handshake_func == 0) {
+    if (s->handshake_func == NULL) {
         SSLerr(SSL_F_SSL_WRITE, SSL_R_UNINITIALIZED);
         return -1;
     }
@@ -1566,7 +1566,7 @@ int SSL_shutdown(SSL *s)
      * (see ssl3_shutdown).
      */
 
-    if (s->handshake_func == 0) {
+    if (s->handshake_func == NULL) {
         SSLerr(SSL_F_SSL_SHUTDOWN, SSL_R_UNINITIALIZED);
         return -1;
     }
@@ -2144,8 +2144,10 @@ int SSL_CTX_set_alpn_protos(SSL_CTX *ctx, const unsigned char *protos,
 {
     OPENSSL_free(ctx->alpn_client_proto_list);
     ctx->alpn_client_proto_list = OPENSSL_malloc(protos_len);
-    if (ctx->alpn_client_proto_list == NULL)
+    if (ctx->alpn_client_proto_list == NULL) {
+        SSLerr(SSL_F_SSL_CTX_SET_ALPN_PROTOS, ERR_R_MALLOC_FAILURE);
         return 1;
+    }
     memcpy(ctx->alpn_client_proto_list, protos, protos_len);
     ctx->alpn_client_proto_list_len = protos_len;
 
@@ -2162,8 +2164,10 @@ int SSL_set_alpn_protos(SSL *ssl, const unsigned char *protos,
 {
     OPENSSL_free(ssl->alpn_client_proto_list);
     ssl->alpn_client_proto_list = OPENSSL_malloc(protos_len);
-    if (ssl->alpn_client_proto_list == NULL)
+    if (ssl->alpn_client_proto_list == NULL) {
+        SSLerr(SSL_F_SSL_SET_ALPN_PROTOS, ERR_R_MALLOC_FAILURE);
         return 1;
+    }
     memcpy(ssl->alpn_client_proto_list, protos, protos_len);
     ssl->alpn_client_proto_list_len = protos_len;
 
@@ -2429,8 +2433,7 @@ void SSL_CTX_free(SSL_CTX *a)
     SSL_CTX_SRP_CTX_free(a);
 #endif
 #ifndef OPENSSL_NO_ENGINE
-    if (a->client_cert_engine)
-        ENGINE_finish(a->client_cert_engine);
+    ENGINE_finish(a->client_cert_engine);
 #endif
 
 #ifndef OPENSSL_NO_EC
@@ -2493,7 +2496,7 @@ void SSL_set_cert_cb(SSL *s, int (*cb) (SSL *ssl, void *arg), void *arg)
     ssl_cert_set_cert_cb(s->cert, cb, arg);
 }
 
-void ssl_set_masks(SSL *s, const SSL_CIPHER *cipher)
+void ssl_set_masks(SSL *s)
 {
 #if !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_GOST)
     CERT_PKEY *cpk;
@@ -2505,7 +2508,6 @@ void ssl_set_masks(SSL *s, const SSL_CIPHER *cipher)
 #ifndef OPENSSL_NO_EC
     int have_ecc_cert, ecdsa_ok;
     X509 *x = NULL;
-    int pk_nid = 0, md_nid = 0;
 #endif
     if (c == NULL)
         return;
@@ -2577,10 +2579,8 @@ void ssl_set_masks(SSL *s, const SSL_CIPHER *cipher)
         ecdsa_ok = ex_kusage & X509v3_KU_DIGITAL_SIGNATURE;
         if (!(pvalid[SSL_PKEY_ECC] & CERT_PKEY_SIGN))
             ecdsa_ok = 0;
-        OBJ_find_sigid_algs(X509_get_signature_nid(x), &md_nid, &pk_nid);
-        if (ecdsa_ok) {
+        if (ecdsa_ok)
             mask_a |= SSL_aECDSA;
-        }
     }
 #endif
 
@@ -2649,16 +2649,7 @@ CERT_PKEY *ssl_get_server_send_pkey(SSL *s)
     c = s->cert;
     if (!s->s3 || !s->s3->tmp.new_cipher)
         return NULL;
-    ssl_set_masks(s, s->s3->tmp.new_cipher);
-
-#ifdef OPENSSL_SSL_DEBUG_BROKEN_PROTOCOL
-    /*
-     * Broken protocol test: return last used certificate: which may mismatch
-     * the one expected.
-     */
-    if (c->cert_flags & SSL_CERT_FLAG_BROKEN_PROTOCOL)
-        return c->key;
-#endif
+    ssl_set_masks(s);
 
     i = ssl_get_server_cert_index(s);
 
@@ -2679,16 +2670,6 @@ EVP_PKEY *ssl_get_sign_pkey(SSL *s, const SSL_CIPHER *cipher,
 
     alg_a = cipher->algorithm_auth;
     c = s->cert;
-
-#ifdef OPENSSL_SSL_DEBUG_BROKEN_PROTOCOL
-    /*
-     * Broken protocol test: use last key: which may mismatch the one
-     * expected.
-     */
-    if (c->cert_flags & SSL_CERT_FLAG_BROKEN_PROTOCOL)
-        idx = c->key - c->pkeys;
-    else
-#endif
 
     if ((alg_a & SSL_aDSS) &&
             (c->pkeys[SSL_PKEY_DSA_SIGN].privatekey != NULL))

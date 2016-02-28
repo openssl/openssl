@@ -6,5 +6,5 @@ BEGINRAW[Makefile]
 ##### CAST assembler implementations
 
 {- $builddir -}/cast-586.s:	{- $sourcedir -}/asm/cast-586.pl {- $sourcetop -}/crypto/perlasm/x86asm.pl {- $sourcetop -}/crypto/perlasm/cbc.pl
-	$(PERL)	{- $sourcedir -}/asm/cast-586.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) > $@
+	CC="$(CC)" $(PERL)	{- $sourcedir -}/asm/cast-586.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) > $@
 ENDRAW[Makefile]

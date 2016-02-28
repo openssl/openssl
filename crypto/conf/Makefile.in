@@ -10,7 +10,7 @@ CFLAG=-g
 MAKEFILE=	Makefile
 AR=		ar r
 
-CFLAGS= $(INCLUDES) $(CFLAG)
+CFLAGS= $(INCLUDES) $(CFLAG) $(SHARED_CFLAG)
 
 GENERAL=Makefile
 
@@ -41,7 +41,7 @@ files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
 
 depend:
-	$(TOP)/util/domd $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(LIBSRC)
+	$(TOP)/util/domd $(CFLAG) $(INCLUDES) -- $(LIBSRC)
 
 clean:
 	rm -f *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff

@@ -116,7 +116,8 @@
 #include <openssl/buffer.h>
 #include <openssl/bio.h>
 #include <openssl/lhash.h>
-#if defined(CRYPTO_MDEBUG_BACKTRACE) && defined(__GNUC__)
+
+#ifndef OPENSSL_NO_CRYPTO_MDEBUG_BACKTRACE
 # include <execinfo.h>
 #endif
 
@@ -171,7 +172,7 @@ struct mem_st {
     unsigned long order;
     time_t time;
     APP_INFO *app_info;
-#if defined(CRYPTO_MDEBUG_BACKTRACE) && defined(__GNUC__)
+#ifndef OPENSSL_NO_CRYPTO_MDEBUG_BACKTRACE
     void *array[30];
     size_t array_siz;
 #endif
@@ -445,7 +446,7 @@ void CRYPTO_mem_debug_malloc(void *addr, size_t num, int before_p,
                 m->order = order;
             }
             m->order = order++;
-# if defined(CRYPTO_MDEBUG_BACKTRACE) && defined(__GNUC__)
+# ifndef OPENSSL_NO_CRYPTO_MDEBUG_BACKTRACE
             m->array_siz = backtrace(m->array, OSSL_NELEM(m->array));
 # endif
             m->time = time(NULL);
@@ -473,7 +474,8 @@ void CRYPTO_mem_debug_malloc(void *addr, size_t num, int before_p,
     return;
 }
 
-void CRYPTO_mem_debug_free(void *addr, int before_p)
+void CRYPTO_mem_debug_free(void *addr, int before_p,
+        const char *file, int line)
 {
     MEM m, *mp;
 
@@ -525,7 +527,7 @@ void CRYPTO_mem_debug_realloc(void *addr1, void *addr2, size_t num,
             if (mp != NULL) {
                 mp->addr = addr2;
                 mp->num = num;
-#if defined(CRYPTO_MDEBUG_BACKTRACE) && defined(__GNUC__)
+#ifndef OPENSSL_NO_CRYPTO_MDEBUG_BACKTRACE
                 mp->array_siz = backtrace(mp->array, OSSL_NELEM(mp->array));
 #endif
                 (void)lh_MEM_insert(mh, mp);
@@ -618,7 +620,7 @@ static void print_leak(const MEM *m, MEM_LEAK *l)
         while (amip && !CRYPTO_THREADID_cmp(&amip->threadid, &ti));
     }
 
-#if defined(CRYPTO_MDEBUG_BACKTRACE) && defined(__GNUC__)
+#ifndef OPENSSL_NO_CRYPTO_MDEBUG_BACKTRACE
     {
         size_t i;
         char **strings = backtrace_symbols(m->array, m->array_siz);

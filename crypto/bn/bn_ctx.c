@@ -53,14 +53,6 @@
  *
  */
 
-#if !defined(BN_CTX_DEBUG) && !defined(BN_DEBUG)
-# ifndef NDEBUG
-#  define NDEBUG
-# endif
-#endif
-
-#include <assert.h>
-
 #include "internal/cryptlib.h"
 #include "bn_lcl.h"
 

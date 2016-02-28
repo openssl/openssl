@@ -15,7 +15,7 @@ use File::Path qw/mkpath/;
 
 # see INSTALL for instructions.
 
-my $usage="Usage: Configure [no-<cipher> ...] [enable-<cipher> ...] [experimental-<cipher> ...] [-Dxxx] [-lxxx] [-Lxxx] [-fxxx] [-Kxxx] [no-hw-xxx|no-hw] [[no-]threads] [[no-]shared] [[no-]zlib|zlib-dynamic] [no-asm] [no-dso] [no-egd] [sctp] [386] [--prefix=DIR] [--openssldir=OPENSSLDIR] [--with-xxx[=vvv]] [--config=FILE] os/compiler[:flags]\n";
+my $usage="Usage: Configure [no-<cipher> ...] [enable-<cipher> ...] [-Dxxx] [-lxxx] [-Lxxx] [-fxxx] [-Kxxx] [no-hw-xxx|no-hw] [[no-]threads] [[no-]shared] [[no-]zlib|zlib-dynamic] [no-asm] [no-dso] [no-egd] [sctp] [386] [--prefix=DIR] [--openssldir=OPENSSLDIR] [--with-xxx[=vvv]] [--config=FILE] os/compiler[:flags]\n";
 
 # Options:
 #
@@ -46,6 +46,8 @@ my $usage="Usage: Configure [no-<cipher> ...] [enable-<cipher> ...] [experimenta
 #               multithreaded applications (default is "threads" if we
 #               know how to do it)
 # [no-]shared	[don't] try to create shared libraries when supported.
+# [no-]pic      [don't] try to build position independent code when supported.
+#               If disabled, it also disables shared and dynamic-engine.
 # no-asm        do not use assembler
 # no-dso        do not compile in any native shared-library methods. This
 #               will ensure that all methods just return NULL.
@@ -76,20 +78,42 @@ my $usage="Usage: Configure [no-<cipher> ...] [enable-<cipher> ...] [experimenta
 # Minimum warning options... any contributions to OpenSSL should at least get
 # past these.
 
-my $gcc_devteam_warn = "-Wall -pedantic -DPEDANTIC -Wno-long-long -Wsign-compare -Wmissing-prototypes -Wshadow -Wformat -Wtype-limits -Werror -DREF_DEBUG -DDEBUG_UNUSED";
+my $gcc_devteam_warn = "-DPEDANTIC -DREF_DEBUG -DDEBUG_UNUSED -DBIO_DEBUG"
+        . " -pedantic"
+        . " -Wall"
+        . " -Wno-long-long"
+        . " -Wsign-compare"
+        . " -Wmissing-prototypes"
+        . " -Wshadow"
+        . " -Wformat"
+        . " -Wtype-limits"
+        . " -Werror"
+        ;
 
 # These are used in addition to $gcc_devteam_warn when the compiler is clang.
 # TODO(openssl-team): fix problems and investigate if (at least) the
 # following warnings can also be enabled:
-# -Wswitch-enum, -Wunused-macros, -Wmissing-field-initializers,
-# -Wcast-align,
-# -Wunreachable-code -Wunused-parameter -Wlanguage-extension-token
-# -Wextended-offsetof
-my $clang_devteam_warn = "-Wno-unused-parameter -Wno-missing-field-initializers -Wno-language-extension-token -Wno-extended-offsetof -Wconditional-uninitialized -Qunused-arguments -Wincompatible-pointer-types-discards-qualifiers -Wmissing-variable-declarations";
+#       -Wswitch-enum
+#       -Wcast-align
+#       -Wunreachable-code
+#       -Wlanguage-extension-token -- no, we use asm()
+#       -Wunused-macros -- no, too tricky for BN and _XOPEN_SOURCE etc
+#       -Wextended-offsetof -- no, needed in CMS ASN1 code
+my $clang_devteam_warn = ""
+        . " -Qunused-arguments"
+        . " -Wextra"
+        . " -Wno-unused-parameter"
+        . " -Wno-missing-field-initializers"
+        . " -Wno-language-extension-token"
+        . " -Wno-extended-offsetof"
+        . " -Wconditional-uninitialized"
+        . " -Wincompatible-pointer-types-discards-qualifiers"
+        . " -Wmissing-variable-declarations"
+        ;
 
-# These are used in addition to $gcc_devteam_warn unless this is a mingw build.
-# This adds backtrace information to the memory leak info.
-my $memleak_devteam_backtrace = "-rdynamic -DCRYPTO_MDEBUG_BACKTRACE";
+# This adds backtrace information to the memory leak info.  Is only used
+# when crypto-mdebug-backtrace is enabled.
+my $memleak_devteam_backtrace = "-rdynamic";
 
 my $strict_warnings = 0;
 
@@ -184,13 +208,7 @@ $config{cross_compile_prefix}="";
 $config{fipslibdir}="/usr/local/ssl/fips-2.0/lib/";
 my $nofipscanistercheck=0;
 $config{baseaddr}="0xFB00000";
-my $no_threads=0;
 my $threads=0;
-$config{no_shared}=0; # but "no-shared" is default
-my $zlib=1;      # but "no-zlib" is default
-my $no_rfc3779=0;
-my $no_asm=0;
-my $no_dso=0;
 my $default_ranlib;
 $config{fips}=0;
 
@@ -204,7 +222,7 @@ $config{sdirs} = [
     "bn", "ec", "rsa", "dsa", "dh", "dso", "engine",
     "buffer", "bio", "stack", "lhash", "rand", "err",
     "evp", "asn1", "pem", "x509", "x509v3", "conf", "txt_db", "pkcs7", "pkcs12", "comp", "ocsp", "ui",
-    "cms", "ts", "jpake", "srp", "cmac", "ct", "async", "kdf"
+    "cms", "ts", "srp", "cmac", "ct", "async", "kdf"
     ];
 
 # Known TLS and DTLS protocols
@@ -231,6 +249,7 @@ my @disablables = (
     "cms",
     "comp",
     "crypto-mdebug",
+    "crypto-mdebug-backtrace",
     "ct",
     "deprecated",
     "des",
@@ -239,7 +258,7 @@ my @disablables = (
     "dsa",
     "dso",
     "dtls",
-    "dynamic[-_]engine",
+    "dynamic-engine",
     "ec",
     "ec2m",
     "ecdh",
@@ -247,13 +266,13 @@ my @disablables = (
     "ec_nistp_64_gcc_128",
     "egd",
     "engine",
-    "err",			# Really???
+    "err",
+    "filenames",
     "heartbeats",
     "hmac",
     "hw(-.+)?",
     "idea",
-    "jpake",
-    "locking",			# Really???
+    "locking",
     "md2",
     "md4",
     "md5",
@@ -262,6 +281,7 @@ my @disablables = (
     "nextprotoneg",
     "ocb",
     "ocsp",
+    "pic",
     "poly1305",
     "posix-io",
     "psk",
@@ -271,6 +291,7 @@ my @disablables = (
     "rdrand",
     "rfc3779",
     "rijndael",			# Old AES name
+    "ripemd",
     "rmd160",
     "rsa",
     "scrypt",
@@ -289,6 +310,8 @@ my @disablables = (
     "stdio",
     "threads",
     "tls",
+    "ts",
+    "ui",
     "unit-test",
     "whirlpool",
     "zlib",
@@ -300,23 +323,26 @@ foreach my $proto ((@tls, @dtls))
 	push(@disablables, "$proto-method");
 	}
 
+my @deprecated_disablables = (
+    "ssl2",
+    );
+
 # All of the following is disabled by default (RC5 was enabled before 0.9.8):
 
-my %disabled = ( # "what"         => "comment" [or special keyword "experimental"]
-		 "ec_nistp_64_gcc_128" => "default",
-		 "egd"            => "default",
-		 "jpake"          => "experimental",
-		 "md2"            => "default",
-		 "rc5"            => "default",
-		 "sctp"           => "default",
-		 "shared"         => "default",
-		 "ssl-trace"	  => "default",
-		 "unit-test"	  => "default",
-		 "zlib"           => "default",
-		 "crypto-mdebug"  => "default",
-		 "heartbeats"     => "default",
-	       );
-my @experimental = ();
+our %disabled = ( # "what"         => "comment"
+		  "ec_nistp_64_gcc_128" => "default",
+		  "egd"            => "default",
+		  "md2"            => "default",
+		  "rc5"            => "default",
+		  "sctp"           => "default",
+		  "shared"         => "default",
+		  "ssl-trace"      => "default",
+		  "static-engine"  => "default",
+		  "unit-test"      => "default",
+		  "zlib"           => "default",
+		  "crypto-mdebug"  => "default",
+		  "heartbeats"     => "default",
+		);
 
 # Note: => pair form used for aesthetics, not to truly make a hash table
 my @disable_cascades = (
@@ -329,7 +355,6 @@ my @disable_cascades = (
     "rijndael"		=> [ "aes" ],
     "des"		=> [ "mdc2" ],
     "ec"		=> [ "ecdsa", "ecdh" ],
-    "psk"		=> [ "jpake" ],
 
     "dgram"		=> [ "dtls" ],
     "dtls"		=> [ @dtls ],
@@ -356,6 +381,14 @@ my @disable_cascades = (
 
     # SRP and HEARTBEATS require TLSEXT
     "tlsext"		=> [ "srp", "heartbeats" ],
+
+    "crypto-mdebug"     => [ "crypto-mdebug-backtrace" ],
+
+    # Without DSO, we can't load dynamic engines, so don't build them dynamic
+    "dso"               => [ "dynamic-engine" ],
+
+    # Without position independent code, there can be no shared libraries or DSOs
+    "pic"               => [ "shared", "dynamic-engine" ],
     );
 
 # Avoid protocol support holes.  Also disable all versions below N, if version
@@ -376,25 +409,14 @@ while ((my $first, my $second) = (shift @list, shift @list)) {
     unshift @list, $second;
 }
 
-# Construct the string of what $config{depdefines} should look like with
-# the defaults from %disabled above.  (we need this to see if we should
-# advise the user to run "make depend"):
-my @default_depdefines =
-    map { my $x = $_; $x =~ tr{[a-z]-}{[A-Z]_}; "OPENSSL_NO_$x"; }
-    grep { $disabled{$_} !~ /\(no-depdefines\)$/ }
-    sort keys %disabled;
-
 # Explicit "no-..." options will be collected in %disabled along with the defaults.
-# To remove something from %disabled, use "enable-foo" (unless it's experimental).
+# To remove something from %disabled, use "enable-foo".
 # For symmetry, "disable-foo" is a synonym for "no-foo".
-
-# For features called "experimental" here, a more explicit "experimental-foo" is needed to enable.
-# We will collect such requests in @experimental.
-# To avoid accidental use of experimental features, applications will have to use -DOPENSSL_EXPERIMENTAL_FOO.
 
 my @generated_headers = (
     "include/openssl/opensslconf.h",
-    "crypto/include/internal/bn_conf.h"
+    "crypto/include/internal/bn_conf.h",
+    "crypto/include/internal/dso_conf.h"
     );
 
 my @generated_by_make_headers = (
@@ -409,8 +431,6 @@ my $no_sse2=0;
 my $user_cflags="";
 my @user_defines=();
 my $unified = 0;
-$config{depdefines}=[];
-$config{openssl_experimental_defines}=[];
 $config{openssl_api_defines}=[];
 $config{openssl_algorithm_defines}=[];
 $config{openssl_thread_defines}=[];
@@ -475,8 +495,16 @@ if (grep /^reconf(igure)?$/, @argvcopy) {
 $config{perlargv} = [ @argvcopy ];
 
 my %unsupported_options = ();
+my %deprecated_options = ();
 foreach (@argvcopy)
 	{
+	# VMS is a case insensitive environment, and depending on settings
+	# out of our control, we may receive options uppercased.  Let's
+	# downcase at least the part before any equal sign.
+	if ($^O eq "VMS")
+		{
+		s/^([^=]*)/lc($1)/e;
+		}
 	s /^-no-/no-/; # some people just can't read the instructions
 
 	# rewrite some options in "enable-..." form
@@ -486,10 +514,15 @@ foreach (@argvcopy)
 	s /^zlib$/enable-zlib/;
 	s /^zlib-dynamic$/enable-zlib-dynamic/;
 
-        if (/^(no|disable|enable|experimental)-(.+)$/)
+        if (/^(no|disable|enable)-(.+)$/)
 		{
 		my $word = $2;
-		if (!grep { $word =~ /^${_}$/ } @disablables)
+		if (grep { $word =~ /^${_}$/ } @deprecated_disablables)
+			{
+			$deprecated_options{$_} = 1;
+			next;
+			}
+		elsif (!grep { $word =~ /^${_}$/ } @disablables)
 			{
 			$unsupported_options{$_} = 1;
 			next;
@@ -497,52 +530,59 @@ foreach (@argvcopy)
 		}
 	if (/^no-(.+)$/ || /^disable-(.+)$/)
 		{
-		if (!($disabled{$1} eq "experimental"))
-			{
-			foreach my $proto ((@tls, @dtls))
-				{
-				if ($1 eq "$proto-method")
-					{
-					$disabled{"$proto"} = "option($proto-method)";
-					last;
-					}
-				}
-			if ($1 eq "dtls")
-				{
-                                foreach my $proto (@dtls)
-					{
-					$disabled{$proto} = "option(dtls)";
-					}
-				}
-			elsif ($1 eq "ssl")
-				{
-				# Last one of its kind
-				$disabled{"ssl3"} = "option(ssl)";
-				}
-			elsif ($1 eq "tls")
-				{
-                                # XXX: Tests will fail if all SSL/TLS
-                                # protocols are disabled.
-                                foreach my $proto (@tls)
-					{
-					$disabled{$proto} = "option(tls)";
-					}
-				}
-			else
-				{
-				$disabled{$1} = "option";
-				}
-			}
+                foreach my $proto ((@tls, @dtls))
+                        {
+                        if ($1 eq "$proto-method")
+                                {
+                                $disabled{"$proto"} = "option($proto-method)";
+                                last;
+                                }
+                        }
+                if ($1 eq "dtls")
+                        {
+                        foreach my $proto (@dtls)
+                                {
+                                $disabled{$proto} = "option(dtls)";
+                                }
+                        }
+                elsif ($1 eq "ssl")
+                        {
+                        # Last one of its kind
+                        $disabled{"ssl3"} = "option(ssl)";
+                        }
+                elsif ($1 eq "tls")
+                        {
+                        # XXX: Tests will fail if all SSL/TLS
+                        # protocols are disabled.
+                        foreach my $proto (@tls)
+                                {
+                                $disabled{$proto} = "option(tls)";
+                                }
+                        }
+                elsif ($1 eq "static-engine")
+                        {
+                        delete $disabled{"dynamic-engine"};
+                        }
+                elsif ($1 eq "dynamic-engine")
+                        {
+                        $disabled{"dynamic-engine"} = "option";
+                        }
+                else
+                        {
+                        $disabled{$1} = "option";
+                        }
 		}
-	elsif (/^enable-(.+)$/ || /^experimental-(.+)$/)
+	elsif (/^enable-(.+)$/)
 		{
+                if ($1 eq "static-engine")
+                        {
+                        $disabled{"dynamic-engine"} = "option";
+                        }
+                elsif ($1 eq "dynamic-engine")
+                        {
+                        delete $disabled{"dynamic-engine"};
+                        }
 		my $algo = $1;
-		if ($disabled{$algo} eq "experimental")
-			{
-			die "You are requesting an experimental feature; please say 'experimental-$algo' if you are sure\n"
-				unless (/^experimental-/);
-			push @experimental, $algo;
-			}
 		delete $disabled{$algo};
 
 		$threads = 1 if ($algo eq "threads");
@@ -638,11 +678,6 @@ foreach (@argvcopy)
 			$user_cflags.=" ".$_;
 			}
 		}
-	elsif ($_ =~ /^([^:]+):(.+)$/)
-		{
-		eval "\$table{\$1} = \"$2\""; # allow $xxx constructs in the string
-		$target=$1;
-		}
 	else
 		{
 		die "target already defined - $target (offending arg: $_)\n" if ($target ne "");
@@ -665,6 +700,11 @@ foreach (@argvcopy)
 		die "***** Unsupported api compatibility level: $config{api}\n",
         }
 
+	if (keys %deprecated_options)
+		{
+		warn "***** Deprecated options: ",
+			join(", ", keys %deprecated_options), "\n";
+		}
 	if (keys %unsupported_options)
 		{
 		die "***** Unsupported options: ",
@@ -730,21 +770,27 @@ foreach (sort (keys %disabled))
 	printf "    no-%-12s %-10s", $_, "[$disabled{$_}]";
 
 	if (/^dso$/)
-		{ $no_dso = 1; }
+		{ }
 	elsif (/^threads$/)
-		{ $no_threads = 1; }
+		{ }
 	elsif (/^shared$/)
-		{ $config{no_shared} = 1; }
+		{ }
+	elsif (/^pic$/)
+		{ }
 	elsif (/^zlib$/)
-		{ $zlib = 0; }
-	elsif (/^static-engine$/)
+		{ }
+	elsif (/^dynamic-engine$/)
 		{ }
 	elsif (/^zlib-dynamic$/)
 		{ }
 	elsif (/^sse2$/)
 		{ $no_sse2 = 1; }
 	elsif (/^engine$/)
-		{ @{$config{dirs}} = grep !/^engine$/, @{$config{dirs}}; }
+		{
+		@{$config{dirs}} = grep !/^engines$/, @{$config{dirs}};
+		@{$config{sdirs}} = grep !/^engine$/, @{$config{sdirs}};
+		push @{$config{openssl_other_defines}}, "OPENSSL_NO_ENGINE";
+		}
 	else
 		{
 		my ($ALGO, $algo);
@@ -757,14 +803,12 @@ foreach (sort (keys %disabled))
 			print " OPENSSL_NO_$ALGO";
 
 			if (/^err$/)	{ push @user_defines, "OPENSSL_NO_ERR"; }
-			elsif (/^asm$/)	{ $no_asm = 1; }
 			}
 		else
 			{
 			($ALGO,$algo) = ("RMD160","rmd160") if ($algo eq "ripemd");
 
 			push @{$config{openssl_algorithm_defines}}, "OPENSSL_NO_$ALGO";
-			push @{$config{depdefines}}, "OPENSSL_NO_$ALGO";
 			print " OPENSSL_NO_$ALGO";
 
 			# fix-up crypto/directory name(s)
@@ -777,15 +821,6 @@ foreach (sort (keys %disabled))
 		}
 
 	print "\n";
-	}
-
-foreach (sort @experimental)
-	{
-	my $ALGO;
-	($ALGO = $_) =~ tr/[a-z]/[A-Z]/;
-
-	# opensslconf.h will set OPENSSL_NO_... unless OPENSSL_EXPERIMENTAL_... is defined
-	push @{$config{openssl_experimental_defines}}, "OPENSSL_NO_$ALGO";
 	}
 
 print "Configuring for $target\n";
@@ -802,14 +837,25 @@ if ($d) {
 }
 $config{target} = $target;
 delete $table{$base_target}->{template}; # or the next test will fail.
-my %target = ( %{$table{$base_target}}, resolve_config($target) );
+my %target = resolve_config($target);
 
 &usage if (!%target || $target{template});
 
+# Set up defaults
+my %target = ( %{$table{$base_target}}, %target );
+
 $target{exe_extension}="";
-$target{exe_extension}=".exe" if ($config{target} eq "Cygwin" || $config{target} eq "DJGPP" || $config{target} =~ /^mingw/);
+$target{exe_extension}=".exe" if ($config{target} eq "DJGPP"
+                                  || $config{target} =~ /^(?:Cygwin|mingw)/);
 $target{exe_extension}=".nlm" if ($config{target} =~ /netware/);
 $target{exe_extension}=".pm"  if ($config{target} =~ /vos/);
+
+($target{shared_extension_simple}=$target{shared_extension})
+    =~ s|\.\$\(SHLIB_MAJOR\)\.\$\(SHLIB_MINOR\)||;
+$target{dso_extension}=$target{shared_extension_simple};
+($target{shared_import_extension}=$target{shared_extension_simple}.".a")
+    if ($config{target} =~ /^(?:Cygwin|mingw)/);
+
 
 $default_ranlib	= which("ranlib") || "true";
 $config{perl}	= $ENV{'PERL'} || which("perl5") || which("perl") || "perl";
@@ -850,18 +896,15 @@ $target{build_scheme} = [ $target{build_scheme} ]
 ###### TO BE REMOVED BEFORE FINAL RELEASE
 ######
 ###### If the user has chosen --unified, we give it to them.
+###### The same happens if we detect that they try to build out-of-source.
 if ($target{build_file} eq "Makefile"
     && $target{build_scheme}->[0] eq "unixmake"
-    && $unified) {
+    && ($unified || $srcdir ne $blddir)) {
     $target{build_scheme} = [ "unified", "unix" ];
 }
 
 my ($builder, $builder_platform, @builder_opts) =
     @{$target{build_scheme}};
-
-push @{$config{defines}},
-    map { (my $x = $_) =~ s/^OPENSSL_NO_/OPENSSL_EXPERIMENTAL_/; $x }
-        @{$config{openssl_experimental_defines}};
 
 if ($target =~ /^mingw/ && `$target{cc} --target-help 2>&1` =~ m/-mno-cygwin/m)
 	{
@@ -869,7 +912,7 @@ if ($target =~ /^mingw/ && `$target{cc} --target-help 2>&1` =~ m/-mno-cygwin/m)
 	$target{shared_ldflag} .= " -mno-cygwin";
 	}
 
-if ($target =~ /linux.*-mips/ && !$no_asm && $user_cflags !~ /-m(ips|arch=)/) {
+if ($target =~ /linux.*-mips/ && !$disabled{asm} && $user_cflags !~ /-m(ips|arch=)/) {
 	# minimally required architecture flags for assembly modules
 	$config{cflags}="-mips2 $config{cflags}" if ($target =~ /mips32/);
 	$config{cflags}="-mips3 $config{cflags}" if ($target =~ /mips64/);
@@ -879,18 +922,13 @@ my $no_shared_warn=0;
 my $no_user_cflags=0;
 my $no_user_defines=0;
 
-if ($user_cflags ne "") { $config{cflags}="$config{cflags}$user_cflags"; }
-else                    { $no_user_cflags=1;  }
-if (@user_defines) { $config{defines}=[ @{$config{defines}}, @user_defines ]; }
-else               { $no_user_defines=1;    }
-
 # The DSO code currently always implements all functions so that no
 # applications will have to worry about that from a compilation point
 # of view. However, the "method"s may return zero unless that platform
 # has support compiled in for them. Currently each method is enabled
 # by a define "DSO_<name>" ... we translate the "dso_scheme" config
 # string entry into using the following logic;
-if (!$no_dso && $target{dso_scheme} ne "")
+if (!$disabled{dso} && $target{dso_scheme} ne "")
 	{
 	$target{dso_scheme} =~ tr/[a-z]/[A-Z]/;
 	if ($target{dso_scheme} eq "DLFCN")
@@ -911,7 +949,7 @@ if (!$no_dso && $target{dso_scheme} ne "")
 
 my $thread_cflags = "";
 my @thread_defines;
-if ($target{thread_cflag} ne "(unknown)" && !$no_threads)
+if ($target{thread_cflag} ne "(unknown)" && !$disabled{threads})
 	{
 	# If we know how to do it, support threads by default.
 	$threads = 1;
@@ -937,7 +975,7 @@ else
 
 $config{ex_libs}="$libs$config{ex_libs}" if ($libs ne "");
 
-if ($no_asm)
+if ($disabled{asm})
 	{
 	@{$config{defines}} = grep !/^[BL]_ENDIAN$/, @{$config{defines}}
 	    if ($config{fips});
@@ -950,7 +988,7 @@ if ($threads)
 	push @{$config{openssl_thread_defines}}, @thread_defines;
 	}
 
-if ($zlib)
+unless ($disabled{zlib})
 	{
 	push @{$config{defines}}, "ZLIB";
 	if (defined($disabled{"zlib-dynamic"}))
@@ -977,36 +1015,37 @@ if (defined($disabled{"deprecated"})) {
 
 if ($target{shared_target} eq "")
 	{
-	$no_shared_warn = 1 if !$config{no_shared} && !$config{fips};
-	$config{no_shared} = 1;
-	}
-if (!$config{no_shared})
-	{
-	if ($target{shared_cflag} ne "")
-		{
-		push @{$config{defines}}, "OPENSSL_PIC";
-		$config{cflags} = "$target{shared_cflag} $config{cflags}";
-		}
+	$no_shared_warn = 1
+	    if ((!$disabled{shared} || !$disabled{"dynamic-engine"})
+		&& !$config{fips});
+	$disabled{shared} = "no-shared-target";
+	$disabled{pic} = $disabled{shared} = $disabled{"dynamic-engine"} =
+	    "no-shared-target";
 	}
 
-if ($builder ne "mk1mf")
-	{
-	# add {no-}static-engine to options to allow mkdef.pl to work without extra arguments
-	if ($config{no_shared})
-		{
-		push @{$config{openssl_other_defines}}, "OPENSSL_NO_DYNAMIC_ENGINE";
-		$config{options}.=" static-engine";
-		}
-	else
-		{
-		push @{$config{openssl_other_defines}}, "OPENSSL_NO_STATIC_ENGINE";
-		$config{options}.=" no-static-engine";
-		}
-	}
+if ($disabled{"dynamic-engine"}) {
+        push @{$config{defines}}, "OPENSSL_NO_DYNAMIC_ENGINE";
+        $config{dynamic_engines} = 0;
+} else {
+        push @{$config{defines}}, "OPENSSL_NO_STATIC_ENGINE";
+        $config{dynamic_engines} = 1;
+}
 
 #
 # Platform fix-ups
 #
+
+# This saves the build files from having to check
+if ($disabled{pic})
+	{
+	$target{shared_cflag} = $target{shared_ldflag} =
+		$target{shared_rcflag} = "";
+	}
+else
+	{
+	push @{$config{defines}}, "OPENSSL_PIC";
+	}
+
 if ($target{sys_id} ne "")
 	{
 	push @{$config{openssl_sys_defines}}, "OPENSSL_SYS_$target{sys_id}";
@@ -1017,10 +1056,8 @@ if ($target{ranlib} eq "")
 	$target{ranlib} = $default_ranlib;
 	}
 
-if (!$no_asm) {
+unless ($disabled{asm}) {
     $target{cpuid_asm_src}=$table{BASE}->{cpuid_asm_src} if ($config{processor} eq "386");
-    $target{cpuid_asm_src}.=" uplink.c uplink-x86.s" if (grep { $_ eq "OPENSSL_USE_APPLINK"} @{$config{defines}});
-
     $target{bn_asm_src} =~ s/\w+-gf2m.c// if (defined($disabled{ec2m}));
 
     # bn-586 is the only one implementing bn_*_part_words
@@ -1043,7 +1080,7 @@ if (!$no_asm) {
     if ($target{md5_asm_src}) {
 	push @{$config{defines}}, "MD5_ASM";
     }
-    $target{cast_asm_src}=$table{BASE}->{cast_asm_src} if (!$config{no_shared}); # CAST assembler is not PIC
+    $target{cast_asm_src}=$table{BASE}->{cast_asm_src} unless $disabled{pic}; # CAST assembler is not PIC
     if ($target{rmd160_asm_src}) {
 	push @{$config{defines}}, "RMD160_ASM";
     }
@@ -1076,20 +1113,20 @@ if (!$no_asm) {
     }
 }
 
-# Is the compiler gcc or clang?  $ecc is used below to see if error-checking
-# can be turned on.
 my $ecc = $target{cc};
-my $ccpcc = "$config{cross_compile_prefix}$target{cc}";
-$config{makedepprog} = 'makedepend';
-open(PIPE, "$ccpcc --version 2>&1 | head -2 |");
-while ( <PIPE> ) {
-    $config{makedepprog} = $ccpcc if /clang|gcc/;
-    $ecc = "clang" if /clang/;
-    $ecc = "gcc" if /gcc/;
+if ($^O ne "VMS") {
+    # Is the compiler gcc or clang?  $ecc is used below to see if
+    # error-checking can be turned on.
+    my $ccpcc = "$config{cross_compile_prefix}$target{cc}";
+    $config{makedepprog} = 'makedepend';
+    open(PIPE, "$ccpcc --version 2>&1 | head -2 |");
+    while ( <PIPE> ) {
+        $config{makedepprog} = $ccpcc if /clang|gcc/;
+        $ecc = "clang" if /clang/;
+        $ecc = "gcc" if /gcc/;
+    }
+    close(PIPE);
 }
-close(PIPE);
-
-$config{depflags} =~ s/^\s*//;
 
 
 # Deal with bn_ops ###################################################
@@ -1126,40 +1163,45 @@ $config{cflags} =~ s/([\\\"])/\\\1/g;
 if (defined($config{api})) {
     $config{openssl_api_defines} = [ "OPENSSL_MIN_API=".$apitable->{$config{api}} ];
     my $apiflag = sprintf("OPENSSL_API_COMPAT=%s", $apitable->{$config{api}});
-    push @default_depdefines, $apiflag;
     push @{$config{defines}}, $apiflag;
 }
 
 if ($strict_warnings)
 	{
 	my $wopt;
-	my $addflags = '';
 	die "ERROR --strict-warnings requires gcc or clang"
             unless $ecc eq 'gcc' || $ecc eq 'clang';
 	foreach $wopt (split /\s+/, $gcc_devteam_warn)
 		{
-		$addflags .= " $wopt" unless ($config{cflags} =~ /(^|\s)$wopt(\s|$)/)
+		$config{cflags} .= " $wopt" unless ($config{cflags} =~ /(?:^|\s)$wopt(?:\s|$)/)
 		}
 	if ($ecc eq "clang")
 		{
 		foreach $wopt (split /\s+/, $clang_devteam_warn)
 			{
-			$addflags .= " $wopt" unless ($config{cflags} =~ /(^|\s)$wopt(\s|$)/)
+			$config{cflags} .= " $wopt" unless ($config{cflags} =~ /(?:^|\s)$wopt(?:\s|$)/)
 			}
 		}
-	if ($target !~ /^mingw/)
-		{
-		foreach $wopt (split /\s+/, $memleak_devteam_backtrace)
-			{
-			$addflags .= " $wopt" unless ($config{cflags} =~ /(^|\s)$wopt(\s|$)/)
-			}
-		if ($target =~ /^BSD-/)
-			{
-			$config{ex_libs} .= " -lexecinfo";
-			}
-		}
-	$config{cflags} = "$addflags $config{cflags}" if $addflags ne '';
 	}
+
+unless ($disabled{"crypto-mdebug-backtrace"})
+	{
+	foreach my $wopt (split /\s+/, $memleak_devteam_backtrace)
+		{
+		$config{cflags} .= " $wopt" unless ($config{cflags} =~ /(?:^|\s)$wopt(?:\s|$)/)
+		}
+	if ($target =~ /^BSD-/)
+		{
+		$config{ex_libs} .= " -lexecinfo";
+		}
+	}
+
+if ($user_cflags ne "") { $config{cflags}="$config{cflags}$user_cflags"; }
+else                    { $no_user_cflags=1;  }
+if (@user_defines) { $config{defines}=[ @{$config{defines}}, @user_defines ]; }
+else               { $no_user_defines=1;    }
+
+# ALL MODIFICATIONS TO %config and %target MUST BE DONE FROM HERE ON
 
 # If we use the unified build, collect information from build.info files
 my %unified_info = ();
@@ -1255,6 +1297,7 @@ if ($builder eq "unified") {
             split /^/m,
             $template->fill_in(HASH => { config => \%config,
                                          target => \%target,
+                                         disabled => \%disabled,
                                          builddir => abs2rel($buildd, $blddir),
                                          sourcedir => abs2rel($sourced, $blddir),
                                          buildtop => abs2rel($blddir, $blddir),
@@ -1373,8 +1416,8 @@ if ($builder eq "unified") {
             $unified_info{libraries}->{$library} = 1;
         }
 
-        die <<"EOF" if $config{no_shared} && scalar @engines;
-ENGINES can only be used if configured with 'shared'.
+        die <<"EOF" if scalar @engines and !$config{dynamic_engines};
+ENGINES can only be used if configured with 'dynamic-engine'.
 This is usually a fault in a build.info file.
 EOF
         foreach (@engines) {
@@ -1400,7 +1443,7 @@ EOF
 
         push @{$unified_info{rawlines}}, @rawlines;
 
-        if (!$config{no_shared}) {
+        unless ($disabled{shared}) {
             # Check sharednames.
             foreach (keys %sharednames) {
                 my $dest = cleanfile($buildd, $_, $blddir);
@@ -1541,9 +1584,9 @@ EOF
 
 # For the schemes that need it, we provide the old *_obj configs
 # from the *_asm_obj ones
-foreach (grep /_asm_src$/, keys %target) {
+foreach (grep /_(asm|aux)_src$/, keys %target) {
     my $src = $_;
-    (my $obj = $_) =~ s/_asm_src$/_obj/;
+    (my $obj = $_) =~ s/_(asm|aux)_src$/_obj/;
     ($target{$obj} = $target{$src}) =~ s/\.[csS]\b/.o/g;
 }
 
@@ -1559,7 +1602,7 @@ use warnings;
 use Exporter;
 #use vars qw(\@ISA \@EXPORT);
 our \@ISA = qw(Exporter);
-our \@EXPORT = qw(\%config \%target %withargs %unified_info);
+our \@EXPORT = qw(\%config \%target %disabled %withargs %unified_info);
 
 EOF
 print OUT "our %config = (\n";
@@ -1664,13 +1707,6 @@ EOF
 print OUT "1;\n";
 close(OUT);
 
-die <<"EOF" if $builder ne "unified" && $srcdir ne $blddir;
-
-***** Trying building anywhere else than in the source tree will not
-***** work for target $config{target}.  To make it possible, it needs
-***** to use the "unified" build scheme.
-
-EOF
 
 print "IsMK1MF       =", ($builder eq "mk1mf" ? "yes" : "no"), "\n";
 print "CC            =$target{cc}\n";
@@ -1837,7 +1873,7 @@ print <<"EOF";
 Configured for $target.
 EOF
 
-print <<"EOF" if (!$no_threads && !$threads);
+print <<"EOF" if (!$disabled{threads} && !$threads);
 
 The library could not be configured for supporting multi-threaded
 applications as the compiler options required on this system are not known.
@@ -1846,10 +1882,11 @@ EOF
 
 print <<"EOF" if ($no_shared_warn);
 
-You gave the option 'shared', which is not supported on this platform, so
-we will pretend you gave the option 'no-shared'.  If you know how to implement
-shared libraries, please let us know (but please first make sure you have
-tried with a current version of OpenSSL).
+The options 'shared', 'pic' and 'dynamic-engine' aren't supported on this
+platform, so we will pretend you gave the option 'no-pic', which also disables
+'shared' and 'dynamic-engine'.  If you know how to implement shared libraries
+or position independent code, please let us know (but please first make sure
+you have tried with a current version of OpenSSL).
 EOF
 
 ###### TO BE REMOVED BEFORE FINAL RELEASE
@@ -1895,14 +1932,14 @@ exit(0);
 # Configuration file reading #########################################
 
 # Helper function to implement conditional inheritance depending on the
-# value of $no_asm.  Used in inherit_from values as follows:
+# value of $disabled{asm}.  Used in inherit_from values as follows:
 #
 #      inherit_from => [ "template", asm("asm_tmpl") ]
 #
 sub asm {
     my @x = @_;
     sub {
-	$no_asm ? () : @x;
+	$disabled{asm} ? () : @x;
     }
 }
 
@@ -1933,12 +1970,20 @@ sub _add {
     }
 }
 sub add_before {
-    my $separator = shift;
+    my $separator = " ";
+    if (ref($_[$#_]) eq "HASH") {
+        my $opts = pop;
+        $separator = $opts->{separator};
+    }
     my @x = @_;
     sub { _add($separator, @x, @_) };
 }
 sub add {
-    my $separator = shift;
+    my $separator = " ";
+    if (ref($_[$#_]) eq "HASH") {
+        my $opts = pop;
+        $separator = $opts->{separator};
+    }
     my @x = @_;
     sub { _add($separator, @_, @x) };
 }
@@ -2036,7 +2081,7 @@ sub resolve_config {
     #   value.
     # - Otherwise, this target's value is assumed to be a string that
     #   will simply override the inherited list of values.
-    my $default_combiner = add(" ");
+    my $default_combiner = add();
 
     my %all_keys =
 	map { $_ => 1 } (keys %combined_inheritance,
@@ -2178,6 +2223,9 @@ sub print_table_entry
 	"shared_ldflag",
 	"shared_rcflag",
 	"shared_extension",
+	"shared_extension_simple",
+	"shared_import_extension",
+	"dso_extension",
 	"obj_extension",
 	"exe_extension",
 	"ranlib",
@@ -2190,14 +2238,24 @@ sub print_table_entry
     if ($type eq "TABLE") {
 	print "\n";
 	print "*** $target\n";
-	printf "\$%-12s = %s\n", $_, $target{$_} foreach (@sequence);
+        foreach (@sequence) {
+            if (ref($target{$_}) eq "ARRAY") {
+                printf "\$%-12s = %s\n", $_, join(" ", @{$target{$_}});
+            } else {
+                printf "\$%-12s = %s\n", $_, $target{$_};
+            }
+        }
     } elsif ($type eq "HASH") {
 	my $largest =
 	    length((sort { length($a) <=> length($b) } @sequence)[-1]);
 	print "    '$target' => {\n";
 	foreach (@sequence) {
 	    if ($target{$_}) {
-		print "      '",$_,"'"," " x ($largest - length($_))," => '",$target{$_},"',\n";
+                if (ref($target{$_}) eq "ARRAY") {
+                    print "      '",$_,"'"," " x ($largest - length($_))," => [ ",join(", ", map { "'$_'" } @{$target{$_}})," ],\n";
+                } else {
+                    print "      '",$_,"'"," " x ($largest - length($_))," => '",$target{$_},"',\n";
+                }
 	    }
 	}
 	print "    },\n";

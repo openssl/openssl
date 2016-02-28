@@ -108,13 +108,6 @@
  *
  */
 
-#ifdef MD_RAND_DEBUG
-# ifndef NDEBUG
-#  define NDEBUG
-# endif
-#endif
-
-#include <assert.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -350,9 +343,6 @@ static int rand_add(const void *buf, int num, double add)
     if (!do_not_lock)
         CRYPTO_w_unlock(CRYPTO_LOCK_RAND);
 
-#if !defined(OPENSSL_THREADS) && !defined(OPENSSL_SYS_WIN32)
-    assert(md_c[1] == md_count[1]);
-#endif
     rv = 1;
  err:
     EVP_MD_CTX_free(m);
@@ -596,7 +586,7 @@ static int rand_bytes(unsigned char *buf, int num, int pseudo)
     else {
         RANDerr(RAND_F_RAND_BYTES, RAND_R_PRNG_NOT_SEEDED);
         ERR_add_error_data(1, "You need to read the OpenSSL FAQ, "
-                           "http://www.openssl.org/support/faq.html");
+                           "https://www.openssl.org/docs/faq.html");
         return (0);
     }
  err:

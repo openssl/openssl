@@ -63,9 +63,9 @@
 
 /* Uncomment out this line to get debugging info about key generation */
 /*
- * #define DEBUG_KEYGEN
+ * #define OPENSSL_DEBUG_KEYGEN
  */
-#ifdef DEBUG_KEYGEN
+#ifdef OPENSSL_DEBUG_KEYGEN
 # include <openssl/bio.h>
 extern BIO *bio_err;
 void h__dump(unsigned char *p, int len);
@@ -109,7 +109,7 @@ int PKCS12_key_gen_uni(unsigned char *pass, int passlen, unsigned char *salt,
     int ret = 0;
     BIGNUM *Ij = NULL, *Bpl1 = NULL; /* These hold Ij and B + 1 */
     EVP_MD_CTX *ctx = NULL;
-#ifdef  DEBUG_KEYGEN
+#ifdef  OPENSSL_DEBUG_KEYGEN
     unsigned char *tmpout = out;
     int tmpn = n;
 #endif
@@ -118,7 +118,7 @@ int PKCS12_key_gen_uni(unsigned char *pass, int passlen, unsigned char *salt,
     if (ctx == NULL)
         goto err;
 
-#ifdef  DEBUG_KEYGEN
+#ifdef  OPENSSL_DEBUG_KEYGEN
     fprintf(stderr, "KEYGEN DEBUG\n");
     fprintf(stderr, "ID %d, ITER %d\n", id, iter);
     fprintf(stderr, "Password (length %d):\n", passlen);
@@ -166,7 +166,7 @@ int PKCS12_key_gen_uni(unsigned char *pass, int passlen, unsigned char *salt,
         }
         memcpy(out, Ai, min(n, u));
         if (u >= n) {
-#ifdef DEBUG_KEYGEN
+#ifdef OPENSSL_DEBUG_KEYGEN
             fprintf(stderr, "Output KEY (length %d)\n", tmpn);
             h__dump(tmpout, tmpn);
 #endif
@@ -221,7 +221,7 @@ int PKCS12_key_gen_uni(unsigned char *pass, int passlen, unsigned char *salt,
     return ret;
 }
 
-#ifdef DEBUG_KEYGEN
+#ifdef OPENSSL_DEBUG_KEYGEN
 void h__dump(unsigned char *p, int len)
 {
     for (; len--; p++)

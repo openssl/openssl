@@ -225,7 +225,8 @@ int pkeyutl_main(int argc, char **argv)
         }
     }
     argc = opt_num_rest();
-    argv = opt_rest();
+    if (argc != 0)
+        goto opthelp;
 
     if (inkey == NULL ||
         (peerkey != NULL && pkey_op != EVP_PKEY_OP_DERIVE))
@@ -389,7 +390,7 @@ static EVP_PKEY_CTX *init_ctx(int *pkeysize,
         break;
 
     case KEY_CERT:
-        x = load_cert(keyfile, keyform, NULL, e, "Certificate");
+        x = load_cert(keyfile, keyform, "Certificate");
         if (x) {
             pkey = X509_get_pubkey(x);
             X509_free(x);

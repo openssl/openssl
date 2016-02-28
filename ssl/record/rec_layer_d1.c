@@ -231,7 +231,7 @@ void DTLS_RECORD_LAYER_set_write_sequence(RECORD_LAYER *rl, unsigned char *seq)
 }
 
 static int have_handshake_fragment(SSL *s, int type, unsigned char *buf,
-                                   int len, int peek);
+                                   int len);
 
 /* copy buffered record into SSL structure */
 static int dtls1_copy_record(SSL *s, pitem *item)
@@ -424,7 +424,7 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
     /*
      * check whether there's a handshake message (client hello?) waiting
      */
-    if ((ret = have_handshake_fragment(s, type, buf, len, peek)))
+    if ((ret = have_handshake_fragment(s, type, buf, len)))
         return ret;
 
     /*
@@ -986,7 +986,7 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
          * is started.
          */
 static int have_handshake_fragment(SSL *s, int type, unsigned char *buf,
-                                   int len, int peek)
+                                   int len)
 {
 
     if ((type == SSL3_RT_HANDSHAKE)

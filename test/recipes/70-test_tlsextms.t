@@ -64,11 +64,8 @@ setup($test_name);
 plan skip_all => "TLSProxy isn't usable on $^O"
     if $^O =~ /^VMS$/;
 
-plan skip_all => "$test_name needs the engine feature enabled"
-    if disabled("engine");
-
-plan skip_all => "$test_name can only be performed with OpenSSL configured shared"
-    if disabled("shared");
+plan skip_all => "$test_name needs the dynamic engine feature enabled"
+    if disabled("engine") || disabled("dynamic-engine");
 
 $ENV{OPENSSL_ENGINES} = bldtop_dir("engines");
 $ENV{OPENSSL_ia32cap} = '~0x200000200000000';
@@ -144,7 +141,7 @@ $proxy->clientflags("-sess_in ".$session);
 $proxy->clientstart();
 checkmessages(5, "Session resumption extended master secret test", 1, 1, 0);
 
-#Test 6: Session resumption extended master secret test orginial session
+#Test 6: Session resumption extended master secret test original session
 # omits extension. Server must not resume session.
 #Expected result: ClientHello extension seen; ServerHello extension seen
 #                 Full handshake
@@ -175,7 +172,7 @@ $proxy->clear();
 $proxy->clientflags("-sess_in ".$session);
 setrmextms(1, 0);
 $proxy->clientstart();
-ok(TLSProxy::Message->fail(), "Client inconsistent session resupmption");
+ok(TLSProxy::Message->fail(), "Client inconsistent session resumption");
 
 #Test 8: Session resumption extended master secret test resumed session
 # omits server extension. Client must abort connection.
@@ -215,11 +212,11 @@ sub extms_filter
 
     foreach my $message (@{$proxy->message_list}) {
         if ($crmextms && $message->mt == TLSProxy::Message::MT_CLIENT_HELLO) {
-            $message->delete_extension(TLSProxy::ClientHello::EXT_EXTENDED_MASTER_SECRET);
+            $message->delete_extension(TLSProxy::Message::EXT_EXTENDED_MASTER_SECRET);
             $message->repack();
         }
         if ($srmextms && $message->mt == TLSProxy::Message::MT_SERVER_HELLO) {
-            $message->delete_extension(TLSProxy::ClientHello::EXT_EXTENDED_MASTER_SECRET);
+            $message->delete_extension(TLSProxy::Message::EXT_EXTENDED_MASTER_SECRET);
             $message->repack();
         }
     }
@@ -237,7 +234,7 @@ sub checkmessages($$$$$)
         #Get the extensions data
         my %extensions = %{$message->extension_data};
         if (defined
-            $extensions{TLSProxy::ClientHello::EXT_EXTENDED_MASTER_SECRET}) {
+            $extensions{TLSProxy::Message::EXT_EXTENDED_MASTER_SECRET}) {
             if ($message->mt == TLSProxy::Message::MT_CLIENT_HELLO) {
                 $cextms = 1;
             } else {

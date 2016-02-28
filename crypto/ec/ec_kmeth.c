@@ -105,10 +105,8 @@ int EC_KEY_set_method(EC_KEY *key, const EC_KEY_METHOD *meth)
         finish(key);
 
 #ifndef OPENSSL_NO_ENGINE
-    if (key->engine != NULL) {
-        ENGINE_finish(key->engine);
-        key->engine = NULL;
-    }
+    ENGINE_finish(key->engine);
+    key->engine = NULL;
 #endif
 
     key->meth = meth;

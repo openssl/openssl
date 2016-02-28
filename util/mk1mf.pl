@@ -53,6 +53,7 @@ my %mf_import = (
 	CC             => \$mf_cc,
 	CFLAG	       => \$mf_cflag,
 	CFLAG_Q	       => \$mf_cflag_q,
+	SHARED_CFLAG   => \$mf_shared_cflag,
         DEPFLAG        => \$mf_depflag,
 	CPUID_OBJ      => \$mf_cpuid_asm,
 	BN_ASM	       => \$mf_bn_asm,
@@ -174,8 +175,6 @@ foreach (grep(!/^$/, split(/ /, $OPTIONS)))
 	{
 	print STDERR "unknown option - $_\n" if !&read_options;
 	}
-
-$no_static_engine = 0 if (!$shlib);
 
 $no_mdc2=1 if ($no_des);
 
@@ -306,10 +305,10 @@ $cflags.=" -DOPENSSL_NO_ASYNC" if $no_async;
 $cflags.=" -DOPENSSL_NO_AUTOALGINIT" if $no_autoalginit;
 $cflags.=" -DOPENSSL_NO_AUTOERRINIT" if $no_autoerrinit;
 $cflags.=" -DOPENSSL_FIPS"    if $fips;
-$cflags.=" -DOPENSSL_NO_JPAKE"    if $no_jpake;
 $cflags.=" -DOPENSSL_NO_EC2M"    if $no_ec2m;
 $cflags.= " -DZLIB" if $zlib_opt;
 $cflags.= " -DZLIB_SHARED" if $zlib_opt == 2;
+$cflags.=" -DOPENSSL_PIC";
 
 if ($no_static_engine)
 	{
@@ -328,7 +327,7 @@ else
 	{ $cflags="$c_flags$cflags" if ($c_flags ne ""); }
 
 if ($orig_platform eq 'copy') {
-    $cflags = $mf_cflag;
+    $cflags = "$mf_cflag $mf_shared_cflag";
     $cc = $mf_cc;
 }
 
@@ -553,8 +552,10 @@ if ($fips)
 			{
 			open (IN, "util/fipslib_path.txt") || fipslib_error();
 			$fipslibdir = <IN>;
-			$fipslibdir =~ s|\R$||;
 			close IN;
+			$fipslibdir = "" unless defined($fipslibdir);
+			$fipslibdir =~ s{\R$}{};
+			fipslib_error() if ($fipslibdir eq "");
 			}
 		fips_check_files($fipslibdir,
 				"fipscanister.lib", "fipscanister.lib.sha1",
@@ -1034,7 +1035,6 @@ sub var_add
 	return("") if $no_dh   && $dir =~ /\/dh/;
 	return("") if $no_ec   && $dir =~ /\/ec/;
 	return("") if $no_cms  && $dir =~ /\/cms/;
-	return("") if $no_jpake  && $dir =~ /\/jpake/;
 	return("") if !$fips   && $dir =~ /^fips/;
 	if ($no_des && $dir =~ /\/des/)
 		{
@@ -1394,7 +1394,6 @@ sub read_options
 		"no-ssl3-method" => 0,
 		"no-srp" => \$no_srp,
 		"no-cms" => \$no_cms,
-		"no-jpake" => \$no_jpake,
 		"no-ec2m" => \$no_ec2m,
 		"no-ec_nistp_64_gcc_128" => 0,
 		"no-err" => \$no_err,
@@ -1403,6 +1402,7 @@ sub read_options
 		"no-gost" => \$no_gost,
 		"no-engine" => \$no_engine,
 		"no-egd" => 0,
+		"no-heartbeats" => 0,
 		"no-hw" => \$no_hw,
 		"no-async" => \$no_async,
 		"no-autoalginit" => \$no_autoalginit,
@@ -1434,6 +1434,7 @@ sub read_options
 		"no-deprecated" => 0,
 		"no-ocb" => 0,
 		"no-crypto-mdebug" => 0,
+		"no-crypto-mdebug-backtrace" => 0,
 		"fips" => \$fips,
 		"fipscanisterbuild" => [\$fips, \$fipscanisterbuild],
 		"fipscanisteronly" => [\$fips, \$fipscanisterbuild, \$fipscanisteronly],
@@ -1460,11 +1461,11 @@ sub read_options
 		{
 		$zlib_opt = 2;
 		}
-	elsif (/^no-static-engine/)
+	elsif (/^no-static-engine/ or /^enable-dynamic-engine/)
 		{
 		$no_static_engine = 1;
 		}
-	elsif (/^enable-static-engine/)
+	elsif (/^no-dynamic-engine/ or /^enable-static-engine/)
 		{
 		$no_static_engine = 0;
 		}
@@ -1478,18 +1479,6 @@ sub read_options
 		if (exists $valid_options{$t})
 			{return 1;}
 		return 0;
-		}
-	# experimental-xxx is mostly like enable-xxx, but opensslconf.v
-	# will still set OPENSSL_NO_xxx unless we set OPENSSL_EXPERIMENTAL_xxx.
-	# (No need to fail if we don't know the algorithm -- this is for adventurous users only.)
-	elsif (/^experimental-/)
-		{
-		my $algo, $ALGO;
-		($algo = $_) =~ s/^experimental-//;
-		($ALGO = $algo) =~ tr/[a-z]/[A-Z]/;
-
-		$xcflags="-DOPENSSL_EXPERIMENTAL_$ALGO $xcflags";
-		
 		}
 	elsif (/^([^=]*)=(.*)$/){ $VARS{$1}=$2; }
 	elsif (/^-[lL].*$/)	{ $l_flags.="$_ "; }

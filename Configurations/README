@@ -216,7 +216,7 @@ In each table entry, the following keys are significant:
     'inherit_from' that indicate what other configurations to inherit
     data from.  These are resolved recursively.
 
-    Inheritance works as a set of default values that can be overriden
+    Inheritance works as a set of default values that can be overridden
     by corresponding key values in the inheriting configuration.
 
     Note 1: any configuration table can be used as a template.
@@ -430,7 +430,7 @@ example, the above would have "something" used, since 1 is true.
 Together with the use of Text::Template, this can be used as
 conditions based on something in the passed variables, for example:
 
-    IF[{- $config{no_shared} -}]
+    IF[{- $disabled{shared} -}]
       LIBS=libcrypto
       SOURCE[libcrypto]=...
     ELSE
@@ -480,26 +480,6 @@ The build-file template is expected to define at least the following
 perl functions in a perl code fragment enclosed with "{-" and "-}".
 They are all expected to return a string with the lines they produce.
 
-    src2dep     - function that produces build file lines to get the
-                  dependencies for an object file into a dependency
-                  file.
-
-                  It's called like this:
-
-                        src2dep(obj => "PATH/TO/objectfile",
-                                srcs => [ "PATH/TO/sourcefile", ... ],
-                                deps => [ "dep1", ... ],
-                                incs => [ "INCL/PATH", ... ]);
-
-                  'obj' has the dependent object file as well as
-                  object file the dependencies are for; it's *without*
-                  extension, src2dep() is expected to add that.
-                  'srcs' has the list of source files to build the
-                  object file, with the first item being the source
-                  file that directly corresponds to the object file.
-                  'deps' is a list of explicit dependencies.  'incs'
-                  is a list of include file directories.
-
     src2obj     - function that produces build file lines to build an
                   object file from source files and associated data.
 
@@ -508,7 +488,8 @@ They are all expected to return a string with the lines they produce.
                         src2obj(obj => "PATH/TO/objectfile",
                                 srcs => [ "PATH/TO/sourcefile", ... ],
                                 deps => [ "dep1", ... ],
-                                incs => [ "INCL/PATH", ... ]);
+                                incs => [ "INCL/PATH", ... ]
+                                intent => one of "lib", "dso", "bin" );
 
                   'obj' has the intended object file *without*
                   extension, src2obj() is expected to add that.
@@ -516,7 +497,9 @@ They are all expected to return a string with the lines they produce.
                   object file, with the first item being the source
                   file that directly corresponds to the object file.
                   'deps' is a list of explicit dependencies.  'incs'
-                  is a list of include file directories.
+                  is a list of include file directories.  Finally,
+                  'intent' indicates what this object file is going
+                  to be used for.
 
     obj2lib     - function that produces build file lines to build a
                   static library file ("libfoo.a" in Unix terms) from
@@ -547,7 +530,7 @@ They are all expected to return a string with the lines they produce.
 
                   'lib' has the intended library file name *without*
                   extension, libobj2shlib is expected to add that.
-                  'shlib' has the correcponding shared library name
+                  'shlib' has the corresponding shared library name
                   *without* extension.  'deps' has the list of other
                   libraries (also *without* extension) this library
                   needs to be linked with.  'objs' has the list of
@@ -562,16 +545,15 @@ They are all expected to return a string with the lines they produce.
                   corresponding static library as input to make the
                   shared library, or the list of object files.
 
-    obj2dynlib  - function that produces build file lines to build a
-                  dynamically loadable library file ("libfoo.so" on
-                  Unix) from object files.
+    obj2dso     - function that produces build file lines to build a
+                  dynamic shared object file from object files.
 
                   called like this:
 
-                        obj2dynlib(lib => "PATH/TO/libfile",
-                                   objs => [ "PATH/TO/objectfile", ... ],
-                                   deps => [ "PATH/TO/otherlibfile",
-                                   ... ]);
+                        obj2dso(lib => "PATH/TO/libfile",
+                                objs => [ "PATH/TO/objectfile", ... ],
+                                deps => [ "PATH/TO/otherlibfile",
+                                ... ]);
 
                   This is almost the same as libobj2shlib, but the
                   intent is to build a shareable library that can be
@@ -614,7 +596,7 @@ the build file actions run with the build tree top as current working
 directory.
 
 Make sure to end the section with these functions with a string that
-you thing is apropriate for the resulting build file.  If nothing
+you thing is appropriate for the resulting build file.  If nothing
 else, end it like this:
 
       "";       # Make sure no lingering values end up in the Makefile

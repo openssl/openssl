@@ -50,10 +50,10 @@
  * ====================================================================
  */
 
+#include <stdlib.h>
+
 #ifndef HEADER_ASYNC_H
 # define HEADER_ASYNC_H
-
-#include <stdlib.h>
 
 #if defined(_WIN32)
 #include <windows.h>

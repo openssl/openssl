@@ -109,10 +109,8 @@ int RSA_set_method(RSA *rsa, const RSA_METHOD *meth)
     if (mtmp->finish)
         mtmp->finish(rsa);
 #ifndef OPENSSL_NO_ENGINE
-    if (rsa->engine) {
-        ENGINE_finish(rsa->engine);
-        rsa->engine = NULL;
-    }
+    ENGINE_finish(rsa->engine);
+    rsa->engine = NULL;
 #endif
     rsa->meth = meth;
     if (meth->init)
@@ -143,7 +141,7 @@ RSA *RSA_new_method(ENGINE *engine)
         ret->engine = ENGINE_get_default_RSA();
     if (ret->engine) {
         ret->meth = ENGINE_get_RSA(ret->engine);
-        if (!ret->meth) {
+        if (ret->meth == NULL) {
             RSAerr(RSA_F_RSA_NEW_METHOD, ERR_R_ENGINE_LIB);
             ENGINE_finish(ret->engine);
             OPENSSL_free(ret);
@@ -156,8 +154,7 @@ RSA *RSA_new_method(ENGINE *engine)
     ret->flags = ret->meth->flags & ~RSA_FLAG_NON_FIPS_ALLOW;
     if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_RSA, ret, &ret->ex_data)) {
 #ifndef OPENSSL_NO_ENGINE
-        if (ret->engine)
-            ENGINE_finish(ret->engine);
+        ENGINE_finish(ret->engine);
 #endif
         OPENSSL_free(ret);
         return (NULL);
@@ -165,8 +162,7 @@ RSA *RSA_new_method(ENGINE *engine)
 
     if ((ret->meth->init != NULL) && !ret->meth->init(ret)) {
 #ifndef OPENSSL_NO_ENGINE
-        if (ret->engine)
-            ENGINE_finish(ret->engine);
+        ENGINE_finish(ret->engine);
 #endif
         CRYPTO_free_ex_data(CRYPTO_EX_INDEX_RSA, ret, &ret->ex_data);
         OPENSSL_free(ret);
@@ -191,8 +187,7 @@ void RSA_free(RSA *r)
     if (r->meth->finish)
         r->meth->finish(r);
 #ifndef OPENSSL_NO_ENGINE
-    if (r->engine)
-        ENGINE_finish(r->engine);
+    ENGINE_finish(r->engine);
 #endif
 
     CRYPTO_free_ex_data(CRYPTO_EX_INDEX_RSA, r, &r->ex_data);

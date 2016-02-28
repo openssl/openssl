@@ -64,11 +64,8 @@ setup($test_name);
 plan skip_all => "TLSProxy isn't usable on $^O"
     if $^O =~ /^VMS$/;
 
-plan skip_all => "$test_name needs the engine feature enabled"
-    if disabled("engine");
-
-plan skip_all => "$test_name can only be performed with OpenSSL configured shared"
-    if disabled("shared");
+plan skip_all => "$test_name needs the dynamic engine feature enabled"
+    if disabled("engine") || disabled("dynamic-engine");
 
 $ENV{OPENSSL_ENGINES} = bldtop_dir("engines");
 $ENV{OPENSSL_ia32cap} = '~0x200000200000000';
@@ -198,7 +195,7 @@ sub inject_empty_ticket_filter {
     foreach my $message (@{$proxy->message_list}) {
         push @new_message_list, $message;
         if ($message->mt == TLSProxy::Message::MT_SERVER_HELLO) {
-            $message->set_extension(TLSProxy::ClientHello::EXT_SESSION_TICKET, "");
+            $message->set_extension(TLSProxy::Message::EXT_SESSION_TICKET, "");
             $message->repack();
             # Tack NewSessionTicket onto the ServerHello record.
             # This only works if the ServerHello is exactly one record.
@@ -226,7 +223,7 @@ sub checkmessages($$$$$$)
 		#Get the extensions data
 		my %extensions = %{$message->extension_data};
 		if (defined
-                    $extensions{TLSProxy::ClientHello::EXT_SESSION_TICKET}) {
+                    $extensions{TLSProxy::Message::EXT_SESSION_TICKET}) {
 		    if ($message->mt == TLSProxy::Message::MT_CLIENT_HELLO) {
 			$chellotickext = 1;
 		    } else {

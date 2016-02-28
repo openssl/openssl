@@ -243,8 +243,6 @@ this outputs the certificate in the form of a C source file.
 
 =head2 TRUST SETTINGS
 
-Please note these options are currently experimental and may well change.
-
 A B<trusted certificate> is an ordinary certificate which has several
 additional pieces of information attached to it such as the permitted
 and prohibited uses of the certificate and an "alias".

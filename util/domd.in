@@ -9,7 +9,7 @@ case "${MAKEDEPEND}" in
 cat)
     ;;
 makedepend)
-    ${MAKEDEPEND} -DOPENSSL_DOING_MAKEDEPEND $@ || exit 1
+    ${MAKEDEPEND} $@ || exit 1
     ;;
 *)
     args="-Werror -MM"
@@ -20,7 +20,7 @@ makedepend)
         shift
     done
     sed -e '/DO NOT DELETE THIS LINE/q' Makefile >Makefile.tmp
-    ${MAKEDEPEND} -DOPENSSL_DOING_MAKEDEPEND $args >>Makefile.tmp || exit 1
+    ${MAKEDEPEND} $args >>Makefile.tmp || exit 1
     mv Makefile.tmp Makefile
     ;;
 esac

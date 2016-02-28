@@ -5,5 +5,5 @@ BEGINRAW[Makefile]
 ##### BF assembler implementations
 
 {- $builddir -}/bf-586.s:	{- $sourcedir -}/asm/bf-586.pl {- $sourcetop -}/crypto/perlasm/x86asm.pl {- $sourcetop -}/crypto/perlasm/cbc.pl
-	$(PERL) {- $sourcedir -}/asm/bf-586.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) > $@
+	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/bf-586.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) > $@
 ENDRAW[Makefile]

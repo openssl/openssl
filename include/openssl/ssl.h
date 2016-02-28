@@ -1934,8 +1934,9 @@ int (*SSL_CTX_get_security_callback(const SSL_CTX *ctx)) (SSL *s,
 void SSL_CTX_set0_security_ex_data(SSL_CTX *ctx, void *ex);
 __owur void *SSL_CTX_get0_security_ex_data(const SSL_CTX *ctx);
 
-#define OPENSSL_INIT_NO_LOAD_SSL_STRINGS    0x0100000000
-#define OPENSSL_INIT_LOAD_SSL_STRINGS       0x0200000000
+/* OPENSSL_INIT flag 0x010000 reserved for internal use */
+#define OPENSSL_INIT_NO_LOAD_SSL_STRINGS    0x00100000L
+#define OPENSSL_INIT_LOAD_SSL_STRINGS       0x00200000L
 
 #define OPENSSL_INIT_SSL_DEFAULT \
         (OPENSSL_INIT_LOAD_SSL_STRINGS | OPENSSL_INIT_LOAD_CRYPTO_STRINGS)
@@ -2043,6 +2044,7 @@ void ERR_load_SSL_strings(void);
 # define SSL_F_SSL_CTX_CHECK_PRIVATE_KEY                  168
 # define SSL_F_SSL_CTX_MAKE_PROFILES                      309
 # define SSL_F_SSL_CTX_NEW                                169
+# define SSL_F_SSL_CTX_SET_ALPN_PROTOS                    343
 # define SSL_F_SSL_CTX_SET_CIPHER_LIST                    269
 # define SSL_F_SSL_CTX_SET_CLIENT_CERT_ENGINE             290
 # define SSL_F_SSL_CTX_SET_PURPOSE                        226
@@ -2090,6 +2092,7 @@ void ERR_load_SSL_strings(void);
 # define SSL_F_SSL_SESSION_NEW                            189
 # define SSL_F_SSL_SESSION_PRINT_FP                       190
 # define SSL_F_SSL_SESSION_SET1_ID_CONTEXT                312
+# define SSL_F_SSL_SET_ALPN_PROTOS                        344
 # define SSL_F_SSL_SET_CERT                               191
 # define SSL_F_SSL_SET_CIPHER_LIST                        271
 # define SSL_F_SSL_SET_FD                                 192
@@ -2122,6 +2125,7 @@ void ERR_load_SSL_strings(void);
 # define SSL_F_STATE_MACHINE                              353
 # define SSL_F_TLS12_CHECK_PEER_SIGALG                    333
 # define SSL_F_TLS1_CHANGE_CIPHER_STATE                   209
+# define SSL_F_TLS1_CHECK_DUPLICATE_EXTENSIONS            341
 # define SSL_F_TLS1_CHECK_SERVERHELLO_TLSEXT              274
 # define SSL_F_TLS1_EXPORT_KEYING_MATERIAL                314
 # define SSL_F_TLS1_GET_CURVELIST                         338

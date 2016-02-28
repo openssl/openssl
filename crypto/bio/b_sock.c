@@ -316,16 +316,10 @@ int BIO_get_accept_socket(char *host, int bind_mode)
 
 int BIO_accept(int sock, char **ip_port)
 {
-    BIO_ADDR *res = BIO_ADDR_new();
+    BIO_ADDR res;
     int ret = -1;
 
-    if (res == NULL) {
-        BIOerr(BIO_F_BIO_ACCEPT, ERR_R_MALLOC_FAILURE);
-        return ret;
-    }
-
-    ret = BIO_accept_ex(sock, res, 0);
-
+    ret = BIO_accept_ex(sock, &res, 0);
     if (ret == (int)INVALID_SOCKET) {
         if (BIO_sock_should_retry(ret)) {
             ret = -2;
@@ -337,8 +331,8 @@ int BIO_accept(int sock, char **ip_port)
     }
 
     if (ip_port != NULL) {
-        char *host = BIO_ADDR_hostname_string(res, 1);
-        char *port = BIO_ADDR_service_string(res, 1);
+        char *host = BIO_ADDR_hostname_string(&res, 1);
+        char *port = BIO_ADDR_service_string(&res, 1);
         *ip_port = OPENSSL_zalloc(strlen(host) + strlen(port) + 2);
         strcpy(*ip_port, host);
         strcat(*ip_port, ":");
@@ -348,7 +342,6 @@ int BIO_accept(int sock, char **ip_port)
     }
 
  end:
-    BIO_ADDR_free(res);
     return ret;
 }
 # endif
@@ -432,7 +425,7 @@ int BIO_sock_info(int sock,
                 BIOerr(BIO_F_BIO_SOCK_INFO, BIO_R_GETSOCKNAME_ERROR);
                 return 0;
             }
-            if (addr_len > sizeof(*info->addr)) {
+            if ((size_t)addr_len > sizeof(*info->addr)) {
                 BIOerr(BIO_F_BIO_SOCK_INFO, BIO_R_GETSOCKNAME_TRUNCATED_ADDRESS);
                 return 0;
             }

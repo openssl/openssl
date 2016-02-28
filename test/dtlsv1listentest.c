@@ -60,7 +60,9 @@
 #include <openssl/bio.h>
 #include <openssl/err.h>
 #include <openssl/conf.h>
-#include <openssl/engine.h>
+#ifndef OPENSSL_NO_ENGINE
+ #include <openssl/engine.h>
+#endif
 #include "e_os.h"
 
 /* Just a ClientHello without a cookie */
@@ -377,7 +379,7 @@ int main(void)
     char *data;
     long datalen;
     int ret, success = 0;
-    size_t i;
+    long i;
 
     ctx = SSL_CTX_new(DTLS_server_method());
     if (ctx == NULL || peer == NULL)
@@ -397,7 +399,7 @@ int main(void)
     SSL_set_wbio(ssl, outbio);
 
     success = 1;
-    for (i = 0; i < OSSL_NELEM(testpackets) && success; i++) {
+    for (i = 0; i < (long)OSSL_NELEM(testpackets) && success; i++) {
         inbio = BIO_new_mem_buf((char *)testpackets[i].in,
                                 testpackets[i].inlen);
         if (inbio == NULL) {

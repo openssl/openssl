@@ -71,14 +71,6 @@
 
 #include "e_os.h"
 
-/* VxWorks defines SSIZE_MAX with an empty value causing compile errors */
-#if defined(OPENSSL_SYS_VXWORKS)
-# undef SSIZE_MAX
-#endif
-#ifndef SSIZE_MAX
-# define SSIZE_MAX INT_MAX
-#endif
-
 static int bio_new(BIO *bio);
 static int bio_free(BIO *bio);
 static int bio_read(BIO *bio, char *buf, int size);
@@ -294,8 +286,8 @@ static ossl_ssize_t bio_nread(BIO *bio, char **buf, size_t num_)
     struct bio_bio_st *b, *peer_b;
     ossl_ssize_t num, available;
 
-    if (num_ > SSIZE_MAX)
-        num = SSIZE_MAX;
+    if (num_ > OSSL_SSIZE_MAX)
+        num = OSSL_SSIZE_MAX;
     else
         num = (ossl_ssize_t) num_;
 
@@ -450,8 +442,8 @@ static ossl_ssize_t bio_nwrite(BIO *bio, char **buf, size_t num_)
     struct bio_bio_st *b;
     ossl_ssize_t num, space;
 
-    if (num_ > SSIZE_MAX)
-        num = SSIZE_MAX;
+    if (num_ > OSSL_SSIZE_MAX)
+        num = OSSL_SSIZE_MAX;
     else
         num = (ossl_ssize_t) num_;
 

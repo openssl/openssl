@@ -120,7 +120,7 @@ void *CRYPTO_secure_zalloc(size_t num, const char *file, int line)
     return ret;
 }
 
-void CRYPTO_secure_free(void *ptr)
+void CRYPTO_secure_free(void *ptr, const char *file, int line)
 {
 #ifdef IMPLEMENTED
     size_t actual_size;
@@ -128,7 +128,7 @@ void CRYPTO_secure_free(void *ptr)
     if (ptr == NULL)
         return;
     if (!secure_mem_initialized) {
-        CRYPTO_free(ptr);
+        CRYPTO_free(ptr, file, line);
         return;
     }
     LOCK();
@@ -138,7 +138,7 @@ void CRYPTO_secure_free(void *ptr)
     sh_free(ptr);
     UNLOCK();
 #else
-    CRYPTO_free(ptr);
+    CRYPTO_free(ptr, file, line);
 #endif /* IMPLEMENTED */
 }
 
@@ -307,7 +307,7 @@ static void sh_add_to_list(char **list, char *ptr)
     *list = ptr;
 }
 
-static void sh_remove_from_list(char *ptr, char *list)
+static void sh_remove_from_list(char *ptr)
 {
     SH_LIST *temp, *temp2;
 
@@ -484,7 +484,7 @@ static char *sh_malloc(size_t size)
         /* remove from bigger list */
         OPENSSL_assert(!sh_testbit(temp, slist, sh.bitmalloc));
         sh_clearbit(temp, slist, sh.bittable);
-        sh_remove_from_list(temp, sh.freelist[slist]);
+        sh_remove_from_list(temp);
         OPENSSL_assert(temp != sh.freelist[slist]);
 
         /* done with bigger list */
@@ -510,7 +510,7 @@ static char *sh_malloc(size_t size)
     chunk = sh.freelist[list];
     OPENSSL_assert(sh_testbit(chunk, list, sh.bittable));
     sh_setbit(chunk, list, sh.bitmalloc);
-    sh_remove_from_list(chunk, sh.freelist[list]);
+    sh_remove_from_list(chunk);
 
     OPENSSL_assert(WITHIN_ARENA(chunk));
 
@@ -539,10 +539,10 @@ static void sh_free(char *ptr)
         OPENSSL_assert(ptr != NULL);
         OPENSSL_assert(!sh_testbit(ptr, list, sh.bitmalloc));
         sh_clearbit(ptr, list, sh.bittable);
-        sh_remove_from_list(ptr, sh.freelist[list]);
+        sh_remove_from_list(ptr);
         OPENSSL_assert(!sh_testbit(ptr, list, sh.bitmalloc));
         sh_clearbit(buddy, list, sh.bittable);
-        sh_remove_from_list(buddy, sh.freelist[list]);
+        sh_remove_from_list(buddy);
 
         list--;
 
