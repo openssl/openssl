@@ -369,7 +369,6 @@ size_t G2_ELEM_point2oct(const BP_GROUP *group, const G2_ELEM *point,
 {
     size_t size, ret = 0;
     BN_CTX *new_ctx = NULL;
-    int used_ctx = 0;
     BIGNUM *x[2] = { NULL }, *y[2] = { NULL };
     size_t field_len, i, skip;
 
@@ -397,81 +396,80 @@ size_t G2_ELEM_point2oct(const BP_GROUP *group, const G2_ELEM *point,
     /*
      * if 'buf' is NULL, just return required length
      */
-    if (buf != NULL) {
-        if (len < size)
-            goto err;
+    if (buf == NULL)
+        return size;
 
-        if (ctx == NULL && (ctx = new_ctx = BN_CTX_new()) == NULL)
-            return 0;
+    if (len < size)
+        goto err;
 
-        used_ctx = 1;
-        BN_CTX_start(ctx);
-        x[0] = BN_CTX_get(ctx);
-        x[1] = BN_CTX_get(ctx);
-        y[0] = BN_CTX_get(ctx);
-        y[1] = BN_CTX_get(ctx);
-        if (y[1] == NULL)
-            goto err;
+    if (ctx == NULL && (ctx = new_ctx = BN_CTX_new()) == NULL)
+        return 0;
 
-        if (!G2_ELEM_get_affine_coordinates(group, point, x, y, ctx))
-            goto err;
+    BN_CTX_start(ctx);
+    x[0] = BN_CTX_get(ctx);
+    x[1] = BN_CTX_get(ctx);
+    y[0] = BN_CTX_get(ctx);
+    y[1] = BN_CTX_get(ctx);
+    if (y[1] == NULL)
+        goto err;
 
-        i = 0;
-        skip = field_len - BN_num_bytes(x[0]);
-        if (skip > field_len)
-            goto err;
-        while (skip > 0) {
-            buf[i++] = 0;
-            skip--;
-        }
-        skip = BN_bn2bin(x[0], buf + i);
-        i += skip;
-        if (i != field_len)
-            goto err;
+    if (!G2_ELEM_get_affine_coordinates(group, point, x, y, ctx))
+        goto err;
 
-        skip = field_len - BN_num_bytes(x[1]);
-        if (skip > field_len)
-            goto err;
-        while (skip > 0) {
-            buf[i++] = 0;
-            skip--;
-        }
-        skip = BN_bn2bin(x[1], buf + i);
-        i += skip;
-        if (i != 2 * field_len)
-            goto err;
-
-        if (form == POINT_CONVERSION_UNCOMPRESSED) {
-            skip = field_len - BN_num_bytes(y[0]);
-            if (skip > field_len)
-                goto err;
-            while (skip > 0) {
-                buf[i++] = 0;
-                skip--;
-            }
-            skip = BN_bn2bin(y[0], buf + i);
-            i += skip;
-
-            skip = field_len - BN_num_bytes(y[1]);
-            if (skip > field_len)
-                goto err;
-            while (skip > 0) {
-                buf[i++] = 0;
-                skip--;
-            }
-            skip = BN_bn2bin(y[1], buf + i);
-            i += skip;
-        }
-
-        if (i != size)
-            goto err;
+    i = 0;
+    skip = field_len - BN_num_bytes(x[0]);
+    if (skip > field_len)
+        goto err;
+    while (skip > 0) {
+        buf[i++] = 0;
+        skip--;
     }
+    skip = BN_bn2bin(x[0], buf + i);
+    i += skip;
+    if (i != field_len)
+        goto err;
+
+    skip = field_len - BN_num_bytes(x[1]);
+    if (skip > field_len)
+        goto err;
+    while (skip > 0) {
+        buf[i++] = 0;
+        skip--;
+    }
+    skip = BN_bn2bin(x[1], buf + i);
+    i += skip;
+    if (i != 2 * field_len)
+        goto err;
+
+    if (form == POINT_CONVERSION_UNCOMPRESSED) {
+        skip = field_len - BN_num_bytes(y[0]);
+        if (skip > field_len)
+            goto err;
+        while (skip > 0) {
+            buf[i++] = 0;
+            skip--;
+        }
+        skip = BN_bn2bin(y[0], buf + i);
+        i += skip;
+
+        skip = field_len - BN_num_bytes(y[1]);
+        if (skip > field_len)
+            goto err;
+        while (skip > 0) {
+            buf[i++] = 0;
+            skip--;
+        }
+        skip = BN_bn2bin(y[1], buf + i);
+        i += skip;
+    }
+
+    if (i != size)
+        goto err;
 
     ret = size;
 
  err:
-    if (used_ctx)
-        BN_CTX_end(ctx);
+    BN_CTX_end(ctx);
     BN_CTX_free(new_ctx);
     return ret;
 }
@@ -490,6 +488,10 @@ int G2_ELEM_oct2point(const BP_GROUP *group, G2_ELEM *point,
     if (len == 1)
         return G2_ELEM_set_to_infinity(group, point);
 
+    /*
+     * As with the curves defined over the base field. integers are zero
+     * padded in the most significant bytes.
+     */
     field_len = BN_num_bytes(group->field);
     enc_len = 4 * field_len;
 

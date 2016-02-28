@@ -154,9 +154,8 @@ int GT_ELEM_is_unity(const BP_GROUP *group, const GT_ELEM *a)
 size_t GT_ELEM_elem2oct(const BP_GROUP *group, const GT_ELEM *a,
                         unsigned char *buf, size_t len, BN_CTX *ctx)
 {
-    size_t ret;
+    size_t size, ret = 0;
     BN_CTX *new_ctx = NULL;
-    int used_ctx = 0;
     BIGNUM *f;
     size_t field_len, i, j, k, l, skip;
 
@@ -164,59 +163,55 @@ size_t GT_ELEM_elem2oct(const BP_GROUP *group, const GT_ELEM *a,
      * ret := required output buffer length
      */
     field_len = BN_num_bytes(group->field);
-    ret = 12 * field_len;
+    size = 12 * field_len;
 
     /*
      * if 'buf' is NULL, just return required length
      */
-    if (buf != NULL) {
-        if (len < ret)
-            goto err;
+    if (buf == NULL)
+        return size;
 
-        if (ctx == NULL && (ctx = new_ctx = BN_CTX_new()) == NULL)
-            return 0;
+    if (len < size)
+        goto err;
 
-        BN_CTX_start(ctx);
-        used_ctx = 1;
-        if ((f = BN_CTX_get(ctx)) == NULL)
-            goto err;
+    if (ctx == NULL && (ctx = new_ctx = BN_CTX_new()) == NULL)
+        return 0;
 
-        l = 0;
-        for (i = 0; i < 2; i++) {
-            for (j = 0; j < 3; j++) {
-                for (k = 0; k < 2; k++) {
-                    if (!BN_from_montgomery(f, a->f->f[i]->f[j]->f[k],
-                                            group->mont, ctx))
-                        goto err;
-                    skip = field_len - BN_num_bytes(f);
-                    if (skip > field_len)
-                        goto err;
-                    while (skip > 0) {
-                        buf[l++] = 0;
-                        skip--;
-                    }
-                    skip = BN_bn2bin(f, buf + l);
-                    l += skip;
-                    if (l != (i * 6 + j * 2 + k + 1) * field_len)
-                        goto err;
+    BN_CTX_start(ctx);
+    if ((f = BN_CTX_get(ctx)) == NULL)
+        goto err;
+
+    l = 0;
+    for (i = 0; i < 2; i++) {
+        for (j = 0; j < 3; j++) {
+            for (k = 0; k < 2; k++) {
+                if (!BN_from_montgomery(f, a->f->f[i]->f[j]->f[k],
+                                        group->mont, ctx))
+                    goto err;
+                skip = field_len - BN_num_bytes(f);
+                if (skip > field_len)
+                    goto err;
+                while (skip > 0) {
+                    buf[l++] = 0;
+                    skip--;
                 }
+                skip = BN_bn2bin(f, buf + l);
+                l += skip;
+                if (l != (i * 6 + j * 2 + k + 1) * field_len)
+                    goto err;
             }
         }
-
-        if (l != ret)
-            goto err;
     }
 
-    if (used_ctx)
-        BN_CTX_end(ctx);
-    BN_CTX_free(new_ctx);
-    return ret;
+    if (l != size)
+        goto err;
+
+    ret = size;
 
  err:
-    if (used_ctx)
-        BN_CTX_end(ctx);
+    BN_CTX_end(ctx);
     BN_CTX_free(new_ctx);
-    return 0;
+    return ret;
 }
 
 int GT_ELEM_oct2elem(const BP_GROUP *group, GT_ELEM *a,
