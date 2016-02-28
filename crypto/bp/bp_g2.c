@@ -370,7 +370,7 @@ size_t G2_ELEM_point2oct(const BP_GROUP *group, const G2_ELEM *point,
     size_t size, ret = 0;
     BN_CTX *new_ctx = NULL;
     BIGNUM *x[2] = { NULL }, *y[2] = { NULL };
-    size_t field_len, i, skip;
+    size_t field_len, i;
 
     if (form != POINT_CONVERSION_UNCOMPRESSED)
         goto err;
@@ -416,51 +416,20 @@ size_t G2_ELEM_point2oct(const BP_GROUP *group, const G2_ELEM *point,
     if (!G2_ELEM_get_affine_coordinates(group, point, x, y, ctx))
         goto err;
 
-    i = 0;
-    skip = field_len - BN_num_bytes(x[0]);
-    if (skip > field_len)
-        goto err;
-    while (skip > 0) {
-        buf[i++] = 0;
-        skip--;
-    }
-    skip = BN_bn2bin(x[0], buf + i);
-    i += skip;
+    i = BN_bn2binpad(x[0], buf, field_len);
     if (i != field_len)
         goto err;
-
-    skip = field_len - BN_num_bytes(x[1]);
-    if (skip > field_len)
-        goto err;
-    while (skip > 0) {
-        buf[i++] = 0;
-        skip--;
-    }
-    skip = BN_bn2bin(x[1], buf + i);
-    i += skip;
+    i += BN_bn2binpad(x[1], buf + i, field_len);
     if (i != 2 * field_len)
         goto err;
 
     if (form == POINT_CONVERSION_UNCOMPRESSED) {
-        skip = field_len - BN_num_bytes(y[0]);
-        if (skip > field_len)
+        i += BN_bn2binpad(y[0], buf + i, field_len);
+        if (i != 3 * field_len)
             goto err;
-        while (skip > 0) {
-            buf[i++] = 0;
-            skip--;
-        }
-        skip = BN_bn2bin(y[0], buf + i);
-        i += skip;
-
-        skip = field_len - BN_num_bytes(y[1]);
-        if (skip > field_len)
+        i += BN_bn2binpad(y[1], buf + i, field_len);
+        if (i != 4 * field_len)
             goto err;
-        while (skip > 0) {
-            buf[i++] = 0;
-            skip--;
-        }
-        skip = BN_bn2bin(y[1], buf + i);
-        i += skip;
     }
 
     if (i != size)

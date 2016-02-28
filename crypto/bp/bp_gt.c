@@ -157,7 +157,7 @@ size_t GT_ELEM_elem2oct(const BP_GROUP *group, const GT_ELEM *a,
     size_t size, ret = 0;
     BN_CTX *new_ctx = NULL;
     BIGNUM *f;
-    size_t field_len, i, j, k, l, skip;
+    size_t field_len, i, j, k, l;
 
     /*
      * ret := required output buffer length
@@ -188,15 +188,7 @@ size_t GT_ELEM_elem2oct(const BP_GROUP *group, const GT_ELEM *a,
                 if (!BN_from_montgomery(f, a->f->f[i]->f[j]->f[k],
                                         group->mont, ctx))
                     goto err;
-                skip = field_len - BN_num_bytes(f);
-                if (skip > field_len)
-                    goto err;
-                while (skip > 0) {
-                    buf[l++] = 0;
-                    skip--;
-                }
-                skip = BN_bn2bin(f, buf + l);
-                l += skip;
+                l += BN_bn2binpad(f, buf + l, field_len);
                 if (l != (i * 6 + j * 2 + k + 1) * field_len)
                     goto err;
             }
