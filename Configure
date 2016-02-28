@@ -1266,6 +1266,8 @@ if ($builder eq "unified") {
             if (-f catfile($srcdir, "engines", $_, "build.info"));
     }
 
+    $config{build_infos} = [ ];
+
     foreach (@build_infos) {
         my $sourced = catdir($srcdir, $_->[0]);
         my $buildd = catdir($blddir, $_->[0]);
@@ -1289,6 +1291,7 @@ if ($builder eq "unified") {
         my %renames = ();
         my %sharednames = ();
 
+        push @{$config{build_infos}}, catfile(abs2rel($sourced, $blddir), $f);
         my $template = Text::Template->new(TYPE => 'FILE',
                                            SOURCE => catfile($sourced, $f));
         die "Something went wrong with $sourced/$f: $!\n" unless $template;
