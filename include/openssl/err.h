@@ -168,6 +168,7 @@ typedef struct err_state_st {
 # define ERR_LIB_CONF            14
 # define ERR_LIB_CRYPTO          15
 # define ERR_LIB_EC              16
+# define ERR_LIB_BP              17
 # define ERR_LIB_SSL             20
 /* #define ERR_LIB_SSL23        21 */
 /* #define ERR_LIB_SSL2         22 */
@@ -211,6 +212,7 @@ typedef struct err_state_st {
 # define CONFerr(f,r) ERR_PUT_error(ERR_LIB_CONF,(f),(r),OPENSSL_FILE,OPENSSL_LINE)
 # define CRYPTOerr(f,r) ERR_PUT_error(ERR_LIB_CRYPTO,(f),(r),OPENSSL_FILE,OPENSSL_LINE)
 # define ECerr(f,r)   ERR_PUT_error(ERR_LIB_EC,(f),(r),OPENSSL_FILE,OPENSSL_LINE)
+# define BPerr(f,r)   ERR_PUT_error(ERR_LIB_BP,(f),(r),OPENSSL_FILE,OPENSSL_LINE)
 # define SSLerr(f,r)  ERR_PUT_error(ERR_LIB_SSL,(f),(r),OPENSSL_FILE,OPENSSL_LINE)
 # define BIOerr(f,r)  ERR_PUT_error(ERR_LIB_BIO,(f),(r),OPENSSL_FILE,OPENSSL_LINE)
 # define PKCS7err(f,r) ERR_PUT_error(ERR_LIB_PKCS7,(f),(r),OPENSSL_FILE,OPENSSL_LINE)
