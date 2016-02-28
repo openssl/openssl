@@ -451,7 +451,7 @@ int G2_ELEM_oct2point(const BP_GROUP *group, G2_ELEM *point,
     size_t field_len, enc_len;
     int ret = 0;
 
-    if (len == 0)
+    if (len == 0 || (len == 1 && buf[0] != 0))
         return 0;
 
     if (len == 1)
