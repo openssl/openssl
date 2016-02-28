@@ -423,7 +423,7 @@ int FP12_exp_cyclotomic(const BP_GROUP *group, FP12 *r, const FP12 *a,
 }
 
 static int FP12_exp_internal(const BP_GROUP *group, FP12 *r, const FP12 *a,
-                        const BIGNUM *b, int num, BN_CTX *ctx)
+                             const BIGNUM *b, int num, BN_CTX *ctx)
 {
     FP12 *t[num];
     int i, j, k, ret = 0;
