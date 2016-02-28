@@ -677,11 +677,6 @@ foreach (@argvcopy)
 			$user_cflags.=" ".$_;
 			}
 		}
-	elsif ($_ =~ /^([^:]+):(.+)$/)
-		{
-		eval "\$table{\$1} = \"$2\""; # allow $xxx constructs in the string
-		$target=$1;
-		}
 	else
 		{
 		die "target already defined - $target (offending arg: $_)\n" if ($target ne "");
