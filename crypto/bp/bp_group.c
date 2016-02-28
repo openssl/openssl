@@ -413,9 +413,10 @@ int BP_GROUP_set_curve(BP_GROUP *group, const BIGNUM *p, const BIGNUM *a,
     /*
      * Initialize elliptic curve group G_1.
      */
-    if (!EC_GROUP_set_curve_GFp
-        (group->ec, group->field, curve_a, curve_b, ctx))
+    if (!EC_GROUP_set_curve_GFp(group->ec, group->field, curve_a,
+                                curve_b, ctx)) {
         goto err;
+    }
     if ((g1 = EC_POINT_new(group->ec)) == NULL)
         goto err;
     if (!EC_POINT_set_affine_coordinates_GFp
