@@ -419,19 +419,14 @@ int FP12_exp_cyclotomic(const BP_GROUP *group, FP12 *r, const FP12 *a,
     return ret;
 }
 
-int FP12_exp_compressed(const BP_GROUP *group, FP12 *r, const FP12 *a,
-                        const BIGNUM *b, BN_CTX *ctx)
+static int FP12_exp_internal(const BP_GROUP *group, FP12 *r, const FP12 *a,
+                        const BIGNUM *b, int num, BN_CTX *ctx)
 {
-    int i, j, w, ret = 0;
+    FP12 *t[num];
+    int i, j, ret = 0;
 
-    w = 0;
-    for (i = 1; i < BN_num_bits(b); i++) {
-        if (BN_is_bit_set(b, i))
-            w++;
-    }
-
-    FP12 *t[w];
-    for (i = 0; i < w; i++) {
+    for (i = 0; i < num; i++) {
+        t[i] = NULL;
         if ((t[i] = FP12_new()) == NULL)
             goto err;
     }
@@ -454,12 +449,12 @@ int FP12_exp_compressed(const BP_GROUP *group, FP12 *r, const FP12 *a,
     /*
      * Decompress partial results simultaneously.
      */
-    if (!FP12_decompress(group, t, (const FP12 **)t, w, ctx))
+    if (!FP12_decompress(group, t, (const FP12 **)t, num, ctx))
         goto err;
     /*
      * Combine partial results into t[0].
      */
-    for (i = 1; i < w; i++) {
+    for (i = 1; i < num; i++) {
         if (!FP12_mul(group, t[0], t[0], t[i], ctx))
             goto err;
     }
@@ -473,10 +468,27 @@ int FP12_exp_compressed(const BP_GROUP *group, FP12 *r, const FP12 *a,
 
     ret = 1;
  err:
-    for (i = 0; i < w; i++) {
+    for (i = 0; i < num; i++) {
         FP12_free(t[i]);
     }
     return ret;
+}
+
+int FP12_exp_compressed(const BP_GROUP *group, FP12 *r, const FP12 *a,
+                        const BIGNUM *b, BN_CTX *ctx)
+{
+    int i, weight;
+
+    /*
+     * Count the Hamming weight and call auxiliary function.
+     */
+    weight = 0;
+    for (i = 1; i < BN_num_bits(b); i++) {
+        if (BN_is_bit_set(b, i))
+            weight++;
+    }
+
+    return FP12_exp_internal(group, r, a, b, weight, ctx);
 }
 
 int FP12_sqr(const BP_GROUP *group, FP12 *r, const FP12 *a, BN_CTX *ctx)
