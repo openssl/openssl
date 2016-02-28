@@ -39,9 +39,10 @@ Memory BIOs support BIO_gets() and BIO_puts().
 If the BIO_CLOSE flag is set when a memory BIO is freed then the underlying
 BUF_MEM structure is also freed.
 
-Calling BIO_reset() on a read write memory BIO clears any data in it. On a
-read only BIO it restores the BIO to its original state and the read only
-data can be read again.
+Calling BIO_reset() on a read write memory BIO clears any data in it if the
+flag BIO_FLAGS_NONCLEAR_RST is not set. On a read only BIO or if the flag
+BIO_FLAGS_NONCLEAR_RST is set it restores the BIO to its original state and 
+the data can be read again.
 
 BIO_eof() is true if no data is in the BIO.
 
@@ -89,12 +90,6 @@ give undefined results, including perhaps a program crash.
 =head1 BUGS
 
 There should be an option to set the maximum size of a memory BIO.
-
-There should be a way to "rewind" a read write BIO without destroying
-its contents.
-
-The copying operation should not occur after every small read of a large BIO
-to improve efficiency.
 
 =head1 EXAMPLE
 
