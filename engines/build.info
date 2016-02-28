@@ -1,5 +1,5 @@
 {- use File::Spec::Functions qw/:DEFAULT rel2abs/; -}
-IF[{- !$config{dynamic_engines} -}]
+IF[{- $disabled{"dynamic-engine"} -}]
  LIBS=../libcrypto
  SOURCE[../libcrypto]=\
         e_padlock.c {- $target{padlock_asm_src} -} \
