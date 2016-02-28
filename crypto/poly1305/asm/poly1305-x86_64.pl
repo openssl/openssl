@@ -1198,6 +1198,20 @@ $code.=<<___;
 
 .Lshort_tail_avx:
 	################################################################
+	# horizontal addition
+
+	vpsrldq		\$8,$D4,$T4
+	vpsrldq		\$8,$D3,$T3
+	vpsrldq		\$8,$D1,$T1
+	vpsrldq		\$8,$D0,$T0
+	vpsrldq		\$8,$D2,$T2
+	vpaddq		$T3,$D3,$D3
+	vpaddq		$T4,$D4,$D4
+	vpaddq		$T0,$D0,$D0
+	vpaddq		$T1,$D1,$D1
+	vpaddq		$T2,$D2,$D2
+
+	################################################################
 	# lazy reduction
 
 	vpsrlq		\$26,$D3,$H3
@@ -1231,25 +1245,11 @@ $code.=<<___;
 	vpand		$MASK,$D3,$D3
 	vpaddq		$H3,$D4,$D4		# h3 -> h4
 
-	################################################################
-	# horizontal addition
-
-	vpsrldq		\$8,$D2,$T2
-	vpsrldq		\$8,$D0,$T0
-	vpsrldq		\$8,$D1,$T1
-	vpsrldq		\$8,$D3,$T3
-	vpsrldq		\$8,$D4,$T4
-	vpaddq		$T2,$D2,$H2
-	vpaddq		$T0,$D0,$H0
-	vpaddq		$T1,$D1,$H1
-	vpaddq		$T3,$D3,$H3
-	vpaddq		$T4,$D4,$H4
-
-	vmovd		$H0,`4*0-48-64`($ctx)	# save partially reduced
-	vmovd		$H1,`4*1-48-64`($ctx)
-	vmovd		$H2,`4*2-48-64`($ctx)
-	vmovd		$H3,`4*3-48-64`($ctx)
-	vmovd		$H4,`4*4-48-64`($ctx)
+	vmovd		$D0,`4*0-48-64`($ctx)	# save partially reduced
+	vmovd		$D1,`4*1-48-64`($ctx)
+	vmovd		$D2,`4*2-48-64`($ctx)
+	vmovd		$D3,`4*3-48-64`($ctx)
+	vmovd		$D4,`4*4-48-64`($ctx)
 ___
 $code.=<<___	if ($win64);
 	vmovdqa		0x50(%r11),%xmm6
@@ -1888,6 +1888,31 @@ $code.=<<___;
 	vpaddq		$H0,$D0,$H0		# h0 = d0 + h1*s4
 
 	################################################################
+	# horizontal addition
+
+	vpsrldq		\$8,$D1,$T1
+	vpsrldq		\$8,$H2,$T2
+	vpsrldq		\$8,$H3,$T3
+	vpsrldq		\$8,$H4,$T4
+	vpsrldq		\$8,$H0,$T0
+	vpaddq		$T1,$D1,$D1
+	vpaddq		$T2,$H2,$H2
+	vpaddq		$T3,$H3,$H3
+	vpaddq		$T4,$H4,$H4
+	vpaddq		$T0,$H0,$H0
+
+	vpermq		\$0x2,$H3,$T3
+	vpermq		\$0x2,$H4,$T4
+	vpermq		\$0x2,$H0,$T0
+	vpermq		\$0x2,$D1,$T1
+	vpermq		\$0x2,$H2,$T2
+	vpaddq		$T3,$H3,$H3
+	vpaddq		$T4,$H4,$H4
+	vpaddq		$T0,$H0,$H0
+	vpaddq		$T1,$D1,$D1
+	vpaddq		$T2,$H2,$H2
+
+	################################################################
 	# lazy reduction
 
 	vpsrlq		\$26,$H3,$D3
@@ -1920,31 +1945,6 @@ $code.=<<___;
 	vpsrlq		\$26,$H3,$D3
 	vpand		$MASK,$H3,$H3
 	vpaddq		$D3,$H4,$H4		# h3 -> h4
-
-	################################################################
-	# horizontal addition
-
-	vpsrldq		\$8,$H2,$T2
-	vpsrldq		\$8,$H0,$T0
-	vpsrldq		\$8,$H1,$T1
-	vpsrldq		\$8,$H3,$T3
-	vpsrldq		\$8,$H4,$T4
-	vpaddq		$T2,$H2,$H2
-	vpaddq		$T0,$H0,$H0
-	vpaddq		$T1,$H1,$H1
-	vpaddq		$T3,$H3,$H3
-	vpaddq		$T4,$H4,$H4
-
-	vpermq		\$0x2,$H2,$T2
-	vpermq		\$0x2,$H0,$T0
-	vpermq		\$0x2,$H1,$T1
-	vpermq		\$0x2,$H3,$T3
-	vpermq		\$0x2,$H4,$T4
-	vpaddq		$T2,$H2,$H2
-	vpaddq		$T0,$H0,$H0
-	vpaddq		$T1,$H1,$H1
-	vpaddq		$T3,$H3,$H3
-	vpaddq		$T4,$H4,$H4
 
 	vmovd		%x#$H0,`4*0-48-64`($ctx)# save partially reduced
 	vmovd		%x#$H1,`4*1-48-64`($ctx)

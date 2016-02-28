@@ -791,6 +791,19 @@ poly1305_blocks_neon:
 
 .Lshort_tail:
 	////////////////////////////////////////////////////////////////
+	// horizontal add
+
+	addp	$ACC3,$ACC3,$ACC3
+	 ldp	d8,d9,[sp,#16]		// meet ABI requirements
+	addp	$ACC0,$ACC0,$ACC0
+	 ldp	d10,d11,[sp,#32]
+	addp	$ACC4,$ACC4,$ACC4
+	 ldp	d12,d13,[sp,#48]
+	addp	$ACC1,$ACC1,$ACC1
+	 ldp	d14,d15,[sp,#64]
+	addp	$ACC2,$ACC2,$ACC2
+
+	////////////////////////////////////////////////////////////////
 	// lazy reduction, but without narrowing
 
 	ushr	$T0.2d,$ACC3,#26
@@ -820,19 +833,6 @@ poly1305_blocks_neon:
 	 and	$ACC3,$ACC3,$MASK.2d
 	add	$ACC1,$ACC1,$T0.2d	// h0 -> h1
 	 add	$ACC4,$ACC4,$T1.2d	// h3 -> h4
-
-	////////////////////////////////////////////////////////////////
-	// horizontal add
-
-	addp	$ACC2,$ACC2,$ACC2
-	 ldp	d8,d9,[sp,#16]		// meet ABI requirements
-	addp	$ACC0,$ACC0,$ACC0
-	 ldp	d10,d11,[sp,#32]
-	addp	$ACC1,$ACC1,$ACC1
-	 ldp	d12,d13,[sp,#48]
-	addp	$ACC3,$ACC3,$ACC3
-	 ldp	d14,d15,[sp,#64]
-	addp	$ACC4,$ACC4,$ACC4
 
 	////////////////////////////////////////////////////////////////
 	// write the result, can be partially reduced
