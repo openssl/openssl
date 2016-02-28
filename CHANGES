@@ -4,6 +4,22 @@
 
  Changes between 1.0.2f and 1.1.0  [xx XXX xxxx]
 
+  *) Add X25519 support.
+     Integrate support for X25519 into EC library. This includes support
+     for public and private key encoding using the format documented in
+     draft-josefsson-pkix-newcurves-01: specifically X25519 uses the
+     OID from that draft, encodes public keys using little endian
+     format in the ECPoint structure and private keys using
+     little endian form in the privateKey field of the ECPrivateKey
+     structure. TLS support complies with draft-ietf-tls-rfc4492bis-06
+     and uses X25519(29).
+
+     Note: the current version supports key generation, public and
+     private key encoding and ECDH key agreement using the EC API.
+     Low level point operations such as EC_POINT_add(), EC_POINT_mul()
+     are NOT supported.
+     [Steve Henson]
+
   *) Deprecate SRP_VBASE_get_by_user.
      SRP_VBASE_get_by_user had inconsistent memory management behaviour.
      In order to fix an unavoidable memory leak (CVE-2016-0798),
