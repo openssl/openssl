@@ -587,6 +587,7 @@ void ec_GFp_nistp_recode_scalar_bits(unsigned char *sign,
                                      unsigned char *digit, unsigned char in);
 #endif
 int ec_precompute_mont_data(EC_GROUP *);
+int ec_group_simple_order_bits(const EC_GROUP *group);
 
 #ifdef ECP_NISTZ256_ASM
 /** Returns GFp methods using montgomery multiplication, with x86-64 optimized
@@ -595,6 +596,13 @@ int ec_precompute_mont_data(EC_GROUP *);
  */
 const EC_METHOD *EC_GFp_nistz256_method(void);
 #endif
+
+size_t ec_key_simple_priv2oct(const EC_KEY *eckey,
+                              unsigned char *buf, size_t len);
+int ec_key_simple_oct2priv(EC_KEY *eckey, unsigned char *buf, size_t len);
+int ec_key_simple_generate_key(EC_KEY *eckey);
+int ec_key_simple_generate_public_key(EC_KEY *eckey);
+int ec_key_simple_check_key(const EC_KEY *eckey);
 
 /* EC_METHOD definitions */
 
@@ -635,6 +643,10 @@ int ossl_ecdh_compute_key(void *out, size_t outlen, const EC_POINT *pub_key,
                           const EC_KEY *ecdh,
                           void *(*KDF) (const void *in, size_t inlen,
                                         void *out, size_t *outlen));
+int ecdh_simple_compute_key(void *out, size_t outlen, const EC_POINT *pub_key,
+                            const EC_KEY *ecdh,
+                            void *(*KDF) (const void *in, size_t inlen,
+                                          void *out, size_t *outlen));
 
 struct ECDSA_SIG_st {
     BIGNUM *r;
