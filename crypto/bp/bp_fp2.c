@@ -233,7 +233,7 @@ int FP2_mul_frb(const BP_GROUP *group, FP2 *r, const FP2 *a, int power,
 int FP2_mul(const BP_GROUP *group, FP2 *r, const FP2 *a, const FP2 *b,
             BN_CTX *ctx)
 {
-    BIGNUM *t0, *t1, *t2, *t3, *t4;
+    BIGNUM *t = NULL, *t1 = NULL, *t2 = NULL, *t3 = NULL, *t4 = NULL;
     BN_CTX *new_ctx = NULL;
     int ret = 0;
 
@@ -241,11 +241,13 @@ int FP2_mul(const BP_GROUP *group, FP2 *r, const FP2 *a, const FP2 *b,
         return 0;
 
     BN_CTX_start(ctx);
-    if ((t0 = BN_CTX_get(ctx)) == NULL || (t1 = BN_CTX_get(ctx)) == NULL
-        || (t2 = BN_CTX_get(ctx)) == NULL || (t3 = BN_CTX_get(ctx)) == NULL
-        || (t4 = BN_CTX_get(ctx)) == NULL) {
+    t0 = BN_CTX_get(ctx);
+    t1 = BN_CTX_get(ctx);
+    t2 = BN_CTX_get(ctx);
+    t3 = BN_CTX_get(ctx);
+    t4 = BN_CTX_get(ctx);
+    if (t5 == NULL)
         goto err;
-    }
 
     /*
      * Karatsuba algorithm.
@@ -300,7 +302,7 @@ int FP2_mul(const BP_GROUP *group, FP2 *r, const FP2 *a, const FP2 *b,
 
 int FP2_mul_nor(const BP_GROUP *group, FP2 *r, const FP2 *a, BN_CTX *ctx)
 {
-    BIGNUM *t;
+    BIGNUM *t = NULL;
     BN_CTX *new_ctx = NULL;
     int ret = 0;
 
@@ -330,7 +332,7 @@ int FP2_mul_nor(const BP_GROUP *group, FP2 *r, const FP2 *a, BN_CTX *ctx)
 
 int FP2_mul_art(const BP_GROUP *group, FP2 *r, const FP2 *a, BN_CTX *ctx)
 {
-    BIGNUM *t;
+    BIGNUM *t = NULL;
     BN_CTX *new_ctx = NULL;
     int ret = 0;
 
@@ -348,7 +350,8 @@ int FP2_mul_art(const BP_GROUP *group, FP2 *r, const FP2 *a, BN_CTX *ctx)
         goto err;
     if (!BN_sub(r->f[0], group->field, a->f[1]))
         goto err;
-    BN_copy(r->f[1], t);
+    if (!BN_copy(r->f[1], t))
+        goto err;
 
     ret = 1;
  err:
@@ -359,7 +362,7 @@ int FP2_mul_art(const BP_GROUP *group, FP2 *r, const FP2 *a, BN_CTX *ctx)
 
 int FP2_sqr(const BP_GROUP *group, FP2 *r, const FP2 *a, BN_CTX *ctx)
 {
-    BIGNUM *t0, *t1, *t2;
+    BIGNUM *t0 = NULL, *t1 = NULL, *t2 = NULL;
     BN_CTX *new_ctx = NULL;
     int ret = 0;
 
@@ -367,10 +370,11 @@ int FP2_sqr(const BP_GROUP *group, FP2 *r, const FP2 *a, BN_CTX *ctx)
         return 0;
 
     BN_CTX_start(ctx);
-    if ((t0 = BN_CTX_get(ctx)) == NULL || (t1 = BN_CTX_get(ctx)) == NULL
-        || (t2 = BN_CTX_get(ctx)) == NULL) {
+    t0 = BN_CTX_get(ctx);
+    t1 = BN_CTX_get(ctx);
+    t2 = BN_CTX_get(ctx);
+    if (t2 == NULL)
         goto err;
-    }
 
     /*
      * t0 = (a_0 + a_1).
