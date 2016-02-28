@@ -61,6 +61,9 @@ G2_ELEM_get_Jprojective_coordinates respectively.
 
 In addition G2_ELEMs can be converted to octet strings in a buffer along with an associated buffer length.
 The functions G2_ELEM_point2oct and G2_ELEM_oct2point convert from and to G2_ELEMs for the octet string format, respectively.
+The octet string stores the point as a concatenation of the x and y coordinates, in this order.
+Each coordinate is represented as the concatenation of two integers composing the quadratic extension field element.
+Each integer is stored in a zero-padded buffer taking ceil(lg(p)/8) bytes for a prime modulus p.
 
 The function G2_ELEM_point2oct must be supplied with a buffer long enough to store the octet string. The return value provides the number of
 octets stored. Calling the function with a NULL buffer will not perform the conversion but will still return the required buffer length.
