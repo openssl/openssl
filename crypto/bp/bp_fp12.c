@@ -401,6 +401,9 @@ int FP12_exp_cyclotomic(const BP_GROUP *group, FP12 *r, const FP12 *a,
     if (!FP12_copy(t, a))
         goto err;
 
+    /*
+     * This is just square-and-multiply exponentiation.
+     */
     for (i = BN_num_bits(b) - 2; i >= 0; i--) {
         if (!FP12_sqr_cyclotomic(group, t, t, ctx))
             goto err;
@@ -423,7 +426,7 @@ static int FP12_exp_internal(const BP_GROUP *group, FP12 *r, const FP12 *a,
                         const BIGNUM *b, int num, BN_CTX *ctx)
 {
     FP12 *t[num];
-    int i, j, ret = 0;
+    int i, j, k, ret = 0;
 
     for (i = 0; i < num; i++) {
         t[i] = NULL;
@@ -431,11 +434,11 @@ static int FP12_exp_internal(const BP_GROUP *group, FP12 *r, const FP12 *a,
             goto err;
     }
 
-    i = 1;
-    j = 0;
-    if (!FP12_sqr(group, t[j], a, ctx))
+    if (!FP12_sqr(group, t[0], a, ctx))
         goto err;
-    while (i < BN_num_bits(b) - 1) {
+
+    k = BN_num_bits(b);
+    for (i = 1, j = 0; i < k - 1; i++) {
         if (BN_is_bit_set(b, i)) {
             if (!FP12_copy(t[j + 1], t[j]))
                 goto err;
@@ -443,7 +446,6 @@ static int FP12_exp_internal(const BP_GROUP *group, FP12 *r, const FP12 *a,
         }
         if (!FP12_sqr_compressed(group, t[j], t[j], ctx))
             goto err;
-        i++;
     }
 
     /*
