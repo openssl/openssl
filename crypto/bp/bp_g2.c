@@ -1103,7 +1103,6 @@ int G2_ELEMs_make_affine(const BP_GROUP *group, size_t num,
     if ((z2 = FP2_new()) == NULL || (z3 = FP2_new()) == NULL)
         goto err;
 
-    m = 0;
     for (i = 0; i < num; i++) {
         zs[i] = NULL;
         if (points[i]->Z_is_one || G2_ELEM_is_at_infinity(group, points[i]))
