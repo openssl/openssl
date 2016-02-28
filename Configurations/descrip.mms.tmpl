@@ -244,10 +244,10 @@ install : install_sw install_docs
         @ WRITE SYS$OUTPUT ""
         @ WRITE SYS$OUTPUT "Installation complete"
         @ WRITE SYS$OUTPUT ""
-        @ IF "$(DESTDIR)" .NES. "" THEN EXIT 1
-        @ WRITE SYS$OUTPUT "Run @$(INSTALLTOP)openssl_startup to set up logical names"
-        @ WRITE SYS$OUTPUT "then run @$(INSTALLTOP)openssl_setup to define commands"
-        @ WRITE SYS$OUTPUT ""
+        @ IF "$(DESTDIR)" .EQS. "" THEN -
+             PIPE ( WRITE SYS$OUTPUT "Run @$(INSTALLTOP)openssl_startup to set up logical names" ; -
+                    WRITE SYS$OUTPUT "then run @$(INSTALLTOP)openssl_setup to define commands" ; -
+                    WRITE SYS$OUTPUT "" )
 
 uninstall : uninstall_docs uninstall_sw
 
