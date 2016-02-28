@@ -168,7 +168,7 @@ int FP2_neg(const BP_GROUP *group, FP2 *r, const FP2 *a)
     return 1;
 }
 
-int FP2_mul_frb(const BP_GROUP *group, FP2 *r, const FP2 *a, int i,
+int FP2_mul_frb(const BP_GROUP *group, FP2 *r, const FP2 *a, int power,
                 BN_CTX *ctx)
 {
     FP2 *frb = NULL;
@@ -184,37 +184,34 @@ int FP2_mul_frb(const BP_GROUP *group, FP2 *r, const FP2 *a, int i,
     /*
      * Multiply by powers of residue powered to (p-1)/6.
      */
-    if (i == 1) {
+    switch (power) {
+    case 1:
         if (!FP2_mul(group, r, a, group->frb, ctx))
             goto err;
-    }
-
-    if (i == 2) {
+        break;
+    case 2:
         if (!FP2_sqr(group, frb, group->frb, ctx))
             goto err;
         if (!FP2_mul(group, r, a, frb, ctx))
             goto err;
-    }
-
-    if (i == 3) {
+        break;
+    case 3:
         if (!FP2_sqr(group, frb, group->frb, ctx))
             goto err;
         if (!FP2_mul(group, r, a, frb, ctx))
             goto err;
         if (!FP2_mul(group, r, a, group->frb, ctx))
             goto err;
-    }
-
-    if (i == 4) {
+        break;
+    case 4:
         if (!FP2_sqr(group, frb, group->frb, ctx))
             goto err;
         if (!FP2_sqr(group, frb, frb, ctx))
             goto err;
         if (!FP2_mul(group, r, a, frb, ctx))
             goto err;
-    }
-
-    if (i == 5) {
+        break;
+    case 5:
         if (!FP2_sqr(group, frb, group->frb, ctx))
             goto err;
         if (!FP2_sqr(group, frb, frb, ctx))
@@ -223,6 +220,7 @@ int FP2_mul_frb(const BP_GROUP *group, FP2 *r, const FP2 *a, int i,
             goto err;
         if (!FP2_mul(group, r, a, group->frb, ctx))
             goto err;
+        break;
     }
 
     ret = 1;
