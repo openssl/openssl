@@ -168,11 +168,6 @@ typedef unsigned int u_int;
 #include "s_apps.h"
 #include "timeouts.h"
 
-#if (defined(OPENSSL_SYS_VMS) && __VMS_VER < 70000000)
-/* FIONBIO used as a switch to enable ioctl, and that isn't in VMS < 7.0 */
-# undef FIONBIO
-#endif
-
 #if defined(__has_feature)
 # if __has_feature(memory_sanitizer)
 #  include <sanitizer/msan_interface.h>
@@ -792,9 +787,7 @@ OPTIONS s_client_options[] = {
 #ifdef WATT32
     {"wdebug", OPT_WDEBUG, '-', "WATT-32 tcp debugging"},
 #endif
-#ifdef FIONBIO
     {"nbio", OPT_NBIO, '-', "Use non-blocking IO"},
-#endif
 #ifndef OPENSSL_NO_PSK
     {"psk_identity", OPT_PSK_IDENTITY, 's', "PSK identity"},
     {"psk", OPT_PSK, 's', "PSK in hex (without 0x)"},
@@ -1705,16 +1698,13 @@ int s_client_main(int argc, char **argv)
     }
     BIO_printf(bio_c_out, "CONNECTED(%08X)\n", s);
 
-#ifdef FIONBIO
     if (c_nbio) {
-        unsigned long l = 1;
-        BIO_printf(bio_c_out, "turning on non blocking io\n");
-        if (BIO_socket_ioctl(s, FIONBIO, &l) < 0) {
+        if (!BIO_socket_nbio(s, 1)) {
             ERR_print_errors(bio_err);
             goto end;
         }
+        BIO_printf(bio_c_out, "Turned on non blocking io\n");
     }
-#endif
     if (socket_type == SOCK_DGRAM) {
 
         sbio = BIO_new_dgram(s, BIO_NOCLOSE);

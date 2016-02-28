@@ -217,7 +217,7 @@ build_tests_nodep : $(TESTPROGS)
 
 test tests : configdata.pm, -
              build_apps_nodep, build_engines_nodep, build_tests_nodep, -
-             depend, rehash
+             depend
         SET DEFAULT [.test]{- move("test") -}
         DEFINE SRCTOP {- sourcedir() -}
         DEFINE BLDTOP {- builddir() -}
@@ -244,10 +244,10 @@ install : install_sw install_docs
         @ WRITE SYS$OUTPUT ""
         @ WRITE SYS$OUTPUT "Installation complete"
         @ WRITE SYS$OUTPUT ""
-        @ IF "$(DESTDIR)" .NES. "" THEN EXIT 1
-        @ WRITE SYS$OUTPUT "Run @$(INSTALLTOP)openssl_startup to set up logical names"
-        @ WRITE SYS$OUTPUT "then run @$(INSTALLTOP)openssl_setup to define commands"
-        @ WRITE SYS$OUTPUT ""
+        @ IF "$(DESTDIR)" .EQS. "" THEN -
+             PIPE ( WRITE SYS$OUTPUT "Run @$(INSTALLTOP)openssl_startup to set up logical names" ; -
+                    WRITE SYS$OUTPUT "then run @$(INSTALLTOP)openssl_setup to define commands" ; -
+                    WRITE SYS$OUTPUT "" )
 
 uninstall : uninstall_docs uninstall_sw
 
@@ -384,16 +384,6 @@ check_INSTALLTOP :
 
 # Helper targets #####################################################
 
-rehash : copy-certs, build_apps_nodep
-        !MCR [.apps]openssl.exe rehash {- builddir("certs", "demo") -}
-        $(PERL) [.tools]c_rehash. [.certs.demo]
-
-copy-certs :
-        @ IF F$SEARCH("{- buildfile("certs.dir") -}") .EQS. "" THEN -
-             CREATE/DIR {- builddir("certs") -}
-        -@ IF "{- sourcedir("certs") -}" .NES. "{- builddir("certs") -}" THEN -
-             COPY {- tree(sourcedir("certs")) -}*.* {- tree(builddir("certs")) -}
-
 # Developer targets ##################################################
 
 debug_logicals :
@@ -445,19 +435,15 @@ configdata.pm : {- sourcefile("Configurations", "descrip.mms.tmpl") -} $(SRCDIR)
       my $after = $unified_info{after}->{$obj.".OBJ"} || "\@ !";
 
       return <<"EOF";
-$obj.MMS : $deps
+$obj.OBJ : $deps
         ${before}
         SET DEFAULT $forward
-        \$(CC) \$(CFLAGS)${incs} /MMS=(FILE=${objd}${objn}.MMS,TARGET=$obj.OBJ) /NOOBJECT $srcs
+        \$(CC) \$(CFLAGS)${incs} /MMS=(FILE=${objd}${objn}.tmp-MMS,TARGET=$obj.OBJ) /OBJECT=${objd}${objn}.OBJ /REPOSITORY=$backward $srcs
         SET DEFAULT $backward
         ${after}
-        - PURGE $obj.MMS
-$obj.OBJ : $obj.MMS
-        ${before}
-        SET DEFAULT $forward
-        \$(CC) \$(CFLAGS)${incs} /OBJECT=${objd}${objn}.OBJ /REPOSITORY=$backward $srcs
-        SET DEFAULT $backward
-        ${after}
+        \@ PIPE ( \$(PERL) -e "use File::Compare qw/compare_text/; my \$x = compare_text(""$obj.MMS"",""$obj.tmp-MMS""); exit(0x10000000 + (\$x == 0));" || -
+                 RENAME $obj.tmp-MMS $obj.mms )
+        \@ IF F\$SEARCH("$obj.tmp-MMS") .NES. "" THEN DELETE $obj.tmp-MMS;*
         - PURGE $obj.OBJ
 EOF
   }
