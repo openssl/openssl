@@ -1,4 +1,3 @@
-/* crypto/ts/ts_asn1.c */
 /*
  * Written by Nils Larsch for the OpenSSL project 2004.
  */
@@ -59,11 +58,12 @@
 #include <openssl/ts.h>
 #include <openssl/err.h>
 #include <openssl/asn1t.h>
+#include "ts_lcl.h"
 
 ASN1_SEQUENCE(TS_MSG_IMPRINT) = {
         ASN1_SIMPLE(TS_MSG_IMPRINT, hash_algo, X509_ALGOR),
         ASN1_SIMPLE(TS_MSG_IMPRINT, hashed_msg, ASN1_OCTET_STRING)
-} ASN1_SEQUENCE_END(TS_MSG_IMPRINT)
+} static_ASN1_SEQUENCE_END(TS_MSG_IMPRINT)
 
 IMPLEMENT_ASN1_FUNCTIONS_const(TS_MSG_IMPRINT)
 IMPLEMENT_ASN1_DUP_FUNCTION(TS_MSG_IMPRINT)
@@ -97,7 +97,7 @@ ASN1_SEQUENCE(TS_REQ) = {
         ASN1_OPT(TS_REQ, nonce, ASN1_INTEGER),
         ASN1_OPT(TS_REQ, cert_req, ASN1_FBOOLEAN),
         ASN1_IMP_SEQUENCE_OF_OPT(TS_REQ, extensions, X509_EXTENSION, 0)
-} ASN1_SEQUENCE_END(TS_REQ)
+} static_ASN1_SEQUENCE_END(TS_REQ)
 
 IMPLEMENT_ASN1_FUNCTIONS_const(TS_REQ)
 IMPLEMENT_ASN1_DUP_FUNCTION(TS_REQ)
@@ -126,7 +126,7 @@ ASN1_SEQUENCE(TS_ACCURACY) = {
         ASN1_OPT(TS_ACCURACY, seconds, ASN1_INTEGER),
         ASN1_IMP_OPT(TS_ACCURACY, millis, ASN1_INTEGER, 0),
         ASN1_IMP_OPT(TS_ACCURACY, micros, ASN1_INTEGER, 1)
-} ASN1_SEQUENCE_END(TS_ACCURACY)
+} static_ASN1_SEQUENCE_END(TS_ACCURACY)
 
 IMPLEMENT_ASN1_FUNCTIONS_const(TS_ACCURACY)
 IMPLEMENT_ASN1_DUP_FUNCTION(TS_ACCURACY)
@@ -142,7 +142,7 @@ ASN1_SEQUENCE(TS_TST_INFO) = {
         ASN1_OPT(TS_TST_INFO, nonce, ASN1_INTEGER),
         ASN1_EXP_OPT(TS_TST_INFO, tsa, GENERAL_NAME, 0),
         ASN1_IMP_SEQUENCE_OF_OPT(TS_TST_INFO, extensions, X509_EXTENSION, 1)
-} ASN1_SEQUENCE_END(TS_TST_INFO)
+} static_ASN1_SEQUENCE_END(TS_TST_INFO)
 
 IMPLEMENT_ASN1_FUNCTIONS_const(TS_TST_INFO)
 IMPLEMENT_ASN1_DUP_FUNCTION(TS_TST_INFO)
@@ -173,7 +173,7 @@ ASN1_SEQUENCE(TS_STATUS_INFO) = {
         ASN1_SIMPLE(TS_STATUS_INFO, status, ASN1_INTEGER),
         ASN1_SEQUENCE_OF_OPT(TS_STATUS_INFO, text, ASN1_UTF8STRING),
         ASN1_OPT(TS_STATUS_INFO, failure_info, ASN1_BIT_STRING)
-} ASN1_SEQUENCE_END(TS_STATUS_INFO)
+} static_ASN1_SEQUENCE_END(TS_STATUS_INFO)
 
 IMPLEMENT_ASN1_FUNCTIONS_const(TS_STATUS_INFO)
 IMPLEMENT_ASN1_DUP_FUNCTION(TS_STATUS_INFO)
@@ -189,8 +189,7 @@ static int ts_resp_set_tst_info(TS_RESP *a)
             TSerr(TS_F_TS_RESP_SET_TST_INFO, TS_R_TOKEN_PRESENT);
             return 0;
         }
-        if (a->tst_info != NULL)
-            TS_TST_INFO_free(a->tst_info);
+        TS_TST_INFO_free(a->tst_info);
         a->tst_info = PKCS7_to_TS_TST_INFO(a->token);
         if (!a->tst_info) {
             TSerr(TS_F_TS_RESP_SET_TST_INFO,
@@ -212,8 +211,7 @@ static int ts_resp_cb(int op, ASN1_VALUE **pval, const ASN1_ITEM *it,
     if (op == ASN1_OP_NEW_POST) {
         ts_resp->tst_info = NULL;
     } else if (op == ASN1_OP_FREE_POST) {
-        if (ts_resp->tst_info != NULL)
-            TS_TST_INFO_free(ts_resp->tst_info);
+        TS_TST_INFO_free(ts_resp->tst_info);
     } else if (op == ASN1_OP_D2I_POST) {
         if (ts_resp_set_tst_info(ts_resp) == 0)
             return 0;
@@ -224,7 +222,7 @@ static int ts_resp_cb(int op, ASN1_VALUE **pval, const ASN1_ITEM *it,
 ASN1_SEQUENCE_cb(TS_RESP, ts_resp_cb) = {
         ASN1_SIMPLE(TS_RESP, status_info, TS_STATUS_INFO),
         ASN1_OPT(TS_RESP, token, PKCS7),
-} ASN1_SEQUENCE_END_cb(TS_RESP, TS_RESP)
+} static_ASN1_SEQUENCE_END_cb(TS_RESP, TS_RESP)
 
 IMPLEMENT_ASN1_FUNCTIONS_const(TS_RESP)
 
@@ -254,7 +252,7 @@ int i2d_TS_RESP_fp(FILE *fp, TS_RESP *a)
 ASN1_SEQUENCE(ESS_ISSUER_SERIAL) = {
         ASN1_SEQUENCE_OF(ESS_ISSUER_SERIAL, issuer, GENERAL_NAME),
         ASN1_SIMPLE(ESS_ISSUER_SERIAL, serial, ASN1_INTEGER)
-} ASN1_SEQUENCE_END(ESS_ISSUER_SERIAL)
+} static_ASN1_SEQUENCE_END(ESS_ISSUER_SERIAL)
 
 IMPLEMENT_ASN1_FUNCTIONS_const(ESS_ISSUER_SERIAL)
 IMPLEMENT_ASN1_DUP_FUNCTION(ESS_ISSUER_SERIAL)
@@ -262,7 +260,7 @@ IMPLEMENT_ASN1_DUP_FUNCTION(ESS_ISSUER_SERIAL)
 ASN1_SEQUENCE(ESS_CERT_ID) = {
         ASN1_SIMPLE(ESS_CERT_ID, hash, ASN1_OCTET_STRING),
         ASN1_OPT(ESS_CERT_ID, issuer_serial, ESS_ISSUER_SERIAL)
-} ASN1_SEQUENCE_END(ESS_CERT_ID)
+} static_ASN1_SEQUENCE_END(ESS_CERT_ID)
 
 IMPLEMENT_ASN1_FUNCTIONS_const(ESS_CERT_ID)
 IMPLEMENT_ASN1_DUP_FUNCTION(ESS_CERT_ID)
@@ -270,7 +268,7 @@ IMPLEMENT_ASN1_DUP_FUNCTION(ESS_CERT_ID)
 ASN1_SEQUENCE(ESS_SIGNING_CERT) = {
         ASN1_SEQUENCE_OF(ESS_SIGNING_CERT, cert_ids, ESS_CERT_ID),
         ASN1_SEQUENCE_OF_OPT(ESS_SIGNING_CERT, policy_info, POLICYINFO)
-} ASN1_SEQUENCE_END(ESS_SIGNING_CERT)
+} static_ASN1_SEQUENCE_END(ESS_SIGNING_CERT)
 
 IMPLEMENT_ASN1_FUNCTIONS_const(ESS_SIGNING_CERT)
 IMPLEMENT_ASN1_DUP_FUNCTION(ESS_SIGNING_CERT)
@@ -288,31 +286,22 @@ TS_TST_INFO *PKCS7_to_TS_TST_INFO(PKCS7 *token)
         TSerr(TS_F_PKCS7_TO_TS_TST_INFO, TS_R_BAD_PKCS7_TYPE);
         return NULL;
     }
-
-    /* Content must be present. */
     if (PKCS7_get_detached(token)) {
         TSerr(TS_F_PKCS7_TO_TS_TST_INFO, TS_R_DETACHED_CONTENT);
         return NULL;
     }
-
-    /* We have a signed data with content. */
     pkcs7_signed = token->d.sign;
     enveloped = pkcs7_signed->contents;
     if (OBJ_obj2nid(enveloped->type) != NID_id_smime_ct_TSTInfo) {
         TSerr(TS_F_PKCS7_TO_TS_TST_INFO, TS_R_BAD_PKCS7_TYPE);
         return NULL;
     }
-
-    /* We have a DER encoded TST_INFO as the signed data. */
     tst_info_wrapper = enveloped->d.other;
     if (tst_info_wrapper->type != V_ASN1_OCTET_STRING) {
         TSerr(TS_F_PKCS7_TO_TS_TST_INFO, TS_R_BAD_TYPE);
         return NULL;
     }
-
-    /* We have the correct ASN1_OCTET_STRING type. */
     tst_info_der = tst_info_wrapper->value.octet_string;
-    /* At last, decode the TST_INFO. */
     p = tst_info_der->data;
     return d2i_TS_TST_INFO(NULL, &p, tst_info_der->length);
 }

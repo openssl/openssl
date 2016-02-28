@@ -1,4 +1,3 @@
-/* crypto/des/rpc_des.h */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -93,11 +92,6 @@
 
 #define DES_MAXLEN      65536   /* maximum # of bytes to encrypt */
 #define DES_QUICKLEN    16      /* maximum # of bytes to encrypt quickly */
-
-#ifdef HEADER_DES_H
-# undef ENCRYPT
-# undef DECRYPT
-#endif
 
 enum desdir { ENCRYPT, DECRYPT };
 enum desmode { CBC, ECB };

@@ -1,6 +1,5 @@
-/* crypto/bn/bn_err.c */
 /* ====================================================================
- * Copyright (c) 1999-2014 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2015 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -70,7 +69,7 @@
 # define ERR_REASON(reason) ERR_PACK(ERR_LIB_BN,0,reason)
 
 static ERR_STRING_DATA BN_str_functs[] = {
-    {ERR_FUNC(BN_F_BNRAND), "BNRAND"},
+    {ERR_FUNC(BN_F_BNRAND), "bnrand"},
     {ERR_FUNC(BN_F_BN_BLINDING_CONVERT_EX), "BN_BLINDING_convert_ex"},
     {ERR_FUNC(BN_F_BN_BLINDING_CREATE_PARAM), "BN_BLINDING_create_param"},
     {ERR_FUNC(BN_F_BN_BLINDING_INVERT_EX), "BN_BLINDING_invert_ex"},
@@ -87,7 +86,7 @@ static ERR_STRING_DATA BN_str_functs[] = {
     {ERR_FUNC(BN_F_BN_DIV_RECP), "BN_div_recp"},
     {ERR_FUNC(BN_F_BN_EXP), "BN_exp"},
     {ERR_FUNC(BN_F_BN_EXPAND2), "bn_expand2"},
-    {ERR_FUNC(BN_F_BN_EXPAND_INTERNAL), "BN_EXPAND_INTERNAL"},
+    {ERR_FUNC(BN_F_BN_EXPAND_INTERNAL), "bn_expand_internal"},
     {ERR_FUNC(BN_F_BN_GENCB_NEW), "BN_GENCB_new"},
     {ERR_FUNC(BN_F_BN_GENERATE_DSA_NONCE), "BN_generate_dsa_nonce"},
     {ERR_FUNC(BN_F_BN_GENERATE_PRIME_EX), "BN_generate_prime_ex"},
@@ -98,6 +97,7 @@ static ERR_STRING_DATA BN_str_functs[] = {
     {ERR_FUNC(BN_F_BN_GF2M_MOD_SOLVE_QUAD_ARR), "BN_GF2m_mod_solve_quad_arr"},
     {ERR_FUNC(BN_F_BN_GF2M_MOD_SQR), "BN_GF2m_mod_sqr"},
     {ERR_FUNC(BN_F_BN_GF2M_MOD_SQRT), "BN_GF2m_mod_sqrt"},
+    {ERR_FUNC(BN_F_BN_LSHIFT), "BN_lshift"},
     {ERR_FUNC(BN_F_BN_MOD_EXP2_MONT), "BN_mod_exp2_mont"},
     {ERR_FUNC(BN_F_BN_MOD_EXP_MONT), "BN_mod_exp_mont"},
     {ERR_FUNC(BN_F_BN_MOD_EXP_MONT_CONSTTIME), "BN_mod_exp_mont_consttime"},
@@ -113,6 +113,8 @@ static ERR_STRING_DATA BN_str_functs[] = {
     {ERR_FUNC(BN_F_BN_NEW), "BN_new"},
     {ERR_FUNC(BN_F_BN_RAND), "BN_rand"},
     {ERR_FUNC(BN_F_BN_RAND_RANGE), "BN_rand_range"},
+    {ERR_FUNC(BN_F_BN_RSHIFT), "BN_rshift"},
+    {ERR_FUNC(BN_F_BN_SET_WORDS), "bn_set_words"},
     {ERR_FUNC(BN_F_BN_USUB), "BN_usub"},
     {0, NULL}
 };
@@ -130,6 +132,7 @@ static ERR_STRING_DATA BN_str_reasons[] = {
     {ERR_REASON(BN_R_INPUT_NOT_REDUCED), "input not reduced"},
     {ERR_REASON(BN_R_INVALID_LENGTH), "invalid length"},
     {ERR_REASON(BN_R_INVALID_RANGE), "invalid range"},
+    {ERR_REASON(BN_R_INVALID_SHIFT), "invalid shift"},
     {ERR_REASON(BN_R_NOT_A_SQUARE), "not a square"},
     {ERR_REASON(BN_R_NOT_INITIALIZED), "not initialized"},
     {ERR_REASON(BN_R_NO_INVERSE), "no inverse"},

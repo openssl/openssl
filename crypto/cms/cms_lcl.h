@@ -1,4 +1,3 @@
-/* crypto/cms/cms_lcl.h */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -109,6 +108,8 @@ struct CMS_ContentInfo_st {
     } d;
 };
 
+DEFINE_STACK_OF(CMS_CertificateChoices)
+
 struct CMS_SignedData_st {
     long version;
     STACK_OF(X509_ALGOR) *digestAlgorithms;
@@ -137,7 +138,7 @@ struct CMS_SignerInfo_st {
     X509 *signer;
     EVP_PKEY *pkey;
     /* Digest and public key context for alternative parameters */
-    EVP_MD_CTX mctx;
+    EVP_MD_CTX *mctx;
     EVP_PKEY_CTX *pctx;
 };
 
@@ -208,7 +209,7 @@ struct CMS_KeyAgreeRecipientInfo_st {
     /* Public key context associated with current operation */
     EVP_PKEY_CTX *pctx;
     /* Cipher context for CEK wrapping */
-    EVP_CIPHER_CTX ctx;
+    EVP_CIPHER_CTX *ctx;
 };
 
 struct CMS_OriginatorIdentifierOrKey_st {
@@ -463,6 +464,23 @@ int cms_RecipientInfo_kari_encrypt(CMS_ContentInfo *cms,
 /* PWRI routines */
 int cms_RecipientInfo_pwri_crypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri,
                                  int en_de);
+
+DECLARE_ASN1_ITEM(CMS_CertificateChoices)
+DECLARE_ASN1_ITEM(CMS_DigestedData)
+DECLARE_ASN1_ITEM(CMS_EncryptedData)
+DECLARE_ASN1_ITEM(CMS_EnvelopedData)
+DECLARE_ASN1_ITEM(CMS_KEKRecipientInfo)
+DECLARE_ASN1_ITEM(CMS_KeyAgreeRecipientInfo)
+DECLARE_ASN1_ITEM(CMS_KeyTransRecipientInfo)
+DECLARE_ASN1_ITEM(CMS_OriginatorPublicKey)
+DECLARE_ASN1_ITEM(CMS_OtherKeyAttribute)
+DECLARE_ASN1_ITEM(CMS_Receipt)
+DECLARE_ASN1_ITEM(CMS_ReceiptRequest)
+DECLARE_ASN1_ITEM(CMS_RecipientEncryptedKey)
+DECLARE_ASN1_ITEM(CMS_RecipientKeyIdentifier)
+DECLARE_ASN1_ITEM(CMS_RevocationInfoChoice)
+DECLARE_ASN1_ITEM(CMS_SignedData)
+DECLARE_ASN1_ITEM(CMS_CompressedData)
 
 #ifdef  __cplusplus
 }

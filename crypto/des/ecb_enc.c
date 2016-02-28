@@ -1,4 +1,3 @@
-/* crypto/des/ecb_enc.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -57,12 +56,9 @@
  */
 
 #include "des_locl.h"
-#include "des_ver.h"
 #include <openssl/opensslv.h>
 #include <openssl/bio.h>
 
-OPENSSL_GLOBAL const char libdes_version[] = "libdes" OPENSSL_VERSION_PTEXT;
-OPENSSL_GLOBAL const char DES_version[] = "DES" OPENSSL_VERSION_PTEXT;
 
 const char *DES_options(void)
 {
@@ -70,34 +66,13 @@ const char *DES_options(void)
     static char buf[32];
 
     if (init) {
-        const char *ptr, *unroll, *risc, *size;
+        const char *size;
 
-#ifdef DES_PTR
-        ptr = "ptr";
-#else
-        ptr = "idx";
-#endif
-#if defined(DES_RISC1) || defined(DES_RISC2)
-# ifdef DES_RISC1
-        risc = "risc1";
-# endif
-# ifdef DES_RISC2
-        risc = "risc2";
-# endif
-#else
-        risc = "cisc";
-#endif
-#ifdef DES_UNROLL
-        unroll = "16";
-#else
-        unroll = "2";
-#endif
         if (sizeof(DES_LONG) != sizeof(long))
             size = "int";
         else
             size = "long";
-        BIO_snprintf(buf, sizeof buf, "des(%s,%s,%s,%s)", ptr, risc, unroll,
-                     size);
+        BIO_snprintf(buf, sizeof buf, "des(%s)", size);
         init = 0;
     }
     return (buf);

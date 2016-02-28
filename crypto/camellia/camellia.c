@@ -1,4 +1,3 @@
-/* crypto/camellia/camellia.c -*- mode:C; c-file-style: "eay" -*- */
 /* ====================================================================
  * Copyright 2006 NTT (Nippon Telegraph and Telephone Corporation) .
  * ALL RIGHTS RESERVED.
@@ -67,7 +66,7 @@
 
 /*
  * Algorithm Specification
- * http://info.isl.llia/specicrypt/eng/camellia/specifications.html
+ * http://info.isl.ntt.co.jp/crypt/eng/camellia/specifications.html
  */
 
 /*

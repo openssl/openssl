@@ -69,20 +69,11 @@ int main(int argc, char **argv)
         ERR_print_errors_fp(stderr);
     }
 
-    if (cms)
-        CMS_ContentInfo_free(cms);
-    if (scert)
-        X509_free(scert);
-    if (skey)
-        EVP_PKEY_free(skey);
-
-    if (in)
-        BIO_free(in);
-    if (out)
-        BIO_free(out);
-    if (tbio)
-        BIO_free(tbio);
-
+    CMS_ContentInfo_free(cms);
+    X509_free(scert);
+    EVP_PKEY_free(skey);
+    BIO_free(in);
+    BIO_free(out);
+    BIO_free(tbio);
     return ret;
-
 }

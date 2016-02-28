@@ -1,4 +1,3 @@
-/* crypto/txt_db/txt_db.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -59,19 +58,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/buffer.h>
 #include <openssl/txt_db.h>
 
 #undef BUFSIZE
 #define BUFSIZE 512
 
-const char TXT_DB_version[] = "TXT_DB" OPENSSL_VERSION_PTEXT;
-
 TXT_DB *TXT_DB_read(BIO *in, int num)
 {
     TXT_DB *ret = NULL;
-    int er = 1;
     int esc = 0;
     long ln = 0;
     int i, add, n;
@@ -86,7 +82,7 @@ TXT_DB *TXT_DB_read(BIO *in, int num)
     if (!BUF_MEM_grow(buf, size))
         goto err;
 
-    if ((ret = OPENSSL_malloc(sizeof(TXT_DB))) == NULL)
+    if ((ret = OPENSSL_malloc(sizeof(*ret))) == NULL)
         goto err;
     ret->num_fields = num;
     ret->index = NULL;
@@ -124,7 +120,7 @@ TXT_DB *TXT_DB_read(BIO *in, int num)
             continue;
         else {
             buf->data[offset - 1] = '\0'; /* blat the '\n' */
-            if (!(p = OPENSSL_malloc(add + offset)))
+            if ((p = OPENSSL_malloc(add + offset)) == NULL)
                 goto err;
             offset = 0;
         }
@@ -156,44 +152,24 @@ TXT_DB *TXT_DB_read(BIO *in, int num)
         }
         *(p++) = '\0';
         if ((n != num) || (*f != '\0')) {
-#if !defined(OPENSSL_NO_STDIO)  /* temporary fix :-( */
-            fprintf(stderr,
-                    "wrong number of fields on line %ld (looking for field %d, got %d, '%s' left)\n",
-                    ln, num, n, f);
-#endif
-            er = 2;
+            ret->error = DB_ERROR_WRONG_NUM_FIELDS;
             goto err;
         }
         pp[n] = p;
-        if (!sk_OPENSSL_PSTRING_push(ret->data, pp)) {
-#if !defined(OPENSSL_NO_STDIO)  /* temporary fix :-( */
-            fprintf(stderr, "failure in sk_push\n");
-#endif
-            er = 2;
+        if (!sk_OPENSSL_PSTRING_push(ret->data, pp))
             goto err;
-        }
     }
-    er = 0;
+    BUF_MEM_free(buf);
+    return ret;
  err:
     BUF_MEM_free(buf);
-    if (er) {
-#if !defined(OPENSSL_NO_STDIO)
-        if (er == 1)
-            fprintf(stderr, "OPENSSL_malloc failure\n");
-#endif
-        if (ret != NULL) {
-            if (ret->data != NULL)
-                sk_OPENSSL_PSTRING_free(ret->data);
-            if (ret->index != NULL)
-                OPENSSL_free(ret->index);
-            if (ret->qual != NULL)
-                OPENSSL_free(ret->qual);
-            if (ret != NULL)
-                OPENSSL_free(ret);
-        }
-        return (NULL);
-    } else
-        return (ret);
+    if (ret != NULL) {
+        sk_OPENSSL_PSTRING_free(ret->data);
+        OPENSSL_free(ret->index);
+        OPENSSL_free(ret->qual);
+        OPENSSL_free(ret);
+    }
+    return (NULL);
 }
 
 OPENSSL_STRING *TXT_DB_get_by_index(TXT_DB *db, int idx,
@@ -245,8 +221,7 @@ int TXT_DB_create_index(TXT_DB *db, int field, int (*qual) (OPENSSL_STRING *),
             return (0);
         }
     }
-    if (db->index[field] != NULL)
-        lh_OPENSSL_STRING_free(db->index[field]);
+    lh_OPENSSL_STRING_free(db->index[field]);
     db->index[field] = idx;
     db->qual[field] = qual;
     return (1);
@@ -295,8 +270,7 @@ long TXT_DB_write(BIO *out, TXT_DB *db)
     }
     ret = tot;
  err:
-    if (buf != NULL)
-        BUF_MEM_free(buf);
+    BUF_MEM_free(buf);
     return (ret);
 }
 
@@ -346,12 +320,10 @@ void TXT_DB_free(TXT_DB *db)
 
     if (db->index != NULL) {
         for (i = db->num_fields - 1; i >= 0; i--)
-            if (db->index[i] != NULL)
-                lh_OPENSSL_STRING_free(db->index[i]);
+            lh_OPENSSL_STRING_free(db->index[i]);
         OPENSSL_free(db->index);
     }
-    if (db->qual != NULL)
-        OPENSSL_free(db->qual);
+    OPENSSL_free(db->qual);
     if (db->data != NULL) {
         for (i = sk_OPENSSL_PSTRING_num(db->data) - 1; i >= 0; i--) {
             /*
@@ -362,12 +334,10 @@ void TXT_DB_free(TXT_DB *db)
             max = p[db->num_fields]; /* last address */
             if (max == NULL) {  /* new row */
                 for (n = 0; n < db->num_fields; n++)
-                    if (p[n] != NULL)
-                        OPENSSL_free(p[n]);
+                    OPENSSL_free(p[n]);
             } else {
                 for (n = 0; n < db->num_fields; n++) {
-                    if (((p[n] < (char *)p) || (p[n] > max))
-                        && (p[n] != NULL))
+                    if (((p[n] < (char *)p) || (p[n] > max)))
                         OPENSSL_free(p[n]);
                 }
             }

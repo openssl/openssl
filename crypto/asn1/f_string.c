@@ -1,4 +1,3 @@
-/* crypto/asn1/f_string.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -57,7 +56,7 @@
  */
 
 #include <stdio.h>
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/buffer.h>
 #include <openssl/asn1.h>
 
@@ -95,8 +94,7 @@ int i2a_ASN1_STRING(BIO *bp, ASN1_STRING *a, int type)
 
 int a2i_ASN1_STRING(BIO *bp, ASN1_STRING *bs, char *buf, int size)
 {
-    int ret = 0;
-    int i, j, k, m, n, again, bufsize;
+    int i, j, k, m, n, again, bufsize, spec_char;
     unsigned char *s = NULL, *sp;
     unsigned char *bufp;
     int num = 0, slen = 0, first = 1;
@@ -107,7 +105,7 @@ int a2i_ASN1_STRING(BIO *bp, ASN1_STRING *bs, char *buf, int size)
             if (first)
                 break;
             else
-                goto err_sl;
+                goto err;
         }
         first = 0;
 
@@ -115,27 +113,27 @@ int a2i_ASN1_STRING(BIO *bp, ASN1_STRING *bs, char *buf, int size)
         if (buf[i - 1] == '\n')
             buf[--i] = '\0';
         if (i == 0)
-            goto err_sl;
+            goto err;
         if (buf[i - 1] == '\r')
             buf[--i] = '\0';
         if (i == 0)
-            goto err_sl;
+            goto err;
         again = (buf[i - 1] == '\\');
 
         for (j = i - 1; j > 0; j--) {
 #ifndef CHARSET_EBCDIC
-            if (!(((buf[j] >= '0') && (buf[j] <= '9')) ||
+            spec_char = (!(((buf[j] >= '0') && (buf[j] <= '9')) ||
                   ((buf[j] >= 'a') && (buf[j] <= 'f')) ||
-                  ((buf[j] >= 'A') && (buf[j] <= 'F'))))
+                  ((buf[j] >= 'A') && (buf[j] <= 'F'))));
 #else
             /*
              * This #ifdef is not strictly necessary, since the characters
              * A...F a...f 0...9 are contiguous (yes, even in EBCDIC - but
              * not the whole alphabet). Nevertheless, isxdigit() is faster.
              */
-            if (!isxdigit(buf[j]))
+            spec_char = (!isxdigit(buf[j]));
 #endif
-            {
+            if (spec_char) {
                 i = j;
                 break;
             }
@@ -145,7 +143,7 @@ int a2i_ASN1_STRING(BIO *bp, ASN1_STRING *bs, char *buf, int size)
          * We have now cleared all the crap off the end of the line
          */
         if (i < 2)
-            goto err_sl;
+            goto err;
 
         bufp = (unsigned char *)buf;
 
@@ -153,22 +151,15 @@ int a2i_ASN1_STRING(BIO *bp, ASN1_STRING *bs, char *buf, int size)
         i -= again;
         if (i % 2 != 0) {
             ASN1err(ASN1_F_A2I_ASN1_STRING, ASN1_R_ODD_NUMBER_OF_CHARS);
-            goto err;
+            return 0;
         }
         i /= 2;
         if (num + i > slen) {
-            if (s == NULL)
-                sp = (unsigned char *)OPENSSL_malloc((unsigned int)num +
-                                                     i * 2);
-            else
-                sp = (unsigned char *)OPENSSL_realloc(s,
-                                                      (unsigned int)num +
-                                                      i * 2);
+            sp = OPENSSL_realloc(s, (unsigned int)num + i * 2);
             if (sp == NULL) {
                 ASN1err(ASN1_F_A2I_ASN1_STRING, ERR_R_MALLOC_FAILURE);
-                if (s != NULL)
-                    OPENSSL_free(s);
-                goto err;
+                OPENSSL_free(s);
+                return 0;
             }
             s = sp;
             slen = num + i * 2;
@@ -185,7 +176,7 @@ int a2i_ASN1_STRING(BIO *bp, ASN1_STRING *bs, char *buf, int size)
                 else {
                     ASN1err(ASN1_F_A2I_ASN1_STRING,
                             ASN1_R_NON_HEX_CHARACTERS);
-                    goto err;
+                    return 0;
                 }
                 s[num + j] <<= 4;
                 s[num + j] |= m;
@@ -199,11 +190,9 @@ int a2i_ASN1_STRING(BIO *bp, ASN1_STRING *bs, char *buf, int size)
     }
     bs->length = num;
     bs->data = s;
-    ret = 1;
+    return 1;
+
  err:
-    if (0) {
- err_sl:
-        ASN1err(ASN1_F_A2I_ASN1_STRING, ASN1_R_SHORT_LINE);
-    }
-    return (ret);
+    ASN1err(ASN1_F_A2I_ASN1_STRING, ASN1_R_SHORT_LINE);
+    return 0;
 }

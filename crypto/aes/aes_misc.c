@@ -1,4 +1,3 @@
-/* crypto/aes/aes_misc.c -*- mode:C; c-file-style: "eay" -*- */
 /* ====================================================================
  * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
  *
@@ -52,8 +51,6 @@
 #include <openssl/opensslv.h>
 #include <openssl/aes.h>
 #include "aes_locl.h"
-
-const char AES_version[] = "AES" OPENSSL_VERSION_PTEXT;
 
 const char *AES_options(void)
 {

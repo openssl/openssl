@@ -60,6 +60,7 @@
 # include <openssl/sha.h>
 # include <openssl/rand.h>
 # include "modes_lcl.h"
+# include "internal/evp_int.h"
 
 # ifndef EVP_CIPH_FLAG_AEAD_CIPHER
 #  define EVP_CIPH_FLAG_AEAD_CIPHER       0x200000
@@ -94,7 +95,7 @@ typedef struct {
         defined(_M_AMD64)       || defined(_M_X64)      || \
         defined(__INTEL__)      )
 
-extern unsigned int OPENSSL_ia32cap_P[3];
+extern unsigned int OPENSSL_ia32cap_P[];
 #  define AESNI_CAPABLE   (1<<(57-32))
 
 int aesni_set_encrypt_key(const unsigned char *userKey, int bits,
@@ -111,7 +112,7 @@ int aesni_cbc_sha256_enc(const void *inp, void *out, size_t blocks,
                          const AES_KEY *key, unsigned char iv[16],
                          SHA256_CTX *ctx, const void *in0);
 
-#  define data(ctx) ((EVP_AES_HMAC_SHA256 *)(ctx)->cipher_data)
+#  define data(ctx) ((EVP_AES_HMAC_SHA256 *)EVP_CIPHER_CTX_cipher_data(ctx))
 
 static int aesni_cbc_hmac_sha256_init_key(EVP_CIPHER_CTX *ctx,
                                           const unsigned char *inkey,
@@ -122,9 +123,13 @@ static int aesni_cbc_hmac_sha256_init_key(EVP_CIPHER_CTX *ctx,
 
     if (enc)
         memset(&key->ks, 0, sizeof(key->ks.rd_key)),
-            ret = aesni_set_encrypt_key(inkey, ctx->key_len * 8, &key->ks);
+            ret = aesni_set_encrypt_key(inkey,
+                                        EVP_CIPHER_CTX_key_length(ctx) * 8,
+                                        &key->ks);
     else
-        ret = aesni_set_decrypt_key(inkey, ctx->key_len * 8, &key->ks);
+        ret = aesni_set_decrypt_key(inkey,
+                                    EVP_CIPHER_CTX_key_length(ctx) * 8,
+                                    &key->ks);
 
     SHA256_Init(&key->head);    /* handy when benchmarking */
     key->tail = key->head;
@@ -487,7 +492,7 @@ static int aesni_cbc_hmac_sha256_cipher(EVP_CIPHER_CTX *ctx,
     if (len % AES_BLOCK_SIZE)
         return 0;
 
-    if (ctx->encrypt) {
+    if (EVP_CIPHER_CTX_encrypting(ctx)) {
         if (plen == NO_PAYLOAD_LENGTH)
             plen = len;
         else if (len !=
@@ -498,13 +503,25 @@ static int aesni_cbc_hmac_sha256_cipher(EVP_CIPHER_CTX *ctx,
             iv = AES_BLOCK_SIZE;
 
 #  if defined(STITCHED_CALL)
+        /*
+         * Assembly stitch handles AVX-capable processors, but its
+         * performance is not optimal on AMD Jaguar, ~40% worse, for
+         * unknown reasons. Incidentally processor in question supports
+         * AVX, but not AMD-specific XOP extension, which can be used
+         * to identify it and avoid stitch invocation. So that after we
+         * establish that current CPU supports AVX, we even see if it's
+         * either even XOP-capable Bulldozer-based or GenuineIntel one.
+         */
         if (OPENSSL_ia32cap_P[1] & (1 << (60 - 32)) && /* AVX? */
+            ((OPENSSL_ia32cap_P[1] & (1 << (43 - 32))) /* XOP? */
+             | (OPENSSL_ia32cap_P[0] & (1<<30))) &&    /* "Intel CPU"? */
             plen > (sha_off + iv) &&
             (blocks = (plen - (sha_off + iv)) / SHA256_CBLOCK)) {
             SHA256_Update(&key->md, in + iv, sha_off);
 
             (void)aesni_cbc_sha256_enc(in, out, blocks, &key->ks,
-                                       ctx->iv, &key->md, in + iv + sha_off);
+                                       EVP_CIPHER_CTX_iv_noconst(ctx),
+                                       &key->md, in + iv + sha_off);
             blocks *= SHA256_CBLOCK;
             aes_off += blocks;
             sha_off += blocks;
@@ -535,10 +552,10 @@ static int aesni_cbc_hmac_sha256_cipher(EVP_CIPHER_CTX *ctx,
                 out[plen] = l;
             /* encrypt HMAC|padding at once */
             aesni_cbc_encrypt(out + aes_off, out + aes_off, len - aes_off,
-                              &key->ks, ctx->iv, 1);
+                              &key->ks, EVP_CIPHER_CTX_iv_noconst(ctx), 1);
         } else {
             aesni_cbc_encrypt(in + aes_off, out + aes_off, len - aes_off,
-                              &key->ks, ctx->iv, 1);
+                              &key->ks, EVP_CIPHER_CTX_iv_noconst(ctx), 1);
         }
     } else {
         union {
@@ -550,7 +567,8 @@ static int aesni_cbc_hmac_sha256_cipher(EVP_CIPHER_CTX *ctx,
         pmac = (void *)(((size_t)mac.c + 63) & ((size_t)0 - 64));
 
         /* decrypt HMAC|padding at once */
-        aesni_cbc_encrypt(in, out, len, &key->ks, ctx->iv, 0);
+        aesni_cbc_encrypt(in, out, len, &key->ks,
+                          EVP_CIPHER_CTX_iv_noconst(ctx), 0);
 
         if (plen != NO_PAYLOAD_LENGTH) { /* "TLS" mode of operation */
             size_t inp_len, mask, j, i;
@@ -817,7 +835,10 @@ static int aesni_cbc_hmac_sha256_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg,
             unsigned char *p = ptr;
             unsigned int len = p[arg - 2] << 8 | p[arg - 1];
 
-            if (ctx->encrypt) {
+            if (arg != EVP_AEAD_TLS1_AAD_LEN)
+                return -1;
+
+            if (EVP_CIPHER_CTX_encrypting(ctx)) {
                 key->payload_length = len;
                 if ((key->aux.tls_ver =
                      p[arg - 4] << 8 | p[arg - 3]) >= TLS1_1_VERSION) {
@@ -832,8 +853,6 @@ static int aesni_cbc_hmac_sha256_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg,
                                AES_BLOCK_SIZE) & -AES_BLOCK_SIZE)
                              - len);
             } else {
-                if (arg > 13)
-                    arg = 13;
                 memcpy(key->aux.tls_aad, ptr, arg);
                 key->payload_length = arg;
 
@@ -858,7 +877,7 @@ static int aesni_cbc_hmac_sha256_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg,
 
             inp_len = param->inp[11] << 8 | param->inp[12];
 
-            if (ctx->encrypt) {
+            if (EVP_CIPHER_CTX_encrypting(ctx)) {
                 if ((param->inp[9] << 8 | param->inp[10]) < TLS1_1_VERSION)
                     return -1;
 
@@ -918,7 +937,7 @@ static EVP_CIPHER aesni_128_cbc_hmac_sha256_cipher = {
 #  else
     NID_undef,
 #  endif
-    16, 16, 16,
+    AES_BLOCK_SIZE, 16, AES_BLOCK_SIZE,
     EVP_CIPH_CBC_MODE | EVP_CIPH_FLAG_DEFAULT_ASN1 |
         EVP_CIPH_FLAG_AEAD_CIPHER | EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK,
     aesni_cbc_hmac_sha256_init_key,
@@ -937,7 +956,7 @@ static EVP_CIPHER aesni_256_cbc_hmac_sha256_cipher = {
 #  else
     NID_undef,
 #  endif
-    16, 32, 16,
+    AES_BLOCK_SIZE, 32, AES_BLOCK_SIZE,
     EVP_CIPH_CBC_MODE | EVP_CIPH_FLAG_DEFAULT_ASN1 |
         EVP_CIPH_FLAG_AEAD_CIPHER | EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK,
     aesni_cbc_hmac_sha256_init_key,

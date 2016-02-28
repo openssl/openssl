@@ -1,4 +1,3 @@
-/* ocsp_ht.c */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
  * 2006.
@@ -113,21 +112,20 @@ static int parse_http_line1(char *line);
 
 OCSP_REQ_CTX *OCSP_REQ_CTX_new(BIO *io, int maxline)
 {
-    OCSP_REQ_CTX *rctx;
-    rctx = OPENSSL_malloc(sizeof(OCSP_REQ_CTX));
-    if (!rctx)
+    OCSP_REQ_CTX *rctx = OPENSSL_zalloc(sizeof(*rctx));
+
+    if (rctx == NULL)
         return NULL;
     rctx->state = OHS_ERROR;
     rctx->max_resp_len = OCSP_MAX_RESP_LENGTH;
     rctx->mem = BIO_new(BIO_s_mem());
     rctx->io = io;
-    rctx->asn1_len = 0;
     if (maxline > 0)
         rctx->iobuflen = maxline;
     else
         rctx->iobuflen = OCSP_MAX_LINE_LEN;
     rctx->iobuf = OPENSSL_malloc(rctx->iobuflen);
-    if (!rctx->iobuf || !rctx->mem) {
+    if (rctx->iobuf == NULL || rctx->mem == NULL) {
         OCSP_REQ_CTX_free(rctx);
         return NULL;
     }
@@ -136,10 +134,10 @@ OCSP_REQ_CTX *OCSP_REQ_CTX_new(BIO *io, int maxline)
 
 void OCSP_REQ_CTX_free(OCSP_REQ_CTX *rctx)
 {
-    if (rctx->mem)
-        BIO_free(rctx->mem);
-    if (rctx->iobuf)
-        OPENSSL_free(rctx->iobuf);
+    if (!rctx)
+        return;
+    BIO_free(rctx->mem);
+    OPENSSL_free(rctx->iobuf);
     OPENSSL_free(rctx);
 }
 
@@ -233,7 +231,7 @@ OCSP_REQ_CTX *OCSP_sendreq_new(BIO *io, const char *path, OCSP_REQUEST *req,
 
     OCSP_REQ_CTX *rctx = NULL;
     rctx = OCSP_REQ_CTX_new(io, maxline);
-    if (!rctx)
+    if (rctx == NULL)
         return NULL;
 
     if (!OCSP_REQ_CTX_http(rctx, "POST", path))
@@ -534,7 +532,7 @@ OCSP_RESPONSE *OCSP_sendreq_bio(BIO *b, const char *path, OCSP_REQUEST *req)
 
     ctx = OCSP_sendreq_new(b, path, req, -1);
 
-    if (!ctx)
+    if (ctx == NULL)
         return NULL;
 
     do {

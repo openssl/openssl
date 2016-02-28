@@ -67,19 +67,10 @@ int main(int argc, char **argv)
         ERR_print_errors_fp(stderr);
     }
 
-    if (cms)
-        CMS_ContentInfo_free(cms);
-
-    if (cacert)
-        X509_free(cacert);
-
-    if (in)
-        BIO_free(in);
-    if (out)
-        BIO_free(out);
-    if (tbio)
-        BIO_free(tbio);
-
+    CMS_ContentInfo_free(cms);
+    X509_free(cacert);
+    BIO_free(in);
+    BIO_free(out);
+    BIO_free(tbio);
     return ret;
-
 }

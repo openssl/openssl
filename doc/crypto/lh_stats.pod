@@ -49,12 +49,6 @@ These functions do not return values.
 
 =head1 SEE ALSO
 
-L<bio(3)|bio(3)>, L<lhash(3)|lhash(3)>
-
-=head1 HISTORY
-
-These functions are available in all versions of SSLeay and OpenSSL.
-
-This manpage is derived from the SSLeay documentation.
+L<bio(3)>, L<lhash(3)>
 
 =cut

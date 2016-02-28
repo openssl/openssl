@@ -1,4 +1,3 @@
-/* crypto/x509/x509name.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -58,11 +57,12 @@
 
 #include <stdio.h>
 #include <openssl/stack.h>
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/asn1.h>
 #include <openssl/objects.h>
 #include <openssl/evp.h>
 #include <openssl/x509.h>
+#include "internal/x509_int.h"
 
 int X509_NAME_get_text_by_NID(X509_NAME *name, int nid, char *buf, int len)
 {
@@ -109,7 +109,7 @@ int X509_NAME_get_index_by_NID(X509_NAME *name, int nid, int lastpos)
     return (X509_NAME_get_index_by_OBJ(name, obj, lastpos));
 }
 
-/* NOTE: you should be passsing -1, not 0 as lastpos */
+/* NOTE: you should be passing -1, not 0 as lastpos */
 int X509_NAME_get_index_by_OBJ(X509_NAME *name, ASN1_OBJECT *obj, int lastpos)
 {
     int n;
@@ -276,8 +276,7 @@ int X509_NAME_add_entry(X509_NAME *name, X509_NAME_ENTRY *ne, int loc,
     }
     return (1);
  err:
-    if (new_name != NULL)
-        X509_NAME_ENTRY_free(new_name);
+    X509_NAME_ENTRY_free(new_name);
     return (0);
 }
 
@@ -394,4 +393,9 @@ ASN1_STRING *X509_NAME_ENTRY_get_data(X509_NAME_ENTRY *ne)
     if (ne == NULL)
         return (NULL);
     return (ne->value);
+}
+
+int X509_NAME_ENTRY_set(const X509_NAME_ENTRY *ne)
+{
+    return ne->set;
 }

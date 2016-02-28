@@ -7,6 +7,7 @@ genpkey - generate a private key
 =head1 SYNOPSIS
 
 B<openssl> B<genpkey>
+[B<-help>]
 [B<-out filename>]
 [B<-outform PEM|DER>]
 [B<-pass arg>]
@@ -26,10 +27,14 @@ The B<genpkey> command generates a private key.
 
 =over 4
 
+=item B<-help>
+
+Print out a usage message.
+
 =item B<-out filename>
 
-the output filename. If this argument is not specified then standard output is
-used.  
+Output the key to the specified file. If this argument is not specified then
+standard output is used.
 
 =item B<-outform DER|PEM>
 
@@ -38,7 +43,7 @@ This specifies the output format DER or PEM.
 =item B<-pass arg>
 
 the output file password source. For more information about the format of B<arg>
-see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)|openssl(1)>.
+see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
 
 =item B<-cipher>
 
@@ -87,7 +92,7 @@ parameters along with the PEM or DER structure.
 
 =head1 KEY GENERATION OPTIONS
 
-The options supported by each algorith and indeed each implementation of an
+The options supported by each algorithm and indeed each implementation of an
 algorithm can vary. The options for the OpenSSL implementations are detailed
 below.
 
@@ -141,11 +146,20 @@ and 2048 bit group with 256 bit subgroup as mentioned in RFC5114 sections
 
 =head1 EC PARAMETER GENERATION OPTIONS
 
+The EC parameter generation options below can also
+be supplied as EC key generation options. This can (for example) generate a
+key from a named curve without the need to use an explicit parameter file.
+
 =over 4
 
 =item B<ec_paramgen_curve:curve>
 
-the EC curve to use.
+the EC curve to use. OpenSSL supports NIST curve names such as "P-256".
+
+=item B<ec_param_enc:encoding>
+
+the encoding to use for parameters. The "encoding" parameter must be either
+"named_curve" or "explicit".
 
 =back
 
@@ -153,7 +167,7 @@ the EC curve to use.
 
 Gost 2001 support is not enabled by default. To enable this algorithm,
 one should load the ccgost engine in the OpenSSL configuration file.
-See README.gost file in the engines/ccgost directiry of the source
+See README.gost file in the engines/ccgost directory of the source
 distribution for more details.
 
 Use of a parameter file for the GOST R 34.10 algorithm is optional.
@@ -190,7 +204,7 @@ can be used.
 
 Generate an RSA private key using default parameters:
 
- openssl genpkey -algorithm RSA -out key.pem 
+ openssl genpkey -algorithm RSA -out key.pem
 
 Encrypt output private key using 128 bit AES and the passphrase "hello":
 
@@ -208,7 +222,7 @@ Generate 1024 bit DSA parameters:
 
 Generate DSA key from parameters:
 
- openssl genpkey -paramfile dsap.pem -out dsakey.pem 
+ openssl genpkey -paramfile dsap.pem -out dsakey.pem
 
 Generate 1024 bit DH parameters:
 
@@ -221,8 +235,28 @@ Output RFC5114 2048 bit DH parameters with 224 bit subgroup:
 
 Generate DH key from parameters:
 
- openssl genpkey -paramfile dhp.pem -out dhkey.pem 
+ openssl genpkey -paramfile dhp.pem -out dhkey.pem
 
+Generate EC parameters:
+
+ openssl genpkey -genparam -algorithm EC -out ecp.pem \
+	-pkeyopt ec_paramgen_curve:secp384r1 \
+	-pkeyopt ec_param_enc:named_curve
+
+Generate EC key from parameters:
+
+ openssl genpkey -paramfile ecp.pem -out eckey.pem
+
+Generate EC key directly:
+
+ openssl genpkey -algorithm EC -out eckey.pem \
+	-pkeyopt ec_paramgen_curve:P-384 \
+	-pkeyopt ec_param_enc:named_curve
+
+=head1 HISTORY
+
+The ability to use NIST curve names, and to generate an EC key directly,
+were added in OpenSSL 1.0.2.
 
 =cut
 

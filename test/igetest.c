@@ -1,4 +1,3 @@
-/* test/igetest.c -*- mode:C; c-file-style: "eay" -*- */
 /* ====================================================================
  * Copyright (c) 2006 The OpenSSL Project.  All rights reserved.
  *
@@ -55,6 +54,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
+#include "e_os.h"
 
 #define TEST_SIZE       128
 #define BIG_TEST_SIZE 10240
@@ -191,8 +191,7 @@ static int run_test_vectors(void)
     unsigned int n;
     int errs = 0;
 
-    for (n = 0; n < sizeof(ige_test_vectors) / sizeof(ige_test_vectors[0]);
-         ++n) {
+    for (n = 0; n < OSSL_NELEM(ige_test_vectors); ++n) {
         const struct ige_test *const v = &ige_test_vectors[n];
         AES_KEY key;
         unsigned char buf[MAX_VECTOR_SIZE];
@@ -235,9 +234,7 @@ static int run_test_vectors(void)
         }
     }
 
-    for (n = 0;
-         n < sizeof(bi_ige_test_vectors) / sizeof(bi_ige_test_vectors[0]);
-         ++n) {
+    for (n = 0; n < OSSL_NELEM(bi_ige_test_vectors); ++n) {
         const struct bi_ige_test *const v = &bi_ige_test_vectors[n];
         AES_KEY key1;
         AES_KEY key2;
@@ -289,9 +286,9 @@ int main(int argc, char **argv)
 
     assert(BIG_TEST_SIZE >= TEST_SIZE);
 
-    RAND_pseudo_bytes(rkey, sizeof rkey);
-    RAND_pseudo_bytes(plaintext, sizeof plaintext);
-    RAND_pseudo_bytes(iv, sizeof iv);
+    RAND_bytes(rkey, sizeof rkey);
+    RAND_bytes(plaintext, sizeof plaintext);
+    RAND_bytes(iv, sizeof iv);
     memcpy(saved_iv, iv, sizeof saved_iv);
 
     /* Forward IGE only... */
@@ -390,7 +387,7 @@ int main(int argc, char **argv)
      */
     /* possible with biIGE, so the IV is not updated. */
 
-    RAND_pseudo_bytes(rkey2, sizeof rkey2);
+    RAND_bytes(rkey2, sizeof rkey2);
 
     /* Straight encrypt/decrypt */
     AES_set_encrypt_key(rkey, 8 * sizeof rkey, &key);

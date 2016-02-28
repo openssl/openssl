@@ -9,9 +9,9 @@ BIO_read, BIO_write, BIO_gets, BIO_puts - BIO I/O functions
  #include <openssl/bio.h>
 
  int	BIO_read(BIO *b, void *buf, int len);
- int	BIO_gets(BIO *b,char *buf, int size);
+ int	BIO_gets(BIO *b, char *buf, int size);
  int	BIO_write(BIO *b, const void *buf, int len);
- int	BIO_puts(BIO *b,const char *buf);
+ int	BIO_puts(BIO *b, const char *buf);
 
 =head1 DESCRIPTION
 
@@ -26,7 +26,7 @@ return the digest and other BIOs may not support BIO_gets() at all.
 
 BIO_write() attempts to write B<len> bytes from B<buf> to BIO B<b>.
 
-BIO_puts() attempts to write a null terminated string B<buf> to BIO B<b>
+BIO_puts() attempts to write a null terminated string B<buf> to BIO B<b>.
 
 =head1 RETURN VALUES
 
@@ -52,15 +52,15 @@ I/O structure and may block as a result. Instead select() (or equivalent)
 should be combined with non blocking I/O so successive reads will request
 a retry instead of blocking.
 
-See L<BIO_should_retry(3)|BIO_should_retry(3)> for details of how to
+See L<BIO_should_retry(3)> for details of how to
 determine the cause of a retry and other I/O issues.
 
 If the BIO_gets() function is not supported by a BIO then it possible to
-work around this by adding a buffering BIO L<BIO_f_buffer(3)|BIO_f_buffer(3)>
+work around this by adding a buffering BIO L<BIO_f_buffer(3)>
 to the chain.
 
 =head1 SEE ALSO
 
-L<BIO_should_retry(3)|BIO_should_retry(3)>
+L<BIO_should_retry(3)>
 
 TBA

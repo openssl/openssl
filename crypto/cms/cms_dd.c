@@ -1,4 +1,3 @@
-/* crypto/cms/cms_dd.c */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -52,15 +51,13 @@
  * ====================================================================
  */
 
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/asn1t.h>
 #include <openssl/pem.h>
 #include <openssl/x509v3.h>
 #include <openssl/err.h>
 #include <openssl/cms.h>
 #include "cms_lcl.h"
-
-DECLARE_ASN1_ITEM(CMS_DigestedData)
 
 /* CMS DigestedData Utilities */
 
@@ -69,12 +66,12 @@ CMS_ContentInfo *cms_DigestedData_create(const EVP_MD *md)
     CMS_ContentInfo *cms;
     CMS_DigestedData *dd;
     cms = CMS_ContentInfo_new();
-    if (!cms)
+    if (cms == NULL)
         return NULL;
 
     dd = M_ASN1_new_of(CMS_DigestedData);
 
-    if (!dd)
+    if (dd == NULL)
         goto err;
 
     cms->contentType = OBJ_nid2obj(NID_pkcs7_digest);
@@ -88,10 +85,7 @@ CMS_ContentInfo *cms_DigestedData_create(const EVP_MD *md)
     return cms;
 
  err:
-
-    if (cms)
-        CMS_ContentInfo_free(cms);
-
+    CMS_ContentInfo_free(cms);
     return NULL;
 }
 
@@ -104,19 +98,23 @@ BIO *cms_DigestedData_init_bio(CMS_ContentInfo *cms)
 
 int cms_DigestedData_do_final(CMS_ContentInfo *cms, BIO *chain, int verify)
 {
-    EVP_MD_CTX mctx;
+    EVP_MD_CTX *mctx = EVP_MD_CTX_new();
     unsigned char md[EVP_MAX_MD_SIZE];
     unsigned int mdlen;
     int r = 0;
     CMS_DigestedData *dd;
-    EVP_MD_CTX_init(&mctx);
+
+    if (mctx == NULL) {
+        CMSerr(CMS_F_CMS_DIGESTEDDATA_DO_FINAL, ERR_R_MALLOC_FAILURE);
+        goto err;
+    }
 
     dd = cms->d.digestedData;
 
-    if (!cms_DigestAlgorithm_find_ctx(&mctx, chain, dd->digestAlgorithm))
+    if (!cms_DigestAlgorithm_find_ctx(mctx, chain, dd->digestAlgorithm))
         goto err;
 
-    if (EVP_DigestFinal_ex(&mctx, md, &mdlen) <= 0)
+    if (EVP_DigestFinal_ex(mctx, md, &mdlen) <= 0)
         goto err;
 
     if (verify) {
@@ -138,7 +136,7 @@ int cms_DigestedData_do_final(CMS_ContentInfo *cms, BIO *chain, int verify)
     }
 
  err:
-    EVP_MD_CTX_cleanup(&mctx);
+    EVP_MD_CTX_free(mctx);
 
     return r;
 

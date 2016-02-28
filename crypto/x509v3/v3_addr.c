@@ -62,13 +62,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/conf.h>
 #include <openssl/asn1.h>
 #include <openssl/asn1t.h>
 #include <openssl/buffer.h>
 #include <openssl/x509v3.h>
+#include "internal/x509_int.h"
+#include "ext_dat.h"
 
+#ifndef OPENSSL_NO_RFC3779
 
 /*
  * OpenSSL ASN.1 template translation of RFC 3779 2.2.3.
@@ -97,7 +100,7 @@ ASN1_SEQUENCE(IPAddressFamily) = {
 ASN1_ITEM_TEMPLATE(IPAddrBlocks) =
   ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SEQUENCE_OF, 0,
                         IPAddrBlocks, IPAddressFamily)
-ASN1_ITEM_TEMPLATE_END(IPAddrBlocks)
+static_ASN1_ITEM_TEMPLATE_END(IPAddrBlocks)
 
 IMPLEMENT_ASN1_FUNCTIONS(IPAddressRange)
 IMPLEMENT_ASN1_FUNCTIONS(IPAddressOrRange)
@@ -357,7 +360,7 @@ static int IPAddressOrRange_cmp(const IPAddressOrRange *a,
 
 /*
  * IPv4-specific closure over IPAddressOrRange_cmp, since sk_sort()
- * comparision routines are only allowed two arguments.
+ * comparison routines are only allowed two arguments.
  */
 static int v4IPAddressOrRange_cmp(const IPAddressOrRange *const *a,
                                   const IPAddressOrRange *const *b)
@@ -367,7 +370,7 @@ static int v4IPAddressOrRange_cmp(const IPAddressOrRange *const *a,
 
 /*
  * IPv6-specific closure over IPAddressOrRange_cmp, since sk_sort()
- * comparision routines are only allowed two arguments.
+ * comparison routines are only allowed two arguments.
  */
 static int v6IPAddressOrRange_cmp(const IPAddressOrRange *const *a,
                                   const IPAddressOrRange *const *b)
@@ -701,7 +704,7 @@ int v3_addr_get_range(IPAddressOrRange *aor,
 }
 
 /*
- * Sort comparision function for a sequence of IPAddressFamily.
+ * Sort comparison function for a sequence of IPAddressFamily.
  *
  * The last paragraph of RFC 3779 2.2.3.3 is slightly ambiguous about
  * the ordering: I can read it as meaning that IPv6 without a SAFI
@@ -945,7 +948,7 @@ static void *v2i_IPAddrBlocks(const struct v3_ext_method *method,
         CONF_VALUE *val = sk_CONF_VALUE_value(values, i);
         unsigned char min[ADDR_RAW_BUF_LEN], max[ADDR_RAW_BUF_LEN];
         unsigned afi, *safi = NULL, safi_;
-        const char *addr_chars;
+        const char *addr_chars = NULL;
         int prefixlen, i1, i2, delim, length;
 
         if (!name_cmp(val->name, "IPv4")) {
@@ -977,7 +980,7 @@ static void *v2i_IPAddrBlocks(const struct v3_ext_method *method,
         length = length_from_afi(afi);
 
         /*
-         * Handle SAFI, if any, and BUF_strdup() so we can null-terminate
+         * Handle SAFI, if any, and OPENSSL_strdup() so we can null-terminate
          * the other input values.
          */
         if (safi != NULL) {
@@ -989,9 +992,9 @@ static void *v2i_IPAddrBlocks(const struct v3_ext_method *method,
                 goto err;
             }
             t += strspn(t, " \t");
-            s = BUF_strdup(t);
+            s = OPENSSL_strdup(t);
         } else {
-            s = BUF_strdup(val->value);
+            s = OPENSSL_strdup(val->value);
         }
         if (s == NULL) {
             X509V3err(X509V3_F_V2I_IPADDRBLOCKS, ERR_R_MALLOC_FAILURE);
@@ -1002,7 +1005,7 @@ static void *v2i_IPAddrBlocks(const struct v3_ext_method *method,
          * Check for inheritance.  Not worth additional complexity to
          * optimize this (seldom-used) case.
          */
-        if (!strcmp(s, "inherit")) {
+        if (strcmp(s, "inherit") == 0) {
             if (!v3_addr_add_inherit(addr, afi, safi)) {
                 X509V3err(X509V3_F_V2I_IPADDRBLOCKS,
                           X509V3_R_INVALID_INHERITANCE);
@@ -1339,3 +1342,5 @@ int v3_addr_validate_resource_set(STACK_OF(X509) *chain,
         return 0;
     return v3_addr_validate_path_internal(NULL, chain, ext);
 }
+
+#endif                          /* OPENSSL_NO_RFC3779 */

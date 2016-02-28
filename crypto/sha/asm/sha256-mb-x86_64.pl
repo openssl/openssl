@@ -19,6 +19,7 @@
 # Sandy Bridge	(20.5	+5.15=25.7)/n	11.6	13.0		+103%
 # Ivy Bridge	(20.4	+5.14=25.5)/n	10.3	11.6		+82%
 # Haswell(iii)	(21.0	+5.00=26.0)/n	7.80	8.79		+170%
+# Skylake	(18.9	+5.00=23.9)/n	7.70	8.17		+170%
 # Bulldozer	(21.6	+5.76=27.4)/n	13.6	13.7		+100%
 #
 # (i)	multi-block CBC encrypt with 128-bit key;
@@ -59,7 +60,7 @@ if (!$avx && $win64 && ($flavour =~ /masm/ || $ENV{ASM} =~ /ml64/) &&
 	$avx = ($1>=10) + ($1>=11);
 }
 
-if (!$avx && `$ENV{CC} -v 2>&1` =~ /(^clang version|based on LLVM) ([3-9]\.[0-9]+)/) {
+if (!$avx && `$ENV{CC} -v 2>&1` =~ /((?:^clang|LLVM) version|.*based on LLVM) ([3-9]\.[0-9]+)/) {
 	$avx = ($2>=3.0) + ($2>3.0);
 }
 
@@ -382,7 +383,7 @@ $code.=<<___;
 	jnz	.Loop_grande
 
 .Ldone:
-	mov	`$REG_SZ*17`(%rsp),%rax		# orignal %rsp
+	mov	`$REG_SZ*17`(%rsp),%rax		# original %rsp
 ___
 $code.=<<___ if ($win64);
 	movaps	-0xb8(%rax),%xmm6
@@ -442,7 +443,7 @@ $code.=<<___;
 	lea	K256_shaext+0x80(%rip),$Tbl
 
 .Loop_grande_shaext:
-	mov	$num,`$REG_SZ*17+8`(%rsp)	# orignal $num
+	mov	$num,`$REG_SZ*17+8`(%rsp)	# original $num
 	xor	$num,$num
 ___
 for($i=0;$i<2;$i++) {
@@ -1061,7 +1062,7 @@ $code.=<<___;
 	jnz	.Loop_grande_avx
 
 .Ldone_avx:
-	mov	`$REG_SZ*17`(%rsp),%rax		# orignal %rsp
+	mov	`$REG_SZ*17`(%rsp),%rax		# original %rsp
 	vzeroupper
 ___
 $code.=<<___ if ($win64);
@@ -1237,7 +1238,7 @@ $code.=<<___;
 	#jnz	.Loop_grande_avx2
 
 .Ldone_avx2:
-	mov	`$REG_SZ*17`(%rsp),%rax		# orignal %rsp
+	mov	`$REG_SZ*17`(%rsp),%rax		# original %rsp
 	vzeroupper
 ___
 $code.=<<___ if ($win64);

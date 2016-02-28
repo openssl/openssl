@@ -24,7 +24,7 @@ reciprocal
 =head1 DESCRIPTION
 
 BN_mod_mul_reciprocal() can be used to perform an efficient
-L<BN_mod_mul(3)|BN_mod_mul(3)> operation when the operation will be performed
+L<BN_mod_mul(3)> operation when the operation will be performed
 repeatedly with the same modulus. It computes B<r>=(B<a>*B<b>)%B<m>
 using B<recp>=1/B<m>, which is set as described below.  B<ctx> is a
 previously allocated B<BN_CTX> used for temporary variables.
@@ -34,6 +34,7 @@ BN_RECP_CTX_init() initializes an existing uninitialized B<BN_RECP>.
 
 BN_RECP_CTX_free() frees the components of the B<BN_RECP>, and, if it
 was created by BN_RECP_CTX_new(), also the structure itself.
+If B<recp> is NULL, nothing is done.
 
 BN_RECP_CTX_set() stores B<m> in B<recp> and sets it up for computing
 1/B<m> and shifting it left by BN_num_bits(B<m>)+1 to make it an
@@ -53,7 +54,7 @@ on error.
 BN_RECP_CTX_init() and BN_RECP_CTX_free() have no return values.
 
 For the other functions, 1 is returned for success, 0 on error.
-The error codes can be obtained by L<ERR_get_error(3)|ERR_get_error(3)>.
+The error codes can be obtained by L<ERR_get_error(3)>.
 
 =head1 REMOVED FUNCTIONALITY
 
@@ -77,13 +78,11 @@ instead:
 
 =head1 SEE ALSO
 
-L<bn(3)|bn(3)>, L<ERR_get_error(3)|ERR_get_error(3)>, L<BN_add(3)|BN_add(3)>,
-L<BN_CTX_new(3)|BN_CTX_new(3)>
+L<bn(3)>, L<ERR_get_error(3)>, L<BN_add(3)>,
+L<BN_CTX_new(3)>
 
 =head1 HISTORY
 
-B<BN_RECP_CTX> was added in SSLeay 0.9.0. Before that, the function
-BN_reciprocal() was used instead, and the BN_mod_mul_reciprocal()
-arguments were different. BN_RECP_CTX_init was removed in OpenSSL 1.1.0
+BN_RECP_CTX_init was removed in OpenSSL 1.1.0
 
 =cut

@@ -66,8 +66,8 @@ there was an error.
 
 =head1 SEE ALSO
 
-L<BIO(3)|BIO(3)>,
-L<BIO_reset(3)|BIO_reset(3)>,
-L<BIO_flush(3)|BIO_flush(3)>,
-L<BIO_pop(3)|BIO_pop(3)>,
-L<BIO_ctrl(3)|BIO_ctrl(3)>.
+L<BIO(3)>,
+L<BIO_reset(3)>,
+L<BIO_flush(3)>,
+L<BIO_pop(3)>,
+L<BIO_ctrl(3)>.

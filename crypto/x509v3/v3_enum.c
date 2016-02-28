@@ -1,4 +1,3 @@
-/* v3_enum.c */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
  * 1999.
@@ -58,8 +57,9 @@
  */
 
 #include <stdio.h>
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/x509v3.h>
+#include "ext_dat.h"
 
 static ENUMERATED_NAMES crl_reasons[] = {
     {CRL_REASON_UNSPECIFIED, "Unspecified", "unspecified"},
@@ -94,7 +94,7 @@ char *i2s_ASN1_ENUMERATED_TABLE(X509V3_EXT_METHOD *method, ASN1_ENUMERATED *e)
     strval = ASN1_ENUMERATED_get(e);
     for (enam = method->usr_data; enam->lname; enam++) {
         if (strval == enam->bitnum)
-            return BUF_strdup(enam->lname);
+            return OPENSSL_strdup(enam->lname);
     }
     return i2s_ASN1_ENUMERATED(method, e);
 }

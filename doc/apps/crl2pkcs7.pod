@@ -7,6 +7,7 @@ crl2pkcs7 - Create a PKCS#7 structure from a CRL and certificates.
 =head1 SYNOPSIS
 
 B<openssl> B<crl2pkcs7>
+[B<-help>]
 [B<-inform PEM|DER>]
 [B<-outform PEM|DER>]
 [B<-in filename>]
@@ -23,6 +24,10 @@ only" structure.
 =head1 COMMAND OPTIONS
 
 =over 4
+
+=item B<-help>
+
+Print out a usage message.
 
 =item B<-inform DER|PEM>
 
@@ -86,6 +91,6 @@ install user certificates and CAs in MSIE using the Xenroll control.
 
 =head1 SEE ALSO
 
-L<pkcs7(1)|pkcs7(1)>
+L<pkcs7(1)>
 
 =cut

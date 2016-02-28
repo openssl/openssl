@@ -1,4 +1,3 @@
-/* v3_pmaps.c */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -58,10 +57,11 @@
  */
 
 #include <stdio.h>
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/asn1t.h>
 #include <openssl/conf.h>
 #include <openssl/x509v3.h>
+#include "ext_dat.h"
 
 static void *v2i_POLICY_MAPPINGS(const X509V3_EXT_METHOD *method,
                                  X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *nval);
@@ -119,7 +119,7 @@ static void *v2i_POLICY_MAPPINGS(const X509V3_EXT_METHOD *method,
     CONF_VALUE *val;
     int i;
 
-    if (!(pmaps = sk_POLICY_MAPPING_new_null())) {
+    if ((pmaps = sk_POLICY_MAPPING_new_null()) == NULL) {
         X509V3err(X509V3_F_V2I_POLICY_MAPPINGS, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
@@ -143,7 +143,7 @@ static void *v2i_POLICY_MAPPINGS(const X509V3_EXT_METHOD *method,
             return NULL;
         }
         pmap = POLICY_MAPPING_new();
-        if (!pmap) {
+        if (pmap == NULL) {
             sk_POLICY_MAPPING_pop_free(pmaps, POLICY_MAPPING_free);
             X509V3err(X509V3_F_V2I_POLICY_MAPPINGS, ERR_R_MALLOC_FAILURE);
             return NULL;

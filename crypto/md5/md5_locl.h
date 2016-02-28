@@ -1,4 +1,3 @@
-/* crypto/md5/md5_locl.h */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -91,7 +90,7 @@ void md5_block_data_order(MD5_CTX *c, const void *p, size_t num);
         } while (0)
 #define HASH_BLOCK_DATA_ORDER   md5_block_data_order
 
-#include "md32_common.h"
+#include "internal/md32_common.h"
 
 /*-
 #define F(x,y,z)        (((x) & (y))  |  ((~(x)) & (z)))

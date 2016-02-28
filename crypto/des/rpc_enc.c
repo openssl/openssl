@@ -1,4 +1,3 @@
-/* crypto/des/rpc_enc.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -58,7 +57,6 @@
 
 #include "rpc_des.h"
 #include "des_locl.h"
-#include "des_ver.h"
 
 int _des_crypt(char *buf, int len, struct desparams *desp);
 int _des_crypt(char *buf, int len, struct desparams *desp)

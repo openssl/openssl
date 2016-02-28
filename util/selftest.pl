@@ -54,7 +54,7 @@ $cversion=`$cc -V |head -1` if $cversion =~ "Error";
 $cversion=`$cc --version` if $cversion eq "";
 $cversion =~ s/Reading specs.*\n//;
 $cversion =~ s/usage.*\n//;
-chomp $cversion;
+$cversion =~ s|\R$||;
 
 if (open(IN,"<CHANGES")) {
     while(<IN>) {
@@ -199,3 +199,4 @@ while (<IN>) {
 }
 print "\nTest report in file $report\n";
 
+die if $ok != 2;

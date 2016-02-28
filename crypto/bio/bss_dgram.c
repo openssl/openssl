@@ -1,4 +1,3 @@
-/* crypto/bio/bio_dgram.c */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -59,10 +58,8 @@
 
 #include <stdio.h>
 #include <errno.h>
-#define USE_SOCKETS
-#include "cryptlib.h"
 
-#include <openssl/bio.h>
+#include "bio_lcl.h"
 #ifndef OPENSSL_NO_DGRAM
 
 # if !(defined(_WIN32) || defined(OPENSSL_SYS_VMS))
@@ -157,18 +154,13 @@ static BIO_METHOD methods_dgramp_sctp = {
 # endif
 
 typedef struct bio_dgram_data_st {
-    union {
-        struct sockaddr sa;
-        struct sockaddr_in sa_in;
-# if OPENSSL_USE_IPV6
-        struct sockaddr_in6 sa_in6;
-# endif
-    } peer;
+    BIO_ADDR peer;
     unsigned int connected;
     unsigned int _errno;
     unsigned int mtu;
     struct timeval next_timeout;
     struct timeval socket_timeout;
+    unsigned int peekmode;
 } bio_dgram_data;
 
 # ifndef OPENSSL_NO_SCTP
@@ -179,13 +171,7 @@ typedef struct bio_dgram_sctp_save_message_st {
 } bio_dgram_sctp_save_message;
 
 typedef struct bio_dgram_sctp_data_st {
-    union {
-        struct sockaddr sa;
-        struct sockaddr_in sa_in;
-#  if OPENSSL_USE_IPV6
-        struct sockaddr_in6 sa_in6;
-#  endif
-    } peer;
+    BIO_ADDR peer;
     unsigned int connected;
     unsigned int _errno;
     unsigned int mtu;
@@ -221,17 +207,11 @@ BIO *BIO_new_dgram(int fd, int close_flag)
 
 static int dgram_new(BIO *bi)
 {
-    bio_dgram_data *data = NULL;
+    bio_dgram_data *data = OPENSSL_zalloc(sizeof(*data));
 
-    bi->init = 0;
-    bi->num = 0;
-    data = OPENSSL_malloc(sizeof(bio_dgram_data));
     if (data == NULL)
         return 0;
-    memset(data, 0x00, sizeof(bio_dgram_data));
     bi->ptr = data;
-
-    bi->flags = 0;
     return (1);
 }
 
@@ -245,8 +225,7 @@ static int dgram_free(BIO *a)
         return 0;
 
     data = (bio_dgram_data *)a->ptr;
-    if (data != NULL)
-        OPENSSL_free(data);
+    OPENSSL_free(data);
 
     return (1);
 }
@@ -306,20 +285,21 @@ static void dgram_adjust_rcv_timeout(BIO *b)
 
         /* Calculate time left until timer expires */
         memcpy(&timeleft, &(data->next_timeout), sizeof(struct timeval));
-        timeleft.tv_sec -= timenow.tv_sec;
-        timeleft.tv_usec -= timenow.tv_usec;
-        if (timeleft.tv_usec < 0) {
+        if (timeleft.tv_usec < timenow.tv_usec) {
+            timeleft.tv_usec = 1000000 - timenow.tv_usec + timeleft.tv_usec;
             timeleft.tv_sec--;
-            timeleft.tv_usec += 1000000;
+        } else {
+            timeleft.tv_usec -= timenow.tv_usec;
         }
-
-        if (timeleft.tv_sec < 0) {
+        if (timeleft.tv_sec < timenow.tv_sec) {
             timeleft.tv_sec = 0;
             timeleft.tv_usec = 1;
+        } else {
+            timeleft.tv_sec -= timenow.tv_sec;
         }
 
         /*
-         * Adjust socket timeout if next handhake message timer will expire
+         * Adjust socket timeout if next handshake message timer will expire
          * earlier.
          */
         if ((data->socket_timeout.tv_sec == 0
@@ -373,39 +353,22 @@ static int dgram_read(BIO *b, char *out, int outl)
 {
     int ret = 0;
     bio_dgram_data *data = (bio_dgram_data *)b->ptr;
+    int flags = 0;
 
-    struct {
-        /*
-         * See commentary in b_sock.c. <appro>
-         */
-        union {
-            size_t s;
-            int i;
-        } len;
-        union {
-            struct sockaddr sa;
-            struct sockaddr_in sa_in;
-# if OPENSSL_USE_IPV6
-            struct sockaddr_in6 sa_in6;
-# endif
-        } peer;
-    } sa;
-
-    sa.len.s = 0;
-    sa.len.i = sizeof(sa.peer);
+    BIO_ADDR peer;
+    socklen_t len = sizeof(peer);
 
     if (out != NULL) {
         clear_socket_error();
-        memset(&sa.peer, 0x00, sizeof(sa.peer));
+        memset(&peer, 0, sizeof(peer));
         dgram_adjust_rcv_timeout(b);
-        ret = recvfrom(b->num, out, outl, 0, &sa.peer.sa, (void *)&sa.len);
-        if (sizeof(sa.len.i) != sizeof(sa.len.s) && sa.len.i == 0) {
-            OPENSSL_assert(sa.len.s <= sizeof(sa.peer));
-            sa.len.i = (int)sa.len.s;
-        }
+        if (data->peekmode)
+            flags = MSG_PEEK;
+        ret = recvfrom(b->num, out, outl, flags,
+                       BIO_ADDR_sockaddr_noconst(&peer), &len);
 
         if (!data->connected && ret >= 0)
-            BIO_ctrl(b, BIO_CTRL_DGRAM_SET_PEER, 0, &sa.peer);
+            BIO_ctrl(b, BIO_CTRL_DGRAM_SET_PEER, 0, &peer);
 
         BIO_clear_retry_flags(b);
         if (ret < 0) {
@@ -429,18 +392,14 @@ static int dgram_write(BIO *b, const char *in, int inl)
     if (data->connected)
         ret = writesocket(b->num, in, inl);
     else {
-        int peerlen = sizeof(data->peer);
+        int peerlen = BIO_ADDR_sockaddr_size(&data->peer);
 
-        if (data->peer.sa.sa_family == AF_INET)
-            peerlen = sizeof(data->peer.sa_in);
-# if OPENSSL_USE_IPV6
-        else if (data->peer.sa.sa_family == AF_INET6)
-            peerlen = sizeof(data->peer.sa_in6);
-# endif
 # if defined(NETWARE_CLIB) && defined(NETWARE_BSDSOCK)
-        ret = sendto(b->num, (char *)in, inl, 0, &data->peer.sa, peerlen);
+        ret = sendto(b->num, (char *)in, inl, 0,
+                     BIO_ADDR_sockaddr(&data->peer), peerlen);
 # else
-        ret = sendto(b->num, in, inl, 0, &data->peer.sa, peerlen);
+        ret = sendto(b->num, in, inl, 0,
+                     BIO_ADDR_sockaddr(&data->peer), peerlen);
 # endif
     }
 
@@ -458,27 +417,31 @@ static long dgram_get_mtu_overhead(bio_dgram_data *data)
 {
     long ret;
 
-    switch (data->peer.sa.sa_family) {
+    switch (BIO_ADDR_family(&data->peer)) {
     case AF_INET:
         /*
          * Assume this is UDP - 20 bytes for IP, 8 bytes for UDP
          */
         ret = 28;
         break;
-# if OPENSSL_USE_IPV6
+# ifdef AF_INET6
     case AF_INET6:
+        {
 #  ifdef IN6_IS_ADDR_V4MAPPED
-        if (IN6_IS_ADDR_V4MAPPED(&data->peer.sa_in6.sin6_addr))
-            /*
-             * Assume this is UDP - 20 bytes for IP, 8 bytes for UDP
-             */
-            ret = 28;
-        else
+            struct in6_addr tmp_addr;
+            if (BIO_ADDR_rawaddress(&data->peer, &tmp_addr, NULL)
+                && IN6_IS_ADDR_V4MAPPED(&tmp_addr))
+                /*
+                 * Assume this is UDP - 20 bytes for IP, 8 bytes for UDP
+                 */
+                ret = 28;
+            else
 #  endif
             /*
              * Assume this is UDP - 40 bytes for IP, 8 bytes for UDP
              */
             ret = 48;
+        }
         break;
 # endif
     default:
@@ -493,20 +456,14 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
 {
     long ret = 1;
     int *ip;
-    struct sockaddr *to = NULL;
     bio_dgram_data *data = NULL;
     int sockopt_val = 0;
+    int d_errno;
 # if defined(OPENSSL_SYS_LINUX) && (defined(IP_MTU_DISCOVER) || defined(IP_MTU))
     socklen_t sockopt_len;      /* assume that system supporting IP_MTU is
                                  * modern enough to define socklen_t */
     socklen_t addr_len;
-    union {
-        struct sockaddr sa;
-        struct sockaddr_in s4;
-#  if OPENSSL_USE_IPV6
-        struct sockaddr_in6 s6;
-#  endif
-    } addr;
+    BIO_ADDR addr;
 # endif
 
     data = (bio_dgram_data *)b->ptr;
@@ -514,10 +471,8 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
     switch (cmd) {
     case BIO_CTRL_RESET:
         num = 0;
-    case BIO_C_FILE_SEEK:
         ret = 0;
         break;
-    case BIO_C_FILE_TELL:
     case BIO_CTRL_INFO:
         ret = 0;
         break;
@@ -551,26 +506,13 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
         ret = 1;
         break;
     case BIO_CTRL_DGRAM_CONNECT:
-        to = (struct sockaddr *)ptr;
-        switch (to->sa_family) {
-        case AF_INET:
-            memcpy(&data->peer, to, sizeof(data->peer.sa_in));
-            break;
-# if OPENSSL_USE_IPV6
-        case AF_INET6:
-            memcpy(&data->peer, to, sizeof(data->peer.sa_in6));
-            break;
-# endif
-        default:
-            memcpy(&data->peer, to, sizeof(data->peer.sa));
-            break;
-        }
+        BIO_ADDR_make(&data->peer, BIO_ADDR_sockaddr((BIO_ADDR *)ptr));
         break;
         /* (Linux)kernel sets DF bit on outgoing IP packets */
     case BIO_CTRL_DGRAM_MTU_DISCOVER:
 # if defined(OPENSSL_SYS_LINUX) && defined(IP_MTU_DISCOVER) && defined(IP_PMTUDISC_DO)
         addr_len = (socklen_t) sizeof(addr);
-        memset((void *)&addr, 0, sizeof(addr));
+        memset(&addr, 0, sizeof(addr));
         if (getsockname(b->num, &addr.sa, &addr_len) < 0) {
             ret = 0;
             break;
@@ -601,7 +543,7 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
     case BIO_CTRL_DGRAM_QUERY_MTU:
 # if defined(OPENSSL_SYS_LINUX) && defined(IP_MTU)
         addr_len = (socklen_t) sizeof(addr);
-        memset((void *)&addr, 0, sizeof(addr));
+        memset(&addr, 0, sizeof(addr));
         if (getsockname(b->num, &addr.sa, &addr_len) < 0) {
             ret = 0;
             break;
@@ -649,18 +591,22 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
         break;
     case BIO_CTRL_DGRAM_GET_FALLBACK_MTU:
         ret = -dgram_get_mtu_overhead(data);
-        switch (data->peer.sa.sa_family) {
+        switch (BIO_ADDR_family(&data->peer)) {
         case AF_INET:
             ret += 576;
             break;
 # if OPENSSL_USE_IPV6
         case AF_INET6:
+            {
 #  ifdef IN6_IS_ADDR_V4MAPPED
-            if (IN6_IS_ADDR_V4MAPPED(&data->peer.sa_in6.sin6_addr))
-                ret += 576;
-            else
+                struct in6_addr tmp_addr;
+                if (BIO_ADDR_rawaddress(&data->peer, &tmp_addr, NULL)
+                    && IN6_IS_ADDR_V4MAPPED(&tmp_addr))
+                    ret += 576;
+                else
 #  endif
-                ret += 1280;
+                    ret += 1280;
+            }
             break;
 # endif
         default:
@@ -675,61 +621,24 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
         ret = num;
         break;
     case BIO_CTRL_DGRAM_SET_CONNECTED:
-        to = (struct sockaddr *)ptr;
-
-        if (to != NULL) {
+        if (ptr != NULL) {
             data->connected = 1;
-            switch (to->sa_family) {
-            case AF_INET:
-                memcpy(&data->peer, to, sizeof(data->peer.sa_in));
-                break;
-# if OPENSSL_USE_IPV6
-            case AF_INET6:
-                memcpy(&data->peer, to, sizeof(data->peer.sa_in6));
-                break;
-# endif
-            default:
-                memcpy(&data->peer, to, sizeof(data->peer.sa));
-                break;
-            }
+            BIO_ADDR_make(&data->peer, BIO_ADDR_sockaddr((BIO_ADDR *)ptr));
         } else {
             data->connected = 0;
-            memset(&(data->peer), 0x00, sizeof(data->peer));
+            memset(&data->peer, 0, sizeof(data->peer));
         }
         break;
     case BIO_CTRL_DGRAM_GET_PEER:
-        switch (data->peer.sa.sa_family) {
-        case AF_INET:
-            ret = sizeof(data->peer.sa_in);
-            break;
-# if OPENSSL_USE_IPV6
-        case AF_INET6:
-            ret = sizeof(data->peer.sa_in6);
-            break;
-# endif
-        default:
-            ret = sizeof(data->peer.sa);
-            break;
-        }
+        ret = BIO_ADDR_sockaddr_size(&data->peer);
+        /* FIXME: if num < ret, we will only return part of an address.
+           That should bee an error, no? */
         if (num == 0 || num > ret)
             num = ret;
         memcpy(ptr, &data->peer, (ret = num));
         break;
     case BIO_CTRL_DGRAM_SET_PEER:
-        to = (struct sockaddr *)ptr;
-        switch (to->sa_family) {
-        case AF_INET:
-            memcpy(&data->peer, to, sizeof(data->peer.sa_in));
-            break;
-# if OPENSSL_USE_IPV6
-        case AF_INET6:
-            memcpy(&data->peer, to, sizeof(data->peer.sa_in6));
-            break;
-# endif
-        default:
-            memcpy(&data->peer, to, sizeof(data->peer.sa));
-            break;
-        }
+        BIO_ADDR_make(&data->peer, BIO_ADDR_sockaddr((BIO_ADDR *)ptr));
         break;
     case BIO_CTRL_DGRAM_SET_NEXT_TIMEOUT:
         memcpy(&(data->next_timeout), ptr, sizeof(struct timeval));
@@ -852,11 +761,11 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
         /* fall-through */
     case BIO_CTRL_DGRAM_GET_RECV_TIMER_EXP:
 # ifdef OPENSSL_SYS_WINDOWS
-        if (data->_errno == WSAETIMEDOUT)
+        d_errno = (data->_errno == WSAETIMEDOUT);
 # else
-        if (data->_errno == EAGAIN)
+        d_errno = (data->_errno == EAGAIN);
 # endif
-        {
+        if (d_errno) {
             ret = 1;
             data->_errno = 0;
         } else
@@ -882,7 +791,7 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
                 perror("setsockopt");
                 ret = -1;
             }
-# elif defined(OPENSSL_SYS_LINUX) && defined(IP_MTUDISCOVER)
+# elif defined(OPENSSL_SYS_LINUX) && defined(IP_MTU_DISCOVER) && defined (IP_PMTUDISC_PROBE)
             if ((sockopt_val = num ? IP_PMTUDISC_PROBE : IP_PMTUDISC_DONT),
                 (ret = setsockopt(b->num, IPPROTO_IP, IP_MTU_DISCOVER,
                                   &sockopt_val, sizeof(sockopt_val))) < 0) {
@@ -928,6 +837,9 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
         break;
     case BIO_CTRL_DGRAM_GET_MTU_OVERHEAD:
         ret = dgram_get_mtu_overhead(data);
+        break;
+    case BIO_CTRL_DGRAM_SET_PEEK_MODE:
+        data->peekmode = (unsigned int)num;
         break;
     default:
         ret = 0;
@@ -997,12 +909,13 @@ BIO *BIO_new_dgram_sctp(int fd, int close_flag)
      * connected socket won't use it.
      */
     sockopt_len = (socklen_t) (sizeof(sctp_assoc_t) + 256 * sizeof(uint8_t));
-    authchunks = OPENSSL_malloc(sockopt_len);
-    memset(authchunks, 0, sockopt_len);
-    ret =
-        getsockopt(fd, IPPROTO_SCTP, SCTP_LOCAL_AUTH_CHUNKS, authchunks,
+    authchunks = OPENSSL_zalloc(sockopt_len);
+    if (authchunks == NULL) {
+        BIO_vfree(bio);
+        return (NULL);
+    }
+    ret = getsockopt(fd, IPPROTO_SCTP, SCTP_LOCAL_AUTH_CHUNKS, authchunks,
                    &sockopt_len);
-
     if (ret < 0) {
         OPENSSL_free(authchunks);
         BIO_vfree(bio);
@@ -1025,7 +938,7 @@ BIO *BIO_new_dgram_sctp(int fd, int close_flag)
 
 #  ifdef SCTP_AUTHENTICATION_EVENT
 #   ifdef SCTP_EVENT
-    memset(&event, 0, sizeof(struct sctp_event));
+    memset(&event, 0, sizeof(event));
     event.se_assoc_id = 0;
     event.se_type = SCTP_AUTHENTICATION_EVENT;
     event.se_on = 1;
@@ -1082,10 +995,9 @@ static int dgram_sctp_new(BIO *bi)
 
     bi->init = 0;
     bi->num = 0;
-    data = OPENSSL_malloc(sizeof(bio_dgram_sctp_data));
+    data = OPENSSL_zalloc(sizeof(*data));
     if (data == NULL)
         return 0;
-    memset(data, 0x00, sizeof(bio_dgram_sctp_data));
 #  ifdef SCTP_PR_SCTP_NONE
     data->prinfo.pr_policy = SCTP_PR_SCTP_NONE;
 #  endif
@@ -1106,8 +1018,7 @@ static int dgram_sctp_free(BIO *a)
 
     data = (bio_dgram_sctp_data *) a->ptr;
     if (data != NULL) {
-        if (data->saved_message.data != NULL)
-            OPENSSL_free(data->saved_message.data);
+        OPENSSL_free(data->saved_message.data);
         OPENSSL_free(data);
     }
 
@@ -1147,8 +1058,7 @@ static int dgram_sctp_read(BIO *b, char *out, int outl)
         clear_socket_error();
 
         do {
-            memset(&data->rcvinfo, 0x00,
-                   sizeof(struct bio_dgram_sctp_rcvinfo));
+            memset(&data->rcvinfo, 0, sizeof(data->rcvinfo));
             iov.iov_base = out;
             iov.iov_len = outl;
             msg.msg_name = NULL;
@@ -1217,9 +1127,13 @@ static int dgram_sctp_read(BIO *b, char *out, int outl)
                      * it can be sent now.
                      */
                     if (data->saved_message.length > 0) {
-                        dgram_sctp_write(data->saved_message.bio,
+                        i = dgram_sctp_write(data->saved_message.bio,
                                          data->saved_message.data,
                                          data->saved_message.length);
+                        if (i < 0) {
+                            ret = i;
+                            break;
+                        }
                         OPENSSL_free(data->saved_message.data);
                         data->saved_message.data = NULL;
                         data->saved_message.length = 0;
@@ -1227,7 +1141,7 @@ static int dgram_sctp_read(BIO *b, char *out, int outl)
 
                     /* disable sender dry event */
 #  ifdef SCTP_EVENT
-                    memset(&event, 0, sizeof(struct sctp_event));
+                    memset(&event, 0, sizeof(event));
                     event.se_assoc_id = 0;
                     event.se_type = SCTP_SENDER_DRY_EVENT;
                     event.se_on = 0;
@@ -1333,6 +1247,10 @@ static int dgram_sctp_read(BIO *b, char *out, int outl)
             optlen =
                 (socklen_t) (sizeof(sctp_assoc_t) + 256 * sizeof(uint8_t));
             authchunks = OPENSSL_malloc(optlen);
+            if (authchunks == NULL) {
+                BIOerr(BIO_F_DGRAM_SCTP_READ, ERR_R_MALLOC_FAILURE);
+                return -1;
+            }
             memset(authchunks, 0, optlen);
             ii = getsockopt(b->num, IPPROTO_SCTP, SCTP_PEER_AUTH_CHUNKS,
                             authchunks, &optlen);
@@ -1360,6 +1278,14 @@ static int dgram_sctp_read(BIO *b, char *out, int outl)
     return (ret);
 }
 
+/*
+ * dgram_sctp_write - send message on SCTP socket
+ * @b: BIO to write to
+ * @in: data to send
+ * @inl: amount of bytes in @in to send
+ *
+ * Returns -1 on error or the sent amount of bytes on success
+ */
 static int dgram_sctp_write(BIO *b, const char *in, int inl)
 {
     int ret;
@@ -1387,7 +1313,7 @@ static int dgram_sctp_write(BIO *b, const char *in, int inl)
      * parameters and flags.
      */
     if (in[0] != 23) {
-        memset(&handshake_sinfo, 0x00, sizeof(struct bio_dgram_sctp_sndinfo));
+        memset(&handshake_sinfo, 0, sizeof(handshake_sinfo));
 #  ifdef SCTP_SACK_IMMEDIATELY
         handshake_sinfo.snd_flags = SCTP_SACK_IMMEDIATELY;
 #  endif
@@ -1398,14 +1324,24 @@ static int dgram_sctp_write(BIO *b, const char *in, int inl)
      * If we have to send a shutdown alert message and the socket is not dry
      * yet, we have to save it and send it as soon as the socket gets dry.
      */
-    if (data->save_shutdown && !BIO_dgram_sctp_wait_for_dry(b)) {
-        data->saved_message.bio = b;
-        if (data->saved_message.data)
+    if (data->save_shutdown) {
+        ret = BIO_dgram_sctp_wait_for_dry(b);
+        if (ret < 0) {
+            return -1;
+        }
+        if (ret == 0) {
+            char *tmp;
+            data->saved_message.bio = b;
+            if ((tmp = OPENSSL_malloc(inl)) == NULL) {
+                BIOerr(BIO_F_DGRAM_SCTP_WRITE, ERR_R_MALLOC_FAILURE);
+                return -1;
+            }
             OPENSSL_free(data->saved_message.data);
-        data->saved_message.data = OPENSSL_malloc(inl);
-        memcpy(data->saved_message.data, in, inl);
-        data->saved_message.length = inl;
-        return inl;
+            data->saved_message.data = tmp;
+            memcpy(data->saved_message.data, in, inl);
+            data->saved_message.length = inl;
+            return inl;
+        }
     }
 
     iov[0].iov_base = (char *)in;
@@ -1423,7 +1359,7 @@ static int dgram_sctp_write(BIO *b, const char *in, int inl)
     cmsg->cmsg_type = SCTP_SNDINFO;
     cmsg->cmsg_len = CMSG_LEN(sizeof(struct sctp_sndinfo));
     sndinfo = (struct sctp_sndinfo *)CMSG_DATA(cmsg);
-    memset(sndinfo, 0, sizeof(struct sctp_sndinfo));
+    memset(sndinfo, 0, sizeof(*sndinfo));
     sndinfo->snd_sid = sinfo->snd_sid;
     sndinfo->snd_flags = sinfo->snd_flags;
     sndinfo->snd_ppid = sinfo->snd_ppid;
@@ -1436,7 +1372,7 @@ static int dgram_sctp_write(BIO *b, const char *in, int inl)
     cmsg->cmsg_type = SCTP_PRINFO;
     cmsg->cmsg_len = CMSG_LEN(sizeof(struct sctp_prinfo));
     prinfo = (struct sctp_prinfo *)CMSG_DATA(cmsg);
-    memset(prinfo, 0, sizeof(struct sctp_prinfo));
+    memset(prinfo, 0, sizeof(*prinfo));
     prinfo->pr_policy = pinfo->pr_policy;
     prinfo->pr_value = pinfo->pr_value;
     msg.msg_controllen += CMSG_SPACE(sizeof(struct sctp_prinfo));
@@ -1446,7 +1382,7 @@ static int dgram_sctp_write(BIO *b, const char *in, int inl)
     cmsg->cmsg_type = SCTP_SNDRCV;
     cmsg->cmsg_len = CMSG_LEN(sizeof(struct sctp_sndrcvinfo));
     sndrcvinfo = (struct sctp_sndrcvinfo *)CMSG_DATA(cmsg);
-    memset(sndrcvinfo, 0, sizeof(struct sctp_sndrcvinfo));
+    memset(sndrcvinfo, 0, sizeof(*sndrcvinfo));
     sndrcvinfo->sinfo_stream = sinfo->snd_sid;
     sndrcvinfo->sinfo_flags = sinfo->snd_flags;
 #   ifdef __FreeBSD__
@@ -1543,7 +1479,7 @@ static long dgram_sctp_ctrl(BIO *b, int cmd, long num, void *ptr)
             ret = -1;
             break;
         }
-        memset(authkey, 0x00, sockopt_len);
+        memset(authkey, 0, sockopt_len);
         authkey->sca_keynumber = authkeyid.scact_keynumber + 1;
 #  ifndef __FreeBSD__
         /*
@@ -1723,10 +1659,24 @@ int BIO_dgram_sctp_notification_cb(BIO *b,
     return 0;
 }
 
+/*
+ * BIO_dgram_sctp_wait_for_dry - Wait for SCTP SENDER_DRY event
+ * @b: The BIO to check for the dry event
+ *
+ * Wait until the peer confirms all packets have been received, and so that
+ * our kernel doesn't have anything to send anymore.  This is only received by
+ * the peer's kernel, not the application.
+ *
+ * Returns:
+ * -1 on error
+ *  0 when not dry yet
+ *  1 when dry
+ */
 int BIO_dgram_sctp_wait_for_dry(BIO *b)
 {
     int is_dry = 0;
-    int n, sockflags, ret;
+    int sockflags = 0;
+    int n, ret;
     union sctp_notification snp;
     struct msghdr msg;
     struct iovec iov;
@@ -1740,7 +1690,7 @@ int BIO_dgram_sctp_wait_for_dry(BIO *b)
 
     /* set sender dry event */
 #  ifdef SCTP_EVENT
-    memset(&event, 0, sizeof(struct sctp_event));
+    memset(&event, 0, sizeof(event));
     event.se_assoc_id = 0;
     event.se_type = SCTP_SENDER_DRY_EVENT;
     event.se_on = 1;
@@ -1763,7 +1713,7 @@ int BIO_dgram_sctp_wait_for_dry(BIO *b)
         return -1;
 
     /* peek for notification */
-    memset(&snp, 0x00, sizeof(union sctp_notification));
+    memset(&snp, 0, sizeof(snp));
     iov.iov_base = (char *)&snp;
     iov.iov_len = sizeof(union sctp_notification);
     msg.msg_name = NULL;
@@ -1785,7 +1735,7 @@ int BIO_dgram_sctp_wait_for_dry(BIO *b)
 
     /* if we find a notification, process it and try again if necessary */
     while (msg.msg_flags & MSG_NOTIFICATION) {
-        memset(&snp, 0x00, sizeof(union sctp_notification));
+        memset(&snp, 0, sizeof(snp));
         iov.iov_base = (char *)&snp;
         iov.iov_len = sizeof(union sctp_notification);
         msg.msg_name = NULL;
@@ -1810,7 +1760,7 @@ int BIO_dgram_sctp_wait_for_dry(BIO *b)
 
             /* disable sender dry event */
 #  ifdef SCTP_EVENT
-            memset(&event, 0, sizeof(struct sctp_event));
+            memset(&event, 0, sizeof(event));
             event.se_assoc_id = 0;
             event.se_type = SCTP_SENDER_DRY_EVENT;
             event.se_on = 0;
@@ -1844,7 +1794,7 @@ int BIO_dgram_sctp_wait_for_dry(BIO *b)
                                        (void *)&snp);
 
         /* found notification, peek again */
-        memset(&snp, 0x00, sizeof(union sctp_notification));
+        memset(&snp, 0, sizeof(snp));
         iov.iov_base = (char *)&snp;
         iov.iov_len = sizeof(union sctp_notification);
         msg.msg_name = NULL;
@@ -1890,7 +1840,7 @@ int BIO_dgram_sctp_msg_waiting(BIO *b)
 
     /* Check if there are any messages waiting to be read */
     do {
-        memset(&snp, 0x00, sizeof(union sctp_notification));
+        memset(&snp, 0, sizeof(snp));
         iov.iov_base = (char *)&snp;
         iov.iov_len = sizeof(union sctp_notification);
         msg.msg_name = NULL;
@@ -1913,7 +1863,7 @@ int BIO_dgram_sctp_msg_waiting(BIO *b)
                 dgram_sctp_handle_auth_free_key_event(b, &snp);
 #  endif
 
-            memset(&snp, 0x00, sizeof(union sctp_notification));
+            memset(&snp, 0, sizeof(snp));
             iov.iov_base = (char *)&snp;
             iov.iov_len = sizeof(union sctp_notification);
             msg.msg_name = NULL;

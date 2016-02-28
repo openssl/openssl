@@ -41,11 +41,11 @@ The library number, function code and reason code respectively.
 
 =head1 SEE ALSO
 
-L<err(3)|err(3)>, L<ERR_get_error(3)|ERR_get_error(3)>
+L<err(3)>, L<ERR_get_error(3)>
 
 =head1 HISTORY
 
 ERR_GET_LIB(), ERR_GET_FUNC() and ERR_GET_REASON() are available in
-all versions of SSLeay and OpenSSL.
+all versions of OpenSSL.
 
 =cut

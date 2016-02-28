@@ -40,7 +40,12 @@
 * (2) University of Haifa, Israel                                            *
 *****************************************************************************/
 
+#include <openssl/opensslconf.h>
 #include "rsaz_exp.h"
+
+#ifndef RSAZ_ENABLED
+NON_EMPTY_TRANSLATION_UNIT
+#else
 
 /*
  * See crypto/bn/asm/rsaz-avx2.pl for further details.
@@ -334,3 +339,5 @@ void RSAZ_512_mod_exp(BN_ULONG result[8],
 
     OPENSSL_cleanse(storage, sizeof(storage));
 }
+
+#endif

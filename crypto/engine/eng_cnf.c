@@ -1,4 +1,3 @@
-/* eng_cnf.c */
 /*
  * Written by Stephen Henson (steve@openssl.org) for the OpenSSL project
  * 2001.
@@ -124,12 +123,12 @@ static int int_engine_configure(char *name, char *value, const CONF *cnf)
         /* First handle some special pseudo ctrls */
 
         /* Override engine name to use */
-        if (!strcmp(ctrlname, "engine_id"))
+        if (strcmp(ctrlname, "engine_id") == 0)
             name = ctrlvalue;
-        else if (!strcmp(ctrlname, "soft_load"))
+        else if (strcmp(ctrlname, "soft_load") == 0)
             soft = 1;
         /* Load a dynamic ENGINE */
-        else if (!strcmp(ctrlname, "dynamic_path")) {
+        else if (strcmp(ctrlname, "dynamic_path") == 0) {
             e = ENGINE_by_id("dynamic");
             if (!e)
                 goto err;
@@ -159,9 +158,9 @@ static int int_engine_configure(char *name, char *value, const CONF *cnf)
              * Allow "EMPTY" to mean no value: this allows a valid "value" to
              * be passed to ctrls of type NO_INPUT
              */
-            if (!strcmp(ctrlvalue, "EMPTY"))
+            if (strcmp(ctrlvalue, "EMPTY") == 0)
                 ctrlvalue = NULL;
-            if (!strcmp(ctrlname, "init")) {
+            if (strcmp(ctrlname, "init") == 0) {
                 if (!NCONF_get_number_e(cnf, value, "init", &do_init))
                     goto err;
                 if (do_init == 1) {
@@ -172,7 +171,7 @@ static int int_engine_configure(char *name, char *value, const CONF *cnf)
                               ENGINE_R_INVALID_INIT_VALUE);
                     goto err;
                 }
-            } else if (!strcmp(ctrlname, "default_algorithms")) {
+            } else if (strcmp(ctrlname, "default_algorithms") == 0) {
                 if (!ENGINE_set_default_string(e, ctrlvalue))
                     goto err;
             } else if (!ENGINE_ctrl_cmd_string(e, ctrlname, ctrlvalue, 0))
@@ -194,8 +193,7 @@ static int int_engine_configure(char *name, char *value, const CONF *cnf)
                                ", name=", ecmd->name,
                                ", value=", ecmd->value);
     }
-    if (e)
-        ENGINE_free(e);
+    ENGINE_free(e);
     return ret;
 }
 
@@ -229,6 +227,7 @@ static int int_engine_module_init(CONF_IMODULE *md, const CONF *cnf)
 static void int_engine_module_finish(CONF_IMODULE *md)
 {
     ENGINE *e;
+
     while ((e = sk_ENGINE_pop(initialized_engines)))
         ENGINE_finish(e);
     sk_ENGINE_free(initialized_engines);

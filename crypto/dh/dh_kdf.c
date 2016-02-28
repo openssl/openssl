@@ -1,4 +1,3 @@
-/* crypto/dh/dh_kdf.c */
 /*
  * Written by Stephen Henson for the OpenSSL project.
  */
@@ -51,13 +50,18 @@
  * ====================================================================
  */
 
+#include <e_os.h>
+
+#ifndef OPENSSL_NO_CMS
 #include <string.h>
 #include <openssl/dh.h>
 #include <openssl/evp.h>
 #include <openssl/asn1.h>
 #include <openssl/cms.h>
 
+
 /* Key derivation from X9.42/RFC2631 */
+/* Uses CMS functions, hence the #ifdef wrapper. */
 
 #define DH_KDF_MAX      (1L << 30)
 
@@ -139,7 +143,7 @@ int DH_KDF_X9_42(unsigned char *out, size_t outlen,
                  ASN1_OBJECT *key_oid,
                  const unsigned char *ukm, size_t ukmlen, const EVP_MD *md)
 {
-    EVP_MD_CTX mctx;
+    EVP_MD_CTX *mctx = NULL;
     int rv = 0;
     unsigned int i;
     size_t mdlen;
@@ -147,31 +151,33 @@ int DH_KDF_X9_42(unsigned char *out, size_t outlen,
     int derlen;
     if (Zlen > DH_KDF_MAX)
         return 0;
+    mctx = EVP_MD_CTX_new();
+    if (mctx == NULL)
+        return 0;
     mdlen = EVP_MD_size(md);
-    EVP_MD_CTX_init(&mctx);
     derlen = dh_sharedinfo_encode(&der, &ctr, key_oid, outlen, ukm, ukmlen);
     if (derlen == 0)
         goto err;
     for (i = 1;; i++) {
         unsigned char mtmp[EVP_MAX_MD_SIZE];
-        EVP_DigestInit_ex(&mctx, md, NULL);
-        if (!EVP_DigestUpdate(&mctx, Z, Zlen))
+        EVP_DigestInit_ex(mctx, md, NULL);
+        if (!EVP_DigestUpdate(mctx, Z, Zlen))
             goto err;
         ctr[3] = i & 0xFF;
         ctr[2] = (i >> 8) & 0xFF;
         ctr[1] = (i >> 16) & 0xFF;
         ctr[0] = (i >> 24) & 0xFF;
-        if (!EVP_DigestUpdate(&mctx, der, derlen))
+        if (!EVP_DigestUpdate(mctx, der, derlen))
             goto err;
         if (outlen >= mdlen) {
-            if (!EVP_DigestFinal(&mctx, out, NULL))
+            if (!EVP_DigestFinal(mctx, out, NULL))
                 goto err;
             outlen -= mdlen;
             if (outlen == 0)
                 break;
             out += mdlen;
         } else {
-            if (!EVP_DigestFinal(&mctx, mtmp, NULL))
+            if (!EVP_DigestFinal(mctx, mtmp, NULL))
                 goto err;
             memcpy(out, mtmp, outlen);
             OPENSSL_cleanse(mtmp, mdlen);
@@ -180,8 +186,8 @@ int DH_KDF_X9_42(unsigned char *out, size_t outlen,
     }
     rv = 1;
  err:
-    if (der)
-        OPENSSL_free(der);
-    EVP_MD_CTX_cleanup(&mctx);
+    OPENSSL_free(der);
+    EVP_MD_CTX_free(mctx);
     return rv;
 }
+#endif

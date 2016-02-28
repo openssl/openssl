@@ -1,4 +1,3 @@
-/* ssl/ssl_txt.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -92,7 +91,7 @@ int SSL_SESSION_print_fp(FILE *fp, const SSL_SESSION *x)
     BIO *b;
     int ret;
 
-    if ((b = BIO_new(BIO_s_file_internal())) == NULL) {
+    if ((b = BIO_new(BIO_s_file())) == NULL) {
         SSLerr(SSL_F_SSL_SESSION_PRINT_FP, ERR_R_BUF_LIB);
         return (0);
     }
@@ -165,18 +164,6 @@ int SSL_SESSION_print(BIO *bp, const SSL_SESSION *x)
         if (BIO_printf(bp, "%02X", x->master_key[i]) <= 0)
             goto err;
     }
-#ifndef OPENSSL_NO_KRB5
-    if (BIO_puts(bp, "\n    Krb5 Principal: ") <= 0)
-        goto err;
-    if (x->krb5_client_princ_len == 0) {
-        if (BIO_puts(bp, "None") <= 0)
-            goto err;
-    } else
-        for (i = 0; i < x->krb5_client_princ_len; i++) {
-            if (BIO_printf(bp, "%02X", x->krb5_client_princ[i]) <= 0)
-                goto err;
-        }
-#endif                          /* OPENSSL_NO_KRB5 */
 #ifndef OPENSSL_NO_PSK
     if (BIO_puts(bp, "\n    PSK identity: ") <= 0)
         goto err;
@@ -194,7 +181,6 @@ int SSL_SESSION_print(BIO *bp, const SSL_SESSION *x)
     if (BIO_printf(bp, "%s", x->srp_username ? x->srp_username : "None") <= 0)
         goto err;
 #endif
-#ifndef OPENSSL_NO_TLSEXT
     if (x->tlsext_tick_lifetime_hint) {
         if (BIO_printf(bp,
                        "\n    TLS session ticket lifetime hint: %ld (seconds)",
@@ -208,21 +194,20 @@ int SSL_SESSION_print(BIO *bp, const SSL_SESSION *x)
             <= 0)
             goto err;
     }
-#endif
 
 #ifndef OPENSSL_NO_COMP
     if (x->compress_meth != 0) {
         SSL_COMP *comp = NULL;
 
-        ssl_cipher_get_evp(x, NULL, NULL, NULL, NULL, &comp, 0);
+        if (!ssl_cipher_get_evp(x, NULL, NULL, NULL, NULL, &comp, 0))
+            goto err;
         if (comp == NULL) {
             if (BIO_printf(bp, "\n    Compression: %d", x->compress_meth) <=
                 0)
                 goto err;
         } else {
-            if (BIO_printf
-                (bp, "\n    Compression: %d (%s)", comp->id,
-                 comp->method->name) <= 0)
+            if (BIO_printf(bp, "\n    Compression: %d (%s)", comp->id,
+                 comp->name) <= 0)
                 goto err;
         }
     }

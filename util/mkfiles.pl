@@ -34,8 +34,6 @@ my @dirs = (
 "crypto/dso",
 "crypto/dh",
 "crypto/ec",
-"crypto/ecdh",
-"crypto/ecdsa",
 "crypto/buffer",
 "crypto/bio",
 "crypto/stack",
@@ -50,7 +48,6 @@ my @dirs = (
 "crypto/x509v3",
 "crypto/cms",
 "crypto/conf",
-"crypto/jpake",
 "crypto/txt_db",
 "crypto/pkcs7",
 "crypto/pkcs12",
@@ -58,16 +55,18 @@ my @dirs = (
 "crypto/engine",
 "crypto/ocsp",
 "crypto/ui",
-"crypto/krb5",
 #"crypto/store",
-"crypto/pqueue",
 "crypto/whrlpool",
 "crypto/ts",
 "crypto/srp",
+"crypto/ct",
+"crypto/async",
+"crypto/chacha",
+"crypto/poly1305",
+"crypto/kdf",
 "ssl",
 "apps",
 "engines",
-"engines/ccgost",
 "test",
 "tools"
 );
@@ -95,7 +94,7 @@ my $s="";
 
 while (<IN>)
 	{
-	chop;
+	s|\R$||;
 	s/#.*//;
 	if (/^([^\s=]+)\s*=\s*(.*)$/)
 		{
@@ -105,10 +104,10 @@ while (<IN>)
 			{
 			if ($b =~ /\\$/)
 				{
-				chop($b);
+				$b=$`;
 				$o.=$b." ";
-				$b=<IN>;
-				chop($b);
+				$b = "" unless defined($b = <IN>);
+				$b =~ s{\R$}{};
 				}
 			else
 				{

@@ -22,10 +22,6 @@ functions.
 	BN_CTX *ctx);
  int BN_BLINDING_invert_ex(BIGNUM *n, const BIGNUM *r, BN_BLINDING *b,
 	BN_CTX *ctx);
- #ifndef OPENSSL_NO_DEPRECATED
- unsigned long BN_BLINDING_get_thread_id(const BN_BLINDING *);
- void BN_BLINDING_set_thread_id(BN_BLINDING *, unsigned long);
- #endif
  CRYPTO_THREADID *BN_BLINDING_thread_id(BN_BLINDING *);
  unsigned long BN_BLINDING_get_flags(const BN_BLINDING *);
  void BN_BLINDING_set_flags(BN_BLINDING *, unsigned long);
@@ -35,12 +31,20 @@ functions.
 			  const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx),
 	BN_MONT_CTX *m_ctx);
 
+Deprecated:
+
+ #if OPENSSL_API_COMPAT < 0x10000000L
+ unsigned long BN_BLINDING_get_thread_id(const BN_BLINDING *);
+ void BN_BLINDING_set_thread_id(BN_BLINDING *, unsigned long);
+ #endif
+
 =head1 DESCRIPTION
 
 BN_BLINDING_new() allocates a new B<BN_BLINDING> structure and copies
 the B<A> and B<Ai> values into the newly created B<BN_BLINDING> object.
 
 BN_BLINDING_free() frees the B<BN_BLINDING> structure.
+If B<b> is NULL, nothing is done.
 
 BN_BLINDING_update() updates the B<BN_BLINDING> parameters by squaring
 the B<A> and B<Ai> or, after specific number of uses and if the
@@ -97,19 +101,11 @@ parameters or NULL on error.
 
 =head1 SEE ALSO
 
-L<bn(3)|bn(3)>
+L<bn(3)>
 
 =head1 HISTORY
 
-BN_BLINDING_thread_id was first introduced in OpenSSL 1.0.0, and it
-deprecates BN_BLINDING_set_thread_id and BN_BLINDING_get_thread_id.
-
-BN_BLINDING_convert_ex, BN_BLINDIND_invert_ex, BN_BLINDING_get_thread_id,
-BN_BLINDING_set_thread_id, BN_BLINDING_set_flags, BN_BLINDING_get_flags
-and BN_BLINDING_create_param were first introduced in OpenSSL 0.9.8
-
-=head1 AUTHOR
-
-Nils Larsch for the OpenSSL project (http://www.openssl.org).
+BN_BLINDING_thread_id() was first introduced in OpenSSL 1.0.0, and it
+deprecates BN_BLINDING_set_thread_id() and BN_BLINDING_get_thread_id().
 
 =cut

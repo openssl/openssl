@@ -8,11 +8,12 @@ ts - Time Stamping Authority tool (client/server)
 
 B<openssl> B<ts>
 B<-query>
+[B<-help>]
 [B<-rand> file:file...]
 [B<-config> configfile]
 [B<-data> file_to_hash]
 [B<-digest> digest_bytes]
-[B<-md2>|B<-md4>|B<-md5>|B<-sha>|B<-sha1>|B<-mdc2>|B<-ripemd160>|B<...>]
+[B<-[digest]>]
 [B<-policy> object_id]
 [B<-no_nonce>]
 [B<-cert>]
@@ -28,6 +29,7 @@ B<-reply>
 [B<-passin> password_src]
 [B<-signer> tsa_cert.pem]
 [B<-inkey> private.pem]
+[B<-sha1|-sha224|-sha256|-sha384|-sha512>]
 [B<-chain> certs_file.pem]
 [B<-policy> object_id]
 [B<-in> response.tsr]
@@ -98,6 +100,10 @@ request with the following options:
 
 =over 4
 
+=item B<-help>
+
+Print out a usage message.
+
 =item B<-rand> file:file...
 
 The files containing random data for seeding the random number
@@ -121,13 +127,13 @@ parameter is specified. (Optional)
 It is possible to specify the message imprint explicitly without the data
 file. The imprint must be specified in a hexadecimal format, two characters
 per byte, the bytes optionally separated by colons (e.g. 1A:F6:01:... or
-1AF601...). The number of bytes must match the message digest algorithm 
+1AF601...). The number of bytes must match the message digest algorithm
 in use. (Optional)
 
-=item B<-md2>|B<-md4>|B<-md5>|B<-sha>|B<-sha1>|B<-mdc2>|B<-ripemd160>|B<...>
+=item B<-[digest]>
 
-The message digest to apply to the data file, it supports all the message
-digest algorithms that are supported by the openssl B<dgst> command.
+The message digest to apply to the data file.
+Any digest supported by the OpenSSL B<dgst> command can be used.
 The default is SHA-1. (Optional)
 
 =item B<-policy> object_id
@@ -189,7 +195,7 @@ OPTIONS> for configurable variables. (Optional)
 
 =item B<-section> tsa_section
 
-The name of the config file section conatining the settings for the
+The name of the config file section containing the settings for the
 response generation. If not specified the default TSA section is
 used, see B<CONFIGURATION FILE OPTIONS> for details. (Optional)
 
@@ -200,7 +206,7 @@ The name of the file containing a DER encoded time stamp request. (Optional)
 =item B<-passin> password_src
 
 Specifies the password source for the private key of the TSA. See
-B<PASS PHRASE ARGUMENTS> in L<openssl(1)|openssl(1)>. (Optional)
+B<PASS PHRASE ARGUMENTS> in L<openssl(1)>. (Optional)
 
 =item B<-signer> tsa_cert.pem
 
@@ -214,6 +220,11 @@ variable of the config file. (Optional)
 
 The signer private key of the TSA in PEM format. Overrides the
 B<signer_key> config file option. (Optional)
+
+=item B<-sha1|-sha224|-sha256|-sha384|-sha512>
+
+Signing digest to use. Overrides the B<signer_digest> config file
+option. (Optional)
 
 =item B<-chain> certs_file.pem
 
@@ -283,7 +294,7 @@ data file. The B<-verify> command does not use the configuration file.
 =item B<-data> file_to_hash
 
 The response or token must be verified against file_to_hash. The file
-is hashed with the message digest algorithm specified in the token. 
+is hashed with the message digest algorithm specified in the token.
 The B<-digest> and B<-queryfile> options must not be specified with this one.
 (Optional)
 
@@ -311,16 +322,16 @@ of a time stamp response (TimeStampResp). (Optional)
 
 =item B<-CApath> trusted_cert_path
 
-The name of the directory containing the trused CA certificates of the
-client. See the similar option of L<verify(1)|verify(1)> for additional
+The name of the directory containing the trusted CA certificates of the
+client. See the similar option of L<verify(1)> for additional
 details. Either this option or B<-CAfile> must be specified. (Optional)
 
 
 =item B<-CAfile> trusted_certs.pem
 
-The name of the file containing a set of trusted self-signed CA 
-certificates in PEM format. See the similar option of 
-L<verify(1)|verify(1)> for additional details. Either this option 
+The name of the file containing a set of trusted self-signed CA
+certificates in PEM format. See the similar option of
+L<verify(1)> for additional details. Either this option
 or B<-CApath> must be specified.
 (Optional)
 
@@ -337,7 +348,7 @@ all intermediate CA certificates unless the response includes them.
 =head1 CONFIGURATION FILE OPTIONS
 
 The B<-query> and B<-reply> commands make use of a configuration file
-defined by the B<OPENSSL_CONF> environment variable. See L<config(5)|config(5)>
+defined by the B<OPENSSL_CONF> environment variable. See L<config(5)>
 for a general description of the syntax of the config file. The
 B<-query> command uses only the symbolic OID names section
 and it can work without it. However, the B<-reply> command needs the
@@ -348,7 +359,7 @@ switch always overrides the settings in the config file.
 
 =over 4
 
-=item B<tsa> section, B<default_tsa>	
+=item B<tsa> section, B<default_tsa>
 
 This is the main section and it specifies the name of another section
 that contains all the options for the B<-reply> command. This default
@@ -356,15 +367,15 @@ section can be overridden with the B<-section> command line switch. (Optional)
 
 =item B<oid_file>
 
-See L<ca(1)|ca(1)> for description. (Optional)
+See L<ca(1)> for description. (Optional)
 
 =item B<oid_section>
 
-See L<ca(1)|ca(1)> for description. (Optional)
+See L<ca(1)> for description. (Optional)
 
 =item B<RANDFILE>
 
-See L<ca(1)|ca(1)> for description. (Optional)
+See L<ca(1)> for description. (Optional)
 
 =item B<serial>
 
@@ -375,8 +386,8 @@ generation a new file is created with serial number 1. (Mandatory)
 
 =item B<crypto_device>
 
-Specifies the OpenSSL engine that will be set as the default for 
-all available algorithms. The default value is builtin, you can specify 
+Specifies the OpenSSL engine that will be set as the default for
+all available algorithms. The default value is builtin, you can specify
 any other engines supported by OpenSSL (e.g. use chil for the NCipher HSM).
 (Optional)
 
@@ -395,6 +406,11 @@ option. (Optional)
 
 The private key of the TSA in PEM format. The same as the B<-inkey>
 command line option. (Optional)
+
+=item B<signer_digest>
+
+Signing digest to use. The same as the
+B<-sha1|-sha224|-sha256|-sha384|-sha512> command line option. (Optional)
 
 =item B<default_policy>
 
@@ -419,7 +435,7 @@ the components is missing zero is assumed for that field. (Optional)
 
 =item B<clock_precision_digits>
 
-Specifies the maximum number of digits, which represent the fraction of 
+Specifies the maximum number of digits, which represent the fraction of
 seconds, that  need to be included in the time field. The trailing zeroes
 must be removed from the time, so there might actually be fewer digits,
 or no fraction of seconds at all. Supported only on UNIX platforms.
@@ -458,12 +474,12 @@ overridden by the B<-config> command line option.
 =head1 EXAMPLES
 
 All the examples below presume that B<OPENSSL_CONF> is set to a proper
-configuration file, e.g. the example configuration file 
+configuration file, e.g. the example configuration file
 openssl/apps/openssl.cnf will do.
 
 =head2 Time Stamp Request
 
-To create a time stamp request for design1.txt with SHA-1 
+To create a time stamp request for design1.txt with SHA-1
 without nonce and policy and no certificate is required in the response:
 
   openssl ts -query -data design1.txt -no_nonce \
@@ -479,7 +495,7 @@ To print the content of the previous request in human readable format:
 
   openssl ts -query -in design1.tsq -text
 
-To create a time stamp request which includes the MD-5 digest 
+To create a time stamp request which includes the MD-5 digest
 of design2.txt, requests the signer certificate and nonce,
 specifies a policy id (assuming the tsa_policy1 name is defined in the
 OID section of the config file):
@@ -493,8 +509,8 @@ Before generating a response a signing certificate must be created for
 the TSA that contains the B<timeStamping> critical extended key usage extension
 without any other key usage extensions. You can add the
 'extendedKeyUsage = critical,timeStamping' line to the user certificate section
-of the config file to generate a proper certificate. See L<req(1)|req(1)>,
-L<ca(1)|ca(1)>, L<x509(1)|x509(1)> for instructions. The examples
+of the config file to generate a proper certificate. See L<req(1)>,
+L<ca(1)>, L<x509(1)> for instructions. The examples
 below assume that cacert.pem contains the certificate of the CA,
 tsacert.pem is the signing certificate issued by cacert.pem and
 tsakey.pem is the private key of the TSA.
@@ -559,14 +575,14 @@ Zoltan Glozik <zglozik@opentsa.org>. Known issues:
 =over 4
 
 =item * No support for time stamps over SMTP, though it is quite easy
-to implement an automatic e-mail based TSA with L<procmail(1)|procmail(1)> 
-and L<perl(1)|perl(1)>. HTTP server support is provided in the form of 
+to implement an automatic e-mail based TSA with L<procmail(1)>
+and L<perl(1)>. HTTP server support is provided in the form of
 a separate apache module. HTTP client support is provided by
-L<tsget(1)|tsget(1)>. Pure TCP/IP protocol is not supported.
+L<tsget(1)>. Pure TCP/IP protocol is not supported.
 
 =item * The file containing the last serial number of the TSA is not
 locked when being read or written. This is a problem if more than one
-instance of L<openssl(1)|openssl(1)> is trying to create a time stamp
+instance of L<openssl(1)> is trying to create a time stamp
 response at the same time. This is not an issue when using the apache
 server module, it does proper locking.
 
@@ -581,14 +597,10 @@ test/testtsa).
 
 =cut
 
-=head1 AUTHOR
-
-Zoltan Glozik <zglozik@opentsa.org>, OpenTSA project (http://www.opentsa.org)
-
 =head1 SEE ALSO
 
-L<tsget(1)|tsget(1)>, L<openssl(1)|openssl(1)>, L<req(1)|req(1)>, 
-L<x509(1)|x509(1)>, L<ca(1)|ca(1)>, L<genrsa(1)|genrsa(1)>, 
-L<config(5)|config(5)>
+L<tsget(1)>, L<openssl(1)>, L<req(1)>,
+L<x509(1)>, L<ca(1)>, L<genrsa(1)>,
+L<config(5)>
 
 =cut

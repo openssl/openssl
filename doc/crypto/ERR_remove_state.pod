@@ -12,7 +12,9 @@ ERR_remove_thread_state, ERR_remove_state - free a thread's error queue
 
 Deprecated:
 
+ #if OPENSSL_API_COMPAT < 0x10000000L
  void ERR_remove_state(unsigned long pid);
+ #endif
 
 =head1 DESCRIPTION
 
@@ -34,12 +36,12 @@ ERR_remove_thread_state and ERR_remove_state() return no value.
 
 =head1 SEE ALSO
 
-L<err(3)|err(3)>
+L<err(3)>
 
 =head1 HISTORY
 
-ERR_remove_state() is available in all versions of SSLeay and OpenSSL. It
-was deprecated in OpenSSL 1.0.0 when ERR_remove_thread_state was introduced
+ERR_remove_state()
+was deprecated in OpenSSL 1.0.0 when ERR_remove_thread_state() was introduced
 and thread IDs were introduced to identify threads instead of 'unsigned long'. 
 
 =cut

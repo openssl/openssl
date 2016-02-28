@@ -1,4 +1,3 @@
-/* crypto/rand/rand_nw.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -109,7 +108,7 @@
  *
  */
 
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/rand.h>
 #include "rand_lcl.h"
 

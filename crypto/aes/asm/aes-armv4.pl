@@ -32,8 +32,20 @@
 # Profiler-assisted and platform-specific optimization resulted in 16%
 # improvement on Cortex A8 core and ~21.5 cycles per byte.
 
-while (($output=shift) && ($output!~/^\w[\w\-]*\.\w+$/)) {}
-open STDOUT,">$output";
+$flavour = shift;
+if ($flavour=~/^\w[\w\-]*\.\w+$/) { $output=$flavour; undef $flavour; }
+else { while (($output=shift) && ($output!~/^\w[\w\-]*\.\w+$/)) {} }
+
+if ($flavour && $flavour ne "void") {
+    $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
+    ( $xlate="${dir}arm-xlate.pl" and -f $xlate ) or
+    ( $xlate="${dir}../../perlasm/arm-xlate.pl" and -f $xlate) or
+    die "can't locate arm-xlate.pl";
+
+    open STDOUT,"| \"$^X\" $xlate $flavour $output";
+} else {
+    open STDOUT,">$output";
+}
 
 $s0="r0";
 $s1="r1";
@@ -58,15 +70,12 @@ $code=<<___;
 #endif
 
 .text
-#if __ARM_ARCH__<7
-.code	32
-#else
+#if defined(__thumb2__) && !defined(__APPLE__)
 .syntax	unified
-# ifdef __thumb2__
 .thumb
-# else
+#else
 .code	32
-# endif
+#undef __thumb2__
 #endif
 
 .type	AES_Te,%object
@@ -181,15 +190,19 @@ AES_Te:
 .type   AES_encrypt,%function
 .align	5
 AES_encrypt:
-#if __ARM_ARCH__<7
+#ifndef	__thumb2__
 	sub	r3,pc,#8		@ AES_encrypt
 #else
 	adr	r3,AES_encrypt
 #endif
 	stmdb   sp!,{r1,r4-r12,lr}
+#ifdef	__APPLE__
+	adr	$tbl,AES_Te
+#else
+	sub	$tbl,r3,#AES_encrypt-AES_Te	@ Te
+#endif
 	mov	$rounds,r0		@ inp
 	mov	$key,r2
-	sub	$tbl,r3,#AES_encrypt-AES_Te	@ Te
 #if __ARM_ARCH__<7
 	ldrb	$s0,[$rounds,#3]	@ load input data in endian-neutral
 	ldrb	$t1,[$rounds,#2]	@ manner...
@@ -427,19 +440,19 @@ _armv4_AES_encrypt:
 .align	5
 AES_set_encrypt_key:
 _armv4_AES_set_encrypt_key:
-#if __ARM_ARCH__<7
+#ifndef	__thumb2__
 	sub	r3,pc,#8		@ AES_set_encrypt_key
 #else
 	adr	r3,AES_set_encrypt_key
 #endif
 	teq	r0,#0
-#if __ARM_ARCH__>=7
+#ifdef	__thumb2__
 	itt	eq			@ Thumb2 thing, sanity check in ARM
 #endif
 	moveq	r0,#-1
 	beq	.Labrt
 	teq	r2,#0
-#if __ARM_ARCH__>=7
+#ifdef	__thumb2__
 	itt	eq			@ Thumb2 thing, sanity check in ARM
 #endif
 	moveq	r0,#-1
@@ -450,18 +463,22 @@ _armv4_AES_set_encrypt_key:
 	teq	r1,#192
 	beq	.Lok
 	teq	r1,#256
-#if __ARM_ARCH__>=7
+#ifdef	__thumb2__
 	itt	ne			@ Thumb2 thing, sanity check in ARM
 #endif
 	movne	r0,#-1
 	bne	.Labrt
 
 .Lok:	stmdb   sp!,{r4-r12,lr}
-	sub	$tbl,r3,#_armv4_AES_set_encrypt_key-AES_Te-1024	@ Te4
-
 	mov	$rounds,r0		@ inp
 	mov	lr,r1			@ bits
 	mov	$key,r2			@ key
+
+#ifdef	__APPLE__
+	adr	$tbl,AES_Te+1024				@ Te4
+#else
+	sub	$tbl,r3,#_armv4_AES_set_encrypt_key-AES_Te-1024	@ Te4
+#endif
 
 #if __ARM_ARCH__<7
 	ldrb	$s0,[$rounds,#3]	@ load input data in endian-neutral
@@ -607,7 +624,7 @@ _armv4_AES_set_encrypt_key:
 	str	$s2,[$key,#-16]
 	subs	$rounds,$rounds,#1
 	str	$s3,[$key,#-12]
-#if __ARM_ARCH__>=7
+#ifdef	__thumb2__
 	itt	eq				@ Thumb2 thing, sanity check in ARM
 #endif
 	subeq	r2,$key,#216
@@ -679,7 +696,7 @@ _armv4_AES_set_encrypt_key:
 	str	$s2,[$key,#-24]
 	subs	$rounds,$rounds,#1
 	str	$s3,[$key,#-20]
-#if __ARM_ARCH__>=7
+#ifdef	__thumb2__
 	itt	eq				@ Thumb2 thing, sanity check in ARM
 #endif
 	subeq	r2,$key,#256
@@ -750,7 +767,7 @@ _armv4_AES_set_enc2dec_key:
 	ldr	$rounds,[r0,#240]
 	mov	$i1,r0			@ input
 	add	$i2,r0,$rounds,lsl#4
-	mov	$key,r1			@ ouput
+	mov	$key,r1			@ output
 	add	$tbl,r1,$rounds,lsl#4
 	str	$rounds,[r1,#240]
 
@@ -949,15 +966,19 @@ AES_Td:
 .type   AES_decrypt,%function
 .align	5
 AES_decrypt:
-#if __ARM_ARCH__<7
+#ifndef	__thumb2__
 	sub	r3,pc,#8		@ AES_decrypt
 #else
 	adr	r3,AES_decrypt
 #endif
 	stmdb   sp!,{r1,r4-r12,lr}
+#ifdef	__APPLE__
+	adr	$tbl,AES_Td
+#else
+	sub	$tbl,r3,#AES_decrypt-AES_Td	@ Td
+#endif
 	mov	$rounds,r0		@ inp
 	mov	$key,r2
-	sub	$tbl,r3,#AES_decrypt-AES_Td		@ Td
 #if __ARM_ARCH__<7
 	ldrb	$s0,[$rounds,#3]	@ load input data in endian-neutral
 	ldrb	$t1,[$rounds,#2]	@ manner...

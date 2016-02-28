@@ -1,4 +1,3 @@
-/* crypto/ts/ts_verify_ctx.c */
 /*
  * Written by Zoltan Glozik (zglozik@stones.com) for the OpenSSL project
  * 2003.
@@ -57,17 +56,16 @@
  *
  */
 
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/objects.h>
 #include <openssl/ts.h>
+#include "ts_lcl.h"
 
 TS_VERIFY_CTX *TS_VERIFY_CTX_new(void)
 {
-    TS_VERIFY_CTX *ctx =
-        (TS_VERIFY_CTX *)OPENSSL_malloc(sizeof(TS_VERIFY_CTX));
-    if (ctx)
-        memset(ctx, 0, sizeof(TS_VERIFY_CTX));
-    else
+    TS_VERIFY_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));
+
+    if (ctx == NULL)
         TSerr(TS_F_TS_VERIFY_CTX_NEW, ERR_R_MALLOC_FAILURE);
     return ctx;
 }
@@ -75,7 +73,7 @@ TS_VERIFY_CTX *TS_VERIFY_CTX_new(void)
 void TS_VERIFY_CTX_init(TS_VERIFY_CTX *ctx)
 {
     OPENSSL_assert(ctx != NULL);
-    memset(ctx, 0, sizeof(TS_VERIFY_CTX));
+    memset(ctx, 0, sizeof(*ctx));
 }
 
 void TS_VERIFY_CTX_free(TS_VERIFY_CTX *ctx)
@@ -85,6 +83,45 @@ void TS_VERIFY_CTX_free(TS_VERIFY_CTX *ctx)
 
     TS_VERIFY_CTX_cleanup(ctx);
     OPENSSL_free(ctx);
+}
+
+int TS_VERIFY_CTX_add_flags(TS_VERIFY_CTX *ctx, int f)
+{
+    ctx->flags |= f;
+    return ctx->flags;
+}
+
+int TS_VERIFY_CTX_set_flags(TS_VERIFY_CTX *ctx, int f)
+{
+    ctx->flags = f;
+    return ctx->flags;
+}
+
+BIO *TS_VERIFY_CTX_set_data(TS_VERIFY_CTX *ctx, BIO *b)
+{
+    ctx->data = b;
+    return ctx->data;
+}
+
+X509_STORE *TS_VERIFY_CTX_set_store(TS_VERIFY_CTX *ctx, X509_STORE *s)
+{
+    ctx->store = s;
+    return ctx->store;
+}
+
+STACK_OF(X509) *TS_VERIFY_CTS_set_certs(TS_VERIFY_CTX *ctx,
+                                        STACK_OF(X509) *certs)
+{
+    ctx->certs = certs;
+    return ctx->certs;
+}
+
+unsigned char *TS_VERIFY_CTX_set_imprint(TS_VERIFY_CTX *ctx,
+                                         unsigned char *hexstr, long len)
+{
+    ctx->imprint = hexstr;
+    ctx->imprint_len = len;
+    return ctx->imprint;
 }
 
 void TS_VERIFY_CTX_cleanup(TS_VERIFY_CTX *ctx)
@@ -121,33 +158,29 @@ TS_VERIFY_CTX *TS_REQ_to_TS_VERIFY_CTX(TS_REQ *req, TS_VERIFY_CTX *ctx)
     OPENSSL_assert(req != NULL);
     if (ret)
         TS_VERIFY_CTX_cleanup(ret);
-    else if (!(ret = TS_VERIFY_CTX_new()))
+    else if ((ret = TS_VERIFY_CTX_new()) == NULL)
         return NULL;
 
-    /* Setting flags. */
     ret->flags = TS_VFY_ALL_IMPRINT & ~(TS_VFY_TSA_NAME | TS_VFY_SIGNATURE);
 
-    /* Setting policy. */
-    if ((policy = TS_REQ_get_policy_id(req)) != NULL) {
-        if (!(ret->policy = OBJ_dup(policy)))
+    if ((policy = req->policy_id) != NULL) {
+        if ((ret->policy = OBJ_dup(policy)) == NULL)
             goto err;
     } else
         ret->flags &= ~TS_VFY_POLICY;
 
-    /* Setting md_alg, imprint and imprint_len. */
-    imprint = TS_REQ_get_msg_imprint(req);
-    md_alg = TS_MSG_IMPRINT_get_algo(imprint);
-    if (!(ret->md_alg = X509_ALGOR_dup(md_alg)))
+    imprint = req->msg_imprint;
+    md_alg = imprint->hash_algo;
+    if ((ret->md_alg = X509_ALGOR_dup(md_alg)) == NULL)
         goto err;
-    msg = TS_MSG_IMPRINT_get_msg(imprint);
+    msg = imprint->hashed_msg;
     ret->imprint_len = ASN1_STRING_length(msg);
-    if (!(ret->imprint = OPENSSL_malloc(ret->imprint_len)))
+    if ((ret->imprint = OPENSSL_malloc(ret->imprint_len)) == NULL)
         goto err;
     memcpy(ret->imprint, ASN1_STRING_data(msg), ret->imprint_len);
 
-    /* Setting nonce. */
-    if ((nonce = TS_REQ_get_nonce(req)) != NULL) {
-        if (!(ret->nonce = ASN1_INTEGER_dup(nonce)))
+    if ((nonce = req->nonce) != NULL) {
+        if ((ret->nonce = ASN1_INTEGER_dup(nonce)) == NULL)
             goto err;
     } else
         ret->flags &= ~TS_VFY_NONCE;

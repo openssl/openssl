@@ -1,4 +1,3 @@
-/* p12_decr.c */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
  * 1999.
@@ -58,12 +57,12 @@
  */
 
 #include <stdio.h>
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/pkcs12.h>
 
 /* Define this to dump decrypted output to files called DERnnn */
 /*
- * #define DEBUG_DECRYPT
+ * #define OPENSSL_DEBUG_DECRYPT
  */
 
 /*
@@ -75,25 +74,30 @@ unsigned char *PKCS12_pbe_crypt(X509_ALGOR *algor, const char *pass,
                                 int passlen, unsigned char *in, int inlen,
                                 unsigned char **data, int *datalen, int en_de)
 {
-    unsigned char *out;
+    unsigned char *out = NULL;
     int outlen, i;
-    EVP_CIPHER_CTX ctx;
+    EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
 
-    EVP_CIPHER_CTX_init(&ctx);
-    /* Decrypt data */
-    if (!EVP_PBE_CipherInit(algor->algorithm, pass, passlen,
-                            algor->parameter, &ctx, en_de)) {
-        PKCS12err(PKCS12_F_PKCS12_PBE_CRYPT,
-                  PKCS12_R_PKCS12_ALGOR_CIPHERINIT_ERROR);
-        return NULL;
-    }
-
-    if (!(out = OPENSSL_malloc(inlen + EVP_CIPHER_CTX_block_size(&ctx)))) {
+    if (ctx == NULL) {
         PKCS12err(PKCS12_F_PKCS12_PBE_CRYPT, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
-    if (!EVP_CipherUpdate(&ctx, out, &i, in, inlen)) {
+    /* Decrypt data */
+    if (!EVP_PBE_CipherInit(algor->algorithm, pass, passlen,
+                            algor->parameter, ctx, en_de)) {
+        PKCS12err(PKCS12_F_PKCS12_PBE_CRYPT,
+                  PKCS12_R_PKCS12_ALGOR_CIPHERINIT_ERROR);
+        goto err;
+    }
+
+    if ((out = OPENSSL_malloc(inlen + EVP_CIPHER_CTX_block_size(ctx)))
+            == NULL) {
+        PKCS12err(PKCS12_F_PKCS12_PBE_CRYPT, ERR_R_MALLOC_FAILURE);
+        goto err;
+    }
+
+    if (!EVP_CipherUpdate(ctx, out, &i, in, inlen)) {
         OPENSSL_free(out);
         out = NULL;
         PKCS12err(PKCS12_F_PKCS12_PBE_CRYPT, ERR_R_EVP_LIB);
@@ -101,7 +105,7 @@ unsigned char *PKCS12_pbe_crypt(X509_ALGOR *algor, const char *pass,
     }
 
     outlen = i;
-    if (!EVP_CipherFinal_ex(&ctx, out + i, &i)) {
+    if (!EVP_CipherFinal_ex(ctx, out + i, &i)) {
         OPENSSL_free(out);
         out = NULL;
         PKCS12err(PKCS12_F_PKCS12_PBE_CRYPT,
@@ -114,7 +118,7 @@ unsigned char *PKCS12_pbe_crypt(X509_ALGOR *algor, const char *pass,
     if (data)
         *data = out;
  err:
-    EVP_CIPHER_CTX_cleanup(&ctx);
+    EVP_CIPHER_CTX_free(ctx);
     return out;
 
 }
@@ -140,7 +144,7 @@ void *PKCS12_item_decrypt_d2i(X509_ALGOR *algor, const ASN1_ITEM *it,
         return NULL;
     }
     p = out;
-#ifdef DEBUG_DECRYPT
+#ifdef OPENSSL_DEBUG_DECRYPT
     {
         FILE *op;
 
@@ -174,7 +178,8 @@ ASN1_OCTET_STRING *PKCS12_item_i2d_encrypt(X509_ALGOR *algor,
     ASN1_OCTET_STRING *oct = NULL;
     unsigned char *in = NULL;
     int inlen;
-    if (!(oct = M_ASN1_OCTET_STRING_new())) {
+
+    if ((oct = ASN1_OCTET_STRING_new()) == NULL) {
         PKCS12err(PKCS12_F_PKCS12_ITEM_I2D_ENCRYPT, ERR_R_MALLOC_FAILURE);
         goto err;
     }
@@ -194,9 +199,6 @@ ASN1_OCTET_STRING *PKCS12_item_i2d_encrypt(X509_ALGOR *algor,
     OPENSSL_free(in);
     return oct;
  err:
-    if (oct)
-        ASN1_OCTET_STRING_free(oct);
+    ASN1_OCTET_STRING_free(oct);
     return NULL;
 }
-
-IMPLEMENT_PKCS12_STACK_OF(PKCS7)

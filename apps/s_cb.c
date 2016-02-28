@@ -1,4 +1,3 @@
-/* apps/s_cb.c - callback functions used by s_client, s_server, and s_time */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -109,12 +108,12 @@
  *
  */
 
+/* callback functions used by s_client, s_server, and s_time */
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h> /* for memcpy() and strcmp() */
 #define USE_SOCKETS
-#define NON_MAIN
 #include "apps.h"
-#undef NON_MAIN
 #undef USE_SOCKETS
 #include <openssl/err.h>
 #include <openssl/rand.h>
@@ -132,8 +131,16 @@ int verify_depth = 0;
 int verify_quiet = 0;
 int verify_error = X509_V_OK;
 int verify_return_error = 0;
-unsigned char cookie_secret[COOKIE_SECRET_LENGTH];
-int cookie_initialized = 0;
+static unsigned char cookie_secret[COOKIE_SECRET_LENGTH];
+static int cookie_initialized = 0;
+
+static const char *lookup(int val, const STRINT_PAIR* list, const char* def)
+{
+    for ( ; list->name; ++list)
+        if (list->retval == val)
+            return list->name;
+    return def;
+}
 
 int verify_callback(int ok, X509_STORE_CTX *ctx)
 {
@@ -160,7 +167,7 @@ int verify_callback(int ok, X509_STORE_CTX *ctx)
         if (verify_depth >= depth) {
             if (!verify_return_error)
                 ok = 1;
-            verify_error = X509_V_OK;
+            verify_error = err;
         } else {
             ok = 0;
             verify_error = X509_V_ERR_CERT_CHAIN_TOO_LONG;
@@ -187,11 +194,11 @@ int verify_callback(int ok, X509_STORE_CTX *ctx)
         break;
     case X509_V_ERR_NO_EXPLICIT_POLICY:
         if (!verify_quiet)
-            policies_print(bio_err, ctx);
+            policies_print(ctx);
         break;
     }
     if (err == X509_V_OK && ok == 2 && !verify_quiet)
-        policies_print(bio_err, ctx);
+        policies_print(ctx);
     if (ok && !verify_quiet)
         BIO_printf(bio_err, "verify return:%d\n", ok);
     return (ok);
@@ -200,11 +207,6 @@ int verify_callback(int ok, X509_STORE_CTX *ctx)
 int set_cert_stuff(SSL_CTX *ctx, char *cert_file, char *key_file)
 {
     if (cert_file != NULL) {
-        /*-
-        SSL *ssl;
-        X509 *x509;
-        */
-
         if (SSL_CTX_use_certificate_file(ctx, cert_file,
                                          SSL_FILETYPE_PEM) <= 0) {
             BIO_printf(bio_err, "unable to get certificate from '%s'\n",
@@ -220,21 +222,6 @@ int set_cert_stuff(SSL_CTX *ctx, char *cert_file, char *key_file)
             ERR_print_errors(bio_err);
             return (0);
         }
-
-        /*-
-        In theory this is no longer needed
-        ssl=SSL_new(ctx);
-        x509=SSL_get_certificate(ssl);
-
-        if (x509 != NULL) {
-                EVP_PKEY *pktmp;
-                pktmp = X509_get_pubkey(x509);
-                EVP_PKEY_copy_parameters(pktmp,
-                                        SSL_get_privatekey(ssl));
-                EVP_PKEY_free(pktmp);
-        }
-        SSL_free(ssl);
-        */
 
         /*
          * If we are using DSA, we can copy the parameters from the private
@@ -293,6 +280,18 @@ int set_cert_key_stuff(SSL_CTX *ctx, X509 *cert, EVP_PKEY *key,
     return 1;
 }
 
+static STRINT_PAIR cert_type_list[] = {
+    {"RSA sign", TLS_CT_RSA_SIGN},
+    {"DSA sign", TLS_CT_DSS_SIGN},
+    {"RSA fixed DH", TLS_CT_RSA_FIXED_DH},
+    {"DSS fixed DH", TLS_CT_DSS_FIXED_DH},
+    {"ECDSA sign", TLS_CT_ECDSA_SIGN},
+    {"RSA fixed ECDH", TLS_CT_RSA_FIXED_ECDH},
+    {"ECDSA fixed ECDH", TLS_CT_ECDSA_FIXED_ECDH},
+    {"GOST01 Sign", TLS_CT_GOST01_SIGN},
+    {NULL}
+};
+
 static void ssl_print_client_cert_types(BIO *bio, SSL *s)
 {
     const unsigned char *p;
@@ -303,51 +302,10 @@ static void ssl_print_client_cert_types(BIO *bio, SSL *s)
     BIO_puts(bio, "Client Certificate Types: ");
     for (i = 0; i < cert_type_num; i++) {
         unsigned char cert_type = p[i];
-        char *cname;
-        switch (cert_type) {
-        case TLS_CT_RSA_SIGN:
-            cname = "RSA sign";
-            break;
-
-        case TLS_CT_DSS_SIGN:
-            cname = "DSA sign";
-            break;
-
-        case TLS_CT_RSA_FIXED_DH:
-            cname = "RSA fixed DH";
-            break;
-
-        case TLS_CT_DSS_FIXED_DH:
-            cname = "DSS fixed DH";
-            break;
-
-        case TLS_CT_ECDSA_SIGN:
-            cname = "ECDSA sign";
-            break;
-
-        case TLS_CT_RSA_FIXED_ECDH:
-            cname = "RSA fixed ECDH";
-            break;
-
-        case TLS_CT_ECDSA_FIXED_ECDH:
-            cname = "ECDSA fixed ECDH";
-            break;
-
-        case TLS_CT_GOST94_SIGN:
-            cname = "GOST94 Sign";
-            break;
-
-        case TLS_CT_GOST01_SIGN:
-            cname = "GOST01 Sign";
-            break;
-
-        default:
-            cname = NULL;
-        }
+        const char *cname = lookup((int)cert_type, cert_type_list, NULL);
 
         if (i)
             BIO_puts(bio, ", ");
-
         if (cname)
             BIO_puts(bio, cname);
         else
@@ -456,10 +414,11 @@ int ssl_print_curves(BIO *out, SSL *s, int noshared)
 {
     int i, ncurves, *curves, nid;
     const char *cname;
+
     ncurves = SSL_get1_curves(s, NULL);
     if (ncurves <= 0)
         return 1;
-    curves = OPENSSL_malloc(ncurves * sizeof(int));
+    curves = app_malloc(ncurves * sizeof(int), "curves to print");
     SSL_get1_curves(s, curves);
 
     BIO_puts(out, "Supported Elliptic Curves: ");
@@ -516,7 +475,7 @@ int ssl_print_tmp_key(BIO *out, SSL *s)
     case EVP_PKEY_DH:
         BIO_printf(out, "DH, %d bits\n", EVP_PKEY_bits(key));
         break;
-#ifndef OPENSSL_NO_ECDH
+#ifndef OPENSSL_NO_EC
     case EVP_PKEY_EC:
         {
             EC_KEY *ec = EVP_PKEY_get1_EC_KEY(key);
@@ -590,36 +549,75 @@ void apps_ssl_info_callback(const SSL *s, int where, int ret)
     }
 }
 
-static const char *ssl_version_str(int version)
-{
-    switch (version) {
-    case SSL3_VERSION:
-        return "SSL 3.0";
-    case TLS1_VERSION:
-        return "TLS 1.0";
-    case TLS1_1_VERSION:
-        return "TLS 1.1";
-    case TLS1_2_VERSION:
-        return "TLS 1.2";
-    case DTLS1_VERSION:
-        return "DTLS 1.0";
-    case DTLS1_BAD_VER:
-        return "DTLS 1.0 (bad)";
-    default:
-        return "???";
-    }
-}
+static STRINT_PAIR ssl_versions[] = {
+    {"SSL 3.0", SSL3_VERSION},
+    {"TLS 1.0", TLS1_VERSION},
+    {"TLS 1.1", TLS1_1_VERSION},
+    {"TLS 1.2", TLS1_2_VERSION},
+    {"DTLS 1.0", DTLS1_VERSION},
+    {"DTLS 1.0 (bad)", DTLS1_BAD_VER},
+    {NULL}
+};
+static STRINT_PAIR alert_types[] = {
+    {" close_notify", 0},
+    {" unexpected_message", 10},
+    {" bad_record_mac", 20},
+    {" decryption_failed", 21},
+    {" record_overflow", 22},
+    {" decompression_failure", 30},
+    {" handshake_failure", 40},
+    {" bad_certificate", 42},
+    {" unsupported_certificate", 43},
+    {" certificate_revoked", 44},
+    {" certificate_expired", 45},
+    {" certificate_unknown", 46},
+    {" illegal_parameter", 47},
+    {" unknown_ca", 48},
+    {" access_denied", 49},
+    {" decode_error", 50},
+    {" decrypt_error", 51},
+    {" export_restriction", 60},
+    {" protocol_version", 70},
+    {" insufficient_security", 71},
+    {" internal_error", 80},
+    {" user_canceled", 90},
+    {" no_renegotiation", 100},
+    {" unsupported_extension", 110},
+    {" certificate_unobtainable", 111},
+    {" unrecognized_name", 112},
+    {" bad_certificate_status_response", 113},
+    {" bad_certificate_hash_value", 114},
+    {" unknown_psk_identity", 115},
+    {NULL}
+};
+
+static STRINT_PAIR handshakes[] = {
+    {", HelloRequest", 0},
+    {", ClientHello", 1},
+    {", ServerHello", 2},
+    {", HelloVerifyRequest", 3},
+    {", NewSessionTicket", 4},
+    {", Certificate", 11},
+    {", ServerKeyExchange", 12},
+    {", CertificateRequest", 13},
+    {", ServerHelloDone", 14},
+    {", CertificateVerify", 15},
+    {", ClientKeyExchange", 16},
+    {", Finished", 20},
+    {", CertificateUrl", 21},
+    {", CertificateStatus", 22},
+    {", SupplementalData", 23},
+    {NULL}
+};
 
 void msg_cb(int write_p, int version, int content_type, const void *buf,
             size_t len, SSL *ssl, void *arg)
 {
     BIO *bio = arg;
-    const char *str_write_p, *str_version, *str_content_type =
-        "", *str_details1 = "", *str_details2 = "";
-
-    str_write_p = write_p ? ">>>" : "<<<";
-
-    str_version = ssl_version_str(version);
+    const char *str_write_p = write_p ? ">>>" : "<<<";
+    const char *str_version = lookup(version, ssl_versions, "???");
+    const char *str_content_type = "", *str_details1 = "", *str_details2 = "";
+    const unsigned char* bp = buf;
 
     if (version == SSL3_VERSION ||
         version == TLS1_VERSION ||
@@ -632,17 +630,9 @@ void msg_cb(int write_p, int version, int content_type, const void *buf,
             break;
         case 21:
             str_content_type = "Alert";
-            break;
-        case 22:
-            str_content_type = "Handshake";
-            break;
-        }
-
-        if (content_type == 21) { /* Alert */
             str_details1 = ", ???";
-
             if (len == 2) {
-                switch (((const unsigned char *)buf)[0]) {
+                switch (bp[0]) {
                 case 1:
                     str_details1 = ", warning";
                     break;
@@ -650,147 +640,24 @@ void msg_cb(int write_p, int version, int content_type, const void *buf,
                     str_details1 = ", fatal";
                     break;
                 }
-
-                str_details2 = " ???";
-                switch (((const unsigned char *)buf)[1]) {
-                case 0:
-                    str_details2 = " close_notify";
-                    break;
-                case 10:
-                    str_details2 = " unexpected_message";
-                    break;
-                case 20:
-                    str_details2 = " bad_record_mac";
-                    break;
-                case 21:
-                    str_details2 = " decryption_failed";
-                    break;
-                case 22:
-                    str_details2 = " record_overflow";
-                    break;
-                case 30:
-                    str_details2 = " decompression_failure";
-                    break;
-                case 40:
-                    str_details2 = " handshake_failure";
-                    break;
-                case 42:
-                    str_details2 = " bad_certificate";
-                    break;
-                case 43:
-                    str_details2 = " unsupported_certificate";
-                    break;
-                case 44:
-                    str_details2 = " certificate_revoked";
-                    break;
-                case 45:
-                    str_details2 = " certificate_expired";
-                    break;
-                case 46:
-                    str_details2 = " certificate_unknown";
-                    break;
-                case 47:
-                    str_details2 = " illegal_parameter";
-                    break;
-                case 48:
-                    str_details2 = " unknown_ca";
-                    break;
-                case 49:
-                    str_details2 = " access_denied";
-                    break;
-                case 50:
-                    str_details2 = " decode_error";
-                    break;
-                case 51:
-                    str_details2 = " decrypt_error";
-                    break;
-                case 60:
-                    str_details2 = " export_restriction";
-                    break;
-                case 70:
-                    str_details2 = " protocol_version";
-                    break;
-                case 71:
-                    str_details2 = " insufficient_security";
-                    break;
-                case 80:
-                    str_details2 = " internal_error";
-                    break;
-                case 90:
-                    str_details2 = " user_canceled";
-                    break;
-                case 100:
-                    str_details2 = " no_renegotiation";
-                    break;
-                case 110:
-                    str_details2 = " unsupported_extension";
-                    break;
-                case 111:
-                    str_details2 = " certificate_unobtainable";
-                    break;
-                case 112:
-                    str_details2 = " unrecognized_name";
-                    break;
-                case 113:
-                    str_details2 = " bad_certificate_status_response";
-                    break;
-                case 114:
-                    str_details2 = " bad_certificate_hash_value";
-                    break;
-                case 115:
-                    str_details2 = " unknown_psk_identity";
-                    break;
-                }
+                str_details2 = lookup((int)bp[1], alert_types, " ???");
             }
-        }
-
-        if (content_type == 22) { /* Handshake */
+            break;
+        case 22:
+            str_content_type = "Handshake";
             str_details1 = "???";
-
-            if (len > 0) {
-                switch (((const unsigned char *)buf)[0]) {
-                case 0:
-                    str_details1 = ", HelloRequest";
-                    break;
-                case 1:
-                    str_details1 = ", ClientHello";
-                    break;
-                case 2:
-                    str_details1 = ", ServerHello";
-                    break;
-                case 3:
-                    str_details1 = ", HelloVerifyRequest";
-                    break;
-                case 11:
-                    str_details1 = ", Certificate";
-                    break;
-                case 12:
-                    str_details1 = ", ServerKeyExchange";
-                    break;
-                case 13:
-                    str_details1 = ", CertificateRequest";
-                    break;
-                case 14:
-                    str_details1 = ", ServerHelloDone";
-                    break;
-                case 15:
-                    str_details1 = ", CertificateVerify";
-                    break;
-                case 16:
-                    str_details1 = ", ClientKeyExchange";
-                    break;
-                case 20:
-                    str_details1 = ", Finished";
-                    break;
-                }
-            }
-        }
+            if (len > 0)
+                str_details1 = lookup((int)bp[0], handshakes, "???");
+            break;
+        case 23:
+            str_content_type = "ApplicationData";
+            break;
 #ifndef OPENSSL_NO_HEARTBEATS
-        if (content_type == 24) { /* Heartbeat */
+        case 24:
             str_details1 = ", Heartbeat";
 
             if (len > 0) {
-                switch (((const unsigned char *)buf)[0]) {
+                switch (bp[0]) {
                 case 1:
                     str_details1 = ", HeartbeatRequest";
                     break;
@@ -799,8 +666,9 @@ void msg_cb(int write_p, int version, int content_type, const void *buf,
                     break;
                 }
             }
-        }
+            break;
 #endif
+        }
     }
 
     BIO_printf(bio, "%s %s%s [length %04lx]%s%s\n", str_write_p, str_version,
@@ -824,257 +692,111 @@ void msg_cb(int write_p, int version, int content_type, const void *buf,
     (void)BIO_flush(bio);
 }
 
-void tlsext_cb(SSL *s, int client_server, int type,
-               unsigned char *data, int len, void *arg)
-{
-    BIO *bio = arg;
-    char *extname;
-
-    switch (type) {
-    case TLSEXT_TYPE_server_name:
-        extname = "server name";
-        break;
-
-    case TLSEXT_TYPE_max_fragment_length:
-        extname = "max fragment length";
-        break;
-
-    case TLSEXT_TYPE_client_certificate_url:
-        extname = "client certificate URL";
-        break;
-
-    case TLSEXT_TYPE_trusted_ca_keys:
-        extname = "trusted CA keys";
-        break;
-
-    case TLSEXT_TYPE_truncated_hmac:
-        extname = "truncated HMAC";
-        break;
-
-    case TLSEXT_TYPE_status_request:
-        extname = "status request";
-        break;
-
-    case TLSEXT_TYPE_user_mapping:
-        extname = "user mapping";
-        break;
-
-    case TLSEXT_TYPE_client_authz:
-        extname = "client authz";
-        break;
-
-    case TLSEXT_TYPE_server_authz:
-        extname = "server authz";
-        break;
-
-    case TLSEXT_TYPE_cert_type:
-        extname = "cert type";
-        break;
-
-    case TLSEXT_TYPE_elliptic_curves:
-        extname = "elliptic curves";
-        break;
-
-    case TLSEXT_TYPE_ec_point_formats:
-        extname = "EC point formats";
-        break;
-
-    case TLSEXT_TYPE_srp:
-        extname = "SRP";
-        break;
-
-    case TLSEXT_TYPE_signature_algorithms:
-        extname = "signature algorithms";
-        break;
-
-    case TLSEXT_TYPE_use_srtp:
-        extname = "use SRTP";
-        break;
-
-    case TLSEXT_TYPE_heartbeat:
-        extname = "heartbeat";
-        break;
-
-    case TLSEXT_TYPE_session_ticket:
-        extname = "session ticket";
-        break;
-
-    case TLSEXT_TYPE_renegotiate:
-        extname = "renegotiation info";
-        break;
-
+static STRINT_PAIR tlsext_types[] = {
+    {"server name", TLSEXT_TYPE_server_name},
+    {"max fragment length", TLSEXT_TYPE_max_fragment_length},
+    {"client certificate URL", TLSEXT_TYPE_client_certificate_url},
+    {"trusted CA keys", TLSEXT_TYPE_trusted_ca_keys},
+    {"truncated HMAC", TLSEXT_TYPE_truncated_hmac},
+    {"status request", TLSEXT_TYPE_status_request},
+    {"user mapping", TLSEXT_TYPE_user_mapping},
+    {"client authz", TLSEXT_TYPE_client_authz},
+    {"server authz", TLSEXT_TYPE_server_authz},
+    {"cert type", TLSEXT_TYPE_cert_type},
+    {"elliptic curves", TLSEXT_TYPE_elliptic_curves},
+    {"EC point formats", TLSEXT_TYPE_ec_point_formats},
+    {"SRP", TLSEXT_TYPE_srp},
+    {"signature algorithms", TLSEXT_TYPE_signature_algorithms},
+    {"use SRTP", TLSEXT_TYPE_use_srtp},
+    {"heartbeat", TLSEXT_TYPE_heartbeat},
+    {"session ticket", TLSEXT_TYPE_session_ticket},
+    {"renegotiation info", TLSEXT_TYPE_renegotiate},
+    {"TLS padding", TLSEXT_TYPE_padding},
 #ifdef TLSEXT_TYPE_next_proto_neg
-    case TLSEXT_TYPE_next_proto_neg:
-        extname = "next protocol";
-        break;
+    {"next protocol", TLSEXT_TYPE_next_proto_neg},
 #endif
 #ifdef TLSEXT_TYPE_encrypt_then_mac
-    case TLSEXT_TYPE_encrypt_then_mac:
-        extname = "encrypt-then-mac";
-        break;
+    {"encrypt-then-mac", TLSEXT_TYPE_encrypt_then_mac},
 #endif
-    case TLSEXT_TYPE_padding:
-        extname = "TLS padding";
-        break;
+#ifdef TLSEXT_TYPE_application_layer_protocol_negotiation
+    {"application layer protocol negotiation",
+     TLSEXT_TYPE_application_layer_protocol_negotiation},
+#endif
+#ifdef TLSEXT_TYPE_extended_master_secret
+    {"extended master secret", TLSEXT_TYPE_extended_master_secret},
+#endif
+    {NULL}
+};
 
-    default:
-        extname = "unknown";
-        break;
-
-    }
+void tlsext_cb(SSL *s, int client_server, int type,
+               const unsigned char *data, int len, void *arg)
+{
+    BIO *bio = arg;
+    const char *extname = lookup(type, tlsext_types, "unknown");
 
     BIO_printf(bio, "TLS %s extension \"%s\" (id=%d), len=%d\n",
                client_server ? "server" : "client", extname, type, len);
-    BIO_dump(bio, (char *)data, len);
+    BIO_dump(bio, (const char *)data, len);
     (void)BIO_flush(bio);
 }
 
 int generate_cookie_callback(SSL *ssl, unsigned char *cookie,
                              unsigned int *cookie_len)
 {
-    unsigned char *buffer, result[EVP_MAX_MD_SIZE];
-    unsigned int length, resultlength;
-    union {
-        struct sockaddr sa;
-        struct sockaddr_in s4;
-#if OPENSSL_USE_IPV6
-        struct sockaddr_in6 s6;
-#endif
-    } peer;
+    unsigned char *buffer;
+    size_t length;
+    unsigned short port;
+    BIO_ADDR *peer = NULL;
 
     /* Initialize a random secret */
     if (!cookie_initialized) {
-        if (!RAND_bytes(cookie_secret, COOKIE_SECRET_LENGTH)) {
+        if (RAND_bytes(cookie_secret, COOKIE_SECRET_LENGTH) <= 0) {
             BIO_printf(bio_err, "error setting random cookie secret\n");
             return 0;
         }
         cookie_initialized = 1;
     }
 
-    /* Read peer information */
-    (void)BIO_dgram_get_peer(SSL_get_rbio(ssl), &peer);
-
-    /* Create buffer with peer's address and port */
-    length = 0;
-    switch (peer.sa.sa_family) {
-    case AF_INET:
-        length += sizeof(struct in_addr);
-        length += sizeof(peer.s4.sin_port);
-        break;
-#if OPENSSL_USE_IPV6
-    case AF_INET6:
-        length += sizeof(struct in6_addr);
-        length += sizeof(peer.s6.sin6_port);
-        break;
-#endif
-    default:
-        OPENSSL_assert(0);
-        break;
-    }
-    buffer = OPENSSL_malloc(length);
-
-    if (buffer == NULL) {
-        BIO_printf(bio_err, "out of memory\n");
+    peer = BIO_ADDR_new();
+    if (peer == NULL) {
+        BIO_printf(bio_err, "memory full\n");
         return 0;
     }
 
-    switch (peer.sa.sa_family) {
-    case AF_INET:
-        memcpy(buffer, &peer.s4.sin_port, sizeof(peer.s4.sin_port));
-        memcpy(buffer + sizeof(peer.s4.sin_port),
-               &peer.s4.sin_addr, sizeof(struct in_addr));
-        break;
-#if OPENSSL_USE_IPV6
-    case AF_INET6:
-        memcpy(buffer, &peer.s6.sin6_port, sizeof(peer.s6.sin6_port));
-        memcpy(buffer + sizeof(peer.s6.sin6_port),
-               &peer.s6.sin6_addr, sizeof(struct in6_addr));
-        break;
-#endif
-    default:
-        OPENSSL_assert(0);
-        break;
-    }
+    /* Read peer information */
+    (void)BIO_dgram_get_peer(SSL_get_rbio(ssl), peer);
+
+    /* Create buffer with peer's address and port */
+    BIO_ADDR_rawaddress(peer, NULL, &length);
+    OPENSSL_assert(length != 0);
+    port = BIO_ADDR_rawport(peer);
+    length += sizeof(port);
+    buffer = app_malloc(length, "cookie generate buffer");
+
+    memcpy(buffer, &port, sizeof(port));
+    BIO_ADDR_rawaddress(peer, buffer + sizeof(port), NULL);
 
     /* Calculate HMAC of buffer using the secret */
     HMAC(EVP_sha1(), cookie_secret, COOKIE_SECRET_LENGTH,
-         buffer, length, result, &resultlength);
-    OPENSSL_free(buffer);
+         buffer, length, cookie, cookie_len);
 
-    memcpy(cookie, result, resultlength);
-    *cookie_len = resultlength;
+    OPENSSL_free(buffer);
+    BIO_ADDR_free(peer);
 
     return 1;
 }
 
-int verify_cookie_callback(SSL *ssl, unsigned char *cookie,
+int verify_cookie_callback(SSL *ssl, const unsigned char *cookie,
                            unsigned int cookie_len)
 {
-    unsigned char *buffer, result[EVP_MAX_MD_SIZE];
-    unsigned int length, resultlength;
-    union {
-        struct sockaddr sa;
-        struct sockaddr_in s4;
-#if OPENSSL_USE_IPV6
-        struct sockaddr_in6 s6;
-#endif
-    } peer;
+    unsigned char result[EVP_MAX_MD_SIZE];
+    unsigned int resultlength;
 
-    /* If secret isn't initialized yet, the cookie can't be valid */
-    if (!cookie_initialized)
-        return 0;
-
-    /* Read peer information */
-    (void)BIO_dgram_get_peer(SSL_get_rbio(ssl), &peer);
-
-    /* Create buffer with peer's address and port */
-    length = 0;
-    switch (peer.sa.sa_family) {
-    case AF_INET:
-        length += sizeof(struct in_addr);
-        length += sizeof(peer.s4.sin_port);
-        break;
-#if OPENSSL_USE_IPV6
-    case AF_INET6:
-        length += sizeof(struct in6_addr);
-        length += sizeof(peer.s6.sin6_port);
-        break;
-#endif
-    default:
-        OPENSSL_assert(0);
-        break;
-    }
-    buffer = OPENSSL_malloc(length);
-
-    if (buffer == NULL) {
-        BIO_printf(bio_err, "out of memory\n");
-        return 0;
-    }
-
-    switch (peer.sa.sa_family) {
-    case AF_INET:
-        memcpy(buffer, &peer.s4.sin_port, sizeof(peer.s4.sin_port));
-        memcpy(buffer + sizeof(peer.s4.sin_port),
-               &peer.s4.sin_addr, sizeof(struct in_addr));
-        break;
-#if OPENSSL_USE_IPV6
-    case AF_INET6:
-        memcpy(buffer, &peer.s6.sin6_port, sizeof(peer.s6.sin6_port));
-        memcpy(buffer + sizeof(peer.s6.sin6_port),
-               &peer.s6.sin6_addr, sizeof(struct in6_addr));
-        break;
-#endif
-    default:
-        OPENSSL_assert(0);
-        break;
-    }
-
-    /* Calculate HMAC of buffer using the secret */
-    HMAC(EVP_sha1(), cookie_secret, COOKIE_SECRET_LENGTH,
-         buffer, length, result, &resultlength);
-    OPENSSL_free(buffer);
-
-    if (cookie_len == resultlength
+    /* Note: we check cookie_initialized because if it's not,
+     * it cannot be valid */
+    if (cookie_initialized
+        && generate_cookie_callback(ssl, result, &resultlength)
+        && cookie_len == resultlength
         && memcmp(result, cookie, resultlength) == 0)
         return 1;
 
@@ -1102,37 +824,32 @@ struct ssl_excert_st {
     struct ssl_excert_st *next, *prev;
 };
 
-struct chain_flags {
-    int flag;
-    const char *name;
+static STRINT_PAIR chain_flags[] = {
+    {"Overall Validity", CERT_PKEY_VALID},
+    {"Sign with EE key", CERT_PKEY_SIGN},
+    {"EE signature", CERT_PKEY_EE_SIGNATURE},
+    {"CA signature", CERT_PKEY_CA_SIGNATURE},
+    {"EE key parameters", CERT_PKEY_EE_PARAM},
+    {"CA key parameters", CERT_PKEY_CA_PARAM},
+    {"Explicitly sign with EE key", CERT_PKEY_EXPLICIT_SIGN},
+    {"Issuer Name", CERT_PKEY_ISSUER_NAME},
+    {"Certificate Type", CERT_PKEY_CERT_TYPE},
+    {NULL}
 };
 
-struct chain_flags chain_flags_list[] = {
-    {CERT_PKEY_VALID, "Overall Validity"},
-    {CERT_PKEY_SIGN, "Sign with EE key"},
-    {CERT_PKEY_EE_SIGNATURE, "EE signature"},
-    {CERT_PKEY_CA_SIGNATURE, "CA signature"},
-    {CERT_PKEY_EE_PARAM, "EE key parameters"},
-    {CERT_PKEY_CA_PARAM, "CA key parameters"},
-    {CERT_PKEY_EXPLICIT_SIGN, "Explicity sign with EE key"},
-    {CERT_PKEY_ISSUER_NAME, "Issuer Name"},
-    {CERT_PKEY_CERT_TYPE, "Certificate Type"},
-    {0, NULL}
-};
-
-static void print_chain_flags(BIO *out, SSL *s, int flags)
+static void print_chain_flags(SSL *s, int flags)
 {
-    struct chain_flags *ctmp = chain_flags_list;
-    while (ctmp->name) {
-        BIO_printf(out, "\t%s: %s\n", ctmp->name,
-                   flags & ctmp->flag ? "OK" : "NOT OK");
-        ctmp++;
-    }
-    BIO_printf(out, "\tSuite B: ");
+    STRINT_PAIR *pp;
+
+    for (pp = chain_flags; pp->name; ++pp)
+        BIO_printf(bio_err, "\t%s: %s\n",
+                   pp->name,
+                   (flags & pp->retval) ? "OK" : "NOT OK");
+    BIO_printf(bio_err, "\tSuite B: ");
     if (SSL_set_cert_flags(s, 0) & SSL_CERT_FLAG_SUITEB_128_LOS)
-        BIO_puts(out, flags & CERT_PKEY_SUITEB ? "OK\n" : "NOT OK\n");
+        BIO_puts(bio_err, flags & CERT_PKEY_SUITEB ? "OK\n" : "NOT OK\n");
     else
-        BIO_printf(out, "not tested\n");
+        BIO_printf(bio_err, "not tested\n");
 }
 
 /*
@@ -1147,8 +864,9 @@ static int set_cert_cb(SSL *ssl, void *arg)
     static int retry_cnt;
     if (retry_cnt < 5) {
         retry_cnt++;
-        fprintf(stderr, "Certificate callback retry test: count %d\n",
-                retry_cnt);
+        BIO_printf(bio_err,
+                   "Certificate callback retry test: count %d\n",
+                   retry_cnt);
         return -1;
     }
 #endif
@@ -1173,11 +891,12 @@ static int set_cert_cb(SSL *ssl, void *arg)
         X509_NAME_print_ex(bio_err, X509_get_subject_name(exc->cert), 0,
                            XN_FLAG_ONELINE);
         BIO_puts(bio_err, "\n");
-
-        print_chain_flags(bio_err, ssl, rv);
+        print_chain_flags(ssl, rv);
         if (rv & CERT_PKEY_VALID) {
-            SSL_use_certificate(ssl, exc->cert);
-            SSL_use_PrivateKey(ssl, exc->key);
+            if (!SSL_use_certificate(ssl, exc->cert)
+                    || !SSL_use_PrivateKey(ssl, exc->key)) {
+                return 0;
+            }
             /*
              * NB: we wouldn't normally do this as it is not efficient
              * building chains on each connection better to cache the chain
@@ -1201,18 +920,9 @@ void ssl_ctx_set_excert(SSL_CTX *ctx, SSL_EXCERT *exc)
 
 static int ssl_excert_prepend(SSL_EXCERT **pexc)
 {
-    SSL_EXCERT *exc;
-    exc = OPENSSL_malloc(sizeof(SSL_EXCERT));
-    if (!exc)
-        return 0;
-    exc->certfile = NULL;
-    exc->keyfile = NULL;
-    exc->chainfile = NULL;
-    exc->cert = NULL;
-    exc->key = NULL;
-    exc->chain = NULL;
-    exc->prev = NULL;
-    exc->build_chain = 0;
+    SSL_EXCERT *exc = app_malloc(sizeof(*exc), "prepend cert");
+
+    memset(exc, 0, sizeof(*exc));
 
     exc->next = *pexc;
     *pexc = exc;
@@ -1232,20 +942,20 @@ static int ssl_excert_prepend(SSL_EXCERT **pexc)
 void ssl_excert_free(SSL_EXCERT *exc)
 {
     SSL_EXCERT *curr;
+
+    if (!exc)
+        return;
     while (exc) {
-        if (exc->cert)
-            X509_free(exc->cert);
-        if (exc->key)
-            EVP_PKEY_free(exc->key);
-        if (exc->chain)
-            sk_X509_pop_free(exc->chain, X509_free);
+        X509_free(exc->cert);
+        EVP_PKEY_free(exc->key);
+        sk_X509_pop_free(exc->chain, X509_free);
         curr = exc;
         exc = exc->next;
         OPENSSL_free(curr);
     }
 }
 
-int load_excert(SSL_EXCERT **pexc, BIO *err)
+int load_excert(SSL_EXCERT **pexc)
 {
     SSL_EXCERT *exc = *pexc;
     if (!exc)
@@ -1258,273 +968,258 @@ int load_excert(SSL_EXCERT **pexc, BIO *err)
     }
     for (; exc; exc = exc->next) {
         if (!exc->certfile) {
-            BIO_printf(err, "Missing filename\n");
+            BIO_printf(bio_err, "Missing filename\n");
             return 0;
         }
-        exc->cert = load_cert(err, exc->certfile, exc->certform,
-                              NULL, NULL, "Server Certificate");
+        exc->cert = load_cert(exc->certfile, exc->certform,
+                              "Server Certificate");
         if (!exc->cert)
             return 0;
         if (exc->keyfile) {
-            exc->key = load_key(err, exc->keyfile, exc->keyform,
+            exc->key = load_key(exc->keyfile, exc->keyform,
                                 0, NULL, NULL, "Server Key");
         } else {
-            exc->key = load_key(err, exc->certfile, exc->certform,
+            exc->key = load_key(exc->certfile, exc->certform,
                                 0, NULL, NULL, "Server Key");
         }
         if (!exc->key)
             return 0;
         if (exc->chainfile) {
-            exc->chain = load_certs(err,
-                                    exc->chainfile, FORMAT_PEM,
-                                    NULL, NULL, "Server Chain");
-            if (!exc->chain)
+            if (!load_certs(exc->chainfile, &exc->chain, FORMAT_PEM, NULL,
+                            "Server Chain"))
                 return 0;
         }
     }
     return 1;
 }
 
-int args_excert(char ***pargs, int *pargc,
-                int *badarg, BIO *err, SSL_EXCERT **pexc)
+enum range { OPT_X_ENUM };
+
+int args_excert(int opt, SSL_EXCERT **pexc)
 {
-    char *arg = **pargs, *argn = (*pargs)[1];
     SSL_EXCERT *exc = *pexc;
-    int narg = 2;
-    if (!exc) {
-        if (ssl_excert_prepend(&exc))
-            *pexc = exc;
-        else {
-            BIO_printf(err, "Error initialising xcert\n");
-            *badarg = 1;
+
+    assert(opt > OPT_X__FIRST);
+    assert(opt < OPT_X__LAST);
+
+    if (exc == NULL) {
+        if (!ssl_excert_prepend(&exc)) {
+            BIO_printf(bio_err, " %s: Error initialising xcert\n",
+                       opt_getprog());
             goto err;
         }
+        *pexc = exc;
     }
-    if (strcmp(arg, "-xcert") == 0) {
-        if (!argn) {
-            *badarg = 1;
-            return 1;
-        }
-        if (exc->certfile && !ssl_excert_prepend(&exc)) {
-            BIO_printf(err, "Error adding xcert\n");
-            *badarg = 1;
-            goto err;
-        }
-        exc->certfile = argn;
-    } else if (strcmp(arg, "-xkey") == 0) {
-        if (!argn) {
-            *badarg = 1;
-            return 1;
-        }
-        if (exc->keyfile) {
-            BIO_printf(err, "Key already specified\n");
-            *badarg = 1;
-            return 1;
-        }
-        exc->keyfile = argn;
-    } else if (strcmp(arg, "-xchain") == 0) {
-        if (!argn) {
-            *badarg = 1;
-            return 1;
-        }
-        if (exc->chainfile) {
-            BIO_printf(err, "Chain already specified\n");
-            *badarg = 1;
-            return 1;
-        }
-        exc->chainfile = argn;
-    } else if (strcmp(arg, "-xchain_build") == 0) {
-        narg = 1;
-        exc->build_chain = 1;
-    } else if (strcmp(arg, "-xcertform") == 0) {
-        if (!argn) {
-            *badarg = 1;
-            goto err;
-        }
-        exc->certform = str2fmt(argn);
-    } else if (strcmp(arg, "-xkeyform") == 0) {
-        if (!argn) {
-            *badarg = 1;
-            goto err;
-        }
-        exc->keyform = str2fmt(argn);
-    } else
+
+    switch ((enum range)opt) {
+    case OPT_X__FIRST:
+    case OPT_X__LAST:
         return 0;
-
-    (*pargs) += narg;
-
-    if (pargc)
-        *pargc -= narg;
-
-    *pexc = exc;
-
+    case OPT_X_CERT:
+        if (exc->certfile && !ssl_excert_prepend(&exc)) {
+            BIO_printf(bio_err, "%s: Error adding xcert\n", opt_getprog());
+            goto err;
+        }
+        exc->certfile = opt_arg();
+        break;
+    case OPT_X_KEY:
+        if (exc->keyfile) {
+            BIO_printf(bio_err, "%s: Key already specified\n", opt_getprog());
+            goto err;
+        }
+        exc->keyfile = opt_arg();
+        break;
+    case OPT_X_CHAIN:
+        if (exc->chainfile) {
+            BIO_printf(bio_err, "%s: Chain already specified\n",
+                       opt_getprog());
+            goto err;
+        }
+        exc->chainfile = opt_arg();
+        break;
+    case OPT_X_CHAIN_BUILD:
+        exc->build_chain = 1;
+        break;
+    case OPT_X_CERTFORM:
+        if (!opt_format(opt_arg(), OPT_FMT_PEMDER, &exc->certform))
+            return 0;
+        break;
+    case OPT_X_KEYFORM:
+        if (!opt_format(opt_arg(), OPT_FMT_PEMDER, &exc->keyform))
+            return 0;
+        break;
+    }
     return 1;
 
  err:
-    ERR_print_errors(err);
+    ERR_print_errors(bio_err);
     ssl_excert_free(exc);
     *pexc = NULL;
-    return 1;
+    return 0;
 }
 
-static void print_raw_cipherlist(BIO *bio, SSL *s)
+static void print_raw_cipherlist(SSL *s)
 {
     const unsigned char *rlist;
-    static const unsigned char scsv_id[] = { 0, 0, 0xFF };
+    static const unsigned char scsv_id[] = { 0, 0xFF };
     size_t i, rlistlen, num;
     if (!SSL_is_server(s))
         return;
     num = SSL_get0_raw_cipherlist(s, NULL);
+    OPENSSL_assert(num == 2);
     rlistlen = SSL_get0_raw_cipherlist(s, &rlist);
-    BIO_puts(bio, "Client cipher list: ");
+    BIO_puts(bio_err, "Client cipher list: ");
     for (i = 0; i < rlistlen; i += num, rlist += num) {
         const SSL_CIPHER *c = SSL_CIPHER_find(s, rlist);
         if (i)
-            BIO_puts(bio, ":");
+            BIO_puts(bio_err, ":");
         if (c)
-            BIO_puts(bio, SSL_CIPHER_get_name(c));
-        else if (!memcmp(rlist, scsv_id - num + 3, num))
-            BIO_puts(bio, "SCSV");
+            BIO_puts(bio_err, SSL_CIPHER_get_name(c));
+        else if (!memcmp(rlist, scsv_id, num))
+            BIO_puts(bio_err, "SCSV");
         else {
             size_t j;
-            BIO_puts(bio, "0x");
+            BIO_puts(bio_err, "0x");
             for (j = 0; j < num; j++)
-                BIO_printf(bio, "%02X", rlist[j]);
+                BIO_printf(bio_err, "%02X", rlist[j]);
         }
     }
-    BIO_puts(bio, "\n");
+    BIO_puts(bio_err, "\n");
 }
 
-void print_ssl_summary(BIO *bio, SSL *s)
+/*
+ * Hex encoder for TLSA RRdata, not ':' delimited.
+ */
+static char *hexencode(const unsigned char *data, size_t len)
+{
+    static const char *hex = "0123456789abcdef";
+    char *out;
+    char *cp;
+    size_t outlen = 2 * len + 1;
+    int ilen = (int) outlen;
+
+    if (outlen < len || ilen < 0 || outlen != (size_t)ilen) {
+        BIO_printf(bio_err, "%s: %" PRIu64 "-byte buffer too large to hexencode\n",
+                   opt_getprog(), (uint64_t)len);
+        exit(1);
+    }
+    cp = out = app_malloc(ilen, "TLSA hex data buffer");
+
+    while (ilen-- > 0) {
+        *cp++ = hex[(*data >> 4) & 0x0f];
+        *cp++ = hex[*data++ & 0x0f];
+    }
+    *cp = '\0';
+    return out;
+}
+
+void print_verify_detail(SSL *s, BIO *bio)
+{
+    int mdpth;
+    EVP_PKEY *mspki;
+    long verify_err = SSL_get_verify_result(s);
+
+    if (verify_err == X509_V_OK) {
+        const char *peername = SSL_get0_peername(s);
+
+        BIO_printf(bio, "Verification: OK\n");
+        if (peername != NULL)
+            BIO_printf(bio, "Verified peername: %s\n", peername);
+    } else {
+        const char *reason = X509_verify_cert_error_string(verify_err);
+
+        BIO_printf(bio, "Verification error: %s\n", reason);
+    }
+
+    if ((mdpth = SSL_get0_dane_authority(s, NULL, &mspki)) >= 0) {
+        uint8_t usage, selector, mtype;
+        const unsigned char *data = NULL;
+        size_t dlen = 0;
+        char *hexdata;
+
+        mdpth = SSL_get0_dane_tlsa(s, &usage, &selector, &mtype, &data, &dlen);
+
+        /*
+         * The TLSA data field can be quite long when it is a certificate,
+         * public key or even a SHA2-512 digest.  Because the initial octets of
+         * ASN.1 certificates and public keys contain mostly boilerplate OIDs
+         * and lengths, we show the last 12 bytes of the data instead, as these
+         * are more likely to distinguish distinct TLSA records.
+         */
+#define TLSA_TAIL_SIZE 12
+        if (dlen > TLSA_TAIL_SIZE)
+            hexdata = hexencode(data + dlen - TLSA_TAIL_SIZE, TLSA_TAIL_SIZE);
+        else
+            hexdata = hexencode(data, dlen);
+        BIO_printf(bio, "DANE TLSA %d %d %d %s%s %s at depth %d\n",
+                   usage, selector, mtype,
+                   (dlen > TLSA_TAIL_SIZE) ? "..." : "", hexdata,
+                   (mspki != NULL) ? "signed the certificate" :
+                   mdpth ? "matched TA certificate" : "matched EE certificate",
+                   mdpth);
+        OPENSSL_free(hexdata);
+    }
+}
+
+void print_ssl_summary(SSL *s)
 {
     const SSL_CIPHER *c;
     X509 *peer;
-    /*
-     * const char *pnam = SSL_is_server(s) ? "client" : "server";
-     */
-    BIO_printf(bio, "Protocol version: %s\n", SSL_get_version(s));
-    print_raw_cipherlist(bio, s);
+    /* const char *pnam = SSL_is_server(s) ? "client" : "server"; */
+
+    BIO_printf(bio_err, "Protocol version: %s\n", SSL_get_version(s));
+    print_raw_cipherlist(s);
     c = SSL_get_current_cipher(s);
-    BIO_printf(bio, "Ciphersuite: %s\n", SSL_CIPHER_get_name(c));
-    do_print_sigalgs(bio, s, 0);
+    BIO_printf(bio_err, "Ciphersuite: %s\n", SSL_CIPHER_get_name(c));
+    do_print_sigalgs(bio_err, s, 0);
     peer = SSL_get_peer_certificate(s);
     if (peer) {
         int nid;
-        BIO_puts(bio, "Peer certificate: ");
-        X509_NAME_print_ex(bio, X509_get_subject_name(peer),
+
+        BIO_puts(bio_err, "Peer certificate: ");
+        X509_NAME_print_ex(bio_err, X509_get_subject_name(peer),
                            0, XN_FLAG_ONELINE);
-        BIO_puts(bio, "\n");
+        BIO_puts(bio_err, "\n");
         if (SSL_get_peer_signature_nid(s, &nid))
-            BIO_printf(bio, "Hash used: %s\n", OBJ_nid2sn(nid));
+            BIO_printf(bio_err, "Hash used: %s\n", OBJ_nid2sn(nid));
+        print_verify_detail(s, bio_err);
     } else
-        BIO_puts(bio, "No peer certificate\n");
-    if (peer)
-        X509_free(peer);
+        BIO_puts(bio_err, "No peer certificate\n");
+    X509_free(peer);
 #ifndef OPENSSL_NO_EC
-    ssl_print_point_formats(bio, s);
+    ssl_print_point_formats(bio_err, s);
     if (SSL_is_server(s))
-        ssl_print_curves(bio, s, 1);
+        ssl_print_curves(bio_err, s, 1);
     else
-        ssl_print_tmp_key(bio, s);
+        ssl_print_tmp_key(bio_err, s);
 #else
     if (!SSL_is_server(s))
-        ssl_print_tmp_key(bio, s);
+        ssl_print_tmp_key(bio_err, s);
 #endif
 }
 
-int args_ssl(char ***pargs, int *pargc, SSL_CONF_CTX *cctx,
-             int *badarg, BIO *err, STACK_OF(OPENSSL_STRING) **pstr)
-{
-    char *arg = **pargs, *argn = (*pargs)[1];
-    int rv;
-
-    /* Attempt to run SSL configuration command */
-    rv = SSL_CONF_cmd_argv(cctx, pargc, pargs);
-    /* If parameter not recognised just return */
-    if (rv == 0)
-        return 0;
-    /* see if missing argument error */
-    if (rv == -3) {
-        BIO_printf(err, "%s needs an argument\n", arg);
-        *badarg = 1;
-        goto end;
-    }
-    /* Check for some other error */
-    if (rv < 0) {
-        BIO_printf(err, "Error with command: \"%s %s\"\n",
-                   arg, argn ? argn : "");
-        *badarg = 1;
-        goto end;
-    }
-    /* Store command and argument */
-    /* If only one argument processed store value as NULL */
-    if (rv == 1)
-        argn = NULL;
-    if (!*pstr)
-        *pstr = sk_OPENSSL_STRING_new_null();
-    if (!*pstr || !sk_OPENSSL_STRING_push(*pstr, arg) ||
-        !sk_OPENSSL_STRING_push(*pstr, argn)) {
-        BIO_puts(err, "Memory allocation failure\n");
-        goto end;
-    }
-
- end:
-    if (*badarg)
-        ERR_print_errors(err);
-
-    return 1;
-}
-
-int args_ssl_call(SSL_CTX *ctx, BIO *err, SSL_CONF_CTX *cctx,
-                  STACK_OF(OPENSSL_STRING) *str, int no_ecdhe, int no_jpake)
+int config_ctx(SSL_CONF_CTX *cctx, STACK_OF(OPENSSL_STRING) *str,
+               SSL_CTX *ctx)
 {
     int i;
+
     SSL_CONF_CTX_set_ssl_ctx(cctx, ctx);
     for (i = 0; i < sk_OPENSSL_STRING_num(str); i += 2) {
-        const char *param = sk_OPENSSL_STRING_value(str, i);
-        const char *value = sk_OPENSSL_STRING_value(str, i + 1);
-        /*
-         * If no_ecdhe or named curve already specified don't need a default.
-         */
-        if (!no_ecdhe && !strcmp(param, "-named_curve"))
-            no_ecdhe = 1;
-#ifndef OPENSSL_NO_JPAKE
-        if (!no_jpake && !strcmp(param, "-cipher")) {
-            BIO_puts(err, "JPAKE sets cipher to PSK\n");
-            return 0;
-        }
-#endif
-        if (SSL_CONF_cmd(cctx, param, value) <= 0) {
-            BIO_printf(err, "Error with command: \"%s %s\"\n",
-                       param, value ? value : "");
-            ERR_print_errors(err);
+        const char *flag = sk_OPENSSL_STRING_value(str, i);
+        const char *arg = sk_OPENSSL_STRING_value(str, i + 1);
+        if (SSL_CONF_cmd(cctx, flag, arg) <= 0) {
+            if (arg)
+                BIO_printf(bio_err, "Error with command: \"%s %s\"\n",
+                           flag, arg);
+            else
+                BIO_printf(bio_err, "Error with command: \"%s\"\n", flag);
+            ERR_print_errors(bio_err);
             return 0;
         }
     }
-    /*
-     * This is a special case to keep existing s_server functionality: if we
-     * don't have any curve specified *and* we haven't disabled ECDHE then
-     * use P-256.
-     */
-    if (!no_ecdhe) {
-        if (SSL_CONF_cmd(cctx, "-named_curve", "P-256") <= 0) {
-            BIO_puts(err, "Error setting EC curve\n");
-            ERR_print_errors(err);
-            return 0;
-        }
-    }
-#ifndef OPENSSL_NO_JPAKE
-    if (!no_jpake) {
-        if (SSL_CONF_cmd(cctx, "-cipher", "PSK") <= 0) {
-            BIO_puts(err, "Error setting cipher to PSK\n");
-            ERR_print_errors(err);
-            return 0;
-        }
-    }
-#endif
     if (!SSL_CONF_CTX_finish(cctx)) {
-        BIO_puts(err, "Error finishing context\n");
-        ERR_print_errors(err);
+        BIO_puts(bio_err, "Error finishing context\n");
+        ERR_print_errors(bio_err);
         return 0;
     }
     return 1;
@@ -1558,8 +1253,10 @@ int ssl_load_stores(SSL_CTX *ctx,
 {
     X509_STORE *vfy = NULL, *ch = NULL;
     int rv = 0;
-    if (vfyCApath || vfyCAfile) {
+    if (vfyCApath != NULL || vfyCAfile != NULL) {
         vfy = X509_STORE_new();
+        if (vfy == NULL)
+            goto err;
         if (!X509_STORE_load_locations(vfy, vfyCAfile, vfyCApath))
             goto err;
         add_crls_store(vfy, crls);
@@ -1567,18 +1264,18 @@ int ssl_load_stores(SSL_CTX *ctx,
         if (crl_download)
             store_setup_crl_download(vfy);
     }
-    if (chCApath || chCAfile) {
+    if (chCApath != NULL || chCAfile != NULL) {
         ch = X509_STORE_new();
+        if (ch == NULL)
+            goto err;
         if (!X509_STORE_load_locations(ch, chCAfile, chCApath))
             goto err;
         SSL_CTX_set1_chain_cert_store(ctx, ch);
     }
     rv = 1;
  err:
-    if (vfy)
-        X509_STORE_free(vfy);
-    if (ch)
-        X509_STORE_free(ch);
+    X509_STORE_free(vfy);
+    X509_STORE_free(ch);
     return rv;
 }
 
@@ -1590,6 +1287,31 @@ typedef struct {
     int (*old_cb) (SSL *s, SSL_CTX *ctx, int op, int bits, int nid,
                    void *other, void *ex);
 } security_debug_ex;
+
+static STRINT_PAIR callback_types[] = {
+    {"Supported Ciphersuite", SSL_SECOP_CIPHER_SUPPORTED},
+    {"Shared Ciphersuite", SSL_SECOP_CIPHER_SHARED},
+    {"Check Ciphersuite", SSL_SECOP_CIPHER_CHECK},
+#ifndef OPENSSL_NO_DH
+    {"Temp DH key bits", SSL_SECOP_TMP_DH},
+#endif
+    {"Supported Curve", SSL_SECOP_CURVE_SUPPORTED},
+    {"Shared Curve", SSL_SECOP_CURVE_SHARED},
+    {"Check Curve", SSL_SECOP_CURVE_CHECK},
+    {"Supported Signature Algorithm digest", SSL_SECOP_SIGALG_SUPPORTED},
+    {"Shared Signature Algorithm digest", SSL_SECOP_SIGALG_SHARED},
+    {"Check Signature Algorithm digest", SSL_SECOP_SIGALG_CHECK},
+    {"Signature Algorithm mask", SSL_SECOP_SIGALG_MASK},
+    {"Certificate chain EE key", SSL_SECOP_EE_KEY},
+    {"Certificate chain CA key", SSL_SECOP_CA_KEY},
+    {"Peer Chain EE key", SSL_SECOP_PEER_EE_KEY},
+    {"Peer Chain CA key", SSL_SECOP_PEER_CA_KEY},
+    {"Certificate chain CA digest", SSL_SECOP_CA_MD},
+    {"Peer chain CA digest", SSL_SECOP_PEER_CA_MD},
+    {"SSL compression", SSL_SECOP_COMPRESSION},
+    {"Session ticket", SSL_SECOP_TICKET},
+    {NULL}
+};
 
 static int security_callback_debug(SSL *s, SSL_CTX *ctx,
                                    int op, int bits, int nid,
@@ -1603,79 +1325,22 @@ static int security_callback_debug(SSL *s, SSL_CTX *ctx,
         return 1;
     BIO_puts(sdb->out, "Security callback: ");
 
+    nm = lookup(op, callback_types, NULL);
     switch (op) {
-    case SSL_SECOP_CIPHER_SUPPORTED:
-        nm = "Supported Ciphersuite";
-        break;
-    case SSL_SECOP_CIPHER_SHARED:
-        nm = "Shared Ciphersuite";
-        break;
-    case SSL_SECOP_CIPHER_CHECK:
-        nm = "Check Ciphersuite";
-        break;
     case SSL_SECOP_TICKET:
-        BIO_puts(sdb->out, "Session ticket");
-        show_bits = 0;
-        nm = NULL;
-        break;
     case SSL_SECOP_COMPRESSION:
-        BIO_puts(sdb->out, "SSL compression");
         show_bits = 0;
         nm = NULL;
-        break;
-#ifndef OPENSSL_NO_DH
-    case SSL_SECOP_TMP_DH:
-        nm = "Temp DH key bits";
-        break;
-#endif
-    case SSL_SECOP_CURVE_SUPPORTED:
-        nm = "Supported Curve";
-        break;
-    case SSL_SECOP_CURVE_SHARED:
-        nm = "Shared Curve";
-        break;
-    case SSL_SECOP_CURVE_CHECK:
-        nm = "Check Curve";
         break;
     case SSL_SECOP_VERSION:
-        BIO_printf(sdb->out, "Version=%s", ssl_version_str(nid));
+        BIO_printf(sdb->out, "Version=%s", lookup(nid, ssl_versions, "???"));
         show_bits = 0;
         nm = NULL;
         break;
-    case SSL_SECOP_SIGALG_SUPPORTED:
-        nm = "Supported Signature Algorithm digest";
-        break;
-    case SSL_SECOP_SIGALG_SHARED:
-        nm = "Shared Signature Algorithm digest";
-        break;
-    case SSL_SECOP_SIGALG_CHECK:
-        nm = "Check Signature Algorithm digest";
-        break;
-    case SSL_SECOP_SIGALG_MASK:
-        nm = "Signature Algorithm mask";
-        break;
-    case SSL_SECOP_EE_KEY:
-        nm = "Certificate chain EE key";
-        break;
-    case SSL_SECOP_CA_KEY:
-        nm = "Certificate chain CA key";
-        break;
     case SSL_SECOP_CA_MD:
-        cert_md = 1;
-        nm = "Certificate chain CA digest";
-        break;
-    case SSL_SECOP_PEER_EE_KEY:
-        nm = "Peer Chain EE key";
-        break;
-    case SSL_SECOP_PEER_CA_KEY:
-        nm = "Peer Chain CA key";
-        break;
     case SSL_SECOP_PEER_CA_MD:
         cert_md = 1;
-        nm = "Peer chain CA digest";
         break;
-    default:
-        nm = NULL;
     }
     if (nm)
         BIO_printf(sdb->out, "%s=", nm);
@@ -1697,26 +1362,26 @@ static int security_callback_debug(SSL *s, SSL_CTX *ctx,
         }
         break;
 #endif
-
+#ifndef OPENSSL_NO_DH
     case SSL_SECOP_OTHER_DH:
         {
             DH *dh = other;
             BIO_printf(sdb->out, "%d", BN_num_bits(dh->p));
             break;
         }
+#endif
     case SSL_SECOP_OTHER_CERT:
         {
             if (cert_md) {
                 int sig_nid = X509_get_signature_nid(other);
                 BIO_puts(sdb->out, OBJ_nid2sn(sig_nid));
             } else {
-                EVP_PKEY *pkey = X509_get_pubkey(other);
+                EVP_PKEY *pkey = X509_get0_pubkey(other);
                 const char *algname = "";
                 EVP_PKEY_asn1_get0_info(NULL, NULL, NULL, NULL,
                                         &algname, EVP_PKEY_get0_asn1(pkey));
                 BIO_printf(sdb->out, "%s, bits=%d",
                            algname, EVP_PKEY_bits(pkey));
-                EVP_PKEY_free(pkey);
             }
             break;
         }
@@ -1755,10 +1420,11 @@ static int security_callback_debug(SSL *s, SSL_CTX *ctx,
     return rv;
 }
 
-void ssl_ctx_security_debug(SSL_CTX *ctx, BIO *out, int verbose)
+void ssl_ctx_security_debug(SSL_CTX *ctx, int verbose)
 {
     static security_debug_ex sdb;
-    sdb.out = out;
+
+    sdb.out = bio_err;
     sdb.verbose = verbose;
     sdb.old_cb = SSL_CTX_get_security_callback(ctx);
     SSL_CTX_set_security_callback(ctx, security_callback_debug);

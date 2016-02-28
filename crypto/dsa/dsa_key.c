@@ -1,4 +1,3 @@
-/* crypto/dsa/dsa_key.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -58,7 +57,7 @@
 
 #include <stdio.h>
 #include <time.h>
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/bn.h>
 #include <openssl/dsa.h>
 #include <openssl/rand.h>
@@ -82,7 +81,7 @@ static int dsa_builtin_keygen(DSA *dsa)
         goto err;
 
     if (dsa->priv_key == NULL) {
-        if ((priv_key = BN_new()) == NULL)
+        if ((priv_key = BN_secure_new()) == NULL)
             goto err;
     } else
         priv_key = dsa->priv_key;
@@ -104,19 +103,19 @@ static int dsa_builtin_keygen(DSA *dsa)
 
         if ((dsa->flags & DSA_FLAG_NO_EXP_CONSTTIME) == 0) {
             local_prk = prk = BN_new();
-            if (!local_prk)
+            if (local_prk == NULL)
                 goto err;
             BN_with_flags(prk, priv_key, BN_FLG_CONSTTIME);
-        } else
+        } else {
             prk = priv_key;
+        }
 
         if (!BN_mod_exp(pub_key, dsa->g, prk, dsa->p, ctx)) {
-            if (local_prk != NULL)
-                BN_free(local_prk);
+            BN_free(local_prk);
             goto err;
         }
-        if (local_prk != NULL)
-            BN_free(local_prk);
+        /* We MUST free local_prk before any further use of priv_key */
+        BN_free(local_prk);
     }
 
     dsa->priv_key = priv_key;
@@ -124,11 +123,10 @@ static int dsa_builtin_keygen(DSA *dsa)
     ok = 1;
 
  err:
-    if ((pub_key != NULL) && (dsa->pub_key == NULL))
+    if (pub_key != dsa->pub_key)
         BN_free(pub_key);
-    if ((priv_key != NULL) && (dsa->priv_key == NULL))
+    if (priv_key != dsa->priv_key)
         BN_free(priv_key);
-    if (ctx != NULL)
-        BN_CTX_free(ctx);
+    BN_CTX_free(ctx);
     return (ok);
 }

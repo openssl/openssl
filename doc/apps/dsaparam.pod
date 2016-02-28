@@ -7,6 +7,7 @@ dsaparam - DSA parameter manipulation and generation
 =head1 SYNOPSIS
 
 B<openssl dsaparam>
+[B<-help>]
 [B<-inform DER|PEM>]
 [B<-outform DER|PEM>]
 [B<-in filename>]
@@ -26,6 +27,10 @@ This command is used to manipulate or generate DSA parameter files.
 =head1 OPTIONS
 
 =over 4
+
+=item B<-help>
+
+Print out a usage message.
 
 =item B<-inform DER|PEM>
 
@@ -62,7 +67,7 @@ this option prints out the DSA parameters in human readable form.
 =item B<-C>
 
 this option converts the parameters into C code. The parameters can then
-be loaded by calling the B<get_dsaXXX()> function.
+be loaded by calling the get_dsaXXX() function.
 
 =item B<-genkey>
 
@@ -72,7 +77,7 @@ parameters.
 =item B<-rand file(s)>
 
 a file or files containing random data used to seed the random number
-generator, or an EGD socket (see L<RAND_egd(3)|RAND_egd(3)>).
+generator, or an EGD socket (see L<RAND_egd(3)>).
 Multiple files can be specified separated by a OS-dependent character.
 The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
 all others.
@@ -104,7 +109,7 @@ DSA parameters is often used to generate several distinct keys.
 
 =head1 SEE ALSO
 
-L<gendsa(1)|gendsa(1)>, L<dsa(1)|dsa(1)>, L<genrsa(1)|genrsa(1)>,
-L<rsa(1)|rsa(1)>
+L<gendsa(1)>, L<dsa(1)>, L<genrsa(1)>,
+L<rsa(1)>
 
 =cut

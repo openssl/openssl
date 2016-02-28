@@ -1,4 +1,3 @@
-/* crypto/sha/sha1dgst.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -60,8 +59,6 @@
 #include <openssl/opensslconf.h>
 
 # include <openssl/opensslv.h>
-
-const char SHA1_version[] = "SHA1" OPENSSL_VERSION_PTEXT;
 
 /* The implementation is in ../md32_common.h */
 

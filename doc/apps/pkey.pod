@@ -8,6 +8,7 @@ pkey - public or private key processing tool
 =head1 SYNOPSIS
 
 B<openssl> B<pkey>
+[B<-help>]
 [B<-inform PEM|DER>]
 [B<-outform PEM|DER>]
 [B<-in filename>]
@@ -31,6 +32,10 @@ between various forms and their components printed out.
 
 =over 4
 
+=item B<-help>
+
+Print out a usage message.
+
 =item B<-inform DER|PEM>
 
 This specifies the input format DER or PEM.
@@ -49,7 +54,7 @@ prompted for.
 =item B<-passin arg>
 
 the input file password source. For more information about the format of B<arg>
-see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)|openssl(1)>.
+see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
 
 =item B<-out filename>
 
@@ -61,7 +66,7 @@ filename.
 =item B<-passout password>
 
 the output file password source. For more information about the format of B<arg>
-see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)|openssl(1)>.
+see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
 
 =item B<-cipher>
 
@@ -129,7 +134,7 @@ To just output the public part of a private key:
 
 =head1 SEE ALSO
 
-L<genpkey(1)|genpkey(1)>, L<rsa(1)|rsa(1)>, L<pkcs8(1)|pkcs8(1)>,
-L<dsa(1)|dsa(1)>, L<genrsa(1)|genrsa(1)>, L<gendsa(1)|gendsa(1)> 
+L<genpkey(1)>, L<rsa(1)>, L<pkcs8(1)>,
+L<dsa(1)>, L<genrsa(1)>, L<gendsa(1)> 
 
 =cut

@@ -1,4 +1,3 @@
-/* p12_add.c */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
  * 1999.
@@ -58,8 +57,9 @@
  */
 
 #include <stdio.h>
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/pkcs12.h>
+#include "p12_lcl.h"
 
 /* Pack an object into an OCTET STRING and turn into a safebag */
 
@@ -68,90 +68,53 @@ PKCS12_SAFEBAG *PKCS12_item_pack_safebag(void *obj, const ASN1_ITEM *it,
 {
     PKCS12_BAGS *bag;
     PKCS12_SAFEBAG *safebag;
-    if (!(bag = PKCS12_BAGS_new())) {
+
+    if ((bag = PKCS12_BAGS_new()) == NULL) {
         PKCS12err(PKCS12_F_PKCS12_ITEM_PACK_SAFEBAG, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
     bag->type = OBJ_nid2obj(nid1);
     if (!ASN1_item_pack(obj, it, &bag->value.octet)) {
         PKCS12err(PKCS12_F_PKCS12_ITEM_PACK_SAFEBAG, ERR_R_MALLOC_FAILURE);
-        return NULL;
+        goto err;
     }
-    if (!(safebag = PKCS12_SAFEBAG_new())) {
+    if ((safebag = PKCS12_SAFEBAG_new()) == NULL) {
         PKCS12err(PKCS12_F_PKCS12_ITEM_PACK_SAFEBAG, ERR_R_MALLOC_FAILURE);
-        return NULL;
+        goto err;
     }
     safebag->value.bag = bag;
     safebag->type = OBJ_nid2obj(nid2);
     return safebag;
-}
 
-/* Turn PKCS8 object into a keybag */
-
-PKCS12_SAFEBAG *PKCS12_MAKE_KEYBAG(PKCS8_PRIV_KEY_INFO *p8)
-{
-    PKCS12_SAFEBAG *bag;
-    if (!(bag = PKCS12_SAFEBAG_new())) {
-        PKCS12err(PKCS12_F_PKCS12_MAKE_KEYBAG, ERR_R_MALLOC_FAILURE);
-        return NULL;
-    }
-    bag->type = OBJ_nid2obj(NID_keyBag);
-    bag->value.keybag = p8;
-    return bag;
-}
-
-/* Turn PKCS8 object into a shrouded keybag */
-
-PKCS12_SAFEBAG *PKCS12_MAKE_SHKEYBAG(int pbe_nid, const char *pass,
-                                     int passlen, unsigned char *salt,
-                                     int saltlen, int iter,
-                                     PKCS8_PRIV_KEY_INFO *p8)
-{
-    PKCS12_SAFEBAG *bag;
-    const EVP_CIPHER *pbe_ciph;
-
-    /* Set up the safe bag */
-    if (!(bag = PKCS12_SAFEBAG_new())) {
-        PKCS12err(PKCS12_F_PKCS12_MAKE_SHKEYBAG, ERR_R_MALLOC_FAILURE);
-        return NULL;
-    }
-
-    bag->type = OBJ_nid2obj(NID_pkcs8ShroudedKeyBag);
-
-    pbe_ciph = EVP_get_cipherbynid(pbe_nid);
-
-    if (pbe_ciph)
-        pbe_nid = -1;
-
-    if (!(bag->value.shkeybag =
-          PKCS8_encrypt(pbe_nid, pbe_ciph, pass, passlen, salt, saltlen, iter,
-                        p8))) {
-        PKCS12err(PKCS12_F_PKCS12_MAKE_SHKEYBAG, ERR_R_MALLOC_FAILURE);
-        return NULL;
-    }
-
-    return bag;
+ err:
+    PKCS12_BAGS_free(bag);
+    return NULL;
 }
 
 /* Turn a stack of SAFEBAGS into a PKCS#7 data Contentinfo */
 PKCS7 *PKCS12_pack_p7data(STACK_OF(PKCS12_SAFEBAG) *sk)
 {
     PKCS7 *p7;
-    if (!(p7 = PKCS7_new())) {
+
+    if ((p7 = PKCS7_new()) == NULL) {
         PKCS12err(PKCS12_F_PKCS12_PACK_P7DATA, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
     p7->type = OBJ_nid2obj(NID_pkcs7_data);
-    if (!(p7->d.data = M_ASN1_OCTET_STRING_new())) {
+    if ((p7->d.data = ASN1_OCTET_STRING_new()) == NULL) {
         PKCS12err(PKCS12_F_PKCS12_PACK_P7DATA, ERR_R_MALLOC_FAILURE);
-        return NULL;
+        goto err;
     }
 
     if (!ASN1_item_pack(sk, ASN1_ITEM_rptr(PKCS12_SAFEBAGS), &p7->d.data)) {
         PKCS12err(PKCS12_F_PKCS12_PACK_P7DATA, PKCS12_R_CANT_PACK_STRUCTURE);
-        return NULL;
+        goto err;
     }
     return p7;
+
+ err:
+    PKCS7_free(p7);
+    return NULL;
 }
 
 /* Unpack SAFEBAGS from PKCS#7 data ContentInfo */
@@ -174,14 +137,15 @@ PKCS7 *PKCS12_pack_p7encdata(int pbe_nid, const char *pass, int passlen,
     PKCS7 *p7;
     X509_ALGOR *pbe;
     const EVP_CIPHER *pbe_ciph;
-    if (!(p7 = PKCS7_new())) {
+
+    if ((p7 = PKCS7_new()) == NULL) {
         PKCS12err(PKCS12_F_PKCS12_PACK_P7ENCDATA, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
     if (!PKCS7_set_type(p7, NID_pkcs7_encrypted)) {
         PKCS12err(PKCS12_F_PKCS12_PACK_P7ENCDATA,
                   PKCS12_R_ERROR_SETTING_ENCRYPTED_DATA_TYPE);
-        return NULL;
+        goto err;
     }
 
     pbe_ciph = EVP_get_cipherbynid(pbe_nid);
@@ -193,19 +157,23 @@ PKCS7 *PKCS12_pack_p7encdata(int pbe_nid, const char *pass, int passlen,
 
     if (!pbe) {
         PKCS12err(PKCS12_F_PKCS12_PACK_P7ENCDATA, ERR_R_MALLOC_FAILURE);
-        return NULL;
+        goto err;
     }
     X509_ALGOR_free(p7->d.encrypted->enc_data->algorithm);
     p7->d.encrypted->enc_data->algorithm = pbe;
-    M_ASN1_OCTET_STRING_free(p7->d.encrypted->enc_data->enc_data);
+    ASN1_OCTET_STRING_free(p7->d.encrypted->enc_data->enc_data);
     if (!(p7->d.encrypted->enc_data->enc_data =
           PKCS12_item_i2d_encrypt(pbe, ASN1_ITEM_rptr(PKCS12_SAFEBAGS), pass,
                                   passlen, bags, 1))) {
         PKCS12err(PKCS12_F_PKCS12_PACK_P7ENCDATA, PKCS12_R_ENCRYPT_ERROR);
-        return NULL;
+        goto err;
     }
 
     return p7;
+
+ err:
+    PKCS7_free(p7);
+    return NULL;
 }
 
 STACK_OF(PKCS12_SAFEBAG) *PKCS12_unpack_p7encdata(PKCS7 *p7, const char *pass,

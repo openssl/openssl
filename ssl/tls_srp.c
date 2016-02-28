@@ -1,4 +1,3 @@
-/* ssl/tls_srp.c */
 /*
  * Written by Christophe Renou (christophe.renou@edelweb.fr) with the
  * precious help of Peter Sylvester (peter.sylvester@edelweb.fr) for the
@@ -60,11 +59,11 @@
 
 #include <openssl/crypto.h>
 #include <openssl/rand.h>
-#include <openssl/srp.h>
 #include <openssl/err.h>
 #include "ssl_locl.h"
 
 #ifndef OPENSSL_NO_SRP
+#include <openssl/srp.h>
 
 int SSL_CTX_SRP_CTX_free(struct ssl_ctx_st *ctx)
 {
@@ -180,7 +179,7 @@ int SSL_SRP_CTX_init(struct ssl_st *s)
         goto err;
     }
     if ((ctx->srp_ctx.login != NULL) &&
-        ((s->srp_ctx.login = BUF_strdup(ctx->srp_ctx.login)) == NULL)) {
+        ((s->srp_ctx.login = OPENSSL_strdup(ctx->srp_ctx.login)) == NULL)) {
         SSLerr(SSL_F_SSL_SRP_CTX_INIT, ERR_R_INTERNAL_ERROR);
         goto err;
     }
@@ -281,14 +280,10 @@ int SSL_set_srp_server_param_pw(SSL *s, const char *user, const char *pass,
         return -1;
     s->srp_ctx.N = BN_dup(GN->N);
     s->srp_ctx.g = BN_dup(GN->g);
-    if (s->srp_ctx.v != NULL) {
-        BN_clear_free(s->srp_ctx.v);
-        s->srp_ctx.v = NULL;
-    }
-    if (s->srp_ctx.s != NULL) {
-        BN_clear_free(s->srp_ctx.s);
-        s->srp_ctx.s = NULL;
-    }
+    BN_clear_free(s->srp_ctx.v);
+    s->srp_ctx.v = NULL;
+    BN_clear_free(s->srp_ctx.s);
+    s->srp_ctx.s = NULL;
     if (!SRP_create_verifier_BN
         (user, pass, &s->srp_ctx.s, &s->srp_ctx.v, GN->N, GN->g))
         return -1;
@@ -349,44 +344,36 @@ int SSL_set_srp_server_param(SSL *s, const BIGNUM *N, const BIGNUM *g,
     return 1;
 }
 
-int SRP_generate_server_master_secret(SSL *s, unsigned char *master_key)
+int srp_generate_server_master_secret(SSL *s)
 {
     BIGNUM *K = NULL, *u = NULL;
-    int ret = -1, tmp_len;
+    int ret = -1, tmp_len = 0;
     unsigned char *tmp = NULL;
 
     if (!SRP_Verify_A_mod_N(s->srp_ctx.A, s->srp_ctx.N))
         goto err;
-    if (!(u = SRP_Calc_u(s->srp_ctx.A, s->srp_ctx.B, s->srp_ctx.N)))
+    if ((u = SRP_Calc_u(s->srp_ctx.A, s->srp_ctx.B, s->srp_ctx.N)) == NULL)
         goto err;
-    if (!
-        (K =
-         SRP_Calc_server_key(s->srp_ctx.A, s->srp_ctx.v, u, s->srp_ctx.b,
-                             s->srp_ctx.N)))
+    if ((K = SRP_Calc_server_key(s->srp_ctx.A, s->srp_ctx.v, u, s->srp_ctx.b,
+                                 s->srp_ctx.N)) == NULL)
         goto err;
 
     tmp_len = BN_num_bytes(K);
     if ((tmp = OPENSSL_malloc(tmp_len)) == NULL)
         goto err;
     BN_bn2bin(K, tmp);
-    ret =
-        s->method->ssl3_enc->generate_master_secret(s, master_key, tmp,
-                                                    tmp_len);
+    ret = ssl_generate_master_secret(s, tmp, tmp_len, 1);
  err:
-    if (tmp) {
-        OPENSSL_cleanse(tmp, tmp_len);
-        OPENSSL_free(tmp);
-    }
     BN_clear_free(K);
     BN_clear_free(u);
     return ret;
 }
 
 /* client side */
-int SRP_generate_client_master_secret(SSL *s, unsigned char *master_key)
+int srp_generate_client_master_secret(SSL *s)
 {
     BIGNUM *x = NULL, *u = NULL, *K = NULL;
-    int ret = -1, tmp_len;
+    int ret = -1, tmp_len = 0;
     char *passwd = NULL;
     unsigned char *tmp = NULL;
 
@@ -395,7 +382,7 @@ int SRP_generate_client_master_secret(SSL *s, unsigned char *master_key)
      */
     if (SRP_Verify_B_mod_N(s->srp_ctx.B, s->srp_ctx.N) == 0)
         goto err;
-    if (!(u = SRP_Calc_u(s->srp_ctx.A, s->srp_ctx.B, s->srp_ctx.N)))
+    if ((u = SRP_Calc_u(s->srp_ctx.A, s->srp_ctx.B, s->srp_ctx.N)) == NULL)
         goto err;
     if (s->srp_ctx.SRP_give_srp_client_pwd_callback == NULL)
         goto err;
@@ -404,32 +391,22 @@ int SRP_generate_client_master_secret(SSL *s, unsigned char *master_key)
          s->srp_ctx.SRP_give_srp_client_pwd_callback(s,
                                                      s->srp_ctx.SRP_cb_arg)))
         goto err;
-    if (!(x = SRP_Calc_x(s->srp_ctx.s, s->srp_ctx.login, passwd)))
+    if ((x = SRP_Calc_x(s->srp_ctx.s, s->srp_ctx.login, passwd)) == NULL)
         goto err;
-    if (!
-        (K =
-         SRP_Calc_client_key(s->srp_ctx.N, s->srp_ctx.B, s->srp_ctx.g, x,
-                             s->srp_ctx.a, u)))
+    if ((K = SRP_Calc_client_key(s->srp_ctx.N, s->srp_ctx.B, s->srp_ctx.g, x,
+                                 s->srp_ctx.a, u)) == NULL)
         goto err;
 
     tmp_len = BN_num_bytes(K);
     if ((tmp = OPENSSL_malloc(tmp_len)) == NULL)
         goto err;
     BN_bn2bin(K, tmp);
-    ret =
-        s->method->ssl3_enc->generate_master_secret(s, master_key, tmp,
-                                                    tmp_len);
+    ret = ssl_generate_master_secret(s, tmp, tmp_len, 1);
  err:
-    if (tmp) {
-        OPENSSL_cleanse(tmp, tmp_len);
-        OPENSSL_free(tmp);
-    }
     BN_clear_free(K);
     BN_clear_free(x);
-    if (passwd) {
-        OPENSSL_cleanse(passwd, strlen(passwd));
-        OPENSSL_free(passwd);
-    }
+    if (passwd != NULL)
+        OPENSSL_clear_free(passwd, strlen(passwd));
     BN_clear_free(u);
     return ret;
 }

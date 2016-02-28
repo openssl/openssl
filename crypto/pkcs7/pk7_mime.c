@@ -1,4 +1,3 @@
-/* pk7_mime.c */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -55,7 +54,7 @@
 
 #include <stdio.h>
 #include <ctype.h>
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/rand.h>
 #include <openssl/x509.h>
 #include <openssl/asn1.h>

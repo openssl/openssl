@@ -1,7 +1,7 @@
 #include <openssl/opensslconf.h>
 
-#ifdef OPENSSL_FIPS
-# include "fips_err.h"
+#ifndef OPENSSL_FIPS
+NON_EMPTY_TRANSLATION_UNIT
 #else
-static void *dummy = &dummy;
+# include "fips_err.h"
 #endif

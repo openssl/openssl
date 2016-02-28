@@ -26,6 +26,7 @@ $cp='$(PERL) util/copy.pl';
 $cp2='$(PERL) util/copy.pl -stripcr';
 $mkdir='$(PERL) util/mkdir-p.pl';
 $rm='del /Q';
+$mv='move /Y';
 
 $zlib_lib="zlib1.lib";
 
@@ -48,7 +49,7 @@ if ($FLAVOR =~ /WIN64/)
     # per 0.9.8 release remaining warnings were explicitly examined and
     # considered safe to ignore.
     # 
-    $base_cflags= " $mf_cflag";
+    $base_cflags= " $mf_cflag" . ($mf_shared_cflag ? " $mf_shared_cflag" : "");
     my $f = ($shlib and !$fipscanisterbuild)?' /MD':' /MT';
     $opt_cflags=$f.' /Ox';
     $dbg_cflags=$f.'d /Od -DDEBUG -D_DEBUG';
@@ -137,7 +138,7 @@ elsif ($FLAVOR =~ /CE/)
     }
 else	# Win32
     {
-    $base_cflags= " $mf_cflag";
+    $base_cflags= " $mf_cflag" . ($mf_shared_cflag ? " $mf_shared_cflag" : "");
     my $f = ($shlib and !$fipscanisterbuild)?' /MD':' /MT';
     $opt_cflags=$f.' /Ox /O2 /Ob2';
     $dbg_cflags=$f.'d /Od -DDEBUG -D_DEBUG';
@@ -284,10 +285,6 @@ $(OBJ_D)\applink.obj:	ms\applink.c
 	$(CC) /Fo$(OBJ_D)\applink.obj $(APP_CFLAGS) -c ms\applink.c
 $(OBJ_D)\uplink.obj:	ms\uplink.c ms\applink.c
 	$(CC) /Fo$(OBJ_D)\uplink.obj $(SHLIB_CFLAGS) -c ms\uplink.c
-$(INCO_D)\applink.c:	ms\applink.c
-	$(CP) ms\applink.c $(INCO_D)\applink.c
-
-EXHEADER= $(EXHEADER) $(INCO_D)\applink.c
 
 LIBS_DEP=$(LIBS_DEP) $(OBJ_D)\applink.obj
 CRYPTOOBJ=$(OBJ_D)\uplink.obj $(CRYPTOOBJ)
@@ -303,6 +300,30 @@ elsif ($shlib && $FLAVOR =~ /CE/)
 	$lib_cflag.=" -D_WINDLL";
 	$lib_cflag.=" -D_DLL" if (!$fipscanisterbuild);
 	}
+
+sub do_rehash_rule {
+    my ($target, $deps) = @_;
+    my $ret = <<"EOF";
+$target: $deps
+	set OPENSSL=\$(BIN_D)${o}openssl.exe
+	set OPENSSL_DEBUG_MEMORY=on
+	\$(PERL) \$(BIN_D)${o}c_rehash certs/demo
+	echo off > $target
+EOF
+    return $ret
+}
+sub do_test_rule {
+    my ($target, $deps, $test_cmd) = @_;
+    my $ret = <<"EOF";
+$target: $deps force.$target
+	set TOP=.
+	set BIN_D=\$(BIN_D)
+	set TEST_D=\$(TEST_D)
+	set PERL=\$(PERL)
+	\$(PERL) test\\$test_cmd \$(TESTS)
+force.$target:
+EOF
+}
 
 sub do_lib_rule
 	{
@@ -341,7 +362,7 @@ sub do_lib_rule
  		if ($fips && $target =~ /O_CRYPTO/)
 			{
 			$ret.="$target: $objs \$(PREMAIN_DSO_EXE)";
-			$ret.="\n\tSET FIPS_LINK=\$(LINK)\n";
+			$ret.="\n\tSET FIPS_LINK=\$(LINK_CMD)\n";
 			$ret.="\tSET FIPS_CC=\$(CC)\n";
 			$ret.="\tSET FIPS_CC_ARGS=/Fo\$(OBJ_D)${o}fips_premain.obj \$(SHLIB_CFLAGS) -c\n";
 			$ret.="\tSET PREMAIN_DSO_EXE=\$(PREMAIN_DSO_EXE)\n";
@@ -355,7 +376,7 @@ sub do_lib_rule
 		else
 			{
 			$ret.="$target: $objs";
-			$ret.="\n\t\$(LINK) \$(MLFLAGS) $efile$target $name @<<\n  \$(SHLIB_EX_OBJ) $objs $ex \$(EX_LIBS)\n<<\n";
+			$ret.="\n\t\$(LINK_CMD) \$(MLFLAGS) $efile$target $name @<<\n  \$(SHLIB_EX_OBJ) $objs $ex \$(EX_LIBS)\n<<\n";
 			}
 
 		$ret.="\tIF EXIST \$@.manifest mt -nologo -manifest \$@.manifest -outputresource:\$@;2\n\n";
@@ -369,17 +390,17 @@ sub do_link_rule
 	my($target,$files,$dep_libs,$libs,$standalone)=@_;
 	local($ret,$_);
 	$file =~ s/\//$o/g if $o ne '/';
-	$n=&bname($targer);
+	$n=&bname($target);
 	$ret.="$target: $files $dep_libs\n";
 	if ($standalone == 1)
 		{
-		$ret.="  \$(LINK) \$(LFLAGS) $efile$target @<<\n\t";
+		$ret.="  \$(LINK_CMD) \$(LFLAGS) $efile$target @<<\n\t";
 		$ret.= "\$(EX_LIBS) " if ($files =~ /O_FIPSCANISTER/ && !$fipscanisterbuild);
 		$ret.="$files $libs\n<<\n";
 		}
 	elsif ($standalone == 2)
 		{
-		$ret.="\tSET FIPS_LINK=\$(LINK)\n";
+		$ret.="\tSET FIPS_LINK=\$(LINK_CMD)\n";
 		$ret.="\tSET FIPS_CC=\$(CC)\n";
 		$ret.="\tSET FIPS_CC_ARGS=/Fo\$(OBJ_D)${o}fips_premain.obj \$(SHLIB_CFLAGS) -c\n";
 		$ret.="\tSET PREMAIN_DSO_EXE=\n";
@@ -391,7 +412,7 @@ sub do_link_rule
 		}
 	else
 		{
-		$ret.="\t\$(LINK) \$(LFLAGS) $efile$target @<<\n";
+		$ret.="\t\$(LINK_CMD) \$(LFLAGS) $efile$target @<<\n";
 		$ret.="\t\$(APP_EX_OBJ) $files $libs\n<<\n";
 		}
     	$ret.="\tIF EXIST \$@.manifest mt -nologo -manifest \$@.manifest -outputresource:\$@;1\n\n";
@@ -405,7 +426,7 @@ sub do_rlink_rule
 	my $files = "$rl_start $rl_mid $rl_end";
 
 	$file =~ s/\//$o/g if $o ne '/';
-	$n=&bname($targer);
+	$n=&bname($target);
 	$ret.="$target: $files $dep_libs \$(FIPS_SHA1_EXE)\n";
 	$ret.="\t\$(PERL) ms\\segrenam.pl \$\$a $rl_start\n";
 	$ret.="\t\$(PERL) ms\\segrenam.pl \$\$b $rl_mid\n";

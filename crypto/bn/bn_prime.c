@@ -1,4 +1,3 @@
-/* crypto/bn/bn_prime.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -111,15 +110,9 @@
 
 #include <stdio.h>
 #include <time.h>
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include "bn_lcl.h"
 #include <openssl/rand.h>
-
-/*
- * NB: these functions have been "upgraded", the deprecated versions (which
- * are compatibility wrappers using these functions) are in bn_depr.c. -
- * Geoff
- */
 
 /*
  * The quick sieve algorithm approach to weeding out primes is Philip
@@ -131,7 +124,7 @@
 static int witness(BIGNUM *w, const BIGNUM *a, const BIGNUM *a1,
                    const BIGNUM *a1_odd, int k, BN_CTX *ctx,
                    BN_MONT_CTX *mont);
-static int probable_prime(BIGNUM *rnd, int bits);
+static int probable_prime(BIGNUM *rnd, int bits, prime_t *mods);
 static int probable_prime_dh_safe(BIGNUM *rnd, int bits,
                                   const BIGNUM *add, const BIGNUM *rem,
                                   BN_CTX *ctx);
@@ -211,9 +204,13 @@ int BN_generate_prime_ex(BIGNUM *ret, int bits, int safe,
     BIGNUM *t;
     int found = 0;
     int i, j, c1 = 0;
-    BN_CTX *ctx;
+    BN_CTX *ctx = NULL;
+    prime_t *mods = NULL;
     int checks = BN_prime_checks_for_size(bits);
 
+    mods = OPENSSL_zalloc(sizeof(*mods) * NUMPRIMES);
+    if (mods == NULL)
+        goto err;
     if (bits < 2) {
         /* There are no prime numbers this small. */
         BNerr(BN_F_BN_GENERATE_PRIME_EX, BN_R_BITS_TOO_SMALL);
@@ -234,7 +231,7 @@ int BN_generate_prime_ex(BIGNUM *ret, int bits, int safe,
  loop:
     /* make a random number and set the top and bottom bits */
     if (add == NULL) {
-        if (!probable_prime(ret, bits))
+        if (!probable_prime(ret, bits, mods))
             goto err;
     } else {
         if (safe) {
@@ -285,10 +282,10 @@ int BN_generate_prime_ex(BIGNUM *ret, int bits, int safe,
     /* we have a prime :-) */
     found = 1;
  err:
-    if (ctx != NULL) {
+    OPENSSL_free(mods);
+    if (ctx != NULL)
         BN_CTX_end(ctx);
-        BN_CTX_free(ctx);
-    }
+    BN_CTX_free(ctx);
     bn_check_top(ret);
     return found;
 }
@@ -397,8 +394,7 @@ int BN_is_prime_fasttest_ex(const BIGNUM *a, int checks, BN_CTX *ctx_passed,
         if (ctx_passed == NULL)
             BN_CTX_free(ctx);
     }
-    if (mont != NULL)
-        BN_MONT_CTX_free(mont);
+    BN_MONT_CTX_free(mont);
 
     return (ret);
 }
@@ -499,10 +495,9 @@ static int witness(BIGNUM *w, const BIGNUM *a, const BIGNUM *a1,
     return 1;
 }
 
-static int probable_prime(BIGNUM *rnd, int bits)
+static int probable_prime(BIGNUM *rnd, int bits, prime_t *mods)
 {
     int i;
-    prime_t mods[NUMPRIMES];
     BN_ULONG delta;
     BN_ULONG maxdelta = BN_MASK2 - primes[NUMPRIMES - 1];
     char is_single_word = bits <= BN_BITS2;
@@ -518,7 +513,17 @@ static int probable_prime(BIGNUM *rnd, int bits)
      * additionally don't want to exceed that many bits.
      */
     if (is_single_word) {
-        BN_ULONG size_limit = (((BN_ULONG)1) << bits) - BN_get_word(rnd) - 1;
+        BN_ULONG size_limit;
+        
+        if (bits == BN_BITS2) {
+            /*
+             * Shifting by this much has undefined behaviour so we do it a
+             * different way
+             */
+            size_limit = ~((BN_ULONG)0) - BN_get_word(rnd);
+        } else {
+            size_limit = (((BN_ULONG)1) << bits) - BN_get_word(rnd) - 1;
+        }
         if (size_limit < maxdelta)
             maxdelta = size_limit;
     }

@@ -48,7 +48,7 @@ BIO_new_fd() returns a file descriptor BIO using B<fd> and B<close_flag>.
 The behaviour of BIO_read() and BIO_write() depends on the behavior of the
 platforms read() and write() calls on the descriptor. If the underlying 
 file descriptor is in a non blocking mode then the BIO will behave in the
-manner described in the L<BIO_read(3)|BIO_read(3)> and L<BIO_should_retry(3)|BIO_should_retry(3)>
+manner described in the L<BIO_read(3)> and L<BIO_should_retry(3)>
 manual pages.
 
 File descriptor BIOs should not be used for socket I/O. Use socket BIOs
@@ -82,8 +82,8 @@ This is a file descriptor BIO version of "Hello World":
 
 =head1 SEE ALSO
 
-L<BIO_seek(3)|BIO_seek(3)>, L<BIO_tell(3)|BIO_tell(3)>,
-L<BIO_reset(3)|BIO_reset(3)>, L<BIO_read(3)|BIO_read(3)>,
-L<BIO_write(3)|BIO_write(3)>, L<BIO_puts(3)|BIO_puts(3)>,
-L<BIO_gets(3)|BIO_gets(3)>, L<BIO_printf(3)|BIO_printf(3)>,
-L<BIO_set_close(3)|BIO_set_close(3)>, L<BIO_get_close(3)|BIO_get_close(3)>
+L<BIO_seek(3)>, L<BIO_tell(3)>,
+L<BIO_reset(3)>, L<BIO_read(3)>,
+L<BIO_write(3)>, L<BIO_puts(3)>,
+L<BIO_gets(3)>, L<BIO_printf(3)>,
+L<BIO_set_close(3)>, L<BIO_get_close(3)>

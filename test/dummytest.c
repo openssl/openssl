@@ -34,7 +34,7 @@ int main(int argc, char *argv[])
         q = p + strlen(p);
 
     if (!p)
-        program = BUF_strdup("(unknown)");
+        program = OPENSSL_strdup("(unknown)");
     else {
         program = OPENSSL_malloc((q - p) + 1);
         strncpy(program, p, q - p);

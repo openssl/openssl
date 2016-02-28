@@ -1,4 +1,3 @@
-/* crypto/rand/rand_win.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -109,7 +108,7 @@
  *
  */
 
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/rand.h>
 #include "rand_lcl.h"
 
@@ -123,7 +122,7 @@
 
 /*
  * Limit the time spent walking through the heap, processes, threads and
- * modules to a maximum of 1000 miliseconds each, unless CryptoGenRandom
+ * modules to a maximum of 1000 milliseconds each, unless CryptoGenRandom
  * failed
  */
 # define MAXDELAY 1000
@@ -196,7 +195,7 @@ typedef NET_API_STATUS(NET_API_FUNCTION *NETFREE) (LPBYTE);
 
 int RAND_poll(void)
 {
-    MEMORYSTATUS m;
+    MEMORYSTATUS mst;
     HCRYPTPROV hProvider = 0;
     DWORD w;
     int good = 0;
@@ -558,8 +557,8 @@ int RAND_poll(void)
     readtimer();
 
     /* memory usage statistics */
-    GlobalMemoryStatus(&m);
-    RAND_add(&m, sizeof(m), 1);
+    GlobalMemoryStatus(&mst);
+    RAND_add(&mst, sizeof(mst), 1);
 
     /* process ID */
     w = GetCurrentProcessId();
@@ -712,7 +711,7 @@ static void readscreen(void)
     bi.biClrImportant = 0;
 
     bmbits = OPENSSL_malloc(size);
-    if (bmbits) {
+    if (bmbits != NULL) {
         /* Now go through the whole screen, repeatedly grabbing n lines */
         for (y = 0; y < h - n; y += n) {
             unsigned char md[MD_DIGEST_LENGTH];

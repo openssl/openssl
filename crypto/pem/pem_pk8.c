@@ -1,4 +1,3 @@
-/* crypto/pem/pem_pkey.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -57,7 +56,7 @@
  */
 
 #include <stdio.h>
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/buffer.h>
 #include <openssl/objects.h>
 #include <openssl/evp.h>
@@ -69,10 +68,12 @@
 static int do_pk8pkey(BIO *bp, EVP_PKEY *x, int isder,
                       int nid, const EVP_CIPHER *enc,
                       char *kstr, int klen, pem_password_cb *cb, void *u);
+
+#ifndef OPENSSL_NO_STDIO
 static int do_pk8pkey_fp(FILE *bp, EVP_PKEY *x, int isder,
                          int nid, const EVP_CIPHER *enc,
                          char *kstr, int klen, pem_password_cb *cb, void *u);
-
+#endif
 /*
  * These functions write a private key in PKCS#8 format: it is a "drop in"
  * replacement for PEM_write_bio_PrivateKey() and friends. As usual if 'enc'
@@ -116,7 +117,8 @@ static int do_pk8pkey(BIO *bp, EVP_PKEY *x, int isder, int nid,
     PKCS8_PRIV_KEY_INFO *p8inf;
     char buf[PEM_BUFSIZE];
     int ret;
-    if (!(p8inf = EVP_PKEY2PKCS8(x))) {
+
+    if ((p8inf = EVP_PKEY2PKCS8(x)) == NULL) {
         PEMerr(PEM_F_DO_PK8PKEY, PEM_R_ERROR_CONVERTING_PRIVATE_KEY);
         return 0;
     }
@@ -138,6 +140,8 @@ static int do_pk8pkey(BIO *bp, EVP_PKEY *x, int isder, int nid,
         if (kstr == buf)
             OPENSSL_cleanse(buf, klen);
         PKCS8_PRIV_KEY_INFO_free(p8inf);
+        if (p8 == NULL)
+            return 0;
         if (isder)
             ret = i2d_PKCS8_bio(bp, p8);
         else
@@ -183,8 +187,7 @@ EVP_PKEY *d2i_PKCS8PrivateKey_bio(BIO *bp, EVP_PKEY **x, pem_password_cb *cb,
     if (!ret)
         return NULL;
     if (x) {
-        if (*x)
-            EVP_PKEY_free(*x);
+        EVP_PKEY_free(*x);
         *x = ret;
     }
     return ret;
@@ -225,7 +228,8 @@ static int do_pk8pkey_fp(FILE *fp, EVP_PKEY *x, int isder, int nid,
 {
     BIO *bp;
     int ret;
-    if (!(bp = BIO_new_fp(fp, BIO_NOCLOSE))) {
+
+    if ((bp = BIO_new_fp(fp, BIO_NOCLOSE)) == NULL) {
         PEMerr(PEM_F_DO_PK8PKEY_FP, ERR_R_BUF_LIB);
         return (0);
     }
@@ -239,7 +243,8 @@ EVP_PKEY *d2i_PKCS8PrivateKey_fp(FILE *fp, EVP_PKEY **x, pem_password_cb *cb,
 {
     BIO *bp;
     EVP_PKEY *ret;
-    if (!(bp = BIO_new_fp(fp, BIO_NOCLOSE))) {
+
+    if ((bp = BIO_new_fp(fp, BIO_NOCLOSE)) == NULL) {
         PEMerr(PEM_F_D2I_PKCS8PRIVATEKEY_FP, ERR_R_BUF_LIB);
         return NULL;
     }

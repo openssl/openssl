@@ -1,4 +1,3 @@
-/* crypto/evp/p_enc.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -57,7 +56,7 @@
  */
 
 #include <stdio.h>
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/rand.h>
 #ifndef OPENSSL_NO_RSA
 # include <openssl/rsa.h>
@@ -72,14 +71,14 @@ int EVP_PKEY_encrypt_old(unsigned char *ek, const unsigned char *key,
     int ret = 0;
 
 #ifndef OPENSSL_NO_RSA
-    if (pubk->type != EVP_PKEY_RSA) {
+    if (EVP_PKEY_id(pubk) != EVP_PKEY_RSA) {
 #endif
         EVPerr(EVP_F_EVP_PKEY_ENCRYPT_OLD, EVP_R_PUBLIC_KEY_NOT_RSA);
 #ifndef OPENSSL_NO_RSA
         goto err;
     }
     ret =
-        RSA_public_encrypt(key_len, key, ek, pubk->pkey.rsa,
+        RSA_public_encrypt(key_len, key, ek, EVP_PKEY_get0_RSA(pubk),
                            RSA_PKCS1_PADDING);
  err:
 #endif

@@ -1,4 +1,3 @@
-/* crypto/ec/ec_lib.c */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -189,4 +188,25 @@ int EC_POINT_oct2point(const EC_GROUP *group, EC_POINT *point,
 #endif
     }
     return group->meth->oct2point(group, point, buf, len, ctx);
+}
+
+size_t EC_POINT_point2buf(const EC_GROUP *group, const EC_POINT *point,
+                          point_conversion_form_t form,
+                          unsigned char **pbuf, BN_CTX *ctx)
+{
+    size_t len;
+    unsigned char *buf;
+    len = EC_POINT_point2oct(group, point, form, NULL, 0, NULL);
+    if (len == 0)
+        return 0;
+    buf = OPENSSL_malloc(len);
+    if (buf == NULL)
+        return 0;
+    len = EC_POINT_point2oct(group, point, form, buf, len, ctx);
+    if (len == 0) {
+        OPENSSL_free(buf);
+        return 0;
+    }
+    *pbuf = buf;
+    return len;
 }

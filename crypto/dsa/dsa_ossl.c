@@ -1,4 +1,3 @@
-/* crypto/dsa/dsa_ossl.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -59,7 +58,7 @@
 /* Original version from Steven Schoch <schoch@sheba.arc.nasa.gov> */
 
 #include <stdio.h>
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/bn.h>
 #include <openssl/sha.h>
 #include <openssl/dsa.h>
@@ -108,23 +107,23 @@ static DSA_METHOD openssl_dsa_meth = {
 #define DSA_MOD_EXP(err_instr,dsa,rr,a1,p1,a2,p2,m,ctx,in_mont) \
         do { \
         int _tmp_res53; \
-        if((dsa)->meth->dsa_mod_exp) \
+        if ((dsa)->meth->dsa_mod_exp) \
                 _tmp_res53 = (dsa)->meth->dsa_mod_exp((dsa), (rr), (a1), (p1), \
                                 (a2), (p2), (m), (ctx), (in_mont)); \
         else \
                 _tmp_res53 = BN_mod_exp2_mont((rr), (a1), (p1), (a2), (p2), \
                                 (m), (ctx), (in_mont)); \
-        if(!_tmp_res53) err_instr; \
+        if (!_tmp_res53) err_instr; \
         } while(0)
 #define DSA_BN_MOD_EXP(err_instr,dsa,r,a,p,m,ctx,m_ctx) \
         do { \
         int _tmp_res53; \
-        if((dsa)->meth->bn_mod_exp) \
+        if ((dsa)->meth->bn_mod_exp) \
                 _tmp_res53 = (dsa)->meth->bn_mod_exp((dsa), (r), (a), (p), \
                                 (m), (ctx), (m_ctx)); \
         else \
                 _tmp_res53 = BN_mod_exp_mont((r), (a), (p), (m), (ctx), (m_ctx)); \
-        if(!_tmp_res53) err_instr; \
+        if (!_tmp_res53) err_instr; \
         } while(0)
 
 const DSA_METHOD *DSA_OpenSSL(void)
@@ -144,7 +143,7 @@ static DSA_SIG *dsa_do_sign(const unsigned char *dgst, int dlen, DSA *dsa)
 
     m = BN_new();
     xr = BN_new();
-    if (!m || !xr)
+    if (m == NULL || xr == NULL)
         goto err;
 
     if (!dsa->p || !dsa->q || !dsa->g) {
@@ -191,9 +190,6 @@ static DSA_SIG *dsa_do_sign(const unsigned char *dgst, int dlen, DSA *dsa)
     if (!BN_mod_mul(s, s, kinv, dsa->q, ctx))
         goto err;
 
-    ret = DSA_SIG_new();
-    if (ret == NULL)
-        goto err;
     /*
      * Redo if r or s is zero as required by FIPS 186-3: this is very
      * unlikely.
@@ -205,21 +201,22 @@ static DSA_SIG *dsa_do_sign(const unsigned char *dgst, int dlen, DSA *dsa)
         }
         goto redo;
     }
+    ret = DSA_SIG_new();
+    if (ret == NULL)
+        goto err;
     ret->r = r;
     ret->s = s;
 
  err:
-    if (!ret) {
+    if (ret == NULL) {
         DSAerr(DSA_F_DSA_DO_SIGN, reason);
         BN_free(r);
         BN_free(s);
     }
-    if (ctx != NULL)
-        BN_CTX_free(ctx);
+    BN_CTX_free(ctx);
     BN_clear_free(m);
     BN_clear_free(xr);
-    if (kinv != NULL)           /* dsa->kinv is NULL now if we used it */
-        BN_clear_free(kinv);
+    BN_clear_free(kinv);
     return (ret);
 }
 
@@ -244,7 +241,7 @@ static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in,
 
     k = BN_new();
     kq = BN_new();
-    if (!k || !kq)
+    if (k == NULL || kq == NULL)
         goto err;
 
     if (ctx_in == NULL) {
@@ -313,21 +310,18 @@ static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in,
     if ((kinv = BN_mod_inverse(NULL, k, dsa->q, ctx)) == NULL)
         goto err;
 
-    if (*kinvp != NULL)
-        BN_clear_free(*kinvp);
+    BN_clear_free(*kinvp);
     *kinvp = kinv;
     kinv = NULL;
-    if (*rp != NULL)
-        BN_clear_free(*rp);
+    BN_clear_free(*rp);
     *rp = r;
     ret = 1;
  err:
     if (!ret) {
         DSAerr(DSA_F_DSA_SIGN_SETUP, ERR_R_BN_LIB);
-        if (r != NULL)
-            BN_clear_free(r);
+        BN_clear_free(r);
     }
-    if (ctx_in == NULL)
+    if (ctx != ctx_in)
         BN_CTX_free(ctx);
     BN_clear_free(k);
     BN_clear_free(kq);
@@ -361,7 +355,7 @@ static int dsa_do_verify(const unsigned char *dgst, int dgst_len,
     u2 = BN_new();
     t1 = BN_new();
     ctx = BN_CTX_new();
-    if (!u1 || !u2 || !t1 || !ctx)
+    if (u1 == NULL || u2 == NULL || t1 == NULL || ctx == NULL)
         goto err;
 
     if (BN_is_zero(sig->r) || BN_is_negative(sig->r) ||
@@ -422,14 +416,10 @@ static int dsa_do_verify(const unsigned char *dgst, int dgst_len,
  err:
     if (ret < 0)
         DSAerr(DSA_F_DSA_DO_VERIFY, ERR_R_BN_LIB);
-    if (ctx != NULL)
-        BN_CTX_free(ctx);
-    if (u1)
-        BN_free(u1);
-    if (u2)
-        BN_free(u2);
-    if (t1)
-        BN_free(t1);
+    BN_CTX_free(ctx);
+    BN_free(u1);
+    BN_free(u2);
+    BN_free(t1);
     return (ret);
 }
 
@@ -441,7 +431,6 @@ static int dsa_init(DSA *dsa)
 
 static int dsa_finish(DSA *dsa)
 {
-    if (dsa->method_mont_p)
-        BN_MONT_CTX_free(dsa->method_mont_p);
+    BN_MONT_CTX_free(dsa->method_mont_p);
     return (1);
 }

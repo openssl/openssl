@@ -1,4 +1,3 @@
-/* crypto/bio/bio_lib.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -59,15 +58,14 @@
 #include <stdio.h>
 #include <errno.h>
 #include <openssl/crypto.h>
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/bio.h>
 #include <openssl/stack.h>
 
 BIO *BIO_new(BIO_METHOD *method)
 {
-    BIO *ret = NULL;
+    BIO *ret = OPENSSL_malloc(sizeof(*ret));
 
-    ret = (BIO *)OPENSSL_malloc(sizeof(BIO));
     if (ret == NULL) {
         BIOerr(BIO_F_BIO_NEW, ERR_R_MALLOC_FAILURE);
         return (NULL);
@@ -112,17 +110,10 @@ int BIO_free(BIO *a)
         return (0);
 
     i = CRYPTO_add(&a->references, -1, CRYPTO_LOCK_BIO);
-#ifdef REF_PRINT
-    REF_PRINT("BIO", a);
-#endif
+    REF_PRINT_COUNT("BIO", a);
     if (i > 0)
         return (1);
-#ifdef REF_CHECK
-    if (i < 0) {
-        fprintf(stderr, "BIO_free, bad reference count\n");
-        abort();
-    }
-#endif
+    REF_ASSERT_ISNT(i < 0);
     if ((a->callback != NULL) &&
         ((i = (int)a->callback(a, BIO_CB_FREE, NULL, 0, 0L, 1L)) <= 0))
         return (i);
@@ -210,7 +201,7 @@ int BIO_read(BIO *b, void *out, int outl)
     i = b->method->bread(b, out, outl);
 
     if (i > 0)
-        b->num_read += (unsigned long)i;
+        b->num_read += (uint64_t)i;
 
     if (cb != NULL)
         i = (int)cb(b, BIO_CB_READ | BIO_CB_RETURN, out, outl, 0L, (long)i);
@@ -243,7 +234,7 @@ int BIO_write(BIO *b, const void *in, int inl)
     i = b->method->bwrite(b, in, inl);
 
     if (i > 0)
-        b->num_write += (unsigned long)i;
+        b->num_write += (uint64_t)i;
 
     if (cb != NULL)
         i = (int)cb(b, BIO_CB_WRITE | BIO_CB_RETURN, in, inl, 0L, (long)i);
@@ -273,7 +264,7 @@ int BIO_puts(BIO *b, const char *in)
     i = b->method->bputs(b, in);
 
     if (i > 0)
-        b->num_write += (unsigned long)i;
+        b->num_write += (uint64_t)i;
 
     if (cb != NULL)
         i = (int)cb(b, BIO_CB_PUTS | BIO_CB_RETURN, in, 0, 0L, (long)i);
@@ -327,9 +318,9 @@ long BIO_int_ctrl(BIO *b, int cmd, long larg, int iarg)
     return (BIO_ctrl(b, cmd, larg, (char *)&i));
 }
 
-char *BIO_ptr_ctrl(BIO *b, int cmd, long larg)
+void *BIO_ptr_ctrl(BIO *b, int cmd, long larg)
 {
-    char *p = NULL;
+    void *p = NULL;
 
     if (BIO_ctrl(b, cmd, larg, (char *)&p) <= 0)
         return (NULL);
@@ -472,7 +463,7 @@ BIO *BIO_find_type(BIO *bio, int type)
 {
     int mt, mask;
 
-    if (!bio)
+    if (bio == NULL)
         return NULL;
     mask = type & 0xff;
     do {
@@ -492,7 +483,7 @@ BIO *BIO_find_type(BIO *bio, int type)
 
 BIO *BIO_next(BIO *b)
 {
-    if (!b)
+    if (b == NULL)
         return NULL;
     return b->next_bio;
 }
@@ -536,8 +527,10 @@ BIO *BIO_dup_chain(BIO *in)
 
         /* copy app data */
         if (!CRYPTO_dup_ex_data(CRYPTO_EX_INDEX_BIO, &new_bio->ex_data,
-                                &bio->ex_data))
+                                &bio->ex_data)) {
+            BIO_free(new_bio);
             goto err;
+        }
 
         if (ret == NULL) {
             eoc = new_bio;
@@ -549,8 +542,8 @@ BIO *BIO_dup_chain(BIO *in)
     }
     return (ret);
  err:
-    if (ret != NULL)
-        BIO_free(ret);
+    BIO_free_all(ret);
+
     return (NULL);
 }
 
@@ -558,13 +551,6 @@ void BIO_copy_next_retry(BIO *b)
 {
     BIO_set_flags(b, BIO_get_retry_flags(b->next_bio));
     b->retry_reason = b->next_bio->retry_reason;
-}
-
-int BIO_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
-                         CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func)
-{
-    return CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_BIO, argl, argp,
-                                   new_func, dup_func, free_func);
 }
 
 int BIO_set_ex_data(BIO *bio, int idx, void *data)
@@ -577,14 +563,14 @@ void *BIO_get_ex_data(BIO *bio, int idx)
     return (CRYPTO_get_ex_data(&(bio->ex_data), idx));
 }
 
-unsigned long BIO_number_read(BIO *bio)
+uint64_t BIO_number_read(BIO *bio)
 {
     if (bio)
         return bio->num_read;
     return 0;
 }
 
-unsigned long BIO_number_written(BIO *bio)
+uint64_t BIO_number_written(BIO *bio)
 {
     if (bio)
         return bio->num_write;

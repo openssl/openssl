@@ -1,4 +1,3 @@
-/* bio_asn1.c */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -146,8 +145,8 @@ BIO_METHOD *BIO_f_asn1(void)
 static int asn1_bio_new(BIO *b)
 {
     BIO_ASN1_BUF_CTX *ctx;
-    ctx = OPENSSL_malloc(sizeof(BIO_ASN1_BUF_CTX));
-    if (!ctx)
+    ctx = OPENSSL_malloc(sizeof(*ctx));
+    if (ctx == NULL)
         return 0;
     if (!asn1_bio_init(ctx, DEFAULT_ASN1_BUF_SIZE)) {
         OPENSSL_free(ctx);
@@ -162,7 +161,7 @@ static int asn1_bio_new(BIO *b)
 static int asn1_bio_init(BIO_ASN1_BUF_CTX *ctx, int size)
 {
     ctx->buf = OPENSSL_malloc(size);
-    if (!ctx->buf)
+    if (ctx->buf == NULL)
         return 0;
     ctx->bufsize = size;
     ctx->bufpos = 0;
@@ -179,12 +178,11 @@ static int asn1_bio_init(BIO_ASN1_BUF_CTX *ctx, int size)
 
 static int asn1_bio_free(BIO *b)
 {
-    BIO_ASN1_BUF_CTX *ctx;
-    ctx = (BIO_ASN1_BUF_CTX *)b->ptr;
+    BIO_ASN1_BUF_CTX *ctx = (BIO_ASN1_BUF_CTX *)b->ptr;
+
     if (ctx == NULL)
         return 0;
-    if (ctx->buf)
-        OPENSSL_free(ctx->buf);
+    OPENSSL_free(ctx->buf);
     OPENSSL_free(ctx);
     b->init = 0;
     b->ptr = NULL;

@@ -22,10 +22,11 @@
 # [1] and [2], with MOVBE twist suggested by Ilya Albrekht and Max
 # Locktyukhin of Intel Corp. who verified that it reduces shuffles
 # pressure with notable relative improvement, achieving 1.0 cycle per
-# byte processed with 128-bit key on Haswell processor, and 0.74 -
-# on Broadwell. [Mentioned results are raw profiled measurements for
-# favourable packet size, one divisible by 96. Applications using the
-# EVP interface will observe a few percent worse performance.]
+# byte processed with 128-bit key on Haswell processor, 0.74 - on
+# Broadwell, 0.63 - on Skylake... [Mentioned results are raw profiled
+# measurements for favourable packet size, one divisible by 96.
+# Applications using the EVP interface will observe a few percent
+# worse performance.]
 #
 # [1] http://rt.openssl.org/Ticket/Display.html?id=2900&user=guest&pass=guest
 # [2] http://www.intel.com/content/dam/www/public/us/en/documents/software-support/enabling-high-performance-gcm.pdf
@@ -43,7 +44,7 @@ die "can't locate x86_64-xlate.pl";
 
 if (`$ENV{CC} -Wa,-v -c -o /dev/null -x assembler /dev/null 2>&1`
 		=~ /GNU assembler version ([2-9]\.[0-9]+)/) {
-	$avx = ($1>=2.19) + ($1>=2.22);
+	$avx = ($1>=2.20) + ($1>=2.22);
 }
 
 if (!$avx && $win64 && ($flavour =~ /nasm/ || $ENV{ASM} =~ /nasm/) &&
@@ -56,7 +57,7 @@ if (!$avx && $win64 && ($flavour =~ /masm/ || $ENV{ASM} =~ /ml64/) &&
 	$avx = ($1>=10) + ($1>=11);
 }
 
-if (!$avx && `$ENV{CC} -v 2>&1` =~ /(^clang version|based on LLVM) ([3-9]\.[0-9]+)/) {
+if (!$avx && `$ENV{CC} -v 2>&1` =~ /((?:^clang|LLVM) version|.*based on LLVM) ([3-9]\.[0-9]+)/) {
 	$avx = ($2>=3.0) + ($2>3.0);
 }
 
@@ -489,7 +490,7 @@ $code.=<<___;
 ___
 $code.=<<___ if ($win64);
 	movaps	-0xd8(%rax),%xmm6
-	movaps	-0xd8(%rax),%xmm7
+	movaps	-0xc8(%rax),%xmm7
 	movaps	-0xb8(%rax),%xmm8
 	movaps	-0xa8(%rax),%xmm9
 	movaps	-0x98(%rax),%xmm10

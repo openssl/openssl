@@ -1,4 +1,3 @@
-/* crypto/lhash/lh_stats.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -60,10 +59,10 @@
 #include <string.h>
 #include <stdlib.h>
 /*
- * If you wish to build this outside of SSLeay, remove the following lines
+ * If you wish to build this outside of OpenSSL, remove the following lines
  * and things should work as expected
  */
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 
 #include <openssl/bio.h>
 #include <openssl/lhash.h>

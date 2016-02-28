@@ -63,19 +63,6 @@ BIO_next() returns the next BIO in a chain.
 
 BIO_method_type() returns the type of the BIO B<b>.
 
-=head1 NOTES
-
-BIO_next() was added to OpenSSL 0.9.6 to provide a 'clean' way to traverse a BIO
-chain or find multiple matches using BIO_find_type(). Previous versions had to
-use:
-
- next = bio->next_bio;
-
-=head1 BUGS
-
-BIO_find_type() in OpenSSL 0.9.5a and earlier could not be safely passed a
-NULL pointer for the B<b> argument.
-
 =head1 EXAMPLE
 
 Traverse a chain looking for digest BIOs:

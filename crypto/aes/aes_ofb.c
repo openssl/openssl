@@ -1,4 +1,3 @@
-/* crypto/aes/aes_ofb.c -*- mode:C; c-file-style: "eay" -*- */
 /* ====================================================================
  * Copyright (c) 2002-2006 The OpenSSL Project.  All rights reserved.
  *

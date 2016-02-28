@@ -21,11 +21,12 @@ the algorithm specified in B<pkey> and ENGINE B<e>.
 The EVP_PKEY_CTX_new_id() function allocates public key algorithm context
 using the algorithm specified by B<id> and ENGINE B<e>. It is normally used
 when no B<EVP_PKEY> structure is associated with the operations, for example
-during parameter generation of key genration for some algorithms.
+during parameter generation of key generation for some algorithms.
 
 EVP_PKEY_CTX_dup() duplicates the context B<ctx>.
 
 EVP_PKEY_CTX_free() frees up the context B<ctx>.
+If B<ctx> is NULL, nothing is done.
 
 =head1 NOTES
 
@@ -43,7 +44,7 @@ EVP_PKEY_CTX_free() does not return a value.
 
 =head1 SEE ALSO
 
-L<EVP_PKEY_new(3)|EVP_PKEY_new(3)>
+L<EVP_PKEY_new(3)>
 
 =head1 HISTORY
 

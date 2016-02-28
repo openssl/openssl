@@ -34,7 +34,7 @@ SSL_CTX_set_security_level, SSL_set_security_level, SSL_CTX_get_security_level, 
 =head1 DESCRIPTION
 
 The functions SSL_CTX_set_security_level() and SSL_set_security_level() set
-the security level to B<level>. If not set the libary default security level
+the security level to B<level>. If not set the library default security level
 is used.
 
 The functions SSL_CTX_get_security_level() and SSL_get_security_level()
@@ -137,7 +137,7 @@ then only ciphersuites consistent with the security level are permissible.
 See SP800-57 for how the security limits are related to individual
 algorithms.
 
-Some security levels require large key sizes for none-ECC public key
+Some security levels require large key sizes for non-ECC public key
 algorithms which can severely degrade performance. For example 256 bits
 of security requires the use of RSA keys of at least 15360 bits in size.
 

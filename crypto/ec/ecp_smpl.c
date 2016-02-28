@@ -1,4 +1,3 @@
-/* crypto/ec/ecp_smpl.c */
 /*
  * Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project. Includes code written by Bodo Moeller for the
@@ -132,13 +131,10 @@ int ec_GFp_simple_group_init(EC_GROUP *group)
     group->field = BN_new();
     group->a = BN_new();
     group->b = BN_new();
-    if (!group->field || !group->a || !group->b) {
-        if (!group->field)
-            BN_free(group->field);
-        if (!group->a)
-            BN_free(group->a);
-        if (!group->b)
-            BN_free(group->b);
+    if (group->field == NULL || group->a == NULL || group->b == NULL) {
+        BN_free(group->field);
+        BN_free(group->a);
+        BN_free(group->b);
         return 0;
     }
     group->a_is_minus3 = 0;
@@ -228,8 +224,7 @@ int ec_GFp_simple_group_set_curve(EC_GROUP *group,
 
  err:
     BN_CTX_end(ctx);
-    if (new_ctx != NULL)
-        BN_CTX_free(new_ctx);
+    BN_CTX_free(new_ctx);
     return ret;
 }
 
@@ -274,8 +269,7 @@ int ec_GFp_simple_group_get_curve(const EC_GROUP *group, BIGNUM *p, BIGNUM *a,
     ret = 1;
 
  err:
-    if (new_ctx)
-        BN_CTX_free(new_ctx);
+    BN_CTX_free(new_ctx);
     return ret;
 }
 
@@ -353,8 +347,7 @@ int ec_GFp_simple_group_check_discriminant(const EC_GROUP *group, BN_CTX *ctx)
  err:
     if (ctx != NULL)
         BN_CTX_end(ctx);
-    if (new_ctx != NULL)
-        BN_CTX_free(new_ctx);
+    BN_CTX_free(new_ctx);
     return ret;
 }
 
@@ -365,13 +358,10 @@ int ec_GFp_simple_point_init(EC_POINT *point)
     point->Z = BN_new();
     point->Z_is_one = 0;
 
-    if (!point->X || !point->Y || !point->Z) {
-        if (point->X)
-            BN_free(point->X);
-        if (point->Y)
-            BN_free(point->Y);
-        if (point->Z)
-            BN_free(point->Z);
+    if (point->X == NULL || point->Y == NULL || point->Z == NULL) {
+        BN_free(point->X);
+        BN_free(point->Y);
+        BN_free(point->Z);
         return 0;
     }
     return 1;
@@ -469,8 +459,7 @@ int ec_GFp_simple_set_Jprojective_coordinates_GFp(const EC_GROUP *group,
     ret = 1;
 
  err:
-    if (new_ctx != NULL)
-        BN_CTX_free(new_ctx);
+    BN_CTX_free(new_ctx);
     return ret;
 }
 
@@ -519,8 +508,7 @@ int ec_GFp_simple_get_Jprojective_coordinates_GFp(const EC_GROUP *group,
     ret = 1;
 
  err:
-    if (new_ctx != NULL)
-        BN_CTX_free(new_ctx);
+    BN_CTX_free(new_ctx);
     return ret;
 }
 
@@ -652,8 +640,7 @@ int ec_GFp_simple_point_get_affine_coordinates(const EC_GROUP *group,
 
  err:
     BN_CTX_end(ctx);
-    if (new_ctx != NULL)
-        BN_CTX_free(new_ctx);
+    BN_CTX_free(new_ctx);
     return ret;
 }
 
@@ -839,8 +826,7 @@ int ec_GFp_simple_add(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a,
  end:
     if (ctx)                    /* otherwise we already called BN_CTX_end */
         BN_CTX_end(ctx);
-    if (new_ctx != NULL)
-        BN_CTX_free(new_ctx);
+    BN_CTX_free(new_ctx);
     return ret;
 }
 
@@ -982,8 +968,7 @@ int ec_GFp_simple_dbl(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a,
 
  err:
     BN_CTX_end(ctx);
-    if (new_ctx != NULL)
-        BN_CTX_free(new_ctx);
+    BN_CTX_free(new_ctx);
     return ret;
 }
 
@@ -1100,8 +1085,7 @@ int ec_GFp_simple_is_on_curve(const EC_GROUP *group, const EC_POINT *point,
 
  err:
     BN_CTX_end(ctx);
-    if (new_ctx != NULL)
-        BN_CTX_free(new_ctx);
+    BN_CTX_free(new_ctx);
     return ret;
 }
 
@@ -1209,8 +1193,7 @@ int ec_GFp_simple_cmp(const EC_GROUP *group, const EC_POINT *a,
 
  end:
     BN_CTX_end(ctx);
-    if (new_ctx != NULL)
-        BN_CTX_free(new_ctx);
+    BN_CTX_free(new_ctx);
     return ret;
 }
 
@@ -1249,8 +1232,7 @@ int ec_GFp_simple_make_affine(const EC_GROUP *group, EC_POINT *point,
 
  err:
     BN_CTX_end(ctx);
-    if (new_ctx != NULL)
-        BN_CTX_free(new_ctx);
+    BN_CTX_free(new_ctx);
     return ret;
 }
 
@@ -1401,8 +1383,7 @@ int ec_GFp_simple_points_make_affine(const EC_GROUP *group, size_t num,
 
  err:
     BN_CTX_end(ctx);
-    if (new_ctx != NULL)
-        BN_CTX_free(new_ctx);
+    BN_CTX_free(new_ctx);
     if (prod_Z != NULL) {
         for (i = 0; i < num; i++) {
             if (prod_Z[i] == NULL)

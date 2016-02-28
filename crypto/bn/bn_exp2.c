@@ -1,4 +1,3 @@
-/* crypto/bn/bn_exp2.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -110,7 +109,7 @@
  */
 
 #include <stdio.h>
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include "bn_lcl.h"
 
 #define TABLE_SIZE      32
@@ -295,7 +294,7 @@ int BN_mod_exp2_mont(BIGNUM *rr, const BIGNUM *a1, const BIGNUM *p1,
         goto err;
     ret = 1;
  err:
-    if ((in_mont == NULL) && (mont != NULL))
+    if (in_mont == NULL)
         BN_MONT_CTX_free(mont);
     BN_CTX_end(ctx);
     bn_check_top(rr);

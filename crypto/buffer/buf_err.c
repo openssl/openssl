@@ -1,6 +1,5 @@
-/* crypto/buffer/buf_err.c */
 /* ====================================================================
- * Copyright (c) 1999-2006 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2015 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -70,12 +69,9 @@
 # define ERR_REASON(reason) ERR_PACK(ERR_LIB_BUF,0,reason)
 
 static ERR_STRING_DATA BUF_str_functs[] = {
-    {ERR_FUNC(BUF_F_BUF_MEMDUP), "BUF_memdup"},
     {ERR_FUNC(BUF_F_BUF_MEM_GROW), "BUF_MEM_grow"},
     {ERR_FUNC(BUF_F_BUF_MEM_GROW_CLEAN), "BUF_MEM_grow_clean"},
     {ERR_FUNC(BUF_F_BUF_MEM_NEW), "BUF_MEM_new"},
-    {ERR_FUNC(BUF_F_BUF_STRDUP), "BUF_strdup"},
-    {ERR_FUNC(BUF_F_BUF_STRNDUP), "BUF_strndup"},
     {0, NULL}
 };
 

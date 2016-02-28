@@ -1,4 +1,3 @@
-/* crypto/evp/evp_lib.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -57,9 +56,11 @@
  */
 
 #include <stdio.h>
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/evp.h>
 #include <openssl/objects.h>
+#include "internal/evp_int.h"
+#include "evp_locl.h"
 
 int EVP_CIPHER_param_to_asn1(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
 {
@@ -68,11 +69,23 @@ int EVP_CIPHER_param_to_asn1(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
     if (c->cipher->set_asn1_parameters != NULL)
         ret = c->cipher->set_asn1_parameters(c, type);
     else if (c->cipher->flags & EVP_CIPH_FLAG_DEFAULT_ASN1) {
-        if (EVP_CIPHER_CTX_mode(c) == EVP_CIPH_WRAP_MODE) {
-            ASN1_TYPE_set(type, V_ASN1_NULL, NULL);
+        switch (EVP_CIPHER_CTX_mode(c)) {
+        case EVP_CIPH_WRAP_MODE:
+            if (EVP_CIPHER_CTX_nid(c) == NID_id_smime_alg_CMS3DESwrap)
+                ASN1_TYPE_set(type, V_ASN1_NULL, NULL);
             ret = 1;
-        } else
+            break;
+
+        case EVP_CIPH_GCM_MODE:
+        case EVP_CIPH_CCM_MODE:
+        case EVP_CIPH_XTS_MODE:
+        case EVP_CIPH_OCB_MODE:
+            ret = -1;
+            break;
+
+        default:
             ret = EVP_CIPHER_set_asn1_iv(c, type);
+        }
     } else
         ret = -1;
     return (ret);
@@ -85,9 +98,23 @@ int EVP_CIPHER_asn1_to_param(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
     if (c->cipher->get_asn1_parameters != NULL)
         ret = c->cipher->get_asn1_parameters(c, type);
     else if (c->cipher->flags & EVP_CIPH_FLAG_DEFAULT_ASN1) {
-        if (EVP_CIPHER_CTX_mode(c) == EVP_CIPH_WRAP_MODE)
-            return 1;
-        ret = EVP_CIPHER_get_asn1_iv(c, type);
+        switch (EVP_CIPHER_CTX_mode(c)) {
+
+        case EVP_CIPH_WRAP_MODE:
+            ret = 1;
+            break;
+
+        case EVP_CIPH_GCM_MODE:
+        case EVP_CIPH_CCM_MODE:
+        case EVP_CIPH_XTS_MODE:
+        case EVP_CIPH_OCB_MODE:
+            ret = -1;
+            break;
+
+        default:
+            ret = EVP_CIPHER_get_asn1_iv(c, type);
+            break;
+        }
     } else
         ret = -1;
     return (ret);
@@ -176,7 +203,7 @@ int EVP_CIPHER_type(const EVP_CIPHER *ctx)
     default:
         /* Check it has an OID and it is valid */
         otmp = OBJ_nid2obj(nid);
-        if (!otmp || !otmp->data)
+        if (OBJ_get0_data(otmp) == NULL)
             nid = NID_undef;
         ASN1_OBJECT_free(otmp);
         return nid;
@@ -193,6 +220,11 @@ int EVP_CIPHER_CTX_block_size(const EVP_CIPHER_CTX *ctx)
     return ctx->cipher->block_size;
 }
 
+int EVP_CIPHER_impl_ctx_size(const EVP_CIPHER *e)
+{
+    return e->ctx_size;
+}
+
 int EVP_Cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                const unsigned char *in, unsigned int inl)
 {
@@ -204,14 +236,14 @@ const EVP_CIPHER *EVP_CIPHER_CTX_cipher(const EVP_CIPHER_CTX *ctx)
     return ctx->cipher;
 }
 
+int EVP_CIPHER_CTX_encrypting(const EVP_CIPHER_CTX *ctx)
+{
+    return ctx->encrypt;
+}
+
 unsigned long EVP_CIPHER_flags(const EVP_CIPHER *cipher)
 {
     return cipher->flags;
-}
-
-unsigned long EVP_CIPHER_CTX_flags(const EVP_CIPHER_CTX *ctx)
-{
-    return ctx->cipher->flags;
 }
 
 void *EVP_CIPHER_CTX_get_app_data(const EVP_CIPHER_CTX *ctx)
@@ -224,6 +256,11 @@ void EVP_CIPHER_CTX_set_app_data(EVP_CIPHER_CTX *ctx, void *data)
     ctx->app_data = data;
 }
 
+void *EVP_CIPHER_CTX_cipher_data(const EVP_CIPHER_CTX *ctx)
+{
+    return ctx->cipher_data;
+}
+
 int EVP_CIPHER_iv_length(const EVP_CIPHER *cipher)
 {
     return cipher->iv_len;
@@ -232,6 +269,36 @@ int EVP_CIPHER_iv_length(const EVP_CIPHER *cipher)
 int EVP_CIPHER_CTX_iv_length(const EVP_CIPHER_CTX *ctx)
 {
     return ctx->cipher->iv_len;
+}
+
+const unsigned char *EVP_CIPHER_CTX_original_iv(const EVP_CIPHER_CTX *ctx)
+{
+    return ctx->oiv;
+}
+
+const unsigned char *EVP_CIPHER_CTX_iv(const EVP_CIPHER_CTX *ctx)
+{
+    return ctx->iv;
+}
+
+unsigned char *EVP_CIPHER_CTX_iv_noconst(EVP_CIPHER_CTX *ctx)
+{
+    return ctx->iv;
+}
+
+unsigned char *EVP_CIPHER_CTX_buf_noconst(EVP_CIPHER_CTX *ctx)
+{
+    return ctx->buf;
+}
+
+int EVP_CIPHER_CTX_num(const EVP_CIPHER_CTX *ctx)
+{
+    return ctx->num;
+}
+
+void EVP_CIPHER_CTX_set_num(EVP_CIPHER_CTX *ctx, int num)
+{
+    ctx->num = num;
 }
 
 int EVP_CIPHER_key_length(const EVP_CIPHER *cipher)
@@ -283,11 +350,158 @@ unsigned long EVP_MD_flags(const EVP_MD *md)
     return md->flags;
 }
 
+EVP_MD *EVP_MD_meth_new(int md_type, int pkey_type)
+{
+    EVP_MD *md = OPENSSL_zalloc(sizeof(*md));
+
+    if (md != NULL) {
+        md->type = md_type;
+        md->pkey_type = pkey_type;
+    }
+    return md;
+}
+EVP_MD *EVP_MD_meth_dup(const EVP_MD *md)
+{
+    EVP_MD *to = EVP_MD_meth_new(md->type, md->pkey_type);
+
+    if (to != NULL)
+        memcpy(to, md, sizeof(*to));
+    return to;
+}
+void EVP_MD_meth_free(EVP_MD *md)
+{
+    OPENSSL_free(md);
+}
+int EVP_MD_meth_set_input_blocksize(EVP_MD *md, int blocksize)
+{
+    md->block_size = blocksize;
+    return 1;
+}
+int EVP_MD_meth_set_result_size(EVP_MD *md, int resultsize)
+{
+    md->md_size = resultsize;
+    return 1;
+}
+int EVP_MD_meth_set_app_datasize(EVP_MD *md, int datasize)
+{
+    md->ctx_size = datasize;
+    return 1;
+}
+int EVP_MD_meth_set_flags(EVP_MD *md, unsigned long flags)
+{
+    md->flags = flags;
+    return 1;
+}
+int EVP_MD_meth_set_init(EVP_MD *md, int (*init)(EVP_MD_CTX *ctx))
+{
+    md->init = init;
+    return 1;
+}
+int EVP_MD_meth_set_update(EVP_MD *md, int (*update)(EVP_MD_CTX *ctx,
+                                                     const void *data,
+                                                     size_t count))
+{
+    md->update = update;
+    return 1;
+}
+int EVP_MD_meth_set_final(EVP_MD *md, int (*final)(EVP_MD_CTX *ctx,
+                                                   unsigned char *md))
+{
+    md->final = final;
+    return 1;
+}
+int EVP_MD_meth_set_copy(EVP_MD *md, int (*copy)(EVP_MD_CTX *to,
+                                                 const EVP_MD_CTX *from))
+{
+    md->copy = copy;
+    return 1;
+}
+int EVP_MD_meth_set_cleanup(EVP_MD *md, int (*cleanup)(EVP_MD_CTX *ctx))
+{
+    md->cleanup = cleanup;
+    return 1;
+}
+int EVP_MD_meth_set_ctrl(EVP_MD *md, int (*ctrl)(EVP_MD_CTX *ctx, int cmd,
+                                                 int p1, void *p2))
+{
+    md->md_ctrl = ctrl;
+    return 1;
+}
+
+int EVP_MD_meth_get_input_blocksize(const EVP_MD *md)
+{
+    return md->block_size;
+}
+int EVP_MD_meth_get_result_size(const EVP_MD *md)
+{
+    return md->md_size;
+}
+int EVP_MD_meth_get_app_datasize(const EVP_MD *md)
+{
+    return md->ctx_size;
+}
+unsigned long EVP_MD_meth_get_flags(const EVP_MD *md)
+{
+    return md->block_size;
+}
+int (*EVP_MD_meth_get_init(const EVP_MD *md))(EVP_MD_CTX *ctx)
+{
+    return md->init;
+}
+int (*EVP_MD_meth_get_update(const EVP_MD *md))(EVP_MD_CTX *ctx,
+                                                const void *data,
+                                                size_t count)
+{
+    return md->update;
+}
+int (*EVP_MD_meth_get_final(const EVP_MD *md))(EVP_MD_CTX *ctx,
+                                               unsigned char *md)
+{
+    return md->final;
+}
+int (*EVP_MD_meth_get_copy(const EVP_MD *md))(EVP_MD_CTX *to,
+                                              const EVP_MD_CTX *from)
+{
+    return md->copy;
+}
+int (*EVP_MD_meth_get_cleanup(const EVP_MD *md))(EVP_MD_CTX *ctx)
+{
+    return md->cleanup;
+}
+int (*EVP_MD_meth_get_ctrl(const EVP_MD *md))(EVP_MD_CTX *ctx, int cmd,
+                                              int p1, void *p2)
+{
+    return md->md_ctrl;
+}
+
 const EVP_MD *EVP_MD_CTX_md(const EVP_MD_CTX *ctx)
 {
     if (!ctx)
         return NULL;
     return ctx->digest;
+}
+
+EVP_PKEY_CTX *EVP_MD_CTX_pkey_ctx(const EVP_MD_CTX *ctx)
+{
+    return ctx->pctx;
+}
+
+void *EVP_MD_CTX_md_data(const EVP_MD_CTX *ctx)
+{
+    return ctx->md_data;
+}
+
+int (*EVP_MD_CTX_update_fn(EVP_MD_CTX *ctx))(EVP_MD_CTX *ctx,
+                                             const void *data, size_t count)
+{
+    return ctx->update;
+}
+
+void EVP_MD_CTX_set_update_fn(EVP_MD_CTX *ctx,
+                              int (*update) (EVP_MD_CTX *ctx,
+                                             const void *data, size_t count))
+{
+    ctx->update = update;
 }
 
 void EVP_MD_CTX_set_flags(EVP_MD_CTX *ctx, int flags)

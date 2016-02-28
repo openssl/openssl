@@ -39,7 +39,7 @@ MDC2_Final() places the message digest in B<md>, which must have space
 for MDC2_DIGEST_LENGTH == 16 bytes of output, and erases the B<MDC2_CTX>.
 
 Applications should use the higher level functions
-L<EVP_DigestInit(3)|EVP_DigestInit(3)> etc. instead of calling the
+L<EVP_DigestInit(3)> etc. instead of calling the
 hash functions directly.
 
 =head1 RETURN VALUES
@@ -54,6 +54,6 @@ ISO/IEC 10118-2, with DES
 
 =head1 SEE ALSO
 
-L<EVP_DigestInit(3)|EVP_DigestInit(3)>
+L<EVP_DigestInit(3)>
 
 =cut

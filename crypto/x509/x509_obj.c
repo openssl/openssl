@@ -1,4 +1,3 @@
-/* crypto/x509/x509_obj.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -57,11 +56,12 @@
  */
 
 #include <stdio.h>
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/lhash.h>
 #include <openssl/objects.h>
 #include <openssl/x509.h>
 #include <openssl/buffer.h>
+#include "internal/x509_int.h"
 
 char *X509_NAME_oneline(X509_NAME *a, char *buf, int len)
 {
@@ -206,7 +206,6 @@ char *X509_NAME_oneline(X509_NAME *a, char *buf, int len)
     return (p);
  err:
     X509err(X509_F_X509_NAME_ONELINE, ERR_R_MALLOC_FAILURE);
-    if (b != NULL)
-        BUF_MEM_free(b);
+    BUF_MEM_free(b);
     return (NULL);
 }

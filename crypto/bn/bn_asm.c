@@ -1,4 +1,3 @@
-/* crypto/bn/bn_asm.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -63,7 +62,7 @@
 
 #include <assert.h>
 #include <openssl/crypto.h>
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include "bn_lcl.h"
 
 #if defined(BN_LLONG) || defined(BN_UMULT_HIGH)

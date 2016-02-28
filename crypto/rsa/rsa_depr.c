@@ -1,4 +1,3 @@
-/* crypto/rsa/rsa_depr.c */
 /* ====================================================================
  * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
  *
@@ -58,17 +57,17 @@
  * "new" versions).
  */
 
-#include <stdio.h>
-#include <time.h>
-#include "cryptlib.h"
-#include <openssl/bn.h>
-#include <openssl/rsa.h>
-
-#ifdef OPENSSL_NO_DEPRECATED
-
-static void *dummy = &dummy;
+#include <openssl/opensslconf.h>
+#if OPENSSL_API_COMPAT >= 0x00908000L
+NON_EMPTY_TRANSLATION_UNIT
 
 #else
+
+# include <stdio.h>
+# include <time.h>
+# include "internal/cryptlib.h"
+# include <openssl/bn.h>
+# include <openssl/rsa.h>
 
 RSA *RSA_generate_key(int bits, unsigned long e_value,
                       void (*callback) (int, int, void *), void *cb_arg)
@@ -78,7 +77,7 @@ RSA *RSA_generate_key(int bits, unsigned long e_value,
     RSA *rsa = RSA_new();
     BIGNUM *e = BN_new();
 
-    if (!cb || !rsa || !e)
+    if (cb == NULL || rsa == NULL || e == NULL)
         goto err;
 
     /*
@@ -99,12 +98,9 @@ RSA *RSA_generate_key(int bits, unsigned long e_value,
         return rsa;
     }
  err:
-    if (e)
-        BN_free(e);
-    if (rsa)
-        RSA_free(rsa);
-    if (cb)
-        BN_GENCB_free(cb);
+    BN_free(e);
+    RSA_free(rsa);
+    BN_GENCB_free(cb);
     return 0;
 }
 #endif

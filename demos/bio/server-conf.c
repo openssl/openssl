@@ -1,6 +1,3 @@
-/* NOCW */
-/* demos/bio/saccept-conf.c */
-
 /*
  * A minimal program to serve an SSL connection. It uses blocking. It uses
  * the SSL_CONF API with a configuration file. cc -I../../include saccept.c
@@ -49,7 +46,7 @@ int main(int argc, char *argv[])
         goto err;
     }
 
-    ctx = SSL_CTX_new(SSLv23_server_method());
+    ctx = SSL_CTX_new(TLS_server_method());
     cctx = SSL_CONF_CTX_new();
     SSL_CONF_CTX_set_flags(cctx, SSL_CONF_FLAG_SERVER);
     SSL_CONF_CTX_set_flags(cctx, SSL_CONF_FLAG_CERTIFICATE);
@@ -67,7 +64,7 @@ int main(int argc, char *argv[])
             ERR_print_errors_fp(stderr);
             goto err;
         }
-        if (!strcmp(cnf->name, "Port")) {
+        if (strcmp(cnf->name, "Port") == 0) {
             port = cnf->value;
         } else {
             fprintf(stderr, "Unknown configuration option %s\n", cnf->name);
@@ -131,8 +128,7 @@ int main(int argc, char *argv[])
     if (ret) {
         ERR_print_errors_fp(stderr);
     }
-    if (in != NULL)
-        BIO_free(in);
+    BIO_free(in);
     exit(ret);
     return (!ret);
 }

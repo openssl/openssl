@@ -1,4 +1,3 @@
-/* crypto/ec/ecp_nist.c */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -150,8 +149,7 @@ int ec_GFp_nist_group_set_curve(EC_GROUP *group, const BIGNUM *p,
 
  err:
     BN_CTX_end(ctx);
-    if (new_ctx != NULL)
-        BN_CTX_free(new_ctx);
+    BN_CTX_free(new_ctx);
     return ret;
 }
 
@@ -176,8 +174,7 @@ int ec_GFp_nist_field_mul(const EC_GROUP *group, BIGNUM *r, const BIGNUM *a,
 
     ret = 1;
  err:
-    if (ctx_new)
-        BN_CTX_free(ctx_new);
+    BN_CTX_free(ctx_new);
     return ret;
 }
 
@@ -202,7 +199,6 @@ int ec_GFp_nist_field_sqr(const EC_GROUP *group, BIGNUM *r, const BIGNUM *a,
 
     ret = 1;
  err:
-    if (ctx_new)
-        BN_CTX_free(ctx_new);
+    BN_CTX_free(ctx_new);
     return ret;
 }

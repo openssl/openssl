@@ -1,4 +1,3 @@
-/* crypto/evp/m_null.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -57,10 +56,11 @@
  */
 
 #include <stdio.h>
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 #include <openssl/x509.h>
+#include "internal/evp_int.h"
 
 static int init(EVP_MD_CTX *ctx)
 {
@@ -87,7 +87,6 @@ static const EVP_MD null_md = {
     final,
     NULL,
     NULL,
-    EVP_PKEY_NULL_method,
     0,
     sizeof(EVP_MD *),
 };

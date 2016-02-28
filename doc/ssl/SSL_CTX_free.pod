@@ -20,6 +20,8 @@ It also calls the free()ing procedures for indirectly affected items, if
 applicable: the session cache, the list of ciphers, the list of Client CAs,
 the certificates and keys.
 
+If B<ctx> is NULL nothing is done.
+
 =head1 WARNINGS
 
 If a session-remove callback is set (SSL_CTX_sess_set_remove_cb()), this
@@ -35,7 +37,7 @@ SSL_CTX_free() does not provide diagnostic information.
 
 =head1 SEE ALSO
 
-L<SSL_CTX_new(3)|SSL_CTX_new(3)>, L<ssl(3)|ssl(3)>,
-L<SSL_CTX_sess_set_get_cb(3)|SSL_CTX_sess_set_get_cb(3)>
+L<SSL_CTX_new(3)>, L<ssl(3)>,
+L<SSL_CTX_sess_set_get_cb(3)>
 
 =cut

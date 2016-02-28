@@ -1,4 +1,3 @@
-/* crypto/bio/bss_log.c */
 /* ====================================================================
  * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
  *
@@ -65,7 +64,7 @@
 #include <stdio.h>
 #include <errno.h>
 
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 
 #if defined(OPENSSL_SYS_WINCE)
 #elif defined(OPENSSL_SYS_WIN32)
@@ -239,7 +238,7 @@ static int slg_write(BIO *b, const char *in, int inl)
         /* The default */
     };
 
-    if ((buf = (char *)OPENSSL_malloc(inl + 1)) == NULL) {
+    if ((buf = OPENSSL_malloc(inl + 1)) == NULL) {
         return (0);
     }
     strncpy(buf, in, inl);
@@ -322,7 +321,7 @@ static void xsyslog(BIO *bp, int priority, const char *string)
         break;
     }
 
-    sprintf(pidbuf, "[%u] ", GetCurrentProcessId());
+    sprintf(pidbuf, "[%lu] ", GetCurrentProcessId());
     lpszStrings[0] = pidbuf;
     lpszStrings[1] = string;
 

@@ -1,4 +1,3 @@
-/* crypto/cms/cms_cd.c */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -52,7 +51,7 @@
  * ====================================================================
  */
 
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/asn1t.h>
 #include <openssl/pem.h>
 #include <openssl/x509v3.h>
@@ -63,8 +62,6 @@
 # include <openssl/comp.h>
 #endif
 #include "cms_lcl.h"
-
-DECLARE_ASN1_ITEM(CMS_CompressedData)
 
 #ifdef ZLIB
 
@@ -84,12 +81,12 @@ CMS_ContentInfo *cms_CompressedData_create(int comp_nid)
         return NULL;
     }
     cms = CMS_ContentInfo_new();
-    if (!cms)
+    if (cms == NULL)
         return NULL;
 
     cd = M_ASN1_new_of(CMS_CompressedData);
 
-    if (!cd)
+    if (cd == NULL)
         goto err;
 
     cms->contentType = OBJ_nid2obj(NID_id_smime_ct_compressedData);
@@ -105,10 +102,7 @@ CMS_ContentInfo *cms_CompressedData_create(int comp_nid)
     return cms;
 
  err:
-
-    if (cms)
-        CMS_ContentInfo_free(cms);
-
+    CMS_ContentInfo_free(cms);
     return NULL;
 }
 

@@ -123,7 +123,7 @@ otherwise.
 ASN1_TIME_print() returns 1 if the time is successfully printed out and 0 if
 an error occurred (I/O error or invalid time format).
 
-ASN1_TIME_diff() returns 1 for sucess and 0 for failure. It can fail if the
+ASN1_TIME_diff() returns 1 for success and 0 for failure. It can fail if the
 pass ASN1_TIME structure has invalid syntax for example.
 
 =cut

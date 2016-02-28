@@ -1,4 +1,3 @@
-/* crypto/sha/sha512.c */
 /* ====================================================================
  * Copyright (c) 2004 The OpenSSL Project.  All rights reserved
  * according to the OpenSSL license [found in ../../LICENSE].
@@ -47,9 +46,7 @@
 #include <openssl/sha.h>
 #include <openssl/opensslv.h>
 
-#include "cryptlib.h"
-
-const char SHA512_version[] = "SHA-512" OPENSSL_VERSION_PTEXT;
+#include "internal/cryptlib.h"
 
 #if defined(__i386) || defined(__i386__) || defined(_M_IX86) || \
     defined(__x86_64) || defined(_M_AMD64) || defined(_M_X64) || \
@@ -107,9 +104,11 @@ int SHA512_Final(unsigned char *md, SHA512_CTX *c)
 
     p[n] = 0x80;                /* There always is a room for one */
     n++;
-    if (n > (sizeof(c->u) - 16))
-        memset(p + n, 0, sizeof(c->u) - n), n = 0,
-            sha512_block_data_order(c, p, 1);
+    if (n > (sizeof(c->u) - 16)) {
+        memset(p + n, 0, sizeof(c->u) - n);
+        n = 0;
+        sha512_block_data_order(c, p, 1);
+    }
 
     memset(p + n, 0, sizeof(c->u) - 16 - n);
 #ifdef  B_ENDIAN

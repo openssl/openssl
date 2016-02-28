@@ -1,4 +1,3 @@
-/* crypto/x509/x509_v3.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -58,12 +57,13 @@
 
 #include <stdio.h>
 #include <openssl/stack.h>
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/asn1.h>
 #include <openssl/objects.h>
 #include <openssl/evp.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
+#include "x509_lcl.h"
 
 int X509v3_get_ext_count(const STACK_OF(X509_EXTENSION) *x)
 {
@@ -175,10 +175,8 @@ STACK_OF(X509_EXTENSION) *X509v3_add_ext(STACK_OF(X509_EXTENSION) **x,
  err:
     X509err(X509_F_X509V3_ADD_EXT, ERR_R_MALLOC_FAILURE);
  err2:
-    if (new_ex != NULL)
-        X509_EXTENSION_free(new_ex);
-    if (sk != NULL)
-        sk_X509_EXTENSION_free(sk);
+    X509_EXTENSION_free(new_ex);
+    sk_X509_EXTENSION_free(sk);
     return (NULL);
 }
 
@@ -254,7 +252,7 @@ int X509_EXTENSION_set_data(X509_EXTENSION *ex, ASN1_OCTET_STRING *data)
 
     if (ex == NULL)
         return (0);
-    i = M_ASN1_OCTET_STRING_set(ex->value, data->data, data->length);
+    i = ASN1_OCTET_STRING_set(&ex->value, data->data, data->length);
     if (!i)
         return (0);
     return (1);
@@ -271,7 +269,7 @@ ASN1_OCTET_STRING *X509_EXTENSION_get_data(X509_EXTENSION *ex)
 {
     if (ex == NULL)
         return (NULL);
-    return (ex->value);
+    return &ex->value;
 }
 
 int X509_EXTENSION_get_critical(X509_EXTENSION *ex)

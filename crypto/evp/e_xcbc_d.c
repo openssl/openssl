@@ -1,4 +1,3 @@
-/* crypto/evp/e_xcbc_d.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -57,13 +56,13 @@
  */
 
 #include <stdio.h>
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 
 #ifndef OPENSSL_NO_DES
 
 # include <openssl/evp.h>
 # include <openssl/objects.h>
-# include "evp_locl.h"
+# include "internal/evp_int.h"
 # include <openssl/des.h>
 
 static int desx_cbc_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
@@ -77,7 +76,7 @@ typedef struct {
     DES_cblock outw;
 } DESX_CBC_KEY;
 
-# define data(ctx) ((DESX_CBC_KEY *)(ctx)->cipher_data)
+# define data(ctx) EVP_C_DATA(DESX_CBC_KEY,ctx)
 
 static const EVP_CIPHER d_xcbc_cipher = {
     NID_desx_cbc,
@@ -115,16 +114,18 @@ static int desx_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 {
     while (inl >= EVP_MAXCHUNK) {
         DES_xcbc_encrypt(in, out, (long)EVP_MAXCHUNK, &data(ctx)->ks,
-                         (DES_cblock *)&(ctx->iv[0]),
-                         &data(ctx)->inw, &data(ctx)->outw, ctx->encrypt);
+                         (DES_cblock *)EVP_CIPHER_CTX_iv_noconst(ctx),
+                         &data(ctx)->inw, &data(ctx)->outw,
+                         EVP_CIPHER_CTX_encrypting(ctx));
         inl -= EVP_MAXCHUNK;
         in += EVP_MAXCHUNK;
         out += EVP_MAXCHUNK;
     }
     if (inl)
         DES_xcbc_encrypt(in, out, (long)inl, &data(ctx)->ks,
-                         (DES_cblock *)&(ctx->iv[0]),
-                         &data(ctx)->inw, &data(ctx)->outw, ctx->encrypt);
+                         (DES_cblock *)EVP_CIPHER_CTX_iv_noconst(ctx),
+                         &data(ctx)->inw, &data(ctx)->outw,
+                         EVP_CIPHER_CTX_encrypting(ctx));
     return 1;
 }
 #endif

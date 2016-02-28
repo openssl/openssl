@@ -1,7 +1,7 @@
 @echo off
 
 rem ========================================================================
-rem   Batch file to assist in setting up the necessary enviroment for
+rem   Batch file to assist in setting up the necessary environment for
 rem   building OpenSSL for NetWare.
 rem
 rem   usage:
@@ -84,10 +84,10 @@ echo using GNU GCC Compiler
 :info
 echo.
 
-if "%LIBC_BUILD%" == "Y" echo Enviroment configured for LibC build
+if "%LIBC_BUILD%" == "Y" echo Environment configured for LibC build
 if "%LIBC_BUILD%" == "Y" echo use "netware\build.bat netware-libc ..." 
 
-if "%CLIB_BUILD%" == "Y" echo Enviroment configured for CLib build
+if "%CLIB_BUILD%" == "Y" echo Environment configured for CLib build
 if "%CLIB_BUILD%" == "Y" echo use "netware\build.bat netware-clib ..." 
 
 goto end

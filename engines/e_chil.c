@@ -1,4 +1,3 @@
-/* crypto/engine/e_chil.c -*- mode: C; c-file-style: "eay" -*- */
 /*
  * Written by Richard Levitte (richard@levitte.org), Geoff Thorpe
  * (geoff@geoffthorpe.net) and Dr Stephen N Henson (steve@openssl.org) for
@@ -376,14 +375,14 @@ static int bind_helper(ENGINE *e)
 
 #  ifndef OPENSSL_NO_RSA
     /*
-     * We know that the "PKCS1_SSLeay()" functions hook properly to the
+     * We know that the "PKCS1_OpenSSL()" functions hook properly to the
      * cswift-specific mod_exp and mod_exp_crt so we use those functions. NB:
      * We don't use ENGINE_openssl() or anything "more generic" because
      * something like the RSAref code may not hook properly, and if you own
      * one of these cards then you have the right to do RSA operations on it
      * anyway!
      */
-    meth1 = RSA_PKCS1_SSLeay();
+    meth1 = RSA_PKCS1_OpenSSL();
     hwcrhk_rsa.rsa_pub_enc = meth1->rsa_pub_enc;
     hwcrhk_rsa.rsa_pub_dec = meth1->rsa_pub_dec;
     hwcrhk_rsa.rsa_priv_enc = meth1->rsa_priv_enc;
@@ -406,7 +405,7 @@ static int bind_helper(ENGINE *e)
 static ENGINE *engine_chil(void)
 {
     ENGINE *ret = ENGINE_new();
-    if (!ret)
+    if (ret == NULL)
         return NULL;
     if (!bind_helper(ret)) {
         ENGINE_free(ret);
@@ -462,8 +461,7 @@ static HWCryptoHook_ModExpCRT_t *p_hwcrhk_ModExpCRT = NULL;
 static const char *HWCRHK_LIBNAME = NULL;
 static void free_HWCRHK_LIBNAME(void)
 {
-    if (HWCRHK_LIBNAME)
-        OPENSSL_free((void *)HWCRHK_LIBNAME);
+    OPENSSL_free(HWCRHK_LIBNAME);
     HWCRHK_LIBNAME = NULL;
 }
 
@@ -477,7 +475,7 @@ static const char *get_HWCRHK_LIBNAME(void)
 static long set_HWCRHK_LIBNAME(const char *name)
 {
     free_HWCRHK_LIBNAME();
-    return (((HWCRHK_LIBNAME = BUF_strdup(name)) != NULL) ? 1 : 0);
+    return (((HWCRHK_LIBNAME = OPENSSL_strdup(name)) != NULL) ? 1 : 0);
 }
 
 static const char *n_hwcrhk_Init = "HWCryptoHook_Init";
@@ -556,26 +554,19 @@ static int hwcrhk_init(ENGINE *e)
         HWCRHKerr(HWCRHK_F_HWCRHK_INIT, HWCRHK_R_DSO_FAILURE);
         goto err;
     }
-    if (!(p1 = (HWCryptoHook_Init_t *)
-          DSO_bind_func(hwcrhk_dso, n_hwcrhk_Init)) ||
-        !(p2 = (HWCryptoHook_Finish_t *)
-          DSO_bind_func(hwcrhk_dso, n_hwcrhk_Finish)) ||
-        !(p3 = (HWCryptoHook_ModExp_t *)
-          DSO_bind_func(hwcrhk_dso, n_hwcrhk_ModExp)) ||
+
+#define BINDIT(t, name) (t *)DSO_bind_func(hwcrhk_dso, name)
+    if ((p1 = BINDIT(HWCryptoHook_Init_t, n_hwcrhk_Init)) == NULL
+        || (p2 = BINDIT(HWCryptoHook_Finish_t, n_hwcrhk_Finish)) == NULL
+        || (p3 = BINDIT(HWCryptoHook_ModExp_t, n_hwcrhk_ModExp)) == NULL
 #  ifndef OPENSSL_NO_RSA
-        !(p4 = (HWCryptoHook_RSA_t *)
-          DSO_bind_func(hwcrhk_dso, n_hwcrhk_RSA)) ||
-        !(p5 = (HWCryptoHook_RSALoadKey_t *)
-          DSO_bind_func(hwcrhk_dso, n_hwcrhk_RSALoadKey)) ||
-        !(p6 = (HWCryptoHook_RSAGetPublicKey_t *)
-          DSO_bind_func(hwcrhk_dso, n_hwcrhk_RSAGetPublicKey)) ||
-        !(p7 = (HWCryptoHook_RSAUnloadKey_t *)
-          DSO_bind_func(hwcrhk_dso, n_hwcrhk_RSAUnloadKey)) ||
+        || (p4 = BINDIT(HWCryptoHook_RSA_t, n_hwcrhk_RSA)) == NULL
+        || (p5 = BINDIT(HWCryptoHook_RSALoadKey_t, n_hwcrhk_RSALoadKey)) == NULL
+        || (p6 = BINDIT(HWCryptoHook_RSAGetPublicKey_t, n_hwcrhk_RSAGetPublicKey)) == NULL
+        || (p7 = BINDIT(HWCryptoHook_RSAUnloadKey_t, n_hwcrhk_RSAUnloadKey)) == NULL
 #  endif
-        !(p8 = (HWCryptoHook_RandomBytes_t *)
-          DSO_bind_func(hwcrhk_dso, n_hwcrhk_RandomBytes)) ||
-        !(p9 = (HWCryptoHook_ModExpCRT_t *)
-          DSO_bind_func(hwcrhk_dso, n_hwcrhk_ModExpCRT))) {
+        || (p8 = BINDIT(HWCryptoHook_RandomBytes_t, n_hwcrhk_RandomBytes)) == NULL
+        || (p9 = BINDIT(HWCryptoHook_ModExpCRT_t, n_hwcrhk_ModExpCRT)) == NULL) {
         HWCRHKerr(HWCRHK_F_HWCRHK_INIT, HWCRHK_R_DSO_FAILURE);
         goto err;
     }
@@ -623,8 +614,7 @@ static int hwcrhk_init(ENGINE *e)
 #  endif
     return 1;
  err:
-    if (hwcrhk_dso)
-        DSO_free(hwcrhk_dso);
+    DSO_free(hwcrhk_dso);
     hwcrhk_dso = NULL;
     p_hwcrhk_Init = NULL;
     p_hwcrhk_Finish = NULL;
@@ -656,8 +646,7 @@ static int hwcrhk_finish(ENGINE *e)
         goto err;
     }
  err:
-    if (logstream)
-        BIO_free(logstream);
+    BIO_free(logstream);
     hwcrhk_dso = NULL;
     p_hwcrhk_Init = NULL;
     p_hwcrhk_Finish = NULL;
@@ -693,10 +682,8 @@ static int hwcrhk_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f) (void))
             BIO *bio = (BIO *)p;
 
             CRYPTO_w_lock(CRYPTO_LOCK_ENGINE);
-            if (logstream) {
-                BIO_free(logstream);
-                logstream = NULL;
-            }
+            BIO_free(logstream);
+            logstream = NULL;
             if (CRYPTO_add(&bio->references, 1, CRYPTO_LOCK_BIO) > 1)
                 logstream = bio;
             else
@@ -791,8 +778,8 @@ static EVP_PKEY *hwcrhk_load_privkey(ENGINE *eng, const char *key_id,
         goto err;
     }
 #  ifndef OPENSSL_NO_RSA
-    hptr = OPENSSL_malloc(sizeof(HWCryptoHook_RSAKeyHandle));
-    if (!hptr) {
+    hptr = OPENSSL_malloc(sizeof(*hptr));
+    if (hptr == NULL) {
         HWCRHKerr(HWCRHK_F_HWCRHK_LOAD_PRIVKEY, ERR_R_MALLOC_FAILURE);
         goto err;
     }
@@ -839,18 +826,21 @@ static EVP_PKEY *hwcrhk_load_privkey(ENGINE *eng, const char *key_id,
     bn_fix_top(rtmp->n);
 
     res = EVP_PKEY_new();
+    if (res == NULL) {
+        HWCRHKerr(HWCRHK_F_HWCRHK_LOAD_PRIVKEY, HWCRHK_R_CHIL_ERROR);
+        goto err;
+    }
     EVP_PKEY_assign_RSA(res, rtmp);
 #  endif
 
-    if (!res)
+    if (res == NULL)
         HWCRHKerr(HWCRHK_F_HWCRHK_LOAD_PRIVKEY,
                   HWCRHK_R_PRIVATE_KEY_ALGORITHMS_DISABLED);
 
     return res;
  err:
 #  ifndef OPENSSL_NO_RSA
-    if (rtmp)
-        RSA_free(rtmp);
+    RSA_free(rtmp);
 #  endif
     return NULL;
 }
@@ -891,8 +881,7 @@ static EVP_PKEY *hwcrhk_load_pubkey(ENGINE *eng, const char *key_id,
 
     return res;
  err:
-    if (res)
-        EVP_PKEY_free(res);
+    EVP_PKEY_free(res);
     return NULL;
 }
 

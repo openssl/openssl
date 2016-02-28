@@ -1,4 +1,3 @@
-/* crypto/bn/bn_depr.c */
 /* ====================================================================
  * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
  *
@@ -58,22 +57,23 @@
  * slurp this code if applications are using them directly.
  */
 
-#include <stdio.h>
-#include <time.h>
-#include "cryptlib.h"
-#include "bn_lcl.h"
-#include <openssl/rand.h>
+#include <openssl/opensslconf.h>
+#if OPENSSL_API_COMPAT >= 0x00908000L
+NON_EMPTY_TRANSLATION_UNIT
+#else
 
-static void *dummy = &dummy;
+# include <stdio.h>
+# include <time.h>
+# include "internal/cryptlib.h"
+# include "bn_lcl.h"
+# include <openssl/rand.h>
 
-#ifndef OPENSSL_NO_DEPRECATED
 BIGNUM *BN_generate_prime(BIGNUM *ret, int bits, int safe,
                           const BIGNUM *add, const BIGNUM *rem,
                           void (*callback) (int, int, void *), void *cb_arg)
 {
     BN_GENCB cb;
     BIGNUM *rnd = NULL;
-    int found = 0;
 
     BN_GENCB_set_old(&cb, callback, cb_arg);
 
@@ -86,11 +86,10 @@ BIGNUM *BN_generate_prime(BIGNUM *ret, int bits, int safe,
         goto err;
 
     /* we have a prime :-) */
-    found = 1;
+    return ret;
  err:
-    if (!found && (ret == NULL) && (rnd != NULL))
-        BN_free(rnd);
-    return (found ? rnd : NULL);
+    BN_free(rnd);
+    return NULL;
 }
 
 int BN_is_prime(const BIGNUM *a, int checks,

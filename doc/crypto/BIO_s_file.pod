@@ -140,9 +140,9 @@ occurred this differs from other types of BIO which will typically return
 
 =head1 SEE ALSO
 
-L<BIO_seek(3)|BIO_seek(3)>, L<BIO_tell(3)|BIO_tell(3)>,
-L<BIO_reset(3)|BIO_reset(3)>, L<BIO_flush(3)|BIO_flush(3)>,
-L<BIO_read(3)|BIO_read(3)>,
-L<BIO_write(3)|BIO_write(3)>, L<BIO_puts(3)|BIO_puts(3)>,
-L<BIO_gets(3)|BIO_gets(3)>, L<BIO_printf(3)|BIO_printf(3)>,
-L<BIO_set_close(3)|BIO_set_close(3)>, L<BIO_get_close(3)|BIO_get_close(3)>
+L<BIO_seek(3)>, L<BIO_tell(3)>,
+L<BIO_reset(3)>, L<BIO_flush(3)>,
+L<BIO_read(3)>,
+L<BIO_write(3)>, L<BIO_puts(3)>,
+L<BIO_gets(3)>, L<BIO_printf(3)>,
+L<BIO_set_close(3)>, L<BIO_get_close(3)>

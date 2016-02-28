@@ -1,4 +1,3 @@
-/* evp_pkey.c */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
  * 1999.
@@ -59,10 +58,11 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/x509.h>
 #include <openssl/rand.h>
-#include "asn1_locl.h"
+#include "internal/asn1_int.h"
+#include "internal/evp_int.h"
 
 /* Extract a private key from a PKCS8 structure */
 
@@ -75,7 +75,7 @@ EVP_PKEY *EVP_PKCS82PKEY(PKCS8_PRIV_KEY_INFO *p8)
     if (!PKCS8_pkey_get0(&algoid, NULL, NULL, NULL, p8))
         return NULL;
 
-    if (!(pkey = EVP_PKEY_new())) {
+    if ((pkey = EVP_PKEY_new()) == NULL) {
         EVPerr(EVP_F_EVP_PKCS82PKEY, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
@@ -115,7 +115,7 @@ PKCS8_PRIV_KEY_INFO *EVP_PKEY2PKCS8_broken(EVP_PKEY *pkey, int broken)
 {
     PKCS8_PRIV_KEY_INFO *p8;
 
-    if (!(p8 = PKCS8_PRIV_KEY_INFO_new())) {
+    if ((p8 = PKCS8_PRIV_KEY_INFO_new()) == NULL) {
         EVPerr(EVP_F_EVP_PKEY2PKCS8_BROKEN, ERR_R_MALLOC_FAILURE);
         return NULL;
     }

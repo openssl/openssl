@@ -1,4 +1,3 @@
-/* crypto/x509/x509_att.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -58,12 +57,13 @@
 
 #include <stdio.h>
 #include <openssl/stack.h>
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/asn1.h>
 #include <openssl/objects.h>
 #include <openssl/evp.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
+#include "x509_lcl.h"
 
 int X509at_get_attr_count(const STACK_OF(X509_ATTRIBUTE) *x)
 {
@@ -146,10 +146,8 @@ STACK_OF(X509_ATTRIBUTE) *X509at_add1_attr(STACK_OF(X509_ATTRIBUTE) **x,
  err:
     X509err(X509_F_X509AT_ADD1_ATTR, ERR_R_MALLOC_FAILURE);
  err2:
-    if (new_attr != NULL)
-        X509_ATTRIBUTE_free(new_attr);
-    if (sk != NULL)
-        sk_X509_ATTRIBUTE_free(sk);
+    X509_ATTRIBUTE_free(new_attr);
+    sk_X509_ATTRIBUTE_free(sk);
     return (NULL);
 }
 
@@ -310,15 +308,12 @@ int X509_ATTRIBUTE_set1_data(X509_ATTRIBUTE *attr, int attrtype,
         }
         atype = stmp->type;
     } else if (len != -1) {
-        if (!(stmp = ASN1_STRING_type_new(attrtype)))
+        if ((stmp = ASN1_STRING_type_new(attrtype)) == NULL)
             goto err;
         if (!ASN1_STRING_set(stmp, data, len))
             goto err;
         atype = attrtype;
     }
-    if (!(attr->value.set = sk_ASN1_TYPE_new_null()))
-        goto err;
-    attr->single = 0;
     /*
      * This is a bit naughty because the attribute should really have at
      * least one value but some types use and zero length SET and require
@@ -326,14 +321,14 @@ int X509_ATTRIBUTE_set1_data(X509_ATTRIBUTE *attr, int attrtype,
      */
     if (attrtype == 0)
         return 1;
-    if (!(ttmp = ASN1_TYPE_new()))
+    if ((ttmp = ASN1_TYPE_new()) == NULL)
         goto err;
     if ((len == -1) && !(attrtype & MBSTRING_FLAG)) {
         if (!ASN1_TYPE_set1(ttmp, attrtype, data))
             goto err;
     } else
         ASN1_TYPE_set(ttmp, atype, stmp);
-    if (!sk_ASN1_TYPE_push(attr->value.set, ttmp))
+    if (!sk_ASN1_TYPE_push(attr->set, ttmp))
         goto err;
     return 1;
  err:
@@ -343,11 +338,9 @@ int X509_ATTRIBUTE_set1_data(X509_ATTRIBUTE *attr, int attrtype,
 
 int X509_ATTRIBUTE_count(X509_ATTRIBUTE *attr)
 {
-    if (!attr->single)
-        return sk_ASN1_TYPE_num(attr->value.set);
-    if (attr->value.single)
-        return 1;
-    return 0;
+    if (attr == NULL)
+        return 0;
+    return sk_ASN1_TYPE_num(attr->set);
 }
 
 ASN1_OBJECT *X509_ATTRIBUTE_get0_object(X509_ATTRIBUTE *attr)
@@ -374,11 +367,6 @@ void *X509_ATTRIBUTE_get0_data(X509_ATTRIBUTE *attr, int idx,
 ASN1_TYPE *X509_ATTRIBUTE_get0_type(X509_ATTRIBUTE *attr, int idx)
 {
     if (attr == NULL)
-        return (NULL);
-    if (idx >= X509_ATTRIBUTE_count(attr))
         return NULL;
-    if (!attr->single)
-        return sk_ASN1_TYPE_value(attr->value.set, idx);
-    else
-        return attr->value.single;
+    return sk_ASN1_TYPE_value(attr->set, idx);
 }

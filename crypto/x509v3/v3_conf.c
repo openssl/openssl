@@ -1,4 +1,3 @@
-/* v3_conf.c */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
  * 1999.
@@ -60,9 +59,10 @@
 
 #include <stdio.h>
 #include <ctype.h>
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/conf.h>
 #include <openssl/x509.h>
+#include "internal/x509_int.h"
 #include <openssl/x509v3.h>
 
 static int v3_check_critical(char **value);
@@ -121,11 +121,12 @@ static X509_EXTENSION *do_ext_nconf(CONF *conf, X509V3_CTX *ctx, int ext_nid,
     X509_EXTENSION *ext;
     STACK_OF(CONF_VALUE) *nval;
     void *ext_struc;
+
     if (ext_nid == NID_undef) {
         X509V3err(X509V3_F_DO_EXT_NCONF, X509V3_R_UNKNOWN_EXTENSION_NAME);
         return NULL;
     }
-    if (!(method = X509V3_EXT_get_nid(ext_nid))) {
+    if ((method = X509V3_EXT_get_nid(ext_nid)) == NULL) {
         X509V3err(X509V3_F_DO_EXT_NCONF, X509V3_R_UNKNOWN_EXTENSION);
         return NULL;
     }
@@ -148,14 +149,14 @@ static X509_EXTENSION *do_ext_nconf(CONF *conf, X509V3_CTX *ctx, int ext_nid,
         if (!ext_struc)
             return NULL;
     } else if (method->s2i) {
-        if (!(ext_struc = method->s2i(method, ctx, value)))
+        if ((ext_struc = method->s2i(method, ctx, value)) == NULL)
             return NULL;
     } else if (method->r2i) {
         if (!ctx->db || !ctx->db_meth) {
             X509V3err(X509V3_F_DO_EXT_NCONF, X509V3_R_NO_CONFIG_DATABASE);
             return NULL;
         }
-        if (!(ext_struc = method->r2i(method, ctx, value)))
+        if ((ext_struc = method->r2i(method, ctx, value)) == NULL)
             return NULL;
     } else {
         X509V3err(X509V3_F_DO_EXT_NCONF,
@@ -189,13 +190,14 @@ static X509_EXTENSION *do_ext_i2d(const X509V3_EXT_METHOD *method,
             goto merr;
     } else {
         unsigned char *p;
+
         ext_len = method->i2d(ext_struc, NULL);
-        if (!(ext_der = OPENSSL_malloc(ext_len)))
+        if ((ext_der = OPENSSL_malloc(ext_len)) == NULL)
             goto merr;
         p = ext_der;
         method->i2d(ext_struc, &p);
     }
-    if (!(ext_oct = M_ASN1_OCTET_STRING_new()))
+    if ((ext_oct = ASN1_OCTET_STRING_new()) == NULL)
         goto merr;
     ext_oct->data = ext_der;
     ext_der = NULL;
@@ -204,16 +206,14 @@ static X509_EXTENSION *do_ext_i2d(const X509V3_EXT_METHOD *method,
     ext = X509_EXTENSION_create_by_NID(NULL, ext_nid, crit, ext_oct);
     if (!ext)
         goto merr;
-    M_ASN1_OCTET_STRING_free(ext_oct);
+    ASN1_OCTET_STRING_free(ext_oct);
 
     return ext;
 
  merr:
     X509V3err(X509V3_F_DO_EXT_I2D, ERR_R_MALLOC_FAILURE);
-    if (ext_der != NULL)
-        OPENSSL_free(ext_der);
-    if (ext_oct != NULL)
-        M_ASN1_OCTET_STRING_free(ext_oct);
+    OPENSSL_free(ext_der);
+    ASN1_OCTET_STRING_free(ext_oct);
     return NULL;
 
 }
@@ -223,7 +223,8 @@ static X509_EXTENSION *do_ext_i2d(const X509V3_EXT_METHOD *method,
 X509_EXTENSION *X509V3_EXT_i2d(int ext_nid, int crit, void *ext_struc)
 {
     const X509V3_EXT_METHOD *method;
-    if (!(method = X509V3_EXT_get_nid(ext_nid))) {
+
+    if ((method = X509V3_EXT_get_nid(ext_nid)) == NULL) {
         X509V3err(X509V3_F_X509V3_EXT_I2D, X509V3_R_UNKNOWN_EXTENSION);
         return NULL;
     }
@@ -248,10 +249,10 @@ static int v3_check_generic(char **value)
 {
     int gen_type = 0;
     char *p = *value;
-    if ((strlen(p) >= 4) && !strncmp(p, "DER:", 4)) {
+    if ((strlen(p) >= 4) && strncmp(p, "DER:", 4) == 0) {
         p += 4;
         gen_type = 1;
-    } else if ((strlen(p) >= 5) && !strncmp(p, "ASN1:", 5)) {
+    } else if ((strlen(p) >= 5) && strncmp(p, "ASN1:", 5) == 0) {
         p += 5;
         gen_type = 2;
     } else
@@ -269,11 +270,12 @@ static X509_EXTENSION *v3_generic_extension(const char *ext, char *value,
                                             X509V3_CTX *ctx)
 {
     unsigned char *ext_der = NULL;
-    long ext_len;
+    long ext_len = 0;
     ASN1_OBJECT *obj = NULL;
     ASN1_OCTET_STRING *oct = NULL;
     X509_EXTENSION *extension = NULL;
-    if (!(obj = OBJ_txt2obj(ext, 0))) {
+
+    if ((obj = OBJ_txt2obj(ext, 0)) == NULL) {
         X509V3err(X509V3_F_V3_GENERIC_EXTENSION,
                   X509V3_R_EXTENSION_NAME_ERROR);
         ERR_add_error_data(2, "name=", ext);
@@ -292,7 +294,7 @@ static X509_EXTENSION *v3_generic_extension(const char *ext, char *value,
         goto err;
     }
 
-    if (!(oct = M_ASN1_OCTET_STRING_new())) {
+    if ((oct = ASN1_OCTET_STRING_new()) == NULL) {
         X509V3err(X509V3_F_V3_GENERIC_EXTENSION, ERR_R_MALLOC_FAILURE);
         goto err;
     }
@@ -305,9 +307,8 @@ static X509_EXTENSION *v3_generic_extension(const char *ext, char *value,
 
  err:
     ASN1_OBJECT_free(obj);
-    M_ASN1_OCTET_STRING_free(oct);
-    if (ext_der)
-        OPENSSL_free(ext_der);
+    ASN1_OCTET_STRING_free(oct);
+    OPENSSL_free(ext_der);
     return extension;
 
 }
@@ -349,11 +350,12 @@ int X509V3_EXT_add_nconf_sk(CONF *conf, X509V3_CTX *ctx, char *section,
     STACK_OF(CONF_VALUE) *nval;
     CONF_VALUE *val;
     int i;
-    if (!(nval = NCONF_get_section(conf, section)))
+
+    if ((nval = NCONF_get_section(conf, section)) == NULL)
         return 0;
     for (i = 0; i < sk_CONF_VALUE_num(nval); i++) {
         val = sk_CONF_VALUE_value(nval, i);
-        if (!(ext = X509V3_EXT_nconf(conf, ctx, val->name, val->value)))
+        if ((ext = X509V3_EXT_nconf(conf, ctx, val->name, val->value)) == NULL)
             return 0;
         if (ctx->flags == X509V3_CTX_REPLACE)
             delete_ext(*sk, ext);
@@ -373,7 +375,7 @@ int X509V3_EXT_add_nconf(CONF *conf, X509V3_CTX *ctx, char *section,
 {
     STACK_OF(X509_EXTENSION) **sk = NULL;
     if (cert)
-        sk = &cert->cert_info->extensions;
+        sk = &cert->cert_info.extensions;
     return X509V3_EXT_add_nconf_sk(conf, ctx, section, sk);
 }
 
@@ -384,7 +386,7 @@ int X509V3_EXT_CRL_add_nconf(CONF *conf, X509V3_CTX *ctx, char *section,
 {
     STACK_OF(X509_EXTENSION) **sk = NULL;
     if (crl)
-        sk = &crl->crl->extensions;
+        sk = &crl->crl.extensions;
     return X509V3_EXT_add_nconf_sk(conf, ctx, section, sk);
 }
 

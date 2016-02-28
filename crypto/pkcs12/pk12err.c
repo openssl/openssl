@@ -1,6 +1,5 @@
-/* crypto/pkcs12/pk12err.c */
 /* ====================================================================
- * Copyright (c) 1999-2006 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2015 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -86,14 +85,18 @@ static ERR_STRING_DATA PKCS12_str_functs[] = {
     {ERR_FUNC(PKCS12_F_PKCS12_ITEM_PACK_SAFEBAG), "PKCS12_item_pack_safebag"},
     {ERR_FUNC(PKCS12_F_PKCS12_KEY_GEN_ASC), "PKCS12_key_gen_asc"},
     {ERR_FUNC(PKCS12_F_PKCS12_KEY_GEN_UNI), "PKCS12_key_gen_uni"},
-    {ERR_FUNC(PKCS12_F_PKCS12_MAKE_KEYBAG), "PKCS12_MAKE_KEYBAG"},
-    {ERR_FUNC(PKCS12_F_PKCS12_MAKE_SHKEYBAG), "PKCS12_MAKE_SHKEYBAG"},
     {ERR_FUNC(PKCS12_F_PKCS12_NEWPASS), "PKCS12_newpass"},
     {ERR_FUNC(PKCS12_F_PKCS12_PACK_P7DATA), "PKCS12_pack_p7data"},
     {ERR_FUNC(PKCS12_F_PKCS12_PACK_P7ENCDATA), "PKCS12_pack_p7encdata"},
     {ERR_FUNC(PKCS12_F_PKCS12_PARSE), "PKCS12_parse"},
     {ERR_FUNC(PKCS12_F_PKCS12_PBE_CRYPT), "PKCS12_pbe_crypt"},
     {ERR_FUNC(PKCS12_F_PKCS12_PBE_KEYIVGEN), "PKCS12_PBE_keyivgen"},
+    {ERR_FUNC(PKCS12_F_PKCS12_SAFEBAG_CREATE0_P8INF),
+     "PKCS12_SAFEBAG_create0_p8inf"},
+    {ERR_FUNC(PKCS12_F_PKCS12_SAFEBAG_CREATE0_PKCS8),
+     "PKCS12_SAFEBAG_create0_pkcs8"},
+    {ERR_FUNC(PKCS12_F_PKCS12_SAFEBAG_CREATE_PKCS8_ENCRYPT),
+     "PKCS12_SAFEBAG_create_pkcs8_encrypt"},
     {ERR_FUNC(PKCS12_F_PKCS12_SETUP_MAC), "PKCS12_setup_mac"},
     {ERR_FUNC(PKCS12_F_PKCS12_SET_MAC), "PKCS12_set_mac"},
     {ERR_FUNC(PKCS12_F_PKCS12_UNPACK_AUTHSAFES), "PKCS12_unpack_authsafes"},
@@ -101,6 +104,7 @@ static ERR_STRING_DATA PKCS12_str_functs[] = {
     {ERR_FUNC(PKCS12_F_PKCS12_VERIFY_MAC), "PKCS12_verify_mac"},
     {ERR_FUNC(PKCS12_F_PKCS8_ADD_KEYUSAGE), "PKCS8_add_keyusage"},
     {ERR_FUNC(PKCS12_F_PKCS8_ENCRYPT), "PKCS8_encrypt"},
+    {ERR_FUNC(PKCS12_F_PKCS8_SET0_PBE), "PKCS8_set0_pbe"},
     {0, NULL}
 };
 

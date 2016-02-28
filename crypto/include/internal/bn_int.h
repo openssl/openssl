@@ -102,10 +102,15 @@ BN_ULONG *bn_get_words(const BIGNUM *a);
 void bn_set_static_words(BIGNUM *a, BN_ULONG *words, int size);
 
 /*
- * Copy data into the BIGNUM. The caller must check that dmax is sufficient to
- * hold the data
+ * Copy words into the BIGNUM |a|, reallocating space as necessary.
+ * The negative flag of |a| is not modified.
+ * Returns 1 on success and 0 on failure.
  */
-void bn_set_data(BIGNUM *a, const void *data, size_t size);
+/*
+ * |num_words| is int because bn_expand2 takes an int. This is an internal
+ * function so we simply trust callers not to pass negative values.
+ */
+int bn_set_words(BIGNUM *a, BN_ULONG *words, int num_words);
 
 size_t bn_sizeof_BIGNUM(void);
 

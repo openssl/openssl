@@ -1,4 +1,3 @@
-/* crypto/bn/bn_nist.c */
 /*
  * Written by Nils Larsch for the OpenSSL project
  */
@@ -57,7 +56,7 @@
  */
 
 #include "bn_lcl.h"
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 
 #define BN_NIST_192_TOP (192+BN_BITS2-1)/BN_BITS2
 #define BN_NIST_224_TOP (224+BN_BITS2-1)/BN_BITS2
@@ -379,8 +378,8 @@ int BN_nist_mod_192(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
     PTR_SIZE_INT mask;
     static const BIGNUM _bignum_nist_p_192_sqr = {
         (BN_ULONG *)_nist_p_192_sqr,
-        sizeof(_nist_p_192_sqr) / sizeof(_nist_p_192_sqr[0]),
-        sizeof(_nist_p_192_sqr) / sizeof(_nist_p_192_sqr[0]),
+        OSSL_NELEM(_nist_p_192_sqr),
+        OSSL_NELEM(_nist_p_192_sqr),
         0, BN_FLG_STATIC_DATA
     };
 
@@ -524,8 +523,8 @@ int BN_nist_mod_224(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
     } u;
     static const BIGNUM _bignum_nist_p_224_sqr = {
         (BN_ULONG *)_nist_p_224_sqr,
-        sizeof(_nist_p_224_sqr) / sizeof(_nist_p_224_sqr[0]),
-        sizeof(_nist_p_224_sqr) / sizeof(_nist_p_224_sqr[0]),
+        OSSL_NELEM(_nist_p_224_sqr),
+        OSSL_NELEM(_nist_p_224_sqr),
         0, BN_FLG_STATIC_DATA
     };
 
@@ -645,7 +644,7 @@ int BN_nist_mod_224(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 #endif
     } else if (carry < 0) {
         /*
-         * it's a bit more comlicated logic in this case. if bn_add_words
+         * it's a bit more complicated logic in this case. if bn_add_words
          * yields no carry, then result has to be adjusted by unconditionally
          * *adding* the modulus. but if it does, then result has to be
          * compared to the modulus and conditionally adjusted by
@@ -705,8 +704,8 @@ int BN_nist_mod_256(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
     } u;
     static const BIGNUM _bignum_nist_p_256_sqr = {
         (BN_ULONG *)_nist_p_256_sqr,
-        sizeof(_nist_p_256_sqr) / sizeof(_nist_p_256_sqr[0]),
-        sizeof(_nist_p_256_sqr) / sizeof(_nist_p_256_sqr[0]),
+        OSSL_NELEM(_nist_p_256_sqr),
+        OSSL_NELEM(_nist_p_256_sqr),
         0, BN_FLG_STATIC_DATA
     };
 
@@ -951,8 +950,8 @@ int BN_nist_mod_384(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
     } u;
     static const BIGNUM _bignum_nist_p_384_sqr = {
         (BN_ULONG *)_nist_p_384_sqr,
-        sizeof(_nist_p_384_sqr) / sizeof(_nist_p_384_sqr[0]),
-        sizeof(_nist_p_384_sqr) / sizeof(_nist_p_384_sqr[0]),
+        OSSL_NELEM(_nist_p_384_sqr),
+        OSSL_NELEM(_nist_p_384_sqr),
         0, BN_FLG_STATIC_DATA
     };
 
@@ -1209,8 +1208,8 @@ int BN_nist_mod_521(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
     PTR_SIZE_INT mask;
     static const BIGNUM _bignum_nist_p_521_sqr = {
         (BN_ULONG *)_nist_p_521_sqr,
-        sizeof(_nist_p_521_sqr) / sizeof(_nist_p_521_sqr[0]),
-        sizeof(_nist_p_521_sqr) / sizeof(_nist_p_521_sqr[0]),
+        OSSL_NELEM(_nist_p_521_sqr),
+        OSSL_NELEM(_nist_p_521_sqr),
         0, BN_FLG_STATIC_DATA
     };
 

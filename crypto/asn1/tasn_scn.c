@@ -1,4 +1,3 @@
-/* tasn_scn.c */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
  * 2010.
@@ -58,7 +57,7 @@
  */
 
 #include <stddef.h>
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/asn1.h>
 #include <openssl/asn1t.h>
 #include <openssl/objects.h>
@@ -75,7 +74,7 @@
 ASN1_SCTX *ASN1_SCTX_new(int (*scan_cb) (ASN1_SCTX *ctx))
 {
     ASN1_SCTX *ret;
-    ret = OPENSSL_malloc(sizeof(ASN1_SCTX));
+    ret = OPENSSL_malloc(sizeof(*ret));
     if (ret == NULL) {
         ASN1err(ASN1_F_ASN1_SCTX_NEW, ERR_R_MALLOC_FAILURE);
         return NULL;

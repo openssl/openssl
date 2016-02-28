@@ -73,6 +73,7 @@
 # Sandy Bridge	7.70		6.10/+26%	4.99/+54%
 # Ivy Bridge	6.06		4.67/+30%	4.60/+32%
 # Haswell	5.45		4.15/+31%	3.57/+53%
+# Skylake	5.18		4.06/+28%	3.54/+46%
 # Bulldozer	9.11		5.95/+53%
 # VIA Nano	9.32		7.15/+30%
 # Atom		10.3		9.17/+12%
@@ -107,7 +108,7 @@ if (!$avx && $win64 && ($flavour =~ /masm/ || $ENV{ASM} =~ /ml64/) &&
 	$avx = ($1>=10) + ($1>=11);
 }
 
-if (!$avx && `$ENV{CC} -v 2>&1` =~ /(^clang version|based on LLVM) ([2-9]\.[0-9]+)/) {
+if (!$avx && `$ENV{CC} -v 2>&1` =~ /((?:^clang|LLVM) version|.*based on LLVM) ([2-9]\.[0-9]+)/) {
 	$avx = ($2>=3.0) + ($2>3.0);
 }
 

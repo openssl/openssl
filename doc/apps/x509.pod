@@ -8,6 +8,7 @@ x509 - Certificate display and signing utility
 =head1 SYNOPSIS
 
 B<openssl> B<x509>
+[B<-help>]
 [B<-inform DER|PEM|NET>]
 [B<-outform DER|PEM|NET>]
 [B<-keyform DER|PEM>]
@@ -55,7 +56,7 @@ B<openssl> B<x509>
 [B<-text>]
 [B<-certopt option>]
 [B<-C>]
-[B<-md2|-md5|-sha1|-mdc2>]
+[B<-[digest]>]
 [B<-clrext>]
 [B<-extfile filename>]
 [B<-extensions section>]
@@ -76,6 +77,10 @@ various sections.
 =head2 INPUT, OUTPUT AND GENERAL PURPOSE OPTIONS
 
 =over 4
+
+=item B<-help>
+
+Print out a usage message.
 
 =item B<-inform DER|PEM|NET>
 
@@ -101,12 +106,15 @@ if this option is not specified.
 This specifies the output filename to write to or standard output by
 default.
 
-=item B<-md2|-md5|-sha1|-mdc2>
+=item B<-[digest]>
 
-the digest to use. This affects any signing or display option that uses a message
-digest, such as the B<-fingerprint>, B<-signkey> and B<-CA> options. If not
-specified then SHA1 is used. If the key being used to sign with is a DSA key
-then this option has no effect: SHA1 is always used with DSA keys.
+the digest to use.
+This affects any signing or display option that uses a message
+digest, such as the B<-fingerprint>, B<-signkey> and B<-CA> options.
+Any digest supported by the OpenSSL B<dgst> command can be used.
+If not specified then SHA1 is used.
+Note that if a DSA key is used for signing, then this flag is ignored
+and SHA1 is used.
 
 =item B<-engine id>
 
@@ -235,8 +243,6 @@ this outputs the certificate in the form of a C source file.
 
 =head2 TRUST SETTINGS
 
-Please note these options are currently experimental and may well change.
-
 A B<trusted certificate> is an ordinary certificate which has several
 additional pieces of information attached to it such as the permitted
 and prohibited uses of the certificate and an "alias".
@@ -286,9 +292,12 @@ clears all the prohibited or rejected uses of the certificate.
 
 =item B<-addtrust arg>
 
-adds a trusted certificate use. Any object name can be used here
-but currently only B<clientAuth> (SSL client use), B<serverAuth>
-(SSL server use) and B<emailProtection> (S/MIME email) are used.
+adds a trusted certificate use.
+Any object name can be used here but currently only B<clientAuth> (SSL client
+use), B<serverAuth> (SSL server use), B<emailProtection> (S/MIME email) and
+B<anyExtendedKeyUsage> are used.
+As of OpenSSL 1.1.0, the last of these blocks all purposes when rejected or
+enables all purposes when trusted.
 Other OpenSSL applications may define additional uses.
 
 =item B<-addreject arg>
@@ -321,7 +330,8 @@ subject name (i.e.  makes it self signed) changes the public key to the
 supplied value and changes the start and end dates. The start date is
 set to the current time and the end date is set to a value determined
 by the B<-days> option. Any certificate extensions are retained unless
-the B<-clrext> option is supplied.
+the B<-clrext> option is supplied; this includes, for example, any existing
+key identifier extensions.
 
 If the input is a certificate request then a self signed certificate
 is created using the supplied private key using the subject name in
@@ -330,7 +340,7 @@ the request.
 =item B<-passin arg>
 
 the key password source. For more information about the format of B<arg>
-see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)|openssl(1)>.
+see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
 
 =item B<-clrext>
 
@@ -366,8 +376,7 @@ the B<-signkey> or B<-CA> options. If used in conjunction with the B<-CA>
 option the serial number file (as specified by the B<-CAserial> or
 B<-CAcreateserial> options) is not used.
 
-The serial number can be decimal or hex (if preceded by B<0x>). Negative
-serial numbers can also be specified but their use is not recommended.
+The serial number can be decimal or hex (if preceded by B<0x>).
 
 =item B<-CA filename>
 
@@ -402,8 +411,9 @@ The default filename consists of the CA certificate file base name with
 
 with this option the CA serial number file is created if it does not exist:
 it will contain the serial number "02" and the certificate being signed will
-have the 1 as its serial number. Normally if the B<-CA> option is specified
-and the serial number file does not exist it is an error.
+have the 1 as its serial number. If the B<-CA> option is specified
+and the serial number file does not exist a random number is generated;
+this is the recommended practice.
 
 =item B<-extfile filename>
 
@@ -416,7 +426,7 @@ the section to add certificate extensions from. If this option is not
 specified then the extensions should either be contained in the unnamed
 (default) section or the default section should contain a variable called
 "extensions" which contains the section to use. See the
-L<x509v3_config(5)|x509v3_config(5)> manual page for details of the
+L<x509v3_config(5)> manual page for details of the
 extension section format.
 
 =item B<-force_pubkey key>
@@ -442,7 +452,7 @@ a B<-> to turn the option off. Only the first four will normally be used.
 
 =item B<compat>
 
-use the old format. This is equivalent to specifying no name options at all.
+use the old format.
 
 =item B<RFC2253>
 
@@ -455,7 +465,7 @@ B<sep_comma_plus>, B<dn_rev> and B<sname>.
 a oneline format which is more readable than RFC2253. It is equivalent to
 specifying the  B<esc_2253>, B<esc_ctrl>, B<esc_msb>, B<utf8>, B<dump_nostr>,
 B<dump_der>, B<use_quote>, B<sep_comma_plus_space>, B<space_eq> and B<sname>
-options.
+options.  This is the I<default> of no name options are given explicitly.
 
 =item B<multiline>
 
@@ -539,7 +549,8 @@ very rare and their use is discouraged). The options ending in
 "space" additionally place a space after the separator to make it
 more readable. The B<sep_multiline> uses a linefeed character for
 the RDN separator and a spaced B<+> for the AVA separator. It also
-indents the fields by four characters.
+indents the fields by four characters. If no field separator is specified
+then B<sep_comma_plus_space> is used by default.
 
 =item B<dn_rev>
 
@@ -865,20 +876,13 @@ be checked.
 There should be options to explicitly set such things as start and end
 dates rather than an offset from the current time.
 
-The code to implement the verify behaviour described in the B<TRUST SETTINGS>
-is currently being developed. It thus describes the intended behaviour rather
-than the current behaviour. It is hoped that it will represent reality in
-OpenSSL 0.9.5 and later.
-
 =head1 SEE ALSO
 
-L<req(1)|req(1)>, L<ca(1)|ca(1)>, L<genrsa(1)|genrsa(1)>,
-L<gendsa(1)|gendsa(1)>, L<verify(1)|verify(1)>,
-L<x509v3_config(5)|x509v3_config(5)> 
+L<req(1)>, L<ca(1)>, L<genrsa(1)>,
+L<gendsa(1)>, L<verify(1)>,
+L<x509v3_config(5)> 
 
 =head1 HISTORY
-
-Before OpenSSL 0.9.8, the default digest for RSA keys was MD5.
 
 The hash algorithm used in the B<-subject_hash> and B<-issuer_hash> options
 before OpenSSL 1.0.0 was based on the deprecated MD5 algorithm and the encoding

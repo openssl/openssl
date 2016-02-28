@@ -8,6 +8,8 @@ PKCS7_verify, PKCS7_get0_signers - verify a PKCS#7 signedData structure
 
  #include <openssl/pkcs7.h>
 
+ #define PKCS7_NO_DUAL_CONTENT
+
  int PKCS7_verify(PKCS7 *p7, STACK_OF(X509) *certs, X509_STORE *store, BIO *indata, BIO *out, int flags);
 
  STACK_OF(X509) *PKCS7_get0_signers(PKCS7 *p7, STACK_OF(X509) *certs, int flags);
@@ -16,7 +18,7 @@ PKCS7_verify, PKCS7_get0_signers - verify a PKCS#7 signedData structure
 
 PKCS7_verify() verifies a PKCS#7 signedData structure. B<p7> is the PKCS7
 structure to verify. B<certs> is a set of certificates in which to search for
-the signer's certificate. B<store> is a trusted certficate store (used for
+the signer's certificate. B<store> is a trusted certificate store (used for
 chain verification). B<indata> is the signed data if the content is not
 present in B<p7> (that is it is detached). The content is written to B<out>
 if it is not NULL.
@@ -34,7 +36,12 @@ Normally the verify process proceeds as follows.
 
 Initially some sanity checks are performed on B<p7>. The type of B<p7> must
 be signedData. There must be at least one signature on the data and if
-the content is detached B<indata> cannot be B<NULL>.
+the content is detached B<indata> cannot be B<NULL>.  If the content is
+not detached and B<indata> is not B<NULL>, then the structure has both
+embedded and external content. To treat this as an error, use the flag
+B<PKCS7_NO_DUAL_CONTENT>.
+The default behavior allows this, for compatibility with older
+versions of OpenSSL.
 
 An attempt is made to locate all the signer's certificates, first looking in
 the B<certs> parameter (if it is not B<NULL>) and then looking in any certificates
@@ -96,7 +103,7 @@ if an error occurs.
 
 PKCS7_get0_signers() returns all signers or B<NULL> if an error occurred.
 
-The error can be obtained from L<ERR_get_error(3)|ERR_get_error(3)>
+The error can be obtained from L<ERR_get_error(3)>
 
 =head1 BUGS
 
@@ -109,10 +116,6 @@ mentioned in PKCS7_sign() also applies to PKCS7_verify().
 
 =head1 SEE ALSO
 
-L<ERR_get_error(3)|ERR_get_error(3)>, L<PKCS7_sign(3)|PKCS7_sign(3)>
-
-=head1 HISTORY
-
-PKCS7_verify() was added to OpenSSL 0.9.5
+L<ERR_get_error(3)>, L<PKCS7_sign(3)>
 
 =cut

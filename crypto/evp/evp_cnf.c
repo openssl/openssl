@@ -1,4 +1,3 @@
-/* evp_cnf.c */
 /*
  * Written by Stephen Henson (steve@openssl.org) for the OpenSSL project
  * 2007.
@@ -60,7 +59,7 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <openssl/crypto.h>
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/conf.h>
 #include <openssl/dso.h>
 #include <openssl/x509.h>
@@ -74,14 +73,15 @@ static int alg_module_init(CONF_IMODULE *md, const CONF *cnf)
     const char *oid_section;
     STACK_OF(CONF_VALUE) *sktmp;
     CONF_VALUE *oval;
+
     oid_section = CONF_imodule_get_value(md);
-    if (!(sktmp = NCONF_get_section(cnf, oid_section))) {
+    if ((sktmp = NCONF_get_section(cnf, oid_section)) == NULL) {
         EVPerr(EVP_F_ALG_MODULE_INIT, EVP_R_ERROR_LOADING_SECTION);
         return 0;
     }
     for (i = 0; i < sk_CONF_VALUE_num(sktmp); i++) {
         oval = sk_CONF_VALUE_value(sktmp, i);
-        if (!strcmp(oval->name, "fips_mode")) {
+        if (strcmp(oval->name, "fips_mode") == 0) {
             int m;
             if (!X509V3_get_value_bool(oval, &m)) {
                 EVPerr(EVP_F_ALG_MODULE_INIT, EVP_R_INVALID_FIPS_MODE);

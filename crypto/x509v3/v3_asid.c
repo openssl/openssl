@@ -61,14 +61,17 @@
 
 #include <stdio.h>
 #include <string.h>
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/conf.h>
 #include <openssl/asn1.h>
 #include <openssl/asn1t.h>
 #include <openssl/x509v3.h>
 #include <openssl/x509.h>
+#include "internal/x509_int.h"
 #include <openssl/bn.h>
+#include "ext_dat.h"
 
+#ifndef OPENSSL_NO_RFC3779
 
 /*
  * OpenSSL ASN.1 template translation of RFC 3779 3.2.3.
@@ -161,7 +164,7 @@ static int i2r_ASIdentifiers(const X509V3_EXT_METHOD *method,
 }
 
 /*
- * Sort comparision function for a sequence of ASIdOrRange elements.
+ * Sort comparison function for a sequence of ASIdOrRange elements.
  */
 static int ASIdOrRange_cmp(const ASIdOrRange *const *a_,
                            const ASIdOrRange *const *b_)
@@ -471,7 +474,7 @@ static int ASIdentifierChoice_canonize(ASIdentifierChoice *choice)
             ASRange *r;
             switch (a->type) {
             case ASIdOrRange_id:
-                if ((r = OPENSSL_malloc(sizeof(ASRange))) == NULL) {
+                if ((r = OPENSSL_malloc(sizeof(*r))) == NULL) {
                     X509V3err(X509V3_F_ASIDENTIFIERCHOICE_CANONIZE,
                               ERR_R_MALLOC_FAILURE);
                     goto done;
@@ -553,7 +556,7 @@ static void *v2i_ASIdentifiers(const struct v3_ext_method *method,
 
     for (i = 0; i < sk_CONF_VALUE_num(values); i++) {
         CONF_VALUE *val = sk_CONF_VALUE_value(values, i);
-        int i1, i2, i3, is_range, which;
+        int i1 = 0, i2 = 0, i3 = 0, is_range = 0, which = 0;
 
         /*
          * Figure out whether this is an AS or an RDI.
@@ -572,7 +575,7 @@ static void *v2i_ASIdentifiers(const struct v3_ext_method *method,
         /*
          * Handle inheritance.
          */
-        if (!strcmp(val->value, "inherit")) {
+        if (strcmp(val->value, "inherit") == 0) {
             if (v3_asid_add_inherit(asid, which))
                 continue;
             X509V3err(X509V3_F_V2I_ASIDENTIFIERS,
@@ -616,7 +619,7 @@ static void *v2i_ASIdentifiers(const struct v3_ext_method *method,
                 goto err;
             }
         } else {
-            char *s = BUF_strdup(val->value);
+            char *s = OPENSSL_strdup(val->value);
             if (s == NULL) {
                 X509V3err(X509V3_F_V2I_ASIDENTIFIERS, ERR_R_MALLOC_FAILURE);
                 goto err;
@@ -717,7 +720,7 @@ static int asid_contains(ASIdOrRanges *parent, ASIdOrRanges *child)
 }
 
 /*
- * Test whether a is a subet of b.
+ * Test whether a is a subset of b.
  */
 int v3_asid_subset(ASIdentifiers *a, ASIdentifiers *b)
 {
@@ -893,3 +896,5 @@ int v3_asid_validate_resource_set(STACK_OF(X509) *chain,
         return 0;
     return v3_asid_validate_path_internal(NULL, chain, ext);
 }
+
+#endif                          /* OPENSSL_NO_RFC3779 */

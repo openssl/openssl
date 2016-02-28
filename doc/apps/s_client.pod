@@ -8,7 +8,9 @@ s_client - SSL/TLS client program
 =head1 SYNOPSIS
 
 B<openssl> B<s_client>
+[B<-help>]
 [B<-connect host:port>]
+[B<-proxy host:port>]
 [B<-servername name>]
 [B<-verify depth>]
 [B<-verify_return_error>]
@@ -19,7 +21,10 @@ B<openssl> B<s_client>
 [B<-pass arg>]
 [B<-CApath directory>]
 [B<-CAfile filename>]
-[B<-trusted_first>]
+[B<-no-CAfile>]
+[B<-no-CApath>]
+[B<-dane_tlsa_domain domain>]
+[B<-dane_tlsa_rrdata rrdata>]
 [B<-attime timestamp>]
 [B<-check_ss_sig>]
 [B<-crl_check>]
@@ -29,7 +34,6 @@ B<openssl> B<s_client>
 [B<-ignore_critical>]
 [B<-inhibit_any>]
 [B<-inhibit_map>]
-[B<-issuer_checks>]
 [B<-partial_chain>]
 [B<-policy arg>]
 [B<-policy_check>]
@@ -39,6 +43,7 @@ B<openssl> B<s_client>
 [B<-suiteB_128_only>]
 [B<-suiteB_192>]
 [B<-trusted_first>]
+[B<-no_alt_chains>]
 [B<-use_deltas>]
 [B<-verify_depth num>]
 [B<-verify_email email>]
@@ -47,7 +52,6 @@ B<openssl> B<s_client>
 [B<-verify_name name>]
 [B<-x509_strict>]
 [B<-reconnect>]
-[B<-pause>]
 [B<-showcerts>]
 [B<-debug>]
 [B<-msg>]
@@ -60,12 +64,20 @@ B<openssl> B<s_client>
 [B<-quiet>]
 [B<-ssl3>]
 [B<-tls1>]
+[B<-tls1_1>]
+[B<-tls1_2>]
 [B<-no_ssl3>]
 [B<-no_tls1>]
 [B<-no_tls1_1>]
 [B<-no_tls1_2>]
+[B<-dtls>]
+[B<-dtls1>]
+[B<-dtls1_2>]
 [B<-fallback_scsv>]
+[B<-async>]
 [B<-bugs>]
+[B<-comp>]
+[B<-no_comp>]
 [B<-cipher cipherlist>]
 [B<-serverpref>]
 [B<-starttls protocol>]
@@ -95,10 +107,20 @@ manual page.
 
 =over 4
 
+=item B<-help>
+
+Print out a usage message.
+
 =item B<-connect host:port>
 
 This specifies the host and optional port to connect to. If not specified
 then an attempt is made to connect to the local host on port 4433.
+
+=item B<-proxy host:port>
+
+When used with the B<-connect> flag, the program uses the host and port
+specified with this flag and issues an HTTP CONNECT command to connect
+to the desired server.
 
 =item B<-servername name>
 
@@ -125,7 +147,7 @@ The private format to use: DER or PEM. PEM is the default.
 =item B<-pass arg>
 
 the private key password source. For more information about the format of B<arg>
-see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)|openssl(1)>.
+see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
 
 =item B<-verify depth>
 
@@ -151,25 +173,67 @@ also used when building the client certificate chain.
 A file containing trusted certificates to use during server authentication
 and to use when attempting to build the client certificate chain.
 
+=item B<-no-CAfile>
+
+Do not load the trusted CA certificates from the default file location
+
+=item B<-no-CApath>
+
+Do not load the trusted CA certificates from the default directory location
+
+=item B<-dane_tlsa_domain domain>
+
+Enable RFC6698/RFC7671 DANE TLSA authentication and specify the
+TLSA base domain which becomes the default SNI hint and the primary
+reference identifier for hostname checks.  This must be used in
+combination with at least one instance of the B<-dane_tlsa_rrdata>
+option below.
+
+When DANE authentication succeeds, the diagnostic output will include
+the lowest (closest to 0) depth at which a TLSA record authenticated
+a chain certificate.  When that TLSA record is a "2 1 0" trust
+anchor public key that signed (rather than matched) the top-most
+certificate of the chain, the result is reported as "TA public key
+verified".  Otherwise, either the TLSA record "matched TA certificate"
+at a positive depth or else "matched EE certificate" at depth 0.
+
+=item B<-dane_tlsa_rrdata rrdata>
+
+Use one or more times to specify the RRDATA fields of the DANE TLSA
+RRset associated with the target service.  The B<rrdata> value is
+specied in "presentation form", that is four whitespace separated
+fields that specify the usage, selector, matching type and associated
+data, with the last of these encoded in hexadecimal.  Optional
+whitespace is ignored in the associated data field.  For example:
+
+  $ openssl s_client -brief -starttls smtp \
+    -connect smtp.example.com:25 \
+    -dane_tlsa_domain smtp.example.com \
+    -dane_tlsa_rrdata "2 1 1
+      B111DD8A1C2091A89BD4FD60C57F0716CCE50FEEFF8137CDBEE0326E 02CF362B" \
+    -dane_tlsa_rrdata "2 1 1
+      60B87575447DCBA2A36B7D11AC09FB24A9DB406FEE12D2CC90180517 616E8A18"
+  ...
+  Verification: OK
+  Verified peername: smtp.example.com
+  DANE TLSA 2 1 1 ...ee12d2cc90180517616e8a18 matched TA certificate at depth 1
+  ...
+
 =item B<-attime>, B<-check_ss_sig>, B<-crl_check>, B<-crl_check_all>,
-B<explicit_policy>, B<-extended_crl>, B<-ignore_critical>, B<-inhibit_any>,
-B<-inhibit_map>, B<-issuer_checks>, B<-partial_chain>, B<-policy>,
+B<-explicit_policy>, B<-extended_crl>, B<-ignore_critical>, B<-inhibit_any>,
+B<-inhibit_map>, B<-no_alt_chains>, B<-partial_chain>, B<-policy>,
 B<-policy_check>, B<-policy_print>, B<-purpose>, B<-suiteB_128>,
 B<-suiteB_128_only>, B<-suiteB_192>, B<-trusted_first>, B<-use_deltas>,
 B<-verify_depth>, B<-verify_email>, B<-verify_hostname>, B<-verify_ip>,
 B<-verify_name>, B<-x509_strict>
 
-Set various certificate chain valiadition options. See the
-L<B<verify>|verify(1)> manual page for details.
+Set various certificate chain validation options. See the
+L<verify(1)> manual page for details.
 
 =item B<-reconnect>
 
 reconnects to the same server 5 times using the same session ID, this can
 be used as a test that session caching is working.
-
-=item B<-pause>
-
-pauses 1 second between each read and write call.
 
 =item B<-showcerts>
 
@@ -246,24 +310,49 @@ Use the PSK key B<key> when using a PSK cipher suite. The key is
 given as a hexadecimal number without leading 0x, for example -psk
 1a2b3c4d.
 
-=item B<-ssl3>, B<-tls1>, B<-no_ssl3>, B<-no_tls1>, B<-no_tls1_1>, B<-no_tls1_2>
+=item B<-ssl3>, B<-tls1>, B<-tls1_1>, B<-tls1_2>, B<-no_ssl3>, B<-no_tls1>, B<-no_tls1_1>, B<-no_tls1_2>
 
-these options disable the use of certain SSL or TLS protocols. By default
-the initial handshake uses a method which should be compatible with all
-servers and permit them to use SSL v3 or TLS as appropriate.
+These options require or disable the use of the specified SSL or TLS protocols.
+By default B<s_client> will negotiate the highest mutually supported protocol
+version.
+When a specific TLS version is required, only that version will be offered to
+and accepted from the server.
 
-Unfortunately there are still ancient and broken servers in use which
-cannot handle this technique and will fail to connect. Some servers only
-work if TLS is turned off.
+=item B<-dtls>, B<-dtls1>, B<-dtls1_2>
+
+These options make B<s_client> use DTLS protocols instead of TLS.
+With B<-dtls>, B<s_client> will negotiate any supported DTLS protcol version,
+whilst B<-dtls1> and B<-dtls1_2> will only support DTLS1.0 and DTLS1.2
+respectively.
 
 =item B<-fallback_scsv>
 
 Send TLS_FALLBACK_SCSV in the ClientHello.
 
+=item B<-async>
+
+switch on asynchronous mode. Cryptographic operations will be performed
+asynchronously. This will only have an effect if an asynchronous capable engine
+is also used via the B<-engine> option. For test purposes the dummy async engine
+(dasync) can be used (if available).
+
 =item B<-bugs>
 
 there are several known bug in SSL and TLS implementations. Adding this
 option enables various workarounds.
+
+=item B<-comp>
+
+Enables support for SSL/TLS compression.
+This option was introduced in OpenSSL 1.1.0.
+TLS compression is not recommended and is off by default as of
+OpenSSL 1.1.0.
+
+=item B<-no_comp>
+
+Disables support for SSL/TLS compression.
+TLS compression is not recommended and is off by default as of
+OpenSSL 1.1.0.
 
 =item B<-brief>
 
@@ -281,12 +370,13 @@ command for more information.
 
 send the protocol-specific message(s) to switch to TLS for communication.
 B<protocol> is a keyword for the intended protocol.  Currently, the only
-supported keywords are "smtp", "pop3", "imap", "ftp" and "xmpp".
+supported keywords are "smtp", "pop3", "imap", "ftp", "xmpp", "xmpp-server",
+and "irc."
 
 =item B<-xmpphost hostname>
 
-This option, when used with "-starttls xmpp", specifies the host for the
-"to" attribute of the stream element.
+This option, when used with "-starttls xmpp" or "-starttls xmpp-server",
+specifies the host for the "to" attribute of the stream element.
 If this option is not specified, then the host specified with "-connect"
 will be used.
 
@@ -317,7 +407,7 @@ for all available algorithms.
 =item B<-rand file(s)>
 
 a file or files containing random data used to seed the random number
-generator, or an EGD socket (see L<RAND_egd(3)|RAND_egd(3)>).
+generator, or an EGD socket (see L<RAND_egd(3)>).
 Multiple files can be specified separated by a OS-dependent character.
 The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
 all others.
@@ -343,7 +433,7 @@ Protocol names are printable ASCII strings, for example "http/1.1" or
 "spdy/3".
 Empty list of protocols is treated specially and will cause the client to
 advertise support for the TLS extension but disconnect just after
-reciving ServerHello with a list of server supported protocols.
+receiving ServerHello with a list of server supported protocols.
 
 =back
 
@@ -399,16 +489,20 @@ option: any verify errors are then returned aborting the handshake.
 
 =head1 BUGS
 
-Because this program has a lot of options and also because some of
-the techniques used are rather old, the C source of s_client is rather
-hard to read and not a model of how things should be done. A typical
-SSL client program would be much simpler.
+Because this program has a lot of options and also because some of the
+techniques used are rather old, the C source of B<s_client> is rather hard to
+read and not a model of how things should be done.
+A typical SSL client program would be much simpler.
 
 The B<-prexit> option is a bit of a hack. We should really report
 information whenever a session is renegotiated.
 
 =head1 SEE ALSO
 
-L<sess_id(1)|sess_id(1)>, L<s_server(1)|s_server(1)>, L<ciphers(1)|ciphers(1)>
+L<sess_id(1)>, L<s_server(1)>, L<ciphers(1)>
+
+=head1 HISTORY
+
+The -no_alt_chains options was first added to OpenSSL 1.1.0.
 
 =cut

@@ -30,12 +30,12 @@ B<sig> and the amount of data written to B<siglen>.
 
 EVP_PKEY_sign() does not hash the data to be signed, and therefore is
 normally used to sign digests. For signing arbitrary messages, see the
-L<EVP_DigestSignInit(3)|EVP_DigestSignInit(3)> and
-L<EVP_SignInit(3)|EVP_SignInit(3)> signing interfaces instead.
+L<EVP_DigestSignInit(3)> and
+L<EVP_SignInit(3)> signing interfaces instead.
 
 After the call to EVP_PKEY_sign_init() algorithm specific control
 operations can be performed to set any appropriate parameters for the
-operation (see L<EVP_PKEY_CTX_ctrl(3)|EVP_PKEY_CTX_ctrl(3)>).
+operation (see L<EVP_PKEY_CTX_ctrl(3)>).
 
 The function EVP_PKEY_sign() can be called more than once on the same
 context if several operations are performed using the same parameters.
@@ -91,13 +91,13 @@ Sign data using RSA with PKCS#1 padding and SHA256 digest:
 
 =head1 SEE ALSO
 
-L<EVP_PKEY_CTX_new(3)|EVP_PKEY_CTX_new(3)>,
-L<EVP_PKEY_CTX_ctrl(3)|EVP_PKEY_CTX_ctrl(3)>,
-L<EVP_PKEY_encrypt(3)|EVP_PKEY_encrypt(3)>,
-L<EVP_PKEY_decrypt(3)|EVP_PKEY_decrypt(3)>,
-L<EVP_PKEY_verify(3)|EVP_PKEY_verify(3)>,
-L<EVP_PKEY_verify_recover(3)|EVP_PKEY_verify_recover(3)>,
-L<EVP_PKEY_derive(3)|EVP_PKEY_derive(3)> 
+L<EVP_PKEY_CTX_new(3)>,
+L<EVP_PKEY_CTX_ctrl(3)>,
+L<EVP_PKEY_encrypt(3)>,
+L<EVP_PKEY_decrypt(3)>,
+L<EVP_PKEY_verify(3)>,
+L<EVP_PKEY_verify_recover(3)>,
+L<EVP_PKEY_derive(3)> 
 
 =head1 HISTORY
 

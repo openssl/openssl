@@ -1,4 +1,3 @@
-/* p12_npas.c */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
  * 1999.
@@ -63,6 +62,7 @@
 #include <openssl/pem.h>
 #include <openssl/err.h>
 #include <openssl/pkcs12.h>
+#include "p12_lcl.h"
 
 /* PKCS#12 password change routine */
 
@@ -113,9 +113,9 @@ static int newpass_p12(PKCS12 *p12, char *oldpass, char *newpass)
     unsigned char mac[EVP_MAX_MD_SIZE];
     unsigned int maclen;
 
-    if (!(asafes = PKCS12_unpack_authsafes(p12)))
+    if ((asafes = PKCS12_unpack_authsafes(p12)) == NULL)
         return 0;
-    if (!(newsafes = sk_PKCS7_new_null()))
+    if ((newsafes = sk_PKCS7_new_null()) == NULL)
         return 0;
     for (i = 0; i < sk_PKCS7_num(asafes); i++) {
         p7 = sk_PKCS7_value(asafes, i);
@@ -158,14 +158,14 @@ static int newpass_p12(PKCS12 *p12, char *oldpass, char *newpass)
     /* Repack safe: save old safe in case of error */
 
     p12_data_tmp = p12->authsafes->d.data;
-    if (!(p12->authsafes->d.data = ASN1_OCTET_STRING_new()))
+    if ((p12->authsafes->d.data = ASN1_OCTET_STRING_new()) == NULL)
         goto saferr;
     if (!PKCS12_pack_authsafes(p12, newsafes))
         goto saferr;
 
     if (!PKCS12_gen_mac(p12, newpass, -1, mac, &maclen))
         goto saferr;
-    if (!(macnew = ASN1_OCTET_STRING_new()))
+    if ((macnew = ASN1_OCTET_STRING_new()) == NULL)
         goto saferr;
     if (!ASN1_OCTET_STRING_set(macnew, mac, maclen))
         goto saferr;
@@ -203,15 +203,15 @@ static int newpass_bag(PKCS12_SAFEBAG *bag, char *oldpass, char *newpass)
     X509_SIG *p8new;
     int p8_nid, p8_saltlen, p8_iter;
 
-    if (M_PKCS12_bag_type(bag) != NID_pkcs8ShroudedKeyBag)
+    if (PKCS12_SAFEBAG_get_nid(bag) != NID_pkcs8ShroudedKeyBag)
         return 1;
 
-    if (!(p8 = PKCS8_decrypt(bag->value.shkeybag, oldpass, -1)))
+    if ((p8 = PKCS8_decrypt(bag->value.shkeybag, oldpass, -1)) == NULL)
         return 0;
     if (!alg_get(bag->value.shkeybag->algor, &p8_nid, &p8_iter, &p8_saltlen))
         return 0;
-    if (!(p8new = PKCS8_encrypt(p8_nid, NULL, newpass, -1, NULL, p8_saltlen,
-                                p8_iter, p8)))
+    if ((p8new = PKCS8_encrypt(p8_nid, NULL, newpass, -1, NULL, p8_saltlen,
+                                p8_iter, p8)) == NULL)
         return 0;
     X509_SIG_free(bag->value.shkeybag);
     bag->value.shkeybag = p8new;
@@ -221,10 +221,7 @@ static int newpass_bag(PKCS12_SAFEBAG *bag, char *oldpass, char *newpass)
 static int alg_get(X509_ALGOR *alg, int *pnid, int *piter, int *psaltlen)
 {
     PBEPARAM *pbe;
-    const unsigned char *p;
-
-    p = alg->parameter->value.sequence->data;
-    pbe = d2i_PBEPARAM(NULL, &p, alg->parameter->value.sequence->length);
+    pbe = ASN1_TYPE_unpack_sequence(ASN1_ITEM_rptr(PBEPARAM), alg->parameter);
     if (!pbe)
         return 0;
     *pnid = OBJ_obj2nid(alg->algorithm);

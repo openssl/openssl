@@ -1,4 +1,3 @@
-/* crypto/evp/p_open.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -56,11 +55,12 @@
  * [including the GNU Public Licence.]
  */
 
-#include <stdio.h>
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
+#ifdef OPENSSL_NO_RSA
+NON_EMPTY_TRANSLATION_UNIT
+#else
 
-#ifndef OPENSSL_NO_RSA
-
+# include <stdio.h>
 # include <openssl/evp.h>
 # include <openssl/objects.h>
 # include <openssl/x509.h>
@@ -74,7 +74,7 @@ int EVP_OpenInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
     int i, size = 0, ret = 0;
 
     if (type) {
-        EVP_CIPHER_CTX_init(ctx);
+        EVP_CIPHER_CTX_reset(ctx);
         if (!EVP_DecryptInit_ex(ctx, type, NULL, NULL, NULL))
             return 0;
     }
@@ -82,13 +82,13 @@ int EVP_OpenInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
     if (!priv)
         return 1;
 
-    if (priv->type != EVP_PKEY_RSA) {
+    if (EVP_PKEY_id(priv) != EVP_PKEY_RSA) {
         EVPerr(EVP_F_EVP_OPENINIT, EVP_R_PUBLIC_KEY_NOT_RSA);
         goto err;
     }
 
-    size = RSA_size(priv->pkey.rsa);
-    key = (unsigned char *)OPENSSL_malloc(size + 2);
+    size = EVP_PKEY_size(priv);
+    key = OPENSSL_malloc(size + 2);
     if (key == NULL) {
         /* ERROR */
         EVPerr(EVP_F_EVP_OPENINIT, ERR_R_MALLOC_FAILURE);
@@ -105,9 +105,7 @@ int EVP_OpenInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
 
     ret = 1;
  err:
-    if (key != NULL)
-        OPENSSL_cleanse(key, size);
-    OPENSSL_free(key);
+    OPENSSL_clear_free(key, size);
     return (ret);
 }
 
@@ -120,10 +118,4 @@ int EVP_OpenFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
         i = EVP_DecryptInit_ex(ctx, NULL, NULL, NULL, NULL);
     return (i);
 }
-#else                           /* !OPENSSL_NO_RSA */
-
-# ifdef PEDANTIC
-static void *dummy = &dummy;
-# endif
-
 #endif

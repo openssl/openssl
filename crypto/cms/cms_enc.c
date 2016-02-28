@@ -1,4 +1,3 @@
-/* crypto/cms/cms_enc.c */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -52,7 +51,7 @@
  * ====================================================================
  */
 
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/asn1t.h>
 #include <openssl/pem.h>
 #include <openssl/x509v3.h>
@@ -62,8 +61,6 @@
 #include "cms_lcl.h"
 
 /* CMS EncryptedData Utilities */
-
-DECLARE_ASN1_ITEM(CMS_EncryptedData)
 
 /* Return BIO based on EncryptedContentInfo and key */
 
@@ -84,7 +81,7 @@ BIO *cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec)
     enc = ec->cipher ? 1 : 0;
 
     b = BIO_new(BIO_f_cipher());
-    if (!b) {
+    if (b == NULL) {
         CMSerr(CMS_F_CMS_ENCRYPTEDCONTENT_INIT_BIO, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
@@ -119,7 +116,7 @@ BIO *cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec)
         /* Generate a random IV if we need one */
         ivlen = EVP_CIPHER_CTX_iv_length(ctx);
         if (ivlen > 0) {
-            if (RAND_pseudo_bytes(iv, ivlen) <= 0)
+            if (RAND_bytes(iv, ivlen) <= 0)
                 goto err;
             piv = iv;
         }
@@ -132,7 +129,7 @@ BIO *cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec)
     /* Generate random session key */
     if (!enc || !ec->key) {
         tkey = OPENSSL_malloc(tkeylen);
-        if (!tkey) {
+        if (tkey == NULL) {
             CMSerr(CMS_F_CMS_ENCRYPTEDCONTENT_INIT_BIO, ERR_R_MALLOC_FAILURE);
             goto err;
         }
@@ -164,8 +161,7 @@ BIO *cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec)
                 goto err;
             } else {
                 /* Use random key */
-                OPENSSL_cleanse(ec->key, ec->keylen);
-                OPENSSL_free(ec->key);
+                OPENSSL_clear_free(ec->key, ec->keylen);
                 ec->key = tkey;
                 ec->keylen = tkeylen;
                 tkey = NULL;
@@ -182,7 +178,7 @@ BIO *cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec)
 
     if (piv) {
         calg->parameter = ASN1_TYPE_new();
-        if (!calg->parameter) {
+        if (calg->parameter == NULL) {
             CMSerr(CMS_F_CMS_ENCRYPTEDCONTENT_INIT_BIO, ERR_R_MALLOC_FAILURE);
             goto err;
         }
@@ -195,15 +191,11 @@ BIO *cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec)
     ok = 1;
 
  err:
-    if (ec->key && !keep_key) {
-        OPENSSL_cleanse(ec->key, ec->keylen);
-        OPENSSL_free(ec->key);
+    if (!keep_key || !ok) {
+        OPENSSL_clear_free(ec->key, ec->keylen);
         ec->key = NULL;
     }
-    if (tkey) {
-        OPENSSL_cleanse(tkey, tkeylen);
-        OPENSSL_free(tkey);
-    }
+    OPENSSL_clear_free(tkey, tkeylen);
     if (ok)
         return b;
     BIO_free(b);
@@ -217,7 +209,7 @@ int cms_EncryptedContent_init(CMS_EncryptedContentInfo *ec,
     ec->cipher = cipher;
     if (key) {
         ec->key = OPENSSL_malloc(keylen);
-        if (!ec->key)
+        if (ec->key == NULL)
             return 0;
         memcpy(ec->key, key, keylen);
     }

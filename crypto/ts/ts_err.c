@@ -1,6 +1,5 @@
-/* crypto/ts/ts_err.c */
 /* ====================================================================
- * Copyright (c) 1999-2007 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2015 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -71,30 +70,35 @@
 
 static ERR_STRING_DATA TS_str_functs[] = {
     {ERR_FUNC(TS_F_D2I_TS_RESP), "d2i_TS_RESP"},
-    {ERR_FUNC(TS_F_DEF_SERIAL_CB), "DEF_SERIAL_CB"},
-    {ERR_FUNC(TS_F_DEF_TIME_CB), "DEF_TIME_CB"},
-    {ERR_FUNC(TS_F_ESS_ADD_SIGNING_CERT), "ESS_ADD_SIGNING_CERT"},
-    {ERR_FUNC(TS_F_ESS_CERT_ID_NEW_INIT), "ESS_CERT_ID_NEW_INIT"},
-    {ERR_FUNC(TS_F_ESS_SIGNING_CERT_NEW_INIT), "ESS_SIGNING_CERT_NEW_INIT"},
-    {ERR_FUNC(TS_F_INT_TS_RESP_VERIFY_TOKEN), "INT_TS_RESP_VERIFY_TOKEN"},
+    {ERR_FUNC(TS_F_DEF_SERIAL_CB), "def_serial_cb"},
+    {ERR_FUNC(TS_F_DEF_TIME_CB), "def_time_cb"},
+    {ERR_FUNC(TS_F_ESS_ADD_SIGNING_CERT), "ESS_add_signing_cert"},
+    {ERR_FUNC(TS_F_ESS_CERT_ID_NEW_INIT), "ess_CERT_ID_new_init"},
+    {ERR_FUNC(TS_F_ESS_SIGNING_CERT_NEW_INIT), "ess_SIGNING_CERT_new_init"},
+    {ERR_FUNC(TS_F_INT_TS_RESP_VERIFY_TOKEN), "int_ts_RESP_verify_token"},
     {ERR_FUNC(TS_F_PKCS7_TO_TS_TST_INFO), "PKCS7_to_TS_TST_INFO"},
     {ERR_FUNC(TS_F_TS_ACCURACY_SET_MICROS), "TS_ACCURACY_set_micros"},
     {ERR_FUNC(TS_F_TS_ACCURACY_SET_MILLIS), "TS_ACCURACY_set_millis"},
     {ERR_FUNC(TS_F_TS_ACCURACY_SET_SECONDS), "TS_ACCURACY_set_seconds"},
-    {ERR_FUNC(TS_F_TS_CHECK_IMPRINTS), "TS_CHECK_IMPRINTS"},
-    {ERR_FUNC(TS_F_TS_CHECK_NONCES), "TS_CHECK_NONCES"},
-    {ERR_FUNC(TS_F_TS_CHECK_POLICY), "TS_CHECK_POLICY"},
-    {ERR_FUNC(TS_F_TS_CHECK_SIGNING_CERTS), "TS_CHECK_SIGNING_CERTS"},
-    {ERR_FUNC(TS_F_TS_CHECK_STATUS_INFO), "TS_CHECK_STATUS_INFO"},
-    {ERR_FUNC(TS_F_TS_COMPUTE_IMPRINT), "TS_COMPUTE_IMPRINT"},
+    {ERR_FUNC(TS_F_TS_CHECK_IMPRINTS), "ts_check_imprints"},
+    {ERR_FUNC(TS_F_TS_CHECK_NONCES), "ts_check_nonces"},
+    {ERR_FUNC(TS_F_TS_CHECK_POLICY), "ts_check_policy"},
+    {ERR_FUNC(TS_F_TS_CHECK_SIGNING_CERTS), "ts_check_signing_certs"},
+    {ERR_FUNC(TS_F_TS_CHECK_STATUS_INFO), "ts_check_status_info"},
+    {ERR_FUNC(TS_F_TS_COMPUTE_IMPRINT), "ts_compute_imprint"},
+    {ERR_FUNC(TS_F_TS_CONF_INVALID), "ts_CONF_invalid"},
+    {ERR_FUNC(TS_F_TS_CONF_LOAD_CERT), "TS_CONF_load_cert"},
+    {ERR_FUNC(TS_F_TS_CONF_LOAD_CERTS), "TS_CONF_load_certs"},
+    {ERR_FUNC(TS_F_TS_CONF_LOAD_KEY), "TS_CONF_load_key"},
+    {ERR_FUNC(TS_F_TS_CONF_LOOKUP_FAIL), "ts_CONF_lookup_fail"},
     {ERR_FUNC(TS_F_TS_CONF_SET_DEFAULT_ENGINE), "TS_CONF_set_default_engine"},
-    {ERR_FUNC(TS_F_TS_GET_STATUS_TEXT), "TS_GET_STATUS_TEXT"},
+    {ERR_FUNC(TS_F_TS_GET_STATUS_TEXT), "ts_get_status_text"},
     {ERR_FUNC(TS_F_TS_MSG_IMPRINT_SET_ALGO), "TS_MSG_IMPRINT_set_algo"},
     {ERR_FUNC(TS_F_TS_REQ_SET_MSG_IMPRINT), "TS_REQ_set_msg_imprint"},
     {ERR_FUNC(TS_F_TS_REQ_SET_NONCE), "TS_REQ_set_nonce"},
     {ERR_FUNC(TS_F_TS_REQ_SET_POLICY_ID), "TS_REQ_set_policy_id"},
     {ERR_FUNC(TS_F_TS_RESP_CREATE_RESPONSE), "TS_RESP_create_response"},
-    {ERR_FUNC(TS_F_TS_RESP_CREATE_TST_INFO), "TS_RESP_CREATE_TST_INFO"},
+    {ERR_FUNC(TS_F_TS_RESP_CREATE_TST_INFO), "ts_RESP_create_tst_info"},
     {ERR_FUNC(TS_F_TS_RESP_CTX_ADD_FAILURE_INFO),
      "TS_RESP_CTX_add_failure_info"},
     {ERR_FUNC(TS_F_TS_RESP_CTX_ADD_MD), "TS_RESP_CTX_add_md"},
@@ -107,12 +111,12 @@ static ERR_STRING_DATA TS_str_functs[] = {
      "TS_RESP_CTX_set_signer_cert"},
     {ERR_FUNC(TS_F_TS_RESP_CTX_SET_STATUS_INFO),
      "TS_RESP_CTX_set_status_info"},
-    {ERR_FUNC(TS_F_TS_RESP_GET_POLICY), "TS_RESP_GET_POLICY"},
+    {ERR_FUNC(TS_F_TS_RESP_GET_POLICY), "ts_RESP_get_policy"},
     {ERR_FUNC(TS_F_TS_RESP_SET_GENTIME_WITH_PRECISION),
-     "TS_RESP_SET_GENTIME_WITH_PRECISION"},
+     "TS_RESP_set_genTime_with_precision"},
     {ERR_FUNC(TS_F_TS_RESP_SET_STATUS_INFO), "TS_RESP_set_status_info"},
     {ERR_FUNC(TS_F_TS_RESP_SET_TST_INFO), "TS_RESP_set_tst_info"},
-    {ERR_FUNC(TS_F_TS_RESP_SIGN), "TS_RESP_SIGN"},
+    {ERR_FUNC(TS_F_TS_RESP_SIGN), "ts_RESP_sign"},
     {ERR_FUNC(TS_F_TS_RESP_VERIFY_SIGNATURE), "TS_RESP_verify_signature"},
     {ERR_FUNC(TS_F_TS_RESP_VERIFY_TOKEN), "TS_RESP_verify_token"},
     {ERR_FUNC(TS_F_TS_TST_INFO_SET_ACCURACY), "TS_TST_INFO_set_accuracy"},
@@ -124,7 +128,7 @@ static ERR_STRING_DATA TS_str_functs[] = {
     {ERR_FUNC(TS_F_TS_TST_INFO_SET_TIME), "TS_TST_INFO_set_time"},
     {ERR_FUNC(TS_F_TS_TST_INFO_SET_TSA), "TS_TST_INFO_set_tsa"},
     {ERR_FUNC(TS_F_TS_VERIFY), "TS_VERIFY"},
-    {ERR_FUNC(TS_F_TS_VERIFY_CERT), "TS_VERIFY_CERT"},
+    {ERR_FUNC(TS_F_TS_VERIFY_CERT), "ts_verify_cert"},
     {ERR_FUNC(TS_F_TS_VERIFY_CTX_NEW), "TS_VERIFY_CTX_new"},
     {0, NULL}
 };
@@ -132,6 +136,8 @@ static ERR_STRING_DATA TS_str_functs[] = {
 static ERR_STRING_DATA TS_str_reasons[] = {
     {ERR_REASON(TS_R_BAD_PKCS7_TYPE), "bad pkcs7 type"},
     {ERR_REASON(TS_R_BAD_TYPE), "bad type"},
+    {ERR_REASON(TS_R_CANNOT_LOAD_CERT), "cannot load certificate"},
+    {ERR_REASON(TS_R_CANNOT_LOAD_KEY), "cannot load private key"},
     {ERR_REASON(TS_R_CERTIFICATE_VERIFY_ERROR), "certificate verify error"},
     {ERR_REASON(TS_R_COULD_NOT_SET_ENGINE), "could not set engine"},
     {ERR_REASON(TS_R_COULD_NOT_SET_TIME), "could not set time"},
@@ -170,6 +176,8 @@ static ERR_STRING_DATA TS_str_reasons[] = {
     {ERR_REASON(TS_R_UNACCEPTABLE_POLICY), "unacceptable policy"},
     {ERR_REASON(TS_R_UNSUPPORTED_MD_ALGORITHM), "unsupported md algorithm"},
     {ERR_REASON(TS_R_UNSUPPORTED_VERSION), "unsupported version"},
+    {ERR_REASON(TS_R_VAR_BAD_VALUE), "var bad value"},
+    {ERR_REASON(TS_R_VAR_LOOKUP_FAILURE), "cannot find config variable"},
     {ERR_REASON(TS_R_WRONG_CONTENT_TYPE), "wrong content type"},
     {0, NULL}
 };

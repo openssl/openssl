@@ -1,4 +1,3 @@
-/* v3_purp.c */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
  * 2001.
@@ -58,9 +57,11 @@
  */
 
 #include <stdio.h>
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
+#include "internal/numbers.h"
 #include <openssl/x509v3.h>
 #include <openssl/x509_vfy.h>
+#include "internal/x509_int.h"
 
 static void x509v3_cache_extensions(X509 *x);
 
@@ -108,7 +109,7 @@ static X509_PURPOSE xstandard[] = {
      NULL},
 };
 
-#define X509_PURPOSE_COUNT (sizeof(xstandard)/sizeof(X509_PURPOSE))
+#define X509_PURPOSE_COUNT OSSL_NELEM(xstandard)
 
 static STACK_OF(X509_PURPOSE) *xptable = NULL;
 
@@ -131,6 +132,7 @@ int X509_check_purpose(X509 *x, int id, int ca)
         x509v3_cache_extensions(x);
         CRYPTO_w_unlock(CRYPTO_LOCK_X509);
     }
+    /* Return if side-effect only call */
     if (id == -1)
         return 1;
     idx = X509_PURPOSE_get_by_id(id);
@@ -172,7 +174,7 @@ int X509_PURPOSE_get_by_sname(char *sname)
     X509_PURPOSE *xptmp;
     for (i = 0; i < X509_PURPOSE_get_count(); i++) {
         xptmp = X509_PURPOSE_get0(i);
-        if (!strcmp(xptmp->sname, sname))
+        if (strcmp(xptmp->sname, sname) == 0)
             return i;
     }
     return -1;
@@ -209,7 +211,7 @@ int X509_PURPOSE_add(int id, int trust, int flags,
     idx = X509_PURPOSE_get_by_id(id);
     /* Need a new entry */
     if (idx == -1) {
-        if (!(ptmp = OPENSSL_malloc(sizeof(X509_PURPOSE)))) {
+        if ((ptmp = OPENSSL_malloc(sizeof(*ptmp))) == NULL) {
             X509V3err(X509V3_F_X509_PURPOSE_ADD, ERR_R_MALLOC_FAILURE);
             return 0;
         }
@@ -223,8 +225,8 @@ int X509_PURPOSE_add(int id, int trust, int flags,
         OPENSSL_free(ptmp->sname);
     }
     /* dup supplied name */
-    ptmp->name = BUF_strdup(name);
-    ptmp->sname = BUF_strdup(sname);
+    ptmp->name = OPENSSL_strdup(name);
+    ptmp->sname = OPENSSL_strdup(sname);
     if (!ptmp->name || !ptmp->sname) {
         X509V3err(X509V3_F_X509_PURPOSE_ADD, ERR_R_MALLOC_FAILURE);
         return 0;
@@ -241,7 +243,8 @@ int X509_PURPOSE_add(int id, int trust, int flags,
 
     /* If its a new entry manage the dynamic table */
     if (idx == -1) {
-        if (!xptable && !(xptable = sk_X509_PURPOSE_new(xp_cmp))) {
+        if (xptable == NULL
+            && (xptable = sk_X509_PURPOSE_new(xp_cmp)) == NULL) {
             X509V3err(X509V3_F_X509_PURPOSE_ADD, ERR_R_MALLOC_FAILURE);
             return 0;
         }
@@ -320,8 +323,10 @@ int X509_supported_extension(X509_EXTENSION *ex)
         NID_basic_constraints,  /* 87 */
         NID_certificate_policies, /* 89 */
         NID_ext_key_usage,      /* 126 */
+#ifndef OPENSSL_NO_RFC3779
         NID_sbgp_ipAddrBlock,   /* 290 */
         NID_sbgp_autonomousSysNum, /* 291 */
+#endif
         NID_policy_constraints, /* 401 */
         NID_proxyCertInfo,      /* 663 */
         NID_name_constraints,   /* 666 */
@@ -334,8 +339,7 @@ int X509_supported_extension(X509_EXTENSION *ex)
     if (ex_nid == NID_undef)
         return 0;
 
-    if (OBJ_bsearch_nid(&ex_nid, supported_nids,
-                        sizeof(supported_nids) / sizeof(int)))
+    if (OBJ_bsearch_nid(&ex_nid, supported_nids, OSSL_NELEM(supported_nids)))
         return 1;
     return 0;
 }
@@ -375,6 +379,14 @@ static void setup_crldp(X509 *x)
     for (i = 0; i < sk_DIST_POINT_num(x->crldp); i++)
         setup_dp(x, sk_DIST_POINT_value(x->crldp, i));
 }
+
+#define V1_ROOT (EXFLAG_V1|EXFLAG_SS)
+#define ku_reject(x, usage) \
+        (((x)->ex_flags & EXFLAG_KUSAGE) && !((x)->ex_kusage & (usage)))
+#define xku_reject(x, usage) \
+        (((x)->ex_flags & EXFLAG_XKUSAGE) && !((x)->ex_xkusage & (usage)))
+#define ns_reject(x, usage) \
+        (((x)->ex_flags & EXFLAG_NSCERT) && !((x)->ex_nscert & (usage)))
 
 static void x509v3_cache_extensions(X509 *x)
 {
@@ -493,7 +505,8 @@ static void x509v3_cache_extensions(X509 *x)
     if (!X509_NAME_cmp(X509_get_subject_name(x), X509_get_issuer_name(x))) {
         x->ex_flags |= EXFLAG_SI;
         /* If SKID matches AKID also indicate self signed */
-        if (X509_check_akid(x, x->akid) == X509_V_OK)
+        if (X509_check_akid(x, x->akid) == X509_V_OK &&
+            !ku_reject(x, KU_KEY_CERT_SIGN))
             x->ex_flags |= EXFLAG_SS;
     }
     x->altname = X509_get_ext_d2i(x, NID_subject_alt_name, NULL, NULL);
@@ -502,9 +515,11 @@ static void x509v3_cache_extensions(X509 *x)
         x->ex_flags |= EXFLAG_INVALID;
     setup_crldp(x);
 
+#ifndef OPENSSL_NO_RFC3779
     x->rfc3779_addr = X509_get_ext_d2i(x, NID_sbgp_ipAddrBlock, NULL, NULL);
     x->rfc3779_asid = X509_get_ext_d2i(x, NID_sbgp_autonomousSysNum,
                                        NULL, NULL);
+#endif
     for (i = 0; i < X509_get_ext_count(x); i++) {
         ex = X509_get_ext(x, i);
         if (OBJ_obj2nid(X509_EXTENSION_get_object(ex))
@@ -529,14 +544,6 @@ static void x509v3_cache_extensions(X509 *x)
  * 3 basicConstraints absent but self signed V1.
  * 4 basicConstraints absent but keyUsage present and keyCertSign asserted.
  */
-
-#define V1_ROOT (EXFLAG_V1|EXFLAG_SS)
-#define ku_reject(x, usage) \
-        (((x)->ex_flags & EXFLAG_KUSAGE) && !((x)->ex_kusage & (usage)))
-#define xku_reject(x, usage) \
-        (((x)->ex_flags & EXFLAG_XKUSAGE) && !((x)->ex_xkusage & (usage)))
-#define ns_reject(x, usage) \
-        (((x)->ex_flags & EXFLAG_NSCERT) && !((x)->ex_nscert & (usage)))
 
 static int check_ca(const X509 *x)
 {
@@ -840,4 +847,36 @@ int X509_check_akid(X509 *issuer, AUTHORITY_KEYID *akid)
             return X509_V_ERR_AKID_ISSUER_SERIAL_MISMATCH;
     }
     return X509_V_OK;
+}
+
+uint32_t X509_get_extension_flags(X509 *x)
+{
+    /* Call for side-effect of computing hash and caching extensions */
+    X509_check_purpose(x, -1, -1);
+    return x->ex_flags;
+}
+
+uint32_t X509_get_key_usage(X509 *x)
+{
+    /* Call for side-effect of computing hash and caching extensions */
+    X509_check_purpose(x, -1, -1);
+    if (x->ex_flags & EXFLAG_KUSAGE)
+        return x->ex_kusage;
+    return UINT32_MAX;
+}
+
+uint32_t X509_get_extended_key_usage(X509 *x)
+{
+    /* Call for side-effect of computing hash and caching extensions */
+    X509_check_purpose(x, -1, -1);
+    if (x->ex_flags & EXFLAG_XKUSAGE)
+        return x->ex_xkusage;
+    return UINT32_MAX;
+}
+
+const ASN1_OCTET_STRING *X509_get0_subject_key_id(X509 *x)
+{
+    /* Call for side-effect of computing hash and caching extensions */
+    X509_check_purpose(x, -1, -1);
+    return x->skid;
 }

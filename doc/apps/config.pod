@@ -47,7 +47,7 @@ or B<${section::name}>. By using the form B<$ENV::name> environment
 variables can be substituted. It is also possible to assign values to
 environment variables by using the name B<ENV::name>, this will work
 if the program looks up environment variables using the B<CONF> library
-instead of calling B<getenv()> directly.
+instead of calling getenv() directly.
 
 It is possible to escape certain characters by using any kind of quote
 or the B<\> character. By making the last character of a line a B<\>
@@ -56,7 +56,7 @@ the sequences B<\n>, B<\r>, B<\b> and B<\t> are recognized.
 
 =head1 OPENSSL LIBRARY CONFIGURATION
 
-In OpenSSL 0.9.7 and later applications can automatically configure certain
+Applications can automatically configure certain
 aspects of OpenSSL using the master OpenSSL configuration file, or optionally
 an alternative configuration file. The B<openssl> utility includes this
 functionality: any sub command uses the master OpenSSL configuration file
@@ -89,8 +89,7 @@ section containing configuration module specific information. E.g.
 
  ... engine stuff here ...
 
-Currently there are two configuration modules. One for ASN1 objects another
-for ENGINE configuration.
+The features of each configuration module are described below.
 
 =head2 ASN1 OBJECT CONFIGURATION MODULE
 
@@ -107,7 +106,7 @@ as any compliant applications. For example:
  some_new_oid = 1.2.3.4
  some_other_oid = 1.2.3.5
 
-In OpenSSL 0.9.8 it is also possible to set the value to the long name followed
+It is also possible to set the value to the long name followed
 by a comma and the numerical OID form. For example:
 
  shortName = some object long name, 1.2.3.4
@@ -166,7 +165,7 @@ then an attempt will be made to initialize the ENGINE after all commands in
 its section have been processed.
 
 The command B<default_algorithms> sets the default algorithms an ENGINE will
-supply using the functions B<ENGINE_set_default_string()>
+supply using the functions ENGINE_set_default_string().
 
 If the name matches none of the above command names it is assumed to be a
 ctrl command which is sent to the ENGINE. The value of the command is the 
@@ -190,6 +189,53 @@ For example:
  other_ctrl = EMPTY
  # Supply all default algorithms
  default_algorithms = ALL
+
+=head2 EVP CONFIGURATION MODULE
+
+This modules has the name B<alg_section> which points to a section containing
+algorithm commands.
+
+Currently the only algorithm command supported is B<fips_mode> whose
+value should be a boolean string such as B<on> or B<off>. If the value is
+B<on> this attempt to enter FIPS mode. If the call fails or the library is
+not FIPS capable then an error occurs.
+
+For example:
+
+ alg_section = evp_settings
+
+ [evp_settings]
+
+ fips_mode = on
+
+=head2 SSL CONFIGURATION MODULE
+
+This module has the name B<ssl_conf> which points to a section containing
+SSL configurations.
+
+Each line in the SSL configuration section contains the name of the
+configuration and the section containing it.
+
+Each configuration section consists of command value pairs for B<SSL_CONF>.
+Each pair will be passed to a B<SSL_CTX> or B<SSL> structure if it calls
+SSL_CTX_config() or SSL_config() with the appropriate configuration name.
+
+Note: any characters before an initial dot in the configuration section are
+ignored so the same command can be used multiple times.
+
+For example:
+
+ ssl_conf = ssl_sect
+
+ [ssl_sect]
+
+ server = server_section
+
+ [server_section]
+
+ RSA.Certificate = server-rsa.pem
+ ECDSA.Certificate = server-ecdsa.pem
+ Ciphers = ALL:!RC4
 
 =head1 NOTES
 
@@ -259,6 +305,59 @@ priority and B</tmp> used if neither is defined:
  # The above value is used if TEMP isn't in the environment
  tmpfile=${ENV::TEMP}/tmp.filename
 
+Simple OpenSSL library configuration example to enter FIPS mode:
+
+ # Default appname: should match "appname" parameter (if any)
+ # supplied to CONF_modules_load_file et al.
+ openssl_conf = openssl_conf_section
+
+ [openssl_conf_section]
+ # Configuration module list
+ alg_section = evp_sect
+
+ [evp_sect]
+ # Set to "yes" to enter FIPS mode if supported
+ fips_mode = yes
+
+Note: in the above example you will get an error in non FIPS capable versions
+of OpenSSL.
+
+More complex OpenSSL library configuration. Add OID and don't enter FIPS mode:
+
+ # Default appname: should match "appname" parameter (if any)
+ # supplied to CONF_modules_load_file et al.
+ openssl_conf = openssl_conf_section
+
+ [openssl_conf_section]
+ # Configuration module list
+ alg_section = evp_sect
+ oid_section = new_oids
+
+ [evp_sect]
+ # This will have no effect as FIPS mode is off by default.
+ # Set to "yes" to enter FIPS mode, if supported
+ fips_mode = no
+
+ [new_oids]
+ # New OID, just short name
+ newoid1 = 1.2.3.4.1
+ # New OID shortname and long name
+ newoid2 = New OID 2 long name, 1.2.3.4.2
+
+The above examples can be used with with any application supporting library
+configuration if "openssl_conf" is modified to match the appropriate "appname".
+
+For example if the second sample file above is saved to "example.cnf" then
+the command line:
+
+ OPENSSL_CONF=example.cnf openssl asn1parse -genstr OID:1.2.3.4.1
+
+will output:
+
+    0:d=0  hl=2 l=   4 prim: OBJECT            :newoid1
+
+showing that the OID "newoid1" has been added as "1.2.3.4.1".
+
 =head1 BUGS
 
 Currently there is no way to include characters using the octal B<\nnn>
@@ -274,6 +373,6 @@ file.
 
 =head1 SEE ALSO
 
-L<x509(1)|x509(1)>, L<req(1)|req(1)>, L<ca(1)|ca(1)>
+L<x509(1)>, L<req(1)>, L<ca(1)>
 
 =cut

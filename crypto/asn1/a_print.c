@@ -1,4 +1,3 @@
-/* crypto/asn1/a_print.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -57,7 +56,7 @@
  */
 
 #include <stdio.h>
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/asn1.h>
 
 int ASN1_PRINTABLE_type(const unsigned char *s, int len)
@@ -124,5 +123,34 @@ int ASN1_UNIVERSALSTRING_to_string(ASN1_UNIVERSALSTRING *s)
     *(p) = '\0';
     s->length /= 4;
     s->type = ASN1_PRINTABLE_type(s->data, s->length);
+    return (1);
+}
+
+int ASN1_STRING_print(BIO *bp, const ASN1_STRING *v)
+{
+    int i, n;
+    char buf[80];
+    const char *p;
+
+    if (v == NULL)
+        return (0);
+    n = 0;
+    p = (const char *)v->data;
+    for (i = 0; i < v->length; i++) {
+        if ((p[i] > '~') || ((p[i] < ' ') &&
+                             (p[i] != '\n') && (p[i] != '\r')))
+            buf[n] = '.';
+        else
+            buf[n] = p[i];
+        n++;
+        if (n >= 80) {
+            if (BIO_write(bp, buf, n) <= 0)
+                return (0);
+            n = 0;
+        }
+    }
+    if (n > 0)
+        if (BIO_write(bp, buf, n) <= 0)
+            return (0);
     return (1);
 }

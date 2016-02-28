@@ -1,4 +1,3 @@
-/* m_sigver.c */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
  * 2006.
@@ -58,10 +57,11 @@
  */
 
 #include <stdio.h>
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 #include <openssl/x509.h>
+#include "internal/evp_int.h"
 #include "evp_locl.h"
 
 static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
@@ -128,7 +128,7 @@ int EVP_DigestVerifyInit(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
 int EVP_DigestSignFinal(EVP_MD_CTX *ctx, unsigned char *sigret,
                         size_t *siglen)
 {
-    int sctx, r = 0;
+    int sctx = 0, r = 0;
     EVP_PKEY_CTX *pctx = ctx->pctx;
     if (pctx->pmeth->flags & EVP_PKEY_FLAG_SIGCTX_CUSTOM) {
         if (!sigret)
@@ -150,23 +150,22 @@ int EVP_DigestSignFinal(EVP_MD_CTX *ctx, unsigned char *sigret,
         sctx = 0;
     if (sigret) {
         unsigned char md[EVP_MAX_MD_SIZE];
-        unsigned int mdlen;
+        unsigned int mdlen = 0;
         if (ctx->flags & EVP_MD_CTX_FLAG_FINALISE) {
             if (sctx)
                 r = ctx->pctx->pmeth->signctx(ctx->pctx, sigret, siglen, ctx);
             else
                 r = EVP_DigestFinal_ex(ctx, md, &mdlen);
         } else {
-            EVP_MD_CTX tmp_ctx;
-            EVP_MD_CTX_init(&tmp_ctx);
-            if (!EVP_MD_CTX_copy_ex(&tmp_ctx, ctx))
+            EVP_MD_CTX *tmp_ctx = EVP_MD_CTX_new();
+            if (tmp_ctx == NULL || !EVP_MD_CTX_copy_ex(tmp_ctx, ctx))
                 return 0;
             if (sctx)
-                r = tmp_ctx.pctx->pmeth->signctx(tmp_ctx.pctx,
-                                                 sigret, siglen, &tmp_ctx);
+                r = tmp_ctx->pctx->pmeth->signctx(tmp_ctx->pctx,
+                                                  sigret, siglen, tmp_ctx);
             else
-                r = EVP_DigestFinal_ex(&tmp_ctx, md, &mdlen);
-            EVP_MD_CTX_cleanup(&tmp_ctx);
+                r = EVP_DigestFinal_ex(tmp_ctx, md, &mdlen);
+            EVP_MD_CTX_free(tmp_ctx);
         }
         if (sctx || !r)
             return r;
@@ -189,9 +188,9 @@ int EVP_DigestVerifyFinal(EVP_MD_CTX *ctx, const unsigned char *sig,
                           size_t siglen)
 {
     unsigned char md[EVP_MAX_MD_SIZE];
-    int r;
-    unsigned int mdlen;
-    int vctx;
+    int r = 0;
+    unsigned int mdlen = 0;
+    int vctx = 0;
 
     if (ctx->pctx->pmeth->verifyctx)
         vctx = 1;
@@ -203,16 +202,15 @@ int EVP_DigestVerifyFinal(EVP_MD_CTX *ctx, const unsigned char *sig,
         } else
             r = EVP_DigestFinal_ex(ctx, md, &mdlen);
     } else {
-        EVP_MD_CTX tmp_ctx;
-        EVP_MD_CTX_init(&tmp_ctx);
-        if (!EVP_MD_CTX_copy_ex(&tmp_ctx, ctx))
+        EVP_MD_CTX *tmp_ctx = EVP_MD_CTX_new();
+        if (tmp_ctx == NULL || !EVP_MD_CTX_copy_ex(tmp_ctx, ctx))
             return -1;
         if (vctx) {
-            r = tmp_ctx.pctx->pmeth->verifyctx(tmp_ctx.pctx,
-                                               sig, siglen, &tmp_ctx);
+            r = tmp_ctx->pctx->pmeth->verifyctx(tmp_ctx->pctx,
+                                                sig, siglen, tmp_ctx);
         } else
-            r = EVP_DigestFinal_ex(&tmp_ctx, md, &mdlen);
-        EVP_MD_CTX_cleanup(&tmp_ctx);
+            r = EVP_DigestFinal_ex(tmp_ctx, md, &mdlen);
+        EVP_MD_CTX_free(tmp_ctx);
     }
     if (vctx || !r)
         return r;

@@ -1,4 +1,3 @@
-/* crypto/o_time.c -*- mode:C; c-file-style: "eay" -*- */
 /*
  * Written by Richard Levitte (richard@levitte.org) for the OpenSSL project
  * 2001.
@@ -162,7 +161,7 @@ struct tm *OPENSSL_gmtime(const time_t *timer, struct tm *result)
             /*-
              * The VMS epoch is the astronomical Smithsonian date,
                if I remember correctly, which is November 17, 1858.
-               Furthermore, time is measure in thenths of microseconds
+               Furthermore, time is measure in tenths of microseconds
                and stored in quadwords (64 bit integers).  unix_epoch
                below is January 1st 1970 expressed as a VMS time.  The
                following code was used to get this number:
@@ -254,7 +253,7 @@ int OPENSSL_gmtime_adj(struct tm *tm, int off_day, long offset_sec)
     int time_sec, time_year, time_month, time_day;
     long time_jd;
 
-    /* Convert time and offset into julian day and seconds */
+    /* Convert time and offset into Julian day and seconds */
     if (!julian_adj(tm, off_day, offset_sec, &time_jd, &time_sec))
         return 0;
 
@@ -378,63 +377,3 @@ static void julian_to_date(long jd, int *y, int *m, int *d)
     *m = j + 2 - (12 * L);
     *y = 100 * (n - 49) + i + L;
 }
-
-#ifdef OPENSSL_TIME_TEST
-
-# include <stdio.h>
-
-/*
- * Time checking test code. Check times are identical for a wide range of
- * offsets. This should be run on a machine with 64 bit time_t or it will
- * trigger the very errors the routines fix.
- */
-
-int main(int argc, char **argv)
-{
-    long offset;
-    for (offset = 0; offset < 1000000; offset++) {
-        check_time(offset);
-        check_time(-offset);
-        check_time(offset * 1000);
-        check_time(-offset * 1000);
-    }
-}
-
-int check_time(long offset)
-{
-    struct tm tm1, tm2, o1;
-    int off_day, off_sec;
-    long toffset;
-    time_t t1, t2;
-    time(&t1);
-    t2 = t1 + offset;
-    OPENSSL_gmtime(&t2, &tm2);
-    OPENSSL_gmtime(&t1, &tm1);
-    o1 = tm1;
-    OPENSSL_gmtime_adj(&tm1, 0, offset);
-    if ((tm1.tm_year != tm2.tm_year) ||
-        (tm1.tm_mon != tm2.tm_mon) ||
-        (tm1.tm_mday != tm2.tm_mday) ||
-        (tm1.tm_hour != tm2.tm_hour) ||
-        (tm1.tm_min != tm2.tm_min) || (tm1.tm_sec != tm2.tm_sec)) {
-        fprintf(stderr, "TIME ERROR!!\n");
-        fprintf(stderr, "Time1: %d/%d/%d, %d:%02d:%02d\n",
-                tm2.tm_mday, tm2.tm_mon + 1, tm2.tm_year + 1900,
-                tm2.tm_hour, tm2.tm_min, tm2.tm_sec);
-        fprintf(stderr, "Time2: %d/%d/%d, %d:%02d:%02d\n",
-                tm1.tm_mday, tm1.tm_mon + 1, tm1.tm_year + 1900,
-                tm1.tm_hour, tm1.tm_min, tm1.tm_sec);
-        return 0;
-    }
-    OPENSSL_gmtime_diff(&o1, &tm1, &off_day, &off_sec);
-    toffset = (long)off_day *SECS_PER_DAY + off_sec;
-    if (offset != toffset) {
-        fprintf(stderr, "TIME OFFSET ERROR!!\n");
-        fprintf(stderr, "Expected %ld, Got %ld (%d:%d)\n",
-                offset, toffset, off_day, off_sec);
-        return 0;
-    }
-    return 1;
-}
-
-#endif

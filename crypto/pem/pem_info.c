@@ -1,4 +1,3 @@
-/* crypto/pem/pem_info.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -57,7 +56,7 @@
  */
 
 #include <stdio.h>
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/buffer.h>
 #include <openssl/objects.h>
 #include <openssl/evp.h>
@@ -172,6 +171,8 @@ STACK_OF(X509_INFO) *PEM_X509_INFO_read_bio(BIO *bp, STACK_OF(X509_INFO) *sk,
             xi->enc_len = 0;
 
             xi->x_pkey = X509_PKEY_new();
+            if (xi->x_pkey == NULL)
+                goto err;
             ptype = EVP_PKEY_RSA;
             pp = &xi->x_pkey->dec_pkey;
             if ((int)strlen(header) > 10) /* assume encrypted */
@@ -193,6 +194,8 @@ STACK_OF(X509_INFO) *PEM_X509_INFO_read_bio(BIO *bp, STACK_OF(X509_INFO) *sk,
             xi->enc_len = 0;
 
             xi->x_pkey = X509_PKEY_new();
+            if (xi->x_pkey == NULL)
+                goto err;
             ptype = EVP_PKEY_DSA;
             pp = &xi->x_pkey->dec_pkey;
             if ((int)strlen(header) > 10) /* assume encrypted */
@@ -214,6 +217,8 @@ STACK_OF(X509_INFO) *PEM_X509_INFO_read_bio(BIO *bp, STACK_OF(X509_INFO) *sk,
             xi->enc_len = 0;
 
             xi->x_pkey = X509_PKEY_new();
+            if (xi->x_pkey == NULL)
+                goto err;
             ptype = EVP_PKEY_EC;
             pp = &xi->x_pkey->dec_pkey;
             if ((int)strlen(header) > 10) /* assume encrypted */
@@ -253,14 +258,11 @@ STACK_OF(X509_INFO) *PEM_X509_INFO_read_bio(BIO *bp, STACK_OF(X509_INFO) *sk,
         } else {
             /* unknown */
         }
-        if (name != NULL)
-            OPENSSL_free(name);
-        if (header != NULL)
-            OPENSSL_free(header);
-        if (data != NULL)
-            OPENSSL_free(data);
+        OPENSSL_free(name);
         name = NULL;
+        OPENSSL_free(header);
         header = NULL;
+        OPENSSL_free(data);
         data = NULL;
     }
 
@@ -276,8 +278,7 @@ STACK_OF(X509_INFO) *PEM_X509_INFO_read_bio(BIO *bp, STACK_OF(X509_INFO) *sk,
     }
     ok = 1;
  err:
-    if (xi != NULL)
-        X509_INFO_free(xi);
+    X509_INFO_free(xi);
     if (!ok) {
         for (i = 0; ((int)i) < sk_X509_INFO_num(ret); i++) {
             xi = sk_X509_INFO_value(ret, i);
@@ -288,12 +289,9 @@ STACK_OF(X509_INFO) *PEM_X509_INFO_read_bio(BIO *bp, STACK_OF(X509_INFO) *sk,
         ret = NULL;
     }
 
-    if (name != NULL)
-        OPENSSL_free(name);
-    if (header != NULL)
-        OPENSSL_free(header);
-    if (data != NULL)
-        OPENSSL_free(data);
+    OPENSSL_free(name);
+    OPENSSL_free(header);
+    OPENSSL_free(data);
     return (ret);
 }
 
@@ -302,7 +300,6 @@ int PEM_X509_INFO_write_bio(BIO *bp, X509_INFO *xi, EVP_CIPHER *enc,
                             unsigned char *kstr, int klen,
                             pem_password_cb *cb, void *u)
 {
-    EVP_CIPHER_CTX ctx;
     int i, ret = 0;
     unsigned char *data = NULL;
     const char *objstr = NULL;
@@ -347,11 +344,13 @@ int PEM_X509_INFO_write_bio(BIO *bp, X509_INFO *xi, EVP_CIPHER *enc,
             }
 
             /* create the right magic header stuff */
-            OPENSSL_assert(strlen(objstr) + 23 + 2 * enc->iv_len + 13 <=
+            OPENSSL_assert(strlen(objstr) + 23
+                           + 2 * EVP_CIPHER_iv_length(enc) + 13 <=
                            sizeof buf);
             buf[0] = '\0';
             PEM_proc_type(buf, PEM_TYPE_ENCRYPTED);
-            PEM_dek_info(buf, objstr, enc->iv_len, (char *)iv);
+            PEM_dek_info(buf, objstr, EVP_CIPHER_iv_length(enc),
+                         (char *)iv);
 
             /* use the normal code to write things out */
             i = PEM_write_bio(bp, PEM_STRING_RSA, buf, data, i);
@@ -362,7 +361,7 @@ int PEM_X509_INFO_write_bio(BIO *bp, X509_INFO *xi, EVP_CIPHER *enc,
 #ifndef OPENSSL_NO_RSA
             /* normal optionally encrypted stuff */
             if (PEM_write_bio_RSAPrivateKey(bp,
-                                            xi->x_pkey->dec_pkey->pkey.rsa,
+                                            EVP_PKEY_get0_RSA(xi->x_pkey->dec_pkey),
                                             enc, kstr, klen, cb, u) <= 0)
                 goto err;
 #endif
@@ -382,7 +381,6 @@ int PEM_X509_INFO_write_bio(BIO *bp, X509_INFO *xi, EVP_CIPHER *enc,
     ret = 1;
 
  err:
-    OPENSSL_cleanse((char *)&ctx, sizeof(ctx));
     OPENSSL_cleanse(buf, PEM_BUFSIZE);
     return (ret);
 }

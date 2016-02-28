@@ -422,7 +422,7 @@ bn_mul_add_words:
 
 // This loop spins in 3*(n+10) ticks on Itanium and in 2*(n+10) on
 // Itanium 2. Yes, unlike previous versions it scales:-) Previous
-// version was peforming *all* additions in IALU and was starving
+// version was performing *all* additions in IALU and was starving
 // for those even on Itanium 2. In this version one addition is
 // moved to FPU and is folded with multiplication. This is at cost
 // of propogating the result from previous call to this subroutine
@@ -495,7 +495,7 @@ bn_sqr_words:
 // scalability. The decision will very likely be reconsidered after the
 // benchmark program is profiled. I.e. if perfomance gain on Itanium
 // will appear larger than loss on "wider" IA-64, then the loop should
-// be explicitely split and the epilogue compressed.
+// be explicitly split and the epilogue compressed.
 .L_bn_sqr_words_ctop:
 { .mfi;	(p16)	ldf8		f32=[r33],8
 	(p25)	xmpy.lu		f42=f41,f41
@@ -568,7 +568,7 @@ bn_sqr_comba8:
 // I've estimated this routine to run in ~120 ticks, but in reality
 // (i.e. according to ar.itc) it takes ~160 ticks. Are those extra
 // cycles consumed for instructions fetch? Or did I misinterpret some
-// clause in Itanium µ-architecture manual? Comments are welcomed and
+// clause in Itanium Âµ-architecture manual? Comments are welcomed and
 // highly appreciated.
 //
 // On Itanium 2 it takes ~190 ticks. This is because of stalls on

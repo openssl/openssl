@@ -1,6 +1,3 @@
-/* NOCW */
-/* demos/bio/server-arg.c */
-
 /*
  * A minimal program to serve an SSL connection. It uses blocking. It use the
  * SSL_CONF API with the command line. cc -I../../include server-arg.c
@@ -29,7 +26,7 @@ int main(int argc, char *argv[])
     /* Add ciphers and message digests */
     OpenSSL_add_ssl_algorithms();
 
-    ctx = SSL_CTX_new(SSLv23_server_method());
+    ctx = SSL_CTX_new(TLS_server_method());
 
     cctx = SSL_CONF_CTX_new();
     SSL_CONF_CTX_set_flags(cctx, SSL_CONF_FLAG_SERVER);
@@ -52,7 +49,7 @@ int main(int argc, char *argv[])
         if (rv > 0)
             continue;
         /* Otherwise application specific argument processing */
-        if (!strcmp(*args, "-port")) {
+        if (strcmp(*args, "-port") == 0) {
             port = args[1];
             if (port == NULL) {
                 fprintf(stderr, "Missing -port argument\n");
@@ -137,8 +134,7 @@ int main(int argc, char *argv[])
     if (ret) {
         ERR_print_errors_fp(stderr);
     }
-    if (in != NULL)
-        BIO_free(in);
+    BIO_free(in);
     exit(ret);
     return (!ret);
 }

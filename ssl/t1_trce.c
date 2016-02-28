@@ -1,4 +1,3 @@
-/* ssl/t1_trce.c */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -65,11 +64,11 @@ typedef struct {
 } ssl_trace_tbl;
 
 # define ssl_trace_str(val, tbl) \
-        do_ssl_trace_str(val, tbl, sizeof(tbl)/sizeof(ssl_trace_tbl))
+        do_ssl_trace_str(val, tbl, OSSL_NELEM(tbl))
 
 # define ssl_trace_list(bio, indent, msg, msglen, value, table) \
         do_ssl_trace_list(bio, indent, msg, msglen, value, \
-         table, sizeof(table)/sizeof(ssl_trace_tbl))
+         table, OSSL_NELEM(table))
 
 static const char *do_ssl_trace_str(int val, ssl_trace_tbl *tbl, size_t ntbl)
 {
@@ -117,7 +116,7 @@ static ssl_trace_tbl ssl_content_tbl[] = {
     {SSL3_RT_ALERT, "Alert"},
     {SSL3_RT_HANDSHAKE, "Handshake"},
     {SSL3_RT_APPLICATION_DATA, "ApplicationData"},
-    {TLS1_RT_HEARTBEAT, "HeartBeat"}
+    {DTLS1_RT_HEARTBEAT, "HeartBeat"}
 };
 
 /* Handshake types */
@@ -184,6 +183,9 @@ static ssl_trace_tbl ssl_ciphers_tbl[] = {
     {0x0029, "TLS_KRB5_EXPORT_WITH_DES_CBC_40_MD5"},
     {0x002A, "TLS_KRB5_EXPORT_WITH_RC2_CBC_40_MD5"},
     {0x002B, "TLS_KRB5_EXPORT_WITH_RC4_40_MD5"},
+    {0x002C, "TLS_PSK_WITH_NULL_SHA"},
+    {0x002D, "TLS_DHE_PSK_WITH_NULL_SHA"},
+    {0x002E, "TLS_RSA_PSK_WITH_NULL_SHA"},
     {0x002F, "TLS_RSA_WITH_AES_128_CBC_SHA"},
     {0x0030, "TLS_DH_DSS_WITH_AES_128_CBC_SHA"},
     {0x0031, "TLS_DH_RSA_WITH_AES_128_CBC_SHA"},
@@ -282,6 +284,7 @@ static ssl_trace_tbl ssl_ciphers_tbl[] = {
     {0x00C4, "TLS_DHE_RSA_WITH_CAMELLIA_256_CBC_SHA256"},
     {0x00C5, "TLS_DH_anon_WITH_CAMELLIA_256_CBC_SHA256"},
     {0x00FF, "TLS_EMPTY_RENEGOTIATION_INFO_SCSV"},
+    {0x5600, "TLS_FALLBACK_SCSV"},
     {0xC001, "TLS_ECDH_ECDSA_WITH_NULL_SHA"},
     {0xC002, "TLS_ECDH_ECDSA_WITH_RC4_128_SHA"},
     {0xC003, "TLS_ECDH_ECDSA_WITH_3DES_EDE_CBC_SHA"},
@@ -332,6 +335,138 @@ static ssl_trace_tbl ssl_ciphers_tbl[] = {
     {0xC030, "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"},
     {0xC031, "TLS_ECDH_RSA_WITH_AES_128_GCM_SHA256"},
     {0xC032, "TLS_ECDH_RSA_WITH_AES_256_GCM_SHA384"},
+    {0xC033, "TLS_ECDHE_PSK_WITH_RC4_128_SHA"},
+    {0xC034, "TLS_ECDHE_PSK_WITH_3DES_EDE_CBC_SHA"},
+    {0xC035, "TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA"},
+    {0xC036, "TLS_ECDHE_PSK_WITH_AES_256_CBC_SHA"},
+    {0xC037, "TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256"},
+    {0xC038, "TLS_ECDHE_PSK_WITH_AES_256_CBC_SHA384"},
+    {0xC039, "TLS_ECDHE_PSK_WITH_NULL_SHA"},
+    {0xC03A, "TLS_ECDHE_PSK_WITH_NULL_SHA256"},
+    {0xC03B, "TLS_ECDHE_PSK_WITH_NULL_SHA384"},
+    {0xC03C, "TLS_RSA_WITH_ARIA_128_CBC_SHA256"},
+    {0xC03D, "TLS_RSA_WITH_ARIA_256_CBC_SHA384"},
+    {0xC03E, "TLS_DH_DSS_WITH_ARIA_128_CBC_SHA256"},
+    {0xC03F, "TLS_DH_DSS_WITH_ARIA_256_CBC_SHA384"},
+    {0xC040, "TLS_DH_RSA_WITH_ARIA_128_CBC_SHA256"},
+    {0xC041, "TLS_DH_RSA_WITH_ARIA_256_CBC_SHA384"},
+    {0xC042, "TLS_DHE_DSS_WITH_ARIA_128_CBC_SHA256"},
+    {0xC043, "TLS_DHE_DSS_WITH_ARIA_256_CBC_SHA384"},
+    {0xC044, "TLS_DHE_RSA_WITH_ARIA_128_CBC_SHA256"},
+    {0xC045, "TLS_DHE_RSA_WITH_ARIA_256_CBC_SHA384"},
+    {0xC046, "TLS_DH_anon_WITH_ARIA_128_CBC_SHA256"},
+    {0xC047, "TLS_DH_anon_WITH_ARIA_256_CBC_SHA384"},
+    {0xC048, "TLS_ECDHE_ECDSA_WITH_ARIA_128_CBC_SHA256"},
+    {0xC049, "TLS_ECDHE_ECDSA_WITH_ARIA_256_CBC_SHA384"},
+    {0xC04A, "TLS_ECDH_ECDSA_WITH_ARIA_128_CBC_SHA256"},
+    {0xC04B, "TLS_ECDH_ECDSA_WITH_ARIA_256_CBC_SHA384"},
+    {0xC04C, "TLS_ECDHE_RSA_WITH_ARIA_128_CBC_SHA256"},
+    {0xC04D, "TLS_ECDHE_RSA_WITH_ARIA_256_CBC_SHA384"},
+    {0xC04E, "TLS_ECDH_RSA_WITH_ARIA_128_CBC_SHA256"},
+    {0xC04F, "TLS_ECDH_RSA_WITH_ARIA_256_CBC_SHA384"},
+    {0xC050, "TLS_RSA_WITH_ARIA_128_GCM_SHA256"},
+    {0xC051, "TLS_RSA_WITH_ARIA_256_GCM_SHA384"},
+    {0xC052, "TLS_DHE_RSA_WITH_ARIA_128_GCM_SHA256"},
+    {0xC053, "TLS_DHE_RSA_WITH_ARIA_256_GCM_SHA384"},
+    {0xC054, "TLS_DH_RSA_WITH_ARIA_128_GCM_SHA256"},
+    {0xC055, "TLS_DH_RSA_WITH_ARIA_256_GCM_SHA384"},
+    {0xC056, "TLS_DHE_DSS_WITH_ARIA_128_GCM_SHA256"},
+    {0xC057, "TLS_DHE_DSS_WITH_ARIA_256_GCM_SHA384"},
+    {0xC058, "TLS_DH_DSS_WITH_ARIA_128_GCM_SHA256"},
+    {0xC059, "TLS_DH_DSS_WITH_ARIA_256_GCM_SHA384"},
+    {0xC05A, "TLS_DH_anon_WITH_ARIA_128_GCM_SHA256"},
+    {0xC05B, "TLS_DH_anon_WITH_ARIA_256_GCM_SHA384"},
+    {0xC05C, "TLS_ECDHE_ECDSA_WITH_ARIA_128_GCM_SHA256"},
+    {0xC05D, "TLS_ECDHE_ECDSA_WITH_ARIA_256_GCM_SHA384"},
+    {0xC05E, "TLS_ECDH_ECDSA_WITH_ARIA_128_GCM_SHA256"},
+    {0xC05F, "TLS_ECDH_ECDSA_WITH_ARIA_256_GCM_SHA384"},
+    {0xC060, "TLS_ECDHE_RSA_WITH_ARIA_128_GCM_SHA256"},
+    {0xC061, "TLS_ECDHE_RSA_WITH_ARIA_256_GCM_SHA384"},
+    {0xC062, "TLS_ECDH_RSA_WITH_ARIA_128_GCM_SHA256"},
+    {0xC063, "TLS_ECDH_RSA_WITH_ARIA_256_GCM_SHA384"},
+    {0xC064, "TLS_PSK_WITH_ARIA_128_CBC_SHA256"},
+    {0xC065, "TLS_PSK_WITH_ARIA_256_CBC_SHA384"},
+    {0xC066, "TLS_DHE_PSK_WITH_ARIA_128_CBC_SHA256"},
+    {0xC067, "TLS_DHE_PSK_WITH_ARIA_256_CBC_SHA384"},
+    {0xC068, "TLS_RSA_PSK_WITH_ARIA_128_CBC_SHA256"},
+    {0xC069, "TLS_RSA_PSK_WITH_ARIA_256_CBC_SHA384"},
+    {0xC06A, "TLS_PSK_WITH_ARIA_128_GCM_SHA256"},
+    {0xC06B, "TLS_PSK_WITH_ARIA_256_GCM_SHA384"},
+    {0xC06C, "TLS_DHE_PSK_WITH_ARIA_128_GCM_SHA256"},
+    {0xC06D, "TLS_DHE_PSK_WITH_ARIA_256_GCM_SHA384"},
+    {0xC06E, "TLS_RSA_PSK_WITH_ARIA_128_GCM_SHA256"},
+    {0xC06F, "TLS_RSA_PSK_WITH_ARIA_256_GCM_SHA384"},
+    {0xC070, "TLS_ECDHE_PSK_WITH_ARIA_128_CBC_SHA256"},
+    {0xC071, "TLS_ECDHE_PSK_WITH_ARIA_256_CBC_SHA384"},
+    {0xC072, "TLS_ECDHE_ECDSA_WITH_CAMELLIA_128_CBC_SHA256"},
+    {0xC073, "TLS_ECDHE_ECDSA_WITH_CAMELLIA_256_CBC_SHA384"},
+    {0xC074, "TLS_ECDH_ECDSA_WITH_CAMELLIA_128_CBC_SHA256"},
+    {0xC075, "TLS_ECDH_ECDSA_WITH_CAMELLIA_256_CBC_SHA384"},
+    {0xC076, "TLS_ECDHE_RSA_WITH_CAMELLIA_128_CBC_SHA256"},
+    {0xC077, "TLS_ECDHE_RSA_WITH_CAMELLIA_256_CBC_SHA384"},
+    {0xC078, "TLS_ECDH_RSA_WITH_CAMELLIA_128_CBC_SHA256"},
+    {0xC079, "TLS_ECDH_RSA_WITH_CAMELLIA_256_CBC_SHA384"},
+    {0xC07A, "TLS_RSA_WITH_CAMELLIA_128_GCM_SHA256"},
+    {0xC07B, "TLS_RSA_WITH_CAMELLIA_256_GCM_SHA384"},
+    {0xC07C, "TLS_DHE_RSA_WITH_CAMELLIA_128_GCM_SHA256"},
+    {0xC07D, "TLS_DHE_RSA_WITH_CAMELLIA_256_GCM_SHA384"},
+    {0xC07E, "TLS_DH_RSA_WITH_CAMELLIA_128_GCM_SHA256"},
+    {0xC07F, "TLS_DH_RSA_WITH_CAMELLIA_256_GCM_SHA384"},
+    {0xC080, "TLS_DHE_DSS_WITH_CAMELLIA_128_GCM_SHA256"},
+    {0xC081, "TLS_DHE_DSS_WITH_CAMELLIA_256_GCM_SHA384"},
+    {0xC082, "TLS_DH_DSS_WITH_CAMELLIA_128_GCM_SHA256"},
+    {0xC083, "TLS_DH_DSS_WITH_CAMELLIA_256_GCM_SHA384"},
+    {0xC084, "TLS_DH_anon_WITH_CAMELLIA_128_GCM_SHA256"},
+    {0xC085, "TLS_DH_anon_WITH_CAMELLIA_256_GCM_SHA384"},
+    {0xC086, "TLS_ECDHE_ECDSA_WITH_CAMELLIA_128_GCM_SHA256"},
+    {0xC087, "TLS_ECDHE_ECDSA_WITH_CAMELLIA_256_GCM_SHA384"},
+    {0xC088, "TLS_ECDH_ECDSA_WITH_CAMELLIA_128_GCM_SHA256"},
+    {0xC089, "TLS_ECDH_ECDSA_WITH_CAMELLIA_256_GCM_SHA384"},
+    {0xC08A, "TLS_ECDHE_RSA_WITH_CAMELLIA_128_GCM_SHA256"},
+    {0xC08B, "TLS_ECDHE_RSA_WITH_CAMELLIA_256_GCM_SHA384"},
+    {0xC08C, "TLS_ECDH_RSA_WITH_CAMELLIA_128_GCM_SHA256"},
+    {0xC08D, "TLS_ECDH_RSA_WITH_CAMELLIA_256_GCM_SHA384"},
+    {0xC08E, "TLS_PSK_WITH_CAMELLIA_128_GCM_SHA256"},
+    {0xC08F, "TLS_PSK_WITH_CAMELLIA_256_GCM_SHA384"},
+    {0xC090, "TLS_DHE_PSK_WITH_CAMELLIA_128_GCM_SHA256"},
+    {0xC091, "TLS_DHE_PSK_WITH_CAMELLIA_256_GCM_SHA384"},
+    {0xC092, "TLS_RSA_PSK_WITH_CAMELLIA_128_GCM_SHA256"},
+    {0xC093, "TLS_RSA_PSK_WITH_CAMELLIA_256_GCM_SHA384"},
+    {0xC094, "TLS_PSK_WITH_CAMELLIA_128_CBC_SHA256"},
+    {0xC095, "TLS_PSK_WITH_CAMELLIA_256_CBC_SHA384"},
+    {0xC096, "TLS_DHE_PSK_WITH_CAMELLIA_128_CBC_SHA256"},
+    {0xC097, "TLS_DHE_PSK_WITH_CAMELLIA_256_CBC_SHA384"},
+    {0xC098, "TLS_RSA_PSK_WITH_CAMELLIA_128_CBC_SHA256"},
+    {0xC099, "TLS_RSA_PSK_WITH_CAMELLIA_256_CBC_SHA384"},
+    {0xC09A, "TLS_ECDHE_PSK_WITH_CAMELLIA_128_CBC_SHA256"},
+    {0xC09B, "TLS_ECDHE_PSK_WITH_CAMELLIA_256_CBC_SHA384"},
+    {0xC09C, "TLS_RSA_WITH_AES_128_CCM"},
+    {0xC09D, "TLS_RSA_WITH_AES_256_CCM"},
+    {0xC09E, "TLS_DHE_RSA_WITH_AES_128_CCM"},
+    {0xC09F, "TLS_DHE_RSA_WITH_AES_256_CCM"},
+    {0xC0A0, "TLS_RSA_WITH_AES_128_CCM_8"},
+    {0xC0A1, "TLS_RSA_WITH_AES_256_CCM_8"},
+    {0xC0A2, "TLS_DHE_RSA_WITH_AES_128_CCM_8"},
+    {0xC0A3, "TLS_DHE_RSA_WITH_AES_256_CCM_8"},
+    {0xC0A4, "TLS_PSK_WITH_AES_128_CCM"},
+    {0xC0A5, "TLS_PSK_WITH_AES_256_CCM"},
+    {0xC0A6, "TLS_DHE_PSK_WITH_AES_128_CCM"},
+    {0xC0A7, "TLS_DHE_PSK_WITH_AES_256_CCM"},
+    {0xC0A8, "TLS_PSK_WITH_AES_128_CCM_8"},
+    {0xC0A9, "TLS_PSK_WITH_AES_256_CCM_8"},
+    {0xC0AA, "TLS_PSK_DHE_WITH_AES_128_CCM_8"},
+    {0xC0AB, "TLS_PSK_DHE_WITH_AES_256_CCM_8"},
+    {0xC0AC, "TLS_ECDHE_ECDSA_WITH_AES_128_CCM"},
+    {0xC0AD, "TLS_ECDHE_ECDSA_WITH_AES_256_CCM"},
+    {0xC0AE, "TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8"},
+    {0xC0AF, "TLS_ECDHE_ECDSA_WITH_AES_256_CCM_8"},
+    {0xCCA8, "TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305" },
+    {0xCCA9, "TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305" },
+    {0xCCAA, "TLS_DHE_RSA_WITH_CHACHA20_POLY1305" },
+    {0xCCAB, "TLS_PSK_WITH_CHACHA20_POLY1305" },
+    {0xCCAC, "TLS_ECDHE_PSK_WITH_CHACHA20_POLY1305" },
+    {0xCCAD, "TLS_DHE_PSK_WITH_CHACHA20_POLY1305" },
+    {0xCCAE, "TLS_RSA_PSK_WITH_CHACHA20_POLY1305" },
     {0xFEFE, "SSL_RSA_FIPS_WITH_DES_CBC_SHA"},
     {0xFEFF, "SSL_RSA_FIPS_WITH_3DES_EDE_CBC_SHA"},
 };
@@ -364,6 +499,7 @@ static ssl_trace_tbl ssl_exts_tbl[] = {
     {TLSEXT_TYPE_renegotiate, "renegotiate"},
     {TLSEXT_TYPE_next_proto_neg, "next_proto_neg"},
     {TLSEXT_TYPE_padding, "padding"},
+    {TLSEXT_TYPE_encrypt_then_mac, "encrypt_then_mac"},
     {TLSEXT_TYPE_extended_master_secret, "extended_master_secret"}
 };
 
@@ -407,20 +543,26 @@ static ssl_trace_tbl ssl_point_tbl[] = {
 };
 
 static ssl_trace_tbl ssl_md_tbl[] = {
-    {0, "none"},
-    {1, "md5"},
-    {2, "sha1"},
-    {3, "sha224"},
-    {4, "sha256"},
-    {5, "sha384"},
-    {6, "sha512"}
+    {TLSEXT_hash_none, "none"},
+    {TLSEXT_hash_md5, "md5"},
+    {TLSEXT_hash_sha1, "sha1"},
+    {TLSEXT_hash_sha224, "sha224"},
+    {TLSEXT_hash_sha256, "sha256"},
+    {TLSEXT_hash_sha384, "sha384"},
+    {TLSEXT_hash_sha512, "sha512"},
+    {TLSEXT_hash_gostr3411, "md_gost94"},
+    {TLSEXT_hash_gostr34112012_256, "md_gost2012_256"},
+    {TLSEXT_hash_gostr34112012_512, "md_gost2012_512"}
 };
 
 static ssl_trace_tbl ssl_sig_tbl[] = {
-    {0, "anonymous"},
-    {1, "rsa"},
-    {2, "dsa"},
-    {3, "ecdsa"}
+    {TLSEXT_signature_anonymous, "anonymous"},
+    {TLSEXT_signature_rsa, "rsa"},
+    {TLSEXT_signature_dsa, "dsa"},
+    {TLSEXT_signature_ecdsa, "ecdsa"},
+    {TLSEXT_signature_gostr34102001, "gost2001"},
+    {TLSEXT_signature_gostr34102012_256, "gost2012_256"},
+    {TLSEXT_signature_gostr34102012_512, "gost2012_512"}
 };
 
 static ssl_trace_tbl ssl_hb_tbl[] = {
@@ -770,18 +912,6 @@ static int ssl_get_keyex(const char **pname, SSL *ssl)
         *pname = "rsa";
         return SSL_kRSA;
     }
-    if (alg_k & SSL_kDHr) {
-        *pname = "dh_rsa";
-        return SSL_kDHr;
-    }
-    if (alg_k & SSL_kDHd) {
-        *pname = "dh_dss";
-        return SSL_kDHd;
-    }
-    if (alg_k & SSL_kKRB5) {
-        *pname = "krb5";
-        return SSL_kKRB5;
-    }
     if (alg_k & SSL_kDHE) {
         *pname = "DHE";
         return SSL_kDHE;
@@ -790,17 +920,21 @@ static int ssl_get_keyex(const char **pname, SSL *ssl)
         *pname = "ECDHE";
         return SSL_kECDHE;
     }
-    if (alg_k & SSL_kECDHr) {
-        *pname = "ECDH RSA";
-        return SSL_kECDHr;
-    }
-    if (alg_k & SSL_kECDHe) {
-        *pname = "ECDH ECDSA";
-        return SSL_kECDHe;
-    }
     if (alg_k & SSL_kPSK) {
         *pname = "PSK";
         return SSL_kPSK;
+    }
+    if (alg_k & SSL_kRSAPSK) {
+        *pname = "RSAPSK";
+        return SSL_kRSAPSK;
+    }
+    if (alg_k & SSL_kDHEPSK) {
+        *pname = "DHEPSK";
+        return SSL_kDHEPSK;
+    }
+    if (alg_k & SSL_kECDHEPSK) {
+        *pname = "ECDHEPSK";
+        return SSL_kECDHEPSK;
     }
     if (alg_k & SSL_kSRP) {
         *pname = "SRP";
@@ -822,9 +956,15 @@ static int ssl_print_client_keyex(BIO *bio, int indent, SSL *ssl,
     id = ssl_get_keyex(&algname, ssl);
     BIO_indent(bio, indent, 80);
     BIO_printf(bio, "KeyExchangeAlgorithm=%s\n", algname);
+    if (id & SSL_PSK) {
+        if (!ssl_print_hexbuf(bio, indent + 2,
+                              "psk_identity", 2, &msg, &msglen))
+            return 0;
+    }
     switch (id) {
 
     case SSL_kRSA:
+    case SSL_kRSAPSK:
         if (TLS1_get_version(ssl) == SSL3_VERSION) {
             ssl_print_hex(bio, indent + 2,
                           "EncyptedPreMasterSecret", msg, msglen);
@@ -836,33 +976,21 @@ static int ssl_print_client_keyex(BIO *bio, int indent, SSL *ssl,
         }
         break;
 
-        /* Implicit parameters only allowed for static DH */
-    case SSL_kDHd:
-    case SSL_kDHr:
-        if (msglen == 0) {
-            BIO_indent(bio, indent + 2, 80);
-            BIO_puts(bio, "implicit\n");
-            break;
-        }
     case SSL_kDHE:
+    case SSL_kDHEPSK:
         if (!ssl_print_hexbuf(bio, indent + 2, "dh_Yc", 2, &msg, &msglen))
             return 0;
         break;
 
-    case SSL_kECDHr:
-    case SSL_kECDHe:
-        if (msglen == 0) {
-            BIO_indent(bio, indent + 2, 80);
-            BIO_puts(bio, "implicit\n");
-            break;
-        }
     case SSL_kECDHE:
+    case SSL_kECDHEPSK:
         if (!ssl_print_hexbuf(bio, indent + 2, "ecdh_Yc", 1, &msg, &msglen))
             return 0;
         break;
+
     }
 
-    return 1;
+    return !msglen;
 }
 
 static int ssl_print_server_keyex(BIO *bio, int indent, SSL *ssl,
@@ -873,16 +1001,12 @@ static int ssl_print_server_keyex(BIO *bio, int indent, SSL *ssl,
     id = ssl_get_keyex(&algname, ssl);
     BIO_indent(bio, indent, 80);
     BIO_printf(bio, "KeyExchangeAlgorithm=%s\n", algname);
+    if (id & SSL_PSK) {
+        if (!ssl_print_hexbuf(bio, indent + 2,
+                              "psk_identity_hint", 2, &msg, &msglen))
+            return 0;
+    }
     switch (id) {
-        /* Should never happen */
-    case SSL_kDHd:
-    case SSL_kDHr:
-    case SSL_kECDHr:
-    case SSL_kECDHe:
-        BIO_indent(bio, indent + 2, 80);
-        BIO_printf(bio, "Unexpected Message\n");
-        break;
-
     case SSL_kRSA:
 
         if (!ssl_print_hexbuf(bio, indent + 2, "rsa_modulus", 2,
@@ -894,6 +1018,7 @@ static int ssl_print_server_keyex(BIO *bio, int indent, SSL *ssl,
         break;
 
     case SSL_kDHE:
+    case SSL_kDHEPSK:
         if (!ssl_print_hexbuf(bio, indent + 2, "dh_p", 2, &msg, &msglen))
             return 0;
         if (!ssl_print_hexbuf(bio, indent + 2, "dh_g", 2, &msg, &msglen))
@@ -902,7 +1027,9 @@ static int ssl_print_server_keyex(BIO *bio, int indent, SSL *ssl,
             return 0;
         break;
 
+#ifndef OPENSSL_NO_EC
     case SSL_kECDHE:
+    case SSL_kECDHEPSK:
         if (msglen < 1)
             return 0;
         BIO_indent(bio, indent + 2, 80);
@@ -921,10 +1048,20 @@ static int ssl_print_server_keyex(BIO *bio, int indent, SSL *ssl,
             msglen -= 3;
             if (!ssl_print_hexbuf(bio, indent + 2, "point", 1, &msg, &msglen))
                 return 0;
+        } else {
+            BIO_printf(bio, "UNKNOWN CURVE PARAMETER TYPE %d\n", msg[0]);
+            return 0;
         }
         break;
+#endif
+
+    case SSL_kPSK:
+    case SSL_kRSAPSK:
+        break;
     }
-    return ssl_print_signature(bio, indent, ssl, &msg, &msglen);
+    if (!(id & SSL_PSK))
+        ssl_print_signature(bio, indent, ssl, &msg, &msglen);
+    return !msglen;
 }
 
 static int ssl_print_certificate(BIO *bio, int indent,
@@ -1241,7 +1378,7 @@ void SSL_trace(int write_p, int version, int content_type,
                        SSL_alert_type_string_long(msg[0] << 8),
                        msg[0], SSL_alert_desc_string_long(msg[1]), msg[1]);
         }
-    case TLS1_RT_HEARTBEAT:
+    case DTLS1_RT_HEARTBEAT:
         ssl_print_heartbeat(bio, 4, msg, msglen);
         break;
 

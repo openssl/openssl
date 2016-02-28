@@ -1,4 +1,3 @@
-/* crypto/des/enc_read.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -58,7 +57,7 @@
 
 #include <stdio.h>
 #include <errno.h>
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include "des_locl.h"
 
 /* This has some uglies in it but it works - even over sockets. */

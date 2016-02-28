@@ -1,4 +1,3 @@
-/* crypto/dsa/dsa_vrf.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -58,7 +57,7 @@
 
 /* Original version from Steven Schoch <schoch@sheba.arc.nasa.gov> */
 
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/dsa.h>
 
 int DSA_do_verify(const unsigned char *dgst, int dgst_len, DSA_SIG *sig,

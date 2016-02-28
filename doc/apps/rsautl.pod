@@ -7,9 +7,11 @@ rsautl - RSA utility
 =head1 SYNOPSIS
 
 B<openssl> B<rsautl>
+[B<-help>]
 [B<-in file>]
 [B<-out file>]
 [B<-inkey file>]
+[B<-keyform PEM|DER|ENGINE>]
 [B<-pubin>]
 [B<-certin>]
 [B<-sign>]
@@ -31,6 +33,10 @@ data using the RSA algorithm.
 
 =over 4
 
+=item B<-help>
+
+Print out a usage message.
+
 =item B<-in filename>
 
 This specifies the input filename to read data from or standard input
@@ -45,9 +51,13 @@ default.
 
 the input key file, by default it should be an RSA private key.
 
+=item B<-keyform PEM|DER|ENGINE>
+
+the key format PEM, DER or ENGINE.
+
 =item B<-pubin>
 
-the input file is an RSA public key. 
+the input file is an RSA public key.
 
 =item B<-certin>
 
@@ -56,7 +66,7 @@ the input is a certificate containing an RSA public key.
 =item B<-sign>
 
 sign the input data and output the signed result. This requires
-and RSA private key.
+an RSA private key.
 
 =item B<-verify>
 
@@ -180,4 +190,4 @@ which it can be seen agrees with the recovered value above.
 
 =head1 SEE ALSO
 
-L<dgst(1)|dgst(1)>, L<rsa(1)|rsa(1)>, L<genrsa(1)|genrsa(1)>
+L<dgst(1)>, L<rsa(1)>, L<genrsa(1)>

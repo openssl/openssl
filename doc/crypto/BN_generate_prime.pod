@@ -35,6 +35,7 @@ for primality
 
 Deprecated:
 
+ #if OPENSSL_API_COMPAT < 0x00908000L
  BIGNUM *BN_generate_prime(BIGNUM *ret, int num, int safe, BIGNUM *add,
      BIGNUM *rem, void (*callback)(int, int, void *), void *cb_arg);
 
@@ -44,6 +45,7 @@ Deprecated:
  int BN_is_prime_fasttest(const BIGNUM *a, int checks,
      void (*callback)(int, int, void *), BN_CTX *ctx, void *cb_arg,
      int do_trial_division);
+ #endif
 
 =head1 DESCRIPTION
 
@@ -111,8 +113,8 @@ B<BN_GENCB> structure that are supported: "new" style and "old" style. New
 programs should prefer the "new" style, whilst the "old" style is provided
 for backwards compatibility purposes.
 
-A BN_GENCB structure should be created through a call to BN_GENCB_new, and freed
-through a call to BN_GENCB_free.
+A BN_GENCB structure should be created through a call to BN_GENCB_new(),
+and freed through a call to BN_GENCB_free().
 
 For "new" style callbacks a BN_GENCB structure should be initialised with a
 call to BN_GENCB_set(), where B<gencb> is a B<BN_GENCB *>, B<callback> is of
@@ -154,7 +156,7 @@ structure.
 
 Callback functions should return 1 on success or 0 on error.
 
-The error codes can be obtained by L<ERR_get_error(3)|ERR_get_error(3)>.
+The error codes can be obtained by L<ERR_get_error(3)>.
 
 =head1 REMOVED FUNCTIONALITY
 
@@ -173,14 +175,11 @@ Instead applications should create a BN_GENCB structure using BN_GENCB_new:
 
 =head1 SEE ALSO
 
-L<bn(3)|bn(3)>, L<ERR_get_error(3)|ERR_get_error(3)>, L<rand(3)|rand(3)>
+L<bn(3)>, L<ERR_get_error(3)>, L<rand(3)>
 
 =head1 HISTORY
 
-The B<cb_arg> arguments to BN_generate_prime() and to BN_is_prime()
-were added in SSLeay 0.9.0. The B<ret> argument to BN_generate_prime()
-was added in SSLeay 0.9.1.
-BN_is_prime_fasttest() was added in OpenSSL 0.9.5. BN_GENCB_new, BN_GENCB_free
-and BN_GENCB_get_arg were added in OpenSSL 1.1.0
+BN_GENCB_new(), BN_GENCB_free(),
+and BN_GENCB_get_arg() were added in OpenSSL 1.1.0
 
 =cut

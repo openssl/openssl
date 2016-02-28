@@ -1,4 +1,3 @@
-/* bio_ndef.c */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -65,7 +64,7 @@
 /*
  * The usage is quite simple, initialize an ASN1 structure, get a BIO from it
  * then any data written through the BIO will end up translated to
- * approptiate format on the fly. The data is streamed out and does *not*
+ * appropriate format on the fly. The data is streamed out and does *not*
  * need to be all held in memory at once. When the BIO is flushed the output
  * is finalized and any signatures etc written out. The BIO is a 'proper'
  * BIO and can handle non blocking I/O correctly. The usage is simple. The
@@ -106,14 +105,14 @@ BIO *BIO_new_NDEF(BIO *out, ASN1_VALUE *val, const ASN1_ITEM *it)
         ASN1err(ASN1_F_BIO_NEW_NDEF, ASN1_R_STREAMING_NOT_SUPPORTED);
         return NULL;
     }
-    ndef_aux = OPENSSL_malloc(sizeof(NDEF_SUPPORT));
+    ndef_aux = OPENSSL_malloc(sizeof(*ndef_aux));
     asn_bio = BIO_new(BIO_f_asn1());
 
     /* ASN1 bio needs to be next to output BIO */
 
     out = BIO_push(asn_bio, out);
 
-    if (!ndef_aux || !asn_bio || !out)
+    if (ndef_aux == NULL || asn_bio == NULL || !out)
         goto err;
 
     BIO_asn1_set_prefix(asn_bio, ndef_prefix, ndef_prefix_free);
@@ -142,10 +141,8 @@ BIO *BIO_new_NDEF(BIO *out, ASN1_VALUE *val, const ASN1_ITEM *it)
     return sarg.ndef_bio;
 
  err:
-    if (asn_bio)
-        BIO_free(asn_bio);
-    if (ndef_aux)
-        OPENSSL_free(ndef_aux);
+    BIO_free(asn_bio);
+    OPENSSL_free(ndef_aux);
     return NULL;
 }
 
@@ -162,6 +159,9 @@ static int ndef_prefix(BIO *b, unsigned char **pbuf, int *plen, void *parg)
 
     derlen = ASN1_item_ndef_i2d(ndef_aux->val, NULL, ndef_aux->it);
     p = OPENSSL_malloc(derlen);
+    if (p == NULL)
+        return 0;
+
     ndef_aux->derbuf = p;
     *pbuf = p;
     derlen = ASN1_item_ndef_i2d(ndef_aux->val, &p, ndef_aux->it);
@@ -184,8 +184,7 @@ static int ndef_prefix_free(BIO *b, unsigned char **pbuf, int *plen,
 
     ndef_aux = *(NDEF_SUPPORT **)parg;
 
-    if (ndef_aux->derbuf)
-        OPENSSL_free(ndef_aux->derbuf);
+    OPENSSL_free(ndef_aux->derbuf);
 
     ndef_aux->derbuf = NULL;
     *pbuf = NULL;
@@ -229,6 +228,9 @@ static int ndef_suffix(BIO *b, unsigned char **pbuf, int *plen, void *parg)
 
     derlen = ASN1_item_ndef_i2d(ndef_aux->val, NULL, ndef_aux->it);
     p = OPENSSL_malloc(derlen);
+    if (p == NULL)
+        return 0;
+
     ndef_aux->derbuf = p;
     *pbuf = p;
     derlen = ASN1_item_ndef_i2d(ndef_aux->val, &p, ndef_aux->it);

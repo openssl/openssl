@@ -11,7 +11,7 @@ $rm='/bin/rm -f';
 
 $cc='gcc';
 if ($debug)
-	{ $cflags="-g2 -ggdb -DREF_CHECK -DCRYPTO_MDEBUG"; }
+	{ $cflags="-g2 -ggdb -DREF_DEBUG"; }
 elsif ($profile)
 	{ $cflags="-pg -O3"; }
 else
@@ -78,7 +78,7 @@ sub do_link_rule
 	$file =~ s/\//$o/g if $o ne '/';
 	$n=&bname($target);
 	$ret.="$target: $files $dep_libs\n";
-	$ret.="\t\$(LINK) ${efile}$target \$(LFLAGS) $files $libs\n\n";
+	$ret.="\t\$(LINK_CMD) ${efile}$target \$(LFLAGS) $files $libs\n\n";
 	return($ret);
 	}
 

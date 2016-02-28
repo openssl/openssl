@@ -128,7 +128,7 @@ the request and finally create a PKCS#12 file containing it.
 =head1 DSA CERTIFICATES
 
 Although the B<CA.pl> creates RSA CAs and requests it is still possible to
-use it with DSA certificates and requests using the L<req(1)|req(1)> command
+use it with DSA certificates and requests using the L<req(1)> command
 directly. The following example shows the steps that would typically be taken.
 
 Create some DSA parameters:
@@ -184,7 +184,7 @@ configuration file, not just its directory.
 
 =head1 SEE ALSO
 
-L<x509(1)|x509(1)>, L<ca(1)|ca(1)>, L<req(1)|req(1)>, L<pkcs12(1)|pkcs12(1)>,
-L<config(5)|config(5)>
+L<x509(1)>, L<ca(1)>, L<req(1)>, L<pkcs12(1)>,
+L<config(5)>
 
 =cut

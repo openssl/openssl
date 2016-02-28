@@ -1,0 +1,32 @@
+LIBS=../../libcrypto
+SOURCE[../../libcrypto]=\
+        cbc128.c ctr128.c cts128.c cfb128.c ofb128.c gcm128.c \
+        ccm128.c xts128.c wrap128.c ocb128.c \
+        {- $target{modes_asm_src} -}
+
+BEGINRAW[Makefile]
+{- $builddir -}/ghash-ia64.s:	{- $sourcedir -}/asm/ghash-ia64.pl
+	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/ghash-ia64.pl $@ $(CFLAGS)
+{- $builddir -}/ghash-x86.s:	{- $sourcedir -}/asm/ghash-x86.pl
+	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/ghash-x86.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) > $@
+{- $builddir -}/ghash-x86_64.s:	{- $sourcedir -}/asm/ghash-x86_64.pl
+	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/ghash-x86_64.pl $(PERLASM_SCHEME) > $@
+{- $builddir -}/aesni-gcm-x86_64.s:	{- $sourcedir -}/asm/aesni-gcm-x86_64.pl
+	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/aesni-gcm-x86_64.pl $(PERLASM_SCHEME) > $@
+{- $builddir -}/ghash-sparcv9.s:	{- $sourcedir -}/asm/ghash-sparcv9.pl
+	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/ghash-sparcv9.pl $@ $(CFLAGS)
+{- $builddir -}/ghash-alpha.s:	{- $sourcedir -}/asm/ghash-alpha.pl
+	(preproc=$$$$.$@.S; trap "rm $$preproc" INT; \
+	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/ghash-alpha.pl > $$preproc && \
+	$(CC) -E -P $$preproc > $@ && rm $$preproc)
+{- $builddir -}/ghash-parisc.s:	{- $sourcedir -}/asm/ghash-parisc.pl
+	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/ghash-parisc.pl $(PERLASM_SCHEME) $@
+{- $builddir -}/ghashv8-armx.S:	{- $sourcedir -}/asm/ghashv8-armx.pl
+	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/ghashv8-armx.pl $(PERLASM_SCHEME) $@
+{- $builddir -}/ghashp8-ppc.s:	{- $sourcedir -}/asm/ghashp8-ppc.pl
+	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/ghashp8-ppc.pl $(PERLASM_SCHEME) $@
+
+# GNU make "catch all"
+{- $builddir -}/ghash-%.S:	{- $sourcedir -}/asm/ghash-%.pl
+	CC="$(CC)" $(PERL) $< $(PERLASM_SCHEME) $@
+ENDRAW[Makefile]

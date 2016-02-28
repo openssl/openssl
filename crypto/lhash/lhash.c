@@ -1,4 +1,3 @@
-/* crypto/lhash/lhash.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -101,8 +100,6 @@
 #include <openssl/crypto.h>
 #include <openssl/lhash.h>
 
-const char lh_version[] = "lhash" OPENSSL_VERSION_PTEXT;
-
 #undef MIN_NODES
 #define MIN_NODES       16
 #define UP_LOAD         (2*LH_LOAD_MULT) /* load times 256 (default 2) */
@@ -115,40 +112,20 @@ static LHASH_NODE **getrn(_LHASH *lh, const void *data, unsigned long *rhash);
 _LHASH *lh_new(LHASH_HASH_FN_TYPE h, LHASH_COMP_FN_TYPE c)
 {
     _LHASH *ret;
-    int i;
 
-    if ((ret = OPENSSL_malloc(sizeof(_LHASH))) == NULL)
+    if ((ret = OPENSSL_zalloc(sizeof(*ret))) == NULL)
         goto err0;
-    if ((ret->b = OPENSSL_malloc(sizeof(LHASH_NODE *) * MIN_NODES)) == NULL)
+    if ((ret->b = OPENSSL_zalloc(sizeof(*ret->b) * MIN_NODES)) == NULL)
         goto err1;
-    for (i = 0; i < MIN_NODES; i++)
-        ret->b[i] = NULL;
     ret->comp = ((c == NULL) ? (LHASH_COMP_FN_TYPE)strcmp : c);
     ret->hash = ((h == NULL) ? (LHASH_HASH_FN_TYPE)lh_strhash : h);
     ret->num_nodes = MIN_NODES / 2;
     ret->num_alloc_nodes = MIN_NODES;
-    ret->p = 0;
     ret->pmax = MIN_NODES / 2;
     ret->up_load = UP_LOAD;
     ret->down_load = DOWN_LOAD;
-    ret->num_items = 0;
-
-    ret->num_expands = 0;
-    ret->num_expand_reallocs = 0;
-    ret->num_contracts = 0;
-    ret->num_contract_reallocs = 0;
-    ret->num_hash_calls = 0;
-    ret->num_comp_calls = 0;
-    ret->num_insert = 0;
-    ret->num_replace = 0;
-    ret->num_delete = 0;
-    ret->num_no_delete = 0;
-    ret->num_retrieve = 0;
-    ret->num_retrieve_miss = 0;
-    ret->num_hash_comps = 0;
-
-    ret->error = 0;
     return (ret);
+
  err1:
     OPENSSL_free(ret);
  err0:
@@ -188,7 +165,7 @@ void *lh_insert(_LHASH *lh, void *data)
     rn = getrn(lh, data, &hash);
 
     if (*rn == NULL) {
-        if ((nn = (LHASH_NODE *)OPENSSL_malloc(sizeof(LHASH_NODE))) == NULL) {
+        if ((nn = OPENSSL_malloc(sizeof(*nn))) == NULL) {
             lh->error++;
             return (NULL);
         }
@@ -325,15 +302,13 @@ static void expand(_LHASH *lh)
 
     if ((lh->p) >= lh->pmax) {
         j = (int)lh->num_alloc_nodes * 2;
-        n = (LHASH_NODE **)OPENSSL_realloc(lh->b,
-                                           (int)(sizeof(LHASH_NODE *) * j));
+        n = OPENSSL_realloc(lh->b, (int)(sizeof(LHASH_NODE *) * j));
         if (n == NULL) {
-/*                      fputs("realloc error in lhash",stderr); */
+            /* fputs("realloc error in lhash",stderr); */
             lh->error++;
             lh->p = 0;
             return;
         }
-        /* else */
         for (i = (int)lh->num_alloc_nodes; i < j; i++) /* 26/02/92 eay */
             n[i] = NULL;        /* 02/03/92 eay */
         lh->pmax = lh->num_alloc_nodes;
@@ -351,11 +326,10 @@ static void contract(_LHASH *lh)
     np = lh->b[lh->p + lh->pmax - 1];
     lh->b[lh->p + lh->pmax - 1] = NULL; /* 24/07-92 - eay - weird but :-( */
     if (lh->p == 0) {
-        n = (LHASH_NODE **)OPENSSL_realloc(lh->b,
-                                           (unsigned int)(sizeof(LHASH_NODE *)
-                                                          * lh->pmax));
+        n = OPENSSL_realloc(lh->b,
+                            (unsigned int)(sizeof(LHASH_NODE *) * lh->pmax));
         if (n == NULL) {
-/*                      fputs("realloc error in lhash",stderr); */
+            /* fputs("realloc error in lhash",stderr); */
             lh->error++;
             return;
         }
@@ -446,4 +420,19 @@ unsigned long lh_strhash(const char *c)
 unsigned long lh_num_items(const _LHASH *lh)
 {
     return lh ? lh->num_items : 0;
+}
+
+unsigned long lh_get_down_load(const _LHASH *lh)
+{
+    return lh->down_load;
+}
+
+void lh_set_down_load(_LHASH *lh, unsigned long down_load)
+{
+    lh->down_load = down_load;
+}
+
+int lh_error(_LHASH *lh)
+{
+    return lh->error;
 }

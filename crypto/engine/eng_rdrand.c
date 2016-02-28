@@ -51,9 +51,10 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <openssl/engine.h>
+#include <internal/engine.h>
 #include <openssl/rand.h>
 #include <openssl/err.h>
+#include <openssl/crypto.h>
 
 #if (defined(__i386)   || defined(__i386__)   || defined(_M_IX86) || \
      defined(__x86_64) || defined(__x86_64__) || \
@@ -120,7 +121,7 @@ static int bind_helper(ENGINE *e)
 static ENGINE *ENGINE_rdrand(void)
 {
     ENGINE *ret = ENGINE_new();
-    if (!ret)
+    if (ret == NULL)
         return NULL;
     if (!bind_helper(ret)) {
         ENGINE_free(ret);
@@ -129,7 +130,7 @@ static ENGINE *ENGINE_rdrand(void)
     return ret;
 }
 
-void ENGINE_load_rdrand(void)
+void engine_load_rdrand_internal(void)
 {
     extern unsigned int OPENSSL_ia32cap_P[];
 
@@ -143,7 +144,7 @@ void ENGINE_load_rdrand(void)
     }
 }
 #else
-void ENGINE_load_rdrand(void)
+void engine_load_rdrand_internal(void)
 {
 }
 #endif

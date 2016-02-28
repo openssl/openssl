@@ -21,20 +21,6 @@ engine - ENGINE cryptographic module support
  int ENGINE_init(ENGINE *e);
  int ENGINE_finish(ENGINE *e);
 
- void ENGINE_load_openssl(void);
- void ENGINE_load_dynamic(void);
- #ifndef OPENSSL_NO_STATIC_ENGINE
- void ENGINE_load_4758cca(void);
- void ENGINE_load_aep(void);
- void ENGINE_load_atalla(void);
- void ENGINE_load_chil(void);
- void ENGINE_load_cswift(void);
- void ENGINE_load_gmp(void);
- void ENGINE_load_nuron(void);
- void ENGINE_load_sureware(void);
- void ENGINE_load_ubsec(void);
- #endif
- void ENGINE_load_cryptodev(void);
  void ENGINE_load_builtin_engines(void);
 
  void ENGINE_cleanup(void);
@@ -81,9 +67,6 @@ engine - ENGINE cryptographic module support
  int ENGINE_register_RAND(ENGINE *e);
  void ENGINE_unregister_RAND(ENGINE *e);
  void ENGINE_register_all_RAND(void);
- int ENGINE_register_STORE(ENGINE *e);
- void ENGINE_unregister_STORE(ENGINE *e);
- void ENGINE_register_all_STORE(void);
  int ENGINE_register_ciphers(ENGINE *e);
  void ENGINE_unregister_ciphers(ENGINE *e);
  void ENGINE_register_all_ciphers(void);
@@ -100,12 +83,6 @@ engine - ENGINE cryptographic module support
  int ENGINE_ctrl_cmd_string(ENGINE *e, const char *cmd_name, const char *arg,
          int cmd_optional);
 
- int ENGINE_set_ex_data(ENGINE *e, int idx, void *arg);
- void *ENGINE_get_ex_data(const ENGINE *e, int idx);
-
- int ENGINE_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
-         CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func);
-
  ENGINE *ENGINE_new(void);
  int ENGINE_free(ENGINE *e);
  int ENGINE_up_ref(ENGINE *e);
@@ -118,7 +95,6 @@ engine - ENGINE cryptographic module support
  int ENGINE_set_ECDSA(ENGINE *e, const ECDSA_METHOD *dh_meth);
  int ENGINE_set_DH(ENGINE *e, const DH_METHOD *dh_meth);
  int ENGINE_set_RAND(ENGINE *e, const RAND_METHOD *rand_meth);
- int ENGINE_set_STORE(ENGINE *e, const STORE_METHOD *rand_meth);
  int ENGINE_set_destroy_function(ENGINE *e, ENGINE_GEN_INT_FUNC_PTR destroy_f);
  int ENGINE_set_init_function(ENGINE *e, ENGINE_GEN_INT_FUNC_PTR init_f);
  int ENGINE_set_finish_function(ENGINE *e, ENGINE_GEN_INT_FUNC_PTR finish_f);
@@ -138,7 +114,6 @@ engine - ENGINE cryptographic module support
  const ECDSA_METHOD *ENGINE_get_ECDSA(const ENGINE *e);
  const DH_METHOD *ENGINE_get_DH(const ENGINE *e);
  const RAND_METHOD *ENGINE_get_RAND(const ENGINE *e);
- const STORE_METHOD *ENGINE_get_STORE(const ENGINE *e);
  ENGINE_GEN_INT_FUNC_PTR ENGINE_get_destroy_function(const ENGINE *e);
  ENGINE_GEN_INT_FUNC_PTR ENGINE_get_init_function(const ENGINE *e);
  ENGINE_GEN_INT_FUNC_PTR ENGINE_get_finish_function(const ENGINE *e);
@@ -172,7 +147,7 @@ implementation includes the following abstractions;
 
  RSA_METHOD - for providing alternative RSA implementations
  DSA_METHOD, DH_METHOD, RAND_METHOD, ECDH_METHOD, ECDSA_METHOD,
-       STORE_METHOD - similarly for other OpenSSL APIs
+       - similarly for other OpenSSL APIs
  EVP_CIPHER - potentially multiple cipher algorithms (indexed by 'nid')
  EVP_DIGEST - potentially multiple hash algorithms (indexed by 'nid')
  key-loading - loading public and/or private EVP_PKEY keys
@@ -192,7 +167,7 @@ to use the pointer value at all, as this kind of reference is a guarantee
 that the structure can not be deallocated until the reference is released.
 
 However, a structural reference provides no guarantee that the ENGINE is
-initiliased and able to use any of its cryptographic
+initialised and able to use any of its cryptographic
 implementations. Indeed it's quite possible that most ENGINEs will not
 initialise at all in typical environments, as ENGINEs are typically used to
 support specialised hardware. To use an ENGINE's functionality, you need a
@@ -201,8 +176,8 @@ specialised form of structural reference, because each functional reference
 implicitly contains a structural reference as well - however to avoid
 difficult-to-find programming bugs, it is recommended to treat the two
 kinds of reference independently. If you have a functional reference to an
-ENGINE, you have a guarantee that the ENGINE has been initialised ready to
-perform cryptographic operations and will remain uninitialised
+ENGINE, you have a guarantee that the ENGINE has been initialised and
+is ready to perform cryptographic operations, and will remain initialised
 until after you have released your reference.
 
 I<Structural references>
@@ -318,17 +293,7 @@ it uses static linking against openssl, then the resulting application
 binary will not contain any alternative ENGINE code at all. So the first
 consideration is whether any/all available ENGINE implementations should be
 made visible to OpenSSL - this is controlled by calling the various "load"
-functions, eg.
-
- /* Make the "dynamic" ENGINE available */
- void ENGINE_load_dynamic(void);
- /* Make the CryptoSwift hardware acceleration support available */
- void ENGINE_load_cswift(void);
- /* Make support for nCipher's "CHIL" hardware available */
- void ENGINE_load_chil(void);
- ...
- /* Make ALL ENGINE implementations bundled with OpenSSL available */
- void ENGINE_load_builtin_engines(void);
+functions.
 
 Having called any of these functions, ENGINE objects would have been
 dynamically allocated and populated with these implementations and linked
@@ -370,7 +335,7 @@ I<Using a specific ENGINE implementation>
 Here we'll assume an application has been configured by its user or admin
 to want to use the "ACME" ENGINE if it is available in the version of
 OpenSSL the application was compiled with. If it is available, it should be
-used by default for all RSA, DSA, and symmetric cipher operation, otherwise
+used by default for all RSA, DSA, and symmetric cipher operations, otherwise
 OpenSSL should use its builtin software as per usual. The following code
 illustrates how to approach this;
 
@@ -401,7 +366,7 @@ I<Automatically using builtin ENGINE implementations>
 
 Here we'll assume we want to load and register all ENGINE implementations
 bundled with OpenSSL, such that for any cryptographic algorithm required by
-OpenSSL - if there is an ENGINE that implements it and can be initialise,
+OpenSSL - if there is an ENGINE that implements it and can be initialised,
 it should be used. The following code illustrates how this can work;
 
  /* Load all bundled ENGINEs into memory and make them visible */
@@ -576,24 +541,19 @@ for any higher-level ENGINE functions such as ENGINE_ctrl_cmd_string().
 by applications, administrations, users, etc. These can support arbitrary
 operations via ENGINE_ctrl(), including passing to and/or from the control
 commands data of any arbitrary type. These commands are supported in the
-discovery mechanisms simply to allow applications determinie if an ENGINE
+discovery mechanisms simply to allow applications to determine if an ENGINE
 supports certain specific commands it might want to use (eg. application "foo"
 might query various ENGINEs to see if they implement "FOO_GET_VENDOR_LOGO_GIF" -
 and ENGINE could therefore decide whether or not to support this "foo"-specific
 extension).
 
-=head2 Future developments
-
-The ENGINE API and internal architecture is currently being reviewed. Slated for
-possible release in 0.9.8 is support for transparent loading of "dynamic"
-ENGINEs (built as self-contained shared-libraries). This would allow ENGINE
-implementations to be provided independently of OpenSSL libraries and/or
-OpenSSL-based applications, and would also remove any requirement for
-applications to explicitly use the "dynamic" ENGINE to bind to shared-library
-implementations.
-
 =head1 SEE ALSO
 
-L<rsa(3)|rsa(3)>, L<dsa(3)|dsa(3)>, L<dh(3)|dh(3)>, L<rand(3)|rand(3)>
+L<OPENSSL_init_crypto(3)>, L<rsa(3)>, L<dsa(3)>, L<dh(3)>, L<rand(3)>
+
+=head1 HISTORY
+
+ENGINE_load_openssl(), ENGINE_load_dynamic(), and ENGINE_load_cryptodev()
+were deprecated in OpenSSL 1.1.0 by OPENSSL_init_crypto().
 
 =cut

@@ -1,4 +1,3 @@
-/* conf_lib.c */
 /*
  * Written by Richard Levitte (richard@levitte.org) for the OpenSSL project
  * 2000.
@@ -58,13 +57,13 @@
  */
 
 #include <stdio.h>
+#include <string.h>
+#include <internal/conf.h>
 #include <openssl/crypto.h>
 #include <openssl/err.h>
 #include <openssl/conf.h>
 #include <openssl/conf_api.h>
 #include <openssl/lhash.h>
-
-const char CONF_version[] = "CONF" OPENSSL_VERSION_PTEXT;
 
 static CONF_METHOD *default_CONF_method = NULL;
 
@@ -118,7 +117,7 @@ LHASH_OF(CONF_VALUE) *CONF_load_fp(LHASH_OF(CONF_VALUE) *conf, FILE *fp,
 {
     BIO *btmp;
     LHASH_OF(CONF_VALUE) *ltmp;
-    if (!(btmp = BIO_new_fp(fp, BIO_NOCLOSE))) {
+    if ((btmp = BIO_new_fp(fp, BIO_NOCLOSE)) == NULL) {
         CONFerr(CONF_F_CONF_LOAD_FP, ERR_R_BUF_LIB);
         return NULL;
     }
@@ -200,7 +199,7 @@ int CONF_dump_fp(LHASH_OF(CONF_VALUE) *conf, FILE *out)
     BIO *btmp;
     int ret;
 
-    if (!(btmp = BIO_new_fp(out, BIO_NOCLOSE))) {
+    if ((btmp = BIO_new_fp(out, BIO_NOCLOSE)) == NULL) {
         CONFerr(CONF_F_CONF_DUMP_FP, ERR_R_BUF_LIB);
         return 0;
     }
@@ -270,7 +269,7 @@ int NCONF_load_fp(CONF *conf, FILE *fp, long *eline)
 {
     BIO *btmp;
     int ret;
-    if (!(btmp = BIO_new_fp(fp, BIO_NOCLOSE))) {
+    if ((btmp = BIO_new_fp(fp, BIO_NOCLOSE)) == NULL) {
         CONFerr(CONF_F_NCONF_LOAD_FP, ERR_R_BUF_LIB);
         return 0;
     }
@@ -354,7 +353,7 @@ int NCONF_dump_fp(const CONF *conf, FILE *out)
 {
     BIO *btmp;
     int ret;
-    if (!(btmp = BIO_new_fp(out, BIO_NOCLOSE))) {
+    if ((btmp = BIO_new_fp(out, BIO_NOCLOSE)) == NULL) {
         CONFerr(CONF_F_NCONF_DUMP_FP, ERR_R_BUF_LIB);
         return 0;
     }
@@ -372,4 +371,31 @@ int NCONF_dump_bio(const CONF *conf, BIO *out)
     }
 
     return conf->meth->dump(conf, out);
+}
+
+/*
+ * These routines call the C malloc/free, to avoid intermixing with
+ * OpenSSL function pointers before the library is initialized.
+ */
+OPENSSL_INIT_SETTINGS *OPENSSL_INIT_new(void)
+{
+    OPENSSL_INIT_SETTINGS *ret = malloc(sizeof(*ret));
+
+    if (ret != NULL)
+        memset(ret, 0, sizeof(*ret));
+    return ret;
+}
+
+
+void OPENSSL_INIT_set_config_filename(OPENSSL_INIT_SETTINGS *settings,
+                                      const char *config_file)
+{
+    free(settings->config_name);
+    settings->config_name = config_file == NULL ? NULL : strdup(config_file);
+}
+
+void OPENSSL_INIT_free(OPENSSL_INIT_SETTINGS *settings)
+{
+    free(settings->config_name);
+    free(settings);
 }

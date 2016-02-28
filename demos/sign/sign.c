@@ -1,4 +1,3 @@
-/* demos/sign/sign.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -57,7 +56,7 @@
  */
 
 /*
- * sign-it.cpp - Simple test app using SSLeay envelopes to sign data
+ * sign-it.cpp - Simple test app using EVP envelopes to sign data
  * 29.9.1996, Sampo Kellomaki <sampo@iki.fi>
  */
 

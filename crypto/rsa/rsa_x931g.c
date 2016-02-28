@@ -1,4 +1,3 @@
-/* crypto/rsa/rsa_gen.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -72,14 +71,15 @@ int RSA_X931_derive_ex(RSA *rsa, BIGNUM *p1, BIGNUM *p2, BIGNUM *q1,
 {
     BIGNUM *r0 = NULL, *r1 = NULL, *r2 = NULL, *r3 = NULL;
     BN_CTX *ctx = NULL, *ctx2 = NULL;
+    int ret = 0;
 
     if (!rsa)
         goto err;
 
     ctx = BN_CTX_new();
-    BN_CTX_start(ctx);
-    if (!ctx)
+    if (ctx == NULL)
         goto err;
+    BN_CTX_start(ctx);
 
     r0 = BN_CTX_get(ctx);
     r1 = BN_CTX_get(ctx);
@@ -100,9 +100,9 @@ int RSA_X931_derive_ex(RSA *rsa, BIGNUM *p1, BIGNUM *p2, BIGNUM *q1,
      * test programs to output selective parameters.
      */
 
-    if (Xp && !rsa->p) {
+    if (Xp && rsa->p == NULL) {
         rsa->p = BN_new();
-        if (!rsa->p)
+        if (rsa->p == NULL)
             goto err;
 
         if (!BN_X931_derive_prime_ex(rsa->p, p1, p2,
@@ -110,16 +110,16 @@ int RSA_X931_derive_ex(RSA *rsa, BIGNUM *p1, BIGNUM *p2, BIGNUM *q1,
             goto err;
     }
 
-    if (Xq && !rsa->q) {
+    if (Xq && rsa->q == NULL) {
         rsa->q = BN_new();
-        if (!rsa->q)
+        if (rsa->q == NULL)
             goto err;
         if (!BN_X931_derive_prime_ex(rsa->q, q1, q2,
                                      Xq, Xq1, Xq2, e, ctx, cb))
             goto err;
     }
 
-    if (!rsa->p || !rsa->q) {
+    if (rsa->p == NULL || rsa->q == NULL) {
         BN_CTX_end(ctx);
         BN_CTX_free(ctx);
         return 2;
@@ -152,7 +152,7 @@ int RSA_X931_derive_ex(RSA *rsa, BIGNUM *p1, BIGNUM *p2, BIGNUM *q1,
         goto err;               /* LCM((p-1)(q-1)) */
 
     ctx2 = BN_CTX_new();
-    if (!ctx2)
+    if (ctx2 == NULL)
         goto err;
 
     rsa->d = BN_mod_inverse(NULL, rsa->e, r0, ctx2); /* d */
@@ -176,18 +176,14 @@ int RSA_X931_derive_ex(RSA *rsa, BIGNUM *p1, BIGNUM *p2, BIGNUM *q1,
     /* calculate inverse of q mod p */
     rsa->iqmp = BN_mod_inverse(NULL, rsa->q, rsa->p, ctx2);
 
+    ret = 1;
  err:
-    if (ctx) {
+    if (ctx)
         BN_CTX_end(ctx);
-        BN_CTX_free(ctx);
-    }
-    if (ctx2)
-        BN_CTX_free(ctx2);
-    /* If this is set all calls successful */
-    if (rsa->iqmp != NULL)
-        return 1;
+    BN_CTX_free(ctx);
+    BN_CTX_free(ctx2);
 
-    return 0;
+    return ret;
 
 }
 
@@ -199,7 +195,7 @@ int RSA_X931_generate_key_ex(RSA *rsa, int bits, const BIGNUM *e,
     BN_CTX *ctx = NULL;
 
     ctx = BN_CTX_new();
-    if (!ctx)
+    if (ctx == NULL)
         goto error;
 
     BN_CTX_start(ctx);
@@ -210,7 +206,7 @@ int RSA_X931_generate_key_ex(RSA *rsa, int bits, const BIGNUM *e,
 
     rsa->p = BN_new();
     rsa->q = BN_new();
-    if (!rsa->p || !rsa->q)
+    if (rsa->p == NULL || rsa->q == NULL)
         goto error;
 
     /* Generate two primes from Xp, Xq */
@@ -235,10 +231,9 @@ int RSA_X931_generate_key_ex(RSA *rsa, int bits, const BIGNUM *e,
     ok = 1;
 
  error:
-    if (ctx) {
+    if (ctx)
         BN_CTX_end(ctx);
-        BN_CTX_free(ctx);
-    }
+    BN_CTX_free(ctx);
 
     if (ok)
         return 1;

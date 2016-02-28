@@ -1,4 +1,3 @@
-/* crypto/ec/ec_curve.c */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -74,6 +73,7 @@
 #include <openssl/err.h>
 #include <openssl/obj_mac.h>
 #include <openssl/opensslconf.h>
+#include "e_os.h"
 
 typedef struct {
     int field_type,             /* either NID_X9_62_prime_field or
@@ -2981,7 +2981,7 @@ static const ec_list_element curve_list[] = {
      "NIST/SECG/WTLS curve over a 233 bit binary field"},
 #endif
     {NID_wap_wsg_idm_ecid_wtls12, &_EC_WTLS_12.h, 0,
-     "WTLS curvs over a 224 bit prime field"},
+     "WTLS curve over a 224 bit prime field"},
 #ifndef OPENSSL_NO_EC2M
     /* IPSec curves */
     {NID_ipsec3, &_EC_IPSEC_155_ID3.h, 0,
@@ -3022,7 +3022,7 @@ static const ec_list_element curve_list[] = {
      "RFC 5639 curve over a 512 bit prime field"},
 };
 
-#define curve_list_length (sizeof(curve_list)/sizeof(ec_list_element))
+#define curve_list_length OSSL_NELEM(curve_list)
 
 static EC_GROUP *ec_group_new_from_data(const ec_list_element curve)
 {
@@ -3048,9 +3048,9 @@ static EC_GROUP *ec_group_new_from_data(const ec_list_element curve)
     params = (const unsigned char *)(data + 1); /* skip header */
     params += seed_len;         /* skip seed */
 
-    if (!(p = BN_bin2bn(params + 0 * param_len, param_len, NULL))
-        || !(a = BN_bin2bn(params + 1 * param_len, param_len, NULL))
-        || !(b = BN_bin2bn(params + 2 * param_len, param_len, NULL))) {
+    if ((p = BN_bin2bn(params + 0 * param_len, param_len, NULL)) == NULL
+        || (a = BN_bin2bn(params + 1 * param_len, param_len, NULL)) == NULL
+        || (b = BN_bin2bn(params + 2 * param_len, param_len, NULL)) == NULL) {
         ECerr(EC_F_EC_GROUP_NEW_FROM_DATA, ERR_R_BN_LIB);
         goto err;
     }
@@ -3084,8 +3084,8 @@ static EC_GROUP *ec_group_new_from_data(const ec_list_element curve)
         goto err;
     }
 
-    if (!(x = BN_bin2bn(params + 3 * param_len, param_len, NULL))
-        || !(y = BN_bin2bn(params + 4 * param_len, param_len, NULL))) {
+    if ((x = BN_bin2bn(params + 3 * param_len, param_len, NULL)) == NULL
+        || (y = BN_bin2bn(params + 4 * param_len, param_len, NULL)) == NULL) {
         ECerr(EC_F_EC_GROUP_NEW_FROM_DATA, ERR_R_BN_LIB);
         goto err;
     }
@@ -3093,7 +3093,7 @@ static EC_GROUP *ec_group_new_from_data(const ec_list_element curve)
         ECerr(EC_F_EC_GROUP_NEW_FROM_DATA, ERR_R_EC_LIB);
         goto err;
     }
-    if (!(order = BN_bin2bn(params + 5 * param_len, param_len, NULL))
+    if ((order = BN_bin2bn(params + 5 * param_len, param_len, NULL)) == NULL
         || !BN_set_word(x, (BN_ULONG)data->cofactor)) {
         ECerr(EC_F_EC_GROUP_NEW_FROM_DATA, ERR_R_BN_LIB);
         goto err;
@@ -3114,22 +3114,14 @@ static EC_GROUP *ec_group_new_from_data(const ec_list_element curve)
         EC_GROUP_free(group);
         group = NULL;
     }
-    if (P)
-        EC_POINT_free(P);
-    if (ctx)
-        BN_CTX_free(ctx);
-    if (p)
-        BN_free(p);
-    if (a)
-        BN_free(a);
-    if (b)
-        BN_free(b);
-    if (order)
-        BN_free(order);
-    if (x)
-        BN_free(x);
-    if (y)
-        BN_free(y);
+    EC_POINT_free(P);
+    BN_CTX_free(ctx);
+    BN_free(p);
+    BN_free(a);
+    BN_free(b);
+    BN_free(order);
+    BN_free(x);
+    BN_free(y);
     return group;
 }
 
@@ -3202,7 +3194,7 @@ static EC_NIST_NAME nist_curves[] = {
 const char *EC_curve_nid2nist(int nid)
 {
     size_t i;
-    for (i = 0; i < sizeof(nist_curves) / sizeof(EC_NIST_NAME); i++) {
+    for (i = 0; i < OSSL_NELEM(nist_curves); i++) {
         if (nist_curves[i].nid == nid)
             return nist_curves[i].name;
     }
@@ -3212,8 +3204,8 @@ const char *EC_curve_nid2nist(int nid)
 int EC_curve_nist2nid(const char *name)
 {
     size_t i;
-    for (i = 0; i < sizeof(nist_curves) / sizeof(EC_NIST_NAME); i++) {
-        if (!strcmp(nist_curves[i].name, name))
+    for (i = 0; i < OSSL_NELEM(nist_curves); i++) {
+        if (strcmp(nist_curves[i].name, name) == 0)
             return nist_curves[i].nid;
     }
     return NID_undef;

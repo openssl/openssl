@@ -5,7 +5,7 @@ $max_nid=0;
 $o=0;
 while(<NUMIN>)
 	{
-	chop;
+	s|\R$||;
 	$o++;
 	s/#.*$//;
 	next if /^\s*$/;
@@ -28,7 +28,7 @@ $Cname="";
 $o=0;
 while (<IN>)
 	{
-	chop;
+	s|\R$||;
 	$o++;
         if (/^!module\s+(.*)$/)
 		{
@@ -67,7 +67,7 @@ while (<IN>)
 		$myoid = &process_oid($myoid);
 		}
 
-	if ($Cname eq "" && !($myln =~ / /))
+	if ($Cname eq "" && ($myln =~ /^[_A-Za-z][\w.-]*$/ ))
 		{
 		$Cname = $myln;
 		$Cname =~ s/\./_/g;
@@ -119,8 +119,6 @@ close NUMOUT;
 
 open (OUT,">$ARGV[2]") || die "Can't open output file $ARGV[2]";
 print OUT <<'EOF';
-/* crypto/objects/obj_mac.h */
-
 /*
  * THIS FILE IS GENERATED FROM objects.txt by objects.pl via the following
  * command: perl objects.pl objects.txt obj_mac.num obj_mac.h

@@ -1,4 +1,3 @@
-/* crypto/bn/bn_mont.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -116,7 +115,7 @@
  * sections 3.8 and 4.2 in http://security.ece.orst.edu/koc/papers/r01rsasw.pdf
  */
 
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include "bn_lcl.h"
 
 #define MONT_WORD               /* use the faster word-based algorithm */
@@ -196,7 +195,9 @@ static int BN_from_montgomery_word(BIGNUM *ret, BIGNUM *r, BN_MONT_CTX *mont)
     rp = r->d;
 
     /* clear the top words of T */
-    memset(&(rp[r->top]), 0, (max - r->top) * sizeof(BN_ULONG));
+    i = max - r->top;
+    if (i)
+        memset(&rp[r->top], 0, sizeof(*rp) * i);
 
     r->top = max;
     n0 = mont->n0[0];
@@ -314,7 +315,7 @@ BN_MONT_CTX *BN_MONT_CTX_new(void)
 {
     BN_MONT_CTX *ret;
 
-    if ((ret = (BN_MONT_CTX *)OPENSSL_malloc(sizeof(BN_MONT_CTX))) == NULL)
+    if ((ret = OPENSSL_malloc(sizeof(*ret))) == NULL)
         return (NULL);
 
     BN_MONT_CTX_init(ret);
@@ -325,9 +326,9 @@ BN_MONT_CTX *BN_MONT_CTX_new(void)
 void BN_MONT_CTX_init(BN_MONT_CTX *ctx)
 {
     ctx->ri = 0;
-    BN_init(&(ctx->RR));
-    BN_init(&(ctx->N));
-    BN_init(&(ctx->Ni));
+    bn_init(&(ctx->RR));
+    bn_init(&(ctx->N));
+    bn_init(&(ctx->Ni));
     ctx->n0[0] = ctx->n0[1] = 0;
     ctx->flags = 0;
 }
@@ -337,9 +338,9 @@ void BN_MONT_CTX_free(BN_MONT_CTX *mont)
     if (mont == NULL)
         return;
 
-    BN_free(&(mont->RR));
-    BN_free(&(mont->N));
-    BN_free(&(mont->Ni));
+    BN_clear_free(&(mont->RR));
+    BN_clear_free(&(mont->N));
+    BN_clear_free(&(mont->Ni));
     if (mont->flags & BN_FLG_MALLOCED)
         OPENSSL_free(mont);
 }
@@ -348,6 +349,9 @@ int BN_MONT_CTX_set(BN_MONT_CTX *mont, const BIGNUM *mod, BN_CTX *ctx)
 {
     int ret = 0;
     BIGNUM *Ri, *R;
+
+    if (BN_is_zero(mod))
+        return 0;
 
     BN_CTX_start(ctx);
     if ((Ri = BN_CTX_get(ctx)) == NULL)
@@ -362,7 +366,7 @@ int BN_MONT_CTX_set(BN_MONT_CTX *mont, const BIGNUM *mod, BN_CTX *ctx)
         BIGNUM tmod;
         BN_ULONG buf[2];
 
-        BN_init(&tmod);
+        bn_init(&tmod);
         tmod.d = buf;
         tmod.dmax = 2;
         tmod.neg = 0;
@@ -512,7 +516,7 @@ BN_MONT_CTX *BN_MONT_CTX_set_locked(BN_MONT_CTX **pmont, int lock,
      * (the losers throw away the work they've done).
      */
     ret = BN_MONT_CTX_new();
-    if (!ret)
+    if (ret == NULL)
         return NULL;
     if (!BN_MONT_CTX_set(ret, mod, ctx)) {
         BN_MONT_CTX_free(ret);

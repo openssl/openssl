@@ -57,12 +57,12 @@
  */
 
 #include <stdio.h>
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/asn1t.h>
 #include <openssl/x509.h>
 #include <openssl/evp.h>
 #include <openssl/bn.h>
-#include "evp_locl.h"
+#include "internal/evp_int.h"
 #include "dsa_locl.h"
 
 /* DSA pkey context structure */
@@ -81,8 +81,8 @@ typedef struct {
 static int pkey_dsa_init(EVP_PKEY_CTX *ctx)
 {
     DSA_PKEY_CTX *dctx;
-    dctx = OPENSSL_malloc(sizeof(DSA_PKEY_CTX));
-    if (!dctx)
+    dctx = OPENSSL_malloc(sizeof(*dctx));
+    if (dctx == NULL)
         return 0;
     dctx->nbits = 1024;
     dctx->qbits = 160;
@@ -113,25 +113,27 @@ static int pkey_dsa_copy(EVP_PKEY_CTX *dst, EVP_PKEY_CTX *src)
 static void pkey_dsa_cleanup(EVP_PKEY_CTX *ctx)
 {
     DSA_PKEY_CTX *dctx = ctx->data;
-    if (dctx)
-        OPENSSL_free(dctx);
+    OPENSSL_free(dctx);
 }
 
 static int pkey_dsa_sign(EVP_PKEY_CTX *ctx, unsigned char *sig,
                          size_t *siglen, const unsigned char *tbs,
                          size_t tbslen)
 {
-    int ret, type;
+    int ret;
     unsigned int sltmp;
     DSA_PKEY_CTX *dctx = ctx->data;
     DSA *dsa = ctx->pkey->pkey.dsa;
 
-    if (dctx->md)
-        type = EVP_MD_type(dctx->md);
-    else
-        type = NID_sha1;
+    if (dctx->md) {
+        if (tbslen != (size_t)EVP_MD_size(dctx->md))
+            return 0;
+    } else {
+        if (tbslen != SHA_DIGEST_LENGTH)
+            return 0;
+    }
 
-    ret = DSA_sign(type, tbs, tbslen, sig, &sltmp, dsa);
+    ret = DSA_sign(0, tbs, tbslen, sig, &sltmp, dsa);
 
     if (ret <= 0)
         return ret;
@@ -143,16 +145,19 @@ static int pkey_dsa_verify(EVP_PKEY_CTX *ctx,
                            const unsigned char *sig, size_t siglen,
                            const unsigned char *tbs, size_t tbslen)
 {
-    int ret, type;
+    int ret;
     DSA_PKEY_CTX *dctx = ctx->data;
     DSA *dsa = ctx->pkey->pkey.dsa;
 
-    if (dctx->md)
-        type = EVP_MD_type(dctx->md);
-    else
-        type = NID_sha1;
+    if (dctx->md) {
+        if (tbslen != (size_t)EVP_MD_size(dctx->md))
+            return 0;
+    } else {
+        if (tbslen != SHA_DIGEST_LENGTH)
+            return 0;
+    }
 
-    ret = DSA_verify(type, tbs, tbslen, sig, siglen, dsa);
+    ret = DSA_verify(0, tbs, tbslen, sig, siglen, dsa);
 
     return ret;
 }
@@ -219,18 +224,18 @@ static int pkey_dsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 static int pkey_dsa_ctrl_str(EVP_PKEY_CTX *ctx,
                              const char *type, const char *value)
 {
-    if (!strcmp(type, "dsa_paramgen_bits")) {
+    if (strcmp(type, "dsa_paramgen_bits") == 0) {
         int nbits;
         nbits = atoi(value);
         return EVP_PKEY_CTX_set_dsa_paramgen_bits(ctx, nbits);
     }
-    if (!strcmp(type, "dsa_paramgen_q_bits")) {
+    if (strcmp(type, "dsa_paramgen_q_bits") == 0) {
         int qbits = atoi(value);
         return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DSA, EVP_PKEY_OP_PARAMGEN,
                                  EVP_PKEY_CTRL_DSA_PARAMGEN_Q_BITS, qbits,
                                  NULL);
     }
-    if (!strcmp(type, "dsa_paramgen_md")) {
+    if (strcmp(type, "dsa_paramgen_md") == 0) {
         return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DSA, EVP_PKEY_OP_PARAMGEN,
                                  EVP_PKEY_CTRL_DSA_PARAMGEN_MD, 0,
                                  (void *)EVP_get_digestbyname(value));
@@ -246,21 +251,19 @@ static int pkey_dsa_paramgen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
     int ret;
     if (ctx->pkey_gencb) {
         pcb = BN_GENCB_new();
-        if (!pcb)
+        if (pcb == NULL)
             return 0;
         evp_pkey_set_cb_translate(pcb, ctx);
     } else
         pcb = NULL;
     dsa = DSA_new();
-    if (!dsa) {
-        if (pcb)
-            BN_GENCB_free(pcb);
+    if (dsa == NULL) {
+        BN_GENCB_free(pcb);
         return 0;
     }
     ret = dsa_builtin_paramgen(dsa, dctx->nbits, dctx->qbits, dctx->pmd,
                                NULL, 0, NULL, NULL, NULL, pcb);
-    if (pcb)
-        BN_GENCB_free(pcb);
+    BN_GENCB_free(pcb);
     if (ret)
         EVP_PKEY_assign_DSA(pkey, dsa);
     else
@@ -276,7 +279,7 @@ static int pkey_dsa_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
         return 0;
     }
     dsa = DSA_new();
-    if (!dsa)
+    if (dsa == NULL)
         return 0;
     EVP_PKEY_assign_DSA(pkey, dsa);
     /* Note: if error return, pkey is freed by parent routine */

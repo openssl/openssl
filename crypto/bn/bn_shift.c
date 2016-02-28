@@ -1,4 +1,3 @@
-/* crypto/bn/bn_shift.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -56,7 +55,7 @@
  * [including the GNU Public Licence.]
  */
 
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include "bn_lcl.h"
 
 int BN_lshift1(BIGNUM *r, const BIGNUM *a)
@@ -136,6 +135,11 @@ int BN_lshift(BIGNUM *r, const BIGNUM *a, int n)
     bn_check_top(r);
     bn_check_top(a);
 
+    if (n < 0) {
+        BNerr(BN_F_BN_LSHIFT, BN_R_INVALID_SHIFT);
+        return 0;
+    }
+
     r->neg = a->neg;
     nw = n / BN_BITS2;
     if (bn_wexpand(r, a->top + nw + 1) == NULL)
@@ -154,10 +158,7 @@ int BN_lshift(BIGNUM *r, const BIGNUM *a, int n)
             t[nw + i + 1] |= (l >> rb) & BN_MASK2;
             t[nw + i] = (l << lb) & BN_MASK2;
         }
-    memset(t, 0, nw * sizeof(t[0]));
-    /*
-     * for (i=0; i<nw; i++) t[i]=0;
-     */
+    memset(t, 0, sizeof(*t) * nw);
     r->top = a->top + nw + 1;
     bn_correct_top(r);
     bn_check_top(r);
@@ -172,6 +173,11 @@ int BN_rshift(BIGNUM *r, const BIGNUM *a, int n)
 
     bn_check_top(r);
     bn_check_top(a);
+
+    if (n < 0) {
+        BNerr(BN_F_BN_RSHIFT, BN_R_INVALID_SHIFT);
+        return 0;
+    }
 
     nw = n / BN_BITS2;
     rb = n % BN_BITS2;

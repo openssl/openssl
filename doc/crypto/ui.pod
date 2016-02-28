@@ -69,7 +69,7 @@ UI_set_method, UI_OpenSSL, ERR_load_UI_strings - New User Interface
 
 UI stands for User Interface, and is general purpose set of routines to
 prompt the user for text-based information.  Through user-written methods
-(see L<ui_create(3)|ui_create(3)>), prompting can be done in any way
+(see L<ui_create(3)>), prompting can be done in any way
 imaginable, be it plain text prompting, through dialog boxes or from a
 cell phone.
 
@@ -106,6 +106,7 @@ most problems when porting.
 
 UI_free() removes a UI from memory, along with all other pieces of memory
 that's connected to it, like duplicated input strings, results and others.
+If B<ui> is NULL nothing is done.
 
 UI_add_input_string() and UI_add_verify_string() add a prompt to the UI,
 as well as flags and a result buffer and the desired minimum and maximum
@@ -180,15 +181,6 @@ UI_set_method() changes the UI method associated with a given UI.
 
 =head1 SEE ALSO
 
-L<ui_create(3)|ui_create(3)>, L<ui_compat(3)|ui_compat(3)>
-
-=head1 HISTORY
-
-The UI section was first introduced in OpenSSL 0.9.7.
-
-=head1 AUTHOR
-
-Richard Levitte (richard@levitte.org) for the OpenSSL project
-(http://www.openssl.org).
+L<ui_create(3)>, L<ui_compat(3)>
 
 =cut

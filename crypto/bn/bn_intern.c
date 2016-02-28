@@ -52,7 +52,7 @@
  *
  */
 
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include "bn_lcl.h"
 
 /*
@@ -67,7 +67,6 @@
 signed char *bn_compute_wNAF(const BIGNUM *scalar, int w, size_t *ret_len)
 {
     int window_val;
-    int ok = 0;
     signed char *r = NULL;
     int sign = 1;
     int bit, next_bit, mask;
@@ -75,7 +74,7 @@ signed char *bn_compute_wNAF(const BIGNUM *scalar, int w, size_t *ret_len)
 
     if (BN_is_zero(scalar)) {
         r = OPENSSL_malloc(1);
-        if (!r) {
+        if (r == NULL) {
             BNerr(BN_F_BN_COMPUTE_WNAF, ERR_R_MALLOC_FAILURE);
             goto err;
         }
@@ -176,17 +175,12 @@ signed char *bn_compute_wNAF(const BIGNUM *scalar, int w, size_t *ret_len)
         BNerr(BN_F_BN_COMPUTE_WNAF, ERR_R_INTERNAL_ERROR);
         goto err;
     }
-    len = j;
-    ok = 1;
+    *ret_len = j;
+    return r;
 
  err:
-    if (!ok) {
-        OPENSSL_free(r);
-        r = NULL;
-    }
-    if (ok)
-        *ret_len = len;
-    return r;
+    OPENSSL_free(r);
+    return NULL;
 }
 
 int bn_get_top(const BIGNUM *a)
@@ -217,8 +211,8 @@ int bn_copy_words(BN_ULONG *out, const BIGNUM *in, int size)
     if (in->top > size)
         return 0;
 
-    memset(out, 0, sizeof(BN_ULONG) * size);
-    memcpy(out, in->d, sizeof(BN_ULONG) * in->top);
+    memset(out, 0, sizeof(*out) * size);
+    memcpy(out, in->d, sizeof(*out) * in->top);
     return 1;
 }
 
@@ -233,11 +227,20 @@ void bn_set_static_words(BIGNUM *a, BN_ULONG *words, int size)
     a->dmax = a->top = size;
     a->neg = 0;
     a->flags |= BN_FLG_STATIC_DATA;
+    bn_correct_top(a);
 }
 
-void bn_set_data(BIGNUM *a, const void *data, size_t size)
+int bn_set_words(BIGNUM *a, BN_ULONG *words, int num_words)
 {
-    memcpy(a->d, data, size);
+    if (bn_wexpand(a, num_words) == NULL) {
+        BNerr(BN_F_BN_SET_WORDS, ERR_R_MALLOC_FAILURE);
+        return 0;
+    }
+
+    memcpy(a->d, words, sizeof(BN_ULONG) * num_words);
+    a->top = num_words;
+    bn_correct_top(a);
+    return 1;
 }
 
 size_t bn_sizeof_BIGNUM(void)

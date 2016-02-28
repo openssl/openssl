@@ -7,15 +7,10 @@ genrsa - generate an RSA private key
 =head1 SYNOPSIS
 
 B<openssl> B<genrsa>
+[B<-help>]
 [B<-out filename>]
 [B<-passout arg>]
 [B<-aes128>]
-[B<-aes128>]
-[B<-aes192>]
-[B<-aes256>]
-[B<-camellia128>]
-[B<-camellia192>]
-[B<-camellia256>]
 [B<-aes192>]
 [B<-aes256>]
 [B<-camellia128>]
@@ -38,15 +33,19 @@ The B<genrsa> command generates an RSA private key.
 
 =over 4
 
+=item B<-help>
+
+Print out a usage message.
+
 =item B<-out filename>
 
-the output filename. If this argument is not specified then standard output is
-used.  
+Output the key to the specified file. If this argument is not specified then
+standard output is used.
 
 =item B<-passout arg>
 
 the output file password source. For more information about the format of B<arg>
-see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)|openssl(1)>.
+see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
 
 =item B<-aes128|-aes192|-aes256|-camellia128|-camellia192|-camellia256|-des|-des3|-idea>
 
@@ -62,7 +61,7 @@ the public exponent to use, either 65537 or 3. The default is 65537.
 =item B<-rand file(s)>
 
 a file or files containing random data used to seed the random number
-generator, or an EGD socket (see L<RAND_egd(3)|RAND_egd(3)>).
+generator, or an EGD socket (see L<RAND_egd(3)>).
 Multiple files can be specified separated by a OS-dependent character.
 The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
 all others.
@@ -102,7 +101,7 @@ be much larger (typically 1024 bits).
 
 =head1 SEE ALSO
 
-L<gendsa(1)|gendsa(1)>
+L<gendsa(1)>
 
 =cut
 

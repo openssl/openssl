@@ -1,4 +1,3 @@
-/* a_mbstr.c */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
  * 1999.
@@ -59,7 +58,7 @@
 
 #include <stdio.h>
 #include <ctype.h>
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/asn1.h>
 
 static int traverse_string(const unsigned char *p, int len, int inform,
@@ -72,13 +71,14 @@ static int cpy_asc(unsigned long value, void *arg);
 static int cpy_bmp(unsigned long value, void *arg);
 static int cpy_univ(unsigned long value, void *arg);
 static int cpy_utf8(unsigned long value, void *arg);
+static int is_numeric(unsigned long value);
 static int is_printable(unsigned long value);
 
 /*
  * These functions take a string in UTF8, ASCII or multibyte form and a mask
  * of permissible ASN1 string types. It then works out the minimal type
- * (using the order Printable < IA5 < T61 < BMP < Universal < UTF8) and
- * creates a string of the correct type with the supplied data. Yes this is
+ * (using the order Numeric < Printable < IA5 < T61 < BMP < Universal < UTF8)
+ * and creates a string of the correct type with the supplied data. Yes this is
  * horrible: it has to be :-( The 'ncopy' form checks minimum and maximum
  * size limits too.
  */
@@ -169,7 +169,9 @@ int ASN1_mbstring_ncopy(ASN1_STRING **out, const unsigned char *in, int len,
 
     /* Now work out output format and string type */
     outform = MBSTRING_ASC;
-    if (mask & B_ASN1_PRINTABLESTRING)
+    if (mask & B_ASN1_NUMERICSTRING)
+        str_type = V_ASN1_NUMERICSTRING;
+    else if (mask & B_ASN1_PRINTABLESTRING)
         str_type = V_ASN1_PRINTABLESTRING;
     else if (mask & B_ASN1_IA5STRING)
         str_type = V_ASN1_IA5STRING;
@@ -190,16 +192,14 @@ int ASN1_mbstring_ncopy(ASN1_STRING **out, const unsigned char *in, int len,
     if (*out) {
         free_out = 0;
         dest = *out;
-        if (dest->data) {
-            dest->length = 0;
-            OPENSSL_free(dest->data);
-            dest->data = NULL;
-        }
+        OPENSSL_free(dest->data);
+        dest->data = NULL;
+        dest->length = 0;
         dest->type = str_type;
     } else {
         free_out = 1;
         dest = ASN1_STRING_type_new(str_type);
-        if (!dest) {
+        if (dest == NULL) {
             ASN1err(ASN1_F_ASN1_MBSTRING_NCOPY, ERR_R_MALLOC_FAILURE);
             return -1;
         }
@@ -237,7 +237,7 @@ int ASN1_mbstring_ncopy(ASN1_STRING **out, const unsigned char *in, int len,
         cpyfunc = cpy_utf8;
         break;
     }
-    if (!(p = OPENSSL_malloc(outlen + 1))) {
+    if ((p = OPENSSL_malloc(outlen + 1)) == NULL) {
         if (free_out)
             ASN1_STRING_free(dest);
         ASN1err(ASN1_F_ASN1_MBSTRING_NCOPY, ERR_R_MALLOC_FAILURE);
@@ -322,6 +322,8 @@ static int type_str(unsigned long value, void *arg)
 {
     unsigned long types;
     types = *((unsigned long *)arg);
+    if ((types & B_ASN1_NUMERICSTRING) && !is_numeric(value))
+        types &= ~B_ASN1_NUMERICSTRING;
     if ((types & B_ASN1_PRINTABLESTRING) && !is_printable(value))
         types &= ~B_ASN1_PRINTABLESTRING;
     if ((types & B_ASN1_IA5STRING) && (value > 127))
@@ -420,4 +422,23 @@ static int is_printable(unsigned long value)
         return 1;
 #endif                          /* CHARSET_EBCDIC */
     return 0;
+}
+
+/* Return 1 if the character is a digit or space */
+static int is_numeric(unsigned long value)
+{
+    int ch;
+    if (value > 0x7f)
+        return 0;
+    ch = (int)value;
+#ifndef CHARSET_EBCDIC
+    if (!isdigit(ch) && ch != ' ')
+        return 0;
+#else
+    if (ch > os_toascii['9'])
+        return 0;
+    if (ch < os_toascii['0'] && ch != os_toascii[' '])
+        return 0;
+#endif
+    return 1;
 }

@@ -1,4 +1,3 @@
-/* p5_crpt2.c */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
  * 1999.
@@ -58,16 +57,16 @@
  */
 #include <stdio.h>
 #include <stdlib.h>
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 # include <openssl/x509.h>
 # include <openssl/evp.h>
 # include <openssl/hmac.h>
 # include "evp_locl.h"
 
 /* set this to print out info about the keygen algorithm */
-/* #define DEBUG_PKCS5V2 */
+/* #define OPENSSL_DEBUG_PKCS5V2 */
 
-# ifdef DEBUG_PKCS5V2
+# ifdef OPENSSL_DEBUG_PKCS5V2
 static void h__dump(const unsigned char *p, int len);
 # endif
 
@@ -85,21 +84,28 @@ int PKCS5_PBKDF2_HMAC(const char *pass, int passlen,
     unsigned char digtmp[EVP_MAX_MD_SIZE], *p, itmp[4];
     int cplen, j, k, tkeylen, mdlen;
     unsigned long i = 1;
-    HMAC_CTX hctx_tpl, hctx;
+    HMAC_CTX *hctx_tpl = NULL, *hctx = NULL;
 
     mdlen = EVP_MD_size(digest);
     if (mdlen < 0)
         return 0;
 
-    HMAC_CTX_init(&hctx_tpl);
+    hctx_tpl = HMAC_CTX_new();
+    if (hctx_tpl == NULL)
+        return 0;
     p = out;
     tkeylen = keylen;
     if (!pass)
         passlen = 0;
     else if (passlen == -1)
         passlen = strlen(pass);
-    if (!HMAC_Init_ex(&hctx_tpl, pass, passlen, digest, NULL)) {
-        HMAC_CTX_cleanup(&hctx_tpl);
+    if (!HMAC_Init_ex(hctx_tpl, pass, passlen, digest, NULL)) {
+        HMAC_CTX_free(hctx_tpl);
+        return 0;
+    }
+    hctx = HMAC_CTX_new();
+    if (hctx == NULL) {
+        HMAC_CTX_free(hctx_tpl);
         return 0;
     }
     while (tkeylen) {
@@ -115,31 +121,33 @@ int PKCS5_PBKDF2_HMAC(const char *pass, int passlen,
         itmp[1] = (unsigned char)((i >> 16) & 0xff);
         itmp[2] = (unsigned char)((i >> 8) & 0xff);
         itmp[3] = (unsigned char)(i & 0xff);
-        if (!HMAC_CTX_copy(&hctx, &hctx_tpl)) {
-            HMAC_CTX_cleanup(&hctx_tpl);
+        if (!HMAC_CTX_copy(hctx, hctx_tpl)) {
+            HMAC_CTX_free(hctx);
+            HMAC_CTX_free(hctx_tpl);
             return 0;
         }
-        if (!HMAC_Update(&hctx, salt, saltlen)
-            || !HMAC_Update(&hctx, itmp, 4)
-            || !HMAC_Final(&hctx, digtmp, NULL)) {
-            HMAC_CTX_cleanup(&hctx_tpl);
-            HMAC_CTX_cleanup(&hctx);
+        if (!HMAC_Update(hctx, salt, saltlen)
+            || !HMAC_Update(hctx, itmp, 4)
+            || !HMAC_Final(hctx, digtmp, NULL)) {
+            HMAC_CTX_free(hctx);
+            HMAC_CTX_free(hctx_tpl);
             return 0;
         }
-        HMAC_CTX_cleanup(&hctx);
+        HMAC_CTX_reset(hctx);
         memcpy(p, digtmp, cplen);
         for (j = 1; j < iter; j++) {
-            if (!HMAC_CTX_copy(&hctx, &hctx_tpl)) {
-                HMAC_CTX_cleanup(&hctx_tpl);
+            if (!HMAC_CTX_copy(hctx, hctx_tpl)) {
+                HMAC_CTX_free(hctx);
+                HMAC_CTX_free(hctx_tpl);
                 return 0;
             }
-            if (!HMAC_Update(&hctx, digtmp, mdlen)
-                || !HMAC_Final(&hctx, digtmp, NULL)) {
-                HMAC_CTX_cleanup(&hctx_tpl);
-                HMAC_CTX_cleanup(&hctx);
+            if (!HMAC_Update(hctx, digtmp, mdlen)
+                || !HMAC_Final(hctx, digtmp, NULL)) {
+                HMAC_CTX_free(hctx);
+                HMAC_CTX_free(hctx_tpl);
                 return 0;
             }
-            HMAC_CTX_cleanup(&hctx);
+            HMAC_CTX_reset(hctx);
             for (k = 0; k < cplen; k++)
                 p[k] ^= digtmp[k];
         }
@@ -147,8 +155,9 @@ int PKCS5_PBKDF2_HMAC(const char *pass, int passlen,
         i++;
         p += cplen;
     }
-    HMAC_CTX_cleanup(&hctx_tpl);
-# ifdef DEBUG_PKCS5V2
+    HMAC_CTX_free(hctx);
+    HMAC_CTX_free(hctx_tpl);
+# ifdef OPENSSL_DEBUG_PKCS5V2
     fprintf(stderr, "Password:\n");
     h__dump(pass, passlen);
     fprintf(stderr, "Salt:\n");
@@ -190,23 +199,14 @@ int PKCS5_v2_PBE_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
                           ASN1_TYPE *param, const EVP_CIPHER *c,
                           const EVP_MD *md, int en_de)
 {
-    const unsigned char *pbuf;
-    int plen;
     PBE2PARAM *pbe2 = NULL;
     const EVP_CIPHER *cipher;
     EVP_PBE_KEYGEN *kdf;
 
     int rv = 0;
 
-    if (param == NULL || param->type != V_ASN1_SEQUENCE ||
-        param->value.sequence == NULL) {
-        EVPerr(EVP_F_PKCS5_V2_PBE_KEYIVGEN, EVP_R_DECODE_ERROR);
-        goto err;
-    }
-
-    pbuf = param->value.sequence->data;
-    plen = param->value.sequence->length;
-    if (!(pbe2 = d2i_PBE2PARAM(NULL, &pbuf, plen))) {
+    pbe2 = ASN1_TYPE_unpack_sequence(ASN1_ITEM_rptr(PBE2PARAM), param);
+    if (pbe2 == NULL) {
         EVPerr(EVP_F_PKCS5_V2_PBE_KEYIVGEN, EVP_R_DECODE_ERROR);
         goto err;
     }
@@ -248,8 +248,7 @@ int PKCS5_v2_PBKDF2_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass,
                              const EVP_CIPHER *c, const EVP_MD *md, int en_de)
 {
     unsigned char *salt, key[EVP_MAX_KEY_LENGTH];
-    const unsigned char *pbuf;
-    int saltlen, iter, plen;
+    int saltlen, iter;
     int rv = 0;
     unsigned int keylen = 0;
     int prf_nid, hmac_md_nid;
@@ -265,15 +264,9 @@ int PKCS5_v2_PBKDF2_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass,
 
     /* Decode parameter */
 
-    if (!param || (param->type != V_ASN1_SEQUENCE)) {
-        EVPerr(EVP_F_PKCS5_V2_PBKDF2_KEYIVGEN, EVP_R_DECODE_ERROR);
-        goto err;
-    }
+    kdf = ASN1_TYPE_unpack_sequence(ASN1_ITEM_rptr(PBKDF2PARAM), param);
 
-    pbuf = param->value.sequence->data;
-    plen = param->value.sequence->length;
-
-    if (!(kdf = d2i_PBKDF2PARAM(NULL, &pbuf, plen))) {
+    if (kdf == NULL) {
         EVPerr(EVP_F_PKCS5_V2_PBKDF2_KEYIVGEN, EVP_R_DECODE_ERROR);
         goto err;
     }
@@ -322,7 +315,7 @@ int PKCS5_v2_PBKDF2_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass,
     return rv;
 }
 
-# ifdef DEBUG_PKCS5V2
+# ifdef OPENSSL_DEBUG_PKCS5V2
 static void h__dump(const unsigned char *p, int len)
 {
     for (; len--; p++)

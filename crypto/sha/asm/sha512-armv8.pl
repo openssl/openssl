@@ -14,8 +14,10 @@
 #
 #		SHA256-hw	SHA256(*)	SHA512
 # Apple A7	1.97		10.5 (+33%)	6.73 (-1%(**))
-# Cortex-A53	2.38		15.6 (+110%)	10.1 (+190%(***))
+# Cortex-A53	2.38		15.5 (+115%)	10.0 (+150%(***))
 # Cortex-A57	2.31		11.6 (+86%)	7.51 (+260%(***))
+# Denver	2.01		10.5 (+26%)	6.70 (+8%)
+# X-Gene			20.0 (+100%)	12.8 (+300%(***))
 # 
 # (*)	Software SHA256 results are of lesser relevance, presented
 #	mostly for informational purposes.
@@ -25,7 +27,7 @@
 # (***)	Super-impressive coefficients over gcc-generated code are
 #	indication of some compiler "pathology", most notably code
 #	generated with -mgeneral-regs-only is significanty faster
-#	and lags behind assembly only by 50-90%.
+#	and the gap is only 40-90%.
 
 $flavour=shift;
 $output=shift;
@@ -167,7 +169,11 @@ $code.=<<___;
 $func:
 ___
 $code.=<<___	if ($SZ==4);
+#ifdef	__ILP32__
+	ldrsw	x16,.LOPENSSL_armcap_P
+#else
 	ldr	x16,.LOPENSSL_armcap_P
+#endif
 	adr	x17,.LOPENSSL_armcap_P
 	add	x16,x16,x17
 	ldr	w16,[x16]
@@ -309,7 +315,11 @@ $code.=<<___;
 .size	.LK$BITS,.-.LK$BITS
 .align	3
 .LOPENSSL_armcap_P:
+#ifdef	__ILP32__
+	.long	OPENSSL_armcap_P-.
+#else
 	.quad	OPENSSL_armcap_P-.
+#endif
 .asciz	"SHA$BITS block transform for ARMv8, CRYPTOGAMS by <appro\@openssl.org>"
 .align	2
 ___

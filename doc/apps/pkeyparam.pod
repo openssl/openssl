@@ -8,6 +8,7 @@ pkeyparam - public key algorithm parameter processing tool
 =head1 SYNOPSIS
 
 B<openssl> B<pkeyparam>
+[B<-help>]
 [B<-in filename>]
 [B<-out filename>]
 [B<-text>]
@@ -22,6 +23,10 @@ between various forms and their components printed out.
 =head1 COMMAND OPTIONS
 
 =over 4
+
+=item B<-help>
+
+Print out a usage message.
 
 =item B<-in filename>
 
@@ -63,7 +68,7 @@ PEM format is supported because the key type is determined by the PEM headers.
 
 =head1 SEE ALSO
 
-L<genpkey(1)|genpkey(1)>, L<rsa(1)|rsa(1)>, L<pkcs8(1)|pkcs8(1)>,
-L<dsa(1)|dsa(1)>, L<genrsa(1)|genrsa(1)>, L<gendsa(1)|gendsa(1)> 
+L<genpkey(1)>, L<rsa(1)>, L<pkcs8(1)>,
+L<dsa(1)>, L<genrsa(1)>, L<gendsa(1)> 
 
 =cut

@@ -7,6 +7,7 @@ ecparam - EC parameter manipulation and generation
 =head1 SYNOPSIS
 
 B<openssl ecparam>
+[B<-help>]
 [B<-inform DER|PEM>]
 [B<-outform DER|PEM>]
 [B<-in filename>]
@@ -31,6 +32,10 @@ This command is used to manipulate or generate EC parameter files.
 =head1 OPTIONS
 
 =over 4
+
+=item B<-help>
+
+Print out a usage message.
 
 =item B<-inform DER|PEM>
 
@@ -66,7 +71,7 @@ This option prints out the EC parameters in human readable form.
 =item B<-C>
 
 This option converts the EC parameters into C code. The parameters can then
-be loaded by calling the B<get_ec_group_XXX()> function.
+be loaded by calling the get_ec_group_XXX() function.
 
 =item B<-check>
 
@@ -114,7 +119,7 @@ This option will generate a EC private key using the specified parameters.
 =item B<-rand file(s)>
 
 a file or files containing random data used to seed the random number
-generator, or an EGD socket (see L<RAND_egd(3)|RAND_egd(3)>).
+generator, or an EGD socket (see L<RAND_egd(3)>).
 Multiple files can be specified separated by a OS-dependent character.
 The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
 all others.
@@ -166,14 +171,6 @@ To print out the EC parameters to standard output:
 
 =head1 SEE ALSO
 
-L<ec(1)|ec(1)>, L<dsaparam(1)|dsaparam(1)>
-
-=head1 HISTORY
-
-The ecparam command was first introduced in OpenSSL 0.9.8.
-
-=head1 AUTHOR
-
-Nils Larsch for the OpenSSL project (http://www.openssl.org)
+L<ec(1)>, L<dsaparam(1)>
 
 =cut

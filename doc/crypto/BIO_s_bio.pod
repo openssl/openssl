@@ -136,9 +136,9 @@ without having to go through the SSL-interface.
 
  BIO *internal_bio, *network_bio;
  ...
- BIO_new_bio_pair(internal_bio, 0, network_bio, 0);
+ BIO_new_bio_pair(&internal_bio, 0, &network_bio, 0);
  SSL_set_bio(ssl, internal_bio, internal_bio);
- SSL_operations();
+ SSL_operations(); //e.g SSL_read and SSL_write
  ...
 
  application |   TLS-engine
@@ -147,9 +147,13 @@ without having to go through the SSL-interface.
              |     /\    ||
              |     ||    \/
              |   BIO-pair (internal_bio)
-    +----------< BIO-pair (network_bio)
+             |   BIO-pair (network_bio)
+             |     ||     /\
+             |     \/     ||
+    +-----------< BIO_operations()
     |        |
-  socket     |
+    |        |
+   socket
 
   ...
   SSL_free(ssl);		/* implicitly frees internal_bio */
@@ -162,7 +166,7 @@ buffer is full or the read buffer is drained. Then the application has to
 flush the write buffer and/or fill the read buffer.
 
 Use the BIO_ctrl_pending(), to find out whether data is buffered in the BIO
-and must be transfered to the network. Use BIO_ctrl_get_read_request() to
+and must be transferred to the network. Use BIO_ctrl_get_read_request() to
 find out, how many bytes must be written into the buffer before the
 SSL_operation() can successfully be continued.
 
@@ -176,7 +180,7 @@ the peer might be waiting for the data before being able to continue.
 
 =head1 SEE ALSO
 
-L<SSL_set_bio(3)|SSL_set_bio(3)>, L<ssl(3)|ssl(3)>, L<bio(3)|bio(3)>,
-L<BIO_should_retry(3)|BIO_should_retry(3)>, L<BIO_read(3)|BIO_read(3)>
+L<SSL_set_bio(3)>, L<ssl(3)>, L<bio(3)>,
+L<BIO_should_retry(3)>, L<BIO_read(3)>
 
 =cut

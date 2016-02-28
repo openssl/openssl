@@ -1,4 +1,3 @@
-/* crypto/sha/sha256.c */
 /* ====================================================================
  * Copyright (c) 2004 The OpenSSL Project.  All rights reserved
  * according to the OpenSSL license [found in ../../LICENSE].
@@ -12,8 +11,6 @@
 #include <openssl/crypto.h>
 #include <openssl/sha.h>
 #include <openssl/opensslv.h>
-
-const char SHA256_version[] = "SHA-256" OPENSSL_VERSION_PTEXT;
 
 int SHA224_Init(SHA256_CTX *c)
 {
@@ -94,7 +91,7 @@ int SHA224_Final(unsigned char *md, SHA256_CTX *c)
  * default: case below covers for it. It's not clear however if it's
  * permitted to truncate to amount of bytes not divisible by 4. I bet not,
  * but if it is, then default: case shall be extended. For reference.
- * Idea behind separate cases for pre-defined lenghts is to let the
+ * Idea behind separate cases for pre-defined lengths is to let the
  * compiler decide if it's appropriate to unroll small loops.
  */
 #define HASH_MAKE_STRING(c,s)   do {    \
@@ -127,7 +124,7 @@ static
 #endif
 void sha256_block_data_order(SHA256_CTX *ctx, const void *in, size_t num);
 
-#include "md32_common.h"
+#include "internal/md32_common.h"
 
 #ifndef SHA256_ASM
 static const SHA_LONG K256[64] = {

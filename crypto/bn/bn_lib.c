@@ -1,4 +1,3 @@
-/* crypto/bn/bn_lib.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -63,13 +62,12 @@
 
 #include <assert.h>
 #include <limits.h>
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include "bn_lcl.h"
-
-const char BN_version[] = "Big Number" OPENSSL_VERSION_PTEXT;
+#include <openssl/opensslconf.h>
 
 /* This stuff appears to be completely unused, so is deprecated */
-#ifndef OPENSSL_NO_DEPRECATED
+#if OPENSSL_API_COMPAT < 0x00908000L
 /*-
  * For a 32 bit machine
  * 2 -   4 ==  128
@@ -223,6 +221,15 @@ int BN_num_bits(const BIGNUM *a)
     return ((i * BN_BITS2) + BN_num_bits_word(a->d[i]));
 }
 
+static void bn_free_d(BIGNUM *a)
+{
+    if (BN_get_flags(a,BN_FLG_SECURE))
+        OPENSSL_secure_free(a->d);
+    else
+        OPENSSL_free(a->d);
+}
+
+
 void BN_clear_free(BIGNUM *a)
 {
     int i;
@@ -232,11 +239,11 @@ void BN_clear_free(BIGNUM *a)
     bn_check_top(a);
     if (a->d != NULL) {
         OPENSSL_cleanse(a->d, a->dmax * sizeof(a->d[0]));
-        if (!(BN_get_flags(a, BN_FLG_STATIC_DATA)))
-            OPENSSL_free(a->d);
+        if (!BN_get_flags(a, BN_FLG_STATIC_DATA))
+            bn_free_d(a);
     }
     i = BN_get_flags(a, BN_FLG_MALLOCED);
-    OPENSSL_cleanse(a, sizeof(BIGNUM));
+    OPENSSL_cleanse(a, sizeof(*a));
     if (i)
         OPENSSL_free(a);
 }
@@ -246,21 +253,23 @@ void BN_free(BIGNUM *a)
     if (a == NULL)
         return;
     bn_check_top(a);
-    if ((a->d != NULL) && !(BN_get_flags(a, BN_FLG_STATIC_DATA)))
-        OPENSSL_free(a->d);
+    if (!BN_get_flags(a, BN_FLG_STATIC_DATA))
+        bn_free_d(a);
     if (a->flags & BN_FLG_MALLOCED)
         OPENSSL_free(a);
     else {
-#ifndef OPENSSL_NO_DEPRECATED
+#if OPENSSL_API_COMPAT < 0x00908000L
         a->flags |= BN_FLG_FREE;
 #endif
         a->d = NULL;
     }
 }
 
-void BN_init(BIGNUM *a)
+void bn_init(BIGNUM *a)
 {
-    memset(a, 0, sizeof(BIGNUM));
+    static BIGNUM nilbn;
+
+    *a = nilbn;
     bn_check_top(a);
 }
 
@@ -268,20 +277,24 @@ BIGNUM *BN_new(void)
 {
     BIGNUM *ret;
 
-    if ((ret = (BIGNUM *)OPENSSL_malloc(sizeof(BIGNUM))) == NULL) {
+    if ((ret = OPENSSL_zalloc(sizeof(*ret))) == NULL) {
         BNerr(BN_F_BN_NEW, ERR_R_MALLOC_FAILURE);
         return (NULL);
     }
     ret->flags = BN_FLG_MALLOCED;
-    ret->top = 0;
-    ret->neg = 0;
-    ret->dmax = 0;
-    ret->d = NULL;
     bn_check_top(ret);
     return (ret);
 }
 
-/* This is used both by bn_expand2() and bn_dup_expand() */
+ BIGNUM *BN_secure_new(void)
+ {
+     BIGNUM *ret = BN_new();
+     if (ret != NULL)
+         ret->flags |= BN_FLG_SECURE;
+     return (ret);
+ }
+
+/* This is used by bn_expand2() */
 /* The caller MUST check that words > b->dmax before calling this */
 static BN_ULONG *bn_expand_internal(const BIGNUM *b, int words)
 {
@@ -299,20 +312,14 @@ static BN_ULONG *bn_expand_internal(const BIGNUM *b, int words)
         BNerr(BN_F_BN_EXPAND_INTERNAL, BN_R_EXPAND_ON_STATIC_BIGNUM_DATA);
         return (NULL);
     }
-    a = A = (BN_ULONG *)OPENSSL_malloc(sizeof(BN_ULONG) * words);
+    if (BN_get_flags(b,BN_FLG_SECURE))
+        a = A = OPENSSL_secure_zalloc(words * sizeof(*a));
+    else
+        a = A = OPENSSL_zalloc(words * sizeof(*a));
     if (A == NULL) {
         BNerr(BN_F_BN_EXPAND_INTERNAL, ERR_R_MALLOC_FAILURE);
         return (NULL);
     }
-#ifdef PURIFY
-    /*
-     * Valgrind complains in BN_consttime_swap because we process the whole
-     * array even if it's not initialised yet. This doesn't matter in that
-     * function - what's important is constant time operation (we're not
-     * actually going to use the data)
-     */
-    memset(a, 0, sizeof(BN_ULONG) * words);
-#endif
 
 #if 1
     B = b->d;
@@ -323,7 +330,7 @@ static BN_ULONG *bn_expand_internal(const BIGNUM *b, int words)
              * The fact that the loop is unrolled
              * 4-wise is a tribute to Intel. It's
              * the one that doesn't have enough
-             * registers to accomodate more data.
+             * registers to accommodate more data.
              * I'd unroll it 8-wise otherwise:-)
              *
              *              <appro@fy.chalmers.se>
@@ -355,7 +362,7 @@ static BN_ULONG *bn_expand_internal(const BIGNUM *b, int words)
         }
     }
 #else
-    memset(A, 0, sizeof(BN_ULONG) * words);
+    memset(A, 0, sizeof(*A) * words);
     memcpy(A, b->d, sizeof(b->d[0]) * b->top);
 #endif
 
@@ -378,8 +385,10 @@ BIGNUM *bn_expand2(BIGNUM *b, int words)
         BN_ULONG *a = bn_expand_internal(b, words);
         if (!a)
             return NULL;
-        if (b->d)
-            OPENSSL_free(b->d);
+        if (b->d) {
+            OPENSSL_cleanse(b->d, b->dmax * sizeof(b->d[0]));
+            bn_free_d(b);
+        }
         b->d = a;
         b->dmax = words;
     }
@@ -396,7 +405,7 @@ BIGNUM *BN_dup(const BIGNUM *a)
         return NULL;
     bn_check_top(a);
 
-    t = BN_new();
+    t = BN_get_flags(a, BN_FLG_SECURE) ? BN_secure_new() : BN_new();
     if (t == NULL)
         return NULL;
     if (!BN_copy(t, a)) {
@@ -493,7 +502,7 @@ void BN_clear(BIGNUM *a)
 {
     bn_check_top(a);
     if (a->d != NULL)
-        memset(a->d, 0, a->dmax * sizeof(a->d[0]));
+        memset(a->d, 0, sizeof(*a->d) * a->dmax);
     a->top = 0;
     a->neg = 0;
 }
@@ -532,7 +541,9 @@ BIGNUM *BN_bin2bn(const unsigned char *s, int len, BIGNUM *ret)
     if (ret == NULL)
         return (NULL);
     bn_check_top(ret);
-    l = 0;
+    /* Skip leading zero's. */
+    for ( ; len > 0 && *s == 0; s++, len--)
+        continue;
     n = len;
     if (n == 0) {
         ret->top = 0;
@@ -541,12 +552,12 @@ BIGNUM *BN_bin2bn(const unsigned char *s, int len, BIGNUM *ret)
     i = ((n - 1) / BN_BYTES) + 1;
     m = ((n - 1) % (BN_BYTES));
     if (bn_wexpand(ret, (int)i) == NULL) {
-        if (bn)
-            BN_free(bn);
+        BN_free(bn);
         return NULL;
     }
     ret->top = i;
     ret->neg = 0;
+    l = 0;
     while (n--) {
         l = (l << 8L) | *(s++);
         if (m-- == 0) {
@@ -564,18 +575,104 @@ BIGNUM *BN_bin2bn(const unsigned char *s, int len, BIGNUM *ret)
 }
 
 /* ignore negative */
-int BN_bn2bin(const BIGNUM *a, unsigned char *to)
+static int bn2binpad(const BIGNUM *a, unsigned char *to, int tolen)
 {
-    int n, i;
+    int i;
     BN_ULONG l;
 
     bn_check_top(a);
-    n = i = BN_num_bytes(a);
+    i = BN_num_bytes(a);
+    if (tolen == -1)
+        tolen = i;
+    else if (tolen < i)
+        return -1;
+    /* Add leading zeroes if necessary */
+    if (tolen > i) {
+        memset(to, 0, tolen - i);
+        to += tolen - i;
+    }
     while (i--) {
         l = a->d[i / BN_BYTES];
         *(to++) = (unsigned char)(l >> (8 * (i % BN_BYTES))) & 0xff;
     }
-    return (n);
+    return tolen;
+}
+
+int BN_bn2binpad(const BIGNUM *a, unsigned char *to, int tolen)
+{
+    if (tolen < 0)
+        return -1;
+    return bn2binpad(a, to, tolen);
+}
+
+int BN_bn2bin(const BIGNUM *a, unsigned char *to)
+{
+    return bn2binpad(a, to, -1);
+}
+
+BIGNUM *BN_lebin2bn(const unsigned char *s, int len, BIGNUM *ret)
+{
+    unsigned int i, m;
+    unsigned int n;
+    BN_ULONG l;
+    BIGNUM *bn = NULL;
+
+    if (ret == NULL)
+        ret = bn = BN_new();
+    if (ret == NULL)
+        return (NULL);
+    bn_check_top(ret);
+    s += len - 1;
+    /* Skip trailing zeroes. */
+    for ( ; len > 0 && *s == 0; s--, len--)
+        continue;
+    n = len;
+    if (n == 0) {
+        ret->top = 0;
+        return ret;
+    }
+    i = ((n - 1) / BN_BYTES) + 1;
+    m = ((n - 1) % (BN_BYTES));
+    if (bn_wexpand(ret, (int)i) == NULL) {
+        BN_free(bn);
+        return NULL;
+    }
+    ret->top = i;
+    ret->neg = 0;
+    l = 0;
+    while (n--) {
+        l = (l << 8L) | *(s--);
+        if (m-- == 0) {
+            ret->d[--i] = l;
+            l = 0;
+            m = BN_BYTES - 1;
+        }
+    }
+    /*
+     * need to call this due to clear byte at top if avoiding having the top
+     * bit set (-ve number)
+     */
+    bn_correct_top(ret);
+    return ret;
+}
+
+int BN_bn2lebinpad(const BIGNUM *a, unsigned char *to, int tolen)
+{
+    int i;
+    BN_ULONG l;
+    bn_check_top(a);
+    i = BN_num_bytes(a);
+    if (tolen < i)
+        return -1;
+    /* Add trailing zeroes if necessary */
+    if (tolen > i)
+        memset(to + i, 0, tolen - i);
+    to += i - 1;
+    while (i--) {
+        l = a->d[i / BN_BYTES];
+        *(to--) = (unsigned char)(l >> (8 * (i % BN_BYTES))) & 0xff;
+    }
+    return tolen;
 }
 
 int BN_ucmp(const BIGNUM *a, const BIGNUM *b)
@@ -906,7 +1003,7 @@ int BN_to_montgomery(BIGNUM *r, const BIGNUM *a, BN_MONT_CTX *mont,
     return BN_mod_mul_montgomery(r, a, &(mont->RR), mont, ctx);
 }
 
-void BN_with_flags(BIGNUM *dest, const BIGNUM *b, int n)
+void BN_with_flags(BIGNUM *dest, const BIGNUM *b, int flags)
 {
     dest->d = b->d;
     dest->top = b->top;
@@ -914,14 +1011,14 @@ void BN_with_flags(BIGNUM *dest, const BIGNUM *b, int n)
     dest->neg = b->neg;
     dest->flags = ((dest->flags & BN_FLG_MALLOCED)
                    | (b->flags & ~BN_FLG_MALLOCED)
-                   | BN_FLG_STATIC_DATA | n);
+                   | BN_FLG_STATIC_DATA | flags);
 }
 
 BN_GENCB *BN_GENCB_new(void)
 {
     BN_GENCB *ret;
 
-    if ((ret = (BN_GENCB *)OPENSSL_malloc(sizeof(BN_GENCB))) == NULL) {
+    if ((ret = OPENSSL_malloc(sizeof(*ret))) == NULL) {
         BNerr(BN_F_BN_GENCB_NEW, ERR_R_MALLOC_FAILURE);
         return (NULL);
     }

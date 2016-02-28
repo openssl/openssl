@@ -41,13 +41,10 @@ a value.
 
 =head1 SEE ALSO
 
-L<X509_STORE_CTX_set_verify_cb(3)|X509_STORE_CTX_set_verify_cb(3)>
-L<CMS_verify(3)|CMS_verify(3)>
+L<X509_STORE_CTX_set_verify_cb(3)>
+L<CMS_verify(3)>
 
 =head1 HISTORY
-
-X509_STORE_set_verify_cb_func() is available in all versions of SSLeay and
-OpenSSL.
 
 X509_STORE_set_verify_cb() was added to OpenSSL 1.0.0.
 

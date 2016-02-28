@@ -1,4 +1,3 @@
-/* crypto/cms/cms_smime.c */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -52,14 +51,14 @@
  * ====================================================================
  */
 
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/asn1t.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 #include <openssl/err.h>
 #include <openssl/cms.h>
 #include "cms_lcl.h"
-#include "asn1_locl.h"
+#include "internal/asn1_int.h"
 
 static BIO *cms_get_text_bio(BIO *out, unsigned int flags)
 {
@@ -82,7 +81,7 @@ static int cms_copy_content(BIO *out, BIO *in, unsigned int flags)
 
     tmpout = cms_get_text_bio(out, flags);
 
-    if (!tmpout) {
+    if (tmpout == NULL) {
         CMSerr(CMS_F_CMS_COPY_CONTENT, ERR_R_MALLOC_FAILURE);
         goto err;
     }
@@ -114,7 +113,7 @@ static int cms_copy_content(BIO *out, BIO *in, unsigned int flags)
     r = 1;
 
  err:
-    if (tmpout && (tmpout != out))
+    if (tmpout != out)
         BIO_free(tmpout);
     return r;
 
@@ -253,7 +252,7 @@ CMS_ContentInfo *CMS_EncryptedData_encrypt(BIO *in, const EVP_CIPHER *cipher,
         return NULL;
     }
     cms = CMS_ContentInfo_new();
-    if (!cms)
+    if (cms == NULL)
         return NULL;
     if (!CMS_EncryptedData_set1_key(cms, cipher, key, keylen))
         return NULL;
@@ -272,8 +271,7 @@ CMS_ContentInfo *CMS_EncryptedData_encrypt(BIO *in, const EVP_CIPHER *cipher,
 static int cms_signerinfo_verify_cert(CMS_SignerInfo *si,
                                       X509_STORE *store,
                                       STACK_OF(X509) *certs,
-                                      STACK_OF(X509_CRL) *crls,
-                                      unsigned int flags)
+                                      STACK_OF(X509_CRL) *crls)
 {
     X509_STORE_CTX ctx;
     X509 *signer;
@@ -354,8 +352,7 @@ int CMS_verify(CMS_ContentInfo *cms, STACK_OF(X509) *certs,
             crls = CMS_get1_crls(cms);
         for (i = 0; i < sk_CMS_SignerInfo_num(sinfos); i++) {
             si = sk_CMS_SignerInfo_value(sinfos, i);
-            if (!cms_signerinfo_verify_cert(si, store,
-                                            cms_certs, crls, flags))
+            if (!cms_signerinfo_verify_cert(si, store, cms_certs, crls))
                 goto err;
         }
     }
@@ -386,7 +383,7 @@ int CMS_verify(CMS_ContentInfo *cms, STACK_OF(X509) *certs,
         tmpin = BIO_new_mem_buf(ptr, len);
         if (tmpin == NULL) {
             CMSerr(CMS_F_CMS_VERIFY, ERR_R_MALLOC_FAILURE);
-            return 0;
+            goto err2;
         }
     } else
         tmpin = dcont;
@@ -446,20 +443,18 @@ int CMS_verify(CMS_ContentInfo *cms, STACK_OF(X509) *certs,
         if (tmpin != dcont)
             BIO_free(tmpin);
     } else {
-
         if (dcont && (tmpin == dcont))
             do_free_upto(cmsbio, dcont);
         else
             BIO_free_all(cmsbio);
     }
 
-    if (tmpout && out != tmpout)
+    if (out != tmpout)
         BIO_free_all(tmpout);
 
-    if (cms_certs)
-        sk_X509_pop_free(cms_certs, X509_free);
-    if (crls)
-        sk_X509_CRL_pop_free(crls, X509_CRL_free);
+ err2:
+    sk_X509_pop_free(cms_certs, X509_free);
+    sk_X509_CRL_pop_free(crls, X509_CRL_free);
 
     return ret;
 }
@@ -484,7 +479,7 @@ CMS_ContentInfo *CMS_sign(X509 *signcert, EVP_PKEY *pkey,
     int i;
 
     cms = CMS_ContentInfo_new();
-    if (!cms || !CMS_SignedData_init(cms))
+    if (cms == NULL || !CMS_SignedData_init(cms))
         goto merr;
     if (flags & CMS_ASCIICRLF
         && !CMS_set1_eContentType(cms,
@@ -515,8 +510,7 @@ CMS_ContentInfo *CMS_sign(X509 *signcert, EVP_PKEY *pkey,
     CMSerr(CMS_F_CMS_SIGN, ERR_R_MALLOC_FAILURE);
 
  err:
-    if (cms)
-        CMS_ContentInfo_free(cms);
+    CMS_ContentInfo_free(cms);
     return NULL;
 }
 
@@ -580,8 +574,7 @@ CMS_ContentInfo *CMS_sign_receipt(CMS_SignerInfo *si,
     r = 1;
 
  err:
-    if (rct_cont)
-        BIO_free(rct_cont);
+    BIO_free(rct_cont);
     if (r)
         return cms;
     CMS_ContentInfo_free(cms);
@@ -618,8 +611,7 @@ CMS_ContentInfo *CMS_encrypt(STACK_OF(X509) *certs, BIO *data,
  merr:
     CMSerr(CMS_F_CMS_ENCRYPT, ERR_R_MALLOC_FAILURE);
  err:
-    if (cms)
-        CMS_ContentInfo_free(cms);
+    CMS_ContentInfo_free(cms);
     return NULL;
 }
 
@@ -807,8 +799,9 @@ int CMS_final(CMS_ContentInfo *cms, BIO *data, BIO *dcont, unsigned int flags)
 {
     BIO *cmsbio;
     int ret = 0;
-    if (!(cmsbio = CMS_dataInit(cms, dcont))) {
-        CMSerr(CMS_F_CMS_FINAL, ERR_R_MALLOC_FAILURE);
+
+    if ((cmsbio = CMS_dataInit(cms, dcont)) == NULL) {
+        CMSerr(CMS_F_CMS_FINAL, CMS_R_CMS_LIB);
         return 0;
     }
 

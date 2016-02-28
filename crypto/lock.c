@@ -1,4 +1,3 @@
-/* crypto/cryptlib.c */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -114,14 +113,12 @@
  * SUN MICROSYSTEMS, INC., and contributed to the OpenSSL project.
  */
 
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/safestack.h>
 
 #if defined(OPENSSL_SYS_WIN32)
-static double SSLeay_MSVC5_hack = 0.0; /* and for VC1.5 */
+static double OpenSSL_MSVC5_hack = 0.0; /* and for VC1.5 */
 #endif
-
-DECLARE_STACK_OF(CRYPTO_dynlock)
 
 /* real #defines in crypto.h, keep these upto date */
 static const char *const lock_names[CRYPTO_NUM_LOCKS] = {
@@ -166,7 +163,8 @@ static const char *const lock_names[CRYPTO_NUM_LOCKS] = {
     "comp",
     "fips",
     "fips2",
-#if CRYPTO_NUM_LOCKS != 41
+    "init",
+#if CRYPTO_NUM_LOCKS != 42
 # error "Inconsistency between crypto.h and cryptlib.c"
 #endif
 };
@@ -207,7 +205,7 @@ int CRYPTO_get_new_lockid(char *name)
      * using /MT. Without this, the application cannot use any floating point
      * printf's. It also seems to be needed for Visual C 1.5 (win16)
      */
-    SSLeay_MSVC5_hack = (double)name[0] * (double)name[1];
+    OpenSSL_MSVC5_hack = (double)name[0] * (double)name[1];
 #endif
 
     if ((app_locks == NULL)
@@ -215,7 +213,7 @@ int CRYPTO_get_new_lockid(char *name)
         CRYPTOerr(CRYPTO_F_CRYPTO_GET_NEW_LOCKID, ERR_R_MALLOC_FAILURE);
         return (0);
     }
-    if ((str = BUF_strdup(name)) == NULL) {
+    if ((str = OPENSSL_strdup(name)) == NULL) {
         CRYPTOerr(CRYPTO_F_CRYPTO_GET_NEW_LOCKID, ERR_R_MALLOC_FAILURE);
         return (0);
     }
@@ -251,13 +249,13 @@ int CRYPTO_get_new_dynlockid(void)
     }
     CRYPTO_w_unlock(CRYPTO_LOCK_DYNLOCK);
 
-    pointer = (CRYPTO_dynlock *) OPENSSL_malloc(sizeof(CRYPTO_dynlock));
+    pointer = OPENSSL_zalloc(sizeof(*pointer));
     if (pointer == NULL) {
         CRYPTOerr(CRYPTO_F_CRYPTO_GET_NEW_DYNLOCKID, ERR_R_MALLOC_FAILURE);
         return (0);
     }
     pointer->references = 1;
-    pointer->data = dynlock_create_callback(__FILE__, __LINE__);
+    pointer->data = dynlock_create_callback(OPENSSL_FILE, OPENSSL_LINE);
     if (pointer->data == NULL) {
         OPENSSL_free(pointer);
         CRYPTOerr(CRYPTO_F_CRYPTO_GET_NEW_DYNLOCKID, ERR_R_MALLOC_FAILURE);
@@ -283,7 +281,7 @@ int CRYPTO_get_new_dynlockid(void)
     CRYPTO_w_unlock(CRYPTO_LOCK_DYNLOCK);
 
     if (i == -1) {
-        dynlock_destroy_callback(pointer->data, __FILE__, __LINE__);
+        dynlock_destroy_callback(pointer->data, OPENSSL_FILE, OPENSSL_LINE);
         OPENSSL_free(pointer);
     } else
         i += 1;                 /* to avoid 0 */
@@ -307,10 +305,9 @@ void CRYPTO_destroy_dynlockid(int i)
     pointer = sk_CRYPTO_dynlock_value(dyn_locks, i);
     if (pointer != NULL) {
         --pointer->references;
-#ifdef REF_CHECK
+#ifdef REF_DEBUG
         if (pointer->references < 0) {
-            fprintf(stderr,
-                    "CRYPTO_destroy_dynlockid, bad reference count\n");
+            OPENSSL_showfatal("CRYPTO_destroy_dynlockid, bad reference count\n");
             abort();
         } else
 #endif
@@ -322,7 +319,7 @@ void CRYPTO_destroy_dynlockid(int i)
     CRYPTO_w_unlock(CRYPTO_LOCK_DYNLOCK);
 
     if (pointer) {
-        dynlock_destroy_callback(pointer->data, __FILE__, __LINE__);
+        dynlock_destroy_callback(pointer->data, OPENSSL_FILE, OPENSSL_LINE);
         OPENSSL_free(pointer);
     }
 }

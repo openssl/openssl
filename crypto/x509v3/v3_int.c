@@ -1,4 +1,3 @@
-/* v3_int.c */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
  * 1999.
@@ -58,8 +57,9 @@
  */
 
 #include <stdio.h>
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/x509v3.h>
+#include "ext_dat.h"
 
 const X509V3_EXT_METHOD v3_crl_num = {
     NID_crl_number, 0, ASN1_ITEM_ref(ASN1_INTEGER),

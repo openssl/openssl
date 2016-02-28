@@ -1,4 +1,3 @@
-/* x_algor.c */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
  * 2000.
@@ -61,6 +60,7 @@
 #include <openssl/x509.h>
 #include <openssl/asn1.h>
 #include <openssl/asn1t.h>
+#include "internal/evp_int.h"
 
 ASN1_SEQUENCE(X509_ALGOR) = {
         ASN1_SIMPLE(X509_ALGOR, algorithm, ASN1_OBJECT),
@@ -86,17 +86,14 @@ int X509_ALGOR_set0(X509_ALGOR *alg, ASN1_OBJECT *aobj, int ptype, void *pval)
             return 0;
     }
     if (alg) {
-        if (alg->algorithm)
-            ASN1_OBJECT_free(alg->algorithm);
+        ASN1_OBJECT_free(alg->algorithm);
         alg->algorithm = aobj;
     }
     if (ptype == 0)
         return 1;
     if (ptype == V_ASN1_UNDEF) {
-        if (alg->parameter) {
-            ASN1_TYPE_free(alg->parameter);
-            alg->parameter = NULL;
-        }
+        ASN1_TYPE_free(alg->parameter);
+        alg->parameter = NULL;
     } else
         ASN1_TYPE_set(alg->parameter, ptype, pval);
     return 1;

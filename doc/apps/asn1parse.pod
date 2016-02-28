@@ -7,6 +7,7 @@ asn1parse - ASN.1 parsing tool
 =head1 SYNOPSIS
 
 B<openssl> B<asn1parse>
+[B<-help>]
 [B<-inform PEM|DER>]
 [B<-in filename>]
 [B<-out filename>]
@@ -30,6 +31,10 @@ structures. It can also be used to extract data from ASN.1 formatted data.
 =head1 OPTIONS
 
 =over 4
+
+=item B<-help>
+
+Print out a usage message.
 
 =item B<-inform> B<DER|PEM>
 
@@ -83,7 +88,7 @@ option can be used multiple times to "drill down" into a nested structure.
 =item B<-genstr string>, B<-genconf file>
 
 generate encoded data based on B<string>, B<file> or both using
-L<ASN1_generate_nconf(3)|ASN1_generate_nconf(3)> format. If B<file> only is
+L<ASN1_generate_nconf(3)> format. If B<file> only is
 present then the string is obtained from the default section using the name
 B<asn1>. The encoded data is passed through the ASN1 parser and printed out as
 though it came from a file, the contents can thus be examined and written to a
@@ -189,6 +194,6 @@ ASN.1 types is not well handled (if at all).
 
 =head1 SEE ALSO
 
-L<ASN1_generate_nconf(3)|ASN1_generate_nconf(3)>
+L<ASN1_generate_nconf(3)>
 
 =cut

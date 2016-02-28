@@ -1,4 +1,3 @@
-/* crypto/evp/c_allc.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -57,12 +56,13 @@
  */
 
 #include <stdio.h>
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/evp.h>
+#include <internal/evp_int.h>
 #include <openssl/pkcs12.h>
 #include <openssl/objects.h>
 
-void OpenSSL_add_all_ciphers(void)
+void openssl_add_all_ciphers_internal(void)
 {
 
 #ifndef OPENSSL_NO_DES
@@ -94,6 +94,7 @@ void OpenSSL_add_all_ciphers(void)
     EVP_add_cipher(EVP_des_ede());
     EVP_add_cipher(EVP_des_ede3());
     EVP_add_cipher(EVP_des_ede3_wrap());
+    EVP_add_cipher_alias(SN_id_smime_alg_CMS3DESwrap, "des3-wrap");
 #endif
 
 #ifndef OPENSSL_NO_RC4
@@ -131,6 +132,9 @@ void OpenSSL_add_all_ciphers(void)
     EVP_add_cipher(EVP_rc2_64_cbc());
     EVP_add_cipher_alias(SN_rc2_cbc, "RC2");
     EVP_add_cipher_alias(SN_rc2_cbc, "rc2");
+    EVP_add_cipher_alias(SN_rc2_cbc, "rc2-128");
+    EVP_add_cipher_alias(SN_rc2_64_cbc, "rc2-64");
+    EVP_add_cipher_alias(SN_rc2_40_cbc, "rc2-40");
 #endif
 
 #ifndef OPENSSL_NO_BF
@@ -178,6 +182,7 @@ void OpenSSL_add_all_ciphers(void)
     EVP_add_cipher(EVP_aes_128_xts());
     EVP_add_cipher(EVP_aes_128_ccm());
     EVP_add_cipher(EVP_aes_128_wrap());
+    EVP_add_cipher_alias(SN_id_aes128_wrap, "aes128-wrap");
     EVP_add_cipher(EVP_aes_128_wrap_pad());
     EVP_add_cipher_alias(SN_aes_128_cbc, "AES128");
     EVP_add_cipher_alias(SN_aes_128_cbc, "aes128");
@@ -194,6 +199,7 @@ void OpenSSL_add_all_ciphers(void)
 # endif
     EVP_add_cipher(EVP_aes_192_ccm());
     EVP_add_cipher(EVP_aes_192_wrap());
+    EVP_add_cipher_alias(SN_id_aes192_wrap, "aes192-wrap");
     EVP_add_cipher(EVP_aes_192_wrap_pad());
     EVP_add_cipher_alias(SN_aes_192_cbc, "AES192");
     EVP_add_cipher_alias(SN_aes_192_cbc, "aes192");
@@ -211,6 +217,7 @@ void OpenSSL_add_all_ciphers(void)
     EVP_add_cipher(EVP_aes_256_xts());
     EVP_add_cipher(EVP_aes_256_ccm());
     EVP_add_cipher(EVP_aes_256_wrap());
+    EVP_add_cipher_alias(SN_id_aes256_wrap, "aes256-wrap");
     EVP_add_cipher(EVP_aes_256_wrap_pad());
     EVP_add_cipher_alias(SN_aes_256_cbc, "AES256");
     EVP_add_cipher_alias(SN_aes_256_cbc, "aes256");
@@ -248,5 +255,12 @@ void OpenSSL_add_all_ciphers(void)
     EVP_add_cipher(EVP_camellia_128_ctr());
     EVP_add_cipher(EVP_camellia_192_ctr());
     EVP_add_cipher(EVP_camellia_256_ctr());
+#endif
+
+#ifndef OPENSSL_NO_CHACHA
+    EVP_add_cipher(EVP_chacha20());
+# ifndef OPENSSL_NO_POLY1305
+    EVP_add_cipher(EVP_chacha20_poly1305());
+# endif
 #endif
 }

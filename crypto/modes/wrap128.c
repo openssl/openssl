@@ -1,4 +1,3 @@
-/* crypto/modes/wrap128.c */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project. Mode with padding contributed by Petr Spacek
@@ -59,7 +58,7 @@
  *  allows you to use them for any 128 bit block cipher.
  */
 
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/modes.h>
 
 /** RFC 3394 section 2.2.3.1 Default Initial Value */
@@ -81,9 +80,9 @@ static const unsigned char default_aiv[] = {
  *
  *  @param[in]  key    Key value.
  *  @param[in]  iv     IV value. Length = 8 bytes. NULL = use default_iv.
- *  @param[in]  in     Plain text as n 64-bit blocks, n >= 2.
+ *  @param[in]  in     Plaintext as n 64-bit blocks, n >= 2.
  *  @param[in]  inlen  Length of in.
- *  @param[out] out    Cipher text. Minimal buffer length = (inlen + 8) bytes.
+ *  @param[out] out    Ciphertext. Minimal buffer length = (inlen + 8) bytes.
  *                     Input and output buffers can overlap if block function
  *                     supports that.
  *  @param[in]  block  Block processing function.
@@ -127,19 +126,19 @@ size_t CRYPTO_128_wrap(void *key, const unsigned char *iv,
 }
 
 /** Unwrapping according to RFC 3394 section 2.2.2 steps 1-2.
- *  IV check (step 3) is responsibility of the caller.
+ *  The IV check (step 3) is responsibility of the caller.
  *
  *  @param[in]  key    Key value.
  *  @param[out] iv     Unchecked IV value. Minimal buffer length = 8 bytes.
- *  @param[out] out    Plain text without IV.
+ *  @param[out] out    Plaintext without IV.
  *                     Minimal buffer length = (inlen - 8) bytes.
  *                     Input and output buffers can overlap if block function
  *                     supports that.
- *  @param[in]  in     Ciphertext text as n 64-bit blocks
+ *  @param[in]  in     Ciphertext as n 64-bit blocks.
  *  @param[in]  inlen  Length of in.
  *  @param[in]  block  Block processing function.
  *  @return            0 if inlen is out of range [24, CRYPTO128_WRAP_MAX]
- *                     or if inlen is not multiply of 8.
+ *                     or if inlen is not a multiple of 8.
  *                     Output length otherwise.
  */
 static size_t crypto_128_unwrap_raw(void *key, unsigned char *iv,
@@ -174,21 +173,22 @@ static size_t crypto_128_unwrap_raw(void *key, unsigned char *iv,
     return inlen;
 }
 
-/** Unwrapping according to RFC 3394 section 2.2.2 including IV check.
- *  First block of plain text have to match supplied IV otherwise an error is
- *  returned.
+/** Unwrapping according to RFC 3394 section 2.2.2, including the IV check.
+ *  The first block of plaintext has to match the supplied IV, otherwise an
+ *  error is returned.
  *
  *  @param[in]  key    Key value.
- *  @param[out] iv     Unchecked IV value. Minimal buffer length = 8 bytes.
- *  @param[out] out    Plain text without IV.
+ *  @param[out] iv     IV value to match against. Length = 8 bytes.
+ *                     NULL = use default_iv.
+ *  @param[out] out    Plaintext without IV.
  *                     Minimal buffer length = (inlen - 8) bytes.
  *                     Input and output buffers can overlap if block function
  *                     supports that.
- *  @param[in]  in     Ciphertext text as n 64-bit blocks
+ *  @param[in]  in     Ciphertext as n 64-bit blocks.
  *  @param[in]  inlen  Length of in.
  *  @param[in]  block  Block processing function.
  *  @return            0 if inlen is out of range [24, CRYPTO128_WRAP_MAX]
- *                     or if inlen is not multiply of 8
+ *                     or if inlen is not a multiple of 8
  *                     or if IV doesn't match expected value.
  *                     Output length otherwise.
  */
@@ -200,26 +200,26 @@ size_t CRYPTO_128_unwrap(void *key, const unsigned char *iv,
     unsigned char got_iv[8];
 
     ret = crypto_128_unwrap_raw(key, got_iv, out, in, inlen, block);
-    if (ret != inlen)
-        return ret;
+    if (ret == 0)
+        return 0;
 
     if (!iv)
         iv = default_iv;
-    if (CRYPTO_memcmp(out, iv, 8)) {
-        OPENSSL_cleanse(out, inlen);
+    if (CRYPTO_memcmp(got_iv, iv, 8)) {
+        OPENSSL_cleanse(out, ret);
         return 0;
     }
-    return inlen;
+    return ret;
 }
 
 /** Wrapping according to RFC 5649 section 4.1.
  *
  *  @param[in]  key    Key value.
  *  @param[in]  icv    (Non-standard) IV, 4 bytes. NULL = use default_aiv.
- *  @param[out] out    Cipher text. Minimal buffer length = (inlen + 15) bytes.
+ *  @param[out] out    Ciphertext. Minimal buffer length = (inlen + 15) bytes.
  *                     Input and output buffers can overlap if block function
  *                     supports that.
- *  @param[in]  in     Plain text as n 64-bit blocks, n >= 2.
+ *  @param[in]  in     Plaintext as n 64-bit blocks, n >= 2.
  *  @param[in]  inlen  Length of in.
  *  @param[in]  block  Block processing function.
  *  @return            0 if inlen is out of range [1, CRYPTO128_WRAP_MAX].
@@ -230,8 +230,13 @@ size_t CRYPTO_128_wrap_pad(void *key, const unsigned char *icv,
                            const unsigned char *in, size_t inlen,
                            block128_f block)
 {
-    /* n: number of 64-bit blocks in the padded key data */
-    const size_t blocks_padded = (inlen + 8) / 8;
+    /* n: number of 64-bit blocks in the padded key data
+     *
+     * If length of plain text is not a multiple of 8, pad the plain text octet
+     * string on the right with octets of zeros, where final length is the
+     * smallest multiple of 8 that is greater than length of plain text.
+     * If length of plain text is a multiple of 8, then there is no padding. */
+    const size_t blocks_padded = (inlen + 7) / 8; /* CEILING(m/8) */
     const size_t padded_len = blocks_padded * 8;
     const size_t padding_len = padded_len - inlen;
     /* RFC 5649 section 3: Alternative Initial Value */
@@ -277,14 +282,14 @@ size_t CRYPTO_128_wrap_pad(void *key, const unsigned char *icv,
  *
  *  @param[in]  key    Key value.
  *  @param[in]  icv    (Non-standard) IV, 4 bytes. NULL = use default_aiv.
- *  @param[out] out    Plain text. Minimal buffer length = inlen bytes.
+ *  @param[out] out    Plaintext. Minimal buffer length = inlen bytes.
  *                     Input and output buffers can overlap if block function
  *                     supports that.
- *  @param[in]  in     Ciphertext text as n 64-bit blocks
+ *  @param[in]  in     Ciphertext as n 64-bit blocks.
  *  @param[in]  inlen  Length of in.
  *  @param[in]  block  Block processing function.
  *  @return            0 if inlen is out of range [16, CRYPTO128_WRAP_MAX],
- *                     or if inlen is not multiply of 8
+ *                     or if inlen is not a multiple of 8
  *                     or if IV and message length indicator doesn't match.
  *                     Output length if unwrapping succeeded and IV matches.
  */
@@ -303,7 +308,7 @@ size_t CRYPTO_128_unwrap_pad(void *key, const unsigned char *icv,
     static unsigned char zeros[8] = { 0x0 };
     size_t ret;
 
-    /* Section 4.2: Cipher text length has to be (n+1) 64-bit blocks. */
+    /* Section 4.2: Ciphertext length has to be (n+1) 64-bit blocks. */
     if ((inlen & 0x7) != 0 || inlen < 16 || inlen >= CRYPTO128_WRAP_MAX)
         return 0;
 
@@ -345,7 +350,10 @@ size_t CRYPTO_128_unwrap_pad(void *key, const unsigned char *icv,
      * LSB(32,AIV).
      */
 
-    ptext_len = (aiv[4] << 24) | (aiv[5] << 16) | (aiv[6] << 8) | aiv[7];
+    ptext_len =   ((unsigned int)aiv[4] << 24)
+                | ((unsigned int)aiv[5] << 16)
+                | ((unsigned int)aiv[6] <<  8)
+                |  (unsigned int)aiv[7];
     if (8 * (n - 1) >= ptext_len || ptext_len > 8 * n) {
         OPENSSL_cleanse(out, inlen);
         return 0;

@@ -5,38 +5,32 @@
 # editor artefacts
 *.swp
 .#*
-#*#
+\#*#
 *~
+/.dir-locals.el
 
 # Top level excludes
-/Makefile.bak
-/Makefile
+/Makefile.orig
 /MINFO
+/TABLE
 /*.a
-/include
 /*.pc
 /rehash.time
 /inc.*
 /makefile.*
 /out.*
 /tmp.*
+/configdata.pm
 
-# Most *.c files under test/ are symlinks
-/test/*.c
-# Apart from these
-!/test/asn1test.c
-!/test/methtest.c
-!/test/dummytest.c
-!/test/igetest.c
-!/test/r160test.c
-!/test/fips_algvs.c
-!/test/testutil.c
+# *all* Makefiles
+Makefile
 
 /test/*.ss
 /test/*.srl
 /test/.rnd
 /test/test*.pem
 /test/newkey.pem
+/test/*.log
 
 # Certificate symbolic links
 *.0
@@ -48,27 +42,17 @@
 
 # Auto generated headers
 /crypto/buildinf.h
-/crypto/opensslconf.h
+/openssl/include/opensslconf.h
+/crypto/include/internal/*_conf.h
+util/domd
 
 # Auto generated assembly language source files
 *.s
-!/crypto/bn/asm/pa-risc2.s
-!/crypto/bn/asm/pa-risc2W.s
-crypto/aes/asm/a_win32.asm
-crypto/bf/asm/b_win32.asm
-crypto/bn/asm/bn_win32.asm
-crypto/bn/asm/co_win32.asm
-crypto/bn/asm/mt_win32.asm
-crypto/cast/asm/c_win32.asm
-crypto/cpu_win32.asm
-crypto/des/asm/d_win32.asm
-crypto/des/asm/y_win32.asm
-crypto/md5/asm/m5_win32.asm
-crypto/rc4/asm/r4_win32.asm
-crypto/rc5/asm/r5_win32.asm
-crypto/ripemd/asm/rm_win32.asm
-crypto/sha/asm/s1_win32.asm
-crypto/sha/asm/sha512-sse2.asm
+!/crypto/*/asm/*.s
+/crypto/arm*.S
+/crypto/*/*.S
+*.asm
+!/crypto/*/asm/*.asm
 
 # Executables
 /apps/openssl
@@ -88,31 +72,66 @@ crypto/sha/asm/sha512-sse2.asm
 *.so*
 *.dylib*
 *.dll*
+*.exe
 # Exceptions
 !/test/bctest
 !/crypto/des/times/486-50.sol
 
 # Misc auto generated files
+/include/openssl/opensslconf.h
 /tools/c_rehash
-/test/evptests.txt
-lib
+/crypto/**/lib
+/engines/**/lib
+/ssl/**/lib
 Makefile.save
 *.bak
-tags
-TAGS
+/tags
+/TAGS
 cscope.out
 *.d
+/crypto.map
+/ssl.map
 
 # Windows
+/tmp32
+/tmp32.dbg
 /tmp32dll
 /tmp32dll.dbg
+/out32
+/out32.dbg
 /out32dll
 /out32dll.dbg
 /inc32
 /MINFO
-ms/bcb.mak
-ms/libeay32.def
-ms/nt.mak
-ms/ntdll.mak
-ms/ssleay32.def
-ms/version32.rc
+/ms/bcb.mak
+/ms/libeay32.def
+/ms/nt.mak
+/ms/ntdll.mak
+/ms/ssleay32.def
+/ms/version32.rc
+
+# Files created on other branches that are not held in git, and are not
+# needed on this branch
+/include/openssl/asn1_mac.h
+/include/openssl/des_old.h
+/include/openssl/fips.h
+/include/openssl/fips_rand.h
+/include/openssl/krb5_asn.h
+/include/openssl/kssl.h
+/include/openssl/pq_compat.h
+/include/openssl/ssl23.h
+/include/openssl/tmdiff.h
+/include/openssl/ui_compat.h
+/test/fips_aesavs.c
+/test/fips_desmovs.c
+/test/fips_dsatest.c
+/test/fips_dssvs.c
+/test/fips_hmactest.c
+/test/fips_randtest.c
+/test/fips_rngvs.c
+/test/fips_rsagtest.c
+/test/fips_rsastest.c
+/test/fips_rsavtest.c
+/test/fips_shatest.c
+/test/fips_test_suite.c
+/test/shatest.c

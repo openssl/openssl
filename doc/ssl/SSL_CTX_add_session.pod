@@ -19,10 +19,10 @@ SSL_CTX_add_session, SSL_add_session, SSL_CTX_remove_session, SSL_remove_session
 SSL_CTX_add_session() adds the session B<c> to the context B<ctx>. The
 reference count for session B<c> is incremented by 1. If a session with
 the same session id already exists, the old session is removed by calling
-L<SSL_SESSION_free(3)|SSL_SESSION_free(3)>.
+L<SSL_SESSION_free(3)>.
 
 SSL_CTX_remove_session() removes the session B<c> from the context B<ctx>.
-L<SSL_SESSION_free(3)|SSL_SESSION_free(3)> is called once for B<c>.
+L<SSL_SESSION_free(3)> is called once for B<c>.
 
 SSL_add_session() and SSL_remove_session() are synonyms for their
 SSL_CTX_*() counterparts.
@@ -66,8 +66,8 @@ The following values are returned by all functions:
 
 =head1 SEE ALSO
 
-L<ssl(3)|ssl(3)>,
-L<SSL_CTX_set_session_cache_mode(3)|SSL_CTX_set_session_cache_mode(3)>,
-L<SSL_SESSION_free(3)|SSL_SESSION_free(3)>
+L<ssl(3)>,
+L<SSL_CTX_set_session_cache_mode(3)>,
+L<SSL_SESSION_free(3)>
 
 =cut

@@ -51,13 +51,6 @@
 #include "modes_lcl.h"
 #include <string.h>
 
-#ifndef MODES_DEBUG
-# ifndef NDEBUG
-#  define NDEBUG
-# endif
-#endif
-#include <assert.h>
-
 #if defined(BSWAP4) && defined(STRICT_ALIGNMENT)
 /* redefine, because alignment is ensured */
 # undef  GETU32
@@ -682,7 +675,7 @@ static void gcm_gmult_1bit(u64 Xi[2], const u64 H[2])
          defined(_M_IX86)       || defined(_M_AMD64)    || defined(_M_X64))
 #  define GHASH_ASM_X86_OR_64
 #  define GCM_FUNCREF_4BIT
-extern unsigned int OPENSSL_ia32cap_P[2];
+extern unsigned int OPENSSL_ia32cap_P[];
 
 void gcm_init_clmul(u128 Htable[16], const u64 Xi[2]);
 void gcm_gmult_clmul(u64 Xi[2], const u128 Htable[16]);
@@ -1685,7 +1678,7 @@ int CRYPTO_gcm128_finish(GCM128_CONTEXT *ctx, const unsigned char *tag,
     ctx->Xi.u[1] ^= ctx->EK0.u[1];
 
     if (tag && len <= sizeof(ctx->Xi))
-        return memcmp(ctx->Xi.c, tag, len);
+        return CRYPTO_memcmp(ctx->Xi.c, tag, len);
     else
         return -1;
 }
@@ -1701,7 +1694,7 @@ GCM128_CONTEXT *CRYPTO_gcm128_new(void *key, block128_f block)
 {
     GCM128_CONTEXT *ret;
 
-    if ((ret = (GCM128_CONTEXT *)OPENSSL_malloc(sizeof(GCM128_CONTEXT))))
+    if ((ret = OPENSSL_malloc(sizeof(*ret))) != NULL)
         CRYPTO_gcm128_init(ret, key, block);
 
     return ret;
@@ -1709,10 +1702,7 @@ GCM128_CONTEXT *CRYPTO_gcm128_new(void *key, block128_f block)
 
 void CRYPTO_gcm128_release(GCM128_CONTEXT *ctx)
 {
-    if (ctx) {
-        OPENSSL_cleanse(ctx, sizeof(*ctx));
-        OPENSSL_free(ctx);
-    }
+    OPENSSL_clear_free(ctx, sizeof(*ctx));
 }
 
 #if defined(SELFTEST)

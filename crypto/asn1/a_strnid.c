@@ -1,4 +1,3 @@
-/* a_strnid.c */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
  * 1999.
@@ -59,7 +58,7 @@
 
 #include <stdio.h>
 #include <ctype.h>
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/asn1.h>
 #include <openssl/objects.h>
 
@@ -100,19 +99,19 @@ int ASN1_STRING_set_default_mask_asc(const char *p)
 {
     unsigned long mask;
     char *end;
-    if (!strncmp(p, "MASK:", 5)) {
+    if (strncmp(p, "MASK:", 5) == 0) {
         if (!p[5])
             return 0;
         mask = strtoul(p + 5, &end, 0);
         if (*end)
             return 0;
-    } else if (!strcmp(p, "nombstr"))
+    } else if (strcmp(p, "nombstr") == 0)
         mask = ~((unsigned long)(B_ASN1_BMPSTRING | B_ASN1_UTF8STRING));
-    else if (!strcmp(p, "pkix"))
+    else if (strcmp(p, "pkix") == 0)
         mask = ~((unsigned long)B_ASN1_T61STRING);
-    else if (!strcmp(p, "utf8only"))
+    else if (strcmp(p, "utf8only") == 0)
         mask = B_ASN1_UTF8STRING;
-    else if (!strcmp(p, "default"))
+    else if (strcmp(p, "default") == 0)
         mask = 0xFFFFFFFFL;
     else
         return 0;
@@ -192,7 +191,10 @@ static const ASN1_STRING_TABLE tbl_standard[] = {
     {NID_name, 1, ub_name, DIRSTRING_TYPE, 0},
     {NID_dnQualifier, -1, -1, B_ASN1_PRINTABLESTRING, STABLE_NO_MASK},
     {NID_domainComponent, 1, -1, B_ASN1_IA5STRING, STABLE_NO_MASK},
-    {NID_ms_csp_name, -1, -1, B_ASN1_BMPSTRING, STABLE_NO_MASK}
+    {NID_ms_csp_name, -1, -1, B_ASN1_BMPSTRING, STABLE_NO_MASK},
+    {NID_INN, 1, 12, B_ASN1_NUMERICSTRING, STABLE_NO_MASK},
+    {NID_OGRN, 1, 13, B_ASN1_NUMERICSTRING, STABLE_NO_MASK},
+    {NID_SNILS, 1, 11, B_ASN1_NUMERICSTRING, STABLE_NO_MASK}
 };
 
 static int sk_table_cmp(const ASN1_STRING_TABLE *const *a,
@@ -220,9 +222,7 @@ ASN1_STRING_TABLE *ASN1_STRING_TABLE_get(int nid)
         if (idx >= 0)
             return sk_ASN1_STRING_TABLE_value(stable, idx);
     }
-    return OBJ_bsearch_table(&fnd, tbl_standard,
-                             sizeof(tbl_standard) /
-                             sizeof(ASN1_STRING_TABLE));
+    return OBJ_bsearch_table(&fnd, tbl_standard, OSSL_NELEM(tbl_standard));
 }
 
 /*
@@ -234,16 +234,16 @@ static ASN1_STRING_TABLE *stable_get(int nid)
 {
     ASN1_STRING_TABLE *tmp, *rv;
     /* Always need a string table so allocate one if NULL */
-    if (!stable) {
+    if (stable == NULL) {
         stable = sk_ASN1_STRING_TABLE_new(sk_table_cmp);
-        if (!stable)
+        if (stable == NULL)
             return NULL;
     }
     tmp = ASN1_STRING_TABLE_get(nid);
     if (tmp && tmp->flags & STABLE_FLAGS_MALLOC)
         return tmp;
-    rv = OPENSSL_malloc(sizeof(ASN1_STRING_TABLE));
-    if (!rv)
+    rv = OPENSSL_malloc(sizeof(*rv));
+    if (rv == NULL)
         return NULL;
     if (!sk_ASN1_STRING_TABLE_push(stable, rv)) {
         OPENSSL_free(rv);
@@ -309,8 +309,7 @@ main()
     ASN1_STRING_TABLE *tmp;
     int i, last_nid = -1;
 
-    for (tmp = tbl_standard, i = 0;
-         i < sizeof(tbl_standard) / sizeof(ASN1_STRING_TABLE); i++, tmp++) {
+    for (tmp = tbl_standard, i = 0; i < OSSL_NELEM(tbl_standard); i++, tmp++) {
         if (tmp->nid < last_nid) {
             last_nid = 0;
             break;
@@ -323,8 +322,7 @@ main()
         exit(0);
     }
 
-    for (tmp = tbl_standard, i = 0;
-         i < sizeof(tbl_standard) / sizeof(ASN1_STRING_TABLE); i++, tmp++)
+    for (tmp = tbl_standard, i = 0; i < OSSL_NELEM(tbl_standard); i++, tmp++)
         printf("Index %d, NID %d, Name=%s\n", i, tmp->nid,
                OBJ_nid2ln(tmp->nid));
 

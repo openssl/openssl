@@ -1,4 +1,3 @@
-/* crypto/pem/pem_sign.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -57,7 +56,7 @@
  */
 
 #include <stdio.h>
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/rand.h>
 #include <openssl/evp.h>
 #include <openssl/objects.h>
@@ -81,7 +80,7 @@ int PEM_SignFinal(EVP_MD_CTX *ctx, unsigned char *sigret,
     int i, ret = 0;
     unsigned int m_len;
 
-    m = (unsigned char *)OPENSSL_malloc(EVP_PKEY_size(pkey) + 2);
+    m = OPENSSL_malloc(EVP_PKEY_size(pkey) + 2);
     if (m == NULL) {
         PEMerr(PEM_F_PEM_SIGNFINAL, ERR_R_MALLOC_FAILURE);
         goto err;
@@ -95,7 +94,6 @@ int PEM_SignFinal(EVP_MD_CTX *ctx, unsigned char *sigret,
     ret = 1;
  err:
     /* ctx has been zeroed by EVP_SignFinal() */
-    if (m != NULL)
-        OPENSSL_free(m);
+    OPENSSL_free(m);
     return (ret);
 }

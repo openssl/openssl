@@ -7,6 +7,7 @@ ec - EC key processing
 =head1 SYNOPSIS
 
 B<openssl> B<ec>
+[B<-help>]
 [B<-inform PEM|DER>]
 [B<-outform PEM|DER>]
 [B<-in filename>]
@@ -23,6 +24,8 @@ B<openssl> B<ec>
 [B<-pubout>]
 [B<-conv_form arg>]
 [B<-param_enc arg>]
+[B<-no_public>]
+[B<-check>]
 [B<-engine id>]
 
 =head1 DESCRIPTION
@@ -36,6 +39,10 @@ PKCS#8 private key format use the B<pkcs8> command.
 =head1 COMMAND OPTIONS
 
 =over 4
+
+=item B<-help>
+
+Print out a usage message.
 
 =item B<-inform DER|PEM>
 
@@ -60,7 +67,7 @@ prompted for.
 =item B<-passin arg>
 
 the input file password source. For more information about the format of B<arg>
-see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)|openssl(1)>.
+see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
 
 =item B<-out filename>
 
@@ -72,7 +79,7 @@ filename.
 =item B<-passout arg>
 
 the output file password source. For more information about the format of B<arg>
-see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)|openssl(1)>.
+see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
 
 =item B<-des|-des3|-idea>
 
@@ -128,6 +135,14 @@ EC parameters structures). The default value is B<named_curve>.
 B<Note> the B<implicitlyCA> alternative ,as specified in RFC 3279,
 is currently not implemented in OpenSSL.
 
+=item B<-no_public>
+
+This option omits the public key components from the private key output.
+
+=item B<-check>
+
+this option checks the consistency of an EC private or public key.
+
 =item B<-engine id>
 
 specifying an engine (by its unique B<id> string) will cause B<ec>
@@ -177,14 +192,6 @@ To change the point conversion form to B<compressed>:
 
 =head1 SEE ALSO
 
-L<ecparam(1)|ecparam(1)>, L<dsa(1)|dsa(1)>, L<rsa(1)|rsa(1)>
-
-=head1 HISTORY
-
-The ec command was first introduced in OpenSSL 0.9.8.
-
-=head1 AUTHOR
-
-Nils Larsch for the OpenSSL project (http://www.openssl.org).
+L<ecparam(1)>, L<dsa(1)>, L<rsa(1)>
 
 =cut

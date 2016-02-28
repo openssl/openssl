@@ -8,6 +8,7 @@ ca - sample minimal CA application
 =head1 SYNOPSIS
 
 B<openssl> B<ca>
+[B<-help>]
 [B<-verbose>]
 [B<-config filename>]
 [B<-name section>]
@@ -49,6 +50,7 @@ B<openssl> B<ca>
 [B<-engine id>]
 [B<-subj arg>]
 [B<-utf8>]
+[B<-create_serial>]
 [B<-multivalue-rdn>]
 
 =head1 DESCRIPTION
@@ -63,6 +65,14 @@ The options descriptions will be divided into each purpose.
 =head1 CA OPTIONS
 
 =over 4
+
+=item B<-help>
+
+Print out a usage message.
+
+=item B<-verbose>
+
+this prints extra details about the operations being performed.
 
 =item B<-config filename>
 
@@ -141,11 +151,7 @@ self-signed certificate.
 =item B<-passin arg>
 
 the key password source. For more information about the format of B<arg>
-see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)|openssl(1)>.
-
-=item B<-verbose>
-
-this prints extra details about the operations being performed.
+see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
 
 =item B<-notext>
 
@@ -167,7 +173,8 @@ the number of days to certify the certificate for.
 
 =item B<-md alg>
 
-the message digest to use. Possible values include md5, sha1 and mdc2.
+the message digest to use.
+Any digest supported by the OpenSSL B<dgst> command can be used.
 This option also applies to CRLs.
 
 =item B<-policy arg>
@@ -214,7 +221,7 @@ to be added when a certificate is issued (defaults to B<x509_extensions>
 unless the B<-extfile> option is used). If no extension section is
 present then, a V1 certificate is created. If the extension section
 is present (even if it is empty), then a V3 certificate is created. See the:w
-L<x509v3_config(5)|x509v3_config(5)> manual page for details of the
+L<x509v3_config(5)> manual page for details of the
 extension section format.
 
 =item B<-extfile file>
@@ -243,9 +250,15 @@ default they are interpreted as ASCII. This means that the field
 values, whether prompted from a terminal or obtained from a
 configuration file, must be valid UTF8 strings.
 
+=item B<-create_serial>
+
+if reading serial from the text file as specified in the configuration
+fails, specifying this option creates a new random serial to be used as next
+serial number.
+
 =item B<-multivalue-rdn>
 
-This option causes the -subj argument to be interpretedt with full
+This option causes the -subj argument to be interpreted with full
 support for multivalued RDNs. Example:
 
 I</DC=org/DC=OpenSSL/DC=users/UID=123456+CN=John Doe>
@@ -319,7 +332,7 @@ created, if the CRL extension section is present (even if it is
 empty) then a V2 CRL is created. The CRL extensions specified are
 CRL extensions and B<not> CRL entry extensions.  It should be noted
 that some software (for example Netscape) can't handle V2 CRLs. See
-L<x509v3_config(5)|x509v3_config(5)> manual page for details of the
+L<x509v3_config(5)> manual page for details of the
 extension section format.
 
 =back
@@ -380,7 +393,7 @@ CA private key. Mandatory.
 =item B<RANDFILE>
 
 a file used to read and write random number seed information, or
-an EGD socket (see L<RAND_egd(3)|RAND_egd(3)>).
+an EGD socket (see L<RAND_egd(3)>).
 
 =item B<default_days>
 
@@ -406,7 +419,7 @@ least one of these must be present to generate a CRL.
 
 =item B<default_md>
 
-the same as the B<-md> option. The message digest to use. Mandatory.
+the same as the B<-md> option. Mandatory.
 
 =item B<database>
 
@@ -641,8 +654,8 @@ the database has to be kept in memory.
 
 The B<ca> command really needs rewriting or the required functionality
 exposed at either a command or interface level so a more friendly utility
-(perl script or GUI) can handle things properly. The scripts B<CA.sh> and
-B<CA.pl> help a little but not very much.
+(perl script or GUI) can handle things properly. The script
+B<CA.pl> helps a little but not very much.
 
 Any fields in a request that are not present in a policy are silently
 deleted. This does not happen if the B<-preserveDN> option is used. To
@@ -690,7 +703,7 @@ then even if a certificate is issued with CA:TRUE it will not be valid.
 
 =head1 SEE ALSO
 
-L<req(1)|req(1)>, L<spkac(1)|spkac(1)>, L<x509(1)|x509(1)>, L<CA.pl(1)|CA.pl(1)>,
-L<config(5)|config(5)>, L<x509v3_config(5)|x509v3_config(5)> 
+L<req(1)>, L<spkac(1)>, L<x509(1)>, L<CA.pl(1)>,
+L<config(5)>, L<x509v3_config(5)> 
 
 =cut

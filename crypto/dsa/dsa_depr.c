@@ -1,4 +1,3 @@
-/* crypto/dsa/dsa_depr.c */
 /* ====================================================================
  * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
  *
@@ -65,18 +64,20 @@
  */
 #define xxxHASH    EVP_sha1()
 
-static void *dummy = &dummy;
+#include <openssl/opensslconf.h>
+#if OPENSSL_API_COMPAT >= 0x00908000L
+NON_EMPTY_TRANSLATION_UNIT
+#else
 
-#include <stdio.h>
-#include <time.h>
-#include "cryptlib.h"
-#include <openssl/evp.h>
-#include <openssl/bn.h>
-#include <openssl/dsa.h>
-#include <openssl/rand.h>
-#include <openssl/sha.h>
+# include <stdio.h>
+# include <time.h>
+# include "internal/cryptlib.h"
+# include <openssl/evp.h>
+# include <openssl/bn.h>
+# include <openssl/dsa.h>
+# include <openssl/rand.h>
+# include <openssl/sha.h>
 
-#ifndef OPENSSL_NO_DEPRECATED
 DSA *DSA_generate_parameters(int bits,
                              unsigned char *seed_in, int seed_len,
                              int *counter_ret, unsigned long *h_ret,
@@ -89,10 +90,8 @@ DSA *DSA_generate_parameters(int bits,
     if ((ret = DSA_new()) == NULL)
         return NULL;
     cb = BN_GENCB_new();
-    if (!cb) {
-        DSA_free(ret);
-        return NULL;
-    }
+    if (cb == NULL)
+        goto err;
 
     BN_GENCB_set_old(cb, callback, cb_arg);
 
@@ -102,6 +101,7 @@ DSA *DSA_generate_parameters(int bits,
         return ret;
     }
     BN_GENCB_free(cb);
+err:
     DSA_free(ret);
     return NULL;
 }

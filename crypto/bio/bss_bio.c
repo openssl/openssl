@@ -1,4 +1,3 @@
-/* crypto/bio/bss_bio.c  -*- Mode: C; c-file-style: "eay" -*- */
 /* ====================================================================
  * Copyright (c) 1998-2003 The OpenSSL Project.  All rights reserved.
  *
@@ -61,20 +60,6 @@
  * See ssl/ssltest.c for some hints on how this can be used.
  */
 
-/* BIO_DEBUG implies BIO_PAIR_DEBUG */
-#ifdef BIO_DEBUG
-# ifndef BIO_PAIR_DEBUG
-#  define BIO_PAIR_DEBUG
-# endif
-#endif
-
-/* disable assert() unless BIO_PAIR_DEBUG has been defined */
-#ifndef BIO_PAIR_DEBUG
-# ifndef NDEBUG
-#  define NDEBUG
-# endif
-#endif
-
 #include <assert.h>
 #include <limits.h>
 #include <stdlib.h>
@@ -85,14 +70,6 @@
 #include <openssl/crypto.h>
 
 #include "e_os.h"
-
-/* VxWorks defines SSIZE_MAX with an empty value causing compile errors */
-#if defined(OPENSSL_SYS_VXWORKS)
-# undef SSIZE_MAX
-#endif
-#ifndef SSIZE_MAX
-# define SSIZE_MAX INT_MAX
-#endif
 
 static int bio_new(BIO *bio);
 static int bio_free(BIO *bio);
@@ -144,7 +121,7 @@ static int bio_new(BIO *bio)
 {
     struct bio_bio_st *b;
 
-    b = OPENSSL_malloc(sizeof *b);
+    b = OPENSSL_malloc(sizeof(*b));
     if (b == NULL)
         return 0;
 
@@ -170,10 +147,7 @@ static int bio_free(BIO *bio)
     if (b->peer)
         bio_destroy_pair(bio);
 
-    if (b->buf != NULL) {
-        OPENSSL_free(b->buf);
-    }
-
+    OPENSSL_free(b->buf);
     OPENSSL_free(b);
 
     return 1;
@@ -312,8 +286,8 @@ static ossl_ssize_t bio_nread(BIO *bio, char **buf, size_t num_)
     struct bio_bio_st *b, *peer_b;
     ossl_ssize_t num, available;
 
-    if (num_ > SSIZE_MAX)
-        num = SSIZE_MAX;
+    if (num_ > OSSL_SSIZE_MAX)
+        num = OSSL_SSIZE_MAX;
     else
         num = (ossl_ssize_t) num_;
 
@@ -468,8 +442,8 @@ static ossl_ssize_t bio_nwrite(BIO *bio, char **buf, size_t num_)
     struct bio_bio_st *b;
     ossl_ssize_t num, space;
 
-    if (num_ > SSIZE_MAX)
-        num = SSIZE_MAX;
+    if (num_ > OSSL_SSIZE_MAX)
+        num = OSSL_SSIZE_MAX;
     else
         num = (ossl_ssize_t) num_;
 
@@ -507,10 +481,8 @@ static long bio_ctrl(BIO *bio, int cmd, long num, void *ptr)
             size_t new_size = num;
 
             if (b->size != new_size) {
-                if (b->buf) {
-                    OPENSSL_free(b->buf);
-                    b->buf = NULL;
-                }
+                OPENSSL_free(b->buf);
+                b->buf = NULL;
                 b->size = new_size;
             }
             ret = 1;
@@ -788,14 +760,10 @@ int BIO_new_bio_pair(BIO **bio1_p, size_t writebuf1,
 
  err:
     if (ret == 0) {
-        if (bio1) {
-            BIO_free(bio1);
-            bio1 = NULL;
-        }
-        if (bio2) {
-            BIO_free(bio2);
-            bio2 = NULL;
-        }
+        BIO_free(bio1);
+        bio1 = NULL;
+        BIO_free(bio2);
+        bio2 = NULL;
     }
 
     *bio1_p = bio1;

@@ -1,4 +1,3 @@
-/* crypto/asn1/asn1_lib.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -58,14 +57,12 @@
 
 #include <stdio.h>
 #include <limits.h>
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/asn1.h>
-#include <openssl/asn1_mac.h>
 
 static int asn1_get_length(const unsigned char **pp, int *inf, long *rl,
                            int max);
 static void asn1_put_length(unsigned char **pp, int length);
-const char ASN1_version[] = "ASN.1" OPENSSL_VERSION_PTEXT;
 
 static int _asn1_check_infinite_end(const unsigned char **p, long len)
 {
@@ -279,57 +276,6 @@ int ASN1_object_size(int constructed, int length, int tag)
     return (ret);
 }
 
-static int _asn1_Finish(ASN1_const_CTX *c)
-{
-    if ((c->inf == (1 | V_ASN1_CONSTRUCTED)) && (!c->eos)) {
-        if (!ASN1_const_check_infinite_end(&c->p, c->slen)) {
-            c->error = ERR_R_MISSING_ASN1_EOS;
-            return (0);
-        }
-    }
-    if (((c->slen != 0) && !(c->inf & 1)) || ((c->slen < 0) && (c->inf & 1))) {
-        c->error = ERR_R_ASN1_LENGTH_MISMATCH;
-        return (0);
-    }
-    return (1);
-}
-
-int asn1_Finish(ASN1_CTX *c)
-{
-    return _asn1_Finish((ASN1_const_CTX *)c);
-}
-
-int asn1_const_Finish(ASN1_const_CTX *c)
-{
-    return _asn1_Finish(c);
-}
-
-int asn1_GetSequence(ASN1_const_CTX *c, long *length)
-{
-    const unsigned char *q;
-
-    q = c->p;
-    c->inf = ASN1_get_object(&(c->p), &(c->slen), &(c->tag), &(c->xclass),
-                             *length);
-    if (c->inf & 0x80) {
-        c->error = ERR_R_BAD_GET_ASN1_OBJECT_CALL;
-        return (0);
-    }
-    if (c->tag != V_ASN1_SEQUENCE) {
-        c->error = ERR_R_EXPECTING_AN_ASN1_SEQUENCE;
-        return (0);
-    }
-    (*length) -= (c->p - q);
-    if (c->max && (*length < 0)) {
-        c->error = ERR_R_ASN1_LENGTH_MISMATCH;
-        return (0);
-    }
-    if (c->inf == (1 | V_ASN1_CONSTRUCTED))
-        c->slen = *length + *(c->pp) - c->p;
-    c->eos = 0;
-    return (1);
-}
-
 int ASN1_STRING_copy(ASN1_STRING *dst, const ASN1_STRING *str)
 {
     if (str == NULL)
@@ -337,7 +283,9 @@ int ASN1_STRING_copy(ASN1_STRING *dst, const ASN1_STRING *str)
     dst->type = str->type;
     if (!ASN1_STRING_set(dst, str->data, str->length))
         return 0;
-    dst->flags = str->flags;
+    /* Copy flags but preserve embed value */
+    dst->flags &= ASN1_STRING_FLAG_EMBED;
+    dst->flags |= str->flags & ~ASN1_STRING_FLAG_EMBED;
     return 1;
 }
 
@@ -347,7 +295,7 @@ ASN1_STRING *ASN1_STRING_dup(const ASN1_STRING *str)
     if (!str)
         return NULL;
     ret = ASN1_STRING_new();
-    if (!ret)
+    if (ret == NULL)
         return NULL;
     if (!ASN1_STRING_copy(ret, str)) {
         ASN1_STRING_free(ret);
@@ -369,11 +317,7 @@ int ASN1_STRING_set(ASN1_STRING *str, const void *_data, int len)
     }
     if ((str->length < len) || (str->data == NULL)) {
         c = str->data;
-        if (c == NULL)
-            str->data = OPENSSL_malloc(len + 1);
-        else
-            str->data = OPENSSL_realloc(c, len + 1);
-
+        str->data = OPENSSL_realloc(c, len + 1);
         if (str->data == NULL) {
             ASN1err(ASN1_F_ASN1_STRING_SET, ERR_R_MALLOC_FAILURE);
             str->data = c;
@@ -391,8 +335,7 @@ int ASN1_STRING_set(ASN1_STRING *str, const void *_data, int len)
 
 void ASN1_STRING_set0(ASN1_STRING *str, void *data, int len)
 {
-    if (str->data)
-        OPENSSL_free(str->data);
+    OPENSSL_free(str->data);
     str->data = data;
     str->length = len;
 }
@@ -406,15 +349,12 @@ ASN1_STRING *ASN1_STRING_type_new(int type)
 {
     ASN1_STRING *ret;
 
-    ret = (ASN1_STRING *)OPENSSL_malloc(sizeof(ASN1_STRING));
+    ret = OPENSSL_zalloc(sizeof(*ret));
     if (ret == NULL) {
         ASN1err(ASN1_F_ASN1_STRING_TYPE_NEW, ERR_R_MALLOC_FAILURE);
         return (NULL);
     }
-    ret->length = 0;
     ret->type = type;
-    ret->data = NULL;
-    ret->flags = 0;
     return (ret);
 }
 
@@ -422,9 +362,19 @@ void ASN1_STRING_free(ASN1_STRING *a)
 {
     if (a == NULL)
         return;
-    if (a->data && !(a->flags & ASN1_STRING_FLAG_NDEF))
+    if (!(a->flags & ASN1_STRING_FLAG_NDEF))
         OPENSSL_free(a->data);
-    OPENSSL_free(a);
+    if (!(a->flags & ASN1_STRING_FLAG_EMBED))
+        OPENSSL_free(a);
+}
+
+void ASN1_STRING_clear_free(ASN1_STRING *a)
+{
+    if (a == NULL)
+        return;
+    if (a->data && !(a->flags & ASN1_STRING_FLAG_NDEF))
+        OPENSSL_cleanse(a->data, a->length);
+    ASN1_STRING_free(a);
 }
 
 int ASN1_STRING_cmp(const ASN1_STRING *a, const ASN1_STRING *b)
@@ -442,32 +392,22 @@ int ASN1_STRING_cmp(const ASN1_STRING *a, const ASN1_STRING *b)
         return (i);
 }
 
-void asn1_add_error(const unsigned char *address, int offset)
-{
-    char buf1[DECIMAL_SIZE(address) + 1], buf2[DECIMAL_SIZE(offset) + 1];
-
-    BIO_snprintf(buf1, sizeof buf1, "%lu", (unsigned long)address);
-    BIO_snprintf(buf2, sizeof buf2, "%d", offset);
-    ERR_add_error_data(4, "address=", buf1, " offset=", buf2);
-}
-
 int ASN1_STRING_length(const ASN1_STRING *x)
 {
-    return M_ASN1_STRING_length(x);
+    return x->length;
 }
 
 void ASN1_STRING_length_set(ASN1_STRING *x, int len)
 {
-    M_ASN1_STRING_length_set(x, len);
-    return;
+    x->length = len;
 }
 
 int ASN1_STRING_type(ASN1_STRING *x)
 {
-    return M_ASN1_STRING_type(x);
+    return x->type;
 }
 
 unsigned char *ASN1_STRING_data(ASN1_STRING *x)
 {
-    return M_ASN1_STRING_data(x);
+    return x->data;
 }

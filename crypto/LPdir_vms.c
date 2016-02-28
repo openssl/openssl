@@ -104,12 +104,12 @@ const char *LP_find_file(LP_DIR_CTX **ctx, const char *directory)
             return 0;
         }
 
-        *ctx = (LP_DIR_CTX *)malloc(sizeof(LP_DIR_CTX));
+        *ctx = malloc(sizeof(**ctx));
         if (*ctx == NULL) {
             errno = ENOMEM;
             return 0;
         }
-        memset(*ctx, '\0', sizeof(LP_DIR_CTX));
+        memset(*ctx, 0, sizeof(**ctx));
 
         strcpy((*ctx)->filespec, directory);
         strcat((*ctx)->filespec, "*.*;");

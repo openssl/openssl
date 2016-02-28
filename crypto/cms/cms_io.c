@@ -1,4 +1,3 @@
-/* crypto/cms/cms_io.c */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -63,11 +62,11 @@ int CMS_stream(unsigned char ***boundary, CMS_ContentInfo *cms)
 {
     ASN1_OCTET_STRING **pos;
     pos = CMS_get0_content(cms);
-    if (!pos)
+    if (pos == NULL)
         return 0;
-    if (!*pos)
+    if (*pos == NULL)
         *pos = ASN1_OCTET_STRING_new();
-    if (*pos) {
+    if (*pos != NULL) {
         (*pos)->flags |= ASN1_STRING_FLAG_NDEF;
         (*pos)->flags &= ~ASN1_STRING_FLAG_CONT;
         *boundary = &(*pos)->data;

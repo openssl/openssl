@@ -21,7 +21,7 @@ BIO_get_bind_mode, BIO_do_accept - accept BIO
  long BIO_set_accept_bios(BIO *b, char *bio);
 
  long BIO_set_bind_mode(BIO *b, long mode);
- long BIO_get_bind_mode(BIO *b, long dummy);
+ long BIO_get_bind_mode(BIO *b);
 
  #define BIO_BIND_NORMAL		0
  #define BIO_BIND_REUSEADDR_IF_UNUSED	1
@@ -54,16 +54,17 @@ connection and reset the BIO into a state where it awaits another
 incoming connection.
 
 BIO_get_fd() and BIO_set_fd() can be called to retrieve or set
-the accept socket. See L<BIO_s_fd(3)|BIO_s_fd(3)>
+the accept socket. See L<BIO_s_fd(3)>
 
 BIO_set_accept_port() uses the string B<name> to set the accept
 port. The port is represented as a string of the form "host:port",
 where "host" is the interface to use and "port" is the port.
-The host can be "*" which is interpreted as meaning
-any interface; "port" has the same syntax
-as the port specified in BIO_set_conn_port() for connect BIOs,
-that is it can be a numerical port string or a string to lookup
-using getservbyname() and a string table.
+The host can be "*" or empty which is interpreted as meaning
+any interface.  If the host is a IPv6 address, it has to be
+enclosed in brackets, for example "[::1]:https".  "port" has the
+same syntax as the port specified in BIO_set_conn_port() for
+connect BIOs, that is it can be a numerical port string or a
+string to lookup using getservbyname() and a string table.
 
 BIO_new_accept() combines BIO_new() and BIO_set_accept_port() into
 a single call: that is it creates a new accept BIO with port
@@ -143,7 +144,15 @@ BIO_do_accept() are macros.
 
 =head1 RETURN VALUES
 
-TBA
+BIO_do_accept(),
+BIO_set_accept_port(), BIO_set_nbio_accept(), BIO_set_accept_bios(),
+and BIO_set_bind_mode(), return 1 for success and 0 or -1 for failure.
+
+BIO_get_accept_port() returns the port name or NULL on error.
+
+BIO_get_bind_mode() returns the set of B<BIO_BIND> flags, or -1 on failure.
+
+BIO_new_accept() returns a BIO or NULL on error.
 
 =head1 EXAMPLE
 
@@ -151,7 +160,7 @@ This example accepts two connections on port 4444, sends messages
 down each and finally closes both down.
 
  BIO *abio, *cbio, *cbio2;
- ERR_load_crypto_strings();
+
  abio = BIO_new_accept("4444");
 
  /* First call to BIO_accept() sets up accept BIO */

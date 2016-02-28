@@ -1,4 +1,3 @@
-/* crypto/cryptlib.c */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -114,12 +113,8 @@
  * SUN MICROSYSTEMS, INC., and contributed to the OpenSSL project.
  */
 
-#include "cryptlib.h"
+#include "internal/cryptlib_int.h"
 #include <openssl/safestack.h>
-
-#if defined(OPENSSL_SYS_WIN32)
-static double SSLeay_MSVC5_hack = 0.0; /* and for VC1.5 */
-#endif
 
 #if     defined(__i386)   || defined(__i386__)   || defined(_M_IX86) || \
         defined(__INTEL__) || \
@@ -133,12 +128,9 @@ unsigned int *OPENSSL_ia32cap_loc(void)
 }
 
 # if defined(OPENSSL_CPUID_OBJ) && !defined(OPENSSL_NO_ASM) && !defined(I386_ONLY)
+#include <stdio.h>
 #  define OPENSSL_CPUID_SETUP
-#  if defined(_WIN32)
-typedef unsigned __int64 IA32CAP;
-#  else
-typedef unsigned long long IA32CAP;
-#  endif
+typedef uint64_t IA32CAP;
 void OPENSSL_cpuid_setup(void)
 {
     static int trigger = 0;
@@ -218,6 +210,7 @@ void OPENSSL_cpuid_setup(void)
  * detaches
  */
 
+BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved);
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
     switch (fdwReason) {
@@ -242,6 +235,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     case DLL_THREAD_ATTACH:
         break;
     case DLL_THREAD_DETACH:
+        OPENSSL_thread_stop();
         break;
     case DLL_PROCESS_DETACH:
         break;
@@ -272,23 +266,21 @@ int OPENSSL_isservice(void)
     WCHAR *name;
     static union {
         void *p;
-        int (*f) (void);
+        FARPROC f;
     } _OPENSSL_isservice = {
         NULL
     };
 
     if (_OPENSSL_isservice.p == NULL) {
-        HANDLE h = GetModuleHandle(NULL);
-        if (h != NULL)
-            _OPENSSL_isservice.p = GetProcAddress(h, "_OPENSSL_isservice");
+        HANDLE mod = GetModuleHandle(NULL);
+        if (mod != NULL)
+            _OPENSSL_isservice.f = GetProcAddress(mod, "_OPENSSL_isservice");
         if (_OPENSSL_isservice.p == NULL)
             _OPENSSL_isservice.p = (void *)-1;
     }
 
     if (_OPENSSL_isservice.p != (void *)-1)
         return (*_OPENSSL_isservice.f) ();
-
-    (void)GetDesktopWindow();   /* return value is ignored */
 
     h = GetProcessWindowStation();
     if (h == NULL)
@@ -408,29 +400,47 @@ void OPENSSL_showfatal(const char *fmta, ...)
         } while (0);
 
     va_start(ap, fmta);
-    _vsntprintf(buf, sizeof(buf) / sizeof(TCHAR) - 1, fmt, ap);
-    buf[sizeof(buf) / sizeof(TCHAR) - 1] = _T('\0');
+    _vsntprintf(buf, OSSL_NELEM(buf) - 1, fmt, ap);
+    buf[OSSL_NELEM(buf) - 1] = _T('\0');
     va_end(ap);
 
 # if defined(_WIN32_WINNT) && _WIN32_WINNT>=0x0333
     /* this -------------v--- guards NT-specific calls */
     if (check_winnt() && OPENSSL_isservice() > 0) {
-        HANDLE h = RegisterEventSource(0, _T("OPENSSL"));
-        const TCHAR *pmsg = buf;
-        ReportEvent(h, EVENTLOG_ERROR_TYPE, 0, 0, 0, 1, 0, &pmsg, 0);
-        DeregisterEventSource(h);
+        HANDLE hEventLog = RegisterEventSource(NULL, _T("OpenSSL"));
+
+        if (hEventLog != NULL) {
+            const TCHAR *pmsg = buf;
+
+            if (!ReportEvent(hEventLog, EVENTLOG_ERROR_TYPE, 0, 0, NULL,
+                             1, 0, &pmsg, NULL)) {
+#if defined(DEBUG)
+                /*
+                 * We are in a situation where we tried to report a critical
+                 * error and this failed for some reason. As a last resort,
+                 * in debug builds, send output to the debugger or any other
+                 * tool like DebugView which can monitor the output.
+                 */
+                OutputDebugString(pmsg);
+#endif
+            }
+
+            (void)DeregisterEventSource(hEventLog);
+        }
     } else
 # endif
-        MessageBox(NULL, buf, _T("OpenSSL: FATAL"), MB_OK | MB_ICONSTOP);
+        MessageBox(NULL, buf, _T("OpenSSL: FATAL"), MB_OK | MB_ICONERROR);
 }
 #else
 void OPENSSL_showfatal(const char *fmta, ...)
 {
+#ifndef OPENSSL_NO_STDIO
     va_list ap;
 
     va_start(ap, fmta);
     vfprintf(stderr, fmta, ap);
     va_end(ap);
+#endif
 }
 
 int OPENSSL_isservice(void)
@@ -457,16 +467,30 @@ void OpenSSLDie(const char *file, int line, const char *assertion)
 #endif
 }
 
-void *OPENSSL_stderr(void)
-{
-    return stderr;
-}
-
-int CRYPTO_memcmp(const void *in_a, const void *in_b, size_t len)
+/* volatile unsigned char* pointers are there because
+ * 1. Accessing a variable declared volatile via a pointer
+ *    that lacks a volatile qualifier causes undefined behavior.
+ * 2. When the variable itself is not volatile the compiler is
+ *    not required to keep all those reads and can convert
+ *    this into canonical memcmp() which doesn't read the whole block.
+ * Pointers to volatile resolve the first problem fully. The second
+ * problem cannot be resolved in any Standard-compliant way but this
+ * works the problem around. Compilers typically react to
+ * pointers to volatile by preserving the reads and writes through them.
+ * The latter is not required by the Standard if the memory pointed to
+ * is not volatile.
+ * Pointers themselves are volatile in the function signature to work
+ * around a subtle bug in gcc 4.6+ which causes writes through
+ * pointers to volatile to not be emitted in some rare,
+ * never needed in real life, pieces of code.
+ */
+int CRYPTO_memcmp(const volatile void * volatile in_a,
+                  const volatile void * volatile in_b,
+                  size_t len)
 {
     size_t i;
-    const unsigned char *a = in_a;
-    const unsigned char *b = in_b;
+    const volatile unsigned char *a = in_a;
+    const volatile unsigned char *b = in_b;
     unsigned char x = 0;
 
     for (i = 0; i < len; i++)

@@ -1,4 +1,3 @@
-/* crypto/ec/eck_prn.c */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -62,7 +61,7 @@
  */
 
 #include <stdio.h>
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/evp.h>
 #include <openssl/ec.h>
 #include <openssl/bn.h>
@@ -119,7 +118,7 @@ int EC_KEY_print(BIO *bp, const EC_KEY *x, int off)
     EVP_PKEY *pk;
     int ret;
     pk = EVP_PKEY_new();
-    if (!pk || !EVP_PKEY_set1_EC_KEY(pk, (EC_KEY *)x))
+    if (pk == NULL || !EVP_PKEY_set1_EC_KEY(pk, (EC_KEY *)x))
         return 0;
     ret = EVP_PKEY_print_private(bp, pk, off, NULL);
     EVP_PKEY_free(pk);
@@ -131,7 +130,7 @@ int ECParameters_print(BIO *bp, const EC_KEY *x)
     EVP_PKEY *pk;
     int ret;
     pk = EVP_PKEY_new();
-    if (!pk || !EVP_PKEY_set1_EC_KEY(pk, (EC_KEY *)x))
+    if (pk == NULL || !EVP_PKEY_set1_EC_KEY(pk, (EC_KEY *)x))
         return 0;
     ret = EVP_PKEY_print_params(bp, pk, 4, NULL);
     EVP_PKEY_free(pk);
@@ -143,13 +142,11 @@ static int print_bin(BIO *fp, const char *str, const unsigned char *num,
 
 int ECPKParameters_print(BIO *bp, const EC_GROUP *x, int off)
 {
-    unsigned char *buffer = NULL;
-    size_t buf_len = 0, i;
     int ret = 0, reason = ERR_R_BIO_LIB;
     BN_CTX *ctx = NULL;
     const EC_POINT *point = NULL;
-    BIGNUM *p = NULL, *a = NULL, *b = NULL, *gen = NULL,
-        *order = NULL, *cofactor = NULL;
+    BIGNUM *p = NULL, *a = NULL, *b = NULL, *gen = NULL;
+    const BIGNUM *order = NULL, *cofactor = NULL;
     const unsigned char *seed;
     size_t seed_len = 0;
 
@@ -200,8 +197,7 @@ int ECPKParameters_print(BIO *bp, const EC_GROUP *x, int off)
             is_char_two = 1;
 
         if ((p = BN_new()) == NULL || (a = BN_new()) == NULL ||
-            (b = BN_new()) == NULL || (order = BN_new()) == NULL ||
-            (cofactor = BN_new()) == NULL) {
+            (b = BN_new()) == NULL) {
             reason = ERR_R_MALLOC_FAILURE;
             goto err;
         }
@@ -224,8 +220,9 @@ int ECPKParameters_print(BIO *bp, const EC_GROUP *x, int off)
             reason = ERR_R_EC_LIB;
             goto err;
         }
-        if (!EC_GROUP_get_order(x, order, NULL) ||
-            !EC_GROUP_get_cofactor(x, cofactor, NULL)) {
+        order = EC_GROUP_get0_order(x);
+        cofactor = EC_GROUP_get0_cofactor(x);
+        if (order == NULL) {
             reason = ERR_R_EC_LIB;
             goto err;
         }
@@ -237,26 +234,8 @@ int ECPKParameters_print(BIO *bp, const EC_GROUP *x, int off)
             goto err;
         }
 
-        buf_len = (size_t)BN_num_bytes(p);
-        if (buf_len < (i = (size_t)BN_num_bytes(a)))
-            buf_len = i;
-        if (buf_len < (i = (size_t)BN_num_bytes(b)))
-            buf_len = i;
-        if (buf_len < (i = (size_t)BN_num_bytes(gen)))
-            buf_len = i;
-        if (buf_len < (i = (size_t)BN_num_bytes(order)))
-            buf_len = i;
-        if (buf_len < (i = (size_t)BN_num_bytes(cofactor)))
-            buf_len = i;
-
         if ((seed = EC_GROUP_get0_seed(x)) != NULL)
             seed_len = EC_GROUP_get_seed_len(x);
-
-        buf_len += 10;
-        if ((buffer = OPENSSL_malloc(buf_len)) == NULL) {
-            reason = ERR_R_MALLOC_FAILURE;
-            goto err;
-        }
 
         if (!BIO_indent(bp, off, 128))
             goto err;
@@ -280,36 +259,36 @@ int ECPKParameters_print(BIO *bp, const EC_GROUP *x, int off)
                 goto err;
 
             /* print the polynomial */
-            if ((p != NULL) && !ASN1_bn_print(bp, "Polynomial:", p, buffer,
+            if ((p != NULL) && !ASN1_bn_print(bp, "Polynomial:", p, NULL,
                                               off))
                 goto err;
         } else {
-            if ((p != NULL) && !ASN1_bn_print(bp, "Prime:", p, buffer, off))
+            if ((p != NULL) && !ASN1_bn_print(bp, "Prime:", p, NULL, off))
                 goto err;
         }
-        if ((a != NULL) && !ASN1_bn_print(bp, "A:   ", a, buffer, off))
+        if ((a != NULL) && !ASN1_bn_print(bp, "A:   ", a, NULL, off))
             goto err;
-        if ((b != NULL) && !ASN1_bn_print(bp, "B:   ", b, buffer, off))
+        if ((b != NULL) && !ASN1_bn_print(bp, "B:   ", b, NULL, off))
             goto err;
         if (form == POINT_CONVERSION_COMPRESSED) {
             if ((gen != NULL) && !ASN1_bn_print(bp, gen_compressed, gen,
-                                                buffer, off))
+                                                NULL, off))
                 goto err;
         } else if (form == POINT_CONVERSION_UNCOMPRESSED) {
             if ((gen != NULL) && !ASN1_bn_print(bp, gen_uncompressed, gen,
-                                                buffer, off))
+                                                NULL, off))
                 goto err;
         } else {                /* form == POINT_CONVERSION_HYBRID */
 
             if ((gen != NULL) && !ASN1_bn_print(bp, gen_hybrid, gen,
-                                                buffer, off))
+                                                NULL, off))
                 goto err;
         }
         if ((order != NULL) && !ASN1_bn_print(bp, "Order: ", order,
-                                              buffer, off))
+                                              NULL, off))
             goto err;
         if ((cofactor != NULL) && !ASN1_bn_print(bp, "Cofactor: ", cofactor,
-                                                 buffer, off))
+                                                 NULL, off))
             goto err;
         if (seed && !print_bin(bp, "Seed:", seed, seed_len, off))
             goto err;
@@ -318,22 +297,11 @@ int ECPKParameters_print(BIO *bp, const EC_GROUP *x, int off)
  err:
     if (!ret)
         ECerr(EC_F_ECPKPARAMETERS_PRINT, reason);
-    if (p)
-        BN_free(p);
-    if (a)
-        BN_free(a);
-    if (b)
-        BN_free(b);
-    if (gen)
-        BN_free(gen);
-    if (order)
-        BN_free(order);
-    if (cofactor)
-        BN_free(cofactor);
-    if (ctx)
-        BN_CTX_free(ctx);
-    if (buffer != NULL)
-        OPENSSL_free(buffer);
+    BN_free(p);
+    BN_free(a);
+    BN_free(b);
+    BN_free(gen);
+    BN_CTX_free(ctx);
     return (ret);
 }
 
@@ -345,12 +313,14 @@ static int print_bin(BIO *fp, const char *name, const unsigned char *buf,
 
     if (buf == NULL)
         return 1;
-    if (off) {
+    if (off > 0) {
         if (off > 128)
             off = 128;
         memset(str, ' ', off);
         if (BIO_write(fp, str, off) <= 0)
             return 0;
+    } else {
+        off = 0;
     }
 
     if (BIO_printf(fp, "%s", name) <= 0)

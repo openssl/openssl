@@ -1,4 +1,3 @@
-/* dso_vms.c -*- mode:C; c-file-style: "eay" -*- */
 /*
  * Written by Richard Levitte (richard@levitte.org) for the OpenSSL project
  * 2000.
@@ -60,7 +59,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/dso.h>
 
 #ifndef OPENSSL_SYS_VMS
@@ -76,7 +75,7 @@ DSO_METHOD *DSO_METHOD_vms(void)
 # include <stsdef.h>
 # include <descrip.h>
 # include <starlet.h>
-# include "vms_rms.h"
+# include "../vms_rms.h"
 
 /* Some compiler options may mask the declaration of "_malloc32". */
 # if __INITIAL_POINTER_SIZE && defined _ANSI_C_SOURCE
@@ -230,7 +229,7 @@ static int vms_load(DSO *dso)
         goto err;
     }
 
-    p = DSO_MALLOC(sizeof(DSO_VMS_INTERNAL));
+    p = DSO_MALLOC(sizeof(*p));
     if (p == NULL) {
         DSOerr(DSO_F_VMS_LOAD, ERR_R_MALLOC_FAILURE);
         goto err;
@@ -267,10 +266,8 @@ static int vms_load(DSO *dso)
     return (1);
  err:
     /* Cleanup! */
-    if (p != NULL)
-        OPENSSL_free(p);
-    if (filename != NULL)
-        OPENSSL_free(filename);
+    OPENSSL_free(p);
+    OPENSSL_free(filename);
     return (0);
 }
 
@@ -514,7 +511,7 @@ static char *vms_merger(DSO *dso, const char *filespec1,
     }
 
     merged = OPENSSL_malloc(nam.NAMX_ESL + 1);
-    if (!merged)
+    if (merged == NULL)
         goto malloc_err;
     strncpy(merged, nam.NAMX_ESA, nam.NAMX_ESL);
     merged[nam.NAMX_ESL] = '\0';
@@ -527,7 +524,8 @@ static char *vms_name_converter(DSO *dso, const char *filename)
 {
     int len = strlen(filename);
     char *not_translated = OPENSSL_malloc(len + 1);
-    strcpy(not_translated, filename);
+    if (not_translated != NULL)
+        strcpy(not_translated, filename);
     return (not_translated);
 }
 

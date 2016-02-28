@@ -1,4 +1,3 @@
-/* crypto/seed/seed_cfb.c -*- mode:C; c-file-style: "eay" -*- */
 /* ====================================================================
  * Copyright (c) 1998-2007 The OpenSSL Project.  All rights reserved.
  *

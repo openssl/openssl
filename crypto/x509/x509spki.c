@@ -1,4 +1,3 @@
-/* x509spki.c */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
  * 1999.
@@ -58,7 +57,7 @@
  */
 
 #include <stdio.h>
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/x509.h>
 
 int NETSCAPE_SPKI_set_pubkey(NETSCAPE_SPKI *x, EVP_PKEY *pkey)
@@ -85,7 +84,7 @@ NETSCAPE_SPKI *NETSCAPE_SPKI_b64_decode(const char *str, int len)
     NETSCAPE_SPKI *spki;
     if (len <= 0)
         len = strlen(str);
-    if (!(spki_der = OPENSSL_malloc(len + 1))) {
+    if ((spki_der = OPENSSL_malloc(len + 1)) == NULL) {
         X509err(X509_F_NETSCAPE_SPKI_B64_DECODE, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
@@ -111,12 +110,10 @@ char *NETSCAPE_SPKI_b64_encode(NETSCAPE_SPKI *spki)
     der_len = i2d_NETSCAPE_SPKI(spki, NULL);
     der_spki = OPENSSL_malloc(der_len);
     b64_str = OPENSSL_malloc(der_len * 2);
-    if (!der_spki || !b64_str) {
+    if (der_spki == NULL || b64_str == NULL) {
         X509err(X509_F_NETSCAPE_SPKI_B64_ENCODE, ERR_R_MALLOC_FAILURE);
-        if (der_spki != NULL)
-            OPENSSL_free(der_spki);
-        if (b64_str != NULL)
-            OPENSSL_free(b64_str);
+        OPENSSL_free(der_spki);
+        OPENSSL_free(b64_str);
         return NULL;
     }
     p = der_spki;

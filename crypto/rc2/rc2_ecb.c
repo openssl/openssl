@@ -1,4 +1,3 @@
-/* crypto/rc2/rc2_ecb.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -59,8 +58,6 @@
 #include <openssl/rc2.h>
 #include "rc2_locl.h"
 #include <openssl/opensslv.h>
-
-const char RC2_version[] = "RC2" OPENSSL_VERSION_PTEXT;
 
 /*-
  * RC2 as implemented frm a posting from

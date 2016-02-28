@@ -1,4 +1,3 @@
-/* crypto/x509/x509_r2x.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -57,11 +56,12 @@
  */
 
 #include <stdio.h>
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/bn.h>
 #include <openssl/evp.h>
 #include <openssl/asn1.h>
 #include <openssl/x509.h>
+#include "internal/x509_int.h"
 #include <openssl/objects.h>
 #include <openssl/buffer.h>
 
@@ -77,10 +77,10 @@ X509 *X509_REQ_to_X509(X509_REQ *r, int days, EVP_PKEY *pkey)
     }
 
     /* duplicate the request */
-    xi = ret->cert_info;
+    xi = &ret->cert_info;
 
-    if (sk_X509_ATTRIBUTE_num(r->req_info->attributes) != 0) {
-        if ((xi->version = M_ASN1_INTEGER_new()) == NULL)
+    if (sk_X509_ATTRIBUTE_num(r->req_info.attributes) != 0) {
+        if ((xi->version = ASN1_INTEGER_new()) == NULL)
             goto err;
         if (!ASN1_INTEGER_set(xi->version, 2))
             goto err;
@@ -94,9 +94,9 @@ X509 *X509_REQ_to_X509(X509_REQ *r, int days, EVP_PKEY *pkey)
     if (X509_set_issuer_name(ret, X509_NAME_dup(xn)) == 0)
         goto err;
 
-    if (X509_gmtime_adj(xi->validity->notBefore, 0) == NULL)
+    if (X509_gmtime_adj(xi->validity.notBefore, 0) == NULL)
         goto err;
-    if (X509_gmtime_adj(xi->validity->notAfter, (long)60 * 60 * 24 * days) ==
+    if (X509_gmtime_adj(xi->validity.notAfter, (long)60 * 60 * 24 * days) ==
         NULL)
         goto err;
 
@@ -104,10 +104,9 @@ X509 *X509_REQ_to_X509(X509_REQ *r, int days, EVP_PKEY *pkey)
 
     if (!X509_sign(ret, pkey, EVP_md5()))
         goto err;
-    if (0) {
+    return ret;
+
  err:
-        X509_free(ret);
-        ret = NULL;
-    }
-    return (ret);
+    X509_free(ret);
+    return NULL;
 }

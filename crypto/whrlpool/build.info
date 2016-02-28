@@ -1,0 +1,10 @@
+LIBS=../../libcrypto
+SOURCE[../../libcrypto]=wp_dgst.c {- $target{wp_asm_src} -}
+
+BEGINRAW[Makefile]
+{- $builddir -}/wp-mmx.s:	{- $sourcedir -}/asm/wp-mmx.pl {- $sourcetop -}/crypto/perlasm/x86asm.pl
+	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/wp-mmx.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) > $@
+
+{- $builddir -}/wp-x86_64.s: {- $sourcedir -}/asm/wp-x86_64.pl
+	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/wp-x86_64.pl $(PERLASM_SCHEME) > $@
+ENDRAW[Makefile]

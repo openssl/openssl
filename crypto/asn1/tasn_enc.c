@@ -1,4 +1,3 @@
-/* tasn_enc.c */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
  * 2000.
@@ -59,10 +58,12 @@
 
 #include <stddef.h>
 #include <string.h>
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/asn1.h>
 #include <openssl/asn1t.h>
 #include <openssl/objects.h>
+#include "internal/asn1_int.h"
+#include "asn1_locl.h"
 
 static int asn1_i2d_ex_primitive(ASN1_VALUE **pval, unsigned char **out,
                                  const ASN1_ITEM *it, int tag, int aclass);
@@ -73,6 +74,8 @@ static int asn1_template_ex_i2d(ASN1_VALUE **pval, unsigned char **out,
                                 const ASN1_TEMPLATE *tt, int tag, int aclass);
 static int asn1_item_flags_i2d(ASN1_VALUE *val, unsigned char **out,
                                const ASN1_ITEM *it, int flags);
+static int asn1_ex_i2c(ASN1_VALUE **pval, unsigned char *cout, int *putype,
+                       const ASN1_ITEM *it);
 
 /*
  * Top level i2d equivalents: the 'ndef' variant instructs the encoder to use
@@ -107,7 +110,7 @@ static int asn1_item_flags_i2d(ASN1_VALUE *val, unsigned char **out,
         if (len <= 0)
             return len;
         buf = OPENSSL_malloc(len);
-        if (!buf)
+        if (buf == NULL)
             return -1;
         p = buf;
         ASN1_item_ex_i2d(&val, &p, it, -1, flags);
@@ -127,9 +130,7 @@ int ASN1_item_ex_i2d(ASN1_VALUE **pval, unsigned char **out,
                      const ASN1_ITEM *it, int tag, int aclass)
 {
     const ASN1_TEMPLATE *tt = NULL;
-    unsigned char *p = NULL;
     int i, seqcontlen, seqlen, ndef = 1;
-    const ASN1_COMPAT_FUNCS *cf;
     const ASN1_EXTERN_FUNCS *ef;
     const ASN1_AUX *aux = it->funcs;
     ASN1_aux_cb *asn1_cb = 0;
@@ -171,20 +172,6 @@ int ASN1_item_ex_i2d(ASN1_VALUE **pval, unsigned char **out,
         /* If new style i2d it does all the work */
         ef = it->funcs;
         return ef->asn1_ex_i2d(pval, out, it, tag, aclass);
-
-    case ASN1_ITYPE_COMPAT:
-        /* old style hackery... */
-        cf = it->funcs;
-        if (out)
-            p = *out;
-        i = cf->asn1_i2d(*pval, out);
-        /*
-         * Fixup for IMPLICIT tag: note this messes up for tags > 30, but so
-         * did the old code. Tags > 30 are very rare anyway.
-         */
-        if (out && (tag != -1))
-            *p = aclass | tag | (*p & V_ASN1_CONSTRUCTED);
-        return i;
 
     case ASN1_ITYPE_NDEF_SEQUENCE:
         /* Use indefinite length constructed if requested */
@@ -252,17 +239,21 @@ int ASN1_item_ex_i2d(ASN1_VALUE **pval, unsigned char **out,
     return 0;
 }
 
-int ASN1_template_i2d(ASN1_VALUE **pval, unsigned char **out,
-                      const ASN1_TEMPLATE *tt)
-{
-    return asn1_template_ex_i2d(pval, out, tt, -1, 0);
-}
-
 static int asn1_template_ex_i2d(ASN1_VALUE **pval, unsigned char **out,
                                 const ASN1_TEMPLATE *tt, int tag, int iclass)
 {
     int i, ret, flags, ttag, tclass, ndef;
+    ASN1_VALUE *tval;
     flags = tt->flags;
+
+    /*
+     * If field is embedded then val needs fixing so it is a pointer to
+     * a pointer to a field.
+     */
+    if (flags & ASN1_TFLG_EMBED) {
+        tval = (ASN1_VALUE *)pval;
+        pval = &tval;
+    }
     /*
      * Work out tag and class to use: tagging may come either from the
      * template or the arguments, not both because this would create
@@ -431,10 +422,10 @@ static int asn1_set_seq_out(STACK_OF(ASN1_VALUE) *sk, unsigned char **out,
         else {
             derlst = OPENSSL_malloc(sk_ASN1_VALUE_num(sk)
                                     * sizeof(*derlst));
-            if (!derlst)
+            if (derlst == NULL)
                 return 0;
             tmpdat = OPENSSL_malloc(skcontlen);
-            if (!tmpdat) {
+            if (tmpdat == NULL) {
                 OPENSSL_free(derlst);
                 return 0;
             }
@@ -537,8 +528,8 @@ static int asn1_i2d_ex_primitive(ASN1_VALUE **pval, unsigned char **out,
 
 /* Produce content octets from a structure */
 
-int asn1_ex_i2c(ASN1_VALUE **pval, unsigned char *cout, int *putype,
-                const ASN1_ITEM *it)
+static int asn1_ex_i2c(ASN1_VALUE **pval, unsigned char *cout, int *putype,
+                       const ASN1_ITEM *it)
 {
     ASN1_BOOLEAN *tbool = NULL;
     ASN1_STRING *strtmp;

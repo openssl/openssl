@@ -1,11 +1,10 @@
-/* ocsp_lib.c */
 /*
  * Written by Tom Titchener <Tom_Titchener@groove.net> for the OpenSSL
  * project.
  */
 
 /*
- * History: This file was transfered to Richard Levitte from CertCo by Kathy
+ * History: This file was transferred to Richard Levitte from CertCo by Kathy
  * Weinhold in mid-spring 2000 to be included in OpenSSL or released as a
  * patch kit.
  */
@@ -65,13 +64,14 @@
  */
 
 #include <stdio.h>
-#include <cryptlib.h>
+#include "internal/cryptlib.h"
 #include <openssl/objects.h>
 #include <openssl/rand.h>
 #include <openssl/x509.h>
 #include <openssl/pem.h>
 #include <openssl/x509v3.h>
 #include <openssl/ocsp.h>
+#include "ocsp_lcl.h"
 #include <openssl/asn1t.h>
 
 /* Convert a certificate and its issuer to an OCSP_CERTID */
@@ -105,17 +105,16 @@ OCSP_CERTID *OCSP_cert_id_new(const EVP_MD *dgst,
     OCSP_CERTID *cid = NULL;
     unsigned char md[EVP_MAX_MD_SIZE];
 
-    if (!(cid = OCSP_CERTID_new()))
+    if ((cid = OCSP_CERTID_new()) == NULL)
         goto err;
 
-    alg = cid->hashAlgorithm;
-    if (alg->algorithm != NULL)
-        ASN1_OBJECT_free(alg->algorithm);
+    alg = &cid->hashAlgorithm;
+    ASN1_OBJECT_free(alg->algorithm);
     if ((nid = EVP_MD_type(dgst)) == NID_undef) {
         OCSPerr(OCSP_F_OCSP_CERT_ID_NEW, OCSP_R_UNKNOWN_NID);
         goto err;
     }
-    if (!(alg->algorithm = OBJ_nid2obj(nid)))
+    if ((alg->algorithm = OBJ_nid2obj(nid)) == NULL)
         goto err;
     if ((alg->parameter = ASN1_TYPE_new()) == NULL)
         goto err;
@@ -123,40 +122,38 @@ OCSP_CERTID *OCSP_cert_id_new(const EVP_MD *dgst,
 
     if (!X509_NAME_digest(issuerName, dgst, md, &i))
         goto digerr;
-    if (!(ASN1_OCTET_STRING_set(cid->issuerNameHash, md, i)))
+    if (!(ASN1_OCTET_STRING_set(&cid->issuerNameHash, md, i)))
         goto err;
 
     /* Calculate the issuerKey hash, excluding tag and length */
     if (!EVP_Digest(issuerKey->data, issuerKey->length, md, &i, dgst, NULL))
         goto err;
 
-    if (!(ASN1_OCTET_STRING_set(cid->issuerKeyHash, md, i)))
+    if (!(ASN1_OCTET_STRING_set(&cid->issuerKeyHash, md, i)))
         goto err;
 
     if (serialNumber) {
-        ASN1_INTEGER_free(cid->serialNumber);
-        if (!(cid->serialNumber = ASN1_INTEGER_dup(serialNumber)))
+        if (ASN1_STRING_copy(&cid->serialNumber, serialNumber) == 0)
             goto err;
     }
     return cid;
  digerr:
     OCSPerr(OCSP_F_OCSP_CERT_ID_NEW, OCSP_R_DIGEST_ERR);
  err:
-    if (cid)
-        OCSP_CERTID_free(cid);
+    OCSP_CERTID_free(cid);
     return NULL;
 }
 
 int OCSP_id_issuer_cmp(OCSP_CERTID *a, OCSP_CERTID *b)
 {
     int ret;
-    ret = OBJ_cmp(a->hashAlgorithm->algorithm, b->hashAlgorithm->algorithm);
+    ret = OBJ_cmp(a->hashAlgorithm.algorithm, b->hashAlgorithm.algorithm);
     if (ret)
         return ret;
-    ret = ASN1_OCTET_STRING_cmp(a->issuerNameHash, b->issuerNameHash);
+    ret = ASN1_OCTET_STRING_cmp(&a->issuerNameHash, &b->issuerNameHash);
     if (ret)
         return ret;
-    return ASN1_OCTET_STRING_cmp(a->issuerKeyHash, b->issuerKeyHash);
+    return ASN1_OCTET_STRING_cmp(&a->issuerKeyHash, &b->issuerKeyHash);
 }
 
 int OCSP_id_cmp(OCSP_CERTID *a, OCSP_CERTID *b)
@@ -165,7 +162,7 @@ int OCSP_id_cmp(OCSP_CERTID *a, OCSP_CERTID *b)
     ret = OCSP_id_issuer_cmp(a, b);
     if (ret)
         return ret;
-    return ASN1_INTEGER_cmp(a->serialNumber, b->serialNumber);
+    return ASN1_INTEGER_cmp(&a->serialNumber, &b->serialNumber);
 }
 
 /*
@@ -185,7 +182,7 @@ int OCSP_parse_url(const char *url, char **phost, char **pport, char **ppath,
     *ppath = NULL;
 
     /* dup the buffer since we are going to mess with it */
-    buf = BUF_strdup(url);
+    buf = OPENSSL_strdup(url);
     if (!buf)
         goto mem_err;
 
@@ -197,10 +194,10 @@ int OCSP_parse_url(const char *url, char **phost, char **pport, char **ppath,
 
     *(p++) = '\0';
 
-    if (!strcmp(buf, "http")) {
+    if (strcmp(buf, "http") == 0) {
         *pssl = 0;
         port = "80";
-    } else if (!strcmp(buf, "https")) {
+    } else if (strcmp(buf, "https") == 0) {
         *pssl = 1;
         port = "443";
     } else
@@ -219,9 +216,9 @@ int OCSP_parse_url(const char *url, char **phost, char **pport, char **ppath,
     p = strchr(p, '/');
 
     if (!p)
-        *ppath = BUF_strdup("/");
+        *ppath = OPENSSL_strdup("/");
     else {
-        *ppath = BUF_strdup(p);
+        *ppath = OPENSSL_strdup(p);
         /* Set start of path to 0 so hostname is valid */
         *p = '\0';
     }
@@ -244,19 +241,13 @@ int OCSP_parse_url(const char *url, char **phost, char **pport, char **ppath,
     if ((p = strchr(p, ':'))) {
         *p = 0;
         port = p + 1;
-    } else {
-        /* Not found: set default port */
-        if (*pssl)
-            port = "443";
-        else
-            port = "80";
     }
 
-    *pport = BUF_strdup(port);
+    *pport = OPENSSL_strdup(port);
     if (!*pport)
         goto mem_err;
 
-    *phost = BUF_strdup(host);
+    *phost = OPENSSL_strdup(host);
 
     if (!*phost)
         goto mem_err;
@@ -273,14 +264,10 @@ int OCSP_parse_url(const char *url, char **phost, char **pport, char **ppath,
     OCSPerr(OCSP_F_OCSP_PARSE_URL, OCSP_R_ERROR_PARSING_URL);
 
  err:
-    if (buf)
-        OPENSSL_free(buf);
-    if (*ppath)
-        OPENSSL_free(*ppath);
-    if (*pport)
-        OPENSSL_free(*pport);
-    if (*phost)
-        OPENSSL_free(*phost);
+    OPENSSL_free(buf);
+    OPENSSL_free(*ppath);
+    OPENSSL_free(*pport);
+    OPENSSL_free(*phost);
     return 0;
 
 }

@@ -57,9 +57,9 @@
  */
 
 #include <stdio.h>
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/evp.h>
-#include "asn1_locl.h"
+#include "internal/asn1_int.h"
 
 #define HMAC_TEST_PRIVATE_KEY_FORMAT
 
@@ -75,7 +75,7 @@ static int hmac_size(const EVP_PKEY *pkey)
 
 static void hmac_key_free(EVP_PKEY *pkey)
 {
-    ASN1_OCTET_STRING *os = (ASN1_OCTET_STRING *)pkey->pkey.ptr;
+    ASN1_OCTET_STRING *os = EVP_PKEY_get0(pkey);
     if (os) {
         if (os->data)
             OPENSSL_cleanse(os->data, os->length);
@@ -107,16 +107,21 @@ static int old_hmac_decode(EVP_PKEY *pkey,
 {
     ASN1_OCTET_STRING *os;
     os = ASN1_OCTET_STRING_new();
-    if (!os || !ASN1_OCTET_STRING_set(os, *pder, derlen))
-        return 0;
-    EVP_PKEY_assign(pkey, EVP_PKEY_HMAC, os);
+    if (os == NULL || !ASN1_OCTET_STRING_set(os, *pder, derlen))
+        goto err;
+    if (!EVP_PKEY_assign(pkey, EVP_PKEY_HMAC, os))
+        goto err;
     return 1;
+
+ err:
+    ASN1_OCTET_STRING_free(os);
+    return 0;
 }
 
 static int old_hmac_encode(const EVP_PKEY *pkey, unsigned char **pder)
 {
     int inc;
-    ASN1_OCTET_STRING *os = (ASN1_OCTET_STRING *)pkey->pkey.ptr;
+    ASN1_OCTET_STRING *os = EVP_PKEY_get0(pkey);
     if (pder) {
         if (!*pder) {
             *pder = OPENSSL_malloc(os->length);

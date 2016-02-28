@@ -57,33 +57,30 @@
  */
 
 #include <stdio.h>
-#include "cryptlib.h"
+#include "internal/cryptlib.h"
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
-#include "evp_locl.h"
+#include "internal/evp_int.h"
 
 /* HMAC pkey context structure */
 
 typedef struct {
     const EVP_MD *md;           /* MD for HMAC use */
     ASN1_OCTET_STRING ktmp;     /* Temp storage for key */
-    HMAC_CTX ctx;
+    HMAC_CTX *ctx;
 } HMAC_PKEY_CTX;
 
 static int pkey_hmac_init(EVP_PKEY_CTX *ctx)
 {
     HMAC_PKEY_CTX *hctx;
-    hctx = OPENSSL_malloc(sizeof(HMAC_PKEY_CTX));
-    if (!hctx)
+
+    hctx = OPENSSL_zalloc(sizeof(*hctx));
+    if (hctx == NULL)
         return 0;
-    hctx->md = NULL;
-    hctx->ktmp.data = NULL;
-    hctx->ktmp.length = 0;
-    hctx->ktmp.flags = 0;
     hctx->ktmp.type = V_ASN1_OCTET_STRING;
-    HMAC_CTX_init(&hctx->ctx);
+    hctx->ctx = HMAC_CTX_new();
 
     ctx->data = hctx;
     ctx->keygen_info_count = 0;
@@ -99,8 +96,7 @@ static int pkey_hmac_copy(EVP_PKEY_CTX *dst, EVP_PKEY_CTX *src)
     sctx = src->data;
     dctx = dst->data;
     dctx->md = sctx->md;
-    HMAC_CTX_init(&dctx->ctx);
-    if (!HMAC_CTX_copy(&dctx->ctx, &sctx->ctx))
+    if (!HMAC_CTX_copy(dctx->ctx, sctx->ctx))
         return 0;
     if (sctx->ktmp.data) {
         if (!ASN1_OCTET_STRING_set(&dctx->ktmp,
@@ -113,14 +109,13 @@ static int pkey_hmac_copy(EVP_PKEY_CTX *dst, EVP_PKEY_CTX *src)
 static void pkey_hmac_cleanup(EVP_PKEY_CTX *ctx)
 {
     HMAC_PKEY_CTX *hctx = ctx->data;
-    HMAC_CTX_cleanup(&hctx->ctx);
-    if (hctx->ktmp.data) {
-        if (hctx->ktmp.length)
-            OPENSSL_cleanse(hctx->ktmp.data, hctx->ktmp.length);
-        OPENSSL_free(hctx->ktmp.data);
-        hctx->ktmp.data = NULL;
+
+    if (hctx != NULL) {
+        HMAC_CTX_free(hctx->ctx);
+        OPENSSL_clear_free(hctx->ktmp.data, hctx->ktmp.length);
+        OPENSSL_free(hctx);
+        ctx->data = NULL;
     }
-    OPENSSL_free(hctx);
 }
 
 static int pkey_hmac_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
@@ -139,8 +134,8 @@ static int pkey_hmac_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
 
 static int int_update(EVP_MD_CTX *ctx, const void *data, size_t count)
 {
-    HMAC_PKEY_CTX *hctx = ctx->pctx->data;
-    if (!HMAC_Update(&hctx->ctx, data, count))
+    HMAC_PKEY_CTX *hctx = EVP_MD_CTX_pkey_ctx(ctx)->data;
+    if (!HMAC_Update(hctx->ctx, data, count))
         return 0;
     return 1;
 }
@@ -148,9 +143,10 @@ static int int_update(EVP_MD_CTX *ctx, const void *data, size_t count)
 static int hmac_signctx_init(EVP_PKEY_CTX *ctx, EVP_MD_CTX *mctx)
 {
     HMAC_PKEY_CTX *hctx = ctx->data;
-    HMAC_CTX_set_flags(&hctx->ctx, mctx->flags & ~EVP_MD_CTX_FLAG_NO_INIT);
+    HMAC_CTX_set_flags(hctx->ctx,
+                       EVP_MD_CTX_test_flags(mctx, ~EVP_MD_CTX_FLAG_NO_INIT));
     EVP_MD_CTX_set_flags(mctx, EVP_MD_CTX_FLAG_NO_INIT);
-    mctx->update = int_update;
+    EVP_MD_CTX_set_update_fn(mctx, int_update);
     return 1;
 }
 
@@ -167,7 +163,7 @@ static int hmac_signctx(EVP_PKEY_CTX *ctx, unsigned char *sig, size_t *siglen,
     if (!sig)
         return 1;
 
-    if (!HMAC_Final(&hctx->ctx, sig, &hlen))
+    if (!HMAC_Final(hctx->ctx, sig, &hlen))
         return 0;
     *siglen = (size_t)hlen;
     return 1;
@@ -192,7 +188,7 @@ static int pkey_hmac_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 
     case EVP_PKEY_CTRL_DIGESTINIT:
         key = (ASN1_OCTET_STRING *)ctx->pkey->pkey.ptr;
-        if (!HMAC_Init_ex(&hctx->ctx, key->data, key->length, hctx->md,
+        if (!HMAC_Init_ex(hctx->ctx, key->data, key->length, hctx->md,
                           ctx->engine))
             return 0;
         break;
@@ -210,11 +206,11 @@ static int pkey_hmac_ctrl_str(EVP_PKEY_CTX *ctx,
     if (!value) {
         return 0;
     }
-    if (!strcmp(type, "key")) {
+    if (strcmp(type, "key") == 0) {
         void *p = (void *)value;
         return pkey_hmac_ctrl(ctx, EVP_PKEY_CTRL_SET_MAC_KEY, -1, p);
     }
-    if (!strcmp(type, "hexkey")) {
+    if (strcmp(type, "hexkey") == 0) {
         unsigned char *key;
         int r;
         long keylen;

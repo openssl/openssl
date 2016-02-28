@@ -61,25 +61,14 @@ int main(int argc, char **argv)
     ret = 0;
 
  err:
-
     if (ret) {
         fprintf(stderr, "Error Verifying Data\n");
         ERR_print_errors_fp(stderr);
     }
-
-    if (p7)
-        PKCS7_free(p7);
-
-    if (cacert)
-        X509_free(cacert);
-
-    if (in)
-        BIO_free(in);
-    if (out)
-        BIO_free(out);
-    if (tbio)
-        BIO_free(tbio);
-
+    PKCS7_free(p7);
+    X509_free(cacert);
+    BIO_free(in);
+    BIO_free(out);
+    BIO_free(tbio);
     return ret;
-
 }
