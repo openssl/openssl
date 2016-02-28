@@ -1044,13 +1044,9 @@ EC_KEY *d2i_ECPrivateKey(EC_KEY **a, const unsigned char **in, long len)
             goto err;
         }
     } else {
-        if (ret->group->meth->keygenpub != NULL) {
-            if (ret->group->meth->keygenpub(ret) == 0)
+        if (ret->group->meth->keygenpub == NULL
+            || ret->group->meth->keygenpub(ret) == 0)
                 goto err;
-        } else if (!EC_POINT_mul(ret->group, ret->pub_key, ret->priv_key, NULL,
-                                 NULL, NULL)) {
-            goto err;
-        }
         /* Remember the original private-key-only encoding. */
         ret->enc_flag |= EC_PKEY_NO_PUBKEY;
     }

@@ -234,14 +234,21 @@ int EC_KEY_generate_key(EC_KEY *eckey)
 
 int ossl_ec_key_gen(EC_KEY *eckey)
 {
+    if (eckey->group->meth->keygen == NULL) {
+        ECerr(EC_F_OSSL_EC_KEY_GEN, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+        return 0;
+    }
+
+    return eckey->group->meth->keygen(eckey);
+}
+
+int ec_key_simple_generate_key(EC_KEY *eckey)
+{
     int ok = 0;
     BN_CTX *ctx = NULL;
     BIGNUM *priv_key = NULL;
     const BIGNUM *order = NULL;
     EC_POINT *pub_key = NULL;
-
-    if (eckey->group->meth->keygen != NULL)
-        return eckey->group->meth->keygen(eckey);
 
     if ((ctx = BN_CTX_new()) == NULL)
         goto err;
@@ -283,10 +290,31 @@ int ossl_ec_key_gen(EC_KEY *eckey)
     if (eckey->priv_key != priv_key)
         BN_free(priv_key);
     BN_CTX_free(ctx);
-    return (ok);
+    return ok;
+}
+
+int ec_key_simple_generate_public_key(EC_KEY *eckey)
+{
+    return EC_POINT_mul(eckey->group, eckey->pub_key, eckey->priv_key, NULL,
+                        NULL, NULL);
 }
 
 int EC_KEY_check_key(const EC_KEY *eckey)
+{
+    if (eckey == NULL || eckey->group == NULL || eckey->pub_key == NULL) {
+        ECerr(EC_F_EC_KEY_CHECK_KEY, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+
+    if (eckey->group->meth->keycheck == NULL) {
+        ECerr(EC_F_EC_KEY_CHECK_KEY, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+        return 0;
+    }
+
+    return eckey->group->meth->keycheck(eckey);
+}
+
+int ec_key_simple_check_key(const EC_KEY *eckey)
 {
     int ok = 0;
     BN_CTX *ctx = NULL;
@@ -294,15 +322,12 @@ int EC_KEY_check_key(const EC_KEY *eckey)
     EC_POINT *point = NULL;
 
     if (eckey == NULL || eckey->group == NULL || eckey->pub_key == NULL) {
-        ECerr(EC_F_EC_KEY_CHECK_KEY, ERR_R_PASSED_NULL_PARAMETER);
+        ECerr(EC_F_EC_KEY_SIMPLE_CHECK_KEY, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
 
-    if (eckey->group->meth->keycheck)
-        return eckey->group->meth->keycheck(eckey);
-
     if (EC_POINT_is_at_infinity(eckey->group, eckey->pub_key)) {
-        ECerr(EC_F_EC_KEY_CHECK_KEY, EC_R_POINT_AT_INFINITY);
+        ECerr(EC_F_EC_KEY_SIMPLE_CHECK_KEY, EC_R_POINT_AT_INFINITY);
         goto err;
     }
 
@@ -313,21 +338,21 @@ int EC_KEY_check_key(const EC_KEY *eckey)
 
     /* testing whether the pub_key is on the elliptic curve */
     if (EC_POINT_is_on_curve(eckey->group, eckey->pub_key, ctx) <= 0) {
-        ECerr(EC_F_EC_KEY_CHECK_KEY, EC_R_POINT_IS_NOT_ON_CURVE);
+        ECerr(EC_F_EC_KEY_SIMPLE_CHECK_KEY, EC_R_POINT_IS_NOT_ON_CURVE);
         goto err;
     }
     /* testing whether pub_key * order is the point at infinity */
     order = eckey->group->order;
     if (BN_is_zero(order)) {
-        ECerr(EC_F_EC_KEY_CHECK_KEY, EC_R_INVALID_GROUP_ORDER);
+        ECerr(EC_F_EC_KEY_SIMPLE_CHECK_KEY, EC_R_INVALID_GROUP_ORDER);
         goto err;
     }
     if (!EC_POINT_mul(eckey->group, point, NULL, eckey->pub_key, order, ctx)) {
-        ECerr(EC_F_EC_KEY_CHECK_KEY, ERR_R_EC_LIB);
+        ECerr(EC_F_EC_KEY_SIMPLE_CHECK_KEY, ERR_R_EC_LIB);
         goto err;
     }
     if (!EC_POINT_is_at_infinity(eckey->group, point)) {
-        ECerr(EC_F_EC_KEY_CHECK_KEY, EC_R_WRONG_ORDER);
+        ECerr(EC_F_EC_KEY_SIMPLE_CHECK_KEY, EC_R_WRONG_ORDER);
         goto err;
     }
     /*
@@ -336,16 +361,16 @@ int EC_KEY_check_key(const EC_KEY *eckey)
      */
     if (eckey->priv_key != NULL) {
         if (BN_cmp(eckey->priv_key, order) >= 0) {
-            ECerr(EC_F_EC_KEY_CHECK_KEY, EC_R_WRONG_ORDER);
+            ECerr(EC_F_EC_KEY_SIMPLE_CHECK_KEY, EC_R_WRONG_ORDER);
             goto err;
         }
         if (!EC_POINT_mul(eckey->group, point, eckey->priv_key,
                           NULL, NULL, ctx)) {
-            ECerr(EC_F_EC_KEY_CHECK_KEY, ERR_R_EC_LIB);
+            ECerr(EC_F_EC_KEY_SIMPLE_CHECK_KEY, ERR_R_EC_LIB);
             goto err;
         }
         if (EC_POINT_cmp(eckey->group, point, eckey->pub_key, ctx) != 0) {
-            ECerr(EC_F_EC_KEY_CHECK_KEY, EC_R_INVALID_PRIVATE_KEY);
+            ECerr(EC_F_EC_KEY_SIMPLE_CHECK_KEY, EC_R_INVALID_PRIVATE_KEY);
             goto err;
         }
     }
@@ -353,7 +378,7 @@ int EC_KEY_check_key(const EC_KEY *eckey)
  err:
     BN_CTX_free(ctx);
     EC_POINT_free(point);
-    return (ok);
+    return ok;
 }
 
 int EC_KEY_set_public_key_affine_coordinates(EC_KEY *key, BIGNUM *x,
@@ -568,11 +593,20 @@ int EC_KEY_oct2key(EC_KEY *key, const unsigned char *buf, size_t len,
 
 size_t EC_KEY_priv2oct(const EC_KEY *eckey, unsigned char *buf, size_t len)
 {
-    size_t buf_len;
     if (eckey->group == NULL || eckey->group->meth == NULL)
         return 0;
-    if (eckey->group->meth->priv2oct)
-        return eckey->group->meth->priv2oct(eckey, buf, len);
+    if (eckey->group->meth->priv2oct == NULL) {
+        ECerr(EC_F_EC_KEY_PRIV2OCT, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+        return 0;
+    }
+
+    return eckey->group->meth->priv2oct(eckey, buf, len);
+}
+
+size_t ec_key_simple_priv2oct(const EC_KEY *eckey,
+                              unsigned char *buf, size_t len)
+{
+    size_t buf_len;
 
     buf_len = (EC_GROUP_get_degree(eckey->group) + 7) / 8;
     if (eckey->priv_key == NULL)
@@ -585,7 +619,7 @@ size_t EC_KEY_priv2oct(const EC_KEY *eckey, unsigned char *buf, size_t len)
     /* Octetstring may need leading zeros if BN is to short */
 
     if (BN_bn2binpad(eckey->priv_key, buf, buf_len) == -1) {
-        ECerr(EC_F_EC_KEY_PRIV2OCT, EC_R_BUFFER_TOO_SMALL);
+        ECerr(EC_F_EC_KEY_SIMPLE_PRIV2OCT, EC_R_BUFFER_TOO_SMALL);
         return 0;
     }
 
@@ -596,18 +630,24 @@ int EC_KEY_oct2priv(EC_KEY *eckey, unsigned char *buf, size_t len)
 {
     if (eckey->group == NULL || eckey->group->meth == NULL)
         return 0;
-    if (eckey->group->meth->oct2priv)
-        return eckey->group->meth->oct2priv(eckey, buf, len);
+    if (eckey->group->meth->oct2priv == NULL) {
+        ECerr(EC_F_EC_KEY_OCT2PRIV, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+        return 0;
+    }
+    return eckey->group->meth->oct2priv(eckey, buf, len);
+}
 
+int ec_key_simple_oct2priv(EC_KEY *eckey, unsigned char *buf, size_t len)
+{
     if (eckey->priv_key == NULL)
         eckey->priv_key = BN_secure_new();
     if (eckey->priv_key == NULL) {
-        ECerr(EC_F_EC_KEY_OCT2PRIV, ERR_R_MALLOC_FAILURE);
+        ECerr(EC_F_EC_KEY_SIMPLE_OCT2PRIV, ERR_R_MALLOC_FAILURE);
         return 0;
     }
     eckey->priv_key = BN_bin2bn(buf, len, eckey->priv_key);
     if (eckey->priv_key == NULL) {
-        ECerr(EC_F_EC_KEY_OCT2PRIV, ERR_R_BN_LIB);
+        ECerr(EC_F_EC_KEY_SIMPLE_OCT2PRIV, ERR_R_BN_LIB);
         return 0;
     }
     return 1;

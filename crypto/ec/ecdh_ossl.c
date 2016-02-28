@@ -77,16 +77,31 @@
 #include <openssl/ec.h>
 #include "ec_lcl.h"
 
+int ossl_ecdh_compute_key(void *out, size_t outlen, const EC_POINT *pub_key,
+                          const EC_KEY *ecdh,
+                          void *(*KDF) (const void *in, size_t inlen,
+                                        void *out, size_t *outlen))
+{
+    if (ecdh->group->meth->ecdh_compute_key == 0) {
+        ECerr(EC_F_OSSL_ECDH_COMPUTE_KEY,
+              ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+        return -1;
+    }
+
+    return ecdh->group->meth->ecdh_compute_key(out, outlen, pub_key, ecdh,
+                                               KDF);
+}
+
 /*-
  * This implementation is based on the following primitives in the IEEE 1363 standard:
  *  - ECKAS-DH1
  *  - ECSVDP-DH
  * Finally an optional KDF is applied.
  */
-int ossl_ecdh_compute_key(void *out, size_t outlen, const EC_POINT *pub_key,
-                          const EC_KEY *ecdh,
-                          void *(*KDF) (const void *in, size_t inlen,
-                                        void *out, size_t *outlen))
+int ecdh_simple_compute_key(void *out, size_t outlen, const EC_POINT *pub_key,
+                            const EC_KEY *ecdh,
+                            void *(*KDF) (const void *in, size_t inlen,
+                                          void *out, size_t *outlen))
 {
     BN_CTX *ctx;
     EC_POINT *tmp = NULL;
@@ -98,14 +113,10 @@ int ossl_ecdh_compute_key(void *out, size_t outlen, const EC_POINT *pub_key,
     unsigned char *buf = NULL;
 
     if (outlen > INT_MAX) {
-        ECerr(EC_F_OSSL_ECDH_COMPUTE_KEY, ERR_R_MALLOC_FAILURE); /* sort of,
+        ECerr(EC_F_ECDH_SIMPLE_COMPUTE_KEY, ERR_R_MALLOC_FAILURE); /* sort of,
                                                                  * anyway */
         return -1;
     }
-
-    if (ecdh->group->meth->ecdh_compute_key != 0)
-        return ecdh->group->meth->ecdh_compute_key(out, outlen, pub_key, ecdh,
-                                                   KDF);
 
     if ((ctx = BN_CTX_new()) == NULL)
         goto err;
@@ -115,7 +126,7 @@ int ossl_ecdh_compute_key(void *out, size_t outlen, const EC_POINT *pub_key,
 
     priv_key = EC_KEY_get0_private_key(ecdh);
     if (priv_key == NULL) {
-        ECerr(EC_F_OSSL_ECDH_COMPUTE_KEY, EC_R_NO_PRIVATE_VALUE);
+        ECerr(EC_F_ECDH_SIMPLE_COMPUTE_KEY, EC_R_NO_PRIVATE_VALUE);
         goto err;
     }
 
@@ -124,33 +135,33 @@ int ossl_ecdh_compute_key(void *out, size_t outlen, const EC_POINT *pub_key,
     if (EC_KEY_get_flags(ecdh) & EC_FLAG_COFACTOR_ECDH) {
         if (!EC_GROUP_get_cofactor(group, x, NULL) ||
             !BN_mul(x, x, priv_key, ctx)) {
-            ECerr(EC_F_OSSL_ECDH_COMPUTE_KEY, ERR_R_MALLOC_FAILURE);
+            ECerr(EC_F_ECDH_SIMPLE_COMPUTE_KEY, ERR_R_MALLOC_FAILURE);
             goto err;
         }
         priv_key = x;
     }
 
     if ((tmp = EC_POINT_new(group)) == NULL) {
-        ECerr(EC_F_OSSL_ECDH_COMPUTE_KEY, ERR_R_MALLOC_FAILURE);
+        ECerr(EC_F_ECDH_SIMPLE_COMPUTE_KEY, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
     if (!EC_POINT_mul(group, tmp, NULL, pub_key, priv_key, ctx)) {
-        ECerr(EC_F_OSSL_ECDH_COMPUTE_KEY, EC_R_POINT_ARITHMETIC_FAILURE);
+        ECerr(EC_F_ECDH_SIMPLE_COMPUTE_KEY, EC_R_POINT_ARITHMETIC_FAILURE);
         goto err;
     }
 
     if (EC_METHOD_get_field_type(EC_GROUP_method_of(group)) ==
         NID_X9_62_prime_field) {
         if (!EC_POINT_get_affine_coordinates_GFp(group, tmp, x, y, ctx)) {
-            ECerr(EC_F_OSSL_ECDH_COMPUTE_KEY, EC_R_POINT_ARITHMETIC_FAILURE);
+            ECerr(EC_F_ECDH_SIMPLE_COMPUTE_KEY, EC_R_POINT_ARITHMETIC_FAILURE);
             goto err;
         }
     }
 #ifndef OPENSSL_NO_EC2M
     else {
         if (!EC_POINT_get_affine_coordinates_GF2m(group, tmp, x, y, ctx)) {
-            ECerr(EC_F_OSSL_ECDH_COMPUTE_KEY, EC_R_POINT_ARITHMETIC_FAILURE);
+            ECerr(EC_F_ECDH_SIMPLE_COMPUTE_KEY, EC_R_POINT_ARITHMETIC_FAILURE);
             goto err;
         }
     }
@@ -159,23 +170,23 @@ int ossl_ecdh_compute_key(void *out, size_t outlen, const EC_POINT *pub_key,
     buflen = (EC_GROUP_get_degree(group) + 7) / 8;
     len = BN_num_bytes(x);
     if (len > buflen) {
-        ECerr(EC_F_OSSL_ECDH_COMPUTE_KEY, ERR_R_INTERNAL_ERROR);
+        ECerr(EC_F_ECDH_SIMPLE_COMPUTE_KEY, ERR_R_INTERNAL_ERROR);
         goto err;
     }
     if ((buf = OPENSSL_malloc(buflen)) == NULL) {
-        ECerr(EC_F_OSSL_ECDH_COMPUTE_KEY, ERR_R_MALLOC_FAILURE);
+        ECerr(EC_F_ECDH_SIMPLE_COMPUTE_KEY, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
     memset(buf, 0, buflen - len);
     if (len != (size_t)BN_bn2bin(x, buf + buflen - len)) {
-        ECerr(EC_F_OSSL_ECDH_COMPUTE_KEY, ERR_R_BN_LIB);
+        ECerr(EC_F_ECDH_SIMPLE_COMPUTE_KEY, ERR_R_BN_LIB);
         goto err;
     }
 
     if (KDF != 0) {
         if (KDF(buf, buflen, out, &outlen) == NULL) {
-            ECerr(EC_F_OSSL_ECDH_COMPUTE_KEY, EC_R_KDF_FAILED);
+            ECerr(EC_F_ECDH_SIMPLE_COMPUTE_KEY, EC_R_KDF_FAILED);
             goto err;
         }
         ret = outlen;
