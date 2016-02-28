@@ -190,11 +190,7 @@ sub do_rehash_rule {
     my ($target, $deps) = @_;
     my $ret = <<"EOF";
 $target: $deps
-	(OPENSSL="`pwd`/util/opensslwrap.sh"; \\
-	OPENSSL_DEBUG_MEMORY=on; \\
-	export OPENSSL OPENSSL_DEBUG_MEMORY; \\
-	\$(PERL) \$(BIN_D)${o}c_rehash certs/demo; \\
-	touch $target)
+	touch $target
 EOF
     return $ret
 }
