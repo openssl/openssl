@@ -234,11 +234,7 @@ int EC_KEY_generate_key(EC_KEY *eckey)
 
 int ossl_ec_key_gen(EC_KEY *eckey)
 {
-    if (eckey->group->meth->keygen == NULL) {
-        ECerr(EC_F_OSSL_EC_KEY_GEN, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
-        return 0;
-    }
-
+    OPENSSL_assert(eckey->group->meth->keygen != NULL);
     return eckey->group->meth->keygen(eckey);
 }
 

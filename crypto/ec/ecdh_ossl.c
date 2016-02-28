@@ -82,9 +82,8 @@ int ossl_ecdh_compute_key(void *out, size_t outlen, const EC_POINT *pub_key,
                           void *(*KDF) (const void *in, size_t inlen,
                                         void *out, size_t *outlen))
 {
-    if (ecdh->group->meth->ecdh_compute_key == 0) {
-        ECerr(EC_F_OSSL_ECDH_COMPUTE_KEY,
-              ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+    if (ecdh->group->meth->ecdh_compute_key == NULL) {
+        ECerr(EC_F_OSSL_ECDH_COMPUTE_KEY, EC_R_CURVE_DOES_NOT_SUPPORT_ECDH);
         return -1;
     }
 
@@ -113,8 +112,8 @@ int ecdh_simple_compute_key(void *out, size_t outlen, const EC_POINT *pub_key,
     unsigned char *buf = NULL;
 
     if (outlen > INT_MAX) {
-        ECerr(EC_F_ECDH_SIMPLE_COMPUTE_KEY, ERR_R_MALLOC_FAILURE); /* sort of,
-                                                                 * anyway */
+        /* sort of, anyway */
+        ECerr(EC_F_ECDH_SIMPLE_COMPUTE_KEY, ERR_R_MALLOC_FAILURE);
         return -1;
     }
 
