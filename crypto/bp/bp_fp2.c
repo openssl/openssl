@@ -172,11 +172,7 @@ int FP2_mul_frb(const BP_GROUP *group, FP2 *r, const FP2 *a, int power,
                 BN_CTX *ctx)
 {
     FP2 *frb = NULL;
-    BN_CTX *new_ctx = NULL;
     int ret = 0;
-
-    if (ctx == NULL && (ctx = new_ctx = BN_CTX_new()) == NULL)
-        return 0;
 
     if ((frb = FP2_new()) == NULL)
         goto err;
@@ -226,14 +222,13 @@ int FP2_mul_frb(const BP_GROUP *group, FP2 *r, const FP2 *a, int power,
     ret = 1;
  err:
     FP2_free(frb);
-    BN_CTX_free(new_ctx);
     return ret;
 }
 
 int FP2_mul(const BP_GROUP *group, FP2 *r, const FP2 *a, const FP2 *b,
             BN_CTX *ctx)
 {
-    BIGNUM *t = NULL, *t1 = NULL, *t2 = NULL, *t3 = NULL, *t4 = NULL;
+    BIGNUM *t0 = NULL, *t1 = NULL, *t2 = NULL, *t3 = NULL, *t4 = NULL;
     BN_CTX *new_ctx = NULL;
     int ret = 0;
 
@@ -246,7 +241,7 @@ int FP2_mul(const BP_GROUP *group, FP2 *r, const FP2 *a, const FP2 *b,
     t2 = BN_CTX_get(ctx);
     t3 = BN_CTX_get(ctx);
     t4 = BN_CTX_get(ctx);
-    if (t5 == NULL)
+    if (t4 == NULL)
         goto err;
 
     /*
@@ -414,7 +409,7 @@ int FP2_sqr(const BP_GROUP *group, FP2 *r, const FP2 *a, BN_CTX *ctx)
 
 int FP2_inv(const BP_GROUP *group, FP2 *r, const FP2 *a, BN_CTX *ctx)
 {
-    BIGNUM *t0, *t1;
+    BIGNUM *t0 = NULL, *t1 = NULL;
     BN_CTX *new_ctx = NULL;
     int ret = 0;
 
@@ -422,7 +417,9 @@ int FP2_inv(const BP_GROUP *group, FP2 *r, const FP2 *a, BN_CTX *ctx)
         return 0;
 
     BN_CTX_start(ctx);
-    if ((t0 = BN_CTX_get(ctx)) == NULL || (t1 = BN_CTX_get(ctx)) == NULL)
+    t0 = BN_CTX_get(ctx);
+    t1 = BN_CTX_get(ctx);
+    if (t1 == NULL)
         goto err;
 
     /*
