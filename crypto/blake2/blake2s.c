@@ -82,6 +82,9 @@ static int blake2s_init_param(BLAKE2S_CTX *S, const BLAKE2S_PARAM *P)
     const uint32_t *p = (const uint32_t *)(P);
     size_t i;
 
+    /* The param struct is carefully hand packed, and should be 32 bytes on
+     * every platform. */
+    OPENSSL_assert(sizeof(BLAKE2S_PARAM) == 32);
     blake2s_init0(S);
     /* IV XOR ParamBlock */
     for(i = 0; i < 8; ++i) {
