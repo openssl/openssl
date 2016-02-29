@@ -1,7 +1,3 @@
-/*
- * Written by Diego F. Aranha (d@miracl.com) and contributed to the
- * the OpenSSL project.
- */
 /* ====================================================================
  * Copyright (c) 2016 The OpenSSL Project.  All rights reserved.
  *
@@ -61,6 +57,7 @@
  * attached software ("Contribution") are developed by MIRACL UK LTD., and
  * are contributed to the OpenSSL project. The Contribution is licensed
  * pursuant to the OpenSSL open source license provided above.
+ * Authored by Diego F. Aranha (d@miracl.com).
  */
 
 #include <string.h>
@@ -205,7 +202,7 @@ int G2_ELEMs_mul(const BP_GROUP *group, G2_ELEM *r, const BIGNUM *scalar,
     if (scalar != NULL) {
         generator = group->gen2;
         if (generator == NULL) {
-            ECerr(EC_F_EC_WNAF_MUL, EC_R_UNDEFINED_GENERATOR);
+            BPerr(BP_F_G2_ELEMS_MUL, BP_R_UNDEFINED_GENERATOR);
             goto err;
         }
 
@@ -232,7 +229,7 @@ int G2_ELEMs_mul(const BP_GROUP *group, G2_ELEM *r, const BIGNUM *scalar,
 
             /* check that pre_comp looks sane */
             if (pre_comp->num != (pre_comp->numblocks * pre_points_per_block)) {
-                ECerr(EC_F_EC_WNAF_MUL, ERR_R_INTERNAL_ERROR);
+                BPerr(BP_F_G2_ELEMS_MUL, ERR_R_INTERNAL_ERROR);
                 goto err;
             }
         } else {
@@ -257,7 +254,7 @@ int G2_ELEMs_mul(const BP_GROUP *group, G2_ELEM *r, const BIGNUM *scalar,
         wNAF[0] = NULL;         /* preliminary pivot */
 
     if (wsize == NULL || wNAF_len == NULL || wNAF == NULL || val_sub == NULL) {
-        ECerr(EC_F_EC_WNAF_MUL, ERR_R_MALLOC_FAILURE);
+        BPerr(BP_F_G2_ELEMS_MUL, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
@@ -276,8 +273,10 @@ int G2_ELEMs_mul(const BP_GROUP *group, G2_ELEM *r, const BIGNUM *scalar,
         wNAF[i] =
             bn_compute_wNAF((i < num ? scalars[i] : scalar), wsize[i],
                             &wNAF_len[i]);
-        if (wNAF[i] == NULL)
+        if (wNAF[i] == NULL) {
+            BPerr(BP_F_G2_ELEMS_MUL, ERR_R_INTERNAL_ERROR);
             goto err;
+        }
         if (wNAF_len[i] > max_len)
             max_len = wNAF_len[i];
     }
@@ -287,7 +286,7 @@ int G2_ELEMs_mul(const BP_GROUP *group, G2_ELEM *r, const BIGNUM *scalar,
 
         if (pre_comp == NULL) {
             if (num_scalar != 1) {
-                ECerr(EC_F_EC_WNAF_MUL, ERR_R_INTERNAL_ERROR);
+                BPerr(BP_F_G2_ELEMS_MUL, ERR_R_INTERNAL_ERROR);
                 goto err;
             }
             /* we have already generated a wNAF for 'scalar' */
@@ -296,7 +295,7 @@ int G2_ELEMs_mul(const BP_GROUP *group, G2_ELEM *r, const BIGNUM *scalar,
             size_t tmp_len = 0;
 
             if (num_scalar != 0) {
-                ECerr(EC_F_EC_WNAF_MUL, ERR_R_INTERNAL_ERROR);
+                BPerr(BP_F_G2_ELEMS_MUL, ERR_R_INTERNAL_ERROR);
                 goto err;
             }
 
@@ -341,7 +340,7 @@ int G2_ELEMs_mul(const BP_GROUP *group, G2_ELEM *r, const BIGNUM *scalar,
                      */
                     numblocks = (tmp_len + blocksize - 1) / blocksize;
                     if (numblocks > pre_comp->numblocks) {
-                        ECerr(EC_F_EC_WNAF_MUL, ERR_R_INTERNAL_ERROR);
+                        BPerr(BP_F_G2_ELEMS_MUL, ERR_R_INTERNAL_ERROR);
                         goto err;
                     }
                     totalnum = num + numblocks;
@@ -355,7 +354,7 @@ int G2_ELEMs_mul(const BP_GROUP *group, G2_ELEM *r, const BIGNUM *scalar,
                     if (i < totalnum - 1) {
                         wNAF_len[i] = blocksize;
                         if (tmp_len < blocksize) {
-                            ECerr(EC_F_EC_WNAF_MUL, ERR_R_INTERNAL_ERROR);
+                            BPerr(BP_F_G2_ELEMS_MUL, ERR_R_INTERNAL_ERROR);
                             goto err;
                         }
                         tmp_len -= blocksize;
@@ -369,7 +368,7 @@ int G2_ELEMs_mul(const BP_GROUP *group, G2_ELEM *r, const BIGNUM *scalar,
                     wNAF[i + 1] = NULL;
                     wNAF[i] = OPENSSL_malloc(wNAF_len[i]);
                     if (wNAF[i] == NULL) {
-                        ECerr(EC_F_EC_WNAF_MUL, ERR_R_MALLOC_FAILURE);
+                        BPerr(BP_F_G2_ELEMS_MUL, ERR_R_MALLOC_FAILURE);
                         OPENSSL_free(tmp_wNAF);
                         goto err;
                     }
@@ -378,7 +377,7 @@ int G2_ELEMs_mul(const BP_GROUP *group, G2_ELEM *r, const BIGNUM *scalar,
                         max_len = wNAF_len[i];
 
                     if (*tmp_points == NULL) {
-                        ECerr(EC_F_EC_WNAF_MUL, ERR_R_INTERNAL_ERROR);
+                        BPerr(BP_F_G2_ELEMS_MUL, ERR_R_INTERNAL_ERROR);
                         OPENSSL_free(tmp_wNAF);
                         goto err;
                     }
@@ -398,7 +397,7 @@ int G2_ELEMs_mul(const BP_GROUP *group, G2_ELEM *r, const BIGNUM *scalar,
      */
     val = OPENSSL_malloc((num_val + 1) * sizeof val[0]);
     if (val == NULL) {
-        ECerr(EC_F_EC_WNAF_MUL, ERR_R_MALLOC_FAILURE);
+        BPerr(BP_F_G2_ELEMS_MUL, ERR_R_MALLOC_FAILURE);
         goto err;
     }
     val[num_val] = NULL;        /* pivot element */
@@ -415,7 +414,7 @@ int G2_ELEMs_mul(const BP_GROUP *group, G2_ELEM *r, const BIGNUM *scalar,
         }
     }
     if (!(v == val + num_val)) {
-        ECerr(EC_F_EC_WNAF_MUL, ERR_R_INTERNAL_ERROR);
+        BPerr(BP_F_G2_ELEMS_MUL, ERR_R_INTERNAL_ERROR);
         goto err;
     }
 
@@ -566,7 +565,7 @@ int g2_wNAF_precompute_mult(BP_GROUP *group, BN_CTX *ctx)
 
     generator = group->gen2;
     if (generator == NULL) {
-        ECerr(EC_F_EC_WNAF_PRECOMPUTE_MULT, EC_R_UNDEFINED_GENERATOR);
+        BPerr(BP_F_G2_WNAF_PRECOMPUTE_MULT, EC_R_UNDEFINED_GENERATOR);
         goto err;
     }
 
@@ -582,7 +581,7 @@ int g2_wNAF_precompute_mult(BP_GROUP *group, BN_CTX *ctx)
     if (!BP_GROUP_get_order(group, order, ctx))
         goto err;
     if (BN_is_zero(order)) {
-        ECerr(EC_F_EC_WNAF_PRECOMPUTE_MULT, EC_R_UNKNOWN_ORDER);
+        BPerr(BP_F_G2_WNAF_PRECOMPUTE_MULT, EC_R_UNKNOWN_ORDER);
         goto err;
     }
 
@@ -609,7 +608,7 @@ int g2_wNAF_precompute_mult(BP_GROUP *group, BN_CTX *ctx)
 
     points = OPENSSL_malloc(sizeof(*points) * (num + 1));
     if (points == NULL) {
-        ECerr(EC_F_EC_WNAF_PRECOMPUTE_MULT, ERR_R_MALLOC_FAILURE);
+        BPerr(BP_F_G2_WNAF_PRECOMPUTE_MULT, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
@@ -617,14 +616,14 @@ int g2_wNAF_precompute_mult(BP_GROUP *group, BN_CTX *ctx)
     var[num] = NULL;            /* pivot */
     for (i = 0; i < num; i++) {
         if ((var[i] = G2_ELEM_new(group)) == NULL) {
-            ECerr(EC_F_EC_WNAF_PRECOMPUTE_MULT, ERR_R_MALLOC_FAILURE);
+            BPerr(BP_F_G2_WNAF_PRECOMPUTE_MULT, ERR_R_MALLOC_FAILURE);
             goto err;
         }
     }
 
     if ((tmp_point = G2_ELEM_new(group)) == NULL
         || (base = G2_ELEM_new(group)) == NULL) {
-        ECerr(EC_F_EC_WNAF_PRECOMPUTE_MULT, ERR_R_MALLOC_FAILURE);
+        BPerr(BP_F_G2_WNAF_PRECOMPUTE_MULT, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
@@ -656,7 +655,7 @@ int g2_wNAF_precompute_mult(BP_GROUP *group, BN_CTX *ctx)
             size_t k;
 
             if (blocksize <= 2) {
-                ECerr(EC_F_EC_WNAF_PRECOMPUTE_MULT, ERR_R_INTERNAL_ERROR);
+                BPerr(BP_F_G2_WNAF_PRECOMPUTE_MULT, ERR_R_INTERNAL_ERROR);
                 goto err;
             }
 

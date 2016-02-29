@@ -1,7 +1,3 @@
-/*
- * Written by Diego F. Aranha (d@miracl.com) and contributed to the
- * the OpenSSL project.
- */
 /* ====================================================================
  * Copyright (c) 2016 The OpenSSL Project.  All rights reserved.
  *
@@ -61,9 +57,11 @@
  * attached software ("Contribution") are developed by MIRACL UK LTD., and
  * are contributed to the OpenSSL project. The Contribution is licensed
  * pursuant to the OpenSSL open source license provided above.
+ * Authored by Diego F. Aranha (d@miracl.com).
  */
 
 #include <openssl/ec.h>
+#include <openssl/err.h>
 
 #include "bp_lcl.h"
 
@@ -71,8 +69,10 @@ G1_ELEM *G1_ELEM_new(const BP_GROUP *group)
 {
     G1_ELEM *ret = NULL;
 
-    if ((ret = OPENSSL_malloc(sizeof(*ret))) == NULL)
+    if ((ret = OPENSSL_malloc(sizeof(*ret))) == NULL) {
+        BPerr(BP_F_G1_ELEM_NEW, BP_R_MALLOC_FAILURE);
         return NULL;
+    }
 
     ret->p = EC_POINT_new(group->ec);
     if (ret->p == NULL) {
@@ -236,8 +236,7 @@ int G1_ELEM_mul(const BP_GROUP *group, G1_ELEM *r, const BIGNUM *g_scalar,
 
     points[0] = point;
     scalars[0] = p_scalar;
-    return G1_ELEMs_mul(group, r, g_scalar,
-                        (point != NULL
+    return G1_ELEMs_mul(group, r, g_scalar, (point != NULL
                          && p_scalar != NULL), points, scalars, ctx);
 }
 

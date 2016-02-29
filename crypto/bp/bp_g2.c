@@ -61,6 +61,7 @@
  * attached software ("Contribution") are developed by MIRACL UK LTD., and
  * are contributed to the OpenSSL project. The Contribution is licensed
  * pursuant to the OpenSSL open source license provided above.
+ * Authored by Diego F. Aranha (d@miracl.com).
  */
 
 #include <openssl/ec.h>
@@ -71,8 +72,10 @@ G2_ELEM *G2_ELEM_new(const BP_GROUP *group)
 {
     G2_ELEM *ret = NULL;
 
-    if ((ret = OPENSSL_malloc(sizeof(*ret))) == NULL)
+    if ((ret = OPENSSL_malloc(sizeof(*ret))) == NULL) {
+        BPerr(BP_F_G2_ELEM_NEW, BP_R_MALLOC_FAILURE);
         return NULL;
+    }
 
     ret->X = FP2_new();
     ret->Y = FP2_new();
@@ -273,6 +276,7 @@ int G2_ELEM_set_affine_coordinates(const BP_GROUP *group, G2_ELEM *point,
 
     if (x == NULL || x[0] == NULL || x[1] == NULL || y == NULL || y[0] == NULL
         || y[1] == NULL) {
+        BPerr(BP_F_G2_ELEM_SET_AFFINE_COORDINATES, BP_R_PASSED_NULL_PARAMETER);
         goto err;
     }
 
@@ -305,6 +309,7 @@ int G2_ELEM_get_affine_coordinates(const BP_GROUP *group,
     BN_CTX_start(ctx);
     if ((z = FP2_new()) == NULL || (z1 = FP2_new()) == NULL
         || (z2 = FP2_new()) == NULL || (z3 = FP2_new()) == NULL) {
+        BPerr(BP_F_G2_ELEM_GET_AFFINE_COORDINATES, BP_R_MALLOC_FAILURE);
         goto err;
     }
 
@@ -399,8 +404,10 @@ size_t G2_ELEM_point2oct(const BP_GROUP *group, const G2_ELEM *point,
     if (buf == NULL)
         return size;
 
-    if (len < size)
+    if (len < size) {
+        BPerr(BP_F_G2_ELEM_POINT2OCT, BP_R_BUFFER_TOO_SMALL);
         goto err;
+    }
 
     if (ctx == NULL && (ctx = new_ctx = BN_CTX_new()) == NULL)
         return 0;
@@ -430,6 +437,8 @@ size_t G2_ELEM_point2oct(const BP_GROUP *group, const G2_ELEM *point,
         i += BN_bn2binpad(y[1], buf + i, field_len);
         if (i != 4 * field_len)
             goto err;
+    } else {
+        BPerr(BP_F_G2_ELEM_POINT2OCT, BP_R_NOT_IMPLEMENTED);
     }
 
     if (i != size)
@@ -503,8 +512,10 @@ int G2_ELEM_oct2point(const BP_GROUP *group, G2_ELEM *point,
     /*
      * test required by X9.62
      */
-    if (G2_ELEM_is_on_curve(group, point, ctx) <= 0)
+    if (G2_ELEM_is_on_curve(group, point, ctx) <= 0) {
+        BP_err(BP_F_G2_ELEM_OCT2POINT, BP_R_POINT_IS_NOT_ON_CURVE);
         goto err;
+    }
 
     ret = 1;
  err:
@@ -535,6 +546,7 @@ int G2_ELEM_add(const BP_GROUP *group, G2_ELEM *r, const G2_ELEM *a,
         || (t2 = FP2_new()) == NULL || (t3 = FP2_new()) == NULL
         || (t4 = FP2_new()) == NULL || (t5 = FP2_new()) == NULL
         || (t6 = FP2_new()) == NULL) {
+        BPerr(BP_F_G2_ELEM_ADD, BP_R_MALLOC_FAILURE);
         goto err;
     }
 
@@ -739,6 +751,7 @@ int G2_ELEM_dbl(const BP_GROUP *group, G2_ELEM *r, const G2_ELEM *a,
 
     if ((t0 = FP2_new()) == NULL || (t1 = FP2_new()) == NULL
         || (t2 = FP2_new()) == NULL || (t3 = FP2_new()) == NULL) {
+        BPerr(BP_F_G2_ELEM_DBL, BP_R_MALLOC_FAILURE);
         goto err;
     }
 
@@ -854,6 +867,7 @@ int G2_ELEM_is_on_curve(const BP_GROUP *group, const G2_ELEM *point,
     if ((rh = FP2_new()) == NULL || (t = FP2_new()) == NULL
         || (z4 = FP2_new()) == NULL || (z6 = FP2_new()) == NULL) {
         goto err;
+        BPerr(BP_F_G2_ELEM_IS_ON_CURVE, BP_R_MALLOC_FAILURE);
     }
 
     /*-
@@ -944,6 +958,7 @@ int G2_ELEM_cmp(const BP_GROUP *group, const G2_ELEM *a, const G2_ELEM *b,
 
     if ((tmp1 = FP2_new()) == NULL || (tmp2 = FP2_new()) == NULL
         || (Za23 = FP2_new()) == NULL || (Zb23 = FP2_new()) == NULL) {
+        BPerr(BP_F_G2_ELEM_CMP, BP_R_MALLOC_FAILURE);
         goto end;
     }
 
@@ -1084,8 +1099,10 @@ int G2_ELEMs_make_affine(const BP_GROUP *group, size_t num,
             goto err;
     }
 
-    if (!FP2_inv_simultaneous(group, zs, zs, m, ctx))
+    if (!FP2_inv_simultaneous(group, zs, zs, m, ctx)) {
+        BPerr(BP_F_G2_ELEMS_MAKE_AFFINE, BP_R_INVALID_ARGUMENT);
         goto err;
+    }
 
     m = 0;
     for (i = 0; i < num; i++) {

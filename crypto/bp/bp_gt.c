@@ -1,7 +1,3 @@
-/*
- * Written by Diego F. Aranha (d@miracl.com) and contributed to the
- * the OpenSSL project.
- */
 /* ====================================================================
  * Copyright (c) 2016 The OpenSSL Project.  All rights reserved.
  *
@@ -61,6 +57,7 @@
  * attached software ("Contribution") are developed by MIRACL UK LTD., and
  * are contributed to the OpenSSL project. The Contribution is licensed
  * pursuant to the OpenSSL open source license provided above.
+ * Authored by Diego F. Aranha (d@miracl.com).
  */
 
 #include <openssl/ec.h>
@@ -72,6 +69,7 @@ GT_ELEM *GT_ELEM_new(const BP_GROUP *group)
     GT_ELEM *ret;
 
     if ((ret = OPENSSL_malloc(sizeof(*ret))) == NULL)
+        BPerr(BP_F_GT_ELEM_NEW, BP_R_MALLOC_FAILURE);
         return NULL;
 
     ret->f = FP12_new();
@@ -171,8 +169,10 @@ size_t GT_ELEM_elem2oct(const BP_GROUP *group, const GT_ELEM *a,
     if (buf == NULL)
         return size;
 
-    if (len < size)
+    if (len < size) {
+        BPerr(BP_F_GT_ELEM_ELEM2OCT, BP_R_BUFFER_TOO_SMALL);
         goto err;
+    }
 
     if (ctx == NULL && (ctx = new_ctx = BN_CTX_new()) == NULL)
         return 0;
@@ -220,8 +220,10 @@ int GT_ELEM_oct2elem(const BP_GROUP *group, GT_ELEM *a,
     field_len = BN_num_bytes(group->field);
     enc_len = 12 * field_len;
 
-    if (len != enc_len)
+    if (len != enc_len) {
+        BPerr(BP_F_GT_ELEM_OCT2ELEM, BP_R_BUFFER_TOO_SMALL);
         return 0;
+    }
 
     if (ctx == NULL && (ctx = new_ctx = BN_CTX_new()) == NULL)
         return 0;

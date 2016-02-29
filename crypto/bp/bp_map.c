@@ -62,10 +62,10 @@
 
 #include "bp_lcl.h"
 
-static int GT_miller_double(const BP_GROUP *group, FP12 *l, FP2 *x3,
-                            FP2 *y3, FP2 *z3, const FP2 *x1,
-                            const FP2 *y1, const FP2 *z1, const BIGNUM *xp,
-                            const BIGNUM *yp, BN_CTX *ctx)
+static int GT_miller_dbl(const BP_GROUP *group, FP12 *l, FP2 *x3,
+                         FP2 *y3, FP2 *z3, const FP2 *x1,
+                         const FP2 *y1, const FP2 *z1, const BIGNUM *xp,
+                         const BIGNUM *yp, BN_CTX *ctx)
 {
     FP2 *t0 = NULL, *t1 = NULL, *t2 = NULL, *t3 = NULL;
     FP2 *t4 = NULL, *t5 = NULL, *t6 = NULL, *u0 = NULL, *u1 = NULL;
@@ -76,6 +76,7 @@ static int GT_miller_double(const BP_GROUP *group, FP12 *l, FP2 *x3,
         || (t4 = FP2_new()) == NULL || (t5 = FP2_new()) == NULL
         || (t6 = FP2_new()) == NULL || (u0 = FP2_new()) == NULL
         || (u1 = FP2_new()) == NULL)
+        BPerr(BP_F_GT_MILLER_DBL, BP_R_MALLOC_FAILURE);
         goto err;
 
     /*
@@ -244,6 +245,7 @@ static int GT_miller_add(const BP_GROUP *group, FP12 *l, FP2 *x3, FP2 *y3,
         || (t2 = FP2_new()) == NULL || (t3 = FP2_new()) == NULL
         || (t4 = FP2_new()) == NULL || (u0 = FP2_new()) == NULL
         || (u1 = FP2_new()) == NULL || (u2 = FP2_new()) == NULL)
+        BPerr(BP_F_GT_MILLER_ADD, BP_R_MALLOC_FAILURE);
         goto err;
 
     if (!FP2_mul(group, t1, z3, x1, ctx))
@@ -330,8 +332,10 @@ static int GT_miller_final(const BP_GROUP *group, FP12 *r, FP2 *x3,
     int ret = 0;
 
     if ((x2 = FP2_new()) == NULL || (y2 = FP2_new()) == NULL
-        || (l = FP12_new()) == NULL)
+        || (l = FP12_new()) == NULL) {
+        BPerr(BP_F_GT_MILLER_FINAL, BP_R_MALLOC_FAILURE);
         goto err;
+    }
 
     if (!FP12_zero(l))
         goto err;
@@ -382,6 +386,7 @@ static int GT_final_exp(const BP_GROUP *group, FP12 *r, const FP12 *a,
     if ((t0 = FP12_new()) == NULL || (t1 = FP12_new()) == NULL
         || (t2 = FP12_new()) == NULL || (t3 = FP12_new()) == NULL
         || (t4 = FP12_new()) == NULL) {
+        BPerr(BP_F_GT_FINAL_EXP, BP_R_MALLOC_FAILURE);
         goto err;
     }
 
@@ -500,12 +505,14 @@ int GT_ELEMs_pairing(const BP_GROUP *group, GT_ELEM *r, size_t num,
             || (s[i] = BN_CTX_get(ctx)) == NULL
             || (t[i] = BN_CTX_get(ctx)) == NULL
             || (miller = BN_CTX_get(ctx)) == NULL) {
+            BPerr(BP_F_GT_ELEMS_PAIRING, BP_R_MALLOC_FAILURE);
             goto err;
         }
         x[i] = y[i] = xq[i] = yq[i] = zq[i] = NULL;
         if ((x[i] = FP2_new()) == NULL || (y[i] = FP2_new()) == NULL
             || (xq[i] = FP2_new()) == NULL || (yq[i] = FP2_new()) == NULL
             || (zq[i] = FP2_new()) == NULL) {
+            BPerr(BP_F_GT_ELEMS_PAIRING, BP_R_MALLOC_FAILURE);
             goto err;
         }
         if ((qs[i] = G2_ELEM_new(group)) == NULL)
@@ -520,8 +527,10 @@ int GT_ELEMs_pairing(const BP_GROUP *group, GT_ELEM *r, size_t num,
              * Copy only the valid pairs and remember amount.
              */
             if (!G1_ELEM_get_affine_coordinates
-                (group, p[i], xp[m], yp[m], ctx))
+                (group, p[i], xp[m], yp[m], ctx)) {
+                BPerr(BP_F_GT_ELEMS_PAIRING, BP_R_INVALID_ARGUMENT);
                 goto err;
+            }
             if (!BN_to_montgomery(xp[m], xp[m], group->mont, ctx))
                 goto err;
             if (!BN_to_montgomery(yp[m], yp[m], group->mont, ctx))
@@ -558,8 +567,10 @@ int GT_ELEMs_pairing(const BP_GROUP *group, GT_ELEM *r, size_t num,
     /*
      * Initialize line function.
      */
-    if ((l = FP12_new()) == NULL)
+    if ((l = FP12_new()) == NULL) {
+        BPerr(BP_F_GT_ELEMS_PAIRING, BP_R_MALLOC_FAILURE);
         goto err;
+    }
     if (!FP12_zero(l))
         goto err;
 

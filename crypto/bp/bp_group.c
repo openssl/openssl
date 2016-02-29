@@ -149,8 +149,10 @@ BP_GROUP *BP_GROUP_new(void)
     BP_GROUP *ret;
 
     ret = OPENSSL_zalloc(sizeof(*ret));
-    if (ret == NULL)
+    if (ret == NULL) {
+        BPerr(BP_F_BP_GROUP_NEW, BP_R_MALLOC_FAILURE);
         return NULL;
+    }
 
     if (!BP_GROUP_init(ret))
         return NULL;
@@ -379,14 +381,18 @@ int BP_GROUP_set_curve(BP_GROUP *group, const BIGNUM *p, const BIGNUM *a,
     /*
      * Check that p = 3 mod 4 and = 1 mod 6, initialize field and extension.
      */
-    if (!BN_is_bit_set(curve_p, 0) || !BN_is_bit_set(curve_p, 1))
+    if (!BN_is_bit_set(curve_p, 0) || !BN_is_bit_set(curve_p, 1)) {
+        BPerr(BP_F_BP_GROUP_SET_CURVE, BP_R_INVALID_PRIME_FIELD);
         goto err;
+    }
     if (!BN_set_word(r, 6))
         goto err;
     if (!BN_div(d, r, curve_p, r, ctx))
         goto err;
-    if (!BN_is_one(r))
+    if (!BN_is_one(r)) {
+        BPerr(BP_F_BP_GROUP_SET_CURVE, BP_R_INVALID_PRIME_FIELD);
         goto err;
+    }
 
     if (!BN_copy(group->field, curve_p))
         goto err;
@@ -417,8 +423,9 @@ int BP_GROUP_set_curve(BP_GROUP *group, const BIGNUM *p, const BIGNUM *a,
     if ((g1 = EC_POINT_new(group->ec)) == NULL)
         goto err;
     if (!EC_POINT_set_affine_coordinates_GFp
-        (group->ec, g1, curve_x, BN_value_one(), ctx))
+        (group->ec, g1, curve_x, BN_value_one(), ctx)) {
         goto err;
+    }
     if (!EC_GROUP_set_generator(group->ec, g1, order, BN_value_one()))
         goto err;
 
@@ -426,8 +433,9 @@ int BP_GROUP_set_curve(BP_GROUP *group, const BIGNUM *p, const BIGNUM *a,
      * Initialize elliptic curve group G_2.
      */
     if (!G2_ELEM_set_affine_coordinates
-        (group, group->gen2, (const BIGNUM **)x, (const BIGNUM **)y, ctx))
+        (group, group->gen2, (const BIGNUM **)x, (const BIGNUM **)y, ctx)) {
         goto err;
+    }
 
     ret = 1;
  err:
