@@ -217,6 +217,7 @@ static int usertime = 1;
 
 typedef struct loopargs_st {
     ASYNC_JOB *inprogress_job;
+    ASYNC_WAIT_CTX *wait_ctx;
     unsigned char *buf;
     unsigned char *buf2;
     unsigned char *buf_malloc;
@@ -1133,6 +1134,12 @@ static int run_benchmark(int async_jobs, int (*loop_function)(void *), loopargs_
     int num_inprogress = 0;
     int error = 0;
     int i = 0;
+    OSSL_ASYNC_FD job_fd = 0;
+    size_t num_job_fds = 0;
+#if defined(ASYNC_POSIX)
+    fd_set waitfdset;
+    OSSL_ASYNC_FD max_fd = 0;
+#endif
 
     run = 1;
 
@@ -1140,9 +1147,11 @@ static int run_benchmark(int async_jobs, int (*loop_function)(void *), loopargs_
         return loop_function((void *)loopargs);
     }
 
+
     for (i = 0; i < async_jobs && !error; i++) {
-        switch (ASYNC_start_job(&(loopargs[i].inprogress_job), &job_op_count,
-                                loop_function, (void *)(loopargs + i), sizeof(loopargs_t))) {
+        switch (ASYNC_start_job(&(loopargs[i].inprogress_job), loopargs[i].wait_ctx,
+                                &job_op_count, loop_function,
+                                (void *)(loopargs + i), sizeof(loopargs_t))) {
             case ASYNC_PAUSE:
                 ++num_inprogress;
                 break;
@@ -1162,23 +1171,70 @@ static int run_benchmark(int async_jobs, int (*loop_function)(void *), loopargs_
         }
     }
 
-    while (num_inprogress > 0) {
-        OSSL_ASYNC_FD job_fd = 0;
 #if defined(ASYNC_POSIX)
-        OSSL_ASYNC_FD max_fd = 0;
+    FD_ZERO(&waitfdset);
+
+    /* Add to the wait set all the fds that are already in the WAIT_CTX
+     * This is required when the same ctx is used multiple times
+     * For the purpose of speed, each job can be associated to at most one fd
+     */
+    for (i = 0; i < async_jobs && num_inprogress > 0; i++) {
+        if (loopargs[i].inprogress_job == NULL)
+            continue;
+
+        if (!ASYNC_WAIT_CTX_get_all_fds(loopargs[i].wait_ctx, NULL, &num_job_fds)
+                || num_job_fds > 1) {
+            BIO_printf(bio_err, "Too many fds in ASYNC_WAIT_CTX\n");
+            ERR_print_errors(bio_err);
+            error = 1;
+            break;
+        }
+        ASYNC_WAIT_CTX_get_all_fds(loopargs[i].wait_ctx, &job_fd, &num_job_fds);
+        FD_SET(job_fd, &waitfdset);
+        if (job_fd > max_fd)
+            max_fd = job_fd;
+    }
+#endif
+
+    while (num_inprogress > 0) {
+#if defined(ASYNC_POSIX)
         int select_result = 0;
-        fd_set waitfdset;
         struct timeval select_timeout;
-        FD_ZERO(&waitfdset);
-        select_timeout.tv_sec=0;
-        select_timeout.tv_usec=0;
+        select_timeout.tv_sec = 0;
+        select_timeout.tv_usec = 0;
 
         for (i = 0; i < async_jobs; i++) {
             if (loopargs[i].inprogress_job != NULL) {
-                job_fd = ASYNC_get_wait_fd(loopargs[i].inprogress_job);
-                FD_SET(job_fd, &waitfdset);
-                if (job_fd > max_fd)
-                    max_fd = job_fd;
+                /* Consider only changed fds to minimize the operations on waitfdset */
+                OSSL_ASYNC_FD add_fd, del_fd;
+                size_t num_add_fds, num_del_fds;
+                if (!ASYNC_WAIT_CTX_get_changed_fds(loopargs[i].wait_ctx, NULL,
+                                                    &num_add_fds, NULL, &num_del_fds)) {
+                    BIO_printf(bio_err, "Failure in ASYNC_WAIT_CTX\n");
+                    ERR_print_errors(bio_err);
+                    error = 1;
+                    break;
+                }
+                if (num_add_fds > 1 || num_del_fds > 1) {
+                    BIO_printf(bio_err, "Too many fds have changed in ASYNC_WAIT_CTX\n");
+                    ERR_print_errors(bio_err);
+                    error = 1;
+                    break;
+                }
+                if (num_add_fds == 0 && num_del_fds == 0)
+                    continue;
+
+                ASYNC_WAIT_CTX_get_changed_fds(loopargs[i].wait_ctx, &add_fd, &num_add_fds,
+                                               &del_fd, &num_del_fds);
+
+                if (num_del_fds == 1)
+                    FD_CLR(del_fd, &waitfdset);
+
+                if (num_add_fds == 1) {
+                    FD_SET(add_fd, &waitfdset);
+                    if (add_fd > max_fd)
+                        max_fd = add_fd;
+                }
             }
         }
         select_result = select(max_fd + 1, &waitfdset, NULL, NULL, &select_timeout);
@@ -1204,17 +1260,25 @@ static int run_benchmark(int async_jobs, int (*loop_function)(void *), loopargs_
             if (loopargs[i].inprogress_job == NULL)
                 continue;
 
-            job_fd = ASYNC_get_wait_fd(loopargs[i].inprogress_job);
+            if (!ASYNC_WAIT_CTX_get_all_fds(loopargs[i].wait_ctx, NULL, &num_job_fds)
+                    || num_job_fds > 1) {
+                BIO_printf(bio_err, "Too many fds in ASYNC_WAIT_CTX\n");
+                ERR_print_errors(bio_err);
+                error = 1;
+                break;
+            }
+            ASYNC_WAIT_CTX_get_all_fds(loopargs[i].wait_ctx, &job_fd, &num_job_fds);
 
 #if defined(ASYNC_POSIX)
-            if (!FD_ISSET(job_fd, &waitfdset))
+            if (num_job_fds == 1 && !FD_ISSET(job_fd, &waitfdset))
                 continue;
 #elif defined(ASYNC_WIN)
-            if (!PeekNamedPipe(job_fd, NULL, 0, NULL, &avail, NULL) && avail > 0)
+            if (num_job_fds == 1 &&
+                    !PeekNamedPipe(job_fd, NULL, 0, NULL, &avail, NULL) && avail > 0)
                 continue;
 #endif
 
-            switch (ASYNC_start_job(&(loopargs[i].inprogress_job),
+            switch (ASYNC_start_job(&(loopargs[i].inprogress_job), loopargs[i].wait_ctx,
                         &job_op_count, loop_function, (void *)(loopargs + i),
                         sizeof(loopargs_t))) {
                 case ASYNC_PAUSE:
@@ -1226,6 +1290,9 @@ static int run_benchmark(int async_jobs, int (*loop_function)(void *), loopargs_
                         total_op_count += job_op_count;
                     }
                     --num_inprogress;
+#if defined(ASYNC_POSIX)
+                    FD_CLR(job_fd, &waitfdset);
+#endif
                     loopargs[i].inprogress_job = NULL;
                     break;
                 case ASYNC_NO_JOBS:
@@ -1574,6 +1641,14 @@ int speed_main(int argc, char **argv)
     memset(loopargs, 0, loopargs_len * sizeof(loopargs_t));
 
     for (i = 0; i < loopargs_len; i++) {
+        if (async_jobs > 0) {
+            loopargs[i].wait_ctx = ASYNC_WAIT_CTX_new();
+            if (loopargs[i].wait_ctx == NULL) {
+                BIO_printf(bio_err, "Error creating the ASYNC_WAIT_CTX\n");
+                goto end;
+            }
+        }
+
         loopargs[i].buf_malloc = app_malloc((int)BUFSIZE + MAX_MISALIGNMENT + 1, "input buffer");
         loopargs[i].buf2_malloc = app_malloc((int)BUFSIZE + MAX_MISALIGNMENT + 1, "input buffer");
         /* Align the start of buffers on a 64 byte boundary */
@@ -2820,7 +2895,6 @@ int speed_main(int argc, char **argv)
         OPENSSL_free(loopargs[i].buf2_malloc);
         OPENSSL_free(loopargs[i].siglen);
     }
-    OPENSSL_free(loopargs);
 #ifndef OPENSSL_NO_RSA
     for (i = 0; i < loopargs_len; i++) {
         for (k = 0; k < RSA_NUM; k++)
@@ -2845,8 +2919,13 @@ int speed_main(int argc, char **argv)
         OPENSSL_free(loopargs[i].secret_b);
     }
 #endif
-    if (async_jobs > 0)
+    if (async_jobs > 0) {
+        for (i = 0; i < loopargs_len; i++)
+            ASYNC_WAIT_CTX_free(loopargs[i].wait_ctx);
+
         ASYNC_cleanup_thread();
+    }
+    OPENSSL_free(loopargs);
     return (ret);
 }
 
