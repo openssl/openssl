@@ -497,8 +497,8 @@ static int ecdh_cavs_kat(BIO *out, const ecdh_cavs_kat_t *kat)
     if (is_char_two) {
 #ifndef OPENSSL_NO_EC2M
         if (!EC_POINT_set_affine_coordinates_GF2m(group, pub, x, y, NULL))
-#endif
             goto err;
+#endif
     }
     else {
         if (!EC_POINT_set_affine_coordinates_GFp(group, pub, x, y, NULL))
@@ -516,8 +516,8 @@ static int ecdh_cavs_kat(BIO *out, const ecdh_cavs_kat_t *kat)
     if (is_char_two) {
 #ifndef OPENSSL_NO_EC2M
         if (!EC_POINT_set_affine_coordinates_GF2m(group, pub, x, y, NULL))
-#endif
             goto err;
+#endif
     }
     else {
         if (!EC_POINT_set_affine_coordinates_GFp(group, pub, x, y, NULL))
