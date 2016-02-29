@@ -76,6 +76,7 @@ struct nistz256_pre_comp_st {
     PRECOMP256_ROW *precomp;
     void *precomp_storage;
     int references;
+    CRYPTO_RWLOCK *lock;
 };
 
 /* Functions implemented in assembly */
@@ -1396,22 +1397,39 @@ static NISTZ256_PRE_COMP *ecp_nistz256_pre_comp_new(const EC_GROUP *group)
     ret->group = group;
     ret->w = 6;                 /* default */
     ret->references = 1;
+
+    ret->lock = CRYPTO_THREAD_lock_new();
+    if (ret->lock == NULL) {
+        ECerr(EC_F_ECP_NISTZ256_PRE_COMP_NEW, ERR_R_MALLOC_FAILURE);
+        OPENSSL_free(ret);
+        return NULL;
+    }
     return ret;
 }
 
 NISTZ256_PRE_COMP *EC_nistz256_pre_comp_dup(NISTZ256_PRE_COMP *p)
 {
+    int i;
     if (p != NULL)
-        CRYPTO_add(&p->references, 1, CRYPTO_LOCK_EC_PRE_COMP);
+        CRYPTO_atomic_add(&p->references, 1, &i, p->lock);
     return p;
 }
 
 void EC_nistz256_pre_comp_free(NISTZ256_PRE_COMP *pre)
 {
-    if (pre == NULL
-            || CRYPTO_add(&pre->references, -1, CRYPTO_LOCK_EC_PRE_COMP) > 0)
+    int i;
+
+    if (pre == NULL)
         return;
+
+    CRYPTO_atomic_add(&pre->references, -1, &i, pre->lock);
+    REF_PRINT_COUNT("EC_nistz256", x);
+    if (i > 0)
+        return;
+    REF_ASSERT_ISNT(i < 0);
+
     OPENSSL_free(pre->precomp_storage);
+    CRYPTO_THREAD_lock_free(pre->lock);
     OPENSSL_free(pre);
 }
 

@@ -187,10 +187,8 @@ extern "C" {
 # define CRYPTO_LOCK_ENGINE              30
 # define CRYPTO_LOCK_UI                  31
 # define CRYPTO_LOCK_ECDSA               32
-# define CRYPTO_LOCK_EC                  33
 # define CRYPTO_LOCK_ECDH                34
 # define CRYPTO_LOCK_BN                  35
-# define CRYPTO_LOCK_EC_PRE_COMP         36
 # define CRYPTO_LOCK_STORE               37
 # define CRYPTO_LOCK_COMP                38
 # define CRYPTO_LOCK_FIPS                39
