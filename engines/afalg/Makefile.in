@@ -10,7 +10,7 @@ CFLAG=-g
 MAKEFILE=	Makefile
 AR=		ar r
 
-CFLAGS= $(INCLUDES) $(CFLAG)
+CFLAGS= $(INCLUDES) $(CFLAG) $(SHARED_CFLAG)
 LIB=$(TOP)/libcrypto.a
 
 LIBNAME=afalg
@@ -28,38 +28,27 @@ errors:
 	$(PERL) $(TOP)/util/mkerr.pl -conf e_afalg.ec -nostatic -write $(SRC)
 
 lib: $(LIBOBJ)
-	@if [ -n "$(SHARED_LIBS)" ]; then \
+	@if [ "$(DYNAMIC_ENGINES)" = 1 ]; then \
 		$(MAKE) -f $(TOP)/Makefile.shared -e \
 			LIBNAME=$(LIBNAME) \
 			LIBEXTRAS='$(LIBOBJ)' \
 			LIBDEPS='-L$(TOP) -lcrypto' \
-			link_o.$(SHLIB_TARGET); \
+			link_dso.$(SHLIB_TARGET); \
 	else \
 		$(AR) $(LIB) $(LIBOBJ); \
 	fi
 	@touch lib
 
 install:
-	[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
-	if [ -n "$(SHARED_LIBS)" ]; then \
+	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
+	@if [ -n "$(SHARED_LIBS)" ]; then \
 		set -e; \
-		echo installing $(LIBNAME); \
-		pfx=lib; \
-		if expr "$(PLATFORM)" : "Cygwin" >/dev/null; then \
-			sfx=".so"; \
-			cp cyg$(LIBNAME).dll $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/engines/$${pfx}$(LIBNAME)$$sfx.new; \
-		else \
-			case "$(CFLAGS)" in \
-			*DSO_DLFCN*) sfx=`expr "$(SHLIB_EXT)" : '.*\(\.[a-z][a-z]*\)' \| ".so"`;; \
-			*DSO_DL*) sfx=".sl";; \
-			*DSO_WIN32*) sfx="eay32.dll"; pfx=;; \
-			*) sfx=".bad";; \
-			esac; \
-			cp $${pfx}$(LIBNAME)$$sfx $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/engines/$${pfx}$(LIBNAME)$$sfx.new; \
-		fi; \
-		chmod 555 $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/engines/$${pfx}$(LIBNAME)$$sfx.new; \
-		mv -f $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/engines/$${pfx}$(LIBNAME)$$sfx.new $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/engines/$${pfx}$(LIBNAME)$$sfx; \
+		$(PERL) $(TOP)/util/mkdir-p.pl $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/engines; \
+		cp $(LIBNAME)$(DSO_EXT) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/engines/$(LIBNAME)$(DSO_EXT).new; \
+		chmod 555 $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/engines/$(LIBNAME)$(DSO_EXT).new; \
+		mv -f $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/engines/$(LIBNAME)$(DSO_EXT).new $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/engines/$(LIBNAME)$(DSO_EXT); \
 	fi
+
 
 depend:
 	@[ -z "$(THIS)" ] || $(TOP)/util/domd $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(LIBSRC) $(TESTLIBSRC)
