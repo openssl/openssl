@@ -147,6 +147,7 @@
 #ifndef OPENSSL_NO_ENGINE
 # include <openssl/engine.h>
 #endif
+#include "internal/threads.h"
 #include "ssl_locl.h"
 
 #define SSL_ENC_DES_IDX         0
@@ -212,6 +213,8 @@ static const EVP_CIPHER *ssl_cipher_methods[SSL_ENC_NUM_IDX] = {
 #define SSL_COMP_NUM_IDX        2
 
 static STACK_OF(SSL_COMP) *ssl_comp_methods = NULL;
+
+static CRYPTO_ONCE ssl_load_builtin_comp_once = CRYPTO_ONCE_STATIC_INIT;
 
 /*
  * Constant SSL_MAX_DIGEST equal to size of digests array should be defined
@@ -575,41 +578,31 @@ static int sk_comp_cmp(const SSL_COMP *const *a, const SSL_COMP *const *b)
     return ((*a)->id - (*b)->id);
 }
 
-static void load_builtin_compressions(void)
+static void do_load_builtin_compressions(void)
 {
-    int got_write_lock = 0;
+    SSL_COMP *comp = NULL;
+    COMP_METHOD *method = COMP_zlib();
 
-    CRYPTO_r_lock(CRYPTO_LOCK_SSL);
-    if (ssl_comp_methods == NULL) {
-        CRYPTO_r_unlock(CRYPTO_LOCK_SSL);
-        CRYPTO_w_lock(CRYPTO_LOCK_SSL);
-        got_write_lock = 1;
+    CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_DISABLE);
+    ssl_comp_methods = sk_SSL_COMP_new(sk_comp_cmp);
 
-        if (ssl_comp_methods == NULL) {
-            SSL_COMP *comp = NULL;
-            COMP_METHOD *method = COMP_zlib();
-
-            CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_DISABLE);
-            ssl_comp_methods = sk_SSL_COMP_new(sk_comp_cmp);
-            if (COMP_get_type(method) != NID_undef
-                && ssl_comp_methods != NULL) {
-                comp = OPENSSL_malloc(sizeof(*comp));
-                if (comp != NULL) {
-                    comp->method = method;
-                    comp->id = SSL_COMP_ZLIB_IDX;
-                    comp->name = COMP_get_name(method);
-                    sk_SSL_COMP_push(ssl_comp_methods, comp);
-                    sk_SSL_COMP_sort(ssl_comp_methods);
-                }
-            }
-            CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ENABLE);
+    if (COMP_get_type(method) != NID_undef && ssl_comp_methods != NULL) {
+        comp = OPENSSL_malloc(sizeof(*comp));
+        if (comp != NULL) {
+            comp->method = method;
+            comp->id = SSL_COMP_ZLIB_IDX;
+            comp->name = COMP_get_name(method);
+            sk_SSL_COMP_push(ssl_comp_methods, comp);
+            sk_SSL_COMP_sort(ssl_comp_methods);
         }
     }
+    CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ENABLE);
+}
 
-    if (got_write_lock)
-        CRYPTO_w_unlock(CRYPTO_LOCK_SSL);
-    else
-        CRYPTO_r_unlock(CRYPTO_LOCK_SSL);
+static void load_builtin_compressions(void)
+{
+    CRYPTO_THREAD_run_once(&ssl_load_builtin_comp_once,
+                           do_load_builtin_compressions);
 }
 #endif
 
