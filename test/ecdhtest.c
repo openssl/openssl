@@ -463,6 +463,27 @@ static int ecdh_kat(BIO *out, const ecdh_kat_t *kat)
 
 #include "ecdhtest_cavs.h"
 
+/*
+ * NIST SP800-56A co-factor ECDH tests.
+ * KATs taken from NIST documents with parameters:
+ *
+ * - (QCAVSx,QCAVSy) is the public key for CAVS.
+ * - dIUT is the private key for IUT.
+ * - (QIUTx,QIUTy) is the public key for IUT.
+ * - ZIUT is the shared secret KAT.
+ *
+ * CAVS: Cryptographic Algorithm Validation System
+ * IUT: Implementation Under Test
+ *
+ * This function tests two things:
+ *
+ * 1. dIUT * G = (QIUTx,QIUTy)
+ *    i.e. public key for IUT computes correctly.
+ * 2. x-coord of cofactor * dIUT * (QCAVSx,QCAVSy) = ZIUT
+ *    i.e. co-factor ECDH key computes correctly.
+ *
+ * returns zero on failure or unsupported curve. One otherwise.
+ */
 static int ecdh_cavs_kat(BIO *out, const ecdh_cavs_kat_t *kat)
 {
     int rv = 0, is_char_two = 0;
@@ -495,7 +516,9 @@ static int ecdh_cavs_kat(BIO *out, const ecdh_cavs_kat_t *kat)
     if(!BN_hex2bn(&y, kat->QIUTy))
         goto err;
     if (is_char_two) {
-#ifndef OPENSSL_NO_EC2M
+#ifdef OPENSSL_NO_EC2M
+        goto err;
+#else
         if (!EC_POINT_set_affine_coordinates_GF2m(group, pub, x, y, NULL))
             goto err;
 #endif
@@ -514,7 +537,9 @@ static int ecdh_cavs_kat(BIO *out, const ecdh_cavs_kat_t *kat)
     if(!BN_hex2bn(&y, kat->QCAVSy))
         goto err;
     if (is_char_two) {
-#ifndef OPENSSL_NO_EC2M
+#ifdef OPENSSL_NO_EC2M
+        goto err;
+#else
         if (!EC_POINT_set_affine_coordinates_GF2m(group, pub, x, y, NULL))
             goto err;
 #endif
@@ -551,8 +576,9 @@ static int ecdh_cavs_kat(BIO *out, const ecdh_cavs_kat_t *kat)
     BN_free(y);
     OPENSSL_free(Ztmp);
     OPENSSL_free(Z);
-    if (rv)
+    if (rv) {
         BIO_puts(out, " ok\n");
+    }
     else {
         fprintf(stderr, "Error in ECC CDH routines\n");
         ERR_print_errors_fp(stderr);
