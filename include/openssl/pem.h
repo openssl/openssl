@@ -241,6 +241,9 @@ int PEM_read_bio(BIO *bp, char **name, char **header,
 #   define PEM_FLAG_ONLY_B64           0x4
 int PEM_read_bio_ex(BIO *bp, char **name, char **header,
                     unsigned char **data, long *len, unsigned int flags);
+int PEM_bytes_read_bio_secmem(unsigned char **pdata, long *plen, char **pnm,
+                              const char *name, BIO *bp, pem_password_cb *cb,
+                              void *u);
 int PEM_write_bio(BIO *bp, const char *name, const char *hdr,
                   const unsigned char *data, long len);
 int PEM_bytes_read_bio(unsigned char **pdata, long *plen, char **pnm,

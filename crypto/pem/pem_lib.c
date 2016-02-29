@@ -244,9 +244,10 @@ static void *pem_flag_malloc(int num, unsigned int flags)
     return OPENSSL_malloc(num);
 }
 
-int PEM_bytes_read_bio(unsigned char **pdata, long *plen, char **pnm,
-                       const char *name, BIO *bp, pem_password_cb *cb,
-                       void *u)
+static int pem_bytes_read_bio_flags(unsigned char **pdata, long *plen,
+                                    char **pnm, const char *name, BIO *bp,
+                                    pem_password_cb *cb, void *u,
+                                    unsigned int flags)
 {
     EVP_CIPHER_INFO cipher;
     char *nm = NULL, *header = NULL;
@@ -254,18 +255,16 @@ int PEM_bytes_read_bio(unsigned char **pdata, long *plen, char **pnm,
     long len;
     int ret = 0;
 
-    for (;;) {
-        if (!PEM_read_bio(bp, &nm, &header, &data, &len)) {
+    do {
+        pem_flag_free(nm, flags);
+        pem_flag_free(header, flags);
+        pem_flag_free(data, flags);
+        if (!PEM_read_bio_ex(bp, &nm, &header, &data, &len, flags)) {
             if (ERR_GET_REASON(ERR_peek_error()) == PEM_R_NO_START_LINE)
                 ERR_add_error_data(2, "Expecting: ", name);
             return 0;
         }
-        if (check_pem(nm, name))
-            break;
-        OPENSSL_free(nm);
-        OPENSSL_free(header);
-        OPENSSL_free(data);
-    }
+    } while (!check_pem(nm, name));
     if (!PEM_get_EVP_CIPHER_INFO(header, &cipher))
         goto err;
     if (!PEM_do_header(&cipher, data, &len, cb, u))
@@ -274,18 +273,32 @@ int PEM_bytes_read_bio(unsigned char **pdata, long *plen, char **pnm,
     *pdata = data;
     *plen = len;
 
-    if (pnm)
+    if (pnm != NULL)
         *pnm = nm;
 
     ret = 1;
 
  err:
-    if (!ret || !pnm)
-        OPENSSL_free(nm);
-    OPENSSL_free(header);
+    if (!ret || pnm == NULL)
+        pem_flag_free(nm, flags);
+    pem_flag_free(header, flags);
     if (!ret)
-        OPENSSL_free(data);
+        pem_flag_free(data, flags);
     return ret;
+}
+
+int PEM_bytes_read_bio(unsigned char **pdata, long *plen, char **pnm,
+                       const char *name, BIO *bp, pem_password_cb *cb,
+                       void *u) {
+    return pem_bytes_read_bio_flags(pdata, plen, pnm, name, bp, cb, u,
+                                    PEM_FLAG_EAY_COMPATIBLE);
+}
+
+int PEM_bytes_read_bio_secmem(unsigned char **pdata, long *plen, char **pnm,
+                              const char *name, BIO *bp, pem_password_cb *cb,
+                              void *u) {
+    return pem_bytes_read_bio_flags(pdata, plen, pnm, name, bp, cb, u,
+                                    PEM_FLAG_SECURE | PEM_FLAG_EAY_COMPATIBLE);
 }
 
 #ifndef OPENSSL_NO_STDIO
