@@ -649,6 +649,7 @@ struct ssl_session_st {
     char *srp_username;
 # endif
     uint32_t flags;
+    CRYPTO_RWLOCK *lock;
 };
 
 /* Extended master secret support */
@@ -953,6 +954,7 @@ struct ssl_ctx_st {
     size_t tlsext_ellipticcurvelist_length;
     unsigned char *tlsext_ellipticcurvelist;
 #  endif                        /* OPENSSL_NO_EC */
+    CRYPTO_RWLOCK *lock;
 };
 
 
@@ -1234,6 +1236,8 @@ struct ssl_st {
     /* Async Job info */
     ASYNC_JOB *job;
     ASYNC_WAIT_CTX *waitctx;
+
+    CRYPTO_RWLOCK *lock;
 };
 
 
@@ -1642,6 +1646,7 @@ typedef struct cert_st {
     char *psk_identity_hint;
 #endif
     int references;             /* >1 only if SSL_copy_session_id is used */
+    CRYPTO_RWLOCK *lock;
 } CERT;
 
 /* Structure containing decoded values of signature algorithms extension */
