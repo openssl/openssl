@@ -90,7 +90,8 @@ in a subsequent call to ASYNC_WAIT_CTX_get_fd(). The
 ASYNC_WAIT_CTX_set_wait_fd() function also expects a pointer to a "cleanup"
 routine. This can be NULL but if provided will automatically get called when the
 ASYNC_WAIT_CTX is freed, and gives the engine the opportunity to close the fd or
-any other resources.
+any other resources. Note: The "cleanup" routine does not get called if the fd
+is cleared directly via a call to ASYNC_WAIT_CTX_clear_fd().
 
 An example of typical usage might be an async capable engine. User code would
 initiate cryptographic operations. The engine would initiate those operations
