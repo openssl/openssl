@@ -108,23 +108,25 @@ static int sct_ctx_update(EVP_MD_CTX *ctx, const SCT_CTX *sctx, const SCT *sct)
     unsigned char tmpbuf[12];
     unsigned char *p, *der;
     size_t derlen;
-    /*
-     * digitally-signed struct { (1 byte) Version sct_version; (1 byte)
-     * SignatureType signature_type = certificate_timestamp; (8 bytes) uint64
-     * timestamp; (2 bytes) LogEntryType entry_type; (? bytes)
-     * select(entry_type) { case x509_entry: ASN.1Cert; case precert_entry:
-     * PreCert; } signed_entry; (2 bytes + sct->ext_len) CtExtensions
-     * extensions;
+    /*+
+     * digitally-signed struct {
+     *   (1 byte) Version sct_version;
+     *   (1 byte) SignatureType signature_type = certificate_timestamp;
+     *   (8 bytes) uint64 timestamp;
+     *   (2 bytes) LogEntryType entry_type;
+     *   (? bytes) select(entry_type) {
+     *     case x509_entry: ASN.1Cert;
+     *     case precert_entry: PreCert;
+     *   } signed_entry;
+     *   (2 bytes + sct->ext_len) CtExtensions extensions;
+     * }
      */
-
     if (sct->entry_type == CT_LOG_ENTRY_TYPE_NOT_SET)
         return 0;
-
     if (sct->entry_type == CT_LOG_ENTRY_TYPE_PRECERT && sctx->ihash == NULL)
         return 0;
 
     p = tmpbuf;
-
     *p++ = sct->version;
     *p++ = SIGNATURE_TYPE_CERT_TIMESTAMP;
     l2n8(sct->timestamp, p);
@@ -172,6 +174,7 @@ int SCT_verify(const SCT_CTX *sctx, const SCT *sct)
 {
     EVP_MD_CTX *ctx = NULL;
     int ret = -1;
+
     if (!SCT_is_complete(sct) || sctx->pkey == NULL ||
         sct->entry_type == CT_LOG_ENTRY_TYPE_NOT_SET ||
         (sct->entry_type == CT_LOG_ENTRY_TYPE_PRECERT && sctx->ihash == NULL)) {
@@ -187,6 +190,7 @@ int SCT_verify(const SCT_CTX *sctx, const SCT *sct)
         CTerr(CT_F_SCT_VERIFY, CT_R_SCT_LOG_ID_MISMATCH);
         return 0;
     }
+
     ctx = EVP_MD_CTX_new();
     if (ctx == NULL)
         goto end;
@@ -203,7 +207,7 @@ int SCT_verify(const SCT_CTX *sctx, const SCT *sct)
     if (ret == 0)
         CTerr(CT_F_SCT_VERIFY, CT_R_SCT_INVALID_SIGNATURE);
 
- end:
+end:
     EVP_MD_CTX_free(ctx);
     return ret;
 }
@@ -214,14 +218,12 @@ int SCT_verify_v1(SCT *sct, X509 *cert, X509 *preissuer,
     int ret = 0;
     SCT_CTX *sctx = NULL;
 
-    if (sct == NULL || cert == NULL || log_pubkey == NULL ||
-        (sct->entry_type == CT_LOG_ENTRY_TYPE_PRECERT && issuer_cert == NULL)) {
-        CTerr(CT_F_SCT_VERIFY_V1, ERR_R_PASSED_NULL_PARAMETER);
-        return -1;
-    } else if (!SCT_is_complete(sct)) {
+    if (!SCT_is_complete(sct)) {
         CTerr(CT_F_SCT_VERIFY_V1, CT_R_SCT_NOT_SET);
         return -1;
-    } else if (sct->version != 0) {
+    }
+
+    if (sct->version != 0) {
         CTerr(CT_F_SCT_VERIFY_V1, CT_R_SCT_UNSUPPORTED_VERSION);
         return 0;
     }
@@ -231,12 +233,10 @@ int SCT_verify_v1(SCT *sct, X509 *cert, X509 *preissuer,
         goto done;
 
     ret = SCT_CTX_set1_pubkey(sctx, log_pubkey);
-
     if (ret <= 0)
         goto done;
 
     ret = SCT_CTX_set1_cert(sctx, cert, preissuer);
-
     if (ret <= 0)
         goto done;
 
@@ -248,8 +248,7 @@ int SCT_verify_v1(SCT *sct, X509 *cert, X509 *preissuer,
 
     ret = SCT_verify(sctx, sct);
 
- done:
-    if (sctx != NULL)
-        SCT_CTX_free(sctx);
+done:
+    SCT_CTX_free(sctx);
     return ret;
 }

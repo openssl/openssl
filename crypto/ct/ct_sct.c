@@ -70,7 +70,7 @@
 
 SCT *SCT_new(void)
 {
-    SCT *sct = OPENSSL_zalloc(sizeof(SCT));
+    SCT *sct = OPENSSL_zalloc(sizeof(*sct));
 
     if (sct == NULL) {
         CTerr(CT_F_SCT_NEW, ERR_R_MALLOC_FAILURE);
@@ -335,8 +335,7 @@ CTLOG *SCT_get0_log(const SCT *sct)
 
 int SCT_set0_log(SCT *sct, const CTLOG_STORE *ct_logs)
 {
-    sct->log =
-            CTLOG_STORE_get0_log_by_id(ct_logs, sct->log_id, sct->log_id_len);
+    sct->log = CTLOG_STORE_get0_log_by_id(ct_logs, sct->log_id, sct->log_id_len);
 
     return sct->log != NULL;
 }
