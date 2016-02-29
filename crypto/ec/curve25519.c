@@ -957,12 +957,6 @@ typedef struct {
   fe T2d;
 } ge_cached;
 
-static const fe d = {-10913610, 13857413, -15372611, 6949391,   114729,
-                     -8787816,  -6275908, -3247719,  -18696448, -12055116};
-
-static const fe sqrtm1 = {-32595792, -7943725,  9377950,  3500415, 12389472,
-                          -272473,   -25146209, -2005654, 326686,  11406482};
-
 static void ge_p3_0(ge_p3 *h) {
   fe_0(h->X);
   fe_1(h->Y);
@@ -982,9 +976,6 @@ static void ge_p3_to_p2(ge_p2 *r, const ge_p3 *p) {
   fe_copy(r->Y, p->Y);
   fe_copy(r->Z, p->Z);
 }
-
-static const fe d2 = {-21827239, -5839606,  -30745221, 13898782, 229458,
-                      15978800,  -12551817, -6495438,  29715968, 9444199};
 
 /* r = p */
 static void ge_p1p1_to_p2(ge_p2 *r, const ge_p1p1 *p) {
