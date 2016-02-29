@@ -3,7 +3,7 @@
 
 /* 
  * co-factor ECDH KATs for NIST SP800-56A
- * http://csrc.nist.gov/groups/STM/cavp/component-testing.html#ecc-cdh
+ * http://csrc.nist.gov/groups/STM/cavp/component-testing.html#ECCCDH
  * $ sha256sum KAS_ECC_CDH_PrimitiveTest.txt 
  * 456068d3f8aad8ac62a03d19ed3173f00ad51f42b51aeab4753c20f30c01cf23  KAS_ECC_CDH_PrimitiveTest.txt
  */
@@ -19,6 +19,7 @@ typedef struct {
 } ecdh_cavs_kat_t;
 
 static const ecdh_cavs_kat_t ecdh_cavs_kats[] = {
+    /* curves over prime fields go here */
     { NID_X9_62_prime192v1,
     "42ea6dd9969dd2a61fea1aac7f8e98edcc896c6e55857cc0",
     "dfbe5d7c61fac88b11811bde328e8a0d12bf01a9d204b523",
@@ -1345,6 +1346,7 @@ static const ecdh_cavs_kat_t ecdh_cavs_kats[] = {
     "b4411cda7a0785b15d149ed301a3697062f42da237aa7f07e0af3fd00eb1800d"
     "9c41" }
 #ifndef OPENSSL_NO_EC2M
+    /* curves over binary fields go here */
     , { NID_sect163k1,
     "0000000574236f1428c432130946783a5b3aabb6c27ea5d6",
     "00000007908c251b8da021cbac281f123f7af4fac5b3dbb8",
