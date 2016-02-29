@@ -2104,21 +2104,37 @@ static int do_revoke(X509 *x509, CA_DB *db, int type, char *value)
     char *row[DB_NUMBER], **rrow, **irow;
     char *rev_str = NULL;
     BIGNUM *bn = NULL;
-    int ok = -1, i;
+    int ok = -1, i;															// first value of 'ok' =  -1
 
     for (i = 0; i < DB_NUMBER; i++)
         row[i] = NULL;
-    row[DB_name] = X509_NAME_oneline(X509_get_subject_name(x509), NULL, 0);
-    bn = ASN1_INTEGER_to_BN(X509_get_serialNumber(x509), NULL);
+    row[DB_name] = X509_NAME_oneline(X509_get_subject_name(x509), NULL, 0);	// export x509 format of name of text
+
+
+	/*
+		DB_type         0
+		DB_exp_date     1
+		DB_rev_date     2
+		DB_serial       3     
+		DB_file         4
+		DB_name         5     
+		DB_NUMBER       6
+	*/
+
+
+
+
+
+    bn = ASN1_INTEGER_to_BN(X509_get_serialNumber(x509), NULL); // export serial number(integer) and change it to BIGNUM and then let it 'bn'.
     if (!bn)
-        goto end;
+        goto end;		// exception
     if (BN_is_zero(bn))
-        row[DB_serial] = OPENSSL_strdup("00");
+        row[DB_serial] = OPENSSL_strdup("00");  // strdup : copy string and return pointer of that
     else
-        row[DB_serial] = BN_bn2hex(bn);
-    BN_free(bn);
+        row[DB_serial] = BN_bn2hex(bn); //  BIG NUM to Hex
+    BN_free(bn);						// memory of bn free 
     if ((row[DB_name] == NULL) || (row[DB_serial] == NULL)) {
-        BIO_printf(bio_err, "Memory allocation failure\n");
+        BIO_printf(bio_err, "Memory allocation failure\n");    // exception
         goto end;
     }
     /*
@@ -2126,16 +2142,16 @@ static int do_revoke(X509 *x509, CA_DB *db, int type, char *value)
      * certs
      */
     rrow = TXT_DB_get_by_index(db->db, DB_serial, row);
-    if (rrow == NULL) {
+    if (rrow == NULL) {					// if there is no serial number,
         BIO_printf(bio_err,
                    "Adding Entry with serial number %s to DB for %s\n",
                    row[DB_serial], row[DB_name]);
 
-        /* We now just add it to the database */
+        /* We now just add it to the database */   
         row[DB_type] = OPENSSL_strdup("V");
         tm = X509_get_notAfter(x509);
-        row[DB_exp_date] = app_malloc(tm->length + 1, "row exp_data");
-        memcpy(row[DB_exp_date], tm->data, tm->length);
+        row[DB_exp_date] = app_malloc(tm->length + 1, "row exp_data"); 
+        memcpy(row[DB_exp_date], tm->data, tm->length); 
         row[DB_exp_date][tm->length] = '\0';
         row[DB_rev_date] = NULL;
         row[DB_file] = OPENSSL_strdup("unknown");
@@ -2144,24 +2160,28 @@ static int do_revoke(X509 *x509, CA_DB *db, int type, char *value)
         for (i = 0; i < DB_NUMBER; i++) {
             irow[i] = row[i];
             row[i] = NULL;
-        }
+        }		// copy value of row to irow and then let value of row be NULL
         irow[DB_NUMBER] = NULL;
 
         if (!TXT_DB_insert(db->db, irow)) {
             BIO_printf(bio_err, "failed to update database\n");
             BIO_printf(bio_err, "TXT_DB error number %ld\n", db->db->error);
-            goto end;
+            goto end;    // exception
         }
 
         /* Revoke Certificate */
         if (type == -1)
             ok = 1;
-        else
+        else 
             ok = do_revoke(x509, db, type, value);
 
         goto end;
 
-    } else if (index_name_cmp_noconst(row, rrow)) {
+    } 
+	
+	
+	
+	  else if (index_name_cmp_noconst(row, rrow)) {
         BIO_printf(bio_err, "ERROR:name does not match %s\n", row[DB_name]);
         goto end;
     } else if (type == -1) {
