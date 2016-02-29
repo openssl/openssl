@@ -310,6 +310,7 @@ struct ec_key_st {
     int references;
     int flags;
     CRYPTO_EX_DATA ex_data;
+    CRYPTO_RWLOCK *lock;
 } /* EC_KEY */ ;
 
 struct ec_point_st {
