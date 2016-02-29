@@ -57,8 +57,7 @@
 
 #include <stdio.h>
 #include <errno.h>
-#include "internal/cryptlib.h"
-#include <openssl/bio.h>
+#include "bio_lcl.h"
 
 static int mem_write(BIO *h, const char *buf, int num);
 static int mem_read(BIO *h, char *buf, int size);
@@ -126,12 +125,11 @@ BIO *BIO_new_mem_buf(const void *buf, int len)
         return NULL;
     bb = (BIO_BUF_MEM *)ret->ptr;
     b = bb->buf;
-
     /* Cast away const and trust in the MEM_RDONLY flag. */
     b->data = (void *)buf;
     b->length = sz;
     b->max = sz;
-    memcpy(bb->readp, bb->buf, sizeof(BUF_MEM));
+    *bb->readp = *bb->buf;
     ret->flags |= BIO_FLAGS_MEM_RDONLY;
     /* Since this is static data retrying wont help */
     ret->num = 0;
@@ -140,15 +138,15 @@ BIO *BIO_new_mem_buf(const void *buf, int len)
 
 static int mem_init(BIO *bi, unsigned long flags)
 {
-    BIO_BUF_MEM *bb;
+    BIO_BUF_MEM *bb = OPENSSL_zalloc(sizeof(BIO_BUF_MEM));
 
-    if ((bb = (BIO_BUF_MEM*)malloc(sizeof(BIO_BUF_MEM))) == NULL)
+    if (bb == NULL)
         return(0);
     if ((bb->buf = BUF_MEM_new_ex(flags)) == NULL)
         return(0);
-    if ((bb->readp = (BUF_MEM*)malloc(sizeof(BUF_MEM))) == NULL)
+    if ((bb->readp = OPENSSL_zalloc(sizeof(BUF_MEM))) == NULL)
         return(0);
-    memcpy(bb->readp, bb->buf, sizeof(BUF_MEM));
+    *bb->readp = *bb->buf;
     bi->shutdown = 1;
     bi->init = 1;
     bi->num = -1;
@@ -178,14 +176,17 @@ static int mem_buf_free(BIO *a, int free_all)
     if (a->shutdown) {
         if ((a->init) && (a->ptr != NULL)) {
             BUF_MEM *b;
-            BIO_BUF_MEM *bb;
-            if((bb = (BIO_BUF_MEM *)a->ptr) != NULL) {
+            BIO_BUF_MEM *bb = (BIO_BUF_MEM *)a->ptr;
+
+            if(bb != NULL) {
                 b = bb->buf;
                 if (a->flags & BIO_FLAGS_MEM_RDONLY)
                     b->data = NULL;
                 BUF_MEM_free(b);
-                if(free_all)
-                    free(bb);
+                if(free_all) {
+                    OPENSSL_free(bb->readp);
+                    OPENSSL_free(bb);
+                }
             }
             a->ptr = NULL;
         }
@@ -196,11 +197,13 @@ static int mem_buf_free(BIO *a, int free_all)
 /*
  * Reallocate memory buffer if read pointer differs
  */
-static int mem_buf_sync(BIO *b) {
+static int mem_buf_sync(BIO *b)
+{
     if((b != NULL) && (b->init) && (b->ptr != NULL)) {
         BIO_BUF_MEM *bbm = (BIO_BUF_MEM *)b->ptr;
+
         if(bbm->readp->data != bbm->buf->data) {
-            memmove(&(bbm->buf->data[0]), &(bbm->readp->data[0]), bbm->readp->length);
+            memmove(bbm->buf->data, bbm->readp->data, bbm->readp->length);
             bbm->buf->length = bbm->readp->length;
             bbm->readp->data = bbm->buf->data;
         }
@@ -211,11 +214,9 @@ static int mem_buf_sync(BIO *b) {
 static int mem_read(BIO *b, char *out, int outl)
 {
     int ret = -1;
-    BUF_MEM *bm;
-    BIO_BUF_MEM *bbm;
+    BIO_BUF_MEM *bbm = (BIO_BUF_MEM *)b->ptr;
+    BUF_MEM *bm = bbm->readp;
 
-    bbm = (BIO_BUF_MEM *)b->ptr;
-    bm = bbm->readp;
     BIO_clear_retry_flags(b);
     ret = (outl >= 0 && (size_t)outl > bm->length) ? (int)bm->length : outl;
     if ((out != NULL) && (ret > 0)) {
@@ -234,27 +235,23 @@ static int mem_write(BIO *b, const char *in, int inl)
 {
     int ret = -1;
     int blen;
-    BUF_MEM *bm;
-    BIO_BUF_MEM *bbm;
+    BIO_BUF_MEM *bbm = (BIO_BUF_MEM *)b->ptr;
 
-    bbm = (BIO_BUF_MEM *)b->ptr;
     if (in == NULL) {
         BIOerr(BIO_F_MEM_WRITE, BIO_R_NULL_PARAMETER);
         goto end;
     }
-
     if (b->flags & BIO_FLAGS_MEM_RDONLY) {
         BIOerr(BIO_F_MEM_WRITE, BIO_R_WRITE_TO_READ_ONLY_BIO);
         goto end;
     }
-
     BIO_clear_retry_flags(b);
     blen = bbm->readp->length;
     mem_buf_sync(b);
     if (BUF_MEM_grow_clean(bbm->buf, blen + inl) == 0)
         goto end;
-    memcpy(&(bbm->buf->data[blen]), in, inl);
-    memcpy(bbm->readp, bbm->buf, sizeof(BUF_MEM));
+    memcpy(bbm->buf->data + blen, in, inl);
+    *bbm->readp = *bbm->buf;
     ret = inl;
  end:
     return (ret);
@@ -264,7 +261,6 @@ static long mem_ctrl(BIO *b, int cmd, long num, void *ptr)
 {
     long ret = 1;
     char **pptr;
-
     BIO_BUF_MEM *bbm = (BIO_BUF_MEM *)b->ptr;
     BUF_MEM *bm;
 
@@ -279,7 +275,7 @@ static long mem_ctrl(BIO *b, int cmd, long num, void *ptr)
                 memset(bm->data, 0, bm->max);
                 bm->length = 0;
             }
-            memcpy(bbm->readp, bbm->buf, sizeof(BUF_MEM));
+            *bbm->readp = *bbm->buf;
         }
         break;
     case BIO_CTRL_EOF:
@@ -301,7 +297,7 @@ static long mem_ctrl(BIO *b, int cmd, long num, void *ptr)
         mem_buf_free(b, 0);
         b->shutdown = (int)num;
         bbm->buf = ptr;
-        memcpy(bbm->readp, bbm->buf, sizeof(BUF_MEM));
+        *bbm->readp = *bbm->buf;
         b->ptr = bbm;
         break;
     case BIO_C_GET_BUF_MEM_PTR:
@@ -318,7 +314,6 @@ static long mem_ctrl(BIO *b, int cmd, long num, void *ptr)
     case BIO_CTRL_SET_CLOSE:
         b->shutdown = (int)num;
         break;
-
     case BIO_CTRL_WPENDING:
         ret = 0L;
         break;

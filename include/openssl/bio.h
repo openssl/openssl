@@ -384,11 +384,6 @@ struct bio_dgram_sctp_prinfo {
 };
 # endif
 
-typedef struct bio_buf_mem {
-    BUF_MEM *buf;   /* allocated buffer */
-    BUF_MEM *readp; /* read pointer */
-} BIO_BUF_MEM;
-
 /*
  * #define BIO_CONN_get_param_hostname BIO_ctrl
  */
