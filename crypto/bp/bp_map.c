@@ -77,9 +77,10 @@ static int GT_miller_dbl(const BP_GROUP *group, FP12 *l, FP2 *x3,
         || (t2 = FP2_new()) == NULL || (t3 = FP2_new()) == NULL
         || (t4 = FP2_new()) == NULL || (t5 = FP2_new()) == NULL
         || (t6 = FP2_new()) == NULL || (u0 = FP2_new()) == NULL
-        || (u1 = FP2_new()) == NULL)
+        || (u1 = FP2_new()) == NULL) {
         BPerr(BP_F_GT_MILLER_DBL, BP_R_MALLOC_FAILURE);
         goto err;
+    }
 
     /*
      * C = z1^2.
@@ -246,9 +247,10 @@ static int GT_miller_add(const BP_GROUP *group, FP12 *l, FP2 *x3, FP2 *y3,
     if ((t0 = FP2_new()) == NULL || (t1 = FP2_new()) == NULL
         || (t2 = FP2_new()) == NULL || (t3 = FP2_new()) == NULL
         || (t4 = FP2_new()) == NULL || (u0 = FP2_new()) == NULL
-        || (u1 = FP2_new()) == NULL || (u2 = FP2_new()) == NULL)
+        || (u1 = FP2_new()) == NULL || (u2 = FP2_new()) == NULL) {
         BPerr(BP_F_GT_MILLER_ADD, BP_R_MALLOC_FAILURE);
         goto err;
+    }
 
     if (!FP2_mul(group, t1, z3, x1, ctx))
         goto err;

@@ -73,7 +73,7 @@ G2_ELEM *G2_ELEM_new(const BP_GROUP *group)
 {
     G2_ELEM *ret = NULL;
 
-    if ((ret = OPENSSL_malloc(sizeof(*ret))) == NULL) {
+    if ((ret = OPENSSL_zalloc(sizeof(*ret))) == NULL) {
         BPerr(BP_F_G2_ELEM_NEW, BP_R_MALLOC_FAILURE);
         return NULL;
     }

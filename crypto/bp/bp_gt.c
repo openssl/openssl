@@ -69,9 +69,10 @@ GT_ELEM *GT_ELEM_new(const BP_GROUP *group)
 {
     GT_ELEM *ret;
 
-    if ((ret = OPENSSL_malloc(sizeof(*ret))) == NULL)
+    if ((ret = OPENSSL_zalloc(sizeof(*ret))) == NULL) {
         BPerr(BP_F_GT_ELEM_NEW, BP_R_MALLOC_FAILURE);
         return NULL;
+    }
 
     ret->f = FP12_new();
     if (ret->f == NULL) {
