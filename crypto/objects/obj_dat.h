@@ -60,12 +60,12 @@
  * [including the GNU Public Licence.]
  */
 
-#define NUM_NID 1040
-#define NUM_SN 1033
-#define NUM_LN 1033
-#define NUM_OBJ 955
+#define NUM_NID 1038
+#define NUM_SN 1031
+#define NUM_LN 1031
+#define NUM_OBJ 953
 
-static const unsigned char lvalues[6762]={
+static const unsigned char lvalues[6744]={
 0x2A,0x86,0x48,0x86,0xF7,0x0D,               /* [  0] OBJ_rsadsi */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,          /* [  6] OBJ_pkcs */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x02,0x02,     /* [ 13] OBJ_md2 */
@@ -1009,12 +1009,10 @@ static const unsigned char lvalues[6762]={
 0x2B,0x06,0x01,0x05,0x02,0x03,               /* [6683] OBJ_id_pkinit */
 0x2B,0x06,0x01,0x05,0x02,0x03,0x04,          /* [6689] OBJ_pkInitClientAuth */
 0x2B,0x06,0x01,0x05,0x02,0x03,0x05,          /* [6696] OBJ_pkInitKDC */
-0x2B,0x06,0x01,0x04,0x01,0xDA,0x47,0x0F,0x01,/* [6703] OBJ_Curve25519 */
-0x2B,0x06,0x01,0x04,0x01,0xDA,0x47,0x0F,0x02,/* [6712] OBJ_Curve448 */
-0x2B,0x06,0x01,0x04,0x01,0xDA,0x47,0x0F,0x03,/* [6721] OBJ_Curve25519ph */
-0x2B,0x06,0x01,0x04,0x01,0xDA,0x47,0x0F,0x04,/* [6730] OBJ_Curve448ph */
-0x2B,0x06,0x01,0x04,0x01,0x8D,0x3A,0x0C,0x02,0x01,0x10,/* [6739] OBJ_blake2b */
-0x2B,0x06,0x01,0x04,0x01,0x8D,0x3A,0x0C,0x02,0x02,0x08,/* [6750] OBJ_blake2s */
+0x2B,0x06,0x01,0x04,0x01,0xDA,0x47,0x0F,0x01,/* [6703] OBJ_X25519 */
+0x2B,0x06,0x01,0x04,0x01,0xDA,0x47,0x0F,0x02,/* [6712] OBJ_X448 */
+0x2B,0x06,0x01,0x04,0x01,0x8D,0x3A,0x0C,0x02,0x01,0x10,/* [6721] OBJ_blake2b */
+0x2B,0x06,0x01,0x04,0x01,0x8D,0x3A,0x0C,0x02,0x02,0x08,/* [6732] OBJ_blake2s */
 };
 
 static const ASN1_OBJECT nid_objs[NUM_NID]={
@@ -2706,12 +2704,10 @@ static const ASN1_OBJECT nid_objs[NUM_NID]={
 {"pkInitClientAuth","PKINIT Client Auth",NID_pkInitClientAuth,7,
 	&(lvalues[6689]),0},
 {"pkInitKDC","Signing KDC Response",NID_pkInitKDC,7,&(lvalues[6696]),0},
-{"Curve25519","Curve25519",NID_Curve25519,9,&(lvalues[6703]),0},
-{"Curve448","Curve448",NID_Curve448,9,&(lvalues[6712]),0},
-{"Curve25519ph","Curve25519ph",NID_Curve25519ph,9,&(lvalues[6721]),0},
-{"Curve448ph","Curve448ph",NID_Curve448ph,9,&(lvalues[6730]),0},
-{"BLAKE2b","blake2b",NID_blake2b,11,&(lvalues[6739]),0},
-{"BLAKE2s","blake2s",NID_blake2s,11,&(lvalues[6750]),0},
+{"X25519","X25519",NID_X25519,9,&(lvalues[6703]),0},
+{"X448","X448",NID_X448,9,&(lvalues[6712]),0},
+{"BLAKE2b","blake2b",NID_blake2b,11,&(lvalues[6721]),0},
+{"BLAKE2s","blake2s",NID_blake2s,11,&(lvalues[6732]),0},
 };
 
 static const unsigned int sn_objs[NUM_SN]={
@@ -2752,8 +2748,8 @@ static const unsigned int sn_objs[NUM_SN]={
 93,	/* "BF-CFB" */
 92,	/* "BF-ECB" */
 94,	/* "BF-OFB" */
-1038,	/* "BLAKE2b" */
-1039,	/* "BLAKE2s" */
+1036,	/* "BLAKE2b" */
+1037,	/* "BLAKE2s" */
 14,	/* "C" */
 751,	/* "CAMELLIA-128-CBC" */
 962,	/* "CAMELLIA-128-CCM" */
@@ -2796,10 +2792,6 @@ static const unsigned int sn_objs[NUM_SN]={
 1019,	/* "ChaCha20" */
 1018,	/* "ChaCha20-Poly1305" */
 367,	/* "CrlID" */
-1034,	/* "Curve25519" */
-1036,	/* "Curve25519ph" */
-1035,	/* "Curve448" */
-1037,	/* "Curve448ph" */
 391,	/* "DC" */
 31,	/* "DES-CBC" */
 643,	/* "DES-CDMF" */
@@ -2928,6 +2920,8 @@ static const unsigned int sn_objs[NUM_SN]={
 1021,	/* "TLS1-PRF" */
 458,	/* "UID" */
  0,	/* "UNDEF" */
+1034,	/* "X25519" */
+1035,	/* "X448" */
 11,	/* "X500" */
 378,	/* "X500algorithms" */
 12,	/* "X509" */
@@ -3768,10 +3762,6 @@ static const unsigned int ln_objs[NUM_LN]={
 131,	/* "Code Signing" */
 1024,	/* "Ctrl/Provision WAP Termination" */
 1023,	/* "Ctrl/provision WAP Access" */
-1034,	/* "Curve25519" */
-1036,	/* "Curve25519ph" */
-1035,	/* "Curve448" */
-1037,	/* "Curve448ph" */
 783,	/* "Diffie-Hellman based MAC" */
 382,	/* "Directory" */
 392,	/* "Domain" */
@@ -3895,6 +3885,8 @@ static const unsigned int ln_objs[NUM_LN]={
 129,	/* "TLS Web Server Authentication" */
 133,	/* "Time Stamping" */
 375,	/* "Trust Root" */
+1034,	/* "X25519" */
+1035,	/* "X448" */
 12,	/* "X509" */
 402,	/* "X509v3 AC Targeting" */
 746,	/* "X509v3 Any Policy" */
@@ -3978,8 +3970,8 @@ static const unsigned int ln_objs[NUM_LN]={
 93,	/* "bf-cfb" */
 92,	/* "bf-ecb" */
 94,	/* "bf-ofb" */
-1038,	/* "blake2b" */
-1039,	/* "blake2s" */
+1036,	/* "blake2b" */
+1037,	/* "blake2s" */
 921,	/* "brainpoolP160r1" */
 922,	/* "brainpoolP160t1" */
 923,	/* "brainpoolP192r1" */
@@ -5488,10 +5480,8 @@ static const unsigned int obj_objs[NUM_OBJ]={
 390,	/* OBJ_dcObject                     1 3 6 1 4 1 1466 344 */
 91,	/* OBJ_bf_cbc                       1 3 6 1 4 1 3029 1 2 */
 973,	/* OBJ_id_scrypt                    1 3 6 1 4 1 11591 4 11 */
-1034,	/* OBJ_Curve25519                   1 3 6 1 4 1 11591 15 1 */
-1035,	/* OBJ_Curve448                     1 3 6 1 4 1 11591 15 2 */
-1036,	/* OBJ_Curve25519ph                 1 3 6 1 4 1 11591 15 3 */
-1037,	/* OBJ_Curve448ph                   1 3 6 1 4 1 11591 15 4 */
+1034,	/* OBJ_X25519                       1 3 6 1 4 1 11591 15 1 */
+1035,	/* OBJ_X448                         1 3 6 1 4 1 11591 15 2 */
 315,	/* OBJ_id_regCtrl_regToken          1 3 6 1 5 5 7 5 1 1 */
 316,	/* OBJ_id_regCtrl_authenticator     1 3 6 1 5 5 7 5 1 2 */
 317,	/* OBJ_id_regCtrl_pkiPublicationInfo 1 3 6 1 5 5 7 5 1 3 */
@@ -5740,7 +5730,7 @@ static const unsigned int obj_objs[NUM_OBJ]={
 955,	/* OBJ_jurisdictionLocalityName     1 3 6 1 4 1 311 60 2 1 1 */
 956,	/* OBJ_jurisdictionStateOrProvinceName 1 3 6 1 4 1 311 60 2 1 2 */
 957,	/* OBJ_jurisdictionCountryName      1 3 6 1 4 1 311 60 2 1 3 */
-1038,	/* OBJ_blake2b                      1 3 6 1 4 1 1722 12 2 1 16 */
-1039,	/* OBJ_blake2s                      1 3 6 1 4 1 1722 12 2 2 8 */
+1036,	/* OBJ_blake2b                      1 3 6 1 4 1 1722 12 2 1 16 */
+1037,	/* OBJ_blake2s                      1 3 6 1 4 1 1722 12 2 2 8 */
 };
 

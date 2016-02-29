@@ -4757,5 +4757,6 @@ o2i_SCT_LIST                            5260	1_1_0	EXIST::FUNCTION:
 SCT_set_version                         5261	1_1_0	EXIST::FUNCTION:
 SCT_LIST_free                           5262	1_1_0	EXIST::FUNCTION:
 SCT_get_log_entry_type                  5263	1_1_0	EXIST::FUNCTION:
-EVP_blake2s                             5264	1_1_0	EXIST::FUNCTION:BLAKE2
+EC_KEY_can_sign                         5264	1_1_0	EXIST::FUNCTION:EC
 EVP_blake2b                             5265	1_1_0	EXIST::FUNCTION:BLAKE2
+EVP_blake2s                             5266	1_1_0	EXIST::FUNCTION:BLAKE2

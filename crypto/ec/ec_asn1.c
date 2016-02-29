@@ -342,7 +342,7 @@ static int ec_asn1_group2fieldid(const EC_GROUP *group, X9_62_FIELDID *field)
             ECerr(EC_F_EC_ASN1_GROUP2FIELDID, ERR_R_ASN1_LIB);
             goto err;
         }
-    } else                      /* nid == NID_X9_62_characteristic_two_field */
+    } else if (nid == NID_X9_62_characteristic_two_field)
 #ifdef OPENSSL_NO_EC2M
     {
         ECerr(EC_F_EC_ASN1_GROUP2FIELDID, EC_R_GF2M_NOT_SUPPORTED);
@@ -417,6 +417,10 @@ static int ec_asn1_group2fieldid(const EC_GROUP *group, X9_62_FIELDID *field)
         }
     }
 #endif
+    else {
+        ECerr(EC_F_EC_ASN1_GROUP2FIELDID, EC_R_UNSUPPORTED_FIELD);
+        goto err;
+    }
 
     ok = 1;
 
@@ -1035,24 +1039,16 @@ EC_KEY *d2i_ECPrivateKey(EC_KEY **a, const unsigned char **in, long len)
 
         pub_oct = ASN1_STRING_data(priv_key->publicKey);
         pub_oct_len = ASN1_STRING_length(priv_key->publicKey);
-        /*
-         * The first byte - point conversion form - must be present.
-         */
-        if (pub_oct_len <= 0) {
-            ECerr(EC_F_D2I_ECPRIVATEKEY, EC_R_BUFFER_TOO_SMALL);
-            goto err;
-        }
-        /* Save the point conversion form. */
-        ret->conv_form = (point_conversion_form_t) (pub_oct[0] & ~0x01);
-        if (!EC_POINT_oct2point(ret->group, ret->pub_key,
-                                pub_oct, (size_t)(pub_oct_len), NULL)) {
+        if (!EC_KEY_oct2key(ret, pub_oct, pub_oct_len, NULL)) {
             ECerr(EC_F_D2I_ECPRIVATEKEY, ERR_R_EC_LIB);
             goto err;
         }
     } else {
-        if (!EC_POINT_mul
-            (ret->group, ret->pub_key, ret->priv_key, NULL, NULL, NULL)) {
-            ECerr(EC_F_D2I_ECPRIVATEKEY, ERR_R_EC_LIB);
+        if (ret->group->meth->keygenpub != NULL) {
+            if (ret->group->meth->keygenpub(ret) == 0)
+                goto err;
+        } else if (!EC_POINT_mul(ret->group, ret->pub_key, ret->priv_key, NULL,
+                                 NULL, NULL)) {
             goto err;
         }
         /* Remember the original private-key-only encoding. */
@@ -1195,17 +1191,10 @@ EC_KEY *o2i_ECPublicKey(EC_KEY **a, const unsigned char **in, long len)
         return 0;
     }
     ret = *a;
-    if (ret->pub_key == NULL &&
-        (ret->pub_key = EC_POINT_new(ret->group)) == NULL) {
-        ECerr(EC_F_O2I_ECPUBLICKEY, ERR_R_MALLOC_FAILURE);
-        return 0;
-    }
-    if (!EC_POINT_oct2point(ret->group, ret->pub_key, *in, len, NULL)) {
+    if (!EC_KEY_oct2key(ret, *in, len, NULL)) {
         ECerr(EC_F_O2I_ECPUBLICKEY, ERR_R_EC_LIB);
         return 0;
     }
-    /* save the point conversion form */
-    ret->conv_form = (point_conversion_form_t) (*in[0] & ~0x01);
     *in += len;
     return ret;
 }
