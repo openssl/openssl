@@ -1,7 +1,7 @@
 {- use File::Spec::Functions qw/:DEFAULT rel2abs/; -}
 
-IF[{- $config{afalg} eq "afalg" -}]
- IF[{- $config{no_shared} -}]
+IF[{- !$disabled{afalg} -}]
+ IF[{- $disabled{"dynamic-engine"} -}]
   LIBS=../../libcrypto
   SOURCE[../../libcrypto]=e_afalg.c e_afalg_err.c
  ELSE

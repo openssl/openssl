@@ -10,7 +10,7 @@ CFLAG=-g
 MAKEFILE=	Makefile
 AR=		ar r
 
-RECURSIVE_MAKE=	[ -z "$(ENGDIRS)" ] || for i in $(ENGDIRS) ; do \
+RECURSIVE_MAKE=[ -z "$(ENGDIRS)" ] || for i in $(ENGDIRS) ; do \
 		    (cd $$i && echo "making $$target in $(DIR)/$$i..." && \
 		    $(MAKE) -e TOP=../.. DIR=$$i $$target ) || exit 1; \
 		done;
@@ -94,6 +94,7 @@ install:
 			mv -f $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/engines/$${l}$(DSO_EXT).new $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/engines/$${l}$(DSO_EXT); \
 		done; \
 	fi
+	@target=install; $(RECURSIVE_MAKE)
 
 uninstall:
 	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...

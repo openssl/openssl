@@ -1183,14 +1183,17 @@ if ($target =~ m/^linux/) {
         my ($ma, $mi1, $mi2) = split("\\.", $verstr);
         ($mi2) = $mi2 =~ /(\d+)/;
         my $ver = $ma*10000 + $mi1*100 + $mi2;
-        if ($ver >= $minver) {
-            $config{afalg}="afalg";
+        if ($ver < $minver) {
+            $disabled{afalg} = "too-old-kernel";
         } else {
-            push @{$config{openssl_other_defines}}, "OPENSSL_NO_AFALGENG";
+            push @{$config{engdirs}}, "afalg";
         }
     }
+} else {
+    $disabled{afalg}  = "not-linux";
 }
-push @{$config{engdirs}}, $config{afalg};
+
+push @{$config{openssl_other_defines}}, "OPENSSL_NO_AFALGENG" if ($disabled{afalg});
 
 # If we use the unified build, collect information from build.info files
 my %unified_info = ();
