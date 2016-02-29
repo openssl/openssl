@@ -83,6 +83,12 @@
 /* Use default functions for poin2oct, oct2point and compressed coordinates */
 #define EC_FLAGS_DEFAULT_OCT    0x1
 
+/* Use custom formats for EC_GROUP, EC_POINT and EC_KEY */
+#define EC_FLAGS_CUSTOM_CURVE   0x2
+
+/* Curve does not support signing operations */
+#define EC_FLAGS_NO_SIGN        0x4
+
 /*
  * Structure details are not part of the exported interface, so all this may
  * change in future versions.
@@ -109,6 +115,7 @@ struct ec_method_st {
                             BN_CTX *);
     /* used by EC_GROUP_get_degree: */
     int (*group_get_degree) (const EC_GROUP *);
+    int (*group_order_bits) (const EC_GROUP *);
     /* used by EC_GROUP_check: */
     int (*group_check_discriminant) (const EC_GROUP *, BN_CTX *);
     /*
@@ -195,6 +202,20 @@ struct ec_method_st {
     int (*field_decode) (const EC_GROUP *, BIGNUM *r, const BIGNUM *a,
                          BN_CTX *);
     int (*field_set_to_one) (const EC_GROUP *, BIGNUM *r, BN_CTX *);
+    /* private key operations */
+    size_t (*priv2oct)(const EC_KEY *eckey, unsigned char *buf, size_t len);
+    int (*oct2priv)(EC_KEY *eckey, unsigned char *buf, size_t len);
+    int (*set_private)(EC_KEY *eckey, const BIGNUM *priv_key);
+    int (*keygen)(EC_KEY *eckey);
+    int (*keycheck)(const EC_KEY *eckey);
+    int (*keygenpub)(EC_KEY *eckey);
+    int (*keycopy)(EC_KEY *dst, const EC_KEY *src);
+    void (*keyfinish)(EC_KEY *eckey);
+    /* custom ECDH operation */
+    int (*ecdh_compute_key)(void *out, size_t outlen, const EC_POINT *pub_key,
+                            const EC_KEY *ecdh,
+                            void *(*KDF) (const void *in, size_t inlen,
+                                          void *out, size_t *outlen));
 } /* EC_METHOD */ ;
 
 /*
@@ -280,6 +301,12 @@ struct ec_key_st {
     EC_GROUP *group;
     EC_POINT *pub_key;
     BIGNUM *priv_key;
+    /*
+     * Arbitrary extra data.
+     * For example in X25519 this contains the raw private key in a 32 byte
+     * buffer.
+     */
+    void *custom_data;
     unsigned int enc_flag;
     point_conversion_form_t conv_form;
     int references;
@@ -299,6 +326,11 @@ struct ec_point_st {
                                  * Z) represents (X/Z^2, Y/Z^3) if Z != 0 */
     int Z_is_one;               /* enable optimized point arithmetics for
                                  * special case */
+    /*
+     * Arbitrary extra data.
+     * For example in X25519 this contains the public key in a 32 byte buffer.
+     */
+    void *custom_data;
 } /* EC_POINT */ ;
 
 NISTP224_PRE_COMP *EC_nistp224_pre_comp_dup(NISTP224_PRE_COMP *);
@@ -621,3 +653,10 @@ int ossl_ecdsa_verify(int type, const unsigned char *dgst, int dgst_len,
                       const unsigned char *sigbuf, int sig_len, EC_KEY *eckey);
 int ossl_ecdsa_verify_sig(const unsigned char *dgst, int dgst_len,
                           const ECDSA_SIG *sig, EC_KEY *eckey);
+
+const EC_METHOD *ec_x25519_meth(void);
+
+int X25519(uint8_t out_shared_key[32], const uint8_t private_key[32],
+           const uint8_t peer_public_value[32]);
+void X25519_public_from_private(uint8_t out_public_value[32],
+                                const uint8_t private_key[32]);

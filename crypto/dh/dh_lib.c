@@ -88,10 +88,8 @@ int DH_set_method(DH *dh, const DH_METHOD *meth)
     if (mtmp->finish)
         mtmp->finish(dh);
 #ifndef OPENSSL_NO_ENGINE
-    if (dh->engine) {
-        ENGINE_finish(dh->engine);
-        dh->engine = NULL;
-    }
+    ENGINE_finish(dh->engine);
+    dh->engine = NULL;
 #endif
     dh->meth = meth;
     if (meth->init)
@@ -126,7 +124,7 @@ DH *DH_new_method(ENGINE *engine)
         ret->engine = ENGINE_get_default_DH();
     if (ret->engine) {
         ret->meth = ENGINE_get_DH(ret->engine);
-        if (!ret->meth) {
+        if (ret->meth == NULL) {
             DHerr(DH_F_DH_NEW_METHOD, ERR_R_ENGINE_LIB);
             ENGINE_finish(ret->engine);
             OPENSSL_free(ret);
@@ -140,8 +138,7 @@ DH *DH_new_method(ENGINE *engine)
     CRYPTO_new_ex_data(CRYPTO_EX_INDEX_DH, ret, &ret->ex_data);
     if ((ret->meth->init != NULL) && !ret->meth->init(ret)) {
 #ifndef OPENSSL_NO_ENGINE
-        if (ret->engine)
-            ENGINE_finish(ret->engine);
+        ENGINE_finish(ret->engine);
 #endif
         CRYPTO_free_ex_data(CRYPTO_EX_INDEX_DH, ret, &ret->ex_data);
         OPENSSL_free(ret);
@@ -165,8 +162,7 @@ void DH_free(DH *r)
     if (r->meth->finish)
         r->meth->finish(r);
 #ifndef OPENSSL_NO_ENGINE
-    if (r->engine)
-        ENGINE_finish(r->engine);
+    ENGINE_finish(r->engine);
 #endif
 
     CRYPTO_free_ex_data(CRYPTO_EX_INDEX_DH, r, &r->ex_data);

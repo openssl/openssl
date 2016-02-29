@@ -3020,6 +3020,7 @@ static const ec_list_element curve_list[] = {
      "RFC 5639 curve over a 512 bit prime field"},
     {NID_brainpoolP512t1, &_EC_brainpoolP512t1.h, 0,
      "RFC 5639 curve over a 512 bit prime field"},
+    {NID_X25519, NULL, ec_x25519_meth, "X25519"},
 };
 
 #define curve_list_length OSSL_NELEM(curve_list)
@@ -3036,6 +3037,10 @@ static EC_GROUP *ec_group_new_from_data(const ec_list_element curve)
     const EC_METHOD *meth;
     const EC_CURVE_DATA *data;
     const unsigned char *params;
+
+    /* If no curve data curve method must handle everything */
+    if (curve.data == NULL)
+        return EC_GROUP_new(curve.meth != NULL ? curve.meth() : NULL);
 
     if ((ctx = BN_CTX_new()) == NULL) {
         ECerr(EC_F_EC_GROUP_NEW_FROM_DATA, ERR_R_MALLOC_FAILURE);

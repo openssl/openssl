@@ -2144,8 +2144,10 @@ int SSL_CTX_set_alpn_protos(SSL_CTX *ctx, const unsigned char *protos,
 {
     OPENSSL_free(ctx->alpn_client_proto_list);
     ctx->alpn_client_proto_list = OPENSSL_malloc(protos_len);
-    if (ctx->alpn_client_proto_list == NULL)
+    if (ctx->alpn_client_proto_list == NULL) {
+        SSLerr(SSL_F_SSL_CTX_SET_ALPN_PROTOS, ERR_R_MALLOC_FAILURE);
         return 1;
+    }
     memcpy(ctx->alpn_client_proto_list, protos, protos_len);
     ctx->alpn_client_proto_list_len = protos_len;
 
@@ -2162,8 +2164,10 @@ int SSL_set_alpn_protos(SSL *ssl, const unsigned char *protos,
 {
     OPENSSL_free(ssl->alpn_client_proto_list);
     ssl->alpn_client_proto_list = OPENSSL_malloc(protos_len);
-    if (ssl->alpn_client_proto_list == NULL)
+    if (ssl->alpn_client_proto_list == NULL) {
+        SSLerr(SSL_F_SSL_SET_ALPN_PROTOS, ERR_R_MALLOC_FAILURE);
         return 1;
+    }
     memcpy(ssl->alpn_client_proto_list, protos, protos_len);
     ssl->alpn_client_proto_list_len = protos_len;
 
@@ -2429,8 +2433,7 @@ void SSL_CTX_free(SSL_CTX *a)
     SSL_CTX_SRP_CTX_free(a);
 #endif
 #ifndef OPENSSL_NO_ENGINE
-    if (a->client_cert_engine)
-        ENGINE_finish(a->client_cert_engine);
+    ENGINE_finish(a->client_cert_engine);
 #endif
 
 #ifndef OPENSSL_NO_EC

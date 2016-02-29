@@ -1,4 +1,3 @@
-/* crypto/ec/ec_err.c */
 /* ====================================================================
  * Copyright (c) 1999-2016 The OpenSSL Project.  All rights reserved.
  *
@@ -275,6 +274,8 @@ static ERR_STRING_DATA EC_str_reasons[] = {
     {ERR_REASON(EC_R_BIGNUM_OUT_OF_RANGE), "bignum out of range"},
     {ERR_REASON(EC_R_BUFFER_TOO_SMALL), "buffer too small"},
     {ERR_REASON(EC_R_COORDINATES_OUT_OF_RANGE), "coordinates out of range"},
+    {ERR_REASON(EC_R_CURVE_DOES_NOT_SUPPORT_SIGNING),
+     "curve does not support signing"},
     {ERR_REASON(EC_R_D2I_ECPKPARAMETERS_FAILURE),
      "d2i ecpkparameters failure"},
     {ERR_REASON(EC_R_DECODE_ERROR), "decode error"},

@@ -136,10 +136,8 @@ int ENGINE_finish(ENGINE *e)
 {
     int to_return = 1;
 
-    if (e == NULL) {
-        ENGINEerr(ENGINE_F_ENGINE_FINISH, ERR_R_PASSED_NULL_PARAMETER);
-        return 0;
-    }
+    if (e == NULL)
+        return 1;
     CRYPTO_w_lock(CRYPTO_LOCK_ENGINE);
     to_return = engine_unlocked_finish(e, 1);
     CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);

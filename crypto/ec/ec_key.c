@@ -108,9 +108,11 @@ void EC_KEY_free(EC_KEY *r)
         r->meth->finish(r);
 
 #ifndef OPENSSL_NO_ENGINE
-    if (r->engine != NULL)
-        ENGINE_finish(r->engine);
+    ENGINE_finish(r->engine);
 #endif
+
+    if (r->group && r->group->meth->keyfinish)
+        r->group->meth->keyfinish(r);
 
     CRYPTO_free_ex_data(CRYPTO_EX_INDEX_EC_KEY, r, &r->ex_data);
     EC_GROUP_free(r->group);
@@ -129,8 +131,10 @@ EC_KEY *EC_KEY_copy(EC_KEY *dest, EC_KEY *src)
     if (src->meth != dest->meth) {
         if (dest->meth->finish != NULL)
             dest->meth->finish(dest);
+        if (dest->group && dest->group->meth->keyfinish)
+            dest->group->meth->keyfinish(dest);
 #ifndef OPENSSL_NO_ENGINE
-        if (dest->engine != NULL && ENGINE_finish(dest->engine) == 0)
+        if (ENGINE_finish(dest->engine) == 0)
             return 0;
         dest->engine = NULL;
 #endif
@@ -164,7 +168,11 @@ EC_KEY *EC_KEY_copy(EC_KEY *dest, EC_KEY *src)
         }
         if (!BN_copy(dest->priv_key, src->priv_key))
             return NULL;
+        if (src->group->meth->keycopy
+            && src->group->meth->keycopy(dest, src) == 0)
+            return NULL;
     }
+
 
     /* copy the rest */
     dest->enc_flag = src->enc_flag;
@@ -232,6 +240,9 @@ int ossl_ec_key_gen(EC_KEY *eckey)
     const BIGNUM *order = NULL;
     EC_POINT *pub_key = NULL;
 
+    if (eckey->group->meth->keygen != NULL)
+        return eckey->group->meth->keygen(eckey);
+
     if ((ctx = BN_CTX_new()) == NULL)
         goto err;
 
@@ -286,6 +297,9 @@ int EC_KEY_check_key(const EC_KEY *eckey)
         ECerr(EC_F_EC_KEY_CHECK_KEY, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
+
+    if (eckey->group->meth->keycheck)
+        return eckey->group->meth->keycheck(eckey);
 
     if (EC_POINT_is_at_infinity(eckey->group, eckey->pub_key)) {
         ECerr(EC_F_EC_KEY_CHECK_KEY, EC_R_POINT_AT_INFINITY);
@@ -443,6 +457,11 @@ const BIGNUM *EC_KEY_get0_private_key(const EC_KEY *key)
 
 int EC_KEY_set_private_key(EC_KEY *key, const BIGNUM *priv_key)
 {
+    if (key->group == NULL || key->group->meth == NULL)
+        return 0;
+    if (key->group->meth->set_private
+        && key->meth->set_private(key, priv_key) == 0)
+        return 0;
     if (key->meth->set_private != NULL
         && key->meth->set_private(key, priv_key) == 0)
         return 0;
@@ -533,7 +552,18 @@ int EC_KEY_oct2key(EC_KEY *key, const unsigned char *buf, size_t len,
         key->pub_key = EC_POINT_new(key->group);
     if (key->pub_key == NULL)
         return 0;
-    return EC_POINT_oct2point(key->group, key->pub_key, buf, len, ctx);
+    if (EC_POINT_oct2point(key->group, key->pub_key, buf, len, ctx) == 0)
+        return 0;
+    /*
+     * Save the point conversion form.
+     * For non-custom curves the first octet of the buffer (excluding
+     * the last significant bit) contains the point conversion form.
+     * EC_POINT_oct2point() has already performed sanity checking of
+     * the buffer so we know it is valid.
+     */
+    if ((key->group->meth->flags & EC_FLAGS_CUSTOM_CURVE) == 0)
+        key->conv_form = (point_conversion_form_t)(buf[0] & ~0x01);
+    return 1;
 }
 
 size_t EC_KEY_priv2oct(const EC_KEY *eckey, unsigned char *buf, size_t len)
@@ -541,6 +571,8 @@ size_t EC_KEY_priv2oct(const EC_KEY *eckey, unsigned char *buf, size_t len)
     size_t buf_len;
     if (eckey->group == NULL || eckey->group->meth == NULL)
         return 0;
+    if (eckey->group->meth->priv2oct)
+        return eckey->group->meth->priv2oct(eckey, buf, len);
 
     buf_len = (EC_GROUP_get_degree(eckey->group) + 7) / 8;
     if (eckey->priv_key == NULL)
@@ -564,6 +596,8 @@ int EC_KEY_oct2priv(EC_KEY *eckey, unsigned char *buf, size_t len)
 {
     if (eckey->group == NULL || eckey->group->meth == NULL)
         return 0;
+    if (eckey->group->meth->oct2priv)
+        return eckey->group->meth->oct2priv(eckey, buf, len);
 
     if (eckey->priv_key == NULL)
         eckey->priv_key = BN_secure_new();
@@ -596,4 +630,12 @@ size_t EC_KEY_priv2buf(const EC_KEY *eckey, unsigned char **pbuf)
     }
     *pbuf = buf;
     return len;
+}
+
+int EC_KEY_can_sign(const EC_KEY *eckey)
+{
+    if (eckey->group == NULL || eckey->group->meth == NULL
+        || (eckey->group->meth->flags & EC_FLAGS_NO_SIGN))
+        return 0;
+    return 1;
 }

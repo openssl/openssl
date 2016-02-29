@@ -48,7 +48,7 @@ extern "C" {
  *
  *      libcrypto.so.0.9
  *
- * Some unixen also make a softlink with the major verson number only:
+ * Some unixen also make a softlink with the major version number only:
  *
  *      libcrypto.so.0
  *

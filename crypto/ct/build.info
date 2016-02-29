@@ -1,2 +1,2 @@
 LIBS=../../libcrypto
-SOURCE[../../libcrypto]= ct_lib.c ct_err.c
+SOURCE[../../libcrypto]= ct_err.c ct_oct.c ct_prn.c ct_sct.c ct_x509v3.c
