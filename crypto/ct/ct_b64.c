@@ -77,18 +77,12 @@
  * A new string will be malloc'd and assigned to |out|. This will be owned by
  * the caller. Do not provide a pre-allocated string in |out|.
  */
-static int CT_base64_decode(const char *in, unsigned char **out)
+static int ct_base64_decode(const char *in, unsigned char **out)
 {
-    size_t inlen;
+    size_t inlen = strlen(in);
     int outlen;
     unsigned char *outbuf = NULL;
 
-    if (in == NULL || out == NULL) {
-        CTerr(CT_F_CT_BASE64_DECODE, ERR_R_PASSED_NULL_PARAMETER);
-        goto err;
-    }
-
-    inlen = strlen(in);
     if (inlen == 0) {
         *out = NULL;
         return 0;
@@ -119,18 +113,10 @@ SCT *SCT_new_from_base64(unsigned char version, const char *logid_base64,
                          const char *extensions_base64,
                          const char *signature_base64)
 {
-    SCT *sct;
+    SCT *sct = SCT_new();
     unsigned char *dec = NULL;
     int declen;
 
-    if (logid_base64 == NULL ||
-        extensions_base64 == NULL ||
-        signature_base64 == NULL) {
-        CTerr(CT_F_SCT_NEW_FROM_BASE64, ERR_R_PASSED_NULL_PARAMETER);
-        return NULL;
-    }
-
-    sct = SCT_new();
     if (sct == NULL) {
         CTerr(CT_F_SCT_NEW_FROM_BASE64, ERR_R_MALLOC_FAILURE);
         return NULL;
@@ -145,7 +131,7 @@ SCT *SCT_new_from_base64(unsigned char version, const char *logid_base64,
         goto err;
     }
 
-    declen = CT_base64_decode(logid_base64, &dec);
+    declen = ct_base64_decode(logid_base64, &dec);
     if (declen < 0) {
         CTerr(CT_F_SCT_NEW_FROM_BASE64, X509_R_BASE64_DECODE_ERROR);
         goto err;
@@ -154,7 +140,7 @@ SCT *SCT_new_from_base64(unsigned char version, const char *logid_base64,
         goto err;
     dec = NULL;
 
-    declen = CT_base64_decode(extensions_base64, &dec);
+    declen = ct_base64_decode(extensions_base64, &dec);
     if (declen < 0) {
         CTerr(CT_F_SCT_NEW_FROM_BASE64, X509_R_BASE64_DECODE_ERROR);
         goto err;
@@ -162,7 +148,7 @@ SCT *SCT_new_from_base64(unsigned char version, const char *logid_base64,
     SCT_set0_extensions(sct, dec, declen);
     dec = NULL;
 
-    declen = CT_base64_decode(signature_base64, &dec);
+    declen = ct_base64_decode(signature_base64, &dec);
     if (declen < 0) {
         CTerr(CT_F_SCT_NEW_FROM_BASE64, X509_R_BASE64_DECODE_ERROR);
         goto err;
@@ -188,12 +174,11 @@ SCT *SCT_new_from_base64(unsigned char version, const char *logid_base64,
 CTLOG *CTLOG_new_from_base64(const char *pkey_base64, const char *name)
 {
     unsigned char *pkey_der = NULL;
+    int pkey_der_len = ct_base64_decode(pkey_base64, &pkey_der);
     const unsigned char *p;
-    int pkey_der_len;
     EVP_PKEY *pkey = NULL;
     CTLOG *log = NULL;
 
-    pkey_der_len = CT_base64_decode(pkey_base64, &pkey_der);
     if (pkey_der_len <= 0) {
         CTerr(CT_F_CTLOG_NEW_FROM_BASE64, CT_R_LOG_CONF_INVALID_KEY);
         return NULL;
