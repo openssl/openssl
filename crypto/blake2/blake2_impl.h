@@ -8,7 +8,7 @@
  *
  * - OpenSSL license   : https://www.openssl.org/source/license.html
  * - Apache 2.0        : http://www.apache.org/licenses/LICENSE-2.0
- * - CC0 1.0 Universal : http://www.apache.org/licenses/LICENSE-2.0
+ * - CC0 1.0 Universal : http://creativecommons.org/publicdomain/zero/1.0
  *
  * More information about the BLAKE2 hash function can be found at
  * https://blake2.net.
