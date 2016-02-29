@@ -63,14 +63,7 @@
 #include <openssl/err.h>
 #include <openssl/evp.h>
 
-/*
- * TODO(robpercival): These macros are getting duplicated all over the place.
- * Is there a single place they should be defined for re-use?
- * Also, is there a good reason they aren't functions?
- */
-#define n2s(c,s) ((s=(((unsigned int)((c)[0]))<<8) | \
-                     (((unsigned int)((c)[1])))), \
-                  c+=2)
+#include "ct_locl.h"
 
 /*
  * Decodes the base64 string |in| into |out|.
