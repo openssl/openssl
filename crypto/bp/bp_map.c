@@ -60,6 +60,8 @@
  * Authored by Diego F. Aranha (d@miracl.com).
  */
 
+#include <openssl/err.h>
+
 #include "bp_lcl.h"
 
 static int GT_miller_dbl(const BP_GROUP *group, FP12 *l, FP2 *x3,
@@ -596,10 +598,11 @@ int GT_ELEMs_pairing(const BP_GROUP *group, GT_ELEM *r, size_t num,
         if (!FP12_sqr(group, r->f, r->f, ctx))
             goto err;
         for (j = 0; j < m; j++) {
-            if (!GT_miller_double
+            if (!GT_miller_dbl
                 (group, l, xq[j], yq[j], zq[j], xq[j], yq[j], zq[j], s[j],
-                 t[j], ctx))
+                 t[j], ctx)) {
                 goto err;
+            }
             if (!FP12_mul_sparse(group, r->f, r->f, l, ctx))
                 goto err;
         }
@@ -607,8 +610,9 @@ int GT_ELEMs_pairing(const BP_GROUP *group, GT_ELEM *r, size_t num,
             for (j = 0; j < m; j++) {
                 if (!GT_miller_add
                     (group, l, xq[j], yq[j], zq[j], x[j], y[j], xp[j], yp[j],
-                     ctx))
+                     ctx)) {
                     goto err;
+                }
                 if (!FP12_mul_sparse(group, r->f, r->f, l, ctx))
                     goto err;
             }

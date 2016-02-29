@@ -65,6 +65,7 @@
  */
 
 #include <openssl/ec.h>
+#include <openssl/err.h>
 
 #include "bp_lcl.h"
 
@@ -513,7 +514,7 @@ int G2_ELEM_oct2point(const BP_GROUP *group, G2_ELEM *point,
      * test required by X9.62
      */
     if (G2_ELEM_is_on_curve(group, point, ctx) <= 0) {
-        BP_err(BP_F_G2_ELEM_OCT2POINT, BP_R_POINT_IS_NOT_ON_CURVE);
+        BPerr(BP_F_G2_ELEM_OCT2POINT, BP_R_POINT_IS_NOT_ON_CURVE);
         goto err;
     }
 

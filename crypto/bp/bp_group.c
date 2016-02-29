@@ -62,6 +62,7 @@
 
 #include <openssl/ec.h>
 #include <openssl/bp.h>
+#include <openssl/err.h>
 
 #include "bp_lcl.h"
 
