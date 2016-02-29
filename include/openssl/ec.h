@@ -1415,6 +1415,7 @@ void ERR_load_EC_strings(void);
 # define EC_F_ECDH_CMS_DECRYPT                            238
 # define EC_F_ECDH_CMS_SET_SHARED_INFO                    239
 # define EC_F_ECDH_COMPUTE_KEY                            246
+# define EC_F_ECDH_SIMPLE_COMPUTE_KEY                     257
 # define EC_F_ECDSA_DO_SIGN_EX                            251
 # define EC_F_ECDSA_DO_VERIFY                             252
 # define EC_F_ECDSA_SIGN_EX                               254
@@ -1517,6 +1518,9 @@ void ERR_load_EC_strings(void);
 # define EC_F_EC_KEY_PRINT_FP                             181
 # define EC_F_EC_KEY_PRIV2OCT                             256
 # define EC_F_EC_KEY_SET_PUBLIC_KEY_AFFINE_COORDINATES    229
+# define EC_F_EC_KEY_SIMPLE_CHECK_KEY                     258
+# define EC_F_EC_KEY_SIMPLE_OCT2PRIV                      259
+# define EC_F_EC_KEY_SIMPLE_PRIV2OCT                      260
 # define EC_F_EC_POINTS_MAKE_AFFINE                       136
 # define EC_F_EC_POINT_ADD                                112
 # define EC_F_EC_POINT_CMP                                113
@@ -1569,6 +1573,7 @@ void ERR_load_EC_strings(void);
 # define EC_R_BIGNUM_OUT_OF_RANGE                         144
 # define EC_R_BUFFER_TOO_SMALL                            100
 # define EC_R_COORDINATES_OUT_OF_RANGE                    146
+# define EC_R_CURVE_DOES_NOT_SUPPORT_ECDH                 160
 # define EC_R_CURVE_DOES_NOT_SUPPORT_SIGNING              159
 # define EC_R_D2I_ECPKPARAMETERS_FAILURE                  117
 # define EC_R_DECODE_ERROR                                142
