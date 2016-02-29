@@ -139,7 +139,7 @@ static int test_ASYNC_init_thread()
 {
     ASYNC_JOB *job1 = NULL, *job2 = NULL, *job3 = NULL;
     int funcret1, funcret2, funcret3;
-    ASYNC_WAIT_CTX *waitctx;
+    ASYNC_WAIT_CTX *waitctx = NULL;
 
     if (       !ASYNC_init_thread(2, 0)
             || (waitctx = ASYNC_WAIT_CTX_new()) == NULL
@@ -175,7 +175,7 @@ static int test_ASYNC_start_job()
 {
     ASYNC_JOB *job = NULL;
     int funcret;
-    ASYNC_WAIT_CTX *waitctx;
+    ASYNC_WAIT_CTX *waitctx = NULL;
 
     ctr = 0;
 
@@ -203,7 +203,7 @@ static int test_ASYNC_get_current_job()
 {
     ASYNC_JOB *job = NULL;
     int funcret;
-    ASYNC_WAIT_CTX *waitctx;
+    ASYNC_WAIT_CTX *waitctx = NULL;
 
     currjob = NULL;
 
@@ -230,7 +230,7 @@ static int test_ASYNC_WAIT_CTX_get_all_fds()
 {
     ASYNC_JOB *job = NULL;
     int funcret;
-    ASYNC_WAIT_CTX *waitctx;
+    ASYNC_WAIT_CTX *waitctx = NULL;
     OSSL_ASYNC_FD fd = OSSL_BAD_ASYNC_FD, delfd = OSSL_BAD_ASYNC_FD;
     size_t numfds, numdelfds;
 
@@ -288,7 +288,7 @@ static int test_ASYNC_block_pause()
 {
     ASYNC_JOB *job = NULL;
     int funcret;
-    ASYNC_WAIT_CTX *waitctx;
+    ASYNC_WAIT_CTX *waitctx = NULL;
 
     if (       !ASYNC_init_thread(1, 0)
             || (waitctx = ASYNC_WAIT_CTX_new()) == NULL
