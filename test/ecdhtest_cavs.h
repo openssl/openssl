@@ -4298,4 +4298,4 @@ static const ecdh_cavs_kat_t ecdh_cavs_kats[] = {
 #endif
 };
 
-#endif /* ECDHTEST_KAVS_H */
+#endif /* ECDHTEST_CAVS_H */
