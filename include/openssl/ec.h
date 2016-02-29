@@ -1231,14 +1231,10 @@ void EC_KEY_METHOD_set_keygen(EC_KEY_METHOD *meth,
                               int (*keygen)(EC_KEY *key));
 
 void EC_KEY_METHOD_set_compute_key(EC_KEY_METHOD *meth,
-                                   int (*ckey)(void *out,
-                                               size_t outlen,
+                                   int (*ckey)(unsigned char **psec,
+                                               size_t *pseclen,
                                                const EC_POINT *pub_key,
-                                               const EC_KEY *ecdh,
-                                               void *(*KDF) (const void *in,
-                                                             size_t inlen,
-                                                             void *out,
-                                                             size_t *outlen)));
+                                               const EC_KEY *ecdh));
 
 void EC_KEY_METHOD_set_sign(EC_KEY_METHOD *meth,
                             int (*sign)(int type, const unsigned char *dgst,
@@ -1279,14 +1275,10 @@ void EC_KEY_METHOD_get_keygen(EC_KEY_METHOD *meth,
                               int (**pkeygen)(EC_KEY *key));
 
 void EC_KEY_METHOD_get_compute_key(EC_KEY_METHOD *meth,
-                                   int (**pck)(void *out,
-                                               size_t outlen,
+                                   int (**pck)(unsigned char **psec,
+                                               size_t *pseclen,
                                                const EC_POINT *pub_key,
-                                               const EC_KEY *ecdh,
-                                               void *(*KDF) (const void *in,
-                                                             size_t inlen,
-                                                             void *out,
-                                                             size_t *outlen)));
+                                               const EC_KEY *ecdh));
 
 void EC_KEY_METHOD_get_sign(EC_KEY_METHOD *meth,
                             int (**psign)(int type, const unsigned char *dgst,

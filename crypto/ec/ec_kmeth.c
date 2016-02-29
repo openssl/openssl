@@ -51,6 +51,7 @@
  * ====================================================================
  */
 
+#include <string.h>
 #include <openssl/ec.h>
 #ifndef OPENSSL_NO_ENGINE
 # include <openssl/engine.h>
@@ -165,10 +166,27 @@ int ECDH_compute_key(void *out, size_t outlen, const EC_POINT *pub_key,
                      void *(*KDF) (const void *in, size_t inlen, void *out,
                                    size_t *outlen))
 {
-    if (eckey->meth->compute_key != NULL)
-        return eckey->meth->compute_key(out, outlen, pub_key, eckey, KDF);
-    ECerr(EC_F_ECDH_COMPUTE_KEY, EC_R_OPERATION_NOT_SUPPORTED);
-    return 0;
+    unsigned char *sec = NULL;
+    size_t seclen;
+    if (eckey->meth->compute_key == NULL) {
+        ECerr(EC_F_ECDH_COMPUTE_KEY, EC_R_OPERATION_NOT_SUPPORTED);
+        return 0;
+    }
+    if (outlen > INT_MAX) {
+        ECerr(EC_F_ECDH_COMPUTE_KEY, EC_R_INVALID_OUTPUT_LENGTH);
+        return 0;
+    }
+    if (!eckey->meth->compute_key(&sec, &seclen, pub_key, eckey))
+        return 0;
+    if (KDF != NULL) {
+        KDF(sec, seclen, out, &outlen);
+    } else {
+        if (outlen > seclen)
+            outlen = seclen;
+        memcpy(out, sec, outlen);
+    }
+    OPENSSL_clear_free(sec, seclen);
+    return outlen;
 }
 
 EC_KEY_METHOD *EC_KEY_METHOD_new(const EC_KEY_METHOD *meth)
@@ -214,14 +232,10 @@ void EC_KEY_METHOD_set_keygen(EC_KEY_METHOD *meth,
 }
 
 void EC_KEY_METHOD_set_compute_key(EC_KEY_METHOD *meth,
-                                   int (*ckey)(void *out,
-                                               size_t outlen,
+                                   int (*ckey)(unsigned char **psec,
+                                               size_t *pseclen,
                                                const EC_POINT *pub_key,
-                                               const EC_KEY *ecdh,
-                                               void *(*KDF) (const void *in,
-                                                             size_t inlen,
-                                                             void *out,
-                                                             size_t *outlen)))
+                                               const EC_KEY *ecdh))
 {
     meth->compute_key = ckey;
 }
@@ -292,14 +306,10 @@ void EC_KEY_METHOD_get_keygen(EC_KEY_METHOD *meth,
 }
 
 void EC_KEY_METHOD_get_compute_key(EC_KEY_METHOD *meth,
-                                   int (**pck)(void *out,
-                                               size_t outlen,
+                                   int (**pck)(unsigned char **pout,
+                                               size_t *poutlen,
                                                const EC_POINT *pub_key,
-                                               const EC_KEY *ecdh,
-                                               void *(*KDF) (const void *in,
-                                                             size_t inlen,
-                                                             void *out,
-                                                             size_t *outlen)))
+                                               const EC_KEY *ecdh))
 {
     if (pck != NULL)
         *pck = meth->compute_key;

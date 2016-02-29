@@ -77,45 +77,33 @@
 #include <openssl/ec.h>
 #include "ec_lcl.h"
 
-int ossl_ecdh_compute_key(void *out, size_t outlen, const EC_POINT *pub_key,
-                          const EC_KEY *ecdh,
-                          void *(*KDF) (const void *in, size_t inlen,
-                                        void *out, size_t *outlen))
+int ossl_ecdh_compute_key(unsigned char **psec, size_t *pseclen,
+                          const EC_POINT *pub_key, const EC_KEY *ecdh)
 {
     if (ecdh->group->meth->ecdh_compute_key == NULL) {
         ECerr(EC_F_OSSL_ECDH_COMPUTE_KEY, EC_R_CURVE_DOES_NOT_SUPPORT_ECDH);
         return -1;
     }
 
-    return ecdh->group->meth->ecdh_compute_key(out, outlen, pub_key, ecdh,
-                                               KDF);
+    return ecdh->group->meth->ecdh_compute_key(psec, pseclen, pub_key, ecdh);
 }
 
 /*-
  * This implementation is based on the following primitives in the IEEE 1363 standard:
  *  - ECKAS-DH1
  *  - ECSVDP-DH
- * Finally an optional KDF is applied.
  */
-int ecdh_simple_compute_key(void *out, size_t outlen, const EC_POINT *pub_key,
-                            const EC_KEY *ecdh,
-                            void *(*KDF) (const void *in, size_t inlen,
-                                          void *out, size_t *outlen))
+int ecdh_simple_compute_key(unsigned char **pout, size_t *poutlen,
+                            const EC_POINT *pub_key, const EC_KEY *ecdh)
 {
     BN_CTX *ctx;
     EC_POINT *tmp = NULL;
     BIGNUM *x = NULL, *y = NULL;
     const BIGNUM *priv_key;
     const EC_GROUP *group;
-    int ret = -1;
+    int ret = 0;
     size_t buflen, len;
     unsigned char *buf = NULL;
-
-    if (outlen > INT_MAX) {
-        /* sort of, anyway */
-        ECerr(EC_F_ECDH_SIMPLE_COMPUTE_KEY, ERR_R_MALLOC_FAILURE);
-        return -1;
-    }
 
     if ((ctx = BN_CTX_new()) == NULL)
         goto err;
@@ -183,19 +171,11 @@ int ecdh_simple_compute_key(void *out, size_t outlen, const EC_POINT *pub_key,
         goto err;
     }
 
-    if (KDF != 0) {
-        if (KDF(buf, buflen, out, &outlen) == NULL) {
-            ECerr(EC_F_ECDH_SIMPLE_COMPUTE_KEY, EC_R_KDF_FAILED);
-            goto err;
-        }
-        ret = outlen;
-    } else {
-        /* no KDF, just copy as much as we can */
-        if (outlen > buflen)
-            outlen = buflen;
-        memcpy(out, buf, outlen);
-        ret = outlen;
-    }
+    *pout = buf;
+    *poutlen = buflen;
+    buf = NULL;
+
+    ret = 1;
 
  err:
     EC_POINT_free(tmp);
@@ -203,5 +183,5 @@ int ecdh_simple_compute_key(void *out, size_t outlen, const EC_POINT *pub_key,
         BN_CTX_end(ctx);
     BN_CTX_free(ctx);
     OPENSSL_free(buf);
-    return (ret);
+    return ret;
 }

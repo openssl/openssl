@@ -293,10 +293,8 @@ static int x25519_point_cmp(const EC_GROUP *group, const EC_POINT *a,
     return 1;
 }
 
-static int x25519_compute_key(void *out, size_t outlen,
-                              const EC_POINT *pub_key, const EC_KEY *ecdh,
-                              void *(*KDF) (const void *in, size_t inlen,
-                                            void *out, size_t *outlen))
+static int x25519_compute_key(unsigned char **psec, size_t *pseclen,
+                              const EC_POINT *pub_key, const EC_KEY *ecdh)
 {
     unsigned char *key;
     int ret = -1;
@@ -304,19 +302,12 @@ static int x25519_compute_key(void *out, size_t outlen,
         return -1;
     key = OPENSSL_malloc(EC_X25519_KEYLEN);
     if (key == NULL)
-        return -1;
+        return 0;
     if (X25519(key, ecdh->custom_data, pub_key->custom_data) == 0)
         goto err;
-    if (KDF) {
-        if (KDF(key, EC_X25519_KEYLEN, out, &outlen) == NULL)
-            goto err;
-        ret = outlen;
-    } else {
-        if (outlen > EC_X25519_KEYLEN)
-            outlen = EC_X25519_KEYLEN;
-        memcpy(out, key, outlen);
-        ret = outlen;
-    }
+    *psec = key;
+    *pseclen = EC_X25519_KEYLEN;
+    return 1;
 
  err:
     OPENSSL_clear_free(key, EC_X25519_KEYLEN);
