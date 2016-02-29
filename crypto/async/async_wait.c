@@ -191,7 +191,8 @@ int ASYNC_WAIT_CTX_clear_fd(ASYNC_WAIT_CTX *ctx, const void *key)
         if (curr->key == key) {
             /*
              * Mark it as deleted. We don't call cleanup if explicitly asked
-             * to clear an fd. We assume the caller is going to do that
+             * to clear an fd. We assume the caller is going to do that (if
+             * appropriate).
              */
             curr->del = 1;
             ctx->numdel++;
