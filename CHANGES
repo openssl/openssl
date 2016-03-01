@@ -2,7 +2,7 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 1.0.2f and 1.0.2g [xx XXX xxxx]
+ Changes between 1.0.2f and 1.0.2g [1 Mar 2016]
 
   * Disable weak ciphers in SSLv3 and up in default builds of OpenSSL.
     Builds that are not configured with "enable-weak-ssl-ciphers" will not
