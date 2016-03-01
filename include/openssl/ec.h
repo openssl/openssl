@@ -1586,6 +1586,7 @@ void ERR_load_EC_strings(void);
 # define EC_R_INVALID_FIELD                               103
 # define EC_R_INVALID_FORM                                104
 # define EC_R_INVALID_GROUP_ORDER                         122
+# define EC_R_INVALID_OUTPUT_LENGTH                       161
 # define EC_R_INVALID_PENTANOMIAL_BASIS                   132
 # define EC_R_INVALID_PRIVATE_KEY                         123
 # define EC_R_INVALID_TRINOMIAL_BASIS                     137

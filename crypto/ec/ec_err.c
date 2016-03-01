@@ -305,6 +305,7 @@ static ERR_STRING_DATA EC_str_reasons[] = {
     {ERR_REASON(EC_R_INVALID_FIELD), "invalid field"},
     {ERR_REASON(EC_R_INVALID_FORM), "invalid form"},
     {ERR_REASON(EC_R_INVALID_GROUP_ORDER), "invalid group order"},
+    {ERR_REASON(EC_R_INVALID_OUTPUT_LENGTH), "invalid output length"},
     {ERR_REASON(EC_R_INVALID_PENTANOMIAL_BASIS), "invalid pentanomial basis"},
     {ERR_REASON(EC_R_INVALID_PRIVATE_KEY), "invalid private key"},
     {ERR_REASON(EC_R_INVALID_TRINOMIAL_BASIS), "invalid trinomial basis"},
