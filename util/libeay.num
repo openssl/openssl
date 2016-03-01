@@ -4801,3 +4801,5 @@ CT_POLICY_EVAL_CTX_set0_cert            5304	1_1_0	EXIST::FUNCTION:
 CT_POLICY_EVAL_CTX_get0_log_store       5305	1_1_0	EXIST::FUNCTION:
 CT_POLICY_EVAL_CTX_free                 5306	1_1_0	EXIST::FUNCTION:
 CT_verify_no_bad_scts                   5307	1_1_0	EXIST::FUNCTION:
+EVP_PKEY_CTX_hex2ctrl                   5308	1_1_0	EXIST::FUNCTION:
+EVP_PKEY_CTX_str2ctrl                   5309	1_1_0	EXIST::FUNCTION:
