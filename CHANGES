@@ -2,6 +2,10 @@
  OpenSSL CHANGES
  _______________
 
+ Changes between 1.0.1s and 1.0.1t [xx XXX xxxx]
+
+  *)
+
  Changes between 1.0.1r and 1.0.1s [1 Mar 2016]
 
   * Disable weak ciphers in SSLv3 and up in default builds of OpenSSL.
