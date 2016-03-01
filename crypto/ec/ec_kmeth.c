@@ -143,6 +143,7 @@ EC_KEY *EC_KEY_new_method(ENGINE *engine)
         if (!ENGINE_init(engine)) {
             ECerr(EC_F_EC_KEY_NEW_METHOD, ERR_R_ENGINE_LIB);
             CRYPTO_free_ex_data(CRYPTO_EX_INDEX_EC_KEY, ret, &ret->ex_data);
+            CRYPTO_THREAD_lock_free(ret->lock);
             OPENSSL_free(ret);
             return NULL;
         }
@@ -155,6 +156,7 @@ EC_KEY *EC_KEY_new_method(ENGINE *engine)
             ECerr(EC_F_EC_KEY_NEW_METHOD, ERR_R_ENGINE_LIB);
             ENGINE_finish(ret->engine);
             CRYPTO_free_ex_data(CRYPTO_EX_INDEX_EC_KEY, ret, &ret->ex_data);
+            CRYPTO_THREAD_lock_free(ret->lock);
             OPENSSL_free(ret);
             return NULL;
         }
