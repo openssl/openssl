@@ -177,13 +177,11 @@ static AUTHORITY_INFO_ACCESS *v2i_AUTHORITY_INFO_ACCESS(X509V3_EXT_METHOD
         ctmp.value = cnf->value;
         if (!v2i_GENERAL_NAME_ex(acc->location, method, ctx, &ctmp, 0))
             goto err;
-        if ((objtmp = OPENSSL_malloc(objlen + 1)) == NULL) {
+        if ((objtmp = OPENSSL_strndup(cnf->name, objlen)) == NULL) {
             X509V3err(X509V3_F_V2I_AUTHORITY_INFO_ACCESS,
                       ERR_R_MALLOC_FAILURE);
             goto err;
         }
-        strncpy(objtmp, cnf->name, objlen);
-        objtmp[objlen] = 0;
         acc->method = OBJ_txt2obj(objtmp, 0);
         if (!acc->method) {
             X509V3err(X509V3_F_V2I_AUTHORITY_INFO_ACCESS,
