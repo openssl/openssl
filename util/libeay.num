@@ -4788,3 +4788,16 @@ SCT_LIST_set0_logs                      5291	1_1_0	EXIST::FUNCTION:
 CTLOG_STORE_get0_log_by_id              5292	1_1_0	EXIST::FUNCTION:
 CTLOG_STORE_load_default_file           5293	1_1_0	EXIST::FUNCTION:
 CTLOG_new                               5294	1_1_0	EXIST::FUNCTION:
+SCT_LIST_validate                       5295	1_1_0	EXIST::FUNCTION:
+CT_verify_at_least_one_good_sct         5296	1_1_0	EXIST::FUNCTION:
+CT_POLICY_EVAL_CTX_set0_issuer          5297	1_1_0	EXIST::FUNCTION:
+SCT_get_validation_status               5298	1_1_0	EXIST::FUNCTION:
+CT_POLICY_EVAL_CTX_set0_log_store       5299	1_1_0	EXIST::FUNCTION:
+SCT_validate                            5300	1_1_0	EXIST::FUNCTION:
+CT_POLICY_EVAL_CTX_new                  5301	1_1_0	EXIST::FUNCTION:
+CT_POLICY_EVAL_CTX_get0_cert            5302	1_1_0	EXIST::FUNCTION:
+CT_POLICY_EVAL_CTX_get0_issuer          5303	1_1_0	EXIST::FUNCTION:
+CT_POLICY_EVAL_CTX_set0_cert            5304	1_1_0	EXIST::FUNCTION:
+CT_POLICY_EVAL_CTX_get0_log_store       5305	1_1_0	EXIST::FUNCTION:
+CT_POLICY_EVAL_CTX_free                 5306	1_1_0	EXIST::FUNCTION:
+CT_verify_no_bad_scts                   5307	1_1_0	EXIST::FUNCTION:
