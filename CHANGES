@@ -2,6 +2,10 @@
  OpenSSL CHANGES
  _______________
 
+ Changes between 1.0.2g and 1.0.2h [xx XXX xxxx]
+
+  *)
+
  Changes between 1.0.2f and 1.0.2g [1 Mar 2016]
 
   * Disable weak ciphers in SSLv3 and up in default builds of OpenSSL.
