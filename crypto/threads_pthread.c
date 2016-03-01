@@ -58,8 +58,10 @@ CRYPTO_RWLOCK *CRYPTO_THREAD_lock_new(void)
     if (lock == NULL)
         return NULL;
 
-    if (pthread_rwlock_init(lock, NULL) != 0)
+    if (pthread_rwlock_init(lock, NULL) != 0) {
+        OPENSSL_free(lock);
         return NULL;
+    }
 
     return lock;
 }
