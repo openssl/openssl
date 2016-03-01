@@ -155,6 +155,7 @@
 # endif
 # include <openssl/pem.h>
 # include <openssl/hmac.h>
+# include <openssl/async.h>
 
 # include <openssl/safestack.h>
 # include <openssl/symhacks.h>
@@ -326,8 +327,8 @@ typedef struct tls_sigalgs_st TLS_SIGALGS;
 typedef struct ssl_conf_ctx_st SSL_CONF_CTX;
 typedef struct ssl_comp_st SSL_COMP;
 
-DEFINE_STACK_OF_CONST(SSL_CIPHER)
-DEFINE_STACK_OF(SSL_COMP)
+STACK_OF(SSL_CIPHER);
+STACK_OF(SSL_COMP);
 
 /* SRTP protection profiles for use with the use_srtp extension (RFC 5764)*/
 typedef struct srtp_protection_profile_st {
@@ -906,6 +907,13 @@ __owur int SSL_extension_supported(unsigned int ext_type);
 #ifdef  __cplusplus
 extern "C" {
 #endif
+
+/*
+ * These need to be after the above set of includes due to a compiler bug
+ * in VisualStudio 2015
+ */
+DEFINE_STACK_OF_CONST(SSL_CIPHER)
+DEFINE_STACK_OF(SSL_COMP)
 
 /* compatibility */
 # define SSL_set_app_data(s,arg)         (SSL_set_ex_data(s,0,(char *)arg))
@@ -1592,7 +1600,10 @@ __owur char *SSL_get_srp_userinfo(SSL *s);
 void SSL_certs_clear(SSL *s);
 void SSL_free(SSL *ssl);
 __owur int SSL_waiting_for_async(SSL *s);
-__owur int SSL_get_async_wait_fd(SSL *s);
+__owur int SSL_get_all_async_fds(SSL *s, OSSL_ASYNC_FD *fds, size_t *numfds);
+__owur int SSL_get_changed_async_fds(SSL *s, OSSL_ASYNC_FD *addfd,
+                                     size_t *numaddfds, OSSL_ASYNC_FD *delfd,
+                                     size_t *numdelfds);
 __owur int SSL_accept(SSL *ssl);
 __owur int SSL_connect(SSL *ssl);
 __owur int SSL_read(SSL *ssl, void *buf, int num);

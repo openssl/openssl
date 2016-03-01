@@ -119,26 +119,14 @@ static int async_ctx_free(void)
 static ASYNC_JOB *async_job_new(void)
 {
     ASYNC_JOB *job = NULL;
-    OSSL_ASYNC_FD pipefds[2];
 
-    job = OPENSSL_malloc(sizeof (ASYNC_JOB));
+    job = OPENSSL_zalloc(sizeof (ASYNC_JOB));
     if (job == NULL) {
         ASYNCerr(ASYNC_F_ASYNC_JOB_NEW, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 
-    if (!async_pipe(pipefds)) {
-        OPENSSL_free(job);
-        ASYNCerr(ASYNC_F_ASYNC_JOB_NEW, ASYNC_R_CANNOT_CREATE_WAIT_PIPE);
-        return NULL;
-    }
-
-    job->wake_set = 0;
-    job->wait_fd = pipefds[0];
-    job->wake_fd = pipefds[1];
-
     job->status = ASYNC_JOB_RUNNING;
-    job->funcargs = NULL;
 
     return job;
 }
@@ -148,8 +136,6 @@ static void async_job_free(ASYNC_JOB *job)
     if (job != NULL) {
         OPENSSL_free(job->funcargs);
         async_fibre_free(&job->fibrectx);
-        async_close_fd(job->wait_fd);
-        async_close_fd(job->wake_fd);
         OPENSSL_free(job);
     }
 }
@@ -219,8 +205,8 @@ void async_start_func(void)
     }
 }
 
-int ASYNC_start_job(ASYNC_JOB **job, int *ret, int (*func)(void *),
-                         void *args, size_t size)
+int ASYNC_start_job(ASYNC_JOB **job, ASYNC_WAIT_CTX *wctx, int *ret,
+                    int (*func)(void *), void *args, size_t size)
 {
     async_ctx *ctx = async_get_ctx();
     if (ctx == NULL)
@@ -237,6 +223,7 @@ int ASYNC_start_job(ASYNC_JOB **job, int *ret, int (*func)(void *),
         if (ctx->currjob != NULL) {
             if (ctx->currjob->status == ASYNC_JOB_STOPPING) {
                 *ret = ctx->currjob->ret;
+                ctx->currjob->waitctx = NULL;
                 async_release_job(ctx->currjob);
                 ctx->currjob = NULL;
                 *job = NULL;
@@ -289,6 +276,7 @@ int ASYNC_start_job(ASYNC_JOB **job, int *ret, int (*func)(void *),
         }
 
         ctx->currjob->func = func;
+        ctx->currjob->waitctx = wctx;
         if (!async_fibre_swapcontext(&ctx->dispatcher,
                 &ctx->currjob->fibrectx, 1)) {
             ASYNCerr(ASYNC_F_ASYNC_START_JOB, ASYNC_R_FAILED_TO_SWAP_CONTEXT);
@@ -302,7 +290,6 @@ err:
     *job = NULL;
     return ASYNC_ERR;
 }
-
 
 int ASYNC_pause_job(void)
 {
@@ -327,6 +314,8 @@ int ASYNC_pause_job(void)
         ASYNCerr(ASYNC_F_ASYNC_PAUSE_JOB, ASYNC_R_FAILED_TO_SWAP_CONTEXT);
         return 0;
     }
+    /* Reset counts of added and deleted fds */
+    async_wait_ctx_reset_counts(job->waitctx);
 
     return 1;
 }
@@ -441,28 +430,9 @@ ASYNC_JOB *ASYNC_get_current_job(void)
     return ctx->currjob;
 }
 
-OSSL_ASYNC_FD ASYNC_get_wait_fd(ASYNC_JOB *job)
+ASYNC_WAIT_CTX *ASYNC_get_wait_ctx(ASYNC_JOB *job)
 {
-    return job->wait_fd;
-}
-
-void ASYNC_wake(ASYNC_JOB *job)
-{
-    char dummy = 0;
-
-    if (job->wake_set)
-        return;
-    async_write1(job->wake_fd, &dummy);
-    job->wake_set = 1;
-}
-
-void ASYNC_clear_wake(ASYNC_JOB *job)
-{
-    char dummy = 0;
-    if (!job->wake_set)
-        return;
-    async_read1(job->wait_fd, &dummy);
-    job->wake_set = 0;
+    return job->waitctx;
 }
 
 void ASYNC_block_pause(void)

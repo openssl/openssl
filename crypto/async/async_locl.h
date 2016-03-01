@@ -81,9 +81,23 @@ struct async_job_st {
     void *funcargs;
     int ret;
     int status;
-    int wake_set;
-    OSSL_ASYNC_FD wait_fd;
-    OSSL_ASYNC_FD wake_fd;
+    ASYNC_WAIT_CTX *waitctx;
+};
+
+struct fd_lookup_st {
+    const void *key;
+    OSSL_ASYNC_FD fd;
+    void *custom_data;
+    void (*cleanup)(ASYNC_WAIT_CTX *, const void *, OSSL_ASYNC_FD, void *);
+    int add;
+    int del;
+    struct fd_lookup_st *next;
+};
+
+struct async_wait_ctx_st {
+    struct fd_lookup_st *fds;
+    size_t numadd;
+    size_t numdel;
 };
 
 DEFINE_STACK_OF(ASYNC_JOB)
@@ -98,7 +112,6 @@ int async_global_init(void);
 void async_local_cleanup(void);
 void async_global_cleanup(void);
 void async_start_func(void);
-int async_pipe(OSSL_ASYNC_FD *pipefds);
-int async_close_fd(OSSL_ASYNC_FD fd);
-int async_write1(OSSL_ASYNC_FD fd, const void *buf);
-int async_read1(OSSL_ASYNC_FD fd, void *buf);
+
+void async_wait_ctx_reset_counts(ASYNC_WAIT_CTX *ctx);
+
