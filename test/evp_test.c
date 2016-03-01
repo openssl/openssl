@@ -1812,7 +1812,8 @@ static int kdf_test_parse(struct evp_test *t,
         return kdf_ctrl(kdata->ctx, EVP_PKEY_CTRL_TLS_SECRET, value);
     } else if (strncmp("Seed", keyword, 4) == 0) {
         return kdf_ctrl(kdata->ctx, EVP_PKEY_CTRL_TLS_SEED, value);
-    }
+    } else if (strncmp(keyword, "Ctrl", 4) == 0)
+        return pkey_test_ctrl(kdata->ctx, value);
     return 0;
 }
 
