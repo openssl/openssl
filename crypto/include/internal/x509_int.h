@@ -104,6 +104,7 @@ struct X509_req_st {
     X509_ALGOR sig_alg;         /* signature algorithm */
     ASN1_BIT_STRING *signature; /* signature */
     int references;
+    CRYPTO_RWLOCK *lock;
 };
 
 struct X509_crl_info_st {
@@ -141,6 +142,7 @@ struct X509_crl_st {
     /* alternative method to handle this CRL */
     const X509_CRL_METHOD *meth;
     void *meth_data;
+    CRYPTO_RWLOCK *lock;
 };
 
 struct x509_revoked_st {
@@ -212,6 +214,7 @@ struct x509_st {
 # endif
     unsigned char sha1_hash[SHA_DIGEST_LENGTH];
     X509_CERT_AUX *aux;
+    CRYPTO_RWLOCK *lock;
 } /* X509 */ ;
 
 /* PKCS#8 private key info structure */

@@ -312,6 +312,7 @@ typedef struct private_key_st {
     /* expanded version of 'enc_algor' */
     EVP_CIPHER_INFO cipher;
     int references;
+    CRYPTO_RWLOCK *lock;
 } X509_PKEY;
 
 typedef struct X509_info_st {
@@ -322,6 +323,7 @@ typedef struct X509_info_st {
     int enc_len;
     char *enc_data;
     int references;
+    CRYPTO_RWLOCK *lock;
 } X509_INFO;
 
 DEFINE_STACK_OF(X509_INFO)
