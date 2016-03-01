@@ -138,6 +138,31 @@ static int pkey_tls1_prf_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
     }
 }
 
+static int pkey_tls1_prf_ctrl_str(EVP_PKEY_CTX *ctx,
+                                  const char *type, const char *value)
+{
+    if (value == NULL)
+        return 0;
+    if (strcmp(type, "md") == 0) {
+        TLS1_PRF_PKEY_CTX *kctx = ctx->data;
+
+        const EVP_MD *md = EVP_get_digestbyname(value);
+        if (md == NULL)
+            return 0;
+        kctx->md = md;
+        return 1;
+    }
+    if (strcmp(type, "secret") == 0)
+        return EVP_PKEY_CTX_str2ctrl(ctx, EVP_PKEY_CTRL_TLS_SECRET, value);
+    if (strcmp(type, "hexsecret") == 0)
+        return EVP_PKEY_CTX_hex2ctrl(ctx, EVP_PKEY_CTRL_TLS_SECRET, value);
+    if (strcmp(type, "seed") == 0)
+        return EVP_PKEY_CTX_str2ctrl(ctx, EVP_PKEY_CTRL_TLS_SEED, value);
+    if (strcmp(type, "hexseed") == 0)
+        return EVP_PKEY_CTX_hex2ctrl(ctx, EVP_PKEY_CTRL_TLS_SEED, value);
+    return -2;
+}
+
 static int pkey_tls1_prf_derive(EVP_PKEY_CTX *ctx, unsigned char *key,
                                 size_t *keylen)
 {
@@ -176,7 +201,7 @@ const EVP_PKEY_METHOD tls1_prf_pkey_meth = {
     0,
     pkey_tls1_prf_derive,
     pkey_tls1_prf_ctrl,
-    0
+    pkey_tls1_prf_ctrl_str
 };
 
 static int tls1_prf_P_hash(const EVP_MD *md,
