@@ -134,7 +134,8 @@ int X509_CRL_sort(X509_CRL *c)
 
 void X509_CRL_up_ref(X509_CRL *crl)
 {
-    CRYPTO_add(&crl->references, 1, CRYPTO_LOCK_X509_CRL);
+    int i;
+    CRYPTO_atomic_add(&crl->references, 1, &i, crl->lock);
 }
 
 long X509_CRL_get_version(X509_CRL *crl)
