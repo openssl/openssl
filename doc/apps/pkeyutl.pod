@@ -25,6 +25,8 @@ B<openssl> B<pkeyutl>
 [B<-encrypt>]
 [B<-decrypt>]
 [B<-derive>]
+[B<-kdf algorithm>]
+[B<-kdflen length>]
 [B<-pkeyopt opt:value>]
 [B<-hexdump>]
 [B<-asn1parse>]
@@ -118,6 +120,15 @@ decrypt the input data using a private key.
 =item B<-derive>
 
 derive a shared secret using the peer key.
+
+=item B<-kdf algorithm>
+
+Use key derivation function B<algorithm>. Note: additional paramers
+will normally have to be set and the KDF output length for this to work.
+
+=item B<-kdflen length>
+
+Set the ouput length for KDF.
 
 =item B<-pkeyopt opt:value>
 
@@ -248,6 +259,12 @@ Sign data using a message digest value (this is currently only valid for RSA):
 Derive a shared secret value:
 
  openssl pkeyutl -derive -inkey key.pem -peerkey pubkey.pem -out secret
+
+Hexdump 48 bytes of TLS1 PRF using digest B<SHA256> and shared secret and
+seed consisting of the single byte 0xFF.
+
+ openssl pkeyutl -kdf TLS1-PRF -kdflen 48 -pkeyopt md:SHA256 \
+    -pkeyopt hexsecret:ff -pkeyopt hexseed:ff -hexdump
 
 =head1 SEE ALSO
 
