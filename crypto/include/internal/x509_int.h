@@ -192,7 +192,6 @@ struct x509_st {
     X509_ALGOR sig_alg;
     ASN1_BIT_STRING signature;
     int references;
-    char *name;
     CRYPTO_EX_DATA ex_data;
     /* These contain copies of various extension values */
     long ex_pathlen;
