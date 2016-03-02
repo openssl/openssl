@@ -17,6 +17,11 @@ BEGINRAW[descrip.mms]
 	$(PERL) {- catfile(catdir($sourcedir, "[-]"), "util", "mkbuildinf.pl") -} "$(CC) $(CFLAGS)" "$(PLATFORM)" > [.crypto]buildinf.h
 ENDRAW[descrip.mms]
 
+BEGINRAW[makefile(windows)]
+crypto\buildinf.h : configdata.pm
+	$(PERL) {- catfile(catdir($sourcedir, ".."), "util", "mkbuildinf.pl") -} "$(CC) $(CFLAGS)" "$(PLATFORM)" > crypto\buildinf.h
+ENDRAW[makefile(windows)]
+
 BEGINRAW[Makefile]
 crypto/buildinf.h : configdata.pm
 	$(PERL) $(SRCDIR)/util/mkbuildinf.pl "$(CC) $(CFLAGS_Q)" "$(PLATFORM)" > crypto/buildinf.h
