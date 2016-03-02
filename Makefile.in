@@ -93,11 +93,11 @@ ENGINESDIR={- use File::Spec::Functions;
 
 CROSS_COMPILE= {- $config{cross_compile_prefix} -}
 CC= $(CROSS_COMPILE){- $target{cc} -}
-CFLAG={- our $cflags2 = join(" ",(map { "-D".$_} @{$config{defines}},"OPENSSLDIR=\"\\\"\$(OPENSSLDIR)\\\"\"","ENGINESDIR=\"\\\"\$(ENGINESDIR)\\\"\"")) -} {- $config{cflags} -}
+CFLAG={- our $cflags2 = join(" ",(map { "-D".$_} @{$target{defines}}, @{$config{defines}}),"-DOPENSSLDIR=\"\\\"\$(OPENSSLDIR)\\\"\"","-DENGINESDIR=\"\\\"\$(ENGINESDIR)\\\"\"") -} {- $target{cflags} -} {- $config{cflags} -}
 CFLAG_Q={- $cflags2 =~ s|([\\"])|\\$1|g; $cflags2 -} {- $config{cflags} -}
 LDFLAG= {- $config{lflags} -}
 PLIB_LDFLAG= {- $config{plib_lflags} -}
-EX_LIBS= {- $config{ex_libs} -}
+EX_LIBS= {- $target{ex_libs} -} {- $config{ex_libs} -}
 EXE_EXT= {- $target{exe_extension} -}
 ARFLAGS= {- $target{arflags} -}
 AR=$(CROSS_COMPILE){- $target{ar} -} $(ARFLAGS) r
@@ -196,7 +196,7 @@ SHARED_CRYPTO=libcrypto$(SHLIB_EXT)
 SHARED_SSL=libssl$(SHLIB_EXT)
 SHARED_LIBS={- $disabled{shared} ? '' : '$(SHARED_CRYPTO) $(SHARED_SSL)'  -}
 SHARED_CFLAG={- $target{shared_cflag} -}
-SHARED_LDFLAG={- $target{shared_ldflag}
+SHARED_LDFLAG={- $target{shared_ldflag}." ".$config{shared_ldflag}
                  # Unlike other OSes (like Solaris, Linux, Tru64,
                  # IRIX) BSD run-time linkers (tested OpenBSD, NetBSD
                  # and FreeBSD) "demand" RPATH set on .so objects.

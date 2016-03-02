@@ -869,9 +869,10 @@ $target{nm} =      $ENV{'NM'}      || $target{nm}      || "nm";
 # For cflags, lflags, plib_lflags, ex_libs and defines, add the debug_
 # or release_ attributes.
 # Do it in such a way that no spurious space is appended (hence the grep).
-$config{defines} = $target{defines} || [];
-$config{cflags} = $target{cflags} || "";
-$config{ex_libs} = $target{ex_libs} || "";
+$config{defines} = [];
+$config{cflags} = "";
+$config{ex_libs} = "";
+$config{shared_ldflag} = "";
 
 # Make sure build_scheme is consistent.
 $target{build_scheme} = [ $target{build_scheme} ]
@@ -893,7 +894,7 @@ my ($builder, $builder_platform, @builder_opts) =
 if ($target =~ /^mingw/ && `$target{cc} --target-help 2>&1` =~ m/-mno-cygwin/m)
 	{
 	$config{cflags} .= " -mno-cygwin";
-	$target{shared_ldflag} .= " -mno-cygwin";
+	$config{shared_ldflag} .= " -mno-cygwin";
 	}
 
 if ($target =~ /linux.*-mips/ && !$disabled{asm} && $user_cflags !~ /-m(ips|arch=)/) {
@@ -917,17 +918,15 @@ if (!$disabled{dso} && $target{dso_scheme} ne "")
 	$target{dso_scheme} =~ tr/[a-z]/[A-Z]/;
 	if ($target{dso_scheme} eq "DLFCN")
 		{
-		$config{defines} = [ "DSO_DLFCN", "HAVE_DLFCN_H",
-				     @{$config{defines}} ]
+		unshift @{$config{defines}}, "DSO_DLFCN", "HAVE_DLFCN_H";
 		}
 	elsif ($target{dso_scheme} eq "DLFCN_NO_H")
 		{
-		$config{defines} = [ "DSO_DLFCN", @{$config{defines}} ]
+		unshift @{$config{defines}}, "DSO_DLFCN";
 		}
 	else
 		{
-		$config{defines} = [ "DSO_$target{dso_scheme}",
-				     @{$config{defines}} ]
+		unshift @{$config{defines}}, "DSO_$target{dso_scheme}";
 		}
 	}
 
@@ -935,8 +934,11 @@ $config{ex_libs}="$libs$config{ex_libs}" if ($libs ne "");
 
 if ($disabled{asm})
 	{
-	@{$config{defines}} = grep !/^[BL]_ENDIAN$/, @{$config{defines}}
-	    if ($config{fips});
+	if ($config{fips})
+		{
+		@{$config{defines}} = grep !/^[BL]_ENDIAN$/, @{$config{defines}};
+		@{$target{defines}} = grep !/^[BL]_ENDIAN$/, @{$target{defines}};
+		}
 	}
 
 # If threads aren't disabled, check how possible they are
@@ -1057,7 +1059,7 @@ unless ($disabled{asm}) {
         if ($config{processor} eq "386") {
 	    $target{wp_asm_src}=$table{DEFAULTS}->{wp_asm_src};
 	} elsif (!$disabled{"whirlpool"}) {
-	    $config{cflags}.=" -DWHIRLPOOL_ASM";
+	    push @{$config{defines}}, "WHIRLPOOL_ASM";
 	}
     }
     if ($target{modes_asm_src} =~ /ghash-/) {
@@ -1671,11 +1673,11 @@ close(OUT);
 
 print "IsMK1MF       =", ($builder eq "mk1mf" ? "yes" : "no"), "\n";
 print "CC            =$target{cc}\n";
-print "CFLAG         =$config{cflags}\n";
-print "DEFINES       =",join(" ", @{$config{defines}}),"\n";
+print "CFLAG         =$target{cflags} $config{cflags}\n";
+print "DEFINES       =",join(" ", @{$target{defines}}, @{$config{defines}}),"\n";
 print "LFLAG         =$target{lflags}\n";
 print "PLIB_LFLAG    =$target{plib_lflags}\n";
-print "EX_LIBS       =$config{ex_libs}\n";
+print "EX_LIBS       =$target{ex_libs} $config{ex_libs}\n";
 print "APPS_OBJ      =$target{apps_obj}\n";
 print "CPUID_OBJ     =$target{cpuid_obj}\n";
 print "UPLINK_OBJ    =$target{uplink_obj}\n";
