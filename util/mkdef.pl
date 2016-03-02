@@ -295,6 +295,7 @@ $crypto.=" include/openssl/srp.h";
 $crypto.=" include/openssl/modes.h";
 $crypto.=" include/openssl/async.h";
 $crypto.=" include/openssl/ct.h";
+$crypto.=" include/openssl/kdf.h";
 
 my $symhacks="include/openssl/symhacks.h";
 
