@@ -3396,8 +3396,8 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
         {
             unsigned char *keys = parg;
             long tlsext_tick_keylen = (sizeof(ctx->tlsext_tick_key_name) +
-                sizeof(ctx->tlsext_tick_hmac_key) + (ctx->tlsext_tick_aes_key));
-            if (!keys)
+                sizeof(ctx->tlsext_tick_hmac_key) + sizeof(ctx->tlsext_tick_aes_key));
+            if (keys == NULL)
                 return tlsext_tick_keylen;
             if (larg != tlsext_tick_keylen) {
                 SSLerr(SSL_F_SSL3_CTX_CTRL, SSL_R_INVALID_TICKET_KEYS_LENGTH);
