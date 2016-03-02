@@ -438,7 +438,7 @@ $config{openssl_other_defines}=[];
 my $libs="";
 my $target="";
 $config{options}="";
-my $build_prefix = "release_";
+$config{build_type} = "release";
 
 my @argvcopy=@ARGV;
 
@@ -591,11 +591,11 @@ foreach (@argvcopy)
 		}
 	elsif (/^--debug$/)
 		{
-		$build_prefix = "debug_";
+		$config{build_type} = "debug";
 		}
 	elsif (/^--release$/)
 		{
-		$build_prefix = "release_";
+		$config{build_type} = "release";
 		}
 	elsif (/^386$/)
 		{ $config{processor}=386; }
@@ -826,7 +826,7 @@ print "Configuring for $target\n";
 # Support for legacy targets having a name starting with 'debug-'
 my ($d, $t) = $target =~ m/^(debug-)?(.*)$/;
 if ($d) {
-    $build_prefix = "debug_";
+    $config{build_type} = "debug";
 
     # If we do not find debug-foo in the table, the target is set to foo.
     if (!$table{$target}) {
@@ -866,14 +866,9 @@ $target{nm} =      $ENV{'NM'}      || $target{nm}      || "nm";
 # For cflags, lflags, plib_lflags, ex_libs and defines, add the debug_
 # or release_ attributes.
 # Do it in such a way that no spurious space is appended (hence the grep).
-$config{defines} = [ @{$target{defines}},
-                     @{$target{$build_prefix."defines"}} ];
-$config{cflags} = join(" ",
-		       grep { $_ ne "" } ($target{cflags},
-					  $target{$build_prefix."cflags"}));
-$config{ex_libs} = join(" ",
-			grep { $_  ne "" } ($target{ex_libs},
-					    $target{$build_prefix."ex_libs"}));
+$config{defines} = $target{defines} || [];
+$config{cflags} = $target{cflags} || "";
+$config{ex_libs} = $target{ex_libs} || "";
 
 # Make sure build_scheme is consistent.
 $target{build_scheme} = [ $target{build_scheme} ]
@@ -2172,22 +2167,12 @@ sub print_table_entry
 	"cc",
 	"cflags",
 	"defines",
-	"debug_cflags",
-	"debug_defines",
-	"release_cflags",
-	"release_defines",
 	"thread_cflag",
 	"unistd",
 	"ld",
 	"lflags",
 	"plib_lflags",
 	"ex_libs",
-	"debug_lflags",
-	"debug_plib_lflags",
-	"debug_ex_libs",
-	"release_lflags",
-	"release_plib_lflags",
-	"release_ex_libs",
 	"bn_ops",
 	"cpuid_obj",
 	"bn_obj",
