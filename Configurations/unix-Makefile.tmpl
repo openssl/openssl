@@ -144,13 +144,13 @@ HTMLSUFFIX=html
 
 CROSS_COMPILE= {- $config{cross_compile_prefix} -}
 CC= $(CROSS_COMPILE){- $target{cc} -}
-CFLAGS={- our $cflags2 = join(" ",(map { "-D".$_} @{$config{defines}}),"-DOPENSSLDIR=\"\\\"\$(OPENSSLDIR)\\\"\"","-DENGINESDIR=\"\\\"\$(ENGINESDIR)\\\"\"") -} {- $config{cflags} -}
+CFLAGS={- our $cflags2 = join(" ",(map { "-D".$_} @{$target{defines}}, @{$config{defines}}),"-DOPENSSLDIR=\"\\\"\$(OPENSSLDIR)\\\"\"","-DENGINESDIR=\"\\\"\$(ENGINESDIR)\\\"\"") -} {- $target{cflags} -} {- $config{cflags} -}
 CFLAGS_Q={- $cflags2 =~ s|([\\"])|\\$1|g; $cflags2 -} {- $config{cflags} -}
 LDFLAGS= {- $target{lflags} -}
 PLIB_LDFLAGS= {- $target{plib_lflags} -}
-EX_LIBS= {- $config{ex_libs} -}
+EX_LIBS= {- $target{ex_libs} -} {- $config{ex_libs} -}
 SHARED_CFLAGS={- $target{shared_cflag} || "" -}
-SHARED_LDFLAGS={- $target{shared_ldflag}
+SHARED_LDFLAGS={- $target{shared_ldflag}." ".$config{shared_ldflag}
                   # Unlike other OSes (like Solaris, Linux, Tru64,
                   # IRIX) BSD run-time linkers (tested OpenBSD, NetBSD
                   # and FreeBSD) "demand" RPATH set on .so objects.
