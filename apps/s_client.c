@@ -1735,7 +1735,7 @@ int s_client_main(int argc, char **argv)
     if (init_client(&s, host, port, socket_family, socket_type) == 0)
     {
         BIO_printf(bio_err, "connect:errno=%d\n", get_last_socket_error());
-        SHUTDOWN(s);
+        BIO_closesocket(s);
         goto end;
     }
     BIO_printf(bio_c_out, "CONNECTED(%08X)\n", s);
@@ -1753,7 +1753,7 @@ int s_client_main(int argc, char **argv)
         if (getsockname(s, &peer, (void *)&peerlen) < 0) {
             BIO_printf(bio_err, "getsockname:errno=%d\n",
                        get_last_socket_error());
-            SHUTDOWN(s);
+            BIO_closesocket(s);
             goto end;
         }
 
@@ -2135,7 +2135,7 @@ int s_client_main(int argc, char **argv)
                                "drop connection and then reconnect\n");
                     do_ssl_shutdown(con);
                     SSL_set_connect_state(con);
-                    SHUTDOWN(SSL_get_fd(con));
+                    BIO_closesocket(SSL_get_fd(con));
                     goto re_start;
                 }
             }
@@ -2452,7 +2452,7 @@ int s_client_main(int argc, char **argv)
     if (in_init)
         print_stuff(bio_c_out, con, full_log);
     do_ssl_shutdown(con);
-    SHUTDOWN(SSL_get_fd(con));
+    BIO_closesocket(SSL_get_fd(con));
  end:
     if (con != NULL) {
         if (prexit != 0)
