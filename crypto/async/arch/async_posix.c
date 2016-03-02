@@ -58,27 +58,12 @@
 # include <stddef.h>
 # include <unistd.h>
 
-pthread_key_t posixctx;
-pthread_key_t posixpool;
-
 #define STACKSIZE       32768
-
-int async_global_init(void)
-{
-    if (pthread_key_create(&posixctx, NULL) != 0
-            || pthread_key_create(&posixpool, NULL) != 0)
-        return 0;
-
-    return 1;
-}
 
 void async_local_cleanup(void)
 {
 }
 
-void async_global_cleanup(void)
-{
-}
 
 int async_fibre_makecontext(async_fibre *fibre)
 {
