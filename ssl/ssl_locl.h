@@ -1734,7 +1734,25 @@ typedef struct ssl3_comp_st {
 
 extern SSL3_ENC_METHOD ssl3_undef_enc_method;
 
-SSL_METHOD *ssl_bad_method(int ver);
+__owur const SSL_METHOD *ssl_bad_method(int ver);
+__owur const SSL_METHOD *sslv3_method(void);
+__owur const SSL_METHOD *sslv3_server_method(void);
+__owur const SSL_METHOD *sslv3_client_method(void);
+__owur const SSL_METHOD *tlsv1_method(void);
+__owur const SSL_METHOD *tlsv1_server_method(void);
+__owur const SSL_METHOD *tlsv1_client_method(void);
+__owur const SSL_METHOD *tlsv1_1_method(void);
+__owur const SSL_METHOD *tlsv1_1_server_method(void);
+__owur const SSL_METHOD *tlsv1_1_client_method(void);
+__owur const SSL_METHOD *tlsv1_2_method(void);
+__owur const SSL_METHOD *tlsv1_2_server_method(void);
+__owur const SSL_METHOD *tlsv1_2_client_method(void);
+__owur const SSL_METHOD *dtlsv1_method(void);
+__owur const SSL_METHOD *dtlsv1_server_method(void);
+__owur const SSL_METHOD *dtlsv1_client_method(void);
+__owur const SSL_METHOD *dtlsv1_2_method(void);
+__owur const SSL_METHOD *dtlsv1_2_server_method(void);
+__owur const SSL_METHOD *dtlsv1_2_client_method(void);
 
 extern const SSL3_ENC_METHOD TLSv1_enc_data;
 extern const SSL3_ENC_METHOD TLSv1_1_enc_data;
