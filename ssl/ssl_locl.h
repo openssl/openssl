@@ -145,6 +145,7 @@
 # include <time.h>
 # include <string.h>
 # include <errno.h>
+# include <stdint.h>
 
 # include "e_os.h"
 
@@ -2043,6 +2044,20 @@ __owur DH *ssl_get_auto_dh(SSL *s);
 
 __owur int ssl_security_cert(SSL *s, SSL_CTX *ctx, X509 *x, int vfy, int is_ee);
 __owur int ssl_security_cert_chain(SSL *s, STACK_OF(X509) *sk, X509 *ex, int vfy);
+
+/* ssl_ctx_log_rsa_client_key_exchange logs |premaster| to |ctx|, if logging is
+ * enabled. It returns one on success and zero on failure. The entry is
+ * identified by the first 8 bytes of |encrypted_premaster|. */
+int ssl_ctx_log_rsa_client_key_exchange(SSL_CTX *ctx,
+	const uint8_t *encrypted_premaster, size_t encrypted_premaster_len,
+	const uint8_t *premaster, size_t premaster_len);
+
+/* ssl_ctx_log_master_secret logs |master| to |ctx|, if logging is enabled. It
+ * returns one on success and zero on failure. The entry is identified by
+ * |client_random|. */
+int ssl_ctx_log_master_secret(SSL_CTX *ctx,
+	const uint8_t *client_random, size_t client_random_len,
+	const uint8_t *master, size_t master_len);
 
 __owur EVP_MD_CTX *ssl_replace_hash(EVP_MD_CTX **hash, const EVP_MD *md);
 void ssl_clear_hash_ctx(EVP_MD_CTX **hash);

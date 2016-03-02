@@ -2227,6 +2227,12 @@ psk_err:
             tmp_buf[0] = 0x70;
 # endif
 
+        /* Log the premaster secret, if logging is enabled. */
+        if (!ssl_ctx_log_rsa_client_key_exchange(s->ctx,
+            p, n, pms, sizeof(pmslen))) {
+            goto err;
+        }
+
         /* Fix buf for TLS and beyond */
         if (s->version > SSL3_VERSION) {
             s2n(n, q);

@@ -2053,6 +2053,8 @@ void ERR_load_SSL_strings(void);
 # define SSL_F_SSL_CREATE_CIPHER_LIST                     166
 # define SSL_F_SSL_CTRL                                   232
 # define SSL_F_SSL_CTX_CHECK_PRIVATE_KEY                  168
+# define SSL_F_SSL_CTX_LOG_MASTER_SECRET                  341
+# define SSL_F_SSL_CTX_LOG_RSA_CLIENT_KEY_EXCHANGE        342
 # define SSL_F_SSL_CTX_MAKE_PROFILES                      309
 # define SSL_F_SSL_CTX_NEW                                169
 # define SSL_F_SSL_CTX_SET_ALPN_PROTOS                    343

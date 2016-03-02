@@ -173,6 +173,13 @@ int tls_construct_finished(SSL *s, const char *sender, int slen)
     memcpy(p, s->s3->tmp.finish_md, i);
     l = i;
 
+    /* Log the master secret, if logging is enabled. */
+    if (!ssl_ctx_log_master_secret(s->ctx,
+        s->s3->client_random, SSL3_RANDOM_SIZE,
+        s->session->master_key, s->session->master_key_length)) {
+        return 0;
+    }
+
     /*
      * Copy the finished so we can use it for renegotiation checks
      */
