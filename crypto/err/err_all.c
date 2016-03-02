@@ -102,6 +102,7 @@
 # include <openssl/ct.h>
 #endif
 #include <openssl/async.h>
+#include <openssl/kdf.h>
 
 void err_load_crypto_strings_intern(void)
 {
@@ -158,4 +159,5 @@ void err_load_crypto_strings_intern(void)
 # endif
     ERR_load_ASYNC_strings();
 #endif
+    ERR_load_KDF_strings();
 }

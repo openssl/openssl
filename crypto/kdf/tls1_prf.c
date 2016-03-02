@@ -141,14 +141,18 @@ static int pkey_tls1_prf_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 static int pkey_tls1_prf_ctrl_str(EVP_PKEY_CTX *ctx,
                                   const char *type, const char *value)
 {
-    if (value == NULL)
+    if (value == NULL) {
+        KDFerr(KDF_F_PKEY_TLS1_PRF_CTRL_STR, KDF_R_VALUE_MISSING);
         return 0;
+    }
     if (strcmp(type, "md") == 0) {
         TLS1_PRF_PKEY_CTX *kctx = ctx->data;
 
         const EVP_MD *md = EVP_get_digestbyname(value);
-        if (md == NULL)
+        if (md == NULL) {
+            KDFerr(KDF_F_PKEY_TLS1_PRF_CTRL_STR, KDF_R_INVALID_DIGEST);
             return 0;
+        }
         kctx->md = md;
         return 1;
     }
@@ -167,8 +171,10 @@ static int pkey_tls1_prf_derive(EVP_PKEY_CTX *ctx, unsigned char *key,
                                 size_t *keylen)
 {
     TLS1_PRF_PKEY_CTX *kctx = ctx->data;
-    if (kctx->md == NULL || kctx->sec == NULL || kctx->seedlen == 0)
+    if (kctx->md == NULL || kctx->sec == NULL || kctx->seedlen == 0) {
+        KDFerr(KDF_F_PKEY_TLS1_PRF_DERIVE, KDF_R_MISSING_PARAMETER);
         return 0;
+    }
     return tls1_prf_alg(kctx->md, kctx->sec, kctx->seclen,
                         kctx->seed, kctx->seedlen,
                         key, *keylen);
