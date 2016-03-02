@@ -351,8 +351,6 @@ int async_init(void)
     return 1;
 }
 
-/* TODO: FIXME: This needs to be called by something!!! */
-void async_deinit(void);
 void async_deinit(void)
 {
     CRYPTO_THREAD_cleanup_local(&ctxkey);
