@@ -580,6 +580,16 @@ void OPENSSL_cleanup(void)
         COMP_zlib_cleanup();
     }
 
+#ifndef OPENSSL_NO_ASYNC
+    if (async_inited) {
+# ifdef OPENSSL_INIT_DEBUG
+        fprintf(stderr, "OPENSSL_INIT: OPENSSL_cleanup: "
+                        "async_deinit()\n");
+# endif
+        async_deinit();
+    }
+#endif
+
 #ifndef OPENSSL_NO_ENGINE
     if (engine_inited) {
 # ifdef OPENSSL_INIT_DEBUG
