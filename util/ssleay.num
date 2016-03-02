@@ -418,3 +418,7 @@ DTLSv1_listen                           473	1_1_0	EXIST::FUNCTION:
 SSL_get0_verified_chain                 474	1_1_0	EXIST::FUNCTION:
 OPENSSL_init_ssl                        475	1_1_0	EXIST::FUNCTION:
 SSL_get_changed_async_fds               476	1_1_0	EXIST::FUNCTION:
+SSL_get_default_passwd_cb_userdata      477	1_1_0	EXIST::FUNCTION:
+SSL_get_default_passwd_cb               478	1_1_0	EXIST::FUNCTION:
+SSL_CTX_get_default_passwd_cb_userdata  479	1_1_0	EXIST::FUNCTION:
+SSL_CTX_get_default_passwd_cb           480	1_1_0	EXIST::FUNCTION:
