@@ -1193,7 +1193,7 @@ static void ge_scalarmult_base(ge_p3 *h, const uint8_t a[32]) {
 #else
 
 /* k25519Precomp[i][j] = (j+1)*256^i*B */
-static ge_precomp k25519Precomp[32][8] = {
+static const ge_precomp k25519Precomp[32][8] = {
     {
         {
             {25967493, -14356035, 29566456, 3660896, -12694345, 4014787,
