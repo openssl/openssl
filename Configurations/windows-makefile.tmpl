@@ -94,11 +94,13 @@ COUTFLAG={- $target{coutflag} || "/Fo" -}
 LD={- $target{ld} || "link" -}
 LDFLAGS={- $target{lflags} -}
 LDOUTFLAG={- $target{loutflag} || "/out:" -}
-EX_LIBS={- $config{ex_libs} -}
-SHARED_CFLAGS={- $target{shared_cflag} || "" -}
+EX_LIBS={- $target{ex_libs} -}
+LIB_CFLAGS={- join(" ", $target{lib_cflags}, $target{shared_cflag}) || "" -}
 SHARED_LDFLAGS={- $target{shared_ldflag} || "" -}
-DSO_CFLAGS={- $target{shared_cflag} || "" -}
+DSO_CFLAGS={- join(" ", $target{dso_cflags}, $target{shared_cflag}) || "" -}
+DSO_LDFLAGS={- join(" ", $target{dso_lflags}, $target{shared_ldflag}) || "" -}
 BIN_CFLAGS={- $target{bin_cflags} -}
+BIN_LDFLAGS={- $target{bin_lflags} -}
 
 PERL={- $config{perl} -}
 
@@ -115,8 +117,7 @@ PROCESSOR= {- $config{processor} -}
 
 # The main targets ###################################################
 
-all: configdata.pm build_libs_nodep build_engines_nodep build_apps_nodep \
-     depend link-utils
+all: configdata.pm build_libs_nodep build_engines_nodep build_apps_nodep depend
 
 build_libs: configdata.pm build_libs_nodep depend
 build_libs_nodep: $(LIBS)
@@ -127,7 +128,7 @@ build_apps_nodep: $(PROGRAMS) $(SCRIPTS)
 build_tests: configdata.pm build_tests_nodep depend
 build_tests_nodep: $(TESTPROGS)
 
-test tests: build_tests_nodep build_apps_nodep build_engines_nodep depend rehash
+test tests: build_tests_nodep build_apps_nodep build_engines_nodep depend
 	set SRCTOP=$(SRCDIR)
 	set BLDTOP=$(BLDDIR)
 	set PERL=$(PERL)
@@ -173,7 +174,7 @@ configdata.pm: {- $config{build_file_template} -} $(SRCDIR)\Configure
      my $srcs = join(" ",  @srcs);
      my $deps = join(" ", @srcs, @{$args{deps}});
      my $incs = join("", map { " /I ".$_ } @{$args{incs}});
-     my $ecflags = { lib => '$(SHARED_CFLAGS)',
+     my $ecflags = { lib => '$(LIB_CFLAGS)',
 		     dso => '$(DSO_CFLAGS)',
 		     bin => '$(BIN_CFLAGS)' } -> {$args{intent}};
      my $makedepprog = $config{makedepprog};
@@ -221,8 +222,8 @@ EOF
      return <<"EOF"
 $target: $deps $ordinalsfile
 	\$(PERL) $mkdef_pl "$mkdef_key" 32 > $shlib.def
-	\$(LD) \$(LDFLAGS) \\
-		/dll /implib:$target \$(LDOUTFLAG)$shlib$shlibext /def:$shlib.def @<<
+	\$(LD) \$(LDFLAGS) \$(SHARED_LDFLAGS) \\
+		/implib:$target \$(LDOUTFLAG)$shlib$shlibext /def:$shlib.def @<<
 $objs$linklibs \$(EX_LIBS)
 <<
 EOF
@@ -230,6 +231,7 @@ EOF
  sub obj2dso {
      my %args = @_;
      my $dso = $args{lib};
+     my $dso_n = basename($dso);
      my $objs = join("\n", map { $_.$objext } @{$args{objs}});
      my $linklibs = join("",
 			 map { "\n$_" } compute_lib_depends(@{$args{deps}}));
@@ -238,8 +240,8 @@ EOF
 		     compute_lib_depends(@{$args{deps}}));
      return <<"EOF";
 $dso$dsoext: $deps
-	\$(LD) \$(LDFLAGS) /dll \$(LDOUTFLAG)$dso$dsoext /def:<< @<<
-LIBRARY         $dso
+	\$(LD) \$(LDFLAGS) \$(DSO_LDFLAGS) \$(LDOUTFLAG)$dso$dsoext /def:<< @<<
+LIBRARY         $dso_n
 EXPORTS
     bind_engine		@1
     v_check		@2
@@ -271,7 +273,7 @@ EOF
 		     compute_lib_depends(@{$args{deps}}));
      return <<"EOF";
 $bin$exeext: $deps
-	\$(LD) \$(LDFLAGS) \$(LDOUTFLAG)$bin$exeext @<<
+	\$(LD) \$(LDFLAGS) \$(BIN_LDFLAGS) \$(LDOUTFLAG)$bin$exeext @<<
 $objs setargv.obj$linklibs \$(EX_LIBS)
 <<
 EOF
