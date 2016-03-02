@@ -30,6 +30,7 @@ LIBSSL=-L.. -lssl
 
 SCRIPTS=CA.pl tsget
 EXE= openssl$(EXE_EXT)
+CONFS=openssl.cnf ct_log_list.cnf
 
 COMMANDS= \
 	asn1pars.o ca.o ciphers.o cms.o crl.o crl2p7.o dgst.o dhparam.o \
@@ -92,10 +93,14 @@ install:
 	 cp $$i $(DESTDIR)$(OPENSSLDIR)/misc/$$i.new; \
 	 chmod 755 $(DESTDIR)$(OPENSSLDIR)/misc/$$i.new; \
 	 mv -f $(DESTDIR)$(OPENSSLDIR)/misc/$$i.new $(DESTDIR)$(OPENSSLDIR)/misc/$$i ); \
-	 done
-	@cp openssl.cnf $(DESTDIR)$(OPENSSLDIR)/openssl.cnf.new; \
-	chmod 644 $(DESTDIR)$(OPENSSLDIR)/openssl.cnf.new; \
-	mv -f  $(DESTDIR)$(OPENSSLDIR)/openssl.cnf.new $(DESTDIR)$(OPENSSLDIR)/openssl.cnf
+	 done;
+	@set -e; for i in $(CONFS); \
+	do \
+	(echo installing $$i; \
+	 cp $$i $(DESTDIR)$(OPENSSLDIR)/$$i.new; \
+	 chmod 644 $(DESTDIR)$(OPENSSLDIR)/$$i.new; \
+	 mv -f $(DESTDIR)$(OPENSSLDIR)/$$i.new $(DESTDIR)$(OPENSSLDIR)/$$i ); \
+	 done;
 
 uninstall:
 	@set -e; for i in $(EXE); \
@@ -107,8 +112,12 @@ uninstall:
 	do  \
 		echo $(RM) $(DESTDIR)$(OPENSSLDIR)/misc/$$i; \
 		$(RM) $(DESTDIR)$(OPENSSLDIR)/misc/$$i; \
-	done
-	$(RM) $(DESTDIR)$(OPENSSLDIR)/openssl.cnf
+	done;
+	@set -e; for i in $(CONFS); \
+	do  \
+		echo $(RM) $(DESTDIR)$(OPENSSLDIR)/$$i; \
+		$(RM) $(DESTDIR)$(OPENSSLDIR)/$$i; \
+	done;
 
 generate: openssl-vms.cnf progs.h
 
