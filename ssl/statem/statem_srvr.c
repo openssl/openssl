@@ -2978,7 +2978,8 @@ int tls_construct_new_session_ticket(SSL *s)
     unsigned int hlen;
     SSL_CTX *tctx = s->initial_ctx;
     unsigned char iv[EVP_MAX_IV_LENGTH];
-    unsigned char key_name[16];
+    unsigned char key_name[TLSEXT_KEYNAME_LENGTH];
+    int iv_len;
 
     /* get session encoding length */
     slen_full = i2d_SSL_SESSION(s->session, NULL);
@@ -3028,13 +3029,14 @@ int tls_construct_new_session_ticket(SSL *s)
      * Grow buffer if need be: the length calculation is as
      * follows handshake_header_length +
      * 4 (ticket lifetime hint) + 2 (ticket length) +
-     * 16 (key name) + max_iv_len (iv length) +
-     * session_length + max_enc_block_size (max encrypted session
-     * length) + max_md_size (HMAC).
+     * sizeof(keyname) + max_iv_len (iv length) +
+     * max_enc_block_size (max encrypted session * length) +
+     * max_md_size (HMAC) + session_length.
      */
     if (!BUF_MEM_grow(s->init_buf,
-                      SSL_HM_HEADER_LENGTH(s) + 22 + EVP_MAX_IV_LENGTH +
-                      EVP_MAX_BLOCK_LENGTH + EVP_MAX_MD_SIZE + slen))
+                      SSL_HM_HEADER_LENGTH(s) + 6 + sizeof(key_name) +
+                      EVP_MAX_IV_LENGTH + EVP_MAX_BLOCK_LENGTH +
+                      EVP_MAX_MD_SIZE + slen))
         goto err;
 
     p = ssl_handshake_start(s);
@@ -3045,10 +3047,14 @@ int tls_construct_new_session_ticket(SSL *s)
     if (tctx->tlsext_ticket_key_cb) {
         if (tctx->tlsext_ticket_key_cb(s, key_name, iv, ctx, hctx, 1) < 0)
             goto err;
+        iv_len = EVP_CIPHER_CTX_iv_length(ctx);
     } else {
-        if (RAND_bytes(iv, 16) <= 0)
+        const EVP_CIPHER *cipher = EVP_aes_256_cbc();
+
+        iv_len = EVP_CIPHER_iv_length(cipher);
+        if (RAND_bytes(iv, iv_len) <= 0)
             goto err;
-        if (!EVP_EncryptInit_ex(ctx, EVP_aes_256_cbc(), NULL,
+        if (!EVP_EncryptInit_ex(ctx, cipher, NULL,
                                 tctx->tlsext_tick_aes_key, iv))
             goto err;
         if (!HMAC_Init_ex(hctx, tctx->tlsext_tick_hmac_key,
@@ -3070,11 +3076,11 @@ int tls_construct_new_session_ticket(SSL *s)
     p += 2;
     /* Output key name */
     macstart = p;
-    memcpy(p, key_name, 16);
-    p += 16;
+    memcpy(p, key_name, sizeof(key_name));
+    p += sizeof(key_name);
     /* output IV */
-    memcpy(p, iv, EVP_CIPHER_CTX_iv_length(ctx));
-    p += EVP_CIPHER_CTX_iv_length(ctx);
+    memcpy(p, iv, iv_len);
+    p += iv_len;
     /* Encrypt session data */
     if (!EVP_EncryptUpdate(ctx, p, &len, senc, slen))
         goto err;
