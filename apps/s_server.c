@@ -2245,7 +2245,7 @@ static int sv_body(int s, int stype, unsigned char *context)
                 if ((i <= 0) || (buf[0] == 'Q')) {
                     BIO_printf(bio_s_out, "DONE\n");
                     (void)BIO_flush(bio_s_out);
-                    SHUTDOWN(s);
+                    BIO_closesocket(s);
                     close_accept_socket();
                     ret = -11;
                     goto err;
@@ -2254,7 +2254,7 @@ static int sv_body(int s, int stype, unsigned char *context)
                     BIO_printf(bio_s_out, "DONE\n");
                     (void)BIO_flush(bio_s_out);
                     if (SSL_version(con) != DTLS1_VERSION)
-                        SHUTDOWN(s);
+                        BIO_closesocket(s);
                     /*
                      * close_accept_socket(); ret= -11;
                      */
@@ -2451,7 +2451,7 @@ static void close_accept_socket(void)
 {
     BIO_printf(bio_err, "shutdown accept socket\n");
     if (accept_socket >= 0) {
-        SHUTDOWN2(accept_socket);
+        BIO_closesocket(accept_socket);
     }
 }
 
