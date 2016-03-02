@@ -3557,7 +3557,7 @@ static unsigned int psk_server_callback(SSL *ssl, const char *identity,
 
 static int do_test_cipherlist(void)
 {
-#if !defined(OPENSSL_NO_SSL3_METHOD) || !defined(OPENSSL_NO_TLS1_METHOD)
+#ifndef OPENSSL_NO_TLS
     int i = 0;
     const SSL_METHOD *meth;
     const SSL_CIPHER *ci, *tci = NULL;
@@ -3567,28 +3567,13 @@ static int do_test_cipherlist(void)
      * call functions, thus avoiding auto-init
      */
     OPENSSL_init_crypto(0, NULL);
-#endif
 
-#ifndef OPENSSL_NO_SSL3_METHOD
-    meth = SSLv3_method();
+    meth = TLS_method();
     tci = NULL;
     while ((ci = meth->get_cipher(i++)) != NULL) {
         if (tci != NULL)
             if (ci->id >= tci->id) {
                 fprintf(stderr, "testing SSLv3 cipher list order: ");
-                fprintf(stderr, "failed %x vs. %x\n", ci->id, tci->id);
-                return 0;
-            }
-        tci = ci;
-    }
-#endif
-#ifndef OPENSSL_NO_TLS1_METHOD
-    meth = TLSv1_method();
-    tci = NULL;
-    while ((ci = meth->get_cipher(i++)) != NULL) {
-        if (tci != NULL)
-            if (ci->id >= tci->id) {
-                fprintf(stderr, "testing TLSv1 cipher list order: ");
                 fprintf(stderr, "failed %x vs. %x\n", ci->id, tci->id);
                 return 0;
             }
