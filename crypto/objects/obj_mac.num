@@ -1033,3 +1033,4 @@ pkInitClientAuth		1032
 pkInitKDC		1033
 X25519		1034
 X448		1035
+hkdf		1036

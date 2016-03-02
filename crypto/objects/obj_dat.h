@@ -60,9 +60,9 @@
  * [including the GNU Public Licence.]
  */
 
-#define NUM_NID 1036
-#define NUM_SN 1029
-#define NUM_LN 1029
+#define NUM_NID 1037
+#define NUM_SN 1030
+#define NUM_LN 1030
 #define NUM_OBJ 951
 
 static const unsigned char lvalues[6722]={
@@ -2704,6 +2704,7 @@ static const ASN1_OBJECT nid_objs[NUM_NID]={
 {"pkInitKDC","Signing KDC Response",NID_pkInitKDC,7,&(lvalues[6696]),0},
 {"X25519","X25519",NID_X25519,9,&(lvalues[6703]),0},
 {"X448","X448",NID_X448,9,&(lvalues[6712]),0},
+{"HKDF","hkdf",NID_hkdf,0,NULL,0},
 };
 
 static const unsigned int sn_objs[NUM_SN]={
@@ -2813,6 +2814,7 @@ static const unsigned int sn_objs[NUM_SN]={
 67,	/* "DSA-old" */
 297,	/* "DVCS" */
 99,	/* "GN" */
+1036,	/* "HKDF" */
 855,	/* "HMAC" */
 780,	/* "HMAC-MD5" */
 781,	/* "HMAC-SHA1" */
@@ -4152,6 +4154,7 @@ static const unsigned int ln_objs[NUM_LN]={
 1012,	/* "grasshopper-ecb" */
 1017,	/* "grasshopper-mac" */
 1014,	/* "grasshopper-ofb" */
+1036,	/* "hkdf" */
 855,	/* "hmac" */
 780,	/* "hmac-md5" */
 781,	/* "hmac-sha1" */
