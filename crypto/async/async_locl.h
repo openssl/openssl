@@ -108,10 +108,9 @@ struct async_pool_st {
     size_t max_size;
 };
 
-int async_global_init(void);
 void async_local_cleanup(void);
-void async_global_cleanup(void);
 void async_start_func(void);
+async_ctx *async_get_ctx(void);
 
 void async_wait_ctx_reset_counts(ASYNC_WAIT_CTX *ctx);
 

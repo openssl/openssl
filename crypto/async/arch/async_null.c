@@ -55,16 +55,7 @@
 
 #ifdef ASYNC_NULL
 
-int async_global_init(void)
-{
-    return 0;
-}
-
 void async_local_cleanup(void)
-{
-}
-
-void async_global_cleanup(void)
 {
 }
 
