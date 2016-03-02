@@ -75,118 +75,28 @@ static int stopped = 0;
 
 static void ossl_init_thread_stop(struct thread_local_inits_st *locals);
 
-/* Implement "once" functionality */
-#if !defined(OPENSSL_THREADS)
-
-static int ossl_init_setup_thread_stop(void)
-{
-    /*
-     * There are no threads to stop. Do nothing.
-     */
-    return 1;
-}
-
-static void ossl_init_thread_stop_cleanup(void)
-{
-}
-
-static struct thread_local_inits_st *local = NULL;
-static struct thread_local_inits_st *ossl_init_get_thread_local(int alloc)
-{
-    struct thread_local_inits_st *tmp;
-
-    tmp = local;
-
-    if (local == NULL && alloc)
-        tmp = local = OPENSSL_zalloc(sizeof(*local));
-
-    if (!alloc)
-        local = NULL;
-
-    return tmp;
-}
-
-#elif defined(OPENSSL_SYS_WINDOWS)
-
-# include <windows.h>
-
-static DWORD threadstopkey = TLS_OUT_OF_INDEXES;
-
-static int ossl_init_setup_thread_stop(void)
-{
-    /*
-     * We use a dummy thread local key here. We use the destructor to detect
-     * when the thread is going to stop
-     */
-    threadstopkey = TlsAlloc();
-    if (threadstopkey == TLS_OUT_OF_INDEXES)
-        return 0;
-
-    return 1;
-}
-
-static void ossl_init_thread_stop_cleanup(void)
-{
-    if (threadstopkey != TLS_OUT_OF_INDEXES) {
-        TlsFree(threadstopkey);
-    }
-}
-
-static struct thread_local_inits_st *ossl_init_get_thread_local(int alloc)
-{
-    struct thread_local_inits_st *local = TlsGetValue(threadstopkey);
-
-    if (local == NULL && alloc) {
-        local = OPENSSL_zalloc(sizeof *local);
-        TlsSetValue(threadstopkey, local);
-    }
-    if (!alloc) {
-        TlsSetValue(threadstopkey, NULL);
-    }
-
-    return local;
-}
-
-#else /* pthreads */
-# include <pthread.h>
-
-static pthread_key_t threadstopkey;
+static CRYPTO_THREAD_LOCAL threadstopkey;
 
 static void ossl_init_thread_stop_wrap(void *local)
 {
     ossl_init_thread_stop((struct thread_local_inits_st *)local);
 }
 
-static int ossl_init_setup_thread_stop(void)
-{
-    /*
-     * We use a dummy thread local key here. We use the destructor to detect
-     * when the thread is going to stop
-     */
-    return (pthread_key_create(&threadstopkey,
-                               ossl_init_thread_stop_wrap) == 0);
-}
-
-static void ossl_init_thread_stop_cleanup(void)
-{
-}
-
 static struct thread_local_inits_st *ossl_init_get_thread_local(int alloc)
 {
-    struct thread_local_inits_st *local = pthread_getspecific(threadstopkey);
+    struct thread_local_inits_st *local =
+        CRYPTO_THREAD_get_local(&threadstopkey);
 
     if (local == NULL && alloc) {
         local = OPENSSL_zalloc(sizeof *local);
-        pthread_setspecific(threadstopkey, local);
+        CRYPTO_THREAD_set_local(&threadstopkey, local);
     }
     if (!alloc) {
-        pthread_setspecific(threadstopkey, NULL);
+        CRYPTO_THREAD_set_local(&threadstopkey, NULL);
     }
 
     return local;
 }
-
-#endif
 
 typedef struct ossl_init_stop_st OPENSSL_INIT_STOP;
 struct ossl_init_stop_st {
@@ -203,7 +113,11 @@ static void ossl_init_base(void)
 #ifdef OPENSSL_INIT_DEBUG
     fprintf(stderr, "OPENSSL_INIT: ossl_init_base: Setting up stop handlers\n");
 #endif
-    ossl_init_setup_thread_stop();
+    /*
+     * We use a dummy thread local key here. We use the destructor to detect
+     * when the thread is going to stop (where that feature is available)
+     */
+    CRYPTO_THREAD_init_local(&threadstopkey, ossl_init_thread_stop_wrap);
 #ifndef OPENSSL_SYS_UEFI
     atexit(OPENSSL_cleanup);
 #endif
@@ -552,7 +466,7 @@ void OPENSSL_cleanup(void)
         ERR_free_strings();
     }
 
-    ossl_init_thread_stop_cleanup();
+    CRYPTO_THREAD_cleanup_local(&threadstopkey);
 
 #ifdef OPENSSL_INIT_DEBUG
     fprintf(stderr, "OPENSSL_INIT: OPENSSL_INIT_library_stop: "
