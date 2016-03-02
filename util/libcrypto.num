@@ -1047,7 +1047,7 @@ X509at_get_attr_by_OBJ                  1015	1_1_0	EXIST::FUNCTION:
 EVP_MD_CTX_copy_ex                      1016	1_1_0	EXIST::FUNCTION:
 UI_dup_error_string                     1017	1_1_0	EXIST::FUNCTION:
 lh_num_items                            1018	1_1_0	EXIST::FUNCTION:
-ERR_get_err_state_table                 1019	1_1_0	EXIST::FUNCTION:
+ERR_get_err_state_table                 1019	1_1_0	NOEXIST::FUNCTION:
 ASN1_INTEGER_cmp                        1020	1_1_0	EXIST::FUNCTION:
 X509_NAME_entry_count                   1021	1_1_0	EXIST::FUNCTION:
 UI_method_set_closer                    1022	1_1_0	EXIST::FUNCTION:
@@ -3507,7 +3507,7 @@ i2d_PBE2PARAM                           3389	1_1_0	EXIST::FUNCTION:
 EC_POINT_make_affine                    3390	1_1_0	EXIST::FUNCTION:EC
 DSA_generate_parameters                 3391	1_1_0	EXIST::FUNCTION:DEPRECATEDIN_0_9_8,DSA
 ASN1_BIT_STRING_num_asc                 3392	1_1_0	EXIST::FUNCTION:
-ERR_release_err_state_table             3393	1_1_0	EXIST::FUNCTION:
+ERR_release_err_state_table             3393	1_1_0	NOEXIST::FUNCTION:
 X509_INFO_free                          3394	1_1_0	EXIST::FUNCTION:
 d2i_PKCS8_PRIV_KEY_INFO_fp              3395	1_1_0	EXIST::FUNCTION:STDIO
 X509_OBJECT_retrieve_match              3396	1_1_0	EXIST::FUNCTION:
