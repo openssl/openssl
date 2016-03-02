@@ -1040,7 +1040,7 @@ static uint8_t equal(signed char b, signed char c) {
   return y;
 }
 
-static void cmov(ge_precomp *t, ge_precomp *u, uint8_t b) {
+static void cmov(ge_precomp *t, const ge_precomp *u, uint8_t b) {
   fe_cmov(t->yplusx, u->yplusx, b);
   fe_cmov(t->yminusx, u->yminusx, b);
   fe_cmov(t->xy2d, u->xy2d, b);
