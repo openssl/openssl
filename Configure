@@ -856,15 +856,15 @@ $target{dso_extension}=$target{shared_extension_simple};
     if ($config{target} =~ /^(?:Cygwin|mingw)/);
 
 
-$default_ranlib	= which("ranlib") || "true";
-$config{perl}	= $ENV{'PERL'} || which("perl5") || which("perl") || "perl";
-my $make	= $ENV{'MAKE'} || "make";
-
 $config{cross_compile_prefix} = $ENV{'CROSS_COMPILE'}
     if $config{cross_compile_prefix} eq "";
 
-# Allow environment CC to override compiler...
-$target{cc} = $ENV{CC} || $target{cc};
+# Allow overriding the names of some tools.  USE WITH CARE
+$config{perl} =    $ENV{'PERL'}    || which("perl5") || which("perl") || "perl";
+$target{cc} =      $ENV{'CC'}      || $target{cc}      || "cc";
+$target{ranlib} =  $ENV{'RANLIB'}  || $target{ranlib}  || which("ranlib") || "true";
+$target{ar} =      $ENV{'AR'}      || $target{ar}      || "ar";
+$target{nm} =      $ENV{'NM'}      || $target{nm}      || "nm";
 
 # For cflags, lflags, plib_lflags, ex_libs and defines, add the debug_
 # or release_ attributes.
@@ -884,10 +884,6 @@ $config{ex_libs} = join(" ",
 			grep { $_  ne "" } ($target{ex_libs},
 					    $target{$build_prefix."ex_libs"}));
 
-$target{ranlib} = $ENV{'RANLIB'} || $target{ranlib} || $default_ranlib;
-$target{ar} = $ENV{'AR'} || "ar";
-$target{arflags} = "" if !defined($target{arflags});
-$target{nm} = "nm";
 # Make sure build_scheme is consistent.
 $target{build_scheme} = [ $target{build_scheme} ]
     if ref($target{build_scheme}) ne "ARRAY";
@@ -1048,11 +1044,6 @@ else
 if ($target{sys_id} ne "")
 	{
 	push @{$config{openssl_sys_defines}}, "OPENSSL_SYS_$target{sys_id}";
-	}
-
-if ($target{ranlib} eq "")
-	{
-	$target{ranlib} = $default_ranlib;
 	}
 
 unless ($disabled{asm}) {
