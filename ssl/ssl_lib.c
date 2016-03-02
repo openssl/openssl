@@ -2474,6 +2474,16 @@ void SSL_CTX_set_default_passwd_cb_userdata(SSL_CTX *ctx, void *u)
     ctx->default_passwd_callback_userdata = u;
 }
 
+pem_password_cb *SSL_CTX_get_default_passwd_cb(SSL_CTX *ctx)
+{
+    return ctx->default_passwd_callback;
+}
+
+void *SSL_CTX_get_default_passwd_cb_userdata(SSL_CTX *ctx)
+{
+    return ctx->default_passwd_callback_userdata;
+}
+
 void SSL_set_default_passwd_cb(SSL *s, pem_password_cb *cb)
 {
     s->default_passwd_callback = cb;
@@ -2482,6 +2492,16 @@ void SSL_set_default_passwd_cb(SSL *s, pem_password_cb *cb)
 void SSL_set_default_passwd_cb_userdata(SSL *s, void *u)
 {
     s->default_passwd_callback_userdata = u;
+}
+
+pem_password_cb *SSL_get_default_passwd_cb(SSL *s)
+{
+    return s->default_passwd_callback;
+}
+
+void *SSL_get_default_passwd_cb_userdata(SSL *s)
+{
+    return s->default_passwd_callback_userdata;
 }
 
 void SSL_CTX_set_cert_verify_callback(SSL_CTX *ctx,
