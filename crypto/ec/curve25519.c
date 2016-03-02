@@ -62,6 +62,11 @@
  * context.  */
 typedef int32_t fe[10];
 
+static const int64_t kBottom25Bits = 0x1ffffff;
+static const int64_t kBottom26Bits = 0x3ffffff;
+static const int64_t kTop39Bits = ~kBottom25Bits;
+static const int64_t kTop38Bits = ~kBottom26Bits;
+
 static uint64_t load_3(const uint8_t *in) {
   uint64_t result;
   result = (uint64_t)in[0];
@@ -102,17 +107,17 @@ static void fe_frombytes(fe h, const uint8_t *s) {
   int64_t carry8;
   int64_t carry9;
 
-  carry9 = (h9 + (int64_t) (1<<24)) >> 25; h0 += carry9 * 19; h9 -= carry9 << 25;
-  carry1 = (h1 + (int64_t) (1<<24)) >> 25; h2 += carry1; h1 -= carry1 << 25;
-  carry3 = (h3 + (int64_t) (1<<24)) >> 25; h4 += carry3; h3 -= carry3 << 25;
-  carry5 = (h5 + (int64_t) (1<<24)) >> 25; h6 += carry5; h5 -= carry5 << 25;
-  carry7 = (h7 + (int64_t) (1<<24)) >> 25; h8 += carry7; h7 -= carry7 << 25;
+  carry9 = h9 + (1 << 24); h0 += (carry9 >> 25) * 19; h9 -= carry9 & kTop39Bits;
+  carry1 = h1 + (1 << 24); h2 += carry1 >> 25; h1 -= carry1 & kTop39Bits;
+  carry3 = h3 + (1 << 24); h4 += carry3 >> 25; h3 -= carry3 & kTop39Bits;
+  carry5 = h5 + (1 << 24); h6 += carry5 >> 25; h5 -= carry5 & kTop39Bits;
+  carry7 = h7 + (1 << 24); h8 += carry7 >> 25; h7 -= carry7 & kTop39Bits;
 
-  carry0 = (h0 + (int64_t) (1<<25)) >> 26; h1 += carry0; h0 -= carry0 << 26;
-  carry2 = (h2 + (int64_t) (1<<25)) >> 26; h3 += carry2; h2 -= carry2 << 26;
-  carry4 = (h4 + (int64_t) (1<<25)) >> 26; h5 += carry4; h4 -= carry4 << 26;
-  carry6 = (h6 + (int64_t) (1<<25)) >> 26; h7 += carry6; h6 -= carry6 << 26;
-  carry8 = (h8 + (int64_t) (1<<25)) >> 26; h9 += carry8; h8 -= carry8 << 26;
+  carry0 = h0 + (1 << 25); h1 += carry0 >> 26; h0 -= carry0 & kTop38Bits;
+  carry2 = h2 + (1 << 25); h3 += carry2 >> 26; h2 -= carry2 & kTop38Bits;
+  carry4 = h4 + (1 << 25); h5 += carry4 >> 26; h4 -= carry4 & kTop38Bits;
+  carry6 = h6 + (1 << 25); h7 += carry6 >> 26; h6 -= carry6 & kTop38Bits;
+  carry8 = h8 + (1 << 25); h9 += carry8 >> 26; h8 -= carry8 & kTop38Bits;
 
   h[0] = h0;
   h[1] = h1;
@@ -160,16 +165,6 @@ static void fe_tobytes(uint8_t *s, const fe h) {
   int32_t h8 = h[8];
   int32_t h9 = h[9];
   int32_t q;
-  int32_t carry0;
-  int32_t carry1;
-  int32_t carry2;
-  int32_t carry3;
-  int32_t carry4;
-  int32_t carry5;
-  int32_t carry6;
-  int32_t carry7;
-  int32_t carry8;
-  int32_t carry9;
 
   q = (19 * h9 + (((int32_t) 1) << 24)) >> 25;
   q = (h0 + q) >> 26;
@@ -187,16 +182,16 @@ static void fe_tobytes(uint8_t *s, const fe h) {
   h0 += 19 * q;
   /* Goal: Output h-2^255 q, which is between 0 and 2^255-20. */
 
-  carry0 = h0 >> 26; h1 += carry0; h0 -= carry0 << 26;
-  carry1 = h1 >> 25; h2 += carry1; h1 -= carry1 << 25;
-  carry2 = h2 >> 26; h3 += carry2; h2 -= carry2 << 26;
-  carry3 = h3 >> 25; h4 += carry3; h3 -= carry3 << 25;
-  carry4 = h4 >> 26; h5 += carry4; h4 -= carry4 << 26;
-  carry5 = h5 >> 25; h6 += carry5; h5 -= carry5 << 25;
-  carry6 = h6 >> 26; h7 += carry6; h6 -= carry6 << 26;
-  carry7 = h7 >> 25; h8 += carry7; h7 -= carry7 << 25;
-  carry8 = h8 >> 26; h9 += carry8; h8 -= carry8 << 26;
-  carry9 = h9 >> 25;               h9 -= carry9 << 25;
+  h1 += h0 >> 26; h0 &= kBottom26Bits;
+  h2 += h1 >> 25; h1 &= kBottom25Bits;
+  h3 += h2 >> 26; h2 &= kBottom26Bits;
+  h4 += h3 >> 25; h3 &= kBottom25Bits;
+  h5 += h4 >> 26; h4 &= kBottom26Bits;
+  h6 += h5 >> 25; h5 &= kBottom25Bits;
+  h7 += h6 >> 26; h6 &= kBottom26Bits;
+  h8 += h7 >> 25; h7 &= kBottom25Bits;
+  h9 += h8 >> 26; h8 &= kBottom26Bits;
+                  h9 &= kBottom25Bits;
                   /* h10 = carry9 */
 
   /* Goal: Output h0+...+2^255 h10-2^255 q, which is between 0 and 2^255-20.
@@ -207,32 +202,32 @@ static void fe_tobytes(uint8_t *s, const fe h) {
   s[0] = h0 >> 0;
   s[1] = h0 >> 8;
   s[2] = h0 >> 16;
-  s[3] = (h0 >> 24) | (h1 << 2);
+  s[3] = (h0 >> 24) | ((uint32_t)(h1 & 0x3fffffff) << 2);
   s[4] = h1 >> 6;
   s[5] = h1 >> 14;
-  s[6] = (h1 >> 22) | (h2 << 3);
+  s[6] = (h1 >> 22) | ((uint32_t)(h2 & 0x1fffffff) << 3);
   s[7] = h2 >> 5;
   s[8] = h2 >> 13;
-  s[9] = (h2 >> 21) | (h3 << 5);
+  s[9] = (h2 >> 21) | ((uint32_t)(h3 & 0x07ffffff) << 5);
   s[10] = h3 >> 3;
   s[11] = h3 >> 11;
-  s[12] = (h3 >> 19) | (h4 << 6);
+  s[12] = (h3 >> 19) | ((uint32_t)(h4 & 0x3fffffff) << 6);
   s[13] = h4 >> 2;
   s[14] = h4 >> 10;
   s[15] = h4 >> 18;
   s[16] = h5 >> 0;
   s[17] = h5 >> 8;
   s[18] = h5 >> 16;
-  s[19] = (h5 >> 24) | (h6 << 1);
+  s[19] = (h5 >> 24) | ((uint32_t)(h6 & 0x7fffffff) << 1);
   s[20] = h6 >> 7;
   s[21] = h6 >> 15;
-  s[22] = (h6 >> 23) | (h7 << 3);
+  s[22] = (h6 >> 23) | ((uint32_t)(h7 & 0x1fffffff) << 3);
   s[23] = h7 >> 5;
   s[24] = h7 >> 13;
-  s[25] = (h7 >> 21) | (h8 << 4);
+  s[25] = (h7 >> 21) | ((uint32_t)(h8 & 0x3fffffff) << 4);
   s[26] = h8 >> 4;
   s[27] = h8 >> 12;
-  s[28] = (h8 >> 20) | (h9 << 6);
+  s[28] = (h8 >> 20) | ((uint32_t)(h9 & 0x03ffffff) << 6);
   s[29] = h9 >> 2;
   s[30] = h9 >> 10;
   s[31] = h9 >> 18;
@@ -472,46 +467,46 @@ static void fe_mul(fe h, const fe f, const fe g) {
    * |h1| <= (1.65*1.65*2^51*(1+1+19+19+19+19+19+19+19+19))
    *   i.e. |h1| <= 1.7*2^59; narrower ranges for h3, h5, h7, h9 */
 
-  carry0 = (h0 + (int64_t) (1<<25)) >> 26; h1 += carry0; h0 -= carry0 << 26;
-  carry4 = (h4 + (int64_t) (1<<25)) >> 26; h5 += carry4; h4 -= carry4 << 26;
+  carry0 = h0 + (1 << 25); h1 += carry0 >> 26; h0 -= carry0 & kTop38Bits;
+  carry4 = h4 + (1 << 25); h5 += carry4 >> 26; h4 -= carry4 & kTop38Bits;
   /* |h0| <= 2^25 */
   /* |h4| <= 2^25 */
   /* |h1| <= 1.71*2^59 */
   /* |h5| <= 1.71*2^59 */
 
-  carry1 = (h1 + (int64_t) (1<<24)) >> 25; h2 += carry1; h1 -= carry1 << 25;
-  carry5 = (h5 + (int64_t) (1<<24)) >> 25; h6 += carry5; h5 -= carry5 << 25;
+  carry1 = h1 + (1 << 24); h2 += carry1 >> 25; h1 -= carry1 & kTop39Bits;
+  carry5 = h5 + (1 << 24); h6 += carry5 >> 25; h5 -= carry5 & kTop39Bits;
   /* |h1| <= 2^24; from now on fits into int32 */
   /* |h5| <= 2^24; from now on fits into int32 */
   /* |h2| <= 1.41*2^60 */
   /* |h6| <= 1.41*2^60 */
 
-  carry2 = (h2 + (int64_t) (1<<25)) >> 26; h3 += carry2; h2 -= carry2 << 26;
-  carry6 = (h6 + (int64_t) (1<<25)) >> 26; h7 += carry6; h6 -= carry6 << 26;
+  carry2 = h2 + (1 << 25); h3 += carry2 >> 26; h2 -= carry2 & kTop38Bits;
+  carry6 = h6 + (1 << 25); h7 += carry6 >> 26; h6 -= carry6 & kTop38Bits;
   /* |h2| <= 2^25; from now on fits into int32 unchanged */
   /* |h6| <= 2^25; from now on fits into int32 unchanged */
   /* |h3| <= 1.71*2^59 */
   /* |h7| <= 1.71*2^59 */
 
-  carry3 = (h3 + (int64_t) (1<<24)) >> 25; h4 += carry3; h3 -= carry3 << 25;
-  carry7 = (h7 + (int64_t) (1<<24)) >> 25; h8 += carry7; h7 -= carry7 << 25;
+  carry3 = h3 + (1 << 24); h4 += carry3 >> 25; h3 -= carry3 & kTop39Bits;
+  carry7 = h7 + (1 << 24); h8 += carry7 >> 25; h7 -= carry7 & kTop39Bits;
   /* |h3| <= 2^24; from now on fits into int32 unchanged */
   /* |h7| <= 2^24; from now on fits into int32 unchanged */
   /* |h4| <= 1.72*2^34 */
   /* |h8| <= 1.41*2^60 */
 
-  carry4 = (h4 + (int64_t) (1<<25)) >> 26; h5 += carry4; h4 -= carry4 << 26;
-  carry8 = (h8 + (int64_t) (1<<25)) >> 26; h9 += carry8; h8 -= carry8 << 26;
+  carry4 = h4 + (1 << 25); h5 += carry4 >> 26; h4 -= carry4 & kTop38Bits;
+  carry8 = h8 + (1 << 25); h9 += carry8 >> 26; h8 -= carry8 & kTop38Bits;
   /* |h4| <= 2^25; from now on fits into int32 unchanged */
   /* |h8| <= 2^25; from now on fits into int32 unchanged */
   /* |h5| <= 1.01*2^24 */
   /* |h9| <= 1.71*2^59 */
 
-  carry9 = (h9 + (int64_t) (1<<24)) >> 25; h0 += carry9 * 19; h9 -= carry9 << 25;
+  carry9 = h9 + (1 << 24); h0 += (carry9 >> 25) * 19; h9 -= carry9 & kTop39Bits;
   /* |h9| <= 2^24; from now on fits into int32 unchanged */
   /* |h0| <= 1.1*2^39 */
 
-  carry0 = (h0 + (int64_t) (1<<25)) >> 26; h1 += carry0; h0 -= carry0 << 26;
+  carry0 = h0 + (1 << 25); h1 += carry0 >> 26; h0 -= carry0 & kTop38Bits;
   /* |h0| <= 2^25; from now on fits into int32 unchanged */
   /* |h1| <= 1.01*2^24 */
 
@@ -637,24 +632,24 @@ static void fe_sq(fe h, const fe f) {
   int64_t carry8;
   int64_t carry9;
 
-  carry0 = (h0 + (int64_t) (1<<25)) >> 26; h1 += carry0; h0 -= carry0 << 26;
-  carry4 = (h4 + (int64_t) (1<<25)) >> 26; h5 += carry4; h4 -= carry4 << 26;
+  carry0 = h0 + (1 << 25); h1 += carry0 >> 26; h0 -= carry0 & kTop38Bits;
+  carry4 = h4 + (1 << 25); h5 += carry4 >> 26; h4 -= carry4 & kTop38Bits;
 
-  carry1 = (h1 + (int64_t) (1<<24)) >> 25; h2 += carry1; h1 -= carry1 << 25;
-  carry5 = (h5 + (int64_t) (1<<24)) >> 25; h6 += carry5; h5 -= carry5 << 25;
+  carry1 = h1 + (1 << 24); h2 += carry1 >> 25; h1 -= carry1 & kTop39Bits;
+  carry5 = h5 + (1 << 24); h6 += carry5 >> 25; h5 -= carry5 & kTop39Bits;
 
-  carry2 = (h2 + (int64_t) (1<<25)) >> 26; h3 += carry2; h2 -= carry2 << 26;
-  carry6 = (h6 + (int64_t) (1<<25)) >> 26; h7 += carry6; h6 -= carry6 << 26;
+  carry2 = h2 + (1 << 25); h3 += carry2 >> 26; h2 -= carry2 & kTop38Bits;
+  carry6 = h6 + (1 << 25); h7 += carry6 >> 26; h6 -= carry6 & kTop38Bits;
 
-  carry3 = (h3 + (int64_t) (1<<24)) >> 25; h4 += carry3; h3 -= carry3 << 25;
-  carry7 = (h7 + (int64_t) (1<<24)) >> 25; h8 += carry7; h7 -= carry7 << 25;
+  carry3 = h3 + (1 << 24); h4 += carry3 >> 25; h3 -= carry3 & kTop39Bits;
+  carry7 = h7 + (1 << 24); h8 += carry7 >> 25; h7 -= carry7 & kTop39Bits;
 
-  carry4 = (h4 + (int64_t) (1<<25)) >> 26; h5 += carry4; h4 -= carry4 << 26;
-  carry8 = (h8 + (int64_t) (1<<25)) >> 26; h9 += carry8; h8 -= carry8 << 26;
+  carry4 = h4 + (1 << 25); h5 += carry4 >> 26; h4 -= carry4 & kTop38Bits;
+  carry8 = h8 + (1 << 25); h9 += carry8 >> 26; h8 -= carry8 & kTop38Bits;
 
-  carry9 = (h9 + (int64_t) (1<<24)) >> 25; h0 += carry9 * 19; h9 -= carry9 << 25;
+  carry9 = h9 + (1 << 24); h0 += (carry9 >> 25) * 19; h9 -= carry9 & kTop39Bits;
 
-  carry0 = (h0 + (int64_t) (1<<25)) >> 26; h1 += carry0; h0 -= carry0 << 26;
+  carry0 = h0 + (1 << 25); h1 += carry0 >> 26; h0 -= carry0 & kTop38Bits;
 
   h[0] = h0;
   h[1] = h1;
@@ -881,24 +876,24 @@ static void fe_sq2(fe h, const fe f) {
   h8 += h8;
   h9 += h9;
 
-  carry0 = (h0 + (int64_t) (1<<25)) >> 26; h1 += carry0; h0 -= carry0 << 26;
-  carry4 = (h4 + (int64_t) (1<<25)) >> 26; h5 += carry4; h4 -= carry4 << 26;
+  carry0 = h0 + (1 << 25); h1 += carry0 >> 26; h0 -= carry0 & kTop38Bits;
+  carry4 = h4 + (1 << 25); h5 += carry4 >> 26; h4 -= carry4 & kTop38Bits;
 
-  carry1 = (h1 + (int64_t) (1<<24)) >> 25; h2 += carry1; h1 -= carry1 << 25;
-  carry5 = (h5 + (int64_t) (1<<24)) >> 25; h6 += carry5; h5 -= carry5 << 25;
+  carry1 = h1 + (1 << 24); h2 += carry1 >> 25; h1 -= carry1 & kTop39Bits;
+  carry5 = h5 + (1 << 24); h6 += carry5 >> 25; h5 -= carry5 & kTop39Bits;
 
-  carry2 = (h2 + (int64_t) (1<<25)) >> 26; h3 += carry2; h2 -= carry2 << 26;
-  carry6 = (h6 + (int64_t) (1<<25)) >> 26; h7 += carry6; h6 -= carry6 << 26;
+  carry2 = h2 + (1 << 25); h3 += carry2 >> 26; h2 -= carry2 & kTop38Bits;
+  carry6 = h6 + (1 << 25); h7 += carry6 >> 26; h6 -= carry6 & kTop38Bits;
 
-  carry3 = (h3 + (int64_t) (1<<24)) >> 25; h4 += carry3; h3 -= carry3 << 25;
-  carry7 = (h7 + (int64_t) (1<<24)) >> 25; h8 += carry7; h7 -= carry7 << 25;
+  carry3 = h3 + (1 << 24); h4 += carry3 >> 25; h3 -= carry3 & kTop39Bits;
+  carry7 = h7 + (1 << 24); h8 += carry7 >> 25; h7 -= carry7 & kTop39Bits;
 
-  carry4 = (h4 + (int64_t) (1<<25)) >> 26; h5 += carry4; h4 -= carry4 << 26;
-  carry8 = (h8 + (int64_t) (1<<25)) >> 26; h9 += carry8; h8 -= carry8 << 26;
+  carry4 = h4 + (1 << 25); h5 += carry4 >> 26; h4 -= carry4 & kTop38Bits;
+  carry8 = h8 + (1 << 25); h9 += carry8 >> 26; h8 -= carry8 & kTop38Bits;
 
-  carry9 = (h9 + (int64_t) (1<<24)) >> 25; h0 += carry9 * 19; h9 -= carry9 << 25;
+  carry9 = h9 + (1 << 24); h0 += (carry9 >> 25) * 19; h9 -= carry9 & kTop39Bits;
 
-  carry0 = (h0 + (int64_t) (1<<25)) >> 26; h1 += carry0; h0 -= carry0 << 26;
+  carry0 = h0 + (1 << 25); h1 += carry0 >> 26; h0 -= carry0 & kTop38Bits;
 
   h[0] = h0;
   h[1] = h1;
@@ -3317,7 +3312,7 @@ static uint8_t negative(signed char b) {
 static void table_select(ge_precomp *t, int pos, signed char b) {
   ge_precomp minust;
   uint8_t bnegative = negative(b);
-  uint8_t babs = b - (((-bnegative) & b) << 1);
+  uint8_t babs = b - (((-bnegative) & b & 0x7f) << 1);
 
   ge_precomp_0(t);
   cmov(t, &k25519Precomp[pos][0], equal(babs, 1));
@@ -3454,17 +3449,17 @@ static void fe_mul121666(fe h, fe f) {
   int64_t carry8;
   int64_t carry9;
 
-  carry9 = (h9 + (int64_t) (1<<24)) >> 25; h0 += carry9 * 19; h9 -= carry9 << 25;
-  carry1 = (h1 + (int64_t) (1<<24)) >> 25; h2 += carry1; h1 -= carry1 << 25;
-  carry3 = (h3 + (int64_t) (1<<24)) >> 25; h4 += carry3; h3 -= carry3 << 25;
-  carry5 = (h5 + (int64_t) (1<<24)) >> 25; h6 += carry5; h5 -= carry5 << 25;
-  carry7 = (h7 + (int64_t) (1<<24)) >> 25; h8 += carry7; h7 -= carry7 << 25;
+  carry9 = h9 + (1 << 24); h0 += (carry9 >> 25) * 19; h9 -= carry9 & kTop39Bits;
+  carry1 = h1 + (1 << 24); h2 += carry1 >> 25; h1 -= carry1 & kTop39Bits;
+  carry3 = h3 + (1 << 24); h4 += carry3 >> 25; h3 -= carry3 & kTop39Bits;
+  carry5 = h5 + (1 << 24); h6 += carry5 >> 25; h5 -= carry5 & kTop39Bits;
+  carry7 = h7 + (1 << 24); h8 += carry7 >> 25; h7 -= carry7 & kTop39Bits;
 
-  carry0 = (h0 + (int64_t) (1<<25)) >> 26; h1 += carry0; h0 -= carry0 << 26;
-  carry2 = (h2 + (int64_t) (1<<25)) >> 26; h3 += carry2; h2 -= carry2 << 26;
-  carry4 = (h4 + (int64_t) (1<<25)) >> 26; h5 += carry4; h4 -= carry4 << 26;
-  carry6 = (h6 + (int64_t) (1<<25)) >> 26; h7 += carry6; h6 -= carry6 << 26;
-  carry8 = (h8 + (int64_t) (1<<25)) >> 26; h9 += carry8; h8 -= carry8 << 26;
+  carry0 = h0 + (1 << 25); h1 += carry0 >> 26; h0 -= carry0 & kTop38Bits;
+  carry2 = h2 + (1 << 25); h3 += carry2 >> 26; h2 -= carry2 & kTop38Bits;
+  carry4 = h4 + (1 << 25); h5 += carry4 >> 26; h4 -= carry4 & kTop38Bits;
+  carry6 = h6 + (1 << 25); h7 += carry6 >> 26; h6 -= carry6 & kTop38Bits;
+  carry8 = h8 + (1 << 25); h9 += carry8 >> 26; h8 -= carry8 & kTop38Bits;
 
   h[0] = h0;
   h[1] = h1;
