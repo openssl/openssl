@@ -372,7 +372,7 @@ sub do_lib_rule
  		if ($fips && $target =~ /O_CRYPTO/)
 			{
 			$ret.="$target: $objs \$(PREMAIN_DSO_EXE)";
-			$ret.="\n\tSET FIPS_LINK=\$(LINK)\n";
+			$ret.="\n\tSET FIPS_LINK=\$(LINK_CMD)\n";
 			$ret.="\tSET FIPS_CC=\$(CC)\n";
 			$ret.="\tSET FIPS_CC_ARGS=/Fo\$(OBJ_D)${o}fips_premain.obj \$(SHLIB_CFLAGS) -c\n";
 			$ret.="\tSET PREMAIN_DSO_EXE=\$(PREMAIN_DSO_EXE)\n";
@@ -386,7 +386,7 @@ sub do_lib_rule
 		else
 			{
 			$ret.="$target: $objs";
-			$ret.="\n\t\$(LINK) \$(MLFLAGS) $efile$target $name @<<\n  \$(SHLIB_EX_OBJ) $objs $ex \$(EX_LIBS)\n<<\n";
+			$ret.="\n\t\$(LINK_CMD) \$(MLFLAGS) $efile$target $name @<<\n  \$(SHLIB_EX_OBJ) $objs $ex \$(EX_LIBS)\n<<\n";
 			}
 		$ret.="\tIF EXIST \$@.manifest mt -nologo -manifest \$@.manifest -outputresource:\$@;2\n\n";
 		}
@@ -405,7 +405,7 @@ sub do_link_rule
 		{
 		$ret.=" \$(OBJ_D)${o}applink.obj" if $shlib;
 		$ret.="\n";
-		$ret.="  \$(LINK) \$(LFLAGS) $efile$target @<<\n\t";
+		$ret.="  \$(LINK_CMD) \$(LFLAGS) $efile$target @<<\n\t";
 		if ($files =~ /O_FIPSCANISTER/ && !$fipscanisterbuild) {
 			$ret.= "\$(EX_LIBS) ";
 			$ret.= "\$(OBJ_D)${o}applink.obj " if $shlib;
@@ -415,7 +415,7 @@ sub do_link_rule
 	elsif ($standalone == 2)
 		{
 		$ret.="\n";
-		$ret.="\tSET FIPS_LINK=\$(LINK)\n";
+		$ret.="\tSET FIPS_LINK=\$(LINK_CMD)\n";
 		$ret.="\tSET FIPS_CC=\$(CC)\n";
 		$ret.="\tSET FIPS_CC_ARGS=/Fo\$(OBJ_D)${o}fips_premain.obj \$(SHLIB_CFLAGS) -c\n";
 		$ret.="\tSET PREMAIN_DSO_EXE=\n";
@@ -431,13 +431,13 @@ sub do_link_rule
 		#$ret.="\t\$(MKLIB) /out:$target @<<\n";
 		#$ret.="\t$files \n<<\n";
 		$ret.="\n";
-		$ret.="\t\$(LINK) /dll /EXPORT:main \$(LFLAGS) $efile$target @<<\n";
+		$ret.="\t\$(LINK_CMD) /dll /EXPORT:main \$(LFLAGS) $efile$target @<<\n";
 		$ret.="\t\$(APP_EX_OBJ) $files $libs\n<<\n";
 		}
 	else
 		{
 		$ret.="\n";
-		$ret.="\t\$(LINK) \$(LFLAGS) $efile$target @<<\n";
+		$ret.="\t\$(LINK_CMD) \$(LFLAGS) $efile$target @<<\n";
 		$ret.="\t\$(APP_EX_OBJ) $files $libs\n<<\n";
 		}
 	$ret.="\tIF EXIST \$@.manifest mt -nologo -manifest \$@.manifest -outputresource:\$@;1\n\n" if (!($FLAVOR =~ /PHONE|STORE|UNIVERSAL/));
