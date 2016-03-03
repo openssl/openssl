@@ -1586,8 +1586,10 @@ int main(int argc, char *argv[])
 
     if ((!SSL_CTX_load_verify_locations(s_ctx, CAfile, CApath)) ||
         (!SSL_CTX_set_default_verify_paths(s_ctx)) ||
+        (!SSL_CTX_set_default_ctlog_list_file(s_ctx)) ||
         (!SSL_CTX_load_verify_locations(c_ctx, CAfile, CApath)) ||
-        (!SSL_CTX_set_default_verify_paths(c_ctx))) {
+        (!SSL_CTX_set_default_verify_paths(c_ctx)) ||
+        (!SSL_CTX_set_default_ctlog_list_file(c_ctx))) {
         /* fprintf(stderr,"SSL_load_verify_locations\n"); */
         ERR_print_errors(bio_err);
         /* goto end; */
