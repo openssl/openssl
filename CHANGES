@@ -4,6 +4,11 @@
 
  Changes between 1.0.2g and 1.1.0  [xx XXX xxxx]
 
+  *) RC4 based libssl ciphersuites are now classed as "weak" ciphers and are
+     disabled by default. They can be re-enabled using the
+     enable-weak-ssl-ciphers option to Configure.
+     [Matt Caswell]
+
   *) If the server has ALPN configured, but supports no protocols that the
      client advertises, send a fatal "no_application_protocol" alert.
      This behaviour is SHALL in RFC 7301, though it isn't universally
