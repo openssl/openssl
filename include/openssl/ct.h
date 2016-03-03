@@ -542,7 +542,7 @@ CTLOG *CTLOG_STORE_get0_log_by_id(const CTLOG_STORE *store,
 
 /*
  * Loads a CT log list into a |store| from a |file|.
- * Returns 1 if loading is successful, or a non-positive integer otherwise.
+ * Returns 1 if loading is successful, or 0 otherwise.
  */
 int CTLOG_STORE_load_file(CTLOG_STORE *store, const char *file);
 
@@ -550,7 +550,7 @@ int CTLOG_STORE_load_file(CTLOG_STORE *store, const char *file);
  * Loads the default CT log list into a |store|.
  * See internal/cryptlib.h for the environment variable and file path that are
  * consulted to find the default file.
- * Returns 1 if loading is successful, or a non-positive integer otherwise.
+ * Returns 1 if loading is successful, or 0 otherwise.
  */
 int CTLOG_STORE_load_default_file(CTLOG_STORE *store);
 
