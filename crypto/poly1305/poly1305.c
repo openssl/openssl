@@ -668,6 +668,20 @@ static const struct poly1305_test poly1305_tests[] = {
      "f248312e578d9d58f8b7bb4d19105431"
     },
     /*
+     * AVX2 in poly1305-x86.pl failed this with 176+32 split
+     */
+    {
+    "248ac31085b6c2adaaa38259a0d7192c5c35d1bb4ef39ad94c38d1c82479e2dd"
+    "2159a077024b0589bc8a20101b506f0a1ad0bbab76e83a83f1b94be6beae74e8"
+    "74cab692c5963a75436b776121ec9f62399a3e66b2d22707dae81933b6277f3c"
+    "8516bcbe26dbbd86f373103d7cf4cad1888c952118fbfbd0d7b4bedc4ae4936a"
+    "ff91157e7aa47c54442ea78d6ac251d324a0fbe49d89cc3521b66d16e9c66a37"
+    "09894e4eb0a4eedc4ae19468e66b81f2"
+    "71351b1d921ea551047abcc6b87a901fde7db79fa1818c11336dbc07244a40eb",
+    "000102030405060708090a0b0c0d0e0f""00000000000000000000000000000000",
+    "bc939bc5281480fa99c6d68c258ec42f"
+    },
+    /*
      * test vectors from Google
      */
     {
@@ -843,6 +857,23 @@ int main()
                 hexdump(expected, sizeof(expected));
                 printf("\n");
                 return 1;
+            }
+
+            for (half = 16; half < inlen; half += 16) {
+                Poly1305_Init(&poly1305, key);
+                Poly1305_Update(&poly1305, in, half);
+                Poly1305_Update(&poly1305, in+half, inlen-half);
+                Poly1305_Final(&poly1305, out);
+
+                if (memcmp(out, expected, sizeof(expected)) != 0) {
+                    printf("Poly1305 test #%d/%d failed.\n", i, half);
+                    printf("got:      ");
+                    hexdump(out, sizeof(out));
+                    printf("\nexpected: ");
+                    hexdump(expected, sizeof(expected));
+                    printf("\n");
+                    return 1;
+                }
             }
         }
 

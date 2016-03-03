@@ -62,6 +62,10 @@ int EC_GROUP_check(const EC_GROUP *group, BN_CTX *ctx)
     BN_CTX *new_ctx = NULL;
     EC_POINT *point = NULL;
 
+    /* Custom curves assumed to be correct */
+    if ((group->meth->flags & EC_FLAGS_CUSTOM_CURVE) != 0)
+        return 1;
+
     if (ctx == NULL) {
         ctx = new_ctx = BN_CTX_new();
         if (ctx == NULL) {

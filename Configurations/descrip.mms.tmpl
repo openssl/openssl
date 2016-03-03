@@ -126,10 +126,10 @@ OPENSSLDIR={- catdir($config{openssldir}) ||
 ENGINESDIR={- $osslprefix -}ENGINES:
 
 CC= {- $target{cc} -}
-CFLAGS= /DEFINE=({- join(",", @{$config{defines}},"OPENSSLDIR=\"\"\"\$(OPENSSLDIR)\"\"\"","ENGINESDIR=\"\"\"\$(ENGINESDIR)\"\"\"") -}) {- $config{cflags} -}
+CFLAGS= /DEFINE=({- join(",", @{$target{defines}}, @{$config{defines}},"OPENSSLDIR=\"\"\"\$(OPENSSLDIR)\"\"\"","ENGINESDIR=\"\"\"\$(ENGINESDIR)\"\"\"") -}) {- $target{cflags} -} {- $config{cflags} -}
 DEPFLAG= /DEFINE=({- join(",", @{$config{depdefines}}) -})
-LDFLAGS= {- $config{lflags} -}
-EX_LIBS= {- $config{ex_libs} ? ",".$config{ex_libs} : "" -}
+LDFLAGS= {- $target{lflags} -}
+EX_LIBS= {- $target{ex_libs} ? ",".$target{ex_libs} : "" -}{- $config{ex_libs} ? ",".$config{ex_libs} : "" -}
 
 PERL={- $config{perl} -}
 
@@ -393,7 +393,7 @@ debug_logicals :
 
 # Building targets ###################################################
 
-configdata.pm : {- sourcefile("Configurations", "descrip.mms.tmpl") -} $(SRCDIR)Configure ! $(SRCDIR)config.com
+configdata.pm : {- join(" ", sourcefile("Configurations", "descrip.mms.tmpl"), sourcefile("Configurations", "common.tmpl")) -} $(SRCDIR)Configure $(SRCDIR)config.com {- join(" ", @{$config{build_infos}}) -}
         @ WRITE SYS$OUTPUT "Detected changed: $?"
         @ WRITE SYS$OUTPUT "Reconfiguring..."
         perl $(SRCDIR)Configure reconf

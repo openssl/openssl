@@ -1175,6 +1175,7 @@ struct ssl_st {
 
     /* Async Job info */
     ASYNC_JOB *job;
+    ASYNC_WAIT_CTX *waitctx;
 };
 
 

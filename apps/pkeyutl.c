@@ -217,7 +217,7 @@ int pkeyutl_main(int argc, char **argv)
         case OPT_PKEYOPT:
             if ((pkeyopts == NULL &&
                  (pkeyopts = sk_OPENSSL_STRING_new_null()) == NULL) ||
-                sk_OPENSSL_STRING_push(pkeyopts, *++argv) == 0) {
+                sk_OPENSSL_STRING_push(pkeyopts, opt_arg()) == 0) {
                 BIO_puts(bio_err, "out of memory\n");
                 goto end;
             }
@@ -334,7 +334,8 @@ int pkeyutl_main(int argc, char **argv)
                       buf_out, (size_t *)&buf_outlen,
                       buf_in, (size_t)buf_inlen);
     }
-    if (rv < 0) {
+    if (rv <= 0) {
+        BIO_puts(bio_err, "Public Key operation error\n");
         ERR_print_errors(bio_err);
         goto end;
     }

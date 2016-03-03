@@ -68,6 +68,38 @@
 # define MAX_SCT_SIZE            65535
 # define MAX_SCT_LIST_SIZE       MAX_SCT_SIZE
 
+/*
+ * Macros to read and write integers in network-byte order.
+ */
+
+#define n2s(c,s)        ((s=(((unsigned int)((c)[0]))<< 8)| \
+                            (((unsigned int)((c)[1]))    )),c+=2)
+
+#define s2n(s,c)        ((c[0]=(unsigned char)(((s)>> 8)&0xff), \
+                          c[1]=(unsigned char)(((s)    )&0xff)),c+=2)
+
+#define l2n3(l,c)       ((c[0]=(unsigned char)(((l)>>16)&0xff), \
+                          c[1]=(unsigned char)(((l)>> 8)&0xff), \
+                          c[2]=(unsigned char)(((l)    )&0xff)),c+=3)
+
+#define n2l8(c,l)       (l =((uint64_t)(*((c)++)))<<56, \
+                         l|=((uint64_t)(*((c)++)))<<48, \
+                         l|=((uint64_t)(*((c)++)))<<40, \
+                         l|=((uint64_t)(*((c)++)))<<32, \
+                         l|=((uint64_t)(*((c)++)))<<24, \
+                         l|=((uint64_t)(*((c)++)))<<16, \
+                         l|=((uint64_t)(*((c)++)))<< 8, \
+                         l|=((uint64_t)(*((c)++))))
+
+#define l2n8(l,c)       (*((c)++)=(unsigned char)(((l)>>56)&0xff), \
+                         *((c)++)=(unsigned char)(((l)>>48)&0xff), \
+                         *((c)++)=(unsigned char)(((l)>>40)&0xff), \
+                         *((c)++)=(unsigned char)(((l)>>32)&0xff), \
+                         *((c)++)=(unsigned char)(((l)>>24)&0xff), \
+                         *((c)++)=(unsigned char)(((l)>>16)&0xff), \
+                         *((c)++)=(unsigned char)(((l)>> 8)&0xff), \
+                         *((c)++)=(unsigned char)(((l)    )&0xff))
+
 /* Signed Certificate Timestamp */
 struct sct_st {
     sct_version_t version;
@@ -91,7 +123,58 @@ struct sct_st {
     size_t sig_len;
     /* Log entry type */
     ct_log_entry_type_t entry_type;
+    /* Where this SCT was found, e.g. certificate, OCSP response, etc. */
+    sct_source_t source;
+    /* The CT log that produced this SCT. */
+    CTLOG *log;
+    /* The result of the last attempt to validate this SCT. */
+    sct_validation_status_t validation_status;
 };
+
+/* Miscellaneous data that is useful when verifying an SCT  */
+struct sct_ctx_st {
+    /* Public key */
+    EVP_PKEY *pkey;
+    /* Hash of public key */
+    unsigned char *pkeyhash;
+    size_t pkeyhashlen;
+    /* For pre-certificate: issuer public key hash */
+    unsigned char *ihash;
+    size_t ihashlen;
+    /* certificate encoding */
+    unsigned char *certder;
+    size_t certderlen;
+    /* pre-certificate encoding */
+    unsigned char *preder;
+    size_t prederlen;
+};
+
+/* Context when evaluating whether a Certificate Transparency policy is met */
+struct ct_policy_eval_ctx_st {
+    X509 *cert;
+    X509 *issuer;
+    CTLOG_STORE *log_store;
+    STACK_OF(SCT) *good_scts;
+    STACK_OF(SCT) *bad_scts;
+};
+
+/*
+ * Creates a new context for verifying an SCT.
+ */
+SCT_CTX *SCT_CTX_new(void);
+/*
+ * Deletes an SCT verification context.
+ */
+void SCT_CTX_free(SCT_CTX *sctx);
+
+/* Sets the certificate that the SCT is related to */
+int SCT_CTX_set1_cert(SCT_CTX *sctx, X509 *cert, X509 *presigner);
+/* Sets the issuer of the certificate that the SCT is related to */
+int SCT_CTX_set1_issuer(SCT_CTX *sctx, const X509 *issuer);
+/* Sets the public key of the issuer of the certificate that the SCT relates to */
+int SCT_CTX_set1_issuer_pubkey(SCT_CTX *sctx, X509_PUBKEY *pubkey);
+/* Sets the public key of the CT log that the SCT is from */
+int SCT_CTX_set1_pubkey(SCT_CTX *sctx, X509_PUBKEY *pubkey);
 
 /*
  * Does this SCT have the minimum fields populated to be usuable?

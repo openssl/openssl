@@ -378,6 +378,11 @@ static int ssl_set_cert(CERT *c, X509 *x)
         return 0;
     }
 
+    if (i == SSL_PKEY_ECC && !EC_KEY_can_sign(EVP_PKEY_get0_EC_KEY(pkey))) {
+        SSLerr(SSL_F_SSL_SET_CERT, SSL_R_ECC_CERT_NOT_FOR_SIGNING);
+        return 0;
+    }
+
     if (c->pkeys[i].privatekey != NULL) {
         /*
          * The return code from EVP_PKEY_copy_parameters is deliberately
