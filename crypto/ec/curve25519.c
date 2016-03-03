@@ -3312,7 +3312,7 @@ static uint8_t negative(signed char b) {
 static void table_select(ge_precomp *t, int pos, signed char b) {
   ge_precomp minust;
   uint8_t bnegative = negative(b);
-  uint8_t babs = b - (((-bnegative) & b & 0x7f) << 1);
+  uint8_t babs = b - ((uint8_t)((-bnegative) & b) << 1);
 
   ge_precomp_0(t);
   cmov(t, &k25519Precomp[pos][0], equal(babs, 1));
