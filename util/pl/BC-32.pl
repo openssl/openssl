@@ -2,8 +2,8 @@
 # Borland C++ builder 3 and 4 -- Janez Jere <jj@void.si>
 #
 
-$ssl=	"ssleay32";
-$crypto="libeay32";
+$ssl=	"libssl32";
+$crypto="libcrypto32";
 
 $o='\\';
 $cp='copy';

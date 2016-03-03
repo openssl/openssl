@@ -13,8 +13,8 @@ set CERUN_PASS_ENV=OPENSSL_CONF HOME
 rem run this from inside the bin directory
 
 rem Copy the DLL's (though they'll only exist if we're in out32dll)
-if exist libeay32.dll cecopy libeay32.dll CE:\OpenSSL
-if exist ssleay32.dll cecopy ssleay32.dll CE:\OpenSSL
+if exist libcrypto32.dll cecopy libcrypto32.dll CE:\OpenSSL
+if exist libssl32.dll cecopy libssl32.dll CE:\OpenSSL
 
 echo rsa_test
 call %test%\testce2 rsa_test

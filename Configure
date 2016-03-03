@@ -1457,9 +1457,9 @@ EOF
                 my %known_ordinals =
                     (
                      crypto =>
-                     cleanfile($sourced, catfile("util", "libeay.num"), $blddir),
+                     cleanfile($sourced, catfile("util", "libcrypto.num"), $blddir),
                      ssl =>
-                     cleanfile($sourced, catfile("util", "ssleay.num"), $blddir)
+                     cleanfile($sourced, catfile("util", "libssl.num"), $blddir)
                     );
                 my $o = $known_ordinals{$_};
                 die "Ordinals for $ddest defined more than once\n"
@@ -1815,11 +1815,11 @@ BEGIN
 	    VALUE "FileDescription", "OpenSSL Shared Library\\0"
 	    VALUE "FileVersion", "$config{version}\\0"
 #if defined(CRYPTO)
-	    VALUE "InternalName", "libeay32\\0"
-	    VALUE "OriginalFilename", "libeay32.dll\\0"
+	    VALUE "InternalName", "libcrypto32\\0"
+	    VALUE "OriginalFilename", "libcrypto32.dll\\0"
 #elif defined(SSL)
-	    VALUE "InternalName", "ssleay32\\0"
-	    VALUE "OriginalFilename", "ssleay32.dll\\0"
+	    VALUE "InternalName", "libssl32\\0"
+	    VALUE "OriginalFilename", "libssl32.dll\\0"
 #endif
 	    VALUE "ProductName", "The OpenSSL Toolkit\\0"
 	    VALUE "ProductVersion", "$config{version}\\0"
