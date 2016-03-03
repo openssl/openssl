@@ -4511,6 +4511,10 @@
 #define LN_tls1_prf             "tls1-prf"
 #define NID_tls1_prf            1021
 
+#define SN_hkdf         "HKDF"
+#define LN_hkdf         "hkdf"
+#define NID_hkdf                1036
+
 #define SN_id_pkinit            "id-pkinit"
 #define NID_id_pkinit           1031
 #define OBJ_id_pkinit           1L,3L,6L,1L,5L,2L,3L
