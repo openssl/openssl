@@ -241,6 +241,12 @@ extern "C" {
 # define TLSEXT_TYPE_application_layer_protocol_negotiation 16
 
 /*
+ * Extension type for Certificate Transparency
+ * https://tools.ietf.org/html/rfc6962#section-3.3.1
+ */
+# define TLSEXT_TYPE_signed_certificate_timestamp    18
+
+/*
  * ExtensionType value for TLS padding extension.
  * http://tools.ietf.org/html/draft-agl-tls-padding
  */
