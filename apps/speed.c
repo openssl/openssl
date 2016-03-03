@@ -1118,10 +1118,6 @@ static int run_benchmark(int async_jobs, int (*loop_function)(void *), loopargs_
     int i = 0;
     OSSL_ASYNC_FD job_fd = 0;
     size_t num_job_fds = 0;
-#if defined(OPENSSL_SYS_UNIX)
-    fd_set waitfdset;
-    OSSL_ASYNC_FD max_fd = 0;
-#endif
 
     run = 1;
 
@@ -1153,89 +1149,45 @@ static int run_benchmark(int async_jobs, int (*loop_function)(void *), loopargs_
         }
     }
 
-#if defined(OPENSSL_SYS_UNIX)
-    FD_ZERO(&waitfdset);
-
-    /* Add to the wait set all the fds that are already in the WAIT_CTX
-     * This is required when the same ctx is used multiple times
-     * For the purpose of speed, each job can be associated to at most one fd
-     */
-    for (i = 0; i < async_jobs && num_inprogress > 0; i++) {
-        if (loopargs[i].inprogress_job == NULL)
-            continue;
-
-        if (!ASYNC_WAIT_CTX_get_all_fds(loopargs[i].wait_ctx, NULL, &num_job_fds)
-                || num_job_fds > 1) {
-            BIO_printf(bio_err, "Too many fds in ASYNC_WAIT_CTX\n");
-            ERR_print_errors(bio_err);
-            error = 1;
-            break;
-        }
-        ASYNC_WAIT_CTX_get_all_fds(loopargs[i].wait_ctx, &job_fd, &num_job_fds);
-        FD_SET(job_fd, &waitfdset);
-        if (job_fd > max_fd)
-            max_fd = job_fd;
-    }
-#endif
-
     while (num_inprogress > 0) {
-#if defined(OPENSSL_SYS_UNIX)
+#if defined(ASYNC_SYS_WINDOWS)
+        DWORD avail = 0;
+#elif defined(ASYNC_SYS_UNIX)
         int select_result = 0;
-        struct timeval select_timeout;
-        select_timeout.tv_sec = 0;
-        select_timeout.tv_usec = 0;
+        OSSL_ASYNC_FD max_fd = 0;
+        fd_set waitfdset;
+        FD_ZERO(&waitfdset);
 
-        for (i = 0; i < async_jobs; i++) {
-            if (loopargs[i].inprogress_job != NULL) {
-                /* Consider only changed fds to minimize the operations on waitfdset */
-                OSSL_ASYNC_FD add_fd, del_fd;
-                size_t num_add_fds, num_del_fds;
-                if (!ASYNC_WAIT_CTX_get_changed_fds(loopargs[i].wait_ctx, NULL,
-                                                    &num_add_fds, NULL, &num_del_fds)) {
-                    BIO_printf(bio_err, "Failure in ASYNC_WAIT_CTX\n");
-                    ERR_print_errors(bio_err);
-                    error = 1;
-                    break;
-                }
-                if (num_add_fds > 1 || num_del_fds > 1) {
-                    BIO_printf(bio_err, "Too many fds have changed in ASYNC_WAIT_CTX\n");
-                    ERR_print_errors(bio_err);
-                    error = 1;
-                    break;
-                }
-                if (num_add_fds == 0 && num_del_fds == 0)
-                    continue;
+        for (i = 0; i < async_jobs && num_inprogress > 0; i++) {
+            if (loopargs[i].inprogress_job == NULL)
+                continue;
 
-                ASYNC_WAIT_CTX_get_changed_fds(loopargs[i].wait_ctx, &add_fd, &num_add_fds,
-                                               &del_fd, &num_del_fds);
-
-                if (num_del_fds == 1)
-                    FD_CLR(del_fd, &waitfdset);
-
-                if (num_add_fds == 1) {
-                    FD_SET(add_fd, &waitfdset);
-                    if (add_fd > max_fd)
-                        max_fd = add_fd;
-                }
+            if (!ASYNC_WAIT_CTX_get_all_fds(loopargs[i].wait_ctx, NULL, &num_job_fds)
+                    || num_job_fds > 1) {
+                BIO_printf(bio_err, "Too many fds in ASYNC_WAIT_CTX\n");
+                ERR_print_errors(bio_err);
+                error = 1;
+                break;
             }
+            ASYNC_WAIT_CTX_get_all_fds(loopargs[i].wait_ctx, &job_fd, &num_job_fds);
+            FD_SET(job_fd, &waitfdset);
+            if (job_fd > max_fd)
+                max_fd = job_fd;
         }
-        select_result = select(max_fd + 1, &waitfdset, NULL, NULL, &select_timeout);
 
+        select_result = select(max_fd + 1, &waitfdset, NULL, NULL, NULL);
         if (select_result == -1 && errno == EINTR)
             continue;
 
         if (select_result == -1) {
-                BIO_printf(bio_err, "Failure in the select\n");
-                ERR_print_errors(bio_err);
-                error = 1;
-                break;
+            BIO_printf(bio_err, "Failure in the select\n");
+            ERR_print_errors(bio_err);
+            error = 1;
+            break;
         }
 
         if (select_result == 0)
             continue;
-
-#elif defined(OPENSSL_SYS_WINDOWS)
-        DWORD avail = 0;
 #endif
 
         for (i = 0; i < async_jobs; i++) {
@@ -1272,9 +1224,6 @@ static int run_benchmark(int async_jobs, int (*loop_function)(void *), loopargs_
                         total_op_count += job_op_count;
                     }
                     --num_inprogress;
-#if defined(OPENSSL_SYS_UNIX)
-                    FD_CLR(job_fd, &waitfdset);
-#endif
                     loopargs[i].inprogress_job = NULL;
                     break;
                 case ASYNC_NO_JOBS:
