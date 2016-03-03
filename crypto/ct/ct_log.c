@@ -245,6 +245,12 @@ int CTLOG_STORE_load_file(CTLOG_STORE *store, const char *file)
     }
 
     enabled_logs = NCONF_get_string(load_ctx->conf, NULL, "enabled_logs");
+    if (enabled_logs == NULL) {
+        ret = 0;
+        CTerr(CT_F_CTLOG_STORE_LOAD_FILE, CT_R_LOG_CONF_INVALID);
+        goto end;
+    }
+
     ret = CONF_parse_list(enabled_logs, ',', 1, ctlog_store_load_log, load_ctx);
     if (ret == 1 && load_ctx->invalid_log_entries > 0) {
         ret = 0;
