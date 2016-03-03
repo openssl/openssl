@@ -296,12 +296,12 @@ section above would be digested into a %unified_info table:
                 "libcrypto" =>
                     [
                         "crypto",
-                        "util/libeay.num",
+                        "util/libcrypto.num",
                     ],
                 "libssl" =>
                     [
                         "ssl",
-                        "util/ssleay.num",
+                        "util/libssl.num",
                     ],
             },
         "programs" =>
@@ -442,7 +442,7 @@ etc.
                   this library.  'ordinals' MAY be present, and when
                   it is, its value is an array where the word is
                   "crypto" or "ssl" and the file is one of the ordinal
-                  files util/libeay.num or util/ssleay.num in the
+                  files util/libcrypto.num or util/libssl.num in the
                   source directory.
 
                   This function has a choice; it can use the
@@ -515,7 +515,7 @@ following calls:
                  lib => "libssl",
                  objs => [ "ssl/tls.o" ],
                  deps => [ "libcrypto" ]
-                 ordinals => [ "ssl", "util/ssleay.num" ]);
+                 ordinals => [ "ssl", "util/libssl.num" ]);
 
     obj2lib(lib => "libssl"
             objs => [ "ssl/tls.o" ]);
