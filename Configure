@@ -57,6 +57,9 @@ my $usage="Usage: Configure [no-<cipher> ...] [enable-<cipher> ...] [-Dxxx] [-lx
 #		library and will be loaded in run-time by the OpenSSL library.
 # sctp          include SCTP support
 # 386           generate 80386 code
+# enable-weak-ssl-ciphers
+#               Enable weak ciphers that are disabled by default. This currently
+#               only includes RC4 based ciphers.
 # no-sse2	disables IA-32 SSE2 code, above option implies no-sse2
 # no-<cipher>   build without specified algorithm (rsa, idea, rc5, ...)
 # -<xxx> +<xxx> compiler options are passed through
@@ -313,6 +316,7 @@ my @disablables = (
     "ui",
     "unit-test",
     "whirlpool",
+    "weak-ssl-ciphers",
     "zlib",
     "zlib-dynamic",
     );
@@ -330,18 +334,19 @@ my @deprecated_disablables = (
 
 our %disabled = ( # "what"         => "comment"
 		  "ec_nistp_64_gcc_128" => "default",
-		  "egd"            => "default",
-		  "md2"            => "default",
-		  "rc5"            => "default",
-		  "sctp"           => "default",
-		  "shared"         => "default",
-		  "ssl-trace"      => "default",
-		  "static-engine"  => "default",
-		  "unit-test"      => "default",
-		  "zlib"           => "default",
-		  "zlib-dynamic"   => "default",
-		  "crypto-mdebug"  => "default",
-		  "heartbeats"     => "default",
+		  "egd"                 => "default",
+		  "md2"                 => "default",
+		  "rc5"                 => "default",
+		  "sctp"                => "default",
+		  "shared"              => "default",
+		  "ssl-trace"           => "default",
+		  "static-engine"       => "default",
+		  "unit-test"           => "default",
+		  "weak-ssl-ciphers"    => "default",
+		  "zlib"                => "default",
+		  "zlib-dynamic"        => "default",
+		  "crypto-mdebug"       => "default",
+		  "heartbeats"          => "default",
 		);
 
 # Note: => pair form used for aesthetics, not to truly make a hash table
