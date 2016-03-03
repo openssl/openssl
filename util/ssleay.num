@@ -422,3 +422,11 @@ SSL_get_default_passwd_cb_userdata      477	1_1_0	EXIST::FUNCTION:
 SSL_get_default_passwd_cb               478	1_1_0	EXIST::FUNCTION:
 SSL_CTX_get_default_passwd_cb_userdata  479	1_1_0	EXIST::FUNCTION:
 SSL_CTX_get_default_passwd_cb           480	1_1_0	EXIST::FUNCTION:
+SSL_CTX_get_ct_validation_callback      481	1_1_0	EXIST::FUNCTION:CT
+SSL_get_ct_validation_callback          482	1_1_0	EXIST::FUNCTION:CT
+SSL_CTX_has_client_custom_ext           483	1_1_0	EXIST::FUNCTION:
+SSL_CTX_set_ctlog_list_file             484	1_1_0	EXIST::FUNCTION:CT
+SSL_CTX_set_default_ctlog_list_file     485	1_1_0	EXIST::FUNCTION:CT
+SSL_set_ct_validation_callback          486	1_1_0	EXIST::FUNCTION:CT
+SSL_get0_peer_scts                      487	1_1_0	EXIST::FUNCTION:CT
+SSL_CTX_set_ct_validation_callback      488	1_1_0	EXIST::FUNCTION:CT
