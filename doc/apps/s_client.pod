@@ -91,6 +91,8 @@ B<openssl> B<s_client>
 [B<-serverinfo types>]
 [B<-status>]
 [B<-nextprotoneg protocols>]
+[B<-noct|requestct|requirect>]
+[B<-ctlogfile>]
 
 =head1 DESCRIPTION
 
@@ -434,6 +436,23 @@ Protocol names are printable ASCII strings, for example "http/1.1" or
 Empty list of protocols is treated specially and will cause the client to
 advertise support for the TLS extension but disconnect just after
 receiving ServerHello with a list of server supported protocols.
+
+=item B<-noct|requestct|requirect>
+
+Use one of these three options to control whether Certificate Transparency (CT)
+is disabled (-noct), enabled but not enforced (-requestct), or enabled and
+enforced (-requirect). If CT is enabled, signed certificate timestamps (SCTs)
+will be requested from the server and invalid SCTs will cause the connection to
+be aborted. If CT is enforced, at least one valid SCT from a recognised CT log
+(see B<-ctlogfile>) will be required or the connection will be aborted.
+
+Enabling CT also enables OCSP stapling, as this is one possible delivery method
+for SCTs.
+
+=item B<-ctlogfile>
+
+A file containing a list of known Certificate Transparency logs. See
+L<SSL_CTX_set_ctlog_list_file(3)> for the expected file format.
 
 =back
 
