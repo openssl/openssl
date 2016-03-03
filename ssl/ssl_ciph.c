@@ -278,6 +278,11 @@ static int ssl_mac_secret_size[SSL_MD_NUM_IDX] = {
 #define CIPHER_DEL      3
 #define CIPHER_ORD      4
 #define CIPHER_SPECIAL  5
+/*
+ * Bump the ciphers to the top of the list.
+ * This rule isn't currently supported by the public cipherstring API.
+ */
+#define CIPHER_BUMP     6
 
 typedef struct cipher_order_st {
     const SSL_CIPHER *cipher;
@@ -896,7 +901,7 @@ static void ssl_cipher_apply_rule(uint32_t cipher_id, uint32_t alg_mkey,
             algo_strength, strength_bits);
 #endif
 
-    if (rule == CIPHER_DEL)
+    if (rule == CIPHER_DEL || rule == CIPHER_BUMP)
         reverse = 1;            /* needed to maintain sorting between
                                  * currently deleted ciphers */
 
@@ -986,6 +991,9 @@ static void ssl_cipher_apply_rule(uint32_t cipher_id, uint32_t alg_mkey,
                 ll_append_head(&head, curr, &tail);
                 curr->active = 0;
             }
+        } else if (rule == CIPHER_BUMP) {
+            if (curr->active)
+                ll_append_head(&head, curr, &tail);
         } else if (rule == CIPHER_KILL) {
             /* reverse == 0 */
             if (head == curr)
@@ -1420,20 +1428,36 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method, STACK
                                disabled_mac, disabled_ssl, co_list, &head,
                                &tail);
 
-    /* Now arrange all ciphers by preference: */
+    /* Now arrange all ciphers by preference. */
 
     /*
      * Everything else being equal, prefer ephemeral ECDH over other key
-     * exchange mechanisms
+     * exchange mechanisms.
+     * For consistency, prefer ECDSA over RSA (though this only matters if the
+     * server has both certificates, and is using the DEFAULT, or a client
+     * preference).
      */
+    ssl_cipher_apply_rule(0, SSL_kECDHE, SSL_aECDSA, 0, 0, 0, 0, CIPHER_ADD,
+                          -1, &head, &tail);
     ssl_cipher_apply_rule(0, SSL_kECDHE, 0, 0, 0, 0, 0, CIPHER_ADD, -1, &head,
                           &tail);
     ssl_cipher_apply_rule(0, SSL_kECDHE, 0, 0, 0, 0, 0, CIPHER_DEL, -1, &head,
                           &tail);
 
-    /* AES is our preferred symmetric cipher */
-    ssl_cipher_apply_rule(0, 0, 0, SSL_AES, 0, 0, 0, CIPHER_ADD, -1, &head,
-                          &tail);
+
+    /* Within each strength group, we prefer GCM over CHACHA... */
+    ssl_cipher_apply_rule(0, 0, 0, SSL_AESGCM, 0, 0, 0, CIPHER_ADD, -1,
+                          &head, &tail);
+    ssl_cipher_apply_rule(0, 0, 0, SSL_CHACHA20, 0, 0, 0, CIPHER_ADD, -1,
+                          &head, &tail);
+
+     /*
+      * ...and generally, our preferred cipher is AES.
+      * Note that AEADs will be bumped to take preference after sorting by
+      * strength.
+      */
+    ssl_cipher_apply_rule(0, 0, 0, SSL_AES ^ SSL_AESGCM, 0, 0, 0, CIPHER_ADD,
+                          -1, &head, &tail);
 
     /* Temporarily enable everything else for sorting */
     ssl_cipher_apply_rule(0, 0, 0, 0, 0, 0, 0, CIPHER_ADD, -1, &head, &tail);
@@ -1471,6 +1495,33 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method, STACK
         OPENSSL_free(co_list);
         return NULL;
     }
+
+    /*
+     * Partially overrule strength sort to prefer TLS 1.2 ciphers/PRFs.
+     * TODO(openssl-team): is there an easier way to accomplish all this?
+     */
+    ssl_cipher_apply_rule(0, 0, 0, 0, 0, SSL_TLSV1_2, 0, CIPHER_BUMP, -1,
+                          &head, &tail);
+
+    /*
+     * Irrespective of strength, enforce the following order:
+     * (EC)DHE + AEAD > (EC)DHE > rest of AEAD > rest.
+     * Within each group, ciphers remain sorted by strength and previous
+     * preference, i.e.,
+     * 1) ECDHE > DHE
+     * 2) GCM > CHACHA
+     * 3) AES > rest
+     * 4) TLS 1.2 > legacy
+     *
+     * Because we now bump ciphers to the top of the list, we proceed in
+     * reverse order of preference.
+     */
+    ssl_cipher_apply_rule(0, 0, 0, 0, SSL_AEAD, 0, 0, CIPHER_BUMP, -1,
+                          &head, &tail);
+    ssl_cipher_apply_rule(0, SSL_kDHE | SSL_kECDHE, 0, 0, 0, 0, 0,
+                          CIPHER_BUMP, -1,  &head, &tail);
+    ssl_cipher_apply_rule(0, SSL_kDHE | SSL_kECDHE, 0, 0, SSL_AEAD, 0, 0,
+                          CIPHER_BUMP, -1,  &head, &tail);
 
     /* Now disable everything (maintaining the ordering!) */
     ssl_cipher_apply_rule(0, 0, 0, 0, 0, 0, 0, CIPHER_DEL, -1, &head, &tail);

@@ -4,6 +4,15 @@
 
  Changes between 1.0.2g and 1.1.0  [xx XXX xxxx]
 
+  *) Changes to the DEFAULT cipherlist:
+       - Prefer (EC)DHE handshakes over plain RSA.
+       - Prefer AEAD ciphers over legacy ciphers.
+       - Prefer ECDSA over RSA when both certificates are available.
+       - Prefer TLSv1.2 ciphers/PRF.
+       - Remove DSS, SEED, IDEA, CAMELLIA, and AES-CCM from the
+         default cipherlist.
+     [Emilia Käsper]
+
   *) Change the ECC default curve list to be this, in order: x25519,
      secp256r1, secp521r1, secp384r1.
      [Rich Salz]
