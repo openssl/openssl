@@ -389,17 +389,12 @@ uninstall_dev:
 		$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn2; \
 		: {- output_on() unless windowsdll(); "" -}; \
 	done
-	@ : {- output_on() if $disabled{shared}; "" -}
-	@echo "$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig/libcrypto.pc"
-	@$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig/libcrypto.pc
-	@echo "$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig/libssl.pc"
-	@$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig/libssl.pc
-	@echo "$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig/openssl.pc"
-	@$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig/openssl.pc
-	@echo $(RMDIR) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig
-	-@$(RMDIR) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig
-	@echo $(RMDIR) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)
-	-@$(RMDIR) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)
+	@ : {- output_on() if $config{no_shared}; "" -}
+	$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig/libcrypto.pc
+	$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig/libssl.pc
+	$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig/openssl.pc
+	-$(RMDIR) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig
+	-$(RMDIR) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)
 
 install_engines:
 	@[ -n "$(INSTALLTOP)" ] || (echo INSTALLTOP should not be empty; exit 1)
@@ -427,8 +422,7 @@ uninstall_engines:
 		echo "$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/engines/$$fn"; \
 		$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/engines/$$fn; \
 	done
-	@echo "$(RMDIR) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/engines"
-	-@$(RMDIR) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/engines
+	-$(RMDIR) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/engines
 
 install_runtime:
 	@[ -n "$(INSTALLTOP)" ] || (echo INSTALLTOP should not be empty; exit 1)
@@ -502,10 +496,8 @@ uninstall_runtime:
 	done
 	: {- output_on() unless windowsdll(); "" -};
 	$(RM) $(DESTDIR)$(OPENSSLDIR)/openssl.cnf
-	@echo "$(RMDIR) $(DESTDIR)$(INSTALLTOP)/bin"
-	-@$(RMDIR) $(DESTDIR)$(INSTALLTOP)/bin
-	@echo "$(RMDIR) $(DESTDIR)$(OPENSSLDIR)/misc"
-	-@$(RMDIR) $(DESTDIR)$(OPENSSLDIR)/misc
+	-$(RMDIR) $(DESTDIR)$(INSTALLTOP)/bin
+	-$(RMDIR) $(DESTDIR)$(OPENSSLDIR)/misc
 
 # A method to extract all names from a .pod file
 # The first sed extracts everything between "=head1 NAME" and the next =head1
