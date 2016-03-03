@@ -93,7 +93,7 @@ static int test_afalg_aes_128_cbc(ENGINE *e)
     if (       !EVP_CIPHER_CTX_reset(ctx)
             || !EVP_CipherInit_ex(ctx, cipher, e, key, iv, 0)
             || !EVP_CipherUpdate(ctx, dbuf, &decl, ebuf, encl)
-            || !EVP_CipherFinal_ex(ctx, ebuf+decl, &decf)) {
+            || !EVP_CipherFinal_ex(ctx, dbuf+decl, &decf)) {
         fprintf(stderr, "%s() failed decryption\n", __func__);
         goto end;
     }
