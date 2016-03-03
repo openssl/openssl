@@ -213,8 +213,13 @@ static int ctlog_store_load_log(const char *log_name, int log_name_len,
     CTLOG_STORE_LOAD_CTX *load_ctx = arg;
     CTLOG *ct_log;
     /* log_name may not be null-terminated, so fix that before using it */
-    char *tmp = OPENSSL_strndup(log_name, log_name_len);
+    char *tmp;
 
+    /* log_name will be NULL for empty list entries */
+    if (log_name == NULL)
+        return 1;
+
+    tmp = OPENSSL_strndup(log_name, log_name_len);
     ct_log = ctlog_new_from_conf(load_ctx->conf, tmp);
     OPENSSL_free(tmp);
     if (ct_log == NULL) {
