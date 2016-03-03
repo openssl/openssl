@@ -5,9 +5,9 @@ IF[{- !$disabled{afalg} -}]
   LIBS=../../libcrypto
   SOURCE[../../libcrypto]=e_afalg.c e_afalg_err.c
  ELSE
-  ENGINES=libafalg
-  SOURCE[libafalg]=e_afalg.c e_afalg_err.c
-  DEPEND[libafalg]=../../libcrypto
-  INCLUDE[libafalg]= {- rel2abs(catdir($builddir,"../include")) -} ../../include
+  ENGINES=afalg
+  SOURCE[afalg]=e_afalg.c e_afalg_err.c
+  DEPEND[afalg]=../../libcrypto
+  INCLUDE[afalg]= {- rel2abs(catdir($builddir,"../include")) -} ../../include
  ENDIF
 ENDIF
