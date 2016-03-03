@@ -873,6 +873,11 @@
      whose return value is often ignored. 
      [Steve Henson]
 
+  *) New -noct, -requestct, -requirect and -ctlogfile options for s_client.
+     These allow SCTs (signed certificate timestamps) to be requested and
+     validated when establishing a connection.
+     [Rob Percival <robpercival@google.com>]
+
  Changes between 1.0.2f and 1.0.2g [1 Mar 2016]
 
   * Disable weak ciphers in SSLv3 and up in default builds of OpenSSL.
