@@ -339,6 +339,7 @@ our %disabled = ( # "what"         => "comment"
 		  "static-engine"  => "default",
 		  "unit-test"      => "default",
 		  "zlib"           => "default",
+		  "zlib-dynamic"   => "default",
 		  "crypto-mdebug"  => "default",
 		  "heartbeats"     => "default",
 		);
@@ -581,6 +582,10 @@ foreach (@argvcopy)
                 elsif ($1 eq "dynamic-engine")
                         {
                         delete $disabled{"dynamic-engine"};
+                        }
+                elsif ($1 eq "zlib-dynamic")
+                        {
+                        delete $disabled{"zlib"};
                         }
 		my $algo = $1;
 		delete $disabled{$algo};
