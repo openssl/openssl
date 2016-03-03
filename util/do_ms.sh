@@ -13,7 +13,7 @@ perl util/mk1mf.pl dll VC-WIN32 >ms/ntdll.mak
 perl util/mk1mf.pl Mingw32 >ms/mingw32.mak
 perl util/mk1mf.pl Mingw32-files >ms/mingw32f.mak
 
-perl util/mkdef.pl 16 libeay > ms/libeay16.def
-perl util/mkdef.pl 32 libeay > ms/libeay32.def
-perl util/mkdef.pl 16 ssleay > ms/ssleay16.def
-perl util/mkdef.pl 32 ssleay > ms/ssleay32.def
+perl util/mkdef.pl 16 libcrypto > ms/libcrypto16.def
+perl util/mkdef.pl 32 libcrypto > ms/libcrypto32.def
+perl util/mkdef.pl 16 libssl > ms/libssl16.def
+perl util/mkdef.pl 32 libssl > ms/libssl32.def
