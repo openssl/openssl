@@ -296,7 +296,7 @@ static const SSL_CIPHER cipher_aliases[] = {
      * "COMPLEMENTOFDEFAULT" (does *not* include ciphersuites not found in
      * ALL!)
      */
-    {0, SSL_TXT_CMPDEF, 0, 0, 0, ~SSL_eNULL, 0, 0, SSL_NOT_DEFAULT, 0, 0, 0},
+    {0, SSL_TXT_CMPDEF, 0, 0, 0, 0, 0, 0, SSL_NOT_DEFAULT, 0, 0, 0},
 
     /*
      * key exchange aliases (some of those using only a single bit here
