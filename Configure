@@ -340,6 +340,8 @@ our %disabled = ( # "what"         => "comment"
 		  "sctp"                => "default",
 		  "shared"              => "default",
 		  "ssl-trace"           => "default",
+		  "ssl3"                => "default",
+		  "ssl3-method"         => "default",
 		  "static-engine"       => "default",
 		  "unit-test"           => "default",
 		  "weak-ssl-ciphers"    => "default",
