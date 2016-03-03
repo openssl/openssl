@@ -85,6 +85,7 @@ struct ctlog_store_st {
 typedef struct ctlog_store_load_ctx_st {
     CTLOG_STORE *log_store;
     CONF *conf;
+    size_t invalid_log_entries;
 } CTLOG_STORE_LOAD_CTX;
 
 /*
@@ -201,7 +202,13 @@ int CTLOG_STORE_load_default_file(CTLOG_STORE *store)
     return CTLOG_STORE_load_file(store, fpath);
 }
 
-static int ctlog_store_load_log(const char *log_name, int log_name_len, void *arg)
+/*
+ * Called by CONF_parse_list, which stops if this returns <= 0, so don't unless
+ * something very bad happens. Otherwise, one bad log entry would stop loading
+ * of any of the following log entries.
+ */
+static int ctlog_store_load_log(const char *log_name, int log_name_len,
+                                void *arg)
 {
     CTLOG_STORE_LOAD_CTX *load_ctx = arg;
     CTLOG *ct_log;
@@ -210,8 +217,11 @@ static int ctlog_store_load_log(const char *log_name, int log_name_len, void *ar
 
     ct_log = ctlog_new_from_conf(load_ctx->conf, tmp);
     OPENSSL_free(tmp);
-    if (ct_log == NULL)
-        return 0;
+    if (ct_log == NULL) {
+        /* If we can't load this log, record that fact and skip it */
+        ++load_ctx->invalid_log_entries;
+        return 1;
+    }
 
     sk_CTLOG_push(load_ctx->log_store->logs, ct_log);
     return 1;
@@ -219,7 +229,7 @@ static int ctlog_store_load_log(const char *log_name, int log_name_len, void *ar
 
 int CTLOG_STORE_load_file(CTLOG_STORE *store, const char *file)
 {
-    int ret = -1;
+    int ret = 0;
     char *enabled_logs;
     CTLOG_STORE_LOAD_CTX* load_ctx = ctlog_store_load_ctx_new();
 
@@ -235,7 +245,12 @@ int CTLOG_STORE_load_file(CTLOG_STORE *store, const char *file)
     }
 
     enabled_logs = NCONF_get_string(load_ctx->conf, NULL, "enabled_logs");
-    CONF_parse_list(enabled_logs, ',', 1, ctlog_store_load_log, load_ctx);
+    ret = CONF_parse_list(enabled_logs, ',', 1, ctlog_store_load_log, load_ctx);
+    if (ret == 1 && load_ctx->invalid_log_entries > 0) {
+        ret = 0;
+        CTerr(CT_F_CTLOG_STORE_LOAD_FILE, CT_R_LOG_CONF_INVALID);
+        goto end;
+    }
 
 end:
     NCONF_free(load_ctx->conf);
