@@ -1332,9 +1332,8 @@ int s_server_main(int argc, char *argv[])
         case OPT_TRACE:
 #ifndef OPENSSL_NO_SSL_TRACE
             s_msg = 2;
-#else
-            break;
 #endif
+            break;
         case OPT_SECURITY_DEBUG:
             sdebug = 1;
             break;

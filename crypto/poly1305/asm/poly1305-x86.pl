@@ -536,6 +536,8 @@ my $base = shift; $base = "esp" if (!defined($base));
 			     },"edx");
 
 sub lazy_reduction {
+my $extra = shift;
+
 	################################################################
 	# lazy reduction as discussed in "NEON crypto" by D.J. Bernstein
 	# and P. Schwabe
@@ -543,6 +545,7 @@ sub lazy_reduction {
 	 &movdqa	($T0,$D3);
 	 &pand		($D3,$MASK);
 	 &psrlq		($T0,26);
+	 &$extra	()				if (defined($extra));
 	 &paddq		($T0,$D4);			# h3 -> h4
 	&movdqa		($T1,$D0);
 	&pand		($D0,$MASK);
@@ -1091,21 +1094,21 @@ my $addr = shift;
 
 &set_label("short_tail");
 
-	&lazy_reduction	();
-
 	################################################################
 	# horizontal addition
 
+	&pshufd		($T1,$D4,0b01001110);
+	&pshufd		($T0,$D3,0b01001110);
+	&paddq		($D4,$T1);
+	&paddq		($D3,$T0);
 	&pshufd		($T1,$D0,0b01001110);
 	&pshufd		($T0,$D1,0b01001110);
-	&paddd		($D0,$T1);
+	&paddq		($D0,$T1);
+	&paddq		($D1,$T0);
 	&pshufd		($T1,$D2,0b01001110);
-	&paddd		($D1,$T0);
-	&pshufd		($T0,$D3,0b01001110);
-	&paddd		($D2,$T1);
-	&pshufd		($T1,$D4,0b01001110);
-	&paddd		($D3,$T0);
-	&paddd		($D4,$T1);
+	#&paddq		($D2,$T1);
+
+	&lazy_reduction	(sub { &paddq ($D2,$T1) });
 
 &set_label("done");
 	&movd		(&DWP(-16*3+4*0,"edi"),$D0);	# store hash value
@@ -1113,8 +1116,8 @@ my $addr = shift;
 	&movd		(&DWP(-16*3+4*2,"edi"),$D2);
 	&movd		(&DWP(-16*3+4*3,"edi"),$D3);
 	&movd		(&DWP(-16*3+4*4,"edi"),$D4);
-&set_label("nodata");
 	&mov	("esp","ebp");
+&set_label("nodata");
 &function_end("_poly1305_blocks_sse2");
 
 &align	(32);
@@ -1435,7 +1438,7 @@ sub X { my $reg=shift; $reg=~s/^ymm/xmm/; $reg; }
 	&test	("eax","eax");				# is_base2_26?
 	&jz	(&label("enter_blocks"));
 
-&set_label("enter_avx2",16);
+&set_label("enter_avx2");
 	&vzeroupper	();
 
 	&call	(&label("pic_point"));
@@ -1731,31 +1734,31 @@ sub vlazy_reduction {
 
 	&vpmuladd	(sub {	my $i=shift; &QWP(4+32*$i-128,"edx");	});
 
-	&vlazy_reduction();
-
 	################################################################
 	# horizontal addition
 
+	&vpsrldq	($T0,$D4,8);
+	&vpsrldq	($T1,$D3,8);
+	&vpaddq		($D4,$D4,$T0);
 	&vpsrldq	($T0,$D0,8);
+	&vpaddq		($D3,$D3,$T1);
 	&vpsrldq	($T1,$D1,8);
 	&vpaddq		($D0,$D0,$T0);
 	&vpsrldq	($T0,$D2,8);
 	&vpaddq		($D1,$D1,$T1);
-	&vpsrldq	($T1,$D3,8);
+	&vpermq		($T1,$D4,2);			# keep folding
 	&vpaddq		($D2,$D2,$T0);
-	&vpsrldq	($T0,$D4,8);
-	&vpaddq		($D3,$D3,$T1);
-	&vpermq		($T1,$D0,2);			# keep folding
-	&vpaddq		($D4,$D4,$T0);
+	&vpermq		($T0,$D3,2);
+	&vpaddq		($D4,$D4,$T1);
+	&vpermq		($T1,$D0,2);
+	&vpaddq		($D3,$D3,$T0);
 	&vpermq		($T0,$D1,2);
 	&vpaddq		($D0,$D0,$T1);
 	&vpermq		($T1,$D2,2);
 	&vpaddq		($D1,$D1,$T0);
-	&vpermq		($T0,$D3,2);
 	&vpaddq		($D2,$D2,$T1);
-	&vpermq		($T1,$D4,2);
-	&vpaddq		($D3,$D3,$T0);
-	&vpaddq		($D4,$D4,$T1);
+
+	&vlazy_reduction();
 
 	&cmp		("ecx",0);
 	&je		(&label("done"));
@@ -1772,14 +1775,14 @@ sub vlazy_reduction {
 	&jmp		(&label("even"));
 
 &set_label("done",16);
-	&vmovd		(&DWP(-16*3+4*0,"edi"),"xmm0");	# store hash value
-	&vmovd		(&DWP(-16*3+4*1,"edi"),"xmm1");
-	&vmovd		(&DWP(-16*3+4*2,"edi"),"xmm2");
-	&vmovd		(&DWP(-16*3+4*3,"edi"),"xmm3");
-	&vmovd		(&DWP(-16*3+4*4,"edi"),"xmm4");
+	&vmovd		(&DWP(-16*3+4*0,"edi"),&X($D0));# store hash value
+	&vmovd		(&DWP(-16*3+4*1,"edi"),&X($D1));
+	&vmovd		(&DWP(-16*3+4*2,"edi"),&X($D2));
+	&vmovd		(&DWP(-16*3+4*3,"edi"),&X($D3));
+	&vmovd		(&DWP(-16*3+4*4,"edi"),&X($D4));
 	&vzeroupper	();
-&set_label("nodata");
 	&mov	("esp","ebp");
+&set_label("nodata");
 &function_end("_poly1305_blocks_avx2");
 }
 &set_label("const_sse2",64);

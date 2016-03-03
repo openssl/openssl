@@ -206,21 +206,10 @@ static int pkey_hmac_ctrl_str(EVP_PKEY_CTX *ctx,
     if (!value) {
         return 0;
     }
-    if (strcmp(type, "key") == 0) {
-        void *p = (void *)value;
-        return pkey_hmac_ctrl(ctx, EVP_PKEY_CTRL_SET_MAC_KEY, -1, p);
-    }
-    if (strcmp(type, "hexkey") == 0) {
-        unsigned char *key;
-        int r;
-        long keylen;
-        key = string_to_hex(value, &keylen);
-        if (!key)
-            return 0;
-        r = pkey_hmac_ctrl(ctx, EVP_PKEY_CTRL_SET_MAC_KEY, keylen, key);
-        OPENSSL_free(key);
-        return r;
-    }
+    if (strcmp(type, "key") == 0)
+        return EVP_PKEY_CTX_str2ctrl(ctx, EVP_PKEY_CTRL_SET_MAC_KEY, value);
+    if (strcmp(type, "hexkey") == 0)
+        return EVP_PKEY_CTX_hex2ctrl(ctx, EVP_PKEY_CTRL_SET_MAC_KEY, value);
     return -2;
 }
 

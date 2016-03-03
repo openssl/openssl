@@ -66,7 +66,7 @@ extern "C" {
 static void ERR_load_DASYNC_strings(void);
 static void ERR_unload_DASYNC_strings(void);
 static void ERR_DASYNC_error(int function, int reason, char *file, int line);
-#define DASYNCerr(f,r) ERR_DASYNC_error((f),(r),__FILE__,__LINE__)
+#define DASYNCerr(f,r) ERR_DASYNC_error((f),(r),OPENSSL_FILE,OPENSSL_LINE)
 
 /* Error codes for the DASYNC functions. */
 

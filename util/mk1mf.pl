@@ -806,7 +806,7 @@ reallyclean:
 
 EOF
 
-$rules .= &do_rehash_rule("rehash.time", "certs/demo apps tools");
+$rules .= &do_rehash_rule("rehash.time", "apps tools");
 $rules .= &do_test_rule("test", "rehash.time", "run_tests.pl");
 
 $rules .= <<"EOF";

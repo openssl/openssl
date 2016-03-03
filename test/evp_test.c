@@ -1739,9 +1739,7 @@ static const struct evp_test_method encode_test_method = {
     encode_test_run,
 };
 
-/*
- * KDF operations: initially just TLS1 PRF but can be adapted.
- */
+/* KDF operations */
 
 struct kdf_data {
     /* Context for this operation */
@@ -1780,39 +1778,14 @@ static void kdf_test_cleanup(struct evp_test *t)
     EVP_PKEY_CTX_free(kdata->ctx);
 }
 
-static int kdf_ctrl(EVP_PKEY_CTX *ctx, int op, const char *value)
-{
-    unsigned char *buf = NULL;
-    size_t buf_len;
-    int rv = 0;
-    if (test_bin(value, &buf, &buf_len) == 0)
-        return 0;
-    if (EVP_PKEY_CTX_ctrl(ctx, -1, -1, op, buf_len, buf) <= 0)
-        goto err;
-    rv = 1;
-    err:
-    OPENSSL_free(buf);
-    return rv;
-}
-
 static int kdf_test_parse(struct evp_test *t,
                           const char *keyword, const char *value)
 {
     struct kdf_data *kdata = t->data;
     if (strcmp(keyword, "Output") == 0)
         return test_bin(value, &kdata->output, &kdata->output_len);
-    else if (strcmp(keyword, "MD") == 0) {
-        const EVP_MD *md = EVP_get_digestbyname(value);
-        if (md == NULL)
-            return 0;
-        if (EVP_PKEY_CTX_set_tls1_prf_md(kdata->ctx, md) <= 0)
-            return 0;
-        return 1;
-    } else if (strcmp(keyword, "Secret") == 0) {
-        return kdf_ctrl(kdata->ctx, EVP_PKEY_CTRL_TLS_SECRET, value);
-    } else if (strncmp("Seed", keyword, 4) == 0) {
-        return kdf_ctrl(kdata->ctx, EVP_PKEY_CTRL_TLS_SEED, value);
-    }
+    if (strncmp(keyword, "Ctrl", 4) == 0)
+        return pkey_test_ctrl(kdata->ctx, value);
     return 0;
 }
 

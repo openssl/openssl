@@ -28,30 +28,6 @@ In each table entry, the following keys are significant:
                            given here, they MUST be as an array of the
                            string such as "MACRO=value", or just
                            "MACRO" for definitions without value.
-        debug_cflags    => Extra compilation flags used when making a
-                           debug build (when Configure receives the
-                           --debug option).  Typically something like
-                           "-g -O0".
-        debug_defines   => Similarly to `debug_cflags', this gets
-                           combined with `defines' during a debug
-                           build.  The value here MUST also be an
-                           array of the same form as for `defines'.
-        release_cflags  => Extra compilation flags used when making a
-                           release build (when Configure receives the
-                           --release option, or doesn't receive the
-                           --debug option).  Typically something like
-                           "-O" or "-O3".
-        release_defines => Similarly to `release_cflags', this gets
-                           combined with `defines' during a release
-                           build.  The value here MUST also be an
-                           array of the same form as for `defines'.
-        thread_cflags   => Extra compilation flags used when
-                           compiling with threading enabled.
-                           Explained further below.  [2]
-        thread_defines  => Similarly to `thread_cflags', this gets
-                           combined with `defines' when threading is
-                           enabled.  The value here MUST also be an
-                           array of the same form as for `defines'.
         shared_cflag    => Extra compilation flags used when
                            compiling for shared libraries, typically
                            something like "-fPIC".
@@ -69,9 +45,6 @@ In each table entry, the following keys are significant:
                            the libraries on the command line.
         ex_libs         => Extra libraries that are needed when
                            linking.
-
-        debug_lflags    => Like debug_cflags, but used when linking.
-        release_lflags  => Like release_cflags, but used when linking.
 
         ar              => The library archive command, the default is
                            "ar".
@@ -97,6 +70,14 @@ In each table entry, the following keys are significant:
                            this is here for future use, it's not
                            implemented yet)
 
+        thread_scheme   => The type of threads is used on the
+                           configured platform.  Currently known
+                           values are "(unknown)", "pthreads",
+                           "uithreads" (a.k.a solaris threads) and
+                           "winthreads".  Except for "(unknown)", the
+                           actual value is currently ignored but may
+                           be used in the future.  See further notes
+                           below [2].
         dso_scheme      => The type of dynamic shared objects to build
                            for.  This mostly comes into play with
                            engines, but can be used for other purposes
@@ -265,7 +246,7 @@ In each table entry, the following keys are significant:
         }
 
 [2] OpenSSL is built with threading capabilities unless the user
-    specifies 'no-threads'.  The value of the key 'thread_cflags' may
+    specifies 'no-threads'.  The value of the key 'thread_scheme' may
     be "(unknown)", in which case the user MUST give some compilation
     flags to Configure.
 

@@ -295,6 +295,7 @@ $crypto.=" include/openssl/srp.h";
 $crypto.=" include/openssl/modes.h";
 $crypto.=" include/openssl/async.h";
 $crypto.=" include/openssl/ct.h";
+$crypto.=" include/openssl/kdf.h";
 
 my $symhacks="include/openssl/symhacks.h";
 
@@ -641,7 +642,8 @@ sub do_defs
 				next;
 			}
 			if ($tag{'TRUE'} != -1) {
-				if (/^\s*DECLARE_STACK_OF\s*\(\s*(\w*)\s*\)/) {
+				if (/^\s*DEFINE_STACK_OF\s*\(\s*(\w*)\s*\)/
+						|| /^\s*DEFINE_STACK_OF_CONST\s*\(\s*(\w*)\s*\)/) {
 					next;
 				} elsif (/^\s*DECLARE_ASN1_ENCODE_FUNCTIONS\s*\(\s*(\w*)\s*,\s*(\w*)\s*,\s*(\w*)\s*\)/) {
 					$def .= "int d2i_$3(void);";

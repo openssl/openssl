@@ -144,8 +144,7 @@ DSA *DSA_new_method(ENGINE *engine)
     CRYPTO_new_ex_data(CRYPTO_EX_INDEX_DSA, ret, &ret->ex_data);
     if ((ret->meth->init != NULL) && !ret->meth->init(ret)) {
 #ifndef OPENSSL_NO_ENGINE
-        if (ret->engine)
-            ENGINE_finish(ret->engine);
+        ENGINE_finish(ret->engine);
 #endif
         CRYPTO_free_ex_data(CRYPTO_EX_INDEX_DSA, ret, &ret->ex_data);
         OPENSSL_free(ret);
@@ -171,8 +170,7 @@ void DSA_free(DSA *r)
     if (r->meth->finish)
         r->meth->finish(r);
 #ifndef OPENSSL_NO_ENGINE
-    if (r->engine)
-        ENGINE_finish(r->engine);
+    ENGINE_finish(r->engine);
 #endif
 
     CRYPTO_free_ex_data(CRYPTO_EX_INDEX_DSA, r, &r->ex_data);
