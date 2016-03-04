@@ -1670,8 +1670,18 @@ int s_client_main(int argc, char **argv)
     }
 
     if (!ctx_set_ctlog_list_file(ctx, ctlog_file)) {
-        ERR_print_errors(bio_err);
-        goto end;
+        if (ct_validation != NULL) {
+            ERR_print_errors(bio_err);
+            goto end;
+        }
+
+        /*
+         * If CT validation is not enabled, the log list isn't needed so don't
+         * show errors or abort. We try to load it regardless because then we
+         * can show the names of the logs any SCTs came from (SCTs may be seen
+         * even with validation disabled).
+         */
+        ERR_clear_error();
     }
 #endif
 

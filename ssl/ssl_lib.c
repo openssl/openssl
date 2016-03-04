@@ -4143,11 +4143,7 @@ end:
 
 int SSL_CTX_set_default_ctlog_list_file(SSL_CTX *ctx)
 {
-    int ret = CTLOG_STORE_load_default_file(ctx->ctlog_store);
-
-    /* Clear any errors if the default file does not exist */
-    ERR_clear_error();
-    return ret;
+    return CTLOG_STORE_load_default_file(ctx->ctlog_store);
 }
 
 int SSL_CTX_set_ctlog_list_file(SSL_CTX *ctx, const char *path)

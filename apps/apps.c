@@ -238,11 +238,7 @@ int ctx_set_verify_locations(SSL_CTX *ctx, const char *CAfile,
 int ctx_set_ctlog_list_file(SSL_CTX *ctx, const char *path)
 {
     if (path == NULL) {
-        if (SSL_CTX_set_default_ctlog_list_file(ctx) <= 0) {
-            BIO_puts(bio_err, "Failed to load default Certificate Transparency "
-                     "log list\n");
-        }
-        return 1; /* Do not treat failure to load the default as an error */
+        return SSL_CTX_set_default_ctlog_list_file(ctx);
     }
 
     return SSL_CTX_set_ctlog_list_file(ctx, path);
