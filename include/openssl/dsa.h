@@ -121,10 +121,7 @@ extern "C" {
 /* typedef struct dsa_st DSA; */
 /* typedef struct dsa_method DSA_METHOD; */
 
-typedef struct DSA_SIG_st {
-    BIGNUM *r;
-    BIGNUM *s;
-} DSA_SIG;
+typedef struct DSA_SIG_st DSA_SIG;
 
 struct dsa_method {
     const char *name;
@@ -187,6 +184,7 @@ DSA_SIG *DSA_SIG_new(void);
 void DSA_SIG_free(DSA_SIG *a);
 int i2d_DSA_SIG(const DSA_SIG *a, unsigned char **pp);
 DSA_SIG *d2i_DSA_SIG(DSA_SIG **v, const unsigned char **pp, long length);
+void DSA_SIG_get0(BIGNUM **pr, BIGNUM **ps, DSA_SIG *sig);
 
 DSA_SIG *DSA_do_sign(const unsigned char *dgst, int dlen, DSA *dsa);
 int DSA_do_verify(const unsigned char *dgst, int dgst_len,
