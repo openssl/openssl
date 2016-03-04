@@ -243,6 +243,12 @@ const ASN1_TEMPLATE *asn1_do_adb(ASN1_VALUE **pval, const ASN1_TEMPLATE *tt,
     else
         selector = ASN1_INTEGER_get((ASN1_INTEGER *)*sfld);
 
+    /* Let application callback translate value */
+    if (adb->adb_cb != NULL && adb->adb_cb(&selector) == 0) {
+        ASN1err(ASN1_F_ASN1_DO_ADB, ASN1_R_UNSUPPORTED_ANY_DEFINED_BY_TYPE);
+        return NULL;
+    }
+
     /*
      * Try to find matching entry in table Maybe should check application
      * types first to allow application override? Might also be useful to
