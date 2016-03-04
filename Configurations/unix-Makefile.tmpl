@@ -389,7 +389,7 @@ uninstall_dev:
 		$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn2; \
 		: {- output_on() unless windowsdll(); "" -}; \
 	done
-	@ : {- output_on() if $config{no_shared}; "" -}
+	@ : {- output_on() if $disabled{shared}; "" -}
 	$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig/libcrypto.pc
 	$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig/libssl.pc
 	$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig/openssl.pc
