@@ -23,7 +23,7 @@ HMAC-based Extract-and-Expand key derivation algorithm
 
 =head1 DESCRIPTION
 
-The EVP_PKEY_HKDF alogorithm implements the HKDF key derivation function.
+The EVP_PKEY_HKDF algorithm implements the HKDF key derivation function.
 HKDF follows the "extract-then-expand" paradigm, where the KDF logically
 consists of two modules. The first stage takes the input keying material
 and "extracts" from it a fixed-length pseudorandom key K. The second stage
@@ -42,6 +42,17 @@ EVP_PKEY_CTX_add1_hkdf_info() sets the info value to B<infolen> bytes of the
 buffer B<info>. If a value is already set, it is appended to the existing
 value.
 
+=head1 STRING CTRLS
+
+HKDF also supports string based control operations via
+L<EVP_PKEY_CTX_ctrl_str(3)>.
+The B<type> parameter "md" uses the supplied B<value> as the name of the digest
+algorithm to use.
+The B<type> parameters "salt", "key" and "info" use the supplied B<value>
+parameter as a B<seed>, B<key> or B<info> value.
+The names "hexsalt", "hexkey" and "hexinfo" are similar except they take a hex
+string which is converted to binary.
+
 =head1 NOTES
 
 All these functions are implemented as macros.
@@ -56,9 +67,13 @@ an error occurs.
 The total length of the info buffer cannot exceed 1024 bytes in length: this
 should be more than enough for any normal use of HKDF.
 
-The output length of the KDF is specified by the length parameter in the
-EVP_PKEY_derive() function. Since the output length is variable, setting
-the buffer to B<NULL> is not meaningful for HKDF.
+The output length of the KDF is specified via the length parameter to the
+L<EVP_PKEY_derive(3)> function.
+Since the HKDF output length is variable, passing a B<NULL> buffer as a means
+to obtain the requisite length is not meaningful with HKDF.
+Instead, the caller must allocate a buffer of the desired length, and pass that
+buffer to L<EVP_PKEY_derive(3)> along with (a pointer initialized to) the
+desired length.
 
 Optimised versions of HKDF can be implemented in an ENGINE.
 
@@ -98,6 +113,7 @@ RFC 5869
 =head1 SEE ALSO
 
 L<EVP_PKEY_CTX_new(3)>,
-L<EVP_PKEY_derive(3)>,
+L<EVP_PKEY_CTX_ctrl_str(3)>,
+L<EVP_PKEY_derive(3)>
 
 =cut
