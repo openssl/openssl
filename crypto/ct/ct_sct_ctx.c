@@ -111,7 +111,7 @@ static int ct_x509_get_ext(X509 *cert, int nid, int *is_duplicated)
  * AKID from the presigner certificate, if necessary.
  * Returns 1 on success, 0 otherwise.
  */
-static int ct_x509_cert_fixup(X509 *cert, X509 *presigner)
+__owur static int ct_x509_cert_fixup(X509 *cert, X509 *presigner)
 {
     int preidx, certidx;
     int pre_akid_ext_is_dup, cert_akid_ext_is_dup;
@@ -230,10 +230,10 @@ err:
     return 0;
 }
 
-static int ct_public_key_hash(X509_PUBKEY *pkey, unsigned char **hash,
-                              size_t *hash_len)
+__owur static int ct_public_key_hash(X509_PUBKEY *pkey, unsigned char **hash,
+                                     size_t *hash_len)
 {
-    int ret = -1;
+    int ret = 0;
     unsigned char *md = NULL, *der = NULL;
     int der_len;
     unsigned int md_len;
@@ -271,8 +271,7 @@ static int ct_public_key_hash(X509_PUBKEY *pkey, unsigned char **hash,
 
 int SCT_CTX_set1_issuer(SCT_CTX *sctx, const X509 *issuer)
 {
-    return ct_public_key_hash(X509_get_X509_PUBKEY(issuer), &sctx->ihash,
-                              &sctx->ihashlen);
+    return SCT_CTX_set1_issuer_pubkey(sctx, X509_get_X509_PUBKEY(issuer));
 }
 
 int SCT_CTX_set1_issuer_pubkey(SCT_CTX *sctx, X509_PUBKEY *pubkey)

@@ -167,20 +167,41 @@ SCT_CTX *SCT_CTX_new(void);
  */
 void SCT_CTX_free(SCT_CTX *sctx);
 
-/* Sets the certificate that the SCT is related to */
-int SCT_CTX_set1_cert(SCT_CTX *sctx, X509 *cert, X509 *presigner);
-/* Sets the issuer of the certificate that the SCT is related to */
-int SCT_CTX_set1_issuer(SCT_CTX *sctx, const X509 *issuer);
-/* Sets the public key of the issuer of the certificate that the SCT relates to */
-int SCT_CTX_set1_issuer_pubkey(SCT_CTX *sctx, X509_PUBKEY *pubkey);
-/* Sets the public key of the CT log that the SCT is from */
-int SCT_CTX_set1_pubkey(SCT_CTX *sctx, X509_PUBKEY *pubkey);
+/*
+ * Sets the certificate that the SCT is being verified against.
+ * This will fail if the certificate is invalid.
+ * Returns 1 on success, 0 on failure.
+ */
+__owur int SCT_CTX_set1_cert(SCT_CTX *sctx, X509 *cert, X509 *presigner);
+
+/*
+ * Sets the issuer of the certificate that the SCT is being verified against.
+ * This is just a convenience method to save extracting the public key and
+ * calling SCT_CTX_set1_issuer_pubkey().
+ * Issuer must not be NULL.
+ * Returns 1 on success, 0 on failure.
+ */
+__owur int SCT_CTX_set1_issuer(SCT_CTX *sctx, const X509 *issuer);
+
+/*
+ * Sets the public key of the issuer of the certificate that the SCT is being
+ * verified against.
+ * The public key must not be NULL.
+ * Returns 1 on success, 0 on failure.
+ */
+__owur int SCT_CTX_set1_issuer_pubkey(SCT_CTX *sctx, X509_PUBKEY *pubkey);
+
+/*
+ * Sets the public key of the CT log that the SCT is from.
+ * Returns 1 on success, 0 on failure.
+ */
+__owur int SCT_CTX_set1_pubkey(SCT_CTX *sctx, X509_PUBKEY *pubkey);
 
 /*
  * Does this SCT have the minimum fields populated to be usuable?
  * Returns 1 if so, 0 otherwise.
  */
-int SCT_is_complete(const SCT *sct);
+__owur int SCT_is_complete(const SCT *sct);
 
 /*
  * Does this SCT have the signature-related fields populated?
@@ -188,6 +209,6 @@ int SCT_is_complete(const SCT *sct);
  * This checks that the signature and hash algorithms are set to supported
  * values and that the signature field is set.
  */
-int SCT_signature_is_complete(const SCT *sct);
+__owur int SCT_signature_is_complete(const SCT *sct);
 
 
