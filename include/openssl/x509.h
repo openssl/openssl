@@ -376,23 +376,6 @@ typedef struct PBKDF2PARAM_st {
     X509_ALGOR *prf;
 } PBKDF2PARAM;
 
-/* PKCS#8 private key info structure */
-
-struct pkcs8_priv_key_info_st {
-    /* Flag for various broken formats */
-    int broken;
-# define PKCS8_OK                0
-# define PKCS8_NO_OCTET          1
-# define PKCS8_EMBEDDED_PARAM    2
-# define PKCS8_NS_DB             3
-# define PKCS8_NEG_PRIVKEY       4
-    ASN1_INTEGER *version;
-    X509_ALGOR *pkeyalg;
-    /* Should be OCTET STRING but some are broken */
-    ASN1_TYPE *pkey;
-    STACK_OF(X509_ATTRIBUTE) *attributes;
-};
-
 #ifdef  __cplusplus
 }
 #endif
@@ -1040,8 +1023,6 @@ DECLARE_ASN1_FUNCTIONS(PKCS8_PRIV_KEY_INFO)
 
 EVP_PKEY *EVP_PKCS82PKEY(PKCS8_PRIV_KEY_INFO *p8);
 PKCS8_PRIV_KEY_INFO *EVP_PKEY2PKCS8(EVP_PKEY *pkey);
-PKCS8_PRIV_KEY_INFO *EVP_PKEY2PKCS8_broken(EVP_PKEY *pkey, int broken);
-PKCS8_PRIV_KEY_INFO *PKCS8_set_broken(PKCS8_PRIV_KEY_INFO *p8, int broken);
 
 int PKCS8_pkey_set0(PKCS8_PRIV_KEY_INFO *priv, ASN1_OBJECT *aobj,
                     int version, int ptype, void *pval,
@@ -1049,6 +1030,10 @@ int PKCS8_pkey_set0(PKCS8_PRIV_KEY_INFO *priv, ASN1_OBJECT *aobj,
 int PKCS8_pkey_get0(ASN1_OBJECT **ppkalg,
                     const unsigned char **pk, int *ppklen,
                     X509_ALGOR **pa, PKCS8_PRIV_KEY_INFO *p8);
+
+STACK_OF(X509_ATTRIBUTE) *PKCS8_pkey_get0_attrs(PKCS8_PRIV_KEY_INFO *p8);
+int PKCS8_pkey_add1_attr_by_NID(PKCS8_PRIV_KEY_INFO *p8, int nid, int type,
+                                const unsigned char *bytes, int len);
 
 int X509_PUBKEY_set0_param(X509_PUBKEY *pub, ASN1_OBJECT *aobj,
                            int ptype, void *pval,
