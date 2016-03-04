@@ -515,11 +515,12 @@ CTLOG *CTLOG_new_from_base64(const char *pkey_base64, const char *name);
 void CTLOG_free(CTLOG *log);
 
 /* Gets the name of the CT log */
-const char *CTLOG_get0_name(CTLOG *log);
+const char *CTLOG_get0_name(const CTLOG *log);
 /* Gets the ID of the CT log */
-void CTLOG_get0_log_id(CTLOG *log, uint8_t **log_id, size_t *log_id_len);
+void CTLOG_get0_log_id(const CTLOG *log, const uint8_t **log_id,
+                       size_t *log_id_len);
 /* Gets the public key of the CT log */
-EVP_PKEY *CTLOG_get0_public_key(CTLOG *log);
+EVP_PKEY *CTLOG_get0_public_key(const CTLOG *log);
 
 /**************************
  * CT log store functions *
