@@ -1665,6 +1665,45 @@ static int cert_issuer_match(STACK_OF(X509_NAME) *ca_dn, X509 *x)
     return 0;
 }
 
+/* function for search client cert */
+static BOOL WINAPI client_cert_find_callback(PCCERT_CONTEXT cert_context,
+                                             void* find_arg)
+{
+    /* Verify the certificate key usage is appropriate or not specified. */
+    BYTE key_usage;
+    DWORD size = 0;
+    DWORD err;
+
+    if (CertGetIntendedKeyUsage(X509_ASN_ENCODING, cert_context->pCertInfo,
+        &key_usage, 1)) {
+            if (!(key_usage & CERT_DIGITAL_SIGNATURE_KEY_USAGE))
+                return FALSE;
+    }
+    else {
+        err = GetLastError();
+        /* If |err| is non-zero, it's an actual error. Otherwise the extension
+         * just isn't present, and we treat it as if everything was allowed. */
+        if (err) {
+            return FALSE;
+        }
+    }
+
+    /* Verify the current time is within the certificate's validity period. */
+    if (CertVerifyTimeValidity(NULL, cert_context->pCertInfo) != 0)
+        return FALSE;
+
+    /* Verify private key metadata is associated with this certificate.
+     * TODO(ppi): Is this really needed? Isn't it equivalent to leaving
+     * CERT_CHAIN_FIND_BY_ISSUER_NO_KEY_FLAG not set in |find_flags| argument of
+     * CertFindChainInStore()? */
+    if (!CertGetCertificateContextProperty(
+        cert_context, CERT_KEY_PROV_INFO_PROP_ID, NULL, &size)) {
+            return FALSE;
+    }
+
+    return TRUE;
+}
+
 static int capi_load_ssl_client_cert(ENGINE *e, SSL *ssl,
                                      STACK_OF(X509_NAME) *ca_dn, X509 **pcert,
                                      EVP_PKEY **pkey, STACK_OF(X509) **pother,
@@ -1680,6 +1719,16 @@ static int capi_load_ssl_client_cert(ENGINE *e, SSL *ssl,
     PCCERT_CONTEXT cert = NULL, excert = NULL;
     CAPI_CTX *ctx;
     CAPI_KEY *key;
+
+    X509_NAME* nm;
+    char *nmBuf;
+    CERT_NAME_BLOB* issuers;
+    CERT_CHAIN_FIND_BY_ISSUER_PARA find_by_issuer_para;
+    PCCERT_CHAIN_CONTEXT chain_context = NULL;
+    DWORD find_flags = 
+        CERT_CHAIN_FIND_BY_ISSUER_CACHE_ONLY_FLAG |
+        CERT_CHAIN_FIND_BY_ISSUER_CACHE_ONLY_URL_FLAG;
+
     ctx = ENGINE_get_ex_data(e, capi_idx);
 
     *pcert = NULL;
@@ -1692,9 +1741,35 @@ static int capi_load_ssl_client_cert(ENGINE *e, SSL *ssl,
     hstore = capi_open_store(ctx, storename);
     if (!hstore)
         return 0;
-    /* Enumerate all certificates collect any matches */
-    for (i = 0;; i++) {
-        cert = CertEnumCertificatesInStore(hstore, cert);
+
+    issuers = OPENSSL_malloc(sizeof(CERT_NAME_BLOB) * sk_X509_NAME_num(ca_dn));
+    for (i = 0; i < sk_X509_NAME_num(ca_dn); i++) {
+        nm = sk_X509_NAME_value(ca_dn, i);
+        issuers[i].pbData = NULL;
+        issuers[i].cbData = i2d_X509_NAME(nm, &(issuers[i].pbData));
+    }
+
+    /* Enumerate the client certificates. */
+    memset(&find_by_issuer_para, 0, sizeof(find_by_issuer_para));
+    find_by_issuer_para.cbSize = sizeof(find_by_issuer_para);
+    find_by_issuer_para.pszUsageIdentifier = szOID_PKIX_KP_CLIENT_AUTH;
+    find_by_issuer_para.cIssuer = sk_X509_NAME_num(ca_dn);
+    find_by_issuer_para.rgIssuer = issuers;
+    find_by_issuer_para.pfnFindCallback = client_cert_find_callback;
+
+    for (;;) {
+        chain_context = CertFindChainInStore(hstore,
+                                             X509_ASN_ENCODING,
+                                             find_flags,
+                                             CERT_CHAIN_FIND_BY_ISSUER,
+                                             &find_by_issuer_para,
+                                             chain_context);
+
+        if (!chain_context)
+            break;
+
+        /* Get the leaf certificate. */
+        cert = chain_context->rgpChain[0]->rgpElement[0]->pCertContext;
         if (!cert)
             break;
         p = cert->pbCertEncoded;
@@ -1703,8 +1778,7 @@ static int capi_load_ssl_client_cert(ENGINE *e, SSL *ssl,
             CAPI_trace(ctx, "Can't Parse Certificate %d\n", i);
             continue;
         }
-        if (cert_issuer_match(ca_dn, x)
-            && X509_check_purpose(x, X509_PURPOSE_SSL_CLIENT, 0)) {
+        if (X509_check_purpose(x, X509_PURPOSE_SSL_CLIENT, 0)) {
             key = capi_get_cert_key(ctx, cert);
             if (!key) {
                 X509_free(x);
@@ -1727,8 +1801,8 @@ static int capi_load_ssl_client_cert(ENGINE *e, SSL *ssl,
 
     }
 
-    if (cert)
-        CertFreeCertificateContext(cert);
+    if (chain_context)
+        CertFreeCertificateChain(chain_context);
     if (hstore)
         CertCloseStore(hstore, 0);
 
