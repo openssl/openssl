@@ -171,7 +171,7 @@ void EVP_EncodeUpdate(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl,
     if (inl <= 0)
         return;
     OPENSSL_assert(ctx->length <= (int)sizeof(ctx->enc_data));
-    if ((ctx->num + inl) < ctx->length) {
+    if (ctx->length - ctx->num > inl) {
         memcpy(&(ctx->enc_data[ctx->num]), in, inl);
         ctx->num += inl;
         return;
