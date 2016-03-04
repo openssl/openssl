@@ -275,7 +275,7 @@ static const unsigned char ecformats_default[] = {
 
 /* The default curves */
 static const unsigned char eccurves_default[] = {
-    /* Prefer X25519 which has the fastest and most secure implementations. */
+    /* Prefer X25519 which has the most robust implementations. */
     0, 29,                      /* X25519 (29) */
     /* Fallback to  P-256 which is most widely deployed. */
     0, 23,                      /* secp256r1 (23) */
