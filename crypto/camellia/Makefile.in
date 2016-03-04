@@ -14,7 +14,7 @@ AR=		ar r
 CMLL_ENC= camellia.o cmll_misc.o cmll_cbc.o
 
 CFLAGS= $(INCLUDES) $(CFLAG) $(SHARED_CFLAG)
-ASFLAGS= $(INCLUDES) $(ASFLAG)
+ASFLAGS= $(INCLUDES) $(ASFLAG) $(SHARED_CFLAG)
 AFLAGS= $(ASFLAGS)
 
 GENERAL=Makefile
