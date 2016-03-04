@@ -881,7 +881,7 @@ int capi_rsa_sign(int dtype, const unsigned char *m, unsigned int m_len,
         }
     }
 
-/* Check exists RSA AES Crypto provider. Init it with key container id
+/* Check if RSA AES Crypto provider exists then init it with key id
  * first - for all supported windows except win xp. second - win xp sp3 */
     if (!CryptAcquireContext(&hprov, capi_key->id, 
                              MS_ENH_RSA_AES_PROV, PROV_RSA_AES, 0)) {
@@ -1507,9 +1507,10 @@ static CAPI_KEY *capi_get_key(CAPI_CTX * ctx, const TCHAR *contname,
         CryptReleaseContext(key->hprov, 0);
         goto err;
     }
+/* store key container name as key id */
     len = strlen(contname);
     if (len > 0) {
-        key->id = OPENSSL_malloc(len+1);
+        key->id = OPENSSL_malloc((len + 1) * sizeof(TCHAR));
         memcpy(key->id, contname, len * sizeof(TCHAR));
         key->id[len] = '\0';
     }
