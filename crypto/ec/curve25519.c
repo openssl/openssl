@@ -62,10 +62,10 @@
  * context.  */
 typedef int32_t fe[10];
 
-static const int64_t kBottom25Bits = 0x1ffffff;
-static const int64_t kBottom26Bits = 0x3ffffff;
-static const int64_t kTop39Bits = ~kBottom25Bits;
-static const int64_t kTop38Bits = ~kBottom26Bits;
+static const int64_t kBottom25Bits = 0x1ffffffLL;
+static const int64_t kBottom26Bits = 0x3ffffffLL;
+static const int64_t kTop39Bits = 0xfffffffffe000000LL;
+static const int64_t kTop38Bits = 0xfffffffffc000000LL;
 
 static uint64_t load_3(const uint8_t *in) {
   uint64_t result;
