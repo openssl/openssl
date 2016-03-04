@@ -2613,13 +2613,18 @@ static void print_stuff(BIO *bio, SSL *s, int full)
 
 #ifndef OPENSSL_NO_CT
         scts = SSL_get0_peer_scts(s);
-        BIO_printf(bio, "---\nSCTs present (%i)\n---\n",
-                   scts ? sk_SCT_num(scts) : 0);
-        SCT_LIST_print(scts, bio, 0, "\n---\n");
-        BIO_printf(bio, "\n");
+        BIO_printf(bio, "---\nSCTs present (%i)\n",
+                   scts != NULL ? sk_SCT_num(scts) : 0);
+
         if (SSL_get_ct_validation_callback(s) == NULL) {
-          BIO_printf(bio, "---\nWarning: CT validation is disabled, so not all "
+          BIO_printf(bio, "Warning: CT validation is disabled, so not all "
                      "SCTs may be displayed. Re-run with \"-requestct\".\n");
+        }
+
+        if (scts != NULL && sk_SCT_num(scts) > 0) {
+            BIO_printf(bio, "---\n");
+            SCT_LIST_print(scts, bio, 0, "\n---\n");
+            BIO_printf(bio, "\n");
         }
 #endif
 
