@@ -305,7 +305,7 @@ int SCT_set_source(SCT *sct, sct_source_t source);
 
 /*
  * Sets the source of all of the SCTs to the same value.
- * Returns 1 on success.
+ * Returns the number of SCTs whose source was set successfully.
  */
 int SCT_LIST_set_source(const STACK_OF(SCT) *scts, sct_source_t source);
 
