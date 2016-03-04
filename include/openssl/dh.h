@@ -156,6 +156,7 @@ struct dh_st {
     CRYPTO_EX_DATA ex_data;
     const DH_METHOD *meth;
     ENGINE *engine;
+    CRYPTO_RWLOCK *lock;
 };
 
 # define DH_GENERATOR_2          2
