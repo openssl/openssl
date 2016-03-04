@@ -1751,6 +1751,7 @@ close(OUT);
 print "IsMK1MF       =", ($builder eq "mk1mf" ? "yes" : "no"), "\n";
 print "CC            =$target{cc}\n";
 print "CFLAG         =$target{cflags} $config{cflags}\n";
+print "SHARED_CFLAG  =$target{shared_cflag}\n";
 print "DEFINES       =",join(" ", @{$target{defines}}, @{$config{defines}}),"\n";
 print "LFLAG         =$target{lflags}\n";
 print "PLIB_LFLAG    =$target{plib_lflags}\n";
