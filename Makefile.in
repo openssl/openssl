@@ -510,10 +510,10 @@ errors:
 	$(PERL) util/mkerr.pl -recurse -write
 	(cd engines; $(MAKE) PERL=$(PERL) errors)
 
-ordinals: util/libeay.num util/ssleay.num test_ordinals TABLE
-util/libeay.num::
+ordinals: util/libcrypto.num util/libssl.num test_ordinals TABLE
+util/libcrypto.num::
 	$(PERL) util/mkdef.pl crypto update
-util/ssleay.num::
+util/libssl.num::
 	$(PERL) util/mkdef.pl ssl update
 test_ordinals:
 	TOP=$(TOP) PERL=$(PERL) $(PERL) test/run_tests.pl test_ordinals

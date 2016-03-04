@@ -5,7 +5,7 @@
 # It does this by parsing the header files and looking for the
 # prototyped functions: it then prunes the output.
 #
-# Intermediary files are created, call libeay.num and ssleay.num,
+# Intermediary files are created, call libcrypto.num and libssl.num,
 # The format of these files is:
 #
 #	routine-name	nnnn	vers	info
@@ -44,8 +44,8 @@ use File::Spec::Functions;
 
 my $debug=0;
 
-my $crypto_num= catfile($config{sourcedir},"util","libeay.num");
-my $ssl_num=    catfile($config{sourcedir},"util","ssleay.num");
+my $crypto_num= catfile($config{sourcedir},"util","libcrypto.num");
+my $ssl_num=    catfile($config{sourcedir},"util","libssl.num");
 my $libname;
 
 my $do_update = 0;
@@ -159,12 +159,12 @@ foreach (@ARGV, split(/ /, $config{options}))
 		$zlib = 1;
 	}
 
-	$do_ssl=1 if $_ eq "ssleay";
+	$do_ssl=1 if $_ eq "libssl";
 	if ($_ eq "ssl") {
 		$do_ssl=1; 
 		$libname=$_
 	}
-	$do_crypto=1 if $_ eq "libeay";
+	$do_crypto=1 if $_ eq "libcrypto";
 	if ($_ eq "crypto") {
 		$do_crypto=1;
 		$libname=$_;
@@ -202,10 +202,10 @@ foreach (@ARGV, split(/ /, $config{options}))
 
 if (!$libname) { 
 	if ($do_ssl) {
-		$libname="SSLEAY";
+		$libname="LIBSSL";
 	}
 	if ($do_crypto) {
-		$libname="LIBEAY";
+		$libname="LIBCRYPTO";
 	}
 }
 
@@ -299,34 +299,34 @@ $crypto.=" include/openssl/kdf.h";
 
 my $symhacks="include/openssl/symhacks.h";
 
-my @ssl_symbols = &do_defs("SSLEAY", $ssl, $symhacks);
-my @crypto_symbols = &do_defs("LIBEAY", $crypto, $symhacks);
+my @ssl_symbols = &do_defs("LIBSSL", $ssl, $symhacks);
+my @crypto_symbols = &do_defs("LIBCRYPTO", $crypto, $symhacks);
 
 if ($do_update) {
 
 if ($do_ssl == 1) {
 
-	&maybe_add_info("SSLEAY",*ssl_list,@ssl_symbols);
+	&maybe_add_info("LIBSSL",*ssl_list,@ssl_symbols);
 	if ($do_rewrite == 1) {
 		open(OUT, ">$ssl_num");
-		&rewrite_numbers(*OUT,"SSLEAY",*ssl_list,@ssl_symbols);
+		&rewrite_numbers(*OUT,"LIBSSL",*ssl_list,@ssl_symbols);
 	} else {
 		open(OUT, ">>$ssl_num");
 	}
-	&update_numbers(*OUT,"SSLEAY",*ssl_list,$max_ssl,@ssl_symbols);
+	&update_numbers(*OUT,"LIBSSL",*ssl_list,$max_ssl,@ssl_symbols);
 	close OUT;
 }
 
 if($do_crypto == 1) {
 
-	&maybe_add_info("LIBEAY",*crypto_list,@crypto_symbols);
+	&maybe_add_info("LIBCRYPTO",*crypto_list,@crypto_symbols);
 	if ($do_rewrite == 1) {
 		open(OUT, ">$crypto_num");
-		&rewrite_numbers(*OUT,"LIBEAY",*crypto_list,@crypto_symbols);
+		&rewrite_numbers(*OUT,"LIBCRYPTO",*crypto_list,@crypto_symbols);
 	} else {
 		open(OUT, ">>$crypto_num");
 	}
-	&update_numbers(*OUT,"LIBEAY",*crypto_list,$max_crypto,@crypto_symbols);
+	&update_numbers(*OUT,"LIBCRYPTO",*crypto_list,$max_crypto,@crypto_symbols);
 	close OUT;
 } 
 
@@ -346,10 +346,10 @@ if($do_crypto == 1) {
 int main()
 {
 EOF
-	&print_test_file(*STDOUT,"SSLEAY",*ssl_list,$do_ctestall,@ssl_symbols)
+	&print_test_file(*STDOUT,"LIBSSL",*ssl_list,$do_ctestall,@ssl_symbols)
 		if $do_ssl == 1;
 
-	&print_test_file(*STDOUT,"LIBEAY",*crypto_list,$do_ctestall,@crypto_symbols)
+	&print_test_file(*STDOUT,"LIBCRYPTO",*crypto_list,$do_ctestall,@crypto_symbols)
 		if $do_crypto == 1;
 
 	print "}\n";
