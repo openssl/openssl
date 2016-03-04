@@ -69,7 +69,7 @@ ASN1_TYPE *PKCS12_SAFEBAG_get0_attr(PKCS12_SAFEBAG *bag, int attr_nid)
 
 ASN1_TYPE *PKCS8_get_attr(PKCS8_PRIV_KEY_INFO *p8, int attr_nid)
 {
-    return PKCS12_get_attr_gen(p8->attributes, attr_nid);
+    return PKCS12_get_attr_gen(PKCS8_pkey_get0_attrs(p8), attr_nid);
 }
 
 PKCS8_PRIV_KEY_INFO *PKCS12_SAFEBAG_get0_p8inf(PKCS12_SAFEBAG *bag)
