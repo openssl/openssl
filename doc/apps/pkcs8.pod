@@ -18,9 +18,6 @@ B<openssl> B<pkcs8>
 [B<-iter count>]
 [B<-noiter>]
 [B<-nocrypt>]
-[B<-nooct>]
-[B<-embed>]
-[B<-nsdb>]
 [B<-v2 alg>]
 [B<-v2prf alg>]
 [B<-v1 alg>]
@@ -100,26 +97,6 @@ this option an unencrypted PrivateKeyInfo structure is expected or output.
 This option does not encrypt private keys at all and should only be used
 when absolutely necessary. Certain software such as some versions of Java
 code signing software used unencrypted private keys.
-
-=item B<-nooct>
-
-This option generates RSA private keys in a broken format that some software
-uses. Specifically the private key should be enclosed in a OCTET STRING
-but some software just includes the structure itself without the
-surrounding OCTET STRING.
-
-=item B<-embed>
-
-This option generates DSA keys in a broken format. The DSA parameters are
-embedded inside the PrivateKey structure. In this form the OCTET STRING
-contains an ASN1 SEQUENCE consisting of two structures: a SEQUENCE containing
-the parameters and an ASN1 INTEGER containing the private key.
-
-=item B<-nsdb>
-
-This option generates DSA keys in a broken format compatible with Netscape
-private key databases. The PrivateKey contains a SEQUENCE consisting of
-the public and private keys respectively.
 
 =item B<-v2 alg>
 
