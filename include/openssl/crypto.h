@@ -187,7 +187,6 @@ extern "C" {
 # define CRYPTO_LOCK_READDIR             24
 # define CRYPTO_LOCK_RSA_BLINDING        25
 # define CRYPTO_LOCK_MALLOC2             27
-# define CRYPTO_LOCK_DSO                 28
 # define CRYPTO_LOCK_DYNLOCK             29
 # define CRYPTO_LOCK_ENGINE              30
 # define CRYPTO_LOCK_UI                  31
