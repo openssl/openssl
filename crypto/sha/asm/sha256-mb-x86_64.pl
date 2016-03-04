@@ -483,10 +483,10 @@ $code.=<<___;
 	punpckhqdq	@MSG1[0],$ABEF1			# F1.E1.B1.A1
 	punpckhqdq	@MSG1[2],$CDGH1			# H1.G1.D1.C1
 
-	pshufd		\$0b00011011,$ABEF0,$ABEF0
-	pshufd		\$0b00011011,$CDGH0,$CDGH0
-	pshufd		\$0b00011011,$ABEF1,$ABEF1
-	pshufd		\$0b00011011,$CDGH1,$CDGH1
+	pshufd		\$0x1b,$ABEF0,$ABEF0
+	pshufd		\$0x1b,$CDGH0,$CDGH0
+	pshufd		\$0x1b,$ABEF1,$ABEF1
+	pshufd		\$0x1b,$CDGH1,$CDGH1
 	jmp		.Loop_shaext
 
 .align	32
@@ -703,10 +703,10 @@ $code.=<<___;
 
 	mov		`$REG_SZ*17+8`(%rsp),$num
 
-	pshufd		\$0b00011011,$ABEF0,$ABEF0
-	pshufd		\$0b00011011,$CDGH0,$CDGH0
-	pshufd		\$0b00011011,$ABEF1,$ABEF1
-	pshufd		\$0b00011011,$CDGH1,$CDGH1
+	pshufd		\$0x1b,$ABEF0,$ABEF0
+	pshufd		\$0x1b,$CDGH0,$CDGH0
+	pshufd		\$0x1b,$ABEF1,$ABEF1
+	pshufd		\$0x1b,$CDGH1,$CDGH1
 
 	movdqa		$ABEF0,@MSG0[0]
 	movdqa		$CDGH0,@MSG0[1]

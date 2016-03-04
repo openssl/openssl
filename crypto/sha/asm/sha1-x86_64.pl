@@ -358,9 +358,9 @@ $code.=<<___;
 	movdqa	K_XX_XX+0xa0(%rip),$BSWAP	# byte-n-word swap
 
 	movdqu	($inp),@MSG[0]
-	pshufd	\$0b00011011,$ABCD,$ABCD	# flip word order
+	pshufd	\$0x1b,$ABCD,$ABCD		# flip word order
 	movdqu	0x10($inp),@MSG[1]
-	pshufd	\$0b00011011,$E,$E		# flip word order
+	pshufd	\$0x1b,$E,$E			# flip word order
 	movdqu	0x20($inp),@MSG[2]
 	pshufb	$BSWAP,@MSG[0]
 	movdqu	0x30($inp),@MSG[3]
@@ -426,8 +426,8 @@ $code.=<<___;
 
 	jnz		.Loop_shaext
 
-	pshufd	\$0b00011011,$ABCD,$ABCD
-	pshufd	\$0b00011011,$E,$E
+	pshufd	\$0x1b,$ABCD,$ABCD
+	pshufd	\$0x1b,$E,$E
 	movdqu	$ABCD,($ctx)
 	movd	$E,16($ctx)
 ___

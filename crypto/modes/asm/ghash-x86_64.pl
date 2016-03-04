@@ -420,15 +420,15 @@ my ($Xhi,$Xi,$Hkey,$HK)=@_;
 if (!defined($HK)) {	$HK = $T2;
 $code.=<<___;
 	movdqa		$Xi,$Xhi		#
-	pshufd		\$0b01001110,$Xi,$T1
-	pshufd		\$0b01001110,$Hkey,$T2
+	pshufd		\$0x4e,$Xi,$T1
+	pshufd		\$0x4e,$Hkey,$T2
 	pxor		$Xi,$T1			#
 	pxor		$Hkey,$T2
 ___
 } else {
 $code.=<<___;
 	movdqa		$Xi,$Xhi		#
-	pshufd		\$0b01001110,$Xi,$T1
+	pshufd		\$0x4e,$Xi,$T1
 	pxor		$Xi,$T1			#
 ___
 }
@@ -495,10 +495,10 @@ $code.=<<___ if ($win64);
 ___
 $code.=<<___;
 	movdqu		($Xip),$Hkey
-	pshufd		\$0b01001110,$Hkey,$Hkey	# dword swap
+	pshufd		\$0x4e,$Hkey,$Hkey	# dword swap
 
 	# <<1 twist
-	pshufd		\$0b11111111,$Hkey,$T2	# broadcast uppermost dword
+	pshufd		\$0xff,$Hkey,$T2	# broadcast uppermost dword
 	movdqa		$Hkey,$T1
 	psllq		\$1,$Hkey
 	pxor		$T3,$T3			#
@@ -512,15 +512,15 @@ $code.=<<___;
 	pxor		$T3,$Hkey		# if(carry) H^=0x1c2_polynomial
 
 	# calculate H^2
-	pshufd		\$0b01001110,$Hkey,$HK
+	pshufd		\$0x4e,$Hkey,$HK
 	movdqa		$Hkey,$Xi
 	pxor		$Hkey,$HK
 ___
 	&clmul64x64_T2	($Xhi,$Xi,$Hkey,$HK);
 	&reduction_alg9	($Xhi,$Xi);
 $code.=<<___;
-	pshufd		\$0b01001110,$Hkey,$T1
-	pshufd		\$0b01001110,$Xi,$T2
+	pshufd		\$0x4e,$Hkey,$T1
+	pshufd		\$0x4e,$Xi,$T2
 	pxor		$Hkey,$T1		# Karatsuba pre-processing
 	movdqu		$Hkey,0x00($Htbl)	# save H
 	pxor		$Xi,$T2			# Karatsuba pre-processing
@@ -537,8 +537,8 @@ ___
 	&clmul64x64_T2	($Xhi,$Xi,$Hkey,$HK);	# H^4
 	&reduction_alg9	($Xhi,$Xi);
 $code.=<<___;
-	pshufd		\$0b01001110,$T3,$T1
-	pshufd		\$0b01001110,$Xi,$T2
+	pshufd		\$0x4e,$T3,$T1
+	pshufd		\$0x4e,$Xi,$T2
 	pxor		$T3,$T1			# Karatsuba pre-processing
 	movdqu		$T3,0x30($Htbl)		# save H^3
 	pxor		$Xi,$T2			# Karatsuba pre-processing
@@ -670,14 +670,14 @@ $code.=<<___;
 	pshufb		$T3,$Xln
 	 pshufb		$T3,$Xl
 	movdqa		$Xln,$Xhn
-	pshufd		\$0b01001110,$Xln,$Xmn
+	pshufd		\$0x4e,$Xln,$Xmn
 	pxor		$Xln,$Xmn
 	pclmulqdq	\$0x00,$Hkey,$Xln
 	pclmulqdq	\$0x11,$Hkey,$Xhn
 	pclmulqdq	\$0x00,$HK,$Xmn
 
 	movdqa		$Xl,$Xh
-	pshufd		\$0b01001110,$Xl,$Xm
+	pshufd		\$0x4e,$Xl,$Xm
 	pxor		$Xl,$Xm
 	pclmulqdq	\$0x00,$Hkey2,$Xl
 	pclmulqdq	\$0x11,$Hkey2,$Xh
@@ -692,12 +692,12 @@ $code.=<<___;
 	pshufb		$T3,$Xl
 	 pshufb		$T3,$T1
 	movdqa		$Xl,$Xh
-	pshufd		\$0b01001110,$Xl,$Xm
+	pshufd		\$0x4e,$Xl,$Xm
 	 pxor		$T1,$Xi
 	pxor		$Xl,$Xm
 	pclmulqdq	\$0x00,$Hkey3,$Xl
 	 movdqa		$Xi,$Xhi
-	 pshufd		\$0b01001110,$Xi,$T1
+	 pshufd		\$0x4e,$Xi,$T1
 	 pxor		$Xi,$T1
 	pclmulqdq	\$0x11,$Hkey3,$Xh
 	pclmulqdq	\$0x00,$HK,$Xm
@@ -720,14 +720,14 @@ $code.=<<___;
 	 movdqu		0x20($inp),$Xln
 	 movdqa		$Xl,$Xh
 	pclmulqdq	\$0x10,$HK,$T1
-	 pshufd		\$0b01001110,$Xl,$Xm
+	 pshufd		\$0x4e,$Xl,$Xm
 	xorps		$Xhn,$Xhi
 	 pxor		$Xl,$Xm
 	 pshufb		$T3,$Xln
 	movups		0x20($Htbl),$HK
 	xorps		$Xmn,$T1
 	 pclmulqdq	\$0x00,$Hkey,$Xl
-	 pshufd		\$0b01001110,$Xln,$Xmn
+	 pshufd		\$0x4e,$Xln,$Xmn
 
 	pxor		$Xi,$T1			# aggregated Karatsuba post-processing
 	 movdqa		$Xln,$Xhn
@@ -771,7 +771,7 @@ $code.=<<___;
 
 	 movdqa		$Xl,$Xh
 	 pxor		$Xm,$Xmn
-	 pshufd		\$0b01001110,$Xl,$Xm
+	 pshufd		\$0x4e,$Xl,$Xm
 	pxor		$T2,$Xi			#
 	pxor		$T1,$Xhi
 	 pxor		$Xl,$Xm
@@ -781,7 +781,7 @@ $code.=<<___;
 	movdqa		$Xi,$Xhi
 	 pclmulqdq	\$0x11,$Hkey3,$Xh
 	 xorps		$Xl,$Xln
-	pshufd		\$0b01001110,$Xi,$T1
+	pshufd		\$0x4e,$Xi,$T1
 	pxor		$Xi,$T1
 
 	 pclmulqdq	\$0x00,$HK,$Xm
@@ -833,7 +833,7 @@ $code.=<<___;
 	pxor		$T1,$Xi			# Ii+Xi
 
 	movdqa		$Xln,$Xhn
-	pshufd		\$0b01001110,$Xln,$Xmn
+	pshufd		\$0x4e,$Xln,$Xmn
 	pxor		$Xln,$Xmn
 	pclmulqdq	\$0x00,$Hkey,$Xln
 	pclmulqdq	\$0x11,$Hkey,$Xhn
@@ -850,7 +850,7 @@ $code.=<<___;
 .Lmod_loop:
 	movdqa		$Xi,$Xhi
 	movdqa		$Xmn,$T1
-	pshufd		\$0b01001110,$Xi,$Xmn	#
+	pshufd		\$0x4e,$Xi,$Xmn	#
 	pxor		$Xi,$Xmn		#
 
 	pclmulqdq	\$0x00,$Hkey2,$Xi
@@ -888,7 +888,7 @@ $code.=<<___;
 	  pslldq	\$8,$Xi
 	  psrldq	\$8,$T1			#	
 	  pxor		$T2,$Xi
-	pshufd		\$0b01001110,$Xhn,$Xmn
+	pshufd		\$0x4e,$Xhn,$Xmn
 	  pxor		$T1,$Xhi		#
 	pxor		$Xhn,$Xmn		#
 
@@ -910,7 +910,7 @@ $code.=<<___;
 .Leven_tail:
 	 movdqa		$Xi,$Xhi
 	 movdqa		$Xmn,$T1
-	 pshufd		\$0b01001110,$Xi,$Xmn	#
+	 pshufd		\$0x4e,$Xi,$Xmn	#
 	 pxor		$Xi,$Xmn		#
 
 	pclmulqdq	\$0x00,$Hkey2,$Xi
@@ -985,10 +985,10 @@ $code.=<<___;
 	vzeroupper
 
 	vmovdqu		($Xip),$Hkey
-	vpshufd		\$0b01001110,$Hkey,$Hkey	# dword swap
+	vpshufd		\$0x4e,$Hkey,$Hkey	# dword swap
 
 	# <<1 twist
-	vpshufd		\$0b11111111,$Hkey,$T2	# broadcast uppermost dword
+	vpshufd		\$0xff,$Hkey,$T2	# broadcast uppermost dword
 	vpsrlq		\$63,$Hkey,$T1
 	vpsllq		\$1,$Hkey,$Hkey
 	vpxor		$T3,$T3,$T3		#
@@ -1076,8 +1076,8 @@ ___
 	&clmul64x64_avx	($Xhi,$Xi,$Hkey,$HK);	# calculate H^2,4,6,8
 	&reduction_avx	($Xhi,$Xi);
 $code.=<<___;
-	vpshufd		\$0b01001110,$T3,$T1
-	vpshufd		\$0b01001110,$Xi,$T2
+	vpshufd		\$0x4e,$T3,$T1
+	vpshufd		\$0x4e,$Xi,$T2
 	vpxor		$T3,$T1,$T1		# Karatsuba pre-processing
 	vmovdqu		$T3,0x00($Htbl)		# save H^1,3,5,7
 	vpxor		$Xi,$T2,$T2		# Karatsuba pre-processing

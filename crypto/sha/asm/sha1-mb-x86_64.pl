@@ -570,10 +570,10 @@ $code.=<<___;
 	punpcklqdq	@MSG0[1],$ABCD0		# d0.c0.b0.a0
 	punpckhqdq	@MSG0[1],$ABCD1		# d1.c1.b1.a1
 
-	pshufd		\$0b00111111,@MSG0[3],$E0
-	pshufd		\$0b01111111,@MSG0[3],$E1
-	pshufd		\$0b00011011,$ABCD0,$ABCD0
-	pshufd		\$0b00011011,$ABCD1,$ABCD1
+	pshufd		\$0x3f,@MSG0[3],$E0
+	pshufd		\$0x7f,@MSG0[3],$E1
+	pshufd		\$0x1b,$ABCD0,$ABCD0
+	pshufd		\$0x1b,$ABCD1,$ABCD1
 	jmp		.Loop_shaext
 
 .align	32
@@ -711,8 +711,8 @@ $code.=<<___;
 
 	mov		`$REG_SZ*17+8`(%rsp),$num
 
-	pshufd		\$0b00011011,$ABCD0,$ABCD0
-	pshufd		\$0b00011011,$ABCD1,$ABCD1
+	pshufd		\$0x1b,$ABCD0,$ABCD0
+	pshufd		\$0x1b,$ABCD1,$ABCD1
 
 	movdqa		$ABCD0,@MSG0[0]
 	punpckldq	$ABCD1,$ABCD0		# b1.b0.a1.a0

@@ -1707,8 +1707,8 @@ $code.=<<___;
 	movups	16($key),$rndkey[0]		# forward reference
 	lea	112($key),$key			# size optimization
 
-	pshufd	\$0b00011011,$ABCD,$ABCD	# flip word order
-	pshufd	\$0b00011011,$E,$E		# flip word order
+	pshufd	\$0x1b,$ABCD,$ABCD		# flip word order
+	pshufd	\$0x1b,$E,$E			# flip word order
 	jmp	.Loop_shaext
 
 .align	16
@@ -1808,8 +1808,8 @@ $code.=<<___;
 	lea		64($in0),$in0
 	jnz		.Loop_shaext
 
-	pshufd	\$0b00011011,$ABCD,$ABCD
-	pshufd	\$0b00011011,$E,$E
+	pshufd	\$0x1b,$ABCD,$ABCD
+	pshufd	\$0x1b,$E,$E
 	movups	$iv,($ivp)			# write IV
 	movdqu	$ABCD,($ctx)
 	movd	$E,16($ctx)

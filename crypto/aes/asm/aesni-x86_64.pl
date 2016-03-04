@@ -4558,11 +4558,11 @@ __aesni_set_encrypt_key:
 	$movkey	%xmm0,(%rax)
 	lea	16(%rax),%rax
 .Lkey_expansion_128_cold:
-	shufps	\$0b00010000,%xmm0,%xmm4
+	shufps	\$0x10,%xmm0,%xmm4
 	xorps	%xmm4, %xmm0
-	shufps	\$0b10001100,%xmm0,%xmm4
+	shufps	\$0x8c,%xmm0,%xmm4
 	xorps	%xmm4, %xmm0
-	shufps	\$0b11111111,%xmm1,%xmm1	# critical path
+	shufps	\$0xff,%xmm1,%xmm1	# critical path
 	xorps	%xmm1,%xmm0
 	ret
 
@@ -4573,25 +4573,25 @@ __aesni_set_encrypt_key:
 .Lkey_expansion_192a_cold:
 	movaps	%xmm2, %xmm5
 .Lkey_expansion_192b_warm:
-	shufps	\$0b00010000,%xmm0,%xmm4
+	shufps	\$0x10,%xmm0,%xmm4
 	movdqa	%xmm2,%xmm3
 	xorps	%xmm4,%xmm0
-	shufps	\$0b10001100,%xmm0,%xmm4
+	shufps	\$0x8c,%xmm0,%xmm4
 	pslldq	\$4,%xmm3
 	xorps	%xmm4,%xmm0
-	pshufd	\$0b01010101,%xmm1,%xmm1	# critical path
+	pshufd	\$0x55,%xmm1,%xmm1	# critical path
 	pxor	%xmm3,%xmm2
 	pxor	%xmm1,%xmm0
-	pshufd	\$0b11111111,%xmm0,%xmm3
+	pshufd	\$0xff,%xmm0,%xmm3
 	pxor	%xmm3,%xmm2
 	ret
 
 .align 16
 .Lkey_expansion_192b:
 	movaps	%xmm0,%xmm3
-	shufps	\$0b01000100,%xmm0,%xmm5
+	shufps	\$0x44,%xmm0,%xmm5
 	$movkey	%xmm5,(%rax)
-	shufps	\$0b01001110,%xmm2,%xmm3
+	shufps	\$0x4e,%xmm2,%xmm3
 	$movkey	%xmm3,16(%rax)
 	lea	32(%rax),%rax
 	jmp	.Lkey_expansion_192b_warm
@@ -4601,11 +4601,11 @@ __aesni_set_encrypt_key:
 	$movkey	%xmm2,(%rax)
 	lea	16(%rax),%rax
 .Lkey_expansion_256a_cold:
-	shufps	\$0b00010000,%xmm0,%xmm4
+	shufps	\$0x10,%xmm0,%xmm4
 	xorps	%xmm4,%xmm0
-	shufps	\$0b10001100,%xmm0,%xmm4
+	shufps	\$0x8c,%xmm0,%xmm4
 	xorps	%xmm4,%xmm0
-	shufps	\$0b11111111,%xmm1,%xmm1	# critical path
+	shufps	\$0xff,%xmm1,%xmm1	# critical path
 	xorps	%xmm1,%xmm0
 	ret
 
@@ -4614,11 +4614,11 @@ __aesni_set_encrypt_key:
 	$movkey	%xmm0,(%rax)
 	lea	16(%rax),%rax
 
-	shufps	\$0b00010000,%xmm2,%xmm4
+	shufps	\$0x10,%xmm2,%xmm4
 	xorps	%xmm4,%xmm2
-	shufps	\$0b10001100,%xmm2,%xmm4
+	shufps	\$0x8c,%xmm2,%xmm4
 	xorps	%xmm4,%xmm2
-	shufps	\$0b10101010,%xmm1,%xmm1	# critical path
+	shufps	\$0xaa,%xmm1,%xmm1	# critical path
 	xorps	%xmm1,%xmm2
 	ret
 .size	${PREFIX}_set_encrypt_key,.-${PREFIX}_set_encrypt_key
