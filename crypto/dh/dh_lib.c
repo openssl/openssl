@@ -108,7 +108,7 @@ DH *DH_new_method(ENGINE *engine)
 
     if (ret == NULL) {
         DHerr(DH_F_DH_NEW_METHOD, ERR_R_MALLOC_FAILURE);
-        return (NULL);
+        return NULL;
     }
 
     ret->meth = DH_get_default_method();
@@ -135,16 +135,25 @@ DH *DH_new_method(ENGINE *engine)
 
     ret->references = 1;
     ret->flags = ret->meth->flags;
+
     CRYPTO_new_ex_data(CRYPTO_EX_INDEX_DH, ret, &ret->ex_data);
-    if ((ret->meth->init != NULL) && !ret->meth->init(ret)) {
+
+    ret->lock = CRYPTO_THREAD_lock_new();
+    if (ret->lock == NULL) {
 #ifndef OPENSSL_NO_ENGINE
         ENGINE_finish(ret->engine);
 #endif
         CRYPTO_free_ex_data(CRYPTO_EX_INDEX_DH, ret, &ret->ex_data);
         OPENSSL_free(ret);
+        return NULL;
+    }
+
+    if ((ret->meth->init != NULL) && !ret->meth->init(ret)) {
+        DH_free(ret);
         ret = NULL;
     }
-    return (ret);
+
+    return ret;
 }
 
 void DH_free(DH *r)
@@ -153,7 +162,8 @@ void DH_free(DH *r)
 
     if (r == NULL)
         return;
-    i = CRYPTO_add(&r->references, -1, CRYPTO_LOCK_DH);
+
+    CRYPTO_atomic_add(&r->references, -1, &i, r->lock);
     REF_PRINT_COUNT("DH", r);
     if (i > 0)
         return;
@@ -166,6 +176,8 @@ void DH_free(DH *r)
 #endif
 
     CRYPTO_free_ex_data(CRYPTO_EX_INDEX_DH, r, &r->ex_data);
+
+    CRYPTO_THREAD_lock_free(r->lock);
 
     BN_clear_free(r->p);
     BN_clear_free(r->g);
@@ -180,7 +192,10 @@ void DH_free(DH *r)
 
 int DH_up_ref(DH *r)
 {
-    int i = CRYPTO_add(&r->references, 1, CRYPTO_LOCK_DH);
+    int i;
+
+    if (CRYPTO_atomic_add(&r->references, 1, &i, r->lock) <= 0)
+        return 0;
 
     REF_PRINT_COUNT("DH", r);
     REF_ASSERT_ISNT(i < 2);

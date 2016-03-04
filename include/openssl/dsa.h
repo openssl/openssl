@@ -172,6 +172,7 @@ struct dsa_st {
     const DSA_METHOD *meth;
     /* functional reference if 'meth' is ENGINE-provided */
     ENGINE *engine;
+    CRYPTO_RWLOCK *lock;
 };
 
 # define d2i_DSAparams_fp(fp,x) (DSA *)ASN1_d2i_fp((char *(*)())DSA_new, \

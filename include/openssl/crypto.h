@@ -172,8 +172,6 @@ extern "C" {
 # define CRYPTO_LOCK_X509_PKEY           5
 # define CRYPTO_LOCK_X509_CRL            6
 # define CRYPTO_LOCK_X509_REQ            7
-# define CRYPTO_LOCK_DSA                 8
-# define CRYPTO_LOCK_RSA                 9
 # define CRYPTO_LOCK_EVP_PKEY            10
 # define CRYPTO_LOCK_X509_STORE          11
 # define CRYPTO_LOCK_SSL_CTX             12
@@ -188,7 +186,6 @@ extern "C" {
 # define CRYPTO_LOCK_BIO                 21
 # define CRYPTO_LOCK_READDIR             24
 # define CRYPTO_LOCK_RSA_BLINDING        25
-# define CRYPTO_LOCK_DH                  26
 # define CRYPTO_LOCK_MALLOC2             27
 # define CRYPTO_LOCK_DSO                 28
 # define CRYPTO_LOCK_DYNLOCK             29
