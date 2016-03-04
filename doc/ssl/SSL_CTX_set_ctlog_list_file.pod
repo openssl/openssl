@@ -37,9 +37,6 @@ The expected format of the log list file is:
 These functions will not clear the existing CT log list - it will be appended
 to.
 
-SSL_CTX_set_default_ctlog_list_file() will not report errors if it fails for
-any reason. Use SSL_CTX_set_ctlog_list_file() if you want errors to be reported.
-
 If an error occurs whilst parsing a particular log entry in the file, that log
 entry will be skipped.
 
