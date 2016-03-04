@@ -317,12 +317,11 @@ int SCT_set_source(SCT *sct, sct_source_t source)
 
 int SCT_LIST_set_source(const STACK_OF(SCT) *scts, sct_source_t source)
 {
-    int i, ret = 1;
+    int i, ret = 0;
 
     for (i = 0; i < sk_SCT_num(scts); ++i) {
-        ret = SCT_set_source(sk_SCT_value(scts, i), source);
-        if (ret != 1)
-            break;
+        if (SCT_set_source(sk_SCT_value(scts, i), source))
+            ++ret;
     }
 
     return ret;
