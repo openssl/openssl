@@ -8,6 +8,9 @@
      callback, such that updates to the SSL_CTX affect ALPN.
      [Todd Short]
 
+  *) Add SSL_CIPHER queries for authentication and key-exchange.
+     [Todd Short]
+
   *) Changes to the DEFAULT cipherlist:
        - Prefer (EC)DHE handshakes over plain RSA.
        - Prefer AEAD ciphers over legacy ciphers.
