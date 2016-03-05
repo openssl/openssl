@@ -198,7 +198,7 @@ sub do_test_rule {
     my ($target, $deps, $test_cmd) = @_;
     my $ret = <<"EOF";
 $target: $deps force.$target
-	TOP=. BIN_D=\$(BIN_D) TEST_D=\$(TEST_D) \\
+	TOP=. BIN_D=\$(BIN_D) TEST_D=\$(TEST_D) OPENSSL_ENGINES=$(ENG_D) \\
 	    PERL=\$(PERL) \$(PERL) test/$test_cmd \$(TESTS)
 force.$target:
 

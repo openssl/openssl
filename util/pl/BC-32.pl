@@ -110,6 +110,7 @@ $target: $deps force.$target
 	set TOP=.
 	set BIN_D=\$(BIN_D)
 	set TEST_D=\$(TEST_D)
+	set OPENSSL_ENGINES=\$(ENG_D)
 	set PERL=\$(PERL)
 	\$(PERL) test\\$test_cmd \$(TESTS)
 force.$target:

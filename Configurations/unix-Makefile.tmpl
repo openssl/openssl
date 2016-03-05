@@ -220,6 +220,7 @@ test tests: build_tests_nodep build_apps_nodep build_engines_nodep depend
 	  SRCTOP=../$(SRCDIR) \
 	  BLDTOP=../$(BLDDIR) \
 	  EXE_EXT={- $exeext -} \
+	  OPENSSL_ENGINES=../$(BLDDIR)/engines \
 	    $(PERL) ../$(SRCDIR)/test/run_tests.pl $(TESTS) )
 
 list-tests:
