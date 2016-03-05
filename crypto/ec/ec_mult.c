@@ -320,8 +320,6 @@ int ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
                 wNAF[num] = tmp_wNAF;
                 wNAF[num + 1] = NULL;
                 wNAF_len[num] = tmp_len;
-                if (tmp_len > max_len)
-                    max_len = tmp_len;
                 /*
                  * pre_comp->points starts with the points that we need here:
                  */
