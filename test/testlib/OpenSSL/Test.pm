@@ -121,9 +121,15 @@ is defined).
 =cut
 
 sub setup {
+    my $old_test_name = $test_name;
     $test_name = shift;
 
     BAIL_OUT("setup() must receive a name") unless $test_name;
+    warn "setup() detected test name change.  Innocuous, so we continue...\n"
+        if $old_test_name && $old_test_name ne $test_name;
+
+    return if $old_test_name;
+
     BAIL_OUT("setup() needs \$TOP or \$SRCTOP and \$BLDTOP to be defined")
         unless $ENV{TOP} || ($ENV{SRCTOP} && $ENV{BLDTOP});
     BAIL_OUT("setup() found both \$TOP and \$SRCTOP or \$BLDTOP...")
@@ -131,8 +137,8 @@ sub setup {
 
     __env();
 
-    BAIL_OUT("setup() expects the file Configure in the \$TOP directory")
-	unless -f srctop_file("Configure");
+    BAIL_OUT("setup() expects the file Configure in the source top directory")
+        unless -f srctop_file("Configure");
 
     __cwd($directories{RESULTS});
 }
