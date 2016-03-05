@@ -971,6 +971,7 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
     /* |cookie| will only be initialized for DTLS. */
     PACKET session_id, cipher_suites, compression, extensions, cookie;
     int is_v2_record;
+    static unsigned char null_compression = 0;
 
     is_v2_record = RECORD_LAYER_is_sslv2_record(&s->rlayer);
 
@@ -1096,19 +1097,20 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
             goto f_err;
         }
 
-        /* Load the client random */
+        /* Load the client random and compression list. */
         challenge_len = challenge_len > SSL3_RANDOM_SIZE ? SSL3_RANDOM_SIZE :
             challenge_len;
         memset(s->s3->client_random, 0, SSL3_RANDOM_SIZE);
         if (!PACKET_copy_bytes(&challenge,
                                s->s3->client_random + SSL3_RANDOM_SIZE -
-                               challenge_len, challenge_len)) {
+                               challenge_len, challenge_len)
+            /* Advertise only null compression. */
+            || !PACKET_buf_init(&compression, &null_compression, 1)) {
             SSLerr(SSL_F_TLS_PROCESS_CLIENT_HELLO, ERR_R_INTERNAL_ERROR);
             al = SSL_AD_INTERNAL_ERROR;
             goto f_err;
         }
 
-        PACKET_null_init(&compression);
         PACKET_null_init(&extensions);
     } else {
         /* Regular ClientHello. */
