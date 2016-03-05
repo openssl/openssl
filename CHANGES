@@ -9,6 +9,9 @@
      [Todd Short]
 
   *) Add SSL_CIPHER queries for authentication and key-exchange.
+
+  *) Modify behavior of ALPN to invoke callback after SNI/servername
+     callback, such that updates to the SSL_CTX affect ALPN.
      [Todd Short]
 
   *) Changes to the DEFAULT cipherlist:

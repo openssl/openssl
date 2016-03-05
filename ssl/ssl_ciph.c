@@ -2012,8 +2012,8 @@ int ssl_cipher_get_cert_index(const SSL_CIPHER *c)
 
 const SSL_CIPHER *ssl_get_cipher_by_char(SSL *ssl, const unsigned char *ptr)
 {
-    const SSL_CIPHER *c;
-    c = ssl->method->get_cipher_by_char(ptr);
+    const SSL_CIPHER *c = ssl->method->get_cipher_by_char(ptr);
+
     if (c == NULL || c->valid == 0)
         return NULL;
     return c;
@@ -2037,10 +2037,8 @@ int SSL_CIPHER_get_cipher_nid(const SSL_CIPHER *c)
 
 int SSL_CIPHER_get_digest_nid(const SSL_CIPHER *c)
 {
-    int i;
-    if (c == NULL)
-        return NID_undef;
-    i = ssl_cipher_info_lookup(ssl_cipher_table_mac, c->algorithm_mac);
+    int i = ssl_cipher_info_lookup(ssl_cipher_table_mac, c->algorithm_mac);
+
     if (i == -1)
         return NID_undef;
     return ssl_cipher_table_mac[i].nid;
@@ -2049,6 +2047,7 @@ int SSL_CIPHER_get_digest_nid(const SSL_CIPHER *c)
 int SSL_CIPHER_get_kx_nid(const SSL_CIPHER *c)
 {
     int i = ssl_cipher_info_lookup(ssl_cipher_table_kx, c->algorithm_mkey);
+
     if (i == -1)
         return NID_undef;
     return ssl_cipher_table_kx[i].nid;
@@ -2056,7 +2055,8 @@ int SSL_CIPHER_get_kx_nid(const SSL_CIPHER *c)
 
 int SSL_CIPHER_get_auth_nid(const SSL_CIPHER *c)
 {
-    int i = ssl_cipher_info_lookup(ssl_cipher_table_kx, c->algorithm_auth);
+    int i = ssl_cipher_info_lookup(ssl_cipher_table_auth, c->algorithm_auth);
+
     if (i == -1)
         return NID_undef;
     return ssl_cipher_table_kx[i].nid;
