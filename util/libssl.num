@@ -384,3 +384,6 @@ SSL_CTX_get_ct_validation_callback      383	1_1_0	EXIST::FUNCTION:CT
 SSL_set_default_read_buffer_len         384	1_1_0	EXIST::FUNCTION:
 SSL_CTX_set_default_read_buffer_len     385	1_1_0	EXIST::FUNCTION:
 SSL_has_pending                         386	1_1_0	EXIST::FUNCTION:
+SSL_CIPHER_get_auth_nid                 387	1_1_0	EXIST::FUNCTION:
+SSL_CIPHER_get_kx_nid                   388	1_1_0	EXIST::FUNCTION:
+SSL_CIPHER_is_aead                      389	1_1_0	EXIST::FUNCTION:
