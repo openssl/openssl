@@ -504,6 +504,8 @@ void ssl_cert_free(CERT *c)
 #ifndef OPENSSL_NO_TLSEXT
     custom_exts_free(&c->cli_ext);
     custom_exts_free(&c->srv_ext);
+    if (c->alpn_proposed)
+        OPENSSL_free(c->alpn_proposed);
 #endif
     OPENSSL_free(c);
 }
