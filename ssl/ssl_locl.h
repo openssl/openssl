@@ -1348,7 +1348,12 @@ typedef struct ssl3_state_st {
      * that the server selected once the ServerHello has been processed.
      */
     unsigned char *alpn_selected;
-    unsigned alpn_selected_len;
+    size_t alpn_selected_len;
+    /* used by the server to know what options were proposed */
+    unsigned char *alpn_proposed;
+    size_t alpn_proposed_len;
+    /* used by the client to know if it actually sent alpn */
+    int alpn_sent;
 
 #   ifndef OPENSSL_NO_EC
     /*

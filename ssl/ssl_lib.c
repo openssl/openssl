@@ -2172,15 +2172,14 @@ void SSL_CTX_set_next_proto_select_cb(SSL_CTX *ctx,
  * length-prefixed strings). Returns 0 on success.
  */
 int SSL_CTX_set_alpn_protos(SSL_CTX *ctx, const unsigned char *protos,
-                            unsigned protos_len)
+                            unsigned int protos_len)
 {
     OPENSSL_free(ctx->alpn_client_proto_list);
-    ctx->alpn_client_proto_list = OPENSSL_malloc(protos_len);
+    ctx->alpn_client_proto_list = OPENSSL_memdup(protos, protos_len);
     if (ctx->alpn_client_proto_list == NULL) {
         SSLerr(SSL_F_SSL_CTX_SET_ALPN_PROTOS, ERR_R_MALLOC_FAILURE);
         return 1;
     }
-    memcpy(ctx->alpn_client_proto_list, protos, protos_len);
     ctx->alpn_client_proto_list_len = protos_len;
 
     return 0;
@@ -2192,15 +2191,14 @@ int SSL_CTX_set_alpn_protos(SSL_CTX *ctx, const unsigned char *protos,
  * length-prefixed strings). Returns 0 on success.
  */
 int SSL_set_alpn_protos(SSL *ssl, const unsigned char *protos,
-                        unsigned protos_len)
+                        unsigned int protos_len)
 {
     OPENSSL_free(ssl->alpn_client_proto_list);
-    ssl->alpn_client_proto_list = OPENSSL_malloc(protos_len);
+    ssl->alpn_client_proto_list = OPENSSL_memdup(protos, protos_len);
     if (ssl->alpn_client_proto_list == NULL) {
         SSLerr(SSL_F_SSL_SET_ALPN_PROTOS, ERR_R_MALLOC_FAILURE);
         return 1;
     }
-    memcpy(ssl->alpn_client_proto_list, protos, protos_len);
     ssl->alpn_client_proto_list_len = protos_len;
 
     return 0;
@@ -2230,7 +2228,7 @@ void SSL_CTX_set_alpn_select_cb(SSL_CTX *ctx,
  * respond with a negotiated protocol then |*len| will be zero.
  */
 void SSL_get0_alpn_selected(const SSL *ssl, const unsigned char **data,
-                            unsigned *len)
+                            unsigned int *len)
 {
     *data = NULL;
     if (ssl->s3)

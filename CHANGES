@@ -4,6 +4,10 @@
 
  Changes between 1.0.2g and 1.1.0  [xx XXX xxxx]
 
+  *) Modify behavior of ALPN to invoke callback after SNI/servername
+     callback, such that updates to the SSL_CTX affect ALPN.
+     [Todd Short]
+
   *) Changes to the DEFAULT cipherlist:
        - Prefer (EC)DHE handshakes over plain RSA.
        - Prefer AEAD ciphers over legacy ciphers.
