@@ -1395,6 +1395,9 @@ __owur int SSL_CIPHER_get_bits(const SSL_CIPHER *c, int *alg_bits);
 __owur char *SSL_CIPHER_get_version(const SSL_CIPHER *c);
 __owur const char *SSL_CIPHER_get_name(const SSL_CIPHER *c);
 __owur uint32_t SSL_CIPHER_get_id(const SSL_CIPHER *c);
+__owur int SSL_CIPHER_get_kx_nid(const SSL_CIPHER *c);
+__owur int SSL_CIPHER_get_auth_nid(const SSL_CIPHER *c);
+__owur int SSL_CIPHER_is_aead(const SSL_CIPHER *c);
 
 __owur int SSL_get_fd(const SSL *s);
 __owur int SSL_get_rfd(const SSL *s);

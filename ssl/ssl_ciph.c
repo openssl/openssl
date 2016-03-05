@@ -240,6 +240,29 @@ static const EVP_MD *ssl_digest_methods[SSL_MD_NUM_IDX] = {
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL
 };
 
+static const ssl_cipher_table ssl_cipher_table_kx[] = {
+    { SSL_kRSA,      NID_kx_rsa },
+    { SSL_kECDHE,    NID_kx_ecdhe },
+    { SSL_kDHE,      NID_kx_dhe },
+    { SSL_kECDHEPSK, NID_kx_ecdhe_psk },
+    { SSL_kDHEPSK,   NID_kx_dhe_psk },
+    { SSL_kRSAPSK,   NID_kx_rsa_psk },
+    { SSL_kPSK,      NID_kx_psk },
+    { SSL_kSRP,      NID_kx_srp },
+    { SSL_kGOST,     NID_kx_gost }
+};
+
+static const ssl_cipher_table ssl_cipher_table_auth[] = {
+    { SSL_aRSA,    NID_auth_rsa },
+    { SSL_aECDSA,  NID_auth_ecdsa },
+    { SSL_aPSK,    NID_auth_psk },
+    { SSL_aDSS,    NID_auth_dss },
+    { SSL_aGOST01, NID_auth_gost01 },
+    { SSL_aGOST12, NID_auth_gost12 },
+    { SSL_aSRP,    NID_auth_srp },
+    { SSL_aNULL,   NID_auth_null }
+};
+
 /* Utility function for table lookup */
 static int ssl_cipher_info_find(const ssl_cipher_table * table,
                                 size_t table_cnt, uint32_t mask)
@@ -2005,10 +2028,10 @@ int SSL_CIPHER_get_cipher_nid(const SSL_CIPHER *c)
 {
     int i;
     if (c == NULL)
-        return -1;
+        return NID_undef;
     i = ssl_cipher_info_lookup(ssl_cipher_table_cipher, c->algorithm_enc);
     if (i == -1)
-        return -1;
+        return NID_undef;
     return ssl_cipher_table_cipher[i].nid;
 }
 
@@ -2016,9 +2039,30 @@ int SSL_CIPHER_get_digest_nid(const SSL_CIPHER *c)
 {
     int i;
     if (c == NULL)
-        return -1;
+        return NID_undef;
     i = ssl_cipher_info_lookup(ssl_cipher_table_mac, c->algorithm_mac);
     if (i == -1)
-        return -1;
+        return NID_undef;
     return ssl_cipher_table_mac[i].nid;
+}
+
+int SSL_CIPHER_get_kx_nid(const SSL_CIPHER *c)
+{
+    int i = ssl_cipher_info_lookup(ssl_cipher_table_kx, c->algorithm_mkey);
+    if (i == -1)
+        return NID_undef;
+    return ssl_cipher_table_kx[i].nid;
+}
+
+int SSL_CIPHER_get_auth_nid(const SSL_CIPHER *c)
+{
+    int i = ssl_cipher_info_lookup(ssl_cipher_table_kx, c->algorithm_auth);
+    if (i == -1)
+        return NID_undef;
+    return ssl_cipher_table_kx[i].nid;
+}
+
+int SSL_CIPHER_is_aead(const SSL_CIPHER *c)
+{
+    return (c->algorithm_mac & SSL_AEAD) ? 1 : 0;
 }

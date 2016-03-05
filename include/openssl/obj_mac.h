@@ -4536,3 +4536,71 @@
 #define SN_X448         "X448"
 #define NID_X448                1035
 #define OBJ_X448                1L,3L,6L,1L,4L,1L,11591L,15L,2L
+
+#define SN_kx_rsa               "KxRSA"
+#define LN_kx_rsa               "kx-rsa"
+#define NID_kx_rsa              1037
+
+#define SN_kx_ecdhe             "KxECDHE"
+#define LN_kx_ecdhe             "kx-ecdhe"
+#define NID_kx_ecdhe            1038
+
+#define SN_kx_dhe               "KxDHE"
+#define LN_kx_dhe               "kx-dhe"
+#define NID_kx_dhe              1039
+
+#define SN_kx_ecdhe_psk         "KxECDHE-PSK"
+#define LN_kx_ecdhe_psk         "kx-ecdhe-psk"
+#define NID_kx_ecdhe_psk                1040
+
+#define SN_kx_dhe_psk           "KxDHE-PSK"
+#define LN_kx_dhe_psk           "kx-dhe-psk"
+#define NID_kx_dhe_psk          1041
+
+#define SN_kx_rsa_psk           "KxRSA_PSK"
+#define LN_kx_rsa_psk           "kx-rsa-psk"
+#define NID_kx_rsa_psk          1042
+
+#define SN_kx_psk               "KxPSK"
+#define LN_kx_psk               "kx-psk"
+#define NID_kx_psk              1043
+
+#define SN_kx_srp               "KxSRP"
+#define LN_kx_srp               "kx-srp"
+#define NID_kx_srp              1044
+
+#define SN_kx_gost              "KxGOST"
+#define LN_kx_gost              "kx-gost"
+#define NID_kx_gost             1045
+
+#define SN_auth_rsa             "AuthRSA"
+#define LN_auth_rsa             "auth-rsa"
+#define NID_auth_rsa            1046
+
+#define SN_auth_ecdsa           "AuthECDSA"
+#define LN_auth_ecdsa           "auth-ecdsa"
+#define NID_auth_ecdsa          1047
+
+#define SN_auth_psk             "AuthPSK"
+#define LN_auth_psk             "auth-psk"
+#define NID_auth_psk            1048
+
+#define SN_auth_dss             "AuthDSS"
+#define LN_auth_dss             "auth-dss"
+#define NID_auth_dss            1049
+
+#define SN_auth_gost01          "AuthGOST01"
+#define LN_auth_gost01          "auth-gost01"
+#define NID_auth_gost01         1050
+
+#define SN_auth_gost12          "AuthGOST12"
+#define LN_auth_gost12          "auth-gost12"
+#define NID_auth_gost12         1051
+
+#define SN_auth_srp             "AuthSRP"
+#define LN_auth_srp             "auth-srp"
+#define NID_auth_srp            1052
+
+#define SN_auth_null            "AuthNULL"
+#define LN_auth_null            "auth-null"
+#define NID_auth_null           1053
