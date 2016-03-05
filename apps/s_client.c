@@ -445,7 +445,7 @@ static char *srtp_profiles = NULL;
 /* This the context that we pass to next_proto_cb */
 typedef struct tlsextnextprotoctx_st {
     unsigned char *data;
-    unsigned short len;
+    size_t len;
     int status;
 } tlsextnextprotoctx;
 
@@ -1634,7 +1634,7 @@ int s_client_main(int argc, char **argv)
         SSL_CTX_set_next_proto_select_cb(ctx, next_proto_cb, &next_proto);
 #endif
     if (alpn_in) {
-        unsigned short alpn_len;
+        size_t alpn_len;
         unsigned char *alpn = next_protos_parse(&alpn_len, alpn_in);
 
         if (alpn == NULL) {

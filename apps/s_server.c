@@ -743,7 +743,7 @@ static int next_proto_cb(SSL *s, const unsigned char **data,
 /* This the context that we pass to alpn_cb */
 typedef struct tlsextalpnctx_st {
     unsigned char *data;
-    unsigned short len;
+    size_t len;
 } tlsextalpnctx;
 
 static int alpn_cb(SSL *s, const unsigned char **out, unsigned char *outlen,
@@ -753,7 +753,7 @@ static int alpn_cb(SSL *s, const unsigned char **out, unsigned char *outlen,
 
     if (!s_quiet) {
         /* We can assume that |in| is syntactically valid. */
-        unsigned i;
+        unsigned int i;
         BIO_printf(bio_s_out, "ALPN protocols advertised by the client: ");
         for (i = 0; i < inlen;) {
             if (i)
@@ -1620,7 +1620,7 @@ int s_server_main(int argc, char *argv[])
     }
 #if !defined(OPENSSL_NO_NEXTPROTONEG)
     if (next_proto_neg_in) {
-        unsigned short len;
+        size_t len;
         next_proto.data = next_protos_parse(&len, next_proto_neg_in);
         if (next_proto.data == NULL)
             goto end;
@@ -1631,7 +1631,7 @@ int s_server_main(int argc, char *argv[])
 #endif
     alpn_ctx.data = NULL;
     if (alpn_in) {
-        unsigned short len;
+        size_t len;
         alpn_ctx.data = next_protos_parse(&len, alpn_in);
         if (alpn_ctx.data == NULL)
             goto end;
