@@ -263,7 +263,7 @@ Derive a shared secret value:
  openssl pkeyutl -derive -inkey key.pem -peerkey pubkey.pem -out secret
 
 Hexdump 48 bytes of TLS1 PRF using digest B<SHA256> and shared secret and
-seed consisting of the single byte 0xFF.
+seed consisting of the single byte 0xFF:
 
  openssl pkeyutl -kdf TLS1-PRF -kdflen 48 -pkeyopt md:SHA256 \
     -pkeyopt hexsecret:ff -pkeyopt hexseed:ff -hexdump
