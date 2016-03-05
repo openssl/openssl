@@ -4,6 +4,10 @@
 
  Changes between 1.0.2g and 1.0.2h [xx XXX xxxx]
 
+  *) Modify behavior of ALPN to invoke callback after SNI/servername
+     callback, such that updates to the SSL_CTX affect ALPN.
+     [Todd Short]
+
   *) Remove LOW from the DEFAULT cipher list.  This removes singles DES from the
      default.
      [Kurt Roeckx]
