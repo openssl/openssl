@@ -3047,6 +3047,7 @@ void ssl3_free(SSL *s)
     OPENSSL_free(s->s3->tmp.peer_sigalgs);
     ssl3_free_digest_list(s);
     OPENSSL_free(s->s3->alpn_selected);
+    OPENSSL_free(s->s3->alpn_proposed);
 
 #ifndef OPENSSL_NO_SRP
     SSL_SRP_CTX_free(s);
@@ -3060,37 +3061,24 @@ void ssl3_clear(SSL *s)
     ssl3_cleanup_key_block(s);
     sk_X509_NAME_pop_free(s->s3->tmp.ca_names, X509_NAME_free);
     OPENSSL_free(s->s3->tmp.ciphers_raw);
-    s->s3->tmp.ciphers_raw = NULL;
     OPENSSL_clear_free(s->s3->tmp.pms, s->s3->tmp.pmslen);
-    s->s3->tmp.pms = NULL;
     OPENSSL_free(s->s3->tmp.peer_sigalgs);
-    s->s3->tmp.peer_sigalgs = NULL;
 
-#ifndef OPENSSL_NO_EC
-    s->s3->is_probably_safari = 0;
-#endif
 #if !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH)
     EVP_PKEY_free(s->s3->tmp.pkey);
-    s->s3->tmp.pkey = NULL;
     EVP_PKEY_free(s->s3->peer_tmp);
-    s->s3->peer_tmp = NULL;
 #endif                         /* !OPENSSL_NO_EC */
 
     ssl3_free_digest_list(s);
 
-    if (s->s3->alpn_selected) {
-        OPENSSL_free(s->s3->alpn_selected);
-        s->s3->alpn_selected = NULL;
-    }
+    OPENSSL_free(s->s3->alpn_selected);
+    OPENSSL_free(s->s3->alpn_proposed);
 
+    /* NULL/zero-out everything in the s3 struct */
     memset(s->s3, 0, sizeof(*s->s3));
 
     ssl_free_wbio_buffer(s);
 
-    s->s3->renegotiate = 0;
-    s->s3->total_renegotiations = 0;
-    s->s3->num_renegotiations = 0;
-    s->s3->in_read_app_data = 0;
     s->version = SSL3_VERSION;
 
 #if !defined(OPENSSL_NO_NEXTPROTONEG)

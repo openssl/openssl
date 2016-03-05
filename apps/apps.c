@@ -1960,7 +1960,7 @@ void policies_print(X509_STORE_CTX *ctx)
  *
  *   returns: a malloced buffer or NULL on failure.
  */
-unsigned char *next_protos_parse(unsigned short *outlen, const char *in)
+unsigned char *next_protos_parse(size_t *outlen, const char *in)
 {
     size_t len;
     unsigned char *out;

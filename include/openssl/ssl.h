@@ -782,9 +782,9 @@ __owur int SSL_select_next_proto(unsigned char **out, unsigned char *outlen,
 # define OPENSSL_NPN_NO_OVERLAP  2
 
 __owur int SSL_CTX_set_alpn_protos(SSL_CTX *ctx, const unsigned char *protos,
-                            unsigned protos_len);
+                                   unsigned int protos_len);
 __owur int SSL_set_alpn_protos(SSL *ssl, const unsigned char *protos,
-                        unsigned protos_len);
+                               unsigned int protos_len);
 void SSL_CTX_set_alpn_select_cb(SSL_CTX *ctx,
                                 int (*cb) (SSL *ssl,
                                            const unsigned char **out,
@@ -793,7 +793,7 @@ void SSL_CTX_set_alpn_select_cb(SSL_CTX *ctx,
                                            unsigned int inlen,
                                            void *arg), void *arg);
 void SSL_get0_alpn_selected(const SSL *ssl, const unsigned char **data,
-                            unsigned *len);
+                            unsigned int *len);
 
 # ifndef OPENSSL_NO_PSK
 /*
