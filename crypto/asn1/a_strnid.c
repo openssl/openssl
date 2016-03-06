@@ -213,6 +213,7 @@ static ASN1_STRING_TABLE *stable_get(int nid)
         rv->mask = tmp->mask;
         rv->flags = tmp->flags | STABLE_FLAGS_MALLOC;
     } else {
+        rv->nid = NID_undef;
         rv->minsize = -1;
         rv->maxsize = -1;
         rv->mask = 0;
