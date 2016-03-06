@@ -491,6 +491,12 @@
 # define SSL_CLIENT_USE_TLS1_2_CIPHERS(s)        \
                 ((SSL_IS_DTLS(s) && s->client_version <= DTLS1_2_VERSION) || \
                 (!SSL_IS_DTLS(s) && s->client_version >= TLS1_2_VERSION))
+/*
+ * Determine if a client should send signature algorithms extension:
+ * as with TLS1.2 cipher we can't rely on method flags.
+ */
+# define SSL_CLIENT_USE_SIGALGS(s)        \
+    SSL_CLIENT_USE_TLS1_2_CIPHERS(s)
 
 /* Mostly for SSLv3 */
 # define SSL_PKEY_RSA_ENC        0

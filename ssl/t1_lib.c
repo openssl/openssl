@@ -1429,7 +1429,7 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *buf,
     }
  skip_ext:
 
-    if (SSL_USE_SIGALGS(s)) {
+    if (SSL_CLIENT_USE_SIGALGS(s)) {
         size_t salglen;
         const unsigned char *salg;
         salglen = tls12_get_psigalgs(s, &salg);
