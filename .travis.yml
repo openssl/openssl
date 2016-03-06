@@ -72,7 +72,7 @@ script:
     - cd _srcdist
     - make
     - if [ -z "$BUILDONLY" ]; then
-          HARNESS_VERBOSE=yes make test
+          HARNESS_VERBOSE=yes make test;
       fi
     - cd ..
 
