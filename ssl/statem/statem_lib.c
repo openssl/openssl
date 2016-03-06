@@ -354,6 +354,16 @@ int tls_get_message_header(SSL *s, int *mt)
                 return 0;
             }
             if (recvd_type == SSL3_RT_CHANGE_CIPHER_SPEC) {
+                /*
+		 * A ChangeCipherSpec must be a single byte and may not occur
+		 * in the middle of a handshake message.
+		 */
+                if (s->init_num != 0 || i != 1 || p[0] != SSL3_MT_CCS) {
+                    al = SSL_AD_UNEXPECTED_MESSAGE;
+                    SSLerr(SSL_F_TLS_GET_MESSAGE_HEADER,
+                           SSL_R_BAD_CHANGE_CIPHER_SPEC);
+                    goto f_err;
+                }
                 s->s3->tmp.message_type = *mt = SSL3_MT_CHANGE_CIPHER_SPEC;
                 s->init_num = i - 1;
                 s->s3->tmp.message_size = i;
