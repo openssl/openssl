@@ -96,6 +96,7 @@ const BIO_METHOD *BIO_f_asn1(void)
 static int asn1_bio_new(BIO *b)
 {
     BIO_ASN1_BUF_CTX *ctx;
+
     ctx = OPENSSL_malloc(sizeof(*ctx));
     if (ctx == NULL)
         return 0;
@@ -120,10 +121,12 @@ static int asn1_bio_init(BIO_ASN1_BUF_CTX *ctx, int size)
     ctx->copylen = 0;
     ctx->asn1_class = V_ASN1_UNIVERSAL;
     ctx->asn1_tag = V_ASN1_OCTET_STRING;
-    ctx->ex_buf = 0;
-    ctx->ex_pos = 0;
+    ctx->ex_buf = NULL;
     ctx->ex_len = 0;
+    ctx->ex_pos = 0;
     ctx->state = ASN1_STATE_START;
+    ctx->prefix = ctx->prefix_free = ctx->suffix = ctx->suffix_free = NULL;
+    ctx->ex_arg = NULL;
     return 1;
 }
 
