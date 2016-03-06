@@ -95,8 +95,8 @@ CROSS_COMPILE= {- $config{cross_compile_prefix} -}
 CC= $(CROSS_COMPILE){- $target{cc} -}
 CFLAG={- our $cflags2 = join(" ",(map { "-D".$_} @{$target{defines}}, @{$config{defines}}),"-DOPENSSLDIR=\"\\\"\$(OPENSSLDIR)\\\"\"","-DENGINESDIR=\"\\\"\$(ENGINESDIR)\\\"\"") -} {- $target{cflags} -} {- $config{cflags} -}
 CFLAG_Q={- $cflags2 =~ s|([\\"])|\\$1|g; $cflags2 -} {- $config{cflags} -}
-LDFLAG= {- $config{lflags} -}
-PLIB_LDFLAG= {- $config{plib_lflags} -}
+LDFLAG= {- $target{lflags} -} {- $config{lflags} -}
+PLIB_LDFLAG= {- $target{plib_lflags} -} {- $config{plib_lflags} -}
 EX_LIBS= {- $target{ex_libs} -} {- $config{ex_libs} -}
 EXE_EXT= {- $target{exe_extension} -}
 ARFLAGS= {- $target{arflags} -}
