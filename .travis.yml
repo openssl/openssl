@@ -24,9 +24,9 @@ env:
     - CONFIG_OPTS="shared"
     - CONFIG_OPTS="no-pic"
     - CONFIG_OPTS="--debug --strict-warnings enable-crypto-mdebug enable-rc5 enable-md2"
-    - CONFIG_OPTS="--unified" BUILDONLY="yes"
-    - CONFIG_OPTS="--unified shared" BUILDONLY="yes"
-    - CONFIG_OPTS="--unified --debug --strict-warnings enable-rc5 enable-md2" BUILDONLY="yes"
+    - CONFIG_OPTS="--unified" BUILDDIR=_build-plain BUILDONLY="yes"
+    - CONFIG_OPTS="--unified shared" BUILDDIR=_build-shared BUILDONLY="yes"
+    - CONFIG_OPTS="--unified --debug --strict-warnings enable-rc5 enable-md2" BUILDDIR=_build-debug BUILDONLY="yes"
 
 matrix:
     include:
@@ -56,10 +56,10 @@ matrix:
 before_script:
     - sh .travis-create-release.sh $TRAVIS_OS_NAME
     - tar -xvzf _srcdist.tar.gz
-    - if expr "$CONFIG_OPTS" : "--unified"; then
-          srcdir=../_srcdir;
-          mkdir _build;
-          cd _build;
+    - if [ -n "$BUILDDIR" ]; then
+          srcdir=../_srcdist;
+          mkdir $BUILDDIR;
+          cd $BUILDDIR;
       else
           srcdir=.;
           cd _srcdist;
@@ -76,8 +76,8 @@ before_script:
     - cd ..
 
 script:
-    - if expr "$CONFIG_OPTS" : "--unified"; then
-          cd _build;
+    - if [ -n "$BUILDDIR" ]; then
+          cd $BUILDDIR;
       else
           cd _srcdist;
       fi
