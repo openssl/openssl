@@ -56,20 +56,31 @@ matrix:
 before_script:
     - sh .travis-create-release.sh $TRAVIS_OS_NAME
     - tar -xvzf _srcdist.tar.gz
-    - cd _srcdist
+    - if expr "$CONFIG_OPTS" : "--unified"; then
+          srcdir=../_srcdir;
+          mkdir _build;
+          cd _build;
+      else
+          srcdir=.;
+          cd _srcdist;
+      fi
     - if [ "$CC" == i686-w64-mingw32-gcc ]; then
           export CROSS_COMPILE=${CC%%gcc}; unset CC;
-          ./Configure mingw $CONFIG_OPTS -Wno-pedantic-ms-format;
+          $srcdir/Configure mingw $CONFIG_OPTS -Wno-pedantic-ms-format;
       elif [ "$CC" == x86_64-w64-mingw32-gcc ]; then
           export CROSS_COMPILE=${CC%%gcc}; unset CC;
-          ./Configure mingw64 $CONFIG_OPTS -Wno-pedantic-ms-format;
+          $srcdir/Configure mingw64 $CONFIG_OPTS -Wno-pedantic-ms-format;
       else
-          ./config $CONFIG_OPTS;
+          $srcdir/config $CONFIG_OPTS;
       fi
     - cd ..
 
 script:
-    - cd _srcdist
+    - if expr "$CONFIG_OPTS" : "--unified"; then
+          cd _build;
+      else
+          cd _srcdist;
+      fi
     - make
     - if [ -z "$BUILDONLY" ]; then
           HARNESS_VERBOSE=yes make test;
