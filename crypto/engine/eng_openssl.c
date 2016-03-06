@@ -458,6 +458,8 @@ static void ossl_hmac_cleanup(EVP_PKEY_CTX *ctx);
 static int ossl_hmac_copy(EVP_PKEY_CTX *dst, EVP_PKEY_CTX *src)
 {
     OSSL_HMAC_PKEY_CTX *sctx, *dctx;
+
+    /* allocate memory for dst->data and a new HMAC_CTX in dst->data->ctx */
     if (!ossl_hmac_init(dst))
         return 0;
     sctx = EVP_PKEY_CTX_get_data(src);
@@ -472,6 +474,7 @@ static int ossl_hmac_copy(EVP_PKEY_CTX *dst, EVP_PKEY_CTX *src)
     }
     return 1;
 err:
+    /* release HMAC_CTX in dst->data->ctx and memory allocated for dst->data */
     ossl_hmac_cleanup(dst);
     return 0;
 }

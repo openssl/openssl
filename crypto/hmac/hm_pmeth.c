@@ -47,6 +47,8 @@ static void pkey_hmac_cleanup(EVP_PKEY_CTX *ctx);
 static int pkey_hmac_copy(EVP_PKEY_CTX *dst, EVP_PKEY_CTX *src)
 {
     HMAC_PKEY_CTX *sctx, *dctx;
+
+    /* allocate memory for dst->data and a new HMAC_CTX in dst->data->ctx */
     if (!pkey_hmac_init(dst))
         return 0;
     sctx = EVP_PKEY_CTX_get_data(src);
@@ -61,6 +63,7 @@ static int pkey_hmac_copy(EVP_PKEY_CTX *dst, EVP_PKEY_CTX *src)
     }
     return 1;
 err:
+    /* release HMAC_CTX in dst->data->ctx and memory allocated for dst->data */
     pkey_hmac_cleanup (dst);
     return 0;
 }
