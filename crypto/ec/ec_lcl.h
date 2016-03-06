@@ -285,6 +285,8 @@ struct ec_group_st {
         NISTZ256_PRE_COMP *nistz256;
         EC_PRE_COMP *ec;
     } pre_comp;
+    /* Arbitrary extra data. */
+    void *custom_data;
 } /* EC_GROUP */ ;
 
 #define SETPRECOMP(g, type, pre) \

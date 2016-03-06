@@ -144,6 +144,11 @@ const EC_METHOD *EC_GFp_simple_method(void);
  */
 const EC_METHOD *EC_GFp_mont_method(void);
 
+/** Returns GFp methods using optimized GLV curve endomorphism techniques.
+ *  \return  EC_METHOD object
+ */
+const EC_METHOD *EC_GFp_glv_method(void);
+
 /** Returns GFp methods using optimized methods for NIST recommended curves
  *  \return  EC_METHOD object
  */

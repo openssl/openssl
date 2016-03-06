@@ -2829,16 +2829,16 @@ static const ec_list_element curve_list[] = {
      "SECG curve over a 128 bit prime field"},
     {NID_secp128r2, &_EC_SECG_PRIME_128R2.h, 0,
      "SECG curve over a 128 bit prime field"},
-    {NID_secp160k1, &_EC_SECG_PRIME_160K1.h, 0,
+    {NID_secp160k1, &_EC_SECG_PRIME_160K1.h, EC_GFp_glv_method,
      "SECG curve over a 160 bit prime field"},
     {NID_secp160r1, &_EC_SECG_PRIME_160R1.h, 0,
      "SECG curve over a 160 bit prime field"},
     {NID_secp160r2, &_EC_SECG_PRIME_160R2.h, 0,
      "SECG/WTLS curve over a 160 bit prime field"},
     /* SECG secp192r1 is the same as X9.62 prime192v1 and hence omitted */
-    {NID_secp192k1, &_EC_SECG_PRIME_192K1.h, 0,
+    {NID_secp192k1, &_EC_SECG_PRIME_192K1.h, EC_GFp_glv_method,
      "SECG curve over a 192 bit prime field"},
-    {NID_secp224k1, &_EC_SECG_PRIME_224K1.h, 0,
+    {NID_secp224k1, &_EC_SECG_PRIME_224K1.h, EC_GFp_glv_method,
      "SECG curve over a 224 bit prime field"},
 #ifndef OPENSSL_NO_EC_NISTP_64_GCC_128
     {NID_secp224r1, &_EC_NIST_PRIME_224.h, EC_GFp_nistp224_method,
@@ -2847,7 +2847,7 @@ static const ec_list_element curve_list[] = {
     {NID_secp224r1, &_EC_NIST_PRIME_224.h, 0,
      "NIST/SECG curve over a 224 bit prime field"},
 #endif
-    {NID_secp256k1, &_EC_SECG_PRIME_256K1.h, 0,
+    {NID_secp256k1, &_EC_SECG_PRIME_256K1.h, EC_GFp_glv_method,
      "SECG curve over a 256 bit prime field"},
     /* SECG secp256r1 is the same as X9.62 prime256v1 and hence omitted */
     {NID_secp384r1, &_EC_NIST_PRIME_384.h, 0,
@@ -3062,8 +3062,12 @@ static EC_GROUP *ec_group_new_from_data(const ec_list_element curve)
 
     if (curve.meth != 0) {
         meth = curve.meth();
-        if (((group = EC_GROUP_new(meth)) == NULL) ||
-            (!(group->meth->group_set_curve(group, p, a, b, ctx)))) {
+        if ((group = EC_GROUP_new(meth)) == NULL) {
+            ECerr(EC_F_EC_GROUP_NEW_FROM_DATA, ERR_R_EC_LIB);
+            goto err;
+        }
+        group->curve_name = curve.nid;
+        if (!(group->meth->group_set_curve(group, p, a, b, ctx))) {
             ECerr(EC_F_EC_GROUP_NEW_FROM_DATA, ERR_R_EC_LIB);
             goto err;
         }
