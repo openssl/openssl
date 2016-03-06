@@ -60,14 +60,14 @@ BIO *BIO_new_NDEF(BIO *out, ASN1_VALUE *val, const ASN1_ITEM *it)
         ASN1err(ASN1_F_BIO_NEW_NDEF, ASN1_R_STREAMING_NOT_SUPPORTED);
         return NULL;
     }
-    ndef_aux = OPENSSL_malloc(sizeof(*ndef_aux));
+    ndef_aux = OPENSSL_zalloc(sizeof(*ndef_aux));
     asn_bio = BIO_new(BIO_f_asn1());
+    if (ndef_aux == NULL || asn_bio == NULL)
+        goto err;
 
     /* ASN1 bio needs to be next to output BIO */
-
     out = BIO_push(asn_bio, out);
-
-    if (ndef_aux == NULL || asn_bio == NULL || !out)
+    if (out == NULL)
         goto err;
 
     BIO_asn1_set_prefix(asn_bio, ndef_prefix, ndef_prefix_free);
@@ -90,7 +90,6 @@ BIO *BIO_new_NDEF(BIO *out, ASN1_VALUE *val, const ASN1_ITEM *it)
     ndef_aux->ndef_bio = sarg.ndef_bio;
     ndef_aux->boundary = sarg.boundary;
     ndef_aux->out = out;
-    ndef_aux->derbuf = NULL;
 
     BIO_ctrl(asn_bio, BIO_C_SET_EX_ARG, 0, ndef_aux);
 
