@@ -63,8 +63,10 @@
 # include <openssl/engine.h>
 #endif
 #include <openssl/evp.h>
+#include <openssl/x509v3.h>
 #include "internal/asn1_int.h"
 #include "internal/evp_int.h"
+#include "internal/numbers.h"
 
 typedef int sk_cmp_fn_type(const char *const *a, const char *const *b);
 
@@ -88,7 +90,8 @@ static const EVP_PKEY_METHOD *standard_methods[] = {
 #ifndef OPENSSL_NO_DH
     &dhx_pkey_meth,
 #endif
-    &tls1_prf_pkey_meth
+    &tls1_prf_pkey_meth,
+    &hkdf_pkey_meth
 };
 
 DECLARE_OBJ_BSEARCH_CMP_FN(const EVP_PKEY_METHOD *, const EVP_PKEY_METHOD *,
@@ -162,8 +165,7 @@ static EVP_PKEY_CTX *int_ctx_new(EVP_PKEY *pkey, ENGINE *e, int id)
     ret = OPENSSL_zalloc(sizeof(*ret));
     if (ret == NULL) {
 #ifndef OPENSSL_NO_ENGINE
-        if (e)
-            ENGINE_finish(e);
+        ENGINE_finish(e);
 #endif
         EVPerr(EVP_F_INT_CTX_NEW, ERR_R_MALLOC_FAILURE);
         return NULL;
@@ -329,12 +331,7 @@ void EVP_PKEY_CTX_free(EVP_PKEY_CTX *ctx)
     EVP_PKEY_free(ctx->pkey);
     EVP_PKEY_free(ctx->peerkey);
 #ifndef OPENSSL_NO_ENGINE
-    if (ctx->engine)
-        /*
-         * The EVP_PKEY_CTX we used belongs to an ENGINE, release the
-         * functional reference we held for this reason.
-         */
-        ENGINE_finish(ctx->engine);
+    ENGINE_finish(ctx->engine);
 #endif
     OPENSSL_free(ctx);
 }
@@ -385,6 +382,33 @@ int EVP_PKEY_CTX_ctrl_str(EVP_PKEY_CTX *ctx,
         return EVP_PKEY_CTX_set_signature_md(ctx, md);
     }
     return ctx->pmeth->ctrl_str(ctx, name, value);
+}
+
+/* Utility functions to send a string of hex string to a ctrl */
+
+int EVP_PKEY_CTX_str2ctrl(EVP_PKEY_CTX *ctx, int cmd, const char *str)
+{
+    size_t len;
+
+    len = strlen(str);
+    if (len > INT_MAX)
+        return -1;
+    return ctx->pmeth->ctrl(ctx, cmd, len, (void *)str);
+}
+
+int EVP_PKEY_CTX_hex2ctrl(EVP_PKEY_CTX *ctx, int cmd, const char *hex)
+{
+    unsigned char *bin;
+    long binlen;
+    int rv = -1;
+
+    bin = string_to_hex(hex, &binlen);
+    if (bin == NULL)
+        return 0;
+    if (binlen <= INT_MAX)
+        rv = ctx->pmeth->ctrl(ctx, cmd, binlen, bin);
+    OPENSSL_free(bin);
+    return rv;
 }
 
 int EVP_PKEY_CTX_get_operation(EVP_PKEY_CTX *ctx)

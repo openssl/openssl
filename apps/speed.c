@@ -201,8 +201,8 @@ static int do_multi(int multi);
 #define RSA_NUM         7
 #define DSA_NUM         3
 
-#define EC_NUM       16
-#define MAX_ECDH_SIZE 256
+#define EC_NUM          17
+#define MAX_ECDH_SIZE   256
 #define MISALIGN        64
 
 static const char *names[ALGOR_NUM] = {
@@ -509,6 +509,7 @@ static OPT_PAIR rsa_choices[] = {
 #define R_EC_B283    13
 #define R_EC_B409    14
 #define R_EC_B571    15
+#define R_EC_X25519  16
 #ifndef OPENSSL_NO_EC
 static OPT_PAIR ecdsa_choices[] = {
     {"ecdsap160", R_EC_P160},
@@ -546,6 +547,7 @@ static OPT_PAIR ecdh_choices[] = {
     {"ecdhb283", R_EC_B283},
     {"ecdhb409", R_EC_B409},
     {"ecdhb571", R_EC_B571},
+    {"ecdhx25519", R_EC_X25519},
     {NULL}
 };
 #endif
@@ -705,7 +707,9 @@ int speed_main(int argc, char **argv)
         NID_sect163k1, NID_sect233k1, NID_sect283k1,
         NID_sect409k1, NID_sect571k1, NID_sect163r2,
         NID_sect233r1, NID_sect283r1, NID_sect409r1,
-        NID_sect571r1
+        NID_sect571r1,
+        /* Other */
+        NID_X25519
     };
     static const char *test_curves_names[EC_NUM] = {
         /* Prime Curves */
@@ -715,7 +719,9 @@ int speed_main(int argc, char **argv)
         "nistk163", "nistk233", "nistk283",
         "nistk409", "nistk571", "nistb163",
         "nistb233", "nistb283", "nistb409",
-        "nistb571"
+        "nistb571",
+        /* Other */
+        "X25519"
     };
     static int test_curves_bits[EC_NUM] = {
         160, 192, 224,
@@ -723,7 +729,7 @@ int speed_main(int argc, char **argv)
         163, 233, 283,
         409, 571, 163,
         233, 283, 409,
-        571
+        571, 253 /* X25519 */
     };
 #endif
 #ifndef OPENSSL_NO_EC
@@ -1781,7 +1787,7 @@ int speed_main(int argc, char **argv)
 
         /* DSA_generate_key(dsa_key[j]); */
         /* DSA_sign_setup(dsa_key[j],NULL); */
-        st = DSA_sign(EVP_PKEY_DSA, buf, 20, buf2, &kk, dsa_key[j]);
+        st = DSA_sign(0, buf, 20, buf2, &kk, dsa_key[j]);
         if (st == 0) {
             BIO_printf(bio_err,
                        "DSA sign failure.  No DSA sign will be done.\n");
@@ -1792,7 +1798,7 @@ int speed_main(int argc, char **argv)
                                dsa_c[j][0], dsa_bits[j], DSA_SECONDS);
             Time_F(START);
             for (count = 0, run = 1; COND(dsa_c[j][0]); count++) {
-                st = DSA_sign(EVP_PKEY_DSA, buf, 20, buf2, &kk, dsa_key[j]);
+                st = DSA_sign(0, buf, 20, buf2, &kk, dsa_key[j]);
                 if (st == 0) {
                     BIO_printf(bio_err, "DSA sign failure\n");
                     ERR_print_errors(bio_err);
@@ -1809,7 +1815,7 @@ int speed_main(int argc, char **argv)
             rsa_count = count;
         }
 
-        st = DSA_verify(EVP_PKEY_DSA, buf, 20, buf2, kk, dsa_key[j]);
+        st = DSA_verify(0, buf, 20, buf2, kk, dsa_key[j]);
         if (st <= 0) {
             BIO_printf(bio_err,
                        "DSA verify failure.  No DSA verify will be done.\n");
@@ -1820,7 +1826,7 @@ int speed_main(int argc, char **argv)
                                dsa_c[j][1], dsa_bits[j], DSA_SECONDS);
             Time_F(START);
             for (count = 0, run = 1; COND(dsa_c[j][1]); count++) {
-                st = DSA_verify(EVP_PKEY_DSA, buf, 20, buf2, kk, dsa_key[j]);
+                st = DSA_verify(0, buf, 20, buf2, kk, dsa_key[j]);
                 if (st <= 0) {
                     BIO_printf(bio_err, "DSA verify failure\n");
                     ERR_print_errors(bio_err);

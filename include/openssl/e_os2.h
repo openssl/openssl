@@ -269,7 +269,7 @@ extern "C" {
 #  endif
 # endif
 
-# if defined(__ultrix) && !defined(ssize_t)
+# if (defined(__ultrix) || defined(OPENSSL_SYS_UEFI)) && !defined(ssize_t)
 #  define ossl_ssize_t int
 #  define OSSL_SSIZE_MAX INT_MAX
 # endif
@@ -286,11 +286,7 @@ extern "C" {
 # endif
 
 /* Standard integer types */
-# if (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L) || \
-     defined(__osf__) || defined(__sgi) || defined(__hpux) || \
-     defined(OPENSSL_SYS_VMS)
-#  include <inttypes.h>
-# elif defined(OPENSSL_SYS_UEFI)
+# if defined(OPENSSL_SYS_UEFI)
 typedef INT8 int8_t;
 typedef UINT8 uint8_t;
 typedef INT16 int16_t;
@@ -299,6 +295,11 @@ typedef INT32 int32_t;
 typedef UINT32 uint32_t;
 typedef INT64 int64_t;
 typedef UINT64 uint64_t;
+#  define PRIu64 "%Lu"
+# elif (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L) || \
+     defined(__osf__) || defined(__sgi) || defined(__hpux) || \
+     defined(OPENSSL_SYS_VMS)
+#  include <inttypes.h>
 # elif defined(_MSC_VER) && _MSC_VER<=1500
 /*
  * minimally required typdefs for systems not supporting inttypes.h or

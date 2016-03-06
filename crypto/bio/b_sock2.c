@@ -274,10 +274,12 @@ int BIO_listen(int sock, const BIO_ADDR *addr, int options)
  * @options: BIO socket options, applied on the accepted socket.
  *
  */
-int BIO_accept_ex(int accept_sock, BIO_ADDR *addr, int options)
+int BIO_accept_ex(int accept_sock, BIO_ADDR *addr_, int options)
 {
     socklen_t len;
     int accepted_sock;
+    BIO_ADDR locaddr;
+    BIO_ADDR *addr = addr_ == NULL ? &locaddr : addr_;
 
     len = sizeof(*addr);
     accepted_sock = accept(accept_sock,

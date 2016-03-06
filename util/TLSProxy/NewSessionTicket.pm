@@ -54,7 +54,8 @@ use strict;
 
 package TLSProxy::NewSessionTicket;
 
-use parent 'TLSProxy::Message';
+use vars '@ISA';
+push @ISA, 'TLSProxy::Message';
 
 sub new
 {

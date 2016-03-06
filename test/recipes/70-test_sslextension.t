@@ -63,11 +63,8 @@ setup($test_name);
 plan skip_all => "TLSProxy isn't usable on $^O"
     if $^O =~ /^VMS$/;
 
-plan skip_all => "$test_name needs the engine feature enabled"
-    if disabled("engine");
-
-plan skip_all => "$test_name can only be performed with OpenSSL configured shared"
-    if disabled("shared");
+plan skip_all => "$test_name needs the dynamic engine feature enabled"
+    if disabled("engine") || disabled("dynamic-engine");
 
 $ENV{OPENSSL_ENGINES} = bldtop_dir("engines");
 $ENV{OPENSSL_ia32cap} = '~0x200000200000000';
@@ -78,9 +75,9 @@ my $proxy = TLSProxy::Proxy->new(
     (!$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE})
 );
 
-plan tests => 1;
+plan tests => 3;
 
-#Test 1: Sending a zero length extension block should pass
+# Test 1: Sending a zero length extension block should pass
 $proxy->start();
 ok(TLSProxy::Message->success, "Zero extension length test");
 
@@ -95,13 +92,64 @@ sub extension_filter
 
     foreach my $message (@{$proxy->message_list}) {
         if ($message->mt == TLSProxy::Message::MT_CLIENT_HELLO) {
-            #Remove all extensions and set the extension len to zero
+            # Remove all extensions and set the extension len to zero
             $message->extension_data({});
             $message->extensions_len(0);
-            #Extensions have been removed so make sure we don't try to use them
+            # Extensions have been removed so make sure we don't try to use them
             $message->process_extensions();
 
             $message->repack();
         }
     }
 }
+
+# Test 2-3: Sending a duplicate extension should fail.
+sub inject_duplicate_extension
+{
+  my ($proxy, $message_type) = @_;
+
+    foreach my $message (@{$proxy->message_list}) {
+        if ($message->mt == $message_type) {
+          my %extensions = %{$message->extension_data};
+            # Add a duplicate (unknown) extension.
+            $message->set_extension(TLSProxy::Message::EXT_DUPLICATE_EXTENSION, "");
+            $message->set_extension(TLSProxy::Message::EXT_DUPLICATE_EXTENSION, "");
+            $message->repack();
+        }
+    }
+}
+
+sub inject_duplicate_extension_clienthello
+{
+    my $proxy = shift;
+
+    # We're only interested in the initial ClientHello
+    if ($proxy->flight != 0) {
+        return;
+    }
+
+    inject_duplicate_extension($proxy, TLSProxy::Message::MT_CLIENT_HELLO);
+}
+
+sub inject_duplicate_extension_serverhello
+{
+    my $proxy = shift;
+
+    # We're only interested in the initial ServerHello
+    if ($proxy->flight != 1) {
+        return;
+    }
+
+    inject_duplicate_extension($proxy, TLSProxy::Message::MT_SERVER_HELLO);
+}
+
+$proxy->clear();
+$proxy->filter(\&inject_duplicate_extension_clienthello);
+$proxy->start();
+ok(TLSProxy::Message->fail(), "Duplicate ClientHello extension");
+
+$proxy->clear();
+$proxy->filter(\&inject_duplicate_extension_serverhello);
+$proxy->start();
+ok(TLSProxy::Message->fail(), "Duplicate ServerHello extension");
+

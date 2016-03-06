@@ -119,6 +119,8 @@ static void group_order_tests(EC_GROUP *group)
     BIGNUM *n1, *n2, *order;
     EC_POINT *P = EC_POINT_new(group);
     EC_POINT *Q = EC_POINT_new(group);
+    EC_POINT *R = EC_POINT_new(group);
+    EC_POINT *S = EC_POINT_new(group);
     BN_CTX *ctx = BN_CTX_new();
     int i;
 
@@ -198,6 +200,17 @@ static void group_order_tests(EC_GROUP *group)
         /* Exercise EC_POINTs_mul, including corner cases. */
         if (EC_POINT_is_at_infinity(group, P))
             ABORT;
+
+        scalars[0] = scalars[1] = BN_value_one();
+        points[0]  = points[1]  = P;
+
+        if (!EC_POINTs_mul(group, R, NULL, 2, points, scalars, ctx))
+            ABORT;
+        if (!EC_POINT_dbl(group, S, points[0], ctx))
+            ABORT;
+        if (0 != EC_POINT_cmp(group, R, S, ctx))
+            ABORT;
+
         scalars[0] = n1;
         points[0] = Q;          /* => infinity */
         scalars[1] = n2;
@@ -219,6 +232,8 @@ static void group_order_tests(EC_GROUP *group)
 
     EC_POINT_free(P);
     EC_POINT_free(Q);
+    EC_POINT_free(R);
+    EC_POINT_free(S);
     BN_free(n1);
     BN_free(n2);
     BN_free(order);
@@ -1402,6 +1417,12 @@ static void internal_curve_test(void)
     for (n = 0; n < crv_len; n++) {
         EC_GROUP *group = NULL;
         int nid = curves[n].nid;
+        /*
+         * Skip for X25519 because low level operations such as EC_POINT_mul()
+         * are not supported for this curve
+         */
+        if (nid == NID_X25519)
+            continue;
         fprintf(stdout, "%s:\n", OBJ_nid2sn(nid));
         fflush(stdout);
         if ((group = EC_GROUP_new_by_curve_name(nid)) == NULL) {

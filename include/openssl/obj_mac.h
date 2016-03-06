@@ -4511,6 +4511,10 @@
 #define LN_tls1_prf             "tls1-prf"
 #define NID_tls1_prf            1021
 
+#define SN_hkdf         "HKDF"
+#define LN_hkdf         "hkdf"
+#define NID_hkdf                1036
+
 #define SN_id_pkinit            "id-pkinit"
 #define NID_id_pkinit           1031
 #define OBJ_id_pkinit           1L,3L,6L,1L,5L,2L,3L
@@ -4525,18 +4529,10 @@
 #define NID_pkInitKDC           1033
 #define OBJ_pkInitKDC           OBJ_id_pkinit,5L
 
-#define SN_Curve25519           "Curve25519"
-#define NID_Curve25519          1034
-#define OBJ_Curve25519          1L,3L,6L,1L,4L,1L,11591L,15L,1L
+#define SN_X25519               "X25519"
+#define NID_X25519              1034
+#define OBJ_X25519              1L,3L,6L,1L,4L,1L,11591L,15L,1L
 
-#define SN_Curve448             "Curve448"
-#define NID_Curve448            1035
-#define OBJ_Curve448            1L,3L,6L,1L,4L,1L,11591L,15L,2L
-
-#define SN_Curve25519ph         "Curve25519ph"
-#define NID_Curve25519ph                1036
-#define OBJ_Curve25519ph                1L,3L,6L,1L,4L,1L,11591L,15L,3L
-
-#define SN_Curve448ph           "Curve448ph"
-#define NID_Curve448ph          1037
-#define OBJ_Curve448ph          1L,3L,6L,1L,4L,1L,11591L,15L,4L
+#define SN_X448         "X448"
+#define NID_X448                1035
+#define OBJ_X448                1L,3L,6L,1L,4L,1L,11591L,15L,2L

@@ -67,7 +67,7 @@ extern "C" {
 static void ERR_load_ZENCOD_strings(void);
 static void ERR_unload_ZENCOD_strings(void);
 static void ERR_ZENCOD_error(int function, int reason, char *file, int line);
-# define ZENCODerr(f,r) ERR_ZENCOD_error((f),(r),__FILE__,__LINE__)
+# define ZENCODerr(f,r) ERR_ZENCOD_error((f),(r),OPENSSL_FILE,OPENSSL_LINE)
 
 /* Error codes for the ZENCOD functions. */
 

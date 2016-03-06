@@ -948,7 +948,7 @@ int dtls_construct_hello_verify_request(SSL *s)
     len = dtls_raw_hello_verify_request(&buf[DTLS1_HM_HEADER_LENGTH],
                                          s->d1->cookie, s->d1->cookie_len);
 
-    dtls1_set_message_header(s, buf, DTLS1_MT_HELLO_VERIFY_REQUEST, len, 0,
+    dtls1_set_message_header(s, DTLS1_MT_HELLO_VERIFY_REQUEST, len, 0,
                              len);
     len += DTLS1_HM_HEADER_LENGTH;
 
@@ -2651,7 +2651,9 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
 {
     EVP_PKEY *pkey = NULL;
     const unsigned char *sig, *data;
+#ifndef OPENSSL_NO_GOST
     unsigned char *gost_data = NULL;
+#endif
     int al, ret = MSG_PROCESS_ERROR;
     int type = 0, j;
     unsigned int len;
@@ -2796,7 +2798,9 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
     BIO_free(s->s3->handshake_buffer);
     s->s3->handshake_buffer = NULL;
     EVP_MD_CTX_free(mctx);
+#ifndef OPENSSL_NO_GOST
     OPENSSL_free(gost_data);
+#endif
     return ret;
 }
 
@@ -3222,9 +3226,6 @@ STACK_OF(SSL_CIPHER) *ssl_bytes_to_cipher_list(SSL *s,
                 goto err;
             }
             s->s3->send_connection_binding = 1;
-#ifdef OPENSSL_RI_DEBUG
-            fprintf(stderr, "SCSV received by server\n");
-#endif
             continue;
         }
 

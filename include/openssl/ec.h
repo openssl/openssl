@@ -252,7 +252,7 @@ BN_MONT_CTX *EC_GROUP_get_mont_data(const EC_GROUP *group);
 /** Gets the order of a EC_GROUP
  *  \param  group  EC_GROUP object
  *  \param  order  BIGNUM to which the order is copied
- *  \param  ctx    BN_CTX object (optional)
+ *  \param  ctx    unused
  *  \return 1 on success and 0 if an error occurred
  */
 int EC_GROUP_get_order(const EC_GROUP *group, BIGNUM *order, BN_CTX *ctx);
@@ -274,7 +274,7 @@ int EC_GROUP_order_bits(const EC_GROUP *group);
 /** Gets the cofactor of a EC_GROUP
  *  \param  group     EC_GROUP object
  *  \param  cofactor  BIGNUM to which the cofactor is copied
- *  \param  ctx       BN_CTX object (optional)
+ *  \param  ctx       unused
  *  \return 1 on success and 0 if an error occurred
  */
 int EC_GROUP_get_cofactor(const EC_GROUP *group, BIGNUM *cofactor,
@@ -901,6 +901,12 @@ int EC_KEY_generate_key(EC_KEY *key);
  */
 int EC_KEY_check_key(const EC_KEY *key);
 
+/** Indicates if an EC_KEY can be used for signing.
+ *  \param  key  the EC_KEY object
+ *  \return 1 if can can sign and 0 otherwise.
+ */
+int EC_KEY_can_sign(const EC_KEY *eckey);
+
 /** Sets a public key from affine coordindates performing
  *  necessary NIST PKV tests.
  *  \param  key  the EC_KEY object
@@ -1225,14 +1231,10 @@ void EC_KEY_METHOD_set_keygen(EC_KEY_METHOD *meth,
                               int (*keygen)(EC_KEY *key));
 
 void EC_KEY_METHOD_set_compute_key(EC_KEY_METHOD *meth,
-                                   int (*ckey)(void *out,
-                                               size_t outlen,
+                                   int (*ckey)(unsigned char **psec,
+                                               size_t *pseclen,
                                                const EC_POINT *pub_key,
-                                               const EC_KEY *ecdh,
-                                               void *(*KDF) (const void *in,
-                                                             size_t inlen,
-                                                             void *out,
-                                                             size_t *outlen)));
+                                               const EC_KEY *ecdh));
 
 void EC_KEY_METHOD_set_sign(EC_KEY_METHOD *meth,
                             int (*sign)(int type, const unsigned char *dgst,
@@ -1273,14 +1275,10 @@ void EC_KEY_METHOD_get_keygen(EC_KEY_METHOD *meth,
                               int (**pkeygen)(EC_KEY *key));
 
 void EC_KEY_METHOD_get_compute_key(EC_KEY_METHOD *meth,
-                                   int (**pck)(void *out,
-                                               size_t outlen,
+                                   int (**pck)(unsigned char **psec,
+                                               size_t *pseclen,
                                                const EC_POINT *pub_key,
-                                               const EC_KEY *ecdh,
-                                               void *(*KDF) (const void *in,
-                                                             size_t inlen,
-                                                             void *out,
-                                                             size_t *outlen)));
+                                               const EC_KEY *ecdh));
 
 void EC_KEY_METHOD_get_sign(EC_KEY_METHOD *meth,
                             int (**psign)(int type, const unsigned char *dgst,
@@ -1409,6 +1407,7 @@ void ERR_load_EC_strings(void);
 # define EC_F_ECDH_CMS_DECRYPT                            238
 # define EC_F_ECDH_CMS_SET_SHARED_INFO                    239
 # define EC_F_ECDH_COMPUTE_KEY                            246
+# define EC_F_ECDH_SIMPLE_COMPUTE_KEY                     257
 # define EC_F_ECDSA_DO_SIGN_EX                            251
 # define EC_F_ECDSA_DO_VERIFY                             252
 # define EC_F_ECDSA_SIGN_EX                               254
@@ -1511,6 +1510,9 @@ void ERR_load_EC_strings(void);
 # define EC_F_EC_KEY_PRINT_FP                             181
 # define EC_F_EC_KEY_PRIV2OCT                             256
 # define EC_F_EC_KEY_SET_PUBLIC_KEY_AFFINE_COORDINATES    229
+# define EC_F_EC_KEY_SIMPLE_CHECK_KEY                     258
+# define EC_F_EC_KEY_SIMPLE_OCT2PRIV                      259
+# define EC_F_EC_KEY_SIMPLE_PRIV2OCT                      260
 # define EC_F_EC_POINTS_MAKE_AFFINE                       136
 # define EC_F_EC_POINT_ADD                                112
 # define EC_F_EC_POINT_CMP                                113
@@ -1563,6 +1565,8 @@ void ERR_load_EC_strings(void);
 # define EC_R_BIGNUM_OUT_OF_RANGE                         144
 # define EC_R_BUFFER_TOO_SMALL                            100
 # define EC_R_COORDINATES_OUT_OF_RANGE                    146
+# define EC_R_CURVE_DOES_NOT_SUPPORT_ECDH                 160
+# define EC_R_CURVE_DOES_NOT_SUPPORT_SIGNING              159
 # define EC_R_D2I_ECPKPARAMETERS_FAILURE                  117
 # define EC_R_DECODE_ERROR                                142
 # define EC_R_DISCRIMINANT_IS_ZERO                        118
@@ -1582,6 +1586,7 @@ void ERR_load_EC_strings(void);
 # define EC_R_INVALID_FIELD                               103
 # define EC_R_INVALID_FORM                                104
 # define EC_R_INVALID_GROUP_ORDER                         122
+# define EC_R_INVALID_OUTPUT_LENGTH                       161
 # define EC_R_INVALID_PENTANOMIAL_BASIS                   132
 # define EC_R_INVALID_PRIVATE_KEY                         123
 # define EC_R_INVALID_TRINOMIAL_BASIS                     137

@@ -156,7 +156,7 @@ for all available algorithms.
 =item B<-scrypt>
 
 uses the B<scrypt> algorithm for private key encryption using default
-parameters: currently N=1024, r=8 and p=16 and AES in CBC mode with a 256 bit
+parameters: currently N=16384, r=8 and p=1 and AES in CBC mode with a 256 bit
 key. These parameters can be modified using the B<-scrypt_N>, B<-scrypt_r>,
 B<-scrypt_p> and B<-v2> options.
 

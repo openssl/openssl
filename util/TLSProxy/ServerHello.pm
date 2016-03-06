@@ -55,7 +55,8 @@ use strict;
 
 package TLSProxy::ServerHello;
 
-use parent 'TLSProxy::Message';
+use vars '@ISA';
+push @ISA, 'TLSProxy::Message';
 
 sub new
 {
@@ -80,7 +81,7 @@ sub new
     $self->{session} = "";
     $self->{ciphersuite} = 0;
     $self->{comp_meth} = 0;
-    $self->{extensions_data} = "";
+    $self->{extension_data} = "";
 
     return $self;
 }
@@ -161,6 +162,11 @@ sub set_message_contents
         $extensions .= pack("n", $key);
         $extensions .= pack("n", length($extdata));
         $extensions .= $extdata;
+        if ($key == TLSProxy::Message::EXT_DUPLICATE_EXTENSION) {
+          $extensions .= pack("n", $key);
+          $extensions .= pack("n", length($extdata));
+          $extensions .= $extdata;
+        }
     }
 
     $data .= pack('n', length($extensions));

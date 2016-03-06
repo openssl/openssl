@@ -203,9 +203,9 @@ int pkcs8_main(int argc, char **argv)
             break;
 #ifndef OPENSSL_NO_SCRYPT
         case OPT_SCRYPT:
-            scrypt_N = 1024;
+            scrypt_N = 16384;
             scrypt_r = 8;
-            scrypt_p = 16;
+            scrypt_p = 1;
             if (cipher == NULL)
                 cipher = EVP_aes_256_cbc();
             break;
@@ -225,7 +225,9 @@ int pkcs8_main(int argc, char **argv)
         }
     }
     argc = opt_num_rest();
-    argv = opt_rest();
+    if (argc != 0)
+        goto opthelp;
+
     private = 1;
 
     if (!app_passwd(passinarg, passoutarg, &passin, &passout)) {

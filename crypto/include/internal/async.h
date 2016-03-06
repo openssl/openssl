@@ -58,4 +58,5 @@
 #include <openssl/async.h>
 
 int async_init(void);
+void async_deinit(void);
 

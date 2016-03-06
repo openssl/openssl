@@ -113,8 +113,7 @@ static CONF_MODULE *module_add(DSO *dso, const char *name,
 static CONF_MODULE *module_find(char *name);
 static int module_init(CONF_MODULE *pmod, char *name, char *value,
                        const CONF *cnf);
-static CONF_MODULE *module_load_dso(const CONF *cnf, char *name, char *value,
-                                    unsigned long flags);
+static CONF_MODULE *module_load_dso(const CONF *cnf, char *name, char *value);
 
 /* Main function: load modules from a CONF structure */
 
@@ -204,7 +203,7 @@ static int module_run(const CONF *cnf, char *name, char *value,
 
     /* Module not found: try to load DSO */
     if (!md && !(flags & CONF_MFLAGS_NO_DSO))
-        md = module_load_dso(cnf, name, value, flags);
+        md = module_load_dso(cnf, name, value);
 
     if (!md) {
         if (!(flags & CONF_MFLAGS_SILENT)) {
@@ -230,8 +229,7 @@ static int module_run(const CONF *cnf, char *name, char *value,
 }
 
 /* Load a module from a DSO */
-static CONF_MODULE *module_load_dso(const CONF *cnf, char *name, char *value,
-                                    unsigned long flags)
+static CONF_MODULE *module_load_dso(const CONF *cnf, char *name, char *value)
 {
     DSO *dso = NULL;
     conf_init_func *ifunc;

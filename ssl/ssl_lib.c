@@ -159,6 +159,9 @@
 # include <openssl/engine.h>
 #endif
 #include <openssl/async.h>
+#ifndef OPENSSL_NO_CT
+# include <openssl/ct.h>
+#endif
 
 const char SSL_version_str[] = OPENSSL_VERSION_TEXT;
 
@@ -740,6 +743,12 @@ SSL *SSL_new(SSL_CTX *ctx)
 
     s->job = NULL;
 
+#ifndef OPENSSL_NO_CT
+    if (!SSL_set_ct_validation_callback(s, ctx->ct_validation_callback,
+            ctx->ct_validation_callback_arg))
+        goto err;
+#endif
+
     return (s);
  err:
     SSL_free(s);
@@ -1041,6 +1050,10 @@ void SSL_free(SSL *s)
 #endif                         /* OPENSSL_NO_EC */
     sk_X509_EXTENSION_pop_free(s->tlsext_ocsp_exts, X509_EXTENSION_free);
     sk_OCSP_RESPID_pop_free(s->tlsext_ocsp_ids, OCSP_RESPID_free);
+#ifndef OPENSSL_NO_CT
+    SCT_LIST_free(s->scts);
+    OPENSSL_free(s->tlsext_scts);
+#endif
     OPENSSL_free(s->tlsext_ocsp_resp);
     OPENSSL_free(s->alpn_client_proto_list);
 
@@ -1054,6 +1067,8 @@ void SSL_free(SSL *s)
     RECORD_LAYER_release(&s->rlayer);
 
     SSL_CTX_free(s->ctx);
+
+    ASYNC_WAIT_CTX_free(s->waitctx);
 
 #if !defined(OPENSSL_NO_NEXTPROTONEG)
     OPENSSL_free(s->next_proto_negotiated);
@@ -1399,17 +1414,29 @@ int SSL_waiting_for_async(SSL *s)
     return 0;
 }
 
-int SSL_get_async_wait_fd(SSL *s)
+int SSL_get_all_async_fds(SSL *s, OSSL_ASYNC_FD *fds, size_t *numfds)
 {
-    if (!s->job)
-        return -1;
+    ASYNC_WAIT_CTX *ctx = s->waitctx;
 
-    return ASYNC_get_wait_fd(s->job);
+    if (ctx == NULL)
+        return 0;
+    return ASYNC_WAIT_CTX_get_all_fds(ctx, fds, numfds);
+}
+
+int SSL_get_changed_async_fds(SSL *s, OSSL_ASYNC_FD *addfd, size_t *numaddfds,
+                              OSSL_ASYNC_FD *delfd, size_t *numdelfds)
+{
+    ASYNC_WAIT_CTX *ctx = s->waitctx;
+
+    if (ctx == NULL)
+        return 0;
+    return ASYNC_WAIT_CTX_get_changed_fds(ctx, addfd, numaddfds, delfd,
+                                          numdelfds);
 }
 
 int SSL_accept(SSL *s)
 {
-    if (s->handshake_func == 0) {
+    if (s->handshake_func == NULL) {
         /* Not properly initialized yet */
         SSL_set_accept_state(s);
     }
@@ -1419,7 +1446,7 @@ int SSL_accept(SSL *s)
 
 int SSL_connect(SSL *s)
 {
-    if (s->handshake_func == 0) {
+    if (s->handshake_func == NULL) {
         /* Not properly initialized yet */
         SSL_set_connect_state(s);
     }
@@ -1435,7 +1462,12 @@ long SSL_get_default_timeout(const SSL *s)
 static int ssl_start_async_job(SSL *s, struct ssl_async_args *args,
                           int (*func)(void *)) {
     int ret;
-    switch(ASYNC_start_job(&s->job, &ret, func, args,
+    if (s->waitctx == NULL) {
+        s->waitctx = ASYNC_WAIT_CTX_new();
+        if (s->waitctx == NULL)
+            return -1;
+    }
+    switch(ASYNC_start_job(&s->job, s->waitctx, &ret, func, args,
         sizeof(struct ssl_async_args))) {
     case ASYNC_ERR:
         s->rwstate = SSL_NOTHING;
@@ -1479,7 +1511,7 @@ static int ssl_io_intern(void *vargs)
 
 int SSL_read(SSL *s, void *buf, int num)
 {
-    if (s->handshake_func == 0) {
+    if (s->handshake_func == NULL) {
         SSLerr(SSL_F_SSL_READ, SSL_R_UNINITIALIZED);
         return -1;
     }
@@ -1506,7 +1538,7 @@ int SSL_read(SSL *s, void *buf, int num)
 
 int SSL_peek(SSL *s, void *buf, int num)
 {
-    if (s->handshake_func == 0) {
+    if (s->handshake_func == NULL) {
         SSLerr(SSL_F_SSL_PEEK, SSL_R_UNINITIALIZED);
         return -1;
     }
@@ -1531,7 +1563,7 @@ int SSL_peek(SSL *s, void *buf, int num)
 
 int SSL_write(SSL *s, const void *buf, int num)
 {
-    if (s->handshake_func == 0) {
+    if (s->handshake_func == NULL) {
         SSLerr(SSL_F_SSL_WRITE, SSL_R_UNINITIALIZED);
         return -1;
     }
@@ -1566,7 +1598,7 @@ int SSL_shutdown(SSL *s)
      * (see ssl3_shutdown).
      */
 
-    if (s->handshake_func == 0) {
+    if (s->handshake_func == NULL) {
         SSLerr(SSL_F_SSL_SHUTDOWN, SSL_R_UNINITIALIZED);
         return -1;
     }
@@ -2144,8 +2176,10 @@ int SSL_CTX_set_alpn_protos(SSL_CTX *ctx, const unsigned char *protos,
 {
     OPENSSL_free(ctx->alpn_client_proto_list);
     ctx->alpn_client_proto_list = OPENSSL_malloc(protos_len);
-    if (ctx->alpn_client_proto_list == NULL)
+    if (ctx->alpn_client_proto_list == NULL) {
+        SSLerr(SSL_F_SSL_CTX_SET_ALPN_PROTOS, ERR_R_MALLOC_FAILURE);
         return 1;
+    }
     memcpy(ctx->alpn_client_proto_list, protos, protos_len);
     ctx->alpn_client_proto_list_len = protos_len;
 
@@ -2162,8 +2196,10 @@ int SSL_set_alpn_protos(SSL *ssl, const unsigned char *protos,
 {
     OPENSSL_free(ssl->alpn_client_proto_list);
     ssl->alpn_client_proto_list = OPENSSL_malloc(protos_len);
-    if (ssl->alpn_client_proto_list == NULL)
+    if (ssl->alpn_client_proto_list == NULL) {
+        SSLerr(SSL_F_SSL_SET_ALPN_PROTOS, ERR_R_MALLOC_FAILURE);
         return 1;
+    }
     memcpy(ssl->alpn_client_proto_list, protos, protos_len);
     ssl->alpn_client_proto_list_len = protos_len;
 
@@ -2298,7 +2334,11 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
     ret->cert_store = X509_STORE_new();
     if (ret->cert_store == NULL)
         goto err;
-
+#ifndef OPENSSL_NO_CT
+    ret->ctlog_store = CTLOG_STORE_new();
+    if (ret->ctlog_store == NULL)
+        goto err;
+#endif
     if (!ssl_create_cipher_list(ret->method,
                            &ret->cipher_list, &ret->cipher_list_by_id,
                            SSL_DEFAULT_CIPHER_LIST, ret->cert)
@@ -2416,6 +2456,9 @@ void SSL_CTX_free(SSL_CTX *a)
     CRYPTO_free_ex_data(CRYPTO_EX_INDEX_SSL_CTX, a, &a->ex_data);
     lh_SSL_SESSION_free(a->sessions);
     X509_STORE_free(a->cert_store);
+#ifndef OPENSSL_NO_CT
+    CTLOG_STORE_free(a->ctlog_store);
+#endif
     sk_SSL_CIPHER_free(a->cipher_list);
     sk_SSL_CIPHER_free(a->cipher_list_by_id);
     ssl_cert_free(a->cert);
@@ -2429,8 +2472,7 @@ void SSL_CTX_free(SSL_CTX *a)
     SSL_CTX_SRP_CTX_free(a);
 #endif
 #ifndef OPENSSL_NO_ENGINE
-    if (a->client_cert_engine)
-        ENGINE_finish(a->client_cert_engine);
+    ENGINE_finish(a->client_cert_engine);
 #endif
 
 #ifndef OPENSSL_NO_EC
@@ -2452,6 +2494,16 @@ void SSL_CTX_set_default_passwd_cb_userdata(SSL_CTX *ctx, void *u)
     ctx->default_passwd_callback_userdata = u;
 }
 
+pem_password_cb *SSL_CTX_get_default_passwd_cb(SSL_CTX *ctx)
+{
+    return ctx->default_passwd_callback;
+}
+
+void *SSL_CTX_get_default_passwd_cb_userdata(SSL_CTX *ctx)
+{
+    return ctx->default_passwd_callback_userdata;
+}
+
 void SSL_set_default_passwd_cb(SSL *s, pem_password_cb *cb)
 {
     s->default_passwd_callback = cb;
@@ -2460,6 +2512,16 @@ void SSL_set_default_passwd_cb(SSL *s, pem_password_cb *cb)
 void SSL_set_default_passwd_cb_userdata(SSL *s, void *u)
 {
     s->default_passwd_callback_userdata = u;
+}
+
+pem_password_cb *SSL_get_default_passwd_cb(SSL *s)
+{
+    return s->default_passwd_callback;
+}
+
+void *SSL_get_default_passwd_cb_userdata(SSL *s)
+{
+    return s->default_passwd_callback_userdata;
 }
 
 void SSL_CTX_set_cert_verify_callback(SSL_CTX *ctx,
@@ -2493,7 +2555,7 @@ void SSL_set_cert_cb(SSL *s, int (*cb) (SSL *ssl, void *arg), void *arg)
     ssl_cert_set_cert_cb(s->cert, cb, arg);
 }
 
-void ssl_set_masks(SSL *s, const SSL_CIPHER *cipher)
+void ssl_set_masks(SSL *s)
 {
 #if !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_GOST)
     CERT_PKEY *cpk;
@@ -2505,7 +2567,6 @@ void ssl_set_masks(SSL *s, const SSL_CIPHER *cipher)
 #ifndef OPENSSL_NO_EC
     int have_ecc_cert, ecdsa_ok;
     X509 *x = NULL;
-    int pk_nid = 0, md_nid = 0;
 #endif
     if (c == NULL)
         return;
@@ -2577,10 +2638,8 @@ void ssl_set_masks(SSL *s, const SSL_CIPHER *cipher)
         ecdsa_ok = ex_kusage & X509v3_KU_DIGITAL_SIGNATURE;
         if (!(pvalid[SSL_PKEY_ECC] & CERT_PKEY_SIGN))
             ecdsa_ok = 0;
-        OBJ_find_sigid_algs(X509_get_signature_nid(x), &md_nid, &pk_nid);
-        if (ecdsa_ok) {
+        if (ecdsa_ok)
             mask_a |= SSL_aECDSA;
-        }
     }
 #endif
 
@@ -2649,16 +2708,7 @@ CERT_PKEY *ssl_get_server_send_pkey(SSL *s)
     c = s->cert;
     if (!s->s3 || !s->s3->tmp.new_cipher)
         return NULL;
-    ssl_set_masks(s, s->s3->tmp.new_cipher);
-
-#ifdef OPENSSL_SSL_DEBUG_BROKEN_PROTOCOL
-    /*
-     * Broken protocol test: return last used certificate: which may mismatch
-     * the one expected.
-     */
-    if (c->cert_flags & SSL_CERT_FLAG_BROKEN_PROTOCOL)
-        return c->key;
-#endif
+    ssl_set_masks(s);
 
     i = ssl_get_server_cert_index(s);
 
@@ -2679,16 +2729,6 @@ EVP_PKEY *ssl_get_sign_pkey(SSL *s, const SSL_CIPHER *cipher,
 
     alg_a = cipher->algorithm_auth;
     c = s->cert;
-
-#ifdef OPENSSL_SSL_DEBUG_BROKEN_PROTOCOL
-    /*
-     * Broken protocol test: use last key: which may mismatch the one
-     * expected.
-     */
-    if (c->cert_flags & SSL_CERT_FLAG_BROKEN_PROTOCOL)
-        idx = c->key - c->pkeys;
-    else
-#endif
 
     if ((alg_a & SSL_aDSS) &&
             (c->pkeys[SSL_PKEY_DSA_SIGN].privatekey != NULL))
@@ -3776,3 +3816,276 @@ STACK_OF(X509) *SSL_get0_verified_chain(const SSL *s)
 }
 
 IMPLEMENT_OBJ_BSEARCH_GLOBAL_CMP_FN(SSL_CIPHER, SSL_CIPHER, ssl_cipher_id);
+
+#ifndef OPENSSL_NO_CT
+
+/*
+ * Moves SCTs from the |src| stack to the |dst| stack.
+ * The source of each SCT will be set to |origin|.
+ * If |dst| points to a NULL pointer, a new stack will be created and owned by
+ * the caller.
+ * Returns the number of SCTs moved, or a negative integer if an error occurs.
+ */
+static int ct_move_scts(STACK_OF(SCT) **dst, STACK_OF(SCT) *src, sct_source_t origin)
+{
+    int scts_moved = 0;
+    SCT *sct = NULL;
+
+    if (*dst == NULL) {
+        *dst = sk_SCT_new_null();
+        if (*dst == NULL) {
+            SSLerr(SSL_F_CT_MOVE_SCTS, ERR_R_MALLOC_FAILURE);
+            goto err;
+        }
+    }
+
+    while ((sct = sk_SCT_pop(src)) != NULL) {
+        if (SCT_set_source(sct, origin) != 1)
+            goto err;
+
+        if (sk_SCT_push(*dst, sct) <= 0)
+            goto err;
+        scts_moved += 1;
+    }
+
+    return scts_moved;
+err:
+    if (sct != NULL)
+        sk_SCT_push(src, sct); /* Put the SCT back */
+    return scts_moved;
+}
+
+/*
+* Look for data collected during ServerHello and parse if found.
+* Return 1 on success, 0 on failure.
+*/
+static int ct_extract_tls_extension_scts(SSL *s)
+{
+    int scts_extracted = 0;
+
+    if (s->tlsext_scts != NULL) {
+        const unsigned char *p = s->tlsext_scts;
+        STACK_OF(SCT) *scts = o2i_SCT_LIST(NULL, &p, s->tlsext_scts_len);
+
+        scts_extracted = ct_move_scts(&s->scts, scts, SCT_SOURCE_TLS_EXTENSION);
+
+        SCT_LIST_free(scts);
+    }
+
+    return scts_extracted;
+}
+
+/*
+ * Checks for an OCSP response and then attempts to extract any SCTs found if it
+ * contains an SCT X509 extension. They will be stored in |s->scts|.
+ * Returns:
+ * - The number of SCTs extracted, assuming an OCSP response exists.
+ * - 0 if no OCSP response exists or it contains no SCTs.
+ * - A negative integer if an error occurs.
+ */
+static int ct_extract_ocsp_response_scts(SSL *s)
+{
+    int scts_extracted = 0;
+    const unsigned char *p;
+    OCSP_BASICRESP *br = NULL;
+    OCSP_RESPONSE *rsp = NULL;
+    STACK_OF(SCT) *scts = NULL;
+    int i;
+
+    if (s->tlsext_ocsp_resp == NULL || s->tlsext_ocsp_resplen == 0)
+        goto err;
+
+    p = s->tlsext_ocsp_resp;
+    rsp = d2i_OCSP_RESPONSE(NULL, &p, s->tlsext_ocsp_resplen);
+    if (rsp == NULL)
+        goto err;
+
+    br = OCSP_response_get1_basic(rsp);
+    if (br == NULL)
+        goto err;
+
+    for (i = 0; i < OCSP_resp_count(br); ++i) {
+        OCSP_SINGLERESP *single = OCSP_resp_get0(br, i);
+
+        if (single == NULL)
+            continue;
+
+        scts = OCSP_SINGLERESP_get1_ext_d2i(single, NID_ct_cert_scts, NULL, NULL);
+        scts_extracted = ct_move_scts(&s->scts, scts,
+                                      SCT_SOURCE_OCSP_STAPLED_RESPONSE);
+        if (scts_extracted < 0)
+            goto err;
+    }
+err:
+    SCT_LIST_free(scts);
+    OCSP_BASICRESP_free(br);
+    OCSP_RESPONSE_free(rsp);
+    return scts_extracted;
+}
+
+/*
+ * Attempts to extract SCTs from the peer certificate.
+ * Return the number of SCTs extracted, or a negative integer if an error
+ * occurs.
+ */
+static int ct_extract_x509v3_extension_scts(SSL *s)
+{
+    int scts_extracted = 0;
+    X509 *cert = SSL_get_peer_certificate(s);
+
+    if (cert != NULL) {
+        STACK_OF(SCT) *scts =
+            X509_get_ext_d2i(cert, NID_ct_precert_scts, NULL, NULL);
+
+        scts_extracted =
+            ct_move_scts(&s->scts, scts, SCT_SOURCE_X509V3_EXTENSION);
+
+        SCT_LIST_free(scts);
+    }
+
+    return scts_extracted;
+}
+
+/*
+ * Attempts to find all received SCTs by checking TLS extensions, the OCSP
+ * response (if it exists) and X509v3 extensions in the certificate.
+ * Returns NULL if an error occurs.
+ */
+const STACK_OF(SCT) *SSL_get0_peer_scts(SSL *s)
+{
+    if (!s->scts_parsed) {
+        if (ct_extract_tls_extension_scts(s) < 0 ||
+            ct_extract_ocsp_response_scts(s) < 0 ||
+            ct_extract_x509v3_extension_scts(s) < 0)
+            goto err;
+
+        s->scts_parsed = 1;
+    }
+    return s->scts;
+err:
+    return NULL;
+}
+
+int SSL_set_ct_validation_callback(SSL *s, ct_validation_cb callback, void *arg)
+{
+    int ret = 0;
+
+    /*
+     * Since code exists that uses the custom extension handler for CT, look
+     * for this and throw an error if they have already registered to use CT.
+     */
+    if (callback != NULL && SSL_CTX_has_client_custom_ext(s->ctx,
+            TLSEXT_TYPE_signed_certificate_timestamp)) {
+        SSLerr(SSL_F_SSL_SET_CT_VALIDATION_CALLBACK,
+               SSL_R_CUSTOM_EXT_HANDLER_ALREADY_INSTALLED);
+        goto err;
+    }
+
+    s->ct_validation_callback = callback;
+    s->ct_validation_callback_arg = arg;
+
+    if (callback != NULL) {
+        /* If we are validating CT, then we MUST accept SCTs served via OCSP */
+        if (!SSL_set_tlsext_status_type(s, TLSEXT_STATUSTYPE_ocsp))
+            goto err;
+    }
+
+    ret = 1;
+err:
+    return ret;
+}
+
+int SSL_CTX_set_ct_validation_callback(SSL_CTX *ctx, ct_validation_cb callback,
+                                       void *arg)
+{
+    int ret = 0;
+
+    /*
+     * Since code exists that uses the custom extension handler for CT, look for
+     * this and throw an error if they have already registered to use CT.
+     */
+    if (callback != NULL && SSL_CTX_has_client_custom_ext(ctx,
+            TLSEXT_TYPE_signed_certificate_timestamp)) {
+        SSLerr(SSL_F_SSL_CTX_SET_CT_VALIDATION_CALLBACK,
+               SSL_R_CUSTOM_EXT_HANDLER_ALREADY_INSTALLED);
+        goto err;
+    }
+
+    ctx->ct_validation_callback = callback;
+    ctx->ct_validation_callback_arg = arg;
+    ret = 1;
+err:
+    return ret;
+}
+
+ct_validation_cb SSL_get_ct_validation_callback(const SSL *s)
+{
+    return s->ct_validation_callback;
+}
+
+ct_validation_cb SSL_CTX_get_ct_validation_callback(const SSL_CTX *ctx)
+{
+    return ctx->ct_validation_callback;
+}
+
+int SSL_validate_ct(SSL *s)
+{
+    int ret = 0;
+    X509 *cert = SSL_get_peer_certificate(s);
+    X509 *issuer = NULL;
+    CT_POLICY_EVAL_CTX *ctx = NULL;
+    const STACK_OF(SCT) *scts;
+
+    /* If no callback is set, attempt no validation - just return success */
+    if (s->ct_validation_callback == NULL)
+        return 1;
+
+    if (cert == NULL) {
+        SSLerr(SSL_F_SSL_VALIDATE_CT, SSL_R_NO_CERTIFICATE_ASSIGNED);
+        goto end;
+    }
+
+    if (s->verified_chain != NULL && sk_X509_num(s->verified_chain) > 1)
+        issuer = sk_X509_value(s->verified_chain, 1);
+
+    ctx = CT_POLICY_EVAL_CTX_new();
+    if (ctx == NULL) {
+        SSLerr(SSL_F_SSL_VALIDATE_CT, ERR_R_MALLOC_FAILURE);
+        goto end;
+    }
+
+    CT_POLICY_EVAL_CTX_set0_cert(ctx, cert);
+    CT_POLICY_EVAL_CTX_set0_issuer(ctx, issuer);
+    CT_POLICY_EVAL_CTX_set0_log_store(ctx, s->ctx->ctlog_store);
+
+    scts = SSL_get0_peer_scts(s);
+
+    if (SCT_LIST_validate(scts, ctx) != 1) {
+        SSLerr(SSL_F_SSL_VALIDATE_CT, SSL_R_SCT_VERIFICATION_FAILED);
+        goto end;
+    }
+
+    ret = s->ct_validation_callback(ctx, scts, s->ct_validation_callback_arg);
+    if (ret < 0)
+        ret = 0; /* This function returns 0 on failure */
+
+end:
+    CT_POLICY_EVAL_CTX_free(ctx);
+    return ret;
+}
+
+int SSL_CTX_set_default_ctlog_list_file(SSL_CTX *ctx)
+{
+    int ret = CTLOG_STORE_load_default_file(ctx->ctlog_store);
+
+    /* Clear any errors if the default file does not exist */
+    ERR_clear_error();
+    return ret;
+}
+
+int SSL_CTX_set_ctlog_list_file(SSL_CTX *ctx, const char *path)
+{
+    return CTLOG_STORE_load_file(ctx->ctlog_store, path);
+}
+
+#endif

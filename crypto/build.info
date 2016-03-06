@@ -3,7 +3,9 @@ LIBS=../libcrypto
 SOURCE[../libcrypto]=\
         cryptlib.c mem.c mem_dbg.c cversion.c ex_data.c cpt_err.c \
         ebcdic.c uid.c o_time.c o_str.c o_dir.c thr_id.c lock.c \
-        o_init.c o_fips.c mem_sec.c init.c {- $target{cpuid_asm_src} -}
+        threads_pthread.c threads_win.c threads_none.c \
+        o_init.c o_fips.c mem_sec.c init.c {- $target{cpuid_asm_src} -} \
+        {- $target{uplink_aux_src} -}
 EXTRA=  ../ms/uplink-x86.pl ../ms/uplink.c ../ms/applink.c \
         x86cpuid.pl x86_64cpuid.pl ia64cpuid.S \
         ppccpuid.pl pariscid.pl alphacpuid.pl arm64cpuid.pl armv4cpuid.pl
@@ -11,24 +13,18 @@ EXTRA=  ../ms/uplink-x86.pl ../ms/uplink.c ../ms/applink.c \
 DEPEND[cversion.o]=buildinf.h
 
 BEGINRAW[descrip.mms]
-[.crypto]buildinf.h : descrip.mms
+[.crypto]buildinf.h : configdata.pm
 	$(PERL) {- catfile(catdir($sourcedir, "[-]"), "util", "mkbuildinf.pl") -} "$(CC) $(CFLAGS)" "$(PLATFORM)" > [.crypto]buildinf.h
 ENDRAW[descrip.mms]
 
 BEGINRAW[Makefile]
-crypto/buildinf.h : Makefile
+crypto/buildinf.h : configdata.pm
 	$(PERL) $(SRCDIR)/util/mkbuildinf.pl "$(CC) $(CFLAGS_Q)" "$(PLATFORM)" > crypto/buildinf.h
 
 ##### APPLINK, UPLINK and CPUID assembler implementations
 
-{- $builddir -}/applink.o:	$(SRCDIR)/ms/applink.c
-	$(CC) $(CFLAGS) -c -o $@ $(TOP)/ms/applink.c
-
-{- $builddir -}/uplink.o:	$(SRCDIR)/ms/uplink.c {- $builddir -}/applink.o
-	$(CC) $(CFLAGS) -c -o $@ $(TOP)/ms/uplink.c
-
 {- $builddir -}/uplink-x86.s:	$(SRCDIR)/ms/uplink-x86.pl
-	CC="$(CC)" $(PERL) $(TOP)/ms/uplink-x86.pl $(PERLASM_SCHEME) > $@
+	CC="$(CC)" $(PERL) $(SRCDIR)/ms/uplink-x86.pl $(PERLASM_SCHEME) > $@
 
 {- $builddir -}/x86cpuid.s:	{- $sourcedir -}/x86cpuid.pl {- $sourcedir -}/perlasm/x86asm.pl
 	CC="$(CC)" $(PERL) {- $sourcedir -}/x86cpuid.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) > $@

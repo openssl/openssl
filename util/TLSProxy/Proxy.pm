@@ -98,9 +98,14 @@ sub new
         message_list => [],
     };
 
+    # IO::Socket::IP is on the core module list, IO::Socket::INET6 isn't.
+    # However, IO::Socket::INET6 is older and is said to be more widely
+    # deployed for the moment, and may have less bugs, so we try the latter
+    # first, then fall back on the code modules.  Worst case scenario, we
+    # fall back to IO::Socket::INET, only supports IPv4.
     eval {
-        require IO::Socket::IP;
-        my $s = IO::Socket::IP->new(
+        require IO::Socket::INET6;
+        my $s = IO::Socket::INET6->new(
             LocalAddr => "::1",
             LocalPort => 0,
             Listen=>1,
@@ -109,13 +114,12 @@ sub new
         $s->close();
     };
     if ($@ eq "") {
-        # IO::Socket::IP supports IPv6 and is in the core modules list
-        $IP_factory = sub { IO::Socket::IP->new(@_); };
+        $IP_factory = sub { IO::Socket::INET6->new(@_); };
         $have_IPv6 = 1;
     } else {
         eval {
-            require IO::Socket::INET6;
-            my $s = IO::Socket::INET6->new(
+            require IO::Socket::IP;
+            my $s = IO::Socket::IP->new(
                 LocalAddr => "::1",
                 LocalPort => 0,
                 Listen=>1,
@@ -124,14 +128,9 @@ sub new
             $s->close();
         };
         if ($@ eq "") {
-            # IO::Socket::INET6 supports IPv6 but isn't on the core modules list
-            # However, it's a bit older and said to be more widely deployed
-            # at the time of writing this comment.
-            $IP_factory = sub { IO::Socket::INET6->new(@_); };
+            $IP_factory = sub { IO::Socket::IP->new(@_); };
             $have_IPv6 = 1;
         } else {
-            # IO::Socket::INET doesn't support IPv6 but is a fallback in case
-            # we have no other.
             $IP_factory = sub { IO::Socket::INET->new(@_); };
         }
     }
@@ -179,9 +178,11 @@ sub start
 
     $pid = fork();
     if ($pid == 0) {
-        open(STDOUT, ">", File::Spec->devnull())
-            or die "Failed to redirect stdout: $!";
-        open(STDERR, ">&STDOUT");
+        if (!$self->debug) {
+            open(STDOUT, ">", File::Spec->devnull())
+                or die "Failed to redirect stdout: $!";
+            open(STDERR, ">&STDOUT");
+        }
         my $execcmd = $self->execute
             ." s_server -no_comp -rev -engine ossltest -accept "
             .($self->server_port)
@@ -228,9 +229,11 @@ sub clientstart
     if ($self->execute) {
         my $pid = fork();
         if ($pid == 0) {
-            open(STDOUT, ">", File::Spec->devnull())
-                or die "Failed to redirect stdout: $!";
-            open(STDERR, ">&STDOUT");
+            if (!$self->debug) {
+                open(STDOUT, ">", File::Spec->devnull())
+                    or die "Failed to redirect stdout: $!";
+                open(STDERR, ">&STDOUT");
+            }
             my $execcmd = "echo test | ".$self->execute
                  ." s_client -engine ossltest -connect "
                  .($self->proxy_addr).":".($self->proxy_port);
@@ -266,7 +269,9 @@ sub clientstart
         );
 
         $retry--;
-        if (!$server_sock) {
+        if ($@ || !defined($server_sock)) {
+            $server_sock->close() if defined($server_sock);
+            undef $server_sock;
             if ($retry) {
                 #Sleep for a short while
                 select(undef, undef, undef, 0.1);

@@ -164,7 +164,9 @@
 # include <openssl/ssl.h>
 # include <openssl/async.h>
 # include <openssl/symhacks.h>
-
+# ifndef OPENSSL_NO_CT
+#  include <openssl/ct.h>
+# endif
 #include "record/record.h"
 #include "statem/statem.h"
 #include "packet_locl.h"
@@ -815,6 +817,16 @@ struct ssl_ctx_st {
 
     int quiet_shutdown;
 
+#  ifndef OPENSSL_NO_CT
+    CTLOG_STORE *ctlog_store; /* CT Log Store */
+    /*
+    * Validates that the SCTs (Signed Certificate Timestamps) are sufficient.
+    * If they are not, the connection should be aborted.
+    */
+    ct_validation_cb ct_validation_callback;
+    void *ct_validation_callback_arg;
+#  endif
+
     /*
      * Maximum amount of data to send in one fragment. actual record size can
      * be more than this due to padding and MAC overheads.
@@ -863,7 +875,6 @@ struct ssl_ctx_st {
 
 #  ifndef OPENSSL_NO_NEXTPROTONEG
     /* Next protocol negotiation information */
-    /* (for experimental NPN extension). */
 
     /*
      * For a server, this contains a callback function by which the set of
@@ -1089,6 +1100,26 @@ struct ssl_st {
     /* certificate status request info */
     /* Status type or -1 if no status type */
     int tlsext_status_type;
+#  ifndef OPENSSL_NO_CT
+    /*
+    * Validates that the SCTs (Signed Certificate Timestamps) are sufficient.
+    * If they are not, the connection should be aborted.
+    */
+    ct_validation_cb ct_validation_callback;
+    /* User-supplied argument tha tis passed to the ct_validation_callback */
+    void *ct_validation_callback_arg;
+    /*
+     * Consolidated stack of SCTs from all sources.
+     * Lazily populated by CT_get_peer_scts(SSL*)
+     */
+    STACK_OF(SCT) *scts;
+    /* Raw extension data, if seen */
+    unsigned char *tlsext_scts;
+    /* Length of raw extension data, if seen */
+    uint16_t tlsext_scts_len;
+    /* Have we attempted to find/parse SCTs yet? */
+    int scts_parsed;
+#  endif
     /* Expect OCSP CertificateStatus message */
     int tlsext_status_expected;
     /* OCSP status request only */
@@ -1165,7 +1196,7 @@ struct ssl_st {
      * basis, depending on the chosen cipher.
      */
     int (*not_resumable_session_cb) (SSL *ssl, int is_forward_secure);
-    
+
     RECORD_LAYER rlayer;
 
     /* Default password callback. */
@@ -1176,6 +1207,7 @@ struct ssl_st {
 
     /* Async Job info */
     ASYNC_JOB *job;
+    ASYNC_WAIT_CTX *waitctx;
 };
 
 
@@ -1594,35 +1626,6 @@ struct tls_sigalgs_st {
     unsigned char rhash;
 };
 
-/*
- * #define MAC_DEBUG
- */
-
-/*
- * #define ERR_DEBUG
- */
-/*
- * #define ABORT_DEBUG
- */
-/*
- * #define PKT_DEBUG 1
- */
-/*
- * #define DES_DEBUG
- */
-/*
- * #define DES_OFB_DEBUG
- */
-/*
- * #define SSL_DEBUG
- */
-/*
- * #define RSA_DEBUG
- */
-/*
- * #define IDEA_DEBUG
- */
-
 # define FP_ICC  (int (*)(const void *,const void *))
 
 /*
@@ -1826,8 +1829,10 @@ const SSL_METHOD *func_name(void)  \
 struct openssl_ssl_test_functions {
     int (*p_ssl_init_wbio_buffer) (SSL *s, int push);
     int (*p_ssl3_setup_buffers) (SSL *s);
+# ifndef OPENSSL_NO_HEARTBEATS
     int (*p_dtls1_process_heartbeat) (SSL *s,
         unsigned char *p, unsigned int length);
+# endif
 };
 
 # ifndef OPENSSL_UNIT_TEST
@@ -1882,7 +1887,7 @@ __owur int ssl_get_server_cert_serverinfo(SSL *s, const unsigned char **serverin
                                    size_t *serverinfo_length);
 __owur EVP_PKEY *ssl_get_sign_pkey(SSL *s, const SSL_CIPHER *c, const EVP_MD **pmd);
 __owur int ssl_cert_type(X509 *x, EVP_PKEY *pkey);
-void ssl_set_masks(SSL *s, const SSL_CIPHER *cipher);
+void ssl_set_masks(SSL *s);
 __owur STACK_OF(SSL_CIPHER) *ssl_get_ciphers_by_id(SSL *s);
 __owur int ssl_verify_alarm_type(long type);
 void ssl_load_ciphers(void);
@@ -1947,7 +1952,7 @@ __owur int ssl_choose_client_version(SSL *s, int version);
 __owur long tls1_default_timeout(void);
 __owur int dtls1_do_write(SSL *s, int type);
 void dtls1_set_message_header(SSL *s,
-                              unsigned char *p, unsigned char mt,
+                              unsigned char mt,
                               unsigned long len,
                               unsigned long frag_off,
                               unsigned long frag_len);
@@ -1956,8 +1961,7 @@ __owur int dtls1_write_app_data_bytes(SSL *s, int type, const void *buf, int len
 
 __owur int dtls1_read_failed(SSL *s, int code);
 __owur int dtls1_buffer_message(SSL *s, int ccs);
-__owur int dtls1_retransmit_message(SSL *s, unsigned short seq,
-                             unsigned long frag_off, int *found);
+__owur int dtls1_retransmit_message(SSL *s, unsigned short seq, int *found);
 __owur int dtls1_get_queue_priority(unsigned short seq, int is_ccs);
 int dtls1_retransmit_buffered_messages(SSL *s);
 void dtls1_clear_record_buffer(SSL *s);
@@ -2064,6 +2068,10 @@ __owur int tls1_set_sigalgs(CERT *c, const int *salg, size_t salglen, int client
 int tls1_check_chain(SSL *s, X509 *x, EVP_PKEY *pk, STACK_OF(X509) *chain,
                      int idx);
 void tls1_set_cert_validity(SSL *s);
+
+#ifndef OPENSSL_NO_CT
+__owur int SSL_validate_ct(SSL *s);
+#endif
 
 #  ifndef OPENSSL_NO_DH
 __owur DH *ssl_get_auto_dh(SSL *s);

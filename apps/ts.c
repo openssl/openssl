@@ -299,7 +299,6 @@ int ts_main(int argc, char **argv)
         }
     }
     argc = opt_num_rest();
-    argv = opt_rest();
     if (mode == OPT_ERR || argc != 0)
         goto opthelp;
 

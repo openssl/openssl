@@ -1444,6 +1444,9 @@ secg-scheme 14 3 : dhSinglePass-cofactorDH-sha512kdf-scheme
 # NID for TLS1 PRF
                             : TLS1-PRF          : tls1-prf
 
+# NID for HKDF
+                            : HKDF              : hkdf
+
 # RFC 4556
 1 3 6 1 5 2 3 : id-pkinit
 id-pkinit 4                     : pkInitClientAuth      : PKINIT Client Auth
@@ -1451,7 +1454,5 @@ id-pkinit 5                     : pkInitKDC             : Signing KDC Response
 
 # New curves from draft-josefsson-pkix-newcurves
 
-1 3 6 1 4 1 11591 15 1      : Curve25519
-1 3 6 1 4 1 11591 15 2      : Curve448
-1 3 6 1 4 1 11591 15 3      : Curve25519ph
-1 3 6 1 4 1 11591 15 4      : Curve448ph
+1 3 6 1 4 1 11591 15 1      : X25519
+1 3 6 1 4 1 11591 15 2      : X448

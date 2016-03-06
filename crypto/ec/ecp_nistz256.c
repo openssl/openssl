@@ -1395,8 +1395,6 @@ static NISTZ256_PRE_COMP *ecp_nistz256_pre_comp_new(const EC_GROUP *group)
 
     ret->group = group;
     ret->w = 6;                 /* default */
-    ret->precomp = NULL;
-    ret->precomp_storage = NULL;
     ret->references = 1;
     return ret;
 }
@@ -1443,6 +1441,7 @@ const EC_METHOD *EC_GFp_nistz256_method(void)
         ec_GFp_mont_group_set_curve,
         ec_GFp_simple_group_get_curve,
         ec_GFp_simple_group_get_degree,
+        ec_group_simple_order_bits,
         ec_GFp_simple_group_check_discriminant,
         ec_GFp_simple_point_init,
         ec_GFp_simple_point_finish,
@@ -1470,7 +1469,16 @@ const EC_METHOD *EC_GFp_nistz256_method(void)
         0,                                          /* field_div */
         ec_GFp_mont_field_encode,
         ec_GFp_mont_field_decode,
-        ec_GFp_mont_field_set_to_one
+        ec_GFp_mont_field_set_to_one,
+        ec_key_simple_priv2oct,
+        ec_key_simple_oct2priv,
+        0, /* set private */
+        ec_key_simple_generate_key,
+        ec_key_simple_check_key,
+        ec_key_simple_generate_public_key,
+        0, /* keycopy */
+        0, /* keyfinish */
+        ecdh_simple_compute_key
     };
 
     return &ret;

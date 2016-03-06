@@ -5,7 +5,7 @@
 # It does this by parsing the header files and looking for the
 # prototyped functions: it then prunes the output.
 #
-# Intermediary files are created, call libeay.num and ssleay.num,
+# Intermediary files are created, call libcrypto.num and libssl.num,
 # The format of these files is:
 #
 #	routine-name	nnnn	vers	info
@@ -44,8 +44,8 @@ use File::Spec::Functions;
 
 my $debug=0;
 
-my $crypto_num= catfile($config{sourcedir},"util","libeay.num");
-my $ssl_num=    catfile($config{sourcedir},"util","ssleay.num");
+my $crypto_num= catfile($config{sourcedir},"util","libcrypto.num");
+my $ssl_num=    catfile($config{sourcedir},"util","libssl.num");
 my $libname;
 
 my $do_update = 0;
@@ -90,8 +90,8 @@ my @known_algorithms = ( "RC2", "RC4", "RC5", "IDEA", "DES", "BF",
                          "STATIC_ENGINE", "ENGINE", "HW", "GMP",
 			 # Entropy Gathering
 			 "EGD",
-                         # X.509v3 Signed Certificate Timestamps
-                         "SCT",
+			 # Certificate Transparency
+			 "CT",
 			 # RFC3779
 			 "RFC3779",
 			 # TLS
@@ -102,8 +102,6 @@ my @known_algorithms = ( "RC2", "RC4", "RC5", "IDEA", "DES", "BF",
 			 "CAPIENG",
 			 # SSL v3 method
 			 "SSL3_METHOD",
-			 # JPAKE
-			 "JPAKE",
 			 # NEXTPROTONEG
 			 "NEXTPROTONEG",
 			 # Deprecated functions
@@ -161,12 +159,12 @@ foreach (@ARGV, split(/ /, $config{options}))
 		$zlib = 1;
 	}
 
-	$do_ssl=1 if $_ eq "ssleay";
+	$do_ssl=1 if $_ eq "libssl";
 	if ($_ eq "ssl") {
 		$do_ssl=1; 
 		$libname=$_
 	}
-	$do_crypto=1 if $_ eq "libeay";
+	$do_crypto=1 if $_ eq "libcrypto";
 	if ($_ eq "crypto") {
 		$do_crypto=1;
 		$libname=$_;
@@ -176,7 +174,6 @@ foreach (@ARGV, split(/ /, $config{options}))
 	$do_ctest=1 if $_ eq "ctest";
 	$do_ctestall=1 if $_ eq "ctestall";
 	$do_checkexist=1 if $_ eq "exist";
-	#$safe_stack_def=1 if $_ eq "-DDEBUG_SAFESTACK";
 	if (/^--api=(\d+)\.(\d+)\.(\d+)$/) {
 		my $apiv = sprintf "%x%02x%02x", $1, $2, $3;
 		foreach (keys %disabled_algorithms) {
@@ -205,10 +202,10 @@ foreach (@ARGV, split(/ /, $config{options}))
 
 if (!$libname) { 
 	if ($do_ssl) {
-		$libname="SSLEAY";
+		$libname="LIBSSL";
 	}
 	if ($do_crypto) {
-		$libname="LIBEAY";
+		$libname="LIBCRYPTO";
 	}
 }
 
@@ -234,12 +231,12 @@ my $ssl="include/openssl/ssl.h";
 $ssl.=" include/openssl/tls1.h";
 $ssl.=" include/openssl/srtp.h";
 
+# We use headers found in include/openssl and include/internal only.
+# The latter is needed so libssl.so/.dll/.exe can link properly.
 my $crypto ="include/openssl/crypto.h";
-$crypto.=" crypto/include/internal/cryptlib.h";
-$crypto.=" crypto/include/internal/chacha.h"; # unless $no_chacha;
-$crypto.=" crypto/include/internal/poly1305.h"; # unless $no_poly1305;
 $crypto.=" include/internal/o_dir.h";
 $crypto.=" include/internal/o_str.h";
+$crypto.=" include/internal/threads.h";
 $crypto.=" include/openssl/des.h" ; # unless $no_des;
 $crypto.=" include/openssl/idea.h" ; # unless $no_idea;
 $crypto.=" include/openssl/rc4.h" ; # unless $no_rc4;
@@ -294,41 +291,42 @@ $crypto.=" include/openssl/ocsp.h";
 $crypto.=" include/openssl/ui.h";
 #$crypto.=" include/openssl/store.h";
 $crypto.=" include/openssl/cms.h";
-$crypto.=" include/openssl/jpake.h";
 $crypto.=" include/openssl/srp.h";
 $crypto.=" include/openssl/modes.h";
 $crypto.=" include/openssl/async.h";
+$crypto.=" include/openssl/ct.h";
+$crypto.=" include/openssl/kdf.h";
 
 my $symhacks="include/openssl/symhacks.h";
 
-my @ssl_symbols = &do_defs("SSLEAY", $ssl, $symhacks);
-my @crypto_symbols = &do_defs("LIBEAY", $crypto, $symhacks);
+my @ssl_symbols = &do_defs("LIBSSL", $ssl, $symhacks);
+my @crypto_symbols = &do_defs("LIBCRYPTO", $crypto, $symhacks);
 
 if ($do_update) {
 
 if ($do_ssl == 1) {
 
-	&maybe_add_info("SSLEAY",*ssl_list,@ssl_symbols);
+	&maybe_add_info("LIBSSL",*ssl_list,@ssl_symbols);
 	if ($do_rewrite == 1) {
 		open(OUT, ">$ssl_num");
-		&rewrite_numbers(*OUT,"SSLEAY",*ssl_list,@ssl_symbols);
+		&rewrite_numbers(*OUT,"LIBSSL",*ssl_list,@ssl_symbols);
 	} else {
 		open(OUT, ">>$ssl_num");
 	}
-	&update_numbers(*OUT,"SSLEAY",*ssl_list,$max_ssl,@ssl_symbols);
+	&update_numbers(*OUT,"LIBSSL",*ssl_list,$max_ssl,@ssl_symbols);
 	close OUT;
 }
 
 if($do_crypto == 1) {
 
-	&maybe_add_info("LIBEAY",*crypto_list,@crypto_symbols);
+	&maybe_add_info("LIBCRYPTO",*crypto_list,@crypto_symbols);
 	if ($do_rewrite == 1) {
 		open(OUT, ">$crypto_num");
-		&rewrite_numbers(*OUT,"LIBEAY",*crypto_list,@crypto_symbols);
+		&rewrite_numbers(*OUT,"LIBCRYPTO",*crypto_list,@crypto_symbols);
 	} else {
 		open(OUT, ">>$crypto_num");
 	}
-	&update_numbers(*OUT,"LIBEAY",*crypto_list,$max_crypto,@crypto_symbols);
+	&update_numbers(*OUT,"LIBCRYPTO",*crypto_list,$max_crypto,@crypto_symbols);
 	close OUT;
 } 
 
@@ -348,10 +346,10 @@ if($do_crypto == 1) {
 int main()
 {
 EOF
-	&print_test_file(*STDOUT,"SSLEAY",*ssl_list,$do_ctestall,@ssl_symbols)
+	&print_test_file(*STDOUT,"LIBSSL",*ssl_list,$do_ctestall,@ssl_symbols)
 		if $do_ssl == 1;
 
-	&print_test_file(*STDOUT,"LIBEAY",*crypto_list,$do_ctestall,@crypto_symbols)
+	&print_test_file(*STDOUT,"LIBCRYPTO",*crypto_list,$do_ctestall,@crypto_symbols)
 		if $do_crypto == 1;
 
 	print "}\n";
@@ -498,7 +496,10 @@ sub do_defs
 				$cpp-- if /^#\s*endif/;
 				next;
 			}
-			$cpp = 1 if /^#.*ifdef.*cplusplus/;
+			if (/^#.*ifdef.*cplusplus/) {
+				$cpp = 1;
+				next;
+			}
 
 			s/{[^{}]*}//gs;                      # ignore {} blocks
 			print STDERR "DEBUG: \$def=\"$def\"\n" if $debug && $def ne "";
@@ -585,6 +586,7 @@ sub do_defs
 				pop(@tag);
 			} elsif (/^\#\s*else/) {
 				my $tag_i = $#tag;
+				die "$file unmatched else\n" if $tag_i < 0;
 				while($tag[$tag_i] ne "-") {
 					my $t=$tag[$tag_i];
 					$tag{$t}= -$tag{$t};
@@ -603,6 +605,9 @@ sub do_defs
 				push(@tag,"TRUE");
 				$tag{"TRUE"}=-1;
 				print STDERR "DEBUG: $file: found 0\n" if $debug;
+			} elsif (/^\#\s*if\s+/) {
+				#Some other unrecognized "if" style
+				push(@tag,"-");
 			} elsif (/^\#\s*define\s+(\w+)\s+(\w+)/
 				 && $symhacking && $tag{'TRUE'} != -1) {
 				# This is for aliasing.  When we find an alias,
@@ -637,7 +642,8 @@ sub do_defs
 				next;
 			}
 			if ($tag{'TRUE'} != -1) {
-				if (/^\s*DECLARE_STACK_OF\s*\(\s*(\w*)\s*\)/) {
+				if (/^\s*DEFINE_STACK_OF\s*\(\s*(\w*)\s*\)/
+						|| /^\s*DEFINE_STACK_OF_CONST\s*\(\s*(\w*)\s*\)/) {
 					next;
 				} elsif (/^\s*DECLARE_ASN1_ENCODE_FUNCTIONS\s*\(\s*(\w*)\s*,\s*(\w*)\s*,\s*(\w*)\s*\)/) {
 					$def .= "int d2i_$3(void);";
@@ -879,6 +885,7 @@ sub do_defs
 			}
 		}
 		close(IN);
+		die "$file: Unmatched tags\n" if $#tag >= 0;
 
 		my $algs;
 		my $plays;

@@ -138,16 +138,12 @@
 #  define openssl_fdset(a,b) FD_SET(a, b)
 # endif
 
-# if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L && \
-     defined(INTMAX_MAX) && defined(UINTMAX_MAX)
-int opt_imax(const char *value, intmax_t *result);
-int opt_umax(const char *value, uintmax_t *result);
-# else
-#  define opt_imax opt_long
-#  define opt_umax opt_ulong
-#  define intmax_t long
-#  define uintmax_t unsigned long
-# endif
+/*
+ * quick macro when you need to pass an unsigned char instead of a char.
+ * this is true for some implementations of the is*() functions, for
+ * example.
+ */
+#define _UC(c) ((unsigned char)(c))
 
 int app_RAND_load_file(const char *file, int dont_warn);
 int app_RAND_write_file(const char *file);
@@ -420,7 +416,7 @@ typedef struct string_int_pair_st {
 char *opt_progname(const char *argv0);
 char *opt_getprog(void);
 char *opt_init(int ac, char **av, const OPTIONS * o);
-int opt_next();
+int opt_next(void);
 int opt_format(const char *s, unsigned long flags, int *result);
 int opt_int(const char *arg, int *result);
 int opt_ulong(const char *arg, unsigned long *result);
@@ -429,6 +425,11 @@ int opt_long(const char *arg, long *result);
     defined(INTMAX_MAX) && defined(UINTMAX_MAX)
 int opt_imax(const char *arg, intmax_t *result);
 int opt_umax(const char *arg, uintmax_t *result);
+#else
+# define opt_imax opt_long
+# define opt_umax opt_ulong
+# define intmax_t long
+# define uintmax_t unsigned long
 #endif
 int opt_pair(const char *arg, const OPT_PAIR * pairs, int *result);
 int opt_cipher(const char *name, const EVP_CIPHER **cipherp);
@@ -442,7 +443,6 @@ int opt_num_rest(void);
 int opt_verify(int i, X509_VERIFY_PARAM *vpm);
 void opt_help(const OPTIONS * list);
 int opt_format_error(const char *s, unsigned long flags);
-int opt_next(void);
 
 typedef struct args_st {
     int size;
@@ -475,22 +475,22 @@ int set_ext_copy(int *copy_type, const char *arg);
 int copy_extensions(X509 *x, X509_REQ *req, int copy_type);
 int app_passwd(char *arg1, char *arg2, char **pass1, char **pass2);
 int add_oid_section(CONF *conf);
-X509 *load_cert(const char *file, int format,
-                const char *pass, ENGINE *e, const char *cert_descrip);
+X509 *load_cert(const char *file, int format, const char *cert_descrip);
 X509_CRL *load_crl(const char *infile, int format);
-int load_cert_crl_http(const char *url, X509 **pcert, X509_CRL **pcrl);
 EVP_PKEY *load_key(const char *file, int format, int maybe_stdin,
                    const char *pass, ENGINE *e, const char *key_descrip);
 EVP_PKEY *load_pubkey(const char *file, int format, int maybe_stdin,
                       const char *pass, ENGINE *e, const char *key_descrip);
 int load_certs(const char *file, STACK_OF(X509) **certs, int format,
-               const char *pass, ENGINE *e, const char *cert_descrip);
+               const char *pass, const char *cert_descrip);
 int load_crls(const char *file, STACK_OF(X509_CRL) **crls, int format,
-              const char *pass, ENGINE *e, const char *cert_descrip);
+              const char *pass, const char *cert_descrip);
 X509_STORE *setup_verify(char *CAfile, char *CApath,
                          int noCAfile, int noCApath);
 int ctx_set_verify_locations(SSL_CTX *ctx, const char *CAfile,
                              const char *CApath, int noCAfile, int noCApath);
+int ctx_set_ctlog_list_file(SSL_CTX *ctx, const char *path);
+
 # ifdef OPENSSL_NO_ENGINE
 #  define setup_engine(engine, debug) NULL
 # else
@@ -563,10 +563,6 @@ int do_X509_CRL_sign(X509_CRL *x, EVP_PKEY *pkey, const EVP_MD *md,
                      STACK_OF(OPENSSL_STRING) *sigopts);
 # ifndef OPENSSL_NO_PSK
 extern char *psk_key;
-# endif
-# ifndef OPENSSL_NO_JPAKE
-void jpake_client_auth(BIO *out, BIO *conn, const char *secret);
-void jpake_server_auth(BIO *out, BIO *conn, const char *secret);
 # endif
 
 unsigned char *next_protos_parse(unsigned short *outlen, const char *in);

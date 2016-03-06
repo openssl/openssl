@@ -119,10 +119,14 @@ static int read_lebn(const unsigned char **in, unsigned int nbyte, BIGNUM **r)
 # define MS_PVKMAGIC             0xb0b5f11eL
 /* Salt length for PVK files */
 # define PVK_SALTLEN             0x10
+/* Maximum length in PVK header */
+# define PVK_MAX_KEYLEN          102400
+/* Maximum salt length */
+# define PVK_MAX_SALTLEN         10240
 
-static EVP_PKEY *b2i_rsa(const unsigned char **in, unsigned int length,
+static EVP_PKEY *b2i_rsa(const unsigned char **in,
                          unsigned int bitlen, int ispub);
-static EVP_PKEY *b2i_dss(const unsigned char **in, unsigned int length,
+static EVP_PKEY *b2i_dss(const unsigned char **in,
                          unsigned int bitlen, int ispub);
 
 static int do_blob_header(const unsigned char **in, unsigned int length,
@@ -235,9 +239,9 @@ static EVP_PKEY *do_b2i(const unsigned char **in, unsigned int length,
         return NULL;
     }
     if (isdss)
-        return b2i_dss(&p, length, bitlen, ispub);
+        return b2i_dss(&p, bitlen, ispub);
     else
-        return b2i_rsa(&p, length, bitlen, ispub);
+        return b2i_rsa(&p, bitlen, ispub);
 }
 
 static EVP_PKEY *do_b2i_bio(BIO *in, int ispub)
@@ -268,16 +272,16 @@ static EVP_PKEY *do_b2i_bio(BIO *in, int ispub)
     }
 
     if (isdss)
-        ret = b2i_dss(&p, length, bitlen, ispub);
+        ret = b2i_dss(&p, bitlen, ispub);
     else
-        ret = b2i_rsa(&p, length, bitlen, ispub);
+        ret = b2i_rsa(&p, bitlen, ispub);
 
  err:
     OPENSSL_free(buf);
     return ret;
 }
 
-static EVP_PKEY *b2i_dss(const unsigned char **in, unsigned int length,
+static EVP_PKEY *b2i_dss(const unsigned char **in,
                          unsigned int bitlen, int ispub)
 {
     const unsigned char *p = *in;
@@ -327,7 +331,7 @@ static EVP_PKEY *b2i_dss(const unsigned char **in, unsigned int length,
     return NULL;
 }
 
-static EVP_PKEY *b2i_rsa(const unsigned char **in, unsigned int length,
+static EVP_PKEY *b2i_rsa(const unsigned char **in,
                          unsigned int bitlen, int ispub)
 {
     const unsigned char *p = *in;
@@ -607,6 +611,9 @@ static int do_PVK_header(const unsigned char **in, unsigned int length,
     is_encrypted = read_ledword(&p);
     *psaltlen = read_ledword(&p);
     *pkeylen = read_ledword(&p);
+
+    if (*pkeylen > PVK_MAX_KEYLEN || *psaltlen > PVK_MAX_SALTLEN)
+        return 0;
 
     if (is_encrypted && !*psaltlen) {
         PEMerr(PEM_F_DO_PVK_HEADER, PEM_R_INCONSISTENT_HEADER);

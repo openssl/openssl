@@ -54,13 +54,6 @@
 
 #include "eng_int.h"
 
-/*
- * If this symbol is defined then ENGINE_get_default_EC_KEY(), the function that
- * is used by EC_KEY to hook in implementation code and cache defaults (etc),
- * will display brief debugging summaries to stderr with the 'nid'.
- */
-/* #define ENGINE_EC_KEY_DEBUG */
-
 static ENGINE_TABLE *dh_table = NULL;
 static const int dummy_nid = 1;
 

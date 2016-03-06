@@ -10,13 +10,13 @@ CFLAG=-g
 MAKEFILE=	Makefile
 AR=		ar r
 
-CFLAGS= $(INCLUDES) $(CFLAG)
+CFLAGS= $(INCLUDES) $(CFLAG) $(SHARED_CFLAG)
 
 GENERAL=Makefile
 
 LIB=$(TOP)/libcrypto.a
-LIBSRC=tls1_prf.c
-LIBOBJ=tls1_prf.o
+LIBSRC=tls1_prf.c kdf_err.c hkdf.c
+LIBOBJ=tls1_prf.o kdf_err.o hkdf.o
 
 SRC= $(LIBSRC)
 
@@ -48,7 +48,7 @@ lint:
 update: depend
 
 depend:
-	$(TOP)/util/domd $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(LIBSRC)
+	$(TOP)/util/domd $(CFLAG) $(INCLUDES) -- $(PROGS) $(LIBSRC)
 
 clean:
 	rm -f *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff

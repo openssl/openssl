@@ -11,7 +11,7 @@ MAKEFILE=	Makefile
 AR=		ar r
 PERL=		perl
 
-CFLAGS= $(INCLUDES) $(CFLAG)
+CFLAGS= $(INCLUDES) $(CFLAG) $(SHARED_CFLAG)
 
 GENERAL=Makefile README
 
@@ -53,7 +53,7 @@ files:
 generate: obj_dat.h ../../include/openssl/obj_mac.h obj_xref.h
 
 depend:
-	$(TOP)/util/domd $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(LIBSRC)
+	$(TOP)/util/domd $(CFLAG) $(INCLUDES) -- $(PROGS) $(LIBSRC)
 
 clean:
 	rm -f *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff

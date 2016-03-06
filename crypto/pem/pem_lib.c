@@ -218,8 +218,7 @@ static int check_pem(const char *nm, const char *name)
                 else
                     r = 0;
 #ifndef OPENSSL_NO_ENGINE
-                if (e)
-                    ENGINE_finish(e);
+                ENGINE_finish(e);
 #endif
                 return r;
             }
@@ -489,7 +488,6 @@ int PEM_get_EVP_CIPHER_INFO(char *header, EVP_CIPHER_INFO *cipher)
 {
     const EVP_CIPHER *enc = NULL;
     char *dekinfostart, c;
-    char **header_pp = &header;
 
     cipher->cipher = NULL;
     if ((header == NULL) || (*header == '\0') || (*header == '\n'))
@@ -536,13 +534,13 @@ int PEM_get_EVP_CIPHER_INFO(char *header, EVP_CIPHER_INFO *cipher)
     }
     *header = '\0';
     cipher->cipher = enc = EVP_get_cipherbyname(dekinfostart);
-    *header = c;
+    *header++ = c;
 
     if (enc == NULL) {
         PEMerr(PEM_F_PEM_GET_EVP_CIPHER_INFO, PEM_R_UNSUPPORTED_ENCRYPTION);
         return (0);
     }
-    if (!load_iv(header_pp, &(cipher->iv[0]), EVP_CIPHER_iv_length(enc)))
+    if (!load_iv(&header, cipher->iv, EVP_CIPHER_iv_length(enc)))
         return (0);
 
     return (1);

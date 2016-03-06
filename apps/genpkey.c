@@ -170,7 +170,9 @@ int genpkey_main(int argc, char **argv)
         }
     }
     argc = opt_num_rest();
-    argv = opt_rest();
+    if (argc != 0)
+        goto opthelp;
+
     private = do_param ? 0 : 1;
 
     if (ctx == NULL)
@@ -315,8 +317,7 @@ int init_gen_str(EVP_PKEY_CTX **pctx,
 
     EVP_PKEY_asn1_get0_info(&pkey_id, NULL, NULL, NULL, NULL, ameth);
 #ifndef OPENSSL_NO_ENGINE
-    if (tmpeng)
-        ENGINE_finish(tmpeng);
+    ENGINE_finish(tmpeng);
 #endif
     ctx = EVP_PKEY_CTX_new_id(pkey_id, e);
 

@@ -186,9 +186,8 @@ int EVP_PKEY_cmp(const EVP_PKEY *a, const EVP_PKEY *b)
 
 EVP_PKEY *EVP_PKEY_new(void)
 {
-    EVP_PKEY *ret;
+    EVP_PKEY *ret = OPENSSL_zalloc(sizeof(*ret));
 
-    ret = OPENSSL_malloc(sizeof(*ret));
     if (ret == NULL) {
         EVPerr(EVP_F_EVP_PKEY_NEW, ERR_R_MALLOC_FAILURE);
         return (NULL);
@@ -196,10 +195,6 @@ EVP_PKEY *EVP_PKEY_new(void)
     ret->type = EVP_PKEY_NONE;
     ret->save_type = EVP_PKEY_NONE;
     ret->references = 1;
-    ret->ameth = NULL;
-    ret->engine = NULL;
-    ret->pkey.ptr = NULL;
-    ret->attributes = NULL;
     ret->save_parameters = 1;
     return (ret);
 }
@@ -229,10 +224,8 @@ static int pkey_set_type(EVP_PKEY *pkey, int type, const char *str, int len)
             return 1;
 #ifndef OPENSSL_NO_ENGINE
         /* If we have an ENGINE release it */
-        if (pkey->engine) {
-            ENGINE_finish(pkey->engine);
-            pkey->engine = NULL;
-        }
+        ENGINE_finish(pkey->engine);
+        pkey->engine = NULL;
 #endif
     }
     if (str)
@@ -240,10 +233,10 @@ static int pkey_set_type(EVP_PKEY *pkey, int type, const char *str, int len)
     else
         ameth = EVP_PKEY_asn1_find(&e, type);
 #ifndef OPENSSL_NO_ENGINE
-    if (!pkey && e)
+    if (pkey == NULL)
         ENGINE_finish(e);
 #endif
-    if (!ameth) {
+    if (ameth == NULL) {
         EVPerr(EVP_F_PKEY_SET_TYPE, EVP_R_UNSUPPORTED_ALGORITHM);
         return 0;
     }
@@ -401,8 +394,7 @@ int EVP_PKEY_type(int type)
     else
         ret = NID_undef;
 #ifndef OPENSSL_NO_ENGINE
-    if (e)
-        ENGINE_finish(e);
+    ENGINE_finish(e);
 #endif
     return ret;
 }
@@ -442,10 +434,8 @@ static void EVP_PKEY_free_it(EVP_PKEY *x)
         x->pkey.ptr = NULL;
     }
 #ifndef OPENSSL_NO_ENGINE
-    if (x->engine) {
-        ENGINE_finish(x->engine);
-        x->engine = NULL;
-    }
+    ENGINE_finish(x->engine);
+    x->engine = NULL;
 #endif
 }
 

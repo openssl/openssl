@@ -325,7 +325,9 @@ int pkcs12_main(int argc, char **argv)
         }
     }
     argc = opt_num_rest();
-    argv = opt_rest();
+    if (argc != 0)
+        goto opthelp;
+
     private = 1;
 
     if (passarg) {
@@ -395,7 +397,7 @@ int pkcs12_main(int argc, char **argv)
 
         /* Load in all certs in input file */
         if (!(options & NOCERTS)) {
-            if (!load_certs(infile, &certs, FORMAT_PEM, NULL, e,
+            if (!load_certs(infile, &certs, FORMAT_PEM, NULL,
                             "certificates"))
                 goto export_end;
 
@@ -424,7 +426,7 @@ int pkcs12_main(int argc, char **argv)
 
         /* Add any more certificates asked for */
         if (certfile) {
-            if (!load_certs(certfile, &certs, FORMAT_PEM, NULL, e,
+            if (!load_certs(certfile, &certs, FORMAT_PEM, NULL,
                             "certificates from certfile"))
                 goto export_end;
         }

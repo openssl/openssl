@@ -82,10 +82,8 @@ EVP_PKEY *d2i_PrivateKey(int type, EVP_PKEY **a, const unsigned char **pp,
     } else {
         ret = *a;
 #ifndef OPENSSL_NO_ENGINE
-        if (ret->engine) {
-            ENGINE_finish(ret->engine);
-            ret->engine = NULL;
-        }
+        ENGINE_finish(ret->engine);
+        ret->engine = NULL;
 #endif
     }
 

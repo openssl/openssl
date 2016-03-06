@@ -341,12 +341,11 @@ int DSO_set_filename(DSO *dso, const char *filename)
         return (0);
     }
     /* We'll duplicate filename */
-    copied = OPENSSL_malloc(strlen(filename) + 1);
+    copied = OPENSSL_strdup(filename);
     if (copied == NULL) {
         DSOerr(DSO_F_DSO_SET_FILENAME, ERR_R_MALLOC_FAILURE);
         return (0);
     }
-    OPENSSL_strlcpy(copied, filename, strlen(filename) + 1);
     OPENSSL_free(dso->filename);
     dso->filename = copied;
     return (1);
@@ -390,12 +389,11 @@ char *DSO_convert_filename(DSO *dso, const char *filename)
             result = dso->meth->dso_name_converter(dso, filename);
     }
     if (result == NULL) {
-        result = OPENSSL_malloc(strlen(filename) + 1);
+        result = OPENSSL_strdup(filename);
         if (result == NULL) {
             DSOerr(DSO_F_DSO_CONVERT_FILENAME, ERR_R_MALLOC_FAILURE);
             return (NULL);
         }
-        OPENSSL_strlcpy(result, filename, strlen(filename) + 1);
     }
     return (result);
 }

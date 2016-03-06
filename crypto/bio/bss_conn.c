@@ -271,12 +271,6 @@ BIO_CONNECT *BIO_CONNECT_new(void)
         return (NULL);
     ret->state = BIO_CONN_S_BEFORE;
     ret->connect_family = BIO_FAMILY_IPANY;
-    ret->param_hostname = NULL;
-    ret->param_service = NULL;
-    ret->info_callback = NULL;
-    ret->connect_mode = 0;
-    ret->addr_first = NULL;
-    ret->addr_iter = NULL;
     return (ret);
 }
 

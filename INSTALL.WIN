@@ -80,7 +80,7 @@
  By default in 1.1.0 OpenSSL will compile builtin ENGINES into separate shared
  libraries. If you specify the "enable-static-engine" option on the command line
  to Configure the shared library build (ms\ntdll.mak) will compile the engines
- into libeay32.dll instead.
+ into libcrypto32.dll instead.
 
  You can also build a static version of the library using the Makefile
  ms\nt.mak
@@ -160,7 +160,7 @@
    possible targets include x86_64-w64-mingw32- and i686-w64-mingw32-.
 
    libcrypto.a and libssl.a are the static libraries. To use the DLLs,
-   link with libeay32.a and libssl32.a instead.
+   link with libcrypto32.a and libssl32.a instead.
 
  Linking your application
  ------------------------

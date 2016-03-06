@@ -63,11 +63,8 @@ setup($test_name);
 plan skip_all => "TLSProxy isn't usable on $^O"
     if $^O =~ /^VMS$/;
 
-plan skip_all => "$test_name needs the engine feature enabled"
-    if disabled("engine");
-
-plan skip_all => "$test_name can only be performed with OpenSSL configured shared"
-    if disabled("shared");
+plan skip_all => "$test_name needs the dynamic engine feature enabled"
+    if disabled("engine") || disabled("dynamic-engine");
 
 $ENV{OPENSSL_ENGINES} = bldtop_dir("engines");
 $ENV{OPENSSL_ia32cap} = '~0x200000200000000';
@@ -99,7 +96,7 @@ sub certstatus_filter
         if ($message->mt == TLSProxy::Message::MT_SERVER_HELLO) {
             #Add the status_request to the ServerHello even though we are not
             #going to send a CertificateStatus message
-            $message->set_extension(TLSProxy::ClientHello::EXT_STATUS_REQUEST,
+            $message->set_extension(TLSProxy::Message::EXT_STATUS_REQUEST,
                                     "");
 
             $message->repack();

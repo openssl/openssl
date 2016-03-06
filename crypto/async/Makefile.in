@@ -10,15 +10,15 @@ CFLAG=-g
 MAKEFILE=	Makefile
 AR=		ar r
 
-CFLAGS= $(INCLUDES) $(CFLAG)
+CFLAGS= $(INCLUDES) $(CFLAG) $(SHARED_CFLAG)
 
 GENERAL=Makefile
 TEST=
 APPS=
 
 LIB=$(TOP)/libcrypto.a
-LIBSRC=async.c async_err.c arch/async_posix.c arch/async_win.c arch/async_null.c
-LIBOBJ=async.o async_err.o arch/async_posix.o arch/async_win.o arch/async_null.o
+LIBSRC=async.c async_wait.c async_err.c arch/async_posix.c arch/async_win.c arch/async_null.c
+LIBOBJ=async.o async_wait.o async_err.o arch/async_posix.o arch/async_win.o arch/async_null.o
 
 SRC= $(LIBSRC)
 
@@ -53,7 +53,7 @@ install:
 	done;
 
 depend:
-	$(TOP)/util/domd $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(LIBSRC)
+	$(TOP)/util/domd $(CFLAG) $(INCLUDES) -- $(PROGS) $(LIBSRC)
 
 clean:
 	rm -f *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff

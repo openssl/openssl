@@ -108,7 +108,7 @@ poly1305_init:
 	and	r5,r5,r3
 
 #if	__ARM_MAX_ARCH__>=7
-	tst	r12,#1			@ check for NEON
+	tst	r12,#ARMV7_NEON		@ check for NEON
 # ifdef	__APPLE__
 	adr	r9,poly1305_blocks_neon
 	adr	r11,poly1305_blocks
@@ -1004,7 +1004,7 @@ poly1305_blocks_neon:
 	vmlal.u32	$D2,$H4#hi,$S3
 
 	vmlal.u32	$D3,$H4#hi,$S4
-	 vmov.u64	$MASK,#-1		@ can be redundant
+	 vorn		$MASK,$MASK,$MASK	@ all-ones, can be redundant
 	vmlal.u32	$D0,$H1#hi,$S4
 	 vshr.u64	$MASK,$MASK,#38
 	vmlal.u32	$D4,$H0#hi,$R4
@@ -1048,7 +1048,7 @@ poly1305_blocks_neon:
 	vmlal.u32	$D2,$H4#lo,$S3
 
 	vmlal.u32	$D3,$H4#lo,$S4
-	 vmov.u64	$MASK,#-1
+	 vorn		$MASK,$MASK,$MASK	@ all-ones
 	vmlal.u32	$D0,$H1#lo,$S4
 	 vshr.u64	$MASK,$MASK,#38
 	vmlal.u32	$D4,$H0#lo,$R4
@@ -1056,6 +1056,15 @@ poly1305_blocks_neon:
 	vmlal.u32	$D2,$H3#lo,$S4
 
 .Lshort_tail:
+	@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+	@ horizontal addition
+
+	vadd.i64	$D3#lo,$D3#lo,$D3#hi
+	vadd.i64	$D0#lo,$D0#lo,$D0#hi
+	vadd.i64	$D4#lo,$D4#lo,$D4#hi
+	vadd.i64	$D1#lo,$D1#lo,$D1#hi
+	vadd.i64	$D2#lo,$D2#lo,$D2#hi
+
 	@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 	@ lazy reduction, but without narrowing
 
@@ -1085,15 +1094,6 @@ poly1305_blocks_neon:
 	 vand.i64	$D3,$D3,$MASK
 	vadd.i64	$D1,$D1,$T0		@ h0 -> h1
 	 vadd.i64	$D4,$D4,$T1		@ h3 -> h4
-
-	@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-	@ horizontal addition
-
-	vadd.i64	$D2#lo,$D2#lo,$D2#hi
-	vadd.i64	$D0#lo,$D0#lo,$D0#hi
-	vadd.i64	$D3#lo,$D3#lo,$D3#hi
-	vadd.i64	$D1#lo,$D1#lo,$D1#hi
-	vadd.i64	$D4#lo,$D4#lo,$D4#hi
 
 	cmp		$len,#0
 	bne		.Leven

@@ -2,8 +2,8 @@
 # Borland C++ builder 3 and 4 -- Janez Jere <jj@void.si>
 #
 
-$ssl=	"ssleay32";
-$crypto="libeay32";
+$ssl=	"libssl32";
+$crypto="libcrypto32";
 
 $o='\\';
 $cp='copy';
@@ -99,9 +99,6 @@ sub do_rehash_rule {
     my ($target, $deps) = @_;
     my $ret = <<"EOF";
 $target: $deps
-	set OPENSSL=\$(BIN_D)${o}openssl.exe
-	set OPENSSL_DEBUG_MEMORY=on
-	\$(PERL) \$(BIN_D)${o}c_rehash certs/demo
 	echo off > $target
 EOF
     return $ret

@@ -18,7 +18,7 @@ BEGINRAW[Makefile]
 	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/rc4-parisc.pl $(PERLASM_SCHEME) $@
 
 {- $builddir -}/rc4-ia64.s: rc4-ia64.S
-	@case `awk '/^#define RC4_INT/{print$$NF}' $(TOP)/include/openssl/opensslconf.h` in \
+	@case `awk '/^#define RC4_INT/{print$$NF}' $(SRCDIR)/include/openssl/opensslconf.h` in \
 	int)	set -x; $(CC) $(CFLAGS) -DSZ=4 -E rc4-ia64.S > $@ ;; \
 	char)	set -x; $(CC) $(CFLAGS) -DSZ=1 -E rc4-ia64.S > $@ ;; \
 	*)	exit 1 ;; \
