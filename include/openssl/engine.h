@@ -725,6 +725,14 @@ void ENGINE_add_conf_module(void);
  * same static data as the calling application (or library), and thus whether
  * these callbacks need to be set or not.
  */
+typedef void *(*dyn_MEM_malloc_fn) (size_t, const char *, int);
+typedef void *(*dyn_MEM_realloc_fn) (void *, size_t, const char *, int);
+typedef void (*dyn_MEM_free_fn) (void *, const char *, int);
+typedef struct st_dynamic_MEM_fns {
+    dyn_MEM_malloc_fn malloc_fn;
+    dyn_MEM_realloc_fn realloc_fn;
+    dyn_MEM_free_fn free_fn;
+} dynamic_MEM_fns;
 /*
  * FIXME: Perhaps the memory and locking code (crypto.h) should declare and
  * use these types so we (and any other dependant code) can simplify a bit??
@@ -747,6 +755,7 @@ typedef struct st_dynamic_LOCK_fns {
 /* The top-level structure */
 typedef struct st_dynamic_fns {
     void *static_state;
+    dynamic_MEM_fns mem_fns;
     dynamic_LOCK_fns lock_fns;
 } dynamic_fns;
 
@@ -795,6 +804,9 @@ typedef int (*dynamic_bind_engine) (ENGINE *e, const char *id,
         OPENSSL_EXPORT \
         int bind_engine(ENGINE *e, const char *id, const dynamic_fns *fns) { \
                 if(ENGINE_get_static_state() == fns->static_state) goto skip_cbs; \
+                CRYPTO_set_mem_functions(fns->mem_fns.malloc_fn, \
+                                         fns->mem_fns.realloc_fn, \
+                                         fns->mem_fns.free_fn); \
                 CRYPTO_set_locking_callback(fns->lock_fns.lock_locking_cb); \
                 CRYPTO_set_add_lock_callback(fns->lock_fns.lock_add_lock_cb); \
                 CRYPTO_set_dynlock_create_callback(fns->lock_fns.dynlock_create_cb); \
