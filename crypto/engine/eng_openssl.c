@@ -442,7 +442,7 @@ static int ossl_hmac_init(EVP_PKEY_CTX *ctx)
     hctx->ktmp.type = V_ASN1_OCTET_STRING;
     hctx->ctx = HMAC_CTX_new();
     if (hctx->ctx == NULL) {
-        OPENSSL_free (hctx);
+        OPENSSL_free(hctx);
         return 0;
     }
     EVP_PKEY_CTX_set_data(ctx, hctx);
