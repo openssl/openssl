@@ -1,8 +1,10 @@
 language: c
+cache: ccache
 
 addons:
     apt:
         packages:
+            - ccache
             - clang-3.6
             - gcc-5
         sources:
@@ -60,6 +62,7 @@ before_script:
           srcdir=../_srcdist;
           mkdir $BUILDDIR;
           cd $BUILDDIR;
+          CC="ccache $CC";
       else
           srcdir=.;
           cd _srcdist;
