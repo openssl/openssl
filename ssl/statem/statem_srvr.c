@@ -1152,6 +1152,38 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
         extensions = *pkt;
     }
 
+    if (SSL_IS_DTLS(s)) {
+        /* Empty cookie was already handled above by returning early. */
+        if (SSL_get_options(s) & SSL_OP_COOKIE_EXCHANGE) {
+            if (s->ctx->app_verify_cookie_cb != NULL) {
+                if (s->ctx->app_verify_cookie_cb(s, PACKET_data(&cookie),
+                                                 PACKET_remaining(&cookie)) == 0) {
+                    al = SSL_AD_HANDSHAKE_FAILURE;
+                    SSLerr(SSL_F_TLS_PROCESS_CLIENT_HELLO,
+                           SSL_R_COOKIE_MISMATCH);
+                    goto f_err;
+                    /* else cookie verification succeeded */
+                }
+            /* default verification */
+            } else if (!PACKET_equal(&cookie, s->d1->cookie,
+                                     s->d1->cookie_len)) {
+                al = SSL_AD_HANDSHAKE_FAILURE;
+                SSLerr(SSL_F_TLS_PROCESS_CLIENT_HELLO, SSL_R_COOKIE_MISMATCH);
+                goto f_err;
+            }
+            s->d1->cookie_verified = 1;
+        }
+        if (s->method->version == DTLS_ANY_VERSION) {
+            protverr = ssl_choose_server_version(s);
+            if (protverr != 0) {
+                SSLerr(SSL_F_TLS_PROCESS_CLIENT_HELLO, protverr);
+                s->version = s->client_version;
+                al = SSL_AD_PROTOCOL_VERSION;
+                goto f_err;
+            }
+        }
+    }
+
     s->hit = 0;
 
     /*
@@ -1195,39 +1227,6 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
             /* i == 0 */
             if (!ssl_get_new_session(s, 1))
                 goto err;
-        }
-    }
-
-    if (SSL_IS_DTLS(s)) {
-        /* Empty cookie was already handled above by returning early. */
-        if (SSL_get_options(s) & SSL_OP_COOKIE_EXCHANGE) {
-            if (s->ctx->app_verify_cookie_cb != NULL) {
-                if (s->ctx->app_verify_cookie_cb(s, PACKET_data(&cookie),
-                                                 PACKET_remaining(&cookie)) == 0) {
-                    al = SSL_AD_HANDSHAKE_FAILURE;
-                    SSLerr(SSL_F_TLS_PROCESS_CLIENT_HELLO,
-                           SSL_R_COOKIE_MISMATCH);
-                    goto f_err;
-                    /* else cookie verification succeeded */
-                }
-            /* default verification */
-            } else if (!PACKET_equal(&cookie, s->d1->cookie,
-                                     s->d1->cookie_len)) {
-                al = SSL_AD_HANDSHAKE_FAILURE;
-                SSLerr(SSL_F_TLS_PROCESS_CLIENT_HELLO, SSL_R_COOKIE_MISMATCH);
-                goto f_err;
-            }
-            s->d1->cookie_verified = 1;
-        }
-        if (s->method->version == DTLS_ANY_VERSION) {
-            protverr = ssl_choose_server_version(s);
-            if (protverr != 0) {
-                SSLerr(SSL_F_TLS_PROCESS_CLIENT_HELLO, protverr);
-                s->version = s->client_version;
-                al = SSL_AD_PROTOCOL_VERSION;
-                goto f_err;
-            }
-            s->session->ssl_version = s->version;
         }
     }
 
