@@ -341,9 +341,11 @@ int ossl_statem_client_read_transition(SSL *s, int mt)
         break;
 
     case TLS_ST_CW_FINISHED:
-        if (mt == SSL3_MT_NEWSESSION_TICKET && s->tlsext_ticket_expected) {
-            st->hand_state = TLS_ST_CR_SESSION_TICKET;
-            return 1;
+        if (s->tlsext_ticket_expected) {
+            if (mt == SSL3_MT_NEWSESSION_TICKET) {
+                st->hand_state = TLS_ST_CR_SESSION_TICKET;
+                return 1;
+            }
         } else if (mt == SSL3_MT_CHANGE_CIPHER_SPEC) {
             st->hand_state = TLS_ST_CR_CHANGE;
             return 1;
