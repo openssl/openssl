@@ -116,6 +116,8 @@ my @known_algorithms = ( "RC2", "RC4", "RC5", "IDEA", "DES", "BF",
 		 	 "SSL_TRACE",
 			 # Unit testing
 		 	 "UNIT_TEST",
+			 # User Interface
+			 "UI",
 			 # OCB mode
 			 "OCB",
                          # APPLINK (win build feature?)
