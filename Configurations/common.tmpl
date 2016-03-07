@@ -134,6 +134,9 @@
      $cache{$script} = 1;
  }
 
+ # Start with populating the cache with all the overrides
+ %cache = map { $_ => 1 } @{$unified_info{overrides}};
+
  # Build all known libraries, engines, programs and scripts.
  # Everything else will be handled as a consequence.
  map { dolib($_) } @{$unified_info{libraries}};
