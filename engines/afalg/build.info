@@ -8,6 +8,6 @@ IF[{- !$disabled{afalg} -}]
   ENGINES=afalg
   SOURCE[afalg]=e_afalg.c e_afalg_err.c
   DEPEND[afalg]=../../libcrypto
-  INCLUDE[afalg]= {- rel2abs(catdir($builddir,"../include")) -} ../../include
+  INCLUDE[afalg]= {- rel2abs(catdir($builddir,"../../include")) -} ../../include
  ENDIF
 ENDIF
