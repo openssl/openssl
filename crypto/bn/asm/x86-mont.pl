@@ -30,6 +30,9 @@ $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
 push(@INC,"${dir}","${dir}../../perlasm");
 require "x86asm.pl";
 
+$output = pop;
+open STDOUT,">$output";
+ 
 &asm_init($ARGV[0],$0);
 
 $sse2=0;
@@ -606,3 +609,5 @@ $sbit=$num;
 &asciz("Montgomery Multiplication for x86, CRYPTOGAMS by <appro\@openssl.org>");
 
 &asm_finish();
+
+close STDOUT;

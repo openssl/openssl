@@ -18,6 +18,9 @@
 # ~100-230% faster than gcc-generated code and ~35-90% faster than
 # the pure SPARCv9 code path.
 
+$output = pop;
+open STDOUT,">$output";
+
 $locals=16*8;
 
 $tab="%l0";
