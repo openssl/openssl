@@ -1517,8 +1517,11 @@ int s_server_main(int argc, char *argv[])
         case OPT_SPLIT_SEND_FRAG:
             split_send_fragment = atoi(opt_arg());
             if (split_send_fragment == 0) {
-                /* Not allowed - set to a deliberately bad value */
-                split_send_fragment = -1;
+                /*
+                 * Not allowed - set to a deliberately bad value so we get an
+                 * error message below
+                 */
+                split_send_fragment = SSL3_RT_MAX_PLAIN_LENGTH + 1;
             }
             break;
         case OPT_MAX_PIPELINES:
