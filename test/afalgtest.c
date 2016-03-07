@@ -58,6 +58,10 @@
 #include <string.h>
 
 #ifndef OPENSSL_NO_AFALGENG
+
+/* Use a buffer size which is not aligned to block size */
+#define BUFFER_SIZE     (8 * 1024) - 13
+
 static int test_afalg_aes_128_cbc(ENGINE *e)
 {
     EVP_CIPHER_CTX *ctx;
@@ -66,11 +70,10 @@ static int test_afalg_aes_128_cbc(ENGINE *e)
                            \x1D\x83\x27\xDE\xB8\x82\xCF\x99";
     unsigned char iv[] = "\x2B\x95\x99\x0A\x91\x51\x37\x4A\
                           \xBD\x8F\xF8\xC5\xA7\xA0\xFE\x08";
-    /* Use a buffer which is not aligned to block size */
-    const int bufsz = (8 * 1024) - 13;
-    unsigned char in[bufsz];
-    unsigned char ebuf[bufsz + 32];
-    unsigned char dbuf[bufsz + 32];
+
+    unsigned char in[BUFFER_SIZE];
+    unsigned char ebuf[BUFFER_SIZE + 32];
+    unsigned char dbuf[BUFFER_SIZE + 32];
     int encl, encf, decl, decf;
     unsigned int status = 0;
 
@@ -80,10 +83,10 @@ static int test_afalg_aes_128_cbc(ENGINE *e)
         return 0;
     }
     EVP_CIPHER_CTX_init(ctx);
-    RAND_bytes(in, bufsz);
+    RAND_bytes(in, BUFFER_SIZE);
 
     if (       !EVP_CipherInit_ex(ctx, cipher, e, key, iv, 1)
-            || !EVP_CipherUpdate(ctx, ebuf, &encl, in, bufsz)
+            || !EVP_CipherUpdate(ctx, ebuf, &encl, in, BUFFER_SIZE)
             || !EVP_CipherFinal_ex(ctx, ebuf+encl, &encf)) {
         fprintf(stderr, "%s() failed encryption\n", __func__);
         goto end;
@@ -99,8 +102,8 @@ static int test_afalg_aes_128_cbc(ENGINE *e)
     }
     decl += decf;
 
-    if (       decl != bufsz
-            || memcmp(dbuf, in, bufsz)) {
+    if (       decl != BUFFER_SIZE
+            || memcmp(dbuf, in, BUFFER_SIZE)) {
         fprintf(stderr, "%s() failed Dec(Enc(P)) != P\n", __func__);
         goto end;
     }
