@@ -6,6 +6,9 @@ require "x86asm.pl";
 
 require "uplink-common.pl";
 
+$output = pop;
+open STDOUT,">$output";
+
 &asm_init($ARGV[0],"uplink-x86");
 
 &external_label("OPENSSL_Uplink");
@@ -31,3 +34,5 @@ for ($i=1;$i<=$N;$i++) {
 &data_word(&label("_\$lazy${i}"));
 }
 &asm_finish();
+
+close OUTPUT;
