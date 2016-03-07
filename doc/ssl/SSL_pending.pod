@@ -36,7 +36,7 @@ SSL_has_pending() returns 1 if B<s> has buffered data (whether processed or
 unprocessed) and 0 otherwise. Note that it is possible for SSL_has_pending() to
 return 1, and then a subsequent call to SSL_read() to return no data because the
 unprocessed buffered data when processed yielded no application data (for
-example this can happend during renegotiation). It is also possible in this
+example this can happen during renegotiation). It is also possible in this
 scenario for SSL_has_pending() to continue to return 1 even after an SSL_read()
 call because the buffered and unprocessed data is not yet processable (e.g.
 because OpenSSL has only received a partial record so far).
