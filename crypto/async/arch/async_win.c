@@ -58,6 +58,11 @@
 # include <windows.h>
 # include "internal/cryptlib.h"
 
+int ASYNC_is_capable(void)
+{
+    return 1;
+}
+
 void async_local_cleanup(void)
 {
     async_ctx *ctx = async_get_ctx();

@@ -4,8 +4,8 @@
 
 ASYNC_init_thread, ASYNC_cleanup_thread, ASYNC_start_job, ASYNC_pause_job,
 ASYNC_in_job, ASYNC_get_wait_fd, ASYNC_set_wait_fd, ASYNC_clear_wait_fd,
-ASYNC_get_current_job, ASYNC_block_pause, ASYNC_unblock_pause - asynchronous job
-management functions
+ASYNC_get_current_job, ASYNC_block_pause, ASYNC_unblock_pause, ASYNC_is_capable
+- asynchronous job management functions
 
 =head1 SYNOPSIS
 
@@ -22,6 +22,8 @@ management functions
  ASYNC_WAIT_CTX *ASYNC_get_wait_ctx(ASYNC_JOB *job);
  void ASYNC_block_pause(void);
  void ASYNC_unblock_pause(void);
+
+ int ASYNC_is_capable(void);
 
 =head1 DESCRIPTION
 
@@ -137,6 +139,9 @@ ASYNC_block_pause() immediately after aquiring the lock and
 ASYNC_unblock_pause() immediately before releasing it then this situation cannot
 occur.
 
+Some platforms cannot support async operations. The ASYNC_is_capable() function
+can be used to detect whether the current platform is async capable or not.
+
 =head1 RETURN VALUES
 
 ASYNC_init_thread returns 1 on success or 0 otherwise.
@@ -152,6 +157,9 @@ ASYNC_get_current_job returns a pointer to the currently executing ASYNC_JOB or
 NULL if not within the context of a job.
 
 ASYNC_get_wait_ctx() returns a pointer to the ASYNC_WAIT_CTX for the job.
+
+ASYNC_is_capable() returns 1 if the current platform is async capable or 0
+otherwise.
 
 =head1 EXAMPLE
 
@@ -295,8 +303,9 @@ L<crypto(3)>, L<ERR_print_errors(3)>
 
 =head1 HISTORY
 
-ASYNC_init, ASYNC_init_thread, ASYNC_cleanup, ASYNC_cleanup_thread,
-ASYNC_start_job, ASYNC_pause_job, ASYNC_get_wait_fd, ASYNC_get_current_job,
-ASYNC_wake, ASYNC_clear_wake were first added to OpenSSL 1.1.0.
+ASYNC_init_thread, ASYNC_cleanup_thread,
+ASYNC_start_job, ASYNC_pause_job, ASYNC_get_current_job, ASYNC_get_wait_ctx(),
+ASYNC_block_pause(), ASYNC_unblock_pause() and ASYNC_is_capable() were first
+added to OpenSSL 1.1.0.
 
 =cut

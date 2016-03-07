@@ -60,10 +60,14 @@
 
 #define STACKSIZE       32768
 
+int ASYNC_is_capable(void)
+{
+    return 1;
+}
+
 void async_local_cleanup(void)
 {
 }
-
 
 int async_fibre_makecontext(async_fibre *fibre)
 {

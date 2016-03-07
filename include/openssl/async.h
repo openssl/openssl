@@ -96,6 +96,8 @@ int ASYNC_WAIT_CTX_get_changed_fds(ASYNC_WAIT_CTX *ctx, OSSL_ASYNC_FD *addfd,
                                    size_t *numdelfds);
 int ASYNC_WAIT_CTX_clear_fd(ASYNC_WAIT_CTX *ctx, const void *key);
 
+int ASYNC_is_capable(void);
+
 int ASYNC_start_job(ASYNC_JOB **job, ASYNC_WAIT_CTX *ctx, int *ret,
                     int (*func)(void *), void *args, size_t size);
 int ASYNC_pause_job(void);

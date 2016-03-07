@@ -99,24 +99,6 @@
 # include <windows.h>
 #endif
 
-#if defined(OPENSSL_SYS_UNIX) && defined(OPENSSL_THREADS)
-# include <unistd.h>
-#endif
-
-#if !defined(OPENSSL_NO_ASYNC)
-# if defined(OPENSSL_SYS_UNIX) && defined(OPENSSL_THREADS)
-#  if _POSIX_VERSION >= 200112L
-#   define ASYNC_POSIX
-#  endif
-# elif defined(_WIN32) || defined(__CYGWIN__)
-#  define ASYNC_WIN
-# endif
-#endif
-
-#if !defined(ASYNC_POSIX) && !defined(ASYNC_WIN)
-# define ASYNC_NULL
-#endif
-
 #include <openssl/bn.h>
 #ifndef OPENSSL_NO_DES
 # include <openssl/des.h>
@@ -458,7 +440,7 @@ OPTIONS speed_options[] = {
 #ifndef NO_FORK
     {"multi", OPT_MULTI, 'p', "Run benchmarks in parallel"},
 #endif
-#ifndef ASYNC_NULL
+#ifndef OPENSSL_NO_ASYNC
     {"async_jobs", OPT_ASYNCJOBS, 'p', "Enable async mode and start pnum jobs"},
 #endif
 #ifndef OPENSSL_NO_ENGINE
@@ -1136,7 +1118,7 @@ static int run_benchmark(int async_jobs, int (*loop_function)(void *), loopargs_
     int i = 0;
     OSSL_ASYNC_FD job_fd = 0;
     size_t num_job_fds = 0;
-#if defined(ASYNC_POSIX)
+#if defined(OPENSSL_SYS_UNIX)
     fd_set waitfdset;
     OSSL_ASYNC_FD max_fd = 0;
 #endif
@@ -1171,7 +1153,7 @@ static int run_benchmark(int async_jobs, int (*loop_function)(void *), loopargs_
         }
     }
 
-#if defined(ASYNC_POSIX)
+#if defined(OPENSSL_SYS_UNIX)
     FD_ZERO(&waitfdset);
 
     /* Add to the wait set all the fds that are already in the WAIT_CTX
@@ -1197,7 +1179,7 @@ static int run_benchmark(int async_jobs, int (*loop_function)(void *), loopargs_
 #endif
 
     while (num_inprogress > 0) {
-#if defined(ASYNC_POSIX)
+#if defined(OPENSSL_SYS_UNIX)
         int select_result = 0;
         struct timeval select_timeout;
         select_timeout.tv_sec = 0;
@@ -1252,7 +1234,7 @@ static int run_benchmark(int async_jobs, int (*loop_function)(void *), loopargs_
         if (select_result == 0)
             continue;
 
-#elif defined(ASYNC_WIN)
+#elif defined(OPENSSL_SYS_WINDOWS)
         DWORD avail = 0;
 #endif
 
@@ -1269,10 +1251,10 @@ static int run_benchmark(int async_jobs, int (*loop_function)(void *), loopargs_
             }
             ASYNC_WAIT_CTX_get_all_fds(loopargs[i].wait_ctx, &job_fd, &num_job_fds);
 
-#if defined(ASYNC_POSIX)
+#if defined(OPENSSL_SYS_UNIX)
             if (num_job_fds == 1 && !FD_ISSET(job_fd, &waitfdset))
                 continue;
-#elif defined(ASYNC_WIN)
+#elif defined(OPENSSL_SYS_WINDOWS)
             if (num_job_fds == 1 &&
                     !PeekNamedPipe(job_fd, NULL, 0, NULL, &avail, NULL) && avail > 0)
                 continue;
@@ -1290,7 +1272,7 @@ static int run_benchmark(int async_jobs, int (*loop_function)(void *), loopargs_
                         total_op_count += job_op_count;
                     }
                     --num_inprogress;
-#if defined(ASYNC_POSIX)
+#if defined(OPENSSL_SYS_UNIX)
                     FD_CLR(job_fd, &waitfdset);
 #endif
                     loopargs[i].inprogress_job = NULL;
@@ -1520,8 +1502,14 @@ int speed_main(int argc, char **argv)
 #endif
             break;
         case OPT_ASYNCJOBS:
-#ifndef ASYNC_NULL
+#ifndef OPENSSL_NO_ASYNC
             async_jobs = atoi(opt_arg());
+            if (!ASYNC_is_capable()) {
+                BIO_printf(bio_err,
+                           "%s: async_jobs specified but async not supported\n",
+                           prog);
+                goto opterr;
+            }
 #endif
             break;
         case OPT_MISALIGN:
