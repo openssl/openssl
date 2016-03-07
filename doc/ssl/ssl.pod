@@ -271,7 +271,7 @@ protocol context defined in the B<SSL_CTX> structure.
 
 =item SSL_CTX *B<SSL_CTX_new>(const SSL_METHOD *meth);
 
-=item void SSL_CTX_up_ref(SSL_CTX *ctx);
+=item int SSL_CTX_up_ref(SSL_CTX *ctx);
 
 =item int B<SSL_CTX_remove_session>(SSL_CTX *ctx, SSL_SESSION *c);
 
@@ -599,7 +599,7 @@ fresh handle for each connection.
 
 =item SSL *B<SSL_new>(SSL_CTX *ctx);
 
-=item void SSL_up_ref(SSL *s);
+=item int SSL_up_ref(SSL *s);
 
 =item long B<SSL_num_renegotiations>(SSL *ssl);
 

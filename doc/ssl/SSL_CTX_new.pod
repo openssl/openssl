@@ -17,7 +17,7 @@ functions
  #include <openssl/ssl.h>
 
  SSL_CTX *SSL_CTX_new(const SSL_METHOD *method);
- void SSL_CTX_up_ref(SSL_CTX *ctx);
+ int SSL_CTX_up_ref(SSL_CTX *ctx);
 
  const SSL_METHOD *TLS_method(void);
  const SSL_METHOD *TLS_server_method(void);
@@ -183,6 +183,8 @@ the reason.
 =item Pointer to an SSL_CTX object
 
 The return value points to an allocated SSL_CTX object.
+
+SSL_CTX_up_ref() returns 1 for success and 0 for failure.
 
 =back
 

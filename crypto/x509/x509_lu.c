@@ -417,18 +417,17 @@ int X509_STORE_add_crl(X509_STORE *ctx, X509_CRL *x)
     return ret;
 }
 
-void X509_OBJECT_up_ref_count(X509_OBJECT *a)
+int X509_OBJECT_up_ref_count(X509_OBJECT *a)
 {
     switch (a->type) {
     default:
         break;
     case X509_LU_X509:
-        X509_up_ref(a->data.x509);
-        break;
+        return X509_up_ref(a->data.x509);
     case X509_LU_CRL:
-        X509_CRL_up_ref(a->data.crl);
-        break;
+        return X509_CRL_up_ref(a->data.crl);
     }
+    return 1;
 }
 
 X509 *X509_OBJECT_get0_X509(X509_OBJECT *a)

@@ -674,7 +674,7 @@ int X509_set_notBefore(X509 *x, const ASN1_TIME *tm);
 ASN1_TIME *X509_get_notAfter(X509 *x);
 int X509_set_notAfter(X509 *x, const ASN1_TIME *tm);
 int X509_set_pubkey(X509 *x, EVP_PKEY *pkey);
-void X509_up_ref(X509 *x);
+int X509_up_ref(X509 *x);
 int X509_get_signature_type(const X509 *x);
 /*
  * This one is only used so that a binary form can output, as in
@@ -731,7 +731,7 @@ int X509_CRL_set_issuer_name(X509_CRL *x, X509_NAME *name);
 int X509_CRL_set_lastUpdate(X509_CRL *x, const ASN1_TIME *tm);
 int X509_CRL_set_nextUpdate(X509_CRL *x, const ASN1_TIME *tm);
 int X509_CRL_sort(X509_CRL *crl);
-void X509_CRL_up_ref(X509_CRL *crl);
+int X509_CRL_up_ref(X509_CRL *crl);
 
 long X509_CRL_get_version(X509_CRL *crl);
 ASN1_TIME *X509_CRL_get_lastUpdate(X509_CRL *crl);

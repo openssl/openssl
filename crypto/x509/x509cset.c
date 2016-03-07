@@ -132,10 +132,16 @@ int X509_CRL_sort(X509_CRL *c)
     return 1;
 }
 
-void X509_CRL_up_ref(X509_CRL *crl)
+int X509_CRL_up_ref(X509_CRL *crl)
 {
     int i;
-    CRYPTO_atomic_add(&crl->references, 1, &i, crl->lock);
+
+    if (CRYPTO_atomic_add(&crl->references, 1, &i, crl->lock) <= 0)
+        return 0;
+
+    REF_PRINT_COUNT("X509_CRL", crl);
+    REF_ASSERT_ISNT(i < 2);
+    return ((i > 1) ? 1 : 0);
 }
 
 long X509_CRL_get_version(X509_CRL *crl)

@@ -2,7 +2,15 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 1.0.2g and 1.1.0  [xx XXX xxxx]
+ Changes between 1.0.2h and 1.1.0  [xx XXX 2016]
+
+  *) Unify TYPE_up_ref(obj) methods signature.
+     SSL_CTX_up_ref(), SSL_up_ref(), X509_up_ref(), EVP_PKEY_up_ref(),
+     X509_CRL_up_ref(), X509_OBJECT_up_ref_count() methods are now returning an
+     int (instead of void) like all others TYPE_up_ref() methods.
+     So now these methods also check the return value of CRYPTO_atomic_add(),
+     and the validity of object reference counter.
+     [fdasilvayy@gmail.com]
 
   *) With Windows Visual Studio builds, the .pdb files are installed
      alongside the installed libraries and executables.  For a static
