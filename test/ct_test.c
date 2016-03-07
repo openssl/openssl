@@ -493,7 +493,7 @@ static int test_encode_tls_sct()
     SETUP_CT_TEST_FIXTURE();
 
     SCT *sct = SCT_new();
-    if (!SCT_set_version(sct, 0)) {
+    if (!SCT_set_version(sct, SCT_VERSION_V1)) {
         fprintf(stderr, "Failed to set SCT version\n");
         return 1;
     }
