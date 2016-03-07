@@ -1669,7 +1669,7 @@ int s_client_main(int argc, char **argv)
         goto end;
     }
 
-    if (ctx_set_ctlog_list_file(ctx, ctlog_file) <= 0) {
+    if (!ctx_set_ctlog_list_file(ctx, ctlog_file)) {
         ERR_print_errors(bio_err);
         goto end;
     }
