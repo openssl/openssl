@@ -4029,7 +4029,7 @@ ct_validation_cb SSL_CTX_get_ct_validation_callback(const SSL_CTX *ctx)
     return ctx->ct_validation_callback;
 }
 
-int SSL_validate_ct(SSL *s)
+int ssl_validate_ct(SSL *s)
 {
     int ret = 0;
     X509 *cert = SSL_get_peer_certificate(s);

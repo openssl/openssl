@@ -2072,7 +2072,7 @@ int tls1_check_chain(SSL *s, X509 *x, EVP_PKEY *pk, STACK_OF(X509) *chain,
 void tls1_set_cert_validity(SSL *s);
 
 #ifndef OPENSSL_NO_CT
-__owur int SSL_validate_ct(SSL *s);
+__owur int ssl_validate_ct(SSL *s);
 #endif
 
 #  ifndef OPENSSL_NO_DH
