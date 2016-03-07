@@ -2060,7 +2060,7 @@ MSG_PROCESS_RETURN tls_process_server_done(SSL *s, PACKET *pkt)
 
 #ifndef OPENSSL_NO_CT
     if (s->ct_validation_callback != NULL) {
-        if (!SSL_validate_ct(s)) {
+        if (!ssl_validate_ct(s)) {
             ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_HANDSHAKE_FAILURE);
             return MSG_PROCESS_ERROR;
         }
