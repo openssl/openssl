@@ -338,7 +338,8 @@ static void dummy_pause_job(void) {
 #if defined(ASYNC_WIN)
     WriteFile(pipefds[1], &buf, 1, &numwritten, NULL);
 #elif defined(ASYNC_POSIX)
-    write(pipefds[1], &buf, 1);
+    if (write(pipefds[1], &buf, 1) < 0)
+        return;
 #endif
 
     /* Ignore errors - we carry on anyway */
@@ -348,7 +349,8 @@ static void dummy_pause_job(void) {
 #if defined(ASYNC_WIN)
     ReadFile(pipefds[0], &buf, 1, &numread, NULL);
 #elif defined(ASYNC_POSIX)
-    read(pipefds[0], &buf, 1);
+    if (read(pipefds[0], &buf, 1) < 0)
+        return;
 #endif
 }
 
