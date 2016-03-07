@@ -347,15 +347,13 @@ void SCT_LIST_print(const STACK_OF(SCT) *sct_list, BIO *out, int indent,
 
 /*
  * Verifies an SCT with the given context.
- * Returns 1 if the SCT verifies successfully, 0 if it cannot be verified and a
- * negative integer if an error occurs.
+ * Returns 1 if the SCT verifies successfully, 0 otherwise.
  */
 __owur int SCT_verify(const SCT_CTX *sctx, const SCT *sct);
 
 /*
  * Verifies an SCT against the provided data.
- * Returns 1 if the SCT verifies successfully, 0 if it cannot be verified and a
- * negative integer if an error occurs.
+ * Returns 1 if the SCT verifies successfully, 0 otherwise.
  */
 __owur int SCT_verify_v1(SCT *sct, X509 *cert, X509 *preissuer,
                   X509_PUBKEY *log_pubkey, X509 *issuer_cert);
