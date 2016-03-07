@@ -69,7 +69,7 @@ static void SCT_signature_algorithms_print(const SCT *sct, BIO *out)
 {
     int nid = SCT_get_signature_nid(sct);
 
-    if (nid <= 0)
+    if (nid == NID_undef)
         BIO_printf(out, "%02X%02X", sct->hash_alg, sct->sig_alg);
     else
         BIO_printf(out, "%s", OBJ_nid2ln(nid));
