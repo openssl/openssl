@@ -9,7 +9,7 @@ SSL_new, SSL_up_ref - create a new SSL structure for a connection
  #include <openssl/ssl.h>
 
  SSL *SSL_new(SSL_CTX *ctx);
- void SSL_up_ref(SSL *s);
+ int SSL_up_ref(SSL *s);
 
 =head1 DESCRIPTION
 
@@ -37,6 +37,8 @@ find out the reason.
 =item Pointer to an SSL structure
 
 The return value points to an allocated SSL structure.
+
+SSL_up_ref() returns 1 for success and 0 for failure.
 
 =back
 
