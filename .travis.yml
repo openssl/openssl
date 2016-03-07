@@ -14,33 +14,23 @@ addons:
 
 os:
     - linux
+    - osx
 
 compiler:
-    - clang-3.6
+    - clang
     - gcc
-    - gcc-5
 
 env:
     - CONFIG_OPTS="shared"
     - CONFIG_OPTS="--debug --strict-warnings enable-crypto-mdebug enable-rc5 enable-md2"
+    - CONFIG_OPTS="" BUILDONLY="yes"
+    - CONFIG_OPTS="--unified" BUILDONLY="yes"
+    - CONFIG_OPTS="--unified shared" BUILDONLY="yes"
+    - CONFIG_OPTS="no-pic" BUILDONLY="yes"
+    - CONFIG_OPTS="no-engine" BUILDONLY="yes"
 
 matrix:
     include:
-        - os: linux
-          compiler: gcc
-          env: CONFIG_OPTS="" BUILDONLY="yes"
-        - os: linux
-          compiler: gcc
-          env: CONFIG_OPTS="--unified" BUILDONLY="yes"
-        - os: linux
-          compiler: gcc
-          env: CONFIG_OPTS="--unified shared" BUILDONLY="yes"
-        - os: linux
-          compiler: gcc
-          env: CONFIG_OPTS="no-pic" BUILDONLY="yes"
-        - os: linux
-          compiler: gcc
-          env: CONFIG_OPTS="no-engine" BUILDONLY="yes"
         - os: linux
           compiler: clang-3.6
           env: CONFIG_OPTS="-fsanitize=address"
@@ -59,21 +49,11 @@ matrix:
         - os: linux
           compiler: x86_64-w64-mingw32-gcc
           env: CONFIG_OPTS="no-pic"
-        - os: osx
+    exclude:
+        - os: linux
           compiler: clang
-          env: CONFIG_OPTS="shared"
         - os: osx
-          compiler: clang
-          env: CONFIG_OPTS="--debug --strict-warnings enable-crypto-mdebug enable-rc5 enable-md2"
-        - os: osx
-          compiler: clang
-          env: CONFIG_OPTS="" BUILDONLY="yes"
-        - os: osx
-          compiler: clang
-          env: CONFIG_OPTS="--unified" BUILDONLY="yes"
-        - os: osx
-          compiler: clang
-          env: CONFIG_OPTS="--unified shared" BUILDONLY="yes"
+          compiler: gcc
 
 before_script:
     - sh .travis-create-release.sh $TRAVIS_OS_NAME
