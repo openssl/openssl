@@ -3931,7 +3931,7 @@ err:
 static int ct_extract_x509v3_extension_scts(SSL *s)
 {
     int scts_extracted = 0;
-    X509 *cert = SSL_get_peer_certificate(s);
+    X509 *cert = s->session != NULL ? s->session->peer : NULL;
 
     if (cert != NULL) {
         STACK_OF(SCT) *scts =
@@ -4028,10 +4028,10 @@ ct_validation_cb SSL_CTX_get_ct_validation_callback(const SSL_CTX *ctx)
     return ctx->ct_validation_callback;
 }
 
-int SSL_validate_ct(SSL *s)
+int ssl_validate_ct(SSL *s)
 {
     int ret = 0;
-    X509 *cert = SSL_get_peer_certificate(s);
+    X509 *cert = s->session != NULL ? s->session->peer : NULL;
     X509 *issuer = NULL;
     CT_POLICY_EVAL_CTX *ctx = NULL;
     const STACK_OF(SCT) *scts;
