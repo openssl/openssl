@@ -62,7 +62,9 @@ before_script:
           srcdir=../_srcdist;
           mkdir $BUILDDIR;
           cd $BUILDDIR;
-          CC="ccache $CC";
+          if which ccache >/dev/null; then
+              CC="ccache $CC";
+          fi
       else
           srcdir=.;
           cd _srcdist;
