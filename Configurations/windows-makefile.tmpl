@@ -167,6 +167,34 @@ configdata.pm: {- $config{build_file_template} -} $(SRCDIR)\Configure
      return map { shlib_import($_) } @_;
  }
 
+  sub generatesrc {
+      my %args = @_;
+      (my $src = $args{src}) =~ s/\.[sS]$/.asm/;
+      my $generator = join(" ", @{$args{generator}});
+
+      if ($src !~ /\.asm$/) {
+          return <<"EOF";
+$args{src}: $args{generator}->[0]
+	\$(PERL) $generator > \$@
+EOF
+      } else {
+          if ($args{generator}->[0] =~ /\.S$/) {
+              return <<"EOF";
+$args{src}: $args{generator}->[0]
+	\$(CC) \$(CFLAGS) -E \$< > \$@
+EOF
+          } elsif ($args{generator}->[0] =~ /\.pl$/) {
+              return <<"EOF";
+$args{src}: $args{generator}->[0]
+	set ASM=\$(AS)
+	\$(PERL) $generator \$@
+EOF
+          } else {
+              die "Generator type for $src unknown: $generator\n";
+          }
+      }
+  }
+
  sub src2obj {
      my %args = @_;
      my $obj = $args{obj};
