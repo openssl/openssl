@@ -460,7 +460,10 @@ extern int kbhit(void);
 # endif
 
 # ifdef USE_SOCKETS
-#  ifdef OPENSSL_NO_SOCK
+#  if defined(WINDOWS) || defined(MSDOS)
+      /* windows world */
+
+#   ifdef OPENSSL_NO_SOCK
 #    define OpenSSL_Write(a,b,c)       (-1)
 #    define OpenSSL_Read(a,b,c)        (-1)
 #   elif !defined(__DJGPP__)
