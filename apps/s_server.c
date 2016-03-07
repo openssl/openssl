@@ -2611,6 +2611,7 @@ static int init_ssl_connection(SSL *con)
         X509_NAME_oneline(X509_get_issuer_name(peer), buf, sizeof buf);
         BIO_printf(bio_s_out, "issuer=%s\n", buf);
         X509_free(peer);
+        peer = NULL;
     }
 
     if (SSL_get_shared_ciphers(con, buf, sizeof buf) != NULL)
@@ -2801,7 +2802,7 @@ static int www_body(int s, int stype, unsigned char *context)
         if (((www == 1) && (strncmp("GET ", buf, 4) == 0)) ||
             ((www == 2) && (strncmp("GET /stats ", buf, 11) == 0))) {
             char *p;
-            X509 *peer;
+            X509 *peer = NULL;
             STACK_OF(SSL_CIPHER) *sk;
             static const char *space = "                          ";
 
@@ -2830,7 +2831,7 @@ static int www_body(int s, int stype, unsigned char *context)
                     goto err;
                 }
                 /*
-                 * We're not acutally expecting any data here and we ignore
+                 * We're not actually expecting any data here and we ignore
                  * any that is sent. This is just to force the handshake that
                  * we're expecting to come from the client. If they haven't
                  * sent one there's not much we can do.
@@ -2842,7 +2843,7 @@ static int www_body(int s, int stype, unsigned char *context)
                      "HTTP/1.0 200 ok\r\nContent-type: text/html\r\n\r\n");
             BIO_puts(io, "<HTML><BODY BGCOLOR=\"#ffffff\">\n");
             BIO_puts(io, "<pre>\n");
-/*                      BIO_puts(io,OpenSSL_version(OPENSSL_VERSION));*/
+            /* BIO_puts(io, OpenSSL_version(OPENSSL_VERSION)); */
             BIO_puts(io, "\n");
             for (i = 0; i < local_argc; i++) {
                 const char *myp;
@@ -2921,6 +2922,8 @@ static int www_body(int s, int stype, unsigned char *context)
                 BIO_printf(io, "Client certificate\n");
                 X509_print(io, peer);
                 PEM_write_bio_X509(io, peer);
+                X509_free(peer);
+                peer = NULL;
             } else
                 BIO_puts(io, "no client certificate available\n");
             BIO_puts(io, "</BODY></HTML>\r\n\r\n");
