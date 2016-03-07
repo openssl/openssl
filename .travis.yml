@@ -5,6 +5,9 @@ addons:
         packages:
             - clang-3.6
             - gcc-5
+            - binutils-mingw-w64
+            - gcc-mingw-w64
+            - wine
         sources:
             - llvm-toolchain-precise-3.6
             - ubuntu-toolchain-r-test
@@ -45,6 +48,12 @@ matrix:
         - os: linux
           compiler: clang
           env: CONFIG_OPTS="no-engine" BUILDONLY="yes"
+        - os: linux
+          compiler: i686-w64-mingw32-gcc
+          env: CONFIG_OPTS="no-pic"
+        - os: linux
+          compiler: x86_64-w64-mingw32-gcc
+          env: CONFIG_OPTS="no-pic"
     exclude:
         - os: osx
           compiler: clang-3.6
@@ -72,6 +81,9 @@ script:
     - cd _srcdist
     - make
     - if [ -z "$BUILDONLY" ]; then
+          if [ -n "$CROSS_COMPILE" ]; then
+              export EXE_SHELL="wine" WINEPREFIX=`pwd`;
+          fi;
           HARNESS_VERBOSE=yes make test;
       fi
     - cd ..
