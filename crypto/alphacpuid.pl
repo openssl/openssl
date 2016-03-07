@@ -1,4 +1,8 @@
 #!/usr/bin/env perl
+
+$output = pop;
+open STDOUT,">$stdout";
+
 print <<'___';
 .text
 
@@ -214,3 +218,5 @@ OPENSSL_instrument_bus2:
 .end	OPENSSL_instrument_bus2
 ___
 }
+
+close STDOUT;
