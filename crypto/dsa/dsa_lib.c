@@ -273,3 +273,35 @@ DH *DSA_dup_DH(const DSA *r)
     return NULL;
 }
 #endif
+
+DSA *DSA_dup(const DSA *dsa)
+{
+    DSA *ret = DSA_new_method(dsa->engine);
+    if (ret == NULL)
+        goto err;
+
+    if (dsa->p != NULL && (ret->p = BN_dup(dsa->p)) == NULL)
+            goto err;
+    if (dsa->q != NULL && (ret->q = BN_dup(dsa->q)) == NULL)
+            goto err;
+    if (dsa->g != NULL && (ret->g = BN_dup(dsa->g)) == NULL)
+            goto err;
+    if (dsa->pub_key != NULL && (ret->pub_key = BN_dup(dsa->pub_key)) == NULL)
+            goto err;
+    if (dsa->priv_key != NULL && (ret->priv_key = BN_dup(dsa->priv_key)) == NULL)
+            goto err;
+    if (dsa->kinv != NULL && (ret->kinv = BN_dup(dsa->kinv)) == NULL)
+            goto err;
+    if (dsa->r != NULL && (ret->r = BN_dup(dsa->r)) == NULL)
+            goto err;
+
+    if (!CRYPTO_dup_ex_data(CRYPTO_EX_INDEX_DSA, &ret->ex_data, &dsa->ex_data))
+        goto err;
+
+    ret->flags = dsa->flags;
+    return ret;
+
+ err:
+    DSA_free(ret);
+    return NULL;
+}
