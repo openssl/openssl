@@ -129,7 +129,7 @@ static int afalg_chk_platform(void);
 static const char *engine_afalg_id = "afalg";
 static const char *engine_afalg_name = "AFLAG engine support";
 
-int afalg_cipher_nids[] = {
+static int afalg_cipher_nids[] = {
     NID_aes_128_cbc
 };
 
@@ -445,14 +445,11 @@ static int afalg_start_cipher_sk(afalg_ctx *actx, const unsigned char *in,
 # ifdef ALG_ZERO_COPY
     int ret;
 # endif
+    char cbuf[CMSG_SPACE(ALG_IV_LEN(ALG_AES_IV_LEN)) + CMSG_SPACE(ALG_OP_LEN)];
 
-    const ssize_t cbuf_sz = CMSG_SPACE(ALG_IV_LEN(ALG_AES_IV_LEN))
-        + CMSG_SPACE(ALG_OP_LEN);
-    char cbuf[cbuf_sz];
-
-    memset(cbuf, 0, cbuf_sz);
+    memset(cbuf, 0, sizeof(cbuf));
     msg.msg_control = cbuf;
-    msg.msg_controllen = cbuf_sz;
+    msg.msg_controllen = sizeof(cbuf);
 
     /*
      * cipher direction (i.e. encrypt or decrypt) and iv are sent to the
