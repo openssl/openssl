@@ -381,3 +381,6 @@ SSL_get_ct_validation_callback          380	1_1_0	EXIST::FUNCTION:CT
 SSL_get0_peer_scts                      381	1_1_0	EXIST::FUNCTION:CT
 SSL_CTX_set_ct_validation_callback      382	1_1_0	EXIST::FUNCTION:CT
 SSL_CTX_get_ct_validation_callback      383	1_1_0	EXIST::FUNCTION:CT
+SSL_CIPHER_get_auth_nid                 384	1_1_0	EXIST::FUNCTION:
+SSL_CIPHER_get_kx_nid                   385	1_1_0	EXIST::FUNCTION:
+SSL_CIPHER_is_aead                      386	1_1_0	EXIST::FUNCTION:
