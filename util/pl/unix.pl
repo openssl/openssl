@@ -96,7 +96,7 @@ sub platform_perlasm_compile_target
 		        {
 			return << "EOF";
 \$(TMP_D)/$p.s: $perl1{$p}/asm/$p.pl
-	\$(PERL) $perl1{$p}/asm/$p.pl \$(PERLASM_SCHEME) > \$@
+	\$(PERL) $perl1{$p}/asm/$p.pl \$(PERLASM_SCHEME) \$@
 EOF
 		        }
 	        }
@@ -104,7 +104,7 @@ EOF
 		{
 		return << 'EOF';
 $(TMP_D)/x86_64cpuid.s: crypto/x86_64cpuid.pl
-	$(PERL) crypto/x86_64cpuid.pl $(PERLASM_SCHEME) > $@
+	$(PERL) crypto/x86_64cpuid.pl $(PERLASM_SCHEME) $@
 EOF
 		}
 	elsif ($target eq '$(OBJ_D)/sha256-x86_64.o')
