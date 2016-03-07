@@ -10,6 +10,9 @@ $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
 push(@INC,"${dir}","${dir}../../perlasm");
 require "x86asm.pl";
 
+$output=pop;
+open STDOUT,">$output";
+
 &asm_init($ARGV[0],"crypt586.pl");
 
 $L="edi";
@@ -18,6 +21,8 @@ $R="esi";
 &external_label("DES_SPtrans");
 &fcrypt_body("fcrypt_body");
 &asm_finish();
+
+close STDOUT;
 
 sub fcrypt_body
 	{

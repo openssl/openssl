@@ -15,6 +15,9 @@ require "desboth.pl";
 # format.
 #
 
+$output=pop;
+open STDOUT,">$output";
+
 &asm_init($ARGV[0],"des-586.pl");
 
 $L="edi";
@@ -38,6 +41,8 @@ $small_footprint=1 if (grep(/\-DOPENSSL_SMALL_FOOTPRINT/,@ARGV));
 &DES_SPtrans();
 
 &asm_finish();
+
+close STDOUT;
 
 sub DES_encrypt_internal()
 	{
