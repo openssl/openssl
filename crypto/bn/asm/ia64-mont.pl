@@ -60,6 +60,8 @@
 # hereafter less for longer keys, while verify - by 74-13%.
 # DSA performance improves by 115-30%.
 
+$output=pop;
+
 if ($^O eq "hpux") {
     $ADDP="addp4";
     for (@ARGV) { $ADDP="add" if (/[\+DD|\-mlp]64/); }
@@ -846,6 +848,6 @@ copyright:
 stringz	"Montgomery multiplication for IA-64, CRYPTOGAMS by <appro\@openssl.org>"
 ___
 
-$output=shift and open STDOUT,">$output";
+open STDOUT,">$output" if $output;
 print $code;
 close STDOUT;

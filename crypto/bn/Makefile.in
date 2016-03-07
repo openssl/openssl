@@ -58,28 +58,28 @@ lib:	$(LIBOBJ)
 	@touch lib
 
 bn-586.s:	asm/bn-586.pl ../perlasm/x86asm.pl
-	$(PERL) asm/bn-586.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) > $@
+	$(PERL) asm/bn-586.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) $@
 co-586.s:	asm/co-586.pl ../perlasm/x86asm.pl
-	$(PERL) asm/co-586.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) > $@
+	$(PERL) asm/co-586.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) $@
 x86-mont.s:	asm/x86-mont.pl ../perlasm/x86asm.pl
-	$(PERL) asm/x86-mont.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) > $@
+	$(PERL) asm/x86-mont.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) $@
 x86-gf2m.s:	asm/x86-gf2m.pl ../perlasm/x86asm.pl
-	$(PERL) asm/x86-gf2m.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) > $@
+	$(PERL) asm/x86-gf2m.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) $@
 
 sparcv8.o:	asm/sparcv8.S
 	$(CC) $(CFLAGS) -c asm/sparcv8.S
 bn-sparcv9.o:	asm/sparcv8plus.S
 	$(CC) $(CFLAGS) -c -o $@ asm/sparcv8plus.S
 sparcv9a-mont.s:	asm/sparcv9a-mont.pl
-	$(PERL) asm/sparcv9a-mont.pl $(CFLAGS) > $@
+	$(PERL) asm/sparcv9a-mont.pl $(CFLAGS) $@
 sparcv9-mont.s:		asm/sparcv9-mont.pl
-	$(PERL) asm/sparcv9-mont.pl $(CFLAGS) > $@
+	$(PERL) asm/sparcv9-mont.pl $(CFLAGS) $@
 vis3-mont.s:		asm/vis3-mont.pl
-	$(PERL) asm/vis3-mont.pl $(CFLAGS) > $@
+	$(PERL) asm/vis3-mont.pl $(CFLAGS) $@
 sparct4-mont.S:	asm/sparct4-mont.pl
-	$(PERL) asm/sparct4-mont.pl $(CFLAGS) > $@
+	$(PERL) asm/sparct4-mont.pl $(CFLAGS) $@
 sparcv9-gf2m.S:	asm/sparcv9-gf2m.pl
-	$(PERL) asm/sparcv9-gf2m.pl $(CFLAGS) > $@
+	$(PERL) asm/sparcv9-gf2m.pl $(CFLAGS) $@
 
 bn-mips.s:	asm/mips.pl
 	$(PERL) asm/mips.pl $(PERLASM_SCHEME) $@
@@ -94,20 +94,20 @@ s390x-gf2m.s:	asm/s390x-gf2m.pl
 x86_64-gcc.o:	asm/x86_64-gcc.c
 	$(CC) $(CFLAGS) -c -o $@ asm/x86_64-gcc.c
 x86_64-mont.s:	asm/x86_64-mont.pl
-	$(PERL) asm/x86_64-mont.pl $(PERLASM_SCHEME) > $@
+	$(PERL) asm/x86_64-mont.pl $(PERLASM_SCHEME) $@
 x86_64-mont5.s:	asm/x86_64-mont5.pl
-	$(PERL) asm/x86_64-mont5.pl $(PERLASM_SCHEME) > $@
+	$(PERL) asm/x86_64-mont5.pl $(PERLASM_SCHEME) $@
 x86_64-gf2m.s:	asm/x86_64-gf2m.pl
-	$(PERL) asm/x86_64-gf2m.pl $(PERLASM_SCHEME) > $@
+	$(PERL) asm/x86_64-gf2m.pl $(PERLASM_SCHEME) $@
 rsaz-x86_64.s:	asm/rsaz-x86_64.pl
-	$(PERL) asm/rsaz-x86_64.pl $(PERLASM_SCHEME) > $@
+	$(PERL) asm/rsaz-x86_64.pl $(PERLASM_SCHEME) $@
 rsaz-avx2.s:	asm/rsaz-avx2.pl 
-	$(PERL) asm/rsaz-avx2.pl $(PERLASM_SCHEME) > $@
+	$(PERL) asm/rsaz-avx2.pl $(PERLASM_SCHEME) $@
 
 bn-ia64.s:	asm/ia64.S
-	$(CC) $(CFLAGS) -E asm/ia64.S > $@
+	$(CC) $(CFLAGS) -E asm/ia64.S $@
 ia64-mont.s:	asm/ia64-mont.pl
-	$(PERL) asm/ia64-mont.pl $@ $(CFLAGS)
+	$(PERL) asm/ia64-mont.pl $(CFLAGS) $@
 
 parisc-mont.s:	asm/parisc-mont.pl
 	$(PERL) asm/parisc-mont.pl $(PERLASM_SCHEME) $@
@@ -119,7 +119,7 @@ ppc64-mont.s:	asm/ppc64-mont.pl;$(PERL) asm/ppc64-mont.pl $(PERLASM_SCHEME) $@
 
 alpha-mont.s:	asm/alpha-mont.pl
 	(preproc=$$$$.$@.S; trap "rm $$preproc" INT; \
-	$(PERL) asm/alpha-mont.pl > $$preproc && \
+	$(PERL) asm/alpha-mont.pl $$preproc && \
 	$(CC) -E -P $$preproc > $@ && rm $$preproc)
 
 # GNU make "catch all"

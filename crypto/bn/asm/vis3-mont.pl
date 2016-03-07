@@ -18,6 +18,9 @@
 # for reference purposes, because T4 has dedicated Montgomery
 # multiplication and squaring *instructions* that deliver even more.
 
+$output = pop;
+open STDOUT,">$output";
+
 $bits=32;
 for (@ARGV)     { $bits=64 if (/\-m64/ || /\-xarch\=v9/); }
 if ($bits==64)  { $bias=2047; $frame=192; }
