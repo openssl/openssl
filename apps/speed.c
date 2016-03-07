@@ -1156,6 +1156,7 @@ static int run_benchmark(int async_jobs, int (*loop_function)(void *), loopargs_
         int select_result = 0;
         OSSL_ASYNC_FD max_fd = 0;
         fd_set waitfdset;
+
         FD_ZERO(&waitfdset);
 
         for (i = 0; i < async_jobs && num_inprogress > 0; i++) {
