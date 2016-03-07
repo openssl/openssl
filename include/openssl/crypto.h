@@ -205,8 +205,7 @@ extern "C" {
 # define CRYPTO_LOCK_COMP                38
 # define CRYPTO_LOCK_FIPS                39
 # define CRYPTO_LOCK_FIPS2               40
-# define CRYPTO_LOCK_INIT                41
-# define CRYPTO_NUM_LOCKS                42
+# define CRYPTO_NUM_LOCKS                41
 
 # define CRYPTO_LOCK             1
 # define CRYPTO_UNLOCK           2
