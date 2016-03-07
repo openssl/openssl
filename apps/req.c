@@ -198,7 +198,9 @@ int req_main(int argc, char **argv)
     char *extensions = NULL, *infile = NULL;
     char *outfile = NULL, *keyfile = NULL, *inrand = NULL;
     char *keyalgstr = NULL, *p, *prog, *passargin = NULL, *passargout = NULL;
-    char *passin = NULL, *passout = NULL, *req_exts = NULL, *subj = NULL;
+    char *passin = NULL, *passout = NULL;
+    char *nofree_passin = NULL, *nofree_passout = NULL;
+    char *req_exts = NULL, *subj = NULL;
     char *template = default_config_file, *keyout = NULL;
     const char *keyalg = NULL;
     OPTION_CHOICE o;
@@ -436,15 +438,17 @@ int req_main(int argc, char **argv)
         }
     }
 
-    if (!passin) {
-        passin = NCONF_get_string(req_conf, SECTION, "input_password");
-        if (!passin)
+    if (passin == NULL) {
+        passin = nofree_passin =
+            NCONF_get_string(req_conf, SECTION, "input_password");
+        if (passin == NULL)
             ERR_clear_error();
     }
 
-    if (!passout) {
-        passout = NCONF_get_string(req_conf, SECTION, "output_password");
-        if (!passout)
+    if (passout == NULL) {
+        passout = nofree_passout =
+            NCONF_get_string(req_conf, SECTION, "output_password");
+        if (passout == NULL)
             ERR_clear_error();
     }
 
@@ -862,8 +866,10 @@ int req_main(int argc, char **argv)
     X509_REQ_free(req);
     X509_free(x509ss);
     ASN1_INTEGER_free(serial);
-    OPENSSL_free(passin);
-    OPENSSL_free(passout);
+    if (passin != nofree_passin)
+        OPENSSL_free(passin);
+    if (passout != nofree_passout)
+        OPENSSL_free(passout);
     OBJ_cleanup();
     return (ret);
 }
