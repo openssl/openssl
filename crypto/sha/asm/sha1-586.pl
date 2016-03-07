@@ -113,6 +113,9 @@ $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
 push(@INC,"${dir}","${dir}../../perlasm");
 require "x86asm.pl";
 
+$output=pop;
+open STDOUT,">$output";
+
 &asm_init($ARGV[0],"sha1-586.pl",$ARGV[$#ARGV] eq "386");
 
 $xmm=$ymm=0;
@@ -1474,3 +1477,5 @@ sub Xtail_avx()
 &asciz("SHA1 block transform for x86, CRYPTOGAMS by <appro\@openssl.org>");
 
 &asm_finish();
+
+close STDOUT;
