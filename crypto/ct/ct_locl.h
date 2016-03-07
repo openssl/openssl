@@ -198,7 +198,7 @@ __owur int SCT_CTX_set1_issuer_pubkey(SCT_CTX *sctx, X509_PUBKEY *pubkey);
 __owur int SCT_CTX_set1_pubkey(SCT_CTX *sctx, X509_PUBKEY *pubkey);
 
 /*
- * Does this SCT have the minimum fields populated to be usuable?
+ * Does this SCT have the minimum fields populated to be usable?
  * Returns 1 if so, 0 otherwise.
  */
 __owur int SCT_is_complete(const SCT *sct);
