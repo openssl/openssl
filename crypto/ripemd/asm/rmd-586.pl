@@ -9,6 +9,9 @@ $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
 push(@INC,"${dir}","${dir}../../perlasm");
 require "x86asm.pl";
 
+$output=pop;
+open STDOUT,">$output";
+
 &asm_init($ARGV[0],$0);
 
 $A="ecx";
@@ -59,6 +62,8 @@ $KR3=0x7A6D76E9;
 
 &ripemd160_block("ripemd160_block_asm_data_order");
 &asm_finish();
+
+close STDOUT;
 
 sub Xv
 	{
