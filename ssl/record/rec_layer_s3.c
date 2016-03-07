@@ -450,9 +450,9 @@ int ssl3_write_bytes(SSL *s, int type, const void *buf_, int len)
 {
     const unsigned char *buf = buf_;
     int tot;
-    unsigned int n, nw;
+    unsigned int n, split_send_fragment, maxpipes;
 #if !defined(OPENSSL_NO_MULTIBLOCK) && EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK
-    unsigned int max_send_fragment, split_send_fragment, maxpipes;
+    unsigned int max_send_fragment, nw;
     unsigned int u_len = (unsigned int)len;
 #endif
     SSL3_BUFFER *wb = &s->rlayer.wbuf[0];
