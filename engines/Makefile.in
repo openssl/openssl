@@ -72,9 +72,9 @@ lib:	$(LIBOBJ) $(TESTLIBOBJ)
 	touch lib
 
 e_padlock-x86.s:	asm/e_padlock-x86.pl
-	$(PERL) asm/e_padlock-x86.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) > $@
+	$(PERL) asm/e_padlock-x86.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) $@
 e_padlock-x86_64.s:	asm/e_padlock-x86_64.pl
-	$(PERL) asm/e_padlock-x86_64.pl $(PERLASM_SCHEME) > $@
+	$(PERL) asm/e_padlock-x86_64.pl $(PERLASM_SCHEME) $@
 
 subdirs:
 	@target=all; $(RECURSIVE_MAKE)
