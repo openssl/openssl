@@ -3941,6 +3941,7 @@ static int ct_extract_x509v3_extension_scts(SSL *s)
             ct_move_scts(&s->scts, scts, SCT_SOURCE_X509V3_EXTENSION);
 
         SCT_LIST_free(scts);
+        X509_free(cert);
     }
 
     return scts_extracted;
@@ -4071,6 +4072,7 @@ int SSL_validate_ct(SSL *s)
 
 end:
     CT_POLICY_EVAL_CTX_free(ctx);
+    X509_free(cert);
     return ret;
 }
 
