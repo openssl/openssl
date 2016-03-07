@@ -129,6 +129,7 @@ ENGINESDIR={- $osslprefix -}ENGINES:
 
 CC= {- $target{cc} -}
 CFLAGS= /DEFINE=({- join(",", @{$target{defines}}, @{$config{defines}},"OPENSSLDIR=\"\"\"\$(OPENSSLDIR)\"\"\"","ENGINESDIR=\"\"\"\$(ENGINESDIR)\"\"\"") -}) {- $target{cflags} -} {- $config{cflags} -}
+CFLAGS_Q=$(CFLAGS)
 DEPFLAG= /DEFINE=({- join(",", @{$config{depdefines}}) -})
 LDFLAGS= {- $target{lflags} -}
 EX_LIBS= {- $target{ex_libs} ? ",".$target{ex_libs} : "" -}{- $config{ex_libs} ? ",".$config{ex_libs} : "" -}
