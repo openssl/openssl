@@ -363,8 +363,22 @@ include paths the build of their source files should use:
 
     INCLUDE[foo]=include
 
-It's possible to have raw build file lines, between BEGINRAW and
-ENDRAW lines as follows:
+In some cases, one might want to generate some source files from
+others, that's done as follows:
+
+    GENERATE[foo.s]=asm/something.pl $(CFLAGS)
+    GENERATE[bar.s]=asm/bar.S
+
+The value of each GENERATE line is a command line or part of it.
+Configure places no rules on the command line, except the the first
+item muct be the generator file.  It is, however, entirely up to the
+build file template to define exactly how those command lines should
+be handled, how the output is captured and so on.
+
+NOTE: GENERATE lines are limited to one command only per GENERATE.
+
+As a last resort, it's possible to have raw build file lines, between
+BEGINRAW and ENDRAW lines as follows:
 
     BEGINRAW[Makefile(unix)]
     haha.h: {- $builddir -}/Makefile
@@ -460,6 +474,26 @@ configdata.pem.
 The build-file template is expected to define at least the following
 perl functions in a perl code fragment enclosed with "{-" and "-}".
 They are all expected to return a string with the lines they produce.
+
+    generatesrc - function that produces build file lines to generate
+                  a source file from some input.
+
+                  It's called like this:
+
+                        generatesrc(src => "PATH/TO/tobegenerated",
+                                    generator => [ "generatingfile", ... ]
+                                    deps => [ "dep1", ... ],
+                                    intent => one of "libs", "dso", "bin" );
+
+                  'src' has the name of the file to be generated.
+                  'generator' is the command or part of command to
+                  generate the file, of which the first item is
+                  expected to be the file to generate from.
+                  generatesrc() is expected to analyse and figure out
+                  exactly how to apply that file and how to capture
+                  the result.  'deps' is a list of explicit
+                  dependencies.  'intent' indicates what the generated
+                  file is going to be used for.
 
     src2obj     - function that produces build file lines to build an
                   object file from source files and associated data.

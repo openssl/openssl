@@ -89,11 +89,8 @@ depends on the library 'libssl' to function properly.
     SOURCE[../libcrypto]=aes.c evp.c cversion.c
     DEPEND[cversion.o]=buildinf.h
     
-    BEGINRAW[Makefile(unix)]
-    crypto/buildinf.h : Makefile
-    	perl util/mkbuildinf.h "$(CC) $(CFLAGS)" "$(PLATFORM)" \
-    	    > crypto/buildinf.h
-    ENDRAW[Makefile(unix)]
+    GENERATE[buildinf.h]=../util/mkbuildinf.pl "$(CC) $(CFLAGS)" "$(PLATFORM)"
+    DEPEND[buildinf.h]=../Makefile
 
 This is the build.info file in 'crypto', and it tells us a little more
 about what's needed to produce 'libcrypto'.  LIBS is used again to
@@ -161,11 +158,8 @@ information comes down to this:
     DEPEND[engines/libossltest]=libcrypto
     INCLUDE[engines/libossltest]=include
     
-    BEGINRAW[Makefile(unix)]
-    crypto/buildinf.h : Makefile
-    	perl util/mkbuildinf.h "$(CC) $(CFLAGS)" "$(PLATFORM)" \
-    	    > crypto/buildinf.h
-    ENDRAW[Makefile(unix)]
+    GENERATE[crypto/buildinf.h]=util/mkbuildinf.pl "$(CC) $(CFLAGS)" "$(PLATFORM)"
+    DEPEND[crypto/buildinf.h]=Makefile
 
 
 A few notes worth mentioning:
@@ -180,7 +174,7 @@ The indexes for SOURCE, INCLUDE and ORDINALS must only be end product
 files, such as libraries, programs or engines.  The values of SOURCE
 variables must only be source files (possibly generated)
 
-DEPEND shows a relationship between different end product files, such
+DEPEND shows a relationship between different produced files, such
 as a program depending on a library, or between an object file and
 some extra source file.
 
