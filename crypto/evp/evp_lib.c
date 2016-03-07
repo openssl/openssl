@@ -256,7 +256,7 @@ void EVP_CIPHER_CTX_set_app_data(EVP_CIPHER_CTX *ctx, void *data)
     ctx->app_data = data;
 }
 
-void *EVP_CIPHER_CTX_cipher_data(const EVP_CIPHER_CTX *ctx)
+void *EVP_CIPHER_CTX_get_cipher_data(const EVP_CIPHER_CTX *ctx)
 {
     return ctx->cipher_data;
 }
