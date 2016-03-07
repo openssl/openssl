@@ -407,6 +407,21 @@ configdata.pm : {- join(" ", sourcefile("Configurations", "descrip.mms.tmpl"), s
 {-
   use File::Basename;
   use File::Spec::Functions qw/abs2rel rel2abs catfile catdir/;
+
+  sub generatesrc {
+      my %args = @_;
+      my $generator = join(" ", @{$args{generator}});
+
+      if ($args{src} !~ /\.[sS]$/) {
+          return <<"EOF";
+$args{src} : $args{generator}->[0]
+	\$(PERL) $generator > \$@
+EOF
+      } else {
+          die "No method to generate assembler source present.\n";
+      }
+  }
+
   sub src2obj {
       my %args = @_;
       my $obj = $args{obj};
