@@ -1151,7 +1151,7 @@ i2d_X509_EXTENSIONS                     1116	1_1_0	EXIST::FUNCTION:
 X509_STORE_CTX_get0_store               1117	1_1_0	EXIST::FUNCTION:
 PKCS12_pack_p7data                      1118	1_1_0	EXIST::FUNCTION:
 RSA_print_fp                            1119	1_1_0	EXIST::FUNCTION:RSA,STDIO
-OPENSSL_INIT_set_config_filename        1120	1_1_0	EXIST::FUNCTION:
+OPENSSL_INIT_set_config_filename        1120	1_1_0	EXIST::FUNCTION:STDIO
 EC_KEY_print_fp                         1121	1_1_0	EXIST::FUNCTION:EC,STDIO
 BIO_dup_chain                           1122	1_1_0	EXIST::FUNCTION:
 PKCS8_PRIV_KEY_INFO_it                  1123	1_1_0	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:
@@ -3439,7 +3439,7 @@ OBJ_sn2nid                              3324	1_1_0	EXIST::FUNCTION:
 CTLOG_free                              3325	1_1_0	EXIST::FUNCTION:
 EVP_CIPHER_meth_dup                     3326	1_1_0	EXIST::FUNCTION:
 CMS_get1_crls                           3327	1_1_0	EXIST::FUNCTION:CMS
-X509_aux_print                          3328	1_1_0	EXIST::FUNCTION:STDIO
+X509_aux_print                          3328	1_1_0	EXIST::FUNCTION:
 DSO_set_name_converter                  3329	1_1_0	EXIST::FUNCTION:
 OPENSSL_thread_stop                     3330	1_1_0	EXIST::FUNCTION:
 X509_policy_node_get0_parent            3331	1_1_0	EXIST::FUNCTION:
@@ -4040,3 +4040,4 @@ CMS_unsigned_add1_attr                  3905	1_1_0	EXIST::FUNCTION:CMS
 lh_doall                                3906	1_1_0	EXIST::FUNCTION:
 PKCS8_pkey_get0_attrs                   3907	1_1_0	EXIST::FUNCTION:
 PKCS8_pkey_add1_attr_by_NID             3908	1_1_0	EXIST::FUNCTION:
+ASYNC_is_capable                        3909	1_1_0	EXIST::FUNCTION:
