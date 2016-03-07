@@ -1,5 +1,5 @@
 /*
- * Tests the Certificate Transparency public and internal APIs.
+ * Tests the Certificate Transparency public API.
  *
  * Author:      Rob Percival (robpercival@google.com)
  *
@@ -59,12 +59,12 @@
 
 #include <openssl/ct.h>
 #include <openssl/err.h>
-#include <openssl/ssl.h>
+#include <openssl/pem.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 #include "testutil.h"
 
-#if !defined(OPENSSL_NO_CT) && !defined(OPENSSL_NO_UNIT_TEST)
+#ifndef OPENSSL_NO_CT
 
 /* Used when declaring buffers to read text files into */
 #define CT_TEST_MAX_FILE_SIZE 8096
