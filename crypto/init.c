@@ -105,6 +105,7 @@ struct ossl_init_stop_st {
 };
 
 static OPENSSL_INIT_STOP *stop_handlers = NULL;
+static CRYPTO_RWLOCK *init_lock = NULL;
 
 static CRYPTO_ONCE base = CRYPTO_ONCE_STATIC_INIT;
 static int base_inited = 0;
@@ -121,6 +122,7 @@ static void ossl_init_base(void)
 #ifndef OPENSSL_SYS_UEFI
     atexit(OPENSSL_cleanup);
 #endif
+    init_lock = CRYPTO_THREAD_lock_new();
     OPENSSL_cpuid_setup();
     base_inited = 1;
 }
@@ -425,6 +427,9 @@ void OPENSSL_cleanup(void)
         OPENSSL_free(lasthandler);
     }
     stop_handlers = NULL;
+
+    CRYPTO_THREAD_lock_free(init_lock);
+
     /*
      * We assume we are single-threaded for this function, i.e. no race
      * conditions for the various "*_inited" vars below.
@@ -544,10 +549,10 @@ int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
 
     if (opts & OPENSSL_INIT_LOAD_CONFIG) {
         int ret;
-        CRYPTO_w_lock(CRYPTO_LOCK_INIT);
+        CRYPTO_THREAD_write_lock(init_lock);
         config_filename = (settings == NULL) ? NULL : settings->config_name;
         ret = CRYPTO_THREAD_run_once(&config, ossl_init_config);
-        CRYPTO_w_unlock(CRYPTO_LOCK_INIT);
+        CRYPTO_THREAD_unlock(init_lock);
         if (!ret)
             return 0;
     }
