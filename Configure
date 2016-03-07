@@ -1274,6 +1274,7 @@ if ($builder eq "unified") {
         my @engines = ();
         my @scripts = ();
         my @extra = ();
+        my @overrides = ();
         my @intermediates = ();
         my @rawlines = ();
 
@@ -1341,6 +1342,9 @@ if ($builder eq "unified") {
                          if !@skip || $skip[$#skip] > 0 },
             qr/^\s*EXTRA\s*=\s*(.*)\s*$/
             => sub { push @extra, split(/\s+/, $1)
+                         if !@skip || $skip[$#skip] > 0 },
+            qr/^\s*OVERRIDES\s*=\s*(.*)\s*$/
+            => sub { push @overrides, split(/\s+/, $1)
                          if !@skip || $skip[$#skip] > 0 },
 
             qr/^\s*ORDINALS\[((?:\\.|[^\\\]])+)\]\s*=\s*(.*)\s*$/,
@@ -1438,6 +1442,11 @@ EOF
         foreach (@extra) {
             my $extra = cleanfile($buildd, $_, $blddir);
             $unified_info{extra}->{$extra} = 1;
+        }
+
+        foreach (@overrides) {
+            my $override = cleanfile($buildd, $_, $blddir);
+            $unified_info{overrides}->{$override} = 1;
         }
 
         push @{$unified_info{rawlines}}, @rawlines;
@@ -1583,7 +1592,7 @@ EOF
 
     ### Make unified_info a bit more efficient
     # One level structures
-    foreach (("programs", "libraries", "engines", "scripts", "extra")) {
+    foreach (("programs", "libraries", "engines", "scripts", "extra", "overrides")) {
         $unified_info{$_} = [ sort keys %{$unified_info{$_}} ];
     }
     # Two level structures
