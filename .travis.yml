@@ -14,53 +14,66 @@ addons:
 
 os:
     - linux
-    - osx
 
 compiler:
-    - clang
     - clang-3.6
     - gcc
     - gcc-5
 
 env:
-    - CONFIG_OPTS=""
     - CONFIG_OPTS="shared"
-    - CONFIG_OPTS="no-pic"
     - CONFIG_OPTS="--debug --strict-warnings enable-crypto-mdebug enable-rc5 enable-md2"
-    - CONFIG_OPTS="--unified" BUILDONLY="yes"
-    - CONFIG_OPTS="--unified shared" BUILDONLY="yes"
-    - CONFIG_OPTS="--unified --debug --strict-warnings enable-rc5 enable-md2" BUILDONLY="yes"
 
 matrix:
     include:
         - os: linux
-          compiler: clang-3.6
-          env: CONFIG_OPTS="-fsanitize=address"
+          compiler: gcc
+          env: CONFIG_OPTS="" BUILDONLY="yes"
         - os: linux
-          compiler: clang-3.6
-          env: CONFIG_OPTS="no-asm --strict-warnings -fno-sanitize-recover -fsanitize=address -fsanitize=undefined enable-rc5 enable-md2"
+          compiler: gcc
+          env: CONFIG_OPTS="--unified" BUILDONLY="yes"
         - os: linux
-          compiler: gcc-5
-          env: CONFIG_OPTS="-fsanitize=address"
+          compiler: gcc
+          env: CONFIG_OPTS="--unified shared" BUILDONLY="yes"
         - os: linux
-          compiler: gcc-5
-          env: CONFIG_OPTS="no-asm --strict-warnings -fno-sanitize-recover -fsanitize=address -fsanitize=undefined enable-rc5 enable-md2"
+          compiler: gcc
+          env: CONFIG_OPTS="no-pic" BUILDONLY="yes"
         - os: linux
-          compiler: clang
+          compiler: gcc
           env: CONFIG_OPTS="no-engine" BUILDONLY="yes"
+        - os: linux
+          compiler: clang-3.6
+          env: CONFIG_OPTS="-fsanitize=address"
+        - os: linux
+          compiler: clang-3.6
+          env: CONFIG_OPTS="no-asm --strict-warnings -fno-sanitize-recover -fsanitize=address -fsanitize=undefined enable-rc5 enable-md2"
+        - os: linux
+          compiler: gcc-5
+          env: CONFIG_OPTS="-fsanitize=address"
+        - os: linux
+          compiler: gcc-5
+          env: CONFIG_OPTS="no-asm --strict-warnings -fno-sanitize-recover -fsanitize=address -fsanitize=undefined enable-rc5 enable-md2"
         - os: linux
           compiler: i686-w64-mingw32-gcc
           env: CONFIG_OPTS="no-pic"
         - os: linux
           compiler: x86_64-w64-mingw32-gcc
           env: CONFIG_OPTS="no-pic"
-    exclude:
         - os: osx
-          compiler: clang-3.6
+          compiler: clang
+          env: CONFIG_OPTS="shared"
         - os: osx
-          compiler: gcc
+          compiler: clang
+          env: CONFIG_OPTS="--debug --strict-warnings enable-crypto-mdebug enable-rc5 enable-md2"
         - os: osx
-          compiler: gcc-5
+          compiler: clang
+          env: CONFIG_OPTS="" BUILDONLY="yes"
+        - os: osx
+          compiler: clang
+          env: CONFIG_OPTS="--unified" BUILDONLY="yes"
+        - os: osx
+          compiler: clang
+          env: CONFIG_OPTS="--unified shared" BUILDONLY="yes"
 
 before_script:
     - sh .travis-create-release.sh $TRAVIS_OS_NAME
