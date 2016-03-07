@@ -646,7 +646,7 @@ int ssl3_do_compress(SSL *ssl, SSL3_RECORD *wr)
 }
 
 /*-
- * ssl3_enc encrypts/decrypts |numpipes| records in |inrecs|
+ * ssl3_enc encrypts/decrypts |n_recs| records in |inrecs|
  *
  * Returns:
  *   0: (in non-constant time) if the record is publically invalid (i.e. too
@@ -655,7 +655,7 @@ int ssl3_do_compress(SSL *ssl, SSL3_RECORD *wr)
  *   -1: if the record's padding is invalid or, if sending, an internal error
  *       occurred.
  */
-int ssl3_enc(SSL *s, SSL3_RECORD *inrecs, unsigned int numpipes, int send)
+int ssl3_enc(SSL *s, SSL3_RECORD *inrecs, unsigned int n_recs, int send)
 {
     SSL3_RECORD *rec;
     EVP_CIPHER_CTX *ds;
@@ -664,6 +664,11 @@ int ssl3_enc(SSL *s, SSL3_RECORD *inrecs, unsigned int numpipes, int send)
     const EVP_CIPHER *enc;
 
     rec = inrecs;
+    /*
+     * We shouldn't ever be called with more than one record in the SSLv3 case
+     */
+    if (n_recs != 1)
+        return 0;
     if (send) {
         ds = s->enc_write_ctx;
         if (s->enc_write_ctx == NULL)
@@ -719,7 +724,7 @@ int ssl3_enc(SSL *s, SSL3_RECORD *inrecs, unsigned int numpipes, int send)
 }
 
 /*-
- * tls1_enc encrypts/decrypts |numpipes| in |recs|.
+ * tls1_enc encrypts/decrypts |n_recs| in |recs|.
  *
  * Returns:
  *   0: (in non-constant time) if the record is publically invalid (i.e. too
@@ -728,7 +733,7 @@ int ssl3_enc(SSL *s, SSL3_RECORD *inrecs, unsigned int numpipes, int send)
  *   -1: if the record's padding/AEAD-authenticator is invalid or, if sending,
  *       an internal error occurred.
  */
-int tls1_enc(SSL *s, SSL3_RECORD *recs, unsigned int numpipes, int send)
+int tls1_enc(SSL *s, SSL3_RECORD *recs, unsigned int n_recs, int send)
 {
     EVP_CIPHER_CTX *ds;
     size_t reclen[SSL_MAX_PIPELINES];
@@ -755,7 +760,7 @@ int tls1_enc(SSL *s, SSL3_RECORD *recs, unsigned int numpipes, int send)
             else
                 ivlen = 0;
             if (ivlen > 1) {
-                for (ctr = 0; ctr < numpipes; ctr++) {
+                for (ctr = 0; ctr < n_recs; ctr++) {
                     if (recs[ctr].data != recs[ctr].input) {
                         /*
                          * we can't write into the input stream: Can this ever
@@ -783,7 +788,7 @@ int tls1_enc(SSL *s, SSL3_RECORD *recs, unsigned int numpipes, int send)
     }
 
     if ((s->session == NULL) || (ds == NULL) || (enc == NULL)) {
-        for (ctr = 0; ctr < numpipes; ctr++) {
+        for (ctr = 0; ctr < n_recs; ctr++) {
             memmove(recs[ctr].data, recs[ctr].input, recs[ctr].length);
             recs[ctr].input = recs[ctr].data;
         }
@@ -791,7 +796,7 @@ int tls1_enc(SSL *s, SSL3_RECORD *recs, unsigned int numpipes, int send)
     } else {
         bs = EVP_CIPHER_block_size(EVP_CIPHER_CTX_cipher(ds));
 
-        if (numpipes > 1) {
+        if (n_recs > 1) {
             if(!(EVP_CIPHER_flags(EVP_CIPHER_CTX_cipher(ds))
                                   & EVP_CIPH_FLAG_PIPELINE)) {
                 /*
@@ -802,7 +807,7 @@ int tls1_enc(SSL *s, SSL3_RECORD *recs, unsigned int numpipes, int send)
                 return -1;
             }
         }
-        for (ctr = 0; ctr < numpipes; ctr++) {
+        for (ctr = 0; ctr < n_recs; ctr++) {
             reclen[ctr] = recs[ctr].length;
 
             if (EVP_CIPHER_flags(EVP_CIPHER_CTX_cipher(ds))
@@ -862,25 +867,25 @@ int tls1_enc(SSL *s, SSL3_RECORD *recs, unsigned int numpipes, int send)
                     return 0;
             }
         }
-        if (numpipes > 1) {
+        if (n_recs > 1) {
             unsigned char *data[SSL_MAX_PIPELINES];
 
             /* Set the output buffers */
-            for(ctr = 0; ctr < numpipes; ctr++) {
+            for(ctr = 0; ctr < n_recs; ctr++) {
                 data[ctr] = recs[ctr].data;
             }
             if (EVP_CIPHER_CTX_ctrl(ds, EVP_CTRL_SET_PIPELINE_OUTPUT_BUFS,
-                                      numpipes, data) <= 0) {
+                                      n_recs, data) <= 0) {
                 SSLerr(SSL_F_TLS1_ENC, SSL_R_PIPELINE_FAILURE);
             }
             /* Set the input buffers */
-            for(ctr = 0; ctr < numpipes; ctr++) {
+            for(ctr = 0; ctr < n_recs; ctr++) {
                 data[ctr] = recs[ctr].input;
             }
             if (EVP_CIPHER_CTX_ctrl(ds, EVP_CTRL_SET_PIPELINE_INPUT_BUFS,
-                                      numpipes, data) <= 0
+                                      n_recs, data) <= 0
                 || EVP_CIPHER_CTX_ctrl(ds, EVP_CTRL_SET_PIPELINE_INPUT_LENS,
-                                      numpipes, reclen) <= 0) {
+                                      n_recs, reclen) <= 0) {
                 SSLerr(SSL_F_TLS1_ENC, SSL_R_PIPELINE_FAILURE);
                 return -1;
             }
@@ -894,13 +899,13 @@ int tls1_enc(SSL *s, SSL3_RECORD *recs, unsigned int numpipes, int send)
             return -1;          /* AEAD can fail to verify MAC */
         if (send == 0) {
             if (EVP_CIPHER_mode(enc) == EVP_CIPH_GCM_MODE) {
-                for (ctr = 0; ctr < numpipes; ctr++) {
+                for (ctr = 0; ctr < n_recs; ctr++) {
                     recs[ctr].data += EVP_GCM_TLS_EXPLICIT_IV_LEN;
                     recs[ctr].input += EVP_GCM_TLS_EXPLICIT_IV_LEN;
                     recs[ctr].length -= EVP_GCM_TLS_EXPLICIT_IV_LEN;
                 }
             } else if (EVP_CIPHER_mode(enc) == EVP_CIPH_CCM_MODE) {
-                for (ctr = 0; ctr < numpipes; ctr++) {
+                for (ctr = 0; ctr < n_recs; ctr++) {
                     recs[ctr].data += EVP_CCM_TLS_EXPLICIT_IV_LEN;
                     recs[ctr].input += EVP_CCM_TLS_EXPLICIT_IV_LEN;
                     recs[ctr].length -= EVP_CCM_TLS_EXPLICIT_IV_LEN;
@@ -913,7 +918,7 @@ int tls1_enc(SSL *s, SSL3_RECORD *recs, unsigned int numpipes, int send)
             mac_size = EVP_MD_CTX_size(s->read_hash);
         if ((bs != 1) && !send) {
             int tmpret;
-            for (ctr = 0; ctr < numpipes; ctr++) {
+            for (ctr = 0; ctr < n_recs; ctr++) {
                 tmpret = tls1_cbc_remove_padding(s, &recs[ctr], bs, mac_size);
                 if (tmpret == -1)
                     return -1;
@@ -921,7 +926,7 @@ int tls1_enc(SSL *s, SSL3_RECORD *recs, unsigned int numpipes, int send)
             }
         }
         if (pad && !send) {
-            for (ctr = 0; ctr < numpipes; ctr++) {
+            for (ctr = 0; ctr < n_recs; ctr++) {
                 recs[ctr].length -= pad;
             }
         }
