@@ -402,7 +402,7 @@ int SCT_validate(SCT *sct, const CT_POLICY_EVAL_CTX *ctx)
             goto end;
         }
 
-        issuer_pkey = X509_get_pubkey(ctx->issuer);
+        issuer_pkey = X509_get0_pubkey(ctx->issuer);
 
         if (X509_PUBKEY_set(&pub, issuer_pkey) != 1)
             goto err;
