@@ -167,6 +167,53 @@ configdata.pm: {- $config{build_file_template} -} $(SRCDIR)\Configure
      return map { shlib_import($_) } @_;
  }
 
+  sub generatesrc {
+      my %args = @_;
+      (my $target = $args{src}) =~ s/\.[sS]$/.asm/;
+      my $generator = join(" ", @{$args{generator}});
+
+      if ($target !~ /\.asm$/) {
+          return <<"EOF";
+$target: $args{generator}->[0]
+	\$(PERL) $generator > \$@
+EOF
+      } else {
+          if ($args{generator}->[0] =~ /\.pl$/) {
+              $generator = '$(PERL) '.$generator;
+          } elsif ($args{generator}->[0] =~ /\.S$/) {
+              $generator = undef;
+          } else {
+              die "Generator type for $src unknown: $generator\n";
+          }
+
+          if (defined($generator)) {
+              # If the target is named foo.S in build.info, we want to
+              # end up generating foo.s in two steps.
+              if ($args{src} =~ /\.S$/) {
+                   return <<"EOF";
+$target: $args{generator}->[0]
+	set ASM=\$(AS)
+	set CC=\$(CC)
+	$generator \$@.S
+	\$(CC) \$(CFLAGS) /EP /C \$@.S > \$@
+        del /Q \$@.S
+EOF
+              }
+              # Otherwise....
+              return <<"EOF";
+$target: $args{generator}->[0]
+	set ASM=\$(AS)
+	set CC=\$(CC)
+	$generator \$@
+EOF
+          }
+          return <<"EOF";
+$target: $args{generator}->[0]
+	\$(CC) \$(CFLAGS) /EP /C \$< > \$@
+EOF
+      }
+  }
+
  sub src2obj {
      my %args = @_;
      my $obj = $args{obj};
