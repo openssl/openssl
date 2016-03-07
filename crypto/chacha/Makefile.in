@@ -37,9 +37,9 @@ lib:	$(LIBOBJ)
 	@touch lib
 
 chacha-x86.s:		asm/chacha-x86.pl
-	$(PERL) asm/chacha-x86.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) > $@
+	$(PERL) asm/chacha-x86.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) $@
 chacha-x86_64.s:	asm/chacha-x86_64.pl
-	$(PERL) asm/chacha-x86_64.pl $(PERLASM_SCHEME) > $@
+	$(PERL) asm/chacha-x86_64.pl $(PERLASM_SCHEME) $@
 chacha-ppc.s:	asm/chacha-ppc.pl
 	$(PERL) asm/chacha-ppc.pl $(PERLASM_SCHEME) $@
 
