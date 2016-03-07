@@ -1983,7 +1983,6 @@ CMS_SignedData_init                     1920	1_1_0	EXIST::FUNCTION:CMS
 X509_REQ_free                           1921	1_1_0	EXIST::FUNCTION:
 ASN1_INTEGER_set                        1922	1_1_0	EXIST::FUNCTION:
 EVP_DecodeFinal                         1923	1_1_0	EXIST::FUNCTION:
-EVP_PKEY2PKCS8_broken                   1924	1_1_0	EXIST::FUNCTION:
 MD5_Transform                           1925	1_1_0	EXIST::FUNCTION:MD5
 SRP_create_verifier_BN                  1926	1_1_0	EXIST::FUNCTION:SRP
 ENGINE_register_all_EC                  1927	1_1_0	EXIST::FUNCTION:ENGINE
@@ -2694,7 +2693,6 @@ EVP_PKEY_CTX_set_cb                     2605	1_1_0	EXIST::FUNCTION:
 PROXY_POLICY_it                         2606	1_1_0	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:
 PROXY_POLICY_it                         2606	1_1_0	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:
 ENGINE_register_complete                2607	1_1_0	EXIST::FUNCTION:ENGINE
-PKCS8_set_broken                        2608	1_1_0	EXIST::FUNCTION:
 EVP_DecodeUpdate                        2609	1_1_0	EXIST::FUNCTION:
 ENGINE_get_default_RAND                 2610	1_1_0	EXIST::FUNCTION:ENGINE
 ERR_peek_last_error_line                2611	1_1_0	EXIST::FUNCTION:
@@ -4040,3 +4038,5 @@ SHA512_Init                             3903	1_1_0	EXIST:!VMSVAX:FUNCTION:
 TS_MSG_IMPRINT_set_msg                  3904	1_1_0	EXIST::FUNCTION:
 CMS_unsigned_add1_attr                  3905	1_1_0	EXIST::FUNCTION:CMS
 lh_doall                                3906	1_1_0	EXIST::FUNCTION:
+PKCS8_pkey_get0_attrs                   3907	1_1_0	EXIST::FUNCTION:
+PKCS8_pkey_add1_attr_by_NID             3908	1_1_0	EXIST::FUNCTION:
