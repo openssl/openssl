@@ -1,5 +1,5 @@
 /*
- * Tests the Certificate Transparency public and internal APIs.
+ * Tests the Certificate Transparency public API.
  *
  * Author:      Rob Percival (robpercival@google.com)
  *
@@ -59,7 +59,7 @@
 
 #include <openssl/ct.h>
 #include <openssl/err.h>
-#include <openssl/ssl.h>
+#include <openssl/pem.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 #include "testutil.h"
