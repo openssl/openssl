@@ -414,7 +414,7 @@ cryptodev_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                  const unsigned char *in, size_t inl)
 {
     struct crypt_op cryp;
-    struct dev_crypto_state *state = EVP_CIPHER_CTX_cipher_data(ctx);
+    struct dev_crypto_state *state = EVP_CIPHER_CTX_get_cipher_data(ctx);
     struct session_op *sess = &state->d_sess;
     const void *iiv;
     unsigned char save_iv[EVP_MAX_IV_LENGTH];
@@ -469,7 +469,7 @@ static int
 cryptodev_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
                    const unsigned char *iv, int enc)
 {
-    struct dev_crypto_state *state = EVP_CIPHER_CTX_cipher_data(ctx);
+    struct dev_crypto_state *state = EVP_CIPHER_CTX_get_cipher_data(ctx);
     struct session_op *sess = &state->d_sess;
     int cipher = -1, i;
 
@@ -510,7 +510,7 @@ cryptodev_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 static int cryptodev_cleanup(EVP_CIPHER_CTX *ctx)
 {
     int ret = 0;
-    struct dev_crypto_state *state = EVP_CIPHER_CTX_cipher_data(ctx);
+    struct dev_crypto_state *state = EVP_CIPHER_CTX_get_cipher_data(ctx);
     struct session_op *sess = &state->d_sess;
 
     if (state->d_fd < 0)

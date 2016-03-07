@@ -181,7 +181,8 @@ struct evp_cipher_st {
 
 /* Wrapper functions for each cipher mode */
 
-#define EVP_C_DATA(kstruct, ctx)   ((kstruct *)EVP_CIPHER_CTX_cipher_data(ctx))
+#define EVP_C_DATA(kstruct, ctx) \
+        ((kstruct *)EVP_CIPHER_CTX_get_cipher_data(ctx))
 
 #define BLOCK_CIPHER_ecb_loop() \
         size_t i, bl; \

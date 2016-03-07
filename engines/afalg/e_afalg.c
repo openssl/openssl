@@ -539,7 +539,7 @@ static int afalg_cipher_init(EVP_CIPHER_CTX *ctx, const unsigned char *key,
         return 0;
     }
 
-    actx = EVP_CIPHER_CTX_cipher_data(ctx);
+    actx = EVP_CIPHER_CTX_get_cipher_data(ctx);
     if (actx == NULL) {
         ALG_WARN("%s: Cipher data NULL\n", __func__);
         return 0;
@@ -602,7 +602,7 @@ static int afalg_do_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
         return 0;
     }
 
-    actx = (afalg_ctx *) EVP_CIPHER_CTX_cipher_data(ctx);
+    actx = (afalg_ctx *) EVP_CIPHER_CTX_get_cipher_data(ctx);
     if (actx == NULL || actx->init_done != MAGIC_INIT_NUM) {
         ALG_WARN("%s afalg ctx passed\n",
                  ctx == NULL ? "NULL" : "Uninitialised");
@@ -649,7 +649,7 @@ static int afalg_cipher_cleanup(EVP_CIPHER_CTX *ctx)
         return 0;
     }
 
-    actx = (afalg_ctx *) EVP_CIPHER_CTX_cipher_data(ctx);
+    actx = (afalg_ctx *) EVP_CIPHER_CTX_get_cipher_data(ctx);
     if (actx == NULL || actx->init_done != MAGIC_INIT_NUM) {
         ALG_WARN("%s afalg ctx passed\n",
                  ctx == NULL ? "NULL" : "Uninitialised");

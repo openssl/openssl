@@ -3676,7 +3676,7 @@ SXNET_get_id_ulong                      3557	1_1_0	EXIST::FUNCTION:
 BIO_get_callback_arg                    3558	1_1_0	EXIST::FUNCTION:
 ENGINE_register_RSA                     3559	1_1_0	EXIST::FUNCTION:ENGINE
 i2v_GENERAL_NAMES                       3560	1_1_0	EXIST::FUNCTION:
-EVP_CIPHER_CTX_cipher_data              3561	1_1_0	EXIST::FUNCTION:
+EVP_CIPHER_CTX_cipher_data              3561	1_1_0	NOEXIST::FUNCTION:
 PKCS7_decrypt                           3562	1_1_0	EXIST::FUNCTION:
 X509_STORE_set1_param                   3563	1_1_0	EXIST::FUNCTION:
 RAND_file_name                          3564	1_1_0	EXIST::FUNCTION:
@@ -4042,3 +4042,4 @@ PKCS8_pkey_get0_attrs                   3907	1_1_0	EXIST::FUNCTION:
 PKCS8_pkey_add1_attr_by_NID             3908	1_1_0	EXIST::FUNCTION:
 ASYNC_is_capable                        3909	1_1_0	EXIST::FUNCTION:
 EVP_CIPHER_CTX_set_cipher_data          3910	1_1_0	EXIST::FUNCTION:
+EVP_CIPHER_CTX_get_cipher_data          3911	1_1_0	EXIST::FUNCTION:
