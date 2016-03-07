@@ -774,10 +774,16 @@ SSL *SSL_new(SSL_CTX *ctx)
     return NULL;
 }
 
-void SSL_up_ref(SSL *s)
+int SSL_up_ref(SSL *s)
 {
     int i;
-    CRYPTO_atomic_add(&s->references, 1, &i, s->lock);
+    
+    if (CRYPTO_atomic_add(&s->references, 1, &i, s->lock) <= 0)
+        return 0;
+
+    REF_PRINT_COUNT("SSL", s);
+    REF_ASSERT_ISNT(i < 2);
+    return ((i > 1) ? 1 : 0);
 }
 
 int SSL_CTX_set_session_id_context(SSL_CTX *ctx, const unsigned char *sid_ctx,
@@ -2504,10 +2510,16 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
     return NULL;
 }
 
-void SSL_CTX_up_ref(SSL_CTX *ctx)
+int SSL_CTX_up_ref(SSL_CTX *ctx)
 {
     int i;
-    CRYPTO_atomic_add(&ctx->references, 1, &i, ctx->lock);
+
+    if (CRYPTO_atomic_add(&ctx->references, 1, &i, ctx->lock) <= 0)
+        return 0;
+
+    REF_PRINT_COUNT("SSL_CTX", ctx);
+    REF_ASSERT_ISNT(i < 2);
+    return ((i > 1) ? 1 : 0);
 }
 
 void SSL_CTX_free(SSL_CTX *a)
