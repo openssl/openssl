@@ -167,7 +167,7 @@ void SSL3_RECORD_set_seq_num(SSL3_RECORD *r, const unsigned char *seq_num)
  * Peeks ahead into "read_ahead" data to see if we have a whole record waiting
  * for us in the buffer.
  */
-static int have_whole_app_data_record_waiting(SSL *s)
+static int ssl3_record_app_data_waiting(SSL *s)
 {
     SSL3_BUFFER *rbuf;
     int left, len;
@@ -425,7 +425,7 @@ int ssl3_get_record(SSL *s)
              && s->enc_read_ctx != NULL
              && (EVP_CIPHER_flags(EVP_CIPHER_CTX_cipher(s->enc_read_ctx))
                 & EVP_CIPH_FLAG_PIPELINE)
-             && have_whole_app_data_record_waiting(s));
+             && ssl3_record_app_data_waiting(s));
 
 
     /*
