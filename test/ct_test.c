@@ -80,7 +80,7 @@ typedef struct ct_test_fixture {
     /* Set the following to test handling of SCTs in TLS format */
     const uint8_t *tls_sct;
     size_t tls_sct_len;
-    const SCT *sct;
+    SCT *sct;
     /*
      * A file to load the expected SCT text from.
      * This text will be compared to the actual text output during the test.
@@ -124,6 +124,7 @@ end:
 static void tear_down(CT_TEST_FIXTURE fixture)
 {
     CTLOG_STORE_free(fixture.ctlog_store);
+    SCT_free(fixture.sct);
     ERR_print_errors_fp(stderr);
 }
 
@@ -237,6 +238,8 @@ static int execute_cert_test(CT_TEST_FIXTURE fixture)
     SCT *sct = NULL;
     char expected_sct_text[CT_TEST_MAX_FILE_SIZE];
     int sct_text_len = 0;
+    unsigned char *tls_sct = NULL;
+    size_t tls_sct_len = 0;
     CT_POLICY_EVAL_CTX *ct_policy_ctx = CT_POLICY_EVAL_CTX_new();
 
     if (fixture.sct_text_file_path != NULL) {
@@ -361,8 +364,6 @@ static int execute_cert_test(CT_TEST_FIXTURE fixture)
 
     if (fixture.tls_sct != NULL) {
         const unsigned char *p = fixture.tls_sct;
-        unsigned char *tls_sct;
-        size_t tls_sct_len;
         if (o2i_SCT(&sct, &p, fixture.tls_sct_len) == NULL) {
             test_failed = 1;
             fprintf(stderr, "Failed to decode SCT from TLS format\n");
@@ -403,6 +404,7 @@ end:
     SCT_LIST_free(scts);
     SCT_free(sct);
     CT_POLICY_EVAL_CTX_free(ct_policy_ctx);
+    OPENSSL_free(tls_sct);
     return test_failed;
 }
 
@@ -502,8 +504,6 @@ static int test_encode_tls_sct()
     fixture.sct = sct;
     fixture.sct_text_file_path = "ct/tls1.sct";
     EXECUTE_CT_TEST();
-
-    SCT_free(sct);
 }
 
 int main(int argc, char *argv[])
