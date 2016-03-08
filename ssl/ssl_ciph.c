@@ -2059,7 +2059,7 @@ int SSL_CIPHER_get_auth_nid(const SSL_CIPHER *c)
 
     if (i == -1)
         return NID_undef;
-    return ssl_cipher_table_kx[i].nid;
+    return ssl_cipher_table_auth[i].nid;
 }
 
 int SSL_CIPHER_is_aead(const SSL_CIPHER *c)
