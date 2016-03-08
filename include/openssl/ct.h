@@ -307,12 +307,6 @@ sct_source_t SCT_get_source(const SCT *sct);
 __owur int SCT_set_source(SCT *sct, sct_source_t source);
 
 /*
- * Sets the source of all of the SCTs to the same value.
- * Returns the number of SCTs whose source was set successfully.
- */
-__owur int SCT_LIST_set_source(const STACK_OF(SCT) *scts, sct_source_t source);
-
-/*
  * Gets information about the log the SCT came from, if set.
  */
 const CTLOG *SCT_get0_log(const SCT *sct);
@@ -323,13 +317,6 @@ const CTLOG *SCT_get0_log(const SCT *sct);
  * The information can be accessed via SCT_get0_log.
  */
 int SCT_set0_log(SCT *sct, const CTLOG_STORE* ct_logs);
-
-/*
- * Looks up information about the logs the SCTs came from using a CT log store.
- * Returns the number of SCTs that now have a log set.
- * If any SCTs already have a log set, they will be skipped.
- */
-int SCT_LIST_set0_logs(STACK_OF(SCT) *sct_list, const CTLOG_STORE *ct_logs);
 
 /*
  * Pretty-prints an |sct| to |out|.

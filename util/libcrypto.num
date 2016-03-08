@@ -1300,7 +1300,7 @@ i2d_X509_REVOKED                        1260	1_1_0	EXIST::FUNCTION:
 CMS_sign                                1261	1_1_0	EXIST::FUNCTION:CMS
 X509_STORE_add_cert                     1262	1_1_0	EXIST::FUNCTION:
 EC_GROUP_precompute_mult                1263	1_1_0	EXIST::FUNCTION:EC
-SCT_LIST_set_source                     1264	1_1_0	EXIST::FUNCTION:
+SCT_LIST_set_source                     1264	1_1_0	NOEXIST::FUNCTION:
 d2i_DISPLAYTEXT                         1265	1_1_0	EXIST::FUNCTION:
 HMAC_CTX_copy                           1266	1_1_0	EXIST::FUNCTION:
 CRYPTO_gcm128_init                      1267	1_1_0	EXIST::FUNCTION:
@@ -1628,7 +1628,7 @@ PEM_write_X509_REQ_NEW                  1579	1_1_0	EXIST::FUNCTION:
 CONF_imodule_set_usr_data               1580	1_1_0	EXIST::FUNCTION:
 d2i_TS_RESP_fp                          1581	1_1_0	EXIST::FUNCTION:STDIO
 X509_policy_tree_get0_user_policies     1582	1_1_0	EXIST::FUNCTION:
-SCT_LIST_set0_logs                      1583	1_1_0	EXIST::FUNCTION:
+SCT_LIST_set0_logs                      1583	1_1_0	NOEXIST::FUNCTION:
 DSA_do_sign                             1584	1_1_0	EXIST::FUNCTION:DSA
 EVP_CIPHER_CTX_reset                    1585	1_1_0	EXIST::FUNCTION:
 OCSP_REVOKEDINFO_new                    1586	1_1_0	EXIST::FUNCTION:
