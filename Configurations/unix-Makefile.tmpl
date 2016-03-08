@@ -660,9 +660,11 @@ tags TAGS: FORCE
 
 # Release targets (note: only available on Unix) #####################
 
+TAR_COMMAND=$(TAR) $(TARFLAGS) --owner 0 --group 0 -cvf - 
+PREPARE_CMD=:
 tar:
 	TMPDIR=/var/tmp/openssl-copy.$$$$; \
-	DISTDIR=openssl-$(VERSION); \
+	DISTDIR=$(NAME); \
 	mkdir -p $$TMPDIR/$$DISTDIR; \
 	(cd $(SRCDIR); \
 	 git ls-tree -r --name-only --full-tree HEAD \
@@ -671,11 +673,11 @@ tar:
 	       cp $$F $$TMPDIR/$$DISTDIR/$$F; \
 	   done); \
 	(cd $$TMPDIR; \
-	 [ -n "$(PREPARE_CMD)" ] && $(PREPARE_CMD); \
+	 $(PREPARE_CMD); \
 	 find $$TMPDIR/$$DISTDIR -type d -print | xargs chmod 755; \
 	 find $$TMPDIR/$$DISTDIR -type f -print | xargs chmod a+r; \
 	 find $$TMPDIR/$$DISTDIR -type f -perm -0100 -print | xargs chmod a+x; \
-	 $(TAR) $(TARFLAGS) --owner 0 --group 0 -cvf - $$DISTDIR) \
+	 $(TAR_COMMAND) $$DISTDIR) \
 	| (cd $(SRCDIR); gzip --best > $(TARFILE).gz); \
 	rm -rf $$TMPDIR
 	cd $(SRCDIR); ls -l $(TARFILE).gz
