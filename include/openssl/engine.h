@@ -737,26 +737,10 @@ typedef struct st_dynamic_MEM_fns {
  * FIXME: Perhaps the memory and locking code (crypto.h) should declare and
  * use these types so we (and any other dependant code) can simplify a bit??
  */
-typedef void (*dyn_lock_locking_cb) (int, int, const char *, int);
-typedef int (*dyn_lock_add_lock_cb) (int *, int, int, const char *, int);
-typedef struct CRYPTO_dynlock_value *(*dyn_dynlock_create_cb) (const char *,
-                                                               int);
-typedef void (*dyn_dynlock_lock_cb) (int, struct CRYPTO_dynlock_value *,
-                                     const char *, int);
-typedef void (*dyn_dynlock_destroy_cb) (struct CRYPTO_dynlock_value *,
-                                        const char *, int);
-typedef struct st_dynamic_LOCK_fns {
-    dyn_lock_locking_cb lock_locking_cb;
-    dyn_lock_add_lock_cb lock_add_lock_cb;
-    dyn_dynlock_create_cb dynlock_create_cb;
-    dyn_dynlock_lock_cb dynlock_lock_cb;
-    dyn_dynlock_destroy_cb dynlock_destroy_cb;
-} dynamic_LOCK_fns;
 /* The top-level structure */
 typedef struct st_dynamic_fns {
     void *static_state;
     dynamic_MEM_fns mem_fns;
-    dynamic_LOCK_fns lock_fns;
 } dynamic_fns;
 
 /*
@@ -807,11 +791,6 @@ typedef int (*dynamic_bind_engine) (ENGINE *e, const char *id,
                 CRYPTO_set_mem_functions(fns->mem_fns.malloc_fn, \
                                          fns->mem_fns.realloc_fn, \
                                          fns->mem_fns.free_fn); \
-                CRYPTO_set_locking_callback(fns->lock_fns.lock_locking_cb); \
-                CRYPTO_set_add_lock_callback(fns->lock_fns.lock_add_lock_cb); \
-                CRYPTO_set_dynlock_create_callback(fns->lock_fns.dynlock_create_cb); \
-                CRYPTO_set_dynlock_lock_callback(fns->lock_fns.dynlock_lock_cb); \
-                CRYPTO_set_dynlock_destroy_callback(fns->lock_fns.dynlock_destroy_cb); \
         skip_cbs: \
                 if(!fn(e,id)) return 0; \
                 return 1; }
