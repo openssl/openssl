@@ -94,6 +94,8 @@
 #  define HWCRHK_LIB_NAME "CHIL engine"
 #  include "e_chil_err.c"
 
+static CRYPTO_RWLOCK *chil_lock;
+
 static int hwcrhk_destroy(ENGINE *e);
 static int hwcrhk_init(ENGINE *e);
 static int hwcrhk_finish(ENGINE *e);
@@ -355,6 +357,11 @@ static int bind_helper(ENGINE *e)
 #  ifndef OPENSSL_NO_DH
     const DH_METHOD *meth2;
 #  endif
+
+    chil_lock = CRYPTO_THREAD_lock_new();
+    if (chil_lock == NULL)
+        return 0;
+
     if (!ENGINE_set_id(e, engine_hwcrhk_id) ||
         !ENGINE_set_name(e, engine_hwcrhk_name) ||
 #  ifndef OPENSSL_NO_RSA
@@ -398,6 +405,7 @@ static int bind_helper(ENGINE *e)
 
     /* Ensure the hwcrhk error handling is set up */
     ERR_load_HWCRHK_strings();
+
     return 1;
 }
 
@@ -526,6 +534,7 @@ static int hwcrhk_destroy(ENGINE *e)
 {
     free_HWCRHK_LIBNAME();
     ERR_unload_HWCRHK_strings();
+    CRYPTO_THREAD_lock_free(chil_lock);
     return 1;
 }
 
@@ -681,32 +690,32 @@ static int hwcrhk_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f) (void))
         {
             BIO *bio = (BIO *)p;
 
-            CRYPTO_w_lock(CRYPTO_LOCK_ENGINE);
+            CRYPTO_THREAD_write_lock(chil_lock);
             BIO_free(logstream);
             logstream = NULL;
-            if (CRYPTO_add(&bio->references, 1, CRYPTO_LOCK_BIO) > 1)
+            if (BIO_up_ref(bio)
                 logstream = bio;
             else
                 HWCRHKerr(HWCRHK_F_HWCRHK_CTRL, HWCRHK_R_BIO_WAS_FREED);
         }
-        CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
+        CRYPTO_THREAD_unlock(chil_lock);
         break;
     case ENGINE_CTRL_SET_PASSWORD_CALLBACK:
-        CRYPTO_w_lock(CRYPTO_LOCK_ENGINE);
+        CRYPTO_THREAD_write_lock(chil_lock);
         password_context.password_callback = (pem_password_cb *)f;
-        CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
+        CRYPTO_THREAD_unlock(chil_lock);
         break;
     case ENGINE_CTRL_SET_USER_INTERFACE:
     case HWCRHK_CMD_SET_USER_INTERFACE:
-        CRYPTO_w_lock(CRYPTO_LOCK_ENGINE);
+        CRYPTO_THREAD_write_lock(chil_lock);
         password_context.ui_method = (UI_METHOD *)p;
-        CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
+        CRYPTO_THREAD_unlock(chil_lock);
         break;
     case ENGINE_CTRL_SET_CALLBACK_DATA:
     case HWCRHK_CMD_SET_CALLBACK_DATA:
-        CRYPTO_w_lock(CRYPTO_LOCK_ENGINE);
+        CRYPTO_THREAD_write_lock(chil_lock);
         password_context.callback_data = p;
-        CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
+        CRYPTO_THREAD_unlock(chil_lock);
         break;
         /*
          * this enables or disables the "SimpleForkCheck" flag used in the
@@ -714,12 +723,12 @@ static int hwcrhk_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f) (void))
          */
     case ENGINE_CTRL_CHIL_SET_FORKCHECK:
     case HWCRHK_CMD_FORK_CHECK:
-        CRYPTO_w_lock(CRYPTO_LOCK_ENGINE);
+        CRYPTO_THREAD_write_lock(chil_lock);
         if (i)
             hwcrhk_globals.flags |= HWCryptoHook_InitFlags_SimpleForkCheck;
         else
             hwcrhk_globals.flags &= ~HWCryptoHook_InitFlags_SimpleForkCheck;
-        CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
+        CRYPTO_THREAD_unlock(chil_lock);
         break;
         /*
          * This will prevent the initialisation function from "installing"
@@ -729,14 +738,14 @@ static int hwcrhk_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f) (void))
          * applications not using multithreading.
          */
     case ENGINE_CTRL_CHIL_NO_LOCKING:
-        CRYPTO_w_lock(CRYPTO_LOCK_ENGINE);
+        CRYPTO_THREAD_write_lock(chil_lock);
         disable_mutex_callbacks = 1;
-        CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
+        CRYPTO_THREAD_unlock(chil_lock);
         break;
     case HWCRHK_CMD_THREAD_LOCKING:
-        CRYPTO_w_lock(CRYPTO_LOCK_ENGINE);
+        CRYPTO_THREAD_write_lock(chil_lock);
         disable_mutex_callbacks = ((i == 0) ? 0 : 1);
-        CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
+        CRYPTO_THREAD_unlock(chil_lock);
         break;
 
         /* The command isn't understood by this engine */
@@ -1297,13 +1306,11 @@ static void hwcrhk_log_message(void *logstr, const char *message)
 {
     BIO *lstream = NULL;
 
-    CRYPTO_w_lock(CRYPTO_LOCK_BIO);
     if (logstr)
         lstream = *(BIO **)logstr;
     if (lstream) {
         BIO_printf(lstream, "%s\n", message);
     }
-    CRYPTO_w_unlock(CRYPTO_LOCK_BIO);
 }
 
 /*
