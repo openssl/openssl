@@ -539,9 +539,9 @@ void CTLOG_STORE_free(CTLOG_STORE *store);
  * Finds a CT log in the store based on its log ID.
  * Returns the CT log, or NULL if no match is found.
  */
-CTLOG *CTLOG_STORE_get0_log_by_id(const CTLOG_STORE *store,
-                                  const uint8_t *log_id,
-                                  size_t log_id_len);
+const CTLOG *CTLOG_STORE_get0_log_by_id(const CTLOG_STORE *store,
+                                        const uint8_t *log_id,
+                                        size_t log_id_len);
 
 /*
  * Loads a CT log list into a |store| from a |file|.
