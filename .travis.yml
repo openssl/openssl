@@ -83,7 +83,7 @@ before_script:
     - cd ..
 
 script:
-    - if expr "$CONFIG_OPTS" : "--unified"; then
+    - if echo "$CONFIG_OPTS" | grep "--unified" >/dev/null; then
           cd _build;
       else
           cd _srcdist;
