@@ -512,11 +512,6 @@ static int dynamic_load(ENGINE *e, dynamic_data_ctx *ctx)
     fns.static_state = ENGINE_get_static_state();
     CRYPTO_get_mem_functions(fns.mem_fns.malloc_fn, fns.mem_fns.realloc_fn,
                              fns.mem_fns.free_fn);
-    fns.lock_fns.lock_locking_cb = CRYPTO_get_locking_callback();
-    fns.lock_fns.lock_add_lock_cb = CRYPTO_get_add_lock_callback();
-    fns.lock_fns.dynlock_create_cb = CRYPTO_get_dynlock_create_callback();
-    fns.lock_fns.dynlock_lock_cb = CRYPTO_get_dynlock_lock_callback();
-    fns.lock_fns.dynlock_destroy_cb = CRYPTO_get_dynlock_destroy_callback();
     /*
      * Now that we've loaded the dynamic engine, make sure no "dynamic"
      * ENGINE elements will show through.
