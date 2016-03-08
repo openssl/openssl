@@ -168,7 +168,6 @@ extern "C" {
 # define CRYPTO_LOCK_X509_STORE          11
 # define CRYPTO_LOCK_RAND                18
 # define CRYPTO_LOCK_RAND2               19
-# define CRYPTO_LOCK_RSA_BLINDING        25
 # define CRYPTO_LOCK_DYNLOCK             29
 # define CRYPTO_LOCK_ENGINE              30
 # define CRYPTO_LOCK_ECDSA               32
