@@ -193,12 +193,17 @@
 
        $ ./Configure linux-elf [options]
 
-     If your system is not available, you will have to edit the Configure
-     program and add the correct configuration for your system. The
-     generic configurations "cc" or "gcc" should usually work on 32 bit
-     systems.
+     If your system isn't listed, you will have to create a configuration
+     file named Configurations/{something}.conf and add the correct
+     configuration for your system. See the available configs as examples
+     and read Configurations/README and Configurations/README.design for
+     more information.
 
-     Configure creates the file Makefile.ssl from Makefile.in and
+     The generic configurations "cc" or "gcc" should usually work on 32 bit
+     Unix-like systems.
+
+     Configure creates a build file ("Makefile" on Unix and "descrip.mms"
+     on OpenVMS) from a suitable template in Configurations, and
      defines various macros in crypto/opensslconf.h (generated from
      crypto/opensslconf.h.in).
 
@@ -287,7 +292,7 @@
      You can find the list of available tests like this:
 
        $ make list-tests                                # Unix
-       $ make list-tests                                ! OpenVMS
+       $ mms list-tests                                 ! OpenVMS
 
      Have a look at the manual for the perl module Test::Harness to
      see what other HARNESS_* variables there are.
