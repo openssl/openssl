@@ -1626,8 +1626,9 @@ int main(int argc, char *argv[])
         rv = SSL_CONF_cmd(c_cctx, arg, argn);
         /* If not recognised use server context */
         if (rv == -2) {
-            (void)SSL_CONF_cmd(s_cctx2, arg, argn);
-            rv = SSL_CONF_cmd(s_cctx, arg, argn);
+            rv = SSL_CONF_cmd(s_cctx2, arg, argn);
+            if (rv > 0)
+                rv = SSL_CONF_cmd(s_cctx, arg, argn);
         }
         if (rv <= 0) {
             BIO_printf(bio_err, "Error processing %s %s\n",
