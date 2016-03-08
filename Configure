@@ -1104,7 +1104,11 @@ if ($^O ne "VMS" && !$disabled{makedepend}) {
     $config{makedepprog} = which('makedepend');
     open(PIPE, "$ccpcc --version 2>&1 | head -2 |");
     while ( <PIPE> ) {
-        $config{makedepprog} = $ccpcc if /clang|gcc/;
+        # Find the version number and save the major.
+        m|(?:.*)\b(\d+)\.\d+\.\d+\b(?:.*)|;
+        # We know that GNU C version 3 and up as well as all clang
+        # versions support dependency generation
+        $config{makedepprog} = $ccpcc if /clang/ || (/gcc/ && $1 > 3);
         $ecc = "clang" if /clang/;
         $ecc = "gcc" if /gcc/;
     }
