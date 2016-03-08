@@ -1854,7 +1854,7 @@ const SSL_METHOD *func_name(void)  \
                 ssl3_put_cipher_by_char, \
                 ssl3_pending, \
                 ssl3_num_ciphers, \
-                dtls1_get_cipher, \
+                ssl3_get_cipher, \
                 s_get_meth, \
                 dtls1_default_timeout, \
                 &enc_data, \
@@ -2013,7 +2013,6 @@ __owur long dtls1_default_timeout(void);
 __owur struct timeval *dtls1_get_timeout(SSL *s, struct timeval *timeleft);
 __owur int dtls1_check_timeout_num(SSL *s);
 __owur int dtls1_handle_timeout(SSL *s);
-__owur const SSL_CIPHER *dtls1_get_cipher(unsigned int u);
 void dtls1_start_timer(SSL *s);
 void dtls1_stop_timer(SSL *s);
 __owur int dtls1_is_timer_expired(SSL *s);
