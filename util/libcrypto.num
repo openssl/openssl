@@ -1657,7 +1657,7 @@ TS_ext_print_bio                        1607	1_1_0	EXIST::FUNCTION:
 SCT_set1_log_id                         1608	1_1_0	EXIST::FUNCTION:
 X509_get0_pubkey_bitstr                 1609	1_1_0	EXIST::FUNCTION:
 ENGINE_register_all_RAND                1610	1_1_0	EXIST::FUNCTION:ENGINE
-BN_BLINDING_thread_id                   1611	1_1_0	EXIST::FUNCTION:
+BN_BLINDING_thread_id                   1611	1_1_0	NOEXIST::FUNCTION:
 EVP_MD_meth_get_result_size             1612	1_1_0	EXIST::FUNCTION:
 BIO_ADDRINFO_address                    1613	1_1_0	EXIST::FUNCTION:
 ASN1_STRING_print_ex                    1614	1_1_0	EXIST::FUNCTION:
@@ -1963,7 +1963,7 @@ UI_UTIL_read_pw_string                  1900	1_1_0	EXIST::FUNCTION:
 NOTICEREF_free                          1901	1_1_0	EXIST::FUNCTION:
 AES_cfb1_encrypt                        1902	1_1_0	EXIST::FUNCTION:AES
 X509v3_get_ext                          1903	1_1_0	EXIST::FUNCTION:
-BN_BLINDING_set_thread_id               1904	1_1_0	EXIST::FUNCTION:DEPRECATEDIN_1_0_0
+BN_BLINDING_set_thread_id               1904	1_1_0	NOEXIST::FUNCTION:
 CRYPTO_gcm128_encrypt_ctr32             1905	1_1_0	EXIST::FUNCTION:
 SCT_set1_signature                      1906	1_1_0	EXIST::FUNCTION:
 CONF_imodule_get_module                 1907	1_1_0	EXIST::FUNCTION:
@@ -2732,7 +2732,7 @@ d2i_PBKDF2PARAM                         2640	1_1_0	EXIST::FUNCTION:
 ERR_load_COMP_strings                   2641	1_1_0	EXIST::FUNCTION:
 EVP_PKEY_meth_add0                      2642	1_1_0	EXIST::FUNCTION:
 EVP_rc4_40                              2643	1_1_0	EXIST::FUNCTION:RC4
-BN_BLINDING_get_thread_id               2644	1_1_0	EXIST::FUNCTION:DEPRECATEDIN_1_0_0
+BN_BLINDING_get_thread_id               2644	1_1_0	NOEXIST::FUNCTION:
 RSA_bits                                2645	1_1_0	EXIST::FUNCTION:RSA
 ASN1_item_dup                           2646	1_1_0	EXIST::FUNCTION:
 GENERAL_NAMES_it                        2647	1_1_0	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:
@@ -4046,3 +4046,7 @@ EVP_CIPHER_CTX_get_cipher_data          3911	1_1_0	EXIST::FUNCTION:
 BIO_up_ref                              3912	1_1_0	EXIST::FUNCTION:
 X509_STORE_up_ref                       3913	1_1_0	EXIST::FUNCTION:
 DSA_SIG_get0                            3914	1_1_0	EXIST::FUNCTION:DSA
+BN_BLINDING_is_current_thread           3915	1_1_0	EXIST::FUNCTION:
+BN_BLINDING_set_current_thread          3916	1_1_0	EXIST::FUNCTION:
+BN_BLINDING_lock                        3917	1_1_0	EXIST::FUNCTION:
+BN_BLINDING_unlock                      3918	1_1_0	EXIST::FUNCTION:
