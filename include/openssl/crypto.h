@@ -182,8 +182,6 @@ extern "C" {
 # define CRYPTO_LOCK_SSL_SESS_CERT       15
 # define CRYPTO_LOCK_SSL                 16
 # define CRYPTO_LOCK_SSL_METHOD          17
-# define CRYPTO_LOCK_RAND                18
-# define CRYPTO_LOCK_RAND2               19
 # define CRYPTO_LOCK_MALLOC              20
 # define CRYPTO_LOCK_BIO                 21
 # define CRYPTO_LOCK_GETHOSTBYNAME       22
