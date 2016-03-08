@@ -60,12 +60,12 @@
  * [including the GNU Public Licence.]
  */
 
-#define NUM_NID 1037
-#define NUM_SN 1030
-#define NUM_LN 1030
-#define NUM_OBJ 951
+#define NUM_NID 1039
+#define NUM_SN 1032
+#define NUM_LN 1032
+#define NUM_OBJ 953
 
-static const unsigned char lvalues[6722]={
+static const unsigned char lvalues[6744]={
 0x2A,0x86,0x48,0x86,0xF7,0x0D,               /* [  0] OBJ_rsadsi */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,          /* [  6] OBJ_pkcs */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x02,0x02,     /* [ 13] OBJ_md2 */
@@ -1011,6 +1011,8 @@ static const unsigned char lvalues[6722]={
 0x2B,0x06,0x01,0x05,0x02,0x03,0x05,          /* [6696] OBJ_pkInitKDC */
 0x2B,0x06,0x01,0x04,0x01,0xDA,0x47,0x0F,0x01,/* [6703] OBJ_X25519 */
 0x2B,0x06,0x01,0x04,0x01,0xDA,0x47,0x0F,0x02,/* [6712] OBJ_X448 */
+0x2B,0x06,0x01,0x04,0x01,0x8D,0x3A,0x0C,0x02,0x01,0x10,/* [6721] OBJ_blake2b */
+0x2B,0x06,0x01,0x04,0x01,0x8D,0x3A,0x0C,0x02,0x02,0x08,/* [6732] OBJ_blake2s */
 };
 
 static const ASN1_OBJECT nid_objs[NUM_NID]={
@@ -2705,6 +2707,8 @@ static const ASN1_OBJECT nid_objs[NUM_NID]={
 {"X25519","X25519",NID_X25519,9,&(lvalues[6703]),0},
 {"X448","X448",NID_X448,9,&(lvalues[6712]),0},
 {"HKDF","hkdf",NID_hkdf,0,NULL,0},
+{"BLAKE2b","blake2b",NID_blake2b,11,&(lvalues[6721]),0},
+{"BLAKE2s","blake2s",NID_blake2s,11,&(lvalues[6732]),0},
 };
 
 static const unsigned int sn_objs[NUM_SN]={
@@ -2745,6 +2749,8 @@ static const unsigned int sn_objs[NUM_SN]={
 93,	/* "BF-CFB" */
 92,	/* "BF-ECB" */
 94,	/* "BF-OFB" */
+1037,	/* "BLAKE2b" */
+1038,	/* "BLAKE2s" */
 14,	/* "C" */
 751,	/* "CAMELLIA-128-CBC" */
 962,	/* "CAMELLIA-128-CCM" */
@@ -3966,6 +3972,8 @@ static const unsigned int ln_objs[NUM_LN]={
 93,	/* "bf-cfb" */
 92,	/* "bf-ecb" */
 94,	/* "bf-ofb" */
+1037,	/* "blake2b" */
+1038,	/* "blake2s" */
 921,	/* "brainpoolP160r1" */
 922,	/* "brainpoolP160t1" */
 923,	/* "brainpoolP192r1" */
@@ -5725,5 +5733,7 @@ static const unsigned int obj_objs[NUM_OBJ]={
 955,	/* OBJ_jurisdictionLocalityName     1 3 6 1 4 1 311 60 2 1 1 */
 956,	/* OBJ_jurisdictionStateOrProvinceName 1 3 6 1 4 1 311 60 2 1 2 */
 957,	/* OBJ_jurisdictionCountryName      1 3 6 1 4 1 311 60 2 1 3 */
+1037,	/* OBJ_blake2b                      1 3 6 1 4 1 1722 12 2 1 16 */
+1038,	/* OBJ_blake2s                      1 3 6 1 4 1 1722 12 2 2 8 */
 };
 

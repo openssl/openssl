@@ -220,7 +220,7 @@ $config{dirs} = [ "crypto", "ssl", "engines", "apps", "test", "tools" ];
 # crypto/ subdirectories to build
 $config{sdirs} = [
     "objects",
-    "md2", "md4", "md5", "sha", "mdc2", "hmac", "ripemd", "whrlpool", "poly1305",
+    "md2", "md4", "md5", "sha", "mdc2", "hmac", "ripemd", "whrlpool", "poly1305", "blake2",
     "des", "aes", "rc2", "rc4", "rc5", "idea", "bf", "cast", "camellia", "seed", "chacha", "modes",
     "bn", "ec", "rsa", "dsa", "dh", "dso", "engine",
     "buffer", "bio", "stack", "lhash", "rand", "err",
@@ -243,6 +243,7 @@ my @disablables = (
     "autoalginit",
     "autoerrinit",
     "bf",
+    "blake2",
     "camellia",
     "capieng",
     "cast",
@@ -1764,6 +1765,7 @@ print "MODES_OBJ     =$target{modes_obj}\n";
 print "PADLOCK_OBJ   =$target{padlock_obj}\n";
 print "CHACHA_ENC    =$target{chacha_obj}\n";
 print "POLY1305_OBJ  =$target{poly1305_obj}\n";
+print "BLAKE2_OBJ    =$target{blake2_obj}\n";
 print "PROCESSOR     =$config{processor}\n";
 print "RANLIB        =$target{ranlib}\n";
 print "ARFLAGS       =$target{arflags}\n";
