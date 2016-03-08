@@ -164,13 +164,13 @@ int SCT_CTX_set1_cert(SCT_CTX *sctx, X509 *cert, X509 *presigner)
     int poison_ext_is_dup, sct_ext_is_dup;
     int poison_idx = ct_x509_get_ext(cert, NID_ct_precert_poison, &poison_ext_is_dup);
 
-    /* Duplicate poison */
+    /* Duplicate poison extensions are present - error */
     if (poison_ext_is_dup)
         goto err;
 
-    /* If no poison extension, store encoding */
+    /* If *cert doesn't have a poison extension, it isn't a precert */
     if (poison_idx == -1) {
-        /* presigner must have poison */
+        /* cert isn't a precert, so we shouldn't have a presigner */
         if (presigner != NULL)
             goto err;
 
@@ -179,20 +179,30 @@ int SCT_CTX_set1_cert(SCT_CTX *sctx, X509 *cert, X509 *presigner)
             goto err;
     }
 
-    /* See if have precert scts extension */
+    /* See if cert has a precert SCTs extension */
     idx = ct_x509_get_ext(cert, NID_ct_precert_scts, &sct_ext_is_dup);
-    /* Duplicate scts */
+    /* Duplicate SCT extensions are present - error */
     if (sct_ext_is_dup)
         goto err;
 
-    if (idx >= 0) {
-        /* Can't have both poison and scts */
-        if (poison_idx >= 0)
-            goto err;
-    } else {
+    if (idx >= 0 && poison_idx >= 0) {
+        /*
+         * cert can't both contain SCTs (i.e. have an SCT extension) and be a
+         * precert (i.e. have a poison extension).
+         */
+        goto err;
+    }
+
+    if (idx == -1) {
         idx = poison_idx;
     }
 
+    /*
+     * If either a poison or SCT extension is present, remove it before encoding
+     * cert. This, along with ct_x509_cert_fixup(), gets a TBSCertificate (see
+     * RFC5280) from cert, which is what the CT log signed when it produced the
+     * SCT.
+     */
     if (idx >= 0) {
         X509_EXTENSION *ext;
 
