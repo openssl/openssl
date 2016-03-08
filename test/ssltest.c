@@ -3617,6 +3617,12 @@ static int do_test_cipherlist(void)
     int i = 0;
     const SSL_METHOD *meth;
     const SSL_CIPHER *ci, *tci = NULL;
+
+    /*
+     * This is required because ssltest "cheats" and uses internal headers to
+     * call functions, thus avoiding auto-init
+     */
+    OPENSSL_init_crypto(0, NULL);
 #endif
 
 #ifndef OPENSSL_NO_SSL3
