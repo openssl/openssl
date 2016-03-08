@@ -184,14 +184,12 @@ extern "C" {
 # define CRYPTO_LOCK_SSL_METHOD          17
 # define CRYPTO_LOCK_RAND                18
 # define CRYPTO_LOCK_RAND2               19
-# define CRYPTO_LOCK_MALLOC              20
 # define CRYPTO_LOCK_BIO                 21
 # define CRYPTO_LOCK_GETHOSTBYNAME       22
 # define CRYPTO_LOCK_GETSERVBYNAME       23
 # define CRYPTO_LOCK_READDIR             24
 # define CRYPTO_LOCK_RSA_BLINDING        25
 # define CRYPTO_LOCK_DH                  26
-# define CRYPTO_LOCK_MALLOC2             27
 # define CRYPTO_LOCK_DSO                 28
 # define CRYPTO_LOCK_DYNLOCK             29
 # define CRYPTO_LOCK_ENGINE              30
