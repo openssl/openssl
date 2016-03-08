@@ -207,8 +207,8 @@
 # include OPENSSL_UNISTD
 #endif
 
-SSL_CTX *s_ctx = NULL;
-SSL_CTX *s_ctx2 = NULL;
+static SSL_CTX *s_ctx = NULL;
+static SSL_CTX *s_ctx2 = NULL;
 
 /*
  * There is really no standard for this, so let's assign something
@@ -1626,7 +1626,7 @@ int main(int argc, char *argv[])
         rv = SSL_CONF_cmd(c_cctx, arg, argn);
         /* If not recognised use server context */
         if (rv == -2) {
-            SSL_CONF_cmd(s_cctx2, arg, argn);
+            (void)SSL_CONF_cmd(s_cctx2, arg, argn);
             rv = SSL_CONF_cmd(s_cctx, arg, argn);
         }
         if (rv <= 0) {
