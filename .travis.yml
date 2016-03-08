@@ -24,8 +24,8 @@ env:
     - CONFIG_OPTS="shared"
     - CONFIG_OPTS="--debug --strict-warnings enable-crypto-mdebug enable-rc5 enable-md2"
     - CONFIG_OPTS="" BUILDONLY="yes"
-    - CONFIG_OPTS="--unified" BUILDONLY="yes"
-    - CONFIG_OPTS="--unified shared" BUILDONLY="yes"
+    - CONFIG_OPTS="--classic" BUILDONLY="yes"
+    - CONFIG_OPTS="--classic shared" BUILDONLY="yes"
     - CONFIG_OPTS="no-pic" BUILDONLY="yes"
     - CONFIG_OPTS="no-engine" BUILDONLY="yes"
 
