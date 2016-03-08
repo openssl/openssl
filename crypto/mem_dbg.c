@@ -284,11 +284,12 @@ int CRYPTO_mem_ctrl(int mode)
 static int mem_check_on(void)
 {
     int ret = 0;
+    CRYPTO_THREAD_ID cur;
 
     if (mh_mode & CRYPTO_MEM_CHECK_ON) {
         CRYPTO_THREAD_run_once(&memdbg_init, do_memdbg_init);
 
-        CRYPTO_THREAD_ID cur = CRYPTO_THREAD_get_current_id();
+        cur = CRYPTO_THREAD_get_current_id();
         CRYPTO_THREAD_read_lock(malloc_lock);
 
         ret = (mh_mode & CRYPTO_MEM_CHECK_ENABLE)
