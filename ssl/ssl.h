@@ -2017,11 +2017,9 @@ const char *SSL_get_version(const SSL *s);
 /* This sets the 'default' SSL version that SSL_new() will create */
 int SSL_CTX_set_ssl_version(SSL_CTX *ctx, const SSL_METHOD *meth);
 
-# ifndef OPENSSL_NO_SSL2
 const SSL_METHOD *SSLv2_method(void); /* SSLv2 */
 const SSL_METHOD *SSLv2_server_method(void); /* SSLv2 */
 const SSL_METHOD *SSLv2_client_method(void); /* SSLv2 */
-# endif
 
 # ifndef OPENSSL_NO_SSL3_METHOD
 const SSL_METHOD *SSLv3_method(void); /* SSLv3 */
