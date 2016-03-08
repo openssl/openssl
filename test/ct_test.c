@@ -545,10 +545,6 @@ static int test_encode_tls_sct()
         return 1;
     }
     SCT_set_timestamp(sct, 1);
-    if (!SCT_set1_extensions(sct, (unsigned char *)"", 0)) {
-        fprintf(stderr, "Failed to set SCT extensions\n");
-        return 1;
-    }
     if (!SCT_set_signature_nid(sct, NID_ecdsa_with_SHA256)) {
         fprintf(stderr, "Failed to set SCT signature NID\n");
         return 1;
