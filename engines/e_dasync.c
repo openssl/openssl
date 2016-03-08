@@ -674,7 +674,7 @@ static int dasync_cipher_init_key_helper(EVP_CIPHER_CTX *ctx,
         pipe_ctx->inner_cipher_data = OPENSSL_zalloc(
             EVP_CIPHER_impl_ctx_size(cipher));
         if (pipe_ctx->inner_cipher_data == NULL) {
-            DASYNCerr(DASYNC_F_DASYNC_AES128_INIT_KEY,
+            DASYNCerr(DASYNC_F_DASYNC_CIPHER_INIT_KEY_HELPER,
                         ERR_R_MALLOC_FAILURE);
             return 0;
         }
