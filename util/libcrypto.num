@@ -4043,3 +4043,5 @@ PKCS8_pkey_add1_attr_by_NID             3908	1_1_0	EXIST::FUNCTION:
 ASYNC_is_capable                        3909	1_1_0	EXIST::FUNCTION:
 EVP_CIPHER_CTX_set_cipher_data          3910	1_1_0	EXIST::FUNCTION:
 EVP_CIPHER_CTX_get_cipher_data          3911	1_1_0	EXIST::FUNCTION:
+BIO_up_ref                              3912	1_1_0	EXIST::FUNCTION:
+X509_STORE_up_ref                       3913	1_1_0	EXIST::FUNCTION:

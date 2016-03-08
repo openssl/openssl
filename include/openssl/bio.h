@@ -326,6 +326,7 @@ struct bio_st {
     uint64_t num_read;
     uint64_t num_write;
     CRYPTO_EX_DATA ex_data;
+    CRYPTO_RWLOCK *lock;
 };
 
 DEFINE_STACK_OF(BIO)
@@ -635,6 +636,7 @@ BIO *BIO_new(BIO_METHOD *type);
 int BIO_set(BIO *a, BIO_METHOD *type);
 int BIO_free(BIO *a);
 void BIO_vfree(BIO *a);
+int BIO_up_ref(BIO *a);
 int BIO_read(BIO *b, void *data, int len);
 int BIO_gets(BIO *bp, char *buf, int size);
 int BIO_write(BIO *b, const void *data, int len);

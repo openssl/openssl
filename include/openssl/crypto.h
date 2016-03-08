@@ -165,12 +165,6 @@ extern "C" {
  * names in cryptlib.c
  */
 
-# define CRYPTO_LOCK_X509                3
-# define CRYPTO_LOCK_X509_INFO           4
-# define CRYPTO_LOCK_X509_PKEY           5
-# define CRYPTO_LOCK_X509_CRL            6
-# define CRYPTO_LOCK_X509_REQ            7
-# define CRYPTO_LOCK_EVP_PKEY            10
 # define CRYPTO_LOCK_X509_STORE          11
 # define CRYPTO_LOCK_SSL_CTX             12
 # define CRYPTO_LOCK_SSL_CERT            13
@@ -181,18 +175,14 @@ extern "C" {
 # define CRYPTO_LOCK_RAND                18
 # define CRYPTO_LOCK_RAND2               19
 # define CRYPTO_LOCK_MALLOC              20
-# define CRYPTO_LOCK_BIO                 21
 # define CRYPTO_LOCK_READDIR             24
 # define CRYPTO_LOCK_RSA_BLINDING        25
 # define CRYPTO_LOCK_MALLOC2             27
 # define CRYPTO_LOCK_DYNLOCK             29
 # define CRYPTO_LOCK_ENGINE              30
-# define CRYPTO_LOCK_UI                  31
 # define CRYPTO_LOCK_ECDSA               32
-# define CRYPTO_LOCK_EC                  33
 # define CRYPTO_LOCK_ECDH                34
 # define CRYPTO_LOCK_BN                  35
-# define CRYPTO_LOCK_EC_PRE_COMP         36
 # define CRYPTO_LOCK_STORE               37
 # define CRYPTO_LOCK_COMP                38
 # define CRYPTO_LOCK_FIPS                39

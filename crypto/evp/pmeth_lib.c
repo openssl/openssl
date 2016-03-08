@@ -175,7 +175,7 @@ static EVP_PKEY_CTX *int_ctx_new(EVP_PKEY *pkey, ENGINE *e, int id)
     ret->operation = EVP_PKEY_OP_UNDEFINED;
     ret->pkey = pkey;
     if (pkey)
-        CRYPTO_add(&pkey->references, 1, CRYPTO_LOCK_EVP_PKEY);
+        EVP_PKEY_up_ref(pkey);
 
     if (pmeth->init) {
         if (pmeth->init(ret) <= 0) {
@@ -288,12 +288,12 @@ EVP_PKEY_CTX *EVP_PKEY_CTX_dup(EVP_PKEY_CTX *pctx)
 #endif
 
     if (pctx->pkey)
-        CRYPTO_add(&pctx->pkey->references, 1, CRYPTO_LOCK_EVP_PKEY);
+        EVP_PKEY_up_ref(pctx->pkey);
 
     rctx->pkey = pctx->pkey;
 
     if (pctx->peerkey)
-        CRYPTO_add(&pctx->peerkey->references, 1, CRYPTO_LOCK_EVP_PKEY);
+        EVP_PKEY_up_ref(pctx->peerkey);
 
     rctx->peerkey = pctx->peerkey;
 

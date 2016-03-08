@@ -70,6 +70,11 @@ X509_PKEY *X509_PKEY_new(void)
         goto err;
 
     ret->references = 1;
+    ret->lock = CRYPTO_THREAD_lock_new();
+    if (ret->lock == NULL) {
+        OPENSSL_free(ret);
+        return NULL;
+    }
     ret->enc_algor = X509_ALGOR_new();
     ret->enc_pkey = ASN1_OCTET_STRING_new();
     if (ret->enc_algor == NULL || ret->enc_pkey == NULL)
@@ -89,7 +94,7 @@ void X509_PKEY_free(X509_PKEY *x)
     if (x == NULL)
         return;
 
-    i = CRYPTO_add(&x->references, -1, CRYPTO_LOCK_X509_PKEY);
+    CRYPTO_atomic_add(&x->references, -1, &i, x->lock);
     REF_PRINT_COUNT("X509_PKEY", x);
     if (i > 0)
         return;
@@ -100,5 +105,6 @@ void X509_PKEY_free(X509_PKEY *x)
     EVP_PKEY_free(x->dec_pkey);
     if (x->key_free)
         OPENSSL_free(x->key_data);
+    CRYPTO_THREAD_lock_free(x->lock);
     OPENSSL_free(x);
 }
