@@ -307,12 +307,18 @@ static int execute_cert_test(CT_TEST_FIXTURE fixture)
 
             if (fixture.test_validity) {
                 int are_scts_validated = 0;
+                int i;
+
                 scts = X509V3_EXT_d2i(sct_extension);
-                if (SCT_LIST_set_source(scts, SCT_SOURCE_X509V3_EXTENSION) !=
-                    sk_SCT_num(scts)) {
-                    fprintf(stderr,
-                            "Error setting SCT source to X509v3 extension\n");
-                    test_failed = 1;
+                for (i = 0; i < sk_SCT_num(scts); ++i) {
+                    SCT *sct_i = sk_SCT_value(scts, i);
+
+                    if (!SCT_set_source(sct_i, SCT_SOURCE_X509V3_EXTENSION)) {
+                        fprintf(stderr,
+                                "Error setting SCT source to X509v3 extension\n");
+                        test_failed = 1;
+                        goto end;
+                    }
                 }
 
                 are_scts_validated = SCT_LIST_validate(scts, ct_policy_ctx);
@@ -322,7 +328,6 @@ static int execute_cert_test(CT_TEST_FIXTURE fixture)
                 } else if (!are_scts_validated) {
                     int invalid_sct_count = 0;
                     int valid_sct_count = 0;
-                    int i;
 
                     for (i = 0; i < sk_SCT_num(scts); ++i) {
                         SCT *sct_i = sk_SCT_value(scts, i);

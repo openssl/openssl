@@ -327,18 +327,6 @@ int SCT_set_source(SCT *sct, sct_source_t source)
     }
 }
 
-int SCT_LIST_set_source(const STACK_OF(SCT) *scts, sct_source_t source)
-{
-    int i, ret = 0;
-
-    for (i = 0; i < sk_SCT_num(scts); ++i) {
-        if (SCT_set_source(sk_SCT_value(scts, i), source))
-            ++ret;
-    }
-
-    return ret;
-}
-
 const CTLOG *SCT_get0_log(const SCT *sct)
 {
     return sct->log;
@@ -349,23 +337,6 @@ int SCT_set0_log(SCT *sct, const CTLOG_STORE *ct_logs)
     sct->log = CTLOG_STORE_get0_log_by_id(ct_logs, sct->log_id, sct->log_id_len);
 
     return sct->log != NULL;
-}
-
-int SCT_LIST_set0_logs(STACK_OF(SCT) *sct_list, const CTLOG_STORE *ct_logs)
-{
-    int sct_logs_found = 0;
-    int i;
-
-    for (i = 0; i < sk_SCT_num(sct_list); ++i) {
-        SCT *sct = sk_SCT_value(sct_list, i);
-
-        if (sct->log == NULL)
-            SCT_set0_log(sct, ct_logs);
-        if (sct->log != NULL)
-            ++sct_logs_found;
-    }
-
-    return sct_logs_found;
 }
 
 sct_validation_status_t SCT_get_validation_status(const SCT *sct)
