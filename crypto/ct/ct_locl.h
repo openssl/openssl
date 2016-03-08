@@ -168,14 +168,18 @@ SCT_CTX *SCT_CTX_new(void);
 void SCT_CTX_free(SCT_CTX *sctx);
 
 /*
- * Sets the certificate that the SCT is being verified against.
- * This will fail if the certificate is invalid.
+ * Sets the certificate that the SCT was created for.
+ * If *cert does not have a poison extension, presigner must be NULL.
+ * If *cert does not have a poison extension, it may have a single SCT
+ * (NID_ct_precert_scts) extension.
+ * If either *cert or *presigner have an AKID (NID_authority_key_identifier)
+ * extension, both must have one.
  * Returns 1 on success, 0 on failure.
  */
 __owur int SCT_CTX_set1_cert(SCT_CTX *sctx, X509 *cert, X509 *presigner);
 
 /*
- * Sets the issuer of the certificate that the SCT is being verified against.
+ * Sets the issuer of the certificate that the SCT was created for.
  * This is just a convenience method to save extracting the public key and
  * calling SCT_CTX_set1_issuer_pubkey().
  * Issuer must not be NULL.
@@ -184,8 +188,8 @@ __owur int SCT_CTX_set1_cert(SCT_CTX *sctx, X509 *cert, X509 *presigner);
 __owur int SCT_CTX_set1_issuer(SCT_CTX *sctx, const X509 *issuer);
 
 /*
- * Sets the public key of the issuer of the certificate that the SCT is being
- * verified against.
+ * Sets the public key of the issuer of the certificate that the SCT was created
+ * for.
  * The public key must not be NULL.
  * Returns 1 on success, 0 on failure.
  */
