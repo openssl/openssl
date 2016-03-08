@@ -414,7 +414,7 @@ STACK_OF(SCT) *o2i_SCT_LIST(STACK_OF(SCT) **a, const unsigned char **pp,
  * Returns < 0 on error, >= 0 indicating bytes written (or would have been)
  * on success.
  */
-__owur int i2d_SCT_LIST(STACK_OF(SCT) *a, unsigned char **pp);
+__owur int i2d_SCT_LIST(const STACK_OF(SCT) *a, unsigned char **pp);
 
 /*
  * Parses an SCT list in DER format and returns it.
