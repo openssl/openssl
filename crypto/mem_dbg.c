@@ -112,6 +112,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include "internal/cryptlib.h"
+#include "internal/threads.h"
 #include <openssl/crypto.h>
 #include <openssl/buffer.h>
 #include <openssl/bio.h>
@@ -147,7 +148,7 @@ static unsigned long order = 0; /* number of memory requests */
  *   OPENSSL_mem_debug_pop()     to pop an entry,
  */
 struct app_mem_info_st {
-    CRYPTO_THREADID threadid;
+    CRYPTO_THREAD_ID threadid;
     const char *file;
     int line;
     const char *info;
@@ -155,12 +156,10 @@ struct app_mem_info_st {
     int references;
 };
 
-/*
- * hash-table with those app_mem_info_st's that are at the
- * top of their thread's stack (with `thread' as key); access requires
- * MALLOC2 lock
- */
-static LHASH_OF(APP_INFO) *amih = NULL;
+static CRYPTO_ONCE memdbg_init = CRYPTO_ONCE_STATIC_INIT;
+static CRYPTO_RWLOCK *malloc_lock = NULL;
+static CRYPTO_RWLOCK *long_malloc_lock = NULL;
+static CRYPTO_THREAD_LOCAL appinfokey;
 
 /* memory-block description */
 struct mem_st {
@@ -168,7 +167,7 @@ struct mem_st {
     int num;
     const char *file;
     int line;
-    CRYPTO_THREADID threadid;
+    CRYPTO_THREAD_ID threadid;
     unsigned long order;
     time_t time;
     APP_INFO *app_info;
@@ -188,7 +187,14 @@ static unsigned int num_disable = 0;
  * Valid iff num_disable > 0.  CRYPTO_LOCK_MALLOC2 is locked exactly in this
  * case (by the thread named in disabling_thread).
  */
-static CRYPTO_THREADID disabling_threadid;
+static CRYPTO_THREAD_ID disabling_threadid;
+
+static void do_memdbg_init(void)
+{
+    malloc_lock = CRYPTO_THREAD_lock_new();
+    long_malloc_lock = CRYPTO_THREAD_lock_new();
+    CRYPTO_THREAD_init_local(&appinfokey, NULL);
+}
 
 static void app_info_free(APP_INFO *inf)
 {
@@ -208,7 +214,9 @@ int CRYPTO_mem_ctrl(int mode)
 #else
     int ret = mh_mode;
 
-    CRYPTO_w_lock(CRYPTO_LOCK_MALLOC);
+    CRYPTO_THREAD_run_once(&memdbg_init, do_memdbg_init);
+
+    CRYPTO_THREAD_write_lock(malloc_lock);
     switch (mode) {
     default:
         break;
@@ -226,30 +234,29 @@ int CRYPTO_mem_ctrl(int mode)
     /* switch off temporarily (for library-internal use): */
     case CRYPTO_MEM_CHECK_DISABLE:
         if (mh_mode & CRYPTO_MEM_CHECK_ON) {
-            CRYPTO_THREADID cur;
-            CRYPTO_THREADID_current(&cur);
-            /* see if we don't have the MALLOC2 lock already */
+            CRYPTO_THREAD_ID cur = CRYPTO_THREAD_get_current_id();
+            /* see if we don't have long_malloc_lock already */
             if (!num_disable
-                || CRYPTO_THREADID_cmp(&disabling_threadid, &cur)) {
+                || !CRYPTO_THREAD_compare_id(disabling_threadid, cur)) {
                 /*
-                 * Long-time lock CRYPTO_LOCK_MALLOC2 must not be claimed
-                 * while we're holding CRYPTO_LOCK_MALLOC, or we'll deadlock
-                 * if somebody else holds CRYPTO_LOCK_MALLOC2 (and cannot
+                 * Long-time lock long_malloc_lock must not be claimed
+                 * while we're holding malloc_lock, or we'll deadlock
+                 * if somebody else holds long_malloc_lock (and cannot
                  * release it because we block entry to this function). Give
                  * them a chance, first, and then claim the locks in
                  * appropriate order (long-time lock first).
                  */
-                CRYPTO_w_unlock(CRYPTO_LOCK_MALLOC);
+                CRYPTO_THREAD_unlock(malloc_lock);
                 /*
                  * Note that after we have waited for CRYPTO_LOCK_MALLOC2 and
                  * CRYPTO_LOCK_MALLOC, we'll still be in the right "case" and
                  * "if" branch because MemCheck_start and MemCheck_stop may
                  * never be used while there are multiple OpenSSL threads.
                  */
-                CRYPTO_w_lock(CRYPTO_LOCK_MALLOC2);
-                CRYPTO_w_lock(CRYPTO_LOCK_MALLOC);
+                CRYPTO_THREAD_write_lock(long_malloc_lock);
+                CRYPTO_THREAD_write_lock(malloc_lock);
                 mh_mode &= ~CRYPTO_MEM_CHECK_ENABLE;
-                CRYPTO_THREADID_cpy(&disabling_threadid, &cur);
+                disabling_threadid = cur;
             }
             num_disable++;
         }
@@ -261,13 +268,13 @@ int CRYPTO_mem_ctrl(int mode)
                 num_disable--;
                 if (num_disable == 0) {
                     mh_mode |= CRYPTO_MEM_CHECK_ENABLE;
-                    CRYPTO_w_unlock(CRYPTO_LOCK_MALLOC2);
+                    CRYPTO_THREAD_unlock(long_malloc_lock);
                 }
             }
         }
         break;
     }
-    CRYPTO_w_unlock(CRYPTO_LOCK_MALLOC);
+    CRYPTO_THREAD_unlock(malloc_lock);
     return (ret);
 #endif
 }
@@ -279,14 +286,15 @@ static int mem_check_on(void)
     int ret = 0;
 
     if (mh_mode & CRYPTO_MEM_CHECK_ON) {
-        CRYPTO_THREADID cur;
-        CRYPTO_THREADID_current(&cur);
-        CRYPTO_r_lock(CRYPTO_LOCK_MALLOC);
+        CRYPTO_THREAD_run_once(&memdbg_init, do_memdbg_init);
+
+        CRYPTO_THREAD_ID cur = CRYPTO_THREAD_get_current_id();
+        CRYPTO_THREAD_read_lock(malloc_lock);
 
         ret = (mh_mode & CRYPTO_MEM_CHECK_ENABLE)
-            || CRYPTO_THREADID_cmp(&disabling_threadid, &cur);
+            || !CRYPTO_THREAD_compare_id(disabling_threadid, cur);
 
-        CRYPTO_r_unlock(CRYPTO_LOCK_MALLOC);
+        CRYPTO_THREAD_unlock(malloc_lock);
     }
     return (ret);
 }
@@ -316,44 +324,29 @@ static unsigned long mem_hash(const MEM *a)
     return (ret);
 }
 
-static int app_info_cmp(const APP_INFO *a, const APP_INFO *b)
-{
-    return CRYPTO_THREADID_cmp(&a->threadid, &b->threadid);
-}
-
-static unsigned long app_info_hash(const APP_INFO *a)
-{
-    unsigned long ret;
-
-    ret = CRYPTO_THREADID_hash(&a->threadid);
-    /* This is left in as a "who am I to question legacy?" measure */
-    ret = ret * 17851 + (ret >> 14) * 7 + (ret >> 4) * 251;
-    return (ret);
-}
-
 /* returns 1 if there was an info to pop, 0 if the stack was empty. */
 static int pop_info(void)
 {
-    APP_INFO tmp;
     APP_INFO *current = NULL;
 
-    if (amih != NULL) {
-        CRYPTO_THREADID_current(&tmp.threadid);
-        if ((current = lh_APP_INFO_delete(amih, &tmp)) != NULL) {
-            APP_INFO *next = current->next;
+    CRYPTO_THREAD_run_once(&memdbg_init, do_memdbg_init);
+    current = (APP_INFO *)CRYPTO_THREAD_get_local(&appinfokey);
+    if (current != NULL) {
+        APP_INFO *next = current->next;
 
-            if (next != NULL) {
-                next->references++;
-                (void)lh_APP_INFO_insert(amih, next);
-            }
-            if (--(current->references) <= 0) {
-                current->next = NULL;
-                if (next != NULL)
-                    next->references--;
-                OPENSSL_free(current);
-            }
-            return 1;
+        if (next != NULL) {
+            next->references++;
+            CRYPTO_THREAD_set_local(&appinfokey, next);
+        } else {
+            CRYPTO_THREAD_set_local(&appinfokey, NULL);
         }
+        if (--(current->references) <= 0) {
+            current->next = NULL;
+            if (next != NULL)
+                next->references--;
+            OPENSSL_free(current);
+        }
+        return 1;
     }
     return 0;
 }
@@ -366,23 +359,22 @@ int CRYPTO_mem_debug_push(const char *info, const char *file, int line)
     if (mem_check_on()) {
         CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_DISABLE);
 
+        CRYPTO_THREAD_run_once(&memdbg_init, do_memdbg_init);
+
         if ((ami = OPENSSL_malloc(sizeof(*ami))) == NULL)
             goto err;
-        if (amih == NULL) {
-            if ((amih = lh_APP_INFO_new(app_info_hash, app_info_cmp)) == NULL) {
-                OPENSSL_free(ami);
-                goto err;
-            }
-        }
 
-        CRYPTO_THREADID_current(&ami->threadid);
+        ami->threadid = CRYPTO_THREAD_get_current_id();
         ami->file = file;
         ami->line = line;
         ami->info = info;
         ami->references = 1;
         ami->next = NULL;
 
-        if ((amim = lh_APP_INFO_insert(amih, ami)) != NULL)
+        amim = (APP_INFO *)CRYPTO_THREAD_get_local(&appinfokey);
+        CRYPTO_THREAD_set_local(&appinfokey, ami);
+
+        if (amim != NULL)
             ami->next = amim;
         ret = 1;
  err:
@@ -410,7 +402,7 @@ void CRYPTO_mem_debug_malloc(void *addr, size_t num, int before_p,
                              const char *file, int line)
 {
     MEM *m, *mm;
-    APP_INFO tmp, *amim;
+    APP_INFO *amim;
 
     switch (before_p & 127) {
     case 0:
@@ -421,6 +413,9 @@ void CRYPTO_mem_debug_malloc(void *addr, size_t num, int before_p,
 
         if (mem_check_on()) {
             CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_DISABLE);
+
+            CRYPTO_THREAD_run_once(&memdbg_init, do_memdbg_init);
+
             if ((m = OPENSSL_malloc(sizeof(*m))) == NULL) {
                 OPENSSL_free(addr);
                 CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ENABLE);
@@ -439,7 +434,7 @@ void CRYPTO_mem_debug_malloc(void *addr, size_t num, int before_p,
             m->file = file;
             m->line = line;
             m->num = num;
-            CRYPTO_THREADID_current(&m->threadid);
+            m->threadid = CRYPTO_THREAD_get_current_id();
 
             if (order == break_order_num) {
                 /* BREAK HERE */
@@ -451,13 +446,10 @@ void CRYPTO_mem_debug_malloc(void *addr, size_t num, int before_p,
 # endif
             m->time = time(NULL);
 
-            CRYPTO_THREADID_current(&tmp.threadid);
-            m->app_info = NULL;
-            if (amih != NULL
-                && (amim = lh_APP_INFO_retrieve(amih, &tmp)) != NULL) {
-                m->app_info = amim;
+            amim = (APP_INFO *)CRYPTO_THREAD_get_local(&appinfokey);
+            m->app_info = amim;
+            if (amim != NULL)
                 amim->references++;
-            }
 
             if ((mm = lh_MEM_insert(mh, m)) != NULL) {
                 /* Not good, but don't sweat it */
@@ -554,7 +546,16 @@ static void print_leak(const MEM *m, MEM_LEAK *l)
     APP_INFO *amip;
     int ami_cnt;
     struct tm *lcl = NULL;
-    CRYPTO_THREADID ti;
+    /*
+     * Convert between CRYPTO_THREAD_ID (which could be anything at all) and
+     * a long. This may not be meaningful depending on what CRYPTO_THREAD_ID is
+     * but hopefully should give something sensible on most platforms
+     */
+    union {
+        CRYPTO_THREAD_ID tid;
+        unsigned long ltid;
+    } tid;
+    CRYPTO_THREAD_ID ti;
 
 #define BUF_REMAIN (sizeof buf - (size_t)(bufp - buf))
 
@@ -573,8 +574,8 @@ static void print_leak(const MEM *m, MEM_LEAK *l)
                  m->order, m->file, m->line);
     bufp += strlen(bufp);
 
-    BIO_snprintf(bufp, BUF_REMAIN, "thread=%lu, ",
-                 CRYPTO_THREADID_hash(&m->threadid));
+    tid.tid = m->threadid;
+    BIO_snprintf(bufp, BUF_REMAIN, "thread=%lu, ", tid.ltid);
     bufp += strlen(bufp);
 
     BIO_snprintf(bufp, BUF_REMAIN, "number=%d, address=%p\n",
@@ -590,7 +591,7 @@ static void print_leak(const MEM *m, MEM_LEAK *l)
     ami_cnt = 0;
 
     if (amip) {
-        CRYPTO_THREADID_cpy(&ti, &amip->threadid);
+        ti = amip->threadid;
 
         do {
             int buf_len;
@@ -598,9 +599,10 @@ static void print_leak(const MEM *m, MEM_LEAK *l)
 
             ami_cnt++;
             memset(buf, '>', ami_cnt);
+            tid.tid = amip->threadid;
             BIO_snprintf(buf + ami_cnt, sizeof buf - ami_cnt,
                          " thread=%lu, file=%s, line=%d, info=\"",
-                         CRYPTO_THREADID_hash(&amip->threadid), amip->file,
+                         tid.ltid, amip->file,
                          amip->line);
             buf_len = strlen(buf);
             info_len = strlen(amip->info);
@@ -617,7 +619,7 @@ static void print_leak(const MEM *m, MEM_LEAK *l)
 
             amip = amip->next;
         }
-        while (amip && !CRYPTO_THREADID_cmp(&amip->threadid, &ti));
+        while (amip && CRYPTO_THREAD_compare_id(amip->threadid, ti));
     }
 
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG_BACKTRACE
@@ -638,11 +640,10 @@ int CRYPTO_mem_leaks(BIO *b)
 {
     MEM_LEAK ml;
 
-    if (mh == NULL && amih == NULL)
-        return 1;
-
     /* Ensure all resources are released */
     OPENSSL_cleanup();
+
+    CRYPTO_THREAD_run_once(&memdbg_init, do_memdbg_init);
 
     CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_DISABLE);
 
@@ -668,7 +669,7 @@ int CRYPTO_mem_leaks(BIO *b)
          */
         int old_mh_mode;
 
-        CRYPTO_w_lock(CRYPTO_LOCK_MALLOC);
+        CRYPTO_THREAD_write_lock(malloc_lock);
 
         /*
          * avoid deadlock when lh_free() uses CRYPTO_mem_debug_free(), which uses
@@ -679,17 +680,19 @@ int CRYPTO_mem_leaks(BIO *b)
 
         lh_MEM_free(mh);
         mh = NULL;
-        if (amih != NULL) {
-            if (lh_APP_INFO_num_items(amih) == 0) {
-                lh_APP_INFO_free(amih);
-                amih = NULL;
-            }
-        }
 
         mh_mode = old_mh_mode;
-        CRYPTO_w_unlock(CRYPTO_LOCK_MALLOC);
+        CRYPTO_THREAD_unlock(malloc_lock);
     }
-    CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ENABLE);
+    CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_OFF);
+
+    /* Clean up locks etc */
+    CRYPTO_THREAD_cleanup_local(&appinfokey);
+    CRYPTO_THREAD_lock_free(malloc_lock);
+    CRYPTO_THREAD_lock_free(long_malloc_lock);
+    malloc_lock = NULL;
+    long_malloc_lock = NULL;
+
     return ml.chunks == 0 ? 1 : 0;
 }
 
@@ -699,8 +702,6 @@ int CRYPTO_mem_leaks_fp(FILE *fp)
     BIO *b;
     int ret;
 
-    if (mh == NULL && amih == NULL)
-        return 1;
     /*
      * Need to turn off memory checking when allocated BIOs ... especially as
      * we're creating them at a time when we're trying to check we've not
