@@ -144,13 +144,13 @@ HTMLSUFFIX=html
 
 CROSS_COMPILE= {- $config{cross_compile_prefix} -}
 CC= $(CROSS_COMPILE){- $target{cc} -}
-CFLAGS={- our $cflags2 = join(" ",(map { "-D".$_} @{$config{defines}}),"-DOPENSSLDIR=\"\\\"\$(OPENSSLDIR)\\\"\"","-DENGINESDIR=\"\\\"\$(ENGINESDIR)\\\"\"") -} {- $config{cflags} -}
+CFLAGS={- our $cflags2 = join(" ",(map { "-D".$_} @{$target{defines}}, @{$config{defines}}),"-DOPENSSLDIR=\"\\\"\$(OPENSSLDIR)\\\"\"","-DENGINESDIR=\"\\\"\$(ENGINESDIR)\\\"\"") -} {- $target{cflags} -} {- $config{cflags} -}
 CFLAGS_Q={- $cflags2 =~ s|([\\"])|\\$1|g; $cflags2 -} {- $config{cflags} -}
-LDFLAGS= {- $config{lflags} -}
-PLIB_LDFLAGS= {- $config{plib_lflags} -}
-EX_LIBS= {- $config{ex_libs} -}
+LDFLAGS= {- $target{lflags} -}
+PLIB_LDFLAGS= {- $target{plib_lflags} -}
+EX_LIBS= {- $target{ex_libs} -} {- $config{ex_libs} -}
 SHARED_CFLAGS={- $target{shared_cflag} || "" -}
-SHARED_LDFLAGS={- $target{shared_ldflag}
+SHARED_LDFLAGS={- $target{shared_ldflag}." ".$config{shared_ldflag}
                   # Unlike other OSes (like Solaris, Linux, Tru64,
                   # IRIX) BSD run-time linkers (tested OpenBSD, NetBSD
                   # and FreeBSD) "demand" RPATH set on .so objects.
@@ -390,16 +390,11 @@ uninstall_dev:
 		: {- output_on() unless windowsdll(); "" -}; \
 	done
 	@ : {- output_on() if $disabled{shared}; "" -}
-	@echo "$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig/libcrypto.pc"
-	@$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig/libcrypto.pc
-	@echo "$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig/libssl.pc"
-	@$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig/libssl.pc
-	@echo "$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig/openssl.pc"
-	@$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig/openssl.pc
-	@echo $(RMDIR) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig
-	-@$(RMDIR) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig
-	@echo $(RMDIR) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)
-	-@$(RMDIR) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)
+	$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig/libcrypto.pc
+	$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig/libssl.pc
+	$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig/openssl.pc
+	-$(RMDIR) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig
+	-$(RMDIR) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)
 
 install_engines:
 	@[ -n "$(INSTALLTOP)" ] || (echo INSTALLTOP should not be empty; exit 1)
@@ -427,8 +422,7 @@ uninstall_engines:
 		echo "$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/engines/$$fn"; \
 		$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/engines/$$fn; \
 	done
-	@echo "$(RMDIR) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/engines"
-	-@$(RMDIR) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/engines
+	-$(RMDIR) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/engines
 
 install_runtime:
 	@[ -n "$(INSTALLTOP)" ] || (echo INSTALLTOP should not be empty; exit 1)
@@ -502,10 +496,8 @@ uninstall_runtime:
 	done
 	: {- output_on() unless windowsdll(); "" -};
 	$(RM) $(DESTDIR)$(OPENSSLDIR)/openssl.cnf
-	@echo "$(RMDIR) $(DESTDIR)$(INSTALLTOP)/bin"
-	-@$(RMDIR) $(DESTDIR)$(INSTALLTOP)/bin
-	@echo "$(RMDIR) $(DESTDIR)$(OPENSSLDIR)/misc"
-	-@$(RMDIR) $(DESTDIR)$(OPENSSLDIR)/misc
+	-$(RMDIR) $(DESTDIR)$(INSTALLTOP)/bin
+	-$(RMDIR) $(DESTDIR)$(OPENSSLDIR)/misc
 
 # A method to extract all names from a .pod file
 # The first sed extracts everything between "=head1 NAME" and the next =head1
@@ -796,7 +788,7 @@ openssl.pc:
 # wasn't passed down automatically.  It's quite safe to use it like we do
 # below; if it doesn't exist, the result will be empty and 'make' will pick
 # up $(MAKEFLAGS) which is passed down as an environment variable.
-configdata.pm: {- $config{build_file_template} -} $(SRCDIR)/Configure $(SRCDIR)/config
+configdata.pm: {- $config{build_file_template} -} $(SRCDIR)/Configurations/common.tmpl $(SRCDIR)/Configure $(SRCDIR)/config {- join(" ", @{$config{build_infos}}) -}
 	@echo "Detected changed: $?"
 	@echo "Reconfiguring..."
 	$(SRCDIR)/Configure reconf
@@ -822,6 +814,43 @@ configdata.pm: {- $config{build_file_template} -} $(SRCDIR)/Configure $(SRCDIR)/
       # On Windows POSIX layers, we depend on {libname}.dll.a
       # On Unix platforms, we depend on {shlibname}.so
       return map { shlib_simple($_) } @_;
+  }
+
+  sub generatesrc {
+      my %args = @_;
+      my $generator = join(" ", @{$args{generator}});
+
+      if ($args{src} !~ /\.[sS]$/) {
+          return <<"EOF";
+$args{src}: $args{generator}->[0]
+	\$(PERL) $generator > \$@
+EOF
+      } else {
+          if ($args{generator}->[0] =~ /\.[sS]$/) {
+              return <<"EOF";
+$args{src}: $args{generator}->[0]
+	\$(CC) \$(CFLAGS) -E \$< > \$@
+EOF
+          } elsif ($args{generator}->[0] =~ /\.pl$/) {
+             return <<"EOF";
+$args{src}: $args{generator}->[0]
+	( trap "rm -f \$@.S" INT; \\
+	  CC="\$(CC)" \$(PERL) $generator \$@.S; \\
+	  if grep '^#' \$@.S >/dev/null; then \\
+	      \$(CC) -E -P \$@.S > \$@ && rm -f \$@.S; \\
+	  else \\
+	      mv \$@.S \$@; \\
+	  fi )
+EOF
+          } elsif ($args{generator}->[0] =~ /\.m4$/) {
+              return <<"EOF";
+$args{src}: $args{generator}->[0]
+	m4 -B 8192 $generator > \$@
+EOF
+          } else {
+              die "Generator type for $args{src} unknown: $args{generator}\n";
+          }
+      }
   }
 
   sub src2obj {

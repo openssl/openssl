@@ -244,6 +244,8 @@ static char *keymatexportlabel = NULL;
 static int keymatexportlen = 20;
 
 static int async = 0;
+static unsigned int split_send_fragment = 0;
+static unsigned int max_pipelines = 0;
 
 #ifndef OPENSSL_NO_ENGINE
 static char *engine_id = NULL;
@@ -402,6 +404,8 @@ static void s_server_init(void)
     s_quiet = 0;
     s_brief = 0;
     async = 0;
+    split_send_fragment = 0;
+    max_pipelines = 0;
 #ifndef OPENSSL_NO_ENGINE
     engine_id = NULL;
 #endif
@@ -805,8 +809,8 @@ typedef enum OPTION_choice {
     OPT_QUIET, OPT_BRIEF, OPT_NO_DHE,
     OPT_NO_RESUME_EPHEMERAL, OPT_PSK_HINT, OPT_PSK, OPT_SRPVFILE,
     OPT_SRPUSERSEED, OPT_REV, OPT_WWW, OPT_UPPER_WWW, OPT_HTTP, OPT_ASYNC,
-    OPT_SSL_CONFIG, OPT_SSL3,
-    OPT_TLS1_2, OPT_TLS1_1, OPT_TLS1, OPT_DTLS, OPT_DTLS1,
+    OPT_SSL_CONFIG, OPT_SPLIT_SEND_FRAG, OPT_MAX_PIPELINES, OPT_READ_BUF,
+    OPT_SSL3, OPT_TLS1_2, OPT_TLS1_1, OPT_TLS1, OPT_DTLS, OPT_DTLS1,
     OPT_DTLS1_2, OPT_TIMEOUT, OPT_MTU, OPT_CHAIN, OPT_LISTEN,
     OPT_ID_PREFIX, OPT_RAND, OPT_SERVERNAME, OPT_SERVERNAME_FATAL,
     OPT_CERT2, OPT_KEY2, OPT_NEXTPROTONEG, OPT_ALPN,
@@ -938,6 +942,12 @@ OPTIONS s_server_options[] = {
     {"async", OPT_ASYNC, '-', "Operate in asynchronous mode"},
     {"ssl_config", OPT_SSL_CONFIG, 's', \
      "Configure SSL_CTX using the configuration 'val'"},
+    {"split_send_frag", OPT_SPLIT_SEND_FRAG, 'n',
+     "Size used to split data for encrypt pipelines"},
+    {"max_pipelines", OPT_MAX_PIPELINES, 'n',
+     "Maximum number of encrypt/decrypt pipelines to be used"},
+    {"read_buf", OPT_READ_BUF, 'n',
+     "Default read buffer size to be used for connections"},
     OPT_S_OPTIONS,
     OPT_V_OPTIONS,
     OPT_X_OPTIONS,
@@ -1041,6 +1051,7 @@ int s_server_main(int argc, char *argv[])
     X509 *s_cert2 = NULL;
     tlsextctx tlsextcbp = { NULL, NULL, SSL_TLSEXT_ERR_ALERT_WARNING };
     const char *ssl_config = NULL;
+    int read_buf_len = 0;
 #ifndef OPENSSL_NO_NEXTPROTONEG
     const char *next_proto_neg_in = NULL;
     tlsextnextprotoctx next_proto = { NULL, 0 };
@@ -1503,6 +1514,23 @@ int s_server_main(int argc, char *argv[])
         case OPT_ASYNC:
             async = 1;
             break;
+        case OPT_SPLIT_SEND_FRAG:
+            split_send_fragment = atoi(opt_arg());
+            if (split_send_fragment == 0) {
+                /*
+                 * Not allowed - set to a deliberately bad value so we get an
+                 * error message below
+                 */
+                split_send_fragment = SSL3_RT_MAX_PLAIN_LENGTH + 1;
+            }
+            break;
+        case OPT_MAX_PIPELINES:
+            max_pipelines = atoi(opt_arg());
+            break;
+        case OPT_READ_BUF:
+            read_buf_len = atoi(opt_arg());
+            break;
+
         }
     }
     argc = opt_num_rest();
@@ -1527,6 +1555,16 @@ int s_server_main(int argc, char *argv[])
         goto end;
     }
 #endif
+
+    if (split_send_fragment > SSL3_RT_MAX_PLAIN_LENGTH) {
+        BIO_printf(bio_err, "Bad split send fragment size\n");
+        goto end;
+    }
+
+    if (max_pipelines > SSL_MAX_PIPELINES) {
+        BIO_printf(bio_err, "Bad max pipelines value\n");
+        goto end;
+    }
 
     if (!app_passwd(passarg, dpassarg, &pass, &dpass)) {
         BIO_printf(bio_err, "Error getting password\n");
@@ -1717,6 +1755,16 @@ int s_server_main(int argc, char *argv[])
 
     if (async) {
         SSL_CTX_set_mode(ctx, SSL_MODE_ASYNC);
+    }
+    if (split_send_fragment > 0) {
+        SSL_CTX_set_split_send_fragment(ctx, split_send_fragment);
+    }
+    if (max_pipelines > 0) {
+        SSL_CTX_set_max_pipelines(ctx, max_pipelines);
+    }
+
+    if (read_buf_len > 0) {
+        SSL_CTX_set_default_read_buffer_len(ctx, read_buf_len);
     }
 
 #ifndef OPENSSL_NO_SRTP
@@ -2168,7 +2216,7 @@ static int sv_body(int s, int stype, unsigned char *context)
         int read_from_sslcon;
 
         read_from_terminal = 0;
-        read_from_sslcon = SSL_pending(con)
+        read_from_sslcon = SSL_has_pending(con)
                            || (async && SSL_waiting_for_async(con));
 
         if (!read_from_sslcon) {
@@ -2245,7 +2293,7 @@ static int sv_body(int s, int stype, unsigned char *context)
                 if ((i <= 0) || (buf[0] == 'Q')) {
                     BIO_printf(bio_s_out, "DONE\n");
                     (void)BIO_flush(bio_s_out);
-                    SHUTDOWN(s);
+                    BIO_closesocket(s);
                     close_accept_socket();
                     ret = -11;
                     goto err;
@@ -2254,7 +2302,7 @@ static int sv_body(int s, int stype, unsigned char *context)
                     BIO_printf(bio_s_out, "DONE\n");
                     (void)BIO_flush(bio_s_out);
                     if (SSL_version(con) != DTLS1_VERSION)
-                        SHUTDOWN(s);
+                        BIO_closesocket(s);
                     /*
                      * close_accept_socket(); ret= -11;
                      */
@@ -2406,7 +2454,7 @@ static int sv_body(int s, int stype, unsigned char *context)
                     ascii2ebcdic(buf, buf, i);
 #endif
                     raw_write_stdout(buf, (unsigned int)i);
-                    if (SSL_pending(con))
+                    if (SSL_has_pending(con))
                         goto again;
                     break;
                 case SSL_ERROR_WANT_ASYNC:
@@ -2451,7 +2499,7 @@ static void close_accept_socket(void)
 {
     BIO_printf(bio_err, "shutdown accept socket\n");
     if (accept_socket >= 0) {
-        SHUTDOWN2(accept_socket);
+        BIO_closesocket(accept_socket);
     }
 }
 

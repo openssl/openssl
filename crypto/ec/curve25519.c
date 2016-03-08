@@ -62,6 +62,11 @@
  * context.  */
 typedef int32_t fe[10];
 
+static const int64_t kBottom25Bits = 0x1ffffffLL;
+static const int64_t kBottom26Bits = 0x3ffffffLL;
+static const int64_t kTop39Bits = 0xfffffffffe000000LL;
+static const int64_t kTop38Bits = 0xfffffffffc000000LL;
+
 static uint64_t load_3(const uint8_t *in) {
   uint64_t result;
   result = (uint64_t)in[0];
@@ -102,17 +107,17 @@ static void fe_frombytes(fe h, const uint8_t *s) {
   int64_t carry8;
   int64_t carry9;
 
-  carry9 = (h9 + (int64_t) (1<<24)) >> 25; h0 += carry9 * 19; h9 -= carry9 << 25;
-  carry1 = (h1 + (int64_t) (1<<24)) >> 25; h2 += carry1; h1 -= carry1 << 25;
-  carry3 = (h3 + (int64_t) (1<<24)) >> 25; h4 += carry3; h3 -= carry3 << 25;
-  carry5 = (h5 + (int64_t) (1<<24)) >> 25; h6 += carry5; h5 -= carry5 << 25;
-  carry7 = (h7 + (int64_t) (1<<24)) >> 25; h8 += carry7; h7 -= carry7 << 25;
+  carry9 = h9 + (1 << 24); h0 += (carry9 >> 25) * 19; h9 -= carry9 & kTop39Bits;
+  carry1 = h1 + (1 << 24); h2 += carry1 >> 25; h1 -= carry1 & kTop39Bits;
+  carry3 = h3 + (1 << 24); h4 += carry3 >> 25; h3 -= carry3 & kTop39Bits;
+  carry5 = h5 + (1 << 24); h6 += carry5 >> 25; h5 -= carry5 & kTop39Bits;
+  carry7 = h7 + (1 << 24); h8 += carry7 >> 25; h7 -= carry7 & kTop39Bits;
 
-  carry0 = (h0 + (int64_t) (1<<25)) >> 26; h1 += carry0; h0 -= carry0 << 26;
-  carry2 = (h2 + (int64_t) (1<<25)) >> 26; h3 += carry2; h2 -= carry2 << 26;
-  carry4 = (h4 + (int64_t) (1<<25)) >> 26; h5 += carry4; h4 -= carry4 << 26;
-  carry6 = (h6 + (int64_t) (1<<25)) >> 26; h7 += carry6; h6 -= carry6 << 26;
-  carry8 = (h8 + (int64_t) (1<<25)) >> 26; h9 += carry8; h8 -= carry8 << 26;
+  carry0 = h0 + (1 << 25); h1 += carry0 >> 26; h0 -= carry0 & kTop38Bits;
+  carry2 = h2 + (1 << 25); h3 += carry2 >> 26; h2 -= carry2 & kTop38Bits;
+  carry4 = h4 + (1 << 25); h5 += carry4 >> 26; h4 -= carry4 & kTop38Bits;
+  carry6 = h6 + (1 << 25); h7 += carry6 >> 26; h6 -= carry6 & kTop38Bits;
+  carry8 = h8 + (1 << 25); h9 += carry8 >> 26; h8 -= carry8 & kTop38Bits;
 
   h[0] = h0;
   h[1] = h1;
@@ -160,16 +165,6 @@ static void fe_tobytes(uint8_t *s, const fe h) {
   int32_t h8 = h[8];
   int32_t h9 = h[9];
   int32_t q;
-  int32_t carry0;
-  int32_t carry1;
-  int32_t carry2;
-  int32_t carry3;
-  int32_t carry4;
-  int32_t carry5;
-  int32_t carry6;
-  int32_t carry7;
-  int32_t carry8;
-  int32_t carry9;
 
   q = (19 * h9 + (((int32_t) 1) << 24)) >> 25;
   q = (h0 + q) >> 26;
@@ -187,16 +182,16 @@ static void fe_tobytes(uint8_t *s, const fe h) {
   h0 += 19 * q;
   /* Goal: Output h-2^255 q, which is between 0 and 2^255-20. */
 
-  carry0 = h0 >> 26; h1 += carry0; h0 -= carry0 << 26;
-  carry1 = h1 >> 25; h2 += carry1; h1 -= carry1 << 25;
-  carry2 = h2 >> 26; h3 += carry2; h2 -= carry2 << 26;
-  carry3 = h3 >> 25; h4 += carry3; h3 -= carry3 << 25;
-  carry4 = h4 >> 26; h5 += carry4; h4 -= carry4 << 26;
-  carry5 = h5 >> 25; h6 += carry5; h5 -= carry5 << 25;
-  carry6 = h6 >> 26; h7 += carry6; h6 -= carry6 << 26;
-  carry7 = h7 >> 25; h8 += carry7; h7 -= carry7 << 25;
-  carry8 = h8 >> 26; h9 += carry8; h8 -= carry8 << 26;
-  carry9 = h9 >> 25;               h9 -= carry9 << 25;
+  h1 += h0 >> 26; h0 &= kBottom26Bits;
+  h2 += h1 >> 25; h1 &= kBottom25Bits;
+  h3 += h2 >> 26; h2 &= kBottom26Bits;
+  h4 += h3 >> 25; h3 &= kBottom25Bits;
+  h5 += h4 >> 26; h4 &= kBottom26Bits;
+  h6 += h5 >> 25; h5 &= kBottom25Bits;
+  h7 += h6 >> 26; h6 &= kBottom26Bits;
+  h8 += h7 >> 25; h7 &= kBottom25Bits;
+  h9 += h8 >> 26; h8 &= kBottom26Bits;
+                  h9 &= kBottom25Bits;
                   /* h10 = carry9 */
 
   /* Goal: Output h0+...+2^255 h10-2^255 q, which is between 0 and 2^255-20.
@@ -207,32 +202,32 @@ static void fe_tobytes(uint8_t *s, const fe h) {
   s[0] = h0 >> 0;
   s[1] = h0 >> 8;
   s[2] = h0 >> 16;
-  s[3] = (h0 >> 24) | (h1 << 2);
+  s[3] = (h0 >> 24) | ((uint32_t)(h1) << 2);
   s[4] = h1 >> 6;
   s[5] = h1 >> 14;
-  s[6] = (h1 >> 22) | (h2 << 3);
+  s[6] = (h1 >> 22) | ((uint32_t)(h2) << 3);
   s[7] = h2 >> 5;
   s[8] = h2 >> 13;
-  s[9] = (h2 >> 21) | (h3 << 5);
+  s[9] = (h2 >> 21) | ((uint32_t)(h3) << 5);
   s[10] = h3 >> 3;
   s[11] = h3 >> 11;
-  s[12] = (h3 >> 19) | (h4 << 6);
+  s[12] = (h3 >> 19) | ((uint32_t)(h4) << 6);
   s[13] = h4 >> 2;
   s[14] = h4 >> 10;
   s[15] = h4 >> 18;
   s[16] = h5 >> 0;
   s[17] = h5 >> 8;
   s[18] = h5 >> 16;
-  s[19] = (h5 >> 24) | (h6 << 1);
+  s[19] = (h5 >> 24) | ((uint32_t)(h6) << 1);
   s[20] = h6 >> 7;
   s[21] = h6 >> 15;
-  s[22] = (h6 >> 23) | (h7 << 3);
+  s[22] = (h6 >> 23) | ((uint32_t)(h7) << 3);
   s[23] = h7 >> 5;
   s[24] = h7 >> 13;
-  s[25] = (h7 >> 21) | (h8 << 4);
+  s[25] = (h7 >> 21) | ((uint32_t)(h8) << 4);
   s[26] = h8 >> 4;
   s[27] = h8 >> 12;
-  s[28] = (h8 >> 20) | (h9 << 6);
+  s[28] = (h8 >> 20) | ((uint32_t)(h9) << 6);
   s[29] = h9 >> 2;
   s[30] = h9 >> 10;
   s[31] = h9 >> 18;
@@ -472,46 +467,46 @@ static void fe_mul(fe h, const fe f, const fe g) {
    * |h1| <= (1.65*1.65*2^51*(1+1+19+19+19+19+19+19+19+19))
    *   i.e. |h1| <= 1.7*2^59; narrower ranges for h3, h5, h7, h9 */
 
-  carry0 = (h0 + (int64_t) (1<<25)) >> 26; h1 += carry0; h0 -= carry0 << 26;
-  carry4 = (h4 + (int64_t) (1<<25)) >> 26; h5 += carry4; h4 -= carry4 << 26;
+  carry0 = h0 + (1 << 25); h1 += carry0 >> 26; h0 -= carry0 & kTop38Bits;
+  carry4 = h4 + (1 << 25); h5 += carry4 >> 26; h4 -= carry4 & kTop38Bits;
   /* |h0| <= 2^25 */
   /* |h4| <= 2^25 */
   /* |h1| <= 1.71*2^59 */
   /* |h5| <= 1.71*2^59 */
 
-  carry1 = (h1 + (int64_t) (1<<24)) >> 25; h2 += carry1; h1 -= carry1 << 25;
-  carry5 = (h5 + (int64_t) (1<<24)) >> 25; h6 += carry5; h5 -= carry5 << 25;
+  carry1 = h1 + (1 << 24); h2 += carry1 >> 25; h1 -= carry1 & kTop39Bits;
+  carry5 = h5 + (1 << 24); h6 += carry5 >> 25; h5 -= carry5 & kTop39Bits;
   /* |h1| <= 2^24; from now on fits into int32 */
   /* |h5| <= 2^24; from now on fits into int32 */
   /* |h2| <= 1.41*2^60 */
   /* |h6| <= 1.41*2^60 */
 
-  carry2 = (h2 + (int64_t) (1<<25)) >> 26; h3 += carry2; h2 -= carry2 << 26;
-  carry6 = (h6 + (int64_t) (1<<25)) >> 26; h7 += carry6; h6 -= carry6 << 26;
+  carry2 = h2 + (1 << 25); h3 += carry2 >> 26; h2 -= carry2 & kTop38Bits;
+  carry6 = h6 + (1 << 25); h7 += carry6 >> 26; h6 -= carry6 & kTop38Bits;
   /* |h2| <= 2^25; from now on fits into int32 unchanged */
   /* |h6| <= 2^25; from now on fits into int32 unchanged */
   /* |h3| <= 1.71*2^59 */
   /* |h7| <= 1.71*2^59 */
 
-  carry3 = (h3 + (int64_t) (1<<24)) >> 25; h4 += carry3; h3 -= carry3 << 25;
-  carry7 = (h7 + (int64_t) (1<<24)) >> 25; h8 += carry7; h7 -= carry7 << 25;
+  carry3 = h3 + (1 << 24); h4 += carry3 >> 25; h3 -= carry3 & kTop39Bits;
+  carry7 = h7 + (1 << 24); h8 += carry7 >> 25; h7 -= carry7 & kTop39Bits;
   /* |h3| <= 2^24; from now on fits into int32 unchanged */
   /* |h7| <= 2^24; from now on fits into int32 unchanged */
   /* |h4| <= 1.72*2^34 */
   /* |h8| <= 1.41*2^60 */
 
-  carry4 = (h4 + (int64_t) (1<<25)) >> 26; h5 += carry4; h4 -= carry4 << 26;
-  carry8 = (h8 + (int64_t) (1<<25)) >> 26; h9 += carry8; h8 -= carry8 << 26;
+  carry4 = h4 + (1 << 25); h5 += carry4 >> 26; h4 -= carry4 & kTop38Bits;
+  carry8 = h8 + (1 << 25); h9 += carry8 >> 26; h8 -= carry8 & kTop38Bits;
   /* |h4| <= 2^25; from now on fits into int32 unchanged */
   /* |h8| <= 2^25; from now on fits into int32 unchanged */
   /* |h5| <= 1.01*2^24 */
   /* |h9| <= 1.71*2^59 */
 
-  carry9 = (h9 + (int64_t) (1<<24)) >> 25; h0 += carry9 * 19; h9 -= carry9 << 25;
+  carry9 = h9 + (1 << 24); h0 += (carry9 >> 25) * 19; h9 -= carry9 & kTop39Bits;
   /* |h9| <= 2^24; from now on fits into int32 unchanged */
   /* |h0| <= 1.1*2^39 */
 
-  carry0 = (h0 + (int64_t) (1<<25)) >> 26; h1 += carry0; h0 -= carry0 << 26;
+  carry0 = h0 + (1 << 25); h1 += carry0 >> 26; h0 -= carry0 & kTop38Bits;
   /* |h0| <= 2^25; from now on fits into int32 unchanged */
   /* |h1| <= 1.01*2^24 */
 
@@ -637,24 +632,24 @@ static void fe_sq(fe h, const fe f) {
   int64_t carry8;
   int64_t carry9;
 
-  carry0 = (h0 + (int64_t) (1<<25)) >> 26; h1 += carry0; h0 -= carry0 << 26;
-  carry4 = (h4 + (int64_t) (1<<25)) >> 26; h5 += carry4; h4 -= carry4 << 26;
+  carry0 = h0 + (1 << 25); h1 += carry0 >> 26; h0 -= carry0 & kTop38Bits;
+  carry4 = h4 + (1 << 25); h5 += carry4 >> 26; h4 -= carry4 & kTop38Bits;
 
-  carry1 = (h1 + (int64_t) (1<<24)) >> 25; h2 += carry1; h1 -= carry1 << 25;
-  carry5 = (h5 + (int64_t) (1<<24)) >> 25; h6 += carry5; h5 -= carry5 << 25;
+  carry1 = h1 + (1 << 24); h2 += carry1 >> 25; h1 -= carry1 & kTop39Bits;
+  carry5 = h5 + (1 << 24); h6 += carry5 >> 25; h5 -= carry5 & kTop39Bits;
 
-  carry2 = (h2 + (int64_t) (1<<25)) >> 26; h3 += carry2; h2 -= carry2 << 26;
-  carry6 = (h6 + (int64_t) (1<<25)) >> 26; h7 += carry6; h6 -= carry6 << 26;
+  carry2 = h2 + (1 << 25); h3 += carry2 >> 26; h2 -= carry2 & kTop38Bits;
+  carry6 = h6 + (1 << 25); h7 += carry6 >> 26; h6 -= carry6 & kTop38Bits;
 
-  carry3 = (h3 + (int64_t) (1<<24)) >> 25; h4 += carry3; h3 -= carry3 << 25;
-  carry7 = (h7 + (int64_t) (1<<24)) >> 25; h8 += carry7; h7 -= carry7 << 25;
+  carry3 = h3 + (1 << 24); h4 += carry3 >> 25; h3 -= carry3 & kTop39Bits;
+  carry7 = h7 + (1 << 24); h8 += carry7 >> 25; h7 -= carry7 & kTop39Bits;
 
-  carry4 = (h4 + (int64_t) (1<<25)) >> 26; h5 += carry4; h4 -= carry4 << 26;
-  carry8 = (h8 + (int64_t) (1<<25)) >> 26; h9 += carry8; h8 -= carry8 << 26;
+  carry4 = h4 + (1 << 25); h5 += carry4 >> 26; h4 -= carry4 & kTop38Bits;
+  carry8 = h8 + (1 << 25); h9 += carry8 >> 26; h8 -= carry8 & kTop38Bits;
 
-  carry9 = (h9 + (int64_t) (1<<24)) >> 25; h0 += carry9 * 19; h9 -= carry9 << 25;
+  carry9 = h9 + (1 << 24); h0 += (carry9 >> 25) * 19; h9 -= carry9 & kTop39Bits;
 
-  carry0 = (h0 + (int64_t) (1<<25)) >> 26; h1 += carry0; h0 -= carry0 << 26;
+  carry0 = h0 + (1 << 25); h1 += carry0 >> 26; h0 -= carry0 & kTop38Bits;
 
   h[0] = h0;
   h[1] = h1;
@@ -881,24 +876,24 @@ static void fe_sq2(fe h, const fe f) {
   h8 += h8;
   h9 += h9;
 
-  carry0 = (h0 + (int64_t) (1<<25)) >> 26; h1 += carry0; h0 -= carry0 << 26;
-  carry4 = (h4 + (int64_t) (1<<25)) >> 26; h5 += carry4; h4 -= carry4 << 26;
+  carry0 = h0 + (1 << 25); h1 += carry0 >> 26; h0 -= carry0 & kTop38Bits;
+  carry4 = h4 + (1 << 25); h5 += carry4 >> 26; h4 -= carry4 & kTop38Bits;
 
-  carry1 = (h1 + (int64_t) (1<<24)) >> 25; h2 += carry1; h1 -= carry1 << 25;
-  carry5 = (h5 + (int64_t) (1<<24)) >> 25; h6 += carry5; h5 -= carry5 << 25;
+  carry1 = h1 + (1 << 24); h2 += carry1 >> 25; h1 -= carry1 & kTop39Bits;
+  carry5 = h5 + (1 << 24); h6 += carry5 >> 25; h5 -= carry5 & kTop39Bits;
 
-  carry2 = (h2 + (int64_t) (1<<25)) >> 26; h3 += carry2; h2 -= carry2 << 26;
-  carry6 = (h6 + (int64_t) (1<<25)) >> 26; h7 += carry6; h6 -= carry6 << 26;
+  carry2 = h2 + (1 << 25); h3 += carry2 >> 26; h2 -= carry2 & kTop38Bits;
+  carry6 = h6 + (1 << 25); h7 += carry6 >> 26; h6 -= carry6 & kTop38Bits;
 
-  carry3 = (h3 + (int64_t) (1<<24)) >> 25; h4 += carry3; h3 -= carry3 << 25;
-  carry7 = (h7 + (int64_t) (1<<24)) >> 25; h8 += carry7; h7 -= carry7 << 25;
+  carry3 = h3 + (1 << 24); h4 += carry3 >> 25; h3 -= carry3 & kTop39Bits;
+  carry7 = h7 + (1 << 24); h8 += carry7 >> 25; h7 -= carry7 & kTop39Bits;
 
-  carry4 = (h4 + (int64_t) (1<<25)) >> 26; h5 += carry4; h4 -= carry4 << 26;
-  carry8 = (h8 + (int64_t) (1<<25)) >> 26; h9 += carry8; h8 -= carry8 << 26;
+  carry4 = h4 + (1 << 25); h5 += carry4 >> 26; h4 -= carry4 & kTop38Bits;
+  carry8 = h8 + (1 << 25); h9 += carry8 >> 26; h8 -= carry8 & kTop38Bits;
 
-  carry9 = (h9 + (int64_t) (1<<24)) >> 25; h0 += carry9 * 19; h9 -= carry9 << 25;
+  carry9 = h9 + (1 << 24); h0 += (carry9 >> 25) * 19; h9 -= carry9 & kTop39Bits;
 
-  carry0 = (h0 + (int64_t) (1<<25)) >> 26; h1 += carry0; h0 -= carry0 << 26;
+  carry0 = h0 + (1 << 25); h1 += carry0 >> 26; h0 -= carry0 & kTop38Bits;
 
   h[0] = h0;
   h[1] = h1;
@@ -1040,160 +1035,14 @@ static uint8_t equal(signed char b, signed char c) {
   return y;
 }
 
-static void cmov(ge_precomp *t, ge_precomp *u, uint8_t b) {
+static void cmov(ge_precomp *t, const ge_precomp *u, uint8_t b) {
   fe_cmov(t->yplusx, u->yplusx, b);
   fe_cmov(t->yminusx, u->yminusx, b);
   fe_cmov(t->xy2d, u->xy2d, b);
 }
 
-#if defined(OPENSSL_SMALL)
-
-/* This block of code replaces the standard base-point table with a much smaller
- * one. The standard table is 30,720 bytes while this one is just 960.
- *
- * This table contains 15 pairs of group elements, (x, y), where each field
- * element is serialised with |fe_tobytes|. If |i| is the index of the group
- * element then consider i+1 as a four-bit number: (i₀, i₁, i₂, i₃) (where i₀
- * is the most significant bit). The value of the group element is then:
- * (i₀×2^192 + i₁×2^128 + i₂×2^64 + i₃)G, where G is the generator. */
-static const uint8_t k25519SmallPrecomp[15 * 2 * 32] = {
-    0x1a, 0xd5, 0x25, 0x8f, 0x60, 0x2d, 0x56, 0xc9, 0xb2, 0xa7, 0x25, 0x95,
-    0x60, 0xc7, 0x2c, 0x69, 0x5c, 0xdc, 0xd6, 0xfd, 0x31, 0xe2, 0xa4, 0xc0,
-    0xfe, 0x53, 0x6e, 0xcd, 0xd3, 0x36, 0x69, 0x21, 0x58, 0x66, 0x66, 0x66,
-    0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66,
-    0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66,
-    0x66, 0x66, 0x66, 0x66, 0x02, 0xa2, 0xed, 0xf4, 0x8f, 0x6b, 0x0b, 0x3e,
-    0xeb, 0x35, 0x1a, 0xd5, 0x7e, 0xdb, 0x78, 0x00, 0x96, 0x8a, 0xa0, 0xb4,
-    0xcf, 0x60, 0x4b, 0xd4, 0xd5, 0xf9, 0x2d, 0xbf, 0x88, 0xbd, 0x22, 0x62,
-    0x13, 0x53, 0xe4, 0x82, 0x57, 0xfa, 0x1e, 0x8f, 0x06, 0x2b, 0x90, 0xba,
-    0x08, 0xb6, 0x10, 0x54, 0x4f, 0x7c, 0x1b, 0x26, 0xed, 0xda, 0x6b, 0xdd,
-    0x25, 0xd0, 0x4e, 0xea, 0x42, 0xbb, 0x25, 0x03, 0xa2, 0xfb, 0xcc, 0x61,
-    0x67, 0x06, 0x70, 0x1a, 0xc4, 0x78, 0x3a, 0xff, 0x32, 0x62, 0xdd, 0x2c,
-    0xab, 0x50, 0x19, 0x3b, 0xf2, 0x9b, 0x7d, 0xb8, 0xfd, 0x4f, 0x29, 0x9c,
-    0xa7, 0x91, 0xba, 0x0e, 0x46, 0x5e, 0x51, 0xfe, 0x1d, 0xbf, 0xe5, 0xe5,
-    0x9b, 0x95, 0x0d, 0x67, 0xf8, 0xd1, 0xb5, 0x5a, 0xa1, 0x93, 0x2c, 0xc3,
-    0xde, 0x0e, 0x97, 0x85, 0x2d, 0x7f, 0xea, 0xab, 0x3e, 0x47, 0x30, 0x18,
-    0x24, 0xe8, 0xb7, 0x60, 0xae, 0x47, 0x80, 0xfc, 0xe5, 0x23, 0xe7, 0xc2,
-    0xc9, 0x85, 0xe6, 0x98, 0xa0, 0x29, 0x4e, 0xe1, 0x84, 0x39, 0x2d, 0x95,
-    0x2c, 0xf3, 0x45, 0x3c, 0xff, 0xaf, 0x27, 0x4c, 0x6b, 0xa6, 0xf5, 0x4b,
-    0x11, 0xbd, 0xba, 0x5b, 0x9e, 0xc4, 0xa4, 0x51, 0x1e, 0xbe, 0xd0, 0x90,
-    0x3a, 0x9c, 0xc2, 0x26, 0xb6, 0x1e, 0xf1, 0x95, 0x7d, 0xc8, 0x6d, 0x52,
-    0xe6, 0x99, 0x2c, 0x5f, 0x9a, 0x96, 0x0c, 0x68, 0x29, 0xfd, 0xe2, 0xfb,
-    0xe6, 0xbc, 0xec, 0x31, 0x08, 0xec, 0xe6, 0xb0, 0x53, 0x60, 0xc3, 0x8c,
-    0xbe, 0xc1, 0xb3, 0x8a, 0x8f, 0xe4, 0x88, 0x2b, 0x55, 0xe5, 0x64, 0x6e,
-    0x9b, 0xd0, 0xaf, 0x7b, 0x64, 0x2a, 0x35, 0x25, 0x10, 0x52, 0xc5, 0x9e,
-    0x58, 0x11, 0x39, 0x36, 0x45, 0x51, 0xb8, 0x39, 0x93, 0xfc, 0x9d, 0x6a,
-    0xbe, 0x58, 0xcb, 0xa4, 0x0f, 0x51, 0x3c, 0x38, 0x05, 0xca, 0xab, 0x43,
-    0x63, 0x0e, 0xf3, 0x8b, 0x41, 0xa6, 0xf8, 0x9b, 0x53, 0x70, 0x80, 0x53,
-    0x86, 0x5e, 0x8f, 0xe3, 0xc3, 0x0d, 0x18, 0xc8, 0x4b, 0x34, 0x1f, 0xd8,
-    0x1d, 0xbc, 0xf2, 0x6d, 0x34, 0x3a, 0xbe, 0xdf, 0xd9, 0xf6, 0xf3, 0x89,
-    0xa1, 0xe1, 0x94, 0x9f, 0x5d, 0x4c, 0x5d, 0xe9, 0xa1, 0x49, 0x92, 0xef,
-    0x0e, 0x53, 0x81, 0x89, 0x58, 0x87, 0xa6, 0x37, 0xf1, 0xdd, 0x62, 0x60,
-    0x63, 0x5a, 0x9d, 0x1b, 0x8c, 0xc6, 0x7d, 0x52, 0xea, 0x70, 0x09, 0x6a,
-    0xe1, 0x32, 0xf3, 0x73, 0x21, 0x1f, 0x07, 0x7b, 0x7c, 0x9b, 0x49, 0xd8,
-    0xc0, 0xf3, 0x25, 0x72, 0x6f, 0x9d, 0xed, 0x31, 0x67, 0x36, 0x36, 0x54,
-    0x40, 0x92, 0x71, 0xe6, 0x11, 0x28, 0x11, 0xad, 0x93, 0x32, 0x85, 0x7b,
-    0x3e, 0xb7, 0x3b, 0x49, 0x13, 0x1c, 0x07, 0xb0, 0x2e, 0x93, 0xaa, 0xfd,
-    0xfd, 0x28, 0x47, 0x3d, 0x8d, 0xd2, 0xda, 0xc7, 0x44, 0xd6, 0x7a, 0xdb,
-    0x26, 0x7d, 0x1d, 0xb8, 0xe1, 0xde, 0x9d, 0x7a, 0x7d, 0x17, 0x7e, 0x1c,
-    0x37, 0x04, 0x8d, 0x2d, 0x7c, 0x5e, 0x18, 0x38, 0x1e, 0xaf, 0xc7, 0x1b,
-    0x33, 0x48, 0x31, 0x00, 0x59, 0xf6, 0xf2, 0xca, 0x0f, 0x27, 0x1b, 0x63,
-    0x12, 0x7e, 0x02, 0x1d, 0x49, 0xc0, 0x5d, 0x79, 0x87, 0xef, 0x5e, 0x7a,
-    0x2f, 0x1f, 0x66, 0x55, 0xd8, 0x09, 0xd9, 0x61, 0x38, 0x68, 0xb0, 0x07,
-    0xa3, 0xfc, 0xcc, 0x85, 0x10, 0x7f, 0x4c, 0x65, 0x65, 0xb3, 0xfa, 0xfa,
-    0xa5, 0x53, 0x6f, 0xdb, 0x74, 0x4c, 0x56, 0x46, 0x03, 0xe2, 0xd5, 0x7a,
-    0x29, 0x1c, 0xc6, 0x02, 0xbc, 0x59, 0xf2, 0x04, 0x75, 0x63, 0xc0, 0x84,
-    0x2f, 0x60, 0x1c, 0x67, 0x76, 0xfd, 0x63, 0x86, 0xf3, 0xfa, 0xbf, 0xdc,
-    0xd2, 0x2d, 0x90, 0x91, 0xbd, 0x33, 0xa9, 0xe5, 0x66, 0x0c, 0xda, 0x42,
-    0x27, 0xca, 0xf4, 0x66, 0xc2, 0xec, 0x92, 0x14, 0x57, 0x06, 0x63, 0xd0,
-    0x4d, 0x15, 0x06, 0xeb, 0x69, 0x58, 0x4f, 0x77, 0xc5, 0x8b, 0xc7, 0xf0,
-    0x8e, 0xed, 0x64, 0xa0, 0xb3, 0x3c, 0x66, 0x71, 0xc6, 0x2d, 0xda, 0x0a,
-    0x0d, 0xfe, 0x70, 0x27, 0x64, 0xf8, 0x27, 0xfa, 0xf6, 0x5f, 0x30, 0xa5,
-    0x0d, 0x6c, 0xda, 0xf2, 0x62, 0x5e, 0x78, 0x47, 0xd3, 0x66, 0x00, 0x1c,
-    0xfd, 0x56, 0x1f, 0x5d, 0x3f, 0x6f, 0xf4, 0x4c, 0xd8, 0xfd, 0x0e, 0x27,
-    0xc9, 0x5c, 0x2b, 0xbc, 0xc0, 0xa4, 0xe7, 0x23, 0x29, 0x02, 0x9f, 0x31,
-    0xd6, 0xe9, 0xd7, 0x96, 0xf4, 0xe0, 0x5e, 0x0b, 0x0e, 0x13, 0xee, 0x3c,
-    0x09, 0xed, 0xf2, 0x3d, 0x76, 0x91, 0xc3, 0xa4, 0x97, 0xae, 0xd4, 0x87,
-    0xd0, 0x5d, 0xf6, 0x18, 0x47, 0x1f, 0x1d, 0x67, 0xf2, 0xcf, 0x63, 0xa0,
-    0x91, 0x27, 0xf8, 0x93, 0x45, 0x75, 0x23, 0x3f, 0xd1, 0xf1, 0xad, 0x23,
-    0xdd, 0x64, 0x93, 0x96, 0x41, 0x70, 0x7f, 0xf7, 0xf5, 0xa9, 0x89, 0xa2,
-    0x34, 0xb0, 0x8d, 0x1b, 0xae, 0x19, 0x15, 0x49, 0x58, 0x23, 0x6d, 0x87,
-    0x15, 0x4f, 0x81, 0x76, 0xfb, 0x23, 0xb5, 0xea, 0xcf, 0xac, 0x54, 0x8d,
-    0x4e, 0x42, 0x2f, 0xeb, 0x0f, 0x63, 0xdb, 0x68, 0x37, 0xa8, 0xcf, 0x8b,
-    0xab, 0xf5, 0xa4, 0x6e, 0x96, 0x2a, 0xb2, 0xd6, 0xbe, 0x9e, 0xbd, 0x0d,
-    0xb4, 0x42, 0xa9, 0xcf, 0x01, 0x83, 0x8a, 0x17, 0x47, 0x76, 0xc4, 0xc6,
-    0x83, 0x04, 0x95, 0x0b, 0xfc, 0x11, 0xc9, 0x62, 0xb8, 0x0c, 0x76, 0x84,
-    0xd9, 0xb9, 0x37, 0xfa, 0xfc, 0x7c, 0xc2, 0x6d, 0x58, 0x3e, 0xb3, 0x04,
-    0xbb, 0x8c, 0x8f, 0x48, 0xbc, 0x91, 0x27, 0xcc, 0xf9, 0xb7, 0x22, 0x19,
-    0x83, 0x2e, 0x09, 0xb5, 0x72, 0xd9, 0x54, 0x1c, 0x4d, 0xa1, 0xea, 0x0b,
-    0xf1, 0xc6, 0x08, 0x72, 0x46, 0x87, 0x7a, 0x6e, 0x80, 0x56, 0x0a, 0x8a,
-    0xc0, 0xdd, 0x11, 0x6b, 0xd6, 0xdd, 0x47, 0xdf, 0x10, 0xd9, 0xd8, 0xea,
-    0x7c, 0xb0, 0x8f, 0x03, 0x00, 0x2e, 0xc1, 0x8f, 0x44, 0xa8, 0xd3, 0x30,
-    0x06, 0x89, 0xa2, 0xf9, 0x34, 0xad, 0xdc, 0x03, 0x85, 0xed, 0x51, 0xa7,
-    0x82, 0x9c, 0xe7, 0x5d, 0x52, 0x93, 0x0c, 0x32, 0x9a, 0x5b, 0xe1, 0xaa,
-    0xca, 0xb8, 0x02, 0x6d, 0x3a, 0xd4, 0xb1, 0x3a, 0xf0, 0x5f, 0xbe, 0xb5,
-    0x0d, 0x10, 0x6b, 0x38, 0x32, 0xac, 0x76, 0x80, 0xbd, 0xca, 0x94, 0x71,
-    0x7a, 0xf2, 0xc9, 0x35, 0x2a, 0xde, 0x9f, 0x42, 0x49, 0x18, 0x01, 0xab,
-    0xbc, 0xef, 0x7c, 0x64, 0x3f, 0x58, 0x3d, 0x92, 0x59, 0xdb, 0x13, 0xdb,
-    0x58, 0x6e, 0x0a, 0xe0, 0xb7, 0x91, 0x4a, 0x08, 0x20, 0xd6, 0x2e, 0x3c,
-    0x45, 0xc9, 0x8b, 0x17, 0x79, 0xe7, 0xc7, 0x90, 0x99, 0x3a, 0x18, 0x25,
-};
-
-static void ge_scalarmult_base(ge_p3 *h, const uint8_t a[32]) {
-  /* k25519SmallPrecomp is first expanded into matching |ge_precomp|
-   * elements. */
-  ge_precomp multiples[15];
-
-  unsigned i;
-  for (i = 0; i < 15; i++) {
-    const uint8_t *bytes = &k25519SmallPrecomp[i*(2 * 32)];
-    fe x, y;
-    fe_frombytes(x, bytes);
-    fe_frombytes(y, bytes + 32);
-
-    ge_precomp *out = &multiples[i];
-    fe_add(out->yplusx, y, x);
-    fe_sub(out->yminusx, y, x);
-    fe_mul(out->xy2d, x, y);
-    fe_mul(out->xy2d, out->xy2d, d2);
-  }
-
-  /* See the comment above |k25519SmallPrecomp| about the structure of the
-   * precomputed elements. This loop does 64 additions and 64 doublings to
-   * calculate the result. */
-  ge_p3_0(h);
-
-  for (i = 63; i < 64; i--) {
-    unsigned j;
-    signed char index = 0;
-
-    for (j = 0; j < 4; j++) {
-      const uint8_t bit = 1 & (a[(8 * j) + (i / 8)] >> (i & 7));
-      index |= (bit << j);
-    }
-
-    ge_precomp e;
-    ge_precomp_0(&e);
-
-    for (j = 1; j < 16; j++) {
-      cmov(&e, &multiples[j-1], equal(index, j));
-    }
-
-    ge_cached cached;
-    ge_p1p1 r;
-    ge_p3_to_cached(&cached, h);
-    ge_add(&r, h, &cached);
-    ge_p1p1_to_p3(h, &r);
-
-    ge_madd(&r, h, &e);
-    ge_p1p1_to_p3(h, &r);
-  }
-}
-
-#else
-
 /* k25519Precomp[i][j] = (j+1)*256^i*B */
-static ge_precomp k25519Precomp[32][8] = {
+static const ge_precomp k25519Precomp[32][8] = {
     {
         {
             {25967493, -14356035, 29566456, 3660896, -12694345, 4014787,
@@ -3317,7 +3166,7 @@ static uint8_t negative(signed char b) {
 static void table_select(ge_precomp *t, int pos, signed char b) {
   ge_precomp minust;
   uint8_t bnegative = negative(b);
-  uint8_t babs = b - (((-bnegative) & b) << 1);
+  uint8_t babs = b - ((uint8_t)((-bnegative) & b) << 1);
 
   ge_precomp_0(t);
   cmov(t, &k25519Precomp[pos][0], equal(babs, 1));
@@ -3388,17 +3237,6 @@ static void ge_scalarmult_base(ge_p3 *h, const uint8_t *a) {
   }
 }
 
-#endif
-
-#if defined(OPENSSL_X25519_X86_64)
-
-static void x25519_scalar_mult(uint8_t out[32], const uint8_t scalar[32],
-                               const uint8_t point[32]) {
-  x25519_x86_64(out, scalar, point);
-}
-
-#else
-
 /* Replace (f,g) with (g,f) if b == 1;
  * replace (f,g) with (f,g) if b == 0.
  *
@@ -3454,17 +3292,17 @@ static void fe_mul121666(fe h, fe f) {
   int64_t carry8;
   int64_t carry9;
 
-  carry9 = (h9 + (int64_t) (1<<24)) >> 25; h0 += carry9 * 19; h9 -= carry9 << 25;
-  carry1 = (h1 + (int64_t) (1<<24)) >> 25; h2 += carry1; h1 -= carry1 << 25;
-  carry3 = (h3 + (int64_t) (1<<24)) >> 25; h4 += carry3; h3 -= carry3 << 25;
-  carry5 = (h5 + (int64_t) (1<<24)) >> 25; h6 += carry5; h5 -= carry5 << 25;
-  carry7 = (h7 + (int64_t) (1<<24)) >> 25; h8 += carry7; h7 -= carry7 << 25;
+  carry9 = h9 + (1 << 24); h0 += (carry9 >> 25) * 19; h9 -= carry9 & kTop39Bits;
+  carry1 = h1 + (1 << 24); h2 += carry1 >> 25; h1 -= carry1 & kTop39Bits;
+  carry3 = h3 + (1 << 24); h4 += carry3 >> 25; h3 -= carry3 & kTop39Bits;
+  carry5 = h5 + (1 << 24); h6 += carry5 >> 25; h5 -= carry5 & kTop39Bits;
+  carry7 = h7 + (1 << 24); h8 += carry7 >> 25; h7 -= carry7 & kTop39Bits;
 
-  carry0 = (h0 + (int64_t) (1<<25)) >> 26; h1 += carry0; h0 -= carry0 << 26;
-  carry2 = (h2 + (int64_t) (1<<25)) >> 26; h3 += carry2; h2 -= carry2 << 26;
-  carry4 = (h4 + (int64_t) (1<<25)) >> 26; h5 += carry4; h4 -= carry4 << 26;
-  carry6 = (h6 + (int64_t) (1<<25)) >> 26; h7 += carry6; h6 -= carry6 << 26;
-  carry8 = (h8 + (int64_t) (1<<25)) >> 26; h9 += carry8; h8 -= carry8 << 26;
+  carry0 = h0 + (1 << 25); h1 += carry0 >> 26; h0 -= carry0 & kTop38Bits;
+  carry2 = h2 + (1 << 25); h3 += carry2 >> 26; h2 -= carry2 & kTop38Bits;
+  carry4 = h4 + (1 << 25); h5 += carry4 >> 26; h4 -= carry4 & kTop38Bits;
+  carry6 = h6 + (1 << 25); h7 += carry6 >> 26; h6 -= carry6 & kTop38Bits;
+  carry8 = h8 + (1 << 25); h9 += carry8 >> 26; h8 -= carry8 & kTop38Bits;
 
   h[0] = h0;
   h[1] = h1;
@@ -3534,8 +3372,6 @@ static void x25519_scalar_mult(uint8_t out[32], const uint8_t scalar[32],
   x25519_scalar_mult_generic(out, scalar, point);
 }
 
-#endif  /* OPENSSL_X25519_X86_64 */
-
 int X25519(uint8_t out_shared_key[32], const uint8_t private_key[32],
            const uint8_t peer_public_value[32]) {
   static const uint8_t kZeros[32] = {0};
@@ -3543,20 +3379,6 @@ int X25519(uint8_t out_shared_key[32], const uint8_t private_key[32],
   /* The all-zero output results when the input is a point of small order. */
   return CRYPTO_memcmp(kZeros, out_shared_key, 32) != 0;
 }
-
-#if defined(OPENSSL_X25519_X86_64)
-
-/* When |OPENSSL_X25519_X86_64| is set, base point multiplication is done with
- * the Montgomery ladder because it's faster. Otherwise it's done using the
- * Ed25519 tables. */
-
-void X25519_public_from_private(uint8_t out_public_value[32],
-                                const uint8_t private_key[32]) {
-  static const uint8_t kMongomeryBasePoint[32] = {9};
-  x25519_scalar_mult(out_public_value, private_key, kMongomeryBasePoint);
-}
-
-#else
 
 void X25519_public_from_private(uint8_t out_public_value[32],
                                 const uint8_t private_key[32]) {
@@ -3579,5 +3401,3 @@ void X25519_public_from_private(uint8_t out_public_value[32],
   fe_mul(zplusy, zplusy, zminusy_inv);
   fe_tobytes(out_public_value, zplusy);
 }
-
-#endif  /* OPENSSL_X25519_X86_64 */

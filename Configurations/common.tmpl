@@ -32,6 +32,22 @@
      @newlist;
  }
 
+ sub dogenerate {
+     my $src = shift;
+     return "" if $cache{$src};
+     my %opts = @_;
+     if ($unified_info{generate}->{$src}) {
+         $OUT .= generatesrc(src => $src,
+                             generator => $unified_info{generate}->{$src},
+                             deps => $unified_info{depends}->{$src},
+                             %opts);
+         foreach (@{$unified_info{depends}->{$src}}) {
+             dogenerate($_, %opts);
+         }
+     }
+     $cache{$src} = 1;
+ }
+
  # doobj is responsible for producing all the recipes that build
  # object files as well as dependency files.
  sub doobj {
@@ -43,10 +59,14 @@
      if (@{$unified_info{sources}->{$obj}}) {
          $OUT .= src2obj(obj => $obj_no_o,
                          srcs => $unified_info{sources}->{$obj},
-                         deps => [ reducedepends(resolvedepends($obj)) ],
+                         deps => $unified_info{depends}->{$obj},
                          incs => [ @{$unified_info{includes}->{$bin}},
                                    @{$unified_info{includes}->{$obj}} ],
                          %opts);
+         foreach ((@{$unified_info{sources}->{$obj}},
+                   @{$unified_info{depends}->{$obj}})) {
+             dogenerate($_, %opts);
+         }
      }
      $cache{$obj} = 1;
  }
@@ -113,6 +133,9 @@
                        sources => $unified_info{sources}->{$script});
      $cache{$script} = 1;
  }
+
+ # Start with populating the cache with all the overrides
+ %cache = map { $_ => 1 } @{$unified_info{overrides}};
 
  # Build all known libraries, engines, programs and scripts.
  # Everything else will be handled as a consequence.

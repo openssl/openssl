@@ -18,22 +18,16 @@ os:
 
 compiler:
     - clang
-    - clang-3.6
     - gcc
-    - gcc-5
-    - i686-w64-mingw32-gcc
-    - x86_64-w64-mingw32-gcc
 
 env:
-    - CONFIG_OPTS=""
     - CONFIG_OPTS="shared"
-    - CONFIG_OPTS="no-pic"
-    - CONFIG_OPTS="no-asm"
     - CONFIG_OPTS="--debug --strict-warnings enable-crypto-mdebug enable-rc5 enable-md2"
-    - CONFIG_OPTS="--unified"
-    - CONFIG_OPTS="--unified shared"
-    - CONFIG_OPTS="--unified no-asm"
-    - CONFIG_OPTS="--unified --debug --strict-warnings enable-crypto-mdebug enable-rc5 enable-md2"
+    - CONFIG_OPTS="" BUILDONLY="yes"
+    - CONFIG_OPTS="--unified" BUILDONLY="yes"
+    - CONFIG_OPTS="--unified shared" BUILDONLY="yes"
+    - CONFIG_OPTS="no-pic" BUILDONLY="yes"
+    - CONFIG_OPTS="no-engine" BUILDONLY="yes"
 
 matrix:
     include:
@@ -42,64 +36,24 @@ matrix:
           env: CONFIG_OPTS="-fsanitize=address"
         - os: linux
           compiler: clang-3.6
-          env: CONFIG_OPTS="no-asm --strict-warnings -fno-sanitize-recover -fsanitize=address -fsanitize=undefined enable-crypto-mdebug enable-rc5 enable-md2"
+          env: CONFIG_OPTS="no-asm --strict-warnings -fno-sanitize-recover -fsanitize=address -fsanitize=undefined enable-rc5 enable-md2"
         - os: linux
           compiler: gcc-5
           env: CONFIG_OPTS="-fsanitize=address"
         - os: linux
           compiler: gcc-5
-          env: CONFIG_OPTS="no-asm --strict-warnings -fno-sanitize-recover -fsanitize=address -fsanitize=undefined enable-crypto-mdebug enable-rc5 enable-md2"
+          env: CONFIG_OPTS="no-asm --strict-warnings -fno-sanitize-recover -fsanitize=address -fsanitize=undefined enable-rc5 enable-md2"
         - os: linux
-          compiler: clang-3.6
-          env: CONFIG_OPTS="no-engine"
-        - os: linux
-          compiler: gcc
-          env: CONFIG_OPTS="no-engine"
-        - os: linux
-          compiler: gcc-5
-          env: CONFIG_OPTS="no-engine"
-    exclude:
-        - os: osx
-          compiler: clang-3.6
-        - os: osx
-          compiler: gcc
-        - os: osx
-          compiler: gcc-5
-        - os: osx
           compiler: i686-w64-mingw32-gcc
-        - os: osx
+          env: CONFIG_OPTS="no-pic"
+        - os: linux
           compiler: x86_64-w64-mingw32-gcc
-        - compiler: i686-w64-mingw32-gcc
-          env: CONFIG_OPTS="shared"
-        - compiler: x86_64-w64-mingw32-gcc
-          env: CONFIG_OPTS="shared"
-        - compiler: i686-w64-mingw32-gcc
-          env: CONFIG_OPTS="no-asm"
-        - compiler: x86_64-w64-mingw32-gcc
-          env: CONFIG_OPTS="no-asm"
-        - compiler: i686-w64-mingw32-gcc
-          env: CONFIG_OPTS="--unified shared"
-        - compiler: x86_64-w64-mingw32-gcc
-          env: CONFIG_OPTS="--unified shared"
-        - compiler: i686-w64-mingw32-gcc
-          env: CONFIG_OPTS="--unified no-asm"
-        - compiler: x86_64-w64-mingw32-gcc
-          env: CONFIG_OPTS="--unified no-asm"
-    allow_failures:
-        - compiler: i686-w64-mingw32-gcc
-          env: CONFIG_OPTS="--debug --strict-warnings enable-crypto-mdebug enable-rc5 enable-md2"
-        - compiler: x86_64-w64-mingw32-gcc
-          env: CONFIG_OPTS="--debug --strict-warnings enable-crypto-mdebug enable-rc5 enable-md2"
-        - compiler: i686-w64-mingw32-gcc
-          env: CONFIG_OPTS="--unified --debug --strict-warnings enable-crypto-mdebug enable-rc5 enable-md2"
-        - compiler: x86_64-w64-mingw32-gcc
-          env: CONFIG_OPTS="--unified --debug --strict-warnings enable-crypto-mdebug enable-rc5 enable-md2"
-        - compiler: clang-3.6
-          env: CONFIG_OPTS="no-engine"
-        - compiler: gcc-5
-          env: CONFIG_OPTS="no-engine"
-        - compiler: gcc
-          env: CONFIG_OPTS="no-engine"
+          env: CONFIG_OPTS="no-pic"
+    exclude:
+        - os: linux
+          compiler: clang
+        - os: osx
+          compiler: gcc
 
 before_script:
     - sh .travis-create-release.sh $TRAVIS_OS_NAME
@@ -119,10 +73,12 @@ before_script:
 script:
     - cd _srcdist
     - make
-    - if [ -n "$CROSS_COMPILE" ]; then
-          export EXE_SHELL="wine" WINEPREFIX=`pwd`;
+    - if [ -z "$BUILDONLY" ]; then
+          if [ -n "$CROSS_COMPILE" ]; then
+              export EXE_SHELL="wine" WINEPREFIX=`pwd`;
+          fi;
+          HARNESS_VERBOSE=yes make test;
       fi
-    - HARNESS_VERBOSE=yes make test
     - cd ..
 
 notifications:

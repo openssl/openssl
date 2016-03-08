@@ -192,7 +192,6 @@ struct x509_st {
     X509_ALGOR sig_alg;
     ASN1_BIT_STRING signature;
     int references;
-    char *name;
     CRYPTO_EX_DATA ex_data;
     /* These contain copies of various extension values */
     long ex_pathlen;
@@ -214,3 +213,12 @@ struct x509_st {
     unsigned char sha1_hash[SHA_DIGEST_LENGTH];
     X509_CERT_AUX *aux;
 } /* X509 */ ;
+
+/* PKCS#8 private key info structure */
+
+struct pkcs8_priv_key_info_st {
+    ASN1_INTEGER *version;
+    X509_ALGOR *pkeyalg;
+    ASN1_OCTET_STRING *pkey;
+    STACK_OF(X509_ATTRIBUTE) *attributes;
+};

@@ -373,11 +373,8 @@ const BIGNUM *EC_GROUP_get0_order(const EC_GROUP *group)
 
 int EC_GROUP_order_bits(const EC_GROUP *group)
 {
-    if (group->meth->group_order_bits)
-        return group->meth->group_order_bits(group);
-    if (group->order)
-        return BN_num_bits(group->order);
-    return 0;
+    OPENSSL_assert(group->meth->group_order_bits != NULL);
+    return group->meth->group_order_bits(group);
 }
 
 int EC_GROUP_get_cofactor(const EC_GROUP *group, BIGNUM *cofactor,
@@ -1029,4 +1026,11 @@ int EC_KEY_set_ex_data(EC_KEY *key, int idx, void *arg)
 void *EC_KEY_get_ex_data(const EC_KEY *key, int idx)
 {
     return CRYPTO_get_ex_data(&key->ex_data, idx);
+}
+
+int ec_group_simple_order_bits(const EC_GROUP *group)
+{
+    if (group->order == NULL)
+        return 0;
+    return BN_num_bits(group->order);
 }

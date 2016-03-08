@@ -164,8 +164,6 @@ struct dsa_st {
     BIGNUM *g;
     BIGNUM *pub_key;            /* y public key */
     BIGNUM *priv_key;           /* x private key */
-    BIGNUM *kinv;               /* Signing pre-calc */
-    BIGNUM *r;                  /* Signing pre-calc */
     int flags;
     /* Normally used to cache montgomery values */
     BN_MONT_CTX *method_mont_p;

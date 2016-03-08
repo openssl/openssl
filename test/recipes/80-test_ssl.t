@@ -13,10 +13,10 @@ setup("test_ssl");
 
 my ($no_rsa, $no_dsa, $no_dh, $no_ec, $no_srp, $no_psk,
     $no_ssl3, $no_tls1, $no_tls1_1, $no_tls1_2,
-    $no_dtls, $no_dtls1, $no_dtls1_2) =
+    $no_dtls, $no_dtls1, $no_dtls1_2, $no_ct) =
     anydisabled qw/rsa dsa dh ec srp psk
                    ssl3 tls1 tls1_1 tls1_2
-                   dtls dtls1 dtls1_2/;
+                   dtls dtls1 dtls1_2 ct/;
 my $no_anytls = alldisabled(available_protocols("tls"));
 my $no_anydtls = alldisabled(available_protocols("dtls"));
 
@@ -64,7 +64,7 @@ my $P2intermediate="tmp_intP2.ss";
 plan tests =>
     1				# For testss
     + 1				# For ssltest -test_cipherlist
-    + 10			# For the first testssl
+    + 11			# For the first testssl
     + 16			# For the first testsslproxy
     + 16			# For the second testsslproxy
     ;
@@ -325,7 +325,7 @@ sub testssl {
     }
 
 
-    # plan tests => 10;
+    # plan tests => 11;
 
     subtest 'standard SSL tests' => sub {
 	######################################################################
@@ -606,20 +606,25 @@ sub testssl {
     subtest 'ALPN tests' => sub {
 	######################################################################
 
-	plan tests => 12;
+	plan tests => 14;
 
       SKIP: {
 	  skip "TLSv1.0 is not supported by this OpenSSL build", 12
 	      if $no_tls1;
 
-	  ok(run(test([@ssltest, "-bio_pair", "-tls1", "-alpn_client", "foo", "-alpn_server", "bar"])));
+	  ok(run(test([@ssltest, "-bio_pair", "-tls1", "-alpn_client", "foo"])));
+	  ok(run(test([@ssltest, "-bio_pair", "-tls1", "-alpn_server", "foo"])));
 	  ok(run(test([@ssltest, "-bio_pair", "-tls1", "-alpn_client", "foo", "-alpn_server", "foo", "-alpn_expected", "foo"])));
 	  ok(run(test([@ssltest, "-bio_pair", "-tls1", "-alpn_client", "foo,bar", "-alpn_server", "foo", "-alpn_expected", "foo"])));
 	  ok(run(test([@ssltest, "-bio_pair", "-tls1", "-alpn_client", "bar,foo", "-alpn_server", "foo", "-alpn_expected", "foo"])));
 	  ok(run(test([@ssltest, "-bio_pair", "-tls1", "-alpn_client", "bar,foo", "-alpn_server", "foo,bar", "-alpn_expected", "foo"])));
 	  ok(run(test([@ssltest, "-bio_pair", "-tls1", "-alpn_client", "bar,foo", "-alpn_server", "bar,foo", "-alpn_expected", "bar"])));
 	  ok(run(test([@ssltest, "-bio_pair", "-tls1", "-alpn_client", "foo,bar", "-alpn_server", "bar,foo", "-alpn_expected", "bar"])));
-	  ok(run(test([@ssltest, "-bio_pair", "-tls1", "-alpn_client", "baz", "-alpn_server", "bar,foo"])));
+
+	  is(run(test([@ssltest, "-bio_pair", "-tls1", "-alpn_client", "foo", "-alpn_server", "bar"])), 0,
+             "Testing ALPN with protocol mismatch, expecting failure");
+	  is(run(test([@ssltest, "-bio_pair", "-tls1", "-alpn_client", "baz", "-alpn_server", "bar,foo"])), 0,
+             "Testing ALPN with protocol mismatch, expecting failure");
 
 	SKIP: {
 	    skip "skipping SRP tests", 4
@@ -757,6 +762,27 @@ sub testssl {
             ok($ok);
         }}}}}
     };
+
+    subtest 'Certificate Transparency tests' => sub {
+	######################################################################
+
+	plan tests => 3;
+
+      SKIP: {
+	  skip "Certificate Transparency is not supported by this OpenSSL build", 3
+	      if $no_ct;
+	  skip "TLSv1.0 is not supported by this OpenSSL build", 3
+	      if $no_tls1;
+
+    $ENV{CTLOG_FILE} = srctop_file("test", "ct", "log_list.conf");
+	  ok(run(test([@ssltest, "-bio_pair", "-tls1", "-noct"])));
+	  ok(run(test([@ssltest, "-bio_pair", "-tls1", "-requestct"])));
+	  # No SCTs provided, so this should fail.
+	  ok(run(test([@ssltest, "-bio_pair", "-tls1", "-requirect",
+	               "-should_negotiate", "fail-client"])));
+	}
+    };
+
 }
 
 sub testsslproxy {

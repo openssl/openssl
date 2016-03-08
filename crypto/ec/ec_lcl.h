@@ -212,10 +212,8 @@ struct ec_method_st {
     int (*keycopy)(EC_KEY *dst, const EC_KEY *src);
     void (*keyfinish)(EC_KEY *eckey);
     /* custom ECDH operation */
-    int (*ecdh_compute_key)(void *out, size_t outlen, const EC_POINT *pub_key,
-                            const EC_KEY *ecdh,
-                            void *(*KDF) (const void *in, size_t inlen,
-                                          void *out, size_t *outlen));
+    int (*ecdh_compute_key)(unsigned char **pout, size_t *poutlen,
+                            const EC_POINT *pub_key, const EC_KEY *ecdh);
 } /* EC_METHOD */ ;
 
 /*
@@ -587,6 +585,7 @@ void ec_GFp_nistp_recode_scalar_bits(unsigned char *sign,
                                      unsigned char *digit, unsigned char in);
 #endif
 int ec_precompute_mont_data(EC_GROUP *);
+int ec_group_simple_order_bits(const EC_GROUP *group);
 
 #ifdef ECP_NISTZ256_ASM
 /** Returns GFp methods using montgomery multiplication, with x86-64 optimized
@@ -595,6 +594,13 @@ int ec_precompute_mont_data(EC_GROUP *);
  */
 const EC_METHOD *EC_GFp_nistz256_method(void);
 #endif
+
+size_t ec_key_simple_priv2oct(const EC_KEY *eckey,
+                              unsigned char *buf, size_t len);
+int ec_key_simple_oct2priv(EC_KEY *eckey, unsigned char *buf, size_t len);
+int ec_key_simple_generate_key(EC_KEY *eckey);
+int ec_key_simple_generate_public_key(EC_KEY *eckey);
+int ec_key_simple_check_key(const EC_KEY *eckey);
 
 /* EC_METHOD definitions */
 
@@ -608,11 +614,8 @@ struct ec_key_method_st {
     int (*set_private)(EC_KEY *key, const BIGNUM *priv_key);
     int (*set_public)(EC_KEY *key, const EC_POINT *pub_key);
     int (*keygen)(EC_KEY *key);
-    int (*compute_key)(void *out, size_t outlen, const EC_POINT *pub_key,
-                       const EC_KEY *ecdh,
-                       void *(*KDF) (const void *in, size_t inlen,
-                                     void *out, size_t *outlen));
-
+    int (*compute_key)(unsigned char **pout, size_t *poutlen,
+                       const EC_POINT *pub_key, const EC_KEY *ecdh);
     int (*sign)(int type, const unsigned char *dgst, int dlen, unsigned char
                 *sig, unsigned int *siglen, const BIGNUM *kinv,
                 const BIGNUM *r, EC_KEY *eckey);
@@ -631,10 +634,10 @@ struct ec_key_method_st {
 #define EC_KEY_METHOD_DYNAMIC   1
 
 int ossl_ec_key_gen(EC_KEY *eckey);
-int ossl_ecdh_compute_key(void *out, size_t outlen, const EC_POINT *pub_key,
-                          const EC_KEY *ecdh,
-                          void *(*KDF) (const void *in, size_t inlen,
-                                        void *out, size_t *outlen));
+int ossl_ecdh_compute_key(unsigned char **pout, size_t *poutlen,
+                          const EC_POINT *pub_key, const EC_KEY *ecdh);
+int ecdh_simple_compute_key(unsigned char **pout, size_t *poutlen,
+                            const EC_POINT *pub_key, const EC_KEY *ecdh);
 
 struct ECDSA_SIG_st {
     BIGNUM *r;

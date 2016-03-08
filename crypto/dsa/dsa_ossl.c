@@ -158,16 +158,8 @@ static DSA_SIG *dsa_do_sign(const unsigned char *dgst, int dlen, DSA *dsa)
     if (ctx == NULL)
         goto err;
  redo:
-    if ((dsa->kinv == NULL) || (dsa->r == NULL)) {
-        if (!dsa_sign_setup(dsa, ctx, &kinv, &r, dgst, dlen))
-            goto err;
-    } else {
-        kinv = dsa->kinv;
-        dsa->kinv = NULL;
-        r = dsa->r;
-        dsa->r = NULL;
-        noredo = 1;
-    }
+    if (!dsa_sign_setup(dsa, ctx, &kinv, &r, dgst, dlen))
+        goto err;
 
     if (dlen > BN_num_bytes(dsa->q))
         /*

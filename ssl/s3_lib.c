@@ -172,7 +172,7 @@ static const SSL_CIPHER ssl3_ciphers[] = {
      SSL_eNULL,
      SSL_MD5,
      SSL_SSLV3,
-     SSL_NOT_DEFAULT | SSL_STRONG_NONE,
+     SSL_STRONG_NONE,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      0,
      0,
@@ -188,13 +188,14 @@ static const SSL_CIPHER ssl3_ciphers[] = {
      SSL_eNULL,
      SSL_SHA1,
      SSL_SSLV3,
-     SSL_NOT_DEFAULT | SSL_STRONG_NONE | SSL_FIPS,
+     SSL_STRONG_NONE | SSL_FIPS,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      0,
      0,
      },
 
 /* Cipher 04 */
+#ifndef OPENSSL_NO_WEAK_SSL_CIPHERS
     {
      1,
      SSL3_TXT_RSA_RC4_128_MD5,
@@ -225,6 +226,7 @@ static const SSL_CIPHER ssl3_ciphers[] = {
      128,
      128,
      },
+#endif
 
 /* Cipher 07 */
 #ifndef OPENSSL_NO_IDEA
@@ -237,7 +239,7 @@ static const SSL_CIPHER ssl3_ciphers[] = {
      SSL_IDEA,
      SSL_SHA1,
      SSL_SSLV3,
-     SSL_MEDIUM,
+     SSL_NOT_DEFAULT | SSL_MEDIUM,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      128,
      128,
@@ -270,7 +272,7 @@ static const SSL_CIPHER ssl3_ciphers[] = {
      SSL_3DES,
      SSL_SHA1,
      SSL_SSLV3,
-     SSL_HIGH | SSL_FIPS,
+     SSL_NOT_DEFAULT | SSL_HIGH | SSL_FIPS,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      112,
      168,
@@ -293,6 +295,7 @@ static const SSL_CIPHER ssl3_ciphers[] = {
      },
 
 /* Cipher 18 */
+#ifndef OPENSSL_NO_WEAK_SSL_CIPHERS
     {
      1,
      SSL3_TXT_ADH_RC4_128_MD5,
@@ -307,6 +310,7 @@ static const SSL_CIPHER ssl3_ciphers[] = {
      128,
      128,
      },
+#endif
 
 /* Cipher 1B */
     {
@@ -334,7 +338,7 @@ static const SSL_CIPHER ssl3_ciphers[] = {
      SSL_eNULL,
      SSL_SHA1,
      SSL_SSLV3,
-     SSL_NOT_DEFAULT | SSL_STRONG_NONE | SSL_FIPS,
+     SSL_STRONG_NONE | SSL_FIPS,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      0,
      0,
@@ -349,7 +353,7 @@ static const SSL_CIPHER ssl3_ciphers[] = {
      SSL_eNULL,
      SSL_SHA1,
      SSL_SSLV3,
-     SSL_NOT_DEFAULT | SSL_STRONG_NONE | SSL_FIPS,
+     SSL_STRONG_NONE | SSL_FIPS,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      0,
      0,
@@ -364,7 +368,7 @@ static const SSL_CIPHER ssl3_ciphers[] = {
      SSL_eNULL,
      SSL_SHA1,
      SSL_SSLV3,
-     SSL_NOT_DEFAULT | SSL_STRONG_NONE | SSL_FIPS,
+     SSL_STRONG_NONE | SSL_FIPS,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      0,
      0,
@@ -397,7 +401,7 @@ static const SSL_CIPHER ssl3_ciphers[] = {
      SSL_AES128,
      SSL_SHA1,
      SSL_SSLV3,
-     SSL_HIGH | SSL_FIPS,
+     SSL_NOT_DEFAULT | SSL_HIGH | SSL_FIPS,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      128,
      128,
@@ -459,7 +463,7 @@ static const SSL_CIPHER ssl3_ciphers[] = {
      SSL_AES256,
      SSL_SHA1,
      SSL_SSLV3,
-     SSL_HIGH | SSL_FIPS,
+     SSL_NOT_DEFAULT | SSL_HIGH | SSL_FIPS,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      256,
      256,
@@ -508,7 +512,7 @@ static const SSL_CIPHER ssl3_ciphers[] = {
      SSL_eNULL,
      SSL_SHA256,
      SSL_TLSV1_2,
-     SSL_NOT_DEFAULT | SSL_STRONG_NONE | SSL_FIPS,
+     SSL_STRONG_NONE | SSL_FIPS,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      0,
      0,
@@ -556,7 +560,7 @@ static const SSL_CIPHER ssl3_ciphers[] = {
      SSL_AES128,
      SSL_SHA256,
      SSL_TLSV1_2,
-     SSL_HIGH | SSL_FIPS,
+     SSL_NOT_DEFAULT | SSL_HIGH | SSL_FIPS,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      128,
      128,
@@ -575,7 +579,7 @@ static const SSL_CIPHER ssl3_ciphers[] = {
      SSL_CAMELLIA128,
      SSL_SHA1,
      SSL_SSLV3,
-     SSL_HIGH,
+     SSL_NOT_DEFAULT | SSL_HIGH,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      128,
      128,
@@ -591,7 +595,7 @@ static const SSL_CIPHER ssl3_ciphers[] = {
      SSL_CAMELLIA128,
      SSL_SHA1,
      SSL_SSLV3,
-     SSL_HIGH,
+     SSL_NOT_DEFAULT | SSL_HIGH,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      128,
      128,
@@ -607,7 +611,7 @@ static const SSL_CIPHER ssl3_ciphers[] = {
      SSL_CAMELLIA128,
      SSL_SHA1,
      SSL_SSLV3,
-     SSL_HIGH,
+     SSL_NOT_DEFAULT | SSL_HIGH,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      128,
      128,
@@ -657,7 +661,7 @@ static const SSL_CIPHER ssl3_ciphers[] = {
      SSL_AES256,
      SSL_SHA256,
      SSL_TLSV1_2,
-     SSL_HIGH | SSL_FIPS,
+     SSL_NOT_DEFAULT | SSL_HIGH | SSL_FIPS,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      256,
      256,
@@ -736,7 +740,7 @@ static const SSL_CIPHER ssl3_ciphers[] = {
      SSL_eNULL,
      SSL_GOST94,
      SSL_TLSV1,
-     SSL_NOT_DEFAULT | SSL_STRONG_NONE,
+     SSL_STRONG_NONE,
      SSL_HANDSHAKE_MAC_GOST94 | TLS1_PRF_GOST94,
      0,
      0
@@ -755,7 +759,7 @@ static const SSL_CIPHER ssl3_ciphers[] = {
      SSL_CAMELLIA256,
      SSL_SHA1,
      SSL_SSLV3,
-     SSL_HIGH,
+     SSL_NOT_DEFAULT | SSL_HIGH,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      256,
      256,
@@ -771,7 +775,7 @@ static const SSL_CIPHER ssl3_ciphers[] = {
      SSL_CAMELLIA256,
      SSL_SHA1,
      SSL_SSLV3,
-     SSL_HIGH,
+     SSL_NOT_DEFAULT | SSL_HIGH,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      256,
      256,
@@ -787,7 +791,7 @@ static const SSL_CIPHER ssl3_ciphers[] = {
      SSL_CAMELLIA256,
      SSL_SHA1,
      SSL_SSLV3,
-     SSL_HIGH,
+     SSL_NOT_DEFAULT | SSL_HIGH,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      256,
      256,
@@ -813,6 +817,7 @@ static const SSL_CIPHER ssl3_ciphers[] = {
 #ifndef OPENSSL_NO_PSK
     /* PSK ciphersuites from RFC 4279 */
     /* Cipher 8A */
+#ifndef OPENSSL_NO_WEAK_SSL_CIPHERS
     {
      1,
      TLS1_TXT_PSK_WITH_RC4_128_SHA,
@@ -827,6 +832,7 @@ static const SSL_CIPHER ssl3_ciphers[] = {
      128,
      128,
      },
+#endif
 
     /* Cipher 8B */
     {
@@ -877,6 +883,7 @@ static const SSL_CIPHER ssl3_ciphers[] = {
      },
 
     /* Cipher 8E */
+#ifndef OPENSSL_NO_WEAK_SSL_CIPHERS
     {
      1,
      TLS1_TXT_DHE_PSK_WITH_RC4_128_SHA,
@@ -891,6 +898,7 @@ static const SSL_CIPHER ssl3_ciphers[] = {
      128,
      128,
      },
+#endif
 
     /* Cipher 8F */
     {
@@ -941,6 +949,7 @@ static const SSL_CIPHER ssl3_ciphers[] = {
      },
 
     /* Cipher 92 */
+#ifndef OPENSSL_NO_WEAK_SSL_CIPHERS
     {
      1,
      TLS1_TXT_RSA_PSK_WITH_RC4_128_SHA,
@@ -955,6 +964,7 @@ static const SSL_CIPHER ssl3_ciphers[] = {
      128,
      128,
      },
+#endif
 
     /* Cipher 93 */
     {
@@ -1018,7 +1028,7 @@ static const SSL_CIPHER ssl3_ciphers[] = {
      SSL_SEED,
      SSL_SHA1,
      SSL_SSLV3,
-     SSL_MEDIUM,
+     SSL_NOT_DEFAULT | SSL_MEDIUM,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      128,
      128,
@@ -1034,7 +1044,7 @@ static const SSL_CIPHER ssl3_ciphers[] = {
      SSL_SEED,
      SSL_SHA1,
      SSL_SSLV3,
-     SSL_MEDIUM,
+     SSL_NOT_DEFAULT | SSL_MEDIUM,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      128,
      128,
@@ -1050,7 +1060,7 @@ static const SSL_CIPHER ssl3_ciphers[] = {
      SSL_SEED,
      SSL_SHA1,
      SSL_SSLV3,
-     SSL_MEDIUM,
+     SSL_NOT_DEFAULT | SSL_MEDIUM,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      128,
      128,
@@ -1150,7 +1160,7 @@ static const SSL_CIPHER ssl3_ciphers[] = {
      SSL_AES128GCM,
      SSL_AEAD,
      SSL_TLSV1_2,
-     SSL_HIGH | SSL_FIPS,
+     SSL_NOT_DEFAULT | SSL_HIGH | SSL_FIPS,
      SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256,
      128,
      128,
@@ -1166,7 +1176,7 @@ static const SSL_CIPHER ssl3_ciphers[] = {
      SSL_AES256GCM,
      SSL_AEAD,
      SSL_TLSV1_2,
-     SSL_HIGH | SSL_FIPS,
+     SSL_NOT_DEFAULT | SSL_HIGH | SSL_FIPS,
      SSL_HANDSHAKE_MAC_SHA384 | TLS1_PRF_SHA384,
      256,
      256,
@@ -1344,7 +1354,7 @@ static const SSL_CIPHER ssl3_ciphers[] = {
      SSL_eNULL,
      SSL_SHA256,
      SSL_TLSV1,
-     SSL_NOT_DEFAULT | SSL_STRONG_NONE | SSL_FIPS,
+     SSL_STRONG_NONE | SSL_FIPS,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      0,
      0,
@@ -1360,7 +1370,7 @@ static const SSL_CIPHER ssl3_ciphers[] = {
      SSL_eNULL,
      SSL_SHA384,
      SSL_TLSV1,
-     SSL_NOT_DEFAULT | SSL_STRONG_NONE | SSL_FIPS,
+     SSL_STRONG_NONE | SSL_FIPS,
      SSL_HANDSHAKE_MAC_SHA384 | TLS1_PRF_SHA384,
      0,
      0,
@@ -1408,7 +1418,7 @@ static const SSL_CIPHER ssl3_ciphers[] = {
      SSL_eNULL,
      SSL_SHA256,
      SSL_TLSV1,
-     SSL_NOT_DEFAULT | SSL_STRONG_NONE | SSL_FIPS,
+     SSL_STRONG_NONE | SSL_FIPS,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      0,
      0,
@@ -1424,7 +1434,7 @@ static const SSL_CIPHER ssl3_ciphers[] = {
      SSL_eNULL,
      SSL_SHA384,
      SSL_TLSV1,
-     SSL_NOT_DEFAULT | SSL_STRONG_NONE | SSL_FIPS,
+     SSL_STRONG_NONE | SSL_FIPS,
      SSL_HANDSHAKE_MAC_SHA384 | TLS1_PRF_SHA384,
      0,
      0,
@@ -1472,7 +1482,7 @@ static const SSL_CIPHER ssl3_ciphers[] = {
      SSL_eNULL,
      SSL_SHA256,
      SSL_TLSV1,
-     SSL_NOT_DEFAULT | SSL_STRONG_NONE | SSL_FIPS,
+     SSL_STRONG_NONE | SSL_FIPS,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      0,
      0,
@@ -1488,7 +1498,7 @@ static const SSL_CIPHER ssl3_ciphers[] = {
      SSL_eNULL,
      SSL_SHA384,
      SSL_TLSV1,
-     SSL_NOT_DEFAULT | SSL_STRONG_NONE | SSL_FIPS,
+     SSL_STRONG_NONE | SSL_FIPS,
      SSL_HANDSHAKE_MAC_SHA384 | TLS1_PRF_SHA384,
      0,
      0,
@@ -1508,7 +1518,7 @@ static const SSL_CIPHER ssl3_ciphers[] = {
      SSL_CAMELLIA128,
      SSL_SHA256,
      SSL_TLSV1_2,
-     SSL_HIGH,
+     SSL_NOT_DEFAULT | SSL_HIGH,
      SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256,
      128,
      128,
@@ -1524,7 +1534,7 @@ static const SSL_CIPHER ssl3_ciphers[] = {
      SSL_CAMELLIA128,
      SSL_SHA256,
      SSL_TLSV1_2,
-     SSL_HIGH,
+     SSL_NOT_DEFAULT | SSL_HIGH,
      SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256,
      128,
      128,
@@ -1540,7 +1550,7 @@ static const SSL_CIPHER ssl3_ciphers[] = {
      SSL_CAMELLIA128,
      SSL_SHA256,
      SSL_TLSV1_2,
-     SSL_HIGH,
+     SSL_NOT_DEFAULT | SSL_HIGH,
      SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256,
      128,
      128,
@@ -1572,7 +1582,7 @@ static const SSL_CIPHER ssl3_ciphers[] = {
      SSL_CAMELLIA256,
      SSL_SHA256,
      SSL_TLSV1_2,
-     SSL_HIGH,
+     SSL_NOT_DEFAULT | SSL_HIGH,
      SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256,
      256,
      256,
@@ -1588,7 +1598,7 @@ static const SSL_CIPHER ssl3_ciphers[] = {
      SSL_CAMELLIA256,
      SSL_SHA256,
      SSL_TLSV1_2,
-     SSL_HIGH,
+     SSL_NOT_DEFAULT | SSL_HIGH,
      SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256,
      256,
      256,
@@ -1604,7 +1614,7 @@ static const SSL_CIPHER ssl3_ciphers[] = {
      SSL_CAMELLIA256,
      SSL_SHA256,
      SSL_TLSV1_2,
-     SSL_HIGH,
+     SSL_NOT_DEFAULT | SSL_HIGH,
      SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256,
      256,
      256,
@@ -1639,13 +1649,14 @@ static const SSL_CIPHER ssl3_ciphers[] = {
      SSL_eNULL,
      SSL_SHA1,
      SSL_SSLV3,
-     SSL_NOT_DEFAULT | SSL_STRONG_NONE | SSL_FIPS,
+     SSL_STRONG_NONE | SSL_FIPS,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      0,
      0,
      },
 
     /* Cipher C007 */
+#ifndef OPENSSL_NO_WEAK_SSL_CIPHERS
     {
      1,
      TLS1_TXT_ECDHE_ECDSA_WITH_RC4_128_SHA,
@@ -1660,6 +1671,7 @@ static const SSL_CIPHER ssl3_ciphers[] = {
      128,
      128,
      },
+#endif
 
     /* Cipher C008 */
     {
@@ -1719,13 +1731,14 @@ static const SSL_CIPHER ssl3_ciphers[] = {
      SSL_eNULL,
      SSL_SHA1,
      SSL_SSLV3,
-     SSL_NOT_DEFAULT | SSL_STRONG_NONE | SSL_FIPS,
+     SSL_STRONG_NONE | SSL_FIPS,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      0,
      0,
      },
 
     /* Cipher C011 */
+#ifndef OPENSSL_NO_WEAK_SSL_CIPHERS
     {
      1,
      TLS1_TXT_ECDHE_RSA_WITH_RC4_128_SHA,
@@ -1740,6 +1753,7 @@ static const SSL_CIPHER ssl3_ciphers[] = {
      128,
      128,
      },
+#endif
 
     /* Cipher C012 */
     {
@@ -1799,13 +1813,14 @@ static const SSL_CIPHER ssl3_ciphers[] = {
      SSL_eNULL,
      SSL_SHA1,
      SSL_SSLV3,
-     SSL_NOT_DEFAULT | SSL_STRONG_NONE | SSL_FIPS,
+     SSL_STRONG_NONE | SSL_FIPS,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      0,
      0,
      },
 
     /* Cipher C016 */
+#ifndef OPENSSL_NO_WEAK_SSL_CIPHERS
     {
      1,
      TLS1_TXT_ECDH_anon_WITH_RC4_128_SHA,
@@ -1820,6 +1835,7 @@ static const SSL_CIPHER ssl3_ciphers[] = {
      128,
      128,
      },
+#endif
 
     /* Cipher C017 */
     {
@@ -1913,7 +1929,7 @@ static const SSL_CIPHER ssl3_ciphers[] = {
      SSL_3DES,
      SSL_SHA1,
      SSL_SSLV3,
-     SSL_HIGH,
+     SSL_NOT_DEFAULT | SSL_HIGH,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      112,
      168,
@@ -1961,7 +1977,7 @@ static const SSL_CIPHER ssl3_ciphers[] = {
      SSL_AES128,
      SSL_SHA1,
      SSL_SSLV3,
-     SSL_HIGH,
+     SSL_NOT_DEFAULT | SSL_HIGH,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      128,
      128,
@@ -2009,7 +2025,7 @@ static const SSL_CIPHER ssl3_ciphers[] = {
      SSL_AES256,
      SSL_SHA1,
      SSL_SSLV3,
-     SSL_HIGH,
+     SSL_NOT_DEFAULT | SSL_HIGH,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      256,
      256,
@@ -2152,6 +2168,7 @@ static const SSL_CIPHER ssl3_ciphers[] = {
 
     /* PSK ciphersuites from RFC 5489 */
     /* Cipher C033 */
+#ifndef OPENSSL_NO_WEAK_SSL_CIPHERS
     {
      1,
      TLS1_TXT_ECDHE_PSK_WITH_RC4_128_SHA,
@@ -2166,6 +2183,7 @@ static const SSL_CIPHER ssl3_ciphers[] = {
      128,
      128,
      },
+#endif
 
     /* Cipher C034 */
     {
@@ -2257,7 +2275,7 @@ static const SSL_CIPHER ssl3_ciphers[] = {
      SSL_eNULL,
      SSL_SHA1,
      SSL_SSLV3,
-     SSL_NOT_DEFAULT | SSL_STRONG_NONE | SSL_FIPS,
+     SSL_STRONG_NONE | SSL_FIPS,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      0,
      0,
@@ -2273,7 +2291,7 @@ static const SSL_CIPHER ssl3_ciphers[] = {
      SSL_eNULL,
      SSL_SHA256,
      SSL_TLSV1,
-     SSL_NOT_DEFAULT | SSL_STRONG_NONE | SSL_FIPS,
+     SSL_STRONG_NONE | SSL_FIPS,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      0,
      0,
@@ -2289,7 +2307,7 @@ static const SSL_CIPHER ssl3_ciphers[] = {
      SSL_eNULL,
      SSL_SHA384,
      SSL_TLSV1,
-     SSL_NOT_DEFAULT | SSL_STRONG_NONE | SSL_FIPS,
+     SSL_STRONG_NONE | SSL_FIPS,
      SSL_HANDSHAKE_MAC_SHA384 | TLS1_PRF_SHA384,
      0,
      0,
@@ -2305,7 +2323,7 @@ static const SSL_CIPHER ssl3_ciphers[] = {
      SSL_CAMELLIA128,
      SSL_SHA256,
      SSL_TLSV1_2,
-     SSL_HIGH,
+     SSL_NOT_DEFAULT | SSL_HIGH,
      SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256,
      128,
      128},
@@ -2319,7 +2337,7 @@ static const SSL_CIPHER ssl3_ciphers[] = {
      SSL_CAMELLIA256,
      SSL_SHA384,
      SSL_TLSV1_2,
-     SSL_HIGH,
+     SSL_NOT_DEFAULT | SSL_HIGH,
      SSL_HANDSHAKE_MAC_SHA384 | TLS1_PRF_SHA384,
      256,
      256},
@@ -2333,7 +2351,7 @@ static const SSL_CIPHER ssl3_ciphers[] = {
      SSL_CAMELLIA128,
      SSL_SHA256,
      SSL_TLSV1_2,
-     SSL_HIGH,
+     SSL_NOT_DEFAULT | SSL_HIGH,
      SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256,
      128,
      128},
@@ -2347,7 +2365,7 @@ static const SSL_CIPHER ssl3_ciphers[] = {
      SSL_CAMELLIA256,
      SSL_SHA384,
      SSL_TLSV1_2,
-     SSL_HIGH,
+     SSL_NOT_DEFAULT | SSL_HIGH,
      SSL_HANDSHAKE_MAC_SHA384 | TLS1_PRF_SHA384,
      256,
      256},
@@ -2365,7 +2383,7 @@ static const SSL_CIPHER ssl3_ciphers[] = {
      SSL_CAMELLIA128,
      SSL_SHA256,
      SSL_TLSV1,
-     SSL_HIGH,
+     SSL_NOT_DEFAULT | SSL_HIGH,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      128,
      128},
@@ -2379,7 +2397,7 @@ static const SSL_CIPHER ssl3_ciphers[] = {
      SSL_CAMELLIA256,
      SSL_SHA384,
      SSL_TLSV1,
-     SSL_HIGH,
+     SSL_NOT_DEFAULT | SSL_HIGH,
      SSL_HANDSHAKE_MAC_SHA384 | TLS1_PRF_SHA384,
      256,
      256},
@@ -2393,7 +2411,7 @@ static const SSL_CIPHER ssl3_ciphers[] = {
      SSL_CAMELLIA128,
      SSL_SHA256,
      SSL_TLSV1,
-     SSL_HIGH,
+     SSL_NOT_DEFAULT | SSL_HIGH,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      128,
      128},
@@ -2407,7 +2425,7 @@ static const SSL_CIPHER ssl3_ciphers[] = {
      SSL_CAMELLIA256,
      SSL_SHA384,
      SSL_TLSV1,
-     SSL_HIGH,
+     SSL_NOT_DEFAULT | SSL_HIGH,
      SSL_HANDSHAKE_MAC_SHA384 | TLS1_PRF_SHA384,
      256,
      256},
@@ -2421,7 +2439,7 @@ static const SSL_CIPHER ssl3_ciphers[] = {
      SSL_CAMELLIA128,
      SSL_SHA256,
      SSL_TLSV1,
-     SSL_HIGH,
+     SSL_NOT_DEFAULT | SSL_HIGH,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      128,
      128},
@@ -2435,7 +2453,7 @@ static const SSL_CIPHER ssl3_ciphers[] = {
      SSL_CAMELLIA256,
      SSL_SHA384,
      SSL_TLSV1,
-     SSL_HIGH,
+     SSL_NOT_DEFAULT | SSL_HIGH,
      SSL_HANDSHAKE_MAC_SHA384 | TLS1_PRF_SHA384,
      256,
      256},
@@ -2449,7 +2467,7 @@ static const SSL_CIPHER ssl3_ciphers[] = {
      SSL_CAMELLIA128,
      SSL_SHA256,
      SSL_TLSV1,
-     SSL_HIGH,
+     SSL_NOT_DEFAULT | SSL_HIGH,
      SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
      128,
      128},
@@ -2463,7 +2481,7 @@ static const SSL_CIPHER ssl3_ciphers[] = {
      SSL_CAMELLIA256,
      SSL_SHA384,
      SSL_TLSV1,
-     SSL_HIGH,
+     SSL_NOT_DEFAULT | SSL_HIGH,
      SSL_HANDSHAKE_MAC_SHA384 | TLS1_PRF_SHA384,
      256,
      256},
@@ -2479,7 +2497,7 @@ static const SSL_CIPHER ssl3_ciphers[] = {
      SSL_AES128CCM,
      SSL_AEAD,
      SSL_TLSV1_2,
-     SSL_HIGH,
+     SSL_NOT_DEFAULT | SSL_HIGH,
      SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256,
      128,
      128,
@@ -2495,7 +2513,7 @@ static const SSL_CIPHER ssl3_ciphers[] = {
      SSL_AES256CCM,
      SSL_AEAD,
      SSL_TLSV1_2,
-     SSL_HIGH,
+     SSL_NOT_DEFAULT | SSL_HIGH,
      SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256,
      256,
      256,
@@ -2511,7 +2529,7 @@ static const SSL_CIPHER ssl3_ciphers[] = {
      SSL_AES128CCM,
      SSL_AEAD,
      SSL_TLSV1_2,
-     SSL_HIGH,
+     SSL_NOT_DEFAULT | SSL_HIGH,
      SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256,
      128,
      128,
@@ -2527,7 +2545,7 @@ static const SSL_CIPHER ssl3_ciphers[] = {
      SSL_AES256CCM,
      SSL_AEAD,
      SSL_TLSV1_2,
-     SSL_HIGH,
+     SSL_NOT_DEFAULT | SSL_HIGH,
      SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256,
      256,
      256,
@@ -2543,7 +2561,7 @@ static const SSL_CIPHER ssl3_ciphers[] = {
      SSL_AES128CCM8,
      SSL_AEAD,
      SSL_TLSV1_2,
-     SSL_HIGH,
+     SSL_NOT_DEFAULT | SSL_HIGH,
      SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256,
      128,
      128,
@@ -2559,7 +2577,7 @@ static const SSL_CIPHER ssl3_ciphers[] = {
      SSL_AES256CCM8,
      SSL_AEAD,
      SSL_TLSV1_2,
-     SSL_HIGH,
+     SSL_NOT_DEFAULT | SSL_HIGH,
      SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256,
      256,
      256,
@@ -2575,7 +2593,7 @@ static const SSL_CIPHER ssl3_ciphers[] = {
      SSL_AES128CCM8,
      SSL_AEAD,
      SSL_TLSV1_2,
-     SSL_HIGH,
+     SSL_NOT_DEFAULT | SSL_HIGH,
      SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256,
      128,
      128,
@@ -2591,7 +2609,7 @@ static const SSL_CIPHER ssl3_ciphers[] = {
      SSL_AES256CCM8,
      SSL_AEAD,
      SSL_TLSV1_2,
-     SSL_HIGH,
+     SSL_NOT_DEFAULT | SSL_HIGH,
      SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256,
      256,
      256,
@@ -2607,7 +2625,7 @@ static const SSL_CIPHER ssl3_ciphers[] = {
      SSL_AES128CCM,
      SSL_AEAD,
      SSL_TLSV1_2,
-     SSL_HIGH,
+     SSL_NOT_DEFAULT | SSL_HIGH,
      SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256,
      128,
      128,
@@ -2623,7 +2641,7 @@ static const SSL_CIPHER ssl3_ciphers[] = {
      SSL_AES256CCM,
      SSL_AEAD,
      SSL_TLSV1_2,
-     SSL_HIGH,
+     SSL_NOT_DEFAULT | SSL_HIGH,
      SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256,
      256,
      256,
@@ -2639,7 +2657,7 @@ static const SSL_CIPHER ssl3_ciphers[] = {
      SSL_AES128CCM,
      SSL_AEAD,
      SSL_TLSV1_2,
-     SSL_HIGH,
+     SSL_NOT_DEFAULT | SSL_HIGH,
      SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256,
      128,
      128,
@@ -2655,7 +2673,7 @@ static const SSL_CIPHER ssl3_ciphers[] = {
      SSL_AES256CCM,
      SSL_AEAD,
      SSL_TLSV1_2,
-     SSL_HIGH,
+     SSL_NOT_DEFAULT | SSL_HIGH,
      SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256,
      256,
      256,
@@ -2671,7 +2689,7 @@ static const SSL_CIPHER ssl3_ciphers[] = {
      SSL_AES128CCM8,
      SSL_AEAD,
      SSL_TLSV1_2,
-     SSL_HIGH,
+     SSL_NOT_DEFAULT | SSL_HIGH,
      SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256,
      128,
      128,
@@ -2687,7 +2705,7 @@ static const SSL_CIPHER ssl3_ciphers[] = {
      SSL_AES256CCM8,
      SSL_AEAD,
      SSL_TLSV1_2,
-     SSL_HIGH,
+     SSL_NOT_DEFAULT | SSL_HIGH,
      SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256,
      256,
      256,
@@ -2703,7 +2721,7 @@ static const SSL_CIPHER ssl3_ciphers[] = {
      SSL_AES128CCM8,
      SSL_AEAD,
      SSL_TLSV1_2,
-     SSL_HIGH,
+     SSL_NOT_DEFAULT | SSL_HIGH,
      SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256,
      128,
      128,
@@ -2719,7 +2737,7 @@ static const SSL_CIPHER ssl3_ciphers[] = {
      SSL_AES256CCM8,
      SSL_AEAD,
      SSL_TLSV1_2,
-     SSL_HIGH,
+     SSL_NOT_DEFAULT | SSL_HIGH,
      SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256,
      256,
      256,
@@ -2735,7 +2753,7 @@ static const SSL_CIPHER ssl3_ciphers[] = {
      SSL_AES128CCM,
      SSL_AEAD,
      SSL_TLSV1_2,
-     SSL_HIGH,
+     SSL_NOT_DEFAULT | SSL_HIGH,
      SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256,
      128,
      128,
@@ -2751,7 +2769,7 @@ static const SSL_CIPHER ssl3_ciphers[] = {
      SSL_AES256CCM,
      SSL_AEAD,
      SSL_TLSV1_2,
-     SSL_HIGH,
+     SSL_NOT_DEFAULT | SSL_HIGH,
      SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256,
      256,
      256,
@@ -2767,7 +2785,7 @@ static const SSL_CIPHER ssl3_ciphers[] = {
      SSL_AES128CCM8,
      SSL_AEAD,
      SSL_TLSV1_2,
-     SSL_HIGH,
+     SSL_NOT_DEFAULT | SSL_HIGH,
      SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256,
      128,
      128,
@@ -2783,7 +2801,7 @@ static const SSL_CIPHER ssl3_ciphers[] = {
      SSL_AES256CCM8,
      SSL_AEAD,
      SSL_TLSV1_2,
-     SSL_HIGH,
+     SSL_NOT_DEFAULT | SSL_HIGH,
      SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256,
      256,
      256,

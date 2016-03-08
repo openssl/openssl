@@ -93,11 +93,11 @@ ENGINESDIR={- use File::Spec::Functions;
 
 CROSS_COMPILE= {- $config{cross_compile_prefix} -}
 CC= $(CROSS_COMPILE){- $target{cc} -}
-CFLAG={- our $cflags2 = join(" ",(map { "-D".$_} @{$config{defines}},"OPENSSLDIR=\"\\\"\$(OPENSSLDIR)\\\"\"","ENGINESDIR=\"\\\"\$(ENGINESDIR)\\\"\"")) -} {- $config{cflags} -}
+CFLAG={- our $cflags2 = join(" ",(map { "-D".$_} @{$target{defines}}, @{$config{defines}}),"-DOPENSSLDIR=\"\\\"\$(OPENSSLDIR)\\\"\"","-DENGINESDIR=\"\\\"\$(ENGINESDIR)\\\"\"") -} {- $target{cflags} -} {- $config{cflags} -}
 CFLAG_Q={- $cflags2 =~ s|([\\"])|\\$1|g; $cflags2 -} {- $config{cflags} -}
-LDFLAG= {- $config{lflags} -}
-PLIB_LDFLAG= {- $config{plib_lflags} -}
-EX_LIBS= {- $config{ex_libs} -}
+LDFLAG= {- $target{lflags} -} {- $config{lflags} -}
+PLIB_LDFLAG= {- $target{plib_lflags} -} {- $config{plib_lflags} -}
+EX_LIBS= {- $target{ex_libs} -} {- $config{ex_libs} -}
 EXE_EXT= {- $target{exe_extension} -}
 ARFLAGS= {- $target{arflags} -}
 AR=$(CROSS_COMPILE){- $target{ar} -} $(ARFLAGS) r
@@ -125,6 +125,7 @@ PROCESSOR= {- $config{processor} -}
 # CPUID module collects small commonly used assembler snippets
 APPS_OBJ={- $target{apps_obj} -}
 CPUID_OBJ= {- $target{cpuid_obj} -}
+UPLINK_OBJ= {- $target{uplink_obj} -}
 BN_ASM= {- $target{bn_obj} -}
 EC_ASM= {- $target{ec_obj} -}
 DES_ENC= {- $target{des_obj} -}
@@ -196,7 +197,7 @@ SHARED_CRYPTO=libcrypto$(SHLIB_EXT)
 SHARED_SSL=libssl$(SHLIB_EXT)
 SHARED_LIBS={- $disabled{shared} ? '' : '$(SHARED_CRYPTO) $(SHARED_SSL)'  -}
 SHARED_CFLAG={- $target{shared_cflag} -}
-SHARED_LDFLAG={- $target{shared_ldflag}
+SHARED_LDFLAG={- $target{shared_ldflag}." ".$config{shared_ldflag}
                  # Unlike other OSes (like Solaris, Linux, Tru64,
                  # IRIX) BSD run-time linkers (tested OpenBSD, NetBSD
                  # and FreeBSD) "demand" RPATH set on .so objects.
@@ -229,6 +230,8 @@ INSTALLDIRS=	\
 		$(DESTDIR)$(OPENSSLDIR)/misc \
 		$(DESTDIR)$(OPENSSLDIR)/certs \
 		$(DESTDIR)$(OPENSSLDIR)/private
+
+ENGDIRS={- join(" ", @{$config{engdirs}}) -}
 
 all: Makefile build_all_but_tests
 
@@ -269,12 +272,13 @@ BUILDENV=	LC_ALL=C PLATFORM='$(PLATFORM)' PROCESSOR='$(PROCESSOR)'\
 		SHLIB_TARGET='$(SHLIB_TARGET)'	\
 		LDFLAG='$(LDFLAG)'				\
 		PLIB_LDFLAG='$(PLIB_LDFLAG)' EX_LIBS='$(EX_LIBS)'	\
-		APPS_OBJ='$(APPS_OBJ)'				\
+		APPS_OBJ='$(APPS_OBJ)' UPLINK_OBJ='$(UPLINK_OBJ)'	\
 		CPUID_OBJ='$(CPUID_OBJ)' BN_ASM='$(BN_ASM)'	\
 		EC_ASM='$(EC_ASM)' DES_ENC='$(DES_ENC)'		\
 		AES_ENC='$(AES_ENC)' CMLL_ENC='$(CMLL_ENC)'	\
 		BF_ENC='$(BF_ENC)' CAST_ENC='$(CAST_ENC)'	\
 		RC4_ENC='$(RC4_ENC)' RC5_ENC='$(RC5_ENC)'	\
+		ENGDIRS='$(ENGDIRS)'    \
 		SHA1_ASM_OBJ='$(SHA1_ASM_OBJ)'			\
 		MD5_ASM_OBJ='$(MD5_ASM_OBJ)'			\
 		RMD160_ASM_OBJ='$(RMD160_ASM_OBJ)'		\
@@ -511,10 +515,10 @@ errors:
 	$(PERL) util/mkerr.pl -recurse -write
 	(cd engines; $(MAKE) PERL=$(PERL) errors)
 
-ordinals: util/libeay.num util/ssleay.num test_ordinals TABLE
-util/libeay.num::
+ordinals: util/libcrypto.num util/libssl.num test_ordinals TABLE
+util/libcrypto.num::
 	$(PERL) util/mkdef.pl crypto update
-util/ssleay.num::
+util/libssl.num::
 	$(PERL) util/mkdef.pl ssl update
 test_ordinals:
 	TOP=$(TOP) PERL=$(PERL) $(PERL) test/run_tests.pl test_ordinals

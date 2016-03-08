@@ -75,6 +75,9 @@ B<openssl> B<s_client>
 [B<-dtls1_2>]
 [B<-fallback_scsv>]
 [B<-async>]
+[B<-split_send_frag>]
+[B<-max_pipelines>]
+[B<-read_buf>]
 [B<-bugs>]
 [B<-comp>]
 [B<-no_comp>]
@@ -91,6 +94,8 @@ B<openssl> B<s_client>
 [B<-serverinfo types>]
 [B<-status>]
 [B<-nextprotoneg protocols>]
+[B<-noct|requestct|requirect>]
+[B<-ctlogfile>]
 
 =head1 DESCRIPTION
 
@@ -336,6 +341,29 @@ asynchronously. This will only have an effect if an asynchronous capable engine
 is also used via the B<-engine> option. For test purposes the dummy async engine
 (dasync) can be used (if available).
 
+=item B<-split_send_frag int>
+
+The size used to split data for encrypt pipelines. If more data is written in
+one go than this value then it will be split into multiple pipelines, up to the
+maximum number of pipelines defined by max_pipelines. This only has an effect if
+a suitable ciphersuite has been negotiated, an engine that supports pipelining
+has been loaded, and max_pipelines is greater than 1. See
+L<SSL_CTX_set_split_send_fragment(3)> for further information.
+
+=item B<-max_pipelines int>
+
+The maximum number of encrypt/decrypt pipelines to be used. This will only have
+an effect if an engine has been loaded that supports pipelining (e.g. the dasync
+engine) and a suiteable ciphersuite has been negotiated. The default value is 1.
+See L<SSL_CTX_set_max_pipelines(3)> for further information.
+
+=item B<-read_buf int>
+
+The default read buffer size to be used for connections. This will only have an
+effect if the buffer size is larger than the size that would otherwise be used
+and pipelining is in use (see L<SSL_CTX_set_default_read_buffer_len(3)> for
+further information).
+
 =item B<-bugs>
 
 there are several known bug in SSL and TLS implementations. Adding this
@@ -434,6 +462,23 @@ Protocol names are printable ASCII strings, for example "http/1.1" or
 Empty list of protocols is treated specially and will cause the client to
 advertise support for the TLS extension but disconnect just after
 receiving ServerHello with a list of server supported protocols.
+
+=item B<-noct|requestct|requirect>
+
+Use one of these three options to control whether Certificate Transparency (CT)
+is disabled (-noct), enabled but not enforced (-requestct), or enabled and
+enforced (-requirect). If CT is enabled, signed certificate timestamps (SCTs)
+will be requested from the server and invalid SCTs will cause the connection to
+be aborted. If CT is enforced, at least one valid SCT from a recognised CT log
+(see B<-ctlogfile>) will be required or the connection will be aborted.
+
+Enabling CT also enables OCSP stapling, as this is one possible delivery method
+for SCTs.
+
+=item B<-ctlogfile>
+
+A file containing a list of known Certificate Transparency logs. See
+L<SSL_CTX_set_ctlog_list_file(3)> for the expected file format.
 
 =back
 

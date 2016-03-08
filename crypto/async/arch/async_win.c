@@ -58,38 +58,14 @@
 # include <windows.h>
 # include "internal/cryptlib.h"
 
-struct winpool {
-    STACK_OF(ASYNC_JOB) *pool;
-    size_t curr_size;
-    size_t max_size;
-};
-
-static DWORD asyncwinpool = 0;
-static DWORD asyncwinctx = 0;
-
-
-void async_start_func(void);
-
-int async_global_init(void)
+int ASYNC_is_capable(void)
 {
-    asyncwinpool = TlsAlloc();
-    asyncwinctx = TlsAlloc();
-    if (asyncwinpool == TLS_OUT_OF_INDEXES
-            || asyncwinctx == TLS_OUT_OF_INDEXES) {
-        if (asyncwinpool != TLS_OUT_OF_INDEXES) {
-            TlsFree(asyncwinpool);
-        }
-        if (asyncwinctx != TLS_OUT_OF_INDEXES) {
-            TlsFree(asyncwinctx);
-        }
-        return 0;
-    }
     return 1;
 }
 
 void async_local_cleanup(void)
 {
-    async_ctx *ctx = async_arch_get_ctx();
+    async_ctx *ctx = async_get_ctx();
     if (ctx != NULL) {
         async_fibre *fibre = &ctx->dispatcher;
         if(fibre != NULL && fibre->fibre != NULL && fibre->converted) {
@@ -97,14 +73,6 @@ void async_local_cleanup(void)
             fibre->fibre = NULL;
         }
     }
-}
-
-void async_global_cleanup(void)
-{
-    TlsFree(asyncwinpool);
-    TlsFree(asyncwinctx);
-    asyncwinpool = 0;
-    asyncwinctx = 0;
 }
 
 int async_fibre_init_dispatcher(async_fibre *fibre)
@@ -125,27 +93,6 @@ int async_fibre_init_dispatcher(async_fibre *fibre)
 VOID CALLBACK async_start_func_win(PVOID unused)
 {
     async_start_func();
-}
-
-async_pool *async_get_pool(void)
-{
-    return (async_pool *)TlsGetValue(asyncwinpool);
-}
-
-
-int async_set_pool(async_pool *pool)
-{
-    return TlsSetValue(asyncwinpool, (LPVOID)pool) != 0;
-}
-
-async_ctx *async_arch_get_ctx(void)
-{
-    return (async_ctx *)TlsGetValue(asyncwinctx);
-}
-
-int async_set_ctx(async_ctx *ctx)
-{
-    return TlsSetValue(asyncwinctx, (LPVOID)ctx) != 0;
 }
 
 #endif

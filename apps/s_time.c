@@ -292,7 +292,7 @@ int s_time_main(int argc, char **argv)
 #else
         SSL_shutdown(scon);
 #endif
-        SHUTDOWN2(SSL_get_fd(scon));
+        BIO_closesocket(SSL_get_fd(scon));
 
         nConn += 1;
         if (SSL_session_reused(scon))
@@ -349,7 +349,7 @@ int s_time_main(int argc, char **argv)
 #else
     SSL_shutdown(scon);
 #endif
-    SHUTDOWN2(SSL_get_fd(scon));
+    BIO_closesocket(SSL_get_fd(scon));
 
     nConn = 0;
     totalTime = 0.0;
@@ -380,7 +380,7 @@ int s_time_main(int argc, char **argv)
 #else
         SSL_shutdown(scon);
 #endif
-        SHUTDOWN2(SSL_get_fd(scon));
+        BIO_closesocket(SSL_get_fd(scon));
 
         nConn += 1;
         if (SSL_session_reused(scon))

@@ -55,6 +55,9 @@
 # key length, more for longer keys] on USI&II cores and 30-80% - on
 # USIII&IV.
 
+$output = pop;
+open STDOUT,">$output";
+
 $fname="bn_mul_mont_fpu";
 $bits=32;
 for (@ARGV) { $bits=64 if (/\-m64/ || /\-xarch\=v9/); }

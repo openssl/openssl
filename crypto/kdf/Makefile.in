@@ -15,8 +15,8 @@ CFLAGS= $(INCLUDES) $(CFLAG) $(SHARED_CFLAG)
 GENERAL=Makefile
 
 LIB=$(TOP)/libcrypto.a
-LIBSRC=tls1_prf.c
-LIBOBJ=tls1_prf.o
+LIBSRC=tls1_prf.c kdf_err.c hkdf.c
+LIBOBJ=tls1_prf.o kdf_err.o hkdf.o
 
 SRC= $(LIBSRC)
 

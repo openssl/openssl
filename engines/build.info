@@ -21,9 +21,5 @@ ELSE
  INCLUDE[ossltest]={- rel2abs(catdir($builddir,"../include")) -} ../include
 ENDIF
 
-BEGINRAW[Makefile]
-{- $builddir -}/e_padlock-x86.s:	{- $sourcedir -}/asm/e_padlock-x86.pl
-	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/e_padlock-x86.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) > $@
-{- $builddir -}/e_padlock-x86_64.s:	{- $sourcedir -}/asm/e_padlock-x86_64.pl
-	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/e_padlock-x86_64.pl $(PERLASM_SCHEME) > $@
-ENDRAW[Makefile]
+GENERATE[e_padlock-x86.s]=asm/e_padlock-x86.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR)
+GENERATE[e_padlock-x86_64.s]=asm/e_padlock-x86_64.pl $(PERLASM_SCHEME)

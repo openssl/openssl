@@ -90,8 +90,8 @@ $include_path = join(" -I", split(/;/, $include_path));
 # check for gcc compiler
 $gnuc = $ENV{"GNUC"};
 
-#$ssl=   "ssleay32";
-#$crypto="libeay32";
+#$ssl=   "libssl32";
+#$crypto="libcrypto32";
 
 if ($gnuc)
 {

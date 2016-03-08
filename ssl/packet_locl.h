@@ -93,6 +93,16 @@ static ossl_inline size_t PACKET_remaining(const PACKET *pkt)
 }
 
 /*
+ * Returns a pointer to the first byte after the packet data.
+ * Useful for integrating with non-PACKET parsing code.
+ * Specifically, we use PACKET_end() to verify that a d2i_... call
+ * has consumed the entire packet contents.
+ */
+static ossl_inline const unsigned char *PACKET_end(const PACKET *pkt)
+{
+    return pkt->curr + pkt->remaining;
+}
+/*
  * Returns a pointer to the PACKET's current position.
  * For use in non-PACKETized APIs.
  */
@@ -452,6 +462,12 @@ __owur static ossl_inline int PACKET_strndup(const PACKET *pkt, char **data)
     return (*data != NULL);
 }
 
+/* Returns 1 if |pkt| contains at least one 0-byte, 0 otherwise. */
+static ossl_inline int PACKET_contains_zero_byte(const PACKET *pkt)
+{
+  return memchr(pkt->curr, 0, pkt->remaining) != NULL;
+}
+
 /* Move the current reading position forward |len| bytes */
 __owur static ossl_inline int PACKET_forward(PACKET *pkt, size_t len)
 {
@@ -489,6 +505,28 @@ __owur static ossl_inline int PACKET_get_length_prefixed_1(PACKET *pkt,
 }
 
 /*
+ * Like PACKET_get_length_prefixed_1, but additionally, fails when there are
+ * leftover bytes in |pkt|.
+ */
+__owur static ossl_inline int PACKET_as_length_prefixed_1(PACKET *pkt, PACKET *subpkt)
+{
+  unsigned int length;
+  const unsigned char *data;
+  PACKET tmp = *pkt;
+  if (!PACKET_get_1(&tmp, &length) ||
+      !PACKET_get_bytes(&tmp, &data, (size_t)length) ||
+      PACKET_remaining(&tmp) != 0) {
+      return 0;
+  }
+
+  *pkt = tmp;
+  subpkt->curr = data;
+  subpkt->remaining = length;
+
+  return 1;
+}
+
+/*
  * Reads a variable-length vector prefixed with a two-byte length, and stores
  * the contents in |subpkt|. |pkt| can equal |subpkt|.
  * Data is not copied: the |subpkt| packet will share its underlying buffer with
@@ -501,6 +539,7 @@ __owur static ossl_inline int PACKET_get_length_prefixed_2(PACKET *pkt,
     unsigned int length;
     const unsigned char *data;
     PACKET tmp = *pkt;
+
     if (!PACKET_get_net_2(&tmp, &length) ||
         !PACKET_get_bytes(&tmp, &data, (size_t)length)) {
         return 0;
@@ -511,6 +550,30 @@ __owur static ossl_inline int PACKET_get_length_prefixed_2(PACKET *pkt,
     subpkt->remaining = length;
 
     return 1;
+}
+
+/*
+ * Like PACKET_get_length_prefixed_2, but additionally, fails when there are
+ * leftover bytes in |pkt|.
+ */
+__owur static ossl_inline int PACKET_as_length_prefixed_2(PACKET *pkt,
+                                                          PACKET *subpkt)
+{
+  unsigned int length;
+  const unsigned char *data;
+  PACKET tmp = *pkt;
+
+  if (!PACKET_get_net_2(&tmp, &length) ||
+      !PACKET_get_bytes(&tmp, &data, (size_t)length) ||
+      PACKET_remaining(&tmp) != 0) {
+      return 0;
+  }
+
+  *pkt = tmp;
+  subpkt->curr = data;
+  subpkt->remaining = length;
+
+  return 1;
 }
 
 /*

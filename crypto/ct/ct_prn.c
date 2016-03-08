@@ -107,6 +107,11 @@ void SCT_print(const SCT *sct, BIO *out, int indent)
 
     BIO_printf(out, "v1 (0x0)");
 
+    if (sct->log != NULL) {
+        BIO_printf(out, "\n%*sLog       : %s", indent + 4, "",
+                   SCT_get0_log_name(sct));
+    }
+
     BIO_printf(out, "\n%*sLog ID    : ", indent + 4, "");
     BIO_hex_string(out, indent + 16, 16, sct->log_id, sct->log_id_len);
 

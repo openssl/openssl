@@ -466,8 +466,6 @@ extern int kbhit(void);
 #   ifdef OPENSSL_NO_SOCK
 #    define OpenSSL_Write(a,b,c)       (-1)
 #    define OpenSSL_Read(a,b,c)        (-1)
-#    define SHUTDOWN(fd)              close(fd)
-#    define SHUTDOWN2(fd)             close(fd)
 #   elif !defined(__DJGPP__)
 #    if defined(_WIN32_WCE) && _WIN32_WCE<410
 #     define getservbyname _masked_declaration_getservbyname
@@ -495,13 +493,9 @@ struct servent *PASCAL getservbyname(const char *, const char *);
 #    endif
 #    define OpenSSL_Write(a,b,c)       send((a),(b),(c),0)
 #    define OpenSSL_Read(a,b,c)        recv((a),(b),(c),0)
-#    define SHUTDOWN(fd)              { shutdown((fd),0); closesocket(fd); }
-#    define SHUTDOWN2(fd)             { shutdown((fd),2); closesocket(fd); }
 #   else
 #    define OpenSSL_Write(a,b,c)       write_s(a,b,c,0)
 #    define OpenSSL_Read(a,b,c)        read_s(a,b,c)
-#    define SHUTDOWN(fd)              close_s(fd)
-#    define SHUTDOWN2(fd)             close_s(fd)
 #   endif
 
 #  elif defined(OPENSSL_SYS_NETWARE)
@@ -525,8 +519,6 @@ struct servent *PASCAL getservbyname(const char *, const char *);
 #   endif
 #   define OpenSSL_Write(a,b,c)   send((a),(b),(c),0)
 #   define OpenSSL_Read(a,b,c) recv((a),(b),(c),0)
-#   define SHUTDOWN(fd)    { shutdown((fd),0); closesocket(fd); }
-#   define SHUTDOWN2(fd)      { shutdown((fd),2); closesocket(fd); }
 
 #  else
 
@@ -588,8 +580,6 @@ struct servent *PASCAL getservbyname(const char *, const char *);
 
 #   define OpenSSL_Read(a,b,c)     read((a),(b),(c))
 #   define OpenSSL_Write(a,b,c)    write((a),(b),(c))
-#   define SHUTDOWN(fd)    { shutdown((fd),0); closesocket((fd)); }
-#   define SHUTDOWN2(fd)   { shutdown((fd),2); closesocket((fd)); }
 #   ifndef INVALID_SOCKET
 #    define INVALID_SOCKET      (-1)
 #   endif                       /* INVALID_SOCKET */

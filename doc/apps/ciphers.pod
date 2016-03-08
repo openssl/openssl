@@ -144,9 +144,10 @@ When used, this must be the first cipherstring specified.
 =item B<COMPLEMENTOFDEFAULT>
 
 The ciphers included in B<ALL>, but not enabled by default. Currently
-this includes all RC4, DES, RC2 and anonymous ciphers. Note that this rule does
+this includes all RC4 and anonymous ciphers. Note that this rule does
 not cover B<eNULL>, which is not included by B<ALL> (use B<COMPLEMENTOFALL> if
-necessary).
+necessary). Note that RC4 based ciphersuites are not built into OpenSSL by
+default (see the enable-weak-ssl-ciphers option to Configure).
 
 =item B<ALL>
 

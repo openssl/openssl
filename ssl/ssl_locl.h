@@ -164,7 +164,9 @@
 # include <openssl/ssl.h>
 # include <openssl/async.h>
 # include <openssl/symhacks.h>
-
+# ifndef OPENSSL_NO_CT
+#  include <openssl/ct.h>
+# endif
 #include "record/record.h"
 #include "statem/statem.h"
 #include "packet_locl.h"
@@ -356,7 +358,9 @@
 # define SSL_eGOST2814789CNT12   0x00040000U
 # define SSL_CHACHA20POLY1305    0x00080000U
 
-# define SSL_AES                 (SSL_AES128|SSL_AES256|SSL_AES128GCM|SSL_AES256GCM|SSL_AES128CCM|SSL_AES256CCM|SSL_AES128CCM8|SSL_AES256CCM8)
+# define SSL_AESGCM              (SSL_AES128GCM | SSL_AES256GCM)
+# define SSL_AESCCM              (SSL_AES128CCM | SSL_AES256CCM | SSL_AES128CCM8 | SSL_AES256CCM8)
+# define SSL_AES                 (SSL_AES128|SSL_AES256|SSL_AESGCM|SSL_AESCCM)
 # define SSL_CAMELLIA            (SSL_CAMELLIA128|SSL_CAMELLIA256)
 # define SSL_CHACHA20            (SSL_CHACHA20POLY1305)
 
@@ -815,11 +819,32 @@ struct ssl_ctx_st {
 
     int quiet_shutdown;
 
+#  ifndef OPENSSL_NO_CT
+    CTLOG_STORE *ctlog_store; /* CT Log Store */
+    /*
+    * Validates that the SCTs (Signed Certificate Timestamps) are sufficient.
+    * If they are not, the connection should be aborted.
+    */
+    ct_validation_cb ct_validation_callback;
+    void *ct_validation_callback_arg;
+#  endif
+
+    /*
+     * If we're using more than one pipeline how should we divide the data
+     * up between the pipes?
+     */
+    unsigned int split_send_fragment;
     /*
      * Maximum amount of data to send in one fragment. actual record size can
      * be more than this due to padding and MAC overheads.
      */
     unsigned int max_send_fragment;
+
+    /* Up to how many pipelines should we use? If 0 then 1 is assumed */
+    unsigned int max_pipelines;
+
+    /* The default read buffer length to use (0 means not set) */
+    size_t default_read_buf_len;
 
 #  ifndef OPENSSL_NO_ENGINE
     /*
@@ -1071,7 +1096,20 @@ struct ssl_st {
     int first_packet;
     /* what was passed, used for SSLv3/TLS rollback check */
     int client_version;
+
+    /*
+     * If we're using more than one pipeline how should we divide the data
+     * up between the pipes?
+     */
+    unsigned int split_send_fragment;
+    /*
+     * Maximum amount of data to send in one fragment. actual record size can
+     * be more than this due to padding and MAC overheads.
+     */
     unsigned int max_send_fragment;
+
+    /* Up to how many pipelines should we use? If 0 then 1 is assumed */
+    unsigned int max_pipelines;
 
     /* TLS extension debug callback */
     void (*tlsext_debug_cb) (SSL *s, int client_server, int type,
@@ -1088,6 +1126,26 @@ struct ssl_st {
     /* certificate status request info */
     /* Status type or -1 if no status type */
     int tlsext_status_type;
+#  ifndef OPENSSL_NO_CT
+    /*
+    * Validates that the SCTs (Signed Certificate Timestamps) are sufficient.
+    * If they are not, the connection should be aborted.
+    */
+    ct_validation_cb ct_validation_callback;
+    /* User-supplied argument tha tis passed to the ct_validation_callback */
+    void *ct_validation_callback_arg;
+    /*
+     * Consolidated stack of SCTs from all sources.
+     * Lazily populated by CT_get_peer_scts(SSL*)
+     */
+    STACK_OF(SCT) *scts;
+    /* Raw extension data, if seen */
+    unsigned char *tlsext_scts;
+    /* Length of raw extension data, if seen */
+    uint16_t tlsext_scts_len;
+    /* Have we attempted to find/parse SCTs yet? */
+    int scts_parsed;
+#  endif
     /* Expect OCSP CertificateStatus message */
     int tlsext_status_expected;
     /* OCSP status request only */
@@ -1601,8 +1659,8 @@ struct tls_sigalgs_st {
  * of a mess of functions, but hell, think of it as an opaque structure :-)
  */
 typedef struct ssl3_enc_method {
-    int (*enc) (SSL *, int);
-    int (*mac) (SSL *, unsigned char *, int);
+    int (*enc) (SSL *, SSL3_RECORD *, unsigned int, int);
+    int (*mac) (SSL *, SSL3_RECORD *, unsigned char *, int);
     int (*setup_key_block) (SSL *);
     int (*generate_master_secret) (SSL *, unsigned char *, unsigned char *,
                                    int);
@@ -2036,6 +2094,10 @@ __owur int tls1_set_sigalgs(CERT *c, const int *salg, size_t salglen, int client
 int tls1_check_chain(SSL *s, X509 *x, EVP_PKEY *pk, STACK_OF(X509) *chain,
                      int idx);
 void tls1_set_cert_validity(SSL *s);
+
+#ifndef OPENSSL_NO_CT
+__owur int ssl_validate_ct(SSL *s);
+#endif
 
 #  ifndef OPENSSL_NO_DH
 __owur DH *ssl_get_auto_dh(SSL *s);

@@ -4,6 +4,9 @@ $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
 push(@INC,"${dir}","${dir}../../perlasm");
 require "x86asm.pl";
 
+$output = pop;
+open STDOUT,">$output";
+
 &asm_init($ARGV[0],$0);
 
 $sse2=0;
@@ -20,6 +23,8 @@ for (@ARGV) { $sse2=1 if (/-DOPENSSL_IA32_SSE2/); }
 &bn_sub_part_words("bn_sub_part_words");
 
 &asm_finish();
+
+close STDOUT;
 
 sub bn_mul_add_words
 	{
@@ -771,4 +776,3 @@ sub bn_sub_part_words
 
 	&function_end($name);
 	}
-

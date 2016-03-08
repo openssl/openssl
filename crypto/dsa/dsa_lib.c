@@ -180,8 +180,6 @@ void DSA_free(DSA *r)
     BN_clear_free(r->g);
     BN_clear_free(r->pub_key);
     BN_clear_free(r->priv_key);
-    BN_clear_free(r->kinv);
-    BN_clear_free(r->r);
     OPENSSL_free(r);
 }
 
