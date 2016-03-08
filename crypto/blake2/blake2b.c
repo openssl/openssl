@@ -187,7 +187,6 @@ int BLAKE2b_Update(BLAKE2B_CTX *c, const void *data, size_t datalen)
         /* Must be >, not >=, so that last block can be hashed differently */
         if(datalen > fill) {
             memcpy(c->buf + c->buflen, in, fill); /* Fill buffer */
-            c->buflen += fill;
             blake2b_increment_counter(c, BLAKE2B_BLOCKBYTES);
             blake2b_compress(c, c->buf); /* Compress */
             c->buflen = 0;
@@ -209,7 +208,6 @@ int BLAKE2b_Update(BLAKE2B_CTX *c, const void *data, size_t datalen)
  */
 int BLAKE2b_Final(unsigned char *md, BLAKE2B_CTX *c)
 {
-    uint8_t buffer[BLAKE2B_OUTBYTES];
     int i;
 
     blake2b_increment_counter(c, c->buflen);
@@ -218,13 +216,11 @@ int BLAKE2b_Final(unsigned char *md, BLAKE2B_CTX *c)
     memset(c->buf + c->buflen, 0, sizeof(c->buf) - c->buflen);
     blake2b_compress(c, c->buf);
 
-    /* Output full hash to temp buffer */
+    /* Output full hash to message digest */
     for(i = 0; i < 8; ++i) {
-        store64(buffer + sizeof(c->h[i]) * i, c->h[i]);
+        store64(md + sizeof(c->h[i]) * i, c->h[i]);
     }
 
-    memcpy(md, buffer, BLAKE2B_DIGEST_LENGTH);
-    OPENSSL_cleanse(buffer, BLAKE2B_OUTBYTES);
     OPENSSL_cleanse(c, sizeof(BLAKE2B_CTX));
     return 1;
 }

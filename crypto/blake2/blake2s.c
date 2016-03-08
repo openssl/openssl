@@ -182,7 +182,6 @@ int BLAKE2s_Update(BLAKE2S_CTX *c, const void *data, size_t datalen)
         /* Must be >, not >=, so that last block can be hashed differently */
         if(datalen > fill) {
             memcpy(c->buf + c->buflen, in, fill); /* Fill buffer */
-            c->buflen += fill;
             blake2s_increment_counter(c, BLAKE2S_BLOCKBYTES);
             blake2s_compress(c, c->buf); /* Compress */
             c->buflen = 0;
@@ -204,7 +203,6 @@ int BLAKE2s_Update(BLAKE2S_CTX *c, const void *data, size_t datalen)
  */
 int BLAKE2s_Final(unsigned char *md, BLAKE2S_CTX *c)
 {
-    uint8_t buffer[BLAKE2S_OUTBYTES];
     int i;
 
     blake2s_increment_counter(c, (uint32_t)c->buflen);
@@ -215,11 +213,9 @@ int BLAKE2s_Final(unsigned char *md, BLAKE2S_CTX *c)
 
     /* Output full hash to temp buffer */
     for(i = 0; i < 8; ++i) {
-        store32(buffer + sizeof(c->h[i]) * i, c->h[i]);
+        store32(md + sizeof(c->h[i]) * i, c->h[i]);
     }
 
-    memcpy(md, buffer, BLAKE2S_DIGEST_LENGTH);
-    OPENSSL_cleanse(buffer, BLAKE2S_OUTBYTES);
     OPENSSL_cleanse(c, sizeof(BLAKE2S_CTX));
     return 1;
 }
