@@ -828,38 +828,47 @@ $args{src}: $args{generator}->[0]
 	\$(PERL) $generator > \$@
 EOF
       } else {
-          if ($args{generator}->[0] =~ /\.[sS]$/) {
-              return <<"EOF";
-$args{src}: $args{generator}->[0]
-	\$(CC) \$(CFLAGS) -E \$< > \$@
-EOF
-          } elsif ($args{generator}->[0] =~ /\.pl$/) {
-             return <<"EOF";
-$args{src}: $args{generator}->[0]
-	( trap "rm -f \$@.S" INT; \\
-	  CC="\$(CC)" \$(PERL) $generator \$@.S; \\
-	  if grep '^#' \$@.S >/dev/null; then \\
-	      \$(CC) -E -P \$@.S > \$@ && rm -f \$@.S; \\
-	  else \\
-	      mv \$@.S \$@; \\
-	  fi )
-EOF
+          if ($args{generator}->[0] =~ /\.pl$/) {
+              $generator = 'CC="$(CC)" $(PERL) '.$generator;
           } elsif ($args{generator}->[0] =~ /\.m4$/) {
+              $generator = 'm4 -B 8192 '.$generator.' >'
+          } elsif ($args{generator}->[0] =~ /\.S$/) {
+              $generator = undef;
+          } else {
+              die "Generator type for $args{src} unknown: $generator\n";
+          }
+
+          if (defined($generator)) {
+              # If the target is named foo.S in build.info, we want to
+              # end up generating foo.s in two steps.
+              if ($args{src} =~ /\.S$/) {
+                   (my $target = $args{src}) =~ s|\.S$|.s|;
+                   return <<"EOF";
+$target: $args{generator}->[0]
+	( trap "rm -f \$@.S" INT; \\
+	  $generator \$@.S; \\
+	  \$(CC) \$(CFLAGS) -E -P \$@.S > \$@ && rm -f \$@.S )
+EOF
+              }
+              # Otherwise....
               return <<"EOF";
 $args{src}: $args{generator}->[0]
-	m4 -B 8192 $generator > \$@
+	$generator \$@
 EOF
-          } else {
-              die "Generator type for $args{src} unknown: $args{generator}\n";
           }
+          return <<"EOF";
+$args{src}: $args{generator}->[0]
+	\$(CC) \$(CFLAGS) -E -P \$< > \$@
+EOF
       }
   }
 
   sub src2obj {
       my %args = @_;
       my $obj = $args{obj};
-      my $srcs = join(" ", @{$args{srcs}});
-      my $deps = join(" ", @{$args{srcs}}, @{$args{deps}});
+      my @srcs = map { (my $x = $_) =~ s/\.S$/.s/; $x } ( @{$args{srcs}} );
+      my $srcs = join(" ",  @srcs);
+      my $deps = join(" ", @srcs, @{$args{deps}});
       my $incs = join("", map { " -I".$_ } @{$args{incs}});
       my $ecflags = { lib => '$(SHARED_CFLAGS)',
                       dso => '$(DSO_CFLAGS)',
