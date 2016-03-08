@@ -1022,15 +1022,13 @@ static DSA_SIG *capi_dsa_do_sign(const unsigned char *digest, int dlen,
         capi_addlasterror();
         goto err;
     } else {
+        BIGNUM *r = NULL, *s = NULL;
         ret = DSA_SIG_new();
         if (ret == NULL)
             goto err;
-        ret->r = BN_new();
-        ret->s = BN_new();
-        if (ret->r == NULL || ret->s == NULL)
-            goto err;
-        if (!lend_tobn(ret->r, csigbuf, 20)
-            || !lend_tobn(ret->s, csigbuf + 20, 20)) {
+        DSA_SIG_get0(&r, &s, ret);
+        if (!lend_tobn(r, csigbuf, 20)
+            || !lend_tobn(s, csigbuf + 20, 20)) {
             DSA_SIG_free(ret);
             ret = NULL;
             goto err;
