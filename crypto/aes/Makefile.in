@@ -66,10 +66,10 @@ aesni-sha256-x86_64.s:	asm/aesni-sha256-x86_64.pl
 aesni-mb-x86_64.s:	asm/aesni-mb-x86_64.pl
 	$(PERL) asm/aesni-mb-x86_64.pl $(PERLASM_SCHEME) > $@
 
-aes-sparcv9.s: asm/aes-sparcv9.pl
-	$(PERL) asm/aes-sparcv9.pl $(CFLAGS) > $@
-aest4-sparcv9.s: asm/aest4-sparcv9.pl ../perlasm/sparcv9_modes.pl
-	$(PERL) asm/aest4-sparcv9.pl $(CFLAGS) > $@
+aes-sparcv9.S: asm/aes-sparcv9.pl
+	$(PERL) asm/aes-sparcv9.pl $(PERLASM_SCHEME) $@
+aest4-sparcv9.S: asm/aest4-sparcv9.pl ../perlasm/sparcv9_modes.pl
+	$(PERL) asm/aest4-sparcv9.pl $(PERLASM_SCHEME) $@
 
 aes-ppc.s:	asm/aes-ppc.pl
 	$(PERL) asm/aes-ppc.pl $(PERLASM_SCHEME) $@

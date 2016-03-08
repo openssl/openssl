@@ -70,16 +70,16 @@ sparcv8.o:	asm/sparcv8.S
 	$(CC) $(CFLAGS) -c asm/sparcv8.S
 bn-sparcv9.o:	asm/sparcv8plus.S
 	$(CC) $(CFLAGS) -c -o $@ asm/sparcv8plus.S
-sparcv9a-mont.s:	asm/sparcv9a-mont.pl
-	$(PERL) asm/sparcv9a-mont.pl $(CFLAGS) $@
-sparcv9-mont.s:		asm/sparcv9-mont.pl
-	$(PERL) asm/sparcv9-mont.pl $(CFLAGS) $@
-vis3-mont.s:		asm/vis3-mont.pl
-	$(PERL) asm/vis3-mont.pl $(CFLAGS) $@
+sparcv9a-mont.S:	asm/sparcv9a-mont.pl
+	$(PERL) asm/sparcv9a-mont.pl $(PERLASM_SCHEME) $@
+sparcv9-mont.S:		asm/sparcv9-mont.pl
+	$(PERL) asm/sparcv9-mont.pl $(PERLASM_SCHEME) $@
+vis3-mont.S:		asm/vis3-mont.pl
+	$(PERL) asm/vis3-mont.pl $(PERLASM_SCHEME) $@
 sparct4-mont.S:	asm/sparct4-mont.pl
-	$(PERL) asm/sparct4-mont.pl $(CFLAGS) $@
+	$(PERL) asm/sparct4-mont.pl $(PERLASM_SCHEME) $@
 sparcv9-gf2m.S:	asm/sparcv9-gf2m.pl
-	$(PERL) asm/sparcv9-gf2m.pl $(CFLAGS) $@
+	$(PERL) asm/sparcv9-gf2m.pl $(PERLASM_SCHEME) $@
 
 bn-mips.s:	asm/mips.pl
 	$(PERL) asm/mips.pl $(PERLASM_SCHEME) $@

@@ -13,8 +13,8 @@ BEGINRAW[Makefile]
 
 {- $builddir -}/des_enc-sparc.S:	{- $sourcedir -}/asm/des_enc.m4
 	m4 -B 8192 {- $sourcedir -}/asm/des_enc.m4 > $@
-{- $builddir -}/dest4-sparcv9.s:	{- $sourcedir -}/asm/dest4-sparcv9.pl
-	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/dest4-sparcv9.pl $(CFLAGS) > $@
+{- $builddir -}/dest4-sparcv9.S:	{- $sourcedir -}/asm/dest4-sparcv9.pl
+	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/dest4-sparcv9.pl $(PERLASM_SCHEME) $@
 
 {- $builddir -}/des-586.s:	{- $sourcedir -}/asm/des-586.pl {- $sourcetop -}/crypto/perlasm/x86asm.pl {- $sourcetop -}/crypto/perlasm/cbc.pl
 	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/des-586.pl $(PERLASM_SCHEME) $(CFLAGS) > $@

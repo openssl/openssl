@@ -14,5 +14,5 @@ BEGINRAW[Makefile]
 	$(PERL) -ne 's/;\s+/;\n/g; print;' > $@
 
 {- $builddir -}/md5-sparcv9.S:	{- $sourcedir -}/asm/md5-sparcv9.pl
-	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/md5-sparcv9.pl $@ $(CFLAGS)
+	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/md5-sparcv9.pl $(PERLASM_SCHEME) $@
 ENDRAW[Makefile]

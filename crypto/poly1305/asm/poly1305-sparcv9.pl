@@ -34,6 +34,9 @@
 # (***)	Multi-process benchmark saturates at ~12.5x single-process
 #	result on 8-core processor, or ~21GBps per 2.85GHz socket.
 
+my $output = pop;
+open STDOUT,">$output";
+
 my ($ctx,$inp,$len,$padbit,$shl,$shr)	= map("%i$_",(0..5));
 my ($r0,$r1,$r2,$r3,$s1,$s2,$s3,$h4)	= map("%l$_",(0..7));
 my ($h0,$h1,$h2,$h3, $t0,$t1,$t2)	= map("%o$_",(0..5,7));
