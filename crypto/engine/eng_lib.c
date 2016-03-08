@@ -59,11 +59,22 @@
 #include "eng_int.h"
 #include <openssl/rand.h>
 
+CRYPTO_RWLOCK *global_engine_lock;
+
+CRYPTO_ONCE engine_lock_init = CRYPTO_ONCE_STATIC_INIT;
+
 /* The "new"/"free" stuff first */
+
+void do_engine_lock_init(void)
+{
+    global_engine_lock = CRYPTO_THREAD_lock_new();
+}
 
 ENGINE *ENGINE_new(void)
 {
     ENGINE *ret;
+
+    CRYPTO_THREAD_run_once(&engine_lock_init, do_engine_lock_init);
 
     ret = OPENSSL_zalloc(sizeof(*ret));
     if (ret == NULL) {
@@ -108,7 +119,7 @@ int engine_free_util(ENGINE *e, int locked)
     if (e == NULL)
         return 1;
     if (locked)
-        i = CRYPTO_add(&e->struct_ref, -1, CRYPTO_LOCK_ENGINE);
+        CRYPTO_atomic_add(&e->struct_ref, -1, &i, global_engine_lock);
     else
         i = --e->struct_ref;
     engine_ref_debug(e, 0, -1)
@@ -201,6 +212,7 @@ void ENGINE_cleanup(void)
      * registering a cleanup callback.
      */
     RAND_set_rand_method(NULL);
+    CRYPTO_THREAD_lock_free(global_engine_lock);
 }
 
 /* Now the "ex_data" support */
