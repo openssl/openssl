@@ -2808,7 +2808,7 @@ static const SSL_CIPHER ssl3_ciphers[] = {
      },
 #if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
 # ifndef OPENSSL_NO_EC
-    /* Cipher CCA8 as per draft-ietf-tls-chacha20-poly1305-03 */
+    /* Cipher CCA8 */
     {
      1,
      TLS1_TXT_ECDHE_RSA_WITH_CHACHA20_POLY1305,
