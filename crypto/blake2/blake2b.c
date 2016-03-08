@@ -49,21 +49,13 @@ static const uint8_t blake2b_sigma[12][16] =
     { 14, 10,  4,  8,  9, 15, 13,  6,  1, 12,  0,  2, 11,  7,  5,  3 }
 };
 
-
-static inline void blake2b_set_lastnode(BLAKE2B_CTX *S)
-{
-    S->f[1] = -1;
-}
-
 /* Some helper functions, not necessarily useful */
 static inline void blake2b_set_lastblock(BLAKE2B_CTX *S)
 {
-    if(S->last_node) {
-        blake2b_set_lastnode(S);
-    }
     S->f[0] = -1;
 }
 
+/* Increment the data hashed couter. */
 static inline void blake2b_increment_counter(BLAKE2B_CTX *S,
                                              const uint64_t inc)
 {
@@ -71,6 +63,7 @@ static inline void blake2b_increment_counter(BLAKE2B_CTX *S,
     S->t[1] += (S->t[0] < inc);
 }
 
+/* Initialize the hashing state. */
 static inline void blake2b_init0(BLAKE2B_CTX *S)
 {
     int i;
@@ -82,7 +75,7 @@ static inline void blake2b_init0(BLAKE2B_CTX *S)
 }
 
 /* init xors IV with input parameter block */
-static int blake2b_init_param(BLAKE2B_CTX *S, const BLAKE2B_PARAM *P)
+static void blake2b_init_param(BLAKE2B_CTX *S, const BLAKE2B_PARAM *P)
 {
     size_t i;
     const uint8_t *p = (const uint8_t *)(P);
@@ -95,10 +88,11 @@ static int blake2b_init_param(BLAKE2B_CTX *S, const BLAKE2B_PARAM *P)
     for(i = 0; i < 8; ++i) {
         S->h[i] ^= load64(p + sizeof(S->h[i]) * i);
     }
-    return 1;
 }
 
-int BLAKE2b_Init(BLAKE2B_CTX *c) {
+/* Initialize the hashing context.  Always returns 1. */
+int BLAKE2b_Init(BLAKE2B_CTX *c)
+{
     BLAKE2B_PARAM P[1];
     P->digest_length = BLAKE2B_DIGEST_LENGTH;
     P->key_length    = 0;
@@ -111,40 +105,11 @@ int BLAKE2b_Init(BLAKE2B_CTX *c) {
     memset(P->reserved, 0, sizeof(P->reserved));
     memset(P->salt,     0, sizeof(P->salt));
     memset(P->personal, 0, sizeof(P->personal));
-    return blake2b_init_param(c, P);
-}
-
-int BLAKE2b_InitKey(BLAKE2B_CTX *c, const void *key, size_t keylen) {
-    BLAKE2B_PARAM P[1];
-    uint8_t block[BLAKE2B_BLOCKBYTES];
-
-    if (!key || !keylen || keylen > BLAKE2B_KEYBYTES) {
-        return 0;
-    }
-
-    P->digest_length = BLAKE2B_DIGEST_LENGTH;
-    P->key_length    = keylen;
-    P->fanout        = 1;
-    P->depth         = 1;
-    store32(&P->leaf_length, 0);
-    store64(&P->node_offset, 0);
-    P->node_depth    = 0;
-    P->inner_length  = 0;
-    memset(P->reserved, 0, sizeof(P->reserved));
-    memset(P->salt,     0, sizeof(P->salt));
-    memset(P->personal, 0, sizeof(P->personal));
-
-    if(!blake2b_init_param(c, P)) {
-        return 0;
-    }
-
-    memset(block, 0, BLAKE2B_BLOCKBYTES);
-    memcpy(block, key, keylen);
-    BLAKE2b_Update(c, block, BLAKE2B_BLOCKBYTES);
-    OPENSSL_cleanse(block, BLAKE2B_BLOCKBYTES); /* Burn the key from stack */
+    blake2b_init_param(c, P);
     return 1;
 }
 
+/* Permute the state while xoring in the block of data. */
 static void blake2b_compress(BLAKE2B_CTX *S,
                             const uint8_t block[BLAKE2B_BLOCKBYTES])
 {
@@ -211,50 +176,46 @@ static void blake2b_compress(BLAKE2B_CTX *S,
 #undef ROUND
 }
 
-int BLAKE2b_Update(BLAKE2B_CTX *c, const void *data, size_t datalen) {
+/* Absorb the input data into the hash state.  Always returns 1. */
+int BLAKE2b_Update(BLAKE2B_CTX *c, const void *data, size_t datalen)
+{
     const uint8_t *in = data;
-    size_t left, fill;
+    size_t fill;
 
     while(datalen > 0) {
-        left = c->buflen;
-        fill = 2 * BLAKE2B_BLOCKBYTES - left;
+        fill = sizeof(c->buf) - c->buflen;
+        /* Must be >, not >=, so that last block can be hashed differently */
         if(datalen > fill) {
-            memcpy(c->buf + left, in, fill); /* Fill buffer */
+            memcpy(c->buf + c->buflen, in, fill); /* Fill buffer */
             c->buflen += fill;
             blake2b_increment_counter(c, BLAKE2B_BLOCKBYTES);
             blake2b_compress(c, c->buf); /* Compress */
-            /* Shift buffer left */
-            memcpy(c->buf, c->buf + BLAKE2B_BLOCKBYTES, BLAKE2B_BLOCKBYTES);
-            c->buflen -= BLAKE2B_BLOCKBYTES;
+            c->buflen = 0;
             in += fill;
             datalen -= fill;
-        } else { /* inlen <= fill */
-            memcpy(c->buf + left, in, datalen);
+        } else { /* datalen <= fill */
+            memcpy(c->buf + c->buflen, in, datalen);
             c->buflen += datalen; /* Be lazy, do not compress */
-            in += datalen;
-            datalen -= datalen;
+            return 1;
         }
     }
 
     return 1;
 }
 
+/*
+ * Finalize the hash state in a way that avoids length extension attacks.
+ * Always returns 1.
+ */
 int BLAKE2b_Final(unsigned char *md, BLAKE2B_CTX *c)
 {
-    uint8_t buffer[BLAKE2B_OUTBYTES] = {0};
+    uint8_t buffer[BLAKE2B_OUTBYTES];
     int i;
-
-    if(c->buflen > BLAKE2B_BLOCKBYTES) {
-        blake2b_increment_counter(c, BLAKE2B_BLOCKBYTES);
-        blake2b_compress(c, c->buf);
-        c->buflen -= BLAKE2B_BLOCKBYTES;
-        memcpy(c->buf, c->buf + BLAKE2B_BLOCKBYTES, c->buflen);
-    }
 
     blake2b_increment_counter(c, c->buflen);
     blake2b_set_lastblock(c);
     /* Padding */
-    memset(c->buf + c->buflen, 0, 2 * BLAKE2B_BLOCKBYTES - c->buflen);
+    memset(c->buf + c->buflen, 0, sizeof(c->buf) - c->buflen);
     blake2b_compress(c, c->buf);
 
     /* Output full hash to temp buffer */
@@ -266,45 +227,4 @@ int BLAKE2b_Final(unsigned char *md, BLAKE2B_CTX *c)
     OPENSSL_cleanse(buffer, BLAKE2B_OUTBYTES);
     OPENSSL_cleanse(c, sizeof(BLAKE2B_CTX));
     return 1;
-}
-
-unsigned char *BLAKE2b(const unsigned char *data, size_t datalen,
-                       const unsigned char *key, size_t keylen,
-                       unsigned char *md)
-{
-    BLAKE2B_CTX S[1];
-    /* The OpenSSL hash functions generally store the result in a static array
-     * if the md pointer passed in is NULL. */
-    static uint8_t staticDigestBuf[BLAKE2B_DIGEST_LENGTH];
-
-    /* Verify parameters */
-    if (NULL == data && datalen > 0) {
-        return NULL;
-    }
-
-    if (NULL == md) {
-        md = staticDigestBuf;
-    }
-
-    if(NULL == key && keylen > 0) {
-        return NULL;
-    }
-
-    if(keylen > BLAKE2B_KEYBYTES) {
-        return NULL;
-    }
-
-    if(keylen > 0) {
-        if(!BLAKE2b_InitKey(S, key, keylen)) {
-            return NULL;
-        }
-    } else {
-        if(!BLAKE2b_Init(S)) {
-            return NULL;
-        }
-    }
-
-    BLAKE2b_Update(S, data, datalen);
-    BLAKE2b_Final(md, S);
-    return md;
 }

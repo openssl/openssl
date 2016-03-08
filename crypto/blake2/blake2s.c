@@ -45,20 +45,13 @@ static const uint8_t blake2s_sigma[10][16] =
     { 10,  2,  8,  4,  7,  6,  1,  5, 15, 11,  9, 14,  3, 12, 13 , 0 } ,
 };
 
-static inline void blake2s_set_lastnode(BLAKE2S_CTX *S)
-{
-    S->f[1] = -1;
-}
-
 /* Some helper functions, not necessarily useful */
 static inline void blake2s_set_lastblock(BLAKE2S_CTX *S)
 {
-  if(S->last_node) {
-      blake2s_set_lastnode(S);
-  }
   S->f[0] = -1;
 }
 
+/* Increment the data hashed couter. */
 static inline void blake2s_increment_counter(BLAKE2S_CTX *S,
                                              const uint32_t inc)
 {
@@ -66,6 +59,7 @@ static inline void blake2s_increment_counter(BLAKE2S_CTX *S,
     S->t[1] += (S->t[0] < inc);
 }
 
+/* Initialize the hashing state. */
 static inline void blake2s_init0(BLAKE2S_CTX *S)
 {
     int i;
@@ -77,7 +71,7 @@ static inline void blake2s_init0(BLAKE2S_CTX *S)
 }
 
 /* init2 xors IV with input parameter block */
-static int blake2s_init_param(BLAKE2S_CTX *S, const BLAKE2S_PARAM *P)
+static void blake2s_init_param(BLAKE2S_CTX *S, const BLAKE2S_PARAM *P)
 {
     const uint32_t *p = (const uint32_t *)(P);
     size_t i;
@@ -90,9 +84,9 @@ static int blake2s_init_param(BLAKE2S_CTX *S, const BLAKE2S_PARAM *P)
     for(i = 0; i < 8; ++i) {
         S->h[i] ^= load32(&p[i]);
     }
-    return 1;
 }
 
+/* Initialize the hashing context.  Always returns 1. */
 int BLAKE2s_Init(BLAKE2S_CTX *c)
 {
     BLAKE2S_PARAM P[1];
@@ -108,41 +102,11 @@ int BLAKE2s_Init(BLAKE2S_CTX *c)
     /* memset(P->reserved, 0, sizeof(P->reserved)); */
     memset(P->salt,     0, sizeof(P->salt));
     memset(P->personal, 0, sizeof(P->personal));
-    return blake2s_init_param(c, P);
-}
-
-int BLAKE2s_InitKey(BLAKE2S_CTX *c, const void *key, size_t keylen)
-{
-    BLAKE2S_PARAM P[1];
-    uint8_t block[BLAKE2S_BLOCKBYTES];
-
-    if (!key || !keylen || keylen > BLAKE2S_KEYBYTES) {
-        return 0;
-    }
-
-    P->digest_length = BLAKE2S_DIGEST_LENGTH;
-    P->key_length    = keylen;
-    P->fanout        = 1;
-    P->depth         = 1;
-    store32(&P->leaf_length, 0);
-    store48(&P->node_offset, 0);
-    P->node_depth    = 0;
-    P->inner_length  = 0;
-    /* memset(P->reserved, 0, sizeof(P->reserved)); */
-    memset(P->salt,     0, sizeof(P->salt));
-    memset(P->personal, 0, sizeof(P->personal));
-
-    if(!blake2s_init_param(c, P)) {
-        return 0;
-    }
-
-    memset(block, 0, BLAKE2S_BLOCKBYTES);
-    memcpy(block, key, keylen);
-    BLAKE2s_Update(c, block, BLAKE2S_BLOCKBYTES);
-    OPENSSL_cleanse(block, BLAKE2S_BLOCKBYTES); /* Burn the key from stack */
+    blake2s_init_param(c, P);
     return 1;
 }
 
+/* Permute the state while xoring in the block of data. */
 static void blake2s_compress(BLAKE2S_CTX *S,
                             const uint8_t block[BLAKE2S_BLOCKBYTES])
 {
@@ -207,53 +171,46 @@ static void blake2s_compress(BLAKE2S_CTX *S,
 #undef ROUND
 }
 
-
+/* Absorb the input data into the hash state.  Always returns 1. */
 int BLAKE2s_Update(BLAKE2S_CTX *c, const void *data, size_t datalen)
 {
     const uint8_t *in = data;
-    size_t left, fill;
+    size_t fill;
 
     while(datalen > 0) {
-        left = c->buflen;
-        fill = 2 * BLAKE2S_BLOCKBYTES - left;
-
+        fill = sizeof(c->buf) - c->buflen;
+        /* Must be >, not >=, so that last block can be hashed differently */
         if(datalen > fill) {
-            memcpy(c->buf + left, in, fill); /* Fill buffer */
+            memcpy(c->buf + c->buflen, in, fill); /* Fill buffer */
             c->buflen += fill;
             blake2s_increment_counter(c, BLAKE2S_BLOCKBYTES);
             blake2s_compress(c, c->buf); /* Compress */
-            /* Shift buffer left */
-            memcpy(c->buf, c->buf + BLAKE2S_BLOCKBYTES, BLAKE2S_BLOCKBYTES);
-            c->buflen -= BLAKE2S_BLOCKBYTES;
+            c->buflen = 0;
             in += fill;
             datalen -= fill;
         } else { /* datalen <= fill */
-            memcpy(c->buf + left, in, datalen);
+            memcpy(c->buf + c->buflen, in, datalen);
             c->buflen += datalen; /* Be lazy, do not compress */
-            in += datalen;
-            datalen -= datalen;
+            return 1;
         }
     }
 
     return 1;
 }
 
+/*
+ * Finalize the hash state in a way that avoids length extension attacks.
+ * Always returns 1.
+ */
 int BLAKE2s_Final(unsigned char *md, BLAKE2S_CTX *c)
 {
-    uint8_t buffer[BLAKE2S_OUTBYTES] = {0};
+    uint8_t buffer[BLAKE2S_OUTBYTES];
     int i;
-
-    if(c->buflen > BLAKE2S_BLOCKBYTES) {
-        blake2s_increment_counter(c, BLAKE2S_BLOCKBYTES);
-        blake2s_compress(c, c->buf);
-        c->buflen -= BLAKE2S_BLOCKBYTES;
-        memcpy(c->buf, c->buf + BLAKE2S_BLOCKBYTES, c->buflen);
-    }
 
     blake2s_increment_counter(c, (uint32_t)c->buflen);
     blake2s_set_lastblock(c);
     /* Padding */
-    memset(c->buf + c->buflen, 0, 2 * BLAKE2S_BLOCKBYTES - c->buflen);
+    memset(c->buf + c->buflen, 0, sizeof(c->buf) - c->buflen);
     blake2s_compress(c, c->buf);
 
     /* Output full hash to temp buffer */
@@ -265,45 +222,4 @@ int BLAKE2s_Final(unsigned char *md, BLAKE2S_CTX *c)
     OPENSSL_cleanse(buffer, BLAKE2S_OUTBYTES);
     OPENSSL_cleanse(c, sizeof(BLAKE2S_CTX));
     return 1;
-}
-
-unsigned char *BLAKE2s(const unsigned char *data, size_t datalen,
-                       const unsigned char *key, size_t keylen,
-                       unsigned char *md)
-{
-    BLAKE2S_CTX S[1];
-    /* The OpenSSL hash functions generally store the result in a static array
-     * if the md pointer passed in is NULL. */
-    static uint8_t staticDigestBuf[BLAKE2S_DIGEST_LENGTH];
-
-    /* Verify parameters */
-    if (NULL == data && datalen > 0) {
-        return NULL;
-    }
-
-    if (NULL == md) {
-        md = staticDigestBuf;
-    }
-
-    if (NULL == key && keylen > 0) {
-        return NULL;
-    }
-
-    if(keylen > BLAKE2S_KEYBYTES) {
-        return NULL;
-    }
-
-    if(keylen > 0) {
-        if(!BLAKE2s_InitKey(S, key, keylen)) {
-            return NULL;
-        }
-    } else {
-        if(!BLAKE2s_Init(S)) {
-            return NULL;
-        }
-    }
-
-    BLAKE2s_Update(S, data, datalen);
-    BLAKE2s_Final(md, S);
-    return md;
 }

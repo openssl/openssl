@@ -24,21 +24,17 @@
 #  error BLAKE2 is disabled.
 # endif
 
-enum blake2s_constant {
-    BLAKE2S_BLOCKBYTES = 64,
-    BLAKE2S_OUTBYTES   = 32,
-    BLAKE2S_KEYBYTES   = 32,
-    BLAKE2S_SALTBYTES  = 8,
-    BLAKE2S_PERSONALBYTES = 8
-};
+#define BLAKE2S_BLOCKBYTES    64
+#define BLAKE2S_OUTBYTES      32
+#define BLAKE2S_KEYBYTES      32
+#define BLAKE2S_SALTBYTES     8
+#define BLAKE2S_PERSONALBYTES 8
 
-enum blake2b_constant {
-    BLAKE2B_BLOCKBYTES = 128,
-    BLAKE2B_OUTBYTES   = 64,
-    BLAKE2B_KEYBYTES   = 64,
-    BLAKE2B_SALTBYTES  = 16,
-    BLAKE2B_PERSONALBYTES = 16
-};
+#define BLAKE2B_BLOCKBYTES    128
+#define BLAKE2B_OUTBYTES      64
+#define BLAKE2B_KEYBYTES      64
+#define BLAKE2B_SALTBYTES     16
+#define BLAKE2B_PERSONALBYTES 16
 
 struct blake2s_param_st {
     uint8_t  digest_length; /* 1 */
@@ -60,9 +56,8 @@ struct blake2s_ctx_st {
     uint32_t h[8];
     uint32_t t[2];
     uint32_t f[2];
-    uint8_t  buf[2 * BLAKE2S_BLOCKBYTES];
+    uint8_t  buf[BLAKE2S_BLOCKBYTES];
     size_t   buflen;
-    uint8_t  last_node;
 };
 
 struct blake2b_param_st {
@@ -85,9 +80,8 @@ struct blake2b_ctx_st {
     uint64_t h[8];
     uint64_t t[2];
     uint64_t f[2];
-    uint8_t  buf[2 * BLAKE2B_BLOCKBYTES];
+    uint8_t  buf[BLAKE2B_BLOCKBYTES];
     size_t   buflen;
-    uint8_t  last_node;
 };
 
 #define BLAKE2B_DIGEST_LENGTH 64
@@ -97,17 +91,9 @@ typedef struct blake2s_ctx_st BLAKE2S_CTX;
 typedef struct blake2b_ctx_st BLAKE2B_CTX;
 
 int BLAKE2b_Init(BLAKE2B_CTX *c);
-int BLAKE2b_InitKey(BLAKE2B_CTX *c, const void *key, size_t keylen);
 int BLAKE2b_Update(BLAKE2B_CTX *c, const void *data, size_t datalen);
 int BLAKE2b_Final(unsigned char *md, BLAKE2B_CTX *c);
-unsigned char *BLAKE2b(const unsigned char *data, size_t datalen,
-                       const unsigned char *key, size_t keylen,
-                       unsigned char *md);
 
 int BLAKE2s_Init(BLAKE2S_CTX *c);
-int BLAKE2s_InitKey(BLAKE2S_CTX *c, const void *key, size_t keylen);
 int BLAKE2s_Update(BLAKE2S_CTX *c, const void *data, size_t datalen);
 int BLAKE2s_Final(unsigned char *md, BLAKE2S_CTX *c);
-unsigned char *BLAKE2s(const unsigned char *data, size_t datalen,
-                       const unsigned char *key, size_t keylen,
-                       unsigned char *md);
