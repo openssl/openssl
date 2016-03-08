@@ -16,6 +16,10 @@
 # block sizes [though few percent better for not so long ones]. All
 # this based on suggestions from David Miller.
 
+$::bias="STACK_BIAS";
+$::frame="STACK_FRAME";
+$::size_t_cc="SIZE_T_CC";
+
 sub asm_init {		# to be called with @ARGV as argument
     for (@_)		{ $::abibits=64 if (/\-m64/ || /\-xarch\=v9/); }
     if ($::abibits==64)	{ $::bias=2047; $::frame=192; $::size_t_cc="%xcc"; }

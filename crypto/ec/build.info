@@ -19,7 +19,7 @@ BEGINRAW[Makefile]
 	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/ecp_nistz256-avx2.pl $(PERLASM_SCHEME) > $@
 
 {- $builddir -}/ecp_nistz256-sparcv9.S:	{- $sourcedir -}/asm/ecp_nistz256-sparcv9.pl
-	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/ecp_nistz256-sparcv9.pl $(CFLAGS) > $@
+	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/ecp_nistz256-sparcv9.pl $(PERLASM_SCHEME) $@
 
 {- $builddir -}/ecp_nistz256-%.S:	{- $sourcedir -}/asm/ecp_nistz256-%.pl
 	CC="$(CC)" $(PERL) $< $(PERLASM_SCHEME) $@

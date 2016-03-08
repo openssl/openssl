@@ -46,13 +46,11 @@
 # saturates at ~15.5x single-process result on 8-core processor,
 # or ~20.5GBps per 2.85GHz socket.
 
-$bits=32;
-for (@ARGV)     { $bits=64 if (/\-m64/ || /\-xarch\=v9/); }
-if ($bits==64)  { $bias=2047; $frame=192; }
-else            { $bias=0;    $frame=112; }
-
-$output=shift;
+$output=pop;
 open STDOUT,">$output";
+
+$frame="STACK_FRAME";
+$bias="STACK_BIAS";
 
 $Zhi="%o0";	# 64-bit values
 $Zlo="%o1";
@@ -75,11 +73,14 @@ $Htbl="%i1";
 $inp="%i2";
 $len="%i3";
 
-$code.=<<___ if ($bits==64);
+$code.=<<___;
+#include "sparc_arch.h"
+
+#ifdef  __arch64__
 .register	%g2,#scratch
 .register	%g3,#scratch
-___
-$code.=<<___;
+#endif
+
 .section	".text",#alloc,#execinstr
 
 .align	64
@@ -183,7 +184,7 @@ gcm_ghash_4bit:
 
 	add	$inp,16,$inp
 	cmp	$inp,$len
-	be,pn	`$bits==64?"%xcc":"%icc"`,.Ldone
+	be,pn	SIZE_T_CC,.Ldone
 	and	$Zlo,0xf,$remi
 
 	ldx	[$Htblo+$nhi],$Tlo

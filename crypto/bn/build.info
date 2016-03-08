@@ -22,11 +22,11 @@ GENERATE[x86-gf2m.s]=asm/x86-gf2m.pl \
 	$(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR)
 DEPEND[x86-gf2m.s]=../perlasm/x86asm.pl
 
-GENERATE[sparcv9a-mont.s]=asm/sparcv9a-mont.pl $(CFLAGS)
-GENERATE[sparcv9-mont.s]=asm/sparcv9-mont.pl $(CFLAGS)
-GENERATE[vis3-mont.s]=asm/vis3-mont.pl $(CFLAGS)
-GENERATE[sparct4-mont.S]=asm/sparct4-mont.pl $(CFLAGS)
-GENERATE[sparcv9-gf2m.S]=asm/sparcv9-gf2m.pl $(CFLAGS)
+GENERATE[sparcv9a-mont.S]=asm/sparcv9a-mont.pl $(PERLASM_SCHEME)
+GENERATE[sparcv9-mont.S]=asm/sparcv9-mont.pl $(PERLASM_SCHEME)
+GENERATE[vis3-mont.S]=asm/vis3-mont.pl $(PERLASM_SCHEME)
+GENERATE[sparct4-mont.S]=asm/sparct4-mont.pl $(PERLASM_SCHEME)
+GENERATE[sparcv9-gf2m.S]=asm/sparcv9-gf2m.pl $(PERLASM_SCHEME)
 
 GENERATE[bn-mips.s]=asm/mips.pl $(PERLASM_SCHEME)
 GENERATE[mips-mont.s]=asm/mips-mont.pl $(PERLASM_SCHEME)

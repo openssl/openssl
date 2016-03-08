@@ -13,8 +13,8 @@ BEGINRAW[Makefile]
 	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/ghash-x86_64.pl $(PERLASM_SCHEME) > $@
 {- $builddir -}/aesni-gcm-x86_64.s:	{- $sourcedir -}/asm/aesni-gcm-x86_64.pl
 	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/aesni-gcm-x86_64.pl $(PERLASM_SCHEME) > $@
-{- $builddir -}/ghash-sparcv9.s:	{- $sourcedir -}/asm/ghash-sparcv9.pl
-	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/ghash-sparcv9.pl $@ $(CFLAGS)
+{- $builddir -}/ghash-sparcv9.S:	{- $sourcedir -}/asm/ghash-sparcv9.pl
+	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/ghash-sparcv9.pl $(PERLASM_SCHEME) $@
 {- $builddir -}/ghash-alpha.s:	{- $sourcedir -}/asm/ghash-alpha.pl
 	(preproc=$$$$.$@.S; trap "rm $$preproc" INT; \
 	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/ghash-alpha.pl > $$preproc && \

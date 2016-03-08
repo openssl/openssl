@@ -31,10 +31,10 @@ BEGINRAW[Makefile]
 {- $builddir -}/aesni-mb-x86_64.s:	{- $sourcedir -}/asm/aesni-mb-x86_64.pl
 	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/aesni-mb-x86_64.pl $(PERLASM_SCHEME) > $@
 
-{- $builddir -}/aes-sparcv9.s: {- $sourcedir -}/asm/aes-sparcv9.pl
-	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/aes-sparcv9.pl $(CFLAGS) > $@
+{- $builddir -}/aes-sparcv9.S: {- $sourcedir -}/asm/aes-sparcv9.pl
+	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/aes-sparcv9.pl $(PERLASM_SCHEME) $@
 {- $builddir -}/aest4-sparcv9.s: {- $sourcedir -}/asm/aest4-sparcv9.pl {- $sourcetop -}/crypto/perlasm/sparcv9_modes.pl
-	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/aest4-sparcv9.pl $(CFLAGS) > $@
+	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/aest4-sparcv9.pl $(PERLASM_SCHEME) $@
 
 {- $builddir -}/aes-ppc.s:	{- $sourcedir -}/asm/aes-ppc.pl
 	CC="$(CC)" $(PERL) {- $sourcedir -}/asm/aes-ppc.pl $(PERLASM_SCHEME) $@

@@ -24,6 +24,9 @@
 # on benchmark. Lower coefficients are for ECDSA sign, server-side
 # operation. Keep in mind that +200% means 3x improvement.
 
+$output = pop;
+open STDOUT,">$output";
+
 $code.=<<___;
 #include "sparc_arch.h"
 

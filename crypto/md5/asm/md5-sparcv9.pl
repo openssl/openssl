@@ -17,7 +17,7 @@
 # single-process result on 8-core processor, or ~11GBps per 2.85GHz
 # socket.
 
-$output=shift;
+$output=pop;
 open STDOUT,">$output";
 
 use integer;
