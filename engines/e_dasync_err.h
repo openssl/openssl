@@ -67,7 +67,7 @@ extern "C" {
 static void ERR_load_DASYNC_strings(void);
 static void ERR_unload_DASYNC_strings(void);
 static void ERR_DASYNC_error(int function, int reason, char *file, int line);
-#define DASYNCerr(f,r) ERR_DASYNC_error((f),(r),OPENSSL_FILE,OPENSSL_LINE)
+# define DASYNCerr(f,r) ERR_DASYNC_error((f),(r),OPENSSL_FILE,OPENSSL_LINE)
 
 /* Error codes for the DASYNC functions. */
 
@@ -77,6 +77,7 @@ static void ERR_DASYNC_error(int function, int reason, char *file, int line);
 # define DASYNC_F_DASYNC_AES128_CBC_HMAC_SHA1_INIT_KEY    109
 # define DASYNC_F_DASYNC_AES128_INIT_KEY                  108
 # define DASYNC_F_DASYNC_BN_MOD_EXP                       101
+# define DASYNC_F_DASYNC_CIPHER_INIT_KEY_HELPER           110
 # define DASYNC_F_DASYNC_MOD_EXP                          102
 # define DASYNC_F_DASYNC_PRIVATE_DECRYPT                  103
 # define DASYNC_F_DASYNC_PRIVATE_ENCRYPT                  104
