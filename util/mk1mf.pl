@@ -1416,6 +1416,7 @@ sub read_options
 		"gcc" => \$gcc,
 		"debug" => \$debug,
 		"--debug" => \$debug,
+		"--classic" => 0,
 		"profile" => \$profile,
 		"shlib" => \$shlib,
 		"dll" => \$shlib,
