@@ -315,7 +315,7 @@ __owur int SCT_LIST_set_source(const STACK_OF(SCT) *scts, sct_source_t source);
 /*
  * Gets information about the log the SCT came from, if set.
  */
-CTLOG *SCT_get0_log(const SCT *sct);
+const CTLOG *SCT_get0_log(const SCT *sct);
 
 /*
  * Looks up information about the log the SCT came from using a CT log store.
