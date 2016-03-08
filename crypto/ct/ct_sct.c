@@ -101,11 +101,14 @@ int SCT_set_version(SCT *sct, sct_version_t version)
         return 0;
     }
     sct->version = version;
+    sct->validation_status = SCT_VALIDATION_STATUS_NOT_SET;
     return 1;
 }
 
 int SCT_set_log_entry_type(SCT *sct, ct_log_entry_type_t entry_type)
 {
+    sct->validation_status = SCT_VALIDATION_STATUS_NOT_SET;
+
     switch (entry_type) {
     case CT_LOG_ENTRY_TYPE_X509:
     case CT_LOG_ENTRY_TYPE_PRECERT:
@@ -127,6 +130,7 @@ int SCT_set0_log_id(SCT *sct, unsigned char *log_id, size_t log_id_len)
     OPENSSL_free(sct->log_id);
     sct->log_id = log_id;
     sct->log_id_len = log_id_len;
+    sct->validation_status = SCT_VALIDATION_STATUS_NOT_SET;
     return 1;
 }
 
@@ -140,6 +144,7 @@ int SCT_set1_log_id(SCT *sct, const unsigned char *log_id, size_t log_id_len)
     OPENSSL_free(sct->log_id);
     sct->log_id = NULL;
     sct->log_id_len = 0;
+    sct->validation_status = SCT_VALIDATION_STATUS_NOT_SET;
 
     if (log_id != NULL && log_id_len > 0) {
         sct->log_id = OPENSSL_memdup(log_id, log_id_len);
@@ -156,6 +161,7 @@ int SCT_set1_log_id(SCT *sct, const unsigned char *log_id, size_t log_id_len)
 void SCT_set_timestamp(SCT *sct, uint64_t timestamp)
 {
     sct->timestamp = timestamp;
+    sct->validation_status = SCT_VALIDATION_STATUS_NOT_SET;
 }
 
 int SCT_set_signature_nid(SCT *sct, int nid)
@@ -164,10 +170,12 @@ int SCT_set_signature_nid(SCT *sct, int nid)
     case NID_sha256WithRSAEncryption:
         sct->hash_alg = TLSEXT_hash_sha256;
         sct->sig_alg = TLSEXT_signature_rsa;
+        sct->validation_status = SCT_VALIDATION_STATUS_NOT_SET;
         return 1;
     case NID_ecdsa_with_SHA256:
         sct->hash_alg = TLSEXT_hash_sha256;
         sct->sig_alg = TLSEXT_signature_ecdsa;
+        sct->validation_status = SCT_VALIDATION_STATUS_NOT_SET;
         return 1;
     default:
         CTerr(CT_F_SCT_SET_SIGNATURE_NID, CT_R_UNRECOGNIZED_SIGNATURE_NID);
@@ -180,6 +188,7 @@ void SCT_set0_extensions(SCT *sct, unsigned char *ext, size_t ext_len)
     OPENSSL_free(sct->ext);
     sct->ext = ext;
     sct->ext_len = ext_len;
+    sct->validation_status = SCT_VALIDATION_STATUS_NOT_SET;
 }
 
 int SCT_set1_extensions(SCT *sct, const unsigned char *ext, size_t ext_len)
@@ -187,6 +196,7 @@ int SCT_set1_extensions(SCT *sct, const unsigned char *ext, size_t ext_len)
     OPENSSL_free(sct->ext);
     sct->ext = NULL;
     sct->ext_len = 0;
+    sct->validation_status = SCT_VALIDATION_STATUS_NOT_SET;
 
     if (ext != NULL && ext_len > 0) {
         sct->ext = OPENSSL_memdup(ext, ext_len);
@@ -204,6 +214,7 @@ void SCT_set0_signature(SCT *sct, unsigned char *sig, size_t sig_len)
     OPENSSL_free(sct->sig);
     sct->sig = sig;
     sct->sig_len = sig_len;
+    sct->validation_status = SCT_VALIDATION_STATUS_NOT_SET;
 }
 
 int SCT_set1_signature(SCT *sct, const unsigned char *sig, size_t sig_len)
@@ -211,6 +222,7 @@ int SCT_set1_signature(SCT *sct, const unsigned char *sig, size_t sig_len)
     OPENSSL_free(sct->sig);
     sct->sig = NULL;
     sct->sig_len = 0;
+    sct->validation_status = SCT_VALIDATION_STATUS_NOT_SET;
 
     if (sig != NULL && sig_len > 0) {
         sct->sig = OPENSSL_memdup(sig, sig_len);
