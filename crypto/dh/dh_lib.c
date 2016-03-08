@@ -109,13 +109,20 @@ DH *DH_new_method(ENGINE *engine)
         return NULL;
     }
 
+    ret->references = 1;
+    ret->lock = CRYPTO_THREAD_lock_new();
+    if (ret->lock == NULL) {
+        OPENSSL_free(ret);
+        return NULL;
+    }
+
     ret->meth = DH_get_default_method();
 #ifndef OPENSSL_NO_ENGINE
+    ret->flags = ret->meth->flags;  /* early default init */
     if (engine) {
         if (!ENGINE_init(engine)) {
             DHerr(DH_F_DH_NEW_METHOD, ERR_R_ENGINE_LIB);
-            OPENSSL_free(ret);
-            return NULL;
+            goto err;
         }
         ret->engine = engine;
     } else
@@ -124,29 +131,19 @@ DH *DH_new_method(ENGINE *engine)
         ret->meth = ENGINE_get_DH(ret->engine);
         if (ret->meth == NULL) {
             DHerr(DH_F_DH_NEW_METHOD, ERR_R_ENGINE_LIB);
-            ENGINE_finish(ret->engine);
-            OPENSSL_free(ret);
-            return NULL;
+            goto err;
         }
     }
 #endif
 
-    ret->references = 1;
     ret->flags = ret->meth->flags;
 
-    CRYPTO_new_ex_data(CRYPTO_EX_INDEX_DH, ret, &ret->ex_data);
-
-    ret->lock = CRYPTO_THREAD_lock_new();
-    if (ret->lock == NULL) {
-#ifndef OPENSSL_NO_ENGINE
-        ENGINE_finish(ret->engine);
-#endif
-        CRYPTO_free_ex_data(CRYPTO_EX_INDEX_DH, ret, &ret->ex_data);
-        OPENSSL_free(ret);
-        return NULL;
-    }
+    if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_DH, ret, &ret->ex_data))
+        goto err;
 
     if ((ret->meth->init != NULL) && !ret->meth->init(ret)) {
+        DHerr(DH_F_DH_NEW_METHOD, ERR_R_INIT_FAIL);
+err:
         DH_free(ret);
         ret = NULL;
     }
