@@ -787,21 +787,30 @@ static void ssl_cipher_collect_ciphers(const SSL_METHOD *ssl_method,
     for (i = 0; i < num_of_ciphers; i++) {
         c = ssl_method->get_cipher(i);
         /* drop those that use any of that is not available */
-        if ((c != NULL) && c->valid &&
-            (!FIPS_mode() || (c->algo_strength & SSL_FIPS)) &&
-            !(c->algorithm_mkey & disabled_mkey) &&
-            !(c->algorithm_auth & disabled_auth) &&
-            !(c->algorithm_enc & disabled_enc) &&
-            !(c->algorithm_mac & disabled_mac)) {
-            co_list[co_list_num].cipher = c;
-            co_list[co_list_num].next = NULL;
-            co_list[co_list_num].prev = NULL;
-            co_list[co_list_num].active = 0;
-            co_list_num++;
-            /*
-             * if (!sk_push(ca_list,(char *)c)) goto err;
-             */
-        }
+        if (c == NULL || !c->valid)
+            continue;
+        if (FIPS_mode() && (c->algo_strength & SSL_FIPS))
+            continue;
+        if ((c->algorithm_mkey & disabled_mkey) ||
+            (c->algorithm_auth & disabled_auth) ||
+            (c->algorithm_enc & disabled_enc) ||
+            (c->algorithm_mac & disabled_mac))
+            continue;
+        if (((ssl_method->ssl3_enc->enc_flags & SSL_ENC_FLAG_DTLS) == 0) &&
+            c->min_tls == 0)
+            continue;
+        if (((ssl_method->ssl3_enc->enc_flags & SSL_ENC_FLAG_DTLS) != 0) &&
+            c->min_dtls == 0)
+            continue;
+
+        co_list[co_list_num].cipher = c;
+        co_list[co_list_num].next = NULL;
+        co_list[co_list_num].prev = NULL;
+        co_list[co_list_num].active = 0;
+        co_list_num++;
+        /*
+         * if (!sk_push(ca_list,(char *)c)) goto err;
+         */
     }
 
     /*

@@ -274,25 +274,6 @@ long dtls1_ctrl(SSL *s, int cmd, long larg, void *parg)
     return (ret);
 }
 
-/*
- * As it's impossible to use stream ciphers in "datagram" mode, this
- * simple filter is designed to disengage them in DTLS. Unfortunately
- * there is no universal way to identify stream SSL_CIPHER, so we have
- * to explicitly list their SSL_* codes. Currently RC4 is the only one
- * available, but if new ones emerge, they will have to be added...
- */
-const SSL_CIPHER *dtls1_get_cipher(unsigned int u)
-{
-    const SSL_CIPHER *ciph = ssl3_get_cipher(u);
-
-    if (ciph != NULL) {
-        if (ciph->algorithm_enc == SSL_RC4)
-            return NULL;
-    }
-
-    return ciph;
-}
-
 void dtls1_start_timer(SSL *s)
 {
 #ifndef OPENSSL_NO_SCTP
