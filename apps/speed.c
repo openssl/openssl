@@ -1150,9 +1150,9 @@ static int run_benchmark(int async_jobs, int (*loop_function)(void *), loopargs_
     }
 
     while (num_inprogress > 0) {
-#if defined(ASYNC_SYS_WINDOWS)
+#if defined(OPENSSL_SYS_WINDOWS)
         DWORD avail = 0;
-#elif defined(ASYNC_SYS_UNIX)
+#elif defined(OPENSSL_SYS_UNIX)
         int select_result = 0;
         OSSL_ASYNC_FD max_fd = 0;
         fd_set waitfdset;
