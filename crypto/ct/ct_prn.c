@@ -80,6 +80,8 @@ static void timestamp_print(uint64_t timestamp, BIO *out)
     ASN1_GENERALIZEDTIME *gen = ASN1_GENERALIZEDTIME_new();
     char genstr[20];
 
+    if (gen == NULL)
+        return;
     ASN1_GENERALIZEDTIME_adj(gen, (time_t)0,
                              (int)(timestamp / 86400000),
                              (timestamp % 86400000) / 1000);
@@ -89,8 +91,8 @@ static void timestamp_print(uint64_t timestamp, BIO *out)
      */
     BIO_snprintf(genstr, sizeof(genstr), "%.14s.%03dZ",
                  ASN1_STRING_data(gen), (unsigned int)(timestamp % 1000));
-    ASN1_GENERALIZEDTIME_set_string(gen, genstr);
-    ASN1_GENERALIZEDTIME_print(out, gen);
+    if (ASN1_GENERALIZEDTIME_set_string(gen, genstr))
+        ASN1_GENERALIZEDTIME_print(out, gen);
     ASN1_GENERALIZEDTIME_free(gen);
 }
 
