@@ -1717,7 +1717,7 @@ long SSL_ctrl(SSL *s, int cmd, long larg, void *parg)
             s->split_send_fragment = s->max_send_fragment;
         return 1;
     case SSL_CTRL_SET_SPLIT_SEND_FRAGMENT:
-        if (larg > s->max_send_fragment || larg == 0)
+        if ((unsigned int)larg > s->max_send_fragment || larg == 0)
             return 0;
         s->split_send_fragment = larg;
         return 1;
@@ -1871,7 +1871,7 @@ long SSL_CTX_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
             ctx->split_send_fragment = ctx->split_send_fragment;
         return 1;
     case SSL_CTRL_SET_SPLIT_SEND_FRAGMENT:
-        if (larg > ctx->max_send_fragment || larg == 0)
+        if ((unsigned int)larg > ctx->max_send_fragment || larg == 0)
             return 0;
         ctx->split_send_fragment = larg;
         return 1;
