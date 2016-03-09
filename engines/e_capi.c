@@ -927,7 +927,7 @@ int capi_rsa_sign(int dtype, const unsigned char *m, unsigned int m_len,
 
  err:
     if (hash)
-    CryptDestroyHash(hash);
+        CryptDestroyHash(hash);
 
     if (hprov && hprov != capi_key->hprov)
         CryptReleaseContext(hprov, 0);
@@ -1478,6 +1478,7 @@ static CAPI_KEY *capi_get_key(CAPI_CTX * ctx, const TCHAR *contname,
     CAPI_KEY *key;
     DWORD dwFlags = 0;
     int len;
+
     key = OPENSSL_malloc(sizeof(CAPI_KEY));
     if (sizeof(TCHAR) == sizeof(char))
         CAPI_trace(ctx, "capi_get_key, contname=%s, provname=%s, type=%d\n",
