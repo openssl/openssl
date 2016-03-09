@@ -2078,15 +2078,15 @@
 #define NID_ripemd160WithRSA            119
 #define OBJ_ripemd160WithRSA            1L,3L,36L,3L,3L,1L,2L
 
-#define SN_blake2b              "BLAKE2b"
-#define LN_blake2b              "blake2b"
-#define NID_blake2b             1056
-#define OBJ_blake2b             1L,3L,6L,1L,4L,1L,1722L,12L,2L,1L,16L
+#define SN_blake2b512           "BLAKE2b512"
+#define LN_blake2b512           "blake2b512"
+#define NID_blake2b512          1056
+#define OBJ_blake2b512          1L,3L,6L,1L,4L,1L,1722L,12L,2L,1L,16L
 
-#define SN_blake2s              "BLAKE2s"
-#define LN_blake2s              "blake2s"
-#define NID_blake2s             1057
-#define OBJ_blake2s             1L,3L,6L,1L,4L,1L,1722L,12L,2L,2L,8L
+#define SN_blake2s256           "BLAKE2s256"
+#define LN_blake2s256           "blake2s256"
+#define NID_blake2s256          1057
+#define OBJ_blake2s256          1L,3L,6L,1L,4L,1L,1722L,12L,2L,2L,8L
 
 #define SN_sxnet                "SXNetID"
 #define LN_sxnet                "Strong Extranet ID"

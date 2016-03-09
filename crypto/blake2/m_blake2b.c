@@ -1,22 +1,20 @@
 /*
- * BLAKE2 reference source code package - reference C implementations
- *
  * Copyright 2012, Samuel Neves <sneves@dei.uc.pt>.
- * You may use this under the terms of the CC0, the OpenSSL Licence, or the
- * Apache Public License 2.0, at your option.  The terms of these licenses can
- * be found at:
+ * Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * - OpenSSL license   : https://www.openssl.org/source/license.html
- * - Apache 2.0        : http://www.apache.org/licenses/LICENSE-2.0
- * - CC0 1.0 Universal : http://www.apache.org/licenses/LICENSE-2.0
- *
- * More information about the BLAKE2 hash function can be found at
- * https://blake2.net.
+ * Licensed under the OpenSSL licenses, (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * https://www.openssl.org/source/license.html
+ * or in the file LICENSE in the source distribution.
  */
 
-/* crypto/evp/m_blake2b.c */
+/*
+ * Derived from the BLAKE2 reference implementation written by Samuel Neves.
+ * More information about the BLAKE2 hash function and its implementations
+ * can be found at https://blake2.net.
+ */
 
-#include <stdio.h>
 #include "internal/cryptlib.h"
 
 #ifndef OPENSSL_NO_BLAKE2
@@ -42,7 +40,7 @@ static int final(EVP_MD_CTX *ctx, unsigned char *md)
 }
 
 static const EVP_MD blake2b_md = {
-    NID_blake2b,
+    NID_blake2b512,
     0,
     BLAKE2B_DIGEST_LENGTH,
     0,
@@ -55,7 +53,7 @@ static const EVP_MD blake2b_md = {
     sizeof(EVP_MD *) + sizeof(BLAKE2B_CTX),
 };
 
-const EVP_MD *EVP_blake2b(void)
+const EVP_MD *EVP_blake2b512(void)
 {
     return (&blake2b_md);
 }
