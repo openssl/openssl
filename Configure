@@ -1193,22 +1193,24 @@ else               { $no_user_defines=1;    }
 
 # ALL MODIFICATIONS TO %config and %target MUST BE DONE FROM HERE ON
 
-$config{afalg}="";
-if ($target =~ m/^linux/) {
-    my $minver = 4*10000 + 1*100 + 0;
-    if ($config{cross_compile_prefix} eq "") {
-        my $verstr = `uname -r`;
-        my ($ma, $mi1, $mi2) = split("\\.", $verstr);
-        ($mi2) = $mi2 =~ /(\d+)/;
-        my $ver = $ma*10000 + $mi1*100 + $mi2;
-        if ($ver < $minver) {
-            $disabled{afalg} = "too-old-kernel";
-        } else {
-            push @{$config{engdirs}}, "afalg";
+unless ($disabled{engine}) {
+    $config{afalg}="";
+    if ($target =~ m/^linux/) {
+        my $minver = 4*10000 + 1*100 + 0;
+        if ($config{cross_compile_prefix} eq "") {
+            my $verstr = `uname -r`;
+            my ($ma, $mi1, $mi2) = split("\\.", $verstr);
+            ($mi2) = $mi2 =~ /(\d+)/;
+            my $ver = $ma*10000 + $mi1*100 + $mi2;
+            if ($ver < $minver) {
+                $disabled{afalg} = "too-old-kernel";
+            } else {
+                push @{$config{engdirs}}, "afalg";
+            }
         }
+    } else {
+        $disabled{afalg}  = "not-linux";
     }
-} else {
-    $disabled{afalg}  = "not-linux";
 }
 
 push @{$config{openssl_other_defines}}, "OPENSSL_NO_AFALGENG" if ($disabled{afalg});
