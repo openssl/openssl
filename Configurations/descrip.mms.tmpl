@@ -103,10 +103,12 @@ ENGINES={- join(", ", map { "-\n\t".$_.".EXE" } @{$unified_info{engines}}) -}
 PROGRAMS={- join(", ", map { "-\n\t".$_.".EXE" } grep { !m|^\[\.test\]| } @{$unified_info{programs}}) -}
 TESTPROGS={- join(", ", map { "-\n\t".$_.".EXE" } grep { m|^\[\.test\]| } @{$unified_info{programs}}) -}
 SCRIPTS={- join(", ", map { "-\n\t".$_ } @{$unified_info{scripts}}) -}
+{- output_off() if $disabled{makedepend}; "" -}
 DEPS={- our @deps = map { (my $x = $_) =~ s|\.o$|\$(DEP_EXT)|; $x; }
                     grep { $unified_info{sources}->{$_}->[0] =~ /\.c$/ }
                     keys %{$unified_info{sources}};
         join(", ", map { "-\n\t".$_ } @deps); -}
+{- output_on() if $disabled{makedepend}; "" -}
 
 # DESTDIR is for package builders so that they can configure for, say,
 # SYS$COMMON:[OPENSSL] and yet have everything installed in STAGING:[USER].
@@ -263,6 +265,7 @@ clean : libclean
 
 depend : descrip.mms
 descrip.mms : FORCE
+	@ ! {- output_off() if $disabled{makedepend}; "" -}
         @ $(PERL) -pe "if (/^# DO NOT DELETE.*/) { exit(0); }" -
                 < descrip.mms > descrip.mms-new
         @ OPEN/APPEND DESCRIP descrip.mms-new
@@ -273,6 +276,7 @@ descrip.mms : FORCE
                  RENAME descrip.mms-new descrip.mms )
         @ IF F$SEARCH("descrip.mms-new") .NES. "" THEN DELETE descrip.mms-new;*
         -@ SPAWN/OUTPUT=NLA0: PURGE/NOLOG descrip.mms
+	@ ! {- output_on() if $disabled{makedepend}; "" -}
 
 # Install helper targets #############################################
 
@@ -448,12 +452,14 @@ EOF
                             } @{$args{incs}}).")";
       my $before = $unified_info{before}->{$obj.".OBJ"} || "\@ !";
       my $after = $unified_info{after}->{$obj.".OBJ"} || "\@ !";
+      my $depbuild = $disabled{makedepend} ? ""
+          : " /MMS=(FILE=${objd}${objn}.tmp-MMS,TARGET=$obj.OBJ)"
 
       return <<"EOF";
 $obj.OBJ : $deps
         ${before}
         SET DEFAULT $forward
-        \$(CC) \$(CFLAGS)${incs} /MMS=(FILE=${objd}${objn}.tmp-MMS,TARGET=$obj.OBJ) /OBJECT=${objd}${objn}.OBJ /REPOSITORY=$backward $srcs
+        \$(CC) \$(CFLAGS)${incs}${depbuild} /OBJECT=${objd}${objn}.OBJ /REPOSITORY=$backward $srcs
         SET DEFAULT $backward
         ${after}
         \@ PIPE ( \$(PERL) -e "use File::Compare qw/compare_text/; my \$x = compare_text(""$obj.MMS"",""$obj.tmp-MMS""); exit(0x10000000 + (\$x == 0));" || -
