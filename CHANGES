@@ -4,6 +4,14 @@
 
  Changes between 1.0.2g and 1.1.0  [xx XXX xxxx]
 
+  *) OpenSSL now uses a new threading API. It is no longer necessary to
+     set locking callbacks to use OpenSSL in a multi-threaded environment. There
+     are two supported threading models: pthreads and windows threads. It is
+     also possible to configure OpenSSL at compile time for "no-threads". The
+     old threading API should no longer be used. The functions have been
+     replaced with "no-op" compatibility macros.
+     [Alessandro Ghedini, Matt Caswell]
+
   *) Modify behavior of ALPN to invoke callback after SNI/servername
      callback, such that updates to the SSL_CTX affect ALPN.
      [Todd Short]
