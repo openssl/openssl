@@ -378,7 +378,6 @@ static const SSL_CIPHER cipher_aliases[] = {
     {0, SSL_TXT_SRP, 0, SSL_kSRP, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 
     /* symmetric encryption aliases */
-    {0, SSL_TXT_DES, 0, 0, 0, SSL_DES, 0, 0, 0, 0, 0, 0, 0, 0, 0},
     {0, SSL_TXT_3DES, 0, 0, 0, SSL_3DES, 0, 0, 0, 0, 0, 0, 0, 0, 0},
     {0, SSL_TXT_RC4, 0, 0, 0, SSL_RC4, 0, 0, 0, 0, 0, 0, 0, 0, 0},
     {0, SSL_TXT_RC2, 0, 0, 0, SSL_RC2, 0, 0, 0, 0, 0, 0, 0, 0, 0},
