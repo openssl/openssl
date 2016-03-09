@@ -297,15 +297,15 @@ int main(int argc, char *argv[])
     BN_free(m);
     BN_CTX_free(ctx);
 
+    if (test_exp_mod_zero() != 0)
+        goto err;
+
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG
     if (CRYPTO_mem_leaks(out) <= 0)
         goto err;
 #endif
     BIO_free(out);
     printf("\n");
-
-    if (test_exp_mod_zero() != 0)
-        goto err;
 
     printf("done\n");
 
