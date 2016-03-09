@@ -1221,6 +1221,7 @@ push @{$config{openssl_other_defines}}, "OPENSSL_NO_AFALGENG" if ($disabled{afal
 # If we use the unified build, collect information from build.info files
 my %unified_info = ();
 
+my $buildinfo_debug = defined($ENV{CONFIGURE_DEBUG_BUILDINFO});
 if ($builder eq "unified") {
     # Store the name of the template file we will build the build file from
     # in %config.  This may be useful for the build file itself.
@@ -1415,7 +1416,18 @@ if ($builder eq "unified") {
                 }
             },
             qr/^(?:#.*|\s*)$/ => sub { },
-            "OTHERWISE" => sub { die "Something wrong with this line:\n$_\nat $sourced/$f" }
+            "OTHERWISE" => sub { die "Something wrong with this line:\n$_\nat $sourced/$f" },
+            "BEFORE" => sub {
+                if ($buildinfo_debug) {
+                    print STDERR "DEBUG: Parsing ",join(" ", @_),"\n";
+                    print STDERR "DEBUG: ... before parsing, skip stack is ",join(" ", map { int($_) } @skip),"\n";
+                }
+            },
+            "AFTER" => sub {
+                if ($buildinfo_debug) {
+                    print STDERR "DEBUG: .... after parsing, skip stack is ",join(" ", map { int($_) } @skip),"\n";
+                }
+            },
             );
         die "runaway IF?" if (@skip);
 
@@ -2453,8 +2465,11 @@ sub collect_information {
     while(defined($_ = $lineiterator->())) {
         s|\R$||;
         my $found = 0;
+        if ($collectors{"BEFORE"}) {
+            $collectors{"BEFORE"}->($_);
+        }
         foreach my $re (keys %collectors) {
-            if ($re ne "OTHERWISE" && /$re/) {
+            if ($re !~ /^OTHERWISE|BEFORE|AFTER$/ && /$re/) {
                 $collectors{$re}->($lineiterator);
                 $found = 1;
             };
@@ -2462,6 +2477,9 @@ sub collect_information {
         if ($collectors{"OTHERWISE"}) {
             $collectors{"OTHERWISE"}->($lineiterator, $_)
                 unless $found || !defined $collectors{"OTHERWISE"};
+        }
+        if ($collectors{"AFTER"}) {
+            $collectors{"AFTER"}->($_);
         }
     }
 }
