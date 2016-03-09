@@ -1475,9 +1475,9 @@ static PCCERT_CONTEXT capi_find_cert(CAPI_CTX * ctx, const char *id,
 static CAPI_KEY *capi_get_key(CAPI_CTX * ctx, const TCHAR *contname,
                               TCHAR *provname, DWORD ptype, DWORD keyspec)
 {
+    size_t len;
     CAPI_KEY *key;
     DWORD dwFlags = 0;
-    int len;
 
     key = OPENSSL_malloc(sizeof(CAPI_KEY));
     if (sizeof(TCHAR) == sizeof(char))
