@@ -103,6 +103,7 @@ cscope.out
 /out32dll.dbg
 /inc32
 /MINFO
+/ms/.rnd
 /ms/bcb.mak
 /ms/libeay32.def
 /ms/nt.mak
