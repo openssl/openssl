@@ -870,14 +870,14 @@ static EVP_PKEY *hwcrhk_load_pubkey(ENGINE *eng, const char *key_id,
             {
                 RSA *rsa = NULL;
 
-                CRYPTO_w_lock(CRYPTO_LOCK_EVP_PKEY);
+                CRYPTO_THREAD_write_lock(chil_lock);
                 rsa = res->pkey.rsa;
                 res->pkey.rsa = RSA_new();
                 res->pkey.rsa->n = rsa->n;
                 res->pkey.rsa->e = rsa->e;
                 rsa->n = NULL;
                 rsa->e = NULL;
-                CRYPTO_w_unlock(CRYPTO_LOCK_EVP_PKEY);
+                CRYPTO_THREAD_unlock(chil_lock);
                 RSA_free(rsa);
             }
             break;
