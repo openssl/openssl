@@ -1053,5 +1053,5 @@ auth_srp		1052
 auth_null		1053
 fips_none		1054
 fips_140_2		1055
-blake2b		1056
-blake2s		1057
+blake2b512		1056
+blake2s256		1057

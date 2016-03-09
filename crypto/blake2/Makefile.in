@@ -1,7 +1,3 @@
-#
-# OpenSSL/crypto/blake2/Makefile
-#
-
 DIR=	blake2
 TOP=	../..
 CC=	cc
@@ -17,8 +13,8 @@ AFLAGS= $(ASFLAGS)
 GENERAL=Makefile
 
 LIB=$(TOP)/libcrypto.a
-LIBSRC=blake2b.c blake2s.c
-LIBOBJ=blake2b.o blake2s.o
+LIBSRC=blake2b.c blake2s.c m_blake2b.c m_blake2s.c
+LIBOBJ=blake2b.o blake2s.o m_blake2b.o m_blake2s.o
 
 SRC= $(LIBSRC)
 
