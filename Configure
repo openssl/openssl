@@ -275,6 +275,7 @@ my @disablables = (
     "hw(-.+)?",
     "idea",
     "locking",
+    "makedepend",
     "md2",
     "md4",
     "md5",
@@ -796,6 +797,8 @@ foreach (sort (keys %disabled))
 		{ }
 	elsif (/^dynamic-engine$/)
 		{ }
+	elsif (/^makedepend$/)
+		{ }
 	elsif (/^zlib-dynamic$/)
 		{ }
 	elsif (/^sse2$/)
@@ -1094,11 +1097,11 @@ unless ($disabled{asm}) {
 }
 
 my $ecc = $target{cc};
-if ($^O ne "VMS") {
+if ($^O ne "VMS" && !$disabled{makedepend}) {
     # Is the compiler gcc or clang?  $ecc is used below to see if
     # error-checking can be turned on.
     my $ccpcc = "$config{cross_compile_prefix}$target{cc}";
-    $config{makedepprog} = 'makedepend';
+    $config{makedepprog} = which('makedepend');
     open(PIPE, "$ccpcc --version 2>&1 | head -2 |");
     while ( <PIPE> ) {
         $config{makedepprog} = $ccpcc if /clang|gcc/;
@@ -1106,7 +1109,10 @@ if ($^O ne "VMS") {
         $ecc = "gcc" if /gcc/;
     }
     close(PIPE);
+
+    $disabled{makedepend} = "unavailable" unless $config{makedepprog};
 }
+
 
 
 # Deal with bn_ops ###################################################
@@ -2335,10 +2341,12 @@ sub which
 	my $path;
 	foreach $path (split /:/, $ENV{PATH})
 		{
-		if (-f "$path/$name$target{exe_extension}" and -x _)
+		my $fullpath = "$path/$name$target{exe_extension}";
+		if (-f $fullpath and -x $fullpath)
 			{
-			return "$path/$name$target{exe_extension}" unless ($name eq "perl" and
-			 system("$path/$name$target{exe_extension} -e " . '\'exit($]<5.0);\''));
+			return $fullpath
+			    unless ($name eq "perl" and
+				    system("$fullpath -e " . '\'exit($]<5.0);\''));
 			}
 		}
 	}
