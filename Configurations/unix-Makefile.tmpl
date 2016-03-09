@@ -79,9 +79,11 @@ ENGINES={- join(" ", map { dso($_) } @{$unified_info{engines}}) -}
 PROGRAMS={- join(" ", map { $_.$exeext } grep { !m|^test/| } @{$unified_info{programs}}) -}
 TESTPROGS={- join(" ", map { $_.$exeext } grep { m|^test/| } @{$unified_info{programs}}) -}
 SCRIPTS={- join(" ", @{$unified_info{scripts}}) -}
+{- output_off() if $disabled{makedepend}; "" -}
 DEPS={- join(" ", map { (my $x = $_) =~ s|\.o$|$depext|; $x; }
                   grep { $unified_info{sources}->{$_}->[0] =~ /\.c$/ }
                   keys %{$unified_info{sources}}); -}
+{- output_on() if $disabled{makedepend}; "" -}
 
 BIN_SCRIPTS=$(BLDDIR)/tools/c_rehash
 MISC_SCRIPTS=$(SRCDIR)/tools/c_hash $(SRCDIR)/tools/c_info \
@@ -178,7 +180,7 @@ RM= rm -f
 RMDIR= rmdir
 TAR= {- $target{tar} || "tar" -}
 TARFLAGS= {- $target{tarflags} -}
-MAKEDEPEND=$(CROSS_COMPILE){- $config{makedepprog} -}
+MAKEDEPEND={- $config{makedepprog} -}
 
 BASENAME=       openssl
 NAME=           $(BASENAME)-$(VERSION)
@@ -259,6 +261,7 @@ clean: libclean
 # was true, 1 if false, and most importantly, 2 if it doesn't
 # recognise the operator.
 depend:
+	@: {- output_off() if $disabled{makedepend}; "" -}
 	@catdepends=false; \
 	if [ Makefile -nt Makefile ] 2>/dev/null || [ $$? = 1 ]; then \
 	  for d in $(DEPS); do \
@@ -283,6 +286,7 @@ depend:
 	    rm -f Makefile.new; \
 	  fi; \
 	fi
+	@: {- output_on() if $disabled{makedepend}; "" -}
 
 # Install helper targets #############################################
 
@@ -874,19 +878,26 @@ EOF
                       dso => '$(DSO_CFLAGS)',
                       bin => '$(BIN_CFLAGS)' } -> {$args{intent}};
       my $makedepprog = $config{makedepprog};
-      if ($makedepprog eq "makedepend") {
-          return <<"EOF";
+      my $recipe = "";
+      if (!$disabled{makedepend} && $makedepprog =~ /\/makedepend/) {
+          $recipe .= <<"EOF";
 $obj$depext: $deps
 	rm -f \$\@.tmp; touch \$\@.tmp
 	-\$(MAKEDEPEND) -f\$\@.tmp -o"|$obj" -- \$(CFLAGS) $ecflags$incs -- $srcs \\
 	    2>/dev/null
 	sed -e 's/^.*|//' -e 's/ \\/\\(\\\\.\\|[^ ]\\)*//g' -e '/: *\$\$/d' -e '/^\\(#.*\\| *\\)\$\$/d' \$\@.tmp > \$\@
 	rm \$\@.tmp
-$obj$objext: $obj$depext
+EOF
+          $deps = $obj.$depext;
+      }
+      if ($disabled{makedepend} || $makedepprog =~ /\/makedepend/) {
+          $recipe .= <<"EOF";
+$obj$objext: $deps
 	\$(CC) \$(CFLAGS) $ecflags$incs -c -o \$\@ $srcs
 EOF
       }
-      return <<"EOF";
+      if (!$disabled{makedepend} && $makedepprog !~ /\/makedepend/) {
+          $recipe .= <<"EOF";
 $obj$objext: $deps
 	\$(CC) \$(CFLAGS) $ecflags$incs -MMD -MF $obj$depext.tmp -MT \$\@ -c -o \$\@ $srcs
 	\@touch $obj$depext.tmp
@@ -894,6 +905,8 @@ $obj$objext: $deps
 		mv $obj$depext.tmp $obj$depext; \\
 	fi
 EOF
+      }
+      return $recipe;
   }
   # On Unix, we build shlibs from static libs, so we're ignoring the
   # object file array.  We *know* this routine is only called when we've
