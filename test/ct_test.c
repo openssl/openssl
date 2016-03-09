@@ -78,7 +78,7 @@ typedef struct ct_test_fixture {
     const char *issuer_file_path;
     int expected_sct_count;
     /* Set the following to test handling of SCTs in TLS format */
-    const uint8_t *tls_sct;
+    const unsigned char *tls_sct;
     size_t tls_sct_len;
     SCT *sct;
     /*
@@ -472,9 +472,7 @@ static int test_verify_multiple_scts()
 
 static int test_decode_tls_sct()
 {
-    SETUP_CT_TEST_FIXTURE();
-    fixture.tls_sct = (unsigned char *)
-        "\x00" /* version */
+    const unsigned char tls_sct[] = "\x00" /* version */
         /* log ID */
         "\xDF\x1C\x2E\xC1\x15\x00\x94\x52\x47\xA9\x61\x68\x32\x5D\xDC\x5C\x79"
         "\x59\xE8\xF7\xC6\xD3\x88\xFC\x00\x2E\x0B\xBD\x3F\x74\xD7\x64"
@@ -483,11 +481,15 @@ static int test_decode_tls_sct()
         "" /* extensions */
         "\x04\x03" /* hash and signature algorithms */
         "\x00\x47" /* signature length */
+        /* signature */
         "\x30\x45\x02\x20\x48\x2F\x67\x51\xAF\x35\xDB\xA6\x54\x36\xBE\x1F\xD6"
         "\x64\x0F\x3D\xBF\x9A\x41\x42\x94\x95\x92\x45\x30\x28\x8F\xA3\xE5\xE2"
         "\x3E\x06\x02\x21\x00\xE4\xED\xC0\xDB\x3A\xC5\x72\xB1\xE2\xF5\xE8\xAB"
         "\x6A\x68\x06\x53\x98\x7D\xCF\x41\x02\x7D\xFE\xFF\xA1\x05\x51\x9D\x89"
-        "\xED\xBF\x08"; /* signature */
+        "\xED\xBF\x08";
+
+    SETUP_CT_TEST_FIXTURE();
+    fixture.tls_sct = tls_sct;
     fixture.tls_sct_len = 118;
     fixture.sct_text_file_path = "ct/tls1.sct";
     EXECUTE_CT_TEST();
@@ -495,6 +497,16 @@ static int test_decode_tls_sct()
 
 static int test_encode_tls_sct()
 {
+    const unsigned char log_id[] = "\xDF\x1C\x2E\xC1\x15\x00\x94\x52\x47\xA9"
+            "\x61\x68\x32\x5D\xDC\x5C\x79\x59\xE8\xF7\xC6\xD3\x88\xFC\x00\x2E"
+            "\x0B\xBD\x3F\x74\xD7\x64";
+
+    const unsigned char signature[] = "\x45\x02\x20\x48\x2F\x67\x51\xAF\x35"
+            "\xDB\xA6\x54\x36\xBE\x1F\xD6\x64\x0F\x3D\xBF\x9A\x41\x42\x94\x95"
+            "\x92\x45\x30\x28\x8F\xA3\xE5\xE2\x3E\x06\x02\x21\x00\xE4\xED\xC0"
+            "\xDB\x3A\xC5\x72\xB1\xE2\xF5\xE8\xAB\x6A\x68\x06\x53\x98\x7D\xCF"
+            "\x41\x02\x7D\xFE\xFF\xA1\x05\x51\x9D\x89\xED\xBF\x08";
+
     SETUP_CT_TEST_FIXTURE();
 
     SCT *sct = SCT_new();
@@ -502,9 +514,7 @@ static int test_encode_tls_sct()
         fprintf(stderr, "Failed to set SCT version\n");
         return 1;
     }
-    if (!SCT_set1_log_id(sct, (unsigned char *)
-        "\xDF\x1C\x2E\xC1\x15\x00\x94\x52\x47\xA9\x61\x68\x32\x5D\xDC\x5C\x79"
-        "\x59\xE8\xF7\xC6\xD3\x88\xFC\x00\x2E\x0B\xBD\x3F\x74\xD7\x64", 32)) {
+    if (!SCT_set1_log_id(sct, log_id, 32)) {
         fprintf(stderr, "Failed to set SCT log ID\n");
         return 1;
     }
@@ -513,12 +523,7 @@ static int test_encode_tls_sct()
         fprintf(stderr, "Failed to set SCT signature NID\n");
         return 1;
     }
-    if (!SCT_set1_signature(sct, (unsigned char *)
-        "\x45\x02\x20\x48\x2F\x67\x51\xAF\x35\xDB\xA6\x54\x36\xBE"
-        "\x1F\xD6\x64\x0F\x3D\xBF\x9A\x41\x42\x94\x95\x92\x45\x30\x28\x8F\xA3"
-        "\xE5\xE2\x3E\x06\x02\x21\x00\xE4\xED\xC0\xDB\x3A\xC5\x72\xB1\xE2\xF5"
-        "\xE8\xAB\x6A\x68\x06\x53\x98\x7D\xCF\x41\x02\x7D\xFE\xFF\xA1\x05\x51"
-        "\x9D\x89\xED\xBF\x08", 71)) {
+    if (!SCT_set1_signature(sct, signature, 71)) {
         fprintf(stderr, "Failed to set SCT signature\n");
         return 1;
     }
