@@ -90,6 +90,7 @@ void SCT_free(SCT *sct)
     OPENSSL_free(sct->log_id);
     OPENSSL_free(sct->ext);
     OPENSSL_free(sct->sig);
+    CTLOG_free(sct->log);
     OPENSSL_free(sct->sct);
     OPENSSL_free(sct);
 }
@@ -327,15 +328,23 @@ int SCT_set_source(SCT *sct, sct_source_t source)
     }
 }
 
+CTLOG *SCT_get1_log(const SCT *sct)
+{
+    CTLOG_up_ref(sct->log);
+    return sct->log;
+}
+
 const CTLOG *SCT_get0_log(const SCT *sct)
 {
     return sct->log;
 }
 
-int SCT_set0_log(SCT *sct, const CTLOG_STORE *ct_logs)
+int SCT_set_log(SCT *sct, const CTLOG_STORE *ct_logs)
 {
-    sct->log = CTLOG_STORE_get0_log_by_id(ct_logs, sct->log_id, sct->log_id_len);
+    if (sct->log != NULL)
+        CTLOG_free(sct->log);
 
+    sct->log = CTLOG_STORE_get1_log_by_id(ct_logs, sct->log_id, sct->log_id_len);
     return sct->log != NULL;
 }
 
@@ -353,9 +362,7 @@ int SCT_validate(SCT *sct, const CT_POLICY_EVAL_CTX *ctx)
     switch (sct->version) {
     case SCT_VERSION_V1:
         if (sct->log == NULL)
-            sct->log = CTLOG_STORE_get0_log_by_id(ctx->log_store,
-                                                  sct->log_id,
-                                                  CT_V1_HASHLEN);
+            SCT_set_log(sct, ctx->log_store);
         break;
     default:
         sct->validation_status = SCT_VALIDATION_STATUS_UNKNOWN_VERSION;

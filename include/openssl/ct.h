@@ -308,17 +308,22 @@ __owur int SCT_set_source(SCT *sct, sct_source_t source);
 
 /*
  * Gets information about the log the SCT came from, if set.
+ * The caller is responsible for calling CTLOG_free once it no longer needs the
+ * CTLOG.
+ */
+CTLOG *SCT_get1_log(const SCT *sct);
+
+/*
+ * Gets information about the log the SCT came from, if set.
  */
 const CTLOG *SCT_get0_log(const SCT *sct);
 
 /*
  * Looks up information about the log the SCT came from using a CT log store.
- * The CTLOG_STORE must outlive the SCT, as ownership of the CTLOG remains with
- * the CTLOG_STORE.
  * Returns 1 if information about the log is found, 0 otherwise.
  * The information can be accessed via SCT_get0_log.
  */
-int SCT_set0_log(SCT *sct, const CTLOG_STORE* ct_logs);
+int SCT_set_log(SCT *sct, const CTLOG_STORE* ct_logs);
 
 /*
  * Pretty-prints an |sct| to |out|.
@@ -345,7 +350,7 @@ __owur int SCT_verify(const SCT_CTX *sctx, const SCT *sct);
  * Returns 1 if the SCT verifies successfully, 0 otherwise.
  */
 __owur int SCT_verify_v1(SCT *sct, X509 *cert, X509 *preissuer,
-                  X509_PUBKEY *log_pubkey, X509 *issuer_cert);
+                         X509_PUBKEY *log_pubkey, X509 *issuer_cert);
 
 /*
  * Gets the last result of validating this SCT.
@@ -480,24 +485,35 @@ __owur int o2i_SCT_signature(SCT *sct, const unsigned char **in, size_t len);
 
 /*
  * Creates a new CT log instance with the given |public_key| and |name|.
- * Should be deleted by the caller using CTLOG_free when no longer needed.
+ * CTLOG_free should be called when it is no longer needed to decrement its
+ * reference count and potentially delete it.
  */
 CTLOG *CTLOG_new(EVP_PKEY *public_key, const char *name);
 
 /*
  * Creates a new, blank CT log instance.
- * Should be deleted by the caller using CTLOG_free when no longer needed.
+ * CTLOG_free should be called when it is no longer needed to decrement its
+ * reference count and potentially delete it.
  */
 CTLOG *CTLOG_new_null(void);
 
 /*
  * Creates a new CT log instance with the given base64 public_key and |name|.
- * Should be deleted by the caller using CTLOG_free when no longer needed.
+ * CTLOG_free should be called when it is no longer needed to decrement its
+ * reference count and potentially delete it.
  */
 CTLOG *CTLOG_new_from_base64(const char *pkey_base64, const char *name);
 
 /*
- * Deletes a CT log instance and its fields.
+ * Adds one to the CT log's reference count.
+ * Call CTLOG_free to decrement the reference count. The CTLOG will be deleted
+ * if the reference count reaches 0.
+ */
+void CTLOG_up_ref(CTLOG *log);
+
+/*
+ * Decrements the reference count of the CTLOG.
+ * It, and its fields, will be deleted if the reference count reaches 0.
  */
 void CTLOG_free(CTLOG *log);
 
@@ -527,10 +543,12 @@ void CTLOG_STORE_free(CTLOG_STORE *store);
 /*
  * Finds a CT log in the store based on its log ID.
  * Returns the CT log, or NULL if no match is found.
+ * The caller is responsible for calling CTLOG_free once it no longer needs the
+ * CTLOG.
  */
-const CTLOG *CTLOG_STORE_get0_log_by_id(const CTLOG_STORE *store,
-                                        const uint8_t *log_id,
-                                        size_t log_id_len);
+CTLOG *CTLOG_STORE_get1_log_by_id(const CTLOG_STORE *store,
+                                  const uint8_t *log_id,
+                                  size_t log_id_len);
 
 /*
  * Loads a CT log list into a |store| from a |file|.

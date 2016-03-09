@@ -1240,7 +1240,7 @@ OBJ_obj2nid                             1202	1_1_0	EXIST::FUNCTION:
 PKCS12_SAFEBAG_free                     1203	1_1_0	EXIST::FUNCTION:
 EVP_cast5_cfb64                         1204	1_1_0	EXIST::FUNCTION:CAST
 OPENSSL_uni2asc                         1205	1_1_0	EXIST::FUNCTION:
-SCT_set0_log                            1206	1_1_0	EXIST::FUNCTION:
+SCT_set0_log                            1206	1_1_0	NOEXIST::FUNCTION:
 PKCS7_add_attribute                     1207	1_1_0	EXIST::FUNCTION:
 ENGINE_register_DSA                     1208	1_1_0	EXIST::FUNCTION:ENGINE
 lh_node_stats                           1209	1_1_0	EXIST::FUNCTION:STDIO
@@ -3910,7 +3910,7 @@ UI_new_method                           3783	1_1_0	EXIST::FUNCTION:
 Camellia_ofb128_encrypt                 3784	1_1_0	EXIST::FUNCTION:CAMELLIA
 X509_new                                3785	1_1_0	EXIST::FUNCTION:
 EC_KEY_get_conv_form                    3786	1_1_0	EXIST::FUNCTION:EC
-CTLOG_STORE_get0_log_by_id              3787	1_1_0	EXIST::FUNCTION:
+CTLOG_STORE_get0_log_by_id              3787	1_1_0	NOEXIST::FUNCTION:
 CMS_signed_add1_attr                    3788	1_1_0	EXIST::FUNCTION:CMS
 EVP_CIPHER_meth_set_iv_length           3789	1_1_0	EXIST::FUNCTION:
 v3_asid_validate_path                   3790	1_1_0	EXIST::FUNCTION:RFC3779
@@ -4058,3 +4058,7 @@ ECPARAMETERS_it                         3922	1_1_0	EXIST:EXPORT_VAR_AS_FUNCTION:
 ECPKPARAMETERS_it                       3923	1_1_0	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:EC
 ECPKPARAMETERS_it                       3923	1_1_0	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:EC
 EC_GROUP_get_ecparameters               3924	1_1_0	EXIST::FUNCTION:EC
+SCT_set_log                             3925	1_1_0	EXIST::FUNCTION:
+SCT_get1_log                            3926	1_1_0	EXIST::FUNCTION:
+CTLOG_STORE_get1_log_by_id              3927	1_1_0	EXIST::FUNCTION:
+CTLOG_up_ref                            3928	1_1_0	EXIST::FUNCTION:
