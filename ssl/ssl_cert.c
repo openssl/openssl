@@ -190,7 +190,7 @@ CERT *ssl_cert_dup(CERT *cert)
     ret->references = 1;
     ret->key = &ret->pkeys[cert->key - cert->pkeys];
     ret->lock = CRYPTO_THREAD_lock_new();
-    if (ret == NULL) {
+    if (ret->lock == NULL) {
         SSLerr(SSL_F_SSL_CERT_DUP, ERR_R_MALLOC_FAILURE);
         OPENSSL_free(ret);
         return NULL;
