@@ -236,7 +236,6 @@ static void ossl_init_async(void)
 #endif
 
 #ifndef OPENSSL_NO_ENGINE
-static int engine_inited = 0;
 static CRYPTO_ONCE engine_openssl = CRYPTO_ONCE_STATIC_INIT;
 static void ossl_init_engine_openssl(void)
 {
@@ -245,7 +244,6 @@ static void ossl_init_engine_openssl(void)
                     "engine_load_openssl_internal()\n");
 # endif
     engine_load_openssl_internal();
-    engine_inited = 1;
 }
 # if !defined(OPENSSL_NO_HW) && \
     (defined(__OpenBSD__) || defined(__FreeBSD__) || defined(HAVE_CRYPTODEV))
@@ -257,7 +255,6 @@ static void ossl_init_engine_cryptodev(void)
                     "engine_load_cryptodev_internal()\n");
 #  endif
     engine_load_cryptodev_internal();
-    engine_inited = 1;
 }
 # endif
 
@@ -270,7 +267,6 @@ static void ossl_init_engine_rdrand(void)
                     "engine_load_rdrand_internal()\n");
 #  endif
     engine_load_rdrand_internal();
-    engine_inited = 1;
 }
 # endif
 static CRYPTO_ONCE engine_dynamic = CRYPTO_ONCE_STATIC_INIT;
@@ -281,7 +277,6 @@ static void ossl_init_engine_dynamic(void)
                     "engine_load_dynamic_internal()\n");
 # endif
     engine_load_dynamic_internal();
-    engine_inited = 1;
 }
 # ifndef OPENSSL_NO_STATIC_ENGINE
 #  if !defined(OPENSSL_NO_HW) && !defined(OPENSSL_NO_HW_PADLOCK)
@@ -293,7 +288,6 @@ static void ossl_init_engine_padlock(void)
                     "engine_load_padlock_internal()\n");
 #   endif
     engine_load_padlock_internal();
-    engine_inited = 1;
 }
 #  endif
 #  if defined(OPENSSL_SYS_WIN32) && !defined(OPENSSL_NO_CAPIENG)
@@ -305,7 +299,6 @@ static void ossl_init_engine_capi(void)
                     "engine_load_capi_internal()\n");
 #   endif
     engine_load_capi_internal();
-    engine_inited = 1;
 }
 #  endif
 static CRYPTO_ONCE engine_dasync = CRYPTO_ONCE_STATIC_INIT;
@@ -316,7 +309,6 @@ static void ossl_init_engine_dasync(void)
                     "engine_load_dasync_internal()\n");
 # endif
     engine_load_dasync_internal();
-    engine_inited = 1;
 }
 #  if !defined(OPENSSL_NO_AFALGENG)
 static OPENSSL_INIT_ONCE engine_afalg = OPENSSL_INIT_ONCE_STATIC_INIT;
@@ -327,7 +319,6 @@ static void ossl_init_engine_afalg(void)
                     "engine_load_afalg_internal()\n");
 #   endif
     engine_load_afalg_internal();
-    engine_inited = 1;
 }
 #  endif
 # endif
@@ -453,16 +444,6 @@ void OPENSSL_cleanup(void)
     }
 #endif
 
-#ifndef OPENSSL_NO_ENGINE
-    if (engine_inited) {
-# ifdef OPENSSL_INIT_DEBUG
-        fprintf(stderr, "OPENSSL_INIT: OPENSSL_cleanup: "
-                        "ENGINE_cleanup()\n");
-# endif
-        ENGINE_cleanup();
-    }
-#endif
-
     if (load_crypto_strings_inited) {
 #ifdef OPENSSL_INIT_DEBUG
         fprintf(stderr, "OPENSSL_INIT: OPENSSL_cleanup: "
@@ -474,6 +455,8 @@ void OPENSSL_cleanup(void)
     CRYPTO_THREAD_cleanup_local(&threadstopkey);
 
 #ifdef OPENSSL_INIT_DEBUG
+    fprintf(stderr, "OPENSSL_INIT: OPENSSL_cleanup: "
+                    "ENGINE_cleanup()\n");
     fprintf(stderr, "OPENSSL_INIT: OPENSSL_INIT_library_stop: "
                     "CRYPTO_cleanup_all_ex_data()\n");
     fprintf(stderr, "OPENSSL_INIT: OPENSSL_INIT_library_stop: "
@@ -482,7 +465,9 @@ void OPENSSL_cleanup(void)
                     "CONF_modules_free()\n");
     fprintf(stderr, "OPENSSL_INIT: OPENSSL_INIT_library_stop: "
                     "RAND_cleanup()\n");
+
 #endif
+    ENGINE_cleanup();
     CRYPTO_cleanup_all_ex_data();
     EVP_cleanup();
     CONF_modules_free();
