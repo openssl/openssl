@@ -510,8 +510,8 @@ static int dynamic_load(ENGINE *e, dynamic_data_ctx *ctx)
      * would also increase opaqueness.
      */
     fns.static_state = ENGINE_get_static_state();
-    CRYPTO_get_mem_functions(fns.mem_fns.malloc_fn, fns.mem_fns.realloc_fn,
-                             fns.mem_fns.free_fn);
+    CRYPTO_get_mem_functions(&fns.mem_fns.malloc_fn, &fns.mem_fns.realloc_fn,
+                             &fns.mem_fns.free_fn);
     /*
      * Now that we've loaded the dynamic engine, make sure no "dynamic"
      * ENGINE elements will show through.
