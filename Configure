@@ -2058,7 +2058,7 @@ sub resolve_config {
     my $target = shift;
     my @breadcrumbs = @_;
 
-    my $extra_checks = defined($ENV{CONFIGURE_EXTRA_CHECKS});
+#    my $extra_checks = defined($ENV{CONFIGURE_EXTRA_CHECKS});
 
     if (grep { $_ eq $target } @breadcrumbs) {
 	die "inherit_from loop!  target backtrace:\n  "
@@ -2158,10 +2158,10 @@ sub resolve_config {
         unless(defined($table{$target}->{$_})) {
             delete $table{$target}->{$_};
         }
-        if ($extra_checks &&
-            $previous && !($add_called ||  $previous ~~ $table{$target}->{$_})) {
-            warn "$_ got replaced in $target\n";
-        }
+#        if ($extra_checks &&
+#            $previous && !($add_called ||  $previous ~~ $table{$target}->{$_})) {
+#            warn "$_ got replaced in $target\n";
+#        }
     }
 
     # Finally done, return the result.
