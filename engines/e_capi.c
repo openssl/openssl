@@ -1610,8 +1610,7 @@ void capi_free_key(CAPI_KEY * key)
     CryptReleaseContext(key->hprov, 0);
     if (key->pcert)
         CertFreeCertificateContext(key->pcert);
-    if (key->id)
-        OPENSSL_free(key->id);
+    OPENSSL_free(key->id);
     OPENSSL_free(key);
 }
 
