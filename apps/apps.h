@@ -490,6 +490,12 @@ X509_STORE *setup_verify(char *CAfile, char *CApath,
 __owur int ctx_set_verify_locations(SSL_CTX *ctx, const char *CAfile,
                                     const char *CApath, int noCAfile,
                                     int noCApath);
+
+/*
+ * Sets the file to load the Certificate Transparency log list from.
+ * If path is NULL, loads from the default file path.
+ * Returns 1 on success, 0 otherwise.
+ */
 __owur int ctx_set_ctlog_list_file(SSL_CTX *ctx, const char *path);
 
 # ifdef OPENSSL_NO_ENGINE
