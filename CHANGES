@@ -8,6 +8,10 @@
      default.
      [Kurt Roeckx]
 
+  *) Only remove the SSLv2 methods with the no-ssl2-method option. When the
+     methods are enabled and ssl2 is disabled the methods return NULL.
+     [Kurt Roeckx]
+
  Changes between 1.0.1r and 1.0.1s [1 Mar 2016]
 
   * Disable weak ciphers in SSLv3 and up in default builds of OpenSSL.
