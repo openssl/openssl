@@ -4,6 +4,20 @@
 
  Changes between 1.0.2g and 1.1.0  [xx XXX xxxx]
 
+  *) Added support for "pipelining". Ciphers that have the
+     EVP_CIPH_FLAG_PIPELINE flag set have a capability to process multiple
+     encryptions/decryptions simultaneously. There are currently no built-in
+     ciphers with this property but the expectation is that engines will be able
+     to offer it to significantly improve throughput. Support has been extended
+     into libssl so that multiple records for a single connection can be
+     processed in one go (for >=TLS 1.1).
+     [Matt Caswell]
+
+  *) Added the AFALG engine. This is an async capable engine which is able to
+     offload work to the Linux kernel. In this initial version it only supports
+     AES128-CBC. The kernel must be version 4.1.0 or greater.
+     [Catriona Lucey]
+
   *) OpenSSL now uses a new threading API. It is no longer necessary to
      set locking callbacks to use OpenSSL in a multi-threaded environment. There
      are two supported threading models: pthreads and windows threads. It is
