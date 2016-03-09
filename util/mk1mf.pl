@@ -1198,6 +1198,7 @@ sub read_options
 		"nw-mwasm" => \$nw_mwasm,
 		"gaswin" => \$gaswin,
 		"no-ssl2" => \$no_ssl2,
+		"no-ssl2-method" => 0,
 		"no-ssl3" => \$no_ssl3,
 		"no-ssl3-method" => 0,
 		"no-tlsext" => \$no_tlsext,
