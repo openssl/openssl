@@ -1334,7 +1334,7 @@ if ($builder eq "unified") {
             # Info we're looking for
             qr/^\s*IF\[((?:\\.|[^\\\]])*)\]\s*$/
             => sub {
-                if (! @skip || $skip[$#skip] >= 0) {
+                if (! @skip || $skip[$#skip] > 0) {
                     push @skip, !! $1;
                 } else {
                     push @skip, -1;
