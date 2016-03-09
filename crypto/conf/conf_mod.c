@@ -286,8 +286,13 @@ static CONF_MODULE *module_add(DSO *dso, const char *name,
     tmod->name = OPENSSL_strdup(name);
     tmod->init = ifunc;
     tmod->finish = ffunc;
+    if (tmod->name == NULL) {
+        OPENSSL_free(tmod);
+        return NULL;
+    }
 
     if (!sk_CONF_MODULE_push(supported_modules, tmod)) {
+        OPENSSL_free(tmod->name);
         OPENSSL_free(tmod);
         return NULL;
     }
