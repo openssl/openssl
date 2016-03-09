@@ -455,8 +455,10 @@ void OPENSSL_cleanup(void)
     CRYPTO_THREAD_cleanup_local(&threadstopkey);
 
 #ifdef OPENSSL_INIT_DEBUG
+#ifndef OPENSSL_NO_ENGINE
     fprintf(stderr, "OPENSSL_INIT: OPENSSL_cleanup: "
                     "ENGINE_cleanup()\n");
+#endif
     fprintf(stderr, "OPENSSL_INIT: OPENSSL_INIT_library_stop: "
                     "CRYPTO_cleanup_all_ex_data()\n");
     fprintf(stderr, "OPENSSL_INIT: OPENSSL_INIT_library_stop: "
@@ -467,7 +469,9 @@ void OPENSSL_cleanup(void)
                     "RAND_cleanup()\n");
 
 #endif
+#ifndef OPENSSL_NO_ENGINE
     ENGINE_cleanup();
+#endif
     CRYPTO_cleanup_all_ex_data();
     EVP_cleanup();
     CONF_modules_free();
