@@ -453,7 +453,7 @@ EOF
       my $before = $unified_info{before}->{$obj.".OBJ"} || "\@ !";
       my $after = $unified_info{after}->{$obj.".OBJ"} || "\@ !";
       my $depbuild = $disabled{makedepend} ? ""
-          : " /MMS=(FILE=${objd}${objn}.tmp-MMS,TARGET=$obj.OBJ)"
+          : " /MMS=(FILE=${objd}${objn}.tmp-MMS,TARGET=$obj.OBJ)";
 
       return <<"EOF";
 $obj.OBJ : $deps
