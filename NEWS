@@ -7,6 +7,8 @@
 
   Major changes between OpenSSL 1.0.2g and OpenSSL 1.1.0 [in pre-release]
 
+      o Added support for "pipelining"
+      o Added the AFALG engine
       o New threading API implemented
       o Support for ChaCha20 and Poly1305 added to libcrypto and libssl
       o Support for extended master secret
