@@ -274,7 +274,6 @@ my @disablables = (
     "hmac",
     "hw(-.+)?",
     "idea",
-    "locking",
     "makedepend",
     "md2",
     "md4",
