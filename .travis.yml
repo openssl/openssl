@@ -60,16 +60,16 @@ matrix:
 before_script:
     - sh .travis-create-release.sh $TRAVIS_OS_NAME
     - tar -xvzf _srcdist.tar.gz
-    - if echo "$CONFIG_OPTS" | grep "--unified" >/dev/null; then
+    - if echo "$CONFIG_OPTS" | grep "--classic" >/dev/null; then
+          srcdir=.;
+          cd _srcdist;
+      else
           srcdir=../_srcdir;
           mkdir _build;
           cd _build;
           if which ccache >/dev/null; then
               CC="ccache $CC";
           fi
-      else
-          srcdir=.;
-          cd _srcdist;
       fi
     - if [ "$CC" == i686-w64-mingw32-gcc ]; then
           export CROSS_COMPILE=${CC%%gcc}; unset CC;
@@ -83,10 +83,10 @@ before_script:
     - cd ..
 
 script:
-    - if echo "$CONFIG_OPTS" | grep "--unified" >/dev/null; then
-          cd _build;
-      else
+    - if echo "$CONFIG_OPTS" | grep "--classic" >/dev/null; then
           cd _srcdist;
+      else
+          cd _build;
       fi
     - make
     - if [ -z "$BUILDONLY" ]; then
