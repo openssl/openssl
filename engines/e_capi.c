@@ -834,7 +834,7 @@ int capi_rsa_sign(int dtype, const unsigned char *m, unsigned int m_len,
     int ret = -1;
     CAPI_KEY *capi_key;
     CAPI_CTX *ctx;
-    HCRYPTPROV hprov;
+    HCRYPTPROV hprov = 0;
 
     ctx = ENGINE_get_ex_data(rsa->engine, capi_idx);
 
