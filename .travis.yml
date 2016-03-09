@@ -60,7 +60,7 @@ matrix:
 before_script:
     - sh .travis-create-release.sh $TRAVIS_OS_NAME
     - tar -xvzf _srcdist.tar.gz
-    - if echo "$CONFIG_OPTS" | grep "--classic" >/dev/null; then
+    - if echo "$CONFIG_OPTS" | grep -e "--classic" >/dev/null; then
           srcdir=.;
           cd _srcdist;
       else
@@ -83,7 +83,7 @@ before_script:
     - cd ..
 
 script:
-    - if echo "$CONFIG_OPTS" | grep "--classic" >/dev/null; then
+    - if echo "$CONFIG_OPTS" | grep -e "--classic" >/dev/null; then
           cd _srcdist;
       else
           cd _build;
