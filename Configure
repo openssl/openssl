@@ -1333,7 +1333,13 @@ if ($builder eq "unified") {
                                                 $l1 =~ s/\\$//; $l1.$l2 }),
             # Info we're looking for
             qr/^\s*IF\[((?:\\.|[^\\\]])*)\]\s*$/
-            => sub { push @skip, !! $1; },
+            => sub {
+                if (! @skip || $skip[$#skip] >= 0) {
+                    push @skip, !! $1;
+                } else {
+                    push @skip, -1;
+                }
+            },
             qr/^\s*ELSIF\[((?:\\.|[^\\\]])*)\]\s*$/
             => sub { die "ELSIF out of scope" if ! @skip;
                      die "ELSIF following ELSE" if abs($skip[$#skip]) == 2;
