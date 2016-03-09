@@ -163,3 +163,5 @@ STARTTLS documents.
 
 3657 Use of the Camellia Encryption Algorithm in Cryptographic 
      Message Syntax (CMS)
+
+7693 The BLAKE2 Cryptographic Hash and Message Authentication Code (MAC)
