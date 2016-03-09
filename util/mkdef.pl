@@ -100,8 +100,8 @@ my @known_algorithms = ( "RC2", "RC4", "RC5", "IDEA", "DES", "BF",
 			 "CMS",
 			 # CryptoAPI Engine
 			 "CAPIENG",
-			 # SSL v3 method
-			 "SSL3_METHOD",
+			 # SSL methods
+			 "SSL3_METHOD", "TLS1_METHOD", "TLS1_1_METHOD", "TLS1_2_METHOD", "DTLS1_METHOD", "DTLS1_2_METHOD",
 			 # NEXTPROTONEG
 			 "NEXTPROTONEG",
 			 # Deprecated functions
