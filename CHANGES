@@ -4,6 +4,9 @@
 
  Changes between 1.0.2g and 1.1.0  [xx XXX xxxx]
 
+  *) Add support for blake2b and blake2s
+     [Bill Cox]
+
   *) Added support for "pipelining". Ciphers that have the
      EVP_CIPH_FLAG_PIPELINE flag set have a capability to process multiple
      encryptions/decryptions simultaneously. There are currently no built-in

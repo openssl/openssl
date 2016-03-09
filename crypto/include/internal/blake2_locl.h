@@ -1,23 +1,22 @@
 /*
- * BLAKE2 reference source code package - reference C implementations
- *
  * Copyright 2012, Samuel Neves <sneves@dei.uc.pt>.
- * You may use this under the terms of the CC0, the OpenSSL Licence, or the
- * Apache Public License 2.0, at your option.  The terms of these licenses can
- * be found at:
+ * Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * - OpenSSL license   : https://www.openssl.org/source/license.html
- * - Apache 2.0        : http://www.apache.org/licenses/LICENSE-2.0
- * - CC0 1.0 Universal : http://www.apache.org/licenses/LICENSE-2.0
- *
- * More information about the BLAKE2 hash function can be found at
- * https://blake2.net.
+ * Licensed under the OpenSSL licenses, (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * https://www.openssl.org/source/license.html
+ * or in the file LICENSE in the source distribution.
  */
 
-/* crypto/blake2/blake2_locl.h */
+/*
+ * Derived from the BLAKE2 reference implementation written by Samuel Neves.
+ * More information about the BLAKE2 hash function and its implementations
+ * can be found at https://blake2.net.
+ */
 
 #include <stddef.h>
-#include <stdint.h>
+#include "e_os.h"
 
 # ifdef OPENSSL_NO_BLAKE2
 #  error BLAKE2 is disabled.
@@ -44,7 +43,6 @@ struct blake2s_param_st {
     uint8_t  node_offset[6];/* 14 */
     uint8_t  node_depth;    /* 15 */
     uint8_t  inner_length;  /* 16 */
-    /* uint8_t  reserved[0]; */
     uint8_t  salt[BLAKE2S_SALTBYTES]; /* 24 */
     uint8_t  personal[BLAKE2S_PERSONALBYTES];  /* 32 */
 };

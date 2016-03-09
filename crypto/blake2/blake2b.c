@@ -1,35 +1,33 @@
 /*
- * BLAKE2 reference source code package - reference C implementations
- *
  * Copyright 2012, Samuel Neves <sneves@dei.uc.pt>.
- * You may use this under the terms of the CC0, the OpenSSL Licence, or the
- * Apache Public License 2.0, at your option.  The terms of these licenses can
- * be found at:
+ * Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * - OpenSSL license   : https://www.openssl.org/source/license.html
- * - Apache 2.0        : http://www.apache.org/licenses/LICENSE-2.0
- * - CC0 1.0 Universal : http://creativecommons.org/publicdomain/zero/1.0
- *
- * More information about the BLAKE2 hash function can be found at
- * https://blake2.net.
+ * Licensed under the OpenSSL licenses, (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * https://www.openssl.org/source/license.html
+ * or in the file LICENSE in the source distribution.
  */
 
-/* crypto/blake2/blake2b.c */
+/*
+ * Derived from the BLAKE2 reference implementation written by Samuel Neves.
+ * More information about the BLAKE2 hash function and its implementations
+ * can be found at https://blake2.net.
+ */
 
-#include <stdint.h>
 #include <string.h>
-#include <stdio.h>
 #include <openssl/crypto.h>
+#include "e_os.h"
 
 #include "internal/blake2_locl.h"
 #include "blake2_impl.h"
 
 static const uint64_t blake2b_IV[8] =
 {
-    0x6a09e667f3bcc908ULL, 0xbb67ae8584caa73bULL,
-    0x3c6ef372fe94f82bULL, 0xa54ff53a5f1d36f1ULL,
-    0x510e527fade682d1ULL, 0x9b05688c2b3e6c1fULL,
-    0x1f83d9abfb41bd6bULL, 0x5be0cd19137e2179ULL
+    0x6a09e667f3bcc908U, 0xbb67ae8584caa73bU,
+    0x3c6ef372fe94f82bU, 0xa54ff53a5f1d36f1U,
+    0x510e527fade682d1U, 0x9b05688c2b3e6c1fU,
+    0x1f83d9abfb41bd6bU, 0x5be0cd19137e2179U
 };
 
 static const uint8_t blake2b_sigma[12][16] =
@@ -48,26 +46,26 @@ static const uint8_t blake2b_sigma[12][16] =
     { 14, 10,  4,  8,  9, 15, 13,  6,  1, 12,  0,  2, 11,  7,  5,  3 }
 };
 
-/* Some helper functions, not necessarily useful */
-static inline void blake2b_set_lastblock(BLAKE2B_CTX *S)
+/* Set that it's the last block we'll compress */
+static ossl_inline void blake2b_set_lastblock(BLAKE2B_CTX *S)
 {
     S->f[0] = -1;
 }
 
-/* Increment the data hashed couter. */
-static inline void blake2b_increment_counter(BLAKE2B_CTX *S,
-                                             const uint64_t inc)
+/* Increment the data hashed counter. */
+static ossl_inline void blake2b_increment_counter(BLAKE2B_CTX *S,
+                                                  const uint64_t inc)
 {
     S->t[0] += inc;
     S->t[1] += (S->t[0] < inc);
 }
 
 /* Initialize the hashing state. */
-static inline void blake2b_init0(BLAKE2B_CTX *S)
+static ossl_inline void blake2b_init0(BLAKE2B_CTX *S)
 {
     int i;
-    memset(S, 0, sizeof(BLAKE2B_CTX));
 
+    memset(S, 0, sizeof(BLAKE2B_CTX));
     for(i = 0; i < 8; ++i) {
         S->h[i] = blake2b_IV[i];
     }
@@ -202,7 +200,7 @@ int BLAKE2b_Update(BLAKE2B_CTX *c, const void *data, size_t datalen)
 }
 
 /*
- * Finalize the hash state in a way that avoids length extension attacks.
+ * Calculate the final hash and save it in md.
  * Always returns 1.
  */
 int BLAKE2b_Final(unsigned char *md, BLAKE2B_CTX *c)

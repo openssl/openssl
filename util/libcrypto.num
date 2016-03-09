@@ -4060,5 +4060,5 @@ ECPKPARAMETERS_it                       3923	1_1_0	EXIST:EXPORT_VAR_AS_FUNCTION:
 EC_GROUP_get_ecparameters               3924	1_1_0	EXIST::FUNCTION:EC
 DHparams_it                             3925	1_1_0	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:DH
 DHparams_it                             3925	1_1_0	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:DH
-EVP_blake2b                             3926	1_1_0	EXIST::FUNCTION:BLAKE2
-EVP_blake2s                             3927	1_1_0	EXIST::FUNCTION:BLAKE2
+EVP_blake2b_512                         3926	1_1_0	EXIST::FUNCTION:BLAKE2
+EVP_blake2s_256                         3927	1_1_0	EXIST::FUNCTION:BLAKE2
