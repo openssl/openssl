@@ -970,60 +970,6 @@ static void print_details(SSL *c_ssl, const char *prefix)
     BIO_printf(bio_stdout, "\n");
 }
 
-static void lock_dbg_cb(int mode, int type, const char *file, int line)
-{
-    static int modes[CRYPTO_NUM_LOCKS]; /* = {0, 0, ... } */
-    const char *errstr = NULL;
-    int rw;
-
-    rw = mode & (CRYPTO_READ | CRYPTO_WRITE);
-    if (!((rw == CRYPTO_READ) || (rw == CRYPTO_WRITE))) {
-        errstr = "invalid mode";
-        goto err;
-    }
-
-    if (type < 0 || type >= CRYPTO_NUM_LOCKS) {
-        errstr = "type out of bounds";
-        goto err;
-    }
-
-    if (mode & CRYPTO_LOCK) {
-        if (modes[type]) {
-            errstr = "already locked";
-            /*
-             * must not happen in a single-threaded program (would deadlock)
-             */
-            goto err;
-        }
-
-        modes[type] = rw;
-    } else if (mode & CRYPTO_UNLOCK) {
-        if (!modes[type]) {
-            errstr = "not locked";
-            goto err;
-        }
-
-        if (modes[type] != rw) {
-            errstr = (rw == CRYPTO_READ) ?
-                "CRYPTO_r_unlock on write lock" :
-                "CRYPTO_w_unlock on read lock";
-        }
-
-        modes[type] = 0;
-    } else {
-        errstr = "invalid mode";
-        goto err;
-    }
-
- err:
-    if (errstr) {
-        /* we cannot use bio_err here */
-        fprintf(stderr,
-                "openssl (lock_dbg_cb): %s (mode=%d, type=%d) at %s:%d\n",
-                errstr, mode, type, file, line);
-    }
-}
-
 /*
  * protocol_from_string - converts a protocol version string to a number
  *
@@ -1128,8 +1074,6 @@ int main(int argc, char *argv[])
     cipher = 0;
 
     bio_err = BIO_new_fp(stderr, BIO_NOCLOSE | BIO_FP_TEXT);
-
-    CRYPTO_set_locking_callback(lock_dbg_cb);
 
     p = getenv("OPENSSL_DEBUG_MEMORY");
     if (p != NULL && strcmp(p, "on") == 0)
