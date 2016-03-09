@@ -1510,13 +1510,9 @@ static CAPI_KEY *capi_get_key(CAPI_CTX * ctx, const TCHAR *contname,
     }
 /* store key container name as key id */
     len = strlen(contname);
-    if (len > 0) {
-        key->id = OPENSSL_malloc((len + 1) * sizeof(TCHAR));
-        memcpy(key->id, contname, len * sizeof(TCHAR));
-        key->id[len] = '\0';
-    }
-    else
-        key->id = 0;
+    key->id = OPENSSL_malloc((len + 1) * sizeof(TCHAR));
+    memcpy(key->id, contname, len * sizeof(TCHAR));
+    key->id[len] = '\0';
     key->keyspec = keyspec;
     key->pcert = NULL;
     return key;
