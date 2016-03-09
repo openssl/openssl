@@ -246,7 +246,7 @@ static const char *engine_hwcrhk_id_alt = "ncipher";
  * into HWCryptoHook_Mutex
  */
 struct HWCryptoHook_MutexValue {
-    int lockid;
+    CRYPTO_RWLOCK *lock;
 };
 
 /*
@@ -597,14 +597,10 @@ static int hwcrhk_init(ENGINE *e)
      * does, use them.
      */
     if (disable_mutex_callbacks == 0) {
-        if (CRYPTO_get_dynlock_create_callback() != NULL &&
-            CRYPTO_get_dynlock_lock_callback() != NULL &&
-            CRYPTO_get_dynlock_destroy_callback() != NULL) {
-            hwcrhk_globals.mutex_init = hwcrhk_mutex_init;
-            hwcrhk_globals.mutex_acquire = hwcrhk_mutex_lock;
-            hwcrhk_globals.mutex_release = hwcrhk_mutex_unlock;
-            hwcrhk_globals.mutex_destroy = hwcrhk_mutex_destroy;
-        }
+        hwcrhk_globals.mutex_init = hwcrhk_mutex_init;
+        hwcrhk_globals.mutex_acquire = hwcrhk_mutex_lock;
+        hwcrhk_globals.mutex_release = hwcrhk_mutex_unlock;
+        hwcrhk_globals.mutex_destroy = hwcrhk_mutex_destroy;
     }
 
     /*
@@ -1145,26 +1141,26 @@ static int hwcrhk_rand_status(void)
 static int hwcrhk_mutex_init(HWCryptoHook_Mutex * mt,
                              HWCryptoHook_CallerContext * cactx)
 {
-    mt->lockid = CRYPTO_get_new_dynlockid();
-    if (mt->lockid == 0)
+    mt->lock = CRYPTO_THREAD_lock_new();
+    if (mt->lock == NULL)
         return 1;               /* failure */
     return 0;                   /* success */
 }
 
 static int hwcrhk_mutex_lock(HWCryptoHook_Mutex * mt)
 {
-    CRYPTO_w_lock(mt->lockid);
+    CRYPTO_THREAD_write_lock(mt->lock);
     return 0;
 }
 
 static void hwcrhk_mutex_unlock(HWCryptoHook_Mutex * mt)
 {
-    CRYPTO_w_unlock(mt->lockid);
+    CRYPTO_THREAD_unlock(mt->lock);
 }
 
 static void hwcrhk_mutex_destroy(HWCryptoHook_Mutex * mt)
 {
-    CRYPTO_destroy_dynlockid(mt->lockid);
+    CRYPTO_THREAD_lock_free(mt->lock);
 }
 
 static int hwcrhk_get_pass(const char *prompt_info,
