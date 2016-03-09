@@ -3,7 +3,7 @@
  ---------------------------------
 
  [Installation on DOS (with djgpp), Windows, MacOS (before MacOS X)
-  and NetWare is described in INSTALL.DJGPP, INSTALL.WIN, INSTALL.MacOS
+  and NetWare is described in INSTALL.DJGPP, INSTALL.MacOS
   and INSTALL.NW.
   
   This document describes installation on the main supported operating
@@ -22,7 +22,8 @@
  For more details regarding specific platforms, there are these notes
  available:
 
-  * NOTES.VMS
+  * NOTES.VMS (OpenVMS)
+  * NOTES.WIN (any Windows except for Windows CE)
 
  Quick Start
  -----------
@@ -43,6 +44,12 @@
     $ mms test
     $ mms install
 
+  on Windows (only pick one of the targets for configuration):
+
+    $ perl Configure { VC-WIN32 | VC-WIN64A | VC-WIN64I | VC-CE }
+    $ nmake
+    $ nmake test
+
  [If any of these steps fails, see section Installation in Detail below.]
 
  This will build and install OpenSSL in the default location, which is:
@@ -50,6 +57,7 @@
   Unix:    normal installation directories under /usr/local
   OpenVMS: SYS$COMMON:[OPENSSL-'version'...], where 'version' is the
            OpenSSL version number ('major'_'minor').
+  Windows: currently don't have an install function     <TBA>
 
  If you want to install it anywhere else, run config like this:
 
@@ -152,6 +160,8 @@
 
  1a. Configure OpenSSL for your operation system automatically:
 
+     NOTE: This is not available on Windows.
+
        $ ./config [options]                             # Unix
 
        or
@@ -235,6 +245,13 @@
 
        $ @[PATH.TO.OPENSSL.SOURCE]Configure {target} {options}
 
+     Windows example:
+
+       $ C:
+       $ mkdir \temp-openssl
+       $ cd \temp-openssl
+       $ perl d:\PATH\TO\OPENSSL\SOURCE\Configure {target} {options}
+
      Paths can be relative just as well as absolute.  Configure will
      do its best to translate them to relative paths whenever possible.
 
@@ -242,6 +259,7 @@
 
        $ make                                           # Unix
        $ mms                                            ! (or mmk) OpenVMS
+       $ nmake                                          # Windows
 
      This will build the OpenSSL libraries (libcrypto.a and libssl.a on
      Unix, corresponding on other platforms) and the OpenSSL binary
@@ -268,6 +286,7 @@
 
        $ make test                                      # Unix
        $ mms test                                       ! OpenVMS
+       $ nmake test                                     # Windows
 
      If some tests fail, look at the output.  There may be reasons for
      the failure that isn't a problem in OpenSSL itself (like a
@@ -279,11 +298,15 @@
        $ DEFINE HARNESS_VERBOSE YES
        $ mms test                                       ! OpenVMS
 
+       $ set HARNESS_VERBOSE=yes
+       $ nmake test                                     # Windows
+
      If you want to run just one or a few specific tests, you can use
      the make variable TESTS to specify them, like this:
 
        $ make TESTS='test_rsa test_dsa' test            # Unix
        $ mms/macro="TESTS=test_rsa test_dsa" test       ! OpenVMS
+       $ nmake TESTS='test_rsa test_dsa' test           # Windows
 
      And of course, you can combine (Unix example shown):
        
@@ -293,6 +316,7 @@
 
        $ make list-tests                                # Unix
        $ mms list-tests                                 ! OpenVMS
+       $ nmake list-tests                               # Windows
 
      Have a look at the manual for the perl module Test::Harness to
      see what other HARNESS_* variables there are.

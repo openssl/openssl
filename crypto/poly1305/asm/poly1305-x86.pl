@@ -38,6 +38,9 @@ $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
 push(@INC,"${dir}","${dir}../../perlasm");
 require "x86asm.pl";
 
+$output=pop;
+open STDOUT,">$output";
+
 &asm_init($ARGV[0],"poly1305-x86.pl",$ARGV[$#ARGV] eq "386");
 
 $sse2=$avx=0;
@@ -1795,3 +1798,5 @@ sub vlazy_reduction {
 &align	(4);
 
 &asm_finish();
+
+close STDOUT;

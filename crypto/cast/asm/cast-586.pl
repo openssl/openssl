@@ -11,6 +11,9 @@ push(@INC,"${dir}","${dir}../../perlasm");
 require "x86asm.pl";
 require "cbc.pl";
 
+$output=pop;
+open STDOUT,">$output";
+
 &asm_init($ARGV[0],"cast-586.pl",$ARGV[$#ARGV] eq "386");
 
 $CAST_ROUNDS=16;
@@ -35,6 +38,8 @@ $S4="CAST_S_table3";
 &cbc("CAST_cbc_encrypt","CAST_encrypt","CAST_decrypt",1,4,5,3,-1,-1);
 
 &asm_finish();
+
+close STDOUT;
 
 sub CAST_encrypt {
     local($name,$enc)=@_;

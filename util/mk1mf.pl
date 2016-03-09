@@ -1230,7 +1230,7 @@ sub perlasm_compile_target
 	my($ret);
 	$bname =~ s/(.*)\.[^\.]$/$1/;
 	$ret ="\$(TMP_D)$o$bname$asm_suffix: $source\n";
-	$ret.="\t\$(PERL) $source $asmtype \$(CFLAG) >\$\@\n";
+	$ret.="\t\$(PERL) $source $asmtype \$(CFLAG) \$\@\n";
 	if ($fipscanisteronly)
 		{
 		$ret .= "\t\$(PERL) util$o.pl . \$@ norunasm \$(CFLAG)\n";
@@ -1295,7 +1295,7 @@ sub do_asm_rule
 			my $plasm = $objfile;
 			$plasm =~ s/${obj}/.pl/;
 			$ret.="$srcfile: $plasm\n";
-			$ret.="\t\$(PERL) $plasm $asmtype \$(CFLAG) >$srcfile\n\n";
+			$ret.="\t\$(PERL) $plasm $asmtype \$(CFLAG) $srcfile\n\n";
 			}
 
 		$ret.="$objfile: $srcfile\n";
