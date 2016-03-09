@@ -313,6 +313,8 @@ const CTLOG *SCT_get0_log(const SCT *sct);
 
 /*
  * Looks up information about the log the SCT came from using a CT log store.
+ * The CTLOG_STORE must outlive the SCT, as ownership of the CTLOG remains with
+ * the CTLOG_STORE.
  * Returns 1 if information about the log is found, 0 otherwise.
  * The information can be accessed via SCT_get0_log.
  */
