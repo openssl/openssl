@@ -4156,4 +4156,15 @@ int SSL_CTX_set_ctlog_list_file(SSL_CTX *ctx, const char *path)
     return CTLOG_STORE_load_file(ctx->ctlog_store, path);
 }
 
+void SSL_CTX_set0_ctlog_store(SSL_CTX *ctx, CTLOG_STORE *logs)
+{
+    CTLOG_STORE_free(ctx->ctlog_store);
+    ctx->ctlog_store = logs;
+}
+
+const CTLOG_STORE *SSL_CTX_get0_ctlog_store(const SSL_CTX *ctx)
+{
+    return ctx->ctlog_store;
+}
+
 #endif

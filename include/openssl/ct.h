@@ -223,13 +223,6 @@ __owur int SCT_set1_log_id(SCT *sct, const unsigned char *log_id,
                            size_t log_id_len);
 
 /*
- * Gets the name of the log that an SCT came from.
- * Ownership of the log name remains with the SCT.
- * Returns the log name, or NULL if it is not known.
- */
-const char *SCT_get0_log_name(const SCT *sct);
-
-/*
  * Returns the timestamp for the SCT (epoch time in milliseconds).
  */
 uint64_t SCT_get_timestamp(const SCT *sct);
@@ -307,32 +300,23 @@ sct_source_t SCT_get_source(const SCT *sct);
 __owur int SCT_set_source(SCT *sct, sct_source_t source);
 
 /*
- * Gets information about the log the SCT came from, if set.
- */
-const CTLOG *SCT_get0_log(const SCT *sct);
-
-/*
- * Looks up information about the log the SCT came from using a CT log store.
- * The CTLOG_STORE must outlive the SCT, as ownership of the CTLOG remains with
- * the CTLOG_STORE.
- * Returns 1 if information about the log is found, 0 otherwise.
- * The information can be accessed via SCT_get0_log.
- */
-int SCT_set0_log(SCT *sct, const CTLOG_STORE* ct_logs);
-
-/*
  * Pretty-prints an |sct| to |out|.
  * It will be indented by the number of spaces specified by |indent|.
+ * If |log| is not NULL:
+ * - it should be the CT log that the SCT came from.
+ * - its name will be printed.
  */
-void SCT_print(const SCT *sct, BIO *out, int indent);
+void SCT_print(const SCT *sct, BIO *out, int indent, const CTLOG *log);
 
 /*
  * Pretty-prints an |sct_list| to |out|.
  * It will be indented by the number of spaces specified by |indent|.
  * SCTs will be delimited by |separator|.
+ * If |logs| is not NULL, it will be used to lookup the CT log that each SCT
+ * came from, so that the log names can be printed.
  */
 void SCT_LIST_print(const STACK_OF(SCT) *sct_list, BIO *out, int indent,
-                    const char *separator);
+                    const char *separator, const CTLOG_STORE *logs);
 
 /*
  * Verifies an SCT with the given context.

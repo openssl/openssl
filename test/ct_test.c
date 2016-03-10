@@ -202,7 +202,7 @@ static int compare_sct_printout(SCT *sct,
         goto end;
     }
 
-    SCT_print(sct, text_buffer, 0);
+    SCT_print(sct, text_buffer, 0, NULL);
 
     /* Append null terminator because we're about to use the buffer contents
     * as a string. */

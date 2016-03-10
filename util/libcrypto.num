@@ -1240,7 +1240,6 @@ OBJ_obj2nid                             1202	1_1_0	EXIST::FUNCTION:
 PKCS12_SAFEBAG_free                     1203	1_1_0	EXIST::FUNCTION:
 EVP_cast5_cfb64                         1204	1_1_0	EXIST::FUNCTION:CAST
 OPENSSL_uni2asc                         1205	1_1_0	EXIST::FUNCTION:
-SCT_set0_log                            1206	1_1_0	EXIST::FUNCTION:
 PKCS7_add_attribute                     1207	1_1_0	EXIST::FUNCTION:
 ENGINE_register_DSA                     1208	1_1_0	EXIST::FUNCTION:ENGINE
 lh_node_stats                           1209	1_1_0	EXIST::FUNCTION:STDIO
@@ -1953,7 +1952,6 @@ idea_cbc_encrypt                        1890	1_1_0	EXIST::FUNCTION:IDEA
 BN_CTX_secure_new                       1891	1_1_0	EXIST::FUNCTION:
 OCSP_ONEREQ_add_ext                     1892	1_1_0	EXIST::FUNCTION:
 CMS_uncompress                          1893	1_1_0	EXIST::FUNCTION:CMS
-SCT_get0_log                            1894	1_1_0	EXIST::FUNCTION:
 CRYPTO_mem_debug_pop                    1895	1_1_0	EXIST::FUNCTION:CRYPTO_MDEBUG
 EVP_aes_192_cfb128                      1896	1_1_0	EXIST::FUNCTION:AES
 OCSP_REQ_CTX_nbio                       1897	1_1_0	EXIST::FUNCTION:
@@ -3651,7 +3649,6 @@ ENGINE_set_default_string               3532	1_1_0	EXIST::FUNCTION:ENGINE
 BIO_number_read                         3533	1_1_0	EXIST::FUNCTION:
 CRYPTO_zalloc                           3534	1_1_0	EXIST::FUNCTION:
 EVP_PKEY_cmp_parameters                 3535	1_1_0	EXIST::FUNCTION:
-SCT_get0_log_name                       3536	1_1_0	EXIST::FUNCTION:
 EVP_PKEY_CTX_new_id                     3537	1_1_0	EXIST::FUNCTION:
 TLS_FEATURE_free                        3538	1_1_0	EXIST::FUNCTION:
 d2i_BASIC_CONSTRAINTS                   3539	1_1_0	EXIST::FUNCTION:
