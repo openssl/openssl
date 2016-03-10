@@ -388,3 +388,5 @@ SSL_CIPHER_get_auth_nid                 387	1_1_0	EXIST::FUNCTION:
 SSL_CIPHER_get_kx_nid                   388	1_1_0	EXIST::FUNCTION:
 SSL_CIPHER_is_aead                      389	1_1_0	EXIST::FUNCTION:
 SSL_SESSION_up_ref                      390	1_1_0	EXIST::FUNCTION:
+SSL_CTX_set0_ctlog_store                391	1_1_0	EXIST::FUNCTION:CT
+SSL_CTX_get0_ctlog_store                392	1_1_0	EXIST::FUNCTION:CT

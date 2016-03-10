@@ -1932,10 +1932,38 @@ __owur ct_validation_cb SSL_CTX_get_ct_validation_callback(const SSL_CTX *ctx);
 /* Gets the SCTs received from a connection */
 const STACK_OF(SCT) *SSL_get0_peer_scts(SSL *s);
 
-/* Load the CT log list from the default location */
+/*
+ * Loads the CT log list from the default location.
+ * If a CTLOG_STORE has previously been set using SSL_CTX_set_ctlog_store,
+ * the log information loaded from this file will be appended to the
+ * CTLOG_STORE.
+ * Returns 1 on success, 0 otherwise.
+ */
 int SSL_CTX_set_default_ctlog_list_file(SSL_CTX *ctx);
-/* Load the CT log list from the specified file path */
+
+/*
+ * Loads the CT log list from the specified file path.
+ * If a CTLOG_STORE has previously been set using SSL_CTX_set_ctlog_store,
+ * the log information loaded from this file will be appended to the
+ * CTLOG_STORE.
+ * Returns 1 on success, 0 otherwise.
+ */
 int SSL_CTX_set_ctlog_list_file(SSL_CTX *ctx, const char *path);
+
+/*
+ * Sets the CT log list used by all SSL connections created from this SSL_CTX.
+ * Ownership of the CTLOG_STORE is transferred to the SSL_CTX.
+ */
+void SSL_CTX_set0_ctlog_store(SSL_CTX *ctx, CTLOG_STORE *logs);
+
+/*
+ * Gets the CT log list used by all SSL connections created from this SSL_CTX.
+ * This will be NULL unless one of the following functions has been called:
+ * - SSL_CTX_set_default_ctlog_list_file
+ * - SSL_CTX_set_ctlog_list_file
+ * - SSL_CTX_set_ctlog_store
+ */
+const CTLOG_STORE *SSL_CTX_get0_ctlog_store(const SSL_CTX *ctx);
 
 # endif /* OPENSSL_NO_CT */
 

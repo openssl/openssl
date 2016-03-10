@@ -96,7 +96,7 @@ static void timestamp_print(uint64_t timestamp, BIO *out)
     ASN1_GENERALIZEDTIME_free(gen);
 }
 
-void SCT_print(const SCT *sct, BIO *out, int indent)
+void SCT_print(const SCT *sct, BIO *out, int indent, const CTLOG *log)
 {
     BIO_printf(out, "%*sSigned Certificate Timestamp:", indent, "");
     BIO_printf(out, "\n%*sVersion   : ", indent + 4, "");
@@ -109,9 +109,9 @@ void SCT_print(const SCT *sct, BIO *out, int indent)
 
     BIO_printf(out, "v1 (0x0)");
 
-    if (sct->log != NULL) {
+    if (log != NULL) {
         BIO_printf(out, "\n%*sLog       : %s", indent + 4, "",
-                   SCT_get0_log_name(sct));
+                   CTLOG_get0_name(log));
     }
 
     BIO_printf(out, "\n%*sLog ID    : ", indent + 4, "");
@@ -133,13 +133,20 @@ void SCT_print(const SCT *sct, BIO *out, int indent)
 }
 
 void SCT_LIST_print(const STACK_OF(SCT) *sct_list, BIO *out, int indent,
-                    const char *separator)
+                    const char *separator, const CTLOG_STORE *log_store)
 {
     int i;
 
     for (i = 0; i < sk_SCT_num(sct_list); ++i) {
         SCT *sct = sk_SCT_value(sct_list, i);
-        SCT_print(sct, out, indent);
+        const CTLOG *log = NULL;
+
+        if (log_store != NULL) {
+            log = CTLOG_STORE_get0_log_by_id(log_store, sct->log_id,
+                                             sct->log_id_len);
+        }
+
+        SCT_print(sct, out, indent, log);
         if (i < sk_SCT_num(sct_list) - 1)
             BIO_printf(out, "%s", separator);
     }

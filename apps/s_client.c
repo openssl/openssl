@@ -204,7 +204,7 @@ static int c_quiet = 0;
 static int c_ign_eof = 0;
 static int c_brief = 0;
 
-static void print_stuff(BIO *berr, SSL *con, int full);
+static void print_stuff(BIO *berr, const SSL_CTX *ctx, SSL *con, int full);
 static int ocsp_resp_cb(SSL *s, void *arg);
 
 static int saved_errno;
@@ -2184,7 +2184,7 @@ int s_client_main(int argc, char **argv)
                     print_ssl_summary(con);
                 }
 
-                print_stuff(bio_c_out, con, full_log);
+                print_stuff(bio_c_out, ctx, con, full_log);
                 if (full_log > 0)
                     full_log--;
 
@@ -2516,13 +2516,13 @@ int s_client_main(int argc, char **argv)
     ret = 0;
  shut:
     if (in_init)
-        print_stuff(bio_c_out, con, full_log);
+        print_stuff(bio_c_out, ctx, con, full_log);
     do_ssl_shutdown(con);
     BIO_closesocket(SSL_get_fd(con));
  end:
     if (con != NULL) {
         if (prexit != 0)
-            print_stuff(bio_c_out, con, 1);
+            print_stuff(bio_c_out, ctx, con, 1);
         SSL_free(con);
     }
 #if !defined(OPENSSL_NO_NEXTPROTONEG)
@@ -2554,7 +2554,7 @@ int s_client_main(int argc, char **argv)
     return (ret);
 }
 
-static void print_stuff(BIO *bio, SSL *s, int full)
+static void print_stuff(BIO *bio, const SSL_CTX *ctx, SSL *s, int full)
 {
     X509 *peer = NULL;
     char buf[BUFSIZ];
@@ -2634,7 +2634,7 @@ static void print_stuff(BIO *bio, SSL *s, int full)
 
         if (scts != NULL && sk_SCT_num(scts) > 0) {
             BIO_printf(bio, "---\n");
-            SCT_LIST_print(scts, bio, 0, "\n---\n");
+            SCT_LIST_print(scts, bio, 0, "\n---\n", SSL_CTX_get0_ctlog_store(ctx));
             BIO_printf(bio, "\n");
         }
 #endif

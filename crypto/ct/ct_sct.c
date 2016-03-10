@@ -251,11 +251,6 @@ size_t SCT_get0_log_id(const SCT *sct, unsigned char **log_id)
     return sct->log_id_len;
 }
 
-const char *SCT_get0_log_name(const SCT *sct)
-{
-    return CTLOG_get0_name(sct->log);
-}
-
 uint64_t SCT_get_timestamp(const SCT *sct)
 {
     return sct->timestamp;
@@ -327,18 +322,6 @@ int SCT_set_source(SCT *sct, sct_source_t source)
     }
 }
 
-const CTLOG *SCT_get0_log(const SCT *sct)
-{
-    return sct->log;
-}
-
-int SCT_set0_log(SCT *sct, const CTLOG_STORE *ct_logs)
-{
-    sct->log = CTLOG_STORE_get0_log_by_id(ct_logs, sct->log_id, sct->log_id_len);
-
-    return sct->log != NULL;
-}
-
 sct_validation_status_t SCT_get_validation_status(const SCT *sct)
 {
     return sct->validation_status;
@@ -349,20 +332,17 @@ int SCT_validate(SCT *sct, const CT_POLICY_EVAL_CTX *ctx)
     int is_sct_valid = -1;
     SCT_CTX *sctx = NULL;
     X509_PUBKEY *pub = NULL, *log_pkey = NULL;
+    const CTLOG *log;
 
-    switch (sct->version) {
-    case SCT_VERSION_V1:
-        if (sct->log == NULL)
-            sct->log = CTLOG_STORE_get0_log_by_id(ctx->log_store,
-                                                  sct->log_id,
-                                                  CT_V1_HASHLEN);
-        break;
-    default:
+    if (sct->version != SCT_VERSION_V1) {
         sct->validation_status = SCT_VALIDATION_STATUS_UNKNOWN_VERSION;
         goto end;
     }
 
-    if (sct->log == NULL) {
+    log = CTLOG_STORE_get0_log_by_id(ctx->log_store,
+                                     sct->log_id, sct->log_id_len);
+
+    if (log == NULL) {
         sct->validation_status = SCT_VALIDATION_STATUS_UNKNOWN_LOG;
         goto end;
     }
@@ -371,7 +351,7 @@ int SCT_validate(SCT *sct, const CT_POLICY_EVAL_CTX *ctx)
     if (sctx == NULL)
         goto err;
 
-    if (X509_PUBKEY_set(&log_pkey, CTLOG_get0_public_key(sct->log)) != 1)
+    if (X509_PUBKEY_set(&log_pkey, CTLOG_get0_public_key(log)) != 1)
         goto err;
     if (SCT_CTX_set1_pubkey(sctx, log_pkey) != 1)
         goto err;
