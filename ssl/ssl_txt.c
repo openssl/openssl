@@ -238,7 +238,7 @@ int SSL_SESSION_print_keylog(BIO *bp, const SSL_SESSION *x)
 
     /*
      * the RSA prefix is required by the format's definition although there's
-     * nothing RSA-specifc in the output, therefore, we don't have to check if
+     * nothing RSA-specific in the output, therefore, we don't have to check if
      * the cipher suite is based on RSA
      */
     if (BIO_puts(bp, "RSA ") <= 0)

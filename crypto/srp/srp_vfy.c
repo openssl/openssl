@@ -445,7 +445,7 @@ int SRP_VBASE_init(SRP_VBASE *vb, char *verifier_file)
 
                 if (sk_SRP_user_pwd_insert(vb->users_pwd, user_pwd, 0) == 0)
                     goto err;
-                user_pwd = NULL; /* abandon responsability */
+                user_pwd = NULL; /* abandon responsibility */
             }
         }
     }

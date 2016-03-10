@@ -853,7 +853,7 @@ static int ssl_add_cert_to_buf(BUF_MEM *buf, unsigned long *l, X509 *x)
     return 1;
 }
 
-/* Add certificate chain to internal SSL BUF_MEM strcuture */
+/* Add certificate chain to internal SSL BUF_MEM structure */
 int ssl_add_cert_chain(SSL *s, CERT_PKEY *cpk, unsigned long *l)
 {
     BUF_MEM *buf = s->init_buf;

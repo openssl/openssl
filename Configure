@@ -73,9 +73,9 @@ my $usage="Usage: Configure [no-<cipher> ...] [enable-<cipher> ...] [-Dxxx] [-lx
 # RC4_CHAR	use 'char' instead of 'int' for RC4_INT in crypto/rc4/rc4.h
 # Following are set automatically by this script
 #
-# MD5_ASM	use some extra md5 assember,
-# SHA1_ASM	use some extra sha1 assember, must define L_ENDIAN for x86
-# RMD160_ASM	use some extra ripemd160 assember,
+# MD5_ASM	use some extra md5 assembler,
+# SHA1_ASM	use some extra sha1 assembler, must define L_ENDIAN for x86
+# RMD160_ASM	use some extra ripemd160 assembler,
 # SHA256_ASM	sha256_block is implemented in assembler
 # SHA512_ASM	sha512_block is implemented in assembler
 # AES_ASM	ASE_[en|de]crypt is implemented in assembler
@@ -166,7 +166,7 @@ sub read_config;
 
 # resolve_config(target)
 #
-# Resolves all the late evalutations, inheritances and so on for the
+# Resolves all the late evaluations, inheritances and so on for the
 # chosen target and any target it inherits from.
 sub resolve_config;
 
@@ -244,7 +244,7 @@ $config{sdirs} = [
 my @tls = qw(ssl3 tls1 tls1_1 tls1_2);
 my @dtls = qw(dtls1 dtls1_2);
 
-# Explicitelly known options that are possible to disable.  They can
+# Explicitly known options that are possible to disable.  They can
 # be regexps, and will be used like this: /^no-${option}$/
 # For developers: keep it sorted alphabetically
 
@@ -711,7 +711,7 @@ foreach (@argvcopy)
 	unless ($_ eq $target || /^no-/ || /^disable-/)
 		{
 		# "no-..." follows later after implied disactivations
-		# have been derived.  (Don't take this too seroiusly,
+		# have been derived.  (Don't take this too seriously,
 		# we really only write OPTIONS to the Makefile out of
 		# nostalgia.)
 
@@ -966,7 +966,7 @@ unless ($disabled{threads}) {
             $disabled{threads} = "unavailable";
         }
     } else {
-        # The user chose to enable threads explicitely, let's see
+        # The user chose to enable threads explicitly, let's see
         # if there's a chance that's possible
         if ($target{thread_scheme} eq "(unknown)") {
             # If the user asked for "threads" and we don't have internal
@@ -2107,8 +2107,8 @@ sub read_config {
 
 }
 
-# configuration resolver.  Will only resolve all the lazy evalutation
-# codeblocks for the chozen target and all those it inherits from,
+# configuration resolver.  Will only resolve all the lazy evaluation
+# codeblocks for the chosen target and all those it inherits from,
 # recursively
 sub resolve_config {
     my $target = shift;
@@ -2161,7 +2161,7 @@ sub resolve_config {
     # - If a value is a coderef, it will be executed with the list of
     #   inherited values as arguments.
     # - If the corresponding key doesn't have a value at all or is the
-    #   emoty string, the inherited value list will be run through the
+    #   empty string, the inherited value list will be run through the
     #   default combiner (below), and the result becomes this target's
     #   value.
     # - Otherwise, this target's value is assumed to be a string that

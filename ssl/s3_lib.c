@@ -3839,7 +3839,7 @@ int ssl3_shutdown(SSL *s)
         if (ret == -1) {
             /*
              * we only get to return -1 here the 2nd/Nth invocation, we must
-             * have already signalled return 0 upon a previous invoation,
+             * have already signalled return 0 upon a previous invocation,
              * return WANT_WRITE
              */
             return (ret);

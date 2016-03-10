@@ -96,7 +96,7 @@ extern "C" {
 /*
  * If this flag is set the DSA method is FIPS compliant and can be used in
  * FIPS mode. This is set in the validated module method. If an application
- * sets this flag in its own methods it is its reposibility to ensure the
+ * sets this flag in its own methods it is its responsibility to ensure the
  * result is compliant.
  */
 

@@ -769,7 +769,7 @@ static int tls1_check_cert_param(SSL *s, X509 *x, int set_ee_md)
 
 # ifndef OPENSSL_NO_EC
 /*
- * tls1_check_ec_tmp_key - Check EC temporary key compatiblity
+ * tls1_check_ec_tmp_key - Check EC temporary key compatibility
  * @s: SSL connection
  * @cid: Cipher ID we're considering using
  *
@@ -1181,7 +1181,7 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *buf,
 
         /*-
          * check for enough space.
-         * 4 for the servername type and entension length
+         * 4 for the servername type and extension length
          * 2 for servernamelist length
          * 1 for the hostname type
          * 2 for hostname length
@@ -1219,7 +1219,7 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *buf,
 
         /*-
          * check for enough space.
-         * 4 for the srp type type and entension length
+         * 4 for the srp type type and extension length
          * 1 for the srp user identity
          * + srp user identity length
          */
@@ -1416,7 +1416,7 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *buf,
 #ifndef OPENSSL_NO_NEXTPROTONEG
     if (s->ctx->next_proto_select_cb && !s->s3->tmp.finish_md_len) {
         /*
-         * The client advertises an emtpy extension to indicate its support
+         * The client advertises an empty extension to indicate its support
          * for Next Protocol Negotiation
          */
         if (limit - ret - 4 < 0)
@@ -2006,7 +2006,7 @@ static int ssl_scan_clienthello_tlsext(SSL *s, PACKET *pkt, int *al)
             /*
              * Although the server_name extension was intended to be
              * extensible to new name types, RFC 4366 defined the
-             * syntax inextensibly and OpenSSL 1.0.x parses it as
+             * syntax inextensibility and OpenSSL 1.0.x parses it as
              * such.
              * RFC 6066 corrected the mistake but adding new name types
              * is nevertheless no longer feasible, so act as if no other
@@ -2237,7 +2237,7 @@ static int ssl_scan_clienthello_tlsext(SSL *s, PACKET *pkt, int *al)
              *
              * s->new_session will be set on renegotiation, but we
              * probably shouldn't rely that it couldn't be set on
-             * the initial renegotation too in certain cases (when
+             * the initial renegotiation too in certain cases (when
              * there's some other reason to disallow resuming an
              * earlier session -- the current code won't be doing
              * anything like that, but this might change).
@@ -2739,7 +2739,8 @@ int tls1_set_server_sigalgs(SSL *s)
 {
     int al;
     size_t i;
-    /* Clear any shared sigtnature algorithms */
+
+    /* Clear any shared signature algorithms */
     OPENSSL_free(s->cert->shared_sigalgs);
     s->cert->shared_sigalgs = NULL;
     s->cert->shared_sigalgslen = 0;
@@ -3077,7 +3078,7 @@ end:
  * tls_decrypt_ticket attempts to decrypt a session ticket.
  *
  *   etick: points to the body of the session ticket extension.
- *   eticklen: the length of the session tickets extenion.
+ *   eticklen: the length of the session tickets extension.
  *   sess_id: points at the session ID.
  *   sesslen: the length of the session ID.
  *   psess: (output) on return, if a ticket was decrypted, then this is set to
