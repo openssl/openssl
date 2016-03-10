@@ -171,6 +171,7 @@ configdata.pm: {- $config{build_file_template} -} $(SRCDIR)\Configure
       my %args = @_;
       (my $target = $args{src}) =~ s/\.[sS]$/.asm/;
       my $generator = join(" ", @{$args{generator}});
+      my $incs = join("", map { " /I ".$_ } @{$args{incs}});
 
       if ($target !~ /\.asm$/) {
           return <<"EOF";
@@ -195,7 +196,7 @@ $target: $args{generator}->[0]
 	set ASM=\$(AS)
 	set CC=\$(CC)
 	$generator \$@.S
-	\$(CC) \$(CFLAGS) /EP /C \$@.S > \$@
+	\$(CC) \$(CFLAGS) $incs /EP /C \$@.S > \$@
         del /Q \$@.S
 EOF
               }
@@ -209,7 +210,7 @@ EOF
           }
           return <<"EOF";
 $target: $args{generator}->[0]
-	\$(CC) \$(CFLAGS) /EP /C \$< > \$@
+	\$(CC) \$(CFLAGS) $incs /EP /C \$< > \$@
 EOF
       }
   }

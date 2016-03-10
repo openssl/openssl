@@ -32,17 +32,24 @@
      @newlist;
  }
 
+ # dogenerate is responsible for producing all the recipes that build
+ # generated source files.  It recurses in case a dependency is also a
+ # generated source file.
  sub dogenerate {
      my $src = shift;
      return "" if $cache{$src};
+     my $obj = shift;
+     my $bin = shift;
      my %opts = @_;
      if ($unified_info{generate}->{$src}) {
          $OUT .= generatesrc(src => $src,
                              generator => $unified_info{generate}->{$src},
                              deps => $unified_info{depends}->{$src},
+                             incs => [ @{$unified_info{includes}->{$bin}},
+                                       @{$unified_info{includes}->{$obj}} ],
                              %opts);
          foreach (@{$unified_info{depends}->{$src}}) {
-             dogenerate($_, %opts);
+             dogenerate($_, $obj, $bin, %opts);
          }
      }
      $cache{$src} = 1;
@@ -65,7 +72,7 @@
                          %opts);
          foreach ((@{$unified_info{sources}->{$obj}},
                    @{$unified_info{depends}->{$obj}})) {
-             dogenerate($_, %opts);
+             dogenerate($_, $obj, $bin, %opts);
          }
      }
      $cache{$obj} = 1;

@@ -825,6 +825,7 @@ configdata.pm: {- $config{build_file_template} -} $(SRCDIR)/Configurations/commo
   sub generatesrc {
       my %args = @_;
       my $generator = join(" ", @{$args{generator}});
+      my $incs = join("", map { " -I".$_ } @{$args{incs}});
 
       if ($args{src} !~ /\.[sS]$/) {
           return <<"EOF";
@@ -851,7 +852,7 @@ EOF
 $target: $args{generator}->[0]
 	( trap "rm -f \$@.S" INT; \\
 	  $generator \$@.S; \\
-	  \$(CC) \$(CFLAGS) -E -P \$@.S > \$@ && rm -f \$@.S )
+	  \$(CC) \$(CFLAGS) $incs -E -P \$@.S > \$@ && rm -f \$@.S )
 EOF
               }
               # Otherwise....
@@ -862,7 +863,7 @@ EOF
           }
           return <<"EOF";
 $args{src}: $args{generator}->[0]
-	\$(CC) \$(CFLAGS) -E -P \$< > \$@
+	\$(CC) \$(CFLAGS) $incs -E -P \$< > \$@
 EOF
       }
   }
