@@ -11,6 +11,7 @@ GENERATE[ghash-x86.s]=asm/ghash-x86.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR)
 GENERATE[ghash-x86_64.s]=asm/ghash-x86_64.pl $(PERLASM_SCHEME)
 GENERATE[aesni-gcm-x86_64.s]=asm/aesni-gcm-x86_64.pl $(PERLASM_SCHEME)
 GENERATE[ghash-sparcv9.S]=asm/ghash-sparcv9.pl $(PERLASM_SCHEME)
+INCLUDE[ghash-sparcv9.o]=..
 GENERATE[ghash-alpha.s]=asm/ghash-alpha.pl
 GENERATE[ghash-parisc.s]=asm/ghash-parisc.pl $(PERLASM_SCHEME)
 GENERATE[ghashv8-armx.S]=asm/ghashv8-armx.pl $(PERLASM_SCHEME)
@@ -21,3 +22,5 @@ BEGINRAW[Makefile]
 {- $builddir -}/ghash-%.S:	{- $sourcedir -}/asm/ghash-%.pl
 	CC="$(CC)" $(PERL) $< $(PERLASM_SCHEME) $@
 ENDRAW[Makefile]
+INCLUDE[ghash-armv4.o]=..
+INCLUDE[ghashv8-armx.o]=..

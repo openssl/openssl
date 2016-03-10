@@ -11,3 +11,5 @@ BEGINRAW[Makefile(unix)]
 {- $builddir -}/chacha-%.S:	{- $sourcedir -}/asm/chacha-%.pl
 	CC="$(CC)" $(PERL) $< $(PERLASM_SCHEME) $@
 ENDRAW[Makefile(unix)]
+INCLUDE[chacha-armv4.o]=..
+INCLUDE[chacha-armv8.o]=..

@@ -7,4 +7,5 @@ GENERATE[cmll-x86.s]=asm/cmll-x86.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR)
 DEPEND[cmll-x86.s]=../perlasm/x86asm.pl
 GENERATE[cmll-x86_64.s]=asm/cmll-x86_64.pl $(PERLASM_SCHEME)
 GENERATE[cmllt4-sparcv9.S]=asm/cmllt4-sparcv9.pl $(PERLASM_SCHEME)
+INCLUDE[cmllt4-sparcv9.o]=..
 DEPEND[cmllt4-sparcv9.S]=../perlasm/sparcv9-modes.pl
