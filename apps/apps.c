@@ -235,6 +235,8 @@ int ctx_set_verify_locations(SSL_CTX *ctx, const char *CAfile,
     return SSL_CTX_load_verify_locations(ctx, CAfile, CApath);
 }
 
+#ifndef OPENSSL_NO_CT
+
 int ctx_set_ctlog_list_file(SSL_CTX *ctx, const char *path)
 {
     if (path == NULL) {
@@ -243,6 +245,8 @@ int ctx_set_ctlog_list_file(SSL_CTX *ctx, const char *path)
 
     return SSL_CTX_set_ctlog_list_file(ctx, path);
 }
+
+#endif
 
 int dump_cert_text(BIO *out, X509 *x)
 {

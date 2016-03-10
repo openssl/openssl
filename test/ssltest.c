@@ -1615,11 +1615,13 @@ int main(int argc, char *argv[])
         /* goto end; */
     }
 
+#ifndef OPENSSL_NO_CT
     if (!SSL_CTX_set_default_ctlog_list_file(s_ctx) ||
         !SSL_CTX_set_default_ctlog_list_file(s_ctx2) ||
         !SSL_CTX_set_default_ctlog_list_file(c_ctx)) {
         ERR_print_errors(bio_err);
     }
+#endif
 
     if (client_auth) {
         printf("client authentication\n");
