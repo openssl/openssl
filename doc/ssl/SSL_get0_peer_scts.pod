@@ -21,7 +21,7 @@ the peer's certificate for SCTs. Future calls will return the same SCTs.
 
 If no Certificate Transparency validation callback has been set (using
 B<SSL_CTX_set_ct_validation_callback> or B<SSL_set_ct_validation_callback>),
-this function is not guarantee to return all of the SCTs that the peer is
+this function is not guaranteed to return all of the SCTs that the peer is
 capable of sending.
 
 =head1 RETURN VALUES

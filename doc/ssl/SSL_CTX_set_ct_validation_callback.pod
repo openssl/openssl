@@ -42,6 +42,12 @@ Certificate Transparency validation cannot be enabled and so a callback cannot
 be set if a custom client extension handler has been registered to handle SCT
 extensions (B<TLSEXT_TYPE_signed_certificate_timestamp>).
 
+If an SCT callback is enabled, a handshake may fail if the peer does
+not provide a certificate, which can happen when using opportunistic
+encryption with anonymous (B<aNULL>) cipher-suites enabled on both ends.
+SCTs should only be used when the application requires an authenticated
+connection, and wishes to perform additional validation on that identity.
+
 =head1 RETURN VALUES
 
 SSL_CTX_set_ct_validation_callback() and SSL_set_ct_validation_callback()
