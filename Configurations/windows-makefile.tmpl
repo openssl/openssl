@@ -139,6 +139,20 @@ list-tests:
 	@set PERL=$(PERL)
 	@$(PERL) $(SRCDIR)\test\run_tests.pl list
 
+libclean:
+	del /Q /F $(LIBS) $(SHLIBS)
+	del lib.pdb
+
+clean: libclean
+	del /Q /F $(PROGRAMS) $(TESTPROGS) $(ENGINES) $(SCRIPTS)
+	del /Q /S /F *.asm
+	del /Q /S /F *.d
+	del /Q /S /F *.obj
+	del /Q /S /F *.pdb
+	del /Q /S /F *.exp
+	del /Q /S /F engines\*.ilk
+	del /Q /S /F engines\*.lib
+
 depend:
 
 # Building targets ###################################################
