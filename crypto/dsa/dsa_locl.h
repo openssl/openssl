@@ -65,8 +65,3 @@ int dsa_builtin_paramgen2(DSA *ret, size_t L, size_t N,
                           size_t seed_len, int idx, unsigned char *seed_out,
                           int *counter_ret, unsigned long *h_ret,
                           BN_GENCB *cb);
-
-struct DSA_SIG_st {
-    BIGNUM *r;
-    BIGNUM *s;
-};
