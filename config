@@ -33,7 +33,7 @@ case "$i" in
 -t*) TEST="true";;
 -h*) TEST="true"; cat <<EOF
 Usage: config [options]
- -d	Add a debug- prefix to machine choice.
+ -d	Build with debugging when possible.
  -t	Test mode, do not run the Configure perl script.
  -h	This help.
 
