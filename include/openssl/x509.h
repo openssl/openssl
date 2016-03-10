@@ -136,10 +136,7 @@ struct X509_pubkey_st {
     CRYPTO_RWLOCK *lock;
 };
 
-typedef struct X509_sig_st {
-    X509_ALGOR *algor;
-    ASN1_OCTET_STRING *digest;
-} X509_SIG;
+typedef struct X509_sig_st X509_SIG;
 
 typedef struct X509_name_entry_st X509_NAME_ENTRY;
 
@@ -586,6 +583,9 @@ EC_KEY *d2i_EC_PUBKEY(EC_KEY **a, const unsigned char **pp, long length);
 # endif
 
 DECLARE_ASN1_FUNCTIONS(X509_SIG)
+void X509_SIG_get0(X509_ALGOR **palg, ASN1_OCTET_STRING **pdigest,
+                   X509_SIG *sig);
+
 DECLARE_ASN1_FUNCTIONS(X509_REQ_INFO)
 DECLARE_ASN1_FUNCTIONS(X509_REQ)
 

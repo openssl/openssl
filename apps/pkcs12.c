@@ -668,10 +668,12 @@ int dump_certs_pkeys_bag(BIO *out, PKCS12_SAFEBAG *bag, char *pass,
     case NID_pkcs8ShroudedKeyBag:
         if (options & INFO) {
             X509_SIG *tp8;
+            X509_ALGOR *tp8alg;
 
             BIO_printf(bio_err, "Shrouded Keybag: ");
             tp8 = PKCS12_SAFEBAG_get0_pkcs8(bag);
-            alg_print(tp8->algor);
+            X509_SIG_get0(&tp8alg, NULL, tp8);
+            alg_print(tp8alg);
         }
         if (options & NOKEYS)
             return 1;

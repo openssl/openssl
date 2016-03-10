@@ -225,3 +225,8 @@ struct pkcs8_priv_key_info_st {
     ASN1_OCTET_STRING *pkey;
     STACK_OF(X509_ATTRIBUTE) *attributes;
 };
+
+struct X509_sig_st {
+    X509_ALGOR *algor;
+    ASN1_OCTET_STRING *digest;
+};
