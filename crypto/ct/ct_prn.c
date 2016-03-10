@@ -96,8 +96,16 @@ static void timestamp_print(uint64_t timestamp, BIO *out)
     ASN1_GENERALIZEDTIME_free(gen);
 }
 
-void SCT_print(const SCT *sct, BIO *out, int indent, const CTLOG *log)
+void SCT_print(const SCT *sct, BIO *out, int indent,
+               const CTLOG_STORE *log_store)
 {
+    const CTLOG *log = NULL;
+
+    if (log_store != NULL) {
+        log = CTLOG_STORE_get0_log_by_id(log_store, sct->log_id,
+                                         sct->log_id_len);
+    }
+
     BIO_printf(out, "%*sSigned Certificate Timestamp:", indent, "");
     BIO_printf(out, "\n%*sVersion   : ", indent + 4, "");
 
@@ -139,14 +147,8 @@ void SCT_LIST_print(const STACK_OF(SCT) *sct_list, BIO *out, int indent,
 
     for (i = 0; i < sk_SCT_num(sct_list); ++i) {
         SCT *sct = sk_SCT_value(sct_list, i);
-        const CTLOG *log = NULL;
 
-        if (log_store != NULL) {
-            log = CTLOG_STORE_get0_log_by_id(log_store, sct->log_id,
-                                             sct->log_id_len);
-        }
-
-        SCT_print(sct, out, indent, log);
+        SCT_print(sct, out, indent, log_store);
         if (i < sk_SCT_num(sct_list) - 1)
             BIO_printf(out, "%s", separator);
     }
