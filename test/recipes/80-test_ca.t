@@ -22,7 +22,7 @@ my $std_openssl_cnf =
 
 rmtree("demoCA", { safe => 0 });
 
-plan tests => 4;
+plan tests => 5;
  SKIP: {
      $ENV{OPENSSL_CONFIG} = '-config "'.srctop_file("test", "CAss.cnf").'"';
      skip "failed creating CA structure", 3
@@ -41,6 +41,10 @@ plan tests => 4;
 
      ok(run(perlapp(["CA.pl", "-verify", "newcert.pem"])),
         'verifying new certificate');
+
+     $ENV{OPENSSL_CONFIG} = "-config ".srctop_file("test", "Uss.cnf");
+     ok(run(perlapp(["CA.pl", "-newprecert"], stderr => undef)),
+        'creating new pre-certificate');
 }
 
 
