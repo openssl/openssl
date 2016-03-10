@@ -77,7 +77,7 @@ before_script:
       else
           if which ccache >/dev/null; then
               CC="ccache $CC";
-          fi
+          fi;
           $srcdir/config $CONFIG_OPTS;
       fi
     - cd ..
