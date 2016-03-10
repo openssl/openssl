@@ -125,8 +125,6 @@ struct sct_st {
     ct_log_entry_type_t entry_type;
     /* Where this SCT was found, e.g. certificate, OCSP response, etc. */
     sct_source_t source;
-    /* The CT log that produced this SCT. */
-    const CTLOG *log;
     /* The result of the last attempt to validate this SCT. */
     sct_validation_status_t validation_status;
 };
