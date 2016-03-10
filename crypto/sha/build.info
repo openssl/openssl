@@ -57,5 +57,7 @@ BEGINRAW[Makefile(unix)]
 ENDRAW[Makefile(unix)]
 INCLUDE[sha1-armv4-large.o]=..
 INCLUDE[sha1-armv8.o]=..
+INCLUDE[sha256-armv4.o]=..
 INCLUDE[sha256-armv8.o]=..
+INCLUDE[sha512-armv4.o]=..
 INCLUDE[sha512-armv8.o]=..
