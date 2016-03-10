@@ -23,9 +23,13 @@ GENERATE[x86-gf2m.s]=asm/x86-gf2m.pl \
 DEPEND[x86-gf2m.s]=../perlasm/x86asm.pl
 
 GENERATE[sparcv9a-mont.S]=asm/sparcv9a-mont.pl $(PERLASM_SCHEME)
+INCLUDE[sparcv9a-mont.o]=..
 GENERATE[sparcv9-mont.S]=asm/sparcv9-mont.pl $(PERLASM_SCHEME)
+INCLUDE[sparcv9-mont.o]=..
 GENERATE[vis3-mont.S]=asm/vis3-mont.pl $(PERLASM_SCHEME)
+INCLUDE[vis3-mont.o]=..
 GENERATE[sparct4-mont.S]=asm/sparct4-mont.pl $(PERLASM_SCHEME)
+INCLUDE[sparct4-mont.o]=..
 GENERATE[sparcv9-gf2m.S]=asm/sparcv9-gf2m.pl $(PERLASM_SCHEME)
 
 GENERATE[bn-mips.s]=asm/mips.pl $(PERLASM_SCHEME)
@@ -53,7 +57,9 @@ GENERATE[ppc64-mont.s]=asm/ppc64-mont.pl $(PERLASM_SCHEME)
 GENERATE[alpha-mont.s]=asm/alpha-mont.pl
 
 GENERATE[armv4-mont.S]=asm/armv4-mont.pl $(PERLASM_SCHEME)
+INCLUDE[armv4-mont.o]=..
 GENERATE[armv4-gf2m.S]=asm/armv4-gf2m.pl $(PERLASM_SCHEME)
+INCLUDE[armv4-gf2m.o]=..
 GENERATE[armv8-mont.S]=asm/armv8-mont.pl $(PERLASM_SCHEME)
 
 OVERRIDES=bn-mips3.o pa-risc2W.o pa-risc2.c

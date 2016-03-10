@@ -7,6 +7,7 @@ GENERATE[md5-586.s]=asm/md5-586.pl $(PERLASM_SCHEME) $(CFLAGS)
 GENERATE[md5-x86_64.s]=asm/md5-x86_64.pl $(PERLASM_SCHEME)
 
 GENERATE[md5-sparcv9.S]=asm/md5-sparcv9.pl $(PERLASM_SCHEME)
+INCLUDE[md5-sparcv9.o]=..
 
 BEGINRAW[Makefile]
 {- $builddir -}/md5-ia64.s: {- $sourcedir -}/asm/md5-ia64.S

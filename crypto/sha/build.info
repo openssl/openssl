@@ -24,8 +24,11 @@ GENERATE[sha256-mb-x86_64.s]=asm/sha256-mb-x86_64.pl $(PERLASM_SCHEME)
 GENERATE[sha512-x86_64.s]=asm/sha512-x86_64.pl $(PERLASM_SCHEME)
 
 GENERATE[sha1-sparcv9.S]=asm/sha1-sparcv9.pl $(PERLASM_SCHEME)
+INCLUDE[sha1-sparcv9.o]=..
 GENERATE[sha256-sparcv9.S]=asm/sha512-sparcv9.pl $(PERLASM_SCHEME)
+INCLUDE[sha256-sparcv9.o]=..
 GENERATE[sha512-sparcv9.S]=asm/sha512-sparcv9.pl $(PERLASM_SCHEME)
+INCLUDE[sha512-sparcv9.o]=..
 
 GENERATE[sha1-ppc.s]=asm/sha1-ppc.pl $(PERLASM_SCHEME)
 GENERATE[sha256-ppc.s]=asm/sha512-ppc.pl $(PERLASM_SCHEME)
@@ -52,3 +55,7 @@ BEGINRAW[Makefile(unix)]
 {- $builddir -}/sha512-%.S:	{- $sourcedir -}/asm/sha512-%.pl
 	CC="$(CC)" $(PERL) $< $(PERLASM_SCHEME) $@
 ENDRAW[Makefile(unix)]
+INCLUDE[sha1-armv4-large.o]=..
+INCLUDE[sha1-armv8.o]=..
+INCLUDE[sha256-armv8.o]=..
+INCLUDE[sha512-armv8.o]=..

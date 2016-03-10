@@ -21,7 +21,9 @@ GENERATE[aesni-sha256-x86_64.s]=asm/aesni-sha256-x86_64.pl $(PERLASM_SCHEME)
 GENERATE[aesni-mb-x86_64.s]=asm/aesni-mb-x86_64.pl $(PERLASM_SCHEME)
 
 GENERATE[aes-sparcv9.S]=asm/aes-sparcv9.pl $(PERLASM_SCHEME)
+INCLUDE[aes-sparcv9.o]=..
 GENERATE[aest4-sparcv9.S]=asm/aest4-sparcv9.pl $(PERLASM_SCHEME)
+INCLUDE[aest4-sparcv9.o]=..
 DEPEND[aest4-sparcv9.S]=../perlasm/sparcv9_modes.pl
 
 GENERATE[aes-ppc.s]=asm/aes-ppc.pl $(PERLASM_SCHEME)
@@ -33,6 +35,7 @@ GENERATE[aes-parisc.s]=asm/aes-parisc.pl $(PERLASM_SCHEME)
 GENERATE[aes-mips.S]=asm/aes-mips.pl $(PERLASM_SCHEME)
 
 GENERATE[aesv8-armx.S]=asm/aesv8-armx.pl $(PERLASM_SCHEME)
+INCLUDE[aesv8-armx.o]=..
 GENERATE[vpaes-armv8.S]=asm/vpaes-armv8.pl $(PERLASM_SCHEME)
 
 
