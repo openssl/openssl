@@ -2569,8 +2569,8 @@ static void print_stuff(BIO *bio, SSL *s, int full)
     unsigned char *exportedkeymat;
 #ifndef OPENSSL_NO_CT
     const STACK_OF(SCT) *scts;
-#endif
     const SSL_CTX *ctx = SSL_get_SSL_CTX(s);
+#endif
 
     if (full) {
         int got_a_chain = 0;
