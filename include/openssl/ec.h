@@ -781,8 +781,6 @@ int EC_GROUP_get_pentanomial_basis(const EC_GROUP *, unsigned int *k1,
 # define OPENSSL_EC_EXPLICIT_CURVE  0x000
 # define OPENSSL_EC_NAMED_CURVE     0x001
 
-typedef struct ecpk_parameters_st ECPKPARAMETERS;
-
 EC_GROUP *d2i_ECPKParameters(EC_GROUP **, const unsigned char **in, long len);
 int i2d_ECPKParameters(const EC_GROUP *, unsigned char **out);
 
