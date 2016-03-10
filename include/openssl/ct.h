@@ -113,19 +113,19 @@ CT_POLICY_EVAL_CTX *CT_POLICY_EVAL_CTX_new(void);
 void CT_POLICY_EVAL_CTX_free(CT_POLICY_EVAL_CTX *ctx);
 
 /* Gets the peer certificate that the SCTs are for */
-X509* CT_POLICY_EVAL_CTX_get0_cert(CT_POLICY_EVAL_CTX *ctx);
+X509* CT_POLICY_EVAL_CTX_get0_cert(const CT_POLICY_EVAL_CTX *ctx);
 
 /* Sets the certificate associated with the received SCTs */
 void CT_POLICY_EVAL_CTX_set0_cert(CT_POLICY_EVAL_CTX *ctx, X509 *cert);
 
 /* Gets the issuer of the aforementioned certificate */
-X509* CT_POLICY_EVAL_CTX_get0_issuer(CT_POLICY_EVAL_CTX *ctx);
+X509* CT_POLICY_EVAL_CTX_get0_issuer(const CT_POLICY_EVAL_CTX *ctx);
 
 /* Sets the issuer of the certificate associated with the received SCTs */
 void CT_POLICY_EVAL_CTX_set0_issuer(CT_POLICY_EVAL_CTX *ctx, X509 *issuer);
 
 /* Gets the CT logs that are trusted sources of SCTs */
-CTLOG_STORE *CT_POLICY_EVAL_CTX_get0_log_store(CT_POLICY_EVAL_CTX *ctx);
+const CTLOG_STORE *CT_POLICY_EVAL_CTX_get0_log_store(const CT_POLICY_EVAL_CTX *ctx);
 
 /* Sets the log store that is in use */
 void CT_POLICY_EVAL_CTX_set0_log_store(CT_POLICY_EVAL_CTX *ctx,
