@@ -884,7 +884,7 @@ EOF
           $recipe .= <<"EOF";
 $obj$depext: $deps
 	rm -f \$\@.tmp; touch \$\@.tmp
-	-\$(MAKEDEPEND) -f\$\@.tmp -o"|$obj" -- \$(CFLAGS) $ecflags$incs -- $srcs \\
+	-\$(MAKEDEPEND) -f\$\@.tmp -o"|$obj$objext" -- \$(CFLAGS) $ecflags$incs -- $srcs \\
 	    2>/dev/null
 	sed -e 's/^.*|//' -e 's/ \\/\\(\\\\.\\|[^ ]\\)*//g' -e '/: *\$\$/d' -e '/^\\(#.*\\| *\\)\$\$/d' \$\@.tmp > \$\@
 	rm \$\@.tmp
