@@ -38,7 +38,7 @@ matrix:
           env: CONFIG_OPTS="-fsanitize=address"
         - os: linux
           compiler: clang-3.6
-          env: CONFIG_OPTS="no-asm --strict-warnings -fno-sanitize-recover -fsanitize=address -fsanitize=undefined enable-rc5 enable-md2"
+          env: CONFIG_OPTS="no-asm --strict-warnings -fno-sanitize-recover -fsanitize=address -fsanitize=undefined -fno-builtin enable-rc5 enable-md2"
         - os: linux
           compiler: gcc-5
           env: CONFIG_OPTS="-fsanitize=address"
