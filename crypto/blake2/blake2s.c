@@ -17,9 +17,7 @@
 
 /* crypto/blake2/blake2s.c */
 
-#include <stdint.h>
 #include <string.h>
-#include <stdio.h>
 #include <openssl/crypto.h>
 
 #include "internal/blake2_locl.h"
@@ -45,14 +43,14 @@ static const uint8_t blake2s_sigma[10][16] =
     { 10,  2,  8,  4,  7,  6,  1,  5, 15, 11,  9, 14,  3, 12, 13 , 0 } ,
 };
 
-/* Some helper functions, not necessarily useful */
-static inline void blake2s_set_lastblock(BLAKE2S_CTX *S)
+/* Set state indicating this is the last hashed blcok. */
+static ossl_inline void blake2s_set_lastblock(BLAKE2S_CTX *S)
 {
   S->f[0] = -1;
 }
 
 /* Increment the data hashed couter. */
-static inline void blake2s_increment_counter(BLAKE2S_CTX *S,
+static ossl_inline void blake2s_increment_counter(BLAKE2S_CTX *S,
                                              const uint32_t inc)
 {
     S->t[0] += inc;
@@ -60,7 +58,7 @@ static inline void blake2s_increment_counter(BLAKE2S_CTX *S,
 }
 
 /* Initialize the hashing state. */
-static inline void blake2s_init0(BLAKE2S_CTX *S)
+static ossl_inline void blake2s_init0(BLAKE2S_CTX *S)
 {
     int i;
 
@@ -99,7 +97,6 @@ int BLAKE2s_Init(BLAKE2S_CTX *c)
     store48(&P->node_offset, 0);
     P->node_depth    = 0;
     P->inner_length  = 0;
-    /* memset(P->reserved, 0, sizeof(P->reserved)); */
     memset(P->salt,     0, sizeof(P->salt));
     memset(P->personal, 0, sizeof(P->personal));
     blake2s_init_param(c, P);

@@ -20,7 +20,7 @@
 #include <stdint.h>
 #include <string.h>
 
-static inline uint32_t load32(const void *src)
+static ossl_inline uint32_t load32(const void *src)
 {
 #if defined(L_ENDIAN)
     uint32_t w;
@@ -36,7 +36,7 @@ static inline uint32_t load32(const void *src)
 #endif
 }
 
-static inline uint64_t load64(const void *src)
+static ossl_inline uint64_t load64(const void *src)
 {
 #if defined(L_ENDIAN)
     uint64_t w;
@@ -56,7 +56,7 @@ static inline uint64_t load64(const void *src)
 #endif
 }
 
-static inline void store32(void *dst, uint32_t w)
+static ossl_inline void store32(void *dst, uint32_t w)
 {
 #if defined(L_ENDIAN)
     memcpy(dst, &w, sizeof w);
@@ -72,7 +72,7 @@ static inline void store32(void *dst, uint32_t w)
 #endif
 }
 
-static inline void store64(void *dst, uint64_t w)
+static ossl_inline void store64(void *dst, uint64_t w)
 {
 #if defined(L_ENDIAN)
     memcpy(dst, &w, sizeof w);
@@ -96,7 +96,7 @@ static inline void store64(void *dst, uint64_t w)
 #endif
 }
 
-static inline uint64_t load48(const void *src)
+static ossl_inline uint64_t load48(const void *src)
 {
     const uint8_t *p = (const uint8_t *)src;
     uint64_t w = *p++;
@@ -108,7 +108,7 @@ static inline uint64_t load48(const void *src)
     return w;
 }
 
-static inline void store48(void *dst, uint64_t w)
+static ossl_inline void store48(void *dst, uint64_t w)
 {
     uint8_t *p = (uint8_t *)dst;
     *p++ = (uint8_t)w;
@@ -124,22 +124,12 @@ static inline void store48(void *dst, uint64_t w)
     *p++ = (uint8_t)w;
 }
 
-static inline uint32_t rotl32(const uint32_t w, const unsigned c)
-{
-    return (w << c) | (w >> (32 - c));
-}
-
-static inline uint64_t rotl64(const uint64_t w, const unsigned c)
-{
-    return (w << c) | (w >> (64 - c));
-}
-
-static inline uint32_t rotr32(const uint32_t w, const unsigned c)
+static ossl_inline uint32_t rotr32(const uint32_t w, const unsigned c)
 {
     return (w >> c) | (w << (32 - c));
 }
 
-static inline uint64_t rotr64(const uint64_t w, const unsigned c)
+static ossl_inline uint64_t rotr64(const uint64_t w, const unsigned c)
 {
     return (w >> c) | (w << (64 - c));
 }

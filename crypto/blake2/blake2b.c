@@ -17,9 +17,7 @@
 
 /* crypto/blake2/blake2b.c */
 
-#include <stdint.h>
 #include <string.h>
-#include <stdio.h>
 #include <openssl/crypto.h>
 
 #include "internal/blake2_locl.h"
@@ -49,14 +47,14 @@ static const uint8_t blake2b_sigma[12][16] =
     { 14, 10,  4,  8,  9, 15, 13,  6,  1, 12,  0,  2, 11,  7,  5,  3 }
 };
 
-/* Some helper functions, not necessarily useful */
-static inline void blake2b_set_lastblock(BLAKE2B_CTX *S)
+/* Set state indicating this is the last hashed blcok. */
+static ossl_inline void blake2b_set_lastblock(BLAKE2B_CTX *S)
 {
     S->f[0] = -1;
 }
 
 /* Increment the data hashed couter. */
-static inline void blake2b_increment_counter(BLAKE2B_CTX *S,
+static ossl_inline void blake2b_increment_counter(BLAKE2B_CTX *S,
                                              const uint64_t inc)
 {
     S->t[0] += inc;
@@ -64,7 +62,7 @@ static inline void blake2b_increment_counter(BLAKE2B_CTX *S,
 }
 
 /* Initialize the hashing state. */
-static inline void blake2b_init0(BLAKE2B_CTX *S)
+static ossl_inline void blake2b_init0(BLAKE2B_CTX *S)
 {
     int i;
     memset(S, 0, sizeof(BLAKE2B_CTX));

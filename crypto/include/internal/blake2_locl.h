@@ -8,7 +8,7 @@
  *
  * - OpenSSL license   : https://www.openssl.org/source/license.html
  * - Apache 2.0        : http://www.apache.org/licenses/LICENSE-2.0
- * - CC0 1.0 Universal : http://www.apache.org/licenses/LICENSE-2.0
+ * - CC0 1.0 Universal : http://creativecommons.org/publicdomain/zero/1.0
  *
  * More information about the BLAKE2 hash function can be found at
  * https://blake2.net.
@@ -45,7 +45,6 @@ struct blake2s_param_st {
     uint8_t  node_offset[6];/* 14 */
     uint8_t  node_depth;    /* 15 */
     uint8_t  inner_length;  /* 16 */
-    /* uint8_t  reserved[0]; */
     uint8_t  salt[BLAKE2S_SALTBYTES]; /* 24 */
     uint8_t  personal[BLAKE2S_PERSONALBYTES];  /* 32 */
 };
