@@ -37,6 +37,7 @@ B<openssl> B<req>
 [B<-newhdr>]
 [B<-extensions section>]
 [B<-reqexts section>]
+[B<-precert>]
 [B<-utf8>]
 [B<-nameopt>]
 [B<-reqopt>]
@@ -252,6 +253,14 @@ extensions (if the B<-x509> option is present) or certificate
 request extensions. This allows several different sections to
 be used in the same configuration file to specify requests for
 a variety of purposes.
+
+=item B<-precert>
+
+a poison extension will be added to the certificate, making it a
+"pre-certificate" (see RFC6962). This can be submitted to Certificate
+Transparency logs in order to obtain signed certificate timestamps (SCTs).
+These SCTs can then be embedded into the pre-certificate as an extension, before
+removing the poison and signing the certificate.
 
 =item B<-utf8>
 
