@@ -491,12 +491,16 @@ __owur int ctx_set_verify_locations(SSL_CTX *ctx, const char *CAfile,
                                     const char *CApath, int noCAfile,
                                     int noCApath);
 
+#ifndef OPENSSL_NO_CT
+
 /*
  * Sets the file to load the Certificate Transparency log list from.
  * If path is NULL, loads from the default file path.
  * Returns 1 on success, 0 otherwise.
  */
 __owur int ctx_set_ctlog_list_file(SSL_CTX *ctx, const char *path);
+
+#endif
 
 # ifdef OPENSSL_NO_ENGINE
 #  define setup_engine(engine, debug) NULL
