@@ -302,11 +302,10 @@ __owur int SCT_set_source(SCT *sct, sct_source_t source);
 /*
  * Pretty-prints an |sct| to |out|.
  * It will be indented by the number of spaces specified by |indent|.
- * If |log| is not NULL:
- * - it should be the CT log that the SCT came from.
- * - its name will be printed.
+ * If |logs| is not NULL, it will be used to lookup the CT log that the SCT came
+ * from, so that the log name can be printed.
  */
-void SCT_print(const SCT *sct, BIO *out, int indent, const CTLOG *log);
+void SCT_print(const SCT *sct, BIO *out, int indent, const CTLOG_STORE *logs);
 
 /*
  * Pretty-prints an |sct_list| to |out|.
