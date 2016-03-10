@@ -82,7 +82,6 @@ static int test_afalg_aes_128_cbc(ENGINE *e)
         fprintf(stderr, "%s() failed to allocate ctx\n", __func__);
         return 0;
     }
-    EVP_CIPHER_CTX_init(ctx);
     RAND_bytes(in, BUFFER_SIZE);
 
     if (       !EVP_CipherInit_ex(ctx, cipher, e, key, iv, 1)
