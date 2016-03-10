@@ -66,6 +66,7 @@
 # endif
 
 # include <openssl/bio.h>
+# include <openssl/asn1.h>
 # include <openssl/ossl_typ.h>
 # if OPENSSL_API_COMPAT < 0x10100000L
 #  include <openssl/bn.h>
@@ -158,6 +159,8 @@ struct dh_st {
     ENGINE *engine;
     CRYPTO_RWLOCK *lock;
 };
+
+DECLARE_ASN1_ITEM(DHparams)
 
 # define DH_GENERATOR_2          2
 /* #define DH_GENERATOR_3       3 */
