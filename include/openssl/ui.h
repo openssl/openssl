@@ -273,7 +273,7 @@ UI_METHOD *UI_OpenSSL(void);
                         display a dialog box after it has been built.
         a reader        This function is called to read a given prompt,
                         maybe from the tty, maybe from a field in a
-                        window.  Note that it's called wth all string
+                        window.  Note that it's called with all string
                         structures, not only the prompt ones, so it must
                         check such things itself.
         a closer        This function closes the session, maybe by closing
@@ -358,7 +358,7 @@ int UI_get_input_flags(UI_STRING *uis);
 /* Return the actual string to output (the prompt, info or error) */
 const char *UI_get0_output_string(UI_STRING *uis);
 /*
- * Return the optional action string to output (the boolean promtp
+ * Return the optional action string to output (the boolean prompt
  * instruction)
  */
 const char *UI_get0_action_string(UI_STRING *uis);

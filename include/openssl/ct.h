@@ -357,7 +357,7 @@ __owur int SCT_LIST_validate(const STACK_OF(SCT) *scts,
  * for data that caller is responsible for freeing (only if function returns
  * successfully).
  * If "pp" is NULL and "*pp" is not NULL, caller is responsible for ensuring
- * that "*pp" is large enough to accept all of the serializied data.
+ * that "*pp" is large enough to accept all of the serialized data.
  * Returns < 0 on error, >= 0 indicating bytes written (or would have been)
  * on success.
  */
@@ -384,7 +384,7 @@ STACK_OF(SCT) *o2i_SCT_LIST(STACK_OF(SCT) **a, const unsigned char **pp,
  * for data that caller is responsible for freeing (only if function returns
  * successfully).
  * If "pp" is NULL and "*pp" is not NULL, caller is responsible for ensuring
- * that "*pp" is large enough to accept all of the serializied data.
+ * that "*pp" is large enough to accept all of the serialized data.
  * Returns < 0 on error, >= 0 indicating bytes written (or would have been)
  * on success.
  */
@@ -418,7 +418,7 @@ __owur int i2o_SCT(const SCT *sct, unsigned char **out);
  * Parses an SCT in TLS format and returns it.
  * If |psct| is not null, it will end up pointing to the parsed SCT. If it
  * already points to a non-null pointer, the pointer will be free'd.
- * |in| should be a pointer to a string contianing the TLS-format SCT.
+ * |in| should be a pointer to a string containing the TLS-format SCT.
  * |in| will be advanced to the end of the SCT if parsing succeeds.
  * |len| should be the length of the SCT in |in|.
  * Returns NULL if an error occurs.
@@ -439,7 +439,7 @@ __owur int i2o_SCT_signature(const SCT *sct, unsigned char **out);
 
 /*
 * Parses an SCT signature in TLS format and populates the |sct| with it.
-* |in| should be a pointer to a string contianing the TLS-format signature.
+* |in| should be a pointer to a string containing the TLS-format signature.
 * |in| will be advanced to the end of the signature if parsing succeeds.
 * |len| should be the length of the signature in |in|.
 * Returns the number of bytes parsed, or a negative integer if an error occurs.

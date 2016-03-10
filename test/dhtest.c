@@ -635,7 +635,7 @@ static int run_rfc5114_tests(void)
     OPENSSL_free(Z1);
     OPENSSL_free(Z2);
 
-    fprintf(stderr, "Initalisation error RFC5114 set %d\n", i + 1);
+    fprintf(stderr, "Initialisation error RFC5114 set %d\n", i + 1);
     ERR_print_errors_fp(stderr);
     return 0;
  err:
