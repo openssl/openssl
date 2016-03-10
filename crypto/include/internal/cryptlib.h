@@ -82,8 +82,6 @@ typedef struct ex_callback_st EX_CALLBACK;
 
 DEFINE_STACK_OF(EX_CALLBACK)
 
-DEFINE_STACK_OF(CRYPTO_dynlock)
-
 typedef struct app_mem_info_st APP_INFO;
 DEFINE_LHASH_OF(APP_INFO);
 typedef struct mem_st MEM;
