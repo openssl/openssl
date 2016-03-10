@@ -156,7 +156,7 @@
 extern "C" {
 #endif
 
-/* Default security level if not overriden at config time */
+/* Default security level if not overridden at config time */
 # ifndef OPENSSL_TLS_SECURITY_LEVEL
 #  define OPENSSL_TLS_SECURITY_LEVEL 1
 # endif
