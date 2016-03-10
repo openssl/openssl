@@ -388,7 +388,7 @@ the L</GCM and OCB modes> section below for details.
 
 =item EVP_aes_128_ocb(void), EVP_aes_192_ocb(void), EVP_aes_256_ocb(void)
 
-Offest Codebook Mode (OCB) for 128, 192 and 256 bit keys respectively.
+Offset Codebook Mode (OCB) for 128, 192 and 256 bit keys respectively.
 These ciphers require additional control operations to function correctly: see
 the L</GCM and OCB modes> section below for details.
 
