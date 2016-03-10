@@ -495,7 +495,7 @@ int ssl3_write_bytes(SSL *s, int type, const void *buf_, int len)
     /*
      * Depending on platform multi-block can deliver several *times*
      * better performance. Downside is that it has to allocate
-     * jumbo buffer to accomodate up to 8 records, but the
+     * jumbo buffer to accommodate up to 8 records, but the
      * compromise is considered worthy.
      */
     if (type == SSL3_RT_APPLICATION_DATA &&
@@ -631,7 +631,7 @@ int ssl3_write_bytes(SSL *s, int type, const void *buf_, int len)
     split_send_fragment = s->split_send_fragment;
     /*
      * If max_pipelines is 0 then this means "undefined" and we default to
-     * 1 pipeline. Similaraly if the cipher does not support pipelined
+     * 1 pipeline. Similarly if the cipher does not support pipelined
      * processing then we also only use 1 pipeline, or if we're not using
      * explicit IVs
      */
@@ -810,7 +810,7 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
         /*
          * extra fragment would be couple of cipher blocks, which would be
          * multiple of SSL3_ALIGN_PAYLOAD, so if we want to align the real
-         * payload, then we can just pretent we simply have two headers.
+         * payload, then we can just pretend we simply have two headers.
          */
         align = (size_t)SSL3_BUFFER_get_buf(wb) + 2 * SSL3_RT_HEADER_LENGTH;
         align = (0-align) & (SSL3_ALIGN_PAYLOAD - 1);
@@ -862,7 +862,7 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
 
         *(outbuf[j]++) = (s->version >> 8);
         /*
-         * Some servers hang if iniatial client hello is larger than 256 bytes
+         * Some servers hang if initial client hello is larger than 256 bytes
          * and record version number > TLS 1.0
          */
         if (SSL_get_state(s) == TLS_ST_CW_CLNT_HELLO
@@ -1445,7 +1445,7 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
             /*
              * This is a warning but we receive it if we requested
              * renegotiation and the peer denied it. Terminate with a fatal
-             * alert because if application tried to renegotiatie it
+             * alert because if application tried to renegotiate it
              * presumably had a good reason and expects it to succeed. In
              * future we might have a renegotiation where we don't care if
              * the peer refused it where we carry on.

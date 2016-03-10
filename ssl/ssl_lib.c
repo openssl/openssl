@@ -3721,7 +3721,7 @@ void SSL_set_not_resumable_session_callback(SSL *ssl,
 
 /*
  * Allocates new EVP_MD_CTX and sets pointer to it into given pointer
- * vairable, freeing EVP_MD_CTX previously stored in that variable, if any.
+ * variable, freeing EVP_MD_CTX previously stored in that variable, if any.
  * If EVP_MD pointer is passed, initializes ctx with this md Returns newly
  * allocated ctx;
  */

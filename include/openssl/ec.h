@@ -241,7 +241,7 @@ int EC_GROUP_get_order(const EC_GROUP *group, BIGNUM *order, BN_CTX *ctx);
 
 const BIGNUM *EC_GROUP_get0_order(const EC_GROUP *group);
 
-/** Gets the number of bits of ther order of an EC_GROUP
+/** Gets the number of bits of the order of an EC_GROUP
  *  \param  group  EC_GROUP object
  *  \return number of bits of group order.
  */
@@ -438,7 +438,7 @@ typedef struct {
 
 /*
  * EC_builtin_curves(EC_builtin_curve *r, size_t size) returns number of all
- * available curves or zero if a error occurred. In case r ist not zero
+ * available curves or zero if a error occurred. In case r is not zero,
  * nitems EC_builtin_curve structures are filled with the data of the first
  * nitems internal groups
  */
@@ -711,7 +711,7 @@ int EC_POINTs_make_affine(const EC_GROUP *group, size_t num,
  *  \param  group  underlying EC_GROUP object
  *  \param  r      EC_POINT object for the result
  *  \param  n      BIGNUM with the multiplier for the group generator (optional)
- *  \param  num    number futher summands
+ *  \param  num    number further summands
  *  \param  p      array of size num of EC_POINT objects
  *  \param  m      array of size num of BIGNUM objects
  *  \param  ctx    BN_CTX object (optional)
@@ -918,7 +918,7 @@ int EC_KEY_check_key(const EC_KEY *key);
  */
 int EC_KEY_can_sign(const EC_KEY *eckey);
 
-/** Sets a public key from affine coordindates performing
+/** Sets a public key from affine coordinates performing
  *  necessary NIST PKV tests.
  *  \param  key  the EC_KEY object
  *  \param  x    public key x coordinate
@@ -1142,7 +1142,7 @@ ECDSA_SIG *ECDSA_do_sign(const unsigned char *dgst, int dgst_len,
  *  \param  dgst     pointer to the hash value to sign
  *  \param  dgstlen  length of the hash value
  *  \param  kinv     BIGNUM with a pre-computed inverse k (optional)
- *  \param  rp       BIGNUM with a pre-computed rp value (optioanl),
+ *  \param  rp       BIGNUM with a pre-computed rp value (optional),
  *                   see ECDSA_sign_setup
  *  \param  eckey    EC_KEY object containing a private EC key
  *  \return pointer to a ECDSA_SIG structure or NULL if an error occurred
@@ -1193,7 +1193,7 @@ int ECDSA_sign(int type, const unsigned char *dgst, int dgstlen,
  *  \param  sig      buffer to hold the DER encoded signature
  *  \param  siglen   pointer to the length of the returned signature
  *  \param  kinv     BIGNUM with a pre-computed inverse k (optional)
- *  \param  rp       BIGNUM with a pre-computed rp value (optioanl),
+ *  \param  rp       BIGNUM with a pre-computed rp value (optional),
  *                   see ECDSA_sign_setup
  *  \param  eckey    EC_KEY object containing a private EC key
  *  \return 1 on success and 0 otherwise

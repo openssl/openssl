@@ -94,7 +94,7 @@ typedef unsigned int u32;
  * POLY1305_BLOCK_SIZE and |padbit| to 0. In all other cases |padbit|
  * should be set to 1 to perform implicit padding with 128th bit.
  * poly1305_blocks does not actually check for this constraint though,
- * it's caller(*)'s resposibility to comply.
+ * it's caller(*)'s responsibility to comply.
  *
  * (*)  In the context "caller" is not application code, but higher
  *      level Poly1305_* from this very module, so that quirks are

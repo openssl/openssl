@@ -109,7 +109,7 @@ struct X509_req_st {
 
 struct X509_crl_info_st {
     ASN1_INTEGER *version;      /* version: defaults to v1(0) so may be NULL */
-    X509_ALGOR sig_alg;         /* signagture algorithm */
+    X509_ALGOR sig_alg;         /* signature algorithm */
     X509_NAME *issuer;          /* CRL issuer name */
     ASN1_TIME *lastUpdate;      /* lastUpdate field */
     ASN1_TIME *nextUpdate;      /* nextUpdate field: optional */

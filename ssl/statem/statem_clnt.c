@@ -870,7 +870,7 @@ int tls_construct_client_hello(SSL *s)
      *      1. Client hello indicates TLS 1.2
      *      2. Server hello says TLS 1.0
      *      3. RSA encrypted premaster secret uses 1.2.
-     *      4. Handhaked proceeds using TLS 1.0.
+     *      4. Handshake proceeds using TLS 1.0.
      *      5. Server sends hello request to renegotiate.
      *      6. Client hello indicates TLS v1.0 as we now
      *         know that is maximum server supports.
