@@ -844,6 +844,8 @@ static int afalg_finish(ENGINE *e)
 static int afalg_destroy(ENGINE *e)
 {
     ERR_unload_AFALG_strings();
+    EVP_CIPHER_meth_free(_hidden_aes_128_cbc);
+    _hidden_aes_128_cbc = NULL;
     return 1;
 }
 
