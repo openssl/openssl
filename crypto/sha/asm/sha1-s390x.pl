@@ -43,7 +43,7 @@ if ($flavour =~ /3[12]/) {
 	$g="g";
 }
 
-while (($output=shift) && ($output!~/^\w[\w\-]*\.\w+$/)) {}
+while (($output=shift) && ($output!~/^\w[\w\-\/]*\.\w+$/)) {}
 open STDOUT,">$output";
 
 $K_00_39="%r0"; $K=$K_00_39;
