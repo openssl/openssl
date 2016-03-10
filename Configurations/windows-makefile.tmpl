@@ -298,6 +298,11 @@ $objs$linklibs \$(EX_LIBS)
 EOF
  }
  sub obj2lib {
+     # Because static libs and import libs are both named the same in native
+     # Windows, we can't have both.  We skip the static lib in that case,
+     # as the shared libs are what we use anyway.
+     return "" unless $disabled{"shared"};
+
      my %args = @_;
      my $lib = $args{lib};
      my $objs = join("\n", map { $_.$objext } @{$args{objs}});
