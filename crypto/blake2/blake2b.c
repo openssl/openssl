@@ -201,8 +201,8 @@ int BLAKE2b_Update(BLAKE2B_CTX *c, const void *data, size_t datalen)
 }
 
 /*
- * Finalize the hash state in a way that avoids length extension attacks.
- * Always returns 1.
+ * The last compression call of BLAKE2 is different by design, in order to
+ * avoid length extension attacks.
  */
 int BLAKE2b_Final(unsigned char *md, BLAKE2B_CTX *c)
 {
