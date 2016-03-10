@@ -49,3 +49,5 @@ BEGINRAW[Makefile]
 	CC="$(CC)" $(PERL) $< $(PERLASM_SCHEME) $@
 
 ENDRAW[Makefile]
+INCLUDE[aes-armv4.o]=..
+INCLUDE[bsaes-armv7.o]=..
