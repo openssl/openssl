@@ -57,11 +57,13 @@
 #include <string.h>
 
 #include <openssl/conf.h>
+#include <openssl/crypto.h>
 #include <openssl/ct.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/safestack.h>
 
+#include "e_os.h"
 #include "internal/cryptlib.h"
 
 /*
@@ -71,6 +73,8 @@ struct ctlog_st {
     char *name;
     uint8_t log_id[CT_V1_HASHLEN];
     EVP_PKEY *public_key;
+    int references;
+    CRYPTO_RWLOCK *lock;
 };
 
 /*
@@ -297,20 +301,46 @@ CTLOG *CTLOG_new_null(void)
 {
     CTLOG *ret = OPENSSL_zalloc(sizeof(*ret));
 
-    if (ret == NULL)
+    if (ret == NULL) {
         CTerr(CT_F_CTLOG_NEW_NULL, ERR_R_MALLOC_FAILURE);
+        return NULL;
+    }
+
+    ret->references = 1;
+    ret->lock = CRYPTO_THREAD_lock_new();
+    if (ret->lock == NULL) {
+        OPENSSL_free(ret);
+        return NULL;
+    }
 
     return ret;
 }
 
-/* Frees CT log and associated structures */
+void CTLOG_up_ref(CTLOG *log)
+{
+    int i;
+
+    CRYPTO_atomic_add(&log->references, 1, &i, log->lock);
+}
+
 void CTLOG_free(CTLOG *log)
 {
-    if (log != NULL) {
-        OPENSSL_free(log->name);
-        EVP_PKEY_free(log->public_key);
-        OPENSSL_free(log);
-    }
+    int i;
+
+    if (log == NULL)
+        return;
+
+    CRYPTO_atomic_add(&log->references, -1, &i, log->lock);
+
+    REF_PRINT_COUNT("CTLOG", i);
+    if (i > 0)
+        return;
+    REF_ASSERT_ISNT(i < 0);
+
+    OPENSSL_free(log->name);
+    EVP_PKEY_free(log->public_key);
+    CRYPTO_THREAD_lock_free(log->lock);
+    OPENSSL_free(log);
 }
 
 const char *CTLOG_get0_name(const CTLOG *log)
@@ -330,20 +360,18 @@ EVP_PKEY *CTLOG_get0_public_key(const CTLOG *log)
     return log->public_key;
 }
 
-/*
- * Given a log ID, finds the matching log.
- * Returns NULL if no match found.
- */
-const CTLOG *CTLOG_STORE_get0_log_by_id(const CTLOG_STORE *store,
-                                        const uint8_t *log_id,
-                                        size_t log_id_len)
+CTLOG *CTLOG_STORE_get1_log_by_id(const CTLOG_STORE *store,
+                                  const uint8_t *log_id,
+                                  size_t log_id_len)
 {
     int i;
 
     for (i = 0; i < sk_CTLOG_num(store->logs); ++i) {
-        const CTLOG *log = sk_CTLOG_value(store->logs, i);
-        if (memcmp(log->log_id, log_id, log_id_len) == 0)
+        CTLOG *log = sk_CTLOG_value(store->logs, i);
+        if (memcmp(log->log_id, log_id, log_id_len) == 0) {
+            CTLOG_up_ref(log);
             return log;
+        }
     }
 
     return NULL;
