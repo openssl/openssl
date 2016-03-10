@@ -62,7 +62,11 @@
 #include <openssl/asn1.h>
 #include <openssl/asn1t.h>
 #include <openssl/rand.h>
-#include "dsa_locl.h"
+
+struct DSA_SIG_st {
+    BIGNUM *r;
+    BIGNUM *s;
+};
 
 ASN1_SEQUENCE(DSA_SIG) = {
         ASN1_SIMPLE(DSA_SIG, r, CBIGNUM),
