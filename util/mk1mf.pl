@@ -1392,6 +1392,7 @@ sub read_options
 		"gaswin" => \$gaswin,
 		"no-ssl3" => \$no_ssl3,
 		"no-ssl3-method" => 0,
+		"no-weak-ssl-ciphers" => 0,
 		"no-srp" => \$no_srp,
 		"no-cms" => \$no_cms,
 		"no-ec2m" => \$no_ec2m,
