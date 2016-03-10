@@ -70,7 +70,7 @@ if ($flavour =~ /64|n32/i) {
 
 $big_endian=(`echo MIPSEL | $ENV{CC} -E -`=~/MIPSEL/)?1:0 if ($ENV{CC});
 
-for (@ARGV) {	$output=$_ if (/^\w[\w\-]*\.\w+$/);   }
+for (@ARGV) {	$output=$_ if (/\w[\w\-]*\.\w+$/);   }
 open STDOUT,">$output";
 
 if (!defined($big_endian))

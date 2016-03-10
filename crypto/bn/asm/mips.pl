@@ -49,7 +49,7 @@
 # key length, more for longer keys.
 
 $flavour = shift || "o32";
-while (($output=shift) && ($output!~/^\w[\w\-]*\.\w+$/)) {}
+while (($output=shift) && ($output!~/\w[\w\-]*\.\w+$/)) {}
 open STDOUT,">$output";
 
 if ($flavour =~ /64|n32/i) {

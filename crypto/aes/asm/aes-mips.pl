@@ -81,13 +81,13 @@ $pf = ($flavour =~ /nubi/i) ? $t0 : $t2;
 
 $big_endian=(`echo MIPSEL | $ENV{CC} -E -`=~/MIPSEL/)?1:0 if ($ENV{CC});
 
-for (@ARGV) {	$output=$_ if (/^\w[\w\-]*\.\w+$/);	}
+for (@ARGV) {	$output=$_ if (/\w[\w\-]*\.\w+$/);	}
 open STDOUT,">$output";
 
 if (!defined($big_endian))
 {    $big_endian=(unpack('L',pack('N',1))==1);   }
 
-while (($output=shift) && ($output!~/^\w[\w\-]*\.\w+$/)) {}
+while (($output=shift) && ($output!~/\w[\w\-]*\.\w+$/)) {}
 open STDOUT,">$output";
 
 my ($MSB,$LSB)=(0,3);	# automatically converted to little-endian
