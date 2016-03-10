@@ -172,14 +172,14 @@ typedef struct x9_62_curve_st {
     ASN1_BIT_STRING *seed;
 } X9_62_CURVE;
 
-typedef struct ec_parameters_st {
+struct ec_parameters_st {
     long version;
     X9_62_FIELDID *fieldID;
     X9_62_CURVE *curve;
     ASN1_OCTET_STRING *base;
     ASN1_INTEGER *order;
     ASN1_INTEGER *cofactor;
-} ECPARAMETERS;
+} /* ECPARAMETERS */ ;
 
 struct ecpk_parameters_st {
     int type;
