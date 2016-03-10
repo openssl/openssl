@@ -387,7 +387,7 @@ int HASH_FINAL(unsigned char *md, HASH_CTX *c)
 # if defined(__alpha) || defined(__sparcv9) || defined(__mips)
 #  define MD32_REG_T long
 /*
- * This comment was originaly written for MD5, which is why it
+ * This comment was originally written for MD5, which is why it
  * discusses A-D. But it basically applies to all 32-bit digests,
  * which is why it was moved to common header file.
  *

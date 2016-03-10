@@ -666,7 +666,7 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
 
         if (dest_maxlen > 0) {
             /*
-             * XDTLS: In a pathalogical case, the Client Hello may be
+             * XDTLS: In a pathological case, the Client Hello may be
              * fragmented--don't always expect dest_maxlen bytes
              */
             if (SSL3_RECORD_get_length(rr)  < dest_maxlen) {
