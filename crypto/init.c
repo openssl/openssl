@@ -324,9 +324,9 @@ static void ossl_init_engine_afalg(void)
 # endif
 #endif
 
+#ifndef OPENSSL_NO_COMP
 static CRYPTO_ONCE zlib = CRYPTO_ONCE_STATIC_INIT;
 
-#ifndef OPENSSL_NO_COMP
 static int zlib_inited = 0;
 static void ossl_init_zlib(void)
 {
