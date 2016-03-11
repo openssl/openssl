@@ -469,12 +469,12 @@ void OPENSSL_cleanup(void)
                     "RAND_cleanup()\n");
 
 #endif
-#ifndef OPENSSL_NO_ENGINE
-    ENGINE_cleanup();
-#endif
     CRYPTO_cleanup_all_ex_data();
     EVP_cleanup();
     CONF_modules_free();
+#ifndef OPENSSL_NO_ENGINE
+    ENGINE_cleanup();
+#endif
     RAND_cleanup();
     base_inited = 0;
 }
