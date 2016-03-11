@@ -214,7 +214,9 @@ static const EVP_CIPHER *ssl_cipher_methods[SSL_ENC_NUM_IDX] = {
 
 static STACK_OF(SSL_COMP) *ssl_comp_methods = NULL;
 
+#ifndef OPENSSL_NO_COMP
 static CRYPTO_ONCE ssl_load_builtin_comp_once = CRYPTO_ONCE_STATIC_INIT;
+#endif
 
 /*
  * Constant SSL_MAX_DIGEST equal to size of digests array should be defined
@@ -621,7 +623,6 @@ int ssl_cipher_get_evp(const SSL_SESSION *s, const EVP_CIPHER **enc,
 #ifndef OPENSSL_NO_COMP
         load_builtin_compressions();
 #endif
-
         *comp = NULL;
         ctmp.id = s->compress_meth;
         if (ssl_comp_methods != NULL) {
