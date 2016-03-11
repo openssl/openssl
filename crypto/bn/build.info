@@ -9,6 +9,8 @@ SOURCE[../../libcrypto]=\
         bn_depr.c bn_const.c bn_x931p.c bn_intern.c bn_dh.c bn_srp.c
 INCLUDE[../../libcrypto]={- rel2abs(catdir($builddir,"..","..","crypto","include")) -}
 
+INCLUDE[bn_exp.o]=..
+
 GENERATE[bn-586.s]=asm/bn-586.pl \
 	$(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR)
 DEPEND[bn-586.s]=../perlasm/x86asm.pl
@@ -31,6 +33,7 @@ INCLUDE[vis3-mont.o]=..
 GENERATE[sparct4-mont.S]=asm/sparct4-mont.pl $(PERLASM_SCHEME)
 INCLUDE[sparct4-mont.o]=..
 GENERATE[sparcv9-gf2m.S]=asm/sparcv9-gf2m.pl $(PERLASM_SCHEME)
+INCLUDE[sparcv9-gf2m.o]=..
 
 GENERATE[bn-mips.s]=asm/mips.pl $(PERLASM_SCHEME)
 GENERATE[mips-mont.s]=asm/mips-mont.pl $(PERLASM_SCHEME)
