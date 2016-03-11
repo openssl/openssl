@@ -134,7 +134,7 @@ foreach (@ARGV)
 		print STDERR <<"EOF";
 and [options] can be one of
 	no-md2 no-md4 no-md5 no-sha no-mdc2	- Skip this digest
-	no-ripemd
+	no-rmd160
 	no-rc2 no-rc4 no-rc5 no-idea no-des     - Skip this symetric cipher
 	no-bf no-cast no-aes no-camellia no-seed
 	no-rsa no-dsa no-dh			- Skip this public key cipher
@@ -1377,7 +1377,7 @@ sub read_options
 		"no-md2" => \$no_md2,
 		"no-md4" => \$no_md4,
 		"no-md5" => \$no_md5,
-		"no-ripemd" => \$no_ripemd,
+		"no-rmd160" => \$no_ripemd,
 		"no-mdc2" => \$no_mdc2,
 		"no-whirlpool" => \$no_whirlpool,
 		"no-patents" => 
