@@ -325,12 +325,15 @@ static void ossl_init_engine_afalg(void)
 #endif
 
 static CRYPTO_ONCE zlib = CRYPTO_ONCE_STATIC_INIT;
+
+#ifndef OPENSSL_NO_COMP
 static int zlib_inited = 0;
 static void ossl_init_zlib(void)
 {
     /* Do nothing - we need to know about this for the later cleanup */
     zlib_inited = 1;
 }
+#endif
 
 static void ossl_init_thread_stop(struct thread_local_inits_st *locals)
 {
@@ -426,6 +429,7 @@ void OPENSSL_cleanup(void)
      * conditions for the various "*_inited" vars below.
      */
 
+#ifndef OPENSSL_NO_COMP
     if (zlib_inited) {
 #ifdef OPENSSL_INIT_DEBUG
         fprintf(stderr, "OPENSSL_INIT: OPENSSL_cleanup: "
@@ -433,6 +437,7 @@ void OPENSSL_cleanup(void)
 #endif
         COMP_zlib_cleanup();
     }
+#endif
 
 #ifndef OPENSSL_NO_ASYNC
     if (async_inited) {
@@ -600,9 +605,11 @@ int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
     }
 #endif
 
+#ifndef OPENSSL_NO_COMP
     if ((opts & OPENSSL_INIT_ZLIB)
             && CRYPTO_THREAD_run_once(&zlib, ossl_init_zlib))
         return 0;
+#endif
 
     return 1;
 }
