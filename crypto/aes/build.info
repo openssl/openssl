@@ -38,6 +38,10 @@ GENERATE[aesv8-armx.S]=asm/aesv8-armx.pl $(PERLASM_SCHEME)
 INCLUDE[aesv8-armx.o]=..
 GENERATE[vpaes-armv8.S]=asm/vpaes-armv8.pl $(PERLASM_SCHEME)
 
+GENERATE[aes-armv4.S]=asm/aes-armv4.pl $(PERLASM_SCHEME)
+INCLUDE[aes-armv4.o]=..
+GENERATE[bsaes-armv7.S]=asm/bsaes-armv7.pl $(PERLASM_SCHEME)
+INCLUDE[bsaes-armv7.o]=..
 
 BEGINRAW[Makefile]
 ##### AES assembler implementations
@@ -49,5 +53,3 @@ BEGINRAW[Makefile]
 	CC="$(CC)" $(PERL) $< $(PERLASM_SCHEME) $@
 
 ENDRAW[Makefile]
-INCLUDE[aes-armv4.o]=..
-INCLUDE[bsaes-armv7.o]=..

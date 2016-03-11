@@ -13,8 +13,6 @@ GENERATE[sha1-ia64.s]=sha1-ia64.pl $(CFLAGS)
 GENERATE[sha256-ia64.s]=sha512-ia64.pl $(CFLAGS)
 GENERATE[sha512-ia64.s]=sha512-ia64.pl $(CFLAGS)
 
-GENERATE[sha256-armv4.S]=asm/sha256-armv4.pl $(PERLASM_SCHEME)
-
 GENERATE[sha1-alpha.s]=asm/sha1-alpha.pl
 
 GENERATE[sha1-x86_64.s]=asm/sha1-x86_64.pl $(PERLASM_SCHEME)
@@ -44,6 +42,20 @@ GENERATE[sha1-mips.S]=asm/sha1-mips.pl $(PERLASM_SCHEME)
 GENERATE[sha256-mips.S]=asm/sha512-mips.pl $(PERLASM_SCHEME)
 GENERATE[sha512-mips.S]=asm/sha512-mips.pl $(PERLASM_SCHEME)
 
+GENERATE[sha1-armv4-large.S]=asm/sha1-armv4-large.pl $(PERLASM_SCHEME)
+INCLUDE[sha1-armv4-large.o]=..
+GENERATE[sha256-armv4.S]=asm/sha256-armv4.pl $(PERLASM_SCHEME)
+INCLUDE[sha256-armv4.o]=..
+GENERATE[sha512-armv4.S]=asm/sha512-armv4.pl $(PERLASM_SCHEME)
+INCLUDE[sha512-armv4.o]=..
+
+GENERATE[sha1-armv8.S]=asm/sha1-armv8.pl $(PERLASM_SCHEME)
+INCLUDE[sha1-armv8.o]=..
+GENERATE[sha256-armv8.S]=asm/sha512-armv8.pl $(PERLASM_SCHEME)
+INCLUDE[sha256-armv8.o]=..
+GENERATE[sha512-armv8.S]=asm/sha512-armv8.pl $(PERLASM_SCHEME)
+INCLUDE[sha512-armv8.o]=..
+
 BEGINRAW[Makefile(unix)]
 ##### SHA assembler implementations
 
@@ -55,9 +67,3 @@ BEGINRAW[Makefile(unix)]
 {- $builddir -}/sha512-%.S:	{- $sourcedir -}/asm/sha512-%.pl
 	CC="$(CC)" $(PERL) $< $(PERLASM_SCHEME) $@
 ENDRAW[Makefile(unix)]
-INCLUDE[sha1-armv4-large.o]=..
-INCLUDE[sha1-armv8.o]=..
-INCLUDE[sha256-armv4.o]=..
-INCLUDE[sha256-armv8.o]=..
-INCLUDE[sha512-armv4.o]=..
-INCLUDE[sha512-armv8.o]=..
