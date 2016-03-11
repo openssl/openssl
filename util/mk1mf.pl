@@ -285,7 +285,6 @@ $cflags.=" -DOPENSSL_NO_MD2"  if $no_md2;
 $cflags.=" -DOPENSSL_NO_MD4"  if $no_md4;
 $cflags.=" -DOPENSSL_NO_MD5"  if $no_md5;
 $cflags.=" -DOPENSSL_NO_RMD160" if $no_ripemd;
-$cflags.=" -DOPENSSL_NO_BLAKE2" if $no_blake2;
 $cflags.=" -DOPENSSL_NO_MDC2" if $no_mdc2;
 $cflags.=" -DOPENSSL_NO_BF"  if $no_bf;
 $cflags.=" -DOPENSSL_NO_CAST" if $no_cast;
