@@ -13,7 +13,9 @@ GENERATE[sha1-ia64.s]=sha1-ia64.pl $(CFLAGS)
 GENERATE[sha256-ia64.s]=sha512-ia64.pl $(CFLAGS)
 GENERATE[sha512-ia64.s]=sha512-ia64.pl $(CFLAGS)
 
+GENERATE[sha1-armv4-large.S]=asm/sha1-armv4-large.pl $(PERLASM_SCHEME)
 GENERATE[sha256-armv4.S]=asm/sha256-armv4.pl $(PERLASM_SCHEME)
+GENERATE[sha512-armv4.S]=asm/sha512-armv4.pl $(PERLASM_SCHEME)
 
 GENERATE[sha1-alpha.s]=asm/sha1-alpha.pl
 
