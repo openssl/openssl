@@ -26,4 +26,6 @@ GENERATE[ppccpuid.s]=ppccpuid.pl $(PERLASM_SCHEM
 GENERATE[pariscid.s]=pariscid.pl $(PERLASM_SCHEM
 GENERATE[alphacpuid.s]=alphacpuid.pl
 GENERATE[arm64cpuid.S]=arm64cpuid.pl $(PERLASM_SCHEME)
+INCLUDE[arm64cpuid.o]=.
 GENERATE[armv4cpuid.S]=armv4cpuid.pl $(PERLASM_SCHEME)
+INCLUDE[armv4cpuid.o]=.

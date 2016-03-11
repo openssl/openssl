@@ -17,10 +17,12 @@ GENERATE[ecp_nistz256-avx2.s]=asm/ecp_nistz256-avx2.pl $(PERLASM_SCHEME)
 GENERATE[ecp_nistz256-sparcv9.S]=asm/ecp_nistz256-sparcv9.pl $(PERLASM_SCHEME)
 INCLUDE[ecp_nistz256-sparcv9.o]=..
 
+GENERATE[ecp_nistz256-armv4.S]=asm/ecp_nistz256-armv4.pl $(PERLASM_SCHEME)
+INCLUDE[ecp_nistz256-armv4.o]=..
+GENERATE[ecp_nistz256-armv8.S]=asm/ecp_nistz256-armv8.pl $(PERLASM_SCHEME)
+INCLUDE[ecp_nistz256-armv8.o]=..
+
 BEGINRAW[Makefile]
 {- $builddir -}/ecp_nistz256-%.S:	{- $sourcedir -}/asm/ecp_nistz256-%.pl
 	CC="$(CC)" $(PERL) $< $(PERLASM_SCHEME) $@
 ENDRAW[Makefile]
-
-INCLUDE[ecp_nistz256-armv4.o]=..
-INCLUDE[ecp_nistz256-armv8.o]=..
