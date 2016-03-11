@@ -396,7 +396,8 @@ my @disable_cascades = (
     "dso"               => [ "dynamic-engine" ],
 
     # Without position independent code, there can be no shared libraries or DSOs
-    "pic"               => [ "shared", "dynamic-engine" ],
+    "pic"               => [ "shared" ],
+    "shared"            => [ "dynamic-engine" ],
     );
 
 # Avoid protocol support holes.  Also disable all versions below N, if version
