@@ -91,7 +91,7 @@
  * avoid possible clashes with libcrypto, we rename it first, using a macro.
  */
 #define bn_expand2 dummy_bn_expand2
-static BIGNUM *bn_expand2(BIGNUM *b, int words) { return NULL; }
+BIGNUM *bn_expand2(BIGNUM *b, int words) { return NULL; }
 
 #include "../crypto/bn/bn_lcl.h"
 
