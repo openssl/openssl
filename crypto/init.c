@@ -468,9 +468,13 @@ void OPENSSL_cleanup(void)
     fprintf(stderr, "OPENSSL_INIT: OPENSSL_cleanup: "
                     "bio_sock_cleanup_int()\n");
     fprintf(stderr, "OPENSSL_INIT: OPENSSL_cleanup: "
+                    "bio_cleanup()\n");
+    fprintf(stderr, "OPENSSL_INIT: OPENSSL_cleanup: "
                     "evp_cleanup_int()\n");
     fprintf(stderr, "OPENSSL_INIT: OPENSSL_cleanup: "
                     "obj_cleanup_int()\n");
+    fprintf(stderr, "OPENSSL_INIT: OPENSSL_cleanup: "
+                    "err_cleanup()\n");
 #endif
     /*
      * Note that cleanup order is important:
@@ -489,11 +493,11 @@ void OPENSSL_cleanup(void)
     engine_cleanup_int();
 #endif
     crypto_cleanup_all_ex_data_int();
-#ifndef OPENSSL_NO_SOCK
-    bio_sock_cleanup_int();
-#endif
+    bio_cleanup();
     evp_cleanup_int();
     obj_cleanup_int();
+    err_cleanup();
+
     base_inited = 0;
 }
 
