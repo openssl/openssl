@@ -16,6 +16,7 @@ GENERATE[ghash-alpha.s]=asm/ghash-alpha.pl
 GENERATE[ghash-parisc.s]=asm/ghash-parisc.pl $(PERLASM_SCHEME)
 GENERATE[ghashv8-armx.S]=asm/ghashv8-armx.pl $(PERLASM_SCHEME)
 GENERATE[ghashp8-ppc.s]=asm/ghashp8-ppc.pl $(PERLASM_SCHEME)
+GENERATE[ghash-armv4.S]=asm/ghash-armv4.pl $(PERLASM_SCHEME)
 
 BEGINRAW[Makefile]
 # GNU make "catch all"
