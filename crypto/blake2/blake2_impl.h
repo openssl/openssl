@@ -125,12 +125,12 @@ static ossl_inline void store48(uint8_t *dst, uint64_t w)
     *p++ = (uint8_t)w;
 }
 
-static ossl_inline uint32_t rotr32(const uint32_t w, const unsigned c)
+static ossl_inline uint32_t rotr32(const uint32_t w, const unsigned int c)
 {
     return (w >> c) | (w << (32 - c));
 }
 
-static ossl_inline uint64_t rotr64(const uint64_t w, const unsigned c)
+static ossl_inline uint64_t rotr64(const uint64_t w, const unsigned int c)
 {
     return (w >> c) | (w << (64 - c));
 }
