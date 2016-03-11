@@ -1136,6 +1136,21 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL *s, PACKET *pkt)
                session_id_len);
     }
 
+    if (!ssl_verify_client_session_version(s)) {
+        if (!ssl_get_new_session(s, 0)) {
+            goto f_err;
+        }
+
+        al = SSL_AD_PROTOCOL_VERSION;
+
+        /* XXX(indutny): introduce new error code */
+        SSLerr(SSL_F_TLS_PROCESS_SERVER_HELLO, SSL_R_SSL_SESSION_ID_CONFLICT);
+        goto f_err;
+    }
+
+    /* It is safe to assign version for a new session at this point */
+    s->session->ssl_version = s->version;
+
     c = ssl_get_cipher_by_char(s, cipherchars);
     if (c == NULL) {
         /* unknown cipher */

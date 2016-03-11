@@ -118,26 +118,7 @@
 
 static const SSL_METHOD *tls1_get_method(int ver)
 {
-    if (ver == TLS_ANY_VERSION)
-        return TLS_method();
-#ifndef OPENSSL_NO_TLS1_2
-    if (ver == TLS1_2_VERSION)
-        return tlsv1_2_method();
-#endif
-#ifndef OPENSSL_NO_TLS1_1
-    if (ver == TLS1_1_VERSION)
-        return tlsv1_1_method();
-#endif
-#ifndef OPENSSL_NO_TLS1
-    if (ver == TLS1_VERSION)
-        return tlsv1_method();
-#endif
-#ifndef OPENSSL_NO_SSL3
-    if (ver == SSL3_VERSION)
-        return (sslv3_method());
-    else
-#endif
-    return NULL;
+    return TLS_method();
 }
 
 IMPLEMENT_tls_meth_func(TLS_ANY_VERSION, 0, 0,
@@ -242,25 +223,7 @@ IMPLEMENT_ssl3_meth_func(sslv3_server_method,
 
 static const SSL_METHOD *tls1_get_client_method(int ver)
 {
-    if (ver == TLS_ANY_VERSION)
-        return TLS_client_method();
-#ifndef OPENSSL_NO_TLS1_2
-    if (ver == TLS1_2_VERSION)
-        return tlsv1_2_client_method();
-#endif
-#ifndef OPENSSL_NO_TLS1_1
-    if (ver == TLS1_1_VERSION)
-        return tlsv1_1_client_method();
-#endif
-#ifndef OPENSSL_NO_TLS1
-    if (ver == TLS1_VERSION)
-        return tlsv1_client_method();
-#endif
-#ifndef OPENSSL_NO_SSL3
-    if (ver == SSL3_VERSION)
-        return (sslv3_client_method());
-#endif
-    return NULL;
+    return TLS_client_method();
 }
 
 IMPLEMENT_tls_meth_func(TLS_ANY_VERSION, 0, 0,

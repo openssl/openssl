@@ -969,14 +969,6 @@ int ssl_choose_client_version(SSL *s, int version)
     default:
         if (version != s->version)
             return SSL_R_WRONG_SSL_VERSION;
-        /*
-         * If this SSL handle is not from a version flexible method we don't
-         * (and never did) check min/max, FIPS or Suite B constraints.  Hope
-         * that's OK.  It is up to the caller to not choose fixed protocol
-         * versions they don't want.  If not, then easy to fix, just return
-         * ssl_method_error(s, s->method)
-         */
-        s->session->ssl_version = s->version;
         return 0;
     case TLS_ANY_VERSION:
         table = tls_version_table;
@@ -999,11 +991,39 @@ int ssl_choose_client_version(SSL *s, int version)
         if (err != 0)
             return err;
         s->method = method;
-        s->session->ssl_version = s->version = version;
+        s->version = version;
         return 0;
     }
 
     return SSL_R_UNSUPPORTED_PROTOCOL;
+}
+
+/*
+ * ssl_verify_client_session_version - Verify that provided SSL_SESSION matches
+ * the protocol negotiated with server.
+ *
+ * @s: client SSL handle.
+ *
+ * Returns 1 on success, 0 on failure
+ */
+int ssl_verify_client_session_version(SSL *s)
+{
+  int err;
+
+  if (s->session == NULL) {
+      return 1;
+  }
+
+  /* Empty session and no EAP-FAST */
+  if (s->session->session_id_length == 0 && !s->session->tlsext_tick) {
+      return 1;
+  }
+
+  if (s->session->ssl_version == s->version) {
+      return 1;
+  }
+
+  return 0;
 }
 
 /*
