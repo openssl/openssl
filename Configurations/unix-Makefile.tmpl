@@ -868,6 +868,14 @@ EOF
       }
   }
 
+  # The combination of perl and sed takes advantage of their respective
+  # capabilities.  Some sed implementations aren't greedy (enough), which
+  # is problematic with the some regexps.  However, the sed d command is
+  # simply easier in sed.
+  #
+  # Should one wonder about the end of the Perl snippet, it's because this
+  # second regexp eats up line endings as well, if the removed path is the
+  # last in the line.  We may therefore need to put back a line ending.
   sub src2obj {
       my %args = @_;
       my $obj = $args{obj};
@@ -886,7 +894,8 @@ $obj$depext: $deps
 	rm -f \$\@.tmp; touch \$\@.tmp
 	-\$(MAKEDEPEND) -f\$\@.tmp -o"|$obj$objext" -- \$(CFLAGS) $ecflags$incs -- $srcs \\
 	    2>/dev/null
-	sed -i -e 's/^.*|//' -e 's/ \\/\\(\\\\.\\|[^ ]\\)*//g' -e '/: *\$\$/d' -e '/^\\(#.*\\| *\\)\$\$/d' \$\@.tmp
+	perl -i -pe 's/^.*\\|//; s/ \\/(\\\\.|[^ ])*//; \$\$_.="\\n" unless /\\R\$\$/g' \$\@.tmp
+	sed -i -e '/: *\$\$/d' -e '/^\\(#.*\\| *\\)\$\$/d' \$\@.tmp
 	\@if ! cmp \$\@.tmp \$\@ > /dev/null 2> /dev/null; then \\
 		mv \$\@.tmp \$\@; \\
 	else \\
