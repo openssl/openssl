@@ -4059,3 +4059,4 @@ DHparams_it                             3925	1_1_0	EXIST:!EXPORT_VAR_AS_FUNCTION
 DHparams_it                             3925	1_1_0	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:DH
 EVP_blake2s256                          3926	1_1_0	EXIST::FUNCTION:BLAKE2
 EVP_blake2b512                          3927	1_1_0	EXIST::FUNCTION:BLAKE2
+X509_SIG_get0                           3928	1_1_0	EXIST::FUNCTION:
