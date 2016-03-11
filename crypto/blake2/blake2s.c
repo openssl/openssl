@@ -70,7 +70,7 @@ static ossl_inline void blake2s_init0(BLAKE2S_CTX *S)
 /* init2 xors IV with input parameter block */
 static void blake2s_init_param(BLAKE2S_CTX *S, const BLAKE2S_PARAM *P)
 {
-    const uint32_t *p = (const uint32_t *)(P);
+    const uint8_t *p = (const uint8_t *)(P);
     size_t i;
 
     /* The param struct is carefully hand packed, and should be 32 bytes on
@@ -79,7 +79,7 @@ static void blake2s_init_param(BLAKE2S_CTX *S, const BLAKE2S_PARAM *P)
     blake2s_init0(S);
     /* IV XOR ParamBlock */
     for(i = 0; i < 8; ++i) {
-        S->h[i] ^= load32(&p[i]);
+        S->h[i] ^= load32(&p[i*4]);
     }
 }
 
@@ -92,8 +92,8 @@ int BLAKE2s_Init(BLAKE2S_CTX *c)
     P->key_length    = 0;
     P->fanout        = 1;
     P->depth         = 1;
-    store32(&P->leaf_length, 0);
-    store48(&P->node_offset, 0);
+    store32(P->leaf_length, 0);
+    store48(P->node_offset, 0);
     P->node_depth    = 0;
     P->inner_length  = 0;
     memset(P->salt,     0, sizeof(P->salt));

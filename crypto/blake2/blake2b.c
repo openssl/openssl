@@ -95,8 +95,8 @@ int BLAKE2b_Init(BLAKE2B_CTX *c)
     P->key_length    = 0;
     P->fanout        = 1;
     P->depth         = 1;
-    store32(&P->leaf_length, 0);
-    store64(&P->node_offset, 0);
+    store32(P->leaf_length, 0);
+    store64(P->node_offset, 0);
     P->node_depth    = 0;
     P->inner_length  = 0;
     memset(P->reserved, 0, sizeof(P->reserved));

@@ -18,7 +18,7 @@
 #include <string.h>
 #include "e_os.h"
 
-static ossl_inline uint32_t load32(const void *src)
+static ossl_inline uint32_t load32(const uint8_t *src)
 {
     const union {
         long one;
@@ -30,16 +30,15 @@ static ossl_inline uint32_t load32(const void *src)
         memcpy(&w, src, sizeof(w));
         return w;
     } else {
-        const uint8_t *p = (const uint8_t *)src;
-        uint32_t w = *p++;
-        w |= (uint32_t)(*p++) <<  8;
-        w |= (uint32_t)(*p++) << 16;
-        w |= (uint32_t)(*p++) << 24;
+        uint32_t w = *src++;
+        w |= (uint32_t)(*src++) <<  8;
+        w |= (uint32_t)(*src++) << 16;
+        w |= (uint32_t)(*src++) << 24;
         return w;
     }
 }
 
-static ossl_inline uint64_t load64(const void *src)
+static ossl_inline uint64_t load64(const uint8_t *src)
 {
     const union {
         long one;
@@ -51,20 +50,19 @@ static ossl_inline uint64_t load64(const void *src)
         memcpy(&w, src, sizeof(w));
         return w;
     } else {
-        const uint8_t *p = (const uint8_t *)src;
-        uint64_t w = *p++;
-        w |= (uint64_t)(*p++) <<  8;
-        w |= (uint64_t)(*p++) << 16;
-        w |= (uint64_t)(*p++) << 24;
-        w |= (uint64_t)(*p++) << 32;
-        w |= (uint64_t)(*p++) << 40;
-        w |= (uint64_t)(*p++) << 48;
-        w |= (uint64_t)(*p++) << 56;
+        uint64_t w = *src++;
+        w |= (uint64_t)(*src++) <<  8;
+        w |= (uint64_t)(*src++) << 16;
+        w |= (uint64_t)(*src++) << 24;
+        w |= (uint64_t)(*src++) << 32;
+        w |= (uint64_t)(*src++) << 40;
+        w |= (uint64_t)(*src++) << 48;
+        w |= (uint64_t)(*src++) << 56;
         return w;
     }
 }
 
-static ossl_inline void store32(void *dst, uint32_t w)
+static ossl_inline void store32(uint8_t *dst, uint32_t w)
 {
     const union {
         long one;
@@ -82,7 +80,7 @@ static ossl_inline void store32(void *dst, uint32_t w)
     }
 }
 
-static ossl_inline void store64(void *dst, uint64_t w)
+static ossl_inline void store64(uint8_t *dst, uint64_t w)
 {
     const union {
         long one;
@@ -100,19 +98,18 @@ static ossl_inline void store64(void *dst, uint64_t w)
     }
 }
 
-static ossl_inline uint64_t load48(const void *src)
+static ossl_inline uint64_t load48(const uint8_t *src)
 {
-    const uint8_t *p = (const uint8_t *)src;
-    uint64_t w = *p++;
-    w |= (uint64_t)(*p++) <<  8;
-    w |= (uint64_t)(*p++) << 16;
-    w |= (uint64_t)(*p++) << 24;
-    w |= (uint64_t)(*p++) << 32;
-    w |= (uint64_t)(*p++) << 40;
+    uint64_t w = *src++;
+    w |= (uint64_t)(*src++) <<  8;
+    w |= (uint64_t)(*src++) << 16;
+    w |= (uint64_t)(*src++) << 24;
+    w |= (uint64_t)(*src++) << 32;
+    w |= (uint64_t)(*src++) << 40;
     return w;
 }
 
-static ossl_inline void store48(void *dst, uint64_t w)
+static ossl_inline void store48(uint8_t *dst, uint64_t w)
 {
     uint8_t *p = (uint8_t *)dst;
     *p++ = (uint8_t)w;
