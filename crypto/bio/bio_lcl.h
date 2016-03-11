@@ -127,6 +127,8 @@ struct bio_st {
 typedef unsigned int socklen_t;
 # endif
 
+extern CRYPTO_RWLOCK *bio_lookup_lock;
+
 int BIO_ADDR_make(BIO_ADDR *ap, const struct sockaddr *sa);
 const struct sockaddr *BIO_ADDR_sockaddr(const BIO_ADDR *ap);
 struct sockaddr *BIO_ADDR_sockaddr_noconst(BIO_ADDR *ap);
@@ -134,6 +136,8 @@ socklen_t BIO_ADDR_sockaddr_size(const BIO_ADDR *ap);
 socklen_t BIO_ADDRINFO_sockaddr_size(const BIO_ADDRINFO *bai);
 const struct sockaddr *BIO_ADDRINFO_sockaddr(const BIO_ADDRINFO *bai);
 #endif
+
+void bio_sock_cleanup_int(void);
 
 #if BIO_FLAGS_UPLINK==0
 /* Shortcut UPLINK calls on most platforms... */

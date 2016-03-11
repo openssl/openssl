@@ -644,3 +644,13 @@ uint64_t BIO_number_written(BIO *bio)
         return bio->num_write;
     return 0;
 }
+
+
+void bio_cleanup(void)
+{
+#ifndef OPENSSL_NO_SOCK
+    bio_sock_cleanup_int();
+    CRYPTO_THREAD_lock_free(bio_lookup_lock);
+    bio_lookup_lock = NULL;
+#endif
+}

@@ -108,7 +108,7 @@
  *
  */
 
-#include "internal/cryptlib.h"
+#include "internal/cryptlib_int.h"
 #include "internal/threads.h"
 #include <openssl/lhash.h>
 
@@ -139,9 +139,13 @@ static CRYPTO_ONCE ex_data_init = CRYPTO_ONCE_STATIC_INIT;
 
 static void do_ex_data_init(void)
 {
-    CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_DISABLE);
     ex_data_lock = CRYPTO_THREAD_lock_new();
-    CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ENABLE);
+}
+
+void ex_data_cleanup(void)
+{
+    CRYPTO_THREAD_lock_free(ex_data_lock);
+    ex_data_lock = NULL;
 }
 
 /*

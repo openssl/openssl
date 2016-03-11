@@ -62,7 +62,7 @@
 #include <openssl/buffer.h>
 #include <ctype.h>
 
-static CRYPTO_RWLOCK *bio_lookup_lock;
+CRYPTO_RWLOCK *bio_lookup_lock;
 static CRYPTO_ONCE bio_lookup_init = CRYPTO_ONCE_STATIC_INIT;
 
 /*
@@ -891,4 +891,5 @@ int BIO_lookup(const char *host, const char *service,
 
     return ret;
 }
+
 #endif /* OPENSSL_NO_SOCK */
