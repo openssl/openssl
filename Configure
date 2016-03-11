@@ -1101,8 +1101,8 @@ if ($^O ne "VMS" && !$disabled{makedepend}) {
     # Is the compiler gcc or clang?  $ecc is used below to see if
     # error-checking can be turned on.
     my $ccpcc = "$config{cross_compile_prefix}$target{cc}";
-    $config{makedepprog} = which('makedepend');
-    open(PIPE, "$ccpcc --version 2>&1 | head -2 |");
+    open(PIPE, "$ccpcc --version 2>&1 |");
+    my $lines = 2;
     while ( <PIPE> ) {
         # Find the version number and save the major.
         m|(?:.*)\b(\d+)\.\d+\.\d+\b(?:.*)|;
@@ -1110,12 +1110,14 @@ if ($^O ne "VMS" && !$disabled{makedepend}) {
         # We know that GNU C version 3 and up as well as all clang
         # versions support dependency generation
         $config{makedepprog} = $ccpcc
-            if /clang/ || (/gcc/ && $compiler_major > 3);
+            if (/clang/ || (/gcc/ && $compiler_major > 3));
         $ecc = "clang" if /clang/;
         $ecc = "gcc" if /gcc/;
+        last if ($config{makedepprog} || !$lines--);
     }
     close(PIPE);
 
+    $config{makedepprog} = which('makedepend') unless $config{makedepprog};
     $disabled{makedepend} = "unavailable" unless $config{makedepprog};
 }
 
