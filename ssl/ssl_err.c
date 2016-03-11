@@ -634,6 +634,8 @@ static ERR_STRING_DATA SSL_str_reasons[] = {
      "ssl session id context too long"},
     {ERR_REASON(SSL_R_SSL_SESSION_ID_HAS_BAD_LENGTH),
      "ssl session id has bad length"},
+    {ERR_REASON(SSL_R_SSL_SESSION_VERSION_MISMATCH),
+     "ssl session version mismatch"},
     {ERR_REASON(SSL_R_TLS_CLIENT_CERT_REQ_WITH_ANON_CIPHER),
      "tls client cert req with anon cipher"},
     {ERR_REASON(SSL_R_TLS_HEARTBEAT_PEER_DOESNT_ACCEPT),
