@@ -66,7 +66,7 @@ my $P2intermediate="tmp_intP2.ss";
 plan tests =>
     1				# For testss
     + 1				# For ssltest -test_cipherlist
-    + 13			# For the first testssl
+    + 14			# For the first testssl
     + 16			# For the first testsslproxy
     + 16			# For the second testsslproxy
     ;
@@ -819,6 +819,20 @@ sub testssl {
 	  ok(run(test([@ssltest, "-bio_pair", "-tls1", "-requirect",
 	               "-should_negotiate", "fail-client"])));
 	}
+    };
+
+    subtest 'TLS1 session renegotiation downgrade' => sub {
+        ######################################################################
+
+        plan tests => 1;
+
+        SKIP: {
+            skip "TLSv1.2 is not supported by this OpenSSL build", 1
+                if $no_tls1_2;
+
+            note('echo test tls1 session renegotiation downgrade');
+            ok(run(test([@ssltest, "-bio_pair", "-num", "2", "-reuse", "-tls1_reuse"])));
+       }
     };
 
 }

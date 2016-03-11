@@ -811,6 +811,8 @@ static void sv_usage(void)
     fprintf(stderr, " -v            - more output\n");
     fprintf(stderr, " -d            - debug output\n");
     fprintf(stderr, " -reuse        - use session-id reuse\n");
+    fprintf(stderr, " -tls1_reuse   - downgrade to TLSv1 on session reuse\n");
+    fprintf(stderr, " -no_ticket    - do not issue TLS session ticket\n");
     fprintf(stderr, " -num <val>    - number of connections to perform\n");
     fprintf(stderr,
             " -bytes <val>  - number of bytes to swap between client/server\n");
@@ -1030,7 +1032,7 @@ int main(int argc, char *argv[])
     SSL_CTX *c_ctx = NULL;
     const SSL_METHOD *meth = NULL;
     SSL *c_ssl, *s_ssl;
-    int number = 1, reuse = 0;
+    int number = 1, reuse = 0, tls1_reuse = 0, no_ticket = 0;
     long bytes = 256L;
 #ifndef OPENSSL_NO_DH
     DH *dh;
@@ -1150,6 +1152,10 @@ int main(int argc, char *argv[])
             debug = 1;
         else if (strcmp(*argv, "-reuse") == 0)
             reuse = 1;
+        else if (strcmp(*argv, "-tls1_reuse") == 0)
+            tls1_reuse = 1;
+        else if (strcmp(*argv, "-no-ticket") == 0)
+            no_ticket = 1;
         else if (strcmp(*argv, "-dhe512") == 0) {
 #ifndef OPENSSL_NO_DH
             dhe512 = 1;
@@ -1445,6 +1451,14 @@ int main(int argc, char *argv[])
                 "to avoid protocol mismatch.\n");
         EXIT(1);
     }
+
+    if (tls1_reuse &&
+        (ssl3 || tls1 || dtls1 || dtls12 || !reuse || number <= 1)) {
+        fprintf(stderr, "Can\'t downgrade to TLSv1 on reuse without reuse, or\n"
+                        "from already low protocol version, or when number of\n"
+                        "tests is equal to 1\n");
+        EXIT(1);
+    }
 #ifdef OPENSSL_FIPS
     if (fips_mode) {
         if (!FIPS_mode_set(1)) {
@@ -1654,6 +1668,11 @@ int main(int argc, char *argv[])
         }
     }
 
+    if (no_ticket) {
+        SSL_CTX_set_options(c_ctx, SSL_OP_NO_TICKET);
+        SSL_CTX_set_options(s_ctx, SSL_OP_NO_TICKET);
+    }
+
     /* Use PSK only if PSK key is given */
     if (psk_key != NULL) {
         /*
@@ -1829,24 +1848,49 @@ int main(int argc, char *argv[])
     if (sn_server1 != NULL || sn_server2 != NULL)
         SSL_CTX_set_tlsext_servername_callback(s_ctx, servername_cb);
 
-    c_ssl = SSL_new(c_ctx);
-    s_ssl = SSL_new(s_ctx);
-
-    if (sn_client)
-        SSL_set_tlsext_host_name(c_ssl, sn_client);
-
-    if (!set_protocol_version(server_min_proto, s_ssl, SSL_CTRL_SET_MIN_PROTO_VERSION))
-        goto end;
-    if (!set_protocol_version(server_max_proto, s_ssl, SSL_CTRL_SET_MAX_PROTO_VERSION))
-        goto end;
-    if (!set_protocol_version(client_min_proto, c_ssl, SSL_CTRL_SET_MIN_PROTO_VERSION))
-        goto end;
-    if (!set_protocol_version(client_max_proto, c_ssl, SSL_CTRL_SET_MAX_PROTO_VERSION))
-        goto end;
-
     BIO_printf(bio_stdout, "Doing handshakes=%d bytes=%ld\n", number, bytes);
     for (i = 0; i < number; i++) {
-        if (!reuse) {
+        if (i == 0 || tls1_reuse) {
+            SSL_SESSION *sess = NULL;
+
+            /* Server downgrade */
+            if (tls1_reuse && i != 0) {
+                SSL_CTX_set_options(s_ctx, SSL_OP_NO_TLSv1_1);
+                SSL_CTX_set_options(s_ctx, SSL_OP_NO_TLSv1_2);
+
+                sess = ssl_session_dup(SSL_get_session(c_ssl), 0);
+            }
+
+            /* Create new SSL* structure to reset *_ssl->method */
+            SSL_free(c_ssl);
+            SSL_free(s_ssl);
+            c_ssl = NULL;
+            s_ssl = NULL;
+
+            c_ssl = SSL_new(c_ctx);
+            s_ssl = SSL_new(s_ctx);
+
+            if (sn_client)
+                SSL_set_tlsext_host_name(c_ssl, sn_client);
+
+            if (!set_protocol_version(server_min_proto, s_ssl, SSL_CTRL_SET_MIN_PROTO_VERSION))
+                goto end;
+            if (!set_protocol_version(server_max_proto, s_ssl, SSL_CTRL_SET_MAX_PROTO_VERSION))
+                goto end;
+            if (!set_protocol_version(client_min_proto, c_ssl, SSL_CTRL_SET_MIN_PROTO_VERSION))
+                goto end;
+            if (!set_protocol_version(client_max_proto, c_ssl, SSL_CTRL_SET_MAX_PROTO_VERSION))
+                goto end;
+
+            if (tls1_reuse && !SSL_set_session(c_ssl, sess)) {
+                BIO_printf(bio_err, "Failed to set session\n");
+                goto end;
+            }
+
+            if (sess != NULL) {
+              SSL_SESSION_free(sess);
+            }
+        } else if (!reuse) {
             if (!SSL_set_session(c_ssl, NULL)) {
                 BIO_printf(bio_err, "Failed to set session\n");
                 goto end;
