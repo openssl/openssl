@@ -886,8 +886,12 @@ $obj$depext: $deps
 	rm -f \$\@.tmp; touch \$\@.tmp
 	-\$(MAKEDEPEND) -f\$\@.tmp -o"|$obj$objext" -- \$(CFLAGS) $ecflags$incs -- $srcs \\
 	    2>/dev/null
-	sed -e 's/^.*|//' -e 's/ \\/\\(\\\\.\\|[^ ]\\)*//g' -e '/: *\$\$/d' -e '/^\\(#.*\\| *\\)\$\$/d' \$\@.tmp > \$\@
-	rm \$\@.tmp
+	sed -i -e 's/^.*|//' -e 's/ \\/\\(\\\\.\\|[^ ]\\)*//g' -e '/: *\$\$/d' -e '/^\\(#.*\\| *\\)\$\$/d' \$\@.tmp
+	\@if ! cmp \$\@.tmp \$\@ > /dev/null 2> /dev/null; then \\
+		mv \$\@.tmp \$\@; \\
+	else \\
+		rm -f \$\@.tmp; \\
+	fi
 EOF
           $deps = $obj.$depext;
       }
@@ -904,6 +908,8 @@ $obj$objext: $deps
 	\@touch $obj$depext.tmp
 	\@if ! cmp $obj$depext.tmp $obj$depext > /dev/null 2> /dev/null; then \\
 		mv $obj$depext.tmp $obj$depext; \\
+	else \\
+		rm -f $obj$depext.tmp; \\
 	fi
 EOF
       }
