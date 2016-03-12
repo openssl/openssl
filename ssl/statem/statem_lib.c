@@ -969,6 +969,14 @@ int ssl_choose_client_version(SSL *s, int version)
     default:
         if (version != s->version)
             return SSL_R_WRONG_SSL_VERSION;
+
+        /*
+         * If this SSL handle is not from a version flexible method we don't
+         * (and never did) check min/max, FIPS or Suite B constraints.  Hope
+         * that's OK.  It is up to the caller to not choose fixed protocol
+         * versions they don't want.  If not, then easy to fix, just return
+         * ssl_method_error(s, s->method)
+         */
         return 0;
     case TLS_ANY_VERSION:
         table = tls_version_table;

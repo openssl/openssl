@@ -877,13 +877,7 @@ int SSL_set_session(SSL *s, SSL_SESSION *session)
     const SSL_METHOD *meth;
 
     if (session != NULL) {
-        meth = s->ctx->method->get_ssl_method(session->ssl_version);
-        if (meth == NULL)
-            meth = s->method->get_ssl_method(session->ssl_version);
-        if (meth == NULL) {
-            SSLerr(SSL_F_SSL_SET_SESSION, SSL_R_UNABLE_TO_FIND_SSL_METHOD);
-            return (0);
-        }
+        meth = s->ctx->method;
 
         if (meth != s->method) {
             if (!SSL_set_ssl_method(s, meth))
