@@ -2,8 +2,8 @@
 
 =head1 NAME
 
-SSL_CTX_set_alpn_select_cb, SSL_CTX_set_alpn_protos, SSL_set_alpn_protos,
-SSL_get0_alpn_selected, SSL_select_next_proto - handle application layer
+SSL_CTX_set_alpn_protos, SSL_set_alpn_protos, SSL_CTX_set_alpn_select_cb,
+SSL_select_next_proto, SSL_get0_alpn_selected - handle application layer
 protocol negotiation (ALPN)
 
 =head1 SYNOPSIS
@@ -38,19 +38,19 @@ B<protos_len>.
 
 SSL_CTX_set_alpn_select_cb() sets the application callback B<cb> used by a
 server to select which protocol to use for the incoming connection. When B<cb>
-is NULL, no ALPN is not used. The B<arg> value is pointer which is passed to
+is NULL, ALPN is not used. The B<arg> value is a pointer which is passed to
 the application callback.
 
 B<cb> is the application defined callback. The B<in>, B<inlen> parameters are a
 vector in protocol-list format. The value of the B<out>, B<outlen> vector
-should be set to the value of a single protocol contained with in the B<in>,
+should be set to the value of a single protocol selected from the B<in>,
 B<inlen> vector. The B<arg> parameter is the pointer set via
 SSL_CTX_set_alpn_select_cb().
 
 SSL_select_next_proto() is a helper function used to select protocols. It
 implements the standard protocol selection. It is expected that this function
 is called from the application callback B<cb>. The protocol data in B<server>,
-B<server_len> and B<client>, B<client_len> must be in protocol-list format
+B<server_len> and B<client>, B<client_len> must be in the protocol-list format
 described below. The first item in the B<server>, B<server_len> list that
 matches an item in the B<client>, B<client_len> list is selected, and returned
 in B<out>, B<outlen>. The B<out> value will point into either B<server> or
@@ -60,7 +60,7 @@ function can also be used in the NPN callback.
 
 SSL_get0_alpn_selected() returns a pointer to the selected protocol in B<data>
 with length B<len>. It is not NUL-terminated. B<data> is set to NULL and B<len>
-is set to 0 if no protocol has been selected. B<data> value must not be freed.
+is set to 0 if no protocol has been selected. B<data> must not be freed.
 
 =head1 NOTES
 
