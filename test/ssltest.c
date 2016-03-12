@@ -285,7 +285,8 @@ static int ssl_srp_server_param_cb(SSL *s, int *ad, void *arg)
 }
 #endif
 
-static SSL_SESSION *dup_session(SSL_SESSION *sess) {
+static SSL_SESSION *dup_session(SSL_SESSION *sess)
+{
   int size;
   unsigned char *serialized, *p;
   SSL_SESSION *copy;
