@@ -5,6 +5,7 @@
 {-
      our $objext = $target{obj_extension} || ".o";
      our $depext = $target{dep_extension} || ".d";
+     our $asmext = $target{asm_extension} || ".s";
      our $exeext = $target{exe_extension} || "";
      our $libext = $target{lib_extension} || ".a";
      our $shlibext = $target{shared_extension} || ".so";
@@ -89,6 +90,7 @@ BIN_SCRIPTS=$(BLDDIR)/tools/c_rehash
 MISC_SCRIPTS=$(SRCDIR)/tools/c_hash $(SRCDIR)/tools/c_info \
 	     $(SRCDIR)/tools/c_issuer $(SRCDIR)/tools/c_name \
 	     $(BLDDIR)/apps/CA.pl $(SRCDIR)/apps/tsget
+SAVED_ASM_DIR=$(BLDDIR)/crypto/bn/asm
 
 SHLIB_INFO={- join(" ", map { "\"".shlib($_).";".shlib_simple($_)."\"" } @{$unified_info{libraries}}) -}
 
@@ -244,6 +246,7 @@ clean: libclean
 	rm -f $(PROGRAMS) $(TESTPROGS)
 	rm -f `find $(BLDDIR) -name '*{- $depext -}'`
 	rm -f `find $(BLDDIR) -name '*{- $objext -}'`
+	rm -f `find $(BLDDIR)/crypto -path $(SAVED_ASM_DIR) -prune -o -name '*{- $asmext -}' -print`
 	rm -f $(BLDDIR)/core
 	rm -f $(BLDDIR)/tags $(BLDDIR)/TAGS
 	rm -f $(BLDDIR)/openssl.pc $(BLDDIR)/libcrypto.pc $(BLDDIR)/libssl.pc
