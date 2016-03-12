@@ -822,7 +822,6 @@ int tls_construct_client_hello(SSL *s)
     }
 
     if ((sess == NULL) || (sess->ssl_version != s->version) ||
-        meth = s->ctx->method;
         /*
          * In the case of EAP-FAST, we can have a pre-shared
          * "ticket" without a session ID.
