@@ -950,15 +950,15 @@ EOF
 $target: $lib$libext $deps $ordinalsfile
 	\$(MAKE) -f \$(SRCDIR)/Makefile.shared -e \\
 		PLATFORM=\$(PLATFORM) \\
-		PERL=\$(PERL) SRCDIR="\$(SRCDIR)" DSTDIR="$libd" \\
-		INSTALLTOP="\$(INSTALLTOP)" LIBDIR="\$(LIBDIR)" \\
-		LIBDEPS="\$(PLIB_LDFLAGS) $linklibs \$(EX_LIBS)" \\
+		PERL=\$(PERL) SRCDIR='\$(SRCDIR)' DSTDIR="$libd" \\
+		INSTALLTOP='\$(INSTALLTOP)' LIBDIR='\$(LIBDIR)' \\
+		LIBDEPS='\$(PLIB_LDFLAGS) '"$linklibs"' \$(EX_LIBS)' \\
 		LIBNAME=$libname LIBVERSION=\$(SHLIB_MAJOR).\$(SHLIB_MINOR) \\
-		LIBCOMPATVERSIONS=";\$(SHLIB_VERSION_HISTORY)" \\
-		CC="\$(CC)" CFLAGS="\$(CFLAGS) \$(LIB_CFLAGS)" \\
-		CROSS_COMPILE="\$(CROSS_COMPILE)" LDFLAGS="\$(LDFLAGS)" \\
-		SHARED_LDFLAGS="\$(LIB_LDFLAGS)" SHLIB_EXT=$shlibext \\
-		SHARED_RCFLAGS="\$(RCFLAGS)" \\
+		LIBCOMPATVERSIONS=';\$(SHLIB_VERSION_HISTORY)' \\
+		CC='\$(CC)' CFLAGS='\$(CFLAGS) \$(LIB_CFLAGS)' \\
+		CROSS_COMPILE='\$(CROSS_COMPILE)' LDFLAGS='\$(LDFLAGS)' \\
+		SHARED_LDFLAGS='\$(LIB_LDFLAGS)' SHLIB_EXT=$shlibext \\
+		SHARED_RCFLAGS='\$(RCFLAGS)' \\
 		link_shlib.$shlib_target
 EOF
 	  . (windowsdll() ? <<"EOF" : "");
@@ -986,11 +986,11 @@ EOF
 $target: $objs $deps
 	\$(MAKE) -f \$(SRCDIR)/Makefile.shared -e \\
 		PLATFORM=\$(PLATFORM) \\
-		PERL=\$(PERL) SRCDIR="\$(SRCDIR)" DSTDIR="$libd" \\
-		LIBDEPS="\$(PLIB_LDFLAGS) $shlibdeps \$(EX_LIBS)" \\
-		LIBNAME=$libname LDFLAGS="\$(LDFLAGS)" \\
-		CC="\$(CC)" CFLAGS="\$(CFLAGS) \$(DSO_CFLAGS)" \\
-		SHARED_LDFLAGS="\$(DSO_LDFLAGS)" \\
+		PERL=\$(PERL) SRCDIR='\$(SRCDIR)' DSTDIR="$libd" \\
+		LIBDEPS='\$(PLIB_LDFLAGS) '"$shlibdeps"' \$(EX_LIBS)' \\
+		LIBNAME=$libname LDFLAGS='\$(LDFLAGS)' \\
+		CC='\$(CC)' CFLAGS='\$(CFLAGS) \$(DSO_CFLAGS)' \\
+		SHARED_LDFLAGS='\$(DSO_LDFLAGS)' \\
 		SHLIB_EXT=$dsoext \\
 		LIBEXTRAS="$objs" \\
 		link_dso.$shlib_target
@@ -1025,9 +1025,9 @@ $bin$exeext: $objs $deps
 	\$(MAKE) -f \$(SRCDIR)/Makefile.shared -e \\
 		PERL=\$(PERL) SRCDIR=\$(SRCDIR) \\
 		APPNAME=$bin$exeext OBJECTS="$objs" \\
-		LIBDEPS="\$(PLIB_LDFLAGS) $linklibs \$(EX_LIBS)" \\
-		CC="\$(CC)" CFLAGS="\$(CFLAGS) \$(BIN_CFLAGS)" \\
-		LDFLAGS="\$(LDFLAGS)" LIBRPATH="\$(INSTALLTOP)/\$(LIBDIR)" \\
+		LIBDEPS='\$(PLIB_LDFLAGS) '"$linklibs"' \$(EX_LIBS)' \\
+		CC='\$(CC)' CFLAGS='\$(CFLAGS) \$(BIN_CFLAGS)' \\
+		LDFLAGS='\$(LDFLAGS)' LIBRPATH='\$(INSTALLTOP)/\$(LIBDIR)' \\
 		link_app.$shlib_target
 EOF
   }
