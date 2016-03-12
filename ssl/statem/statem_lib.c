@@ -1007,28 +1007,6 @@ int ssl_choose_client_version(SSL *s, int version)
 }
 
 /*
- * ssl_verify_client_session_version - Verify that provided SSL_SESSION matches
- * the protocol negotiated with server.
- *
- * @s: client SSL handle.
- *
- * Returns 1 when it matches, 0 otherwise
- */
-int ssl_verify_client_session_version(SSL *s)
-{
-  /* Empty session and no EAP-FAST */
-  if (s->session->session_id_length == 0 && !s->session->tlsext_tick) {
-      return 1;
-  }
-
-  if (s->session->ssl_version == s->version) {
-      return 1;
-  }
-
-  return 0;
-}
-
-/*
  * ssl_get_client_min_max_version - get minimum and maximum client version
  * @s: The SSL connection
  * @min_version: The minimum supported version
