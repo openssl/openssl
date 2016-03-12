@@ -830,7 +830,6 @@ int tls_construct_client_hello(SSL *s)
         (sess->not_resumable)) {
         if (!ssl_get_new_session(s, 0))
             goto err;
-        s->session->ssl_version = s->version;
     }
     /* else use the pre-loaded session */
 
@@ -1129,8 +1128,11 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL *s, PACKET *pkt)
             if (!ssl_get_new_session(s, 0)) {
                 goto f_err;
             }
-            s->session->ssl_version = s->version;
         }
+
+        /* Fix session version if it is not reused and we are not in EAP-FAST */
+        if (s->session->tlsext_tick == NULL)
+            s->session->ssl_version = s->version;
 
         s->session->session_id_length = session_id_len;
         /* session_id_len could be 0 */
