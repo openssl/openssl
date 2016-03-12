@@ -831,6 +831,7 @@ int tls_construct_client_hello(SSL *s)
         (sess->not_resumable)) {
         if (!ssl_get_new_session(s, 0))
             goto err;
+        s->session->ssl_version = s->version;
     }
     /* else use the pre-loaded session */
 
@@ -1129,6 +1130,7 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL *s, PACKET *pkt)
             if (!ssl_get_new_session(s, 0)) {
                 goto f_err;
             }
+            s->session->ssl_version = s->version;
         }
 
         s->session->session_id_length = session_id_len;
@@ -1145,15 +1147,12 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL *s, PACKET *pkt)
         goto f_err;
     }
 
-    /* It is safe to assign version for a new session at this point.
-     *
-     * If this SSL handle is not from a version flexible method we don't
+    /* If this SSL handle is not from a version flexible method we don't
      * (and never did) check min/max, FIPS or Suite B constraints.  Hope
      * that's OK.  It is up to the caller to not choose fixed protocol
      * versions they don't want.  If not, then easy to fix, just return
      * ssl_method_error(s, s->method)
      */
-    s->session->ssl_version = s->version;
 
     c = ssl_get_cipher_by_char(s, cipherchars);
     if (c == NULL) {
