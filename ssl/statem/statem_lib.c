@@ -1016,8 +1016,6 @@ int ssl_choose_client_version(SSL *s, int version)
  */
 int ssl_verify_client_session_version(SSL *s)
 {
-  int err;
-
   /* Empty session and no EAP-FAST */
   if (s->session->session_id_length == 0 && !s->session->tlsext_tick) {
       return 1;
