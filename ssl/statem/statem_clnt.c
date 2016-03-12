@@ -1148,9 +1148,6 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL *s, PACKET *pkt)
         goto f_err;
     }
 
-    /* It is safe to assign version for a new session at this point */
-    s->session->ssl_version = s->version;
-
     c = ssl_get_cipher_by_char(s, cipherchars);
     if (c == NULL) {
         /* unknown cipher */

@@ -1004,15 +1004,11 @@ int ssl_choose_client_version(SSL *s, int version)
  *
  * @s: client SSL handle.
  *
- * Returns 1 on success, 0 on failure
+ * Returns 1 when it matches, 0 otherwise
  */
 int ssl_verify_client_session_version(SSL *s)
 {
   int err;
-
-  if (s->session == NULL) {
-      return 1;
-  }
 
   /* Empty session and no EAP-FAST */
   if (s->session->session_id_length == 0 && !s->session->tlsext_tick) {

@@ -1031,7 +1031,7 @@ int main(int argc, char *argv[])
     char *p;
     SSL_CTX *c_ctx = NULL;
     const SSL_METHOD *meth = NULL;
-    SSL *c_ssl, *s_ssl;
+    SSL *c_ssl = NULL, *s_ssl = NULL;
     int number = 1, reuse = 0, tls1_reuse = 0, no_ticket = 0;
     long bytes = 256L;
 #ifndef OPENSSL_NO_DH
@@ -1862,8 +1862,10 @@ int main(int argc, char *argv[])
             }
 
             /* Create new SSL* structure to reset *_ssl->method */
-            SSL_free(c_ssl);
-            SSL_free(s_ssl);
+            if (c_ssl != NULL)
+              SSL_free(c_ssl);
+            if (s_ssl != NULL)
+              SSL_free(s_ssl);
             c_ssl = NULL;
             s_ssl = NULL;
 
