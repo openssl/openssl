@@ -27,6 +27,6 @@ IF[{- !$disabled{"engine"} -}]
     INCLUDE[ossltest]={- rel2abs(catdir($builddir,"../include")) -} ../include
   ENDIF
 
-  GENERATE[e_padlock-x86.s]=asm/e_padlock-x86.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR)
+  GENERATE[e_padlock-x86.s]=asm/e_padlock-x86.pl $(PERLASM_SCHEME) $(CFLAGS) $(LIB_CFLAGS) $(PROCESSOR)
   GENERATE[e_padlock-x86_64.s]=asm/e_padlock-x86_64.pl $(PERLASM_SCHEME)
 ENDIF

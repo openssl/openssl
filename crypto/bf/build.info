@@ -1,5 +1,5 @@
 LIBS=../../libcrypto
 SOURCE[../../libcrypto]=bf_skey.c bf_ecb.c bf_enc.c bf_cfb64.c bf_ofb64.c 
 
-GENERATE[bf-586.s]=asm/bf-586.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR)
+GENERATE[bf-586.s]=asm/bf-586.pl $(PERLASM_SCHEME) $(CFLAGS) $(LIB_CFLAGS) $(PROCESSOR)
 DEPEND[bf-586.s]=../perlasm/x86asm.pl ../perlasm/cbc.pl
