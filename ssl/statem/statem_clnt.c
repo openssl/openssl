@@ -822,6 +822,7 @@ int tls_construct_client_hello(SSL *s)
     }
 
     if ((sess == NULL) || (sess->ssl_version != s->version) ||
+        meth = s->ctx->method;
         /*
          * In the case of EAP-FAST, we can have a pre-shared
          * "ticket" without a session ID.
@@ -1143,6 +1144,16 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL *s, PACKET *pkt)
         SSLerr(SSL_F_TLS_PROCESS_SERVER_HELLO, SSL_R_SSL_SESSION_ID_CONFLICT);
         goto f_err;
     }
+
+    /* It is safe to assign version for a new session at this point.
+     *
+     * If this SSL handle is not from a version flexible method we don't
+     * (and never did) check min/max, FIPS or Suite B constraints.  Hope
+     * that's OK.  It is up to the caller to not choose fixed protocol
+     * versions they don't want.  If not, then easy to fix, just return
+     * ssl_method_error(s, s->method)
+     */
+    s->session->ssl_version = s->version;
 
     c = ssl_get_cipher_by_char(s, cipherchars);
     if (c == NULL) {

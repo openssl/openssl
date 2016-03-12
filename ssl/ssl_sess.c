@@ -874,13 +874,9 @@ int SSL_SESSION_up_ref(SSL_SESSION *ss)
 int SSL_set_session(SSL *s, SSL_SESSION *session)
 {
     int ret = 0;
-    const SSL_METHOD *meth;
-
     if (session != NULL) {
-        meth = s->ctx->method;
-
-        if (meth != s->method) {
-            if (!SSL_set_ssl_method(s, meth))
+        if (s->ctx->method != s->method) {
+            if (!SSL_set_ssl_method(s, s->ctx->method))
                 return (0);
         }
 
@@ -892,9 +888,8 @@ int SSL_set_session(SSL *s, SSL_SESSION *session)
     } else {
         SSL_SESSION_free(s->session);
         s->session = NULL;
-        meth = s->ctx->method;
-        if (meth != s->method) {
-            if (!SSL_set_ssl_method(s, meth))
+        if (s->ctx->method != s->method) {
+            if (!SSL_set_ssl_method(s, s->ctx->method))
                 return (0);
         }
         ret = 1;
