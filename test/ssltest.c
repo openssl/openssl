@@ -299,7 +299,7 @@ static SSL_SESSION *dup_session(SSL_SESSION *sess)
   }
 
   p = serialized;
-  i2d_SSL_SESSION(sess, &p);
+  size = i2d_SSL_SESSION(sess, &p);
 
   p = serialized;
   copy = d2i_SSL_SESSION(NULL, (const unsigned char**) &p, size);
