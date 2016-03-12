@@ -1801,6 +1801,10 @@ static int tls1_alpn_handle_client_hello_late(SSL *s, int *ret, int *al)
                 return 0;
             }
             s->s3->alpn_selected_len = selected_len;
+#ifndef OPENSSL_NO_NEXTPROTONEG
+            /* ALPN takes precedence over NPN. */
+            s->s3->next_proto_neg_seen = 0;
+#endif
         } else {
             *al = SSL_AD_NO_APPLICATION_PROTOCOL;
             *ret = SSL_TLSEXT_ERR_ALERT_FATAL;
@@ -1902,6 +1906,10 @@ static int ssl_scan_clienthello_tlsext(SSL *s, PACKET *pkt, int *al)
 
     OPENSSL_free(s->s3->alpn_selected);
     s->s3->alpn_selected = NULL;
+    s->s3->alpn_selected_len = 0;
+    OPENSSL_free(s->s3->alpn_proposed);
+    s->s3->alpn_proposed = NULL;
+    s->s3->alpn_proposed_len = 0;
 #ifndef OPENSSL_NO_HEARTBEATS
     s->tlsext_heartbeat &= ~(SSL_DTLSEXT_HB_ENABLED |
                              SSL_DTLSEXT_HB_DONT_SEND_REQUESTS);
@@ -2216,8 +2224,7 @@ static int ssl_scan_clienthello_tlsext(SSL *s, PACKET *pkt, int *al)
 #endif
 #ifndef OPENSSL_NO_NEXTPROTONEG
         else if (type == TLSEXT_TYPE_next_proto_neg &&
-                 s->s3->tmp.finish_md_len == 0 &&
-                 s->s3->alpn_selected == NULL) {
+                 s->s3->tmp.finish_md_len == 0) {
             /*-
              * We shouldn't accept this extension on a
              * renegotiation.
@@ -2243,10 +2250,6 @@ static int ssl_scan_clienthello_tlsext(SSL *s, PACKET *pkt, int *al)
                  s->s3->tmp.finish_md_len == 0) {
             if (!tls1_alpn_handle_client_hello(s, &extension, al))
                 return 0;
-#ifndef OPENSSL_NO_NEXTPROTONEG
-            /* ALPN takes precedence over NPN. */
-            s->s3->next_proto_neg_seen = 0;
-#endif
         }
 
         /* session ticket processed earlier */
