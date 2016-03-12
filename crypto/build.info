@@ -16,7 +16,7 @@ DEPEND[buildinf.h]=configdata.pm
 
 GENERATE[uplink-x86.s]=../ms/uplink-x86.pl $(PERLASM_SCHEME)
 
-GENERATE[x86cpuid.s]=x86cpuid.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR)
+GENERATE[x86cpuid.s]=x86cpuid.pl $(PERLASM_SCHEME) $(CFLAGS) $(LIB_CFLAGS) $(PROCESSOR)
 DEPEND[x86cpuid.s]=perlasm/x86asm.pl
 
 GENERATE[x86_64cpuid.s]=x86_64cpuid.pl $(PERLASM_SCHEME)
