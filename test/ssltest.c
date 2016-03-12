@@ -285,6 +285,33 @@ static int ssl_srp_server_param_cb(SSL *s, int *ad, void *arg)
 }
 #endif
 
+static SSL_SESSION *dup_session(SSL_SESSION *sess) {
+  int size;
+  unsigned char *serialized, *p;
+  SSL_SESSION *copy;
+
+  size = i2d_SSL_SESSION(sess, NULL);
+  serialized = OPENSSL_malloc(size);
+  if (serialized == NULL) {
+      fprintf(stderr, "failed to allocate data for copying SSL_SESSION\n");
+      abort();
+  }
+
+  p = serialized;
+  i2d_SSL_SESSION(sess, &p);
+
+  p = serialized;
+  copy = d2i_SSL_SESSION(NULL, (const unsigned char**) &p, size);
+  OPENSSL_free(serialized);
+
+  if (copy == NULL) {
+      fprintf(stderr, "failed to allocate data for SSL_SESSION copy\n");
+      abort();
+  }
+
+  return copy;
+}
+
 static BIO *bio_err = NULL;
 static BIO *bio_stdout = NULL;
 
@@ -1858,7 +1885,7 @@ int main(int argc, char *argv[])
                 SSL_CTX_set_options(s_ctx, SSL_OP_NO_TLSv1_1);
                 SSL_CTX_set_options(s_ctx, SSL_OP_NO_TLSv1_2);
 
-                sess = ssl_session_dup(SSL_get_session(c_ssl), 0);
+                sess = dup_session(SSL_get_session(c_ssl));
             }
 
             /* Create new SSL* structure to reset *_ssl->method */
