@@ -96,7 +96,7 @@ LDFLAGS={- $target{lflags} -}
 LDOUTFLAG={- $target{loutflag} || "/out:" -}
 EX_LIBS={- $target{ex_libs} -}
 LIB_CFLAGS={- join(" ", $target{lib_cflags}, $target{shared_cflag}) || "" -}
-SHARED_LDFLAGS={- $target{shared_ldflag} || "" -}
+LIB_LDFLAGS={- $target{shared_ldflag} || "" -}
 DSO_CFLAGS={- join(" ", $target{dso_cflags}, $target{shared_cflag}) || "" -}
 DSO_LDFLAGS={- join(" ", $target{dso_lflags}, $target{shared_ldflag}) || "" -}
 BIN_CFLAGS={- $target{bin_cflags} -}
@@ -284,7 +284,7 @@ EOF
      return <<"EOF"
 $target: $deps $ordinalsfile
 	\$(PERL) $mkdef_pl "$mkdef_key" 32 > $shlib.def
-	\$(LD) \$(LDFLAGS) \$(SHARED_LDFLAGS) \\
+	\$(LD) \$(LDFLAGS) \$(LIB_LDFLAGS) \\
 		/implib:$target \$(LDOUTFLAG)$shlib$shlibext /def:$shlib.def @<<
 $objs$linklibs \$(EX_LIBS)
 <<
