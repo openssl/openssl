@@ -1149,13 +1149,6 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL *s, PACKET *pkt)
         goto f_err;
     }
 
-    /* If this SSL handle is not from a version flexible method we don't
-     * (and never did) check min/max, FIPS or Suite B constraints.  Hope
-     * that's OK.  It is up to the caller to not choose fixed protocol
-     * versions they don't want.  If not, then easy to fix, just return
-     * ssl_method_error(s, s->method)
-     */
-
     c = ssl_get_cipher_by_char(s, cipherchars);
     if (c == NULL) {
         /* unknown cipher */
