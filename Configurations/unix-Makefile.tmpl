@@ -84,6 +84,7 @@ DEPS={- join(" ", map { (my $x = $_) =~ s|\.o$|$depext|; $x; }
                   grep { $unified_info{sources}->{$_}->[0] =~ /\.c$/ }
                   keys %{$unified_info{sources}}); -}
 {- output_on() if $disabled{makedepend}; "" -}
+GENERATED={- join(" ", map { (my $x = $_) =~ s|\.S$|\.s|; $x } keys %{$unified_info{generate}}) -}
 
 BIN_SCRIPTS=$(BLDDIR)/tools/c_rehash
 MISC_SCRIPTS=$(SRCDIR)/tools/c_hash $(SRCDIR)/tools/c_info \
@@ -242,13 +243,14 @@ install: install_sw install_ssldirs install_docs
 uninstall: uninstall_docs uninstall_sw
 
 clean: libclean
-	rm -f $(PROGRAMS) $(TESTPROGS)
-	rm -f `find $(BLDDIR) -name '*{- $depext -}'`
-	rm -f `find $(BLDDIR) -name '*{- $objext -}'`
-	rm -f $(BLDDIR)/core
-	rm -f $(BLDDIR)/tags $(BLDDIR)/TAGS
-	rm -f $(BLDDIR)/openssl.pc $(BLDDIR)/libcrypto.pc $(BLDDIR)/libssl.pc
-	-rm -f `find $(BLDDIR) -type l`
+	rm -f $(PROGRAMS) $(TESTPROGS) $(ENGINES) $(SCRIPTS)
+	rm -f $(GENERATED)
+	-rm -f `find . -name '*{- $depext -}'`
+	-rm -f `find . -name '*{- $objext -}'`
+	rm -f core
+	rm -f tags TAGS
+	rm -f openssl.pc libcrypto.pc libssl.pc
+	-rm -f `find . -type l`
 	rm -f $(TARFILE)
 
 # This exists solely for those who still type 'make depend'
