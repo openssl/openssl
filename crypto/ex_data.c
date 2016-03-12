@@ -161,17 +161,6 @@ static EX_CALLBACKS *get_and_lock(int class_index)
 
     ip = &ex_data[class_index];
     CRYPTO_THREAD_write_lock(ex_data_lock);
-    if (ip->meth == NULL) {
-        ip->meth = sk_EX_CALLBACK_new_null();
-        /* We push an initial value on the stack because the SSL
-         * "app_data" routines use ex_data index zero.  See RT 3710. */
-        if (ip->meth == NULL
-            || !sk_EX_CALLBACK_push(ip->meth, NULL)) {
-            CRYPTOerr(CRYPTO_F_GET_AND_LOCK, ERR_R_MALLOC_FAILURE);
-            CRYPTO_THREAD_unlock(ex_data_lock);
-            return NULL;
-        }
-    }
     return ip;
 }
 
@@ -255,6 +244,18 @@ int CRYPTO_get_ex_new_index(int class_index, long argl, void *argp,
 
     if (ip == NULL)
         return -1;
+
+    if (ip->meth == NULL) {
+        ip->meth = sk_EX_CALLBACK_new_null();
+        /* We push an initial value on the stack because the SSL
+         * "app_data" routines use ex_data index zero.  See RT 3710. */
+        if (ip->meth == NULL
+            || !sk_EX_CALLBACK_push(ip->meth, NULL)) {
+            CRYPTOerr(CRYPTO_F_GET_AND_LOCK, ERR_R_MALLOC_FAILURE);
+            goto err;
+        }
+    }
+
     a = (EX_CALLBACK *)OPENSSL_malloc(sizeof(*a));
     if (a == NULL) {
         CRYPTOerr(CRYPTO_F_CRYPTO_GET_EX_NEW_INDEX, ERR_R_MALLOC_FAILURE);
