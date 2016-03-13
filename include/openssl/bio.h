@@ -216,10 +216,12 @@ extern "C" {
 # define BIO_FLAGS_BASE64_NO_NL  0x100
 
 /*
- * This is used with memory BIOs: it means we shouldn't free up or change the
- * data in any way.
+ * This is used with memory BIOs:
+ * BIO_FLAGS_MEM_RDONLY means we shouldn't free up or change the data in any way;
+ * BIO_FLAGS_NONCLEAR_RST means we should't clear data on reset.
  */
 # define BIO_FLAGS_MEM_RDONLY    0x200
+# define BIO_FLAGS_NONCLEAR_RST  0x400
 
 typedef union bio_addr_st BIO_ADDR;
 typedef struct bio_addrinfo_st BIO_ADDRINFO;
