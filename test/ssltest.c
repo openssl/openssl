@@ -1890,10 +1890,12 @@ int main(int argc, char *argv[])
             }
 
             /* Create new SSL* structure to reset *_ssl->method */
-            if (c_ssl != NULL)
-              SSL_free(c_ssl);
-            if (s_ssl != NULL)
-              SSL_free(s_ssl);
+            if (c_ssl != NULL) {
+                SSL_free(c_ssl);
+            }
+            if (s_ssl != NULL) {
+                SSL_free(s_ssl);
+            }
             c_ssl = NULL;
             s_ssl = NULL;
 
@@ -1918,7 +1920,7 @@ int main(int argc, char *argv[])
             }
 
             if (sess != NULL) {
-              SSL_SESSION_free(sess);
+                SSL_SESSION_free(sess);
             }
         } else if (!reuse) {
             if (!SSL_set_session(c_ssl, NULL)) {
