@@ -22,7 +22,7 @@ typedef enum OPTION_choice {
     OPT_OUT, OPT_ENGINE, OPT_RAND, OPT_BASE64, OPT_HEX
 } OPTION_CHOICE;
 
-OPTIONS rand_options[] = {
+const OPTIONS rand_options[] = {
     {OPT_HELP_STR, 1, '-', "Usage: %s [flags] num\n"},
     {OPT_HELP_STR, 1, '-', "Valid options are:\n"},
     {"help", OPT_HELP, '-', "Display this summary"},

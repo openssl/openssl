@@ -26,7 +26,7 @@ typedef enum OPTION_choice {
     OPT_V, OPT_UPPER_V, OPT_S
 } OPTION_CHOICE;
 
-OPTIONS ciphers_options[] = {
+const OPTIONS ciphers_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
     {"v", OPT_V, '-', "Verbose listing of the SSL/TLS ciphers"},
     {"V", OPT_UPPER_V, '-', "Even more verbose"},

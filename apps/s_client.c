@@ -558,7 +558,7 @@ typedef enum OPTION_choice {
     OPT_DANE_TLSA_RRDATA, OPT_DANE_EE_NO_NAME
 } OPTION_CHOICE;
 
-OPTIONS s_client_options[] = {
+const OPTIONS s_client_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
     {"host", OPT_HOST, 's', "Use -connect instead"},
     {"port", OPT_PORT, 'p', "Use -connect instead"},

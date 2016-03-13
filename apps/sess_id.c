@@ -23,7 +23,7 @@ typedef enum OPTION_choice {
     OPT_TEXT, OPT_CERT, OPT_NOOUT, OPT_CONTEXT
 } OPTION_CHOICE;
 
-OPTIONS sess_id_options[] = {
+const OPTIONS sess_id_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
     {"inform", OPT_INFORM, 'F', "Input format - default PEM (DER or PEM)"},
     {"outform", OPT_OUTFORM, 'f',

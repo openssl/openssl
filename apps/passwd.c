@@ -67,7 +67,7 @@ typedef enum OPTION_choice {
     OPT_1, OPT_5, OPT_6, OPT_CRYPT, OPT_SALT, OPT_STDIN
 } OPTION_CHOICE;
 
-OPTIONS passwd_options[] = {
+const OPTIONS passwd_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
     {"in", OPT_IN, '<', "Pead passwords from file"},
     {"noverify", OPT_NOVERIFY, '-',

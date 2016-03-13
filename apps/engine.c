@@ -26,7 +26,7 @@ typedef enum OPTION_choice {
     OPT_V = 100, OPT_VV, OPT_VVV, OPT_VVVV
 } OPTION_CHOICE;
 
-OPTIONS engine_options[] = {
+const OPTIONS engine_options[] = {
     {OPT_HELP_STR, 1, '-', "Usage: %s [options] engine...\n"},
     {OPT_HELP_STR, 1, '-',
         "  engine... Engines to load\n"},

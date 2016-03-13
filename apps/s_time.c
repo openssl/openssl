@@ -59,7 +59,7 @@ typedef enum OPTION_choice {
     OPT_WWW
 } OPTION_CHOICE;
 
-OPTIONS s_time_options[] = {
+const OPTIONS s_time_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
     {"connect", OPT_CONNECT, 's',
      "Where to connect as post:port (default is " SSL_CONNECT_NAME ")"},

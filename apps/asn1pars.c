@@ -30,7 +30,7 @@ typedef enum OPTION_choice {
     OPT_ITEM
 } OPTION_CHOICE;
 
-OPTIONS asn1parse_options[] = {
+const OPTIONS asn1parse_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
     {"inform", OPT_INFORM, 'F', "input format - one of DER PEM"},
     {"in", OPT_IN, '<', "input file"},

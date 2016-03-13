@@ -27,7 +27,7 @@ typedef enum OPTION_choice {
     OPT_SPKSECT
 } OPTION_CHOICE;
 
-OPTIONS spkac_options[] = {
+const OPTIONS spkac_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
     {"in", OPT_IN, '<', "Input file"},
     {"out", OPT_OUT, '>', "Output file"},

@@ -35,7 +35,7 @@ typedef enum OPTION_choice {
     OPT_PUBIN, OPT_CERTIN, OPT_INKEY, OPT_PASSIN, OPT_KEYFORM
 } OPTION_CHOICE;
 
-OPTIONS rsautl_options[] = {
+const OPTIONS rsautl_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
     {"in", OPT_IN, '<', "Input file"},
     {"out", OPT_OUT, '>', "Output file"},

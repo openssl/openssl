@@ -39,7 +39,7 @@ typedef enum OPTION_choice {
     OPT_RAND, OPT_DSAPARAM, OPT_C, OPT_2, OPT_5
 } OPTION_CHOICE;
 
-OPTIONS dhparam_options[] = {
+const OPTIONS dhparam_options[] = {
     {OPT_HELP_STR, 1, '-', "Usage: %s [flags] [numbits]\n"},
     {OPT_HELP_STR, 1, '-', "Valid options are:\n"},
     {"help", OPT_HELP, '-', "Display this summary"},

@@ -86,7 +86,7 @@ typedef enum OPTION_choice {
     OPT_MD, OPT_V_ENUM
 } OPTION_CHOICE;
 
-OPTIONS ts_options[] = {
+const OPTIONS ts_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
     {"config", OPT_CONFIG, '<', "Configuration file"},
     {"section", OPT_SECTION, 's', "Section to use within config file"},

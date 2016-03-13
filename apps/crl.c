@@ -26,7 +26,7 @@ typedef enum OPTION_choice {
     OPT_NOOUT, OPT_NAMEOPT, OPT_MD
 } OPTION_CHOICE;
 
-OPTIONS crl_options[] = {
+const OPTIONS crl_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
     {"inform", OPT_INFORM, 'F', "Input format; default PEM"},
     {"in", OPT_IN, '<', "Input file - default stdin"},

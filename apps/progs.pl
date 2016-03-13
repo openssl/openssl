@@ -63,7 +63,7 @@ foreach (@ARGV) {
 print "\n";
 
 foreach (@ARGV) {
-	printf "extern OPTIONS %s_options[];\n", $_;
+	printf "extern const OPTIONS %s_options[];\n", $_;
 }
 
 print "\n#ifdef INCLUDE_FUNCTION_TABLE\n";
@@ -102,7 +102,7 @@ foreach my $cmd (
 	"sha1", "sha224", "sha256", "sha384", "sha512",
 	"mdc2", "rmd160", "blake2b512", "blake2s256"
 ) {
-        my $str = "    { FT_md, \"".$cmd."\", dgst_main},\n";
+        my $str = "    { FT_md, \"".$cmd."\", dgst_main },\n";
         if (grep { $cmd eq $_ } @disablables) {
                 print "#ifndef OPENSSL_NO_".uc($cmd)."\n${str}#endif\n";
         } elsif (my $disabler = $md_disabler{$cmd}) {
