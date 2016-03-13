@@ -99,7 +99,7 @@ typedef enum OPTION_choice {
     OPT_MD
 } OPTION_CHOICE;
 
-OPTIONS ocsp_options[] = {
+const OPTIONS ocsp_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
     {"out", OPT_OUTFILE, '>', "Output filename"},
     {"timeout", OPT_TIMEOUT, 'p',

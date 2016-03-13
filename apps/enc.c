@@ -41,7 +41,7 @@ typedef enum OPTION_choice {
     OPT_UPPER_S, OPT_IV, OPT_MD, OPT_CIPHER
 } OPTION_CHOICE;
 
-OPTIONS enc_options[] = {
+const OPTIONS enc_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
     {"ciphers", OPT_LIST, '-', "List ciphers"},
     {"in", OPT_IN, '<', "Input file"},

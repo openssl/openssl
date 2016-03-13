@@ -27,7 +27,7 @@ typedef enum OPTION_choice {
     OPT_TRADITIONAL
 } OPTION_CHOICE;
 
-OPTIONS pkcs8_options[] = {
+const OPTIONS pkcs8_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
     {"inform", OPT_INFORM, 'F', "Input format (DER or PEM)"},
     {"outform", OPT_OUTFORM, 'F', "Output format (DER or PEM)"},

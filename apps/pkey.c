@@ -21,7 +21,7 @@ typedef enum OPTION_choice {
     OPT_TEXT, OPT_NOOUT, OPT_MD, OPT_TRADITIONAL
 } OPTION_CHOICE;
 
-OPTIONS pkey_options[] = {
+const OPTIONS pkey_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
     {"inform", OPT_INFORM, 'f', "Input format (DER or PEM)"},
     {"outform", OPT_OUTFORM, 'F', "Output format (DER or PEM)"},

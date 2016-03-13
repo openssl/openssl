@@ -25,7 +25,7 @@ typedef enum OPTION_choice {
     OPT_INFORM, OPT_OUTFORM, OPT_IN, OPT_OUT, OPT_NOCRL, OPT_CERTFILE
 } OPTION_CHOICE;
 
-OPTIONS crl2pkcs7_options[] = {
+const OPTIONS crl2pkcs7_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
     {"inform", OPT_INFORM, 'F', "Input format - DER or PEM"},
     {"outform", OPT_OUTFORM, 'F', "Output format - DER or PEM"},

@@ -363,7 +363,7 @@ typedef enum OPTION_choice {
     OPT_MR, OPT_MB, OPT_MISALIGN, OPT_ASYNCJOBS
 } OPTION_CHOICE;
 
-OPTIONS speed_options[] = {
+const OPTIONS speed_options[] = {
     {OPT_HELP_STR, 1, '-', "Usage: %s [options] ciphers...\n"},
     {OPT_HELP_STR, 1, '-', "Valid options are:\n"},
     {"help", OPT_HELP, '-', "Display this summary"},

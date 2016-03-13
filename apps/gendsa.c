@@ -29,7 +29,7 @@ typedef enum OPTION_choice {
     OPT_OUT, OPT_PASSOUT, OPT_ENGINE, OPT_RAND, OPT_CIPHER
 } OPTION_CHOICE;
 
-OPTIONS gendsa_options[] = {
+const OPTIONS gendsa_options[] = {
     {OPT_HELP_STR, 1, '-', "Usage: %s [args] dsaparam-file\n"},
     {OPT_HELP_STR, 1, '-', "Valid options are:\n"},
     {"help", OPT_HELP, '-', "Display this summary"},

@@ -45,7 +45,7 @@ typedef enum OPTION_choice {
     OPT_CONV_FORM, OPT_PARAM_ENC, OPT_GENKEY, OPT_RAND, OPT_ENGINE
 } OPTION_CHOICE;
 
-OPTIONS ecparam_options[] = {
+const OPTIONS ecparam_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
     {"inform", OPT_INFORM, 'F', "Input format - default PEM (DER or PEM)"},
     {"outform", OPT_OUTFORM, 'F', "Output format - default PEM"},
