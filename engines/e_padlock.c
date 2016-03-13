@@ -361,7 +361,7 @@ static int padlock_aes_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 #    define NEAREST_ALIGNED(ptr) ( (unsigned char *)(ptr) +         \
         ( (0x10 - ((size_t)(ptr) & 0x0F)) & 0x0F )      )
 #    define ALIGNED_CIPHER_DATA(ctx) ((struct padlock_cipher_data *)\
-        NEAREST_ALIGNED(EVP_CIPHER_CTX_cipher_data(ctx)))
+        NEAREST_ALIGNED(EVP_CIPHER_CTX_get_cipher_data(ctx)))
 
 static int
 padlock_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg,

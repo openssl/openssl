@@ -68,7 +68,8 @@ $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
 push(@INC,"${dir}","${dir}../../perlasm");
 require "sparcv9_modes.pl";
 
-&asm_init(@ARGV);
+$output = pop;
+open STDOUT,">$output";
 
 $::evp=1;	# if $evp is set to 0, script generates module with
 # AES_[en|de]crypt, AES_set_[en|de]crypt_key and AES_cbc_encrypt entry
@@ -83,12 +84,14 @@ $::evp=1;	# if $evp is set to 0, script generates module with
 {
 my ($inp,$out,$key,$rounds,$tmp,$mask)=map("%o$_",(0..5));
 
-$code.=<<___ if ($::abibits==64);
+$code.=<<___;
+#include "sparc_arch.h"
+
+#ifdef	__arch64__
 .register	%g2,#scratch
 .register	%g3,#scratch
+#endif
 
-___
-$code.=<<___;
 .text
 
 .globl	aes_t4_encrypt

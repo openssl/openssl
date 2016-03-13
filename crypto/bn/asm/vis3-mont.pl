@@ -18,16 +18,20 @@
 # for reference purposes, because T4 has dedicated Montgomery
 # multiplication and squaring *instructions* that deliver even more.
 
-$bits=32;
-for (@ARGV)     { $bits=64 if (/\-m64/ || /\-xarch\=v9/); }
-if ($bits==64)  { $bias=2047; $frame=192; }
-else            { $bias=0;    $frame=112; }
+$output = pop;
+open STDOUT,">$output";
 
-$code.=<<___ if ($bits==64);
+$frame = "STACK_FRAME";
+$bias = "STACK_BIAS";
+
+$code.=<<___;
+#include "sparc_arch.h"
+
+#ifdef	__arch64__
 .register	%g2,#scratch
 .register	%g3,#scratch
-___
-$code.=<<___;
+#endif
+
 .section	".text",#alloc,#execinstr
 ___
 

@@ -266,8 +266,11 @@ int OCSP_parse_url(const char *url, char **phost, char **pport, char **ppath,
  err:
     OPENSSL_free(buf);
     OPENSSL_free(*ppath);
+    *ppath = NULL;
     OPENSSL_free(*pport);
+    *pport = NULL;
     OPENSSL_free(*phost);
+    *phost = NULL;
     return 0;
 
 }

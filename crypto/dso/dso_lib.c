@@ -120,12 +120,20 @@ DSO *DSO_new_method(DSO_METHOD *meth)
     else
         ret->meth = meth;
     ret->references = 1;
-    if ((ret->meth->init != NULL) && !ret->meth->init(ret)) {
+
+    ret->lock = CRYPTO_THREAD_lock_new();
+    if (ret->lock == NULL) {
         sk_void_free(ret->meth_data);
         OPENSSL_free(ret);
+        return NULL;
+    }
+
+    if ((ret->meth->init != NULL) && !ret->meth->init(ret)) {
+        DSO_free(ret);
         ret = NULL;
     }
-    return (ret);
+
+    return ret;
 }
 
 int DSO_free(DSO *dso)
@@ -135,27 +143,30 @@ int DSO_free(DSO *dso)
     if (dso == NULL)
         return (1);
 
-    i = CRYPTO_add(&dso->references, -1, CRYPTO_LOCK_DSO);
+    if (CRYPTO_atomic_add(&dso->references, -1, &i, dso->lock) <= 0)
+        return 0;
+
     REF_PRINT_COUNT("DSO", dso);
     if (i > 0)
-        return (1);
+        return 1;
     REF_ASSERT_ISNT(i < 0);
 
     if ((dso->meth->dso_unload != NULL) && !dso->meth->dso_unload(dso)) {
         DSOerr(DSO_F_DSO_FREE, DSO_R_UNLOAD_FAILED);
-        return (0);
+        return 0;
     }
 
     if ((dso->meth->finish != NULL) && !dso->meth->finish(dso)) {
         DSOerr(DSO_F_DSO_FREE, DSO_R_FINISH_FAILED);
-        return (0);
+        return 0;
     }
 
     sk_void_free(dso->meth_data);
     OPENSSL_free(dso->filename);
     OPENSSL_free(dso->loaded_filename);
+    CRYPTO_THREAD_lock_free(dso->lock);
     OPENSSL_free(dso);
-    return (1);
+    return 1;
 }
 
 int DSO_flags(DSO *dso)
@@ -165,13 +176,19 @@ int DSO_flags(DSO *dso)
 
 int DSO_up_ref(DSO *dso)
 {
+    int i;
+
     if (dso == NULL) {
         DSOerr(DSO_F_DSO_UP_REF, ERR_R_PASSED_NULL_PARAMETER);
-        return (0);
+        return 0;
     }
 
-    CRYPTO_add(&dso->references, 1, CRYPTO_LOCK_DSO);
-    return (1);
+    if (CRYPTO_atomic_add(&dso->references, 1, &i, dso->lock) <= 0)
+        return 0;
+
+    REF_PRINT_COUNT("DSO", r);
+    REF_ASSERT_ISNT(i < 2);
+    return ((i > 1) ? 1 : 0);
 }
 
 DSO *DSO_load(DSO *dso, const char *filename, DSO_METHOD *meth, int flags)
@@ -341,12 +358,11 @@ int DSO_set_filename(DSO *dso, const char *filename)
         return (0);
     }
     /* We'll duplicate filename */
-    copied = OPENSSL_malloc(strlen(filename) + 1);
+    copied = OPENSSL_strdup(filename);
     if (copied == NULL) {
         DSOerr(DSO_F_DSO_SET_FILENAME, ERR_R_MALLOC_FAILURE);
         return (0);
     }
-    OPENSSL_strlcpy(copied, filename, strlen(filename) + 1);
     OPENSSL_free(dso->filename);
     dso->filename = copied;
     return (1);
@@ -390,12 +406,11 @@ char *DSO_convert_filename(DSO *dso, const char *filename)
             result = dso->meth->dso_name_converter(dso, filename);
     }
     if (result == NULL) {
-        result = OPENSSL_malloc(strlen(filename) + 1);
+        result = OPENSSL_strdup(filename);
         if (result == NULL) {
             DSOerr(DSO_F_DSO_CONVERT_FILENAME, ERR_R_MALLOC_FAILURE);
             return (NULL);
         }
-        OPENSSL_strlcpy(result, filename, strlen(filename) + 1);
     }
     return (result);
 }

@@ -75,7 +75,7 @@ static char *i2s_poison(const X509V3_EXT_METHOD *method, void *val)
 static int i2r_SCT_LIST(X509V3_EXT_METHOD *method, STACK_OF(SCT) *sct_list,
                  BIO *out, int indent)
 {
-    SCT_LIST_print(sct_list, out, indent, "\n");
+    SCT_LIST_print(sct_list, out, indent, "\n", NULL);
     return 1;
 }
 

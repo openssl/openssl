@@ -487,8 +487,21 @@ int load_crls(const char *file, STACK_OF(X509_CRL) **crls, int format,
               const char *pass, const char *cert_descrip);
 X509_STORE *setup_verify(char *CAfile, char *CApath,
                          int noCAfile, int noCApath);
-int ctx_set_verify_locations(SSL_CTX *ctx, const char *CAfile,
-                             const char *CApath, int noCAfile, int noCApath);
+__owur int ctx_set_verify_locations(SSL_CTX *ctx, const char *CAfile,
+                                    const char *CApath, int noCAfile,
+                                    int noCApath);
+
+#ifndef OPENSSL_NO_CT
+
+/*
+ * Sets the file to load the Certificate Transparency log list from.
+ * If path is NULL, loads from the default file path.
+ * Returns 1 on success, 0 otherwise.
+ */
+__owur int ctx_set_ctlog_list_file(SSL_CTX *ctx, const char *path);
+
+#endif
+
 # ifdef OPENSSL_NO_ENGINE
 #  define setup_engine(engine, debug) NULL
 # else
@@ -563,7 +576,7 @@ int do_X509_CRL_sign(X509_CRL *x, EVP_PKEY *pkey, const EVP_MD *md,
 extern char *psk_key;
 # endif
 
-unsigned char *next_protos_parse(unsigned short *outlen, const char *in);
+unsigned char *next_protos_parse(size_t *outlen, const char *in);
 
 void print_cert_checks(BIO *bio, X509 *x,
                        const char *checkhost,

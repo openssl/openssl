@@ -22,8 +22,8 @@
 #	to improve Cortex-A9 result, but then A5/A7 loose more than 20%;
 
 $flavour = shift;
-if ($flavour=~/^\w[\w\-]*\.\w+$/) { $output=$flavour; undef $flavour; }
-else { while (($output=shift) && ($output!~/^\w[\w\-]*\.\w+$/)) {} }
+if ($flavour=~/\w[\w\-]*\.\w+$/) { $output=$flavour; undef $flavour; }
+else { while (($output=shift) && ($output!~/\w[\w\-]*\.\w+$/)) {} }
 
 if ($flavour && $flavour ne "void") {
     $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
@@ -108,7 +108,7 @@ poly1305_init:
 	and	r5,r5,r3
 
 #if	__ARM_MAX_ARCH__>=7
-	tst	r12,#1			@ check for NEON
+	tst	r12,#ARMV7_NEON		@ check for NEON
 # ifdef	__APPLE__
 	adr	r9,poly1305_blocks_neon
 	adr	r11,poly1305_blocks
@@ -1057,6 +1057,15 @@ poly1305_blocks_neon:
 
 .Lshort_tail:
 	@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+	@ horizontal addition
+
+	vadd.i64	$D3#lo,$D3#lo,$D3#hi
+	vadd.i64	$D0#lo,$D0#lo,$D0#hi
+	vadd.i64	$D4#lo,$D4#lo,$D4#hi
+	vadd.i64	$D1#lo,$D1#lo,$D1#hi
+	vadd.i64	$D2#lo,$D2#lo,$D2#hi
+
+	@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 	@ lazy reduction, but without narrowing
 
 	vshr.u64	$T0,$D3,#26
@@ -1085,15 +1094,6 @@ poly1305_blocks_neon:
 	 vand.i64	$D3,$D3,$MASK
 	vadd.i64	$D1,$D1,$T0		@ h0 -> h1
 	 vadd.i64	$D4,$D4,$T1		@ h3 -> h4
-
-	@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-	@ horizontal addition
-
-	vadd.i64	$D2#lo,$D2#lo,$D2#hi
-	vadd.i64	$D0#lo,$D0#lo,$D0#hi
-	vadd.i64	$D3#lo,$D3#lo,$D3#hi
-	vadd.i64	$D1#lo,$D1#lo,$D1#hi
-	vadd.i64	$D4#lo,$D4#lo,$D4#hi
 
 	cmp		$len,#0
 	bne		.Leven

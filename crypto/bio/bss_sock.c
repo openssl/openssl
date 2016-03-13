@@ -122,7 +122,7 @@ static int sock_free(BIO *a)
         return (0);
     if (a->shutdown) {
         if (a->init) {
-            SHUTDOWN2(a->num);
+            BIO_closesocket(a->num);
         }
         a->init = 0;
         a->flags = 0;
@@ -213,12 +213,6 @@ int BIO_sock_should_retry(int i)
 
     if ((i == 0) || (i == -1)) {
         err = get_last_socket_error();
-
-# if defined(OPENSSL_SYS_WINDOWS) && 0/* more microsoft stupidity? perhaps
-                                       * not? Ben 4/1/99 */
-        if ((i == -1) && (err == 0))
-            return (1);
-# endif
 
         return (BIO_sock_non_fatal_error(err));
     }

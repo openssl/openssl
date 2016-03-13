@@ -134,7 +134,8 @@ foreach (@ARGV)
 		print STDERR <<"EOF";
 and [options] can be one of
 	no-md2 no-md4 no-md5 no-sha no-mdc2	- Skip this digest
-	no-ripemd
+	no-rmd160
+	no-blake2				- No blake2
 	no-rc2 no-rc4 no-rc5 no-idea no-des     - Skip this symetric cipher
 	no-bf no-cast no-aes no-camellia no-seed
 	no-rsa no-dsa no-dh			- Skip this public key cipher
@@ -806,7 +807,7 @@ reallyclean:
 
 EOF
 
-$rules .= &do_rehash_rule("rehash.time", "certs/demo apps tools");
+$rules .= &do_rehash_rule("rehash.time", "apps tools");
 $rules .= &do_test_rule("test", "rehash.time", "run_tests.pl");
 
 $rules .= <<"EOF";
@@ -1073,6 +1074,7 @@ sub var_add
 	@a=grep(!/(^md4)|(_md4$)/,@a) if $no_md4;
 	@a=grep(!/(^md5)|(_md5$)/,@a) if $no_md5;
 	@a=grep(!/(rmd)|(ripemd)/,@a) if $no_ripemd;
+	@a=grep(!/(^blake)/,@a) if $no_blake2;
 
 	@a=grep(!/(^d2i_r_)|(^i2d_r_)/,@a) if $no_rsa;
 	@a=grep(!/(^p_open$)/,@a) if $no_rsa;
@@ -1230,7 +1232,7 @@ sub perlasm_compile_target
 	my($ret);
 	$bname =~ s/(.*)\.[^\.]$/$1/;
 	$ret ="\$(TMP_D)$o$bname$asm_suffix: $source\n";
-	$ret.="\t\$(PERL) $source $asmtype \$(CFLAG) >\$\@\n";
+	$ret.="\t\$(PERL) $source $asmtype \$(CFLAG) \$\@\n";
 	if ($fipscanisteronly)
 		{
 		$ret .= "\t\$(PERL) util$o.pl . \$@ norunasm \$(CFLAG)\n";
@@ -1295,7 +1297,7 @@ sub do_asm_rule
 			my $plasm = $objfile;
 			$plasm =~ s/${obj}/.pl/;
 			$ret.="$srcfile: $plasm\n";
-			$ret.="\t\$(PERL) $plasm $asmtype \$(CFLAG) >$srcfile\n\n";
+			$ret.="\t\$(PERL) $plasm $asmtype \$(CFLAG) $srcfile\n\n";
 			}
 
 		$ret.="$objfile: $srcfile\n";
@@ -1377,7 +1379,8 @@ sub read_options
 		"no-md2" => \$no_md2,
 		"no-md4" => \$no_md4,
 		"no-md5" => \$no_md5,
-		"no-ripemd" => \$no_ripemd,
+		"no-rmd160" => \$no_ripemd,
+		"no-blake2" => \$no_blake2,		
 		"no-mdc2" => \$no_mdc2,
 		"no-whirlpool" => \$no_whirlpool,
 		"no-patents" => 
@@ -1392,6 +1395,7 @@ sub read_options
 		"gaswin" => \$gaswin,
 		"no-ssl3" => \$no_ssl3,
 		"no-ssl3-method" => 0,
+		"no-weak-ssl-ciphers" => 0,
 		"no-srp" => \$no_srp,
 		"no-cms" => \$no_cms,
 		"no-ec2m" => \$no_ec2m,
@@ -1416,6 +1420,7 @@ sub read_options
 		"gcc" => \$gcc,
 		"debug" => \$debug,
 		"--debug" => \$debug,
+		"--classic" => 0,
 		"profile" => \$profile,
 		"shlib" => \$shlib,
 		"dll" => \$shlib,

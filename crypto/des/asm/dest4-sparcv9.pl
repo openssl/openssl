@@ -27,14 +27,17 @@ $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
 push(@INC,"${dir}","${dir}../../perlasm");
 require "sparcv9_modes.pl";
 
-&asm_init(@ARGV);
-
-$code.=<<___ if ($::abibits==64);
-.register       %g2,#scratch
-.register       %g3,#scratch
-___
+$output=pop;
+open STDOUT,">$output";
 
 $code.=<<___;
+#include "sparc_arch.h"
+
+#ifdef	__arch64__
+.register       %g2,#scratch
+.register       %g3,#scratch
+#endif
+
 .text
 ___
 

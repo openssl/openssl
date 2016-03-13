@@ -5,6 +5,9 @@ push(@INC,"${dir}","${dir}../../perlasm");
 require "x86asm.pl";
 require "cbc.pl";
 
+$output = pop;
+open STDOUT,">$output";
+
 &asm_init($ARGV[0],"rc5-586.pl");
 
 $RC5_MAX_ROUNDS=16;
@@ -21,6 +24,8 @@ $tmp4="edx";
 &RC5_32_encrypt("RC5_32_decrypt",0);
 &cbc("RC5_32_cbc_encrypt","RC5_32_encrypt","RC5_32_decrypt",0,4,5,3,-1,-1);
 &asm_finish();
+
+close STDOUT;
 
 sub RC5_32_encrypt
 	{

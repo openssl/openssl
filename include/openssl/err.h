@@ -141,7 +141,6 @@ extern "C" {
 
 # define ERR_NUM_ERRORS  16
 typedef struct err_state_st {
-    CRYPTO_THREADID tid;
     int err_flags[ERR_NUM_ERRORS];
     unsigned long err_buffer[ERR_NUM_ERRORS];
     char *err_data[ERR_NUM_ERRORS];
@@ -194,6 +193,7 @@ typedef struct err_state_st {
 # define ERR_LIB_JPAKE           49
 # define ERR_LIB_CT              50
 # define ERR_LIB_ASYNC           51
+# define ERR_LIB_KDF             52
 
 # define ERR_LIB_USER            128
 
@@ -232,6 +232,7 @@ typedef struct err_state_st {
 # define JPAKEerr(f,r) ERR_PUT_error(ERR_LIB_JPAKE,(f),(r),OPENSSL_FILE,OPENSSL_LINE)
 # define CTerr(f,r) ERR_PUT_error(ERR_LIB_CT,(f),(r),OPENSSL_FILE,OPENSSL_LINE)
 # define ASYNCerr(f,r) ERR_PUT_error(ERR_LIB_ASYNC,(f),(r),OPENSSL_FILE,OPENSSL_LINE)
+# define KDFerr(f,r) ERR_PUT_error(ERR_LIB_KDF,(f),(r),OPENSSL_FILE,OPENSSL_LINE)
 
 /*
  * Borland C seems too stupid to be able to shift and do longs in the
@@ -364,14 +365,12 @@ void ERR_load_ERR_strings(void);
 
 void ERR_free_strings(void);
 
-void ERR_remove_thread_state(const CRYPTO_THREADID *tid);
+void ERR_remove_thread_state(void);
 DEPRECATEDIN_1_0_0(void ERR_remove_state(unsigned long pid)) /* if zero we
                                                               * look it up */
 ERR_STATE *ERR_get_state(void);
 
 LHASH_OF(ERR_STRING_DATA) *ERR_get_string_table(void);
-LHASH_OF(ERR_STATE) *ERR_get_err_state_table(void);
-void ERR_release_err_state_table(LHASH_OF(ERR_STATE) **hash);
 
 int ERR_get_next_error_library(void);
 

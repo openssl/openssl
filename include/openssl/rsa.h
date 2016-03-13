@@ -158,6 +158,7 @@ struct rsa_st {
     char *bignum_data;
     BN_BLINDING *blinding;
     BN_BLINDING *mt_blinding;
+    CRYPTO_RWLOCK *lock;
 };
 
 # ifndef OPENSSL_RSA_MAX_MODULUS_BITS

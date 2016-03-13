@@ -711,6 +711,7 @@ static STRINT_PAIR tlsext_types[] = {
     {"heartbeat", TLSEXT_TYPE_heartbeat},
     {"session ticket", TLSEXT_TYPE_session_ticket},
     {"renegotiation info", TLSEXT_TYPE_renegotiate},
+    {"signed certificate timestamps", TLSEXT_TYPE_signed_certificate_timestamp},
     {"TLS padding", TLSEXT_TYPE_padding},
 #ifdef TLSEXT_TYPE_next_proto_neg
     {"next protocol", TLSEXT_TYPE_next_proto_neg},
@@ -1284,7 +1285,7 @@ int ssl_load_stores(SSL_CTX *ctx,
 typedef struct {
     BIO *out;
     int verbose;
-    int (*old_cb) (SSL *s, SSL_CTX *ctx, int op, int bits, int nid,
+    int (*old_cb) (const SSL *s, const SSL_CTX *ctx, int op, int bits, int nid,
                    void *other, void *ex);
 } security_debug_ex;
 
@@ -1313,7 +1314,7 @@ static STRINT_PAIR callback_types[] = {
     {NULL}
 };
 
-static int security_callback_debug(SSL *s, SSL_CTX *ctx,
+static int security_callback_debug(const SSL *s, const SSL_CTX *ctx,
                                    int op, int bits, int nid,
                                    void *other, void *ex)
 {

@@ -28,8 +28,8 @@
 #	20-25% worse;
 
 $flavour = shift;
-if ($flavour=~/^\w[\w\-]*\.\w+$/) { $output=$flavour; undef $flavour; }
-else { while (($output=shift) && ($output!~/^\w[\w\-]*\.\w+$/)) {} }
+if ($flavour=~/\w[\w\-]*\.\w+$/) { $output=$flavour; undef $flavour; }
+else { while (($output=shift) && ($output!~/\w[\w\-]*\.\w+$/)) {} }
 
 if ($flavour && $flavour ne "void") {
     $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
@@ -214,7 +214,7 @@ ChaCha20_ctr32:
 # ifdef	__APPLE__
 	ldr	r4,[r4]
 # endif
-	tst	r4,#1
+	tst	r4,#ARMV7_NEON
 	bne	.LChaCha20_neon
 .Lshort:
 #endif

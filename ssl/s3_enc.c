@@ -251,8 +251,6 @@ int ssl3_change_cipher_state(SSL *s, int which)
                        SSL_R_COMPRESSION_LIBRARY_ERROR);
                 goto err2;
             }
-            if (!RECORD_LAYER_setup_comp_buffer(&s->rlayer))
-                goto err;
         }
 #endif
         RECORD_LAYER_reset_read_sequence(&s->rlayer);
@@ -667,6 +665,8 @@ int ssl3_alert_code(int code)
         return (TLS1_AD_UNKNOWN_PSK_IDENTITY);
     case SSL_AD_INAPPROPRIATE_FALLBACK:
         return (TLS1_AD_INAPPROPRIATE_FALLBACK);
+    case SSL_AD_NO_APPLICATION_PROTOCOL:
+        return (TLS1_AD_NO_APPLICATION_PROTOCOL);
     default:
         return (-1);
     }

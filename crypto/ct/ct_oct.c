@@ -70,30 +70,6 @@
 
 #include "ct_locl.h"
 
-#define n2s(c,s)        ((s=(((unsigned int)((c)[0]))<< 8)| \
-                            (((unsigned int)((c)[1]))    )),c+=2)
-
-#define s2n(s,c)        ((c[0]=(unsigned char)(((s)>> 8)&0xff), \
-                          c[1]=(unsigned char)(((s)    )&0xff)),c+=2)
-
-#define n2l8(c,l)       (l =((uint64_t)(*((c)++)))<<56, \
-                         l|=((uint64_t)(*((c)++)))<<48, \
-                         l|=((uint64_t)(*((c)++)))<<40, \
-                         l|=((uint64_t)(*((c)++)))<<32, \
-                         l|=((uint64_t)(*((c)++)))<<24, \
-                         l|=((uint64_t)(*((c)++)))<<16, \
-                         l|=((uint64_t)(*((c)++)))<< 8, \
-                         l|=((uint64_t)(*((c)++))))
-
-#define l2n8(l,c)       (*((c)++)=(unsigned char)(((l)>>56)&0xff), \
-                         *((c)++)=(unsigned char)(((l)>>48)&0xff), \
-                         *((c)++)=(unsigned char)(((l)>>40)&0xff), \
-                         *((c)++)=(unsigned char)(((l)>>32)&0xff), \
-                         *((c)++)=(unsigned char)(((l)>>24)&0xff), \
-                         *((c)++)=(unsigned char)(((l)>>16)&0xff), \
-                         *((c)++)=(unsigned char)(((l)>> 8)&0xff), \
-                         *((c)++)=(unsigned char)(((l)    )&0xff))
-
 int o2i_SCT_signature(SCT *sct, const unsigned char **in, size_t len)
 {
     size_t siglen;
@@ -466,7 +442,7 @@ STACK_OF(SCT) *d2i_SCT_LIST(STACK_OF(SCT) **a, const unsigned char **pp,
     return sk;
 }
 
-int i2d_SCT_LIST(STACK_OF(SCT) *a, unsigned char **out)
+int i2d_SCT_LIST(const STACK_OF(SCT) *a, unsigned char **out)
 {
     ASN1_OCTET_STRING oct;
     int len;

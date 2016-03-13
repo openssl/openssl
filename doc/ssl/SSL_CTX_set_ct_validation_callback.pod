@@ -1,0 +1,65 @@
+=pod
+
+=head1 NAME
+
+SSL_set_ct_validation_callback, SSL_CTX_set_ct_validation_callback,
+SSL_get_ct_validation_callback, SSL_CTX_get_ct_validation_callback -
+control Certificate Transparency policy
+
+=head1 SYNOPSIS
+
+ #include <openssl/ssl.h>
+
+ int SSL_set_ct_validation_callback(SSL *s, ct_validation_cb callback, void *arg);
+ int SSL_CTX_set_ct_validation_callback(SSL_CTX *ctx, ct_validation_cb callback, void *arg);
+ ct_validation_cb SSL_get_ct_validation_callback(const SSL *s);
+ ct_validation_cb SSL_CTX_get_ct_validation_callback(const SSL_CTX *ctx);
+
+=head1 DESCRIPTION
+
+SSL_set_ct_validation_callback() and SSL_CTX_set_ct_validation_callback() set
+the function that is called when Certificate Transparency validation needs to
+occur. It is the responsibility of this function to examine the signed
+certificate timestamps (SCTs) that are passed to it and determine whether they
+are sufficient to allow the connection to continue. If they are, the function
+must return 1, otherwise it must return 0.
+
+An arbitrary piece of user data, B<arg>, can be passed in when setting the
+callback. This will be passed to the callback whenever it is invoked. Ownership
+of this userdata remains with the caller.
+
+If no callback is set, SCTs will not be requested and Certificate Transparency
+validation will not occur.
+
+=head1 NOTES
+
+If a callback is set, OCSP stapling will be enabled. This is because one
+possible source of SCTs is the OCSP response from a server.
+
+=head1 RESTRICTIONS
+
+Certificate Transparency validation cannot be enabled and so a callback cannot
+be set if a custom client extension handler has been registered to handle SCT
+extensions (B<TLSEXT_TYPE_signed_certificate_timestamp>).
+
+If an SCT callback is enabled, a handshake may fail if the peer does
+not provide a certificate, which can happen when using opportunistic
+encryption with anonymous (B<aNULL>) cipher-suites enabled on both ends.
+SCTs should only be used when the application requires an authenticated
+connection, and wishes to perform additional validation on that identity.
+
+=head1 RETURN VALUES
+
+SSL_CTX_set_ct_validation_callback() and SSL_set_ct_validation_callback()
+return 1 if the B<callback> is successfully set. They return 0 if an error
+occurs, e.g. a custom client extension handler has been setup to handle SCTs.
+
+SSL_CTX_get_ct_validation_callback() and SSL_get_ct_validation_callback()
+return the current callback, or NULL if no callback is set.
+
+=head1 SEE ALSO
+
+L<ssl(3)>,
+L<ct_validation_cb(3)>
+
+=cut

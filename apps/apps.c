@@ -235,6 +235,19 @@ int ctx_set_verify_locations(SSL_CTX *ctx, const char *CAfile,
     return SSL_CTX_load_verify_locations(ctx, CAfile, CApath);
 }
 
+#ifndef OPENSSL_NO_CT
+
+int ctx_set_ctlog_list_file(SSL_CTX *ctx, const char *path)
+{
+    if (path == NULL) {
+        return SSL_CTX_set_default_ctlog_list_file(ctx);
+    }
+
+    return SSL_CTX_set_ctlog_list_file(ctx, path);
+}
+
+#endif
+
 int dump_cert_text(BIO *out, X509 *x)
 {
     char *p;
@@ -1947,7 +1960,7 @@ void policies_print(X509_STORE_CTX *ctx)
  *
  *   returns: a malloced buffer or NULL on failure.
  */
-unsigned char *next_protos_parse(unsigned short *outlen, const char *in)
+unsigned char *next_protos_parse(size_t *outlen, const char *in)
 {
     size_t len;
     unsigned char *out;
@@ -2638,15 +2651,27 @@ BIO *bio_open_default_quiet(const char *filename, char mode, int format)
 
 void wait_for_async(SSL *s)
 {
-    int width, fd;
+    int width = 0;
     fd_set asyncfds;
+    OSSL_ASYNC_FD *fds;
+    size_t numfds;
 
-    fd = SSL_get_async_wait_fd(s);
-    if (fd < 0)
+    if (!SSL_get_all_async_fds(s, NULL, &numfds))
         return;
+    if (numfds == 0)
+        return;
+    fds = OPENSSL_malloc(sizeof(OSSL_ASYNC_FD) * numfds);
+    if (!SSL_get_all_async_fds(s, fds, &numfds)) {
+        OPENSSL_free(fds);
+    }
 
-    width = fd + 1;
     FD_ZERO(&asyncfds);
-    openssl_fdset(fd, &asyncfds);
+    while (numfds > 0) {
+        if (width <= (int)*fds)
+            width = (int)*fds + 1;
+        openssl_fdset((int)*fds, &asyncfds);
+        numfds--;
+        fds++;
+    }
     select(width, (void *)&asyncfds, NULL, NULL, NULL);
 }

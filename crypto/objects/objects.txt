@@ -671,6 +671,9 @@ algorithm 29		: RSA-SHA1-2		: sha1WithRSA
 1 3 36 3 2 1		: RIPEMD160		: ripemd160
 1 3 36 3 3 1 2		: RSA-RIPEMD160		: ripemd160WithRSA
 
+1 3 6 1 4 1 1722 12 2 1 16 : BLAKE2b512        : blake2b512
+1 3 6 1 4 1 1722 12 2 2 8  : BLAKE2s256        : blake2s256
+
 !Cname sxnet
 1 3 101 1 4 1		: SXNetID		: Strong Extranet ID
 
@@ -1444,6 +1447,9 @@ secg-scheme 14 3 : dhSinglePass-cofactorDH-sha512kdf-scheme
 # NID for TLS1 PRF
                             : TLS1-PRF          : tls1-prf
 
+# NID for HKDF
+                            : HKDF              : hkdf
+
 # RFC 4556
 1 3 6 1 5 2 3 : id-pkinit
 id-pkinit 4                     : pkInitClientAuth      : PKINIT Client Auth
@@ -1451,7 +1457,27 @@ id-pkinit 5                     : pkInitKDC             : Signing KDC Response
 
 # New curves from draft-josefsson-pkix-newcurves
 
-1 3 6 1 4 1 11591 15 1      : Curve25519
-1 3 6 1 4 1 11591 15 2      : Curve448
-1 3 6 1 4 1 11591 15 3      : Curve25519ph
-1 3 6 1 4 1 11591 15 4      : Curve448ph
+1 3 6 1 4 1 11591 15 1      : X25519
+1 3 6 1 4 1 11591 15 2      : X448
+
+# NIDs for cipher key exchange
+                            : KxRSA        : kx-rsa
+                            : KxECDHE      : kx-ecdhe
+                            : KxDHE        : kx-dhe
+                            : KxECDHE-PSK  : kx-ecdhe-psk
+                            : KxDHE-PSK    : kx-dhe-psk
+                            : KxRSA_PSK    : kx-rsa-psk
+                            : KxPSK        : kx-psk
+                            : KxSRP        : kx-srp
+                            : KxGOST       : kx-gost
+
+# NIDs for cipher authentication
+                            : AuthRSA      : auth-rsa
+                            : AuthECDSA    : auth-ecdsa
+                            : AuthPSK      : auth-psk
+                            : AuthDSS      : auth-dss
+                            : AuthGOST01   : auth-gost01
+                            : AuthGOST12   : auth-gost12
+                            : AuthSRP      : auth-srp
+                            : AuthNULL     : auth-null
+

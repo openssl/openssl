@@ -79,6 +79,14 @@ UI *UI_new_method(const UI_METHOD *method)
         UIerr(UI_F_UI_NEW_METHOD, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
+
+    ret->lock = CRYPTO_THREAD_lock_new();
+    if (ret->lock == NULL) {
+        UIerr(UI_F_UI_NEW_METHOD, ERR_R_MALLOC_FAILURE);
+        OPENSSL_free(ret);
+        return NULL;
+    }
+
     if (method == NULL)
         ret->meth = UI_get_default_method();
     else
@@ -111,6 +119,7 @@ void UI_free(UI *ui)
         return;
     sk_UI_STRING_pop_free(ui->strings, free_string);
     CRYPTO_free_ex_data(CRYPTO_EX_INDEX_UI, ui, &ui->ex_data);
+    CRYPTO_THREAD_lock_free(ui->lock);
     OPENSSL_free(ui);
 }
 

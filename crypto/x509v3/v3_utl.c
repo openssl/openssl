@@ -978,14 +978,12 @@ static int do_x509_check(X509 *x, const char *chk, size_t chklen,
         GENERAL_NAMES_free(gens);
         if (rv != 0)
             return rv;
-        if (cnid == NID_undef
-            || (san_present
-                && !(flags & X509_CHECK_FLAG_ALWAYS_CHECK_SUBJECT)))
+        if (san_present && !(flags & X509_CHECK_FLAG_ALWAYS_CHECK_SUBJECT))
             return 0;
     }
 
     /* We're done if CN-ID is not pertinent */
-    if (cnid == NID_undef)
+    if (cnid == NID_undef || (flags & X509_CHECK_FLAG_NEVER_CHECK_SUBJECT))
         return 0;
 
     i = -1;

@@ -121,7 +121,8 @@ static int cmll_t4_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
                             const unsigned char *iv, int enc)
 {
     int ret, mode, bits;
-    EVP_CAMELLIA_KEY *dat = (EVP_CAMELLIA_KEY *) EVP_CIPHER_CTX_cipher_data(ctx);
+    EVP_CAMELLIA_KEY *dat =
+        (EVP_CAMELLIA_KEY *)EVP_CIPHER_CTX_get_cipher_data(ctx);
 
     mode = EVP_CIPHER_CTX_mode(ctx);
     bits = EVP_CIPHER_CTX_key_length(ctx) * 8;

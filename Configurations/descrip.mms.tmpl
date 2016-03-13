@@ -103,10 +103,12 @@ ENGINES={- join(", ", map { "-\n\t".$_.".EXE" } @{$unified_info{engines}}) -}
 PROGRAMS={- join(", ", map { "-\n\t".$_.".EXE" } grep { !m|^\[\.test\]| } @{$unified_info{programs}}) -}
 TESTPROGS={- join(", ", map { "-\n\t".$_.".EXE" } grep { m|^\[\.test\]| } @{$unified_info{programs}}) -}
 SCRIPTS={- join(", ", map { "-\n\t".$_ } @{$unified_info{scripts}}) -}
+{- output_off() if $disabled{makedepend}; "" -}
 DEPS={- our @deps = map { (my $x = $_) =~ s|\.o$|\$(DEP_EXT)|; $x; }
                     grep { $unified_info{sources}->{$_}->[0] =~ /\.c$/ }
                     keys %{$unified_info{sources}};
         join(", ", map { "-\n\t".$_ } @deps); -}
+{- output_on() if $disabled{makedepend}; "" -}
 
 # DESTDIR is for package builders so that they can configure for, say,
 # SYS$COMMON:[OPENSSL] and yet have everything installed in STAGING:[USER].
@@ -126,10 +128,11 @@ OPENSSLDIR={- catdir($config{openssldir}) ||
 ENGINESDIR={- $osslprefix -}ENGINES:
 
 CC= {- $target{cc} -}
-CFLAGS= /DEFINE=({- join(",", @{$config{defines}},"OPENSSLDIR=\"\"\"\$(OPENSSLDIR)\"\"\"","ENGINESDIR=\"\"\"\$(ENGINESDIR)\"\"\"") -}) {- $config{cflags} -}
+CFLAGS= /DEFINE=({- join(",", @{$target{defines}}, @{$config{defines}},"OPENSSLDIR=\"\"\"\$(OPENSSLDIR)\"\"\"","ENGINESDIR=\"\"\"\$(ENGINESDIR)\"\"\"") -}) {- $target{cflags} -} {- $config{cflags} -}
+CFLAGS_Q=$(CFLAGS)
 DEPFLAG= /DEFINE=({- join(",", @{$config{depdefines}}) -})
-LDFLAGS= {- $config{lflags} -}
-EX_LIBS= {- $config{ex_libs} ? ",".$config{ex_libs} : "" -}
+LDFLAGS= {- $target{lflags} -}
+EX_LIBS= {- $target{ex_libs} ? ",".$target{ex_libs} : "" -}{- $config{ex_libs} ? ",".$config{ex_libs} : "" -}
 
 PERL={- $config{perl} -}
 
@@ -244,10 +247,10 @@ install : install_sw install_docs
         @ WRITE SYS$OUTPUT ""
         @ WRITE SYS$OUTPUT "Installation complete"
         @ WRITE SYS$OUTPUT ""
-        @ IF "$(DESTDIR)" .NES. "" THEN EXIT 1
-        @ WRITE SYS$OUTPUT "Run @$(INSTALLTOP)openssl_startup to set up logical names"
-        @ WRITE SYS$OUTPUT "then run @$(INSTALLTOP)openssl_setup to define commands"
-        @ WRITE SYS$OUTPUT ""
+        @ IF "$(DESTDIR)" .EQS. "" THEN -
+             PIPE ( WRITE SYS$OUTPUT "Run @$(INSTALLTOP)openssl_startup to set up logical names" ; -
+                    WRITE SYS$OUTPUT "then run @$(INSTALLTOP)openssl_setup to define commands" ; -
+                    WRITE SYS$OUTPUT "" )
 
 uninstall : uninstall_docs uninstall_sw
 
@@ -263,6 +266,7 @@ clean : libclean
 
 depend : descrip.mms
 descrip.mms : FORCE
+	@ ! {- output_off() if $disabled{makedepend}; "" -}
         @ $(PERL) -pe "if (/^# DO NOT DELETE.*/) { exit(0); }" -
                 < descrip.mms > descrip.mms-new
         @ OPEN/APPEND DESCRIP descrip.mms-new
@@ -273,6 +277,7 @@ descrip.mms : FORCE
                  RENAME descrip.mms-new descrip.mms )
         @ IF F$SEARCH("descrip.mms-new") .NES. "" THEN DELETE descrip.mms-new;*
         -@ SPAWN/OUTPUT=NLA0: PURGE/NOLOG descrip.mms
+	@ ! {- output_on() if $disabled{makedepend}; "" -}
 
 # Install helper targets #############################################
 
@@ -393,7 +398,7 @@ debug_logicals :
 
 # Building targets ###################################################
 
-configdata.pm : {- sourcefile("Configurations", "descrip.mms.tmpl") -} $(SRCDIR)Configure ! $(SRCDIR)config.com
+configdata.pm : {- join(" ", sourcefile("Configurations", "descrip.mms.tmpl"), sourcefile("Configurations", "common.tmpl")) -} $(SRCDIR)Configure $(SRCDIR)config.com {- join(" ", @{$config{build_infos}}) -}
         @ WRITE SYS$OUTPUT "Detected changed: $?"
         @ WRITE SYS$OUTPUT "Reconfiguring..."
         perl $(SRCDIR)Configure reconf
@@ -407,6 +412,21 @@ configdata.pm : {- sourcefile("Configurations", "descrip.mms.tmpl") -} $(SRCDIR)
 {-
   use File::Basename;
   use File::Spec::Functions qw/abs2rel rel2abs catfile catdir/;
+
+  sub generatesrc {
+      my %args = @_;
+      my $generator = join(" ", @{$args{generator}});
+
+      if ($args{src} !~ /\.[sS]$/) {
+          return <<"EOF";
+$args{src} : $args{generator}->[0]
+	\$(PERL) $generator > \$@
+EOF
+      } else {
+          die "No method to generate assembler source present.\n";
+      }
+  }
+
   sub src2obj {
       my %args = @_;
       my $obj = $args{obj};
@@ -433,21 +453,19 @@ configdata.pm : {- sourcefile("Configurations", "descrip.mms.tmpl") -} $(SRCDIR)
                             } @{$args{incs}}).")";
       my $before = $unified_info{before}->{$obj.".OBJ"} || "\@ !";
       my $after = $unified_info{after}->{$obj.".OBJ"} || "\@ !";
+      my $depbuild = $disabled{makedepend} ? ""
+          : " /MMS=(FILE=${objd}${objn}.tmp-MMS,TARGET=$obj.OBJ)";
 
       return <<"EOF";
-$obj.MMS : $deps
+$obj.OBJ : $deps
         ${before}
         SET DEFAULT $forward
-        \$(CC) \$(CFLAGS)${incs} /MMS=(FILE=${objd}${objn}.MMS,TARGET=$obj.OBJ) /NOOBJECT $srcs
+        \$(CC) \$(CFLAGS)${incs}${depbuild} /OBJECT=${objd}${objn}.OBJ /REPOSITORY=$backward $srcs
         SET DEFAULT $backward
         ${after}
-        - PURGE $obj.MMS
-$obj.OBJ : $obj.MMS
-        ${before}
-        SET DEFAULT $forward
-        \$(CC) \$(CFLAGS)${incs} /OBJECT=${objd}${objn}.OBJ /REPOSITORY=$backward $srcs
-        SET DEFAULT $backward
-        ${after}
+        \@ PIPE ( \$(PERL) -e "use File::Compare qw/compare_text/; my \$x = compare_text(""$obj.MMS"",""$obj.tmp-MMS""); exit(0x10000000 + (\$x == 0));" || -
+                 RENAME $obj.tmp-MMS $obj.mms )
+        \@ IF F\$SEARCH("$obj.tmp-MMS") .NES. "" THEN DELETE $obj.tmp-MMS;*
         - PURGE $obj.OBJ
 EOF
   }

@@ -42,6 +42,9 @@ require "x86asm.pl";
 
 $OPENSSL=1;
 
+$output = pop;
+open STDOUT,">$output";
+
 &asm_init($ARGV[0],"cmll-586.pl",$ARGV[$#ARGV] eq "386");
 
 @T=("eax","ebx","ecx","edx");
@@ -1136,3 +1139,5 @@ my ($s0,$s1,$s2,$s3) = @T;
 &asciz("Camellia for x86 by <appro\@openssl.org>");
 
 &asm_finish();
+
+close STDOUT;

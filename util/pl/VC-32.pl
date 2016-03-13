@@ -3,17 +3,17 @@
 # Win64 and WinCE [follow $FLAVOR variable to trace the differences].
 #
 
-$ssl=	"ssleay32";
-$crypto="libeay32";
+$ssl=	"libssl32";
+$crypto="libcrypto32";
 
 if ($fips && !$shlib)
 	{
-	$crypto="libeayfips32";
-	$crypto_compat = "libeaycompat32.lib";
+	$crypto="libcryptofips32";
+	$crypto_compat = "libcryptocompat32.lib";
 	}
 else
 	{
-	$crypto="libeay32";
+	$crypto="libcrypto32";
 	}
 
 if ($fipscanisterbuild)
@@ -305,9 +305,6 @@ sub do_rehash_rule {
     my ($target, $deps) = @_;
     my $ret = <<"EOF";
 $target: $deps
-	set OPENSSL=\$(BIN_D)${o}openssl.exe
-	set OPENSSL_DEBUG_MEMORY=on
-	\$(PERL) \$(BIN_D)${o}c_rehash certs/demo
 	echo off > $target
 EOF
     return $ret

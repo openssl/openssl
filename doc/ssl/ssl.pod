@@ -206,7 +206,7 @@ Return the internal name of I<cipher> as a string. These are the various
 strings defined by the I<SSL3_TXT_xxx> and I<TLS1_TXT_xxx>
 definitions in the header files.
 
-=item char *B<SSL_CIPHER_get_version>(SSL_CIPHER *cipher);
+=item const char *B<SSL_CIPHER_get_version>(SSL_CIPHER *cipher);
 
 Returns a string like "C<SSLv3>" or "C<TLSv1.2>" which indicates the
 SSL/TLS protocol version to which I<cipher> belongs (i.e. where it was defined

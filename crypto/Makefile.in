@@ -22,9 +22,10 @@ PLIB_LDFLAG=
 EX_LIBS=
 
 CFLAGS= $(INCLUDE) $(CFLAG) $(SHARED_CFLAG)
-ASFLAGS= $(INCLUDE) $(ASFLAG)
+ASFLAGS= $(INCLUDE) $(ASFLAG) $(SHARED_CFLAG)
 AFLAGS=$(ASFLAGS)
 CPUID_OBJ=mem_clr.o
+UPLINK_OBJ=
 
 LIBS=
 
@@ -33,13 +34,13 @@ GENERAL=Makefile README crypto-lib.com install.com
 LIB= $(TOP)/libcrypto.a
 SHARED_LIB= libcrypto$(SHLIB_EXT)
 LIBSRC=	cryptlib.c mem.c mem_clr.c mem_dbg.c cversion.c ex_data.c cpt_err.c \
-	ebcdic.c uid.c o_time.c o_str.c o_dir.c thr_id.c lock.c \
+	ebcdic.c uid.c o_time.c o_str.c o_dir.c \
 	threads_pthread.c threads_win.c threads_none.c \
 	o_init.c o_fips.c mem_sec.c init.c
 LIBOBJ= cryptlib.o mem.o mem_dbg.o cversion.o ex_data.o cpt_err.o \
-	ebcdic.o uid.o o_time.o o_str.o o_dir.o thr_id.o lock.o \
+	ebcdic.o uid.o o_time.o o_str.o o_dir.o \
 	threads_pthread.o threads_win.o threads_none.o \
-	o_init.o o_fips.o mem_sec.o init.o $(CPUID_OBJ)
+	o_init.o o_fips.o mem_sec.o init.o $(CPUID_OBJ) $(UPLINK_OBJ)
 
 SRC= $(LIBSRC)
 
@@ -63,7 +64,7 @@ buildinf.h: ../Makefile
 	$(PERL) $(TOP)/util/mkbuildinf.pl "$(CC) $(CFLAGS_Q)" "$(PLATFORM)" >buildinf.h
 
 x86cpuid.s:	x86cpuid.pl perlasm/x86asm.pl
-	$(PERL) x86cpuid.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) > $@
+	$(PERL) x86cpuid.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) $@
 
 applink.o:	$(TOP)/ms/applink.c
 	$(CC) $(CFLAGS) -c -o $@ $(TOP)/ms/applink.c
@@ -72,18 +73,18 @@ uplink.o:	$(TOP)/ms/uplink.c applink.o
 	$(CC) $(CFLAGS) -c -o $@ $(TOP)/ms/uplink.c
 
 uplink-x86.s:	$(TOP)/ms/uplink-x86.pl
-	$(PERL) $(TOP)/ms/uplink-x86.pl $(PERLASM_SCHEME) > $@
+	$(PERL) $(TOP)/ms/uplink-x86.pl $(PERLASM_SCHEME) $@
 
-x86_64cpuid.s:	x86_64cpuid.pl;	$(PERL) x86_64cpuid.pl $(PERLASM_SCHEME) > $@
+x86_64cpuid.s:	x86_64cpuid.pl;	$(PERL) x86_64cpuid.pl $(PERLASM_SCHEME) $@
 ia64cpuid.s:	ia64cpuid.S;	$(CC) $(CFLAGS) -E ia64cpuid.S > $@
 ppccpuid.s:	ppccpuid.pl;	$(PERL) ppccpuid.pl $(PERLASM_SCHEME) $@
 pariscid.s:	pariscid.pl;	$(PERL) pariscid.pl $(PERLASM_SCHEME) $@
 alphacpuid.s:	alphacpuid.pl
 	(preproc=$$$$.$@.S; trap "rm $$preproc" INT; \
-	$(PERL) alphacpuid.pl > $$preproc && \
+	$(PERL) alphacpuid.pl $$preproc && \
 	$(CC) -E -P $$preproc > $@ && rm $$preproc)
-arm64cpuid.S:	arm64cpuid.pl;	$(PERL) arm64cpuid.pl $(PERLASM_SCHEME) > $@
-armv4cpuid.S:	armv4cpuid.pl;	$(PERL) armv4cpuid.pl $(PERLASM_SCHEME) > $@
+arm64cpuid.S:	arm64cpuid.pl;	$(PERL) arm64cpuid.pl $(PERLASM_SCHEME) $@
+armv4cpuid.S:	armv4cpuid.pl;	$(PERL) armv4cpuid.pl $(PERLASM_SCHEME) $@
 
 subdirs:
 	@target=all; $(RECURSIVE_MAKE)

@@ -51,8 +51,8 @@ $lo="LO";
 # ====================================================================
 
 $flavour = shift;
-if ($flavour=~/^\w[\w\-]*\.\w+$/) { $output=$flavour; undef $flavour; }
-else { while (($output=shift) && ($output!~/^\w[\w\-]*\.\w+$/)) {} }
+if ($flavour=~/\w[\w\-]*\.\w+$/) { $output=$flavour; undef $flavour; }
+else { while (($output=shift) && ($output!~/\w[\w\-]*\.\w+$/)) {} }
 
 if ($flavour && $flavour ne "void") {
     $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
@@ -287,7 +287,7 @@ sha512_block_data_order:
 #ifdef	__APPLE__
 	ldr	r12,[r12]
 #endif
-	tst	r12,#1
+	tst	r12,#ARMV7_NEON
 	bne	.LNEON
 #endif
 	add	$len,$inp,$len,lsl#7	@ len to point at the end of inp

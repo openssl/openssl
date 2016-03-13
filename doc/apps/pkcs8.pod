@@ -18,9 +18,6 @@ B<openssl> B<pkcs8>
 [B<-iter count>]
 [B<-noiter>]
 [B<-nocrypt>]
-[B<-nooct>]
-[B<-embed>]
-[B<-nsdb>]
 [B<-v2 alg>]
 [B<-v2prf alg>]
 [B<-v1 alg>]
@@ -101,26 +98,6 @@ This option does not encrypt private keys at all and should only be used
 when absolutely necessary. Certain software such as some versions of Java
 code signing software used unencrypted private keys.
 
-=item B<-nooct>
-
-This option generates RSA private keys in a broken format that some software
-uses. Specifically the private key should be enclosed in a OCTET STRING
-but some software just includes the structure itself without the
-surrounding OCTET STRING.
-
-=item B<-embed>
-
-This option generates DSA keys in a broken format. The DSA parameters are
-embedded inside the PrivateKey structure. In this form the OCTET STRING
-contains an ASN1 SEQUENCE consisting of two structures: a SEQUENCE containing
-the parameters and an ASN1 INTEGER containing the private key.
-
-=item B<-nsdb>
-
-This option generates DSA keys in a broken format compatible with Netscape
-private key databases. The PrivateKey contains a SEQUENCE consisting of
-the public and private keys respectively.
-
 =item B<-v2 alg>
 
 This option enables the use of PKCS#5 v2.0 algorithms. Normally PKCS#8
@@ -156,7 +133,7 @@ for all available algorithms.
 =item B<-scrypt>
 
 uses the B<scrypt> algorithm for private key encryption using default
-parameters: currently N=1024, r=8 and p=16 and AES in CBC mode with a 256 bit
+parameters: currently N=16384, r=8 and p=1 and AES in CBC mode with a 256 bit
 key. These parameters can be modified using the B<-scrypt_N>, B<-scrypt_r>,
 B<-scrypt_p> and B<-v2> options.
 

@@ -70,7 +70,7 @@ int ossl_init_thread_start(uint64_t opts);
  * are those ommitted from crypto.h because they are "reserverd for internal
  * use".
  */
-# define OPENSSL_INIT_ZLIB                   0x010000
+# define OPENSSL_INIT_ZLIB                   0x00010000L
 
 /* OPENSSL_INIT_THREAD flags */
 # define OPENSSL_INIT_THREAD_ASYNC           0x01

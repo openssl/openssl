@@ -462,7 +462,7 @@ static int read_string_inner(UI *ui, UI_STRING *uis, int echo, int strip_nl)
 /* Internal functions to open, handle and close a channel to the console.  */
 static int open_console(UI *ui)
 {
-    CRYPTO_w_lock(CRYPTO_LOCK_UI);
+    CRYPTO_THREAD_write_lock(ui->lock);
     is_a_tty = 1;
 
 #if defined(OPENSSL_SYS_VXWORKS) || defined(OPENSSL_SYS_NETWARE)
@@ -569,7 +569,7 @@ static int close_console(UI *ui)
 #ifdef OPENSSL_SYS_VMS
     status = sys$dassgn(channel);
 #endif
-    CRYPTO_w_unlock(CRYPTO_LOCK_UI);
+    CRYPTO_THREAD_unlock(ui->lock);
 
     return 1;
 }

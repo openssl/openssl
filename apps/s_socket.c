@@ -266,11 +266,11 @@ int do_server(int *accept_sock, const char *host, const char *port,
             } while (sock < 0 && BIO_sock_should_retry(ret));
             if (sock < 0) {
                 ERR_print_errors(bio_err);
-                SHUTDOWN(asock);
+                BIO_closesocket(asock);
                 break;
             }
             i = (*cb)(sock, type, context);
-            SHUTDOWN2(sock);
+            BIO_closesocket(sock);
         } else {
             i = (*cb)(asock, type, context);
         }
@@ -278,7 +278,7 @@ int do_server(int *accept_sock, const char *host, const char *port,
         if (naccept != -1)
             naccept--;
         if (i < 0 || naccept == 0) {
-            SHUTDOWN2(asock);
+            BIO_closesocket(asock);
             ret = i;
             break;
         }

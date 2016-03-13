@@ -90,4 +90,8 @@ void openssl_add_all_digests_internal(void)
 #ifndef OPENSSL_NO_WHIRLPOOL
     EVP_add_digest(EVP_whirlpool());
 #endif
+#ifndef OPENSSL_NO_BLAKE2
+    EVP_add_digest(EVP_blake2b512());
+    EVP_add_digest(EVP_blake2s256());
+#endif
 }

@@ -774,6 +774,17 @@ int bn_probable_prime_dh(BIGNUM *rnd, int bits,
 int bn_probable_prime_dh_retry(BIGNUM *rnd, int bits, BN_CTX *ctx);
 int bn_probable_prime_dh_coprime(BIGNUM *rnd, int bits, BN_CTX *ctx);
 
+static ossl_inline BIGNUM *bn_expand(BIGNUM *a, int bits)
+{
+    if (bits > (INT_MAX - BN_BITS2 + 1))
+        return NULL;
+
+    if(((bits+BN_BITS2-1)/BN_BITS2) <= (a)->dmax)
+        return a;
+
+    return bn_expand2((a),(bits+BN_BITS2-1)/BN_BITS2);
+}
+
 #ifdef  __cplusplus
 }
 #endif
