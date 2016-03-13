@@ -22,8 +22,8 @@ DEPEND[x86cpuid.s]=perlasm/x86asm.pl
 GENERATE[x86_64cpuid.s]=x86_64cpuid.pl $(PERLASM_SCHEME)
 
 GENERATE[ia64cpuid.s]=ia64cpuid.S
-GENERATE[ppccpuid.s]=ppccpuid.pl $(PERLASM_SCHEM
-GENERATE[pariscid.s]=pariscid.pl $(PERLASM_SCHEM
+GENERATE[ppccpuid.s]=ppccpuid.pl $(PERLASM_SCHEME)
+GENERATE[pariscid.s]=pariscid.pl $(PERLASM_SCHEME)
 GENERATE[alphacpuid.s]=alphacpuid.pl
 GENERATE[arm64cpuid.S]=arm64cpuid.pl $(PERLASM_SCHEME)
 INCLUDE[arm64cpuid.o]=.
