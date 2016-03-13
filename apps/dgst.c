@@ -36,7 +36,7 @@ typedef enum OPTION_choice {
     OPT_DIGEST
 } OPTION_CHOICE;
 
-OPTIONS dgst_options[] = {
+const OPTIONS dgst_options[] = {
     {OPT_HELP_STR, 1, '-', "Usage: %s [options] [file...]\n"},
     {OPT_HELP_STR, 1, '-',
         "  file... files to digest (default is stdin)\n"},

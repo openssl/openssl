@@ -59,7 +59,7 @@ typedef enum OPTION_choice {
     OPT_BADSIG, OPT_MD, OPT_ENGINE, OPT_NOCERT
 } OPTION_CHOICE;
 
-OPTIONS x509_options[] = {
+const OPTIONS x509_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
     {"inform", OPT_INFORM, 'f',
      "Input format - default PEM (one of DER, NET or PEM)"},

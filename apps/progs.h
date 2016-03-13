@@ -73,54 +73,54 @@ extern int verify_main(int argc, char *argv[]);
 extern int version_main(int argc, char *argv[]);
 extern int x509_main(int argc, char *argv[]);
 
-extern OPTIONS asn1parse_options[];
-extern OPTIONS ca_options[];
-extern OPTIONS ciphers_options[];
-extern OPTIONS cms_options[];
-extern OPTIONS crl_options[];
-extern OPTIONS crl2pkcs7_options[];
-extern OPTIONS dgst_options[];
-extern OPTIONS dhparam_options[];
-extern OPTIONS dsa_options[];
-extern OPTIONS dsaparam_options[];
-extern OPTIONS ec_options[];
-extern OPTIONS ecparam_options[];
-extern OPTIONS enc_options[];
-extern OPTIONS engine_options[];
-extern OPTIONS errstr_options[];
-extern OPTIONS exit_options[];
-extern OPTIONS gendsa_options[];
-extern OPTIONS genpkey_options[];
-extern OPTIONS genrsa_options[];
-extern OPTIONS help_options[];
-extern OPTIONS list_options[];
-extern OPTIONS nseq_options[];
-extern OPTIONS ocsp_options[];
-extern OPTIONS passwd_options[];
-extern OPTIONS pkcs12_options[];
-extern OPTIONS pkcs7_options[];
-extern OPTIONS pkcs8_options[];
-extern OPTIONS pkey_options[];
-extern OPTIONS pkeyparam_options[];
-extern OPTIONS pkeyutl_options[];
-extern OPTIONS prime_options[];
-extern OPTIONS rand_options[];
-extern OPTIONS rehash_options[];
-extern OPTIONS req_options[];
-extern OPTIONS rsa_options[];
-extern OPTIONS rsautl_options[];
-extern OPTIONS s_client_options[];
-extern OPTIONS s_server_options[];
-extern OPTIONS s_time_options[];
-extern OPTIONS sess_id_options[];
-extern OPTIONS smime_options[];
-extern OPTIONS speed_options[];
-extern OPTIONS spkac_options[];
-extern OPTIONS srp_options[];
-extern OPTIONS ts_options[];
-extern OPTIONS verify_options[];
-extern OPTIONS version_options[];
-extern OPTIONS x509_options[];
+extern const OPTIONS asn1parse_options[];
+extern const OPTIONS ca_options[];
+extern const OPTIONS ciphers_options[];
+extern const OPTIONS cms_options[];
+extern const OPTIONS crl_options[];
+extern const OPTIONS crl2pkcs7_options[];
+extern const OPTIONS dgst_options[];
+extern const OPTIONS dhparam_options[];
+extern const OPTIONS dsa_options[];
+extern const OPTIONS dsaparam_options[];
+extern const OPTIONS ec_options[];
+extern const OPTIONS ecparam_options[];
+extern const OPTIONS enc_options[];
+extern const OPTIONS engine_options[];
+extern const OPTIONS errstr_options[];
+extern const OPTIONS exit_options[];
+extern const OPTIONS gendsa_options[];
+extern const OPTIONS genpkey_options[];
+extern const OPTIONS genrsa_options[];
+extern const OPTIONS help_options[];
+extern const OPTIONS list_options[];
+extern const OPTIONS nseq_options[];
+extern const OPTIONS ocsp_options[];
+extern const OPTIONS passwd_options[];
+extern const OPTIONS pkcs12_options[];
+extern const OPTIONS pkcs7_options[];
+extern const OPTIONS pkcs8_options[];
+extern const OPTIONS pkey_options[];
+extern const OPTIONS pkeyparam_options[];
+extern const OPTIONS pkeyutl_options[];
+extern const OPTIONS prime_options[];
+extern const OPTIONS rand_options[];
+extern const OPTIONS rehash_options[];
+extern const OPTIONS req_options[];
+extern const OPTIONS rsa_options[];
+extern const OPTIONS rsautl_options[];
+extern const OPTIONS s_client_options[];
+extern const OPTIONS s_server_options[];
+extern const OPTIONS s_time_options[];
+extern const OPTIONS sess_id_options[];
+extern const OPTIONS smime_options[];
+extern const OPTIONS speed_options[];
+extern const OPTIONS spkac_options[];
+extern const OPTIONS srp_options[];
+extern const OPTIONS ts_options[];
+extern const OPTIONS verify_options[];
+extern const OPTIONS version_options[];
+extern const OPTIONS x509_options[];
 
 #ifdef INCLUDE_FUNCTION_TABLE
 static FUNCTION functions[] = {
@@ -209,31 +209,31 @@ static FUNCTION functions[] = {
     { FT_general, "version", version_main, version_options },
     { FT_general, "x509", x509_main, x509_options },
 #ifndef OPENSSL_NO_MD2
-    { FT_md, "md2", dgst_main},
+    { FT_md, "md2", dgst_main },
 #endif
 #ifndef OPENSSL_NO_MD4
-    { FT_md, "md4", dgst_main},
+    { FT_md, "md4", dgst_main },
 #endif
-    { FT_md, "md5", dgst_main},
+    { FT_md, "md5", dgst_main },
 #ifndef OPENSSL_NO_GOST
-    { FT_md, "gost", dgst_main},
+    { FT_md, "gost", dgst_main },
 #endif
-    { FT_md, "sha1", dgst_main},
-    { FT_md, "sha224", dgst_main},
-    { FT_md, "sha256", dgst_main},
-    { FT_md, "sha384", dgst_main},
-    { FT_md, "sha512", dgst_main},
+    { FT_md, "sha1", dgst_main },
+    { FT_md, "sha224", dgst_main },
+    { FT_md, "sha256", dgst_main },
+    { FT_md, "sha384", dgst_main },
+    { FT_md, "sha512", dgst_main },
 #ifndef OPENSSL_NO_MDC2
-    { FT_md, "mdc2", dgst_main},
+    { FT_md, "mdc2", dgst_main },
 #endif
 #ifndef OPENSSL_NO_RMD160
-    { FT_md, "rmd160", dgst_main},
+    { FT_md, "rmd160", dgst_main },
 #endif
 #ifndef OPENSSL_NO_BLAKE2
-    { FT_md, "blake2b512", dgst_main},
+    { FT_md, "blake2b512", dgst_main },
 #endif
 #ifndef OPENSSL_NO_BLAKE2
-    { FT_md, "blake2s256", dgst_main},
+    { FT_md, "blake2s256", dgst_main },
 #endif
     { FT_cipher, "aes-128-cbc", enc_main, enc_options },
     { FT_cipher, "aes-128-ecb", enc_main, enc_options },

@@ -264,7 +264,7 @@ int main(int argc, char *argv[])
     EXIT(ret);
 }
 
-OPTIONS exit_options[] = {
+const OPTIONS exit_options[] = {
     {NULL}
 };
 
@@ -322,7 +322,7 @@ typedef enum HELPLIST_CHOICE {
     OPT_PK_ALGORITHMS, OPT_DISABLED, OPT_MISSING_HELP
 } HELPLIST_CHOICE;
 
-OPTIONS list_options[] = {
+const OPTIONS list_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
     {"commands", OPT_COMMANDS, '-', "List of standard commands"},
     {"digest-commands", OPT_DIGEST_COMMANDS, '-',
@@ -397,7 +397,7 @@ typedef enum HELP_CHOICE {
     OPT_hERR = -1, OPT_hEOF = 0, OPT_hHELP
 } HELP_CHOICE;
 
-OPTIONS help_options[] = {
+const OPTIONS help_options[] = {
     {"help", OPT_hHELP, '-', "Display this summary"},
     {NULL}
 };

@@ -25,7 +25,7 @@ typedef enum OPTION_choice {
     OPT_TEXT, OPT_PRINT, OPT_PRINT_CERTS, OPT_ENGINE
 } OPTION_CHOICE;
 
-OPTIONS pkcs7_options[] = {
+const OPTIONS pkcs7_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
     {"inform", OPT_INFORM, 'F', "Input format - DER or PEM"},
     {"in", OPT_IN, '<', "Input file"},

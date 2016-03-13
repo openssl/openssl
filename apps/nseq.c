@@ -18,7 +18,7 @@ typedef enum OPTION_choice {
     OPT_TOSEQ, OPT_IN, OPT_OUT
 } OPTION_CHOICE;
 
-OPTIONS nseq_options[] = {
+const OPTIONS nseq_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
     {"toseq", OPT_TOSEQ, '-', "Output NS Sequence file"},
     {"in", OPT_IN, '<', "Input file"},

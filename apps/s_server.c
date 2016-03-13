@@ -679,7 +679,7 @@ typedef enum OPTION_choice {
     OPT_X_ENUM
 } OPTION_CHOICE;
 
-OPTIONS s_server_options[] = {
+const OPTIONS s_server_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
     {"port", OPT_PORT, 'p',
      "TCP/IP port to listen on for connections (default is " PORT ")"},

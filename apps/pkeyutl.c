@@ -39,7 +39,7 @@ typedef enum OPTION_choice {
     OPT_PEERFORM, OPT_KEYFORM, OPT_PKEYOPT, OPT_KDF, OPT_KDFLEN
 } OPTION_CHOICE;
 
-OPTIONS pkeyutl_options[] = {
+const OPTIONS pkeyutl_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
     {"in", OPT_IN, '<', "Input file - default stdin"},
     {"out", OPT_OUT, '>', "Output file - default stdout"},

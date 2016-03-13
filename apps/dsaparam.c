@@ -44,7 +44,7 @@ typedef enum OPTION_choice {
     OPT_TIMEBOMB
 } OPTION_CHOICE;
 
-OPTIONS dsaparam_options[] = {
+const OPTIONS dsaparam_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
     {"inform", OPT_INFORM, 'F', "Input format - DER or PEM"},
     {"in", OPT_IN, '<', "Input file"},

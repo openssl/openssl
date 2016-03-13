@@ -186,7 +186,7 @@ typedef enum OPTION_choice {
     OPT_PASSIN, OPT_PASSOUT, OPT_ENGINE
 } OPTION_CHOICE;
 
-OPTIONS srp_options[] = {
+const OPTIONS srp_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
     {"verbose", OPT_VERBOSE, '-', "Talk a lot while doing things"},
     {"config", OPT_CONFIG, '<', "A config file"},

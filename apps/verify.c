@@ -31,7 +31,7 @@ typedef enum OPTION_choice {
     OPT_VERBOSE
 } OPTION_CHOICE;
 
-OPTIONS verify_options[] = {
+const OPTIONS verify_options[] = {
     {OPT_HELP_STR, 1, '-', "Usage: %s [options] cert.pem...\n"},
     {OPT_HELP_STR, 1, '-', "Valid options are:\n"},
     {"help", OPT_HELP, '-', "Display this summary"},

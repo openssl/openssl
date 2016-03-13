@@ -35,7 +35,7 @@ typedef enum OPTION_choice {
     OPT_NOOUT, OPT_TEXT, OPT_MODULUS, OPT_CHECK, OPT_CIPHER
 } OPTION_CHOICE;
 
-OPTIONS rsa_options[] = {
+const OPTIONS rsa_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
     {"inform", OPT_INFORM, 'f', "Input format, one of DER NET PEM"},
     {"outform", OPT_OUTFORM, 'f', "Output format, one of DER NET PEM PVK"},

@@ -19,7 +19,7 @@ typedef enum OPTION_choice {
     OPT_IN, OPT_OUT, OPT_TEXT, OPT_NOOUT, OPT_ENGINE
 } OPTION_CHOICE;
 
-OPTIONS pkeyparam_options[] = {
+const OPTIONS pkeyparam_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
     {"in", OPT_IN, '<', "Input file"},
     {"out", OPT_OUT, '>', "Output file"},
