@@ -1133,10 +1133,7 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL *s, PACKET *pkt)
             }
         }
 
-        /* Fix session version if it is not reused and we are not in EAP-FAST */
-        if (s->session->tlsext_tick == NULL)
-            s->session->ssl_version = s->version;
-
+        s->session->ssl_version = s->version;
         s->session->session_id_length = session_id_len;
         /* session_id_len could be 0 */
         memcpy(s->session->session_id, PACKET_data(&session_id),
