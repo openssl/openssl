@@ -251,7 +251,7 @@ int CRYPTO_get_ex_new_index(int class_index, long argl, void *argp,
          * "app_data" routines use ex_data index zero.  See RT 3710. */
         if (ip->meth == NULL
             || !sk_EX_CALLBACK_push(ip->meth, NULL)) {
-            CRYPTOerr(CRYPTO_F_GET_AND_LOCK, ERR_R_MALLOC_FAILURE);
+            CRYPTOerr(CRYPTO_F_CRYPTO_GET_EX_NEW_INDEX, ERR_R_MALLOC_FAILURE);
             goto err;
         }
     }
