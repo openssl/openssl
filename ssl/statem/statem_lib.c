@@ -969,7 +969,6 @@ int ssl_choose_client_version(SSL *s, int version)
     default:
         if (version != s->version)
             return SSL_R_WRONG_SSL_VERSION;
-
         /*
          * If this SSL handle is not from a version flexible method we don't
          * (and never did) check min/max, FIPS or Suite B constraints.  Hope
