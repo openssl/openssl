@@ -480,7 +480,7 @@ case "$GUESSOS" in
 	echo "         invoke '$THERE/Configure irix64-mips4-$CC' *manually*."
 	if [ "$TEST" = "false" -a -t 1 ]; then
 	  echo "         You have about 5 seconds to press Ctrl-C to abort."
-	  (trap "stty `stty -g`" 2 0; stty -icanon min 0 time 50; read waste) <&1
+	  (trap "stty `stty -g`; exit 0" 2 0; stty -icanon min 0 time 50; read waste) <&1
 	fi
         #CPU=`(hinv -t cpu) 2>/dev/null | head -1 | sed 's/^CPU:[^R]*R\([0-9]*\).*/\1/'`
         #CPU=${CPU:-0}
@@ -499,7 +499,7 @@ case "$GUESSOS" in
 	    echo "         invoke '$THERE/Configure darwin64-ppc-cc' *manually*."
 	    if [ "$TEST" = "false" -a -t 1 ]; then
 	      echo "         You have about 5 seconds to press Ctrl-C to abort."
-	      (trap "stty `stty -g`" 2 0; stty -icanon min 0 time 50; read waste) <&1
+	      (trap "stty `stty -g`; exit 0" 2 0; stty -icanon min 0 time 50; read waste) <&1
 	    fi
 	fi
 	if [ "$ISA64" = "1" -a "$KERNEL_BITS" = "64" ]; then
@@ -552,7 +552,7 @@ case "$GUESSOS" in
 	    echo "         invoke '$THERE/Configure linux-ppc64' *manually*."
 	    if [ "$TEST" = "false" -a -t 1 ]; then
 		echo "         You have about 5 seconds to press Ctrl-C to abort."
-		(trap "stty `stty -g`" 2 0; stty -icanon min 0 time 50; read waste) <&1
+		(trap "stty `stty -g`; exit 0" 2 0; stty -icanon min 0 time 50; read waste) <&1
 	    fi
 	fi
 	if [ "$KERNEL_BITS" = "64" ]; then
@@ -569,7 +569,7 @@ case "$GUESSOS" in
 	echo "         invoke '$THERE/Configure linux64-mips64' *manually*."
 	if [ "$TEST" = "false" -a -t 1 ]; then
 	    echo "         You have about 5 seconds to press Ctrl-C to abort."
-	    (trap "stty `stty -g`" 2 0; stty -icanon min 0 time 50; read waste) <&1
+	    (trap "stty `stty -g`; exit 0" 2 0; stty -icanon min 0 time 50; read waste) <&1
 	fi
 	OUT="linux-mips64"
 	;;
@@ -586,7 +586,7 @@ case "$GUESSOS" in
 	echo "         invoke '$THERE/Configure linux64-sparcv9' *manually*."
 	if [ "$TEST" = "false" -a -t 1 ]; then
 	  echo "          You have about 5 seconds to press Ctrl-C to abort."
-	  (trap "stty `stty -g`" 2 0; stty -icanon min 0 time 50; read waste) <&1
+	  (trap "stty `stty -g`; exit 0" 2 0; stty -icanon min 0 time 50; read waste) <&1
 	fi
 	OUT="linux-sparcv9" ;;
   sparc-*-linux2)
@@ -634,7 +634,7 @@ case "$GUESSOS" in
 	#  echo "         have to invoke './Configure linux32-s390x' *manually*."
 	#  if [ "$TEST" = "false" -a -t -1 ]; then
 	#    echo "         You have about 5 seconds to press Ctrl-C to abort."
-	#    (trap "stty `stty -g`" 2 0; stty -icanon min 0 time 50; read waste) <&1
+	#    (trap "stty `stty -g`; exit 0" 2 0; stty -icanon min 0 time 50; read waste) <&1
 	#  fi
 	#fi
 	OUT="linux64-s390x"
@@ -663,7 +663,7 @@ case "$GUESSOS" in
 		echo "         invoke '$THERE/Configure solaris64-sparcv9-cc' *manually*."
 		if [ "$TEST" = "false" -a -t 1 ]; then
 		  echo "         You have about 5 seconds to press Ctrl-C to abort."
-		  (trap "stty `stty -g`" 2 0; stty -icanon min 0 time 50; read waste) <&1
+		  (trap "stty `stty -g`; exit 0" 2 0; stty -icanon min 0 time 50; read waste) <&1
 		fi
 	    elif [ "$CC" = "gcc" -a "$GCC_ARCH" = "-m64" ]; then
 		# $GCC_ARCH denotes default ABI chosen by compiler driver
@@ -675,7 +675,7 @@ case "$GUESSOS" in
 		echo "         invoke '$THERE/Configure solaris-sparcv9-gcc' *manually*."
 		if [ "$TEST" = "false" -a -t 1 ]; then
 		  echo "         You have about 5 seconds to press Ctrl-C to abort."
-		  (trap "stty `stty -g`" 2 0; stty -icanon min 0 time 50; read waste) <&1
+		  (trap "stty `stty -g`; exit 0" 2 0; stty -icanon min 0 time 50; read waste) <&1
 		fi
 	    elif [ "$GCC_ARCH" = "-m32" ]; then
 		echo "NOTICE! If you *know* that your GNU C supports 64-bit/V9 ABI"
@@ -683,7 +683,7 @@ case "$GUESSOS" in
 		echo "        invoke '$THERE/Configure solaris64-sparcv9-gcc' *manually*."
 		if [ "$TEST" = "false" -a -t 1 ]; then
 		  echo "         You have about 5 seconds to press Ctrl-C to abort."
-		  (trap "stty `stty -g`" 2 0; stty -icanon min 0 time 50; read waste) <&1
+		  (trap "stty `stty -g`; exit 0" 2 0; stty -icanon min 0 time 50; read waste) <&1
 		fi
 	    fi
 	fi
@@ -764,7 +764,7 @@ case "$GUESSOS" in
 		echo "         invoke '$THERE/Configure hpux64-parisc2-cc' *manually*."
 		if [ "$TEST" = "false" -a -t 1 ]; then
 		  echo "         You have about 5 seconds to press Ctrl-C to abort."
-		  (trap "stty `stty -g`" 2 0; stty -icanon min 0 time 50; read waste) <&1
+		  (trap "stty `stty -g`; exit 0" 2 0; stty -icanon min 0 time 50; read waste) <&1
 		fi
 	     fi
 	elif [ $CPU_VERSION -ge 528 ]; then	# PA-RISC 1.1+ CPU
@@ -796,7 +796,7 @@ case "$GUESSOS" in
 		echo "         invoke '$THERE/Configure aix64-cc' *manually*."
 		if [ "$TEST" = "false" -a -t 1 ]; then
 		    echo "         You have ~5 seconds to press Ctrl-C to abort."
-		    (trap "stty `stty -g`" 2 0; stty -icanon min 0 time 50; read waste) <&1
+		    (trap "stty `stty -g`; exit 0" 2 0; stty -icanon min 0 time 50; read waste) <&1
 		fi
 	    fi
 	fi
