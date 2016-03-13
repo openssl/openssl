@@ -10,7 +10,7 @@ CFLAG=-g
 MAKEFILE=	Makefile
 AR=		ar r
 
-RECURSIVE_MAKE=[ -z "$(ENGDIRS)" ] || for i in $(ENGDIRS) ; do \
+RECURSIVE_MAKE= for i in $${ENGDIRS:-$(ENGDIRS)} ; do \
 		    (cd $$i && echo "making $$target in $(DIR)/$$i..." && \
 		    $(MAKE) -e TOP=../.. DIR=$$i $$target ) || exit 1; \
 		done;
