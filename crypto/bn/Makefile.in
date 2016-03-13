@@ -105,7 +105,7 @@ rsaz-avx2.s:	asm/rsaz-avx2.pl
 	$(PERL) asm/rsaz-avx2.pl $(PERLASM_SCHEME) $@
 
 bn-ia64.s:	asm/ia64.S
-	$(CC) $(CFLAGS) -E asm/ia64.S $@
+	$(CC) $(CFLAGS) -E asm/ia64.S > $@
 ia64-mont.s:	asm/ia64-mont.pl
 	$(PERL) asm/ia64-mont.pl $(CFLAGS) $@
 
