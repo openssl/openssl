@@ -8,17 +8,17 @@ DEPEND[rc4-586.s]=../perlasm/x86asm.pl
 GENERATE[rc4-x86_64.s]=asm/rc4-x86_64.pl $(PERLASM_SCHEME)
 GENERATE[rc4-md5-x86_64.s]=asm/rc4-md5-x86_64.pl $(PERLASM_SCHEME)
 
-GENERATE[rc4-ia64.S]=asm/rc4-ia64.pl $(CFLAGS) $(LIB_CFLAGS)
-
 GENERATE[rc4-parisc.s]=asm/rc4-parisc.pl $(PERLASM_SCHEME)
 
 BEGINRAW[Makefile]
-{- $builddir -}/rc4-ia64.s: rc4-ia64.S
-	@case `awk '/^#define RC4_INT/{print$$NF}' $(SRCDIR)/include/openssl/opensslconf.h` in \
-	int)	set -x; $(CC) $(CFLAGS) $(LIB_CFLAGS) -DSZ=4 -E rc4-ia64.S > $@ ;; \
-	char)	set -x; $(CC) $(CFLAGS) $(LIB_CFLAGS) -DSZ=1 -E rc4-ia64.S > $@ ;; \
-	*)	exit 1 ;; \
-	esac
+{- $builddir -}/rc4-ia64.s: {- $sourcedir -}/asm/rc4-ia64.pl
+	@(trap "rm $@.*" INT 0; \
+	  perl $< $(CFLAGS) $(LIB_CFLAGS) $@.S; \
+	  case `awk '/^#define RC4_INT/{print$$NF}' $(BLDDIR)/include/openssl/opensslconf.h` in \
+	  int)	set -x; $(CC) $(CFLAGS) $(LIB_CFLAGS) -DSZ=4 -E $@.S > $@.i && mv -f $@.i $@;; \
+	  char)	set -x; $(CC) $(CFLAGS) $(LIB_CFLAGS) -DSZ=1 -E $@.S > $@.i && mv -f $@.i $@;; \
+	  *)	exit 1 ;; \
+	  esac )
 
 # GNU make "catch all"
 {- $builddir -}/rc4-%.s:	{- $sourcedir -}/asm/rc4-%.pl
