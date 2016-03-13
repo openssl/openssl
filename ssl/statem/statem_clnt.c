@@ -821,7 +821,10 @@ int tls_construct_client_hello(SSL *s)
         goto err;
     }
 
-    if ((sess == NULL) || (sess->ssl_version != s->version) ||
+    if ((sess == NULL) ||
+        /* Only destroy session which version is bigger than maximum supported.
+         */
+        ssl_version_cmp(s, sess->ssl_version, s->version) > 0 ||
         /*
          * In the case of EAP-FAST, we can have a pre-shared
          * "ticket" without a session ID.
