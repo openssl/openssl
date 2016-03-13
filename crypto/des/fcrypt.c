@@ -70,9 +70,11 @@ char *DES_crypt(const char *buf, const char *salt)
     char e_buf[32 + 1];         /* replace 32 by 8 ? */
     char *ret;
 
+    if (salt[0] == '\0' || salt[1] == '\0') return NULL;
+
     /* Copy at most 2 chars of salt */
-    if ((e_salt[0] = salt[0]) != '\0')
-        e_salt[1] = salt[1];
+    e_salt[0] = salt[0];
+    e_salt[1] = salt[1];
 
     /* Copy at most 32 chars of password */
     strncpy(e_buf, buf, sizeof(e_buf));
@@ -107,6 +109,8 @@ char *DES_fcrypt(const char *buf, const char *salt, char *ret)
     unsigned char *b = bb;
     unsigned char c, u;
 
+    if (salt[0] == '\0' || salt[1] == '\0') return NULL;
+
     /*
      * eay 25/08/92 If you call crypt("pwd","*") as often happens when you
      * have * as the pwd field in /etc/passwd, the function returns
@@ -115,17 +119,14 @@ char *DES_fcrypt(const char *buf, const char *salt, char *ret)
      * libraries.  People found that the disabled accounts effectively had no
      * passwd :-(.
      */
-#ifndef CHARSET_EBCDIC
-    x = ret[0] = ((salt[0] == '\0') ? 'A' : salt[0]);
+
+    x = ret[0] = salt[0];
+    if (x >= sizeof(con_salt)) return NULL;
     Eswap0 = con_salt[x] << 2;
-    x = ret[1] = ((salt[1] == '\0') ? 'A' : salt[1]);
+
+    x = ret[1] = salt[1];
+    if (x >= sizeof(con_salt)) return NULL;
     Eswap1 = con_salt[x] << 6;
-#else
-    x = ret[0] = ((salt[0] == '\0') ? os_toascii['A'] : salt[0]);
-    Eswap0 = con_salt[x] << 2;
-    x = ret[1] = ((salt[1] == '\0') ? os_toascii['A'] : salt[1]);
-    Eswap1 = con_salt[x] << 6;
-#endif
 
     /*
      * EAY r=strlen(buf); r=(r+7)/8;
