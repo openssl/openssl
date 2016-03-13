@@ -64,6 +64,12 @@ union bio_addr_st {
 
 /* END BIO_ADDRINFO/BIO_ADDR stuff. */
 
+/* BIO_BUF_MEM  */
+struct bio_buf_mem_st {
+    struct buf_mem_st *buf;   /* allocated buffer */
+    struct buf_mem_st *readp; /* read pointer */
+};
+
 #include "internal/cryptlib.h"
 #include <internal/bio.h>
 
