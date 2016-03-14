@@ -62,7 +62,7 @@ an RSA key will return B<EVP_PKEY_RSA>.
 EVP_PKEY_id() returns the actual OID associated with B<pkey>. Historically keys
 using the same algorithm could use different OIDs. For example an RSA key could
 use the OIDs corresponding to the NIDs B<NID_rsaEncryption> (equivalent to
-B<EVP_PKEY_RSA) or B<NID_rsa> (equivalent to B<EVP_PKEY_RSA2>). The use of
+B<EVP_PKEY_RSA>) or B<NID_rsa> (equivalent to B<EVP_PKEY_RSA2>). The use of
 alternative non-standard OIDs is now rare so B<EVP_PKEY_RSA2> et al are not
 often seen in practice.
 
