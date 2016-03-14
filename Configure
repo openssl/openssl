@@ -1,11 +1,7 @@
 #! /usr/bin/env perl
 # -*- mode: perl; -*-
 
-##
 ##  Configure -- OpenSSL source tree configuration script
-##  If editing this file, run this command before committing
-##	make -f Makefile.in TABLE
-##
 
 require 5.000;
 use strict;
@@ -202,7 +198,6 @@ foreach (sort glob($pattern) ) {
 
 print "Configuring OpenSSL version $config{version} (0x$config{version_num})\n";
 
-$config{perl};
 $config{prefix}="";
 $config{openssldir}="";
 $config{processor}="";
@@ -746,7 +741,7 @@ while (@tocheckfor) {
 	my ($test, $descendents) = (shift @cascade_copy, shift @cascade_copy);
 	if (ref($test) eq "CODE" ? $test->() : defined($disabled{$test})) {
 	    map {
-		$new_tocheckfor{$_} => 1; $disabled{$_} = "forced";
+		$new_tocheckfor{$_} = 1; $disabled{$_} = "forced";
 	    } grep { !defined($disabled{$_}) } @$descendents;
 	}
     }
@@ -1153,7 +1148,7 @@ die "Exactly one of SIXTY_FOUR_BIT|SIXTY_FOUR_BIT_LONG|THIRTY_TWO_BIT can be set
 
 # "Stringify" the C flags string.  This permits it to be made part of a string
 # and works as well on command lines.
-$config{cflags} =~ s/([\\\"])/\\\1/g;
+$config{cflags} =~ s/([\\\"])/\\$1/g;
 
 if (defined($config{api})) {
     $config{openssl_api_defines} = [ "OPENSSL_MIN_API=".$apitable->{$config{api}} ];
@@ -1798,7 +1793,7 @@ print "SIXTY_FOUR_BIT_LONG mode\n" if $config{b64l};
 print "SIXTY_FOUR_BIT mode\n" if $config{b64};
 print "THIRTY_TWO_BIT mode\n" if $config{b32};
 print "BN_LLONG mode\n" if $config{bn_ll};
-print "RC4 uses $config{rc4_int}\n" if $config{rc4_int} != $def_int;
+print "RC4 uses $config{rc4_int}\n" if $config{rc4_int} ne $def_int;
 
 for (@generated_headers) {
     mkpath(catdir($blddir, dirname($_)));
@@ -2210,7 +2205,7 @@ sub usage
 	exit(1);
 	}
 
-sub run_dofile()
+sub run_dofile
 {
     my $out = shift;
     my @templates = @_;
