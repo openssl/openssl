@@ -52,12 +52,13 @@
  *
  */
 #include <stdio.h>
+#include <openssl/opensslconf.h>
+
+#ifndef OPENSSL_NO_AFALGENG
+#include <string.h>
 #include <openssl/engine.h>
 #include <openssl/evp.h>
 #include <openssl/rand.h>
-#include <string.h>
-
-#ifndef OPENSSL_NO_AFALGENG
 
 /* Use a buffer size which is not aligned to block size */
 #define BUFFER_SIZE     (8 * 1024) - 13
@@ -113,14 +114,9 @@ static int test_afalg_aes_128_cbc(ENGINE *e)
     EVP_CIPHER_CTX_free(ctx);
     return status;
 }
-#endif
 
 int main(int argc, char **argv)
 {
-#ifdef OPENSSL_NO_AFALGENG
-    fprintf(stderr, "AFALG not supported - skipping AFALG tests\n");
-#else
-
     ENGINE *e;
 
     CRYPTO_set_mem_debug(1);
@@ -144,7 +140,17 @@ int main(int argc, char **argv)
     }
 
     ENGINE_free(e);
-#endif
     printf("PASS\n");
     return 0;
 }
+
+#else  /* OPENSSL_NO_AFALGENG */
+
+int main(int argc, char **argv)
+{
+    fprintf(stderr, "AFALG not supported - skipping AFALG tests\n");
+    printf("PASS\n");
+    return 0;
+}
+
+#endif
