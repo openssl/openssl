@@ -1863,6 +1863,7 @@ MSG_PROCESS_RETURN tls_process_certificate_request(SSL *s, PACKET *pkt)
             SSLerr(SSL_F_TLS_PROCESS_CERTIFICATE_REQUEST, ERR_R_MALLOC_FAILURE);
             goto err;
         }
+        xn = NULL;
     }
 
     /* we should setup a certificate to return.... */
@@ -1877,6 +1878,7 @@ MSG_PROCESS_RETURN tls_process_certificate_request(SSL *s, PACKET *pkt)
  err:
     ossl_statem_set_error(s);
  done:
+    X509_NAME_free(xn);
     sk_X509_NAME_pop_free(ca_sk, X509_NAME_free);
     return ret;
 }
