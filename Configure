@@ -233,6 +233,7 @@ my @dtls = qw(dtls1 dtls1_2);
 
 my @disablables = (
     "aes",
+    "afalgeng",
     "asm",
     "async",
     "autoalginit",
@@ -394,6 +395,7 @@ my @disable_cascades = (
     # Without position independent code, there can be no shared libraries or DSOs
     "pic"               => [ "shared" ],
     "shared"            => [ "dynamic-engine" ],
+    "engine"            => [ "afalgeng" ],
     );
 
 # Avoid protocol support holes.  Also disable all versions below N, if version
@@ -1193,8 +1195,8 @@ else               { $no_user_defines=1;    }
 
 # ALL MODIFICATIONS TO %config and %target MUST BE DONE FROM HERE ON
 
-unless ($disabled{engine}) {
-    $config{afalg}="";
+unless ($disabled{afalgeng}) {
+    $config{afalgeng}="";
     if ($target =~ m/^linux/) {
         my $minver = 4*10000 + 1*100 + 0;
         if ($config{cross_compile_prefix} eq "") {
@@ -1203,17 +1205,17 @@ unless ($disabled{engine}) {
             ($mi2) = $mi2 =~ /(\d+)/;
             my $ver = $ma*10000 + $mi1*100 + $mi2;
             if ($ver < $minver) {
-                $disabled{afalg} = "too-old-kernel";
+                $disabled{afalgeng} = "too-old-kernel";
             } else {
                 push @{$config{engdirs}}, "afalg";
             }
         }
     } else {
-        $disabled{afalg}  = "not-linux";
+        $disabled{afalgeng}  = "not-linux";
     }
 }
 
-push @{$config{openssl_other_defines}}, "OPENSSL_NO_AFALGENG" if ($disabled{afalg});
+push @{$config{openssl_other_defines}}, "OPENSSL_NO_AFALGENG" if ($disabled{afalgeng});
 
 # If we use the unified build, collect information from build.info files
 my %unified_info = ();
