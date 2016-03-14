@@ -59,7 +59,7 @@ my $test_name = "test_afalg";
 setup($test_name);
 
 plan skip_all => "$test_name not supported for this build"
-    if disabled("engine") || disabled("afalg");
+    if disabled("afalgeng");
 
 plan tests => 1;
 
