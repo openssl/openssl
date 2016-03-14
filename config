@@ -767,8 +767,13 @@ case "$GUESSOS" in
 		  (trap "stty `stty -g`; exit 0" 2 0; stty -icanon min 0 time 50; read waste) <&1
 		fi
 	     fi
+	     # PA-RISC 2.0 is no longer supported as separate 32-bit
+	     # target. This is compensated for by run-time detection
+	     # in most critical assembly modules and taking advantage
+	     # of 2.0 architectire in PA-RISC 1.1 build.
+	     OUT="hpux-parisc1_1-${CC}"
 	elif [ $CPU_VERSION -ge 528 ]; then	# PA-RISC 1.1+ CPU
-	     OUT="hpux-parisc-${CC}"
+	     OUT="hpux-parisc1_1-${CC}"
 	elif [ $CPU_VERSION -ge 523 ]; then	# PA-RISC 1.0 CPU
 	     OUT="hpux-parisc-${CC}"
 	else					# Motorola(?) CPU
