@@ -483,7 +483,9 @@ void OPENSSL_cleanup(void)
     ENGINE_cleanup();
 #endif
     CRYPTO_cleanup_all_ex_data();
+    BIO_sock_cleanup();
     EVP_cleanup();
+    OBJ_cleanup();
     CONF_modules_free();
     RAND_cleanup();
     base_inited = 0;
