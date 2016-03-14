@@ -94,6 +94,8 @@ script:
               export EXE_SHELL="wine" WINEPREFIX=`pwd`;
           fi;
           HARNESS_VERBOSE=yes make test;
+      else
+          make build_tests;
       fi
     - cd ..
 
