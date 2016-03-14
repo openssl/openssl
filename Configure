@@ -3,7 +3,7 @@
 
 ##  Configure -- OpenSSL source tree configuration script
 
-require 5.000;
+require 5.10.0;
 use strict;
 use File::Basename;
 use File::Spec::Functions qw/:DEFAULT abs2rel rel2abs/;
