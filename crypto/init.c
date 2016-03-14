@@ -460,25 +460,34 @@ void OPENSSL_cleanup(void)
     CRYPTO_THREAD_cleanup_local(&threadstopkey);
 
 #ifdef OPENSSL_INIT_DEBUG
+    fprintf(stderr, "OPENSSL_INIT: OPENSSL_cleanup: "
+                    "RAND_cleanup()\n");
+    fprintf(stderr, "OPENSSL_INIT: OPENSSL_cleanup: "
+                    "CONF_modules_free()\n");
 #ifndef OPENSSL_NO_ENGINE
     fprintf(stderr, "OPENSSL_INIT: OPENSSL_cleanup: "
                     "ENGINE_cleanup()\n");
 #endif
-    fprintf(stderr, "OPENSSL_INIT: OPENSSL_INIT_library_stop: "
+    fprintf(stderr, "OPENSSL_INIT: OPENSSL_cleanup: "
                     "CRYPTO_cleanup_all_ex_data()\n");
-    fprintf(stderr, "OPENSSL_INIT: OPENSSL_INIT_library_stop: "
+    fprintf(stderr, "OPENSSL_INIT: OPENSSL_cleanup: "
+                    "BIO_sock_cleanup()\n");
+    fprintf(stderr, "OPENSSL_INIT: OPENSSL_cleanup: "
                     "EVP_cleanup()\n");
-    fprintf(stderr, "OPENSSL_INIT: OPENSSL_INIT_library_stop: "
-                    "CONF_modules_free()\n");
-    fprintf(stderr, "OPENSSL_INIT: OPENSSL_INIT_library_stop: "
-                    "RAND_cleanup()\n");
-
+    fprintf(stderr, "OPENSSL_INIT: OPENSSL_cleanup: "
+                    "OBJ_cleanup()\n");
 #endif
-/*
- * Note that cleanup order is important.
- * For example, ENGINEs use CRYPTO_EX_DATA and therefore, must be cleaned up
- * before the ex data handlers are wiped in CRYPTO_cleanup_all_ex_data().
- */
+    /*
+     * Note that cleanup order is important:
+     * - RAND_cleanup could call an ENINGE's RAND cleanup function so must be
+     * called before ENGINE_cleanup()
+     * - ENGINEs use CRYPTO_EX_DATA and therefore, must be cleaned up
+     * before the ex data handlers are wiped in CRYPTO_cleanup_all_ex_data().
+     * - CONF_modules_free() can end up in ENGINE code so must be called before
+     * ENGINE_cleanup()
+     */
+    RAND_cleanup();
+    CONF_modules_free();
 #ifndef OPENSSL_NO_ENGINE
     ENGINE_cleanup();
 #endif
@@ -486,8 +495,6 @@ void OPENSSL_cleanup(void)
     BIO_sock_cleanup();
     EVP_cleanup();
     OBJ_cleanup();
-    CONF_modules_free();
-    RAND_cleanup();
     base_inited = 0;
 }
 
