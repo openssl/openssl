@@ -55,14 +55,16 @@
  * [including the GNU Public Licence.]
  */
 
-#ifndef HEADER_NEW_DES_H
-# define HEADER_NEW_DES_H
+#ifndef HEADER_DES_H
+# define HEADER_DES_H
 
-# include <openssl/e_os2.h>
+# include <openssl/opensslconf.h>
 
-# ifdef OPENSSL_NO_DES
-#  error DES is disabled.
+# ifndef OPENSSL_NO_DES
+# ifdef  __cplusplus
+extern "C" {
 # endif
+# include <openssl/e_os2.h>
 
 typedef unsigned int DES_LONG;
 
@@ -70,10 +72,6 @@ typedef unsigned int DES_LONG;
 #  undef OPENSSL_EXTERN
 #  define OPENSSL_EXTERN OPENSSL_EXPORT
 # endif
-
-#ifdef  __cplusplus
-extern "C" {
-#endif
 
 typedef unsigned char DES_cblock[8];
 typedef /* const */ unsigned char const_DES_cblock[8];
@@ -228,8 +226,9 @@ int DES_read_2passwords(DES_cblock *key1, DES_cblock *key2,
 
 # define DES_fixup_key_parity DES_set_odd_parity
 
-#ifdef  __cplusplus
+# ifdef  __cplusplus
 }
-#endif
+# endif
+# endif
 
 #endif

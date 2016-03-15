@@ -1,2 +1,4 @@
-SCRIPTS=c_rehash
-SOURCE[c_rehash]=c_rehash.in
+IF[{- !$disabled{apps} -}]
+  SCRIPTS=c_rehash
+  SOURCE[c_rehash]=c_rehash.in
+ENDIF

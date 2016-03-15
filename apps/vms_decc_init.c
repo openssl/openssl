@@ -105,6 +105,7 @@ decc_feat_t decc_feat_array[] = {
     {(char *)NULL, 0}
 };
 
+
 char **copy_argv(int *argc, char *argv[])
 {
     /*-

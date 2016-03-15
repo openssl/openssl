@@ -1,4 +1,11 @@
-#! /usr/bin/perl
+#! /usr/bin/env perl
+# Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the OpenSSL license (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+
 
 use strict;
 use warnings;
@@ -46,7 +53,16 @@ sub __multiplier {
 	if ($operator eq "*") {
 	    $operand1->bmul($operand2);
 	} elsif ($operator eq "/") {
+	    # Math::BigInt->bdiv() is documented to do floored division,
+	    # i.e. 1 / -4 = -1, while bc and OpenSSL BN_div do truncated
+	    # division, i.e. 1 / -4 = 0.  We need to make the operation
+	    # work like OpenSSL's BN_div to be able to verify.
+	    my $neg = ($operand1->is_neg()
+		       ? !$operand2->is_neg() : $operand2->is_neg());
+	    $operand1->babs();
+	    $operand2->babs();
 	    $operand1->bdiv($operand2);
+	    if ($neg) { $operand1->bneg(); }
 	} elsif ($operator eq "%") {
 	    # Here's a bit of a quirk...
 	    # With OpenSSL's BN, as well as bc, the result of -10 % 3 is -1

@@ -40,10 +40,6 @@ typedef unsigned int seed_word;
 extern "C" {
 #endif
 
-# define G_FUNC(v)       \
-        SS[0][(unsigned char)      (v) & 0xff] ^ SS[1][(unsigned char) ((v)>>8) & 0xff] ^ \
-        SS[2][(unsigned char)((v)>>16) & 0xff] ^ SS[3][(unsigned char)((v)>>24) & 0xff]
-
 # define char2word(c, i)  \
         (i) = ((((seed_word)(c)[0]) << 24) | (((seed_word)(c)[1]) << 16) | (((seed_word)(c)[2]) << 8) | ((seed_word)(c)[3]))
 

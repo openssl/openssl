@@ -60,8 +60,8 @@
 #include "internal/cryptlib.h"
 #include <openssl/lhash.h>
 #include "internal/bn_int.h"
-#include <openssl/rsa.h>
 #include <openssl/rand.h>
+#include "rsa_locl.h"
 
 int RSA_bits(const RSA *r)
 {

@@ -60,14 +60,10 @@
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include <openssl/bn.h>
-#include <openssl/dsa.h>
+#include "dsa_locl.h"
 #include <openssl/asn1.h>
-#ifndef OPENSSL_NO_ENGINE
-# include <openssl/engine.h>
-#endif
-#ifndef OPENSSL_NO_DH
-# include <openssl/dh.h>
-#endif
+#include <openssl/engine.h>
+#include <openssl/dh.h>
 
 static const DSA_METHOD *default_DSA_method = NULL;
 
@@ -106,6 +102,11 @@ int DSA_set_method(DSA *dsa, const DSA_METHOD *meth)
     if (meth->init)
         meth->init(dsa);
     return 1;
+}
+
+const DSA_METHOD *DSA_get_method(DSA *d)
+{
+    return d->meth;
 }
 
 DSA *DSA_new_method(ENGINE *engine)
@@ -253,34 +254,117 @@ DH *DSA_dup_DH(const DSA *r)
      */
 
     DH *ret = NULL;
+    BIGNUM *p = NULL, *q = NULL, *g = NULL, *pub_key = NULL, *priv_key = NULL;
 
     if (r == NULL)
         goto err;
     ret = DH_new();
     if (ret == NULL)
         goto err;
-    if (r->p != NULL)
-        if ((ret->p = BN_dup(r->p)) == NULL)
+    if (r->p != NULL || r->g != NULL || r->q != NULL) {
+        if (r->p == NULL || r->g == NULL || r->q == NULL) {
+            /* Shouldn't happen */
             goto err;
-    if (r->q != NULL) {
-        ret->length = BN_num_bits(r->q);
-        if ((ret->q = BN_dup(r->q)) == NULL)
+        }
+        p = BN_dup(r->p);
+        g = BN_dup(r->g);
+        q = BN_dup(r->q);
+        if (p == NULL || g == NULL || q == NULL || !DH_set0_pqg(ret, p, q, g))
             goto err;
+        p = g = q = NULL;
     }
-    if (r->g != NULL)
-        if ((ret->g = BN_dup(r->g)) == NULL)
+
+    if (r->pub_key != NULL) {
+        pub_key = BN_dup(r->pub_key);
+        if (pub_key == NULL)
             goto err;
-    if (r->pub_key != NULL)
-        if ((ret->pub_key = BN_dup(r->pub_key)) == NULL)
+        if (r->priv_key != NULL) {
+            priv_key = BN_dup(r->priv_key);
+            if (priv_key == NULL)
+                goto err;
+        }
+        if (!DH_set0_key(ret, pub_key, priv_key))
             goto err;
-    if (r->priv_key != NULL)
-        if ((ret->priv_key = BN_dup(r->priv_key)) == NULL)
-            goto err;
+    } else if (r->priv_key != NULL) {
+        /* Shouldn't happen */
+        goto err;
+    }
 
     return ret;
 
  err:
+    BN_free(p);
+    BN_free(g);
+    BN_free(q);
+    BN_free(pub_key);
+    BN_free(priv_key);
     DH_free(ret);
     return NULL;
 }
 #endif
+
+void DSA_get0_pqg(const DSA *d, BIGNUM **p, BIGNUM **q, BIGNUM **g)
+{
+    if (p != NULL)
+        *p = d->p;
+    if (q != NULL)
+        *q = d->q;
+    if (g != NULL)
+        *g = d->g;
+}
+
+int DSA_set0_pqg(DSA *d, BIGNUM *p, BIGNUM *q, BIGNUM *g)
+{
+    if (p == NULL || q == NULL || g == NULL)
+        return 0;
+    BN_free(d->p);
+    BN_free(d->q);
+    BN_free(d->g);
+    d->p = p;
+    d->q = q;
+    d->g = g;
+
+    return 1;
+}
+
+void DSA_get0_key(const DSA *d, BIGNUM **pub_key, BIGNUM **priv_key)
+{
+    if (pub_key != NULL)
+        *pub_key = d->pub_key;
+    if (priv_key != NULL)
+        *priv_key = d->priv_key;
+}
+
+int DSA_set0_key(DSA *d, BIGNUM *pub_key, BIGNUM *priv_key)
+{
+    /* Note that it is valid for priv_key to be NULL */
+    if (pub_key == NULL)
+        return 0;
+
+    BN_free(d->pub_key);
+    BN_free(d->priv_key);
+    d->pub_key = pub_key;
+    d->priv_key = priv_key;
+
+    return 1;
+}
+
+void DSA_clear_flags(DSA *d, int flags)
+{
+    d->flags &= ~flags;
+}
+
+int DSA_test_flags(const DSA *d, int flags)
+{
+    return d->flags & flags;
+}
+
+void DSA_set_flags(DSA *d, int flags)
+{
+    d->flags |= flags;
+}
+
+ENGINE *DSA_get0_engine(DSA *d)
+{
+    return d->engine;
+}

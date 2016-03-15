@@ -176,14 +176,18 @@ static int apps_startup()
                              | OPENSSL_INIT_LOAD_CONFIG, NULL))
         return 0;
 
+#ifndef OPENSSL_NO_UI
     setup_ui_method();
+#endif
 
     return 1;
 }
 
 static void apps_shutdown()
 {
+#ifndef OPENSSL_NO_UI
     destroy_ui_method();
+#endif
 }
 
 static char *make_config_name()
@@ -207,10 +211,6 @@ static char *make_config_name()
     return p;
 }
 
-#if defined( OPENSSL_SYS_VMS)
-extern char **copy_argv(int *argc, char **argv);
-#endif
-
 int main(int argc, char *argv[])
 {
     FUNCTION f, *fp;
@@ -229,9 +229,9 @@ int main(int argc, char *argv[])
     default_config_file = make_config_name();
     bio_in = dup_bio_in(FORMAT_TEXT);
     bio_out = dup_bio_out(FORMAT_TEXT);
-    bio_err = BIO_new_fp(stderr, BIO_NOCLOSE | BIO_FP_TEXT);
+    bio_err = dup_bio_err(FORMAT_TEXT);
 
-#if defined( OPENSSL_SYS_VMS)
+#if defined(OPENSSL_SYS_VMS) && defined(__DECC)
     copied_argv = argv = copy_argv(&argc, argv);
 #endif
 
@@ -491,10 +491,8 @@ int help_main(int argc, char **argv)
             return 0;
         }
     }
-    argc = opt_num_rest();
-    argv = opt_rest();
 
-    if (argc != 0) {
+    if (opt_num_rest() != 0) {
         BIO_printf(bio_err, "Usage: %s\n", prog);
         return 1;
     }
@@ -644,9 +642,6 @@ static int SortFnByName(const void *_f1, const void *_f2)
 static void list_disabled(void)
 {
     BIO_puts(bio_out, "Disabled algorithms:\n");
-#ifdef OPENSSL_NO_AES
-    BIO_puts(bio_out, "AES\n");
-#endif
 #ifdef OPENSSL_NO_BF
     BIO_puts(bio_out, "BF\n");
 #endif
@@ -704,9 +699,6 @@ static void list_disabled(void)
 #ifdef OPENSSL_NO_HEARTBEATS
     BIO_puts(bio_out, "HEARTBEATS\n");
 #endif
-#ifdef OPENSSL_NO_HMAC
-    BIO_puts(bio_out, "HMAC\n");
-#endif
 #ifdef OPENSSL_NO_IDEA
     BIO_puts(bio_out, "IDEA\n");
 #endif
@@ -749,17 +741,11 @@ static void list_disabled(void)
 #ifdef OPENSSL_NO_SCRYPT
     BIO_puts(bio_out, "SCRYPT\n");
 #endif
-#ifdef OPENSSL_NO_SCT
-    BIO_puts(bio_out, "SCT\n");
-#endif
 #ifdef OPENSSL_NO_SCTP
     BIO_puts(bio_out, "SCTP\n");
 #endif
 #ifdef OPENSSL_NO_SEED
     BIO_puts(bio_out, "SEED\n");
-#endif
-#ifdef OPENSSL_NO_SHA
-    BIO_puts(bio_out, "SHA\n");
 #endif
 #ifdef OPENSSL_NO_SOCK
     BIO_puts(bio_out, "SOCK\n");

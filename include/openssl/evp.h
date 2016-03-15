@@ -682,10 +682,10 @@ int EVP_CIPHER_CTX_set_padding(EVP_CIPHER_CTX *c, int pad);
 int EVP_CIPHER_CTX_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr);
 int EVP_CIPHER_CTX_rand_key(EVP_CIPHER_CTX *ctx, unsigned char *key);
 
-BIO_METHOD *BIO_f_md(void);
-BIO_METHOD *BIO_f_base64(void);
-BIO_METHOD *BIO_f_cipher(void);
-BIO_METHOD *BIO_f_reliable(void);
+const BIO_METHOD *BIO_f_md(void);
+const BIO_METHOD *BIO_f_base64(void);
+const BIO_METHOD *BIO_f_cipher(void);
+const BIO_METHOD *BIO_f_reliable(void);
 __owur int BIO_set_cipher(BIO *b, const EVP_CIPHER *c, const unsigned char *k,
                           const unsigned char *i, int enc);
 
@@ -793,13 +793,12 @@ const EVP_CIPHER *EVP_rc5_32_12_16_cfb64(void);
 #  define EVP_rc5_32_12_16_cfb EVP_rc5_32_12_16_cfb64
 const EVP_CIPHER *EVP_rc5_32_12_16_ofb(void);
 # endif
-# ifndef OPENSSL_NO_AES
 const EVP_CIPHER *EVP_aes_128_ecb(void);
 const EVP_CIPHER *EVP_aes_128_cbc(void);
 const EVP_CIPHER *EVP_aes_128_cfb1(void);
 const EVP_CIPHER *EVP_aes_128_cfb8(void);
 const EVP_CIPHER *EVP_aes_128_cfb128(void);
-#  define EVP_aes_128_cfb EVP_aes_128_cfb128
+# define EVP_aes_128_cfb EVP_aes_128_cfb128
 const EVP_CIPHER *EVP_aes_128_ofb(void);
 const EVP_CIPHER *EVP_aes_128_ctr(void);
 const EVP_CIPHER *EVP_aes_128_ccm(void);
@@ -807,30 +806,30 @@ const EVP_CIPHER *EVP_aes_128_gcm(void);
 const EVP_CIPHER *EVP_aes_128_xts(void);
 const EVP_CIPHER *EVP_aes_128_wrap(void);
 const EVP_CIPHER *EVP_aes_128_wrap_pad(void);
-#  ifndef OPENSSL_NO_OCB
+# ifndef OPENSSL_NO_OCB
 const EVP_CIPHER *EVP_aes_128_ocb(void);
-#  endif
+# endif
 const EVP_CIPHER *EVP_aes_192_ecb(void);
 const EVP_CIPHER *EVP_aes_192_cbc(void);
 const EVP_CIPHER *EVP_aes_192_cfb1(void);
 const EVP_CIPHER *EVP_aes_192_cfb8(void);
 const EVP_CIPHER *EVP_aes_192_cfb128(void);
-#  define EVP_aes_192_cfb EVP_aes_192_cfb128
+# define EVP_aes_192_cfb EVP_aes_192_cfb128
 const EVP_CIPHER *EVP_aes_192_ofb(void);
 const EVP_CIPHER *EVP_aes_192_ctr(void);
 const EVP_CIPHER *EVP_aes_192_ccm(void);
 const EVP_CIPHER *EVP_aes_192_gcm(void);
 const EVP_CIPHER *EVP_aes_192_wrap(void);
 const EVP_CIPHER *EVP_aes_192_wrap_pad(void);
-#  ifndef OPENSSL_NO_OCB
+# ifndef OPENSSL_NO_OCB
 const EVP_CIPHER *EVP_aes_192_ocb(void);
-#  endif
+# endif
 const EVP_CIPHER *EVP_aes_256_ecb(void);
 const EVP_CIPHER *EVP_aes_256_cbc(void);
 const EVP_CIPHER *EVP_aes_256_cfb1(void);
 const EVP_CIPHER *EVP_aes_256_cfb8(void);
 const EVP_CIPHER *EVP_aes_256_cfb128(void);
-#  define EVP_aes_256_cfb EVP_aes_256_cfb128
+# define EVP_aes_256_cfb EVP_aes_256_cfb128
 const EVP_CIPHER *EVP_aes_256_ofb(void);
 const EVP_CIPHER *EVP_aes_256_ctr(void);
 const EVP_CIPHER *EVP_aes_256_ccm(void);
@@ -838,14 +837,13 @@ const EVP_CIPHER *EVP_aes_256_gcm(void);
 const EVP_CIPHER *EVP_aes_256_xts(void);
 const EVP_CIPHER *EVP_aes_256_wrap(void);
 const EVP_CIPHER *EVP_aes_256_wrap_pad(void);
-#  ifndef OPENSSL_NO_OCB
+# ifndef OPENSSL_NO_OCB
 const EVP_CIPHER *EVP_aes_256_ocb(void);
-#  endif
+# endif
 const EVP_CIPHER *EVP_aes_128_cbc_hmac_sha1(void);
 const EVP_CIPHER *EVP_aes_256_cbc_hmac_sha1(void);
 const EVP_CIPHER *EVP_aes_128_cbc_hmac_sha256(void);
 const EVP_CIPHER *EVP_aes_256_cbc_hmac_sha256(void);
-# endif
 # ifndef OPENSSL_NO_CAMELLIA
 const EVP_CIPHER *EVP_camellia_128_ecb(void);
 const EVP_CIPHER *EVP_camellia_128_cbc(void);
@@ -888,11 +886,11 @@ const EVP_CIPHER *EVP_seed_ofb(void);
 # endif
 
 # if OPENSSL_API_COMPAT < 0x10100000L
-#   define OPENSSL_add_all_algorithms_conf() \
+#  define OPENSSL_add_all_algorithms_conf() \
     OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_CIPHERS \
                         | OPENSSL_INIT_ADD_ALL_DIGESTS \
                         | OPENSSL_INIT_LOAD_CONFIG, NULL)
-#   define OPENSSL_add_all_algorithms_noconf() \
+#  define OPENSSL_add_all_algorithms_noconf() \
     OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_CIPHERS \
                         | OPENSSL_INIT_ADD_ALL_DIGESTS, NULL)
 
@@ -907,10 +905,12 @@ const EVP_CIPHER *EVP_seed_ofb(void);
                         | OPENSSL_INIT_ADD_ALL_DIGESTS, NULL)
 #  endif
 
-#   define OpenSSL_add_all_ciphers() \
+#  define OpenSSL_add_all_ciphers() \
     OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_CIPHERS, NULL)
-#   define OpenSSL_add_all_digests() \
+#  define OpenSSL_add_all_digests() \
     OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_DIGESTS, NULL)
+
+#  define EVP_cleanup() while(0) continue
 # endif
 
 int EVP_add_cipher(const EVP_CIPHER *cipher);
@@ -918,7 +918,6 @@ int EVP_add_digest(const EVP_MD *digest);
 
 const EVP_CIPHER *EVP_get_cipherbyname(const char *name);
 const EVP_MD *EVP_get_digestbyname(const char *name);
-void EVP_cleanup(void);
 
 void EVP_CIPHER_do_all(void (*fn) (const EVP_CIPHER *ciph,
                                    const char *from, const char *to, void *x),

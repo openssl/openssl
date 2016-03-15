@@ -148,8 +148,8 @@ int ENGINE_free(ENGINE *e)
 /* Cleanup stuff */
 
 /*
- * ENGINE_cleanup() is coded such that anything that does work that will need
- * cleanup can register a "cleanup" callback here. That way we don't get
+ * engine_cleanup_int() is coded such that anything that does work that will
+ * need cleanup can register a "cleanup" callback here. That way we don't get
  * linker bloat by referring to all *possible* cleanups, but any linker bloat
  * into code "X" will cause X's cleanup function to end up here.
  */
@@ -200,7 +200,7 @@ static void engine_cleanup_cb_free(ENGINE_CLEANUP_ITEM *item)
     OPENSSL_free(item);
 }
 
-void ENGINE_cleanup(void)
+void engine_cleanup_int(void)
 {
     if (int_cleanup_check(0)) {
         sk_ENGINE_CLEANUP_ITEM_pop_free(cleanup_stack,

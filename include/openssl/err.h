@@ -234,13 +234,8 @@ typedef struct err_state_st {
 # define ASYNCerr(f,r) ERR_PUT_error(ERR_LIB_ASYNC,(f),(r),OPENSSL_FILE,OPENSSL_LINE)
 # define KDFerr(f,r) ERR_PUT_error(ERR_LIB_KDF,(f),(r),OPENSSL_FILE,OPENSSL_LINE)
 
-/*
- * Borland C seems too stupid to be able to shift and do longs in the
- * pre-processor :-(
- */
-# define ERR_PACK(l,f,r)         (((((unsigned long)l)&0xffL)*0x1000000)| \
-                                ((((unsigned long)f)&0xfffL)*0x1000)| \
-                                ((((unsigned long)r)&0xfffL)))
+# define ERR_PACK(l,f,r) \
+    ( (((l) & 0x0FF) << 24L) | (((f) & 0xFFF) << 12L) | ((r) & 0xFFF) )
 # define ERR_GET_LIB(l)          (int)((((unsigned long)l)>>24L)&0xffL)
 # define ERR_GET_FUNC(l)         (int)((((unsigned long)l)>>12L)&0xfffL)
 # define ERR_GET_REASON(l)       (int)((l)&0xfffL)
@@ -361,9 +356,8 @@ void ERR_load_ERR_strings(void);
 #if OPENSSL_API_COMPAT < 0x10100000L
 # define ERR_load_crypto_strings() \
     OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL)
+# define ERR_free_strings() while(0) continue
 #endif
-
-void ERR_free_strings(void);
 
 void ERR_remove_thread_state(void);
 DEPRECATEDIN_1_0_0(void ERR_remove_state(unsigned long pid)) /* if zero we

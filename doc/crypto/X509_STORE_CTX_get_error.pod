@@ -2,17 +2,22 @@
 
 =head1 NAME
 
-X509_STORE_CTX_get_error, X509_STORE_CTX_set_error, X509_STORE_CTX_get_error_depth, X509_STORE_CTX_get_current_cert, X509_STORE_CTX_get1_chain, X509_verify_cert_error_string - get or set certificate verification status information
+X509_STORE_CTX_get_error, X509_STORE_CTX_set_error,
+X509_STORE_CTX_get_error_depth, X509_STORE_CTX_set_error_depth,
+X509_STORE_CTX_get_current_cert, X509_STORE_CTX_get0_cert,
+X509_STORE_CTX_get1_chain, X509_verify_cert_error_string - get or set certificate verification status information
 
 =head1 SYNOPSIS
 
  #include <openssl/x509.h>
  #include <openssl/x509_vfy.h>
 
- int	X509_STORE_CTX_get_error(X509_STORE_CTX *ctx);
- void	X509_STORE_CTX_set_error(X509_STORE_CTX *ctx,int s);
- int	X509_STORE_CTX_get_error_depth(X509_STORE_CTX *ctx);
- X509 *	X509_STORE_CTX_get_current_cert(X509_STORE_CTX *ctx);
+ int   X509_STORE_CTX_get_error(X509_STORE_CTX *ctx);
+ void  X509_STORE_CTX_set_error(X509_STORE_CTX *ctx,int s);
+ int   X509_STORE_CTX_get_error_depth(X509_STORE_CTX *ctx);
+ void  X509_STORE_CTX_set_error_depth(X509_STORE_CTX *ctx, int depth);
+ X509 *X509_STORE_CTX_get_current_cert(X509_STORE_CTX *ctx);
+ X509 *X509_STORE_CTX_get0_cert(X509_STORE_CTX *ctx);
 
  STACK_OF(X509) *X509_STORE_CTX_get1_chain(X509_STORE_CTX *ctx);
 
@@ -34,6 +39,12 @@ X509_STORE_CTX_get_error_depth() returns the B<depth> of the error. This is a
 non-negative integer representing where in the certificate chain the error
 occurred. If it is zero it occurred in the end entity certificate, one if
 it is the certificate which signed the end entity certificate and so on.
+
+X509_STORE_CTX_set_error_depth() sets the error B<depth>.
+This can be used in combination with X509_STORE_CTX_set_error() to set the
+depth at which an error condition was detected.
+
+X509_STORE_CTX_get0_cert() returns the leaf certificate being verified.
 
 X509_STORE_CTX_get_current_cert() returns the certificate in B<ctx> which
 caused the error or B<NULL> if no certificate is relevant.

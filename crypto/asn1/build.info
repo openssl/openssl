@@ -3,7 +3,7 @@ SOURCE[../../libcrypto]=\
         a_object.c a_bitstr.c a_utctm.c a_gentm.c a_time.c a_int.c a_octet.c \
         a_print.c a_type.c a_dup.c a_d2i_fp.c a_i2d_fp.c \
         a_utf8.c a_sign.c a_digest.c a_verify.c a_mbstr.c a_strex.c \
-        x_algor.c x_val.c x_pubkey.c x_sig.c x_bignum.c \
+        x_algor.c x_val.c x_sig.c x_bignum.c \
         x_long.c x_info.c x_spki.c nsseq.c \
         d2i_pu.c d2i_pr.c i2d_pu.c i2d_pr.c\
         t_pkey.c t_spki.c t_bitst.c \

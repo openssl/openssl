@@ -64,8 +64,6 @@
 
 #if defined(OPENSSL_SYS_VMS)
 # include <sys/timeb.h>
-#elif defined(OPENSSL_SYS_NETWARE) && !defined(_WINSOCK2API_)
-# include <sys/timeval.h>
 #elif defined(OPENSSL_SYS_VXWORKS)
 # include <sys/times.h>
 #elif !defined(OPENSSL_SYS_WIN32)
@@ -460,7 +458,7 @@ static void get_current_time(struct timeval *t)
 #define LISTEN_SUCCESS              2
 #define LISTEN_SEND_VERIFY_REQUEST  1
 
-
+#ifndef OPENSSL_NO_SOCK
 int DTLSv1_listen(SSL *s, BIO_ADDR *client)
 {
     int next, n, ret = 0, clearpkt = 0;
@@ -868,6 +866,7 @@ end:
     }
     return ret;
 }
+#endif
 
 static int dtls1_set_handshake_header(SSL *s, int htype, unsigned long len)
 {

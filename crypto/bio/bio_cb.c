@@ -58,8 +58,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include "bio_lcl.h"
 #include "internal/cryptlib.h"
-#include <openssl/bio.h>
 #include <openssl/err.h>
 
 long BIO_debug_callback(BIO *bio, int cmd, const char *argp,

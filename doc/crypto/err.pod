@@ -33,7 +33,6 @@ err - error codes
  void ERR_print_errors_fp(FILE *fp);
 
  void ERR_load_crypto_strings(void);
- void ERR_free_strings(void);
 
  void ERR_put_error(int lib, int func, int reason, const char *file,
          int line);
@@ -48,6 +47,11 @@ Deprecated:
  #if OPENSSL_API_COMPAT < 0x10000000L
  void ERR_remove_state(unsigned long pid);
  #endif
+
+ #if OPENSSL_API_COMPAT < 0x10100000L
+ void ERR_free_strings(void)
+ #endif
+
 
 =head1 DESCRIPTION
 

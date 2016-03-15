@@ -1,5 +1,5 @@
 /* ====================================================================
- * Copyright (c) 1999-2015 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2016 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -110,6 +110,7 @@ static ERR_STRING_DATA X509_str_functs[] = {
     {ERR_FUNC(X509_F_X509_NAME_ONELINE), "X509_NAME_oneline"},
     {ERR_FUNC(X509_F_X509_NAME_PRINT), "X509_NAME_print"},
     {ERR_FUNC(X509_F_X509_PRINT_EX_FP), "X509_print_ex_fp"},
+    {ERR_FUNC(X509_F_X509_PUBKEY_DECODE), "x509_pubkey_decode"},
     {ERR_FUNC(X509_F_X509_PUBKEY_GET0), "X509_PUBKEY_get0"},
     {ERR_FUNC(X509_F_X509_PUBKEY_SET), "X509_PUBKEY_set"},
     {ERR_FUNC(X509_F_X509_REQ_CHECK_PRIVATE_KEY),
@@ -125,6 +126,8 @@ static ERR_STRING_DATA X509_str_functs[] = {
     {ERR_FUNC(X509_F_X509_STORE_CTX_NEW), "X509_STORE_CTX_new"},
     {ERR_FUNC(X509_F_X509_STORE_CTX_PURPOSE_INHERIT),
      "X509_STORE_CTX_purpose_inherit"},
+    {ERR_FUNC(X509_F_X509_STORE_GET_X509_BY_SUBJECT),
+     "X509_STORE_get_X509_by_subject"},
     {ERR_FUNC(X509_F_X509_TO_X509_REQ), "X509_to_X509_REQ"},
     {ERR_FUNC(X509_F_X509_TRUST_ADD), "X509_TRUST_add"},
     {ERR_FUNC(X509_F_X509_TRUST_SET), "X509_TRUST_set"},

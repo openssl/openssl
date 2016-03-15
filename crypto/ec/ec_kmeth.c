@@ -53,9 +53,7 @@
 
 #include <string.h>
 #include <openssl/ec.h>
-#ifndef OPENSSL_NO_ENGINE
-# include <openssl/engine.h>
-#endif
+#include <openssl/engine.h>
 #include <openssl/err.h>
 #include "ec_lcl.h"
 
@@ -168,6 +166,7 @@ EC_KEY *EC_KEY_new_method(ENGINE *engine)
     ret->references = 1;
 
     if (ret->meth->init != NULL && ret->meth->init(ret) == 0) {
+        ECerr(EC_F_EC_KEY_NEW_METHOD, ERR_R_INIT_FAIL);
         EC_KEY_free(ret);
         return NULL;
     }

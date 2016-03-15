@@ -1103,7 +1103,9 @@ const void *OBJ_bsearch_ex_(const void *key, const void *base, int num,
 int OBJ_new_nid(int num);
 int OBJ_add_object(const ASN1_OBJECT *obj);
 int OBJ_create(const char *oid, const char *sn, const char *ln);
-void OBJ_cleanup(void);
+#if OPENSSL_API_COMPAT < 0x10100000L
+# define OBJ_cleanup() while(0) continue
+#endif
 int OBJ_create_objects(BIO *in);
 
 size_t OBJ_length(const ASN1_OBJECT *obj);
@@ -1113,9 +1115,6 @@ int OBJ_find_sigid_algs(int signid, int *pdig_nid, int *ppkey_nid);
 int OBJ_find_sigid_by_algs(int *psignid, int dig_nid, int pkey_nid);
 int OBJ_add_sigid(int signid, int dig_id, int pkey_id);
 void OBJ_sigid_free(void);
-
-extern int obj_cleanup_defer;
-void check_defer(int nid);
 
 /* BEGIN ERROR CODES */
 /*

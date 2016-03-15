@@ -2,12 +2,10 @@
  OPENSSL INSTALLATION
  --------------------
 
- [Installation on DOS (with djgpp), MacOS (before MacOS X)
-  and NetWare is described in INSTALL.DJGPP, INSTALL.MacOS
-  and INSTALL.NW.
-  
-  This document describes installation on the main supported operating
-  systems, currently the Linux/Unix family, OpenVMS and Windows.]
+ [This document describes installation on the main supported operating
+  systems, currently the Linux/Unix family, OpenVMS and Windows.
+  Installation on DOS (with djgpp), MacOS (before MacOS X)
+  is described in INSTALL.DJGPP or INSTALL.MacOS, respectively.]
 
  To install OpenSSL, you will need:
 
@@ -19,8 +17,8 @@
     header files
   * a supported operating system
 
- For more details regarding specific platforms, there are these notes
- available:
+ For additional platform specific requirements and other details,
+ please read one of these:
 
   * NOTES.VMS (OpenVMS)
   * NOTES.WIN (any Windows except for Windows CE)
@@ -49,6 +47,7 @@
     $ perl Configure { VC-WIN32 | VC-WIN64A | VC-WIN64I | VC-CE }
     $ nmake
     $ nmake test
+    $ nmake install
 
  [If any of these steps fails, see section Installation in Detail below.]
 
@@ -56,8 +55,8 @@
 
   Unix:    normal installation directories under /usr/local
   OpenVMS: SYS$COMMON:[OPENSSL-'version'...], where 'version' is the
-           OpenSSL version number ('major'_'minor').
-  Windows: currently don't have an install function     <TBA>
+           OpenSSL version number with underscores instead of periods.
+  Windows: C:\Program Files\OpenSSL or C:\Program Files (x86)\OpenSSL
 
  If you want to install it anywhere else, run config like this:
 
@@ -74,73 +73,185 @@
  ---------------------
 
  There are several options to ./config (or ./Configure) to customize
- the build:
+ the build (note that for Windows, the defaults for --prefix and
+ --openssldir depend in what configuration is used and what Windows
+ implementation OpenSSL is built on.  More notes on this in NOTES.WIN):
 
-  --prefix=DIR     The top of the installation directory tree.  Defaults are:
+  --prefix=DIR
+                   The top of the installation directory tree.  Defaults are:
 
                    Unix:           /usr/local
+                   Windows:        C:\Program Files\OpenSSL
+                                or C:\Program Files (x86)\OpenSSL
                    OpenVMS:        SYS$COMMON:[OPENSSL-'version']
 
-  --openssldir=DIR Directory for OpenSSL configuration files, and also the
+  --openssldir=DIR
+                   Directory for OpenSSL configuration files, and also the
                    default certificate and key store.  Defaults are:
 
-                   Unix:           PREFIX/ssl (PREFIX is given by --prefix)
-                   OpenVMS:        SYS$COMMON:[SSL]
+                   Unix:           /usr/local/ssl
+                   Windows:        C:\Program Files\Common Files\SSL
+                                or C:\Program Files (x86)\Common Files\SSL
+                   OpenVMS:        SYS$COMMON:[OPENSSL-COMMON]
 
-  --api=x.y.z      Don't build with support for deprecated APIs below the
+  --api=x.y.z
+                   Don't build with support for deprecated APIs below the
                    specified version number. For example "--api=1.1.0" will
                    remove support for all APIS that were deprecated in OpenSSL
                    version 1.1.0 or below.
 
-  no-deprecated    Don't build with support for any deprecated APIs. This is the
-                   same as using "--api" and supplying the latest version
-                   number.
+  no-afalgeng
+                   Don't build the AFALG engine. This option will be forced if
+                   on a platform that does not support AFALG.
 
-  no-autoalginit   Don't automatically load all supported ciphers and digests.
+  no-asm
+                   Do not use assembler code. On some platforms a small amount
+                   of assembler code may still be used.
+
+  no-async
+                   Do not build support for async operations.
+
+  no-autoalginit
+                   Don't automatically load all supported ciphers and digests.
                    Typically OpenSSL will make available all of its supported
                    ciphers and digests. For a statically linked application this
                    may be undesirable if small executable size is an objective.
                    This only affects libcrypto. Ciphers and digests will have to
                    be loaded manually using EVP_add_cipher() and
-                   EVP_add_digest() if this option is used.
+                   EVP_add_digest() if this option is used. This option will
+                   force a non-shared build.
 
-  no-autoerrinit   Don't automatically load all libcrypto/libssl error strings.
+  no-autoerrinit
+                   Don't automatically load all libcrypto/libssl error strings.
                    Typically OpenSSL will automatically load human readable
                    error strings. For a statically linked application this may
                    be undesirable if small executable size is an objective.
 
-  no-threads       Don't try to build with support for multi-threaded
-                   applications.
 
-  threads          Build with support for multi-threaded applications.
-                   This will usually require additional system-dependent
-                   options! See "Note on multi-threading" below.
+  no-capieng
+                   Don't build the CAPI engine. This option will be forced if
+                   on a platform that does not support CAPI.
 
-  no-zlib          Don't try to build with support for zlib compression and
-                   decompression.
+  no-cms
+                   Don't build support for CMS features
 
-  zlib             Build with support for zlib compression/decompression.
+  no-comp
+                   Don't build support for SSL/TLS compression. If this option
+                   is left enabled (the default), then compression will only
+                   work if the zlib or zlib-dynamic options are also chosen.
 
-  zlib-dynamic     Like "zlib", but has OpenSSL load the zlib library
-                   dynamically when needed.  This is only supported on systems
-                   where loading of shared libraries is supported.  This is the
-                   default choice.
+  enable-crypto-mdebug
+                   Build support for debugging memory allocated via
+                   OPENSSL_malloc() or OPENSSL_zalloc().
 
-  no-shared        Don't try to create shared libraries.
+  enable-crypto-mdebug-backtrace
+                   As for crypto-mdebug, but additionally provide backtrace
+                   information for allocated memory.
 
-  shared           In addition to the usual static libraries, create shared
-                   libraries on platforms where it's supported.  See "Note on
-                   shared libraries" below.
+  no-ct
+                   Don't build support for Certificate Transparency.
 
-  no-asm           Do not use assembler code.
+  no-deprecated
+                   Don't build with support for any deprecated APIs. This is the
+                   same as using "--api" and supplying the latest version
+                   number.
 
-  386              On Intel hardware, use the 80386 instruction set only
-                   (the default x86 code is more efficient, but requires at
-                   least a 486). Note: Use compiler flags for any other CPU
-                   specific configuration, e.g. "-m32" to build x86 code on
-                   an x64 system.
+  no-dgram
+                   Don't build support for datagram based BIOs. Selecting this
+                   option will also force the disabling of DTLS.
 
-  no-sse2          Exclude SSE2 code pathes. Normally SSE2 extension is
+  no-dso
+                   Don't build support for loading Dynamic Shared Objects.
+
+  no-dynamic-engine
+                   Don't build the dynamically loaded engines. This only has an
+                   effect in a "shared" build
+
+  no-ec
+                   Don't build support for Elliptic Curves.
+
+  no-ec2m
+                   Don't build support for binary Elliptic Curves
+
+  enable-ec_nistp_64_gcc_128
+                   Enable support for optimised implementations of some commonly
+                   used NIST elliptic curves. This is only supported on some
+                   platforms.
+
+  enable-egd
+                   Build support for gathering entropy from EGD (Entropy
+                   Gathering Daemon).
+
+  no-engine
+                   Don't build support for loading engines.
+
+  no-err
+                   Don't compile in any error strings.
+
+  no-filenames
+                   Don't compile in filename and line number information (e.g.
+                   for errors and memory allocation).
+
+  no-gost
+                   Don't build support for GOST based ciphersuites. Note that
+                   if this feature is enabled then GOST ciphersuites are only
+                   available if the GOST algorithms are also available through
+                   loading an externally supplied engine.
+
+  enable-heartbeats
+                   Build support for DTLS heartbeats.
+
+  no-hw-padlock
+                   Don't build the padlock engine.
+
+  no-makedepend
+                   Don't generate dependencies.
+
+  no-multiblock
+                   Don't build support for writing multiple records in one
+                   go in libssl (Note: this is a different capability to the
+                   pipelining functionality).
+
+  no-nextprotoneg
+                   Don't build support for the NPN TLS extension.
+
+  no-ocsp
+                   Don't build support for OCSP.
+
+  no-pic
+                   Don't build with support for Position Independent Code.
+
+  no-posix-io
+                   Don't use POSIX IO capabilities.
+
+  no-psk
+                   Don't build support for Pre-Shared Key based ciphersuites.
+
+  no-rdrand
+                   Don't use hardware RDRAND capabilities.
+
+  no-rfc3779
+                   Don't build support for RFC3779 ("X.509 Extensions for IP
+                   Addresses and AS Identifiers")
+
+  sctp
+                   Build support for SCTP
+
+  no-shared
+                   Do not create shared libraries, only static ones.  See "Note
+                   on shared libraries" below.
+
+  no-sock
+                   Don't build support for socket BIOs
+
+  no-srp
+                   Don't build support for SRP or SRP based ciphersuites.
+
+  no-srtp
+                   Don't build SRTP support
+
+  no-sse2
+                   Exclude SSE2 code paths. Normally SSE2 extension is
                    detected at run-time, but the decision whether or not the
                    machine code will be executed is taken solely on CPU
                    capability vector. This means that if you happen to run OS
@@ -151,15 +262,96 @@
                    compiled with CPU_ENABLE_SSE, and there is a way to
                    disengage SSE2 code pathes upon application start-up,
                    but if you aim for wider "audience" running such kernel,
-                   consider no-sse2. Both 386 and no-asm options above imply
+                   consider no-sse2. Both the 386 and no-asm options imply
                    no-sse2.
 
-  no-<alg>         Build without the specified algorithm (bf, cast, des, dh,
-                   dsa, hmac, md2, md5, mdc2, rc2, rc4, rc5, rsa, sha).
+  enable-ssl-trace
+                   Build with the SSL Trace capabilities (adds the "-trace"
+                   option to s_client and s_server).
 
-  -Dxxx, -lxxx,    These system specific options will be passed through to the
-  -Lxxx, -fxxx,    compiler to allow you to define preprocessor symbols, specify
-  -mXXX, -Kxxx     additional libraries, library directories or other compiler
+  no-static-engine
+                   Don't build the statically linked engines. This only
+                   has an impact when not built "shared".
+
+  no-stdio
+                   Don't use any C "stdio" features. Only libcrypto and libssl
+                   can be built in this way. Using this option will suppress
+                   building the command line applications. Additionally since
+                   the OpenSSL tests also use the command line applications the
+                   tests will also be skipped.
+
+  no-threads
+                   Don't try to build with support for multi-threaded
+                   applications.
+
+  threads
+                   Build with support for multi-threaded applications. Most
+                   platforms will enable this by default. However if on a
+                   platform where this is not the case then this will usually
+                   require additional system-dependent options! See "Note on
+                   multi-threading" below.
+
+  no-ts
+                   Don't build Time Stamping Authority support.
+
+  no-ui
+                   Don't build with the "UI" capability (i.e. the set of
+                   features enabling text based prompts).
+
+  enable-unit-test
+                   Enable additional unit test APIs. This should not typically
+                   be used in production deployments.
+
+  enable-weak-ssl-ciphers
+                   Build support for SSL/TLS ciphers that are considered "weak"
+                   (e.g. RC4 based ciphersuites).
+
+  zlib
+                   Build with support for zlib compression/decompression.
+
+  zlib-dynamic
+                   Like "zlib", but has OpenSSL load the zlib library
+                   dynamically when needed.  This is only supported on systems
+                   where loading of shared libraries is supported.
+
+  386
+                   On Intel hardware, use the 80386 instruction set only
+                   (the default x86 code is more efficient, but requires at
+                   least a 486). Note: Use compiler flags for any other CPU
+                   specific configuration, e.g. "-m32" to build x86 code on
+                   an x64 system.
+
+  no-<prot>
+                   Don't build support for negotiating the specified SSL/TLS
+                   protocol (one of ssl, ssl3, tls, tls1, tls1_1, tls1_2, dtls,
+                   dtls1 or dtls1_2). If "no-tls" is selected then all of tls1,
+                   tls1_1 and tls1_2 are disabled. Similarly "no-dtls" will
+                   disable dtls1 and dtls1_2. The "no-ssl" option is synonymous
+                   with "no-ssl3". Note this only affects version negotiation.
+                   OpenSSL will still provide the methods for applications to
+                   explicitly select the individual protocol versions.
+
+  no-<prot>-method
+                   As for no-<prot> but in addition do not build the methods for
+                   applications to explicitly select individual protocol
+                   versions.
+
+  enable-<alg>
+                   Build with support for the specified algorithm, where <alg>
+                   is one of: md2 or rc5.
+
+  no-<alg>
+                   Build without support for the specified algorithm, where
+                   <alg> is one of: bf, blake2, camellia, cast, chacha, cmac,
+                   des, dh, dsa, ecdh, ecdsa, idea, md4, md5, mdc2, ocb,
+                   ploy1305, rc2, rc4, rmd160, scrypt, seed or whirlpool. The
+                   "ripemd" algorithm is deprecated and if used is synonymous
+                   with rmd160.
+
+  -Dxxx, -lxxx, -Lxxx, -fxxx, -mXXX, -Kxxx
+                   These system specific options will be passed through to the
+                   compiler to allow you to define preprocessor symbols, specify
+                   additional libraries, library directories or other compiler
                    options.
 
 
@@ -442,15 +634,12 @@
  Note on shared libraries
  ------------------------
 
- Shared libraries have certain caveats.  Binary backward compatibility
- can't be guaranteed before OpenSSL version 1.0.  The only reason to
- use them would be to conserve memory on systems where several programs
- are using OpenSSL.
-
- For most systems, the OpenSSL Configure script knows what is needed to
- build shared libraries for libcrypto and libssl.  On these systems,
- the shared libraries are currently not created by default, but giving
- the option "shared" will get them created.
+ For most systems the OpenSSL Configure script knows what is needed to
+ build shared libraries for libcrypto and libssl. On these systems
+ the shared libraries will be created by default. This can be suppressed and
+ only static libraries created by using the "no-shared" option. On systems
+ where OpenSSL does not know how to build shared libraries the "no-shared"
+ option will be forced and only static libraries will be created.
 
  Note on random number generation
  --------------------------------

@@ -1,218 +1,240 @@
 {- use File::Spec::Functions qw/catdir rel2abs/; -}
-PROGRAMS=\
-        nptest bntest \
-        ectest ecdsatest ecdhtest gmdifftest pbelutest ideatest \
-        md2test md4test md5test \
-        hmactest wp_test \
-        rc2test rc4test rc5test \
-        destest sha1test sha256t sha512t \
-        mdc2test rmdtest \
-        randtest dhtest enginetest casttest \
-        bftest ssltest dsatest exptest rsa_test \
-        evp_test evp_extra_test igetest v3nametest \
-        danetest heartbeat_test p5_crpt2_test \
-        constant_time_test verify_extra_test clienthellotest \
-        packettest asynctest secmemtest srptest memleaktest \
-        dtlsv1listentest ct_test threadstest afalgtest
+IF[{- !$disabled{tests} -}]
+  PROGRAMS=\
+          aborttest \
+          nptest bntest \
+          ectest ecdsatest ecdhtest gmdifftest pbelutest ideatest \
+          md2test md4test md5test \
+          hmactest wp_test \
+          rc2test rc4test rc5test \
+          destest sha1test sha256t sha512t \
+          mdc2test rmdtest \
+          randtest dhtest enginetest casttest \
+          bftest ssltest_old dsatest exptest rsa_test \
+          evp_test evp_extra_test igetest v3nametest \
+          danetest heartbeat_test p5_crpt2_test \
+          constant_time_test verify_extra_test clienthellotest \
+          packettest asynctest secmemtest srptest memleaktest \
+          dtlsv1listentest ct_test threadstest afalgtest d2i_test \
+          ssl_test_ctx_test ssl_test
 
-SOURCE[nptest]=nptest.c
-INCLUDE[nptest]={- rel2abs(catdir($builddir,"../include")) -} ../include
-DEPEND[nptest]=../libcrypto
+  SOURCE[aborttest]=aborttest.c
+  INCLUDE[aborttest]={- rel2abs(catdir($builddir,"../include")) -} ../include
+  DEPEND[aborttest]=../libcrypto
 
-SOURCE[bntest]=bntest.c
-INCLUDE[bntest]={- rel2abs(catdir($builddir,"../crypto/include")) -} {- rel2abs(catdir($builddir,"../include")) -} .. ../crypto/include ../include
-DEPEND[bntest]=../libcrypto
+  SOURCE[nptest]=nptest.c
+  INCLUDE[nptest]={- rel2abs(catdir($builddir,"../include")) -} ../include
+  DEPEND[nptest]=../libcrypto
 
-SOURCE[ectest]=ectest.c
-INCLUDE[ectest]={- rel2abs(catdir($builddir,"../include")) -} ../include
-DEPEND[ectest]=../libcrypto
+  SOURCE[bntest]=bntest.c
+  INCLUDE[bntest]={- rel2abs(catdir($builddir,"../crypto/include")) -} {- rel2abs(catdir($builddir,"../include")) -} .. ../crypto/include ../include
+  DEPEND[bntest]=../libcrypto
 
-SOURCE[ecdsatest]=ecdsatest.c
-INCLUDE[ecdsatest]={- rel2abs(catdir($builddir,"../include")) -} ../include
-DEPEND[ecdsatest]=../libcrypto
+  SOURCE[ectest]=ectest.c
+  INCLUDE[ectest]={- rel2abs(catdir($builddir,"../include")) -} ../include
+  DEPEND[ectest]=../libcrypto
 
-SOURCE[ecdhtest]=ecdhtest.c
-INCLUDE[ecdhtest]={- rel2abs(catdir($builddir,"../include")) -} ../include
-DEPEND[ecdhtest]=../libcrypto
+  SOURCE[ecdsatest]=ecdsatest.c
+  INCLUDE[ecdsatest]={- rel2abs(catdir($builddir,"../include")) -} ../include
+  DEPEND[ecdsatest]=../libcrypto
 
-SOURCE[gmdifftest]=gmdifftest.c
-INCLUDE[gmdifftest]={- rel2abs(catdir($builddir,"../include")) -} ../include
-DEPEND[gmdifftest]=../libcrypto
+  SOURCE[ecdhtest]=ecdhtest.c
+  INCLUDE[ecdhtest]={- rel2abs(catdir($builddir,"../include")) -} ../include
+  DEPEND[ecdhtest]=../libcrypto
 
-SOURCE[pbelutest]=pbelutest.c
-INCLUDE[pbelutest]={- rel2abs(catdir($builddir,"../include")) -} ../include
-DEPEND[pbelutest]=../libcrypto
+  SOURCE[gmdifftest]=gmdifftest.c
+  INCLUDE[gmdifftest]={- rel2abs(catdir($builddir,"../include")) -} ../include
+  DEPEND[gmdifftest]=../libcrypto
 
-SOURCE[ideatest]=ideatest.c
-INCLUDE[ideatest]={- rel2abs(catdir($builddir,"../include")) -} ../include
-DEPEND[ideatest]=../libcrypto
+  SOURCE[pbelutest]=pbelutest.c
+  INCLUDE[pbelutest]={- rel2abs(catdir($builddir,"../include")) -} ../include
+  DEPEND[pbelutest]=../libcrypto
 
-SOURCE[md2test]=md2test.c
-INCLUDE[md2test]={- rel2abs(catdir($builddir,"../include")) -} ../include
-DEPEND[md2test]=../libcrypto
+  SOURCE[ideatest]=ideatest.c
+  INCLUDE[ideatest]={- rel2abs(catdir($builddir,"../include")) -} ../include
+  DEPEND[ideatest]=../libcrypto
 
-SOURCE[md4test]=md4test.c
-INCLUDE[md4test]={- rel2abs(catdir($builddir,"../include")) -} ../include
-DEPEND[md4test]=../libcrypto
+  SOURCE[md2test]=md2test.c
+  INCLUDE[md2test]={- rel2abs(catdir($builddir,"../include")) -} ../include
+  DEPEND[md2test]=../libcrypto
 
-SOURCE[md5test]=md5test.c
-INCLUDE[md5test]={- rel2abs(catdir($builddir,"../include")) -} ../include
-DEPEND[md5test]=../libcrypto
+  SOURCE[md4test]=md4test.c
+  INCLUDE[md4test]={- rel2abs(catdir($builddir,"../include")) -} ../include
+  DEPEND[md4test]=../libcrypto
 
-SOURCE[hmactest]=hmactest.c
-INCLUDE[hmactest]={- rel2abs(catdir($builddir,"../include")) -} ../include
-DEPEND[hmactest]=../libcrypto
+  SOURCE[md5test]=md5test.c
+  INCLUDE[md5test]={- rel2abs(catdir($builddir,"../include")) -} ../include
+  DEPEND[md5test]=../libcrypto
 
-SOURCE[wp_test]=wp_test.c
-INCLUDE[wp_test]={- rel2abs(catdir($builddir,"../include")) -} ../include
-DEPEND[wp_test]=../libcrypto
+  SOURCE[hmactest]=hmactest.c
+  INCLUDE[hmactest]={- rel2abs(catdir($builddir,"../include")) -} ../include
+  DEPEND[hmactest]=../libcrypto
 
-SOURCE[rc2test]=rc2test.c
-INCLUDE[rc2test]={- rel2abs(catdir($builddir,"../include")) -} ../include
-DEPEND[rc2test]=../libcrypto
+  SOURCE[wp_test]=wp_test.c
+  INCLUDE[wp_test]={- rel2abs(catdir($builddir,"../include")) -} ../include
+  DEPEND[wp_test]=../libcrypto
 
-SOURCE[rc4test]=rc4test.c
-INCLUDE[rc4test]={- rel2abs(catdir($builddir,"../include")) -} ../include
-DEPEND[rc4test]=../libcrypto
+  SOURCE[rc2test]=rc2test.c
+  INCLUDE[rc2test]={- rel2abs(catdir($builddir,"../include")) -} ../include
+  DEPEND[rc2test]=../libcrypto
 
-SOURCE[rc5test]=rc5test.c
-INCLUDE[rc5test]={- rel2abs(catdir($builddir,"../include")) -} ../include
-DEPEND[rc5test]=../libcrypto
+  SOURCE[rc4test]=rc4test.c
+  INCLUDE[rc4test]={- rel2abs(catdir($builddir,"../include")) -} ../include
+  DEPEND[rc4test]=../libcrypto
 
-SOURCE[destest]=destest.c
-INCLUDE[destest]={- rel2abs(catdir($builddir,"../include")) -} ../include
-DEPEND[destest]=../libcrypto
+  SOURCE[rc5test]=rc5test.c
+  INCLUDE[rc5test]={- rel2abs(catdir($builddir,"../include")) -} ../include
+  DEPEND[rc5test]=../libcrypto
 
-SOURCE[sha1test]=sha1test.c
-INCLUDE[sha1test]={- rel2abs(catdir($builddir,"../include")) -} ../include
-DEPEND[sha1test]=../libcrypto
+  SOURCE[destest]=destest.c
+  INCLUDE[destest]={- rel2abs(catdir($builddir,"../include")) -} ../include
+  DEPEND[destest]=../libcrypto
 
-SOURCE[sha256t]=sha256t.c
-INCLUDE[sha256t]={- rel2abs(catdir($builddir,"../include")) -} ../include
-DEPEND[sha256t]=../libcrypto
+  SOURCE[sha1test]=sha1test.c
+  INCLUDE[sha1test]={- rel2abs(catdir($builddir,"../include")) -} ../include
+  DEPEND[sha1test]=../libcrypto
 
-SOURCE[sha512t]=sha512t.c
-INCLUDE[sha512t]={- rel2abs(catdir($builddir,"../include")) -} ../include
-DEPEND[sha512t]=../libcrypto
+  SOURCE[sha256t]=sha256t.c
+  INCLUDE[sha256t]={- rel2abs(catdir($builddir,"../include")) -} ../include
+  DEPEND[sha256t]=../libcrypto
 
-SOURCE[mdc2test]=mdc2test.c
-INCLUDE[mdc2test]={- rel2abs(catdir($builddir,"../include")) -} ../include
-DEPEND[mdc2test]=../libcrypto
+  SOURCE[sha512t]=sha512t.c
+  INCLUDE[sha512t]={- rel2abs(catdir($builddir,"../include")) -} ../include
+  DEPEND[sha512t]=../libcrypto
 
-SOURCE[rmdtest]=rmdtest.c
-INCLUDE[rmdtest]={- rel2abs(catdir($builddir,"../include")) -} ../include
-DEPEND[rmdtest]=../libcrypto
+  SOURCE[mdc2test]=mdc2test.c
+  INCLUDE[mdc2test]={- rel2abs(catdir($builddir,"../include")) -} ../include
+  DEPEND[mdc2test]=../libcrypto
 
-SOURCE[randtest]=randtest.c
-INCLUDE[randtest]={- rel2abs(catdir($builddir,"../include")) -} ../include
-DEPEND[randtest]=../libcrypto
+  SOURCE[rmdtest]=rmdtest.c
+  INCLUDE[rmdtest]={- rel2abs(catdir($builddir,"../include")) -} ../include
+  DEPEND[rmdtest]=../libcrypto
 
-SOURCE[dhtest]=dhtest.c
-INCLUDE[dhtest]={- rel2abs(catdir($builddir,"../include")) -} ../include
-DEPEND[dhtest]=../libcrypto
+  SOURCE[randtest]=randtest.c
+  INCLUDE[randtest]={- rel2abs(catdir($builddir,"../include")) -} ../include
+  DEPEND[randtest]=../libcrypto
 
-SOURCE[enginetest]=enginetest.c
-INCLUDE[enginetest]={- rel2abs(catdir($builddir,"../include")) -} ../include
-DEPEND[enginetest]=../libcrypto
+  SOURCE[dhtest]=dhtest.c
+  INCLUDE[dhtest]={- rel2abs(catdir($builddir,"../include")) -} ../include
+  DEPEND[dhtest]=../libcrypto
 
-SOURCE[casttest]=casttest.c
-INCLUDE[casttest]={- rel2abs(catdir($builddir,"../include")) -} ../include
-DEPEND[casttest]=../libcrypto
+  SOURCE[enginetest]=enginetest.c
+  INCLUDE[enginetest]={- rel2abs(catdir($builddir,"../include")) -} ../include
+  DEPEND[enginetest]=../libcrypto
 
-SOURCE[bftest]=bftest.c
-INCLUDE[bftest]={- rel2abs(catdir($builddir,"../include")) -} ../include
-DEPEND[bftest]=../libcrypto
+  SOURCE[casttest]=casttest.c
+  INCLUDE[casttest]={- rel2abs(catdir($builddir,"../include")) -} ../include
+  DEPEND[casttest]=../libcrypto
 
-SOURCE[ssltest]=ssltest.c
-INCLUDE[ssltest]={- rel2abs(catdir($builddir,"../include")) -} .. ../include
-DEPEND[ssltest]=../libcrypto ../libssl
+  SOURCE[bftest]=bftest.c
+  INCLUDE[bftest]={- rel2abs(catdir($builddir,"../include")) -} ../include
+  DEPEND[bftest]=../libcrypto
 
-SOURCE[dsatest]=dsatest.c
-INCLUDE[dsatest]={- rel2abs(catdir($builddir,"../include")) -} ../include
-DEPEND[dsatest]=../libcrypto
+  SOURCE[ssltest_old]=ssltest_old.c
+  INCLUDE[ssltest_old]={- rel2abs(catdir($builddir,"../include")) -} .. ../include
+  DEPEND[ssltest_old]=../libcrypto ../libssl
 
-SOURCE[exptest]=exptest.c
-INCLUDE[exptest]={- rel2abs(catdir($builddir,"../include")) -} ../include
-DEPEND[exptest]=../libcrypto
+  SOURCE[dsatest]=dsatest.c
+  INCLUDE[dsatest]={- rel2abs(catdir($builddir,"../include")) -} ../include
+  DEPEND[dsatest]=../libcrypto
 
-SOURCE[rsa_test]=rsa_test.c
-INCLUDE[rsa_test]={- rel2abs(catdir($builddir,"../include")) -} .. ../include
-DEPEND[rsa_test]=../libcrypto
+  SOURCE[exptest]=exptest.c
+  INCLUDE[exptest]={- rel2abs(catdir($builddir,"../include")) -} ../include
+  DEPEND[exptest]=../libcrypto
 
-SOURCE[evp_test]=evp_test.c
-INCLUDE[evp_test]={- rel2abs(catdir($builddir,"../include")) -} ../include
-DEPEND[evp_test]=../libcrypto
+  SOURCE[rsa_test]=rsa_test.c
+  INCLUDE[rsa_test]={- rel2abs(catdir($builddir,"../include")) -} .. ../include
+  DEPEND[rsa_test]=../libcrypto
 
-SOURCE[evp_extra_test]=evp_extra_test.c
-INCLUDE[evp_extra_test]={- rel2abs(catdir($builddir,"../include")) -} ../include
-DEPEND[evp_extra_test]=../libcrypto
+  SOURCE[evp_test]=evp_test.c
+  INCLUDE[evp_test]={- rel2abs(catdir($builddir,"../include")) -} ../include
+  DEPEND[evp_test]=../libcrypto
 
-SOURCE[igetest]=igetest.c
-INCLUDE[igetest]={- rel2abs(catdir($builddir,"../include")) -} .. ../include
-DEPEND[igetest]=../libcrypto
+  SOURCE[evp_extra_test]=evp_extra_test.c
+  INCLUDE[evp_extra_test]={- rel2abs(catdir($builddir,"../include")) -} ../include
+  DEPEND[evp_extra_test]=../libcrypto
 
-SOURCE[v3nametest]=v3nametest.c
-INCLUDE[v3nametest]={- rel2abs(catdir($builddir,"../include")) -} ../include
-DEPEND[v3nametest]=../libcrypto
+  SOURCE[igetest]=igetest.c
+  INCLUDE[igetest]={- rel2abs(catdir($builddir,"../include")) -} .. ../include
+  DEPEND[igetest]=../libcrypto
 
-SOURCE[danetest]=danetest.c
-INCLUDE[danetest]={- rel2abs(catdir($builddir,"../include")) -} ../include
-DEPEND[danetest]=../libcrypto ../libssl
+  SOURCE[v3nametest]=v3nametest.c
+  INCLUDE[v3nametest]={- rel2abs(catdir($builddir,"../include")) -} ../include
+  DEPEND[v3nametest]=../libcrypto
 
-SOURCE[heartbeat_test]=heartbeat_test.c testutil.c
-INCLUDE[heartbeat_test]={- rel2abs(catdir($builddir,"../include")) -} .. ../include
-DEPEND[heartbeat_test]=../libcrypto ../libssl
+  SOURCE[danetest]=danetest.c
+  INCLUDE[danetest]={- rel2abs(catdir($builddir,"../include")) -} ../include
+  DEPEND[danetest]=../libcrypto ../libssl
 
-SOURCE[p5_crpt2_test]=p5_crpt2_test.c
-INCLUDE[p5_crpt2_test]={- rel2abs(catdir($builddir,"../include")) -} ../include
-DEPEND[p5_crpt2_test]=../libcrypto
+  SOURCE[heartbeat_test]=heartbeat_test.c testutil.c
+  INCLUDE[heartbeat_test]={- rel2abs(catdir($builddir,"../include")) -} .. ../include
+  DEPEND[heartbeat_test]=../libcrypto ../libssl
 
-SOURCE[constant_time_test]=constant_time_test.c
-INCLUDE[constant_time_test]={- rel2abs(catdir($builddir,"../include")) -} .. ../include
-DEPEND[constant_time_test]=../libcrypto
+  SOURCE[p5_crpt2_test]=p5_crpt2_test.c
+  INCLUDE[p5_crpt2_test]={- rel2abs(catdir($builddir,"../include")) -} ../include
+  DEPEND[p5_crpt2_test]=../libcrypto
 
-SOURCE[verify_extra_test]=verify_extra_test.c
-INCLUDE[verify_extra_test]={- rel2abs(catdir($builddir,"../include")) -} ../include
-DEPEND[verify_extra_test]=../libcrypto
+  SOURCE[constant_time_test]=constant_time_test.c
+  INCLUDE[constant_time_test]={- rel2abs(catdir($builddir,"../include")) -} .. ../include
+  DEPEND[constant_time_test]=../libcrypto
 
-SOURCE[clienthellotest]=clienthellotest.c
-INCLUDE[clienthellotest]={- rel2abs(catdir($builddir,"../include")) -} ../include
-DEPEND[clienthellotest]=../libcrypto ../libssl
+  SOURCE[verify_extra_test]=verify_extra_test.c
+  INCLUDE[verify_extra_test]={- rel2abs(catdir($builddir,"../include")) -} ../include
+  DEPEND[verify_extra_test]=../libcrypto
 
-SOURCE[packettest]=packettest.c
-INCLUDE[packettest]={- rel2abs(catdir($builddir,"../include")) -} ../include
-DEPEND[packettest]=../libcrypto
+  SOURCE[clienthellotest]=clienthellotest.c
+  INCLUDE[clienthellotest]={- rel2abs(catdir($builddir,"../include")) -} ../include
+  DEPEND[clienthellotest]=../libcrypto ../libssl
 
-SOURCE[asynctest]=asynctest.c
-INCLUDE[asynctest]={- rel2abs(catdir($builddir,"../include")) -} .. ../include
-DEPEND[asynctest]=../libcrypto
+  SOURCE[packettest]=packettest.c
+  INCLUDE[packettest]={- rel2abs(catdir($builddir,"../include")) -} ../include
+  DEPEND[packettest]=../libcrypto
 
-SOURCE[secmemtest]=secmemtest.c
-INCLUDE[secmemtest]={- rel2abs(catdir($builddir,"../include")) -} ../include
-DEPEND[secmemtest]=../libcrypto
+  SOURCE[asynctest]=asynctest.c
+  INCLUDE[asynctest]={- rel2abs(catdir($builddir,"../include")) -} .. ../include
+  DEPEND[asynctest]=../libcrypto
 
-SOURCE[srptest]=srptest.c
-INCLUDE[srptest]={- rel2abs(catdir($builddir,"../include")) -} ../include
-DEPEND[srptest]=../libcrypto
+  SOURCE[secmemtest]=secmemtest.c
+  INCLUDE[secmemtest]={- rel2abs(catdir($builddir,"../include")) -} ../include
+  DEPEND[secmemtest]=../libcrypto
 
-SOURCE[memleaktest]=memleaktest.c
-INCLUDE[memleaktest]={- rel2abs(catdir($builddir,"../include")) -} ../include
-DEPEND[memleaktest]=../libcrypto
+  SOURCE[srptest]=srptest.c
+  INCLUDE[srptest]={- rel2abs(catdir($builddir,"../include")) -} ../include
+  DEPEND[srptest]=../libcrypto
 
-SOURCE[dtlsv1listentest]=dtlsv1listentest.c
-INCLUDE[dtlsv1listentest]={- rel2abs(catdir($builddir,"../include")) -} .. ../include
-DEPEND[dtlsv1listentest]=../libssl
+  SOURCE[memleaktest]=memleaktest.c
+  INCLUDE[memleaktest]={- rel2abs(catdir($builddir,"../include")) -} ../include
+  DEPEND[memleaktest]=../libcrypto
 
-SOURCE[ct_test]=ct_test.c testutil.c
-INCLUDE[ct_test]={- rel2abs(catdir($builddir,"../include")) -} ../crypto/include ../include
-DEPEND[ct_test]=../libcrypto
+  SOURCE[dtlsv1listentest]=dtlsv1listentest.c
+  INCLUDE[dtlsv1listentest]={- rel2abs(catdir($builddir,"../include")) -} .. ../include
+  DEPEND[dtlsv1listentest]=../libssl
 
-SOURCE[threadstest]=threadstest.c
-INCLUDE[threadstest]={- rel2abs(catdir($builddir,"../include")) -} .. ../include
-DEPEND[threadstest]=../libcrypto
+  SOURCE[ct_test]=ct_test.c testutil.c
+  INCLUDE[ct_test]={- rel2abs(catdir($builddir,"../include")) -} ../crypto/include ../include
+  DEPEND[ct_test]=../libcrypto
 
-SOURCE[afalgtest]=afalgtest.c
-INCLUDE[afalgtest]={- rel2abs(catdir($builddir,"../include")) -} .. ../include
-DEPEND[afalgtest]=../libcrypto
+  SOURCE[threadstest]=threadstest.c
+  INCLUDE[threadstest]={- rel2abs(catdir($builddir,"../include")) -} .. ../include
+  DEPEND[threadstest]=../libcrypto
 
-INCLUDE[testutil.o]=..
+  SOURCE[afalgtest]=afalgtest.c
+  INCLUDE[afalgtest]={- rel2abs(catdir($builddir,"../include")) -} .. ../include
+  DEPEND[afalgtest]=../libcrypto
+
+  SOURCE[d2i_test]=d2i_test.c testutil.c
+  INCLUDE[d2i_test]={- rel2abs(catdir($builddir,"../include")) -} .. ../include
+  DEPEND[d2i_test]=../libcrypto
+
+  SOURCE[ssl_test_ctx_test]=ssl_test_ctx_test.c ssl_test_ctx.c testutil.c
+  INCLUDE[ssl_test_ctx_test]={- rel2abs(catdir($builddir,"../include")) -} .. ../include
+  DEPEND[ssl_test_ctx_test]=../libcrypto
+
+  SOURCE[ssl_test]=ssl_test.c ssl_test_ctx.c testutil.c handshake_helper.c
+  INCLUDE[ssl_test]={- rel2abs(catdir($builddir,"../include")) -} .. ../include
+  DEPEND[ssl_test]=../libcrypto ../libssl
+
+  INCLUDE[testutil.o]=..
+  INCLUDE[ssl_test_ctx.o]={- rel2abs(catdir($builddir,"../include")) -} ../include
+  INCLUDE[handshake_helper.o]={- rel2abs(catdir($builddir,"../include")) -} ../include
+ENDIF

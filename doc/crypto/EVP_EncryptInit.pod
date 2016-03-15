@@ -194,12 +194,14 @@ passed an B<EVP_CIPHER> or B<EVP_CIPHER_CTX> structure.  The actual NID
 value is an internal value which may not have a corresponding OBJECT
 IDENTIFIER.
 
-EVP_CIPHER_CTX_set_padding() enables or disables padding. By default
-encryption operations are padded using standard block padding and the
-padding is checked and removed when decrypting. If the B<pad> parameter
-is zero then no padding is performed, the total amount of data encrypted
-or decrypted must then be a multiple of the block size or an error will
-occur.
+EVP_CIPHER_CTX_set_padding() enables or disables padding. This
+function should be called after the context is set up for encryption
+or decryption with EVP_EncryptInit_ex(), EVP_DecryptInit_ex() or
+EVP_CipherInit_ex(). By default encryption operations are padded using
+standard block padding and the padding is checked and removed when
+decrypting. If the B<pad> parameter is zero then no padding is
+performed, the total amount of data encrypted or decrypted must then
+be a multiple of the block size or an error will occur.
 
 EVP_CIPHER_key_length() and EVP_CIPHER_CTX_key_length() return the key
 length of a cipher when passed an B<EVP_CIPHER> or B<EVP_CIPHER_CTX>
@@ -382,13 +384,13 @@ bits and 12 rounds.
 
 AES Galois Counter Mode (GCM) for 128, 192 and 256 bit keys respectively.
 These ciphers require additional control operations to function correctly: see
-the L<GCM and OCB modes> section below for details.
+the L</GCM and OCB modes> section below for details.
 
 =item EVP_aes_128_ocb(void), EVP_aes_192_ocb(void), EVP_aes_256_ocb(void)
 
 Offest Codebook Mode (OCB) for 128, 192 and 256 bit keys respectively.
 These ciphers require additional control operations to function correctly: see
-the L<GCM and OCB modes> section below for details.
+the L</GCM and OCB modes> section below for details.
 
 =item EVP_aes_128_ccm(), EVP_aes_192_ccm(), EVP_aes_256_ccm()
 
@@ -439,7 +441,7 @@ length can only be set before specifying an IV. If not called a default tag
 length is used. For OCB AES the default is 16 (i.e. 128 bits). This is also the
 maximum tag length for OCB.
 
-See L<EXAMPLES> below for an example of the use of GCM mode.
+See L</EXAMPLES> below for an example of the use of GCM mode.
 
 =head1 CCM Mode
 

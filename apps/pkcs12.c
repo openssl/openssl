@@ -57,7 +57,9 @@
  */
 
 #include <openssl/opensslconf.h>
-#if !defined(OPENSSL_NO_DES)
+#if defined(OPENSSL_NO_DES)
+NON_EMPTY_TRANSLATION_UNIT
+#else
 
 # include <stdio.h>
 # include <stdlib.h>
@@ -174,7 +176,8 @@ int pkcs12_main(int argc, char **argv)
     int cert_pbe = NID_pbe_WithSHA1And3_Key_TripleDES_CBC;
 # endif
     int key_pbe = NID_pbe_WithSHA1And3_Key_TripleDES_CBC;
-    int ret = 1, macver = 1, noprompt = 0, add_lmk = 0, private = 0;
+    int ret = 1, macver = 1, add_lmk = 0, private = 0;
+    int noprompt = 0;
     char *passinarg = NULL, *passoutarg = NULL, *passarg = NULL;
     char *passin = NULL, *passout = NULL, *inrand = NULL, *macalg = NULL;
     char *cpass = NULL, *mpass = NULL, *CApath = NULL, *CAfile = NULL;
@@ -365,9 +368,16 @@ int pkcs12_main(int argc, char **argv)
     }
 
     if (twopass) {
-        if (EVP_read_pw_string
-            (macpass, sizeof macpass, "Enter MAC Password:", export_cert)) {
-            BIO_printf(bio_err, "Can't read Password\n");
+        if (1) {
+#ifndef OPENSSL_NO_UI
+            if (EVP_read_pw_string
+                (macpass, sizeof macpass, "Enter MAC Password:", export_cert)) {
+                BIO_printf(bio_err, "Can't read Password\n");
+                goto end;
+            }
+        } else {
+#endif
+            BIO_printf(bio_err, "Unsupported option -twopass\n");
             goto end;
         }
     }
@@ -475,12 +485,21 @@ int pkcs12_main(int argc, char **argv)
         if (add_lmk && key)
             EVP_PKEY_add1_attr_by_NID(key, NID_LocalKeySet, 0, NULL, -1);
 
-        if (!noprompt &&
-            EVP_read_pw_string(pass, sizeof pass, "Enter Export Password:",
-                               1)) {
-            BIO_printf(bio_err, "Can't read Password\n");
-            goto export_end;
+        if (!noprompt) {
+            if (1) {
+#ifndef OPENSSL_NO_UI
+                if (EVP_read_pw_string(pass, sizeof pass, "Enter Export Password:",
+                                       1)) {
+                    BIO_printf(bio_err, "Can't read Password\n");
+                    goto export_end;
+                }
+            } else {
+#endif
+                BIO_printf(bio_err, "Password required\n");
+                goto export_end;
+            }
         }
+
         if (!twopass)
             OPENSSL_strlcpy(macpass, pass, sizeof macpass);
 
@@ -532,11 +551,19 @@ int pkcs12_main(int argc, char **argv)
         goto end;
     }
 
-    if (!noprompt
-        && EVP_read_pw_string(pass, sizeof pass, "Enter Import Password:",
-                              0)) {
-        BIO_printf(bio_err, "Can't read Password\n");
-        goto end;
+    if (!noprompt) {
+        if (1) {
+#ifndef OPENSSL_NO_UI
+            if (EVP_read_pw_string(pass, sizeof pass, "Enter Import Password:",
+                                   0)) {
+                BIO_printf(bio_err, "Can't read Password\n");
+                goto end;
+            }
+        } else {
+#endif
+            BIO_printf(bio_err, "Password required\n");
+            goto end;
+        }
     }
 
     if (!twopass)
@@ -731,21 +758,28 @@ int dump_certs_pkeys_bag(BIO *out, PKCS12_SAFEBAG *bag, char *pass,
 static int get_cert_chain(X509 *cert, X509_STORE *store,
                           STACK_OF(X509) **chain)
 {
-    X509_STORE_CTX store_ctx;
+    X509_STORE_CTX *store_ctx = NULL;
     STACK_OF(X509) *chn = NULL;
     int i = 0;
 
-    if (!X509_STORE_CTX_init(&store_ctx, store, cert, NULL)) {
-        *chain = NULL;
-        return X509_V_ERR_UNSPECIFIED;
+    store_ctx = X509_STORE_CTX_new();
+    if (store_ctx == NULL) {
+        i =  X509_V_ERR_UNSPECIFIED;
+        goto end;
+    }
+    if (!X509_STORE_CTX_init(store_ctx, store, cert, NULL)) {
+        i =  X509_V_ERR_UNSPECIFIED;
+        goto end;
     }
 
-    if (X509_verify_cert(&store_ctx) > 0)
-        chn = X509_STORE_CTX_get1_chain(&store_ctx);
-    else if ((i = X509_STORE_CTX_get_error(&store_ctx)) == 0)
+
+    if (X509_verify_cert(store_ctx) > 0)
+        chn = X509_STORE_CTX_get1_chain(store_ctx);
+    else if ((i = X509_STORE_CTX_get_error(store_ctx)) == 0)
         i = X509_V_ERR_UNSPECIFIED;
 
-    X509_STORE_CTX_cleanup(&store_ctx);
+end:
+    X509_STORE_CTX_free(store_ctx);
     *chain = chn;
     return i;
 }

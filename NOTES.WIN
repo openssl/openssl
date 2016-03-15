@@ -22,6 +22,31 @@
    supported.
 
 
+ Visual C++ (native Windows)
+ ---------------------------
+
+ Installation directories
+
+ The default installation directories are derived from environment
+ variables.
+
+ For VC-WIN32, the following defaults are use:
+
+     PREFIX:      %ProgramFiles(86)%\OpenSSL
+     OPENSSLDIR:  %CommonProgramFiles(86)%\SSL
+
+ For VC-WIN32, the following defaults are use:
+
+     PREFIX:      %ProgramW6432%\OpenSSL
+     OPENSSLDIR:  %CommonProgramW6432%\SSL
+
+ Should those environment variables not exist (on a pure Win32
+ installation for examples), these fallbacks are used:
+
+     PREFIX:      %ProgramFiles%\OpenSSL
+     OPENSSLDIR:  %CommonProgramFiles%\SSL
+
+
  GNU C (Cygwin)
  --------------
 
@@ -53,8 +78,9 @@
  recognize that binaries targeting Cygwin itself are not interchangeable
  with "conventional" Windows binaries you generate with/for MinGW.
 
+
  GNU C (MinGW/MSYS)
- -------------
+ ------------------
 
  * Compiler and shell environment installation:
 
@@ -72,75 +98,6 @@
    Other possible cross compile prefixes include x86_64-w64-mingw32-
    and i686-w64-mingw32-.
 
-
- "Classic" builds (Visual C++)
- ----------------
-
- [OpenSSL was classically built using a script called mk1mf.  This is
-  still available by configuring with --classic.  The notes below are
-  using this flag, and are tentative.  Use with care.
-
-  NOTE: this won't be available for long.]
-
- If you want to compile in the assembly language routines with Visual
- C++, then you will need the Netwide Assembler binary, nasmw.exe or nasm.exe, to
- be available on your %PATH%.
-
- Firstly you should run Configure and generate the Makefiles. If you don't want
- the assembly language files then add the "no-asm" option (without quotes) to
- the Configure lines below.
-
- For Win32:
-
- > perl Configure VC-WIN32 --classic --prefix=c:\some\openssl\dir
- > ms\do_nasm
-
- Note: replace the last line above with the following if not using the assembly
- language files:
-
- > ms\do_ms
-
- For Win64/x64:
-
- > perl Configure VC-WIN64A --classic --prefix=c:\some\openssl\dir
- > ms\do_win64a
-
- For Win64/IA64:
-
- > perl Configure VC-WIN64I --classic --prefix=c:\some\openssl\dir
- > ms\do_win64i
-
- Where the prefix argument specifies where OpenSSL will be installed to.
-
- Then from the VC++ environment at a prompt do the following. Note, your %PATH%
- and other environment variables should be set up for 32-bit or 64-bit
- development as appropriate.
-
- > nmake -f ms\ntdll.mak
-
- If all is well it should compile and you will have some DLLs and
- executables in out32dll. If you want to try the tests then do:
-
- > nmake -f ms\ntdll.mak test
-
- To install OpenSSL to the specified location do:
-
- > nmake -f ms\ntdll.mak install
-
- Tweaks:
-
- There are various changes you can make to the Windows compile
- environment. By default the library is not compiled with debugging
- symbols. If you add --debug to the Configure lines above then debugging symbols
- will be compiled in.
-
- By default in 1.1.0 OpenSSL will compile builtin ENGINES into separate shared
- libraries. If you specify the "enable-static-engine" option on the command line
- to Configure the shared library build (ms\ntdll.mak) will compile the engines
- into libcrypto32.dll instead.
-
- You can also build a static version of the library using the Makefile
- ms\nt.mak
 
  Linking your application
  ------------------------

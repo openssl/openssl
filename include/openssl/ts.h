@@ -60,6 +60,8 @@
 # define HEADER_TS_H
 
 # include <openssl/opensslconf.h>
+
+# ifndef OPENSSL_NO_TS
 # include <openssl/symhacks.h>
 # include <openssl/buffer.h>
 # include <openssl/evp.h>
@@ -67,22 +69,12 @@
 # include <openssl/stack.h>
 # include <openssl/asn1.h>
 # include <openssl/safestack.h>
-
-# ifndef OPENSSL_NO_RSA
-#  include <openssl/rsa.h>
-# endif
-
-# ifndef OPENSSL_NO_DSA
-#  include <openssl/dsa.h>
-# endif
-
-# ifndef OPENSSL_NO_DH
-#  include <openssl/dh.h>
-# endif
-
-#ifdef  __cplusplus
+# include <openssl/rsa.h>
+# include <openssl/dsa.h>
+# include <openssl/dh.h>
+# ifdef  __cplusplus
 extern "C" {
-#endif
+# endif
 
 # ifdef WIN32
 /* Under Win32 this is defined in wincrypt.h */
@@ -696,7 +688,9 @@ void ERR_load_TS_strings(void);
 # define TS_R_VAR_LOOKUP_FAILURE                          136
 # define TS_R_WRONG_CONTENT_TYPE                          114
 
-#ifdef  __cplusplus
+# ifdef  __cplusplus
 }
-#endif
+# endif
+# endif
+
 #endif

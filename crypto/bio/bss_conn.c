@@ -103,7 +103,7 @@ void BIO_CONNECT_free(BIO_CONNECT *a);
 #define BIO_CONN_S_OK                    5
 #define BIO_CONN_S_BLOCKED_CONNECT       6
 
-static BIO_METHOD methods_connectp = {
+static const BIO_METHOD methods_connectp = {
     BIO_TYPE_CONNECT,
     "socket connect",
     conn_write,
@@ -198,7 +198,7 @@ static int conn_state(BIO *b, BIO_CONNECT *c)
             ret = BIO_connect(b->num, BIO_ADDRINFO_address(c->addr_iter),
                               BIO_SOCK_KEEPALIVE | c->connect_mode);
             b->retry_reason = 0;
-            if (ret < 0) {
+            if (ret == 0) {
                 if (BIO_sock_should_retry(ret)) {
                     BIO_set_retry_special(b);
                     c->state = BIO_CONN_S_BLOCKED_CONNECT;
@@ -285,7 +285,7 @@ void BIO_CONNECT_free(BIO_CONNECT *a)
     OPENSSL_free(a);
 }
 
-BIO_METHOD *BIO_s_connect(void)
+const BIO_METHOD *BIO_s_connect(void)
 {
     return (&methods_connectp);
 }

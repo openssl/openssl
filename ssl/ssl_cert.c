@@ -125,9 +125,7 @@
 #include <openssl/bio.h>
 #include <openssl/pem.h>
 #include <openssl/x509v3.h>
-#ifndef OPENSSL_NO_DH
-# include <openssl/dh.h>
-#endif
+#include <openssl/dh.h>
 #include <openssl/bn.h>
 #include "internal/threads.h"
 #include "ssl_locl.h"
@@ -477,33 +475,45 @@ void ssl_cert_set_cert_cb(CERT *c, int (*cb) (SSL *ssl, void *arg), void *arg)
 int ssl_verify_cert_chain(SSL *s, STACK_OF(X509) *sk)
 {
     X509 *x;
-    int i;
+    int i = 0;
     X509_STORE *verify_store;
-    X509_STORE_CTX ctx;
+    X509_STORE_CTX *ctx = NULL;
     X509_VERIFY_PARAM *param;
+
+    if ((sk == NULL) || (sk_X509_num(sk) == 0))
+        return 0;
 
     if (s->cert->verify_store)
         verify_store = s->cert->verify_store;
     else
         verify_store = s->ctx->cert_store;
 
-    if ((sk == NULL) || (sk_X509_num(sk) == 0))
-        return (0);
+    ctx = X509_STORE_CTX_new();
+    if (ctx == NULL) {
+        SSLerr(SSL_F_SSL_VERIFY_CERT_CHAIN, ERR_R_MALLOC_FAILURE);
+        return 0;
+    }
 
     x = sk_X509_value(sk, 0);
-    if (!X509_STORE_CTX_init(&ctx, verify_store, x, sk)) {
+    if (!X509_STORE_CTX_init(ctx, verify_store, x, sk)) {
         SSLerr(SSL_F_SSL_VERIFY_CERT_CHAIN, ERR_R_X509_LIB);
-        return (0);
+        goto end;
     }
-    param = X509_STORE_CTX_get0_param(&ctx);
+    param = X509_STORE_CTX_get0_param(ctx);
+    /*
+     * XXX: Separate @AUTHSECLEVEL and @TLSSECLEVEL would be useful at some
+     * point, for now a single @SECLEVEL sets the same policy for TLS crypto
+     * and PKI authentication.
+     */
+    X509_VERIFY_PARAM_set_auth_level(param, SSL_get_security_level(s));
 
     /* Set suite B flags if needed */
-    X509_STORE_CTX_set_flags(&ctx, tls1_suiteb(s));
-    X509_STORE_CTX_set_ex_data(&ctx, SSL_get_ex_data_X509_STORE_CTX_idx(), s);
+    X509_STORE_CTX_set_flags(ctx, tls1_suiteb(s));
+    X509_STORE_CTX_set_ex_data(ctx, SSL_get_ex_data_X509_STORE_CTX_idx(), s);
 
     /* Verify via DANE if enabled */
     if (DANETLS_ENABLED(&s->dane))
-        X509_STORE_CTX_set0_dane(&ctx, &s->dane);
+        X509_STORE_CTX_set0_dane(ctx, &s->dane);
 
     /*
      * We need to inherit the verify parameters. These can be determined by
@@ -511,34 +521,25 @@ int ssl_verify_cert_chain(SSL *s, STACK_OF(X509) *sk)
      * vice versa.
      */
 
-    X509_STORE_CTX_set_default(&ctx, s->server ? "ssl_client" : "ssl_server");
+    X509_STORE_CTX_set_default(ctx, s->server ? "ssl_client" : "ssl_server");
     /*
      * Anything non-default in "s->param" should overwrite anything in the ctx.
      */
     X509_VERIFY_PARAM_set1(param, s->param);
 
     if (s->verify_callback)
-        X509_STORE_CTX_set_verify_cb(&ctx, s->verify_callback);
+        X509_STORE_CTX_set_verify_cb(ctx, s->verify_callback);
 
     if (s->ctx->app_verify_callback != NULL)
-        i = s->ctx->app_verify_callback(&ctx, s->ctx->app_verify_arg);
-    else {
-        i = X509_verify_cert(&ctx);
-# if 0
-        /* Dummy error calls so mkerr generates them */
-        SSLerr(SSL_F_SSL_VERIFY_CERT_CHAIN, SSL_R_EE_KEY_TOO_SMALL);
-        SSLerr(SSL_F_SSL_VERIFY_CERT_CHAIN, SSL_R_CA_KEY_TOO_SMALL);
-        SSLerr(SSL_F_SSL_VERIFY_CERT_CHAIN, SSL_R_CA_MD_TOO_WEAK);
-# endif
-        if (i > 0)
-            i = ssl_security_cert_chain(s, ctx.chain, NULL, 1);
-    }
+        i = s->ctx->app_verify_callback(ctx, s->ctx->app_verify_arg);
+    else
+        i = X509_verify_cert(ctx);
 
-    s->verify_result = ctx.error;
+    s->verify_result = X509_STORE_CTX_get_error(ctx);
     sk_X509_pop_free(s->verified_chain, X509_free);
     s->verified_chain = NULL;
-    if (X509_STORE_CTX_get_chain(&ctx) != NULL) {
-        s->verified_chain = X509_STORE_CTX_get1_chain(&ctx);
+    if (X509_STORE_CTX_get0_chain(ctx) != NULL) {
+        s->verified_chain = X509_STORE_CTX_get1_chain(ctx);
         if (s->verified_chain == NULL) {
             SSLerr(SSL_F_SSL_VERIFY_CERT_CHAIN, ERR_R_MALLOC_FAILURE);
             i = 0;
@@ -548,9 +549,9 @@ int ssl_verify_cert_chain(SSL *s, STACK_OF(X509) *sk)
     /* Move peername from the store context params to the SSL handle's */
     X509_VERIFY_PARAM_move_peername(s->param, param);
 
-    X509_STORE_CTX_cleanup(&ctx);
-
-    return (i);
+end:
+    X509_STORE_CTX_free(ctx);
+    return i;
 }
 
 static void set_client_CA_list(STACK_OF(X509_NAME) **ca_list,
@@ -835,13 +836,18 @@ static int ssl_add_cert_to_buf(BUF_MEM *buf, unsigned long *l, X509 *x)
     unsigned char *p;
 
     n = i2d_X509(x, NULL);
-    if (!BUF_MEM_grow_clean(buf, (int)(n + (*l) + 3))) {
+    if (n < 0 || !BUF_MEM_grow_clean(buf, (int)(n + (*l) + 3))) {
         SSLerr(SSL_F_SSL_ADD_CERT_TO_BUF, ERR_R_BUF_LIB);
         return 0;
     }
     p = (unsigned char *)&(buf->data[*l]);
     l2n3(n, p);
-    i2d_X509(x, &p);
+    n = i2d_X509(x, &p);
+    if (n < 0) {
+        /* Shouldn't happen */
+        SSLerr(SSL_F_SSL_ADD_CERT_TO_BUF, ERR_R_BUF_LIB);
+        return 0;
+    }
     *l += n + 3;
 
     return 1;
@@ -851,10 +857,10 @@ static int ssl_add_cert_to_buf(BUF_MEM *buf, unsigned long *l, X509 *x)
 int ssl_add_cert_chain(SSL *s, CERT_PKEY *cpk, unsigned long *l)
 {
     BUF_MEM *buf = s->init_buf;
-    int i;
-
+    int i, chain_count;
     X509 *x;
     STACK_OF(X509) *extra_certs;
+    STACK_OF(X509) *chain = NULL;
     X509_STORE *chain_store;
 
     /* TLSv1 sends a chain with nothing in it, instead of an alert */
@@ -884,9 +890,14 @@ int ssl_add_cert_chain(SSL *s, CERT_PKEY *cpk, unsigned long *l)
         chain_store = s->ctx->cert_store;
 
     if (chain_store) {
-        X509_STORE_CTX xs_ctx;
+        X509_STORE_CTX* xs_ctx = X509_STORE_CTX_new();
 
-        if (!X509_STORE_CTX_init(&xs_ctx, chain_store, x, NULL)) {
+        if (xs_ctx == NULL) {
+            SSLerr(SSL_F_SSL_ADD_CERT_CHAIN, ERR_R_MALLOC_FAILURE);
+            return (0);
+        }
+        if (!X509_STORE_CTX_init(xs_ctx, chain_store, x, NULL)) {
+            X509_STORE_CTX_free(xs_ctx);
             SSLerr(SSL_F_SSL_ADD_CERT_CHAIN, ERR_R_X509_LIB);
             return (0);
         }
@@ -896,24 +907,32 @@ int ssl_add_cert_chain(SSL *s, CERT_PKEY *cpk, unsigned long *l)
          * ignore the error return from this call. We're not actually verifying
          * the cert - we're just building as much of the chain as we can
          */
-        X509_verify_cert(&xs_ctx);
+        (void) X509_verify_cert(xs_ctx);
         /* Don't leave errors in the queue */
         ERR_clear_error();
-        i = ssl_security_cert_chain(s, xs_ctx.chain, NULL, 0);
+        chain =  X509_STORE_CTX_get0_chain(xs_ctx);
+        i = ssl_security_cert_chain(s, chain, NULL, 0);
         if (i != 1) {
-            X509_STORE_CTX_cleanup(&xs_ctx);
+#if 0
+            /* Dummy error calls so mkerr generates them */
+            SSLerr(SSL_F_SSL_ADD_CERT_CHAIN, SSL_R_EE_KEY_TOO_SMALL);
+            SSLerr(SSL_F_SSL_ADD_CERT_CHAIN, SSL_R_CA_KEY_TOO_SMALL);
+            SSLerr(SSL_F_SSL_ADD_CERT_CHAIN, SSL_R_CA_MD_TOO_WEAK);
+#endif
+            X509_STORE_CTX_free(xs_ctx);
             SSLerr(SSL_F_SSL_ADD_CERT_CHAIN, i);
             return 0;
         }
-        for (i = 0; i < sk_X509_num(xs_ctx.chain); i++) {
-            x = sk_X509_value(xs_ctx.chain, i);
+        chain_count = sk_X509_num(chain);
+        for (i = 0; i < chain_count; i++) {
+            x = sk_X509_value(chain, i);
 
             if (!ssl_add_cert_to_buf(buf, l, x)) {
-                X509_STORE_CTX_cleanup(&xs_ctx);
+                X509_STORE_CTX_free(xs_ctx);
                 return 0;
             }
         }
-        X509_STORE_CTX_cleanup(&xs_ctx);
+        X509_STORE_CTX_free(xs_ctx);
     } else {
         i = ssl_security_cert_chain(s, extra_certs, x, 0);
         if (i != 1) {
@@ -937,7 +956,7 @@ int ssl_build_cert_chain(SSL *s, SSL_CTX *ctx, int flags)
     CERT *c = s ? s->cert : ctx->cert;
     CERT_PKEY *cpk = c->key;
     X509_STORE *chain_store = NULL;
-    X509_STORE_CTX xs_ctx;
+    X509_STORE_CTX *xs_ctx = NULL;
     STACK_OF(X509) *chain = NULL, *untrusted = NULL;
     X509 *x;
     int i, rv = 0;
@@ -983,15 +1002,20 @@ int ssl_build_cert_chain(SSL *s, SSL_CTX *ctx, int flags)
             untrusted = cpk->chain;
     }
 
-    if (!X509_STORE_CTX_init(&xs_ctx, chain_store, cpk->x509, untrusted)) {
+    xs_ctx = X509_STORE_CTX_new();
+    if (xs_ctx == NULL) {
+        SSLerr(SSL_F_SSL_BUILD_CERT_CHAIN, ERR_R_MALLOC_FAILURE);
+        goto err;
+    }
+    if (!X509_STORE_CTX_init(xs_ctx, chain_store, cpk->x509, untrusted)) {
         SSLerr(SSL_F_SSL_BUILD_CERT_CHAIN, ERR_R_X509_LIB);
         goto err;
     }
     /* Set suite B flags if needed */
-    X509_STORE_CTX_set_flags(&xs_ctx,
+    X509_STORE_CTX_set_flags(xs_ctx,
                              c->cert_flags & SSL_CERT_FLAG_SUITEB_128_LOS);
 
-    i = X509_verify_cert(&xs_ctx);
+    i = X509_verify_cert(xs_ctx);
     if (i <= 0 && flags & SSL_BUILD_CHAIN_FLAG_IGNORE_ERROR) {
         if (flags & SSL_BUILD_CHAIN_FLAG_CLEAR_ERROR)
             ERR_clear_error();
@@ -999,17 +1023,15 @@ int ssl_build_cert_chain(SSL *s, SSL_CTX *ctx, int flags)
         rv = 2;
     }
     if (i > 0)
-        chain = X509_STORE_CTX_get1_chain(&xs_ctx);
+        chain = X509_STORE_CTX_get1_chain(xs_ctx);
     if (i <= 0) {
         SSLerr(SSL_F_SSL_BUILD_CERT_CHAIN, SSL_R_CERTIFICATE_VERIFY_FAILED);
-        i = X509_STORE_CTX_get_error(&xs_ctx);
+        i = X509_STORE_CTX_get_error(xs_ctx);
         ERR_add_error_data(2, "Verify error:",
                            X509_verify_cert_error_string(i));
 
-        X509_STORE_CTX_cleanup(&xs_ctx);
         goto err;
     }
-    X509_STORE_CTX_cleanup(&xs_ctx);
     /* Remove EE certificate from chain */
     x = sk_X509_shift(chain);
     X509_free(x);
@@ -1044,6 +1066,7 @@ int ssl_build_cert_chain(SSL *s, SSL_CTX *ctx, int flags)
  err:
     if (flags & SSL_BUILD_CHAIN_FLAG_CHECK)
         X509_STORE_free(chain_store);
+    X509_STORE_CTX_free(xs_ctx);
 
     return rv;
 }

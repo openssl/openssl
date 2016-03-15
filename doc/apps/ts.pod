@@ -8,13 +8,12 @@ ts - Time Stamping Authority tool (client/server)
 
 B<openssl> B<ts>
 B<-query>
-[B<-help>]
 [B<-rand> file:file...]
 [B<-config> configfile]
 [B<-data> file_to_hash]
 [B<-digest> digest_bytes]
 [B<-[digest]>]
-[B<-policy> object_id]
+[B<-tspolicy> object_id]
 [B<-no_nonce>]
 [B<-cert>]
 [B<-in> request.tsq]
@@ -31,7 +30,7 @@ B<-reply>
 [B<-inkey> private.pem]
 [B<-sha1|-sha224|-sha256|-sha384|-sha512>]
 [B<-chain> certs_file.pem]
-[B<-policy> object_id]
+[B<-tspolicy> object_id]
 [B<-in> response.tsr]
 [B<-token_in>]
 [B<-out> response.tsr]
@@ -49,6 +48,38 @@ B<-verify>
 [B<-CApath> trusted_cert_path]
 [B<-CAfile> trusted_certs.pem]
 [B<-untrusted> cert_file.pem]
+[I<verify options>]
+
+I<verify options:>
+[-attime timestamp]
+[-check_ss_sig]
+[-crl_check]
+[-crl_check_all]
+[-explicit_policy]
+[-extended_crl]
+[-ignore_critical]
+[-inhibit_any]
+[-inhibit_map]
+[-issuer_checks]
+[-no_alt_chains]
+[-no_check_time]
+[-partial_chain]
+[-policy arg]
+[-policy_check]
+[-policy_print]
+[-purpose purpose]
+[-suiteB_128]
+[-suiteB_128_only]
+[-suiteB_192]
+[-trusted_first]
+[-use_deltas]
+[-auth_level num]
+[-verify_depth num]
+[-verify_email email]
+[-verify_hostname hostname]
+[-verify_ip ip]
+[-verify_name name]
+[-x509_strict]
 
 =head1 DESCRIPTION
 
@@ -100,10 +131,6 @@ request with the following options:
 
 =over 4
 
-=item B<-help>
-
-Print out a usage message.
-
 =item B<-rand> file:file...
 
 The files containing random data for seeding the random number
@@ -136,7 +163,7 @@ The message digest to apply to the data file.
 Any digest supported by the OpenSSL B<dgst> command can be used.
 The default is SHA-1. (Optional)
 
-=item B<-policy> object_id
+=item B<-tspolicy> object_id
 
 The policy that the client expects the TSA to use for creating the
 time stamp token. Either the dotted OID notation or OID names defined
@@ -235,7 +262,7 @@ contain the certificate chain for the signer certificate from its
 issuer upwards. The B<-reply> command does not build a certificate
 chain automatically. (Optional)
 
-=item B<-policy> object_id
+=item B<-tspolicy> object_id
 
 The default policy to use for the response unless the client
 explicitly requires a particular TSA policy. The OID can be specified
@@ -343,6 +370,18 @@ certificate. This file must contain the TSA signing certificate and
 all intermediate CA certificates unless the response includes them.
 (Optional)
 
+=item I<verify options>
+
+The options B<-attime timestamp>, B<-check_ss_sig>, B<-crl_check>,
+B<-crl_check_all>, B<-explicit_policy>, B<-extended_crl>, B<-ignore_critical>,
+B<-inhibit_any>, B<-inhibit_map>, B<-issuer_checks>, B<-no_alt_chains>,
+B<-no_check_time>, B<-partial_chain>, B<-policy>, B<-policy_check>,
+B<-policy_print>, B<-purpose>, B<-suiteB_128>, B<-suiteB_128_only>,
+B<-suiteB_192>, B<-trusted_first>, B<-use_deltas>, B<-auth_level>,
+B<-verify_depth>, B<-verify_email>, B<-verify_hostname>, B<-verify_ip>,
+B<-verify_name>, and B<-x509_strict> can be used to control timestamp
+verification.  See L<verify(1)>.
+
 =back
 
 =head1 CONFIGURATION FILE OPTIONS
@@ -415,7 +454,7 @@ B<-sha1|-sha224|-sha256|-sha384|-sha512> command line option. (Optional)
 =item B<default_policy>
 
 The default policy to use when the request does not mandate any
-policy. The same as the B<-policy> command line option. (Optional)
+policy. The same as the B<-tspolicy> command line option. (Optional)
 
 =item B<other_policies>
 
@@ -501,7 +540,7 @@ specifies a policy id (assuming the tsa_policy1 name is defined in the
 OID section of the config file):
 
   openssl ts -query -data design2.txt -md5 \
-	-policy tsa_policy1 -cert -out design2.tsq
+	-tspolicy tsa_policy1 -cert -out design2.tsq
 
 =head2 Time Stamp Response
 

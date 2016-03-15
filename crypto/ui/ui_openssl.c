@@ -194,14 +194,13 @@
 #  define TERMIO
 #  undef  SGTTY
 /*
- * We know that VMS, MSDOS, VXWORKS, NETWARE use entirely other mechanisms.
+ * We know that VMS, MSDOS, VXWORKS, use entirely other mechanisms.
  * MAC_OS_GUSI_SOURCE should probably go away, but that needs to be confirmed.
  */
 # elif !defined(OPENSSL_SYS_VMS) \
 	&& !defined(OPENSSL_SYS_MSDOS) \
 	&& !defined(MAC_OS_GUSI_SOURCE) \
-	&& !defined(OPENSSL_SYS_VXWORKS) \
-	&& !defined(OPENSSL_SYS_NETWARE)
+	&& !defined(OPENSSL_SYS_VXWORKS)
 #  define TERMIOS
 #  undef  TERMIO
 #  undef  SGTTY
@@ -253,7 +252,7 @@ struct IOSB {
 };
 #endif
 
-#if defined(MAC_OS_GUSI_SOURCE) || defined(OPENSSL_SYS_NETWARE)
+#if defined(MAC_OS_GUSI_SOURCE)
 /*
  * This one needs work. As a matter of fact the code is unoperational
  * and this is only a trick to get it compiled.
@@ -465,7 +464,7 @@ static int open_console(UI *ui)
     CRYPTO_THREAD_write_lock(ui->lock);
     is_a_tty = 1;
 
-#if defined(OPENSSL_SYS_VXWORKS) || defined(OPENSSL_SYS_NETWARE)
+#if defined(OPENSSL_SYS_VXWORKS)
     tty_in = stdin;
     tty_out = stderr;
 #else

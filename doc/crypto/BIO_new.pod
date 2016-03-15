@@ -8,8 +8,8 @@ BIO_new, BIO_set, BIO_up_ref, BIO_free, BIO_vfree, BIO_free_all - BIO allocation
 
  #include <openssl/bio.h>
 
- BIO *	BIO_new(BIO_METHOD *type);
- int	BIO_set(BIO *a,BIO_METHOD *type);
+ BIO *	BIO_new(const BIO_METHOD *type);
+ int	BIO_set(BIO *a,const BIO_METHOD *type);
  int	BIO_up_ref(BIO *a);
  int	BIO_free(BIO *a);
  void	BIO_vfree(BIO *a);

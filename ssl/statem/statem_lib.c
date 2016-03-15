@@ -788,6 +788,44 @@ static int ssl_method_error(const SSL *s, const SSL_METHOD *method)
 }
 
 /*
+ * ssl_version_supported - Check that the specified `version` is supported by
+ * `SSL *` instance
+ *
+ * @s: The SSL handle for the candidate method
+ * @version: Protocol version to test against
+ *
+ * Returns 1 when supported, otherwise 0
+ */
+int ssl_version_supported(const SSL *s, int version)
+{
+    const version_info *vent;
+    const version_info *table;
+
+    switch (s->method->version) {
+    default:
+        /* Version should match method version for non-ANY method */
+        return version_cmp(s, version, s->version) == 0;
+    case TLS_ANY_VERSION:
+        table = tls_version_table;
+        break;
+    case DTLS_ANY_VERSION:
+        table = dtls_version_table;
+        break;
+    }
+
+    for (vent = table;
+         vent->version != 0 && version_cmp(s, version, vent->version) <= 0;
+         ++vent) {
+        if (vent->cmeth != NULL &&
+            version_cmp(s, version, vent->version) == 0 &&
+            ssl_method_error(s, vent->cmeth()) == 0) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+/*
  * ssl_check_version_downgrade - In response to RFC7507 SCSV version
  * fallback indication from a client check whether we're using the highest
  * supported protocol version.
@@ -976,7 +1014,6 @@ int ssl_choose_client_version(SSL *s, int version)
          * versions they don't want.  If not, then easy to fix, just return
          * ssl_method_error(s, s->method)
          */
-        s->session->ssl_version = s->version;
         return 0;
     case TLS_ANY_VERSION:
         table = tls_version_table;
@@ -999,7 +1036,7 @@ int ssl_choose_client_version(SSL *s, int version)
         if (err != 0)
             return err;
         s->method = method;
-        s->session->ssl_version = s->version = version;
+        s->version = version;
         return 0;
     }
 

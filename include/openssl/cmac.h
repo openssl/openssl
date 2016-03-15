@@ -54,6 +54,8 @@
 #ifndef HEADER_CMAC_H
 # define HEADER_CMAC_H
 
+# ifndef OPENSSL_NO_CMAC
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -78,4 +80,6 @@ int CMAC_resume(CMAC_CTX *ctx);
 #ifdef  __cplusplus
 }
 #endif
+
+# endif
 #endif

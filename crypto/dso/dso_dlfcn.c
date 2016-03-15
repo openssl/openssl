@@ -65,17 +65,9 @@
 # define _GNU_SOURCE            /* make sure dladdr is declared */
 #endif
 
-#include <stdio.h>
-#include "internal/cryptlib.h"
-#include <openssl/dso.h>
-#include "internal/dso_conf.h"
+#include "dso_locl.h"
 
-#ifndef DSO_DLFCN
-DSO_METHOD *DSO_METHOD_dlfcn(void)
-{
-    return NULL;
-}
-#else
+#ifdef DSO_DLFCN
 
 # ifdef HAVE_DLFCN_H
 #  ifdef __osf__
@@ -97,32 +89,28 @@ DSO_METHOD *DSO_METHOD_dlfcn(void)
 
 static int dlfcn_load(DSO *dso);
 static int dlfcn_unload(DSO *dso);
-static void *dlfcn_bind_var(DSO *dso, const char *symname);
 static DSO_FUNC_TYPE dlfcn_bind_func(DSO *dso, const char *symname);
 static char *dlfcn_name_converter(DSO *dso, const char *filename);
 static char *dlfcn_merger(DSO *dso, const char *filespec1,
                           const char *filespec2);
-static int dlfcn_pathbyaddr(void *addr, char *path, int sz);
 static void *dlfcn_globallookup(const char *name);
 
 static DSO_METHOD dso_meth_dlfcn = {
     "OpenSSL 'dlfcn' shared library method",
     dlfcn_load,
     dlfcn_unload,
-    dlfcn_bind_var,
     dlfcn_bind_func,
     NULL,                       /* ctrl */
     dlfcn_name_converter,
     dlfcn_merger,
     NULL,                       /* init */
     NULL,                       /* finish */
-    dlfcn_pathbyaddr,
     dlfcn_globallookup
 };
 
-DSO_METHOD *DSO_METHOD_dlfcn(void)
+DSO_METHOD *DSO_METHOD_openssl(void)
 {
-    return (&dso_meth_dlfcn);
+    return &dso_meth_dlfcn;
 }
 
 /*
@@ -209,32 +197,6 @@ static int dlfcn_unload(DSO *dso)
     /* For now I'm not aware of any errors associated with dlclose() */
     dlclose(ptr);
     return (1);
-}
-
-static void *dlfcn_bind_var(DSO *dso, const char *symname)
-{
-    void *ptr, *sym;
-
-    if ((dso == NULL) || (symname == NULL)) {
-        DSOerr(DSO_F_DLFCN_BIND_VAR, ERR_R_PASSED_NULL_PARAMETER);
-        return (NULL);
-    }
-    if (sk_void_num(dso->meth_data) < 1) {
-        DSOerr(DSO_F_DLFCN_BIND_VAR, DSO_R_STACK_ERROR);
-        return (NULL);
-    }
-    ptr = sk_void_value(dso->meth_data, sk_void_num(dso->meth_data) - 1);
-    if (ptr == NULL) {
-        DSOerr(DSO_F_DLFCN_BIND_VAR, DSO_R_NULL_HANDLE);
-        return (NULL);
-    }
-    sym = dlsym(ptr, symname);
-    if (sym == NULL) {
-        DSOerr(DSO_F_DLFCN_BIND_VAR, DSO_R_SYM_FAILURE);
-        ERR_add_error_data(4, "symname(", symname, "): ", dlerror());
-        return (NULL);
-    }
-    return (sym);
 }
 
 static DSO_FUNC_TYPE dlfcn_bind_func(DSO *dso, const char *symname)
@@ -392,38 +354,6 @@ static int dladdr(void *address, Dl_info *dl)
     return (int)v;
 }
 # endif                         /* __sgi */
-
-static int dlfcn_pathbyaddr(void *addr, char *path, int sz)
-{
-# ifdef HAVE_DLINFO
-    Dl_info dli;
-    int len;
-
-    if (addr == NULL) {
-        union {
-            int (*f) (void *, char *, int);
-            void *p;
-        } t = {
-            dlfcn_pathbyaddr
-        };
-        addr = t.p;
-    }
-
-    if (dladdr(addr, &dli)) {
-        len = (int)strlen(dli.dli_fname);
-        if (sz <= 0)
-            return len + 1;
-        if (len >= sz)
-            len = sz - 1;
-        memcpy(path, dli.dli_fname, len);
-        path[len++] = 0;
-        return len;
-    }
-
-    ERR_add_error_data(2, "dlfcn_pathbyaddr(): ", dlerror());
-# endif
-    return -1;
-}
 
 static void *dlfcn_globallookup(const char *name)
 {

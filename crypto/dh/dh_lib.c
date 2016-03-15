@@ -58,10 +58,8 @@
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include <openssl/bn.h>
-#include <openssl/dh.h>
-#ifndef OPENSSL_NO_ENGINE
-# include <openssl/engine.h>
-#endif
+#include "dh_locl.h"
+#include <openssl/engine.h>
 
 static const DH_METHOD *default_DH_method = NULL;
 
@@ -232,4 +230,87 @@ int DH_security_bits(const DH *dh)
     else
         N = -1;
     return BN_security_bits(BN_num_bits(dh->p), N);
+}
+
+
+void DH_get0_pqg(const DH *dh, BIGNUM **p, BIGNUM **q, BIGNUM **g)
+{
+    if (p != NULL)
+        *p = dh->p;
+    if (q != NULL)
+        *q = dh->q;
+    if (g != NULL)
+        *g = dh->g;
+}
+
+int DH_set0_pqg(DH *dh, BIGNUM *p, BIGNUM *q, BIGNUM *g)
+{
+    /* q is optional */
+    if (p == NULL || g == NULL)
+        return 0;
+    BN_free(dh->p);
+    BN_free(dh->q);
+    BN_free(dh->g);
+    dh->p = p;
+    dh->q = q;
+    dh->g = g;
+
+    if (q != NULL) {
+        dh->length = BN_num_bits(q);
+    }
+
+    return 1;
+}
+
+long DH_get_length(const DH *dh)
+{
+    return dh->length;
+}
+
+int DH_set_length(DH *dh, long length)
+{
+    dh->length = length;
+    return 1;
+}
+
+void DH_get0_key(const DH *dh, BIGNUM **pub_key, BIGNUM **priv_key)
+{
+    if (pub_key != NULL)
+        *pub_key = dh->pub_key;
+    if (priv_key != NULL)
+        *priv_key = dh->priv_key;
+}
+
+int DH_set0_key(DH *dh, BIGNUM *pub_key, BIGNUM *priv_key)
+{
+    /* Note that it is valid for priv_key to be NULL */
+    if (pub_key == NULL)
+        return 0;
+
+    BN_free(dh->pub_key);
+    BN_free(dh->priv_key);
+    dh->pub_key = pub_key;
+    dh->priv_key = priv_key;
+
+    return 1;
+}
+
+void DH_clear_flags(DH *dh, int flags)
+{
+    dh->flags &= ~flags;
+}
+
+int DH_test_flags(const DH *dh, int flags)
+{
+    return dh->flags & flags;
+}
+
+void DH_set_flags(DH *dh, int flags)
+{
+    dh->flags |= flags;
+}
+
+ENGINE *DH_get0_engine(DH *dh)
+{
+    return dh->engine;
 }

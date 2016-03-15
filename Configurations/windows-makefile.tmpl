@@ -11,6 +11,19 @@
  our $shlibextimport = $target{shared_import_extension} || ".lib";
  our $dsoext = $target{dso_extension} || ".dll";
 
+ my $win_installenv =
+     $target{build_scheme}->[2] eq "VC-W32" ?
+     "ProgramFiles(x86)" : "ProgramW6432";
+ my $win_commonenv =
+     $target{build_scheme}->[2] eq "VC-W32"
+     ? "CommonProgramFiles(x86)" : "CommonProgramW6432";
+ our $win_installroot =
+     defined($ENV{$win_installenv})
+     ? '%'.$win_installenv.'%' : '%ProgramFiles%';
+ our $win_commonroot =
+     defined($ENV{$win_commonenv})
+     ? '%'.$win_commonenv.'%' : '%CommonProgramFiles%';
+
  sub shlib {
      return () if $disabled{shared};
      my $lib = shift;
@@ -48,15 +61,17 @@ PROGRAMS={- join(" ", map { $_.$exeext } grep { !m|^test\\| } @{$unified_info{pr
 TESTPROGS={- join(" ", map { $_.$exeext } grep { m|^test\\| } @{$unified_info{programs}}) -}
 SCRIPTS={- join(" ", @{$unified_info{scripts}}) -}
 
+{- output_off() if $disabled{makedepend}; "" -}
 DEPS={- join(" ", map { (my $x = $_) =~ s|\.o$|$depext|; $x; }
                   grep { $unified_info{sources}->{$_}->[0] =~ /\.c$/ }
                   keys %{$unified_info{sources}}); -}
+{- output_on() if $disabled{makedepend}; "" -}
 
 # Do not edit these manually. Use Configure with --prefix or --openssldir
 # to change this!  Short explanation in the top comment in Configure
 INSTALLTOP={- # $prefix is used in the OPENSSLDIR perl snippet
 	      #
-	      our $prefix = $config{prefix} || "/usr/local";
+	      our $prefix = $config{prefix} || "$win_installroot\\OpenSSL";
               $prefix -}
 OPENSSLDIR={- #
 	      # The logic here is that if no --openssldir was given,
@@ -73,16 +88,9 @@ OPENSSLDIR={- #
                       (file_name_is_absolute($config{openssldir}) ?
                            $config{openssldir}
                            : catdir($prefix, $config{openssldir}))
-                      : catdir($prefix, "ssl");
+                      : "$win_commonroot\\SSL";
               $openssldir -}
-LIBDIR={- #
-          # if $prefix/lib$target{multilib} is not an existing
-          # directory, then assume that it's not searched by linker
-          # automatically, in which case adding $target{multilib} suffix
-          # causes more grief than we're ready to tolerate, so don't...
-          our $multilib =
-              -d "$prefix/lib$target{multilib}" ? $target{multilib} : "";
-          our $libdir = $config{libdir} || "lib$multilib";
+LIBDIR={- our $libdir = $config{libdir} || "lib";
           $libdir -}
 ENGINESDIR={- use File::Spec::Functions;
               our $enginesdir = catdir($prefix,$libdir,"engines");
@@ -91,6 +99,8 @@ ENGINESDIR={- use File::Spec::Functions;
 CC={- $target{cc} -}
 CFLAGS={- join(" ",(map { "-D".$_} @{$target{defines}}, @{$config{defines}})) -} {- join(" ", quotify_l("-DENGINESDIR=\"$enginesdir\"", "-DOPENSSLDIR=\"$openssldir\"")) -} {- $target{cflags} -} {- $config{cflags} -}
 COUTFLAG={- $target{coutflag} || "/Fo" -}
+RC={- $target{rc} || "rc" -}
+RCOUTFLAG={- $target{rcoutflag} || "/fo" -}
 LD={- $target{ld} || "link" -}
 LDFLAGS={- $target{lflags} -}
 LDOUTFLAG={- $target{loutflag} || "/out:" -}
@@ -128,19 +138,29 @@ build_apps_nodep: $(PROGRAMS) $(SCRIPTS)
 build_tests: configdata.pm build_tests_nodep depend
 build_tests_nodep: $(TESTPROGS)
 
-test tests: build_tests_nodep build_apps_nodep build_engines_nodep depend
+test: tests
+tests: build_tests_nodep build_apps_nodep build_engines_nodep depend
+	@rem {- output_off() if $disabled{tests}; "" -}
 	set SRCTOP=$(SRCDIR)
 	set BLDTOP=$(BLDDIR)
 	set PERL=$(PERL)
 	$(PERL) $(SRCDIR)\test\run_tests.pl $(TESTS)
+	@rem {- if ($disabled{tests}) { output_on(); } else { output_off(); } "" -}
+	@echo "Tests are not supported with your chosen Configure options"
+	@rem {- output_on() if !$disabled{tests}; "" -}
 
 list-tests:
 	@set TOP=$(SRCDIR)
 	@set PERL=$(PERL)
 	@$(PERL) $(SRCDIR)\test\run_tests.pl list
 
+install: install_sw install_ssldirs install_docs
+
+uninstall: uninstall_docs uninstall_sw
+
 libclean:
-	del /Q /F $(LIBS) $(SHLIBS)
+	$(PERL) -e "map { m/(.*)\.dll$$/; unlink glob """$$1.*""" } @ARGV" $(SHLIBS)
+	del /Q /F $(LIBS)
 	del lib.pdb
 
 clean: libclean
@@ -155,6 +175,53 @@ clean: libclean
 
 depend:
 
+# Install helper targets #############################################
+
+install_sw: all install_dev install_engines install_runtime
+
+uninstall_sw: uninstall_runtime uninstall_engines uninstall_dev
+
+install_docs:
+
+uninstall_docs:
+
+install_ssldirs:
+	@$(PERL) $(SRCDIR)\util\mkdir-p.pl "$(DESTDIR)$(OPENSSLDIR)\certs"
+	@$(PERL) $(SRCDIR)\util\mkdir-p.pl "$(DESTDIR)$(OPENSSLDIR)\private"
+
+install_dev:
+	@if "$(INSTALLTOP)"=="" ( echo INSTALLTOP should not be empty & exit 1 )
+	@echo *** Installing development files
+	@$(PERL) $(SRCDIR)\util\mkdir-p.pl "$(DESTDIR)$(INSTALLTOP)\include\openssl"
+	@$(PERL) $(SRCDIR)\util\copy.pl $(SRCDIR)\include\openssl\*.h \
+				       "$(DESTDIR)$(INSTALLTOP)\include\openssl"
+	@$(PERL) $(SRCDIR)\util\copy.pl $(BLDDIR)\include\openssl\*.h \
+				       "$(DESTDIR)$(INSTALLTOP)\include\openssl"
+	@$(PERL) $(SRCDIR)\util\mkdir-p.pl "$(DESTDIR)$(INSTALLTOP)\$(LIBDIR)"
+	@$(PERL) $(SRCDIR)\util\copy.pl $(LIBS) \
+				       "$(DESTDIR)$(INSTALLTOP)\$(LIBDIR)"
+
+uninstall_dev:
+
+install_engines:
+	@if "$(INSTALLTOP)"=="" ( echo INSTALLTOP should not be empty & exit 1 )
+	@echo *** Installing engines
+	@$(PERL) $(SRCDIR)\util\mkdir-p.pl "$(DESTDIR)$(ENGINESDIR)"
+	@if not "$(ENGINES)"=="" \
+	 $(PERL) $(SRCDIR)\util\copy.pl $(ENGINES) "$(DESTDIR)$(ENGINESDIR)"
+
+uninstall_engines:
+
+install_runtime:
+	@if "$(INSTALLTOP)"=="" ( echo INSTALLTOP should not be empty & exit 1 )
+	@echo *** Installing runtime files
+	@$(PERL) $(SRCDIR)\util\mkdir-p.pl "$(DESTDIR)$(INSTALLTOP)\bin"
+	@if not "$(SHLIBS)"=="" \
+	 $(PERL) $(SRCDIR)\util\copy.pl $(SHLIBS) "$(DESTDIR)$(INSTALLTOP)\bin"
+	@$(PERL) $(SRCDIR)\util\copy.pl $(PROGRAMS) "$(DESTDIR)$(INSTALLTOP)\bin"
+
+uninstall_runtime:
+
 # Building targets ###################################################
 
 configdata.pm: {- $config{build_file_template} -} $(SRCDIR)\Configure
@@ -166,7 +233,7 @@ configdata.pm: {- $config{build_file_template} -} $(SRCDIR)\Configure
 	@echo "***   Please run the same make command again   ***"
 	@echo "***                                            ***"
 	@echo "**************************************************"
-	@( exit 1 )
+	@exit 1
 
 {-
  use File::Basename;
@@ -185,16 +252,18 @@ configdata.pm: {- $config{build_file_template} -} $(SRCDIR)\Configure
       my %args = @_;
       (my $target = $args{src}) =~ s/\.[sS]$/.asm/;
       my $generator = join(" ", @{$args{generator}});
+      my $generator_incs = join("", map { " -I".$_ } @{$args{generator_incs}});
       my $incs = join("", map { " /I ".$_ } @{$args{incs}});
+      my $deps = join(" ", @{$args{generator_deps}}, @{$args{deps}});
 
       if ($target !~ /\.asm$/) {
           return <<"EOF";
-$target: $args{generator}->[0]
-	\$(PERL) $generator > \$@
+$target: $args{generator}->[0] $deps
+	\$(PERL)$generator_incs $generator > \$@
 EOF
       } else {
           if ($args{generator}->[0] =~ /\.pl$/) {
-              $generator = '$(PERL) '.$generator;
+              $generator = '$(PERL)'.$generator_incs.' '.$generator;
           } elsif ($args{generator}->[0] =~ /\.S$/) {
               $generator = undef;
           } else {
@@ -206,25 +275,25 @@ EOF
               # end up generating foo.s in two steps.
               if ($args{src} =~ /\.S$/) {
                    return <<"EOF";
-$target: $args{generator}->[0]
+$target: $args{generator}->[0] $deps
 	set ASM=\$(AS)
 	set CC=\$(CC)
 	$generator \$@.S
-	\$(CC) \$(CFLAGS) $incs /EP /C \$@.S > \$@
+	\$(CC) \$(CFLAGS) $incs /EP /C \$@.S > \$@.i && move /Y \$@.i \$@
         del /Q \$@.S
 EOF
               }
               # Otherwise....
               return <<"EOF";
-$target: $args{generator}->[0]
+$target: $args{generator}->[0] $deps
 	set ASM=\$(AS)
 	set CC=\$(CC)
 	$generator \$@
 EOF
           }
           return <<"EOF";
-$target: $args{generator}->[0]
-	\$(CC) \$(CFLAGS) $incs /EP /C \$< > \$@
+$target: $args{generator}->[0] $deps
+	\$(CC) \$(CFLAGS) $incs /EP /C $args{generator}->[0] > \$@.i && move /Y \$@.i \$@
 EOF
       }
   }
@@ -232,10 +301,16 @@ EOF
  sub src2obj {
      my %args = @_;
      my $obj = $args{obj};
-     my @srcs = map { (my $x = $_) =~ s/\.[sS]$/.asm/; $x } ( @{$args{srcs}} );
+     my @srcs = map { (my $x = $_) =~ s/\.s$/.asm/; $x
+                    } ( @{$args{srcs}} );
      my $srcs = join(" ",  @srcs);
      my $deps = join(" ", @srcs, @{$args{deps}});
      my $incs = join("", map { " /I ".$_ } @{$args{incs}});
+     unless ($disabled{zlib}) {
+         if ($withargs{zlib_include}) {
+             $incs .= " /I ".$withargs{zlib_include};
+         }
+     }
      my $ecflags = { lib => '$(LIB_CFLAGS)',
 		     dso => '$(DSO_CFLAGS)',
 		     bin => '$(BIN_CFLAGS)' } -> {$args{intent}};
@@ -246,7 +321,7 @@ $obj$objext: $deps
 	\$(AS) \$(ASFLAGS) \$(ASOUTFLAG)\$\@ $srcs
 EOF
      }
-     return <<"EOF";
+     return <<"EOF"	if (!$disabled{makedepend});
 $obj$depext: $deps
 	\$(CC) \$(CFLAGS) $ecflags$inc /Zs /showIncludes $srcs 2>&1 | \\
 	    \$(PERL) -n << > $obj$depext
@@ -254,11 +329,15 @@ chomp;
 s/^Note: including file: *//;
 \$\$collect{\$\$_} = 1;
 END { print '$obj$objext: ',join(" ", sort keys \%collect),"\\n" }
-<<KEEP
+<<
 $obj$objext: $obj$depext
 	\$(CC) \$(CFLAGS) $ecflags$incs -c \$(COUTFLAG)\$\@ @<<
 $srcs
-<<KEEP
+<<
+EOF
+    return <<"EOF"	if ($disabled{makedepend});
+$obj$objext: $deps
+	\$(CC) \$(CFLAGS) $ecflags$incs -c \$(COUTFLAG)\$\@ $srcs
 EOF
  }
 
@@ -280,14 +359,25 @@ EOF
      my $mkdef_pl = abs2rel(rel2abs(catfile($config{sourcedir},
 					    "util", "mkdef.pl")),
 			    rel2abs($config{builddir}));
+     my $mkrc_pl = abs2rel(rel2abs(catfile($config{sourcedir},
+					   "util", "mkrc.pl")),
+			   rel2abs($config{builddir}));
      my $target = shlib_import($lib);
      return <<"EOF"
-$target: $deps $ordinalsfile
+$target: $deps $ordinalsfile $mkdef_pl
 	\$(PERL) $mkdef_pl "$mkdef_key" 32 > $shlib.def
+	\$(PERL) -i.tmp -pe "s|^LIBRARY\\s+${mkdef_key}32|LIBRARY $shlib|;" $shlib.def
+	DEL $shlib.def.tmp
+	\$(PERL) $mkrc_pl $shlib$shlibext > $shlib.rc
+	\$(RC) \$(RCOUTFLAG)$shlib.res $shlib.rc
 	\$(LD) \$(LDFLAGS) \$(LIB_LDFLAGS) \\
-		/implib:$target \$(LDOUTFLAG)$shlib$shlibext /def:$shlib.def @<<
-$objs$linklibs \$(EX_LIBS)
+		/implib:\$@ \$(LDOUTFLAG)$shlib$shlibext /def:$shlib.def @<< || (DEL /Q \$(\@B).* $shlib.* && EXIT 1)
+$objs $shlib.res$linklibs \$(EX_LIBS)
 <<
+	DEL /F apps\\$shlib$shlibext
+	DEL /F test\\$shlib$shlibext
+	COPY $shlib$shlibext apps
+	COPY $shlib$shlibext test
 EOF
  }
  sub obj2dso {
@@ -325,7 +415,7 @@ EOF
      return <<"EOF";
 $lib$libext: $deps
 	\$(AR) \$(ARFLAGS) \$(AROUTFLAG)$lib$libext @<<
-$objs
+\$\?
 <<
 EOF
  }

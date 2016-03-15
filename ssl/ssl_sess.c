@@ -137,9 +137,7 @@
 #include <stdio.h>
 #include <openssl/lhash.h>
 #include <openssl/rand.h>
-#ifndef OPENSSL_NO_ENGINE
-# include <openssl/engine.h>
-#endif
+#include <openssl/engine.h>
 #include "ssl_locl.h"
 
 static void SSL_SESSION_list_remove(SSL_CTX *ctx, SSL_SESSION *s);
@@ -874,19 +872,9 @@ int SSL_SESSION_up_ref(SSL_SESSION *ss)
 int SSL_set_session(SSL *s, SSL_SESSION *session)
 {
     int ret = 0;
-    const SSL_METHOD *meth;
-
     if (session != NULL) {
-        meth = s->ctx->method->get_ssl_method(session->ssl_version);
-        if (meth == NULL)
-            meth = s->method->get_ssl_method(session->ssl_version);
-        if (meth == NULL) {
-            SSLerr(SSL_F_SSL_SET_SESSION, SSL_R_UNABLE_TO_FIND_SSL_METHOD);
-            return (0);
-        }
-
-        if (meth != s->method) {
-            if (!SSL_set_ssl_method(s, meth))
+        if (s->ctx->method != s->method) {
+            if (!SSL_set_ssl_method(s, s->ctx->method))
                 return (0);
         }
 
@@ -898,9 +886,8 @@ int SSL_set_session(SSL *s, SSL_SESSION *session)
     } else {
         SSL_SESSION_free(s->session);
         s->session = NULL;
-        meth = s->ctx->method;
-        if (meth != s->method) {
-            if (!SSL_set_ssl_method(s, meth))
+        if (s->ctx->method != s->method) {
+            if (!SSL_set_ssl_method(s, s->ctx->method))
                 return (0);
         }
         ret = 1;
@@ -936,6 +923,11 @@ long SSL_SESSION_set_time(SSL_SESSION *s, long t)
         return (0);
     s->time = t;
     return (t);
+}
+
+const char *SSL_SESSION_get0_hostname(const SSL_SESSION *s)
+{
+    return s->tlsext_hostname;
 }
 
 int SSL_SESSION_has_ticket(const SSL_SESSION *s)

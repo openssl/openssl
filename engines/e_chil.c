@@ -61,7 +61,7 @@
 #include <string.h>
 #include <openssl/crypto.h>
 #include <openssl/pem.h>
-#include <openssl/dso.h>
+#include "internal/dso.h"
 #include <openssl/engine.h>
 #include <openssl/ui.h>
 #include <openssl/rand.h>

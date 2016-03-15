@@ -202,6 +202,10 @@ case "${SYSTEM}:${RELEASE}:${VERSION}:${MACHINE}" in
 	echo "${MACHINE}-whatever-freebsd"; exit 0
 	;;
 
+    Haiku:*)
+	echo "${MACHINE}-whatever-haiku"; exit 0
+	;;
+
     NetBSD:*:*:*386*)
         echo "`(/usr/sbin/sysctl -n hw.model || /sbin/sysctl -n hw.model) | sed 's,.*\(.\)86-class.*,i\186,'`-whatever-netbsd"; exit 0
 	;;
@@ -724,6 +728,8 @@ case "$GUESSOS" in
 			*ELF*)	OUT="BSD-x86-elf" ;;
 			*)	OUT="BSD-x86"; options="$options no-sse2" ;;
 			esac ;;
+  x86_64-*-haiku)	OUT="haiku-x86_64" ;;
+  *-*-haiku)		OUT="haiku-x86" ;;
   *-*-*bsd*)		OUT="BSD-generic32" ;;
 
   *-*-osf)		OUT="osf1-alpha-cc" ;;
@@ -770,7 +776,7 @@ case "$GUESSOS" in
 	     # PA-RISC 2.0 is no longer supported as separate 32-bit
 	     # target. This is compensated for by run-time detection
 	     # in most critical assembly modules and taking advantage
-	     # of 2.0 architectire in PA-RISC 1.1 build.
+	     # of 2.0 architecture in PA-RISC 1.1 build.
 	     OUT="hpux-parisc1_1-${CC}"
 	elif [ $CPU_VERSION -ge 528 ]; then	# PA-RISC 1.1+ CPU
 	     OUT="hpux-parisc1_1-${CC}"

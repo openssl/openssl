@@ -186,7 +186,9 @@ int CONF_modules_load_file(const char *filename, const char *appname,
                            unsigned long flags);
 void CONF_modules_unload(int all);
 void CONF_modules_finish(void);
-void CONF_modules_free(void);
+#if OPENSSL_API_COMPAT < 0x10100000L
+# define CONF_modules_free() while(0) continue
+#endif
 int CONF_module_add(const char *name, conf_init_func *ifunc,
                     conf_finish_func *ffunc);
 

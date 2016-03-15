@@ -27,11 +27,15 @@ rand - pseudo-random number generator
  const RAND_METHOD *RAND_get_rand_method(void);
  RAND_METHOD *RAND_OpenSSL(void);
 
- void RAND_cleanup(void);
-
  /* For Win32 only */
  void RAND_screen(void);
  int RAND_event(UINT, WPARAM, LPARAM);
+
+Deprecated:
+
+ #if OPENSSL_API_COMPAT < 0x10100000L
+ void RAND_cleanup(void)
+ #endif
 
 =head1 DESCRIPTION
 

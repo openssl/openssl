@@ -56,25 +56,21 @@
  * Hudson (tjh@cryptsoft.com).
  *
  */
-#ifndef __SRP_H__
-# define __SRP_H__
+#ifndef HEADER_SRP_H
+# define HEADER_SRP_H
 
 #include <openssl/opensslconf.h>
 
-# ifdef OPENSSL_NO_SRP
-#  error SRP is disabled.
-# endif
-
+#ifndef OPENSSL_NO_SRP
 # include <stdio.h>
 # include <string.h>
-
-#ifdef  __cplusplus
-extern "C" {
-#endif
-
 # include <openssl/safestack.h>
 # include <openssl/bn.h>
 # include <openssl/crypto.h>
+
+# ifdef  __cplusplus
+extern "C" {
+# endif
 
 typedef struct SRP_gN_cache_st {
     char *b64_bn;
@@ -175,8 +171,9 @@ int SRP_Verify_B_mod_N(BIGNUM *B, BIGNUM *N);
 
 # define SRP_MINIMAL_N 1024
 
-#ifdef  __cplusplus
+# ifdef  __cplusplus
 }
-#endif
+# endif
+# endif
 
 #endif

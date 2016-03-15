@@ -61,11 +61,9 @@
 #include <openssl/asn1t.h>
 #include <openssl/x509.h>
 #include <openssl/evp.h>
-#include <openssl/dh.h>
+#include "dh_locl.h"
 #include <openssl/bn.h>
-#ifndef OPENSSL_NO_DSA
-# include <openssl/dsa.h>
-#endif
+#include <openssl/dsa.h>
 #include <openssl/objects.h>
 #include "internal/evp_int.h"
 

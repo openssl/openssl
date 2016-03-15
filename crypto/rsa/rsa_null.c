@@ -59,8 +59,8 @@
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include <openssl/bn.h>
-#include <openssl/rsa.h>
 #include <openssl/rand.h>
+#include "rsa_locl.h"
 
 /*
  * This is a dummy RSA implementation that just returns errors when called.

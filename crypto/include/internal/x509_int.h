@@ -217,6 +217,77 @@ struct x509_st {
     CRYPTO_RWLOCK *lock;
 } /* X509 */ ;
 
+/*
+ * This is a used when verifying cert chains.  Since the gathering of the
+ * cert chain can take some time (and have to be 'retried', this needs to be
+ * kept and passed around.
+ */
+struct x509_store_ctx_st {      /* X509_STORE_CTX */
+    X509_STORE *ctx;
+    /* used when looking up certs */
+    int current_method;
+    /* The following are set by the caller */
+    /* The cert to check */
+    X509 *cert;
+    /* chain of X509s - untrusted - passed in */
+    STACK_OF(X509) *untrusted;
+    /* set of CRLs passed in */
+    STACK_OF(X509_CRL) *crls;
+    X509_VERIFY_PARAM *param;
+    /* Other info for use with get_issuer() */
+    void *other_ctx;
+    /* Callbacks for various operations */
+    /* called to verify a certificate */
+    int (*verify) (X509_STORE_CTX *ctx);
+    /* error callback */
+    int (*verify_cb) (int ok, X509_STORE_CTX *ctx);
+    /* get issuers cert from ctx */
+    int (*get_issuer) (X509 **issuer, X509_STORE_CTX *ctx, X509 *x);
+    /* check issued */
+    int (*check_issued) (X509_STORE_CTX *ctx, X509 *x, X509 *issuer);
+    /* Check revocation status of chain */
+    int (*check_revocation) (X509_STORE_CTX *ctx);
+    /* retrieve CRL */
+    int (*get_crl) (X509_STORE_CTX *ctx, X509_CRL **crl, X509 *x);
+    /* Check CRL validity */
+    int (*check_crl) (X509_STORE_CTX *ctx, X509_CRL *crl);
+    /* Check certificate against CRL */
+    int (*cert_crl) (X509_STORE_CTX *ctx, X509_CRL *crl, X509 *x);
+    int (*check_policy) (X509_STORE_CTX *ctx);
+    STACK_OF(X509) *(*lookup_certs) (X509_STORE_CTX *ctx, X509_NAME *nm);
+    STACK_OF(X509_CRL) *(*lookup_crls) (X509_STORE_CTX *ctx, X509_NAME *nm);
+    int (*cleanup) (X509_STORE_CTX *ctx);
+    /* The following is built up */
+    /* if 0, rebuild chain */
+    int valid;
+    /* number of untrusted certs */
+    int num_untrusted;
+    /* chain of X509s - built up and trusted */
+    STACK_OF(X509) *chain;
+    /* Valid policy tree */
+    X509_POLICY_TREE *tree;
+    /* Require explicit policy value */
+    int explicit_policy;
+    /* When something goes wrong, this is why */
+    int error_depth;
+    int error;
+    X509 *current_cert;
+    /* cert currently being tested as valid issuer */
+    X509 *current_issuer;
+    /* current CRL */
+    X509_CRL *current_crl;
+    /* score of current CRL */
+    int current_crl_score;
+    /* Reason mask */
+    unsigned int current_reasons;
+    /* For CRL path validation: parent context */
+    X509_STORE_CTX *parent;
+    CRYPTO_EX_DATA ex_data;
+    SSL_DANE *dane;
+    /* signed via bare TA public key, rather than CA certificate */
+    int bare_ta_signed;
+};
+
 /* PKCS#8 private key info structure */
 
 struct pkcs8_priv_key_info_st {
@@ -229,4 +300,15 @@ struct pkcs8_priv_key_info_st {
 struct X509_sig_st {
     X509_ALGOR *algor;
     ASN1_OCTET_STRING *digest;
+};
+
+struct x509_object_st {
+    /* one of the above types */
+    X509_LOOKUP_TYPE type;
+    union {
+        char *ptr;
+        X509 *x509;
+        X509_CRL *crl;
+        EVP_PKEY *pkey;
+    } data;
 };

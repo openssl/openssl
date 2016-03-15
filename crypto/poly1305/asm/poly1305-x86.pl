@@ -299,6 +299,7 @@ if ($sse2) {
 	&adc	("ebx",0);
 	&adc	("ecx",0);
 	&adc	("esi",0);
+	&adc	("edi",0);
 
 	&cmp	("ebp",&wparam(2));		# done yet?
 	&jne	(&label("loop"));
@@ -544,6 +545,8 @@ my $extra = shift;
 	################################################################
 	# lazy reduction as discussed in "NEON crypto" by D.J. Bernstein
 	# and P. Schwabe
+	#
+	# [(*) see discussion in poly1305-armv4 module]
 
 	 &movdqa	($T0,$D3);
 	 &pand		($D3,$MASK);
@@ -563,12 +566,12 @@ my $extra = shift;
 							# possible, because
 							# paddq is "broken"
 							# on Atom
-	&pand		($D1,$MASK);
-	&paddq		($T1,$D2);			# h1 -> h2
 	 &psllq		($T0,2);
+	&paddq		($T1,$D2);			# h1 -> h2
+	 &paddq		($T0,$D0);			# h4 -> h0 (*)
+	&pand		($D1,$MASK);
 	&movdqa		($D2,$T1);
 	&psrlq		($T1,26);
-	 &paddd		($T0,$D0);			# h4 -> h0
 	&pand		($D2,$MASK);
 	&paddd		($T1,$D3);			# h2 -> h3
 	 &movdqa	($D0,$T0);
@@ -1165,11 +1168,12 @@ my $addr = shift;
 	&shr	("edi",2);
 	&lea	("ebp",&DWP(0,"edi","edi",4));	# *5
 	 &mov	("edi",&wparam(1));		# output
-	add	("eax","ebp");
+	&add	("eax","ebp");
 	 &mov	("ebp",&wparam(2));		# key
-	adc	("ebx",0);
-	adc	("ecx",0);
-	adc	("edx",0);
+	&adc	("ebx",0);
+	&adc	("ecx",0);
+	&adc	("edx",0);
+	&adc	("esi",0);
 
 	&movd	($D0,"eax");			# offload original hash value
 	&add	("eax",5);			# compare to modulus
@@ -1708,18 +1712,18 @@ sub vlazy_reduction {
 	&vpsrlq		($T1,$D1,26);
 	&vpand		($D1,$D1,$MASK);
 	&vpaddq		($D2,$D2,$T1);			# h1 -> h2
-	 &vpaddd	($D0,$D0,$T0);
+	 &vpaddq	($D0,$D0,$T0);
 	 &vpsllq	($T0,$T0,2);
 	&vpsrlq		($T1,$D2,26);
 	&vpand		($D2,$D2,$MASK);
-	 &vpaddd	($D0,$D0,$T0);			# h4 -> h0
-	&vpaddd		($D3,$D3,$T1);			# h2 -> h3
+	 &vpaddq	($D0,$D0,$T0);			# h4 -> h0
+	&vpaddq		($D3,$D3,$T1);			# h2 -> h3
 	&vpsrlq		($T1,$D3,26);
 	 &vpsrlq	($T0,$D0,26);
 	 &vpand		($D0,$D0,$MASK);
 	&vpand		($D3,$D3,$MASK);
-	 &vpaddd	($D1,$D1,$T0);			# h0 -> h1
-	&vpaddd		($D4,$D4,$T1);			# h3 -> h4
+	 &vpaddq	($D1,$D1,$T0);			# h0 -> h1
+	&vpaddq		($D4,$D4,$T1);			# h3 -> h4
 }
 	&vlazy_reduction();
 

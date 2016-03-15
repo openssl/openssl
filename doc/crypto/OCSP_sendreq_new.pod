@@ -40,7 +40,7 @@ B<rctx>. When the operation is complete it returns the response in B<*presp>.
 
 OCSP_REQ_CTX_free() frees up the OCSP context B<rctx>.
 
-OCSP_set_max_response_length() sets the maximum reponse length for B<rctx>
+OCSP_set_max_response_length() sets the maximum response length for B<rctx>
 to B<len>. If the response exceeds this length an error occurs. If not
 set a default value of 100k is used.
 

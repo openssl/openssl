@@ -57,9 +57,9 @@
 
 #include <stdio.h>
 #include <errno.h>
+#include "bio_lcl.h"
 #include "internal/cryptlib.h"
 #include <openssl/rand.h>
-#include <openssl/bio.h>
 
 /*
  * BIO_put and BIO_get both add to the digest, BIO_gets returns the digest
@@ -79,7 +79,7 @@ typedef struct nbio_test_st {
     int lwn;
 } NBIO_TEST;
 
-static BIO_METHOD methods_nbiof = {
+static const BIO_METHOD methods_nbiof = {
     BIO_TYPE_NBIO_TEST,
     "non-blocking IO test filter",
     nbiof_write,
@@ -92,7 +92,7 @@ static BIO_METHOD methods_nbiof = {
     nbiof_callback_ctrl,
 };
 
-BIO_METHOD *BIO_f_nbio_test(void)
+const BIO_METHOD *BIO_f_nbio_test(void)
 {
     return (&methods_nbiof);
 }

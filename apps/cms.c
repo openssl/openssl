@@ -214,11 +214,9 @@ OPTIONS cms_options[] = {
     {"receipt_request_to", OPT_RR_TO, 's'},
     {"", OPT_CIPHER, '-', "Any supported cipher"},
     OPT_V_OPTIONS,
-# ifndef OPENSSL_NO_AES
     {"aes128-wrap", OPT_AES128_WRAP, '-', "Use AES128 to wrap key"},
     {"aes192-wrap", OPT_AES192_WRAP, '-', "Use AES192 to wrap key"},
     {"aes256-wrap", OPT_AES256_WRAP, '-', "Use AES256 to wrap key"},
-# endif
 # ifndef OPENSSL_NO_DES
     {"des3-wrap", OPT_3DES_WRAP, '-', "Use 3DES-EDE to wrap key"},
 # endif
@@ -455,7 +453,7 @@ int cms_main(int argc, char **argv)
             noout = print = 1;
             break;
         case OPT_SECRETKEY:
-            secret_key = string_to_hex(opt_arg(), &ltmp);
+            secret_key = OPENSSL_hexstr2buf(opt_arg(), &ltmp);
             if (secret_key == NULL) {
                 BIO_printf(bio_err, "Invalid key %s\n", opt_arg());
                 goto end;
@@ -463,7 +461,7 @@ int cms_main(int argc, char **argv)
             secret_keylen = (size_t)ltmp;
             break;
         case OPT_SECRETKEYID:
-            secret_keyid = string_to_hex(opt_arg(), &ltmp);
+            secret_keyid = OPENSSL_hexstr2buf(opt_arg(), &ltmp);
             if (secret_keyid == NULL) {
                 BIO_printf(bio_err, "Invalid id %s\n", opt_arg());
                 goto opthelp;
@@ -603,7 +601,6 @@ int cms_main(int argc, char **argv)
             wrap_cipher = EVP_des_ede3_wrap();
 # endif
             break;
-# ifndef OPENSSL_NO_AES
         case OPT_AES128_WRAP:
             wrap_cipher = EVP_aes_128_wrap();
             break;
@@ -613,12 +610,6 @@ int cms_main(int argc, char **argv)
         case OPT_AES256_WRAP:
             wrap_cipher = EVP_aes_256_wrap();
             break;
-# else
-        case OPT_AES128_WRAP:
-        case OPT_AES192_WRAP:
-        case OPT_AES256_WRAP:
-            break;
-# endif
         }
     }
     argc = opt_num_rest();

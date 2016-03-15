@@ -1,4 +1,11 @@
-#!/usr/local/bin/perl -w
+#! /usr/bin/env perl
+# Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the OpenSSL license (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+
 #
 # generate a .def file
 #
@@ -61,7 +68,6 @@ my $VMSNonVAX=0;
 my $VMS=0;
 my $W32=0;
 my $NT=0;
-my $OS2=0;
 my $linux=0;
 # Set this to make typesafe STACK definitions appear in DEF
 my $safe_stack_def = 0;
@@ -98,6 +104,7 @@ my @known_algorithms = ( "RC2", "RC4", "RC5", "IDEA", "DES", "BF",
 			 "PSK", "SRP", "HEARTBEATS",
 			 # CMS
 			 "CMS",
+                         "OCSP",
 			 # CryptoAPI Engine
 			 "CAPIENG",
 			 # SSL methods
@@ -118,8 +125,11 @@ my @known_algorithms = ( "RC2", "RC4", "RC5", "IDEA", "DES", "BF",
 		 	 "UNIT_TEST",
 			 # User Interface
 			 "UI",
+			 #
+			 "TS",
 			 # OCB mode
 			 "OCB",
+			 "CMAC",
                          # APPLINK (win build feature?)
                          "APPLINK"
                      );
@@ -155,7 +165,6 @@ foreach (@ARGV, split(/ /, $config{options}))
 		$linux=1;
 	}
 	$VMS=$VMSNonVAX=1 if $_ eq "VMS";
-	$OS2=1 if $_ eq "OS2";
 	if ($_ eq "zlib" || $_ eq "enable-zlib" || $_ eq "zlib-dynamic"
 			 || $_ eq "enable-zlib-dynamic") {
 		$zlib = 1;
@@ -212,11 +221,11 @@ if (!$libname) {
 }
 
 # If no platform is given, assume WIN32
-if ($W32 + $VMS + $OS2 + $linux == 0) {
+if ($W32 + $VMS + $linux == 0) {
 	$W32 = 1;
 }
 die "Please, only one platform at a time"
-    if ($W32 + $VMS + $OS2 + $linux > 1);
+    if ($W32 + $VMS + $linux > 1);
 
 if (!$do_ssl && !$do_crypto)
 	{
@@ -239,6 +248,7 @@ my $crypto ="include/openssl/crypto.h";
 $crypto.=" include/internal/o_dir.h";
 $crypto.=" include/internal/o_str.h";
 $crypto.=" include/internal/threads.h";
+$crypto.=" include/internal/err.h";
 $crypto.=" include/openssl/des.h" ; # unless $no_des;
 $crypto.=" include/openssl/idea.h" ; # unless $no_idea;
 $crypto.=" include/openssl/rc4.h" ; # unless $no_rc4;
@@ -269,7 +279,7 @@ $crypto.=" include/openssl/engine.h"; # unless $no_engine;
 $crypto.=" include/openssl/stack.h" ; # unless $no_stack;
 $crypto.=" include/openssl/buffer.h" ; # unless $no_buffer;
 $crypto.=" include/openssl/bio.h" ; # unless $no_bio;
-$crypto.=" include/openssl/dso.h" ; # unless $no_dso;
+$crypto.=" include/internal/dso.h" ; # unless $no_dso;
 $crypto.=" include/openssl/lhash.h" ; # unless $no_lhash;
 $crypto.=" include/openssl/conf.h";
 $crypto.=" include/openssl/txt_db.h";
@@ -1113,7 +1123,6 @@ sub is_valid
 			if ($keyword eq "VMS" && $VMS) { return 1; }
 			if ($keyword eq "WIN32" && $W32) { return 1; }
 			if ($keyword eq "WINNT" && $NT) { return 1; }
-			if ($keyword eq "OS2" && $OS2) { return 1; }
 			# Special platforms:
 			# EXPORT_VAR_AS_FUNCTION means that global variables
 			# will be represented as functions.  This currently
@@ -1202,22 +1211,8 @@ sub print_def_file
 
 	if ($W32)
 		{ $libname.="32"; }
-	elsif ($OS2)
-		{ # DLL names should not clash on the whole system.
-		  # However, they should not have any particular relationship
-		  # to the name of the static library.  Chose descriptive names
-		  # (must be at most 8 chars).
-		  my %translate = (ssl => 'open_ssl', crypto => 'cryptssl');
-		  $libname = $translate{$name} || $name;
-		  $liboptions = <<EOO;
-INITINSTANCE
-DATA MULTIPLE NONSHARED
-EOO
-		  # Vendor field can't contain colon, drat; so we omit http://
-		  $description = "\@#$http_vendor:$version#\@$what; DLL for library $name.  Build for EMX -Zmtd";
-		}
 
-        if ($W32 || $OS2)
+        if ($W32)
                 {
                 print OUT <<"EOF";
 ;
@@ -1329,12 +1324,12 @@ EOF
                                             }
                                             print OUT $symline;
                                             $symvtextcount += length($symline) - 2;
-					} elsif($v && !$OS2) {
+					} elsif($v) {
 						printf OUT "    %s%-39s @%-8d DATA\n",
 								($W32)?"":"_",$s2,$n;
 					} else {
 						printf OUT "    %s%-39s @%d\n",
-								($W32||$OS2)?"":"_",$s2,$n;
+								($W32)?"":"_",$s2,$n;
 					}
 				}
 			}

@@ -421,7 +421,7 @@ int i2d_PKCS8PrivateKey_nid_bio(BIO *bp, EVP_PKEY *x, int nid,
 EVP_PKEY *d2i_PKCS8PrivateKey_bio(BIO *bp, EVP_PKEY **x, pem_password_cb *cb,
                                   void *u);
 
-#ifndef OPENSSL_NO_STDIO
+# ifndef OPENSSL_NO_STDIO
 int i2d_PKCS8PrivateKey_fp(FILE *fp, EVP_PKEY *x, const EVP_CIPHER *enc,
                            char *kstr, int klen,
                            pem_password_cb *cb, void *u);
@@ -438,20 +438,22 @@ EVP_PKEY *d2i_PKCS8PrivateKey_fp(FILE *fp, EVP_PKEY **x, pem_password_cb *cb,
 int PEM_write_PKCS8PrivateKey(FILE *fp, EVP_PKEY *x, const EVP_CIPHER *enc,
                               char *kstr, int klen, pem_password_cb *cd,
                               void *u);
-#endif
+# endif
 EVP_PKEY *PEM_read_bio_Parameters(BIO *bp, EVP_PKEY **x);
 int PEM_write_bio_Parameters(BIO *bp, EVP_PKEY *x);
 
+# ifndef OPENSSL_NO_DSA
 EVP_PKEY *b2i_PrivateKey(const unsigned char **in, long length);
 EVP_PKEY *b2i_PublicKey(const unsigned char **in, long length);
 EVP_PKEY *b2i_PrivateKey_bio(BIO *in);
 EVP_PKEY *b2i_PublicKey_bio(BIO *in);
 int i2b_PrivateKey_bio(BIO *out, EVP_PKEY *pk);
 int i2b_PublicKey_bio(BIO *out, EVP_PKEY *pk);
-# ifndef OPENSSL_NO_RC4
+#  ifndef OPENSSL_NO_RC4
 EVP_PKEY *b2i_PVK_bio(BIO *in, pem_password_cb *cb, void *u);
 int i2b_PVK_bio(BIO *out, EVP_PKEY *pk, int enclevel,
                 pem_password_cb *cb, void *u);
+#  endif
 # endif
 
 /* BEGIN ERROR CODES */

@@ -159,12 +159,6 @@ extern "C" {
 #  define SSLEAY_PLATFORM         OPENSSL_PLATFORM
 #  define SSLEAY_DIR              OPENSSL_DIR
 
-#  define CRYPTO_w_lock(a)
-#  define CRYPTO_w_unlock(a)
-#  define CRYPTO_r_lock(a)
-#  define CRYPTO_r_unlock(a)
-#  define CRYPTO_add(a,b,c)       ((*(a))+=(b))
-
 /*
  * Old type for allocating dynamic locks. No longer used. Use the new thread
  * API instead.
@@ -218,9 +212,8 @@ DEFINE_STACK_OF(void)
 # define CRYPTO_EX_INDEX_ENGINE          10
 # define CRYPTO_EX_INDEX_UI              11
 # define CRYPTO_EX_INDEX_BIO             12
-# define CRYPTO_EX_INDEX_STORE           13
-# define CRYPTO_EX_INDEX_APP             14
-# define CRYPTO_EX_INDEX__COUNT          15
+# define CRYPTO_EX_INDEX_APP             13
+# define CRYPTO_EX_INDEX__COUNT          14
 
 /*
  * This is the default callbacks, but we can have others as well: this is
@@ -262,6 +255,9 @@ int CRYPTO_mem_ctrl(int mode);
 size_t OPENSSL_strlcpy(char *dst, const char *src, size_t siz);
 size_t OPENSSL_strlcat(char *dst, const char *src, size_t siz);
 size_t OPENSSL_strnlen(const char *str, size_t maxlen);
+char *OPENSSL_buf2hexstr(const unsigned char *buffer, long len);
+unsigned char *OPENSSL_hexstr2buf(const char *str, long *len);
+int OPENSSL_hexchar2int(unsigned char c);
 
 # define OPENSSL_MALLOC_MAX_NELEMS(type)  (((1U<<(sizeof(int)*8-1))-1)/sizeof(type))
 
@@ -304,27 +300,25 @@ void CRYPTO_free_ex_data(int class_index, void *obj, CRYPTO_EX_DATA *ad);
  */
 int CRYPTO_set_ex_data(CRYPTO_EX_DATA *ad, int idx, void *val);
 void *CRYPTO_get_ex_data(const CRYPTO_EX_DATA *ad, int idx);
+
+# if OPENSSL_API_COMPAT < 0x10100000L
 /*
  * This function cleans up all "ex_data" state. It mustn't be called under
  * potential race-conditions.
  */
-void CRYPTO_cleanup_all_ex_data(void);
+# define CRYPTO_cleanup_all_ex_data() while(0) continue
 
-# if OPENSSL_API_COMPAT < 0x10100000L
 /*
- * These are the functions for the old threading API. These are all now no-ops
- * and should not be used.
+ * The old locking functions have been removed completely without compatibility
+ * macros. This is because the old functions either could not properly report
+ * errors, or the returned error values were not clearly documented.
+ * Replacing the locking functions with with no-ops would cause race condition
+ * issues in the affected applications. It is far better for them to fail at
+ * compile time.
+ * On the other hand, the locking callbacks are no longer used.  Consequently,
+ * the callback management functions can be safely replaced with no-op macros.
  */
-#  define CRYPTO_get_new_lockid(name)   (0)
 #  define CRYPTO_num_locks()            (0)
-/*
- * The old CRYPTO_lock() function has been removed completely without a
- * compatibility macro. This is because previously it could not return an error
- * response, but if any applications are using this they will not work and could
- * fail in strange ways. Better for them to fail at compile time.
- * 
- * void CRYPTO_lock(int mode, int type, const char *file, int line);
- */
 #  define CRYPTO_set_locking_callback(func)
 #  define CRYPTO_get_locking_callback()         (NULL)
 #  define CRYPTO_set_add_lock_callback(func)
@@ -350,13 +344,6 @@ typedef struct crypto_threadid_st {
 #   define CRYPTO_thread_id()                           (0UL)
 #  endif /* OPENSSL_API_COMPAT < 0x10000000L */
 
-#  define CRYPTO_get_lock_name(type)                    (NULL)
-#  define CRYPTO_add_lock(pointer, amount, type, file, line) \
-                                                        (0)
-
-#  define CRYPTO_get_new_dynlockid()                    (0)
-#  define CRYPTO_destroy_dynlockid(i)
-#  define CRYPTO_get_dynlock_value(i)                   (NULL)
 #  define CRYPTO_set_dynlock_create_callback(dyn_create_function)
 #  define CRYPTO_set_dynlock_lock_callback(dyn_lock_function)
 #  define CRYPTO_set_dynlock_destroy_callback(dyn_destroy_function)
@@ -526,12 +513,15 @@ void ERR_load_CRYPTO_strings(void);
 # define CRYPTO_F_INT_DUP_EX_DATA                         106
 # define CRYPTO_F_INT_FREE_EX_DATA                        107
 # define CRYPTO_F_INT_NEW_EX_DATA                         108
+# define CRYPTO_F_OPENSSL_BUF2HEXSTR                      117
 # define CRYPTO_F_OPENSSL_INIT_CRYPTO                     116
 # define CRYPTO_F_OPENSSL_MEMDUP                          114
+# define CRYPTO_F_OPENSSL_HEXSTR2BUF                      118
 
 /* Reason codes. */
 # define CRYPTO_R_FIPS_MODE_NOT_SUPPORTED                 101
-# define CRYPTO_R_NO_DYNLOCK_CREATE_CALLBACK              100
+# define CRYPTO_R_ILLEGAL_HEX_DIGIT                       102
+# define CRYPTO_R_ODD_NUMBER_OF_DIGITS                    103
 
 #ifdef  __cplusplus
 }

@@ -62,7 +62,7 @@
 #include <openssl/buffer.h>
 #include <ctype.h>
 
-static CRYPTO_RWLOCK *bio_lookup_lock;
+CRYPTO_RWLOCK *bio_lookup_lock;
 static CRYPTO_ONCE bio_lookup_init = CRYPTO_ONCE_STATIC_INIT;
 
 /*
@@ -82,6 +82,11 @@ static CRYPTO_ONCE bio_lookup_init = CRYPTO_ONCE_STATIC_INIT;
 BIO_ADDR *BIO_ADDR_new(void)
 {
     BIO_ADDR *ret = OPENSSL_zalloc(sizeof(*ret));
+
+    if (ret == NULL) {
+        BIOerr(BIO_F_BIO_ADDR_NEW, ERR_R_MALLOC_FAILURE);
+        return NULL;
+    }
 
     ret->sa.sa_family = AF_UNSPEC;
     return ret;
@@ -722,6 +727,15 @@ int BIO_lookup(const char *host, const char *service,
     } else {
 #endif
         const struct hostent *he;
+/*
+ * Because struct hostent is defined for 32-bit pointers only with
+ * VMS C, we need to make sure that '&he_fallback_address' and
+ * '&he_fallback_addresses' are 32-bit pointers
+ */
+#if defined(OPENSSL_SYS_VMS) && defined(__DECC)
+# pragma pointer_size save
+# pragma pointer_size 32
+#endif
         /* Windows doesn't seem to have in_addr_t */
 #ifdef OPENSSL_SYS_WINDOWS
         static uint32_t he_fallback_address;
@@ -735,6 +749,10 @@ int BIO_lookup(const char *host, const char *service,
         static const struct hostent he_fallback =
             { NULL, NULL, AF_INET, sizeof(he_fallback_address),
               (char **)&he_fallback_addresses };
+#if defined(OPENSSL_SYS_VMS) && defined(__DECC)
+# pragma pointer_size restore
+#endif
+
         struct servent *se;
         /* Apprently, on WIN64, s_proto and s_port have traded places... */
 #ifdef _WIN64
@@ -742,7 +760,6 @@ int BIO_lookup(const char *host, const char *service,
 #else
         struct servent se_fallback = { NULL, NULL, 0, NULL };
 #endif
-        char *proto = NULL;
 
         CRYPTO_THREAD_run_once(&bio_lookup_init, do_bio_lookup_init);
 
@@ -778,11 +795,33 @@ int BIO_lookup(const char *host, const char *service,
 
         if (service == NULL) {
             se_fallback.s_port = 0;
-            se_fallback.s_proto = proto;
+            se_fallback.s_proto = NULL;
             se = &se_fallback;
         } else {
             char *endp = NULL;
             long portnum = strtol(service, &endp, 10);
+
+/*
+ * Because struct servent is defined for 32-bit pointers only with
+ * VMS C, we need to make sure that 'proto' is a 32-bit pointer.
+ */
+#if defined(OPENSSL_SYS_VMS) && defined(__DECC)
+# pragma pointer_size save
+# pragma pointer_size 32
+#endif
+            char *proto = NULL;
+#if defined(OPENSSL_SYS_VMS) && defined(__DECC)
+# pragma pointer_size restore
+#endif
+
+            switch (socktype) {
+            case SOCK_STREAM:
+                proto = "tcp";
+                break;
+            case SOCK_DGRAM:
+                proto = "udp";
+                break;
+            }
 
             if (endp != service && *endp == '\0'
                     && portnum > 0 && portnum < 65536) {
@@ -790,14 +829,6 @@ int BIO_lookup(const char *host, const char *service,
                 se_fallback.s_proto = proto;
                 se = &se_fallback;
             } else if (endp == service) {
-                switch (socktype) {
-                case SOCK_STREAM:
-                    proto = "tcp";
-                    break;
-                case SOCK_DGRAM:
-                    proto = "udp";
-                    break;
-                }
                 se = getservbyname(service, proto);
 
                 if (se == NULL) {
@@ -818,7 +849,19 @@ int BIO_lookup(const char *host, const char *service,
         *res = NULL;
 
         {
+/*
+ * Because hostent::h_addr_list is an array of 32-bit pointers with VMS C,
+ * we must make sure our iterator designates the same element type, hence
+ * the pointer size dance.
+ */
+#if defined(OPENSSL_SYS_VMS) && defined(__DECC)
+# pragma pointer_size save
+# pragma pointer_size 32
+#endif
             char **addrlistp;
+#if defined(OPENSSL_SYS_VMS) && defined(__DECC)
+# pragma pointer_size restore
+#endif
             size_t addresses;
             BIO_ADDRINFO *tmp_bai = NULL;
 
@@ -853,4 +896,5 @@ int BIO_lookup(const char *host, const char *service,
 
     return ret;
 }
+
 #endif /* OPENSSL_NO_SOCK */

@@ -216,6 +216,7 @@ int ASN1_item_sign(const ASN1_ITEM *it, X509_ALGOR *algor1,
                    X509_ALGOR *algor2, ASN1_BIT_STRING *signature, void *asn,
                    EVP_PKEY *pkey, const EVP_MD *type)
 {
+    int rv;
     EVP_MD_CTX *ctx = EVP_MD_CTX_new();
 
     if (ctx == NULL) {
@@ -226,7 +227,11 @@ int ASN1_item_sign(const ASN1_ITEM *it, X509_ALGOR *algor1,
         EVP_MD_CTX_free(ctx);
         return 0;
     }
-    return ASN1_item_sign_ctx(it, algor1, algor2, signature, asn, ctx);
+
+    rv = ASN1_item_sign_ctx(it, algor1, algor2, signature, asn, ctx);
+
+    EVP_MD_CTX_free(ctx);
+    return rv;
 }
 
 int ASN1_item_sign_ctx(const ASN1_ITEM *it,
@@ -318,7 +323,6 @@ int ASN1_item_sign_ctx(const ASN1_ITEM *it,
     signature->flags &= ~(ASN1_STRING_FLAG_BITS_LEFT | 0x07);
     signature->flags |= ASN1_STRING_FLAG_BITS_LEFT;
  err:
-    EVP_MD_CTX_free(ctx);
     OPENSSL_clear_free((char *)buf_in, (unsigned int)inl);
     OPENSSL_clear_free((char *)buf_out, outll);
     return (outl);

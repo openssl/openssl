@@ -45,6 +45,7 @@ B<openssl> B<s_client>
 [B<-trusted_first>]
 [B<-no_alt_chains>]
 [B<-use_deltas>]
+[B<-auth_level num>]
 [B<-verify_depth num>]
 [B<-verify_email email>]
 [B<-verify_hostname hostname>]
@@ -94,7 +95,7 @@ B<openssl> B<s_client>
 [B<-serverinfo types>]
 [B<-status>]
 [B<-nextprotoneg protocols>]
-[B<-noct|requestct|requirect>]
+[B<-ct|noct>]
 [B<-ctlogfile>]
 
 =head1 DESCRIPTION
@@ -229,8 +230,8 @@ B<-explicit_policy>, B<-extended_crl>, B<-ignore_critical>, B<-inhibit_any>,
 B<-inhibit_map>, B<-no_alt_chains>, B<-partial_chain>, B<-policy>,
 B<-policy_check>, B<-policy_print>, B<-purpose>, B<-suiteB_128>,
 B<-suiteB_128_only>, B<-suiteB_192>, B<-trusted_first>, B<-use_deltas>,
-B<-verify_depth>, B<-verify_email>, B<-verify_hostname>, B<-verify_ip>,
-B<-verify_name>, B<-x509_strict>
+B<-auth_level>, B<-verify_depth>, B<-verify_email>, B<-verify_hostname>,
+B<-verify_ip>, B<-verify_name>, B<-x509_strict>
 
 Set various certificate chain validation options. See the
 L<verify(1)> manual page for details.
@@ -436,7 +437,7 @@ for all available algorithms.
 
 a file or files containing random data used to seed the random number
 generator, or an EGD socket (see L<RAND_egd(3)>).
-Multiple files can be specified separated by a OS-dependent character.
+Multiple files can be specified separated by an OS-dependent character.
 The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
 all others.
 
@@ -463,14 +464,12 @@ Empty list of protocols is treated specially and will cause the client to
 advertise support for the TLS extension but disconnect just after
 receiving ServerHello with a list of server supported protocols.
 
-=item B<-noct|requestct|requirect>
+=item B<-ct|noct>
 
-Use one of these three options to control whether Certificate Transparency (CT)
-is disabled (-noct), enabled but not enforced (-requestct), or enabled and
-enforced (-requirect). If CT is enabled, signed certificate timestamps (SCTs)
-will be requested from the server and invalid SCTs will cause the connection to
-be aborted. If CT is enforced, at least one valid SCT from a recognised CT log
-(see B<-ctlogfile>) will be required or the connection will be aborted.
+Use one of these two options to control whether Certificate Transparency (CT)
+is enabled (B<-ct>) or disabled (B<-noct>).
+If CT is enabled, signed certificate timestamps (SCTs) will be requested from
+the server and reported at handshake completion.
 
 Enabling CT also enables OCSP stapling, as this is one possible delivery method
 for SCTs.

@@ -375,6 +375,7 @@ int req_main(int argc, char **argv)
     if (!nmflag_set)
         nmflag = XN_FLAG_ONELINE;
 
+    /* TODO: simplify this as pkey is still always NULL here */ 
     private = newreq && (pkey == NULL) ? 1 : 0;
 
     if (!app_passwd(passargin, passargout, &passin, &passout)) {
@@ -666,10 +667,9 @@ int req_main(int argc, char **argv)
             if (!X509_set_subject_name
                 (x509ss, X509_REQ_get_subject_name(req)))
                 goto end;
-            tmppkey = X509_REQ_get_pubkey(req);
+            tmppkey = X509_REQ_get0_pubkey(req);
             if (!tmppkey || !X509_set_pubkey(x509ss, tmppkey))
                 goto end;
-            EVP_PKEY_free(tmppkey);
 
             /* Set up V3 context struct */
 
@@ -739,20 +739,15 @@ int req_main(int argc, char **argv)
     }
 
     if (verify && !x509) {
-        int tmp = 0;
+        EVP_PKEY *tpubkey = pkey;
 
-        if (pkey == NULL) {
-            pkey = X509_REQ_get_pubkey(req);
-            tmp = 1;
-            if (pkey == NULL)
+        if (tpubkey == NULL) {
+            tpubkey = X509_REQ_get0_pubkey(req);
+            if (tpubkey == NULL)
                 goto end;
         }
 
-        i = X509_REQ_verify(req, pkey);
-        if (tmp) {
-            EVP_PKEY_free(pkey);
-            pkey = NULL;
-        }
+        i = X509_REQ_verify(req, tpubkey);
 
         if (i < 0) {
             goto end;
@@ -816,9 +811,11 @@ int req_main(int argc, char **argv)
         }
         fprintf(stdout, "Modulus=");
 #ifndef OPENSSL_NO_RSA
-        if (EVP_PKEY_base_id(tpubkey) == EVP_PKEY_RSA)
-            BN_print(out, EVP_PKEY_get0_RSA(tpubkey)->n);
-        else
+        if (EVP_PKEY_base_id(tpubkey) == EVP_PKEY_RSA) {
+            BIGNUM *n;
+            RSA_get0_key(EVP_PKEY_get0_RSA(tpubkey), &n, NULL, NULL);
+            BN_print(out, n);
+        } else
 #endif
             fprintf(stdout, "Wrong Algorithm type");
         EVP_PKEY_free(tpubkey);
@@ -870,7 +867,6 @@ int req_main(int argc, char **argv)
         OPENSSL_free(passin);
     if (passout != nofree_passout)
         OPENSSL_free(passout);
-    OBJ_cleanup();
     return (ret);
 }
 
@@ -1523,13 +1519,9 @@ int do_X509_sign(X509 *x, EVP_PKEY *pkey, const EVP_MD *md,
     EVP_MD_CTX *mctx = EVP_MD_CTX_new();
 
     rv = do_sign_init(mctx, pkey, md, sigopts);
-    /* Note: X509_sign_ctx() calls ASN1_item_sign_ctx(), which destroys
-     * the EVP_MD_CTX we send it, so only destroy it here if the former
-     * isn't called */
     if (rv > 0)
         rv = X509_sign_ctx(x, mctx);
-    else
-        EVP_MD_CTX_free(mctx);
+    EVP_MD_CTX_free(mctx);
     return rv > 0 ? 1 : 0;
 }
 
@@ -1539,13 +1531,9 @@ int do_X509_REQ_sign(X509_REQ *x, EVP_PKEY *pkey, const EVP_MD *md,
     int rv;
     EVP_MD_CTX *mctx = EVP_MD_CTX_new();
     rv = do_sign_init(mctx, pkey, md, sigopts);
-    /* Note: X509_REQ_sign_ctx() calls ASN1_item_sign_ctx(), which destroys
-     * the EVP_MD_CTX we send it, so only destroy it here if the former
-     * isn't called */
     if (rv > 0)
         rv = X509_REQ_sign_ctx(x, mctx);
-    else
-        EVP_MD_CTX_free(mctx);
+    EVP_MD_CTX_free(mctx);
     return rv > 0 ? 1 : 0;
 }
 
@@ -1555,12 +1543,8 @@ int do_X509_CRL_sign(X509_CRL *x, EVP_PKEY *pkey, const EVP_MD *md,
     int rv;
     EVP_MD_CTX *mctx = EVP_MD_CTX_new();
     rv = do_sign_init(mctx, pkey, md, sigopts);
-    /* Note: X509_CRL_sign_ctx() calls ASN1_item_sign_ctx(), which destroys
-     * the EVP_MD_CTX we send it, so only destroy it here if the former
-     * isn't called */
     if (rv > 0)
         rv = X509_CRL_sign_ctx(x, mctx);
-    else
-        EVP_MD_CTX_free(mctx);
+    EVP_MD_CTX_free(mctx);
     return rv > 0 ? 1 : 0;
 }

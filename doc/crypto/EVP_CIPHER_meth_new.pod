@@ -193,7 +193,7 @@ The EVP routines will simply give them control and do nothing more.
 
 =item EVP_CIPH_FLAG_AEAD_CIPHER
 
-This indicates that this is a AEAD cipher implementation.
+This indicates that this is an AEAD cipher implementation.
 
 =item EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK
 

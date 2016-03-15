@@ -37,14 +37,15 @@ Makefile
 
 # Links under apps
 /apps/CA.pl
+/apps/tsget
 /apps/md4.c
 
 
 # Auto generated headers
 /crypto/buildinf.h
-/openssl/include/opensslconf.h
 /crypto/include/internal/*_conf.h
-util/domd
+/openssl/include/opensslconf.h
+/util/domd
 
 # Auto generated assembly language source files
 *.s
@@ -59,6 +60,7 @@ util/domd
 /test/sha256t
 /test/sha512t
 /test/gost2814789t
+/test/ssltest_old
 /test/*test
 /test/fips_aesavs
 /test/fips_desmovs

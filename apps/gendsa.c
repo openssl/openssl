@@ -101,6 +101,7 @@ int gendsa_main(int argc, char **argv)
     char *outfile = NULL, *passoutarg = NULL, *passout = NULL, *prog;
     OPTION_CHOICE o;
     int ret = 1, private = 0;
+    BIGNUM *p = NULL;
 
     prog = opt_init(argc, argv, gendsa_options);
     while ((o = opt_next()) != OPT_EOF) {
@@ -168,7 +169,8 @@ int gendsa_main(int argc, char **argv)
         BIO_printf(bio_err, "%ld semi-random bytes loaded\n",
                    app_RAND_load_files(inrand));
 
-    BIO_printf(bio_err, "Generating DSA key, %d bits\n", BN_num_bits(dsa->p));
+    DSA_get0_pqg(dsa, &p, NULL, NULL);
+    BIO_printf(bio_err, "Generating DSA key, %d bits\n", BN_num_bits(p));
     if (!DSA_generate_key(dsa))
         goto end;
 

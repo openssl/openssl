@@ -131,8 +131,10 @@ int verify_depth = 0;
 int verify_quiet = 0;
 int verify_error = X509_V_OK;
 int verify_return_error = 0;
+#ifndef OPENSSL_NO_SOCK
 static unsigned char cookie_secret[COOKIE_SECRET_LENGTH];
 static int cookie_initialized = 0;
+#endif
 
 static const char *lookup(int val, const STRINT_PAIR* list, const char* def)
 {
@@ -404,8 +406,6 @@ int ssl_print_point_formats(BIO *out, SSL *s)
 
         }
     }
-    if (nformats <= 0)
-        BIO_puts(out, "NONE");
     BIO_puts(out, "\n");
     return 1;
 }
@@ -437,8 +437,6 @@ int ssl_print_curves(BIO *out, SSL *s, int noshared)
             BIO_printf(out, "%s", cname);
         }
     }
-    if (ncurves == 0)
-        BIO_puts(out, "NONE");
     OPENSSL_free(curves);
     if (noshared) {
         BIO_puts(out, "\n");
@@ -505,12 +503,12 @@ long bio_dump_callback(BIO *bio, int cmd, const char *argp,
 
     if (cmd == (BIO_CB_READ | BIO_CB_RETURN)) {
         BIO_printf(out, "read from %p [%p] (%lu bytes => %ld (0x%lX))\n",
-                   (void *)bio, argp, (unsigned long)argi, ret, ret);
+                   (void *)bio, (void *)argp, (unsigned long)argi, ret, ret);
         BIO_dump(out, argp, (int)ret);
         return (ret);
     } else if (cmd == (BIO_CB_WRITE | BIO_CB_RETURN)) {
         BIO_printf(out, "write to %p [%p] (%lu bytes => %ld (0x%lX))\n",
-                   (void *)bio, argp, (unsigned long)argi, ret, ret);
+                   (void *)bio, (void *)argp, (unsigned long)argi, ret, ret);
         BIO_dump(out, argp, (int)ret);
     }
     return (ret);
@@ -741,6 +739,7 @@ void tlsext_cb(SSL *s, int client_server, int type,
     (void)BIO_flush(bio);
 }
 
+#ifndef OPENSSL_NO_SOCK
 int generate_cookie_callback(SSL *ssl, unsigned char *cookie,
                              unsigned int *cookie_len)
 {
@@ -803,6 +802,7 @@ int verify_cookie_callback(SSL *ssl, const unsigned char *cookie,
 
     return 0;
 }
+#endif
 
 /*
  * Example of extended certificate handling. Where the standard support of
@@ -1106,7 +1106,7 @@ static char *hexencode(const unsigned char *data, size_t len)
     }
     cp = out = app_malloc(ilen, "TLSA hex data buffer");
 
-    while (ilen-- > 0) {
+    while (len-- > 0) {
         *cp++ = hex[(*data >> 4) & 0x0f];
         *cp++ = hex[*data++ & 0x0f];
     }
@@ -1367,7 +1367,7 @@ static int security_callback_debug(const SSL *s, const SSL_CTX *ctx,
     case SSL_SECOP_OTHER_DH:
         {
             DH *dh = other;
-            BIO_printf(sdb->out, "%d", BN_num_bits(dh->p));
+            BIO_printf(sdb->out, "%d", DH_bits(dh));
             break;
         }
 #endif

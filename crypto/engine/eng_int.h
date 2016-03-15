@@ -99,9 +99,9 @@ extern CRYPTO_RWLOCK *global_engine_lock;
 
 /*
  * Any code that will need cleanup operations should use these functions to
- * register callbacks. ENGINE_cleanup() will call all registered callbacks in
- * order. NB: both the "add" functions assume the engine lock to already be
- * held (in "write" mode).
+ * register callbacks. engine_cleanup_int() will call all registered
+ * callbacks in order. NB: both the "add" functions assume the engine lock to
+ * already be held (in "write" mode).
  */
 typedef void (ENGINE_CLEANUP_CB) (void);
 typedef struct st_engine_cleanup_item {

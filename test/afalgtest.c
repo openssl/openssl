@@ -55,6 +55,22 @@
 #include <openssl/opensslconf.h>
 
 #ifndef OPENSSL_NO_AFALGENG
+# include <linux/version.h>
+# define K_MAJ   4
+# define K_MIN1  1
+# define K_MIN2  0
+# if LINUX_VERSION_CODE <= KERNEL_VERSION(K_MAJ, K_MIN1, K_MIN2)
+/*
+ * If we get here then it looks like there is a mismatch between the linux
+ * headers and the actual kernel version, so we have tried to compile with
+ * afalg support, but then skipped it in e_afalg.c. As far as this test is
+ * concerned we behave as if we had been configured without support
+ */
+#  define OPENSSL_NO_AFALGENG
+# endif
+#endif
+
+#ifndef OPENSSL_NO_AFALGENG
 #include <string.h>
 #include <openssl/engine.h>
 #include <openssl/evp.h>
