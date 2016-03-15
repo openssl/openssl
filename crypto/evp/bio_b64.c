@@ -116,16 +116,20 @@ static int b64_new(BIO *bi)
 
     ctx = OPENSSL_zalloc(sizeof(*ctx));
     if (ctx == NULL)
-        return (0);
+        return 0;
 
     ctx->cont = 1;
     ctx->start = 1;
     ctx->base64 = EVP_ENCODE_CTX_new();
+    if (ctx->base64 == NULL) {
+        OPENSSL_free (ctx);
+        return 0;
+    }
     bi->init = 1;
     bi->ptr = (char *)ctx;
     bi->flags = 0;
     bi->num = 0;
-    return (1);
+    return 1;
 }
 
 static int b64_free(BIO *a)

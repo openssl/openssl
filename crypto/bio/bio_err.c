@@ -1,4 +1,3 @@
-/* crypto/bio/bio_err.c */
 /* ====================================================================
  * Copyright (c) 1999-2016 The OpenSSL Project.  All rights reserved.
  *
@@ -74,6 +73,7 @@ static ERR_STRING_DATA BIO_str_functs[] = {
     {ERR_FUNC(BIO_F_ADDR_STRINGS), "addr_strings"},
     {ERR_FUNC(BIO_F_BIO_ACCEPT), "BIO_accept"},
     {ERR_FUNC(BIO_F_BIO_ACCEPT_EX), "BIO_accept_ex"},
+    {ERR_FUNC(BIO_F_BIO_ADDR_NEW), "BIO_ADDR_new"},
     {ERR_FUNC(BIO_F_BIO_BER_GET_HEADER), "BIO_BER_GET_HEADER"},
     {ERR_FUNC(BIO_F_BIO_CALLBACK_CTRL), "BIO_callback_ctrl"},
     {ERR_FUNC(BIO_F_BIO_CONNECT), "BIO_connect"},

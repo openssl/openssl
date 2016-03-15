@@ -168,6 +168,8 @@ EC_KEY *EC_KEY_new_method(ENGINE *engine)
     ret->references = 1;
 
     if (ret->meth->init != NULL && ret->meth->init(ret) == 0) {
+        CRYPTO_free_ex_data(CRYPTO_EX_INDEX_EC_KEY, ret, &ret->ex_data);
+        CRYPTO_THREAD_lock_free(ret->lock);
         EC_KEY_free(ret);
         return NULL;
     }
