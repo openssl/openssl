@@ -98,7 +98,7 @@ indir "tsa" => sub
 
      skip "failed", 16
          unless ok(run(app([@RUN, "-query", "-data", $testtsa,
-                            "-policy", "tsa_policy1", "-cert",
+                            "-tspolicy", "tsa_policy1", "-cert",
                             "-out", "req1.tsq"])),
                    'creating req1.req time stamp request for file testtsa');
 
@@ -132,7 +132,7 @@ indir "tsa" => sub
 
      skip "failed", 10
          unless ok(run(app([@RUN, "-query", "-data", $testtsa,
-                            "-policy", "tsa_policy2", "-no_nonce",
+                            "-tspolicy", "tsa_policy2", "-no_nonce",
                             "-out", "req2.tsq"])),
                    'creating req2.req time stamp request for file testtsa');
 
