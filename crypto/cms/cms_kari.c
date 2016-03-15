@@ -392,17 +392,16 @@ static int cms_wrap_init(CMS_KeyAgreeRecipientInfo *kari,
 #ifndef OPENSSL_NO_DES
     if (EVP_CIPHER_type(cipher) == NID_des_ede3_cbc)
         kekcipher = EVP_des_ede3_wrap();
-    else if (keylen <= 16)
-#else
-    if (keylen <= 16)
 #endif
-        kekcipher = EVP_des_ede3_wrap();
-    else if (keylen <= 16)
-        kekcipher = EVP_aes_128_wrap();
-    else if (keylen <= 24)
-        kekcipher = EVP_aes_192_wrap();
-    else
-        kekcipher = EVP_aes_256_wrap();
+#ifndef OPENSSL_NO_AES
+    if (EVP_CIPHER_type(cipher) != NID_des_ede3_cbc)
+      if (keylen <= 16)
+          kekcipher = EVP_aes_128_wrap();
+      else if (keylen <= 24)
+          kekcipher = EVP_aes_192_wrap();
+      else
+          kekcipher = EVP_aes_256_wrap();
+#endif
     return EVP_EncryptInit_ex(ctx, kekcipher, NULL, NULL, NULL);
 }
 
