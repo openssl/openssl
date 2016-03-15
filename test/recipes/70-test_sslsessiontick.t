@@ -71,6 +71,7 @@ $ENV{OPENSSL_ENGINES} = bldtop_dir("engines");
 $ENV{OPENSSL_ia32cap} = '~0x200000200000000';
 
 sub checkmessages($$$$$$);
+sub clearclient();
 sub clearall();
 
 my $chellotickext = 0;
@@ -119,7 +120,7 @@ clearall();
 $proxy->serverconnects(2);
 $proxy->clientflags("-sess_out ".$session);
 $proxy->start();
-$proxy->clear();
+$proxy->clearClient();
 $proxy->clientflags("-sess_in ".$session);
 $proxy->clientstart();
 checkmessages(4, "Session resumption session ticket test", 1, 0, 0, 0);
@@ -132,7 +133,7 @@ clearall();
 $proxy->serverconnects(2);
 $proxy->clientflags("-sess_out ".$session." -no_ticket");
 $proxy->start();
-$proxy->clear();
+$proxy->clearClient();
 $proxy->clientflags("-sess_in ".$session);
 $proxy->clientstart();
 checkmessages(5, "Session resumption with ticket capable client without a "
@@ -153,14 +154,14 @@ $proxy->serverconnects(3);
 $proxy->filter(undef);
 $proxy->clientflags("-sess_out ".$session);
 $proxy->start();
-$proxy->clear();
+$proxy->clearClient();
 $proxy->clientflags("-sess_in ".$session." -sess_out ".$session);
 $proxy->filter(\&inject_empty_ticket_filter);
 $proxy->clientstart();
 #Expected result: ClientHello extension seen; ServerHello extension seen;
 #                 NewSessionTicket message seen; Abbreviated handshake.
 checkmessages(7, "Empty ticket resumption test",  1, 1, 1, 0);
-clearall();
+clearclient();
 $proxy->clientflags("-sess_in ".$session);
 $proxy->filter(undef);
 $proxy->clientstart();
@@ -252,11 +253,18 @@ sub checkmessages($$$$$$)
     }
 }
 
-sub clearall()
+
+sub clearclient()
 {
     $chellotickext = 0;
     $shellotickext = 0;
     $fullhand = 0;
     $ticketseen = 0;
+    $proxy->clearClient();
+}
+
+sub clearall()
+{
+    clearclient();
     $proxy->clear();
 }

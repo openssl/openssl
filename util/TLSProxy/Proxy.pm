@@ -52,6 +52,7 @@
 # Hudson (tjh@cryptsoft.com).
 
 use strict;
+use POSIX ":sys_wait_h";
 
 package TLSProxy::Proxy;
 
@@ -86,6 +87,7 @@ sub new
         serverflags => "",
         clientflags => "",
         serverconnects => 1,
+        serverpid => 0,
 
         #Public read
         execute => $execute,
@@ -138,21 +140,29 @@ sub new
     return bless $self, $class;
 }
 
-sub clear
+sub clearClient
 {
     my $self = shift;
 
     $self->{cipherc} = "";
-    $self->{ciphers} = "AES128-SHA";
     $self->{flight} = 0;
     $self->{record_list} = [];
     $self->{message_list} = [];
-    $self->{serverflags} = "";
     $self->{clientflags} = "";
-    $self->{serverconnects} = 1;
 
     TLSProxy::Message->clear();
     TLSProxy::Record->clear();
+}
+
+sub clear
+{
+    my $self = shift;
+
+    $self->clearClient;
+    $self->{ciphers} = "AES128-SHA";
+    $self->{serverflags} = "";
+    $self->{serverconnects} = 1;
+    $self->{serverpid} = 0;
 }
 
 sub restart
@@ -195,6 +205,7 @@ sub start
         }
         exec($execcmd);
     }
+    $self->serverpid($pid);
 
     $self->clientstart;
 }
@@ -318,6 +329,13 @@ sub clientstart
     }
     if(!$self->debug) {
         select($oldstdout);
+    }
+    $self->serverconnects($self->serverconnects - 1);
+    if ($self->serverconnects == 0) {
+        die "serverpid is zero\n" if $self->serverpid == 0;
+        print "Waiting for server process to close: "
+              .$self->serverpid."\n";
+        waitpid( $self->serverpid, 0);
     }
 }
 
@@ -502,5 +520,13 @@ sub message_list
         $self->{message_list} = shift;
     }
     return $self->{message_list};
+}
+sub serverpid
+{
+    my $self = shift;
+    if (@_) {
+      $self->{serverpid} = shift;
+    }
+    return $self->{serverpid};
 }
 1;

@@ -84,7 +84,8 @@ ok(TLSProxy::Message->success(), "Version tolerance test, TLS 1.3");
 
 #Test 2: Testing something below SSLv3 should fail
 $client_version = TLSProxy::Record::VERS_SSL_3_0 - 1;
-$proxy->restart();
+$proxy->clear();
+$proxy->start();
 ok(TLSProxy::Message->fail(), "Version tolerance test, SSL < 3.0");
 
 sub vers_tolerance_filter
