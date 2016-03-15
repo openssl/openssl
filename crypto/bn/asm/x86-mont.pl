@@ -88,7 +88,7 @@ $frame=32;				# size of above frame rounded up to 16n
 
 	&and	("esp",-64);		# align to cache line
 
-	# Some OSes, *cough*-dows, insist on stack being "wired" to
+	# Some OSes (Windows) insist on stack being "wired" to
 	# physical memory in strictly sequential manner, i.e. if stack
 	# allocation spans two pages, then reference to farmost one can
 	# be punishable by SEGV. But page walking can do good even on
