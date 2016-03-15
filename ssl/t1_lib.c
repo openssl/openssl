@@ -3415,8 +3415,10 @@ static int tls_decrypt_ticket(SSL *s, const unsigned char *etick,
     p = etick + 16 + EVP_CIPHER_CTX_iv_length(&ctx);
     eticklen -= 16 + EVP_CIPHER_CTX_iv_length(&ctx);
     sdec = OPENSSL_malloc(eticklen);
-    if (!sdec || EVP_DecryptUpdate(&ctx, sdec, &slen, p, eticklen) <= 0) {
+    if (sdec == NULL
+            || EVP_DecryptUpdate(&ctx, sdec, &slen, p, eticklen) <= 0) {
         EVP_CIPHER_CTX_cleanup(&ctx);
+        OPENSSL_free(sdec);
         return -1;
     }
     if (EVP_DecryptFinal(&ctx, sdec + slen, &mlen) <= 0) {
