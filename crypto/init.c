@@ -594,13 +594,13 @@ int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
 # ifndef OPENSSL_NO_STATIC_ENGINE
 #  if !defined(OPENSSL_NO_HW) && !defined(OPENSSL_NO_HW_PADLOCK)
     if ((opts & OPENSSL_INIT_ENGINE_PADLOCK)
-            && CRYPTO_THREAD_run_once(&engine_padlock,
-                                      ossl_init_engine_padlock))
+            && !CRYPTO_THREAD_run_once(&engine_padlock,
+                                       ossl_init_engine_padlock))
         return 0;
 #  endif
 #  if defined(OPENSSL_SYS_WIN32) && !defined(OPENSSL_NO_CAPIENG)
     if ((opts & OPENSSL_INIT_ENGINE_CAPI)
-            && CRYPTO_THREAD_run_once(&engine_capi, ossl_init_engine_capi))
+            && !CRYPTO_THREAD_run_once(&engine_capi, ossl_init_engine_capi))
         return 0;
 #  endif
     if ((opts & OPENSSL_INIT_ENGINE_DASYNC)
@@ -621,7 +621,7 @@ int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
 
 #ifndef OPENSSL_NO_COMP
     if ((opts & OPENSSL_INIT_ZLIB)
-            && CRYPTO_THREAD_run_once(&zlib, ossl_init_zlib))
+            && !CRYPTO_THREAD_run_once(&zlib, ossl_init_zlib))
         return 0;
 #endif
 
