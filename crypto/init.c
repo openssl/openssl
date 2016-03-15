@@ -311,7 +311,7 @@ static void ossl_init_engine_dasync(void)
     engine_load_dasync_internal();
 }
 #  if !defined(OPENSSL_NO_AFALGENG)
-static OPENSSL_INIT_ONCE engine_afalg = OPENSSL_INIT_ONCE_STATIC_INIT;
+static CRYPTO_ONCE engine_afalg = CRYPTO_ONCE_STATIC_INIT;
 static void ossl_init_engine_afalg(void)
 {
 #   ifdef OPENSSL_INIT_DEBUG
