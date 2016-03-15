@@ -892,9 +892,7 @@ $obj$depext: $deps
 	rm -f \$\@.tmp; touch \$\@.tmp
 	-\$(MAKEDEPEND) -f\$\@.tmp -o"|$obj$objext" -- \$(CFLAGS) $ecflags$incs -- $srcs \\
 	    2>/dev/null
-	perl -i -pe 's/^.*\\|//; s/ \\/(\\\\.|[^ ])*//;               #\\
-	             \$\$_ = undef if (/: *\$\$/ || /^(#.*| *)\$\$/); #\\
-	             \$\$_.="\\n" unless !defined(\$\$_) or /\\R\$\$/g;' \$\@.tmp
+	perl -i -pe 's/^.*\\|//; s/ \\/(\\\\.|[^ ])*//; \$\$_ = undef if (/: *\$\$/ || /^(#.*| *)\$\$/); \$\$_.="\\n" unless !defined(\$\$_) or /\\R\$\$/g;' \$\@.tmp
 	\@if cmp \$\@.tmp \$\@ > /dev/null 2> /dev/null; then \\
 		rm -f \$\@.tmp; \\
 	else \\
