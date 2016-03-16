@@ -19,9 +19,15 @@ before_build:
             $env:VCVARS_PLATFORM="amd64"
             $env:TARGET="VC-WIN64A"
         }
+    - ps: >-
+        If ($env:Configuration -Match "shared") {
+            $env:SHARED="shared"
+        } Else {
+            $env:SHARED=""
+        }
     - ps: $env:VSCOMNTOOLS=(Get-Content ("env:VS" + "$env:VSVER" + "0COMNTOOLS"))
     - call "%VSCOMNTOOLS%\..\..\VC\vcvarsall.bat" %VCVARS_PLATFORM%
-    - perl Configure %TARGET% no-asm
+    - perl Configure %TARGET% no-asm %SHARED%
 
 build_script:
     - nmake
