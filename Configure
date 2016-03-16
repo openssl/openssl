@@ -1208,6 +1208,8 @@ unless ($disabled{afalgeng}) {
             } else {
                 push @{$config{engdirs}}, "afalg";
             }
+        } else {
+            $disabled{afalgeng} = "cross-compiling";
         }
     } else {
         $disabled{afalgeng}  = "not-linux";
