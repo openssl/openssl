@@ -488,7 +488,9 @@ void ssl_load_ciphers(void)
 {
     size_t i;
     const ssl_cipher_table *t;
+
     disabled_enc_mask = 0;
+    ssl_sort_cipher_list();
     for (i = 0, t = ssl_cipher_table_cipher; i < SSL_ENC_NUM_IDX; i++, t++) {
         if (t->nid == NID_undef) {
             ssl_cipher_methods[i] = NULL;

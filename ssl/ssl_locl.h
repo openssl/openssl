@@ -1949,6 +1949,7 @@ __owur int ssl_cert_type(X509 *x, EVP_PKEY *pkey);
 void ssl_set_masks(SSL *s);
 __owur STACK_OF(SSL_CIPHER) *ssl_get_ciphers_by_id(SSL *s);
 __owur int ssl_verify_alarm_type(long type);
+void ssl_sort_cipher_list(void);
 void ssl_load_ciphers(void);
 __owur int ssl_fill_hello_random(SSL *s, int server, unsigned char *field, int len);
 __owur int ssl_generate_master_secret(SSL *s, unsigned char *pms, size_t pmslen,
