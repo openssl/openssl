@@ -43,6 +43,7 @@
       o Extended SSL_CONF support using configuration files
       o KDF algorithm support. Implement TLS PRF as a KDF.
       o Support for Certificate Transparency
+      o HKDF support.
 
   Major changes between OpenSSL 1.0.2f and OpenSSL 1.0.2g [1 Mar 2016]
 
