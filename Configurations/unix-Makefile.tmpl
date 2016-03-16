@@ -797,7 +797,7 @@ openssl.pc:
 # wasn't passed down automatically.  It's quite safe to use it like we do
 # below; if it doesn't exist, the result will be empty and 'make' will pick
 # up $(MAKEFLAGS) which is passed down as an environment variable.
-configdata.pm: {- $config{build_file_template} -} $(SRCDIR)/Configurations/common.tmpl $(SRCDIR)/Configure $(SRCDIR)/config {- join(" ", @{$config{build_infos}}) -}
+configdata.pm: $(SRCDIR)/Configurations/unix-Makefile.tmpl $(SRCDIR)/Configurations/common.tmpl $(SRCDIR)/Configure $(SRCDIR)/config {- join(" ", @{$config{build_infos}}) -}
 	@echo "Detected changed: $?"
 	@echo "Reconfiguring..."
 	$(SRCDIR)/Configure reconf
