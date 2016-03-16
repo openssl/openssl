@@ -190,7 +190,7 @@ int version_main(int argc, char **argv)
             dirty = version = 1;
             break;
         case OPT_A:
-            cflags = version = date = platform = dir = 1;
+            cflags = version = date = platform = dir = engdir = 1;
             break;
         }
     }
