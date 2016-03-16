@@ -282,12 +282,18 @@ EOF
 			    rel2abs($config{builddir}));
      my $target = shlib_import($lib);
      return <<"EOF"
-$target: $deps $ordinalsfile
+$target: $deps $ordinalsfile $mkdef_pl
 	\$(PERL) $mkdef_pl "$mkdef_key" 32 > $shlib.def
+	\$(PERL) -i.tmp -pe "s|^LIBRARY\\s+${mkdef_key}32|LIBRARY $shlib|;" $shlib.def
+	DEL $shlib.def.tmp
 	\$(LD) \$(LDFLAGS) \$(LIB_LDFLAGS) \\
 		/implib:$target \$(LDOUTFLAG)$shlib$shlibext /def:$shlib.def @<<
 $objs$linklibs \$(EX_LIBS)
 <<
+	DEL /F apps\\$shlib$shlibext
+	DEL /F test\\$shlib$shlibext
+	COPY $shlib$shlibext apps
+	COPY $shlib$shlibext test
 EOF
  }
  sub obj2dso {
