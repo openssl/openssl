@@ -1057,7 +1057,6 @@ int main(int argc, char *argv[])
 #endif
     int no_protocol;
     int min_version = 0, max_version = 0;
-
 #ifndef OPENSSL_NO_CT
     /*
      * Disable CT validation by default, because it will interfere with
@@ -1065,7 +1064,6 @@ int main(int argc, char *argv[])
      */
     ct_validation_cb ct_validation = NULL;
 #endif
-
     SSL_CONF_CTX *s_cctx = NULL, *c_cctx = NULL, *s_cctx2 = NULL;
     STACK_OF(OPENSSL_STRING) *conf_args = NULL;
     char *arg = NULL, *argn = NULL;
@@ -3569,6 +3567,7 @@ static int do_test_cipherlist(void)
      * call functions, thus avoiding auto-init
      */
     OPENSSL_init_crypto(0, NULL);
+    OPENSSL_init_ssl(0, NULL);
 
     meth = TLS_method();
     tci = NULL;
