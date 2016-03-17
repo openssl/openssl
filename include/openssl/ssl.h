@@ -646,13 +646,8 @@ __owur int SRP_Calc_A_param(SSL *s);
 
 # endif
 
-# if defined(OPENSSL_SYS_MSDOS) && !defined(OPENSSL_SYS_WIN32)
-#  define SSL_MAX_CERT_LIST_DEFAULT 1024*30
-                                          /* 30k max cert list :-) */
-# else
-#  define SSL_MAX_CERT_LIST_DEFAULT 1024*100
-                                           /* 100k max cert list :-) */
-# endif
+/* 100k max cert list */
+# define SSL_MAX_CERT_LIST_DEFAULT 1024*100
 
 # define SSL_SESSION_CACHE_MAX_SIZE_DEFAULT      (1024*20)
 
