@@ -312,8 +312,5 @@ int main(int argc, char *argv[])
     EXIT(0);
  err:
     ERR_print_errors(out);
-#ifdef OPENSSL_SYS_NETWARE
-    printf("ERROR\n");
-#endif
     EXIT(1);
 }

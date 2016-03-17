@@ -50,8 +50,6 @@
  See the appropriate file:
         INSTALL         Linux, Unix, etc.
         INSTALL.DJGPP   DOS platform with DJGPP
-        INSTALL.NW      Netware
-        INSTALL.OS2     OS/2
         INSTALL.VMS     VMS
         INSTALL.WIN     Windows
         INSTALL.WCE     Windows CE

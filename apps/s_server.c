@@ -147,11 +147,6 @@
 
 #include <openssl/e_os2.h>
 
-/* conflicts with winsock2 stuff on netware */
-#if !defined(OPENSSL_SYS_NETWARE)
-# include <sys/types.h>
-#endif
-
 /*
  * With IPv6, it looks like Digital has mixed up the proper order of
  * recursive header file inclusion, resulting in the compiler complaining
@@ -2112,7 +2107,7 @@ static int sv_body(int s, int stype, unsigned char *context)
     SSL *con = NULL;
     BIO *sbio;
     struct timeval timeout;
-#if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MSDOS) || defined(OPENSSL_SYS_NETWARE)
+#if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MSDOS)
     struct timeval tv;
 #else
     struct timeval *timeoutp;
@@ -2228,7 +2223,7 @@ static int sv_body(int s, int stype, unsigned char *context)
 
         if (!read_from_sslcon) {
             FD_ZERO(&readfds);
-#if !defined(OPENSSL_SYS_WINDOWS) && !defined(OPENSSL_SYS_MSDOS) && !defined(OPENSSL_SYS_NETWARE)
+#if !defined(OPENSSL_SYS_WINDOWS) && !defined(OPENSSL_SYS_MSDOS)
             openssl_fdset(fileno(stdin), &readfds);
 #endif
             openssl_fdset(s, &readfds);
@@ -2239,7 +2234,7 @@ static int sv_body(int s, int stype, unsigned char *context)
              * if you do have a cast then you can either go for (int *) or
              * (void *).
              */
-#if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MSDOS) || defined(OPENSSL_SYS_NETWARE)
+#if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MSDOS)
             /*
              * Under DOS (non-djgpp) and Windows we can't select on stdin:
              * only on sockets. As a workaround we timeout the select every
@@ -2793,9 +2788,7 @@ static int www_body(int s, int stype, unsigned char *context)
                     continue;
                 }
 #endif
-#if defined(OPENSSL_SYS_NETWARE)
-                delay(1000);
-#elif !defined(OPENSSL_SYS_MSDOS)
+#if !defined(OPENSSL_SYS_MSDOS)
                 sleep(1);
 #endif
                 continue;
@@ -3186,9 +3179,7 @@ static int rev_body(int s, int stype, unsigned char *context)
                     continue;
                 }
 #endif
-#if defined(OPENSSL_SYS_NETWARE)
-                delay(1000);
-#elif !defined(OPENSSL_SYS_MSDOS)
+#if !defined(OPENSSL_SYS_MSDOS)
                 sleep(1);
 #endif
                 continue;

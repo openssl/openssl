@@ -906,7 +906,7 @@ int s_client_main(int argc, char **argv)
     ENGINE *ssl_client_engine = NULL;
 #endif
     ENGINE *e = NULL;
-#if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MSDOS) || defined(OPENSSL_SYS_NETWARE)
+#if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MSDOS)
     struct timeval tv;
 #endif
     char *servername = NULL;
@@ -2210,7 +2210,7 @@ int s_client_main(int argc, char **argv)
         ssl_pending = read_ssl && SSL_has_pending(con);
 
         if (!ssl_pending) {
-#if !defined(OPENSSL_SYS_WINDOWS) && !defined(OPENSSL_SYS_MSDOS) && !defined(OPENSSL_SYS_NETWARE)
+#if !defined(OPENSSL_SYS_WINDOWS) && !defined(OPENSSL_SYS_MSDOS)
             if (tty_on) {
                 if (read_tty)
                     openssl_fdset(fileno(stdin), &readfds);
@@ -2264,17 +2264,6 @@ int s_client_main(int argc, char **argv)
                                || !read_tty))
                         continue;
 # endif
-                } else
-                    i = select(width, (void *)&readfds, (void *)&writefds,
-                               NULL, timeoutp);
-            }
-#elif defined(OPENSSL_SYS_NETWARE)
-            if (!write_tty) {
-                if (read_tty) {
-                    tv.tv_sec = 1;
-                    tv.tv_usec = 0;
-                    i = select(width, (void *)&readfds, (void *)&writefds,
-                               NULL, &tv);
                 } else
                     i = select(width, (void *)&readfds, (void *)&writefds,
                                NULL, timeoutp);
@@ -2360,7 +2349,7 @@ int s_client_main(int argc, char **argv)
                 goto shut;
             }
         }
-#if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MSDOS) || defined(OPENSSL_SYS_NETWARE)
+#if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MSDOS)
         /* Assume Windows/DOS/BeOS can always write */
         else if (!ssl_pending && write_tty)
 #else
@@ -2455,8 +2444,6 @@ int s_client_main(int argc, char **argv)
                  || (WAIT_OBJECT_0 ==
                      WaitForSingleObject(GetStdHandle(STD_INPUT_HANDLE), 0)))
 # endif
-#elif defined (OPENSSL_SYS_NETWARE)
-        else if (_kbhit())
 #else
         else if (FD_ISSET(fileno(stdin), &readfds))
 #endif
