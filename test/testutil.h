@@ -90,8 +90,8 @@
  *      }
  */
 # define SETUP_TEST_FIXTURE(TEST_FIXTURE_TYPE, set_up)\
-        TEST_FIXTURE_TYPE fixture = set_up(TEST_CASE_NAME);\
-        int result = 0
+    TEST_FIXTURE_TYPE fixture = set_up(TEST_CASE_NAME); \
+    int result = 0
 
 # define EXECUTE_TEST(execute_func, tear_down)\
         if (execute_func(fixture) != 0) result = 1;\
@@ -120,7 +120,16 @@
  * returned from run_tests() should be used as the return value for main().
  */
 # define ADD_TEST(test_function) add_test(#test_function, test_function)
+
+/*
+ * Simple parameterized tests. Adds a test_function(idx) test for each
+ * 0 <= idx < num.
+ */
+# define ADD_ALL_TESTS(test_function, num) \
+  add_all_tests(#test_function, test_function, num)
+
 void add_test(const char *test_case_name, int (*test_fn) ());
+void add_all_tests(const char *test_case_name, int (*test_fn)(int idx), int num);
 int run_tests(const char *test_prog_name);
 
 #endif                          /* HEADER_TESTUTIL_H */

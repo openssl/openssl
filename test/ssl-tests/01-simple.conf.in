@@ -1,0 +1,27 @@
+# -*- mode: perl; -*-
+
+## SSL test configurations
+
+package ssltests;
+
+our @tests = (
+    {
+        name => "default",
+        server => { },
+        client => { },
+        test   => { "ExpectedResult" => "Success" },
+    },
+
+    {
+        name => "verify-cert",
+        server => { },
+        client => {
+            # Don't set up the client root file.
+            "VerifyCAFile" => undef,
+        },
+        test   => {
+          "ExpectedResult" => "ClientFail",
+          "ClientAlert" => "UnknownCA",
+        },
+    },
+);
