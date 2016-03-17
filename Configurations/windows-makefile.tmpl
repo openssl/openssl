@@ -311,11 +311,11 @@ chomp;
 s/^Note: including file: *//;
 \$\$collect{\$\$_} = 1;
 END { print '$obj$objext: ',join(" ", sort keys \%collect),"\\n" }
-<<KEEP
+<<
 $obj$objext: $obj$depext
 	\$(CC) \$(CFLAGS) $ecflags$incs -c \$(COUTFLAG)\$\@ @<<
 $srcs
-<<KEEP
+<<
 EOF
  }
 
