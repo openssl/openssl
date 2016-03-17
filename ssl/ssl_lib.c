@@ -3067,7 +3067,7 @@ const char *ssl_protocol_to_string(int version)
     else if (version == TLS1_1_VERSION)
         return "TLSv1.1";
     else if (version == TLS1_VERSION)
-        return "TLSv1.0";
+        return "TLSv1";
     else if (version == SSL3_VERSION)
         return "SSLv3";
     else if (version == DTLS1_BAD_VER)
