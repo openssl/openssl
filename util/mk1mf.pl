@@ -107,7 +107,6 @@ $infile="MINFO";
 	"Mingw32", "GNU C++ - Windows NT or 9x",
 	"Mingw32-files", "Create files with DOS copy ...",
 	"linux-elf","Linux elf",
-	"ultrix-mips","DEC mips ultrix",
 	"FreeBSD","FreeBSD distribution",
 	"OS2-EMX", "EMX GCC OS/2",
 	"netware-clib", "CodeWarrior for NetWare - CLib - with WinSock Sockets",
@@ -232,12 +231,6 @@ elsif ($platform eq "linux-elf")
 	{
 	require "unix.pl";
 	require "linux.pl";
-	$unix=1;
-	}
-elsif ($platform eq "ultrix-mips")
-	{
-	require "unix.pl";
-	require "ultrix.pl";
 	$unix=1;
 	}
 elsif ($platform eq "OS2-EMX")
