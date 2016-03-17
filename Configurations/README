@@ -100,7 +100,7 @@ In each table entry, the following keys are significant:
                            string in the list is the name of the build
                            scheme.
                            Currently recognised build schemes are
-                           "mk1mf" and "unixmake" and "unified".
+                           "unixmake" and "unified".
                            For the "unified" build scheme, this item
                            *must* be an array with the first being the
                            word "unified" and the second being a word
