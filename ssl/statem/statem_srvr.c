@@ -212,7 +212,7 @@ int ossl_statem_server_read_transition(SSL *s, int mt)
             if (mt == SSL3_MT_CERTIFICATE) {
                 st->hand_state = TLS_ST_SR_CERT;
                 return 1;
-            } 
+            }
         }
         break;
 
@@ -1280,7 +1280,7 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
         SSLerr(SSL_F_TLS_PROCESS_CLIENT_HELLO, SSL_R_NO_COMPRESSION_SPECIFIED);
         goto f_err;
     }
-    
+
     /* TLS extensions */
     if (s->version >= SSL3_VERSION) {
         if (!ssl_parse_clienthello_tlsext(s, &extensions)) {
@@ -2073,7 +2073,6 @@ int tls_construct_certificate_request(SSL *s)
 MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
 {
     int al;
-    unsigned int i;
     unsigned long alg_k;
 #ifndef OPENSSL_NO_RSA
     RSA *rsa = NULL;
@@ -2302,6 +2301,7 @@ MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
     if (alg_k & (SSL_kDHE | SSL_kDHEPSK)) {
         EVP_PKEY *skey = NULL;
         DH *cdh;
+        unsigned int i;
 
         if (!PACKET_get_net_2(pkt, &i)) {
             if (alg_k & (SSL_kDHE | SSL_kDHEPSK)) {
@@ -2375,6 +2375,8 @@ MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
                    SSL_R_MISSING_TMP_ECDH_KEY);
             goto f_err;
         } else {
+            unsigned int i;
+
             /*
              * Get client's public key from encoded point in the
              * ClientKeyExchange message.
@@ -2420,6 +2422,8 @@ MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
 #endif
 #ifndef OPENSSL_NO_SRP
     if (alg_k & SSL_kSRP) {
+        unsigned int i;
+
         if (!PACKET_get_net_2(pkt, &i)
                 || !PACKET_get_bytes(pkt, &data, i)) {
             al = SSL_AD_DECODE_ERROR;
