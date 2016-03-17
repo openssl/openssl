@@ -11,6 +11,19 @@
  our $shlibextimport = $target{shared_import_extension} || ".lib";
  our $dsoext = $target{dso_extension} || ".dll";
 
+ my $win_installenv =
+     $target{build_scheme}->[2] eq "VC-W32" ?
+     "ProgramFiles(x86)" : "ProgramW6432";
+ my $win_commonenv =
+     $target{build_scheme}->[2] eq "VC-W32"
+     ? "CommonProgramFiles(x86)" : "CommonProgramW6432";
+ our $win_installroot =
+     defined($ENV{$win_installenv})
+     ? '%'.$win_installenv.'%' : '%ProgramFiles%';
+ our $win_commonroot =
+     defined($ENV{$win_commonenv})
+     ? '%'.$win_commonenv.'%' : '%CommonProgramFiles%';
+
  sub shlib {
      return () if $disabled{shared};
      my $lib = shift;
@@ -56,7 +69,7 @@ DEPS={- join(" ", map { (my $x = $_) =~ s|\.o$|$depext|; $x; }
 # to change this!  Short explanation in the top comment in Configure
 INSTALLTOP={- # $prefix is used in the OPENSSLDIR perl snippet
 	      #
-	      our $prefix = $config{prefix} || "/usr/local";
+	      our $prefix = $config{prefix} || "$win_installroot\\OpenSSL";
               $prefix -}
 OPENSSLDIR={- #
 	      # The logic here is that if no --openssldir was given,
@@ -73,16 +86,9 @@ OPENSSLDIR={- #
                       (file_name_is_absolute($config{openssldir}) ?
                            $config{openssldir}
                            : catdir($prefix, $config{openssldir}))
-                      : catdir($prefix, "ssl");
+                      : "$win_commonroot\\SSL";
               $openssldir -}
-LIBDIR={- #
-          # if $prefix/lib$target{multilib} is not an existing
-          # directory, then assume that it's not searched by linker
-          # automatically, in which case adding $target{multilib} suffix
-          # causes more grief than we're ready to tolerate, so don't...
-          our $multilib =
-              -d "$prefix/lib$target{multilib}" ? $target{multilib} : "";
-          our $libdir = $config{libdir} || "lib$multilib";
+LIBDIR={- our $libdir = $config{libdir} || "lib";
           $libdir -}
 ENGINESDIR={- use File::Spec::Functions;
               our $enginesdir = catdir($prefix,$libdir,"engines");
@@ -139,6 +145,10 @@ list-tests:
 	@set PERL=$(PERL)
 	@$(PERL) $(SRCDIR)\test\run_tests.pl list
 
+install: install_sw install_ssldirs install_docs
+
+uninstall: uninstall_docs uninstall_sw
+
 libclean:
 	del /Q /F $(LIBS) $(SHLIBS)
 	del lib.pdb
@@ -154,6 +164,53 @@ clean: libclean
 	del /Q /S /F engines\*.lib
 
 depend:
+
+# Install helper targets #############################################
+
+install_sw: all install_dev install_engines install_runtime
+
+uninstall_sw: uninstall_runtime uninstall_engines uninstall_dev
+
+install_docs:
+
+uninstall_docs:
+
+install_ssldirs:
+	@$(PERL) $(SRCDIR)\util\mkdir-p.pl $(DESTDIR)$(OPENSSLDIR)\certs
+	@$(PERL) $(SRCDIR)\util\mkdir-p.pl $(DESTDIR)$(OPENSSLDIR)\private
+
+install_dev:
+	@if "$(INSTALLTOP)"=="" ( echo INSTALLTOP should not be empty & exit 1 )
+	@echo *** Installing development files
+	@$(PERL) $(SRCDIR)\util\mkdir-p.pl "$(DESTDIR)$(INSTALLTOP)\include\openssl"
+	@$(PERL) $(SRCDIR)\util\copy.pl $(SRCDIR)\include\openssl\*.h \
+				       "$(DESTDIR)$(INSTALLTOP)\include\openssl"
+	@$(PERL) $(SRCDIR)\util\copy.pl $(BLDDIR)\include\openssl\*.h \
+				       "$(DESTDIR)$(INSTALLTOP)\include\openssl"
+	@$(PERL) $(SRCDIR)\util\mkdir-p.pl "$(DESTDIR)$(INSTALLTOP)\$(LIBDIR)"
+	@$(PERL) $(SRCDIR)\util\copy.pl $(LIBS) \
+				       "$(DESTDIR)$(INSTALLTOP)\$(LIBDIR)"
+
+uninstall_dev:
+
+install_engines:
+	@if "$(INSTALLTOP)"=="" ( echo INSTALLTOP should not be empty & exit 1 )
+	@echo *** Installing engines
+	@$(PERL) $(SRCDIR)\util\mkdir-p.pl "$(DESTDIR)$(ENGINESDIR)"
+	@if not "$(ENGINES)"=="" \
+	 $(PERL) $(SRCDIR)\util\copy.pl $(ENGINES) "$(DESTDIR)$(ENGINESDIR)"
+
+uninstall_engines:
+
+install_runtime:
+	@if "$(INSTALLTOP)"=="" ( echo INSTALLTOP should not be empty & exit 1 )
+	@echo *** Installing runtime files
+	@$(PERL) $(SRCDIR)\util\mkdir-p.pl "$(DESTDIR)$(INSTALLTOP)\bin"
+	@if not "$(SHLIBS)"=="" \
+	 $(PERL) $(SRCDIR)\util\copy.pl $(SHLIBS) "$(DESTDIR)$(INSTALLTOP)\bin"
+	@$(PERL) $(SRCDIR)\util\copy.pl $(PROGRAMS) "$(DESTDIR)$(INSTALLTOP)\bin"
+
+uninstall_runtime:
 
 # Building targets ###################################################
 

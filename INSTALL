@@ -49,6 +49,7 @@
     $ perl Configure { VC-WIN32 | VC-WIN64A | VC-WIN64I | VC-CE }
     $ nmake
     $ nmake test
+    $ nmake install
 
  [If any of these steps fails, see section Installation in Detail below.]
 
@@ -74,17 +75,23 @@
  ---------------------
 
  There are several options to ./config (or ./Configure) to customize
- the build:
+ the build (note that for Windows, the defaults for --prefix and
+ --openssldir depend in what configuration is used and what Windows
+ implementation OpenSSL is built on.  More notes on this in NOTES.WIN):
 
   --prefix=DIR     The top of the installation directory tree.  Defaults are:
 
                    Unix:           /usr/local
+                   Windows:        C:\Program Files\OpenSSL
+                                or C:\Program Files (x86)\OpenSSL
                    OpenVMS:        SYS$COMMON:[OPENSSL-'version']
 
   --openssldir=DIR Directory for OpenSSL configuration files, and also the
                    default certificate and key store.  Defaults are:
 
                    Unix:           PREFIX/ssl (PREFIX is given by --prefix)
+                   Windows:        C:\Program Files\Common Files\SSL
+                                or C:\Program Files (x86)\Common Files\SSL
                    OpenVMS:        SYS$COMMON:[SSL]
 
   --api=x.y.z      Don't build with support for deprecated APIs below the
