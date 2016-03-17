@@ -1961,6 +1961,11 @@ exit(0);
 
 # Configuration file reading #########################################
 
+# Note: All of the helper functions are for lazy evaluation.  They all
+# return a CODE ref, which will return the intended value when evaluated.
+# Thus, whenever there's mention of a returned value, it's about that
+# intended value.
+
 # Helper function to implement conditional inheritance depending on the
 # value of $disabled{asm}.  Used in inherit_from values as follows:
 #
@@ -1972,6 +1977,53 @@ sub asm {
 	$disabled{asm} ? () : @x;
     }
 }
+
+# Helper function to implement conditional value variants, with a default
+# plus additional values based on the value of $config{build_type}.
+# Arguments are given in hash table form:
+#
+#       picker(default => "Basic string: ",
+#              debug   => "debug",
+#              release => "release")
+#
+# When configuring with --debug, the resulting string will be
+# "Basic string: debug", and when not, it will be "Basic string: release"
+#
+# This can be used to create variants of sets of flags according to the
+# build type:
+#
+#       cflags => picker(default => "-Wall",
+#                        debug   => "-g -O0",
+#                        release => "-O3")
+#
+sub picker {
+    my %opts = @_;
+    return sub { add($opts{default} || (),
+                     $opts{$config{build_type}} || ())->(); }
+}
+
+# Helper function to combine several values of different types into one.
+# This is useful if you want to combine a string with the result of a
+# lazy function, such as:
+#
+#       cflags => combine("-Wall", sub { $disabled{zlib} ? () : "-DZLIB" })
+#
+sub combine {
+    my @stuff = @_;
+    return sub { add(@stuff)->(); }
+}
+
+# Helper function to implement conditional values depending on the value
+# of $disabled{threads}.  Can be used as follows:
+#
+#       cflags => combine("-Wall", threads("-pthread"))
+#
+sub threads {
+    my @flags = @_;
+    return sub { add($disabled{threads} ? () : @flags)->(); }
+}
+
+
 
 our $add_called = 0;
 # Helper function to implement adding values to already existing configuration
