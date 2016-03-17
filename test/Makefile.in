@@ -85,6 +85,8 @@ CTTEST=	ct_test
 THREADSTEST=	threadstest
 AFALGTEST= afalgtest
 D2ITEST = d2i_test
+SSLTESTCTXTEST = ssl_test_ctx_test
+NEWSSLTEST = ssl_test
 
 TESTS=		alltests
 
@@ -107,7 +109,8 @@ EXE=	$(NPTEST)$(EXE_EXT) $(MEMLEAKTEST)$(EXE_EXT) \
 	$(CONSTTIMETEST)$(EXE_EXT) $(VERIFYEXTRATEST)$(EXE_EXT) \
 	$(CLIENTHELLOTEST)$(EXE_EXT) $(PACKETTEST)$(EXE_EXT) $(ASYNCTEST)$(EXE_EXT) \
 	$(DTLSV1LISTENTEST)$(EXE_EXT) $(CTTEST)$(EXE_EXT) $(THREADSTEST)$(EXE_EXT) \
-	$(AFALGTEST)$(EXE_EXT) $(D2ITEST)$(EXE_EXT)
+	$(AFALGTEST)$(EXE_EXT) $(D2ITEST)$(EXE_EXT) $(SSLTESTCTXTEST)$(EXE_EXT) \
+	$(NEWSSLTEST)$(EXE_EXT)
 
 # $(METHTEST)$(EXE_EXT)
 
@@ -125,7 +128,8 @@ OBJ=	$(NPTEST).o $(MEMLEAKTEST).o \
 	$(HEARTBEATTEST).o $(P5_CRPT2_TEST).o \
 	$(CONSTTIMETEST).o $(VERIFYEXTRATEST).o $(CLIENTHELLOTEST).o \
 	$(PACKETTEST).o $(ASYNCTEST).o $(DTLSV1LISTENTEST).o $(CTTEST).o \
-	$(THREADSTEST).o testutil.o $(AFALGTEST).o $(D2ITEST).o
+	$(THREADSTEST).o testutil.o $(AFALGTEST).o $(D2ITEST).o ssl_test_ctx.o \
+	$(SSLTESTCTXTEST).o $(NEWSSLTEST).o handshake_helper.o
 
 SRC=	$(NPTEST).c $(MEMLEAKTEST).c \
 	$(BNTEST).c $(ECTEST).c \
@@ -140,9 +144,10 @@ SRC=	$(NPTEST).c $(MEMLEAKTEST).c \
 	$(HEARTBEATTEST).c $(P5_CRPT2_TEST).c \
 	$(CONSTTIMETEST).c $(VERIFYEXTRATEST).c $(CLIENTHELLOTEST).c \
 	$(PACKETTEST).c $(ASYNCTEST).c $(DTLSV1LISTENTEST).c $(CTTEST).c \
-	$(THREADSTEST).c testutil.c $(AFALGTEST).c $(D2ITEST).c
+	$(THREADSTEST).c testutil.c $(AFALGTEST).c $(D2ITEST).c ssl_test_ctx.c \
+	$(SSLTESTCTXTEST).c $(NEWSSLTEST).c handshake_helper.c
 
-HEADER=	testutil.h
+HEADER=	testutil.h ssl_test_ctx.h handshake_helper.h
 
 ALL=	$(GENERAL) $(SRC) $(HEADER)
 
@@ -388,5 +393,18 @@ $(AFALGTEST)$(EXE_EXT): $(AFALGTEST).o $(DLIBCRYPTO)
 
 $(D2ITEST)$(EXE_EXT): $(D2ITEST).o $(DLIBCRYPTO) testutil.o
 	@target=$(D2ITEST) testutil=testutil.o; $(BUILD_CMD)
+
+$(SSLTESTCTXTEST)$(EXE_EXT): $(SSLTESTCTXTEST).o testutil.o $(DLIBCRYPTO)
+	@target=$(SSLTESTCTXTEST); $(BUILD_CMD)
+
+$(SSLTESTCTXTEST)$(EXE_EXT): $(SSLTESTCTXTEST).o testutil.o ssl_test_ctx.o \
+	$(DLIBCRYPTO)
+	@target=$(SSLTESTCTXTEST) testutil="testutil.o ssl_test_ctx.o"; \
+	$(BUILD_CMD)
+
+$(NEWSSLTEST)$(EXE_EXT): $(NEWSSLTEST).o testutil.o ssl_test_ctx.o \
+	handshake_helper.o $(DLIBSSL) $(DLIBCRYPTO)
+	@target=$(NEWSSLTEST) testutil="testutil.o ssl_test_ctx.o \
+	handshake_helper.o"; $(BUILD_CMD)
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.

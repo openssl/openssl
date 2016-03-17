@@ -594,8 +594,8 @@ static const ssl_conf_cmd_tbl ssl_conf_cmds[] = {
 #endif
     SSL_CONF_CMD_STRING(CipherString, "cipher", 0),
     SSL_CONF_CMD_STRING(Protocol, NULL, 0),
-    SSL_CONF_CMD_STRING(MinProtocol, "min_protocol", SSL_CONF_FLAG_SERVER | SSL_CONF_FLAG_CLIENT),
-    SSL_CONF_CMD_STRING(MaxProtocol, "max_protocol", SSL_CONF_FLAG_SERVER | SSL_CONF_FLAG_CLIENT),
+    SSL_CONF_CMD_STRING(MinProtocol, "min_protocol", 0),
+    SSL_CONF_CMD_STRING(MaxProtocol, "max_protocol", 0),
     SSL_CONF_CMD_STRING(Options, NULL, 0),
     SSL_CONF_CMD_STRING(VerifyMode, NULL, 0),
     SSL_CONF_CMD(Certificate, "cert", SSL_CONF_FLAG_CERTIFICATE,
