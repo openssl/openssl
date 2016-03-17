@@ -37,9 +37,6 @@ lib:	$(LIBOBJ)
 	$(RANLIB) $(LIB) || echo Never mind.
 	@touch lib
 
-files:
-	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
-
 depend:
 	$(TOP)/util/domd $(CFLAG) $(INCLUDES) -- $(LIBSRC)
 

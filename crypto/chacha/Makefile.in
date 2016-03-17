@@ -48,9 +48,6 @@ chacha-%.S:	asm/chacha-%.pl;	$(PERL) $< $(PERLASM_SCHEME) $@
 chacha-armv4.o:	chacha-armv4.S
 chacha-armv8.o:	chacha-armv8.S
 
-files:
-	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
-
 depend:
 	$(TOP)/util/domd $(CFLAG) $(INCLUDES) -- $(PROGS) $(LIBSRC)
 

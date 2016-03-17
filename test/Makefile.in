@@ -152,9 +152,6 @@ all:	exe
 
 exe:	$(EXE) dummytest$(EXE_EXT)
 
-files:
-	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
-
 generate: $(SRC)
 $(SRC):
 	@sh $(TOP)/util/point.sh dummytest.c $@

@@ -4,6 +4,9 @@
 
  Changes between 1.0.2g and 1.1.0  [xx XXX xxxx]
 
+  *) Removed the mk1mf build scripts.
+     [Richard Levitte]
+
   *) Headers are now wrapped, if necessary, with OPENSSL_NO_xxx, so
      it is always safe to #include a header now.
      [Rich Salz]

@@ -47,9 +47,6 @@ obj_xref.h: objxref.pl obj_xref.txt obj_mac.num
 	$(PERL) objxref.pl obj_mac.num obj_xref.txt > obj_xref.h
 	@sleep 1; touch obj_xref.h; sleep 1
 
-files:
-	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
-
 generate: obj_dat.h ../../include/openssl/obj_mac.h obj_xref.h
 
 depend:

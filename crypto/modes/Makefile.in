@@ -67,9 +67,6 @@ ghash-%.S:	asm/ghash-%.pl;	$(PERL) $< $(PERLASM_SCHEME) $@
 ghash-armv4.o:	ghash-armv4.S
 ghashv8-armx.o:	ghashv8-armx.S
 
-files:
-	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
-
 depend:
 	$(TOP)/util/domd $(CFLAG) $(INCLUDES) -- $(PROGS) $(LIBSRC)
 

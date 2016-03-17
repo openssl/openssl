@@ -46,9 +46,6 @@ uninstall:
 		$(RM) $(DESTDIR)$(OPENSSLDIR)/misc/$$i; \
 	done;
 
-files:
-	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
-
 errors:
 
 depend:
