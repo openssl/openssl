@@ -1106,7 +1106,7 @@ static char *hexencode(const unsigned char *data, size_t len)
     }
     cp = out = app_malloc(ilen, "TLSA hex data buffer");
 
-    while (ilen-- > 0) {
+    while (len-- > 0) {
         *cp++ = hex[(*data >> 4) & 0x0f];
         *cp++ = hex[*data++ & 0x0f];
     }
