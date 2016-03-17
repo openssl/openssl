@@ -22,6 +22,31 @@
    supported.
 
 
+ Visual C++ (native Windows)
+ ---------------------------
+
+ Installation directories
+
+ The default installation directories are derived from environment
+ variables.
+
+ For VC-WIN32, the following defaults are use:
+
+     PREFIX:      %ProgramFiles(86)%\OpenSSL
+     OPENSSLDIR:  %CommonProgramFiles(86)%\SSL
+
+ For VC-WIN32, the following defaults are use:
+
+     PREFIX:      %ProgramW6432%\OpenSSL
+     OPENSSLDIR:  %CommonProgramW6432%\SSL
+
+ Should those environment variables not exist (on a pure Win32
+ installation for examples), these fallbacks are used:
+
+     PREFIX:      %ProgramFiles%\OpenSSL
+     OPENSSLDIR:  %CommonProgramFiles%\SSL
+
+
  GNU C (Cygwin)
  --------------
 
@@ -54,7 +79,7 @@
  with "conventional" Windows binaries you generate with/for MinGW.
 
  GNU C (MinGW/MSYS)
- -------------
+ ------------------
 
  * Compiler and shell environment installation:
 
