@@ -7,6 +7,9 @@
   *) Removed the aged BC-32 config and all its supporting scripts
      [Richard Levitte]
 
+  *) Removed support for Ultrix as a platform.
+     [Rich Salz]
+
   *) Add support for HKDF.
      [Alessandro Ghedini]
 
