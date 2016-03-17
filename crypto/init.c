@@ -220,7 +220,6 @@ static void ossl_init_no_config(void)
     config_inited = 1;
 }
 
-#ifndef OPENSSL_NO_ASYNC
 static CRYPTO_ONCE async = CRYPTO_ONCE_STATIC_INIT;
 static int async_inited = 0;
 static void ossl_init_async(void)
@@ -231,7 +230,6 @@ static void ossl_init_async(void)
     async_init();
     async_inited = 1;
 }
-#endif
 
 #ifndef OPENSSL_NO_ENGINE
 static CRYPTO_ONCE engine_openssl = CRYPTO_ONCE_STATIC_INIT;
@@ -339,7 +337,6 @@ static void ossl_init_thread_stop(struct thread_local_inits_st *locals)
     if (locals == NULL)
         return;
 
-#ifndef OPENSSL_NO_ASYNC
     if (locals->async) {
 #ifdef OPENSSL_INIT_DEBUG
         fprintf(stderr, "OPENSSL_INIT: ossl_init_thread_stop: "
@@ -347,7 +344,6 @@ static void ossl_init_thread_stop(struct thread_local_inits_st *locals)
 #endif
         ASYNC_cleanup_thread();
     }
-#endif
 
     if (locals->err_state) {
 #ifdef OPENSSL_INIT_DEBUG
@@ -437,7 +433,6 @@ void OPENSSL_cleanup(void)
     }
 #endif
 
-#ifndef OPENSSL_NO_ASYNC
     if (async_inited) {
 # ifdef OPENSSL_INIT_DEBUG
         fprintf(stderr, "OPENSSL_INIT: OPENSSL_cleanup: "
@@ -445,7 +440,6 @@ void OPENSSL_cleanup(void)
 # endif
         async_deinit();
     }
-#endif
 
     if (load_crypto_strings_inited) {
 #ifdef OPENSSL_INIT_DEBUG
@@ -565,11 +559,10 @@ int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
             return 0;
     }
 
-#ifndef OPENSSL_NO_ASYNC
     if ((opts & OPENSSL_INIT_ASYNC)
             && !CRYPTO_THREAD_run_once(&async, ossl_init_async))
         return 0;
-#endif
+
 #ifndef OPENSSL_NO_ENGINE
     if ((opts & OPENSSL_INIT_ENGINE_OPENSSL)
             && !CRYPTO_THREAD_run_once(&engine_openssl,
