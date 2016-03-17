@@ -66,7 +66,9 @@
 #ifndef OPENSSL_NO_ENGINE
 #include <internal/engine.h>
 #endif
+#ifndef OPENSSL_NO_COMP
 #include <openssl/comp.h>
+#endif
 #include <internal/err.h>
 #include <stdlib.h>
 #include <assert.h>

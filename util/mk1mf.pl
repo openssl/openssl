@@ -275,9 +275,10 @@ $cflags.=" -DOPENSSL_NO_AUTOALGINIT" if $no_autoalginit;
 $cflags.=" -DOPENSSL_NO_AUTOERRINIT" if $no_autoerrinit;
 $cflags.=" -DOPENSSL_FIPS"    if $fips;
 $cflags.=" -DOPENSSL_NO_EC2M"    if $no_ec2m;
-$cflags.= " -DZLIB" if $zlib_opt;
-$cflags.= " -DZLIB_SHARED" if $zlib_opt == 2;
+$cflags.=" -DZLIB" if $zlib_opt;
+$cflags.=" -DZLIB_SHARED" if $zlib_opt == 2;
 $cflags.=" -DOPENSSL_PIC";
+$cflags.=" -DOPENSSL_NO_COMP" if $no_comp;
 
 if ($no_static_engine)
 	{
@@ -1004,6 +1005,7 @@ sub var_add
 	return("") if $no_dh   && $dir =~ /\/dh/;
 	return("") if $no_ec   && $dir =~ /\/ec/;
 	return("") if $no_cms  && $dir =~ /\/cms/;
+	return("") if $no_comp && $dir =~ /\/comp/;
 	return("") if !$fips   && $dir =~ /^fips/;
 	if ($no_des && $dir =~ /\/des/)
 		{
@@ -1402,6 +1404,7 @@ sub read_options
 		"no-zlib-dynamic" => 0,
 		"no-ssl-trace" => 0,
 		"no-unit-test" => 0,
+		"no-comp" => \$no_comp,
 		"no-deprecated" => 0,
 		"no-ocb" => 0,
 		"no-crypto-mdebug" => 0,
@@ -1426,7 +1429,6 @@ sub read_options
 				}
 			}
 		}
-	elsif (/^no-comp$/) { $xcflags = "-DOPENSSL_NO_COMP $xcflags"; }
 	elsif (/^enable-zlib$/) { $zlib_opt = 1 if $zlib_opt == 0 }
 	elsif (/^enable-zlib-dynamic$/)
 		{

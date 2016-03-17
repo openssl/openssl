@@ -2,7 +2,7 @@ d2i_EC_PUBKEY                           1	1_1_0	EXIST::FUNCTION:EC
 b2i_PVK_bio                             2	1_1_0	EXIST::FUNCTION:RC4
 PEM_read_bio_NETSCAPE_CERT_SEQUENCE     3	1_1_0	EXIST::FUNCTION:
 X509_STORE_CTX_get_chain                4	1_1_0	EXIST::FUNCTION:
-COMP_expand_block                       5	1_1_0	EXIST::FUNCTION:
+COMP_expand_block                       5	1_1_0	EXIST::FUNCTION:COMP
 X509V3_get_string                       6	1_1_0	EXIST::FUNCTION:
 TS_MSG_IMPRINT_free                     7	1_1_0	EXIST::FUNCTION:
 DES_xcbc_encrypt                        8	1_1_0	EXIST::FUNCTION:DES
@@ -843,7 +843,7 @@ i2d_ASN1_UTF8STRING                     822	1_1_0	EXIST::FUNCTION:
 TS_REQ_delete_ext                       823	1_1_0	EXIST::FUNCTION:
 PKCS7_DIGEST_free                       824	1_1_0	EXIST::FUNCTION:
 OBJ_nid2ln                              825	1_1_0	EXIST::FUNCTION:
-COMP_CTX_new                            826	1_1_0	EXIST::FUNCTION:
+COMP_CTX_new                            826	1_1_0	EXIST::FUNCTION:COMP
 BIO_ADDR_family                         827	1_1_0	EXIST::FUNCTION:
 OCSP_RESPONSE_it                        828	1_1_0	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:
 OCSP_RESPONSE_it                        828	1_1_0	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:
@@ -930,7 +930,7 @@ ENGINE_register_ciphers                 904	1_1_0	EXIST::FUNCTION:ENGINE
 PKCS5_pbe2_set_iv                       905	1_1_0	EXIST::FUNCTION:
 ASN1_add_stable_module                  906	1_1_0	EXIST::FUNCTION:
 EVP_camellia_128_cbc                    907	1_1_0	EXIST::FUNCTION:CAMELLIA
-COMP_zlib                               908	1_1_0	EXIST::FUNCTION:
+COMP_zlib                               908	1_1_0	EXIST::FUNCTION:COMP
 EVP_read_pw_string                      909	1_1_0	EXIST::FUNCTION:UI
 i2d_ASN1_NULL                           910	1_1_0	EXIST::FUNCTION:
 DES_encrypt1                            911	1_1_0	EXIST::FUNCTION:DES
@@ -1282,7 +1282,7 @@ X509_CRL_cmp                            1243	1_1_0	EXIST::FUNCTION:
 DSO_METHOD_openssl                      1244	1_1_0	EXIST::FUNCTION:
 d2i_PrivateKey_fp                       1245	1_1_0	EXIST::FUNCTION:STDIO
 i2d_NETSCAPE_CERT_SEQUENCE              1246	1_1_0	EXIST::FUNCTION:
-COMP_zlib_cleanup                       1247	1_1_0	EXIST::FUNCTION:
+COMP_zlib_cleanup                       1247	1_1_0	EXIST::FUNCTION:COMP
 EC_POINT_oct2point                      1248	1_1_0	EXIST::FUNCTION:EC
 EVP_CIPHER_CTX_buf_noconst              1249	1_1_0	EXIST::FUNCTION:
 OPENSSL_DIR_read                        1250	1_1_0	EXIST::FUNCTION:
@@ -2222,7 +2222,7 @@ IPAddressFamily_it                      2150	1_1_0	EXIST:EXPORT_VAR_AS_FUNCTION:
 ERR_load_OCSP_strings                   2151	1_1_0	EXIST::FUNCTION:
 BIO_push                                2152	1_1_0	EXIST::FUNCTION:
 ASN1_BMPSTRING_new                      2153	1_1_0	EXIST::FUNCTION:
-COMP_get_type                           2154	1_1_0	EXIST::FUNCTION:
+COMP_get_type                           2154	1_1_0	EXIST::FUNCTION:COMP
 d2i_ASIdentifierChoice                  2155	1_1_0	EXIST::FUNCTION:RFC3779
 i2d_ASN1_T61STRING                      2156	1_1_0	EXIST::FUNCTION:
 X509_add1_trust_object                  2157	1_1_0	EXIST::FUNCTION:
@@ -2485,7 +2485,7 @@ BIO_dump_indent                         2405	1_1_0	EXIST::FUNCTION:
 ENGINE_set_pkey_asn1_meths              2406	1_1_0	EXIST::FUNCTION:ENGINE
 OPENSSL_gmtime_diff                     2407	1_1_0	EXIST::FUNCTION:
 TS_CONF_set_crypto_device               2408	1_1_0	EXIST::FUNCTION:ENGINE
-COMP_CTX_get_method                     2409	1_1_0	EXIST::FUNCTION:
+COMP_CTX_get_method                     2409	1_1_0	EXIST::FUNCTION:COMP
 EC_GROUP_get_cofactor                   2410	1_1_0	EXIST::FUNCTION:EC
 EVP_rc5_32_12_16_ofb                    2411	1_1_0	EXIST::FUNCTION:RC5
 EVP_MD_CTX_md_data                      2412	1_1_0	EXIST::FUNCTION:
@@ -2579,7 +2579,7 @@ ASN1_STRING_type_new                    2494	1_1_0	EXIST::FUNCTION:
 TS_STATUS_INFO_free                     2495	1_1_0	EXIST::FUNCTION:
 BN_mod_mul                              2496	1_1_0	EXIST::FUNCTION:
 CMS_add0_recipient_key                  2497	1_1_0	EXIST::FUNCTION:CMS
-BIO_f_zlib                              2498	1_1_0	EXIST:ZLIB:FUNCTION:
+BIO_f_zlib                              2498	1_1_0	EXIST:ZLIB:FUNCTION:COMP
 AES_cfb128_encrypt                      2499	1_1_0	EXIST::FUNCTION:AES
 ENGINE_set_EC                           2500	1_1_0	EXIST::FUNCTION:ENGINE
 d2i_ECPKParameters                      2501	1_1_0	EXIST::FUNCTION:EC
@@ -2727,7 +2727,7 @@ get_rfc2409_prime_1024                  2637	1_1_0	EXIST::FUNCTION:
 CRYPTO_set_mem_functions                2638	1_1_0	EXIST::FUNCTION:
 i2d_ASN1_VISIBLESTRING                  2639	1_1_0	EXIST::FUNCTION:
 d2i_PBKDF2PARAM                         2640	1_1_0	EXIST::FUNCTION:
-ERR_load_COMP_strings                   2641	1_1_0	EXIST::FUNCTION:
+ERR_load_COMP_strings                   2641	1_1_0	EXIST::FUNCTION:COMP
 EVP_PKEY_meth_add0                      2642	1_1_0	EXIST::FUNCTION:
 EVP_rc4_40                              2643	1_1_0	EXIST::FUNCTION:RC4
 BN_BLINDING_get_thread_id               2644	1_1_0	NOEXIST::FUNCTION:
@@ -3060,7 +3060,7 @@ d2i_PKCS12_bio                          2954	1_1_0	EXIST::FUNCTION:
 ASN1_item_free                          2955	1_1_0	EXIST::FUNCTION:
 PKCS7_content_new                       2956	1_1_0	EXIST::FUNCTION:
 X509_keyid_get0                         2957	1_1_0	EXIST::FUNCTION:
-COMP_get_name                           2958	1_1_0	EXIST::FUNCTION:
+COMP_get_name                           2958	1_1_0	EXIST::FUNCTION:COMP
 EC_GROUP_new_curve_GF2m                 2959	1_1_0	EXIST::FUNCTION:EC,EC2M
 X509_SIG_free                           2960	1_1_0	EXIST::FUNCTION:
 PEM_ASN1_write                          2961	1_1_0	EXIST::FUNCTION:STDIO
@@ -3103,7 +3103,7 @@ NCONF_get_string                        2996	1_1_0	EXIST::FUNCTION:
 d2i_PROXY_CERT_INFO_EXTENSION           2997	1_1_0	EXIST::FUNCTION:
 EC_POINT_point2buf                      2998	1_1_0	EXIST::FUNCTION:EC
 RSA_padding_add_PKCS1_OAEP_mgf1         2999	1_1_0	EXIST::FUNCTION:RSA
-COMP_CTX_get_type                       3000	1_1_0	EXIST::FUNCTION:
+COMP_CTX_get_type                       3000	1_1_0	EXIST::FUNCTION:COMP
 TS_RESP_CTX_set_status_info             3001	1_1_0	EXIST::FUNCTION:
 BIO_f_nbio_test                         3002	1_1_0	EXIST::FUNCTION:
 SEED_ofb128_encrypt                     3003	1_1_0	EXIST::FUNCTION:SEED
@@ -3422,7 +3422,7 @@ X509_get0_pubkey                        3309	1_1_0	EXIST::FUNCTION:
 X509_check_ip                           3310	1_1_0	EXIST::FUNCTION:
 PKCS7_get_signed_attribute              3311	1_1_0	EXIST::FUNCTION:
 ASN1_GENERALIZEDTIME_free               3312	1_1_0	EXIST::FUNCTION:
-COMP_compress_block                     3313	1_1_0	EXIST::FUNCTION:
+COMP_compress_block                     3313	1_1_0	EXIST::FUNCTION:COMP
 ASN1_STRING_dup                         3314	1_1_0	EXIST::FUNCTION:
 X509_LOOKUP_free                        3315	1_1_0	EXIST::FUNCTION:
 EC_GROUP_cmp                            3316	1_1_0	EXIST::FUNCTION:EC
@@ -3500,7 +3500,7 @@ EVP_aes_192_ocb                         3384	1_1_0	EXIST::FUNCTION:AES,OCB
 EVP_camellia_256_cfb1                   3385	1_1_0	EXIST::FUNCTION:CAMELLIA
 DES_read_2passwords                     3386	1_1_0	EXIST::FUNCTION:DES,UI
 CRYPTO_secure_actual_size               3387	1_1_0	EXIST::FUNCTION:
-COMP_CTX_free                           3388	1_1_0	EXIST::FUNCTION:
+COMP_CTX_free                           3388	1_1_0	EXIST::FUNCTION:COMP
 i2d_PBE2PARAM                           3389	1_1_0	EXIST::FUNCTION:
 EC_POINT_make_affine                    3390	1_1_0	EXIST::FUNCTION:EC
 DSA_generate_parameters                 3391	1_1_0	EXIST::FUNCTION:DEPRECATEDIN_0_9_8,DSA
