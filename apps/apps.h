@@ -128,9 +128,7 @@
 #  include <openssl/ocsp.h>
 # endif
 # include <openssl/ossl_typ.h>
-# ifndef OPENSSL_SYS_NETWARE
-#  include <signal.h>
-# endif
+# include <signal.h>
 
 # if defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_WINCE)
 #  define openssl_fdset(a,b) FD_SET((unsigned int)a, b)

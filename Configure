@@ -860,7 +860,6 @@ my %target = resolve_config($target);
 $target{exe_extension}="";
 $target{exe_extension}=".exe" if ($config{target} eq "DJGPP"
                                   || $config{target} =~ /^(?:Cygwin|mingw)/);
-$target{exe_extension}=".nlm" if ($config{target} =~ /netware/);
 $target{exe_extension}=".pm"  if ($config{target} =~ /vos/);
 
 ($target{shared_extension_simple}=$target{shared_extension})
@@ -1869,16 +1868,15 @@ my %builders = (
         build_Makefile();
 
 	# create the ms/version32.rc file if needed
-	if ($platform ne "netware") {
-	    my ($v1, $v2, $v3, $v4);
-	    if ($config{version_num} =~ /^0x([0-9a-f]{1})([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{1})L$/i) {
-		$v1=hex $1;
-		$v2=hex $2;
-		$v3=hex $3;
-		$v4=hex $4;
-	    }
-	    open (OUT,">ms/version32.rc") || die "Can't open ms/version32.rc";
-	    print OUT <<"EOF";
+        my ($v1, $v2, $v3, $v4);
+        if ($config{version_num} =~ /^0x([0-9a-f]{1})([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{1})L$/i) {
+            $v1=hex $1;
+            $v2=hex $2;
+            $v3=hex $3;
+            $v4=hex $4;
+        }
+        open (OUT,">ms/version32.rc") || die "Can't open ms/version32.rc";
+        print OUT <<"EOF";
 #include <winver.h>
 
 LANGUAGE 0x09,0x01
@@ -1927,8 +1925,7 @@ BEGIN
     END
 END
 EOF
-	    close(OUT);
-	}
+        close(OUT);
     },
     );
 

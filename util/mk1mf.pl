@@ -108,11 +108,6 @@ $infile="MINFO";
 	"Mingw32-files", "Create files with DOS copy ...",
 	"linux-elf","Linux elf",
 	"FreeBSD","FreeBSD distribution",
-	"OS2-EMX", "EMX GCC OS/2",
-	"netware-clib", "CodeWarrior for NetWare - CLib - with WinSock Sockets",
-	"netware-clib-bsdsock", "CodeWarrior for NetWare - CLib - with BSD Sockets",
-	"netware-libc", "CodeWarrior for NetWare - LibC - with WinSock Sockets",
-	"netware-libc-bsdsock", "CodeWarrior for NetWare - LibC - with BSD Sockets",
 	"default","cc under unix",
 	"auto", "auto detect from top level Makefile",
         "copy", "copy from top level Makefile"
@@ -149,8 +144,6 @@ and [options] can be one of
 	no-autoalginit				- Don't auto load algorithms in libcrypto
 	no-autoerrinit				- Don't auto load error strings for libcrypto or libssl
 	nasm 					- Use NASM for x86 asm
-	nw-nasm					- Use NASM x86 asm for NetWare
-	nw-mwasm				- Use Metrowerks x86 asm for NetWare
 	gaswin					- Use GNU as with Mingw32
 	no-socks				- No socket code
 	no-err					- No error strings
@@ -232,18 +225,6 @@ elsif ($platform eq "linux-elf")
 	require "unix.pl";
 	require "linux.pl";
 	$unix=1;
-	}
-elsif ($platform eq "OS2-EMX")
-	{
-	$wc=1;
-	require 'OS2-EMX.pl';
-	}
-elsif (($platform eq "netware-clib") || ($platform eq "netware-libc") ||
-       ($platform eq "netware-clib-bsdsock") || ($platform eq "netware-libc-bsdsock"))
-	{
-	$LIBC=1 if $platform eq "netware-libc" || $platform eq "netware-libc-bsdsock";
-	$BSDSOCK=1 if ($platform eq "netware-libc-bsdsock") || ($platform eq "netware-clib-bsdsock");
-	require 'netware.pl';
 	}
 else
 	{
@@ -1377,8 +1358,6 @@ sub read_options
 		"no-dh" => \$no_dh,
 		"no-asm" => \$no_asm,
 		"nasm" => \$nasm,
-		"nw-nasm" => \$nw_nasm,
-		"nw-mwasm" => \$nw_mwasm,
 		"gaswin" => \$gaswin,
 		"no-ssl3" => \$no_ssl3,
 		"no-ssl3-method" => 0,

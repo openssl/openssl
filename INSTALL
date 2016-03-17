@@ -2,12 +2,10 @@
  OPENSSL INSTALLATION
  --------------------
 
- [Installation on DOS (with djgpp), MacOS (before MacOS X)
-  and NetWare is described in INSTALL.DJGPP, INSTALL.MacOS
-  and INSTALL.NW.
-  
-  This document describes installation on the main supported operating
-  systems, currently the Linux/Unix family, OpenVMS and Windows.]
+ [This document describes installation on the main supported operating
+  systems, currently the Linux/Unix family, OpenVMS and Windows.
+  Installation on DOS (with djgpp), MacOS (before MacOS X)
+  is described in INSTALL.DJGPP or INSTALL.MacOS, respectively.]
 
  To install OpenSSL, you will need:
 

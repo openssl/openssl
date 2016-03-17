@@ -115,7 +115,7 @@
 #include <openssl/rand.h>
 #include "rand_lcl.h"
 
-#if !(defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_VMS) || defined(OPENSSL_SYS_OS2) || defined(OPENSSL_SYS_VXWORKS) || defined(OPENSSL_SYS_NETWARE) || defined(OPENSSL_SYS_UEFI))
+#if !(defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_VMS) || defined(OPENSSL_SYS_VXWORKS) || defined(OPENSSL_SYS_UEFI))
 
 # include <sys/types.h>
 # include <sys/time.h>
@@ -414,9 +414,7 @@ int RAND_poll(void)
 #endif                          /* !(defined(OPENSSL_SYS_WINDOWS) ||
                                  * defined(OPENSSL_SYS_WIN32) ||
                                  * defined(OPENSSL_SYS_VMS) ||
-                                 * defined(OPENSSL_SYS_OS2) ||
-                                 * defined(OPENSSL_SYS_VXWORKS) ||
-                                 * defined(OPENSSL_SYS_NETWARE)) */
+                                 * defined(OPENSSL_SYS_VXWORKS) */
 
 #if defined(OPENSSL_SYS_VXWORKS) || defined(OPENSSL_SYS_UEFI)
 int RAND_poll(void)

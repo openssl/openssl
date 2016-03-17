@@ -64,8 +64,6 @@
 
 #if defined(OPENSSL_SYS_VMS)
 # include <sys/timeb.h>
-#elif defined(OPENSSL_SYS_NETWARE) && !defined(_WINSOCK2API_)
-# include <sys/timeval.h>
 #elif defined(OPENSSL_SYS_VXWORKS)
 # include <sys/times.h>
 #elif !defined(OPENSSL_SYS_WIN32)

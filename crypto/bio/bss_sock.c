@@ -222,7 +222,7 @@ int BIO_sock_should_retry(int i)
 int BIO_sock_non_fatal_error(int err)
 {
     switch (err) {
-# if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_NETWARE)
+# if defined(OPENSSL_SYS_WINDOWS)
 #  if defined(WSAEWOULDBLOCK)
     case WSAEWOULDBLOCK:
 #  endif

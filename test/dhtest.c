@@ -202,10 +202,6 @@ int main(int argc, char *argv[])
     DH_free(a);
     BN_GENCB_free(_cb);
     BIO_free(out);
-# ifdef OPENSSL_SYS_NETWARE
-    if (ret)
-        printf("ERROR: %d\n", ret);
-# endif
     EXIT(ret);
 }
 

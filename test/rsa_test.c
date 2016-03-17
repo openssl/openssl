@@ -329,10 +329,6 @@ int main(int argc, char *argv[])
         err = 1;
 #endif
 
-# ifdef OPENSSL_SYS_NETWARE
-    if (err)
-        printf("ERROR: %d\n", err);
-# endif
     return err;
 }
 #endif
