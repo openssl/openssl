@@ -14,7 +14,8 @@ PROGRAMS=\
         danetest heartbeat_test p5_crpt2_test \
         constant_time_test verify_extra_test clienthellotest \
         packettest asynctest secmemtest srptest memleaktest \
-        dtlsv1listentest ct_test threadstest afalgtest d2i_test
+        dtlsv1listentest ct_test threadstest afalgtest d2i_test \
+        ssl_test_ctx_test ssl_test
 
 SOURCE[aborttest]=aborttest.c
 INCLUDE[aborttest]={- rel2abs(catdir($builddir,"../include")) -} ../include
@@ -224,4 +225,14 @@ SOURCE[d2i_test]=d2i_test.c testutil.c
 INCLUDE[d2i_test]={- rel2abs(catdir($builddir,"../include")) -} .. ../include
 DEPEND[d2i_test]=../libcrypto
 
+SOURCE[ssl_test_ctx_test]=ssl_test_ctx_test.c ssl_test_ctx.c testutil.c
+INCLUDE[ssl_test_ctx_test]={- rel2abs(catdir($builddir,"../include")) -} .. ../include
+DEPEND[ssl_test_ctx_test]=../libcrypto
+
+SOURCE[ssl_test]=ssl_test.c ssl_test_ctx.c testutil.c handshake_helper.c
+INCLUDE[ssl_test]={- rel2abs(catdir($builddir,"../include")) -} .. ../include
+DEPEND[ssl_test]=../libcrypto ../libssl
+
 INCLUDE[testutil.o]=..
+INCLUDE[ssl_test_ctx.o]={- rel2abs(catdir($builddir,"../include")) -} ../include
+INCLUDE[handshake_helper.o]={- rel2abs(catdir($builddir,"../include")) -} ../include

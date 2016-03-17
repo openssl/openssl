@@ -66,10 +66,13 @@ my $P2intermediate="tmp_intP2.ss";
 my $server_sess="server.ss";
 my $client_sess="client.ss";
 
+# ssltest.c is deprecated in favour of the new framework in ssl_test.c
+# If you're adding tests here, you probably want to convert them to the
+# new format in ssl_test.c and add recipes to 80-test_ssl_new.t instead.
 plan tests =>
     1				# For testss
     + 1				# For ssltest -test_cipherlist
-    + 15			# For the first testssl
+    + 14			# For the first testssl
     + 16			# For the first testsslproxy
     + 16			# For the second testsslproxy
     ;
@@ -710,55 +713,6 @@ sub testssl {
 
 	  ok(run(test([@ssltest, "-cipher", "AES128-SHA256", "-bytes", "8m"])));
 	}
-    };
-
-    subtest 'TLS Version min/max tests' => sub {
-        my @protos;
-        push(@protos, "ssl3") unless $no_ssl3;
-        push(@protos, "tls1") unless $no_tls1;
-        push(@protos, "tls1.1") unless $no_tls1_1;
-        push(@protos, "tls1.2") unless $no_tls1_2;
-        my @minprotos = (undef, @protos);
-        my @maxprotos = (@protos, undef);
-        my @shdprotos = (@protos, $protos[$#protos]);
-        my $n = ((@protos+2) * (@protos+3))/2 - 2;
-        my $ntests = $n * $n;
-	plan tests => $ntests;
-      SKIP: {
-        skip "TLS disabled", 1 if $ntests == 1;
-
-        my $should;
-        for (my $smin = 0; $smin < @minprotos; ++$smin) {
-        for (my $smax = $smin ? $smin - 1 : 0; $smax < @maxprotos; ++$smax) {
-        for (my $cmin = 0; $cmin < @minprotos; ++$cmin) {
-        for (my $cmax = $cmin ? $cmin - 1 : 0; $cmax < @maxprotos; ++$cmax) {
-            if ($cmax < $smin-1) {
-                $should = "fail-server";
-            } elsif ($smax < $cmin-1) {
-                $should = "fail-client";
-            } elsif ($cmax > $smax) {
-                $should = $shdprotos[$smax];
-            } else {
-                $should = $shdprotos[$cmax];
-            }
-
-            my @args = @ssltest;
-            push(@args, "-should_negotiate", $should);
-            push(@args, "-server_min_proto", $minprotos[$smin])
-                if (defined($minprotos[$smin]));
-            push(@args, "-server_max_proto", $maxprotos[$smax])
-                if (defined($maxprotos[$smax]));
-            push(@args, "-client_min_proto", $minprotos[$cmin])
-                if (defined($minprotos[$cmin]));
-            push(@args, "-client_max_proto", $maxprotos[$cmax])
-                if (defined($maxprotos[$cmax]));
-            my $ok = run(test[@args]);
-            if (! $ok) {
-                print STDERR "\nsmin=$smin, smax=$smax, cmin=$cmin, cmax=$cmax\n";
-                print STDERR "\nFailed: @args\n";
-            }
-            ok($ok);
-        }}}}}
     };
 
     subtest 'DTLS Version min/max tests' => sub {
