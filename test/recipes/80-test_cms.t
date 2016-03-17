@@ -13,7 +13,8 @@ setup("test_cms");
 
 my $smdir    = srctop_dir("test", "smime-certs");
 my $smcont   = srctop_file("test", "smcont.txt");
-my ($no_dh, $no_ec, $no_ec2m, $no_zlib) = disabled qw/dh ec ec2m zlib/;
+my ($no_dh, $no_ec, $no_ec2m, $no_rc2, $no_zlib)
+    = disabled qw/dh ec ec2m rc2 zlib/;
 
 plan tests => 4;
 
@@ -465,12 +466,15 @@ sub check_availability {
     my $tnam = shift;
 
     return "$tnam: skipped, EC disabled\n"
-	if ($no_ec && $tnam =~ /ECDH/);
+        if ($no_ec && $tnam =~ /ECDH/);
     return "$tnam: skipped, ECDH disabled\n"
-	if ($no_ec && $tnam =~ /ECDH/);
+        if ($no_ec && $tnam =~ /ECDH/);
     return "$tnam: skipped, EC2M disabled\n"
-	if ($no_ec2m && $tnam =~ /K-283/);
+        if ($no_ec2m && $tnam =~ /K-283/);
     return "$tnam: skipped, DH disabled\n"
-	if ($no_dh && $tnam =~ /X9\.42/);
+        if ($no_dh && $tnam =~ /X9\.42/);
+    return "$tnam: skipped, RC2 disabled\n"
+        if ($no_rc2 && $tnam =~ /RC2/);
+
     return "";
 }
