@@ -901,7 +901,7 @@ if ($target{build_scheme}->[0] eq "unified" && $classic) {
         if $srcdir ne $blddir;
 
     $target{build_scheme} = { unix    => [ "unixmake" ],
-                              windows => [ "mk1mf", $target{build_scheme}->[2] ],
+                              windows => undef,
                               VMS     => undef } -> {$target{build_scheme}->[1]};
 
     die "Classic mode unavailable on this platform\n"
