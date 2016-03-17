@@ -358,7 +358,7 @@ my @disable_cascades = (
     "des"		=> [ "mdc2" ],
     "ec"		=> [ "ecdsa", "ecdh" ],
 
-    "dgram"		=> [ "dtls" ],
+    "dgram"		=> [ "dtls", "sctp" ],
     "dtls"		=> [ @dtls ],
 
     # SSL 3.0, (D)TLS 1.0 and TLS 1.1 require MD5 and SHA
