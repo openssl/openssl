@@ -99,11 +99,6 @@ die "Makefile is not the toplevel Makefile!\n" if $ssl_version eq "";
 $infile="MINFO";
 
 %ops=(
-	"VC-WIN32",   "Microsoft Visual C++ [4-6] - Windows NT or 9X",
-	"VC-WIN64I",  "Microsoft C/C++ - Win64/IA-64",
-	"VC-WIN64A",  "Microsoft C/C++ - Win64/x64",
-	"VC-CE",   "Microsoft eMbedded Visual C++ 3.0 - Windows CE ONLY",
-	"VC-NT",   "Microsoft Visual C++ [4-6] - Windows NT ONLY",
 	"Mingw32", "GNU C++ - Windows NT or 9x",
 	"Mingw32-files", "Create files with DOS copy ...",
 	"linux-elf","Linux elf",
@@ -201,13 +196,7 @@ if ($platform eq "auto" || $platform eq 'copy') {
 	print STDERR "Imported platform $mf_platform\n";
 }
 
-if (($platform =~ /VC-(.+)/))
-	{
-	$FLAVOR=$1;
-	$NT = 1 if $1 eq "NT";
-	require 'VC-32.pl';
-	}
-elsif ($platform eq "Mingw32")
+if ($platform eq "Mingw32")
 	{
 	require 'Mingw32.pl';
 	}
@@ -856,19 +845,6 @@ foreach (values %lib_nam)
 	$rules.=&do_compile_rule("\$(OBJ_D)",$lib_obj{$_},$lib);
 	}
 
-# hack to add version info on MSVC
-if (($platform eq "VC-WIN32") || ($platform eq "VC-WIN64A")
-	|| ($platform eq "VC-WIN64I") || ($platform eq "VC-NT")) {
-    $rules.= <<"EOF";
-\$(OBJ_D)\\\$(CRYPTO).res: ms\\version32.rc
-	\$(RSC) /fo"\$(OBJ_D)\\\$(CRYPTO).res" /d CRYPTO ms\\version32.rc
-
-\$(OBJ_D)\\\$(SSL).res: ms\\version32.rc
-	\$(RSC) /fo"\$(OBJ_D)\\\$(SSL).res" /d SSL ms\\version32.rc
-
-EOF
-}
-
 $defs.=&do_defs("T_EXE",$test,"\$(TEST_D)",$exep);
 foreach (split(/\s+/,$test))
 	{
@@ -1122,14 +1098,6 @@ sub do_defs
 
 		$Vars{$var}.="$t ";
 		$ret.=$t;
-		}
-	# hack to add version info on MSVC
-	if ($shlib && (($platform eq "VC-WIN32") || ($platfrom eq "VC-WIN64I") || ($platform eq "VC-WIN64A") || ($platform eq "VC-NT")))
-		{
-		if ($var eq "CRYPTOOBJ")
-			{ $ret.="\$(OBJ_D)\\\$(CRYPTO).res "; }
-		elsif ($var eq "SSLOBJ")
-			{ $ret.="\$(OBJ_D)\\\$(SSL).res "; }
 		}
 	chomp($ret);            # Does this actually do something? /RL
 	$ret.="\n\n";
