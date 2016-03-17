@@ -106,7 +106,6 @@ $infile="MINFO";
 	"VC-NT",   "Microsoft Visual C++ [4-6] - Windows NT ONLY",
 	"Mingw32", "GNU C++ - Windows NT or 9x",
 	"Mingw32-files", "Create files with DOS copy ...",
-	"BC-NT",   "Borland C++ 4.5 - Windows NT",
 	"linux-elf","Linux elf",
 	"ultrix-mips","DEC mips ultrix",
 	"FreeBSD","FreeBSD distribution",
@@ -223,11 +222,6 @@ elsif ($platform eq "Mingw32")
 elsif ($platform eq "Mingw32-files")
 	{
 	require 'Mingw32f.pl';
-	}
-elsif ($platform eq "BC-NT")
-	{
-	$bc=1;
-	require 'BC-32.pl';
 	}
 elsif ($platform eq "FreeBSD")
 	{
