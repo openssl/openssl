@@ -89,10 +89,6 @@ armv4cpuid.S:	armv4cpuid.pl;	$(PERL) armv4cpuid.pl $(PERLASM_SCHEME) $@
 subdirs:
 	@target=all; $(RECURSIVE_MAKE)
 
-files:
-	$(PERL) $(TOP)/util/files.pl "CPUID_OBJ=$(CPUID_OBJ)" Makefile >> $(TOP)/MINFO
-	@target=files; $(RECURSIVE_MAKE)
-
 # lib: $(LIB): are splitted to avoid end-less loop
 lib:	$(LIB)
 	@touch lib

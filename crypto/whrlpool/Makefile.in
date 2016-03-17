@@ -47,9 +47,6 @@ wp-x86_64.s: asm/wp-x86_64.pl
 
 $(LIBOBJ): $(LIBSRC)
 
-files:
-	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
-
 depend:
 	$(TOP)/util/domd $(CFLAG) $(INCLUDES) -- $(PROGS) $(LIBSRC)
 

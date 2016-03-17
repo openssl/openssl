@@ -75,9 +75,6 @@ scripts: $(SCRIPTS)
 openssl-vms.cnf: openssl.cnf
 	$(PERL) $(TOP)/VMS/VMSify-conf.pl < openssl.cnf > openssl-vms.cnf
 
-files:
-	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
-
 install:
 	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
 	@set -e; for i in $(EXE); \

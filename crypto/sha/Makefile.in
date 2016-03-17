@@ -97,9 +97,6 @@ sha1-armv8.o:		sha1-armv8.S
 sha256-armv8.o:		sha256-armv8.S
 sha512-armv8.o:		sha512-armv8.S
 
-files:
-	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
-
 depend:
 	$(TOP)/util/domd $(CFLAG) $(INCLUDES) -- $(PROGS) $(LIBSRC)
 

@@ -1778,7 +1778,6 @@ print OUT "1;\n";
 close(OUT);
 
 
-print "IsMK1MF       =", ($builder eq "mk1mf" ? "yes" : "no"), "\n";
 print "CC            =$target{cc}\n";
 print "CFLAG         =$target{cflags} $config{cflags}\n";
 print "SHARED_CFLAG  =$target{shared_cflag}\n";
@@ -1869,11 +1868,6 @@ my %builders = (
 
         run_dofile("util/domd", "util/domd.in");
         chmod 0755, "util/domd";
-    },
-    mk1mf => sub {
-        my $platform = shift;
-        # The only reason we do this is to have something to build MINFO from
-        build_Makefile();
     },
     );
 

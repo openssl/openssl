@@ -465,19 +465,11 @@ clean:	libclean
 	rm -f speed.* .pure
 	rm -f $(TARFILE)
 
-makefile.one: files
-	$(PERL) util/mk1mf.pl >makefile.one; \
-	sh util/do_ms.sh
-
-files:
-	$(PERL) $(TOP)/util/files.pl Makefile > $(TOP)/MINFO
-	@set -e; target=files; $(RECURSIVE_BUILD_CMD)
-
 gentests:
 	@(cd test && echo "generating dummy tests (if needed)..." && \
 	$(CLEARENV) && $(MAKE) -e $(BUILDENV) TESTS='$(TESTS)' OPENSSL_DEBUG_MEMORY=on generate );
 
-test:   files tests
+test:   tests
 
 tests:  build_tests 
 	@(cd test && echo "testing..." && \

@@ -52,9 +52,6 @@ poly1305-%.S:	asm/poly1305-%.pl;	$(PERL) $< $(PERLASM_SCHEME) $@
 poly1305-armv4.o:	poly1305-armv4.S
 poly1305-armv8.o:	poly1305-armv8.S
 
-files:
-	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
-
 depend:
 	$(TOP)/util/domd $(CFLAG) $(INCLUDES) -- $(PROGS) $(LIBSRC)
 

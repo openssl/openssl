@@ -52,9 +52,6 @@ md5-ia64.s: asm/md5-ia64.S
 md5-sparcv9.S:	asm/md5-sparcv9.pl
 	$(PERL) asm/md5-sparcv9.pl $(PERLASM_SCHEME) $@
 
-files:
-	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
-
 depend:
 	$(TOP)/util/domd $(CFLAG) $(INCLUDES) -- $(PROGS) $(LIBSRC)
 

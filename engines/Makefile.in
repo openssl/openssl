@@ -79,10 +79,6 @@ e_padlock-x86_64.s:	asm/e_padlock-x86_64.pl
 subdirs:
 	@target=all; $(RECURSIVE_MAKE)
 
-files:
-	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
-	@target=files; $(RECURSIVE_MAKE)
-
 install:
 	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
 	@if [ -n "$(SHARED_LIBS)" ]; then \
