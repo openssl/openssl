@@ -152,8 +152,6 @@ struct ct_policy_eval_ctx_st {
     X509 *cert;
     X509 *issuer;
     CTLOG_STORE *log_store;
-    STACK_OF(SCT) *good_scts;
-    STACK_OF(SCT) *bad_scts;
 };
 
 /*
