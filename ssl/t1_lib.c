@@ -1805,6 +1805,8 @@ static int tls1_alpn_handle_client_hello_late(SSL *s, int *ret, int *al)
                 return 0;
             }
             s->s3->alpn_selected_len = selected_len;
+        } else if (r == SSL_TLSEXT_ERR_NOACK) {
+            *al = SSL_AD_NO_APPLICATION_PROTOCOL;
         } else {
             *al = SSL_AD_NO_APPLICATION_PROTOCOL;
             *ret = SSL_TLSEXT_ERR_ALERT_FATAL;
