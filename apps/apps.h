@@ -631,6 +631,4 @@ extern int verify_quiet;
 extern int verify_error;
 extern int verify_return_error;
 
-# include "progs.h"
-
 #endif
