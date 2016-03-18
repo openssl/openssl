@@ -53,9 +53,7 @@
 
 #include <string.h>
 #include <openssl/ec.h>
-#ifndef OPENSSL_NO_ENGINE
-# include <openssl/engine.h>
-#endif
+#include <openssl/engine.h>
 #include <openssl/err.h>
 #include "ec_lcl.h"
 

@@ -115,14 +115,10 @@
 #include <openssl/hmac.h>
 #include <openssl/ocsp.h>
 #include <openssl/rand.h>
-#ifndef OPENSSL_NO_DH
-# include <openssl/dh.h>
-# include <openssl/bn.h>
-#endif
+#include <openssl/dh.h>
+#include <openssl/bn.h>
 #include "ssl_locl.h"
-#ifndef OPENSSL_NO_CT
-# include <openssl/ct.h>
-#endif
+#include <openssl/ct.h>
 
 static int tls_decrypt_ticket(SSL *s, const unsigned char *tick, int ticklen,
                               const unsigned char *sess_id, int sesslen,

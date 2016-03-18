@@ -54,16 +54,14 @@
 #ifndef HEADER_CMS_H
 # define HEADER_CMS_H
 
+# include <openssl/opensslconf.h>
+
+# ifndef OPENSSL_NO_CMS
 # include <openssl/x509.h>
 # include <openssl/x509v3.h>
-
-# ifdef OPENSSL_NO_CMS
-#  error CMS is disabled.
-# endif
-
-#ifdef __cplusplus
+# ifdef __cplusplus
 extern "C" {
-#endif
+# endif
 
 typedef struct CMS_ContentInfo_st CMS_ContentInfo;
 typedef struct CMS_SignerInfo_st CMS_SignerInfo;
@@ -551,7 +549,9 @@ void ERR_load_CMS_strings(void);
 # define CMS_R_VERIFICATION_FAILURE                       158
 # define CMS_R_WRAP_ERROR                                 159
 
-#ifdef  __cplusplus
+# ifdef  __cplusplus
 }
-#endif
+# endif
+# endif
+
 #endif

@@ -59,23 +59,13 @@
 #include <internal/err.h>
 #include <openssl/asn1.h>
 #include <openssl/bn.h>
-#ifndef OPENSSL_NO_EC
-# include <openssl/ec.h>
-#endif
+#include <openssl/ec.h>
 #include <openssl/buffer.h>
 #include <openssl/bio.h>
-#ifndef OPENSSL_NO_COMP
-# include <openssl/comp.h>
-#endif
-#ifndef OPENSSL_NO_RSA
-# include <openssl/rsa.h>
-#endif
-#ifndef OPENSSL_NO_DH
-# include <openssl/dh.h>
-#endif
-#ifndef OPENSSL_NO_DSA
-# include <openssl/dsa.h>
-#endif
+#include <openssl/comp.h>
+#include <openssl/rsa.h>
+#include <openssl/dh.h>
+#include <openssl/dsa.h>
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 #include <openssl/pem2.h>
@@ -85,9 +75,7 @@
 #include <openssl/pkcs12.h>
 #include <openssl/rand.h>
 #include <openssl/dso.h>
-#ifndef OPENSSL_NO_ENGINE
-# include <openssl/engine.h>
-#endif
+#include <openssl/engine.h>
 #include <openssl/ui.h>
 #include <openssl/ocsp.h>
 #include <openssl/err.h>
@@ -95,12 +83,8 @@
 # include <openssl/fips.h>
 #endif
 #include <openssl/ts.h>
-#ifndef OPENSSL_NO_CMS
-# include <openssl/cms.h>
-#endif
-#ifndef OPENSSL_NO_CT
-# include <openssl/ct.h>
-#endif
+#include <openssl/cms.h>
+#include <openssl/ct.h>
 #include <openssl/async.h>
 #include <openssl/kdf.h>
 

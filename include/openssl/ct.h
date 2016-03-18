@@ -51,20 +51,19 @@
 * ====================================================================
 */
 
-#ifdef OPENSSL_NO_CT
-# error "CT is disabled"
-#endif
-
 #ifndef HEADER_CT_H
 # define HEADER_CT_H
 
+# include <openssl/opensslconf.h>
+
+# ifndef OPENSSL_NO_CT
 # include <openssl/ossl_typ.h>
 # include <openssl/safestack.h>
 # include <openssl/x509.h>
-
 # ifdef  __cplusplus
 extern "C" {
 # endif
+
 
 /* Minimum RSA key size, from RFC6962 */
 # define SCT_MIN_RSA_BITS 2048
@@ -601,7 +600,9 @@ void ERR_load_CT_strings(void);
 # define CT_R_UNSUPPORTED_ENTRY_TYPE                      102
 # define CT_R_UNSUPPORTED_VERSION                         103
 
-#ifdef  __cplusplus
+# ifdef  __cplusplus
 }
-#endif
+# endif
+# endif
+
 #endif

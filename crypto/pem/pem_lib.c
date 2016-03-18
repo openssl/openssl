@@ -66,12 +66,8 @@
 #include <openssl/pem.h>
 #include <openssl/pkcs12.h>
 #include "internal/asn1_int.h"
-#ifndef OPENSSL_NO_DES
-# include <openssl/des.h>
-#endif
-#ifndef OPENSSL_NO_ENGINE
-# include <openssl/engine.h>
-#endif
+#include <openssl/des.h>
+#include <openssl/engine.h>
 
 #define MIN_LENGTH      4
 

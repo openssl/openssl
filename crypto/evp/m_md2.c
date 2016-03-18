@@ -64,9 +64,7 @@
 # include <openssl/objects.h>
 # include <openssl/x509.h>
 # include <openssl/md2.h>
-# ifndef OPENSSL_NO_RSA
-#  include <openssl/rsa.h>
-# endif
+# include <openssl/rsa.h>
 
 #include "internal/evp_int.h"
 

@@ -59,9 +59,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "internal/cryptlib.h"
-#ifndef OPENSSL_NO_ENGINE
-# include <openssl/engine.h>
-#endif
+#include <openssl/engine.h>
 #include <openssl/evp.h>
 #include <openssl/x509v3.h>
 #include "internal/asn1_int.h"

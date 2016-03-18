@@ -64,12 +64,8 @@
 #include <openssl/x509.h>
 #include <openssl/pkcs12.h>
 #include <openssl/pem.h>
-#ifndef OPENSSL_NO_ENGINE
-# include <openssl/engine.h>
-#endif
-#ifndef OPENSSL_NO_DH
-# include <openssl/dh.h>
-#endif
+#include <openssl/engine.h>
+#include <openssl/dh.h>
 #include "internal/asn1_int.h"
 #include "internal/evp_int.h"
 
