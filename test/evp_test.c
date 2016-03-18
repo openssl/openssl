@@ -1022,11 +1022,16 @@ static int mac_test_init(struct evp_test *t, const char *alg)
 {
     int type;
     struct mac_data *mdat;
-    if (strcmp(alg, "HMAC") == 0)
+    if (strcmp(alg, "HMAC") == 0) {
         type = EVP_PKEY_HMAC;
-    else if (strcmp(alg, "CMAC") == 0)
+    } else if (strcmp(alg, "CMAC") == 0) {
+#ifndef OPENSSL_NO_CMAC
         type = EVP_PKEY_CMAC;
-    else
+#else
+        t->skip = 1;
+        return 1;
+#endif
+    } else
         return 0;
 
     mdat = OPENSSL_malloc(sizeof(*mdat));
