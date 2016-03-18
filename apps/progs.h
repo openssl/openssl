@@ -198,7 +198,9 @@ static FUNCTION functions[] = {
 #ifndef OPENSSL_NO_SRP
     { FT_general, "srp", srp_main, srp_options },
 #endif
+#ifndef OPENSSL_NO_TS
     { FT_general, "ts", ts_main, ts_options },
+#endif
     { FT_general, "verify", verify_main, verify_options },
     { FT_general, "version", version_main, version_options },
     { FT_general, "x509", x509_main, x509_options },
