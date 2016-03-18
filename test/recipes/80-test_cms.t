@@ -13,8 +13,8 @@ setup("test_cms");
 
 my $smdir    = srctop_dir("test", "smime-certs");
 my $smcont   = srctop_file("test", "smcont.txt");
-my ($no_dh, $no_ec, $no_ec2m, $no_rc2, $no_zlib)
-    = disabled qw/dh ec ec2m rc2 zlib/;
+my ($no_des, $no_dh, $no_ec, $no_ec2m, $no_rc2, $no_zlib)
+    = disabled qw/des dh ec ec2m rc2 zlib/;
 
 plan tests => 4;
 
@@ -119,7 +119,7 @@ my @smime_pkcs7_tests = (
 	"-CAfile", catfile($smdir, "smroot.pem"), "-out", "smtst.txt" ]
     ],
 
-    [ "enveloped content test streaming S/MIME format, 3 recipients",
+    [ "enveloped content test streaming S/MIME format, DES, 3 recipients",
       [ "-encrypt", "-in", $smcont,
 	"-stream", "-out", "test.cms",
 	catfile($smdir, "smrsa1.pem"),
@@ -129,7 +129,7 @@ my @smime_pkcs7_tests = (
 	"-in", "test.cms", "-out", "smtst.txt" ]
     ],
 
-    [ "enveloped content test streaming S/MIME format, 3 recipients, 3rd used",
+    [ "enveloped content test streaming S/MIME format, DES, 3 recipients, 3rd used",
       [ "-encrypt", "-in", $smcont,
 	"-stream", "-out", "test.cms",
 	catfile($smdir, "smrsa1.pem"),
@@ -139,7 +139,7 @@ my @smime_pkcs7_tests = (
 	"-in", "test.cms", "-out", "smtst.txt" ]
     ],
 
-    [ "enveloped content test streaming S/MIME format, 3 recipients, key only used",
+    [ "enveloped content test streaming S/MIME format, DES, 3 recipients, key only used",
       [ "-encrypt", "-in", $smcont,
 	"-stream", "-out", "test.cms",
 	catfile($smdir, "smrsa1.pem"),
@@ -201,7 +201,7 @@ my @smime_cms_tests = (
 	"-CAfile", catfile($smdir, "smroot.pem") ]
     ],
 
-    [ "enveloped content test streaming S/MIME format, 3 recipients, keyid",
+    [ "enveloped content test streaming S/MIME format, DES, 3 recipients, keyid",
       [ "-encrypt", "-in", $smcont,
 	"-stream", "-out", "test.cms", "-keyid",
 	catfile($smdir, "smrsa1.pem"),
@@ -306,7 +306,7 @@ my @smime_cms_param_tests = (
 	"-CAfile", catfile($smdir, "smroot.pem"), "-out", "smtst.txt" ]
     ],
 
-    [ "enveloped content test streaming S/MIME format, OAEP default parameters",
+    [ "enveloped content test streaming S/MIME format, DES, OAEP default parameters",
       [ "-encrypt", "-in", $smcont,
 	"-stream", "-out", "test.cms",
 	"-recip", catfile($smdir, "smrsa1.pem"), "-keyopt", "rsa_padding_mode:oaep" ],
@@ -314,7 +314,7 @@ my @smime_cms_param_tests = (
 	"-in", "test.cms", "-out", "smtst.txt" ]
     ],
 
-    [ "enveloped content test streaming S/MIME format, OAEP SHA256",
+    [ "enveloped content test streaming S/MIME format, DES, OAEP SHA256",
       [ "-encrypt", "-in", $smcont,
 	"-stream", "-out", "test.cms",
 	"-recip", catfile($smdir, "smrsa1.pem"), "-keyopt", "rsa_padding_mode:oaep",
@@ -323,7 +323,7 @@ my @smime_cms_param_tests = (
 	"-in", "test.cms", "-out", "smtst.txt" ]
     ],
 
-    [ "enveloped content test streaming S/MIME format, ECDH",
+    [ "enveloped content test streaming S/MIME format, DES, ECDH",
       [ "-encrypt", "-in", $smcont,
 	"-stream", "-out", "test.cms",
 	"-recip", catfile($smdir, "smec1.pem") ],
@@ -331,7 +331,7 @@ my @smime_cms_param_tests = (
 	"-in", "test.cms", "-out", "smtst.txt" ]
     ],
 
-    [ "enveloped content test streaming S/MIME format, ECDH, key identifier",
+    [ "enveloped content test streaming S/MIME format, ECDH, DES, key identifier",
       [ "-encrypt", "-keyid", "-in", $smcont,
 	"-stream", "-out", "test.cms",
 	"-recip", catfile($smdir, "smec1.pem") ],
@@ -475,6 +475,8 @@ sub check_availability {
         if ($no_dh && $tnam =~ /X9\.42/);
     return "$tnam: skipped, RC2 disabled\n"
         if ($no_rc2 && $tnam =~ /RC2/);
+    return "$tnam: skipped, DES disabled\n"
+        if ($no_des && $tnam =~ /DES/);
 
     return "";
 }
