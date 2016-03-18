@@ -227,6 +227,8 @@ static FUNCTION functions[] = {
 #endif
 #ifndef OPENSSL_NO_BLAKE2
     { FT_md, "blake2b512", dgst_main},
+#endif
+#ifndef OPENSSL_NO_BLAKE2
     { FT_md, "blake2s256", dgst_main},
 #endif
 #ifndef OPENSSL_NO_AES

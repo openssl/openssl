@@ -84,11 +84,16 @@ foreach (
 	"md2", "md4", "md5",
 	"md_ghost94",
 	"sha1", "sha224", "sha256", "sha384", "sha512",
-	"mdc2", "rmd160", "blake2b", "blake2s"
+	"mdc2", "rmd160", "blake2b512", "blake2s256"
 ) {
-        printf "#ifndef OPENSSL_NO_".uc($_)."\n" if ! /sha/;
-        printf "    { FT_md, \"".$_."\", dgst_main},\n";
-        printf "#endif\n" if ! /sha/;
+        my $str = "    { FT_md, \"".$_."\", dgst_main},\n";
+        if (/blake2/) {
+                print "#ifndef OPENSSL_NO_BLAKE2\n${str}#endif\n";
+        } elsif (/sha/) {
+                print "${str}";
+        } else {
+                print "#ifndef OPENSSL_NO_".uc($_)."\n${str}#endif\n";
+        }
 }
 
 foreach (
