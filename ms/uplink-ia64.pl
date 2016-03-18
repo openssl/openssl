@@ -1,5 +1,8 @@
 #!/usr/bin/env perl
 
+$output = pop;
+open STDOUT,">$output";
+
 $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
 push(@INC,"${dir}.");
 
@@ -48,3 +51,5 @@ for ($i=1;$i<=$N;$i++) {   print "      data8   \@fptr(lazy$i#)\n";   }
 print <<___;
 .size   OPENSSL_UplinkTable,.-OPENSSL_UplinkTable#
 ___
+
+close STDOUT;
