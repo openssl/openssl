@@ -13,8 +13,8 @@ setup("test_cms");
 
 my $smdir    = srctop_dir("test", "smime-certs");
 my $smcont   = srctop_file("test", "smcont.txt");
-my ($no_des, $no_dh, $no_ec, $no_ec2m, $no_rc2, $no_zlib)
-    = disabled qw/des dh ec ec2m rc2 zlib/;
+my ($no_des, $no_dh, $no_dsa, $no_ec, $no_ec2m, $no_rc2, $no_zlib)
+    = disabled qw/des dh dsa ec ec2m rc2 zlib/;
 
 plan tests => 4;
 
@@ -59,7 +59,7 @@ my @smime_pkcs7_tests = (
 	"-content", $smcont ]
     ],
 
-    [ "signed detached content DER format, add RSA signer",
+    [ "signed detached content DER format, add RSA signer (with DSA existing)",
       [ "-resign", "-inform", "DER", "-in", "test.cms", "-outform", "DER",
 	"-signer", catfile($smdir, "smrsa1.pem"), "-out", "test2.cms" ],
       [ "-verify", "-in", "test2.cms", "-inform", "DER",
@@ -477,6 +477,8 @@ sub check_availability {
         if ($no_rc2 && $tnam =~ /RC2/);
     return "$tnam: skipped, DES disabled\n"
         if ($no_des && $tnam =~ /DES/);
+    return "$tnam: skipped, DSA disabled\n"
+        if ($no_dsa && $tnam =~ / DSA/);
 
     return "";
 }

@@ -171,7 +171,10 @@ int dhparam_main(int argc, char **argv)
     BIO *in = NULL, *out = NULL;
     DH *dh = NULL;
     char *infile = NULL, *outfile = NULL, *prog, *inrand = NULL;
-    int dsaparam = 0, i, text = 0, C = 0, ret = 1, num = 0, g = 0;
+#ifndef OPENSSL_NO_DSA
+    int dsaparam = 0;
+#endif
+    int i, text = 0, C = 0, ret = 1, num = 0, g = 0;
     int informat = FORMAT_PEM, outformat = FORMAT_PEM, check = 0, noout = 0;
     OPTION_CHOICE o;
 
@@ -211,7 +214,9 @@ int dhparam_main(int argc, char **argv)
             text = 1;
             break;
         case OPT_DSAPARAM:
+#ifndef OPENSSL_NO_DSA
             dsaparam = 1;
+#endif
             break;
         case OPT_C:
             C = 1;
