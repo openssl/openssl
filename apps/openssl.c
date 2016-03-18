@@ -132,8 +132,8 @@
 #ifdef OPENSSL_SYS_VMS
 # include <unixio.h>
 #endif
-#define INCLUDE_FUNCTION_TABLE
 #include "apps.h"
+#include "progs.h"
 
 
 #ifdef OPENSSL_NO_CAMELLIA
