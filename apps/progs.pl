@@ -75,6 +75,8 @@ foreach (@ARGV) {
 		print "#ifndef OPENSSL_NO_OCSP\n${str}#endif\n";
 	} elsif (/^srp$/) {
 		print "#ifndef OPENSSL_NO_SRP\n${str}#endif\n";
+	} elsif (/^ts$/) {
+		print "#ifndef OPENSSL_NO_TS\n${str}#endif\n";
 	} else {
 		print $str;
 	}
