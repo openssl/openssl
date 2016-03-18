@@ -194,6 +194,7 @@ int main(int argc, char *argv[])
     if (!run_rfc5114_tests())
         ret = 1;
  err:
+    (void)BIO_flush(out);
     ERR_print_errors_fp(stderr);
 
     OPENSSL_free(abuf);
@@ -202,6 +203,12 @@ int main(int argc, char *argv[])
     DH_free(a);
     BN_GENCB_free(_cb);
     BIO_free(out);
+
+#ifndef OPENSSL_NO_CRYPTO_MDEBUG
+    if (CRYPTO_mem_leaks_fp(stderr) <= 0)
+        ret = 1;
+#endif
+
     EXIT(ret);
 }
 
