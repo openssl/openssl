@@ -243,10 +243,11 @@ configdata.pm: {- $config{build_file_template} -} $(SRCDIR)\Configure
       (my $target = $args{src}) =~ s/\.[sS]$/.asm/;
       my $generator = join(" ", @{$args{generator}});
       my $incs = join("", map { " /I ".$_ } @{$args{incs}});
+      my $deps = join(" ", @{$args{deps}});
 
       if ($target !~ /\.asm$/) {
           return <<"EOF";
-$target: $args{generator}->[0]
+$target: $args{generator}->[0] $deps
 	\$(PERL) $generator > \$@
 EOF
       } else {
@@ -263,7 +264,7 @@ EOF
               # end up generating foo.s in two steps.
               if ($args{src} =~ /\.S$/) {
                    return <<"EOF";
-$target: $args{generator}->[0]
+$target: $args{generator}->[0] $deps
 	set ASM=\$(AS)
 	set CC=\$(CC)
 	$generator \$@.S
@@ -273,14 +274,14 @@ EOF
               }
               # Otherwise....
               return <<"EOF";
-$target: $args{generator}->[0]
+$target: $args{generator}->[0] $deps
 	set ASM=\$(AS)
 	set CC=\$(CC)
 	$generator \$@
 EOF
           }
           return <<"EOF";
-$target: $args{generator}->[0]
+$target: $args{generator}->[0] $deps
 	\$(CC) \$(CFLAGS) $incs /EP /C \$< > \$@
 EOF
       }

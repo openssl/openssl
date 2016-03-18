@@ -802,10 +802,11 @@ configdata.pm: $(SRCDIR)/Configurations/unix-Makefile.tmpl $(SRCDIR)/Configurati
       my %args = @_;
       my $generator = join(" ", @{$args{generator}});
       my $incs = join("", map { " -I".$_ } @{$args{incs}});
+      my $deps = join(" ", @{$args{deps}});
 
       if ($args{src} !~ /\.[sS]$/) {
           return <<"EOF";
-$args{src}: $args{generator}->[0]
+$args{src}: $args{generator}->[0] $deps
 	\$(PERL) $generator > \$@
 EOF
       } else {
@@ -825,7 +826,7 @@ EOF
               if ($args{src} =~ /\.S$/) {
                    (my $target = $args{src}) =~ s|\.S$|.s|;
                    return <<"EOF";
-$target: $args{generator}->[0]
+$target: $args{generator}->[0] $deps
 	( trap "rm -f \$@.*" INT 0; \\
 	  $generator \$@.S; \\
 	  \$(CC) \$(CFLAGS) $incs -E -P \$@.S > \$@.i && mv -f \$@.i \$@ )
@@ -833,12 +834,12 @@ EOF
               }
               # Otherwise....
               return <<"EOF";
-$args{src}: $args{generator}->[0]
+$args{src}: $args{generator}->[0] $deps
 	$generator \$@
 EOF
           }
           return <<"EOF";
-$args{src}: $args{generator}->[0]
+$args{src}: $args{generator}->[0] $deps
 	\$(CC) \$(CFLAGS) $incs -E -P \$< > \$@
 EOF
       }

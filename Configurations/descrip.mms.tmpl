@@ -418,10 +418,11 @@ configdata.pm : {- join(" ", sourcefile("Configurations", "descrip.mms.tmpl"), s
   sub generatesrc {
       my %args = @_;
       my $generator = join(" ", @{$args{generator}});
+      my $deps = join(", -\n\t\t", @{$args{deps}});
 
       if ($args{src} !~ /\.[sS]$/) {
           return <<"EOF";
-$args{src} : $args{generator}->[0]
+$args{src} : $args{generator}->[0] $deps
 	\$(PERL) $generator > \$@
 EOF
       } else {
