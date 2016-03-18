@@ -272,7 +272,7 @@ $target: $args{generator}->[0] $deps
 	set ASM=\$(AS)
 	set CC=\$(CC)
 	$generator \$@.S
-	\$(CC) \$(CFLAGS) $incs /EP /C \$@.S > \$@
+	\$(CC) \$(CFLAGS) $incs /EP /C \$@.S > \$@.i && move /Y \$@.i \$@
         del /Q \$@.S
 EOF
               }
@@ -286,7 +286,7 @@ EOF
           }
           return <<"EOF";
 $target: $args{generator}->[0] $deps
-	\$(CC) \$(CFLAGS) $incs /EP /C \$< > \$@
+	\$(CC) \$(CFLAGS) $incs /EP /C $args{generator}->[0] > \$@.i && move /Y \$@.i \$@
 EOF
       }
   }
