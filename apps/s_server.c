@@ -146,9 +146,6 @@ static int async = 0;
 static unsigned int split_send_fragment = 0;
 static unsigned int max_pipelines = 0;
 
-#ifndef OPENSSL_NO_ENGINE
-static char *engine_id = NULL;
-#endif
 static const char *session_id_prefix = NULL;
 
 #ifndef OPENSSL_NO_DTLS
@@ -305,9 +302,6 @@ static void s_server_init(void)
     async = 0;
     split_send_fragment = 0;
     max_pipelines = 0;
-#ifndef OPENSSL_NO_ENGINE
-    engine_id = NULL;
-#endif
 }
 
 static int local_argc = 0;
@@ -919,12 +913,12 @@ OPTIONS s_server_options[] = {
 #ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
 #endif
-    {NULL}
+    {NULL, OPT_EOF, 0, NULL}
 };
 
 int s_server_main(int argc, char *argv[])
 {
-    ENGINE *e = NULL;
+    ENGINE *engine = NULL;
     EVP_PKEY *s_key = NULL, *s_dkey = NULL;
     SSL_CONF_CTX *cctx = NULL;
     const SSL_METHOD *meth = TLS_server_method();
@@ -1396,7 +1390,7 @@ int s_server_main(int argc, char *argv[])
             session_id_prefix = opt_arg();
             break;
         case OPT_ENGINE:
-            e = setup_engine(opt_arg(), 1);
+            engine = setup_engine(opt_arg(), 1);
             break;
         case OPT_RAND:
             inrand = opt_arg();
@@ -1502,7 +1496,7 @@ int s_server_main(int argc, char *argv[])
         goto end;
 
     if (nocert == 0) {
-        s_key = load_key(s_key_file, s_key_format, 0, pass, e,
+        s_key = load_key(s_key_file, s_key_format, 0, pass, engine,
                          "server certificate private key file");
         if (!s_key) {
             ERR_print_errors(bio_err);
@@ -1523,7 +1517,7 @@ int s_server_main(int argc, char *argv[])
         }
 
         if (tlsextcbp.servername) {
-            s_key2 = load_key(s_key_file2, s_key_format, 0, pass, e,
+            s_key2 = load_key(s_key_file2, s_key_format, 0, pass, engine,
                               "second server certificate private key file");
             if (!s_key2) {
                 ERR_print_errors(bio_err);
@@ -1582,7 +1576,7 @@ int s_server_main(int argc, char *argv[])
             s_dkey_file = s_dcert_file;
 
         s_dkey = load_key(s_dkey_file, s_dkey_format,
-                          0, dpass, e, "second certificate private key file");
+                          0, dpass, engine, "second certificate private key file");
         if (!s_dkey) {
             ERR_print_errors(bio_err);
             goto end;

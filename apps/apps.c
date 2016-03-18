@@ -1413,7 +1413,7 @@ int save_serial(char *serialfile, char *suffix, BIGNUM *serial,
 
 int rotate_serial(char *serialfile, char *new_suffix, char *old_suffix)
 {
-    char buf[5][BSIZE];
+    char buf[2][BSIZE];
     int i, j;
 
     i = strlen(serialfile) + strlen(old_suffix);
@@ -1782,6 +1782,7 @@ int bio_to_mem(unsigned char **out, int maxlen, BIO *in)
     BIO *mem;
     int len, ret;
     unsigned char tbuf[1024];
+
     mem = BIO_new(BIO_s_mem());
     if (mem == NULL)
         return -1;
